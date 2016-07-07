@@ -7,7 +7,7 @@
 
 struct pool;
 class Istream;
-struct async_operation_ref;
+class CancellablePointer;
 
 struct sink_buffer_handler {
     void (*done)(void *data, size_t length, void *ctx);
@@ -17,6 +17,6 @@ struct sink_buffer_handler {
 void
 sink_buffer_new(struct pool &pool, Istream &input,
                 const struct sink_buffer_handler &handler, void *ctx,
-                struct async_operation_ref &async_ref);
+                CancellablePointer &cancel_ptr);
 
 #endif

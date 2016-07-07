@@ -40,10 +40,10 @@ class HeaderSink final : public ForwardIstream, Cancellable {
 public:
     HeaderSink(struct pool &_pool, Istream &_input,
                const struct sink_header_handler &_handler, void *_ctx,
-               struct async_operation_ref &async_ref)
+               CancellablePointer &cancel_ptr)
         :ForwardIstream(_pool, _input),
          handler(&_handler), handler_ctx(_ctx) {
-        async_ref = *this;
+        cancel_ptr = *this;
     }
 
     size_t InvokeCallback(size_t consumed);
@@ -313,11 +313,11 @@ HeaderSink::_GetAvailable(bool partial)
 void
 sink_header_new(struct pool &pool, Istream &input,
                 const struct sink_header_handler &handler, void *ctx,
-                struct async_operation_ref &async_ref)
+                CancellablePointer &cancel_ptr)
 {
     assert(handler.done != nullptr);
     assert(handler.error != nullptr);
 
-    NewIstream<HeaderSink>(pool, input, handler, ctx, async_ref);
+    NewIstream<HeaderSink>(pool, input, handler, ctx, cancel_ptr);
 
 }

@@ -9,11 +9,11 @@
 
 struct pool;
 class Istream;
-struct async_operation_ref;
+class CancellablePointer;
 
 void
 sink_gstring_new(struct pool &pool, Istream &input,
                  void (*callback)(GString *value, GError *error, void *ctx),
-                 void *ctx, struct async_operation_ref &async_ref);
+                 void *ctx, CancellablePointer &cancel_ptr);
 
 #endif

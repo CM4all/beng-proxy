@@ -15,7 +15,7 @@
 
 struct pool;
 class Istream;
-struct async_operation_ref;
+class CancellablePointer;
 
 struct sink_header_handler {
     void (*done)(void *header, size_t length, Istream &tail, void *ctx);
@@ -25,6 +25,6 @@ struct sink_header_handler {
 void
 sink_header_new(struct pool &pool, Istream &input,
                 const struct sink_header_handler &handler, void *ctx,
-                struct async_operation_ref &async_ref);
+                CancellablePointer &cancel_ptr);
 
 #endif

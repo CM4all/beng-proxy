@@ -21,11 +21,11 @@ struct GStringSink final : IstreamSink, Cancellable {
     GStringSink(struct pool &_pool, Istream &_input,
                 void (*_callback)(GString *value, GError *error, void *ctx),
                 void *_ctx,
-                struct async_operation_ref &async_ref)
+                CancellablePointer &cancel_ptr)
         :IstreamSink(_input, FD_ANY), pool(&_pool),
          value(g_string_sized_new(256)),
          callback(_callback), callback_ctx(_ctx) {
-        async_ref = *this;
+        cancel_ptr = *this;
     }
 
     /* virtual methods from class Cancellable */
@@ -61,9 +61,8 @@ struct GStringSink final : IstreamSink, Cancellable {
 void
 sink_gstring_new(struct pool &pool, Istream &input,
                  void (*callback)(GString *value, GError *error, void *ctx),
-                 void *ctx, struct async_operation_ref &async_ref)
+                 void *ctx, CancellablePointer &cancel_ptr)
 {
     NewFromPool<GStringSink>(pool, pool, input,
-                             callback, ctx,
-                             async_ref);
+                             callback, ctx, cancel_ptr);
 }

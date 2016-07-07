@@ -24,12 +24,12 @@ struct BufferSink final : IstreamSink, Cancellable {
 
     BufferSink(struct pool &_pool, Istream &_input, size_t available,
                const struct sink_buffer_handler &_handler, void *ctx,
-               struct async_operation_ref &async_ref)
+               CancellablePointer &cancel_ptr)
         :IstreamSink(_input, FD_ANY), pool(&_pool),
          buffer((unsigned char *)p_malloc(pool, available)),
          size(available),
          handler(&_handler), handler_ctx(ctx) {
-        async_ref = *this;
+        cancel_ptr = *this;
     }
 
     /* virtual methods from class Cancellable */
@@ -117,7 +117,7 @@ BufferSink::Cancel()
 void
 sink_buffer_new(struct pool &pool, Istream &input,
                 const struct sink_buffer_handler &handler, void *ctx,
-                struct async_operation_ref &async_ref)
+                CancellablePointer &cancel_ptr)
 {
     static char empty_buffer[1];
 
@@ -145,5 +145,5 @@ sink_buffer_new(struct pool &pool, Istream &input,
     }
 
     NewFromPool<BufferSink>(pool, pool, input, available,
-                            handler, ctx, async_ref);
+                            handler, ctx, cancel_ptr);
 }
