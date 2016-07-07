@@ -40,7 +40,7 @@ lhttp_request(struct pool &pool, EventLoop &event_loop,
               http_method_t method, HttpHeaders &&headers,
               Istream *body,
               HttpResponseHandler &handler,
-              struct async_operation_ref &async_ref)
+              CancellablePointer &cancel_ptr)
 {
     GError *error = nullptr;
     if (!address.options.Check(&error)) {
@@ -74,5 +74,5 @@ lhttp_request(struct pool &pool, EventLoop &event_loop,
                         stock_item->GetStockName(),
                         nullptr, nullptr,
                         method, address.uri, std::move(headers), body, true,
-                        handler, async_ref);
+                        handler, cancel_ptr);
 }

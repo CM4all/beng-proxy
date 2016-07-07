@@ -38,6 +38,7 @@
 #include "istream/istream.hxx"
 #include "istream/istream_hold.hxx"
 #include "gerrno.h"
+#include "async.hxx"
 
 #include <http/status.h>
 #include <daemon/log.h>

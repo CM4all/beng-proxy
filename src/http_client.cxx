@@ -20,7 +20,6 @@
 #include "istream/istream_chunked.hxx"
 #include "istream/istream_dechunk.hxx"
 #include "istream/istream_string.hxx"
-#include "async.hxx"
 #include "growing_buffer.hxx"
 #include "uri/uri_verify.hxx"
 #include "direct.hxx"
@@ -29,6 +28,7 @@
 #include "completion.h"
 #include "fs_lease.hxx"
 #include "pool.hxx"
+#include "util/Cancellable.hxx"
 #include "util/Cast.hxx"
 #include "util/CharUtil.hxx"
 #include "util/StringUtil.hxx"
@@ -187,7 +187,7 @@ struct HttpClient final : IstreamHandler, Cancellable {
                HttpHeaders &&headers,
                Istream *body, bool expect_100,
                HttpResponseHandler &handler,
-               struct async_operation_ref &async_ref);
+               CancellablePointer &cancel_ptr);
 
     ~HttpClient() {
         pool_unref(&caller_pool);
@@ -1255,7 +1255,7 @@ HttpClient::HttpClient(struct pool &_caller_pool, struct pool &_pool,
                        HttpHeaders &&headers,
                        Istream *body, bool expect_100,
                        HttpResponseHandler &handler,
-                       struct async_operation_ref &async_ref)
+                       CancellablePointer &cancel_ptr)
     :caller_pool(_caller_pool),
      peer_name(_peer_name),
      stopwatch(stopwatch_new(&_pool, peer_name, uri)),
@@ -1272,7 +1272,7 @@ HttpClient::HttpClient(struct pool &_caller_pool, struct pool &_pool,
 
     pool_ref(&caller_pool);
 
-    async_ref = *this;
+    cancel_ptr = *this;
 
     /* request line */
 
@@ -1360,7 +1360,7 @@ http_client_request(struct pool &caller_pool, EventLoop &event_loop,
                     HttpHeaders &&headers,
                     Istream *body, bool expect_100,
                     HttpResponseHandler &handler,
-                    struct async_operation_ref &async_ref)
+                    CancellablePointer &cancel_ptr)
 {
     assert(fd >= 0);
     assert(http_method_is_valid(method));
@@ -1390,6 +1390,6 @@ http_client_request(struct pool &caller_pool, EventLoop &event_loop,
                             filter, filter_ctx,
                             method, uri,
                             std::move(headers), body, expect_100,
-                            handler, async_ref);
+                            handler, cancel_ptr);
     pool_unref(pool); // response_body_reader holds the reference
 }

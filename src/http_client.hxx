@@ -19,7 +19,7 @@ class Istream;
 class Lease;
 struct SocketFilter;
 class HttpResponseHandler;
-struct async_operation_ref;
+class CancellablePointer;
 class HttpHeaders;
 
 /**
@@ -91,6 +91,6 @@ http_client_request(struct pool &pool, EventLoop &event_loop,
                     HttpHeaders &&headers,
                     Istream *body, bool expect_100,
                     HttpResponseHandler &handler,
-                    struct async_operation_ref &async_ref);
+                    CancellablePointer &cancel_ptr);
 
 #endif

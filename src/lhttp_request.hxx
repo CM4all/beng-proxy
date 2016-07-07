@@ -15,7 +15,7 @@ class Istream;
 struct LhttpStock;
 struct LhttpAddress;
 class HttpResponseHandler;
-struct async_operation_ref;
+class CancellablePointer;
 class HttpHeaders;
 
 void
@@ -25,6 +25,6 @@ lhttp_request(struct pool &pool, EventLoop &event_loop,
               http_method_t method,
               HttpHeaders &&headers, Istream *body,
               HttpResponseHandler &handler,
-              struct async_operation_ref &async_ref);
+              CancellablePointer &cancel_ptr);
 
 #endif
