@@ -10,7 +10,6 @@
 #include "pool.hxx"
 #include "istream/Pointer.hxx"
 #include "istream/istream_null.hxx"
-#include "async.hxx"
 #include "header_parser.hxx"
 #include "stopwatch.hxx"
 #include "strmap.hxx"
@@ -18,6 +17,7 @@
 #include "fb_pool.hxx"
 #include "SliceFifoBuffer.hxx"
 #include "util/Cast.hxx"
+#include "util/Cancellable.hxx"
 
 #include <string.h>
 #include <stdlib.h>
@@ -45,7 +45,7 @@ struct CGIClient final : Istream, IstreamHandler, Cancellable {
     CGIClient(struct pool &_pool, Stopwatch *_stopwatch,
               Istream &_input,
               HttpResponseHandler &_handler,
-              struct async_operation_ref &async_ref);
+              CancellablePointer &cancel_ptr);
 
     /**
      * @return false if the connection has been closed
@@ -461,7 +461,7 @@ inline
 CGIClient::CGIClient(struct pool &_pool, Stopwatch *_stopwatch,
                      Istream &_input,
                      HttpResponseHandler &_handler,
-                     struct async_operation_ref &async_ref)
+                     CancellablePointer &cancel_ptr)
     :Istream(_pool),
      stopwatch(_stopwatch),
      input(_input, *this),
@@ -469,7 +469,7 @@ CGIClient::CGIClient(struct pool &_pool, Stopwatch *_stopwatch,
      parser(_pool),
      handler(_handler)
 {
-    async_ref = *this;
+    cancel_ptr = *this;
 
     input.Read();
 }
@@ -478,8 +478,8 @@ void
 cgi_client_new(struct pool &pool, Stopwatch *stopwatch,
                Istream &input,
                HttpResponseHandler &handler,
-               struct async_operation_ref &async_ref)
+               CancellablePointer &cancel_ptr)
 {
     NewFromPool<CGIClient>(pool, pool, stopwatch, input,
-                           handler, async_ref);
+                           handler, cancel_ptr);
 }

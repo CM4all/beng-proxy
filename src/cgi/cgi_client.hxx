@@ -13,7 +13,7 @@ struct pool;
 struct Stopwatch;
 class Istream;
 class HttpResponseHandler;
-struct async_operation_ref;
+class CancellablePointer;
 
 /**
  * @param input the stream received from the child process
@@ -22,6 +22,6 @@ void
 cgi_client_new(struct pool &pool, Stopwatch *stopwatch,
                Istream &input,
                HttpResponseHandler &handler,
-               struct async_operation_ref &async_ref);
+               CancellablePointer &cancel_ptr);
 
 #endif

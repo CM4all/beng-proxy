@@ -8,7 +8,6 @@
 #include "cgi_address.hxx"
 #include "cgi_client.hxx"
 #include "cgi_launch.hxx"
-#include "async.hxx"
 #include "abort_flag.hxx"
 #include "stopwatch.hxx"
 #include "http_response.hxx"
@@ -23,11 +22,11 @@ cgi_new(SpawnService &spawn_service, EventLoop &event_loop,
         const char *remote_addr,
         const StringMap &headers, Istream *body,
         HttpResponseHandler &handler,
-        struct async_operation_ref &async_ref)
+        CancellablePointer &cancel_ptr)
 {
     auto *stopwatch = stopwatch_new(pool, address->path);
 
-    AbortFlag abort_flag(async_ref);
+    AbortFlag abort_flag(cancel_ptr);
 
     GError *error = nullptr;
     Istream *input = cgi_launch(event_loop, pool, method, address,
@@ -47,5 +46,5 @@ cgi_new(SpawnService &spawn_service, EventLoop &event_loop,
 
     stopwatch_event(stopwatch, "fork");
 
-    cgi_client_new(*pool, stopwatch, *input, handler, async_ref);
+    cgi_client_new(*pool, stopwatch, *input, handler, cancel_ptr);
 }

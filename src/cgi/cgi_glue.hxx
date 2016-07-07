@@ -16,7 +16,7 @@ class Istream;
 class SpawnService;
 class StringMap;
 class HttpResponseHandler;
-struct async_operation_ref;
+class CancellablePointer;
 
 void
 cgi_new(SpawnService &spawn_service, EventLoop &event_loop,
@@ -25,6 +25,6 @@ cgi_new(SpawnService &spawn_service, EventLoop &event_loop,
         const char *remote_addr,
         const StringMap &headers, Istream *body,
         HttpResponseHandler &_handler,
-        struct async_operation_ref &async_ref);
+        CancellablePointer &cancel_ptr);
 
 #endif
