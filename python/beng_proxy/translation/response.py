@@ -57,10 +57,7 @@ class Response:
             self.packet(TRANSLATE_CONTAINER)
         return self
 
-    def http(self, uri, addresses=None):
-        """Generate a HTTP packet.  If you do not specify an address
-        list, this function looks up the URI's host name with the
-        local resolver (which may throw socket.gaierror)."""
+    def __http(self, packet, uri, addresses=None):
         assert uri[0] != '/' or len(addresses) == 0
         assert addresses is None or hasattr(addresses, '__iter__')
 
@@ -74,10 +71,16 @@ class Response:
             if port: address += ':' + port
             addresses = (address,)
 
-        self.packet(TRANSLATE_HTTP, uri)
+        self.packet(packet, uri)
         for address in addresses:
             self.packet(TRANSLATE_ADDRESS_STRING, address)
         return self
+
+    def http(self, *args, **kwargs):
+        """Generate a HTTP packet.  If you do not specify an address
+        list, this function looks up the URI's host name with the
+        local resolver (which may throw socket.gaierror)."""
+        return self.__http(TRANSLATE_HTTP, *args, **kwargs)
 
     proxy = http # deprecated
 
