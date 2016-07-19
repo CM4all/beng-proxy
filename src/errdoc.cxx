@@ -22,7 +22,7 @@
 #include <daemon/log.h>
 
 struct ErrorResponseLoader final : HttpResponseHandler, Cancellable {
-    struct async_operation_ref async_ref;
+    CancellablePointer cancel_ptr;
 
     Request *request2;
 
@@ -152,7 +152,7 @@ ErrorResponseLoader::Cancel()
     if (body != nullptr)
         body->CloseUnused();
 
-    async_ref.Abort();
+    cancel_ptr.Cancel();
 }
 
 /*
@@ -183,5 +183,5 @@ errdoc_dispatch_response(Request &request2, http_status_t status,
     translate_cache(request2.pool, *instance->translate_cache,
                     er->translate_request,
                     errdoc_translate_handler, er,
-                    er->async_ref);
+                    er->cancel_ptr);
 }
