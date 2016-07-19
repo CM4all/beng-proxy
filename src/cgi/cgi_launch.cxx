@@ -102,6 +102,13 @@ PrepareCgi(struct pool &pool, PreparedChildProcess &p,
                 continue;
             }
 
+            if (strcmp(pair.key, "proxy") == 0)
+                /* work around vulnerability in several CGI programs
+                   which take the environment variable HTTP_PROXY as
+                   proxy specification for their internal HTTP
+                   clients; see CVE-2016-5385 and others */
+                continue;
+
             char buffer[512] = "HTTP_";
             size_t i;
             for (i = 0; 5 + i < sizeof(buffer) - 1 && pair.key[i] != 0; ++i) {
@@ -115,6 +122,7 @@ PrepareCgi(struct pool &pool, PreparedChildProcess &p,
             }
 
             buffer[5 + i] = 0;
+
             p.SetEnv(buffer, pair.value);
         }
     }
