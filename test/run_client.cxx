@@ -3,7 +3,6 @@
 #include "http_client.hxx"
 #include "http_headers.hxx"
 #include "http_response.hxx"
-#include "async.hxx"
 #include "lease.hxx"
 #include "direct.hxx"
 #include "istream/istream_file.hxx"
@@ -22,6 +21,7 @@
 #include "net/SocketAddress.hxx"
 #include "event/Event.hxx"
 #include "event/ShutdownListener.hxx"
+#include "util/Cancellable.hxx"
 
 #include <inline/compiler.h>
 #include <socket/resolver.h>
@@ -87,7 +87,7 @@ struct Context final : ConnectSocketHandler, Lease, HttpResponseHandler {
 
     ShutdownListener shutdown_listener;
 
-    struct async_operation_ref async_ref;
+    CancellablePointer cancel_ptr;
 
     http_method_t method;
     Istream *request_body;
@@ -134,7 +134,7 @@ Context::ShutdownCallback()
         body_abort = true;
     } else {
         aborted = true;
-        async_ref.Abort();
+        cancel_ptr.Cancel();
     }
 }
 
@@ -243,7 +243,7 @@ Context::OnSocketConnectSuccess(SocketDescriptor &&new_fd)
                            "localhost", 80, false,
                            method, url.uri, headers, request_body,
                            *this,
-                           async_ref);
+                           cancel_ptr);
         break;
 
     case parsed_url::HTTP:
@@ -256,7 +256,7 @@ Context::OnSocketConnectSuccess(SocketDescriptor &&new_fd)
                             HttpHeaders(std::move(headers)),
                             request_body, false,
                             *this,
-                            async_ref);
+                            cancel_ptr);
         break;
 
     case parsed_url::HTTPS: {
@@ -287,7 +287,7 @@ Context::OnSocketConnectSuccess(SocketDescriptor &&new_fd)
                             HttpHeaders(std::move(headers)),
                             request_body, false,
                             *this,
-                            async_ref);
+                            cancel_ptr);
         break;
     }
     }
@@ -393,7 +393,7 @@ main(int argc, char **argv)
                       SocketAddress::Null(),
                       SocketAddress(ai->ai_addr, ai->ai_addrlen),
                       30,
-                      ctx, ctx.async_ref);
+                      ctx, ctx.cancel_ptr);
     freeaddrinfo(ai);
 
     /* run test */

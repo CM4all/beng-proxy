@@ -5,7 +5,6 @@
 #include "translate_quark.hxx"
 #include "translate_request.hxx"
 #include "translate_response.hxx"
-#include "async.hxx"
 #include "transformation.hxx"
 #include "widget_view.hxx"
 #include "beng-proxy/translation.h"
@@ -18,6 +17,7 @@
 #include "event/Loop.hxx"
 #include "pool.hxx"
 #include "RootPool.hxx"
+#include "util/Cancellable.hxx"
 
 #include <string.h>
 
@@ -267,47 +267,47 @@ static const TranslateHandler my_translate_handler = {
 static void
 test_basic(struct pool *pool, struct tcache *cache)
 {
-    struct async_operation_ref async_ref;
+    CancellablePointer cancel_ptr;
 
     const auto request1 = MakeRequest("/");
     const auto response1 = MakeResponse().File("/var/www/index.html");
     next_response = expected_response = &response1;
     translate_cache(*pool, *cache, request1,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 
     next_response = nullptr;
     translate_cache(*pool, *cache, request1,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 
     const auto request2 = MakeRequest("/foo/bar.html");
     const auto response2 = MakeResponse().Base("/foo/").File("/srv/foo/bar.html");
     next_response = expected_response = &response2;
     translate_cache(*pool, *cache, request2,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 
     const auto request3 = MakeRequest("/foo/index.html");
     const auto response3 = MakeResponse().Base("/foo/").File("/srv/foo/index.html");
     next_response = nullptr;
     expected_response = &response3;
     translate_cache(*pool, *cache, request3,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 
     const auto request4 = MakeRequest("/foo/");
     const auto response4 = MakeResponse().Base("/foo/").File("/srv/foo/");
     expected_response = &response4;
     translate_cache(*pool, *cache, request4,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 
     const auto request5 = MakeRequest("/foo");
     expected_response = nullptr;
     translate_cache(*pool, *cache, request5,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 
     const auto request10 = MakeRequest("/foo//bar");
     const auto response10 = MakeResponse().Base("/foo/").File("/srv/foo//bar");
     expected_response = &response10;
     translate_cache(*pool, *cache, request10,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 
     const auto request6 = MakeRequest("/cgi1/foo");
     const auto response6 = MakeResponse().Base("/cgi1/")
@@ -315,7 +315,7 @@ test_basic(struct pool *pool, struct tcache *cache)
 
     next_response = expected_response = &response6;
     translate_cache(*pool, *cache, request6,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 
     const auto request7 = MakeRequest("/cgi1/a/b/c");
     const auto response7 = MakeResponse().Base("/cgi1/")
@@ -324,7 +324,7 @@ test_basic(struct pool *pool, struct tcache *cache)
     next_response = nullptr;
     expected_response = &response7;
     translate_cache(*pool, *cache, request7,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 
     const auto request8 = MakeRequest("/cgi2/foo");
     const auto response8 = MakeResponse().Base("/cgi2/")
@@ -332,7 +332,7 @@ test_basic(struct pool *pool, struct tcache *cache)
 
     next_response = expected_response = &response8;
     translate_cache(*pool, *cache, request8,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 
     const auto request9 = MakeRequest("/cgi2/a/b/c");
     const auto response9 = MakeResponse().Base("/cgi2/")
@@ -341,7 +341,7 @@ test_basic(struct pool *pool, struct tcache *cache)
     next_response = nullptr;
     expected_response = &response9;
     translate_cache(*pool, *cache, request9,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 }
 
 /**
@@ -351,26 +351,26 @@ test_basic(struct pool *pool, struct tcache *cache)
 static void
 test_base_root(struct pool *pool, struct tcache *cache)
 {
-    struct async_operation_ref async_ref;
+    CancellablePointer cancel_ptr;
 
     const auto request1 = MakeRequest("/base_root/");
     const auto response1 = MakeResponse().Base("/base_root/").File("/var/www/");
     next_response = expected_response = &response1;
     translate_cache(*pool, *cache, request1,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 
     const auto request2 = MakeRequest("/base_root/hansi");
     const auto response2 = MakeResponse().Base("/base_root/").File("/var/www/hansi");
     next_response = nullptr;
     expected_response = &response2;
     translate_cache(*pool, *cache, request2,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 }
 
 static void
 test_base_mismatch(struct pool *pool, struct tcache *cache)
 {
-    struct async_operation_ref async_ref;
+    CancellablePointer cancel_ptr;
 
     const auto request1 = MakeRequest("/base_mismatch/hansi");
     const auto response1 = MakeResponse().Base("/different_base/").File("/var/www/");
@@ -378,7 +378,7 @@ test_base_mismatch(struct pool *pool, struct tcache *cache)
     next_response = &response1;
     expected_response = nullptr;
     translate_cache(*pool, *cache, request1,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 }
 
 /**
@@ -387,7 +387,7 @@ test_base_mismatch(struct pool *pool, struct tcache *cache)
 static void
 test_base_uri(struct pool *pool, struct tcache *cache)
 {
-    struct async_operation_ref async_ref;
+    CancellablePointer cancel_ptr;
 
     const auto request1 = MakeRequest("/base_uri/foo");
     const auto response1 = MakeResponse().Base("/base_uri/")
@@ -396,7 +396,7 @@ test_base_uri(struct pool *pool, struct tcache *cache)
 
     next_response = expected_response = &response1;
     translate_cache(*pool, *cache, request1,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 
     const auto request2 = MakeRequest("/base_uri/hansi");
     const auto response2 = MakeResponse().Base("/base_uri/")
@@ -406,7 +406,7 @@ test_base_uri(struct pool *pool, struct tcache *cache)
     next_response = nullptr;
     expected_response = &response2;
     translate_cache(*pool, *cache, request2,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 }
 
 /**
@@ -415,7 +415,7 @@ test_base_uri(struct pool *pool, struct tcache *cache)
 static void
 test_base_test_path(struct pool *pool, struct tcache *cache)
 {
-    struct async_operation_ref async_ref;
+    CancellablePointer cancel_ptr;
 
     const auto request1 = MakeRequest("/base_test_path/foo");
     const auto response1 = MakeResponse().Base("/base_test_path/")
@@ -424,7 +424,7 @@ test_base_test_path(struct pool *pool, struct tcache *cache)
 
     next_response = expected_response = &response1;
     translate_cache(*pool, *cache, request1,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 
     const auto request2 = MakeRequest("/base_test_path/hansi");
     const auto response2 = MakeResponse().Base("/base_test_path/")
@@ -434,7 +434,7 @@ test_base_test_path(struct pool *pool, struct tcache *cache)
     next_response = nullptr;
     expected_response = &response2;
     translate_cache(*pool, *cache, request2,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 }
 
 static void
@@ -445,23 +445,23 @@ test_easy_base(struct pool *pool, struct tcache *cache)
     const auto response1 = MakeResponse().EasyBase("/easy/").File("/var/www/");
     const auto response1b = MakeResponse().EasyBase("/easy/").File("/var/www/bar.html");
 
-    struct async_operation_ref async_ref;
+    CancellablePointer cancel_ptr;
 
     next_response = &response1;
     expected_response = &response1b;
     translate_cache(*pool, *cache, request1,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 
     next_response = nullptr;
     translate_cache(*pool, *cache, request1,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 
     const auto request2 = MakeRequest("/easy/index.html");
     const auto response2 = MakeResponse().EasyBase("/easy/")
         .File("/var/www/index.html");
     expected_response = &response2;
     translate_cache(*pool, *cache, request2,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 }
 
 /**
@@ -470,7 +470,7 @@ test_easy_base(struct pool *pool, struct tcache *cache)
 static void
 test_easy_base_uri(struct pool *pool, struct tcache *cache)
 {
-    struct async_operation_ref async_ref;
+    CancellablePointer cancel_ptr;
 
     const auto request1 = MakeRequest("/easy_base_uri/foo");
     const auto response1 = MakeResponse().EasyBase("/easy_base_uri/")
@@ -483,7 +483,7 @@ test_easy_base_uri(struct pool *pool, struct tcache *cache)
     next_response = &response1;
     expected_response = &response1b;
     translate_cache(*pool, *cache, request1,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 
     const auto request2 = MakeRequest("/easy_base_uri/hansi");
     const auto response2 = MakeResponse().EasyBase("/easy_base_uri/")
@@ -493,7 +493,7 @@ test_easy_base_uri(struct pool *pool, struct tcache *cache)
     next_response = nullptr;
     expected_response = &response2;
     translate_cache(*pool, *cache, request2,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 }
 
 /**
@@ -502,7 +502,7 @@ test_easy_base_uri(struct pool *pool, struct tcache *cache)
 static void
 test_easy_base_test_path(struct pool *pool, struct tcache *cache)
 {
-    struct async_operation_ref async_ref;
+    CancellablePointer cancel_ptr;
 
     const auto request1 = MakeRequest("/easy_base_test_path/foo");
     const auto response1 = MakeResponse().EasyBase("/easy_base_test_path/")
@@ -515,7 +515,7 @@ test_easy_base_test_path(struct pool *pool, struct tcache *cache)
     next_response = &response1;
     expected_response = &response1b;
     translate_cache(*pool, *cache, request1,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 
     const auto request2 = MakeRequest("/easy_base_test_path/hansi");
     const auto response2 = MakeResponse().EasyBase("/easy_base_test_path/")
@@ -525,7 +525,7 @@ test_easy_base_test_path(struct pool *pool, struct tcache *cache)
     next_response = nullptr;
     expected_response = &response2;
     translate_cache(*pool, *cache, request2,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 }
 
 static void
@@ -542,59 +542,59 @@ test_vary_invalidate(struct pool *pool, struct tcache *cache)
     const auto response5c = MakeResponse().File("/srv/qs3")
         .Vary(response5_vary).Invalidate(response5_invalidate);
 
-    struct async_operation_ref async_ref;
+    CancellablePointer cancel_ptr;
 
     const auto request6 = MakeRequest("/qs").QueryString("abc");
     const auto response5a = MakeResponse().File("/srv/qs1")
         .Vary(response5_vary);
     next_response = expected_response = &response5a;
     translate_cache(*pool, *cache, request6,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 
     const auto request7 = MakeRequest("/qs").QueryString("xyz");
     const auto response5b = MakeResponse().File("/srv/qs2")
         .Vary(response5_vary);
     next_response = expected_response = &response5b;
     translate_cache(*pool, *cache, request7,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 
     next_response = nullptr;
     expected_response = &response5a;
     translate_cache(*pool, *cache, request6,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 
     next_response = nullptr;
     expected_response = &response5b;
     translate_cache(*pool, *cache, request7,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 
     const auto request8 = MakeRequest("/qs/").QueryString("xyz");
     next_response = expected_response = &response5c;
     translate_cache(*pool, *cache, request8,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 
     next_response = nullptr;
     expected_response = &response5a;
     translate_cache(*pool, *cache, request6,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 
     next_response = expected_response = &response5c;
     translate_cache(*pool, *cache, request7,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 
     next_response = expected_response = &response5c;
     translate_cache(*pool, *cache, request8,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 
     expected_response = &response5c;
     translate_cache(*pool, *cache, request7,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 }
 
 static void
 test_invalidate_uri(struct pool *pool, struct tcache *cache)
 {
-    struct async_operation_ref async_ref;
+    CancellablePointer cancel_ptr;
 
     /* feed the cache */
 
@@ -603,20 +603,20 @@ test_invalidate_uri(struct pool *pool, struct tcache *cache)
 
     next_response = expected_response = &response1;
     translate_cache(*pool, *cache, request1,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 
     const auto request2 = MakeRequest("/invalidate/uri").Check("x");
     const auto response2 = MakeResponse().File("/var/www/invalidate/uri");
     next_response = expected_response = &response2;
     translate_cache(*pool, *cache, request2,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 
     const auto request3 = MakeRequest("/invalidate/uri")
         .ErrorDocumentStatus(HTTP_STATUS_INTERNAL_SERVER_ERROR);
     const auto response3 = MakeResponse().File("/var/www/500/invalidate/uri");
     next_response = expected_response = &response3;
     translate_cache(*pool, *cache, request3,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 
     const auto request4 = MakeRequest("/invalidate/uri")
         .ErrorDocumentStatus(HTTP_STATUS_INTERNAL_SERVER_ERROR)
@@ -625,7 +625,7 @@ test_invalidate_uri(struct pool *pool, struct tcache *cache)
 
     next_response = expected_response = &response4;
     translate_cache(*pool, *cache, request4,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 
     const auto request4b = MakeRequest("/invalidate/uri")
         .ErrorDocumentStatus(HTTP_STATUS_INTERNAL_SERVER_ERROR)
@@ -634,7 +634,7 @@ test_invalidate_uri(struct pool *pool, struct tcache *cache)
     const auto response4b = MakeResponse().File("/var/www/500/check/wfu/invalidate/uri");
     next_response = expected_response = &response4b;
     translate_cache(*pool, *cache, request4b,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 
     /* verify the cache items */
 
@@ -642,23 +642,23 @@ test_invalidate_uri(struct pool *pool, struct tcache *cache)
 
     expected_response = &response1;
     translate_cache(*pool, *cache, request1,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 
     expected_response = &response2;
     translate_cache(*pool, *cache, request2,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 
     expected_response = &response3;
     translate_cache(*pool, *cache, request3,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 
     expected_response = &response4;
     translate_cache(*pool, *cache, request4,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 
     expected_response = &response4b;
     translate_cache(*pool, *cache, request4b,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 
     /* invalidate all cache items */
 
@@ -672,28 +672,28 @@ test_invalidate_uri(struct pool *pool, struct tcache *cache)
 
     next_response = expected_response = &response5;
     translate_cache(*pool, *cache, request5,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 
     /* check if all cache items have really been deleted */
 
     next_response = expected_response = nullptr;
 
     translate_cache(*pool, *cache, request1,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
     translate_cache(*pool, *cache, request2,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
     translate_cache(*pool, *cache, request3,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
     translate_cache(*pool, *cache, request4,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
     translate_cache(*pool, *cache, request4b,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 }
 
 static void
 test_regex(struct pool *pool, struct tcache *cache)
 {
-    struct async_operation_ref async_ref;
+    CancellablePointer cancel_ptr;
 
     /* add the "inverse_regex" test to the cache first */
     const auto request_i1 = MakeRequest("/regex/foo");
@@ -701,7 +701,7 @@ test_regex(struct pool *pool, struct tcache *cache)
         .Base("/regex/").InverseRegex("\\.(jpg|html)$");
     next_response = expected_response = &response_i1;
     translate_cache(*pool, *cache, request_i1,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 
     /* fill the cache */
     const auto request1 = MakeRequest("/regex/a/foo.jpg");
@@ -709,7 +709,7 @@ test_regex(struct pool *pool, struct tcache *cache)
         .Base("/regex/").Regex("\\.jpg$");
     next_response = expected_response = &response1;
     translate_cache(*pool, *cache, request1,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 
     /* regex mismatch */
     const auto request2 = MakeRequest("/regex/b/foo.html");
@@ -717,7 +717,7 @@ test_regex(struct pool *pool, struct tcache *cache)
         .Base("/regex/").Regex("\\.html$");
     next_response = expected_response = &response2;
     translate_cache(*pool, *cache, request2,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 
     /* regex match */
     const auto request3 = MakeRequest("/regex/c/bar.jpg");
@@ -726,7 +726,7 @@ test_regex(struct pool *pool, struct tcache *cache)
     next_response = nullptr;
     expected_response = &response3;
     translate_cache(*pool, *cache, request3,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 
     /* second regex match */
     const auto request4 = MakeRequest("/regex/d/bar.html");
@@ -735,7 +735,7 @@ test_regex(struct pool *pool, struct tcache *cache)
     next_response = nullptr;
     expected_response = &response4;
     translate_cache(*pool, *cache, request4,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 
     /* see if the "inverse_regex" cache item is still there */
     const auto request_i2 = MakeRequest("/regex/bar");
@@ -744,7 +744,7 @@ test_regex(struct pool *pool, struct tcache *cache)
     next_response = nullptr;
     expected_response = &response_i2;
     translate_cache(*pool, *cache, request_i2,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 }
 
 static void
@@ -754,31 +754,31 @@ test_regex_error(struct pool *pool, struct tcache *cache)
     const auto response = MakeResponse().File("/error")
         .Base("/regex/").Regex("(");
 
-    struct async_operation_ref async_ref;
+    CancellablePointer cancel_ptr;
 
     /* this must fail */
     next_response = &response;
     expected_response = nullptr;
     translate_cache(*pool, *cache, request,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 }
 
 static void
 test_regex_tail(struct pool *pool, struct tcache *cache)
 {
-    struct async_operation_ref async_ref;
+    CancellablePointer cancel_ptr;
 
     const auto request1 = MakeRequest("/regex_tail/a/foo.jpg");
     const auto response1 = MakeResponse().File("/var/www/regex/images/a/foo.jpg")
         .Base("/regex_tail/").RegexTail("^a/");
     next_response = expected_response = &response1;
     translate_cache(*pool, *cache, request1,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 
     const auto request2 = MakeRequest("/regex_tail/b/foo.html");
     next_response = expected_response = nullptr;
     translate_cache(*pool, *cache, request2,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 
     const auto request3 = MakeRequest("/regex_tail/a/bar.jpg");
     const auto response3 = MakeResponse().File("/var/www/regex/images/a/bar.jpg")
@@ -786,19 +786,19 @@ test_regex_tail(struct pool *pool, struct tcache *cache)
     next_response = nullptr;
     expected_response = &response3;
     translate_cache(*pool, *cache, request3,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 
     const auto request4 = MakeRequest("/regex_tail/%61/escaped.html");
 
     next_response = expected_response = nullptr;
     translate_cache(*pool, *cache, request4,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 }
 
 static void
 test_regex_tail_unescape(struct pool *pool, struct tcache *cache)
 {
-    struct async_operation_ref async_ref;
+    CancellablePointer cancel_ptr;
 
     const auto request1 = MakeRequest("/regex_unescape/a/foo.jpg");
     const auto response1 = MakeResponse().File("/var/www/regex/images/a/foo.jpg")
@@ -806,13 +806,13 @@ test_regex_tail_unescape(struct pool *pool, struct tcache *cache)
 
     next_response = expected_response = &response1;
     translate_cache(*pool, *cache, request1,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 
     const auto request2 = MakeRequest("/regex_unescape/b/foo.html");
 
     next_response = expected_response = nullptr;
     translate_cache(*pool, *cache, request2,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 
     const auto request3 = MakeRequest("/regex_unescape/a/bar.jpg");
     const auto response3 = MakeResponse().File("/var/www/regex/images/a/bar.jpg")
@@ -821,7 +821,7 @@ test_regex_tail_unescape(struct pool *pool, struct tcache *cache)
     next_response = nullptr;
     expected_response = &response3;
     translate_cache(*pool, *cache, request3,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 
     const auto request4 = MakeRequest("/regex_unescape/%61/escaped.html");
     const auto response4 = MakeResponse().File("/var/www/regex/images/a/escaped.html")
@@ -829,13 +829,13 @@ test_regex_tail_unescape(struct pool *pool, struct tcache *cache)
     next_response = nullptr;
     expected_response = &response4;
     translate_cache(*pool, *cache, request4,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 }
 
 static void
 test_expand(struct pool *pool, struct tcache *cache)
 {
-    struct async_operation_ref async_ref;
+    CancellablePointer cancel_ptr;
 
     /* add to cache */
 
@@ -852,7 +852,7 @@ test_expand(struct pool *pool, struct tcache *cache)
     next_response = &response1n;
     expected_response = &response1e;
     translate_cache(*pool, *cache, request1,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 
     /* check match */
 
@@ -865,13 +865,13 @@ test_expand(struct pool *pool, struct tcache *cache)
     next_response = nullptr;
     expected_response = &response2;
     translate_cache(*pool, *cache, request2,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 }
 
 static void
 test_expand_local(struct pool *pool, struct tcache *cache)
 {
-    struct async_operation_ref async_ref;
+    CancellablePointer cancel_ptr;
 
     /* add to cache */
 
@@ -889,7 +889,7 @@ test_expand_local(struct pool *pool, struct tcache *cache)
     next_response = &response1n;
     expected_response = &response1e;
     translate_cache(*pool, *cache, request1,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 
     /* check match */
 
@@ -902,13 +902,13 @@ test_expand_local(struct pool *pool, struct tcache *cache)
     next_response = nullptr;
     expected_response = &response2;
     translate_cache(*pool, *cache, request2,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 }
 
 static void
 test_expand_local_filter(struct pool *pool, struct tcache *cache)
 {
-    struct async_operation_ref async_ref;
+    CancellablePointer cancel_ptr;
 
     /* add to cache */
 
@@ -930,7 +930,7 @@ test_expand_local_filter(struct pool *pool, struct tcache *cache)
     next_response = &response1n;
     expected_response = &response1e;
     translate_cache(*pool, *cache, request1,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 
     /* check match */
 
@@ -945,13 +945,13 @@ test_expand_local_filter(struct pool *pool, struct tcache *cache)
     next_response = nullptr;
     expected_response = &response2;
     translate_cache(*pool, *cache, request2,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 }
 
 static void
 test_expand_uri(struct pool *pool, struct tcache *cache)
 {
-    struct async_operation_ref async_ref;
+    CancellablePointer cancel_ptr;
 
     /* add to cache */
 
@@ -968,7 +968,7 @@ test_expand_uri(struct pool *pool, struct tcache *cache)
     next_response = &response1n;
     expected_response = &response1e;
     translate_cache(*pool, *cache, request1,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 
     /* check match */
 
@@ -981,13 +981,13 @@ test_expand_uri(struct pool *pool, struct tcache *cache)
     next_response = nullptr;
     expected_response = &response2;
     translate_cache(*pool, *cache, request2,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 }
 
 static void
 test_auto_base(struct pool *pool, struct tcache *cache)
 {
-    struct async_operation_ref async_ref;
+    CancellablePointer cancel_ptr;
 
     /* store response */
 
@@ -998,7 +998,7 @@ test_auto_base(struct pool *pool, struct tcache *cache)
 
     next_response = expected_response = &response1;
     translate_cache(*pool, *cache, request1,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 
     /* check if BASE was auto-detected */
 
@@ -1010,7 +1010,7 @@ test_auto_base(struct pool *pool, struct tcache *cache)
     next_response = nullptr;
     expected_response = &response2;
     translate_cache(*pool, *cache, request2,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 }
 
 /**
@@ -1019,7 +1019,7 @@ test_auto_base(struct pool *pool, struct tcache *cache)
 static void
 test_base_check(struct pool *pool, struct tcache *cache)
 {
-    struct async_operation_ref async_ref;
+    CancellablePointer cancel_ptr;
 
     /* feed the cache */
 
@@ -1028,7 +1028,7 @@ test_base_check(struct pool *pool, struct tcache *cache)
 
     next_response = expected_response = &response1;
     translate_cache(*pool, *cache, request1,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 
     const auto request2 = MakeRequest("/a/b/c.html").Check("x");
     const auto response2 = MakeResponse().Base("/a/b/")
@@ -1036,7 +1036,7 @@ test_base_check(struct pool *pool, struct tcache *cache)
 
     next_response = expected_response = &response2;
     translate_cache(*pool, *cache, request2,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 
     const auto request3 = MakeRequest("/a/d/e.html").Check("x");
     const auto response3 = MakeResponse().Base("/a/d/")
@@ -1044,7 +1044,7 @@ test_base_check(struct pool *pool, struct tcache *cache)
 
     next_response = expected_response = &response3;
     translate_cache(*pool, *cache, request3,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 
     /* now check whether the translate cache matches the BASE
        correctly */
@@ -1056,12 +1056,12 @@ test_base_check(struct pool *pool, struct tcache *cache)
 
     expected_response = &response4;
     translate_cache(*pool, *cache, request4,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 
     const auto request5 = MakeRequest("/a/b/0/1.html");
 
     translate_cache(*pool, *cache, request5,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 
     const auto request6 = MakeRequest("/a/b/0/1.html").Check("x");
     const auto response6 = MakeResponse().Base("/a/b/")
@@ -1069,7 +1069,7 @@ test_base_check(struct pool *pool, struct tcache *cache)
 
     expected_response = &response6;
     translate_cache(*pool, *cache, request6,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 
     const auto request7 = MakeRequest("/a/d/2/3.html").Check("x");
     const auto response7 = MakeResponse().Base("/a/d/")
@@ -1077,7 +1077,7 @@ test_base_check(struct pool *pool, struct tcache *cache)
 
     expected_response = &response7;
     translate_cache(*pool, *cache, request7,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 
     /* expect cache misses */
 
@@ -1085,7 +1085,7 @@ test_base_check(struct pool *pool, struct tcache *cache)
 
     const auto miss1 = MakeRequest("/a/f/g.html").Check("y");
     translate_cache(*pool, *cache, miss1,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 }
 
 /**
@@ -1094,7 +1094,7 @@ test_base_check(struct pool *pool, struct tcache *cache)
 static void
 test_base_wfu(struct pool *pool, struct tcache *cache)
 {
-    struct async_operation_ref async_ref;
+    CancellablePointer cancel_ptr;
 
     /* feed the cache */
 
@@ -1103,7 +1103,7 @@ test_base_wfu(struct pool *pool, struct tcache *cache)
 
     next_response = expected_response = &response1;
     translate_cache(*pool, *cache, request1,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 
     const auto request2 = MakeRequest("/wfu/a/b/c.html").WantFullUri("x");
     const auto response2 = MakeResponse().Base("/wfu/a/b/")
@@ -1111,7 +1111,7 @@ test_base_wfu(struct pool *pool, struct tcache *cache)
 
     next_response = expected_response = &response2;
     translate_cache(*pool, *cache, request2,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 
     const auto request3 = MakeRequest("/wfu/a/d/e.html").WantFullUri("x");
     const auto response3 = MakeResponse().Base("/wfu/a/d/")
@@ -1119,7 +1119,7 @@ test_base_wfu(struct pool *pool, struct tcache *cache)
 
     next_response = expected_response = &response3;
     translate_cache(*pool, *cache, request3,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 
     /* now check whether the translate cache matches the BASE
        correctly */
@@ -1131,12 +1131,12 @@ test_base_wfu(struct pool *pool, struct tcache *cache)
 
     expected_response = &response4;
     translate_cache(*pool, *cache, request4,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 
     const auto request5 = MakeRequest("/wfu/a/b/0/1.html");
 
     translate_cache(*pool, *cache, request5,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 
     const auto request6 = MakeRequest("/wfu/a/b/0/1.html").WantFullUri("x");
     const auto response6 = MakeResponse().Base("/wfu/a/b/")
@@ -1144,7 +1144,7 @@ test_base_wfu(struct pool *pool, struct tcache *cache)
 
     expected_response = &response6;
     translate_cache(*pool, *cache, request6,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 
     const auto request7 = MakeRequest("/wfu/a/d/2/3.html").WantFullUri("x");
     const auto response7 = MakeResponse().Base("/wfu/a/d/")
@@ -1152,14 +1152,14 @@ test_base_wfu(struct pool *pool, struct tcache *cache)
 
     expected_response = &response7;
     translate_cache(*pool, *cache, request7,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 
     /* expect cache misses */
 
     const auto miss1 = MakeRequest("/wfu/a/f/g.html").WantFullUri("y");
     expected_response = nullptr;
     translate_cache(*pool, *cache, miss1,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 }
 
 /**
@@ -1168,7 +1168,7 @@ test_base_wfu(struct pool *pool, struct tcache *cache)
 static void
 test_unsafe_base(struct pool *pool, struct tcache *cache)
 {
-    struct async_operation_ref async_ref;
+    CancellablePointer cancel_ptr;
 
     /* feed */
     const auto request1 = MakeRequest("/unsafe_base1/foo");
@@ -1177,7 +1177,7 @@ test_unsafe_base(struct pool *pool, struct tcache *cache)
 
     next_response = expected_response = &response1;
     translate_cache(*pool, *cache, request1,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 
     const auto request2 = MakeRequest("/unsafe_base2/foo");
     const auto response2 = MakeResponse().UnsafeBase("/unsafe_base2/")
@@ -1185,7 +1185,7 @@ test_unsafe_base(struct pool *pool, struct tcache *cache)
 
     next_response = expected_response = &response2;
     translate_cache(*pool, *cache, request2,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 
     /* fail (no UNSAFE_BASE) */
 
@@ -1193,7 +1193,7 @@ test_unsafe_base(struct pool *pool, struct tcache *cache)
 
     next_response = expected_response = nullptr;
     translate_cache(*pool, *cache, request3,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 
     /* success (with UNSAFE_BASE) */
 
@@ -1204,7 +1204,7 @@ test_unsafe_base(struct pool *pool, struct tcache *cache)
     next_response = nullptr;
     expected_response = &response4;
     translate_cache(*pool, *cache, request4,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 }
 
 /**
@@ -1213,7 +1213,7 @@ test_unsafe_base(struct pool *pool, struct tcache *cache)
 static void
 test_expand_unsafe_base(struct pool *pool, struct tcache *cache)
 {
-    struct async_operation_ref async_ref;
+    CancellablePointer cancel_ptr;
 
     /* feed */
 
@@ -1224,7 +1224,7 @@ test_expand_unsafe_base(struct pool *pool, struct tcache *cache)
 
     next_response = expected_response = &response1;
     translate_cache(*pool, *cache, request1,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 
     const auto request2 = MakeRequest("/expand_unsafe_base2/foo");
     const auto response2 = MakeResponse().UnsafeBase("/expand_unsafe_base2/")
@@ -1233,7 +1233,7 @@ test_expand_unsafe_base(struct pool *pool, struct tcache *cache)
 
     next_response = expected_response = &response2;
     translate_cache(*pool, *cache, request2,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 
     /* fail (no UNSAFE_BASE) */
 
@@ -1241,7 +1241,7 @@ test_expand_unsafe_base(struct pool *pool, struct tcache *cache)
 
     next_response = expected_response = nullptr;
     translate_cache(*pool, *cache, request3,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 
     /* success (with UNSAFE_BASE) */
 
@@ -1253,13 +1253,13 @@ test_expand_unsafe_base(struct pool *pool, struct tcache *cache)
     next_response = nullptr;
     expected_response = &response4;
     translate_cache(*pool, *cache, request4,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 }
 
 static void
 test_expand_bind_mount(struct pool *pool, struct tcache *cache)
 {
-    struct async_operation_ref async_ref;
+    CancellablePointer cancel_ptr;
 
     /* add to cache */
 
@@ -1280,7 +1280,7 @@ test_expand_bind_mount(struct pool *pool, struct tcache *cache)
     next_response = &response1n;
     expected_response = &response1e;
     translate_cache(*pool, *cache, request1,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 
     const auto request2 = MakeRequest("/expand_bind_mount/bar");
     const auto response2e = MakeResponse().Base("/expand_bind_mount/")
@@ -1292,7 +1292,7 @@ test_expand_bind_mount(struct pool *pool, struct tcache *cache)
     next_response = nullptr;
     expected_response = &response2e;
     translate_cache(*pool, *cache, request2,
-                    my_translate_handler, nullptr, async_ref);
+                    my_translate_handler, nullptr, cancel_ptr);
 }
 
 int

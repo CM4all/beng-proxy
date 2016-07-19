@@ -4,7 +4,6 @@
 #include "lease.hxx"
 #include "http_response.hxx"
 #include "direct.hxx"
-#include "async.hxx"
 #include "strmap.hxx"
 #include "istream/istream.hxx"
 #include "istream/Pointer.hxx"
@@ -17,6 +16,7 @@
 #include "spawn/Local.hxx"
 #include "event/Event.hxx"
 #include "util/ConstBuffer.hxx"
+#include "util/Cancellable.hxx"
 
 #include <daemon/log.h>
 
@@ -35,7 +35,7 @@ struct Context final : WasLease, IstreamHandler, HttpResponseHandler {
     IstreamPointer body;
     bool error;
 
-    struct async_operation_ref async_ref;
+    CancellablePointer cancel_ptr;
 
     Context():body(nullptr) {}
 
@@ -187,7 +187,7 @@ int main(int argc, char **argv) {
                        nullptr, nullptr,
                        *strmap_new(pool), request_body(event_loop, pool),
                        { (const char *const*)parameters, num_parameters },
-                       context, context.async_ref);
+                       context, context.cancel_ptr);
 
     event_loop.Dispatch();
 

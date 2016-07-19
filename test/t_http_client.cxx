@@ -36,14 +36,14 @@ struct Connection {
                  Istream *body,
                  bool expect_100,
                  HttpResponseHandler &handler,
-                 struct async_operation_ref &async_ref) {
+                 CancellablePointer &cancel_ptr) {
         http_client_request(*pool, event_loop, fd, FdType::FD_SOCKET,
                             lease,
                             "localhost",
                             nullptr, nullptr,
                             method, uri, HttpHeaders(std::move(headers)),
                             body, expect_100,
-                            handler, async_ref);
+                            handler, cancel_ptr);
     }
 
     static Connection *NewMirror(struct pool &, EventLoop &event_loop) {
@@ -196,7 +196,7 @@ test_no_keepalive(Context<Connection> &c)
 #ifdef HAVE_EXPECT_100
                           false,
 #endif
-                          c, c.async_ref);
+                          c, c.cancel_ptr);
     pool_unref(c.pool);
     pool_commit();
 

@@ -170,12 +170,12 @@ struct Connection {
                  StringMap &&headers,
                  Istream *body,
                  HttpResponseHandler &handler,
-                 struct async_operation_ref &async_ref) {
+                 CancellablePointer &cancel_ptr) {
         ajp_client_request(*pool, event_loop, fd, FdType::FD_SOCKET,
                            lease,
                            "http", "192.168.1.100", "remote", "server", 80, false,
                            method, uri, headers, body,
-                           handler, async_ref);
+                           handler, cancel_ptr);
     }
 
     static Connection *NewMirror(struct pool &, EventLoop &event_loop) {

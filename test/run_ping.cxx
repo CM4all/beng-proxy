@@ -1,11 +1,11 @@
 #include "ping.hxx"
 #include "pool.hxx"
 #include "RootPool.hxx"
-#include "async.hxx"
 #include "net/AllocatedSocketAddress.hxx"
 #include "net/Parser.hxx"
 #include "event/Loop.hxx"
 #include "util/Error.hxx"
+#include "util/Cancellable.hxx"
 
 #include <glib.h>
 
@@ -13,7 +13,7 @@
 #include <stdlib.h>
 
 static bool success;
-static struct async_operation_ref my_async_ref;
+static CancellablePointer my_cancel_ptr;
 
 class MyPingClientHandler final : public PingClientHandler {
 public:
@@ -54,7 +54,7 @@ int main(int argc, char **argv)
     MyPingClientHandler handler;
     ping(event_loop, *pool, address,
          handler,
-         my_async_ref);
+         my_cancel_ptr);
 
     event_loop.Dispatch();
 

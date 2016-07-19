@@ -9,7 +9,6 @@
 #include "tio.hxx"
 #include "fcgi/Client.hxx"
 #include "http_response.hxx"
-#include "async.hxx"
 #include "system/SetupProcess.hxx"
 #include "system/fd-util.h"
 #include "system/fd_util.h"
@@ -238,7 +237,7 @@ struct Connection {
                  http_method_t method, const char *uri,
                  StringMap &&headers, Istream *body,
                  HttpResponseHandler &handler,
-                 struct async_operation_ref &async_ref) {
+                 CancellablePointer &cancel_ptr) {
         fcgi_client_request(pool, event_loop, fd, FdType::FD_SOCKET,
                             lease,
                             method, uri, uri, nullptr, nullptr, nullptr,
@@ -246,7 +245,7 @@ struct Connection {
                             headers, body,
                             nullptr,
                             -1,
-                            handler, async_ref);
+                            handler, cancel_ptr);
     }
 
     static Connection *NewMirror(struct pool &, EventLoop &event_loop) {

@@ -7,7 +7,6 @@
 #include "memcached/memcached_stock.hxx"
 #include "http_cache_choice.hxx"
 #include "lease.hxx"
-#include "async.hxx"
 #include "strmap.hxx"
 #include "pool.hxx"
 #include "RootPool.hxx"
@@ -15,6 +14,7 @@
 #include "fb_pool.hxx"
 #include "event/Loop.hxx"
 #include "system/SetupProcess.hxx"
+#include "util/Cancellable.hxx"
 
 #include <socket/resolver.h>
 #include <socket/util.h>
@@ -80,10 +80,10 @@ int main(int argc, char **argv) {
 
     /* send memcached request */
 
-    struct async_operation_ref async_ref;
+    CancellablePointer cancel_ptr;
     http_cache_choice_cleanup(*pool, *stock, argv[2],
                               cleanup_callback, nullptr,
-                              async_ref);
+                              cancel_ptr);
 
     pool_unref(pool);
     pool_commit();

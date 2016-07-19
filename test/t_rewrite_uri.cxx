@@ -8,7 +8,6 @@
 #include "widget_resolver.hxx"
 #include "uri/uri_parser.hxx"
 #include "RootPool.hxx"
-#include "async.hxx"
 #include "escape_pool.hxx"
 #include "escape_html.hxx"
 #include "istream/istream.hxx"
@@ -17,6 +16,7 @@
 #include "penv.hxx"
 #include "inline_widget.hxx"
 #include "event/Loop.hxx"
+#include "util/Cancellable.hxx"
 
 #include <glib.h>
 
@@ -137,12 +137,12 @@ static void
 assert_istream_equals(struct pool *pool, Istream *istream, const char *value)
 {
     struct sink_gstring_ctx ctx;
-    struct async_operation_ref async_ref;
+    CancellablePointer cancel_ptr;
 
     assert(istream != NULL);
     assert(value != NULL);
 
-    sink_gstring_new(*pool, *istream, sink_gstring_callback, &ctx, async_ref);
+    sink_gstring_new(*pool, *istream, sink_gstring_callback, &ctx, cancel_ptr);
 
     while (!ctx.finished)
         istream->Read();

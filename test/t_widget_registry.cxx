@@ -1,5 +1,4 @@
 #include "widget_registry.hxx"
-#include "async.hxx"
 #include "http_address.hxx"
 #include "tcache.hxx"
 #include "tstock.hxx"
@@ -12,6 +11,7 @@
 #include "pool.hxx"
 #include "RootPool.hxx"
 #include "event/Loop.hxx"
+#include "util/Cancellable.hxx"
 
 #include <string.h>
 
@@ -78,7 +78,7 @@ test_normal(struct pool *pool, EventLoop &event_loop)
 {
     TranslateStock translate_stock;
     Context data;
-    struct async_operation_ref async_ref;
+    CancellablePointer cancel_ptr;
 
     pool = pool_new_linear(pool, "test", 8192);
 
@@ -87,7 +87,7 @@ test_normal(struct pool *pool, EventLoop &event_loop)
 
     widget_class_lookup(*pool, *pool, *tcache, "sync",
                         BIND_METHOD(data, &Context::RegistryCallback),
-                        async_ref);
+                        cancel_ptr);
     assert(!translate_stock.aborted);
     assert(data.got_class);
     assert(data.cls != NULL);
@@ -111,7 +111,7 @@ test_abort(struct pool *pool, EventLoop &event_loop)
 {
     TranslateStock translate_stock;
     Context data;
-    struct async_operation_ref async_ref;
+    CancellablePointer cancel_ptr;
 
     pool = pool_new_linear(pool, "test", 8192);
 
@@ -120,11 +120,11 @@ test_abort(struct pool *pool, EventLoop &event_loop)
 
     widget_class_lookup(*pool, *pool, *tcache,  "block",
                         BIND_METHOD(data, &Context::RegistryCallback),
-                        async_ref);
+                        cancel_ptr);
     assert(!data.got_class);
     assert(!translate_stock.aborted);
 
-    async_ref.Abort();
+    cancel_ptr.Cancel();
 
     /* need to unref the pool after aborted(), because our fake
        tstock_translate() implementation does not reference the

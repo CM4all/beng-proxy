@@ -7,8 +7,8 @@
 #include "istream/sink_close.hxx"
 #include "istream/sink_gstring.hxx"
 #include "istream/Bucket.hxx"
-#include "async.hxx"
 #include "event/Event.hxx"
+#include "util/Cancellable.hxx"
 
 #include <glib.h>
 
@@ -79,7 +79,7 @@ static void
 test_block1(EventLoop &event_loop)
 {
     BlockContext ctx;
-    struct async_operation_ref async_ref;
+    CancellablePointer cancel_ptr;
 
     auto pool = pool_new_libc(nullptr, "test");
 
@@ -89,7 +89,7 @@ test_block1(EventLoop &event_loop)
 
     tee->SetHandler(ctx);
 
-    sink_gstring_new(*pool, *second, buffer_callback, (Context *)&ctx, async_ref);
+    sink_gstring_new(*pool, *second, buffer_callback, (Context *)&ctx, cancel_ptr);
     assert(ctx.value == nullptr);
 
     pool_unref(pool);
@@ -124,7 +124,7 @@ static void
 test_close_data(EventLoop &event_loop, struct pool *pool)
 {
     Context ctx;
-    struct async_operation_ref async_ref;
+    CancellablePointer cancel_ptr;
 
     pool = pool_new_libc(nullptr, "test");
     Istream *tee =
@@ -134,7 +134,7 @@ test_close_data(EventLoop &event_loop, struct pool *pool)
     sink_close_new(*pool, *tee);
     Istream *second = &istream_tee_second(*tee);
 
-    sink_gstring_new(*pool, *second, buffer_callback, &ctx, async_ref);
+    sink_gstring_new(*pool, *second, buffer_callback, &ctx, cancel_ptr);
     assert(ctx.value == nullptr);
 
     pool_unref(pool);
@@ -160,12 +160,12 @@ static void
 test_close_skipped(EventLoop &event_loop, struct pool *pool)
 {
     Context ctx;
-    struct async_operation_ref async_ref;
+    CancellablePointer cancel_ptr;
 
     pool = pool_new_libc(nullptr, "test");
     Istream *input = istream_string_new(pool, "foo");
     Istream *tee = istream_tee_new(*pool, *input, event_loop, false, false);
-    sink_gstring_new(*pool, *tee, buffer_callback, &ctx, async_ref);
+    sink_gstring_new(*pool, *tee, buffer_callback, &ctx, cancel_ptr);
 
     Istream *second = &istream_tee_second(*tee);
     sink_close_new(*pool, *second);

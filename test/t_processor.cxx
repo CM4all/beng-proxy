@@ -8,11 +8,11 @@
 #include "widget_class.hxx"
 #include "widget_lookup.hxx"
 #include "rewrite_uri.hxx"
-#include "async.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream_block.hxx"
 #include "istream/istream_string.hxx"
 #include "event/Loop.hxx"
+#include "util/Cancellable.hxx"
 
 #include <glib.h>
 
@@ -128,15 +128,15 @@ test_proxy_abort(struct pool *pool)
                              "bp_session", session_id, "foo",
                              HTTP_METHOD_GET, nullptr);
 
-    struct async_operation_ref async_ref;
+    CancellablePointer cancel_ptr;
     MyWidgetLookupHandler handler;
     processor_lookup_widget(*pool, *istream_block_new(*pool),
                             widget, "foo", env, PROCESSOR_CONTAINER,
-                            handler, async_ref);
+                            handler, cancel_ptr);
 
     pool_unref(pool);
 
-    async_ref.Abort();
+    cancel_ptr.Cancel();
 
     pool_commit();
 }

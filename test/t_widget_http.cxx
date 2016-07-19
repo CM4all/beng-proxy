@@ -14,7 +14,6 @@
 #include "css_processor.hxx"
 #include "text_processor.hxx"
 #include "penv.hxx"
-#include "async.hxx"
 #include "transformation.hxx"
 #include "crash.hxx"
 #include "istream/istream.hxx"
@@ -25,6 +24,7 @@
 #include "suffix_registry.hxx"
 #include "address_suffix_registry.hxx"
 #include "event/Loop.hxx"
+#include "util/Cancellable.hxx"
 
 #include <inline/compiler.h>
 
@@ -244,7 +244,7 @@ test_cookie_client(struct pool *pool)
     cls.views.address = address;
     cls.stateful = true;
 
-    struct async_operation_ref async_ref;
+    CancellablePointer cancel_ptr;
 
     auto *session = session_new();
 
@@ -266,7 +266,7 @@ test_cookie_client(struct pool *pool)
 
         Context context;
         widget_http_request(*pool, widget, env,
-                            context, async_ref);
+                            context, cancel_ptr);
 
         assert(got_request);
         assert(got_response);

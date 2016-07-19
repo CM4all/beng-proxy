@@ -1,6 +1,5 @@
 #include "memcached/memcached_client.hxx"
 #include "http_response.hxx"
-#include "async.hxx"
 #include "system/SetupProcess.hxx"
 #include "system/fd-util.h"
 #include "system/fd_util.h"
@@ -15,6 +14,7 @@
 #include "RootPool.hxx"
 #include "event/Loop.hxx"
 #include "util/Cast.hxx"
+#include "util/Cancellable.hxx"
 
 #include <glib.h>
 
@@ -76,7 +76,7 @@ struct Context final : Lease, IstreamHandler {
     bool close_value_early = false;
     bool close_value_late = false;
     bool close_value_data = false;
-    struct async_operation_ref async_ref;
+    CancellablePointer cancel_ptr;
     int fd = -1;
     bool released = false, reuse = false, got_response = false;
     enum memcached_response_status status;
@@ -109,7 +109,7 @@ struct Context final : Lease, IstreamHandler {
 static char request_value[8192];
 
 struct RequestValueIstream final : public Istream {
-    struct async_operation_ref async_ref;
+    CancellablePointer cancel_ptr;
 
     bool read_close, read_abort;
 
@@ -132,7 +132,7 @@ RequestValueIstream::_Read()
         GError *error = g_error_new_literal(test_quark(), 0, "read_close");
         DestroyError(error);
     } else if (read_abort)
-        async_ref.Abort();
+        cancel_ptr.Cancel();
     else if (sent >= sizeof(request_value))
         DestroyEof();
     else {
@@ -159,7 +159,7 @@ request_value_cancel_ptr(Istream &istream)
 {
     auto &v = (RequestValueIstream &)istream;
 
-    return v.async_ref;
+    return v.cancel_ptr;
 }
 
 /*
@@ -270,7 +270,7 @@ test_basic(struct pool *pool, Context *c)
                             "foo", 3,
                             NULL,
                             &my_mcd_handler, c,
-                            c->async_ref);
+                            c->cancel_ptr);
     pool_unref(pool);
     pool_commit();
 
@@ -298,7 +298,7 @@ test_close_early(struct pool *pool, Context *c)
                             "foo", 3,
                             NULL,
                             &my_mcd_handler, c,
-                            c->async_ref);
+                            c->cancel_ptr);
     pool_unref(pool);
     pool_commit();
 
@@ -327,7 +327,7 @@ test_close_late(struct pool *pool, Context *c)
                             "foo", 3,
                             NULL,
                             &my_mcd_handler, c,
-                            c->async_ref);
+                            c->cancel_ptr);
     pool_unref(pool);
     pool_commit();
 
@@ -357,7 +357,7 @@ test_close_data(struct pool *pool, Context *c)
                             "foo", 3,
                             NULL,
                             &my_mcd_handler, c,
-                            c->async_ref);
+                            c->cancel_ptr);
     pool_unref(pool);
     pool_commit();
 
@@ -387,11 +387,11 @@ test_abort(struct pool *pool, Context *c)
                             "foo", 3,
                             NULL,
                             &my_mcd_handler, c,
-                            c->async_ref);
+                            c->cancel_ptr);
     pool_unref(pool);
     pool_commit();
 
-    c->async_ref.Abort();
+    c->cancel_ptr.Cancel();
 
     assert(!c->got_response);
     assert(c->released);

@@ -1,5 +1,4 @@
 #include "PoolTest.hxx"
-#include "async.hxx"
 #include "rubber.hxx"
 #include "sink_rubber.hxx"
 #include "pool.hxx"
@@ -11,6 +10,7 @@
 #include "istream/istream_null.hxx"
 #include "istream/istream_string.hxx"
 #include "istream/istream.hxx"
+#include "util/Cancellable.hxx"
 
 #include <inline/compiler.h>
 
@@ -37,7 +37,7 @@ struct Data final : RubberSinkHandler {
     size_t size;
     GError *error;
 
-    struct async_operation_ref async_ref;
+    CancellablePointer cancel_ptr;
 
     Data(Rubber *_r):result(NONE), r(_r), rubber_id(0), error(NULL) {}
     ~Data() {
@@ -122,7 +122,7 @@ public:
 
         Istream *input = istream_null_new(GetPool());
         sink_rubber_new(*GetPool(), *input, *r, 1024,
-                        data, data.async_ref);
+                        data, data.cancel_ptr);
 
         CPPUNIT_ASSERT_EQUAL(Data::DONE, data.result);
         CPPUNIT_ASSERT_EQUAL(0u, data.rubber_id);
@@ -135,7 +135,7 @@ public:
         Istream *input = istream_byte_new(*GetPool(),
                                           *istream_null_new(GetPool()));
         sink_rubber_new(*GetPool(), *input, *r, 1024,
-                        data, data.async_ref);
+                        data, data.cancel_ptr);
 
         CPPUNIT_ASSERT_EQUAL(Data::NONE, data.result);
         input->Read();
@@ -150,7 +150,7 @@ public:
 
         Istream *input = istream_string_new(GetPool(), "foo");
         sink_rubber_new(*GetPool(), *input, *r, 1024,
-                        data, data.async_ref);
+                        data, data.cancel_ptr);
 
         CPPUNIT_ASSERT_EQUAL(Data::NONE, data.result);
         input->Read();
@@ -170,7 +170,7 @@ public:
                                           *istream_string_new(GetPool(),
                                                               "foobar"));
         sink_rubber_new(*GetPool(), *input, *r, 1024,
-                        data, data.async_ref);
+                        data, data.cancel_ptr);
 
         CPPUNIT_ASSERT_EQUAL(Data::NONE, data.result);
 
@@ -191,7 +191,7 @@ public:
 
         Istream *input = istream_string_new(GetPool(), "foobar");
         sink_rubber_new(*GetPool(), *input, *r, 5,
-                        data, data.async_ref);
+                        data, data.cancel_ptr);
         CPPUNIT_ASSERT_EQUAL(Data::TOO_LARGE, data.result);
     }
 
@@ -202,7 +202,7 @@ public:
                                           *istream_string_new(GetPool(),
                                                              "foobar"));
         sink_rubber_new(*GetPool(), *input, *r, 5,
-                        data, data.async_ref);
+                        data, data.cancel_ptr);
 
         CPPUNIT_ASSERT_EQUAL(Data::NONE, data.result);
 
@@ -219,7 +219,7 @@ public:
         Istream *input = istream_fail_new(GetPool(),
                                           g_error_new(g_file_error_quark(), 0, "error"));
         sink_rubber_new(*GetPool(), *input, *r, 1024,
-                        data, data.async_ref);
+                        data, data.cancel_ptr);
 
         CPPUNIT_ASSERT_EQUAL(Data::NONE, data.result);
         input->Read();
@@ -235,7 +235,7 @@ public:
         istream_delayed_cancellable_ptr(*input) = nullptr;
 
         sink_rubber_new(*GetPool(), *input, *r, 8 * 1024 * 1024,
-                        data, data.async_ref);
+                        data, data.cancel_ptr);
         CPPUNIT_ASSERT_EQUAL(Data::OOM, data.result);
     }
 
@@ -249,12 +249,12 @@ public:
                                          istream_string_new(GetPool(), "foo"),
                                          delayed);
         sink_rubber_new(*GetPool(), *input, *r, 4,
-                        data, data.async_ref);
+                        data, data.cancel_ptr);
         CPPUNIT_ASSERT_EQUAL(Data::NONE, data.result);
         input->Read();
         CPPUNIT_ASSERT_EQUAL(Data::NONE, data.result);
 
-        data.async_ref.Abort();
+        data.cancel_ptr.Cancel();
     }
 };
 

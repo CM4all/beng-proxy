@@ -4,7 +4,6 @@
 #include "translate_response.hxx"
 #include "widget_view.hxx"
 #include "transformation.hxx"
-#include "async.hxx"
 #include "fb_pool.hxx"
 #include "pool.hxx"
 #include "RootPool.hxx"
@@ -14,6 +13,7 @@
 #include "cgi_address.hxx"
 #include "nfs_address.hxx"
 #include "event/Loop.hxx"
+#include "util/Cancellable.hxx"
 
 #include <glib.h>
 
@@ -141,8 +141,6 @@ int main(int argc, char **argv) {
     request.host = "example.com";
     request.uri = "/foo/index.html";
 
-    struct async_operation_ref async_ref;
-
     (void)argc;
     (void)argv;
 
@@ -153,8 +151,9 @@ int main(int argc, char **argv) {
 
     auto *translate_stock = tstock_new(event_loop, "@translation", 0);
 
+    CancellablePointer cancel_ptr;
     tstock_translate(*translate_stock, *pool,
-                     request, my_translate_handler, nullptr, async_ref);
+                     request, my_translate_handler, nullptr, cancel_ptr);
 
     event_loop.Dispatch();
     fb_pool_deinit();

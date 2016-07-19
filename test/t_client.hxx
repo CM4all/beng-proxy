@@ -1,5 +1,4 @@
 #include "http_response.hxx"
-#include "async.hxx"
 #include "lease.hxx"
 #include "istream/istream.hxx"
 #include "istream/Pointer.hxx"
@@ -18,6 +17,7 @@
 #include "strmap.hxx"
 #include "fb_pool.hxx"
 #include "util/Cast.hxx"
+#include "util/Cancellable.hxx"
 
 #ifdef USE_BUCKETS
 #include "istream/Bucket.hxx"
@@ -74,7 +74,7 @@ struct Context final : Cancellable, Lease, HttpResponseHandler, IstreamHandler {
     bool close_response_body_late = false;
     bool close_response_body_data = false;
     bool response_body_byte = false;
-    struct async_operation_ref async_ref;
+    CancellablePointer cancel_ptr;
     Connection *connection = nullptr;
     bool released = false, aborted = false;
     http_status_t status = http_status_t(0);
@@ -408,7 +408,7 @@ test_empty(Context<Connection> &c)
 #ifdef HAVE_EXPECT_100
                           false,
 #endif
-                          c, c.async_ref);
+                          c, c.cancel_ptr);
     pool_unref(c.pool);
     pool_commit();
 
@@ -436,7 +436,7 @@ test_body(Context<Connection> &c)
 #ifdef HAVE_EXPECT_100
                           false,
 #endif
-                          c, c.async_ref);
+                          c, c.cancel_ptr);
     pool_unref(c.pool);
     pool_commit();
 
@@ -472,7 +472,7 @@ test_read_body(Context<Connection> &c)
 #ifdef HAVE_EXPECT_100
                           false,
 #endif
-                          c, c.async_ref);
+                          c, c.cancel_ptr);
     pool_unref(c.pool);
     pool_commit();
 
@@ -506,7 +506,7 @@ test_huge(Context<Connection> &c)
 #ifdef HAVE_EXPECT_100
                           false,
 #endif
-                          c, c.async_ref);
+                          c, c.cancel_ptr);
     pool_unref(c.pool);
     pool_commit();
 
@@ -535,7 +535,7 @@ test_close_response_body_early(Context<Connection> &c)
 #ifdef HAVE_EXPECT_100
                           false,
 #endif
-                          c, c.async_ref);
+                          c, c.cancel_ptr);
     pool_unref(c.pool);
     pool_commit();
 
@@ -565,7 +565,7 @@ test_close_response_body_late(Context<Connection> &c)
 #ifdef HAVE_EXPECT_100
                           false,
 #endif
-                          c, c.async_ref);
+                          c, c.cancel_ptr);
     pool_unref(c.pool);
     pool_commit();
 
@@ -595,7 +595,7 @@ test_close_response_body_data(Context<Connection> &c)
 #ifdef HAVE_EXPECT_100
                           false,
 #endif
-                          c, c.async_ref);
+                          c, c.cancel_ptr);
     pool_unref(c.pool);
     pool_commit();
 
@@ -650,7 +650,7 @@ test_close_request_body_early(Context<Connection> &c)
 #ifdef HAVE_EXPECT_100
                           false,
 #endif
-                          c, c.async_ref);
+                          c, c.cancel_ptr);
 
     GError *error = g_error_new_literal(test_quark(), 0,
                                         "fail_request_body_early");
@@ -690,7 +690,7 @@ test_close_request_body_fail(Context<Connection> &c)
 #ifdef HAVE_EXPECT_100
                           false,
 #endif
-                          c, c.async_ref);
+                          c, c.cancel_ptr);
     pool_unref(c.pool);
     pool_commit();
 
@@ -734,7 +734,7 @@ test_data_blocking(Context<Connection> &c)
 #ifdef HAVE_EXPECT_100
                           false,
 #endif
-                          c, c.async_ref);
+                          c, c.cancel_ptr);
     pool_unref(c.pool);
     pool_commit();
 
@@ -792,7 +792,7 @@ test_data_blocking2(Context<Connection> &c)
 #ifdef HAVE_EXPECT_100
                           false,
 #endif
-                          c, c.async_ref);
+                          c, c.cancel_ptr);
     pool_unref(c.pool);
     pool_commit();
 
@@ -842,7 +842,7 @@ test_body_fail(Context<Connection> &c)
 #ifdef HAVE_EXPECT_100
                           false,
 #endif
-                          c, c.async_ref);
+                          c, c.cancel_ptr);
     pool_unref(c.pool);
     pool_commit();
 
@@ -872,7 +872,7 @@ test_head(Context<Connection> &c)
 #ifdef HAVE_EXPECT_100
                           false,
 #endif
-                          c, c.async_ref);
+                          c, c.cancel_ptr);
     pool_unref(c.pool);
     pool_commit();
 
@@ -905,7 +905,7 @@ test_head_discard(Context<Connection> &c)
 #ifdef HAVE_EXPECT_100
                           false,
 #endif
-                          c, c.async_ref);
+                          c, c.cancel_ptr);
     pool_unref(c.pool);
     pool_commit();
 
@@ -935,7 +935,7 @@ test_head_discard2(Context<Connection> &c)
 #ifdef HAVE_EXPECT_100
                           false,
 #endif
-                          c, c.async_ref);
+                          c, c.cancel_ptr);
     pool_unref(c.pool);
     pool_commit();
 
@@ -965,7 +965,7 @@ test_ignored_body(Context<Connection> &c)
 #ifdef HAVE_EXPECT_100
                           false,
 #endif
-                          c, c.async_ref);
+                          c, c.cancel_ptr);
     pool_unref(c.pool);
     pool_commit();
 
@@ -1001,7 +1001,7 @@ test_close_ignored_request_body(Context<Connection> &c)
 #ifdef HAVE_EXPECT_100
                           false,
 #endif
-                          c, c.async_ref);
+                          c, c.cancel_ptr);
     pool_unref(c.pool);
     pool_commit();
 
@@ -1036,7 +1036,7 @@ test_head_close_ignored_request_body(Context<Connection> &c)
 #ifdef HAVE_EXPECT_100
                           false,
 #endif
-                          c, c.async_ref);
+                          c, c.cancel_ptr);
     pool_unref(c.pool);
     pool_commit();
 
@@ -1070,7 +1070,7 @@ test_close_request_body_eor(Context<Connection> &c)
 #ifdef HAVE_EXPECT_100
                           false,
 #endif
-                          c, c.async_ref);
+                          c, c.cancel_ptr);
     pool_unref(c.pool);
     pool_commit();
 
@@ -1104,7 +1104,7 @@ test_close_request_body_eor2(Context<Connection> &c)
 #ifdef HAVE_EXPECT_100
                           false,
 #endif
-                          c, c.async_ref);
+                          c, c.cancel_ptr);
     pool_unref(c.pool);
     pool_commit();
 
@@ -1137,7 +1137,7 @@ test_bogus_100(Context<Connection> &c)
     c.connection->Request(c.pool, c,
                           HTTP_METHOD_GET, "/foo", StringMap(*c.pool),
                           nullptr, false,
-                          c, c.async_ref);
+                          c, c.cancel_ptr);
 
     pool_unref(c.pool);
     pool_commit();
@@ -1169,7 +1169,7 @@ test_twice_100(Context<Connection> &c)
                           HTTP_METHOD_GET, "/foo", StringMap(*c.pool),
                           c.request_body,
                           false,
-                          c, c.async_ref);
+                          c, c.cancel_ptr);
     istream_delayed_cancellable_ptr(*c.request_body) = nullptr;
 
     pool_unref(c.pool);
@@ -1201,7 +1201,7 @@ test_close_100(Context<Connection> &c)
     c.connection->Request(c.pool, c,
                           HTTP_METHOD_POST, "/foo", StringMap(*c.pool),
                           request_body, true,
-                          c, c.async_ref);
+                          c, c.cancel_ptr);
 
     pool_unref(c.pool);
     pool_commit();
@@ -1235,7 +1235,7 @@ test_no_body_while_sending(Context<Connection> &c)
 #ifdef HAVE_EXPECT_100
                           false,
 #endif
-                          c, c.async_ref);
+                          c, c.cancel_ptr);
 
     pool_unref(c.pool);
     pool_commit();
@@ -1264,7 +1264,7 @@ test_hold(Context<Connection> &c)
 #ifdef HAVE_EXPECT_100
                           false,
 #endif
-                          c, c.async_ref);
+                          c, c.cancel_ptr);
 
     pool_unref(c.pool);
     pool_commit();
@@ -1298,7 +1298,7 @@ test_premature_close_headers(Context<Connection> &c)
 #ifdef HAVE_EXPECT_100
                           false,
 #endif
-                          c, c.async_ref);
+                          c, c.cancel_ptr);
 
     pool_unref(c.pool);
     pool_commit();
@@ -1332,7 +1332,7 @@ test_premature_close_body(Context<Connection> &c)
 #ifdef HAVE_EXPECT_100
                           false,
 #endif
-                          c, c.async_ref);
+                          c, c.cancel_ptr);
 
     pool_unref(c.pool);
     pool_commit();
@@ -1364,7 +1364,7 @@ test_post_empty(Context<Connection> &c)
 #ifdef HAVE_EXPECT_100
                           false,
 #endif
-                          c, c.async_ref);
+                          c, c.cancel_ptr);
     pool_unref(c.pool);
     pool_commit();
 
@@ -1406,7 +1406,7 @@ test_buckets(Context<Connection> &c)
 #ifdef HAVE_EXPECT_100
                           false,
 #endif
-                          c, c.async_ref);
+                          c, c.cancel_ptr);
     pool_unref(c.pool);
     pool_commit();
 
@@ -1438,7 +1438,7 @@ test_buckets_close(Context<Connection> &c)
 #ifdef HAVE_EXPECT_100
                           false,
 #endif
-                          c, c.async_ref);
+                          c, c.cancel_ptr);
     pool_unref(c.pool);
     pool_commit();
 
@@ -1472,7 +1472,7 @@ test_premature_end(Context<Connection> &c)
 #ifdef HAVE_EXPECT_100
                           false,
 #endif
-                          c, c.async_ref);
+                          c, c.cancel_ptr);
     pool_unref(c.pool);
     pool_commit();
 
@@ -1503,7 +1503,7 @@ test_excess_data(Context<Connection> &c)
 #ifdef HAVE_EXPECT_100
                           false,
 #endif
-                          c, c.async_ref);
+                          c, c.cancel_ptr);
     pool_unref(c.pool);
     pool_commit();
 

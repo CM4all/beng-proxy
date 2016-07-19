@@ -3,9 +3,9 @@
 #include "stock/GetHandler.hxx"
 #include "stock/Item.hxx"
 #include "event/Loop.hxx"
-#include "async.hxx"
 #include "pool.hxx"
 #include "RootPool.hxx"
+#include "util/Cancellable.hxx"
 
 #include <glib.h>
 
@@ -96,7 +96,7 @@ public:
 int main(gcc_unused int argc, gcc_unused char **argv)
 {
     Stock *stock;
-    struct async_operation_ref async_ref;
+    CancellablePointer cancel_ptr;
     StockItem *item, *second, *third;
 
     EventLoop event_loop;
@@ -108,7 +108,7 @@ int main(gcc_unused int argc, gcc_unused char **argv)
 
     /* create first item */
 
-    stock->Get(*pool, nullptr, handler, async_ref);
+    stock->Get(*pool, nullptr, handler, cancel_ptr);
     assert(got_item);
     assert(last_item != nullptr);
     assert(num_create == 1 && num_fail == 0);
@@ -126,7 +126,7 @@ int main(gcc_unused int argc, gcc_unused char **argv)
 
     got_item = false;
     last_item = nullptr;
-    stock->Get(*pool, nullptr, handler, async_ref);
+    stock->Get(*pool, nullptr, handler, cancel_ptr);
     assert(got_item);
     assert(last_item == item);
     assert(num_create == 1 && num_fail == 0);
@@ -136,7 +136,7 @@ int main(gcc_unused int argc, gcc_unused char **argv)
 
     got_item = false;
     last_item = nullptr;
-    stock->Get(*pool, nullptr, handler, async_ref);
+    stock->Get(*pool, nullptr, handler, cancel_ptr);
     assert(got_item);
     assert(last_item != nullptr);
     assert(last_item != item);
@@ -149,7 +149,7 @@ int main(gcc_unused int argc, gcc_unused char **argv)
     next_fail = true;
     got_item = false;
     last_item = nullptr;
-    stock->Get(*pool, nullptr, handler, async_ref);
+    stock->Get(*pool, nullptr, handler, cancel_ptr);
     assert(got_item);
     assert(last_item == nullptr);
     assert(num_create == 2 && num_fail == 1);
@@ -160,7 +160,7 @@ int main(gcc_unused int argc, gcc_unused char **argv)
     next_fail = false;
     got_item = false;
     last_item = nullptr;
-    stock->Get(*pool, nullptr, handler, async_ref);
+    stock->Get(*pool, nullptr, handler, cancel_ptr);
     assert(got_item);
     assert(last_item != nullptr);
     assert(num_create == 3 && num_fail == 1);
@@ -171,14 +171,14 @@ int main(gcc_unused int argc, gcc_unused char **argv)
 
     got_item = false;
     last_item = nullptr;
-    stock->Get(*pool, nullptr, handler, async_ref);
+    stock->Get(*pool, nullptr, handler, cancel_ptr);
     assert(!got_item);
     assert(num_create == 3 && num_fail == 1);
     assert(num_borrow == 1 && num_release == 1 && num_destroy == 1);
 
     /* fifth item waiting */
 
-    stock->Get(*pool, nullptr, handler, async_ref);
+    stock->Get(*pool, nullptr, handler, cancel_ptr);
     assert(!got_item);
     assert(num_create == 3 && num_fail == 1);
     assert(num_borrow == 1 && num_release == 1 && num_destroy == 1);
