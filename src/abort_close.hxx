@@ -9,6 +9,7 @@
 
 struct pool;
 class Istream;
+class CancellablePointer;
 struct async_operation_ref;
 
 /**
@@ -17,7 +18,7 @@ struct async_operation_ref;
  */
 struct async_operation_ref &
 async_close_on_abort(struct pool &pool, Istream &istream,
-                     struct async_operation_ref &async_ref);
+                     CancellablePointer &cancel_ptr);
 
 /**
  * Same as async_close_on_abort(), but allows #istream to be NULL.

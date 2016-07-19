@@ -15,9 +15,9 @@ struct CloseOnAbort final : Cancellable {
     struct async_operation_ref ref;
 
     CloseOnAbort(Istream &_istream,
-                 struct async_operation_ref &async_ref)
+                 CancellablePointer &_cancel_ptr)
         :istream(_istream) {
-        async_ref = *this;
+        _cancel_ptr = *this;
     }
 
     /* virtual methods from class Cancellable */
@@ -34,11 +34,11 @@ struct CloseOnAbort final : Cancellable {
 
 struct async_operation_ref &
 async_close_on_abort(struct pool &pool, Istream &istream,
-                     struct async_operation_ref &async_ref)
+                     CancellablePointer &cancel_ptr)
 {
     assert(!istream.HasHandler());
 
-    auto coa = NewFromPool<struct CloseOnAbort>(pool, istream, async_ref);
+    auto coa = NewFromPool<struct CloseOnAbort>(pool, istream, cancel_ptr);
     return coa->ref;
 }
 
