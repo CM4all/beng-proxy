@@ -51,7 +51,7 @@ struct FcgiRemoteRequest final : StockGetHandler, Lease {
     const int stderr_fd;
 
     HttpResponseHandler &handler;
-    struct async_operation_ref &async_ref;
+    CancellablePointer &cancel_ptr;
 
     FcgiRemoteRequest(struct pool &_pool, EventLoop &_event_loop,
                       http_method_t _method, const char *_uri,
@@ -64,7 +64,7 @@ struct FcgiRemoteRequest final : StockGetHandler, Lease {
                       ConstBuffer<const char *> _params,
                       int _stderr_fd,
                       HttpResponseHandler &_handler,
-                      struct async_operation_ref &_async_ref)
+                      CancellablePointer &_cancel_ptr)
         :pool(_pool), event_loop(_event_loop),
          method(_method), uri(_uri),
          script_filename(_script_filename), script_name(_script_name),
@@ -74,7 +74,7 @@ struct FcgiRemoteRequest final : StockGetHandler, Lease {
          headers(std::move(_headers)),
          params(_params),
          stderr_fd(_stderr_fd),
-         handler(_handler), async_ref(_async_ref) {
+         handler(_handler), cancel_ptr(_cancel_ptr) {
     }
 
     /* virtual methods from class StockGetHandler */
@@ -111,7 +111,7 @@ FcgiRemoteRequest::OnStockItemReady(StockItem &item)
                         params,
                         stderr_fd,
                         handler,
-                        async_ref);
+                        cancel_ptr);
 }
 
 void
@@ -144,8 +144,7 @@ fcgi_remote_request(struct pool *pool, EventLoop &event_loop,
                     HttpResponseHandler &handler,
                     struct async_operation_ref &_async_ref)
 {
-    auto *async_ref = &_async_ref;
-
+    CancellablePointer *cancel_ptr = &_async_ref;
     auto request = NewFromPool<FcgiRemoteRequest>(*pool, *pool, event_loop,
                                                   method, uri, path,
                                                   script_name, path_info,
@@ -153,16 +152,16 @@ fcgi_remote_request(struct pool *pool, EventLoop &event_loop,
                                                   remote_addr,
                                                   std::move(headers), params,
                                                   stderr_fd,
-                                                  handler, *async_ref);
+                                                  handler, *cancel_ptr);
 
     if (body != nullptr) {
         request->body = istream_hold_new(*pool, *body);
-        async_ref = &async_close_on_abort(*pool, *request->body, *async_ref);
+        cancel_ptr = &async_close_on_abort(*pool, *request->body, *cancel_ptr);
     } else
         request->body = nullptr;
 
     tcp_balancer_get(*tcp_balancer, *pool,
                      false, SocketAddress::Null(),
                      0, *address_list, 20,
-                     *request, *async_ref);
+                     *request, *cancel_ptr);
 }
