@@ -34,12 +34,38 @@ enum {
     CHOICE_MAGIC = 4,
 };
 
+/**
+ * Auto-abbreviate the input string by replacing a long trailer with
+ * its MD5 sum.  This is a hack to allow storing long URIs as a
+ * memcached key (250 bytes max).
+ */
+static const char *
+maybe_abbreviate(const char *p)
+{
+    size_t length = strlen(p);
+    if (length < 232)
+        return p;
+
+    static char buffer[256];
+    char *checksum = g_compute_checksum_for_string(G_CHECKSUM_MD5, p + 200,
+                                                   length - 200);
+    snprintf(buffer, sizeof(buffer), "%.*s~%s", 200, p, checksum);
+    g_free(checksum);
+    return buffer;
+}
+
+static const char *
+http_cache_choice_key(struct pool &pool, const char *uri)
+{
+    return p_strcat(&pool, maybe_abbreviate(uri), " choice", nullptr);
+}
+
 struct HttpCacheChoice {
-    struct pool *pool;
+    struct pool *const pool;
 
     MemachedStock *stock;
 
-    const char *uri;
+    const char *const uri;
     const char *key;
 
     const StringMap *request_headers;
@@ -58,6 +84,48 @@ struct HttpCacheChoice {
     void *callback_ctx;
 
     struct async_operation_ref *async_ref;
+
+    HttpCacheChoice(struct pool &_pool, MemachedStock &_stock,
+                    const char *_uri, const StringMap *_request_headers,
+                    http_cache_choice_get_t _callback,
+                    void *_callback_ctx,
+                    struct async_operation_ref &_async_ref)
+        :pool(&_pool), stock(&_stock),
+         uri(_uri), key(http_cache_choice_key(*pool, uri)),
+         request_headers(_request_headers),
+         callback_ctx(_callback_ctx),
+         async_ref(&_async_ref) {
+        callback.get = _callback;
+    }
+
+    HttpCacheChoice(struct pool &_pool, MemachedStock &_stock,
+                    const char *_uri,
+                    http_cache_choice_filter_t _callback,
+                    void *_callback_ctx,
+                    struct async_operation_ref &_async_ref)
+        :pool(&_pool), stock(&_stock),
+         uri(_uri), key(http_cache_choice_key(*pool, uri)),
+         callback_ctx(_callback_ctx),
+         async_ref(&_async_ref) {
+        callback.filter = _callback;
+    }
+
+    HttpCacheChoice(struct pool &_pool, MemachedStock &_stock,
+                    const char *_uri,
+                    http_cache_choice_delete_t _callback,
+                    void *_callback_ctx,
+                    struct async_operation_ref &_async_ref)
+        :pool(&_pool), stock(&_stock),
+         uri(_uri), key(http_cache_choice_key(*pool, uri)),
+         callback_ctx(_callback_ctx),
+         async_ref(&_async_ref) {
+        callback.delete_ = _callback;
+    }
+
+    HttpCacheChoice(struct pool &_pool, const char *_uri,
+                    ConstBuffer<void> _data)
+        :pool(&_pool),
+         uri(_uri), data(_data) {}
 };
 
 bool
@@ -84,26 +152,6 @@ mcd_vary_hash(const StringMap *vary)
     return hash;
 }
 
-/**
- * Auto-abbreviate the input string by replacing a long trailer with
- * its MD5 sum.  This is a hack to allow storing long URIs as a
- * memcached key (250 bytes max).
- */
-static const char *
-maybe_abbreviate(const char *p)
-{
-    size_t length = strlen(p);
-    if (length < 232)
-        return p;
-
-    static char buffer[256];
-    char *checksum = g_compute_checksum_for_string(G_CHECKSUM_MD5, p + 200,
-                                                   length - 200);
-    snprintf(buffer, sizeof(buffer), "%.*s~%s", 200, p, checksum);
-    g_free(checksum);
-    return buffer;
-}
-
 const char *
 http_cache_choice_vary_key(struct pool &pool, const char *uri,
                            const StringMap *vary)
@@ -115,12 +163,6 @@ http_cache_choice_vary_key(struct pool &pool, const char *uri,
     uri = maybe_abbreviate(uri);
 
     return p_strcat(&pool, uri, " ", hash, nullptr);
-}
-
-static const char *
-http_cache_choice_key(struct pool &pool, const char *uri)
-{
-    return p_strcat(&pool, maybe_abbreviate(uri), " choice", nullptr);
 }
 
 static void
@@ -235,16 +277,10 @@ http_cache_choice_get(struct pool &pool, MemachedStock &stock,
                       void *callback_ctx,
                       struct async_operation_ref &async_ref)
 {
-    auto choice = PoolAlloc<HttpCacheChoice>(pool);
-
-    choice->pool = &pool;
-    choice->stock = &stock;
-    choice->uri = uri;
-    choice->key = http_cache_choice_key(pool, uri);
-    choice->request_headers = request_headers;
-    choice->callback.get = callback;
-    choice->callback_ctx = callback_ctx;
-    choice->async_ref = &async_ref;
+    auto choice = NewFromPool<HttpCacheChoice>(pool, pool, stock, uri,
+                                               request_headers,
+                                               callback, callback_ctx,
+                                               async_ref);
 
     memcached_stock_invoke(&pool, &stock,
                            MEMCACHED_OPCODE_GET,
@@ -260,20 +296,15 @@ http_cache_choice_prepare(struct pool &pool, const char *uri,
                           const HttpCacheResponseInfo &info,
                           const StringMap &vary)
 {
-    auto choice = PoolAlloc<HttpCacheChoice>(pool);
-
-    choice->pool = &pool;
-    choice->uri = uri;
-
     GrowingBuffer gb(*tpool, 1024);
     serialize_uint32(gb, CHOICE_MAGIC);
     serialize_uint64(gb, std::chrono::system_clock::to_time_t(info.expires));
     serialize_strmap(gb, vary);
 
     auto data = gb.Dup(pool);
-    choice->data = { data.data, data.size };
 
-    return choice;
+    return NewFromPool<HttpCacheChoice>(pool, pool, uri,
+                                        ConstBuffer<void>(data.data, data.size));
 }
 
 static void
@@ -531,15 +562,9 @@ http_cache_choice_filter(struct pool &pool, MemachedStock &stock,
                          void *callback_ctx,
                          struct async_operation_ref &async_ref)
 {
-    auto choice = PoolAlloc<HttpCacheChoice>(pool);
-
-    choice->pool = &pool;
-    choice->stock = &stock;
-    choice->uri = uri;
-    choice->key = http_cache_choice_key(pool, uri);
-    choice->callback.filter = callback;
-    choice->callback_ctx = callback_ctx;
-    choice->async_ref = &async_ref;
+    auto choice = NewFromPool<HttpCacheChoice>(pool, pool, stock, uri,
+                                               callback, callback_ctx,
+                                               async_ref);
 
     memcached_stock_invoke(&pool, &stock,
                            MEMCACHED_OPCODE_GET,
@@ -550,28 +575,36 @@ http_cache_choice_filter(struct pool &pool, MemachedStock &stock,
                            async_ref);
 }
 
-struct cleanup_data {
-    std::chrono::system_clock::time_point now;
+struct HttpCacheChoiceCleanup {
+    const std::chrono::system_clock::time_point now =
+        std::chrono::system_clock::now();
+
     struct uset uset;
 
-    http_cache_choice_cleanup_t callback;
-    void *callback_ctx;
+    const http_cache_choice_cleanup_t callback;
+    void *const callback_ctx;
+
+    HttpCacheChoiceCleanup(http_cache_choice_cleanup_t _callback,
+                           void *_callback_ctx)
+        :callback(_callback), callback_ctx(_callback_ctx) {
+        uset_init(&uset);
+    }
 };
 
 static bool
 http_cache_choice_cleanup_filter_callback(const HttpCacheChoiceInfo *info,
                                           GError *error, void *ctx)
 {
-    cleanup_data *data = (cleanup_data *)ctx;
+    auto &cleanup = *(HttpCacheChoiceCleanup *)ctx;
 
     if (info != nullptr) {
         unsigned hash = mcd_vary_hash(info->vary);
-        bool duplicate = uset_contains_or_add(&data->uset, hash);
+        bool duplicate = uset_contains_or_add(&cleanup.uset, hash);
         return (info->expires == std::chrono::system_clock::from_time_t(-1) ||
-                info->expires >= data->now) &&
+                info->expires >= cleanup.now) &&
             !duplicate;
     } else {
-        data->callback(error, data->callback_ctx);
+        cleanup.callback(error, cleanup.callback_ctx);
         return false;
     }
 }
@@ -583,15 +616,11 @@ http_cache_choice_cleanup(struct pool &pool, MemachedStock &stock,
                           void *callback_ctx,
                           struct async_operation_ref &async_ref)
 {
-    auto data = NewFromPool<cleanup_data>(pool);
-
-    data->now = std::chrono::system_clock::now();
-    uset_init(&data->uset);
-    data->callback = callback;
-    data->callback_ctx = callback_ctx;
+    auto cleanup = NewFromPool<HttpCacheChoiceCleanup>(pool, callback,
+                                                       callback_ctx);
 
     http_cache_choice_filter(pool, stock, uri,
-                             http_cache_choice_cleanup_filter_callback, data,
+                             http_cache_choice_cleanup_filter_callback, cleanup,
                              async_ref);
 }
 
@@ -631,15 +660,9 @@ http_cache_choice_delete(struct pool &pool, MemachedStock &stock,
                          void *callback_ctx,
                          struct async_operation_ref &async_ref)
 {
-    auto choice = PoolAlloc<HttpCacheChoice>(pool);
-
-    choice->pool = &pool;
-    choice->stock = &stock;
-    choice->uri = uri;
-    choice->key = http_cache_choice_key(pool, uri);
-    choice->callback.delete_ = callback;
-    choice->callback_ctx = callback_ctx;
-    choice->async_ref = &async_ref;
+    auto choice = NewFromPool<HttpCacheChoice>(pool, pool, stock, uri,
+                                               callback, callback_ctx,
+                                               async_ref);
 
     memcached_stock_invoke(&pool, &stock,
                            MEMCACHED_OPCODE_GET,
