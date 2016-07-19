@@ -11,7 +11,7 @@ struct pool;
 struct Widget;
 struct processor_env;
 class HttpResponseHandler;
-struct async_operation_ref;
+class CancellablePointer;
 class WidgetLookupHandler;
 
 /**
@@ -22,7 +22,7 @@ void
 widget_http_request(struct pool &pool, Widget &widget,
                     struct processor_env &env,
                     HttpResponseHandler &handler,
-                    struct async_operation_ref &async_ref);
+                    CancellablePointer &cancel_ptr);
 
 /**
  * Send a HTTP request to the widget server, process it, and look up
@@ -35,6 +35,6 @@ void
 widget_http_lookup(struct pool &pool, Widget &widget, const char *id,
                    struct processor_env &env,
                    WidgetLookupHandler &handler,
-                   struct async_operation_ref &async_ref);
+                   CancellablePointer &cancel_ptr);
 
 #endif

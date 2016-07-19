@@ -23,7 +23,7 @@ void
 frame_top_widget(struct pool *pool, Widget *widget,
                  struct processor_env *env,
                  HttpResponseHandler &handler,
-                 struct async_operation_ref *async_ref)
+                 CancellablePointer &cancel_ptr)
 {
     assert(widget != nullptr);
     assert(widget->cls != nullptr);
@@ -60,14 +60,14 @@ frame_top_widget(struct pool *pool, Widget *widget,
     }
 
     widget_http_request(*pool, *widget, *env,
-                        handler, *async_ref);
+                        handler, cancel_ptr);
 }
 
 void
 frame_parent_widget(struct pool *pool, Widget *widget, const char *id,
                     struct processor_env *env,
                     WidgetLookupHandler &handler,
-                    struct async_operation_ref *async_ref)
+                    CancellablePointer &cancel_ptr)
 {
     assert(widget != nullptr);
     assert(widget->cls != nullptr);
@@ -108,5 +108,5 @@ frame_parent_widget(struct pool *pool, Widget *widget, const char *id,
     }
 
     widget_http_lookup(*pool, *widget, id, *env,
-                       handler, *async_ref);
+                       handler, cancel_ptr);
 }

@@ -69,26 +69,26 @@ struct WidgetRequest final : HttpResponseHandler, Cancellable {
     WidgetLookupHandler *lookup_handler;
 
     HttpResponseHandler *http_handler;
-    struct async_operation_ref async_ref;
+    struct async_operation_ref cancel_ptr;
 
     WidgetRequest(struct pool &_pool, Widget &_widget,
                   struct processor_env &_env,
                   HttpResponseHandler &_handler,
-                  struct async_operation_ref &_async_ref)
+                  CancellablePointer &_cancel_ptr)
         :pool(_pool), widget(_widget), env(_env), http_handler(&_handler) {
-        _async_ref = *this;
+        _cancel_ptr = *this;
     }
 
     WidgetRequest(struct pool &_pool, Widget &_widget,
                   struct processor_env &_env,
                   const char *_lookup_id,
                   WidgetLookupHandler &_handler,
-                  struct async_operation_ref &_async_ref)
+                  CancellablePointer &_cancel_ptr)
         :pool(_pool), widget(_widget),
          lookup_id(_lookup_id),
          env(_env),
          lookup_handler(&_handler) {
-        _async_ref = *this;
+        _cancel_ptr = *this;
     }
 
     RealmSessionLease GetSessionIfStateful() const {
@@ -153,7 +153,7 @@ struct WidgetRequest final : HttpResponseHandler, Cancellable {
     /* virtual methods from class Cancellable */
     void Cancel() override {
         widget.Cancel();
-        async_ref.Abort();
+        cancel_ptr.Cancel();
     }
 
     /* virtual methods from class HttpResponseHandler */
@@ -250,7 +250,7 @@ WidgetRequest::HandleRedirect(const char *location, Istream *body)
                                                         false),
                                      nullptr, nullptr,
                                      *this,
-                                     async_ref);
+                                     cancel_ptr);
 
     return true;
 }
@@ -296,7 +296,7 @@ WidgetRequest::ProcessResponse(http_status_t status,
                                 widget, lookup_id,
                                 env, options,
                                 *lookup_handler,
-                                async_ref);
+                                cancel_ptr);
     else {
         body = processor_process(pool, *body,
                                  widget, env, options);
@@ -396,7 +396,7 @@ WidgetRequest::FilterResponse(http_status_t status,
                       HTTP_METHOD_POST, filter, status,
                       std::move(headers), body, source_tag,
                       *this,
-                      async_ref);
+                      cancel_ptr);
 }
 
 void
@@ -643,7 +643,7 @@ WidgetRequest::SendRequest()
                                      *address, HTTP_STATUS_OK,
                                      std::move(headers),
                                      request_body, nullptr,
-                                     *this, async_ref);
+                                     *this, cancel_ptr);
 }
 
 static void
@@ -678,7 +678,7 @@ WidgetRequest::ContentTypeLookup()
     return suffix_registry_lookup(pool, *global_translate_cache,
                                   *widget.GetAddress(),
                                   widget_suffix_registry_handler, this,
-                                  async_ref);
+                                  cancel_ptr);
 }
 
 /*
@@ -690,12 +690,12 @@ void
 widget_http_request(struct pool &pool, Widget &widget,
                     struct processor_env &env,
                     HttpResponseHandler &handler,
-                    struct async_operation_ref &async_ref)
+                    CancellablePointer &cancel_ptr)
 {
     assert(widget.cls != nullptr);
 
     auto embed = NewFromPool<WidgetRequest>(pool, pool, widget, env,
-                                            handler, async_ref);
+                                            handler, cancel_ptr);
 
     if (!embed->ContentTypeLookup())
         embed->SendRequest();
@@ -705,13 +705,13 @@ void
 widget_http_lookup(struct pool &pool, Widget &widget, const char *id,
                    struct processor_env &env,
                    WidgetLookupHandler &handler,
-                   struct async_operation_ref &async_ref)
+                   CancellablePointer &cancel_ptr)
 {
     assert(widget.cls != nullptr);
     assert(id != nullptr);
 
     auto embed = NewFromPool<WidgetRequest>(pool, pool, widget, env, id,
-                                            handler, async_ref);
+                                            handler, cancel_ptr);
 
     if (!embed->ContentTypeLookup())
         embed->SendRequest();

@@ -68,7 +68,7 @@ widget_http_request(gcc_unused struct pool &pool,
                     gcc_unused Widget &widget,
                     gcc_unused struct processor_env &env,
                     HttpResponseHandler &handler,
-                    gcc_unused struct async_operation_ref &async_ref)
+                    gcc_unused CancellablePointer &cancel_ptr)
 {
     GError *error = g_error_new_literal(g_quark_from_static_string("test"), 0,
                                         "Test");

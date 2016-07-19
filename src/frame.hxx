@@ -11,8 +11,8 @@ struct pool;
 struct Widget;
 struct processor_env;
 class HttpResponseHandler;
-struct async_operation_ref;
 class WidgetLookupHandler;
+class CancellablePointer;
 
 /**
  * Request the contents of the specified widget.  This is a wrapper
@@ -23,7 +23,7 @@ void
 frame_top_widget(struct pool *pool, Widget *widget,
                  struct processor_env *env,
                  HttpResponseHandler &_handler,
-                 struct async_operation_ref *async_ref);
+                 CancellablePointer &cancel_ptr);
 
 /**
  * Looks up a child widget in the specified widget.  This is a wrapper
@@ -34,6 +34,6 @@ void
 frame_parent_widget(struct pool *pool, Widget *widget, const char *id,
                     struct processor_env *env,
                     WidgetLookupHandler &handler,
-                    struct async_operation_ref *async_ref);
+                    CancellablePointer &cancel_ptr);
 
 #endif

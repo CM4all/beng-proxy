@@ -180,7 +180,7 @@ ProxyWidget::Continue()
         frame_parent_widget(&request.pool, widget,
                             ref->id,
                             &request.env,
-                            *this, &async_ref);
+                            *this, async_ref);
     } else {
         const struct processor_env *env = &request.env;
 
@@ -219,7 +219,7 @@ ProxyWidget::Continue()
         frame_top_widget(&request.pool, widget,
                          &request.env,
                          *this,
-                         &async_ref);
+                         async_ref);
     }
 }
 
