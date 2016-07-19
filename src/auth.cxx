@@ -136,6 +136,6 @@ Request::HandleAuth(const TranslateResponse &response)
                     *instance.translate_cache,
                     *t,
                     auth_translate_handler, this,
-                    async_ref);
+                    cancel_ptr);
 }
 

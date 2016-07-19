@@ -107,5 +107,5 @@ delegate_handler(Request &request2, const DelegateAddress &address,
     delegate_stock_open(request2.instance.delegate_stock, &request.pool,
                         address.delegate, address.child_options,
                         path,
-                        request2, request2.async_ref);
+                        request2, request2.cancel_ptr);
 }

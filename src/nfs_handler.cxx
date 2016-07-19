@@ -149,5 +149,5 @@ nfs_handler(Request &request2)
     nfs_cache_request(pool, *request2.instance.nfs_cache,
                       address.server, address.export_name, address.path,
                       nfs_handler_cache_handler, &request2,
-                      request2.async_ref);
+                      request2.cancel_ptr);
 }

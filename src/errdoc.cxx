@@ -109,7 +109,7 @@ errdoc_translate_response(TranslateResponse &response, void *ctx)
             ->SendRequest(request2->pool, 0, HTTP_METHOD_GET,
                           response.address, HTTP_STATUS_OK,
                           StringMap(request2->pool), nullptr, nullptr,
-                          er, request2->async_ref);
+                          er, request2->cancel_ptr);
     } else
         errdoc_resubmit(er);
 }
@@ -175,7 +175,7 @@ errdoc_dispatch_response(Request &request2, http_status_t status,
                                                 status, std::move(headers),
                                                 body);
 
-    request2.async_ref = *er;
+    request2.cancel_ptr = *er;
 
     fill_translate_request(&er->translate_request,
                            &request2.translate.request,

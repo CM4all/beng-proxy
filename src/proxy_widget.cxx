@@ -315,7 +315,7 @@ proxy_widget(Request &request2,
     auto proxy = NewFromPool<ProxyWidget>(request2.pool, request2,
                                           widget, proxy_ref);
 
-    request2.async_ref = *proxy;
+    request2.cancel_ptr = *proxy;
 
     processor_lookup_widget(request2.pool, body,
                             widget, proxy_ref->id,

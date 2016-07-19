@@ -332,7 +332,7 @@ do_content_type_lookup(Request &request,
                                   *request.instance.translate_cache,
                                   address,
                                   handler_suffix_registry_handler, &request,
-                                  request.async_ref);
+                                  request.cancel_ptr);
 }
 
 static void
@@ -734,7 +734,7 @@ Request::SubmitTranslateRequest()
                     *instance.translate_cache,
                     translate.request,
                     handler_translate_handler, this,
-                    async_ref);
+                    cancel_ptr);
 }
 
 static bool

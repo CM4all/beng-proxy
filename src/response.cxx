@@ -620,7 +620,7 @@ response_apply_filter(Request &request2,
         ->SendRequest(request2.pool, request2.session_id.GetClusterHash(),
                       HTTP_METHOD_POST, filter, status, std::move(headers2),
                       body, source_tag,
-                      request2, request2.async_ref);
+                      request2, request2.cancel_ptr);
 }
 
 static void

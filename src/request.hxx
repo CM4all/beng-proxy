@@ -13,12 +13,12 @@
 #include "translate_response.hxx"
 #include "delegate/Handler.hxx"
 #include "penv.hxx"
-#include "async.hxx"
 #include "session.hxx"
 #include "transformation.hxx"
 #include "widget_class.hxx"
 #include "http_response.hxx"
 #include "glibfwd.hxx"
+#include "util/Cancellable.hxx"
 
 class Istream;
 class HttpHeaders;
@@ -217,7 +217,7 @@ struct Request final : HttpResponseHandler, DelegateHandler, Cancellable {
     bool response_sent = false;
 #endif
 
-    struct async_operation_ref async_ref;
+    CancellablePointer cancel_ptr;
 
     Request(BpInstance &_instance, BpConnection &_connection,
             HttpServerRequest &_request);
@@ -345,7 +345,7 @@ struct Request final : HttpResponseHandler, DelegateHandler, Cancellable {
         DiscardRequestBody();
 
         /* forward the abort to the http_server library */
-        async_ref.Abort();
+        cancel_ptr.Cancel();
     }
 
     /* virtual methods from class HttpResponseHandler */
