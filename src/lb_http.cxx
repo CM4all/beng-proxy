@@ -409,7 +409,7 @@ LbConnection::HandleHttpRequest(HttpServerRequest &request,
 
 void
 LbConnection::LogHttpRequest(HttpServerRequest &request,
-                             http_status_t status, off_t length,
+                             http_status_t status, int64_t length,
                              uint64_t bytes_received, uint64_t bytes_sent)
 {
     access_log(&request, nullptr,

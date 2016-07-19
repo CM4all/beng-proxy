@@ -11,6 +11,8 @@
 #include "http_server/Request.hxx"
 #include "log-glue.h"
 
+#include <daemon/log.h>
+
 #include <time.h>
 
 static const char *
@@ -25,14 +27,13 @@ optional_string(const char *p)
 void
 access_log(HttpServerRequest *request, const char *site,
            const char *referer, const char *user_agent,
-           http_status_t status, off_t content_length,
+           http_status_t status, int64_t content_length,
            uint64_t bytes_received, uint64_t bytes_sent,
            uint64_t duration)
 {
     assert(request != nullptr);
     assert(http_method_is_valid(request->method));
     assert(http_status_is_valid(status));
-    assert(content_length >= 0);
 
     if (log_global_enabled()) {
         log_http_request(time(nullptr) * 1000000,
@@ -56,9 +57,7 @@ access_log(HttpServerRequest *request, const char *site,
 
     char length_buffer[32];
     const char *length;
-    if (content_length == -2)
-        length = "?";
-    else if (content_length < 0)
+    if (content_length < 0)
         length = "-";
     else {
         snprintf(length_buffer, sizeof(length_buffer), "%llu",

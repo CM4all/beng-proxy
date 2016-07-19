@@ -41,7 +41,7 @@ struct Instance final : HttpServerConnectionHandler {
                            struct async_operation_ref &async_ref) override;
 
     void LogHttpRequest(HttpServerRequest &,
-                        http_status_t, off_t,
+                        http_status_t, int64_t,
                         uint64_t, uint64_t) override {}
 
     void HttpConnectionError(GError *error) override;

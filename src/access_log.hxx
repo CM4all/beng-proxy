@@ -10,13 +10,8 @@
 #include <http/status.h>
 
 #include <stdint.h>
-#include <sys/types.h>
 
 struct HttpServerRequest;
-
-#ifndef NO_ACCESS_LOG
-#include <daemon/log.h>
-#endif
 
 #ifdef NO_ACCESS_LOG
 
@@ -25,7 +20,7 @@ access_log(gcc_unused HttpServerRequest *request,
            gcc_unused const char *site,
            gcc_unused const char *referer,
            gcc_unused const char *user_agent,
-           gcc_unused http_status_t status, gcc_unused off_t length,
+           gcc_unused http_status_t status, gcc_unused int64_t length,
            gcc_unused uint64_t bytes_received,
            gcc_unused uint64_t bytes_sent,
            gcc_unused uint64_t duration)
@@ -34,10 +29,20 @@ access_log(gcc_unused HttpServerRequest *request,
 
 #else
 
+/**
+ * @param length the number of response body (payload) bytes sent
+ * to our HTTP client or negative if there was no response body
+ * (which is different from "empty response body")
+ * @param bytes_received the number of raw bytes received from our
+ * HTTP client
+ * @param bytes_sent the number of raw bytes sent to our HTTP client
+ * (which includes status line, headers and transport encoding
+ * overhead such as chunk headers)
+ */
 void
 access_log(HttpServerRequest *request, const char *site,
            const char *referer, const char *user_agent,
-           http_status_t status, off_t length,
+           http_status_t status, int64_t length,
            uint64_t bytes_received, uint64_t bytes_sent,
            uint64_t duration);
 

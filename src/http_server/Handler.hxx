@@ -11,7 +11,6 @@
 
 #include <http/status.h>
 
-#include <sys/types.h>
 #include <stdint.h>
 
 struct HttpServerRequest;
@@ -22,8 +21,18 @@ public:
     virtual void HandleHttpRequest(HttpServerRequest &request,
                                    struct async_operation_ref &async_ref) = 0;
 
+    /**
+     * @param length the number of response body (payload) bytes sent
+     * to our HTTP client, or negative if there was no response body
+     * (which is different from "empty response body")
+     * @param bytes_received the number of raw bytes received from our
+     * HTTP client
+     * @param bytes_sent the number of raw bytes sent to our HTTP
+     * client (which includes status line, headers and transport
+     * encoding overhead such as chunk headers)
+     */
     virtual void LogHttpRequest(HttpServerRequest &request,
-                                http_status_t status, off_t length,
+                                http_status_t status, int64_t length,
                                 uint64_t bytes_received, uint64_t bytes_sent) = 0;
 
     /**

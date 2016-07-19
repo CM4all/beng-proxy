@@ -63,7 +63,7 @@ bool
 log_http_request(uint64_t timestamp, http_method_t method, const char *uri,
                  const char *remote_host, const char *site,
                  const char *referer, const char *user_agent,
-                 http_status_t status, uint64_t length,
+                 http_status_t status, int64_t length,
                  uint64_t traffic_received, uint64_t traffic_sent,
                  uint64_t duration)
 {
@@ -89,7 +89,9 @@ log_http_request(uint64_t timestamp, http_method_t method, const char *uri,
         log_client_append_string(global_log_client, LOG_USER_AGENT,
                                  user_agent);
     log_client_append_u16(global_log_client, LOG_HTTP_STATUS, status);
-    log_client_append_u64(global_log_client, LOG_LENGTH, length);
+
+    if (length >= 0)
+        log_client_append_u64(global_log_client, LOG_LENGTH, length);
 
     struct {
         uint64_t received, sent;

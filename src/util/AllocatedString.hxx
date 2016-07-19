@@ -104,11 +104,11 @@ public:
 		return value == nullptr;
 	}
 
-	bool operator==(std::nullptr_t) const {
+	constexpr bool operator==(std::nullptr_t) const {
 		return value == nullptr;
 	}
 
-	bool operator!=(std::nullptr_t) const {
+	constexpr bool operator!=(std::nullptr_t) const {
 		return value != nullptr;
 	}
 
