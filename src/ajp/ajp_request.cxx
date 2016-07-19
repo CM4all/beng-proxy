@@ -10,7 +10,6 @@
 #include "header_writer.hxx"
 #include "stock/GetHandler.hxx"
 #include "stock/Item.hxx"
-#include "async.hxx"
 #include "ajp_client.hxx"
 #include "strmap.hxx"
 #include "lease.hxx"
@@ -21,6 +20,7 @@
 #include "istream/istream_hold.hxx"
 #include "net/SocketAddress.hxx"
 #include "pool.hxx"
+#include "util/Cancellable.hxx"
 
 #include <inline/compiler.h>
 
@@ -46,7 +46,7 @@ struct AjpRequest final : public StockGetHandler, Lease {
     Istream *body;
 
     HttpResponseHandler &handler;
-    struct async_operation_ref &async_ref;
+    CancellablePointer &cancel_ptr;
 
     AjpRequest(struct pool &_pool, EventLoop &_event_loop,
                const char *_protocol, const char *_remote_addr,
@@ -55,7 +55,7 @@ struct AjpRequest final : public StockGetHandler, Lease {
                http_method_t _method, const char *_uri,
                StringMap &&_headers,
                HttpResponseHandler &_handler,
-               struct async_operation_ref &_async_ref)
+               CancellablePointer &_cancel_ptr)
         :pool(_pool), event_loop(_event_loop),
          protocol(_protocol),
          remote_addr(_remote_addr), remote_host(_remote_host),
@@ -64,7 +64,7 @@ struct AjpRequest final : public StockGetHandler, Lease {
          method(_method), uri(_uri),
          headers(std::move(_headers)),
          handler(_handler),
-         async_ref(_async_ref) {
+         cancel_ptr(_cancel_ptr) {
     }
 
     /* virtual methods from class StockGetHandler */
@@ -96,7 +96,7 @@ AjpRequest::OnStockItemReady(StockItem &item)
                        remote_host, server_name,
                        server_port, is_ssl,
                        method, uri, headers, body,
-                       handler, async_ref);
+                       handler, cancel_ptr);
 }
 
 void
@@ -125,7 +125,7 @@ ajp_stock_request(struct pool &pool, EventLoop &event_loop,
                   StringMap &&headers,
                   Istream *body,
                   HttpResponseHandler &handler,
-                  struct async_operation_ref &_async_ref)
+                  CancellablePointer &_cancel_ptr)
 {
     assert(uwa.path != nullptr);
     assert(body == nullptr || !body->HasHandler());
@@ -136,12 +136,12 @@ ajp_stock_request(struct pool &pool, EventLoop &event_loop,
                                       server_name, server_port,
                                       is_ssl, method, uwa.path,
                                       std::move(headers),
-                                      handler, _async_ref);
+                                      handler, _cancel_ptr);
 
-    CancellablePointer *async_ref = &_async_ref;
+    auto *cancel_ptr = &_cancel_ptr;
     if (body != nullptr) {
         hr->body = istream_hold_new(pool, *body);
-        async_ref = &async_close_on_abort(pool, *hr->body, *async_ref);
+        cancel_ptr = &async_close_on_abort(pool, *hr->body, *cancel_ptr);
     } else
         hr->body = nullptr;
 
@@ -150,5 +150,5 @@ ajp_stock_request(struct pool &pool, EventLoop &event_loop,
                      session_sticky,
                      uwa.addresses,
                      20,
-                     *hr, *async_ref);
+                     *hr, *cancel_ptr);
 }

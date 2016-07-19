@@ -16,7 +16,7 @@ struct TcpBalancer;
 struct HttpAddress;
 class StringMap;
 class HttpResponseHandler;
-struct async_operation_ref;
+class CancellablePointer;
 
 /**
  * @param session_sticky a portion of the session id that is used to
@@ -33,6 +33,6 @@ ajp_stock_request(struct pool &pool, EventLoop &event_loop,
                   const HttpAddress &uwa,
                   StringMap &&headers, Istream *body,
                   HttpResponseHandler &handler,
-                  struct async_operation_ref &async_ref);
+                  CancellablePointer &cancel_ptr);
 
 #endif
