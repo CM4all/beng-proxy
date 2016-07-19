@@ -14,10 +14,6 @@
 
 struct http_server_request;
 
-#ifndef NO_ACCESS_LOG
-#include <daemon/log.h>
-#endif
-
 #ifdef NO_ACCESS_LOG
 
 static inline void

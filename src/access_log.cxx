@@ -11,6 +11,8 @@
 #include "http_server/Request.hxx"
 #include "log-glue.h"
 
+#include <daemon/log.h>
+
 #include <time.h>
 
 static const char *
