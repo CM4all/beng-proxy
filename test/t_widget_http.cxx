@@ -75,7 +75,7 @@ processor_lookup_widget(gcc_unused struct pool &pool,
                         gcc_unused struct processor_env &env,
                         gcc_unused unsigned options,
                         WidgetLookupHandler &handler,
-                        gcc_unused struct async_operation_ref &async_ref)
+                        gcc_unused CancellablePointer &cancel_ptr)
 {
     handler.WidgetNotFound();
 }

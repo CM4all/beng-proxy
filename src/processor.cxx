@@ -20,7 +20,6 @@
 #include "growing_buffer.hxx"
 #include "tpool.hxx"
 #include "inline_widget.hxx"
-#include "async.hxx"
 #include "rewrite_uri.hxx"
 #include "bp_global.hxx"
 #include "expansible_buffer.hxx"
@@ -43,6 +42,7 @@
 #include "util/CharUtil.hxx"
 #include "util/Macros.hxx"
 #include "util/StringView.hxx"
+#include "util/Cancellable.hxx"
 
 #include <daemon/log.h>
 
@@ -196,7 +196,7 @@ struct XmlProcessor final : XmlParserHandler, Cancellable {
 
     WidgetLookupHandler *handler;
 
-    struct async_operation_ref *async_ref;
+    CancellablePointer *cancel_ptr;
 
     XmlProcessor(struct pool &_pool, struct pool &_caller_pool,
                  Widget &_widget, struct processor_env &_env,
@@ -389,7 +389,7 @@ processor_lookup_widget(struct pool &caller_pool,
                         struct processor_env &env,
                         unsigned options,
                         WidgetLookupHandler &handler,
-                        struct async_operation_ref &async_ref)
+                        CancellablePointer &cancel_ptr)
 {
     assert(id != nullptr);
 
@@ -413,8 +413,8 @@ processor_lookup_widget(struct pool &caller_pool,
 
     pool_ref(&caller_pool);
 
-    async_ref = *processor;
-    processor->async_ref = &async_ref;
+    cancel_ptr = *processor;
+    processor->cancel_ptr = &cancel_ptr;
 
     do {
         processor->had_input = false;

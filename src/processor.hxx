@@ -47,10 +47,10 @@ struct pool;
 class Istream;
 struct parsed_uri;
 struct Widget;
-struct async_operation_ref;
 struct processor_env;
 class StringMap;
 class WidgetLookupHandler;
+class CancellablePointer;
 
 gcc_pure
 bool
@@ -79,6 +79,6 @@ processor_lookup_widget(struct pool &pool, Istream &istream,
                         struct processor_env &env,
                         unsigned options,
                         WidgetLookupHandler &handler,
-                        struct async_operation_ref &async_ref);
+                        CancellablePointer &cancel_ptr);
 
 #endif
