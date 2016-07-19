@@ -16,7 +16,6 @@ class Istream;
 struct lease;
 class StringMap;
 class HttpResponseHandler;
-struct async_operation_ref;
 struct WasServer;
 
 class WasServerHandler {

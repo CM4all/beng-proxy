@@ -15,7 +15,7 @@ struct was_stock;
 class StockMap;
 class StringMap;
 class HttpResponseHandler;
-struct async_operation_ref;
+class CancellablePointer;
 struct ChildOptions;
 template<typename T> struct ConstBuffer;
 
@@ -35,6 +35,6 @@ was_request(struct pool &pool, StockMap &was_stock,
             StringMap &headers, Istream *body,
             ConstBuffer<const char *> params,
             HttpResponseHandler &handler,
-            struct async_operation_ref &async_ref);
+            CancellablePointer &cancel_ptr);
 
 #endif

@@ -37,7 +37,7 @@ template<typename T> struct ConstBuffer;
  * @param body the request body (optional)
  * @param params application specific parameters
  * @param handler receives the response
- * @param async_ref a handle which may be used to abort the operation
+ * @param cancel_ptr a handle which may be used to abort the operation
  */
 void
 was_client_request(struct pool &pool, EventLoop &event_loop,

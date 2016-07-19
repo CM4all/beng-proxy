@@ -258,7 +258,7 @@ struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler, C
 
     /* virtual methods from class Cancellable */
     void Cancel() override {
-        /* async_operation_ref::Abort() can only be used before the
+        /* Cancellable::Cancel() can only be used before the
            response was delivered to our callback */
         assert(!response.WasSubmitted());
 

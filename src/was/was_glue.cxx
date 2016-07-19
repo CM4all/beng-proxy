@@ -47,7 +47,7 @@ class WasRequest final : public StockGetHandler, WasLease {
     ConstBuffer<const char *> parameters;
 
     HttpResponseHandler &handler;
-    struct async_operation_ref &async_ref;
+    CancellablePointer &cancel_ptr;
 
 public:
     WasRequest(struct pool &_pool,
@@ -57,13 +57,13 @@ public:
                StringMap &_headers,
                ConstBuffer<const char *> _parameters,
                HttpResponseHandler &_handler,
-               struct async_operation_ref &_async_ref)
+               CancellablePointer &_cancel_ptr)
         :pool(_pool),
          method(_method),
          uri(_uri), script_name(_script_name),
          path_info(_path_info), query_string(_query_string),
          headers(_headers), parameters(_parameters),
-         handler(_handler), async_ref(_async_ref) {
+         handler(_handler), cancel_ptr(_cancel_ptr) {
     }
 
     CancellablePointer *SetBody(Istream *_body,
@@ -114,7 +114,7 @@ WasRequest::OnStockItemReady(StockItem &item)
                        query_string,
                        headers, body,
                        parameters,
-                       handler, async_ref);
+                       handler, cancel_ptr);
 }
 
 void
@@ -143,7 +143,7 @@ was_request(struct pool &pool, StockMap &was_stock,
             StringMap &headers, Istream *body,
             ConstBuffer<const char *> parameters,
             HttpResponseHandler &handler,
-            struct async_operation_ref &async_ref)
+            CancellablePointer &cancel_ptr)
 {
     if (action == nullptr)
         action = path;
@@ -152,10 +152,10 @@ was_request(struct pool &pool, StockMap &was_stock,
                                            method, uri, script_name,
                                            path_info, query_string,
                                            headers, parameters,
-                                           handler, async_ref);
+                                           handler, cancel_ptr);
 
     was_stock_get(&was_stock, &pool,
                   options,
                   action, args,
-                  *request, *request->SetBody(body, &async_ref));
+                  *request, *request->SetBody(body, &cancel_ptr));
 }
