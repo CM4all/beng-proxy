@@ -34,7 +34,6 @@ access_log(struct http_server_request *request, const char *site,
     assert(request != nullptr);
     assert(http_method_is_valid(request->method));
     assert(http_status_is_valid(status));
-    assert(content_length >= 0);
 
     if (log_global_enabled()) {
         log_http_request(time(nullptr) * 1000000,
@@ -58,9 +57,7 @@ access_log(struct http_server_request *request, const char *site,
 
     char length_buffer[32];
     const char *length;
-    if (content_length == -2)
-        length = "?";
-    else if (content_length < 0)
+    if (content_length < 0)
         length = "-";
     else {
         snprintf(length_buffer, sizeof(length_buffer), "%llu",
