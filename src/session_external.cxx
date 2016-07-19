@@ -38,7 +38,7 @@ public:
                      nullptr, nullptr,
                      HTTP_METHOD_GET, address,
                      HttpHeaders(pool), nullptr,
-                     *this, async_ref);
+                     *this, cancel_ptr);
     }
 
     /* virtual methods from class HttpResponseHandler */

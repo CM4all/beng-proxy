@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_BACKGROUND_HXX
 #define BENG_PROXY_BACKGROUND_HXX
 
-#include "async.hxx"
+#include "util/Cancellable.hxx"
 
 #include <boost/intrusive/list.hpp>
 
@@ -22,7 +22,7 @@ struct BackgroundJob {
     typedef boost::intrusive::list_member_hook<LinkMode> SiblingsListHook;
     SiblingsListHook siblings;
 
-    struct async_operation_ref async_ref;
+    CancellablePointer cancel_ptr;
 };
 
 /**
@@ -45,19 +45,19 @@ public:
 
     /**
      * Add a background job to the manager, and return its
-     * #async_operation_ref.  This is a convenience function.
+     * #CancellablePointer.  This is a convenience function.
      */
-    struct async_operation_ref *Add2(BackgroundJob &job) {
+    CancellablePointer &Add2(BackgroundJob &job) {
         Add(job);
-        return &job.async_ref;
+        return job.cancel_ptr;
     }
 
     /**
      * Leave the job registered in the manager, and reuse its
-     * #async_operation_ref for another job iteration.
+     * #CancellablePointer for another job iteration.
      */
-    struct async_operation_ref *Reuse(BackgroundJob &job) {
-        return &job.async_ref;
+    CancellablePointer &Reuse(BackgroundJob &job) {
+        return job.cancel_ptr;
     }
 
     /**
@@ -73,7 +73,7 @@ public:
      */
     void AbortAll() {
         jobs.clear_and_dispose([this](BackgroundJob *job){
-                job->async_ref.Abort();
+                job->cancel_ptr.Cancel();
             });
     }
 };

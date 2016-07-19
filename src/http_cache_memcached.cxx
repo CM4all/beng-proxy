@@ -239,7 +239,7 @@ mcd_choice_get_callback(const char *key, bool unclean,
 
         http_cache_choice_cleanup(*pool, *request.stock, request.uri,
                                   background_callback, job,
-                                  *request.background->Add2(*job));
+                                  request.background->Add2(*job));
         pool_unref(pool);
     }
 
@@ -531,7 +531,7 @@ mcd_background_delete(MemachedStock &stock,
                            key, strlen(key),
                            nullptr,
                            &mcd_background_handler, job,
-                           *background.Add2(*job));
+                           background.Add2(*job));
     pool_unref(pool);
 }
 
@@ -548,7 +548,7 @@ http_cache_memcached_remove_uri(MemachedStock &stock,
     auto job = NewFromPool<LinkedBackgroundJob>(*pool, background);
     http_cache_choice_delete(*pool, stock, uri,
                              background_callback, job,
-                             *background.Add2(*job));
+                             background.Add2(*job));
 
     pool_unref(pool);
 }
@@ -611,7 +611,7 @@ http_cache_memcached_remove_uri_match(MemachedStock &stock,
 
     http_cache_choice_filter(*pool, stock, uri,
                              mcd_delete_filter_callback, data,
-                             *background.Add2(data->job));
+                             background.Add2(data->job));
 
     pool_unref(pool);
 }

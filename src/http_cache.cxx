@@ -263,7 +263,7 @@ http_cache_put(HttpCacheRequest &request,
                                  request.response.status, request.response.headers,
                                  value,
                                  http_cache_memcached_put_callback, job,
-                                 *request.cache.background.Add2(*job));
+                                 request.cache.background.Add2(*job));
     }
 }
 
@@ -652,7 +652,7 @@ http_cache_flush(HttpCache &cache)
 
         http_cache_memcached_flush(*pool, *cache.memcached_stock,
                                    http_cache_flush_callback, flush,
-                                   *cache.background.Add2(*flush));
+                                   cache.background.Add2(*flush));
         pool_unref(pool);
     }
 
