@@ -17,7 +17,6 @@
 #include "widget-quark.h"
 #include "session.hxx"
 #include "cookie_client.hxx"
-#include "async.hxx"
 #include "ResourceLoader.hxx"
 #include "header_writer.hxx"
 #include "header_forward.hxx"
@@ -32,6 +31,7 @@
 #include "suffix_registry.hxx"
 #include "address_suffix_registry.hxx"
 #include "util/Cast.hxx"
+#include "util/Cancellable.hxx"
 
 #include <daemon/log.h>
 
@@ -69,7 +69,7 @@ struct WidgetRequest final : HttpResponseHandler, Cancellable {
     WidgetLookupHandler *lookup_handler;
 
     HttpResponseHandler *http_handler;
-    struct async_operation_ref cancel_ptr;
+    CancellablePointer cancel_ptr;
 
     WidgetRequest(struct pool &_pool, Widget &_widget,
                   struct processor_env &_env,
