@@ -11,7 +11,6 @@
 
 #include <http/status.h>
 
-#include <sys/types.h>
 #include <stdint.h>
 
 struct http_server_request;
@@ -33,7 +32,7 @@ struct HttpServerConnectionHandler {
      * encoding overhead such as chunk headers)
      */
     void (*log)(struct http_server_request *request,
-                http_status_t status, off_t length,
+                http_status_t status, int64_t length,
                 uint64_t bytes_received, uint64_t bytes_sent,
                 void *ctx);
 

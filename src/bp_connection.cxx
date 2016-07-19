@@ -82,7 +82,7 @@ my_http_server_connection_request(struct http_server_request *request,
 
 static void
 my_http_server_connection_log(struct http_server_request *request,
-                              http_status_t status, off_t length,
+                              http_status_t status, int64_t length,
                               uint64_t bytes_received, uint64_t bytes_sent,
                               void *ctx)
 {
