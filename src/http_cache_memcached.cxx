@@ -153,7 +153,7 @@ http_cache_memcached_flush(struct pool &pool, MemachedStock &stock,
                            nullptr, 0,
                            nullptr,
                            &http_cache_memcached_flush_handler, request,
-                           &async_ref);
+                           async_ref);
 }
 
 static HttpCacheDocument *
@@ -254,7 +254,7 @@ mcd_choice_get_callback(const char *key, bool unclean,
                            key, strlen(key),
                            nullptr,
                            &http_cache_memcached_get_handler, &request,
-                           request.async_ref);
+                           *request.async_ref);
 }
 
 static void
@@ -363,7 +363,7 @@ http_cache_memcached_get(struct pool &pool, MemachedStock &stock,
                            key, strlen(key),
                            nullptr,
                            &http_cache_memcached_get_handler, request,
-                           &async_ref);
+                           async_ref);
 }
 
 static void
@@ -477,7 +477,7 @@ http_cache_memcached_put(struct pool &pool, MemachedStock &stock,
                            key, strlen(key),
                            value,
                            &http_cache_memcached_put_handler, request,
-                           &async_ref);
+                           async_ref);
 }
 
 static void
@@ -531,7 +531,7 @@ mcd_background_delete(MemachedStock &stock,
                            key, strlen(key),
                            nullptr,
                            &mcd_background_handler, job,
-                           background.Add2(*job));
+                           *background.Add2(*job));
     pool_unref(pool);
 }
 

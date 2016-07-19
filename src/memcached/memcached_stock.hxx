@@ -18,7 +18,7 @@ struct memcached_client_handler;
 struct MemachedStock;
 struct TcpBalancer;
 struct AddressList;
-struct async_operation_ref;
+class CancellablePointer;
 
 MemachedStock *
 memcached_stock_new(EventLoop &event_loop, TcpBalancer *tcp_balancer,
@@ -40,6 +40,6 @@ memcached_stock_invoke(struct pool *pool, MemachedStock *stock,
                        Istream *value,
                        const struct memcached_client_handler *handler,
                        void *handler_ctx,
-                       struct async_operation_ref *async_ref);
+                       CancellablePointer &cancel_ptr);
 
 #endif

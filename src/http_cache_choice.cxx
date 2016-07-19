@@ -252,7 +252,7 @@ http_cache_choice_get(struct pool &pool, MemachedStock &stock,
                            choice->key, strlen(choice->key),
                            nullptr,
                            &http_cache_choice_get_handler, choice,
-                           &async_ref);
+                           async_ref);
 }
 
 HttpCacheChoice *
@@ -335,7 +335,7 @@ http_cache_choice_prepend_response(enum memcached_response_status status,
                                choice->key, strlen(choice->key),
                                value,
                                &http_cache_choice_add_handler, choice,
-                               choice->async_ref);
+                               *choice->async_ref);
         break;
 
     case MEMCACHED_STATUS_NO_ERROR:
@@ -381,7 +381,7 @@ http_cache_choice_commit(HttpCacheChoice &choice,
                            nullptr, 0,
                            choice.key, strlen(choice.key), value,
                            &http_cache_choice_prepend_handler, &choice,
-                           &async_ref);
+                           async_ref);
 }
 
 static void
@@ -456,7 +456,7 @@ http_cache_choice_filter_buffer_done(void *data0, size_t length, void *ctx)
                                choice->key, strlen(choice->key),
                                nullptr,
                                &http_cache_choice_filter_set_handler, choice,
-                               choice->async_ref);
+                               *choice->async_ref);
     else {
         /* send new contents */
         /* XXX use CAS */
@@ -471,7 +471,7 @@ http_cache_choice_filter_buffer_done(void *data0, size_t length, void *ctx)
                                istream_memory_new(choice->pool, data0,
                                                   dest - (char *)data0),
                                &http_cache_choice_filter_set_handler, choice,
-                               choice->async_ref);
+                               *choice->async_ref);
     }
 }
 
@@ -547,7 +547,7 @@ http_cache_choice_filter(struct pool &pool, MemachedStock &stock,
                            choice->key, strlen(choice->key),
                            nullptr,
                            &http_cache_choice_filter_get_handler, choice,
-                           &async_ref);
+                           async_ref);
 }
 
 struct cleanup_data {
@@ -647,5 +647,5 @@ http_cache_choice_delete(struct pool &pool, MemachedStock &stock,
                            choice->key, strlen(choice->key),
                            nullptr,
                            &http_cache_choice_delete_handler, choice,
-                           &async_ref);
+                           async_ref);
 }

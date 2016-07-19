@@ -13,7 +13,6 @@
 #include "address_list.hxx"
 #include "lease.hxx"
 #include "pool.hxx"
-#include "async.hxx"
 #include "istream/istream.hxx"
 #include "net/SocketAddress.hxx"
 
@@ -70,7 +69,7 @@ struct MemcachedStockRequest final : public StockGetHandler, Lease {
     const struct memcached_client_handler &handler;
     void *const handler_ctx;
 
-    struct async_operation_ref &async_ref;
+    CancellablePointer &cancel_ptr;
 
     MemcachedStockRequest(struct pool &_pool, EventLoop &_event_loop,
                           enum memcached_opcode _opcode,
@@ -79,14 +78,14 @@ struct MemcachedStockRequest final : public StockGetHandler, Lease {
                           Istream *_value,
                           const struct memcached_client_handler &_handler,
                           void *_handler_ctx,
-                          struct async_operation_ref &_async_ref)
+                          CancellablePointer &_cancel_ptr)
         :pool(_pool), event_loop(_event_loop),
          opcode(_opcode),
          extras(_extras), extras_length(_extras_length),
          key(_key), key_length(_key_length),
          value(_value),
          handler(_handler), handler_ctx(_handler_ctx),
-         async_ref(_async_ref) {}
+         cancel_ptr(_cancel_ptr) {}
 
     /* virtual methods from class StockGetHandler */
     void OnStockItemReady(StockItem &item) override;
@@ -117,7 +116,7 @@ MemcachedStockRequest::OnStockItemReady(StockItem &_item)
                             key, key_length,
                             value,
                             &handler, handler_ctx,
-                            async_ref);
+                            cancel_ptr);
 }
 
 void
@@ -137,7 +136,7 @@ memcached_stock_invoke(struct pool *pool, MemachedStock *stock,
                        Istream *value,
                        const struct memcached_client_handler *handler,
                        void *handler_ctx,
-                       struct async_operation_ref *async_ref)
+                       CancellablePointer &cancel_ptr)
 {
     assert(extras_length <= MEMCACHED_EXTRAS_MAX);
     assert(key_length <= MEMCACHED_KEY_MAX);
@@ -149,11 +148,11 @@ memcached_stock_invoke(struct pool *pool, MemachedStock *stock,
                                                       key, key_length,
                                                       value,
                                                       *handler, handler_ctx,
-                                                      *async_ref);
+                                                      cancel_ptr);
 
     tcp_balancer_get(stock->tcp_balancer, *pool,
                      false, SocketAddress::Null(),
                      0, stock->address,
                      10,
-                     *request, *async_ref);
+                     *request, cancel_ptr);
 }

@@ -55,7 +55,7 @@ memcached_client_quark(void)
  * @param value an optional request value
  * @param handler a callback function which receives the response
  * @param handler_ctx a context pointer for the callback function
- * @param async_ref a handle which may be used to abort the operation
+ * @param cancel_ptr a handle which may be used to abort the operation
  */
 void
 memcached_client_invoke(struct pool *pool, EventLoop &event_loop,
