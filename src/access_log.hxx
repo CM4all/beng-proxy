@@ -30,6 +30,15 @@ access_log(gcc_unused struct http_server_request *request,
 
 #else
 
+/**
+ * @param length the number of response body (payload) bytes sent
+ * to our HTTP client
+ * @param bytes_received the number of raw bytes received from our
+ * HTTP client
+ * @param bytes_sent the number of raw bytes sent to our HTTP client
+ * (which includes status line, headers and transport encoding
+ * overhead such as chunk headers)
+ */
 void
 access_log(struct http_server_request *request, const char *site,
            const char *referer, const char *user_agent,
