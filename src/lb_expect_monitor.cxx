@@ -8,12 +8,12 @@
 #include "lb_monitor.hxx"
 #include "lb_config.hxx"
 #include "pool.hxx"
-#include "async.hxx"
 #include "gerrno.h"
 #include "net/ConnectSocket.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
 #include "event/SocketEvent.hxx"
+#include "util/Cancellable.hxx"
 
 #include <unistd.h>
 #include <sys/socket.h>
@@ -30,16 +30,16 @@ struct ExpectMonitor final : ConnectSocketHandler, Cancellable {
 
     LbMonitorHandler &handler;
 
-    struct async_operation_ref &async_ref;
+    CancellablePointer &cancel_ptr;
 
     ExpectMonitor(EventLoop &event_loop,
                   struct pool &_pool, const LbMonitorConfig &_config,
                   LbMonitorHandler &_handler,
-                  async_operation_ref &_async_ref)
+                  CancellablePointer &_cancel_ptr)
         :pool(_pool), config(_config),
          event(event_loop, BIND_THIS_METHOD(EventCallback)),
          handler(_handler),
-         async_ref(_async_ref) {}
+         cancel_ptr(_cancel_ptr) {}
 
     ExpectMonitor(const ExpectMonitor &other) = delete;
 
@@ -155,7 +155,7 @@ ExpectMonitor::OnSocketConnectSuccess(SocketDescriptor &&new_fd)
     event.Set(fd, EV_READ|EV_TIMEOUT);
     event.Add(expect_timeout);
 
-    async_ref = *this;
+    cancel_ptr = *this;
 
     pool_ref(&pool);
 }
@@ -170,11 +170,11 @@ expect_monitor_run(EventLoop &event_loop, struct pool &pool,
                    const LbMonitorConfig &config,
                    SocketAddress address,
                    LbMonitorHandler &handler,
-                   struct async_operation_ref &async_ref)
+                   CancellablePointer &cancel_ptr)
 {
     ExpectMonitor *expect = new ExpectMonitor(event_loop, pool, config,
                                               handler,
-                                              async_ref);
+                                              cancel_ptr);
 
     const unsigned connect_timeout = config.connect_timeout > 0
         ? config.connect_timeout
@@ -187,7 +187,7 @@ expect_monitor_run(EventLoop &event_loop, struct pool &pool,
                       SocketAddress::Null(),
                       address,
                       connect_timeout,
-                      *expect, async_ref);
+                      *expect, cancel_ptr);
 }
 
 const LbMonitorClass expect_monitor_class = {

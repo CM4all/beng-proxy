@@ -14,7 +14,7 @@
 struct pool;
 class EventLoop;
 class SocketAddress;
-struct async_operation_ref;
+class CancellablePointer;
 struct LbMonitorConfig;
 struct LbMonitor;
 
@@ -31,7 +31,7 @@ struct LbMonitorClass {
                 struct pool &pool, const LbMonitorConfig &config,
                 SocketAddress address,
                 LbMonitorHandler &handler,
-                struct async_operation_ref &async_ref);
+                CancellablePointer &cancel_ptr);
 };
 
 LbMonitor *

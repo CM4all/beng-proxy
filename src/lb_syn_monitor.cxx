@@ -8,9 +8,9 @@
 #include "lb_monitor.hxx"
 #include "lb_config.hxx"
 #include "pool.hxx"
-#include "async.hxx"
 #include "net/ConnectSocket.hxx"
 #include "net/SocketAddress.hxx"
+#include "util/Cancellable.hxx"
 
 #include <unistd.h>
 #include <sys/socket.h>
@@ -47,7 +47,7 @@ syn_monitor_run(EventLoop &event_loop, struct pool &pool,
                 const LbMonitorConfig &config,
                 SocketAddress address,
                 LbMonitorHandler &handler,
-                struct async_operation_ref &async_ref)
+                CancellablePointer &cancel_ptr)
 {
     const unsigned timeout = config.timeout > 0
         ? config.timeout
@@ -60,7 +60,7 @@ syn_monitor_run(EventLoop &event_loop, struct pool &pool,
                       address,
                       timeout,
                       *syn,
-                      async_ref);
+                      cancel_ptr);
 }
 
 const LbMonitorClass syn_monitor_class = {

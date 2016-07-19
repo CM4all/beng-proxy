@@ -6,11 +6,11 @@
 
 #include "lb_monitor.hxx"
 #include "lb_config.hxx"
-#include "async.hxx"
 #include "pool.hxx"
 #include "failure.hxx"
 #include "net/SocketAddress.hxx"
 #include "event/TimerEvent.hxx"
+#include "util/Cancellable.hxx"
 
 #include <daemon/log.h>
 
@@ -29,7 +29,7 @@ struct LbMonitor final : public LbMonitorHandler {
     const struct timeval timeout;
     TimerEvent timeout_event;
 
-    struct async_operation_ref async_ref;
+    CancellablePointer cancel_ptr;
 
     bool state = true;
     bool fade = false;
@@ -42,8 +42,8 @@ struct LbMonitor final : public LbMonitorHandler {
     ~LbMonitor() {
         interval_event.Cancel();
 
-        if (async_ref.IsDefined())
-            async_ref.Abort();
+        if (cancel_ptr)
+            cancel_ptr.Cancel();
 
         pool_unref(&pool);
     }
@@ -62,7 +62,7 @@ private:
 void
 LbMonitor::Success()
 {
-    async_ref.Clear();
+    cancel_ptr = nullptr;
     timeout_event.Cancel();
 
     if (!state)
@@ -87,7 +87,7 @@ LbMonitor::Success()
 void
 LbMonitor::Fade()
 {
-    async_ref.Clear();
+    cancel_ptr = nullptr;
     timeout_event.Cancel();
 
     if (!fade)
@@ -104,7 +104,7 @@ LbMonitor::Fade()
 void
 LbMonitor::Timeout()
 {
-    async_ref.Clear();
+    cancel_ptr = nullptr;
     timeout_event.Cancel();
 
     daemon_log(state ? 3 : 6, "monitor timeout: %s\n", name);
@@ -118,7 +118,7 @@ LbMonitor::Timeout()
 void
 LbMonitor::Error(GError *error)
 {
-    async_ref.Clear();
+    cancel_ptr = nullptr;
     timeout_event.Cancel();
 
     if (state)
@@ -138,7 +138,7 @@ LbMonitor::Error(GError *error)
 inline void
 LbMonitor::IntervalCallback()
 {
-    assert(!async_ref.IsDefined());
+    assert(!cancel_ptr);
 
     daemon_log(6, "running monitor %s\n", name);
 
@@ -146,18 +146,18 @@ LbMonitor::IntervalCallback()
         timeout_event.Add(timeout);
 
     struct pool *run_pool = pool_new_linear(&pool, "monitor_run", 8192);
-    class_.run(event_loop, *run_pool, config, address, *this, async_ref);
+    class_.run(event_loop, *run_pool, config, address, *this, cancel_ptr);
     pool_unref(run_pool);
 }
 
 inline void
 LbMonitor::TimeoutCallback()
 {
-    assert(async_ref.IsDefined());
+    assert(cancel_ptr);
 
     daemon_log(6, "monitor timeout: %s\n", name);
 
-    async_ref.AbortAndClear();
+    cancel_ptr.CancelAndClear();
 
     state = false;
     failure_set(address, FAILURE_MONITOR, std::chrono::seconds::zero());
@@ -179,7 +179,6 @@ LbMonitor::LbMonitor(EventLoop &_event_loop,
      timeout{time_t(config.timeout), 0},
      timeout_event(event_loop, BIND_THIS_METHOD(TimeoutCallback))
 {
-    async_ref.Clear();
     pool_ref(&pool);
 }
 

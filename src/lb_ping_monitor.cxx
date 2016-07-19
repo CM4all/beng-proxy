@@ -8,8 +8,8 @@
 #include "lb_monitor.hxx"
 #include "ping.hxx"
 #include "pool.hxx"
-#include "async.hxx"
 #include "net/SocketAddress.hxx"
+#include "util/Cancellable.hxx"
 
 class LbPingClientHandler final : public PingClientHandler {
     LbMonitorHandler &handler;
@@ -36,11 +36,11 @@ ping_monitor_run(EventLoop &event_loop, struct pool &pool,
                  gcc_unused const LbMonitorConfig &config,
                  SocketAddress address,
                  LbMonitorHandler &handler,
-                 struct async_operation_ref &async_ref)
+                 CancellablePointer &cancel_ptr)
 {
     ping(event_loop, pool, address,
          *NewFromPool<LbPingClientHandler>(pool, handler),
-         async_ref);
+         cancel_ptr);
 }
 
 const LbMonitorClass ping_monitor_class = {
