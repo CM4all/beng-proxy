@@ -27,6 +27,7 @@ class Istream;
 class EventLoop;
 class HttpHeaders;
 class HttpResponseHandler;
+class CancellablePointer;
 
 struct GlueHttpServerAddress {
     const char *const host_and_port;
@@ -65,7 +66,7 @@ public:
                  http_method_t method, const char *uri,
                  HttpHeaders &&headers, Istream *body,
                  HttpResponseHandler &handler,
-                 struct async_operation_ref &async_ref);
+                 CancellablePointer &cancel_ptr);
 
     GlueHttpResponse Request(EventLoop &event_loop,
                              struct pool &p, GlueHttpServerAddress &server,

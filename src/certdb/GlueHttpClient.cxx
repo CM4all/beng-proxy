@@ -17,7 +17,6 @@
 #include "filtered_socket.hxx"
 #include "ssl/ssl_client.hxx"
 #include "event/Loop.hxx"
-#include "async.hxx"
 #include "istream/Handler.hxx"
 #include "istream/Pointer.hxx"
 #include "fb_pool.hxx"
@@ -113,7 +112,7 @@ GlueHttpClient::Request(struct pool &p, EventLoop &event_loop,
                         http_method_t method, const char *uri,
                         HttpHeaders &&headers, Istream *body,
                         HttpResponseHandler &handler,
-                        struct async_operation_ref &async_ref)
+                        CancellablePointer &cancel_ptr)
 {
     const SocketFilter *filter = nullptr;
     SocketFilterFactory *filter_factory = nullptr;
@@ -135,7 +134,7 @@ GlueHttpClient::Request(struct pool &p, EventLoop &event_loop,
                  filter, filter_factory,
                  method, *address,
                  std::move(headers), body,
-                 handler, async_ref);
+                 handler, cancel_ptr);
 }
 
 class GlueHttpRequest final : IstreamHandler, public HttpResponseHandler {
@@ -218,11 +217,11 @@ GlueHttpClient::Request(EventLoop &event_loop,
                         http_method_t method, const char *uri,
                         HttpHeaders &&headers, Istream *body)
 {
-    struct async_operation_ref async_ref;
+    CancellablePointer cancel_ptr;
 
     GlueHttpRequest request(p);
     Request(p, event_loop, server, method, uri, std::move(headers), body,
-            request, async_ref);
+            request, cancel_ptr);
     while (!request.IsDone() && event_loop.LoopOnce()) {}
 
     request.CheckThrowError();
