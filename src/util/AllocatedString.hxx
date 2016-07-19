@@ -104,12 +104,12 @@ public:
 		return value == nullptr;
 	}
 
-	bool operator==(std::nullptr_t n) const {
-		return value == n;
+	constexpr bool operator==(std::nullptr_t) const {
+		return value == nullptr;
 	}
 
-	bool operator!=(std::nullptr_t n) const {
-		return value != n;
+	constexpr bool operator!=(std::nullptr_t) const {
+		return value != nullptr;
 	}
 
 	constexpr const_pointer c_str() const {
