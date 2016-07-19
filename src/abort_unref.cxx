@@ -24,11 +24,11 @@ struct UnrefOnAbort final : Cancellable {
 #endif
 
     UnrefOnAbort(struct pool &_pool,
-                 struct async_operation_ref &async_ref
+                 CancellablePointer &_cancel_ptr
                  TRACE_ARGS_DECL_)
         :pool(_pool)
          TRACE_ARGS_INIT {
-        async_ref = *this;
+        _cancel_ptr = *this;
     }
 
     /* virtual methods from class Cancellable */
@@ -45,10 +45,10 @@ struct UnrefOnAbort final : Cancellable {
 
 struct async_operation_ref &
 async_unref_on_abort_impl(struct pool &pool,
-                          struct async_operation_ref &async_ref
+                          CancellablePointer &cancel_ptr
                           TRACE_ARGS_DECL)
 {
-    auto uoa = NewFromPool<UnrefOnAbort>(pool, pool, async_ref
+    auto uoa = NewFromPool<UnrefOnAbort>(pool, pool, cancel_ptr
                                          TRACE_ARGS_FWD);
     return uoa->ref;
 }

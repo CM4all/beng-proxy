@@ -558,7 +558,7 @@ filter_cache_miss(FilterCache &cache, struct pool &caller_pool,
                   http_status_t status, StringMap &&headers,
                   Istream *body, const char *body_etag,
                   HttpResponseHandler &_handler,
-                  struct async_operation_ref &async_ref)
+                  CancellablePointer &cancel_ptr)
 {
     /* the cache request may live longer than the caller pool, so
        allocate a new pool for it from cache->pool */
@@ -575,7 +575,7 @@ filter_cache_miss(FilterCache &cache, struct pool &caller_pool,
                                       status, std::move(headers),
                                       body, body_etag,
                                       *request,
-                                      async_unref_on_abort(caller_pool, async_ref));
+                                      async_unref_on_abort(caller_pool, cancel_ptr));
     pool_unref(pool);
 }
 
