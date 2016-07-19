@@ -18,7 +18,7 @@ struct HttpCacheChoice;
 struct HttpCacheResponseInfo;
 class StringMap;
 struct MemachedStock;
-struct async_operation_ref;
+class CancellablePointer;
 
 struct HttpCacheChoiceInfo {
     std::chrono::system_clock::time_point expires;
@@ -45,7 +45,7 @@ http_cache_choice_get(struct pool &pool, MemachedStock &stock,
                       const char *uri, const StringMap *request_headers,
                       http_cache_choice_get_t callback,
                       void *callback_ctx,
-                      struct async_operation_ref &async_ref);
+                      CancellablePointer &cancel_ptr);
 
 HttpCacheChoice *
 http_cache_choice_prepare(struct pool &pool, const char *uri,
@@ -57,7 +57,7 @@ http_cache_choice_commit(HttpCacheChoice &choice,
                          MemachedStock &stock,
                          http_cache_choice_commit_t callback,
                          void *callback_ctx,
-                         struct async_operation_ref &async_ref);
+                         CancellablePointer &cancel_ptr);
 
 /**
  * Filter the choice record, keep only items accepted by the filter
@@ -69,7 +69,7 @@ http_cache_choice_filter(struct pool &pool, MemachedStock &stock,
                          const char *uri,
                          http_cache_choice_filter_t callback,
                          void *callback_ctx,
-                         struct async_operation_ref &async_ref);
+                         CancellablePointer &cancel_ptr);
 
 /**
  * Clean up the choice record, removing expired items.
@@ -79,7 +79,7 @@ http_cache_choice_cleanup(struct pool &pool, MemachedStock &stock,
                           const char *uri,
                           http_cache_choice_cleanup_t callback,
                           void *callback_ctx,
-                          struct async_operation_ref &async_ref);
+                          CancellablePointer &cancel_ptr);
 
 /**
  * Deletes the choice record.
@@ -93,6 +93,6 @@ http_cache_choice_delete(struct pool &pool, MemachedStock &stock,
                          const char *uri,
                          http_cache_choice_delete_t callback,
                          void *callback_ctx,
-                         struct async_operation_ref &async_ref);
+                         CancellablePointer &cancel_ptr);
 
 #endif

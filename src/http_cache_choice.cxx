@@ -20,7 +20,6 @@
 #include "istream/istream.hxx"
 #include "istream/istream_memory.hxx"
 #include "pool.hxx"
-#include "async.hxx"
 #include "util/djbhash.h"
 #include "util/ConstBuffer.hxx"
 #include "util/WritableBuffer.hxx"
@@ -83,18 +82,18 @@ struct HttpCacheChoice {
 
     void *callback_ctx;
 
-    struct async_operation_ref *async_ref;
+    CancellablePointer *cancel_ptr;
 
     HttpCacheChoice(struct pool &_pool, MemachedStock &_stock,
                     const char *_uri, const StringMap *_request_headers,
                     http_cache_choice_get_t _callback,
                     void *_callback_ctx,
-                    struct async_operation_ref &_async_ref)
+                    CancellablePointer &_cancel_ptr)
         :pool(&_pool), stock(&_stock),
          uri(_uri), key(http_cache_choice_key(*pool, uri)),
          request_headers(_request_headers),
          callback_ctx(_callback_ctx),
-         async_ref(&_async_ref) {
+         cancel_ptr(&_cancel_ptr) {
         callback.get = _callback;
     }
 
@@ -102,11 +101,11 @@ struct HttpCacheChoice {
                     const char *_uri,
                     http_cache_choice_filter_t _callback,
                     void *_callback_ctx,
-                    struct async_operation_ref &_async_ref)
+                    CancellablePointer &_cancel_ptr)
         :pool(&_pool), stock(&_stock),
          uri(_uri), key(http_cache_choice_key(*pool, uri)),
          callback_ctx(_callback_ctx),
-         async_ref(&_async_ref) {
+         cancel_ptr(&_cancel_ptr) {
         callback.filter = _callback;
     }
 
@@ -114,11 +113,11 @@ struct HttpCacheChoice {
                     const char *_uri,
                     http_cache_choice_delete_t _callback,
                     void *_callback_ctx,
-                    struct async_operation_ref &_async_ref)
+                    CancellablePointer &_cancel_ptr)
         :pool(&_pool), stock(&_stock),
          uri(_uri), key(http_cache_choice_key(*pool, uri)),
          callback_ctx(_callback_ctx),
-         async_ref(&_async_ref) {
+         cancel_ptr(&_cancel_ptr) {
         callback.delete_ = _callback;
     }
 
@@ -254,7 +253,7 @@ http_cache_choice_get_response(enum memcached_response_status status,
 
     sink_buffer_new(*choice->pool, *value,
                     http_cache_choice_buffer_handler, choice,
-                    *choice->async_ref);
+                    *choice->cancel_ptr);
 }
 
 static void
@@ -275,12 +274,12 @@ http_cache_choice_get(struct pool &pool, MemachedStock &stock,
                       const char *uri, const StringMap *request_headers,
                       http_cache_choice_get_t callback,
                       void *callback_ctx,
-                      struct async_operation_ref &async_ref)
+                      CancellablePointer &cancel_ptr)
 {
     auto choice = NewFromPool<HttpCacheChoice>(pool, pool, stock, uri,
                                                request_headers,
                                                callback, callback_ctx,
-                                               async_ref);
+                                               cancel_ptr);
 
     memcached_stock_invoke(&pool, &stock,
                            MEMCACHED_OPCODE_GET,
@@ -288,7 +287,7 @@ http_cache_choice_get(struct pool &pool, MemachedStock &stock,
                            choice->key, strlen(choice->key),
                            nullptr,
                            &http_cache_choice_get_handler, choice,
-                           async_ref);
+                           cancel_ptr);
 }
 
 HttpCacheChoice *
@@ -366,7 +365,7 @@ http_cache_choice_prepend_response(enum memcached_response_status status,
                                choice->key, strlen(choice->key),
                                value,
                                &http_cache_choice_add_handler, choice,
-                               *choice->async_ref);
+                               *choice->cancel_ptr);
         break;
 
     case MEMCACHED_STATUS_NO_ERROR:
@@ -394,13 +393,13 @@ http_cache_choice_commit(HttpCacheChoice &choice,
                          MemachedStock &stock,
                          http_cache_choice_commit_t callback,
                          void *callback_ctx,
-                         struct async_operation_ref &async_ref)
+                         CancellablePointer &cancel_ptr)
 {
     choice.key = http_cache_choice_key(*choice.pool, choice.uri);
     choice.stock = &stock;
     choice.callback.commit = callback;
     choice.callback_ctx = callback_ctx;
-    choice.async_ref = &async_ref;
+    choice.cancel_ptr = &cancel_ptr;
 
     cache_log(5, "prepend '%s'\n", choice.key);
 
@@ -412,7 +411,7 @@ http_cache_choice_commit(HttpCacheChoice &choice,
                            nullptr, 0,
                            choice.key, strlen(choice.key), value,
                            &http_cache_choice_prepend_handler, &choice,
-                           async_ref);
+                           cancel_ptr);
 }
 
 static void
@@ -487,7 +486,7 @@ http_cache_choice_filter_buffer_done(void *data0, size_t length, void *ctx)
                                choice->key, strlen(choice->key),
                                nullptr,
                                &http_cache_choice_filter_set_handler, choice,
-                               *choice->async_ref);
+                               *choice->cancel_ptr);
     else {
         /* send new contents */
         /* XXX use CAS */
@@ -502,7 +501,7 @@ http_cache_choice_filter_buffer_done(void *data0, size_t length, void *ctx)
                                istream_memory_new(choice->pool, data0,
                                                   dest - (char *)data0),
                                &http_cache_choice_filter_set_handler, choice,
-                               *choice->async_ref);
+                               *choice->cancel_ptr);
     }
 }
 
@@ -539,7 +538,7 @@ http_cache_choice_filter_get_response(enum memcached_response_status status,
 
     sink_buffer_new(*choice->pool, *value,
                     http_cache_choice_filter_buffer_handler, choice,
-                    *choice->async_ref);
+                    *choice->cancel_ptr);
 }
 
 static void
@@ -560,11 +559,11 @@ http_cache_choice_filter(struct pool &pool, MemachedStock &stock,
                          const char *uri,
                          http_cache_choice_filter_t callback,
                          void *callback_ctx,
-                         struct async_operation_ref &async_ref)
+                         CancellablePointer &cancel_ptr)
 {
     auto choice = NewFromPool<HttpCacheChoice>(pool, pool, stock, uri,
                                                callback, callback_ctx,
-                                               async_ref);
+                                               cancel_ptr);
 
     memcached_stock_invoke(&pool, &stock,
                            MEMCACHED_OPCODE_GET,
@@ -572,7 +571,7 @@ http_cache_choice_filter(struct pool &pool, MemachedStock &stock,
                            choice->key, strlen(choice->key),
                            nullptr,
                            &http_cache_choice_filter_get_handler, choice,
-                           async_ref);
+                           cancel_ptr);
 }
 
 struct HttpCacheChoiceCleanup {
@@ -614,14 +613,14 @@ http_cache_choice_cleanup(struct pool &pool, MemachedStock &stock,
                           const char *uri,
                           http_cache_choice_cleanup_t callback,
                           void *callback_ctx,
-                          struct async_operation_ref &async_ref)
+                          CancellablePointer &cancel_ptr)
 {
     auto cleanup = NewFromPool<HttpCacheChoiceCleanup>(pool, callback,
                                                        callback_ctx);
 
     http_cache_choice_filter(pool, stock, uri,
                              http_cache_choice_cleanup_filter_callback, cleanup,
-                             async_ref);
+                             cancel_ptr);
 }
 
 static void
@@ -658,11 +657,11 @@ http_cache_choice_delete(struct pool &pool, MemachedStock &stock,
                          const char *uri,
                          http_cache_choice_delete_t callback,
                          void *callback_ctx,
-                         struct async_operation_ref &async_ref)
+                         CancellablePointer &cancel_ptr)
 {
     auto choice = NewFromPool<HttpCacheChoice>(pool, pool, stock, uri,
                                                callback, callback_ctx,
-                                               async_ref);
+                                               cancel_ptr);
 
     memcached_stock_invoke(&pool, &stock,
                            MEMCACHED_OPCODE_GET,
@@ -670,5 +669,5 @@ http_cache_choice_delete(struct pool &pool, MemachedStock &stock,
                            choice->key, strlen(choice->key),
                            nullptr,
                            &http_cache_choice_delete_handler, choice,
-                           async_ref);
+                           cancel_ptr);
 }
