@@ -13,7 +13,6 @@ struct pool;
 struct StockItem;
 struct FcgiStock;
 struct ChildOptions;
-struct async_operation_ref;
 template<typename T> struct ConstBuffer;
 class EventLoop;
 class SpawnService;

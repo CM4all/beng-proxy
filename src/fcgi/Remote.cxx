@@ -16,11 +16,11 @@
 #include "address_list.hxx"
 #include "pool.hxx"
 #include "strmap.hxx"
-#include "async.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream_hold.hxx"
 #include "net/SocketAddress.hxx"
 #include "util/ConstBuffer.hxx"
+#include "util/Cancellable.hxx"
 
 #include <daemon/log.h>
 
@@ -142,9 +142,9 @@ fcgi_remote_request(struct pool *pool, EventLoop &event_loop,
                     ConstBuffer<const char *> params,
                     int stderr_fd,
                     HttpResponseHandler &handler,
-                    struct async_operation_ref &_async_ref)
+                    CancellablePointer &_cancel_ptr)
 {
-    CancellablePointer *cancel_ptr = &_async_ref;
+    CancellablePointer *cancel_ptr = &_cancel_ptr;
 
     auto request = NewFromPool<FcgiRemoteRequest>(*pool, *pool, event_loop,
                                                   method, uri, path,
