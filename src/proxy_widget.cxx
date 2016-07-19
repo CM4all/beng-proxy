@@ -43,7 +43,7 @@ struct ProxyWidget final : WidgetLookupHandler, HttpResponseHandler, Cancellable
      */
     const struct widget_ref *ref;
 
-    struct async_operation_ref async_ref;
+    CancellablePointer cancel_ptr;
 
     ProxyWidget(Request &_request, Widget &_widget,
                 const struct widget_ref *_ref)
@@ -180,7 +180,7 @@ ProxyWidget::Continue()
         frame_parent_widget(&request.pool, widget,
                             ref->id,
                             &request.env,
-                            *this, async_ref);
+                            *this, cancel_ptr);
     } else {
         const struct processor_env *env = &request.env;
 
@@ -219,7 +219,7 @@ ProxyWidget::Continue()
         frame_top_widget(&request.pool, widget,
                          &request.env,
                          *this,
-                         async_ref);
+                         cancel_ptr);
     }
 }
 
@@ -251,7 +251,7 @@ ProxyWidget::WidgetFound(Widget &_widget)
         ResolveWidget(request.pool, *widget,
                       *global_translate_cache,
                       BIND_THIS_METHOD(ResolverCallback),
-                      async_ref);
+                      cancel_ptr);
         return;
     }
 
@@ -295,7 +295,7 @@ ProxyWidget::Cancel()
        is cancelled */
     widget->Cancel();
 
-    async_ref.Abort();
+    cancel_ptr.Cancel();
 }
 
 /*
@@ -320,5 +320,5 @@ proxy_widget(Request &request2,
     processor_lookup_widget(request2.pool, body,
                             widget, proxy_ref->id,
                             request2.env, options,
-                            *proxy, proxy->async_ref);
+                            *proxy, proxy->cancel_ptr);
 }
