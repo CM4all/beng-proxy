@@ -40,7 +40,10 @@ struct TcpStockRequest {
 struct TcpStockConnection final
     : HeapStockItem, ConnectSocketHandler, Cancellable {
 
-    struct async_operation_ref client_socket;
+    /**
+     * To cancel the ClientSocket.
+     */
+    CancellablePointer cancel_ptr;
 
     int fd = -1;
 
@@ -49,12 +52,12 @@ struct TcpStockConnection final
     SocketEvent event;
 
     TcpStockConnection(CreateStockItem c, int _domain,
-                       CancellablePointer &cancel_ptr)
+                       CancellablePointer &_cancel_ptr)
         :HeapStockItem(c), domain(_domain),
          event(c.stock.GetEventLoop(), BIND_THIS_METHOD(EventCallback)) {
-        cancel_ptr = *this;
+        _cancel_ptr = *this;
 
-        client_socket.Clear();
+        cancel_ptr = nullptr;
     }
 
     ~TcpStockConnection() override;
@@ -63,9 +66,9 @@ struct TcpStockConnection final
 
     /* virtual methods from class Cancellable */
     void Cancel() override {
-        assert(client_socket.IsDefined());
+        assert(cancel_ptr);
 
-        client_socket.Abort();
+        cancel_ptr.Cancel();
         InvokeCreateAborted();
     }
 
@@ -121,7 +124,7 @@ TcpStockConnection::EventCallback(short events)
 void
 TcpStockConnection::OnSocketConnectSuccess(SocketDescriptor &&new_fd)
 {
-    client_socket.Clear();
+    cancel_ptr = nullptr;
 
     fd = new_fd.Steal();
     event.Set(fd, EV_READ|EV_TIMEOUT);
@@ -132,7 +135,7 @@ TcpStockConnection::OnSocketConnectSuccess(SocketDescriptor &&new_fd)
 void
 TcpStockConnection::OnSocketConnectError(GError *error)
 {
-    client_socket.Clear();
+    cancel_ptr = nullptr;
 
     g_prefix_error(&error, "failed to connect to '%s': ", GetStockName());
     InvokeCreateError(error);
@@ -163,13 +166,13 @@ tcp_stock_create(gcc_unused void *ctx,
                       request->address,
                       request->timeout,
                       *connection,
-                      connection->client_socket);
+                      connection->cancel_ptr);
 }
 
 TcpStockConnection::~TcpStockConnection()
 {
-    if (client_socket.IsDefined())
-        client_socket.Abort();
+    if (cancel_ptr)
+        cancel_ptr.Cancel();
     else if (fd >= 0) {
         event.Delete();
         close(fd);
