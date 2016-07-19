@@ -10,7 +10,6 @@
 #include "shm/dpool.hxx"
 #include "random.hxx"
 #include "crash.hxx"
-#include "system/clock.h"
 #include "event/TimerEvent.hxx"
 #include "util/StaticArray.hxx"
 #include "util/RefCount.hxx"

@@ -12,7 +12,6 @@
 #include "tpool.hxx"
 #include "pool.hxx"
 #include "shm/dpool.hxx"
-#include "system/clock.h"
 #include "util/StringView.hxx"
 
 #include <iterator>
