@@ -21,6 +21,7 @@
 #include "istream/istream_chunked.hxx"
 #include "istream/istream_dechunk.hxx"
 #include "istream/istream_string.hxx"
+#include "istream/istream_null.hxx"
 #include "async.hxx"
 #include "growing_buffer.hxx"
 #include "please.hxx"
@@ -617,8 +618,10 @@ HttpClient::HeadersFinished()
         (header_connection != nullptr &&
          http_list_contains_i(header_connection, "keep-alive"));
 
-    if (http_status_is_empty(response.status) ||
-        response.no_body) {
+    if (http_status_is_empty(response.status))
+        response.no_body = true;
+
+    if (response.no_body) {
         response.body = nullptr;
         response.read_state = response::READ_BODY;
         return true;
@@ -887,9 +890,12 @@ HttpClient::FeedHeaders(const void *data, size_t length)
     const ScopePoolRef ref(GetPool() TRACE_ARGS);
     const ScopePoolRef caller_ref(caller_pool TRACE_ARGS);
 
+    auto *body = response.body;
+    if (body == nullptr && !response.no_body)
+        body = istream_null_new(&caller_pool);
+
     response.in_handler = true;
-    request.handler.InvokeResponse(response.status, response.headers,
-                                   response.body);
+    request.handler.InvokeResponse(response.status, response.headers, body);
     response.in_handler = false;
 
     if (!IsValid())
