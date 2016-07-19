@@ -133,7 +133,7 @@ struct FilterCacheRequest final : HttpResponseHandler, RubberSinkHandler {
          * A handle to abort the sink_rubber that copies response body
          * data into a new rubber allocation.
          */
-        struct async_operation_ref async_ref;
+        CancellablePointer cancel_ptr;
     } response;
 
     /**
@@ -215,7 +215,7 @@ static void
 filter_cache_request_release(struct FilterCacheRequest *request)
 {
     assert(request != nullptr);
-    assert(!request->response.async_ref.IsDefined());
+    assert(!request->response.cancel_ptr);
 
     request->timeout_event.Cancel();
 
@@ -236,10 +236,9 @@ static void
 filter_cache_request_abort(struct FilterCacheRequest *request)
 {
     assert(request != nullptr);
-    assert(request->response.async_ref.IsDefined());
+    assert(!request->response.cancel_ptr);
 
-    request->response.async_ref.Abort();
-    request->response.async_ref.Clear();
+    request->response.cancel_ptr.CancelAndClear();
     filter_cache_request_release(request);
 }
 
@@ -358,7 +357,7 @@ FilterCacheRequest::OnTimeout()
 void
 FilterCacheRequest::RubberDone(unsigned rubber_id, size_t size)
 {
-    response.async_ref.Clear();
+    response.cancel_ptr = nullptr;
 
     /* the request was successful, and all of the body data has been
        saved: add it to the cache */
@@ -370,7 +369,7 @@ FilterCacheRequest::RubberDone(unsigned rubber_id, size_t size)
 void
 FilterCacheRequest::RubberOutOfMemory()
 {
-    response.async_ref.Clear();
+    response.cancel_ptr = nullptr;
 
     cache_log(4, "filter_cache: nocache oom %s\n", info.key);
     filter_cache_request_release(this);
@@ -379,7 +378,7 @@ FilterCacheRequest::RubberOutOfMemory()
 void
 FilterCacheRequest::RubberTooLarge()
 {
-    response.async_ref.Clear();
+    response.cancel_ptr = nullptr;
 
     cache_log(4, "filter_cache: nocache too large %s\n", info.key);
     filter_cache_request_release(this);
@@ -388,7 +387,7 @@ FilterCacheRequest::RubberTooLarge()
 void
 FilterCacheRequest::RubberError(GError *error)
 {
-    response.async_ref.Clear();
+    response.cancel_ptr = nullptr;
 
     cache_log(4, "filter_cache: body_abort %s: %s\n",
               info.key, error->message);
@@ -421,7 +420,7 @@ FilterCacheRequest::OnHttpResponse(http_status_t status, StringMap &&headers,
     }
 
     if (body == nullptr) {
-        response.async_ref.Clear();
+        response.cancel_ptr = nullptr;
 
         response.status = status;
         response.headers = &headers;
@@ -448,14 +447,14 @@ FilterCacheRequest::OnHttpResponse(http_status_t status, StringMap &&headers,
         sink_rubber_new(pool, istream_tee_second(*body),
                         *cache.rubber, cacheable_size_limit,
                         *this,
-                        response.async_ref);
+                        response.cancel_ptr);
     }
 
     handler.InvokeResponse(status, std::move(headers), body);
     pool_unref(&caller_pool);
 
     if (body != nullptr) {
-        if (response.async_ref.IsDefined())
+        if (response.cancel_ptr)
             /* just in case our handler has closed the body without
                looking at it: call istream_read() to start reading */
             istream_tee_second(*body).Read();
