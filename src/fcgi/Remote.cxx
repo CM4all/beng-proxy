@@ -145,6 +145,7 @@ fcgi_remote_request(struct pool *pool, EventLoop &event_loop,
                     struct async_operation_ref &_async_ref)
 {
     CancellablePointer *cancel_ptr = &_async_ref;
+
     auto request = NewFromPool<FcgiRemoteRequest>(*pool, *pool, event_loop,
                                                   method, uri, path,
                                                   script_name, path_info,

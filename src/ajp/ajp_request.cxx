@@ -138,7 +138,7 @@ ajp_stock_request(struct pool &pool, EventLoop &event_loop,
                                       std::move(headers),
                                       handler, _async_ref);
 
-    auto *async_ref = &_async_ref;
+    CancellablePointer *async_ref = &_async_ref;
     if (body != nullptr) {
         hr->body = istream_hold_new(pool, *body);
         async_ref = &async_close_on_abort(pool, *hr->body, *async_ref);

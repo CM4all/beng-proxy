@@ -5,14 +5,14 @@
  */
 
 #include "abort_close.hxx"
-#include "async.hxx"
 #include "pool.hxx"
 #include "istream/istream.hxx"
 #include "util/Cast.hxx"
+#include "util/Cancellable.hxx"
 
 struct CloseOnAbort final : Cancellable {
     Istream &istream;
-    struct async_operation_ref ref;
+    CancellablePointer cancel_ptr;
 
     CloseOnAbort(Istream &_istream,
                  CancellablePointer &_cancel_ptr)
@@ -22,7 +22,7 @@ struct CloseOnAbort final : Cancellable {
 
     /* virtual methods from class Cancellable */
     void Cancel() override {
-        ref.Abort();
+        cancel_ptr.Cancel();
         istream.CloseUnused();
     }
 };
@@ -32,21 +32,21 @@ struct CloseOnAbort final : Cancellable {
  *
  */
 
-struct async_operation_ref &
+CancellablePointer &
 async_close_on_abort(struct pool &pool, Istream &istream,
                      CancellablePointer &cancel_ptr)
 {
     assert(!istream.HasHandler());
 
     auto coa = NewFromPool<struct CloseOnAbort>(pool, istream, cancel_ptr);
-    return coa->ref;
+    return coa->cancel_ptr;
 }
 
-struct async_operation_ref &
+CancellablePointer &
 async_optional_close_on_abort(struct pool &pool, Istream *istream,
-                              struct async_operation_ref &async_ref)
+                              CancellablePointer &cancel_ptr)
 {
     return istream != nullptr
-        ? async_close_on_abort(pool, *istream, async_ref)
-        : async_ref;
+        ? async_close_on_abort(pool, *istream, cancel_ptr)
+        : cancel_ptr;
 }

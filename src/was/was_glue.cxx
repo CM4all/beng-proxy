@@ -66,16 +66,16 @@ public:
          handler(_handler), async_ref(_async_ref) {
     }
 
-    struct async_operation_ref *SetBody(Istream *_body,
-                                        struct async_operation_ref *_async_ref) {
+    CancellablePointer *SetBody(Istream *_body,
+                                CancellablePointer *_cancel_ptr) {
         assert(body == nullptr);
 
         if (_body != nullptr) {
             body = istream_hold_new(pool, *_body);
-            _async_ref = &async_close_on_abort(pool, *body, *_async_ref);
+            _cancel_ptr = &async_close_on_abort(pool, *body, *_cancel_ptr);
         }
 
-        return _async_ref;
+        return _cancel_ptr;
     }
 
     /* virtual methods from class StockGetHandler */

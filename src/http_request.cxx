@@ -217,7 +217,7 @@ http_request(struct pool &pool, EventLoop &event_loop,
                                        method, uwa, std::move(headers),
                                        handler, _async_ref);
 
-    struct async_operation_ref *async_ref = &_async_ref;
+    CancellablePointer *async_ref = &_async_ref;
     if (body != nullptr) {
         body = istream_hold_new(pool, *body);
         async_ref = &async_close_on_abort(pool, *body, *async_ref);
