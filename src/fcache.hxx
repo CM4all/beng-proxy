@@ -17,9 +17,9 @@ class ResourceLoader;
 struct ResourceAddress;
 class StringMap;
 class HttpResponseHandler;
-struct async_operation_ref;
 struct AllocatorStats;
 class FilterCache;
+class CancellablePointer;
 
 FilterCache *
 filter_cache_new(struct pool *pool, size_t max_size,
@@ -53,6 +53,6 @@ filter_cache_request(FilterCache &cache,
                      http_status_t status, StringMap &&headers,
                      Istream *body,
                      HttpResponseHandler &handler,
-                     struct async_operation_ref &async_ref);
+                     CancellablePointer &cancel_ptr);
 
 #endif

@@ -19,7 +19,7 @@ FailingResourceLoader::SendRequest(struct pool &,
                                    StringMap &&,
                                    Istream *body, const char *,
                                    HttpResponseHandler &handler,
-                                   struct async_operation_ref &)
+                                   CancellablePointer &)
 {
     if (body != nullptr)
         body->CloseUnused();

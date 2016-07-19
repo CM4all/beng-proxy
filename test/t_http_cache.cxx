@@ -195,7 +195,7 @@ public:
                      http_status_t status, StringMap &&headers,
                      Istream *body, const char *body_etag,
                      HttpResponseHandler &handler,
-                     struct async_operation_ref &async_ref) override;
+                     CancellablePointer &cancel_ptr) override;
 };
 
 void
@@ -207,7 +207,7 @@ MyResourceLoader::SendRequest(struct pool &pool,
                               StringMap &&headers,
                               Istream *body, gcc_unused const char *body_etag,
                               HttpResponseHandler &handler,
-                              gcc_unused struct async_operation_ref &async_ref)
+                              gcc_unused CancellablePointer &cancel_ptr)
 {
     const auto *request = &requests[current_request];
     StringMap *expected_rh;
@@ -307,7 +307,7 @@ run_cache_test(struct pool *root_pool, unsigned num, bool cached)
     const ResourceAddress address(uwa);
 
     Istream *body;
-    struct async_operation_ref async_ref;
+    CancellablePointer cancel_ptr;
 
     current_request = num;
 
@@ -327,7 +327,7 @@ run_cache_test(struct pool *root_pool, unsigned num, bool cached)
     Context context(*pool);
     http_cache_request(*cache, *pool, 0, request->method, address,
                        std::move(headers), body,
-                       context, async_ref);
+                       context, cancel_ptr);
     pool_unref(pool);
 
     assert(got_request);

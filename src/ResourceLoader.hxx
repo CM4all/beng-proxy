@@ -13,7 +13,7 @@ class Istream;
 struct ResourceAddress;
 class StringMap;
 class HttpResponseHandler;
-struct async_operation_ref;
+class CancellablePointer;
 
 /**
  * Load resources specified by a resource_address.
@@ -38,7 +38,7 @@ public:
                              http_status_t status, StringMap &&headers,
                              Istream *body, const char *body_etag,
                              HttpResponseHandler &handler,
-                             struct async_operation_ref &async_ref) = 0;
+                             CancellablePointer &cancel_ptr) = 0;
 };
 
 #endif

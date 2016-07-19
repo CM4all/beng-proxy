@@ -63,7 +63,7 @@ public:
                      http_status_t status, StringMap &&headers,
                      Istream *body, const char *body_etag,
                      HttpResponseHandler &handler,
-                     struct async_operation_ref &async_ref) override;
+                     CancellablePointer &cancel_ptr) override;
 };
 
 #endif

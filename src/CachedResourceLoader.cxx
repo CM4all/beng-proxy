@@ -17,10 +17,10 @@ CachedResourceLoader::SendRequest(struct pool &pool,
                                   Istream *body,
                                   gcc_unused const char *body_etag,
                                   HttpResponseHandler &handler,
-                                  struct async_operation_ref &async_ref)
+                                  CancellablePointer &cancel_ptr)
 {
     http_cache_request(cache, pool, session_sticky,
                        method, address,
                        std::move(headers), body,
-                       handler, async_ref);
+                       handler, cancel_ptr);
 }

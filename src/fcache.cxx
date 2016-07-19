@@ -623,7 +623,7 @@ filter_cache_request(FilterCache &cache,
                      http_status_t status, StringMap &&headers,
                      Istream *body,
                      HttpResponseHandler &handler,
-                     struct async_operation_ref &async_ref)
+                     CancellablePointer &cancel_ptr)
 {
     auto *info = filter_cache_request_evaluate(pool, address, source_id);
     if (info != nullptr) {
@@ -634,7 +634,7 @@ filter_cache_request(FilterCache &cache,
             filter_cache_miss(cache, pool, std::move(*info),
                               address, status, std::move(headers),
                               body, source_id,
-                              handler, async_ref);
+                              handler, cancel_ptr);
         else
             filter_cache_found(cache, *item, pool, body, handler);
     } else {
@@ -642,6 +642,6 @@ filter_cache_request(FilterCache &cache,
                                           HTTP_METHOD_POST, address,
                                           status, std::move(headers),
                                           body, source_id,
-                                          handler, async_ref);
+                                          handler, cancel_ptr);
     }
 }

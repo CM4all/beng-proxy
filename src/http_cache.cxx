@@ -106,7 +106,7 @@ public:
         StringMap *headers;
     } response;
 
-    struct async_operation_ref async_ref;
+    CancellablePointer cancel_ptr;
 
     HttpCacheRequest(struct pool &_pool, struct pool &_caller_pool,
                      unsigned _session_sticky,
@@ -117,7 +117,7 @@ public:
                      const StringMap &_headers,
                      HttpResponseHandler &_handler,
                      HttpCacheRequestInfo &_info,
-                     struct async_operation_ref &_async_ref);
+                     CancellablePointer &_cancel_ptr);
 
     HttpCacheRequest(const HttpCacheRequest &) = delete;
     HttpCacheRequest &operator=(const HttpCacheRequest &) = delete;
@@ -436,13 +436,13 @@ HttpCacheRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
         sink_rubber_new(pool, istream_tee_second(*body),
                         *cache.rubber, cacheable_size_limit,
                         *this,
-                        async_ref);
+                        cancel_ptr);
     }
 
     handler.InvokeResponse(status, std::move(_headers), body);
     pool_unref_denotify(&caller_pool, &caller_pool_notify);
 
-    if (input != nullptr && async_ref.IsDefined())
+    if (input != nullptr && cancel_ptr)
         /* just in case our handler has closed the body without
            looking at it: call istream_read() to start reading */
         input->Read();
@@ -485,7 +485,7 @@ HttpCacheRequest::Cancel()
 
     pool_unref_denotify(&caller_pool, &caller_pool_notify);
 
-    async_ref.Abort();
+    cancel_ptr.Cancel();
 }
 
 
@@ -504,7 +504,7 @@ HttpCacheRequest::HttpCacheRequest(struct pool &_pool,
                                    const StringMap &_headers,
                                    HttpResponseHandler &_handler,
                                    HttpCacheRequestInfo &_request_info,
-                                   struct async_operation_ref &_async_ref)
+                                   CancellablePointer &_cancel_ptr)
     :pool(_pool), caller_pool(_caller_pool),
      session_sticky(_session_sticky),
      cache(_cache),
@@ -514,7 +514,7 @@ HttpCacheRequest::HttpCacheRequest(struct pool &_pool,
      headers(_pool, _headers),
      handler(_handler),
      request_info(_request_info) {
-    _async_ref = *this;
+    _cancel_ptr = *this;
     pool_ref_notify(&caller_pool, &caller_pool_notify);
 }
 
@@ -567,9 +567,9 @@ http_cache_new(struct pool &pool, size_t max_size,
 void
 HttpCacheRequest::RubberStoreFinished()
 {
-    assert(async_ref.IsDefined());
+    assert(cancel_ptr);
 
-    async_ref.Clear();
+    cancel_ptr = nullptr;
     cache.requests.erase(cache.requests.iterator_to(*this));
 }
 
@@ -577,7 +577,7 @@ void
 HttpCacheRequest::AbortRubberStore()
 {
     cache.requests.erase(cache.requests.iterator_to(*this));
-    async_ref.Abort();
+    cancel_ptr.Cancel();
 }
 
 inline
@@ -673,7 +673,7 @@ http_cache_miss(HttpCache &cache, struct pool &caller_pool,
                 const ResourceAddress &address,
                 StringMap &&headers,
                 HttpResponseHandler &handler,
-                struct async_operation_ref &async_ref)
+                CancellablePointer &cancel_ptr)
 {
     if (info.only_if_cached) {
         handler.InvokeResponse(HTTP_STATUS_GATEWAY_TIMEOUT,
@@ -693,7 +693,7 @@ http_cache_miss(HttpCache &cache, struct pool &caller_pool,
                                       http_cache_key(*pool, address),
                                       headers,
                                       handler,
-                                      info, async_ref);
+                                      info, cancel_ptr);
 
     cache_log(4, "http_cache: miss %s\n", request->key);
 
@@ -702,7 +702,7 @@ http_cache_miss(HttpCache &cache, struct pool &caller_pool,
                                       HTTP_STATUS_OK, std::move(headers),
                                       nullptr, nullptr,
                                       *request,
-                                      request->async_ref);
+                                      request->cancel_ptr);
     pool_unref(pool);
 }
 
@@ -788,7 +788,7 @@ http_cache_test(HttpCacheRequest &request,
                                       HTTP_STATUS_OK, std::move(headers),
                                       nullptr, nullptr,
                                       request,
-                                      request.async_ref);
+                                      request.cancel_ptr);
 }
 
 /**
@@ -805,7 +805,7 @@ http_cache_heap_test(HttpCache &cache, struct pool &caller_pool,
                      const ResourceAddress &address,
                      StringMap &&headers,
                      HttpResponseHandler &handler,
-                     struct async_operation_ref &async_ref)
+                     CancellablePointer &cancel_ptr)
 {
     /* the cache request may live longer than the caller pool, so
        allocate a new pool for it from cache.pool */
@@ -818,7 +818,7 @@ http_cache_heap_test(HttpCache &cache, struct pool &caller_pool,
                                       http_cache_key(*pool, address),
                                       headers,
                                       handler,
-                                      info, async_ref);
+                                      info, cancel_ptr);
 
     http_cache_lock(cache, document);
     request->document = &document;
@@ -852,7 +852,7 @@ http_cache_found(HttpCache &cache,
                  const ResourceAddress &address,
                  StringMap &&headers,
                  HttpResponseHandler &handler,
-                 struct async_operation_ref &async_ref)
+                 CancellablePointer &cancel_ptr)
 {
     if (http_cache_may_serve(info, document))
         http_cache_heap_serve(cache.heap, document, pool,
@@ -861,7 +861,7 @@ http_cache_found(HttpCache &cache,
     else
         http_cache_heap_test(cache, pool, session_sticky, info, document,
                              method, address, std::move(headers),
-                             handler, async_ref);
+                             handler, cancel_ptr);
 }
 
 /**
@@ -878,7 +878,7 @@ http_cache_heap_use(HttpCache &cache,
                     StringMap &&headers,
                     HttpCacheRequestInfo &info,
                     HttpResponseHandler &handler,
-                    struct async_operation_ref &async_ref)
+                    CancellablePointer &cancel_ptr)
 {
     HttpCacheDocument *document =
         cache.heap.Get(http_cache_key(pool, address), headers);
@@ -886,11 +886,11 @@ http_cache_heap_use(HttpCache &cache,
     if (document == nullptr)
         http_cache_miss(cache, pool, session_sticky, info,
                         method, address, std::move(headers),
-                        handler, async_ref);
+                        handler, cancel_ptr);
     else
         http_cache_found(cache, info, *document, pool, session_sticky,
                          method, address, std::move(headers),
-                         handler, async_ref);
+                         handler, cancel_ptr);
 }
 
 /**
@@ -910,7 +910,7 @@ http_cache_memcached_forward(HttpCacheRequest &request,
                                                         request.pool,
                                                         request.headers),
                                               nullptr, nullptr,
-                                              handler, request.async_ref);
+                                              handler, request.cancel_ptr);
 }
 
 /**
@@ -992,7 +992,7 @@ http_cache_memcached_use(HttpCache &cache,
                          StringMap &headers,
                          HttpCacheRequestInfo &info,
                          HttpResponseHandler &handler,
-                         struct async_operation_ref &async_ref)
+                         CancellablePointer &cancel_ptr)
 {
     assert(cache.memcached_stock != nullptr);
 
@@ -1008,14 +1008,14 @@ http_cache_memcached_use(HttpCache &cache,
                                       http_cache_key(*pool, address),
                                       headers,
                                       handler,
-                                      info, async_ref);
+                                      info, cancel_ptr);
 
     http_cache_memcached_get(*pool, *cache.memcached_stock,
                              request->cache.pool,
                              cache.background,
                              request->key, request->headers,
                              http_cache_memcached_get_callback, request,
-                             request->async_ref);
+                             request->cancel_ptr);
     pool_unref(pool);
 }
 
@@ -1026,7 +1026,7 @@ http_cache_request(HttpCache &cache,
                    const ResourceAddress &address,
                    StringMap &&headers, Istream *body,
                    HttpResponseHandler &handler,
-                   struct async_operation_ref &async_ref)
+                   CancellablePointer &cancel_ptr)
 {
     const char *key = cache.heap.IsDefined() ||
         cache.memcached_stock != nullptr
@@ -1043,7 +1043,7 @@ http_cache_request(HttpCache &cache,
                                           method, address,
                                           HTTP_STATUS_OK, std::move(headers),
                                           body, nullptr,
-                                          handler, async_ref);
+                                          handler, cancel_ptr);
         return;
     }
 
@@ -1054,11 +1054,11 @@ http_cache_request(HttpCache &cache,
         if (cache.heap.IsDefined())
             http_cache_heap_use(cache, pool, session_sticky,
                                 method, address, std::move(headers), info,
-                                handler, async_ref);
+                                handler, cancel_ptr);
         else if (cache.memcached_stock != nullptr)
             http_cache_memcached_use(cache, pool, session_sticky,
                                      method, address, headers, info,
-                                     handler, async_ref);
+                                     handler, cancel_ptr);
     } else {
         if (http_cache_request_invalidate(method))
             http_cache_remove_url(cache, key, headers);
@@ -1069,6 +1069,6 @@ http_cache_request(HttpCache &cache,
                                           method, address,
                                           HTTP_STATUS_OK, std::move(headers),
                                           body, nullptr,
-                                          handler, async_ref);
+                                          handler, cancel_ptr);
     }
 }

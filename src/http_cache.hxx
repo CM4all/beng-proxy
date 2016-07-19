@@ -20,9 +20,9 @@ class ResourceLoader;
 struct ResourceAddress;
 class StringMap;
 class HttpResponseHandler;
-struct async_operation_ref;
 struct AllocatorStats;
 class HttpCache;
+class CancellablePointer;
 
 HttpCache *
 http_cache_new(struct pool &pool, size_t max_size,
@@ -53,6 +53,6 @@ http_cache_request(HttpCache &cache,
                    const ResourceAddress &address,
                    StringMap &&headers, Istream *body,
                    HttpResponseHandler &handler,
-                   struct async_operation_ref &async_ref);
+                   CancellablePointer &cancel_ptr);
 
 #endif

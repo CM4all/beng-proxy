@@ -131,7 +131,7 @@ DirectResourceLoader::SendRequest(struct pool &pool,
                                   Istream *body,
                                   gcc_unused const char *body_etag,
                                   HttpResponseHandler &handler,
-                                  struct async_operation_ref &async_ref)
+                                  CancellablePointer &cancel_ptr)
 {
     switch (address.type) {
         const FileAddress *file;
@@ -168,7 +168,7 @@ DirectResourceLoader::SendRequest(struct pool &pool,
                                    file->path,
                                    file->content_type,
                                    handler,
-                                   async_ref);
+                                   cancel_ptr);
             return;
         }
 
@@ -187,7 +187,7 @@ DirectResourceLoader::SendRequest(struct pool &pool,
         nfs_request(pool, *nfs_cache,
                     nfs->server, nfs->export_name,
                     nfs->path, nfs->content_type,
-                    handler, async_ref);
+                    handler, cancel_ptr);
 #else
         handler.InvokeError(g_error_new_literal(resource_loader_quark(), 0,
                                                 "libnfs disabled"));
@@ -208,7 +208,7 @@ DirectResourceLoader::SendRequest(struct pool &pool,
                 method, &address.GetCgi(),
                 extract_remote_ip(&pool, &headers),
                 headers, body,
-                handler, async_ref);
+                handler, cancel_ptr);
         return;
 
     case ResourceAddress::Type::FASTCGI:
@@ -243,7 +243,7 @@ DirectResourceLoader::SendRequest(struct pool &pool,
                          headers, body,
                          cgi->params,
                          stderr_fd,
-                         handler, async_ref);
+                         handler, cancel_ptr);
         else
             fcgi_remote_request(&pool, event_loop, tcp_balancer,
                                 &cgi->address_list,
@@ -257,7 +257,7 @@ DirectResourceLoader::SendRequest(struct pool &pool,
                                 std::move(headers), body,
                                 cgi->params,
                                 stderr_fd,
-                                handler, async_ref);
+                                handler, cancel_ptr);
         return;
 
     case ResourceAddress::Type::WAS:
@@ -272,7 +272,7 @@ DirectResourceLoader::SendRequest(struct pool &pool,
                     cgi->query_string,
                     headers, body,
                     cgi->params,
-                    handler, async_ref);
+                    handler, cancel_ptr);
         return;
 
     case ResourceAddress::Type::HTTP:
@@ -293,7 +293,7 @@ DirectResourceLoader::SendRequest(struct pool &pool,
                          filter, filter_factory,
                          method, address.GetHttp(),
                          HttpHeaders(std::move(headers)), body,
-                         handler, async_ref);
+                         handler, cancel_ptr);
             break;
 
         case HttpAddress::Protocol::AJP:
@@ -307,7 +307,7 @@ DirectResourceLoader::SendRequest(struct pool &pool,
                               false,
                               method, address.GetHttp(),
                               std::move(headers), body,
-                              handler, async_ref);
+                              handler, cancel_ptr);
             break;
         }
 
@@ -317,7 +317,7 @@ DirectResourceLoader::SendRequest(struct pool &pool,
         lhttp_request(pool, event_loop, *lhttp_stock,
                       address.GetLhttp(),
                       method, HttpHeaders(std::move(headers)), body,
-                      handler, async_ref);
+                      handler, cancel_ptr);
         return;
     }
 

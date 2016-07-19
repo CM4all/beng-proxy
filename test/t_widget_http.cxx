@@ -136,7 +136,7 @@ public:
                      http_status_t status, StringMap &&headers,
                      Istream *body, const char *body_etag,
                      HttpResponseHandler &handler,
-                     struct async_operation_ref &async_ref) override;
+                     CancellablePointer &cancel_ptr) override;
 };
 
 void
@@ -148,7 +148,7 @@ MyResourceLoader::SendRequest(struct pool &pool,
                               StringMap &&headers,
                               Istream *body, gcc_unused const char *body_etag,
                               HttpResponseHandler &handler,
-                              gcc_unused struct async_operation_ref &async_ref)
+                              gcc_unused CancellablePointer &cancel_ptr)
 {
     StringMap response_headers(pool);
     Istream *response_body = istream_null_new(&pool);
