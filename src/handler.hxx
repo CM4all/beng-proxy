@@ -10,8 +10,8 @@
 struct Request;
 struct BpConnection;
 struct HttpServerRequest;
-struct async_operation_ref;
 struct DelegateAddress;
+class CancellablePointer;
 
 void
 delegate_handler(Request &request, const DelegateAddress &address,
@@ -29,6 +29,6 @@ proxy_handler(Request &request);
 void
 handle_http_request(BpConnection &connection,
                     HttpServerRequest &request,
-                    struct async_operation_ref &async_ref);
+                    CancellablePointer &cancel_ptr);
 
 #endif

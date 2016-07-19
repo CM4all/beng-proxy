@@ -886,7 +886,7 @@ serve_document_root_file(Request &request2, const BpConfig &config)
 void
 handle_http_request(BpConnection &connection,
                     HttpServerRequest &request,
-                    struct async_operation_ref &async_ref)
+                    CancellablePointer &cancel_ptr)
 {
     auto *request2 = NewFromPool<Request>(request.pool,
                                           connection.instance,
@@ -896,7 +896,7 @@ handle_http_request(BpConnection &connection,
         ? istream_hold_new(request.pool, *request.body)
         : nullptr;
 
-    async_ref = *request2;
+    cancel_ptr = *request2;
 
     if (!request_uri_parse(*request2, request2->uri))
         return;
