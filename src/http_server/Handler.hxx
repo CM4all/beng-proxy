@@ -14,12 +14,12 @@
 #include <stdint.h>
 
 struct HttpServerRequest;
-struct async_operation_ref;
+class CancellablePointer;
 
 class HttpServerConnectionHandler {
 public:
     virtual void HandleHttpRequest(HttpServerRequest &request,
-                                   struct async_operation_ref &async_ref) = 0;
+                                   CancellablePointer &cancel_ptr) = 0;
 
     /**
      * @param length the number of response body (payload) bytes sent

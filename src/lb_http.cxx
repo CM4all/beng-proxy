@@ -37,7 +37,7 @@
 #include "istream/istream.hxx"
 #include "istream/istream_hold.hxx"
 #include "gerrno.h"
-#include "async.hxx"
+#include "util/Cancellable.hxx"
 
 #include <http/status.h>
 #include <daemon/log.h>
@@ -55,7 +55,7 @@ struct LbRequest final : public StockGetHandler, Lease, HttpResponseHandler {
      */
     Istream *body;
 
-    struct async_operation_ref *async_ref;
+    CancellablePointer &cancel_ptr;
 
     StockItem *stock_item;
     SocketAddress current_address;
@@ -64,14 +64,14 @@ struct LbRequest final : public StockGetHandler, Lease, HttpResponseHandler {
 
     LbRequest(LbConnection &_connection, TcpBalancer &_balancer,
               HttpServerRequest &_request,
-              struct async_operation_ref &_async_ref)
+              CancellablePointer &_cancel_ptr)
         :connection(_connection),
          balancer(_balancer),
          request(_request),
          body(request.body != nullptr
               ? istream_hold_new(request.pool, *request.body)
               : nullptr),
-         async_ref(&_async_ref) {}
+         cancel_ptr(_cancel_ptr) {}
 
     /* virtual methods from class StockGetHandler */
     void OnStockItemReady(StockItem &item) override;
@@ -292,7 +292,7 @@ LbRequest::OnStockItemReady(StockItem &item)
                         NULL, NULL,
                         request.method, request.uri,
                         HttpHeaders(std::move(headers)), body, true,
-                        *this, *async_ref);
+                        *this, cancel_ptr);
 }
 
 void
@@ -322,7 +322,7 @@ LbRequest::OnStockItemError(GError *error)
 
 void
 LbConnection::HandleHttpRequest(HttpServerRequest &request,
-                                struct async_operation_ref &async_ref)
+                                CancellablePointer &cancel_ptr)
 {
     ++instance.http_request_counter;
 
@@ -331,7 +331,7 @@ LbConnection::HandleHttpRequest(HttpServerRequest &request,
     const auto request2 =
         NewFromPool<LbRequest>(request.pool,
                                *this, *instance.tcp_balancer,
-                               request, async_ref);
+                               request, cancel_ptr);
     const auto *cluster = request2->cluster =
         lb_http_select_cluster(listener.destination, request);
 
@@ -403,7 +403,7 @@ LbConnection::HandleHttpRequest(HttpServerRequest &request,
                      *request2,
                      async_optional_close_on_abort(request.pool,
                                                    request2->body,
-                                                   async_ref));
+                                                   cancel_ptr));
 }
 
 void

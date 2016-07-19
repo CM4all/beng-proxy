@@ -66,14 +66,14 @@ close_connection(BpConnection *connection)
 
 void
 BpConnection::HandleHttpRequest(HttpServerRequest &request,
-                                struct async_operation_ref &async_ref)
+                                CancellablePointer &cancel_ptr)
 {
     ++instance.http_request_counter;
 
     site_name = nullptr;
     request_start_time = std::chrono::steady_clock::now();
 
-    handle_http_request(*this, request, async_ref);
+    handle_http_request(*this, request, cancel_ptr);
 }
 
 void

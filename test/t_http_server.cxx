@@ -38,7 +38,7 @@ struct Instance final : HttpServerConnectionHandler {
 
     /* virtual methods from class HttpServerConnectionHandler */
     void HandleHttpRequest(HttpServerRequest &request,
-                           struct async_operation_ref &async_ref) override;
+                           CancellablePointer &cancel_ptr) override;
 
     void LogHttpRequest(HttpServerRequest &,
                         http_status_t, int64_t,
@@ -58,7 +58,7 @@ catch_callback(GError *error, gcc_unused void *ctx)
 
 void
 Instance::HandleHttpRequest(HttpServerRequest &request,
-                            gcc_unused struct async_operation_ref &async_ref)
+                            gcc_unused CancellablePointer &cancel_ptr)
 {
     http_server_response(&request, HTTP_STATUS_OK, HttpHeaders(request.pool),
                          istream_catch_new(&request.pool, *request.body,

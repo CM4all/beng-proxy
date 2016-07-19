@@ -14,11 +14,11 @@
 #include "istream/istream.hxx"
 #include "RootPool.hxx"
 #include "pool.hxx"
-#include "async.hxx"
 #include "event/Loop.hxx"
 #include "event/TimerEvent.hxx"
 #include "event/ShutdownListener.hxx"
 #include "fb_pool.hxx"
+#include "util/Cancellable.hxx"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -69,7 +69,7 @@ struct Instance final : HttpServerConnectionHandler, Cancellable {
 
     /* virtual methods from class HttpServerConnectionHandler */
     void HandleHttpRequest(HttpServerRequest &request,
-                           struct async_operation_ref &async_ref) override;
+                           CancellablePointer &cancel_ptr) override;
 
     void LogHttpRequest(HttpServerRequest &,
                         http_status_t, int64_t,
@@ -99,7 +99,7 @@ Instance::OnTimer()
 
 void
 Instance::HandleHttpRequest(HttpServerRequest &request,
-                            gcc_unused struct async_operation_ref &async_ref)
+                            gcc_unused CancellablePointer &cancel_ptr)
 {
     switch (mode) {
         Istream *body;

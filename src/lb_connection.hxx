@@ -61,7 +61,7 @@ struct LbConnection final
 
     /* virtual methods from class HttpServerConnectionHandler */
     void HandleHttpRequest(HttpServerRequest &request,
-                           struct async_operation_ref &async_ref) override;
+                           CancellablePointer &cancel_ptr) override;
 
     void LogHttpRequest(HttpServerRequest &request,
                         http_status_t status, off_t length,
