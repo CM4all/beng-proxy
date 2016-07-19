@@ -11,9 +11,9 @@
 struct pool;
 class StockMap;
 class HttpResponseHandler;
-struct async_operation_ref;
 struct ChildOptions;
 class EventLoop;
+class CancellablePointer;
 
 void
 delegate_stock_request(EventLoop &event_loop, StockMap &stock,
@@ -22,6 +22,6 @@ delegate_stock_request(EventLoop &event_loop, StockMap &stock,
                        const ChildOptions &options,
                        const char *path, const char *content_type,
                        HttpResponseHandler &handler,
-                       struct async_operation_ref &async_ref);
+                       CancellablePointer &cancel_ptr);
 
 #endif

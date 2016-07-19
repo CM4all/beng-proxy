@@ -6,11 +6,11 @@
 #include "spawn/Registry.hxx"
 #include "spawn/Local.hxx"
 #include "stock/MapStock.hxx"
-#include "async.hxx"
 #include "event/Loop.hxx"
 #include "event/DeferEvent.hxx"
 #include "RootPool.hxx"
 #include "pool.hxx"
+#include "util/Cancellable.hxx"
 
 #include <glib.h>
 
@@ -49,8 +49,6 @@ public:
 
 int main(int argc, char **argv)
 {
-    struct async_operation_ref my_async_ref;
-
     if (argc != 2) {
         fprintf(stderr, "usage: run-delegate PATH\n");
         return 1;
@@ -72,9 +70,10 @@ int main(int argc, char **argv)
     ChildOptions child_options;
 
     MyDelegateHandler handler(event_loop);
+    CancellablePointer cancel_ptr;
     delegate_stock_open(delegate_stock, pool, helper_path, child_options,
                         argv[1],
-                        handler, my_async_ref);
+                        handler, cancel_ptr);
 
     event_loop.Dispatch();
 }

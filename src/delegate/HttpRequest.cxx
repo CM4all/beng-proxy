@@ -38,10 +38,10 @@ public:
 
     void Open(StockMap &stock, const char *helper,
               const ChildOptions &options,
-              struct async_operation_ref &async_ref) {
+              CancellablePointer &cancel_ptr) {
         delegate_stock_open(&stock, &pool,
                             helper, options, path,
-                            *this, async_ref);
+                            *this, cancel_ptr);
     }
 
 private:
@@ -88,10 +88,10 @@ delegate_stock_request(EventLoop &event_loop, StockMap &stock,
                        const ChildOptions &options,
                        const char *path, const char *content_type,
                        HttpResponseHandler &handler,
-                       struct async_operation_ref &async_ref)
+                       CancellablePointer &cancel_ptr)
 {
     auto get = NewFromPool<DelegateHttpRequest>(pool, event_loop, pool,
                                                 path, content_type,
                                                 handler);
-    get->Open(stock, helper, options, async_ref);
+    get->Open(stock, helper, options, cancel_ptr);
 }

@@ -13,13 +13,11 @@
 #include "stock/MapStock.hxx"
 #include "lease.hxx"
 #include "pool.hxx"
-#include "async.hxx"
+#include "util/Cancellable.hxx"
 
 #include <daemon/log.h>
 
 #include <errno.h>
-
-struct async_operation_ref;
 
 struct DelegateGlue final : Lease {
     StockItem &item;
@@ -38,7 +36,7 @@ delegate_stock_open(StockMap *stock, struct pool *pool,
                     const ChildOptions &options,
                     const char *path,
                     DelegateHandler &handler,
-                    struct async_operation_ref &async_ref)
+                    CancellablePointer &cancel_ptr)
 {
     GError *error = nullptr;
     auto *item = delegate_stock_get(stock, pool, helper, options, &error);
@@ -50,5 +48,5 @@ delegate_stock_open(StockMap *stock, struct pool *pool,
     auto glue = NewFromPool<DelegateGlue>(*pool, *item);
     delegate_open(stock->GetEventLoop(), delegate_stock_item_get(*item), *glue,
                   pool, path,
-                  handler, async_ref);
+                  handler, cancel_ptr);
 }

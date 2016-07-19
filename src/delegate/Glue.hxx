@@ -8,10 +8,10 @@
 #ifndef BENG_DELEGATE_GLUE_HXX
 #define BENG_DELEGATE_GLUE_HXX
 
-struct async_operation_ref;
 struct ChildOptions;
 class StockMap;
 class DelegateHandler;
+class CancellablePointer;
 
 void
 delegate_stock_open(StockMap *stock, struct pool *pool,
@@ -19,6 +19,6 @@ delegate_stock_open(StockMap *stock, struct pool *pool,
                     const ChildOptions &options,
                     const char *path,
                     DelegateHandler &handler,
-                    struct async_operation_ref &async_ref);
+                    CancellablePointer &cancel_ptr);
 
 #endif
