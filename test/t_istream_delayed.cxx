@@ -1,7 +1,7 @@
 #include "istream/istream_delayed.hxx"
 #include "istream/istream_string.hxx"
 #include "istream/istream.hxx"
-#include "async.hxx"
+#include "util/Cancellable.hxx"
 
 #include <stdio.h>
 

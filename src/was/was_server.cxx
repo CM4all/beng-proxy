@@ -10,7 +10,6 @@
 #include "was_output.hxx"
 #include "was_input.hxx"
 #include "http_response.hxx"
-#include "async.hxx"
 #include "direct.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream_null.hxx"

@@ -239,11 +239,6 @@ struct Context final : Cancellable, Lease, HttpResponseHandler, IstreamHandler {
     void OnHttpError(GError *error) override;
 };
 
-/*
- * async_operation
- *
- */
-
 template<class Connection>
 void
 Context<Connection>::Cancel()

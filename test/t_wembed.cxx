@@ -5,7 +5,6 @@
 #include "widget_resolver.hxx"
 #include "processor.hxx"
 #include "penv.hxx"
-#include "async.hxx"
 #include "http_response.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream_iconv.hxx"
@@ -13,6 +12,7 @@
 #include "RootPool.hxx"
 #include "session.hxx"
 #include "event/Loop.hxx"
+#include "util/Cancellable.hxx"
 
 #include <glib.h>
 

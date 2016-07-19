@@ -3,7 +3,7 @@
 #include "istream/istream_delayed.hxx"
 #include "istream/istream_hold.hxx"
 #include "istream/istream_memory.hxx"
-#include "async.hxx"
+#include "util/Cancellable.hxx"
 
 #include <string.h>
 

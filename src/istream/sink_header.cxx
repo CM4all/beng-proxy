@@ -8,7 +8,7 @@
 
 #include "sink_header.hxx"
 #include "ForwardIstream.hxx"
-#include "async.hxx"
+#include "util/Cancellable.hxx"
 #include "util/Cast.hxx"
 #include "util/ByteOrder.hxx"
 

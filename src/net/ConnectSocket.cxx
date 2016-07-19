@@ -7,13 +7,12 @@
 #include "ConnectSocket.hxx"
 #include "SocketDescriptor.hxx"
 #include "SocketAddress.hxx"
-#include "async.hxx"
 #include "system/fd_util.h"
 #include "stopwatch.hxx"
 #include "event/SocketEvent.hxx"
 #include "gerrno.h"
-#include "util/Cast.hxx"
 #include "pool.hxx"
+#include "util/Cancellable.hxx"
 
 #include <socket/util.h>
 

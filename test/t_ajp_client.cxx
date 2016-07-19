@@ -7,7 +7,6 @@
 #include "ajp_server.hxx"
 #include "ajp/ajp_client.hxx"
 #include "http_response.hxx"
-#include "async.hxx"
 #include "system/SetupProcess.hxx"
 #include "system/fd-util.h"
 #include "system/fd_util.h"

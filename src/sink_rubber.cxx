@@ -6,10 +6,9 @@
 
 #include "sink_rubber.hxx"
 #include "istream/Sink.hxx"
-#include "async.hxx"
 #include "rubber.hxx"
 #include "pool.hxx"
-#include "util/Cast.hxx"
+#include "util/Cancellable.hxx"
 
 #include <assert.h>
 #include <stdint.h>

@@ -23,9 +23,9 @@
 #include "session.hxx"
 #include "inline_widget.hxx"
 #include "pool.hxx"
-#include "async.hxx"
 #include "pbuffer.hxx"
 #include "util/StringView.hxx"
+#include "util/Cancellable.hxx"
 
 #include <daemon/log.h>
 

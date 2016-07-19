@@ -9,7 +9,6 @@
 
 struct pool;
 class HttpResponseHandler;
-struct async_operation_ref;
 class EventLoop;
 
 void

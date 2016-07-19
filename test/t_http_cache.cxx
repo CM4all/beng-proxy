@@ -8,11 +8,11 @@
 #include "header_parser.hxx"
 #include "strmap.hxx"
 #include "http_response.hxx"
-#include "async.hxx"
 #include "RootPool.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream_string.hxx"
 #include "event/Event.hxx"
+#include "util/Cancellable.hxx"
 
 #include <inline/compiler.h>
 

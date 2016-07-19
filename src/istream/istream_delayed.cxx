@@ -4,7 +4,7 @@
 
 #include "istream_delayed.hxx"
 #include "ForwardIstream.hxx"
-#include "async.hxx"
+#include "util/Cancellable.hxx"
 
 #include <assert.h>
 #include <string.h>

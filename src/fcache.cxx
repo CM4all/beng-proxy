@@ -25,9 +25,9 @@
 #include "SlicePool.hxx"
 #include "sink_rubber.hxx"
 #include "AllocatorStats.hxx"
-#include "async.hxx"
 #include "pool.hxx"
 #include "event/TimerEvent.hxx"
+#include "util/Cancellable.hxx"
 
 #include <boost/intrusive/list.hpp>
 

@@ -1,6 +1,5 @@
 #include "memcached/memcached_client.hxx"
 #include "lease.hxx"
-#include "async.hxx"
 #include "system/fd-util.h"
 #include "istream/istream.hxx"
 #include "istream/istream_pipe.hxx"
@@ -13,6 +12,7 @@
 #include "RootPool.hxx"
 #include "system/SetupProcess.hxx"
 #include "util/ByteOrder.hxx"
+#include "util/Cancellable.hxx"
 
 #include <socket/resolver.h>
 #include <socket/util.h>

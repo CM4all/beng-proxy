@@ -12,7 +12,6 @@
 #include <inline/compiler.h>
 
 struct pool;
-struct async_operation_ref;
 struct lease_ref;
 class StockMap;
 struct StockItem;

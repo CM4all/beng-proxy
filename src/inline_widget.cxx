@@ -12,7 +12,6 @@
 #include "widget_class.hxx"
 #include "widget_resolver.hxx"
 #include "widget_approval.hxx"
-#include "async.hxx"
 #include "bp_global.hxx"
 #include "http_util.hxx"
 #include "http_response.hxx"

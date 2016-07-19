@@ -14,7 +14,6 @@
 #include "tcp_balancer.hxx"
 #include "stock/GetHandler.hxx"
 #include "stock/Item.hxx"
-#include "async.hxx"
 #include "growing_buffer.hxx"
 #include "lease.hxx"
 #include "abort_close.hxx"
@@ -23,8 +22,8 @@
 #include "istream/istream_hold.hxx"
 #include "filtered_socket.hxx"
 #include "pool.hxx"
-#include "async.hxx"
 #include "net/SocketAddress.hxx"
+#include "util/Cancellable.hxx"
 
 #include <inline/compiler.h>
 

@@ -1,5 +1,5 @@
 /*
- * A wrapper for an async_operation which closes an istream on abort.
+ * A wrapper for an Cancellable which closes an istream on abort.
  *
  * author: Max Kellermann <mk@cm4all.com>
  */

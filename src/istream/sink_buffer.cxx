@@ -1,9 +1,8 @@
 #include "sink_buffer.hxx"
 #include "istream.hxx"
 #include "Sink.hxx"
-#include "async.hxx"
 #include "pool.hxx"
-#include "util/Cast.hxx"
+#include "util/Cancellable.hxx"
 
 #include <glib.h>
 

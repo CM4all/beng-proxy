@@ -12,7 +12,6 @@
 #include "widget.hxx"
 #include "growing_buffer.hxx"
 #include "tpool.hxx"
-#include "async.hxx"
 #include "rewrite_uri.hxx"
 #include "bp_global.hxx"
 #include "escape_css.hxx"

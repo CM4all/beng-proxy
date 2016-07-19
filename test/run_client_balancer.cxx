@@ -5,10 +5,10 @@
 #include "event/Loop.hxx"
 #include "pool.hxx"
 #include "RootPool.hxx"
-#include "async.hxx"
 #include "balancer.hxx"
 #include "failure.hxx"
 #include "address_list.hxx"
+#include "util/Cancellable.hxx"
 
 #include <socket/resolver.h>
 #include <socket/util.h>

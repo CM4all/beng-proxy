@@ -685,7 +685,6 @@ libutil_a_SOURCES = \
 	src/http_date.cxx src/http_date.hxx \
 	src/gmtime.c src/gmtime.h \
 	src/html_chars.hxx \
-	src/async.hxx \
 	src/lease.hxx \
 	src/trace.h \
 	src/uri/uri_base.cxx src/uri/uri_base.hxx \

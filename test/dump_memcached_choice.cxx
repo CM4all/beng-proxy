@@ -1,7 +1,6 @@
 #include "memcached/memcached_client.hxx"
 #include "http_cache_document.hxx"
 #include "lease.hxx"
-#include "async.hxx"
 #include "system/SetupProcess.hxx"
 #include "system/fd-util.h"
 #include "strmap.hxx"
@@ -15,6 +14,7 @@
 #include "fb_pool.hxx"
 #include "event/Loop.hxx"
 #include "util/ConstBuffer.hxx"
+#include "util/Cancellable.hxx"
 
 #include <socket/resolver.h>
 #include <socket/util.h>

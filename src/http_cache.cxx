@@ -14,7 +14,6 @@
 #include "ResourceLoader.hxx"
 #include "ResourceAddress.hxx"
 #include "http_util.hxx"
-#include "async.hxx"
 #include "background.hxx"
 #include "cache.hxx"
 #include "rubber.hxx"
@@ -27,6 +26,7 @@
 #include "pool.hxx"
 #include "event/TimerEvent.hxx"
 #include "util/Cast.hxx"
+#include "util/Cancellable.hxx"
 
 #include <glib.h>
 

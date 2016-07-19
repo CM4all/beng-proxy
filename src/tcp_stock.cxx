@@ -9,7 +9,6 @@
 #include "stock/Stock.hxx"
 #include "stock/Class.hxx"
 #include "stock/Item.hxx"
-#include "async.hxx"
 #include "address_list.hxx"
 #include "gerrno.h"
 #include "pool.hxx"
@@ -18,6 +17,7 @@
 #include "net/ConnectSocket.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/SocketDescriptor.hxx"
+#include "util/Cancellable.hxx"
 
 #include <daemon/log.h>
 #include <socket/address.h>

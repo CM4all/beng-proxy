@@ -1,5 +1,5 @@
 /*
- * A wrapper for an async_operation which unrefs the pool on abort.
+ * A wrapper for an Cancellable which unrefs the pool on abort.
  *
  * This solves a problem of many libraries which reference a pool, but
  * pass the async_ref object to another library.  When the caller

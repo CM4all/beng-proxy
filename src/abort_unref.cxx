@@ -1,5 +1,5 @@
 /*
- * A wrapper for an async_operation which unrefs the pool on abort.
+ * A wrapper for an Cancellable which unrefs the pool on abort.
  *
  * This solves a problem of many libraries which reference a pool, but
  * pass the async_ref object to another library.  When the caller
@@ -10,9 +10,9 @@
  */
 
 #include "abort_unref.hxx"
-#include "async.hxx"
 #include "pool.hxx"
 #include "util/Cast.hxx"
+#include "util/Cancellable.hxx"
 
 struct UnrefOnAbort final : Cancellable {
     struct pool &pool;

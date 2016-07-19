@@ -8,7 +8,7 @@
 #include "util/Cancellable.hxx"
 
 /**
- * An async_operation implementation which sets a flag.  This can be
+ * An #Cancellable implementation which sets a flag.  This can be
  * used by libraries which don't have their own implementation, but
  * need to know whether the operation has been aborted.
  */

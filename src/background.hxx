@@ -14,7 +14,7 @@
 /**
  * A job running in the background, which shall be aborted when
  * beng-proxy is shut down.  The job holds a reference to an
- * #async_operation object, which may be used to stop it.
+ * #Cancellable object, which may be used to stop it.
  */
 struct BackgroundJob {
     static constexpr auto link_mode = boost::intrusive::normal_link;
