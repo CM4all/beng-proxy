@@ -11,6 +11,8 @@
 
 #include <boost/intrusive/list.hpp>
 
+#include <chrono>
+
 #include <stdint.h>
 
 struct pool;
@@ -49,7 +51,7 @@ struct LbConnection final
      * The time stamp at the start of the request.  Used to calculate
      * the request duration.
      */
-    uint64_t request_start_time;
+    std::chrono::steady_clock::time_point request_start_time;
 
     LbTcpConnection *tcp;
 

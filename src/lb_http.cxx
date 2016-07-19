@@ -27,7 +27,6 @@
 #include "http_headers.hxx"
 #include "stock/GetHandler.hxx"
 #include "stock/Item.hxx"
-#include "system/clock.h"
 #include "access_log.hxx"
 #include "strmap.hxx"
 #include "failure.hxx"
@@ -327,7 +326,7 @@ LbConnection::HandleHttpRequest(HttpServerRequest &request,
 {
     ++instance.http_request_counter;
 
-    request_start_time = now_us();
+    request_start_time = std::chrono::steady_clock::now();
 
     const auto request2 =
         NewFromPool<LbRequest>(request.pool,
@@ -417,7 +416,7 @@ LbConnection::LogHttpRequest(HttpServerRequest &request,
                request.headers.Get("user-agent"),
                status, length,
                bytes_received, bytes_sent,
-               now_us() - request_start_time);
+               std::chrono::steady_clock::now() - request_start_time);
 }
 
 void

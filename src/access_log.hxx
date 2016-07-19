@@ -9,6 +9,8 @@
 
 #include <http/status.h>
 
+#include <chrono>
+
 #include <stdint.h>
 
 struct HttpServerRequest;
@@ -23,7 +25,7 @@ access_log(gcc_unused HttpServerRequest *request,
            gcc_unused http_status_t status, gcc_unused int64_t length,
            gcc_unused uint64_t bytes_received,
            gcc_unused uint64_t bytes_sent,
-           gcc_unused uint64_t duration)
+           gcc_unused std::chrono::steady_clock::duration duration)
 {
 }
 
@@ -44,7 +46,7 @@ access_log(HttpServerRequest *request, const char *site,
            const char *referer, const char *user_agent,
            http_status_t status, int64_t length,
            uint64_t bytes_received, uint64_t bytes_sent,
-           uint64_t duration);
+           std::chrono::steady_clock::duration duration);
 
 #endif
 

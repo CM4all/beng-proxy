@@ -13,7 +13,6 @@
 #include "handler.hxx"
 #include "access_log.hxx"
 #include "drop.hxx"
-#include "system/clock.h"
 #include "gerrno.h"
 #include "util/Error.hxx"
 #include "net/SocketDescriptor.hxx"
@@ -72,7 +71,7 @@ BpConnection::HandleHttpRequest(HttpServerRequest &request,
     ++instance.http_request_counter;
 
     site_name = nullptr;
-    request_start_time = now_us();
+    request_start_time = std::chrono::steady_clock::now();
 
     handle_http_request(*this, request, async_ref);
 }
@@ -87,7 +86,7 @@ BpConnection::LogHttpRequest(HttpServerRequest &request,
                request.headers.Get("user-agent"),
                status, length,
                bytes_received, bytes_sent,
-               now_us() - request_start_time);
+               std::chrono::steady_clock::now() - request_start_time);
     site_name = nullptr;
 }
 

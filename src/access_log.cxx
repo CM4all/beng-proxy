@@ -29,11 +29,13 @@ access_log(HttpServerRequest *request, const char *site,
            const char *referer, const char *user_agent,
            http_status_t status, int64_t content_length,
            uint64_t bytes_received, uint64_t bytes_sent,
-           uint64_t duration)
+           std::chrono::steady_clock::duration duration)
 {
     assert(request != nullptr);
     assert(http_method_is_valid(request->method));
     assert(http_status_is_valid(status));
+
+    const auto duration_us = std::chrono::duration_cast<std::chrono::microseconds>(duration);
 
     if (log_global_enabled()) {
         log_http_request(time(nullptr) * 1000000,
@@ -42,7 +44,7 @@ access_log(HttpServerRequest *request, const char *site,
                          referer, user_agent,
                          status, content_length,
                          bytes_received, bytes_sent,
-                         duration);
+                         duration_us.count());
         return;
     }
 
@@ -72,7 +74,7 @@ access_log(HttpServerRequest *request, const char *site,
                status, length,
                optional_string(referer),
                optional_string(user_agent),
-               (unsigned long long)duration);
+               (unsigned long long)duration_us.count());
 }
 
 #endif
