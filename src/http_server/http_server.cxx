@@ -168,9 +168,9 @@ HttpServerConnection::TryWriteBuckets()
     case BucketResult::ERROR:
         assert(!response.istream.IsDefined());
 
-        /* we clear this async_ref here so CloseRequest() won't think
-           we havn't sent a response yet */
-        request.async_ref.Clear();
+        /* we clear this CancellablePointer here so CloseRequest()
+           won't think we havn't sent a response yet */
+        request.cancel_ptr = nullptr;
 
         Error(error);
         result = BucketResult::DESTROYED;
@@ -421,10 +421,10 @@ HttpServerConnection::CloseRequest()
          request.read_state == Request::END)) {
         if (response.istream.IsDefined())
             response.istream.ClearAndClose();
-        else if (request.async_ref.IsDefined())
+        else if (request.cancel_ptr)
             /* don't call this if coming from
                _response_stream_abort() */
-            request.async_ref.Abort();
+            request.cancel_ptr.Cancel();
     }
 
     /* the handler must have closed the request body */

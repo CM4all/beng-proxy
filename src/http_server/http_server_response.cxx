@@ -90,9 +90,9 @@ HttpServerConnection::OnError(GError *error)
 
     response.istream.Clear();
 
-    /* we clear this async_ref here so http_server_request_close()
+    /* we clear this cancel_ptr here so http_server_request_close()
        won't think we havn't sent a response yet */
-    request.async_ref.Clear();
+    request.cancel_ptr = nullptr;
 
     g_prefix_error(&error, "error on HTTP response stream: ");
     Error(error);

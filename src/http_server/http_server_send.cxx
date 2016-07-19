@@ -77,8 +77,6 @@ HttpServerConnection::SubmitResponse(http_status_t status,
     assert(score != HTTP_SERVER_NEW);
     assert(socket.IsConnected());
 
-    request.async_ref.Poison();
-
     if (http_status_is_success(status)) {
         if (score == HTTP_SERVER_FIRST)
             score = HTTP_SERVER_SUCCESS;

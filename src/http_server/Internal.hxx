@@ -9,12 +9,12 @@
 
 #include "http_server.hxx"
 #include "http_body.hxx"
-#include "async.hxx"
 #include "filtered_socket.hxx"
 #include "net/SocketAddress.hxx"
 #include "event/TimerEvent.hxx"
 #include "event/DeferEvent.hxx"
 #include "istream/Pointer.hxx"
+#include "util/Cancellable.hxx"
 
 #include <http/method.h>
 
@@ -104,7 +104,7 @@ struct HttpServerConnection final : IstreamHandler {
 
         HttpServerRequest *request = nullptr;
 
-        struct async_operation_ref async_ref;
+        CancellablePointer cancel_ptr;
 
         uint64_t bytes_received = 0;
     } request;

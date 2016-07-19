@@ -16,7 +16,6 @@
 struct pool;
 class EventLoop;
 class Istream;
-struct async_operation_ref;
 struct SocketFilter;
 class SocketAddress;
 class HttpHeaders;

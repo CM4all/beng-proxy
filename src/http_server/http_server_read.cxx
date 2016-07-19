@@ -342,7 +342,7 @@ HttpServerConnection::SubmitRequest()
                                  "Unrecognized expectation");
     else {
         request.in_handler = true;
-        handler->HandleHttpRequest(*request.request, request.async_ref);
+        handler->HandleHttpRequest(*request.request, request.cancel_ptr);
         request.in_handler = false;
     }
 
