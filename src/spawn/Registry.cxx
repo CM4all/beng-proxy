@@ -5,7 +5,6 @@
 #include "Registry.hxx"
 #include "ExitListener.hxx"
 #include "event/Callback.hxx"
-#include "system/clock.h"
 #include "util/DeleteDisposer.hxx"
 
 #include <daemon/log.h>
@@ -26,7 +25,7 @@ ChildProcessRegistry::ChildProcess::ChildProcess(EventLoop &event_loop,
                                                  pid_t _pid, const char *_name,
                                                  ExitListener *_listener)
     :pid(_pid), name(_name),
-     start_us(now_us()),
+     start_time(std::chrono::steady_clock::now()),
      listener(_listener),
      kill_timeout_event(event_loop, BIND_THIS_METHOD(KillTimeoutCallback)) {}
 
@@ -58,9 +57,12 @@ ChildProcessRegistry::ChildProcess::OnExit(int status,
         daemon_log(2, "child process '%s' (pid %d) exited with status %d\n",
                    name.c_str(), (int)pid, exit_status);
 
+    const auto duration = std::chrono::steady_clock::now() - start_time;
+    const auto duration_f = std::chrono::duration_cast<std::chrono::duration<double>>(duration);
+
     daemon_log(6, "stats on '%s' (pid %d): %1.3fs elapsed, %1.3fs user, %1.3fs sys, %ld/%ld faults, %ld/%ld switches\n",
                name.c_str(), (int)pid,
-               (now_us() - start_us) / 1000000.,
+               duration_f.count(),
                timeval_to_double(rusage.ru_utime),
                timeval_to_double(rusage.ru_stime),
                rusage.ru_minflt, rusage.ru_majflt,

@@ -13,6 +13,7 @@
 #include <boost/intrusive/set.hpp>
 
 #include <string>
+#include <chrono>
 
 #include <assert.h>
 #include <sys/types.h>
@@ -33,10 +34,10 @@ class ChildProcessRegistry {
         const std::string name;
 
         /**
-         * The monotonic clock when this child process was started
-         * (registered in this library).
+         * The time when this child process was started (registered in
+         * this library).
          */
-        const uint64_t start_us;
+        const std::chrono::steady_clock::time_point start_time;
 
         ExitListener *listener;
 
