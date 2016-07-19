@@ -21,6 +21,16 @@ struct HttpServerConnectionHandler {
     void (*request)(struct http_server_request *request,
                     void *ctx,
                     struct async_operation_ref *async_ref);
+
+    /**
+     * @param length the number of response body (payload) bytes sent
+     * to our HTTP client
+     * @param bytes_received the number of raw bytes received from our
+     * HTTP client
+     * @param bytes_sent the number of raw bytes sent to our HTTP
+     * client (which includes status line, headers and transport
+     * encoding overhead such as chunk headers)
+     */
     void (*log)(struct http_server_request *request,
                 http_status_t status, off_t length,
                 uint64_t bytes_received, uint64_t bytes_sent,
