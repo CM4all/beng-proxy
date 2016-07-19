@@ -108,7 +108,7 @@ http_cache_memcached_flush(gcc_unused struct pool &pool,
                            gcc_unused MemachedStock &stock,
                            gcc_unused http_cache_memcached_flush_t callback,
                            gcc_unused void *callback_ctx,
-                           gcc_unused struct async_operation_ref &async_ref)
+                           gcc_unused CancellablePointer &cancel_ptr)
 {
 }
 
@@ -121,7 +121,7 @@ http_cache_memcached_get(gcc_unused struct pool &pool,
                          gcc_unused StringMap &request_headers,
                          gcc_unused http_cache_memcached_get_t callback,
                          gcc_unused void *callback_ctx,
-                         gcc_unused struct async_operation_ref &async_ref)
+                         gcc_unused CancellablePointer &cancel_ptr)
 {
 }
 
@@ -138,7 +138,7 @@ http_cache_memcached_put(gcc_unused struct pool &pool,
                          gcc_unused Istream *value,
                          gcc_unused http_cache_memcached_put_t put,
                          gcc_unused void *callback_ctx,
-                         gcc_unused struct async_operation_ref &async_ref)
+                         gcc_unused CancellablePointer &cancel_ptr)
 {
 }
 

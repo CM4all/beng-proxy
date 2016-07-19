@@ -64,7 +64,7 @@ struct HttpCacheMemcachedRequest {
 
     void *callback_ctx;
 
-    struct async_operation_ref *async_ref;
+    CancellablePointer *cancel_ptr;
 
     HttpCacheMemcachedRequest(struct pool &_pool)
         :pool(&_pool) {}
@@ -74,11 +74,11 @@ struct HttpCacheMemcachedRequest {
                               struct pool &_background_pool,
                               BackgroundManager &_background,
                               const char *_uri,
-                              struct async_operation_ref &_async_ref)
+                              CancellablePointer &_cancel_ptr)
         :pool(&_pool), stock(&_stock),
          background_pool(&_background_pool), background(&_background),
          uri(_uri),
-         async_ref(&_async_ref) {}
+         cancel_ptr(&_cancel_ptr) {}
 
     HttpCacheMemcachedRequest(struct pool &_pool,
                               MemachedStock &_stock,
@@ -88,13 +88,13 @@ struct HttpCacheMemcachedRequest {
                               StringMap &_request_headers,
                               http_cache_memcached_get_t _callback,
                               void *_callback_ctx,
-                              struct async_operation_ref &_async_ref)
+                              CancellablePointer &_cancel_ptr)
         :pool(&_pool), stock(&_stock),
          background_pool(&_background_pool), background(&_background),
          uri(_uri), request_headers(&_request_headers),
          in_choice(false),
          callback_ctx(_callback_ctx),
-         async_ref(&_async_ref) {
+         cancel_ptr(&_cancel_ptr) {
         callback.get = _callback;
     }
 
@@ -141,7 +141,7 @@ void
 http_cache_memcached_flush(struct pool &pool, MemachedStock &stock,
                            http_cache_memcached_flush_t callback,
                            void *callback_ctx,
-                           struct async_operation_ref &async_ref)
+                           CancellablePointer &cancel_ptr)
 {
     auto request = NewFromPool<HttpCacheMemcachedRequest>(pool, pool);
 
@@ -153,7 +153,7 @@ http_cache_memcached_flush(struct pool &pool, MemachedStock &stock,
                            nullptr, 0,
                            nullptr,
                            &http_cache_memcached_flush_handler, request,
-                           async_ref);
+                           cancel_ptr);
 }
 
 static HttpCacheDocument *
@@ -254,7 +254,7 @@ mcd_choice_get_callback(const char *key, bool unclean,
                            key, strlen(key),
                            nullptr,
                            &http_cache_memcached_get_handler, &request,
-                           *request.async_ref);
+                           *request.cancel_ptr);
 }
 
 static void
@@ -280,7 +280,7 @@ http_cache_memcached_header_done(void *header_ptr, size_t length,
             http_cache_choice_get(*request.pool, *request.stock,
                                   request.uri, request.request_headers,
                                   mcd_choice_get_callback, &request,
-                                  *request.async_ref);
+                                  *request.cancel_ptr);
             return;
         }
 
@@ -322,7 +322,7 @@ http_cache_memcached_get_response(enum memcached_response_status status,
         http_cache_choice_get(*request.pool, *request.stock,
                               request.uri, request.request_headers,
                               mcd_choice_get_callback, &request,
-                              *request.async_ref);
+                              *request.cancel_ptr);
         return;
     }
 
@@ -336,7 +336,7 @@ http_cache_memcached_get_response(enum memcached_response_status status,
 
     sink_header_new(*request.pool, *value,
                     http_cache_memcached_header_handler, &request,
-                    *request.async_ref);
+                    *request.cancel_ptr);
 }
 
 void
@@ -346,7 +346,7 @@ http_cache_memcached_get(struct pool &pool, MemachedStock &stock,
                          const char *uri, StringMap &request_headers,
                          http_cache_memcached_get_t callback,
                          void *callback_ctx,
-                         struct async_operation_ref &async_ref)
+                         CancellablePointer &cancel_ptr)
 {
     auto request = NewFromPool<HttpCacheMemcachedRequest>(pool, pool,
                                                           stock,
@@ -354,7 +354,7 @@ http_cache_memcached_get(struct pool &pool, MemachedStock &stock,
                                                           background,
                                                           uri, request_headers,
                                                           callback, callback_ctx,
-                                                          async_ref);
+                                                          cancel_ptr);
 
     const char *key = http_cache_choice_vary_key(pool, uri, nullptr);
 
@@ -363,7 +363,7 @@ http_cache_memcached_get(struct pool &pool, MemachedStock &stock,
                            key, strlen(key),
                            nullptr,
                            &http_cache_memcached_get_handler, request,
-                           async_ref);
+                           cancel_ptr);
 }
 
 static void
@@ -395,7 +395,7 @@ http_cache_memcached_put_response(enum memcached_response_status status,
 
     http_cache_choice_commit(*request.choice, *request.stock,
                              mcd_choice_commit_callback, &request,
-                             *request.async_ref);
+                             *request.cancel_ptr);
 }
 
 static void
@@ -422,12 +422,12 @@ http_cache_memcached_put(struct pool &pool, MemachedStock &stock,
                          const StringMap *response_headers,
                          Istream *value,
                          http_cache_memcached_put_t callback, void *callback_ctx,
-                         struct async_operation_ref &async_ref)
+                         CancellablePointer &cancel_ptr)
 {
     auto request = NewFromPool<HttpCacheMemcachedRequest>(pool, pool, stock,
                                                           background_pool,
                                                           background,
-                                                          uri, async_ref);
+                                                          uri, cancel_ptr);
 
     const AutoRewindPool auto_rewind(*tpool);
 
@@ -477,7 +477,7 @@ http_cache_memcached_put(struct pool &pool, MemachedStock &stock,
                            key, strlen(key),
                            value,
                            &http_cache_memcached_put_handler, request,
-                           async_ref);
+                           cancel_ptr);
 }
 
 static void

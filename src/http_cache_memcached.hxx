@@ -11,12 +11,12 @@
 
 #include <http/status.h>
 
-struct async_operation_ref;
 struct pool;
 class StringMap;
 class Istream;
 struct MemachedStock;
 class BackgroundManager;
+class CancellablePointer;
 struct HttpCacheResponseInfo;
 struct HttpCacheDocument;
 
@@ -33,7 +33,7 @@ void
 http_cache_memcached_flush(struct pool &pool, MemachedStock &stock,
                            http_cache_memcached_flush_t callback,
                            void *callback_ctx,
-                           struct async_operation_ref &async_ref);
+                           CancellablePointer &cancel_ptr);
 
 void
 http_cache_memcached_get(struct pool &pool, MemachedStock &stock,
@@ -42,7 +42,7 @@ http_cache_memcached_get(struct pool &pool, MemachedStock &stock,
                          const char *uri, StringMap &request_headers,
                          http_cache_memcached_get_t callback,
                          void *callback_ctx,
-                         struct async_operation_ref &async_ref);
+                         CancellablePointer &cancel_ptr);
 
 void
 http_cache_memcached_put(struct pool &pool, MemachedStock &stock,
@@ -55,7 +55,7 @@ http_cache_memcached_put(struct pool &pool, MemachedStock &stock,
                          const StringMap *response_headers,
                          Istream *value,
                          http_cache_memcached_put_t put, void *callback_ctx,
-                         struct async_operation_ref &async_ref);
+                         CancellablePointer &cancel_ptr);
 
 void
 http_cache_memcached_remove_uri(MemachedStock &stock,
