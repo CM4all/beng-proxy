@@ -15,14 +15,13 @@
 #include "trace.h"
 
 struct pool;
-struct async_operation_ref;
 class CancellablePointer;
 
-struct async_operation_ref &
+CancellablePointer &
 async_unref_on_abort_impl(struct pool &pool,
                           CancellablePointer &cancel_ptr
                           TRACE_ARGS_DECL);
 
-#define async_unref_on_abort(pool, async_ref) async_unref_on_abort_impl(pool, async_ref TRACE_ARGS)
+#define async_unref_on_abort(pool, cancel_ptr) async_unref_on_abort_impl(pool, cancel_ptr TRACE_ARGS)
 
 #endif

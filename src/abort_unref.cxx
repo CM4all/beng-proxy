@@ -16,7 +16,7 @@
 
 struct UnrefOnAbort final : Cancellable {
     struct pool &pool;
-    struct async_operation_ref ref;
+    CancellablePointer cancel_ptr;
 
 #ifdef TRACE
     const char *const file;
@@ -33,7 +33,7 @@ struct UnrefOnAbort final : Cancellable {
 
     /* virtual methods from class Cancellable */
     void Cancel() override {
-        ref.Abort();
+        cancel_ptr.Cancel();
         pool_unref_fwd(&pool);
     }
 };
@@ -43,12 +43,12 @@ struct UnrefOnAbort final : Cancellable {
  *
  */
 
-struct async_operation_ref &
+CancellablePointer &
 async_unref_on_abort_impl(struct pool &pool,
                           CancellablePointer &cancel_ptr
                           TRACE_ARGS_DECL)
 {
     auto uoa = NewFromPool<UnrefOnAbort>(pool, pool, cancel_ptr
                                          TRACE_ARGS_FWD);
-    return uoa->ref;
+    return uoa->cancel_ptr;
 }
