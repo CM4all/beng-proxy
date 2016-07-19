@@ -150,6 +150,10 @@ HttpServerConnection::SubmitResponse(http_status_t status,
     response.length = - status_stream->GetAvailable(false)
         - header_stream->GetAvailable(false);
 
+    /* make sure the access logger gets a negative value if there
+       is no response body */
+    response.length -= body == nullptr;
+
     body = istream_cat_new(request_pool, status_stream,
                            header_stream, body);
 

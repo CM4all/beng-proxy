@@ -432,7 +432,7 @@ HttpServerConnection::CloseRequest()
     assert(request.read_state != Request::START);
     assert(request.request != nullptr);
 
-    if (response.status != http_status_t(0) && response.length >= 0)
+    if (response.status != http_status_t(0))
         Log();
 
     struct pool &request_pool = *request.request->pool;

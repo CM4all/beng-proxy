@@ -24,7 +24,8 @@ struct HttpServerConnectionHandler {
 
     /**
      * @param length the number of response body (payload) bytes sent
-     * to our HTTP client
+     * to our HTTP client, or negative if there was no response body
+     * (which is different from "empty response body")
      * @param bytes_received the number of raw bytes received from our
      * HTTP client
      * @param bytes_sent the number of raw bytes sent to our HTTP

@@ -3,6 +3,7 @@ cm4all-beng-proxy (10.23) unstable; urgency=low
   * cgi: ignore the "Proxy" request header to work around security
     vulnerabilities in several CGI programs
   * http_client: differentiate between "empty response body" and "no body"
+  * http_server: log "-" if there is no response body
 
  --   
 
