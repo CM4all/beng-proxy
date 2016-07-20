@@ -13,6 +13,8 @@
 
 #include <glib.h>
 
+#include <chrono>
+
 #include <time.h>
 #include <assert.h>
 #include <sys/socket.h>
@@ -26,11 +28,11 @@ enum {
 struct StopwatchEvent {
     const char *name;
 
-    struct timespec time;
+    std::chrono::steady_clock::time_point time;
 
     void Init(const char *_name) {
         name = _name;
-        clock_gettime(CLOCK_MONOTONIC, &time);
+        time = std::chrono::steady_clock::now();
     }
 };
 
@@ -133,11 +135,10 @@ stopwatch_event(Stopwatch *stopwatch, const char *name)
     stopwatch->events.append().Init(name);
 }
 
-static long
-timespec_diff_ms(const struct timespec *a, const struct timespec *b)
+static constexpr long
+ToLongMs(std::chrono::steady_clock::duration d)
 {
-    return (a->tv_sec - b->tv_sec) * 1000 +
-        (a->tv_nsec - b->tv_nsec) / 1000000;
+    return std::chrono::duration_cast<std::chrono::seconds>(d).count();
 }
 
 static long
@@ -169,8 +170,7 @@ stopwatch_dump(const Stopwatch *stopwatch)
     for (const auto &i : stopwatch->events)
         g_string_append_printf(message, " %s=%ldms",
                                i.name,
-                               timespec_diff_ms(&i.time,
-                                                &stopwatch->events.front().time));
+                               ToLongMs(i.time - stopwatch->events.front().time));
 
     getrusage(RUSAGE_SELF, &self);
     g_string_append_printf(message, " (beng-proxy=%ld+%ldms)",
