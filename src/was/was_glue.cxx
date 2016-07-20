@@ -106,8 +106,8 @@ WasRequest::OnStockItemReady(StockItem &item)
 
     const auto &process = was_stock_item_get(item);
 
-    was_client_request(pool, item.stock.GetEventLoop(), process.control_fd,
-                       process.input_fd, process.output_fd,
+    was_client_request(pool, item.stock.GetEventLoop(), process.control.Get(),
+                       process.input.Get(), process.output.Get(),
                        *this,
                        method, uri,
                        script_name, path_info,

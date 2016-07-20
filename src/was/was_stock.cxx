@@ -96,7 +96,7 @@ public:
             return false;
         }
 
-        event.Set(process.control_fd, EV_READ|EV_TIMEOUT);
+        event.Set(process.control.Get(), EV_READ|EV_TIMEOUT);
         return true;
     }
 
@@ -182,7 +182,7 @@ WasChildParams::GetStockKey(struct pool &pool) const
 inline bool
 WasChild::ReceiveControl(void *p, size_t size)
 {
-    ssize_t nbytes = recv(process.control_fd, p, size, MSG_DONTWAIT);
+    ssize_t nbytes = recv(process.control.Get(), p, size, MSG_DONTWAIT);
     if (nbytes == (ssize_t)size)
         return true;
 
@@ -207,7 +207,7 @@ WasChild::DiscardInput(uint64_t remaining)
     while (remaining > 0) {
         uint8_t buffer[16384];
         size_t size = std::min(remaining, uint64_t(sizeof(buffer)));
-        ssize_t nbytes = read(process.input_fd, buffer, size);
+        ssize_t nbytes = process.input.Read(buffer, size);
         if (nbytes <= 0)
             return false;
 
@@ -304,7 +304,7 @@ WasChild::EventCallback(short events)
         }
 
         char buffer;
-        ssize_t nbytes = recv(process.control_fd, &buffer, sizeof(buffer),
+        ssize_t nbytes = recv(process.control.Get(), &buffer, sizeof(buffer),
                               MSG_DONTWAIT);
         if (nbytes < 0)
             daemon_log(2, "error on idle WAS control connection '%s': %s\n",
@@ -352,7 +352,7 @@ WasChild::~WasChild()
     if (process.pid >= 0)
         spawn_service.KillChildProcess(process.pid);
 
-    if (process.control_fd >= 0)
+    if (process.control.IsDefined())
         event.Delete();
 }
 

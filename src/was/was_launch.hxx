@@ -7,6 +7,7 @@
 #ifndef BENG_PROXY_WAS_LAUNCH_HXX
 #define BENG_PROXY_WAS_LAUNCH_HXX
 
+#include "system/UniqueFileDescriptor.hxx"
 #include "glibfwd.hxx"
 
 class SpawnService;
@@ -16,13 +17,13 @@ template<typename T> struct ConstBuffer;
 
 struct WasProcess {
     int pid = -1;
-    int control_fd = -1, input_fd = -1, output_fd = -1;
+    UniqueFileDescriptor control, input, output;
 
-    ~WasProcess() {
-        Close();
+    void Close() {
+        control.Close();
+        input.Close();
+        output.Close();
     }
-
-    void Close();
 };
 
 bool
