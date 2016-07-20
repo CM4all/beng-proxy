@@ -6,6 +6,7 @@
 
 #include "stopwatch.hxx"
 #include "pool.hxx"
+#include "util/StaticArray.hxx"
 
 #include <daemon/log.h>
 #include <socket/address.h>
@@ -20,7 +21,6 @@
 
 enum {
     STOPWATCH_VERBOSE = 3,
-    MAX_EVENTS = 16,
 };
 
 struct StopwatchEvent {
@@ -43,8 +43,7 @@ struct Stopwatch {
 
     const char *const name;
 
-    unsigned num_events;
-    StopwatchEvent events[MAX_EVENTS];
+    StaticArray<StopwatchEvent, 16> events;
 
     /**
      * Our own resource usage, measured when the stopwatch was
@@ -56,8 +55,7 @@ struct Stopwatch {
         :pool(&_pool), name(_name) {
         ::pool_notify(pool, &pool_notify);
 
-        events[0].Init(name);
-        num_events = 1;
+        events.append().Init(name);
 
         getrusage(RUSAGE_SELF, &self);
     }
@@ -128,11 +126,11 @@ stopwatch_event(Stopwatch *stopwatch, const char *name)
     assert(stopwatch != nullptr);
     assert(name != nullptr);
 
-    if (stopwatch->num_events >= MAX_EVENTS)
+    if (stopwatch->events.full())
         /* array is full, do not record any more events */
         return;
 
-    stopwatch->events[stopwatch->num_events++].Init(name);
+    stopwatch->events.append().Init(name);
 }
 
 static long
@@ -159,21 +157,20 @@ stopwatch_dump(const Stopwatch *stopwatch)
         return;
 
     assert(stopwatch != nullptr);
-    assert(stopwatch->num_events > 0);
-    assert(stopwatch->num_events <= MAX_EVENTS);
+    assert(!stopwatch->events.empty());
 
-    if (stopwatch->num_events < 2)
+    if (stopwatch->events.size() < 2)
         /* nothing was recorded (except for the initial event) */
         return;
 
     message = g_string_sized_new(1024);
     g_string_printf(message, "stopwatch[%s]:", stopwatch->name);
 
-    for (unsigned i = 1; i < stopwatch->num_events; ++i)
+    for (const auto &i : stopwatch->events)
         g_string_append_printf(message, " %s=%ldms",
-                               stopwatch->events[i].name,
-                               timespec_diff_ms(&stopwatch->events[i].time,
-                                                &stopwatch->events[0].time));
+                               i.name,
+                               timespec_diff_ms(&i.time,
+                                                &stopwatch->events.front().time));
 
     getrusage(RUSAGE_SELF, &self);
     g_string_append_printf(message, " (beng-proxy=%ld+%ldms)",
