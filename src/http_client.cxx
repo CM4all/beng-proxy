@@ -628,10 +628,13 @@ HttpClient::HeadersFinished()
         (header_connection != nullptr &&
          http_list_contains_i(header_connection, "keep-alive"));
 
-    if (http_status_is_empty(response.status))
+    if (http_status_is_empty(response.status) &&
+        /* "100 Continue" requires special handling here, because the
+           final response following it may contain a body */
+        response.status != HTTP_STATUS_CONTINUE)
         response.no_body = true;
 
-    if (response.no_body) {
+    if (response.no_body || response.status == HTTP_STATUS_CONTINUE) {
         response.body = nullptr;
         response.read_state = response::READ_BODY;
         return true;
