@@ -13,6 +13,7 @@
 #include "Registry.hxx"
 #include "ExitListener.hxx"
 #include "event/SocketEvent.hxx"
+#include "system/UniqueFileDescriptor.hxx"
 #include "util/DeleteDisposer.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/StaticArray.hxx"
@@ -34,33 +35,6 @@
 #include <errno.h>
 
 class SpawnServerProcess;
-
-class SpawnFd {
-    int fd;
-
-public:
-    explicit SpawnFd(int _fd=-1):fd(_fd) {}
-
-    SpawnFd(SpawnFd &&src):fd(src.fd) {
-        src.fd = -1;
-    }
-
-    ~SpawnFd() {
-        if (fd >= 0)
-            close(fd);
-    }
-
-    SpawnFd &operator=(SpawnFd &&src) {
-        std::swap(fd, src.fd);
-        return *this;
-    }
-
-    int Release() {
-        int result = fd;
-        fd = -1;
-        return result;
-    }
-};
 
 class SpawnFdList {
     ConstBuffer<int> list;
@@ -94,11 +68,11 @@ public:
         return list.size;
     }
 
-    SpawnFd Get() {
+    UniqueFileDescriptor Get() {
         if (IsEmpty())
             throw MalformedSpawnPayloadError();
 
-        return SpawnFd(list.shift());
+        return UniqueFileDescriptor(FileDescriptor(list.shift()));
     }
 };
 
@@ -406,19 +380,19 @@ SpawnServerConnection::HandleExecMessage(SpawnPayload payload,
             break;
 
         case SpawnExecCommand::STDIN:
-            p.SetStdin(fds.Get().Release());
+            p.SetStdin(fds.Get().Steal());
             break;
 
         case SpawnExecCommand::STDOUT:
-            p.SetStdout(fds.Get().Release());
+            p.SetStdout(fds.Get().Steal());
             break;
 
         case SpawnExecCommand::STDERR:
-            p.SetStderr(fds.Get().Release());
+            p.SetStderr(fds.Get().Steal());
             break;
 
         case SpawnExecCommand::CONTROL:
-            p.SetControl(fds.Get().Release());
+            p.SetControl(fds.Get().Steal());
             break;
 
         case SpawnExecCommand::REFENCE:
@@ -556,7 +530,7 @@ SpawnServerConnection::HandleMessage(ConstBuffer<uint8_t> payload,
         if (!payload.IsEmpty() || fds.size() != 1)
             throw MalformedSpawnPayloadError();
 
-        process.AddConnection(fds.Get().Release());
+        process.AddConnection(fds.Get().Steal());
         break;
 
     case SpawnRequestCommand::EXEC:
