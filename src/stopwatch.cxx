@@ -138,7 +138,7 @@ stopwatch_event(Stopwatch *stopwatch, const char *name)
 static constexpr long
 ToLongMs(std::chrono::steady_clock::duration d)
 {
-    return std::chrono::duration_cast<std::chrono::seconds>(d).count();
+    return std::chrono::duration_cast<std::chrono::milliseconds>(d).count();
 }
 
 static long
