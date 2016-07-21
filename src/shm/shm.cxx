@@ -219,6 +219,7 @@ shm_merge(struct shm *shm, struct page *page)
         other->num_pages += page->num_pages;
         list_remove(&page->siblings);
         page = other;
+        page_number = shm_page_number(shm, other->data);
     }
 
     /* merge with next page? */
