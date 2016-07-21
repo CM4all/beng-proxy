@@ -7,6 +7,7 @@ cm4all-beng-proxy (9.15) unstable; urgency=low
   * http_client: differentiate between "empty response body" and "no body"
   * http_client: fix "excess data" error after "100 Continue"
   * fcgi: fix assertion failure
+  * shm: fix double allocation bug which caused session corruption
   * session: fix user expiry after defragmentation
   * omit stale "session" parameter in processed URIs
 
