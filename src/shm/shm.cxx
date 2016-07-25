@@ -238,6 +238,7 @@ shm::Merge(Page *page)
             available.erase(i);
 
             page = &previous;
+            page_number = PageNumber(page->data);
             i = available.iterator_to(*page);
         }
     }
