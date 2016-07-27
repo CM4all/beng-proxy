@@ -81,6 +81,10 @@ struct shm {
         return At(page_size * CalcHeaderPages());
     }
 
+    unsigned PageNumber(const Page &page) const {
+        return &page - &pages[0];
+    }
+
     unsigned PageNumber(const void *p) const {
         ptrdiff_t difference = (const uint8_t *)p - GetData();
         unsigned page_number = difference / page_size;
@@ -222,7 +226,7 @@ shm_alloc(struct shm *shm, unsigned want_pages)
 void
 shm::Merge(Page *page)
 {
-    unsigned page_number = PageNumber(page->data);
+    unsigned page_number = PageNumber(*page);
 
     /* merge with previous page? */
 
@@ -233,12 +237,12 @@ shm::Merge(Page *page)
 
     if (i != available.begin()) {
         Page &previous = *std::prev(i);
-        if (PageNumber(previous.data) + previous.num_pages == page_number) {
+        if (PageNumber(previous) + previous.num_pages == page_number) {
             previous.num_pages += page->num_pages;
             available.erase(i);
 
             page = &previous;
-            page_number = PageNumber(page->data);
+            page_number = PageNumber(*page);
             i = available.iterator_to(*page);
         }
     }
@@ -251,7 +255,7 @@ shm::Merge(Page *page)
     if (i != std::prev(available.end())) {
         Page &next = *std::next(i);
 
-        if (page_number + page->num_pages == PageNumber(next.data)) {
+        if (page_number + page->num_pages == PageNumber(next)) {
             page->num_pages += next.num_pages;
             available.erase(available.iterator_to(next));
         }
