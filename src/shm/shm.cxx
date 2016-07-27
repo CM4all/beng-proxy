@@ -36,7 +36,7 @@ struct shm {
         uint8_t *data;
 
         bool operator<(const Page &other) const {
-            return data < other.data;
+            return this < &other;
         }
     };
 
