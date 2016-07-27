@@ -27,13 +27,17 @@ struct shm {
     const size_t page_size;
     const unsigned num_pages;
 
+    /**
+     * The data section of the first page.
+     */
+    uint8_t *const data;
+
     /** this lock protects the linked list */
     boost::interprocess::interprocess_mutex mutex;
 
     struct Page
         : boost::intrusive::set_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
         unsigned num_pages;
-        uint8_t *data;
 
         bool operator<(const Page &other) const {
             return this < &other;
@@ -47,11 +51,11 @@ struct shm {
     Page pages[1];
 
     shm(size_t _page_size, unsigned _num_pages)
-        :page_size(_page_size), num_pages(_num_pages) {
+        :page_size(_page_size), num_pages(_num_pages),
+         data(At(page_size * CalcHeaderPages())) {
         ref.Init();
 
         pages[0].num_pages = num_pages;
-        pages[0].data = GetData();
         available.push_front(pages[0]);
     }
 
@@ -74,11 +78,27 @@ struct shm {
     }
 
     uint8_t *GetData() {
-        return At(page_size * CalcHeaderPages());
+        return data;
     }
 
     const uint8_t *GetData() const {
-        return At(page_size * CalcHeaderPages());
+        return data;
+    }
+
+    uint8_t *PageData(unsigned page_number) {
+        return GetData() + page_number * page_size;
+    }
+
+    const uint8_t *PageData(unsigned page_number) const {
+        return GetData() + page_number * page_size;
+    }
+
+    uint8_t *PageData(Page &page) {
+        return PageData(PageNumber(page));
+    }
+
+    const uint8_t *PageData(const Page &page) const {
+        return PageData(PageNumber(page));
     }
 
     unsigned PageNumber(const Page &page) const {
@@ -173,7 +193,6 @@ shm::SplitPage(Page *page, unsigned want_pages)
 
     page->num_pages -= want_pages;
 
-    page[page->num_pages].data = page->data + page_size * page->num_pages;
     page += page->num_pages;
     page->num_pages = want_pages;
 
@@ -203,15 +222,17 @@ shm::Allocate(unsigned want_pages)
 
         lock.unlock();
 
-        poison_undefined(page->data, page_size * want_pages);
-        return page->data;
+        void *page_data = PageData(*page);
+        poison_undefined(page_data, page_size * want_pages);
+        return page_data;
     } else {
         page = SplitPage(page, want_pages);
 
         lock.unlock();
 
-        poison_undefined(page->data, page_size * want_pages);
-        return page->data;
+        void *page_data = PageData(*page);
+        poison_undefined(page_data, page_size * want_pages);
+        return page_data;
     }
 }
 
@@ -265,7 +286,7 @@ shm::Free(const void *p)
     unsigned page_number = PageNumber(p);
     Page *page = &pages[page_number];
 
-    poison_noaccess(page->data, page_size * page->num_pages);
+    poison_noaccess(PageData(*page), page_size * page->num_pages);
 
     boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex> lock(mutex);
 
