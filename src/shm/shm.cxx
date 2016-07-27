@@ -65,8 +65,16 @@ struct shm {
         return (header_size + page_size - 1) / page_size;
     }
 
+    static size_t CalcMemoryMapSize(size_t page_size, unsigned num_pages) {
+        return page_size * (CalcHeaderPages(page_size, num_pages) + num_pages);
+    }
+
     unsigned CalcHeaderPages() const {
         return CalcHeaderPages(page_size, num_pages);
+    }
+
+    size_t CalcMemoryMapSize() const {
+        return CalcMemoryMapSize(page_size, num_pages);
     }
 
     uint8_t *At(size_t offset) {
@@ -134,8 +142,8 @@ shm_new(size_t page_size, unsigned num_pages)
     assert(page_size >= sizeof(size_t));
     assert(num_pages > 0);
 
-    const unsigned header_pages = shm::CalcHeaderPages(page_size, num_pages);
-    void *p = mmap(nullptr, page_size * (header_pages + num_pages),
+    const size_t size = shm::CalcMemoryMapSize(page_size, num_pages);
+    void *p = mmap(nullptr, size,
                    PROT_READ|PROT_WRITE,
                    MAP_ANONYMOUS|MAP_SHARED,
                    -1, 0);
@@ -156,17 +164,14 @@ shm_ref(struct shm *shm)
 void
 shm_close(struct shm *shm)
 {
-    unsigned header_pages;
-    int ret;
-
     assert(shm != nullptr);
+
+    const size_t size = shm->CalcMemoryMapSize();
 
     if (shm->ref.Put())
         shm->~shm();
 
-    header_pages = shm->CalcHeaderPages();
-    ret = munmap(shm, shm->page_size * (header_pages + shm->num_pages));
-    if (ret < 0)
+    if (munmap(shm, size) < 0)
         daemon_log(1, "munmap() failed: %s\n", strerror(errno));
 }
 
