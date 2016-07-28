@@ -121,12 +121,12 @@ lhttp_child_stock_socket_type(void *info)
 }
 
 static bool
-lhttp_child_stock_prepare(void *info, int fd,
+lhttp_child_stock_prepare(void *info, UniqueFileDescriptor &&fd,
                           PreparedChildProcess &p, GError **error_r)
 {
     const auto &address = *(const LhttpAddress *)info;
 
-    p.stdin_fd = fd;
+    p.SetStdin(std::move(fd));
 
     return address.CopyTo(p, error_r);
 }

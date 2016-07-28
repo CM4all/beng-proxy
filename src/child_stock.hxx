@@ -17,12 +17,13 @@
 class StockMap;
 struct StockItem;
 struct PreparedChildProcess;
+class UniqueFileDescriptor;
 class EventLoop;
 class SpawnService;
 
 struct ChildStockClass {
     int (*socket_type)(void *info);
-    bool (*prepare)(void *info, int fd,
+    bool (*prepare)(void *info, UniqueFileDescriptor &&fd,
                     PreparedChildProcess &p,
                     GError **error_r);
 };

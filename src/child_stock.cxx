@@ -104,7 +104,7 @@ ChildStock::Create(CreateStockItem c, void *info)
     }
 
     PreparedChildProcess p;
-    if (!cls.prepare(info, fd.Steal(), p, &error)) {
+    if (!cls.prepare(info, std::move(fd), p, &error)) {
         item->InvokeCreateError(error);
         return;
     }

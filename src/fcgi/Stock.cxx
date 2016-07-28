@@ -160,13 +160,13 @@ FcgiConnection::OnSocketEvent(short events)
  */
 
 static bool
-fcgi_child_stock_prepare(void *info, int fd,
+fcgi_child_stock_prepare(void *info, UniqueFileDescriptor &&fd,
                          PreparedChildProcess &p, GError **error_r)
 {
     const auto &params = *(const FcgiChildParams *)info;
     const ChildOptions &options = params.options;
 
-    p.stdin_fd = fd;
+    p.SetStdin(std::move(fd));
 
     /* the FastCGI protocol defines a channel for stderr, so we could
        close its "real" stderr here, but many FastCGI applications
