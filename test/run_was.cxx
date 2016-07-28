@@ -164,9 +164,10 @@ int main(int argc, char **argv) {
     child_process_registry.SetVolatile();
     LocalSpawnService spawn_service(spawn_config, child_process_registry);
 
-    if (!was_launch(spawn_service, context.process, "was",
-                    argv[1], nullptr,
-                    child_options, nullptr, &error)) {
+    context.process = was_launch(spawn_service, "was",
+                                 argv[1], nullptr,
+                                 child_options, nullptr, &error);
+    if (!context.process.IsDefined()) {
         g_printerr("%s\n", error->message);
         g_error_free(error);
         return 2;

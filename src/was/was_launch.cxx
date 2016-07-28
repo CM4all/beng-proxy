@@ -19,9 +19,8 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-bool
+WasProcess
 was_launch(SpawnService &spawn_service,
-           WasProcess &process,
            const char *name,
            const char *executable_path,
            ConstBuffer<const char *> args,
@@ -29,13 +28,15 @@ was_launch(SpawnService &spawn_service,
            ExitListener *listener,
            GError **error_r)
 {
+    WasProcess process;
+
     int control_fds[2];
 
     PreparedChildProcess p;
 
     if (socketpair_cloexec(AF_UNIX, SOCK_STREAM, 0, control_fds) < 0) {
         set_error_errno_msg(error_r, "failed to create socket pair");
-        return false;
+        return process;
     }
 
     process.control = UniqueFileDescriptor(FileDescriptor(control_fds[0]));
@@ -44,7 +45,7 @@ was_launch(SpawnService &spawn_service,
     UniqueFileDescriptor input_r, input_w;
     if (!UniqueFileDescriptor::CreatePipe(input_r, input_w)) {
         set_error_errno_msg(error_r, "failed to create first pipe");
-        return false;
+        return process;
     }
 
     input_r.SetNonBlocking();
@@ -54,7 +55,7 @@ was_launch(SpawnService &spawn_service,
     UniqueFileDescriptor output_r, output_w;
     if (!UniqueFileDescriptor::CreatePipe(output_r, output_w)) {
         set_error_errno_msg(error_r, "failed to create second pipe");
-        return false;
+        return process;
     }
 
     p.stdin_fd = output_r.Steal();
@@ -66,13 +67,13 @@ was_launch(SpawnService &spawn_service,
         p.Append(i);
 
     if (!options.CopyTo(p, true, nullptr, error_r))
-        return false;
+        return process;
 
     int pid = spawn_service.SpawnChildProcess(name, std::move(p), listener,
                                               error_r);
     if (pid < 0)
-        return false;
+        return process;
 
     process.pid = pid;
-    return true;
+    return process;
 }

@@ -82,13 +82,14 @@ public:
     ~WasChild() override;
 
     bool Launch(const WasChildParams &params, GError **error_r) {
-        if (!was_launch(spawn_service, process,
-                        GetStockName(),
-                        params.executable_path,
-                        params.args,
-                        params.options,
-                        this,
-                        error_r)) {
+        process = was_launch(spawn_service,
+                             GetStockName(),
+                             params.executable_path,
+                             params.args,
+                             params.options,
+                             this,
+                             error_r);
+        if (!process.IsDefined()) {
             /* explicitly Close() the WasProcess, so our destructor
                doesn't believe we have already initialized the
                Event */

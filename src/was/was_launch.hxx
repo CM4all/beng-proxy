@@ -19,6 +19,10 @@ struct WasProcess {
     int pid = -1;
     UniqueFileDescriptor control, input, output;
 
+    bool IsDefined() const {
+        return pid > 0;
+    }
+
     void Close() {
         control.Close();
         input.Close();
@@ -26,9 +30,8 @@ struct WasProcess {
     }
 };
 
-bool
+WasProcess
 was_launch(SpawnService &spawn_service,
-           WasProcess &process,
            const char *name,
            const char *executable_path,
            ConstBuffer<const char *> args,
