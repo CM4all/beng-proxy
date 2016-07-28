@@ -136,7 +136,7 @@ delegate_stock_create(void *ctx,
         return;
     }
 
-    p.stdin_fd = fds[1];
+    p.SetStdin(fds[1]);
 
     int pid = spawn_service.SpawnChildProcess(info.executable_path,
                                               std::move(p), nullptr,
