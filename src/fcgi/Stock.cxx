@@ -18,6 +18,7 @@
 #include "pool.hxx"
 #include "event/SocketEvent.hxx"
 #include "event/Duration.hxx"
+#include "system/UniqueFileDescriptor.hxx"
 #include "util/ConstBuffer.hxx"
 
 #include <daemon/log.h>
@@ -173,9 +174,9 @@ fcgi_child_stock_prepare(void *info, UniqueFileDescriptor &&fd,
        don't use the FastCGI protocol to send error messages, so we
        just keep it open */
 
-    int null_fd = open("/dev/null", O_WRONLY|O_CLOEXEC|O_NOCTTY);
-    if (null_fd >= 0)
-        p.stdout_fd = null_fd;
+    UniqueFileDescriptor null_fd;
+    if (null_fd.Open("/dev/null", O_WRONLY))
+        p.SetStdin(std::move(null_fd));
 
     p.Append(params.executable_path);
     for (auto i : params.args)
