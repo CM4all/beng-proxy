@@ -110,8 +110,6 @@ pipe_filter(SpawnService &spawn_service, EventLoop &event_loop,
     pid_t pid = SpawnChildProcess(event_loop, pool, path, body, &response,
                                   std::move(p),
                                   spawn_service, &error);
-    if (prefix_logger.second >= 0)
-        close(prefix_logger.second);
     if (pid < 0) {
         DeletePrefixLogger(prefix_logger.first);
         handler.InvokeError(error);
