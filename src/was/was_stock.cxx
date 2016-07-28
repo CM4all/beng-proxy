@@ -82,7 +82,7 @@ public:
     ~WasChild() override;
 
     bool Launch(const WasChildParams &params, GError **error_r) {
-        if (!was_launch(spawn_service, &process,
+        if (!was_launch(spawn_service, process,
                         GetStockName(),
                         params.executable_path,
                         params.args,

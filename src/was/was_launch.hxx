@@ -28,7 +28,7 @@ struct WasProcess {
 
 bool
 was_launch(SpawnService &spawn_service,
-           WasProcess *process,
+           WasProcess &process,
            const char *name,
            const char *executable_path,
            ConstBuffer<const char *> args,

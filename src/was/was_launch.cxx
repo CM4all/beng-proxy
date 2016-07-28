@@ -21,7 +21,7 @@
 
 bool
 was_launch(SpawnService &spawn_service,
-           WasProcess *process,
+           WasProcess &process,
            const char *name,
            const char *executable_path,
            ConstBuffer<const char *> args,
@@ -38,7 +38,7 @@ was_launch(SpawnService &spawn_service,
         return false;
     }
 
-    process->control = UniqueFileDescriptor(FileDescriptor(control_fds[0]));
+    process.control = UniqueFileDescriptor(FileDescriptor(control_fds[0]));
     p.control_fd = control_fds[1];
 
     UniqueFileDescriptor input_r, input_w;
@@ -48,7 +48,7 @@ was_launch(SpawnService &spawn_service,
     }
 
     input_r.SetNonBlocking();
-    process->input = std::move(input_r);
+    process.input = std::move(input_r);
     p.stdout_fd = input_w.Steal();
 
     UniqueFileDescriptor output_r, output_w;
@@ -59,7 +59,7 @@ was_launch(SpawnService &spawn_service,
 
     p.stdin_fd = output_r.Steal();
     output_w.SetNonBlocking();
-    process->output = std::move(output_w);
+    process.output = std::move(output_w);
 
     p.Append(executable_path);
     for (auto i : args)
@@ -73,6 +73,6 @@ was_launch(SpawnService &spawn_service,
     if (pid < 0)
         return false;
 
-    process->pid = pid;
+    process.pid = pid;
     return true;
 }
