@@ -3,6 +3,7 @@
  */
 
 #include "Prepared.hxx"
+#include "system/UniqueFileDescriptor.hxx"
 #include "util/ConstBuffer.hxx"
 
 #include <string.h>
@@ -86,6 +87,30 @@ PreparedChildProcess::SetControl(int fd)
     if (control_fd >= 0)
         close(control_fd);
     control_fd = fd;
+}
+
+void
+PreparedChildProcess::SetStdin(UniqueFileDescriptor &&fd)
+{
+    SetStdin(fd.Steal());
+}
+
+void
+PreparedChildProcess::SetStdout(UniqueFileDescriptor &&fd)
+{
+    SetStdout(fd.Steal());
+}
+
+void
+PreparedChildProcess::SetStderr(UniqueFileDescriptor &&fd)
+{
+    SetStderr(fd.Steal());
+}
+
+void
+PreparedChildProcess::SetControl(UniqueFileDescriptor &&fd)
+{
+    SetControl(fd.Steal());
 }
 
 const char *
