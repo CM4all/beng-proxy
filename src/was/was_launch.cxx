@@ -40,7 +40,7 @@ was_launch(SpawnService &spawn_service,
     }
 
     process.control = UniqueFileDescriptor(FileDescriptor(control_fds[0]));
-    p.control_fd = control_fds[1];
+    p.SetControl(control_fds[1]);
 
     UniqueFileDescriptor input_r, input_w;
     if (!UniqueFileDescriptor::CreatePipe(input_r, input_w)) {
@@ -50,7 +50,7 @@ was_launch(SpawnService &spawn_service,
 
     input_r.SetNonBlocking();
     process.input = std::move(input_r);
-    p.stdout_fd = input_w.Steal();
+    p.SetStdout(std::move(input_w));
 
     UniqueFileDescriptor output_r, output_w;
     if (!UniqueFileDescriptor::CreatePipe(output_r, output_w)) {
@@ -58,7 +58,7 @@ was_launch(SpawnService &spawn_service,
         return process;
     }
 
-    p.stdin_fd = output_r.Steal();
+    p.SetStdin(std::move(output_r));
     output_w.SetNonBlocking();
     process.output = std::move(output_w);
 
