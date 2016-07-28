@@ -12,6 +12,7 @@
 #include "spawn/IstreamSpawn.hxx"
 #include "spawn/Prepared.hxx"
 #include "PrefixLogger.hxx"
+#include "system/UniqueFileDescriptor.hxx"
 #include "util/CharUtil.hxx"
 #include "util/Error.hxx"
 
@@ -43,7 +44,7 @@ StringFallback(const char *value, const char *fallback)
 
 static bool
 PrepareCgi(struct pool &pool, PreparedChildProcess &p,
-           int stderr_fd,
+           UniqueFileDescriptor stderr_fd,
            http_method_t method,
            const CgiAddress &address,
            const char *remote_addr,
@@ -51,7 +52,7 @@ PrepareCgi(struct pool &pool, PreparedChildProcess &p,
            off_t content_length,
            GError **error_r)
 {
-    p.stderr_fd = stderr_fd;
+    p.SetStderr(std::move(stderr_fd));
 
     const char *path = address.path;
 
@@ -152,11 +153,11 @@ cgi_launch(EventLoop &event_loop, struct pool *pool,
            SpawnService &spawn_service,
            GError **error_r)
 {
-    const auto prefix_logger = CreatePrefixLogger(event_loop, IgnoreError());
+    auto prefix_logger = CreatePrefixLogger(event_loop, IgnoreError());
 
     PreparedChildProcess p;
 
-    if (!PrepareCgi(*pool, p, prefix_logger.second, method,
+    if (!PrepareCgi(*pool, p, std::move(prefix_logger.second), method,
                     *address, remote_addr, headers,
                     body != nullptr ? body->GetAvailable(false) : -1,
                     error_r)) {

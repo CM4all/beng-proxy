@@ -4,7 +4,7 @@
 
 #include "PrefixLogger.hxx"
 #include "event/SocketEvent.hxx"
-#include "system/fd_util.h"
+#include "system/UniqueFileDescriptor.hxx"
 #include "util/Error.hxx"
 
 #include <algorithm>
@@ -15,7 +15,7 @@
 #include <stdlib.h>
 
 class PrefixLogger {
-    const int fd;
+    UniqueFileDescriptor fd;
 
     SocketEvent event;
 
@@ -24,15 +24,15 @@ class PrefixLogger {
     size_t line_length = 0;
 
 public:
-    explicit PrefixLogger(EventLoop &event_loop, int _fd)
-        :fd(_fd), event(event_loop, fd, EV_READ|EV_PERSIST,
-                        BIND_THIS_METHOD(SocketEventCallback)) {
+    explicit PrefixLogger(EventLoop &event_loop, UniqueFileDescriptor &&_fd)
+        :fd(std::move(_fd)),
+         event(event_loop, fd.Get(), EV_READ|EV_PERSIST,
+               BIND_THIS_METHOD(SocketEventCallback)) {
         event.Add();
     }
 
     ~PrefixLogger() {
         event.Delete();
-        close(fd);
     }
 
     void SetPrefix(const char *prefix) {
@@ -73,8 +73,8 @@ public:
 private:
     void SocketEventCallback(gcc_unused short events) {
         /* reserve 1 byte for newline for overlong lines */
-        ssize_t nbytes = read(fd, buffer + line_length,
-                              sizeof(buffer) - line_length - 1);
+        ssize_t nbytes = fd.Read(buffer + line_length,
+                                 sizeof(buffer) - line_length - 1);
         if (nbytes <= 0) {
             delete this;
             return;
@@ -86,16 +86,17 @@ private:
     }
 };
 
-std::pair<PrefixLogger *, int>
+std::pair<PrefixLogger *, UniqueFileDescriptor>
 CreatePrefixLogger(EventLoop &event_loop, Error &error)
 {
-    int fds[2];
-    if (pipe_cloexec(fds) < 0) {
+    UniqueFileDescriptor r, w;
+    if (!UniqueFileDescriptor::CreatePipe(r, w)) {
         error.SetErrno("pipe() failed");
-        return std::make_pair(nullptr, -1);
+        return std::make_pair(nullptr, UniqueFileDescriptor());
     }
 
-    return std::make_pair(new PrefixLogger(event_loop, fds[0]), fds[1]);
+    return std::make_pair(new PrefixLogger(event_loop, std::move(r)),
+                          std::move(w));
 }
 
 void

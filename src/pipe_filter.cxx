@@ -16,6 +16,7 @@
 #include "spawn/IstreamSpawn.hxx"
 #include "spawn/Prepared.hxx"
 #include "PrefixLogger.hxx"
+#include "system/UniqueFileDescriptor.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/djbhash.h"
 #include "util/Error.hxx"
@@ -91,10 +92,10 @@ pipe_filter(SpawnService &spawn_service, EventLoop &event_loop,
 
     auto *stopwatch = stopwatch_new(pool, path);
 
-    const auto prefix_logger = CreatePrefixLogger(event_loop, IgnoreError());
+    auto prefix_logger = CreatePrefixLogger(event_loop, IgnoreError());
 
     PreparedChildProcess p;
-    p.stderr_fd = prefix_logger.second;
+    p.SetStderr(std::move(prefix_logger.second));
     p.Append(path);
     for (auto i : args)
         p.Append(i);

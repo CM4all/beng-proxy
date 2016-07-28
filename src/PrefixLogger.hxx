@@ -10,8 +10,9 @@
 class EventLoop;
 class Error;
 class PrefixLogger;
+class UniqueFileDescriptor;
 
-std::pair<PrefixLogger *, int>
+std::pair<PrefixLogger *, UniqueFileDescriptor>
 CreatePrefixLogger(EventLoop &event_loop, Error &error);
 
 void
