@@ -14,6 +14,7 @@
 #include "gerrno.h"
 #include "spawn/Interface.hxx"
 #include "spawn/Prepared.hxx"
+#include "system/UniqueFileDescriptor.hxx"
 #include "pool.hxx"
 
 #include <glib.h>
@@ -96,14 +97,14 @@ ChildStock::Create(CreateStockItem c, void *info)
         ? cls.socket_type(info)
         : SOCK_STREAM;
 
-    int fd = item->socket.Create(socket_type, &error);
-    if (fd < 0) {
+    auto fd = item->socket.Create(socket_type, &error);
+    if (!fd.IsDefined()) {
         item->InvokeCreateError(error);
         return;
     }
 
     PreparedChildProcess p;
-    if (!cls.prepare(info, fd, p, &error)) {
+    if (!cls.prepare(info, fd.Steal(), p, &error)) {
         item->InvokeCreateError(error);
         return;
     }

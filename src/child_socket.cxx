@@ -6,6 +6,7 @@
 
 #include "child_socket.hxx"
 #include "system/fd_util.h"
+#include "system/UniqueFileDescriptor.hxx"
 #include "gerrno.h"
 
 #include <stdlib.h>
@@ -22,12 +23,12 @@ make_child_socket_path(struct sockaddr_un *address)
     return *mktemp(address->sun_path) != 0;
 }
 
-int
+UniqueFileDescriptor
 ChildSocket::Create(int socket_type, GError **error_r)
 {
     if (!make_child_socket_path(&address)) {
         set_error_errno_msg(error_r, "mktemp() failed");
-        return -1;
+        return UniqueFileDescriptor();
     }
 
     unlink(address.sun_path);
@@ -35,13 +36,14 @@ ChildSocket::Create(int socket_type, GError **error_r)
     const int fd = socket(PF_UNIX, socket_type, 0);
     if (fd < 0) {
         set_error_errno_msg(error_r, "failed to create local socket");
-        return -1;
+        return UniqueFileDescriptor();
     }
+
+    UniqueFileDescriptor ufd((FileDescriptor(fd)));
 
     if (bind(fd, GetAddress().GetAddress(), GetAddress().GetSize()) < 0) {
         set_error_errno_msg(error_r, "failed to bind local socket");
-        close(fd);
-        return -1;
+        return UniqueFileDescriptor();
     }
 
     /* allow only beng-proxy to connect to it */
@@ -49,11 +51,10 @@ ChildSocket::Create(int socket_type, GError **error_r)
 
     if (listen(fd, 8) < 0) {
         set_error_errno_msg(error_r, "failed to listen on local socket");
-        close(fd);
-        return -1;
+        return UniqueFileDescriptor();
     }
 
-    return fd;
+    return ufd;
 }
 
 void

@@ -13,6 +13,8 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 
+class UniqueFileDescriptor;
+
 struct ChildSocket {
     struct sockaddr_un address;
 
@@ -27,7 +29,7 @@ struct ChildSocket {
     /**
      * @return the listener socket descriptor or -1 on error
      */
-    int Create(int socket_type, GError **error_r);
+    UniqueFileDescriptor Create(int socket_type, GError **error_r);
 
     void Unlink();
 
