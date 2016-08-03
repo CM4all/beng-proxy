@@ -75,6 +75,8 @@ cm4all_beng_proxy_SOURCES = \
 	include/beng-proxy/headers.h \
 	include/beng-proxy/translation.h \
 	src/AllocatorStats.hxx \
+	src/AvahiPoll.cxx src/AvahiPoll.hxx \
+	src/AvahiClient.cxx src/AvahiClient.hxx \
 	src/product.h \
 	src/FdType.hxx \
 	src/capabilities.cxx src/capabilities.hxx \
@@ -316,6 +318,7 @@ cm4all_beng_proxy_SOURCES = \
 	src/bp_instance.cxx src/bp_instance.hxx \
 	src/bp_main.cxx
 cm4all_beng_proxy_CPPFLAGS = $(AM_CPPFLAGS) \
+	$(AVAHI_CFLAGS) \
 	$(LIBSYSTEMD_CFLAGS)
 cm4all_beng_proxy_LDADD = $(AM_LDADD) \
 	-lcap \
@@ -334,6 +337,7 @@ cm4all_beng_proxy_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_INLINE_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS) \
 	$(LIBCM4ALL_HTTP_LIBS) \
+	$(AVAHI_LIBS) \
 	$(DBUS_LIBS) \
 	$(LIBSYSTEMD_LIBS) \
 	$(LIBPCRE_LIBS) \

@@ -99,6 +99,9 @@ AC_SUBST(LIBPQ_LIBS,"-lpq")
 PKG_CHECK_MODULES([JSONCPP], [jsoncpp],,
 	[AC_MSG_ERROR([libjsoncpp not found])])
 
+PKG_CHECK_MODULES([AVAHI], [avahi-client],,
+	[AC_MSG_ERROR([avahi-client not found])])
+
 AC_ARG_ENABLE(nfs,
 	AS_HELP_STRING([--enable-nfs],
 		[Enable the NFS client (default: enabled)]),,

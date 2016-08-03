@@ -18,6 +18,7 @@
 #include "event/TimerEvent.hxx"
 #include "spawn/Registry.hxx"
 #include "control_handler.hxx"
+#include "AvahiClient.hxx"
 #include "background.hxx"
 
 #include <boost/intrusive/list.hpp>
@@ -100,6 +101,8 @@ struct BpInstance final : ControlHandler {
      * root or the beng-proxy user.
      */
     LocalControl *local_control_server = nullptr;
+
+    MyAvahiClient avahi_client;
 
     /* stock */
     TranslateStock *translate_stock = nullptr;

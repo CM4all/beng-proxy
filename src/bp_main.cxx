@@ -249,6 +249,13 @@ add_listener(BpInstance *instance, SocketAddress address, const char *tag)
     }
 
     listener.SetTcpDeferAccept(10);
+
+    if (tag != nullptr) {
+        // TODO: use a configured ZeroConf type
+        char type[64];
+        snprintf(type, sizeof(type), "_%s._tcp", tag);
+        instance->avahi_client.AddService(type, address);
+    }
 }
 
 static void
@@ -264,6 +271,14 @@ add_tcp_listener(BpInstance *instance, int port, const char *tag)
     }
 
     listener.SetTcpDeferAccept(10);
+
+    if (tag != nullptr) {
+        // TODO: use a configured ZeroConf type
+        char type[64];
+        snprintf(type, sizeof(type), "_%s._tcp", tag);
+        instance->avahi_client.AddService(AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC,
+                                          type, port);
+    }
 }
 
 int main(int argc, char **argv)
