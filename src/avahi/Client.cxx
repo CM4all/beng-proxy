@@ -159,7 +159,7 @@ MyAvahiClient::ClientCallback(AvahiClient *c, AvahiClientState state)
 
     switch (state) {
     case AVAHI_CLIENT_S_RUNNING:
-        if (group == nullptr)
+        if (!services.empty() && group == nullptr)
             RegisterServices(c);
         break;
 
