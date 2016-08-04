@@ -79,8 +79,10 @@ MyAvahiClient::Close()
         group = nullptr;
     }
 
-    if (client != nullptr)
+    if (client != nullptr) {
         avahi_client_free(client);
+        client = nullptr;
+    }
 }
 
 void

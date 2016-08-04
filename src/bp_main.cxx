@@ -126,6 +126,8 @@ BpInstance::ShutdownCallback()
 
     pool_commit();
 
+    avahi_client.Close();
+
     spawn_worker_event.Cancel();
 
     child_process_registry.SetVolatile();

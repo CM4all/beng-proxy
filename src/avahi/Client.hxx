@@ -48,6 +48,8 @@ public:
     MyAvahiClient(const MyAvahiClient &) = delete;
     MyAvahiClient &operator=(const MyAvahiClient &) = delete;
 
+    void Close();
+
     void Enable();
 
     void AddService(AvahiIfIndex interface, AvahiProtocol protocol,
@@ -55,8 +57,6 @@ public:
     void AddService(const char *type, SocketAddress address);
 
 private:
-    void Close();
-
     void GroupCallback(AvahiEntryGroup *g, AvahiEntryGroupState state);
     static void GroupCallback(AvahiEntryGroup *g,
                               AvahiEntryGroupState state,
