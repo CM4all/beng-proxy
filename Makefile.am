@@ -75,8 +75,6 @@ cm4all_beng_proxy_SOURCES = \
 	include/beng-proxy/headers.h \
 	include/beng-proxy/translation.h \
 	src/AllocatorStats.hxx \
-	src/avahi/Poll.cxx src/avahi/Poll.hxx \
-	src/avahi/Client.cxx src/avahi/Client.hxx \
 	src/product.h \
 	src/FdType.hxx \
 	src/capabilities.cxx src/capabilities.hxx \
@@ -322,6 +320,7 @@ cm4all_beng_proxy_CPPFLAGS = $(AM_CPPFLAGS) \
 	$(LIBSYSTEMD_CFLAGS)
 cm4all_beng_proxy_LDADD = $(AM_LDADD) \
 	-lcap \
+	libavahi.a \
 	libssl.a \
 	libhttp_server.a \
 	libistream.a libpool.a libmemory.a libevent.a \
@@ -650,6 +649,7 @@ noinst_LIBRARIES = libutil.a libmemory.a libpool.a \
 	libevent.a \
 	libssl.a \
 	libpg.a \
+	libavahi.a \
 	libhttp_server.a \
 	libistream.a
 
@@ -859,6 +859,12 @@ libpg_a_SOURCES = \
 	src/pg/CheckError.hxx \
 	src/pg/BinaryValue.hxx \
 	src/pg/Notify.hxx
+
+libavahi_a_SOURCES = \
+	src/avahi/Client.cxx src/avahi/Client.hxx \
+	src/avahi/Poll.cxx src/avahi/Poll.hxx
+libavahi_a_CPPFLAGS = $(AM_CPPFLAGS) \
+	$(AVAHI_CFLAGS)
 
 libhttp_server_a_SOURCES = \
 	src/http_server/Request.cxx src/http_server/Request.hxx \
