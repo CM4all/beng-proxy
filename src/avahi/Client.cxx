@@ -98,7 +98,7 @@ MyAvahiClient::GroupCallback(AvahiEntryGroup *g, AvahiEntryGroupState state)
         break;
 
     case AVAHI_ENTRY_GROUP_FAILURE:
-        daemon_log(3, "Avahi service group failure: %s",
+        daemon_log(3, "Avahi service group failure: %s\n",
                    avahi_strerror(avahi_client_errno(avahi_entry_group_get_client(g))));
         break;
 
@@ -123,7 +123,7 @@ MyAvahiClient::RegisterServices(AvahiClient *c)
     if (group == nullptr) {
         group = avahi_entry_group_new(c, GroupCallback, this);
         if (group == nullptr) {
-            daemon_log(3, "Failed to create Avahi service group: %s",
+            daemon_log(3, "Failed to create Avahi service group: %s\n",
                        avahi_strerror(avahi_client_errno(c)));
             return;
         }
@@ -138,7 +138,7 @@ MyAvahiClient::RegisterServices(AvahiClient *c)
                                                   nullptr, nullptr,
                                                   i.port, nullptr);
         if (error < 0) {
-            daemon_log(3, "Failed to add Avahi service %s: %s",
+            daemon_log(3, "Failed to add Avahi service %s: %s\n",
                        i.type.c_str(), avahi_strerror(error));
             return;
         }
@@ -146,7 +146,7 @@ MyAvahiClient::RegisterServices(AvahiClient *c)
 
     int result = avahi_entry_group_commit(group);
     if (result < 0) {
-        daemon_log(3, "Failed to commit Avahi service group: %s",
+        daemon_log(3, "Failed to commit Avahi service group: %s\n",
                    avahi_strerror(result));
         return;
     }
@@ -170,7 +170,7 @@ MyAvahiClient::ClientCallback(AvahiClient *c, AvahiClientState state)
 
             reconnect_timer.Add(EventDuration<10, 0>::value);
         } else {
-            daemon_log(3, "Avahi client failed: %s", avahi_strerror(error));
+            daemon_log(3, "Avahi client failed: %s\n", avahi_strerror(error));
             reconnect_timer.Add(EventDuration<60, 0>::value);
         }
 
@@ -204,7 +204,7 @@ MyAvahiClient::OnReconnectTimer()
                               ClientCallback, this,
                               &error);
     if (client == nullptr) {
-        daemon_log(3, "Failed to create avahi client: %s",
+        daemon_log(3, "Failed to create avahi client: %s\n",
                    avahi_strerror(error));
         reconnect_timer.Add(EventDuration<60, 0>::value);
         return;
