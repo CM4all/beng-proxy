@@ -14,6 +14,7 @@
 #include "net/ConnectSocket.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
+#include "net/StaticSocketAddress.hxx"
 #include "util/Cancellable.hxx"
 
 #include <unistd.h>
@@ -433,25 +434,16 @@ lb_tcp_new(struct pool &pool, EventLoop &event_loop, Stock *pipe_stock,
                                             remote_address);
 
     SocketAddress bind_address = SocketAddress::Null();
+    StaticSocketAddress bind_address_buffer;
 
     if (transparent_source) {
         bind_address = remote_address;
 
         /* reset the port to 0 to allow the kernel to choose one */
-        if (bind_address.GetFamily() == AF_INET) {
-            struct sockaddr_in *s_in = (struct sockaddr_in *)
-                p_memdup(&pool, bind_address.GetAddress(),
-                         bind_address.GetSize());
-            s_in->sin_port = 0;
-            bind_address = SocketAddress((const struct sockaddr *)s_in,
-                                         bind_address.GetSize());
-        } else if (bind_address.GetFamily() == AF_INET6) {
-            struct sockaddr_in6 *s_in = (struct sockaddr_in6 *)
-                p_memdup(&pool, bind_address.GetAddress(),
-                         bind_address.GetSize());
-            s_in->sin6_port = 0;
-            bind_address = SocketAddress((const struct sockaddr *)s_in,
-                                         bind_address.GetSize());
+        if (bind_address.GetPort() != 0) {
+            bind_address_buffer = bind_address;
+            if (bind_address_buffer.SetPort(0))
+                bind_address = bind_address_buffer;
         }
     }
 
