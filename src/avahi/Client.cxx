@@ -2,7 +2,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "AvahiClient.hxx"
+#include "Client.hxx"
 #include "event/Duration.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/Interface.hxx"

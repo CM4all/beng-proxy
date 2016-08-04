@@ -6,7 +6,7 @@
 #define AVAHI_CLIENT_HXX
 
 #include "event/TimerEvent.hxx"
-#include "AvahiPoll.hxx"
+#include "Poll.hxx"
 
 #include <avahi-client/client.h>
 #include <avahi-client/publish.h>

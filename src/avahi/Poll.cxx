@@ -2,7 +2,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "AvahiPoll.hxx"
+#include "Poll.hxx"
 #include "event/SocketEvent.hxx"
 #include "event/TimerEvent.hxx"
 

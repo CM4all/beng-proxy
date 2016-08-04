@@ -75,8 +75,8 @@ cm4all_beng_proxy_SOURCES = \
 	include/beng-proxy/headers.h \
 	include/beng-proxy/translation.h \
 	src/AllocatorStats.hxx \
-	src/AvahiPoll.cxx src/AvahiPoll.hxx \
-	src/AvahiClient.cxx src/AvahiClient.hxx \
+	src/avahi/Poll.cxx src/avahi/Poll.hxx \
+	src/avahi/Client.cxx src/avahi/Client.hxx \
 	src/product.h \
 	src/FdType.hxx \
 	src/capabilities.cxx src/capabilities.hxx \

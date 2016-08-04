@@ -18,7 +18,7 @@
 #include "event/TimerEvent.hxx"
 #include "spawn/Registry.hxx"
 #include "control_handler.hxx"
-#include "AvahiClient.hxx"
+#include "avahi/Client.hxx"
 #include "background.hxx"
 
 #include <boost/intrusive/list.hpp>
