@@ -149,13 +149,13 @@ lb_connection_new(LbInstance &instance,
 
     case LbProtocol::TCP:
         ++instance.n_tcp_connections;
-        lb_tcp_new(&connection->pool, instance.event_loop,
+        lb_tcp_new(connection->pool, instance.event_loop,
                    instance.pipe_stock,
                    std::move(fd), fd_type, filter, filter_ctx, address,
                    listener.destination.cluster->transparent_source,
                    listener.destination.cluster->address_list,
                    *connection->instance.balancer,
-                   &tcp_handler, connection,
+                   tcp_handler, connection,
                    &connection->tcp);
         break;
     }

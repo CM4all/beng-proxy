@@ -389,20 +389,20 @@ lb_tcp_sticky(const AddressList &address_list,
 }
 
 void
-lb_tcp_new(struct pool *pool, EventLoop &event_loop, Stock *pipe_stock,
+lb_tcp_new(struct pool &pool, EventLoop &event_loop, Stock *pipe_stock,
            SocketDescriptor &&fd, FdType fd_type,
            const SocketFilter *filter, void *filter_ctx,
            SocketAddress remote_address,
            bool transparent_source,
            const AddressList &address_list,
            Balancer &balancer,
-           const LbTcpConnectionHandler *handler, void *ctx,
+           const LbTcpConnectionHandler &handler, void *ctx,
            LbTcpConnection **tcp_r)
 {
-    auto *tcp = NewFromPool<LbTcpConnection>(*pool, event_loop);
-    tcp->pool = pool;
+    auto *tcp = NewFromPool<LbTcpConnection>(pool, event_loop);
+    tcp->pool = &pool;
     tcp->pipe_stock = pipe_stock;
-    tcp->handler = handler;
+    tcp->handler = &handler;
     tcp->handler_ctx = ctx;
 
     tcp->inbound.Init(fd.Steal(), fd_type,
@@ -426,14 +426,14 @@ lb_tcp_new(struct pool *pool, EventLoop &event_loop, Stock *pipe_stock,
         /* reset the port to 0 to allow the kernel to choose one */
         if (bind_address.GetFamily() == AF_INET) {
             struct sockaddr_in *s_in = (struct sockaddr_in *)
-                p_memdup(pool, bind_address.GetAddress(),
+                p_memdup(&pool, bind_address.GetAddress(),
                          bind_address.GetSize());
             s_in->sin_port = 0;
             bind_address = SocketAddress((const struct sockaddr *)s_in,
                                          bind_address.GetSize());
         } else if (bind_address.GetFamily() == AF_INET6) {
             struct sockaddr_in6 *s_in = (struct sockaddr_in6 *)
-                p_memdup(pool, bind_address.GetAddress(),
+                p_memdup(&pool, bind_address.GetAddress(),
                          bind_address.GetSize());
             s_in->sin6_port = 0;
             bind_address = SocketAddress((const struct sockaddr *)s_in,
@@ -443,7 +443,7 @@ lb_tcp_new(struct pool *pool, EventLoop &event_loop, Stock *pipe_stock,
 
     *tcp_r = tcp;
 
-    client_balancer_connect(event_loop, *pool, balancer,
+    client_balancer_connect(event_loop, pool, balancer,
                             transparent_source,
                             bind_address,
                             session_sticky,
