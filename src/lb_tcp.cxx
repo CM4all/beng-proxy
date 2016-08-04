@@ -6,6 +6,7 @@
 
 #include "lb_tcp.hxx"
 #include "lb_config.hxx"
+#include "lb_cluster.hxx"
 #include "filtered_socket.hxx"
 #include "client_balancer.hxx"
 #include "address_sticky.hxx"
@@ -419,6 +420,7 @@ lb_tcp_new(struct pool &pool, EventLoop &event_loop, Stock *pipe_stock,
            const SocketFilter *filter, void *filter_ctx,
            SocketAddress remote_address,
            const LbClusterConfig &cluster,
+           LbClusterMap &clusters,
            Balancer &balancer,
            const LbTcpConnectionHandler &handler, void *ctx,
            LbTcpConnection **tcp_r)
@@ -447,6 +449,36 @@ lb_tcp_new(struct pool &pool, EventLoop &event_loop, Stock *pipe_stock,
     }
 
     *tcp_r = tcp;
+
+    if (!cluster.zeroconf_service.empty()) {
+        /* TODO: generalize the Zeroconf code, implement sticky */
+
+        auto *cluster2 = clusters.Find(cluster.name);
+        if (cluster2 == nullptr) {
+            tcp->DestroyInbound();
+            handler.error("Zeroconf error", "Zeroconf cluster not found", ctx);
+            return;
+        }
+
+        const auto member = cluster2->Pick();
+        if (member.first == nullptr) {
+            tcp->DestroyInbound();
+            handler.error("Zeroconf error", "Zeroconf cluster is empty", ctx);
+            return;
+        }
+
+        const auto address = member.second;
+        assert(address.IsDefined());
+
+        client_socket_new(event_loop, pool,
+                          address.GetFamily(), SOCK_STREAM, 0,
+                          cluster.transparent_source, bind_address,
+                          address,
+                          20,
+                          *tcp,
+                          tcp->cancel_connect);
+        return;
+    }
 
     client_balancer_connect(event_loop, pool, balancer,
                             cluster.transparent_source,

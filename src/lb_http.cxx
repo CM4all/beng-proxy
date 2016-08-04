@@ -358,6 +358,39 @@ LbConnection::HandleHttpRequest(HttpServerRequest &request,
         }
     }
 
+    if (!cluster->zeroconf_service.empty()) {
+        /* TODO: generalize the Zeroconf code, implement sticky */
+
+        auto *cluster2 = instance.clusters.Find(cluster->name);
+        if (cluster2 == nullptr) {
+            http_server_send_message(&request,
+                                     HTTP_STATUS_INTERNAL_SERVER_ERROR,
+                                     "Zeroconf cluster not found");
+            return;
+        }
+
+        const auto member = cluster2->Pick();
+        if (member.first == nullptr) {
+            http_server_send_message(&request,
+                                     HTTP_STATUS_INTERNAL_SERVER_ERROR,
+                                     "Zeroconf cluster is empty");
+            return;
+        }
+
+        assert(member.second.IsDefined());
+
+        tcp_stock_get(instance.tcp_stock, &request.pool, member.first,
+                      transparent_source, bind_address,
+                      member.second,
+                      20,
+                      *request2,
+                      async_optional_close_on_abort(request.pool,
+                                                    request2->body,
+                                                    cancel_ptr));
+
+        return;
+    }
+
     /* prepare for the balancer */
 
     unsigned session_sticky = 0;

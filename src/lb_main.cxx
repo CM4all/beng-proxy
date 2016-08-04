@@ -126,6 +126,8 @@ LbInstance::ShutdownCallback()
     if (is_watchdog && worker_pid > 0)
         kill(worker_pid, SIGTERM);
 
+    avahi_client.Close();
+
     child_process_registry.SetVolatile();
 
     if (is_watchdog)

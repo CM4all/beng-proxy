@@ -495,7 +495,11 @@ ConfigParser::FeedCluster(LineParser &line)
         if (config.FindCluster(cluster->name) != nullptr)
             throw LineParser::Error("Duplicate pool name");
 
-        if (cluster->members.empty())
+        if (!cluster->zeroconf_domain.empty() &&
+            cluster->zeroconf_service.empty())
+            throw LineParser::Error("zeroconf_service missing");
+
+        if (cluster->members.empty() && cluster->zeroconf_service.empty())
             throw LineParser::Error("Pool has no members");
 
         if (!validate_protocol_sticky(cluster->protocol, cluster->sticky_mode))
@@ -555,6 +559,10 @@ ConfigParser::FeedCluster(LineParser &line)
         if (cluster->monitor == nullptr)
             throw LineParser::Error("No such monitor");
     } else if (strcmp(word, "member") == 0) {
+        if (!cluster->zeroconf_service.empty() ||
+            !cluster->zeroconf_domain.empty())
+            throw LineParser::Error("Cannot configure both hard-coded members and Zeroconf");
+
         char *name = line.NextValue();
         if (name == nullptr)
             throw LineParser::Error("Member name expected");
@@ -592,6 +600,30 @@ ConfigParser::FeedCluster(LineParser &line)
                    name, auto-create a new node */
                 AutoCreateMember(*member, name);
         }
+    } else if (strcmp(word, "zeroconf_service") == 0) {
+        if (!cluster->members.empty())
+            throw LineParser::Error("Cannot configure both hard-coded members and Zeroconf");
+
+        if (!cluster->zeroconf_service.empty())
+            throw LineParser::Error("Duplicate zeroconf_service");
+
+        const char *service = line.NextValue();
+        if (service == nullptr || *service == 0)
+            throw LineParser::Error("Zeroconf service name expected");
+
+        cluster->zeroconf_service = service;
+    } else if (strcmp(word, "zeroconf_domain") == 0) {
+        if (!cluster->members.empty())
+            throw LineParser::Error("Cannot configure both hard-coded members and Zeroconf");
+
+        if (!cluster->zeroconf_domain.empty())
+            throw LineParser::Error("Duplicate zeroconf_domain");
+
+        const char *domain = line.NextValue();
+        if (domain == nullptr || *domain == 0)
+            throw LineParser::Error("Zeroconf domain name expected");
+
+        cluster->zeroconf_domain = domain;
     } else if (strcmp(word, "protocol") == 0) {
         const char *protocol = line.NextValue();
         if (protocol == nullptr)

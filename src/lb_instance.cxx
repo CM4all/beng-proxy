@@ -20,6 +20,7 @@ static constexpr auto &COMPRESS_INTERVAL = EventDuration<600>::value;
 
 LbInstance::LbInstance()
     :monitors(pool),
+     avahi_client(event_loop, "beng-lb"),
      child_process_registry(event_loop),
      launch_worker_event(event_loop, BIND_THIS_METHOD(LaunchWorker)),
      compress_event(event_loop, BIND_THIS_METHOD(OnCompressTimer)),
@@ -40,6 +41,8 @@ LbInstance::InitWorker()
 
     /* run monitors only in the worker process */
     monitors.Enable();
+
+    clusters.Scan(*config, avahi_client);
 
     ConnectCertCaches();
 }

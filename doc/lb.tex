@@ -116,6 +116,23 @@ pool demo {
 The option \texttt{mangle\_via yes} enables request header mangling:
 the headers \texttt{Via} and \texttt{X-Forwarded-For} are updated.
 
+\subsubsection{Zeroconf}
+
+To discover pool members automatically using Zeroconf, use the
+\verb|zeroconf_service| setting:
+
+\begin{verbatim*}
+pool "auto" {
+   zeroconf_service "_widgetserver._tcp"
+}
+\end{verbatim*}
+
+It will look up in the default domain; to use another domain, use the
+\verb|zeroconf_domain| setting.
+
+This requires \texttt{avahi-daemon} to be installed and running.  And,
+of course, it requires the pool members to publish their service.
+
 \subsubsection{Protocols}
 
 The protocol \texttt{tcp} forwards raw a raw bidirectional TCP stream.

@@ -167,6 +167,8 @@ struct LbClusterConfig {
 
     std::vector<LbMemberConfig> members;
 
+    std::string zeroconf_service, zeroconf_domain;
+
     /**
      * A list of node addresses.
      */

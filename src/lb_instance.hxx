@@ -9,6 +9,7 @@
 
 #include "RootPool.hxx"
 #include "lb_cmdline.hxx"
+#include "lb_cluster.hxx"
 #include "lb_connection.hxx"
 #include "lb_hmonitor.hxx"
 #include "spawn/ExitListener.hxx"
@@ -17,6 +18,7 @@
 #include "event/SignalEvent.hxx"
 #include "event/ShutdownListener.hxx"
 #include "spawn/Registry.hxx"
+#include "avahi/Client.hxx"
 
 #include <forward_list>
 #include <map>
@@ -44,11 +46,18 @@ struct LbInstance final : ExitListener {
 
     std::forward_list<LbControl> controls;
 
+    /**
+     * A map of clusters which need run-time data.
+     */
+    LbClusterMap clusters;
+
     std::forward_list<lb_listener> listeners;
 
     std::map<std::string, CertCache> cert_dbs;
 
     LbMonitorMap monitors;
+
+    MyAvahiClient avahi_client;
 
     ChildProcessRegistry child_process_registry;
     TimerEvent launch_worker_event;

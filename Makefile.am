@@ -434,6 +434,7 @@ cm4all_beng_lb_SOURCES = \
 	src/lb_cookie.cxx \
 	src/lb_config.hxx \
 	src/lb_config.cxx \
+	src/lb_cluster.cxx src/lb_cluster.hxx \
 	src/lb_check.cxx src/lb_check.hxx \
 	src/lb_setup.hxx \
 	src/lb_setup.cxx \
@@ -450,10 +451,12 @@ cm4all_beng_lb_SOURCES = \
 	src/lb_instance.cxx src/lb_instance.hxx \
 	src/lb_main.cxx
 cm4all_beng_lb_CPPFLAGS = $(AM_CPPFLAGS) \
+	$(AVAHI_CFLAGS) \
 	$(LIBSYSTEMD_CFLAGS) \
 	$(LIBPQ_CFLAGS)
 cm4all_beng_lb_LDADD = $(AM_LDADD) \
 	-lcap \
+	libavahi.a \
 	libssl.a \
 	libhttp_server.a \
 	libistream.a libpool.a libmemory.a libevent.a \
@@ -467,6 +470,7 @@ cm4all_beng_lb_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_INLINE_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS) \
 	$(LIBCM4ALL_HTTP_LIBS) \
+	$(AVAHI_LIBS) \
 	$(LIBSYSTEMD_LIBS) \
 	$(LIBPCRE_LIBS) \
 	$(GTHREAD_LIBS) \

@@ -153,6 +153,7 @@ lb_connection_new(LbInstance &instance,
                    instance.pipe_stock,
                    std::move(fd), fd_type, filter, filter_ctx, address,
                    *listener.destination.cluster,
+                   instance.clusters,
                    *connection->instance.balancer,
                    tcp_handler, connection,
                    &connection->tcp);
