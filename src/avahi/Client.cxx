@@ -26,17 +26,23 @@ MyAvahiClient::~MyAvahiClient()
 }
 
 void
+MyAvahiClient::Enable()
+{
+    assert(client == nullptr);
+
+    reconnect_timer.Add(EventDuration<0, 1000>::value);
+}
+
+void
 MyAvahiClient::AddService(AvahiIfIndex interface, AvahiProtocol protocol,
                           const char *type, uint16_t port)
 {
     /* cannot register any more services after initial connect */
     assert(client == nullptr);
 
-    if (services.empty())
-        /* initiate the connection */
-        reconnect_timer.Add(EventDuration<0, 10000>::value);
-
     services.emplace_front(interface, protocol, type, port);
+
+    Enable();
 }
 
 void

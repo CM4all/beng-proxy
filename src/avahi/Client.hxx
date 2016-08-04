@@ -48,6 +48,8 @@ public:
     MyAvahiClient(const MyAvahiClient &) = delete;
     MyAvahiClient &operator=(const MyAvahiClient &) = delete;
 
+    void Enable();
+
     void AddService(AvahiIfIndex interface, AvahiProtocol protocol,
                     const char *type, uint16_t port);
     void AddService(const char *type, SocketAddress address);
