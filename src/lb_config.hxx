@@ -206,10 +206,10 @@ struct LbGoto {
     LbGoto() = default;
 
     explicit LbGoto(LbClusterConfig *_cluster)
-        :cluster(_cluster), branch(nullptr) {}
+        :cluster(_cluster) {}
 
     explicit LbGoto(LbBranchConfig *_branch)
-        :cluster(nullptr), branch(_branch) {}
+        :branch(_branch) {}
 
     bool IsDefined() const {
         return cluster != nullptr || branch != nullptr;
