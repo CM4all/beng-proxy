@@ -34,8 +34,11 @@ struct LbTcpConnection final : ConnectSocketHandler {
 
     bool got_inbound_data, got_outbound_data;
 
-    explicit LbTcpConnection(EventLoop &event_loop)
-        :inbound(event_loop), outbound(event_loop) {}
+    LbTcpConnection(struct pool &_pool, EventLoop &event_loop,
+                    Stock *_pipe_stock,
+                    SocketDescriptor &&fd, FdType fd_type,
+                    const SocketFilter *filter, void *filter_ctx,
+                    const LbTcpConnectionHandler &_handler, void *ctx);
 
     void DestroyInbound();
     void DestroyOutbound();
@@ -388,6 +391,27 @@ lb_tcp_sticky(const AddressList &address_list,
     return 0;
 }
 
+inline
+LbTcpConnection::LbTcpConnection(struct pool &_pool, EventLoop &event_loop,
+                                 Stock *_pipe_stock,
+                                 SocketDescriptor &&fd, FdType fd_type,
+                                 const SocketFilter *filter, void *filter_ctx,
+                                 const LbTcpConnectionHandler &_handler, void *ctx)
+    :pool(&_pool), pipe_stock(_pipe_stock),
+     handler(&_handler), handler_ctx(ctx),
+     inbound(event_loop), outbound(event_loop)
+{
+    inbound.Init(fd.Steal(), fd_type,
+                 nullptr, &write_timeout,
+                 filter, filter_ctx,
+                 inbound_buffered_socket_handler, this);
+    /* TODO
+    inbound.base.direct = pipe_stock != nullptr &&
+        (ISTREAM_TO_PIPE & fd_type) != 0 &&
+        (ISTREAM_TO_TCP & FdType::FD_PIPE) != 0;
+    */
+}
+
 void
 lb_tcp_new(struct pool &pool, EventLoop &event_loop, Stock *pipe_stock,
            SocketDescriptor &&fd, FdType fd_type,
@@ -399,21 +423,11 @@ lb_tcp_new(struct pool &pool, EventLoop &event_loop, Stock *pipe_stock,
            const LbTcpConnectionHandler &handler, void *ctx,
            LbTcpConnection **tcp_r)
 {
-    auto *tcp = NewFromPool<LbTcpConnection>(pool, event_loop);
-    tcp->pool = &pool;
-    tcp->pipe_stock = pipe_stock;
-    tcp->handler = &handler;
-    tcp->handler_ctx = ctx;
-
-    tcp->inbound.Init(fd.Steal(), fd_type,
-                      nullptr, &write_timeout,
-                      filter, filter_ctx,
-                      inbound_buffered_socket_handler, tcp);
-    /* TODO
-    tcp->inbound.base.direct = pipe_stock != nullptr &&
-        (ISTREAM_TO_PIPE & fd_type) != 0 &&
-        (ISTREAM_TO_TCP & FdType::FD_PIPE) != 0;
-    */
+    auto *tcp = NewFromPool<LbTcpConnection>(pool, pool, event_loop,
+                                             pipe_stock,
+                                             std::move(fd), fd_type,
+                                             filter, filter_ctx,
+                                             handler, ctx);
 
     unsigned session_sticky = lb_tcp_sticky(address_list,
                                             remote_address);
