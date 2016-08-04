@@ -3,6 +3,7 @@
  */
 
 #include "Client.hxx"
+#include "ConnectionListener.hxx"
 #include "event/Duration.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/Interface.hxx"
@@ -80,6 +81,9 @@ MyAvahiClient::Close()
     }
 
     if (client != nullptr) {
+        for (auto *l : listeners)
+            l->OnAvahiDisconnect();
+
         avahi_client_free(client);
         client = nullptr;
     }
@@ -169,6 +173,10 @@ MyAvahiClient::ClientCallback(AvahiClient *c, AvahiClientState state)
     case AVAHI_CLIENT_S_RUNNING:
         if (!services.empty() && group == nullptr)
             RegisterServices(c);
+
+        for (auto *l : listeners)
+            l->OnAvahiConnect(c);
+
         break;
 
     case AVAHI_CLIENT_FAILURE:
@@ -181,6 +189,9 @@ MyAvahiClient::ClientCallback(AvahiClient *c, AvahiClientState state)
             daemon_log(3, "Avahi client failed: %s\n", avahi_strerror(error));
             reconnect_timer.Add(EventDuration<60, 0>::value);
         }
+
+        for (auto *l : listeners)
+            l->OnAvahiDisconnect();
 
         break;
 

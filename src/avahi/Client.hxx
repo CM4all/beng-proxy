@@ -16,6 +16,7 @@
 
 class EventLoop;
 class SocketAddress;
+class AvahiConnectionListener;
 
 class MyAvahiClient final {
     std::string name;
@@ -41,6 +42,8 @@ class MyAvahiClient final {
 
     std::forward_list<Service> services;
 
+    std::forward_list<AvahiConnectionListener *> listeners;
+
 public:
     MyAvahiClient(EventLoop &event_loop, const char *_name);
     ~MyAvahiClient();
@@ -51,6 +54,14 @@ public:
     void Close();
 
     void Enable();
+
+    void AddListener(AvahiConnectionListener &listener) {
+        listeners.push_front(&listener);
+    }
+
+    void RemoveListener(AvahiConnectionListener &listener) {
+        listeners.remove(&listener);
+    }
 
     void AddService(AvahiIfIndex interface, AvahiProtocol protocol,
                     const char *type, uint16_t port);

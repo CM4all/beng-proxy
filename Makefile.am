@@ -861,6 +861,7 @@ libpg_a_SOURCES = \
 	src/pg/Notify.hxx
 
 libavahi_a_SOURCES = \
+	src/avahi/ConnectionListener.hxx \
 	src/avahi/Client.cxx src/avahi/Client.hxx \
 	src/avahi/Poll.cxx src/avahi/Poll.hxx
 libavahi_a_CPPFLAGS = $(AM_CPPFLAGS) \
