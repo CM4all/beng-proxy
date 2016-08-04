@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2015 Max Kellermann <max@duempel.org>
+ * Copyright (C) 2012-2016 Max Kellermann <max@duempel.org>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -93,6 +93,20 @@ public:
 	void Clear() {
 		address.ss_family = AF_UNSPEC;
 	}
+
+	/**
+	 * Extract the port number.  Returns 0 if not applicable.
+	 */
+	gcc_pure
+	unsigned GetPort() const {
+		return ((SocketAddress)*this).GetPort();
+	}
+
+	/**
+	 * @return true on success, false if this address cannot have
+	 * a port number
+	 */
+	bool SetPort(unsigned port);
 
 	gcc_pure
 	bool operator==(const StaticSocketAddress &other) const;
