@@ -19,7 +19,7 @@
 void
 lb_listener::OnAccept(SocketDescriptor &&new_fd, SocketAddress address)
 {
-    lb_connection_new(&instance, &config,
+    lb_connection_new(instance, config,
                       ssl_factory,
                       std::move(new_fd), address);
 }

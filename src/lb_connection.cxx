@@ -94,20 +94,20 @@ static constexpr LbTcpConnectionHandler tcp_handler = {
  */
 
 LbConnection *
-lb_connection_new(LbInstance *instance,
-                  const LbListenerConfig *listener,
+lb_connection_new(LbInstance &instance,
+                  const LbListenerConfig &listener,
                   SslFactory *ssl_factory,
                   SocketDescriptor &&fd, SocketAddress address)
 {
     /* determine the local socket address */
     StaticSocketAddress local_address = fd.GetLocalAddress();
 
-    struct pool *pool = pool_new_linear(instance->pool, "client_connection",
+    struct pool *pool = pool_new_linear(instance.pool, "client_connection",
                                         2048);
     pool_set_major(pool);
 
-    auto *connection = NewFromPool<LbConnection>(*pool, *pool, *instance,
-                                                 *listener, address);
+    auto *connection = NewFromPool<LbConnection>(*pool, *pool, instance,
+                                                 listener, address);
 
     auto fd_type = FdType::FD_TCP;
 
@@ -127,16 +127,16 @@ lb_connection_new(LbInstance *instance,
 
         filter = &thread_socket_filter;
         filter_ctx = connection->thread_socket_filter =
-            thread_socket_filter_new(*pool, instance->event_loop,
-                                     thread_pool_get_queue(instance->event_loop),
+            thread_socket_filter_new(*pool, instance.event_loop,
+                                     thread_pool_get_queue(instance.event_loop),
                                      &ssl_filter_get_handler(*connection->ssl_filter));
     }
 
-    instance->connections.push_back(*connection);
+    instance.connections.push_back(*connection);
 
-    switch (listener->destination.GetProtocol()) {
+    switch (listener.destination.GetProtocol()) {
     case LbProtocol::HTTP:
-        connection->http = http_server_connection_new(pool, instance->event_loop,
+        connection->http = http_server_connection_new(pool, instance.event_loop,
                                                       fd.Steal(), fd_type,
                                                       filter, filter_ctx,
                                                       local_address.IsDefined()
@@ -148,12 +148,12 @@ lb_connection_new(LbInstance *instance,
         break;
 
     case LbProtocol::TCP:
-        ++instance->n_tcp_connections;
-        lb_tcp_new(&connection->pool, instance->event_loop,
-                   instance->pipe_stock,
+        ++instance.n_tcp_connections;
+        lb_tcp_new(&connection->pool, instance.event_loop,
+                   instance.pipe_stock,
                    std::move(fd), fd_type, filter, filter_ctx, address,
-                   listener->destination.cluster->transparent_source,
-                   listener->destination.cluster->address_list,
+                   listener.destination.cluster->transparent_source,
+                   listener.destination.cluster->address_list,
                    *connection->instance.balancer,
                    &tcp_handler, connection,
                    &connection->tcp);

@@ -72,8 +72,8 @@ struct LbConnection final
 };
 
 LbConnection *
-lb_connection_new(LbInstance *instance,
-                  const LbListenerConfig *listener,
+lb_connection_new(LbInstance &instance,
+                  const LbListenerConfig &listener,
                   SslFactory *ssl_factory,
                   SocketDescriptor &&fd, SocketAddress address);
 
