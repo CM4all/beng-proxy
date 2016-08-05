@@ -5,8 +5,8 @@
  */
 
 #include "lb_tcp.hxx"
+#include "lb_config.hxx"
 #include "filtered_socket.hxx"
-#include "address_list.hxx"
 #include "client_balancer.hxx"
 #include "address_sticky.hxx"
 #include "direct.hxx"
@@ -418,8 +418,7 @@ lb_tcp_new(struct pool &pool, EventLoop &event_loop, Stock *pipe_stock,
            SocketDescriptor &&fd, FdType fd_type,
            const SocketFilter *filter, void *filter_ctx,
            SocketAddress remote_address,
-           bool transparent_source,
-           const AddressList &address_list,
+           const LbClusterConfig &cluster,
            Balancer &balancer,
            const LbTcpConnectionHandler &handler, void *ctx,
            LbTcpConnection **tcp_r)
@@ -430,13 +429,13 @@ lb_tcp_new(struct pool &pool, EventLoop &event_loop, Stock *pipe_stock,
                                              filter, filter_ctx,
                                              handler, ctx);
 
-    unsigned session_sticky = lb_tcp_sticky(address_list,
+    unsigned session_sticky = lb_tcp_sticky(cluster.address_list,
                                             remote_address);
 
     SocketAddress bind_address = SocketAddress::Null();
     StaticSocketAddress bind_address_buffer;
 
-    if (transparent_source) {
+    if (cluster.transparent_source) {
         bind_address = remote_address;
 
         /* reset the port to 0 to allow the kernel to choose one */
@@ -450,10 +449,10 @@ lb_tcp_new(struct pool &pool, EventLoop &event_loop, Stock *pipe_stock,
     *tcp_r = tcp;
 
     client_balancer_connect(event_loop, pool, balancer,
-                            transparent_source,
+                            cluster.transparent_source,
                             bind_address,
                             session_sticky,
-                            &address_list,
+                            &cluster.address_list,
                             20,
                             *tcp,
                             tcp->cancel_connect);

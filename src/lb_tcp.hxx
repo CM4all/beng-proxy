@@ -16,6 +16,7 @@ class Stock;
 struct SocketFilter;
 struct AddressList;
 struct Balancer;
+struct LbClusterConfig;
 struct LbTcpConnection;
 class SocketDescriptor;
 class SocketAddress;
@@ -35,8 +36,7 @@ lb_tcp_new(struct pool &pool, EventLoop &event_loop, Stock *pipe_stock,
            SocketDescriptor &&fd, FdType fd_type,
            const SocketFilter *filter, void *filter_ctx,
            SocketAddress remote_address,
-           bool transparent_source,
-           const AddressList &address_list,
+           const LbClusterConfig &cluster,
            Balancer &balancer,
            const LbTcpConnectionHandler &handler, void *ctx,
            LbTcpConnection **tcp_r);
