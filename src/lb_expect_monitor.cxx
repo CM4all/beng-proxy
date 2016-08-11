@@ -14,6 +14,8 @@
 #include "net/SocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
 #include "event/Event.hxx"
+#include "event/TimerEvent.hxx"
+#include "event/Duration.hxx"
 #include "event/Callback.hxx"
 
 #include <unistd.h>
@@ -29,6 +31,12 @@ struct ExpectMonitor final : ConnectSocketHandler {
 
     Event event;
 
+    /**
+     * A timer which is used to delay the recv() call, just in case
+     * the server sends the response in more than one packet.
+     */
+    TimerEvent delay_event;
+
     LbMonitorHandler *handler;
 
     struct async_operation_ref *async_ref;
@@ -38,12 +46,15 @@ struct ExpectMonitor final : ConnectSocketHandler {
                   LbMonitorHandler &_handler,
                   async_operation_ref *_async_ref)
         :pool(_pool), config(_config),
+         delay_event(MakeSimpleEventCallback(ExpectMonitor, DelayCallback),
+                     this),
          handler(&_handler),
          async_ref(_async_ref) {}
 
     ExpectMonitor(const ExpectMonitor &other) = delete;
 
     void EventCallback(evutil_socket_t _fd, short events);
+    void DelayCallback();
 
     void Abort();
 
@@ -77,6 +88,7 @@ inline void
 ExpectMonitor::Abort()
 {
     event.Delete();
+    delay_event.Cancel();
     close(fd);
     pool_unref(pool);
     delete this;
@@ -88,7 +100,7 @@ ExpectMonitor::Abort()
  */
 
 inline void
-ExpectMonitor::EventCallback(evutil_socket_t _fd, short events)
+ExpectMonitor::EventCallback(gcc_unused evutil_socket_t _fd, short events)
 {
     operation.Finished();
 
@@ -96,30 +108,42 @@ ExpectMonitor::EventCallback(evutil_socket_t _fd, short events)
         close(fd);
         handler->Timeout();
     } else {
-        char buffer[1024];
+        /* wait 10ms before we start reading */
+        delay_event.Add(EventDuration<0, 10000>::value);
+        return;
+    }
 
-        ssize_t nbytes = recv(_fd, buffer, sizeof(buffer),
-                              MSG_DONTWAIT);
-        if (nbytes < 0) {
-            GError *error = new_error_errno();
-            close(fd);
-            handler->Error(error);
-        } else if (!config->fade_expect.empty() &&
-                   check_expectation(buffer, nbytes,
-                                     config->fade_expect.c_str())) {
-            close(fd);
-            handler->Fade();
-        } else if (config->expect.empty() ||
-                   check_expectation(buffer, nbytes,
-                                     config->expect.c_str())) {
-            close(fd);
-            handler->Success();
-        } else {
-            close(fd);
-            GError *error = g_error_new_literal(g_file_error_quark(), 0,
-                                                "Expectation failed");
-            handler->Error(error);
-        }
+    pool_unref(pool);
+    delete this;
+    pool_commit();
+}
+
+void
+ExpectMonitor::DelayCallback()
+{
+    char buffer[1024];
+
+    ssize_t nbytes = recv(fd, buffer, sizeof(buffer),
+                          MSG_DONTWAIT);
+    if (nbytes < 0) {
+        GError *error = new_error_errno();
+        close(fd);
+        handler->Error(error);
+    } else if (!config->fade_expect.empty() &&
+               check_expectation(buffer, nbytes,
+                                 config->fade_expect.c_str())) {
+        close(fd);
+        handler->Fade();
+    } else if (config->expect.empty() ||
+               check_expectation(buffer, nbytes,
+                                 config->expect.c_str())) {
+        close(fd);
+        handler->Success();
+    } else {
+        close(fd);
+        GError *error = g_error_new_literal(g_file_error_quark(), 0,
+                                            "Expectation failed");
+        handler->Error(error);
     }
 
     pool_unref(pool);

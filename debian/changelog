@@ -1,6 +1,7 @@
 cm4all-beng-proxy (10.26) unstable; urgency=low
 
   * bot: recognize WordPress pingbacks as "bot"
+  * lb/monitor/expect: delay the receive call by 10ms
 
  --   
 
