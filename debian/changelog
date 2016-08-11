@@ -4,7 +4,7 @@ cm4all-beng-proxy (10.26) unstable; urgency=low
   * lb/monitor/expect: delay the receive call by 10ms
   * certdb, bp_cmdline, log-forward: use IPv6 only if available
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Thu, 11 Aug 2016 13:04:23 -0000
 
 cm4all-beng-proxy (10.25) unstable; urgency=low
 
