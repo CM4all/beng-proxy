@@ -322,7 +322,7 @@ main(int argc, char **argv)
     Context ctx;
 
     if (argc < 2 || argc > 3) {
-        fprintf(stderr, "usage: run-ajp-client URL [BODY]\n");
+        fprintf(stderr, "usage: run_client URL [BODY]\n");
         return EXIT_FAILURE;
     }
 
