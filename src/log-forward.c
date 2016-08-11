@@ -25,6 +25,7 @@ open_udp(const char *host, int default_port)
 {
     struct addrinfo hints;
     memset(&hints, 0, sizeof(hints));
+    hints.ai_flags = AI_ADDRCONFIG;
     hints.ai_socktype = SOCK_DGRAM;
 
     struct addrinfo *ai;

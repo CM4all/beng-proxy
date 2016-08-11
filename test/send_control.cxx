@@ -19,6 +19,7 @@ int main(int argc, char **argv) {
 
     struct addrinfo hints, *ai;
     memset(&hints, 0, sizeof(hints));
+    hints.ai_flags = AI_ADDRCONFIG|AI_PASSIVE;
     hints.ai_socktype = SOCK_DGRAM;
 
     if (socket_resolve_host_port(argv[1], 1234, &hints, &ai) != 0) {

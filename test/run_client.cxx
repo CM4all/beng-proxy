@@ -93,7 +93,7 @@ struct Context final : ConnectSocketHandler, Lease, HttpResponseHandler {
     Istream *request_body;
 
     SocketDescriptor fd;
-    bool idle, reuse, aborted;
+    bool idle, reuse, aborted, got_response = false;
     http_status_t status;
 
     SinkFd *body;
@@ -198,6 +198,7 @@ void
 Context::OnHttpResponse(http_status_t _status, gcc_unused StringMap &&headers,
                         Istream *_body)
 {
+    got_response = true;
     status = _status;
 
     if (_body != nullptr) {
@@ -230,6 +231,7 @@ void
 Context::OnSocketConnectSuccess(SocketDescriptor &&new_fd)
 {
     fd = std::move(new_fd);
+    idle = false;
 
     StringMap headers(*pool);
     headers.Add("host", url.host);
@@ -318,7 +320,7 @@ main(int argc, char **argv)
     Context ctx;
 
     if (argc < 2 || argc > 3) {
-        fprintf(stderr, "usage: run-ajp-client URL [BODY]\n");
+        fprintf(stderr, "usage: run_client URL [BODY]\n");
         return EXIT_FAILURE;
     }
 
@@ -336,6 +338,7 @@ main(int argc, char **argv)
 
     struct addrinfo hints, *ai;
     memset(&hints, 0, sizeof(hints));
+    hints.ai_flags = AI_ADDRCONFIG;
     hints.ai_socktype = SOCK_STREAM;
 
     int ret = socket_resolve_host_port(ctx.url.host, ctx.url.default_port,
@@ -400,9 +403,10 @@ main(int argc, char **argv)
 
     ctx.event_loop.Dispatch();
 
-    assert(ctx.body_eof || ctx.body_abort || ctx.aborted);
+    assert(!ctx.got_response || ctx.body_eof || ctx.body_abort || ctx.aborted);
 
-    fprintf(stderr, "reuse=%d\n", ctx.reuse);
+    if (ctx.got_response)
+        fprintf(stderr, "reuse=%d\n", ctx.reuse);
 
     /* cleanup */
 
@@ -415,5 +419,5 @@ main(int argc, char **argv)
 
     g_free(ctx.url.host);
 
-    return ctx.body_eof ? EXIT_SUCCESS : EXIT_FAILURE;
+    return ctx.got_response && ctx.body_eof ? EXIT_SUCCESS : EXIT_FAILURE;
 }
