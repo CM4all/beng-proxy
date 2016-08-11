@@ -237,6 +237,7 @@ void
 Context::OnSocketConnectSuccess(SocketDescriptor &&new_fd)
 {
     fd = std::move(new_fd);
+    idle = false;
 
     struct strmap *headers = strmap_new(pool);
     headers->Add("host", url.host);
