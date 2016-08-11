@@ -83,7 +83,7 @@ cookie_jar::Dup(struct dpool &new_pool) const
     if (dest == nullptr)
         return nullptr;
 
-    for (const struct cookie &src_cookie : cookies) {
+    for (const auto &src_cookie : cookies) {
         struct cookie *dest_cookie = src_cookie.Dup(new_pool);
         if (dest_cookie == nullptr) {
             dest->Free();
