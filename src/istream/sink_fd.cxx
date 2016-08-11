@@ -52,7 +52,9 @@ struct SinkFd final : IstreamHandler {
         :pool(&_pool),
          input(_istream, *this, istream_direct_mask_to(_fd_type)),
          fd(_fd), fd_type(_fd_type),
-         handler(&_handler), handler_ctx(_handler_ctx) {
+         handler(&_handler), handler_ctx(_handler_ctx),
+         event(fd, EV_WRITE|EV_PERSIST,
+               MakeSimpleEventCallback(SinkFd, EventCallback), this){
         ScheduleWrite();
     }
 
