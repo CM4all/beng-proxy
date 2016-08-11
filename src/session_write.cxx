@@ -156,7 +156,7 @@ write_cookie(FILE *file, const struct cookie *cookie)
 static bool
 write_cookie_jar(FILE *file, const struct cookie_jar *jar)
 {
-    for (const struct cookie &cookie : jar->cookies)
+    for (const auto &cookie : jar->cookies)
         if (!session_write_magic(file, MAGIC_COOKIE) ||
             !write_cookie(file, &cookie))
             return false;
