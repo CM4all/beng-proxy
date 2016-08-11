@@ -195,8 +195,8 @@ ParseListenerConfig(const char *argv0, const char *s,
 
     struct addrinfo hints;
     memset(&hints, 0, sizeof(hints));
+    hints.ai_flags = AI_ADDRCONFIG|AI_PASSIVE;
     hints.ai_socktype = SOCK_STREAM;
-    hints.ai_flags = AI_PASSIVE;
 
     struct addrinfo *ai;
     int result = socket_resolve_host_port(s,
@@ -644,6 +644,7 @@ parse_cmdline(BpConfig *config, struct pool *pool, int argc, char **argv)
                 arg_error(argv[0], "duplicate memcached-server option");
 
             memset(&hints, 0, sizeof(hints));
+            hints.ai_flags = AI_ADDRCONFIG;
             hints.ai_socktype = SOCK_STREAM;
 
             config->memcached_server =

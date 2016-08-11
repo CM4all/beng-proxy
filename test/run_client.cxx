@@ -344,6 +344,7 @@ main(int argc, char **argv)
 
     struct addrinfo hints, *ai;
     memset(&hints, 0, sizeof(hints));
+    hints.ai_flags = AI_ADDRCONFIG;
     hints.ai_socktype = SOCK_STREAM;
 
     int ret = socket_resolve_host_port(ctx.url.host, ctx.url.default_port,

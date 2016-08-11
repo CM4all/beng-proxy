@@ -65,6 +65,7 @@ int main(int argc, char **argv) {
     AddressList address_list;
     address_list.Init();
     memset(&hints, 0, sizeof(hints));
+    hints.ai_flags = AI_ADDRCONFIG;
     hints.ai_socktype = SOCK_STREAM;
     GError *error = NULL;
     if (!address_list_resolve(pool, &address_list,

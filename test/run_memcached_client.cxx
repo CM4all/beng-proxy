@@ -221,6 +221,7 @@ int main(int argc, char **argv) {
     /* connect socket */
 
     memset(&hints, 0, sizeof(hints));
+    hints.ai_flags = AI_ADDRCONFIG|AI_PASSIVE;
     hints.ai_socktype = SOCK_STREAM;
 
     ret = socket_resolve_host_port(argv[1], 11211, &hints, &ai);
