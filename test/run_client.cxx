@@ -79,6 +79,8 @@ parse_url(struct parsed_url *dest, const char *url)
 }
 
 struct Context final : ConnectSocketHandler, Lease {
+    EventBase event_base;
+
     struct pool *pool;
 
     struct parsed_url url;
@@ -354,7 +356,6 @@ main(int argc, char **argv)
 
     SetupProcess();
 
-    EventBase event_base;
     fb_pool_init(false);
 
     ctx.shutdown_listener.Enable();
@@ -403,7 +404,7 @@ main(int argc, char **argv)
 
     /* run test */
 
-    event_base.Dispatch();
+    ctx.event_base.Dispatch();
 
     assert(ctx.body_eof || ctx.body_abort || ctx.aborted);
 
