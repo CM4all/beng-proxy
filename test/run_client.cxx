@@ -93,7 +93,7 @@ struct Context final : ConnectSocketHandler, Lease {
     Istream *request_body;
 
     SocketDescriptor fd;
-    bool idle, reuse, aborted;
+    bool idle, reuse, aborted, got_response = false;
     http_status_t status;
 
     SinkFd *body;
@@ -198,6 +198,7 @@ my_response(http_status_t status, struct strmap *headers gcc_unused,
 {
     auto *c = (Context *)ctx;
 
+    c->got_response = true;
     c->status = status;
 
     if (body != nullptr) {
@@ -406,9 +407,10 @@ main(int argc, char **argv)
 
     ctx.event_base.Dispatch();
 
-    assert(ctx.body_eof || ctx.body_abort || ctx.aborted);
+    assert(!ctx.got_response || ctx.body_eof || ctx.body_abort || ctx.aborted);
 
-    fprintf(stderr, "reuse=%d\n", ctx.reuse);
+    if (ctx.got_response)
+        fprintf(stderr, "reuse=%d\n", ctx.reuse);
 
     /* cleanup */
 
@@ -421,5 +423,5 @@ main(int argc, char **argv)
 
     g_free(ctx.url.host);
 
-    return ctx.body_eof ? EXIT_SUCCESS : EXIT_FAILURE;
+    return ctx.got_response && ctx.body_eof ? EXIT_SUCCESS : EXIT_FAILURE;
 }
