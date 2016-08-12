@@ -257,7 +257,10 @@ LbConfigParser::CertDatabase::Finish()
 {
     config.Check();
 
-    parent.config.cert_dbs.insert(std::make_pair(config.name, config));
+    auto i = parent.config.cert_dbs.emplace(std::string(config.name),
+                                            std::move(config));
+    if (!i.second)
+        throw LineParser::Error("Duplicate certdb name");
 
     ConfigParser::Finish();
 }
@@ -270,9 +273,6 @@ LbConfigParser::CreateCertDatabase(LineParser &line)
         throw std::runtime_error("Database name expected");
 
     line.ExpectSymbolAndEol('{');
-
-    if (config.FindCertDb(name) != nullptr)
-        throw LineParser::Error("Duplicate certdb name");
 
     SetChild(std::make_unique<CertDatabase>(*this, name));
 }
@@ -361,7 +361,10 @@ LbConfigParser::Monitor::Finish()
         (config.expect.empty() && config.fade_expect.empty()))
         throw LineParser::Error("No 'expect' string configured");
 
-    parent.config.monitors.insert(std::make_pair(config.name, config));
+    auto i = parent.config.monitors.emplace(std::string(config.name),
+                                            std::move(config));
+    if (!i.second)
+        throw LineParser::Error("Duplicate monitor name");
 
     ConfigParser::Finish();
 }
@@ -374,9 +377,6 @@ LbConfigParser::CreateMonitor(LineParser &line)
         throw LineParser::Error("Monitor name expected");
 
     line.ExpectSymbolAndEol('{');
-
-    if (config.FindMonitor(name) != nullptr)
-        throw LineParser::Error("Duplicate monitor name");
 
     SetChild(std::make_unique<Monitor>(*this, name));
 }
@@ -428,8 +428,10 @@ LbConfigParser::Node::Finish()
             throw LineParser::Error(error.GetMessage());
     }
 
-    parent.config.nodes.emplace(std::string(config.name),
-                                std::move(config));
+    auto i = parent.config.nodes.emplace(std::string(config.name),
+                                         std::move(config));
+    if (!i.second)
+        throw LineParser::Error("Duplicate node name");
 
     ConfigParser::Finish();
 }
@@ -442,9 +444,6 @@ LbConfigParser::CreateNode(LineParser &line)
         throw LineParser::Error("Node name expected");
 
     line.ExpectSymbolAndEol('{');
-
-    if (config.FindNode(name) != nullptr)
-        throw LineParser::Error("Duplicate node name");
 
     SetChild(std::make_unique<Node>(*this, name));
 }
@@ -702,9 +701,6 @@ LbConfigParser::Cluster::ParseLine(LineParser &line)
 void
 LbConfigParser::Cluster::Finish()
 {
-    if (parent.config.FindCluster(config.name) != nullptr)
-        throw LineParser::Error("Duplicate pool name");
-
     if (!config.zeroconf_domain.empty() &&
         config.zeroconf_service.empty())
         throw LineParser::Error("zeroconf_service missing");
@@ -720,7 +716,10 @@ LbConfigParser::Cluster::Finish()
            sense */
         config.sticky_mode = StickyMode::NONE;
 
-    parent.config.clusters.insert(std::make_pair(config.name, config));
+    auto i = parent.config.clusters.emplace(std::string(config.name),
+                                            std::move(config));
+    if (!i.second)
+        throw LineParser::Error("Duplicate pool name");
 
     ConfigParser::Finish();
 }
@@ -858,17 +857,16 @@ LbConfigParser::Branch::ParseLine(LineParser &line)
 void
 LbConfigParser::Branch::Finish()
 {
-    if (parent.config.FindBranch(config.name) != nullptr)
-        throw LineParser::Error("Duplicate pool/branch name");
-
     if (!config.HasFallback())
         throw LineParser::Error("Branch has no fallback");
 
     if (config.GetProtocol() != LbProtocol::HTTP)
         throw LineParser::Error("Only HTTP pools allowed in branch");
 
-    parent.config.branches.emplace(std::string(config.name),
-                                   std::move(config));
+    auto i = parent.config.branches.emplace(std::string(config.name),
+                                            std::move(config));
+    if (!i.second)
+        throw LineParser::Error("Duplicate pool/branch name");
 
     ConfigParser::Finish();
 }
