@@ -1,0 +1,49 @@
+/*
+ * author: Max Kellermann <mk@cm4all.com>
+ */
+
+#ifndef CONFIG_PARSER_HXX
+#define CONFIG_PARSER_HXX
+
+#include <memory>
+
+class LineParser;
+
+class ConfigParser {
+public:
+    virtual bool PreParseLine(LineParser &line);
+    virtual void ParseLine(LineParser &line) = 0;
+    virtual void Finish() {}
+};
+
+class NestedConfigParser : public ConfigParser {
+    std::unique_ptr<ConfigParser> child;
+
+public:
+    /* virtual methods from class ConfigParser */
+    bool PreParseLine(LineParser &line) override;
+    void ParseLine(LineParser &line) final;
+    void Finish() override;
+
+protected:
+    void SetChild(std::unique_ptr<ConfigParser> &&_child);
+    virtual void ParseLine2(LineParser &line) = 0;
+};
+
+class CommentConfigParser final : public ConfigParser {
+    ConfigParser &child;
+
+public:
+    explicit CommentConfigParser(ConfigParser &_child)
+        :child(_child) {}
+
+    /* virtual methods from class ConfigParser */
+    bool PreParseLine(LineParser &line) override;
+    void ParseLine(LineParser &line) final;
+    void Finish() override;
+};
+
+void
+ParseConfigFile(const char *path, ConfigParser &parser);
+
+#endif

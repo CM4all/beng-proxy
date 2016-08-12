@@ -412,6 +412,7 @@ cm4all_beng_lb_SOURCES = \
 	src/nop_thread_socket_filter.cxx src/nop_thread_socket_filter.hxx \
 	src/ping.cxx src/ping.hxx \
 	src/LineParser.cxx src/LineParser.hxx \
+	src/ConfigParser.cxx src/ConfigParser.hxx \
 	src/lb_cmdline.hxx \
 	src/lb_cmdline.cxx \
 	src/lb_stats.cxx src/lb_stats.hxx \
@@ -493,7 +494,8 @@ cm4all_certdb_SOURCES = \
 	src/expand.cxx src/expand.hxx \
 	src/pexpand.cxx src/pexpand.hxx \
 	src/address_resolver.cxx src/address_resolver.hxx \
-	src/LineParser.cxx \
+	src/LineParser.cxx src/LineParser.hxx \
+	src/ConfigParser.cxx src/ConfigParser.hxx \
 	src/lb_config.cxx \
 	src/http_address.cxx src/http_address.hxx \
 	src/http_client.cxx src/http_client.hxx \

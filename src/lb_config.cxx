@@ -6,6 +6,7 @@
 
 #include "lb_config.hxx"
 #include "LineParser.hxx"
+#include "ConfigParser.hxx"
 #include "system/Error.hxx"
 #include "net/Parser.hxx"
 #include "util/Error.hxx"
@@ -20,88 +21,136 @@
 #include <errno.h>
 #include <netdb.h>
 
-class LbConfigParser {
+class LbConfigParser final : public NestedConfigParser {
+    struct pool &pool;
     LbConfig &config;
 
-    enum class State {
-        ROOT,
-        CONTROL,
-        CERT_DB,
-        MONITOR,
-        NODE,
-        CLUSTER,
-        BRANCH,
-        LISTENER,
-    } state;
+    class Control final : public ConfigParser {
+        LbConfigParser &parent;
+        LbControlConfig config;
 
-    LbControlConfig *control;
-    LbCertDatabaseConfig *cert_db;
-    LbMonitorConfig *monitor;
-    LbNodeConfig *node;
-    LbClusterConfig *cluster;
-    LbBranchConfig *branch;
-    LbListenerConfig *listener;
+    public:
+        explicit Control(LbConfigParser &_parent)
+            :parent(_parent) {}
+
+    protected:
+        /* virtual methods from class ConfigParser */
+        void ParseLine(LineParser &line) override;
+        void Finish() override;
+    };
+
+    class CertDatabase final : public ConfigParser {
+        LbConfigParser &parent;
+        LbCertDatabaseConfig config;
+
+    public:
+        CertDatabase(LbConfigParser &_parent, const char *_name)
+            :parent(_parent), config(_name) {}
+
+    protected:
+        /* virtual methods from class ConfigParser */
+        void ParseLine(LineParser &line) override;
+        void Finish() override;
+    };
+
+    class Monitor final : public ConfigParser {
+        LbConfigParser &parent;
+        LbMonitorConfig config;
+
+    public:
+        Monitor(LbConfigParser &_parent, const char *_name)
+            :parent(_parent), config(_name) {}
+
+    protected:
+        /* virtual methods from class ConfigParser */
+        void ParseLine(LineParser &line) override;
+        void Finish() override;
+    };
+
+    class Node final : public ConfigParser {
+        LbConfigParser &parent;
+        LbNodeConfig config;
+
+    public:
+        Node(LbConfigParser &_parent, const char *_name)
+            :parent(_parent), config(_name) {}
+
+    protected:
+        /* virtual methods from class ConfigParser */
+        void ParseLine(LineParser &line) override;
+        void Finish() override;
+    };
+
+    class Cluster final : public ConfigParser {
+        LbConfigParser &parent;
+        LbClusterConfig config;
+
+    public:
+        Cluster(LbConfigParser &_parent, const char *_name)
+            :parent(_parent), config(_name) {}
+
+    protected:
+        /* virtual methods from class ConfigParser */
+        void ParseLine(LineParser &line) override;
+        void Finish() override;
+    };
+
+    class Branch final : public ConfigParser {
+        LbConfigParser &parent;
+        LbBranchConfig config;
+
+    public:
+        Branch(LbConfigParser &_parent, const char *_name)
+            :parent(_parent), config(_name) {}
+
+    protected:
+        /* virtual methods from class ConfigParser */
+        void ParseLine(LineParser &line) override;
+        void Finish() override;
+    };
+
+    class Listener final : public ConfigParser {
+        LbConfigParser &parent;
+        LbListenerConfig config;
+
+    public:
+        Listener(LbConfigParser &_parent, const char *_name)
+            :parent(_parent), config(_name) {}
+
+    protected:
+        /* virtual methods from class ConfigParser */
+        void ParseLine(LineParser &line) override;
+        void Finish() override;
+    };
 
 public:
-    explicit LbConfigParser(LbConfig &_config)
-        :config(_config),
-         state(State::ROOT) {}
+    LbConfigParser(struct pool &_pool, LbConfig &_config)
+        :pool(_pool), config(_config) {}
 
-    void Feed(LineParser &line);
+protected:
+    /* virtual methods from class ConfigParser */
+    void Finish() override;
+
+    /* virtual methods from class NestedConfigParser */
+    void ParseLine2(LineParser &line) override;
 
 private:
-    void FeedRoot(LineParser &line);
-
     void CreateControl(LineParser &line);
-    void FeedControl(LineParser &line);
-
     void CreateCertDatabase(LineParser &line);
-    void FeedCertDatabase(LineParser &line);
-
     void CreateMonitor(LineParser &line);
-    void FeedMonitor(LineParser &line);
-
     void CreateNode(LineParser &line);
-    void FeedNode(LineParser &line);
 
     LbNodeConfig &AutoCreateNode(const char *name);
     void AutoCreateMember(LbMemberConfig &member, const char *name);
 
     void CreateCluster(LineParser &line);
-    void FeedCluster(LineParser &line);
-
     void CreateBranch(LineParser &line);
-    void FeedBranch(LineParser &line);
-
     void CreateListener(LineParser &line);
-    void FeedListener(LineParser &line);
 };
 
-inline void
-LbConfigParser::CreateControl(LineParser &line)
+void
+LbConfigParser::Control::ParseLine(LineParser &line)
 {
-    line.ExpectSymbolAndEol('{');
-
-    state = State::CONTROL;
-    control = new LbControlConfig();
-}
-
-inline void
-LbConfigParser::FeedControl(LineParser &line)
-{
-    if (line.SkipSymbol('}')) {
-        line.ExpectEnd();
-
-        if (control->bind_address.IsNull())
-            throw LineParser::Error("Bind address is missing");
-
-        config.controls.emplace_back(std::move(*control));
-        delete control;
-
-        state = State::ROOT;
-        return;
-    }
-
     const char *word = line.NextWord();
     if (word == nullptr)
         throw LineParser::Error("Syntax error");
@@ -114,46 +163,34 @@ LbConfigParser::FeedControl(LineParser &line)
         line.ExpectEnd();
 
         Error error;
-        control->bind_address = ParseSocketAddress(address, 80, true, error);
-        if (control->bind_address.IsNull())
+        config.bind_address = ParseSocketAddress(address, 80, true, error);
+        if (config.bind_address.IsNull())
             throw LineParser::Error(error.GetMessage());
     } else
         throw LineParser::Error("Unknown option");
 }
 
-inline void
-LbConfigParser::CreateCertDatabase(LineParser &line)
+void
+LbConfigParser::Control::Finish()
 {
-    const char *name = line.NextValue();
-    if (name == nullptr)
-        throw std::runtime_error("Database name expected");
+    if (config.bind_address.IsNull())
+        throw LineParser::Error("Bind address is missing");
 
-    line.ExpectSymbolAndEol('{');
+    parent.config.controls.emplace_back(std::move(config));
 
-    if (config.FindCertDb(name) != nullptr)
-        throw LineParser::Error("Duplicate certdb name");
-
-    state = State::CERT_DB;
-    cert_db = new LbCertDatabaseConfig(name);
+    ConfigParser::Finish();
 }
 
 inline void
-LbConfigParser::FeedCertDatabase(LineParser &line)
+LbConfigParser::CreateControl(LineParser &line)
 {
-    auto &db = *cert_db;
+    line.ExpectSymbolAndEol('{');
+    SetChild(std::make_unique<Control>(*this));
+}
 
-    if (line.SkipSymbol('}')) {
-        line.ExpectEnd();
-
-        db.Check();
-
-        config.cert_dbs.insert(std::make_pair(db.name, db));
-        delete &db;
-
-        state = State::ROOT;
-        return;
-    }
-
+void
+LbConfigParser::CertDatabase::ParseLine(LineParser &line)
+{
     const char *word = line.NextWord();
     if (word == nullptr)
         throw std::runtime_error("Syntax error");
@@ -165,7 +202,7 @@ LbConfigParser::FeedCertDatabase(LineParser &line)
 
         line.ExpectEnd();
 
-        db.connect = connect;
+        config.connect = connect;
     } else if (strcmp(word, "schema") == 0) {
         const char *schema = line.NextValue();
         if (schema == nullptr)
@@ -173,7 +210,7 @@ LbConfigParser::FeedCertDatabase(LineParser &line)
 
         line.ExpectEnd();
 
-        db.schema = schema;
+        config.schema = schema;
     } else if (strcmp(word, "ca_cert") == 0) {
         const char *path = line.NextValue();
         if (path == nullptr)
@@ -181,7 +218,7 @@ LbConfigParser::FeedCertDatabase(LineParser &line)
 
         line.ExpectEnd();
 
-        db.ca_certs.emplace_back(path);
+        config.ca_certs.emplace_back(path);
     } else if (strcmp(word, "wrap_key") == 0) {
         const char *name = line.NextValue();
         if (name == nullptr)
@@ -205,14 +242,128 @@ LbConfigParser::FeedCertDatabase(LineParser &line)
             key[i] = v;
         }
 
-        auto i = db.wrap_keys.emplace(name, key);
+        auto i = config.wrap_keys.emplace(name, key);
         if (!i.second)
             throw LineParser::Error("Duplicate wrap_key name");
 
-        if (db.default_wrap_key.empty())
-            db.default_wrap_key = i.first->first;
+        if (config.default_wrap_key.empty())
+            config.default_wrap_key = i.first->first;
     } else
         throw std::runtime_error("Unknown option");
+}
+
+void
+LbConfigParser::CertDatabase::Finish()
+{
+    config.Check();
+
+    parent.config.cert_dbs.insert(std::make_pair(config.name, config));
+
+    ConfigParser::Finish();
+}
+
+inline void
+LbConfigParser::CreateCertDatabase(LineParser &line)
+{
+    const char *name = line.NextValue();
+    if (name == nullptr)
+        throw std::runtime_error("Database name expected");
+
+    line.ExpectSymbolAndEol('{');
+
+    if (config.FindCertDb(name) != nullptr)
+        throw LineParser::Error("Duplicate certdb name");
+
+    SetChild(std::make_unique<CertDatabase>(*this, name));
+}
+
+void
+LbConfigParser::Monitor::ParseLine(LineParser &line)
+{
+    const char *word = line.NextWord();
+    if (word == nullptr)
+        throw LineParser::Error("Syntax error");
+
+    if (strcmp(word, "type") == 0) {
+        const char *value = line.NextValue();
+        if (value == nullptr)
+            throw LineParser::Error("Monitor address expected");
+
+        line.ExpectEnd();
+
+        if (config.type != LbMonitorConfig::Type::NONE)
+            throw LineParser::Error("Monitor type already specified");
+
+        if (strcmp(value, "none") == 0)
+            config.type = LbMonitorConfig::Type::NONE;
+        else if (strcmp(value, "ping") == 0)
+            config.type = LbMonitorConfig::Type::PING;
+        else if (strcmp(value, "connect") == 0)
+            config.type = LbMonitorConfig::Type::CONNECT;
+        else if (strcmp(value, "tcp_expect") == 0)
+            config.type = LbMonitorConfig::Type::TCP_EXPECT;
+        else
+            throw LineParser::Error("Unknown monitor type");
+    } else if (strcmp(word, "interval") == 0) {
+        unsigned value = line.NextPositiveInteger();
+        if (value == 0)
+            throw LineParser::Error("Positive integer expected");
+
+        config.interval = value;
+    } else if (strcmp(word, "timeout") == 0) {
+        unsigned value = line.NextPositiveInteger();
+        if (value == 0)
+            throw LineParser::Error("Positive integer expected");
+
+        config.timeout = value;
+    } else if (config.type == LbMonitorConfig::Type::TCP_EXPECT &&
+               strcmp(word, "connect_timeout") == 0) {
+        unsigned value = line.NextPositiveInteger();
+        if (value == 0)
+            throw LineParser::Error("Positive integer expected");
+
+        config.connect_timeout = value;
+    } else if (config.type == LbMonitorConfig::Type::TCP_EXPECT &&
+               strcmp(word, "send") == 0) {
+        const char *value = line.NextUnescape();
+        if (value == nullptr)
+            throw LineParser::Error("String value expected");
+
+        line.ExpectEnd();
+
+        config.send = value;
+    } else if (config.type == LbMonitorConfig::Type::TCP_EXPECT &&
+               strcmp(word, "expect") == 0) {
+        const char *value = line.NextUnescape();
+        if (value == nullptr)
+            throw LineParser::Error("String value expected");
+
+        line.ExpectEnd();
+
+        config.expect = value;
+    } else if (config.type == LbMonitorConfig::Type::TCP_EXPECT &&
+               strcmp(word, "expect_graceful") == 0) {
+        const char *value = line.NextUnescape();
+        if (value == nullptr)
+            throw LineParser::Error("String value expected");
+
+        line.ExpectEnd();
+
+        config.fade_expect = value;
+    } else
+        throw LineParser::Error("Unknown option");
+}
+
+void
+LbConfigParser::Monitor::Finish()
+{
+    if (config.type == LbMonitorConfig::Type::TCP_EXPECT &&
+        (config.expect.empty() && config.fade_expect.empty()))
+        throw LineParser::Error("No 'expect' string configured");
+
+    parent.config.monitors.insert(std::make_pair(config.name, config));
+
+    ConfigParser::Finish();
 }
 
 inline void
@@ -227,99 +378,60 @@ LbConfigParser::CreateMonitor(LineParser &line)
     if (config.FindMonitor(name) != nullptr)
         throw LineParser::Error("Duplicate monitor name");
 
-    state = State::MONITOR;
-    monitor = new LbMonitorConfig(name);
+    SetChild(std::make_unique<Monitor>(*this, name));
 }
 
-inline void
-LbConfigParser::FeedMonitor(LineParser &line)
+void
+LbConfigParser::Node::ParseLine(LineParser &line)
 {
-    if (line.SkipSymbol('}')) {
-        line.ExpectEnd();
-
-        if (monitor->type == LbMonitorConfig::Type::TCP_EXPECT &&
-            (monitor->expect.empty() && monitor->fade_expect.empty()))
-            throw LineParser::Error("No 'expect' string configured");
-
-        config.monitors.insert(std::make_pair(monitor->name, *monitor));
-        delete monitor;
-
-        state = State::ROOT;
-        return;
-    }
-
     const char *word = line.NextWord();
     if (word == nullptr)
         throw LineParser::Error("Syntax error");
 
-    if (strcmp(word, "type") == 0) {
+    if (strcmp(word, "address") == 0) {
         const char *value = line.NextValue();
         if (value == nullptr)
-            throw LineParser::Error("Monitor address expected");
+            throw LineParser::Error("Node address expected");
 
         line.ExpectEnd();
 
-        if (monitor->type != LbMonitorConfig::Type::NONE)
-            throw LineParser::Error("Monitor type already specified");
+        if (!config.address.IsNull())
+            throw LineParser::Error("Duplicate node address");
 
-        if (strcmp(value, "none") == 0)
-            monitor->type = LbMonitorConfig::Type::NONE;
-        else if (strcmp(value, "ping") == 0)
-            monitor->type = LbMonitorConfig::Type::PING;
-        else if (strcmp(value, "connect") == 0)
-            monitor->type = LbMonitorConfig::Type::CONNECT;
-        else if (strcmp(value, "tcp_expect") == 0)
-            monitor->type = LbMonitorConfig::Type::TCP_EXPECT;
-        else
-            throw LineParser::Error("Unknown monitor type");
-    } else if (strcmp(word, "interval") == 0) {
-        unsigned value = line.NextPositiveInteger();
-        if (value == 0)
-            throw LineParser::Error("Positive integer expected");
-
-        monitor->interval = value;
-    } else if (strcmp(word, "timeout") == 0) {
-        unsigned value = line.NextPositiveInteger();
-        if (value == 0)
-            throw LineParser::Error("Positive integer expected");
-
-        monitor->timeout = value;
-    } else if (monitor->type == LbMonitorConfig::Type::TCP_EXPECT &&
-               strcmp(word, "connect_timeout") == 0) {
-        unsigned value = line.NextPositiveInteger();
-        if (value == 0)
-            throw LineParser::Error("Positive integer expected");
-
-        monitor->connect_timeout = value;
-    } else if (monitor->type == LbMonitorConfig::Type::TCP_EXPECT &&
-               strcmp(word, "send") == 0) {
-        const char *value = line.NextUnescape();
+        Error error;
+        config.address = ParseSocketAddress(value, 80, false, error);
+        if (config.address.IsNull())
+            throw LineParser::Error(error.GetMessage());
+    } else if (strcmp(word, "jvm_route") == 0) {
+        const char *value = line.NextValue();
         if (value == nullptr)
-            throw LineParser::Error("String value expected");
+            throw LineParser::Error("Value expected");
 
         line.ExpectEnd();
 
-        monitor->send = value;
-    } else if (monitor->type == LbMonitorConfig::Type::TCP_EXPECT &&
-               strcmp(word, "expect") == 0) {
-        const char *value = line.NextUnescape();
-        if (value == nullptr)
-            throw LineParser::Error("String value expected");
+        if (!config.jvm_route.empty())
+            throw LineParser::Error("Duplicate jvm_route");
 
-        line.ExpectEnd();
-
-        monitor->expect = value;
-    } else if (monitor->type == LbMonitorConfig::Type::TCP_EXPECT &&
-               strcmp(word, "expect_graceful") == 0) {
-        const char *value = line.NextUnescape();
-        if (value == nullptr)
-            throw LineParser::Error("String value expected");
-
-        line.ExpectEnd();
-
-        monitor->fade_expect = value;
+        config.jvm_route = value;
     } else
         throw LineParser::Error("Unknown option");
+}
+
+void
+LbConfigParser::Node::Finish()
+{
+    if (config.address.IsNull()) {
+        Error error;
+        config.address = ParseSocketAddress(config.name.c_str(), 80, false,
+                                            error);
+        if (config.address.IsNull())
+            throw LineParser::Error(error.GetMessage());
+    }
+
+    parent.config.nodes.emplace(std::string(config.name),
+                                std::move(config));
+
+    ConfigParser::Finish();
 }
 
 inline void
@@ -334,62 +446,7 @@ LbConfigParser::CreateNode(LineParser &line)
     if (config.FindNode(name) != nullptr)
         throw LineParser::Error("Duplicate node name");
 
-    state = State::NODE;
-    node = new LbNodeConfig(name);
-}
-
-inline void
-LbConfigParser::FeedNode(LineParser &line)
-{
-    if (line.SkipSymbol('}')) {
-        line.ExpectEnd();
-
-        if (node->address.IsNull()) {
-            Error error;
-            node->address = ParseSocketAddress(node->name.c_str(), 80, false,
-                                               error);
-            if (node->address.IsNull())
-                throw LineParser::Error(error.GetMessage());
-        }
-
-        config.nodes.insert(std::make_pair(node->name, std::move(*node)));
-        delete node;
-
-        state = State::ROOT;
-        return;
-    }
-
-    const char *word = line.NextWord();
-    if (word == nullptr)
-        throw LineParser::Error("Syntax error");
-
-    if (strcmp(word, "address") == 0) {
-        const char *value = line.NextValue();
-        if (value == nullptr)
-            throw LineParser::Error("Node address expected");
-
-        line.ExpectEnd();
-
-        if (!node->address.IsNull())
-            throw LineParser::Error("Duplicate node address");
-
-        Error error;
-        node->address = ParseSocketAddress(value, 80, false, error);
-        if (node->address.IsNull())
-            throw LineParser::Error(error.GetMessage());
-    } else if (strcmp(word, "jvm_route") == 0) {
-        const char *value = line.NextValue();
-        if (value == nullptr)
-            throw LineParser::Error("Value expected");
-
-        line.ExpectEnd();
-
-        if (!node->jvm_route.empty())
-            throw LineParser::Error("Duplicate jvm_route");
-
-        node->jvm_route = value;
-    } else
-        throw LineParser::Error("Unknown option");
+    SetChild(std::make_unique<Node>(*this, name));
 }
 
 LbNodeConfig &
@@ -411,19 +468,6 @@ LbConfigParser::AutoCreateMember(LbMemberConfig &member, const char *name)
 {
     member.node = &AutoCreateNode(name);
     member.port = 0;
-}
-
-inline void
-LbConfigParser::CreateCluster(LineParser &line)
-{
-    const char *name = line.NextValue();
-    if (name == nullptr)
-        throw LineParser::Error("Pool name expected");
-
-    line.ExpectSymbolAndEol('{');
-
-    state = State::CLUSTER;
-    cluster = new LbClusterConfig(name);
 }
 
 static unsigned
@@ -488,37 +532,9 @@ ParseStickyMode(const char *s)
         throw LineParser::Error("Unknown sticky mode");
 }
 
-inline void
-LbConfigParser::FeedCluster(LineParser &line)
+void
+LbConfigParser::Cluster::ParseLine(LineParser &line)
 {
-    if (line.SkipSymbol('}')) {
-        line.ExpectEnd();
-
-        if (config.FindCluster(cluster->name) != nullptr)
-            throw LineParser::Error("Duplicate pool name");
-
-        if (!cluster->zeroconf_domain.empty() &&
-            cluster->zeroconf_service.empty())
-            throw LineParser::Error("zeroconf_service missing");
-
-        if (cluster->members.empty() && cluster->zeroconf_service.empty())
-            throw LineParser::Error("Pool has no members");
-
-        if (!validate_protocol_sticky(cluster->protocol, cluster->sticky_mode))
-            throw LineParser::Error("Sticky mode not available for this protocol");
-
-        if (cluster->members.size() == 1)
-            /* with only one member, a sticky setting doesn't make
-               sense */
-            cluster->sticky_mode = StickyMode::NONE;
-
-        config.clusters.insert(std::make_pair(cluster->name, *cluster));
-        delete cluster;
-
-        state = State::ROOT;
-        return;
-    }
-
     const char *word = line.NextWord();
     if (word == nullptr)
         throw LineParser::Error("Syntax error");
@@ -530,7 +546,7 @@ LbConfigParser::FeedCluster(LineParser &line)
 
         line.ExpectEnd();
 
-        cluster->name = name;
+        config.name = name;
     } else if (strcmp(word, "sticky") == 0) {
         const char *sticky_mode = line.NextValue();
         if (sticky_mode == nullptr)
@@ -538,7 +554,7 @@ LbConfigParser::FeedCluster(LineParser &line)
 
         line.ExpectEnd();
 
-        cluster->sticky_mode = ParseStickyMode(sticky_mode);
+        config.sticky_mode = ParseStickyMode(sticky_mode);
     } else if (strcmp(word, "session_cookie") == 0) {
         const char *session_cookie = line.NextValue();
         if (session_cookie == nullptr)
@@ -546,7 +562,7 @@ LbConfigParser::FeedCluster(LineParser &line)
 
         line.ExpectEnd();
 
-        cluster->session_cookie = session_cookie;
+        config.session_cookie = session_cookie;
     } else if (strcmp(word, "monitor") == 0) {
         const char *name = line.NextValue();
         if (name == nullptr)
@@ -554,15 +570,15 @@ LbConfigParser::FeedCluster(LineParser &line)
 
         line.ExpectEnd();
 
-        if (cluster->monitor != nullptr)
+        if (config.monitor != nullptr)
             throw LineParser::Error("Monitor already specified");
 
-        cluster->monitor = config.FindMonitor(name);
-        if (cluster->monitor == nullptr)
+        config.monitor = parent.config.FindMonitor(name);
+        if (config.monitor == nullptr)
             throw LineParser::Error("No such monitor");
     } else if (strcmp(word, "member") == 0) {
-        if (!cluster->zeroconf_service.empty() ||
-            !cluster->zeroconf_domain.empty())
+        if (!config.zeroconf_service.empty() ||
+            !config.zeroconf_domain.empty())
             throw LineParser::Error("Cannot configure both hard-coded members and Zeroconf");
 
         char *name = line.NextValue();
@@ -573,16 +589,16 @@ LbConfigParser::FeedCluster(LineParser &line)
         line.ExpectEnd();
         */
 
-        cluster->members.emplace_back();
+        config.members.emplace_back();
 
-        auto *member = &cluster->members.back();
+        auto *member = &config.members.back();
 
-        member->node = config.FindNode(name);
+        member->node = parent.config.FindNode(name);
         if (member->node == nullptr) {
             char *q = strchr(name, ':');
             if (q != nullptr) {
                 *q++ = 0;
-                member->node = config.FindNode(name);
+                member->node = parent.config.FindNode(name);
                 if (member->node == nullptr) {
                     /* node doesn't exist: parse the given member
                        name, auto-create a new node */
@@ -590,7 +606,7 @@ LbConfigParser::FeedCluster(LineParser &line)
                     /* restore the colon */
                     *--q = ':';
 
-                    AutoCreateMember(*member, name);
+                    parent.AutoCreateMember(*member, name);
                     return;
                 }
 
@@ -600,32 +616,32 @@ LbConfigParser::FeedCluster(LineParser &line)
             } else
                 /* node doesn't exist: parse the given member
                    name, auto-create a new node */
-                AutoCreateMember(*member, name);
+                parent.AutoCreateMember(*member, name);
         }
     } else if (strcmp(word, "zeroconf_service") == 0) {
-        if (!cluster->members.empty())
+        if (!config.members.empty())
             throw LineParser::Error("Cannot configure both hard-coded members and Zeroconf");
 
-        if (!cluster->zeroconf_service.empty())
+        if (!config.zeroconf_service.empty())
             throw LineParser::Error("Duplicate zeroconf_service");
 
         const char *service = line.NextValue();
         if (service == nullptr || *service == 0)
             throw LineParser::Error("Zeroconf service name expected");
 
-        cluster->zeroconf_service = service;
+        config.zeroconf_service = service;
     } else if (strcmp(word, "zeroconf_domain") == 0) {
-        if (!cluster->members.empty())
+        if (!config.members.empty())
             throw LineParser::Error("Cannot configure both hard-coded members and Zeroconf");
 
-        if (!cluster->zeroconf_domain.empty())
+        if (!config.zeroconf_domain.empty())
             throw LineParser::Error("Duplicate zeroconf_domain");
 
         const char *domain = line.NextValue();
         if (domain == nullptr || *domain == 0)
             throw LineParser::Error("Zeroconf domain name expected");
 
-        cluster->zeroconf_domain = domain;
+        config.zeroconf_domain = domain;
     } else if (strcmp(word, "protocol") == 0) {
         const char *protocol = line.NextValue();
         if (protocol == nullptr)
@@ -634,9 +650,9 @@ LbConfigParser::FeedCluster(LineParser &line)
         line.ExpectEnd();
 
         if (strcmp(protocol, "http") == 0)
-            cluster->protocol = LbProtocol::HTTP;
+            config.protocol = LbProtocol::HTTP;
         else if (strcmp(protocol, "tcp") == 0)
-            cluster->protocol = LbProtocol::TCP;
+            config.protocol = LbProtocol::TCP;
         else
             throw LineParser::Error("Unknown protocol");
     } else if (strcmp(word, "source_address") == 0) {
@@ -646,20 +662,20 @@ LbConfigParser::FeedCluster(LineParser &line)
 
         line.ExpectEnd();
 
-        cluster->transparent_source = true;
+        config.transparent_source = true;
     } else if (strcmp(word, "mangle_via") == 0) {
-        cluster->mangle_via = line.NextBool();
+        config.mangle_via = line.NextBool();
 
         line.ExpectEnd();
     } else if (strcmp(word, "fallback") == 0) {
-        if (cluster->fallback.IsDefined())
+        if (config.fallback.IsDefined())
             throw LineParser::Error("Duplicate fallback");
 
         const char *location = line.NextValue();
         if (strstr(location, "://") != nullptr) {
             line.ExpectEnd();
 
-            cluster->fallback.location = location;
+            config.fallback.location = location;
         } else {
             char *endptr;
             http_status_t status =
@@ -676,15 +692,41 @@ LbConfigParser::FeedCluster(LineParser &line)
 
             line.ExpectEnd();
 
-            cluster->fallback.status = status;
-            cluster->fallback.message = message;
+            config.fallback.status = status;
+            config.fallback.message = message;
         }
     } else
         throw LineParser::Error("Unknown option");
 }
 
+void
+LbConfigParser::Cluster::Finish()
+{
+    if (parent.config.FindCluster(config.name) != nullptr)
+        throw LineParser::Error("Duplicate pool name");
+
+    if (!config.zeroconf_domain.empty() &&
+        config.zeroconf_service.empty())
+        throw LineParser::Error("zeroconf_service missing");
+
+    if (config.members.empty() && config.zeroconf_service.empty())
+        throw LineParser::Error("Pool has no members");
+
+    if (!validate_protocol_sticky(config.protocol, config.sticky_mode))
+        throw LineParser::Error("Sticky mode not available for this protocol");
+
+    if (config.members.size() == 1)
+        /* with only one member, a sticky setting doesn't make
+           sense */
+        config.sticky_mode = StickyMode::NONE;
+
+    parent.config.clusters.insert(std::make_pair(config.name, config));
+
+    ConfigParser::Finish();
+}
+
 inline void
-LbConfigParser::CreateBranch(LineParser &line)
+LbConfigParser::CreateCluster(LineParser &line)
 {
     const char *name = line.NextValue();
     if (name == nullptr)
@@ -692,8 +734,7 @@ LbConfigParser::CreateBranch(LineParser &line)
 
     line.ExpectSymbolAndEol('{');
 
-    state = State::BRANCH;
-    branch = new LbBranchConfig(name);
+    SetChild(std::make_unique<Cluster>(*this, name));
 }
 
 static bool
@@ -723,29 +764,9 @@ parse_attribute_reference(LbAttributeReference &a, const char *p)
         return false;
 }
 
-inline void
-LbConfigParser::FeedBranch(LineParser &line)
+void
+LbConfigParser::Branch::ParseLine(LineParser &line)
 {
-    if (line.SkipSymbol('}')) {
-        line.ExpectEnd();
-
-        if (config.FindBranch(branch->name) != nullptr)
-            throw LineParser::Error("Duplicate pool/branch name");
-
-        if (!branch->HasFallback())
-            throw LineParser::Error("Branch has no fallback");
-
-        if (branch->GetProtocol() != LbProtocol::HTTP)
-            throw LineParser::Error("Only HTTP pools allowed in branch");
-
-        config.branches.insert(std::make_pair(branch->name,
-                                              std::move(*branch)));
-        delete branch;
-
-        state = State::ROOT;
-        return;
-    }
-
     const char *word = line.NextWord();
     if (word == nullptr)
         throw LineParser::Error("Syntax error");
@@ -755,24 +776,24 @@ LbConfigParser::FeedBranch(LineParser &line)
         if (name == nullptr)
             throw LineParser::Error("Pool name expected");
 
-        LbGoto destination = config.FindGoto(name);
+        LbGoto destination = parent.config.FindGoto(name);
         if (!destination.IsDefined())
             throw LineParser::Error("No such pool");
 
         if (line.IsEnd()) {
-            if (branch->HasFallback())
+            if (config.HasFallback())
                 throw LineParser::Error("Fallback already specified");
 
-            if (!branch->conditions.empty() &&
-                branch->conditions.front().destination.GetProtocol() != destination.GetProtocol())
+            if (!config.conditions.empty() &&
+                config.conditions.front().destination.GetProtocol() != destination.GetProtocol())
                 throw LineParser::Error("Protocol mismatch");
 
-            branch->fallback = destination;
+            config.fallback = destination;
             return;
         }
 
-        if (branch->fallback.IsDefined() &&
-            branch->fallback.GetProtocol() != destination.GetProtocol())
+        if (config.fallback.IsDefined() &&
+            config.fallback.GetProtocol() != destination.GetProtocol())
                 throw LineParser::Error("Protocol mismatch");
 
         const char *if_ = line.NextWord();
@@ -829,47 +850,44 @@ LbConfigParser::FeedBranch(LineParser &line)
                            : LbConditionConfig(std::move(a), negate,
                                                string),
                            destination);
-        branch->conditions.emplace_back(std::move(gif));
+        config.conditions.emplace_back(std::move(gif));
     } else
         throw LineParser::Error("Unknown option");
 }
 
-inline void
-LbConfigParser::CreateListener(LineParser &line)
+void
+LbConfigParser::Branch::Finish()
 {
-    const char *name = line.NextValue();
-    if (name == nullptr)
-        throw LineParser::Error("Listener name expected");
+    if (parent.config.FindBranch(config.name) != nullptr)
+        throw LineParser::Error("Duplicate pool/branch name");
 
-    line.ExpectSymbolAndEol('{');
+    if (!config.HasFallback())
+        throw LineParser::Error("Branch has no fallback");
 
-    state = State::LISTENER;
-    listener = new LbListenerConfig(name);
+    if (config.GetProtocol() != LbProtocol::HTTP)
+        throw LineParser::Error("Only HTTP pools allowed in branch");
+
+    parent.config.branches.emplace(std::string(config.name),
+                                   std::move(config));
+
+    ConfigParser::Finish();
 }
 
 inline void
-LbConfigParser::FeedListener(LineParser &line)
+LbConfigParser::CreateBranch(LineParser &line)
 {
-    if (line.SkipSymbol('}')) {
-        line.ExpectEnd();
+    const char *name = line.NextValue();
+    if (name == nullptr)
+        throw LineParser::Error("Pool name expected");
 
-        if (config.FindListener(listener->name) != nullptr)
-            throw LineParser::Error("Duplicate listener name");
+    line.ExpectSymbolAndEol('{');
 
-        if (listener->bind_address.IsNull())
-            throw LineParser::Error("Listener has no destination");
+    SetChild(std::make_unique<Branch>(*this, name));
+}
 
-        if (listener->ssl &&
-            !listener->ssl_config.IsValid(listener->cert_db != nullptr))
-            throw LineParser::Error("Incomplete SSL configuration");
-
-        config.listeners.emplace_back(std::move(*listener));
-        delete listener;
-
-        state = State::ROOT;
-        return;
-    }
-
+void
+LbConfigParser::Listener::ParseLine(LineParser &line)
+{
     const char *word = line.NextWord();
     if (word == nullptr)
         throw LineParser::Error("Syntax error");
@@ -882,41 +900,41 @@ LbConfigParser::FeedListener(LineParser &line)
         line.ExpectEnd();
 
         Error error;
-        listener->bind_address = ParseSocketAddress(address, 80, true,
+        config.bind_address = ParseSocketAddress(address, 80, true,
                                                     error);
-        if (listener->bind_address.IsNull())
+        if (config.bind_address.IsNull())
             throw LineParser::Error(error.GetMessage());
     } else if (strcmp(word, "pool") == 0) {
         const char *name = line.NextValue();
         if (name == nullptr)
             throw LineParser::Error("Pool name expected");
 
-        if (listener->destination.IsDefined())
+        if (config.destination.IsDefined())
             throw LineParser::Error("Pool already configured");
 
-        listener->destination = config.FindGoto(name);
-        if (!listener->destination.IsDefined())
+        config.destination = parent.config.FindGoto(name);
+        if (!config.destination.IsDefined())
             throw LineParser::Error("No such pool");
     } else if (strcmp(word, "verbose_response") == 0) {
         bool value = line.NextBool();
 
         line.ExpectEnd();
 
-        listener->verbose_response = value;
+        config.verbose_response = value;
     } else if (strcmp(word, "ssl") == 0) {
         bool value = line.NextBool();
 
-        if (listener->ssl && !value)
+        if (config.ssl && !value)
             throw LineParser::Error("SSL cannot be disabled at this point");
 
         line.ExpectEnd();
 
-        listener->ssl = value;
+        config.ssl = value;
     } else if (strcmp(word, "ssl_cert_db") == 0) {
-        if (!listener->ssl)
+        if (!config.ssl)
             throw LineParser::Error("SSL is not enabled");
 
-        if (listener->cert_db != nullptr)
+        if (config.cert_db != nullptr)
             throw LineParser::Error("ssl_cert_db already set");
 
         const char *name = line.NextValue();
@@ -925,11 +943,11 @@ LbConfigParser::FeedListener(LineParser &line)
 
         line.ExpectEnd();
 
-        listener->cert_db = config.FindCertDb(name);
-        if (listener->cert_db == nullptr)
+        config.cert_db = parent.config.FindCertDb(name);
+        if (config.cert_db == nullptr)
             throw LineParser::Error(std::string("No such cert_db: ") + name);
     } else if (strcmp(word, "ssl_cert") == 0) {
-        if (!listener->ssl)
+        if (!config.ssl)
             throw LineParser::Error("SSL is not enabled");
 
         const char *path = line.NextValue();
@@ -945,7 +963,7 @@ LbConfigParser::FeedListener(LineParser &line)
 
         line.ExpectEnd();
 
-        auto &cks = listener->ssl_config.cert_key;
+        auto &cks = config.ssl_config.cert_key;
         if (!cks.empty()) {
             auto &front = cks.front();
 
@@ -968,7 +986,7 @@ LbConfigParser::FeedListener(LineParser &line)
 
         cks.emplace_back(path, key_path);
     } else if (strcmp(word, "ssl_key") == 0) {
-        if (!listener->ssl)
+        if (!config.ssl)
             throw LineParser::Error("SSL is not enabled");
 
         const char *path = line.NextValue();
@@ -977,7 +995,7 @@ LbConfigParser::FeedListener(LineParser &line)
 
         line.ExpectEnd();
 
-        auto &cks = listener->ssl_config.cert_key;
+        auto &cks = config.ssl_config.cert_key;
         if (!cks.empty()) {
             if (!cks.front().key_file.empty())
                 throw LineParser::Error("Key already configured");
@@ -987,10 +1005,10 @@ LbConfigParser::FeedListener(LineParser &line)
             cks.emplace_back(std::string(), path);
         }
     } else if (strcmp(word, "ssl_ca_cert") == 0) {
-        if (!listener->ssl)
+        if (!config.ssl)
             throw LineParser::Error("SSL is not enabled");
 
-        if (!listener->ssl_config.ca_cert_file.empty())
+        if (!config.ssl_config.ca_cert_file.empty())
             throw LineParser::Error("Certificate already configured");
 
         const char *path = line.NextValue();
@@ -999,9 +1017,9 @@ LbConfigParser::FeedListener(LineParser &line)
 
         line.ExpectEnd();
 
-        listener->ssl_config.ca_cert_file = path;
+        config.ssl_config.ca_cert_file = path;
     } else if (strcmp(word, "ssl_verify") == 0) {
-        if (!listener->ssl)
+        if (!config.ssl)
             throw LineParser::Error("SSL is not enabled");
 
         const char *value = line.NextValue();
@@ -1009,11 +1027,11 @@ LbConfigParser::FeedListener(LineParser &line)
             throw LineParser::Error("yes/no expected");
 
         if (strcmp(value, "yes") == 0)
-            listener->ssl_config.verify = SslVerify::YES;
+            config.ssl_config.verify = SslVerify::YES;
         else if (strcmp(value, "no") == 0)
-            listener->ssl_config.verify = SslVerify::NO;
+            config.ssl_config.verify = SslVerify::NO;
         else if (strcmp(value, "optional") == 0)
-            listener->ssl_config.verify = SslVerify::OPTIONAL;
+            config.ssl_config.verify = SslVerify::OPTIONAL;
         else
             throw LineParser::Error("yes/no expected");
 
@@ -1023,7 +1041,37 @@ LbConfigParser::FeedListener(LineParser &line)
 }
 
 void
-LbConfigParser::FeedRoot(LineParser &line)
+LbConfigParser::Listener::Finish()
+{
+    if (parent.config.FindListener(config.name) != nullptr)
+        throw LineParser::Error("Duplicate listener name");
+
+    if (config.bind_address.IsNull())
+        throw LineParser::Error("Listener has no destination");
+
+    if (config.ssl &&
+        !config.ssl_config.IsValid(config.cert_db != nullptr))
+        throw LineParser::Error("Incomplete SSL configuration");
+
+    parent.config.listeners.emplace_back(std::move(config));
+
+    ConfigParser::Finish();
+}
+
+inline void
+LbConfigParser::CreateListener(LineParser &line)
+{
+    const char *name = line.NextValue();
+    if (name == nullptr)
+        throw LineParser::Error("Listener name expected");
+
+    line.ExpectSymbolAndEol('{');
+
+    SetChild(std::make_unique<Listener>(*this, name));
+}
+
+void
+LbConfigParser::ParseLine2(LineParser &line)
 {
     const char *word = line.NextWord();
     if (word == nullptr)
@@ -1047,67 +1095,6 @@ LbConfigParser::FeedRoot(LineParser &line)
         throw LineParser::Error("Unknown option");
 }
 
-inline void
-LbConfigParser::Feed(LineParser &line)
-{
-    if (line.front() == '#' || line.IsEnd())
-        return;
-
-    switch (state) {
-    case State::ROOT:
-        FeedRoot(line);
-        break;
-
-    case State::CONTROL:
-        FeedControl(line);
-        break;
-
-    case State::CERT_DB:
-        FeedCertDatabase(line);
-        break;
-
-    case State::MONITOR:
-        FeedMonitor(line);
-        break;
-
-    case State::NODE:
-        FeedNode(line);
-        break;
-
-    case State::CLUSTER:
-        FeedCluster(line);
-        break;
-
-    case State::BRANCH:
-        FeedBranch(line);
-        break;
-
-    case State::LISTENER:
-        FeedListener(line);
-        break;
-    }
-}
-
-static void
-config_parser_run(LbConfig &config, FILE *file)
-{
-    LbConfigParser parser(config);
-
-    char buffer[4096], *line;
-    unsigned i = 1;
-    while ((line = fgets(buffer, sizeof(buffer), file)) != nullptr) {
-        LineParser line_parser(line);
-
-        try {
-            parser.Feed(line_parser);
-        } catch (...) {
-            std::throw_with_nested(LineParser::Error("Line " + std::to_string(i)));
-        }
-
-        ++i;
-    }
-}
-
 static void
 lb_cluster_config_finish(struct pool *pool, LbClusterConfig &config)
 {
@@ -1123,27 +1110,23 @@ lb_cluster_config_finish(struct pool *pool, LbClusterConfig &config)
     }
 }
 
-static void
-lb_config_finish(struct pool *pool, LbConfig &config)
+void
+LbConfigParser::Finish()
 {
     for (auto &i : config.clusters)
-        lb_cluster_config_finish(pool, i.second);
+        lb_cluster_config_finish(&pool, i.second);
+
+    NestedConfigParser::Finish();
 }
 
 LbConfig
 lb_config_load(struct pool *pool, const char *path)
 {
-    FILE *file = fopen(path, "r");
-    if (file == nullptr)
-        throw FormatErrno("Failed to open %s", path);
-
-    AtScopeExit(file) { fclose(file); };
-
     LbConfig config;
+    LbConfigParser parser(*pool, config);
+    CommentConfigParser parser2(parser);
 
-    config_parser_run(config, file);
-    lb_config_finish(pool, config);
-
+    ParseConfigFile(path, parser2);
     return config;
 }
 
