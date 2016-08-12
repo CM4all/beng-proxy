@@ -20,7 +20,7 @@
 #include <errno.h>
 #include <netdb.h>
 
-struct LbConfigParser {
+class LbConfigParser {
     LbConfig &config;
 
     enum class State {
@@ -42,10 +42,14 @@ struct LbConfigParser {
     LbBranchConfig *branch;
     LbListenerConfig *listener;
 
+public:
     explicit LbConfigParser(LbConfig &_config)
         :config(_config),
          state(State::ROOT) {}
 
+    void Feed(LineParser &line);
+
+private:
     void FeedRoot(LineParser &line);
 
     void CreateControl(LineParser &line);
@@ -71,8 +75,6 @@ struct LbConfigParser {
 
     void CreateListener(LineParser &line);
     void FeedListener(LineParser &line);
-
-    void Feed(LineParser &line);
 };
 
 inline void
