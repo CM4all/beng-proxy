@@ -20,7 +20,7 @@
 #include <errno.h>
 #include <netdb.h>
 
-struct ConfigParser {
+struct LbConfigParser {
     LbConfig &config;
 
     enum class State {
@@ -42,7 +42,7 @@ struct ConfigParser {
     LbBranchConfig *branch;
     LbListenerConfig *listener;
 
-    explicit ConfigParser(LbConfig &_config)
+    explicit LbConfigParser(LbConfig &_config)
         :config(_config),
          state(State::ROOT) {}
 
@@ -76,7 +76,7 @@ struct ConfigParser {
 };
 
 inline void
-ConfigParser::CreateControl(LineParser &line)
+LbConfigParser::CreateControl(LineParser &line)
 {
     line.ExpectSymbolAndEol('{');
 
@@ -85,7 +85,7 @@ ConfigParser::CreateControl(LineParser &line)
 }
 
 inline void
-ConfigParser::FeedControl(LineParser &line)
+LbConfigParser::FeedControl(LineParser &line)
 {
     if (line.SkipSymbol('}')) {
         line.ExpectEnd();
@@ -120,7 +120,7 @@ ConfigParser::FeedControl(LineParser &line)
 }
 
 inline void
-ConfigParser::CreateCertDatabase(LineParser &line)
+LbConfigParser::CreateCertDatabase(LineParser &line)
 {
     const char *name = line.NextValue();
     if (name == nullptr)
@@ -136,7 +136,7 @@ ConfigParser::CreateCertDatabase(LineParser &line)
 }
 
 inline void
-ConfigParser::FeedCertDatabase(LineParser &line)
+LbConfigParser::FeedCertDatabase(LineParser &line)
 {
     auto &db = *cert_db;
 
@@ -214,7 +214,7 @@ ConfigParser::FeedCertDatabase(LineParser &line)
 }
 
 inline void
-ConfigParser::CreateMonitor(LineParser &line)
+LbConfigParser::CreateMonitor(LineParser &line)
 {
     const char *name = line.NextValue();
     if (name == nullptr)
@@ -230,7 +230,7 @@ ConfigParser::CreateMonitor(LineParser &line)
 }
 
 inline void
-ConfigParser::FeedMonitor(LineParser &line)
+LbConfigParser::FeedMonitor(LineParser &line)
 {
     if (line.SkipSymbol('}')) {
         line.ExpectEnd();
@@ -321,7 +321,7 @@ ConfigParser::FeedMonitor(LineParser &line)
 }
 
 inline void
-ConfigParser::CreateNode(LineParser &line)
+LbConfigParser::CreateNode(LineParser &line)
 {
     const char *name = line.NextValue();
     if (name == nullptr)
@@ -337,7 +337,7 @@ ConfigParser::CreateNode(LineParser &line)
 }
 
 inline void
-ConfigParser::FeedNode(LineParser &line)
+LbConfigParser::FeedNode(LineParser &line)
 {
     if (line.SkipSymbol('}')) {
         line.ExpectEnd();
@@ -391,7 +391,7 @@ ConfigParser::FeedNode(LineParser &line)
 }
 
 LbNodeConfig &
-ConfigParser::AutoCreateNode(const char *name)
+LbConfigParser::AutoCreateNode(const char *name)
 {
     Error error;
     auto address = ParseSocketAddress(name, 80, false, error);
@@ -405,14 +405,14 @@ ConfigParser::AutoCreateNode(const char *name)
 }
 
 void
-ConfigParser::AutoCreateMember(LbMemberConfig &member, const char *name)
+LbConfigParser::AutoCreateMember(LbMemberConfig &member, const char *name)
 {
     member.node = &AutoCreateNode(name);
     member.port = 0;
 }
 
 inline void
-ConfigParser::CreateCluster(LineParser &line)
+LbConfigParser::CreateCluster(LineParser &line)
 {
     const char *name = line.NextValue();
     if (name == nullptr)
@@ -487,7 +487,7 @@ ParseStickyMode(const char *s)
 }
 
 inline void
-ConfigParser::FeedCluster(LineParser &line)
+LbConfigParser::FeedCluster(LineParser &line)
 {
     if (line.SkipSymbol('}')) {
         line.ExpectEnd();
@@ -682,7 +682,7 @@ ConfigParser::FeedCluster(LineParser &line)
 }
 
 inline void
-ConfigParser::CreateBranch(LineParser &line)
+LbConfigParser::CreateBranch(LineParser &line)
 {
     const char *name = line.NextValue();
     if (name == nullptr)
@@ -722,7 +722,7 @@ parse_attribute_reference(LbAttributeReference &a, const char *p)
 }
 
 inline void
-ConfigParser::FeedBranch(LineParser &line)
+LbConfigParser::FeedBranch(LineParser &line)
 {
     if (line.SkipSymbol('}')) {
         line.ExpectEnd();
@@ -833,7 +833,7 @@ ConfigParser::FeedBranch(LineParser &line)
 }
 
 inline void
-ConfigParser::CreateListener(LineParser &line)
+LbConfigParser::CreateListener(LineParser &line)
 {
     const char *name = line.NextValue();
     if (name == nullptr)
@@ -846,7 +846,7 @@ ConfigParser::CreateListener(LineParser &line)
 }
 
 inline void
-ConfigParser::FeedListener(LineParser &line)
+LbConfigParser::FeedListener(LineParser &line)
 {
     if (line.SkipSymbol('}')) {
         line.ExpectEnd();
@@ -1021,7 +1021,7 @@ ConfigParser::FeedListener(LineParser &line)
 }
 
 void
-ConfigParser::FeedRoot(LineParser &line)
+LbConfigParser::FeedRoot(LineParser &line)
 {
     const char *word = line.NextWord();
     if (word == nullptr)
@@ -1046,7 +1046,7 @@ ConfigParser::FeedRoot(LineParser &line)
 }
 
 inline void
-ConfigParser::Feed(LineParser &line)
+LbConfigParser::Feed(LineParser &line)
 {
     if (line.front() == '#' || line.IsEnd())
         return;
@@ -1089,7 +1089,7 @@ ConfigParser::Feed(LineParser &line)
 static void
 config_parser_run(LbConfig &config, FILE *file)
 {
-    ConfigParser parser(config);
+    LbConfigParser parser(config);
 
     char buffer[4096], *line;
     unsigned i = 1;
