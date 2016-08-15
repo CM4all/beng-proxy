@@ -72,6 +72,13 @@ public:
         return found;
     }
 
+    /**
+     * If the next word matches the given parameter, then skip it and
+     * return true.  If not, the method returns false, leaving the
+     * object unmodified.
+     */
+    bool SkipWord(const char *word);
+
     const char *NextWord();
     char *NextValue();
     char *NextUnescape();

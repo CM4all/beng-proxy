@@ -6,6 +6,26 @@
 
 #include <string.h>
 
+bool
+LineParser::SkipWord(const char *word)
+{
+    char *q = p;
+
+    do {
+        if (*q++ != *word)
+            return false;
+    } while (*++word != 0);
+
+    if (*q == 0) {
+        p = q;
+        return true;
+    } else if (IsWhitespaceFast(*q)) {
+        p = StripLeft(q + 1);
+        return true;
+    } else
+        return false;
+}
+
 const char *
 LineParser::NextWord()
 {
