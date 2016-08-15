@@ -1123,8 +1123,9 @@ lb_config_load(struct pool *pool, const char *path)
     LbConfig config;
     LbConfigParser parser(*pool, config);
     CommentConfigParser parser2(parser);
+    IncludeConfigParser parser3(path, parser2);
 
-    ParseConfigFile(path, parser2);
+    ParseConfigFile(path, parser3);
     return config;
 }
 
