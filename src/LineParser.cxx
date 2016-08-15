@@ -172,6 +172,9 @@ LineParser::ExpectValueAndEnd()
     if (value == nullptr)
         throw Error("Value expected");
 
+    if (*value == 0)
+        throw Error("Empty value not allowed");
+
     ExpectEnd();
 
     return value;

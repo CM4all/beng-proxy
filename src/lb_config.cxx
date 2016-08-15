@@ -563,11 +563,7 @@ LbConfigParser::Cluster::ParseLine(LineParser &line)
         if (!config.zeroconf_service.empty())
             throw LineParser::Error("Duplicate zeroconf_service");
 
-        const char *service = line.NextValue();
-        if (service == nullptr || *service == 0)
-            throw LineParser::Error("Zeroconf service name expected");
-
-        config.zeroconf_service = service;
+        config.zeroconf_service = line.ExpectValueAndEnd();
     } else if (strcmp(word, "zeroconf_domain") == 0) {
         if (!config.members.empty())
             throw LineParser::Error("Cannot configure both hard-coded members and Zeroconf");
@@ -575,11 +571,7 @@ LbConfigParser::Cluster::ParseLine(LineParser &line)
         if (!config.zeroconf_domain.empty())
             throw LineParser::Error("Duplicate zeroconf_domain");
 
-        const char *domain = line.NextValue();
-        if (domain == nullptr || *domain == 0)
-            throw LineParser::Error("Zeroconf domain name expected");
-
-        config.zeroconf_domain = domain;
+        config.zeroconf_domain = line.ExpectValueAndEnd();
     } else if (strcmp(word, "protocol") == 0) {
         const char *protocol = line.ExpectValueAndEnd();
         if (strcmp(protocol, "http") == 0)
@@ -826,8 +818,7 @@ LbConfigParser::Listener::ParseLine(LineParser &line)
         const char *address = line.ExpectValueAndEnd();
 
         Error error;
-        config.bind_address = ParseSocketAddress(address, 80, true,
-                                                    error);
+        config.bind_address = ParseSocketAddress(address, 80, true, error);
         if (config.bind_address.IsNull())
             throw LineParser::Error(error.GetMessage());
     } else if (strcmp(word, "pool") == 0) {

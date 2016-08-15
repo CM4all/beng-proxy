@@ -86,6 +86,9 @@ public:
     bool NextBool();
     unsigned NextPositiveInteger();
 
+    /**
+     * Expect a non-empty value and end-of-line.
+     */
     char *ExpectValueAndEnd();
 
 private:
