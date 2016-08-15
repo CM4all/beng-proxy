@@ -16,6 +16,10 @@ public:
     virtual void Finish() {}
 };
 
+/**
+ * A #ConfigParser which can dynamically forward method calls to a
+ * nested #ConfigParser instance.
+ */
 class NestedConfigParser : public ConfigParser {
     std::unique_ptr<ConfigParser> child;
 
@@ -30,6 +34,9 @@ protected:
     virtual void ParseLine2(LineParser &line) = 0;
 };
 
+/**
+ * A #ConfigParser which ignores lines starting with '#'.
+ */
 class CommentConfigParser final : public ConfigParser {
     ConfigParser &child;
 
