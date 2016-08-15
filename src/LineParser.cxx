@@ -164,3 +164,15 @@ LineParser::NextPositiveInteger()
 
     return (unsigned)l;
 }
+
+char *
+LineParser::ExpectValueAndEnd()
+{
+    char *value = NextValue();
+    if (value == nullptr)
+        throw Error("Value expected");
+
+    ExpectEnd();
+
+    return value;
+}

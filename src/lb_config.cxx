@@ -156,11 +156,7 @@ LbConfigParser::Control::ParseLine(LineParser &line)
         throw LineParser::Error("Syntax error");
 
     if (strcmp(word, "bind") == 0) {
-        const char *address = line.NextValue();
-        if (address == nullptr)
-            throw LineParser::Error("Control address expected");
-
-        line.ExpectEnd();
+        const char *address = line.ExpectValueAndEnd();
 
         Error error;
         config.bind_address = ParseSocketAddress(address, 80, true, error);
@@ -196,29 +192,11 @@ LbConfigParser::CertDatabase::ParseLine(LineParser &line)
         throw std::runtime_error("Syntax error");
 
     if (strcmp(word, "connect") == 0) {
-        const char *connect = line.NextValue();
-        if (connect == nullptr)
-            throw std::runtime_error("Connect string expected");
-
-        line.ExpectEnd();
-
-        config.connect = connect;
+        config.connect = line.ExpectValueAndEnd();
     } else if (strcmp(word, "schema") == 0) {
-        const char *schema = line.NextValue();
-        if (schema == nullptr)
-            throw std::runtime_error("Schema name expected");
-
-        line.ExpectEnd();
-
-        config.schema = schema;
+        config.schema = line.ExpectValueAndEnd();
     } else if (strcmp(word, "ca_cert") == 0) {
-        const char *path = line.NextValue();
-        if (path == nullptr)
-            throw std::runtime_error("CA certificate path name expected");
-
-        line.ExpectEnd();
-
-        config.ca_certs.emplace_back(path);
+        config.ca_certs.emplace_back(line.ExpectValueAndEnd());
     } else if (strcmp(word, "wrap_key") == 0) {
         const char *name = line.NextValue();
         if (name == nullptr)
@@ -285,15 +263,10 @@ LbConfigParser::Monitor::ParseLine(LineParser &line)
         throw LineParser::Error("Syntax error");
 
     if (strcmp(word, "type") == 0) {
-        const char *value = line.NextValue();
-        if (value == nullptr)
-            throw LineParser::Error("Monitor address expected");
-
-        line.ExpectEnd();
-
         if (config.type != LbMonitorConfig::Type::NONE)
             throw LineParser::Error("Monitor type already specified");
 
+        const char *value = line.ExpectValueAndEnd();
         if (strcmp(value, "none") == 0)
             config.type = LbMonitorConfig::Type::NONE;
         else if (strcmp(value, "ping") == 0)
@@ -389,30 +362,20 @@ LbConfigParser::Node::ParseLine(LineParser &line)
         throw LineParser::Error("Syntax error");
 
     if (strcmp(word, "address") == 0) {
-        const char *value = line.NextValue();
-        if (value == nullptr)
-            throw LineParser::Error("Node address expected");
-
-        line.ExpectEnd();
-
         if (!config.address.IsNull())
             throw LineParser::Error("Duplicate node address");
+
+        const char *value = line.ExpectValueAndEnd();
 
         Error error;
         config.address = ParseSocketAddress(value, 80, false, error);
         if (config.address.IsNull())
             throw LineParser::Error(error.GetMessage());
     } else if (strcmp(word, "jvm_route") == 0) {
-        const char *value = line.NextValue();
-        if (value == nullptr)
-            throw LineParser::Error("Value expected");
-
-        line.ExpectEnd();
-
         if (!config.jvm_route.empty())
             throw LineParser::Error("Duplicate jvm_route");
 
-        config.jvm_route = value;
+        config.jvm_route = line.ExpectValueAndEnd();
     } else
         throw LineParser::Error("Unknown option");
 }
@@ -539,40 +502,16 @@ LbConfigParser::Cluster::ParseLine(LineParser &line)
         throw LineParser::Error("Syntax error");
 
     if (strcmp(word, "name") == 0) {
-        const char *name = line.NextValue();
-        if (name == nullptr)
-            throw LineParser::Error("Pool name expected");
-
-        line.ExpectEnd();
-
-        config.name = name;
+        config.name = line.ExpectValueAndEnd();
     } else if (strcmp(word, "sticky") == 0) {
-        const char *sticky_mode = line.NextValue();
-        if (sticky_mode == nullptr)
-            throw LineParser::Error("Sticky mode expected");
-
-        line.ExpectEnd();
-
-        config.sticky_mode = ParseStickyMode(sticky_mode);
+        config.sticky_mode = ParseStickyMode(line.ExpectValueAndEnd());
     } else if (strcmp(word, "session_cookie") == 0) {
-        const char *session_cookie = line.NextValue();
-        if (session_cookie == nullptr)
-            throw LineParser::Error("Cookie name expected");
-
-        line.ExpectEnd();
-
-        config.session_cookie = session_cookie;
+        config.session_cookie = line.ExpectValueAndEnd();
     } else if (strcmp(word, "monitor") == 0) {
-        const char *name = line.NextValue();
-        if (name == nullptr)
-            throw LineParser::Error("Monitor name expected");
-
-        line.ExpectEnd();
-
         if (config.monitor != nullptr)
             throw LineParser::Error("Monitor already specified");
 
-        config.monitor = parent.config.FindMonitor(name);
+        config.monitor = parent.config.FindMonitor(line.ExpectValueAndEnd());
         if (config.monitor == nullptr)
             throw LineParser::Error("No such monitor");
     } else if (strcmp(word, "member") == 0) {
@@ -642,12 +581,7 @@ LbConfigParser::Cluster::ParseLine(LineParser &line)
 
         config.zeroconf_domain = domain;
     } else if (strcmp(word, "protocol") == 0) {
-        const char *protocol = line.NextValue();
-        if (protocol == nullptr)
-            throw LineParser::Error("Protocol name expected");
-
-        line.ExpectEnd();
-
+        const char *protocol = line.ExpectValueAndEnd();
         if (strcmp(protocol, "http") == 0)
             config.protocol = LbProtocol::HTTP;
         else if (strcmp(protocol, "tcp") == 0)
@@ -655,11 +589,9 @@ LbConfigParser::Cluster::ParseLine(LineParser &line)
         else
             throw LineParser::Error("Unknown protocol");
     } else if (strcmp(word, "source_address") == 0) {
-        const char *address = line.NextValue();
-        if (address == nullptr || strcmp(address, "transparent") != 0)
+        const char *address = line.ExpectValueAndEnd();
+        if (strcmp(address, "transparent") != 0)
             throw LineParser::Error("\"transparent\" expected");
-
-        line.ExpectEnd();
 
         config.transparent_source = true;
     } else if (strcmp(word, "mangle_via") == 0) {
@@ -891,11 +823,7 @@ LbConfigParser::Listener::ParseLine(LineParser &line)
         throw LineParser::Error("Syntax error");
 
     if (strcmp(word, "bind") == 0) {
-        const char *address = line.NextValue();
-        if (address == nullptr)
-            throw LineParser::Error("Listener address expected");
-
-        line.ExpectEnd();
+        const char *address = line.ExpectValueAndEnd();
 
         Error error;
         config.bind_address = ParseSocketAddress(address, 80, true,
@@ -903,14 +831,10 @@ LbConfigParser::Listener::ParseLine(LineParser &line)
         if (config.bind_address.IsNull())
             throw LineParser::Error(error.GetMessage());
     } else if (strcmp(word, "pool") == 0) {
-        const char *name = line.NextValue();
-        if (name == nullptr)
-            throw LineParser::Error("Pool name expected");
-
         if (config.destination.IsDefined())
             throw LineParser::Error("Pool already configured");
 
-        config.destination = parent.config.FindGoto(name);
+        config.destination = parent.config.FindGoto(line.ExpectValueAndEnd());
         if (!config.destination.IsDefined())
             throw LineParser::Error("No such pool");
     } else if (strcmp(word, "verbose_response") == 0) {
@@ -935,12 +859,7 @@ LbConfigParser::Listener::ParseLine(LineParser &line)
         if (config.cert_db != nullptr)
             throw LineParser::Error("ssl_cert_db already set");
 
-        const char *name = line.NextValue();
-        if (name == nullptr)
-            throw LineParser::Error("Name expected");
-
-        line.ExpectEnd();
-
+        const char *name = line.ExpectValueAndEnd();
         config.cert_db = parent.config.FindCertDb(name);
         if (config.cert_db == nullptr)
             throw LineParser::Error(std::string("No such cert_db: ") + name);
@@ -987,11 +906,7 @@ LbConfigParser::Listener::ParseLine(LineParser &line)
         if (!config.ssl)
             throw LineParser::Error("SSL is not enabled");
 
-        const char *path = line.NextValue();
-        if (path == nullptr)
-            throw LineParser::Error("Path expected");
-
-        line.ExpectEnd();
+        const char *path = line.ExpectValueAndEnd();
 
         auto &cks = config.ssl_config.cert_key;
         if (!cks.empty()) {
@@ -1009,21 +924,12 @@ LbConfigParser::Listener::ParseLine(LineParser &line)
         if (!config.ssl_config.ca_cert_file.empty())
             throw LineParser::Error("Certificate already configured");
 
-        const char *path = line.NextValue();
-        if (path == nullptr)
-            throw LineParser::Error("Path expected");
-
-        line.ExpectEnd();
-
-        config.ssl_config.ca_cert_file = path;
+        config.ssl_config.ca_cert_file = line.ExpectValueAndEnd();
     } else if (strcmp(word, "ssl_verify") == 0) {
         if (!config.ssl)
             throw LineParser::Error("SSL is not enabled");
 
-        const char *value = line.NextValue();
-        if (value == nullptr)
-            throw LineParser::Error("yes/no expected");
-
+        const char *value = line.ExpectValueAndEnd();
         if (strcmp(value, "yes") == 0)
             config.ssl_config.verify = SslVerify::YES;
         else if (strcmp(value, "no") == 0)
@@ -1032,8 +938,6 @@ LbConfigParser::Listener::ParseLine(LineParser &line)
             config.ssl_config.verify = SslVerify::OPTIONAL;
         else
             throw LineParser::Error("yes/no expected");
-
-        line.ExpectEnd();
     } else
         throw LineParser::Error("Unknown option");
 }

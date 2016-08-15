@@ -86,6 +86,8 @@ public:
     bool NextBool();
     unsigned NextPositiveInteger();
 
+    char *ExpectValueAndEnd();
+
 private:
     char *NextUnquotedValue();
     char *NextQuotedValue(char stop);
