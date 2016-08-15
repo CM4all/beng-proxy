@@ -87,6 +87,54 @@ CommentConfigParser::Finish()
     ConfigParser::Finish();
 }
 
+bool
+IncludeConfigParser::PreParseLine(LineParser &line)
+{
+    return child.PreParseLine(line);
+}
+
+void
+IncludeConfigParser::ParseLine(LineParser &line)
+{
+    if (line.SkipWord("include")) {
+        const char *p = line.NextUnescape();
+        if (p == nullptr)
+            throw LineParser::Error("Quoted path expected");
+
+        line.ExpectEnd();
+
+        IncludePath(p);
+    } else
+        child.ParseLine(line);
+}
+
+void
+IncludeConfigParser::Finish()
+{
+    child.Finish();
+}
+
+static std::string
+ApplyPath(const char *base, const char *p)
+{
+    if (*p == '/')
+        /* is already absolute */
+        return p;
+
+    const char *slash = strrchr(base, '/');
+    if (slash == nullptr)
+        return p;
+
+    return std::string(base, slash + 1) + p;
+}
+
+inline void
+IncludeConfigParser::IncludePath(const char *p)
+{
+    IncludeConfigParser sub(ApplyPath(path.c_str(), p), child);
+    ParseConfigFile(sub.path.c_str(), sub);
+}
+
 static void
 ParseConfigFile(const char *path, FILE *file, ConfigParser &parser)
 {

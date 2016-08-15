@@ -50,6 +50,27 @@ public:
     void Finish() override;
 };
 
+/**
+ * A #ConfigParser which can "include" other files.
+ */
+class IncludeConfigParser final : public ConfigParser {
+    const std::string path;
+
+    ConfigParser &child;
+
+public:
+    IncludeConfigParser(std::string &&_path, ConfigParser &_child)
+        :path(std::move(_path)), child(_child) {}
+
+    /* virtual methods from class ConfigParser */
+    bool PreParseLine(LineParser &line) override;
+    void ParseLine(LineParser &line) override;
+    void Finish() override;
+
+private:
+    void IncludePath(const char *p);
+};
+
 void
 ParseConfigFile(const char *path, ConfigParser &parser);
 
