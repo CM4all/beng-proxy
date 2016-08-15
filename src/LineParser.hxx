@@ -87,6 +87,11 @@ public:
     unsigned NextPositiveInteger();
 
     /**
+     * Expect a non-empty value.
+     */
+    char *ExpectValue();
+
+    /**
      * Expect a non-empty value and end-of-line.
      */
     char *ExpectValueAndEnd();

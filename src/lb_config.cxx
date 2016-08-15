@@ -198,13 +198,9 @@ LbConfigParser::CertDatabase::ParseLine(LineParser &line)
     } else if (strcmp(word, "ca_cert") == 0) {
         config.ca_certs.emplace_back(line.ExpectValueAndEnd());
     } else if (strcmp(word, "wrap_key") == 0) {
-        const char *name = line.NextValue();
-        if (name == nullptr)
-            throw LineParser::Error("Name expected");
-
-        const char *hex_key = line.NextValue();
-        if (hex_key == nullptr)
-            throw LineParser::Error("Key expected");
+        const char *name = line.ExpectValue();
+        const char *hex_key = line.ExpectValue();
+        line.ExpectEnd();
 
         CertDatabaseConfig::AES256 key;
         if (strlen(hex_key) != key.size() * 2)
@@ -246,10 +242,7 @@ LbConfigParser::CertDatabase::Finish()
 inline void
 LbConfigParser::CreateCertDatabase(LineParser &line)
 {
-    const char *name = line.NextValue();
-    if (name == nullptr)
-        throw std::runtime_error("Database name expected");
-
+    const char *name = line.ExpectValue();
     line.ExpectSymbolAndEol('{');
 
     SetChild(std::make_unique<CertDatabase>(*this, name));
@@ -345,10 +338,7 @@ LbConfigParser::Monitor::Finish()
 inline void
 LbConfigParser::CreateMonitor(LineParser &line)
 {
-    const char *name = line.NextValue();
-    if (name == nullptr)
-        throw LineParser::Error("Monitor name expected");
-
+    const char *name = line.ExpectValue();
     line.ExpectSymbolAndEol('{');
 
     SetChild(std::make_unique<Monitor>(*this, name));
@@ -402,10 +392,7 @@ LbConfigParser::Node::Finish()
 inline void
 LbConfigParser::CreateNode(LineParser &line)
 {
-    const char *name = line.NextValue();
-    if (name == nullptr)
-        throw LineParser::Error("Node name expected");
-
+    const char *name = line.ExpectValue();
     line.ExpectSymbolAndEol('{');
 
     SetChild(std::make_unique<Node>(*this, name));
@@ -519,9 +506,7 @@ LbConfigParser::Cluster::ParseLine(LineParser &line)
             !config.zeroconf_domain.empty())
             throw LineParser::Error("Cannot configure both hard-coded members and Zeroconf");
 
-        char *name = line.NextValue();
-        if (name == nullptr)
-            throw LineParser::Error("Member name expected");
+        char *name = line.ExpectValue();
 
         /*
         line.ExpectEnd();
@@ -594,7 +579,7 @@ LbConfigParser::Cluster::ParseLine(LineParser &line)
         if (config.fallback.IsDefined())
             throw LineParser::Error("Duplicate fallback");
 
-        const char *location = line.NextValue();
+        const char *location = line.ExpectValue();
         if (strstr(location, "://") != nullptr) {
             line.ExpectEnd();
 
@@ -609,9 +594,7 @@ LbConfigParser::Cluster::ParseLine(LineParser &line)
             if (http_status_is_empty(status))
                 throw LineParser::Error("This HTTP status does not allow a response body");
 
-            const char *message = line.NextValue();
-            if (message == nullptr)
-                throw LineParser::Error("Message expected");
+            const char *message = line.ExpectValue();
 
             line.ExpectEnd();
 
@@ -651,10 +634,7 @@ LbConfigParser::Cluster::Finish()
 inline void
 LbConfigParser::CreateCluster(LineParser &line)
 {
-    const char *name = line.NextValue();
-    if (name == nullptr)
-        throw LineParser::Error("Pool name expected");
-
+    const char *name = line.ExpectValue();
     line.ExpectSymbolAndEol('{');
 
     SetChild(std::make_unique<Cluster>(*this, name));
@@ -695,9 +675,7 @@ LbConfigParser::Branch::ParseLine(LineParser &line)
         throw LineParser::Error("Syntax error");
 
     if (strcmp(word, "goto") == 0) {
-        const char *name = line.NextValue();
-        if (name == nullptr)
-            throw LineParser::Error("Pool name expected");
+        const char *name = line.ExpectValue();
 
         LbGoto destination = parent.config.FindGoto(name);
         if (!destination.IsDefined())
@@ -798,10 +776,7 @@ LbConfigParser::Branch::Finish()
 inline void
 LbConfigParser::CreateBranch(LineParser &line)
 {
-    const char *name = line.NextValue();
-    if (name == nullptr)
-        throw LineParser::Error("Pool name expected");
-
+    const char *name = line.ExpectValue();
     line.ExpectSymbolAndEol('{');
 
     SetChild(std::make_unique<Branch>(*this, name));
@@ -858,16 +833,11 @@ LbConfigParser::Listener::ParseLine(LineParser &line)
         if (!config.ssl)
             throw LineParser::Error("SSL is not enabled");
 
-        const char *path = line.NextValue();
-        if (path == nullptr)
-            throw LineParser::Error("Path expected");
+        const char *path = line.ExpectValue();
 
         const char *key_path = nullptr;
-        if (!line.IsEnd()) {
-            key_path = line.NextValue();
-            if (key_path == nullptr)
-                throw LineParser::Error("Path expected");
-        }
+        if (!line.IsEnd())
+            key_path = line.ExpectValue();
 
         line.ExpectEnd();
 
@@ -954,10 +924,7 @@ LbConfigParser::Listener::Finish()
 inline void
 LbConfigParser::CreateListener(LineParser &line)
 {
-    const char *name = line.NextValue();
-    if (name == nullptr)
-        throw LineParser::Error("Listener name expected");
-
+    const char *name = line.ExpectValue();
     line.ExpectSymbolAndEol('{');
 
     SetChild(std::make_unique<Listener>(*this, name));

@@ -166,7 +166,7 @@ LineParser::NextPositiveInteger()
 }
 
 char *
-LineParser::ExpectValueAndEnd()
+LineParser::ExpectValue()
 {
     char *value = NextValue();
     if (value == nullptr)
@@ -175,7 +175,13 @@ LineParser::ExpectValueAndEnd()
     if (*value == 0)
         throw Error("Empty value not allowed");
 
-    ExpectEnd();
+    return value;
+}
 
+char *
+LineParser::ExpectValueAndEnd()
+{
+    char *value = ExpectValue();
+    ExpectEnd();
     return value;
 }
