@@ -8,7 +8,7 @@
 #define BENG_PROXY_GLUE_HTTP_CLIENT_HXX
 
 #include "http_headers.hxx"
-#include "address_list.hxx"
+#include "net/AddressInfo.hxx"
 #include "strmap.hxx"
 
 #include <http/method.h>
@@ -20,7 +20,6 @@ struct pool;
 struct Balancer;
 class StockMap;
 struct TcpBalancer;
-struct AddressList;
 struct SocketFilter;
 class SocketFilterFactory;
 class Istream;
@@ -32,11 +31,11 @@ class CancellablePointer;
 struct GlueHttpServerAddress {
     const char *const host_and_port;
 
-    AddressList addresses;
+    AddressInfo addresses;
 
     const bool ssl;
 
-    GlueHttpServerAddress(struct pool &p, bool _ssl,
+    GlueHttpServerAddress(bool _ssl,
                           const char *_host_and_port, int default_port);
 };
 

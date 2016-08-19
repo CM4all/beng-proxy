@@ -9,7 +9,6 @@
 #include "tcp_stock.hxx"
 #include "stock/MapStock.hxx"
 #include "tcp_balancer.hxx"
-#include "address_resolver.hxx"
 #include "http_request.hxx"
 #include "http_response.hxx"
 #include "http_address.hxx"
@@ -21,6 +20,7 @@
 #include "istream/Pointer.hxx"
 #include "fb_pool.hxx"
 #include "thread_pool.hxx"
+#include "net/Resolver.hxx"
 #include "util/ScopeExit.hxx"
 
 #include <stdexcept>
@@ -43,29 +43,24 @@ CheckThrowError(GError *error)
         ThrowError(error);
 }
 
-static void
-ResolveOrThrow(struct pool &p, AddressList &address_list,
-               const char *host_and_port, int default_port)
+static AddressInfo
+ResolveOrThrow(const char *host_and_port, int default_port)
 {
     struct addrinfo hints;
     memset(&hints, 0, sizeof(hints));
     hints.ai_flags = AI_ADDRCONFIG;
     hints.ai_socktype = SOCK_STREAM;
 
-    GError *error = nullptr;
-    if (!address_list_resolve(&p, &address_list,
-                              host_and_port, default_port,
-                              &hints, &error))
-        ThrowError(error);
+    return Resolve(host_and_port, default_port, &hints);
 }
 
-GlueHttpServerAddress::GlueHttpServerAddress(struct pool &p, bool _ssl,
+GlueHttpServerAddress::GlueHttpServerAddress(bool _ssl,
                                              const char *_host_and_port,
                                              int default_port)
     :host_and_port(_host_and_port),
+     addresses(ResolveOrThrow(_host_and_port, default_port)),
      ssl(_ssl)
 {
-    ResolveOrThrow(p, addresses, _host_and_port, default_port);
 }
 
 GlueHttpClient::GlueHttpClient(struct pool &p, EventLoop &event_loop)
@@ -129,7 +124,8 @@ GlueHttpClient::Request(struct pool &p, EventLoop &event_loop,
                                              HttpAddress::Protocol::HTTP,
                                              server.ssl,
                                              server.host_and_port, uri,
-                                             server.addresses);
+                                             AddressList(ShallowCopy(),
+                                                         server.addresses));
 
     http_request(p, event_loop, *tcp_balancer, 0,
                  filter, filter_factory,

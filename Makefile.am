@@ -493,7 +493,6 @@ cm4all_certdb_SOURCES = \
 	src/regex.cxx src/regex.hxx \
 	src/expand.cxx src/expand.hxx \
 	src/pexpand.cxx src/pexpand.hxx \
-	src/address_resolver.cxx src/address_resolver.hxx \
 	src/LineParser.cxx src/LineParser.hxx \
 	src/ConfigParser.cxx src/ConfigParser.hxx \
 	src/lb_config.cxx \
