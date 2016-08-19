@@ -45,7 +45,7 @@ struct BpConfig {
 
     std::forward_list<ListenerConfig> listen;
 
-    const char *session_cookie = "beng_proxy_session";
+    std::string session_cookie = "beng_proxy_session";
 
     bool dynamic_session_cookie = false;
 

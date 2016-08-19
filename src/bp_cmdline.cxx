@@ -217,7 +217,7 @@ ParseListenerConfig(const char *argv0, const char *s,
 static bool http_cache_size_set = false;
 
 static void
-handle_set2(BpConfig &config, struct pool &pool, const char *argv0,
+handle_set2(BpConfig &config, const char *argv0,
             const char *name, size_t name_length, const char *value)
 {
     static const char session_cookie[] = "session_cookie";
@@ -371,7 +371,7 @@ handle_set2(BpConfig &config, struct pool &pool, const char *argv0,
         if (*value == 0)
             arg_error(argv0, "Invalid value for session_cookie");
 
-        config.session_cookie = p_strdup(pool, value);
+        config.session_cookie = value;
     } else if (name_length == sizeof(dynamic_session_cookie) - 1 &&
                memcmp(name, dynamic_session_cookie, sizeof(dynamic_session_cookie) - 1) == 0) {
         if (strcmp(value, "yes") == 0)
@@ -432,7 +432,7 @@ ParseAllowGroup(SpawnConfig &config, const char *arg)
 }
 
 static void
-handle_set(BpConfig &config, struct pool &pool,
+handle_set(BpConfig &config,
            const char *argv0, const char *p)
 {
     const char *eq;
@@ -444,7 +444,7 @@ handle_set(BpConfig &config, struct pool &pool,
     if (eq == p)
         arg_error(argv0, "No name found in --set argument");
 
-    handle_set2(config, pool, argv0, p, eq - p, eq + 1);
+    handle_set2(config, argv0, p, eq - p, eq + 1);
 }
 
 static void
@@ -678,7 +678,7 @@ parse_cmdline(BpConfig &config, struct pool &pool, int argc, char **argv)
             break;
 
         case 's':
-            handle_set(config, pool, argv[0], optarg);
+            handle_set(config, argv[0], optarg);
             break;
 
         case '?':

@@ -69,15 +69,15 @@ build_session_cookie_name(struct pool *pool, const BpConfig *config,
                           const StringMap &headers)
 {
     if (!config->dynamic_session_cookie)
-        return config->session_cookie;
+        return config->session_cookie.c_str();
 
     const char *host = headers.Get("host");
     if (host == nullptr || *host == 0)
-        return config->session_cookie;
+        return config->session_cookie.c_str();
 
-    size_t length = strlen(config->session_cookie);
+    size_t length = config->session_cookie.length();
     char *name = PoolAlloc<char>(*pool, length + 5);
-    memcpy(name, config->session_cookie, length);
+    memcpy(name, config->session_cookie.data(), length);
     format_uint16_hex_fixed(name + length, crc16_string(0, host));
     name[length + 4] = 0;
     return name;
