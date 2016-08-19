@@ -77,7 +77,7 @@ int main(int argc, char **argv) {
     TcpBalancer *tcp_balancer = tcp_balancer_new(*tcp_stock,
                                                  *balancer_new(*pool,
                                                                event_loop));
-    auto *stock = memcached_stock_new(event_loop, tcp_balancer, &address_list);
+    auto *stock = memcached_stock_new(event_loop, *tcp_balancer, address_list);
 
     /* send memcached request */
 

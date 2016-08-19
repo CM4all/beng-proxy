@@ -148,11 +148,11 @@ http_cache_memcached_flush(struct pool &pool, MemachedStock &stock,
     request->callback.flush = callback;
     request->callback_ctx = callback_ctx;
 
-    memcached_stock_invoke(&pool, &stock, MEMCACHED_OPCODE_FLUSH,
+    memcached_stock_invoke(pool, stock, MEMCACHED_OPCODE_FLUSH,
                            nullptr, 0,
                            nullptr, 0,
                            nullptr,
-                           &http_cache_memcached_flush_handler, request,
+                           http_cache_memcached_flush_handler, request,
                            cancel_ptr);
 }
 
@@ -249,11 +249,11 @@ mcd_choice_get_callback(const char *key, bool unclean,
     }
 
     request.in_choice = true;
-    memcached_stock_invoke(request.pool, request.stock, MEMCACHED_OPCODE_GET,
+    memcached_stock_invoke(*request.pool, *request.stock, MEMCACHED_OPCODE_GET,
                            nullptr, 0,
                            key, strlen(key),
                            nullptr,
-                           &http_cache_memcached_get_handler, &request,
+                           http_cache_memcached_get_handler, &request,
                            *request.cancel_ptr);
 }
 
@@ -358,11 +358,11 @@ http_cache_memcached_get(struct pool &pool, MemachedStock &stock,
 
     const char *key = http_cache_choice_vary_key(pool, uri, nullptr);
 
-    memcached_stock_invoke(&pool, &stock, MEMCACHED_OPCODE_GET,
+    memcached_stock_invoke(pool, stock, MEMCACHED_OPCODE_GET,
                            nullptr, 0,
                            key, strlen(key),
                            nullptr,
-                           &http_cache_memcached_get_handler, request,
+                           http_cache_memcached_get_handler, request,
                            cancel_ptr);
 }
 
@@ -471,12 +471,12 @@ http_cache_memcached_put(struct pool &pool, MemachedStock &stock,
     request->callback.put = callback;
     request->callback_ctx = callback_ctx;
 
-    memcached_stock_invoke(&pool, &stock,
+    memcached_stock_invoke(pool, stock,
                            MEMCACHED_OPCODE_SET,
                            &request->extras.set, sizeof(request->extras.set),
                            key, strlen(key),
                            value,
-                           &http_cache_memcached_put_handler, request,
+                           http_cache_memcached_put_handler, request,
                            cancel_ptr);
 }
 
@@ -525,12 +525,12 @@ mcd_background_delete(MemachedStock &stock,
     auto job = NewFromPool<LinkedBackgroundJob>(*pool, background);
     const char *key = http_cache_choice_vary_key(*pool, uri, vary);
 
-    memcached_stock_invoke(pool, &stock,
+    memcached_stock_invoke(*pool, stock,
                            MEMCACHED_OPCODE_DELETE,
                            nullptr, 0,
                            key, strlen(key),
                            nullptr,
-                           &mcd_background_handler, job,
+                           mcd_background_handler, job,
                            background.Add2(*job));
     pool_unref(pool);
 }

@@ -21,8 +21,8 @@ struct AddressList;
 class CancellablePointer;
 
 MemachedStock *
-memcached_stock_new(EventLoop &event_loop, TcpBalancer *tcp_balancer,
-                    const AddressList *address);
+memcached_stock_new(EventLoop &event_loop, TcpBalancer &tcp_balancer,
+                    const AddressList &address);
 
 void
 memcached_stock_free(MemachedStock *stock);
@@ -33,12 +33,12 @@ memcached_stock_free(MemachedStock *stock);
  * description of the other arguments.
  */
 void
-memcached_stock_invoke(struct pool *pool, MemachedStock *stock,
+memcached_stock_invoke(struct pool &pool, MemachedStock &stock,
                        enum memcached_opcode opcode,
                        const void *extras, size_t extras_length,
                        const void *key, size_t key_length,
                        Istream *value,
-                       const struct memcached_client_handler *handler,
+                       const struct memcached_client_handler &handler,
                        void *handler_ctx,
                        CancellablePointer &cancel_ptr);
 

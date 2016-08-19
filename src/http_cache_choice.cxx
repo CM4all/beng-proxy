@@ -281,12 +281,12 @@ http_cache_choice_get(struct pool &pool, MemachedStock &stock,
                                                callback, callback_ctx,
                                                cancel_ptr);
 
-    memcached_stock_invoke(&pool, &stock,
+    memcached_stock_invoke(pool, stock,
                            MEMCACHED_OPCODE_GET,
                            nullptr, 0,
                            choice->key, strlen(choice->key),
                            nullptr,
-                           &http_cache_choice_get_handler, choice,
+                           http_cache_choice_get_handler, choice,
                            cancel_ptr);
 }
 
@@ -359,12 +359,12 @@ http_cache_choice_prepend_response(enum memcached_response_status status,
 
         value = istream_memory_new(choice->pool,
                                    choice->data.data, choice->data.size);
-        memcached_stock_invoke(choice->pool, choice->stock,
+        memcached_stock_invoke(*choice->pool, *choice->stock,
                                MEMCACHED_OPCODE_ADD,
                                &choice->extras, sizeof(choice->extras),
                                choice->key, strlen(choice->key),
                                value,
-                               &http_cache_choice_add_handler, choice,
+                               http_cache_choice_add_handler, choice,
                                *choice->cancel_ptr);
         break;
 
@@ -406,11 +406,11 @@ http_cache_choice_commit(HttpCacheChoice &choice,
     Istream *value = istream_memory_new(choice.pool,
                                         choice.data.data,
                                         choice.data.size);
-    memcached_stock_invoke(choice.pool, &stock,
+    memcached_stock_invoke(*choice.pool, stock,
                            MEMCACHED_OPCODE_PREPEND,
                            nullptr, 0,
                            choice.key, strlen(choice.key), value,
-                           &http_cache_choice_prepend_handler, &choice,
+                           http_cache_choice_prepend_handler, &choice,
                            cancel_ptr);
 }
 
@@ -480,12 +480,12 @@ http_cache_choice_filter_buffer_done(void *data0, size_t length, void *ctx)
     else if (dest == data0)
         /* no entries left */
         /* XXX use CAS */
-        memcached_stock_invoke(choice->pool, choice->stock,
+        memcached_stock_invoke(*choice->pool, *choice->stock,
                                MEMCACHED_OPCODE_DELETE,
                                nullptr, 0,
                                choice->key, strlen(choice->key),
                                nullptr,
-                               &http_cache_choice_filter_set_handler, choice,
+                               http_cache_choice_filter_set_handler, choice,
                                *choice->cancel_ptr);
     else {
         /* send new contents */
@@ -494,13 +494,13 @@ http_cache_choice_filter_buffer_done(void *data0, size_t length, void *ctx)
         choice->extras.flags = 0;
         choice->extras.expiration = ToBE32(600); /* XXX */
 
-        memcached_stock_invoke(choice->pool, choice->stock,
+        memcached_stock_invoke(*choice->pool, *choice->stock,
                                MEMCACHED_OPCODE_REPLACE,
                                &choice->extras, sizeof(choice->extras),
                                choice->key, strlen(choice->key),
                                istream_memory_new(choice->pool, data0,
                                                   dest - (char *)data0),
-                               &http_cache_choice_filter_set_handler, choice,
+                               http_cache_choice_filter_set_handler, choice,
                                *choice->cancel_ptr);
     }
 }
@@ -565,12 +565,12 @@ http_cache_choice_filter(struct pool &pool, MemachedStock &stock,
                                                callback, callback_ctx,
                                                cancel_ptr);
 
-    memcached_stock_invoke(&pool, &stock,
+    memcached_stock_invoke(pool, stock,
                            MEMCACHED_OPCODE_GET,
                            nullptr, 0,
                            choice->key, strlen(choice->key),
                            nullptr,
-                           &http_cache_choice_filter_get_handler, choice,
+                           http_cache_choice_filter_get_handler, choice,
                            cancel_ptr);
 }
 
@@ -663,11 +663,11 @@ http_cache_choice_delete(struct pool &pool, MemachedStock &stock,
                                                callback, callback_ctx,
                                                cancel_ptr);
 
-    memcached_stock_invoke(&pool, &stock,
+    memcached_stock_invoke(pool, stock,
                            MEMCACHED_OPCODE_GET,
                            nullptr, 0,
                            choice->key, strlen(choice->key),
                            nullptr,
-                           &http_cache_choice_delete_handler, choice,
+                           http_cache_choice_delete_handler, choice,
                            cancel_ptr);
 }

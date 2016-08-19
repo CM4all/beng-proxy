@@ -38,10 +38,10 @@ struct MemachedStock {
 };
 
 MemachedStock *
-memcached_stock_new(EventLoop &event_loop, TcpBalancer *tcp_balancer,
-                    const AddressList *address)
+memcached_stock_new(EventLoop &event_loop, TcpBalancer &tcp_balancer,
+                    const AddressList &address)
 {
-    return new MemachedStock(event_loop, *tcp_balancer, *address);
+    return new MemachedStock(event_loop, tcp_balancer, address);
 }
 
 void
@@ -129,30 +129,30 @@ MemcachedStockRequest::OnStockItemError(GError *error)
 }
 
 void
-memcached_stock_invoke(struct pool *pool, MemachedStock *stock,
+memcached_stock_invoke(struct pool &pool, MemachedStock &stock,
                        enum memcached_opcode opcode,
                        const void *extras, size_t extras_length,
                        const void *key, size_t key_length,
                        Istream *value,
-                       const struct memcached_client_handler *handler,
+                       const struct memcached_client_handler &handler,
                        void *handler_ctx,
                        CancellablePointer &cancel_ptr)
 {
     assert(extras_length <= MEMCACHED_EXTRAS_MAX);
     assert(key_length <= MEMCACHED_KEY_MAX);
 
-    auto request = NewFromPool<MemcachedStockRequest>(*pool, *pool,
-                                                      stock->event_loop,
+    auto request = NewFromPool<MemcachedStockRequest>(pool, pool,
+                                                      stock.event_loop,
                                                       opcode,
                                                       extras, extras_length,
                                                       key, key_length,
                                                       value,
-                                                      *handler, handler_ctx,
+                                                      handler, handler_ctx,
                                                       cancel_ptr);
 
-    tcp_balancer_get(stock->tcp_balancer, *pool,
+    tcp_balancer_get(stock.tcp_balancer, pool,
                      false, SocketAddress::Null(),
-                     0, stock->address,
+                     0, stock.address,
                      10,
                      *request, cancel_ptr);
 }
