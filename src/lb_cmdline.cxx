@@ -9,7 +9,6 @@
 
 #include <daemon/daemonize.h>
 #include <daemon/log.h>
-#include <socket/resolver.h>
 
 #include <systemd/sd-daemon.h>
 

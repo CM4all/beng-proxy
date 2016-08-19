@@ -12,11 +12,9 @@
 #include "ua_classification.hxx"
 #include "util/Error.hxx"
 #include "util/IterableSplitString.hxx"
-#include "util/ScopeExit.hxx"
 
 #include <daemon/daemonize.h>
 #include <daemon/log.h>
-#include <socket/resolver.h>
 
 #include <systemd/sd-daemon.h>
 
@@ -176,7 +174,7 @@ static void arg_error(const char *argv0, const char *fmt, ...) {
 }
 
 static void
-ParseListenerConfig(const char *argv0, const char *s,
+ParseListenerConfig(const char *s,
                     std::forward_list<ListenerConfig> &list)
 {
     std::string tag;
@@ -199,19 +197,8 @@ ParseListenerConfig(const char *argv0, const char *s,
     hints.ai_flags = AI_ADDRCONFIG|AI_PASSIVE;
     hints.ai_socktype = SOCK_STREAM;
 
-    struct addrinfo *ai;
-    int result = socket_resolve_host_port(s,
-                                          debug_mode ? 8080 : 80,
-                                          &hints,
-                                          &ai);
-    if (result != 0)
-        arg_error(argv0, "failed to resolve %s", s);
-
-    AtScopeExit(ai) { freeaddrinfo(ai); };
-
-    for (struct addrinfo *i = ai; i != nullptr; i = i->ai_next)
-        list.emplace_front(SocketAddress(i->ai_addr, i->ai_addrlen),
-                           tag);
+    for (const auto &i : Resolve(s, debug_mode ? 8080 : 80, &hints))
+        list.emplace_front(i, tag);
 }
 
 static bool http_cache_size_set = false;
@@ -596,7 +583,7 @@ parse_cmdline(BpConfig &config, int argc, char **argv)
             break;
 
         case 'L':
-            ParseListenerConfig(argv[0], optarg, config.listen);
+            ParseListenerConfig(optarg, config.listen);
             break;
 
         case 'c':
