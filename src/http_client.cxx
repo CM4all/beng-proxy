@@ -26,7 +26,6 @@
 #include "direct.hxx"
 #include "stopwatch.hxx"
 #include "strmap.hxx"
-#include "completion.h"
 #include "fs_lease.hxx"
 #include "pool.hxx"
 #include "util/Cancellable.hxx"
