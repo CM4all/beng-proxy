@@ -300,8 +300,6 @@ cm4all_beng_proxy_SOURCES = \
 	src/udp_listener.cxx src/udp_listener.hxx \
 	src/udp_distribute.cxx src/udp_distribute.hxx \
 	src/istream_gb.cxx src/istream_gb.hxx \
-	src/address_quark.h \
-	src/address_resolver.cxx src/address_resolver.hxx \
 	src/istream_unlock.cxx src/istream_unlock.hxx \
 	src/ua_classification.cxx src/ua_classification.hxx \
 	src/log-client.c src/log-client.h \
@@ -371,7 +369,6 @@ cm4all_beng_lb_SOURCES = \
 	src/balancer.cxx \
 	src/address_string.cxx src/address_string.hxx \
 	src/address_list.cxx \
-	src/address_resolver.cxx src/address_resolver.hxx \
 	src/address_sticky.cxx src/address_sticky.hxx \
 	src/generic_balancer.hxx \
 	src/client_balancer.cxx src/client_balancer.hxx \
