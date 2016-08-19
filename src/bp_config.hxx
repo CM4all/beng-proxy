@@ -12,18 +12,10 @@
 #include "util/StaticArray.hxx"
 #include "spawn/Config.hxx"
 
-#include <daemon/user.h>
-
 #include <forward_list>
 #include <chrono>
 
 #include <stddef.h>
-
-#ifdef NDEBUG
-static const bool debug_mode = false;
-#else
-extern bool debug_mode;
-#endif
 
 struct ListenerConfig {
     AllocatedSocketAddress address;
@@ -36,8 +28,6 @@ struct ListenerConfig {
 
 struct BpConfig {
     static constexpr unsigned MAX_PORTS = 32;
-
-    struct daemon_user user;
 
     StaticArray<unsigned, MAX_PORTS> ports;
 
@@ -58,8 +48,6 @@ struct BpConfig {
     const char *document_root = "/var/www";
 
     const char *translation_socket = nullptr;
-
-    const char *access_logger = nullptr;
 
     AddressInfo memcached_server;
 
@@ -100,8 +88,6 @@ struct BpConfig {
     bool verbose_response = false;
 
     SpawnConfig spawn;
-
-    BpConfig();
 };
 
 #endif

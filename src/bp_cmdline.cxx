@@ -41,6 +41,11 @@ enum Options {
 extern char ARGS_ESCAPE_CHAR;
 #endif
 
+BpCmdLine::BpCmdLine()
+{
+    memset(&user, 0, sizeof(user));
+}
+
 static void usage(void) {
     puts("usage: cm4all-beng-proxy [options]\n\n"
          "valid options:\n"
@@ -449,7 +454,7 @@ Copy(UidGid &dest, const struct daemon_user &src)
 
 /** read configuration options from the command line */
 void
-parse_cmdline(BpConfig &config, int argc, char **argv)
+parse_cmdline(BpCmdLine &cmdline, BpConfig &config, int argc, char **argv)
 {
     int ret;
     char *endptr;
@@ -534,7 +539,7 @@ parse_cmdline(BpConfig &config, int argc, char **argv)
             break;
 
         case 'A':
-            config.access_logger = *optarg == 0
+            cmdline.access_logger = *optarg == 0
                 ? NULL : optarg;
             break;
 
@@ -680,8 +685,8 @@ parse_cmdline(BpConfig &config, int argc, char **argv)
     /* check completeness */
 
     if (user_name != NULL) {
-        daemon_user_by_name(&config.user, user_name, group_name);
-        if (!daemon_user_defined(&config.user))
+        daemon_user_by_name(&cmdline.user, user_name, group_name);
+        if (!daemon_user_defined(&cmdline.user))
             arg_error(argv[0], "refusing to run as root");
     } else if (group_name != NULL)
         arg_error(argv[0], "cannot set --group without --user");
@@ -701,7 +706,7 @@ parse_cmdline(BpConfig &config, int argc, char **argv)
         if (daemon_user_by_name(&u, spawn_user, nullptr) < 0)
             arg_error(argv[0], "Failed to look up user '%s'", spawn_user);
 
-        if (!daemon_user_defined(&config.user))
+        if (!daemon_user_defined(&cmdline.user))
             arg_error(argv[0], "refusing to spawn child processes as root");
 
         Copy(config.spawn.default_uid_gid, u);
@@ -712,7 +717,7 @@ parse_cmdline(BpConfig &config, int argc, char **argv)
         for (size_t i = 0; i < u.num_groups; ++i)
             config.spawn.allowed_gids.insert(u.groups[i]);
     } else {
-        Copy(config.spawn.default_uid_gid, config.user);
+        Copy(config.spawn.default_uid_gid, cmdline.user);
         config.spawn.ignore_userns = true;
     }
 

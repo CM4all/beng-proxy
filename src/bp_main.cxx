@@ -298,7 +298,7 @@ try {
 
     /* configuration */
 
-    parse_cmdline(instance.config, argc, argv);
+    parse_cmdline(instance.cmdline, instance.config, argc, argv);
 
     if (instance.config.ports.empty() && instance.config.listen.empty())
         instance.config.ports.push_back(debug_mode ? 8080 : 80);
@@ -479,18 +479,18 @@ try {
 
     /* launch the access logger */
 
-    if (!log_global_init(instance.config.access_logger))
+    if (!log_global_init(instance.cmdline.access_logger))
         return EXIT_FAILURE;
 
     /* daemonize II */
 
-    if (daemon_user_defined(&instance.config.user))
+    if (daemon_user_defined(&instance.cmdline.user))
         capabilities_pre_setuid();
 
-    if (daemon_user_set(&instance.config.user) < 0)
+    if (daemon_user_set(&instance.cmdline.user) < 0)
         return EXIT_FAILURE;
 
-    if (daemon_user_defined(&instance.config.user))
+    if (daemon_user_defined(&instance.cmdline.user))
         capabilities_post_setuid(cap_keep_list, ARRAY_SIZE(cap_keep_list));
 
     /* create worker processes */

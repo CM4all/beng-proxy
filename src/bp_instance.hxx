@@ -8,6 +8,7 @@
 #define BENG_PROXY_INSTANCE_HXX
 
 #include "RootPool.hxx"
+#include "bp_cmdline.hxx"
 #include "bp_config.hxx"
 #include "bp_listener.hxx"
 #include "bp_connection.hxx"
@@ -50,6 +51,7 @@ class FilterCache;
 struct BpInstance final : ControlHandler {
     RootPool pool;
 
+    BpCmdLine cmdline;
     BpConfig config;
 
     EventLoop event_loop;
