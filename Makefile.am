@@ -798,6 +798,7 @@ libnet_a_SOURCES = \
 	src/net/AddressInfo.hxx \
 	src/net/Resolver.cxx src/net/Resolver.hxx \
 	src/net/Parser.cxx src/net/Parser.hxx \
+	src/net/RConnectSocket.cxx src/net/RConnectSocket.hxx \
 	src/net/Interface.cxx src/net/Interface.hxx \
 	src/net/SocketDescriptor.cxx src/net/SocketDescriptor.hxx
 
@@ -2061,7 +2062,7 @@ test_run_memcached_client_SOURCES = test/run_memcached_client.cxx \
 test_run_memcached_client_LDADD = $(LIBEVENT_LIBS) $(GLIB_LIBS) \
 	libistream.a libpool.a libmemory.a libevent.a \
 	libputil.a \
-	libsystem.a \
+	libnet.a libsystem.a libutil.a \
 	$(LIBCM4ALL_DAEMON_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
@@ -2074,7 +2075,7 @@ test_dump_memcached_choice_SOURCES = test/dump_memcached_choice.cxx \
 test_dump_memcached_choice_LDADD = $(LIBEVENT_LIBS) $(GLIB_LIBS) \
 	libistream.a libpool.a libmemory.a libevent.a \
 	libputil.a \
-	libsystem.a \
+	libnet.a libsystem.a \
 	libutil.a \
 	$(LIBCM4ALL_DAEMON_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS)
@@ -2164,7 +2165,7 @@ test_dump_control_LDADD = $(AM_LDADD) \
 	$(LIBEVENT_LIBS)
 
 test_send_control_SOURCES = test/send_control.cxx
-test_send_control_LDADD = $(LIBCM4ALL_SOCKET_LIBS)
+test_send_control_LDADD = libnet.a libsystem.a libutil.a $(LIBCM4ALL_SOCKET_LIBS)
 
 test_run_ua_parser_SOURCES = test/run_ua_parser.cxx \
 	src/regex.cxx src/expand.cxx \

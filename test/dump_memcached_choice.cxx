@@ -13,10 +13,11 @@
 #include "pool.hxx"
 #include "fb_pool.hxx"
 #include "event/Loop.hxx"
+#include "net/SocketDescriptor.hxx"
+#include "net/RConnectSocket.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/Cancellable.hxx"
 
-#include <socket/resolver.h>
 #include <socket/util.h>
 
 #include <glib.h>
@@ -30,7 +31,7 @@
 struct Context final : Lease{
     struct pool *pool;
 
-    int fd = -1;
+    SocketDescriptor s;
     bool idle = false, reuse;
 
     bool success = false;
@@ -40,13 +41,12 @@ struct Context final : Lease{
     /* virtual methods from class Lease */
     void ReleaseLease(bool _reuse) override {
         assert(!idle);
-        assert(fd >= 0);
+        assert(s.IsDefined());
 
         idle = true;
         reuse = _reuse;
 
-        close(fd);
-        fd = -1;
+        s.Close();
     }
 };
 
@@ -156,8 +156,6 @@ static const struct memcached_client_handler my_mcd_handler = {
  */
 
 int main(int argc, char **argv) {
-    int fd, ret;
-    struct addrinfo hints, *ai;
     const char *key;
 
     if (argc != 3) {
@@ -171,31 +169,13 @@ int main(int argc, char **argv) {
 
     /* connect socket */
 
+    struct addrinfo hints;
     memset(&hints, 0, sizeof(hints));
     hints.ai_socktype = SOCK_STREAM;
 
-    ret = socket_resolve_host_port(argv[1], 11211, &hints, &ai);
-    if (ret != 0) {
-        fprintf(stderr, "Failed to resolve host name\n");
-        return 2;
-    }
+    ctx.s = ResolveConnectSocket(argv[1], 11211, hints);
 
-    fd = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
-    if (fd < 0) {
-        fprintf(stderr, "socket() failed: %s\n", strerror(errno));
-        return 2;
-    }
-
-    ret = connect(fd, ai->ai_addr, ai->ai_addrlen);
-    if (ret < 0) {
-        fprintf(stderr, "connect() failed: %s\n", strerror(errno));
-        return 2;
-    }
-
-    freeaddrinfo(ai);
-
-    fd_set_nonblock(fd, true);
-    socket_set_nodelay(fd, true);
+    socket_set_nodelay(ctx.s.Get(), true);
 
     /* initialize */
 
@@ -212,7 +192,7 @@ int main(int argc, char **argv) {
 
     /* send memcached request */
 
-    memcached_client_invoke(ctx.pool, event_loop, fd, FdType::FD_TCP,
+    memcached_client_invoke(ctx.pool, event_loop, ctx.s.Get(), FdType::FD_TCP,
                             ctx,
                             MEMCACHED_OPCODE_GET,
                             NULL, 0,
