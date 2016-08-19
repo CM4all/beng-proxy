@@ -9,11 +9,11 @@
  * A return value type which indicates the state of the desired
  * operation.
  */
-enum completion {
+enum class Completion {
     /**
      * The operation completed.
      */
-    C_DONE,
+    DONE,
 
     /**
      * Partial completion.  More data is needed to complete the
@@ -21,18 +21,18 @@ enum completion {
      * socket may be closed already), the recipient of this value
      * shall abort the operation.
      */
-    C_MORE,
+    MORE,
 
     /**
      * An error has occurred.  Details are returned in a GError object.
      */
-    C_ERROR,
+    ERROR,
 
     /**
      * The object has been closed/destroyed.  Details have been
      * supplied to the handler.
      */
-    C_CLOSED,
+    CLOSED,
 };
 
 #endif

@@ -23,7 +23,7 @@ CGIParser::CGIParser(struct pool &pool)
  * Evaluate the response headers after the headers have been finalized
  * by an empty line.
  */
-inline enum completion
+inline Completion
 CGIParser::Finish(ForeignFifoBuffer<uint8_t> &buffer, GError **error_r)
 {
     /* parse the status */
@@ -52,16 +52,16 @@ CGIParser::Finish(ForeignFifoBuffer<uint8_t> &buffer, GError **error_r)
 
     if (IsTooMuch(buffer.GetAvailable())) {
         g_set_error(error_r, cgi_quark(), 0, "too much data from CGI script");
-        return C_ERROR;
+        return Completion::ERROR;
     }
 
 #ifndef NDEBUG
     finished = true;
 #endif
-    return C_DONE;
+    return Completion::DONE;
 }
 
-enum completion
+Completion
 CGIParser::FeedHeaders(struct pool &pool, ForeignFifoBuffer<uint8_t> &buffer,
                        GError **error_r)
 {
@@ -69,7 +69,7 @@ CGIParser::FeedHeaders(struct pool &pool, ForeignFifoBuffer<uint8_t> &buffer,
 
     auto r = buffer.Read();
     if (r.IsEmpty())
-        return C_MORE;
+        return Completion::MORE;
 
     const char *data = (const char *)r.data;
     const char *data_end = data + r.size;
@@ -97,7 +97,7 @@ CGIParser::FeedHeaders(struct pool &pool, ForeignFifoBuffer<uint8_t> &buffer,
 
     if (next != nullptr) {
         buffer.Consume(next - data);
-        return C_MORE;
+        return Completion::MORE;
     }
 
     if (buffer.IsFull()) {
@@ -106,8 +106,8 @@ CGIParser::FeedHeaders(struct pool &pool, ForeignFifoBuffer<uint8_t> &buffer,
            out */
 
         g_set_error(error_r, cgi_quark(), 0, "CGI response header too long");
-        return C_ERROR;
+        return Completion::ERROR;
     }
 
-    return C_MORE;
+    return Completion::MORE;
 }

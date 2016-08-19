@@ -149,10 +149,9 @@ CGIClient::FeedHeaders(const void *data, size_t length)
     buffer.Append(length);
 
     GError *error = nullptr;
-    enum completion c = parser.FeedHeaders(GetPool(), buffer, &error);
-    switch (c) {
-    case C_DONE:
-        /* the C_DONE status can only be triggered by new data that
+    switch (parser.FeedHeaders(GetPool(), buffer, &error)) {
+    case Completion::DONE:
+        /* the DONE status can only be triggered by new data that
            was just received; therefore, the amount of data still in
            the buffer (= response body) must be smaller */
         assert(buffer.GetAvailable() < length);
@@ -165,17 +164,17 @@ CGIClient::FeedHeaders(const void *data, size_t length)
            response body handler */
         return length - buffer.GetAvailable();
 
-    case C_MORE:
+    case Completion::MORE:
         return length;
 
-    case C_ERROR:
+    case Completion::ERROR:
         buffer.Free(fb_pool_get());
         input.ClearAndClose();
         handler.InvokeError(error);
         pool_unref(&GetPool());
         return 0;
 
-    case C_CLOSED:
+    case Completion::CLOSED:
         /* unreachable */
         assert(false);
         return 0;

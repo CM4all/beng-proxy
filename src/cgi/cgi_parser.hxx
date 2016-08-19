@@ -8,7 +8,7 @@
 #define BENG_PROXY_CGI_PARSER_HXX
 
 #include "strmap.hxx"
-#include "completion.h"
+#include "Completion.hxx"
 #include "glibfwd.hxx"
 
 #include <http/status.h>
@@ -64,11 +64,11 @@ struct CGIParser {
      *
      * @param buffer a buffer containing data received from the CGI
      * program; consumed data will automatically be removed
-     * @return C_DONE when the headers are finished (the remaining buffer
-     * contains the response body); C_PARTIAL or C_NONE when more header
-     * data is expected; C_ERROR on error
+     * @return DONE when the headers are finished (the remaining
+     * buffer contains the response body); PARTIAL or NONE when more
+     * header data is expected; ERROR on error
      */
-    enum completion FeedHeaders(struct pool &pool,
+    Completion FeedHeaders(struct pool &pool,
                                 ForeignFifoBuffer<uint8_t> &buffer,
                                 GError **error_r);
 
@@ -122,8 +122,7 @@ struct CGIParser {
     }
 
 private:
-    enum completion Finish(ForeignFifoBuffer<uint8_t> &buffer,
-                           GError **error_r);
+    Completion Finish(ForeignFifoBuffer<uint8_t> &buffer, GError **error_r);
 };
 
 #endif

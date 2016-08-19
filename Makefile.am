@@ -236,7 +236,7 @@ cm4all_beng_proxy_SOURCES = \
 	src/widget.hxx \
 	$(STOPWATCH_SRC) \
 	src/bp_cmdline.cxx \
-	src/completion.h \
+	src/Completion.hxx \
 	src/crash.cxx src/crash.hxx \
 	src/bp_worker.cxx src/bp_worker.hxx \
 	src/istream_rubber.cxx src/istream_rubber.hxx \
