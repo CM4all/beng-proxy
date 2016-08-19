@@ -5,11 +5,22 @@
  */
 
 #include "address_list.hxx"
+#include "net/AddressInfo.hxx"
 #include "pool.hxx"
 
 #include <socket/address.h>
 
 #include <string.h>
+
+AddressList::AddressList(ShallowCopy, const AddressInfo &src)
+{
+    for (const auto &i : src) {
+        if (addresses.full())
+            break;
+
+        addresses.push_back(i);
+    }
+}
 
 AddressList::AddressList(struct pool &pool, const AddressList &src)
     :sticky_mode(src.sticky_mode)

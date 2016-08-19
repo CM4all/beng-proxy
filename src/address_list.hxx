@@ -20,6 +20,7 @@
 struct pool;
 struct dpool;
 class SocketAddress;
+class AddressInfo;
 
 struct AddressList {
     static constexpr size_t MAX_ADDRESSES = 16;
@@ -38,6 +39,8 @@ struct AddressList {
          addresses(src.addresses)
     {
     }
+
+    AddressList(ShallowCopy, const AddressInfo &src);
 
     AddressList(struct pool &pool, const AddressList &src);
 
