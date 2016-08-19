@@ -20,10 +20,11 @@
 #include "beng-proxy/translation.h"
 #include "pool.hxx"
 #include "net/SocketAddress.hxx"
+#include "net/AddressInfo.hxx"
+#include "net/Resolver.hxx"
 #include "util/CharUtil.hxx"
 
 #include <daemon/log.h>
-#include <socket/resolver.h>
 #include <http/header.h>
 
 #include <glib.h>
@@ -115,21 +116,14 @@ parse_address_string(struct pool *pool, AddressList *list,
         return true;
     }
 
-    struct addrinfo hints, *ai;
-    int ret;
-
+    struct addrinfo hints;
     memset(&hints, 0, sizeof(hints));
     hints.ai_flags = AI_NUMERICHOST;
     hints.ai_socktype = SOCK_STREAM;
 
-    ret = socket_resolve_host_port(p, default_port, &hints, &ai);
-    if (ret != 0)
-        return false;
+    for (const auto &i : Resolve(p, default_port, &hints))
+        list->Add(pool, i);
 
-    for (const struct addrinfo *i = ai; i != nullptr; i = i->ai_next)
-        list->Add(pool, {i->ai_addr, i->ai_addrlen});
-
-    freeaddrinfo(ai);
     return true;
 }
 
@@ -1910,7 +1904,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
             return false;
         }
 
-        {
+        try {
             bool ret;
 
             ret = parse_address_string(pool, address_list,
@@ -1920,6 +1914,11 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
                                     "malformed ADDRESS_STRING packet");
                 return false;
             }
+        } catch (const std::exception &e) {
+                g_set_error(error_r, translate_quark(), 0,
+                            "malformed ADDRESS_STRING packet: %s",
+                            e.what());
+                return false;
         }
 
         return true;
