@@ -217,7 +217,7 @@ ParseListenerConfig(const char *argv0, const char *s,
 static bool http_cache_size_set = false;
 
 static void
-handle_set2(BpConfig *config, struct pool *pool, const char *argv0,
+handle_set2(BpConfig &config, struct pool &pool, const char *argv0,
             const char *name, size_t name_length, const char *value)
 {
     static const char session_cookie[] = "session_cookie";
@@ -252,7 +252,7 @@ handle_set2(BpConfig *config, struct pool *pool, const char *argv0,
         if (*endptr != 0 || l <= 0 || l >= 1024 * 1024)
             arg_error(argv0, "Invalid value for max_connections");
 
-        config->max_connections = l;
+        config.max_connections = l;
     } else if (name_length == sizeof(tcp_stock_limit) - 1 &&
                memcmp(name, tcp_stock_limit,
                       sizeof(tcp_stock_limit) - 1) == 0) {
@@ -260,7 +260,7 @@ handle_set2(BpConfig *config, struct pool *pool, const char *argv0,
         if (*endptr != 0 || l < 0)
             arg_error(argv0, "Invalid value for tcp_stock_limit");
 
-        config->tcp_stock_limit = l;
+        config.tcp_stock_limit = l;
     } else if (name_length == sizeof(fcgi_stock_limit) - 1 &&
                memcmp(name, fcgi_stock_limit,
                       sizeof(fcgi_stock_limit) - 1) == 0) {
@@ -268,7 +268,7 @@ handle_set2(BpConfig *config, struct pool *pool, const char *argv0,
         if (*endptr != 0 || l < 0)
             arg_error(argv0, "Invalid value for fastcgi_stock_limit");
 
-        config->fcgi_stock_limit = l;
+        config.fcgi_stock_limit = l;
     } else if (name_length == sizeof(fcgi_stock_max_idle) - 1 &&
                memcmp(name, fcgi_stock_max_idle,
                       sizeof(fcgi_stock_max_idle) - 1) == 0) {
@@ -276,7 +276,7 @@ handle_set2(BpConfig *config, struct pool *pool, const char *argv0,
         if (*endptr != 0 || l < 0)
             arg_error(argv0, "Invalid value for fastcgi_stock_max_idle");
 
-        config->fcgi_stock_max_idle = l;
+        config.fcgi_stock_max_idle = l;
     } else if (name_length == sizeof(was_stock_limit) - 1 &&
                memcmp(name, was_stock_limit,
                       sizeof(was_stock_limit) - 1) == 0) {
@@ -284,7 +284,7 @@ handle_set2(BpConfig *config, struct pool *pool, const char *argv0,
         if (*endptr != 0 || l < 0)
             arg_error(argv0, "Invalid value for was_stock_limit");
 
-        config->was_stock_limit = l;
+        config.was_stock_limit = l;
     } else if (name_length == sizeof(was_stock_max_idle) - 1 &&
                memcmp(name, was_stock_max_idle,
                       sizeof(was_stock_max_idle) - 1) == 0) {
@@ -292,7 +292,7 @@ handle_set2(BpConfig *config, struct pool *pool, const char *argv0,
         if (*endptr != 0 || l < 0)
             arg_error(argv0, "Invalid value for was_stock_max_idle");
 
-        config->was_stock_max_idle = l;
+        config.was_stock_max_idle = l;
     } else if (name_length == sizeof(http_cache_size) - 1 &&
                memcmp(name, http_cache_size,
                       sizeof(http_cache_size) - 1) == 0) {
@@ -300,7 +300,7 @@ handle_set2(BpConfig *config, struct pool *pool, const char *argv0,
         if (*endptr != 0 || l < 0)
             arg_error(argv0, "Invalid value for http_cache_size");
 
-        config->http_cache_size = l;
+        config.http_cache_size = l;
         http_cache_size_set = true;
     } else if (name_length == sizeof(filter_cache_size) - 1 &&
                memcmp(name, filter_cache_size,
@@ -309,7 +309,7 @@ handle_set2(BpConfig *config, struct pool *pool, const char *argv0,
         if (*endptr != 0 || l < 0)
             arg_error(argv0, "Invalid value for filter_cache_size");
 
-        config->filter_cache_size = l;
+        config.filter_cache_size = l;
 #ifdef HAVE_LIBNFS
     } else if (name_length == sizeof(nfs_cache_size) - 1 &&
                memcmp(name, nfs_cache_size,
@@ -318,7 +318,7 @@ handle_set2(BpConfig *config, struct pool *pool, const char *argv0,
         if (*endptr != 0 || l < 0)
             arg_error(argv0, "Invalid value for nfs_cache_size");
 
-        config->nfs_cache_size = l;
+        config.nfs_cache_size = l;
 #endif
     } else if (name_length == sizeof(translate_cache_size) - 1 &&
                memcmp(name, translate_cache_size,
@@ -327,7 +327,7 @@ handle_set2(BpConfig *config, struct pool *pool, const char *argv0,
         if (*endptr != 0 || l < 0)
             arg_error(argv0, "Invalid value for translate_cache_size");
 
-        config->translate_cache_size = l;
+        config.translate_cache_size = l;
     } else if (name_length == sizeof(translate_stock_limit) - 1 &&
                memcmp(name, translate_stock_limit,
                       sizeof(translate_stock_limit) - 1) == 0) {
@@ -335,7 +335,7 @@ handle_set2(BpConfig *config, struct pool *pool, const char *argv0,
         if (*endptr != 0 || l < 0)
             arg_error(argv0, "Invalid value for translate_stock_limit");
 
-        config->translate_stock_limit = l;
+        config.translate_stock_limit = l;
     } else if (name_length == sizeof(stopwatch) - 1 &&
                memcmp(name, stopwatch, sizeof(stopwatch) - 1) == 0) {
         if (strcmp(value, "yes") == 0)
@@ -346,14 +346,14 @@ handle_set2(BpConfig *config, struct pool *pool, const char *argv0,
                memcmp(name, dump_widget_tree,
                       sizeof(dump_widget_tree) - 1) == 0) {
         if (strcmp(value, "yes") == 0)
-            config->dump_widget_tree = true;
+            config.dump_widget_tree = true;
         else if (strcmp(value, "no") != 0)
             arg_error(argv0, "Invalid value for dump_widget_tree");
     } else if (name_length == sizeof(verbose_response) - 1 &&
                memcmp(name, verbose_response,
                       sizeof(verbose_response) - 1) == 0) {
         if (strcmp(value, "yes") == 0)
-            config->verbose_response = true;
+            config.verbose_response = true;
         else if (strcmp(value, "no") != 0)
             arg_error(argv0, "Invalid value for verbose_response");
 #ifndef NDEBUG
@@ -371,11 +371,11 @@ handle_set2(BpConfig *config, struct pool *pool, const char *argv0,
         if (*value == 0)
             arg_error(argv0, "Invalid value for session_cookie");
 
-        config->session_cookie = p_strdup(pool, value);
+        config.session_cookie = p_strdup(pool, value);
     } else if (name_length == sizeof(dynamic_session_cookie) - 1 &&
                memcmp(name, dynamic_session_cookie, sizeof(dynamic_session_cookie) - 1) == 0) {
         if (strcmp(value, "yes") == 0)
-            config->dynamic_session_cookie = true;
+            config.dynamic_session_cookie = true;
         else if (strcmp(value, "no") != 0)
             arg_error(argv0, "Invalid value for dynamic_session_cookie");
     } else if (name_length == sizeof(session_idle_timeout) - 1 &&
@@ -385,11 +385,11 @@ handle_set2(BpConfig *config, struct pool *pool, const char *argv0,
         if (*endptr != 0 || l <= 0)
             arg_error(argv0, "Invalid value for session_idle_timeout");
 
-        config->session_idle_timeout = std::chrono::seconds(l);
+        config.session_idle_timeout = std::chrono::seconds(l);
     } else if (name_length == sizeof(session_save_path) - 1 &&
                memcmp(name, session_save_path,
                       sizeof(session_save_path) - 1) == 0) {
-        config->session_save_path = value;
+        config.session_save_path = value;
     } else
         arg_error(argv0, "Unknown variable: %.*s", (int)name_length, name);
 }
@@ -432,7 +432,7 @@ ParseAllowGroup(SpawnConfig &config, const char *arg)
 }
 
 static void
-handle_set(BpConfig *config, struct pool *pool,
+handle_set(BpConfig &config, struct pool &pool,
            const char *argv0, const char *p)
 {
     const char *eq;
@@ -461,7 +461,7 @@ Copy(UidGid &dest, const struct daemon_user &src)
 
 /** read configuration options from the command line */
 void
-parse_cmdline(BpConfig *config, struct pool *pool, int argc, char **argv)
+parse_cmdline(BpConfig &config, struct pool &pool, int argc, char **argv)
 {
     int ret;
     char *endptr;
@@ -547,7 +547,7 @@ parse_cmdline(BpConfig *config, struct pool *pool, int argc, char **argv)
             break;
 
         case 'A':
-            config->access_logger = *optarg == 0
+            config.access_logger = *optarg == 0
                 ? NULL : optarg;
             break;
 
@@ -566,11 +566,11 @@ parse_cmdline(BpConfig *config, struct pool *pool, int argc, char **argv)
             break;
 
         case ALLOW_USER:
-            ParseAllowUser(config->spawn, optarg);
+            ParseAllowUser(config.spawn, optarg);
             break;
 
         case ALLOW_GROUP:
-            ParseAllowGroup(config->spawn, optarg);
+            ParseAllowGroup(config.spawn, optarg);
             break;
 
         case SPAWN_USER:
@@ -586,86 +586,86 @@ parse_cmdline(BpConfig *config, struct pool *pool, int argc, char **argv)
             break;
 
         case 'p':
-            if (config->ports.full())
+            if (config.ports.full())
                 arg_error(argv[0], "too many listener ports");
             ret = (unsigned)strtoul(optarg, &endptr, 10);
             if (*endptr != 0)
                 arg_error(argv[0], "invalid number after --port");
             if (ret <= 0 || ret > 0xffff)
                 arg_error(argv[0], "invalid port after --port");
-            config->ports.push_back(ret);
+            config.ports.push_back(ret);
             break;
 
         case 'L':
-            ParseListenerConfig(argv[0], optarg, config->listen);
+            ParseListenerConfig(argv[0], optarg, config.listen);
             break;
 
         case 'c':
-            config->control_listen = optarg;
+            config.control_listen = optarg;
             break;
 
         case 'm':
-            config->multicast_group = optarg;
+            config.multicast_group = optarg;
             break;
 
         case 'w':
-            config->num_workers = (unsigned)strtoul(optarg, &endptr, 10);
+            config.num_workers = (unsigned)strtoul(optarg, &endptr, 10);
             if (*endptr != 0)
                 arg_error(argv[0], "invalid number after --workers");
-            if (config->num_workers > 1024)
+            if (config.num_workers > 1024)
                 arg_error(argv[0], "too many workers configured");
 
-            if (config->num_workers == 1 && sd_booted())
+            if (config.num_workers == 1 && sd_booted())
                 /* we don't need a watchdog process if systemd watches
                    on us */
-                config->num_workers = 0;
+                config.num_workers = 0;
 
             break;
 
         case 'r':
-            config->document_root = optarg;
+            config.document_root = optarg;
             break;
 
         case 't':
-            config->translation_socket = optarg;
+            config.translation_socket = optarg;
             break;
 
         case 'M':
-            if (config->memcached_server != NULL)
+            if (config.memcached_server != NULL)
                 arg_error(argv[0], "duplicate memcached-server option");
 
             memset(&hints, 0, sizeof(hints));
             hints.ai_flags = AI_ADDRCONFIG;
             hints.ai_socktype = SOCK_STREAM;
 
-            config->memcached_server =
-                address_list_resolve_new(pool, optarg, 11211, &hints, &error);
-            if (config->memcached_server == NULL)
+            config.memcached_server =
+                address_list_resolve_new(&pool, optarg, 11211, &hints, &error);
+            if (config.memcached_server == NULL)
                 arg_error(argv[0], "%s", error->message);
 
             break;
 
         case 'B':
-            config->bulldog_path = optarg;
+            config.bulldog_path = optarg;
             break;
 
         case 'C':
-            config->cluster_size = strtoul(optarg, &endptr, 10);
+            config.cluster_size = strtoul(optarg, &endptr, 10);
             if (endptr == optarg || *endptr != 0 ||
-                config->cluster_size > 1024)
+                config.cluster_size > 1024)
                 arg_error(argv[0], "Invalid cluster size number");
 
-            if (config->cluster_node >= config->cluster_size)
-                config->cluster_node = 0;
+            if (config.cluster_node >= config.cluster_size)
+                config.cluster_node = 0;
             break;
 
         case 'N':
-            config->cluster_node = strtoul(optarg, &endptr, 10);
+            config.cluster_node = strtoul(optarg, &endptr, 10);
             if (endptr == optarg || *endptr != 0)
                 arg_error(argv[0], "Invalid cluster size number");
 
-            if ((config->cluster_node != 0 || config->cluster_size != 0) &&
-                config->cluster_node >= config->cluster_size)
+            if ((config.cluster_node != 0 || config.cluster_size != 0) &&
+                config.cluster_node >= config.cluster_size)
                 arg_error(argv[0], "Cluster node too large");
             break;
 
@@ -697,41 +697,41 @@ parse_cmdline(BpConfig *config, struct pool *pool, int argc, char **argv)
     /* check completeness */
 
     if (user_name != NULL) {
-        daemon_user_by_name(&config->user, user_name, group_name);
-        if (!daemon_user_defined(&config->user))
+        daemon_user_by_name(&config.user, user_name, group_name);
+        if (!daemon_user_defined(&config.user))
             arg_error(argv[0], "refusing to run as root");
     } else if (group_name != NULL)
         arg_error(argv[0], "cannot set --group without --user");
     else if (!debug_mode)
         arg_error(argv[0], "no user name specified (-u)");
 
-    if (config->memcached_server != NULL && http_cache_size_set)
+    if (config.memcached_server != NULL && http_cache_size_set)
         arg_error(argv[0], "can't specify both --memcached-server and http_cache_size");
 
     if (debug_mode) {
         if (spawn_user != nullptr)
             arg_error(argv[0], "cannot set --spawn-user in debug mode");
 
-        config->spawn.default_uid_gid.LoadEffective();
+        config.spawn.default_uid_gid.LoadEffective();
     } else if (spawn_user != nullptr) {
         struct daemon_user u;
         if (daemon_user_by_name(&u, spawn_user, nullptr) < 0)
             arg_error(argv[0], "Failed to look up user '%s'", spawn_user);
 
-        if (!daemon_user_defined(&config->user))
+        if (!daemon_user_defined(&config.user))
             arg_error(argv[0], "refusing to spawn child processes as root");
 
-        Copy(config->spawn.default_uid_gid, u);
-        config->spawn.ignore_userns = true;
+        Copy(config.spawn.default_uid_gid, u);
+        config.spawn.ignore_userns = true;
 
-        config->spawn.allowed_uids.insert(u.uid);
-        config->spawn.allowed_gids.insert(u.gid);
+        config.spawn.allowed_uids.insert(u.uid);
+        config.spawn.allowed_gids.insert(u.gid);
         for (size_t i = 0; i < u.num_groups; ++i)
-            config->spawn.allowed_gids.insert(u.groups[i]);
+            config.spawn.allowed_gids.insert(u.groups[i]);
     } else {
-        Copy(config->spawn.default_uid_gid, config->user);
-        config->spawn.ignore_userns = true;
+        Copy(config.spawn.default_uid_gid, config.user);
+        config.spawn.ignore_userns = true;
     }
 
-    assert(config->spawn.default_uid_gid.IsComplete());
+    assert(config.spawn.default_uid_gid.IsComplete());
 }

@@ -107,6 +107,6 @@ struct BpConfig {
 };
 
 void
-parse_cmdline(BpConfig *config, struct pool *pool, int argc, char **argv);
+parse_cmdline(BpConfig &config, struct pool &pool, int argc, char **argv);
 
 #endif

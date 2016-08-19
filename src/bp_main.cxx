@@ -296,7 +296,7 @@ try {
 
     /* configuration */
 
-    parse_cmdline(&instance.config, instance.pool, argc, argv);
+    parse_cmdline(instance.config, *instance.pool, argc, argv);
 
     if (instance.config.ports.empty() && instance.config.listen.empty())
         instance.config.ports.push_back(debug_mode ? 8080 : 80);
