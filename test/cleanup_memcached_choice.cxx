@@ -3,7 +3,6 @@
 #include "balancer.hxx"
 #include "stock/MapStock.hxx"
 #include "address_list.hxx"
-#include "address_resolver.hxx"
 #include "memcached/memcached_stock.hxx"
 #include "http_cache_choice.hxx"
 #include "lease.hxx"
@@ -14,7 +13,10 @@
 #include "fb_pool.hxx"
 #include "event/Loop.hxx"
 #include "system/SetupProcess.hxx"
+#include "net/AddressInfo.hxx"
+#include "net/Resolver.hxx"
 #include "util/Cancellable.hxx"
+#include "util/PrintException.hxx"
 
 #include <socket/resolver.h>
 #include <socket/util.h>
@@ -41,9 +43,9 @@ cleanup_callback(GError *error, gcc_unused void *ctx)
  *
  */
 
-int main(int argc, char **argv) {
-    struct addrinfo hints;
-
+int
+main(int argc, char **argv)
+try {
     if (argc != 3) {
         fprintf(stderr, "usage: cleanup-memcached-choice HOST[:PORT] URI\n");
         return 1;
@@ -61,17 +63,13 @@ int main(int argc, char **argv) {
     RootPool root_pool;
     auto *pool = pool_new_linear(root_pool, "test", 8192);
 
-    AddressList address_list;
+    struct addrinfo hints;
     memset(&hints, 0, sizeof(hints));
     hints.ai_flags = AI_ADDRCONFIG;
     hints.ai_socktype = SOCK_STREAM;
-    GError *error = NULL;
-    if (!address_list_resolve(pool, &address_list,
-                              argv[1], 11211, &hints, &error)) {
-        fprintf(stderr, "%s\n", error->message);
-        g_error_free(error);
-        return 1;
-    }
+
+    const auto address_info = Resolve(argv[1], 11211, &hints);
+    const AddressList address_list(ShallowCopy(), address_info);
 
     auto *tcp_stock = tcp_stock_new(event_loop, 0);
     TcpBalancer *tcp_balancer = tcp_balancer_new(*tcp_stock,
@@ -99,4 +97,7 @@ int main(int argc, char **argv) {
     fb_pool_deinit();
 
     return EXIT_SUCCESS;
+} catch (const std::exception &e) {
+    PrintException(e);
+    return EXIT_FAILURE;
 }
