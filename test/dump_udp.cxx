@@ -3,6 +3,7 @@
 #include "net/SocketAddress.hxx"
 #include "event/Loop.hxx"
 #include "util/Error.hxx"
+#include "util/PrintException.hxx"
 
 #include <daemon/log.h>
 
@@ -22,19 +23,6 @@ public:
         fprintf(stderr, "%s\n", error.GetMessage());
     }
 };
-
-static void
-PrintException(const std::exception &e)
-{
-    fprintf(stderr, "%s\n", e.what());
-    try {
-        std::rethrow_if_nested(e);
-    } catch (const std::exception &nested) {
-        PrintException(nested);
-    } catch (...) {
-        fprintf(stderr, "Unrecognized nested exception\n");
-    }
-}
 
 int main(int argc, char **argv)
 try {
