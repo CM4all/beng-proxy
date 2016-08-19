@@ -7,7 +7,6 @@
 
 #include <inline/compiler.h>
 #include <daemon/log.h>
-#include <socket/resolver.h>
 #include <socket/util.h>
 
 #include <stdio.h>
