@@ -800,6 +800,7 @@ libnet_a_SOURCES = \
 	src/net/StaticSocketAddress.cxx src/net/StaticSocketAddress.hxx \
 	src/net/AllocatedSocketAddress.cxx src/net/AllocatedSocketAddress.hxx \
 	src/net/AddressInfo.hxx \
+	src/net/Resolver.cxx src/net/Resolver.hxx \
 	src/net/Parser.cxx src/net/Parser.hxx \
 	src/net/Interface.cxx src/net/Interface.hxx \
 	src/net/SocketDescriptor.cxx src/net/SocketDescriptor.hxx
