@@ -67,6 +67,10 @@ public:
 		return {value->ai_addr, value->ai_addrlen};
 	}
 
+	const struct addrinfo *operator->() const {
+		return value;
+	}
+
 	class const_iterator {
 		struct addrinfo *cursor;
 
@@ -89,6 +93,10 @@ public:
 
 		SocketAddress operator*() const {
 			return {cursor->ai_addr, cursor->ai_addrlen};
+		}
+
+		const struct addrinfo *operator->() const {
+			return cursor;
 		}
 	};
 
