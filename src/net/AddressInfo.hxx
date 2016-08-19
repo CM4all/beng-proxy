@@ -63,6 +63,10 @@ public:
 		return value == nullptr;
 	}
 
+	SocketAddress front() const {
+		return {value->ai_addr, value->ai_addrlen};
+	}
+
 	class const_iterator {
 		struct addrinfo *cursor;
 
