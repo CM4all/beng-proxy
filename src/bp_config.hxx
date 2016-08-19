@@ -8,6 +8,7 @@
 #define BENG_PROXY_CONFIG_HXX
 
 #include "net/AllocatedSocketAddress.hxx"
+#include "net/AddressInfo.hxx"
 #include "util/StaticArray.hxx"
 #include "spawn/Config.hxx"
 
@@ -19,7 +20,6 @@
 #include <stddef.h>
 
 struct pool;
-struct AddressList;
 
 #ifdef NDEBUG
 static const bool debug_mode = false;
@@ -63,7 +63,7 @@ struct BpConfig {
 
     const char *access_logger = nullptr;
 
-    AddressList *memcached_server = nullptr;
+    AddressInfo memcached_server;
 
     /**
      * The Bulldog data path.
@@ -107,6 +107,6 @@ struct BpConfig {
 };
 
 void
-parse_cmdline(BpConfig &config, struct pool &pool, int argc, char **argv);
+parse_cmdline(BpConfig &config, int argc, char **argv);
 
 #endif

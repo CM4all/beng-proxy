@@ -5,7 +5,8 @@
  */
 
 #include "bp_config.hxx"
-#include "address_resolver.hxx"
+#include "net/AddressInfo.hxx"
+#include "net/Resolver.hxx"
 #include "stopwatch.hxx"
 #include "pool.hxx"
 #include "ua_classification.hxx"
@@ -18,7 +19,6 @@
 #include <socket/resolver.h>
 
 #include <systemd/sd-daemon.h>
-#include <glib.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -461,7 +461,7 @@ Copy(UidGid &dest, const struct daemon_user &src)
 
 /** read configuration options from the command line */
 void
-parse_cmdline(BpConfig &config, struct pool &pool, int argc, char **argv)
+parse_cmdline(BpConfig &config, int argc, char **argv)
 {
     int ret;
     char *endptr;
@@ -500,7 +500,6 @@ parse_cmdline(BpConfig &config, struct pool &pool, int argc, char **argv)
     struct addrinfo hints;
     const char *user_name = NULL, *group_name = NULL;
     const char *spawn_user = nullptr;
-    GError *error = NULL;
     Error error2;
 
     while (1) {
@@ -631,18 +630,14 @@ parse_cmdline(BpConfig &config, struct pool &pool, int argc, char **argv)
             break;
 
         case 'M':
-            if (config.memcached_server != NULL)
+            if (!config.memcached_server.empty())
                 arg_error(argv[0], "duplicate memcached-server option");
 
             memset(&hints, 0, sizeof(hints));
             hints.ai_flags = AI_ADDRCONFIG;
             hints.ai_socktype = SOCK_STREAM;
 
-            config.memcached_server =
-                address_list_resolve_new(&pool, optarg, 11211, &hints, &error);
-            if (config.memcached_server == NULL)
-                arg_error(argv[0], "%s", error->message);
-
+            config.memcached_server = Resolve(optarg, 11211, &hints);
             break;
 
         case 'B':
@@ -705,7 +700,7 @@ parse_cmdline(BpConfig &config, struct pool &pool, int argc, char **argv)
     else if (!debug_mode)
         arg_error(argv[0], "no user name specified (-u)");
 
-    if (config.memcached_server != NULL && http_cache_size_set)
+    if (!config.memcached_server.empty() && http_cache_size_set)
         arg_error(argv[0], "can't specify both --memcached-server and http_cache_size");
 
     if (debug_mode) {

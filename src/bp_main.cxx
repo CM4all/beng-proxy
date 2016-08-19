@@ -45,6 +45,7 @@
 #include "spawn/Glue.hxx"
 #include "spawn/Client.hxx"
 #include "event/Duration.hxx"
+#include "address_list.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/ServerSocket.hxx"
 #include "util/Error.hxx"
@@ -296,7 +297,7 @@ try {
 
     /* configuration */
 
-    parse_cmdline(instance.config, *instance.pool, argc, argv);
+    parse_cmdline(instance.config, argc, argv);
 
     if (instance.config.ports.empty() && instance.config.listen.empty())
         instance.config.ports.push_back(debug_mode ? 8080 : 80);
@@ -393,11 +394,13 @@ try {
     instance.tcp_balancer = tcp_balancer_new(*instance.tcp_stock,
                                              *instance.balancer);
 
-    if (instance.config.memcached_server != nullptr)
+    const AddressList memcached_server(ShallowCopy(),
+                                       instance.config.memcached_server);
+    if (!instance.config.memcached_server.empty())
         instance.memcached_stock =
             memcached_stock_new(instance.event_loop,
                                 *instance.tcp_balancer,
-                                *instance.config.memcached_server);
+                                memcached_server);
 
     if (instance.config.translation_socket != nullptr) {
         instance.translate_stock =
