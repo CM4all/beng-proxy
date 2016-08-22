@@ -414,6 +414,12 @@ struct FilteredSocket {
         return base.Read(expect_more);
     }
 
+    ssize_t InternalDirectWrite(const void *data, size_t length) {
+        assert(filter != nullptr);
+
+        return base.DirectWrite(data, length);
+    }
+
     ssize_t InternalWrite(const void *data, size_t length) {
         assert(filter != nullptr);
 

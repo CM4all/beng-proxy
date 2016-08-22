@@ -235,8 +235,12 @@ SslFilter::Run(ThreadSocketFilter &f, GError **error_r)
                 peer_subject = format_subject_name(cert.get());
                 peer_issuer_subject = format_issuer_subject_name(cert.get());
             }
-        } else if (!check_ssl_error(ssl.get(), result, error_r))
+        } else if (!check_ssl_error(ssl.get(), result, error_r)) {
+            /* flush the encrypted_output buffer, because it may
+               contain a "TLS alert" */
+            f.encrypted_output.MoveFromAllowNull(encrypted_output);
             return false;
+        }
     }
 
     if (gcc_likely(!handshaking)) {

@@ -80,7 +80,8 @@ struct Transformation {
     Transformation *Dup(struct pool *pool) const;
 
     gcc_malloc
-    Transformation *DupChain(struct pool *pool) const;
+    static Transformation *DupChain(struct pool *pool,
+                                    const Transformation *src);
 
     /**
      * Expand the strings in this transformation (not following the linked
