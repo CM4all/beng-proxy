@@ -59,11 +59,11 @@ Transformation::Dup(struct pool *pool) const
 }
 
 Transformation *
-Transformation::DupChain(struct pool *pool) const
+Transformation::DupChain(struct pool *pool, const Transformation *src)
 {
     Transformation *dest = nullptr, **tail_p = &dest;
 
-    for (auto src = this; src != nullptr; src = src->next) {
+    for (; src != nullptr; src = src->next) {
         Transformation *p = src->Dup(pool);
         *tail_p = p;
         tail_p = &p->next;
