@@ -3,6 +3,7 @@ cm4all-beng-proxy (10.27) unstable; urgency=low
   * ssl: disable RC4
   * ssl: ignore the client's cipher preferences
   * ssl: send TLS alert to peer after handshake refusal
+  * fix crash when compiled with GCC6
 
  --   
 
