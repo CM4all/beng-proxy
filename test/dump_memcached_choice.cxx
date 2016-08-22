@@ -30,8 +30,8 @@
 struct Context final : Lease{
     struct pool *pool;
 
-    int fd;
-    bool idle, reuse;
+    int fd = -1;
+    bool idle = false, reuse;
 
     bool success = false;
 
@@ -159,7 +159,6 @@ int main(int argc, char **argv) {
     int fd, ret;
     struct addrinfo hints, *ai;
     const char *key;
-    static Context ctx;
 
     if (argc != 3) {
         fprintf(stderr, "usage: run-memcached-client HOST[:PORT] URI\n");
@@ -167,6 +166,8 @@ int main(int argc, char **argv) {
     }
 
     direct_global_init();
+
+    Context ctx;
 
     /* connect socket */
 
