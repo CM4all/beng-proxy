@@ -4,8 +4,8 @@
 #include "net/AllocatedSocketAddress.hxx"
 #include "net/Parser.hxx"
 #include "event/Loop.hxx"
-#include "util/Error.hxx"
 #include "util/Cancellable.hxx"
+#include "util/PrintException.hxx"
 
 #include <glib.h>
 
@@ -33,7 +33,7 @@ public:
 };
 
 int main(int argc, char **argv)
-{
+try {
     if (argc != 2) {
         fprintf(stderr, "usage: run-ping IP\n");
         return EXIT_FAILURE;
@@ -42,12 +42,7 @@ int main(int argc, char **argv)
     RootPool root_pool;
     LinearPool pool(root_pool, "test", 8192);
 
-    Error error;
-    const auto address = ParseSocketAddress(argv[1], 0, false, error);
-    if (address.IsNull()) {
-        fprintf(stderr, "%s\n", error.GetMessage());
-        return EXIT_FAILURE;
-    }
+    const auto address = ParseSocketAddress(argv[1], 0, false);
 
     EventLoop event_loop;
 
@@ -59,4 +54,7 @@ int main(int argc, char **argv)
     event_loop.Dispatch();
 
     return success ? EXIT_SUCCESS : EXIT_FAILURE;
+} catch (const std::exception &e) {
+    PrintException(e);
+    return EXIT_FAILURE;
 }

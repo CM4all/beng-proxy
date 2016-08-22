@@ -193,13 +193,7 @@ udp_listener_port_new(const char *host_and_port, int default_port,
 {
     assert(host_and_port != nullptr);
 
-    // TODO: migrate ParseSocketAddress() to exception
-    Error error;
-    auto address = ParseSocketAddress(host_and_port, default_port, true,
-                                      error);
-    if (address.IsNull())
-        throw std::runtime_error(error.GetMessage());
-
+    auto address = ParseSocketAddress(host_and_port, default_port, true);
     return udp_listener_new(address, handler);
 }
 

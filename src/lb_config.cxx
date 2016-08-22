@@ -158,10 +158,7 @@ LbConfigParser::Control::ParseLine(LineParser &line)
     if (strcmp(word, "bind") == 0) {
         const char *address = line.ExpectValueAndEnd();
 
-        Error error;
-        config.bind_address = ParseSocketAddress(address, 80, true, error);
-        if (config.bind_address.IsNull())
-            throw LineParser::Error(error.GetMessage());
+        config.bind_address = ParseSocketAddress(address, 80, true);
     } else
         throw LineParser::Error("Unknown option");
 }
@@ -357,10 +354,7 @@ LbConfigParser::Node::ParseLine(LineParser &line)
 
         const char *value = line.ExpectValueAndEnd();
 
-        Error error;
-        config.address = ParseSocketAddress(value, 80, false, error);
-        if (config.address.IsNull())
-            throw LineParser::Error(error.GetMessage());
+        config.address = ParseSocketAddress(value, 80, false);
     } else if (strcmp(word, "jvm_route") == 0) {
         if (!config.jvm_route.empty())
             throw LineParser::Error("Duplicate jvm_route");
@@ -373,13 +367,8 @@ LbConfigParser::Node::ParseLine(LineParser &line)
 void
 LbConfigParser::Node::Finish()
 {
-    if (config.address.IsNull()) {
-        Error error;
-        config.address = ParseSocketAddress(config.name.c_str(), 80, false,
-                                            error);
-        if (config.address.IsNull())
-            throw LineParser::Error(error.GetMessage());
-    }
+    if (config.address.IsNull())
+        config.address = ParseSocketAddress(config.name.c_str(), 80, false);
 
     auto i = parent.config.nodes.emplace(std::string(config.name),
                                          std::move(config));
@@ -401,10 +390,7 @@ LbConfigParser::CreateNode(LineParser &line)
 LbNodeConfig &
 LbConfigParser::AutoCreateNode(const char *name)
 {
-    Error error;
-    auto address = ParseSocketAddress(name, 80, false, error);
-    if (address.IsNull())
-        throw LineParser::Error(error.GetMessage());
+    auto address = ParseSocketAddress(name, 80, false);
 
     auto i = config.nodes.insert(std::make_pair(name,
                                                 LbNodeConfig(name,
@@ -792,10 +778,7 @@ LbConfigParser::Listener::ParseLine(LineParser &line)
     if (strcmp(word, "bind") == 0) {
         const char *address = line.ExpectValueAndEnd();
 
-        Error error;
-        config.bind_address = ParseSocketAddress(address, 80, true, error);
-        if (config.bind_address.IsNull())
-            throw LineParser::Error(error.GetMessage());
+        config.bind_address = ParseSocketAddress(address, 80, true);
     } else if (strcmp(word, "pool") == 0) {
         if (config.destination.IsDefined())
             throw LineParser::Error("Pool already configured");

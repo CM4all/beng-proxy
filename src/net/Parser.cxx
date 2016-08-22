@@ -4,23 +4,16 @@
 
 #include "Parser.hxx"
 #include "AllocatedSocketAddress.hxx"
-#include "Error.hxx"
-#include "util/Error.hxx"
-#include "util/Domain.hxx"
 
 #include <socket/resolver.h>
 
-#include <assert.h>
-#include <sys/un.h>
-#include <netdb.h>
-#include <string.h>
+#include <stdexcept>
 
-#ifndef __linux
-static constexpr Domain resolver_domain("resolver");
-#endif
+#include <netdb.h>
+#include <stdio.h>
 
 AllocatedSocketAddress
-ParseSocketAddress(const char *p, int default_port, bool passive, Error &error)
+ParseSocketAddress(const char *p, int default_port, bool passive)
 {
     if (*p == '/') {
         AllocatedSocketAddress address;
@@ -37,8 +30,7 @@ ParseSocketAddress(const char *p, int default_port, bool passive, Error &error)
         return address;
 #else
         /* Linux specific feature */
-        error.Set(resolver_domain, "Abstract sockets supported only on Linux");
-        return AllocatedSocketAddress::Null();
+        throw std::runtime_error("Abstract sockets supported only on Linux");
 #endif
     }
 
@@ -58,10 +50,11 @@ ParseSocketAddress(const char *p, int default_port, bool passive, Error &error)
                                           passive ? &passive_hints : &hints,
                                           &ai);
     if (result != 0) {
-        error.Format(netdb_domain, result,
-                     "Failed to resolve '%s': %s",
-                     p, gai_strerror(result));
-        return AllocatedSocketAddress::Null();
+        char msg[512];
+        snprintf(msg, sizeof(msg),
+                 "Failed to resolve '%s': %s",
+                 p, gai_strerror(result));
+        throw std::runtime_error(msg);
     }
 
     AllocatedSocketAddress address(SocketAddress(ai->ai_addr, ai->ai_addrlen));

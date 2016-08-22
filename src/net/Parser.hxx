@@ -5,11 +5,13 @@
 #ifndef NET_PARSER_HXX
 #define NET_PARSER_HXX
 
-class Error;
 class AllocatedSocketAddress;
 
+/**
+ * Parse a numeric socket address.  Throws std::runtime_error on
+ * error.
+ */
 AllocatedSocketAddress
-ParseSocketAddress(const char *p, int default_port, bool passive,
-                   Error &error);
+ParseSocketAddress(const char *p, int default_port, bool passive);
 
 #endif
