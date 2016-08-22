@@ -90,10 +90,61 @@ a C++11 compiler, e.g. gcc 4.9.
 Install the package \texttt{cm4all-beng-proxy} and the translation
 server of your choice.
 
-\subsection{Configuration options}
+\section{Configuration}
 
-The command line argument \texttt{--set} allows you to tweak some
-settings:
+The file \texttt{/etc/cm4all/beng/lb.conf} contains
+\emph{beng-proxy}'s configuration.  The following options are
+available:
+
+\subsection{\texttt{include}}
+
+Include another file.  Example:
+
+\begin{verbatim*}
+include "foo/bar.conf"
+\end{verbatim*}
+
+The specified file name may be relative to the including file.
+
+\subsection{\texttt{listener}}
+
+Listen for HTTP requests on the configured address.  Example:
+
+\begin{verbatim*}
+listener {
+   bind "*:80"
+   tag "foo"
+}
+\end{verbatim*}
+
+This binds to all interfaces on port 80.  The (optional) tag is set to
+``foo''.
+
+Known attributes:
+
+\begin{longtabu*}{|l|X|}\hline
+
+\verb|bind| & An adddress to bind to.  May be the wildcard ``*'' or an
+IPv4/IPv6 address followed by a port.  IPv6 addresses should be
+enclosed in square brackets to disambiguate the port separator.  Local
+sockets start with a slash ``/'', and abstract sockets start with an
+at symbol ``@''. \\\hline
+
+\verb|tag| & A tag, to be passed to the translation server in a
+\verb|LISTENER_TAG| packet (see page \pageref{listenertag}). \\\hline
+
+\end{longtabu*}
+
+\subsection{\texttt{set}}
+
+Tweak global settings.  Most of these are legacy from the old
+\texttt{--set} command-line option.  Syntax:
+
+\begin{verbatim*}
+set NAME = "VALUE"
+\end{verbatim*}
+
+The following settings are available:
 
 \begin{longtabu*} {|l|X|}
 \hline
@@ -193,6 +244,8 @@ server without losing sessions.  \\
 
 All memory sizes can be suffixed using \texttt{kB}, \texttt{MB} or
 \texttt{GB}.
+
+\subsection{Command-line options}
 
 \label{memcached}
 You may specify \texttt{--memcached-server} followed by a server name.
@@ -698,6 +751,7 @@ described here is 3. \\
 
 \hline
 
+\label{listenertag}
 \verb|LISTENER_TAG| & The ``tag'' of the listener that accepted the
 connection.  The can can be specified in the \texttt{--listen}
 setting, for example: \texttt{--listen TAG=192.168.1.99:80} (This

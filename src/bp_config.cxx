@@ -5,8 +5,13 @@
  */
 
 #include "bp_config.hxx"
+#include "LineParser.hxx"
+#include "ConfigParser.hxx"
+#include "net/Parser.hxx"
 #include "util/StringView.hxx"
 #include "util/StringParser.hxx"
+
+#include <string.h>
 
 void
 BpConfig::HandleSet(StringView name, const char *value)
@@ -55,4 +60,94 @@ BpConfig::HandleSet(StringView name, const char *value)
         session_save_path = value;
     } else
         throw std::runtime_error("Unknown variable");
+}
+
+class BpConfigParser final : public NestedConfigParser {
+    BpConfig &config;
+
+    class Listener final : public ConfigParser {
+        BpConfigParser &parent;
+        ListenerConfig config;
+
+    public:
+        explicit Listener(BpConfigParser &_parent):parent(_parent) {}
+
+    protected:
+        /* virtual methods from class ConfigParser */
+        void ParseLine(LineParser &line) override;
+        void Finish() override;
+    };
+
+public:
+    explicit BpConfigParser(BpConfig &_config)
+        :config(_config) {}
+
+protected:
+    /* virtual methods from class NestedConfigParser */
+    void ParseLine2(LineParser &line) override;
+
+private:
+    void CreateListener(LineParser &line);
+};
+
+void
+BpConfigParser::Listener::ParseLine(LineParser &line)
+{
+    const char *word = line.ExpectWord();
+
+    if (strcmp(word, "bind") == 0) {
+        if (!config.address.IsNull())
+            throw LineParser::Error("Bind address already specified");
+
+        config.address = ParseSocketAddress(line.ExpectValueAndEnd(),
+                                            80, true);
+    } else if (strcmp(word, "tag") == 0) {
+        config.tag = line.ExpectValueAndEnd();
+    } else
+        throw LineParser::Error("Unknown option");
+}
+
+void
+BpConfigParser::Listener::Finish()
+{
+    if (config.address.IsNull())
+        throw LineParser::Error("Listener has no bind address");
+
+    parent.config.listen.emplace_front(std::move(config));
+
+    ConfigParser::Finish();
+}
+
+inline void
+BpConfigParser::CreateListener(LineParser &line)
+{
+    line.ExpectSymbolAndEol('{');
+
+    SetChild(std::make_unique<Listener>(*this));
+}
+
+void
+BpConfigParser::ParseLine2(LineParser &line)
+{
+    const char *word = line.ExpectWord();
+
+    if (strcmp(word, "listener") == 0)
+        CreateListener(line);
+    else if (strcmp(word, "set") == 0) {
+        const char *name = line.ExpectWord();
+        line.ExpectSymbol('=');
+        const char *value = line.ExpectValueAndEnd();
+        config.HandleSet(name, value);
+    } else
+        throw LineParser::Error("Unknown option");
+}
+
+void
+LoadConfigFile(BpConfig &config, const char *path)
+{
+    BpConfigParser parser(config);
+    CommentConfigParser parser2(parser);
+    IncludeConfigParser parser3(path, parser2);
+
+    ParseConfigFile(path, parser3);
 }

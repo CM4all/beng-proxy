@@ -24,6 +24,8 @@ struct ListenerConfig {
 
     std::string tag;
 
+    ListenerConfig() = default;
+
     ListenerConfig(SocketAddress _address, const std::string &_tag)
         :address(_address), tag(_tag) {}
 };
@@ -100,5 +102,12 @@ struct BpConfig {
 
     void HandleSet(StringView name, const char *value);
 };
+
+/**
+ * Load and parse the specified configuration file.  Throws an
+ * exception on error.
+ */
+void
+LoadConfigFile(BpConfig &config, const char *path);
 
 #endif

@@ -22,6 +22,8 @@ struct BpCmdLine {
 
     const char *access_logger = nullptr;
 
+    const char *config_file = "/etc/cm4all/beng/proxy/beng-proxy.conf";
+
     BpCmdLine();
 };
 

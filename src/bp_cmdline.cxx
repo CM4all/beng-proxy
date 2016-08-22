@@ -70,6 +70,10 @@ static void usage(void) {
          "                \"internal\" logs into the error log\n"
          "                \"null\" disables the access logger\n"
 #ifdef __GLIBC__
+         " --config-file file\n"
+#endif
+         " -f file        load this configuration file\n"
+#ifdef __GLIBC__
          " --user name\n"
 #endif
          " -u name        switch to another user id\n"
@@ -282,6 +286,7 @@ parse_cmdline(BpCmdLine &cmdline, BpConfig &config, int argc, char **argv)
         {"access-logger", 1, NULL, 'A'},
         {"no-daemon", 0, NULL, 'D'}, /* obsolete */
         {"pidfile", 1, NULL, 'P'}, /* obsolete */
+        {"config-file", 1, nullptr, 'f'},
         {"user", 1, NULL, 'u'},
         {"group", 1, NULL, 'g'},
         {"logger-user", 1, NULL, 'U'},
@@ -314,11 +319,11 @@ parse_cmdline(BpCmdLine &cmdline, BpConfig &config, int argc, char **argv)
         int option_index = 0;
 
         ret = getopt_long(argc, argv,
-                          "hVvqDP:l:A:u:g:U:p:L:c:m:w:r:t:M:B:C:N:s:",
+                          "hVvqDP:l:A:f:u:g:U:p:L:c:m:w:r:t:M:B:C:N:s:",
                           long_options, &option_index);
 #else
         ret = getopt(argc, argv,
-                     "hVvqDP:l:A:u:g:U:p:L:c:m:w:r:t:M:B:C:N:s:");
+                     "hVvqDP:l:A:f:u:g:U:p:L:c:m:w:r:t:M:B:C:N:s:");
 #endif
         if (ret == -1)
             break;
@@ -349,6 +354,10 @@ parse_cmdline(BpCmdLine &cmdline, BpConfig &config, int argc, char **argv)
         case 'A':
             cmdline.access_logger = *optarg == 0
                 ? NULL : optarg;
+            break;
+
+        case 'f':
+            cmdline.config_file = optarg;
             break;
 
         case 'u':
