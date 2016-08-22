@@ -235,7 +235,7 @@ cm4all_beng_proxy_SOURCES = \
 	src/tstock.cxx src/tstock.hxx \
 	src/widget.hxx \
 	$(STOPWATCH_SRC) \
-	src/bp_cmdline.cxx \
+	src/bp_cmdline.cxx src/bp_cmdline.hxx \
 	src/Completion.hxx \
 	src/crash.cxx src/crash.hxx \
 	src/bp_worker.cxx src/bp_worker.hxx \

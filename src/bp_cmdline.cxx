@@ -4,6 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
+#include "bp_cmdline.hxx"
 #include "bp_config.hxx"
 #include "net/AddressInfo.hxx"
 #include "net/Resolver.hxx"

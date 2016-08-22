@@ -19,8 +19,6 @@
 
 #include <stddef.h>
 
-struct pool;
-
 #ifdef NDEBUG
 static const bool debug_mode = false;
 #else
@@ -105,8 +103,5 @@ struct BpConfig {
 
     BpConfig();
 };
-
-void
-parse_cmdline(BpConfig &config, int argc, char **argv);
 
 #endif

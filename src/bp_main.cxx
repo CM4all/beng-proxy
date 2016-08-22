@@ -5,6 +5,7 @@
  */
 
 #include "direct.hxx"
+#include "bp_cmdline.hxx"
 #include "bp_instance.hxx"
 #include "bp_connection.hxx"
 #include "bp_worker.hxx"
