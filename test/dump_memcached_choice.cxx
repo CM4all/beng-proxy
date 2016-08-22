@@ -34,7 +34,8 @@ struct Context final : Lease{
     bool idle, reuse;
 
     Istream *value;
-    bool value_eof, value_abort;
+
+    bool success = false;
 
     CancellablePointer cancel_ptr;
 
@@ -68,8 +69,10 @@ dump_choice(const HttpCacheDocument *document)
  */
 
 static void
-my_sink_done(void *data0, size_t length, gcc_unused void *ctx)
+my_sink_done(void *data0, size_t length, void *_ctx)
 {
+    auto &ctx = *(Context *)_ctx;
+
     /*uint32_t magic;*/
 
     ConstBuffer<void> data(data0, length);
@@ -89,10 +92,12 @@ my_sink_done(void *data0, size_t length, gcc_unused void *ctx)
 
         if (data.IsNull())
             /* deserialization failure */
-            break;
+            return;
 
         dump_choice(&document);
     }
+
+    ctx.success = true;
 }
 
 static void
@@ -225,5 +230,5 @@ int main(int argc, char **argv) {
 
     fb_pool_deinit();
 
-    return ctx.value_eof ? 0 : 2;
+    return ctx.success ? 0 : 2;
 }
