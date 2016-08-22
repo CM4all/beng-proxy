@@ -64,7 +64,7 @@ SetupBasicSslCtx(SSL_CTX *ssl_ctx, bool server)
        the client; this call is only here to maximize our SSL/TLS
        "score" in benchmarks which think following the client's
        preferences is bad */
-    SSL_CTX_set_options(ssl->ctx, SSL_OP_CIPHER_SERVER_PREFERENCE);
+    SSL_CTX_set_options(ssl_ctx, SSL_OP_CIPHER_SERVER_PREFERENCE);
 }
 
 UniqueSSL_CTX
