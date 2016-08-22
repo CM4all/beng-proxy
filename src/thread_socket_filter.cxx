@@ -243,6 +243,19 @@ ThreadSocketFilter::Done()
     if (error != nullptr) {
         /* an error has occurred inside the worker thread: forward it
            to the filtered_socket */
+
+        if (socket->IsConnected()) {
+            /* flush the encrypted_output buffer, because it may
+               contain a "TLS alert" */
+            auto r = encrypted_output.Read();
+            if (!r.IsEmpty()) {
+                /* don't care for the return value; the socket and
+                   this object are going to be closed anyway */
+                socket->InternalDirectWrite(r.data, r.size);
+                socket->Shutdown();
+            }
+        }
+
         GError *error2 = error;
         error = nullptr;
         lock.unlock();
