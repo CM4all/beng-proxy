@@ -56,7 +56,7 @@ SetupBasicSslCtx(SSL_CTX *ssl_ctx, bool server)
     SSL_CTX_set_options(ssl_ctx, SSL_OP_NO_SSLv2|SSL_OP_NO_SSLv3);
 
     /* disable weak ciphers */
-    SSL_CTX_set_cipher_list(ssl_ctx, "DEFAULT:!EXPORT:!LOW");
+    SSL_CTX_set_cipher_list(ssl_ctx, "DEFAULT:!EXPORT:!LOW:!RC4");
 }
 
 UniqueSSL_CTX
