@@ -457,6 +457,17 @@ public:
     }
 
     /**
+     * Variant of Write() which does not touch events and does not
+     * invoke any callbacks.  It circumvents all the #BufferedSocket
+     * features and invokes SocketWrapper::Write() directly.  Use this
+     * in special cases when you want to push data to the socket right
+     * before closing it.
+     */
+    ssize_t DirectWrite(const void *data, size_t length) {
+        return base.Write(data, length);
+    }
+
+    /**
      * Write data to the socket.
      *
      * @return the positive number of bytes written or a #write_result
