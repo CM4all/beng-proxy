@@ -5,7 +5,7 @@ cm4all-beng-proxy (10.27) unstable; urgency=low
   * ssl: send TLS alert to peer after handshake refusal
   * fix crash when compiled with GCC6
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Mon, 22 Aug 2016 18:34:30 -0000
 
 cm4all-beng-proxy (10.26) unstable; urgency=low
 
