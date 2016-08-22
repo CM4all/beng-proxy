@@ -3,14 +3,13 @@
  */
 
 #include "Parser.hxx"
+#include "AddressInfo.hxx"
+#include "Resolver.hxx"
 #include "AllocatedSocketAddress.hxx"
-
-#include <socket/resolver.h>
 
 #include <stdexcept>
 
 #include <netdb.h>
-#include <stdio.h>
 
 AllocatedSocketAddress
 ParseSocketAddress(const char *p, int default_port, bool passive)
@@ -45,20 +44,7 @@ ParseSocketAddress(const char *p, int default_port, bool passive)
         .ai_socktype = SOCK_STREAM,
     };
 
-    struct addrinfo *ai;
-    int result = socket_resolve_host_port(p, default_port,
-                                          passive ? &passive_hints : &hints,
-                                          &ai);
-    if (result != 0) {
-        char msg[512];
-        snprintf(msg, sizeof(msg),
-                 "Failed to resolve '%s': %s",
-                 p, gai_strerror(result));
-        throw std::runtime_error(msg);
-    }
-
-    AllocatedSocketAddress address(SocketAddress(ai->ai_addr, ai->ai_addrlen));
-    freeaddrinfo(ai);
-
-    return address;
+    const auto ai = Resolve(p, default_port,
+                            passive ? &passive_hints : &hints);
+    return AllocatedSocketAddress(ai.front());
 }
