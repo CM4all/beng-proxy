@@ -57,6 +57,14 @@ SetupBasicSslCtx(SSL_CTX *ssl_ctx, bool server)
 
     /* disable weak ciphers */
     SSL_CTX_set_cipher_list(ssl_ctx, "DEFAULT:!EXPORT:!LOW:!RC4");
+
+    /* let us choose the cipher based on our own priority; so if a
+       client prefers to use a weak cipher (which would be rather
+       stupid, but oh well..), choose the strongest one supported by
+       the client; this call is only here to maximize our SSL/TLS
+       "score" in benchmarks which think following the client's
+       preferences is bad */
+    SSL_CTX_set_options(ssl->ctx, SSL_OP_CIPHER_SERVER_PREFERENCE);
 }
 
 UniqueSSL_CTX
