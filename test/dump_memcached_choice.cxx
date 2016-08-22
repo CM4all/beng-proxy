@@ -33,8 +33,6 @@ struct Context final : Lease{
     int fd;
     bool idle, reuse;
 
-    Istream *value;
-
     bool success = false;
 
     CancellablePointer cancel_ptr;
