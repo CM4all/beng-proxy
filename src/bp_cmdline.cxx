@@ -11,6 +11,7 @@
 #include "stopwatch.hxx"
 #include "pool.hxx"
 #include "ua_classification.hxx"
+#include "util/StringView.hxx"
 #include "util/Error.hxx"
 #include "util/IterableSplitString.hxx"
 
@@ -203,180 +204,122 @@ static bool http_cache_size_set = false;
 
 static void
 handle_set2(BpConfig &config, const char *argv0,
-            const char *name, size_t name_length, const char *value)
+            StringView name, const char *value)
 {
-    static const char session_cookie[] = "session_cookie";
-    static const char dynamic_session_cookie[] = "dynamic_session_cookie";
-    static const char session_idle_timeout[] = "session_idle_timeout";
-    static const char session_save_path[] = "session_save_path";
-    static const char max_connections[] = "max_connections";
-    static const char tcp_stock_limit[] = "tcp_stock_limit";
-    static const char fcgi_stock_limit[] = "fastcgi_stock_limit";
-    static const char fcgi_stock_max_idle[] = "fastcgi_stock_max_idle";
-    static const char was_stock_limit[] = "was_stock_limit";
-    static const char was_stock_max_idle[] = "was_stock_max_idle";
-    static const char http_cache_size[] = "http_cache_size";
-    static const char filter_cache_size[] = "filter_cache_size";
-#ifdef HAVE_LIBNFS
-    static const char nfs_cache_size[] = "nfs_cache_size";
-#endif
-    static const char translate_cache_size[] = "translate_cache_size";
-    static const char translate_stock_limit[] = "translate_stock_limit";
-    static const char stopwatch[] = "stopwatch";
-    static const char dump_widget_tree[] = "dump_widget_tree";
-    static const char verbose_response[] = "verbose_response";
-#ifndef NDEBUG
-    static const char args_escape_char[] = "args_escape_char";
-#endif
     char *endptr;
     long l;
 
-    if (name_length == sizeof(max_connections) - 1 &&
-        memcmp(name, max_connections, sizeof(max_connections) - 1) == 0) {
+    if (name.Equals("max_connections")) {
         l = strtol(value, &endptr, 10);
         if (*endptr != 0 || l <= 0 || l >= 1024 * 1024)
             arg_error(argv0, "Invalid value for max_connections");
 
         config.max_connections = l;
-    } else if (name_length == sizeof(tcp_stock_limit) - 1 &&
-               memcmp(name, tcp_stock_limit,
-                      sizeof(tcp_stock_limit) - 1) == 0) {
+    } else if (name.Equals("tcp_stock_limit")) {
         l = strtol(value, &endptr, 10);
         if (*endptr != 0 || l < 0)
             arg_error(argv0, "Invalid value for tcp_stock_limit");
 
         config.tcp_stock_limit = l;
-    } else if (name_length == sizeof(fcgi_stock_limit) - 1 &&
-               memcmp(name, fcgi_stock_limit,
-                      sizeof(fcgi_stock_limit) - 1) == 0) {
+    } else if (name.Equals("fcgi_stock_limit")) {
         l = strtol(value, &endptr, 10);
         if (*endptr != 0 || l < 0)
             arg_error(argv0, "Invalid value for fastcgi_stock_limit");
 
         config.fcgi_stock_limit = l;
-    } else if (name_length == sizeof(fcgi_stock_max_idle) - 1 &&
-               memcmp(name, fcgi_stock_max_idle,
-                      sizeof(fcgi_stock_max_idle) - 1) == 0) {
+    } else if (name.Equals("fcgi_stock_max_idle")) {
         l = strtol(value, &endptr, 10);
         if (*endptr != 0 || l < 0)
             arg_error(argv0, "Invalid value for fastcgi_stock_max_idle");
 
         config.fcgi_stock_max_idle = l;
-    } else if (name_length == sizeof(was_stock_limit) - 1 &&
-               memcmp(name, was_stock_limit,
-                      sizeof(was_stock_limit) - 1) == 0) {
+    } else if (name.Equals("was_stock_limit")) {
         l = strtol(value, &endptr, 10);
         if (*endptr != 0 || l < 0)
             arg_error(argv0, "Invalid value for was_stock_limit");
 
         config.was_stock_limit = l;
-    } else if (name_length == sizeof(was_stock_max_idle) - 1 &&
-               memcmp(name, was_stock_max_idle,
-                      sizeof(was_stock_max_idle) - 1) == 0) {
+    } else if (name.Equals("was_stock_max_idle")) {
         l = strtol(value, &endptr, 10);
         if (*endptr != 0 || l < 0)
             arg_error(argv0, "Invalid value for was_stock_max_idle");
 
         config.was_stock_max_idle = l;
-    } else if (name_length == sizeof(http_cache_size) - 1 &&
-               memcmp(name, http_cache_size,
-                      sizeof(http_cache_size) - 1) == 0) {
+    } else if (name.Equals("http_cache_size")) {
         l = strtol(value, &endptr, 10);
         if (*endptr != 0 || l < 0)
             arg_error(argv0, "Invalid value for http_cache_size");
 
         config.http_cache_size = l;
         http_cache_size_set = true;
-    } else if (name_length == sizeof(filter_cache_size) - 1 &&
-               memcmp(name, filter_cache_size,
-                      sizeof(filter_cache_size) - 1) == 0) {
+    } else if (name.Equals("filter_cache_size")) {
         l = strtol(value, &endptr, 10);
         if (*endptr != 0 || l < 0)
             arg_error(argv0, "Invalid value for filter_cache_size");
 
         config.filter_cache_size = l;
 #ifdef HAVE_LIBNFS
-    } else if (name_length == sizeof(nfs_cache_size) - 1 &&
-               memcmp(name, nfs_cache_size,
-                      sizeof(nfs_cache_size) - 1) == 0) {
+    } else if (name.Equals("nfs_cache_size")) {
         l = strtol(value, &endptr, 10);
         if (*endptr != 0 || l < 0)
             arg_error(argv0, "Invalid value for nfs_cache_size");
 
         config.nfs_cache_size = l;
 #endif
-    } else if (name_length == sizeof(translate_cache_size) - 1 &&
-               memcmp(name, translate_cache_size,
-                      sizeof(translate_cache_size) - 1) == 0) {
+    } else if (name.Equals("translate_cache_size")) {
         l = strtol(value, &endptr, 10);
         if (*endptr != 0 || l < 0)
             arg_error(argv0, "Invalid value for translate_cache_size");
 
         config.translate_cache_size = l;
-    } else if (name_length == sizeof(translate_stock_limit) - 1 &&
-               memcmp(name, translate_stock_limit,
-                      sizeof(translate_stock_limit) - 1) == 0) {
+    } else if (name.Equals("translate_stock_limit")) {
         l = strtol(value, &endptr, 10);
         if (*endptr != 0 || l < 0)
             arg_error(argv0, "Invalid value for translate_stock_limit");
 
         config.translate_stock_limit = l;
-    } else if (name_length == sizeof(stopwatch) - 1 &&
-               memcmp(name, stopwatch, sizeof(stopwatch) - 1) == 0) {
+    } else if (name.Equals("stopwatch")) {
         if (strcmp(value, "yes") == 0)
             stopwatch_enable();
         else if (strcmp(value, "no") != 0)
             arg_error(argv0, "Invalid value for stopwatch");
-    } else if (name_length == sizeof(dump_widget_tree) - 1 &&
-               memcmp(name, dump_widget_tree,
-                      sizeof(dump_widget_tree) - 1) == 0) {
+    } else if (name.Equals("dump_widget_tree")) {
         if (strcmp(value, "yes") == 0)
             config.dump_widget_tree = true;
         else if (strcmp(value, "no") != 0)
             arg_error(argv0, "Invalid value for dump_widget_tree");
-    } else if (name_length == sizeof(verbose_response) - 1 &&
-               memcmp(name, verbose_response,
-                      sizeof(verbose_response) - 1) == 0) {
+    } else if (name.Equals("verbose_response")) {
         if (strcmp(value, "yes") == 0)
             config.verbose_response = true;
         else if (strcmp(value, "no") != 0)
             arg_error(argv0, "Invalid value for verbose_response");
 #ifndef NDEBUG
-    } else if (name_length == sizeof(args_escape_char) - 1 &&
-               memcmp(name, args_escape_char,
-                      sizeof(args_escape_char) - 1) == 0) {
+    } else if (name.Equals("args_escape_char")) {
         if (value[0] != 0 && value[1] == 0)
             ARGS_ESCAPE_CHAR = value[0];
         else
             arg_error(argv0, "Invalid value for args_escape_char");
 #endif
-    } else if (name_length == sizeof(session_cookie) - 1 &&
-               memcmp(name, session_cookie,
-                      sizeof(session_cookie) - 1) == 0) {
+    } else if (name.Equals("session_cookie")) {
         if (*value == 0)
             arg_error(argv0, "Invalid value for session_cookie");
 
         config.session_cookie = value;
-    } else if (name_length == sizeof(dynamic_session_cookie) - 1 &&
-               memcmp(name, dynamic_session_cookie, sizeof(dynamic_session_cookie) - 1) == 0) {
+    } else if (name.Equals("dynamic_session_cookie")) {
         if (strcmp(value, "yes") == 0)
             config.dynamic_session_cookie = true;
         else if (strcmp(value, "no") != 0)
             arg_error(argv0, "Invalid value for dynamic_session_cookie");
-    } else if (name_length == sizeof(session_idle_timeout) - 1 &&
-               memcmp(name, session_idle_timeout,
-                      sizeof(session_idle_timeout) - 1) == 0) {
+    } else if (name.Equals("session_idle_timeout")) {
         l = strtol(value, &endptr, 10);
         if (*endptr != 0 || l <= 0)
             arg_error(argv0, "Invalid value for session_idle_timeout");
 
         config.session_idle_timeout = std::chrono::seconds(l);
-    } else if (name_length == sizeof(session_save_path) - 1 &&
-               memcmp(name, session_save_path,
-                      sizeof(session_save_path) - 1) == 0) {
+    } else if (name.Equals("session_save_path")) {
         config.session_save_path = value;
     } else
-        arg_error(argv0, "Unknown variable: %.*s", (int)name_length, name);
+        arg_error(argv0, "Unknown variable: %.*s", (int)name.size, name.data);
 }
 
 template<typename F>
@@ -429,7 +372,10 @@ handle_set(BpConfig &config,
     if (eq == p)
         arg_error(argv0, "No name found in --set argument");
 
-    handle_set2(config, argv0, p, eq - p, eq + 1);
+    const StringView name(p, eq - p);
+    const char *const value = eq + 1;
+
+    handle_set2(config, argv0, name, value);
 }
 
 static void
