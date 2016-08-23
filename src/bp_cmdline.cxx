@@ -200,8 +200,6 @@ ParseListenerConfig(const char *s,
         list.emplace_front(i, tag);
 }
 
-static bool http_cache_size_set = false;
-
 static void
 handle_set2(BpConfig &config, StringView name, const char *value)
 {
@@ -250,7 +248,7 @@ handle_set2(BpConfig &config, StringView name, const char *value)
             throw std::runtime_error("Invalid value");
 
         config.http_cache_size = l;
-        http_cache_size_set = true;
+        config.http_cache_size_set = true;
     } else if (name.Equals("filter_cache_size")) {
         l = strtol(value, &endptr, 10);
         if (*endptr != 0 || l < 0)
@@ -629,7 +627,7 @@ parse_cmdline(BpCmdLine &cmdline, BpConfig &config, int argc, char **argv)
     else if (!debug_mode)
         arg_error(argv[0], "no user name specified (-u)");
 
-    if (!config.memcached_server.empty() && http_cache_size_set)
+    if (!config.memcached_server.empty() && config.http_cache_size_set)
         arg_error(argv[0], "can't specify both --memcached-server and http_cache_size");
 
     if (debug_mode) {
