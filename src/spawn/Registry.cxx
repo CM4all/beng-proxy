@@ -8,7 +8,6 @@
 #include "util/DeleteDisposer.hxx"
 
 #include <daemon/log.h>
-#include <daemon/daemonize.h>
 
 #include <string.h>
 #include <errno.h>
@@ -185,9 +184,6 @@ ChildProcessRegistry::OnSigChld(int)
 
     struct rusage rusage;
     while ((pid = wait4(-1, &status, WNOHANG, &rusage)) > 0) {
-        if (daemonize_child_exited(pid, status))
-            continue;
-
         OnExit(pid, status, rusage);
     }
 

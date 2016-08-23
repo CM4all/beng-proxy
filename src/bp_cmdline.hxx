@@ -18,7 +18,7 @@ extern bool debug_mode;
 #endif
 
 struct BpCmdLine {
-    struct daemon_user user;
+    struct daemon_user user, logger_user;
 
     const char *access_logger = nullptr;
 

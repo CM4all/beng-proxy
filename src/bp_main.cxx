@@ -53,7 +53,6 @@
 #include "util/Macros.hxx"
 #include "util/PrintException.hxx"
 
-#include <daemon/daemonize.h>
 #include <daemon/log.h>
 
 #include <systemd/sd-daemon.h>
@@ -215,8 +214,6 @@ BpInstance::ReloadEventCallback(int)
     daemon_log(3, "caught SIGHUP, flushing all caches (pid=%d)\n",
                (int)getpid());
 
-    daemonize_reopen_logfile();
-
     translate_cache_flush(*translate_cache);
     http_cache_flush(*http_cache);
     if (filter_cache != nullptr)
@@ -287,8 +284,6 @@ add_tcp_listener(BpInstance *instance, int port, const char *tag)
 
 int main(int argc, char **argv)
 try {
-    int ret;
-
 #ifndef NDEBUG
     if (geteuid() != 0)
         debug_mode = true;
@@ -327,14 +322,6 @@ try {
         /* in single-worker mode with watchdog master process, let
            only the one worker handle control commands */
         global_control_handler_disable(instance);
-
-    /* daemonize */
-
-    ret = daemonize();
-    if (ret < 0)
-        exit(2);
-
-    /* post-daemon initialization */
 
     fb_pool_init(instance.event_loop, true);
 
@@ -480,7 +467,7 @@ try {
     /* launch the access logger */
 
     if (!log_global_init(instance.cmdline.access_logger,
-                         &daemon_config.logger_user))
+                         &instance.cmdline.logger_user))
         return EXIT_FAILURE;
 
     /* daemonize II */
@@ -533,8 +520,6 @@ try {
     ssl_client_deinit();
 
     crash_global_deinit();
-
-    daemonize_cleanup();
 
     ua_classification_deinit();
 } catch (const std::exception &e) {

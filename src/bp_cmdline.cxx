@@ -14,7 +14,6 @@
 #include "util/Error.hxx"
 #include "util/IterableSplitString.hxx"
 
-#include <daemon/daemonize.h>
 #include <daemon/log.h>
 
 #include <systemd/sd-daemon.h>
@@ -44,6 +43,7 @@ extern char ARGS_ESCAPE_CHAR;
 BpCmdLine::BpCmdLine()
 {
     memset(&user, 0, sizeof(user));
+    memset(&logger_user, 0, sizeof(logger_user));
 }
 
 static void usage(void) {
@@ -75,14 +75,6 @@ static void usage(void) {
          " -A program     specifies an access logger program (executed by /bin/sh)\n"
          "                \"internal\" logs into the error log\n"
          "                \"null\" disables the access logger\n"
-#ifdef __GLIBC__
-         " --no-daemon\n"
-#endif
-         " -D             don't detach (daemonize)\n"
-#ifdef __GLIBC__
-         " --pidfile file\n"
-#endif
-         " -P file        create a pid file\n"
 #ifdef __GLIBC__
          " --user name\n"
 #endif
@@ -464,10 +456,10 @@ parse_cmdline(BpCmdLine &cmdline, BpConfig &config, int argc, char **argv)
         {"version", 0, NULL, 'V'},
         {"verbose", 0, NULL, 'v'},
         {"quiet", 0, NULL, 'q'},
-        {"logger", 1, NULL, 'l'},
+        {"logger", 1, NULL, 'l'}, /* obsolete */
         {"access-logger", 1, NULL, 'A'},
-        {"no-daemon", 0, NULL, 'D'},
-        {"pidfile", 1, NULL, 'P'},
+        {"no-daemon", 0, NULL, 'D'}, /* obsolete */
+        {"pidfile", 1, NULL, 'P'}, /* obsolete */
         {"user", 1, NULL, 'u'},
         {"group", 1, NULL, 'g'},
         {"logger-user", 1, NULL, 'U'},
@@ -527,15 +519,9 @@ parse_cmdline(BpCmdLine &cmdline, BpConfig &config, int argc, char **argv)
             break;
 
         case 'D':
-            daemon_config.detach = 0;
-            break;
-
         case 'P':
-            daemon_config.pidfile = optarg;
-            break;
-
         case 'l':
-            daemon_config.logger = *optarg == 0 ? nullptr : optarg;
+            /* obsolete */
             break;
 
         case 'A':
@@ -574,7 +560,7 @@ parse_cmdline(BpCmdLine &cmdline, BpConfig &config, int argc, char **argv)
             if (debug_mode)
                 arg_error(argv[0], "cannot specify a user in debug mode");
 
-            daemon_user_by_name(&daemon_config.logger_user, optarg, NULL);
+            daemon_user_by_name(&cmdline.logger_user, optarg, NULL);
             break;
 
         case 'p':

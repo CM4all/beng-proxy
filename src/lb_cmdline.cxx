@@ -7,7 +7,6 @@
 #include "lb_cmdline.hxx"
 #include "stopwatch.hxx"
 
-#include <daemon/daemonize.h>
 #include <daemon/log.h>
 
 #include <systemd/sd-daemon.h>
@@ -45,23 +44,11 @@ static void usage(void) {
          " -C             check configuration file syntax\n"
 #endif
 #ifdef __GLIBC__
-         " --logger program\n"
-#endif
-         " -l program     specifies an error logger program (executed by /bin/sh)\n"
-#ifdef __GLIBC__
          " --access-logger program\n"
 #endif
          " -A program     specifies an access logger program (executed by /bin/sh)\n"
          "                \"internal\" logs into the error log\n"
          "                \"null\" disables the access logger\n"
-#ifdef __GLIBC__
-         " --no-daemon\n"
-#endif
-         " -D             don't detach (daemonize)\n"
-#ifdef __GLIBC__
-         " --pidfile file\n"
-#endif
-         " -P file        create a pid file\n"
 #ifdef __GLIBC__
          " --user name\n"
 #endif
@@ -73,7 +60,7 @@ static void usage(void) {
 #ifdef __GLIBC__
          " --logger-user name\n"
 #endif
-         " -U name        execute the error logger program with this user id\n"
+         " -U name        execute the access logger program with this user id\n"
 #ifdef __GLIBC__
          " --watchdog\n"
 #endif
@@ -160,10 +147,10 @@ parse_cmdline(struct lb_cmdline *config,
         {"quiet", 0, NULL, 'q'},
         {"config-file", 1, NULL, 'f'},
         {"check", 0, NULL, 'C'},
-        {"logger", 1, NULL, 'l'},
+        {"logger", 1, NULL, 'l'}, /* obsolete */
         {"access-logger", 1, NULL, 'A'},
-        {"no-daemon", 0, NULL, 'D'},
-        {"pidfile", 1, NULL, 'P'},
+        {"no-daemon", 0, NULL, 'D'}, /* obsolete */
+        {"pidfile", 1, NULL, 'P'}, /* obsolete */
         {"user", 1, NULL, 'u'},
         {"group", 1, NULL, 'g'},
         {"logger-user", 1, NULL, 'U'},
@@ -213,15 +200,9 @@ parse_cmdline(struct lb_cmdline *config,
             break;
 
         case 'D':
-            daemon_config.detach = 0;
-            break;
-
         case 'P':
-            daemon_config.pidfile = optarg;
-            break;
-
         case 'l':
-            daemon_config.logger = *optarg == 0 ? nullptr : optarg;
+            /* obsolete */
             break;
 
         case 'A':
@@ -238,7 +219,7 @@ parse_cmdline(struct lb_cmdline *config,
             break;
 
         case 'U':
-            daemon_user_by_name(&daemon_config.logger_user, optarg, NULL);
+            daemon_user_by_name(&config->logger_user, optarg, NULL);
             break;
 
         case 'W':

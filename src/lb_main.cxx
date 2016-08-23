@@ -31,7 +31,6 @@
 #include "util/Macros.hxx"
 
 #include <daemon/log.h>
-#include <daemon/daemonize.h>
 
 #include <systemd/sd-daemon.h>
 #include <postgresql/libpq-fe.h>
@@ -173,8 +172,6 @@ LbInstance::ShutdownCallback()
 void
 LbInstance::ReloadEventCallback(int)
 {
-    daemonize_reopen_logfile();
-
     unsigned n_ssl_sessions = FlushSSLSessionCache(LONG_MAX);
     daemon_log(3, "flushed %u SSL sessions\n", n_ssl_sessions);
 
@@ -255,13 +252,6 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    /* daemonize */
-
-    if (daemonize() < 0)
-        exit(2);
-
-    /* post-daemon initialization */
-
     fb_pool_init(instance.event_loop, false);
 
     instance.balancer = balancer_new(*instance.pool, instance.event_loop);
@@ -278,7 +268,7 @@ int main(int argc, char **argv)
     /* launch the access logger */
 
     if (!log_global_init(instance.cmdline.access_logger,
-                         &daemon_config.logger_user))
+                         &instance.cmdline.logger_user))
         return EXIT_FAILURE;
 
     /* daemonize II */
@@ -338,6 +328,4 @@ int main(int argc, char **argv)
     delete instance.config;
 
     pool_recycler_clear();
-
-    daemonize_cleanup();
 }

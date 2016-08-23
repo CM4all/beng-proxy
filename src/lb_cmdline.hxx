@@ -21,7 +21,7 @@ struct ListenerConfig {
 };
 
 struct lb_cmdline {
-    struct daemon_user user;
+    struct daemon_user user, logger_user;
 
     /**
      * The configuration file.
@@ -47,6 +47,7 @@ struct lb_cmdline {
 
     lb_cmdline() {
         memset(&user, 0, sizeof(user));
+        memset(&logger_user, 0, sizeof(logger_user));
     }
 };
 
