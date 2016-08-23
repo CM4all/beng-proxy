@@ -47,7 +47,7 @@ struct BpConfig {
 
     const char *document_root = "/var/www";
 
-    const char *translation_socket = nullptr;
+    const char *translation_socket = "@translation";
 
     AddressInfo memcached_server;
 
