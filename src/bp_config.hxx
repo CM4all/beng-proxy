@@ -35,8 +35,6 @@ struct BpConfig {
 
     std::string session_cookie = "beng_proxy_session";
 
-    bool dynamic_session_cookie = false;
-
     std::chrono::seconds session_idle_timeout = std::chrono::minutes(30);
 
     const char *session_save_path = nullptr;
@@ -79,6 +77,8 @@ struct BpConfig {
     unsigned was_stock_limit = 0, was_stock_max_idle = 16;
 
     unsigned cluster_size = 0, cluster_node = 0;
+
+    bool dynamic_session_cookie = false;
 
     /**
      * Dump widget trees to the log file?
