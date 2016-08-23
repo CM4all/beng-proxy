@@ -11,7 +11,6 @@
 #include "pool.hxx"
 #include "ua_classification.hxx"
 #include "util/StringView.hxx"
-#include "util/StringParser.hxx"
 #include "util/Error.hxx"
 #include "util/IterableSplitString.hxx"
 
@@ -194,55 +193,6 @@ ParseListenerConfig(const char *s,
         list.emplace_front(i, tag);
 }
 
-static void
-handle_set2(BpConfig &config, StringView name, const char *value)
-{
-    if (name.Equals("max_connections")) {
-        config.max_connections = ParsePositiveLong(value, 1024 * 1024);
-    } else if (name.Equals("tcp_stock_limit")) {
-        config.tcp_stock_limit = ParseUnsignedLong(value);
-    } else if (name.Equals("fcgi_stock_limit")) {
-        config.fcgi_stock_limit = ParseUnsignedLong(value);
-    } else if (name.Equals("fcgi_stock_max_idle")) {
-        config.fcgi_stock_max_idle = ParseUnsignedLong(value);
-    } else if (name.Equals("was_stock_limit")) {
-        config.was_stock_limit = ParseUnsignedLong(value);
-    } else if (name.Equals("was_stock_max_idle")) {
-        config.was_stock_max_idle = ParseUnsignedLong(value);
-    } else if (name.Equals("http_cache_size")) {
-        config.http_cache_size = ParseSize(value);
-        config.http_cache_size_set = true;
-    } else if (name.Equals("filter_cache_size")) {
-        config.filter_cache_size = ParseSize(value);
-#ifdef HAVE_LIBNFS
-    } else if (name.Equals("nfs_cache_size")) {
-        config.nfs_cache_size = ParseSize(value);
-#endif
-    } else if (name.Equals("translate_cache_size")) {
-        config.translate_cache_size = ParseUnsignedLong(value);
-    } else if (name.Equals("translate_stock_limit")) {
-        config.translate_stock_limit = ParseUnsignedLong(value);
-    } else if (name.Equals("stopwatch")) {
-        config.stopwatch = ParseBool(value);
-    } else if (name.Equals("dump_widget_tree")) {
-        config.dump_widget_tree = ParseBool(value);
-    } else if (name.Equals("verbose_response")) {
-        config.verbose_response = ParseBool(value);
-    } else if (name.Equals("session_cookie")) {
-        if (*value == 0)
-            throw std::runtime_error("Invalid value");
-
-        config.session_cookie = value;
-    } else if (name.Equals("dynamic_session_cookie")) {
-        config.dynamic_session_cookie = ParseBool(value);
-    } else if (name.Equals("session_idle_timeout")) {
-        config.session_idle_timeout = ParsePositiveDuration(value);
-    } else if (name.Equals("session_save_path")) {
-        config.session_save_path = value;
-    } else
-        throw std::runtime_error("Unknown variable");
-}
-
 template<typename F>
 static void
 SplitForEach(const char *p, char separator, F &&f)
@@ -297,7 +247,7 @@ handle_set(BpConfig &config,
     const char *const value = eq + 1;
 
     try {
-        handle_set2(config, name, value);
+        config.HandleSet(name, value);
     } catch (const std::runtime_error &e) {
         arg_error(argv0, "Error while parsing \"--set %.*s\": %s",
                   (int)name.size, name.data, e.what());

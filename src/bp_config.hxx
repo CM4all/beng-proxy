@@ -17,6 +17,8 @@
 
 #include <stddef.h>
 
+struct StringView;
+
 struct ListenerConfig {
     AllocatedSocketAddress address;
 
@@ -95,6 +97,8 @@ struct BpConfig {
     bool stopwatch = false;
 
     SpawnConfig spawn;
+
+    void HandleSet(StringView name, const char *value);
 };
 
 #endif
