@@ -13,7 +13,7 @@
 
 #include <string.h>
 
-static const char ARGS_ESCAPE_CHAR = '$';
+static constexpr char ARGS_ESCAPE_CHAR = '$';
 
 StringMap *
 args_parse(struct pool *pool, const char *p, size_t length)
