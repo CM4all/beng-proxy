@@ -92,6 +92,8 @@ struct BpConfig {
 
     bool verbose_response = false;
 
+    bool stopwatch = false;
+
     SpawnConfig spawn;
 };
 

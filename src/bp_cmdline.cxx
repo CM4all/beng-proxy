@@ -8,7 +8,6 @@
 #include "bp_config.hxx"
 #include "net/AddressInfo.hxx"
 #include "net/Resolver.hxx"
-#include "stopwatch.hxx"
 #include "pool.hxx"
 #include "ua_classification.hxx"
 #include "util/StringView.hxx"
@@ -224,8 +223,7 @@ handle_set2(BpConfig &config, StringView name, const char *value)
     } else if (name.Equals("translate_stock_limit")) {
         config.translate_stock_limit = ParseUnsignedLong(value);
     } else if (name.Equals("stopwatch")) {
-        if (ParseBool(value))
-            stopwatch_enable();
+        config.stopwatch = ParseBool(value);
     } else if (name.Equals("dump_widget_tree")) {
         config.dump_widget_tree = ParseBool(value);
     } else if (name.Equals("verbose_response")) {
