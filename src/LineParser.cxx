@@ -165,6 +165,16 @@ LineParser::NextPositiveInteger()
     return (unsigned)l;
 }
 
+const char *
+LineParser::ExpectWord()
+{
+    const char *value = NextWord();
+    if (value == nullptr)
+        throw Error("Word expected");
+
+    return value;
+}
+
 char *
 LineParser::ExpectValue()
 {

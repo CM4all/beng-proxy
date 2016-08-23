@@ -151,9 +151,7 @@ private:
 void
 LbConfigParser::Control::ParseLine(LineParser &line)
 {
-    const char *word = line.NextWord();
-    if (word == nullptr)
-        throw LineParser::Error("Syntax error");
+    const char *word = line.ExpectWord();
 
     if (strcmp(word, "bind") == 0) {
         const char *address = line.ExpectValueAndEnd();
@@ -184,9 +182,7 @@ LbConfigParser::CreateControl(LineParser &line)
 void
 LbConfigParser::CertDatabase::ParseLine(LineParser &line)
 {
-    const char *word = line.NextWord();
-    if (word == nullptr)
-        throw std::runtime_error("Syntax error");
+    const char *word = line.ExpectWord();
 
     if (strcmp(word, "connect") == 0) {
         config.connect = line.ExpectValueAndEnd();
@@ -248,9 +244,7 @@ LbConfigParser::CreateCertDatabase(LineParser &line)
 void
 LbConfigParser::Monitor::ParseLine(LineParser &line)
 {
-    const char *word = line.NextWord();
-    if (word == nullptr)
-        throw LineParser::Error("Syntax error");
+    const char *word = line.ExpectWord();
 
     if (strcmp(word, "type") == 0) {
         if (config.type != LbMonitorConfig::Type::NONE)
@@ -344,9 +338,7 @@ LbConfigParser::CreateMonitor(LineParser &line)
 void
 LbConfigParser::Node::ParseLine(LineParser &line)
 {
-    const char *word = line.NextWord();
-    if (word == nullptr)
-        throw LineParser::Error("Syntax error");
+    const char *word = line.ExpectWord();
 
     if (strcmp(word, "address") == 0) {
         if (!config.address.IsNull())
@@ -470,9 +462,7 @@ ParseStickyMode(const char *s)
 void
 LbConfigParser::Cluster::ParseLine(LineParser &line)
 {
-    const char *word = line.NextWord();
-    if (word == nullptr)
-        throw LineParser::Error("Syntax error");
+    const char *word = line.ExpectWord();
 
     if (strcmp(word, "name") == 0) {
         config.name = line.ExpectValueAndEnd();
@@ -656,9 +646,7 @@ parse_attribute_reference(LbAttributeReference &a, const char *p)
 void
 LbConfigParser::Branch::ParseLine(LineParser &line)
 {
-    const char *word = line.NextWord();
-    if (word == nullptr)
-        throw LineParser::Error("Syntax error");
+    const char *word = line.ExpectWord();
 
     if (strcmp(word, "goto") == 0) {
         const char *name = line.ExpectValue();
@@ -771,9 +759,7 @@ LbConfigParser::CreateBranch(LineParser &line)
 void
 LbConfigParser::Listener::ParseLine(LineParser &line)
 {
-    const char *word = line.NextWord();
-    if (word == nullptr)
-        throw LineParser::Error("Syntax error");
+    const char *word = line.ExpectWord();
 
     if (strcmp(word, "bind") == 0) {
         const char *address = line.ExpectValueAndEnd();
@@ -916,9 +902,7 @@ LbConfigParser::CreateListener(LineParser &line)
 void
 LbConfigParser::ParseLine2(LineParser &line)
 {
-    const char *word = line.NextWord();
-    if (word == nullptr)
-        throw LineParser::Error("Syntax error");
+    const char *word = line.ExpectWord();
 
     if (strcmp(word, "node") == 0)
         CreateNode(line);

@@ -48,11 +48,17 @@ public:
             throw Error(std::string("Unexpected tokens at end of line: ") + p);
     }
 
-    void ExpectSymbolAndEol(char symbol) {
+    void ExpectSymbol(char symbol) {
         if (front() != symbol)
             throw Error(std::string("'") + symbol + "' expected");
 
         ++p;
+        Strip();
+    }
+
+    void ExpectSymbolAndEol(char symbol) {
+        ExpectSymbol(symbol);
+
         if (!IsEnd())
             throw Error(std::string("Unexpected tokens after '")
                         + symbol + "': " + p);
@@ -85,6 +91,8 @@ public:
 
     bool NextBool();
     unsigned NextPositiveInteger();
+
+    const char *ExpectWord();
 
     /**
      * Expect a non-empty value.
