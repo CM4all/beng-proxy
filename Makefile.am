@@ -2276,7 +2276,7 @@ if DOCUMENTATION
 
 TEX_VARS =
 TEX_FLAGS = --interaction=nonstopmode --no-shell-escape --output-format=pdf
-TEX_RUN = $(TEX_VARS) pdflatex $(TEX_FLAGS) --output-directory=$(@D)
+TEX_RUN = $(TEX_VARS) lualatex $(TEX_FLAGS) --output-directory=$(@D)
 
 doc/beng.pdf: $(srcdir)/doc/beng.tex
 	@mkdir -p $(@D)
