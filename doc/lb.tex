@@ -1,7 +1,9 @@
 \documentclass[a4paper,12pt]{article}
 \usepackage[utf8]{luainputenc}
 \usepackage{hyperref}
-\usepackage{tabularx}
+\usepackage{longtable}
+\usepackage{tabu}
+\tabulinesep=2mm
 
 \begin{document}
 \title{CM4all Beng Load Balancer}
@@ -190,8 +192,7 @@ pool or another branch.
 
 The following ``variables'' are available:
 
-\smallskip
-\noindent\begin{tabularx}{\textwidth}{|l|X|}
+\begin{longtabu*}{|l|X|}
 \hline
 \verb|$request_method| & the HTTP request method (``\texttt{GET}'',
 ``\texttt{POST}'', ...) \\
@@ -201,13 +202,11 @@ The following ``variables'' are available:
 \verb|$http_header_name| & a HTTP request header with the
 specified name, lower case, dashes converted to underscore \\
 \hline
-\end{tabularx}
-\smallskip
+\end{longtabu*}
 
 The following operators are available:
 
-\smallskip
-\noindent\begin{tabularx}{\textwidth}{|l|X|}
+\begin{longtabu*}{|l|X|}
 \hline
 \verb|==| & check the value for equality \\
 \hline
@@ -217,8 +216,7 @@ The following operators are available:
 \hline
 \verb|!~| & Perl-compatible regular expression mismatch \\
 \hline
-\end{tabularx}
-\smallskip
+\end{longtabu*}
 
 The last token is a quoted string decpiting the value to compare with,
 or the regular expression.

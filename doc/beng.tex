@@ -2,7 +2,8 @@
 \usepackage[utf8]{luainputenc}
 \usepackage{hyperref}
 \usepackage{longtable}
-\usepackage{tabularx}
+\usepackage{tabu}
+\tabulinesep=2mm
 
 \begin{document}
 \title{CM4all beng-proxy}
@@ -94,7 +95,7 @@ server of your choice.
 The command line argument \texttt{--set} allows you to tweak some
 settings:
 
-\begin{longtable}{|l|p{8cm}|}
+\begin{longtabu*} {|l|X|}
 \hline
 
 \verb|session_cookie| & The name of the session cookie.  The
@@ -188,7 +189,7 @@ load the sessions from there.  This option allows restarting the
 server without losing sessions.  \\
 
 \hline
-\end{longtable}
+\end{longtabu*}
 
 \label{memcached}
 You may specify \texttt{--memcached-server} followed by a server name.
@@ -681,7 +682,7 @@ just the raw string, without terminating zero.
 
 \subsection{Request}
 
-\begin{longtable}{|l|p{10cm}|}
+\begin{longtabu*}{|l|X|}
 \hline
 
 \verb|BEGIN| & Begins the request.  The payload is a 8-bit unsigned
@@ -865,12 +866,12 @@ another problem reading the file).  This packet is implicitly on
 
 \hline
 
-\end{longtable}
+\end{longtabu*}
 
 \subsection{Response}
 \label{tresponse}
 
-\begin{longtable}{|l|p{8cm}|}
+\begin{longtabu*}{|l|X|}
 
 \hline
 
@@ -1493,7 +1494,7 @@ the previous translation response.  Only allowed if the request
 contains a \verb|CHECK| packet. \\
 
 \hline
-\end{longtable}
+\end{longtabu*}
 
 If the translation server does not provide the \verb|CONTENT_TYPE|
 header, \emph{beng-proxy} will attempt to discover the file type from
@@ -1514,7 +1515,7 @@ See \ref{static} for an explanation of static file resources.
 The response packet \verb|PATH| declares a static file that will be
 served.  The following packets are available:
 
-\begin{longtable}{|l|p{8cm}|}
+\begin{longtabu*}{|l|X|}
 \hline
 
 \verb|PATH| & Absolute path of the local file to be served. \\
@@ -1566,7 +1567,7 @@ header.  The payload is a 32 bit integer specifying the number of
 seconds from now. \\
 
 \hline
-\end{longtable}
+\end{longtabu*}
 
 \subsection{Delegates}
 \label{tdelegate}
@@ -1575,7 +1576,7 @@ If \verb|DELEGATE| follows after \verb|PATH|, then this file will be
 opened through the ``delegate'' process.  See \ref{delegate} for an
 explanation.
 
-\begin{longtable}{|l|p{8cm}|}
+\begin{longtabu*}{|l|X|}
 \hline
 
 \verb|DELEGATE| & The payload is the path of the delegate program. \\
@@ -1593,7 +1594,7 @@ explanation.
 \verb|JAILCGI| & enable JailCGI \\
 
 \hline
-\end{longtable}
+\end{longtabu*}
 
 See \ref{rlimits} for how to configure resource limits and \ref{ns}
 for how to configure namespaces.
@@ -1619,7 +1620,7 @@ resources (see \ref{cgi} and \ref{was}).  A ``pipe'' can be used as a
 filter (see \ref{pipe}).  The following packets are used to choose the
 protocol:
 
-\begin{longtable}{|l|p{10cm}|}
+\begin{longtabu*}{|l|X|}
 \hline
 
 \verb|CGI| & a local path which is executed as CGI script \\
@@ -1640,11 +1641,11 @@ To connect to an existing FastCGI server, specify one or more
 prints the modified resource on stdout \\
 
 \hline
-\end{longtable}
+\end{longtabu*}
 
 The following packets can be used to specify more details:
 
-\begin{longtable}{|l|p{8cm}|}
+\begin{longtabu*}{|l|X|}
 \hline
 
 \verb|EXPAND_PATH| & Override the executable path with the given value
@@ -1736,14 +1737,14 @@ match group of \verb|REGEX|.  \scriptsize{(Since version 4.0.33)} \\
 \verb|PATH_INFO| (only CGI, FastCGI and WAS) \\
 
 \hline
-\end{longtable}
+\end{longtabu*}
 
 See \ref{rlimits} for how to configure resource limits and \ref{ns}
 for how to configure namespaces.
 
 \subsection{Local HTTP}
 
-\begin{longtable}{|l|p{8cm}|}
+\begin{longtabu*}{|l|X|}
 \hline
 
 \verb|APPEND| & appends an argument to the command line \\
@@ -1754,7 +1755,7 @@ for how to configure namespaces.
 \verb|APPEND| \\
 
 \hline
-\end{longtable}
+\end{longtabu*}
 
 See \ref{rlimits} for how to configure resource limits and \ref{ns}
 for how to configure namespaces.
@@ -1767,7 +1768,7 @@ processes.  Its payload is a string, a sequence of resource limit
 codes and their respective limit values.  The following resource
 limits are supported:
 
-\begin{longtable}{|l|l|p{10cm}|}
+\begin{longtabu*}{|l|l|X|}
 \hline
 
 \texttt{t} & \texttt{CPU} & CPU time limit in seconds. \\
@@ -1837,7 +1838,7 @@ value can be raised. \\
 may be set for this process. \\
 
 \hline
-\end{longtable}
+\end{longtabu*}
 
 The letter in the first column is the code for the payload, to be
 followed by '!' (for ``unlimited'') or the numeric limit value (with
@@ -2170,15 +2171,15 @@ The translation server provides access to the widget database, where
 all widget servers are registered.  A widget request can use the
 following packets:
 
-\begin{longtable}{|l|p{10cm}|}
+\begin{longtabu*}{|l|X|}
 \hline
 \verb|WIDGET_TYPE| & the name of the widget type \\
 \hline
-\end{longtable}
+\end{longtabu*}
 
 The translation server's response consists of these packets:
 
-\begin{longtable}{|l|p{8cm}|}
+\begin{longtabu*}{|l|X|}
 \hline
 \verb|STATUS| & in case of a lookup error, this packet provides the
 HTTP status code \\
@@ -2265,7 +2266,7 @@ request, the request and response headers will be logged.  Only for
 debugging purposes. \\
 
 \hline
-\end{longtable}
+\end{longtabu*}
 
 
 \subsection{Login translation}
@@ -2277,7 +2278,7 @@ launch the user's processes.
 
 The request contains the following packets:
 
-\begin{longtable}{|l|p{10cm}|}
+\begin{longtabu*}{|l|X|}
 \hline
 
 \verb|LOGIN| & Marks this request as a ``login'' request.  No
@@ -2305,7 +2306,7 @@ verify a password (clear-text in the payload).  A password mismatch
 must result in a negative reply. \\
 
 \hline
-\end{longtable}
+\end{longtabu*}
 
 If the user does not exist, the translation server shall respond with
 \texttt{STATUS=404}.
@@ -2313,7 +2314,7 @@ If the user does not exist, the translation server shall respond with
 A successful response must contain at least \verb|HOME| and
 \verb|UID_GID|:
 
-\begin{longtable}{|l|p{10cm}|}
+\begin{longtabu*}{|l|X|}
 \hline
 
 \verb|HOME| & Path of the user's home directory. \\
@@ -2324,7 +2325,7 @@ A successful response must contain at least \verb|HOME| and
 the child process.  Payload is an array of 32 bit integers. \\
 
 \hline
-\end{longtable}
+\end{longtabu*}
 
 \section{Remote Control Protocol}
 
@@ -2355,7 +2356,7 @@ To enable IP multicast, set the multicast group address with
 
 \subsection{Commands}
 
-\begin{longtable}{|l|p{8cm}|}
+\begin{longtabu*}{|l|X|}
 \hline
 
 \texttt{NOP} & ignored \\
@@ -2386,7 +2387,7 @@ refer to it.  The payload is the node name according to
 lasts for 3 hours. \\
 
 \hline
-\end{longtable}
+\end{longtabu*}
 
 
 \section{Logging Protocol}
@@ -2467,7 +2468,7 @@ Directories are auto-created if they do not exist.
 The following variables are available:
 
 \smallskip
-\noindent\begin{tabularx}{\textwidth}{|l|X|}
+\noindent\begin{tabu} {|l|X|}
 \hline
 \texttt{date} & the date in the form YYYY-mm-dd \\
 \hline
@@ -2483,7 +2484,7 @@ The following variables are available:
 \hline
 \texttt{site} & the name of the ``site'' \\
 \hline
-\end{tabularx}
+\end{tabu}
 \smallskip
 
 Example:
@@ -2788,7 +2789,7 @@ XML parser.
 The following translation packets may be used to configure the
 processor:
 
-\begin{longtable}{|l|p{8cm}|}
+\begin{longtabu*}{|l|X|}
 \hline
 
 \verb|PROCESS| & Enables the processor. \\
@@ -2839,7 +2840,7 @@ specific prefix, see \ref{prefix_css_class}. \\
 for ``style'' element/attribute contents? \\
 
 \hline
-\end{longtable}
+\end{longtabu*}
 
 
 \subsection{Adding a widget}
@@ -2852,7 +2853,7 @@ To add a widget, use the following command:
 
 The following attributes may be specified:
 
-\begin{longtable}{|l|p{8cm}|}
+\begin{longtabu*}{|l|X|}
 \hline
 \texttt{id} & unique identification of this widget; this is required
 for proper session and form management if there are several widgets
@@ -2874,7 +2875,7 @@ default and means that two documents have different sessions;
 \texttt{site} means documents in the same site share session data \\
 
 \hline
-\end{longtable}
+\end{longtabu*}
 
 Registered widgets are not yet implemented.
 
@@ -2941,8 +2942,7 @@ or HTML, and this is only an interim solution until the javascript
 filter is finished.  These entities are (unlike normal HTML entities)
 also expanded in \texttt{SCRIPT} elements.
 
-\smallskip
-\noindent\begin{tabularx}{\textwidth}{|l|X|}
+\begin{longtabu*}{|l|X|}
 \hline
 
 \texttt{\&c:local;} & the ``local'' URI of this widget class (see
@@ -2981,8 +2981,7 @@ this variable for redirecting \\
 \hline
 \texttt{\&c:session;} & the current session id \\
 \hline
-\end{tabularx}
-\smallskip
+\end{longtabu*}
 
 \subsection{Relative URIs}
 \label{rewrite}
@@ -2993,8 +2992,7 @@ widget author cannot specify a link relative to the widget itself.  To
 allow this, \emph{beng-proxy} can rewrite relative links to the
 following bases:
 
-\smallskip
-\noindent\begin{tabularx}{\textwidth}{|l|X|}
+\begin{longtabu*}{|l|X|}
 \hline
 
 \texttt{template} & links are relative to the main template (default)
@@ -3017,17 +3015,15 @@ child widget.  You may append a relative URI separated by a slash. \\
 i.e. the container which declared it \\
 
 \hline
-\end{tabularx}
-\smallskip
+\end{longtabu*}
 
 The base name must be specified in the element attribute
 \texttt{c:base} before the attribute containing the URI.  To specify
 the mode of the rewritten URI, you may use the attribute
 \texttt{c:mode}:
 
-\smallskip
 \label{c_mode}
-\noindent\begin{tabularx}{\textwidth}{|l|X|}
+\begin{longtabu*}{|l|X|}
 \hline
 
 \texttt{direct} & direct link to the resource \\
@@ -3048,8 +3044,7 @@ widget; useful for frame contents \\
 response body \\
 
 \hline
-\end{tabularx}
-\smallskip
+\end{longtabu*}
 
 The mode is ignored when the base is ``\texttt{template}''.
 
@@ -3209,7 +3204,7 @@ different widget than the current one.
 
 \texttt{mode} is one of the following:
 
-\begin{longtable}{|l|p{11cm}|}
+\begin{longtabu*}{|l|X|}
 \hline
 
 \texttt{focus} & the full page (the default if \texttt{null} is
@@ -3221,7 +3216,7 @@ passed) \\
 \texttt{text/html}) \\
 
 \hline
-\end{longtable}
+\end{longtabu*}
 
 The \texttt{path} argument is an URI relative to the widget.  It may
 include a query string.
@@ -3269,7 +3264,7 @@ body {
 The following translation packets may be used to configure the
 CSS processor:
 
-\begin{longtable}{|l|p{8cm}|}
+\begin{longtabu*}{|l|X|}
 \hline
 
 \verb|PROCESS_CSS| & Enables the CSS processor. \\
@@ -3280,7 +3275,7 @@ CSS processor:
 get a widget specific prefix, see below. \\
 
 \hline
-\end{longtable}
+\end{longtabu*}
 
 
 \subsection{Local Classes}
