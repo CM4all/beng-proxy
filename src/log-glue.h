@@ -13,12 +13,14 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+struct daemon_user;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 bool
-log_global_init(const char *program);
+log_global_init(const char *program, const struct daemon_user *user);
 
 void
 log_global_deinit(void);

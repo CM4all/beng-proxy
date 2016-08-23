@@ -277,7 +277,8 @@ int main(int argc, char **argv)
 
     /* launch the access logger */
 
-    if (!log_global_init(instance.cmdline.access_logger))
+    if (!log_global_init(instance.cmdline.access_logger,
+                         &daemon_config.logger_user))
         return EXIT_FAILURE;
 
     /* daemonize II */
