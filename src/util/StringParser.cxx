@@ -28,6 +28,7 @@
  */
 
 #include "StringParser.hxx"
+#include "StringUtil.hxx"
 
 #include <stdexcept>
 
@@ -75,10 +76,62 @@ ParsePositiveLong(const char *s, unsigned long max_value)
 	return value;
 }
 
+template<size_t OPERAND>
+static size_t
+Multiply(size_t value)
+{
+	static constexpr size_t MAX_INPUT = SIZE_MAX / OPERAND;
+	if (value > MAX_INPUT)
+		throw std::runtime_error("Value too large");
+
+	return value * OPERAND;
+}
+
 size_t
 ParseSize(const char *s)
 {
-	return ParseUnsignedLong(s);
+	char *endptr;
+	size_t value = strtoul(s, &endptr, 10);
+	if (endptr == s)
+		throw std::runtime_error("Failed to parse integer");
+
+	static constexpr size_t KILO = 1024;
+	static constexpr size_t MEGA = 1024 * KILO;
+	static constexpr size_t GIGA = 1024 * MEGA;
+
+	s = StripLeft(endptr);
+
+	switch (*s) {
+	case 'k':
+		value = Multiply<KILO>(value);
+		++s;
+		break;
+
+	case 'M':
+		value = Multiply<MEGA>(value);
+		++s;
+		break;
+
+	case 'G':
+		value = Multiply<GIGA>(value);
+		++s;
+		break;
+
+	case '\0':
+		break;
+
+	default:
+		throw std::runtime_error("Unknown size suffix");
+	}
+
+	/* ignore 'B' for "byte" */
+	if (*s == 'B')
+		++s;
+
+	if (*s != '\0')
+		throw std::runtime_error("Unknown size suffix");
+
+	return value;
 }
 
 std::chrono::seconds
