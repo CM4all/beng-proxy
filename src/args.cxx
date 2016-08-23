@@ -13,13 +13,7 @@
 
 #include <string.h>
 
-#ifdef NDEBUG
 static const char ARGS_ESCAPE_CHAR = '$';
-#else
-/* hack: can be modified in cmdline.c; to be removed after all widgets
-   have been fixed */
-char ARGS_ESCAPE_CHAR = '$';
-#endif
 
 StringMap *
 args_parse(struct pool *pool, const char *p, size_t length)

@@ -35,12 +35,6 @@ enum Options {
     SPAWN_USER,
 };
 
-#ifndef NDEBUG
-/* hack: variable from args.c; to be removed after all widgets have
-   been fixed */
-extern char ARGS_ESCAPE_CHAR;
-#endif
-
 BpCmdLine::BpCmdLine()
 {
     memset(&user, 0, sizeof(user));
@@ -290,13 +284,6 @@ handle_set2(BpConfig &config, StringView name, const char *value)
             config.verbose_response = true;
         else if (strcmp(value, "no") != 0)
             throw std::runtime_error("Invalid value");
-#ifndef NDEBUG
-    } else if (name.Equals("args_escape_char")) {
-        if (value[0] != 0 && value[1] == 0)
-            ARGS_ESCAPE_CHAR = value[0];
-        else
-            throw std::runtime_error("Invalid value");
-#endif
     } else if (name.Equals("session_cookie")) {
         if (*value == 0)
             throw std::runtime_error("Invalid value");
