@@ -203,8 +203,7 @@ ParseListenerConfig(const char *s,
 static bool http_cache_size_set = false;
 
 static void
-handle_set2(BpConfig &config, const char *argv0,
-            StringView name, const char *value)
+handle_set2(BpConfig &config, StringView name, const char *value)
 {
     char *endptr;
     long l;
@@ -212,114 +211,114 @@ handle_set2(BpConfig &config, const char *argv0,
     if (name.Equals("max_connections")) {
         l = strtol(value, &endptr, 10);
         if (*endptr != 0 || l <= 0 || l >= 1024 * 1024)
-            arg_error(argv0, "Invalid value for max_connections");
+            throw std::runtime_error("Invalid value");
 
         config.max_connections = l;
     } else if (name.Equals("tcp_stock_limit")) {
         l = strtol(value, &endptr, 10);
         if (*endptr != 0 || l < 0)
-            arg_error(argv0, "Invalid value for tcp_stock_limit");
+            throw std::runtime_error("Invalid value");
 
         config.tcp_stock_limit = l;
     } else if (name.Equals("fcgi_stock_limit")) {
         l = strtol(value, &endptr, 10);
         if (*endptr != 0 || l < 0)
-            arg_error(argv0, "Invalid value for fastcgi_stock_limit");
+            throw std::runtime_error("Invalid value");
 
         config.fcgi_stock_limit = l;
     } else if (name.Equals("fcgi_stock_max_idle")) {
         l = strtol(value, &endptr, 10);
         if (*endptr != 0 || l < 0)
-            arg_error(argv0, "Invalid value for fastcgi_stock_max_idle");
+            throw std::runtime_error("Invalid value");
 
         config.fcgi_stock_max_idle = l;
     } else if (name.Equals("was_stock_limit")) {
         l = strtol(value, &endptr, 10);
         if (*endptr != 0 || l < 0)
-            arg_error(argv0, "Invalid value for was_stock_limit");
+            throw std::runtime_error("Invalid value");
 
         config.was_stock_limit = l;
     } else if (name.Equals("was_stock_max_idle")) {
         l = strtol(value, &endptr, 10);
         if (*endptr != 0 || l < 0)
-            arg_error(argv0, "Invalid value for was_stock_max_idle");
+            throw std::runtime_error("Invalid value");
 
         config.was_stock_max_idle = l;
     } else if (name.Equals("http_cache_size")) {
         l = strtol(value, &endptr, 10);
         if (*endptr != 0 || l < 0)
-            arg_error(argv0, "Invalid value for http_cache_size");
+            throw std::runtime_error("Invalid value");
 
         config.http_cache_size = l;
         http_cache_size_set = true;
     } else if (name.Equals("filter_cache_size")) {
         l = strtol(value, &endptr, 10);
         if (*endptr != 0 || l < 0)
-            arg_error(argv0, "Invalid value for filter_cache_size");
+            throw std::runtime_error("Invalid value");
 
         config.filter_cache_size = l;
 #ifdef HAVE_LIBNFS
     } else if (name.Equals("nfs_cache_size")) {
         l = strtol(value, &endptr, 10);
         if (*endptr != 0 || l < 0)
-            arg_error(argv0, "Invalid value for nfs_cache_size");
+            throw std::runtime_error("Invalid value");
 
         config.nfs_cache_size = l;
 #endif
     } else if (name.Equals("translate_cache_size")) {
         l = strtol(value, &endptr, 10);
         if (*endptr != 0 || l < 0)
-            arg_error(argv0, "Invalid value for translate_cache_size");
+            throw std::runtime_error("Invalid value");
 
         config.translate_cache_size = l;
     } else if (name.Equals("translate_stock_limit")) {
         l = strtol(value, &endptr, 10);
         if (*endptr != 0 || l < 0)
-            arg_error(argv0, "Invalid value for translate_stock_limit");
+            throw std::runtime_error("Invalid value");
 
         config.translate_stock_limit = l;
     } else if (name.Equals("stopwatch")) {
         if (strcmp(value, "yes") == 0)
             stopwatch_enable();
         else if (strcmp(value, "no") != 0)
-            arg_error(argv0, "Invalid value for stopwatch");
+            throw std::runtime_error("Invalid value");
     } else if (name.Equals("dump_widget_tree")) {
         if (strcmp(value, "yes") == 0)
             config.dump_widget_tree = true;
         else if (strcmp(value, "no") != 0)
-            arg_error(argv0, "Invalid value for dump_widget_tree");
+            throw std::runtime_error("Invalid value");
     } else if (name.Equals("verbose_response")) {
         if (strcmp(value, "yes") == 0)
             config.verbose_response = true;
         else if (strcmp(value, "no") != 0)
-            arg_error(argv0, "Invalid value for verbose_response");
+            throw std::runtime_error("Invalid value");
 #ifndef NDEBUG
     } else if (name.Equals("args_escape_char")) {
         if (value[0] != 0 && value[1] == 0)
             ARGS_ESCAPE_CHAR = value[0];
         else
-            arg_error(argv0, "Invalid value for args_escape_char");
+            throw std::runtime_error("Invalid value");
 #endif
     } else if (name.Equals("session_cookie")) {
         if (*value == 0)
-            arg_error(argv0, "Invalid value for session_cookie");
+            throw std::runtime_error("Invalid value");
 
         config.session_cookie = value;
     } else if (name.Equals("dynamic_session_cookie")) {
         if (strcmp(value, "yes") == 0)
             config.dynamic_session_cookie = true;
         else if (strcmp(value, "no") != 0)
-            arg_error(argv0, "Invalid value for dynamic_session_cookie");
+            throw std::runtime_error("Invalid value");
     } else if (name.Equals("session_idle_timeout")) {
         l = strtol(value, &endptr, 10);
         if (*endptr != 0 || l <= 0)
-            arg_error(argv0, "Invalid value for session_idle_timeout");
+            throw std::runtime_error("Invalid value");
 
         config.session_idle_timeout = std::chrono::seconds(l);
     } else if (name.Equals("session_save_path")) {
         config.session_save_path = value;
     } else
-        arg_error(argv0, "Unknown variable: %.*s", (int)name.size, name.data);
+        throw std::runtime_error("Unknown variable");
 }
 
 template<typename F>
@@ -375,7 +374,12 @@ handle_set(BpConfig &config,
     const StringView name(p, eq - p);
     const char *const value = eq + 1;
 
-    handle_set2(config, argv0, name, value);
+    try {
+        handle_set2(config, name, value);
+    } catch (const std::runtime_error &e) {
+        arg_error(argv0, "Error while parsing \"--set %.*s\": %s",
+                  (int)name.size, name.data, e.what());
+    }
 }
 
 static void
