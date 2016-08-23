@@ -12,6 +12,7 @@
 #include "pool.hxx"
 #include "ua_classification.hxx"
 #include "util/StringView.hxx"
+#include "util/StringParser.hxx"
 #include "util/Error.hxx"
 #include "util/IterableSplitString.hxx"
 
@@ -197,109 +198,47 @@ ParseListenerConfig(const char *s,
 static void
 handle_set2(BpConfig &config, StringView name, const char *value)
 {
-    char *endptr;
-    long l;
-
     if (name.Equals("max_connections")) {
-        l = strtol(value, &endptr, 10);
-        if (*endptr != 0 || l <= 0 || l >= 1024 * 1024)
-            throw std::runtime_error("Invalid value");
-
-        config.max_connections = l;
+        config.max_connections = ParsePositiveLong(value, 1024 * 1024);
     } else if (name.Equals("tcp_stock_limit")) {
-        l = strtol(value, &endptr, 10);
-        if (*endptr != 0 || l < 0)
-            throw std::runtime_error("Invalid value");
-
-        config.tcp_stock_limit = l;
+        config.tcp_stock_limit = ParseUnsignedLong(value);
     } else if (name.Equals("fcgi_stock_limit")) {
-        l = strtol(value, &endptr, 10);
-        if (*endptr != 0 || l < 0)
-            throw std::runtime_error("Invalid value");
-
-        config.fcgi_stock_limit = l;
+        config.fcgi_stock_limit = ParseUnsignedLong(value);
     } else if (name.Equals("fcgi_stock_max_idle")) {
-        l = strtol(value, &endptr, 10);
-        if (*endptr != 0 || l < 0)
-            throw std::runtime_error("Invalid value");
-
-        config.fcgi_stock_max_idle = l;
+        config.fcgi_stock_max_idle = ParseUnsignedLong(value);
     } else if (name.Equals("was_stock_limit")) {
-        l = strtol(value, &endptr, 10);
-        if (*endptr != 0 || l < 0)
-            throw std::runtime_error("Invalid value");
-
-        config.was_stock_limit = l;
+        config.was_stock_limit = ParseUnsignedLong(value);
     } else if (name.Equals("was_stock_max_idle")) {
-        l = strtol(value, &endptr, 10);
-        if (*endptr != 0 || l < 0)
-            throw std::runtime_error("Invalid value");
-
-        config.was_stock_max_idle = l;
+        config.was_stock_max_idle = ParseUnsignedLong(value);
     } else if (name.Equals("http_cache_size")) {
-        l = strtol(value, &endptr, 10);
-        if (*endptr != 0 || l < 0)
-            throw std::runtime_error("Invalid value");
-
-        config.http_cache_size = l;
+        config.http_cache_size = ParseSize(value);
         config.http_cache_size_set = true;
     } else if (name.Equals("filter_cache_size")) {
-        l = strtol(value, &endptr, 10);
-        if (*endptr != 0 || l < 0)
-            throw std::runtime_error("Invalid value");
-
-        config.filter_cache_size = l;
+        config.filter_cache_size = ParseSize(value);
 #ifdef HAVE_LIBNFS
     } else if (name.Equals("nfs_cache_size")) {
-        l = strtol(value, &endptr, 10);
-        if (*endptr != 0 || l < 0)
-            throw std::runtime_error("Invalid value");
-
-        config.nfs_cache_size = l;
+        config.nfs_cache_size = ParseSize(value);
 #endif
     } else if (name.Equals("translate_cache_size")) {
-        l = strtol(value, &endptr, 10);
-        if (*endptr != 0 || l < 0)
-            throw std::runtime_error("Invalid value");
-
-        config.translate_cache_size = l;
+        config.translate_cache_size = ParseUnsignedLong(value);
     } else if (name.Equals("translate_stock_limit")) {
-        l = strtol(value, &endptr, 10);
-        if (*endptr != 0 || l < 0)
-            throw std::runtime_error("Invalid value");
-
-        config.translate_stock_limit = l;
+        config.translate_stock_limit = ParseUnsignedLong(value);
     } else if (name.Equals("stopwatch")) {
-        if (strcmp(value, "yes") == 0)
+        if (ParseBool(value))
             stopwatch_enable();
-        else if (strcmp(value, "no") != 0)
-            throw std::runtime_error("Invalid value");
     } else if (name.Equals("dump_widget_tree")) {
-        if (strcmp(value, "yes") == 0)
-            config.dump_widget_tree = true;
-        else if (strcmp(value, "no") != 0)
-            throw std::runtime_error("Invalid value");
+        config.dump_widget_tree = ParseBool(value);
     } else if (name.Equals("verbose_response")) {
-        if (strcmp(value, "yes") == 0)
-            config.verbose_response = true;
-        else if (strcmp(value, "no") != 0)
-            throw std::runtime_error("Invalid value");
+        config.verbose_response = ParseBool(value);
     } else if (name.Equals("session_cookie")) {
         if (*value == 0)
             throw std::runtime_error("Invalid value");
 
         config.session_cookie = value;
     } else if (name.Equals("dynamic_session_cookie")) {
-        if (strcmp(value, "yes") == 0)
-            config.dynamic_session_cookie = true;
-        else if (strcmp(value, "no") != 0)
-            throw std::runtime_error("Invalid value");
+        config.dynamic_session_cookie = ParseBool(value);
     } else if (name.Equals("session_idle_timeout")) {
-        l = strtol(value, &endptr, 10);
-        if (*endptr != 0 || l <= 0)
-            throw std::runtime_error("Invalid value");
-
-        config.session_idle_timeout = std::chrono::seconds(l);
+        config.session_idle_timeout = ParsePositiveDuration(value);
     } else if (name.Equals("session_save_path")) {
         config.session_save_path = value;
     } else

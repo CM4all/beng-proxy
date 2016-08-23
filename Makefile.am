@@ -667,6 +667,7 @@ libutil_a_SOURCES = \
 	src/util/StringAPI.hxx \
 	src/util/StringUtil.cxx src/util/StringUtil.hxx \
 	src/util/StringView.cxx src/util/StringView.hxx \
+	src/util/StringParser.cxx src/util/StringParser.hxx \
 	src/util/StringCompare.hxx \
 	src/util/StringPointer.hxx \
 	src/util/TemplateString.hxx \
