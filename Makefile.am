@@ -2273,15 +2273,20 @@ benchmark: cm4all-beng-proxy
 #
 
 if DOCUMENTATION
+
+TEX_VARS =
+TEX_FLAGS =
+TEX_RUN = $(TEX_VARS) pdflatex $(TEX_FLAGS) --output-directory=$(@D)
+
 doc/beng.pdf: $(srcdir)/doc/beng.tex
 	@mkdir -p $(@D)
-	pdflatex -output-directory $(@D) $<
-	pdflatex -output-directory $(@D) $<
+	$(TEX_RUN) $<
+	$(TEX_RUN) $<
 
 doc/lb.pdf: $(srcdir)/doc/lb.tex
 	@mkdir -p $(@D)
-	pdflatex -output-directory $(@D) $<
-	pdflatex -output-directory $(@D) $<
+	$(TEX_RUN) $<
+	$(TEX_RUN) $<
 endif
 
 #
