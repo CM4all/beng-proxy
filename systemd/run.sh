@@ -10,6 +10,7 @@ LOGGER=""
 LOGGER_USER=cm4all-logger
 ACCESS_LOGGER="null"
 PORT=""
+LISTEN=""
 WORKERS=0
 DOCUMENT_ROOT=/var/www
 TRANSLATION_SOCKET=@translation
