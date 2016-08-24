@@ -96,7 +96,7 @@ control_local_free(LocalControl *cl)
 }
 
 void
-control_local_open(LocalControl *cl)
+control_local_open(LocalControl *cl, EventLoop &event_loop)
 {
     cl->server.reset();
 
@@ -106,7 +106,8 @@ control_local_open(LocalControl *cl)
     sprintf(sa.sun_path + 1, "%s%d", cl->prefix, (int)getpid());
 
     std::unique_ptr<ControlServer> new_server(new ControlServer(*cl));
-    new_server->Open(SocketAddress((const struct sockaddr *)&sa,
+    new_server->Open(event_loop,
+                     SocketAddress((const struct sockaddr *)&sa,
                                    SUN_LEN(&sa) + 1 + strlen(sa.sun_path + 1)));
     cl->server = std::move(new_server);
 }

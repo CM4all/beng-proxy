@@ -267,7 +267,8 @@ global_control_handler_init(BpInstance *instance)
     instance->control_distribute = new ControlDistribute(*instance);
 
     std::unique_ptr<ControlServer> new_server(new ControlServer(*instance->control_distribute));
-    new_server->Open(instance->config.control_listen, group);
+    new_server->Open(instance->event_loop,
+                     instance->config.control_listen, group);
     instance->control_server = new_server.release();
 }
 
@@ -331,5 +332,6 @@ local_control_handler_deinit(BpInstance *instance)
 void
 local_control_handler_open(BpInstance *instance)
 {
-    control_local_open(instance->local_control_server);
+    control_local_open(instance->local_control_server,
+                       instance->event_loop);
 }

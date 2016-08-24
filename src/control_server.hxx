@@ -18,6 +18,7 @@ struct in_addr;
 class SocketAddress;
 class Error;
 class UdpListener;
+class EventLoop;
 
 struct ControlServer final : UdpHandler {
     UdpListener *udp = nullptr;
@@ -29,10 +30,12 @@ struct ControlServer final : UdpHandler {
 
     ~ControlServer();
 
-    void Open(SocketAddress address,
+    void Open(EventLoop &event_loop,
+              SocketAddress address,
               const struct in_addr *group=nullptr);
 
-    void OpenPort(const char *host_and_port, int default_port,
+    void OpenPort(EventLoop &event_loop,
+                  const char *host_and_port, int default_port,
                   const struct in_addr *group);
 
     void Enable();

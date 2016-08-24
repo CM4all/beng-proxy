@@ -43,7 +43,7 @@ try {
 
     DumpUdpHandler handler;
 
-    auto *udp = udp_listener_port_new(listen_host, 1234, handler);
+    auto *udp = udp_listener_port_new(event_loop, listen_host, 1234, handler);
 
     if (mcast_group != nullptr) {
         struct in_addr addr = {

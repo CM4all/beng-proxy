@@ -105,13 +105,15 @@ ControlServer::OnUdpError(Error &&error)
 }
 
 void
-ControlServer::OpenPort(const char *host_and_port, int default_port,
+ControlServer::OpenPort(EventLoop &event_loop,
+                        const char *host_and_port, int default_port,
                         const struct in_addr *group)
 {
     assert(host_and_port != nullptr);
     assert(udp == nullptr);
 
-    udp = udp_listener_port_new(host_and_port, default_port,
+    udp = udp_listener_port_new(event_loop,
+                                host_and_port, default_port,
                                 *this);
 
     if (group != nullptr)
@@ -119,12 +121,13 @@ ControlServer::OpenPort(const char *host_and_port, int default_port,
 }
 
 void
-ControlServer::Open(SocketAddress address,
+ControlServer::Open(EventLoop &event_loop,
+                    SocketAddress address,
                     const struct in_addr *group)
 {
     assert(udp == nullptr);
 
-    udp = udp_listener_new(address, *this);
+    udp = udp_listener_new(event_loop, address, *this);
 
     if (group != nullptr)
         udp->Join4(group);

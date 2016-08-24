@@ -25,11 +25,12 @@
 
 static constexpr Domain udp_listener_domain("udp_listener");
 
-UdpListener::UdpListener(int _fd, UdpHandler &_handler)
-    :fd(_fd), handler(_handler)
+UdpListener::UdpListener(EventLoop &event_loop, int _fd, UdpHandler &_handler)
+    :fd(_fd),
+     event(event_loop, fd, EV_READ|EV_PERSIST,
+           BIND_THIS_METHOD(EventCallback)),
+     handler(_handler)
 {
-    event.Set(fd, EV_READ|EV_PERSIST,
-              MakeSimpleEventCallback(UdpListener, EventCallback), this);
     event.Add();
 }
 
@@ -53,13 +54,12 @@ UdpListener::SetFd(int _fd)
     close(fd);
     fd = _fd;
 
-    event.Set(fd, EV_READ|EV_PERSIST,
-              MakeSimpleEventCallback(UdpListener, EventCallback), this);
+    event.Set(fd, EV_READ|EV_PERSIST);
     event.Add();
 }
 
-inline void
-UdpListener::EventCallback()
+void
+UdpListener::EventCallback(short)
 {
     char buffer[4096];
     struct iovec iov;
@@ -121,7 +121,8 @@ UdpListener::EventCallback()
 }
 
 UdpListener *
-udp_listener_new(SocketAddress address,
+udp_listener_new(EventLoop &event_loop,
+                 SocketAddress address,
                  UdpHandler &handler)
 {
     int fd = socket_cloexec_nonblock(address.GetFamily(),
@@ -163,17 +164,18 @@ udp_listener_new(SocketAddress address,
         throw FormatErrno(e, "Failed to bind to %s", address_string);
     }
 
-    return new UdpListener(fd, handler);
+    return new UdpListener(event_loop, fd, handler);
 }
 
 UdpListener *
-udp_listener_port_new(const char *host_and_port, int default_port,
+udp_listener_port_new(EventLoop &event_loop,
+                      const char *host_and_port, int default_port,
                       UdpHandler &handler)
 {
     assert(host_and_port != nullptr);
 
     auto address = ParseSocketAddress(host_and_port, default_port, true);
-    return udp_listener_new(address, handler);
+    return udp_listener_new(event_loop, address, handler);
 }
 
 void

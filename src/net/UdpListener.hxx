@@ -7,7 +7,7 @@
 #ifndef UDP_LISTENER_HXX
 #define UDP_LISTENER_HXX
 
-#include "event/Event.hxx"
+#include "event/SocketEvent.hxx"
 
 #include <stddef.h>
 
@@ -18,12 +18,12 @@ class Error;
 
 class UdpListener {
     int fd;
-    Event event;
+    SocketEvent event;
 
     UdpHandler &handler;
 
 public:
-    UdpListener(int _fd, UdpHandler &_handler);
+    UdpListener(EventLoop &event_loop, int _fd, UdpHandler &_handler);
     ~UdpListener();
 
     /**
@@ -63,15 +63,17 @@ public:
                Error &error_r);
 
 private:
-    void EventCallback();
+    void EventCallback(short events);
 };
 
 UdpListener *
-udp_listener_new(SocketAddress address,
+udp_listener_new(EventLoop &event_loop,
+                 SocketAddress address,
                  UdpHandler &handler);
 
 UdpListener *
-udp_listener_port_new(const char *host_and_port, int default_port,
+udp_listener_port_new(EventLoop &event_loop,
+                      const char *host_and_port, int default_port,
                       UdpHandler &handler);
 
 #endif

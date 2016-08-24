@@ -51,7 +51,7 @@ try {
 
     Error error;
     ControlServer cs(handler);
-    cs.OpenPort(listen_host, 1234,
+    cs.OpenPort(event_loop, listen_host, 1234,
                 mcast_group != nullptr ? &mcast_group_addr : nullptr);
 
     event_loop.Dispatch();

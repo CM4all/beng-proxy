@@ -10,6 +10,7 @@
 struct LocalControl;
 struct ControlServer;
 class ControlHandler;
+class EventLoop;
 class Error;
 
 LocalControl *
@@ -19,7 +20,7 @@ void
 control_local_free(LocalControl *cl);
 
 void
-control_local_open(LocalControl *cl);
+control_local_open(LocalControl *cl, EventLoop &event_loop);
 
 ControlServer *
 control_local_get(LocalControl *cl);
