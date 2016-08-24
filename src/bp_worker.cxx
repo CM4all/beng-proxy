@@ -100,7 +100,7 @@ BpInstance::SpawnWorker()
 #endif
 
     int distribute_socket = -1;
-    if (config.control_listen != nullptr && config.num_workers != 1) {
+    if (!config.control_listen.empty() && config.num_workers != 1) {
         distribute_socket = global_control_handler_add_fd(this);
         if (distribute_socket < 0) {
             daemon_log(1, "udp_distribute_add() failed: %s\n",

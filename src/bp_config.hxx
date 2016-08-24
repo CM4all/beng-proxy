@@ -45,7 +45,16 @@ struct BpConfig {
 
     const char *session_save_path = nullptr;
 
-    AllocatedSocketAddress control_listen;
+    struct ControlListener {
+        AllocatedSocketAddress address;
+
+        ControlListener() = default;
+
+        explicit ControlListener(SocketAddress _address)
+            :address(_address) {}
+    };
+
+    std::forward_list<ControlListener> control_listen;
 
     const char *multicast_group = nullptr;
 

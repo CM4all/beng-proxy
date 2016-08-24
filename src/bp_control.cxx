@@ -254,7 +254,7 @@ BpInstance::OnControlError(Error &&error)
 void
 global_control_handler_init(BpInstance *instance)
 {
-    if (instance->config.control_listen.IsNull())
+    if (instance->config.control_listen.empty())
         return;
 
     struct in_addr group_buffer;
@@ -267,37 +267,38 @@ global_control_handler_init(BpInstance *instance)
     instance->control_distribute = new ControlDistribute(instance->event_loop,
                                                          *instance);
 
-    std::unique_ptr<ControlServer> new_server(new ControlServer(*instance->control_distribute));
-    new_server->Open(instance->event_loop,
-                     instance->config.control_listen, group);
-    instance->control_server = new_server.release();
+    for (const auto &control_listen : instance->config.control_listen) {
+        instance->control_servers.emplace_front(*instance->control_distribute);
+        auto &new_server = instance->control_servers.front();
+        new_server.Open(instance->event_loop, control_listen.address, group);
+    }
 }
 
 void
 global_control_handler_deinit(BpInstance *instance)
 {
-    delete instance->control_server;
+    instance->control_servers.clear();
     delete instance->control_distribute;
 }
 
 void
 global_control_handler_enable(BpInstance &instance)
 {
-    if (instance.control_server != nullptr)
-        instance.control_server->Enable();
+    for (auto &c : instance.control_servers)
+        c.Enable();
 }
 
 void
 global_control_handler_disable(BpInstance &instance)
 {
-    if (instance.control_server != nullptr)
-        instance.control_server->Disable();
+    for (auto &c : instance.control_servers)
+        c.Disable();
 }
 
 int
 global_control_handler_add_fd(BpInstance *instance)
 {
-    assert(instance->control_server != NULL);
+    assert(!instance->control_servers.empty());
     assert(instance->control_distribute != nullptr);
 
     return instance->control_distribute->Add();
@@ -306,11 +307,17 @@ global_control_handler_add_fd(BpInstance *instance)
 void
 global_control_handler_set_fd(BpInstance *instance, int fd)
 {
-    assert(instance->control_server != NULL);
+    assert(!instance->control_servers.empty());
     assert(instance->control_distribute != nullptr);
 
     instance->control_distribute->Clear();
-    instance->control_server->SetFd(fd);
+
+    /* erase all but one */
+    instance->control_servers.erase_after(instance->control_servers.begin(),
+                                          instance->control_servers.end());
+
+    /* replace the one */
+    instance->control_servers.front().SetFd(fd);
 }
 
 /*

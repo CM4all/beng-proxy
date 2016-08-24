@@ -6,6 +6,7 @@
 
 #include "bp_instance.hxx"
 #include "fb_pool.hxx"
+#include "control_server.hxx"
 #include "DirectResourceLoader.hxx"
 #include "CachedResourceLoader.hxx"
 #include "FilterResourceLoader.hxx"

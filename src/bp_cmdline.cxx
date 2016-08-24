@@ -411,7 +411,7 @@ parse_cmdline(BpCmdLine &cmdline, BpConfig &config, int argc, char **argv)
             break;
 
         case 'c':
-            config.control_listen = ParseSocketAddress(optarg, 5478, true);
+            config.control_listen.emplace_front(ParseSocketAddress(optarg, 5478, true));
             break;
 
         case 'm':

@@ -92,10 +92,10 @@ struct BpInstance final : ControlHandler {
     ControlDistribute *control_distribute = nullptr;
 
     /**
-     * The configured control channel server (see --control-listen),
-     * nullptr if none was configured.
+     * The configured control channel servers (see --control-listen).
+     * May be empty if none was configured.
      */
-    ControlServer *control_server = nullptr;
+    std::forward_list<ControlServer> control_servers;
 
     /**
      * The implicit per-process control server.  It listens on a local
