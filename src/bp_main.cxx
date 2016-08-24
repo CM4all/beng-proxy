@@ -261,11 +261,11 @@ add_listener(BpInstance *instance, SocketAddress address, const char *tag)
 }
 
 static void
-add_tcp_listener(BpInstance *instance, int port, const char *tag)
+add_tcp_listener(BpInstance *instance, int port)
 {
     Error error;
 
-    instance->listeners.emplace_front(*instance, tag);
+    instance->listeners.emplace_front(*instance, nullptr);
     auto &listener = instance->listeners.front();
     if (!listener.ListenTCP(port, error)) {
         fprintf(stderr, "%s\n", error.GetMessage());
@@ -273,14 +273,6 @@ add_tcp_listener(BpInstance *instance, int port, const char *tag)
     }
 
     listener.SetTcpDeferAccept(10);
-
-    if (tag != nullptr) {
-        // TODO: use a configured ZeroConf type
-        char type[64];
-        snprintf(type, sizeof(type), "_%s._tcp", tag);
-        instance->avahi_client.AddService(AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC,
-                                          type, port);
-    }
 }
 
 int main(int argc, char **argv)
@@ -317,7 +309,7 @@ try {
     init_signals(&instance);
 
     for (auto i : instance.config.ports)
-        add_tcp_listener(&instance, i, nullptr);
+        add_tcp_listener(&instance, i);
 
     for (const auto &i : instance.config.listen)
         add_listener(&instance, i.address,
