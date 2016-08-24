@@ -299,7 +299,6 @@ cm4all_beng_proxy_SOURCES = \
 	src/widget_http.cxx src/widget_http.hxx \
 	src/inline_widget.cxx src/inline_widget.hxx \
 	src/frame.cxx src/frame.hxx \
-	src/udp_distribute.cxx src/udp_distribute.hxx \
 	src/istream_gb.cxx src/istream_gb.hxx \
 	src/istream_unlock.cxx src/istream_unlock.hxx \
 	src/ua_classification.cxx src/ua_classification.hxx \
@@ -793,6 +792,7 @@ libnet_a_SOURCES = \
 	src/net/Error.cxx src/net/Error.hxx \
 	src/net/ConnectSocket.cxx src/net/ConnectSocket.hxx \
 	src/net/ServerSocket.cxx src/net/ServerSocket.hxx \
+	src/net/UdpDistribute.cxx src/net/UdpDistribute.hxx \
 	src/net/UdpListener.cxx src/net/UdpListener.hxx \
 	src/net/UdpHandler.hxx \
 	src/net/SocketAddress.cxx src/net/SocketAddress.hxx \

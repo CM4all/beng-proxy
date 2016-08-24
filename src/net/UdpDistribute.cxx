@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "udp_distribute.hxx"
+#include "UdpDistribute.hxx"
 #include "event/Event.hxx"
 #include "event/Callback.hxx"
 #include "system/fd_util.h"

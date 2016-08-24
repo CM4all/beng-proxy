@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_UDP_DISTRIBUTE_HXX
-#define BENG_PROXY_UDP_DISTRIBUTE_HXX
+#ifndef UDP_DISTRIBUTE_HXX
+#define UDP_DISTRIBUTE_HXX
 
 #include <stddef.h>
 

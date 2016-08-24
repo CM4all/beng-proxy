@@ -8,7 +8,7 @@
 #include "control_distribute.hxx"
 #include "control_handler.hxx"
 #include "net/SocketAddress.hxx"
-#include "udp_distribute.hxx"
+#include "net/UdpDistribute.hxx"
 
 #include <utility>
 
