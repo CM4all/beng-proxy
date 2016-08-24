@@ -118,11 +118,15 @@ ControlServer::OpenPort(const char *host_and_port, int default_port,
 }
 
 void
-ControlServer::Open(SocketAddress address)
+ControlServer::Open(SocketAddress address,
+                    const struct in_addr *group)
 {
     assert(udp == nullptr);
 
     udp = udp_listener_new(address, *this);
+
+    if (group != nullptr)
+        udp_listener_join4(udp, group);
 }
 
 ControlServer::~ControlServer()

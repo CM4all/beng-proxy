@@ -28,7 +28,8 @@ struct ControlServer final : UdpHandler {
 
     ~ControlServer();
 
-    void Open(SocketAddress address);
+    void Open(SocketAddress address,
+              const struct in_addr *group=nullptr);
 
     void OpenPort(const char *host_and_port, int default_port,
                   const struct in_addr *group);
