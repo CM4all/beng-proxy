@@ -7,25 +7,50 @@
 #ifndef UDP_DISTRIBUTE_HXX
 #define UDP_DISTRIBUTE_HXX
 
+#include "event/SocketEvent.hxx"
+
+#include <boost/intrusive/list.hpp>
+
 #include <stddef.h>
 
 class EventLoop;
-struct UdpDistribute;
 
-UdpDistribute *
-udp_distribute_new(EventLoop &event_loop);
+class UdpDistribute {
+    struct Recipient
+        : boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::auto_unlink>> {
 
-void
-udp_distribute_free(UdpDistribute *ud);
+        const int fd;
+        SocketEvent event;
 
-void
-udp_distribute_clear(UdpDistribute *ud);
+        Recipient(EventLoop &event_loop, int _fd);
+        ~Recipient();
 
-int
-udp_distribute_add(UdpDistribute *ud);
+        void RemoveAndDestroy() {
+            delete this;
+        }
 
-void
-udp_distribute_packet(UdpDistribute *ud,
-                      const void *payload, size_t payload_length);
+    private:
+        void EventCallback(short) {
+            RemoveAndDestroy();
+        }
+    };
+
+    EventLoop &event_loop;
+
+    boost::intrusive::list<Recipient,
+                           boost::intrusive::constant_time_size<false>> recipients;
+
+public:
+    explicit UdpDistribute(EventLoop &_event_loop):event_loop(_event_loop) {}
+
+    ~UdpDistribute() {
+        Clear();
+    }
+
+    int Add();
+    void Clear();
+
+    void Packet(const void *payload, size_t payload_length);
+};
 
 #endif

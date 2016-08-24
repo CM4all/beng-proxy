@@ -14,26 +14,26 @@
 
 ControlDistribute::ControlDistribute(EventLoop &event_loop,
                                      ControlHandler &_next_handler)
-    :distribute(udp_distribute_new(event_loop)),
+    :distribute(new UdpDistribute(event_loop)),
      next_handler(_next_handler)
 {
 }
 
 ControlDistribute::~ControlDistribute()
 {
-    udp_distribute_free(distribute);
+    delete distribute;
 }
 
 int
 ControlDistribute::Add()
 {
-    return udp_distribute_add(distribute);
+    return distribute->Add();
 }
 
 void
 ControlDistribute::Clear()
 {
-    udp_distribute_clear(distribute);
+    distribute->Clear();
 }
 
 bool
@@ -41,7 +41,7 @@ ControlDistribute::OnControlRaw(const void *data, size_t length,
                                 SocketAddress address, int uid)
 {
     /* forward the packet to all worker processes */
-    udp_distribute_packet(distribute, data, length);
+    distribute->Packet(data, length);
 
     return next_handler.OnControlRaw(data, length, address, uid);
 }
