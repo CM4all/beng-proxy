@@ -15,7 +15,7 @@
 #include <unistd.h>
 #include <sys/socket.h>
 
-struct UdpDistribute {
+class UdpDistribute {
     struct Recipient
         : boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::auto_unlink>> {
 
@@ -49,6 +49,7 @@ struct UdpDistribute {
     boost::intrusive::list<Recipient,
                            boost::intrusive::constant_time_size<false>> recipients;
 
+public:
     explicit UdpDistribute(EventLoop &_event_loop):event_loop(_event_loop) {}
 
     ~UdpDistribute() {
