@@ -156,7 +156,7 @@ LbConfigParser::Control::ParseLine(LineParser &line)
     if (strcmp(word, "bind") == 0) {
         const char *address = line.ExpectValueAndEnd();
 
-        config.bind_address = ParseSocketAddress(address, 80, true);
+        config.bind_address = ParseSocketAddress(address, 5478, true);
     } else
         throw LineParser::Error("Unknown option");
 }
