@@ -1,5 +1,6 @@
 #include "system/SetupProcess.hxx"
 #include "net/UdpListener.hxx"
+#include "net/UdpHandler.hxx"
 #include "net/SocketAddress.hxx"
 #include "event/Loop.hxx"
 #include "util/Error.hxx"

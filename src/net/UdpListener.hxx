@@ -12,18 +12,8 @@
 struct in_addr;
 class SocketAddress;
 class UdpListener;
+class UdpHandler;
 class Error;
-
-class UdpHandler {
-public:
-    /**
-     * @param uid the peer process uid, or -1 if unknown
-     */
-    virtual void OnUdpDatagram(const void *data, size_t length,
-                               SocketAddress address, int uid) = 0;
-
-    virtual void OnUdpError(Error &&error) = 0;
-};
 
 UdpListener *
 udp_listener_new(SocketAddress address,

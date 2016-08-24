@@ -794,6 +794,7 @@ libnet_a_SOURCES = \
 	src/net/ConnectSocket.cxx src/net/ConnectSocket.hxx \
 	src/net/ServerSocket.cxx src/net/ServerSocket.hxx \
 	src/net/UdpListener.cxx src/net/UdpListener.hxx \
+	src/net/UdpHandler.hxx \
 	src/net/SocketAddress.cxx src/net/SocketAddress.hxx \
 	src/net/StaticSocketAddress.cxx src/net/StaticSocketAddress.hxx \
 	src/net/AllocatedSocketAddress.cxx src/net/AllocatedSocketAddress.hxx \

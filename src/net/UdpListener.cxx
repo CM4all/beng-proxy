@@ -5,6 +5,7 @@
  */
 
 #include "UdpListener.hxx"
+#include "UdpHandler.hxx"
 #include "AllocatedSocketAddress.hxx"
 #include "Parser.hxx"
 #include "system/fd_util.h"

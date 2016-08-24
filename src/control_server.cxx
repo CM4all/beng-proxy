@@ -6,6 +6,7 @@
 
 #include "control_server.hxx"
 #include "pool.hxx"
+#include "net/UdpListener.hxx"
 #include "net/SocketAddress.hxx"
 #include "util/ByteOrder.hxx"
 #include "util/Error.hxx"
@@ -133,6 +134,24 @@ ControlServer::~ControlServer()
 {
     if (udp != nullptr)
         udp_listener_free(udp);
+}
+
+void
+ControlServer::Enable()
+{
+    udp_listener_enable(udp);
+}
+
+void
+ControlServer::Disable()
+{
+    udp_listener_disable(udp);
+}
+
+void
+ControlServer::SetFd(int fd)
+{
+    udp_listener_set_fd(udp, fd);
 }
 
 bool

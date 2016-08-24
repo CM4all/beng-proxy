@@ -9,7 +9,7 @@
 
 #include "beng-proxy/control.h"
 #include "control_handler.hxx"
-#include "net/UdpListener.hxx"
+#include "net/UdpHandler.hxx"
 
 #include <stddef.h>
 
@@ -17,6 +17,7 @@ struct pool;
 struct in_addr;
 class SocketAddress;
 class Error;
+class UdpListener;
 
 struct ControlServer final : UdpHandler {
     UdpListener *udp = nullptr;
@@ -34,21 +35,14 @@ struct ControlServer final : UdpHandler {
     void OpenPort(const char *host_and_port, int default_port,
                   const struct in_addr *group);
 
-    void Enable() {
-        udp_listener_enable(udp);
-    }
-
-    void Disable() {
-        udp_listener_disable(udp);
-    }
+    void Enable();
+    void Disable();
 
     /**
      * Replaces the socket.  The old one is closed, and the new one is
      * now owned by this object.
      */
-    void SetFd(int fd) {
-        udp_listener_set_fd(udp, fd);
-    }
+    void SetFd(int fd);
 
     bool Reply(struct pool *pool,
                SocketAddress address,
