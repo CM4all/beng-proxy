@@ -9,10 +9,11 @@
 
 #include <stddef.h>
 
+class EventLoop;
 struct UdpDistribute;
 
 UdpDistribute *
-udp_distribute_new();
+udp_distribute_new(EventLoop &event_loop);
 
 void
 udp_distribute_free(UdpDistribute *ud);

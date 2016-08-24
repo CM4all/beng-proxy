@@ -14,6 +14,7 @@
 
 struct ControlServer;
 struct UdpDistribute;
+class EventLoop;
 class SocketAddress;
 
 class ControlDistribute final : public ControlHandler {
@@ -22,7 +23,8 @@ class ControlDistribute final : public ControlHandler {
     ControlHandler &next_handler;
 
 public:
-    explicit ControlDistribute(ControlHandler &_next_handler);
+    explicit ControlDistribute(EventLoop &event_loop,
+                               ControlHandler &_next_handler);
     ~ControlDistribute();
 
     int Add();

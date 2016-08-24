@@ -12,8 +12,9 @@
 
 #include <utility>
 
-ControlDistribute::ControlDistribute(ControlHandler &_next_handler)
-    :distribute(udp_distribute_new()),
+ControlDistribute::ControlDistribute(EventLoop &event_loop,
+                                     ControlHandler &_next_handler)
+    :distribute(udp_distribute_new(event_loop)),
      next_handler(_next_handler)
 {
 }

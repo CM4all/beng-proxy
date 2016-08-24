@@ -5,8 +5,7 @@
  */
 
 #include "UdpDistribute.hxx"
-#include "event/Event.hxx"
-#include "event/Callback.hxx"
+#include "event/SocketEvent.hxx"
 #include "system/fd_util.h"
 #include "util/DeleteDisposer.hxx"
 
@@ -21,13 +20,12 @@ struct UdpDistribute {
         : boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::auto_unlink>> {
 
         const int fd;
-        Event event;
+        SocketEvent event;
 
-        Recipient(int _fd)
-            :fd(_fd) {
-            event.Set(fd, EV_READ,
-                      MakeSimpleEventCallback(Recipient, EventCallback),
-                      this);
+        Recipient(EventLoop &event_loop, int _fd)
+            :fd(_fd),
+             event(event_loop, fd, EV_READ,
+                   BIND_THIS_METHOD(EventCallback)) {
             event.Add();
         }
 
@@ -40,13 +38,18 @@ struct UdpDistribute {
             delete this;
         }
 
-        void EventCallback() {
+    private:
+        void EventCallback(short) {
             RemoveAndDestroy();
         }
     };
 
+    EventLoop &event_loop;
+
     boost::intrusive::list<Recipient,
                            boost::intrusive::constant_time_size<false>> recipients;
+
+    explicit UdpDistribute(EventLoop &_event_loop):event_loop(_event_loop) {}
 
     ~UdpDistribute() {
         Clear();
@@ -59,9 +62,9 @@ struct UdpDistribute {
 };
 
 UdpDistribute *
-udp_distribute_new()
+udp_distribute_new(EventLoop &event_loop)
 {
-    return new UdpDistribute();
+    return new UdpDistribute(event_loop);
 }
 
 void
@@ -89,7 +92,7 @@ UdpDistribute::Add()
     if (socketpair_cloexec(AF_UNIX, SOCK_DGRAM, 0, fds) < 0)
         return -1;
 
-    auto *ur = new Recipient(fds[0]);
+    auto *ur = new Recipient(event_loop, fds[0]);
     recipients.push_back(*ur);
     return fds[1];
 }

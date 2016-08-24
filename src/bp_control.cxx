@@ -264,7 +264,8 @@ global_control_handler_init(BpInstance *instance)
         group = &group_buffer;
     }
 
-    instance->control_distribute = new ControlDistribute(*instance);
+    instance->control_distribute = new ControlDistribute(instance->event_loop,
+                                                         *instance);
 
     std::unique_ptr<ControlServer> new_server(new ControlServer(*instance->control_distribute));
     new_server->Open(instance->event_loop,
