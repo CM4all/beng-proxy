@@ -9,7 +9,7 @@
 
 #include "beng-proxy/control.h"
 #include "control_handler.hxx"
-#include "udp_listener.hxx"
+#include "net/UdpListener.hxx"
 
 #include <stddef.h>
 

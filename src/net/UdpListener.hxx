@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_UDP_LISTENER_HXX
-#define BENG_PROXY_UDP_LISTENER_HXX
+#ifndef UDP_LISTENER_HXX
+#define UDP_LISTENER_HXX
 
 #include <stddef.h>
 

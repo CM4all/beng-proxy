@@ -299,7 +299,6 @@ cm4all_beng_proxy_SOURCES = \
 	src/widget_http.cxx src/widget_http.hxx \
 	src/inline_widget.cxx src/inline_widget.hxx \
 	src/frame.cxx src/frame.hxx \
-	src/udp_listener.cxx src/udp_listener.hxx \
 	src/udp_distribute.cxx src/udp_distribute.hxx \
 	src/istream_gb.cxx src/istream_gb.hxx \
 	src/istream_unlock.cxx src/istream_unlock.hxx \
@@ -390,7 +389,6 @@ cm4all_beng_lb_SOURCES = \
 	src/istream_gb.cxx \
 	src/buffered_io.cxx \
 	$(STOPWATCH_SRC) \
-	src/udp_listener.cxx src/udp_listener.hxx \
 	src/control_server.cxx src/control_server.hxx \
 	src/control_handler.cxx src/control_handler.hxx \
 	src/direct.cxx src/direct.hxx \
@@ -795,6 +793,7 @@ libnet_a_SOURCES = \
 	src/net/Error.cxx src/net/Error.hxx \
 	src/net/ConnectSocket.cxx src/net/ConnectSocket.hxx \
 	src/net/ServerSocket.cxx src/net/ServerSocket.hxx \
+	src/net/UdpListener.cxx src/net/UdpListener.hxx \
 	src/net/SocketAddress.cxx src/net/SocketAddress.hxx \
 	src/net/StaticSocketAddress.cxx src/net/StaticSocketAddress.hxx \
 	src/net/AllocatedSocketAddress.cxx src/net/AllocatedSocketAddress.hxx \
@@ -2146,8 +2145,7 @@ test_run_delegate_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_DAEMON_LIBS) \
 	$(LIBPCRE_LIBS)
 
-test_dump_udp_SOURCES = test/dump_udp.cxx \
-	src/udp_listener.cxx
+test_dump_udp_SOURCES = test/dump_udp.cxx
 test_dump_udp_LDADD = $(AM_LDADD) \
 	libnet.a libevent.a \
 	libsystem.a \
@@ -2157,7 +2155,6 @@ test_dump_udp_LDADD = $(AM_LDADD) \
 
 test_dump_control_SOURCES = test/dump_control.cxx \
 	src/control_handler.cxx src/control_handler.hxx \
-	src/udp_listener.cxx \
 	src/control_server.cxx
 test_dump_control_LDADD = $(AM_LDADD) \
 	libpool.a libmemory.a \
