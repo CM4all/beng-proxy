@@ -8,32 +8,14 @@
 #include "control_distribute.hxx"
 #include "control_handler.hxx"
 #include "net/SocketAddress.hxx"
-#include "net/UdpDistribute.hxx"
 
 #include <utility>
 
 ControlDistribute::ControlDistribute(EventLoop &event_loop,
                                      ControlHandler &_next_handler)
-    :distribute(new UdpDistribute(event_loop)),
+    :distribute(event_loop),
      next_handler(_next_handler)
 {
-}
-
-ControlDistribute::~ControlDistribute()
-{
-    delete distribute;
-}
-
-int
-ControlDistribute::Add()
-{
-    return distribute->Add();
-}
-
-void
-ControlDistribute::Clear()
-{
-    distribute->Clear();
 }
 
 bool
@@ -41,7 +23,7 @@ ControlDistribute::OnControlRaw(const void *data, size_t length,
                                 SocketAddress address, int uid)
 {
     /* forward the packet to all worker processes */
-    distribute->Packet(data, length);
+    distribute.Packet(data, length);
 
     return next_handler.OnControlRaw(data, length, address, uid);
 }

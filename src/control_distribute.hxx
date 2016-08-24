@@ -9,26 +9,29 @@
 #define BENG_PROXY_CONTROL_DISTRIBUTE_HXX
 
 #include "control_handler.hxx"
+#include "net/UdpDistribute.hxx"
 
 #include <stddef.h>
 
 struct ControlServer;
-struct UdpDistribute;
 class EventLoop;
 class SocketAddress;
 
 class ControlDistribute final : public ControlHandler {
-    UdpDistribute *const distribute;
+    UdpDistribute distribute;
 
     ControlHandler &next_handler;
 
 public:
-    explicit ControlDistribute(EventLoop &event_loop,
-                               ControlHandler &_next_handler);
-    ~ControlDistribute();
+    ControlDistribute(EventLoop &event_loop, ControlHandler &_next_handler);
 
-    int Add();
-    void Clear();
+    int Add() {
+        return distribute.Add();
+    }
+
+    void Clear() {
+        distribute.Clear();
+    }
 
     static const struct control_handler handler;
 
