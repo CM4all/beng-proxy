@@ -67,7 +67,7 @@ class BpConfigParser final : public NestedConfigParser {
 
     class Listener final : public ConfigParser {
         BpConfigParser &parent;
-        ListenerConfig config;
+        BpConfig::Listener config;
 
     public:
         explicit Listener(BpConfigParser &_parent):parent(_parent) {}

@@ -171,7 +171,7 @@ static void arg_error(const char *argv0, const char *fmt, ...) {
 
 static void
 ParseListenerConfig(const char *s,
-                    std::forward_list<ListenerConfig> &list)
+                    std::forward_list<BpConfig::Listener> &list)
 {
     std::string tag;
 

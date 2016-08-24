@@ -19,25 +19,25 @@
 
 struct StringView;
 
-struct ListenerConfig {
-    AllocatedSocketAddress address;
-
-    std::string tag;
-
-    std::string zeroconf_type;
-
-    ListenerConfig() = default;
-
-    ListenerConfig(SocketAddress _address, const std::string &_tag)
-        :address(_address), tag(_tag) {}
-};
-
 struct BpConfig {
     static constexpr unsigned MAX_PORTS = 32;
 
     StaticArray<unsigned, MAX_PORTS> ports;
 
-    std::forward_list<ListenerConfig> listen;
+    struct Listener {
+        AllocatedSocketAddress address;
+
+        std::string tag;
+
+        std::string zeroconf_type;
+
+        Listener() = default;
+
+        Listener(SocketAddress _address, const std::string &_tag)
+            :address(_address), tag(_tag) {}
+    };
+
+    std::forward_list<Listener> listen;
 
     std::string session_cookie = "beng_proxy_session";
 
