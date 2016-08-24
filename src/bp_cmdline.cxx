@@ -8,6 +8,7 @@
 #include "bp_config.hxx"
 #include "net/AddressInfo.hxx"
 #include "net/Resolver.hxx"
+#include "net/Parser.hxx"
 #include "pool.hxx"
 #include "ua_classification.hxx"
 #include "util/StringView.hxx"
@@ -410,7 +411,7 @@ parse_cmdline(BpCmdLine &cmdline, BpConfig &config, int argc, char **argv)
             break;
 
         case 'c':
-            config.control_listen = optarg;
+            config.control_listen = ParseSocketAddress(optarg, 5478, true);
             break;
 
         case 'm':

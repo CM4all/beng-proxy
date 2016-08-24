@@ -254,7 +254,7 @@ BpInstance::OnControlError(Error &&error)
 void
 global_control_handler_init(BpInstance *instance)
 {
-    if (instance->config.control_listen == NULL)
+    if (instance->config.control_listen.IsNull())
         return;
 
     struct in_addr group_buffer;
@@ -267,7 +267,7 @@ global_control_handler_init(BpInstance *instance)
     instance->control_distribute = new ControlDistribute(*instance);
 
     std::unique_ptr<ControlServer> new_server(new ControlServer(*instance->control_distribute));
-    new_server->OpenPort(instance->config.control_listen, 5478, group);
+    new_server->Open(instance->config.control_listen, group);
     instance->control_server = new_server.release();
 }
 

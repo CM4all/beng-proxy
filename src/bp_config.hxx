@@ -45,7 +45,7 @@ struct BpConfig {
 
     const char *session_save_path = nullptr;
 
-    const char *control_listen = nullptr;
+    AllocatedSocketAddress control_listen;
 
     const char *multicast_group = nullptr;
 
