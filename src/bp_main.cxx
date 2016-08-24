@@ -237,7 +237,8 @@ deinit_signals(BpInstance *instance)
 }
 
 static void
-add_listener(BpInstance *instance, SocketAddress address, const char *tag)
+add_listener(BpInstance *instance, SocketAddress address, const char *tag,
+             const std::string &zeroconf_type)
 {
     Error error;
 
@@ -252,12 +253,8 @@ add_listener(BpInstance *instance, SocketAddress address, const char *tag)
 
     listener.SetTcpDeferAccept(10);
 
-    if (tag != nullptr) {
-        // TODO: use a configured ZeroConf type
-        char type[64];
-        snprintf(type, sizeof(type), "_%s._tcp", tag);
-        instance->avahi_client.AddService(type, address);
-    }
+    if (!zeroconf_type.empty())
+        instance->avahi_client.AddService(zeroconf_type.c_str(), address);
 }
 
 static void
@@ -313,7 +310,8 @@ try {
 
     for (const auto &i : instance.config.listen)
         add_listener(&instance, i.address,
-                     i.tag.empty() ? nullptr : i.tag.c_str());
+                     i.tag.empty() ? nullptr : i.tag.c_str(),
+                     i.zeroconf_type);
 
     global_control_handler_init(&instance);
 

@@ -24,6 +24,8 @@ struct ListenerConfig {
 
     std::string tag;
 
+    std::string zeroconf_type;
+
     ListenerConfig() = default;
 
     ListenerConfig(SocketAddress _address, const std::string &_tag)

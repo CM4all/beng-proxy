@@ -103,6 +103,8 @@ BpConfigParser::Listener::ParseLine(LineParser &line)
                                             80, true);
     } else if (strcmp(word, "tag") == 0) {
         config.tag = line.ExpectValueAndEnd();
+    } else if (strcmp(word, "zeroconf_type") == 0) {
+        config.zeroconf_type = line.ExpectValueAndEnd();
     } else
         throw LineParser::Error("Unknown option");
 }
