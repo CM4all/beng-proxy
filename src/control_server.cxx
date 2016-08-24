@@ -115,7 +115,7 @@ ControlServer::OpenPort(const char *host_and_port, int default_port,
                                 *this);
 
     if (group != nullptr)
-        udp_listener_join4(udp, group);
+        udp->Join4(group);
 }
 
 void
@@ -127,31 +127,30 @@ ControlServer::Open(SocketAddress address,
     udp = udp_listener_new(address, *this);
 
     if (group != nullptr)
-        udp_listener_join4(udp, group);
+        udp->Join4(group);
 }
 
 ControlServer::~ControlServer()
 {
-    if (udp != nullptr)
-        udp_listener_free(udp);
+    delete udp;
 }
 
 void
 ControlServer::Enable()
 {
-    udp_listener_enable(udp);
+    udp->Enable();
 }
 
 void
 ControlServer::Disable()
 {
-    udp_listener_disable(udp);
+    udp->Disable();
 }
 
 void
 ControlServer::SetFd(int fd)
 {
-    udp_listener_set_fd(udp, fd);
+    udp->SetFd(fd);
 }
 
 bool
@@ -169,7 +168,7 @@ ControlServer::Reply(struct pool *pool,
     header->command = ToBE16(command);
     memcpy(header + 1, payload, payload_length);
 
-    return udp_listener_reply(udp, address,
-                              header, sizeof(*header) + payload_length,
-                              error_r);
+    return udp->Reply(address,
+                      header, sizeof(*header) + payload_length,
+                      error_r);
 }

@@ -9,7 +9,6 @@
 #include "AllocatedSocketAddress.hxx"
 #include "Parser.hxx"
 #include "system/fd_util.h"
-#include "event/Event.hxx"
 #include "event/Callback.hxx"
 #include "system/Error.hxx"
 #include "util/Error.hxx"
@@ -26,59 +25,38 @@
 
 static constexpr Domain udp_listener_domain("udp_listener");
 
-class UdpListener {
-    int fd;
-    Event event;
+UdpListener::UdpListener(int _fd, UdpHandler &_handler)
+    :fd(_fd), handler(_handler)
+{
+    event.Set(fd, EV_READ|EV_PERSIST,
+              MakeSimpleEventCallback(UdpListener, EventCallback), this);
+    event.Add();
+}
 
-    UdpHandler &handler;
+UdpListener::~UdpListener()
+{
+    assert(fd >= 0);
 
-public:
-    UdpListener(int _fd, UdpHandler &_handler)
-        :fd(_fd), handler(_handler) {
-        event.Set(fd, EV_READ|EV_PERSIST,
-                  MakeSimpleEventCallback(UdpListener, EventCallback), this);
-        event.Add();
-    }
+    event.Delete();
+    close(fd);
+}
 
-    ~UdpListener() {
-        assert(fd >= 0);
+void
+UdpListener::SetFd(int _fd)
+{
+    assert(fd >= 0);
+    assert(_fd >= 0);
+    assert(fd != _fd);
 
-        event.Delete();
-        close(fd);
-    }
+    event.Delete();
 
-    void Enable() {
-        event.Add();
-    }
+    close(fd);
+    fd = _fd;
 
-    void Disable() {
-        event.Delete();
-    }
-
-    void SetFd(int _fd) {
-        assert(fd >= 0);
-        assert(_fd >= 0);
-        assert(fd != _fd);
-
-        event.Delete();
-
-        close(fd);
-        fd = _fd;
-
-        event.Set(fd, EV_READ|EV_PERSIST,
-                  MakeSimpleEventCallback(UdpListener, EventCallback), this);
-        event.Add();
-    }
-
-    void Join4(const struct in_addr *group);
-
-    bool Reply(SocketAddress address,
-               const void *data, size_t data_length,
-               Error &error_r);
-
-private:
-    void EventCallback();
-};
+    event.Set(fd, EV_READ|EV_PERSIST,
+              MakeSimpleEventCallback(UdpListener, EventCallback), this);
+    event.Add();
+}
 
 inline void
 UdpListener::EventCallback()
@@ -199,38 +177,6 @@ udp_listener_port_new(const char *host_and_port, int default_port,
 }
 
 void
-udp_listener_free(UdpListener *udp)
-{
-    assert(udp != nullptr);
-
-    delete udp;
-}
-
-void
-udp_listener_enable(UdpListener *udp)
-{
-    assert(udp != nullptr);
-
-    udp->Enable();
-}
-
-void
-udp_listener_disable(UdpListener *udp)
-{
-    assert(udp != nullptr);
-
-    udp->Disable();
-}
-
-void
-udp_listener_set_fd(UdpListener *udp, int fd)
-{
-    assert(udp != nullptr);
-
-    udp->SetFd(fd);
-}
-
-inline void
 UdpListener::Join4(const struct in_addr *group)
 {
     struct ip_mreq r;
@@ -241,13 +187,7 @@ UdpListener::Join4(const struct in_addr *group)
         throw MakeErrno("Failed to join multicast group");
 }
 
-void
-udp_listener_join4(UdpListener *udp, const struct in_addr *group)
-{
-    udp->Join4(group);
-}
-
-inline bool
+bool
 UdpListener::Reply(SocketAddress address,
                    const void *data, size_t data_length,
                    Error &error_r)
@@ -268,15 +208,4 @@ UdpListener::Reply(SocketAddress address,
     }
 
     return true;
-}
-
-bool
-udp_listener_reply(UdpListener *udp,
-                   SocketAddress address,
-                   const void *data, size_t data_length,
-                   Error &error_r)
-{
-    assert(udp != nullptr);
-
-    return udp->Reply(address, data, data_length, error_r);
 }

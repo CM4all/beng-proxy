@@ -50,7 +50,7 @@ try {
             .s_addr = inet_addr(mcast_group),
         };
 
-        udp_listener_join4(udp, &addr);
+        udp->Join4(&addr);
     }
 
     event_loop.Dispatch();
