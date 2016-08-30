@@ -3434,7 +3434,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         return true;
 
     case TRANSLATE_EXTERNAL_SESSION_KEEPALIVE: {
-        const uint16_t *value = (const uint16_t *)payload;
+        const uint16_t *value = (const uint16_t *)(const void *)payload;
         if (payload_length != sizeof(*value) || *value == 0) {
             g_set_error_literal(error_r, translate_quark(), 0,
                                 "malformed EXTERNAL_SESSION_KEEPALIVE packet");
