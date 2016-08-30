@@ -16,7 +16,7 @@ struct UidGid {
 
     std::array<gid_t, 32> groups;
 
-    constexpr UidGid():uid(0), gid(0), groups{0} {}
+    constexpr UidGid():uid(0), gid(0), groups{{0}} {}
 
     void LoadEffective();
 
