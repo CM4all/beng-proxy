@@ -9,7 +9,7 @@
 
 #include <string.h>
 
-inline bool
+bool
 StringMap::Item::Compare::Less(const char *a, const char *b) const
 {
     return strcmp(a, b) < 0;
