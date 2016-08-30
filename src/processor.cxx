@@ -162,8 +162,8 @@ struct XmlProcessor final : XmlParserHandler, Cancellable {
             off_t start, end;
         } delete_[4];
 
-        PostponedRewrite(struct pool &pool)
-            :value(pool, 1024, 8192) {}
+        PostponedRewrite(struct pool &_pool)
+            :value(_pool, 1024, 8192) {}
     } postponed_rewrite;
 
     struct CurrentWidget {
@@ -176,15 +176,15 @@ struct XmlProcessor final : XmlParserHandler, Cancellable {
             ExpansibleBuffer name;
             ExpansibleBuffer value;
 
-            Param(struct pool &pool)
-                :name(pool, 128, 512),
-                 value(pool, 512, 4096) {}
+            Param(struct pool &_pool)
+                :name(_pool, 128, 512),
+                 value(_pool, 512, 4096) {}
         } param;
 
         ExpansibleBuffer params;
 
-        CurrentWidget(struct pool &processor_pool, struct processor_env &env)
-            :pool(*env.pool), param(processor_pool),
+        CurrentWidget(struct pool &processor_pool, struct processor_env &_env)
+            :pool(*_env.pool), param(processor_pool),
              params(processor_pool, 1024, 8192) {}
     } widget;
 
