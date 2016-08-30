@@ -60,14 +60,14 @@ namespace TemplateString {
 	 * Invoke #F, pass all characters in #src from #i to #length
 	 * as variadic arguments.
 	 */
-	template<template<char...> typename F,
+	template<template<char...> class F,
 		 const char *src, size_t length, size_t i,
 		 char... _value>
 	struct VariadicChars : VariadicChars<F, src, length - 1, i + 1, _value..., src[i]> {
 		static_assert(length > 0, "Wrong length");
 	};
 
-	template<template<char...> typename F,
+	template<template<char...> class F,
 		 const char *src, size_t length,
 		 char... _value>
 	struct VariadicChars<F, src, 0, length, _value...> : F<_value...> {};
@@ -75,7 +75,7 @@ namespace TemplateString {
 	/**
 	 * Like #VariadicChars, but pass an additional argument to #F.
 	 */
-	template<template<typename Arg, char...> typename F, typename Arg,
+	template<template<typename Arg, char...> class F, typename Arg,
 		 const char *src, size_t length, size_t i,
 		 char... _value>
 	struct VariadicChars1 : VariadicChars1<F, Arg,
@@ -83,7 +83,7 @@ namespace TemplateString {
 		static_assert(length > 0, "Wrong length");
 	};
 
-	template<template<typename Arg, char...> typename F, typename Arg,
+	template<template<typename Arg, char...> class F, typename Arg,
 		 const char *src, size_t length,
 		 char... _value>
 	struct VariadicChars1<F, Arg, src, 0, length, _value...> : F<Arg, _value...> {};
