@@ -103,6 +103,9 @@ private:
 
 class GrowingBufferReader {
 #ifndef NDEBUG
+#ifdef __clang__
+    gcc_unused
+#endif
     const GrowingBuffer *growing_buffer;
 #endif
 
