@@ -55,9 +55,9 @@ dpool::~dpool()
     assert(shm != nullptr);
 
     DpoolChunk *chunk, *n;
-    for (chunk = (DpoolChunk *)first_chunk.siblings.next;
+    for (chunk = (DpoolChunk *)(void *)first_chunk.siblings.next;
          chunk != &first_chunk; chunk = n) {
-        n = (DpoolChunk *)chunk->siblings.next;
+        n = (DpoolChunk *)(void *)chunk->siblings.next;
 
         chunk->Destroy(*shm);
     }
@@ -105,7 +105,7 @@ dpool::Allocate(size_t size) throw(std::bad_alloc)
         if (p != nullptr)
             return p;
 
-        chunk = (DpoolChunk *)chunk->siblings.next;
+        chunk = (DpoolChunk *)(void *)chunk->siblings.next;
     } while (chunk != &first_chunk);
 
     /* none found; try to allocate a new chunk */
@@ -132,9 +132,9 @@ dpool::FindChunk(const void *p)
     if (first_chunk.Contains(p))
         return &first_chunk;
 
-    for (auto *chunk = (DpoolChunk *)first_chunk.siblings.next;
+    for (auto *chunk = (DpoolChunk *)(void *)first_chunk.siblings.next;
          chunk != &first_chunk;
-         chunk = (DpoolChunk *)chunk->siblings.next) {
+         chunk = (DpoolChunk *)(void *)chunk->siblings.next) {
         if (chunk->Contains(p))
             return chunk;
     }
