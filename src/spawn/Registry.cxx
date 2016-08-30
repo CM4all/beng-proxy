@@ -20,13 +20,13 @@ static constexpr struct timeval child_kill_timeout = {
     .tv_usec = 0,
 };
 
-ChildProcessRegistry::ChildProcess::ChildProcess(EventLoop &event_loop,
+ChildProcessRegistry::ChildProcess::ChildProcess(EventLoop &_event_loop,
                                                  pid_t _pid, const char *_name,
                                                  ExitListener *_listener)
     :pid(_pid), name(_name),
      start_time(std::chrono::steady_clock::now()),
      listener(_listener),
-     kill_timeout_event(event_loop, BIND_THIS_METHOD(KillTimeoutCallback)) {}
+     kill_timeout_event(_event_loop, BIND_THIS_METHOD(KillTimeoutCallback)) {}
 
 static constexpr double
 timeval_to_double(const struct timeval &tv)
