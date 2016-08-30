@@ -61,11 +61,11 @@ http_date_format_r(char *buffer, std::chrono::system_clock::time_point t)
     static struct tm tm_buffer;
     const struct tm *tm = sysx_time_gmtime(std::chrono::system_clock::to_time_t(t), &tm_buffer);
 
-    *(uint32_t*)buffer = *(const uint32_t*)wday_name(tm->tm_wday);
+    *(uint32_t *)(void *)buffer = *(const uint32_t *)(const void *)wday_name(tm->tm_wday);
     buffer[4] = ' ';
     format_2digit(buffer + 5, tm->tm_mday);
     buffer[7] = ' ';
-    *(uint32_t*)(buffer + 8) = *(const uint32_t*)month_name(tm->tm_mon);
+    *(uint32_t *)(void *)(buffer + 8) = *(const uint32_t *)(const void *)month_name(tm->tm_mon);
     format_4digit(buffer + 12, tm->tm_year + 1900);
     buffer[16] = ' ';
     format_2digit(buffer + 17, tm->tm_hour);
@@ -74,7 +74,7 @@ http_date_format_r(char *buffer, std::chrono::system_clock::time_point t)
     buffer[22] = ':';
     format_2digit(buffer + 23, tm->tm_sec);
     buffer[25] = ' ';
-    *(uint32_t*)(buffer + 26) = *(const uint32_t*)"GMT";
+    *(uint32_t *)(void *)(buffer + 26) = *(const uint32_t *)(const void *)"GMT";
 }
 
 static char buffer[30];
@@ -123,7 +123,7 @@ parse_month_name(const char *p)
     int i;
 
     for (i = 0; i < 12; ++i)
-        if (*(const uint32_t*)months[i] == *(const uint32_t*)p)
+        if (*(const uint32_t *)(const void *)months[i] == *(const uint32_t *)(const void *)p)
             return i;
 
     return -1;
