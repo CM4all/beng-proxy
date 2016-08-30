@@ -1064,6 +1064,7 @@ test_run_was_LDADD = $(AM_LDADD) \
 	$(LIBEVENT_LIBS) $(LIBCM4ALL_DAEMON_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS) \
 	$(LIBCM4ALL_HTTP_LIBS) \
+	$(LIBSYSTEMD_LIBS) \
 	$(LIBPCRE_LIBS) \
 	$(GLIB_LIBS)
 
@@ -1377,6 +1378,7 @@ test_t_cgi_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_HTTP_LIBS) \
 	$(LIBCM4ALL_DAEMON_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS) \
+	$(LIBSYSTEMD_LIBS) \
 	$(LIBPCRE_LIBS)
 
 test_t_http_server_SOURCES = test/t_http_server.cxx \
@@ -2092,6 +2094,7 @@ test_run_delegate_LDADD = $(AM_LDADD) \
 	libputil.a \
 	libutil.a \
 	$(LIBCM4ALL_DAEMON_LIBS) \
+	$(LIBSYSTEMD_LIBS) \
 	$(LIBPCRE_LIBS)
 
 test_dump_udp_SOURCES = test/dump_udp.cxx \

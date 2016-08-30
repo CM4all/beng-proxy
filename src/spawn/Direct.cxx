@@ -10,6 +10,8 @@
 
 #include <inline/compiler.h>
 
+#include <systemd/sd-journal.h>
+
 #include <assert.h>
 #include <string.h>
 #include <unistd.h>
@@ -50,10 +52,21 @@ Exec(const char *path, const PreparedChildProcess &p,
     if (p.no_new_privs)
         prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0);
 
+    int stdout_fd = p.stdout_fd, stderr_fd = p.stderr_fd;
+    if (stdout_fd < 0 || stderr_fd < 0) {
+        /* if no log destination was specified, log to the systemd
+           journal */
+        int journal_fd = sd_journal_stream_fd(p.args.front(), LOG_INFO, true);
+        if (stdout_fd < 0)
+            stdout_fd = journal_fd;
+        if (stderr_fd < 0)
+            stderr_fd = journal_fd;
+    }
+
     constexpr int CONTROL_FILENO = 3;
     CheckedDup2(p.stdin_fd, STDIN_FILENO);
-    CheckedDup2(p.stdout_fd, STDOUT_FILENO);
-    CheckedDup2(p.stderr_fd, STDERR_FILENO);
+    CheckedDup2(stdout_fd, STDOUT_FILENO);
+    CheckedDup2(stderr_fd, STDERR_FILENO);
     CheckedDup2(p.control_fd, CONTROL_FILENO);
 
     execve(path, const_cast<char *const*>(p.args.raw()),

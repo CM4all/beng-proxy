@@ -1,5 +1,6 @@
 cm4all-beng-proxy (10.33) unstable; urgency=low
 
+  * spawn: create systemd journal identifier
   * was: add stopwatch support
 
  --   
