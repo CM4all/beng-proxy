@@ -19,7 +19,7 @@ cm4all-beng-proxy (11.0.1) unstable; urgency=low
   * remove obsolete sysv init scripts, depend on systemd instead
   * ZeroConf publish support
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Tue, 30 Aug 2016 22:24:03 -0000
 
 cm4all-beng-proxy (10.27) unstable; urgency=low
 
