@@ -163,7 +163,7 @@ struct NfsCacheItem final : CacheItem {
 
     NfsCacheItem(struct pool &_pool, const NfsCacheStore &store,
                  Rubber &_rubber, unsigned _rubber_id)
-        :CacheItem(std::chrono::minutes(1), stat.st_size),
+        :CacheItem(std::chrono::minutes(1), store.stat.st_size),
          pool(_pool), stat(store.stat),
          rubber(_rubber), rubber_id(_rubber_id) {
     }
