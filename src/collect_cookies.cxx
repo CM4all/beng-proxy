@@ -8,7 +8,7 @@
 #include "strmap.hxx"
 #include "cookie_client.hxx"
 
-inline const char *
+const char *
 Request::GetCookieHost() const
 {
     if (translate.response->cookie_host != nullptr)
