@@ -14,8 +14,8 @@
 class EventLoop;
 class ResourceLoader;
 class StringMap;
-struct SessionLease;
-struct RealmSessionLease;
+class SessionLease;
+class RealmSessionLease;
 
 struct processor_env {
     struct pool *pool;
