@@ -22,7 +22,7 @@ class UdpDistribute {
         const int fd;
         SocketEvent event;
 
-        Recipient(EventLoop &event_loop, int _fd);
+        Recipient(EventLoop &_event_loop, int _fd);
         ~Recipient();
 
         void RemoveAndDestroy() {

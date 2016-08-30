@@ -12,9 +12,9 @@
 #include <unistd.h>
 #include <sys/socket.h>
 
-UdpDistribute::Recipient::Recipient(EventLoop &event_loop, int _fd)
+UdpDistribute::Recipient::Recipient(EventLoop &_event_loop, int _fd)
     :fd(_fd),
-     event(event_loop, fd, EV_READ,
+     event(_event_loop, fd, EV_READ,
            BIND_THIS_METHOD(EventCallback))
 {
     event.Add();
