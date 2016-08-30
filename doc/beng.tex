@@ -140,6 +140,32 @@ Zeroconf service in the local Avahi daemon.  This can be used by
 
 \end{longtabu*}
 
+\subsection{\texttt{control}}
+\label{config.control}
+
+Listen for control commands the configured address.  See page
+\pageref{control} for more information.  Example:
+
+\begin{verbatim*}
+control {
+  bind "@beng-proxy"
+}
+\end{verbatim*}
+
+This binds to the abstract address \verb|beng-proxy|.
+
+Known attributes:
+
+\begin{longtabu*}{|l|X|}\hline
+
+\verb|bind| & An adddress to bind to.  May be the wildcard ``*'' or an
+IPv4/IPv6 address followed by a port.  IPv6 addresses should be
+enclosed in square brackets to disambiguate the port separator.  Local
+sockets start with a slash ``/'', and abstract sockets start with an
+at symbol ``@''. \\\hline
+
+\end{longtabu*}
+
 \subsection{\texttt{set}}
 
 Tweak global settings.  Most of these are legacy from the old
@@ -2390,6 +2416,7 @@ the child process.  Payload is an array of 32 bit integers. \\
 \end{longtabu*}
 
 \section{Remote Control Protocol}
+\label{control}
 
 \emph{beng-proxy} can listen for multicast packets on a UDP port.
 These packets contain one or more commands.  This is useful to notify
@@ -2409,9 +2436,8 @@ bytes to the next 4 byte border.
 
 \subsection{Configuring}
 
-The command line option \texttt{--control-listen} allows you to
-specify an address to listen on, specify \texttt{*} to listen on all
-interfaces.  The default port is 5478.
+The configuration line option \verb|control| allows you to specify an
+address to listen on (see page \pageref{config.control}).
 
 To enable IP multicast, set the multicast group address with
 \texttt{--multicast-group}.

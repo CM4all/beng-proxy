@@ -78,6 +78,20 @@ class BpConfigParser final : public NestedConfigParser {
         void Finish() override;
     };
 
+    class Control final : public ConfigParser {
+        BpConfigParser &parent;
+        BpConfig::ControlListener config;
+
+    public:
+        explicit Control(BpConfigParser &_parent)
+            :parent(_parent) {}
+
+    protected:
+        /* virtual methods from class ConfigParser */
+        void ParseLine(LineParser &line) override;
+        void Finish() override;
+    };
+
 public:
     explicit BpConfigParser(BpConfig &_config)
         :config(_config) {}
@@ -88,6 +102,7 @@ protected:
 
 private:
     void CreateListener(LineParser &line);
+    void CreateControl(LineParser &line);
 };
 
 void
@@ -129,12 +144,44 @@ BpConfigParser::CreateListener(LineParser &line)
 }
 
 void
+BpConfigParser::Control::ParseLine(LineParser &line)
+{
+    const char *word = line.ExpectWord();
+
+    if (strcmp(word, "bind") == 0) {
+        config.address = ParseSocketAddress(line.ExpectValueAndEnd(),
+                                            5478, true);
+    } else
+        throw LineParser::Error("Unknown option");
+}
+
+void
+BpConfigParser::Control::Finish()
+{
+    if (config.address.IsNull())
+        throw LineParser::Error("Bind address is missing");
+
+    parent.config.control_listen.emplace_front(std::move(config));
+
+    ConfigParser::Finish();
+}
+
+inline void
+BpConfigParser::CreateControl(LineParser &line)
+{
+    line.ExpectSymbolAndEol('{');
+    SetChild(std::make_unique<Control>(*this));
+}
+
+void
 BpConfigParser::ParseLine2(LineParser &line)
 {
     const char *word = line.ExpectWord();
 
     if (strcmp(word, "listener") == 0)
         CreateListener(line);
+    else if (strcmp(word, "control") == 0)
+        CreateControl(line);
     else if (strcmp(word, "set") == 0) {
         const char *name = line.ExpectWord();
         line.ExpectSymbol('=');
