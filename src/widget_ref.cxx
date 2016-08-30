@@ -8,6 +8,7 @@
 #include "pool.hxx"
 #include "util/IterableSplitString.hxx"
 
+#include <assert.h>
 #include <string.h>
 
 const struct widget_ref *
