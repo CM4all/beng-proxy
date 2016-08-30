@@ -23,6 +23,7 @@ AddressList::Add(struct dpool &pool, const SocketAddress address)
         return false;
 
     const struct sockaddr *new_address = (const struct sockaddr *)
+        (const void *)
         d_memdup(pool, address.GetAddress(), address.GetSize());
     addresses.push_back({new_address, address.GetSize()});
     return true;
