@@ -36,7 +36,7 @@ namespace ODBus {
 			:value(_value) {}
 	};
 
-	template<typename T, template<typename U> typename WrapTraits>
+	template<typename T, template<typename U> class WrapTraits>
 	struct WrapValue {
 		typedef typename T::Traits ContainedTraits;
 		typedef WrapTraits<ContainedTraits> Traits;
