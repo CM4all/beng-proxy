@@ -33,9 +33,9 @@ LbMonitorMap::Key::operator<(const Key &other) const
 }
 
 char *
-LbMonitorMap::Key::ToString(struct pool &pool) const
+LbMonitorMap::Key::ToString(struct pool &_pool) const
 {
-    return p_sprintf(&pool, "%s:[%s]:%u", monitor_name, node_name, port);
+    return p_sprintf(&_pool, "%s:[%s]:%u", monitor_name, node_name, port);
 }
 
 LbMonitorMap::LbMonitorMap(struct pool &_pool)
