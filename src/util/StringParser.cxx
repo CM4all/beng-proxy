@@ -143,5 +143,5 @@ ParseDuration(const char *s)
 std::chrono::seconds
 ParsePositiveDuration(const char *s)
 {
-	return std::chrono::seconds(ParsePositiveDuration(s));
+	return std::chrono::seconds(ParsePositiveLong(s));
 }
