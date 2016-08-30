@@ -31,10 +31,10 @@ socket_address_sticky(SocketAddress address)
 
     switch (address.GetFamily()) {
     case AF_INET:
-        return ipv4_sticky((const struct sockaddr_in *)address.GetAddress());
+        return ipv4_sticky((const struct sockaddr_in *)(const void *)address.GetAddress());
 
     case AF_INET6:
-        return ipv6_sticky((const struct sockaddr_in6 *)address.GetAddress());
+        return ipv6_sticky((const struct sockaddr_in6 *)(const void *)address.GetAddress());
 
     default:
         return 0;
