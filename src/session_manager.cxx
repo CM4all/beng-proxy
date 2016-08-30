@@ -272,6 +272,12 @@ public:
     Session *Find(SessionId id) {
         assert(container != nullptr);
 
+        return container->Find(id);
+    }
+
+    Session *LockFind(SessionId id) {
+        assert(container != nullptr);
+
         return container->LockFind(id);
     }
 
@@ -603,7 +609,7 @@ session_get(SessionId id)
 
     crash_unsafe_enter();
 
-    Session *session = session_manager->Find(id);
+    Session *session = session_manager->LockFind(id);
 
     if (session == nullptr)
         crash_unsafe_leave();
