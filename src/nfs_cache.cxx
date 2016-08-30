@@ -421,7 +421,7 @@ nfs_cache_request(struct pool &pool, NfsCache &cache,
 }
 
 static Istream *
-nfs_cache_item_open(struct pool &pool, NfsCache &cache,
+nfs_cache_item_open(struct pool &pool,
                     NfsCacheItem &item,
                     uint64_t start, uint64_t end)
 {
@@ -433,7 +433,7 @@ nfs_cache_item_open(struct pool &pool, NfsCache &cache,
     Istream *istream =
         istream_rubber_new(pool, item.rubber, item.rubber_id,
                            start, end, false);
-    return istream_unlock_new(pool, *istream, cache.cache, item);
+    return istream_unlock_new(pool, *istream, item);
 }
 
 static Istream *
@@ -493,7 +493,7 @@ nfs_cache_handle_open(struct pool &pool, NfsCacheHandle &handle,
     if (handle.item != nullptr) {
         /* cache hit: serve cached file */
         cache_log(5, "nfs_cache: serve %s\n", handle.key);
-        return nfs_cache_item_open(pool, handle.cache, *handle.item,
+        return nfs_cache_item_open(pool, *handle.item,
                                    start, end);
     } else {
         /* cache miss: load from NFS server */

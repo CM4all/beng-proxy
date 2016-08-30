@@ -9,14 +9,13 @@
 #include <assert.h>
 
 class UnlockIstream final : public ForwardIstream {
-    Cache &cache;
     CacheItem &item;
 
 public:
     UnlockIstream(struct pool &p, Istream &_input,
-                  Cache &_cache, CacheItem &_item)
+                  CacheItem &_item)
         :ForwardIstream(p, _input),
-         cache(_cache), item(_item) {
+         item(_item) {
         item.Lock();
     }
 
@@ -39,8 +38,7 @@ public:
 };
 
 Istream *
-istream_unlock_new(struct pool &pool, Istream &input,
-                   Cache &cache, CacheItem &item)
+istream_unlock_new(struct pool &pool, Istream &input, CacheItem &item)
 {
-    return NewIstream<UnlockIstream>(pool, input, cache, item);
+    return NewIstream<UnlockIstream>(pool, input, item);
 }

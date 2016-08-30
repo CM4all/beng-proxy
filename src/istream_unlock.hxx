@@ -7,7 +7,6 @@
 
 struct pool;
 class Istream;
-struct Cache;
 struct CacheItem;
 
 /**
@@ -15,7 +14,6 @@ struct CacheItem;
  * closed.
  */
 Istream *
-istream_unlock_new(struct pool &pool, Istream &input,
-                   Cache &cache, CacheItem &item);
+istream_unlock_new(struct pool &pool, Istream &input, CacheItem &item);
 
 #endif

@@ -597,8 +597,7 @@ filter_cache_serve(FilterCache &cache, FilterCacheItem &item,
                              0, item.size, false)
         : istream_null_new(&pool);
 
-    response_body = istream_unlock_new(pool, *response_body,
-                                       cache.cache, item);
+    response_body = istream_unlock_new(pool, *response_body, item);
 
     handler.InvokeResponse(item.status,
                            StringMap(ShallowCopy(), pool, item.headers),

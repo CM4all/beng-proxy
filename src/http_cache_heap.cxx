@@ -161,8 +161,7 @@ HttpCacheHeap::OpenStream(struct pool &_pool, HttpCacheDocument &document)
         return istream_null_new(&_pool);
 
     Istream *istream = item.OpenStream(_pool);
-    return istream_unlock_new(_pool, *istream,
-                              *cache, item);
+    return istream_unlock_new(_pool, *istream, item);
 }
 
 /*
