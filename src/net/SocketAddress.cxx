@@ -46,10 +46,10 @@ SocketAddress::GetPort() const
 
 	switch (GetFamily()) {
 	case AF_INET:
-		return ntohs(((const struct sockaddr_in *)address)->sin_port);
+		return ntohs(((const struct sockaddr_in *)(const void *)address)->sin_port);
 
 	case AF_INET6:
-		return ntohs(((const struct sockaddr_in6 *)address)->sin6_port);
+		return ntohs(((const struct sockaddr_in6 *)(const void *)address)->sin6_port);
 
 	default:
 		return 0;

@@ -38,11 +38,11 @@ Match(const struct sockaddr &a,
     switch (a.sa_family) {
     case AF_INET:
         return Match((const struct sockaddr_in &)a,
-                     *(const struct sockaddr_in *)b.GetAddress());
+                     *(const struct sockaddr_in *)(const void *)b.GetAddress());
 
     case AF_INET6:
         return Match((const struct sockaddr_in6 &)a,
-                     *(const struct sockaddr_in6 *)b.GetAddress());
+                     *(const struct sockaddr_in6 *)(const void *)b.GetAddress());
 
     default:
         /* other address families are unsupported */

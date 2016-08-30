@@ -94,14 +94,14 @@ AllocatedSocketAddress::SetPort(unsigned port)
 	switch (GetFamily()) {
 	case AF_INET:
 		{
-			auto *a = (struct sockaddr_in *)address;
+			auto *a = (struct sockaddr_in *)(void *)address;
 			a->sin_port = htons(port);
 			return true;
 		}
 
 	case AF_INET6:
 		{
-			auto *a = (struct sockaddr_in6 *)address;
+			auto *a = (struct sockaddr_in6 *)(void *)address;
 			a->sin6_port = htons(port);
 			return true;
 		}
