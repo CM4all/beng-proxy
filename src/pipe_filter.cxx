@@ -15,7 +15,6 @@
 #include "spawn/ChildOptions.hxx"
 #include "spawn/IstreamSpawn.hxx"
 #include "spawn/Prepared.hxx"
-#include "PrefixLogger.hxx"
 #include "system/UniqueFileDescriptor.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/djbhash.h"
@@ -92,17 +91,13 @@ pipe_filter(SpawnService &spawn_service, EventLoop &event_loop,
 
     auto *stopwatch = stopwatch_new(pool, path);
 
-    auto prefix_logger = CreatePrefixLogger(event_loop, IgnoreError());
-
     PreparedChildProcess p;
-    p.SetStderr(std::move(prefix_logger.second));
     p.Append(path);
     for (auto i : args)
         p.Append(i);
 
     GError *error = nullptr;
     if (!options.CopyTo(p, true, nullptr, &error)) {
-        DeletePrefixLogger(prefix_logger.first);
         handler.InvokeError(error);
         return;
     }
@@ -112,13 +107,9 @@ pipe_filter(SpawnService &spawn_service, EventLoop &event_loop,
                                   std::move(p),
                                   spawn_service, &error);
     if (pid < 0) {
-        DeletePrefixLogger(prefix_logger.first);
         handler.InvokeError(error);
         return;
     }
-
-    if (prefix_logger.first != nullptr)
-        PrefixLoggerSetPid(*prefix_logger.first, pid);
 
     stopwatch_event(stopwatch, "fork");
 

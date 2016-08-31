@@ -199,7 +199,6 @@ cm4all_beng_proxy_SOURCES = \
 	src/xml_parser.cxx src/xml_parser.hxx \
 	src/pipe_stock.cxx src/pipe_stock.hxx \
 	src/pipe_filter.cxx src/pipe_filter.hxx \
-	src/PrefixLogger.cxx src/PrefixLogger.hxx \
 	src/processor.cxx src/processor.hxx \
 	src/penv.cxx src/penv.hxx \
 	src/esession.cxx \
@@ -1416,7 +1415,6 @@ test_t_cgi_SOURCES = test/t_cgi.cxx \
 	src/regex.cxx \
 	src/buffered_io.cxx \
 	src/header_parser.cxx \
-	src/PrefixLogger.cxx src/PrefixLogger.hxx \
 	src/crash.cxx src/crash.hxx \
 	src/expand.cxx src/pexpand.cxx \
 	src/direct.cxx

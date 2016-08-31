@@ -11,7 +11,6 @@
 #include "product.h"
 #include "spawn/IstreamSpawn.hxx"
 #include "spawn/Prepared.hxx"
-#include "PrefixLogger.hxx"
 #include "system/UniqueFileDescriptor.hxx"
 #include "util/CharUtil.hxx"
 #include "util/Error.hxx"
@@ -44,7 +43,6 @@ StringFallback(const char *value, const char *fallback)
 
 static bool
 PrepareCgi(struct pool &pool, PreparedChildProcess &p,
-           UniqueFileDescriptor stderr_fd,
            http_method_t method,
            const CgiAddress &address,
            const char *remote_addr,
@@ -52,8 +50,6 @@ PrepareCgi(struct pool &pool, PreparedChildProcess &p,
            off_t content_length,
            GError **error_r)
 {
-    p.SetStderr(std::move(stderr_fd));
-
     const char *path = address.path;
 
     p.SetEnv("GATEWAY_INTERFACE", "CGI/1.1");
@@ -153,17 +149,13 @@ cgi_launch(EventLoop &event_loop, struct pool *pool,
            SpawnService &spawn_service,
            GError **error_r)
 {
-    auto prefix_logger = CreatePrefixLogger(event_loop, IgnoreError());
-
     PreparedChildProcess p;
 
-    if (!PrepareCgi(*pool, p, std::move(prefix_logger.second), method,
+    if (!PrepareCgi(*pool, p, method,
                     *address, remote_addr, headers,
                     body != nullptr ? body->GetAvailable(false) : -1,
-                    error_r)) {
-        DeletePrefixLogger(prefix_logger.first);
+                    error_r))
         return nullptr;
-    }
 
     Istream *input;
     int pid = SpawnChildProcess(event_loop, pool,
@@ -171,13 +163,8 @@ cgi_launch(EventLoop &event_loop, struct pool *pool,
                                 std::move(p),
                                 spawn_service,
                                 error_r);
-    if (pid < 0) {
-        DeletePrefixLogger(prefix_logger.first);
+    if (pid < 0)
         return nullptr;
-    }
-
-    if (prefix_logger.first != nullptr)
-        PrefixLoggerSetPid(*prefix_logger.first, pid);
 
     return input;
 }
