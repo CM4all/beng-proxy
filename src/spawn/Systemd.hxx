@@ -14,6 +14,6 @@ struct CgroupState;
  */
 CgroupState
 CreateSystemdScope(const char *name, const char *description,
-                   bool delegate=false);
+                   int pid, bool delegate=false);
 
 #endif

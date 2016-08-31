@@ -135,7 +135,8 @@ WaitJobRemoved(DBusConnection *connection, const char *object_path)
 }
 
 CgroupState
-CreateSystemdScope(const char *name, const char *description, bool delegate)
+CreateSystemdScope(const char *name, const char *description,
+                   int pid, bool delegate)
 {
     if (!sd_booted())
         return CgroupState();
@@ -179,7 +180,7 @@ CreateSystemdScope(const char *name, const char *description, bool delegate)
     using PropTypeTraits = StructTypeTraits<StringTypeTraits,
                                             VariantTypeTraits>;
 
-    const uint32_t pids_value[] = { uint32_t(getpid()) };
+    const uint32_t pids_value[] = { uint32_t(pid) };
 
     AppendMessageIter(args, DBUS_TYPE_ARRAY, PropTypeTraits::TypeAsString::value)
         .Append(Struct(String("Description"),

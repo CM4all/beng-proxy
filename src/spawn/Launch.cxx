@@ -7,10 +7,13 @@
 #include "CgroupState.hxx"
 #include "Server.hxx"
 #include "system/Error.hxx"
+#include "system/UniqueFileDescriptor.hxx"
 #include "util/PrintException.cxx"
 
 #include <sched.h>
 #include <unistd.h>
+#include <string.h>
+#include <errno.h>
 #include <sys/prctl.h>
 #include <sys/signal.h>
 
@@ -20,6 +23,14 @@ struct LaunchSpawnServerContext {
     int fd;
 
     std::function<void()> post_clone;
+
+    /**
+     * A pipe which is used to copy the "real" PID to the spawner
+     * (which doesn't know its own PID because it lives in a new PID
+     * namespace).  The "real" PID is necessary because we need to
+     * send it to systemd.
+     */
+    FileDescriptor read_pipe, write_pipe;
 };
 
 static int
@@ -28,6 +39,16 @@ RunSpawnServer2(void *p)
     auto &ctx = *(LaunchSpawnServerContext *)p;
 
     ctx.post_clone();
+
+    ctx.write_pipe.Close();
+
+    /* receive our "real" PID from the parent process; we have no way
+       to obtain it, because we're in a PID namespace and getpid()
+       returns 1 */
+    int real_pid;
+    if (ctx.read_pipe.Read(&real_pid, sizeof(real_pid)) != sizeof(real_pid))
+        real_pid = getpid();
+    ctx.read_pipe.Close();
 
     const char *name = "spawn";
     prctl(PR_SET_NAME, (unsigned long)name, 0, 0, 0);
@@ -47,18 +68,11 @@ RunSpawnServer2(void *p)
         cgroup_state =
             CreateSystemdScope("cm4all-beng-spawn.scope",
                                "The cm4all-beng-proxy child process spawner",
-                               true);
+                               real_pid, true);
     } catch (const std::runtime_error &e) {
         fprintf(stderr, "Failed to create systemd scope: ");
         PrintException(e);
     }
-
-    /* create a new PID namespace to keep (untrusted) child processes
-       contained; we need to do that after creating the systemd scope,
-       because systemd would just see "PIDs=1" (because we're pid 1 in
-       the new PID namespace) */
-    if (unshare(CLONE_NEWPID) < 0)
-        perror("Failed to create new PID namespace");
 
     RunSpawnServer(ctx.config, cgroup_state, ctx.fd);
     return 0;
@@ -68,14 +82,32 @@ pid_t
 LaunchSpawnServer(const SpawnConfig &config, int fd,
                   std::function<void()> post_clone)
 {
-    LaunchSpawnServerContext ctx{config, fd, std::move(post_clone)};
+    UniqueFileDescriptor read_pipe, write_pipe;
+    if (!UniqueFileDescriptor::CreatePipe(read_pipe, write_pipe))
+        throw MakeErrno("pipe() failed");
+
+    LaunchSpawnServerContext ctx{config, fd, std::move(post_clone),
+            read_pipe.ToFileDescriptor(), write_pipe.ToFileDescriptor()};
 
     char stack[32768];
-    auto pid = clone(RunSpawnServer2, stack + sizeof(stack),
-                     CLONE_IO | SIGCHLD,
-                     &ctx);
+    int pid = clone(RunSpawnServer2, stack + sizeof(stack),
+                    CLONE_NEWPID | CLONE_IO | SIGCHLD,
+                    &ctx);
+    if (pid < 0) {
+        /* try again without CLONE_NEWPID */
+        fprintf(stderr, "Failed to create spawner PID namespace (%s), trying without\n",
+                strerror(errno));
+        pid = clone(RunSpawnServer2, stack + sizeof(stack),
+                    CLONE_IO | SIGCHLD,
+                    &ctx);
+    }
+
     if (pid < 0)
         throw MakeErrno("clone() failed");
+
+    /* send its "real" PID to the spawner */
+    read_pipe.Close();
+    write_pipe.Write(&pid, sizeof(pid));
 
     return pid;
 }
