@@ -200,6 +200,9 @@ handle_control_packet(BpInstance *instance, ControlServer *server,
     daemon_log(5, "control command=%d payload_length=%zu\n",
                command, payload_length);
 
+    /* only local clients are allowed to use most commands */
+    const bool is_privileged = address.GetFamily() == AF_LOCAL;
+
     switch (command) {
     case CONTROL_NOP:
         /* duh! */
@@ -210,7 +213,8 @@ handle_control_packet(BpInstance *instance, ControlServer *server,
         break;
 
     case CONTROL_DUMP_POOLS:
-        pool_dump_tree(instance->pool);
+        if (is_privileged)
+            pool_dump_tree(instance->pool);
         break;
 
     case CONTROL_ENABLE_NODE:
@@ -224,12 +228,13 @@ handle_control_packet(BpInstance *instance, ControlServer *server,
         break;
 
     case CONTROL_VERBOSE:
-        if (payload_length == 1)
+        if (is_privileged && payload_length == 1)
             daemon_log_config.verbose = *(const uint8_t *)payload;
         break;
 
     case CONTROL_FADE_CHILDREN:
-        instance->FadeChildren();
+        if (is_privileged)
+            instance->FadeChildren();
         break;
     }
 }

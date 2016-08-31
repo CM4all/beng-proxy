@@ -223,6 +223,9 @@ LbControl::OnControlPacket(ControlServer &control_server,
                            const void *payload, size_t payload_length,
                            SocketAddress address)
 {
+    /* only local clients are allowed to use most commands */
+    const bool is_privileged = address.GetFamily() == AF_LOCAL;
+
     switch (command) {
     case CONTROL_NOP:
     case CONTROL_TCACHE_INVALIDATE:
@@ -230,11 +233,13 @@ LbControl::OnControlPacket(ControlServer &control_server,
         break;
 
     case CONTROL_ENABLE_NODE:
-        enable_node(&instance, (const char *)payload, payload_length);
+        if (is_privileged)
+            enable_node(&instance, (const char *)payload, payload_length);
         break;
 
     case CONTROL_FADE_NODE:
-        fade_node(&instance, (const char *)payload, payload_length);
+        if (is_privileged)
+            fade_node(&instance, (const char *)payload, payload_length);
         break;
 
     case CONTROL_NODE_STATUS:
@@ -244,7 +249,8 @@ LbControl::OnControlPacket(ControlServer &control_server,
         break;
 
     case CONTROL_DUMP_POOLS:
-        pool_dump_tree(instance.pool);
+        if (is_privileged)
+            pool_dump_tree(instance.pool);
         break;
 
     case CONTROL_STATS:
@@ -252,7 +258,7 @@ LbControl::OnControlPacket(ControlServer &control_server,
         break;
 
     case CONTROL_VERBOSE:
-        if (payload_length == 1)
+        if (is_privileged && payload_length == 1)
             daemon_log_config.verbose = *(const uint8_t *)payload;
         break;
     }
