@@ -178,7 +178,7 @@ IncludeConfigParser::IncludeOptionalPath(const char *p)
             return;
 
         default:
-            throw FormatErrno(e, "Failed to open %s", path);
+            throw FormatErrno(e, "Failed to open %s", sub.path.c_str());
         }
     }
 
