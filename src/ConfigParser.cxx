@@ -10,6 +10,7 @@
 #include <inline/compiler.h>
 
 #include <assert.h>
+#include <errno.h>
 
 bool
 ConfigParser::PreParseLine(gcc_unused LineParser &line)
@@ -104,6 +105,14 @@ IncludeConfigParser::ParseLine(LineParser &line)
         line.ExpectEnd();
 
         IncludePath(p);
+    } else if (line.SkipWord("include_optional")) {
+        const char *p = line.NextUnescape();
+        if (p == nullptr)
+            throw LineParser::Error("Quoted path expected");
+
+        line.ExpectEnd();
+
+        IncludeOptionalPath(p);
     } else
         child.ParseLine(line);
 }
@@ -152,6 +161,31 @@ ParseConfigFile(const char *path, FILE *file, ConfigParser &parser)
 
         ++i;
     }
+}
+
+inline void
+IncludeConfigParser::IncludeOptionalPath(const char *p)
+{
+    IncludeConfigParser sub(ApplyPath(path.c_str(), p), child);
+
+    FILE *file = fopen(sub.path.c_str(), "r");
+    if (file == nullptr) {
+        int e = errno;
+        switch (e) {
+        case ENOENT:
+        case ENOTDIR:
+            /* silently ignore this error */
+            return;
+
+        default:
+            throw FormatErrno(e, "Failed to open %s", path);
+        }
+    }
+
+    AtScopeExit(file) { fclose(file); };
+
+    ParseConfigFile(sub.path.c_str(), file, sub);
+    sub.Finish();
 }
 
 void

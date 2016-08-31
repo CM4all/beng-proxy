@@ -69,6 +69,7 @@ public:
 
 private:
     void IncludePath(const char *p);
+    void IncludeOptionalPath(const char *p);
 };
 
 void

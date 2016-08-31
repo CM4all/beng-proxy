@@ -47,7 +47,14 @@ systemctl restart cm4all-beng-lb
 
 Configuration is read from the file
 \texttt{/etc/cm4all/beng/lb.conf}.  From there, other files can be
-included with the \texttt{include} keyword.
+included with the \texttt{include} keyword:
+
+\begin{verbatim*}
+include "foo/bar.conf"
+include_optional "foo/may-not-exist.conf"
+\end{verbatim*}
+
+The second line silently ignores non-existing files.
 
 The following object types can be configured here:
 
