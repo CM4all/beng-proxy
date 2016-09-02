@@ -676,6 +676,20 @@ embed::SendRequest()
     transformation = t_view->transformation;
 
     const auto *address = widget_address(&widget);
+
+    if (!address->IsDefined()) {
+        const char *view_name = widget.view_name;
+        if (view_name == nullptr)
+            view_name = "[default]";
+
+        GError *error =
+            g_error_new(widget_quark(), WIDGET_ERROR_UNSPECIFIED,
+                        "Widget '%s' view '%s' does not have an address",
+                        widget.GetLogName(), view_name);
+        widget_dispatch_error(this, error);
+        return;
+    }
+
     resource_tag = address->GetId(pool);
 
     Istream *request_body = widget.from_request.body;
