@@ -176,7 +176,7 @@ fcgi_child_stock_prepare(void *info, UniqueFileDescriptor &&fd,
 
     UniqueFileDescriptor null_fd;
     if (null_fd.Open("/dev/null", O_WRONLY))
-        p.SetStdin(std::move(null_fd));
+        p.SetStdout(std::move(null_fd));
 
     p.Append(params.executable_path);
     for (auto i : params.args)
