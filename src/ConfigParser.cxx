@@ -152,9 +152,11 @@ IncludeConfigParser::IncludePath(boost::filesystem::path &&p)
 
         std::vector<fs::path> files;
 
-        for (const auto &i : fs::directory_iterator(directory))
-            if (fnmatch(pattern.c_str(), i.path().filename().c_str(), 0) == 0)
-                files.emplace_back(i.path());
+        /* range-based for requires Boost 1.56 */
+        for (auto i = fs::directory_iterator(directory);
+             i != fs::directory_iterator(); ++i)
+            if (fnmatch(pattern.c_str(), i->path().filename().c_str(), 0) == 0)
+                files.emplace_back(i->path());
 
         std::sort(files.begin(), files.end());
 
