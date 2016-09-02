@@ -621,6 +621,20 @@ WidgetRequest::SendRequest()
     transformation = t_view->transformation;
 
     const auto *address = widget.GetAddress();
+
+    if (!address->IsDefined()) {
+        const char *view_name = widget.from_template.view_name;
+        if (view_name == nullptr)
+            view_name = "[default]";
+
+        GError *error =
+            g_error_new(widget_quark(), WIDGET_ERROR_UNSPECIFIED,
+                        "Widget '%s' view '%s' does not have an address",
+                        widget.GetLogName(), view_name);
+        DispatchError(error);
+        return;
+    }
+
     resource_tag = address->GetId(pool);
 
     Istream *request_body = widget.from_request.body;
