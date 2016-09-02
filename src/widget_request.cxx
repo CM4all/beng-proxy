@@ -27,13 +27,7 @@ try {
 
     auto &p = ws.session.parent.pool;
 
-    if (ws.path_info != nullptr)
-        d_free(p, ws.path_info);
-
     ws.path_info.Set(p, from_request.path_info);
-
-    if (ws.query_string != nullptr)
-        d_free(p, ws.query_string);
 
     if (from_request.query_string.IsEmpty())
         ws.query_string.Clear(p);
