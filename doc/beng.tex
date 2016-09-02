@@ -103,9 +103,13 @@ Include another file.  Example:
 \begin{verbatim*}
 include "foo/bar.conf"
 include_optional "foo/may-not-exist.conf"
+include "wildcard/*.conf"
 \end{verbatim*}
 
 The second line silently ignores non-existing files.
+
+The third line includes all files in the directory \texttt{wildcard}
+ending with \texttt{.conf}.
 
 The specified file name may be relative to the including file.
 

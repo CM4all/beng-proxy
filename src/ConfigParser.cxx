@@ -11,6 +11,7 @@
 
 #include <assert.h>
 #include <errno.h>
+#include <fnmatch.h>
 
 namespace fs = boost::filesystem;
 
@@ -138,8 +139,33 @@ ApplyPath(const fs::path &base, fs::path &&p)
 inline void
 IncludeConfigParser::IncludePath(boost::filesystem::path &&p)
 {
-    IncludeConfigParser sub(ApplyPath(path, std::move(p)), child);
-    ParseConfigFile(sub.path.c_str(), sub);
+    p = ApplyPath(path, std::move(p));
+
+    auto directory = p.parent_path();
+    if (directory.empty())
+        directory = ".";
+
+    const auto pattern = p.filename();
+
+    if (pattern.native().find('*') != std::string::npos ||
+        pattern.native().find('?') != std::string::npos) {
+
+        std::vector<fs::path> files;
+
+        for (const auto &i : fs::directory_iterator(directory))
+            if (fnmatch(pattern.c_str(), i.path().filename().c_str(), 0) == 0)
+                files.emplace_back(i.path());
+
+        std::sort(files.begin(), files.end());
+
+        for (auto &i : files) {
+            IncludeConfigParser sub(std::move(i), child);
+            ParseConfigFile(sub.path.c_str(), sub);
+        }
+    } else {
+        IncludeConfigParser sub(std::move(p), child);
+        ParseConfigFile(sub.path.c_str(), sub);
+    }
 }
 
 static void
