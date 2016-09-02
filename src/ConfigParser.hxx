@@ -5,6 +5,8 @@
 #ifndef CONFIG_PARSER_HXX
 #define CONFIG_PARSER_HXX
 
+#include <boost/filesystem.hpp>
+
 #include <memory>
 
 class LineParser;
@@ -54,12 +56,12 @@ public:
  * A #ConfigParser which can "include" other files.
  */
 class IncludeConfigParser final : public ConfigParser {
-    const std::string path;
+    const boost::filesystem::path path;
 
     ConfigParser &child;
 
 public:
-    IncludeConfigParser(std::string &&_path, ConfigParser &_child)
+    IncludeConfigParser(boost::filesystem::path &&_path, ConfigParser &_child)
         :path(std::move(_path)), child(_child) {}
 
     /* virtual methods from class ConfigParser */
@@ -68,11 +70,11 @@ public:
     void Finish() override;
 
 private:
-    void IncludePath(const char *p);
-    void IncludeOptionalPath(const char *p);
+    void IncludePath(boost::filesystem::path &&p);
+    void IncludeOptionalPath(boost::filesystem::path &&p);
 };
 
 void
-ParseConfigFile(const char *path, ConfigParser &parser);
+ParseConfigFile(const boost::filesystem::path &path, ConfigParser &parser);
 
 #endif

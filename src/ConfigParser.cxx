@@ -12,6 +12,8 @@
 #include <assert.h>
 #include <errno.h>
 
+namespace fs = boost::filesystem;
+
 bool
 ConfigParser::PreParseLine(gcc_unused LineParser &line)
 {
@@ -123,29 +125,26 @@ IncludeConfigParser::Finish()
     child.Finish();
 }
 
-static std::string
-ApplyPath(const char *base, const char *p)
+static fs::path
+ApplyPath(const fs::path &base, fs::path &&p)
 {
-    if (*p == '/')
+    if (p.is_absolute())
         /* is already absolute */
         return p;
 
-    const char *slash = strrchr(base, '/');
-    if (slash == nullptr)
-        return p;
-
-    return std::string(base, slash + 1) + p;
+    return base.parent_path() / p;
 }
 
 inline void
-IncludeConfigParser::IncludePath(const char *p)
+IncludeConfigParser::IncludePath(boost::filesystem::path &&p)
 {
-    IncludeConfigParser sub(ApplyPath(path.c_str(), p), child);
+    IncludeConfigParser sub(ApplyPath(path, std::move(p)), child);
     ParseConfigFile(sub.path.c_str(), sub);
 }
 
 static void
-ParseConfigFile(const char *path, FILE *file, ConfigParser &parser)
+ParseConfigFile(const boost::filesystem::path &path, FILE *file,
+                ConfigParser &parser)
 {
     char buffer[4096], *line;
     unsigned i = 1;
@@ -156,7 +155,7 @@ ParseConfigFile(const char *path, FILE *file, ConfigParser &parser)
             if (!parser.PreParseLine(line_parser))
                 parser.ParseLine(line_parser);
         } catch (...) {
-            std::throw_with_nested(LineParser::Error(std::string(path) + ':' + std::to_string(i)));
+            std::throw_with_nested(LineParser::Error(path.native() + ':' + std::to_string(i)));
         }
 
         ++i;
@@ -164,9 +163,9 @@ ParseConfigFile(const char *path, FILE *file, ConfigParser &parser)
 }
 
 inline void
-IncludeConfigParser::IncludeOptionalPath(const char *p)
+IncludeConfigParser::IncludeOptionalPath(boost::filesystem::path &&p)
 {
-    IncludeConfigParser sub(ApplyPath(path.c_str(), p), child);
+    IncludeConfigParser sub(ApplyPath(path, std::move(p)), child);
 
     FILE *file = fopen(sub.path.c_str(), "r");
     if (file == nullptr) {
@@ -189,11 +188,11 @@ IncludeConfigParser::IncludeOptionalPath(const char *p)
 }
 
 void
-ParseConfigFile(const char *path, ConfigParser &parser)
+ParseConfigFile(const boost::filesystem::path &path, ConfigParser &parser)
 {
-    FILE *file = fopen(path, "r");
+    FILE *file = fopen(path.c_str(), "r");
     if (file == nullptr)
-        throw FormatErrno("Failed to open %s", path);
+        throw FormatErrno("Failed to open %s", path.c_str());
 
     AtScopeExit(file) { fclose(file); };
 
