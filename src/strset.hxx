@@ -16,7 +16,7 @@ struct pool;
 /**
  * An unordered set of strings.
  */
-struct StringSet {
+class StringSet {
     struct Item : boost::intrusive::slist_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
         const char *value;
     };
@@ -26,6 +26,7 @@ struct StringSet {
 
     List list;
 
+public:
     StringSet() = default;
     StringSet(const StringSet &) = delete;
     StringSet(StringSet &&) = default;
