@@ -13,6 +13,7 @@
 #include "child_stock.hxx"
 #include "spawn/Prepared.hxx"
 #include "spawn/ChildOptions.hxx"
+#include "spawn/JailParams.hxx"
 #include "spawn/JailConfig.hxx"
 #include "gerrno.h"
 #include "pool.hxx"
@@ -209,8 +210,8 @@ fcgi_stock_create(void *ctx, CreateStockItem c, void *info,
     auto *connection = new FcgiConnection(fcgi_stock->GetEventLoop(), c);
 
     const ChildOptions &options = params->options;
-    if (options.jail.enabled) {
-        connection->jail_home_directory = options.jail.home_directory;
+    if (options.jail != nullptr && options.jail->enabled) {
+        connection->jail_home_directory = options.jail->home_directory;
 
         if (!connection->jail_config.Load("/etc/cm4all/jailcgi/jail.conf")) {
             GError *error = g_error_new(fcgi_quark(), 0,

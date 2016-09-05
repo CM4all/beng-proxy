@@ -10,6 +10,7 @@
 #include "strmap.hxx"
 #include "product.h"
 #include "spawn/IstreamSpawn.hxx"
+#include "spawn/JailParams.hxx"
 #include "spawn/Prepared.hxx"
 #include "system/UniqueFileDescriptor.hxx"
 #include "util/CharUtil.hxx"
@@ -69,12 +70,12 @@ PrepareCgi(struct pool &pool, PreparedChildProcess &p,
         p.SetEnv("REMOTE_ADDR", remote_addr);
 
     const char *arg = nullptr;
-    if (address.options.jail.enabled) {
+    if (address.options.jail != nullptr && address.options.jail->enabled) {
         p.SetEnv("JAILCGI_FILENAME", path);
         path = "/usr/lib/cm4all/jailcgi/bin/wrapper";
 
-        if (address.options.jail.home_directory != nullptr)
-            p.SetEnv("JETSERV_HOME", address.options.jail.home_directory);
+        if (address.options.jail->home_directory != nullptr)
+            p.SetEnv("JETSERV_HOME", address.options.jail->home_directory);
 
         if (address.interpreter != nullptr)
             p.SetEnv("JAILCGI_INTERPRETER", address.interpreter);

@@ -7,13 +7,15 @@
 
 #include "ExpandableStringList.hxx"
 #include "CgroupOptions.hxx"
-#include "ResourceLimits.hxx"
 #include "RefenceOptions.hxx"
 #include "NamespaceOptions.hxx"
-#include "JailParams.hxx"
 #include "UidGid.hxx"
 #include "util/ShallowCopy.hxx"
+#include "glibfwd.hxx"
 
+struct ResourceLimits;
+struct JailParams;
+struct PreparedChildProcess;
 class MatchInfo;
 class Error;
 
@@ -34,13 +36,13 @@ struct ChildOptions {
 
     CgroupOptions cgroup;
 
-    ResourceLimits rlimits;
+    ResourceLimits *rlimits = nullptr;
 
     RefenceOptions refence;
 
     NamespaceOptions ns;
 
-    JailParams jail;
+    JailParams *jail = nullptr;
 
     UidGid uid_gid;
 
@@ -65,15 +67,10 @@ struct ChildOptions {
     ChildOptions(ChildOptions &&) = default;
     ChildOptions &operator=(ChildOptions &&) = default;
 
-    bool Check(GError **error_r) const {
-        return jail.Check(error_r);
-    }
+    bool Check(GError **error_r) const;
 
-    bool IsExpandable() const {
-        return expand_stderr_path != nullptr ||
-            env.IsExpandable() ||
-            ns.IsExpandable() || jail.IsExpandable();
-    }
+    gcc_pure
+    bool IsExpandable() const;
 
     bool Expand(struct pool &pool, const MatchInfo &match_info,
                 Error &error_r);

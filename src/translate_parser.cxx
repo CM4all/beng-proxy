@@ -17,6 +17,8 @@
 #include "cgi_address.hxx"
 #include "nfs_address.hxx"
 #include "spawn/mount_list.hxx"
+#include "spawn/ResourceLimits.hxx"
+#include "spawn/JailParams.hxx"
 #include "beng-proxy/translation.h"
 #include "pool.hxx"
 #include "net/SocketAddress.hxx"
@@ -40,7 +42,7 @@ TranslateParser::SetChildOptions(ChildOptions &_child_options)
     child_options = &_child_options;
     ns_options = &child_options->ns;
     mount_list = &ns_options->mounts;
-    jail = &child_options->jail;
+    jail = nullptr;
     env_builder = child_options->env;
 }
 
@@ -309,7 +311,7 @@ translate_jail_finish(JailParams *jail,
                       const char *document_root,
                       GError **error_r)
 {
-    if (!jail->enabled)
+    if (jail == nullptr || !jail->enabled)
         return true;
 
     if (jail->home_directory == nullptr)
@@ -354,7 +356,7 @@ translate_response_finish(TranslateResponse *response,
         if (cgi.document_root == nullptr)
             cgi.document_root = response->document_root;
 
-        if (!translate_jail_finish(&cgi.options.jail,
+        if (!translate_jail_finish(cgi.options.jail,
                                    response, cgi.document_root,
                                    error_r))
             return false;
@@ -362,11 +364,12 @@ translate_response_finish(TranslateResponse *response,
         auto &file = response->address.GetFile();
 
         if (file.delegate != nullptr) {
-            if (file.delegate->child_options.jail.enabled &&
+            if (file.delegate->child_options.jail != nullptr &&
+                file.delegate->child_options.jail->enabled &&
                 file.document_root == nullptr)
                 file.document_root = response->document_root;
 
-            if (!translate_jail_finish(&file.delegate->child_options.jail,
+            if (!translate_jail_finish(file.delegate->child_options.jail,
                                        response,
                                        file.document_root,
                                        error_r))
@@ -695,7 +698,7 @@ translate_client_uts_namespace(NamespaceOptions *ns,
 }
 
 static bool
-translate_client_rlimits(ChildOptions *child_options,
+translate_client_rlimits(struct pool &pool, ChildOptions *child_options,
                          const char *payload,
                          GError **error_r)
 {
@@ -705,7 +708,10 @@ translate_client_rlimits(ChildOptions *child_options,
         return false;
     }
 
-    if (!child_options->rlimits.Parse(payload)) {
+    if (child_options->rlimits == nullptr)
+        child_options->rlimits = NewFromPool<ResourceLimits>(pool);
+
+    if (!child_options->rlimits->Parse(payload)) {
         g_set_error_literal(error_r, translate_quark(), 0,
                             "malformed RLIMITS packet");
         return false;
@@ -1765,9 +1771,13 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
     case TRANSLATE_JAILCGI:
         if (jail == nullptr) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced JAILCGI packet");
-            return false;
+            if (child_options == nullptr) {
+                g_set_error_literal(error_r, translate_quark(), 0,
+                                    "misplaced JAILCGI packet");
+                return false;
+            }
+
+            jail = child_options->jail = NewFromPool<JailParams>(*pool);
         }
 
         jail->enabled = true;
@@ -2720,7 +2730,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         return translate_client_uts_namespace(ns_options, payload, error_r);
 
     case TRANSLATE_RLIMITS:
-        return translate_client_rlimits(child_options, payload, error_r);
+        return translate_client_rlimits(*pool, child_options, payload, error_r);
 
     case TRANSLATE_WANT:
         return HandleWant((const uint16_t *)_payload, payload_length, error_r);

@@ -14,6 +14,7 @@
 #include "stock/Item.hxx"
 #include "lease.hxx"
 #include "child_stock.hxx"
+#include "spawn/JailParams.hxx"
 #include "spawn/Prepared.hxx"
 #include "gerrno.h"
 #include "pool.hxx"
@@ -235,8 +236,8 @@ lhttp_stock_get(LhttpStock *lhttp_stock, struct pool *pool,
                 const LhttpAddress *address,
                 GError **error_r)
 {
-    const auto *const jail = &address->options.jail;
-    if (jail->enabled && jail->home_directory == nullptr) {
+    const auto *const jail = address->options.jail;
+    if (jail != nullptr && jail->enabled && jail->home_directory == nullptr) {
         g_set_error(error_r, lhttp_quark(), 0,
                     "No home directory for jailed LHTTP");
         return nullptr;
