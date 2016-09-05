@@ -17,7 +17,7 @@ param_array::CopyFrom(struct pool *pool, const struct param_array &src)
     n = src.n;
     for (unsigned i = 0; i < src.n; ++i) {
         values[i] = p_strdup(pool, src.values[i]);
-        expand_values[i] = p_strdup_checked(pool, src.expand_values[i]);
+        expand_values[i] = src.expand_values[i];
     }
 }
 
@@ -25,7 +25,7 @@ bool
 param_array::IsExpandable() const
 {
     for (unsigned i = 0; i < n; ++i)
-        if (expand_values[i] != nullptr)
+        if (expand_values[i])
             return true;
 
     return false;
@@ -38,10 +38,10 @@ param_array::Expand(struct pool *pool,
     assert(pool != nullptr);
 
     for (unsigned i = 0; i < n; ++i) {
-        if (expand_values[i] == nullptr)
+        if (!expand_values[i])
             continue;
 
-        values[i] = expand_string_unescaped(pool, expand_values[i],
+        values[i] = expand_string_unescaped(pool, values[i],
                                             match_info, error_r);
         if (values[i] == nullptr)
             return false;

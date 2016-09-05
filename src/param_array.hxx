@@ -29,7 +29,7 @@ struct param_array {
      */
     const char *values[CAPACITY];
 
-    const char *expand_values[CAPACITY];
+    bool expand_values[CAPACITY];
 
     param_array() = default;
 
@@ -59,19 +59,20 @@ struct param_array {
         const unsigned i = n++;
 
         values[i] = value;
-        expand_values[i] = nullptr;
+        expand_values[i] = false;
     }
 
     bool CanSetExpand() const {
         assert(n <= CAPACITY);
 
-        return n > 0 && expand_values[n - 1] == nullptr;
+        return n > 0 && !expand_values[n - 1];
     }
 
     void SetExpand(const char *value) {
         assert(CanSetExpand());
 
-        expand_values[n - 1] = value;
+        values[n - 1] = value;
+        expand_values[n - 1] = true;
     }
 
     gcc_pure
