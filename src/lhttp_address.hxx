@@ -6,7 +6,7 @@
 #define BENG_PROXY_LHTTP_ADDRESS_HXX
 
 #include "spawn/ChildOptions.hxx"
-#include "param_array.hxx"
+#include "ExpandableStringList.hxx"
 #include "glibfwd.hxx"
 #include "util/ShallowCopy.hxx"
 
@@ -25,7 +25,7 @@ class Error;
 struct LhttpAddress {
     const char *path;
 
-    struct param_array args;
+    ExpandableStringList args;
 
     ChildOptions options;
 
@@ -57,7 +57,7 @@ struct LhttpAddress {
 
     constexpr LhttpAddress(ShallowCopy shallow_copy, const LhttpAddress &src)
         :path(src.path),
-         args(src.args),
+         args(shallow_copy, src.args),
          options(shallow_copy, src.options),
          host_and_port(src.host_and_port),
          uri(src.uri), expand_uri(src.expand_uri),

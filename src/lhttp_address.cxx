@@ -25,8 +25,6 @@ LhttpAddress::LhttpAddress(const char *_path)
      blocking(true)
 {
     assert(path != nullptr);
-
-    args.Init();
 }
 
 LhttpAddress::LhttpAddress(struct pool &pool, const LhttpAddress &src)

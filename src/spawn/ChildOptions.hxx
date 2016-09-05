@@ -5,7 +5,7 @@
 #ifndef BENG_PROXY_CHILD_OPTIONS_HXX
 #define BENG_PROXY_CHILD_OPTIONS_HXX
 
-#include "param_array.hxx"
+#include "ExpandableStringList.hxx"
 #include "CgroupOptions.hxx"
 #include "ResourceLimits.hxx"
 #include "RefenceOptions.hxx"
@@ -30,7 +30,7 @@ struct ChildOptions {
     /**
      * Environment variables.
      */
-    struct param_array env;
+    ExpandableStringList env;
 
     CgroupOptions cgroup;
 
@@ -46,14 +46,12 @@ struct ChildOptions {
 
     bool no_new_privs = false;
 
-    ChildOptions() {
-        env.Init();
-    }
+    ChildOptions() = default;
 
-    constexpr ChildOptions(ShallowCopy, const ChildOptions &src)
+    constexpr ChildOptions(ShallowCopy shallow_copy, const ChildOptions &src)
         :stderr_path(src.stderr_path),
          expand_stderr_path(src.expand_stderr_path),
-         env(src.env),
+         env(shallow_copy, src.env),
          cgroup(src.cgroup),
          rlimits(src.rlimits),
          refence(src.refence),

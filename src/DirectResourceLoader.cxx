@@ -196,7 +196,7 @@ DirectResourceLoader::SendRequest(struct pool &pool,
     case ResourceAddress::Type::PIPE:
         cgi = &address.GetCgi();
         pipe_filter(spawn_service, event_loop, &pool,
-                    cgi->path, cgi->args,
+                    cgi->path, cgi->args.ToArray(pool),
                     cgi->options,
                     status, std::move(headers), body,
                     handler);
@@ -232,7 +232,7 @@ DirectResourceLoader::SendRequest(struct pool &pool,
                          cgi->options,
                          cgi->action,
                          cgi->path,
-                         cgi->args,
+                         cgi->args.ToArray(pool),
                          method, cgi->GetURI(&pool),
                          cgi->script_name,
                          cgi->path_info,
@@ -240,7 +240,7 @@ DirectResourceLoader::SendRequest(struct pool &pool,
                          cgi->document_root,
                          extract_remote_ip(&pool, &headers),
                          headers, body,
-                         cgi->params,
+                         cgi->params.ToArray(pool),
                          stderr_fd,
                          handler, cancel_ptr);
         else
@@ -254,7 +254,7 @@ DirectResourceLoader::SendRequest(struct pool &pool,
                                 cgi->document_root,
                                 extract_remote_ip(&pool, &headers),
                                 std::move(headers), body,
-                                cgi->params,
+                                cgi->params.ToArray(pool),
                                 stderr_fd,
                                 handler, cancel_ptr);
         return;
@@ -264,13 +264,13 @@ DirectResourceLoader::SendRequest(struct pool &pool,
         was_request(pool, *was_stock, cgi->options,
                     cgi->action,
                     cgi->path,
-                    cgi->args,
+                    cgi->args.ToArray(pool),
                     method, cgi->GetURI(&pool),
                     cgi->script_name,
                     cgi->path_info,
                     cgi->query_string,
                     headers, body,
-                    cgi->params,
+                    cgi->params.ToArray(pool),
                     handler, cancel_ptr);
         return;
 

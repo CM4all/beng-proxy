@@ -41,6 +41,7 @@ TranslateParser::SetChildOptions(ChildOptions &_child_options)
     ns_options = &child_options->ns;
     mount_list = &ns_options->mounts;
     jail = &child_options->jail;
+    env_builder = child_options->env;
 }
 
 void
@@ -48,8 +49,11 @@ TranslateParser::SetCgiAddress(ResourceAddress::Type type,
                                const char *path)
 {
     cgi_address = cgi_address_new(*pool, path);
+
     *resource_address = ResourceAddress(type, *cgi_address);
 
+    args_builder = cgi_address->args;
+    params_builder = cgi_address->params;
     SetChildOptions(cgi_address->options);
 }
 
@@ -426,29 +430,26 @@ translate_client_check_pair(const char *name,
 }
 
 static bool
-translate_client_pair(struct param_array &array, const char *name,
+translate_client_pair(struct pool &pool,
+                      ExpandableStringList::Builder &builder,
+                      const char *name,
                       const char *payload, size_t payload_length,
                       GError **error_r)
 {
-    if (array.IsFull()) {
-        g_set_error(error_r, translate_quark(), 0,
-                    "too many %s packets", name);
-        return false;
-    }
-
     if (!translate_client_check_pair(name, payload, payload_length, error_r))
         return false;
 
-    array.Append(payload);
+    builder.Add(pool, payload, false);
     return true;
 }
 
 static bool
-translate_client_expand_pair(struct param_array &array, const char *name,
+translate_client_expand_pair(ExpandableStringList::Builder &builder,
+                             const char *name,
                              const char *payload, size_t payload_length,
                              GError **error_r)
 {
-    if (!array.CanSetExpand()) {
+    if (!builder.CanSetExpand()) {
         g_set_error(error_r, translate_quark(), 0,
                     "misplaced %s packet", name);
         return false;
@@ -457,7 +458,7 @@ translate_client_expand_pair(struct param_array &array, const char *name,
     if (!translate_client_check_pair(name, payload, payload_length, error_r))
         return false;
 
-    array.SetExpand(payload);
+    builder.SetExpand(payload);
     return true;
 }
 
@@ -2165,23 +2166,8 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
             return false;
         }
 
-        if (cgi_address != nullptr) {
-            if (cgi_address->args.IsFull()) {
-                g_set_error_literal(error_r, translate_quark(), 0,
-                                "too many APPEND packets");
-                return false;
-            }
-
-            cgi_address->args.Append(payload);
-            return true;
-        } else if (lhttp_address != nullptr) {
-            if (lhttp_address->args.IsFull()) {
-                g_set_error_literal(error_r, translate_quark(), 0,
-                                "too many APPEND packets");
-                return false;
-            }
-
-            lhttp_address->args.Append(payload);
+        if (cgi_address != nullptr || lhttp_address != nullptr) {
+            args_builder.Add(*pool, payload, false);
             return true;
         } else {
             g_set_error_literal(error_r, translate_quark(), 0,
@@ -2203,23 +2189,14 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
             return false;
         }
 
-        if (cgi_address != nullptr) {
-            if (!cgi_address->args.CanSetExpand()) {
+        if (cgi_address != nullptr || lhttp_address != nullptr) {
+            if (!args_builder.CanSetExpand()) {
                 g_set_error_literal(error_r, translate_quark(), 0,
                                 "misplaced EXPAND_APPEND packet");
                 return false;
             }
 
-            cgi_address->args.SetExpand(payload);
-            return true;
-        } else if (lhttp_address != nullptr) {
-            if (!lhttp_address->args.CanSetExpand()) {
-                g_set_error_literal(error_r, translate_quark(), 0,
-                                    "misplaced EXPAND_APPEND packet");
-                return false;
-            }
-
-            lhttp_address->args.SetExpand(payload);
+            args_builder.SetExpand(payload);
             return true;
         } else {
             g_set_error_literal(error_r, translate_quark(), 0,
@@ -2231,11 +2208,11 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         if (cgi_address != nullptr &&
             resource_address->type != ResourceAddress::Type::CGI &&
             resource_address->type != ResourceAddress::Type::PIPE) {
-            return translate_client_pair(cgi_address->params, "PAIR",
+            return translate_client_pair(*pool, params_builder, "PAIR",
                                          payload, payload_length,
                                          error_r);
         } else if (child_options != nullptr) {
-            return translate_client_pair(child_options->env, "PAIR",
+            return translate_client_pair(*pool, env_builder, "PAIR",
                                          payload, payload_length,
                                          error_r);
 
@@ -2254,15 +2231,15 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
         if (cgi_address != nullptr) {
             const auto type = resource_address->type;
-            struct param_array &p = type == ResourceAddress::Type::CGI
-                ? cgi_address->options.env
-                : cgi_address->params;
+            auto &builder = type == ResourceAddress::Type::CGI
+                ? env_builder
+                : params_builder;
 
-            return translate_client_expand_pair(p, "EXPAND_PAIR",
+            return translate_client_expand_pair(builder, "EXPAND_PAIR",
                                                 payload, payload_length,
                                                 error_r);
         } else if (lhttp_address != nullptr) {
-            return translate_client_expand_pair(lhttp_address->options.env,
+            return translate_client_expand_pair(env_builder,
                                                 "EXPAND_PAIR",
                                                 payload, payload_length,
                                                 error_r);
@@ -2578,6 +2555,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         lhttp_address = NewFromPool<LhttpAddress>(*pool, payload);
         *resource_address = *lhttp_address;
 
+        args_builder = lhttp_address->args;
         SetChildOptions(lhttp_address->options);
         return true;
 
@@ -2842,7 +2820,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
     case TRANSLATE_SETENV:
         if (child_options != nullptr) {
-            return translate_client_pair(child_options->env,
+            return translate_client_pair(*pool, env_builder,
                                          "SETENV",
                                          payload, payload_length,
                                          error_r);
@@ -2860,7 +2838,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         }
 
         if (child_options != nullptr) {
-            return translate_client_expand_pair(child_options->env,
+            return translate_client_expand_pair(env_builder,
                                                 "EXPAND_SETENV",
                                                 payload, payload_length,
                                                 error_r);

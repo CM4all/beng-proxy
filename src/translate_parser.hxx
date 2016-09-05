@@ -10,6 +10,7 @@
 #include "translate_reader.hxx"
 #include "translate_response.hxx"
 #include "translate_request.hxx"
+#include "ExpandableStringList.hxx"
 #include "glibfwd.hxx"
 
 struct FileAddress;
@@ -81,6 +82,8 @@ class TranslateParser {
 
     /** the current address list being edited */
     AddressList *address_list;
+
+    ExpandableStringList::Builder env_builder, args_builder, params_builder;
 
     /**
      * Default port for #TRANSLATE_ADDRESS_STRING.

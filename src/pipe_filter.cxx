@@ -46,11 +46,12 @@ append_etag(struct pool *pool, const char *in, const char *suffix)
                      "\"", (size_t)1, nullptr);
 }
 
+template<typename A, typename E>
 static const char *
 make_pipe_etag(struct pool *pool, const char *in,
                const char *path,
-               ConstBuffer<const char *> args,
-               ConstBuffer<const char *> env)
+               const A &args,
+               const E &env)
 {
     char suffix[10] = {'-'};
 

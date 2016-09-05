@@ -19,8 +19,6 @@
 CgiAddress::CgiAddress(const char *_path)
     :path(_path)
 {
-    args.Init();
-    params.Init();
 }
 
 CgiAddress *

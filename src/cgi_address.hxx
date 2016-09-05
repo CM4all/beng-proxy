@@ -7,7 +7,7 @@
 
 #include "spawn/ChildOptions.hxx"
 #include "address_list.hxx"
-#include "param_array.hxx"
+#include "ExpandableStringList.hxx"
 
 #include <inline/compiler.h>
 
@@ -23,12 +23,12 @@ struct CgiAddress {
     /**
      * Command-line arguments.
      */
-    struct param_array args;
+    ExpandableStringList args;
 
     /**
      * Protocol-specific name/value pairs (per-request).
      */
-    struct param_array params;
+    ExpandableStringList params;
 
     ChildOptions options;
 
@@ -82,7 +82,7 @@ struct CgiAddress {
 
     constexpr CgiAddress(ShallowCopy shallow_copy, const CgiAddress &src)
         :path(src.path),
-         args(src.args), params(src.params),
+         args(shallow_copy, src.args), params(shallow_copy, src.params),
          options(shallow_copy, src.options),
          interpreter(src.interpreter), action(src.action),
          uri(src.uri), script_name(src.script_name), path_info(src.path_info),
