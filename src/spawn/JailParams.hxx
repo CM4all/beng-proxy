@@ -16,12 +16,14 @@ class Error;
 
 struct JailParams {
     bool enabled = false;
+
+    bool expand_home_directory = false;
+
     const char *account_id = nullptr;
     const char *site_id = nullptr;
     const char *user_name = nullptr;
     const char *host_name = nullptr;
     const char *home_directory = nullptr;
-    const char *expand_home_directory = nullptr;
 
     JailParams() = default;
     JailParams(struct pool *pool, const JailParams &src);
@@ -34,7 +36,7 @@ struct JailParams {
                        const char *document_root) const;
 
     bool IsExpandable() const {
-        return expand_home_directory != nullptr;
+        return expand_home_directory;
     }
 
     bool Expand(struct pool &pool, const MatchInfo &match_info,

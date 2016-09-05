@@ -533,8 +533,9 @@ translate_client_expand_home(NamespaceOptions *ns, JailParams *jail,
     }
 
     if (jail != nullptr && jail->enabled &&
-        jail->expand_home_directory == nullptr) {
-        jail->expand_home_directory = payload;
+        !jail->expand_home_directory) {
+        jail->home_directory = payload;
+        jail->expand_home_directory = true;
         ok = true;
     }
 

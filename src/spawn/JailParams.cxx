@@ -28,7 +28,7 @@ JailParams::Check(GError **error_r) const
     if (!enabled)
         return true;
 
-    if (home_directory == nullptr && expand_home_directory == nullptr) {
+    if (home_directory == nullptr) {
         g_set_error(error_r, jail_quark(), 0, "No JailCGI home directory");
         return false;
     }
@@ -38,12 +38,12 @@ JailParams::Check(GError **error_r) const
 
 JailParams::JailParams(struct pool *pool, const JailParams &src)
     :enabled(src.enabled),
+     expand_home_directory(src.expand_home_directory),
      account_id(p_strdup_checked(pool, src.account_id)),
      site_id(p_strdup_checked(pool, src.site_id)),
      user_name(p_strdup_checked(pool, src.user_name)),
      host_name(p_strdup_checked(pool, src.host_name)),
-     home_directory(p_strdup_checked(pool, src.home_directory)),
-     expand_home_directory(p_strdup_checked(pool, src.expand_home_directory))
+     home_directory(p_strdup_checked(pool, src.home_directory))
 {
 }
 
@@ -106,9 +106,9 @@ bool
 JailParams::Expand(struct pool &pool, const MatchInfo &match_info,
                    Error &error_r)
 {
-    if (expand_home_directory != nullptr) {
+    if (expand_home_directory) {
         home_directory =
-            expand_string_unescaped(&pool, expand_home_directory, match_info,
+            expand_string_unescaped(&pool, home_directory, match_info,
                                     error_r);
         if (home_directory == nullptr)
             return false;
