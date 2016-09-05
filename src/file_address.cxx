@@ -30,7 +30,7 @@ file_address::file_address(struct pool *pool, const file_address &src)
      expand_path(p_strdup_checked(pool, src.expand_path)),
      expand_document_root(p_strdup_checked(pool, src.expand_document_root)),
      delegate(src.delegate != nullptr
-              ? NewFromPool<DelegateAddress>(*pool, *src.delegate)
+              ? NewFromPool<DelegateAddress>(*pool, *pool, *src.delegate)
               : nullptr),
      auto_gzipped(src.auto_gzipped) {
 }

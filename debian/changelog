@@ -2,6 +2,7 @@ cm4all-beng-proxy (10.29) unstable; urgency=low
 
   * istream/pipe: fix crash after running out of file descriptors
   * bp: raise default connection limit to 32k
+  * delegate: fix potential crash
   * systemd: set default NOFILE limits to 256k
   * systemd: enable crash dumps
 
