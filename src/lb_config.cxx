@@ -88,7 +88,7 @@ config_parser_feed_control(ConfigParser *parser, LineParser &line)
         line.ExpectEnd();
 
         Error error;
-        control->bind_address = ParseSocketAddress(address, 80, true, error);
+        control->bind_address = ParseSocketAddress(address, 5478, true, error);
         if (control->bind_address.IsNull())
             throw LineParser::Error(error.GetMessage());
     } else

@@ -1,6 +1,6 @@
 cm4all-beng-proxy (10.28) unstable; urgency=low
 
-  * 
+  * lb: fix default control port
 
  --   
 
