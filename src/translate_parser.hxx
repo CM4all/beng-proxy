@@ -125,6 +125,8 @@ public:
     }
 
 private:
+    void SetChildOptions(ChildOptions &_child_options);
+
     bool AddView(const char *name, GError **error_r);
 
     /**

@@ -34,6 +34,15 @@
 #include <sys/un.h>
 #include <netdb.h>
 
+void
+TranslateParser::SetChildOptions(ChildOptions &_child_options)
+{
+    child_options = &_child_options;
+    ns_options = &child_options->ns;
+    mount_list = &ns_options->mounts;
+    jail = &child_options->jail;
+}
+
 /*
  * receive response
  *
@@ -1645,10 +1654,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         *resource_address = ResourceAddress(ResourceAddress::Type::PIPE,
                                            *cgi_address);
 
-        child_options = &cgi_address->options;
-        ns_options = &child_options->ns;
-        mount_list = &ns_options->mounts;
-        jail = &child_options->jail;
+        SetChildOptions(cgi_address->options);
         return true;
 
     case TRANSLATE_CGI:
@@ -1669,10 +1675,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
                                            *cgi_address);
 
         cgi_address->document_root = response.document_root;
-        child_options = &cgi_address->options;
-        ns_options = &child_options->ns;
-        mount_list = &ns_options->mounts;
-        jail = &child_options->jail;
+        SetChildOptions(cgi_address->options);
         return true;
 
     case TRANSLATE_FASTCGI:
@@ -1692,10 +1695,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         *resource_address = ResourceAddress(ResourceAddress::Type::FASTCGI,
                                            *cgi_address);
 
-        child_options = &cgi_address->options;
-        ns_options = &child_options->ns;
-        mount_list = &ns_options->mounts;
-        jail = &child_options->jail;
+        SetChildOptions(cgi_address->options);
         address_list = &cgi_address->address_list;
         default_port = 9000;
         return true;
@@ -2151,10 +2151,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         }
 
         file_address->delegate = NewFromPool<DelegateAddress>(*pool, payload);
-        child_options = &file_address->delegate->child_options;
-        ns_options = &child_options->ns;
-        mount_list = &ns_options->mounts;
-        jail = &child_options->jail;
+        SetChildOptions(file_address->delegate->child_options);
         return true;
 
     case TRANSLATE_APPEND:
@@ -2377,10 +2374,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         *resource_address = ResourceAddress(ResourceAddress::Type::WAS,
                                            *cgi_address);
 
-        child_options = &cgi_address->options;
-        ns_options = &child_options->ns;
-        mount_list = &ns_options->mounts;
-        jail = &child_options->jail;
+        SetChildOptions(cgi_address->options);
         return true;
 
     case TRANSLATE_TRANSPARENT:
@@ -2589,10 +2583,8 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
         lhttp_address = NewFromPool<LhttpAddress>(*pool, payload);
         *resource_address = *lhttp_address;
-        child_options = &lhttp_address->options;
-        ns_options = &child_options->ns;
-        mount_list = &ns_options->mounts;
-        jail = &child_options->jail;
+
+        SetChildOptions(lhttp_address->options);
         return true;
 
     case TRANSLATE_LHTTP_URI:
