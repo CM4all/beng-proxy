@@ -10,9 +10,9 @@
 #include "util/ConstBuffer.hxx"
 #include "util/TrivialArray.hxx"
 #include "util/kvlist.hxx"
+#include "util/StringSet.hxx"
 #include "ResourceAddress.hxx"
 #include "header_forward.hxx"
-#include "strset.hxx"
 #include "glibfwd.hxx"
 
 #include <http/status.h>

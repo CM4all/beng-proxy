@@ -2,8 +2,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_STRSET_HXX
-#define BENG_PROXY_STRSET_HXX
+#ifndef STRING_SET_HXX
+#define STRING_SET_HXX
 
 #include <inline/compiler.h>
 

@@ -676,6 +676,7 @@ libutil_a_SOURCES = \
 	src/util/StringPointer.hxx \
 	src/util/TemplateString.hxx \
 	src/util/AllocatedString.cxx src/util/AllocatedString.hxx \
+	src/util/StringSet.cxx src/util/StringSet.hxx \
 	src/util/DeleteDisposer.hxx \
 	src/util/Macros.hxx \
 	src/util/TrivialArray.hxx \
@@ -716,7 +717,7 @@ libputil_a_SOURCES = \
 	src/growing_buffer.cxx src/growing_buffer.hxx \
 	src/please.hxx \
 	src/strmap.cxx src/strmap.hxx \
-	src/strset.cxx src/strset.hxx \
+	src/PStringSet.cxx \
 	src/puri_base.cxx src/puri_base.hxx \
 	src/puri_edit.cxx src/puri_edit.hxx \
 	src/puri_escape.cxx src/puri_escape.hxx \
