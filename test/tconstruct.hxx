@@ -20,29 +20,29 @@ struct MakeRequest : TranslateRequest {
         uri = _uri;
     }
 
-    MakeRequest &QueryString(const char *value) {
+    MakeRequest &&QueryString(const char *value) {
         query_string = value;
-        return *this;
+        return std::move(*this);
     }
 
-    MakeRequest &Check(const char *value) {
+    MakeRequest &&Check(const char *value) {
         check = {value, strlen(value)};
-        return *this;
+        return std::move(*this);
     }
 
-    MakeRequest &WantFullUri(const char *value) {
+    MakeRequest &&WantFullUri(const char *value) {
         want_full_uri = {value, strlen(value)};
-        return *this;
+        return std::move(*this);
     }
 
-    MakeRequest &WantFullUri(ConstBuffer<void> value) {
+    MakeRequest &&WantFullUri(ConstBuffer<void> value) {
         want_full_uri = value;
-        return *this;
+        return std::move(*this);
     }
 
-    MakeRequest &ErrorDocumentStatus(http_status_t value) {
+    MakeRequest &&ErrorDocumentStatus(http_status_t value) {
         error_document_status = value;
-        return *this;
+        return std::move(*this);
     }
 };
 
@@ -67,100 +67,100 @@ struct MakeResponse : TranslateResponse {
         base = _base;
     }
 
-    MakeResponse &FullCopyFrom(struct pool &p, const TranslateResponse &src) {
+    MakeResponse &&FullCopyFrom(struct pool &p, const TranslateResponse &src) {
         CopyFrom(&p, src);
         max_age = src.max_age;
         address.CopyFrom(p, src.address);
         user = src.user;
-        return *this;
+        return std::move(*this);
     }
 
-    MakeResponse &Base(const char *value) {
+    MakeResponse &&Base(const char *value) {
         base = value;
-        return *this;
+        return std::move(*this);
     }
 
-    MakeResponse &EasyBase(const char *value) {
+    MakeResponse &&EasyBase(const char *value) {
         easy_base = true;
         return Base(value);
     }
 
-    MakeResponse &UnsafeBase(const char *value) {
+    MakeResponse &&UnsafeBase(const char *value) {
         unsafe_base = true;
         return Base(value);
     }
 
-    MakeResponse &AutoBase() {
+    MakeResponse &&AutoBase() {
         auto_base = true;
-        return *this;
+        return std::move(*this);
     }
 
-    MakeResponse &Regex(const char *value) {
+    MakeResponse &&Regex(const char *value) {
         regex = value;
-        return *this;
+        return std::move(*this);
     }
 
-    MakeResponse &RegexTail(const char *value) {
+    MakeResponse &&RegexTail(const char *value) {
         regex_tail = true;
         return Regex(value);
     }
 
-    MakeResponse &RegexTailUnescape(const char *value) {
+    MakeResponse &&RegexTailUnescape(const char *value) {
         regex_unescape = true;
         return RegexTail(value);
     }
 
-    MakeResponse &InverseRegex(const char *value) {
+    MakeResponse &&InverseRegex(const char *value) {
         inverse_regex = value;
-        return *this;
+        return std::move(*this);
     }
 
-    MakeResponse &Uri(const char *value) {
+    MakeResponse &&Uri(const char *value) {
         uri = value;
-        return *this;
+        return std::move(*this);
     }
 
-    MakeResponse &TestPath(const char *value) {
+    MakeResponse &&TestPath(const char *value) {
         test_path = value;
-        return *this;
+        return std::move(*this);
     }
 
-    MakeResponse &File(const FileAddress &_file) {
+    MakeResponse &&File(const FileAddress &_file) {
         address = _file;
-        return *this;
+        return std::move(*this);
     }
 
-    MakeResponse &File(FileAddress &&_file) {
+    MakeResponse &&File(FileAddress &&_file) {
         return File(*file_address_dup(*tpool, &_file));
     }
 
-    MakeResponse &File(const char *_path) {
+    MakeResponse &&File(const char *_path) {
         struct pool &p = *tpool;
         auto f = file_address_new(p, _path);
         address = *f;
-        return *this;
+        return std::move(*this);
     }
 
-    MakeResponse &Http(const HttpAddress &_http) {
+    MakeResponse &&Http(const HttpAddress &_http) {
         address = _http;
-        return *this;
+        return std::move(*this);
     }
 
-    MakeResponse &Http(struct HttpAddress &&_http) {
+    MakeResponse &&Http(struct HttpAddress &&_http) {
         return Http(*http_address_dup(*tpool, &_http));
     }
 
-    MakeResponse &Cgi(const CgiAddress &_cgi) {
+    MakeResponse &&Cgi(const CgiAddress &_cgi) {
         address = ResourceAddress(ResourceAddress::Type::CGI, _cgi);
-        return *this;
+        return std::move(*this);
     }
 
-    MakeResponse &Cgi(CgiAddress &&_cgi) {
+    MakeResponse &&Cgi(CgiAddress &&_cgi) {
         return Cgi(*_cgi.Clone(*tpool));
     }
 
-    MakeResponse &Cgi(const char *_path, const char *_uri=nullptr,
-                      const char *_path_info=nullptr) {
+    MakeResponse &&Cgi(const char *_path, const char *_uri=nullptr,
+                       const char *_path_info=nullptr) {
         struct pool &p = *tpool;
         auto cgi = cgi_address_new(p, _path);
         cgi->uri = _uri;
@@ -183,7 +183,7 @@ struct MakeResponse : TranslateResponse {
         *tail = t;
     }
 
-    MakeResponse &Filter(const CgiAddress &_cgi) {
+    MakeResponse &&Filter(const CgiAddress &_cgi) {
         struct pool &p = *tpool;
         auto t = NewFromPool<Transformation>(p);
         t->next = nullptr;
@@ -191,50 +191,50 @@ struct MakeResponse : TranslateResponse {
         t->u.filter.reveal_user = false;
         t->u.filter.address = ResourceAddress(ResourceAddress::Type::CGI, _cgi);
         AppendTransformation(t);
-        return *this;
+        return std::move(*this);
     }
 
-    MakeResponse &Filter(CgiAddress &&_cgi) {
+    MakeResponse &&Filter(CgiAddress &&_cgi) {
         return Filter(*_cgi.Clone(*tpool));
     }
 
     template<size_t n>
-    MakeResponse &Vary(const uint16_t (&_vary)[n]) {
+    MakeResponse &&Vary(const uint16_t (&_vary)[n]) {
         vary = {_vary, n};
-        return *this;
+        return std::move(*this);
     }
 
     template<size_t n>
-    MakeResponse &Vary(const beng_translation_command (&_vary)[n]) {
+    MakeResponse &&Vary(const beng_translation_command (&_vary)[n]) {
         auto data = PoolAlloc<uint16_t>(*tpool, n);
         std::copy_n(_vary, n, vary.data);
         vary = {data, n};
-        return *this;
+        return std::move(*this);
     }
 
     template<size_t n>
-    MakeResponse &Invalidate(const uint16_t (&_invalidate)[n]) {
+    MakeResponse &&Invalidate(const uint16_t (&_invalidate)[n]) {
         invalidate = {_invalidate, n};
-        return *this;
+        return std::move(*this);
     }
 
-    MakeResponse &Check(const char *value) {
+    MakeResponse &&Check(const char *value) {
         check = {value, strlen(value)};
-        return *this;
+        return std::move(*this);
     }
 
-    MakeResponse &WantFullUri(const char *value) {
+    MakeResponse &&WantFullUri(const char *value) {
         want_full_uri = {value, strlen(value)};
-        return *this;
+        return std::move(*this);
     }
 };
 
 struct MakeFileAddress : FileAddress {
     explicit MakeFileAddress(const char *_path):FileAddress(_path) {}
 
-    MakeFileAddress &ExpandPath(const char *value) {
+    MakeFileAddress &&ExpandPath(const char *value) {
         expand_path = value;
-        return *this;
+        return std::move(*this);
     }
 };
 
@@ -243,14 +243,14 @@ struct MakeHttpAddress : HttpAddress {
         :HttpAddress(HttpAddress::Protocol::HTTP, false,
                      "localhost:8080", _path) {}
 
-    MakeHttpAddress &Host(const char *value) {
+    MakeHttpAddress &&Host(const char *value) {
         host_and_port = value;
-        return *this;
+        return std::move(*this);
     }
 
-    MakeHttpAddress &ExpandPath(const char *value) {
+    MakeHttpAddress &&ExpandPath(const char *value) {
         expand_path = value;
-        return *this;
+        return std::move(*this);
     }
 };
 
@@ -262,29 +262,29 @@ struct MakeCgiAddress : CgiAddress {
         path_info = _path_info;
     }
 
-    MakeCgiAddress &ScriptName(const char *value) {
+    MakeCgiAddress &&ScriptName(const char *value) {
         script_name = value;
-        return *this;
+        return std::move(*this);
     }
 
-    MakeCgiAddress &DocumentRoot(const char *value) {
+    MakeCgiAddress &&DocumentRoot(const char *value) {
         document_root = value;
-        return *this;
+        return std::move(*this);
     }
 
-    MakeCgiAddress &ExpandPathInfo(const char *value) {
+    MakeCgiAddress &&ExpandPathInfo(const char *value) {
         expand_path_info = value;
-        return *this;
+        return std::move(*this);
     }
 
-    MakeCgiAddress &BindMount(const char *_source, const char *_target,
-                              bool _expand_source=false,
-                              bool _writable=false) {
+    MakeCgiAddress &&BindMount(const char *_source, const char *_target,
+                               bool _expand_source=false,
+                               bool _writable=false) {
         auto &p = *tpool;
         auto *m = NewFromPool<MountList>(p, _source, _target,
                                          _expand_source, _writable);
         m->next = options.ns.mounts;
         options.ns.mounts = m;
-        return *this;
+        return std::move(*this);
     }
 };
