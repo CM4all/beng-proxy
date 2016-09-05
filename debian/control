@@ -151,7 +151,7 @@ Description: Python bindings for beng-proxy
 
 Package: cm4all-beng-proxy-tools
 Architecture: all
-Depends: ruby (>= 1.8.2), ruby1.8 (>= 1.8.2)
+Depends: ruby (>= 1:2.1)
 Enhances: cm4all-beng-proxy
 Description: Tools for beng-proxy
  BENG proxy is an HTTP proxy server which includes a HTML template
