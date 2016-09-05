@@ -25,6 +25,12 @@ struct DelegateAddress {
     ChildOptions child_options;
 
     DelegateAddress(const char *_delegate);
+
+    constexpr DelegateAddress(ShallowCopy shallow_copy,
+                              const DelegateAddress &src)
+        :delegate(src.delegate),
+         child_options(shallow_copy, src.child_options) {}
+
     DelegateAddress(struct pool &pool, const DelegateAddress &src);
 
     bool Check(GError **error_r) const {

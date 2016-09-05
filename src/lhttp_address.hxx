@@ -55,10 +55,10 @@ struct LhttpAddress {
 
     explicit LhttpAddress(const char *path);
 
-    constexpr LhttpAddress(ShallowCopy, const LhttpAddress &src)
+    constexpr LhttpAddress(ShallowCopy shallow_copy, const LhttpAddress &src)
         :path(src.path),
          args(src.args),
-         options(src.options),
+         options(shallow_copy, src.options),
          host_and_port(src.host_and_port),
          uri(src.uri), expand_uri(src.expand_uri),
          concurrency(src.concurrency),

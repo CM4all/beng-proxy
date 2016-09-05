@@ -12,6 +12,7 @@
 #include "NamespaceOptions.hxx"
 #include "JailParams.hxx"
 #include "UidGid.hxx"
+#include "util/ShallowCopy.hxx"
 
 class MatchInfo;
 class Error;
@@ -49,7 +50,22 @@ struct ChildOptions {
         env.Init();
     }
 
+    constexpr ChildOptions(ShallowCopy, const ChildOptions &src)
+        :stderr_path(src.stderr_path),
+         expand_stderr_path(src.expand_stderr_path),
+         env(src.env),
+         cgroup(src.cgroup),
+         rlimits(src.rlimits),
+         refence(src.refence),
+         ns(src.ns),
+         jail(src.jail),
+         uid_gid(src.uid_gid),
+         no_new_privs(src.no_new_privs) {}
+
     ChildOptions(struct pool *pool, const ChildOptions &src);
+
+    ChildOptions(ChildOptions &&) = default;
+    ChildOptions &operator=(ChildOptions &&) = default;
 
     bool Check(GError **error_r) const {
         return jail.Check(error_r);

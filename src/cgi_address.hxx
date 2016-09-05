@@ -83,7 +83,7 @@ struct CgiAddress {
     constexpr CgiAddress(ShallowCopy shallow_copy, const CgiAddress &src)
         :path(src.path),
          args(src.args), params(src.params),
-         options(src.options),
+         options(shallow_copy, src.options),
          interpreter(src.interpreter), action(src.action),
          uri(src.uri), script_name(src.script_name), path_info(src.path_info),
          query_string(src.query_string), document_root(src.document_root),
