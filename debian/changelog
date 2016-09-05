@@ -4,7 +4,7 @@ cm4all-beng-proxy (10.28) unstable; urgency=low
   * lb: fix default control port
   * debian: adjust Ruby dependencies for Debian Jessie
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Mon, 05 Sep 2016 10:58:34 -0000
 
 cm4all-beng-proxy (10.27) unstable; urgency=low
 
