@@ -126,6 +126,7 @@ public:
 
 private:
     void SetChildOptions(ChildOptions &_child_options);
+    void SetCgiAddress(ResourceAddress::Type type, const char *path);
 
     bool AddView(const char *name, GError **error_r);
 

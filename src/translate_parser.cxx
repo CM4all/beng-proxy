@@ -43,6 +43,16 @@ TranslateParser::SetChildOptions(ChildOptions &_child_options)
     jail = &child_options->jail;
 }
 
+void
+TranslateParser::SetCgiAddress(ResourceAddress::Type type,
+                               const char *path)
+{
+    cgi_address = cgi_address_new(*pool, path);
+    *resource_address = ResourceAddress(type, *cgi_address);
+
+    SetChildOptions(cgi_address->options);
+}
+
 /*
  * receive response
  *
@@ -1650,11 +1660,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
             return false;
         }
 
-        cgi_address = cgi_address_new(*pool, payload);
-        *resource_address = ResourceAddress(ResourceAddress::Type::PIPE,
-                                           *cgi_address);
-
-        SetChildOptions(cgi_address->options);
+        SetCgiAddress(ResourceAddress::Type::PIPE, payload);
         return true;
 
     case TRANSLATE_CGI:
@@ -1670,12 +1676,8 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
             return false;
         }
 
-        cgi_address = cgi_address_new(*pool, payload);
-        *resource_address = ResourceAddress(ResourceAddress::Type::CGI,
-                                           *cgi_address);
-
+        SetCgiAddress(ResourceAddress::Type::CGI, payload);
         cgi_address->document_root = response.document_root;
-        SetChildOptions(cgi_address->options);
         return true;
 
     case TRANSLATE_FASTCGI:
@@ -1691,11 +1693,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
             return false;
         }
 
-        cgi_address = cgi_address_new(*pool, payload);
-        *resource_address = ResourceAddress(ResourceAddress::Type::FASTCGI,
-                                           *cgi_address);
-
-        SetChildOptions(cgi_address->options);
+        SetCgiAddress(ResourceAddress::Type::FASTCGI, payload);
         address_list = &cgi_address->address_list;
         default_port = 9000;
         return true;
@@ -2370,11 +2368,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
             return false;
         }
 
-        cgi_address = cgi_address_new(*pool, payload);
-        *resource_address = ResourceAddress(ResourceAddress::Type::WAS,
-                                           *cgi_address);
-
-        SetChildOptions(cgi_address->options);
+        SetCgiAddress(ResourceAddress::Type::WAS, payload);
         return true;
 
     case TRANSLATE_TRANSPARENT:
