@@ -72,7 +72,7 @@ private:
     void CloseInternal();
     void Abort(GError *error);
     ssize_t Consume();
-    bool Create();
+    bool Create(GError **error_r);
 };
 
 void
@@ -177,7 +177,7 @@ PipeIstream::OnData(const void *data, size_t length)
 }
 
 inline bool
-PipeIstream::Create()
+PipeIstream::Create(GError **error_r)
 {
     assert(fds[0] < 0);
     assert(fds[1] < 0);
@@ -185,18 +185,14 @@ PipeIstream::Create()
     if (stock != nullptr) {
         assert(stock_item == nullptr);
 
-        GError *error = nullptr;
-        stock_item = stock->GetNow(GetPool(), nullptr, &error);
-        if (stock_item == nullptr) {
-            daemon_log(1, "%s\n", error->message);
-            g_error_free(error);
+        stock_item = stock->GetNow(GetPool(), nullptr, error_r);
+        if (stock_item == nullptr)
             return false;
-        }
 
         pipe_stock_item_get(stock_item, fds);
     } else {
         if (pipe_cloexec_nonblock(fds) < 0) {
-            daemon_log(1, "pipe() failed: %s\n", strerror(errno));
+            set_error_errno_msg(error_r, "pipe() failed");
             return false;
         }
     }
@@ -228,8 +224,13 @@ PipeIstream::OnDirect(FdType type, int fd, size_t max_length)
 
     assert((type & ISTREAM_TO_PIPE) == type);
 
-    if (fds[1] < 0 && !Create())
-        return ISTREAM_RESULT_CLOSED;
+    if (fds[1] < 0) {
+        GError *error = nullptr;
+        if (!Create(&error)) {
+            Abort(error);
+            return ISTREAM_RESULT_CLOSED;
+        }
+    }
 
     ssize_t nbytes = splice(fd, nullptr, fds[1], nullptr, max_length,
                             SPLICE_F_NONBLOCK | SPLICE_F_MOVE);
