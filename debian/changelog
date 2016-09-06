@@ -12,6 +12,7 @@ cm4all-beng-proxy (9.15) unstable; urgency=low
   * omit stale "session" parameter in processed URIs
   * bot: recognize WordPress pingbacks as "bot"
   * fix crash when compiled with GCC6
+  * bp: raise default connection limit to 32k
   * systemd: set default NOFILE limits to 256k
 
  --   
