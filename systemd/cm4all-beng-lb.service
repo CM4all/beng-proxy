@@ -5,5 +5,7 @@ After=network.target
 [Service]
 ExecStart=/usr/lib/cm4all/beng-lb/systemd/run.sh
 
+LimitNOFILE=262144
+
 [Install]
 WantedBy=multi-user.target
