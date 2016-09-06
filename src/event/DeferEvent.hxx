@@ -2,8 +2,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_DEFER_EVENT_HXX
-#define BENG_PROXY_DEFER_EVENT_HXX
+#ifndef DEFER_EVENT_HXX
+#define DEFER_EVENT_HXX
 
 #include "util/BindMethod.hxx"
 
