@@ -72,7 +72,7 @@ struct BpConfig {
     unsigned num_workers = 0;
 
     /** maximum number of simultaneous connections */
-    unsigned max_connections = 8192;
+    unsigned max_connections = 32768;
 
     size_t http_cache_size = 512 * 1024 * 1024;
 
