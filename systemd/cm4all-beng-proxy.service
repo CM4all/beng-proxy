@@ -9,5 +9,7 @@ ExecReload=/bin/kill -HUP $MAINPID
 Restart=on-failure
 SyslogIdentifier=cm4all-beng-proxy
 
+LimitNOFILE=262144
+
 [Install]
 WantedBy=multi-user.target

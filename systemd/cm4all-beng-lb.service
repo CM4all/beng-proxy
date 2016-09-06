@@ -8,5 +8,7 @@ ExecStart=/usr/lib/cm4all/beng-lb/systemd/run.sh
 Restart=on-failure
 SyslogIdentifier=cm4all-beng-lb
 
+LimitNOFILE=262144
+
 [Install]
 WantedBy=multi-user.target
