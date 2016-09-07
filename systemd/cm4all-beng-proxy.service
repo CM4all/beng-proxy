@@ -5,6 +5,9 @@ After=network.target
 [Service]
 ExecStart=/usr/lib/cm4all/beng-proxy/systemd/run.sh
 
+# enable crash dumps
+LimitCORE=infinity
+
 LimitNOFILE=262144
 
 [Install]
