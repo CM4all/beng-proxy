@@ -12,5 +12,10 @@ LimitNOFILE=65536
 
 SyslogIdentifier=cm4all-beng-proxy
 
+# enable crash dumps
+LimitCORE=infinity
+
+LimitNOFILE=262144
+
 [Install]
 WantedBy=multi-user.target
