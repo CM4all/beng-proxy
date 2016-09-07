@@ -342,6 +342,7 @@ was_stock_create(gcc_unused void *ctx,
 
     GError *error = nullptr;
     if (!child->Launch(*params, &error)) {
+        assert(error != nullptr);
         child->InvokeCreateError(error);
         return;
     }
