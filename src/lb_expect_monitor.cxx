@@ -102,9 +102,8 @@ ExpectMonitor::Abort()
 inline void
 ExpectMonitor::EventCallback(gcc_unused evutil_socket_t _fd, short events)
 {
-    operation.Finished();
-
     if (events & EV_TIMEOUT) {
+        operation.Finished();
         close(fd);
         handler->Timeout();
     } else {
@@ -121,6 +120,8 @@ ExpectMonitor::EventCallback(gcc_unused evutil_socket_t _fd, short events)
 void
 ExpectMonitor::DelayCallback()
 {
+    operation.Finished();
+
     char buffer[1024];
 
     ssize_t nbytes = recv(fd, buffer, sizeof(buffer),
