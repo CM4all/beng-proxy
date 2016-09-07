@@ -312,6 +312,14 @@ TranslateResponse::CacheStore(struct pool *pool, const TranslateResponse &src,
                 uri = length != (size_t)-1
                     ? p_strndup(pool, uri, length)
                     : nullptr;
+
+                if (uri == nullptr && !internal_redirect.IsNull())
+                    /* this BASE mismatch is fatal, because it
+                       invalidates a required attribute; clearing
+                       "base" is an trigger for tcache_store() to fail
+                       on this translation response */
+                    // TODO: throw an exception instead of this kludge
+                    base = nullptr;
             }
 
             if (test_path != nullptr) {
