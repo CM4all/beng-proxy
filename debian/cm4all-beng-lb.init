@@ -29,6 +29,8 @@ ACCESS_LOGGER=""
 CONFIG_FILE="/etc/cm4all/beng/lb.conf"
 OPTIONS="-vv"
 
+ulimit -HS -n 262144
+
 test -f /etc/default/cm4all-beng-lb && source /etc/default/cm4all-beng-lb
 
 if test -z "$DAEMON_USER"; then
