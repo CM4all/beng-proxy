@@ -18,6 +18,3 @@
 
 # Other options
 #OPTIONS="-v"
-
-# Resource limits
-ulimit -HS -n 65536

@@ -38,6 +38,8 @@ UA_CLASSES=
 SESSION_SAVE_PATH=
 OPTIONS="-vv"
 
+ulimit -HS -n 262144
+
 test -f /etc/default/cm4all-beng-proxy && source /etc/default/cm4all-beng-proxy
 
 test -n "$PORT" && PORTSPEC=`echo "$PORT" | xargs -rd, -n1 -- echo -n " --port"`
