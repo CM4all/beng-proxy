@@ -53,8 +53,6 @@ struct shm {
     shm(size_t _page_size, unsigned _num_pages)
         :page_size(_page_size), num_pages(_num_pages),
          data(At(page_size * CalcHeaderPages())) {
-        ref.Init();
-
         pages[0].num_pages = num_pages;
         available.push_front(pages[0]);
     }

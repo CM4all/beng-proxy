@@ -8,15 +8,12 @@
 #define REFCOUNT_HXX
 
 #include <atomic>
-#include <type_traits>
 
 class RefCount {
     std::atomic_uint value;
 
 public:
-    void Init() {
-        value = 1;
-    }
+    constexpr RefCount():value(1) {}
 
     void Get() {
         ++value;
@@ -30,7 +27,5 @@ public:
         return --value == 0;
     }
 };
-
-static_assert(std::is_trivial<RefCount>::value, "type is not trivial");
 
 #endif

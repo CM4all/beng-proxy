@@ -95,7 +95,6 @@ struct SessionContainer {
     explicit SessionContainer(std::chrono::seconds _idle_timeout)
         :idle_timeout(_idle_timeout),
          sessions(Set::bucket_traits(buckets, N_BUCKETS)) {
-        ref.Init();
     }
 
     ~SessionContainer();
