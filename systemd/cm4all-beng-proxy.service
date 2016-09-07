@@ -9,6 +9,9 @@ ExecReload=/bin/kill -HUP $MAINPID
 Restart=on-failure
 SyslogIdentifier=cm4all-beng-proxy
 
+# enable crash dumps
+LimitCORE=infinity
+
 LimitNOFILE=262144
 
 [Install]

@@ -8,6 +8,9 @@ ExecStart=/usr/lib/cm4all/beng-lb/systemd/run.sh
 Restart=on-failure
 SyslogIdentifier=cm4all-beng-lb
 
+# enable crash dumps
+LimitCORE=infinity
+
 LimitNOFILE=262144
 
 [Install]
