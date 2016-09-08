@@ -16,7 +16,7 @@ cm4all-beng-proxy (9.15) unstable; urgency=low
   * systemd: set default NOFILE limits to 256k
   * systemd: enable crash dumps
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Thu, 08 Sep 2016 14:25:37 -0000
 
 cm4all-beng-proxy (9.14) unstable; urgency=low
 
