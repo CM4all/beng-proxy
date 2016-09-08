@@ -137,6 +137,7 @@ HttpServerConnection::TryWriteBuckets2(GError **error_r)
         return BucketResult::DESTROYED;
     }
 
+    response.bytes_sent += nbytes;
     response.length += nbytes;
 
     size_t consumed = response.istream.ConsumeBucketList(nbytes);

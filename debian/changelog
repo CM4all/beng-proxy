@@ -1,6 +1,6 @@
 cm4all-beng-proxy (9.15) unstable; urgency=low
 
-  * 
+  * http_server: update the "raw bytes sent" attribute properly
 
  --   
 
