@@ -104,6 +104,7 @@ binary-indep: build check
 	dh_installchangelogs -i
 	dh_systemd_enable -i
 	dh_systemd_start -i
+	dh_installinit -i
 	dh_install -i
 	dh_link -i
 	#dh_strip -i
@@ -125,6 +126,7 @@ binary-arch: build check
 	dh_installchangelogs -a
 	dh_systemd_enable -a
 	dh_systemd_start -a
+	dh_installinit -a
 	dh_install -a
 	dh_link -a
 	dh_strip -p cm4all-beng-proxy --dbg-package=cm4all-beng-proxy-dbg
