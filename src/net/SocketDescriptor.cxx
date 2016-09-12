@@ -60,7 +60,7 @@ static bool
 IsV6Any(SocketAddress address)
 {
     return address.GetFamily() == AF_INET6 &&
-        memcmp(&((const struct sockaddr_in6 *)address.GetAddress())->sin6_addr,
+        memcmp(&((const struct sockaddr_in6 *)(const void *)address.GetAddress())->sin6_addr,
                &in6addr_any, sizeof(in6addr_any)) == 0;
 }
 
