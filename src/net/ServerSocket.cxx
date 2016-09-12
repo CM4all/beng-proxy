@@ -81,27 +81,41 @@ ServerSocket::Listen(int family, int socktype, int protocol,
 bool
 ServerSocket::ListenTCP(unsigned port, Error &error)
 {
+    return ListenTCP6(port, IgnoreError()) || ListenTCP4(port, error);
+}
+
+bool
+ServerSocket::ListenTCP4(unsigned port, Error &error)
+{
     assert(port > 0);
 
-    struct sockaddr_in6 sa6;
     struct sockaddr_in sa4;
-
-    memset(&sa6, 0, sizeof(sa6));
-    sa6.sin6_family = AF_INET6;
-    sa6.sin6_addr = in6addr_any;
-    sa6.sin6_port = htons(port);
 
     memset(&sa4, 0, sizeof(sa4));
     sa4.sin_family = AF_INET;
     sa4.sin_addr.s_addr = INADDR_ANY;
     sa4.sin_port = htons(port);
 
+    return Listen(PF_INET, SOCK_STREAM, 0,
+                  SocketAddress((const struct sockaddr *)&sa4, sizeof(sa4)),
+                  error);
+}
+
+bool
+ServerSocket::ListenTCP6(unsigned port, Error &error)
+{
+    assert(port > 0);
+
+    struct sockaddr_in6 sa6;
+
+    memset(&sa6, 0, sizeof(sa6));
+    sa6.sin6_family = AF_INET6;
+    sa6.sin6_addr = in6addr_any;
+    sa6.sin6_port = htons(port);
+
     return Listen(PF_INET6, SOCK_STREAM, 0,
                   SocketAddress((const struct sockaddr *)&sa6, sizeof(sa6)),
-                  IgnoreError()) ||
-        Listen(PF_INET, SOCK_STREAM, 0,
-               SocketAddress((const struct sockaddr *)&sa4, sizeof(sa4)),
-               error);
+                  error);
 }
 
 bool

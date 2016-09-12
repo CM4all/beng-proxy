@@ -27,6 +27,8 @@ public:
                 SocketAddress address, Error &error);
 
     bool ListenTCP(unsigned port, Error &error);
+    bool ListenTCP4(unsigned port, Error &error);
+    bool ListenTCP6(unsigned port, Error &error);
 
     bool ListenPath(const char *path, Error &error);
 
