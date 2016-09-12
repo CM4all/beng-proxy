@@ -118,6 +118,17 @@ SocketDescriptor::SetTcpDeferAccept(const int &seconds)
                       &seconds, sizeof(seconds)) == 0;
 }
 
+bool
+SocketDescriptor::SetV6Only(bool _value)
+{
+    assert(IsDefined());
+
+    int value = _value;
+
+    return setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY,
+                      &value, sizeof(value)) == 0;
+}
+
 SocketDescriptor
 SocketDescriptor::Accept(StaticSocketAddress &address, Error &error) const
 {

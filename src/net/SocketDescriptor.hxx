@@ -77,6 +77,7 @@ public:
     bool Bind(SocketAddress address);
 
     bool SetTcpDeferAccept(const int &seconds);
+    bool SetV6Only(bool value);
 
     SocketDescriptor Accept(StaticSocketAddress &address, Error &error) const;
 
