@@ -18,7 +18,7 @@ template<typename T> struct ConstBuffer;
 
 class ExpandableStringList final {
     struct Item {
-        Item *next;
+        Item *next = nullptr;
 
         const char *value;
 
