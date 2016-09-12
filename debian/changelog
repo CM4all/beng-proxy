@@ -1,5 +1,6 @@
 cm4all-beng-proxy (11.2) unstable; urgency=low
 
+  * disable the "V6ONLY" flag on all IPv6 wildcard listeners
   * etc: include conf.d/*.conf
   * debian: re-add dh_installinit to install the *.default files
 

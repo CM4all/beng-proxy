@@ -13,6 +13,7 @@
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
+#include <string.h>
 
 SocketDescriptor::~SocketDescriptor()
 {
@@ -54,6 +55,15 @@ SocketDescriptor::Create(int domain, int type, int protocol, Error &error)
     return true;
 }
 
+gcc_pure
+static bool
+IsV6Any(SocketAddress address)
+{
+    return address.GetFamily() == AF_INET6 &&
+        memcmp(&((const struct sockaddr_in6 *)address.GetAddress())->sin6_addr,
+               &in6addr_any, sizeof(in6addr_any)) == 0;
+}
+
 bool
 SocketDescriptor::CreateListen(int family, int socktype, int protocol,
                                const SocketAddress &address, Error &error)
@@ -68,6 +78,9 @@ SocketDescriptor::CreateListen(int family, int socktype, int protocol,
         Close();
         return false;
     }
+
+    if (IsV6Any(address))
+        SetV6Only(false);
 
     if (!Bind(address)) {
         error.SetErrno("Failed to bind");
