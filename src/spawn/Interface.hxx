@@ -5,8 +5,6 @@
 #ifndef BENG_PROXY_SPAWN_INTERFACE_HXX
 #define BENG_PROXY_SPAWN_INTERFACE_HXX
 
-#include "glibfwd.hxx"
-
 struct PreparedChildProcess;
 class ExitListener;
 
@@ -17,12 +15,13 @@ class ExitListener;
 class SpawnService {
 public:
     /**
-     * @return a process id or -1 on error
+     * Throws std::runtime_error on error.
+     *
+     * @return a process id
      */
     virtual int SpawnChildProcess(const char *name,
                                   PreparedChildProcess &&params,
-                                  ExitListener *listener,
-                                  GError **error_r) = 0;
+                                  ExitListener *listener) = 0;
 
     virtual void SetExitListener(int pid, ExitListener *listener) = 0;
 

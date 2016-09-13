@@ -6,21 +6,18 @@
 #include "Direct.hxx"
 #include "Registry.hxx"
 #include "CgroupState.hxx"
-#include "gerrno.h"
+#include "system/Error.hxx"
 
 #include <utility>
 
 int
 LocalSpawnService::SpawnChildProcess(const char *name,
                                      PreparedChildProcess &&params,
-                                     ExitListener *listener,
-                                     GError **error_r)
+                                     ExitListener *listener)
 {
     pid_t pid = ::SpawnChildProcess(std::move(params), config, CgroupState());
-    if (pid < 0) {
-        set_error_errno_msg2(error_r, -pid, "clone() failed");
-        return pid;
-    }
+    if (pid < 0)
+        throw MakeErrno("clone() failed");
 
     registry.Add(pid, name, listener);
     return pid;

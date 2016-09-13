@@ -21,8 +21,7 @@ public:
         :config(_config), registry(_registry) {}
 
     int SpawnChildProcess(const char *name, PreparedChildProcess &&params,
-                          ExitListener *listener,
-                          GError **error_r) override;
+                          ExitListener *listener) override;
 
     void SetExitListener(int pid, ExitListener *listener) override;
 

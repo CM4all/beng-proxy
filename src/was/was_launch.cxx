@@ -11,6 +11,7 @@
 #include "spawn/Prepared.hxx"
 #include "spawn/ChildOptions.hxx"
 #include "gerrno.h"
+#include "GException.hxx"
 #include "util/ConstBuffer.hxx"
 
 #include <daemon/log.h>
@@ -69,11 +70,13 @@ was_launch(SpawnService &spawn_service,
     if (!options.CopyTo(p, true, nullptr, error_r))
         return process;
 
-    int pid = spawn_service.SpawnChildProcess(name, std::move(p), listener,
-                                              error_r);
-    if (pid < 0)
-        return process;
+    try {
+        process.pid = spawn_service.SpawnChildProcess(name, std::move(p),
+                                                      listener);
+    } catch (const std::runtime_error &e) {
+        process.pid = -1;
+        SetGError(error_r, e);
+    }
 
-    process.pid = pid;
     return process;
 }

@@ -14,6 +14,7 @@
 #include "direct.hxx"
 #include "event/SocketEvent.hxx"
 #include "gerrno.h"
+#include "GException.hxx"
 #include "pool.hxx"
 #include "fb_pool.hxx"
 #include "SliceFifoBuffer.hxx"
@@ -437,16 +438,9 @@ SpawnChildProcess(EventLoop &event_loop, struct pool *pool, const char *name,
         return -1;
     }
 
-    const int pid = spawn_service.SpawnChildProcess(name, std::move(prepared),
-                                                    nullptr, error_r);
-    if (pid < 0) {
-        if (input != nullptr) {
-            close(stdin_pipe);
-            input->CloseUnused();
-        }
-
-        close(stdout_pipe);
-    } else {
+    try {
+        const int pid = spawn_service.SpawnChildProcess(name, std::move(prepared),
+                                                        nullptr);
         auto f = NewFromPool<SpawnIstream>(*pool, spawn_service, event_loop,
                                            *pool,
                                            input, stdin_pipe,
@@ -456,7 +450,17 @@ SpawnChildProcess(EventLoop &event_loop, struct pool *pool, const char *name,
         /* XXX CLOEXEC */
 
         *output_r = f;
-    }
 
-    return pid;
+        return pid;
+    } catch (const std::runtime_error &e) {
+        if (input != nullptr) {
+            close(stdin_pipe);
+            input->CloseUnused();
+        }
+
+        close(stdout_pipe);
+
+        SetGError(error_r, e);
+        return -1;
+    }
 }

@@ -79,6 +79,7 @@ cm4all_beng_proxy_SOURCES = \
 	src/FdType.hxx \
 	src/capabilities.cxx src/capabilities.hxx \
 	src/gerrno.h \
+	src/GException.hxx \
 	src/glibfwd.hxx \
 	src/abort_close.cxx src/abort_close.hxx \
 	src/abort_flag.hxx \
@@ -687,6 +688,7 @@ libutil_a_SOURCES = \
 	src/util/Domain.hxx \
 	src/util/Error.cxx src/util/Error.hxx \
 	src/util/PrintException.cxx src/util/PrintException.hxx \
+	src/util/RuntimeError.hxx \
 	src/util/djbhash.c src/util/djbhash.h \
 	src/util/ScopeExit.hxx \
 	src/util/ShallowCopy.hxx \

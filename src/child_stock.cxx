@@ -12,6 +12,7 @@
 #include "stock/Class.hxx"
 #include "stock/Item.hxx"
 #include "gerrno.h"
+#include "GException.hxx"
 #include "spawn/Interface.hxx"
 #include "spawn/Prepared.hxx"
 #include "system/UniqueFileDescriptor.hxx"
@@ -109,15 +110,14 @@ ChildStock::Create(CreateStockItem c, void *info)
         return;
     }
 
-    int pid = item->pid =
-        spawn_service.SpawnChildProcess(item->GetStockName(), std::move(p),
-                                        item, &error);
-    if (pid < 0) {
-        item->InvokeCreateError(error);
-        return;
+    try {
+        item->pid = spawn_service.SpawnChildProcess(item->GetStockName(),
+                                                    std::move(p),
+                                                    item);
+        item->InvokeCreateSuccess();
+    } catch (const std::runtime_error &e) {
+        item->InvokeCreateError(ToGError(e));
     }
-
-    item->InvokeCreateSuccess();
 }
 
 static void

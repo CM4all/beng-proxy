@@ -16,6 +16,8 @@
 #include "spawn/Prepared.hxx"
 #include "spawn/ChildOptions.hxx"
 #include "gerrno.h"
+#include "GException.hxx"
+#include "AllocatorPtr.hxx"
 #include "pool.hxx"
 
 #include <daemon/log.h>
@@ -138,18 +140,16 @@ delegate_stock_create(void *ctx,
 
     p.SetStdin(fds[1]);
 
-    int pid = spawn_service.SpawnChildProcess(info.executable_path,
-                                              std::move(p), nullptr,
-                                              &error);
-    if (pid < 0) {
-        error = new_error_errno_msg2(-pid, "clone() failed");
-        close(fds[0]);
-        c.InvokeCreateError(error);
-        return;
-    }
+    try {
+        int pid = spawn_service.SpawnChildProcess(info.executable_path,
+                                                  std::move(p), nullptr);
 
-    auto *process = new DelegateProcess(c, pid, fds[0]);
-    process->InvokeCreateSuccess();
+        auto *process = new DelegateProcess(c, pid, fds[0]);
+        process->InvokeCreateSuccess();
+    } catch (const std::runtime_error &e) {
+        close(fds[0]);
+        c.InvokeCreateError(ToGError(e));
+    }
 }
 
 static constexpr StockClass delegate_stock_class = {

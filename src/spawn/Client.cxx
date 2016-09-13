@@ -10,8 +10,7 @@
 #include "mount_list.hxx"
 #include "ExitListener.hxx"
 #include "system/Error.hxx"
-#include "util/Error.hxx"
-#include "util/Domain.hxx"
+#include "util/RuntimeError.hxx"
 #include "util/ScopeExit.hxx"
 
 #include <daemon/log.h>
@@ -251,8 +250,7 @@ Serialize(SpawnSerializer &s, const PreparedChildProcess &p)
 int
 SpawnServerClient::SpawnChildProcess(const char *name,
                                      PreparedChildProcess &&p,
-                                     ExitListener *listener,
-                                     GError **error_r)
+                                     ExitListener *listener)
 {
     assert(!shutting_down);
 
@@ -260,11 +258,9 @@ SpawnServerClient::SpawnChildProcess(const char *name,
        necessary, and the only way to have it secure); this one is
        only here for the developer to see the error earlier in the
        call chain */
-    if (!p.uid_gid.IsEmpty() && !config.Verify(p.uid_gid)) {
-        g_set_error(error_r, spawn_quark(), 0, "uid/gid not allowed: %d/%d",
-                    int(p.uid_gid.uid), int(p.uid_gid.gid));
-        return -1;
-    }
+    if (!p.uid_gid.IsEmpty() && !config.Verify(p.uid_gid))
+        throw FormatRuntimeError("uid/gid not allowed: %d/%d",
+                                 int(p.uid_gid.uid), int(p.uid_gid.gid));
 
     CheckOrAbort();
 
@@ -278,17 +274,13 @@ SpawnServerClient::SpawnChildProcess(const char *name,
 
         Serialize(s, p);
     } catch (SpawnPayloadTooLargeError) {
-        g_set_error_literal(error_r, spawn_quark(), 0,
-                            "Spawn payload is too large");
-        return -1;
+        throw std::runtime_error("Spawn payload is too large");
     }
 
     try {
         Send(s.GetPayload(), s.GetFds());
     } catch (const std::runtime_error &e) {
-        g_set_error(error_r, spawn_quark(), 0,
-                    "Spawn server failed: %s", e.what());
-        return -1;
+        std::throw_with_nested(std::runtime_error("Spawn server failed"));
     }
 
     processes.emplace(std::piecewise_construct,
