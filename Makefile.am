@@ -1113,10 +1113,11 @@ test_run_was_SOURCES = test/run_was.cxx \
 	src/expand.cxx src/pexpand.cxx \
 	src/direct.cxx
 test_run_was_LDADD = $(AM_LDADD) \
-	libistream.a libevent.a \
+	libistream.a \
 	libraddress.a \
 	libspawn.a \
 	libpool.a libmemory.a \
+	libevent.a \
 	libsystem.a \
 	libputil.a \
 	libutil.a \
