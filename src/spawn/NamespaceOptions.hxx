@@ -7,6 +7,7 @@
 
 #include <inline/compiler.h>
 
+class AllocatorPtr;
 struct pool;
 struct MountList;
 struct SpawnConfig;
@@ -67,7 +68,7 @@ struct NamespaceOptions {
     const char *hostname = nullptr;
 
     NamespaceOptions() = default;
-    NamespaceOptions(struct pool *pool, const NamespaceOptions &src);
+    NamespaceOptions(AllocatorPtr alloc, const NamespaceOptions &src);
 
     gcc_pure
     bool IsExpandable() const;

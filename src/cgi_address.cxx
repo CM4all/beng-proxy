@@ -4,6 +4,7 @@
 
 #include "cgi_address.hxx"
 #include "pool.hxx"
+#include "AllocatorPtr.hxx"
 #include "uri/uri_base.hxx"
 #include "uri/uri_escape.hxx"
 #include "uri/uri_extract.hxx"
@@ -31,7 +32,7 @@ CgiAddress::CgiAddress(struct pool &pool, const CgiAddress &src)
     :path(p_strdup(&pool, src.path)),
      args(pool, src.args),
      params(pool, src.params),
-     options(&pool, src.options),
+     options(pool, src.options),
      interpreter(p_strdup_checked(&pool, src.interpreter)),
      action(p_strdup_checked(&pool, src.action)),
      uri(p_strdup_checked(&pool, src.uri)),

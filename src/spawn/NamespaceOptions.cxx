@@ -5,7 +5,7 @@
 #include "NamespaceOptions.hxx"
 #include "Config.hxx"
 #include "mount_list.hxx"
-#include "pool.hxx"
+#include "AllocatorPtr.hxx"
 #include "system/pivot_root.h"
 #include "system/bind_mount.h"
 #include "pexpand.hxx"
@@ -24,7 +24,7 @@
 #error This library requires Linux
 #endif
 
-NamespaceOptions::NamespaceOptions(struct pool *pool,
+NamespaceOptions::NamespaceOptions(AllocatorPtr alloc,
                                    const NamespaceOptions &src)
     :enable_user(src.enable_user),
      enable_pid(src.enable_pid),
@@ -32,14 +32,14 @@ NamespaceOptions::NamespaceOptions(struct pool *pool,
      enable_ipc(src.enable_ipc),
      enable_mount(src.enable_mount),
      mount_proc(src.mount_proc),
-     pivot_root(p_strdup_checked(pool, src.pivot_root)),
-     home(p_strdup_checked(pool, src.home)),
-     expand_home(p_strdup_checked(pool, src.expand_home)),
-     mount_home(p_strdup_checked(pool, src.mount_home)),
-     mount_tmp_tmpfs(p_strdup_checked(pool, src.mount_tmp_tmpfs)),
-     mount_tmpfs(p_strdup_checked(pool, src.mount_tmpfs)),
-     mounts(MountList::CloneAll(*pool, src.mounts)),
-     hostname(p_strdup_checked(pool, src.hostname))
+     pivot_root(alloc.CheckDup(src.pivot_root)),
+     home(alloc.CheckDup(src.home)),
+     expand_home(alloc.CheckDup(src.expand_home)),
+     mount_home(alloc.CheckDup(src.mount_home)),
+     mount_tmp_tmpfs(alloc.CheckDup(src.mount_tmp_tmpfs)),
+     mount_tmpfs(alloc.CheckDup(src.mount_tmpfs)),
+     mounts(MountList::CloneAll(alloc, src.mounts)),
+     hostname(alloc.CheckDup(src.hostname))
 {
 }
 

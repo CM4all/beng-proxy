@@ -4,6 +4,7 @@
 
 #include "lhttp_address.hxx"
 #include "pool.hxx"
+#include "AllocatorPtr.hxx"
 #include "uri/uri_base.hxx"
 #include "uri/uri_relative.hxx"
 #include "uri/uri_escape.hxx"
@@ -30,7 +31,7 @@ LhttpAddress::LhttpAddress(const char *_path)
 LhttpAddress::LhttpAddress(struct pool &pool, const LhttpAddress &src)
     :path(p_strdup(&pool, src.path)),
      args(pool, src.args),
-     options(&pool, src.options),
+     options(pool, src.options),
      host_and_port(p_strdup_checked(&pool, src.host_and_port)),
      uri(p_strdup(&pool, src.uri)),
      expand_uri(p_strdup_checked(&pool, src.expand_uri)),

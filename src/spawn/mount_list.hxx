@@ -7,7 +7,7 @@
 
 #include <inline/compiler.h>
 
-struct pool;
+class AllocatorPtr;
 class MatchInfo;
 class Error;
 
@@ -26,7 +26,7 @@ struct MountList {
         :next(nullptr), source(_source), target(_target),
          expand_source(_expand_source), writable(_writable) {}
 
-    MountList(struct pool &pool, const MountList &src);
+    MountList(AllocatorPtr alloc, const MountList &src);
 
     bool IsExpandable() const {
         return expand_source;
@@ -48,7 +48,7 @@ struct MountList {
 
     void Apply() const;
 
-    static MountList *CloneAll(struct pool &pool, const MountList *src);
+    static MountList *CloneAll(AllocatorPtr alloc, const MountList *src);
     static void ApplyAll(const MountList *m);
 };
 

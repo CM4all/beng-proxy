@@ -12,6 +12,7 @@
 #include <iterator>
 
 struct pool;
+class AllocatorPtr;
 class MatchInfo;
 class Error;
 template<typename T> struct ConstBuffer;
@@ -39,7 +40,7 @@ public:
                                    const ExpandableStringList &src)
         :head(src.head) {}
 
-    ExpandableStringList(struct pool &pool, const ExpandableStringList &src);
+    ExpandableStringList(AllocatorPtr alloc, const ExpandableStringList &src);
 
     gcc_pure
     bool IsEmpty() const {
@@ -95,7 +96,7 @@ public:
         Builder(ExpandableStringList &_list)
             :list(&_list), tail_r(&_list.head), last(nullptr) {}
 
-        void Add(struct pool &pool, const char *value, bool expandable);
+        void Add(AllocatorPtr alloc, const char *value, bool expandable);
 
         bool CanSetExpand() const {
             return last != nullptr && !last->expandable;
@@ -107,7 +108,7 @@ public:
         }
     };
 
-    ConstBuffer<const char *> ToArray(struct pool &pool) const;
+    ConstBuffer<const char *> ToArray(AllocatorPtr alloc) const;
 };
 
 #endif

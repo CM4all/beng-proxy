@@ -7,7 +7,7 @@
 
 #include <inline/compiler.h>
 
-struct pool;
+class AllocatorPtr;
 struct StringView;
 struct CgroupState;
 
@@ -26,9 +26,9 @@ struct CgroupOptions {
     SetItem *set_head = nullptr;
 
     CgroupOptions() = default;
-    CgroupOptions(struct pool &pool, const CgroupOptions &src);
+    CgroupOptions(AllocatorPtr alloc, const CgroupOptions &src);
 
-    void Set(struct pool &pool, StringView name, StringView value);
+    void Set(AllocatorPtr alloc, StringView name, StringView value);
 
     void Apply(const CgroupState &state) const;
 

@@ -3,7 +3,7 @@
  */
 
 #include "RefenceOptions.hxx"
-#include "pool.hxx"
+#include "AllocatorPtr.hxx"
 #include "util/djbhash.h"
 
 #include <algorithm>
@@ -14,9 +14,8 @@
 #include <string.h>
 #include <errno.h>
 
-RefenceOptions::RefenceOptions(struct pool &p, const RefenceOptions &src)
-    :data((const char *)p_memdup(&p, src.data.data, src.data.size),
-          src.data.size)
+RefenceOptions::RefenceOptions(AllocatorPtr alloc, const RefenceOptions &src)
+    :data(alloc.Dup(src.data))
 {
 }
 

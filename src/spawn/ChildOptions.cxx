@@ -6,7 +6,7 @@
 #include "ResourceLimits.hxx"
 #include "JailParams.hxx"
 #include "Prepared.hxx"
-#include "pool.hxx"
+#include "AllocatorPtr.hxx"
 #include "pexpand.hxx"
 #include "gerrno.h"
 #include "util/djbhash.h"
@@ -18,19 +18,19 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-ChildOptions::ChildOptions(struct pool *pool,
+ChildOptions::ChildOptions(AllocatorPtr alloc,
                            const ChildOptions &src)
-    :stderr_path(p_strdup_checked(pool, src.stderr_path)),
-     expand_stderr_path(p_strdup_checked(pool, src.expand_stderr_path)),
-     env(*pool, src.env),
-     cgroup(*pool, src.cgroup),
+    :stderr_path(alloc.CheckDup(src.stderr_path)),
+     expand_stderr_path(alloc.CheckDup(src.expand_stderr_path)),
+     env(alloc, src.env),
+     cgroup(alloc, src.cgroup),
      rlimits(src.rlimits != nullptr
-             ? NewFromPool<ResourceLimits>(*pool, *src.rlimits)
+             ? alloc.New<ResourceLimits>(*src.rlimits)
              : nullptr),
-     refence(*pool, src.refence),
-     ns(pool, src.ns),
+     refence(alloc, src.refence),
+     ns(alloc, src.ns),
      jail(src.jail != nullptr
-          ? NewFromPool<JailParams>(*pool, *src.jail)
+          ? alloc.New<JailParams>(*src.jail)
           : nullptr),
      uid_gid(src.uid_gid),
      no_new_privs(src.no_new_privs)

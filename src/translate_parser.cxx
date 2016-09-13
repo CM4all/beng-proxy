@@ -21,6 +21,7 @@
 #include "spawn/JailParams.hxx"
 #include "beng-proxy/translation.h"
 #include "pool.hxx"
+#include "AllocatorPtr.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/AddressInfo.hxx"
 #include "net/Resolver.hxx"

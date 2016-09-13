@@ -7,6 +7,8 @@
 
 #include "util/StringView.hxx"
 
+class AllocatorPtr;
+
 /**
  * Options for Refence.
  */
@@ -15,7 +17,7 @@ class RefenceOptions {
 
 public:
     RefenceOptions() = default;
-    RefenceOptions(struct pool &p, const RefenceOptions &src);
+    RefenceOptions(AllocatorPtr alloc, const RefenceOptions &src);
 
     bool IsEmpty() const {
         return data.IsEmpty();

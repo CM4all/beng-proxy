@@ -62,7 +62,7 @@ struct ChildOptions {
          uid_gid(src.uid_gid),
          no_new_privs(src.no_new_privs) {}
 
-    ChildOptions(struct pool *pool, const ChildOptions &src);
+    ChildOptions(AllocatorPtr alloc, const ChildOptions &src);
 
     ChildOptions(ChildOptions &&) = default;
     ChildOptions &operator=(ChildOptions &&) = default;

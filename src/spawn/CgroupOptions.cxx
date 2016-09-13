@@ -6,7 +6,7 @@
 #include "CgroupState.hxx"
 #include "Config.hxx"
 #include "mount_list.hxx"
-#include "pool.hxx"
+#include "AllocatorPtr.hxx"
 #include "system/pivot_root.h"
 #include "system/bind_mount.h"
 #include "pexpand.hxx"
@@ -28,28 +28,25 @@
 #error This library requires Linux
 #endif
 
-CgroupOptions::CgroupOptions(struct pool &pool, const CgroupOptions &src)
-    :name(p_strdup_checked(&pool, src.name))
+CgroupOptions::CgroupOptions(AllocatorPtr alloc, const CgroupOptions &src)
+    :name(alloc.CheckDup(src.name))
 {
     auto **set_tail = &set_head;
 
     for (const auto *i = src.set_head; i != nullptr; i = i->next) {
-        auto *new_set = NewFromPool<SetItem>(pool,
-                                             p_strdup(&pool, i->name),
-                                             p_strdup(&pool, i->value));
+        auto *new_set = alloc.New<SetItem>(alloc.Dup(i->name),
+                                           alloc.Dup(i->value));
         *set_tail = new_set;
         set_tail = &new_set->next;
     }
 }
 
 void
-CgroupOptions::Set(struct pool &pool, StringView _name, StringView _value)
+CgroupOptions::Set(AllocatorPtr alloc, StringView _name, StringView _value)
 {
-        auto *new_set = NewFromPool<SetItem>(pool,
-                                             p_strdup(pool, _name),
-                                             p_strdup(pool, _value));
-        new_set->next = set_head;
-        set_head = new_set;
+    auto *new_set = alloc.New<SetItem>(alloc.DupZ(_name), alloc.DupZ(_value));
+    new_set->next = set_head;
+    set_head = new_set;
 }
 
 static void

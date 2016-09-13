@@ -4,7 +4,7 @@
 
 #include "mount_list.hxx"
 #include "system/bind_mount.h"
-#include "pool.hxx"
+#include "AllocatorPtr.hxx"
 #include "pexpand.hxx"
 
 #include <sys/mount.h>
@@ -14,20 +14,20 @@
 #include <errno.h>
 
 inline
-MountList::MountList(struct pool &pool, const MountList &src)
+MountList::MountList(AllocatorPtr alloc, const MountList &src)
     :next(nullptr),
-     source(p_strdup(&pool, src.source)),
-     target(p_strdup(&pool, src.target)),
+     source(alloc.Dup(src.source)),
+     target(alloc.Dup(src.target)),
      expand_source(src.expand_source),
      writable(src.writable) {}
 
 MountList *
-MountList::CloneAll(struct pool &pool, const MountList *src)
+MountList::CloneAll(AllocatorPtr alloc, const MountList *src)
 {
     MountList *head = nullptr, **tail = &head;
 
     for (; src != nullptr; src = src->next) {
-        MountList *dest = NewFromPool<MountList>(pool, pool, *src);
+        MountList *dest = alloc.New<MountList>(alloc, *src);
         *tail = dest;
         tail = &dest->next;
     }
