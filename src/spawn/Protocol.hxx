@@ -38,6 +38,7 @@ enum class SpawnExecCommand : uint8_t {
     NO_NEW_PRIVS,
     CGROUP,
     CGROUP_SET,
+    PRIORITY,
 };
 
 enum class SpawnResponseCommand : uint16_t {

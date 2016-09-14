@@ -25,6 +25,12 @@ struct PreparedChildProcess {
     StaticArray<const char *, 32> env;
     int stdin_fd = -1, stdout_fd = -1, stderr_fd = -1, control_fd = -1;
 
+    /**
+     * The CPU scheduler priority configured with setpriority(),
+     * ranging from -20 to 19.
+     */
+    int priority = 0;
+
     CgroupOptions cgroup;
 
     RefenceOptions refence;

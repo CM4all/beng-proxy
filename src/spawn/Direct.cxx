@@ -45,6 +45,12 @@ Exec(const char *path, const PreparedChildProcess &p,
     p.ns.Setup(config);
     p.rlimits.Apply();
 
+    if (p.priority != 0 &&
+        setpriority(PRIO_PROCESS, getpid(), p.priority) < 0) {
+        fprintf(stderr, "setpriority() failed: %s\n", strerror(errno));
+        _exit(EXIT_FAILURE);
+    }
+
     if (!p.uid_gid.IsEmpty())
         p.uid_gid.Apply();
     else if (config.ignore_userns)

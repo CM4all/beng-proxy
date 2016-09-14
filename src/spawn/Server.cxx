@@ -489,6 +489,10 @@ SpawnServerConnection::HandleExecMessage(SpawnPayload payload,
             }
 
             break;
+
+        case SpawnExecCommand::PRIORITY:
+            payload.ReadInt(p.priority);
+            break;
         }
     }
 

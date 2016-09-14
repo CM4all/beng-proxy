@@ -237,6 +237,11 @@ Serialize(SpawnSerializer &s, const PreparedChildProcess &p)
     s.CheckWriteFd(SpawnExecCommand::STDERR, p.stderr_fd);
     s.CheckWriteFd(SpawnExecCommand::CONTROL, p.control_fd);
 
+    if (p.priority != 0) {
+        s.Write(SpawnExecCommand::PRIORITY);
+        s.WriteInt(p.priority);
+    }
+
     Serialize(s, p.cgroup);
     Serialize(s, p.refence);
     Serialize(s, p.ns);
