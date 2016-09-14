@@ -15,8 +15,6 @@
 
 #include <daemon/log.h>
 
-#include <glib.h>
-
 #include <array>
 
 #include <assert.h>
@@ -26,13 +24,6 @@
 #include <sys/socket.h>
 
 static constexpr size_t MAX_FDS = 8;
-
-gcc_const
-static inline GQuark
-spawn_quark(void)
-{
-    return g_quark_from_static_string("spawn");
-}
 
 SpawnServerClient::SpawnServerClient(EventLoop &event_loop,
                                      const SpawnConfig &_config, int _fd)
