@@ -248,6 +248,8 @@ Serialize(SpawnSerializer &s, const PreparedChildProcess &p)
     Serialize(s, p.rlimits);
     Serialize(s, p.uid_gid);
 
+    s.WriteOptionalString(SpawnExecCommand::CHROOT, p.chroot);
+
     if (p.no_new_privs)
         s.Write(SpawnExecCommand::NO_NEW_PRIVS);
 }

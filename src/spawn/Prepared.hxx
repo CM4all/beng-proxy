@@ -41,6 +41,13 @@ struct PreparedChildProcess {
 
     UidGid uid_gid;
 
+    /**
+     * Change to this new root directory.  This feature should not be
+     * used; use NamespaceOptions::pivot_root instead.  It is only
+     * here for compatibility.
+     */
+    const char *chroot = nullptr;
+
     bool no_new_privs = false;
 
     /**

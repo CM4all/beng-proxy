@@ -493,6 +493,10 @@ SpawnServerConnection::HandleExecMessage(SpawnPayload payload,
         case SpawnExecCommand::PRIORITY:
             payload.ReadInt(p.priority);
             break;
+
+        case SpawnExecCommand::CHROOT:
+            p.chroot = payload.ReadString();
+            break;
         }
     }
 

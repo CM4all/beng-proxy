@@ -45,6 +45,12 @@ Exec(const char *path, const PreparedChildProcess &p,
     p.ns.Setup(config);
     p.rlimits.Apply();
 
+    if (p.chroot != nullptr && chroot(p.chroot) < 0) {
+        fprintf(stderr, "chroot('%s') failed: %s\n",
+                p.chroot, strerror(errno));
+        _exit(EXIT_FAILURE);
+    }
+
     if (p.priority != 0 &&
         setpriority(PRIO_PROCESS, getpid(), p.priority) < 0) {
         fprintf(stderr, "setpriority() failed: %s\n", strerror(errno));
