@@ -76,6 +76,8 @@ Exec(const char *path, const PreparedChildProcess &p,
     CheckedDup2(stderr_fd, STDERR_FILENO);
     CheckedDup2(p.control_fd, CONTROL_FILENO);
 
+    setsid();
+
     execve(path, const_cast<char *const*>(p.args.raw()),
            const_cast<char *const*>(p.env.raw()));
 
