@@ -115,8 +115,6 @@ cm4all_beng_proxy_SOURCES = \
 	src/cgi/cgi_launch.cxx src/cgi/cgi_launch.hxx \
 	src/child_socket.cxx src/child_socket.hxx \
 	src/child_stock.cxx src/child_stock.hxx \
-	src/LineParser.cxx src/LineParser.hxx \
-	src/ConfigParser.cxx src/ConfigParser.hxx \
 	src/bp_config.cxx src/bp_config.hxx \
 	src/bp_listener.cxx src/bp_listener.hxx \
 	src/bp_connection.cxx src/bp_connection.hxx \
@@ -329,6 +327,7 @@ cm4all_beng_proxy_LDADD = $(AM_LDADD) \
 	libspawn.a \
 	libpool.a libmemory.a \
 	libodbus.a \
+	libio.a \
 	libsystem.a \
 	libputil.a \
 	libutil.a \
@@ -411,8 +410,6 @@ cm4all_beng_lb_SOURCES = \
 	src/thread_socket_filter.cxx src/thread_socket_filter.hxx \
 	src/nop_thread_socket_filter.cxx src/nop_thread_socket_filter.hxx \
 	src/ping.cxx src/ping.hxx \
-	src/LineParser.cxx src/LineParser.hxx \
-	src/ConfigParser.cxx src/ConfigParser.hxx \
 	src/lb_cmdline.hxx \
 	src/lb_cmdline.cxx \
 	src/lb_stats.cxx src/lb_stats.hxx \
@@ -464,6 +461,7 @@ cm4all_beng_lb_LDADD = $(AM_LDADD) \
 	libnet.a \
 	libspawn.a \
 	libpool.a libmemory.a \
+	libio.a \
 	libsystem.a \
 	libpg.a \
 	libputil.a \
@@ -496,8 +494,6 @@ cm4all_certdb_SOURCES = \
 	src/regex.cxx src/regex.hxx \
 	src/expand.cxx src/expand.hxx \
 	src/pexpand.cxx src/pexpand.hxx \
-	src/LineParser.cxx src/LineParser.hxx \
-	src/ConfigParser.cxx src/ConfigParser.hxx \
 	src/lb_config.cxx \
 	src/http_address.cxx src/http_address.hxx \
 	src/http_client.cxx src/http_client.hxx \
@@ -539,6 +535,7 @@ cm4all_certdb_LDADD = $(AM_LDADD) \
 	libistream.a libpool.a libputil.a libmemory.a libevent.a \
 	libnet.a \
 	libraddress.a \
+	libio.a \
 	libsystem.a \
 	libutil.a \
 	$(LIBCM4ALL_INLINE_LIBS) \
@@ -650,6 +647,7 @@ endif
 
 noinst_LIBRARIES = libutil.a libmemory.a libpool.a \
 	libsystem.a \
+	libio.a \
 	libodbus.a \
 	libspawn.a \
 	libshm.a \
@@ -764,6 +762,10 @@ libsystem_a_SOURCES = \
 	src/system/urandom.cxx src/system/urandom.hxx \
 	src/system/sigutil.h \
 	src/system/mmap.h
+
+libio_a_SOURCES = \
+	src/io/LineParser.cxx src/io/LineParser.hxx \
+	src/io/ConfigParser.cxx src/io/ConfigParser.hxx
 
 libodbus_a_SOURCES = \
 	src/odbus/Types.hxx \
