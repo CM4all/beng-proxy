@@ -5,8 +5,8 @@
  */
 
 #include "bp_config.hxx"
-#include "LineParser.hxx"
-#include "ConfigParser.hxx"
+#include "io/LineParser.hxx"
+#include "io/ConfigParser.hxx"
 #include "net/Parser.hxx"
 #include "util/StringView.hxx"
 #include "util/StringParser.hxx"
