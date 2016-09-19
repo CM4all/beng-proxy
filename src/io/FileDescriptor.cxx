@@ -144,9 +144,9 @@ FileDescriptor::DisableCloseOnExec()
 }
 
 bool
-FileDescriptor::CheckDuplicate(int new_fd)
+FileDescriptor::CheckDuplicate(FileDescriptor new_fd)
 {
-	if (fd == new_fd) {
+	if (*this == new_fd) {
 		DisableCloseOnExec();
 		return true;
 	} else
