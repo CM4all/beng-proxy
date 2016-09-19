@@ -6,7 +6,7 @@
 #include "Prepared.hxx"
 #include "Config.hxx"
 #include "system/sigutil.h"
-#include "system/fd_util.h"
+#include "io/FileDescriptor.hxx"
 
 #include <inline/compiler.h>
 
@@ -24,15 +24,16 @@
 #endif
 
 static void
+CheckedDup2(FileDescriptor oldfd, FileDescriptor newfd)
+{
+    if (oldfd.IsDefined())
+        oldfd.CheckDuplicate(newfd);
+}
+
+static void
 CheckedDup2(int oldfd, int newfd)
 {
-    if (oldfd < 0)
-        return;
-
-    if (oldfd == newfd)
-        fd_set_cloexec(oldfd, false);
-    else
-        dup2(oldfd, newfd);
+    CheckedDup2(FileDescriptor(oldfd), FileDescriptor(newfd));
 }
 
 gcc_noreturn
