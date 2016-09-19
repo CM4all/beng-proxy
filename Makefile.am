@@ -753,8 +753,6 @@ libsystem_a_SOURCES = \
 	src/system/Error.hxx \
 	src/system/StringFile.cxx src/system/StringFile.hxx \
 	src/system/SetupProcess.cxx src/system/SetupProcess.hxx \
-	src/system/FileDescriptor.cxx src/system/FileDescriptor.hxx \
-	src/system/UniqueFileDescriptor.hxx \
 	src/system/fd-util.c src/system/fd-util.h \
 	src/system/fd_util.c src/system/fd_util.h \
 	src/system/bind_mount.c src/system/bind_mount.h \
@@ -764,6 +762,8 @@ libsystem_a_SOURCES = \
 	src/system/mmap.h
 
 libio_a_SOURCES = \
+	src/io/FileDescriptor.cxx src/io/FileDescriptor.hxx \
+	src/io/UniqueFileDescriptor.hxx \
 	src/io/LineParser.cxx src/io/LineParser.hxx \
 	src/io/ConfigParser.cxx src/io/ConfigParser.hxx
 

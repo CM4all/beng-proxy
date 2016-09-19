@@ -7,7 +7,7 @@
 #include "AddressInfo.hxx"
 #include "SocketDescriptor.hxx"
 #include "system/Error.hxx"
-#include "system/FileDescriptor.hxx"
+#include "io/FileDescriptor.hxx"
 
 SocketDescriptor
 ResolveConnectSocket(const char *host_and_port, int default_port,

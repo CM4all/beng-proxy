@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_WAS_LAUNCH_HXX
 #define BENG_PROXY_WAS_LAUNCH_HXX
 
-#include "system/UniqueFileDescriptor.hxx"
+#include "io/UniqueFileDescriptor.hxx"
 #include "glibfwd.hxx"
 
 class SpawnService;

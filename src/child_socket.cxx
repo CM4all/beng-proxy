@@ -6,7 +6,7 @@
 
 #include "child_socket.hxx"
 #include "system/fd_util.h"
-#include "system/UniqueFileDescriptor.hxx"
+#include "io/UniqueFileDescriptor.hxx"
 #include "gerrno.h"
 
 #include <stdlib.h>

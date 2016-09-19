@@ -7,7 +7,7 @@
 #include "CgroupState.hxx"
 #include "Server.hxx"
 #include "system/Error.hxx"
-#include "system/UniqueFileDescriptor.hxx"
+#include "io/UniqueFileDescriptor.hxx"
 #include "util/PrintException.cxx"
 
 #include <sched.h>

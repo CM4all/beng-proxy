@@ -12,7 +12,7 @@
 #include "spawn/IstreamSpawn.hxx"
 #include "spawn/JailParams.hxx"
 #include "spawn/Prepared.hxx"
-#include "system/UniqueFileDescriptor.hxx"
+#include "io/UniqueFileDescriptor.hxx"
 #include "util/CharUtil.hxx"
 #include "util/Error.hxx"
 

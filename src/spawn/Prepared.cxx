@@ -3,7 +3,7 @@
  */
 
 #include "Prepared.hxx"
-#include "system/UniqueFileDescriptor.hxx"
+#include "io/UniqueFileDescriptor.hxx"
 #include "util/ConstBuffer.hxx"
 
 #include <string.h>

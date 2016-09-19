@@ -19,7 +19,7 @@
 #include "pool.hxx"
 #include "event/SocketEvent.hxx"
 #include "event/Duration.hxx"
-#include "system/UniqueFileDescriptor.hxx"
+#include "io/UniqueFileDescriptor.hxx"
 #include "util/ConstBuffer.hxx"
 
 #include <daemon/log.h>

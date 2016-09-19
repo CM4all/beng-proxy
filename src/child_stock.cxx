@@ -15,7 +15,7 @@
 #include "GException.hxx"
 #include "spawn/Interface.hxx"
 #include "spawn/Prepared.hxx"
-#include "system/UniqueFileDescriptor.hxx"
+#include "io/UniqueFileDescriptor.hxx"
 #include "pool.hxx"
 
 #include <glib.h>
