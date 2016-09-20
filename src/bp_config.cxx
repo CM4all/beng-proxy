@@ -116,6 +116,8 @@ BpConfigParser::Listener::ParseLine(LineParser &line)
 
         config.address = ParseSocketAddress(line.ExpectValueAndEnd(),
                                             80, true);
+    } else if (strcmp(word, "interface") == 0) {
+        config.interface = line.ExpectValueAndEnd();
     } else if (strcmp(word, "tag") == 0) {
         config.tag = line.ExpectValueAndEnd();
     } else if (strcmp(word, "zeroconf_type") == 0) {

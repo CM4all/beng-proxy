@@ -62,6 +62,7 @@ bool
 ServerSocket::Listen(int family, int socktype, int protocol,
                      SocketAddress address,
                      bool reuse_port,
+                     const char *bind_to_device,
                      Error &error)
 {
     if (address.GetFamily() == AF_UNIX) {
@@ -86,6 +87,11 @@ ServerSocket::Listen(int family, int socktype, int protocol,
 
     if (address.IsV6Any())
         fd.SetV6Only(false);
+
+    if (bind_to_device != nullptr && !fd.SetBindToDevice(bind_to_device)) {
+        error.SetErrno("Failed to set SO_BINDTODEVICE");
+        return false;
+    }
 
     if (!fd.Bind(address)) {
         error.SetErrno("Failed to bind");
@@ -134,7 +140,7 @@ ServerSocket::ListenTCP4(unsigned port, Error &error)
 
     return Listen(PF_INET, SOCK_STREAM, 0,
                   SocketAddress((const struct sockaddr *)&sa4, sizeof(sa4)),
-                  false, error);
+                  false, nullptr, error);
 }
 
 bool
@@ -151,7 +157,7 @@ ServerSocket::ListenTCP6(unsigned port, Error &error)
 
     return Listen(PF_INET6, SOCK_STREAM, 0,
                   SocketAddress((const struct sockaddr *)&sa6, sizeof(sa6)),
-                  false, error);
+                  false, nullptr, error);
 }
 
 bool
@@ -160,7 +166,7 @@ ServerSocket::ListenPath(const char *path, Error &error)
     AllocatedSocketAddress address;
     address.SetLocal(path);
 
-    return Listen(AF_LOCAL, SOCK_STREAM, 0, address, false, error);
+    return Listen(AF_LOCAL, SOCK_STREAM, 0, address, false, nullptr, error);
 }
 
 ServerSocket::~ServerSocket()

@@ -42,6 +42,7 @@
 #include "ssl/ssl_init.hxx"
 #include "ssl/ssl_client.hxx"
 #include "system/SetupProcess.hxx"
+#include "system/Error.hxx"
 #include "capabilities.hxx"
 #include "spawn/Local.hxx"
 #include "spawn/Glue.hxx"
@@ -239,7 +240,9 @@ BpInstance::AddListener(const BpConfig::Listener &c)
     auto &listener = listeners.front();
 
     if (!listener.Listen(c.address.GetFamily(), SOCK_STREAM, 0,
-                         c.address, c.reuse_port, error)) {
+                         c.address, c.reuse_port,
+                         c.interface.empty() ? nullptr : c.interface.c_str(),
+                         error)) {
         fprintf(stderr, "%s\n", error.GetMessage());
         exit(2);
     }

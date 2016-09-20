@@ -332,6 +332,11 @@ struct LbListenerConfig {
 
     LbGoto destination;
 
+    /**
+     * If non-empty, sets SO_BINDTODEVICE.
+     */
+    std::string interface;
+
     bool reuse_port = false;
 
     bool verbose_response = false;

@@ -765,6 +765,8 @@ LbConfigParser::Listener::ParseLine(LineParser &line)
         const char *address = line.ExpectValueAndEnd();
 
         config.bind_address = ParseSocketAddress(address, 80, true);
+    } else if (strcmp(word, "interface") == 0) {
+        config.interface = line.ExpectValueAndEnd();
     } else if (strcmp(word, "reuse_port") == 0) {
         config.reuse_port = line.NextBool();
         line.ExpectEnd();

@@ -26,6 +26,7 @@ public:
     bool Listen(int family, int socktype, int protocol,
                 SocketAddress address,
                 bool reuse_port,
+                const char *bind_to_device,
                 Error &error);
 
     bool ListenTCP(unsigned port, Error &error);
