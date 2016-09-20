@@ -142,6 +142,9 @@ struct BpInstance final : ControlHandler {
     BpInstance();
     ~BpInstance();
 
+    void EnableSignals();
+    void DisableSignals();
+
     void ForkCow(bool inherit);
 
     void ScheduleSaveSessions();
@@ -165,6 +168,13 @@ struct BpInstance final : ControlHandler {
 
     void ReloadEventCallback(int signo);
 
+    void AddListener(SocketAddress address, const char *tag,
+                     const std::string &zeroconf_type);
+    void AddTcpListener(int port);
+
+    void EnableListeners();
+    void DisableListeners();
+
     /* virtual methods from class ControlHandler */
     void OnControlPacket(ControlServer &control_server,
                          enum beng_control_command command,
@@ -178,19 +188,5 @@ private:
 
     void SaveSesssions();
 };
-
-struct client_connection;
-
-void
-init_signals(BpInstance *instance);
-
-void
-deinit_signals(BpInstance *instance);
-
-void
-all_listeners_event_add(BpInstance *instance);
-
-void
-all_listeners_event_del(BpInstance *instance);
 
 #endif

@@ -160,7 +160,7 @@ BpInstance::SpawnWorker()
                              config.cluster_size,
                              config.cluster_node);
 
-        all_listeners_event_add(this);
+        EnableListeners();
     } else {
 #ifdef USE_SPAWNER
         close(spawn_fd);
