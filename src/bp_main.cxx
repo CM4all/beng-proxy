@@ -504,8 +504,6 @@ try {
     bulldog_deinit();
     failure_deinit();
 
-    free_all_listeners(&instance);
-
 #ifdef USE_SPAWNER
     delete instance.spawn;
 #endif
