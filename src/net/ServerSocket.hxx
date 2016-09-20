@@ -36,6 +36,10 @@ public:
         return fd.SetTcpDeferAccept(seconds);
     }
 
+    bool SetBindToDevice(const char *name) {
+        return fd.SetBindToDevice(name);
+    }
+
     void AddEvent() {
         event.Add();
     }
