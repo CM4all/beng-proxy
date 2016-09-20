@@ -142,7 +142,6 @@ delegate_stock_create(void *ctx,
                                               std::move(p), nullptr,
                                               &error);
     if (pid < 0) {
-        error = new_error_errno_msg2(-pid, "clone() failed");
         close(fds[0]);
         c.InvokeCreateError(error);
         return;
