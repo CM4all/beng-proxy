@@ -168,8 +168,7 @@ struct BpInstance final : ControlHandler {
 
     void ReloadEventCallback(int signo);
 
-    void AddListener(SocketAddress address, const char *tag,
-                     const std::string &zeroconf_type);
+    void AddListener(const BpConfig::Listener &c);
     void AddTcpListener(int port);
 
     void EnableListeners();

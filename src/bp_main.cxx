@@ -231,24 +231,23 @@ BpInstance::DisableSignals()
 }
 
 void
-BpInstance::AddListener(SocketAddress address, const char *tag,
-                        const std::string &zeroconf_type)
+BpInstance::AddListener(const BpConfig::Listener &c)
 {
     Error error;
 
-    listeners.emplace_front(*this, tag);
+    listeners.emplace_front(*this, c.tag.empty() ? nullptr : c.tag.c_str());
     auto &listener = listeners.front();
 
-    if (!listener.Listen(address.GetFamily(), SOCK_STREAM, 0,
-                         address, error)) {
+    if (!listener.Listen(c.address.GetFamily(), SOCK_STREAM, 0,
+                         c.address, error)) {
         fprintf(stderr, "%s\n", error.GetMessage());
         exit(2);
     }
 
     listener.SetTcpDeferAccept(10);
 
-    if (!zeroconf_type.empty())
-        avahi_client.AddService(zeroconf_type.c_str(), address);
+    if (!c.zeroconf_type.empty())
+        avahi_client.AddService(c.zeroconf_type.c_str(), c.address);
 }
 
 void
@@ -303,9 +302,7 @@ try {
         instance.AddTcpListener(i);
 
     for (const auto &i : instance.config.listen)
-        instance.AddListener(i.address,
-                             i.tag.empty() ? nullptr : i.tag.c_str(),
-                             i.zeroconf_type);
+        instance.AddListener(i);
 
     global_control_handler_init(&instance);
 
