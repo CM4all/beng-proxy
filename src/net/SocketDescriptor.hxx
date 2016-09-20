@@ -79,6 +79,11 @@ public:
     bool SetTcpDeferAccept(const int &seconds);
     bool SetV6Only(bool value);
 
+    /**
+     * Setter for SO_BINDTODEVICE.
+     */
+    bool SetBindToDevice(const char *name);
+
     SocketDescriptor Accept(StaticSocketAddress &address, Error &error) const;
 
     /**

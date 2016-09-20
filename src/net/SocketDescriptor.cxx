@@ -142,6 +142,15 @@ SocketDescriptor::SetV6Only(bool _value)
                       &value, sizeof(value)) == 0;
 }
 
+bool
+SocketDescriptor::SetBindToDevice(const char *name)
+{
+    assert(IsDefined());
+
+    return setsockopt(fd, SOL_SOCKET, SO_BINDTODEVICE,
+                      name, strlen(name)) == 0;
+}
+
 SocketDescriptor
 SocketDescriptor::Accept(StaticSocketAddress &address, Error &error) const
 {
