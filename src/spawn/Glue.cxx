@@ -23,15 +23,17 @@ StartSpawnServer(const SpawnConfig &config,
 
     const int close_fd = sv[1];
 
-    pid_t pid = LaunchSpawnServer(config, sv[0],
-                                  [close_fd, post_clone](){
-                                      close(close_fd);
-                                      post_clone();
-                                  });
-    if (pid < 0) {
+    pid_t pid;
+    try {
+        pid = LaunchSpawnServer(config, sv[0],
+                                [close_fd, post_clone](){
+                                    close(close_fd);
+                                    post_clone();
+                                });
+    } catch (...) {
         close(sv[0]);
         close(sv[1]);
-        return nullptr;
+        throw;
     }
 
     child_process_registry.Add(pid, "spawn", nullptr);
