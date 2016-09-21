@@ -73,17 +73,13 @@ SocketDescriptor::CreateListen(int family, int socktype, int protocol,
     if (!Create(family, socktype, protocol, error))
         return false;
 
-    const int reuse = 1;
-    if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR,
-                   (const char *)&reuse, sizeof(reuse)) < 0) {
+    if (!SetBoolOption(SOL_SOCKET, SO_REUSEADDR, true)) {
         error.SetErrno("Failed to set SO_REUSEADDR");
         Close();
         return false;
     }
 
-    if (reuse_port &&
-        setsockopt(fd, SOL_SOCKET, SO_REUSEPORT,
-                       (const char *)&reuse, sizeof(reuse)) < 0) {
+    if (reuse_port && !SetBoolOption(SOL_SOCKET, SO_REUSEPORT, true)) {
         error.SetErrno("Failed to set SO_REUSEPORT");
         Close();
         return false;
@@ -118,8 +114,7 @@ SocketDescriptor::CreateListen(int family, int socktype, int protocol,
         return false;
     }
 
-    setsockopt(fd, SOL_SOCKET, SO_PASSCRED,
-               (const char *)&reuse, sizeof(reuse));
+    SetBoolOption(SOL_SOCKET, SO_PASSCRED, true);
 
     return true;
 }
@@ -133,32 +128,30 @@ SocketDescriptor::Bind(SocketAddress address)
 }
 
 bool
-SocketDescriptor::SetTcpDeferAccept(const int &seconds)
+SocketDescriptor::SetOption(int level, int name,
+                            const void *value, size_t size)
 {
     assert(IsDefined());
 
-    return setsockopt(fd, IPPROTO_TCP, TCP_DEFER_ACCEPT,
-                      &seconds, sizeof(seconds)) == 0;
+    return setsockopt(fd, level, name, value, size) == 0;
 }
 
 bool
-SocketDescriptor::SetV6Only(bool _value)
+SocketDescriptor::SetTcpDeferAccept(const int &seconds)
 {
-    assert(IsDefined());
+    return SetOption(IPPROTO_TCP, TCP_DEFER_ACCEPT, &seconds, sizeof(seconds));
+}
 
-    int value = _value;
-
-    return setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY,
-                      &value, sizeof(value)) == 0;
+bool
+SocketDescriptor::SetV6Only(bool value)
+{
+    return SetBoolOption(IPPROTO_IPV6, IPV6_V6ONLY, value);
 }
 
 bool
 SocketDescriptor::SetBindToDevice(const char *name)
 {
-    assert(IsDefined());
-
-    return setsockopt(fd, SOL_SOCKET, SO_BINDTODEVICE,
-                      name, strlen(name)) == 0;
+    return SetOption(SOL_SOCKET, SO_BINDTODEVICE, name, strlen(name));
 }
 
 SocketDescriptor

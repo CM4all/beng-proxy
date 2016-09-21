@@ -78,6 +78,13 @@ public:
 
     bool Bind(SocketAddress address);
 
+    bool SetOption(int level, int name, const void *value, size_t size);
+
+    bool SetBoolOption(int level, int name, bool _value) {
+        const int value = _value;
+        return SetOption(level, name, &value, sizeof(value));
+    }
+
     bool SetTcpDeferAccept(const int &seconds);
     bool SetV6Only(bool value);
 
