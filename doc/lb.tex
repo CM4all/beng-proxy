@@ -246,8 +246,23 @@ listener port80 {
 A listener has a name, an socket address to bind to (including the
 port).  To handle requests, it is associated with exactly one pool.
 
-The option \verb|verbose_response| can be set to \texttt{yes} to
-expose internal error messages in HTTP responses.
+Known attributes:
+
+\begin{longtabu*}{|l|X|}\hline
+
+\verb|bind| & An adddress to bind to.  May be the wildcard ``*'' or an
+IPv4/IPv6 address followed by a port.  IPv6 addresses should be
+enclosed in square brackets to disambiguate the port separator.  Local
+sockets start with a slash ``/'', and abstract sockets start with an
+at symbol ``@''. \\\hline
+
+\verb|ssl| & \texttt{yes} enables SSL/TLS.  See \ref{ssl} for more
+information and more SSL options. \\\hline
+
+\verb|verbose_response| & \texttt{yes} exposes internal error messages
+in HTTP responses. \\\hline
+
+\end{longtabu*}
 
 \subsection{Sticky}
 \label{sticky}
@@ -317,6 +332,7 @@ It is allowed to set \verb|jvm_route| in a node that is used in pools
 without the according \verb|sticky| setting.
 
 \subsection{SSL/TLS}
+\label{ssl}
 
 To enable SSL/TLS on a listener, configure:
 
