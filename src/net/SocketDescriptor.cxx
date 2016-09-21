@@ -94,19 +94,9 @@ SocketDescriptor::CreateListen(int family, int socktype, int protocol,
         return false;
     }
 
-#ifdef __linux
-    /* enable TCP Fast Open (requires Linux 3.7) */
-
-#ifndef TCP_FASTOPEN
-#define TCP_FASTOPEN 23
-#endif
-
     if ((family == AF_INET || family == AF_INET6) &&
-        socktype == SOCK_STREAM) {
-        int qlen = 16;
-        setsockopt(fd, SOL_TCP, TCP_FASTOPEN, &qlen, sizeof(qlen));
-    }
-#endif
+        socktype == SOCK_STREAM)
+        SetTcpFastOpen();
 
     if (listen(fd, 64) < 0) {
         error.SetErrno("Failed to listen");
@@ -137,6 +127,18 @@ SocketDescriptor::SetOption(int level, int name,
 }
 
 bool
+SocketDescriptor::SetReuseAddress(bool value)
+{
+    return SetBoolOption(SOL_SOCKET, SO_REUSEADDR, value);
+}
+
+bool
+SocketDescriptor::SetReusePort(bool value)
+{
+    return SetBoolOption(SOL_SOCKET, SO_REUSEPORT, value);
+}
+
+bool
 SocketDescriptor::SetTcpDeferAccept(const int &seconds)
 {
     return SetOption(IPPROTO_TCP, TCP_DEFER_ACCEPT, &seconds, sizeof(seconds));
@@ -152,6 +154,12 @@ bool
 SocketDescriptor::SetBindToDevice(const char *name)
 {
     return SetOption(SOL_SOCKET, SO_BINDTODEVICE, name, strlen(name));
+}
+
+bool
+SocketDescriptor::SetTcpFastOpen(int qlen)
+{
+    return SetOption(SOL_TCP, TCP_FASTOPEN, &qlen, sizeof(qlen));
 }
 
 SocketDescriptor
