@@ -332,6 +332,8 @@ struct LbListenerConfig {
 
     LbGoto destination;
 
+    bool reuse_port = false;
+
     bool verbose_response = false;
 
     bool ssl = false;

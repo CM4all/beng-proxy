@@ -31,6 +31,8 @@ struct BpConfig {
 
         std::string zeroconf_type;
 
+        bool reuse_port = false;
+
         Listener() = default;
 
         Listener(SocketAddress _address, const std::string &_tag)

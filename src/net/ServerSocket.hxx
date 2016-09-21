@@ -24,7 +24,9 @@ public:
     ~ServerSocket();
 
     bool Listen(int family, int socktype, int protocol,
-                SocketAddress address, Error &error);
+                SocketAddress address,
+                bool reuse_port,
+                Error &error);
 
     bool ListenTCP(unsigned port, Error &error);
     bool ListenTCP4(unsigned port, Error &error);

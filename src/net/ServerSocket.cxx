@@ -61,6 +61,7 @@ ServerSocket::EventCallback(gcc_unused short events)
 bool
 ServerSocket::Listen(int family, int socktype, int protocol,
                      SocketAddress address,
+                     bool reuse_port,
                      Error &error)
 {
     if (address.GetFamily() == AF_UNIX) {
@@ -70,7 +71,9 @@ ServerSocket::Listen(int family, int socktype, int protocol,
             unlink(sun->sun_path);
     }
 
-    if (!fd.CreateListen(family, socktype, protocol, address, error))
+    if (!fd.CreateListen(family, socktype, protocol, address,
+                         reuse_port,
+                         error))
         return false;
 
     event.Set(fd.Get(), EV_READ|EV_PERSIST);
@@ -98,7 +101,7 @@ ServerSocket::ListenTCP4(unsigned port, Error &error)
 
     return Listen(PF_INET, SOCK_STREAM, 0,
                   SocketAddress((const struct sockaddr *)&sa4, sizeof(sa4)),
-                  error);
+                  false, error);
 }
 
 bool
@@ -115,7 +118,7 @@ ServerSocket::ListenTCP6(unsigned port, Error &error)
 
     return Listen(PF_INET6, SOCK_STREAM, 0,
                   SocketAddress((const struct sockaddr *)&sa6, sizeof(sa6)),
-                  error);
+                  false, error);
 }
 
 bool
@@ -124,7 +127,7 @@ ServerSocket::ListenPath(const char *path, Error &error)
     AllocatedSocketAddress address;
     address.SetLocal(path);
 
-    return Listen(AF_LOCAL, SOCK_STREAM, 0, address, error);
+    return Listen(AF_LOCAL, SOCK_STREAM, 0, address, false, error);
 }
 
 ServerSocket::~ServerSocket()

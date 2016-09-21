@@ -138,6 +138,10 @@ enclosed in square brackets to disambiguate the port separator.  Local
 sockets start with a slash ``/'', and abstract sockets start with an
 at symbol ``@''. \\\hline
 
+\verb|reuse_port| & \texttt{yes} enables the socket option
+\verb|SO_REUSEPORT|, which allows multiple sockets to bind to the same
+port. \\\hline
+
 \verb|tag| & A tag, to be passed to the translation server in a
 \verb|LISTENER_TAG| packet (see page \pageref{listenertag}). \\\hline
 

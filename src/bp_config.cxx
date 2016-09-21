@@ -120,6 +120,9 @@ BpConfigParser::Listener::ParseLine(LineParser &line)
         config.tag = line.ExpectValueAndEnd();
     } else if (strcmp(word, "zeroconf_type") == 0) {
         config.zeroconf_type = line.ExpectValueAndEnd();
+    } else if (strcmp(word, "reuse_port") == 0) {
+        config.reuse_port = line.NextBool();
+        line.ExpectEnd();
     } else
         throw LineParser::Error("Unknown option");
 }

@@ -239,7 +239,7 @@ BpInstance::AddListener(const BpConfig::Listener &c)
     auto &listener = listeners.front();
 
     if (!listener.Listen(c.address.GetFamily(), SOCK_STREAM, 0,
-                         c.address, error)) {
+                         c.address, c.reuse_port, error)) {
         fprintf(stderr, "%s\n", error.GetMessage());
         exit(2);
     }

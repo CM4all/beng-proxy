@@ -66,7 +66,9 @@ IsV6Any(SocketAddress address)
 
 bool
 SocketDescriptor::CreateListen(int family, int socktype, int protocol,
-                               const SocketAddress &address, Error &error)
+                               const SocketAddress &address,
+                               bool reuse_port,
+                               Error &error)
 {
     if (!Create(family, socktype, protocol, error))
         return false;
@@ -75,6 +77,14 @@ SocketDescriptor::CreateListen(int family, int socktype, int protocol,
     if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR,
                    (const char *)&reuse, sizeof(reuse)) < 0) {
         error.SetErrno("Failed to set SO_REUSEADDR");
+        Close();
+        return false;
+    }
+
+    if (reuse_port &&
+        setsockopt(fd, SOL_SOCKET, SO_REUSEPORT,
+                       (const char *)&reuse, sizeof(reuse)) < 0) {
+        error.SetErrno("Failed to set SO_REUSEPORT");
         Close();
         return false;
     }

@@ -72,7 +72,9 @@ public:
 
     bool Create(int domain, int type, int protocol, Error &error);
     bool CreateListen(int family, int socktype, int protocol,
-                      const SocketAddress &address, Error &error);
+                      const SocketAddress &address,
+                      bool reuse_port,
+                      Error &error);
 
     bool Bind(SocketAddress address);
 
