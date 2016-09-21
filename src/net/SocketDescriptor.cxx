@@ -85,17 +85,23 @@ SocketDescriptor::CreateListen(int family, int socktype, int protocol,
         return false;
     }
 
-    if ((family == AF_INET || family == AF_INET6) &&
-        socktype == SOCK_STREAM)
-        SetTcpFastOpen();
+    switch (family) {
+    case AF_INET:
+    case AF_INET6:
+        if (socktype == SOCK_STREAM)
+            SetTcpFastOpen();
+        break;
+
+    case AF_LOCAL:
+        SetBoolOption(SOL_SOCKET, SO_PASSCRED, true);
+        break;
+    }
 
     if (listen(fd, 64) < 0) {
         error.SetErrno("Failed to listen");
         Close();
         return false;
     }
-
-    SetBoolOption(SOL_SOCKET, SO_PASSCRED, true);
 
     return true;
 }
