@@ -55,15 +55,6 @@ SocketDescriptor::Create(int domain, int type, int protocol, Error &error)
     return true;
 }
 
-gcc_pure
-static bool
-IsV6Any(SocketAddress address)
-{
-    return address.GetFamily() == AF_INET6 &&
-        memcmp(&((const struct sockaddr_in6 *)(const void *)address.GetAddress())->sin6_addr,
-               &in6addr_any, sizeof(in6addr_any)) == 0;
-}
-
 bool
 SocketDescriptor::CreateListen(int family, int socktype, int protocol,
                                const SocketAddress &address,
@@ -85,7 +76,7 @@ SocketDescriptor::CreateListen(int family, int socktype, int protocol,
         return false;
     }
 
-    if (IsV6Any(address))
+    if (address.IsV6Any())
         SetV6Only(false);
 
     if (!Bind(address)) {
