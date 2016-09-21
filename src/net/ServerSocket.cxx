@@ -71,10 +71,43 @@ ServerSocket::Listen(int family, int socktype, int protocol,
             unlink(sun->sun_path);
     }
 
-    if (!fd.CreateListen(family, socktype, protocol, address,
-                         reuse_port,
-                         error))
+    if (!fd.Create(family, socktype, protocol, error))
         return false;
+
+    if (!fd.SetBoolOption(SOL_SOCKET, SO_REUSEADDR, true)) {
+        error.SetErrno("Failed to set SO_REUSEADDR");
+        return false;
+    }
+
+    if (reuse_port && !fd.SetBoolOption(SOL_SOCKET, SO_REUSEPORT, true)) {
+        error.SetErrno("Failed to set SO_REUSEPORT");
+        return false;
+    }
+
+    if (address.IsV6Any())
+        fd.SetV6Only(false);
+
+    if (!fd.Bind(address)) {
+        error.SetErrno("Failed to bind");
+        return false;
+    }
+
+    switch (family) {
+    case AF_INET:
+    case AF_INET6:
+        if (socktype == SOCK_STREAM)
+            fd.SetTcpFastOpen();
+        break;
+
+    case AF_LOCAL:
+        fd.SetBoolOption(SOL_SOCKET, SO_PASSCRED, true);
+        break;
+    }
+
+    if (listen(fd.Get(), 64) < 0) {
+        error.SetErrno("Failed to listen");
+        return false;
+    }
 
     event.Set(fd.Get(), EV_READ|EV_PERSIST);
     AddEvent();

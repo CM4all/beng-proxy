@@ -56,57 +56,6 @@ SocketDescriptor::Create(int domain, int type, int protocol, Error &error)
 }
 
 bool
-SocketDescriptor::CreateListen(int family, int socktype, int protocol,
-                               const SocketAddress &address,
-                               bool reuse_port,
-                               Error &error)
-{
-    if (!Create(family, socktype, protocol, error))
-        return false;
-
-    if (!SetBoolOption(SOL_SOCKET, SO_REUSEADDR, true)) {
-        error.SetErrno("Failed to set SO_REUSEADDR");
-        Close();
-        return false;
-    }
-
-    if (reuse_port && !SetBoolOption(SOL_SOCKET, SO_REUSEPORT, true)) {
-        error.SetErrno("Failed to set SO_REUSEPORT");
-        Close();
-        return false;
-    }
-
-    if (address.IsV6Any())
-        SetV6Only(false);
-
-    if (!Bind(address)) {
-        error.SetErrno("Failed to bind");
-        Close();
-        return false;
-    }
-
-    switch (family) {
-    case AF_INET:
-    case AF_INET6:
-        if (socktype == SOCK_STREAM)
-            SetTcpFastOpen();
-        break;
-
-    case AF_LOCAL:
-        SetBoolOption(SOL_SOCKET, SO_PASSCRED, true);
-        break;
-    }
-
-    if (listen(fd, 64) < 0) {
-        error.SetErrno("Failed to listen");
-        Close();
-        return false;
-    }
-
-    return true;
-}
-
-bool
 SocketDescriptor::Bind(SocketAddress address)
 {
     assert(IsDefined());
