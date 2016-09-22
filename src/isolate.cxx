@@ -57,6 +57,12 @@ isolate_from_filesystem()
 
     chmod("run", 0111);
 
+    /* symlink /var/run to /run, because some libraries such as
+       libdbus use the old path */
+    mkdir("var", 0700);
+    symlink("/run", "var/run");
+    chmod("var", 0111);
+
     /* enter the new root */
     mkdir(put_old, 0);
     if (my_pivot_root(new_root, put_old) < 0) {
