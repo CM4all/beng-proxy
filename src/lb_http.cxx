@@ -358,7 +358,7 @@ LbConnection::HandleHttpRequest(HttpServerRequest &request,
         }
     }
 
-    if (!cluster->zeroconf_service.empty()) {
+    if (cluster->HasZeroConf()) {
         /* TODO: generalize the Zeroconf code, implement sticky */
 
         auto *cluster2 = instance.clusters.Find(cluster->name);

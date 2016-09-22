@@ -588,7 +588,7 @@ LbConfigParser::Cluster::Finish()
         config.zeroconf_service.empty())
         throw LineParser::Error("zeroconf_service missing");
 
-    if (config.members.empty() && config.zeroconf_service.empty())
+    if (config.members.empty() && !config.HasZeroConf())
         throw LineParser::Error("Pool has no members");
 
     if (!validate_protocol_sticky(config.protocol, config.sticky_mode))

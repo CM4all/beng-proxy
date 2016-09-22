@@ -450,7 +450,7 @@ lb_tcp_new(struct pool &pool, EventLoop &event_loop, Stock *pipe_stock,
 
     *tcp_r = tcp;
 
-    if (!cluster.zeroconf_service.empty()) {
+    if (cluster.HasZeroConf()) {
         /* TODO: generalize the Zeroconf code, implement sticky */
 
         auto *cluster2 = clusters.Find(cluster.name);

@@ -183,6 +183,10 @@ struct LbClusterConfig {
      */
     gcc_pure
     int FindJVMRoute(const char *jvm_route) const;
+
+    bool HasZeroConf() const {
+        return !zeroconf_service.empty();
+    }
 };
 
 struct LbAttributeReference {
