@@ -283,7 +283,7 @@ int main(int argc, char **argv)
        to PostgreSQL eventually */
     // TODO: bind-mount the PostgreSQL socket into the new rootfs
     if (!instance.config->HasCertDatabase())
-        isolate_from_filesystem();
+        isolate_from_filesystem(instance.config->HasZeroConf());
 
     if (daemon_user_defined(&instance.cmdline.user))
         capabilities_post_setuid(cap_keep_list, ARRAY_SIZE(cap_keep_list));
