@@ -37,7 +37,7 @@ public:
 
     void ExpectWhitespace() {
         if (!IsWhitespaceNotNull(front()))
-            throw std::runtime_error("Syntax error");
+            throw Error("Syntax error");
 
         ++p;
         Strip();
