@@ -20,6 +20,10 @@ public:
         StripRight(p);
     }
 
+    char *Rest() {
+        return p;
+    }
+
     void Strip() {
         p = StripLeft(p);
     }
