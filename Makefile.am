@@ -996,6 +996,7 @@ FILTER_TESTS = test/t_istream_cat test/t_istream_chunked test/t_istream_dechunk 
 
 check_PROGRAMS = \
 	test/t_cache test/t_tcache \
+	test/t_ConfigParser \
 	test/t_regex \
 	test/t_header_forward \
 	test/t_stock \
@@ -1036,6 +1037,7 @@ check_PROGRAMS = \
 	test/t_memcached_client
 
 TESTS = test/t_cache test/t_tcache \
+	test/t_ConfigParser \
 	test/t_regex \
 	test/t_header_forward \
 	test/t_stock \
@@ -1171,6 +1173,17 @@ test_t_tcache_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_SOCKET_LIBS) \
 	$(LIBPCRE_LIBS) \
 	$(LIBEVENT_LIBS) $(GLIB_LIBS) -lrt
+
+test_t_ConfigParser_SOURCES = \
+	test/t_ConfigParser.cxx
+test_t_ConfigParser_CPPFLAGS = $(AM_CPPFLAGS) $(CPPUNIT_CFLAGS)
+test_t_ConfigParser_LDADD = $(AM_LDADD) \
+	libio.a \
+	libsystem.a \
+	libutil.a \
+	$(BOOST_FILESYSTEM_LIB) \
+	$(BOOST_SYSTEM_LIB) \
+	$(CPPUNIT_LIBS)
 
 test_t_regex_SOURCES = test/t_regex.cxx src/regex.cxx src/expand.cxx src/pexpand.cxx
 test_t_regex_CPPFLAGS = $(AM_CPPFLAGS) $(CPPUNIT_CFLAGS)

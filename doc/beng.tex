@@ -113,6 +113,24 @@ ending with \texttt{.conf}.
 
 The specified file name may be relative to the including file.
 
+\subsection{Variables (\texttt{@set})}
+
+Set a variable.  Within double-quoted strings, variables can be
+expanded with \verb|${name}|.  Example:
+
+\begin{verbatim*}
+@set foo = "192.168.1.42";
+@set bar = "${foo}:80";
+listener {
+  bind "${bar}"
+}
+\end{verbatim*}
+
+At the time of this writing, the concept of variables is not
+well-implemented.  For example, (backslash) escape sequences don't
+work, and the scope of variables is not defined.  For now, use
+variables only for very simple things.
+
 \subsection{\texttt{listener}}
 
 Listen for HTTP requests on the configured address.  Example:

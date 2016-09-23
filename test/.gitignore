@@ -75,5 +75,6 @@ run_nfs_client
 /send_control
 /fake_memcached_server
 /format_http_date
+/t_ConfigParser
 
 *.trs

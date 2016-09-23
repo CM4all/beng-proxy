@@ -92,6 +92,150 @@ CommentConfigParser::Finish()
 }
 
 bool
+VariableConfigParser::PreParseLine(LineParser &line)
+{
+    return child.PreParseLine(line);
+}
+
+void
+VariableConfigParser::ParseLine(LineParser &line)
+{
+    Expand(line);
+
+    if (line.SkipWord("@set")) {
+        const char *name = line.ExpectWordAndSymbol('=',
+                                                    "Variable name expected",
+                                                    "'=' expected");
+        const char *value = line.NextUnescape();
+        if (value == nullptr)
+            throw LineParser::Error("Quoted value expected after '='");
+
+        line.ExpectEnd();
+
+        auto i = variables.emplace(name, value);
+        if (!i.second)
+            i.first->second = value;
+    } else {
+        child.ParseLine(line);
+    }
+}
+
+void
+VariableConfigParser::Finish()
+{
+    child.Finish();
+    ConfigParser::Finish();
+}
+
+void
+VariableConfigParser::ExpandOne(std::string &dest,
+                                const char *&src, const char *end) const
+{
+    assert(src + 2 <= end);
+    assert(*src == '$');
+    assert(src[1] == '{');
+
+    src += 2;
+
+    if (src >= end || !LineParser::IsWordChar(*src))
+        throw LineParser::Error("Variable name expected after '${'");
+
+    const char *name_begin = src++;
+
+    do {
+        if (++src >= end)
+            throw LineParser::Error("Missing '}' after variable name");
+    } while (LineParser::IsWordChar(*src));
+
+    if (*src != '}')
+        throw LineParser::Error("Missing '}' after variable name");
+
+    const char *name_end = src++;
+
+    const std::string name(name_begin, name_end);
+    auto i = variables.find(name);
+    if (i == variables.end())
+        throw LineParser::Error("No such variable: " + name);
+
+    dest += i->second;
+}
+
+void
+VariableConfigParser::ExpandQuoted(std::string &dest,
+                                   const char *src, const char *end) const
+{
+    while (true) {
+        const char *dollar = (const char *)memchr(src, '$', end - src);
+        if (dollar == nullptr)
+            break;
+
+        dest.append(src, dollar);
+
+        src = dollar;
+        ExpandOne(dest, src, end);
+    }
+
+    dest.append(src, end);
+}
+
+void
+VariableConfigParser::Expand(std::string &dest, const char *src) const
+{
+    while (true) {
+        const char ch = *src;
+        if (ch == 0)
+            break;
+
+        if (ch == '\'') {
+            const char *end = strchr(src + 1, '\'');
+            if (end == nullptr)
+                break;
+
+            ++end;
+            dest.append(src, end);
+            src = end;
+        } else if (ch == '"') {
+            const char *end = strchr(src + 1, '"');
+            if (end == nullptr)
+                break;
+
+            dest.push_back(ch);
+            ExpandQuoted(dest, src + 1, end);
+            dest.push_back(ch);
+            src = end + 1;
+        } else if (ch == '$' && src[1] == '{') {
+            dest.push_back('\'');
+            ExpandOne(dest, src, src + strlen(src));
+            dest.push_back('\'');
+        } else {
+            dest.push_back(ch);
+            ++src;
+        }
+    }
+
+    dest += src;
+}
+
+char *
+VariableConfigParser::Expand(const char *src) const
+{
+    if (strstr(src, "${") == nullptr)
+        return nullptr;
+
+    buffer.clear();
+    Expand(buffer, src);
+    return &buffer.front();
+}
+
+void
+VariableConfigParser::Expand(LineParser &line) const
+{
+    char *p = Expand(line.Rest());
+    if (p != nullptr)
+        line = LineParser(p);
+}
+
+bool
 IncludeConfigParser::PreParseLine(LineParser &line)
 {
     return child.PreParseLine(line);

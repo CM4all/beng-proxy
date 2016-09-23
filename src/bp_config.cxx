@@ -200,7 +200,8 @@ void
 LoadConfigFile(BpConfig &config, const char *path)
 {
     BpConfigParser parser(config);
-    CommentConfigParser parser2(parser);
+    VariableConfigParser v_parser(parser);
+    CommentConfigParser parser2(v_parser);
     IncludeConfigParser parser3(path, parser2);
 
     ParseConfigFile(path, parser3);
