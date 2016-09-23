@@ -20,9 +20,6 @@ public:
         StripRight(p);
     }
 
-    LineParser(const LineParser &) = delete;
-    LineParser &operator=(const LineParser &) = delete;
-
     void Strip() {
         p = StripLeft(p);
     }
