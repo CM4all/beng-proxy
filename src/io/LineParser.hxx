@@ -105,13 +105,13 @@ public:
      */
     char *ExpectValueAndEnd();
 
-private:
-    char *NextUnquotedValue();
-    char *NextQuotedValue(char stop);
-
     static constexpr bool IsWordChar(char ch) {
         return IsAlphaNumericASCII(ch) || ch == '_';
     }
+
+private:
+    char *NextUnquotedValue();
+    char *NextQuotedValue(char stop);
 
     static constexpr bool IsUnquotedChar(char ch) {
         return IsWordChar(ch) || ch == '.' || ch == '-' || ch == ':';
