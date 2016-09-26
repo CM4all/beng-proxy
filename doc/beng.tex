@@ -96,14 +96,14 @@ The file \texttt{/etc/cm4all/beng/lb.conf} contains
 \emph{beng-proxy}'s configuration.  The following options are
 available:
 
-\subsection{\texttt{include}}
+\subsection{\texttt{@include}}
 
 Include another file.  Example:
 
 \begin{verbatim*}
-include "foo/bar.conf"
-include_optional "foo/may-not-exist.conf"
-include "wildcard/*.conf"
+@include "foo/bar.conf"
+@include_optional "foo/may-not-exist.conf"
+@include "wildcard/*.conf"
 \end{verbatim*}
 
 The second line silently ignores non-existing files.

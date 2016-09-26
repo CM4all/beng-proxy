@@ -244,7 +244,8 @@ IncludeConfigParser::PreParseLine(LineParser &line)
 void
 IncludeConfigParser::ParseLine(LineParser &line)
 {
-    if (line.SkipWord("include")) {
+    if (line.SkipWord("@include") ||
+        /* v11.2 legacy: */ line.SkipWord("include")) {
         const char *p = line.NextUnescape();
         if (p == nullptr)
             throw LineParser::Error("Quoted path expected");
@@ -252,7 +253,8 @@ IncludeConfigParser::ParseLine(LineParser &line)
         line.ExpectEnd();
 
         IncludePath(p);
-    } else if (line.SkipWord("include_optional")) {
+    } else if (line.SkipWord("@include_optional") ||
+               /* v11.2 legacy: */ line.SkipWord("include_optional")) {
         const char *p = line.NextUnescape();
         if (p == nullptr)
             throw LineParser::Error("Quoted path expected");
