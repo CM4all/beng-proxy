@@ -95,6 +95,10 @@ public:
 
     const char *ExpectWord();
 
+    const char *ExpectWordAndSymbol(char symbol,
+                                    const char *error1,
+                                    const char *error2);
+
     /**
      * Expect a non-empty value.
      */

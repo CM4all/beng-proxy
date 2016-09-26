@@ -175,6 +175,32 @@ LineParser::ExpectWord()
     return value;
 }
 
+const char *
+LineParser::ExpectWordAndSymbol(char symbol,
+                                const char *error1,
+                                const char *error2)
+{
+    if (!IsWordChar(front()))
+        throw Error(error1);
+
+    const char *result = p;
+    do {
+        ++p;
+    } while (IsWordChar(front()));
+
+    if (IsWhitespaceNotNull(front())) {
+        *p++ = 0;
+        Strip();
+    }
+
+    if (IsEnd() || front() != symbol)
+        throw Error(error2);
+
+    *p++ = 0;
+
+    return result;
+}
+
 char *
 LineParser::ExpectValue()
 {
