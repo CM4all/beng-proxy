@@ -32,6 +32,7 @@ static constexpr struct UriEscapeData {
 class UriEscapeTest : public CppUnit::TestFixture {
     CPPUNIT_TEST_SUITE(UriEscapeTest);
     CPPUNIT_TEST(TestUriEscape);
+    CPPUNIT_TEST(TestUriUnescape);
     CPPUNIT_TEST_SUITE_END();
 
 public:
