@@ -151,10 +151,12 @@ Known attributes:
 \begin{longtabu*}{|l|X|}\hline
 
 \verb|bind| & An adddress to bind to.  May be the wildcard ``*'' or an
-IPv4/IPv6 address followed by a port.  IPv6 addresses should be
-enclosed in square brackets to disambiguate the port separator.  Local
-sockets start with a slash ``/'', and abstract sockets start with an
-at symbol ``@''. \\\hline
+IPv4/IPv6 address followed by a port.  If you omit the port number, it
+will default to 80.  Specifying port 0 will auto-select a free port
+(which makes sense only if you publish the listener with Zeroconf).
+IPv6 addresses should be enclosed in square brackets to disambiguate
+the port separator.  Local sockets start with a slash ``/'', and
+abstract sockets start with an at symbol ``@''. \\\hline
 
 \verb|interface| & Limit this listener to the given network
 interface. \\\hline
