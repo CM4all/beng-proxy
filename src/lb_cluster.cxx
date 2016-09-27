@@ -125,7 +125,7 @@ LbCluster::LbCluster(const LbClusterConfig &_config,
                      MyAvahiClient &_avahi_client)
     :config(_config), avahi_client(_avahi_client)
 {
-    if (!config.zeroconf_service.empty()) {
+    if (config.HasZeroConf()) {
         avahi_client.AddListener(*this);
         avahi_client.Enable();
     }
@@ -136,7 +136,7 @@ LbCluster::~LbCluster()
     if (avahi_browser != nullptr)
         avahi_service_browser_free(avahi_browser);
 
-    if (!config.zeroconf_service.empty())
+    if (config.HasZeroConf())
         avahi_client.RemoveListener(*this);
 }
 
@@ -283,7 +283,7 @@ LbClusterMap::Scan(const LbListenerConfig &config, MyAvahiClient &avahi_client)
 void
 LbClusterMap::Scan(const LbClusterConfig &config, MyAvahiClient &avahi_client)
 {
-    if (config.zeroconf_service.empty())
+    if (!config.HasZeroConf())
         /* doesn't need runtime data */
         return;
 

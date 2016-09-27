@@ -8,6 +8,7 @@
 #include <boost/filesystem.hpp>
 
 #include <memory>
+#include <map>
 
 class LineParser;
 
@@ -50,6 +51,35 @@ public:
     bool PreParseLine(LineParser &line) override;
     void ParseLine(LineParser &line) final;
     void Finish() override;
+};
+
+/**
+ * A #ConfigParser which can define and use variables.
+ */
+class VariableConfigParser final : public ConfigParser {
+    ConfigParser &child;
+
+    std::map<std::string, std::string> variables;
+
+    mutable std::string buffer;
+
+public:
+    explicit VariableConfigParser(ConfigParser &_child)
+        :child(_child) {}
+
+    /* virtual methods from class ConfigParser */
+    bool PreParseLine(LineParser &line) override;
+    void ParseLine(LineParser &line) final;
+    void Finish() override;
+
+private:
+    void ExpandOne(std::string &dest,
+                   const char *&src, const char *end) const;
+    void ExpandQuoted(std::string &dest,
+                      const char *src, const char *end) const;
+    void Expand(std::string &dest, const char *src) const;
+    char *Expand(const char *src) const;
+    void Expand(LineParser &line) const;
 };
 
 /**

@@ -38,6 +38,14 @@ SocketAddress::operator==(SocketAddress other) const
 	return size == other.size && memcmp(address, other.address, size) == 0;
 }
 
+bool
+SocketAddress::IsV6Any() const
+{
+    return GetFamily() == AF_INET6 &&
+	    memcmp(&((const struct sockaddr_in6 *)(const void *)GetAddress())->sin6_addr,
+		   &in6addr_any, sizeof(in6addr_any)) == 0;
+}
+
 unsigned
 SocketAddress::GetPort() const
 {

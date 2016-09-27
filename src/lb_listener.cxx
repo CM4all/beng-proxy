@@ -62,6 +62,8 @@ lb_listener::Setup(Error &error)
 
     if (!Listen(config.bind_address.GetFamily(), SOCK_STREAM, 0,
                 config.bind_address,
+                config.reuse_port,
+                config.interface.empty() ? nullptr : config.interface.c_str(),
                 error))
         return false;
 

@@ -20,8 +20,9 @@ public:
         StripRight(p);
     }
 
-    LineParser(const LineParser &) = delete;
-    LineParser &operator=(const LineParser &) = delete;
+    char *Rest() {
+        return p;
+    }
 
     void Strip() {
         p = StripLeft(p);
@@ -37,7 +38,7 @@ public:
 
     void ExpectWhitespace() {
         if (!IsWhitespaceNotNull(front()))
-            throw std::runtime_error("Syntax error");
+            throw Error("Syntax error");
 
         ++p;
         Strip();
@@ -94,6 +95,10 @@ public:
 
     const char *ExpectWord();
 
+    const char *ExpectWordAndSymbol(char symbol,
+                                    const char *error1,
+                                    const char *error2);
+
     /**
      * Expect a non-empty value.
      */
@@ -104,13 +109,13 @@ public:
      */
     char *ExpectValueAndEnd();
 
-private:
-    char *NextUnquotedValue();
-    char *NextQuotedValue(char stop);
-
     static constexpr bool IsWordChar(char ch) {
         return IsAlphaNumericASCII(ch) || ch == '_';
     }
+
+private:
+    char *NextUnquotedValue();
+    char *NextQuotedValue(char stop);
 
     static constexpr bool IsUnquotedChar(char ch) {
         return IsWordChar(ch) || ch == '.' || ch == '-' || ch == ':';

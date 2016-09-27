@@ -183,6 +183,10 @@ struct LbClusterConfig {
      */
     gcc_pure
     int FindJVMRoute(const char *jvm_route) const;
+
+    bool HasZeroConf() const {
+        return !zeroconf_service.empty();
+    }
 };
 
 struct LbAttributeReference {
@@ -222,6 +226,8 @@ struct LbGoto {
 
     gcc_pure
     const char *GetName() const;
+
+    bool HasZeroConf() const;
 };
 
 struct LbConditionConfig {
@@ -275,6 +281,10 @@ struct LbGotoIfConfig {
 
     LbGotoIfConfig(LbConditionConfig &&c, LbGoto d)
         :condition(std::move(c)), destination(d) {}
+
+    bool HasZeroConf() const {
+        return destination.HasZeroConf();
+    }
 };
 
 /**
@@ -303,6 +313,17 @@ struct LbBranchConfig {
     LbProtocol GetProtocol() const {
         return fallback.GetProtocol();
     }
+
+    bool HasZeroConf() const {
+        if (fallback.HasZeroConf())
+            return true;
+
+        for (const auto &i : conditions)
+            if (i.HasZeroConf())
+                return true;
+
+        return false;
+    }
 };
 
 inline LbProtocol
@@ -325,12 +346,26 @@ LbGoto::GetName() const
         : branch->name.c_str();
 }
 
+inline bool
+LbGoto::HasZeroConf() const
+{
+    return (cluster != nullptr && cluster->HasZeroConf()) ||
+        (branch != nullptr && branch->HasZeroConf());
+}
+
 struct LbListenerConfig {
     std::string name;
 
     AllocatedSocketAddress bind_address;
 
     LbGoto destination;
+
+    /**
+     * If non-empty, sets SO_BINDTODEVICE.
+     */
+    std::string interface;
+
+    bool reuse_port = false;
 
     bool verbose_response = false;
 
@@ -342,6 +377,11 @@ struct LbListenerConfig {
 
     explicit LbListenerConfig(const char *_name)
         :name(_name) {}
+
+    gcc_pure
+    bool HasZeroConf() const {
+        return destination.HasZeroConf();
+    }
 };
 
 struct LbConfig {
@@ -428,6 +468,15 @@ struct LbConfig {
     bool HasCertDatabase() const {
         for (const auto &i : listeners)
             if (i.cert_db != nullptr)
+                return true;
+
+        return false;
+    }
+
+    gcc_pure
+    bool HasZeroConf() const {
+        for (const auto &i : listeners)
+            if (i.HasZeroConf())
                 return true;
 
         return false;

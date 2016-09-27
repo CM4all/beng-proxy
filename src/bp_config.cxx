@@ -116,10 +116,15 @@ BpConfigParser::Listener::ParseLine(LineParser &line)
 
         config.address = ParseSocketAddress(line.ExpectValueAndEnd(),
                                             80, true);
+    } else if (strcmp(word, "interface") == 0) {
+        config.interface = line.ExpectValueAndEnd();
     } else if (strcmp(word, "tag") == 0) {
         config.tag = line.ExpectValueAndEnd();
     } else if (strcmp(word, "zeroconf_type") == 0) {
         config.zeroconf_type = line.ExpectValueAndEnd();
+    } else if (strcmp(word, "reuse_port") == 0) {
+        config.reuse_port = line.NextBool();
+        line.ExpectEnd();
     } else
         throw LineParser::Error("Unknown option");
 }
@@ -195,7 +200,8 @@ void
 LoadConfigFile(BpConfig &config, const char *path)
 {
     BpConfigParser parser(config);
-    CommentConfigParser parser2(parser);
+    VariableConfigParser v_parser(parser);
+    CommentConfigParser parser2(v_parser);
     IncludeConfigParser parser3(path, parser2);
 
     ParseConfigFile(path, parser3);

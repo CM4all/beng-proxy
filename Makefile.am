@@ -1001,6 +1001,7 @@ FILTER_TESTS = test/t_istream_cat test/t_istream_chunked test/t_istream_dechunk 
 
 check_PROGRAMS = \
 	test/t_cache test/t_tcache \
+	test/t_ConfigParser \
 	test/t_regex \
 	test/t_header_forward \
 	test/t_stock \
@@ -1041,6 +1042,7 @@ check_PROGRAMS = \
 	test/t_memcached_client
 
 TESTS = test/t_cache test/t_tcache \
+	test/t_ConfigParser \
 	test/t_regex \
 	test/t_header_forward \
 	test/t_stock \
@@ -1122,6 +1124,7 @@ test_run_was_LDADD = $(AM_LDADD) \
 	libspawn.a \
 	libpool.a libmemory.a \
 	libevent.a \
+	libio.a \
 	libsystem.a \
 	libputil.a \
 	libutil.a \
@@ -1178,6 +1181,17 @@ test_t_tcache_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_SOCKET_LIBS) \
 	$(LIBPCRE_LIBS) \
 	$(LIBEVENT_LIBS) $(GLIB_LIBS) -lrt
+
+test_t_ConfigParser_SOURCES = \
+	test/t_ConfigParser.cxx
+test_t_ConfigParser_CPPFLAGS = $(AM_CPPFLAGS) $(CPPUNIT_CFLAGS)
+test_t_ConfigParser_LDADD = $(AM_LDADD) \
+	libio.a \
+	libsystem.a \
+	libutil.a \
+	$(BOOST_FILESYSTEM_LIB) \
+	$(BOOST_SYSTEM_LIB) \
+	$(CPPUNIT_LIBS)
 
 test_t_regex_SOURCES = test/t_regex.cxx src/regex.cxx src/expand.cxx src/pexpand.cxx
 test_t_regex_CPPFLAGS = $(AM_CPPFLAGS) $(CPPUNIT_CFLAGS)
@@ -1446,6 +1460,7 @@ test_t_cgi_LDADD = $(AM_LDADD) \
 	libspawn.a \
 	libpool.a libmemory.a \
 	libevent.a \
+	libio.a \
 	libsystem.a \
 	libutil.a \
 	$(LIBCM4ALL_HTTP_LIBS) \
@@ -2103,7 +2118,10 @@ test_run_memcached_client_SOURCES = test/run_memcached_client.cxx \
 test_run_memcached_client_LDADD = $(LIBEVENT_LIBS) $(GLIB_LIBS) \
 	libistream.a libpool.a libmemory.a libevent.a \
 	libputil.a \
-	libnet.a libsystem.a libutil.a \
+	libnet.a \
+	libio.a \
+	libsystem.a \
+	libutil.a \
 	$(LIBCM4ALL_DAEMON_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
@@ -2116,7 +2134,9 @@ test_dump_memcached_choice_SOURCES = test/dump_memcached_choice.cxx \
 test_dump_memcached_choice_LDADD = $(LIBEVENT_LIBS) $(GLIB_LIBS) \
 	libistream.a libpool.a libmemory.a libevent.a \
 	libputil.a \
-	libnet.a libsystem.a \
+	libnet.a \
+	libio.a \
+	libsystem.a \
 	libutil.a \
 	$(LIBCM4ALL_DAEMON_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS)
@@ -2180,6 +2200,7 @@ test_run_delegate_LDADD = $(AM_LDADD) \
 	libevent.a \
 	libspawn.a \
 	libpool.a libmemory.a \
+	libio.a \
 	libsystem.a \
 	libputil.a \
 	libutil.a \
@@ -2207,7 +2228,12 @@ test_dump_control_LDADD = $(AM_LDADD) \
 	$(LIBEVENT_LIBS)
 
 test_send_control_SOURCES = test/send_control.cxx
-test_send_control_LDADD = libnet.a libsystem.a libutil.a $(LIBCM4ALL_SOCKET_LIBS)
+test_send_control_LDADD = \
+	libnet.a \
+	libio.a \
+	libsystem.a \
+	libutil.a \
+	$(LIBCM4ALL_SOCKET_LIBS)
 
 test_run_ua_parser_SOURCES = test/run_ua_parser.cxx \
 	src/regex.cxx src/expand.cxx \

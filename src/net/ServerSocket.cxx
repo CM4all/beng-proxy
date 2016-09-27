@@ -61,6 +61,8 @@ ServerSocket::EventCallback(gcc_unused short events)
 bool
 ServerSocket::Listen(int family, int socktype, int protocol,
                      SocketAddress address,
+                     bool reuse_port,
+                     const char *bind_to_device,
                      Error &error)
 {
     if (address.GetFamily() == AF_UNIX) {
@@ -70,8 +72,48 @@ ServerSocket::Listen(int family, int socktype, int protocol,
             unlink(sun->sun_path);
     }
 
-    if (!fd.CreateListen(family, socktype, protocol, address, error))
+    if (!fd.Create(family, socktype, protocol, error))
         return false;
+
+    if (!fd.SetBoolOption(SOL_SOCKET, SO_REUSEADDR, true)) {
+        error.SetErrno("Failed to set SO_REUSEADDR");
+        return false;
+    }
+
+    if (reuse_port && !fd.SetBoolOption(SOL_SOCKET, SO_REUSEPORT, true)) {
+        error.SetErrno("Failed to set SO_REUSEPORT");
+        return false;
+    }
+
+    if (address.IsV6Any())
+        fd.SetV6Only(false);
+
+    if (bind_to_device != nullptr && !fd.SetBindToDevice(bind_to_device)) {
+        error.SetErrno("Failed to set SO_BINDTODEVICE");
+        return false;
+    }
+
+    if (!fd.Bind(address)) {
+        error.SetErrno("Failed to bind");
+        return false;
+    }
+
+    switch (family) {
+    case AF_INET:
+    case AF_INET6:
+        if (socktype == SOCK_STREAM)
+            fd.SetTcpFastOpen();
+        break;
+
+    case AF_LOCAL:
+        fd.SetBoolOption(SOL_SOCKET, SO_PASSCRED, true);
+        break;
+    }
+
+    if (listen(fd.Get(), 64) < 0) {
+        error.SetErrno("Failed to listen");
+        return false;
+    }
 
     event.Set(fd.Get(), EV_READ|EV_PERSIST);
     AddEvent();
@@ -98,7 +140,7 @@ ServerSocket::ListenTCP4(unsigned port, Error &error)
 
     return Listen(PF_INET, SOCK_STREAM, 0,
                   SocketAddress((const struct sockaddr *)&sa4, sizeof(sa4)),
-                  error);
+                  false, nullptr, error);
 }
 
 bool
@@ -115,7 +157,7 @@ ServerSocket::ListenTCP6(unsigned port, Error &error)
 
     return Listen(PF_INET6, SOCK_STREAM, 0,
                   SocketAddress((const struct sockaddr *)&sa6, sizeof(sa6)),
-                  error);
+                  false, nullptr, error);
 }
 
 bool
@@ -124,7 +166,13 @@ ServerSocket::ListenPath(const char *path, Error &error)
     AllocatedSocketAddress address;
     address.SetLocal(path);
 
-    return Listen(AF_LOCAL, SOCK_STREAM, 0, address, error);
+    return Listen(AF_LOCAL, SOCK_STREAM, 0, address, false, nullptr, error);
+}
+
+StaticSocketAddress
+ServerSocket::GetLocalAddress() const
+{
+    return fd.GetLocalAddress();
 }
 
 ServerSocket::~ServerSocket()

@@ -13,19 +13,49 @@
 #include <errno.h>
 #include <sys/mount.h>
 #include <sys/stat.h>
+#include <fcntl.h>
 
 #ifndef __linux
 #error This library requires Linux
 #endif
 
-void
-isolate_from_filesystem()
+static bool
+try_write_file(const char *path, const char *data)
 {
+    int fd = open(path, O_WRONLY|O_CLOEXEC);
+    if (fd < 0)
+        return false;
+
+    if (write(fd, data, strlen(data)) < 0)
+        return false;
+
+    close(fd);
+    return true;
+}
+
+static bool
+setup_uid_map(int uid)
+{
+    char buffer[64];
+    sprintf(buffer, "%d %d 1", uid, uid);
+    return try_write_file("/proc/self/uid_map", buffer);
+}
+
+void
+isolate_from_filesystem(bool allow_dbus)
+{
+    const auto original_uid = allow_dbus ? geteuid() : -1;
+
     constexpr int flags = CLONE_NEWUSER|CLONE_NEWNS;
     if (unshare(flags) < 0) {
         daemon_log(3, "unshare(0x%x) failed: %s\n", flags, strerror(errno));
         return;
     }
+
+    if (allow_dbus)
+        /* for dbus "AUTH EXTERNAL", libdbus needs to obtain the
+           "real" uid from geteuid(), so set up the mapping */
+        setup_uid_map(original_uid);
 
     /* convert all "shared" mounts to "private" mounts */
     mount(nullptr, "/", nullptr, MS_PRIVATE|MS_REC, nullptr);
@@ -55,7 +85,20 @@ isolate_from_filesystem()
     mount(nullptr, "run/systemd", nullptr,
           MS_REMOUNT|MS_BIND|MS_NOEXEC|MS_NOSUID|MS_RDONLY, nullptr);
 
+    if (allow_dbus) {
+        mkdir("run/dbus", 0);
+        mount("/run/dbus", "run/dbus", nullptr, MS_BIND, nullptr);
+        mount(nullptr, "run/dbus", nullptr,
+              MS_REMOUNT|MS_BIND|MS_NOEXEC|MS_NOSUID|MS_RDONLY, nullptr);
+    }
+
     chmod("run", 0111);
+
+    /* symlink /var/run to /run, because some libraries such as
+       libdbus use the old path */
+    mkdir("var", 0700);
+    symlink("/run", "var/run");
+    chmod("var", 0111);
 
     /* enter the new root */
     mkdir(put_old, 0);

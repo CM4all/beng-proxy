@@ -87,6 +87,8 @@ MyAvahiClient::Close()
         avahi_client_free(client);
         client = nullptr;
     }
+
+    reconnect_timer.Cancel();
 }
 
 void

@@ -93,6 +93,12 @@ public:
 	}
 
 	/**
+	 * Is this the IPv6 wildcard address (in6addr_any)?
+	 */
+	gcc_pure
+	bool IsV6Any() const;
+
+	/**
 	 * Extract the port number.  Returns 0 if not applicable.
 	 */
 	gcc_pure

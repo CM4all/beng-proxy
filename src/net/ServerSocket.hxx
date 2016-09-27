@@ -24,7 +24,10 @@ public:
     ~ServerSocket();
 
     bool Listen(int family, int socktype, int protocol,
-                SocketAddress address, Error &error);
+                SocketAddress address,
+                bool reuse_port,
+                const char *bind_to_device,
+                Error &error);
 
     bool ListenTCP(unsigned port, Error &error);
     bool ListenTCP4(unsigned port, Error &error);
@@ -32,8 +35,14 @@ public:
 
     bool ListenPath(const char *path, Error &error);
 
+    StaticSocketAddress GetLocalAddress() const;
+
     bool SetTcpDeferAccept(const int &seconds) {
         return fd.SetTcpDeferAccept(seconds);
+    }
+
+    bool SetBindToDevice(const char *name) {
+        return fd.SetBindToDevice(name);
     }
 
     void AddEvent() {

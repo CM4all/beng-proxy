@@ -96,14 +96,14 @@ The file \texttt{/etc/cm4all/beng/lb.conf} contains
 \emph{beng-proxy}'s configuration.  The following options are
 available:
 
-\subsection{\texttt{include}}
+\subsection{\texttt{@include}}
 
 Include another file.  Example:
 
 \begin{verbatim*}
-include "foo/bar.conf"
-include_optional "foo/may-not-exist.conf"
-include "wildcard/*.conf"
+@include "foo/bar.conf"
+@include_optional "foo/may-not-exist.conf"
+@include "wildcard/*.conf"
 \end{verbatim*}
 
 The second line silently ignores non-existing files.
@@ -112,6 +112,24 @@ The third line includes all files in the directory \texttt{wildcard}
 ending with \texttt{.conf}.
 
 The specified file name may be relative to the including file.
+
+\subsection{Variables (\texttt{@set})}
+
+Set a variable.  Within double-quoted strings, variables can be
+expanded with \verb|${name}|.  Example:
+
+\begin{verbatim*}
+@set foo = "192.168.1.42";
+@set bar = "${foo}:80";
+listener {
+  bind "${bar}"
+}
+\end{verbatim*}
+
+At the time of this writing, the concept of variables is not
+well-implemented.  For example, (backslash) escape sequences don't
+work, and the scope of variables is not defined.  For now, use
+variables only for very simple things.
 
 \subsection{\texttt{listener}}
 
@@ -133,10 +151,19 @@ Known attributes:
 \begin{longtabu*}{|l|X|}\hline
 
 \verb|bind| & An adddress to bind to.  May be the wildcard ``*'' or an
-IPv4/IPv6 address followed by a port.  IPv6 addresses should be
-enclosed in square brackets to disambiguate the port separator.  Local
-sockets start with a slash ``/'', and abstract sockets start with an
-at symbol ``@''. \\\hline
+IPv4/IPv6 address followed by a port.  If you omit the port number, it
+will default to 80.  Specifying port 0 will auto-select a free port
+(which makes sense only if you publish the listener with Zeroconf).
+IPv6 addresses should be enclosed in square brackets to disambiguate
+the port separator.  Local sockets start with a slash ``/'', and
+abstract sockets start with an at symbol ``@''. \\\hline
+
+\verb|interface| & Limit this listener to the given network
+interface. \\\hline
+
+\verb|reuse_port| & \texttt{yes} enables the socket option
+\verb|SO_REUSEPORT|, which allows multiple sockets to bind to the same
+port. \\\hline
 
 \verb|tag| & A tag, to be passed to the translation server in a
 \verb|LISTENER_TAG| packet (see page \pageref{listenertag}). \\\hline

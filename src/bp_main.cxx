@@ -42,6 +42,7 @@
 #include "ssl/ssl_init.hxx"
 #include "ssl/ssl_client.hxx"
 #include "system/SetupProcess.hxx"
+#include "system/Error.hxx"
 #include "capabilities.hxx"
 #include "spawn/Local.hxx"
 #include "spawn/Glue.hxx"
@@ -49,6 +50,7 @@
 #include "event/Duration.hxx"
 #include "address_list.hxx"
 #include "net/SocketAddress.hxx"
+#include "net/StaticSocketAddress.hxx"
 #include "net/ServerSocket.hxx"
 #include "util/Error.hxx"
 #include "util/Macros.hxx"
@@ -88,23 +90,17 @@ static constexpr cap_value_t cap_keep_list[] = {
 #endif
 };
 
-static void
-free_all_listeners(BpInstance *instance)
-{
-    instance->listeners.clear();
-}
-
 void
-all_listeners_event_add(BpInstance *instance)
+BpInstance::EnableListeners()
 {
-    for (auto &listener : instance->listeners)
+    for (auto &listener : listeners)
         listener.AddEvent();
 }
 
 void
-all_listeners_event_del(BpInstance *instance)
+BpInstance::DisableListeners()
 {
-    for (auto &listener : instance->listeners)
+    for (auto &listener : listeners)
         listener.RemoveEvent();
 }
 
@@ -115,14 +111,14 @@ BpInstance::ShutdownCallback()
         return;
 
     should_exit = true;
-    deinit_signals(this);
+    DisableSignals();
     thread_pool_stop();
 
 #ifdef USE_SPAWNER
     spawn->Shutdown();
 #endif
 
-    free_all_listeners(this);
+    listeners.clear();
 
     connections.clear_and_dispose(BpConnection::Disposer());
 
@@ -223,47 +219,55 @@ BpInstance::ReloadEventCallback(int)
 }
 
 void
-init_signals(BpInstance *instance)
+BpInstance::EnableSignals()
 {
-    instance->shutdown_listener.Enable();
-    instance->sighup_event.Add();
+    shutdown_listener.Enable();
+    sighup_event.Add();
 }
 
 void
-deinit_signals(BpInstance *instance)
+BpInstance::DisableSignals()
 {
-    instance->shutdown_listener.Disable();
-    instance->sighup_event.Delete();
+    shutdown_listener.Disable();
+    sighup_event.Delete();
 }
 
-static void
-add_listener(BpInstance *instance, SocketAddress address, const char *tag,
-             const std::string &zeroconf_type)
+void
+BpInstance::AddListener(const BpConfig::Listener &c)
 {
     Error error;
 
-    instance->listeners.emplace_front(*instance, tag);
-    auto &listener = instance->listeners.front();
+    listeners.emplace_front(*this, c.tag.empty() ? nullptr : c.tag.c_str());
+    auto &listener = listeners.front();
 
-    if (!listener.Listen(address.GetFamily(), SOCK_STREAM, 0,
-                         address, error)) {
+    if (!listener.Listen(c.address.GetFamily(), SOCK_STREAM, 0,
+                         c.address, c.reuse_port,
+                         c.interface.empty() ? nullptr : c.interface.c_str(),
+                         error)) {
         fprintf(stderr, "%s\n", error.GetMessage());
         exit(2);
     }
 
     listener.SetTcpDeferAccept(10);
 
-    if (!zeroconf_type.empty())
-        instance->avahi_client.AddService(zeroconf_type.c_str(), address);
+    if (!c.zeroconf_type.empty()) {
+        /* ask the kernel for the effective address via getsockname(),
+           because it may have changed, e.g. if the kernel has
+           selected a port for us */
+        const auto local_address = listener.GetLocalAddress();
+        if (local_address.IsDefined())
+            avahi_client.AddService(c.zeroconf_type.c_str(),
+                                    local_address);
+    }
 }
 
-static void
-add_tcp_listener(BpInstance *instance, int port)
+void
+BpInstance::AddTcpListener(int port)
 {
     Error error;
 
-    instance->listeners.emplace_front(*instance, nullptr);
-    auto &listener = instance->listeners.front();
+    listeners.emplace_front(*this, nullptr);
+    auto &listener = listeners.front();
     if (!listener.ListenTCP(port, error)) {
         fprintf(stderr, "%s\n", error.GetMessage());
         exit(2);
@@ -303,15 +307,13 @@ try {
 
     direct_global_init();
 
-    init_signals(&instance);
+    instance.EnableSignals();
 
     for (auto i : instance.config.ports)
-        add_tcp_listener(&instance, i);
+        instance.AddTcpListener(i);
 
     for (const auto &i : instance.config.listen)
-        add_listener(&instance, i.address,
-                     i.tag.empty() ? nullptr : i.tag.c_str(),
-                     i.zeroconf_type);
+        instance.AddListener(i);
 
     global_control_handler_init(&instance);
 
@@ -338,8 +340,8 @@ try {
             instance.event_loop.Reinit();
 
             global_control_handler_deinit(&instance);
-            free_all_listeners(&instance);
-            deinit_signals(&instance);
+            instance.listeners.clear();
+            instance.DisableSignals();
 
             instance.~BpInstance();
         });
@@ -482,7 +484,7 @@ try {
 
     if (instance.config.num_workers > 0) {
         /* the master process shouldn't work */
-        all_listeners_event_del(&instance);
+        instance.DisableListeners();
 
         /* spawn the first worker really soon */
         instance.spawn_worker_event.Add(EventDuration<0, 10000>::value);
@@ -503,8 +505,6 @@ try {
 
     bulldog_deinit();
     failure_deinit();
-
-    free_all_listeners(&instance);
 
 #ifdef USE_SPAWNER
     delete instance.spawn;

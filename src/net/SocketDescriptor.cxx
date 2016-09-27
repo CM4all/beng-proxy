@@ -55,65 +55,6 @@ SocketDescriptor::Create(int domain, int type, int protocol, Error &error)
     return true;
 }
 
-gcc_pure
-static bool
-IsV6Any(SocketAddress address)
-{
-    return address.GetFamily() == AF_INET6 &&
-        memcmp(&((const struct sockaddr_in6 *)(const void *)address.GetAddress())->sin6_addr,
-               &in6addr_any, sizeof(in6addr_any)) == 0;
-}
-
-bool
-SocketDescriptor::CreateListen(int family, int socktype, int protocol,
-                               const SocketAddress &address, Error &error)
-{
-    if (!Create(family, socktype, protocol, error))
-        return false;
-
-    const int reuse = 1;
-    if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR,
-                   (const char *)&reuse, sizeof(reuse)) < 0) {
-        error.SetErrno("Failed to set SO_REUSEADDR");
-        Close();
-        return false;
-    }
-
-    if (IsV6Any(address))
-        SetV6Only(false);
-
-    if (!Bind(address)) {
-        error.SetErrno("Failed to bind");
-        Close();
-        return false;
-    }
-
-#ifdef __linux
-    /* enable TCP Fast Open (requires Linux 3.7) */
-
-#ifndef TCP_FASTOPEN
-#define TCP_FASTOPEN 23
-#endif
-
-    if ((family == AF_INET || family == AF_INET6) &&
-        socktype == SOCK_STREAM) {
-        int qlen = 16;
-        setsockopt(fd, SOL_TCP, TCP_FASTOPEN, &qlen, sizeof(qlen));
-    }
-#endif
-
-    if (listen(fd, 64) < 0) {
-        error.SetErrno("Failed to listen");
-        Close();
-        return false;
-    }
-
-    setsockopt(fd, SOL_SOCKET, SO_PASSCRED,
-               (const char *)&reuse, sizeof(reuse));
-
-    return true;
-}
-
 bool
 SocketDescriptor::Bind(SocketAddress address)
 {
@@ -123,23 +64,48 @@ SocketDescriptor::Bind(SocketAddress address)
 }
 
 bool
-SocketDescriptor::SetTcpDeferAccept(const int &seconds)
+SocketDescriptor::SetOption(int level, int name,
+                            const void *value, size_t size)
 {
     assert(IsDefined());
 
-    return setsockopt(fd, IPPROTO_TCP, TCP_DEFER_ACCEPT,
-                      &seconds, sizeof(seconds)) == 0;
+    return setsockopt(fd, level, name, value, size) == 0;
 }
 
 bool
-SocketDescriptor::SetV6Only(bool _value)
+SocketDescriptor::SetReuseAddress(bool value)
 {
-    assert(IsDefined());
+    return SetBoolOption(SOL_SOCKET, SO_REUSEADDR, value);
+}
 
-    int value = _value;
+bool
+SocketDescriptor::SetReusePort(bool value)
+{
+    return SetBoolOption(SOL_SOCKET, SO_REUSEPORT, value);
+}
 
-    return setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY,
-                      &value, sizeof(value)) == 0;
+bool
+SocketDescriptor::SetTcpDeferAccept(const int &seconds)
+{
+    return SetOption(IPPROTO_TCP, TCP_DEFER_ACCEPT, &seconds, sizeof(seconds));
+}
+
+bool
+SocketDescriptor::SetV6Only(bool value)
+{
+    return SetBoolOption(IPPROTO_IPV6, IPV6_V6ONLY, value);
+}
+
+bool
+SocketDescriptor::SetBindToDevice(const char *name)
+{
+    return SetOption(SOL_SOCKET, SO_BINDTODEVICE, name, strlen(name));
+}
+
+bool
+SocketDescriptor::SetTcpFastOpen(int qlen)
+{
+    return SetOption(SOL_TCP, TCP_FASTOPEN, &qlen, sizeof(qlen));
 }
 
 SocketDescriptor

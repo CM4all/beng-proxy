@@ -588,7 +588,7 @@ LbConfigParser::Cluster::Finish()
         config.zeroconf_service.empty())
         throw LineParser::Error("zeroconf_service missing");
 
-    if (config.members.empty() && config.zeroconf_service.empty())
+    if (config.members.empty() && !config.HasZeroConf())
         throw LineParser::Error("Pool has no members");
 
     if (!validate_protocol_sticky(config.protocol, config.sticky_mode))
@@ -765,6 +765,11 @@ LbConfigParser::Listener::ParseLine(LineParser &line)
         const char *address = line.ExpectValueAndEnd();
 
         config.bind_address = ParseSocketAddress(address, 80, true);
+    } else if (strcmp(word, "interface") == 0) {
+        config.interface = line.ExpectValueAndEnd();
+    } else if (strcmp(word, "reuse_port") == 0) {
+        config.reuse_port = line.NextBool();
+        line.ExpectEnd();
     } else if (strcmp(word, "pool") == 0) {
         if (config.destination.IsDefined())
             throw LineParser::Error("Pool already configured");
@@ -951,7 +956,8 @@ lb_config_load(struct pool *pool, const char *path)
 {
     LbConfig config;
     LbConfigParser parser(*pool, config);
-    CommentConfigParser parser2(parser);
+    VariableConfigParser v_parser(parser);
+    CommentConfigParser parser2(v_parser);
     IncludeConfigParser parser3(path, parser2);
 
     ParseConfigFile(path, parser3);

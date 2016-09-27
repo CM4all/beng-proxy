@@ -71,13 +71,28 @@ public:
     bool Create(int domain, int type, int protocol);
 
     bool Create(int domain, int type, int protocol, Error &error);
-    bool CreateListen(int family, int socktype, int protocol,
-                      const SocketAddress &address, Error &error);
 
     bool Bind(SocketAddress address);
 
+    bool SetOption(int level, int name, const void *value, size_t size);
+
+    bool SetBoolOption(int level, int name, bool _value) {
+        const int value = _value;
+        return SetOption(level, name, &value, sizeof(value));
+    }
+
+    bool SetReuseAddress(bool value=true);
+    bool SetReusePort(bool value=true);
+
     bool SetTcpDeferAccept(const int &seconds);
     bool SetV6Only(bool value);
+
+    /**
+     * Setter for SO_BINDTODEVICE.
+     */
+    bool SetBindToDevice(const char *name);
+
+    bool SetTcpFastOpen(int qlen=16);
 
     SocketDescriptor Accept(StaticSocketAddress &address, Error &error) const;
 

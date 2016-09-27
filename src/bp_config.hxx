@@ -27,9 +27,16 @@ struct BpConfig {
     struct Listener {
         AllocatedSocketAddress address;
 
+        /**
+         * If non-empty, sets SO_BINDTODEVICE.
+         */
+        std::string interface;
+
         std::string tag;
 
         std::string zeroconf_type;
+
+        bool reuse_port = false;
 
         Listener() = default;
 
