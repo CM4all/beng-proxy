@@ -50,6 +50,7 @@
 #include "event/Duration.hxx"
 #include "address_list.hxx"
 #include "net/SocketAddress.hxx"
+#include "net/StaticSocketAddress.hxx"
 #include "net/ServerSocket.hxx"
 #include "util/Error.hxx"
 #include "util/Macros.hxx"
@@ -249,8 +250,15 @@ BpInstance::AddListener(const BpConfig::Listener &c)
 
     listener.SetTcpDeferAccept(10);
 
-    if (!c.zeroconf_type.empty())
-        avahi_client.AddService(c.zeroconf_type.c_str(), c.address);
+    if (!c.zeroconf_type.empty()) {
+        /* ask the kernel for the effective address via getsockname(),
+           because it may have changed, e.g. if the kernel has
+           selected a port for us */
+        const auto local_address = listener.GetLocalAddress();
+        if (local_address.IsDefined())
+            avahi_client.AddService(c.zeroconf_type.c_str(),
+                                    local_address);
+    }
 }
 
 void
