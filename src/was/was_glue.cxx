@@ -102,10 +102,10 @@ WasRequest::OnStockItemReady(StockItem &item)
 void
 WasRequest::OnStockItemError(GError *error)
 {
-    handler.InvokeAbort(error);
-
     if (body != nullptr)
         body->CloseUnused();
+
+    handler.InvokeAbort(error);
 }
 
 /*
