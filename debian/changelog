@@ -1,6 +1,6 @@
 cm4all-beng-proxy (9.16) unstable; urgency=low
 
-  * 
+  * fix memory leak after resource loader failure
 
  --   
 

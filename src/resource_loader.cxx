@@ -216,11 +216,11 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
         return;
 
     case ResourceAddress::Type::NFS:
-#ifdef HAVE_LIBNFS
         if (body != nullptr)
             /* NFS files cannot receive a request body, close it */
             body->CloseUnused();
 
+#ifdef HAVE_LIBNFS
         nfs_request(*pool, *rl->nfs_cache,
                     address->u.nfs->server, address->u.nfs->export_name,
                     address->u.nfs->path,
@@ -257,6 +257,10 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
             stderr_fd = cgi->options.OpenStderrPath();
             if (stderr_fd < 0) {
                 int code = errno;
+
+                if (body != nullptr)
+                    body->CloseUnused();
+
                 GError *error =
                     g_error_new(errno_quark(), code, "open('%s') failed: %s",
                                 cgi->options.stderr_path,
