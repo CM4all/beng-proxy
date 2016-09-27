@@ -169,6 +169,12 @@ ServerSocket::ListenPath(const char *path, Error &error)
     return Listen(AF_LOCAL, SOCK_STREAM, 0, address, false, nullptr, error);
 }
 
+StaticSocketAddress
+ServerSocket::GetLocalAddress() const
+{
+    return fd.GetLocalAddress();
+}
+
 ServerSocket::~ServerSocket()
 {
     if (fd.IsDefined())

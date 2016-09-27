@@ -35,6 +35,8 @@ public:
 
     bool ListenPath(const char *path, Error &error);
 
+    StaticSocketAddress GetLocalAddress() const;
+
     bool SetTcpDeferAccept(const int &seconds) {
         return fd.SetTcpDeferAccept(seconds);
     }
