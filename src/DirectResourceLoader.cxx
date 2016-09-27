@@ -155,6 +155,9 @@ DirectResourceLoader::SendRequest(struct pool &pool,
         file = &address.GetFile();
         if (file->delegate != nullptr) {
             if (delegate_stock == nullptr) {
+                if (body != nullptr)
+                    body->CloseUnused();
+
                 GError *error = g_error_new_literal(resource_loader_quark(), 0,
                                                     "No delegate stock");
                 handler.InvokeError(error);
@@ -177,11 +180,12 @@ DirectResourceLoader::SendRequest(struct pool &pool,
         return;
 
     case ResourceAddress::Type::NFS:
-#ifdef HAVE_LIBNFS
-        nfs = &address.GetNfs();
         if (body != nullptr)
             /* NFS files cannot receive a request body, close it */
             body->CloseUnused();
+
+#ifdef HAVE_LIBNFS
+        nfs = &address.GetNfs();
 
         nfs_request(pool, *nfs_cache,
                     nfs->server, nfs->export_name,
@@ -217,6 +221,10 @@ DirectResourceLoader::SendRequest(struct pool &pool,
             stderr_fd = cgi->options.OpenStderrPath();
             if (stderr_fd < 0) {
                 int code = errno;
+
+                if (body != nullptr)
+                    body->CloseUnused();
+
                 GError *error =
                     g_error_new(errno_quark(), code, "open('%s') failed: %s",
                                 cgi->options.stderr_path,
