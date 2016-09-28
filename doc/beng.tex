@@ -119,8 +119,8 @@ Set a variable.  Within double-quoted strings, variables can be
 expanded with \verb|${name}|.  Example:
 
 \begin{verbatim*}
-@set foo = "192.168.1.42";
-@set bar = "${foo}:80";
+@set foo = "192.168.1.42"
+@set bar = "${foo}:80"
 listener {
   bind "${bar}"
 }
