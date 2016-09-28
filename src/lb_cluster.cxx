@@ -27,7 +27,18 @@ LbCluster::Member::Resolve(AvahiClient *client, AvahiIfIndex interface,
 
     resolver = avahi_service_resolver_new(client, interface, protocol,
                                           name, type, domain,
-                                          AVAHI_PROTO_UNSPEC,
+                                          /* workaround: the following
+                                             should be
+                                             AVAHI_PROTO_UNSPEC
+                                             (because we can deal with
+                                             either protocol), but
+                                             then avahi-daemon
+                                             sometimes returns IPv6
+                                             addresses from the cache,
+                                             even though the service
+                                             was registered as IPv4
+                                             only */
+                                          protocol,
                                           AvahiLookupFlags(0),
                                           ServiceResolverCallback, this);
     if (resolver == nullptr)
