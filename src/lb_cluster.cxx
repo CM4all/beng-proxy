@@ -170,6 +170,19 @@ LbCluster::FillActive()
             active_members.push_back(&i);
 }
 
+static std::string
+MakeKey(AvahiIfIndex interface,
+        AvahiProtocol protocol,
+        const char *name,
+        const char *type,
+        const char *domain)
+{
+    char buffer[2048];
+    snprintf(buffer, sizeof(buffer), "%d/%d/%s/%s/%s",
+             (int)interface, (int)protocol, name, type, domain);
+    return buffer;
+}
+
 void
 LbCluster::ServiceBrowserCallback(AvahiServiceBrowser *b,
                                   AvahiIfIndex interface,
@@ -182,7 +195,9 @@ LbCluster::ServiceBrowserCallback(AvahiServiceBrowser *b,
 {
     if (event == AVAHI_BROWSER_NEW) {
         auto i = members.emplace(std::piecewise_construct,
-                                 std::forward_as_tuple(name),
+                                 std::forward_as_tuple(MakeKey(interface,
+                                                               protocol, name,
+                                                               type, domain)),
                                  std::forward_as_tuple(*this));
         if (i.second || i.first->second.HasFailed())
             i.first->second.Resolve(avahi_service_browser_get_client(b),
