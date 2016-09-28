@@ -62,7 +62,8 @@ class LbCluster final : AvahiConnectionListener {
         void CancelResolve();
 
     private:
-        void ServiceResolverCallback(AvahiResolverEvent event,
+        void ServiceResolverCallback(AvahiIfIndex interface,
+                                     AvahiResolverEvent event,
                                      const AvahiAddress *a,
                                      uint16_t port);
         static void ServiceResolverCallback(AvahiServiceResolver *r,

@@ -57,7 +57,7 @@ Import(const AvahiIPv4Address &src, unsigned port)
 }
 
 static AllocatedSocketAddress
-Import(const AvahiIPv6Address &src, unsigned port)
+Import(AvahiIfIndex interface, const AvahiIPv6Address &src, unsigned port)
 {
     struct sockaddr_in6 sin;
     sin.sin6_family = AF_INET6;
@@ -65,33 +65,34 @@ Import(const AvahiIPv6Address &src, unsigned port)
     sin.sin6_port = htons(port);
     static_assert(sizeof(sin.sin6_addr) == sizeof(src), "");
     memcpy(&sin.sin6_addr, &src, sizeof(src));
-    sin.sin6_scope_id = 0;
+    sin.sin6_scope_id = IN6_IS_ADDR_LINKLOCAL(&sin.sin6_addr) ? interface : 0;
     return AllocatedSocketAddress(SocketAddress((const struct sockaddr *)&sin,
                                                 sizeof(sin)));
 }
 
 static AllocatedSocketAddress
-Import(const AvahiAddress &src, unsigned port)
+Import(AvahiIfIndex interface, const AvahiAddress &src, unsigned port)
 {
     switch (src.proto) {
     case AVAHI_PROTO_INET:
         return Import(src.data.ipv4, port);
 
     case AVAHI_PROTO_INET6:
-        return Import(src.data.ipv6, port);
+        return Import(interface, src.data.ipv6, port);
     }
 
     return AllocatedSocketAddress();
 }
 
 void
-LbCluster::Member::ServiceResolverCallback(AvahiResolverEvent event,
+LbCluster::Member::ServiceResolverCallback(AvahiIfIndex interface,
+                                           AvahiResolverEvent event,
                                            const AvahiAddress *a,
                                            uint16_t port)
 {
     switch (event) {
     case AVAHI_RESOLVER_FOUND:
-        address = Import(*a, port);
+        address = Import(interface, *a, port);
         cluster.dirty = true;
         break;
 
@@ -104,7 +105,7 @@ LbCluster::Member::ServiceResolverCallback(AvahiResolverEvent event,
 
 void
 LbCluster::Member::ServiceResolverCallback(AvahiServiceResolver *,
-                                           gcc_unused AvahiIfIndex interface,
+                                           AvahiIfIndex interface,
                                            gcc_unused AvahiProtocol protocol,
                                            AvahiResolverEvent event,
                                            gcc_unused const char *name,
@@ -118,7 +119,7 @@ LbCluster::Member::ServiceResolverCallback(AvahiServiceResolver *,
                                            void *userdata)
 {
     auto &member = *(LbCluster::Member *)userdata;
-    member.ServiceResolverCallback(event, a, port);
+    member.ServiceResolverCallback(interface, event, a, port);
 }
 
 LbCluster::LbCluster(const LbClusterConfig &_config,
