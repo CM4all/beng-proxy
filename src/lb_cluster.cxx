@@ -216,7 +216,8 @@ LbCluster::ServiceBrowserCallback(AvahiServiceBrowser *b,
                                     interface, protocol,
                                     name, type, domain);
     } else if (event == AVAHI_BROWSER_REMOVE) {
-        auto i = members.find(name);
+        auto i = members.find(MakeKey(interface, protocol, name,
+                                      type, domain));
         if (i != members.end()) {
             if (i->second.IsActive())
                 dirty = true;
