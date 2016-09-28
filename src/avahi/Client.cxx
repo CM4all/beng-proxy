@@ -145,8 +145,8 @@ MyAvahiClient::RegisterServices(AvahiClient *c)
 
     for (const auto &i : services) {
         int error = avahi_entry_group_add_service(group,
-                                                  AVAHI_IF_UNSPEC,
-                                                  AVAHI_PROTO_UNSPEC,
+                                                  i.interface,
+                                                  i.protocol,
                                                   AvahiPublishFlags(0),
                                                   name.c_str(), i.type.c_str(),
                                                   nullptr, nullptr,
