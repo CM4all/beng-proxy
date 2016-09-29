@@ -17,7 +17,7 @@ ExpandableStringList::ExpandableStringList(struct pool &pool,
     Builder builder(*this);
 
     for (const auto *i = src.head; i != nullptr; i = i->next)
-        builder.Add(pool, i->value, i->expandable);
+        builder.Add(pool, p_strdup(&pool, i->value), i->expandable);
 }
 
 bool
