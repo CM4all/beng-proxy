@@ -95,6 +95,11 @@ public:
         Builder(ExpandableStringList &_list)
             :list(&_list), tail_r(&_list.head), last(nullptr) {}
 
+        /**
+         * Add a new item to the end of the list.  The pool is only
+         * used to allocate the item structure, it does not copy the
+         * string.
+         */
         void Add(struct pool &pool, const char *value, bool expandable);
 
         bool CanSetExpand() const {
