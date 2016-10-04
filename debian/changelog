@@ -2,6 +2,7 @@ cm4all-beng-proxy (9.16) unstable; urgency=low
 
   * fix memory leak after resource loader failure
   * was: fix crash on spawn error
+  * fcache: check X-CM4all-BENG-User (via REVEAL_USER) in cache lookup
 
  --   
 

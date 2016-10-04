@@ -222,13 +222,19 @@ filter_cache_request_abort(struct FilterCacheRequest *request)
 static FilterCacheInfo *
 filter_cache_request_evaluate(struct pool &pool,
                               const ResourceAddress *address,
-                              const char *source_id)
+                              const char *source_id,
+                              const struct strmap *headers)
 {
     if (source_id == nullptr)
         return nullptr;
 
+    const char *user = strmap_get_checked(headers, "x-cm4all-beng-user");
+    if (user == nullptr)
+        user = "";
+
     return NewFromPool<FilterCacheInfo>(pool,
                                         p_strcat(&pool, source_id, "|",
+                                                 user, "|",
                                                  address->GetId(pool), nullptr));
 }
 
@@ -690,7 +696,7 @@ filter_cache_request(FilterCache *cache,
                      struct async_operation_ref *async_ref)
 {
     FilterCacheInfo *info = cache->cache != nullptr
-        ? filter_cache_request_evaluate(*pool, address, source_id)
+        ? filter_cache_request_evaluate(*pool, address, source_id, headers)
         : nullptr;
     if (info != nullptr) {
         FilterCacheItem *item
