@@ -198,9 +198,6 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
         file = address->u.file;
         if (file->delegate != nullptr) {
             if (rl->delegate_stock == nullptr) {
-                if (body != nullptr)
-                    body->CloseUnused();
-
                 GError *error = g_error_new_literal(resource_loader_quark(), 0,
                                                     "No delegate stock");
                 handler->InvokeAbort(handler_ctx, error);
