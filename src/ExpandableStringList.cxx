@@ -17,7 +17,7 @@ ExpandableStringList::ExpandableStringList(AllocatorPtr alloc,
     Builder builder(*this);
 
     for (const auto *i = src.head; i != nullptr; i = i->next)
-        builder.Add(alloc, i->value, i->expandable);
+        builder.Add(alloc, alloc.Dup(i->value), i->expandable);
 }
 
 bool

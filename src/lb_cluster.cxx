@@ -27,7 +27,18 @@ LbCluster::Member::Resolve(AvahiClient *client, AvahiIfIndex interface,
 
     resolver = avahi_service_resolver_new(client, interface, protocol,
                                           name, type, domain,
-                                          AVAHI_PROTO_UNSPEC,
+                                          /* workaround: the following
+                                             should be
+                                             AVAHI_PROTO_UNSPEC
+                                             (because we can deal with
+                                             either protocol), but
+                                             then avahi-daemon
+                                             sometimes returns IPv6
+                                             addresses from the cache,
+                                             even though the service
+                                             was registered as IPv4
+                                             only */
+                                          protocol,
                                           AvahiLookupFlags(0),
                                           ServiceResolverCallback, this);
     if (resolver == nullptr)
@@ -57,7 +68,7 @@ Import(const AvahiIPv4Address &src, unsigned port)
 }
 
 static AllocatedSocketAddress
-Import(const AvahiIPv6Address &src, unsigned port)
+Import(AvahiIfIndex interface, const AvahiIPv6Address &src, unsigned port)
 {
     struct sockaddr_in6 sin;
     sin.sin6_family = AF_INET6;
@@ -65,33 +76,34 @@ Import(const AvahiIPv6Address &src, unsigned port)
     sin.sin6_port = htons(port);
     static_assert(sizeof(sin.sin6_addr) == sizeof(src), "");
     memcpy(&sin.sin6_addr, &src, sizeof(src));
-    sin.sin6_scope_id = 0;
+    sin.sin6_scope_id = IN6_IS_ADDR_LINKLOCAL(&sin.sin6_addr) ? interface : 0;
     return AllocatedSocketAddress(SocketAddress((const struct sockaddr *)&sin,
                                                 sizeof(sin)));
 }
 
 static AllocatedSocketAddress
-Import(const AvahiAddress &src, unsigned port)
+Import(AvahiIfIndex interface, const AvahiAddress &src, unsigned port)
 {
     switch (src.proto) {
     case AVAHI_PROTO_INET:
         return Import(src.data.ipv4, port);
 
     case AVAHI_PROTO_INET6:
-        return Import(src.data.ipv6, port);
+        return Import(interface, src.data.ipv6, port);
     }
 
     return AllocatedSocketAddress();
 }
 
 void
-LbCluster::Member::ServiceResolverCallback(AvahiResolverEvent event,
+LbCluster::Member::ServiceResolverCallback(AvahiIfIndex interface,
+                                           AvahiResolverEvent event,
                                            const AvahiAddress *a,
                                            uint16_t port)
 {
     switch (event) {
     case AVAHI_RESOLVER_FOUND:
-        address = Import(*a, port);
+        address = Import(interface, *a, port);
         cluster.dirty = true;
         break;
 
@@ -104,7 +116,7 @@ LbCluster::Member::ServiceResolverCallback(AvahiResolverEvent event,
 
 void
 LbCluster::Member::ServiceResolverCallback(AvahiServiceResolver *,
-                                           gcc_unused AvahiIfIndex interface,
+                                           AvahiIfIndex interface,
                                            gcc_unused AvahiProtocol protocol,
                                            AvahiResolverEvent event,
                                            gcc_unused const char *name,
@@ -118,7 +130,7 @@ LbCluster::Member::ServiceResolverCallback(AvahiServiceResolver *,
                                            void *userdata)
 {
     auto &member = *(LbCluster::Member *)userdata;
-    member.ServiceResolverCallback(event, a, port);
+    member.ServiceResolverCallback(interface, event, a, port);
 }
 
 LbCluster::LbCluster(const LbClusterConfig &_config,
@@ -170,6 +182,19 @@ LbCluster::FillActive()
             active_members.push_back(&i);
 }
 
+static std::string
+MakeKey(AvahiIfIndex interface,
+        AvahiProtocol protocol,
+        const char *name,
+        const char *type,
+        const char *domain)
+{
+    char buffer[2048];
+    snprintf(buffer, sizeof(buffer), "%d/%d/%s/%s/%s",
+             (int)interface, (int)protocol, name, type, domain);
+    return buffer;
+}
+
 void
 LbCluster::ServiceBrowserCallback(AvahiServiceBrowser *b,
                                   AvahiIfIndex interface,
@@ -182,14 +207,17 @@ LbCluster::ServiceBrowserCallback(AvahiServiceBrowser *b,
 {
     if (event == AVAHI_BROWSER_NEW) {
         auto i = members.emplace(std::piecewise_construct,
-                                 std::forward_as_tuple(name),
+                                 std::forward_as_tuple(MakeKey(interface,
+                                                               protocol, name,
+                                                               type, domain)),
                                  std::forward_as_tuple(*this));
         if (i.second || i.first->second.HasFailed())
             i.first->second.Resolve(avahi_service_browser_get_client(b),
                                     interface, protocol,
                                     name, type, domain);
     } else if (event == AVAHI_BROWSER_REMOVE) {
-        auto i = members.find(name);
+        auto i = members.find(MakeKey(interface, protocol, name,
+                                      type, domain));
         if (i != members.end()) {
             if (i->second.IsActive())
                 dirty = true;

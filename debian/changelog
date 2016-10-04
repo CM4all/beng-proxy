@@ -4,6 +4,30 @@ cm4all-beng-proxy (12.0.1) unstable; urgency=low
 
  --   
 
+cm4all-beng-proxy (11.7) unstable; urgency=low
+
+  * merge release 10.32
+  * enforce Zeroconf/avahi-daemon browser notify after restarting beng-proxy
+
+ -- Max Kellermann <mk@cm4all.com>  Tue, 04 Oct 2016 21:59:34 -0000
+
+cm4all-beng-proxy (11.6) unstable; urgency=low
+
+  * was: fix use-after-free bug
+
+ -- Max Kellermann <mk@cm4all.com>  Thu, 29 Sep 2016 14:26:50 -0000
+
+cm4all-beng-proxy (11.5) unstable; urgency=low
+
+  * avahi: fix interface and protocol published via Zeroconf
+  * lb: fix collision in Zeroconf node lookups
+  * lb: support IPv6 link-local addresses from Zeroconf
+  * lb: work around avahi-daemon IPv4/IPv6 mixup bug
+  * config: allow space after '=' in @set
+  * doc: remove bogus semicolons from configuration examples
+
+ -- Max Kellermann <mk@cm4all.com>  Wed, 28 Sep 2016 21:42:43 -0000
+
 cm4all-beng-proxy (11.4) unstable; urgency=low
 
   * merge release 10.31
@@ -75,6 +99,12 @@ cm4all-beng-proxy (11.0.1) unstable; urgency=low
   * ZeroConf publish support
 
  -- Max Kellermann <mk@cm4all.com>  Tue, 30 Aug 2016 22:24:03 -0000
+
+cm4all-beng-proxy (10.32) unstable; urgency=low
+
+  * merge release 9.16
+
+ -- Max Kellermann <mk@cm4all.com>  Tue, 04 Oct 2016 11:05:53 -0000
 
 cm4all-beng-proxy (10.31) unstable; urgency=low
 
@@ -383,6 +413,14 @@ cm4all-beng-proxy (10.0.1) unstable; urgency=low
   * disable the access log by default
 
  -- Max Kellermann <mk@cm4all.com>  Fri, 18 Dec 2015 18:48:31 -0000
+
+cm4all-beng-proxy (9.16) unstable; urgency=low
+
+  * fix memory leak after resource loader failure
+  * was: fix crash on spawn error
+  * fcache: check X-CM4all-BENG-User (via REVEAL_USER) in cache lookup
+
+ -- Max Kellermann <mk@cm4all.com>  Tue, 04 Oct 2016 10:44:09 -0000
 
 cm4all-beng-proxy (9.15) unstable; urgency=low
 

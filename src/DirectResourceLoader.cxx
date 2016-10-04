@@ -156,9 +156,6 @@ DirectResourceLoader::SendRequest(struct pool &pool,
         file = &address.GetFile();
         if (file->delegate != nullptr) {
             if (delegate_stock == nullptr) {
-                if (body != nullptr)
-                    body->CloseUnused();
-
                 GError *error = g_error_new_literal(resource_loader_quark(), 0,
                                                     "No delegate stock");
                 handler.InvokeError(error);

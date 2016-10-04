@@ -246,13 +246,19 @@ filter_cache_request_abort(struct FilterCacheRequest *request)
 static FilterCacheInfo *
 filter_cache_request_evaluate(struct pool &pool,
                               const ResourceAddress &address,
-                              const char *source_id)
+                              const char *source_id,
+                              const StringMap &headers)
 {
     if (source_id == nullptr)
         return nullptr;
 
+    const char *user = headers.Get("x-cm4all-beng-user");
+    if (user == nullptr)
+        user = "";
+
     return NewFromPool<FilterCacheInfo>(pool,
                                         p_strcat(&pool, source_id, "|",
+                                                 user, "|",
                                                  address.GetId(pool), nullptr));
 }
 
@@ -623,7 +629,8 @@ filter_cache_request(FilterCache &cache,
                      HttpResponseHandler &handler,
                      CancellablePointer &cancel_ptr)
 {
-    auto *info = filter_cache_request_evaluate(pool, address, source_id);
+    auto *info = filter_cache_request_evaluate(pool, address,
+                                               source_id, headers);
     if (info != nullptr) {
         FilterCacheItem *item
             = (FilterCacheItem *)cache.cache.Get(info->key);
