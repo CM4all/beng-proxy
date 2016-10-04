@@ -1,6 +1,6 @@
 cm4all-beng-proxy (10.32) unstable; urgency=low
 
-  * 
+  * merge release 9.16
 
  --   
 
@@ -311,6 +311,14 @@ cm4all-beng-proxy (10.0.1) unstable; urgency=low
   * disable the access log by default
 
  -- Max Kellermann <mk@cm4all.com>  Fri, 18 Dec 2015 18:48:31 -0000
+
+cm4all-beng-proxy (9.16) unstable; urgency=low
+
+  * fix memory leak after resource loader failure
+  * was: fix crash on spawn error
+  * fcache: check X-CM4all-BENG-User (via REVEAL_USER) in cache lookup
+
+ -- Max Kellermann <mk@cm4all.com>  Tue, 04 Oct 2016 10:44:09 -0000
 
 cm4all-beng-proxy (9.15) unstable; urgency=low
 
