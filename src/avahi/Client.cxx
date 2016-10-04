@@ -14,8 +14,29 @@
 #include <avahi-common/malloc.h>
 #include <avahi-common/alternative.h>
 
+#include <stdio.h>
+#include <unistd.h>
+
+/**
+ * Append the process id to the given prefix string.  This is used as
+ * a workaround for an avahi-daemon bug/problem: when a service gets
+ * restarted, and then binds to a new port number (e.g. beng-proxy
+ * with automatic port assignment), we don't get notified, and so we
+ * never query the new port.  By appending the process id to the
+ * client name, we ensure that the exiting old process broadcasts
+ * AVAHI_BROWSER_REMOVE, and hte new process broadcasts
+ * AVAHI_BROWSER_NEW.
+ */
+static std::string
+MakePidName(const char *prefix)
+{
+    char buffer[256];
+    snprintf(buffer, sizeof(buffer), "%s[%u]", prefix, (unsigned)getpid());
+    return buffer;
+}
+
 MyAvahiClient::MyAvahiClient(EventLoop &event_loop, const char *_name)
-    :name(_name),
+    :name(MakePidName(_name)),
      reconnect_timer(event_loop, BIND_THIS_METHOD(OnReconnectTimer)),
      poll(event_loop)
 {
