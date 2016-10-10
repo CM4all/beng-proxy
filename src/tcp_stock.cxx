@@ -68,7 +68,7 @@ struct TcpStockConnection final
     void Cancel() override {
         assert(cancel_ptr);
 
-        cancel_ptr.Cancel();
+        cancel_ptr.CancelAndClear();
         InvokeCreateAborted();
     }
 

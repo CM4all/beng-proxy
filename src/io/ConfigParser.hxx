@@ -14,6 +14,8 @@ class LineParser;
 
 class ConfigParser {
 public:
+    virtual ~ConfigParser() {}
+
     virtual bool PreParseLine(LineParser &line);
     virtual void ParseLine(LineParser &line) = 0;
     virtual void Finish() {}
