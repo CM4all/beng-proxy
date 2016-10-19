@@ -117,8 +117,10 @@ SpawnIstream::Cancel()
     close(output_fd);
     output_fd = -1;
 
-    if (pid >= 0)
+    if (pid >= 0) {
         spawn_service.KillChildProcess(pid);
+        pid = -1;
+    }
 }
 
 inline bool
