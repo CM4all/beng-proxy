@@ -58,6 +58,12 @@ stopwatch_enable()
     stopwatch_enabled = true;
 }
 
+bool
+stopwatch_is_enabled()
+{
+    return stopwatch_enabled && daemon_log_config.verbose >= STOPWATCH_VERBOSE;
+}
+
 static void
 stopwatch_event_init(struct stopwatch_event *event, const char *name)
 {
