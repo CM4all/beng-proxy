@@ -149,7 +149,8 @@ public:
                  void *ctx,
                  struct async_operation_ref *async_ref) {
         lease = &_lease;
-        was_client_request(pool, control_fd, input_fd, output_fd, *this,
+        was_client_request(pool, nullptr,
+                           control_fd, input_fd, output_fd, *this,
                            method, uri, uri, nullptr, nullptr,
                            headers, body, nullptr,
                            handler, ctx, async_ref);

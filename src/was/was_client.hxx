@@ -10,6 +10,7 @@
 #include <http/method.h>
 
 struct pool;
+struct stopwatch;
 class Istream;
 class WasLease;
 struct strmap;
@@ -41,6 +42,7 @@ template<typename T> struct ConstBuffer;
  */
 void
 was_client_request(struct pool *pool,
+                   struct stopwatch *stopwatch,
                    int control_fd, int input_fd, int output_fd,
                    WasLease &lease,
                    http_method_t method, const char *uri,

@@ -19,7 +19,9 @@
 #include "istream/istream.hxx"
 #include "istream/istream_hold.hxx"
 #include "pool.hxx"
+#include "stopwatch.hxx"
 #include "util/ConstBuffer.hxx"
+#include "util/StringCompare.hxx"
 
 #include <daemon/log.h>
 
@@ -31,6 +33,8 @@
 
 class WasRequest final : public StockGetHandler, WasLease {
     struct pool &pool;
+
+    struct stopwatch *const stopwatch;
 
     StockItem *stock_item;
 
@@ -49,6 +53,7 @@ class WasRequest final : public StockGetHandler, WasLease {
 
 public:
     WasRequest(struct pool &_pool,
+               struct stopwatch *_stopwatch,
                http_method_t _method, const char *_uri,
                const char *_script_name, const char *_path_info,
                const char *_query_string,
@@ -58,6 +63,7 @@ public:
                void *_handler_ctx,
                struct async_operation_ref *_async_ref)
         :pool(_pool),
+         stopwatch(_stopwatch),
          method(_method),
          uri(_uri), script_name(_script_name),
          path_info(_path_info), query_string(_query_string),
@@ -106,7 +112,7 @@ WasRequest::OnStockItemReady(StockItem &item)
 
     const auto &process = was_stock_item_get(item);
 
-    was_client_request(&pool, process.control_fd,
+    was_client_request(&pool, stopwatch, process.control_fd,
                        process.input_fd, process.output_fd,
                        *this,
                        method, uri,
@@ -132,6 +138,46 @@ WasRequest::OnStockItemError(GError *error)
  *
  */
 
+gcc_pure
+static const char *
+GetComaClass(ConstBuffer<const char *> parameters)
+{
+    for (const char *i : parameters) {
+        const char *result = StringAfterPrefix(i, "COMA_CLASS=");
+        if (result != nullptr && *result != 0)
+            return result;
+    }
+
+    return nullptr;
+}
+
+static struct stopwatch *
+stopwatch_new_was(struct pool *pool, const char *path, const char *uri,
+                  const char *path_info,
+                  ConstBuffer<const char *> parameters)
+{
+    assert(pool != nullptr);
+    assert(path != nullptr);
+    assert(uri != nullptr);
+
+    if (!stopwatch_is_enabled())
+        return nullptr;
+
+    /* special case for a very common COMA application */
+    const char *coma_class = GetComaClass(parameters);
+    if (coma_class != nullptr)
+        path = coma_class;
+
+    const char *slash = strrchr(path, '/');
+    if (slash != nullptr && slash[1] != 0)
+        path = slash + 1;
+
+    if (path_info != nullptr && *path_info != 0)
+        uri = path_info;
+
+    return stopwatch_new(pool, p_strcat(pool, path, " ", uri, nullptr));
+}
+
 void
 was_request(struct pool *pool, StockMap *was_stock,
             const ChildOptions &options,
@@ -151,6 +197,9 @@ was_request(struct pool *pool, StockMap *was_stock,
         action = path;
 
     auto request = NewFromPool<WasRequest>(*pool, *pool,
+                                           stopwatch_new_was(pool, path, uri,
+                                                             path_info,
+                                                             parameters),
                                            method, uri, script_name,
                                            path_info, query_string,
                                            headers, parameters,

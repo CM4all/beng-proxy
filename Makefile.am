@@ -1047,6 +1047,7 @@ test_run_ping_LDADD = $(AM_LDADD) \
 	$(GLIB_LIBS)
 
 test_run_was_SOURCES = test/run_was.cxx \
+	$(STOPWATCH_SRC) \
 	src/was/was_launch.cxx src/was/was_client.cxx \
 	src/was/was_control.cxx src/was/was_input.cxx src/was/was_output.cxx \
 	src/buffered_io.cxx \
@@ -1904,6 +1905,7 @@ test_t_fcgi_client_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
 test_t_was_client_SOURCES = test/t_was_client.cxx \
+	$(STOPWATCH_SRC) \
 	src/was/was_server.cxx src/was/was_server.hxx \
 	src/was/was_control.cxx src/was/was_input.cxx src/was/was_output.cxx \
 	src/was/was_client.cxx \
