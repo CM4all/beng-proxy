@@ -30,6 +30,7 @@
 #include <unistd.h>
 #include <sys/socket.h>
 #include <sys/wait.h>
+#include <signal.h>
 #include <poll.h>
 #include <string.h>
 #include <errno.h>
@@ -280,7 +281,14 @@ SpawnServerConnection::SendExit(int id, int status)
                 pfd.fd = fd;
                 pfd.events = POLLOUT;
 
-                if (poll(&pfd, 1, 10000) > 0) {
+                static const struct timespec timeout = {10, 0};
+
+                /* ignore all signals while waiting, or else the poll
+                   may be interrupted too early by the next SIGCHLD */
+                sigset_t signals;
+                sigfillset(&signals);
+
+                if (ppoll(&pfd, 1, &timeout, &signals) > 0) {
                     /* try again (may throw another exception) */
                     ::Send<1>(fd, s);
                     /* yay, it worked! */

@@ -7,6 +7,8 @@
 #ifndef BENG_PROXY_STOPWATCH_HXX
 #define BENG_PROXY_STOPWATCH_HXX
 
+#include <inline/compiler.h>
+
 #include <stddef.h>
 
 struct pool;
@@ -16,7 +18,11 @@ struct sockaddr;
 #ifdef ENABLE_STOPWATCH
 
 void
-stopwatch_enable(void);
+stopwatch_enable();
+
+gcc_const
+bool
+stopwatch_is_enabled();
 
 Stopwatch *
 stopwatch_new(struct pool *pool, const char *name, const char *suffix=nullptr);
@@ -37,8 +43,14 @@ stopwatch_dump(const Stopwatch *stopwatch);
 #else
 
 static inline void
-stopwatch_enable(void)
+stopwatch_enable()
 {
+}
+
+static inline bool
+stopwatch_is_enabled()
+{
+    return false;
 }
 
 static inline Stopwatch *

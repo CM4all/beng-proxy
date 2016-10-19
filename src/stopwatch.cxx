@@ -66,11 +66,17 @@ struct Stopwatch {
 static bool stopwatch_enabled;
 
 void
-stopwatch_enable(void)
+stopwatch_enable()
 {
     assert(!stopwatch_enabled);
 
     stopwatch_enabled = true;
+}
+
+bool
+stopwatch_is_enabled()
+{
+    return stopwatch_enabled && daemon_log_config.verbose >= STOPWATCH_VERBOSE;
 }
 
 Stopwatch *
@@ -83,6 +89,10 @@ stopwatch_new(struct pool *pool, const char *name, const char *suffix)
         name = p_strdup(pool, name);
     else
         name = p_strcat(pool, name, suffix, nullptr);
+
+    constexpr size_t MAX_NAME = 96;
+    if (strlen(name) > MAX_NAME)
+        name = p_strndup(pool, name, MAX_NAME);
 
     return NewFromPool<Stopwatch>(*pool, *pool, name);
 }
