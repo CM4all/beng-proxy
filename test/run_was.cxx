@@ -180,7 +180,8 @@ int main(int argc, char **argv) {
         while (parameters[num_parameters] != nullptr)
             ++num_parameters;
 
-    was_client_request(*pool, event_loop, context.process.control.Get(),
+    was_client_request(*pool, event_loop, nullptr,
+                       context.process.control.Get(),
                        context.process.input.Get(),
                        context.process.output.Get(),
                        context,
