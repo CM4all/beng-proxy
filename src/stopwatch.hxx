@@ -16,7 +16,7 @@ struct sockaddr;
 #ifdef ENABLE_STOPWATCH
 
 void
-stopwatch_enable(void);
+stopwatch_enable();
 
 struct stopwatch *
 stopwatch_new(struct pool *pool, const char *name);
@@ -37,7 +37,7 @@ stopwatch_dump(const struct stopwatch *stopwatch);
 #else
 
 static inline void
-stopwatch_enable(void)
+stopwatch_enable()
 {
 }
 

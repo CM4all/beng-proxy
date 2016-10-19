@@ -51,7 +51,7 @@ struct stopwatch {
 static bool stopwatch_enabled;
 
 void
-stopwatch_enable(void)
+stopwatch_enable()
 {
     assert(!stopwatch_enabled);
 
