@@ -11,23 +11,32 @@ ARGF.each do |line|
     # remove timestamp
     line.sub!(/^@[0-9a-f]+ /, '')
 
+    if line =~ /^stopwatch\[\w+\.cls\//
+      line.sub!('.cls/', '.cls /')
+    end
+
+    line.sub!(/^(stopwatch\[)(clear-html)(\/.*)$/, '\1\2 /\2\3')
+
     # only stopwatch lines
     if line =~ /^stopwatch\[(\S+) ([^\]]+)\]: .*headers=(\d+)ms/
         host, uri, t = $1, $2, $3.to_i
 
         # no translation server stats
-        next if host =~ /^localhost:/
+        next if host == '@translation' or host =~ /^localhost:/
 
         # remove some useless query parameters
         uri.gsub!(/(\/(?:config|preview|show|thumbnail)).*/, '\1')
-        uri.gsub!(/(?:beng_session|step|u|d|kc|k|\w+Id|max\w+|domain|path|address|companyname|type|guestbookId|plz|width|page_no|cc|wiid|effect|generic|search|firstResult|maxResults|descending|orderBy|header|project|parentStateId|_statemachineId|parentStatemachineId|color|trigger|direction|isWizard|preset|output|referrer|redirect|ctimestamp|name|email|entries_per_page|text|homepage|cm-[-\w]+)=[-\w\+%\$]*/, '')
-        uri.gsub!(/\/(pageId|skin|wcid|initParams|bodyonly)=[\w.$]*/, '')
+        uri.gsub!(/[&?](_|txnid)=[\da-f]+/, '')
+        uri.gsub!(/(?:beng_session|step|u|d|kc|k|\w+Id|max\w+|domain|path|address|companyname|type|guestbookId|plz|width|page_no|cc|wiid|effect|generic|search|firstResult|maxResults|descending|orderBy|header|project|parentStateId|_statemachineId|parentStatemachineId|color|trigger|direction|isWizard|preset|output|referrer|redirect|ctimestamp|name|email|entries_per_page|text|homepage|cm-[-\w]+)=[-\w.\+%\$]*/, '')
+        uri.gsub!(/\/(pageId|skin|wcid|wiid|initParams|bodyonly|family)=[-\+\w.$]*/, '')
+        uri.gsub!(/\?ticket=[\|0-9a-f]+/, '')
 
         # little bit of cleanup
         uri.gsub!(/&{2,}/, '&')
         uri.gsub!(/\/{2,}/, '/')
         uri.gsub!(/\?&/, '?')
         uri.gsub!(/[&?]$/, '')
+        uri.sub!(/(=[^\/]*)\/$/, '\1')
 
         # some special cases
         uri.sub!(/((?:Widget|statistics)\/show|sam\/jump\.cls|photo\/(?:CONFIG|SHOW))\?.*/, '\1')
@@ -48,6 +57,8 @@ ARGF.each do |line|
 
         # no static files
         next if uri =~ /\.(?:png|jpg|js|css|gif|conf|ico)(?:\?.*)?$/
+
+        uri = host + uri if host =~ /\.cls$/
     elsif line =~ /^stopwatch\[(\/[^\]]+)\]: fork=.* end=(\d+)ms/
         uri, t = $1, $2.to_i
     else
