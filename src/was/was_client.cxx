@@ -100,6 +100,11 @@ struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler {
               void *handler_ctx,
               struct async_operation_ref &async_ref);
 
+    void Destroy() {
+        pool_unref(caller_pool);
+        pool_unref(pool);
+    }
+
     /**
      * Cancel the request body by sending #WAS_COMMAND_PREMATURE to
      * the WAS child process.
@@ -187,8 +192,7 @@ struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler {
         ClearUnused();
 
         handler.InvokeAbort(error);
-        pool_unref(caller_pool);
-        pool_unref(pool);
+        Destroy();
     }
 
     /**
@@ -198,9 +202,7 @@ struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler {
         assert(response.WasSubmitted());
 
         Clear(error);
-
-        pool_unref(caller_pool);
-        pool_unref(pool);
+        Destroy();
     }
 
     /**
@@ -210,9 +212,7 @@ struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler {
         assert(response.WasSubmitted());
 
         ClearUnused();
-
-        pool_unref(caller_pool);
-        pool_unref(pool);
+        Destroy();
     }
 
     /**
@@ -227,9 +227,7 @@ struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler {
             return;
 
         ReleaseControl();
-
-        pool_unref(caller_pool);
-        pool_unref(pool);
+        Destroy();
     }
 
     /**
@@ -243,9 +241,7 @@ struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler {
         operation.Finished();
 
         Clear(error);
-
-        pool_unref(caller_pool);
-        pool_unref(pool);
+        Destroy();
     }
 
     /**
@@ -266,9 +262,7 @@ struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler {
         assert(!response.WasSubmitted());
 
         ClearUnused();
-
-        pool_unref(caller_pool);
-        pool_unref(pool);
+        Destroy();
     }
 
     /**
@@ -329,8 +323,7 @@ WasClient::SubmitPendingResponse()
 
         ReleaseControl();
 
-        pool_unref(pool);
-        pool_unref(caller_pool);
+        Destroy();
     } else
         body = &was_input_enable(*response.body);
 
@@ -455,8 +448,7 @@ WasClient::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload)
         operation.Finished();
         handler.InvokeResponse(response.status, headers, nullptr);
 
-        pool_unref(caller_pool);
-        pool_unref(pool);
+        Destroy();
         return false;
 
     case WAS_COMMAND_DATA:
@@ -630,8 +622,7 @@ WasClient::WasInputClose(uint64_t received)
         lease.ReleaseWasStop(received);
     }
 
-    pool_unref(caller_pool);
-    pool_unref(pool);
+    Destroy();
 }
 
 bool
