@@ -416,6 +416,13 @@ static void
 ParseAllowUser(SpawnConfig &config, const char *arg)
 {
     SplitForEach(arg, ',', [&config](const char *name){
+            char *endptr;
+            unsigned long i = strtoul(name, &endptr, 10);
+            if (endptr > name && *endptr == 0) {
+                config.allowed_uids.insert(i);
+                return;
+            }
+
             struct passwd *pw = getpwnam(name);
             if (pw == nullptr) {
                 fprintf(stderr, "No such user: %s\n", name);
@@ -430,6 +437,13 @@ static void
 ParseAllowGroup(SpawnConfig &config, const char *arg)
 {
     SplitForEach(arg, ',', [&config](const char *name){
+            char *endptr;
+            unsigned long i = strtoul(name, &endptr, 10);
+            if (endptr > name && *endptr == 0) {
+                config.allowed_gids.insert(i);
+                return;
+            }
+
             struct group *gr = getgrnam(name);
             if (gr == nullptr) {
                 fprintf(stderr, "No such group: %s\n", name);
