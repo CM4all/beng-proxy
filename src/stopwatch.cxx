@@ -79,6 +79,10 @@ stopwatch_new(struct pool *pool, const char *name)
     if (!stopwatch_enabled || daemon_log_config.verbose < STOPWATCH_VERBOSE)
         return nullptr;
 
+    constexpr size_t MAX_NAME = 96;
+    if (strlen(name) > MAX_NAME)
+        name = p_strndup(pool, name, MAX_NAME);
+
     auto stopwatch = NewFromPool<struct stopwatch>(*pool);
     stopwatch->pool = pool;
     pool_notify(pool, &stopwatch->pool_notify);
