@@ -1,6 +1,6 @@
 cm4all-beng-proxy (10.34) unstable; urgency=low
 
-  * 
+  * lb: adapt to Linux 4.8 user namespace API change
 
  --   
 

@@ -4,6 +4,7 @@
 
 #include "isolate.hxx"
 #include "system/pivot_root.h"
+#include "util/ScopeExit.hxx"
 
 #include <daemon/log.h>
 
@@ -13,19 +14,66 @@
 #include <errno.h>
 #include <sys/mount.h>
 #include <sys/stat.h>
+#include <fcntl.h>
 
 #ifndef __linux
 #error This library requires Linux
 #endif
 
+static bool
+try_write_file(const char *path, const char *data)
+{
+    int fd = open(path, O_WRONLY|O_CLOEXEC);
+    if (fd < 0)
+        return false;
+
+    AtScopeExit(fd) { close(fd); };
+    return write(fd, data, strlen(data)) > 0;
+}
+
+static void
+setup_uid_map(int uid)
+{
+    char buffer[64];
+    sprintf(buffer, "%d %d 1", uid, uid);
+    try_write_file("/proc/self/uid_map", buffer);
+}
+
+static void
+setup_gid_map(int gid)
+{
+    char buffer[64];
+    sprintf(buffer, "%d %d 1", gid, gid);
+    try_write_file("/proc/self/gid_map", buffer);
+}
+
+/**
+ * Write "deny" to /proc/self/setgroups which is necessary for
+ * unprivileged processes to set up a gid_map.  See Linux commits
+ * 9cc4651 and 66d2f33 for details.
+ */
+static void
+deny_setgroups()
+{
+    try_write_file("/proc/self/setgroups", "deny");
+}
+
 void
 isolate_from_filesystem()
 {
+    const int uid = geteuid(), gid = getegid();
+
     constexpr int flags = CLONE_NEWUSER|CLONE_NEWNS;
     if (unshare(flags) < 0) {
         daemon_log(3, "unshare(0x%x) failed: %s\n", flags, strerror(errno));
         return;
     }
+
+    /* since version 4.8, the Linux kernel requires a uid/gid mapping
+       or else the mkdir() calls below fail */
+    deny_setgroups();
+    setup_gid_map(gid);
+    setup_uid_map(uid);
 
     /* convert all "shared" mounts to "private" mounts */
     mount(nullptr, "/", nullptr, MS_PRIVATE|MS_REC, nullptr);
