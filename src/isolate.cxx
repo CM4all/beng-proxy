@@ -4,6 +4,7 @@
 
 #include "isolate.hxx"
 #include "system/pivot_root.h"
+#include "util/ScopeExit.hxx"
 
 #include <daemon/log.h>
 
@@ -26,11 +27,8 @@ try_write_file(const char *path, const char *data)
     if (fd < 0)
         return false;
 
-    if (write(fd, data, strlen(data)) < 0)
-        return false;
-
-    close(fd);
-    return true;
+    AtScopeExit(fd) { close(fd); };
+    return write(fd, data, strlen(data)) > 0;
 }
 
 static bool
@@ -41,10 +39,29 @@ setup_uid_map(int uid)
     return try_write_file("/proc/self/uid_map", buffer);
 }
 
+static void
+setup_gid_map(int gid)
+{
+    char buffer[64];
+    sprintf(buffer, "%d %d 1", gid, gid);
+    try_write_file("/proc/self/gid_map", buffer);
+}
+
+/**
+ * Write "deny" to /proc/self/setgroups which is necessary for
+ * unprivileged processes to set up a gid_map.  See Linux commits
+ * 9cc4651 and 66d2f33 for details.
+ */
+static void
+deny_setgroups()
+{
+    try_write_file("/proc/self/setgroups", "deny");
+}
+
 void
 isolate_from_filesystem(bool allow_dbus)
 {
-    const auto original_uid = allow_dbus ? geteuid() : -1;
+    const int uid = geteuid(), gid = getegid();
 
     constexpr int flags = CLONE_NEWUSER|CLONE_NEWNS;
     if (unshare(flags) < 0) {
@@ -52,10 +69,13 @@ isolate_from_filesystem(bool allow_dbus)
         return;
     }
 
-    if (allow_dbus)
-        /* for dbus "AUTH EXTERNAL", libdbus needs to obtain the
-           "real" uid from geteuid(), so set up the mapping */
-        setup_uid_map(original_uid);
+    /* since version 4.8, the Linux kernel requires a uid/gid mapping
+       or else the mkdir() calls below fail */
+    /* for dbus "AUTH EXTERNAL", libdbus needs to obtain the "real"
+       uid from geteuid(), so set up the mapping */
+    deny_setgroups();
+    setup_gid_map(gid);
+    setup_uid_map(uid);
 
     /* convert all "shared" mounts to "private" mounts */
     mount(nullptr, "/", nullptr, MS_PRIVATE|MS_REC, nullptr);
