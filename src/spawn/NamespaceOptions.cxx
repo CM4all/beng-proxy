@@ -9,6 +9,7 @@
 #include "system/pivot_root.h"
 #include "system/bind_mount.h"
 #include "pexpand.hxx"
+#include "util/ScopeExit.hxx"
 
 #include <assert.h>
 #include <sched.h>
@@ -143,11 +144,8 @@ try_write_file(const char *path, const char *data)
     if (fd < 0)
         return false;
 
-    if (write(fd, data, strlen(data)) < 0)
-        return false;
-
-    close(fd);
-    return true;
+    AtScopeExit(fd) { close(fd); };
+    return write(fd, data, strlen(data)) > 0;
 }
 
 static void
