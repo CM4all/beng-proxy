@@ -32,6 +32,36 @@ lb_connection_log_gerror(int level, const LbConnection *connection,
 }
 
 void
+lb_connection_log_error(int level, const LbConnection *connection,
+                        const char *prefix, const std::exception &e)
+{
+    lb_connection_log_error(level, connection, prefix, e.what());
+
+    try {
+        std::rethrow_if_nested(e);
+    } catch (const std::exception &nested) {
+        lb_connection_log_error(level, connection, prefix, nested);
+    } catch (...) {
+        lb_connection_log_error(level, connection, prefix,
+                                "Unrecognized nested exception");
+    }
+}
+
+void
+lb_connection_log_error(int level, const LbConnection *connection,
+                        const char *prefix, std::exception_ptr ep)
+{
+    try {
+        std::rethrow_exception(ep);
+    } catch (const std::exception &e) {
+        lb_connection_log_error(level, connection, prefix, e);
+    } catch (...) {
+        lb_connection_log_error(level, connection, prefix,
+                                "Unrecognized exception");
+    }
+}
+
+void
 lb_connection_log_errno(int level, const LbConnection *connection,
                         const char *prefix, int error)
 {
