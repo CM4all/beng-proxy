@@ -10,8 +10,8 @@
 #include "system/fd_util.h"
 #include "stopwatch.hxx"
 #include "event/SocketEvent.hxx"
-#include "gerrno.h"
 #include "pool.hxx"
+#include "system/Error.hxx"
 #include "util/Cancellable.hxx"
 
 #include <socket/util.h>
@@ -19,6 +19,8 @@
 #ifdef ENABLE_STOPWATCH
 #include <socket/address.h>
 #endif
+
+#include <stdexcept>
 
 #include <assert.h>
 #include <stddef.h>
@@ -31,8 +33,7 @@ void
 ConnectSocketHandler::OnSocketConnectTimeout()
 {
     /* default implementation falls back to OnSocketConnectError() */
-    auto error = g_error_new_literal(errno_quark(), ETIMEDOUT, "timeout");
-    OnSocketConnectError(error);
+    OnSocketConnectError(std::make_exception_ptr(std::runtime_error("Timeout")));
 }
 
 class ConnectSocket final : Cancellable {
@@ -122,8 +123,7 @@ ConnectSocket::EventCallback(short events)
 
         handler.OnSocketConnectSuccess(std::move(fd));
     } else {
-        GError *error = new_error_errno2(s_err);
-        handler.OnSocketConnectError(error);
+        handler.OnSocketConnectError(std::make_exception_ptr(MakeErrno(s_err)));
     }
 
     Delete();
@@ -151,31 +151,27 @@ client_socket_new(EventLoop &event_loop, struct pool &pool,
 
     SocketDescriptor fd;
     if (!fd.Create(domain, type, protocol)) {
-        GError *error = new_error_errno();
-        handler.OnSocketConnectError(error);
+        handler.OnSocketConnectError(std::make_exception_ptr(MakeErrno("Failed to create socket")));
         return;
     }
 
     if ((domain == PF_INET || domain == PF_INET6) && type == SOCK_STREAM &&
         !socket_set_nodelay(fd.Get(), true)) {
-        GError *error = new_error_errno();
-        handler.OnSocketConnectError(error);
+        handler.OnSocketConnectError(std::make_exception_ptr(MakeErrno()));
         return;
     }
 
     if (ip_transparent) {
         int on = 1;
         if (setsockopt(fd.Get(), SOL_IP, IP_TRANSPARENT, &on, sizeof on) < 0) {
-            GError *error = new_error_errno_msg("Failed to set IP_TRANSPARENT");
-            handler.OnSocketConnectError(error);
+            handler.OnSocketConnectError(std::make_exception_ptr(MakeErrno("Failed to set IP_TRANSPARENT")));
             return;
         }
     }
 
     if (!bind_address.IsNull() && bind_address.IsDefined() &&
         !fd.Bind(bind_address)) {
-        GError *error = new_error_errno();
-        handler.OnSocketConnectError(error);
+        handler.OnSocketConnectError(std::make_exception_ptr(MakeErrno()));
         return;
     }
 
@@ -200,7 +196,6 @@ client_socket_new(EventLoop &event_loop, struct pool &pool,
 #endif
                                    handler, cancel_ptr);
     } else {
-        GError *error = new_error_errno();
-        handler.OnSocketConnectError(error);
+        handler.OnSocketConnectError(std::make_exception_ptr(MakeErrno()));
     }
 }

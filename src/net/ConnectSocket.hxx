@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_CONNECT_SOCKET_HXX
 #define BENG_PROXY_CONNECT_SOCKET_HXX
 
-#include "glibfwd.hxx"
+#include <exception>
 
 struct pool;
 class EventLoop;
@@ -19,7 +19,7 @@ class ConnectSocketHandler {
 public:
     virtual void OnSocketConnectSuccess(SocketDescriptor &&fd) = 0;
     virtual void OnSocketConnectTimeout();
-    virtual void OnSocketConnectError(GError *error) = 0;
+    virtual void OnSocketConnectError(std::exception_ptr ep) = 0;
 };
 
 /**

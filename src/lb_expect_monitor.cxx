@@ -9,6 +9,7 @@
 #include "lb_config.hxx"
 #include "pool.hxx"
 #include "gerrno.h"
+#include "GException.hxx"
 #include "net/ConnectSocket.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
@@ -63,8 +64,8 @@ struct ExpectMonitor final : ConnectSocketHandler, Cancellable {
         delete this;
     }
 
-    void OnSocketConnectError(GError *error) override {
-        handler.Error(error);
+    void OnSocketConnectError(std::exception_ptr ep) override {
+        handler.Error(ToGError(ep));
         delete this;
     }
 

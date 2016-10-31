@@ -22,6 +22,7 @@
 #include "event/Event.hxx"
 #include "event/ShutdownListener.hxx"
 #include "util/Cancellable.hxx"
+#include "util/PrintException.hxx"
 
 #include <inline/compiler.h>
 #include <socket/resolver.h>
@@ -106,7 +107,7 @@ struct Context final : ConnectSocketHandler, Lease, HttpResponseHandler {
 
     /* virtual methods from class ConnectSocketHandler */
     void OnSocketConnectSuccess(SocketDescriptor &&fd) override;
-    void OnSocketConnectError(GError *error) override;
+    void OnSocketConnectError(std::exception_ptr ep) override;
 
     /* virtual methods from class Lease */
     void ReleaseLease(bool _reuse) override {
@@ -296,10 +297,9 @@ Context::OnSocketConnectSuccess(SocketDescriptor &&new_fd)
 }
 
 void
-Context::OnSocketConnectError(GError *error)
+Context::OnSocketConnectError(std::exception_ptr ep)
 {
-    g_printerr("%s\n", error->message);
-    g_error_free(error);
+    PrintException(ep);
 
     aborted = true;
 

@@ -8,6 +8,7 @@
 #include "lb_monitor.hxx"
 #include "lb_config.hxx"
 #include "pool.hxx"
+#include "GException.hxx"
 #include "net/ConnectSocket.hxx"
 #include "net/SocketAddress.hxx"
 #include "util/Cancellable.hxx"
@@ -32,8 +33,8 @@ public:
         handler.Timeout();
     }
 
-    void OnSocketConnectError(GError *error) override {
-        handler.Error(error);
+    void OnSocketConnectError(std::exception_ptr ep) override {
+        handler.Error(ToGError(ep));
     }
 };
 

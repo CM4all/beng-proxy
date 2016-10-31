@@ -49,7 +49,7 @@ struct LbTcpConnection final : ConnectSocketHandler {
     /* virtual methods from class ConnectSocketHandler */
     void OnSocketConnectSuccess(SocketDescriptor &&fd) override;
     void OnSocketConnectTimeout() override;
-    void OnSocketConnectError(GError *error) override;
+    void OnSocketConnectError(std::exception_ptr ep) override;
 };
 
 static constexpr timeval write_timeout = { 30, 0 };
@@ -360,10 +360,10 @@ LbTcpConnection::OnSocketConnectTimeout()
 }
 
 void
-LbTcpConnection::OnSocketConnectError(GError *error)
+LbTcpConnection::OnSocketConnectError(std::exception_ptr ep)
 {
     DestroyInbound();
-    handler->gerror("Connect error", error, handler_ctx);
+    handler->gerror("Connect error", ToGError(ep), handler_ctx);
 }
 
 /*

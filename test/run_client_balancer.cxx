@@ -9,6 +9,7 @@
 #include "failure.hxx"
 #include "address_list.hxx"
 #include "util/Cancellable.hxx"
+#include "util/PrintException.hxx"
 
 #include <socket/resolver.h>
 #include <socket/util.h>
@@ -30,7 +31,7 @@ struct Context final : ConnectSocketHandler {
     } result = TIMEOUT;
 
     SocketDescriptor fd;
-    GError *error;
+    std::exception_ptr error;
 
     /* virtual methods from class ConnectSocketHandler */
     void OnSocketConnectSuccess(SocketDescriptor &&new_fd) override {
@@ -44,9 +45,9 @@ struct Context final : ConnectSocketHandler {
         balancer_free(balancer);
     }
 
-    void OnSocketConnectError(GError *_error) override {
+    void OnSocketConnectError(std::exception_ptr ep) override {
         result = ERROR;
-        error = _error;
+        error = std::move(ep);
         balancer_free(balancer);
     }
 };
@@ -128,8 +129,7 @@ main(int argc, char **argv)
         return EXIT_FAILURE;
 
     case Context::ERROR:
-        fprintf(stderr, "%s\n", ctx.error->message);
-        g_error_free(ctx.error);
+        PrintException(ctx.error);
         return EXIT_FAILURE;
     }
 

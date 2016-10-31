@@ -45,7 +45,7 @@ struct ClientBalancerRequest : ConnectSocketHandler {
     /* virtual methods from class ConnectSocketHandler */
     void OnSocketConnectSuccess(SocketDescriptor &&fd) override;
     void OnSocketConnectTimeout() override;
-    void OnSocketConnectError(GError *error) override;
+    void OnSocketConnectError(std::exception_ptr ep) override;
 };
 
 inline void
@@ -85,13 +85,11 @@ ClientBalancerRequest::OnSocketConnectTimeout()
 }
 
 void
-ClientBalancerRequest::OnSocketConnectError(GError *error)
+ClientBalancerRequest::OnSocketConnectError(std::exception_ptr ep)
 {
     auto &base = BalancerRequest<ClientBalancerRequest>::Cast(*this);
     if (!base.Failure())
-        handler.OnSocketConnectError(error);
-    else
-        g_error_free(error);
+        handler.OnSocketConnectError(ep);
 }
 
 /*

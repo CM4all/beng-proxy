@@ -10,7 +10,7 @@
 #include "stock/Class.hxx"
 #include "stock/Item.hxx"
 #include "address_list.hxx"
-#include "gerrno.h"
+#include "GException.hxx"
 #include "pool.hxx"
 #include "event/SocketEvent.hxx"
 #include "event/Duration.hxx"
@@ -74,7 +74,7 @@ struct TcpStockConnection final
 
     /* virtual methods from class ConnectSocketHandler */
     void OnSocketConnectSuccess(SocketDescriptor &&fd) override;
-    void OnSocketConnectError(GError *error) override;
+    void OnSocketConnectError(std::exception_ptr ep) override;
 
     /* virtual methods from class StockItem */
     bool Borrow(gcc_unused void *ctx) override {
@@ -133,10 +133,11 @@ TcpStockConnection::OnSocketConnectSuccess(SocketDescriptor &&new_fd)
 }
 
 void
-TcpStockConnection::OnSocketConnectError(GError *error)
+TcpStockConnection::OnSocketConnectError(std::exception_ptr ep)
 {
     cancel_ptr = nullptr;
 
+    auto *error = ToGError(ep);
     g_prefix_error(&error, "failed to connect to '%s': ", GetStockName());
     InvokeCreateError(error);
 }
