@@ -7,10 +7,11 @@
 
 #include "buffered_socket.hxx"
 #include "fb_pool.hxx"
-#include "gerrno.h"
+#include "system/Error.hxx"
 #include "util/ConstBuffer.hxx"
 
 #include <utility>
+#include <stdexcept>
 
 #include <limits.h>
 #include <errno.h>
@@ -18,10 +19,8 @@
 void
 BufferedSocket::ClosedPrematurely()
 {
-    GError *error =
-        g_error_new_literal(buffered_socket_quark(), 0,
-                            "Peer closed the socket prematurely");
-    handler->error(error, handler_ctx);
+    handler->error(std::make_exception_ptr(std::runtime_error("Peer closed the socket prematurely")),
+                   handler_ctx);
 }
 
 void
@@ -185,10 +184,8 @@ BufferedSocket::SubmitFromBuffer()
         }
 
         if (IsFull()) {
-            GError *error =
-                g_error_new_literal(buffered_socket_quark(), 0,
-                                    "Input buffer overflow");
-            handler->error(error, handler_ctx);
+            handler->error(std::make_exception_ptr(std::runtime_error("Input buffer overflow")),
+                           handler_ctx);
             return false;
         }
 
@@ -268,7 +265,7 @@ BufferedSocket::SubmitDirect()
         return false;
 
     case DirectResult::ERRNO:
-        handler->error(new_error_errno(), handler_ctx);
+        handler->error(std::make_exception_ptr(MakeErrno()), handler_ctx);
         return false;
     }
 
@@ -313,8 +310,8 @@ BufferedSocket::FillBuffer()
                 base.ScheduleRead(read_timeout);
             return true;
         } else {
-            GError *error = new_error_errno_msg("recv() failed");
-            handler->error(error, handler_ctx);
+            handler->error(std::make_exception_ptr(MakeErrno("recv() failed")),
+                           handler_ctx);
             return false;
         }
     }
@@ -430,8 +427,7 @@ BufferedSocket::OnTimeout(void *ctx)
     if (s->handler->timeout != nullptr)
         return s->handler->timeout(s->handler_ctx);
 
-    s->handler->error(g_error_new_literal(buffered_socket_quark(), 0,
-                                          "Timeout"),
+    s->handler->error(std::make_exception_ptr(std::runtime_error("Timeout")),
                       s->handler_ctx);
     return false;
 }

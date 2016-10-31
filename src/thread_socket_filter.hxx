@@ -33,8 +33,11 @@ public:
     /**
      * Do the work.  This is run in an unspecified worker thread.  The
      * given #ThreadSocketFilter's mutex may be used for protection.
+     *
+     * This method may throw exceptions, which will be forwarded to
+     * BufferedSocketHandler::error().
      */
-    virtual bool Run(ThreadSocketFilter &f, GError **error_r) = 0;
+    virtual void Run(ThreadSocketFilter &f) = 0;
 
     /**
      * Called in the main thread after one or more run() calls have
@@ -159,10 +162,10 @@ struct ThreadSocketFilter : ThreadJob {
     std::mutex mutex;
 
     /**
-     * If this is set, an error was caught inside the thread, and
+     * If this is set, an exception was caught inside the thread, and
      * shall be forwarded to the main thread.
      */
-    GError *error = nullptr;
+    std::exception_ptr error;
 
     /**
      * A buffer of input data that was not yet handled by the filter.

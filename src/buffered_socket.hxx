@@ -12,7 +12,7 @@
 #include "event/DeferEvent.hxx"
 #include "util/DestructObserver.hxx"
 
-#include <glib.h>
+#include <exception>
 
 enum class BufferedResult {
     /**
@@ -230,10 +230,9 @@ struct BufferedSocketHandler {
      * An I/O error on the socket has occurred.  After returning, it
      * is assumed that the #BufferedSocket object has been closed.
      *
-     * @param error a description of the error, to be freed by the
-     * callee
+     * @param e the exception that was caught
      */
-    void (*error)(GError *error, void *ctx);
+    void (*error)(std::exception_ptr e, void *ctx);
 };
 
 /**
@@ -557,12 +556,5 @@ private:
         Read(false);
     }
 };
-
-gcc_const
-static inline GQuark
-buffered_socket_quark(void)
-{
-    return g_quark_from_static_string("buffered_socket");
-}
 
 #endif

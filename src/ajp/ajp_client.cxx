@@ -12,6 +12,7 @@
 #include "http_response.hxx"
 #include "growing_buffer.hxx"
 #include "format.h"
+#include "GException.hxx"
 #include "istream_ajp_body.hxx"
 #include "istream_gb.hxx"
 #include "istream/istream.hxx"
@@ -757,10 +758,11 @@ ajp_client_socket_write(void *ctx)
 }
 
 static void
-ajp_client_socket_error(GError *error, void *ctx)
+ajp_client_socket_error(std::exception_ptr ep, void *ctx)
 {
     AjpClient *client = (AjpClient *)ctx;
 
+    auto *error = ToGError(ep);
     g_prefix_error(&error, "AJP connection failed: ");
     client->AbortResponse(error);
 }

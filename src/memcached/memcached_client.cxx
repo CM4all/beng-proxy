@@ -10,6 +10,7 @@
 #include "please.hxx"
 #include "istream/Pointer.hxx"
 #include "pool.hxx"
+#include "GException.hxx"
 #include "util/Cancellable.hxx"
 #include "util/Cast.hxx"
 #include "util/ByteOrder.hxx"
@@ -578,10 +579,11 @@ memcached_client_socket_remaining(gcc_unused size_t remaining, void *ctx)
 }
 
 static void
-memcached_client_socket_error(GError *error, void *ctx)
+memcached_client_socket_error(std::exception_ptr ep, void *ctx)
 {
     auto *client = (MemcachedClient *)ctx;
 
+    auto *error = ToGError(ep);
     g_prefix_error(&error, "memcached connection failed: ");
     client->AbortResponse(error);
 }

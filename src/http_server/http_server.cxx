@@ -12,6 +12,7 @@
 #include "gerrno.h"
 #include "pool.hxx"
 #include "paddress.hxx"
+#include "GException.hxx"
 #include "istream/Bucket.hxx"
 #include "util/StringView.hxx"
 #include "util/StaticArray.hxx"
@@ -295,11 +296,11 @@ http_server_socket_closed(void *ctx)
 }
 
 static void
-http_server_socket_error(GError *error, void *ctx)
+http_server_socket_error(std::exception_ptr ep, void *ctx)
 {
     auto *connection = (HttpServerConnection *)ctx;
 
-    connection->Error(error);
+    connection->Error(ToGError(ep));
 }
 
 static constexpr BufferedSocketHandler http_server_socket_handler = {

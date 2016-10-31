@@ -26,6 +26,7 @@
 #include "direct.hxx"
 #include "stopwatch.hxx"
 #include "strmap.hxx"
+#include "GException.hxx"
 #include "fs_lease.hxx"
 #include "pool.hxx"
 #include "util/Cancellable.hxx"
@@ -1117,12 +1118,12 @@ http_client_socket_broken(void *ctx)
 }
 
 static void
-http_client_socket_error(GError *error, void *ctx)
+http_client_socket_error(std::exception_ptr ep, void *ctx)
 {
     HttpClient *client = (HttpClient *)ctx;
 
     stopwatch_event(client->stopwatch, "error");
-    client->AbortResponse(error);
+    client->AbortResponse(ToGError(ep));
 }
 
 static constexpr BufferedSocketHandler http_client_socket_handler = {

@@ -9,6 +9,7 @@
 #define BENG_PROXY_FILTERED_SOCKET_HXX
 
 #include "buffered_socket.hxx"
+#include "glibfwd.hxx"
 
 #include <pthread.h>
 
@@ -503,10 +504,10 @@ struct FilteredSocket {
 
     bool InvokeTimeout();
 
-    void InvokeError(GError *error) {
+    void InvokeError(std::exception_ptr e) {
         assert(filter != nullptr);
 
-        handler->error(error, handler_ctx);
+        handler->error(std::move(e), handler_ctx);
     }
 };
 

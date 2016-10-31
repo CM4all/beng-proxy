@@ -8,27 +8,25 @@
 #include "nop_thread_socket_filter.hxx"
 #include "thread_socket_filter.hxx"
 #include "pool.hxx"
-#include "util/ForeignFifoBuffer.hxx"
 
 #include <string.h>
 
 class NopThreadSocketFilter final : public ThreadSocketFilterHandler {
 public:
     /* virtual methods from class ThreadSocketFilterHandler */
-    bool Run(ThreadSocketFilter &f, GError **error_r) override;
+    void Run(ThreadSocketFilter &f) override;
 
     void Destroy(ThreadSocketFilter &) override {
         this->~NopThreadSocketFilter();
     }
 };
 
-bool
-NopThreadSocketFilter::Run(ThreadSocketFilter &f, gcc_unused GError **error_r)
+void
+NopThreadSocketFilter::Run(ThreadSocketFilter &f)
 {
     const std::lock_guard<std::mutex> lock(f.mutex);
     f.decrypted_input.MoveFrom(f.encrypted_input);
     f.encrypted_output.MoveFrom(f.plain_output);
-    return true;
 }
 
 /*

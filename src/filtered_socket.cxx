@@ -8,6 +8,7 @@
 #include "filtered_socket.hxx"
 
 #include <utility>
+#include <stdexcept>
 
 #include <string.h>
 #include <errno.h>
@@ -77,11 +78,11 @@ filtered_socket_bs_broken(void *ctx)
 }
 
 static void
-filtered_socket_bs_error(GError *error, void *ctx)
+filtered_socket_bs_error(std::exception_ptr ep, void *ctx)
 {
     FilteredSocket *s = (FilteredSocket *)ctx;
 
-    s->handler->error(error, s->handler_ctx);
+    s->handler->error(ep, s->handler_ctx);
 }
 
 static constexpr BufferedSocketHandler filtered_socket_bs_handler = {
@@ -306,8 +307,7 @@ FilteredSocket::InvokeTimeout()
     if (handler->timeout != nullptr)
         return handler->timeout(handler_ctx);
     else {
-        handler->error(g_error_new_literal(buffered_socket_quark(), 0,
-                                           "Timeout"),
+        handler->error(std::make_exception_ptr(std::runtime_error("Timeout")),
                        handler_ctx);
         return false;
     }

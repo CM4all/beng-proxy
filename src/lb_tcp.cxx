@@ -12,6 +12,7 @@
 #include "address_sticky.hxx"
 #include "direct.hxx"
 #include "pool.hxx"
+#include "GException.hxx"
 #include "net/ConnectSocket.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
@@ -180,12 +181,12 @@ inbound_buffered_socket_broken(void *ctx)
 }
 
 static void
-inbound_buffered_socket_error(GError *error, void *ctx)
+inbound_buffered_socket_error(std::exception_ptr ep, void *ctx)
 {
     LbTcpConnection *tcp = (LbTcpConnection *)ctx;
 
     lb_tcp_close(tcp);
-    tcp->handler->gerror("Error", error, tcp->handler_ctx);
+    tcp->handler->gerror("Error", ToGError(ep), tcp->handler_ctx);
 }
 
 static constexpr BufferedSocketHandler inbound_buffered_socket_handler = {
@@ -306,12 +307,12 @@ outbound_buffered_socket_broken(void *ctx)
 }
 
 static void
-outbound_buffered_socket_error(GError *error, void *ctx)
+outbound_buffered_socket_error(std::exception_ptr ep, void *ctx)
 {
     LbTcpConnection *tcp = (LbTcpConnection *)ctx;
 
     lb_tcp_close(tcp);
-    tcp->handler->gerror("Error", error, tcp->handler_ctx);
+    tcp->handler->gerror("Error", ToGError(ep), tcp->handler_ctx);
 }
 
 static constexpr BufferedSocketHandler outbound_buffered_socket_handler = {

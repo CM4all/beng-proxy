@@ -23,6 +23,8 @@
 #include "net/Resolver.hxx"
 #include "util/ScopeExit.hxx"
 
+#include <glib.h>
+
 #include <stdexcept>
 
 #include <string.h>

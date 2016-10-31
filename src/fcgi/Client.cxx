@@ -8,6 +8,7 @@
 #include "Quark.hxx"
 #include "Protocol.hxx"
 #include "Serialize.hxx"
+#include "GException.hxx"
 #include "buffered_socket.hxx"
 #include "growing_buffer.hxx"
 #include "http_response.hxx"
@@ -990,11 +991,11 @@ fcgi_client_socket_timeout(void *ctx)
 }
 
 static void
-fcgi_client_socket_error(GError *error, void *ctx)
+fcgi_client_socket_error(std::exception_ptr ep, void *ctx)
 {
     FcgiClient *client = (FcgiClient *)ctx;
 
-    client->AbortResponse(error);
+    client->AbortResponse(ToGError(ep));
 }
 
 static constexpr BufferedSocketHandler fcgi_client_socket_handler = {

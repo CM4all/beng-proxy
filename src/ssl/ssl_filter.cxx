@@ -56,11 +56,11 @@ struct SslFilter final : ThreadSocketFilterHandler {
         encrypted_output.FreeIfDefined(fb_pool_get());
     }
 
-    bool Encrypt(GError **error_r);
+    void Encrypt();
 
     /* virtual methods from class ThreadSocketFilterHandler */
     void PreRun(ThreadSocketFilter &f) override;
-    bool Run(ThreadSocketFilter &f, GError **error_r) override;
+    void Run(ThreadSocketFilter &f) override;
     void PostRun(ThreadSocketFilter &f) override;
 
     void Destroy(ThreadSocketFilter &) override {
@@ -68,16 +68,12 @@ struct SslFilter final : ThreadSocketFilterHandler {
     }
 };
 
-static void
-ssl_set_error(GError **error_r)
+static std::runtime_error
+MakeSslError()
 {
-    if (error_r == nullptr)
-        return;
-
     unsigned long error = ERR_get_error();
     char buffer[120];
-    g_set_error(error_r, ssl_quark(), 0, "%s",
-                ERR_error_string(error, buffer));
+    return std::runtime_error(ERR_error_string(error, buffer));
 }
 
 static AllocatedString<>
@@ -114,24 +110,20 @@ is_ssl_error(SSL *ssl, int ret)
     }
 }
 
-static bool
-check_ssl_error(SSL *ssl, int result, GError **error_r)
+static void
+CheckThrowSslError(SSL *ssl, int result)
 {
-    if (is_ssl_error(ssl, result)) {
-        ssl_set_error(error_r);
-        return false;
-    } else
-        return true;
+    if (is_ssl_error(ssl, result))
+        throw MakeSslError();
 }
 
 enum class SslDecryptResult {
     SUCCESS,
-    ERROR,
     CLOSE_NOTIFY_ALERT,
 };
 
 static SslDecryptResult
-ssl_decrypt(SSL *ssl, ForeignFifoBuffer<uint8_t> &buffer, GError **error_r)
+ssl_decrypt(SSL *ssl, ForeignFifoBuffer<uint8_t> &buffer)
 {
     /* SSL_read() must be called repeatedly until there is no more
        data (or until the buffer is full) */
@@ -147,37 +139,34 @@ ssl_decrypt(SSL *ssl, ForeignFifoBuffer<uint8_t> &buffer, GError **error_r)
                 /* got a "close notify" alert from the peer */
                 return SslDecryptResult::CLOSE_NOTIFY_ALERT;
 
-            return check_ssl_error(ssl, result, error_r)
-                ? SslDecryptResult::SUCCESS
-                : SslDecryptResult::ERROR;
+            CheckThrowSslError(ssl, result);
+            return SslDecryptResult::SUCCESS;
         }
 
         buffer.Append(result);
     }
 }
 
-/**
- * @return false on error
- */
-static bool
-ssl_encrypt(SSL *ssl, ForeignFifoBuffer<uint8_t> &buffer, GError **error_r)
+static void
+ssl_encrypt(SSL *ssl, ForeignFifoBuffer<uint8_t> &buffer)
 {
     auto r = buffer.Read();
     if (r.IsEmpty())
-        return true;
+        return;
 
     int result = SSL_write(ssl, r.data, r.size);
-    if (result <= 0)
-        return check_ssl_error(ssl, result, error_r);
+    if (result <= 0) {
+        CheckThrowSslError(ssl, result);
+        return;
+    }
 
     buffer.Consume(result);
-    return true;
 }
 
-inline bool
-SslFilter::Encrypt(GError **error_r)
+inline void
+SslFilter::Encrypt()
 {
-    return ssl_encrypt(ssl.get(), plain_output, error_r);
+    ssl_encrypt(ssl.get(), plain_output);
 }
 
 /*
@@ -194,8 +183,8 @@ SslFilter::PreRun(ThreadSocketFilter &f)
     }
 }
 
-bool
-SslFilter::Run(ThreadSocketFilter &f, GError **error_r)
+void
+SslFilter::Run(ThreadSocketFilter &f)
 {
     /* copy input (and output to make room for more output) */
 
@@ -205,7 +194,7 @@ SslFilter::Run(ThreadSocketFilter &f, GError **error_r)
         if (f.decrypted_input.IsNull() || f.encrypted_output.IsNull()) {
             /* retry, let PreRun() allocate the missing buffer */
             f.again = true;
-            return true;
+            return;
         }
 
         f.decrypted_input.MoveFromAllowNull(decrypted_input);
@@ -217,7 +206,7 @@ SslFilter::Run(ThreadSocketFilter &f, GError **error_r)
         if (decrypted_input.IsNull() || encrypted_output.IsNull()) {
             /* retry, let PreRun() allocate the missing buffer */
             f.again = true;
-            return true;
+            return;
         }
     }
 
@@ -235,24 +224,24 @@ SslFilter::Run(ThreadSocketFilter &f, GError **error_r)
                 peer_subject = format_subject_name(cert.get());
                 peer_issuer_subject = format_issuer_subject_name(cert.get());
             }
-        } else if (!check_ssl_error(ssl.get(), result, error_r)) {
-            /* flush the encrypted_output buffer, because it may
-               contain a "TLS alert" */
-            f.encrypted_output.MoveFromAllowNull(encrypted_output);
-            return false;
+        } else {
+            try {
+                CheckThrowSslError(ssl.get(), result);
+                /* flush the encrypted_output buffer, because it may
+                   contain a "TLS alert" */
+            } catch (...) {
+                f.encrypted_output.MoveFromAllowNull(encrypted_output);
+                throw;
+            }
         }
     }
 
     if (gcc_likely(!handshaking)) {
-        if (!Encrypt(error_r))
-            return false;
+        Encrypt();
 
-        switch (ssl_decrypt(ssl.get(), decrypted_input, error_r)) {
+        switch (ssl_decrypt(ssl.get(), decrypted_input)) {
         case SslDecryptResult::SUCCESS:
             break;
-
-        case SslDecryptResult::ERROR:
-            return false;
 
         case SslDecryptResult::CLOSE_NOTIFY_ALERT:
             {
@@ -280,8 +269,6 @@ SslFilter::Run(ThreadSocketFilter &f, GError **error_r)
 
         f.handshaking = handshaking;
     }
-
-    return true;
 }
 
 void

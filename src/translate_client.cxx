@@ -13,6 +13,7 @@
 #include "please.hxx"
 #include "growing_buffer.hxx"
 #include "stopwatch.hxx"
+#include "GException.hxx"
 #include "gerrno.h"
 #include "pool.hxx"
 #include "util/Cancellable.hxx"
@@ -400,10 +401,11 @@ translate_client_socket_write(void *ctx)
 }
 
 static void
-translate_client_socket_error(GError *error, void *ctx)
+translate_client_socket_error(std::exception_ptr ep, void *ctx)
 {
     TranslateClient *client = (TranslateClient *)ctx;
 
+    auto *error = ToGError(ep);
     g_prefix_error(&error, "Translation server connection failed: ");
     client->Fail(error);
 }

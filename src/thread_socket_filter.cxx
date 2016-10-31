@@ -11,8 +11,7 @@
 #include "thread_queue.hxx"
 #include "pool.hxx"
 #include "event/Duration.hxx"
-
-#include "gerrno.h"
+#include "system/Error.hxx"
 
 #include <algorithm>
 
@@ -46,18 +45,12 @@ ThreadSocketFilter::~ThreadSocketFilter()
     decrypted_input.FreeIfDefined(fb_pool_get());
     plain_output.FreeIfDefined(fb_pool_get());
     encrypted_output.FreeIfDefined(fb_pool_get());
-
-    if (error != nullptr)
-        g_error_free(error);
 }
 
 void
 ThreadSocketFilter::ClosedPrematurely()
 {
-    GError *e =
-        g_error_new_literal(buffered_socket_quark(), 0,
-                            "Peer closed the socket prematurely");
-    socket->InvokeError(e);
+    socket->InvokeError(std::make_exception_ptr(std::runtime_error("Peer closed the socket prematurely")));
 }
 
 void
@@ -222,8 +215,13 @@ ThreadSocketFilter::Run()
         busy = true;
     }
 
-    GError *new_error = nullptr;
-    bool success = handler->Run(*this, &new_error);
+    std::exception_ptr new_error;
+
+    try {
+        handler->Run(*this);
+    } catch (...) {
+        new_error = std::current_exception();
+    }
 
     {
         const std::lock_guard<std::mutex> lock(mutex);
@@ -231,9 +229,8 @@ ThreadSocketFilter::Run()
         busy = false;
         done_pending = true;
 
-        assert(error == nullptr);
-        if (!success)
-            error = new_error;
+        assert(!error);
+        error = std::move(new_error);
     }
 }
 
@@ -267,8 +264,9 @@ ThreadSocketFilter::Done()
             }
         }
 
-        GError *error2 = error;
+        std::exception_ptr error2 = std::move(error);
         error = nullptr;
+
         lock.unlock();
         socket->InvokeError(error2);
         return;
@@ -629,7 +627,7 @@ thread_socket_filter_internal_write(void *ctx)
             if (errno == EAGAIN)
                 return true;
 
-            f->socket->InvokeError(new_error_errno_msg("write error"));
+            f->socket->InvokeError(std::make_exception_ptr(MakeErrno("write error")));
             return false;
 
         case WRITE_BLOCKING:
