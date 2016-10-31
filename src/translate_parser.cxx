@@ -5,7 +5,6 @@
  */
 
 #include "translate_parser.hxx"
-#include "translate_quark.hxx"
 #include "transformation.hxx"
 #include "widget_class.hxx"
 #include "processor.hxx"
