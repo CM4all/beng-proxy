@@ -13,4 +13,7 @@
 void
 PrintException(const std::exception &e);
 
+void
+PrintException(const std::exception_ptr &ep);
+
 #endif
