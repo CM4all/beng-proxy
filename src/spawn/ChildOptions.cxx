@@ -37,10 +37,11 @@ ChildOptions::ChildOptions(AllocatorPtr alloc,
 {
 }
 
-bool
-ChildOptions::Check(GError **error_r) const
+void
+ChildOptions::Check() const
 {
-    return jail == nullptr || jail->Check(error_r);
+    if (jail != nullptr)
+        jail->Check();
 }
 
 bool

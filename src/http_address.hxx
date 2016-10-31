@@ -86,7 +86,10 @@ struct HttpAddress {
     gcc_pure
     StringView RelativeTo(const HttpAddress &base) const;
 
-    bool Check(GError **error_r) const;
+    /**
+     * Throws std::runtime_error on error.
+     */
+    void Check() const;
 
     /**
      * Build the absolute URI from this object, but use the specified path
@@ -160,11 +163,11 @@ struct HttpAddress {
  * Parse the given absolute URI into a newly allocated
  * #http_address object.
  *
- * @return nullptr on error
+ * Throws std::runtime_error on error.
  */
 gcc_malloc
 HttpAddress *
-http_address_parse(struct pool *pool, const char *uri, GError **error_r);
+http_address_parse(struct pool *pool, const char *uri);
 
 /**
  * Create a new #http_address object from the specified one, but

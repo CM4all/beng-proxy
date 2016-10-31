@@ -43,7 +43,10 @@ struct NfsAddress {
 
     const char *GetId(struct pool *pool) const;
 
-    bool Check(GError **error_r) const;
+    /**
+     * Throws std::runtime_error on error.
+     */
+    void Check() const;
 
     gcc_pure
     bool HasQueryString() const {

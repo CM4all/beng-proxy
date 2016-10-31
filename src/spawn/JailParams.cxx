@@ -11,29 +11,18 @@
 #include "util/CharUtil.hxx"
 #include "util/ConstBuffer.hxx"
 
-#include <glib.h>
+#include <stdexcept>
 
 #include <string.h>
 
-gcc_const
-static GQuark
-jail_quark(void)
-{
-    return g_quark_from_static_string("jail");
-}
-
-bool
-JailParams::Check(GError **error_r) const
+void
+JailParams::Check() const
 {
     if (!enabled)
-        return true;
+        return;
 
-    if (home_directory == nullptr) {
-        g_set_error(error_r, jail_quark(), 0, "No JailCGI home directory");
-        return false;
-    }
-
-    return true;
+    if (home_directory == nullptr)
+        throw std::runtime_error("No JailCGI home directory");
 }
 
 JailParams::JailParams(struct pool *pool, const JailParams &src)

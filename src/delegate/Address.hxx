@@ -33,8 +33,11 @@ struct DelegateAddress {
 
     DelegateAddress(struct pool &pool, const DelegateAddress &src);
 
-    bool Check(GError **error_r) const {
-        return child_options.Check(error_r);
+    /**
+     * Throws std::runtime_error on error.
+     */
+    void Check() const {
+        child_options.Check();
     }
 
     /**

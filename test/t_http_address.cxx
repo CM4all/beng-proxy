@@ -8,7 +8,7 @@
 static void
 test_unix(struct pool *pool)
 {
-    auto *a = http_address_parse(pool, "unix:/var/run/foo", NULL);
+    auto *a = http_address_parse(pool, "unix:/var/run/foo");
     assert(a != NULL);
     assert(a->host_and_port == NULL);
     assert(strcmp(a->path, "/var/run/foo") == 0);
@@ -17,7 +17,7 @@ test_unix(struct pool *pool)
 static void
 test_apply(struct pool *pool)
 {
-    auto *a = http_address_parse(pool, "http://localhost/foo", NULL);
+    auto *a = http_address_parse(pool, "http://localhost/foo");
     assert(a != NULL);
     assert(a->protocol == HttpAddress::Protocol::HTTP);
     assert(a->host_and_port != NULL);

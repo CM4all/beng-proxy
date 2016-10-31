@@ -67,7 +67,10 @@ struct ChildOptions {
     ChildOptions(ChildOptions &&) = default;
     ChildOptions &operator=(ChildOptions &&) = default;
 
-    bool Check(GError **error_r) const;
+    /**
+     * Throws std::runtime_error on error.
+     */
+    void Check() const;
 
     gcc_pure
     bool IsExpandable() const;

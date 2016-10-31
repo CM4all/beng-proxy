@@ -73,16 +73,13 @@ LhttpAddress::Dup(struct pool &pool) const
     return NewFromPool<LhttpAddress>(pool, pool, *this);
 }
 
-bool
-LhttpAddress::Check(GError **error_r) const
+void
+LhttpAddress::Check() const
 {
-    if (uri == nullptr) {
-        g_set_error_literal(error_r, translate_quark(), 0,
-                            "missing LHTTP_URI");
-        return false;
-    }
+    if (uri == nullptr)
+        throw std::runtime_error("missing LHTTP_URI");
 
-    return options.Check(error_r);
+    options.Check();
 }
 
 LhttpAddress *

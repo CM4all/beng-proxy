@@ -11,7 +11,6 @@
 #include "translate_response.hxx"
 #include "translate_request.hxx"
 #include "ExpandableStringList.hxx"
-#include "glibfwd.hxx"
 
 struct FileAddress;
 struct CgiAddress;
@@ -116,12 +115,14 @@ public:
     }
 
     enum class Result {
-        ERROR,
         MORE,
         DONE,
     };
 
-    Result Process(GError **error_r);
+    /**
+     * Throws std::runtime_error on error.
+     */
+    Result Process();
 
     TranslateResponse &GetResponse() {
         return response;
@@ -131,38 +132,40 @@ private:
     void SetChildOptions(ChildOptions &_child_options);
     void SetCgiAddress(ResourceAddress::Type type, const char *path);
 
-    bool AddView(const char *name, GError **error_r);
+    /**
+     * Throws std::runtime_error on error.
+     */
+    void AddView(const char *name);
 
     /**
      * Finish the settings in the current view, i.e. copy attributes
      * from the "parent" view.
+     *
+     * Throws std::runtime_error on error.
      */
-    bool FinishView(GError **error_r);
+    void FinishView();
 
     Transformation *AddTransformation();
     ResourceAddress *AddFilter();
 
-    bool HandleBindMount(const char *payload, size_t payload_length,
-                         bool expand, bool writable, GError **error_r);
+    void HandleBindMount(const char *payload, size_t payload_length,
+                         bool expand, bool writable);
 
-    bool HandleRefence(StringView payload, GError **error_r);
+    void HandleRefence(StringView payload);
 
-    bool HandleWant(const uint16_t *payload, size_t payload_length,
-                    GError **error_r);
+    void HandleWant(const uint16_t *payload, size_t payload_length);
 
-    bool HandleContentTypeLookup(ConstBuffer<void> payload, GError **error_r);
+    void HandleContentTypeLookup(ConstBuffer<void> payload);
 
-    bool HandleRegularPacket(enum beng_translation_command command,
-                             const void *const _payload, size_t payload_length,
-                             GError **error_r);
+    void HandleRegularPacket(enum beng_translation_command command,
+                             const void *const _payload, size_t payload_length);
 
-    bool HandleUidGid(ConstBuffer<void> payload, GError **error_r);
+    void HandleUidGid(ConstBuffer<void> payload);
 
-    bool HandleCgroupSet(StringView payload, GError **error_r);
+    void HandleCgroupSet(StringView payload);
 
     Result HandlePacket(enum beng_translation_command command,
-                        const void *const _payload, size_t payload_length,
-                        GError **error_r);
+                        const void *const _payload, size_t payload_length);
 };
 
 #endif

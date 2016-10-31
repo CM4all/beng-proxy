@@ -21,6 +21,8 @@
 
 #include <glib.h>
 
+#include <stdexcept>
+
 #include <assert.h>
 #include <string.h>
 #include <errno.h>
@@ -300,7 +302,7 @@ marshal_request(struct pool &pool, const TranslateRequest &request,
 
 inline BufferedResult
 TranslateClient::Feed(const uint8_t *data, size_t length)
-{
+try {
     size_t consumed = 0;
     while (consumed < length) {
         size_t nbytes = parser.Feed(data + consumed, length - consumed);
@@ -311,13 +313,8 @@ TranslateClient::Feed(const uint8_t *data, size_t length)
         consumed += nbytes;
         socket.Consumed(nbytes);
 
-        GError *error = nullptr;
-        auto result = parser.Process(&error);
+        auto result = parser.Process();
         switch (result) {
-        case TranslateParser::Result::ERROR:
-            Fail(error);
-            return BufferedResult::CLOSED;
-
         case TranslateParser::Result::MORE:
             break;
 
@@ -330,6 +327,9 @@ TranslateClient::Feed(const uint8_t *data, size_t length)
     }
 
     return BufferedResult::MORE;
+} catch (const std::runtime_error &e) {
+    Fail(g_error_new_literal(translate_quark(), 0, e.what()));
+    return BufferedResult::CLOSED;
 }
 
 /*

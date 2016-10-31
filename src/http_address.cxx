@@ -20,6 +20,8 @@
 
 #include <glib.h>
 
+#include <stdexcept>
+
 #include <string.h>
 
 gcc_const
@@ -80,10 +82,12 @@ http_address_new(struct pool &pool, HttpAddress::Protocol protocol, bool ssl,
 
 /**
  * Utility function used by http_address_parse().
+ *
+ * Throws std::runtime_error on error.
  */
 static HttpAddress *
 http_address_parse2(struct pool *pool, HttpAddress::Protocol protocol, bool ssl,
-                    const char *uri, GError **error_r)
+                    const char *uri)
 {
     assert(pool != nullptr);
     assert(uri != nullptr);
@@ -91,11 +95,8 @@ http_address_parse2(struct pool *pool, HttpAddress::Protocol protocol, bool ssl,
     const char *path = strchr(uri, '/');
     const char *host_and_port;
     if (path != nullptr) {
-        if (path == uri || !uri_path_verify_quick(path)) {
-            g_set_error(error_r, http_address_quark(), 0,
-                        "malformed HTTP URI");
-            return nullptr;
-        }
+        if (path == uri || !uri_path_verify_quick(path))
+            throw std::runtime_error("malformed HTTP URI");
 
         host_and_port = p_strndup(pool, uri, path - uri);
         path = p_strdup(pool, path);
@@ -108,27 +109,22 @@ http_address_parse2(struct pool *pool, HttpAddress::Protocol protocol, bool ssl,
 }
 
 HttpAddress *
-http_address_parse(struct pool *pool, const char *uri, GError **error_r)
+http_address_parse(struct pool *pool, const char *uri)
 {
     if (memcmp(uri, "http://", 7) == 0)
         return http_address_parse2(pool, HttpAddress::Protocol::HTTP,
-                                   false, uri + 7,
-                                   error_r);
+                                   false, uri + 7);
     else if (memcmp(uri, "https://", 8) == 0)
         return http_address_parse2(pool, HttpAddress::Protocol::HTTP,
-                                   true, uri + 8,
-                                   error_r);
+                                   true, uri + 8);
     else if (memcmp(uri, "ajp://", 6) == 0)
         return http_address_parse2(pool, HttpAddress::Protocol::AJP,
-                                   false, uri + 6,
-                                   error_r);
+                                   false, uri + 6);
     else if (memcmp(uri, "unix:/", 6) == 0)
         return http_address_new(*pool, HttpAddress::Protocol::HTTP,
                                 false, nullptr, uri + 5);
 
-    g_set_error(error_r, http_address_quark(), 0,
-                "unrecognized URI");
-    return nullptr;
+    throw std::runtime_error("unrecognized URI");
 }
 
 HttpAddress *
@@ -158,18 +154,13 @@ http_address_dup_with_path(struct pool &pool,
     return NewFromPool<HttpAddress>(pool, pool, *uwa, path);
 }
 
-bool
-HttpAddress::Check(GError **error_r) const
+void
+HttpAddress::Check() const
 {
-    if (addresses.IsEmpty()) {
-        g_set_error_literal(error_r, translate_quark(), 0,
-                            protocol == Protocol::AJP
-                            ? "no ADDRESS for AJP address"
-                            :"no ADDRESS for HTTP address");
-        return false;
-    }
-
-    return true;
+    if (addresses.IsEmpty())
+        throw std::runtime_error(protocol == Protocol::AJP
+                                 ? "no ADDRESS for AJP address"
+                                 : "no ADDRESS for HTTP address");
 }
 
 gcc_const
@@ -275,10 +266,14 @@ HttpAddress::Apply(struct pool *pool, StringView relative) const
         return this;
 
     if (uri_has_protocol(relative)) {
-        HttpAddress *other =
-            http_address_parse(pool, p_strdup(*pool, relative),
-                               nullptr);
-        if (other == nullptr || other->protocol != protocol)
+        HttpAddress *other;
+        try {
+            other = http_address_parse(pool, p_strdup(*pool, relative));
+        } catch (const std::runtime_error &e) {
+            return nullptr;
+        }
+
+        if (other->protocol != protocol)
             return nullptr;
 
         const char *my_host = host_and_port != nullptr ? host_and_port : "";

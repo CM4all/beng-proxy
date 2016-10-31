@@ -558,33 +558,36 @@ ResourceAddress::GetUriPath() const
     gcc_unreachable();
 }
 
-bool
-ResourceAddress::Check(GError **error_r) const
+void
+ResourceAddress::Check() const
 {
     switch (type) {
     case Type::NONE:
-        return true;
+        break;
 
     case Type::HTTP:
-        return u.http->Check(error_r);
+        u.http->Check();
+        break;
 
     case Type::LOCAL:
-        return u.file->Check(error_r);
+        u.file->Check();
+        break;
 
     case Type::LHTTP:
-        return u.lhttp->Check(error_r);
+        u.lhttp->Check();
+        break;
 
     case Type::PIPE:
     case Type::CGI:
     case Type::FASTCGI:
     case Type::WAS:
-        return u.cgi->Check(error_r);
+        u.cgi->Check();
+        break;
 
     case Type::NFS:
-        return u.nfs->Check(error_r);
+        u.nfs->Check();
+        break;
     }
-
-    return true;
 }
 
 bool

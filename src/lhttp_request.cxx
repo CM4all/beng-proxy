@@ -15,6 +15,9 @@
 #include "istream/istream.hxx"
 #include "header_writer.hxx"
 #include "pool.hxx"
+#include "translate_quark.hxx"
+
+#include <stdexcept>
 
 struct LhttpRequest final : Lease {
     StockItem &stock_item;
@@ -42,15 +45,18 @@ lhttp_request(struct pool &pool, EventLoop &event_loop,
               HttpResponseHandler &handler,
               CancellablePointer &cancel_ptr)
 {
-    GError *error = nullptr;
-    if (!address.options.Check(&error)) {
+    try {
+        address.options.Check();
+    } catch (const std::runtime_error &e) {
         if (body != nullptr)
             body->CloseUnused();
 
-        handler.InvokeError(error);
+        handler.InvokeError(g_error_new_literal(translate_quark(), 0,
+                                                e.what()));
         return;
     }
 
+    GError *error = nullptr;
     StockItem *stock_item =
         lhttp_stock_get(&lhttp_stock, &pool, &address,
                         &error);

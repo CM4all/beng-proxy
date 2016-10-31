@@ -12,6 +12,8 @@
 #include "translate_quark.hxx"
 #include "util/StringView.hxx"
 
+#include <stdexcept>
+
 #include <assert.h>
 #include <string.h>
 
@@ -49,22 +51,14 @@ nfs_address_dup(struct pool &pool, const NfsAddress *src)
     return NewFromPool<NfsAddress>(pool, &pool, *src);
 }
 
-bool
-NfsAddress::Check(GError **error_r) const
+void
+NfsAddress::Check() const
 {
-    if (export_name == nullptr || *export_name == 0) {
-        g_set_error_literal(error_r, translate_quark(), 0,
-                            "missing NFS_EXPORT");
-        return false;
-    }
+    if (export_name == nullptr || *export_name == 0)
+        throw std::runtime_error("missing NFS_EXPORT");
 
-    if (path == nullptr || *path == 0) {
-        g_set_error_literal(error_r, translate_quark(), 0,
-                            "missing NFS PATH");
-        return false;
-    }
-
-    return true;
+    if (path == nullptr || *path == 0)
+        throw std::runtime_error("missing NFS PATH");
 }
 
 bool

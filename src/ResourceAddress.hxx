@@ -101,7 +101,10 @@ public:
         type = Type::NONE;
     }
 
-    bool Check(GError **error_r) const;
+    /**
+     * Throws std::runtime_error on error.
+     */
+    void Check() const;
 
     gcc_pure
     bool IsHttp() const;

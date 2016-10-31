@@ -109,8 +109,8 @@ struct CgiAddress {
     gcc_pure
     const char *GetId(struct pool *pool) const;
 
-    bool Check(GError **error_r) const {
-        return options.Check(error_r);
+    void Check() const {
+        options.Check();
     }
 
     gcc_pure

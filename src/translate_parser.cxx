@@ -26,11 +26,10 @@
 #include "net/AddressInfo.hxx"
 #include "net/Resolver.hxx"
 #include "util/CharUtil.hxx"
+#include "util/RuntimeError.hxx"
 
 #include <daemon/log.h>
 #include <http/header.h>
-
-#include <glib.h>
 
 #include <assert.h>
 #include <string.h>
@@ -116,7 +115,7 @@ TranslateParser::AddFilter()
     return &t->u.filter.address;
 }
 
-static bool
+static void
 parse_address_string(struct pool *pool, AddressList *list,
                      const char *p, int default_port)
 {
@@ -127,7 +126,7 @@ parse_address_string(struct pool *pool, AddressList *list,
         size_t path_length = strlen(p);
 
         if (path_length >= sizeof(sun.sun_path))
-            return false;
+            throw std::runtime_error("Socket path is too long");
 
         sun.sun_family = AF_UNIX;
         memcpy(sun.sun_path, p, path_length + 1);
@@ -139,7 +138,7 @@ parse_address_string(struct pool *pool, AddressList *list,
             sun.sun_path[0] = 0;
 
         list->Add(pool, { (const struct sockaddr *)&sun, size });
-        return true;
+        return;
     }
 
     struct addrinfo hints;
@@ -149,8 +148,6 @@ parse_address_string(struct pool *pool, AddressList *list,
 
     for (const auto &i : Resolve(p, default_port, &hints))
         list->Add(pool, i);
-
-    return true;
 }
 
 static bool
@@ -172,8 +169,8 @@ valid_view_name(const char *name)
     return true;
 }
 
-bool
-TranslateParser::FinishView(GError **error_r)
+void
+TranslateParser::FinishView()
 {
     assert(response.views != nullptr);
 
@@ -197,17 +194,13 @@ TranslateParser::FinishView(GError **error_r)
             v->InheritFrom(*pool, *response.views);
     }
 
-    if (!v->address.Check(error_r))
-        return false;
-
-    return true;
+    v->address.Check();
 }
 
-inline bool
-TranslateParser::AddView(const char *name, GError **error_r)
+inline void
+TranslateParser::AddView(const char *name)
 {
-    if (!FinishView(error_r))
-        return false;
+    FinishView();
 
     auto new_view = NewFromPool<WidgetView>(*pool);
     new_view->Init(name);
@@ -230,23 +223,17 @@ TranslateParser::AddView(const char *name, GError **error_r)
     address_list = nullptr;
     transformation_tail = &new_view->transformation;
     transformation = nullptr;
-
-    return true;
 }
 
-static bool
+static void
 parse_header_forward(struct header_forward_settings *settings,
-                     const void *payload, size_t payload_length,
-                     GError **error_r)
+                     const void *payload, size_t payload_length)
 {
     const beng_header_forward_packet *packet =
         (const beng_header_forward_packet *)payload;
 
-    if (payload_length % sizeof(*packet) != 0) {
-        g_set_error_literal(error_r, translate_quark(), 0,
-                            "malformed header forward packet");
-        return false;
-    }
+    if (payload_length % sizeof(*packet) != 0)
+        throw std::runtime_error("malformed header forward packet");
 
     while (payload_length > 0) {
         if (packet->group < HEADER_GROUP_ALL ||
@@ -255,11 +242,8 @@ parse_header_forward(struct header_forward_settings *settings,
              packet->mode != HEADER_FORWARD_YES &&
              packet->mode != HEADER_FORWARD_BOTH &&
              packet->mode != HEADER_FORWARD_MANGLE) ||
-            packet->reserved != 0) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed header forward packet");
-            return false;
-        }
+            packet->reserved != 0)
+            throw std::runtime_error("malformed header forward packet");
 
         if (packet->group == HEADER_GROUP_ALL) {
             for (unsigned i = 0; i < HEADER_GROUP_MAX; ++i)
@@ -271,79 +255,62 @@ parse_header_forward(struct header_forward_settings *settings,
         ++packet;
         payload_length -= sizeof(*packet);
     }
-
-    return true;
 }
 
-static bool
+static void
 parse_header(struct pool *pool,
              KeyValueList &headers, const char *packet_name,
-             const char *payload, size_t payload_length,
-             GError **error_r)
+             const char *payload, size_t payload_length)
 {
     const char *value = (const char *)memchr(payload, ':', payload_length);
     if (value == nullptr || value == payload ||
-        has_null_byte(payload, payload_length)) {
-        g_set_error(error_r, translate_quark(), 0, "malformed %s packet",
-                    packet_name);
-        return false;
-    }
+        has_null_byte(payload, payload_length))
+        throw FormatRuntimeError("malformed %s packet", packet_name);
 
     const char *name = p_strdup_lower(*pool, StringView(payload, value));
     ++value;
 
-    if (!http_header_name_valid(name)) {
-        g_set_error(error_r, translate_quark(), 0,
-                    "malformed name in %s packet", packet_name);
-        return false;
-    } else if (http_header_is_hop_by_hop(name)) {
-        g_set_error(error_r, translate_quark(), 0, "hop-by-hop %s packet",
-                    packet_name);
-        return false;
-    }
+    if (!http_header_name_valid(name))
+        throw FormatRuntimeError("malformed name in %s packet", packet_name);
+    else if (http_header_is_hop_by_hop(name))
+        throw FormatRuntimeError("hop-by-hop %s packet", packet_name);
 
     headers.Add(PoolAllocator(*pool), name, value);
-    return true;
 }
 
-static bool
+/**
+ * Throws std::runtime_error on error.
+ */
+static void
 translate_jail_finish(JailParams *jail,
                       const TranslateResponse *response,
-                      const char *document_root,
-                      GError **error_r)
+                      const char *document_root)
 {
     if (jail == nullptr || !jail->enabled)
-        return true;
+        return;
 
     if (jail->home_directory == nullptr)
         jail->home_directory = document_root;
 
-    if (jail->home_directory == nullptr) {
-        g_set_error_literal(error_r, translate_quark(), 0,
-                            "No home directory for JAIL");
-        return false;
-    }
+    if (jail->home_directory == nullptr)
+        throw std::runtime_error("No home directory for JAIL");
 
     if (jail->site_id == nullptr)
         jail->site_id = response->site;
-
-    return true;
 }
 
 /**
  * Final fixups for the response before it is passed to the handler.
+ *
+ * Throws std::runtime_error on error.
  */
-static bool
-translate_response_finish(TranslateResponse *response,
-                          GError **error_r)
+static void
+translate_response_finish(TranslateResponse *response)
 {
-    if (response->easy_base && !response->address.IsValidBase()) {
+    if (response->easy_base && !response->address.IsValidBase())
         /* EASY_BASE was enabled, but the resource address does not
            end with a slash, thus LoadBase() cannot work */
-        g_set_error_literal(error_r, translate_quark(), 0,
-                            "Invalid base address");
-        return false;
-    }
+        throw std::runtime_error("Invalid base address");
 
     if (response->address.IsCgiAlike()) {
         auto &cgi = response->address.GetCgi();
@@ -357,10 +324,8 @@ translate_response_finish(TranslateResponse *response,
         if (cgi.document_root == nullptr)
             cgi.document_root = response->document_root;
 
-        if (!translate_jail_finish(cgi.options.jail,
-                                   response, cgi.document_root,
-                                   error_r))
-            return false;
+        translate_jail_finish(cgi.options.jail,
+                              response, cgi.document_root);
     } else if (response->address.type == ResourceAddress::Type::LOCAL) {
         auto &file = response->address.GetFile();
 
@@ -370,16 +335,13 @@ translate_response_finish(TranslateResponse *response,
                 file.document_root == nullptr)
                 file.document_root = response->document_root;
 
-            if (!translate_jail_finish(file.delegate->child_options.jail,
-                                       response,
-                                       file.document_root,
-                                       error_r))
-                return false;
+            translate_jail_finish(file.delegate->child_options.jail,
+                                  response,
+                                  file.document_root);
         }
     }
 
-    if (!response->address.Check(error_r))
-        return false;
+    response->address.Check();
 
     /* these lists are in reverse order because new items were added
        to the front; reverse them now */
@@ -387,27 +349,16 @@ translate_response_finish(TranslateResponse *response,
     response->response_headers.Reverse();
 
     if (!response->probe_path_suffixes.IsNull() &&
-        response->probe_suffixes.empty()) {
-        g_set_error_literal(error_r, translate_quark(), 0,
-                            "PROBE_PATH_SUFFIX without PROBE_SUFFIX");
-        return false;
-    }
+        response->probe_suffixes.empty())
+        throw std::runtime_error("PROBE_PATH_SUFFIX without PROBE_SUFFIX");
 
     if (!response->internal_redirect.IsNull() &&
-        (response->uri == nullptr && response->expand_uri == nullptr)) {
-        g_set_error_literal(error_r, translate_quark(), 0,
-                            "INTERNAL_REDIRECT without URI");
-        return false;
-    }
+        (response->uri == nullptr && response->expand_uri == nullptr))
+        throw std::runtime_error("INTERNAL_REDIRECT without URI");
 
     if (!response->internal_redirect.IsNull() &&
-        !response->want_full_uri.IsNull()) {
-        g_set_error_literal(error_r, translate_quark(), 0,
-                            "INTERNAL_REDIRECT conflicts with WANT_FULL_URI");
-        return false;
-    }
-
-    return true;
+        !response->want_full_uri.IsNull())
+        throw std::runtime_error("INTERNAL_REDIRECT conflicts with WANT_FULL_URI");
 }
 
 gcc_pure
@@ -419,85 +370,58 @@ translate_client_check_pair(const char *payload, size_t payload_length)
         strchr(payload + 1, '=') != nullptr;
 }
 
-static bool
+static void
 translate_client_check_pair(const char *name,
-                            const char *payload, size_t payload_length,
-                            GError **error_r)
+                            const char *payload, size_t payload_length)
 {
-    if (!translate_client_check_pair(payload, payload_length)) {
-        g_set_error(error_r, translate_quark(), 0,
-                    "malformed %s packet", name);
-        return false;
-    }
-
-    return true;
+    if (!translate_client_check_pair(payload, payload_length))
+        throw FormatRuntimeError("malformed %s packet", name);
 }
 
-static bool
+static void
 translate_client_pair(struct pool &pool,
                       ExpandableStringList::Builder &builder,
                       const char *name,
-                      const char *payload, size_t payload_length,
-                      GError **error_r)
+                      const char *payload, size_t payload_length)
 {
-    if (!translate_client_check_pair(name, payload, payload_length, error_r))
-        return false;
+    translate_client_check_pair(name, payload, payload_length);
 
     builder.Add(pool, payload, false);
-    return true;
 }
 
-static bool
+static void
 translate_client_expand_pair(ExpandableStringList::Builder &builder,
                              const char *name,
-                             const char *payload, size_t payload_length,
-                             GError **error_r)
+                             const char *payload, size_t payload_length)
 {
-    if (!builder.CanSetExpand()) {
-        g_set_error(error_r, translate_quark(), 0,
-                    "misplaced %s packet", name);
-        return false;
-    }
+    if (!builder.CanSetExpand())
+        throw FormatRuntimeError("misplaced %s packet", name);
 
-    if (!translate_client_check_pair(name, payload, payload_length, error_r))
-        return false;
+    translate_client_check_pair(name, payload, payload_length);
 
     builder.SetExpand(payload);
-    return true;
 }
 
-static bool
+static void
 translate_client_pivot_root(NamespaceOptions *ns,
-                            const char *payload, size_t payload_length,
-                            GError **error_r)
+                            const char *payload, size_t payload_length)
 {
-    if (!is_valid_absolute_path(payload, payload_length)) {
-        g_set_error_literal(error_r, translate_quark(), 0,
-                            "malformed PIVOT_ROOT packet");
-        return false;
-    }
+    if (!is_valid_absolute_path(payload, payload_length))
+        throw std::runtime_error("malformed PIVOT_ROOT packet");
 
-    if (ns == nullptr || ns->pivot_root != nullptr) {
-        g_set_error_literal(error_r, translate_quark(), 0,
-                            "misplaced PIVOT_ROOT packet");
-        return false;
-    }
+    if (ns == nullptr || ns->pivot_root != nullptr)
+        throw std::runtime_error("misplaced PIVOT_ROOT packet");
 
     ns->enable_mount = true;
     ns->pivot_root = payload;
-    return true;
 }
 
-static bool
+static void
 translate_client_home(NamespaceOptions *ns, JailParams *jail,
-                      const char *payload, size_t payload_length,
-                      GError **error_r)
+                      const char *payload, size_t payload_length)
 {
-    if (!is_valid_absolute_path(payload, payload_length)) {
-        g_set_error_literal(error_r, translate_quark(), 0,
-                            "malformed HOME packet");
-        return false;
-    }
+    if (!is_valid_absolute_path(payload, payload_length))
+        throw std::runtime_error("malformed HOME packet");
 
     bool ok = false;
 
@@ -512,22 +436,15 @@ translate_client_home(NamespaceOptions *ns, JailParams *jail,
     }
 
     if (!ok)
-        g_set_error_literal(error_r, translate_quark(), 0,
-                            "misplaced HOME packet");
-
-    return ok;
+        throw std::runtime_error("misplaced HOME packet");
 }
 
-static bool
+static void
 translate_client_expand_home(NamespaceOptions *ns, JailParams *jail,
-                             const char *payload, size_t payload_length,
-                             GError **error_r)
+                             const char *payload, size_t payload_length)
 {
-    if (!is_valid_absolute_path(payload, payload_length)) {
-        g_set_error_literal(error_r, translate_quark(), 0,
-                            "malformed EXPAND_HOME packet");
-        return false;
-    }
+    if (!is_valid_absolute_path(payload, payload_length))
+        throw std::runtime_error("malformed EXPAND_HOME packet");
 
     bool ok = false;
 
@@ -544,128 +461,84 @@ translate_client_expand_home(NamespaceOptions *ns, JailParams *jail,
     }
 
     if (!ok)
-        g_set_error_literal(error_r, translate_quark(), 0,
-                            "misplaced EXPAND_HOME packet");
-
-    return ok;
+        throw std::runtime_error("misplaced EXPAND_HOME packet");
 }
 
-static bool
+static void
 translate_client_mount_proc(NamespaceOptions *ns,
-                            size_t payload_length,
-                            GError **error_r)
+                            size_t payload_length)
 {
-    if (payload_length > 0) {
-        g_set_error_literal(error_r, translate_quark(), 0,
-                            "malformed MOUNT_PROC packet");
-        return false;
-    }
+    if (payload_length > 0)
+        throw std::runtime_error("malformed MOUNT_PROC packet");
 
-    if (ns == nullptr || ns->mount_proc) {
-        g_set_error_literal(error_r, translate_quark(), 0,
-                            "misplaced MOUNT_PROC packet");
-        return false;
-    }
+    if (ns == nullptr || ns->mount_proc)
+        throw std::runtime_error("misplaced MOUNT_PROC packet");
 
     ns->enable_mount = true;
     ns->mount_proc = true;
-    return true;
 }
 
-static bool
+static void
 translate_client_mount_tmp_tmpfs(NamespaceOptions *ns,
-                                 ConstBuffer<char> payload,
-                                 GError **error_r)
+                                 ConstBuffer<char> payload)
 {
-    if (has_null_byte(payload.data, payload.size)) {
-        g_set_error_literal(error_r, translate_quark(), 0,
-                            "malformed MOUNT_TMP_TMPFS packet");
-        return false;
-    }
+    if (has_null_byte(payload.data, payload.size))
+        throw std::runtime_error("malformed MOUNT_TMP_TMPFS packet");
 
-    if (ns == nullptr || ns->mount_tmp_tmpfs != nullptr) {
-        g_set_error_literal(error_r, translate_quark(), 0,
-                            "misplaced MOUNT_TMP_TMPFS packet");
-        return false;
-    }
+    if (ns == nullptr || ns->mount_tmp_tmpfs != nullptr)
+        throw std::runtime_error("misplaced MOUNT_TMP_TMPFS packet");
 
     ns->enable_mount = true;
     ns->mount_tmp_tmpfs = payload.data != nullptr
         ? payload.data
         : "";
-    return true;
 }
 
-static bool
+static void
 translate_client_mount_home(NamespaceOptions *ns,
-                            const char *payload, size_t payload_length,
-                            GError **error_r)
+                            const char *payload, size_t payload_length)
 {
-    if (!is_valid_absolute_path(payload, payload_length)) {
-        g_set_error_literal(error_r, translate_quark(), 0,
-                            "malformed MOUNT_HOME packet");
-        return false;
-    }
+    if (!is_valid_absolute_path(payload, payload_length))
+        throw std::runtime_error("malformed MOUNT_HOME packet");
 
     if (ns == nullptr || ns->home == nullptr ||
-        ns->mount_home != nullptr) {
-        g_set_error_literal(error_r, translate_quark(), 0,
-                            "misplaced MOUNT_HOME packet");
-        return false;
-    }
+        ns->mount_home != nullptr)
+        throw std::runtime_error("misplaced MOUNT_HOME packet");
 
     ns->enable_mount = true;
     ns->mount_home = payload;
-    return true;
 }
 
-static bool
+static void
 translate_client_mount_tmpfs(NamespaceOptions *ns,
-                            const char *payload, size_t payload_length,
-                            GError **error_r)
+                             const char *payload, size_t payload_length)
 {
     if (!is_valid_absolute_path(payload, payload_length) ||
         /* not allowed for /tmp, use TRANSLATE_MOUNT_TMP_TMPFS
            instead! */
-        strcmp(payload, "/tmp") == 0) {
-        g_set_error_literal(error_r, translate_quark(), 0,
-                            "malformed MOUNT_TMPFS packet");
-        return false;
-    }
+        strcmp(payload, "/tmp") == 0)
+        throw std::runtime_error("malformed MOUNT_TMPFS packet");
 
-    if (ns == nullptr || ns->mount_tmpfs != nullptr) {
-        g_set_error_literal(error_r, translate_quark(), 0,
-                            "misplaced MOUNT_TMPFS packet");
-        return false;
-    }
+    if (ns == nullptr || ns->mount_tmpfs != nullptr)
+        throw std::runtime_error("misplaced MOUNT_TMPFS packet");
 
     ns->enable_mount = true;
     ns->mount_tmpfs = payload;
-    return true;
 }
 
-inline bool
+inline void
 TranslateParser::HandleBindMount(const char *payload, size_t payload_length,
-                                 bool expand, bool writable, GError **error_r)
+                                 bool expand, bool writable)
 {
-    if (*payload != '/') {
-        g_set_error_literal(error_r, translate_quark(), 0,
-                            "malformed BIND_MOUNT packet");
-        return false;
-    }
+    if (*payload != '/')
+        throw std::runtime_error("malformed BIND_MOUNT packet");
 
     const char *separator = (const char *)memchr(payload, 0, payload_length);
-    if (separator == nullptr || separator[1] != '/') {
-        g_set_error_literal(error_r, translate_quark(), 0,
-                            "malformed BIND_MOUNT packet");
-        return false;
-    }
+    if (separator == nullptr || separator[1] != '/')
+        throw std::runtime_error("malformed BIND_MOUNT packet");
 
-    if (mount_list == nullptr) {
-        g_set_error_literal(error_r, translate_quark(), 0,
-                            "misplaced BIND_MOUNT packet");
-        return false;
-    }
+    if (mount_list == nullptr)
+        throw std::runtime_error("misplaced BIND_MOUNT packet");
 
     auto *m = NewFromPool<MountList>(*pool,
                                      /* skip the slash to make it relative */
@@ -674,109 +547,69 @@ TranslateParser::HandleBindMount(const char *payload, size_t payload_length,
                                      expand, writable);
     *mount_list = m;
     mount_list = &m->next;
-    return true;
 }
 
-static bool
+static void
 translate_client_uts_namespace(NamespaceOptions *ns,
-                               const char *payload,
-                               GError **error_r)
+                               const char *payload)
 {
-    if (*payload == 0) {
-        g_set_error_literal(error_r, translate_quark(), 0,
-                            "malformed MOUNT_UTS_NAMESPACE packet");
-        return false;
-    }
+    if (*payload == 0)
+        throw std::runtime_error("malformed MOUNT_UTS_NAMESPACE packet");
 
-    if (ns == nullptr || ns->hostname != nullptr) {
-        g_set_error_literal(error_r, translate_quark(), 0,
-                            "misplaced MOUNT_UTS_NAMESPACE packet");
-        return false;
-    }
+    if (ns == nullptr || ns->hostname != nullptr)
+        throw std::runtime_error("misplaced MOUNT_UTS_NAMESPACE packet");
 
     ns->hostname = payload;
-    return true;
 }
 
-static bool
+static void
 translate_client_rlimits(struct pool &pool, ChildOptions *child_options,
-                         const char *payload,
-                         GError **error_r)
+                         const char *payload)
 {
-    if (child_options == nullptr) {
-        g_set_error_literal(error_r, translate_quark(), 0,
-                            "misplaced RLIMITS packet");
-        return false;
-    }
+    if (child_options == nullptr)
+        throw std::runtime_error("misplaced RLIMITS packet");
 
     if (child_options->rlimits == nullptr)
         child_options->rlimits = NewFromPool<ResourceLimits>(pool);
 
-    if (!child_options->rlimits->Parse(payload)) {
-        g_set_error_literal(error_r, translate_quark(), 0,
-                            "malformed RLIMITS packet");
-        return false;
-    }
-
-    return true;
+    if (!child_options->rlimits->Parse(payload))
+        throw std::runtime_error("malformed RLIMITS packet");
 }
 
-inline bool
-TranslateParser::HandleWant(const uint16_t *payload, size_t payload_length,
-                            GError **error_r)
+inline void
+TranslateParser::HandleWant(const uint16_t *payload, size_t payload_length)
 {
-    if (response.protocol_version < 1) {
-        g_set_error_literal(error_r, translate_quark(), 0,
-                            "WANT requires protocol version 1");
-        return false;
-    }
+    if (response.protocol_version < 1)
+        throw std::runtime_error("WANT requires protocol version 1");
 
-    if (from_request.want) {
-        g_set_error_literal(error_r, translate_quark(), 0,
-                            "WANT loop");
-        return false;
-    }
+    if (from_request.want)
+        throw std::runtime_error("WANT loop");
 
-    if (!response.want.IsEmpty()) {
-        g_set_error_literal(error_r, translate_quark(), 0,
-                            "duplicate WANT packet");
-        return false;
-    }
+    if (!response.want.IsEmpty())
+        throw std::runtime_error("duplicate WANT packet");
 
-    if (payload_length % sizeof(payload[0]) != 0) {
-        g_set_error_literal(error_r, translate_quark(), 0,
-                            "malformed WANT packet");
-        return false;
-    }
+    if (payload_length % sizeof(payload[0]) != 0)
+        throw std::runtime_error("malformed WANT packet");
 
     response.want = { payload, payload_length / sizeof(payload[0]) };
-    return true;
 }
 
-static bool
+static void
 translate_client_file_not_found(TranslateResponse &response,
-                                ConstBuffer<void> payload,
-                                GError **error_r)
+                                ConstBuffer<void> payload)
 {
-    if (!response.file_not_found.IsNull()) {
-        g_set_error_literal(error_r, translate_quark(), 0,
-                            "duplicate FILE_NOT_FOUND packet");
-        return false;
-    }
+    if (!response.file_not_found.IsNull())
+        throw std::runtime_error("duplicate FILE_NOT_FOUND packet");
 
     if (response.test_path == nullptr &&
         response.expand_test_path == nullptr) {
         switch (response.address.type) {
         case ResourceAddress::Type::NONE:
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "FIlE_NOT_FOUND without resource address");
-            return false;
+            throw std::runtime_error("FIlE_NOT_FOUND without resource address");
 
         case ResourceAddress::Type::HTTP:
         case ResourceAddress::Type::PIPE:
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "FIlE_NOT_FOUND not compatible with resource address");
-            return false;
+            throw std::runtime_error("FIlE_NOT_FOUND not compatible with resource address");
 
         case ResourceAddress::Type::LOCAL:
         case ResourceAddress::Type::NFS:
@@ -789,12 +622,10 @@ translate_client_file_not_found(TranslateResponse &response,
     }
 
     response.file_not_found = payload;
-    return true;
 }
 
-inline bool
-TranslateParser::HandleContentTypeLookup(ConstBuffer<void> payload,
-                                         GError **error_r)
+inline void
+TranslateParser::HandleContentTypeLookup(ConstBuffer<void> payload)
 {
     const char *content_type;
     ConstBuffer<void> *content_type_lookup;
@@ -805,52 +636,34 @@ TranslateParser::HandleContentTypeLookup(ConstBuffer<void> payload,
     } else if (nfs_address != nullptr) {
         content_type = nfs_address->content_type;
         content_type_lookup = &nfs_address->content_type_lookup;
-    } else {
-        g_set_error_literal(error_r, translate_quark(), 0,
-                            "misplaced CONTENT_TYPE_LOOKUP");
-        return false;
-    }
+    } else
+        throw std::runtime_error("misplaced CONTENT_TYPE_LOOKUP");
 
-    if (!content_type_lookup->IsNull()) {
-        g_set_error_literal(error_r, translate_quark(), 0,
-                            "duplicate CONTENT_TYPE_LOOKUP");
-        return false;
-    }
+    if (!content_type_lookup->IsNull())
+        throw std::runtime_error("duplicate CONTENT_TYPE_LOOKUP");
 
-    if (content_type != nullptr) {
-        g_set_error_literal(error_r, translate_quark(), 0,
-                            "CONTENT_TYPE/CONTENT_TYPE_LOOKUP conflict");
-        return false;
-    }
+    if (content_type != nullptr)
+        throw std::runtime_error("CONTENT_TYPE/CONTENT_TYPE_LOOKUP conflict");
 
     *content_type_lookup = payload;
-    return true;
 }
 
-static bool
+static void
 translate_client_enotdir(TranslateResponse &response,
-                         ConstBuffer<void> payload,
-                         GError **error_r)
+                         ConstBuffer<void> payload)
 {
-    if (!response.enotdir.IsNull()) {
-        g_set_error_literal(error_r, translate_quark(), 0,
-                            "duplicate ENOTDIR");
-        return false;
-    }
+    if (!response.enotdir.IsNull())
+        throw std::runtime_error("duplicate ENOTDIR");
 
     if (response.test_path == nullptr) {
         switch (response.address.type) {
         case ResourceAddress::Type::NONE:
-        g_set_error_literal(error_r, translate_quark(), 0,
-                            "ENOTDIR without resource address");
-            return false;
+            throw std::runtime_error("ENOTDIR without resource address");
 
         case ResourceAddress::Type::HTTP:
         case ResourceAddress::Type::PIPE:
         case ResourceAddress::Type::NFS:
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "ENOTDIR not compatible with resource address");
-            return false;
+            throw std::runtime_error("ENOTDIR not compatible with resource address");
 
         case ResourceAddress::Type::LOCAL:
         case ResourceAddress::Type::CGI:
@@ -862,27 +675,20 @@ translate_client_enotdir(TranslateResponse &response,
     }
 
     response.enotdir = payload;
-    return true;
 }
 
-static bool
+static void
 translate_client_directory_index(TranslateResponse &response,
-                                 ConstBuffer<void> payload,
-                                 GError **error_r)
+                                 ConstBuffer<void> payload)
 {
-    if (!response.directory_index.IsNull()) {
-        g_set_error_literal(error_r, translate_quark(), 0,
-                            "duplicate DIRECTORY_INDEX");
-        return false;
-    }
+    if (!response.directory_index.IsNull())
+        throw std::runtime_error("duplicate DIRECTORY_INDEX");
 
     if (response.test_path == nullptr &&
         response.expand_test_path == nullptr) {
         switch (response.address.type) {
         case ResourceAddress::Type::NONE:
-        g_set_error_literal(error_r, translate_quark(), 0,
-                            "DIRECTORY_INDEX without resource address");
-            return false;
+            throw std::runtime_error("DIRECTORY_INDEX without resource address");
 
         case ResourceAddress::Type::HTTP:
         case ResourceAddress::Type::LHTTP:
@@ -890,9 +696,7 @@ translate_client_directory_index(TranslateResponse &response,
         case ResourceAddress::Type::CGI:
         case ResourceAddress::Type::FASTCGI:
         case ResourceAddress::Type::WAS:
-        g_set_error_literal(error_r, translate_quark(), 0,
-                            "DIRECTORY_INDEX not compatible with resource address");
-            return false;
+            throw std::runtime_error("DIRECTORY_INDEX not compatible with resource address");
 
         case ResourceAddress::Type::LOCAL:
         case ResourceAddress::Type::NFS:
@@ -901,84 +705,53 @@ translate_client_directory_index(TranslateResponse &response,
     }
 
     response.directory_index = payload;
-    return true;
 }
 
-static bool
+static void
 translate_client_expires_relative(TranslateResponse &response,
-                                  ConstBuffer<void> payload,
-                                  GError **error_r)
+                                  ConstBuffer<void> payload)
 {
-    if (response.expires_relative > std::chrono::seconds::zero()) {
-        g_set_error_literal(error_r, translate_quark(), 0,
-                            "duplicate EXPIRES_RELATIVE");
-        return false;
-    }
+    if (response.expires_relative > std::chrono::seconds::zero())
+        throw std::runtime_error("duplicate EXPIRES_RELATIVE");
 
-    if (payload.size != sizeof(uint32_t)) {
-        g_set_error_literal(error_r, translate_quark(), 0,
-                            "malformed EXPIRES_RELATIVE");
-        return false;
-    }
+    if (payload.size != sizeof(uint32_t))
+        throw std::runtime_error("malformed EXPIRES_RELATIVE");
 
     response.expires_relative = std::chrono::seconds(*(const uint32_t *)payload.data);
-    return true;
 }
 
-static bool
+static void
 translate_client_stderr_path(ChildOptions *child_options,
-                             ConstBuffer<void> payload,
-                             GError **error_r)
+                             ConstBuffer<void> payload)
 {
     const char *path = (const char *)payload.data;
-    if (!is_valid_absolute_path(path, payload.size)) {
-        g_set_error_literal(error_r, translate_quark(), 0,
-                            "malformed STDERR_PATH packet");
-        return false;
-    }
+    if (!is_valid_absolute_path(path, payload.size))
+        throw std::runtime_error("malformed STDERR_PATH packet");
 
-    if (child_options == nullptr) {
-        g_set_error_literal(error_r, translate_quark(), 0,
-                            "misplaced STDERR_PATH packet");
-        return false;
-    }
+    if (child_options == nullptr)
+        throw std::runtime_error("misplaced STDERR_PATH packet");
 
-    if (child_options->stderr_path != nullptr) {
-        g_set_error_literal(error_r, translate_quark(), 0,
-                            "duplicate STDERR_PATH packet");
-        return false;
-    }
+    if (child_options->stderr_path != nullptr)
+        throw std::runtime_error("duplicate STDERR_PATH packet");
 
     child_options->stderr_path = path;
-    return true;
 }
 
-static bool
+static void
 translate_client_expand_stderr_path(ChildOptions *child_options,
-                                    ConstBuffer<void> payload,
-                                    GError **error_r)
+                                    ConstBuffer<void> payload)
 {
     const char *path = (const char *)payload.data;
-    if (!is_valid_nonempty_string((const char *)payload.data, payload.size)) {
-        g_set_error_literal(error_r, translate_quark(), 0,
-                            "malformed EXPAND_STDERR_PATH packet");
-        return false;
-    }
+    if (!is_valid_nonempty_string((const char *)payload.data, payload.size))
+        throw std::runtime_error("malformed EXPAND_STDERR_PATH packet");
 
-    if (child_options == nullptr) {
-        g_set_error_literal(error_r, translate_quark(), 0,
-                            "misplaced EXPAND_STDERR_PATH packet");
-        return false;
-    }
+    if (child_options == nullptr)
+        throw std::runtime_error("misplaced EXPAND_STDERR_PATH packet");
 
-    if (child_options->expand_stderr_path != nullptr) {
-        g_set_error_literal(error_r, translate_quark(), 0,
-                            "duplicate EXPAND_STDERR_PATH packet");
-        return false;
-    }
+    if (child_options->expand_stderr_path != nullptr)
+        throw std::runtime_error("duplicate EXPAND_STDERR_PATH packet");
 
     child_options->expand_stderr_path = path;
-    return true;
 }
 
 gcc_pure
@@ -1000,35 +773,23 @@ CheckRefence(StringView payload)
     }
 }
 
-inline bool
-TranslateParser::HandleRefence(StringView payload,
-                               GError **error_r)
+inline void
+TranslateParser::HandleRefence(StringView payload)
 {
-    if (child_options == nullptr || !child_options->refence.IsEmpty()) {
-        g_set_error_literal(error_r, translate_quark(), 0,
-                            "misplaced REFENCE packet");
-        return false;
-    }
+    if (child_options == nullptr || !child_options->refence.IsEmpty())
+        throw std::runtime_error("misplaced REFENCE packet");
 
-    if (!CheckRefence(payload)) {
-        g_set_error_literal(error_r, translate_quark(), 0,
-                            "malformed REFENCE packet");
-        return false;
-    }
+    if (!CheckRefence(payload))
+        throw std::runtime_error("malformed REFENCE packet");
 
     child_options->refence.Set(payload);
-    return true;
 }
 
-inline bool
-TranslateParser::HandleUidGid(ConstBuffer<void> _payload,
-                              GError **error_r)
+inline void
+TranslateParser::HandleUidGid(ConstBuffer<void> _payload)
 {
-    if (child_options == nullptr || !child_options->uid_gid.IsEmpty()) {
-        g_set_error_literal(error_r, translate_quark(), 0,
-                            "misplaced UID_GID packet");
-        return false;
-    }
+    if (child_options == nullptr || !child_options->uid_gid.IsEmpty())
+        throw std::runtime_error("misplaced UID_GID packet");
 
     UidGid &uid_gid = child_options->uid_gid;
 
@@ -1036,11 +797,8 @@ TranslateParser::HandleUidGid(ConstBuffer<void> _payload,
     const size_t max_size = min_size + sizeof(int) * uid_gid.groups.max_size();
 
     if (_payload.size < min_size || _payload.size > max_size ||
-        _payload.size % sizeof(int) != 0) {
-        g_set_error_literal(error_r, translate_quark(), 0,
-                            "malformed UID_GID packet");
-        return false;
-    }
+        _payload.size % sizeof(int) != 0)
+        throw std::runtime_error("malformed UID_GID packet");
 
     const auto payload = ConstBuffer<int>::FromVoid(_payload);
     uid_gid.uid = payload[0];
@@ -1051,8 +809,6 @@ TranslateParser::HandleUidGid(ConstBuffer<void> _payload,
               uid_gid.groups.begin());
     if (n_groups < uid_gid.groups.max_size())
         uid_gid.groups[n_groups] = 0;
-
-    return true;
 }
 
 gcc_pure
@@ -1108,24 +864,17 @@ ParseCgroupSet(StringView payload)
     return std::make_pair(name, value);
 }
 
-inline bool
-TranslateParser::HandleCgroupSet(StringView payload, GError **error_r)
+inline void
+TranslateParser::HandleCgroupSet(StringView payload)
 {
-    if (child_options == nullptr) {
-        g_set_error_literal(error_r, translate_quark(), 0,
-                            "misplaced CGROUP_SET packet");
-        return false;
-    }
+    if (child_options == nullptr)
+        throw std::runtime_error("misplaced CGROUP_SET packet");
 
     auto set = ParseCgroupSet(payload);
-    if (set.first.IsNull()) {
-        g_set_error_literal(error_r, translate_quark(), 0,
-                            "malformed CGROUP_SET packet");
-        return false;
-    }
+    if (set.first.IsNull())
+        throw std::runtime_error("malformed CGROUP_SET packet");
 
     child_options->cgroup.Set(*pool, set.first, set.second);
-    return true;
 }
 
 static bool
@@ -1135,10 +884,10 @@ CheckProbeSuffix(const char *payload, size_t length)
         !has_null_byte(payload, length);
 }
 
-inline bool
+inline void
 TranslateParser::HandleRegularPacket(enum beng_translation_command command,
-                                     const void *const _payload, size_t payload_length,
-                                     GError **error_r)
+                                     const void *const _payload,
+                                     size_t payload_length)
 {
     const char *const payload = (const char *)_payload;
 
@@ -1164,298 +913,210 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
     case TRANSLATE_LOGIN:
     case TRANSLATE_PASSWORD:
     case TRANSLATE_SERVICE:
-        g_set_error_literal(error_r, translate_quark(), 0,
-                            "misplaced translate request packet");
-        return false;
+        throw std::runtime_error("misplaced translate request packet");
 
     case TRANSLATE_UID_GID:
-        return HandleUidGid({_payload, payload_length}, error_r);
+        HandleUidGid({_payload, payload_length});
+        return;
 
     case TRANSLATE_STATUS:
-        if (payload_length != 2) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "size mismatch in STATUS packet from translation server");
-            return false;
-        }
+        if (payload_length != 2)
+            throw std::runtime_error("size mismatch in STATUS packet from translation server");
 
         response.status = http_status_t(*(const uint16_t*)(const void *)payload);
 
-        if (!http_status_is_valid(response.status)) {
-            g_set_error(error_r, translate_quark(), 0,
-                        "invalid HTTP status code %u", response.status);
-            return false;
-        }
+        if (!http_status_is_valid(response.status))
+            throw FormatRuntimeError("invalid HTTP status code %u",
+                                     response.status);
 
-        return true;
+        return;
 
     case TRANSLATE_PATH:
-        if (!is_valid_absolute_path(payload, payload_length)) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed PATH packet");
-            return false;
-        }
+        if (!is_valid_absolute_path(payload, payload_length))
+            throw std::runtime_error("malformed PATH packet");
 
         if (nfs_address != nullptr && *nfs_address->path == 0) {
             nfs_address->path = payload;
-            return true;
+            return;
         }
 
-        if (resource_address == nullptr || resource_address->IsDefined()) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced PATH packet");
-            return false;
-        }
+        if (resource_address == nullptr || resource_address->IsDefined())
+            throw std::runtime_error("misplaced PATH packet");
 
         file_address = file_address_new(*pool, payload);
         *resource_address = *file_address;
-        return true;
+        return;
 
     case TRANSLATE_PATH_INFO:
-        if (has_null_byte(payload, payload_length)) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed PATH_INFO packet");
-            return false;
-        }
+        if (has_null_byte(payload, payload_length))
+            throw std::runtime_error("malformed PATH_INFO packet");
 
         if (cgi_address != nullptr &&
             cgi_address->path_info == nullptr) {
             cgi_address->path_info = payload;
-            return true;
+            return;
         } else if (file_address != nullptr) {
             /* don't emit an error when the resource is a local path.
                This combination might be useful one day, but isn't
                currently used. */
-            return true;
-        } else {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced PATH_INFO packet");
-            return false;
-        }
+            return;
+        } else
+            throw std::runtime_error("misplaced PATH_INFO packet");
 
     case TRANSLATE_EXPAND_PATH:
-        if (has_null_byte(payload, payload_length)) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed EXPAND_PATH packet");
-            return false;
-        }
+        if (has_null_byte(payload, payload_length))
+            throw std::runtime_error("malformed EXPAND_PATH packet");
 
         if (response.regex == nullptr) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced EXPAND_PATH packet");
-            return false;
+            throw std::runtime_error("misplaced EXPAND_PATH packet");
         } else if (cgi_address != nullptr &&
                    cgi_address->expand_path == nullptr) {
             cgi_address->expand_path = payload;
-            return true;
+            return;
         } else if (nfs_address != nullptr &&
                    nfs_address->expand_path == nullptr) {
             nfs_address->expand_path = payload;
-            return true;
+            return;
         } else if (file_address != nullptr &&
                    file_address->expand_path == nullptr) {
             file_address->expand_path = payload;
-            return true;
+            return;
         } else if (http_address != NULL &&
                    http_address->expand_path == NULL) {
             http_address->expand_path = payload;
-            return true;
-        } else {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced EXPAND_PATH packet");
-            return false;
-        }
+            return;
+        } else
+            throw std::runtime_error("misplaced EXPAND_PATH packet");
 
     case TRANSLATE_EXPAND_PATH_INFO:
-        if (has_null_byte(payload, payload_length)) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed EXPAND_PATH_INFO packet");
-            return false;
-        }
+        if (has_null_byte(payload, payload_length))
+            throw std::runtime_error("malformed EXPAND_PATH_INFO packet");
 
         if (response.regex == nullptr) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced EXPAND_PATH_INFO packet");
-            return false;
+            throw std::runtime_error("misplaced EXPAND_PATH_INFO packet");
         } else if (cgi_address != nullptr &&
                    cgi_address->expand_path_info == nullptr) {
             cgi_address->expand_path_info = payload;
-            return true;
         } else if (file_address != nullptr) {
             /* don't emit an error when the resource is a local path.
                This combination might be useful one day, but isn't
                currently used. */
-            return true;
-        } else {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced EXPAND_PATH_INFO packet");
-            return false;
-        }
+        } else
+            throw std::runtime_error("misplaced EXPAND_PATH_INFO packet");
+
+        return;
 
     case TRANSLATE_DEFLATED:
-        if (!is_valid_absolute_path(payload, payload_length)) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed DEFLATED packet");
-            return false;
-        }
+        if (!is_valid_absolute_path(payload, payload_length))
+            throw std::runtime_error("malformed DEFLATED packet");
 
         if (file_address != nullptr) {
             file_address->deflated = payload;
-            return true;
+            return;
         } else if (nfs_address != nullptr) {
             /* ignore for now */
-        } else {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced DEFLATED packet");
-            return false;
-        }
+        } else
+            throw std::runtime_error("misplaced DEFLATED packet");
+        return;
 
     case TRANSLATE_GZIPPED:
-        if (!is_valid_absolute_path(payload, payload_length)) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed GZIPPED packet");
-            return false;
-        }
+        if (!is_valid_absolute_path(payload, payload_length))
+            throw std::runtime_error("malformed GZIPPED packet");
 
         if (file_address != nullptr) {
             if (file_address->auto_gzipped ||
-                file_address->gzipped != nullptr) {
-                g_set_error_literal(error_r, translate_quark(), 0,
-                                    "misplaced GZIPPED packet");
-                return false;
-            }
+                file_address->gzipped != nullptr)
+                throw std::runtime_error("misplaced GZIPPED packet");
 
             file_address->gzipped = payload;
-            return true;
+            return;
         } else if (nfs_address != nullptr) {
             /* ignore for now */
+            return;
         } else {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced GZIPPED packet");
-            return false;
+            throw std::runtime_error("misplaced GZIPPED packet");
         }
+
+        return;
 
     case TRANSLATE_SITE:
         assert(resource_address != nullptr);
 
-        if (!is_valid_nonempty_string(payload, payload_length)) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed SITE packet");
-            return false;
-        }
+        if (!is_valid_nonempty_string(payload, payload_length))
+            throw std::runtime_error("malformed SITE packet");
 
         if (resource_address == &response.address)
             response.site = payload;
         else if (jail != nullptr && jail->enabled)
             jail->site_id = payload;
-        else {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced SITE packet");
-            return false;
-        }
+        else
+            throw std::runtime_error("misplaced SITE packet");
 
-        return true;
+        return;
 
     case TRANSLATE_CONTENT_TYPE:
-        if (!is_valid_nonempty_string(payload, payload_length)) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed CONTENT_TYPE packet");
-            return false;
-        }
+        if (!is_valid_nonempty_string(payload, payload_length))
+            throw std::runtime_error("malformed CONTENT_TYPE packet");
 
         if (file_address != nullptr) {
-            if (!file_address->content_type_lookup.IsNull()) {
-                g_set_error_literal(error_r, translate_quark(), 0,
-                                    "CONTENT_TYPE/CONTENT_TYPE_LOOKUP conflict");
-                return false;
-            }
+            if (!file_address->content_type_lookup.IsNull())
+                throw std::runtime_error("CONTENT_TYPE/CONTENT_TYPE_LOOKUP conflict");
 
             file_address->content_type = payload;
-            return true;
         } else if (nfs_address != nullptr) {
-            if (!nfs_address->content_type_lookup.IsNull()) {
-                g_set_error_literal(error_r, translate_quark(), 0,
-                                    "CONTENT_TYPE/CONTENT_TYPE_LOOKUP conflict");
-                return false;
-            }
+            if (!nfs_address->content_type_lookup.IsNull())
+                throw std::runtime_error("CONTENT_TYPE/CONTENT_TYPE_LOOKUP conflict");
 
             nfs_address->content_type = payload;
-            return true;
         } else if (from_request.content_type_lookup) {
             response.content_type = payload;
-            return true;
-        } else {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced CONTENT_TYPE packet");
-            return false;
-        }
+        } else
+            throw std::runtime_error("misplaced CONTENT_TYPE packet");
+
+        return;
 
     case TRANSLATE_HTTP:
-        if (resource_address == nullptr ||
-            resource_address->IsDefined()) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced HTTP packet");
-            return false;
-        }
+        if (resource_address == nullptr || resource_address->IsDefined())
+            throw std::runtime_error("misplaced HTTP packet");
 
-        if (!is_valid_nonempty_string(payload, payload_length)) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed HTTP packet");
-            return false;
-        }
+        if (!is_valid_nonempty_string(payload, payload_length))
+            throw std::runtime_error("malformed HTTP packet");
 
-        http_address = http_address_parse(pool, payload, error_r);
-        if (http_address == nullptr)
-            return false;
-
-        if (http_address->protocol != HttpAddress::Protocol::HTTP) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed HTTP packet");
-            return false;
-        }
+        http_address = http_address_parse(pool, payload);
+        if (http_address->protocol != HttpAddress::Protocol::HTTP)
+            throw std::runtime_error("malformed HTTP packet");
 
         *resource_address = *http_address;
 
         address_list = &http_address->addresses;
         default_port = http_address->GetDefaultPort();
-        return true;
+        return;
 
     case TRANSLATE_REDIRECT:
-        if (!is_valid_nonempty_string(payload, payload_length)) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed REDIRECT packet");
-            return false;
-        }
+        if (!is_valid_nonempty_string(payload, payload_length))
+            throw std::runtime_error("malformed REDIRECT packet");
 
         response.redirect = payload;
-        return true;
+        return;
 
     case TRANSLATE_EXPAND_REDIRECT:
         if (response.regex == nullptr ||
             response.redirect == nullptr ||
-            response.expand_redirect != nullptr) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced EXPAND_REDIRECT packet");
-            return false;
-        }
+            response.expand_redirect != nullptr)
+            throw std::runtime_error("misplaced EXPAND_REDIRECT packet");
 
-        if (!is_valid_nonempty_string(payload, payload_length)) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed EXPAND_REDIRECT packet");
-            return false;
-        }
+        if (!is_valid_nonempty_string(payload, payload_length))
+            throw std::runtime_error("malformed EXPAND_REDIRECT packet");
 
         response.expand_redirect = payload;
-        return true;
+        return;
 
     case TRANSLATE_BOUNCE:
-        if (!is_valid_nonempty_string(payload, payload_length)) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed BOUNCE packet");
-            return false;
-        }
+        if (!is_valid_nonempty_string(payload, payload_length))
+            throw std::runtime_error("malformed BOUNCE packet");
 
         response.bounce = payload;
-        return true;
+        return;
 
     case TRANSLATE_FILTER:
         resource_address = AddFilter();
@@ -1468,390 +1129,279 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         nfs_address = nullptr;
         lhttp_address = nullptr;
         address_list = nullptr;
-        return true;
+        return;
 
     case TRANSLATE_FILTER_4XX:
         if (view != nullptr)
             view->filter_4xx = true;
         else
             response.filter_4xx = true;
-        return true;
+        return;
 
     case TRANSLATE_PROCESS:
         new_transformation = AddTransformation();
         new_transformation->type = Transformation::Type::PROCESS;
         new_transformation->u.processor.options = PROCESSOR_REWRITE_URL;
-        return true;
+        return;
 
     case TRANSLATE_DOMAIN:
         daemon_log(2, "deprecated DOMAIN packet\n");
-        return true;
+        return;
 
     case TRANSLATE_CONTAINER:
         if (transformation == nullptr ||
-            transformation->type != Transformation::Type::PROCESS) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced CONTAINER packet");
-            return false;
-        }
+            transformation->type != Transformation::Type::PROCESS)
+            throw std::runtime_error("misplaced CONTAINER packet");
 
         transformation->u.processor.options |= PROCESSOR_CONTAINER;
-        return true;
+        return;
 
     case TRANSLATE_SELF_CONTAINER:
         if (transformation == nullptr ||
-            transformation->type != Transformation::Type::PROCESS) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced SELF_CONTAINER packet");
-            return false;
-        }
+            transformation->type != Transformation::Type::PROCESS)
+            throw std::runtime_error("misplaced SELF_CONTAINER packet");
 
         transformation->u.processor.options |=
             PROCESSOR_SELF_CONTAINER|PROCESSOR_CONTAINER;
-        return true;
+        return;
 
     case TRANSLATE_GROUP_CONTAINER:
-        if (!is_valid_nonempty_string(payload, payload_length)) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed GROUP_CONTAINER packet");
-            return false;
-        }
+        if (!is_valid_nonempty_string(payload, payload_length))
+            throw std::runtime_error("malformed GROUP_CONTAINER packet");
 
         if (transformation == nullptr ||
-            transformation->type != Transformation::Type::PROCESS) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced GROUP_CONTAINER packet");
-            return false;
-        }
+            transformation->type != Transformation::Type::PROCESS)
+            throw std::runtime_error("misplaced GROUP_CONTAINER packet");
 
         transformation->u.processor.options |= PROCESSOR_CONTAINER;
         response.container_groups.Add(*pool, payload);
-        return true;
+        return;
 
     case TRANSLATE_WIDGET_GROUP:
-        if (!is_valid_nonempty_string(payload, payload_length)) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed WIDGET_GROUP packet");
-            return false;
-        }
+        if (!is_valid_nonempty_string(payload, payload_length))
+            throw std::runtime_error("malformed WIDGET_GROUP packet");
 
         response.widget_group = payload;
-        return true;
+        return;
 
     case TRANSLATE_UNTRUSTED:
         if (!is_valid_nonempty_string(payload, payload_length) || *payload == '.' ||
-            payload[payload_length - 1] == '.') {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed UNTRUSTED packet");
-            return false;
-        }
+            payload[payload_length - 1] == '.')
+            throw std::runtime_error("malformed UNTRUSTED packet");
 
-        if (response.HasUntrusted()) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced UNTRUSTED packet");
-            return false;
-        }
+        if (response.HasUntrusted())
+            throw std::runtime_error("misplaced UNTRUSTED packet");
 
         response.untrusted = payload;
-        return true;
+        return;
 
     case TRANSLATE_UNTRUSTED_PREFIX:
         if (!is_valid_nonempty_string(payload, payload_length) || *payload == '.' ||
-            payload[payload_length - 1] == '.') {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed UNTRUSTED_PREFIX packet");
-            return false;
-        }
+            payload[payload_length - 1] == '.')
+            throw std::runtime_error("malformed UNTRUSTED_PREFIX packet");
 
-        if (response.HasUntrusted()) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced UNTRUSTED_PREFIX packet");
-            return false;
-        }
+        if (response.HasUntrusted())
+            throw std::runtime_error("misplaced UNTRUSTED_PREFIX packet");
 
         response.untrusted_prefix = payload;
-        return true;
+        return;
 
     case TRANSLATE_UNTRUSTED_SITE_SUFFIX:
         if (!is_valid_nonempty_string(payload, payload_length) || *payload == '.' ||
-            payload[payload_length - 1] == '.') {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed UNTRUSTED_SITE_SUFFIX packet");
-            return false;
-        }
+            payload[payload_length - 1] == '.')
+            throw std::runtime_error("malformed UNTRUSTED_SITE_SUFFIX packet");
 
-        if (response.HasUntrusted()) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced UNTRUSTED_SITE_SUFFIX packet");
-            return false;
-        }
+        if (response.HasUntrusted())
+            throw std::runtime_error("misplaced UNTRUSTED_SITE_SUFFIX packet");
 
         response.untrusted_site_suffix = payload;
-        return true;
+        return;
 
     case TRANSLATE_SCHEME:
-        if (strncmp(payload, "http", 4) != 0) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced SCHEME packet");
-            return false;
-        }
+        if (strncmp(payload, "http", 4) != 0)
+            throw std::runtime_error("misplaced SCHEME packet");
 
         response.scheme = payload;
-        return true;
+        return;
 
     case TRANSLATE_HOST:
         response.host = payload;
-        return true;
+        return;
 
     case TRANSLATE_URI:
-        if (!is_valid_absolute_uri(payload, payload_length)) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed URI packet");
-            return false;
-        }
+        if (!is_valid_absolute_uri(payload, payload_length))
+            throw std::runtime_error("malformed URI packet");
 
         response.uri = payload;
-        return true;
+        return;
 
     case TRANSLATE_DIRECT_ADDRESSING:
         response.direct_addressing = true;
-        return true;
+        return;
 
     case TRANSLATE_STATEFUL:
         response.stateful = true;
-        return true;
+        return;
 
     case TRANSLATE_SESSION:
         response.session = { payload, payload_length };
-        return true;
+        return;
 
     case TRANSLATE_USER:
         response.user = payload;
         previous_command = command;
-        return true;
+        return;
 
     case TRANSLATE_REALM:
-        if (payload_length > 0) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed REALM packet");
-            return false;
-        }
+        if (payload_length > 0)
+            throw std::runtime_error("malformed REALM packet");
 
-        if (response.realm != nullptr) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "duplicate REALM packet");
-            return false;
-        }
+        if (response.realm != nullptr)
+            throw std::runtime_error("duplicate REALM packet");
 
-        if (response.realm_from_auth_base) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced REALM packet");
-            return false;
-        }
+        if (response.realm_from_auth_base)
+            throw std::runtime_error("misplaced REALM packet");
 
         response.realm = payload;
-        return true;
+        return;
 
     case TRANSLATE_LANGUAGE:
         response.language = payload;
-        return true;
+        return;
 
     case TRANSLATE_PIPE:
-        if (resource_address == nullptr || resource_address->IsDefined()) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced PIPE packet");
-            return false;
-        }
+        if (resource_address == nullptr || resource_address->IsDefined())
+            throw std::runtime_error("misplaced PIPE packet");
 
-        if (payload_length == 0) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed PIPE packet");
-            return false;
-        }
+        if (payload_length == 0)
+            throw std::runtime_error("malformed PIPE packet");
 
         SetCgiAddress(ResourceAddress::Type::PIPE, payload);
-        return true;
+        return;
 
     case TRANSLATE_CGI:
-        if (resource_address == nullptr || resource_address->IsDefined()) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced CGI packet");
-            return false;
-        }
+        if (resource_address == nullptr || resource_address->IsDefined())
+            throw std::runtime_error("misplaced CGI packet");
 
-        if (!is_valid_absolute_path(payload, payload_length)) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed CGI packet");
-            return false;
-        }
+        if (!is_valid_absolute_path(payload, payload_length))
+            throw std::runtime_error("malformed CGI packet");
 
         SetCgiAddress(ResourceAddress::Type::CGI, payload);
         cgi_address->document_root = response.document_root;
-        return true;
+        return;
 
     case TRANSLATE_FASTCGI:
-        if (resource_address == nullptr || resource_address->IsDefined()) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced FASTCGI packet");
-            return false;
-        }
+        if (resource_address == nullptr || resource_address->IsDefined())
+            throw std::runtime_error("misplaced FASTCGI packet");
 
-        if (!is_valid_absolute_path(payload, payload_length)) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed FASTCGI packet");
-            return false;
-        }
+        if (!is_valid_absolute_path(payload, payload_length))
+            throw std::runtime_error("malformed FASTCGI packet");
 
         SetCgiAddress(ResourceAddress::Type::FASTCGI, payload);
         address_list = &cgi_address->address_list;
         default_port = 9000;
-        return true;
+        return;
 
     case TRANSLATE_AJP:
-        if (resource_address == nullptr || resource_address->IsDefined()) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced AJP packet");
-            return false;
-        }
+        if (resource_address == nullptr || resource_address->IsDefined())
+            throw std::runtime_error("misplaced AJP packet");
 
-        if (payload_length == 0) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed AJP packet");
-            return false;
-        }
+        if (payload_length == 0)
+            throw std::runtime_error("malformed AJP packet");
 
-        http_address = http_address_parse(pool, payload, error_r);
-        if (http_address == nullptr)
-            return false;
-
-        if (http_address->protocol != HttpAddress::Protocol::AJP) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed AJP packet");
-            return false;
-        }
+        http_address = http_address_parse(pool, payload);
+        if (http_address->protocol != HttpAddress::Protocol::AJP)
+            throw std::runtime_error("malformed AJP packet");
 
         *resource_address = *http_address;
 
         address_list = &http_address->addresses;
         default_port = 8009;
-        return true;
+        return;
 
     case TRANSLATE_NFS_SERVER:
-        if (resource_address == nullptr || resource_address->IsDefined()) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced NFS_SERVER packet");
-            return false;
-        }
+        if (resource_address == nullptr || resource_address->IsDefined())
+            throw std::runtime_error("misplaced NFS_SERVER packet");
 
-        if (payload_length == 0) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed NFS_SERVER packet");
-            return false;
-        }
+        if (payload_length == 0)
+            throw std::runtime_error("malformed NFS_SERVER packet");
 
         nfs_address = nfs_address_new(*pool, payload, "", "");
         *resource_address = *nfs_address;
-        return true;
+        return;
 
     case TRANSLATE_NFS_EXPORT:
         if (nfs_address == nullptr ||
-            *nfs_address->export_name != 0) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced NFS_EXPORT packet");
-            return false;
-        }
+            *nfs_address->export_name != 0)
+            throw std::runtime_error("misplaced NFS_EXPORT packet");
 
-        if (!is_valid_absolute_path(payload, payload_length)) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed NFS_EXPORT packet");
-            return false;
-        }
+        if (!is_valid_absolute_path(payload, payload_length))
+            throw std::runtime_error("malformed NFS_EXPORT packet");
 
         nfs_address->export_name = payload;
-        return true;
+        return;
 
     case TRANSLATE_JAILCGI:
         if (jail == nullptr) {
-            if (child_options == nullptr) {
-                g_set_error_literal(error_r, translate_quark(), 0,
-                                    "misplaced JAILCGI packet");
-                return false;
-            }
+            if (child_options == nullptr)
+                throw std::runtime_error("misplaced JAILCGI packet");
 
             jail = child_options->jail = NewFromPool<JailParams>(*pool);
         }
 
         jail->enabled = true;
-        return true;
+        return;
 
     case TRANSLATE_HOME:
-        return translate_client_home(ns_options, jail, payload, payload_length,
-                                     error_r);
+        translate_client_home(ns_options, jail, payload, payload_length);
+        return;
 
     case TRANSLATE_INTERPRETER:
         if (resource_address == nullptr ||
             (resource_address->type != ResourceAddress::Type::CGI &&
              resource_address->type != ResourceAddress::Type::FASTCGI) ||
-            cgi_address->interpreter != nullptr) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced INTERPRETER packet");
-            return false;
-        }
+            cgi_address->interpreter != nullptr)
+            throw std::runtime_error("misplaced INTERPRETER packet");
 
         cgi_address->interpreter = payload;
-        return true;
+        return;
 
     case TRANSLATE_ACTION:
         if (resource_address == nullptr ||
             (resource_address->type != ResourceAddress::Type::CGI &&
              resource_address->type != ResourceAddress::Type::FASTCGI) ||
-            cgi_address->action != nullptr) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced ACTION packet");
-            return false;
-        }
+            cgi_address->action != nullptr)
+            throw std::runtime_error("misplaced ACTION packet");
 
         cgi_address->action = payload;
-        return true;
+        return;
 
     case TRANSLATE_SCRIPT_NAME:
         if (resource_address == nullptr ||
             (resource_address->type != ResourceAddress::Type::CGI &&
              resource_address->type != ResourceAddress::Type::WAS &&
              resource_address->type != ResourceAddress::Type::FASTCGI) ||
-            cgi_address->script_name != nullptr) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced SCRIPT_NAME packet");
-            return false;
-        }
+            cgi_address->script_name != nullptr)
+            throw std::runtime_error("misplaced SCRIPT_NAME packet");
 
         cgi_address->script_name = payload;
-        return true;
+        return;
 
     case TRANSLATE_EXPAND_SCRIPT_NAME:
-        if (!is_valid_nonempty_string(payload, payload_length)) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed EXPAND_SCRIPT_NAME packet");
-            return false;
-        }
+        if (!is_valid_nonempty_string(payload, payload_length))
+            throw std::runtime_error("malformed EXPAND_SCRIPT_NAME packet");
 
         if (response.regex == nullptr ||
             cgi_address == nullptr ||
-            cgi_address->expand_script_name != nullptr) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced EXPAND_SCRIPT_NAME packet");
-            return false;
-        }
+            cgi_address->expand_script_name != nullptr)
+            throw std::runtime_error("misplaced EXPAND_SCRIPT_NAME packet");
 
         cgi_address->expand_script_name = payload;
-        return true;
+        return;
 
     case TRANSLATE_DOCUMENT_ROOT:
-        if (!is_valid_absolute_path(payload, payload_length)) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed DOCUMENT_ROOT packet");
-            return false;
-        }
+        if (!is_valid_absolute_path(payload, payload_length))
+            throw std::runtime_error("malformed DOCUMENT_ROOT packet");
 
         if (cgi_address != nullptr)
             cgi_address->document_root = payload;
@@ -1860,20 +1410,14 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
             file_address->document_root = payload;
         else
             response.document_root = payload;
-        return true;
+        return;
 
     case TRANSLATE_EXPAND_DOCUMENT_ROOT:
-        if (!is_valid_nonempty_string(payload, payload_length)) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed EXPAND_DOCUMENT_ROOT packet");
-            return false;
-        }
+        if (!is_valid_nonempty_string(payload, payload_length))
+            throw std::runtime_error("malformed EXPAND_DOCUMENT_ROOT packet");
 
-        if (response.regex == nullptr) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced EXPAND_DOCUMENT_ROOT packet");
-            return false;
-        }
+        if (response.regex == nullptr)
+            throw std::runtime_error("misplaced EXPAND_DOCUMENT_ROOT packet");
 
         if (cgi_address != nullptr)
             cgi_address->expand_document_root = payload;
@@ -1882,76 +1426,47 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
             file_address->expand_document_root = payload;
         else
             response.expand_document_root = payload;
-        return true;
+        return;
 
     case TRANSLATE_ADDRESS:
-        if (address_list == nullptr) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced ADDRESS packet");
-            return false;
-        }
+        if (address_list == nullptr)
+            throw std::runtime_error("misplaced ADDRESS packet");
 
-        if (payload_length < 2) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed INTERPRETER packet");
-            return false;
-        }
+        if (payload_length < 2)
+            throw std::runtime_error("malformed INTERPRETER packet");
 
         address_list->Add(pool,
                           SocketAddress((const struct sockaddr *)_payload,
                                         payload_length));
-        return true;
+        return;
 
     case TRANSLATE_ADDRESS_STRING:
-        if (address_list == nullptr) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced ADDRESS_STRING packet");
-            return false;
-        }
+        if (address_list == nullptr)
+            throw std::runtime_error("misplaced ADDRESS_STRING packet");
 
-        if (payload_length == 0) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed ADDRESS_STRING packet");
-            return false;
-        }
+        if (payload_length == 0)
+            throw std::runtime_error("malformed ADDRESS_STRING packet");
 
         try {
-            bool ret;
-
-            ret = parse_address_string(pool, address_list,
-                                       payload, default_port);
-            if (!ret) {
-                g_set_error_literal(error_r, translate_quark(), 0,
-                                    "malformed ADDRESS_STRING packet");
-                return false;
-            }
+            parse_address_string(pool, address_list,
+                                 payload, default_port);
         } catch (const std::exception &e) {
-                g_set_error(error_r, translate_quark(), 0,
-                            "malformed ADDRESS_STRING packet: %s",
-                            e.what());
-                return false;
+            throw FormatRuntimeError("malformed ADDRESS_STRING packet: %s",
+                                     e.what());
         }
 
-        return true;
+        return;
 
     case TRANSLATE_VIEW:
-        if (!valid_view_name(payload)) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "invalid view name");
-            return false;
-        }
+        if (!valid_view_name(payload))
+            throw std::runtime_error("invalid view name");
 
-        if (!AddView(payload, error_r))
-            return false;
-
-        return true;
+        AddView(payload);
+        return;
 
     case TRANSLATE_MAX_AGE:
-        if (payload_length != 4) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed MAX_AGE packet");
-            return false;
-        }
+        if (payload_length != 4)
+            throw std::runtime_error("malformed MAX_AGE packet");
 
         switch (previous_command) {
         case TRANSLATE_BEGIN:
@@ -1963,283 +1478,178 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
             break;
 
         default:
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced MAX_AGE packet");
-            return false;
+            throw std::runtime_error("misplaced MAX_AGE packet");
         }
 
-        return true;
+        return;
 
     case TRANSLATE_VARY:
         if (payload_length == 0 ||
-            payload_length % sizeof(response.vary.data[0]) != 0) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed VARY packet");
-            return false;
-        }
+            payload_length % sizeof(response.vary.data[0]) != 0)
+            throw std::runtime_error("malformed VARY packet");
 
         response.vary.data = (const uint16_t *)_payload;
         response.vary.size = payload_length / sizeof(response.vary.data[0]);
-        return true;
+        return;
 
     case TRANSLATE_INVALIDATE:
         if (payload_length == 0 ||
-            payload_length % sizeof(response.invalidate.data[0]) != 0) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed INVALIDATE packet");
-            return false;
-        }
+            payload_length % sizeof(response.invalidate.data[0]) != 0)
+            throw std::runtime_error("malformed INVALIDATE packet");
 
         response.invalidate.data = (const uint16_t *)_payload;
         response.invalidate.size = payload_length /
             sizeof(response.invalidate.data[0]);
-        return true;
+        return;
 
     case TRANSLATE_BASE:
         if (!is_valid_absolute_uri(payload, payload_length) ||
-            payload[payload_length - 1] != '/') {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed BASE packet");
-            return false;
-        }
+            payload[payload_length - 1] != '/')
+            throw std::runtime_error("malformed BASE packet");
 
         if (from_request.uri == nullptr ||
             response.auto_base ||
-            response.base != nullptr) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced BASE packet");
-            return false;
-        }
+            response.base != nullptr)
+            throw std::runtime_error("misplaced BASE packet");
 
-        if (memcmp(from_request.uri, payload, payload_length) != 0) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "BASE mismatches request URI");
-            return false;
-        }
+        if (memcmp(from_request.uri, payload, payload_length) != 0)
+            throw std::runtime_error("BASE mismatches request URI");
 
         response.base = payload;
-        return true;
+        return;
 
     case TRANSLATE_UNSAFE_BASE:
-        if (payload_length > 0) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed UNSAFE_BASE packet");
-            return false;
-        }
+        if (payload_length > 0)
+            throw std::runtime_error("malformed UNSAFE_BASE packet");
 
-        if (response.base == nullptr) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced UNSAFE_BASE packet");
-            return false;
-        }
+        if (response.base == nullptr)
+            throw std::runtime_error("misplaced UNSAFE_BASE packet");
 
         response.unsafe_base = true;
-        return true;
+        return;
 
     case TRANSLATE_EASY_BASE:
-        if (payload_length > 0) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed EASY_BASE");
-            return false;
-        }
+        if (payload_length > 0)
+            throw std::runtime_error("malformed EASY_BASE");
 
-        if (response.base == nullptr) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "EASY_BASE without BASE");
-            return false;
-        }
+        if (response.base == nullptr)
+            throw std::runtime_error("EASY_BASE without BASE");
 
-        if (response.easy_base) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "duplicate EASY_BASE");
-            return false;
-        }
+        if (response.easy_base)
+            throw std::runtime_error("duplicate EASY_BASE");
 
         response.easy_base = true;
-        return true;
+        return;
 
     case TRANSLATE_REGEX:
-        if (response.base == nullptr) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "REGEX without BASE");
-            return false;
-        }
+        if (response.base == nullptr)
+            throw std::runtime_error("REGEX without BASE");
 
-        if (response.regex != nullptr) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "duplicate REGEX");
-            return false;
-        }
+        if (response.regex != nullptr)
+            throw std::runtime_error("duplicate REGEX");
 
-        if (!is_valid_nonempty_string(payload, payload_length)) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed REGEX packet");
-            return false;
-        }
+        if (!is_valid_nonempty_string(payload, payload_length))
+            throw std::runtime_error("malformed REGEX packet");
 
         response.regex = payload;
-        return true;
+        return;
 
     case TRANSLATE_INVERSE_REGEX:
-        if (response.base == nullptr) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "INVERSE_REGEX without BASE");
-            return false;
-        }
+        if (response.base == nullptr)
+            throw std::runtime_error("INVERSE_REGEX without BASE");
 
-        if (response.inverse_regex != nullptr) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "duplicate INVERSE_REGEX");
-            return false;
-        }
+        if (response.inverse_regex != nullptr)
+            throw std::runtime_error("duplicate INVERSE_REGEX");
 
-        if (!is_valid_nonempty_string(payload, payload_length)) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed INVERSE_REGEX packet");
-            return false;
-        }
+        if (!is_valid_nonempty_string(payload, payload_length))
+            throw std::runtime_error("malformed INVERSE_REGEX packet");
 
         response.inverse_regex = payload;
-        return true;
+        return;
 
     case TRANSLATE_REGEX_TAIL:
-        if (payload_length > 0) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed REGEX_TAIL packet");
-            return false;
-        }
+        if (payload_length > 0)
+            throw std::runtime_error("malformed REGEX_TAIL packet");
 
-        if (response.regex == nullptr &&
-            response.inverse_regex == nullptr) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced REGEX_TAIL packet");
-            return false;
-        }
+        if (response.regex == nullptr && response.inverse_regex == nullptr)
+            throw std::runtime_error("misplaced REGEX_TAIL packet");
 
-        if (response.regex_tail) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "duplicate REGEX_TAIL packet");
-            return false;
-        }
+        if (response.regex_tail)
+            throw std::runtime_error("duplicate REGEX_TAIL packet");
 
         response.regex_tail = true;
-        return true;
+        return;
 
     case TRANSLATE_REGEX_UNESCAPE:
-        if (payload_length > 0) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed REGEX_UNESCAPE packet");
-            return false;
-        }
+        if (payload_length > 0)
+            throw std::runtime_error("malformed REGEX_UNESCAPE packet");
 
-        if (response.regex == nullptr &&
-            response.inverse_regex == nullptr) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced REGEX_UNESCAPE packet");
-            return false;
-        }
+        if (response.regex == nullptr && response.inverse_regex == nullptr)
+            throw std::runtime_error("misplaced REGEX_UNESCAPE packet");
 
-        if (response.regex_unescape) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "duplicate REGEX_UNESCAPE packet");
-            return false;
-        }
+        if (response.regex_unescape)
+            throw std::runtime_error("duplicate REGEX_UNESCAPE packet");
 
         response.regex_unescape = true;
-        return true;
+        return;
 
     case TRANSLATE_DELEGATE:
-        if (file_address == nullptr) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced DELEGATE packet");
-            return false;
-        }
+        if (file_address == nullptr)
+            throw std::runtime_error("misplaced DELEGATE packet");
 
-        if (!is_valid_absolute_path(payload, payload_length)) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed DELEGATE packet");
-            return false;
-        }
+        if (!is_valid_absolute_path(payload, payload_length))
+            throw std::runtime_error("malformed DELEGATE packet");
 
         file_address->delegate = NewFromPool<DelegateAddress>(*pool, payload);
         SetChildOptions(file_address->delegate->child_options);
-        return true;
+        return;
 
     case TRANSLATE_APPEND:
-        if (!is_valid_nonempty_string(payload, payload_length)) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed APPEND packet");
-            return false;
-        }
+        if (!is_valid_nonempty_string(payload, payload_length))
+            throw std::runtime_error("malformed APPEND packet");
 
-        if (resource_address == nullptr) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced APPEND packet");
-            return false;
-        }
+        if (resource_address == nullptr)
+            throw std::runtime_error("misplaced APPEND packet");
 
         if (cgi_address != nullptr || lhttp_address != nullptr) {
             args_builder.Add(*pool, payload, false);
-            return true;
-        } else {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced APPEND packet");
-            return false;
-        }
+        } else
+            throw std::runtime_error("misplaced APPEND packet");
+
+        return;
 
     case TRANSLATE_EXPAND_APPEND:
-        if (!is_valid_nonempty_string(payload, payload_length)) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed EXPAND_APPEND packet");
-            return false;
-        }
+        if (!is_valid_nonempty_string(payload, payload_length))
+            throw std::runtime_error("malformed EXPAND_APPEND packet");
 
-        if (response.regex == nullptr ||
-            resource_address == nullptr) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced EXPAND_APPEND packet");
-            return false;
-        }
+        if (response.regex == nullptr || resource_address == nullptr)
+            throw std::runtime_error("misplaced EXPAND_APPEND packet");
 
         if (cgi_address != nullptr || lhttp_address != nullptr) {
-            if (!args_builder.CanSetExpand()) {
-                g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced EXPAND_APPEND packet");
-                return false;
-            }
+            if (!args_builder.CanSetExpand())
+                throw std::runtime_error("misplaced EXPAND_APPEND packet");
 
             args_builder.SetExpand(payload);
-            return true;
-        } else {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced APPEND packet");
-            return false;
-        }
+        } else
+            throw std::runtime_error("misplaced APPEND packet");
+        return;
 
     case TRANSLATE_PAIR:
         if (cgi_address != nullptr &&
             resource_address->type != ResourceAddress::Type::CGI &&
             resource_address->type != ResourceAddress::Type::PIPE) {
-            return translate_client_pair(*pool, params_builder, "PAIR",
-                                         payload, payload_length,
-                                         error_r);
+            translate_client_pair(*pool, params_builder, "PAIR",
+                                  payload, payload_length);
         } else if (child_options != nullptr) {
-            return translate_client_pair(*pool, env_builder, "PAIR",
-                                         payload, payload_length,
-                                         error_r);
-
-        } else {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced PAIR packet");
-            return false;
-        }
+            translate_client_pair(*pool, env_builder, "PAIR",
+                                  payload, payload_length);
+        } else
+            throw std::runtime_error("misplaced PAIR packet");
+        return;
 
     case TRANSLATE_EXPAND_PAIR:
-        if (response.regex == nullptr) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced EXPAND_PAIR packet");
-            return false;
-        }
+        if (response.regex == nullptr)
+            throw std::runtime_error("misplaced EXPAND_PAIR packet");
 
         if (cgi_address != nullptr) {
             const auto type = resource_address->type;
@@ -2247,185 +1657,144 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
                 ? env_builder
                 : params_builder;
 
-            return translate_client_expand_pair(builder, "EXPAND_PAIR",
-                                                payload, payload_length,
-                                                error_r);
+            translate_client_expand_pair(builder, "EXPAND_PAIR",
+                                         payload, payload_length);
         } else if (lhttp_address != nullptr) {
-            return translate_client_expand_pair(env_builder,
-                                                "EXPAND_PAIR",
-                                                payload, payload_length,
-                                                error_r);
-        } else {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced EXPAND_PAIR packet");
-            return false;
-        }
+            translate_client_expand_pair(env_builder,
+                                         "EXPAND_PAIR",
+                                         payload, payload_length);
+        } else
+            throw std::runtime_error("misplaced EXPAND_PAIR packet");
+        return;
 
     case TRANSLATE_DISCARD_SESSION:
         response.discard_session = true;
-        return true;
+        return;
 
     case TRANSLATE_REQUEST_HEADER_FORWARD:
-        return view != nullptr
-            ? parse_header_forward(&view->request_header_forward,
-                                   payload, payload_length, error_r)
-            : parse_header_forward(&response.request_header_forward,
-                                   payload, payload_length, error_r);
+        if (view != nullptr)
+            parse_header_forward(&view->request_header_forward,
+                                 payload, payload_length);
+        else
+            parse_header_forward(&response.request_header_forward,
+                                 payload, payload_length);
+        return;
 
     case TRANSLATE_RESPONSE_HEADER_FORWARD:
-        return view != nullptr
-            ? parse_header_forward(&view->response_header_forward,
-                                   payload, payload_length, error_r)
-            : parse_header_forward(&response.response_header_forward,
-                                   payload, payload_length, error_r);
+        if (view != nullptr)
+            parse_header_forward(&view->response_header_forward,
+                                 payload, payload_length);
+        else
+            parse_header_forward(&response.response_header_forward,
+                                 payload, payload_length);
+        return;
 
     case TRANSLATE_WWW_AUTHENTICATE:
-        if (!is_valid_nonempty_string(payload, payload_length)) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed WWW_AUTHENTICATE packet");
-            return false;
-        }
+        if (!is_valid_nonempty_string(payload, payload_length))
+            throw std::runtime_error("malformed WWW_AUTHENTICATE packet");
 
         response.www_authenticate = payload;
-        return true;
+        return;
 
     case TRANSLATE_AUTHENTICATION_INFO:
-        if (!is_valid_nonempty_string(payload, payload_length)) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed AUTHENTICATION_INFO packet");
-            return false;
-        }
+        if (!is_valid_nonempty_string(payload, payload_length))
+            throw std::runtime_error("malformed AUTHENTICATION_INFO packet");
 
         response.authentication_info = payload;
-        return true;
+        return;
 
     case TRANSLATE_HEADER:
-        if (!parse_header(pool, response.response_headers,
-                          "HEADER", payload, payload_length, error_r))
-            return false;
-
-        return true;
+        parse_header(pool, response.response_headers,
+                     "HEADER", payload, payload_length);
+        return;
 
     case TRANSLATE_SECURE_COOKIE:
         response.secure_cookie = true;
-        return true;
+        return;
 
     case TRANSLATE_COOKIE_DOMAIN:
-        if (response.cookie_domain != nullptr) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced COOKIE_DOMAIN packet");
-            return false;
-        }
+        if (response.cookie_domain != nullptr)
+            throw std::runtime_error("misplaced COOKIE_DOMAIN packet");
 
-        if (!is_valid_nonempty_string(payload, payload_length)) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed COOKIE_DOMAIN packet");
-            return false;
-        }
+        if (!is_valid_nonempty_string(payload, payload_length))
+            throw std::runtime_error("malformed COOKIE_DOMAIN packet");
 
         response.cookie_domain = payload;
-        return true;
+        return;
 
     case TRANSLATE_ERROR_DOCUMENT:
         response.error_document = { payload, payload_length };
-        return true;
+        return;
 
     case TRANSLATE_CHECK:
-        if (!response.check.IsNull()) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "duplicate CHECK packet");
-            return false;
-        }
+        if (!response.check.IsNull())
+            throw std::runtime_error("duplicate CHECK packet");
 
         response.check = { payload, payload_length };
-        return true;
+        return;
 
     case TRANSLATE_PREVIOUS:
         response.previous = true;
-        return true;
+        return;
 
     case TRANSLATE_WAS:
-        if (resource_address == nullptr || resource_address->IsDefined()) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced WAS packet");
-            return false;
-        }
+        if (resource_address == nullptr || resource_address->IsDefined())
+            throw std::runtime_error("misplaced WAS packet");
 
-        if (!is_valid_absolute_path(payload, payload_length)) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed WAS packet");
-            return false;
-        }
+        if (!is_valid_absolute_path(payload, payload_length))
+            throw std::runtime_error("malformed WAS packet");
 
         SetCgiAddress(ResourceAddress::Type::WAS, payload);
-        return true;
+        return;
 
     case TRANSLATE_TRANSPARENT:
         response.transparent = true;
-        return true;
+        return;
 
     case TRANSLATE_WIDGET_INFO:
         response.widget_info = true;
-        return true;
+        return;
 
     case TRANSLATE_STICKY:
-        if (address_list == nullptr) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced STICKY packet");
-            return false;
-        }
+        if (address_list == nullptr)
+            throw std::runtime_error("misplaced STICKY packet");
 
         address_list->SetStickyMode(StickyMode::SESSION_MODULO);
-        return true;
+        return;
 
     case TRANSLATE_DUMP_HEADERS:
         response.dump_headers = true;
-        return true;
+        return;
 
     case TRANSLATE_COOKIE_HOST:
-        if (resource_address == nullptr || !resource_address->IsDefined()) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced COOKIE_HOST packet");
-            return false;
-        }
+        if (resource_address == nullptr || !resource_address->IsDefined())
+            throw std::runtime_error("misplaced COOKIE_HOST packet");
 
-        if (!is_valid_nonempty_string(payload, payload_length)) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed COOKIE_HOST packet");
-            return false;
-        }
+        if (!is_valid_nonempty_string(payload, payload_length))
+            throw std::runtime_error("malformed COOKIE_HOST packet");
 
         response.cookie_host = payload;
-        return true;
+        return;
 
     case TRANSLATE_COOKIE_PATH:
-        if (response.cookie_path != nullptr) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced COOKIE_PATH packet");
-            return false;
-        }
+        if (response.cookie_path != nullptr)
+            throw std::runtime_error("misplaced COOKIE_PATH packet");
 
-        if (!is_valid_absolute_uri(payload, payload_length)) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed COOKIE_PATH packet");
-            return false;
-        }
+        if (!is_valid_absolute_uri(payload, payload_length))
+            throw std::runtime_error("malformed COOKIE_PATH packet");
 
         response.cookie_path = payload;
-        return true;
+        return;
 
     case TRANSLATE_PROCESS_CSS:
         new_transformation = AddTransformation();
         new_transformation->type = Transformation::Type::PROCESS_CSS;
         new_transformation->u.css_processor.options = CSS_PROCESSOR_REWRITE_URL;
-        return true;
+        return;
 
     case TRANSLATE_PREFIX_CSS_CLASS:
-        if (transformation == nullptr) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced PREFIX_CSS_CLASS packet");
-            return false;
-        }
+        if (transformation == nullptr)
+            throw std::runtime_error("misplaced PREFIX_CSS_CLASS packet");
 
         switch (transformation->type) {
         case Transformation::Type::PROCESS:
@@ -2437,19 +1806,14 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
             break;
 
         default:
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced PREFIX_CSS_CLASS packet");
-            return false;
+            throw std::runtime_error("misplaced PREFIX_CSS_CLASS packet");
         }
 
-        return true;
+        return;
 
     case TRANSLATE_PREFIX_XML_ID:
-        if (transformation == nullptr) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced PREFIX_XML_ID packet");
-            return false;
-        }
+        if (transformation == nullptr)
+            throw std::runtime_error("misplaced PREFIX_XML_ID packet");
 
         switch (transformation->type) {
         case Transformation::Type::PROCESS:
@@ -2461,66 +1825,49 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
             break;
 
         default:
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced PREFIX_XML_ID packet");
-            return false;
+            throw std::runtime_error("misplaced PREFIX_XML_ID packet");
         }
 
-        return true;
+        return;
 
     case TRANSLATE_PROCESS_STYLE:
         if (transformation == nullptr ||
-            transformation->type != Transformation::Type::PROCESS) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced PROCESS_STYLE packet");
-            return false;
-        }
+            transformation->type != Transformation::Type::PROCESS)
+            throw std::runtime_error("misplaced PROCESS_STYLE packet");
 
         transformation->u.processor.options |= PROCESSOR_STYLE;
-        return true;
+        return;
 
     case TRANSLATE_FOCUS_WIDGET:
         if (transformation == nullptr ||
-            transformation->type != Transformation::Type::PROCESS) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced FOCUS_WIDGET packet");
-            return false;
-        }
+            transformation->type != Transformation::Type::PROCESS)
+            throw std::runtime_error("misplaced FOCUS_WIDGET packet");
 
         transformation->u.processor.options |= PROCESSOR_FOCUS_WIDGET;
-        return true;
+        return;
 
     case TRANSLATE_ANCHOR_ABSOLUTE:
         if (transformation == nullptr ||
-            transformation->type != Transformation::Type::PROCESS) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced ANCHOR_ABSOLUTE packet");
-            return false;
-        }
+            transformation->type != Transformation::Type::PROCESS)
+            throw std::runtime_error("misplaced ANCHOR_ABSOLUTE packet");
 
         response.anchor_absolute = true;
-        return true;
+        return;
 
     case TRANSLATE_PROCESS_TEXT:
         new_transformation = AddTransformation();
         new_transformation->type = Transformation::Type::PROCESS_TEXT;
-        return true;
+        return;
 
     case TRANSLATE_LOCAL_URI:
-        if (response.local_uri != nullptr) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced LOCAL_URI packet");
-            return false;
-        }
+        if (response.local_uri != nullptr)
+            throw std::runtime_error("misplaced LOCAL_URI packet");
 
-        if (payload_length == 0 || payload[payload_length - 1] != '/') {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed LOCAL_URI packet");
-            return false;
-        }
+        if (payload_length == 0 || payload[payload_length - 1] != '/')
+            throw std::runtime_error("malformed LOCAL_URI packet");
 
         response.local_uri = payload;
-        return true;
+        return;
 
     case TRANSLATE_AUTO_BASE:
         if (resource_address != &response.address ||
@@ -2529,945 +1876,653 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
             cgi_address->path_info == nullptr ||
             from_request.uri == nullptr ||
             response.base != nullptr ||
-            response.auto_base) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced AUTO_BASE packet");
-            return false;
-        }
+            response.auto_base)
+            throw std::runtime_error("misplaced AUTO_BASE packet");
 
         response.auto_base = true;
-        return true;
+        return;
 
     case TRANSLATE_VALIDATE_MTIME:
         if (payload_length < 10 || payload[8] != '/' ||
-            memchr(payload + 9, 0, payload_length - 9) != nullptr) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed VALIDATE_MTIME packet");
-            return false;
-        }
+            memchr(payload + 9, 0, payload_length - 9) != nullptr)
+            throw std::runtime_error("malformed VALIDATE_MTIME packet");
 
         response.validate_mtime.mtime = *(const uint64_t *)_payload;
         response.validate_mtime.path =
             p_strndup(pool, payload + 8, payload_length - 8);
-        return true;
+        return;
 
     case TRANSLATE_LHTTP_PATH:
-        if (resource_address == nullptr || resource_address->IsDefined()) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced LHTTP_PATH packet");
-            return false;
-        }
+        if (resource_address == nullptr || resource_address->IsDefined())
+            throw std::runtime_error("misplaced LHTTP_PATH packet");
 
-        if (!is_valid_absolute_path(payload, payload_length)) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed LHTTP_PATH packet");
-            return false;
-        }
+        if (!is_valid_absolute_path(payload, payload_length))
+            throw std::runtime_error("malformed LHTTP_PATH packet");
 
         lhttp_address = NewFromPool<LhttpAddress>(*pool, payload);
         *resource_address = *lhttp_address;
 
         args_builder = lhttp_address->args;
         SetChildOptions(lhttp_address->options);
-        return true;
+        return;
 
     case TRANSLATE_LHTTP_URI:
         if (lhttp_address == nullptr ||
-            lhttp_address->uri != nullptr) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced LHTTP_HOST packet");
-            return false;
-        }
+            lhttp_address->uri != nullptr)
+            throw std::runtime_error("misplaced LHTTP_HOST packet");
 
-        if (!is_valid_absolute_uri(payload, payload_length)) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed LHTTP_URI packet");
-            return false;
-        }
+        if (!is_valid_absolute_uri(payload, payload_length))
+            throw std::runtime_error("malformed LHTTP_URI packet");
 
         lhttp_address->uri = payload;
-        return true;
+        return;
 
     case TRANSLATE_EXPAND_LHTTP_URI:
         if (lhttp_address == nullptr ||
             lhttp_address->uri == nullptr ||
             lhttp_address->expand_uri != nullptr ||
-            response.regex == nullptr) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced EXPAND_LHTTP_URI packet");
-            return false;
-        }
+            response.regex == nullptr)
+            throw std::runtime_error("misplaced EXPAND_LHTTP_URI packet");
 
-        if (!is_valid_nonempty_string(payload, payload_length)) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed EXPAND_LHTTP_URI packet");
-            return false;
-        }
+        if (!is_valid_nonempty_string(payload, payload_length))
+            throw std::runtime_error("malformed EXPAND_LHTTP_URI packet");
 
         lhttp_address->expand_uri = payload;
-        return true;
+        return;
 
     case TRANSLATE_LHTTP_HOST:
         if (lhttp_address == nullptr ||
-            lhttp_address->host_and_port != nullptr) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced LHTTP_HOST packet");
-            return false;
-        }
+            lhttp_address->host_and_port != nullptr)
+            throw std::runtime_error("misplaced LHTTP_HOST packet");
 
-        if (!is_valid_nonempty_string(payload, payload_length)) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed LHTTP_HOST packet");
-            return false;
-        }
+        if (!is_valid_nonempty_string(payload, payload_length))
+            throw std::runtime_error("malformed LHTTP_HOST packet");
 
         lhttp_address->host_and_port = payload;
-        return true;
+        return;
 
     case TRANSLATE_CONCURRENCY:
-        if (lhttp_address == nullptr) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced CONCURRENCY packet");
-            return false;
-        }
+        if (lhttp_address == nullptr)
+            throw std::runtime_error("misplaced CONCURRENCY packet");
 
-        if (payload_length != 2) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed CONCURRENCY packet");
-            return false;
-        }
+        if (payload_length != 2)
+            throw std::runtime_error("malformed CONCURRENCY packet");
 
         lhttp_address->concurrency = *(const uint16_t *)_payload;
-        return true;
+        return;
 
     case TRANSLATE_WANT_FULL_URI:
-        if (from_request.want_full_uri) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "WANT_FULL_URI loop");
-            return false;
-        }
+        if (from_request.want_full_uri)
+            throw std::runtime_error("WANT_FULL_URI loop");
 
-        if (!response.want_full_uri.IsNull()) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "duplicate WANT_FULL_URI packet");
-            return false;
-        }
+        if (!response.want_full_uri.IsNull())
+            throw std::runtime_error("duplicate WANT_FULL_URI packet");
 
         response.want_full_uri = { payload, payload_length };
-        return true;
+        return;
 
     case TRANSLATE_USER_NAMESPACE:
-        if (payload_length != 0) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed USER_NAMESPACE packet");
-            return false;
-        }
+        if (payload_length != 0)
+            throw std::runtime_error("malformed USER_NAMESPACE packet");
 
         if (ns_options != nullptr) {
             ns_options->enable_user = true;
-        } else {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced USER_NAMESPACE packet");
-            return false;
-        }
+        } else
+            throw std::runtime_error("misplaced USER_NAMESPACE packet");
 
-        return true;
+        return;
 
     case TRANSLATE_PID_NAMESPACE:
-        if (payload_length != 0) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed PID_NAMESPACE packet");
-            return false;
-        }
+        if (payload_length != 0)
+            throw std::runtime_error("malformed PID_NAMESPACE packet");
 
         if (ns_options != nullptr) {
             ns_options->enable_pid = true;
-        } else {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced PID_NAMESPACE packet");
-            return false;
-        }
+        } else
+            throw std::runtime_error("misplaced PID_NAMESPACE packet");
 
-        return true;
+        return;
 
     case TRANSLATE_NETWORK_NAMESPACE:
-        if (payload_length != 0) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed NETWORK_NAMESPACE packet");
-            return false;
-        }
+        if (payload_length != 0)
+            throw std::runtime_error("malformed NETWORK_NAMESPACE packet");
 
         if (ns_options != nullptr) {
             ns_options->enable_network = true;
-        } else {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced NETWORK_NAMESPACE packet");
-            return false;
-        }
+        } else
+            throw std::runtime_error("misplaced NETWORK_NAMESPACE packet");
 
-        return true;
+        return;
 
     case TRANSLATE_PIVOT_ROOT:
-        return translate_client_pivot_root(ns_options, payload, payload_length,
-                                           error_r);
+        translate_client_pivot_root(ns_options, payload, payload_length);
+        return;
 
     case TRANSLATE_MOUNT_PROC:
-        return translate_client_mount_proc(ns_options, payload_length,
-                                           error_r);
+        translate_client_mount_proc(ns_options, payload_length);
+        return;
 
     case TRANSLATE_MOUNT_HOME:
-        return translate_client_mount_home(ns_options, payload, payload_length,
-                                           error_r);
+        translate_client_mount_home(ns_options, payload, payload_length);
+        return;
 
     case TRANSLATE_BIND_MOUNT:
-        return HandleBindMount(payload, payload_length, false, false, error_r);
+        HandleBindMount(payload, payload_length, false, false);
+        return;
 
     case TRANSLATE_MOUNT_TMP_TMPFS:
-        return translate_client_mount_tmp_tmpfs(ns_options,
-                                                { payload, payload_length },
-                                                error_r);
+        translate_client_mount_tmp_tmpfs(ns_options,
+                                         { payload, payload_length });
+        return;
 
     case TRANSLATE_UTS_NAMESPACE:
-        return translate_client_uts_namespace(ns_options, payload, error_r);
+        translate_client_uts_namespace(ns_options, payload);
+        return;
 
     case TRANSLATE_RLIMITS:
-        return translate_client_rlimits(*pool, child_options, payload, error_r);
+        translate_client_rlimits(*pool, child_options, payload);
+        return;
 
     case TRANSLATE_WANT:
-        return HandleWant((const uint16_t *)_payload, payload_length, error_r);
+        HandleWant((const uint16_t *)_payload, payload_length);
+        return;
 
     case TRANSLATE_FILE_NOT_FOUND:
-        return translate_client_file_not_found(response,
-                                               { _payload, payload_length },
-                                               error_r);
+        translate_client_file_not_found(response,
+                                        { _payload, payload_length });
+        return;
 
     case TRANSLATE_CONTENT_TYPE_LOOKUP:
-        return HandleContentTypeLookup({ _payload, payload_length }, error_r);
+        HandleContentTypeLookup({ _payload, payload_length });
+        return;
 
     case TRANSLATE_DIRECTORY_INDEX:
-        return translate_client_directory_index(response,
-                                                { _payload, payload_length },
-                                                error_r);
+        translate_client_directory_index(response,
+                                         { _payload, payload_length });
+        return;
 
     case TRANSLATE_EXPIRES_RELATIVE:
-        return translate_client_expires_relative(response,
-                                                 { _payload, payload_length },
-                                                 error_r);
+        translate_client_expires_relative(response,
+                                          { _payload, payload_length });
+        return;
 
 
     case TRANSLATE_TEST_PATH:
-        if (!is_valid_absolute_path(payload, payload_length)) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed TEST_PATH packet");
-            return false;
-        }
+        if (!is_valid_absolute_path(payload, payload_length))
+            throw std::runtime_error("malformed TEST_PATH packet");
 
-        if (response.test_path != nullptr) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "duplicate TEST_PATH packet");
-            return false;
-        }
+        if (response.test_path != nullptr)
+            throw std::runtime_error("duplicate TEST_PATH packet");
 
         response.test_path = payload;
-        return true;
+        return;
 
     case TRANSLATE_EXPAND_TEST_PATH:
-        if (response.regex == nullptr) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced EXPAND_TEST_PATH packet");
-            return false;
-        }
+        if (response.regex == nullptr)
+            throw std::runtime_error("misplaced EXPAND_TEST_PATH packet");
 
-        if (!is_valid_nonempty_string(payload, payload_length)) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed EXPAND_TEST_PATH packet");
-            return false;
-        }
+        if (!is_valid_nonempty_string(payload, payload_length))
+            throw std::runtime_error("malformed EXPAND_TEST_PATH packet");
 
-        if (response.expand_test_path != nullptr) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "duplicate EXPAND_TEST_PATH packet");
-            return false;
-        }
+        if (response.expand_test_path != nullptr)
+            throw std::runtime_error("duplicate EXPAND_TEST_PATH packet");
 
         response.expand_test_path = payload;
-        return true;
+        return;
 
     case TRANSLATE_REDIRECT_QUERY_STRING:
-        if (payload_length != 0) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed REDIRECT_QUERY_STRING packet");
-            return false;
-        }
+        if (payload_length != 0)
+            throw std::runtime_error("malformed REDIRECT_QUERY_STRING packet");
 
         if (response.redirect_query_string ||
             (response.redirect == nullptr &&
-             response.expand_redirect == nullptr)) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced REDIRECT_QUERY_STRING packet");
-            return false;
-        }
+             response.expand_redirect == nullptr))
+            throw std::runtime_error("misplaced REDIRECT_QUERY_STRING packet");
 
         response.redirect_query_string = true;
-        return true;
+        return;
 
     case TRANSLATE_ENOTDIR:
-        return translate_client_enotdir(response, { _payload, payload_length },
-                                        error_r);
+        translate_client_enotdir(response, { _payload, payload_length });
+        return;
 
     case TRANSLATE_STDERR_PATH:
-        return translate_client_stderr_path(child_options,
-                                            { _payload, payload_length },
-                                            error_r);
+        translate_client_stderr_path(child_options,
+                                     { _payload, payload_length });
+        return;
 
     case TRANSLATE_AUTH:
-        if (response.HasAuth()) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "duplicate AUTH packet");
-            return false;
-        }
+        if (response.HasAuth())
+            throw std::runtime_error("duplicate AUTH packet");
 
         response.auth = { payload, payload_length };
-        return true;
+        return;
 
     case TRANSLATE_SETENV:
         if (child_options != nullptr) {
-            return translate_client_pair(*pool, env_builder,
-                                         "SETENV",
-                                         payload, payload_length,
-                                         error_r);
-        } else {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced SETENV packet");
-            return false;
-        }
+            translate_client_pair(*pool, env_builder,
+                                  "SETENV",
+                                  payload, payload_length);
+        } else
+            throw std::runtime_error("misplaced SETENV packet");
+        return;
 
     case TRANSLATE_EXPAND_SETENV:
-        if (response.regex == nullptr) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced EXPAND_SETENV packet");
-            return false;
-        }
+        if (response.regex == nullptr)
+            throw std::runtime_error("misplaced EXPAND_SETENV packet");
 
         if (child_options != nullptr) {
-            return translate_client_expand_pair(env_builder,
-                                                "EXPAND_SETENV",
-                                                payload, payload_length,
-                                                error_r);
-        } else {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced SETENV packet");
-            return false;
-        }
+            translate_client_expand_pair(env_builder,
+                                         "EXPAND_SETENV",
+                                         payload, payload_length);
+        } else
+            throw std::runtime_error("misplaced SETENV packet");
+        return;
 
     case TRANSLATE_EXPAND_URI:
         if (response.regex == nullptr ||
             response.uri == nullptr ||
-            response.expand_uri != nullptr) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced EXPAND_URI packet");
-            return false;
-        }
+            response.expand_uri != nullptr)
+            throw std::runtime_error("misplaced EXPAND_URI packet");
 
-        if (!is_valid_nonempty_string(payload, payload_length)) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed EXPAND_URI packet");
-            return false;
-        }
+        if (!is_valid_nonempty_string(payload, payload_length))
+            throw std::runtime_error("malformed EXPAND_URI packet");
 
         response.expand_uri = payload;
-        return true;
+        return;
 
     case TRANSLATE_EXPAND_SITE:
         if (response.regex == nullptr ||
             response.site == nullptr ||
-            response.expand_site != nullptr) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced EXPAND_SITE packet");
-            return false;
-        }
+            response.expand_site != nullptr)
+            throw std::runtime_error("misplaced EXPAND_SITE packet");
 
-        if (!is_valid_nonempty_string(payload, payload_length)) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed EXPAND_SITE packet");
-            return false;
-        }
+        if (!is_valid_nonempty_string(payload, payload_length))
+            throw std::runtime_error("malformed EXPAND_SITE packet");
 
         response.expand_site = payload;
-        return true;
+        return;
 
     case TRANSLATE_REQUEST_HEADER:
-        if (!parse_header(pool, response.request_headers,
-                          "REQUEST_HEADER", payload, payload_length, error_r))
-            return false;
-
-        return true;
+        parse_header(pool, response.request_headers,
+                     "REQUEST_HEADER", payload, payload_length);
+        return;
 
     case TRANSLATE_EXPAND_REQUEST_HEADER:
-        if (response.regex == nullptr) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced EXPAND_REQUEST_HEADERS packet");
-            return false;
-        }
+        if (response.regex == nullptr)
+            throw std::runtime_error("misplaced EXPAND_REQUEST_HEADERS packet");
 
-        if (!parse_header(pool,
-                          response.expand_request_headers,
-                          "EXPAND_REQUEST_HEADER", payload, payload_length,
-                          error_r))
-            return false;
-
-        return true;
+        parse_header(pool,
+                     response.expand_request_headers,
+                     "EXPAND_REQUEST_HEADER", payload, payload_length);
+        return;
 
     case TRANSLATE_AUTO_GZIPPED:
-        if (payload_length > 0) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed AUTO_GZIPPED packet");
-            return false;
-        }
+        if (payload_length > 0)
+            throw std::runtime_error("malformed AUTO_GZIPPED packet");
 
         if (file_address != nullptr) {
             if (file_address->auto_gzipped ||
-                file_address->gzipped != nullptr) {
-                g_set_error_literal(error_r, translate_quark(), 0,
-                                    "misplaced AUTO_GZIPPED packet");
-                return false;
-            }
+                file_address->gzipped != nullptr)
+                throw std::runtime_error("misplaced AUTO_GZIPPED packet");
 
             file_address->auto_gzipped = true;
-            return true;
         } else if (nfs_address != nullptr) {
             /* ignore for now */
-        } else {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced AUTO_GZIPPED packet");
-            return false;
-        }
+        } else
+            throw std::runtime_error("misplaced AUTO_GZIPPED packet");
+        return;
 
     case TRANSLATE_PROBE_PATH_SUFFIXES:
         if (!response.probe_path_suffixes.IsNull() ||
             (response.test_path == nullptr &&
-             response.expand_test_path == nullptr)) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced PROBE_PATH_SUFFIXES packet");
-            return false;
-        }
+             response.expand_test_path == nullptr))
+            throw std::runtime_error("misplaced PROBE_PATH_SUFFIXES packet");
 
         response.probe_path_suffixes = { payload, payload_length };
-        return true;
+        return;
 
     case TRANSLATE_PROBE_SUFFIX:
-        if (response.probe_path_suffixes.IsNull()) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced PROBE_SUFFIX packet");
-            return false;
-        }
+        if (response.probe_path_suffixes.IsNull())
+            throw std::runtime_error("misplaced PROBE_SUFFIX packet");
 
-        if (response.probe_suffixes.full()) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "too many PROBE_SUFFIX packets");
-            return false;
-        }
+        if (response.probe_suffixes.full())
+            throw std::runtime_error("too many PROBE_SUFFIX packets");
 
-        if (!CheckProbeSuffix(payload, payload_length)) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed PROBE_SUFFIX packets");
-            return false;
-        }
+        if (!CheckProbeSuffix(payload, payload_length))
+            throw std::runtime_error("malformed PROBE_SUFFIX packets");
 
         response.probe_suffixes.push_back(payload);
-        return true;
+        return;
 
     case TRANSLATE_AUTH_FILE:
-        if (response.HasAuth()) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "duplicate AUTH_FILE packet");
-            return false;
-        }
+        if (response.HasAuth())
+            throw std::runtime_error("duplicate AUTH_FILE packet");
 
-        if (!is_valid_absolute_path(payload, payload_length)) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed AUTH_FILE packet");
-            return false;
-        }
+        if (!is_valid_absolute_path(payload, payload_length))
+            throw std::runtime_error("malformed AUTH_FILE packet");
 
         response.auth_file = payload;
-        return true;
+        return;
 
     case TRANSLATE_EXPAND_AUTH_FILE:
-        if (response.HasAuth()) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "duplicate EXPAND_AUTH_FILE packet");
-            return false;
-        }
+        if (response.HasAuth())
+            throw std::runtime_error("duplicate EXPAND_AUTH_FILE packet");
 
-        if (!is_valid_nonempty_string(payload, payload_length)) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed EXPAND_AUTH_FILE packet");
-            return false;
-        }
+        if (!is_valid_nonempty_string(payload, payload_length))
+            throw std::runtime_error("malformed EXPAND_AUTH_FILE packet");
 
-        if (response.regex == nullptr) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced EXPAND_AUTH_FILE packet");
-            return false;
-        }
+        if (response.regex == nullptr)
+            throw std::runtime_error("misplaced EXPAND_AUTH_FILE packet");
 
         response.expand_auth_file = payload;
-        return true;
+        return;
 
     case TRANSLATE_APPEND_AUTH:
         if (!response.HasAuth() ||
             !response.append_auth.IsNull() ||
-            response.expand_append_auth != nullptr) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced APPEND_AUTH packet");
-            return false;
-        }
+            response.expand_append_auth != nullptr)
+            throw std::runtime_error("misplaced APPEND_AUTH packet");
 
         response.append_auth = { payload, payload_length };
-        return true;
+        return;
 
     case TRANSLATE_EXPAND_APPEND_AUTH:
         if (response.regex == nullptr ||
             !response.HasAuth() ||
             !response.append_auth.IsNull() ||
-            response.expand_append_auth != nullptr) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced EXPAND_APPEND_AUTH packet");
-            return false;
-        }
+            response.expand_append_auth != nullptr)
+            throw std::runtime_error("misplaced EXPAND_APPEND_AUTH packet");
 
-        if (!is_valid_nonempty_string(payload, payload_length)) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed EXPAND_APPEND_AUTH packet");
-            return false;
-        }
+        if (!is_valid_nonempty_string(payload, payload_length))
+            throw std::runtime_error("malformed EXPAND_APPEND_AUTH packet");
 
         response.expand_append_auth = payload;
-        return true;
+        return;
 
     case TRANSLATE_EXPAND_COOKIE_HOST:
         if (response.regex == nullptr ||
             resource_address == nullptr ||
-            !resource_address->IsDefined()) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced EXPAND_COOKIE_HOST packet");
-            return false;
-        }
+            !resource_address->IsDefined())
+            throw std::runtime_error("misplaced EXPAND_COOKIE_HOST packet");
 
-        if (!is_valid_nonempty_string(payload, payload_length)) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed EXPAND_COOKIE_HOST packet");
-            return false;
-        }
+        if (!is_valid_nonempty_string(payload, payload_length))
+            throw std::runtime_error("malformed EXPAND_COOKIE_HOST packet");
 
         response.expand_cookie_host = payload;
-        return true;
+        return;
 
     case TRANSLATE_EXPAND_BIND_MOUNT:
-        return HandleBindMount(payload, payload_length, true, false, error_r);
+        HandleBindMount(payload, payload_length, true, false);
+        return;
 
     case TRANSLATE_NON_BLOCKING:
-        if (payload_length > 0) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed NON_BLOCKING packet");
-            return false;
-        }
+        if (payload_length > 0)
+            throw std::runtime_error("malformed NON_BLOCKING packet");
 
         if (lhttp_address != nullptr) {
             lhttp_address->blocking = false;
-            return true;
-        } else {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced NON_BLOCKING packet");
-            return false;
-        }
+        } else
+            throw std::runtime_error("misplaced NON_BLOCKING packet");
+
+        return;
 
     case TRANSLATE_READ_FILE:
         if (response.read_file != nullptr ||
-            response.expand_read_file != nullptr) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "duplicate READ_FILE packet");
-            return false;
-        }
+            response.expand_read_file != nullptr)
+            throw std::runtime_error("duplicate READ_FILE packet");
 
-        if (!is_valid_absolute_path(payload, payload_length)) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed READ_FILE packet");
-            return false;
-        }
+        if (!is_valid_absolute_path(payload, payload_length))
+            throw std::runtime_error("malformed READ_FILE packet");
 
         response.read_file = payload;
-        return true;
+        return;
 
     case TRANSLATE_EXPAND_READ_FILE:
         if (response.read_file != nullptr ||
-            response.expand_read_file != nullptr) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "duplicate EXPAND_READ_FILE packet");
-            return false;
-        }
+            response.expand_read_file != nullptr)
+            throw std::runtime_error("duplicate EXPAND_READ_FILE packet");
 
-        if (!is_valid_nonempty_string(payload, payload_length)) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed EXPAND_READ_FILE packet");
-            return false;
-        }
+        if (!is_valid_nonempty_string(payload, payload_length))
+            throw std::runtime_error("malformed EXPAND_READ_FILE packet");
 
         response.expand_read_file = payload;
-        return true;
+        return;
 
     case TRANSLATE_EXPAND_HEADER:
-        if (response.regex == nullptr) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced EXPAND_HEADER packet");
-            return false;
-        }
+        if (response.regex == nullptr)
+            throw std::runtime_error("misplaced EXPAND_HEADER packet");
 
-        if (!parse_header(pool,
-                          response.expand_response_headers,
-                          "EXPAND_HEADER", payload, payload_length,
-                          error_r))
-            return false;
-
-        return true;
+        parse_header(pool,
+                     response.expand_response_headers,
+                     "EXPAND_HEADER", payload, payload_length);
+        return;
 
     case TRANSLATE_REGEX_ON_HOST_URI:
         if (response.regex == nullptr &&
-            response.inverse_regex == nullptr) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "REGEX_ON_HOST_URI without REGEX");
-            return false;
-        }
+            response.inverse_regex == nullptr)
+            throw std::runtime_error("REGEX_ON_HOST_URI without REGEX");
 
-        if (response.regex_on_host_uri) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "duplicate REGEX_ON_HOST_URI");
-            return false;
-        }
+        if (response.regex_on_host_uri)
+            throw std::runtime_error("duplicate REGEX_ON_HOST_URI");
 
-        if (payload_length > 0) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed REGEX_ON_HOST_URI packet");
-            return false;
-        }
+        if (payload_length > 0)
+            throw std::runtime_error("malformed REGEX_ON_HOST_URI packet");
 
         response.regex_on_host_uri = true;
-        return true;
+        return;
 
     case TRANSLATE_SESSION_SITE:
         response.session_site = payload;
-        return true;
+        return;
 
     case TRANSLATE_IPC_NAMESPACE:
-        if (payload_length != 0) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed IPC_NAMESPACE packet");
-            return false;
-        }
+        if (payload_length != 0)
+            throw std::runtime_error("malformed IPC_NAMESPACE packet");
 
         if (ns_options != nullptr) {
             ns_options->enable_ipc = true;
-        } else {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced IPC_NAMESPACE packet");
-            return false;
-        }
+        } else
+            throw std::runtime_error("misplaced IPC_NAMESPACE packet");
 
-        return true;
+        return;
 
     case TRANSLATE_AUTO_DEFLATE:
-        if (payload_length > 0) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed AUTO_DEFLATE packet");
-            return false;
-        }
+        if (payload_length > 0)
+            throw std::runtime_error("malformed AUTO_DEFLATE packet");
 
-        if (response.auto_deflate) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced AUTO_DEFLATE packet");
-            return false;
-        }
+        if (response.auto_deflate)
+            throw std::runtime_error("misplaced AUTO_DEFLATE packet");
 
         response.auto_deflate = true;
-        return true;
+        return;
 
     case TRANSLATE_EXPAND_HOME:
-        return translate_client_expand_home(ns_options, jail,
-                                            payload, payload_length,
-                                            error_r);
+        translate_client_expand_home(ns_options, jail,
+                                     payload, payload_length);
+        return;
 
 
     case TRANSLATE_EXPAND_STDERR_PATH:
-        return translate_client_expand_stderr_path(child_options,
-                                                   { _payload, payload_length },
-                                                   error_r);
+        translate_client_expand_stderr_path(child_options,
+                                            { _payload, payload_length });
+        return;
 
     case TRANSLATE_REGEX_ON_USER_URI:
         if (response.regex == nullptr &&
-            response.inverse_regex == nullptr) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "REGEX_ON_USER_URI without REGEX");
-            return false;
-        }
+            response.inverse_regex == nullptr)
+            throw std::runtime_error("REGEX_ON_USER_URI without REGEX");
 
-        if (response.regex_on_user_uri) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "duplicate REGEX_ON_USER_URI");
-            return false;
-        }
+        if (response.regex_on_user_uri)
+            throw std::runtime_error("duplicate REGEX_ON_USER_URI");
 
-        if (payload_length > 0) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed REGEX_ON_USER_URI packet");
-            return false;
-        }
+        if (payload_length > 0)
+            throw std::runtime_error("malformed REGEX_ON_USER_URI packet");
 
         response.regex_on_user_uri = true;
-        return true;
+        return;
 
     case TRANSLATE_AUTO_GZIP:
-        if (payload_length > 0) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed AUTO_GZIP packet");
-            return false;
-        }
+        if (payload_length > 0)
+            throw std::runtime_error("malformed AUTO_GZIP packet");
 
-        if (response.auto_gzip) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced AUTO_GZIP packet");
-            return false;
-        }
+        if (response.auto_gzip)
+            throw std::runtime_error("misplaced AUTO_GZIP packet");
 
         response.auto_gzip = true;
-        return true;
+        return;
 
     case TRANSLATE_INTERNAL_REDIRECT:
-        if (!response.internal_redirect.IsNull()) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "duplicate INTERNAL_REDIRECT packet");
-            return false;
-        }
+        if (!response.internal_redirect.IsNull())
+            throw std::runtime_error("duplicate INTERNAL_REDIRECT packet");
 
         response.internal_redirect = { payload, payload_length };
-        return true;
+        return;
 
     case TRANSLATE_REFENCE:
-        return HandleRefence({payload, payload_length}, error_r);
+        HandleRefence({payload, payload_length});
+        return;
 
     case TRANSLATE_INVERSE_REGEX_UNESCAPE:
-        if (payload_length > 0) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed INVERSE_REGEX_UNESCAPE packet");
-            return false;
-        }
+        if (payload_length > 0)
+            throw std::runtime_error("malformed INVERSE_REGEX_UNESCAPE packet");
 
-        if (response.inverse_regex == nullptr) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced INVERSE_REGEX_UNESCAPE packet");
-            return false;
-        }
+        if (response.inverse_regex == nullptr)
+            throw std::runtime_error("misplaced INVERSE_REGEX_UNESCAPE packet");
 
-        if (response.inverse_regex_unescape) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "duplicate INVERSE_REGEX_UNESCAPE packet");
-            return false;
-        }
+        if (response.inverse_regex_unescape)
+            throw std::runtime_error("duplicate INVERSE_REGEX_UNESCAPE packet");
 
         response.inverse_regex_unescape = true;
-        return true;
+        return;
 
     case TRANSLATE_BIND_MOUNT_RW:
-        return HandleBindMount(payload, payload_length, false, true, error_r);
+        HandleBindMount(payload, payload_length, false, true);
+        return;
 
     case TRANSLATE_EXPAND_BIND_MOUNT_RW:
-        return HandleBindMount(payload, payload_length, true, true, error_r);
+        HandleBindMount(payload, payload_length, true, true);
+        return;
 
     case TRANSLATE_UNTRUSTED_RAW_SITE_SUFFIX:
         if (!is_valid_nonempty_string(payload, payload_length) ||
-            payload[payload_length - 1] == '.') {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed UNTRUSTED_RAW_SITE_SUFFIX packet");
-            return false;
-        }
+            payload[payload_length - 1] == '.')
+            throw std::runtime_error("malformed UNTRUSTED_RAW_SITE_SUFFIX packet");
 
-        if (response.HasUntrusted()) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced UNTRUSTED_RAW_SITE_SUFFIX packet");
-            return false;
-        }
+        if (response.HasUntrusted())
+            throw std::runtime_error("misplaced UNTRUSTED_RAW_SITE_SUFFIX packet");
 
         response.untrusted_raw_site_suffix = payload;
-        return true;
+        return;
 
     case TRANSLATE_MOUNT_TMPFS:
-        return translate_client_mount_tmpfs(ns_options,
-                                            payload, payload_length,
-                                            error_r);
+        translate_client_mount_tmpfs(ns_options, payload, payload_length);
+        return;
 
     case TRANSLATE_REVEAL_USER:
-        if (payload_length > 0) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed REVEAL_USER packet");
-            return false;
-        }
+        if (payload_length > 0)
+            throw std::runtime_error("malformed REVEAL_USER packet");
 
         if (transformation == nullptr ||
             transformation->type != Transformation::Type::FILTER ||
-            transformation->u.filter.reveal_user) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced REVEAL_USER packet");
-            return false;
-        }
+            transformation->u.filter.reveal_user)
+            throw std::runtime_error("misplaced REVEAL_USER packet");
 
         transformation->u.filter.reveal_user = true;
-        return true;
+        return;
 
     case TRANSLATE_REALM_FROM_AUTH_BASE:
-        if (payload_length > 0) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed REALM_FROM_AUTH_BASE packet");
-            return false;
-        }
+        if (payload_length > 0)
+            throw std::runtime_error("malformed REALM_FROM_AUTH_BASE packet");
 
-        if (response.realm_from_auth_base) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "duplicate REALM_FROM_AUTH_BASE packet");
-            return false;
-        }
+        if (response.realm_from_auth_base)
+            throw std::runtime_error("duplicate REALM_FROM_AUTH_BASE packet");
 
-        if (response.realm != nullptr || !response.HasAuth()) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced REALM_FROM_AUTH_BASE packet");
-            return false;
-        }
+        if (response.realm != nullptr || !response.HasAuth())
+            throw std::runtime_error("misplaced REALM_FROM_AUTH_BASE packet");
 
         response.realm_from_auth_base = true;
-        return true;
+        return;
 
     case TRANSLATE_NO_NEW_PRIVS:
-        if (child_options == nullptr || child_options->no_new_privs) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced NO_NEW_PRIVS packet");
-            return false;
-        }
+        if (child_options == nullptr || child_options->no_new_privs)
+            throw std::runtime_error("misplaced NO_NEW_PRIVS packet");
 
-        if (payload_length != 0) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed NO_NEW_PRIVS packet");
-            return false;
-        }
+        if (payload_length != 0)
+            throw std::runtime_error("malformed NO_NEW_PRIVS packet");
 
         child_options->no_new_privs = true;
-        return true;
+        return;
 
     case TRANSLATE_CGROUP:
         if (child_options == nullptr ||
-            child_options->cgroup.name != nullptr) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced CGROUP packet");
-            return false;
-        }
+            child_options->cgroup.name != nullptr)
+            throw std::runtime_error("misplaced CGROUP packet");
 
-        if (!valid_view_name(payload)) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed CGROUP packet");
-            return false;
-        }
+        if (!valid_view_name(payload))
+            throw std::runtime_error("malformed CGROUP packet");
 
         child_options->cgroup.name = payload;
-        return true;
+        return;
 
     case TRANSLATE_CGROUP_SET:
-        return HandleCgroupSet({payload, payload_length}, error_r);
+        HandleCgroupSet({payload, payload_length});
+        return;
 
     case TRANSLATE_EXTERNAL_SESSION_MANAGER:
-        if (!is_valid_nonempty_string(payload, payload_length)) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed EXTERNAL_SESSION_MANAGER packet");
-            return false;
-        }
+        if (!is_valid_nonempty_string(payload, payload_length))
+            throw std::runtime_error("malformed EXTERNAL_SESSION_MANAGER packet");
 
-        if (response.external_session_manager != nullptr) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "duplicate EXTERNAL_SESSION_MANAGER packet");
-            return false;
-        }
+        if (response.external_session_manager != nullptr)
+            throw std::runtime_error("duplicate EXTERNAL_SESSION_MANAGER packet");
 
         response.external_session_manager = http_address =
-            http_address_parse(pool, payload, error_r);
-        if (http_address == nullptr)
-            return false;
-
-        if (http_address->protocol != HttpAddress::Protocol::HTTP) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed EXTERNAL_SESSION_MANAGER packet");
-            return false;
-        }
+            http_address_parse(pool, payload);
+        if (http_address->protocol != HttpAddress::Protocol::HTTP)
+            throw std::runtime_error("malformed EXTERNAL_SESSION_MANAGER packet");
 
         address_list = &http_address->addresses;
         default_port = http_address->GetDefaultPort();
-        return true;
+        return;
 
     case TRANSLATE_EXTERNAL_SESSION_KEEPALIVE: {
         const uint16_t *value = (const uint16_t *)(const void *)payload;
-        if (payload_length != sizeof(*value) || *value == 0) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "malformed EXTERNAL_SESSION_KEEPALIVE packet");
-            return false;
-        }
+        if (payload_length != sizeof(*value) || *value == 0)
+            throw std::runtime_error("malformed EXTERNAL_SESSION_KEEPALIVE packet");
 
-        if (response.external_session_manager == nullptr) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "misplaced EXTERNAL_SESSION_KEEPALIVE packet");
-            return false;
-        }
+        if (response.external_session_manager == nullptr)
+            throw std::runtime_error("misplaced EXTERNAL_SESSION_KEEPALIVE packet");
 
-        if (response.external_session_keepalive != std::chrono::seconds::zero()) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "duplicate EXTERNAL_SESSION_KEEPALIVE packet");
-            return false;
-        }
+        if (response.external_session_keepalive != std::chrono::seconds::zero())
+            throw std::runtime_error("duplicate EXTERNAL_SESSION_KEEPALIVE packet");
 
         response.external_session_keepalive = std::chrono::seconds(*value);
-        return true;
+        return;
     }
     }
 
-    g_set_error(error_r, translate_quark(), 0,
-                "unknown translation packet: %u", command);
-    return false;
+    throw FormatRuntimeError("unknown translation packet: %u", command);
 }
 
 inline TranslateParser::Result
 TranslateParser::HandlePacket(enum beng_translation_command command,
-                              const void *const payload, size_t payload_length,
-                              GError **error_r)
+                              const void *const payload, size_t payload_length)
 {
     assert(payload != nullptr);
 
     if (command == TRANSLATE_BEGIN) {
-        if (response.status != (http_status_t)-1) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "double BEGIN from translation server");
-            return Result::ERROR;
-        }
+        if (response.status != (http_status_t)-1)
+            throw std::runtime_error("double BEGIN from translation server");
     } else {
-        if (response.status == (http_status_t)-1) {
-            g_set_error_literal(error_r, translate_quark(), 0,
-                                "no BEGIN from translation server");
-            return Result::ERROR;
-        }
+        if (response.status == (http_status_t)-1)
+            throw std::runtime_error("no BEGIN from translation server");
     }
 
     switch (command) {
     case TRANSLATE_END:
-        if (!translate_response_finish(&response, error_r))
-            return Result::ERROR;
+        translate_response_finish(&response);
 
-        if (!FinishView(error_r))
-            return Result::ERROR;
-
+        FinishView();
         return Result::DONE;
 
     case TRANSLATE_BEGIN:
@@ -3498,20 +2553,18 @@ TranslateParser::HandlePacket(enum beng_translation_command command,
         return Result::MORE;
 
     default:
-        return HandleRegularPacket(command, payload, payload_length, error_r)
-            ? Result::MORE
-            : Result::ERROR;
+        HandleRegularPacket(command, payload, payload_length);
+        return Result::MORE;
     }
 }
 
 TranslateParser::Result
-TranslateParser::Process(GError **error_r)
+TranslateParser::Process()
 {
     if (!reader.IsComplete())
         /* need more data */
         return Result::MORE;
 
     return HandlePacket(reader.GetCommand(),
-                        reader.GetPayload(), reader.GetLength(),
-                        error_r);
+                        reader.GetPayload(), reader.GetLength());
 }

@@ -28,7 +28,10 @@ struct JailParams {
     JailParams() = default;
     JailParams(struct pool *pool, const JailParams &src);
 
-    bool Check(GError **error_r) const;
+    /**
+     * Throws std::runtime_error on error.
+     */
+    void Check() const;
 
     char *MakeId(char *p) const;
 

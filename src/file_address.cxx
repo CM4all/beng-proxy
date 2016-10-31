@@ -30,10 +30,11 @@ FileAddress::FileAddress(struct pool *pool, const FileAddress &src)
      auto_gzipped(src.auto_gzipped) {
 }
 
-bool
-FileAddress::Check(GError **error_r) const
+void
+FileAddress::Check() const
 {
-    return delegate == nullptr || delegate->Check(error_r);
+    if (delegate != nullptr)
+        delegate->Check();
 }
 
 FileAddress *
