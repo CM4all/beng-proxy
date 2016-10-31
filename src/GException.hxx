@@ -31,4 +31,17 @@ ToGError(const std::exception &e)
     return g_error_new_literal(exception_quark(), 0, e.what());
 }
 
+static inline GError *
+ToGError(std::exception_ptr ep)
+{
+    try {
+        std::rethrow_exception(ep);
+    } catch (const std::exception &e) {
+        return ToGError(e);
+    } catch (...) {
+        return g_error_new_literal(exception_quark(), 0,
+                                   "Unexpected C++ exception");
+    }
+}
+
 #endif
