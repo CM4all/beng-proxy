@@ -123,14 +123,14 @@ enum write_result {
     WRITE_ERRNO = -1,
 
     /**
-     * The destination socket blocks.  The #buffered_socket library
+     * The destination socket blocks.  The #BufferedSocket library
      * has already scheduled the "write" event to resume writing
      * later.
      */
     WRITE_BLOCKING = -2,
 
     /**
-     * The #buffered_socket was destroyed inside the function call.
+     * The #BufferedSocket was destroyed inside the function call.
      */
     WRITE_DESTROYED = -3,
 
@@ -202,7 +202,7 @@ struct BufferedSocketHandler {
      * The output buffer was drained, and all data that has been
      * passed to buffered_socket_write() was written to the socket.
      *
-     * This method is not actually used by #buffered_socket; it is
+     * This method is not actually used by #BufferedSocket; it is
      * only implemented for #filtered_socket.
      *
      * @return false if the method has destroyed the socket
@@ -228,7 +228,7 @@ struct BufferedSocketHandler {
 
     /**
      * An I/O error on the socket has occurred.  After returning, it
-     * is assumed that the #buffered_socket object has been closed.
+     * is assumed that the #BufferedSocket object has been closed.
      *
      * @param error a description of the error, to be freed by the
      * callee
@@ -237,8 +237,7 @@ struct BufferedSocketHandler {
 };
 
 /**
- * A wrapper for #socket_wrapper that manages an optional input
- * buffer.
+ * A wrapper for #SocketWrapper that manages an optional input buffer.
  *
  * The object can have the following states:
  *

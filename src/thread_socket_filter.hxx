@@ -61,7 +61,7 @@ struct ThreadSocketFilter : ThreadJob {
 
     /**
      * The actual filter.  If this is NULL, then this object behaves
-     * just like #buffered_socket.
+     * just like #BufferedSocket.
      */
     ThreadSocketFilterHandler *const handler;
 

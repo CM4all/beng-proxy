@@ -101,7 +101,7 @@ public:
 };
 
 /**
- * A wrapper for #buffered_socket that can filter input and output.
+ * A wrapper for #BufferedSocket that can filter input and output.
  */
 struct FilteredSocket {
     BufferedSocket base;
@@ -112,7 +112,7 @@ struct FilteredSocket {
 
     /**
      * The actual filter.  If this is nullptr, then this object behaves
-     * just like #buffered_socket.
+     * just like #BufferedSocket.
      */
     const SocketFilter *filter;
     void *filter_ctx;
@@ -122,7 +122,7 @@ struct FilteredSocket {
 
     /**
      * Is there still data in the filter's output?  Once this turns
-     * from "false" to "true", the #buffered_socket_handler method
+     * from "false" to "true", the #BufferedSocket_handler method
      * drained() will be invoked.
      */
     bool drained;
