@@ -186,7 +186,7 @@ inbound_buffered_socket_error(std::exception_ptr ep, void *ctx)
     LbTcpConnection *tcp = (LbTcpConnection *)ctx;
 
     lb_tcp_close(tcp);
-    tcp->handler->gerror("Error", ToGError(ep), tcp->handler_ctx);
+    tcp->handler->exception("Error", ep, tcp->handler_ctx);
 }
 
 static constexpr BufferedSocketHandler inbound_buffered_socket_handler = {
@@ -312,7 +312,7 @@ outbound_buffered_socket_error(std::exception_ptr ep, void *ctx)
     LbTcpConnection *tcp = (LbTcpConnection *)ctx;
 
     lb_tcp_close(tcp);
-    tcp->handler->gerror("Error", ToGError(ep), tcp->handler_ctx);
+    tcp->handler->exception("Error", ep, tcp->handler_ctx);
 }
 
 static constexpr BufferedSocketHandler outbound_buffered_socket_handler = {
@@ -363,7 +363,7 @@ void
 LbTcpConnection::OnSocketConnectError(std::exception_ptr ep)
 {
     DestroyInbound();
-    handler->gerror("Connect error", ToGError(ep), handler_ctx);
+    handler->exception("Connect error", ep, handler_ctx);
 }
 
 /*

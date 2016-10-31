@@ -71,12 +71,11 @@ tcp_errno(const char *prefix, int error, void *ctx)
 }
 
 static void
-tcp_gerror(const char *prefix, GError *error, void *ctx)
+tcp_exception(const char *prefix, std::exception_ptr ep, void *ctx)
 {
     auto *connection = (LbConnection *)ctx;
 
-    lb_connection_log_gerror(3, connection, prefix, error);
-    g_error_free(error);
+    lb_connection_log_error(3, connection, prefix, ep);
     --connection->instance.n_tcp_connections;
     lb_connection_remove(connection);
 }
@@ -85,7 +84,7 @@ static constexpr LbTcpConnectionHandler tcp_handler = {
     .eof = tcp_eof,
     .error = tcp_error,
     ._errno = tcp_errno,
-    .gerror = tcp_gerror,
+    .exception = tcp_exception,
 };
 
 /*

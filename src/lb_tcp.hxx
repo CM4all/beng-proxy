@@ -9,7 +9,8 @@
 
 #include "FdType.hxx"
 
-typedef struct _GError GError;
+#include <exception>
+
 struct pool;
 class EventLoop;
 class Stock;
@@ -26,7 +27,7 @@ struct LbTcpConnectionHandler {
     void (*eof)(void *ctx);
     void (*error)(const char *prefix, const char *error, void *ctx);
     void (*_errno)(const char *prefix, int error, void *ctx);
-    void (*gerror)(const char *prefix, GError *error, void *ctx);
+    void (*exception)(const char *prefix, std::exception_ptr ep, void *ctx);
 };
 
 /**
