@@ -361,8 +361,6 @@ translate_try_write(TranslateClient *client)
         stopwatch_event(client->stopwatch, "request");
 
         client->socket.UnscheduleWrite();
-
-        client->parser.Init();
         return client->socket.Read(true);
     }
 

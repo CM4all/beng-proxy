@@ -20,7 +20,7 @@ class TranslatePacketReader {
         COMPLETE,
     };
 
-    State state;
+    State state = State::HEADER;
 
     struct beng_translation_header header;
 
@@ -28,10 +28,6 @@ class TranslatePacketReader {
     size_t payload_position;
 
 public:
-    void Init() {
-        state = State::HEADER;
-    }
-
     /**
      * Read a packet from the socket.
      *

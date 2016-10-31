@@ -103,10 +103,7 @@ class TranslateParser {
 
 public:
     TranslateParser(struct pool &_pool, const TranslateRequest &r)
-        :pool(&_pool), from_request(r) {}
-
-    void Init() {
-        reader.Init();
+        :pool(&_pool), from_request(r) {
         response.status = (http_status_t)-1;
     }
 
