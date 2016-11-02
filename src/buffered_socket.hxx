@@ -99,7 +99,7 @@ enum class DirectResult {
 
     /**
      * There was an I/O error on the socket and errno contains the
-     * error code.  The caller will create a GError object and will
+     * error code.  The caller will create a std::system_error and will
      * invoke the error() handler method.
      */
     ERRNO,
