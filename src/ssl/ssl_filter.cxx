@@ -294,18 +294,11 @@ ssl_filter_new(struct pool &pool, UniqueSSL &&ssl)
 }
 
 SslFilter *
-ssl_filter_new(struct pool *pool, SslFactory &factory,
-               GError **error_r)
+ssl_filter_new(struct pool *pool, SslFactory &factory)
 {
     assert(pool != nullptr);
 
-    try {
-        return NewFromPool<SslFilter>(*pool, ssl_factory_make(factory));
-    } catch (const SslError &e) {
-        g_set_error(error_r, ssl_quark(), 0, "SSL_new() failed: %s",
-                    e.what());
-        return nullptr;
-    }
+    return NewFromPool<SslFilter>(*pool, ssl_factory_make(factory));
 }
 
 ThreadSocketFilterHandler &

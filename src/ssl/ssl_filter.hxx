@@ -28,13 +28,14 @@ ssl_filter_new(struct pool &pool, UniqueSSL &&ssl);
 /**
  * Create a new SSL filter.
  *
+ * Throws std::runtime_error on error.
+ *
  * @param encrypted_fd the encrypted side of the filter
  * @param plain_fd the plain-text side of the filter (socketpair
  * to local service)
  */
 SslFilter *
-ssl_filter_new(struct pool *pool, SslFactory &factory,
-               GError **error_r);
+ssl_filter_new(struct pool *pool, SslFactory &factory);
 
 ThreadSocketFilterHandler &
 ssl_filter_get_handler(SslFilter &ssl);

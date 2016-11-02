@@ -114,12 +114,10 @@ lb_connection_new(LbInstance &instance,
     void *filter_ctx = nullptr;
 
     if (ssl_factory != nullptr) {
-        GError *error = nullptr;
-        connection->ssl_filter = ssl_filter_new(pool, *ssl_factory,
-                                                &error);
-        if (connection->ssl_filter == nullptr) {
-            lb_connection_log_gerror(1, connection, "SSL", error);
-            g_error_free(error);
+        try {
+            connection->ssl_filter = ssl_filter_new(pool, *ssl_factory);
+        } catch (const std::runtime_error &e) {
+            lb_connection_log_error(1, connection, "SSL", e);
             pool_unref(pool);
             return nullptr;
         }
