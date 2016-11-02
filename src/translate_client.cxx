@@ -17,6 +17,7 @@
 #include "gerrno.h"
 #include "pool.hxx"
 #include "util/Cancellable.hxx"
+#include "util/RuntimeError.hxx"
 
 #include <socket/address.h>
 
@@ -120,18 +121,15 @@ TranslateClient::Fail(GError *error)
  *
  */
 
-static bool
+static void
 write_packet_n(GrowingBuffer *gb, uint16_t command,
-               const void *payload, size_t length, GError **error_r)
+               const void *payload, size_t length)
 {
     static struct beng_translation_header header;
 
-    if (length >= 0xffff) {
-        g_set_error(error_r, translate_quark(), 0,
-                    "payload for translate command %u too large",
-                    command);
-        return false;
-    }
+    if (length >= 0xffff)
+        throw FormatRuntimeError("payload for translate command %u too large",
+                                 command);
 
     header.length = (uint16_t)length;
     header.command = command;
@@ -139,158 +137,128 @@ write_packet_n(GrowingBuffer *gb, uint16_t command,
     gb->Write(&header, sizeof(header));
     if (length > 0)
         gb->Write(payload, length);
-
-    return true;
 }
 
-static bool
-write_packet(GrowingBuffer *gb, uint16_t command,
-             const char *payload, GError **error_r)
+static void
+write_packet(GrowingBuffer *gb, uint16_t command, const char *payload)
 {
-    return write_packet_n(gb, command, payload,
-                          payload != nullptr ? strlen(payload) : 0,
-                          error_r);
+    write_packet_n(gb, command, payload,
+                   payload != nullptr ? strlen(payload) : 0);
 }
 
 template<typename T>
-static bool
+static void
 write_buffer(GrowingBuffer *gb, uint16_t command,
-             ConstBuffer<T> buffer, GError **error_r)
+             ConstBuffer<T> buffer)
 {
     auto b = buffer.ToVoid();
-    return write_packet_n(gb, command, b.data, b.size, error_r);
+    write_packet_n(gb, command, b.data, b.size);
 }
 
 /**
  * Forward the command to write_packet() only if #payload is not nullptr.
  */
-static bool
-write_optional_packet(GrowingBuffer *gb, uint16_t command,
-                      const char *payload, GError **error_r)
+static void
+write_optional_packet(GrowingBuffer *gb, uint16_t command, const char *payload)
 {
-    if (payload == nullptr)
-        return true;
-
-    return write_packet(gb, command, payload, error_r);
+    if (payload != nullptr)
+        write_packet(gb, command, payload);
 }
 
 template<typename T>
-static bool
+static void
 write_optional_buffer(GrowingBuffer *gb, uint16_t command,
-                      ConstBuffer<T> buffer, GError **error_r)
+                      ConstBuffer<T> buffer)
 {
-    return buffer.IsNull() || write_buffer(gb, command, buffer, error_r);
+    if (!buffer.IsNull())
+        write_buffer(gb, command, buffer);
 }
 
-static bool
-write_short(GrowingBuffer *gb,
-            uint16_t command, uint16_t payload, GError **error_r)
+static void
+write_short(GrowingBuffer *gb, uint16_t command, uint16_t payload)
 {
-    return write_packet_n(gb, command, &payload, sizeof(payload), error_r);
+    write_packet_n(gb, command, &payload, sizeof(payload));
 }
 
-static bool
+static void
 write_sockaddr(GrowingBuffer *gb,
                uint16_t command, uint16_t command_string,
-               SocketAddress address,
-               GError **error_r)
+               SocketAddress address)
 {
     assert(!address.IsNull());
 
     char address_string[1024];
-    return write_packet_n(gb, command,
-                          address.GetAddress(), address.GetSize(),
-                          error_r) &&
-        (!socket_address_to_string(address_string, sizeof(address_string),
-                                   address.GetAddress(), address.GetSize()) ||
-         write_packet(gb, command_string, address_string, error_r));
+    write_packet_n(gb, command,
+                   address.GetAddress(), address.GetSize());
+
+    if (socket_address_to_string(address_string, sizeof(address_string),
+                                 address.GetAddress(), address.GetSize()))
+        write_packet(gb, command_string, address_string);
 }
 
-static bool
+static void
 write_optional_sockaddr(GrowingBuffer *gb,
                         uint16_t command, uint16_t command_string,
-                        SocketAddress address,
-                        GError **error_r)
+                        SocketAddress address)
 {
-    return !address.IsNull()
-        ? write_sockaddr(gb, command, command_string, address,
-                         error_r)
-        : true;
+    if (!address.IsNull())
+        write_sockaddr(gb, command, command_string, address);
 }
 
 static GrowingBuffer
-marshal_request(struct pool &pool, const TranslateRequest &request,
-                GError **error_r)
+marshal_request(struct pool &pool, const TranslateRequest &request)
 {
     GrowingBuffer gb(pool, 512);
 
-    bool success = write_packet_n(&gb, TRANSLATE_BEGIN,
-                                  &PROTOCOL_VERSION, sizeof(PROTOCOL_VERSION),
-                                  error_r) &&
-        write_optional_buffer(&gb, TRANSLATE_ERROR_DOCUMENT,
-                              request.error_document,
-                              error_r) &&
-        (request.error_document_status == 0 ||
-         write_short(&gb, TRANSLATE_STATUS,
-                     request.error_document_status, error_r)) &&
-        write_optional_packet(&gb, TRANSLATE_LISTENER_TAG,
-                              request.listener_tag, error_r) &&
-        write_optional_sockaddr(&gb, TRANSLATE_LOCAL_ADDRESS,
-                                TRANSLATE_LOCAL_ADDRESS_STRING,
-                                request.local_address, error_r) &&
-        write_optional_packet(&gb, TRANSLATE_REMOTE_HOST,
-                              request.remote_host, error_r) &&
-        write_optional_packet(&gb, TRANSLATE_HOST, request.host, error_r) &&
-        write_optional_packet(&gb, TRANSLATE_USER_AGENT, request.user_agent,
-                              error_r) &&
-        write_optional_packet(&gb, TRANSLATE_UA_CLASS, request.ua_class,
-                              error_r) &&
-        write_optional_packet(&gb, TRANSLATE_LANGUAGE,
-                              request.accept_language, error_r) &&
-        write_optional_packet(&gb, TRANSLATE_AUTHORIZATION,
-                              request.authorization, error_r) &&
-        write_optional_packet(&gb, TRANSLATE_URI, request.uri, error_r) &&
-        write_optional_packet(&gb, TRANSLATE_ARGS, request.args, error_r) &&
-        write_optional_packet(&gb, TRANSLATE_QUERY_STRING,
-                              request.query_string, error_r) &&
-        write_optional_packet(&gb, TRANSLATE_WIDGET_TYPE,
-                              request.widget_type, error_r) &&
-        write_optional_buffer(&gb, TRANSLATE_SESSION, request.session,
-                              error_r) &&
-        write_optional_buffer(&gb, TRANSLATE_INTERNAL_REDIRECT,
-                              request.internal_redirect, error_r) &&
-        write_optional_buffer(&gb, TRANSLATE_CHECK, request.check,
-                              error_r) &&
-        write_optional_buffer(&gb, TRANSLATE_AUTH, request.auth, error_r) &&
-        write_optional_buffer(&gb, TRANSLATE_WANT_FULL_URI,
-                              request.want_full_uri, error_r) &&
-        write_optional_buffer(&gb, TRANSLATE_WANT, request.want, error_r) &&
-        write_optional_buffer(&gb, TRANSLATE_FILE_NOT_FOUND,
-                              request.file_not_found, error_r) &&
-        write_optional_buffer(&gb, TRANSLATE_CONTENT_TYPE_LOOKUP,
-                              request.content_type_lookup, error_r) &&
-        write_optional_packet(&gb, TRANSLATE_SUFFIX, request.suffix,
-                              error_r) &&
-        write_optional_buffer(&gb, TRANSLATE_ENOTDIR,
-                              request.enotdir, error_r) &&
-        write_optional_buffer(&gb, TRANSLATE_DIRECTORY_INDEX,
-                              request.directory_index, error_r) &&
-        write_optional_packet(&gb, TRANSLATE_PARAM, request.param,
-                              error_r) &&
-        write_optional_buffer(&gb, TRANSLATE_PROBE_PATH_SUFFIXES,
-                              request.probe_path_suffixes,
-                              error_r) &&
-        write_optional_packet(&gb, TRANSLATE_PROBE_SUFFIX,
-                              request.probe_suffix,
-                              error_r) &&
-        write_optional_buffer(&gb, TRANSLATE_READ_FILE,
-                              request.read_file,
-                              error_r) &&
-        write_optional_packet(&gb, TRANSLATE_USER,
-                              request.user, error_r) &&
-        write_packet(&gb, TRANSLATE_END, nullptr, error_r);
-    if (!success)
-        gb.Clear();
+    write_packet_n(&gb, TRANSLATE_BEGIN,
+                   &PROTOCOL_VERSION, sizeof(PROTOCOL_VERSION));
+    write_optional_buffer(&gb, TRANSLATE_ERROR_DOCUMENT,
+                          request.error_document);
+
+    if (request.error_document_status != 0)
+        write_short(&gb, TRANSLATE_STATUS,
+                    request.error_document_status);
+
+    write_optional_packet(&gb, TRANSLATE_LISTENER_TAG,
+                          request.listener_tag);
+    write_optional_sockaddr(&gb, TRANSLATE_LOCAL_ADDRESS,
+                            TRANSLATE_LOCAL_ADDRESS_STRING,
+                            request.local_address);
+    write_optional_packet(&gb, TRANSLATE_REMOTE_HOST,
+                          request.remote_host);
+    write_optional_packet(&gb, TRANSLATE_HOST, request.host);
+    write_optional_packet(&gb, TRANSLATE_USER_AGENT, request.user_agent);
+    write_optional_packet(&gb, TRANSLATE_UA_CLASS, request.ua_class);
+    write_optional_packet(&gb, TRANSLATE_LANGUAGE, request.accept_language);
+    write_optional_packet(&gb, TRANSLATE_AUTHORIZATION, request.authorization);
+    write_optional_packet(&gb, TRANSLATE_URI, request.uri);
+    write_optional_packet(&gb, TRANSLATE_ARGS, request.args);
+    write_optional_packet(&gb, TRANSLATE_QUERY_STRING, request.query_string);
+    write_optional_packet(&gb, TRANSLATE_WIDGET_TYPE, request.widget_type);
+    write_optional_buffer(&gb, TRANSLATE_SESSION, request.session);
+    write_optional_buffer(&gb, TRANSLATE_INTERNAL_REDIRECT,
+                          request.internal_redirect);
+    write_optional_buffer(&gb, TRANSLATE_CHECK, request.check);
+    write_optional_buffer(&gb, TRANSLATE_AUTH, request.auth);
+    write_optional_buffer(&gb, TRANSLATE_WANT_FULL_URI, request.want_full_uri);
+    write_optional_buffer(&gb, TRANSLATE_WANT, request.want);
+    write_optional_buffer(&gb, TRANSLATE_FILE_NOT_FOUND,
+                          request.file_not_found);
+    write_optional_buffer(&gb, TRANSLATE_CONTENT_TYPE_LOOKUP,
+                          request.content_type_lookup);
+    write_optional_packet(&gb, TRANSLATE_SUFFIX, request.suffix);
+    write_optional_buffer(&gb, TRANSLATE_ENOTDIR, request.enotdir);
+    write_optional_buffer(&gb, TRANSLATE_DIRECTORY_INDEX,
+                          request.directory_index);
+    write_optional_packet(&gb, TRANSLATE_PARAM, request.param);
+    write_optional_buffer(&gb, TRANSLATE_PROBE_PATH_SUFFIXES,
+                          request.probe_path_suffixes);
+    write_optional_packet(&gb, TRANSLATE_PROBE_SUFFIX,
+                          request.probe_suffix);
+    write_optional_buffer(&gb, TRANSLATE_READ_FILE,
+                          request.read_file);
+    write_optional_packet(&gb, TRANSLATE_USER, request.user);
+    write_packet(&gb, TRANSLATE_END, nullptr);
 
     return gb;
 }
@@ -458,7 +426,7 @@ translate(struct pool &pool, EventLoop &event_loop,
           const TranslateRequest &request,
           const TranslateHandler &handler, void *ctx,
           CancellablePointer &cancel_ptr)
-{
+try {
     assert(fd >= 0);
     assert(request.uri != nullptr || request.widget_type != nullptr ||
            (!request.content_type_lookup.IsNull() &&
@@ -466,14 +434,7 @@ translate(struct pool &pool, EventLoop &event_loop,
     assert(handler.response != nullptr);
     assert(handler.error != nullptr);
 
-    GError *error = nullptr;
-    GrowingBuffer gb = marshal_request(pool, request, &error);
-    if (gb.IsEmpty()) {
-        lease.ReleaseLease(true);
-
-        handler.error(error, ctx);
-        return;
-    }
+    GrowingBuffer gb = marshal_request(pool, request);
 
     auto *client = NewFromPool<TranslateClient>(pool, pool, event_loop,
                                                 fd, lease,
@@ -482,4 +443,8 @@ translate(struct pool &pool, EventLoop &event_loop,
 
     pool_ref(&client->pool);
     translate_try_write(client);
+} catch (const std::runtime_error &e) {
+    lease.ReleaseLease(true);
+
+    handler.error(ToGError(e), ctx);
 }
