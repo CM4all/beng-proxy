@@ -60,6 +60,7 @@ struct TranslateClient final : Cancellable {
     void Release(bool reuse);
 
     void Fail(GError *error);
+    void Fail(const std::exception &e);
 
     BufferedResult Feed(const uint8_t *data, size_t length);
 
@@ -115,6 +116,11 @@ TranslateClient::Fail(GError *error)
     pool_unref(&pool);
 }
 
+void
+TranslateClient::Fail(const std::exception &e)
+{
+    Fail(ToGError(e));
+}
 
 /*
  * request marshalling
@@ -297,7 +303,7 @@ try {
 
     return BufferedResult::MORE;
 } catch (const std::runtime_error &e) {
-    Fail(g_error_new_literal(translate_quark(), 0, e.what()));
+    Fail(e);
     return BufferedResult::CLOSED;
 }
 
