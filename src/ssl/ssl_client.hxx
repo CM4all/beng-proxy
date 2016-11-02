@@ -22,9 +22,12 @@ ssl_client_deinit();
 const SocketFilter &
 ssl_client_get_filter();
 
+/**
+ *
+ * Throws std::runtime_error on error.
+ */
 void *
 ssl_client_create(struct pool *pool, EventLoop &event_loop,
-                  const char *hostname,
-                  GError **error_r);
+                  const char *hostname);
 
 #endif

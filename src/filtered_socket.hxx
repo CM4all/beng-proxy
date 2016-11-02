@@ -98,7 +98,10 @@ struct SocketFilter {
 
 class SocketFilterFactory {
 public:
-    virtual void *CreateFilter(GError **error_r) = 0;
+    /**
+     * Throws std::runtime_error on error.
+     */
+    virtual void *CreateFilter() = 0;
 };
 
 /**

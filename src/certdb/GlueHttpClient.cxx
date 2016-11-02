@@ -99,8 +99,8 @@ public:
                            const char *_host)
         :pool(_pool), event_loop(_event_loop), host(_host) {}
 
-    void *CreateFilter(GError **error_r) override {
-        return ssl_client_create(&pool, event_loop, host, error_r);
+    void *CreateFilter() override {
+        return ssl_client_create(&pool, event_loop, host);
     }
 };
 

@@ -13,10 +13,9 @@
 #include "thread_socket_filter.hxx"
 #include "thread_pool.hxx"
 #include "pool.hxx"
+#include "util/ScopeExit.hxx"
 
 #include <daemon/log.h>
-
-#include <glib.h>
 
 static SSL_CTX *ssl_client_ctx;
 
@@ -45,14 +44,11 @@ ssl_client_get_filter()
 
 static void *
 ssl_client_create2(struct pool *pool, EventLoop &event_loop,
-                   const char *hostname,
-                   GError **error_r)
+                   const char *hostname)
 {
     UniqueSSL ssl(SSL_new(ssl_client_ctx));
-    if (!ssl) {
-        g_set_error_literal(error_r, ssl_quark(), 0, "SSL_new() failed");
-        return nullptr;
-    }
+    if (!ssl)
+        throw SslError("SSL_new() failed");
 
     SSL_set_connect_state(ssl.get());
 
@@ -67,16 +63,14 @@ ssl_client_create2(struct pool *pool, EventLoop &event_loop,
 
 void *
 ssl_client_create(struct pool *pool, EventLoop &event_loop,
-                  const char *hostname,
-                  GError **error_r)
+                  const char *hostname)
 {
     /* create a new pool for the SSL filter; this is necessary because
        thread_socket_filter_close() may need to invoke
        pool_set_persistent(), which is only possible if nobody else
        has "trashed" the pool yet */
     pool = pool_new_linear(pool, "ssl_client", 1024);
+    AtScopeExit(pool) { pool_unref(pool); };
 
-    void *result = ssl_client_create2(pool, event_loop, hostname, error_r);
-    pool_unref(pool);
-    return result;
+    return ssl_client_create2(pool, event_loop, hostname);
 }

@@ -230,7 +230,7 @@ Context::OnHttpError(GError *error)
 
 void
 Context::OnSocketConnectSuccess(SocketDescriptor &&new_fd)
-{
+try {
     fd = std::move(new_fd);
     idle = false;
 
@@ -263,22 +263,8 @@ Context::OnSocketConnectSuccess(SocketDescriptor &&new_fd)
         break;
 
     case parsed_url::HTTPS: {
-        GError *error = nullptr;
         void *filter_ctx = ssl_client_create(pool, event_loop,
-                                             url.host,
-                                             &error);
-        if (filter_ctx == nullptr) {
-            g_printerr("%s\n", error->message);
-            g_error_free(error);
-
-            aborted = true;
-
-            if (request_body != nullptr)
-                request_body->CloseUnused();
-
-            shutdown_listener.Disable();
-            return;
-        }
+                                             url.host);
 
         auto filter = &ssl_client_get_filter();
         http_client_request(*pool, event_loop,
@@ -294,7 +280,16 @@ Context::OnSocketConnectSuccess(SocketDescriptor &&new_fd)
         break;
     }
     }
-}
+} catch (const std::runtime_error &e) {
+    PrintException(e);
+
+    aborted = true;
+
+    if (request_body != nullptr)
+        request_body->CloseUnused();
+
+    shutdown_listener.Disable();
+ }
 
 void
 Context::OnSocketConnectError(std::exception_ptr ep)

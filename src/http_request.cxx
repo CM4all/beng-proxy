@@ -22,6 +22,7 @@
 #include "istream/istream_hold.hxx"
 #include "filtered_socket.hxx"
 #include "pool.hxx"
+#include "GException.hxx"
 #include "net/SocketAddress.hxx"
 #include "util/Cancellable.hxx"
 
@@ -164,11 +165,11 @@ HttpRequest::OnStockItemReady(StockItem &item)
 
     void *filter_ctx = nullptr;
     if (filter_factory != nullptr) {
-        GError *error = nullptr;
-        filter_ctx = filter_factory->CreateFilter(&error);
-        if (filter_ctx == nullptr) {
+        try {
+            filter_ctx = filter_factory->CreateFilter();
+        } catch (const std::runtime_error &e) {
             ReleaseLease(true);
-            Failed(error);
+            Failed(ToGError(e));
             return;
         }
     }
