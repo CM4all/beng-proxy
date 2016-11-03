@@ -16,6 +16,7 @@
 #include "GException.hxx"
 #include "gerrno.h"
 #include "pool.hxx"
+#include "system/Error.hxx"
 #include "util/Cancellable.hxx"
 #include "util/RuntimeError.hxx"
 
@@ -323,9 +324,7 @@ translate_try_write(TranslateClient *client)
         if (gcc_likely(nbytes == WRITE_BLOCKING))
             return true;
 
-        GError *error =
-            new_error_errno_msg("write error to translation server");
-        client->Fail(error);
+        client->Fail(MakeErrno("write error to translation server"));
         return false;
     }
 
