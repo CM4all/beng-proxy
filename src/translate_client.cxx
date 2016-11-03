@@ -19,6 +19,7 @@
 #include "system/Error.hxx"
 #include "util/Cancellable.hxx"
 #include "util/RuntimeError.hxx"
+#include "util/Exception.hxx"
 
 #include <socket/address.h>
 
@@ -385,9 +386,8 @@ translate_client_socket_error(std::exception_ptr ep, void *ctx)
 {
     TranslateClient *client = (TranslateClient *)ctx;
 
-    auto *error = ToGError(ep);
-    g_prefix_error(&error, "Translation server connection failed: ");
-    client->Fail(error);
+    client->Fail(NestException(ep,
+                               std::runtime_error("Translation server connection failed")));
 }
 
 static constexpr BufferedSocketHandler translate_client_socket_handler = {
