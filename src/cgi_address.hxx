@@ -155,8 +155,10 @@ struct CgiAddress {
             params.IsExpandable();
     }
 
-    bool Expand(struct pool *pool, const MatchInfo &match_info,
-                Error &error_r);
+    /**
+     * Throws std::runtime_error on error.
+     */
+    void Expand(struct pool *pool, const MatchInfo &match_info);
 };
 
 CgiAddress *

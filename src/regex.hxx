@@ -120,11 +120,11 @@ public:
 /**
  * Calculate the length of an expanded string.
  *
- * @return the length (without the null terminator) or size_t(-1) on
- * error
+ * Throws std::runtime_error on error.
+ *
+ * @return the length (without the null terminator)
  */
 size_t
-ExpandStringLength(const char *src, MatchInfo match_info,
-                   Error &error_r);
+ExpandStringLength(const char *src, MatchInfo match_info);
 
 #endif

@@ -326,8 +326,10 @@ public:
 
     /**
      * Expand the expand_path_info attribute.
+     *
+     * Throws std::runtime_error on error.
      */
-    bool Expand(struct pool &pool, const MatchInfo &match_info, Error &error);
+    void Expand(struct pool &pool, const MatchInfo &match_info);
 };
 
 #endif

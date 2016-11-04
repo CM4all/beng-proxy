@@ -12,7 +12,6 @@
 
 struct pool;
 class MatchInfo;
-class Error;
 
 /**
  * The address of a file on a NFS server.
@@ -68,9 +67,11 @@ struct NfsAddress {
         return expand_path != nullptr;
     }
 
+    /**
+     * Throws std::runtime_error on error.
+     */
     const NfsAddress *Expand(struct pool *pool,
-                             const MatchInfo &match_info,
-                             Error &error_r) const;
+                             const MatchInfo &match_info) const;
 };
 
 NfsAddress *

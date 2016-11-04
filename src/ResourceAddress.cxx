@@ -676,54 +676,49 @@ ResourceAddress::IsExpandable() const
     gcc_unreachable();
 }
 
-bool
-ResourceAddress::Expand(struct pool &pool, const MatchInfo &match_info,
-                        Error &error_r)
+void
+ResourceAddress::Expand(struct pool &pool, const MatchInfo &match_info)
 {
     switch (type) {
         FileAddress *file;
         CgiAddress *cgi;
         HttpAddress *uwa;
         LhttpAddress *lhttp;
-        const NfsAddress *nfs;
 
     case Type::NONE:
-        return true;
+        break;
 
     case Type::LOCAL:
         u.file = file = file_address_dup(pool, u.file);
-        return file->Expand(&pool, match_info, error_r);
+        file->Expand(&pool, match_info);
+        break;
 
     case Type::PIPE:
     case Type::CGI:
     case Type::FASTCGI:
     case Type::WAS:
         u.cgi = cgi = u.cgi->Clone(pool);
-        return cgi->Expand(&pool, match_info, error_r);
+        cgi->Expand(&pool, match_info);
+        break;
 
     case Type::HTTP:
         /* copy the http_address object (it's a pointer, not
            in-line) and expand it */
         u.http = uwa = http_address_dup(pool, u.http);
-        return uwa->Expand(&pool, match_info, error_r);
+        uwa->Expand(&pool, match_info);
+        break;
 
     case Type::LHTTP:
         /* copy the lhttp_address object (it's a pointer, not
            in-line) and expand it */
         u.lhttp = lhttp = u.lhttp->Dup(pool);
-        return lhttp->Expand(&pool, match_info, error_r);
+        lhttp->Expand(&pool, match_info);
+        break;
 
     case Type::NFS:
         /* copy the nfs_address object (it's a pointer, not
            in-line) and expand it */
-        nfs = u.nfs->Expand(&pool, match_info, error_r);
-        if (nfs == nullptr)
-            return false;
-
-        u.nfs = nfs;
-        return true;
+        u.nfs = u.nfs->Expand(&pool, match_info);
+        break;
     }
-
-    assert(false);
-    gcc_unreachable();
 }

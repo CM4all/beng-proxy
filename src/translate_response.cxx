@@ -414,96 +414,61 @@ TranslateResponse::IsExpandable() const
          widget_view_any_is_expandable(views));
 }
 
-bool
-TranslateResponse::Expand(struct pool *pool,
-                          const MatchInfo &match_info, Error &error_r)
+void
+TranslateResponse::Expand(struct pool *pool, const MatchInfo &match_info)
 {
     assert(pool != nullptr);
     assert(regex != nullptr);
 
-    if (expand_redirect != nullptr) {
-        redirect = expand_string_unescaped(pool, expand_redirect,
-                                           match_info, error_r);
-        if (redirect == nullptr)
-            return false;
-    }
+    if (expand_redirect != nullptr)
+        redirect = expand_string_unescaped(pool, expand_redirect, match_info);
 
-    if (expand_site != nullptr) {
-        site = expand_string_unescaped(pool, expand_site, match_info, error_r);
-        if (site == nullptr)
-            return false;
-    }
+    if (expand_site != nullptr)
+        site = expand_string_unescaped(pool, expand_site, match_info);
 
-    if (expand_document_root != nullptr) {
+    if (expand_document_root != nullptr)
         document_root = expand_string_unescaped(pool, expand_document_root,
-                                                match_info, error_r);
-        if (document_root == nullptr)
-            return false;
-    }
+                                                match_info);
 
-    if (expand_uri != nullptr) {
-        uri = expand_string_unescaped(pool, expand_uri, match_info, error_r);
-        if (uri == nullptr)
-            return false;
-    }
+    if (expand_uri != nullptr)
+        uri = expand_string_unescaped(pool, expand_uri, match_info);
 
-    if (expand_test_path != nullptr) {
+    if (expand_test_path != nullptr)
         test_path = expand_string_unescaped(pool, expand_test_path,
-                                            match_info, error_r);
-        if (test_path == nullptr)
-            return false;
-    }
+                                            match_info);
 
-    if (expand_auth_file != nullptr) {
+    if (expand_auth_file != nullptr)
         auth_file = expand_string_unescaped(pool, expand_auth_file,
-                                            match_info, error_r);
-        if (auth_file == nullptr)
-            return false;
-    }
+                                            match_info);
 
-    if (expand_read_file != nullptr) {
+    if (expand_read_file != nullptr)
         read_file = expand_string_unescaped(pool, expand_read_file,
-                                            match_info, error_r);
-        if (read_file == nullptr)
-            return false;
-    }
+                                            match_info);
 
     if (expand_append_auth != nullptr) {
         const char *value = expand_string_unescaped(pool, expand_append_auth,
-                                                    match_info, error_r);
-        if (auth_file == nullptr)
-            return false;
-
+                                                    match_info);
         append_auth = { value, strlen(value) };
     }
 
-    if (expand_cookie_host != nullptr) {
+    if (expand_cookie_host != nullptr)
         cookie_host = expand_string_unescaped(pool, expand_cookie_host,
-                                              match_info, error_r);
-        if (cookie_host == nullptr)
-            return false;
-    }
+                                              match_info);
 
     for (const auto &i : expand_request_headers) {
-        const char *value = expand_string_unescaped(pool, i.value,
-                                                    match_info, error_r);
-        if (value == nullptr)
-            return false;
-
+        const char *value = expand_string_unescaped(pool, i.value, match_info);
         request_headers.Add(PoolAllocator(*pool), i.key, value);
     }
 
     for (const auto &i : expand_response_headers) {
-        const char *value = expand_string_unescaped(pool, i.value,
-                                                    match_info, error_r);
-        if (value == nullptr)
-            return false;
-
+        const char *value = expand_string_unescaped(pool, i.value, match_info);
         response_headers.Add(PoolAllocator(*pool), i.key, value);
     }
 
-    return address.Expand(*pool, match_info, error_r) &&
-        (external_session_manager == nullptr ||
-         external_session_manager->Expand(pool, match_info, error_r)) &&
-        widget_view_expand_all(pool, views, match_info, error_r);
+    address.Expand(*pool, match_info);
+
+    if (external_session_manager != nullptr)
+        external_session_manager->Expand(pool, match_info);
+
+    widget_view_expand_all(pool, views, match_info);
 }

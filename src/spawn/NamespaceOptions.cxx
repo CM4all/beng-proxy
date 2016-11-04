@@ -50,18 +50,13 @@ NamespaceOptions::IsExpandable() const
     return expand_home != nullptr || MountList::IsAnyExpandable(mounts);
 }
 
-bool
-NamespaceOptions::Expand(struct pool &pool, const MatchInfo &match_info,
-                         Error &error_r)
+void
+NamespaceOptions::Expand(struct pool &pool, const MatchInfo &match_info)
 {
-    if (expand_home != nullptr) {
-        home = expand_string_unescaped(&pool, expand_home, match_info,
-                                       error_r);
-        if (home == nullptr)
-            return false;
-    }
+    if (expand_home != nullptr)
+        home = expand_string_unescaped(&pool, expand_home, match_info);
 
-    return MountList::ExpandAll(pool, mounts, match_info, error_r);
+    MountList::ExpandAll(pool, mounts, match_info);
 }
 
 int

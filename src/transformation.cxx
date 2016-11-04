@@ -82,9 +82,8 @@ Transformation::IsChainExpandable() const
     return false;
 }
 
-bool
-Transformation::Expand(struct pool *pool, const MatchInfo &match_info,
-                       Error &error_r)
+void
+Transformation::Expand(struct pool *pool, const MatchInfo &match_info)
 {
     assert(pool != nullptr);
 
@@ -92,25 +91,19 @@ Transformation::Expand(struct pool *pool, const MatchInfo &match_info,
     case Type::PROCESS:
     case Type::PROCESS_CSS:
     case Type::PROCESS_TEXT:
-        return true;
+        break;
 
     case Type::FILTER:
-        return u.filter.address.Expand(*pool, match_info, error_r);
+        u.filter.address.Expand(*pool, match_info);
+        break;
     }
-
-    assert(false);
-    return true;
 }
 
-bool
-Transformation::ExpandChain(struct pool *pool, const MatchInfo &match_info,
-                            Error &error_r)
+void
+Transformation::ExpandChain(struct pool *pool, const MatchInfo &match_info)
 {
     assert(pool != nullptr);
 
     for (auto t = this; t != nullptr; t = t->next)
-        if (!t->Expand(pool, match_info, error_r))
-            return false;
-
-    return true;
+        t->Expand(pool, match_info);
 }

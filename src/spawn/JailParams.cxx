@@ -91,17 +91,10 @@ JailParams::InsertWrapper(PreparedChildProcess &p,
     return p.InsertWrapper({w.raw(), w.size()});
 }
 
-bool
-JailParams::Expand(struct pool &pool, const MatchInfo &match_info,
-                   Error &error_r)
+void
+JailParams::Expand(struct pool &pool, const MatchInfo &match_info)
 {
-    if (expand_home_directory) {
+    if (expand_home_directory)
         home_directory =
-            expand_string_unescaped(&pool, home_directory, match_info,
-                                    error_r);
-        if (home_directory == nullptr)
-            return false;
-    }
-
-    return true;
+            expand_string_unescaped(&pool, home_directory, match_info);
 }

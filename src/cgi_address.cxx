@@ -253,48 +253,31 @@ CgiAddress::Apply(struct pool *pool,
     return dest;
 }
 
-bool
-CgiAddress::Expand(struct pool *pool, const MatchInfo &match_info,
-                   Error &error_r)
+void
+CgiAddress::Expand(struct pool *pool, const MatchInfo &match_info)
 {
     assert(pool != nullptr);
 
-    if (!options.Expand(*pool, match_info, error_r))
-        return false;
+    options.Expand(*pool, match_info);
 
-    if (expand_path != nullptr) {
-        path = expand_string_unescaped(pool, expand_path, match_info, error_r);
-        if (path == nullptr)
-            return false;
-    }
+    if (expand_path != nullptr)
+        path = expand_string_unescaped(pool, expand_path, match_info);
 
-    if (expand_uri != nullptr) {
-        uri = expand_string_unescaped(pool, expand_uri, match_info, error_r);
-        if (uri == nullptr)
-            return false;
-    }
+    if (expand_uri != nullptr)
+        uri = expand_string_unescaped(pool, expand_uri, match_info);
 
-    if (expand_script_name != nullptr) {
+    if (expand_script_name != nullptr)
         script_name = expand_string_unescaped(pool, expand_script_name,
-                                              match_info, error_r);
-        if (script_name == nullptr)
-            return false;
-    }
+                                              match_info);
 
-    if (expand_path_info != nullptr) {
+    if (expand_path_info != nullptr)
         path_info = expand_string_unescaped(pool, expand_path_info,
-                                            match_info, error_r);
-        if (path_info == nullptr)
-            return false;
-    }
+                                            match_info);
 
-    if (expand_document_root != nullptr) {
+    if (expand_document_root != nullptr)
         document_root = expand_string_unescaped(pool, expand_document_root,
-                                                match_info, error_r);
-        if (document_root == nullptr)
-            return false;
-    }
+                                                match_info);
 
-    return args.Expand(pool, match_info, error_r) &&
-        params.Expand(pool, match_info, error_r);
+    args.Expand(pool, match_info);
+    params.Expand(pool, match_info);
 }

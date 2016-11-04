@@ -15,12 +15,8 @@ DelegateAddress::DelegateAddress(struct pool &pool, const DelegateAddress &src)
     :delegate(p_strdup(&pool, src.delegate)),
      child_options(pool, src.child_options) {}
 
-bool
-DelegateAddress::Expand(struct pool &pool, const MatchInfo &match_info,
-                        Error &error_r)
+void
+DelegateAddress::Expand(struct pool &pool, const MatchInfo &match_info)
 {
-    if (!child_options.Expand(pool, match_info, error_r))
-        return false;
-
-    return true;
+    child_options.Expand(pool, match_info);
 }

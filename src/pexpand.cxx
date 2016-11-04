@@ -16,16 +16,13 @@
 
 const char *
 expand_string(struct pool *pool, const char *src,
-              const MatchInfo &match_info, Error &error_r)
+              const MatchInfo &match_info)
 {
     assert(pool != nullptr);
     assert(src != nullptr);
     assert(match_info.IsDefined());
 
-    const size_t length = ExpandStringLength(src, match_info, error_r);
-    if (length == size_t(-1))
-        return nullptr;
-
+    const size_t length = ExpandStringLength(src, match_info);
     const auto buffer = (char *)p_malloc(pool, length + 1);
 
     struct Result {
@@ -45,16 +42,13 @@ expand_string(struct pool *pool, const char *src,
             q = (char *)mempcpy(q, p, _length);
         }
 
-        bool AppendValue(const char *p, size_t _length,
-                         gcc_unused Error &error) {
+        void AppendValue(const char *p, size_t _length) {
             Append(p, _length);
-            return true;
         }
     };
 
     Result result(buffer);
-    if (!ExpandString(result, src, match_info, error_r))
-        return nullptr;
+    ExpandString(result, src, match_info);
 
     assert(result.q == buffer + length);
     *result.q = 0;
@@ -64,17 +58,13 @@ expand_string(struct pool *pool, const char *src,
 
 const char *
 expand_string_unescaped(struct pool *pool, const char *src,
-                        const MatchInfo &match_info,
-                        Error &error_r)
+                        const MatchInfo &match_info)
 {
     assert(pool != nullptr);
     assert(src != nullptr);
     assert(match_info.IsDefined());
 
-    const size_t length = ExpandStringLength(src, match_info, error_r);
-    if (length == size_t(-1))
-        return nullptr;
-
+    const size_t length = ExpandStringLength(src, match_info);
     const auto buffer = (char *)p_malloc(pool, length + 1);
 
     struct Result {
@@ -94,20 +84,15 @@ expand_string_unescaped(struct pool *pool, const char *src,
             q = (char *)mempcpy(q, p, _length);
         }
 
-        bool AppendValue(const char *p, size_t _length, Error &error) {
+        void AppendValue(const char *p, size_t _length) {
             q = uri_unescape(q, {p, _length});
-            if (q == nullptr) {
-                error.Set(expand_domain, "Malformed URI escape");
-                return false;
-            }
-
-            return true;
+            if (q == nullptr)
+                throw std::runtime_error("Malformed URI escape");
         }
     };
 
     Result result(buffer);
-    if (!ExpandString(result, src, match_info, error_r))
-        return nullptr;
+    ExpandString(result, src, match_info);
 
     assert(result.q <= buffer + length);
     *result.q = 0;

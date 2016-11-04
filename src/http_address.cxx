@@ -313,17 +313,11 @@ HttpAddress::RelativeTo(const HttpAddress &base) const
     return uri_relative(base.path, path);
 }
 
-bool
-HttpAddress::Expand(struct pool *pool, const MatchInfo &match_info,
-                    Error &error_r)
+void
+HttpAddress::Expand(struct pool *pool, const MatchInfo &match_info)
 {
     assert(pool != nullptr);
 
-    if (expand_path != nullptr) {
-        path = expand_string(pool, expand_path, match_info, error_r);
-        if (path == nullptr)
-            return false;
-    }
-
-    return true;
+    if (expand_path != nullptr)
+        path = expand_string(pool, expand_path, match_info);
 }

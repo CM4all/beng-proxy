@@ -14,7 +14,6 @@
 struct pool;
 class AllocatorPtr;
 class MatchInfo;
-class Error;
 template<typename T> struct ConstBuffer;
 
 class ExpandableStringList final {
@@ -80,8 +79,10 @@ public:
     gcc_pure
     bool IsExpandable() const;
 
-    bool Expand(struct pool *pool,
-                const MatchInfo &match_info, Error &error_r);
+    /**
+     * Throws std::runtime_error on error.
+     */
+    void Expand(struct pool *pool, const MatchInfo &match_info);
 
     class Builder final {
         ExpandableStringList *list;

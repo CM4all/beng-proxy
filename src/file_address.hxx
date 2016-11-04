@@ -12,7 +12,6 @@
 
 struct pool;
 class MatchInfo;
-class Error;
 struct DelegateAddress;
 
 /**
@@ -74,8 +73,10 @@ struct FileAddress {
     gcc_pure
     bool IsExpandable() const;
 
-    bool Expand(struct pool *pool, const MatchInfo &match_info,
-                Error &error_r);
+    /**
+     * Throws std::runtime_error on error.
+     */
+    void Expand(struct pool *pool, const MatchInfo &match_info);
 };
 
 FileAddress *

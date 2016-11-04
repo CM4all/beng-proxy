@@ -17,7 +17,6 @@ struct ResourceLimits;
 struct JailParams;
 struct PreparedChildProcess;
 class MatchInfo;
-class Error;
 
 /**
  * Options for launching a child process.
@@ -75,8 +74,7 @@ struct ChildOptions {
     gcc_pure
     bool IsExpandable() const;
 
-    bool Expand(struct pool &pool, const MatchInfo &match_info,
-                Error &error_r);
+    void Expand(struct pool &pool, const MatchInfo &match_info);
 
     char *MakeId(char *p) const;
 

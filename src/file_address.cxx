@@ -101,27 +101,18 @@ FileAddress::IsExpandable() const
         (delegate != nullptr && delegate->IsExpandable());
 }
 
-bool
-FileAddress::Expand(struct pool *pool, const MatchInfo &match_info,
-                    Error &error_r)
+void
+FileAddress::Expand(struct pool *pool, const MatchInfo &match_info)
 {
     assert(pool != nullptr);
 
-    if (expand_path != nullptr) {
-        path = expand_string_unescaped(pool, expand_path, match_info, error_r);
-        if (path == nullptr)
-            return false;
-    }
+    if (expand_path != nullptr)
+        path = expand_string_unescaped(pool, expand_path, match_info);
 
-    if (expand_document_root != nullptr) {
+    if (expand_document_root != nullptr)
         document_root = expand_string_unescaped(pool, expand_document_root,
-                                                match_info, error_r);
-        if (document_root == nullptr)
-            return false;
-    }
+                                                match_info);
 
-    if (delegate != nullptr && !delegate->Expand(*pool, match_info, error_r))
-        return false;
-
-    return true;
+    if (delegate != nullptr)
+        delegate->Expand(*pool, match_info);
 }

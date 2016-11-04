@@ -9,7 +9,6 @@
 
 class AllocatorPtr;
 class MatchInfo;
-class Error;
 
 struct MountList {
     MountList *next;
@@ -41,10 +40,9 @@ struct MountList {
         return false;
     }
 
-    bool Expand(struct pool &pool, const MatchInfo &match_info,
-                Error &error_r);
-    static bool ExpandAll(struct pool &pool, MountList *m,
-                          const MatchInfo &match_info, Error &error_r);
+    void Expand(struct pool &pool, const MatchInfo &match_info);
+    static void ExpandAll(struct pool &pool, MountList *m,
+                          const MatchInfo &match_info);
 
     void Apply() const;
 

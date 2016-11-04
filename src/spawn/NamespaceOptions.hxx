@@ -12,7 +12,6 @@ struct pool;
 struct MountList;
 struct SpawnConfig;
 class MatchInfo;
-class Error;
 
 struct NamespaceOptions {
     /**
@@ -73,8 +72,10 @@ struct NamespaceOptions {
     gcc_pure
     bool IsExpandable() const;
 
-    bool Expand(struct pool &pool, const MatchInfo &match_info,
-                Error &error_r);
+    /**
+     * Throws std::runtime_error on error.
+     */
+    void Expand(struct pool &pool, const MatchInfo &match_info);
 
     gcc_pure
     int GetCloneFlags(const SpawnConfig &config, int flags) const;

@@ -14,7 +14,6 @@
 
 struct pool;
 struct Transformation;
-class Error;
 
 struct WidgetView {
     WidgetView *next;
@@ -109,9 +108,10 @@ struct WidgetView {
     /**
      * Expand the strings in this view (not following the linked list)
      * with the specified regex result.
+     *
+     * Throws std::runtime_error on error.
      */
-    bool Expand(struct pool &pool, const MatchInfo &match_info,
-                Error &error_r);
+    void Expand(struct pool &pool, const MatchInfo &match_info);
 };
 
 /**
@@ -134,8 +134,8 @@ widget_view_any_is_expandable(const WidgetView *view);
  * The same as widget_view_expand(), but expand all voews in
  * the linked list.
  */
-bool
+void
 widget_view_expand_all(struct pool *pool, WidgetView *view,
-                       const MatchInfo &match_info, Error &error_r);
+                       const MatchInfo &match_info);
 
 #endif

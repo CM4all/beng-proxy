@@ -53,20 +53,18 @@ ChildOptions::IsExpandable() const
         (jail != nullptr && jail->IsExpandable());
 }
 
-bool
-ChildOptions::Expand(struct pool &pool, const MatchInfo &match_info,
-                     Error &error_r)
+void
+ChildOptions::Expand(struct pool &pool, const MatchInfo &match_info)
 {
-    if (expand_stderr_path != nullptr) {
+    if (expand_stderr_path != nullptr)
         stderr_path = expand_string_unescaped(&pool, expand_stderr_path,
-                                              match_info, error_r);
-        if (stderr_path == nullptr)
-            return false;
-    }
+                                              match_info);
 
-    return env.Expand(&pool, match_info, error_r) &&
-        ns.Expand(pool, match_info, error_r) &&
-        (jail == nullptr || jail->Expand(pool, match_info, error_r));
+    env.Expand(&pool, match_info);
+    ns.Expand(pool, match_info);
+
+    if (jail != nullptr)
+        jail->Expand(pool, match_info);
 }
 
 char *

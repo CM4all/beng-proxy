@@ -55,8 +55,7 @@ UniqueRegex::Compile(const char *pattern, bool anchored, bool capture,
 }
 
 size_t
-ExpandStringLength(const char *src, MatchInfo match_info,
-                   Error &error_r)
+ExpandStringLength(const char *src, MatchInfo match_info)
 {
     struct Result {
         size_t result = 0;
@@ -73,10 +72,8 @@ ExpandStringLength(const char *src, MatchInfo match_info,
             result += length;
         }
 
-        bool AppendValue(gcc_unused const char *p, size_t length,
-                         gcc_unused Error &error) {
+        void AppendValue(gcc_unused const char *p, size_t length) {
             result += length;
-            return true;
         }
 
         size_t Commit() const {
@@ -85,7 +82,6 @@ ExpandStringLength(const char *src, MatchInfo match_info,
     };
 
     Result result;
-    return ExpandString(result, src, match_info, error_r)
-        ? result.Commit()
-        : size_t(-1);
+    ExpandString(result, src, match_info);
+    return result.Commit();
 }

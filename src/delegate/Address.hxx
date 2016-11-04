@@ -11,7 +11,6 @@
 
 struct pool;
 class MatchInfo;
-class Error;
 
 /**
  * The description of a delegate process.
@@ -48,8 +47,10 @@ struct DelegateAddress {
         return child_options.IsExpandable();
     }
 
-    bool Expand(struct pool &pool, const MatchInfo &match_info,
-                Error &error_r);
+    /**
+     * Throws std::runtime_error on error.
+     */
+    void Expand(struct pool &pool, const MatchInfo &match_info);
 };
 
 #endif

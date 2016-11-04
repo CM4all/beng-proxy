@@ -35,30 +35,22 @@ MountList::CloneAll(AllocatorPtr alloc, const MountList *src)
     return head;
 }
 
-bool
-MountList::Expand(struct pool &pool, const MatchInfo &match_info,
-                  Error &error_r)
+void
+MountList::Expand(struct pool &pool, const MatchInfo &match_info)
 {
     if (expand_source) {
         expand_source = false;
 
-        source = expand_string_unescaped(&pool, source, match_info, error_r);
-        if (source == nullptr)
-            return false;
+        source = expand_string_unescaped(&pool, source, match_info);
     }
-
-    return true;
 }
 
-bool
+void
 MountList::ExpandAll(struct pool &pool, MountList *m,
-                     const MatchInfo &match_info, Error &error_r)
+                     const MatchInfo &match_info)
 {
     for (; m != nullptr; m = m->next)
-        if (!m->Expand(pool, match_info, error_r))
-            return false;
-
-    return true;
+        m->Expand(pool, match_info);
 }
 
 inline void

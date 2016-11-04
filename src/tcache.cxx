@@ -710,12 +710,13 @@ tcache_regex_input(struct pool *pool,
 /**
  * Expand EXPAND_PATH_INFO specifications in all #resource_address
  * instances.
+ *
+ * Throws std::runtime_error on error.
  */
-static bool
+static void
 tcache_expand_response(struct pool &pool, TranslateResponse &response,
                        RegexPointer regex,
-                       const char *uri, const char *host, const char *user,
-                       Error &error)
+                       const char *uri, const char *host, const char *user)
 {
     assert(regex.IsDefined());
     assert(uri != nullptr);
@@ -725,53 +726,23 @@ tcache_expand_response(struct pool &pool, TranslateResponse &response,
 
     const AutoRewindPool auto_rewind(*tpool);
 
-    if (response.regex_on_host_uri && strchr(host, '/') != nullptr) {
-        error.Set(http_response_domain, HTTP_STATUS_BAD_REQUEST,
-                  "Malformed Host header");
-        return false;
-    }
+    if (response.regex_on_host_uri && strchr(host, '/') != nullptr)
+        throw HttpMessageResponse(HTTP_STATUS_BAD_REQUEST,
+                                  "Malformed Host header");
 
     uri = tcache_regex_input(tpool, uri, host, user, response);
     if (uri == nullptr || (!response.unsafe_base &&
-                           !uri_path_verify_paranoid(uri))) {
-        error.Set(http_response_domain, HTTP_STATUS_BAD_REQUEST,
-                  "Malformed URI");
-        return false;
-    }
+                           !uri_path_verify_paranoid(uri)))
+        throw HttpMessageResponse(HTTP_STATUS_BAD_REQUEST,
+                                  "Malformed URI");
 
     const auto match_info = regex.MatchCapture(uri);
-    if (!match_info.IsDefined()) {
+    if (!match_info.IsDefined())
         /* shouldn't happen, as this has already been matched */
-        error.Set(http_response_domain, HTTP_STATUS_BAD_REQUEST,
-                  "Regex mismatch");
-        return false;
-    }
+        throw HttpMessageResponse(HTTP_STATUS_BAD_REQUEST,
+                                  "Regex mismatch");
 
-    return response.Expand(&pool, match_info, error);
-}
-
-static bool
-tcache_expand_response(struct pool &pool, TranslateResponse &response,
-                       RegexPointer regex,
-                       const char *uri, const char *host, const char *user,
-                       GError **error_r)
-{
-    Error error;
-    bool success = tcache_expand_response(pool, response, regex,
-                                          uri, host, user, error);
-    if (!success) {
-        GQuark quark = translate_quark();
-        int code = 0;
-        if (error.IsDomain(http_response_domain)) {
-            quark = http_response_quark();
-            code = error.GetCode();
-        }
-
-        g_set_error(error_r, quark, code,
-                    "translate_cache: %s", error.GetMessage());
-    }
-
-    return success;
+    response.Expand(&pool, match_info);
 }
 
 static const char *
@@ -1322,17 +1293,12 @@ tcache_handler_response(TranslateResponse &response, void *ctx)
             }
         }
 
-        GError *error = nullptr;
-        bool success =
+        try {
             tcache_expand_response(*tcr.pool, response, regex,
                                    tcr.request.uri, tcr.request.host,
-                                   tcr.request.user,
-                                   &error);
-
-        if (!success) {
-            tcr.handler->error(std::make_exception_ptr(std::runtime_error(error->message)),
-                               tcr.handler_ctx);
-            g_error_free(error);
+                                   tcr.request.user);
+        } catch (...) {
+            tcr.handler->error(std::current_exception(), tcr.handler_ctx);
             return;
         }
     } else if (response.easy_base) {
@@ -1390,14 +1356,14 @@ tcache_hit(struct pool &pool,
         return;
     }
 
-    GError *error = nullptr;
-    if (uri != nullptr && response->IsExpandable() &&
-        !tcache_expand_response(pool, *response, item.regex, uri, host, user,
-                                &error)) {
-        handler.error(std::make_exception_ptr(std::runtime_error(error->message)),
-                      ctx);
-        g_error_free(error);
-        return;
+    if (uri != nullptr && response->IsExpandable()) {
+        try {
+            tcache_expand_response(pool, *response, item.regex,
+                                   uri, host, user);
+        } catch (...) {
+            handler.error(std::current_exception(), ctx);
+            return;
+        }
     }
 
     handler.response(*response, ctx);

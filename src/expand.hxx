@@ -5,20 +5,21 @@
 #ifndef BENG_PROXY_EXPAND_HXX
 #define BENG_PROXY_EXPAND_HXX
 
-#include "util/Error.hxx"
+#include "util/RuntimeError.hxx"
 
 #include <inline/compiler.h>
+
+#include <stdexcept>
 
 #include <assert.h>
 #include <string.h>
 
-class Domain;
-extern const Domain expand_domain;
-
+/**
+ * Throws std::runtime_error on error.
+ */
 template<typename Result, typename MatchInfo>
-bool
-ExpandString(Result &result, const char *src,
-             MatchInfo &&match_info, Error &error)
+void
+ExpandString(Result &result, const char *src, MatchInfo &&match_info)
 {
     assert(src != nullptr);
 
@@ -27,7 +28,7 @@ ExpandString(Result &result, const char *src,
         if (backslash == nullptr) {
             /* append the remaining input string and return */
             result.Append(src);
-            return true;
+            return;
         }
 
         /* copy everything up to the backslash */
@@ -40,18 +41,13 @@ ExpandString(Result &result, const char *src,
             result.Append(ch);
         else if (ch >= '0' && ch <= '9') {
             auto c = match_info.GetCapture(ch - '0');
-            if (c.IsNull()) {
-                error.Set(expand_domain, "Invalid regex capture");
-                return false;
-            }
+            if (c.IsNull())
+                throw std::runtime_error("Invalid regex capture");
 
-            if (!c.IsEmpty() &&
-                !result.AppendValue(c.data, c.size, error))
-                return false;
+            if (!c.IsEmpty())
+                result.AppendValue(c.data, c.size);
         } else {
-            error.Format(expand_domain,
-                         "Invalid backslash escape (0x%02x)", ch);
-            return false;
+            throw FormatRuntimeError("Invalid backslash escape (0x%02x)", ch);
         }
     }
 }

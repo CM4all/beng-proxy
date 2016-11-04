@@ -77,28 +77,29 @@ public:
         CPPUNIT_ASSERT(match_info.IsDefined());
 
         RootPool pool;
-        auto e = expand_string(pool, "\\1-\\2-\\3-\\\\", match_info,
-                               IgnoreError());
+        auto e = expand_string(pool, "\\1-\\2-\\3-\\\\", match_info);
         CPPUNIT_ASSERT(e != nullptr);
         CPPUNIT_ASSERT(strcmp(e, "bar-a-b/c.html-\\") == 0);
 
         match_info = r.MatchCapture("/foo/bar/a/b/");
         CPPUNIT_ASSERT(match_info.IsDefined());
 
-        e = expand_string(pool, "\\1-\\2-\\3-\\\\", match_info, IgnoreError());
+        e = expand_string(pool, "\\1-\\2-\\3-\\\\", match_info);
         CPPUNIT_ASSERT(e != nullptr);
         CPPUNIT_ASSERT(strcmp(e, "bar-a-b/-\\") == 0);
 
         match_info = r.MatchCapture("/foo/bar/a%20b/c%2520.html");
         CPPUNIT_ASSERT(match_info.IsDefined());
 
-        e = expand_string_unescaped(pool, "\\1-\\2-\\3", match_info,
-                                    IgnoreError());
+        e = expand_string_unescaped(pool, "\\1-\\2-\\3", match_info);
         CPPUNIT_ASSERT(e != nullptr);
         CPPUNIT_ASSERT(strcmp(e, "bar-a b-c%20.html") == 0);
 
-        e = expand_string_unescaped(pool, "\\4", match_info, IgnoreError());
-        CPPUNIT_ASSERT(e == nullptr);
+        try {
+            e = expand_string_unescaped(pool, "\\4", match_info);
+            CPPUNIT_FAIL("Must fail");
+        } catch (...) {
+        }
     }
 
     void TestExpandMalformedUriEscape() {
@@ -111,14 +112,15 @@ public:
         CPPUNIT_ASSERT(match_info.IsDefined());
 
         RootPool pool;
-        auto e = expand_string(pool, "-\\1-", match_info, IgnoreError());
+        auto e = expand_string(pool, "-\\1-", match_info);
         CPPUNIT_ASSERT(e != nullptr);
         CPPUNIT_ASSERT(strcmp(e, "-%xxx-") == 0);
 
-        Error error;
-        e = expand_string_unescaped(pool, "-\\1-", match_info, error);
-        CPPUNIT_ASSERT(e == nullptr);
-        CPPUNIT_ASSERT(error.IsDefined());
+        try {
+            e = expand_string_unescaped(pool, "-\\1-", match_info);
+            CPPUNIT_FAIL("Must fail");
+        } catch (...) {
+        }
     }
 
     void TestExpandOptional() {
@@ -131,13 +133,13 @@ public:
         CPPUNIT_ASSERT(match_info.IsDefined());
 
         RootPool pool;
-        auto e = expand_string(pool, "\\1-\\2-\\3", match_info, IgnoreError());
+        auto e = expand_string(pool, "\\1-\\2-\\3", match_info);
         CPPUNIT_ASSERT(e != nullptr);
         CPPUNIT_ASSERT(strcmp(e, "a-b-c") == 0);
 
         match_info = r.MatchCapture("ac");
         CPPUNIT_ASSERT(match_info.IsDefined());
-        e = expand_string(pool, "\\1-\\2-\\3", match_info, IgnoreError());
+        e = expand_string(pool, "\\1-\\2-\\3", match_info);
         CPPUNIT_ASSERT(e != nullptr);
         CPPUNIT_ASSERT(strcmp(e, "a--c") == 0);
     }
@@ -152,19 +154,19 @@ public:
         CPPUNIT_ASSERT(match_info.IsDefined());
 
         RootPool pool;
-        auto e = expand_string(pool, "\\1-\\2-\\3", match_info, IgnoreError());
+        auto e = expand_string(pool, "\\1-\\2-\\3", match_info);
         CPPUNIT_ASSERT(e != nullptr);
         CPPUNIT_ASSERT(strcmp(e, "a-b-c") == 0);
 
         match_info = r.MatchCapture("ac");
         CPPUNIT_ASSERT(match_info.IsDefined());
-        e = expand_string(pool, "\\1-\\2-\\3", match_info, IgnoreError());
+        e = expand_string(pool, "\\1-\\2-\\3", match_info);
         CPPUNIT_ASSERT(e != nullptr);
         CPPUNIT_ASSERT(strcmp(e, "a--c") == 0);
 
         match_info = r.MatchCapture("ab");
         CPPUNIT_ASSERT(match_info.IsDefined());
-        e = expand_string(pool, "\\1-\\2-\\3", match_info, IgnoreError());
+        e = expand_string(pool, "\\1-\\2-\\3", match_info);
         CPPUNIT_ASSERT(e != nullptr);
         CPPUNIT_ASSERT(strcmp(e, "a-b-") == 0);
     }

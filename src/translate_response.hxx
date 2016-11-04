@@ -325,9 +325,10 @@ struct TranslateResponse {
     /**
      * Expand the strings in this response with the specified regex
      * result.
+     *
+     * Throws std::runtime_error on error.
      */
-    bool Expand(struct pool *pool,
-                const MatchInfo &match_info, Error &error_r);
+    void Expand(struct pool *pool, const MatchInfo &match_info);
 };
 
 #endif

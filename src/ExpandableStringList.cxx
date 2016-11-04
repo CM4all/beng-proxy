@@ -30,21 +30,15 @@ ExpandableStringList::IsExpandable() const
     return false;
 }
 
-bool
-ExpandableStringList::Expand(struct pool *pool,
-                             const MatchInfo &match_info, Error &error_r)
+void
+ExpandableStringList::Expand(struct pool *pool, const MatchInfo &match_info)
 {
     for (auto *i = head; i != nullptr; i = i->next) {
         if (!i->expandable)
             continue;
 
-        i->value = expand_string_unescaped(pool, i->value,
-                                           match_info, error_r);
-        if (i->value == nullptr)
-            return false;
+        i->value = expand_string_unescaped(pool, i->value, match_info);
     }
-
-    return true;
 }
 
 void

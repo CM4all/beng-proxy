@@ -86,16 +86,16 @@ struct Transformation {
     /**
      * Expand the strings in this transformation (not following the linked
      * lits) with the specified regex result.
+     *
+     * Throws std::runtime_error on error.
      */
-    bool Expand(struct pool *pool, const MatchInfo &match_info,
-                Error &error_r);
+    void Expand(struct pool *pool, const MatchInfo &match_info);
 
     /**
      * The same as transformation_expand(), but expand all transformations
      * in the linked list.
      */
-    bool ExpandChain(struct pool *pool, const MatchInfo &match_info,
-                     Error &error_r);
+    void ExpandChain(struct pool *pool, const MatchInfo &match_info);
 };
 
 #endif

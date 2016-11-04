@@ -169,22 +169,17 @@ LhttpAddress::RelativeTo(const LhttpAddress &base) const
     return uri_relative(base.uri, uri);
 }
 
-bool
-LhttpAddress::Expand(struct pool *pool, const MatchInfo &match_info,
-                      Error &error_r)
+void
+LhttpAddress::Expand(struct pool *pool, const MatchInfo &match_info)
 {
     assert(pool != NULL);
 
-    if (!options.Expand(*pool, match_info, error_r))
-        return false;
+    options.Expand(*pool, match_info);
 
-    if (expand_uri != NULL) {
-        uri = expand_string(pool, expand_uri, match_info, error_r);
-        if (uri == NULL)
-            return false;
-    }
+    if (expand_uri != NULL)
+        uri = expand_string(pool, expand_uri, match_info);
 
-    return args.Expand(pool, match_info, error_r);
+    args.Expand(pool, match_info);
 }
 
 bool

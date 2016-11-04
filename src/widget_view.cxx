@@ -179,26 +179,21 @@ widget_view_any_is_expandable(const WidgetView *view)
     return false;
 }
 
-bool
-WidgetView::Expand(struct pool &pool, const MatchInfo &match_info,
-                    Error &error_r)
+void
+WidgetView::Expand(struct pool &pool, const MatchInfo &match_info)
 {
-    return address.Expand(pool, match_info, error_r) &&
-        transformation->ExpandChain(&pool, match_info, error_r);
+    address.Expand(pool, match_info);
+    transformation->ExpandChain(&pool, match_info);
 }
 
-bool
+void
 widget_view_expand_all(struct pool *pool, WidgetView *view,
-                       const MatchInfo &match_info, Error &error_r)
+                       const MatchInfo &match_info)
 {
     assert(pool != nullptr);
 
     while (view != nullptr) {
-        if (!view->Expand(*pool, match_info, error_r))
-            return false;
-
+        view->Expand(*pool, match_info);
         view = view->next;
     }
-
-    return true;
 }

@@ -108,8 +108,7 @@ NfsAddress::LoadBase(struct pool *pool, const char *suffix) const
 }
 
 const NfsAddress *
-NfsAddress::Expand(struct pool *pool, const MatchInfo &match_info,
-                   Error &error_r) const
+NfsAddress::Expand(struct pool *pool, const MatchInfo &match_info) const
 {
     assert(pool != nullptr);
 
@@ -117,9 +116,7 @@ NfsAddress::Expand(struct pool *pool, const MatchInfo &match_info,
         return this;
 
     const char *new_path = expand_string_unescaped(pool, expand_path,
-                                                   match_info, error_r);
-    if (new_path == nullptr)
-        return nullptr;
+                                                   match_info);
 
     auto dest = NewFromPool<NfsAddress>(*pool, server, export_name,
                                         new_path);

@@ -16,7 +16,6 @@
 
 struct pool;
 struct StringView;
-class Error;
 
 /**
  * The address of a HTTP server that is launched and managed by
@@ -147,8 +146,7 @@ struct LhttpAddress {
             args.IsExpandable();
     }
 
-    bool Expand(struct pool *pool, const MatchInfo &match_info,
-                Error &error_r);
+    void Expand(struct pool *pool, const MatchInfo &match_info);
 
     bool CopyTo(PreparedChildProcess &dest, GError **error_r) const;
 };

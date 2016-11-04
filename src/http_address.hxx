@@ -18,7 +18,6 @@ struct pool;
 struct dpool;
 struct StringView;
 class MatchInfo;
-class Error;
 
 struct HttpAddress {
     const enum class Protocol : uint8_t {
@@ -142,8 +141,10 @@ struct HttpAddress {
         return expand_path != nullptr;
     }
 
-    bool Expand(struct pool *pool, const MatchInfo &match_info,
-                Error &error_r);
+    /**
+     * Throws std::runtime_error on error.
+     */
+    void Expand(struct pool *pool, const MatchInfo &match_info);
 
     gcc_pure
     int GetDefaultPort() const {

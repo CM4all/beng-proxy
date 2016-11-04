@@ -12,7 +12,6 @@
 struct pool;
 struct PreparedChildProcess;
 class MatchInfo;
-class Error;
 
 struct JailParams {
     bool enabled = false;
@@ -42,8 +41,7 @@ struct JailParams {
         return expand_home_directory;
     }
 
-    bool Expand(struct pool &pool, const MatchInfo &match_info,
-                Error &error_r);
+    void Expand(struct pool &pool, const MatchInfo &match_info);
 };
 
 #endif
