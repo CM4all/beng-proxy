@@ -694,7 +694,7 @@ libutil_a_SOURCES = \
 	src/util/ForeignFifoBuffer.hxx \
 	src/util/DynamicFifoBuffer.hxx \
 	src/util/RefCount.hxx \
-	src/kvlist.hxx \
+	src/util/kvlist.hxx \
 	src/format.c format.h \
 	src/http_date.cxx src/http_date.hxx \
 	src/gmtime.c src/gmtime.h \
