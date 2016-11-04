@@ -312,8 +312,11 @@ struct TranslateResponse {
     void CacheLoad(struct pool *pool, const TranslateResponse &src,
                    const char *uri);
 
-    UniqueRegex CompileRegex(Error &error) const;
-    UniqueRegex CompileInverseRegex(Error &error) const;
+    /**
+     * Throws std::runtime_error on error.
+     */
+    UniqueRegex CompileRegex() const;
+    UniqueRegex CompileInverseRegex() const;
 
     /**
      * Does any response need to be expanded with

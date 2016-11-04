@@ -9,7 +9,6 @@
 #include "TranslateHandler.hxx"
 #include "translate_request.hxx"
 #include "translate_response.hxx"
-#include "translate_quark.hxx"
 #include "regex.hxx"
 #include "http_quark.h"
 #include "http_domain.hxx"
@@ -26,7 +25,6 @@
 #include "AllocatorStats.hxx"
 #include "load_file.hxx"
 #include "util/djbhash.h"
-#include "util/Error.hxx"
 #include "util/RuntimeError.hxx"
 #include "util/StringView.hxx"
 #include "beng-proxy/translation.h"
@@ -1217,24 +1215,22 @@ tcache_store(TranslateCacheRequest &tcr, const TranslateResponse &response)
     cache_log(4, "translate_cache: store %s\n", key);
 
     if (response.regex != nullptr) {
-        Error error;
-        item->regex = response.CompileRegex(error);
-        if (!item->regex.IsDefined()) {
+        try {
+            item->regex = response.CompileRegex();
+        } catch (...) {
             DeleteUnrefTrashPool(*pool, item);
-            throw FormatRuntimeError("translate_cache: %s",
-                                     error.GetMessage());
+            throw;
         }
     } else {
         assert(!response.IsExpandable());
     }
 
     if (response.inverse_regex != nullptr) {
-        Error error;
-        item->inverse_regex = response.CompileInverseRegex(error);
-        if (!item->inverse_regex.IsDefined()) {
+        try {
+            item->inverse_regex = response.CompileInverseRegex();
+        } catch (...) {
             DeleteUnrefTrashPool(*pool, item);
-            throw FormatRuntimeError("translate_cache: %s",
-                                     error.GetMessage());
+            throw;
         }
     }
 
@@ -1282,18 +1278,10 @@ tcache_handler_response(TranslateResponse &response, void *ctx)
 
     if (tcr.request.uri != nullptr && response.IsExpandable()) {
         UniqueRegex unref_regex;
-        if (!regex.IsDefined()) {
-            Error error;
-            regex = unref_regex = response.CompileRegex(error);
-            if (!regex.IsDefined()) {
-                tcr.handler->error(std::make_exception_ptr(FormatRuntimeError("translate_cache: %s",
-                                                                              error.GetMessage())),
-                                   tcr.handler_ctx);
-                return;
-            }
-        }
 
         try {
+            regex = unref_regex = response.CompileRegex();
+
             tcache_expand_response(*tcr.pool, response, regex,
                                    tcr.request.uri, tcr.request.host,
                                    tcr.request.user);

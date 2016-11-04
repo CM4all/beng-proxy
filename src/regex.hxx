@@ -16,8 +16,6 @@
 
 #include <algorithm>
 
-class Error;
-
 class MatchInfo {
     friend class RegexPointer;
 
@@ -113,8 +111,10 @@ public:
         return *this;
     }
 
-    bool Compile(const char *pattern, bool anchored, bool capture,
-                 Error &error);
+    /**
+     * Throws std::runtime_error on error.
+     */
+    void Compile(const char *pattern, bool anchored, bool capture);
 };
 
 /**

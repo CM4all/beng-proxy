@@ -374,22 +374,22 @@ TranslateResponse::CacheLoad(struct pool *pool, const TranslateResponse &src,
 }
 
 UniqueRegex
-TranslateResponse::CompileRegex(Error &error_r) const
+TranslateResponse::CompileRegex() const
 {
     assert(regex != nullptr);
 
     UniqueRegex r;
-    r.Compile(regex, protocol_version >= 3, IsExpandable(), error_r);
+    r.Compile(regex, protocol_version >= 3, IsExpandable());
     return r;
 }
 
 UniqueRegex
-TranslateResponse::CompileInverseRegex(Error &error_r) const
+TranslateResponse::CompileInverseRegex() const
 {
     assert(inverse_regex != nullptr);
 
     UniqueRegex r;
-    r.Compile(inverse_regex, protocol_version >= 3, false, error_r);
+    r.Compile(inverse_regex, protocol_version >= 3, false);
     return r;
 }
 

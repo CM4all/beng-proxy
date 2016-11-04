@@ -9,6 +9,7 @@
 #include "util/Error.hxx"
 #include "util/Domain.hxx"
 
+#include <stdexcept>
 #include <forward_list>
 #include <string>
 
@@ -78,8 +79,12 @@ parse_line(UserAgentClass &cls, char *line, Error &error)
         }
     }
 
-    if (!cls.regex.Compile(r, false, false, error))
+    try {
+        cls.regex.Compile(r, false, false);
+    } catch (const std::runtime_error &e) {
+        error.Set(ua_classification_domain, e.what());
         return false;
+    }
 
     cls.name = name;
     return true;

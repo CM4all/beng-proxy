@@ -29,7 +29,7 @@ public:
     void TestMatch1() {
         UniqueRegex r;
         CPPUNIT_ASSERT(!r.IsDefined());
-        CPPUNIT_ASSERT(r.Compile(".", false, false, IgnoreError()));
+        r.Compile(".", false, false);
         CPPUNIT_ASSERT(r.IsDefined());
         CPPUNIT_ASSERT(r.Match("a"));
         CPPUNIT_ASSERT(r.Match("abc"));
@@ -38,7 +38,7 @@ public:
     void TestMatch2() {
         UniqueRegex r = UniqueRegex();
         CPPUNIT_ASSERT(!r.IsDefined());
-        CPPUNIT_ASSERT(r.Compile("..", false, false, IgnoreError()));
+        r.Compile("..", false, false);
         CPPUNIT_ASSERT(r.IsDefined());
         CPPUNIT_ASSERT(!r.Match("a"));
         CPPUNIT_ASSERT(r.Match("abc"));
@@ -47,7 +47,7 @@ public:
     void TestNotAnchored() {
         UniqueRegex r = UniqueRegex();
         CPPUNIT_ASSERT(!r.IsDefined());
-        CPPUNIT_ASSERT(r.Compile("/foo/", false, false, IgnoreError()));
+        r.Compile("/foo/", false, false);
         CPPUNIT_ASSERT(r.IsDefined());
         CPPUNIT_ASSERT(r.Match("/foo/"));
         CPPUNIT_ASSERT(r.Match("/foo/bar"));
@@ -57,7 +57,7 @@ public:
     void TestAnchored() {
         UniqueRegex r = UniqueRegex();
         CPPUNIT_ASSERT(!r.IsDefined());
-        CPPUNIT_ASSERT(r.Compile("/foo/", true, false, IgnoreError()));
+        r.Compile("/foo/", true, false);
         CPPUNIT_ASSERT(r.IsDefined());
         CPPUNIT_ASSERT(r.Match("/foo/"));
         CPPUNIT_ASSERT(r.Match("/foo/bar"));
@@ -67,8 +67,7 @@ public:
     void TestExpand() {
         UniqueRegex r;
         CPPUNIT_ASSERT(!r.IsDefined());
-        CPPUNIT_ASSERT(r.Compile("^/foo/(\\w+)/([^/]+)/(.*)$", false, true,
-                                 IgnoreError()));
+        r.Compile("^/foo/(\\w+)/([^/]+)/(.*)$", false, true);
         CPPUNIT_ASSERT(r.IsDefined());
 
         CPPUNIT_ASSERT(!r.Match("a"));
@@ -105,7 +104,7 @@ public:
     void TestExpandMalformedUriEscape() {
         UniqueRegex r;
         CPPUNIT_ASSERT(!r.IsDefined());
-        CPPUNIT_ASSERT(r.Compile("^(.*)$", false, true, IgnoreError()));
+        r.Compile("^(.*)$", false, true);
         CPPUNIT_ASSERT(r.IsDefined());
 
         auto match_info = r.MatchCapture("%xxx");
@@ -126,7 +125,7 @@ public:
     void TestExpandOptional() {
         UniqueRegex r;
         CPPUNIT_ASSERT(!r.IsDefined());
-        CPPUNIT_ASSERT(r.Compile("^(a)(b)?(c)$", true, true, IgnoreError()));
+        r.Compile("^(a)(b)?(c)$", true, true);
         CPPUNIT_ASSERT(r.IsDefined());
 
         auto match_info = r.MatchCapture("abc");
@@ -147,7 +146,7 @@ public:
     void TestExpandOptionalLast() {
         UniqueRegex r;
         CPPUNIT_ASSERT(!r.IsDefined());
-        CPPUNIT_ASSERT(r.Compile("^(a)(b)?(c)?$", true, true, IgnoreError()));
+        r.Compile("^(a)(b)?(c)?$", true, true);
         CPPUNIT_ASSERT(r.IsDefined());
 
         auto match_info = r.MatchCapture("abc");

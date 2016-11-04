@@ -6,17 +6,13 @@
 
 #include "regex.hxx"
 #include "expand.hxx"
-#include "util/Domain.hxx"
-#include "util/Error.hxx"
+#include "util/RuntimeError.hxx"
 
 #include <assert.h>
 #include <string.h>
 
-static constexpr Domain regex_domain("regex");
-
-bool
-UniqueRegex::Compile(const char *pattern, bool anchored, bool capture,
-                     Error &error)
+void
+UniqueRegex::Compile(const char *pattern, bool anchored, bool capture)
 {
     constexpr int default_options = PCRE_DOTALL|PCRE_NO_AUTO_CAPTURE;
 
@@ -29,11 +25,9 @@ UniqueRegex::Compile(const char *pattern, bool anchored, bool capture,
     const char *error_string;
     int error_offset;
     re = pcre_compile(pattern, options, &error_string, &error_offset, nullptr);
-    if (re == nullptr) {
-        error.Format(regex_domain, "Error in regex at offset %d: %s",
-                     error_offset, error_string);
-        return false;
-    }
+    if (re == nullptr)
+        throw FormatRuntimeError("Error in regex at offset %d: %s",
+                                 error_offset, error_string);
 
     int study_options = 0;
 #ifdef PCRE_CONFIG_JIT
@@ -43,15 +37,12 @@ UniqueRegex::Compile(const char *pattern, bool anchored, bool capture,
     if (extra == nullptr && error_string != nullptr) {
         pcre_free(re);
         re = nullptr;
-        error.Format(regex_domain, "Regex study error: %s", error_string);
-        return false;
+        throw FormatRuntimeError("Regex study error: %s", error_string);
     }
 
     int n;
     if (capture && pcre_fullinfo(re, extra, PCRE_INFO_CAPTURECOUNT, &n) == 0)
         n_capture = n;
-
-    return true;
 }
 
 size_t

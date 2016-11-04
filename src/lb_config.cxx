@@ -9,7 +9,6 @@
 #include "io/ConfigParser.hxx"
 #include "system/Error.hxx"
 #include "net/Parser.hxx"
-#include "util/Error.hxx"
 #include "util/StringUtil.hxx"
 #include "util/CharUtil.hxx"
 #include "util/ScopeExit.hxx"
@@ -713,11 +712,8 @@ LbConfigParser::Branch::ParseLine(LineParser &line)
             throw LineParser::Error("Unknown attribute reference");
 
         UniqueRegex regex;
-        if (op == LbConditionConfig::Operator::REGEX) {
-            Error error;
-            if (!regex.Compile(string, false, false, error))
-                throw LineParser::Error(error.GetMessage());
-        }
+        if (op == LbConditionConfig::Operator::REGEX)
+            regex.Compile(string, false, false);
 
         LbGotoIfConfig gif(regex.IsDefined()
                            ? LbConditionConfig(std::move(a), negate,
