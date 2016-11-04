@@ -15,7 +15,7 @@
 #include "bot.h"
 #include "pbuffer.hxx"
 #include "strmap.hxx"
-#include "crc.h"
+#include "util/djbhash.h"
 #include "format.h"
 
 #include <daemon/log.h>
@@ -78,7 +78,7 @@ build_session_cookie_name(struct pool *pool, const BpConfig *config,
     size_t length = config->session_cookie.length();
     char *name = PoolAlloc<char>(*pool, length + 5);
     memcpy(name, config->session_cookie.data(), length);
-    format_uint16_hex_fixed(name + length, crc16_string(0, host));
+    format_uint16_hex_fixed(name + length, djb_hash_string(host));
     name[length + 4] = 0;
     return name;
 }
