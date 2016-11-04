@@ -6,9 +6,9 @@
 
 #include "socket_wrapper.hxx"
 #include "direct.hxx"
-#include "buffered_io.hxx"
 #include "system/fd-util.h"
 #include "system/fd_util.h"
+#include "io/Buffered.hxx"
 #include "pool.hxx"
 
 #include <socket/util.h>

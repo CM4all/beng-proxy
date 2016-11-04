@@ -12,7 +12,7 @@
 #include "system/fd_util.h"
 #include "event/Event.hxx"
 #include "event/Callback.hxx"
-#include "buffered_io.hxx"
+#include "io/Buffered.hxx"
 #include "pool.hxx"
 #include "fb_pool.hxx"
 #include "SliceFifoBuffer.hxx"

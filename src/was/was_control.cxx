@@ -6,9 +6,9 @@
 
 #include "was_control.hxx"
 #include "was_quark.h"
-#include "buffered_io.hxx"
 #include "strmap.hxx"
 #include "fb_pool.hxx"
+#include "io/Buffered.hxx"
 #include "util/ConstBuffer.hxx"
 
 #include <daemon/log.h>

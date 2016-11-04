@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_BUFFERED_IO_HXX
-#define BENG_PROXY_BUFFERED_IO_HXX
+#ifndef IO_BUFFERED_HXX
+#define IO_BUFFERED_HXX
 
 #include <sys/types.h>
 #include <stdint.h>

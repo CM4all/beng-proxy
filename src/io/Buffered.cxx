@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "buffered_io.hxx"
+#include "Buffered.hxx"
 #include "util/ForeignFifoBuffer.hxx"
 
 #include <assert.h>

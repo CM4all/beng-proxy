@@ -9,10 +9,10 @@
 #include "event/SocketEvent.hxx"
 #include "direct.hxx"
 #include "istream/istream.hxx"
-#include "buffered_io.hxx"
 #include "pool.hxx"
 #include "fb_pool.hxx"
 #include "SliceFifoBuffer.hxx"
+#include "io/Buffered.hxx"
 #include "util/Cast.hxx"
 #include "gerrno.h"
 
