@@ -3,7 +3,6 @@
 #include "net/UdpHandler.hxx"
 #include "net/SocketAddress.hxx"
 #include "event/Loop.hxx"
-#include "util/Error.hxx"
 #include "util/PrintException.hxx"
 
 #include <daemon/log.h>

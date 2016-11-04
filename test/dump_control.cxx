@@ -2,7 +2,6 @@
 #include "net/SocketAddress.hxx"
 #include "event/Loop.hxx"
 #include "system/SetupProcess.hxx"
-#include "util/Error.hxx"
 #include "util/PrintException.hxx"
 
 #include <inline/compiler.h>
@@ -49,7 +48,6 @@ try {
 
     DumpControlHandler handler;
 
-    Error error;
     ControlServer cs(handler);
     cs.OpenPort(event_loop, listen_host, 1234,
                 mcast_group != nullptr ? &mcast_group_addr : nullptr);

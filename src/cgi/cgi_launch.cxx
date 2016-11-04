@@ -14,7 +14,6 @@
 #include "spawn/Prepared.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "util/CharUtil.hxx"
-#include "util/Error.hxx"
 
 #include <daemon/log.h>
 

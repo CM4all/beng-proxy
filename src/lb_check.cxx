@@ -9,7 +9,6 @@
 #include "ssl/ssl_factory.hxx"
 #include "ssl/SniCallback.hxx"
 #include "ssl/Cache.hxx"
-#include "util/Error.hxx"
 
 static void
 lb_check(EventLoop &event_loop, const LbCertDatabaseConfig &config)

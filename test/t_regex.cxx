@@ -1,7 +1,6 @@
 #include "regex.hxx"
 #include "pexpand.hxx"
 #include "RootPool.hxx"
-#include "util/Error.hxx"
 
 #include <inline/compiler.h>
 
