@@ -22,6 +22,7 @@
 #include "gerrno.h"
 #include "pool.hxx"
 #include "util/Error.hxx"
+#include "util/Exception.hxx"
 
 #include <daemon/log.h>
 
@@ -183,4 +184,18 @@ response_dispatch_log(Request &request, http_status_t status,
 {
     response_dispatch_log(request, status,
                           http_status_to_string(status), log_msg);
+}
+
+void
+response_dispatch_log(Request &request, http_status_t status,
+                      const char *msg,
+                      std::exception_ptr ep)
+{
+    auto log_msg = GetFullMessage(ep);
+    daemon_log(2, "error on '%s': %s\n", request.request.uri, log_msg.c_str());
+
+    if (request.instance.config.verbose_response)
+        msg = p_strdup(&request.pool, log_msg.c_str());
+
+    response_dispatch_message(request, status, msg);
 }
