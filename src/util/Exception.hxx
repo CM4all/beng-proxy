@@ -33,6 +33,9 @@
 #include <exception>
 #include <string>
 
+/**
+ * Create a nested exception, wrapping #ep inside (a copy of) #t.
+ */
 template<typename T>
 inline std::exception_ptr
 NestException(std::exception_ptr ep, T &&t)
@@ -48,11 +51,19 @@ NestException(std::exception_ptr ep, T &&t)
 	}
 }
 
+/**
+ * Obtain the full concatenated message of an exception and its nested
+ * chain.
+ */
 std::string
 GetFullMessage(const std::exception &e,
 	       const char *fallback="Unknown exception",
 	       const char *separator="; ");
 
+/**
+ * Obtain the full concatenated message of an exception and its nested
+ * chain.
+ */
 std::string
 GetFullMessage(const std::exception_ptr &ep,
 	       const char *fallback="Unknown exception",
