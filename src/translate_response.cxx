@@ -15,6 +15,7 @@
 #include "regex.hxx"
 #include "pexpand.hxx"
 #include "http_address.hxx"
+#include "HttpMessageResponse.hxx"
 #include "util/StringView.hxx"
 
 #include <glib.h>
@@ -344,15 +345,14 @@ TranslateResponse::CacheStore(struct pool *pool, const TranslateResponse &src,
     return has_base;
 }
 
-bool
+void
 TranslateResponse::CacheLoad(struct pool *pool, const TranslateResponse &src,
-                             const char *request_uri, GError **error_r)
+                             const char *request_uri)
 {
     const bool expandable = src.IsExpandable();
 
-    if (!address.CacheLoad(*pool, src.address, request_uri, src.base,
-                           src.unsafe_base, expandable, error_r))
-        return false;
+    address.CacheLoad(*pool, src.address, request_uri, src.base,
+                      src.unsafe_base, expandable);
 
     if (this != &src)
         CopyFrom(pool, src);
@@ -366,13 +366,11 @@ TranslateResponse::CacheLoad(struct pool *pool, const TranslateResponse &src,
         if (test_path != nullptr) {
             char *unescaped = uri_unescape_dup(pool, tail);
             if (unescaped == nullptr)
-                return false;
+                throw HttpMessageResponse(HTTP_STATUS_BAD_REQUEST, "Malformed URI tail");
 
             test_path = p_strcat(pool, test_path, unescaped, nullptr);
         }
     }
-
-    return true;
 }
 
 UniqueRegex

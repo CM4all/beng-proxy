@@ -306,8 +306,11 @@ struct TranslateResponse {
     bool CacheStore(struct pool *pool, const TranslateResponse &src,
                     const char *uri);
 
-    bool CacheLoad(struct pool *pool, const TranslateResponse &src,
-                   const char *uri, GError **error_r);
+    /**
+     * Throws std::runtime_error on error.
+     */
+    void CacheLoad(struct pool *pool, const TranslateResponse &src,
+                   const char *uri);
 
     UniqueRegex CompileRegex(Error &error) const;
     UniqueRegex CompileInverseRegex(Error &error) const;

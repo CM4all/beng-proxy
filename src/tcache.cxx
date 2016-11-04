@@ -1337,12 +1337,10 @@ tcache_handler_response(TranslateResponse &response, void *ctx)
         }
     } else if (response.easy_base) {
         /* create a writable copy and apply the BASE */
-        GError *error = nullptr;
-        if (!response.CacheLoad(tcr.pool, response,
-                                 tcr.request.uri, &error)) {
-            tcr.handler->error(std::make_exception_ptr(std::runtime_error(error->message)),
-                               tcr.handler_ctx);
-            g_error_free(error);
+        try {
+            response.CacheLoad(tcr.pool, response, tcr.request.uri);
+        } catch (...) {
+            tcr.handler->error(std::current_exception(), tcr.handler_ctx);
             return;
         }
     } else if (response.base != nullptr) {
@@ -1385,14 +1383,14 @@ tcache_hit(struct pool &pool,
 
     cache_log(4, "translate_cache: hit %s\n", key);
 
-    GError *error = nullptr;
-    if (!response->CacheLoad(&pool, item.response, uri, &error)) {
-        handler.error(std::make_exception_ptr(std::runtime_error(error->message)),
-                      ctx);
-        g_error_free(error);
+    try {
+        response->CacheLoad(&pool, item.response, uri);
+    } catch (...) {
+        handler.error(std::current_exception(), ctx);
         return;
     }
 
+    GError *error = nullptr;
     if (uri != nullptr && response->IsExpandable() &&
         !tcache_expand_response(pool, *response, item.regex, uri, host, user,
                                 &error)) {

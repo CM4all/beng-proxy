@@ -16,7 +16,7 @@
 #include "uri/uri_verify.hxx"
 #include "uri/uri_base.hxx"
 #include "pool.hxx"
-#include "http_quark.h"
+#include "HttpMessageResponse.hxx"
 #include "util/StringView.hxx"
 
 #include <http/status.h>
@@ -373,34 +373,29 @@ ResourceAddress::LoadBase(struct pool &pool, const char *suffix) const
     gcc_unreachable();
 }
 
-bool
+void
 ResourceAddress::CacheLoad(struct pool &pool, const ResourceAddress &src,
                            const char *uri, const char *base,
-                           bool unsafe_base, bool expandable,
-                           GError **error_r)
+                           bool unsafe_base, bool expandable)
 {
     if (base != nullptr && !expandable) {
         const char *tail = require_base_tail(uri, base);
 
-        if (!unsafe_base && !uri_path_verify_paranoid(tail - 1)) {
-            g_set_error(error_r, http_response_quark(),
-                        HTTP_STATUS_BAD_REQUEST, "Malformed URI");
-            return false;
-        }
+        if (!unsafe_base && !uri_path_verify_paranoid(tail - 1))
+            throw HttpMessageResponse(HTTP_STATUS_BAD_REQUEST, "Malformed URI");
 
         if (src.type == Type::NONE) {
             /* see code comment in tcache_store_address() */
             type = Type::NONE;
-            return true;
+            return;
         }
 
         *this = src.LoadBase(pool, tail);
         if (IsDefined())
-            return true;
+            return;
     }
 
     CopyFrom(pool, src);
-    return true;
 }
 
 ResourceAddress

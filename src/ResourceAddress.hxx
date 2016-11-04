@@ -305,11 +305,12 @@ public:
     /**
      * Load an address from a cached object, and apply any BASE
      * changes (if a BASE is present).
+     *
+     * Throws std::runtime_error on error.
      */
-    bool CacheLoad(struct pool &pool, const ResourceAddress &src,
+    void CacheLoad(struct pool &pool, const ResourceAddress &src,
                    const char *uri, const char *base,
-                   bool unsafe_base, bool expandable,
-                   GError **error_r);
+                   bool unsafe_base, bool expandable);
 
     gcc_pure
     ResourceAddress Apply(struct pool &pool, StringView relative) const;
