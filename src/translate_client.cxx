@@ -5,7 +5,6 @@
  */
 
 #include "translate_client.hxx"
-#include "translate_quark.hxx"
 #include "translate_parser.hxx"
 #include "translate_request.hxx"
 #include "TranslateHandler.hxx"

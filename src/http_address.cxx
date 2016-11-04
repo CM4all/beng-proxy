@@ -13,7 +13,6 @@
 #include "puri_relative.hxx"
 #include "pool.hxx"
 #include "pexpand.hxx"
-#include "translate_quark.hxx"
 #include "util/StringView.hxx"
 
 #include <socket/address.h>

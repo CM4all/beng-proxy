@@ -6,7 +6,6 @@
 
 #include "request.hxx"
 #include "bp_instance.hxx"
-#include "translate_quark.hxx"
 #include "http_client.hxx"
 #include "ajp/ajp_client.hxx"
 #include "memcached/memcached_client.hxx"
@@ -93,10 +92,7 @@ response_dispatch_error(Request &request, GError *error)
     }
 #endif
 
-    if (error->domain == translate_quark())
-        response_dispatch_error(request, error, HTTP_STATUS_BAD_GATEWAY,
-                                "Translation server failed");
-    else if (error->domain == http_client_quark() ||
+    if (error->domain == http_client_quark() ||
              error->domain == ajp_client_quark())
         response_dispatch_error(request, error, HTTP_STATUS_BAD_GATEWAY,
                                 "Upstream server failed");

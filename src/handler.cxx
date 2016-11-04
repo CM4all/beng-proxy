@@ -36,7 +36,6 @@
 #include "istream/istream.hxx"
 #include "istream/istream_hold.hxx"
 #include "TranslateHandler.hxx"
-#include "translate_quark.hxx"
 #include "ua_classification.hxx"
 #include "beng-proxy/translation.h"
 #include "util/Cast.hxx"

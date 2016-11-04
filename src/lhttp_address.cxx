@@ -12,7 +12,6 @@
 #include "puri_edit.hxx"
 #include "puri_relative.hxx"
 #include "pexpand.hxx"
-#include "translate_quark.hxx"
 #include "spawn/Prepared.hxx"
 #include "util/StringView.hxx"
 

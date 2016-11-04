@@ -9,7 +9,6 @@
 #include "pexpand.hxx"
 #include "pool.hxx"
 #include "pbuffer.hxx"
-#include "translate_quark.hxx"
 #include "util/StringView.hxx"
 
 #include <stdexcept>
