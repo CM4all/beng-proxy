@@ -686,6 +686,7 @@ libutil_a_SOURCES = \
 	src/util/Domain.hxx \
 	src/util/Error.cxx src/util/Error.hxx \
 	src/util/PrintException.cxx src/util/PrintException.hxx \
+	src/util/Exception.cxx src/util/Exception.hxx \
 	src/util/RuntimeError.hxx \
 	src/util/djbhash.c src/util/djbhash.h \
 	src/util/ScopeExit.hxx \
