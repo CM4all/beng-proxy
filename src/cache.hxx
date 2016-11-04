@@ -20,8 +20,6 @@
 #include <stddef.h>
 #include <string.h>
 
-struct Cache;
-struct AllocatorStats;
 class EventLoop;
 
 struct CacheItem {

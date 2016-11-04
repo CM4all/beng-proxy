@@ -5,7 +5,6 @@
  */
 
 #include "cache.hxx"
-#include "AllocatorStats.hxx"
 #include "util/djbhash.h"
 
 #include <boost/version.hpp>
