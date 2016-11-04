@@ -7,8 +7,6 @@
 #include "cache.hxx"
 #include "util/djbhash.h"
 
-#include <boost/version.hpp>
-
 #include <assert.h>
 
 inline size_t
@@ -95,13 +93,8 @@ Cache::RemoveItem(CacheItem &item)
 {
     assert(!item.removed);
 
-#if BOOST_VERSION >= 105000
     items.erase_and_dispose(items.iterator_to(item),
                             ItemRemover(*this));
-#else
-    items.erase(items.iterator_to(item));
-    ItemRemoved(&item);
-#endif
 }
 
 CacheItem *
