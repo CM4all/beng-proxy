@@ -4,9 +4,9 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "tstock.hxx"
-#include "TranslateHandler.hxx"
-#include "translate_client.hxx"
+#include "Stock.hxx"
+#include "Handler.hxx"
+#include "Client.hxx"
 #include "stock/Stock.hxx"
 #include "stock/Class.hxx"
 #include "stock/Item.hxx"

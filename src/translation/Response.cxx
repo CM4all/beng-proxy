@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "translate_response.hxx"
+#include "Response.hxx"
 #include "pool.hxx"
 #include "pbuffer.hxx"
 #include "strmap.hxx"

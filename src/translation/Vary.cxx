@@ -2,8 +2,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "tvary.hxx"
-#include "translate_response.hxx"
+#include "Vary.hxx"
+#include "Response.hxx"
 #include "strmap.hxx"
 #include "growing_buffer.hxx"
 #include "header_writer.hxx"

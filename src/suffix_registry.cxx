@@ -6,10 +6,10 @@
  */
 
 #include "suffix_registry.hxx"
-#include "tcache.hxx"
-#include "TranslateHandler.hxx"
-#include "translate_request.hxx"
-#include "translate_response.hxx"
+#include "translation/Cache.hxx"
+#include "translation/Handler.hxx"
+#include "translation/Request.hxx"
+#include "translation/Response.hxx"
 #include "widget_view.hxx"
 #include "pool.hxx"
 

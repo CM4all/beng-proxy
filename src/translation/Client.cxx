@@ -4,10 +4,10 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "translate_client.hxx"
-#include "translate_parser.hxx"
-#include "translate_request.hxx"
-#include "TranslateHandler.hxx"
+#include "Client.hxx"
+#include "Parser.hxx"
+#include "Request.hxx"
+#include "Handler.hxx"
 #include "buffered_socket.hxx"
 #include "please.hxx"
 #include "growing_buffer.hxx"

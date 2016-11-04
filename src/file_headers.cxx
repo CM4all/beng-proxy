@@ -14,7 +14,7 @@
 #include "http_server/Request.hxx"
 #include "http_util.hxx"
 #include "http_headers.hxx"
-#include "tvary.hxx"
+#include "translation/Vary.hxx"
 
 #include <assert.h>
 #include <stdlib.h>

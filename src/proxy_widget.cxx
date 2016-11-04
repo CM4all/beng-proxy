@@ -22,7 +22,7 @@
 #include "bp_global.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream_pipe.hxx"
-#include "tvary.hxx"
+#include "translation/Vary.hxx"
 #include "pool.hxx"
 #include "util/Cast.hxx"
 

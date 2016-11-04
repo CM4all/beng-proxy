@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "transformation.hxx"
+#include "Transformation.hxx"
 #include "processor.hxx"
 #include "pool.hxx"
 

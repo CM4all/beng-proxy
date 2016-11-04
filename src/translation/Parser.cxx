@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "translate_parser.hxx"
-#include "transformation.hxx"
+#include "Parser.hxx"
+#include "Transformation.hxx"
 #include "widget_class.hxx"
 #include "processor.hxx"
 #include "css_processor.hxx"

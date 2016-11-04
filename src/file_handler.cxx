@@ -18,7 +18,7 @@
 #include "http_server/Request.hxx"
 #include "istream/istream_file.hxx"
 #include "istream/istream.hxx"
-#include "tvary.hxx"
+#include "translation/Vary.hxx"
 
 #include <glib.h>
 

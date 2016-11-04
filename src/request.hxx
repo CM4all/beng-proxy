@@ -9,12 +9,12 @@
 #define BENG_PROXY_REQUEST_HXX
 
 #include "uri/uri_parser.hxx"
-#include "translate_request.hxx"
-#include "translate_response.hxx"
+#include "translation/Request.hxx"
+#include "translation/Response.hxx"
+#include "translation/Transformation.hxx"
 #include "delegate/Handler.hxx"
 #include "penv.hxx"
 #include "session.hxx"
-#include "transformation.hxx"
 #include "widget_class.hxx"
 #include "http_response.hxx"
 #include "glibfwd.hxx"

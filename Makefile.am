@@ -816,16 +816,16 @@ libraddress_a_SOURCES = \
 libtranslation_a_SOURCES = \
 	include/beng-proxy/headers.h \
 	include/beng-proxy/translation.h \
-	src/tcache.cxx src/tcache.hxx \
-	src/tstock.cxx src/tstock.hxx \
-	src/translate_reader.cxx src/translate_reader.hxx \
-	src/translate_parser.cxx src/translate_parser.hxx \
-	src/translate_client.cxx src/translate_client.hxx \
-	src/TranslateHandler.hxx \
-	src/translate_request.hxx \
-	src/transformation.cxx src/transformation.hxx \
-	src/translate_response.cxx rc/translate_response.hxx \
-	src/tvary.cxx src/tvary.hxx
+	src/translation/Cache.cxx src/translation/Cache.hxx \
+	src/translation/Stock.cxx src/translation/Stock.hxx \
+	src/translation/PReader.cxx src/translation/PReader.hxx \
+	src/translation/Parser.cxx src/translation/Parser.hxx \
+	src/translation/Client.cxx src/translation/Client.hxx \
+	src/translation/Handler.hxx \
+	src/translation/Request.hxx \
+	src/translation/Transformation.cxx src/translation/Transformation.hxx \
+	src/translation/Response.cxx src/translation/Response.hxx \
+	src/translation/Vary.cxx src/translation/Vary.hxx
 
 libevent_a_SOURCES = \
 	src/event/Loop.cxx src/event/Loop.hxx \

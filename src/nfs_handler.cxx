@@ -8,7 +8,7 @@
 #include "nfs_cache.hxx"
 #include "nfs_address.hxx"
 #include "file_headers.hxx"
-#include "tvary.hxx"
+#include "translation/Vary.hxx"
 #include "header_writer.hxx"
 #include "generate_response.hxx"
 #include "growing_buffer.hxx"

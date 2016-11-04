@@ -20,7 +20,7 @@
 #include "ResourceLoader.hxx"
 #include "header_writer.hxx"
 #include "header_forward.hxx"
-#include "transformation.hxx"
+#include "translation/Transformation.hxx"
 #include "bp_global.hxx"
 #include "resource_tag.hxx"
 #include "uri/uri_extract.hxx"

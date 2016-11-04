@@ -5,7 +5,6 @@
  */
 
 #include "request.hxx"
-#include "transformation.hxx"
 #include "http_server/http_server.hxx"
 #include "http_server/Request.hxx"
 #include "http_headers.hxx"
@@ -36,7 +35,8 @@
 #include "istream/istream_deflate.hxx"
 #include "istream/istream_pipe.hxx"
 #include "istream/istream_string.hxx"
-#include "tvary.hxx"
+#include "translation/Vary.hxx"
+#include "translation/Transformation.hxx"
 #include "http_date.hxx"
 #include "product.h"
 #include "http_address.hxx"

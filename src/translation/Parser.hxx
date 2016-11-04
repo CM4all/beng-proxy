@@ -7,9 +7,9 @@
 #ifndef BENG_PROXY_TRANSLATE_PARSER_HXX
 #define BENG_PROXY_TRANSLATE_PARSER_HXX
 
-#include "translate_reader.hxx"
-#include "translate_response.hxx"
-#include "translate_request.hxx"
+#include "PReader.hxx"
+#include "Response.hxx"
+#include "Request.hxx"
 #include "ExpandableStringList.hxx"
 
 struct FileAddress;

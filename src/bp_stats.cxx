@@ -10,7 +10,7 @@
 #include "stock/Stats.hxx"
 #include "fb_pool.hxx"
 #include "SlicePool.hxx"
-#include "tcache.hxx"
+#include "translation/Cache.hxx"
 #include "http_cache.hxx"
 #include "fcache.hxx"
 #include "nfs_cache.hxx"

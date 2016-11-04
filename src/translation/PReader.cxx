@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "translate_reader.hxx"
+#include "PReader.hxx"
 #include "pool.hxx"
 
 #include <string.h>

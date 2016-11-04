@@ -12,7 +12,7 @@
 #include "FilterResourceLoader.hxx"
 #include "http_cache.hxx"
 #include "fcache.hxx"
-#include "tcache.hxx"
+#include "translation/Cache.hxx"
 #include "lhttp_stock.hxx"
 #include "fcgi/Stock.hxx"
 #include "stock/MapStock.hxx"

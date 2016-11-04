@@ -6,7 +6,7 @@
 
 #include "file_directory_index.hxx"
 #include "request.hxx"
-#include "translate_response.hxx"
+#include "translation/Response.hxx"
 #include "file_address.hxx"
 
 #include <assert.h>

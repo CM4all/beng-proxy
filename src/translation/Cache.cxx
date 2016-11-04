@@ -4,11 +4,11 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "tcache.hxx"
-#include "tstock.hxx"
-#include "TranslateHandler.hxx"
-#include "translate_request.hxx"
-#include "translate_response.hxx"
+#include "Cache.hxx"
+#include "Stock.hxx"
+#include "Handler.hxx"
+#include "Request.hxx"
+#include "Response.hxx"
 #include "regex.hxx"
 #include "http_quark.h"
 #include "http_domain.hxx"

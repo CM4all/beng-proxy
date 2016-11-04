@@ -14,7 +14,7 @@
 #include "css_processor.hxx"
 #include "text_processor.hxx"
 #include "penv.hxx"
-#include "transformation.hxx"
+#include "translation/Transformation.hxx"
 #include "crash.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream_null.hxx"
