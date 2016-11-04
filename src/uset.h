@@ -9,15 +9,9 @@
 #include <glib.h>
 
 struct uset {
-    unsigned num;
+    unsigned num = 0;
     unsigned values[64];
 };
-
-static inline void
-uset_init(struct uset *u)
-{
-    u->num = 0;
-}
 
 /**
  * Adds the specified value.  Does nothing if the #uset is full.  Does

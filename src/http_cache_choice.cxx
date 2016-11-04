@@ -176,7 +176,6 @@ http_cache_choice_buffer_done(void *data0, size_t length, void *ctx)
     unsigned hash;
 
     ConstBuffer<void> data(data0, length);
-    uset_init(&uset);
 
     while (!data.IsEmpty()) {
         magic = deserialize_uint32(data);
@@ -586,7 +585,6 @@ struct HttpCacheChoiceCleanup {
     HttpCacheChoiceCleanup(http_cache_choice_cleanup_t _callback,
                            void *_callback_ctx)
         :callback(_callback), callback_ctx(_callback_ctx) {
-        uset_init(&uset);
     }
 };
 
