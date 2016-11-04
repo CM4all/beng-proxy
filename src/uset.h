@@ -6,11 +6,10 @@
 #ifndef BENG_PROXY_USET_H
 #define BENG_PROXY_USET_H
 
-#include <glib.h>
+#include "util/StaticArray.hxx"
 
 struct uset {
-    unsigned num = 0;
-    unsigned values[64];
+    StaticArray<unsigned, 64> values;
 };
 
 /**
@@ -20,19 +19,14 @@ struct uset {
 static inline void
 uset_add(struct uset *u, unsigned value)
 {
-    if (u->num < G_N_ELEMENTS(u->values))
-        u->values[u->num++] = value;
+    u->values.checked_append(value);
 }
 
 gcc_pure
 static inline bool
 uset_contains(const struct uset *u, unsigned value)
 {
-    for (unsigned i = 0; i < u->num; ++i)
-        if (u->values[i] == value)
-            return true;
-
-    return false;
+    return u->values.contains(value);
 }
 
 /**
