@@ -114,7 +114,7 @@ struct CacheItem {
     };
 };
 
-struct Cache {
+class Cache {
     const size_t max_size;
     size_t size;
 
@@ -142,6 +142,7 @@ struct Cache {
 
     CleanupTimer cleanup_timer;
 
+public:
     Cache(EventLoop &event_loop,
           unsigned hashtable_capacity, size_t _max_size);
 

@@ -16,7 +16,7 @@ struct pool;
 class Istream;
 class Rubber;
 class EventLoop;
-struct Cache;
+class Cache;
 class StringMap;
 struct AllocatorStats;
 struct HttpCacheResponseInfo;
