@@ -111,7 +111,7 @@ struct CacheItem {
 
 class Cache {
     const size_t max_size;
-    size_t size;
+    size_t size = 0;
 
     typedef boost::intrusive::unordered_multiset<CacheItem,
                                                  boost::intrusive::member_hook<CacheItem,
