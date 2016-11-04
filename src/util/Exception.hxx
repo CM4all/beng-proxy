@@ -52,6 +52,28 @@ NestException(std::exception_ptr ep, T &&t)
 }
 
 /**
+ * Find an instance of #T in the nested exception chain, and rethrow
+ * it.  Does nothing of no such instance was found.
+ */
+template<typename T>
+inline void
+FindRetrowNested(std::exception_ptr ep)
+{
+	try {
+		std::rethrow_exception(ep);
+	} catch (const T &t) {
+		throw;
+	} catch (const std::exception &e) {
+		try {
+			std::rethrow_if_nested(e);
+		} catch (...) {
+			FindRetrowNested<T>(std::current_exception());
+		}
+	} catch (...) {
+	}
+}
+
+/**
  * Obtain the full concatenated message of an exception and its nested
  * chain.
  */
