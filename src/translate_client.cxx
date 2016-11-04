@@ -61,6 +61,7 @@ struct TranslateClient final : Cancellable {
     void Release(bool reuse);
 
     void Fail(GError *error);
+    void Fail(std::exception_ptr ep);
     void Fail(const std::exception &e);
 
     BufferedResult Feed(const uint8_t *data, size_t length);
@@ -115,6 +116,12 @@ TranslateClient::Fail(GError *error)
 
     handler.error(error, handler_ctx);
     pool_unref(&pool);
+}
+
+void
+TranslateClient::Fail(std::exception_ptr ep)
+{
+    Fail(ToGError(ep));
 }
 
 void
