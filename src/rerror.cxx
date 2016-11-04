@@ -19,6 +19,7 @@
 #include "http_server/Request.hxx"
 #include "http_quark.h"
 #include "http_domain.hxx"
+#include "HttpMessageResponse.hxx"
 #include "gerrno.h"
 #include "pool.hxx"
 #include "util/Error.hxx"
@@ -193,6 +194,13 @@ response_dispatch_log(Request &request, http_status_t status,
 {
     auto log_msg = GetFullMessage(ep);
     daemon_log(2, "error on '%s': %s\n", request.request.uri, log_msg.c_str());
+
+    try {
+        FindRetrowNested<HttpMessageResponse>(ep);
+    } catch (const HttpMessageResponse &e) {
+        status = e.GetStatus();
+        msg = p_strdup(&request.pool, e.what());
+    }
 
     if (request.instance.config.verbose_response)
         msg = p_strdup(&request.pool, log_msg.c_str());
