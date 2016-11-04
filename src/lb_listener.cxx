@@ -10,7 +10,6 @@
 #include "lb_config.hxx"
 #include "ssl/ssl_factory.hxx"
 #include "ssl/DbSniCallback.hxx"
-#include "util/Error.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
 #include "util/Exception.hxx"
@@ -43,8 +42,8 @@ lb_listener::lb_listener(LbInstance &_instance,
 {
 }
 
-bool
-lb_listener::Setup(Error &error)
+void
+lb_listener::Setup()
 {
     assert(ssl_factory == nullptr);
 
@@ -61,18 +60,14 @@ lb_listener::Setup(Error &error)
                                              std::move(sni_callback));
     }
 
-    if (!Listen(config.bind_address.GetFamily(), SOCK_STREAM, 0,
-                config.bind_address,
-                config.reuse_port,
-                config.interface.empty() ? nullptr : config.interface.c_str(),
-                error))
-        return false;
+    Listen(config.bind_address.GetFamily(), SOCK_STREAM, 0,
+           config.bind_address,
+           config.reuse_port,
+           config.interface.empty() ? nullptr : config.interface.c_str());
 
     if (config.destination.GetProtocol() == LbProtocol::HTTP ||
         config.ssl)
         SetTcpDeferAccept(10);
-
-    return true;
 }
 
 lb_listener::~lb_listener()

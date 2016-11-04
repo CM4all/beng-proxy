@@ -27,7 +27,6 @@
 #include "event/Callback.hxx"
 #include "system/SetupProcess.hxx"
 #include "util/PrintException.hxx"
-#include "util/Error.hxx"
 #include "util/Macros.hxx"
 
 #include <daemon/log.h>
@@ -238,15 +237,8 @@ int main(int argc, char **argv)
     init_signals(&instance);
 
     try {
-        Error error2;
-
         init_all_controls(&instance);
-
-        if (!init_all_listeners(instance, error2)) {
-            deinit_all_controls(&instance);
-            fprintf(stderr, "%s\n", error2.GetMessage());
-            return EXIT_FAILURE;
-        }
+        init_all_listeners(instance);
     } catch (const std::exception &e) {
         fprintf(stderr, "%s\n", e.what());
         return EXIT_FAILURE;

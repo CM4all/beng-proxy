@@ -5,7 +5,6 @@
 #include "SocketDescriptor.hxx"
 #include "SocketAddress.hxx"
 #include "StaticSocketAddress.hxx"
-#include "util/Error.hxx"
 
 #include <errno.h>
 #include <unistd.h>
@@ -38,21 +37,6 @@ SocketDescriptor::Create(int domain, int type, int protocol)
     type |= SOCK_CLOEXEC|SOCK_NONBLOCK;
     fd = socket(domain, type, protocol);
     return fd >= 0;
-}
-
-bool
-SocketDescriptor::Create(int domain, int type, int protocol, Error &error)
-{
-    assert(!IsDefined());
-
-    type |= SOCK_CLOEXEC|SOCK_NONBLOCK;
-    fd = socket(domain, type, protocol);
-    if (fd < 0) {
-        error.SetErrno("Failed to create socket");
-        return false;
-    }
-
-    return true;
 }
 
 bool

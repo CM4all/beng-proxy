@@ -6,7 +6,6 @@
 #include "bp_instance.hxx"
 #include "bp_connection.hxx"
 #include "net/SocketAddress.hxx"
-#include "util/Error.hxx"
 #include "util/Exception.hxx"
 
 #include <daemon/log.h>

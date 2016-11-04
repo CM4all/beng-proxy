@@ -9,7 +9,6 @@
 
 #include <list>
 
-class Error;
 class TrafoHandler;
 
 class TrafoServer {
@@ -22,7 +21,10 @@ public:
     TrafoServer(EventLoop &_event_loop, TrafoHandler &_handler)
         :event_loop(_event_loop), handler(_handler) {}
 
-    bool ListenPath(const char *path, Error &error);
+    /**
+     * Throws std::runtime_error on error.
+     */
+    void ListenPath(const char *path);
 };
 
 #endif

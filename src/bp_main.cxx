@@ -52,7 +52,6 @@
 #include "net/SocketAddress.hxx"
 #include "net/StaticSocketAddress.hxx"
 #include "net/ServerSocket.hxx"
-#include "util/Error.hxx"
 #include "util/Macros.hxx"
 #include "util/PrintException.hxx"
 
@@ -235,18 +234,12 @@ BpInstance::DisableSignals()
 void
 BpInstance::AddListener(const BpConfig::Listener &c)
 {
-    Error error;
-
     listeners.emplace_front(*this, c.tag.empty() ? nullptr : c.tag.c_str());
     auto &listener = listeners.front();
 
-    if (!listener.Listen(c.address.GetFamily(), SOCK_STREAM, 0,
-                         c.address, c.reuse_port,
-                         c.interface.empty() ? nullptr : c.interface.c_str(),
-                         error)) {
-        fprintf(stderr, "%s\n", error.GetMessage());
-        exit(2);
-    }
+    listener.Listen(c.address.GetFamily(), SOCK_STREAM, 0,
+                    c.address, c.reuse_port,
+                    c.interface.empty() ? nullptr : c.interface.c_str());
 
     listener.SetTcpDeferAccept(10);
 
@@ -264,15 +257,9 @@ BpInstance::AddListener(const BpConfig::Listener &c)
 void
 BpInstance::AddTcpListener(int port)
 {
-    Error error;
-
     listeners.emplace_front(*this, nullptr);
     auto &listener = listeners.front();
-    if (!listener.ListenTCP(port, error)) {
-        fprintf(stderr, "%s\n", error.GetMessage());
-        exit(2);
-    }
-
+    listener.ListenTCP(port);
     listener.SetTcpDeferAccept(10);
 }
 

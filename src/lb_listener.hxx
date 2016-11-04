@@ -9,7 +9,6 @@
 
 #include "net/ServerSocket.hxx"
 
-class Error;
 struct SslFactory;
 struct LbListenerConfig;
 struct LbInstance;
@@ -26,7 +25,7 @@ public:
                 const LbListenerConfig &_config);
     ~lb_listener();
 
-    bool Setup(Error &error);
+    void Setup();
 
     unsigned FlushSSLSessionCache(long tm);
 

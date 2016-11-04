@@ -13,7 +13,7 @@
 #include "Connection.hxx"
 #include "Request.hxx"
 #include "Response.hxx"
-#include "util/Error.hxx"
+#include "util/Exception.hxx"
 
 #include <utility>
 #include <type_traits>
@@ -61,7 +61,7 @@ public:
     int Run();
 
 private:
-    bool Setup(Error &error);
+    void Setup();
 
     void OnQuitSignal() {
         cerr << "quit" << endl;
@@ -83,22 +83,21 @@ TrafoFramework<H>::OnTrafoRequest(TrafoConnection &connection,
 }
 
 template<typename H>
-bool
-TrafoFramework<H>::Setup(Error &error)
+void
+TrafoFramework<H>::Setup()
 {
-    return server.ListenPath("/tmp/trafo-example.socket", error);
+    server.ListenPath("/tmp/trafo-example.socket");
 }
 
 template<typename H>
 int
 TrafoFramework<H>::Run()
 {
-    {
-        Error error;
-        if (!Setup(error)) {
-            cerr << error.GetMessage() << endl;
-            return EXIT_FAILURE;
-        }
+    try {
+        Setup();
+    } catch (...) {
+        cerr << GetFullMessage(std::current_exception()) << endl;
+        return EXIT_FAILURE;
     }
 
     event_loop.Dispatch();

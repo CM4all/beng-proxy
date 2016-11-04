@@ -49,21 +49,17 @@ init_monitors(LbInstance &instance, const LbBranchConfig &cluster)
         init_monitors(instance, i);
 }
 
-bool
-init_all_listeners(LbInstance &instance, Error &error)
+void
+init_all_listeners(LbInstance &instance)
 {
     auto &listeners = instance.listeners;
 
     for (const auto &config : instance.config->listeners) {
         listeners.emplace_front(instance, config);
         auto &listener = listeners.front();
-        if (!listener.Setup(error))
-            return false;
-
+        listener.Setup();
         init_monitors(instance, config.destination);
     }
-
-    return true;
 }
 
 void

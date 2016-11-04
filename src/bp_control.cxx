@@ -20,7 +20,6 @@
 #include "util/ConstBuffer.hxx"
 #include "util/ByteOrder.hxx"
 #include "util/Exception.hxx"
-#include "util/Error.hxx"
 #include "util/Macros.hxx"
 
 #include <glib.h>

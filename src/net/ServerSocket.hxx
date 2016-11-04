@@ -13,7 +13,6 @@
 #include <exception>
 
 class SocketAddress;
-class Error;
 
 class ServerSocket {
     SocketDescriptor fd;
@@ -25,17 +24,19 @@ public:
 
     ~ServerSocket();
 
-    bool Listen(int family, int socktype, int protocol,
+    /**
+     * Throws std::runtime_error on error.
+     */
+    void Listen(int family, int socktype, int protocol,
                 SocketAddress address,
                 bool reuse_port,
-                const char *bind_to_device,
-                Error &error);
+                const char *bind_to_device);
 
-    bool ListenTCP(unsigned port, Error &error);
-    bool ListenTCP4(unsigned port, Error &error);
-    bool ListenTCP6(unsigned port, Error &error);
+    void ListenTCP(unsigned port);
+    void ListenTCP4(unsigned port);
+    void ListenTCP6(unsigned port);
 
-    bool ListenPath(const char *path, Error &error);
+    void ListenPath(const char *path);
 
     StaticSocketAddress GetLocalAddress() const;
 

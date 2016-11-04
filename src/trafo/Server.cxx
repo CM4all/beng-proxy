@@ -4,15 +4,9 @@
 
 #include "Server.hxx"
 
-bool
-TrafoServer::ListenPath(const char *path, Error &error)
+void
+TrafoServer::ListenPath(const char *path)
 {
     listeners.emplace_back(event_loop, handler);
-
-    if (!listeners.back().ListenPath(path, error)) {
-        listeners.pop_back();
-        return false;
-    }
-
-    return true;
+    listeners.back().ListenPath(path);
 }

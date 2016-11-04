@@ -8,10 +8,9 @@
 #define BENG_PROXY_LB_SETUP_H
 
 struct LbInstance;
-class Error;
 
-bool
-init_all_listeners(LbInstance &instance, Error &error_r);
+void
+init_all_listeners(LbInstance &instance);
 
 void
 deinit_all_listeners(LbInstance *instance);

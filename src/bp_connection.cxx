@@ -14,7 +14,6 @@
 #include "access_log.hxx"
 #include "drop.hxx"
 #include "gerrno.h"
-#include "util/Error.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/StaticSocketAddress.hxx"

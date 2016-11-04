@@ -18,7 +18,6 @@
 #include "io/UniqueFileDescriptor.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/djbhash.h"
-#include "util/Error.hxx"
 
 #include <daemon/log.h>
 
