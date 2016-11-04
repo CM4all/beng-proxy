@@ -10,6 +10,8 @@
 #include "SocketDescriptor.hxx"
 #include "event/SocketEvent.hxx"
 
+#include <exception>
+
 class SocketAddress;
 class Error;
 
@@ -60,7 +62,7 @@ protected:
      * @param fd the socket owned by the callee
      */
     virtual void OnAccept(SocketDescriptor &&fd, SocketAddress address) = 0;
-    virtual void OnAcceptError(Error &&error) = 0;
+    virtual void OnAcceptError(std::exception_ptr ep) = 0;
 
 private:
     void EventCallback(short events);

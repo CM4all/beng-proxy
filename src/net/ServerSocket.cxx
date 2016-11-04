@@ -10,6 +10,7 @@
 #include "StaticSocketAddress.hxx"
 #include "AllocatedSocketAddress.hxx"
 #include "system/fd_util.h"
+#include "system/Error.hxx"
 #include "event/Callback.hxx"
 #include "util/Error.hxx"
 
@@ -38,20 +39,18 @@ void
 ServerSocket::EventCallback(gcc_unused short events)
 {
     StaticSocketAddress remote_address;
-    Error error;
-    auto remote_fd = fd.Accept(remote_address, error);
+    auto remote_fd = fd.Accept(remote_address);
     if (!remote_fd.IsDefined()) {
-        if (!error.IsDomain(errno_domain) ||
-            (error.GetCode() != EAGAIN && error.GetCode() != EWOULDBLOCK))
-            OnAcceptError(std::move(error));
+        const int e = errno;
+        if (e != EAGAIN && e != EWOULDBLOCK)
+            OnAcceptError(std::make_exception_ptr(MakeErrno(e, "Failed to accept connection")));
 
         return;
     }
 
     if (IsTCP(remote_address) &&
         !socket_set_nodelay(remote_fd.Get(), true)) {
-        error.SetErrno("setsockopt(TCP_NODELAY) failed");
-        OnAcceptError(std::move(error));
+        OnAcceptError(std::make_exception_ptr(MakeErrno("setsockopt(TCP_NODELAY) failed")));
         return;
     }
 

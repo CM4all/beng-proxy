@@ -94,7 +94,10 @@ public:
 
     bool SetTcpFastOpen(int qlen=16);
 
-    SocketDescriptor Accept(StaticSocketAddress &address, Error &error) const;
+    /**
+     * @return an "undefined" instance on error
+     */
+    SocketDescriptor Accept(StaticSocketAddress &address) const;
 
     /**
      * @return false on error (with errno set)

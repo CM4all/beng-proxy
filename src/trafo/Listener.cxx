@@ -4,7 +4,7 @@
 
 #include "Listener.hxx"
 #include "net/SocketAddress.hxx"
-#include "util/Error.hxx"
+#include "util/Exception.hxx"
 
 #include <daemon/log.h>
 
@@ -22,7 +22,7 @@ TrafoListener::OnAccept(SocketDescriptor &&new_fd,
 }
 
 void
-TrafoListener::OnAcceptError(Error &&error)
+TrafoListener::OnAcceptError(std::exception_ptr ep)
 {
-    daemon_log(2, "%s\n", error.GetMessage());
+    daemon_log(2, "%s\n", GetFullMessage(ep).c_str());
 }

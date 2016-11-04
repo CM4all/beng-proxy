@@ -5,8 +5,9 @@
 #include "bp_listener.hxx"
 #include "bp_instance.hxx"
 #include "bp_connection.hxx"
-#include "util/Error.hxx"
 #include "net/SocketAddress.hxx"
+#include "util/Error.hxx"
+#include "util/Exception.hxx"
 
 #include <daemon/log.h>
 
@@ -22,7 +23,7 @@ BPListener::OnAccept(SocketDescriptor &&_fd, SocketAddress address)
 }
 
 void
-BPListener::OnAcceptError(Error &&error)
+BPListener::OnAcceptError(std::exception_ptr ep)
 {
-    daemon_log(2, "%s\n", error.GetMessage());
+    daemon_log(2, "%s\n", GetFullMessage(ep).c_str());
 }

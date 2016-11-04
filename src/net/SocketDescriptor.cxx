@@ -109,18 +109,13 @@ SocketDescriptor::SetTcpFastOpen(int qlen)
 }
 
 SocketDescriptor
-SocketDescriptor::Accept(StaticSocketAddress &address, Error &error) const
+SocketDescriptor::Accept(StaticSocketAddress &address) const
 {
     assert(IsDefined());
 
     address.size = address.GetCapacity();
     int result = accept4(fd, address, &address.size,
                          SOCK_CLOEXEC|SOCK_NONBLOCK);
-    if (result < 0) {
-        error.SetErrno("Failed to accept connection");
-        return SocketDescriptor();
-    }
-
     return SocketDescriptor(result);
 }
 

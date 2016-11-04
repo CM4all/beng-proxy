@@ -32,7 +32,7 @@ public:
 
 protected:
     void OnAccept(SocketDescriptor &&fd, SocketAddress address) override;
-    void OnAcceptError(Error &&error) override;
+    void OnAcceptError(std::exception_ptr ep) override;
 };
 
 #endif

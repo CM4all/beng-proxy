@@ -13,6 +13,7 @@
 #include "util/Error.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
+#include "util/Exception.hxx"
 
 #include <daemon/log.h>
 
@@ -25,9 +26,9 @@ lb_listener::OnAccept(SocketDescriptor &&new_fd, SocketAddress address)
 }
 
 void
-lb_listener::OnAcceptError(Error &&error)
+lb_listener::OnAcceptError(std::exception_ptr ep)
 {
-    daemon_log(2, "%s\n", error.GetMessage());
+    daemon_log(2, "%s\n", GetFullMessage(ep).c_str());
 }
 
 /*
