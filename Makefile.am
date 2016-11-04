@@ -94,7 +94,6 @@ cm4all_beng_proxy_SOURCES = \
 	src/ajp/ajp-util.h \
 	src/ajp/istream_ajp_body.cxx src/ajp/istream_ajp_body.hxx \
 	src/args.cxx src/args.hxx \
-	src/background.hxx \
 	src/balancer.cxx src/balancer.hxx \
 	src/bot.c src/bot.h \
 	src/bulldog.c src/bulldog.h \
@@ -126,7 +125,6 @@ cm4all_beng_proxy_SOURCES = \
 	src/delegate/RequestHandler.cxx \
 	src/direct.cxx src/direct.hxx \
 	src/drop.cxx src/drop.hxx \
-	src/expiry.hxx \
 	src/failure.cxx src/failure.hxx \
 	src/relocate_uri.cxx src/relocate_uri.hxx \
 	src/regex.cxx src/regex.hxx \
@@ -659,12 +657,14 @@ noinst_LIBRARIES = libutil.a libmemory.a libpool.a \
 	libistream.a
 
 libutil_a_SOURCES = \
+	src/util/Background.hxx \
 	src/util/BindMethod.hxx \
 	src/util/ByteOrder.hxx \
 	src/util/Cast.hxx \
 	src/util/CharUtil.hxx \
 	src/util/ConstBuffer.hxx \
 	src/util/DestructObserver.hxx \
+	src/util/Expiry.hxx \
 	src/util/InstanceList.hxx \
 	src/util/IterableSplitString.hxx \
 	src/util/StringAPI.hxx \

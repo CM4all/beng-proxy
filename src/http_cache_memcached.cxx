@@ -15,15 +15,15 @@
 #include "serialize.hxx"
 #include "strmap.hxx"
 #include "tpool.hxx"
-#include "background.hxx"
 #include "istream_gb.hxx"
 #include "istream/istream_cat.hxx"
 #include "istream/istream_memory.hxx"
 #include "istream/istream.hxx"
 #include "istream/sink_header.hxx"
 #include "pool.hxx"
-#include "util/ConstBuffer.hxx"
+#include "util/Background.hxx"
 #include "util/ByteOrder.hxx"
+#include "util/ConstBuffer.hxx"
 
 #include <inline/compiler.h>
 

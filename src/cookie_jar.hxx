@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_COOKIE_JAR_HXX
 #define BENG_PROXY_COOKIE_JAR_HXX
 
-#include "expiry.hxx"
+#include "util/Expiry.hxx"
 #include "util/StringView.hxx"
 
 #include <boost/intrusive/list.hpp>

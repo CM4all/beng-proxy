@@ -5,12 +5,12 @@
  */
 
 #include "failure.hxx"
-#include "expiry.hxx"
 #include "pool.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/AllocatedSocketAddress.hxx"
 #include "util/djbhash.h"
 #include "util/DeleteDisposer.hxx"
+#include "util/Expiry.hxx"
 
 #include <daemon/log.h>
 

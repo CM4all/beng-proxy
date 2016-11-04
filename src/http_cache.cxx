@@ -14,7 +14,6 @@
 #include "ResourceLoader.hxx"
 #include "ResourceAddress.hxx"
 #include "http_util.hxx"
-#include "background.hxx"
 #include "cache.hxx"
 #include "rubber.hxx"
 #include "sink_rubber.hxx"
@@ -25,6 +24,7 @@
 #include "istream/istream_tee.hxx"
 #include "pool.hxx"
 #include "event/TimerEvent.hxx"
+#include "util/Background.hxx"
 #include "util/Cast.hxx"
 #include "util/Cancellable.hxx"
 

@@ -20,7 +20,7 @@
 #include "spawn/Registry.hxx"
 #include "control_handler.hxx"
 #include "avahi/Client.hxx"
-#include "background.hxx"
+#include "util/Background.hxx"
 
 #include <boost/intrusive/list.hpp>
 

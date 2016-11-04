@@ -7,13 +7,13 @@
 #include "session_external.hxx"
 #include "session.hxx"
 #include "bp_instance.hxx"
-#include "background.hxx"
 #include "http_address.hxx"
 #include "http_request.hxx"
 #include "http_response.hxx"
 #include "http_headers.hxx"
 #include "istream/istream.hxx"
 #include "pool.hxx"
+#include "util/Background.hxx"
 
 #include <daemon/log.h>
 

@@ -8,10 +8,10 @@
 #define BENG_PROXY_SESSION_HXX
 
 #include "session_id.hxx"
-#include "expiry.hxx"
 #include "cookie_jar.hxx"
 #include "shm/String.hxx"
 #include "util/ConstBuffer.hxx"
+#include "util/Expiry.hxx"
 
 #include <inline/compiler.h>
 
