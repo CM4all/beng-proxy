@@ -6,7 +6,6 @@
 
 #include "ssl_factory.hxx"
 #include "ssl_config.hxx"
-#include "ssl_domain.hxx"
 #include "SniCallback.hxx"
 #include "Error.hxx"
 #include "Basic.hxx"
