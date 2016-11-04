@@ -8,6 +8,7 @@
 #include "util/djbhash.h"
 
 #include <assert.h>
+#include <string.h>
 
 inline size_t
 CacheItem::KeyHasher(const char *key)
@@ -15,6 +16,14 @@ CacheItem::KeyHasher(const char *key)
     assert(key != nullptr);
 
     return djb_hash_string(key);
+}
+
+bool
+CacheItem::KeyValueEqual(const char *a, const CacheItem &b)
+{
+    assert(a != nullptr);
+
+    return strcmp(a, b.key) == 0;
 }
 
 Cache::Cache(EventLoop &event_loop,

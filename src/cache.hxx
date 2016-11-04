@@ -18,7 +18,6 @@
 #include <memory>
 
 #include <stddef.h>
-#include <string.h>
 
 class EventLoop;
 
@@ -92,11 +91,7 @@ struct CacheItem {
     }
 
     gcc_pure
-    static bool KeyValueEqual(const char *a, const CacheItem &b) {
-        assert(a != nullptr);
-
-        return strcmp(a, b.key) == 0;
-    }
+    static bool KeyValueEqual(const char *a, const CacheItem &b);
 
     struct Hash {
         gcc_pure
