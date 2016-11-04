@@ -15,7 +15,7 @@
 #include "istream/istream.hxx"
 #include "header_writer.hxx"
 #include "pool.hxx"
-#include "translate_quark.hxx"
+#include "GException.hxx"
 
 #include <stdexcept>
 
@@ -51,8 +51,7 @@ lhttp_request(struct pool &pool, EventLoop &event_loop,
         if (body != nullptr)
             body->CloseUnused();
 
-        handler.InvokeError(g_error_new_literal(translate_quark(), 0,
-                                                e.what()));
+        handler.InvokeError(ToGError(e));
         return;
     }
 
