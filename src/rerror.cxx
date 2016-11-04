@@ -16,6 +16,7 @@
 #include "widget-quark.h"
 #include "http_response.hxx"
 #include "http_server/http_server.hxx"
+#include "http_server/Request.hxx"
 #include "http_quark.h"
 #include "http_domain.hxx"
 #include "gerrno.h"
@@ -168,7 +169,7 @@ void
 response_dispatch_log(Request &request, http_status_t status,
                       const char *msg, const char *log_msg)
 {
-    daemon_log(2, "%s\n", log_msg);
+    daemon_log(2, "error on '%s': %s\n", request.request.uri, log_msg);
 
     if (request.instance.config.verbose_response)
         msg = p_strdup(&request.pool, log_msg);
