@@ -9,13 +9,12 @@
 #include "net/UdpListener.hxx"
 #include "net/SocketAddress.hxx"
 #include "util/ByteOrder.hxx"
-#include "util/Error.hxx"
-#include "util/Domain.hxx"
+#include "util/RuntimeError.hxx"
+
+#include <stdexcept>
 
 #include <assert.h>
 #include <string.h>
-
-static constexpr Domain control_server_domain("control_server");
 
 static void
 control_server_decode(ControlServer &control_server,
@@ -28,7 +27,7 @@ control_server_decode(ControlServer &control_server,
     const uint32_t *magic = (const uint32_t *)data;
 
     if (length < sizeof(*magic) || FromBE32(*magic) != control_magic) {
-        handler.OnControlError(Error(control_server_domain, "wrong magic"));
+        handler.OnControlError(std::make_exception_ptr(std::runtime_error("wrong magic")));
         return;
     }
 
@@ -36,10 +35,7 @@ control_server_decode(ControlServer &control_server,
     length -= sizeof(*magic);
 
     if (length % 4 != 0) {
-        Error error;
-        error.Format(control_server_domain,
-                     "odd control packet (length=%zu)", length);
-        handler.OnControlError(std::move(error));
+        handler.OnControlError(std::make_exception_ptr(FormatRuntimeError("odd control packet (length=%zu)", length)));
         return;
     }
 
@@ -49,10 +45,8 @@ control_server_decode(ControlServer &control_server,
         const struct beng_control_header *header =
             (const struct beng_control_header *)data;
         if (length < sizeof(*header)) {
-            Error error;
-            error.Format(control_server_domain,
-                         "partial header (length=%zu)", length);
-            handler.OnControlError(std::move(error));
+            handler.OnControlError(std::make_exception_ptr(FormatRuntimeError("partial header (length=%zu)",
+                                                                              length)));
             return;
         }
 
@@ -65,11 +59,8 @@ control_server_decode(ControlServer &control_server,
 
         const char *payload = (const char *)data;
         if (length < payload_length) {
-            Error error;
-            error.Format(control_server_domain,
-                         "partial payload (length=%zu, expected=%zu)",
-                         length, payload_length);
-            handler.OnControlError(std::move(error));
+            handler.OnControlError(std::make_exception_ptr(FormatRuntimeError("partial payload (length=%zu, expected=%zu)",
+                                                                              length, payload_length)));
             return;
         }
 
@@ -99,9 +90,9 @@ ControlServer::OnUdpDatagram(const void *data, size_t length,
 }
 
 void
-ControlServer::OnUdpError(Error &&error)
+ControlServer::OnUdpError(std::exception_ptr ep)
 {
-    handler.OnControlError(std::move(error));
+    handler.OnControlError(ep);
 }
 
 void

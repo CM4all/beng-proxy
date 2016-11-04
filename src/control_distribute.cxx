@@ -9,8 +9,6 @@
 #include "control_handler.hxx"
 #include "net/SocketAddress.hxx"
 
-#include <utility>
-
 ControlDistribute::ControlDistribute(EventLoop &event_loop,
                                      ControlHandler &_next_handler)
     :distribute(event_loop),
@@ -39,7 +37,7 @@ ControlDistribute::OnControlPacket(ControlServer &control_server,
 }
 
 void
-ControlDistribute::OnControlError(Error &&error)
+ControlDistribute::OnControlError(std::exception_ptr ep)
 {
-    return next_handler.OnControlError(std::move(error));
+    return next_handler.OnControlError(ep);
 }

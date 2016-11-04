@@ -13,6 +13,7 @@
 #include "tpool.hxx"
 #include "pool.hxx"
 #include "util/Error.hxx"
+#include "util/Exception.hxx"
 
 #include <daemon/log.h>
 #include <socket/address.h>
@@ -265,9 +266,9 @@ LbControl::OnControlPacket(ControlServer &control_server,
 }
 
 void
-LbControl::OnControlError(Error &&error)
+LbControl::OnControlError(std::exception_ptr ep)
 {
-    daemon_log(2, "%s\n", error.GetMessage());
+    daemon_log(2, "%s\n", GetFullMessage(ep).c_str());
 }
 
 void

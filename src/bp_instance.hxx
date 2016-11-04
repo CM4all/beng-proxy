@@ -180,7 +180,7 @@ struct BpInstance final : ControlHandler {
                          const void *payload, size_t payload_length,
                          SocketAddress address) override;
 
-    void OnControlError(Error &&error) override;
+    void OnControlError(std::exception_ptr ep) override;
 
 private:
     void RespawnWorkerCallback();

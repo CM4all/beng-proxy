@@ -14,7 +14,6 @@
 struct LbInstance;
 struct LbControlConfig;
 struct ControlServer;
-class Error;
 
 struct LbControl final : ControlHandler {
     LbInstance &instance;
@@ -35,7 +34,7 @@ struct LbControl final : ControlHandler {
                          const void *payload, size_t payload_length,
                          SocketAddress address) override;
 
-    void OnControlError(Error &&error) override;
+    void OnControlError(std::exception_ptr ep) override;
 };
 
 #endif

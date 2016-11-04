@@ -79,9 +79,7 @@ UdpListener::EventCallback(short)
 
     ssize_t nbytes = recvmsg_cloexec(fd, &msg, MSG_DONTWAIT);
     if (nbytes < 0) {
-        Error error;
-        error.SetErrno("recv() failed");
-        handler.OnUdpError(std::move(error));
+        handler.OnUdpError(std::make_exception_ptr(MakeErrno("recv() failed")));
         return;
     }
 

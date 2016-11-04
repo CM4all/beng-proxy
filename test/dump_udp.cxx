@@ -20,8 +20,8 @@ public:
         printf("packet: %zu uid=%d\n", length, uid);
     }
 
-    void OnUdpError(Error &&error) override {
-        fprintf(stderr, "%s\n", error.GetMessage());
+    void OnUdpError(std::exception_ptr ep) override {
+        PrintException(ep);
     }
 };
 

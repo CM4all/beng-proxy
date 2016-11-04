@@ -19,6 +19,7 @@
 #include "net/SocketAddress.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/ByteOrder.hxx"
+#include "util/Exception.hxx"
 #include "util/Error.hxx"
 #include "util/Macros.hxx"
 
@@ -251,9 +252,9 @@ BpInstance::OnControlPacket(ControlServer &_control_server,
 }
 
 void
-BpInstance::OnControlError(Error &&error)
+BpInstance::OnControlError(std::exception_ptr ep)
 {
-    daemon_log(2, "%s\n", error.GetMessage());
+    daemon_log(2, "%s\n", GetFullMessage(ep).c_str());
 }
 
 void

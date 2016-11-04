@@ -9,9 +9,10 @@
 
 #include "beng-proxy/control.h"
 
+#include <exception>
+
 #include <stddef.h>
 
-class Error;
 class SocketAddress;
 struct ControlServer;
 
@@ -29,7 +30,7 @@ public:
                                  const void *payload, size_t payload_length,
                                  SocketAddress address) = 0;
 
-    virtual void OnControlError(Error &&error) = 0;
+    virtual void OnControlError(std::exception_ptr ep) = 0;
 };
 
 #endif

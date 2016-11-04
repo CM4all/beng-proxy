@@ -22,8 +22,8 @@ public:
         printf("packet command=%u length=%zu\n", command, payload_length);
     }
 
-    void OnControlError(Error &&error) override {
-        fprintf(stderr, "%s\n", error.GetMessage());
+    void OnControlError(std::exception_ptr ep) override {
+        PrintException(ep);
     }
 };
 

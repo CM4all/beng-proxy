@@ -5,10 +5,11 @@
 #ifndef UDP_HANDLER_HXX
 #define UDP_HANDLER_HXX
 
+#include <exception>
+
 #include <stddef.h>
 
 class SocketAddress;
-class Error;
 
 class UdpHandler {
 public:
@@ -18,7 +19,7 @@ public:
     virtual void OnUdpDatagram(const void *data, size_t length,
                                SocketAddress address, int uid) = 0;
 
-    virtual void OnUdpError(Error &&error) = 0;
+    virtual void OnUdpError(std::exception_ptr ep) = 0;
 };
 
 #endif
