@@ -72,8 +72,6 @@ bin_PROGRAMS = cm4all-beng-proxy \
 	cm4all-beng-proxy-delegate-helper
 
 cm4all_beng_proxy_SOURCES = \
-	include/beng-proxy/headers.h \
-	include/beng-proxy/translation.h \
 	src/AllocatorStats.hxx \
 	src/product.h \
 	src/FdType.hxx \
@@ -219,11 +217,8 @@ cm4all_beng_proxy_SOURCES = \
 	src/static_headers.cxx src/static_headers.hxx \
 	src/suffix_registry.cxx src/suffix_registry.hxx \
 	src/address_suffix_registry.cxx src/address_suffix_registry.hxx \
-	src/tcache.cxx src/tcache.hxx \
 	src/tcp_stock.cxx src/tcp_stock.hxx \
 	src/tcp_balancer.cxx src/tcp_balancer.hxx \
-	src/transformation.cxx src/transformation.hxx \
-	src/tstock.cxx src/tstock.hxx \
 	src/widget.hxx \
 	$(STOPWATCH_SRC) \
 	src/bp_cmdline.cxx src/bp_cmdline.hxx \
@@ -243,13 +238,6 @@ cm4all_beng_proxy_SOURCES = \
 	src/cookie_client.cxx src/cookie_client.hxx \
 	src/cookie_server.cxx src/cookie_server.hxx \
 	src/cookie_string.cxx src/cookie_string.hxx \
-	src/translate_reader.cxx src/translate_reader.hxx \
-	src/translate_parser.cxx src/translate_parser.hxx \
-	src/translate_client.cxx src/translate_client.hxx \
-	src/TranslateHandler.hxx \
-	src/translate_request.hxx \
-	src/translate_response.cxx rc/translate_response.hxx \
-	src/tvary.cxx src/tvary.hxx \
 	src/lhttp_quark.hxx \
 	src/lhttp_stock.cxx src/lhttp_stock.hxx \
 	src/lhttp_request.cxx src/lhttp_request.hxx \
@@ -312,6 +300,7 @@ cm4all_beng_proxy_LDADD = $(AM_LDADD) \
 	libistream.a libevent.a \
 	libshm.a \
 	libnet.a \
+	libtranslation.a \
 	libraddress.a \
 	libspawn.a \
 	libpool.a libmemory.a \
@@ -633,6 +622,7 @@ noinst_LIBRARIES = libutil.a libmemory.a libpool.a \
 	libputil.a \
 	libeutil.a \
 	libraddress.a \
+	libtranslation.a \
 	libevent.a \
 	libssl.a \
 	libpg.a \
@@ -822,6 +812,20 @@ libraddress_a_SOURCES = \
 	src/http_address.cxx src/http_address.hxx \
 	src/address_list.cxx src/address_list.hxx \
 	src/ResourceAddress.cxx src/ResourceAddress.hxx
+
+libtranslation_a_SOURCES = \
+	include/beng-proxy/headers.h \
+	include/beng-proxy/translation.h \
+	src/tcache.cxx src/tcache.hxx \
+	src/tstock.cxx src/tstock.hxx \
+	src/translate_reader.cxx src/translate_reader.hxx \
+	src/translate_parser.cxx src/translate_parser.hxx \
+	src/translate_client.cxx src/translate_client.hxx \
+	src/TranslateHandler.hxx \
+	src/translate_request.hxx \
+	src/transformation.cxx src/transformation.hxx \
+	src/translate_response.cxx rc/translate_response.hxx \
+	src/tvary.cxx src/tvary.hxx
 
 libevent_a_SOURCES = \
 	src/event/Loop.cxx src/event/Loop.hxx \
@@ -1153,15 +1157,15 @@ test_t_cache_LDADD = $(AM_LDADD) \
 	libutil.a \
 	$(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS)
 
-test_t_tcache_SOURCES = test/t_tcache.cxx src/tcache.cxx \
+test_t_tcache_SOURCES = test/t_tcache.cxx \
 	test/tconstruct.hxx \
-	src/translate_response.cxx \
 	src/http_domain.cxx \
 	src/widget_view.cxx \
 	src/ExpandableStringList.cxx \
 	src/pexpand.cxx \
 	src/transformation.cxx
 test_t_tcache_LDADD = $(AM_LDADD) \
+	libtranslation.a \
 	libeutil.a \
 	libraddress.a \
 	libevent.a \
@@ -1674,15 +1678,13 @@ test_t_rewrite_uri_LDADD = $(AM_LDADD) \
 
 test_t_widget_registry_SOURCES = test/t_widget_registry.cxx \
 	src/widget_registry.cxx \
-	src/transformation.cxx \
-	src/tcache.cxx \
-	src/translate_response.cxx \
 	src/widget_view.cxx \
 	src/abort_unref.cxx \
 	src/ExpandableStringList.cxx \
 	src/pexpand.cxx \
 	src/http_domain.cxx
 test_t_widget_registry_LDADD = $(AM_LDADD) \
+	libtranslation.a \
 	libeutil.a \
 	libevent.a \
 	libraddress.a \
