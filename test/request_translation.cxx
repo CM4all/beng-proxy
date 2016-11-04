@@ -14,6 +14,7 @@
 #include "nfs_address.hxx"
 #include "event/Loop.hxx"
 #include "util/Cancellable.hxx"
+#include "util/PrintException.hxx"
 
 #include <glib.h>
 
@@ -124,10 +125,9 @@ my_translate_response(TranslateResponse &response, void *ctx)
 }
 
 static void
-my_translate_error(GError *error, gcc_unused void *ctx)
+my_translate_error(std::exception_ptr ep, gcc_unused void *ctx)
 {
-    fprintf(stderr, "%s\n", error->message);
-    g_error_free(error);
+    PrintException(ep);
 }
 
 static const TranslateHandler my_translate_handler = {

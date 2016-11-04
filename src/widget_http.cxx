@@ -28,6 +28,7 @@
 #include "istream/istream.hxx"
 #include "istream/istream_pipe.hxx"
 #include "pool.hxx"
+#include "GException.hxx"
 #include "suffix_registry.hxx"
 #include "address_suffix_registry.hxx"
 #include "util/Cast.hxx"
@@ -673,12 +674,12 @@ widget_suffix_registry_success(const char *content_type,
 }
 
 static void
-widget_suffix_registry_error(GError *error, void *ctx)
+widget_suffix_registry_error(std::exception_ptr ep, void *ctx)
 {
     WidgetRequest &embed = *(WidgetRequest *)ctx;
 
     embed.widget.Cancel();
-    embed.DispatchError(error);
+    embed.DispatchError(ToGError(ep));
 }
 
 static constexpr SuffixRegistryHandler widget_suffix_registry_handler = {

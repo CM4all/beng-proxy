@@ -13,6 +13,7 @@
 #include "regex.hxx"
 #include "http_quark.h"
 #include "http_domain.hxx"
+#include "HttpMessageResponse.hxx"
 #include "cache.hxx"
 #include "uri/uri_base.hxx"
 #include "uri/uri_verify.hxx"
@@ -26,6 +27,7 @@
 #include "load_file.hxx"
 #include "util/djbhash.h"
 #include "util/Error.hxx"
+#include "util/RuntimeError.hxx"
 #include "util/StringView.hxx"
 #include "beng-proxy/translation.h"
 
@@ -1160,15 +1162,13 @@ translate_cache_invalidate(struct tcache &tcache,
 }
 
 /**
- * @return nullptr on error
+ * Throws std::runtime_error on error.
  */
 static const TranslateCacheItem *
-tcache_store(TranslateCacheRequest &tcr, const TranslateResponse &response,
-             GError **error_r)
+tcache_store(TranslateCacheRequest &tcr, const TranslateResponse &response)
 {
     assert(tcr.tcache->slice_pool != nullptr);
     assert(tcr.tcache->cache != nullptr);
-    assert(error_r == nullptr || *error_r == nullptr);
 
     struct pool *pool = pool_new_slice(&tcr.tcache->pool, "tcache_item",
                                        tcr.tcache->slice_pool);
@@ -1234,9 +1234,7 @@ tcache_store(TranslateCacheRequest &tcr, const TranslateResponse &response,
     if (item->response.base == nullptr && response.base != nullptr) {
         /* base mismatch - refuse to use this response */
         DeleteUnrefTrashPool(*pool, item);
-        g_set_error(error_r, http_response_quark(),
-                    HTTP_STATUS_BAD_REQUEST, "Base mismatch");
-        return nullptr;
+        throw HttpMessageResponse(HTTP_STATUS_BAD_REQUEST, "Base mismatch");
     }
 
     assert(!item->response.easy_base ||
@@ -1252,9 +1250,8 @@ tcache_store(TranslateCacheRequest &tcr, const TranslateResponse &response,
         item->regex = response.CompileRegex(error);
         if (!item->regex.IsDefined()) {
             DeleteUnrefTrashPool(*pool, item);
-            g_set_error(error_r, translate_quark(), 0,
-                        "translate_cache: %s", error.GetMessage());
-            return nullptr;
+            throw FormatRuntimeError("translate_cache: %s",
+                                     error.GetMessage());
         }
     } else {
         assert(!response.IsExpandable());
@@ -1265,9 +1262,8 @@ tcache_store(TranslateCacheRequest &tcr, const TranslateResponse &response,
         item->inverse_regex = response.CompileInverseRegex(error);
         if (!item->inverse_regex.IsDefined()) {
             DeleteUnrefTrashPool(*pool, item);
-            g_set_error(error_r, translate_quark(), 0,
-                        "translate_cache: %s", error.GetMessage());
-            return nullptr;
+            throw FormatRuntimeError("translate_cache: %s",
+                                     error.GetMessage());
         }
     }
 
@@ -1302,14 +1298,13 @@ tcache_handler_response(TranslateResponse &response, void *ctx)
     if (!tcr.cacheable) {
         cache_log(4, "translate_cache: ignore %s\n", tcr.key);
     } else if (tcache_response_evaluate(response)) {
-        GError *error = nullptr;
-        auto item = tcache_store(tcr, response, &error);
-        if (item == nullptr) {
-            tcr.handler->error(error, tcr.handler_ctx);
+        try {
+            auto item = tcache_store(tcr, response);
+            regex = item->regex;
+        } catch (...) {
+            tcr.handler->error(std::current_exception(), tcr.handler_ctx);
             return;
         }
-
-        regex = item->regex;
     } else {
         cache_log(4, "translate_cache: nocache %s\n", tcr.key);
     }
@@ -1320,10 +1315,9 @@ tcache_handler_response(TranslateResponse &response, void *ctx)
             Error error;
             regex = unref_regex = response.CompileRegex(error);
             if (!regex.IsDefined()) {
-                auto *gerror = g_error_new(translate_quark(), 0,
-                                           "translate_cache: %s",
-                                           error.GetMessage());
-                tcr.handler->error(gerror, tcr.handler_ctx);
+                tcr.handler->error(std::make_exception_ptr(FormatRuntimeError("translate_cache: %s",
+                                                                              error.GetMessage())),
+                                   tcr.handler_ctx);
                 return;
             }
         }
@@ -1336,7 +1330,9 @@ tcache_handler_response(TranslateResponse &response, void *ctx)
                                    &error);
 
         if (!success) {
-            tcr.handler->error(error, tcr.handler_ctx);
+            tcr.handler->error(std::make_exception_ptr(std::runtime_error(error->message)),
+                               tcr.handler_ctx);
+            g_error_free(error);
             return;
         }
     } else if (response.easy_base) {
@@ -1344,17 +1340,18 @@ tcache_handler_response(TranslateResponse &response, void *ctx)
         GError *error = nullptr;
         if (!response.CacheLoad(tcr.pool, response,
                                  tcr.request.uri, &error)) {
-            tcr.handler->error(error, tcr.handler_ctx);
+            tcr.handler->error(std::make_exception_ptr(std::runtime_error(error->message)),
+                               tcr.handler_ctx);
+            g_error_free(error);
             return;
         }
     } else if (response.base != nullptr) {
         const char *uri = tcr.request.uri;
         const char *tail = require_base_tail(uri, response.base);
         if (!response.unsafe_base && !uri_path_verify_paranoid(tail)) {
-            auto error = g_error_new(http_response_quark(),
-                                     HTTP_STATUS_BAD_REQUEST,
-                                     "Malformed URI");
-            tcr.handler->error(error, tcr.handler_ctx);
+            tcr.handler->error(std::make_exception_ptr(HttpMessageResponse(HTTP_STATUS_BAD_REQUEST,
+                                                                           "Malformed URI")),
+                               tcr.handler_ctx);
             return;
         }
     }
@@ -1363,13 +1360,13 @@ tcache_handler_response(TranslateResponse &response, void *ctx)
 }
 
 static void
-tcache_handler_error(GError *error, void *ctx)
+tcache_handler_error(std::exception_ptr ep, void *ctx)
 {
     TranslateCacheRequest &tcr = *(TranslateCacheRequest *)ctx;
 
     cache_log(4, "translate_cache: error %s\n", tcr.key);
 
-    tcr.handler->error(error, tcr.handler_ctx);
+    tcr.handler->error(ep, tcr.handler_ctx);
 }
 
 static const TranslateHandler tcache_handler = {
@@ -1390,14 +1387,18 @@ tcache_hit(struct pool &pool,
 
     GError *error = nullptr;
     if (!response->CacheLoad(&pool, item.response, uri, &error)) {
-        handler.error(error, ctx);
+        handler.error(std::make_exception_ptr(std::runtime_error(error->message)),
+                      ctx);
+        g_error_free(error);
         return;
     }
 
     if (uri != nullptr && response->IsExpandable() &&
         !tcache_expand_response(pool, *response, item.regex, uri, host, user,
                                 &error)) {
-        handler.error(error, ctx);
+        handler.error(std::make_exception_ptr(std::runtime_error(error->message)),
+                      ctx);
+        g_error_free(error);
         return;
     }
 

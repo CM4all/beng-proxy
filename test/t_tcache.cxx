@@ -33,7 +33,8 @@ tstock_translate(gcc_unused TranslateStock &stock, struct pool &pool,
         auto response = NewFromPool<MakeResponse>(pool, pool, *next_response);
         handler.response(*response, ctx);
     } else
-        handler.error(g_error_new(translate_quark(), 0, "Error"), ctx);
+        handler.error(std::make_exception_ptr(std::runtime_error("Error")),
+                      ctx);
 }
 
 static bool
@@ -252,11 +253,9 @@ my_translate_response(TranslateResponse &response,
 }
 
 static void
-my_translate_error(GError *error, gcc_unused void *ctx)
+my_translate_error(gcc_unused std::exception_ptr ep, gcc_unused void *ctx)
 {
     assert(expected_response == nullptr);
-
-    g_error_free(error);
 }
 
 static const TranslateHandler my_translate_handler = {

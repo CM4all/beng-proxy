@@ -15,10 +15,9 @@
 #include "translate_response.hxx"
 #include "transformation.hxx"
 #include "pool.hxx"
+#include "util/Exception.hxx"
 
 #include <daemon/log.h>
-
-#include <glib.h>
 
 static void
 widget_registry_lookup(struct pool &pool,
@@ -81,12 +80,11 @@ widget_translate_response(TranslateResponse &response, void *ctx)
 }
 
 static void
-widget_translate_error(GError *error, void *ctx)
+widget_translate_error(std::exception_ptr ep, void *ctx)
 {
     const auto lookup = (WidgetRegistryLookup *)ctx;
 
-    daemon_log(2, "widget registry error: %s\n", error->message);
-    g_error_free(error);
+    daemon_log(2, "widget registry error: %s\n", GetFullMessage(ep).c_str());
 
     lookup->callback(nullptr);
 }

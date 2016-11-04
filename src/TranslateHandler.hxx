@@ -5,13 +5,13 @@
 #ifndef BENG_PROXY_TRANSLATE_HANDLER_HXX
 #define BENG_PROXY_TRANSLATE_HANDLER_HXX
 
-#include "glibfwd.hxx"
+#include <exception>
 
 struct TranslateResponse;
 
 struct TranslateHandler {
     void (*response)(TranslateResponse &response, void *ctx);
-    void (*error)(GError *error, void *ctx);
+    void (*error)(std::exception_ptr ep, void *ctx);
 };
 
 #endif

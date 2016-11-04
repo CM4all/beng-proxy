@@ -20,6 +20,8 @@
 
 #include <daemon/log.h>
 
+#include <stdexcept>
+
 #include <string.h>
 #include <errno.h>
 
@@ -189,7 +191,9 @@ TranslateStockRequest::OnStockItemReady(StockItem &_item)
 void
 TranslateStockRequest::OnStockItemError(GError *error)
 {
-    handler.error(error, handler_ctx);
+    handler.error(std::make_exception_ptr(std::runtime_error(error->message)),
+                  handler_ctx);
+    g_error_free(error);
 }
 
 /*

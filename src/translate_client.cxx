@@ -23,8 +23,6 @@
 
 #include <socket/address.h>
 
-#include <glib.h>
-
 #include <stdexcept>
 
 #include <assert.h>
@@ -61,7 +59,6 @@ struct TranslateClient final : Cancellable {
     void ReleaseSocket(bool reuse);
     void Release(bool reuse);
 
-    void Fail(GError *error);
     void Fail(std::exception_ptr ep);
     void Fail(const std::exception &e);
 
@@ -109,26 +106,20 @@ TranslateClient::Release(bool reuse)
 }
 
 void
-TranslateClient::Fail(GError *error)
+TranslateClient::Fail(std::exception_ptr ep)
 {
     stopwatch_event(stopwatch, "error");
 
     ReleaseSocket(false);
 
-    handler.error(error, handler_ctx);
+    handler.error(ep, handler_ctx);
     pool_unref(&pool);
-}
-
-void
-TranslateClient::Fail(std::exception_ptr ep)
-{
-    Fail(ToGError(ep));
 }
 
 void
 TranslateClient::Fail(const std::exception &e)
 {
-    Fail(ToGError(e));
+    Fail(std::make_exception_ptr(e));
 }
 
 /*
@@ -455,8 +446,8 @@ try {
 
     pool_ref(&client->pool);
     translate_try_write(client);
-} catch (const std::runtime_error &e) {
+} catch (...) {
     lease.ReleaseLease(true);
 
-    handler.error(ToGError(e), ctx);
+    handler.error(std::current_exception(), ctx);
 }

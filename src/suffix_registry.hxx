@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_SUFFIX_REGISTRY_HXX
 #define BENG_PROXY_SUFFIX_REGISTRY_HXX
 
-#include "glibfwd.hxx"
+#include <exception>
 
 struct pool;
 struct tcache;
@@ -24,7 +24,7 @@ struct SuffixRegistryHandler {
                     const Transformation *transformations,
                     void *ctx);
 
-    void (*error)(GError *error, void *ctx);
+    void (*error)(std::exception_ptr ep, void *ctx);
 };
 typedef void (*widget_class_callback_t)(const struct widget_class *cls,
                                         void *ctx);

@@ -47,11 +47,11 @@ suffix_translate_response(TranslateResponse &response, void *ctx)
 }
 
 static void
-suffix_translate_error(GError *error, void *ctx)
+suffix_translate_error(std::exception_ptr ep, void *ctx)
 {
     SuffixRegistryLookup &lookup = *(SuffixRegistryLookup *)ctx;
 
-    lookup.handler.error(error, lookup.handler_ctx);
+    lookup.handler.error(ep, lookup.handler_ctx);
 }
 
 static const TranslateHandler suffix_translate_handler = {

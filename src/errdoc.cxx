@@ -16,6 +16,7 @@
 #include "http_response.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream_hold.hxx"
+#include "util/Exception.hxx"
 
 #include <glib.h>
 
@@ -115,12 +116,12 @@ errdoc_translate_response(TranslateResponse &response, void *ctx)
 }
 
 static void
-errdoc_translate_error(GError *error, void *ctx)
+errdoc_translate_error(std::exception_ptr ep, void *ctx)
 {
     auto &er = *(ErrorResponseLoader *)ctx;
 
-    daemon_log(2, "error document translation error: %s\n", error->message);
-    g_error_free(error);
+    daemon_log(2, "error document translation error: %s\n",
+               GetFullMessage(ep).c_str());
 
     errdoc_resubmit(er);
 }
