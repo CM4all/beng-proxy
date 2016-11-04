@@ -66,6 +66,8 @@ struct CacheItem {
 
     CacheItem(const CacheItem &) = delete;
 
+    void Release();
+
     /**
      * Locks the specified item in memory, i.e. prevents that it is
      * freed by Cache::Remove().

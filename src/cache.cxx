@@ -26,6 +26,16 @@ CacheItem::KeyValueEqual(const char *a, const CacheItem &b)
     return strcmp(a, b.key) == 0;
 }
 
+void
+CacheItem::Release()
+{
+    if (lock == 0)
+        Destroy();
+    else
+        /* this item is locked - postpone the Destroy() call */
+        removed = true;
+}
+
 Cache::Cache(EventLoop &event_loop,
              unsigned hashtable_capacity, size_t _max_size)
     :max_size(_max_size),
@@ -63,11 +73,7 @@ Cache::ItemRemoved(CacheItem *item)
 
     size -= item->size;
 
-    if (item->lock == 0)
-        item->Destroy();
-    else
-        /* this item is locked - postpone the destroy() call */
-        item->removed = true;
+    item->Release();
 
     if (size == 0)
         cleanup_timer.Disable();
