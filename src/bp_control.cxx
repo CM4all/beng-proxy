@@ -184,12 +184,13 @@ query_stats(BpInstance *instance, ControlServer *server,
 
     const AutoRewindPool auto_rewind(*tpool);
 
-    Error error;
-    if (!server->Reply(tpool,
-                       address,
-                       CONTROL_STATS, &stats, sizeof(stats),
-                       error))
-        daemon_log(3, "%s\n", error.GetMessage());
+    try {
+        server->Reply(tpool,
+                      address,
+                      CONTROL_STATS, &stats, sizeof(stats));
+    } catch (const std::runtime_error &e) {
+        daemon_log(3, "%s\n", e.what());
+    }
 }
 
 static void

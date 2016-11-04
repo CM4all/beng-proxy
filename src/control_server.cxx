@@ -147,12 +147,11 @@ ControlServer::SetFd(int fd)
     udp->SetFd(fd);
 }
 
-bool
+void
 ControlServer::Reply(struct pool *pool,
                      SocketAddress address,
                      enum beng_control_command command,
-                     const void *payload, size_t payload_length,
-                     Error &error_r)
+                     const void *payload, size_t payload_length)
 {
     assert(udp != nullptr);
 
@@ -162,7 +161,5 @@ ControlServer::Reply(struct pool *pool,
     header->command = ToBE16(command);
     memcpy(header + 1, payload, payload_length);
 
-    return udp->Reply(address,
-                      header, sizeof(*header) + payload_length,
-                      error_r);
+    udp->Reply(address, header, sizeof(*header) + payload_length);
 }

@@ -11,8 +11,6 @@
 #include "system/fd_util.h"
 #include "event/Callback.hxx"
 #include "system/Error.hxx"
-#include "util/Error.hxx"
-#include "util/Domain.hxx"
 
 #include <socket/address.h>
 
@@ -22,8 +20,6 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <unistd.h>
-
-static constexpr Domain udp_listener_domain("udp_listener");
 
 UdpListener::UdpListener(EventLoop &event_loop, int _fd, UdpHandler &_handler)
     :fd(_fd),
@@ -187,25 +183,18 @@ UdpListener::Join4(const struct in_addr *group)
         throw MakeErrno("Failed to join multicast group");
 }
 
-bool
+void
 UdpListener::Reply(SocketAddress address,
-                   const void *data, size_t data_length,
-                   Error &error_r)
+                   const void *data, size_t data_length)
 {
     assert(fd >= 0);
 
     ssize_t nbytes = sendto(fd, data, data_length,
                             MSG_DONTWAIT|MSG_NOSIGNAL,
                             address.GetAddress(), address.GetSize());
-    if (gcc_unlikely(nbytes < 0)) {
-        error_r.SetErrno("Failed to send UDP packet");
-        return false;
-    }
+    if (gcc_unlikely(nbytes < 0))
+        throw MakeErrno("Failed to send UDP packet");
 
-    if ((size_t)nbytes != data_length) {
-        error_r.Set(udp_listener_domain, "Short send");
-        return false;
-    }
-
-    return true;
+    if ((size_t)nbytes != data_length)
+        throw std::runtime_error("Short send");
 }

@@ -47,11 +47,13 @@ struct ControlServer final : UdpHandler {
      */
     void SetFd(int fd);
 
-    bool Reply(struct pool *pool,
+    /**
+     * Throws std::runtime_error on error.
+     */
+    void Reply(struct pool *pool,
                SocketAddress address,
                enum beng_control_command command,
-               const void *payload, size_t payload_length,
-               Error &error_r);
+               const void *payload, size_t payload_length);
 
     /* virtual methods from class UdpHandler */
     void OnUdpDatagram(const void *data, size_t length,

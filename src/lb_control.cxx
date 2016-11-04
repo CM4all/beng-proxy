@@ -12,7 +12,6 @@
 #include "failure.hxx"
 #include "tpool.hxx"
 #include "pool.hxx"
-#include "util/Error.hxx"
 #include "util/Exception.hxx"
 
 #include <daemon/log.h>
@@ -124,11 +123,10 @@ failure_status_to_string(enum failure_status status)
     return "error";
 }
 
-static bool
+static void
 node_status_response(ControlServer *server, struct pool *pool,
                      SocketAddress address,
-                     const char *payload, size_t length, const char *status,
-                     Error &error_r)
+                     const char *payload, size_t length, const char *status)
 {
     size_t status_length = strlen(status);
 
@@ -138,16 +136,15 @@ node_status_response(ControlServer *server, struct pool *pool,
     response[length] = 0;
     memcpy(response + length + 1, status, status_length);
 
-    return server->Reply(pool, address,
-                         CONTROL_NODE_STATUS, response, response_length,
-                         error_r);
+    server->Reply(pool, address,
+                  CONTROL_NODE_STATUS, response, response_length);
 }
 
 static void
 query_node_status(LbControl *control, ControlServer &control_server,
                   const char *payload, size_t length,
                   SocketAddress address)
-{
+try {
     if (address.GetSize() == 0) {
         daemon_log(3, "got NODE_STATUS from unbound client socket\n");
         return;
@@ -155,9 +152,9 @@ query_node_status(LbControl *control, ControlServer &control_server,
 
     const char *colon = (const char *)memchr(payload, ':', length);
     if (colon == nullptr || colon == payload || colon == payload + length - 1) {
-        node_status_response(control->server.get(), tpool, address,
-                             payload, length, "malformed", IgnoreError());
         daemon_log(3, "malformed NODE_STATUS control packet: no port\n");
+        node_status_response(control->server.get(), tpool, address,
+                             payload, length, "malformed");
         return;
     }
 
@@ -169,18 +166,18 @@ query_node_status(LbControl *control, ControlServer &control_server,
 
     const auto *node = control->instance.config->FindNode(node_name);
     if (node == nullptr) {
-        node_status_response(control->server.get(), tpool, address,
-                             payload, length, "unknown", IgnoreError());
         daemon_log(3, "unknown node in NODE_STATUS control packet\n");
+        node_status_response(control->server.get(), tpool, address,
+                             payload, length, "unknown");
         return;
     }
 
     char *endptr;
     unsigned port = strtoul(port_string, &endptr, 10);
     if (port == 0 || *endptr != 0) {
-        node_status_response(control->server.get(), tpool, address,
-                             payload, length, "malformed", IgnoreError());
         daemon_log(3, "malformed NODE_STATUS control packet: port is not a number\n");
+        node_status_response(control->server.get(), tpool, address,
+                             payload, length, "malformed");
         return;
     }
 
@@ -194,28 +191,26 @@ query_node_status(LbControl *control, ControlServer &control_server,
         failure_get_status({with_port, node->address.GetSize()});
     const char *s = failure_status_to_string(status);
 
-    Error error;
-    if (!node_status_response(&control_server, tpool, address,
-                              payload, length, s,
-                              error))
-        daemon_log(3, "%s\n", error.GetMessage());
+    node_status_response(&control_server, tpool, address,
+                         payload, length, s);
+} catch (const std::runtime_error &e) {
+    daemon_log(3, "%s\n", e.what());
 }
 
 static void
 query_stats(LbControl *control, ControlServer &control_server,
             SocketAddress address)
-{
+try {
     struct beng_control_stats stats;
     lb_get_stats(&control->instance, &stats);
 
     const AutoRewindPool auto_rewind(*tpool);
 
-    Error error;
-    if (!control_server.Reply(tpool,
-                              address,
-                              CONTROL_STATS, &stats, sizeof(stats),
-                              error))
-        daemon_log(3, "%s\n", error.GetMessage());
+    control_server.Reply(tpool,
+                         address,
+                         CONTROL_STATS, &stats, sizeof(stats));
+} catch (const std::runtime_error &e) {
+    daemon_log(3, "%s\n", e.what());
 }
 
 void

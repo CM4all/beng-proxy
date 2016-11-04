@@ -14,7 +14,6 @@
 struct in_addr;
 class SocketAddress;
 class UdpHandler;
-class Error;
 
 class UdpListener {
     int fd;
@@ -57,10 +56,11 @@ public:
 
     /**
      * Send a reply datagram to a client.
+     *
+     * Throws std::runtime_error on error.
      */
-    bool Reply(SocketAddress address,
-               const void *data, size_t data_length,
-               Error &error_r);
+    void Reply(SocketAddress address,
+               const void *data, size_t data_length);
 
 private:
     void EventCallback(short events);
