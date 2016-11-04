@@ -5,6 +5,8 @@
 #ifndef GEXCEPTION_HXX
 #define GEXCEPTION_HXX
 
+#include "util/Exception.hxx"
+
 #include <glib.h>
 
 #include <exception>
@@ -22,7 +24,8 @@ exception_quark()
 static inline void
 SetGError(GError **error_r, const std::exception &e)
 {
-    g_set_error_literal(error_r, exception_quark(), 0, e.what());
+    g_set_error_literal(error_r, exception_quark(), 0,
+                        GetFullMessage(e).c_str());
 }
 
 static inline GError *
