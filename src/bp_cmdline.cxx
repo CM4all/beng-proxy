@@ -12,7 +12,6 @@
 #include "pool.hxx"
 #include "ua_classification.hxx"
 #include "util/StringView.hxx"
-#include "util/Error.hxx"
 #include "util/IterableSplitString.hxx"
 
 #include <daemon/log.h>
@@ -327,7 +326,6 @@ parse_cmdline(BpCmdLine &cmdline, BpConfig &config, int argc, char **argv)
     struct addrinfo hints;
     const char *user_name = NULL, *group_name = NULL;
     const char *spawn_user = nullptr;
-    Error error2;
 
     while (1) {
 #ifdef __GLIBC__
@@ -490,11 +488,7 @@ parse_cmdline(BpCmdLine &cmdline, BpConfig &config, int argc, char **argv)
             break;
 
         case 'a':
-            if (!ua_classification_init(optarg, error2)) {
-                fprintf(stderr, "%s\n", error2.GetMessage());
-                exit(EXIT_FAILURE);
-            }
-
+            ua_classification_init(optarg);
             break;
 
         case 's':

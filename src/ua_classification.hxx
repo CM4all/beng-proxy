@@ -7,10 +7,11 @@
 
 #include <inline/compiler.h>
 
-class Error;
-
-bool
-ua_classification_init(const char *path, Error &error);
+/**
+ * Throws std::runtime_error on error.
+ */
+void
+ua_classification_init(const char *path);
 
 void
 ua_classification_deinit();

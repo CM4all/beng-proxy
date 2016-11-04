@@ -684,8 +684,6 @@ libutil_a_SOURCES = \
 	src/util/Macros.hxx \
 	src/util/TrivialArray.hxx \
 	src/util/StaticArray.hxx \
-	src/util/Domain.hxx \
-	src/util/Error.cxx src/util/Error.hxx \
 	src/util/PrintException.cxx src/util/PrintException.hxx \
 	src/util/Exception.cxx src/util/Exception.hxx \
 	src/util/RuntimeError.hxx \

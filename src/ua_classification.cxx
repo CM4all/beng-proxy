@@ -4,10 +4,10 @@
 
 #include "ua_classification.hxx"
 #include "regex.hxx"
+#include "system/Error.hxx"
 #include "util/StringUtil.hxx"
 #include "util/CharUtil.hxx"
-#include "util/Error.hxx"
-#include "util/Domain.hxx"
+#include "util/ScopeExit.hxx"
 
 #include <stdexcept>
 #include <forward_list>
@@ -17,8 +17,6 @@
 #include <string.h>
 #include <stdio.h>
 #include <errno.h>
-
-static constexpr Domain ua_classification_domain("ua_classification");
 
 struct UserAgentClass {
     UniqueRegex regex;
@@ -30,68 +28,48 @@ typedef std::forward_list<UserAgentClass> UserAgentClassList;
 static UserAgentClassList *ua_classes;
 
 static bool
-parse_line(UserAgentClass &cls, char *line, Error &error)
+parse_line(UserAgentClass &cls, char *line)
 {
     if (*line == 'm')
         ++line;
-    else if (*line != '/') {
-        error.Set(ua_classification_domain,
-                  "Regular expression must start with '/' or 'm'");
-        return false;
-    }
+    else if (*line != '/')
+        throw std::runtime_error("Regular expression must start with '/' or 'm'");
 
     char delimiter = *line++;
     const char *r = line;
     char *end = strchr(line, delimiter);
-    if (end == nullptr) {
-        error.Set(ua_classification_domain,
-                  "Regular expression not terminated");
-        return false;
-    }
+    if (end == nullptr)
+        throw std::runtime_error("Regular expression not terminated");
 
     *end = 0;
     line = StripLeft(end + 1);
 
     const char *name = line++;
-    if (!IsAlphaNumericASCII(*name)) {
-        error.Set(ua_classification_domain,
-                  "Alphanumeric class name expected");
-        return false;
-    }
+    if (!IsAlphaNumericASCII(*name))
+        throw std::runtime_error("Alphanumeric class name expected");
 
     while (IsAlphaNumericASCII(*line))
         ++line;
 
     if (*line != 0) {
-        if (!IsWhitespaceFast(*line)) {
-            error.Set(ua_classification_domain,
-                      "Alphanumeric class name expected");
-            return false;
-        }
+        if (!IsWhitespaceFast(*line))
+            throw std::runtime_error("Alphanumeric class name expected");
 
         *line++ = 0;
         line = StripLeft(line);
 
-        if (*line != 0) {
-            error.Set(ua_classification_domain,
-                      "Excess characters after class name");
-            return false;
-        }
+        if (*line != 0)
+            throw std::runtime_error("Excess characters after class name");
     }
 
-    try {
-        cls.regex.Compile(r, false, false);
-    } catch (const std::runtime_error &e) {
-        error.Set(ua_classification_domain, e.what());
-        return false;
-    }
+    cls.regex.Compile(r, false, false);
 
     cls.name = name;
     return true;
 }
 
-static bool
-ua_classification_init(UserAgentClassList &list, FILE *file, Error &error)
+static void
+ua_classification_init(UserAgentClassList &list, FILE *file)
 {
     auto tail = ua_classes->before_begin();
 
@@ -103,33 +81,31 @@ ua_classification_init(UserAgentClassList &list, FILE *file, Error &error)
             continue;
 
         UserAgentClass cls;
-        if (!parse_line(cls, p, error))
-            return false;
+        parse_line(cls, p);
 
         tail = list.emplace_after(tail, std::move(cls));
     }
-
-    return true;
 }
 
-bool
-ua_classification_init(const char *path, Error &error)
+void
+ua_classification_init(const char *path)
 {
     if (path == nullptr)
-        return true;
+        return;
 
     FILE *file = fopen(path, "r");
-    if (file == nullptr) {
-        error.FormatErrno("Failed to open %s", path);
-        return false;
-    }
+    if (file == nullptr)
+        throw FormatErrno("Failed to open %s", path);
+
+    AtScopeExit(file) { fclose(file); };
 
     ua_classes = new UserAgentClassList();
-    bool success = ua_classification_init(*ua_classes, file, error);
-    fclose(file);
-    if (!success)
+    try {
+        ua_classification_init(*ua_classes, file);
+    } catch (...) {
         ua_classification_deinit();
-    return success;
+        throw;
+    }
 }
 
 void
