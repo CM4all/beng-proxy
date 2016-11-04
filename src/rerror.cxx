@@ -22,7 +22,6 @@
 #include "HttpMessageResponse.hxx"
 #include "gerrno.h"
 #include "pool.hxx"
-#include "util/Error.hxx"
 #include "util/Exception.hxx"
 
 #include <daemon/log.h>
@@ -38,16 +37,6 @@ response_dispatch_error(Request &request, GError *error,
 {
     if (request.instance.config.verbose_response)
         message = p_strdup(&request.pool, error->message);
-
-    response_dispatch_message(request, status, message);
-}
-
-static void
-response_dispatch_error(Request &request, Error &&error,
-                        http_status_t status, const char *message)
-{
-    if (request.instance.config.verbose_response)
-        message = p_strdup(&request.pool, error.GetMessage());
 
     response_dispatch_message(request, status, message);
 }
@@ -135,34 +124,6 @@ response_dispatch_error(Request &request, GError *error)
                                 "Cache server failed");
     else
         response_dispatch_error(request, error,
-                                HTTP_STATUS_BAD_GATEWAY,
-                                "Internal server error");
-}
-
-void
-response_dispatch_error(Request &request, Error &&error)
-{
-    if (error.IsDomain(http_response_domain)) {
-        response_dispatch_message(request, http_status_t(error.GetCode()),
-                                  p_strdup(&request.pool,
-                                           error.GetMessage()));
-        return;
-    } else if (error.IsDomain(errno_domain)) {
-        switch (error.GetCode()) {
-        case ENOENT:
-        case ENOTDIR:
-            response_dispatch_error(request, std::move(error),
-                                    HTTP_STATUS_NOT_FOUND,
-                                    "The requested file does not exist.");
-            break;
-
-        default:
-            response_dispatch_error(request, std::move(error),
-                                    HTTP_STATUS_INTERNAL_SERVER_ERROR,
-                                    "Internal server error");
-        }
-    } else
-        response_dispatch_error(request, std::move(error),
                                 HTTP_STATUS_BAD_GATEWAY,
                                 "Internal server error");
 }

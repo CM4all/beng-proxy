@@ -24,7 +24,6 @@
 
 class Istream;
 class HttpHeaders;
-class Error;
 class StringMap;
 struct BpInstance;
 struct BpConnection;
@@ -375,9 +374,6 @@ response_dispatch_message2(Request &request, http_status_t status,
 
 void
 response_dispatch_error(Request &request, GError *error);
-
-void
-response_dispatch_error(Request &request, Error &&error);
 
 void
 response_dispatch_log(Request &request, http_status_t status,
