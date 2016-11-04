@@ -10,9 +10,9 @@
 #include "http_server/http_server.hxx"
 #include "util/Macros.hxx"
 
-#include <glib.h>
-
 #include <daemon/log.h>
+
+#include <limits>
 
 #include <assert.h>
 
@@ -21,7 +21,7 @@ drop_some_connections(BpInstance *instance)
 {
     BpConnection *connections[32];
     unsigned num_connections = 0;
-    http_server_score min_score = (http_server_score)G_MAXSHORT;
+    http_server_score min_score = std::numeric_limits<http_server_score>::max();
 
     assert(instance != NULL);
 
