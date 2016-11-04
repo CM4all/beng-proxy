@@ -208,6 +208,7 @@ public:
 
     void Flush();
 
+private:
     /** clean up expired cache items every 60 seconds */
     bool ExpireCallback();
 
