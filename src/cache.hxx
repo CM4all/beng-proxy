@@ -71,7 +71,7 @@ struct CacheItem {
 
     /**
      * Locks the specified item in memory, i.e. prevents that it is
-     * freed by cache_remove().
+     * freed by Cache::Remove().
      */
     void Lock() {
         ++lock;
