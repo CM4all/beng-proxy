@@ -3,7 +3,6 @@
  */
 
 #include "Address.hxx"
-#include "pool.hxx"
 #include "AllocatorPtr.hxx"
 
 DelegateAddress::DelegateAddress(const char *_delegate)
@@ -11,9 +10,9 @@ DelegateAddress::DelegateAddress(const char *_delegate)
 {
 }
 
-DelegateAddress::DelegateAddress(struct pool &pool, const DelegateAddress &src)
-    :delegate(p_strdup(&pool, src.delegate)),
-     child_options(pool, src.child_options) {}
+DelegateAddress::DelegateAddress(AllocatorPtr alloc, const DelegateAddress &src)
+    :delegate(alloc.Dup(src.delegate)),
+     child_options(alloc, src.child_options) {}
 
 void
 DelegateAddress::Expand(struct pool &pool, const MatchInfo &match_info)

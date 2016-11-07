@@ -14,7 +14,7 @@
 
 #include <assert.h>
 
-struct pool;
+class AllocatorPtr;
 struct StringView;
 
 /**
@@ -75,7 +75,7 @@ struct LhttpAddress {
         uri = _uri;
     }
 
-    LhttpAddress(struct pool &pool, const LhttpAddress &src);
+    LhttpAddress(AllocatorPtr alloc, const LhttpAddress &src);
 
     LhttpAddress &operator=(const LhttpAddress &) = delete;
 
@@ -103,9 +103,9 @@ struct LhttpAddress {
     gcc_pure
     bool HasQueryString() const;
 
-    LhttpAddress *Dup(struct pool &pool) const;
+    LhttpAddress *Dup(AllocatorPtr alloc) const;
 
-    LhttpAddress *DupWithUri(struct pool &pool, const char *uri) const;
+    LhttpAddress *DupWithUri(AllocatorPtr alloc, const char *uri) const;
 
     /**
      * Duplicates this #lhttp_address object and inserts the specified
@@ -126,11 +126,9 @@ struct LhttpAddress {
     gcc_pure
     bool IsValidBase() const;
 
-    LhttpAddress *SaveBase(struct pool *pool,
-                           const char *suffix) const;
+    LhttpAddress *SaveBase(AllocatorPtr alloc, const char *suffix) const;
 
-    LhttpAddress *LoadBase(struct pool *pool,
-                           const char *suffix) const;
+    LhttpAddress *LoadBase(AllocatorPtr alloc, const char *suffix) const;
 
     /**
      * @return a new object on success, src if no change is needed, nullptr

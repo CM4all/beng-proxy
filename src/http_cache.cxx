@@ -22,7 +22,7 @@
 #include "istream/istream.hxx"
 #include "istream/istream_hold.hxx"
 #include "istream/istream_tee.hxx"
-#include "pool.hxx"
+#include "AllocatorPtr.hxx"
 #include "event/TimerEvent.hxx"
 #include "util/Background.hxx"
 #include "util/Cast.hxx"

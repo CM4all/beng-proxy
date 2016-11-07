@@ -9,7 +9,7 @@
 
 #include <inline/compiler.h>
 
-struct pool;
+class AllocatorPtr;
 class MatchInfo;
 
 /**
@@ -37,7 +37,7 @@ struct NfsAddress {
         :server(_server), export_name(_export_name), path(_path),
          expand_path(nullptr), content_type(nullptr) {}
 
-    NfsAddress(struct pool *pool, const NfsAddress &other);
+    NfsAddress(AllocatorPtr alloc, const NfsAddress &other);
 
     NfsAddress(const NfsAddress &) = delete;
     NfsAddress &operator=(const NfsAddress &) = delete;
@@ -57,9 +57,9 @@ struct NfsAddress {
     gcc_pure
     bool IsValidBase() const;
 
-    NfsAddress *SaveBase(struct pool *pool, const char *suffix) const;
+    NfsAddress *SaveBase(AllocatorPtr alloc, const char *suffix) const;
 
-    NfsAddress *LoadBase(struct pool *pool, const char *suffix) const;
+    NfsAddress *LoadBase(AllocatorPtr alloc, const char *suffix) const;
 
     /**
      * Does this address need to be expanded with Expand()?

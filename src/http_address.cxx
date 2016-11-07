@@ -51,32 +51,32 @@ HttpAddress::HttpAddress(ShallowCopy shallow_copy,
 {
 }
 
-HttpAddress::HttpAddress(struct pool &pool, const HttpAddress &src)
+HttpAddress::HttpAddress(AllocatorPtr alloc, const HttpAddress &src)
     :protocol(src.protocol), ssl(src.ssl),
-     host_and_port(p_strdup_checked(&pool, src.host_and_port)),
-     path(p_strdup(&pool, src.path)),
-     expand_path(p_strdup_checked(&pool, src.expand_path)),
-     addresses(pool, src.addresses)
+     host_and_port(alloc.CheckDup(src.host_and_port)),
+     path(alloc.Dup(src.path)),
+     expand_path(alloc.CheckDup(src.expand_path)),
+     addresses(alloc, src.addresses)
 {
 }
 
-HttpAddress::HttpAddress(struct pool &pool, const HttpAddress &src,
+HttpAddress::HttpAddress(AllocatorPtr alloc, const HttpAddress &src,
                          const char *_path)
     :protocol(src.protocol), ssl(src.ssl),
-     host_and_port(p_strdup_checked(&pool, src.host_and_port)),
-     path(p_strdup(&pool, _path)),
+     host_and_port(alloc.CheckDup(src.host_and_port)),
+     path(alloc.Dup(_path)),
      expand_path(nullptr),
-     addresses(pool, src.addresses)
+     addresses(alloc, src.addresses)
 {
 }
 
 static HttpAddress *
-http_address_new(struct pool &pool, HttpAddress::Protocol protocol, bool ssl,
+http_address_new(AllocatorPtr alloc, HttpAddress::Protocol protocol, bool ssl,
                  const char *host_and_port, const char *path)
 {
     assert(path != nullptr);
 
-    return NewFromPool<HttpAddress>(pool, protocol, ssl, host_and_port, path);
+    return alloc.New<HttpAddress>(protocol, ssl, host_and_port, path);
 }
 
 /**
@@ -85,10 +85,9 @@ http_address_new(struct pool &pool, HttpAddress::Protocol protocol, bool ssl,
  * Throws std::runtime_error on error.
  */
 static HttpAddress *
-http_address_parse2(struct pool *pool, HttpAddress::Protocol protocol, bool ssl,
+http_address_parse2(AllocatorPtr alloc, HttpAddress::Protocol protocol, bool ssl,
                     const char *uri)
 {
-    assert(pool != nullptr);
     assert(uri != nullptr);
 
     const char *path = strchr(uri, '/');
@@ -97,52 +96,52 @@ http_address_parse2(struct pool *pool, HttpAddress::Protocol protocol, bool ssl,
         if (path == uri || !uri_path_verify_quick(path))
             throw std::runtime_error("malformed HTTP URI");
 
-        host_and_port = p_strndup(pool, uri, path - uri);
-        path = p_strdup(pool, path);
+        host_and_port = alloc.DupZ({uri, path});
+        path = alloc.Dup(path);
     } else {
-        host_and_port = p_strdup(pool, uri);
+        host_and_port = alloc.Dup(uri);
         path = "/";
     }
 
-    return http_address_new(*pool, protocol, ssl, host_and_port, path);
+    return http_address_new(alloc, protocol, ssl, host_and_port, path);
 }
 
 HttpAddress *
-http_address_parse(struct pool *pool, const char *uri)
+http_address_parse(AllocatorPtr alloc, const char *uri)
 {
     if (memcmp(uri, "http://", 7) == 0)
-        return http_address_parse2(pool, HttpAddress::Protocol::HTTP,
+        return http_address_parse2(alloc, HttpAddress::Protocol::HTTP,
                                    false, uri + 7);
     else if (memcmp(uri, "https://", 8) == 0)
-        return http_address_parse2(pool, HttpAddress::Protocol::HTTP,
+        return http_address_parse2(alloc, HttpAddress::Protocol::HTTP,
                                    true, uri + 8);
     else if (memcmp(uri, "ajp://", 6) == 0)
-        return http_address_parse2(pool, HttpAddress::Protocol::AJP,
+        return http_address_parse2(alloc, HttpAddress::Protocol::AJP,
                                    false, uri + 6);
     else if (memcmp(uri, "unix:/", 6) == 0)
-        return http_address_new(*pool, HttpAddress::Protocol::HTTP,
+        return http_address_new(alloc, HttpAddress::Protocol::HTTP,
                                 false, nullptr, uri + 5);
 
     throw std::runtime_error("unrecognized URI");
 }
 
 HttpAddress *
-http_address_with_path(struct pool &pool, const HttpAddress *uwa,
+http_address_with_path(AllocatorPtr alloc, const HttpAddress *uwa,
                        const char *path)
 {
-    auto *p = NewFromPool<HttpAddress>(pool, ShallowCopy(), *uwa);
+    auto *p = alloc.New<HttpAddress>(ShallowCopy(), *uwa);
     p->path = path;
     return p;
 }
 
 HttpAddress *
-http_address_dup_with_path(struct pool &pool,
+http_address_dup_with_path(AllocatorPtr alloc,
                            const HttpAddress *uwa,
                            const char *path)
 {
     assert(uwa != nullptr);
 
-    return NewFromPool<HttpAddress>(pool, pool, *uwa, path);
+    return alloc.New<HttpAddress>(alloc, *uwa, path);
 }
 
 void
@@ -223,35 +222,33 @@ HttpAddress::IsValidBase() const
 }
 
 HttpAddress *
-HttpAddress::SaveBase(struct pool *pool, const char *suffix) const
+HttpAddress::SaveBase(AllocatorPtr alloc, const char *suffix) const
 {
-    assert(pool != nullptr);
     assert(suffix != nullptr);
 
     size_t length = base_string(path, suffix);
     if (length == (size_t)-1)
         return nullptr;
 
-    return http_address_dup_with_path(*pool, this,
-                                      p_strndup(pool, path, length));
+    return http_address_dup_with_path(alloc, this,
+                                      alloc.DupZ({path, length}));
 }
 
 HttpAddress *
-HttpAddress::LoadBase(struct pool *pool, const char *suffix) const
+HttpAddress::LoadBase(AllocatorPtr alloc, const char *suffix) const
 {
-    assert(pool != nullptr);
     assert(suffix != nullptr);
     assert(path != nullptr);
     assert(*path != 0);
     assert(expand_path != nullptr ||
            path[strlen(path) - 1] == '/');
 
-    return http_address_dup_with_path(*pool, this,
-                                      p_strcat(pool, path, suffix, nullptr));
+    return http_address_dup_with_path(alloc, this,
+                                      alloc.Concat(path, suffix));
 }
 
 const HttpAddress *
-HttpAddress::Apply(struct pool *pool, StringView relative) const
+HttpAddress::Apply(AllocatorPtr alloc, StringView relative) const
 {
     if (relative.IsEmpty())
         return this;
@@ -259,7 +256,7 @@ HttpAddress::Apply(struct pool *pool, StringView relative) const
     if (uri_has_protocol(relative)) {
         HttpAddress *other;
         try {
-            other = http_address_parse(pool, p_strdup(*pool, relative));
+            other = http_address_parse(alloc, alloc.DupZ(relative));
         } catch (const std::runtime_error &e) {
             return nullptr;
         }
@@ -281,10 +278,10 @@ HttpAddress::Apply(struct pool *pool, StringView relative) const
         return other;
     }
 
-    const char *p = uri_absolute(*pool, path, relative);
+    const char *p = uri_absolute(alloc, path, relative);
     assert(p != nullptr);
 
-    return http_address_with_path(*pool, this, p);
+    return http_address_with_path(alloc, this, p);
 }
 
 StringView

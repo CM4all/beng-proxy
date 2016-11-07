@@ -5,6 +5,7 @@
 #include "event/Loop.hxx"
 #include "pool.hxx"
 #include "RootPool.hxx"
+#include "AllocatorPtr.hxx"
 #include "balancer.hxx"
 #include "failure.hxx"
 #include "address_list.hxx"
@@ -71,6 +72,7 @@ main(int argc, char **argv)
 
     RootPool root_pool;
     LinearPool pool(root_pool, "test", 8192);
+    AllocatorPtr alloc(pool);
 
     failure_init();
 
@@ -96,7 +98,7 @@ main(int argc, char **argv)
         }
 
         for (struct addrinfo *j = ai; j != nullptr; j = j->ai_next)
-            address_list.Add(pool, {ai->ai_addr, ai->ai_addrlen});
+            address_list.Add(alloc, {ai->ai_addr, ai->ai_addrlen});
 
         freeaddrinfo(ai);
     }

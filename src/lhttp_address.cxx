@@ -27,13 +27,13 @@ LhttpAddress::LhttpAddress(const char *_path)
     assert(path != nullptr);
 }
 
-LhttpAddress::LhttpAddress(struct pool &pool, const LhttpAddress &src)
-    :path(p_strdup(&pool, src.path)),
-     args(pool, src.args),
-     options(pool, src.options),
-     host_and_port(p_strdup_checked(&pool, src.host_and_port)),
-     uri(p_strdup(&pool, src.uri)),
-     expand_uri(p_strdup_checked(&pool, src.expand_uri)),
+LhttpAddress::LhttpAddress(AllocatorPtr alloc, const LhttpAddress &src)
+    :path(alloc.Dup(src.path)),
+     args(alloc, src.args),
+     options(alloc, src.options),
+     host_and_port(alloc.CheckDup(src.host_and_port)),
+     uri(alloc.Dup(src.uri)),
+     expand_uri(alloc.CheckDup(src.expand_uri)),
      concurrency(src.concurrency),
      blocking(src.blocking)
 {
@@ -67,9 +67,9 @@ LhttpAddress::GetId(struct pool *pool) const
 }
 
 LhttpAddress *
-LhttpAddress::Dup(struct pool &pool) const
+LhttpAddress::Dup(AllocatorPtr alloc) const
 {
-    return NewFromPool<LhttpAddress>(pool, pool, *this);
+    return alloc.New<LhttpAddress>(alloc, *this);
 }
 
 void
@@ -82,9 +82,9 @@ LhttpAddress::Check() const
 }
 
 LhttpAddress *
-LhttpAddress::DupWithUri(struct pool &pool, const char *new_uri) const
+LhttpAddress::DupWithUri(AllocatorPtr alloc, const char *new_uri) const
 {
-    LhttpAddress *p = Dup(pool);
+    LhttpAddress *p = Dup(alloc);
     p->uri = new_uri;
     return p;
 }
@@ -119,29 +119,27 @@ LhttpAddress::IsValidBase() const
 }
 
 LhttpAddress *
-LhttpAddress::SaveBase(struct pool *pool, const char *suffix) const
+LhttpAddress::SaveBase(AllocatorPtr alloc, const char *suffix) const
 {
-    assert(pool != nullptr);
     assert(suffix != nullptr);
 
     size_t length = base_string(uri, suffix);
     if (length == (size_t)-1)
         return nullptr;
 
-    return DupWithUri(*pool, p_strndup(pool, uri, length));
+    return DupWithUri(alloc, alloc.DupZ({uri, length}));
 }
 
 LhttpAddress *
-LhttpAddress::LoadBase(struct pool *pool, const char *suffix) const
+LhttpAddress::LoadBase(AllocatorPtr alloc, const char *suffix) const
 {
-    assert(pool != nullptr);
     assert(suffix != nullptr);
     assert(uri != nullptr);
     assert(*uri != 0);
     assert(uri[strlen(uri) - 1] == '/');
     assert(suffix != nullptr);
 
-    return DupWithUri(*pool, p_strcat(pool, uri, suffix, nullptr));
+    return DupWithUri(alloc, alloc.Concat(uri, suffix));
 }
 
 const LhttpAddress *

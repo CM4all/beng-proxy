@@ -10,7 +10,7 @@
 
 #include <inline/compiler.h>
 
-struct pool;
+class AllocatorPtr;
 class MatchInfo;
 struct DelegateAddress;
 
@@ -49,7 +49,7 @@ struct FileAddress {
     {
     }
 
-    FileAddress(struct pool *pool, const FileAddress &src);
+    FileAddress(AllocatorPtr alloc, const FileAddress &src);
 
     FileAddress(const FileAddress &) = delete;
     FileAddress &operator=(const FileAddress &) = delete;
@@ -67,8 +67,8 @@ struct FileAddress {
     gcc_pure
     bool IsValidBase() const;
 
-    FileAddress *SaveBase(struct pool *pool, const char *suffix) const;
-    FileAddress *LoadBase(struct pool *pool, const char *suffix) const;
+    FileAddress *SaveBase(AllocatorPtr alloc, const char *suffix) const;
+    FileAddress *LoadBase(AllocatorPtr alloc, const char *suffix) const;
 
     /**
      * Does this address need to be expanded with Expand()?

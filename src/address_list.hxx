@@ -17,8 +17,8 @@
 #include <stddef.h>
 #include <assert.h>
 
-struct pool;
 struct dpool;
+class AllocatorPtr;
 class SocketAddress;
 class AddressInfo;
 
@@ -42,7 +42,7 @@ struct AddressList {
 
     AddressList(ShallowCopy, const AddressInfo &src);
 
-    AddressList(struct pool &pool, const AddressList &src);
+    AddressList(AllocatorPtr alloc, const AddressList &src);
 
     AddressList(struct dpool &pool, const AddressList &src);
     void Free(struct dpool &pool);
@@ -79,7 +79,7 @@ struct AddressList {
     /**
      * @return false if the list is full
      */
-    bool Add(struct pool *pool, SocketAddress address);
+    bool Add(AllocatorPtr alloc, SocketAddress address);
 
     bool Add(struct dpool &pool, SocketAddress address);
 

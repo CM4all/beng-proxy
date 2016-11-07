@@ -115,7 +115,7 @@ TranslateParser::AddFilter()
 }
 
 static void
-parse_address_string(struct pool *pool, AddressList *list,
+parse_address_string(AllocatorPtr alloc, AddressList *list,
                      const char *p, int default_port)
 {
     if (*p == '/' || *p == '@') {
@@ -136,7 +136,7 @@ parse_address_string(struct pool *pool, AddressList *list,
             /* abstract socket */
             sun.sun_path[0] = 0;
 
-        list->Add(pool, { (const struct sockaddr *)&sun, size });
+        list->Add(alloc, { (const struct sockaddr *)&sun, size });
         return;
     }
 
@@ -146,7 +146,7 @@ parse_address_string(struct pool *pool, AddressList *list,
     hints.ai_socktype = SOCK_STREAM;
 
     for (const auto &i : Resolve(p, default_port, &hints))
-        list->Add(pool, i);
+        list->Add(alloc, i);
 }
 
 static bool
@@ -1081,7 +1081,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         if (!is_valid_nonempty_string(payload, payload_length))
             throw std::runtime_error("malformed HTTP packet");
 
-        http_address = http_address_parse(pool, payload);
+        http_address = http_address_parse(*pool, payload);
         if (http_address->protocol != HttpAddress::Protocol::HTTP)
             throw std::runtime_error("malformed HTTP packet");
 
@@ -1308,7 +1308,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         if (payload_length == 0)
             throw std::runtime_error("malformed AJP packet");
 
-        http_address = http_address_parse(pool, payload);
+        http_address = http_address_parse(*pool, payload);
         if (http_address->protocol != HttpAddress::Protocol::AJP)
             throw std::runtime_error("malformed AJP packet");
 
@@ -1434,7 +1434,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         if (payload_length < 2)
             throw std::runtime_error("malformed INTERPRETER packet");
 
-        address_list->Add(pool,
+        address_list->Add(*pool,
                           SocketAddress((const struct sockaddr *)_payload,
                                         payload_length));
         return;
@@ -1447,7 +1447,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
             throw std::runtime_error("malformed ADDRESS_STRING packet");
 
         try {
-            parse_address_string(pool, address_list,
+            parse_address_string(*pool, address_list,
                                  payload, default_port);
         } catch (const std::exception &e) {
             throw FormatRuntimeError("malformed ADDRESS_STRING packet: %s",
@@ -2476,7 +2476,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
             throw std::runtime_error("duplicate EXTERNAL_SESSION_MANAGER packet");
 
         response.external_session_manager = http_address =
-            http_address_parse(pool, payload);
+            http_address_parse(*pool, payload);
         if (http_address->protocol != HttpAddress::Protocol::HTTP)
             throw std::runtime_error("malformed EXTERNAL_SESSION_MANAGER packet");
 

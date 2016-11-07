@@ -6,7 +6,7 @@
 
 #include "widget_view.hxx"
 #include "translation/Transformation.hxx"
-#include "pool.hxx"
+#include "AllocatorPtr.hxx"
 
 #include <string.h>
 

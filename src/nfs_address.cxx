@@ -7,8 +7,6 @@
 #include "puri_base.hxx"
 #include "puri_escape.hxx"
 #include "pexpand.hxx"
-#include "pool.hxx"
-#include "pbuffer.hxx"
 #include "AllocatorPtr.hxx"
 #include "util/StringView.hxx"
 
@@ -17,13 +15,13 @@
 #include <assert.h>
 #include <string.h>
 
-NfsAddress::NfsAddress(struct pool *pool, const NfsAddress &other)
-    :server(p_strdup(pool, other.server)),
-     export_name(p_strdup(pool, other.export_name)),
-     path(p_strdup(pool, other.path)),
-     expand_path(p_strdup_checked(pool, other.expand_path)),
-     content_type(p_strdup_checked(pool, other.content_type)),
-     content_type_lookup(DupBuffer(*pool, other.content_type_lookup)) {}
+NfsAddress::NfsAddress(AllocatorPtr alloc, const NfsAddress &other)
+    :server(alloc.Dup(other.server)),
+     export_name(alloc.Dup(other.export_name)),
+     path(alloc.Dup(other.path)),
+     expand_path(alloc.CheckDup(other.expand_path)),
+     content_type(alloc.CheckDup(other.content_type)),
+     content_type_lookup(alloc.Dup(other.content_type_lookup)) {}
 
 const char *
 NfsAddress::GetId(struct pool *pool) const
@@ -52,42 +50,37 @@ NfsAddress::IsValidBase() const
 }
 
 NfsAddress *
-NfsAddress::SaveBase(struct pool *pool, const char *suffix) const
+NfsAddress::SaveBase(AllocatorPtr alloc, const char *suffix) const
 {
-    assert(pool != nullptr);
     assert(suffix != nullptr);
 
-    size_t length = base_string_unescape(*pool, path, suffix);
+    size_t length = base_string_unescape(alloc, path, suffix);
     if (length == (size_t)-1)
         return nullptr;
 
-    auto dest = NewFromPool<NfsAddress>(*pool,
-                                        p_strdup(pool, server),
-                                        p_strdup(pool, export_name),
-                                        p_strndup(pool, path, length));
-    dest->content_type = p_strdup_checked(pool, content_type);
+    auto dest = alloc.New<NfsAddress>(alloc.Dup(server),
+                                      alloc.Dup(export_name),
+                                      alloc.DupZ({path, length}));
+    dest->content_type = alloc.CheckDup(content_type);
     return dest;
 }
 
 NfsAddress *
-NfsAddress::LoadBase(struct pool *pool, const char *suffix) const
+NfsAddress::LoadBase(AllocatorPtr alloc, const char *suffix) const
 {
-    assert(pool != nullptr);
     assert(path != nullptr);
     assert(*path != 0);
     assert(path[strlen(path) - 1] == '/');
     assert(suffix != nullptr);
 
-    char *unescaped = uri_unescape_dup(*pool, suffix);
+    char *unescaped = uri_unescape_dup(alloc, suffix);
     if (unescaped == nullptr)
         return nullptr;
 
-    auto dest = NewFromPool<NfsAddress>(*pool,
-                                        p_strdup(pool, server),
-                                        p_strdup(pool, export_name),
-                                        p_strcat(pool, path,
-                                                 unescaped, nullptr));
-    dest->content_type = p_strdup_checked(pool, content_type);
+    auto dest = alloc.New<NfsAddress>(alloc.Dup(server),
+                                      alloc.Dup(export_name),
+                                      alloc.Concat(path, unescaped));
+    dest->content_type = alloc.CheckDup(content_type);
     return dest;
 }
 

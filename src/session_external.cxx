@@ -12,7 +12,7 @@
 #include "http_response.hxx"
 #include "http_headers.hxx"
 #include "istream/istream.hxx"
-#include "pool.hxx"
+#include "AllocatorPtr.hxx"
 #include "util/Background.hxx"
 
 #include <daemon/log.h>

@@ -13,9 +13,9 @@
 
 #include <stddef.h>
 
-struct pool;
 struct dpool;
 struct StringView;
+class AllocatorPtr;
 class MatchInfo;
 
 struct HttpAddress {
@@ -63,8 +63,8 @@ struct HttpAddress {
 
     constexpr HttpAddress(HttpAddress &&src):HttpAddress(ShallowCopy(), src) {}
 
-    HttpAddress(struct pool &pool, const HttpAddress &src);
-    HttpAddress(struct pool &pool, const HttpAddress &src, const char *_path);
+    HttpAddress(AllocatorPtr alloc, const HttpAddress &src);
+    HttpAddress(AllocatorPtr alloc, const HttpAddress &src, const char *_path);
 
     constexpr HttpAddress(ShallowCopy shallow_copy, const HttpAddress &src,
                           const char *_path)
@@ -129,12 +129,12 @@ struct HttpAddress {
     bool IsValidBase() const;
 
     gcc_malloc
-    HttpAddress *SaveBase(struct pool *pool, const char *suffix) const;
+    HttpAddress *SaveBase(AllocatorPtr alloc, const char *suffix) const;
 
     gcc_malloc
-    HttpAddress *LoadBase(struct pool *pool, const char *suffix) const;
+    HttpAddress *LoadBase(AllocatorPtr alloc, const char *suffix) const;
 
-    const HttpAddress *Apply(struct pool *pool, StringView relative) const;
+    const HttpAddress *Apply(AllocatorPtr alloc, StringView relative) const;
 
     /**
      * Does this address need to be expanded with http_address_expand()?
@@ -171,7 +171,7 @@ struct HttpAddress {
  */
 gcc_malloc
 HttpAddress *
-http_address_parse(struct pool *pool, const char *uri);
+http_address_parse(AllocatorPtr alloc, const char *uri);
 
 /**
  * Create a new #http_address object from the specified one, but
@@ -180,7 +180,7 @@ http_address_parse(struct pool *pool, const char *uri);
  */
 gcc_malloc
 HttpAddress *
-http_address_with_path(struct pool &pool,
+http_address_with_path(AllocatorPtr alloc,
                        const HttpAddress *uwa,
                        const char *path);
 
@@ -191,7 +191,7 @@ http_address_with_path(struct pool &pool,
  */
 gcc_malloc
 HttpAddress *
-http_address_dup_with_path(struct pool &pool,
+http_address_dup_with_path(AllocatorPtr alloc,
                            const HttpAddress *uwa,
                            const char *path);
 

@@ -1,7 +1,7 @@
 #include "PoolTest.hxx"
 #include "failure.hxx"
 #include "balancer.hxx"
-#include "pool.hxx"
+#include "AllocatorPtr.hxx"
 #include "address_list.hxx"
 #include "event/Loop.hxx"
 
@@ -66,7 +66,7 @@ public:
         if (result != 0)
             return false;
 
-        bool success = AddressList::Add(pool, {ai->ai_addr, ai->ai_addrlen});
+        bool success = AddressList::Add(*pool, {ai->ai_addr, ai->ai_addrlen});
         freeaddrinfo(ai);
         return success;
     }

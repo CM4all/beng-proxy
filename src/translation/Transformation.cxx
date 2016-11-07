@@ -6,7 +6,7 @@
 
 #include "Transformation.hxx"
 #include "processor.hxx"
-#include "pool.hxx"
+#include "AllocatorPtr.hxx"
 
 #include <string.h>
 

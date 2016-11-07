@@ -7,6 +7,7 @@
 #include "cgi_address.hxx"
 #include "spawn/mount_list.hxx"
 #include "spawn/NamespaceOptions.hxx"
+#include "AllocatorPtr.hxx"
 #include "pool.hxx"
 #include "tpool.hxx"
 
@@ -131,7 +132,7 @@ struct MakeResponse : TranslateResponse {
     }
 
     MakeResponse &&File(FileAddress &&_file) {
-        return File(*NewFromPool<FileAddress>(*tpool, tpool, _file));
+        return File(*NewFromPool<FileAddress>(*tpool, *tpool, _file));
     }
 
     MakeResponse &&File(const char *_path) {

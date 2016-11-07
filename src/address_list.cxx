@@ -6,7 +6,7 @@
 
 #include "address_list.hxx"
 #include "net/AddressInfo.hxx"
-#include "pool.hxx"
+#include "AllocatorPtr.hxx"
 
 #include <socket/address.h>
 
@@ -22,23 +22,23 @@ AddressList::AddressList(ShallowCopy, const AddressInfo &src)
     }
 }
 
-AddressList::AddressList(struct pool &pool, const AddressList &src)
+AddressList::AddressList(AllocatorPtr alloc, const AddressList &src)
     :sticky_mode(src.sticky_mode)
 {
     addresses.clear();
 
     for (const auto &i : src)
-        Add(&pool, i);
+        Add(alloc, i);
 }
 
 bool
-AddressList::Add(struct pool *pool, const SocketAddress address)
+AddressList::Add(AllocatorPtr alloc, const SocketAddress address)
 {
     if (addresses.full())
         return false;
 
     const struct sockaddr *new_address = (const struct sockaddr *)
-        p_memdup(pool, address.GetAddress(), address.GetSize());
+        alloc.Dup(address.GetAddress(), address.GetSize());
     addresses.push_back({new_address, address.GetSize()});
     return true;
 }

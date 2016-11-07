@@ -11,7 +11,7 @@
 
 #include <inline/compiler.h>
 
-struct pool;
+class AllocatorPtr;
 class MatchInfo;
 
 /**
@@ -98,7 +98,7 @@ struct CgiAddress {
 
     constexpr CgiAddress(CgiAddress &&src):CgiAddress(ShallowCopy(), src) {}
 
-    CgiAddress(struct pool &pool, const CgiAddress &src);
+    CgiAddress(AllocatorPtr alloc, const CgiAddress &src);
 
     CgiAddress &operator=(const CgiAddress &) = delete;
 
@@ -127,16 +127,16 @@ struct CgiAddress {
     void InsertArgs(struct pool &pool, StringView new_args,
                     StringView new_path_info);
 
-    CgiAddress *Clone(struct pool &p) const;
+    CgiAddress *Clone(AllocatorPtr alloc) const;
 
     gcc_pure
     bool IsValidBase() const;
 
     char *AutoBase(struct pool *pool, const char *request_uri) const;
 
-    CgiAddress *SaveBase(struct pool *pool, const char *suffix) const;
+    CgiAddress *SaveBase(AllocatorPtr alloc, const char *suffix) const;
 
-    CgiAddress *LoadBase(struct pool *pool, const char *suffix) const;
+    CgiAddress *LoadBase(AllocatorPtr alloc, const char *suffix) const;
 
     /**
      * @return a new object on success, src if no change is needed,

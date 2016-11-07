@@ -5,6 +5,7 @@
  */
 
 #include "lb_config.hxx"
+#include "AllocatorPtr.hxx"
 #include "io/LineParser.hxx"
 #include "io/ConfigParser.hxx"
 #include "system/Error.hxx"
@@ -933,7 +934,7 @@ lb_cluster_config_finish(struct pool *pool, LbClusterConfig &config)
         if (member.port != 0)
             address.SetPort(member.port);
 
-        if (!config.address_list.Add(pool, address))
+        if (!config.address_list.Add(*pool, address))
             throw LineParser::Error("Too many members");
     }
 }

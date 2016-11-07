@@ -22,24 +22,24 @@ CgiAddress::CgiAddress(const char *_path)
 {
 }
 
-CgiAddress::CgiAddress(struct pool &pool, const CgiAddress &src)
-    :path(p_strdup(&pool, src.path)),
-     args(pool, src.args),
-     params(pool, src.params),
-     options(pool, src.options),
-     interpreter(p_strdup_checked(&pool, src.interpreter)),
-     action(p_strdup_checked(&pool, src.action)),
-     uri(p_strdup_checked(&pool, src.uri)),
-     script_name(p_strdup_checked(&pool, src.script_name)),
-     path_info(p_strdup_checked(&pool, src.path_info)),
-     query_string(p_strdup_checked(&pool, src.query_string)),
-     document_root(p_strdup_checked(&pool, src.document_root)),
-     expand_path(p_strdup_checked(&pool, src.expand_path)),
-     expand_uri(p_strdup_checked(&pool, src.expand_uri)),
-     expand_script_name(p_strdup_checked(&pool, src.expand_script_name)),
-     expand_path_info(p_strdup_checked(&pool, src.expand_path_info)),
-     expand_document_root(p_strdup_checked(&pool, src.expand_document_root)),
-     address_list(pool, src.address_list)
+CgiAddress::CgiAddress(AllocatorPtr alloc, const CgiAddress &src)
+    :path(alloc.Dup(src.path)),
+     args(alloc, src.args),
+     params(alloc, src.params),
+     options(alloc, src.options),
+     interpreter(alloc.CheckDup(src.interpreter)),
+     action(alloc.CheckDup(src.action)),
+     uri(alloc.CheckDup(src.uri)),
+     script_name(alloc.CheckDup(src.script_name)),
+     path_info(alloc.CheckDup(src.path_info)),
+     query_string(alloc.CheckDup(src.query_string)),
+     document_root(alloc.CheckDup(src.document_root)),
+     expand_path(alloc.CheckDup(src.expand_path)),
+     expand_uri(alloc.CheckDup(src.expand_uri)),
+     expand_script_name(alloc.CheckDup(src.expand_script_name)),
+     expand_path_info(alloc.CheckDup(src.expand_path_info)),
+     expand_document_root(alloc.CheckDup(src.expand_document_root)),
+     address_list(alloc, src.address_list)
 {
 }
 
@@ -123,9 +123,9 @@ CgiAddress::GetId(struct pool *pool) const
 }
 
 CgiAddress *
-CgiAddress::Clone(struct pool &p) const
+CgiAddress::Clone(AllocatorPtr alloc) const
 {
-    return NewFromPool<CgiAddress>(p, p, *this);
+    return alloc.New<CgiAddress>(alloc, *this);
 }
 
 void
@@ -179,45 +179,43 @@ CgiAddress::AutoBase(struct pool *pool, const char *request_uri) const
 }
 
 CgiAddress *
-CgiAddress::SaveBase(struct pool *pool, const char *suffix) const
+CgiAddress::SaveBase(AllocatorPtr alloc, const char *suffix) const
 {
-    assert(pool != nullptr);
     assert(suffix != nullptr);
 
     size_t uri_length = uri != nullptr
-        ? base_string_unescape(*pool, uri, suffix)
+        ? base_string_unescape(alloc, uri, suffix)
         : 0;
     if (uri_length == (size_t)-1)
         return nullptr;
 
     const char *new_path_info = path_info != nullptr ? path_info : "";
-    size_t length = base_string_unescape(*pool, new_path_info, suffix);
+    size_t length = base_string_unescape(alloc, new_path_info, suffix);
     if (length == (size_t)-1)
         return nullptr;
 
-    CgiAddress *dest = Clone(*pool);
+    CgiAddress *dest = Clone(alloc);
     if (dest->uri != nullptr)
-        dest->uri = p_strndup(pool, dest->uri, uri_length);
-    dest->path_info = p_strndup(pool, new_path_info, length);
+        dest->uri = alloc.DupZ({dest->uri, uri_length});
+    dest->path_info = alloc.DupZ({new_path_info, length});
     return dest;
 }
 
 CgiAddress *
-CgiAddress::LoadBase(struct pool *pool, const char *suffix) const
+CgiAddress::LoadBase(AllocatorPtr alloc, const char *suffix) const
 {
-    assert(pool != nullptr);
     assert(suffix != nullptr);
 
-    char *unescaped = uri_unescape_dup(*pool, suffix);
+    char *unescaped = uri_unescape_dup(alloc, suffix);
     if (unescaped == nullptr)
         return nullptr;
 
-    CgiAddress *dest = Clone(*pool);
+    CgiAddress *dest = Clone(alloc);
     if (dest->uri != nullptr)
-        dest->uri = p_strcat(pool, dest->uri, unescaped, nullptr);
+        dest->uri = alloc.Concat(dest->uri, unescaped);
 
     const char *new_path_info = path_info != nullptr ? path_info : "";
-    dest->path_info = p_strcat(pool, new_path_info, unescaped, nullptr);
+    dest->path_info = alloc.Concat(new_path_info, unescaped);
     return dest;
 }
 

@@ -9,7 +9,7 @@
 
 #include <inline/compiler.h>
 
-struct pool;
+class AllocatorPtr;
 class MatchInfo;
 
 /**
@@ -33,7 +33,7 @@ struct DelegateAddress {
     constexpr DelegateAddress(DelegateAddress &&src)
         :DelegateAddress(ShallowCopy(), src) {}
 
-    DelegateAddress(struct pool &pool, const DelegateAddress &src);
+    DelegateAddress(AllocatorPtr alloc, const DelegateAddress &src);
 
     DelegateAddress &operator=(const DelegateAddress &) = delete;
 

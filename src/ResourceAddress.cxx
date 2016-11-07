@@ -15,11 +15,17 @@
 #include "uri/uri_extract.hxx"
 #include "uri/uri_verify.hxx"
 #include "uri/uri_base.hxx"
-#include "pool.hxx"
+#include "AllocatorPtr.hxx"
 #include "HttpMessageResponse.hxx"
 #include "util/StringView.hxx"
 
 #include <http/status.h>
+
+ResourceAddress::ResourceAddress(AllocatorPtr alloc,
+                                 const ResourceAddress &src)
+{
+    CopyFrom(alloc, src);
+}
 
 bool
 ResourceAddress::IsHttp() const
@@ -29,7 +35,7 @@ ResourceAddress::IsHttp() const
 }
 
 void
-ResourceAddress::CopyFrom(struct pool &pool, const ResourceAddress &src)
+ResourceAddress::CopyFrom(AllocatorPtr alloc, const ResourceAddress &src)
 {
     type = src.type;
 
@@ -39,28 +45,28 @@ ResourceAddress::CopyFrom(struct pool &pool, const ResourceAddress &src)
 
     case Type::LOCAL:
         assert(src.u.file != nullptr);
-        u.file = NewFromPool<FileAddress>(pool, &pool, *src.u.file);
+        u.file = alloc.New<FileAddress>(alloc, *src.u.file);
         break;
 
     case Type::HTTP:
         assert(src.u.http != nullptr);
-        u.http = NewFromPool<HttpAddress>(pool, pool, *src.u.http);
+        u.http = alloc.New<HttpAddress>(alloc, *src.u.http);
         break;
 
     case Type::LHTTP:
         assert(src.u.lhttp != nullptr);
-        u.lhttp = src.u.lhttp->Dup(pool);
+        u.lhttp = src.u.lhttp->Dup(alloc);
         break;
 
     case Type::PIPE:
     case Type::CGI:
     case Type::FASTCGI:
     case Type::WAS:
-        u.cgi = src.u.cgi->Clone(pool);
+        u.cgi = src.u.cgi->Clone(alloc);
         break;
 
     case Type::NFS:
-        u.nfs = NewFromPool<NfsAddress>(pool, &pool, *src.u.nfs);
+        u.nfs = alloc.New<NfsAddress>(alloc, *src.u.nfs);
         break;
     }
 }
@@ -216,7 +222,7 @@ ResourceAddress::AutoBase(struct pool &pool, const char *uri) const
 }
 
 ResourceAddress
-ResourceAddress::SaveBase(struct pool &pool, const char *suffix) const
+ResourceAddress::SaveBase(AllocatorPtr alloc, const char *suffix) const
 {
     switch (type) {
     case Type::NONE:
@@ -227,7 +233,7 @@ ResourceAddress::SaveBase(struct pool &pool, const char *suffix) const
     case Type::FASTCGI:
     case Type::WAS:
         {
-            auto *cgi = GetCgi().SaveBase(&pool, suffix);
+            auto *cgi = GetCgi().SaveBase(alloc, suffix);
             if (cgi == nullptr)
                 return nullptr;
 
@@ -236,7 +242,7 @@ ResourceAddress::SaveBase(struct pool &pool, const char *suffix) const
 
     case Type::LOCAL:
         {
-            auto *file = GetFile().SaveBase(&pool, suffix);
+            auto *file = GetFile().SaveBase(alloc, suffix);
             if (file == nullptr)
                 return nullptr;
 
@@ -245,7 +251,7 @@ ResourceAddress::SaveBase(struct pool &pool, const char *suffix) const
 
     case Type::HTTP:
         {
-            auto *http = GetHttp().SaveBase(&pool, suffix);
+            auto *http = GetHttp().SaveBase(alloc, suffix);
             if (http == nullptr)
                 return nullptr;
 
@@ -254,7 +260,7 @@ ResourceAddress::SaveBase(struct pool &pool, const char *suffix) const
 
     case Type::LHTTP:
         {
-            auto *lhttp = GetLhttp().SaveBase(&pool, suffix);
+            auto *lhttp = GetLhttp().SaveBase(alloc, suffix);
             if (lhttp == nullptr)
                 return nullptr;
 
@@ -263,7 +269,7 @@ ResourceAddress::SaveBase(struct pool &pool, const char *suffix) const
 
     case Type::NFS:
         {
-            auto *nfs = GetNfs().SaveBase(&pool, suffix);
+            auto *nfs = GetNfs().SaveBase(alloc, suffix);
             if (nfs == nullptr)
                 return nullptr;
 
@@ -311,7 +317,7 @@ ResourceAddress::CacheStore(struct pool &pool,
 }
 
 ResourceAddress
-ResourceAddress::LoadBase(struct pool &pool, const char *suffix) const
+ResourceAddress::LoadBase(AllocatorPtr alloc, const char *suffix) const
 {
     switch (type) {
     case Type::NONE:
@@ -323,7 +329,7 @@ ResourceAddress::LoadBase(struct pool &pool, const char *suffix) const
     case Type::FASTCGI:
     case Type::WAS:
         {
-            auto *cgi = GetCgi().LoadBase(&pool, suffix);
+            auto *cgi = GetCgi().LoadBase(alloc, suffix);
             if (cgi == nullptr)
                 return nullptr;
 
@@ -332,7 +338,7 @@ ResourceAddress::LoadBase(struct pool &pool, const char *suffix) const
 
     case Type::LOCAL:
         {
-            auto *file = GetFile().LoadBase(&pool, suffix);
+            auto *file = GetFile().LoadBase(alloc, suffix);
             if (file == nullptr)
                 return nullptr;
 
@@ -341,7 +347,7 @@ ResourceAddress::LoadBase(struct pool &pool, const char *suffix) const
 
     case Type::HTTP:
         {
-            auto *http = GetHttp().LoadBase(&pool, suffix);
+            auto *http = GetHttp().LoadBase(alloc, suffix);
             if (http == nullptr)
                 return nullptr;
 
@@ -350,7 +356,7 @@ ResourceAddress::LoadBase(struct pool &pool, const char *suffix) const
 
     case Type::LHTTP:
         {
-            auto *lhttp = GetLhttp().LoadBase(&pool, suffix);
+            auto *lhttp = GetLhttp().LoadBase(alloc, suffix);
             if (lhttp == nullptr)
                 return nullptr;
 
@@ -359,7 +365,7 @@ ResourceAddress::LoadBase(struct pool &pool, const char *suffix) const
 
     case Type::NFS:
         {
-            auto *nfs = GetNfs().LoadBase(&pool, suffix);
+            auto *nfs = GetNfs().LoadBase(alloc, suffix);
             if (nfs == nullptr)
                 return nullptr;
 
@@ -413,7 +419,7 @@ ResourceAddress::Apply(struct pool &pool, StringView relative) const
         return {ShallowCopy(), *this};
 
     case Type::HTTP:
-        uwa = u.http->Apply(&pool, relative);
+        uwa = u.http->Apply(pool, relative);
         if (uwa == nullptr)
             return nullptr;
 
@@ -687,7 +693,7 @@ ResourceAddress::Expand(struct pool &pool, const MatchInfo &match_info)
         break;
 
     case Type::LOCAL:
-        u.file = file = NewFromPool<FileAddress>(pool, &pool, *u.file);
+        u.file = file = NewFromPool<FileAddress>(pool, pool, *u.file);
         file->Expand(&pool, match_info);
         break;
 

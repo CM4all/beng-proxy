@@ -10,7 +10,7 @@
 #include "net/SocketAddress.hxx"
 #include "failure.hxx"
 #include "bulldog.h"
-#include "pool.hxx"
+#include "AllocatorPtr.hxx"
 
 #include <assert.h>
 #include <stdbool.h>

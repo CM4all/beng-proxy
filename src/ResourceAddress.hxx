@@ -16,7 +16,6 @@
 
 #include <assert.h>
 
-struct pool;
 struct StringView;
 struct FileAddress;
 struct LhttpAddress;
@@ -25,6 +24,7 @@ struct CgiAddress;
 struct NfsAddress;
 class MatchInfo;
 class Error;
+class AllocatorPtr;
 
 struct ResourceAddress {
     enum class Type {
@@ -95,9 +95,7 @@ public:
     constexpr ResourceAddress(ResourceAddress &&src)
         :ResourceAddress(ShallowCopy(), src) {}
 
-    ResourceAddress(struct pool &pool, const ResourceAddress &src) {
-        CopyFrom(pool, src);
-    }
+    ResourceAddress(AllocatorPtr alloc, const ResourceAddress &src);
 
     ResourceAddress &operator=(ResourceAddress &&) = default;
 
@@ -226,7 +224,7 @@ public:
     gcc_pure
     const char *GetId(struct pool &pool) const;
 
-    void CopyFrom(struct pool &pool, const ResourceAddress &src);
+    void CopyFrom(AllocatorPtr alloc, const ResourceAddress &src);
 
     gcc_malloc
     ResourceAddress *Dup(struct pool &pool) const;
@@ -286,7 +284,7 @@ public:
      * cannot have a base address
      */
     gcc_pure
-    ResourceAddress SaveBase(struct pool &pool, const char *suffix) const;
+    ResourceAddress SaveBase(AllocatorPtr alloc, const char *suffix) const;
 
     /**
      * Duplicate a resource address, and append a suffix.
@@ -298,7 +296,7 @@ public:
      * @return nullptr if this address type cannot have a base address
      */
     gcc_pure
-    ResourceAddress LoadBase(struct pool &pool, const char *suffix) const;
+    ResourceAddress LoadBase(AllocatorPtr alloc, const char *suffix) const;
 
     /**
      * Copies data from #src for storing in the translation cache.

@@ -9,24 +9,23 @@
 #include "puri_base.hxx"
 #include "puri_escape.hxx"
 #include "pexpand.hxx"
-#include "pool.hxx"
 #include "pbuffer.hxx"
 #include "AllocatorPtr.hxx"
 
 #include <assert.h>
 #include <string.h>
 
-FileAddress::FileAddress(struct pool *pool, const FileAddress &src)
-    :path(p_strdup(pool, src.path)),
-     deflated(p_strdup_checked(pool, src.deflated)),
-     gzipped(p_strdup_checked(pool, src.gzipped)),
-     content_type(p_strdup_checked(pool, src.content_type)),
-     content_type_lookup(DupBuffer(*pool, src.content_type_lookup)),
-     document_root(p_strdup_checked(pool, src.document_root)),
-     expand_path(p_strdup_checked(pool, src.expand_path)),
-     expand_document_root(p_strdup_checked(pool, src.expand_document_root)),
+FileAddress::FileAddress(AllocatorPtr alloc, const FileAddress &src)
+    :path(alloc.Dup(src.path)),
+     deflated(alloc.CheckDup(src.deflated)),
+     gzipped(alloc.CheckDup(src.gzipped)),
+     content_type(alloc.CheckDup(src.content_type)),
+     content_type_lookup(alloc.Dup(src.content_type_lookup)),
+     document_root(alloc.CheckDup(src.document_root)),
+     expand_path(alloc.CheckDup(src.expand_path)),
+     expand_document_root(alloc.CheckDup(src.expand_document_root)),
      delegate(src.delegate != nullptr
-              ? NewFromPool<DelegateAddress>(*pool, *pool, *src.delegate)
+              ? alloc.New<DelegateAddress>(alloc, *src.delegate)
               : nullptr),
      auto_gzipped(src.auto_gzipped) {
 }
@@ -45,17 +44,16 @@ FileAddress::IsValidBase() const
 }
 
 FileAddress *
-FileAddress::SaveBase(struct pool *pool, const char *suffix) const
+FileAddress::SaveBase(AllocatorPtr alloc, const char *suffix) const
 {
-    assert(pool != nullptr);
     assert(suffix != nullptr);
 
-    size_t length = base_string_unescape(*pool, path, suffix);
+    size_t length = base_string_unescape(alloc, path, suffix);
     if (length == (size_t)-1)
         return nullptr;
 
-    auto *dest = NewFromPool<FileAddress>(*pool, pool, *this);
-    dest->path = p_strndup(pool, dest->path, length);
+    auto *dest = alloc.New<FileAddress>(alloc, *this);
+    dest->path = alloc.DupZ({dest->path, length});
 
     /* BASE+DEFLATED is not supported */
     dest->deflated = nullptr;
@@ -65,20 +63,19 @@ FileAddress::SaveBase(struct pool *pool, const char *suffix) const
 }
 
 FileAddress *
-FileAddress::LoadBase(struct pool *pool, const char *suffix) const
+FileAddress::LoadBase(AllocatorPtr alloc, const char *suffix) const
 {
-    assert(pool != nullptr);
     assert(path != nullptr);
     assert(*path != 0);
     assert(path[strlen(path) - 1] == '/');
     assert(suffix != nullptr);
 
-    char *unescaped = uri_unescape_dup(*pool, suffix);
+    char *unescaped = uri_unescape_dup(alloc, suffix);
     if (unescaped == nullptr)
         return nullptr;
 
-    auto *dest = NewFromPool<FileAddress>(*pool, pool, *this);
-    dest->path = p_strcat(pool, dest->path, unescaped, nullptr);
+    auto *dest = alloc.New<FileAddress>(alloc, *this);
+    dest->path = alloc.Concat(dest->path, unescaped);
     return dest;
 }
 
