@@ -9,19 +9,19 @@
 
 #include <inline/compiler.h>
 
-struct pool;
+class AllocatorPtr;
 struct StringView;
 
 gcc_pure gcc_malloc
 const char *
-uri_escape_dup(struct pool *pool, StringView src,
+uri_escape_dup(AllocatorPtr alloc, StringView src,
                char escape_char='%');
 
 /**
  * @return nullptr on error
  */
 char *
-uri_unescape_dup(struct pool *pool, StringView src,
+uri_unescape_dup(AllocatorPtr alloc, StringView src,
                  char escape_char='%');
 
 #endif

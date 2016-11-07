@@ -185,13 +185,13 @@ CgiAddress::SaveBase(struct pool *pool, const char *suffix) const
     assert(suffix != nullptr);
 
     size_t uri_length = uri != nullptr
-        ? base_string_unescape(pool, uri, suffix)
+        ? base_string_unescape(*pool, uri, suffix)
         : 0;
     if (uri_length == (size_t)-1)
         return nullptr;
 
     const char *new_path_info = path_info != nullptr ? path_info : "";
-    size_t length = base_string_unescape(pool, new_path_info, suffix);
+    size_t length = base_string_unescape(*pool, new_path_info, suffix);
     if (length == (size_t)-1)
         return nullptr;
 
@@ -208,7 +208,7 @@ CgiAddress::LoadBase(struct pool *pool, const char *suffix) const
     assert(pool != nullptr);
     assert(suffix != nullptr);
 
-    char *unescaped = uri_unescape_dup(pool, suffix);
+    char *unescaped = uri_unescape_dup(*pool, suffix);
     if (unescaped == nullptr)
         return nullptr;
 
@@ -241,7 +241,7 @@ CgiAddress::Apply(struct pool *pool,
     const char *new_path_info = path_info != nullptr ? path_info : "";
 
     auto *dest = NewFromPool<CgiAddress>(*pool, ShallowCopy(), *this);
-    dest->path_info = uri_absolute(pool, new_path_info,
+    dest->path_info = uri_absolute(*pool, new_path_info,
                                    {unescaped, unescaped_length});
     assert(dest->path_info != nullptr);
     return dest;

@@ -11,13 +11,13 @@
 
 #include <stddef.h>
 
-struct pool;
+class AllocatorPtr;
 
 /**
  * @return (size_t)-1 on mismatch
  */
 gcc_pure
 size_t
-base_string_unescape(struct pool *pool, const char *p, const char *tail);
+base_string_unescape(AllocatorPtr alloc, const char *p, const char *tail);
 
 #endif

@@ -8,7 +8,7 @@
 #include "uri/uri_escape.hxx"
 #include "puri_escape.hxx"
 #include "strmap.hxx"
-#include "pool.hxx"
+#include "AllocatorPtr.hxx"
 #include "util/StringView.hxx"
 
 #include <string.h>
@@ -31,7 +31,7 @@ args_parse(struct pool *pool, const char *p, size_t length)
 
         const char *equals = (const char *)memchr(p, '=', ampersand - p);
         if (equals > p) {
-            char *value = uri_unescape_dup(pool, {equals + 1, ampersand},
+            char *value = uri_unescape_dup(*pool, {equals + 1, ampersand},
                                            ARGS_ESCAPE_CHAR);
             if (value != nullptr)
                 args->Add(p_strndup(pool, p, equals - p), value);

@@ -6,16 +6,15 @@
 
 #include "puri_relative.hxx"
 #include "uri/uri_extract.hxx"
-#include "pool.hxx"
+#include "AllocatorPtr.hxx"
 #include "util/StringView.hxx"
 
 #include <assert.h>
 #include <string.h>
 
 const char *
-uri_compress(struct pool *pool, const char *uri)
+uri_compress(AllocatorPtr alloc, const char *uri)
 {
-    assert(pool != nullptr);
     assert(uri != nullptr);
 
     while (uri[0] == '.' && uri[1] == '/')
@@ -32,7 +31,7 @@ uri_compress(struct pool *pool, const char *uri)
            duplicate anything */
         return uri;
 
-    char *dest = p_strdup(pool, uri);
+    char *dest = alloc.Dup(uri);
 
     /* eliminate "//" */
 
@@ -54,7 +53,6 @@ uri_compress(struct pool *pool, const char *uri)
     while ((p = strstr(dest, "/../")) != nullptr) {
         if (p == dest) {
             /* this ".." cannot be resolved - scream! */
-            p_free(pool, dest);
             return nullptr;
         }
 
@@ -81,7 +79,6 @@ uri_compress(struct pool *pool, const char *uri)
         else if (p[1] == '.' && p[2] == '.' && p[3] == 0) {
             if (p == dest) {
                 /* refuse to delete the leading slash */
-                p_free(pool, dest);
                 return nullptr;
             }
 
@@ -91,7 +88,6 @@ uri_compress(struct pool *pool, const char *uri)
             if (p == nullptr) {
                 /* if the string doesn't start with a slash, then an
                    empty return value is allowed */
-                p_free(pool, dest);
                 return "";
             }
 
@@ -102,7 +98,6 @@ uri_compress(struct pool *pool, const char *uri)
     if (dest[0] == '.' && dest[1] == 0) {
         /* if the string doesn't start with a slash, then an empty
            return value is allowed */
-        p_free(pool, dest);
         return "";
     }
 
@@ -123,7 +118,7 @@ uri_after_last_slash(const char *uri)
 }
 
 const char *
-uri_absolute(struct pool *pool, const char *base, StringView uri)
+uri_absolute(AllocatorPtr alloc, const char *base, StringView uri)
 {
     assert(base != nullptr);
 
@@ -131,7 +126,7 @@ uri_absolute(struct pool *pool, const char *base, StringView uri)
         return base;
 
     if (uri_has_protocol(uri))
-        return p_strdup(*pool, uri);
+        return alloc.DupZ(uri);
 
     size_t base_length;
     if (uri.size >= 2 && uri[0] == '/' && uri[1] == '/') {
@@ -142,12 +137,11 @@ uri_absolute(struct pool *pool, const char *base, StringView uri)
             base_length = 0;
     } else if (uri[0] == '/') {
         if (base[0] == '/' && base[1] != '/')
-            return p_strdup(*pool, uri);
+            return alloc.DupZ(uri);
 
         const char *base_path = uri_path(base);
         if (base_path == nullptr)
-            return p_strncat(pool, base, strlen(base),
-                             uri.data, uri.size, nullptr);
+            return alloc.Concat(base, uri);
 
         base_length = base_path - base;
     } else if (uri[0] == '?') {
@@ -156,15 +150,10 @@ uri_absolute(struct pool *pool, const char *base, StringView uri)
     } else {
         const char *base_end = uri_after_last_slash(base);
         if (base_end == nullptr)
-            return p_strncat(pool, base, strlen(base), "/", size_t(1),
-                             uri.data, uri.size, nullptr);
+            return alloc.Concat(base, "/", uri);
 
         base_length = base_end - base;
     }
 
-    char *dest = PoolAlloc<char>(*pool, base_length + uri.size + 1);
-    memcpy(dest, base, base_length);
-    memcpy(dest + base_length, uri.data, uri.size);
-    dest[base_length + uri.size] = 0;
-    return dest;
+    return alloc.Concat(StringView(base, base_length), uri);
 }

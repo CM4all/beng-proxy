@@ -432,11 +432,11 @@ cm4all_beng_lb_LDADD = $(AM_LDADD) \
 	libistream.a libevent.a \
 	libnet.a \
 	libspawn.a \
+	libputil.a \
 	libpool.a libmemory.a \
 	libio.a \
 	libsystem.a \
 	libpg.a \
-	libputil.a \
 	libutil.a \
 	$(LIBCM4ALL_DAEMON_LIBS) \
 	$(LIBCM4ALL_INLINE_LIBS) \
@@ -494,12 +494,12 @@ cm4all_certdb_CPPFLAGS = $(AM_CPPFLAGS) \
 	$(LIBPQ_CFLAGS)
 cm4all_certdb_LDADD = $(AM_LDADD) \
 	libssl.a \
-	libpool.a libmemory.a \
+	libmemory.a \
 	libnet.a \
 	libraddress.a \
 	libpg.a \
 	libeutil.a \
-	libistream.a libpool.a libputil.a libmemory.a libevent.a \
+	libistream.a libputil.a libpool.a libmemory.a libevent.a \
 	libnet.a \
 	libraddress.a \
 	libio.a \

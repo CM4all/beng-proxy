@@ -11,6 +11,7 @@
 #include "pexpand.hxx"
 #include "pool.hxx"
 #include "pbuffer.hxx"
+#include "AllocatorPtr.hxx"
 
 #include <assert.h>
 #include <string.h>
@@ -49,7 +50,7 @@ FileAddress::SaveBase(struct pool *pool, const char *suffix) const
     assert(pool != nullptr);
     assert(suffix != nullptr);
 
-    size_t length = base_string_unescape(pool, path, suffix);
+    size_t length = base_string_unescape(*pool, path, suffix);
     if (length == (size_t)-1)
         return nullptr;
 
@@ -72,7 +73,7 @@ FileAddress::LoadBase(struct pool *pool, const char *suffix) const
     assert(path[strlen(path) - 1] == '/');
     assert(suffix != nullptr);
 
-    char *unescaped = uri_unescape_dup(pool, suffix);
+    char *unescaped = uri_unescape_dup(*pool, suffix);
     if (unescaped == nullptr)
         return nullptr;
 

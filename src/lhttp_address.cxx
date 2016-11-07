@@ -153,7 +153,7 @@ LhttpAddress::Apply(struct pool *pool, StringView relative) const
     if (uri_has_authority(relative))
         return nullptr;
 
-    const char *p = uri_absolute(pool, path, relative);
+    const char *p = uri_absolute(*pool, path, relative);
     assert(p != nullptr);
 
     return NewFromPool<LhttpAddress>(*pool, ShallowCopy(), *this, p);

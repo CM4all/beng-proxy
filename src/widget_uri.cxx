@@ -14,7 +14,7 @@
 #include "http_address.hxx"
 #include "lhttp_address.hxx"
 #include "cgi_address.hxx"
-#include "pool.hxx"
+#include "AllocatorPtr.hxx"
 #include "util/StringView.hxx"
 
 #include <assert.h>
@@ -151,7 +151,7 @@ Widget::DetermineAddress(bool stateful) const
 
         if (*path_info != 0)
             cgi->path_info = cgi->path_info != nullptr
-                ? uri_absolute(&pool, cgi->path_info, path_info)
+                ? uri_absolute(pool, cgi->path_info, path_info)
                 : path_info;
 
         if (!stateful || from_request.query_string.IsEmpty())
@@ -197,7 +197,7 @@ Widget::AbsoluteUri(struct pool &_pool, bool stateful,
     if (relative_uri.IsNull())
         return uwa->GetAbsoluteURI(&_pool);
 
-    const char *uri = uri_absolute(&_pool, base, relative_uri);
+    const char *uri = uri_absolute(_pool, base, relative_uri);
     assert(uri != nullptr);
     if (!relative_uri.IsEmpty() &&
         from_template.query_string != nullptr)

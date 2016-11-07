@@ -11,7 +11,7 @@
 
 #include <stddef.h>
 
-struct pool;
+class AllocatorPtr;
 struct StringView;
 
 /**
@@ -20,7 +20,7 @@ struct StringView;
  */
 gcc_pure gcc_malloc
 const char *
-uri_compress(struct pool *pool, const char *uri);
+uri_compress(AllocatorPtr alloc, const char *uri);
 
 /**
  * Append a relative URI to an absolute base URI, and return the
@@ -29,6 +29,6 @@ uri_compress(struct pool *pool, const char *uri);
  */
 gcc_pure gcc_malloc
 const char *
-uri_absolute(struct pool *pool, const char *base, StringView uri);
+uri_absolute(AllocatorPtr alloc, const char *base, StringView uri);
 
 #endif

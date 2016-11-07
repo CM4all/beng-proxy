@@ -13,7 +13,7 @@
 #include "penv.hxx"
 #include "uri/uri_parser.hxx"
 #include "puri_relative.hxx"
-#include "pool.hxx"
+#include "AllocatorPtr.hxx"
 #include "shm/dpool.hxx"
 
 #include <string.h>
@@ -92,7 +92,7 @@ Widget::CopyFromRequest(struct processor_env &env, GError **error_r)
         from_request.path_info = env.path_info;
         if (from_request.path_info != nullptr) {
             from_request.path_info =
-                uri_compress(env.pool, from_request.path_info);
+                uri_compress(*env.pool, from_request.path_info);
             if (from_request.path_info == nullptr) {
                 g_set_error(error_r, widget_quark(), WIDGET_ERROR_FORBIDDEN,
                             "path compression failed");

@@ -11,7 +11,7 @@
 #include "uri/uri_extract.hxx"
 #include "puri_edit.hxx"
 #include "puri_relative.hxx"
-#include "pool.hxx"
+#include "AllocatorPtr.hxx"
 #include "pexpand.hxx"
 #include "util/StringView.hxx"
 
@@ -281,7 +281,7 @@ HttpAddress::Apply(struct pool *pool, StringView relative) const
         return other;
     }
 
-    const char *p = uri_absolute(pool, path, relative);
+    const char *p = uri_absolute(*pool, path, relative);
     assert(p != nullptr);
 
     return http_address_with_path(*pool, this, p);

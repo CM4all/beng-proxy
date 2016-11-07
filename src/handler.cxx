@@ -27,6 +27,7 @@
 #include "http_headers.hxx"
 #include "http_server/Request.hxx"
 #include "http_quark.h"
+#include "AllocatorPtr.hxx"
 #include "puri_edit.hxx"
 #include "puri_escape.hxx"
 #include "uri/uri_verify.hxx"
@@ -73,7 +74,7 @@ bounce_uri(struct pool &pool, const Request &request,
 
     const char *current_uri = p_strcat(&pool, scheme, "://", host, uri_path,
                                        nullptr);
-    const char *escaped_uri = uri_escape_dup(&pool, current_uri,
+    const char *escaped_uri = uri_escape_dup(pool, current_uri,
                                              strlen(current_uri));
 
     return p_strcat(&pool, response.bounce, escaped_uri, nullptr);

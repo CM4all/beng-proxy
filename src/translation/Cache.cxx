@@ -19,6 +19,7 @@
 #include "uri/uri_escape.hxx"
 #include "puri_escape.hxx"
 #include "tpool.hxx"
+#include "AllocatorPtr.hxx"
 #include "pbuffer.hxx"
 #include "paddress.hxx"
 #include "SlicePool.hxx"
@@ -688,7 +689,7 @@ tcache_regex_input(struct pool *pool,
         assert(response.regex != nullptr ||
                response.inverse_regex != nullptr);
 
-        uri = uri_unescape_dup(pool, uri);
+        uri = uri_unescape_dup(*pool, uri);
         if (uri == nullptr)
             return nullptr;
     }
