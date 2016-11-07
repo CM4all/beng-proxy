@@ -23,81 +23,81 @@ public:
     void TestURI() {
         auto pool = GetPool();
 
-        CgiAddress *a = cgi_address_new(*pool, "/usr/bin/cgi");
-        CPPUNIT_ASSERT_EQUAL(false, a->IsExpandable());
-        CPPUNIT_ASSERT_EQUAL(0, strcmp(a->GetURI(pool), "/"));
+        CgiAddress a("/usr/bin/cgi");
+        CPPUNIT_ASSERT_EQUAL(false, a.IsExpandable());
+        CPPUNIT_ASSERT_EQUAL(0, strcmp(a.GetURI(pool), "/"));
 
-        a->script_name = "/";
-        CPPUNIT_ASSERT_EQUAL(0, strcmp(a->GetURI(pool), "/"));
+        a.script_name = "/";
+        CPPUNIT_ASSERT_EQUAL(0, strcmp(a.GetURI(pool), "/"));
 
-        a->path_info = "foo";
-        CPPUNIT_ASSERT_EQUAL(0, strcmp(a->GetURI(pool), "/foo"));
+        a.path_info = "foo";
+        CPPUNIT_ASSERT_EQUAL(0, strcmp(a.GetURI(pool), "/foo"));
 
-        a->query_string = "";
-        CPPUNIT_ASSERT_EQUAL(0, strcmp(a->GetURI(pool), "/foo?"));
+        a.query_string = "";
+        CPPUNIT_ASSERT_EQUAL(0, strcmp(a.GetURI(pool), "/foo?"));
 
-        a->query_string = "a=b";
-        CPPUNIT_ASSERT_EQUAL(0, strcmp(a->GetURI(pool), "/foo?a=b"));
+        a.query_string = "a=b";
+        CPPUNIT_ASSERT_EQUAL(0, strcmp(a.GetURI(pool), "/foo?a=b"));
 
-        a->path_info = "";
-        CPPUNIT_ASSERT_EQUAL(0, strcmp(a->GetURI(pool), "/?a=b"));
+        a.path_info = "";
+        CPPUNIT_ASSERT_EQUAL(0, strcmp(a.GetURI(pool), "/?a=b"));
 
-        a->path_info = nullptr;
-        CPPUNIT_ASSERT_EQUAL(0, strcmp(a->GetURI(pool), "/?a=b"));
+        a.path_info = nullptr;
+        CPPUNIT_ASSERT_EQUAL(0, strcmp(a.GetURI(pool), "/?a=b"));
 
-        a->script_name = "/test.cgi";
-        a->path_info = nullptr;
-        a->query_string = nullptr;
-        CPPUNIT_ASSERT_EQUAL(0, strcmp(a->GetURI(pool), "/test.cgi"));
+        a.script_name = "/test.cgi";
+        a.path_info = nullptr;
+        a.query_string = nullptr;
+        CPPUNIT_ASSERT_EQUAL(0, strcmp(a.GetURI(pool), "/test.cgi"));
 
-        a->path_info = "/foo";
-        CPPUNIT_ASSERT_EQUAL(0, strcmp(a->GetURI(pool), "/test.cgi/foo"));
+        a.path_info = "/foo";
+        CPPUNIT_ASSERT_EQUAL(0, strcmp(a.GetURI(pool), "/test.cgi/foo"));
 
-        a->script_name = "/bar/";
-        CPPUNIT_ASSERT_EQUAL(0, strcmp(a->GetURI(pool), "/bar/foo"));
+        a.script_name = "/bar/";
+        CPPUNIT_ASSERT_EQUAL(0, strcmp(a.GetURI(pool), "/bar/foo"));
 
-        a->script_name = "/";
-        CPPUNIT_ASSERT_EQUAL(0, strcmp(a->GetURI(pool), "/foo"));
+        a.script_name = "/";
+        CPPUNIT_ASSERT_EQUAL(0, strcmp(a.GetURI(pool), "/foo"));
 
-        a->script_name = nullptr;
-        CPPUNIT_ASSERT_EQUAL(0, strcmp(a->GetURI(pool), "/foo"));
+        a.script_name = nullptr;
+        CPPUNIT_ASSERT_EQUAL(0, strcmp(a.GetURI(pool), "/foo"));
     }
 
     void TestApply() {
         auto pool = GetPool();
 
-        CgiAddress *a = cgi_address_new(*pool, "/usr/bin/cgi");
-        a->script_name = "/test.pl";
-        a->path_info = "/foo";
+        CgiAddress a("/usr/bin/cgi");
+        a.script_name = "/test.pl";
+        a.path_info = "/foo";
 
-        auto b = a->Apply(pool, "");
-        CPPUNIT_ASSERT_EQUAL((const CgiAddress *)a, b);
+        auto b = a.Apply(pool, "");
+        CPPUNIT_ASSERT_EQUAL((const CgiAddress *)&a, b);
 
-        b = a->Apply(pool, "bar");
+        b = a.Apply(pool, "bar");
         CPPUNIT_ASSERT(b != nullptr);
-        CPPUNIT_ASSERT(b != a);
+        CPPUNIT_ASSERT(b != &a);
         CPPUNIT_ASSERT_EQUAL(false, b->IsValidBase());
-        CPPUNIT_ASSERT_EQUAL(0, strcmp(b->path, a->path));
-        CPPUNIT_ASSERT_EQUAL(0, strcmp(b->script_name, a->script_name));
+        CPPUNIT_ASSERT_EQUAL(0, strcmp(b->path, a.path));
+        CPPUNIT_ASSERT_EQUAL(0, strcmp(b->script_name, a.script_name));
         CPPUNIT_ASSERT_EQUAL(0, strcmp(b->path_info, "/bar"));
 
-        a->path_info = "/foo/";
-        CPPUNIT_ASSERT_EQUAL(true, a->IsValidBase());
+        a.path_info = "/foo/";
+        CPPUNIT_ASSERT_EQUAL(true, a.IsValidBase());
 
-        b = a->Apply(pool, "bar");
+        b = a.Apply(pool, "bar");
         CPPUNIT_ASSERT(b != nullptr);
-        CPPUNIT_ASSERT(b != a);
+        CPPUNIT_ASSERT(b != &a);
         CPPUNIT_ASSERT_EQUAL(false, b->IsValidBase());
-        CPPUNIT_ASSERT_EQUAL(0, strcmp(b->path, a->path));
-        CPPUNIT_ASSERT_EQUAL(0, strcmp(b->script_name, a->script_name));
+        CPPUNIT_ASSERT_EQUAL(0, strcmp(b->path, a.path));
+        CPPUNIT_ASSERT_EQUAL(0, strcmp(b->script_name, a.script_name));
         CPPUNIT_ASSERT_EQUAL(0, strcmp(b->path_info, "/foo/bar"));
 
-        b = a->Apply(pool, "/bar");
+        b = a.Apply(pool, "/bar");
         CPPUNIT_ASSERT(b != nullptr);
-        CPPUNIT_ASSERT(b != a);
+        CPPUNIT_ASSERT(b != &a);
         CPPUNIT_ASSERT_EQUAL(false, b->IsValidBase());
-        CPPUNIT_ASSERT_EQUAL(0, strcmp(b->path, a->path));
-        CPPUNIT_ASSERT_EQUAL(0, strcmp(b->script_name, a->script_name));
+        CPPUNIT_ASSERT_EQUAL(0, strcmp(b->path, a.path));
+        CPPUNIT_ASSERT_EQUAL(0, strcmp(b->script_name, a.script_name));
         CPPUNIT_ASSERT_EQUAL(0, strcmp(b->path_info, "/bar"));
     }
 };
