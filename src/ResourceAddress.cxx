@@ -68,9 +68,7 @@ ResourceAddress::CopyFrom(struct pool &pool, const ResourceAddress &src)
 ResourceAddress *
 ResourceAddress::Dup(struct pool &pool) const
 {
-    auto dest = NewFromPool<ResourceAddress>(pool);
-    dest->CopyFrom(pool, *this);
-    return dest;
+    return NewFromPool<ResourceAddress>(pool, pool, *this);
 }
 
 ResourceAddress
