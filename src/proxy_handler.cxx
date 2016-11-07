@@ -61,7 +61,7 @@ proxy_handler(Request &request2)
 {
     struct pool &pool = request2.pool;
     const TranslateResponse &tr = *request2.translate.response;
-    ResourceAddress address = request2.translate.address;
+    ResourceAddress address(ShallowCopy(), request2.translate.address);
 
     assert(address.type == ResourceAddress::Type::HTTP ||
            address.type == ResourceAddress::Type::LHTTP ||

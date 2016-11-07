@@ -52,7 +52,7 @@ struct WidgetView {
     WidgetView() = default;
 
     explicit constexpr WidgetView(const ResourceAddress &_address)
-        :next(nullptr), name(nullptr), address(_address),
+        :next(nullptr), name(nullptr), address(ShallowCopy(), _address),
          filter_4xx(false), inherited(false),
          transformation(nullptr),
          request_header_forward(), response_header_forward() {}

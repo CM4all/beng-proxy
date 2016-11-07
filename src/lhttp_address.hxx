@@ -65,6 +65,9 @@ struct LhttpAddress {
     {
     }
 
+    constexpr LhttpAddress(LhttpAddress &&src)
+        :LhttpAddress(ShallowCopy(), src) {}
+
     LhttpAddress(ShallowCopy shallow_copy, const LhttpAddress &src,
                  const char *_uri)
         :LhttpAddress(shallow_copy, src)
@@ -73,6 +76,8 @@ struct LhttpAddress {
     }
 
     LhttpAddress(struct pool &pool, const LhttpAddress &src);
+
+    LhttpAddress &operator=(const LhttpAddress &) = delete;
 
     /**
      * Generates a string identifying the server process.  This can be

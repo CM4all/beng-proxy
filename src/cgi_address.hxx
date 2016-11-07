@@ -96,7 +96,11 @@ struct CgiAddress {
     {
     }
 
+    constexpr CgiAddress(CgiAddress &&src):CgiAddress(ShallowCopy(), src) {}
+
     CgiAddress(struct pool &pool, const CgiAddress &src);
+
+    CgiAddress &operator=(const CgiAddress &) = delete;
 
     gcc_pure
     const char *GetURI(struct pool *pool) const;

@@ -63,7 +63,7 @@ struct MakeResponse : TranslateResponse {
                           const char *_base=nullptr)
         :MakeResponse()
     {
-        address = _address;
+        address = {ShallowCopy(), _address};
         base = _base;
     }
 

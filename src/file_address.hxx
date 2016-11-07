@@ -51,6 +51,9 @@ struct FileAddress {
 
     FileAddress(struct pool *pool, const FileAddress &src);
 
+    FileAddress(const FileAddress &) = delete;
+    FileAddress &operator=(const FileAddress &) = delete;
+
     gcc_pure
     bool HasQueryString() const {
         return false;

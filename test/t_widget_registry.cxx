@@ -58,7 +58,7 @@ tstock_translate(gcc_unused TranslateStock &stock, struct pool &pool,
         response->address = *http_address_parse(&pool, "http://foo/");
         response->views = NewFromPool<WidgetView>(pool);
         response->views->Init(nullptr);
-        response->views->address = response->address;
+        response->views->address = {ShallowCopy(), response->address};
         handler.response(*response, ctx);
     } else if (strcmp(request.widget_type, "block") == 0) {
         cancel_ptr = stock;

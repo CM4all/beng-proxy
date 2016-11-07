@@ -111,7 +111,7 @@ ResourceAddress::WithQueryStringFrom(struct pool &pool, const char *uri) const
     case Type::PIPE:
     case Type::NFS:
         /* no query string support */
-        return *this;
+        return {ShallowCopy(), *this};
 
     case Type::HTTP:
         assert(u.http != nullptr);
@@ -119,7 +119,7 @@ ResourceAddress::WithQueryStringFrom(struct pool &pool, const char *uri) const
         query_string = uri_query_string(uri);
         if (query_string == nullptr)
             /* no query string in URI */
-            return *this;
+            return {ShallowCopy(), *this};
 
         return *u.http->InsertQueryString(pool, query_string);
 
@@ -129,7 +129,7 @@ ResourceAddress::WithQueryStringFrom(struct pool &pool, const char *uri) const
         query_string = uri_query_string(uri);
         if (query_string == nullptr)
             /* no query string in URI */
-            return *this;
+            return {ShallowCopy(), *this};
 
         return *u.lhttp->InsertQueryString(pool, query_string);
 
@@ -141,7 +141,7 @@ ResourceAddress::WithQueryStringFrom(struct pool &pool, const char *uri) const
         query_string = uri_query_string(uri);
         if (query_string == nullptr)
             /* no query string in URI */
-            return *this;
+            return {ShallowCopy(), *this};
 
         cgi = NewFromPool<CgiAddress>(pool, ShallowCopy(), GetCgi());
         cgi->InsertQueryString(pool, query_string);
@@ -164,7 +164,7 @@ ResourceAddress::WithArgs(struct pool &pool,
     case Type::PIPE:
     case Type::NFS:
         /* no arguments support */
-        return *this;
+        return {ShallowCopy(), *this};
 
     case Type::HTTP:
         assert(u.http != nullptr);
@@ -182,7 +182,7 @@ ResourceAddress::WithArgs(struct pool &pool,
         assert(u.cgi->path != nullptr);
 
         if (u.cgi->uri == nullptr && u.cgi->path_info == nullptr)
-            return *this;
+            return {ShallowCopy(), *this};
 
         cgi = NewFromPool<CgiAddress>(pool, ShallowCopy(), GetCgi());
         cgi->InsertArgs(pool, args, path);
@@ -412,7 +412,7 @@ ResourceAddress::Apply(struct pool &pool, StringView relative) const
     case Type::LOCAL:
     case Type::PIPE:
     case Type::NFS:
-        return *this;
+        return {ShallowCopy(), *this};
 
     case Type::HTTP:
         uwa = u.http->Apply(&pool, relative);

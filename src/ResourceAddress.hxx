@@ -8,7 +8,7 @@
 #ifndef BENG_PROXY_RESOURCE_ADDRESS_HXX
 #define BENG_PROXY_RESOURCE_ADDRESS_HXX
 
-#include "glibfwd.hxx"
+#include "util/ShallowCopy.hxx"
 
 #include <inline/compiler.h>
 
@@ -89,9 +89,17 @@ public:
     constexpr ResourceAddress(const NfsAddress &nfs)
       :type(Type::NFS), u(nfs) {}
 
+    constexpr ResourceAddress(ShallowCopy, const ResourceAddress &src)
+        :type(src.type), u(src.u) {}
+
+    constexpr ResourceAddress(ResourceAddress &&src)
+        :ResourceAddress(ShallowCopy(), src) {}
+
     ResourceAddress(struct pool &pool, const ResourceAddress &src) {
         CopyFrom(pool, src);
     }
+
+    ResourceAddress &operator=(ResourceAddress &&) = default;
 
     constexpr bool IsDefined() const {
         return type != Type::NONE;

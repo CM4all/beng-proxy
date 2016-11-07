@@ -31,7 +31,7 @@ Widget::GetBaseAddress(struct pool &_pool, bool stateful) const
         : GetStatelessAddress();
 
     if (!src->IsHttp() || from_template.query_string == nullptr)
-        return *src;
+        return {ShallowCopy(), *src};
 
     const auto &src_http = src->GetHttp();
     const char *const src_path = src_http.path;
@@ -44,7 +44,7 @@ Widget::GetBaseAddress(struct pool &_pool, bool stateful) const
                                       from_request.query_string);
 
     if (uri == src_path)
-        return *src;
+        return {ShallowCopy(), *src};
 
     return src->WithPath(_pool, uri);
 }

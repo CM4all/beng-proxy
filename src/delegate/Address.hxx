@@ -30,7 +30,12 @@ struct DelegateAddress {
         :delegate(src.delegate),
          child_options(shallow_copy, src.child_options) {}
 
+    constexpr DelegateAddress(DelegateAddress &&src)
+        :DelegateAddress(ShallowCopy(), src) {}
+
     DelegateAddress(struct pool &pool, const DelegateAddress &src);
+
+    DelegateAddress &operator=(const DelegateAddress &) = delete;
 
     /**
      * Throws std::runtime_error on error.

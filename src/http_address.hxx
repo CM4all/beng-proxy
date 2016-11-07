@@ -8,7 +8,6 @@
 #define BENG_PROXY_HTTP_ADDRESS_HXX
 
 #include "address_list.hxx"
-#include "glibfwd.hxx"
 
 #include <inline/compiler.h>
 
@@ -62,6 +61,8 @@ struct HttpAddress {
     {
     }
 
+    constexpr HttpAddress(HttpAddress &&src):HttpAddress(ShallowCopy(), src) {}
+
     HttpAddress(struct pool &pool, const HttpAddress &src);
     HttpAddress(struct pool &pool, const HttpAddress &src, const char *_path);
 
@@ -77,6 +78,8 @@ struct HttpAddress {
 
     HttpAddress(struct dpool &dpool, const HttpAddress &src);
     void Free(struct dpool &pool);
+
+    HttpAddress &operator=(const HttpAddress &) = delete;
 
     /**
      * Check if this instance is relative to the base, and return the
