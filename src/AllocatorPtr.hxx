@@ -15,7 +15,7 @@ class AllocatorPtr {
 public:
     AllocatorPtr(struct pool &_pool):pool(_pool) {}
 
-    const char *Dup(const char *src) {
+    char *Dup(const char *src) {
         return p_strdup(&pool, src);
     }
 
