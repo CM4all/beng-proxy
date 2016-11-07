@@ -60,7 +60,7 @@ ResourceAddress::CopyFrom(struct pool &pool, const ResourceAddress &src)
         break;
 
     case Type::NFS:
-        u.nfs = nfs_address_dup(pool, src.u.nfs);
+        u.nfs = NewFromPool<NfsAddress>(pool, &pool, *src.u.nfs);
         break;
     }
 }

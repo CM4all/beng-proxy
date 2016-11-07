@@ -1325,7 +1325,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         if (payload_length == 0)
             throw std::runtime_error("malformed NFS_SERVER packet");
 
-        nfs_address = nfs_address_new(*pool, payload, "", "");
+        nfs_address = NewFromPool<NfsAddress>(*pool, payload, "", "");
         *resource_address = *nfs_address;
         return;
 

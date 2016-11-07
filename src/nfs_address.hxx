@@ -5,7 +5,6 @@
 #ifndef BENG_PROXY_NFS_ADDRESS_HXX
 #define BENG_PROXY_NFS_ADDRESS_HXX
 
-#include "glibfwd.hxx"
 #include "util/ConstBuffer.hxx"
 
 #include <inline/compiler.h>
@@ -76,12 +75,5 @@ struct NfsAddress {
     const NfsAddress *Expand(struct pool *pool,
                              const MatchInfo &match_info) const;
 };
-
-NfsAddress *
-nfs_address_new(struct pool &pool, const char *server,
-                const char *export_name, const char *path);
-
-NfsAddress *
-nfs_address_dup(struct pool &pool, const NfsAddress *src);
 
 #endif

@@ -24,16 +24,6 @@ NfsAddress::NfsAddress(struct pool *pool, const NfsAddress &other)
      content_type(p_strdup_checked(pool, other.content_type)),
      content_type_lookup(DupBuffer(*pool, other.content_type_lookup)) {}
 
-struct NfsAddress *
-nfs_address_new(struct pool &pool, const char *server,
-                const char *export_name, const char *path)
-{
-    return NewFromPool<NfsAddress>(pool,
-                                   p_strdup(&pool, server),
-                                   p_strdup(&pool, export_name),
-                                   p_strdup(&pool, path));
-}
-
 const char *
 NfsAddress::GetId(struct pool *pool) const
 {
@@ -42,12 +32,6 @@ NfsAddress::GetId(struct pool *pool) const
     assert(path != nullptr);
 
     return p_strcat(pool, server, ":", export_name, ":", path, nullptr);
-}
-
-NfsAddress *
-nfs_address_dup(struct pool &pool, const NfsAddress *src)
-{
-    return NewFromPool<NfsAddress>(pool, &pool, *src);
 }
 
 void
