@@ -8,6 +8,7 @@
 #include "pool.hxx"
 
 struct StringView;
+template<typename T> struct ConstBuffer;
 
 class AllocatorPtr {
     struct pool &pool;
@@ -37,6 +38,7 @@ public:
         return p_memdup(&pool, data, size);
     }
 
+    ConstBuffer<void> Dup(ConstBuffer<void> src);
     StringView Dup(StringView src);
     const char *DupZ(StringView src);
 };
