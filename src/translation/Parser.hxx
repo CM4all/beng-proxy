@@ -11,6 +11,7 @@
 #include "Response.hxx"
 #include "Request.hxx"
 #include "ExpandableStringList.hxx"
+#include "AllocatorPtr.hxx"
 
 struct FileAddress;
 struct CgiAddress;
@@ -26,7 +27,7 @@ struct Transformation;
 struct StringView;
 
 class TranslateParser {
-    struct pool *pool;
+    AllocatorPtr alloc;
 
     struct FromRequest {
         const char *uri;
@@ -102,13 +103,13 @@ class TranslateParser {
     Transformation **transformation_tail;
 
 public:
-    TranslateParser(struct pool &_pool, const TranslateRequest &r)
-        :pool(&_pool), from_request(r) {
+    TranslateParser(AllocatorPtr _alloc, const TranslateRequest &r)
+        :alloc(_alloc), from_request(r) {
         response.status = (http_status_t)-1;
     }
 
     size_t Feed(const uint8_t *data, size_t length) {
-        return reader.Feed(pool, data, length);
+        return reader.Feed(alloc, data, length);
     }
 
     enum class Result {

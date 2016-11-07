@@ -5,12 +5,12 @@
  */
 
 #include "PReader.hxx"
-#include "pool.hxx"
+#include "AllocatorPtr.hxx"
 
 #include <string.h>
 
 size_t
-TranslatePacketReader::Feed(struct pool *pool,
+TranslatePacketReader::Feed(AllocatorPtr alloc,
                             const uint8_t *data, size_t length)
 {
     assert(state == State::HEADER ||
@@ -44,7 +44,7 @@ TranslatePacketReader::Feed(struct pool *pool,
         state = State::PAYLOAD;
 
         payload_position = 0;
-        payload = PoolAlloc<char>(*pool, header.length + 1);
+        payload = alloc.NewArray<char>(header.length + 1);
         payload[header.length] = 0;
 
         if (length == 0)

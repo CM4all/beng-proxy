@@ -19,8 +19,6 @@
 #include "spawn/ResourceLimits.hxx"
 #include "spawn/JailParams.hxx"
 #include "beng-proxy/translation.h"
-#include "pool.hxx"
-#include "AllocatorPtr.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/AddressInfo.hxx"
 #include "net/Resolver.hxx"
@@ -49,7 +47,7 @@ void
 TranslateParser::SetCgiAddress(ResourceAddress::Type type,
                                const char *path)
 {
-    cgi_address = NewFromPool<CgiAddress>(*pool, path);
+    cgi_address = alloc.New<CgiAddress>(path);
 
     *resource_address = ResourceAddress(type, *cgi_address);
 
@@ -94,7 +92,7 @@ is_valid_absolute_uri(const char *p, size_t size)
 Transformation *
 TranslateParser::AddTransformation()
 {
-    auto t = NewFromPool<Transformation>(*pool);
+    auto t = alloc.New<Transformation>();
     t->next = nullptr;
 
     transformation = t;
@@ -181,7 +179,7 @@ TranslateParser::FinishView()
         const ResourceAddress *address = &response.address;
         if (address->IsDefined() && !v->address.IsDefined()) {
             /* no address yet: copy address from response */
-            v->address.CopyFrom(*pool, *address);
+            v->address.CopyFrom(alloc, *address);
             v->filter_4xx = response.filter_4xx;
         }
 
@@ -190,7 +188,7 @@ TranslateParser::FinishView()
     } else {
         if (!v->address.IsDefined() && v != response.views)
             /* no address yet: inherits settings from the default view */
-            v->InheritFrom(*pool, *response.views);
+            v->InheritFrom(alloc, *response.views);
     }
 
     v->address.Check();
@@ -201,7 +199,7 @@ TranslateParser::AddView(const char *name)
 {
     FinishView();
 
-    auto new_view = NewFromPool<WidgetView>(*pool);
+    auto new_view = alloc.New<WidgetView>();
     new_view->Init(name);
     new_view->request_header_forward = response.request_header_forward;
     new_view->response_header_forward = response.response_header_forward;
@@ -257,7 +255,7 @@ parse_header_forward(struct header_forward_settings *settings,
 }
 
 static void
-parse_header(struct pool *pool,
+parse_header(AllocatorPtr alloc,
              KeyValueList &headers, const char *packet_name,
              const char *payload, size_t payload_length)
 {
@@ -266,7 +264,7 @@ parse_header(struct pool *pool,
         has_null_byte(payload, payload_length))
         throw FormatRuntimeError("malformed %s packet", packet_name);
 
-    const char *name = p_strdup_lower(*pool, StringView(payload, value));
+    const char *name = alloc.DupToLower(StringView(payload, value));
     ++value;
 
     if (!http_header_name_valid(name))
@@ -274,7 +272,7 @@ parse_header(struct pool *pool,
     else if (http_header_is_hop_by_hop(name))
         throw FormatRuntimeError("hop-by-hop %s packet", packet_name);
 
-    headers.Add(PoolAllocator(*pool), name, value);
+    headers.Add(alloc, name, value);
 }
 
 /**
@@ -378,14 +376,14 @@ translate_client_check_pair(const char *name,
 }
 
 static void
-translate_client_pair(struct pool &pool,
+translate_client_pair(AllocatorPtr alloc,
                       ExpandableStringList::Builder &builder,
                       const char *name,
                       const char *payload, size_t payload_length)
 {
     translate_client_check_pair(name, payload, payload_length);
 
-    builder.Add(pool, payload, false);
+    builder.Add(alloc, payload, false);
 }
 
 static void
@@ -539,11 +537,10 @@ TranslateParser::HandleBindMount(const char *payload, size_t payload_length,
     if (mount_list == nullptr)
         throw std::runtime_error("misplaced BIND_MOUNT packet");
 
-    auto *m = NewFromPool<MountList>(*pool,
-                                     /* skip the slash to make it relative */
-                                     payload + 1,
-                                     separator + 1,
-                                     expand, writable);
+    auto *m = alloc.New<MountList>(/* skip the slash to make it relative */
+                                   payload + 1,
+                                   separator + 1,
+                                   expand, writable);
     *mount_list = m;
     mount_list = &m->next;
 }
@@ -562,14 +559,14 @@ translate_client_uts_namespace(NamespaceOptions *ns,
 }
 
 static void
-translate_client_rlimits(struct pool &pool, ChildOptions *child_options,
+translate_client_rlimits(AllocatorPtr alloc, ChildOptions *child_options,
                          const char *payload)
 {
     if (child_options == nullptr)
         throw std::runtime_error("misplaced RLIMITS packet");
 
     if (child_options->rlimits == nullptr)
-        child_options->rlimits = NewFromPool<ResourceLimits>(pool);
+        child_options->rlimits = alloc.New<ResourceLimits>();
 
     if (!child_options->rlimits->Parse(payload))
         throw std::runtime_error("malformed RLIMITS packet");
@@ -873,7 +870,7 @@ TranslateParser::HandleCgroupSet(StringView payload)
     if (set.first.IsNull())
         throw std::runtime_error("malformed CGROUP_SET packet");
 
-    child_options->cgroup.Set(*pool, set.first, set.second);
+    child_options->cgroup.Set(alloc, set.first, set.second);
 }
 
 static bool
@@ -942,7 +939,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         if (resource_address == nullptr || resource_address->IsDefined())
             throw std::runtime_error("misplaced PATH packet");
 
-        file_address = NewFromPool<FileAddress>(*pool, payload);
+        file_address = alloc.New<FileAddress>(payload);
         *resource_address = *file_address;
         return;
 
@@ -1081,7 +1078,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         if (!is_valid_nonempty_string(payload, payload_length))
             throw std::runtime_error("malformed HTTP packet");
 
-        http_address = http_address_parse(*pool, payload);
+        http_address = http_address_parse(alloc, payload);
         if (http_address->protocol != HttpAddress::Protocol::HTTP)
             throw std::runtime_error("malformed HTTP packet");
 
@@ -1173,7 +1170,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
             throw std::runtime_error("misplaced GROUP_CONTAINER packet");
 
         transformation->u.processor.options |= PROCESSOR_CONTAINER;
-        response.container_groups.Add(*pool, payload);
+        response.container_groups.Add(alloc, payload);
         return;
 
     case TRANSLATE_WIDGET_GROUP:
@@ -1308,7 +1305,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         if (payload_length == 0)
             throw std::runtime_error("malformed AJP packet");
 
-        http_address = http_address_parse(*pool, payload);
+        http_address = http_address_parse(alloc, payload);
         if (http_address->protocol != HttpAddress::Protocol::AJP)
             throw std::runtime_error("malformed AJP packet");
 
@@ -1325,7 +1322,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         if (payload_length == 0)
             throw std::runtime_error("malformed NFS_SERVER packet");
 
-        nfs_address = NewFromPool<NfsAddress>(*pool, payload, "", "");
+        nfs_address = alloc.New<NfsAddress>(payload, "", "");
         *resource_address = *nfs_address;
         return;
 
@@ -1345,7 +1342,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
             if (child_options == nullptr)
                 throw std::runtime_error("misplaced JAILCGI packet");
 
-            jail = child_options->jail = NewFromPool<JailParams>(*pool);
+            jail = child_options->jail = alloc.New<JailParams>();
         }
 
         jail->enabled = true;
@@ -1434,7 +1431,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         if (payload_length < 2)
             throw std::runtime_error("malformed INTERPRETER packet");
 
-        address_list->Add(*pool,
+        address_list->Add(alloc,
                           SocketAddress((const struct sockaddr *)_payload,
                                         payload_length));
         return;
@@ -1447,7 +1444,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
             throw std::runtime_error("malformed ADDRESS_STRING packet");
 
         try {
-            parse_address_string(*pool, address_list,
+            parse_address_string(alloc, address_list,
                                  payload, default_port);
         } catch (const std::exception &e) {
             throw FormatRuntimeError("malformed ADDRESS_STRING packet: %s",
@@ -1599,7 +1596,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         if (!is_valid_absolute_path(payload, payload_length))
             throw std::runtime_error("malformed DELEGATE packet");
 
-        file_address->delegate = NewFromPool<DelegateAddress>(*pool, payload);
+        file_address->delegate = alloc.New<DelegateAddress>(payload);
         SetChildOptions(file_address->delegate->child_options);
         return;
 
@@ -1611,7 +1608,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
             throw std::runtime_error("misplaced APPEND packet");
 
         if (cgi_address != nullptr || lhttp_address != nullptr) {
-            args_builder.Add(*pool, payload, false);
+            args_builder.Add(alloc, payload, false);
         } else
             throw std::runtime_error("misplaced APPEND packet");
 
@@ -1637,10 +1634,10 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         if (cgi_address != nullptr &&
             resource_address->type != ResourceAddress::Type::CGI &&
             resource_address->type != ResourceAddress::Type::PIPE) {
-            translate_client_pair(*pool, params_builder, "PAIR",
+            translate_client_pair(alloc, params_builder, "PAIR",
                                   payload, payload_length);
         } else if (child_options != nullptr) {
-            translate_client_pair(*pool, env_builder, "PAIR",
+            translate_client_pair(alloc, env_builder, "PAIR",
                                   payload, payload_length);
         } else
             throw std::runtime_error("misplaced PAIR packet");
@@ -1703,7 +1700,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         return;
 
     case TRANSLATE_HEADER:
-        parse_header(pool, response.response_headers,
+        parse_header(alloc, response.response_headers,
                      "HEADER", payload, payload_length);
         return;
 
@@ -1888,7 +1885,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
         response.validate_mtime.mtime = *(const uint64_t *)_payload;
         response.validate_mtime.path =
-            p_strndup(pool, payload + 8, payload_length - 8);
+            alloc.DupZ({payload + 8, payload_length - 8});
         return;
 
     case TRANSLATE_LHTTP_PATH:
@@ -1898,7 +1895,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         if (!is_valid_absolute_path(payload, payload_length))
             throw std::runtime_error("malformed LHTTP_PATH packet");
 
-        lhttp_address = NewFromPool<LhttpAddress>(*pool, payload);
+        lhttp_address = alloc.New<LhttpAddress>(payload);
         *resource_address = *lhttp_address;
 
         args_builder = lhttp_address->args;
@@ -2019,7 +2016,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         return;
 
     case TRANSLATE_RLIMITS:
-        translate_client_rlimits(*pool, child_options, payload);
+        translate_client_rlimits(alloc, child_options, payload);
         return;
 
     case TRANSLATE_WANT:
@@ -2099,7 +2096,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
     case TRANSLATE_SETENV:
         if (child_options != nullptr) {
-            translate_client_pair(*pool, env_builder,
+            translate_client_pair(alloc, env_builder,
                                   "SETENV",
                                   payload, payload_length);
         } else
@@ -2143,7 +2140,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         return;
 
     case TRANSLATE_REQUEST_HEADER:
-        parse_header(pool, response.request_headers,
+        parse_header(alloc, response.request_headers,
                      "REQUEST_HEADER", payload, payload_length);
         return;
 
@@ -2151,7 +2148,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         if (response.regex == nullptr)
             throw std::runtime_error("misplaced EXPAND_REQUEST_HEADERS packet");
 
-        parse_header(pool,
+        parse_header(alloc,
                      response.expand_request_headers,
                      "EXPAND_REQUEST_HEADER", payload, payload_length);
         return;
@@ -2292,7 +2289,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         if (response.regex == nullptr)
             throw std::runtime_error("misplaced EXPAND_HEADER packet");
 
-        parse_header(pool,
+        parse_header(alloc,
                      response.expand_response_headers,
                      "EXPAND_HEADER", payload, payload_length);
         return;
@@ -2476,7 +2473,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
             throw std::runtime_error("duplicate EXTERNAL_SESSION_MANAGER packet");
 
         response.external_session_manager = http_address =
-            http_address_parse(*pool, payload);
+            http_address_parse(alloc, payload);
         if (http_address->protocol != HttpAddress::Protocol::HTTP)
             throw std::runtime_error("malformed EXTERNAL_SESSION_MANAGER packet");
 
@@ -2539,7 +2536,7 @@ TranslateParser::HandlePacket(enum beng_translation_command command,
         lhttp_address = nullptr;
         address_list = nullptr;
 
-        response.views = NewFromPool<WidgetView>(*pool);
+        response.views = alloc.New<WidgetView>();
         response.views->Init(nullptr);
         view = nullptr;
         widget_view_tail = &response.views->next;

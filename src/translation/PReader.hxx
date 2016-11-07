@@ -13,6 +13,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+class AllocatorPtr;
+
 class TranslatePacketReader {
     enum class State {
         HEADER,
@@ -33,7 +35,7 @@ public:
      *
      * @return the number of bytes consumed
      */
-    size_t Feed(struct pool *pool, const uint8_t *data, size_t length);
+    size_t Feed(AllocatorPtr alloc, const uint8_t *data, size_t length);
 
     bool IsComplete() const {
         return state == State::COMPLETE;
