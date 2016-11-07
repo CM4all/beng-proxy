@@ -22,12 +22,6 @@ CgiAddress::CgiAddress(const char *_path)
 {
 }
 
-CgiAddress *
-cgi_address_new(struct pool &pool, const char *path)
-{
-    return NewFromPool<CgiAddress>(pool, path);
-}
-
 CgiAddress::CgiAddress(struct pool &pool, const CgiAddress &src)
     :path(p_strdup(&pool, src.path)),
      args(pool, src.args),

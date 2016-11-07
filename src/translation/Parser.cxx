@@ -49,7 +49,7 @@ void
 TranslateParser::SetCgiAddress(ResourceAddress::Type type,
                                const char *path)
 {
-    cgi_address = cgi_address_new(*pool, path);
+    cgi_address = NewFromPool<CgiAddress>(*pool, path);
 
     *resource_address = ResourceAddress(type, *cgi_address);
 

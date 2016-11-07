@@ -165,7 +165,4 @@ struct CgiAddress {
     void Expand(struct pool *pool, const MatchInfo &match_info);
 };
 
-CgiAddress *
-cgi_address_new(struct pool &pool, const char *path);
-
 #endif
