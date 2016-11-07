@@ -131,12 +131,12 @@ struct MakeResponse : TranslateResponse {
     }
 
     MakeResponse &&File(FileAddress &&_file) {
-        return File(*file_address_dup(*tpool, &_file));
+        return File(*NewFromPool<FileAddress>(*tpool, tpool, _file));
     }
 
     MakeResponse &&File(const char *_path) {
         struct pool &p = *tpool;
-        auto f = file_address_new(p, _path);
+        auto f = NewFromPool<FileAddress>(p, _path);
         address = *f;
         return std::move(*this);
     }

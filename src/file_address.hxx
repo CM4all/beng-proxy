@@ -82,10 +82,4 @@ struct FileAddress {
     void Expand(struct pool *pool, const MatchInfo &match_info);
 };
 
-FileAddress *
-file_address_new(struct pool &pool, const char *path);
-
-FileAddress *
-file_address_dup(struct pool &pool, const FileAddress *src);
-
 #endif

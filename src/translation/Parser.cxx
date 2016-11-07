@@ -942,7 +942,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         if (resource_address == nullptr || resource_address->IsDefined())
             throw std::runtime_error("misplaced PATH packet");
 
-        file_address = file_address_new(*pool, payload);
+        file_address = NewFromPool<FileAddress>(*pool, payload);
         *resource_address = *file_address;
         return;
 

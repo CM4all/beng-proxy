@@ -39,7 +39,7 @@ ResourceAddress::CopyFrom(struct pool &pool, const ResourceAddress &src)
 
     case Type::LOCAL:
         assert(src.u.file != nullptr);
-        u.file = file_address_dup(pool, src.u.file);
+        u.file = NewFromPool<FileAddress>(pool, &pool, *src.u.file);
         break;
 
     case Type::HTTP:
@@ -687,7 +687,7 @@ ResourceAddress::Expand(struct pool &pool, const MatchInfo &match_info)
         break;
 
     case Type::LOCAL:
-        u.file = file = file_address_dup(pool, u.file);
+        u.file = file = NewFromPool<FileAddress>(pool, &pool, *u.file);
         file->Expand(&pool, match_info);
         break;
 

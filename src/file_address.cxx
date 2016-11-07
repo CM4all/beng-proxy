@@ -37,18 +37,6 @@ FileAddress::Check() const
         delegate->Check();
 }
 
-FileAddress *
-file_address_new(struct pool &pool, const char *path)
-{
-    return NewFromPool<FileAddress>(pool, path);
-}
-
-FileAddress *
-file_address_dup(struct pool &pool, const FileAddress *src)
-{
-    return NewFromPool<FileAddress>(pool, &pool, *src);
-}
-
 bool
 FileAddress::IsValidBase() const
 {
@@ -65,7 +53,7 @@ FileAddress::SaveBase(struct pool *pool, const char *suffix) const
     if (length == (size_t)-1)
         return nullptr;
 
-    FileAddress *dest = file_address_dup(*pool, this);
+    auto *dest = NewFromPool<FileAddress>(*pool, pool, *this);
     dest->path = p_strndup(pool, dest->path, length);
 
     /* BASE+DEFLATED is not supported */
@@ -88,7 +76,7 @@ FileAddress::LoadBase(struct pool *pool, const char *suffix) const
     if (unescaped == nullptr)
         return nullptr;
 
-    FileAddress *dest = file_address_dup(*pool, this);
+    auto *dest = NewFromPool<FileAddress>(*pool, pool, *this);
     dest->path = p_strcat(pool, dest->path, unescaped, nullptr);
     return dest;
 }
