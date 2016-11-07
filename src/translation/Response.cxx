@@ -248,7 +248,7 @@ TranslateResponse::CopyFrom(struct pool *pool, const TranslateResponse &src)
     realm = p_strdup_checked(pool, src.realm);
 
     external_session_manager = src.external_session_manager != nullptr
-        ? http_address_dup(*pool, src.external_session_manager)
+        ? NewFromPool<HttpAddress>(*pool, *pool, *src.external_session_manager)
         : nullptr;
     external_session_keepalive = src.external_session_keepalive;
 

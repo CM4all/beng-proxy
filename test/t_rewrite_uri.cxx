@@ -30,7 +30,7 @@ struct MakeWidgetClass : WidgetClass {
         Init();
 
         auto http = MakeHttpAddress(uri).Host("widget-server");
-        views.address = *http_address_dup(p, &http);
+        views.address = *NewFromPool<HttpAddress>(p, p, http);
     }
 };
 

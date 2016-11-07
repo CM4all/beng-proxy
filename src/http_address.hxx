@@ -184,10 +184,6 @@ http_address_with_path(struct pool &pool,
                        const HttpAddress *uwa,
                        const char *path);
 
-gcc_malloc
-HttpAddress *
-http_address_dup(struct pool &pool, const HttpAddress *uwa);
-
 /**
  * Create a new #http_address object from the specified one, but
  * replace the "path" attribute.  The strings from the source object

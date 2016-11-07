@@ -147,7 +147,7 @@ struct MakeResponse : TranslateResponse {
     }
 
     MakeResponse &&Http(struct HttpAddress &&_http) {
-        return Http(*http_address_dup(*tpool, &_http));
+        return Http(*NewFromPool<HttpAddress>(*tpool, *tpool, _http));
     }
 
     MakeResponse &&Cgi(const CgiAddress &_cgi) {

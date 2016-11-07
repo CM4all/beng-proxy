@@ -136,14 +136,6 @@ http_address_with_path(struct pool &pool, const HttpAddress *uwa,
 }
 
 HttpAddress *
-http_address_dup(struct pool &pool, const HttpAddress *uwa)
-{
-    assert(uwa != nullptr);
-
-    return NewFromPool<HttpAddress>(pool, pool, *uwa);
-}
-
-HttpAddress *
 http_address_dup_with_path(struct pool &pool,
                            const HttpAddress *uwa,
                            const char *path)

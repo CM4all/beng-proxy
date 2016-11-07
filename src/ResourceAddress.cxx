@@ -44,7 +44,7 @@ ResourceAddress::CopyFrom(struct pool &pool, const ResourceAddress &src)
 
     case Type::HTTP:
         assert(src.u.http != nullptr);
-        u.http = http_address_dup(pool, src.u.http);
+        u.http = NewFromPool<HttpAddress>(pool, pool, *src.u.http);
         break;
 
     case Type::LHTTP:
@@ -702,7 +702,7 @@ ResourceAddress::Expand(struct pool &pool, const MatchInfo &match_info)
     case Type::HTTP:
         /* copy the http_address object (it's a pointer, not
            in-line) and expand it */
-        u.http = uwa = http_address_dup(pool, u.http);
+        u.http = uwa = NewFromPool<HttpAddress>(pool, pool, *u.http);
         uwa->Expand(&pool, match_info);
         break;
 
