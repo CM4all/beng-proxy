@@ -97,7 +97,6 @@ cm4all_beng_proxy_SOURCES = \
 	src/balancer.cxx src/balancer.hxx \
 	src/bot.c src/bot.h \
 	src/bulldog.c src/bulldog.h \
-	src/cache.cxx src/cache.hxx \
 	src/spawn/Protocol.hxx \
 	src/spawn/Parser.hxx \
 	src/spawn/Builder.hxx \
@@ -218,13 +217,6 @@ cm4all_beng_proxy_SOURCES = \
 	src/nop_socket_filter.cxx src/nop_socket_filter.hxx \
 	src/file_request.cxx src/file_request.hxx \
 	src/static_headers.cxx src/static_headers.hxx \
-	src/stock/Item.cxx src/stock/Item.hxx \
-	src/stock/GetHandler.hxx \
-	src/stock/Class.hxx \
-	src/stock/Stats.hxx \
-	src/stock/Stock.cxx src/stock/Stock.hxx \
-	src/stock/MapStock.cxx src/stock/MapStock.hxx \
-	src/stock/MultiStock.cxx src/stock/MultiStock.hxx \
 	src/suffix_registry.cxx src/suffix_registry.hxx \
 	src/address_suffix_registry.cxx src/address_suffix_registry.hxx \
 	src/tcache.cxx src/tcache.hxx \
@@ -301,7 +293,6 @@ cm4all_beng_proxy_SOURCES = \
 	src/log-client.c src/log-client.h \
 	src/log-launch.c src/log-launch.h \
 	src/log-glue.c src/log-glue.h \
-	src/notify.cxx src/notify.hxx \
 	src/thread_job.h \
 	src/thread_queue.cxx src/thread_queue.hxx \
 	src/thread_worker.cxx src/thread_worker.hxx \
@@ -317,6 +308,7 @@ cm4all_beng_proxy_LDADD = $(AM_LDADD) \
 	libavahi.a \
 	libssl.a \
 	libhttp_server.a \
+	libeutil.a \
 	libistream.a libevent.a \
 	libshm.a \
 	libnet.a \
@@ -358,10 +350,6 @@ cm4all_beng_lb_SOURCES = \
 	src/isolate.cxx src/isolate.hxx \
 	src/abort_close.cxx src/abort_close.hxx \
 	src/capabilities.cxx src/capabilities.hxx \
-	src/stock/ThreadedStock.hxx \
-	src/stock/Item.cxx src/stock/Item.hxx \
-	src/stock/Stock.cxx src/stock/Stock.hxx \
-	src/stock/MapStock.cxx src/stock/MapStock.hxx \
 	src/tcp_stock.cxx \
 	src/tcp_balancer.cxx \
 	src/pipe_stock.cxx \
@@ -373,7 +361,6 @@ cm4all_beng_lb_SOURCES = \
 	src/generic_balancer.hxx \
 	src/client_balancer.cxx src/client_balancer.hxx \
 	src/bulldog.c \
-	src/cache.cxx \
 	src/http_body.cxx \
 	src/http_client.cxx \
 	src/http_string.cxx \
@@ -397,7 +384,6 @@ cm4all_beng_lb_SOURCES = \
 	src/log-client.c \
 	src/log-launch.c \
 	src/StickyMode.hxx \
-	src/notify.cxx src/notify.hxx \
 	src/thread_job.h \
 	src/thread_queue.cxx src/thread_queue.hxx \
 	src/thread_worker.cxx src/thread_worker.hxx \
@@ -453,6 +439,7 @@ cm4all_beng_lb_LDADD = $(AM_LDADD) \
 	libavahi.a \
 	libssl.a \
 	libhttp_server.a \
+	libeutil.a \
 	libistream.a libevent.a \
 	libnet.a \
 	libspawn.a \
@@ -478,13 +465,9 @@ cm4all_beng_lb_LDADD = $(AM_LDADD) \
 
 cm4all_certdb_SOURCES = \
 	$(STOPWATCH_SRC) \
-	src/stock/Item.cxx src/stock/Item.hxx \
-	src/stock/Stock.cxx src/stock/Stock.hxx \
-	src/stock/MapStock.cxx src/stock/MapStock.hxx \
 	src/tcp_stock.cxx src/tcp_stock.hxx \
 	src/tcp_balancer.cxx src/tcp_balancer.hxx \
 	src/balancer.cxx src/balancer.hxx \
-	src/cache.cxx src/cache.hxx \
 	src/failure.cxx src/failure.hxx \
 	src/bulldog.c \
 	src/regex.cxx src/regex.hxx \
@@ -509,7 +492,6 @@ cm4all_certdb_SOURCES = \
 	src/thread_queue.cxx src/thread_queue.hxx \
 	src/thread_worker.cxx src/thread_worker.hxx \
 	src/thread_pool.cxx src/thread_pool.hxx \
-	src/notify.cxx src/notify.hxx \
 	src/certdb/Config.hxx \
 	src/certdb/WrapKey.cxx src/certdb/WrapKey.hxx \
 	src/certdb/CertDatabase.cxx src/certdb/CertDatabase.hxx \
@@ -527,6 +509,7 @@ cm4all_certdb_LDADD = $(AM_LDADD) \
 	libnet.a \
 	libraddress.a \
 	libpg.a \
+	libeutil.a \
 	libistream.a libpool.a libputil.a libmemory.a libevent.a \
 	libnet.a \
 	libraddress.a \
@@ -648,6 +631,7 @@ noinst_LIBRARIES = libutil.a libmemory.a libpool.a \
 	libshm.a \
 	libnet.a \
 	libputil.a \
+	libeutil.a \
 	libraddress.a \
 	libevent.a \
 	libssl.a \
@@ -720,6 +704,19 @@ libputil_a_SOURCES = \
 	src/puri_edit.cxx src/puri_edit.hxx \
 	src/puri_escape.cxx src/puri_escape.hxx \
 	src/puri_relative.cxx src/puri_relative.hxx
+
+# Utility library using libevent
+libeutil_a_SOURCES = \
+	src/notify.cxx src/notify.hxx \
+	src/stock/Item.cxx src/stock/Item.hxx \
+	src/stock/GetHandler.hxx \
+	src/stock/Class.hxx \
+	src/stock/Stats.hxx \
+	src/stock/Stock.cxx src/stock/Stock.hxx \
+	src/stock/MapStock.cxx src/stock/MapStock.hxx \
+	src/stock/MultiStock.cxx src/stock/MultiStock.hxx \
+	src/stock/ThreadedStock.hxx \
+	src/cache.cxx src/cache.hxx
 
 libmemory_a_SOURCES = \
 	src/fb_pool.cxx src/fb_pool.hxx \
@@ -1146,17 +1143,17 @@ test_was_mirror_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_SOCKET_LIBS) \
 	$(GLIB_LIBS)
 
-test_t_cache_SOURCES = test/t_cache.cxx \
-	src/cache.cxx
+test_t_cache_SOURCES = test/t_cache.cxx
 test_t_cache_LDADD = $(AM_LDADD) \
 	libputil.a \
+	libeutil.a \
 	libevent.a \
 	libpool.a libmemory.a \
 	libsystem.a \
 	libutil.a \
 	$(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS)
 
-test_t_tcache_SOURCES = test/t_tcache.cxx src/tcache.cxx src/cache.cxx \
+test_t_tcache_SOURCES = test/t_tcache.cxx src/tcache.cxx \
 	test/tconstruct.hxx \
 	src/translate_response.cxx \
 	src/http_domain.cxx \
@@ -1165,6 +1162,7 @@ test_t_tcache_SOURCES = test/t_tcache.cxx src/tcache.cxx src/cache.cxx \
 	src/pexpand.cxx \
 	src/transformation.cxx
 test_t_tcache_LDADD = $(AM_LDADD) \
+	libeutil.a \
 	libraddress.a \
 	libevent.a \
 	libputil.a \
@@ -1219,10 +1217,9 @@ test_t_header_forward_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_DAEMON_LIBS) \
 	$(LIBCM4ALL_HTTP_LIBS)
 
-test_t_stock_SOURCES = test/t_stock.cxx \
-	src/stock/Item.cxx \
-	src/stock/Stock.cxx
+test_t_stock_SOURCES = test/t_stock.cxx
 test_t_stock_LDADD = $(AM_LDADD) \
+	libeutil.a \
 	libpool.a libmemory.a libevent.a \
 	$(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS) $(GLIB_LIBS)
 
@@ -1291,11 +1288,10 @@ test_t_expansible_buffer_LDADD = $(AM_LDADD) \
 T_ISTREAM_FILTER_SRC = \
 	test/t_istream_filter.hxx \
 	src/direct.cxx \
-	src/pipe_stock.cxx \
-	src/stock/Item.cxx \
-	src/stock/Stock.cxx
+	src/pipe_stock.cxx
 
 T_ISTREAM_FILTER_LIB = $(AM_LDADD) \
+	libeutil.a \
 	libistream.a libpool.a libmemory.a \
 	libevent.a \
 	libputil.a \
@@ -1421,10 +1417,11 @@ test_t_growing_buffer_LDADD = $(T_ISTREAM_FILTER_LIB)
 test_t_balancer_SOURCES = test/t_balancer.cxx \
 	test/PoolTest.hxx \
 	src/bulldog.c \
-	src/balancer.cxx src/cache.cxx src/failure.cxx \
+	src/balancer.cxx src/failure.cxx \
 	src/address_list.cxx
 test_t_balancer_CPPFLAGS = $(AM_CPPFLAGS) $(CPPUNIT_CFLAGS)
 test_t_balancer_LDADD = $(AM_LDADD) \
+	libeutil.a \
 	libevent.a \
 	libnet.a \
 	libputil.a \
@@ -1469,13 +1466,12 @@ test_t_http_server_SOURCES = test/t_http_server.cxx \
 	src/header_writer.cxx \
 	src/istream_gb.cxx \
 	src/pipe_stock.cxx \
-	src/stock/Item.cxx \
-	src/stock/Stock.cxx \
 	src/direct.cxx \
 	src/http_body.cxx \
 	src/header_parser.cxx
 test_t_http_server_LDADD = $(AM_LDADD) \
 	libhttp_server.a \
+	libeutil.a \
 	libistream.a libpool.a libmemory.a libevent.a \
 	libputil.a \
 	libio.a \
@@ -1494,13 +1490,12 @@ test_run_http_server_SOURCES = test/run_http_server.cxx \
 	src/header_writer.cxx \
 	src/istream_gb.cxx \
 	src/pipe_stock.cxx \
-	src/stock/Item.cxx \
-	src/stock/Stock.cxx \
 	src/direct.cxx \
 	src/http_body.cxx \
 	src/header_parser.cxx
 test_run_http_server_LDADD = $(AM_LDADD) \
 	libhttp_server.a \
+	libeutil.a \
 	libistream.a libpool.a libmemory.a libevent.a \
 	libputil.a \
 	libio.a \
@@ -1548,12 +1543,13 @@ test_t_http_cache_SOURCES = test/t_http_cache.cxx \
 	src/http_cache.cxx src/http_cache_rfc.cxx \
 	src/http_cache_info.cxx src/http_cache_document.cxx \
 	src/http_cache_heap.cxx src/http_cache_age.cxx \
-	src/abort_unref.cxx src/cache.cxx \
+	src/abort_unref.cxx \
 	src/header_writer.cxx src/http_util.cxx \
 	src/ExpandableStringList.cxx \
 	src/pexpand.cxx \
 	src/istream_unlock.cxx
 test_t_http_cache_LDADD = $(AM_LDADD) \
+	libeutil.a \
 	libistream.a libevent.a \
 	libraddress.a \
 	libputil.a \
@@ -1678,10 +1674,8 @@ test_t_rewrite_uri_LDADD = $(AM_LDADD) \
 
 test_t_widget_registry_SOURCES = test/t_widget_registry.cxx \
 	src/widget_registry.cxx \
-	src/stock/Item.cxx \
-	src/stock/Stock.cxx \
 	src/transformation.cxx \
-	src/tcache.cxx src/cache.cxx \
+	src/tcache.cxx \
 	src/translate_response.cxx \
 	src/widget_view.cxx \
 	src/abort_unref.cxx \
@@ -1689,6 +1683,7 @@ test_t_widget_registry_SOURCES = test/t_widget_registry.cxx \
 	src/pexpand.cxx \
 	src/http_domain.cxx
 test_t_widget_registry_LDADD = $(AM_LDADD) \
+	libeutil.a \
 	libevent.a \
 	libraddress.a \
 	libputil.a \
@@ -1778,9 +1773,7 @@ test_request_translation_SOURCES = test/request_translation.cxx \
 	src/translate_parser.cxx src/translate_parser.hxx \
 	src/translate_client.cxx src/tstock.cxx \
 	src/translate_response.cxx \
-	src/failure.cxx src/bulldog.c src/balancer.cxx src/cache.cxx \
-	src/stock/Item.cxx \
-	src/stock/Stock.cxx \
+	src/failure.cxx src/bulldog.c src/balancer.cxx \
 	src/abort_unref.cxx \
 	src/widget_view.cxx \
 	src/transformation.cxx \
@@ -1788,6 +1781,7 @@ test_request_translation_SOURCES = test/request_translation.cxx \
 	src/pexpand.cxx \
 	$(STOPWATCH_SRC)
 test_request_translation_LDADD = $(AM_LDADD) \
+	libeutil.a \
 	libraddress.a \
 	libistream.a libevent.a \
 	libio.a \
@@ -1887,11 +1881,12 @@ test_run_processor_SOURCES = test/run_processor.cxx \
 	src/widget_view.cxx \
 	src/transformation.cxx \
 	src/failure.cxx src/bulldog.c \
-	src/balancer.cxx src/http_address.cxx src/cache.cxx \
+	src/balancer.cxx src/http_address.cxx src/\
 	src/ExpandableStringList.cxx \
 	src/pexpand.cxx \
 	$(STOPWATCH_SRC)
 test_run_processor_LDADD = $(AM_LDADD) \
+	libeutil.a \
 	libistream.a libevent.a \
 	libio.a \
 	libnet.a \
@@ -1923,7 +1918,7 @@ test_t_processor_SOURCES = test/t_processor.cxx \
 	src/widget_view.cxx \
 	src/transformation.cxx \
 	src/failure.cxx src/bulldog.c \
-	src/balancer.cxx src/cache.cxx \
+	src/balancer.cxx \
 	src/ExpandableStringList.cxx \
 	src/pexpand.cxx \
 	$(STOPWATCH_SRC)
@@ -1931,6 +1926,7 @@ test_t_processor_LDADD = $(AM_LDADD) \
 	libnet.a \
 	libraddress.a \
 	libputil.a \
+	libeutil.a \
 	libistream.a libevent.a \
 	libshm.a \
 	libspawn.a \
@@ -1949,10 +1945,10 @@ test_run_client_balancer_SOURCES = test/run_client_balancer.cxx \
 	src/balancer.cxx \
 	src/failure.cxx \
 	src/bulldog.c \
-	src/cache.cxx \
 	$(STOPWATCH_SRC)
 test_run_client_balancer_LDADD = $(AM_LDADD) \
 	libputil.a \
+	libeutil.a \
 	libistream.a libpool.a libmemory.a libevent.a \
 	libnet.a \
 	libsystem.a \
@@ -1968,12 +1964,11 @@ if HAVE_LIBNFS
 test_run_nfs_client_SOURCES = test/run_nfs_client.cxx \
 	src/nfs_client.cxx src/istream_nfs.cxx \
 	src/direct.cxx \
-	src/stock/Item.cxx \
-	src/stock/Stock.cxx \
 	src/pipe_stock.cxx \
 	src/static_headers.cxx
 test_run_nfs_client_LDADD = $(AM_LDADD) \
 	libistream.a libpool.a libmemory.a \
+	libeutil.a \
 	libevent.a \
 	libsystem.a \
 	libputil.a \
@@ -2046,7 +2041,6 @@ test_t_ajp_client_LDADD = $(AM_LDADD) \
 test_run_client_SOURCES = test/run_client.cxx \
 	src/thread_socket_filter.cxx \
 	src/thread_pool.cxx src/thread_queue.cxx src/thread_worker.cxx \
-	src/notify.cxx \
 	src/http_client.cxx src/http_body.cxx \
 	src/header_writer.cxx src/header_parser.cxx \
 	src/http_upgrade.cxx src/http_util.cxx \
@@ -2056,13 +2050,12 @@ test_run_client_SOURCES = test/run_client.cxx \
 	src/socket_wrapper.cxx src/buffered_socket.cxx src/filtered_socket.cxx \
 	src/serialize.cxx \
 	src/istream_gb.cxx \
-	src/stock/Item.cxx \
-	src/stock/Stock.cxx \
 	src/pipe_stock.cxx \
 	$(STOPWATCH_SRC) \
 	src/direct.cxx
 test_run_client_LDADD = $(AM_LDADD) \
 	libssl.a \
+	libeutil.a \
 	libistream.a libpool.a libmemory.a libevent.a \
 	libio.a \
 	libnet.a \
@@ -2086,11 +2079,11 @@ test_run_http_cache_SOURCES = test/run_http_cache.cxx \
 	src/regex.cxx \
 	src/address_list.cxx \
 	src/istream_unlock.cxx \
-	src/cache.cxx \
 	src/ExpandableStringList.cxx \
 	src/pexpand.cxx \
 	src/istream_rubber.cxx
 test_run_http_cache_LDADD = $(AM_LDADD) \
+	libeutil.a \
 	libraddress.a \
 	libistream.a libevent.a \
 	libputil.a \
@@ -2106,11 +2099,10 @@ test_run_http_cache_LDADD = $(AM_LDADD) \
 test_run_memcached_client_SOURCES = test/run_memcached_client.cxx \
 	src/memcached/memcached_client.cxx src/memcached/memcached_packet.cxx \
 	src/socket_wrapper.cxx src/buffered_socket.cxx \
-	src/stock/Item.cxx \
-	src/stock/Stock.cxx \
 	src/pipe_stock.cxx \
 	src/direct.cxx
 test_run_memcached_client_LDADD = $(LIBEVENT_LIBS) $(GLIB_LIBS) \
+	libeutil.a \
 	libistream.a libpool.a libmemory.a libevent.a \
 	libputil.a \
 	libnet.a \
@@ -2140,10 +2132,6 @@ test_cleanup_memcached_choice_SOURCES = test/cleanup_memcached_choice.cxx \
 	src/tcp_stock.cxx src/tcp_balancer.cxx \
 	src/socket_wrapper.cxx src/buffered_socket.cxx \
 	src/direct.cxx \
-	src/cache.cxx \
-	src/stock/Item.cxx \
-	src/stock/Stock.cxx \
-	src/stock/MapStock.cxx \
 	src/memcached/memcached_client.cxx src/memcached/memcached_packet.cxx \
 	src/memcached/memcached_stock.cxx \
 	src/http_cache_choice.cxx src/http_cache_rfc.cxx \
@@ -2153,6 +2141,7 @@ test_cleanup_memcached_choice_SOURCES = test/cleanup_memcached_choice.cxx \
 	src/pexpand.cxx \
 	$(STOPWATCH_SRC)
 test_cleanup_memcached_choice_LDADD = $(AM_LDADD) \
+	libeutil.a \
 	libraddress.a \
 	libistream.a libevent.a \
 	libio.a \
@@ -2184,12 +2173,10 @@ test_run_delegate_SOURCES = test/run_delegate.cxx \
 	src/delegate/Stock.cxx \
 	src/delegate/Client.cxx \
 	src/delegate/Glue.cxx \
-	src/stock/Item.cxx \
-	src/stock/Stock.cxx \
-	src/stock/MapStock.cxx \
 	src/ExpandableStringList.cxx \
 	src/pexpand.cxx
 test_run_delegate_LDADD = $(AM_LDADD) \
+	libeutil.a \
 	libraddress.a \
 	libevent.a \
 	libspawn.a \
