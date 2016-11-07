@@ -1162,8 +1162,7 @@ test_t_tcache_SOURCES = test/t_tcache.cxx \
 	src/http_domain.cxx \
 	src/widget_view.cxx \
 	src/ExpandableStringList.cxx \
-	src/pexpand.cxx \
-	src/transformation.cxx
+	src/pexpand.cxx
 test_t_tcache_LDADD = $(AM_LDADD) \
 	libtranslation.a \
 	libeutil.a \
@@ -1385,11 +1384,12 @@ test_t_istream_processor_SOURCES = test/t_istream_processor.cxx \
 	src/widget_session.cxx src/xml_parser.cxx src/widget_class.cxx \
 	src/widget_view.cxx \
 	src/rewrite_uri.cxx src/widget_resolver.cxx \
-	src/bp_global.cxx src/transformation.cxx \
+	src/bp_global.cxx \
 	src/ExpandableStringList.cxx \
 	src/pexpand.cxx \
 	$(T_ISTREAM_FILTER_SRC)
 test_t_istream_processor_LDADD = $(AM_LDADD) \
+	libtranslation.a \
 	libraddress.a \
 	libputil.a \
 	libshm.a \
@@ -1658,12 +1658,13 @@ test_t_rewrite_uri_SOURCES = test/t_rewrite_uri.cxx \
 	src/istream_html_escape.cxx \
 	src/rewrite_uri.cxx src/widget_uri.cxx src/widget.cxx \
 	src/widget_init.cxx src/widget_root.cxx \
-	src/widget_view.cxx src/transformation.cxx \
+	src/widget_view.cxx \
 	src/widget_class.cxx \
 	src/ExpandableStringList.cxx \
 	src/pexpand.cxx \
 	src/args.cxx
 test_t_rewrite_uri_LDADD = $(AM_LDADD) \
+	libtranslation.a \
 	libraddress.a \
 	libputil.a \
 	libistream.a \
@@ -1744,10 +1745,10 @@ test_t_widget_http_SOURCES = test/t_widget_http.cxx \
 	src/http_string.cxx src/http_util.cxx \
 	src/http_upgrade.cxx \
 	src/istream_escape.cxx \
-	src/transformation.cxx \
 	src/ExpandableStringList.cxx \
 	src/pexpand.cxx
 test_t_widget_http_LDADD = $(AM_LDADD) \
+	libtranslation.a \
 	libistream.a \
 	libraddress.a \
 	libputil.a \
@@ -1771,18 +1772,14 @@ test_format_http_date_LDADD = $(AM_LDADD) libutil.a
 test_request_translation_SOURCES = test/request_translation.cxx \
 	src/socket_wrapper.cxx src/buffered_socket.cxx \
 	src/direct.cxx \
-	src/translate_reader.cxx src/translate_reader.hxx \
-	src/translate_parser.cxx src/translate_parser.hxx \
-	src/translate_client.cxx src/tstock.cxx \
-	src/translate_response.cxx \
 	src/failure.cxx src/bulldog.c src/balancer.cxx \
 	src/abort_unref.cxx \
 	src/widget_view.cxx \
-	src/transformation.cxx \
 	src/ExpandableStringList.cxx \
 	src/pexpand.cxx \
 	$(STOPWATCH_SRC)
 test_request_translation_LDADD = $(AM_LDADD) \
+	libtranslation.a \
 	libeutil.a \
 	libraddress.a \
 	libistream.a libevent.a \
@@ -1881,13 +1878,13 @@ test_run_processor_SOURCES = test/run_processor.cxx \
 	src/header_parser.cxx \
 	src/widget_request.cxx \
 	src/widget_view.cxx \
-	src/transformation.cxx \
 	src/failure.cxx src/bulldog.c \
 	src/balancer.cxx src/http_address.cxx src/\
 	src/ExpandableStringList.cxx \
 	src/pexpand.cxx \
 	$(STOPWATCH_SRC)
 test_run_processor_LDADD = $(AM_LDADD) \
+	libtranslation.a \
 	libeutil.a \
 	libistream.a libevent.a \
 	libio.a \
@@ -1918,13 +1915,13 @@ test_t_processor_SOURCES = test/t_processor.cxx \
 	src/header_parser.cxx \
 	src/widget_request.cxx \
 	src/widget_view.cxx \
-	src/transformation.cxx \
 	src/failure.cxx src/bulldog.c \
 	src/balancer.cxx \
 	src/ExpandableStringList.cxx \
 	src/pexpand.cxx \
 	$(STOPWATCH_SRC)
 test_t_processor_LDADD = $(AM_LDADD) \
+	libtranslation.a \
 	libnet.a \
 	libraddress.a \
 	libputil.a \
