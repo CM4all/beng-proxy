@@ -11,7 +11,7 @@
 
 #include <stddef.h>
 
-struct pool;
+class AllocatorPtr;
 
 /**
  * An unordered set of strings.
@@ -50,15 +50,16 @@ public:
      * already exists.
      *
      * @param p the string value which must be allocated by the caller
-     * @param pool a pool that is used to allocate the node (not the value)
+     * @param alloc an allocator that is used to allocate the node
+     * (not the value)
      */
-    void Add(struct pool &pool, const char *p);
+    void Add(AllocatorPtr alloc, const char *p);
 
     /**
      * Copy all strings from one set to this, creating duplicates of
-     * all values from the specified pool.
+     * all values from the specified allocator.
      */
-    void CopyFrom(struct pool &pool, const StringSet &s);
+    void CopyFrom(AllocatorPtr alloc, const StringSet &s);
 
     class const_iterator {
         List::const_iterator i;

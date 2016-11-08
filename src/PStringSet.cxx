@@ -3,19 +3,19 @@
  */
 
 #include "util/StringSet.hxx"
-#include "pool.hxx"
+#include "AllocatorPtr.hxx"
 
 void
-StringSet::Add(struct pool &pool, const char *p)
+StringSet::Add(AllocatorPtr alloc, const char *p)
 {
-    auto *item = NewFromPool<Item>(pool);
+    auto *item = alloc.New<Item>();
     item->value = p;
     list.push_front(*item);
 }
 
 void
-StringSet::CopyFrom(struct pool &pool, const StringSet &s)
+StringSet::CopyFrom(AllocatorPtr alloc, const StringSet &s)
 {
     for (auto i : s)
-        Add(pool, p_strdup(&pool, i));
+        Add(alloc, alloc.Dup(i));
 }
