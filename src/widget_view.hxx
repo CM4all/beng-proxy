@@ -14,6 +14,7 @@
 
 struct pool;
 struct Transformation;
+class AllocatorPtr;
 
 struct WidgetView {
     WidgetView *next;
@@ -59,12 +60,12 @@ struct WidgetView {
 
     void Init(const char *_name);
 
-    void CopyFrom(struct pool &pool, const WidgetView &src);
+    void CopyFrom(AllocatorPtr alloc, const WidgetView &src);
 
-    WidgetView *Clone(struct pool &pool) const;
+    WidgetView *Clone(AllocatorPtr alloc) const;
 
-    void CopyChainFrom(struct pool &pool, const WidgetView &src);
-    WidgetView *CloneChain(struct pool &pool) const;
+    void CopyChainFrom(AllocatorPtr alloc, const WidgetView &src);
+    WidgetView *CloneChain(AllocatorPtr alloc) const;
 
     /**
      * Copy the specified address into the view, if it does not have an
@@ -73,7 +74,7 @@ struct WidgetView {
      * @return true if the address was inherited, false if the view
      * already had an address or if the specified address is empty
      */
-    bool InheritAddress(struct pool &pool,
+    bool InheritAddress(AllocatorPtr alloc,
                         const ResourceAddress &src);
 
 
@@ -85,7 +86,7 @@ struct WidgetView {
      * view already had an address or if the source view's address is
      * empty
      */
-    bool InheritFrom(struct pool &pool, const WidgetView &src);
+    bool InheritFrom(AllocatorPtr alloc, const WidgetView &src);
 
     /**
      * Does the effective view enable the HTML processor?

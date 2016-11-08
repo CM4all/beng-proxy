@@ -48,50 +48,50 @@ WidgetView::Init(const char *_name)
 }
 
 void
-WidgetView::CopyFrom(struct pool &pool, const WidgetView &src)
+WidgetView::CopyFrom(AllocatorPtr alloc, const WidgetView &src)
 {
-    Init(p_strdup_checked(&pool, src.name));
+    Init(alloc.CheckDup(src.name));
 
-    address.CopyFrom(pool, src.address);
+    address.CopyFrom(alloc, src.address);
     filter_4xx = src.filter_4xx;
     inherited = src.inherited;
-    transformation = Transformation::DupChain(pool, src.transformation);
+    transformation = Transformation::DupChain(alloc, src.transformation);
     request_header_forward = src.request_header_forward;
     response_header_forward = src.response_header_forward;
 }
 
 WidgetView *
-WidgetView::Clone(struct pool &pool) const
+WidgetView::Clone(AllocatorPtr alloc) const
 {
-    auto dest = NewFromPool<WidgetView>(pool);
-    dest->CopyFrom(pool, *this);
+    auto dest = alloc.New<WidgetView>();
+    dest->CopyFrom(alloc, *this);
     return dest;
 }
 
 void
-WidgetView::CopyChainFrom(struct pool &pool, const WidgetView &_src)
+WidgetView::CopyChainFrom(AllocatorPtr alloc, const WidgetView &_src)
 {
-    CopyFrom(pool, _src);
+    CopyFrom(alloc, _src);
 
     next = nullptr;
     WidgetView **tail_p = &next;
 
     for (const WidgetView *src = _src.next; src != nullptr; src = src->next) {
-        WidgetView *p = src->Clone(pool);
+        WidgetView *p = src->Clone(alloc);
         *tail_p = p;
         tail_p = &p->next;
     }
 }
 
 WidgetView *
-WidgetView::CloneChain(struct pool &pool) const
+WidgetView::CloneChain(AllocatorPtr alloc) const
 {
     assert(name == nullptr);
 
     WidgetView *dest = nullptr, **tail_p = &dest;
 
     for (const WidgetView *src = this; src != nullptr; src = src->next) {
-        WidgetView *p = src->Clone(pool);
+        WidgetView *p = src->Clone(alloc);
         *tail_p = p;
         tail_p = &p->next;
     }
@@ -101,22 +101,22 @@ WidgetView::CloneChain(struct pool &pool) const
 }
 
 bool
-WidgetView::InheritAddress(struct pool &pool,
+WidgetView::InheritAddress(AllocatorPtr alloc,
                            const ResourceAddress &src)
 {
     if (address.type != ResourceAddress::Type::NONE ||
         src.type == ResourceAddress::Type::NONE)
         return false;
 
-    address.CopyFrom(pool, src);
+    address.CopyFrom(alloc, src);
     inherited = true;
     return true;
 }
 
 bool
-WidgetView::InheritFrom(struct pool &pool, const WidgetView &src)
+WidgetView::InheritFrom(AllocatorPtr alloc, const WidgetView &src)
 {
-    if (InheritAddress(pool, src.address)) {
+    if (InheritAddress(alloc, src.address)) {
         filter_4xx = src.filter_4xx;
 
         request_header_forward = src.request_header_forward;
