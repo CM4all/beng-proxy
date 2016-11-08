@@ -53,6 +53,10 @@ public:
     StringView Dup(StringView src);
     const char *DupZ(StringView src);
 
+    const char *DupToLower(StringView src) {
+        return p_strdup_lower(pool, src);
+    }
+
 private:
     template<typename... Args>
     static size_t ConcatLength(const char *s, Args... args) {
