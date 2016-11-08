@@ -25,7 +25,6 @@
 #include "util/CharUtil.hxx"
 #include "util/RuntimeError.hxx"
 
-#include <daemon/log.h>
 #include <http/header.h>
 
 #include <assert.h>
@@ -1141,8 +1140,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         return;
 
     case TRANSLATE_DOMAIN:
-        daemon_log(2, "deprecated DOMAIN packet\n");
-        return;
+        throw std::runtime_error("deprecated DOMAIN packet");
 
     case TRANSLATE_CONTAINER:
         if (transformation == nullptr ||
