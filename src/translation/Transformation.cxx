@@ -31,9 +31,9 @@ Transformation::IsContainer() const
 }
 
 Transformation *
-Transformation::Dup(struct pool *pool) const
+Transformation::Dup(AllocatorPtr alloc) const
 {
-    Transformation *dest = NewFromPool<Transformation>(*pool);
+    Transformation *dest = alloc.New<Transformation>();
 
     dest->type = type;
     switch (dest->type) {
@@ -49,7 +49,7 @@ Transformation::Dup(struct pool *pool) const
         break;
 
     case Type::FILTER:
-        dest->u.filter.address.CopyFrom(*pool, u.filter.address);
+        dest->u.filter.address.CopyFrom(alloc, u.filter.address);
         dest->u.filter.reveal_user = u.filter.reveal_user;
         break;
     }
@@ -59,12 +59,12 @@ Transformation::Dup(struct pool *pool) const
 }
 
 Transformation *
-Transformation::DupChain(struct pool *pool, const Transformation *src)
+Transformation::DupChain(AllocatorPtr alloc, const Transformation *src)
 {
     Transformation *dest = nullptr, **tail_p = &dest;
 
     for (; src != nullptr; src = src->next) {
-        Transformation *p = src->Dup(pool);
+        Transformation *p = src->Dup(alloc);
         *tail_p = p;
         tail_p = &p->next;
     }

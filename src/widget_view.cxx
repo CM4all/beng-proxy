@@ -55,7 +55,7 @@ WidgetView::CopyFrom(struct pool &pool, const WidgetView &src)
     address.CopyFrom(pool, src.address);
     filter_4xx = src.filter_4xx;
     inherited = src.inherited;
-    transformation = Transformation::DupChain(&pool, src.transformation);
+    transformation = Transformation::DupChain(pool, src.transformation);
     request_header_forward = src.request_header_forward;
     response_header_forward = src.response_header_forward;
 }

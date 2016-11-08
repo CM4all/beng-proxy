@@ -14,7 +14,7 @@
 #include <assert.h>
 
 struct pool;
-class Error;
+class AllocatorPtr;
 
 struct Transformation {
     Transformation *next;
@@ -77,10 +77,10 @@ struct Transformation {
     bool IsChainExpandable() const;
 
     gcc_malloc
-    Transformation *Dup(struct pool *pool) const;
+    Transformation *Dup(AllocatorPtr alloc) const;
 
     gcc_malloc
-    static Transformation *DupChain(struct pool *pool,
+    static Transformation *DupChain(AllocatorPtr alloc,
                                     const Transformation *src);
 
     /**
