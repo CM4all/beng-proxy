@@ -5,15 +5,23 @@
  */
 
 #include "Response.hxx"
+#if TRANSLATION_ENABLE_WIDGET
 #include "widget_view.hxx"
+#endif
+#if TRANSLATION_ENABLE_CACHE
 #include "uri/uri_base.hxx"
 #include "puri_base.hxx"
 #include "puri_escape.hxx"
+#include "HttpMessageResponse.hxx"
+#endif
 #include "AllocatorPtr.hxx"
+#if TRANSLATION_ENABLE_EXPAND
 #include "regex.hxx"
 #include "pexpand.hxx"
+#endif
+#if TRANSLATION_ENABLE_SESSION
 #include "http_address.hxx"
-#include "HttpMessageResponse.hxx"
+#endif
 #include "util/StringView.hxx"
 
 void
@@ -22,9 +30,14 @@ TranslateResponse::Clear()
     protocol_version = 0;
     max_age = std::chrono::seconds(-1);
     expires_relative = std::chrono::seconds::zero();
+#if TRANSLATION_ENABLE_HTTP
     status = (http_status_t)0;
+#endif
+#if TRANSLATION_ENABLE_RADDRESS
     address.Clear();
+#endif
 
+#if TRANSLATION_ENABLE_HTTP
     request_header_forward =
         (struct header_forward_settings){
         .modes = {
@@ -54,10 +67,14 @@ TranslateResponse::Clear()
             [HEADER_GROUP_LINK] = HEADER_FORWARD_YES,
         },
     };
+#endif
 
     base = nullptr;
+#if TRANSLATION_ENABLE_EXPAND
     regex = inverse_regex = nullptr;
+#endif
     site = expand_site = nullptr;
+#if TRANSLATION_ENABLE_HTTP
     document_root = expand_document_root = nullptr;
 
     redirect = expand_redirect = nullptr;
@@ -73,39 +90,69 @@ TranslateResponse::Clear()
     untrusted_prefix = nullptr;
     untrusted_site_suffix = nullptr;
     untrusted_raw_site_suffix = nullptr;
+#endif
 
     test_path = expand_test_path = nullptr;
+#if TRANSLATION_ENABLE_RADDRESS
     unsafe_base = false;
     easy_base = false;
+#endif
+#if TRANSLATION_ENABLE_EXPAND
     regex_tail = regex_unescape = inverse_regex_unescape = false;
+#endif
+#if TRANSLATION_ENABLE_WIDGET
     direct_addressing = false;
+#endif
+#if TRANSLATION_ENABLE_SESSION
     stateful = false;
     discard_session = false;
     secure_cookie = false;
+#endif
+#if TRANSLATION_ENABLE_TRANSFORMATION
     filter_4xx = false;
+#endif
     previous = false;
     transparent = false;
+#if TRANSLATION_ENABLE_HTTP
     redirect_query_string = false;
+#endif
+#if TRANSLATION_ENABLE_RADDRESS
     auto_base = false;
+#endif
+#if TRANSLATION_ENABLE_WIDGET
     widget_info = false;
     anchor_absolute = false;
+#endif
+#if TRANSLATION_ENABLE_HTTP
     dump_headers = false;
+#endif
+#if TRANSLATION_ENABLE_EXPAND
     regex_on_host_uri = false;
     regex_on_user_uri = false;
+#endif
     auto_deflate = false;
     auto_gzip = false;
+#if TRANSLATION_ENABLE_SESSION
     realm_from_auth_base = false;
 
     session = nullptr;
+#endif
+#if TRANSLATION_ENABLE_HTTP
     internal_redirect = nullptr;
+#endif
+#if TRANSLATION_ENABLE_SESSION
     check = nullptr;
     auth = nullptr;
     auth_file = expand_auth_file = nullptr;
     append_auth = nullptr;
     expand_append_auth = nullptr;
+#endif
 
+#if TRANSLATION_ENABLE_HTTP
     want_full_uri = nullptr;
+#endif
 
+#if TRANSLATION_ENABLE_SESSION
     session_site = nullptr;
     user = nullptr;
     user_max_age = std::chrono::seconds(-1);
@@ -119,23 +166,32 @@ TranslateResponse::Clear()
     authentication_info = nullptr;
 
     cookie_domain = cookie_host = expand_cookie_host = cookie_path = nullptr;
+#endif
 
+#if TRANSLATION_ENABLE_HTTP
     request_headers.Clear();
     expand_request_headers.Clear();
     response_headers.Clear();
     expand_response_headers.Clear();
+#endif
 
+#if TRANSLATION_ENABLE_WIDGET
     views = nullptr;
     widget_group = nullptr;
     container_groups.Init();
+#endif
 
+#if TRANSLATION_ENABLE_CACHE
     vary = nullptr;
     invalidate = nullptr;
+#endif
     want = nullptr;
+#if TRANSLATION_ENABLE_RADDRESS
     file_not_found = nullptr;
     content_type = nullptr;
     enotdir = nullptr;
     directory_index = nullptr;
+#endif
     error_document = nullptr;
     probe_path_suffixes = nullptr;
     probe_suffixes.clear();
@@ -166,16 +222,23 @@ TranslateResponse::CopyFrom(AllocatorPtr alloc, const TranslateResponse &src)
 
     expires_relative = src.expires_relative;
 
+#if TRANSLATION_ENABLE_HTTP
     status = src.status;
+#endif
 
+#if TRANSLATION_ENABLE_HTTP
     request_header_forward = src.request_header_forward;
     response_header_forward = src.response_header_forward;
+#endif
 
     base = alloc.CheckDup(src.base);
+#if TRANSLATION_ENABLE_EXPAND
     regex = alloc.CheckDup(src.regex);
     inverse_regex = alloc.CheckDup(src.inverse_regex);
+#endif
     site = alloc.CheckDup(src.site);
     expand_site = alloc.CheckDup(src.expand_site);
+#if TRANSLATION_ENABLE_RADDRESS
     document_root = alloc.CheckDup(src.document_root);
     expand_document_root = alloc.CheckDup(src.expand_document_root);
     redirect = alloc.CheckDup(src.redirect);
@@ -192,46 +255,80 @@ TranslateResponse::CopyFrom(AllocatorPtr alloc, const TranslateResponse &src)
         alloc.CheckDup(src.untrusted_site_suffix);
     untrusted_raw_site_suffix =
         alloc.CheckDup(src.untrusted_raw_site_suffix);
+#endif
+#if TRANSLATION_ENABLE_RADDRESS
     unsafe_base = src.unsafe_base;
     easy_base = src.easy_base;
+#endif
+#if TRANSLATION_ENABLE_EXPAND
     regex_tail = src.regex_tail;
     regex_unescape = src.regex_unescape;
     inverse_regex_unescape = src.inverse_regex_unescape;
+#endif
+#if TRANSLATION_ENABLE_WIDGET
     direct_addressing = src.direct_addressing;
+#endif
+#if TRANSLATION_ENABLE_SESSION
     stateful = src.stateful;
     discard_session = src.discard_session;
     secure_cookie = src.secure_cookie;
+#endif
+#if TRANSLATION_ENABLE_TRANSFORMATION
     filter_4xx = src.filter_4xx;
+#endif
     previous = src.previous;
     transparent = src.transparent;
+#if TRANSLATION_ENABLE_HTTP
     redirect_query_string = src.redirect_query_string;
+#endif
+#if TRANSLATION_ENABLE_RADDRESS
     auto_base = src.auto_base;
+#endif
+#if TRANSLATION_ENABLE_WIDGET
     widget_info = src.widget_info;
     widget_group = alloc.CheckDup(src.widget_group);
+#endif
     test_path = alloc.CheckDup(src.test_path);
     expand_test_path = alloc.CheckDup(src.expand_test_path);
+#if TRANSLATION_ENABLE_SESSION
     auth_file = alloc.CheckDup(src.auth_file);
     expand_auth_file = alloc.CheckDup(src.expand_auth_file);
     append_auth = alloc.Dup(src.append_auth);
     expand_append_auth = alloc.CheckDup(src.expand_append_auth);
+#endif
 
+#if TRANSLATION_ENABLE_WIDGET
     container_groups.Init();
     container_groups.CopyFrom(alloc, src.container_groups);
+#endif
 
+#if TRANSLATION_ENABLE_WIDGET
     anchor_absolute = src.anchor_absolute;
+#endif
+#if TRANSLATION_ENABLE_HTTP
     dump_headers = src.dump_headers;
+#endif
+#if TRANSLATION_ENABLE_EXPAND
     regex_on_host_uri = src.regex_on_host_uri;
     regex_on_user_uri = src.regex_on_user_uri;
+#endif
     auto_deflate = src.auto_deflate;
     auto_gzip = src.auto_gzip;
+#if TRANSLATION_ENABLE_SESSION
     realm_from_auth_base = src.realm_from_auth_base;
     session = nullptr;
+#endif
 
+#if TRANSLATION_ENABLE_HTTP
     internal_redirect = alloc.Dup(src.internal_redirect);
+#endif
+#if TRANSLATION_ENABLE_SESSION
     check = alloc.Dup(src.check);
     auth = alloc.Dup(src.auth);
     want_full_uri = alloc.Dup(src.want_full_uri);
+#endif
 
+#if TRANSLATION_ENABLE_SESSION
     /* The "user" attribute must not be present in cached responses,
        because they belong to only that one session.  For the same
        reason, we won't copy the user_max_age attribute. */
@@ -252,23 +349,32 @@ TranslateResponse::CopyFrom(AllocatorPtr alloc, const TranslateResponse &src)
     cookie_host = alloc.CheckDup(src.cookie_host);
     expand_cookie_host = alloc.CheckDup(src.expand_cookie_host);
     cookie_path = alloc.CheckDup(src.cookie_path);
+#endif
 
+#if TRANSLATION_ENABLE_HTTP
     request_headers = KeyValueList(alloc, src.request_headers);
     expand_request_headers = KeyValueList(alloc, src.expand_request_headers);
     response_headers = KeyValueList(alloc, src.response_headers);
     expand_response_headers = KeyValueList(alloc, src.expand_response_headers);
+#endif
 
+#if TRANSLATION_ENABLE_WIDGET
     views = src.views != nullptr
         ? src.views->CloneChain(alloc)
         : nullptr;
+#endif
 
+#if TRANSLATION_ENABLE_CACHE
     vary = alloc.Dup(src.vary);
     invalidate = alloc.Dup(src.invalidate);
+#endif
     want = alloc.Dup(src.want);
+#if TRANSLATION_ENABLE_RADDRESS
     file_not_found = alloc.Dup(src.file_not_found);
     content_type = alloc.CheckDup(src.content_type);
     enotdir = alloc.Dup(src.enotdir);
     directory_index = alloc.Dup(src.directory_index);
+#endif
     error_document = alloc.Dup(src.error_document);
     probe_path_suffixes = alloc.Dup(src.probe_path_suffixes);
     CopyArray(alloc, probe_suffixes, src.probe_suffixes);
@@ -278,6 +384,8 @@ TranslateResponse::CopyFrom(AllocatorPtr alloc, const TranslateResponse &src)
     validate_mtime.mtime = src.validate_mtime.mtime;
     validate_mtime.path = alloc.CheckDup(src.validate_mtime.path);
 }
+
+#if TRANSLATION_ENABLE_CACHE
 
 bool
 TranslateResponse::CacheStore(AllocatorPtr alloc, const TranslateResponse &src,
@@ -363,6 +471,10 @@ TranslateResponse::CacheLoad(AllocatorPtr alloc, const TranslateResponse &src,
         }
     }
 }
+
+#endif
+
+#if TRANSLATION_ENABLE_EXPAND
 
 UniqueRegex
 TranslateResponse::CompileRegex() const
@@ -463,3 +575,5 @@ TranslateResponse::Expand(struct pool *pool, const MatchInfo &match_info)
 
     widget_view_expand_all(pool, views, match_info);
 }
+
+#endif

@@ -7,12 +7,20 @@
 #ifndef BENG_PROXY_TRANSLATE_RESPONSE_HXX
 #define BENG_PROXY_TRANSLATE_RESPONSE_HXX
 
+#include "Features.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/TrivialArray.hxx"
+#if TRANSLATION_ENABLE_HTTP
 #include "util/kvlist.hxx"
+#include "header_forward.hxx"
+#endif
+#if TRANSLATION_ENABLE_WIDGET
 #include "util/StringSet.hxx"
+#endif
+#if TRANSLATION_ENABLE_RADDRESS
 #include "ResourceAddress.hxx"
 #include "header_forward.hxx"
+#endif
 
 #include <http/status.h>
 
@@ -39,10 +47,15 @@ struct TranslateResponse {
      */
     std::chrono::seconds expires_relative;
 
+#if TRANSLATION_ENABLE_HTTP
     http_status_t status;
+#endif
 
+#if TRANSLATION_ENABLE_RADDRESS
     ResourceAddress address;
+#endif
 
+#if TRANSLATION_ENABLE_HTTP
     /**
      * Which request headers are forwarded?
      */
@@ -52,14 +65,19 @@ struct TranslateResponse {
      * Which response headers are forwarded?
      */
     struct header_forward_settings response_header_forward;
+#endif
 
     const char *base;
 
+#if TRANSLATION_ENABLE_CACHE
     const char *regex;
     const char *inverse_regex;
+#endif
 
     const char *site;
     const char *expand_site;
+
+#if TRANSLATION_ENABLE_HTTP
     const char *document_root;
 
     /**
@@ -83,6 +101,7 @@ struct TranslateResponse {
     const char *untrusted_prefix;
     const char *untrusted_site_suffix;
     const char *untrusted_raw_site_suffix;
+#endif
 
     /**
      * @see #TRANSLATE_TEST_PATH
@@ -94,36 +113,55 @@ struct TranslateResponse {
      */
     const char *expand_test_path;
 
+#if TRANSLATION_ENABLE_RADDRESS
     bool unsafe_base;
 
     bool easy_base;
+#endif
 
+#if TRANSLATION_ENABLE_CACHE
     bool regex_tail, regex_unescape, inverse_regex_unescape;
+#endif
 
+#if TRANSLATION_ENABLE_WIDGET
     bool direct_addressing;
+#endif
 
+#if TRANSLATION_ENABLE_SESSION
     bool stateful;
 
     bool discard_session;
 
     bool secure_cookie;
+#endif
 
+#if TRANSLATION_ENABLE_TRANSFORMATION
     bool filter_4xx;
+#endif
 
     bool previous;
 
     bool transparent;
 
+#if TRANSLATION_ENABLE_HTTP
     bool redirect_query_string;
+#endif
 
+#if TRANSLATION_ENABLE_RADDRESS
     bool auto_base;
+#endif
 
+#if TRANSLATION_ENABLE_WIDGET
     bool widget_info;
 
     bool anchor_absolute;
+#endif
 
+#if TRANSLATION_ENABLE_HTTP
     bool dump_headers;
+#endif
 
+#if TRANSLATION_ENABLE_CACHE
     /**
      * @see #TRANSLATE_REGEX_ON_HOST_URI
      */
@@ -133,6 +171,7 @@ struct TranslateResponse {
      * @see #TRANSLATE_REGEX_ON_USER_URI
      */
     bool regex_on_user_uri;
+#endif
 
     /**
      * @see #TRANSLATE_AUTO_DEFLATE
@@ -144,20 +183,25 @@ struct TranslateResponse {
      */
     bool auto_gzip;
 
+#if TRANSLATION_ENABLE_SESSION
     /**
      * @see #TRANSLATE_REALM_FROM_AUTH_BASE
      */
     bool realm_from_auth_base;
 
     ConstBuffer<void> session;
+#endif
 
+#if TRANSLATION_ENABLE_HTTP
     /**
      * The payload of the #TRANSLATE_INTERNAL_REDIRECT packet.  If
      * ConstBuffer::IsNull(), then no #TRANSLATE_INTERNAL_REDIRECT
      * packet was received.
      */
     ConstBuffer<void> internal_redirect;
+#endif
 
+#if TRANSLATION_ENABLE_SESSION
     /**
      * The payload of the CHECK packet.  If ConstBuffer::IsNull(),
      * then no CHECK packet was received.
@@ -184,14 +228,18 @@ struct TranslateResponse {
      * @see #TRANSLATE_EXPAND_APPEND_AUTH
      */
     const char *expand_append_auth;
+#endif
 
+#if TRANSLATION_ENABLE_HTTP
     /**
      * The payload of the #TRANSLATE_WANT_FULL_URI packet.  If
      * ConstBuffer::IsNull(), then no #TRANSLATE_WANT_FULL_URI packet
      * was received.
      */
     ConstBuffer<void> want_full_uri;
+#endif
 
+#if TRANSLATION_ENABLE_SESSION
     const char *user;
     std::chrono::seconds user_max_age;
 
@@ -217,13 +265,17 @@ struct TranslateResponse {
     const char *cookie_domain;
     const char *cookie_host, *expand_cookie_host;
     const char *cookie_path;
+#endif
 
+#if TRANSLATION_ENABLE_HTTP
     KeyValueList request_headers;
     KeyValueList expand_request_headers;
 
     KeyValueList response_headers;
     KeyValueList expand_response_headers;
+#endif
 
+#if TRANSLATION_ENABLE_WIDGET
     WidgetView *views;
 
     /**
@@ -235,11 +287,15 @@ struct TranslateResponse {
      * From #TRANSLATE_GROUP_CONTAINER.
      */
     StringSet container_groups;
+#endif
 
+#if TRANSLATION_ENABLE_CACHE
     ConstBuffer<uint16_t> vary;
     ConstBuffer<uint16_t> invalidate;
+#endif
     ConstBuffer<uint16_t> want;
 
+#if TRANSLATION_ENABLE_RADDRESS
     ConstBuffer<void> file_not_found;
 
     /**
@@ -251,6 +307,7 @@ struct TranslateResponse {
     ConstBuffer<void> enotdir;
 
     ConstBuffer<void> directory_index;
+#endif
 
     ConstBuffer<void> error_document;
 
@@ -276,11 +333,14 @@ struct TranslateResponse {
         return want.Contains(cmd);
     }
 
+#if TRANSLATION_ENABLE_CACHE
     gcc_pure
     bool VaryContains(uint16_t cmd) const {
         return vary.Contains(cmd);
     }
+#endif
 
+#if TRANSLATION_ENABLE_SESSION
     gcc_pure
     bool HasAuth() const {
         return !auth.IsNull() ||
@@ -292,9 +352,11 @@ struct TranslateResponse {
             untrusted_site_suffix != nullptr ||
             untrusted_raw_site_suffix != nullptr;
     }
+#endif
 
     void CopyFrom(AllocatorPtr alloc, const TranslateResponse &src);
 
+#if TRANSLATION_ENABLE_CACHE
     /**
      * Copy data from #src for storing in the translation cache.
      *
@@ -309,6 +371,7 @@ struct TranslateResponse {
      */
     void CacheLoad(AllocatorPtr alloc, const TranslateResponse &src,
                    const char *uri);
+#endif
 
     /**
      * Throws std::runtime_error on error.
@@ -316,6 +379,7 @@ struct TranslateResponse {
     UniqueRegex CompileRegex() const;
     UniqueRegex CompileInverseRegex() const;
 
+#if TRANSLATION_ENABLE_EXPAND
     /**
      * Does any response need to be expanded with
      * translate_response_expand()?
@@ -330,6 +394,7 @@ struct TranslateResponse {
      * Throws std::runtime_error on error.
      */
     void Expand(struct pool *pool, const MatchInfo &match_info);
+#endif
 };
 
 #endif

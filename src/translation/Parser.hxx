@@ -40,7 +40,9 @@ class TranslateParser {
 
         explicit FromRequest(const TranslateRequest &r)
             :uri(r.uri),
+#if TRANSLATION_ENABLE_HTTP
              want_full_uri(!r.want_full_uri.IsNull()),
+#endif
              want(!r.want.IsEmpty()),
              content_type_lookup(!r.content_type_lookup.IsNull()) {}
     } from_request;
@@ -55,8 +57,10 @@ class TranslateParser {
 
     enum beng_translation_command previous_command;
 
+#if TRANSLATION_ENABLE_RADDRESS
     /** the current resource address being edited */
     ResourceAddress *resource_address;
+#endif
 
     /** the current JailCGI parameters being edited */
     JailParams *jail;
@@ -70,6 +74,7 @@ class TranslateParser {
     /** the tail of the current mount_list */
     MountList **mount_list;
 
+#if TRANSLATION_ENABLE_RADDRESS
     /** the current local file address being edited */
     FileAddress *file_address;
 
@@ -87,6 +92,7 @@ class TranslateParser {
 
     /** the current address list being edited */
     AddressList *address_list;
+#endif
 
     ExpandableStringList::Builder env_builder, args_builder, params_builder;
 
@@ -132,8 +138,12 @@ public:
 
 private:
     void SetChildOptions(ChildOptions &_child_options);
-    void SetCgiAddress(ResourceAddress::Type type, const char *path);
 
+#if TRANSLATION_ENABLE_RADDRESS
+    void SetCgiAddress(ResourceAddress::Type type, const char *path);
+#endif
+
+#if TRANSLATION_ENABLE_WIDGET
     /**
      * Throws std::runtime_error on error.
      */
@@ -146,9 +156,12 @@ private:
      * Throws std::runtime_error on error.
      */
     void FinishView();
+#endif
 
+#if TRANSLATION_ENABLE_TRANSFORMATION
     Transformation *AddTransformation();
     ResourceAddress *AddFilter();
+#endif
 
     void HandleBindMount(const char *payload, size_t payload_length,
                          bool expand, bool writable);
@@ -157,7 +170,9 @@ private:
 
     void HandleWant(const uint16_t *payload, size_t payload_length);
 
+#if TRANSLATION_ENABLE_RADDRESS
     void HandleContentTypeLookup(ConstBuffer<void> payload);
+#endif
 
     void HandleRegularPacket(enum beng_translation_command command,
                              const void *const _payload, size_t payload_length);

@@ -5,6 +5,7 @@
 #ifndef EXPANDABLE_STRING_LIST_HXX
 #define EXPANDABLE_STRING_LIST_HXX
 
+#include "translation/Features.hxx"
 #include "util/ShallowCopy.hxx"
 
 #include <inline/compiler.h>
@@ -22,10 +23,15 @@ class ExpandableStringList final {
 
         const char *value;
 
+#if TRANSLATION_ENABLE_EXPAND
         bool expandable;
 
         Item(const char *_value, bool _expandable)
             :value(_value), expandable(_expandable) {}
+#else
+        Item(const char *_value, bool)
+            :value(_value) {}
+#endif
     };
 
     Item *head = nullptr;
@@ -76,6 +82,7 @@ public:
         return {nullptr};
     }
 
+#if TRANSLATION_ENABLE_EXPAND
     gcc_pure
     bool IsExpandable() const;
 
@@ -83,6 +90,7 @@ public:
      * Throws std::runtime_error on error.
      */
     void Expand(struct pool *pool, const MatchInfo &match_info);
+#endif
 
     class Builder final {
         ExpandableStringList *list;
@@ -104,6 +112,7 @@ public:
          */
         void Add(AllocatorPtr alloc, const char *value, bool expandable);
 
+#if TRANSLATION_ENABLE_EXPAND
         bool CanSetExpand() const {
             return last != nullptr && !last->expandable;
         }
@@ -112,6 +121,7 @@ public:
             last->value = value;
             last->expandable = true;
         }
+#endif
     };
 
     ConstBuffer<const char *> ToArray(AllocatorPtr alloc) const;

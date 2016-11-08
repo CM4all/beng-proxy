@@ -817,6 +817,7 @@ libraddress_a_SOURCES = \
 libtranslation_a_SOURCES = \
 	include/beng-proxy/headers.h \
 	include/beng-proxy/translation.h \
+	src/translation/Features.hxx \
 	src/translation/Cache.cxx src/translation/Cache.hxx \
 	src/translation/Stock.cxx src/translation/Stock.hxx \
 	src/translation/PReader.cxx src/translation/PReader.hxx \

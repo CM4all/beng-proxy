@@ -7,7 +7,10 @@
 #ifndef BENG_PROXY_TRANSLATE_REQUEST_HXX
 #define BENG_PROXY_TRANSLATE_REQUEST_HXX
 
+#include "Features.hxx"
+#if TRANSLATION_ENABLE_HTTP
 #include "net/SocketAddress.hxx"
+#endif
 #include "util/ConstBuffer.hxx"
 
 #include <http/status.h>
@@ -18,7 +21,9 @@
 struct TranslateRequest {
     const char *listener_tag;
 
+#if TRANSLATION_ENABLE_HTTP
     SocketAddress local_address;
+#endif
 
     const char *remote_host;
     const char *host;
@@ -35,7 +40,11 @@ struct TranslateRequest {
     const char *args;
     const char *query_string;
     const char *widget_type;
+
+#if TRANSLATION_ENABLE_SESSION
     ConstBuffer<void> session;
+#endif
+
     const char *param;
 
     /**
@@ -45,6 +54,7 @@ struct TranslateRequest {
      */
     ConstBuffer<void> internal_redirect;
 
+#if TRANSLATION_ENABLE_SESSION
     /**
      * The payload of the CHECK packet.  If ConstBuffer::IsNull(),
      * then no CHECK packet will be sent.
@@ -56,13 +66,16 @@ struct TranslateRequest {
      * then no AUTH packet will be sent.
      */
     ConstBuffer<void> auth;
+#endif
 
+#if TRANSLATION_ENABLE_HTTP
     /**
      * The payload of the #TRANSLATE_WANT_FULL_URI packet.  If
      * ConstBuffer::IsNull(), then no #TRANSLATE_WANT_FULL_URI packet
      * was received.
      */
     ConstBuffer<void> want_full_uri;
+#endif
 
     ConstBuffer<uint16_t> want;
 
@@ -92,7 +105,9 @@ struct TranslateRequest {
 
     void Clear() {
         listener_tag = nullptr;
+#if TRANSLATION_ENABLE_HTTP
         local_address = nullptr;
+#endif
         remote_host = nullptr;
         host = nullptr;
         user_agent = nullptr;
@@ -103,12 +118,18 @@ struct TranslateRequest {
         args = nullptr;
         query_string = nullptr;
         widget_type = nullptr;
+#if TRANSLATION_ENABLE_SESSION
         session = nullptr;
+#endif
         param = nullptr;
         internal_redirect = nullptr;
+#if TRANSLATION_ENABLE_SESSION
         check = nullptr;
         auth = nullptr;
+#endif
+#if TRANSLATION_ENABLE_HTTP
         want_full_uri = nullptr;
+#endif
         want = nullptr;
         file_not_found = nullptr;
         content_type_lookup = nullptr;

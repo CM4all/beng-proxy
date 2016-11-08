@@ -5,23 +5,34 @@
  */
 
 #include "Parser.hxx"
+#if TRANSLATION_ENABLE_TRANSFORMATION
 #include "Transformation.hxx"
-#include "widget_class.hxx"
 #include "processor.hxx"
 #include "css_processor.hxx"
+#endif
+#if TRANSLATION_ENABLE_WIDGET
+#include "widget_class.hxx"
+#endif
+#if TRANSLATION_ENABLE_RADDRESS
 #include "file_address.hxx"
 #include "delegate/Address.hxx"
 #include "lhttp_address.hxx"
 #include "http_address.hxx"
 #include "cgi_address.hxx"
 #include "nfs_address.hxx"
+#endif
+#include "spawn/ChildOptions.hxx"
 #include "spawn/mount_list.hxx"
 #include "spawn/ResourceLimits.hxx"
+#if TRANSLATION_ENABLE_JAILCGI
 #include "spawn/JailParams.hxx"
+#endif
 #include "beng-proxy/translation.h"
+#if TRANSLATION_ENABLE_HTTP
 #include "net/SocketAddress.hxx"
 #include "net/AddressInfo.hxx"
 #include "net/Resolver.hxx"
+#endif
 #include "util/CharUtil.hxx"
 #include "util/RuntimeError.hxx"
 
@@ -42,6 +53,8 @@ TranslateParser::SetChildOptions(ChildOptions &_child_options)
     env_builder = child_options->env;
 }
 
+#if TRANSLATION_ENABLE_RADDRESS
+
 void
 TranslateParser::SetCgiAddress(ResourceAddress::Type type,
                                const char *path)
@@ -54,6 +67,8 @@ TranslateParser::SetCgiAddress(ResourceAddress::Type type,
     params_builder = cgi_address->params;
     SetChildOptions(cgi_address->options);
 }
+
+#endif
 
 /*
  * receive response
@@ -81,12 +96,18 @@ is_valid_absolute_path(const char *p, size_t size)
     return is_valid_nonempty_string(p, size) && *p == '/';
 }
 
+#if TRANSLATION_ENABLE_HTTP
+
 gcc_pure
 static bool
 is_valid_absolute_uri(const char *p, size_t size)
 {
     return is_valid_absolute_path(p, size);
 }
+
+#endif
+
+#if TRANSLATION_ENABLE_TRANSFORMATION
 
 Transformation *
 TranslateParser::AddTransformation()
@@ -110,6 +131,10 @@ TranslateParser::AddFilter()
     t->u.filter.reveal_user = false;
     return &t->u.filter.address;
 }
+
+#endif
+
+#if TRANSLATION_ENABLE_HTTP
 
 static void
 parse_address_string(AllocatorPtr alloc, AddressList *list,
@@ -145,6 +170,10 @@ parse_address_string(AllocatorPtr alloc, AddressList *list,
     for (const auto &i : Resolve(p, default_port, &hints))
         list->Add(alloc, i);
 }
+
+#endif
+
+#if TRANSLATION_ENABLE_WIDGET
 
 static bool
 valid_view_name_char(char ch)
@@ -221,6 +250,10 @@ TranslateParser::AddView(const char *name)
     transformation = nullptr;
 }
 
+#endif
+
+#if TRANSLATION_ENABLE_HTTP
+
 static void
 parse_header_forward(struct header_forward_settings *settings,
                      const void *payload, size_t payload_length)
@@ -274,6 +307,10 @@ parse_header(AllocatorPtr alloc,
     headers.Add(alloc, name, value);
 }
 
+#endif
+
+#if TRANSLATION_ENABLE_JAILCGI
+
 /**
  * Throws std::runtime_error on error.
  */
@@ -295,6 +332,8 @@ translate_jail_finish(JailParams *jail,
         jail->site_id = response->site;
 }
 
+#endif
+
 /**
  * Final fixups for the response before it is passed to the handler.
  *
@@ -303,6 +342,7 @@ translate_jail_finish(JailParams *jail,
 static void
 translate_response_finish(TranslateResponse *response)
 {
+#if TRANSLATION_ENABLE_RADDRESS
     if (response->easy_base && !response->address.IsValidBase())
         /* EASY_BASE was enabled, but the resource address does not
            end with a slash, thus LoadBase() cannot work */
@@ -338,16 +378,20 @@ translate_response_finish(TranslateResponse *response)
     }
 
     response->address.Check();
+#endif
 
+#if TRANSLATION_ENABLE_HTTP
     /* these lists are in reverse order because new items were added
        to the front; reverse them now */
     response->request_headers.Reverse();
     response->response_headers.Reverse();
+#endif
 
     if (!response->probe_path_suffixes.IsNull() &&
         response->probe_suffixes.empty())
         throw std::runtime_error("PROBE_PATH_SUFFIX without PROBE_SUFFIX");
 
+#if TRANSLATION_ENABLE_HTTP
     if (!response->internal_redirect.IsNull() &&
         (response->uri == nullptr && response->expand_uri == nullptr))
         throw std::runtime_error("INTERNAL_REDIRECT without URI");
@@ -355,6 +399,7 @@ translate_response_finish(TranslateResponse *response)
     if (!response->internal_redirect.IsNull() &&
         !response->want_full_uri.IsNull())
         throw std::runtime_error("INTERNAL_REDIRECT conflicts with WANT_FULL_URI");
+#endif
 }
 
 gcc_pure
@@ -385,6 +430,8 @@ translate_client_pair(AllocatorPtr alloc,
     builder.Add(alloc, payload, false);
 }
 
+#if TRANSLATION_ENABLE_EXPAND
+
 static void
 translate_client_expand_pair(ExpandableStringList::Builder &builder,
                              const char *name,
@@ -397,6 +444,8 @@ translate_client_expand_pair(ExpandableStringList::Builder &builder,
 
     builder.SetExpand(payload);
 }
+
+#endif
 
 static void
 translate_client_pivot_root(NamespaceOptions *ns,
@@ -413,7 +462,10 @@ translate_client_pivot_root(NamespaceOptions *ns,
 }
 
 static void
-translate_client_home(NamespaceOptions *ns, JailParams *jail,
+translate_client_home(NamespaceOptions *ns,
+#if TRANSLATION_ENABLE_JAILCGI
+                      JailParams *jail,
+#endif
                       const char *payload, size_t payload_length)
 {
     if (!is_valid_absolute_path(payload, payload_length))
@@ -426,17 +478,24 @@ translate_client_home(NamespaceOptions *ns, JailParams *jail,
         ok = true;
     }
 
+#if TRANSLATION_ENABLE_JAILCGI
     if (jail != nullptr && jail->enabled && jail->home_directory == nullptr) {
         jail->home_directory = payload;
         ok = true;
     }
+#endif
 
     if (!ok)
         throw std::runtime_error("misplaced HOME packet");
 }
 
+#if TRANSLATION_ENABLE_EXPAND
+
 static void
-translate_client_expand_home(NamespaceOptions *ns, JailParams *jail,
+translate_client_expand_home(NamespaceOptions *ns,
+#if TRANSLATION_ENABLE_JAILCGI
+                             JailParams *jail,
+#endif
                              const char *payload, size_t payload_length)
 {
     if (!is_valid_absolute_path(payload, payload_length))
@@ -449,16 +508,20 @@ translate_client_expand_home(NamespaceOptions *ns, JailParams *jail,
         ok = true;
     }
 
+#if TRANSLATION_ENABLE_JAILCGI
     if (jail != nullptr && jail->enabled &&
         !jail->expand_home_directory) {
         jail->home_directory = payload;
         jail->expand_home_directory = true;
         ok = true;
     }
+#endif
 
     if (!ok)
         throw std::runtime_error("misplaced EXPAND_HOME packet");
 }
+
+#endif
 
 static void
 translate_client_mount_proc(NamespaceOptions *ns,
@@ -589,6 +652,8 @@ TranslateParser::HandleWant(const uint16_t *payload, size_t payload_length)
     response.want = { payload, payload_length / sizeof(payload[0]) };
 }
 
+#if TRANSLATION_ENABLE_RADDRESS
+
 static void
 translate_client_file_not_found(TranslateResponse &response,
                                 ConstBuffer<void> payload)
@@ -702,6 +767,8 @@ translate_client_directory_index(TranslateResponse &response,
     response.directory_index = payload;
 }
 
+#endif
+
 static void
 translate_client_expires_relative(TranslateResponse &response,
                                   ConstBuffer<void> payload)
@@ -732,6 +799,8 @@ translate_client_stderr_path(ChildOptions *child_options,
     child_options->stderr_path = path;
 }
 
+#if TRANSLATION_ENABLE_EXPAND
+
 static void
 translate_client_expand_stderr_path(ChildOptions *child_options,
                                     ConstBuffer<void> payload)
@@ -748,6 +817,8 @@ translate_client_expand_stderr_path(ChildOptions *child_options,
 
     child_options->expand_stderr_path = path;
 }
+
+#endif
 
 gcc_pure
 static bool
@@ -887,7 +958,9 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
     const char *const payload = (const char *)_payload;
 
     switch (command) {
+#if TRANSLATION_ENABLE_TRANSFORMATION
         Transformation *new_transformation;
+#endif
 
     case TRANSLATE_BEGIN:
     case TRANSLATE_END:
@@ -915,6 +988,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         return;
 
     case TRANSLATE_STATUS:
+#if TRANSLATION_ENABLE_HTTP
         if (payload_length != 2)
             throw std::runtime_error("size mismatch in STATUS packet from translation server");
 
@@ -925,8 +999,12 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
                                      response.status);
 
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_PATH:
+#if TRANSLATION_ENABLE_RADDRESS
         if (!is_valid_absolute_path(payload, payload_length))
             throw std::runtime_error("malformed PATH packet");
 
@@ -941,8 +1019,12 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         file_address = alloc.New<FileAddress>(payload);
         *resource_address = *file_address;
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_PATH_INFO:
+#if TRANSLATION_ENABLE_RADDRESS
         if (has_null_byte(payload, payload_length))
             throw std::runtime_error("malformed PATH_INFO packet");
 
@@ -957,8 +1039,12 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
             return;
         } else
             throw std::runtime_error("misplaced PATH_INFO packet");
+#else
+        break;
+#endif
 
     case TRANSLATE_EXPAND_PATH:
+#if TRANSLATION_ENABLE_RADDRESS && TRANSLATION_ENABLE_EXPAND
         if (has_null_byte(payload, payload_length))
             throw std::runtime_error("malformed EXPAND_PATH packet");
 
@@ -982,8 +1068,12 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
             return;
         } else
             throw std::runtime_error("misplaced EXPAND_PATH packet");
+#else
+        break;
+#endif
 
     case TRANSLATE_EXPAND_PATH_INFO:
+#if TRANSLATION_ENABLE_RADDRESS && TRANSLATION_ENABLE_EXPAND
         if (has_null_byte(payload, payload_length))
             throw std::runtime_error("malformed EXPAND_PATH_INFO packet");
 
@@ -1000,8 +1090,12 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
             throw std::runtime_error("misplaced EXPAND_PATH_INFO packet");
 
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_DEFLATED:
+#if TRANSLATION_ENABLE_RADDRESS
         if (!is_valid_absolute_path(payload, payload_length))
             throw std::runtime_error("malformed DEFLATED packet");
 
@@ -1013,8 +1107,12 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         } else
             throw std::runtime_error("misplaced DEFLATED packet");
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_GZIPPED:
+#if TRANSLATION_ENABLE_RADDRESS
         if (!is_valid_absolute_path(payload, payload_length))
             throw std::runtime_error("malformed GZIPPED packet");
 
@@ -1033,8 +1131,12 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         }
 
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_SITE:
+#if TRANSLATION_ENABLE_RADDRESS
         assert(resource_address != nullptr);
 
         if (!is_valid_nonempty_string(payload, payload_length))
@@ -1048,8 +1150,12 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
             throw std::runtime_error("misplaced SITE packet");
 
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_CONTENT_TYPE:
+#if TRANSLATION_ENABLE_RADDRESS
         if (!is_valid_nonempty_string(payload, payload_length))
             throw std::runtime_error("malformed CONTENT_TYPE packet");
 
@@ -1069,8 +1175,12 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
             throw std::runtime_error("misplaced CONTENT_TYPE packet");
 
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_HTTP:
+#if TRANSLATION_ENABLE_RADDRESS
         if (resource_address == nullptr || resource_address->IsDefined())
             throw std::runtime_error("misplaced HTTP packet");
 
@@ -1086,15 +1196,23 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         address_list = &http_address->addresses;
         default_port = http_address->GetDefaultPort();
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_REDIRECT:
+#if TRANSLATION_ENABLE_HTTP
         if (!is_valid_nonempty_string(payload, payload_length))
             throw std::runtime_error("malformed REDIRECT packet");
 
         response.redirect = payload;
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_EXPAND_REDIRECT:
+#if TRANSLATION_ENABLE_HTTP && TRANSLATION_ENABLE_EXPAND
         if (response.regex == nullptr ||
             response.redirect == nullptr ||
             response.expand_redirect != nullptr)
@@ -1105,15 +1223,23 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
         response.expand_redirect = payload;
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_BOUNCE:
+#if TRANSLATION_ENABLE_HTTP
         if (!is_valid_nonempty_string(payload, payload_length))
             throw std::runtime_error("malformed BOUNCE packet");
 
         response.bounce = payload;
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_FILTER:
+#if TRANSLATION_ENABLE_TRANSFORMATION
         resource_address = AddFilter();
         jail = nullptr;
         child_options = nullptr;
@@ -1125,32 +1251,48 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         lhttp_address = nullptr;
         address_list = nullptr;
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_FILTER_4XX:
+#if TRANSLATION_ENABLE_TRANSFORMATION
         if (view != nullptr)
             view->filter_4xx = true;
         else
             response.filter_4xx = true;
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_PROCESS:
+#if TRANSLATION_ENABLE_TRANSFORMATION
         new_transformation = AddTransformation();
         new_transformation->type = Transformation::Type::PROCESS;
         new_transformation->u.processor.options = PROCESSOR_REWRITE_URL;
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_DOMAIN:
         throw std::runtime_error("deprecated DOMAIN packet");
 
     case TRANSLATE_CONTAINER:
+#if TRANSLATION_ENABLE_TRANSFORMATION
         if (transformation == nullptr ||
             transformation->type != Transformation::Type::PROCESS)
             throw std::runtime_error("misplaced CONTAINER packet");
 
         transformation->u.processor.options |= PROCESSOR_CONTAINER;
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_SELF_CONTAINER:
+#if TRANSLATION_ENABLE_TRANSFORMATION
         if (transformation == nullptr ||
             transformation->type != Transformation::Type::PROCESS)
             throw std::runtime_error("misplaced SELF_CONTAINER packet");
@@ -1158,8 +1300,12 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         transformation->u.processor.options |=
             PROCESSOR_SELF_CONTAINER|PROCESSOR_CONTAINER;
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_GROUP_CONTAINER:
+#if TRANSLATION_ENABLE_TRANSFORMATION
         if (!is_valid_nonempty_string(payload, payload_length))
             throw std::runtime_error("malformed GROUP_CONTAINER packet");
 
@@ -1170,15 +1316,23 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         transformation->u.processor.options |= PROCESSOR_CONTAINER;
         response.container_groups.Add(alloc, payload);
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_WIDGET_GROUP:
+#if TRANSLATION_ENABLE_WIDGET
         if (!is_valid_nonempty_string(payload, payload_length))
             throw std::runtime_error("malformed WIDGET_GROUP packet");
 
         response.widget_group = payload;
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_UNTRUSTED:
+#if TRANSLATION_ENABLE_WIDGET
         if (!is_valid_nonempty_string(payload, payload_length) || *payload == '.' ||
             payload[payload_length - 1] == '.')
             throw std::runtime_error("malformed UNTRUSTED packet");
@@ -1188,8 +1342,12 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
         response.untrusted = payload;
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_UNTRUSTED_PREFIX:
+#if TRANSLATION_ENABLE_HTTP
         if (!is_valid_nonempty_string(payload, payload_length) || *payload == '.' ||
             payload[payload_length - 1] == '.')
             throw std::runtime_error("malformed UNTRUSTED_PREFIX packet");
@@ -1199,8 +1357,12 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
         response.untrusted_prefix = payload;
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_UNTRUSTED_SITE_SUFFIX:
+#if TRANSLATION_ENABLE_HTTP
         if (!is_valid_nonempty_string(payload, payload_length) || *payload == '.' ||
             payload[payload_length - 1] == '.')
             throw std::runtime_error("malformed UNTRUSTED_SITE_SUFFIX packet");
@@ -1210,43 +1372,73 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
         response.untrusted_site_suffix = payload;
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_SCHEME:
+#if TRANSLATION_ENABLE_HTTP
         if (strncmp(payload, "http", 4) != 0)
             throw std::runtime_error("misplaced SCHEME packet");
 
         response.scheme = payload;
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_HOST:
+#if TRANSLATION_ENABLE_HTTP
         response.host = payload;
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_URI:
+#if TRANSLATION_ENABLE_HTTP
         if (!is_valid_absolute_uri(payload, payload_length))
             throw std::runtime_error("malformed URI packet");
 
         response.uri = payload;
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_DIRECT_ADDRESSING:
+#if TRANSLATION_ENABLE_WIDGET
         response.direct_addressing = true;
+#endif
         return;
 
     case TRANSLATE_STATEFUL:
+#if TRANSLATION_ENABLE_SESSION
         response.stateful = true;
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_SESSION:
+#if TRANSLATION_ENABLE_SESSION
         response.session = { payload, payload_length };
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_USER:
+#if TRANSLATION_ENABLE_SESSION
         response.user = payload;
         previous_command = command;
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_REALM:
+#if TRANSLATION_ENABLE_SESSION
         if (payload_length > 0)
             throw std::runtime_error("malformed REALM packet");
 
@@ -1258,12 +1450,20 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
         response.realm = payload;
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_LANGUAGE:
+#if TRANSLATION_ENABLE_SESSION
         response.language = payload;
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_PIPE:
+#if TRANSLATION_ENABLE_RADDRESS
         if (resource_address == nullptr || resource_address->IsDefined())
             throw std::runtime_error("misplaced PIPE packet");
 
@@ -1272,8 +1472,12 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
         SetCgiAddress(ResourceAddress::Type::PIPE, payload);
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_CGI:
+#if TRANSLATION_ENABLE_RADDRESS
         if (resource_address == nullptr || resource_address->IsDefined())
             throw std::runtime_error("misplaced CGI packet");
 
@@ -1283,8 +1487,12 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         SetCgiAddress(ResourceAddress::Type::CGI, payload);
         cgi_address->document_root = response.document_root;
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_FASTCGI:
+#if TRANSLATION_ENABLE_RADDRESS
         if (resource_address == nullptr || resource_address->IsDefined())
             throw std::runtime_error("misplaced FASTCGI packet");
 
@@ -1295,8 +1503,12 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         address_list = &cgi_address->address_list;
         default_port = 9000;
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_AJP:
+#if TRANSLATION_ENABLE_RADDRESS
         if (resource_address == nullptr || resource_address->IsDefined())
             throw std::runtime_error("misplaced AJP packet");
 
@@ -1312,8 +1524,12 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         address_list = &http_address->addresses;
         default_port = 8009;
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_NFS_SERVER:
+#if TRANSLATION_ENABLE_RADDRESS
         if (resource_address == nullptr || resource_address->IsDefined())
             throw std::runtime_error("misplaced NFS_SERVER packet");
 
@@ -1323,8 +1539,12 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         nfs_address = alloc.New<NfsAddress>(payload, "", "");
         *resource_address = *nfs_address;
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_NFS_EXPORT:
+#if TRANSLATION_ENABLE_RADDRESS
         if (nfs_address == nullptr ||
             *nfs_address->export_name != 0)
             throw std::runtime_error("misplaced NFS_EXPORT packet");
@@ -1334,8 +1554,12 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
         nfs_address->export_name = payload;
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_JAILCGI:
+#if TRANSLATION_ENABLE_JAILCGI
         if (jail == nullptr) {
             if (child_options == nullptr)
                 throw std::runtime_error("misplaced JAILCGI packet");
@@ -1345,12 +1569,18 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
         jail->enabled = true;
         return;
+#endif
 
     case TRANSLATE_HOME:
-        translate_client_home(ns_options, jail, payload, payload_length);
+        translate_client_home(ns_options,
+#if TRANSLATION_ENABLE_JAILCGI
+                              jail,
+#endif
+                              payload, payload_length);
         return;
 
     case TRANSLATE_INTERPRETER:
+#if TRANSLATION_ENABLE_RADDRESS
         if (resource_address == nullptr ||
             (resource_address->type != ResourceAddress::Type::CGI &&
              resource_address->type != ResourceAddress::Type::FASTCGI) ||
@@ -1359,8 +1589,12 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
         cgi_address->interpreter = payload;
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_ACTION:
+#if TRANSLATION_ENABLE_RADDRESS
         if (resource_address == nullptr ||
             (resource_address->type != ResourceAddress::Type::CGI &&
              resource_address->type != ResourceAddress::Type::FASTCGI) ||
@@ -1369,8 +1603,12 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
         cgi_address->action = payload;
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_SCRIPT_NAME:
+#if TRANSLATION_ENABLE_RADDRESS
         if (resource_address == nullptr ||
             (resource_address->type != ResourceAddress::Type::CGI &&
              resource_address->type != ResourceAddress::Type::WAS &&
@@ -1380,8 +1618,12 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
         cgi_address->script_name = payload;
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_EXPAND_SCRIPT_NAME:
+#if TRANSLATION_ENABLE_RADDRESS && TRANSLATION_ENABLE_EXPAND
         if (!is_valid_nonempty_string(payload, payload_length))
             throw std::runtime_error("malformed EXPAND_SCRIPT_NAME packet");
 
@@ -1392,8 +1634,12 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
         cgi_address->expand_script_name = payload;
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_DOCUMENT_ROOT:
+#if TRANSLATION_ENABLE_RADDRESS
         if (!is_valid_absolute_path(payload, payload_length))
             throw std::runtime_error("malformed DOCUMENT_ROOT packet");
 
@@ -1405,8 +1651,12 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         else
             response.document_root = payload;
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_EXPAND_DOCUMENT_ROOT:
+#if TRANSLATION_ENABLE_RADDRESS && TRANSLATION_ENABLE_EXPAND
         if (!is_valid_nonempty_string(payload, payload_length))
             throw std::runtime_error("malformed EXPAND_DOCUMENT_ROOT packet");
 
@@ -1421,20 +1671,28 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         else
             response.expand_document_root = payload;
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_ADDRESS:
+#if TRANSLATION_ENABLE_HTTP
         if (address_list == nullptr)
             throw std::runtime_error("misplaced ADDRESS packet");
 
         if (payload_length < 2)
-            throw std::runtime_error("malformed INTERPRETER packet");
+            throw std::runtime_error("malformed ADDRESS packet");
 
         address_list->Add(alloc,
                           SocketAddress((const struct sockaddr *)_payload,
                                         payload_length));
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_ADDRESS_STRING:
+#if TRANSLATION_ENABLE_HTTP
         if (address_list == nullptr)
             throw std::runtime_error("misplaced ADDRESS_STRING packet");
 
@@ -1450,13 +1708,20 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         }
 
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_VIEW:
+#if TRANSLATION_ENABLE_WIDGET
         if (!valid_view_name(payload))
             throw std::runtime_error("invalid view name");
 
         AddView(payload);
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_MAX_AGE:
         if (payload_length != 4)
@@ -1467,9 +1732,11 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
             response.max_age = std::chrono::seconds(*(const uint32_t *)_payload);
             break;
 
+#if TRANSLATION_ENABLE_SESSION
         case TRANSLATE_USER:
             response.user_max_age = std::chrono::seconds(*(const uint32_t *)_payload);
             break;
+#endif
 
         default:
             throw std::runtime_error("misplaced MAX_AGE packet");
@@ -1478,6 +1745,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         return;
 
     case TRANSLATE_VARY:
+#if TRANSLATION_ENABLE_CACHE
         if (payload_length == 0 ||
             payload_length % sizeof(response.vary.data[0]) != 0)
             throw std::runtime_error("malformed VARY packet");
@@ -1485,8 +1753,12 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         response.vary.data = (const uint16_t *)_payload;
         response.vary.size = payload_length / sizeof(response.vary.data[0]);
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_INVALIDATE:
+#if TRANSLATION_ENABLE_CACHE
         if (payload_length == 0 ||
             payload_length % sizeof(response.invalidate.data[0]) != 0)
             throw std::runtime_error("malformed INVALIDATE packet");
@@ -1495,8 +1767,12 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         response.invalidate.size = payload_length /
             sizeof(response.invalidate.data[0]);
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_BASE:
+#if TRANSLATION_ENABLE_RADDRESS
         if (!is_valid_absolute_uri(payload, payload_length) ||
             payload[payload_length - 1] != '/')
             throw std::runtime_error("malformed BASE packet");
@@ -1511,8 +1787,12 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
         response.base = payload;
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_UNSAFE_BASE:
+#if TRANSLATION_ENABLE_RADDRESS
         if (payload_length > 0)
             throw std::runtime_error("malformed UNSAFE_BASE packet");
 
@@ -1521,8 +1801,12 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
         response.unsafe_base = true;
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_EASY_BASE:
+#if TRANSLATION_ENABLE_RADDRESS
         if (payload_length > 0)
             throw std::runtime_error("malformed EASY_BASE");
 
@@ -1534,8 +1818,12 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
         response.easy_base = true;
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_REGEX:
+#if TRANSLATION_ENABLE_EXPAND
         if (response.base == nullptr)
             throw std::runtime_error("REGEX without BASE");
 
@@ -1547,8 +1835,12 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
         response.regex = payload;
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_INVERSE_REGEX:
+#if TRANSLATION_ENABLE_EXPAND
         if (response.base == nullptr)
             throw std::runtime_error("INVERSE_REGEX without BASE");
 
@@ -1560,8 +1852,12 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
         response.inverse_regex = payload;
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_REGEX_TAIL:
+#if TRANSLATION_ENABLE_EXPAND
         if (payload_length > 0)
             throw std::runtime_error("malformed REGEX_TAIL packet");
 
@@ -1573,8 +1869,12 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
         response.regex_tail = true;
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_REGEX_UNESCAPE:
+#if TRANSLATION_ENABLE_EXPAND
         if (payload_length > 0)
             throw std::runtime_error("malformed REGEX_UNESCAPE packet");
 
@@ -1586,8 +1886,12 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
         response.regex_unescape = true;
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_DELEGATE:
+#if TRANSLATION_ENABLE_RADDRESS
         if (file_address == nullptr)
             throw std::runtime_error("misplaced DELEGATE packet");
 
@@ -1597,8 +1901,12 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         file_address->delegate = alloc.New<DelegateAddress>(payload);
         SetChildOptions(file_address->delegate->child_options);
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_APPEND:
+#if TRANSLATION_ENABLE_RADDRESS
         if (!is_valid_nonempty_string(payload, payload_length))
             throw std::runtime_error("malformed APPEND packet");
 
@@ -1611,8 +1919,12 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
             throw std::runtime_error("misplaced APPEND packet");
 
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_EXPAND_APPEND:
+#if TRANSLATION_ENABLE_RADDRESS && TRANSLATION_ENABLE_EXPAND
         if (!is_valid_nonempty_string(payload, payload_length))
             throw std::runtime_error("malformed EXPAND_APPEND packet");
 
@@ -1627,14 +1939,20 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         } else
             throw std::runtime_error("misplaced APPEND packet");
         return;
+#endif
 
     case TRANSLATE_PAIR:
+#if TRANSLATION_ENABLE_RADDRESS
         if (cgi_address != nullptr &&
             resource_address->type != ResourceAddress::Type::CGI &&
             resource_address->type != ResourceAddress::Type::PIPE) {
             translate_client_pair(alloc, params_builder, "PAIR",
                                   payload, payload_length);
-        } else if (child_options != nullptr) {
+            return;
+        }
+#endif
+
+        if (child_options != nullptr) {
             translate_client_pair(alloc, env_builder, "PAIR",
                                   payload, payload_length);
         } else
@@ -1642,6 +1960,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         return;
 
     case TRANSLATE_EXPAND_PAIR:
+#if TRANSLATION_ENABLE_RADDRESS
         if (response.regex == nullptr)
             throw std::runtime_error("misplaced EXPAND_PAIR packet");
 
@@ -1660,12 +1979,20 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         } else
             throw std::runtime_error("misplaced EXPAND_PAIR packet");
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_DISCARD_SESSION:
+#if TRANSLATION_ENABLE_SESSION
         response.discard_session = true;
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_REQUEST_HEADER_FORWARD:
+#if TRANSLATION_ENABLE_HTTP
         if (view != nullptr)
             parse_header_forward(&view->request_header_forward,
                                  payload, payload_length);
@@ -1673,8 +2000,12 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
             parse_header_forward(&response.request_header_forward,
                                  payload, payload_length);
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_RESPONSE_HEADER_FORWARD:
+#if TRANSLATION_ENABLE_HTTP
         if (view != nullptr)
             parse_header_forward(&view->response_header_forward,
                                  payload, payload_length);
@@ -1682,31 +2013,51 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
             parse_header_forward(&response.response_header_forward,
                                  payload, payload_length);
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_WWW_AUTHENTICATE:
+#if TRANSLATION_ENABLE_SESSION
         if (!is_valid_nonempty_string(payload, payload_length))
             throw std::runtime_error("malformed WWW_AUTHENTICATE packet");
 
         response.www_authenticate = payload;
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_AUTHENTICATION_INFO:
+#if TRANSLATION_ENABLE_SESSION
         if (!is_valid_nonempty_string(payload, payload_length))
             throw std::runtime_error("malformed AUTHENTICATION_INFO packet");
 
         response.authentication_info = payload;
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_HEADER:
+#if TRANSLATION_ENABLE_HTTP
         parse_header(alloc, response.response_headers,
                      "HEADER", payload, payload_length);
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_SECURE_COOKIE:
+#if TRANSLATION_ENABLE_SESSION
         response.secure_cookie = true;
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_COOKIE_DOMAIN:
+#if TRANSLATION_ENABLE_SESSION
         if (response.cookie_domain != nullptr)
             throw std::runtime_error("misplaced COOKIE_DOMAIN packet");
 
@@ -1715,23 +2066,31 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
         response.cookie_domain = payload;
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_ERROR_DOCUMENT:
         response.error_document = { payload, payload_length };
         return;
 
     case TRANSLATE_CHECK:
+#if TRANSLATION_ENABLE_SESSION
         if (!response.check.IsNull())
             throw std::runtime_error("duplicate CHECK packet");
 
         response.check = { payload, payload_length };
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_PREVIOUS:
         response.previous = true;
         return;
 
     case TRANSLATE_WAS:
+#if TRANSLATION_ENABLE_RADDRESS
         if (resource_address == nullptr || resource_address->IsDefined())
             throw std::runtime_error("misplaced WAS packet");
 
@@ -1740,27 +2099,39 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
         SetCgiAddress(ResourceAddress::Type::WAS, payload);
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_TRANSPARENT:
         response.transparent = true;
         return;
 
     case TRANSLATE_WIDGET_INFO:
+#if TRANSLATION_ENABLE_WIDGET
         response.widget_info = true;
+#endif
         return;
 
     case TRANSLATE_STICKY:
+#if TRANSLATION_ENABLE_RADDRESS
         if (address_list == nullptr)
             throw std::runtime_error("misplaced STICKY packet");
 
         address_list->SetStickyMode(StickyMode::SESSION_MODULO);
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_DUMP_HEADERS:
+#if TRANSLATION_ENABLE_HTTP
         response.dump_headers = true;
+#endif
         return;
 
     case TRANSLATE_COOKIE_HOST:
+#if TRANSLATION_ENABLE_SESSION
         if (resource_address == nullptr || !resource_address->IsDefined())
             throw std::runtime_error("misplaced COOKIE_HOST packet");
 
@@ -1769,8 +2140,12 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
         response.cookie_host = payload;
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_COOKIE_PATH:
+#if TRANSLATION_ENABLE_SESSION
         if (response.cookie_path != nullptr)
             throw std::runtime_error("misplaced COOKIE_PATH packet");
 
@@ -1779,14 +2154,22 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
         response.cookie_path = payload;
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_PROCESS_CSS:
+#if TRANSLATION_ENABLE_TRANSFORMATION
         new_transformation = AddTransformation();
         new_transformation->type = Transformation::Type::PROCESS_CSS;
         new_transformation->u.css_processor.options = CSS_PROCESSOR_REWRITE_URL;
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_PREFIX_CSS_CLASS:
+#if TRANSLATION_ENABLE_TRANSFORMATION
         if (transformation == nullptr)
             throw std::runtime_error("misplaced PREFIX_CSS_CLASS packet");
 
@@ -1804,8 +2187,12 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         }
 
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_PREFIX_XML_ID:
+#if TRANSLATION_ENABLE_TRANSFORMATION
         if (transformation == nullptr)
             throw std::runtime_error("misplaced PREFIX_XML_ID packet");
 
@@ -1823,37 +2210,57 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         }
 
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_PROCESS_STYLE:
+#if TRANSLATION_ENABLE_TRANSFORMATION
         if (transformation == nullptr ||
             transformation->type != Transformation::Type::PROCESS)
             throw std::runtime_error("misplaced PROCESS_STYLE packet");
 
         transformation->u.processor.options |= PROCESSOR_STYLE;
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_FOCUS_WIDGET:
+#if TRANSLATION_ENABLE_TRANSFORMATION
         if (transformation == nullptr ||
             transformation->type != Transformation::Type::PROCESS)
             throw std::runtime_error("misplaced FOCUS_WIDGET packet");
 
         transformation->u.processor.options |= PROCESSOR_FOCUS_WIDGET;
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_ANCHOR_ABSOLUTE:
+#if TRANSLATION_ENABLE_WIDGET
         if (transformation == nullptr ||
             transformation->type != Transformation::Type::PROCESS)
             throw std::runtime_error("misplaced ANCHOR_ABSOLUTE packet");
 
         response.anchor_absolute = true;
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_PROCESS_TEXT:
+#if TRANSLATION_ENABLE_TRANSFORMATION
         new_transformation = AddTransformation();
         new_transformation->type = Transformation::Type::PROCESS_TEXT;
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_LOCAL_URI:
+#if TRANSLATION_ENABLE_HTTP
         if (response.local_uri != nullptr)
             throw std::runtime_error("misplaced LOCAL_URI packet");
 
@@ -1862,8 +2269,12 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
         response.local_uri = payload;
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_AUTO_BASE:
+#if TRANSLATION_ENABLE_RADDRESS
         if (resource_address != &response.address ||
             cgi_address == nullptr ||
             cgi_address != &response.address.GetCgi() ||
@@ -1875,6 +2286,9 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
         response.auto_base = true;
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_VALIDATE_MTIME:
         if (payload_length < 10 || payload[8] != '/' ||
@@ -1887,6 +2301,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         return;
 
     case TRANSLATE_LHTTP_PATH:
+#if TRANSLATION_ENABLE_RADDRESS
         if (resource_address == nullptr || resource_address->IsDefined())
             throw std::runtime_error("misplaced LHTTP_PATH packet");
 
@@ -1899,8 +2314,12 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         args_builder = lhttp_address->args;
         SetChildOptions(lhttp_address->options);
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_LHTTP_URI:
+#if TRANSLATION_ENABLE_RADDRESS
         if (lhttp_address == nullptr ||
             lhttp_address->uri != nullptr)
             throw std::runtime_error("misplaced LHTTP_HOST packet");
@@ -1910,8 +2329,12 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
         lhttp_address->uri = payload;
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_EXPAND_LHTTP_URI:
+#if TRANSLATION_ENABLE_RADDRESS
         if (lhttp_address == nullptr ||
             lhttp_address->uri == nullptr ||
             lhttp_address->expand_uri != nullptr ||
@@ -1923,8 +2346,12 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
         lhttp_address->expand_uri = payload;
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_LHTTP_HOST:
+#if TRANSLATION_ENABLE_RADDRESS
         if (lhttp_address == nullptr ||
             lhttp_address->host_and_port != nullptr)
             throw std::runtime_error("misplaced LHTTP_HOST packet");
@@ -1934,8 +2361,12 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
         lhttp_address->host_and_port = payload;
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_CONCURRENCY:
+#if TRANSLATION_ENABLE_RADDRESS
         if (lhttp_address == nullptr)
             throw std::runtime_error("misplaced CONCURRENCY packet");
 
@@ -1944,8 +2375,12 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
         lhttp_address->concurrency = *(const uint16_t *)_payload;
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_WANT_FULL_URI:
+#if TRANSLATION_ENABLE_HTTP
         if (from_request.want_full_uri)
             throw std::runtime_error("WANT_FULL_URI loop");
 
@@ -1954,6 +2389,9 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
         response.want_full_uri = { payload, payload_length };
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_USER_NAMESPACE:
         if (payload_length != 0)
@@ -2022,18 +2460,30 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         return;
 
     case TRANSLATE_FILE_NOT_FOUND:
+#if TRANSLATION_ENABLE_RADDRESS
         translate_client_file_not_found(response,
                                         { _payload, payload_length });
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_CONTENT_TYPE_LOOKUP:
+#if TRANSLATION_ENABLE_RADDRESS
         HandleContentTypeLookup({ _payload, payload_length });
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_DIRECTORY_INDEX:
+#if TRANSLATION_ENABLE_RADDRESS
         translate_client_directory_index(response,
                                          { _payload, payload_length });
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_EXPIRES_RELATIVE:
         translate_client_expires_relative(response,
@@ -2052,6 +2502,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         return;
 
     case TRANSLATE_EXPAND_TEST_PATH:
+#if TRANSLATION_ENABLE_EXPAND
         if (response.regex == nullptr)
             throw std::runtime_error("misplaced EXPAND_TEST_PATH packet");
 
@@ -2063,8 +2514,12 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
         response.expand_test_path = payload;
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_REDIRECT_QUERY_STRING:
+#if TRANSLATION_ENABLE_HTTP
         if (payload_length != 0)
             throw std::runtime_error("malformed REDIRECT_QUERY_STRING packet");
 
@@ -2075,10 +2530,17 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
         response.redirect_query_string = true;
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_ENOTDIR:
+#if TRANSLATION_ENABLE_RADDRESS
         translate_client_enotdir(response, { _payload, payload_length });
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_STDERR_PATH:
         translate_client_stderr_path(child_options,
@@ -2086,11 +2548,15 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         return;
 
     case TRANSLATE_AUTH:
+#if TRANSLATION_ENABLE_SESSION
         if (response.HasAuth())
             throw std::runtime_error("duplicate AUTH packet");
 
         response.auth = { payload, payload_length };
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_SETENV:
         if (child_options != nullptr) {
@@ -2102,6 +2568,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         return;
 
     case TRANSLATE_EXPAND_SETENV:
+#if TRANSLATION_ENABLE_EXPAND
         if (response.regex == nullptr)
             throw std::runtime_error("misplaced EXPAND_SETENV packet");
 
@@ -2112,8 +2579,12 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         } else
             throw std::runtime_error("misplaced SETENV packet");
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_EXPAND_URI:
+#if TRANSLATION_ENABLE_EXPAND
         if (response.regex == nullptr ||
             response.uri == nullptr ||
             response.expand_uri != nullptr)
@@ -2124,8 +2595,12 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
         response.expand_uri = payload;
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_EXPAND_SITE:
+#if TRANSLATION_ENABLE_EXPAND
         if (response.regex == nullptr ||
             response.site == nullptr ||
             response.expand_site != nullptr)
@@ -2136,13 +2611,19 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
         response.expand_site = payload;
         return;
+#endif
 
     case TRANSLATE_REQUEST_HEADER:
+#if TRANSLATION_ENABLE_HTTP
         parse_header(alloc, response.request_headers,
                      "REQUEST_HEADER", payload, payload_length);
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_EXPAND_REQUEST_HEADER:
+#if TRANSLATION_ENABLE_HTTP && TRANSLATION_ENABLE_EXPAND
         if (response.regex == nullptr)
             throw std::runtime_error("misplaced EXPAND_REQUEST_HEADERS packet");
 
@@ -2150,8 +2631,12 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
                      response.expand_request_headers,
                      "EXPAND_REQUEST_HEADER", payload, payload_length);
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_AUTO_GZIPPED:
+#if TRANSLATION_ENABLE_EXPAND
         if (payload_length > 0)
             throw std::runtime_error("malformed AUTO_GZIPPED packet");
 
@@ -2165,6 +2650,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
             /* ignore for now */
         } else
             throw std::runtime_error("misplaced AUTO_GZIPPED packet");
+#endif
         return;
 
     case TRANSLATE_PROBE_PATH_SUFFIXES:
@@ -2190,6 +2676,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         return;
 
     case TRANSLATE_AUTH_FILE:
+#if TRANSLATION_ENABLE_SESSION
         if (response.HasAuth())
             throw std::runtime_error("duplicate AUTH_FILE packet");
 
@@ -2198,8 +2685,12 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
         response.auth_file = payload;
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_EXPAND_AUTH_FILE:
+#if TRANSLATION_ENABLE_SESSION
         if (response.HasAuth())
             throw std::runtime_error("duplicate EXPAND_AUTH_FILE packet");
 
@@ -2211,8 +2702,12 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
         response.expand_auth_file = payload;
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_APPEND_AUTH:
+#if TRANSLATION_ENABLE_SESSION
         if (!response.HasAuth() ||
             !response.append_auth.IsNull() ||
             response.expand_append_auth != nullptr)
@@ -2220,8 +2715,12 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
         response.append_auth = { payload, payload_length };
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_EXPAND_APPEND_AUTH:
+#if TRANSLATION_ENABLE_SESSION
         if (response.regex == nullptr ||
             !response.HasAuth() ||
             !response.append_auth.IsNull() ||
@@ -2233,8 +2732,12 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
         response.expand_append_auth = payload;
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_EXPAND_COOKIE_HOST:
+#if TRANSLATION_ENABLE_SESSION
         if (response.regex == nullptr ||
             resource_address == nullptr ||
             !resource_address->IsDefined())
@@ -2245,12 +2748,20 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
         response.expand_cookie_host = payload;
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_EXPAND_BIND_MOUNT:
+#if TRANSLATION_ENABLE_EXPAND
         HandleBindMount(payload, payload_length, true, false);
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_NON_BLOCKING:
+#if TRANSLATION_ENABLE_RADDRESS
         if (payload_length > 0)
             throw std::runtime_error("malformed NON_BLOCKING packet");
 
@@ -2260,6 +2771,9 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
             throw std::runtime_error("misplaced NON_BLOCKING packet");
 
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_READ_FILE:
         if (response.read_file != nullptr ||
@@ -2273,6 +2787,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         return;
 
     case TRANSLATE_EXPAND_READ_FILE:
+#if TRANSLATION_ENABLE_EXPAND
         if (response.read_file != nullptr ||
             response.expand_read_file != nullptr)
             throw std::runtime_error("duplicate EXPAND_READ_FILE packet");
@@ -2282,8 +2797,12 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
         response.expand_read_file = payload;
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_EXPAND_HEADER:
+#if TRANSLATION_ENABLE_HTTP && TRANSLATION_ENABLE_EXPAND
         if (response.regex == nullptr)
             throw std::runtime_error("misplaced EXPAND_HEADER packet");
 
@@ -2291,8 +2810,12 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
                      response.expand_response_headers,
                      "EXPAND_HEADER", payload, payload_length);
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_REGEX_ON_HOST_URI:
+#if TRANSLATION_ENABLE_HTTP
         if (response.regex == nullptr &&
             response.inverse_regex == nullptr)
             throw std::runtime_error("REGEX_ON_HOST_URI without REGEX");
@@ -2305,10 +2828,17 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
         response.regex_on_host_uri = true;
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_SESSION_SITE:
+#if TRANSLATION_ENABLE_SESSION
         response.session_site = payload;
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_IPC_NAMESPACE:
         if (payload_length != 0)
@@ -2332,17 +2862,28 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         return;
 
     case TRANSLATE_EXPAND_HOME:
-        translate_client_expand_home(ns_options, jail,
+#if TRANSLATION_ENABLE_EXPAND
+        translate_client_expand_home(ns_options,
+#if TRANSLATION_ENABLE_JAILCGI
+                                     jail,
+#endif
                                      payload, payload_length);
         return;
-
+#else
+        break;
+#endif
 
     case TRANSLATE_EXPAND_STDERR_PATH:
+#if TRANSLATION_ENABLE_EXPAND
         translate_client_expand_stderr_path(child_options,
                                             { _payload, payload_length });
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_REGEX_ON_USER_URI:
+#if TRANSLATION_ENABLE_HTTP
         if (response.regex == nullptr &&
             response.inverse_regex == nullptr)
             throw std::runtime_error("REGEX_ON_USER_URI without REGEX");
@@ -2355,6 +2896,9 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
         response.regex_on_user_uri = true;
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_AUTO_GZIP:
         if (payload_length > 0)
@@ -2367,17 +2911,22 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         return;
 
     case TRANSLATE_INTERNAL_REDIRECT:
+#if TRANSLATION_ENABLE_HTTP
         if (!response.internal_redirect.IsNull())
             throw std::runtime_error("duplicate INTERNAL_REDIRECT packet");
 
         response.internal_redirect = { payload, payload_length };
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_REFENCE:
         HandleRefence({payload, payload_length});
         return;
 
     case TRANSLATE_INVERSE_REGEX_UNESCAPE:
+#if TRANSLATION_ENABLE_EXPAND
         if (payload_length > 0)
             throw std::runtime_error("malformed INVERSE_REGEX_UNESCAPE packet");
 
@@ -2389,16 +2938,24 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
         response.inverse_regex_unescape = true;
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_BIND_MOUNT_RW:
         HandleBindMount(payload, payload_length, false, true);
         return;
 
     case TRANSLATE_EXPAND_BIND_MOUNT_RW:
+#if TRANSLATION_ENABLE_EXPAND
         HandleBindMount(payload, payload_length, true, true);
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_UNTRUSTED_RAW_SITE_SUFFIX:
+#if TRANSLATION_ENABLE_SESSION
         if (!is_valid_nonempty_string(payload, payload_length) ||
             payload[payload_length - 1] == '.')
             throw std::runtime_error("malformed UNTRUSTED_RAW_SITE_SUFFIX packet");
@@ -2408,12 +2965,16 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
         response.untrusted_raw_site_suffix = payload;
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_MOUNT_TMPFS:
         translate_client_mount_tmpfs(ns_options, payload, payload_length);
         return;
 
     case TRANSLATE_REVEAL_USER:
+#if TRANSLATION_ENABLE_TRANSFORMATION
         if (payload_length > 0)
             throw std::runtime_error("malformed REVEAL_USER packet");
 
@@ -2424,8 +2985,12 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
         transformation->u.filter.reveal_user = true;
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_REALM_FROM_AUTH_BASE:
+#if TRANSLATION_ENABLE_SESSION
         if (payload_length > 0)
             throw std::runtime_error("malformed REALM_FROM_AUTH_BASE packet");
 
@@ -2437,6 +3002,9 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
         response.realm_from_auth_base = true;
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_NO_NEW_PRIVS:
         if (child_options == nullptr || child_options->no_new_privs)
@@ -2448,6 +3016,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         child_options->no_new_privs = true;
         return;
 
+#if TRANSLATION_ENABLE_V12
     case TRANSLATE_CGROUP:
         if (child_options == nullptr ||
             child_options->cgroup.name != nullptr)
@@ -2464,6 +3033,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         return;
 
     case TRANSLATE_EXTERNAL_SESSION_MANAGER:
+#if TRANSLATION_ENABLE_SESSION
         if (!is_valid_nonempty_string(payload, payload_length))
             throw std::runtime_error("malformed EXTERNAL_SESSION_MANAGER packet");
 
@@ -2478,6 +3048,9 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         address_list = &http_address->addresses;
         default_port = http_address->GetDefaultPort();
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_EXTERNAL_SESSION_KEEPALIVE: {
         const uint16_t *value = (const uint16_t *)(const void *)payload;
@@ -2493,6 +3066,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         response.external_session_keepalive = std::chrono::seconds(*value);
         return;
     }
+#endif
     }
 
     throw FormatRuntimeError("unknown translation packet: %u", command);
@@ -2516,31 +3090,44 @@ TranslateParser::HandlePacket(enum beng_translation_command command,
     case TRANSLATE_END:
         translate_response_finish(&response);
 
+#if TRANSLATION_ENABLE_WIDGET
         FinishView();
+#endif
         return Result::DONE;
 
     case TRANSLATE_BEGIN:
         begun = true;
         response.Clear();
         previous_command = command;
+#if TRANSLATION_ENABLE_RADDRESS
         resource_address = &response.address;
+#endif
+#if TRANSLATION_ENABLE_JAILCGI
         jail = nullptr;
+#endif
         child_options = nullptr;
         ns_options = nullptr;
         mount_list = nullptr;
+#if TRANSLATION_ENABLE_RADDRESS
         file_address = nullptr;
         http_address = nullptr;
         cgi_address = nullptr;
         nfs_address = nullptr;
         lhttp_address = nullptr;
         address_list = nullptr;
+#endif
 
+#if TRANSLATION_ENABLE_WIDGET
         response.views = alloc.New<WidgetView>();
         response.views->Init(nullptr);
         view = nullptr;
         widget_view_tail = &response.views->next;
+#endif
+
+#if TRANSLATION_ENABLE_TRANSFORMATION
         transformation = nullptr;
         transformation_tail = &response.views->transformation;
+#endif
 
         if (payload_length >= sizeof(uint8_t))
             response.protocol_version = *(const uint8_t *)payload;
