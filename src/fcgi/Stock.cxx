@@ -15,7 +15,7 @@
 #include "spawn/ChildOptions.hxx"
 #include "spawn/JailParams.hxx"
 #include "spawn/JailConfig.hxx"
-#include "gerrno.h"
+#include "GException.hxx"
 #include "pool.hxx"
 #include "event/SocketEvent.hxx"
 #include "event/Duration.hxx"
@@ -183,7 +183,14 @@ fcgi_child_stock_prepare(void *info, UniqueFileDescriptor &&fd,
     for (auto i : params.args)
         p.Append(i);
 
-    return options.CopyTo(p, true, nullptr, error_r);
+    try {
+        options.CopyTo(p, true, nullptr);
+    } catch (const std::runtime_error &e) {
+        SetGError(error_r, e);
+        return false;
+    }
+
+    return true;
 }
 
 static const ChildStockClass fcgi_child_stock_class = {

@@ -179,13 +179,13 @@ LhttpAddress::Expand(struct pool *pool, const MatchInfo &match_info)
     args.Expand(pool, match_info);
 }
 
-bool
-LhttpAddress::CopyTo(PreparedChildProcess &dest, GError **error_r) const
+void
+LhttpAddress::CopyTo(PreparedChildProcess &dest) const
 {
     dest.Append(path);
 
     for (const char *i : args)
         dest.Append(i);
 
-    return options.CopyTo(dest, true, nullptr, error_r);
+    options.CopyTo(dest, true, nullptr);
 }

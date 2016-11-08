@@ -11,7 +11,6 @@
 #include "NamespaceOptions.hxx"
 #include "UidGid.hxx"
 #include "util/ShallowCopy.hxx"
-#include "glibfwd.hxx"
 
 struct ResourceLimits;
 struct JailParams;
@@ -81,12 +80,14 @@ struct ChildOptions {
     int OpenStderrPath() const;
 
     /**
+     * Throws std::runtime_error on error.
+     *
      * @param use_jail shall #jail be used?  Pass false for protocols
      * which have a non-standard way of calling the JailCGI wrapper,
      * e.g. basic CGI
      */
-    bool CopyTo(PreparedChildProcess &dest, bool use_jail,
-                const char *document_root, GError **error_r) const;
+    void CopyTo(PreparedChildProcess &dest, bool use_jail,
+                const char *document_root) const;
 };
 
 #endif

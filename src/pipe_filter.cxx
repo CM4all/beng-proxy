@@ -11,6 +11,7 @@
 #include "istream_stopwatch.hxx"
 #include "strmap.hxx"
 #include "pool.hxx"
+#include "GException.hxx"
 #include "istream/istream.hxx"
 #include "spawn/ChildOptions.hxx"
 #include "spawn/IstreamSpawn.hxx"
@@ -96,13 +97,15 @@ pipe_filter(SpawnService &spawn_service, EventLoop &event_loop,
     for (auto i : args)
         p.Append(i);
 
-    GError *error = nullptr;
-    if (!options.CopyTo(p, true, nullptr, &error)) {
-        handler.InvokeError(error);
+    try {
+        options.CopyTo(p, true, nullptr);
+    } catch (const std::runtime_error &e) {
+        handler.InvokeError(ToGError(e));
         return;
     }
 
     Istream *response;
+    GError *error = nullptr;
     pid_t pid = SpawnChildProcess(event_loop, pool, path, body, &response,
                                   std::move(p),
                                   spawn_service, &error);

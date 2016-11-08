@@ -9,6 +9,7 @@
 #include "istream/istream.hxx"
 #include "strmap.hxx"
 #include "product.h"
+#include "GException.hxx"
 #include "spawn/IstreamSpawn.hxx"
 #include "spawn/JailParams.hxx"
 #include "spawn/Prepared.hxx"
@@ -41,14 +42,16 @@ StringFallback(const char *value, const char *fallback)
     return value != nullptr ? value : fallback;
 }
 
-static bool
+/**
+ * Throws std::runtime_error on error.
+ */
+static void
 PrepareCgi(struct pool &pool, PreparedChildProcess &p,
            http_method_t method,
            const CgiAddress &address,
            const char *remote_addr,
            const StringMap &headers,
-           off_t content_length,
-           GError **error_r)
+           off_t content_length)
 {
     const char *path = address.path;
 
@@ -137,7 +140,7 @@ PrepareCgi(struct pool &pool, PreparedChildProcess &p,
     if (arg != nullptr)
         p.Append(arg);
 
-    return address.options.CopyTo(p, false, nullptr, error_r);
+    address.options.CopyTo(p, false, nullptr);
 }
 
 Istream *
@@ -151,11 +154,14 @@ cgi_launch(EventLoop &event_loop, struct pool *pool,
 {
     PreparedChildProcess p;
 
-    if (!PrepareCgi(*pool, p, method,
-                    *address, remote_addr, headers,
-                    body != nullptr ? body->GetAvailable(false) : -1,
-                    error_r))
+    try {
+        PrepareCgi(*pool, p, method,
+                   *address, remote_addr, headers,
+                   body != nullptr ? body->GetAvailable(false) : -1);
+    } catch (const std::runtime_error &e) {
+        SetGError(error_r, e);
         return nullptr;
+    }
 
     Istream *input;
     int pid = SpawnChildProcess(event_loop, pool,

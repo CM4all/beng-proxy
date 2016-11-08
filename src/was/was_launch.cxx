@@ -67,8 +67,12 @@ was_launch(SpawnService &spawn_service,
     for (auto i : args)
         p.Append(i);
 
-    if (!options.CopyTo(p, true, nullptr, error_r))
+    try {
+        options.CopyTo(p, true, nullptr);
+    } catch (const std::runtime_error &e) {
+        SetGError(error_r, e);
         return process;
+    }
 
     try {
         process.pid = spawn_service.SpawnChildProcess(name, std::move(p),

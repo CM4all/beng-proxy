@@ -8,7 +8,7 @@
 #include "Prepared.hxx"
 #include "AllocatorPtr.hxx"
 #include "pexpand.hxx"
-#include "gerrno.h"
+#include "system/Error.hxx"
 #include "util/djbhash.h"
 
 #include <assert.h>
@@ -104,23 +104,18 @@ ChildOptions::OpenStderrPath() const
                 0666);
 }
 
-bool
+void
 ChildOptions::CopyTo(PreparedChildProcess &dest,
                      bool use_jail,
-                     const char *document_root,
-                     GError **error_r) const
+                     const char *document_root) const
 {
     if (use_jail && jail != nullptr)
         jail->InsertWrapper(dest, document_root);
 
     if (stderr_path != nullptr) {
         int fd = OpenStderrPath();
-        if (fd < 0) {
-            int code = errno;
-            g_set_error(error_r, errno_quark(), errno, "open('%s') failed: %s",
-                        stderr_path, strerror(code));
-            return false;
-        }
+        if (fd < 0)
+            throw FormatErrno("open('%s') failed", stderr_path);
 
         dest.SetStderr(fd);
     }
@@ -135,6 +130,4 @@ ChildOptions::CopyTo(PreparedChildProcess &dest,
         dest.rlimits = *rlimits;
     dest.uid_gid = uid_gid;
     dest.no_new_privs = no_new_privs;
-
-    return true;
 }

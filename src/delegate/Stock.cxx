@@ -125,15 +125,16 @@ delegate_stock_create(void *ctx,
     PreparedChildProcess p;
     p.Append(info.executable_path);
 
-    GError *error = nullptr;
-    if (!info.options.CopyTo(p, true, nullptr, &error)) {
-        c.InvokeCreateError(error);
+    try {
+        info.options.CopyTo(p, true, nullptr);
+    } catch (const std::runtime_error &e) {
+        c.InvokeCreateError(ToGError(e));
         return;
     }
 
     int fds[2];
     if (socketpair_cloexec(AF_UNIX, SOCK_STREAM, 0, fds) < 0) {
-        error = new_error_errno_msg("socketpair() failed: %s");
+        auto *error = new_error_errno_msg("socketpair() failed: %s");
         c.InvokeCreateError(error);
         return;
     }

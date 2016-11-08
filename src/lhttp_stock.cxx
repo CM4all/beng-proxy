@@ -16,7 +16,7 @@
 #include "child_stock.hxx"
 #include "spawn/JailParams.hxx"
 #include "spawn/Prepared.hxx"
-#include "gerrno.h"
+#include "GException.hxx"
 #include "pool.hxx"
 #include "event/SocketEvent.hxx"
 
@@ -129,7 +129,14 @@ lhttp_child_stock_prepare(void *info, UniqueFileDescriptor &&fd,
 
     p.SetStdin(std::move(fd));
 
-    return address.CopyTo(p, error_r);
+    try {
+        address.CopyTo(p);
+    } catch (const std::runtime_error &e) {
+        SetGError(error_r, e);
+        return false;
+    }
+
+    return true;
 }
 
 static const ChildStockClass lhttp_child_stock_class = {

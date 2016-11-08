@@ -151,7 +151,10 @@ struct LhttpAddress {
 
     void Expand(struct pool *pool, const MatchInfo &match_info);
 
-    bool CopyTo(PreparedChildProcess &dest, GError **error_r) const;
+    /**
+     * Throws std::runtime_error on error.
+     */
+    void CopyTo(PreparedChildProcess &dest) const;
 };
 
 #endif
