@@ -5,8 +5,6 @@
  */
 
 #include "Response.hxx"
-#include "pool.hxx"
-#include "pbuffer.hxx"
 #include "strmap.hxx"
 #include "widget_view.hxx"
 #include "uri/uri_base.hxx"
@@ -154,17 +152,17 @@ TranslateResponse::Clear()
 
 template<unsigned N>
 static void
-CopyArray(struct pool &pool, TrivialArray<const char *, N> &dest,
+CopyArray(AllocatorPtr alloc, TrivialArray<const char *, N> &dest,
           const TrivialArray<const char *, N> &src)
 {
     const size_t size = src.size();
     dest.resize(size);
     for (size_t i = 0; i < size; ++i)
-        dest[i] = p_strdup(&pool, src[i]);
+        dest[i] = alloc.Dup(src[i]);
 }
 
 void
-TranslateResponse::CopyFrom(struct pool *pool, const TranslateResponse &src)
+TranslateResponse::CopyFrom(AllocatorPtr alloc, const TranslateResponse &src)
 {
     protocol_version = src.protocol_version;
 
@@ -178,27 +176,27 @@ TranslateResponse::CopyFrom(struct pool *pool, const TranslateResponse &src)
     request_header_forward = src.request_header_forward;
     response_header_forward = src.response_header_forward;
 
-    base = p_strdup_checked(pool, src.base);
-    regex = p_strdup_checked(pool, src.regex);
-    inverse_regex = p_strdup_checked(pool, src.inverse_regex);
-    site = p_strdup_checked(pool, src.site);
-    expand_site = p_strdup_checked(pool, src.expand_site);
-    document_root = p_strdup_checked(pool, src.document_root);
-    expand_document_root = p_strdup_checked(pool, src.expand_document_root);
-    redirect = p_strdup_checked(pool, src.redirect);
-    expand_redirect = p_strdup_checked(pool, src.expand_redirect);
-    bounce = p_strdup_checked(pool, src.bounce);
-    scheme = p_strdup_checked(pool, src.scheme);
-    host = p_strdup_checked(pool, src.host);
-    uri = p_strdup_checked(pool, src.uri);
-    expand_uri = p_strdup_checked(pool, src.expand_uri);
-    local_uri = p_strdup_checked(pool, src.local_uri);
-    untrusted = p_strdup_checked(pool, src.untrusted);
-    untrusted_prefix = p_strdup_checked(pool, src.untrusted_prefix);
+    base = alloc.CheckDup(src.base);
+    regex = alloc.CheckDup(src.regex);
+    inverse_regex = alloc.CheckDup(src.inverse_regex);
+    site = alloc.CheckDup(src.site);
+    expand_site = alloc.CheckDup(src.expand_site);
+    document_root = alloc.CheckDup(src.document_root);
+    expand_document_root = alloc.CheckDup(src.expand_document_root);
+    redirect = alloc.CheckDup(src.redirect);
+    expand_redirect = alloc.CheckDup(src.expand_redirect);
+    bounce = alloc.CheckDup(src.bounce);
+    scheme = alloc.CheckDup(src.scheme);
+    host = alloc.CheckDup(src.host);
+    uri = alloc.CheckDup(src.uri);
+    expand_uri = alloc.CheckDup(src.expand_uri);
+    local_uri = alloc.CheckDup(src.local_uri);
+    untrusted = alloc.CheckDup(src.untrusted);
+    untrusted_prefix = alloc.CheckDup(src.untrusted_prefix);
     untrusted_site_suffix =
-        p_strdup_checked(pool, src.untrusted_site_suffix);
+        alloc.CheckDup(src.untrusted_site_suffix);
     untrusted_raw_site_suffix =
-        p_strdup_checked(pool, src.untrusted_raw_site_suffix);
+        alloc.CheckDup(src.untrusted_raw_site_suffix);
     unsafe_base = src.unsafe_base;
     easy_base = src.easy_base;
     regex_tail = src.regex_tail;
@@ -214,16 +212,16 @@ TranslateResponse::CopyFrom(struct pool *pool, const TranslateResponse &src)
     redirect_query_string = src.redirect_query_string;
     auto_base = src.auto_base;
     widget_info = src.widget_info;
-    widget_group = p_strdup_checked(pool, src.widget_group);
-    test_path = p_strdup_checked(pool, src.test_path);
-    expand_test_path = p_strdup_checked(pool, src.expand_test_path);
-    auth_file = p_strdup_checked(pool, src.auth_file);
-    expand_auth_file = p_strdup_checked(pool, src.expand_auth_file);
-    append_auth = DupBuffer(*pool, src.append_auth);
-    expand_append_auth = p_strdup_checked(pool, src.expand_append_auth);
+    widget_group = alloc.CheckDup(src.widget_group);
+    test_path = alloc.CheckDup(src.test_path);
+    expand_test_path = alloc.CheckDup(src.expand_test_path);
+    auth_file = alloc.CheckDup(src.auth_file);
+    expand_auth_file = alloc.CheckDup(src.expand_auth_file);
+    append_auth = alloc.Dup(src.append_auth);
+    expand_append_auth = alloc.CheckDup(src.expand_append_auth);
 
     container_groups.Init();
-    container_groups.CopyFrom(*pool, src.container_groups);
+    container_groups.CopyFrom(alloc, src.container_groups);
 
     anchor_absolute = src.anchor_absolute;
     dump_headers = src.dump_headers;
@@ -234,10 +232,10 @@ TranslateResponse::CopyFrom(struct pool *pool, const TranslateResponse &src)
     realm_from_auth_base = src.realm_from_auth_base;
     session = nullptr;
 
-    internal_redirect = DupBuffer(*pool, src.internal_redirect);
-    check = DupBuffer(*pool, src.check);
-    auth = DupBuffer(*pool, src.auth);
-    want_full_uri = DupBuffer(*pool, src.want_full_uri);
+    internal_redirect = alloc.Dup(src.internal_redirect);
+    check = alloc.Dup(src.check);
+    auth = alloc.Dup(src.auth);
+    want_full_uri = alloc.Dup(src.want_full_uri);
 
     /* The "user" attribute must not be present in cached responses,
        because they belong to only that one session.  For the same
@@ -246,66 +244,63 @@ TranslateResponse::CopyFrom(struct pool *pool, const TranslateResponse &src)
     session_site = nullptr;
 
     language = nullptr;
-    realm = p_strdup_checked(pool, src.realm);
+    realm = alloc.CheckDup(src.realm);
 
     external_session_manager = src.external_session_manager != nullptr
-        ? NewFromPool<HttpAddress>(*pool, *pool, *src.external_session_manager)
+        ? alloc.New<HttpAddress>(alloc, *src.external_session_manager)
         : nullptr;
     external_session_keepalive = src.external_session_keepalive;
 
-    www_authenticate = p_strdup_checked(pool, src.www_authenticate);
-    authentication_info = p_strdup_checked(pool, src.authentication_info);
-    cookie_domain = p_strdup_checked(pool, src.cookie_domain);
-    cookie_host = p_strdup_checked(pool, src.cookie_host);
-    expand_cookie_host = p_strdup_checked(pool, src.expand_cookie_host);
-    cookie_path = p_strdup_checked(pool, src.cookie_path);
+    www_authenticate = alloc.CheckDup(src.www_authenticate);
+    authentication_info = alloc.CheckDup(src.authentication_info);
+    cookie_domain = alloc.CheckDup(src.cookie_domain);
+    cookie_host = alloc.CheckDup(src.cookie_host);
+    expand_cookie_host = alloc.CheckDup(src.expand_cookie_host);
+    cookie_path = alloc.CheckDup(src.cookie_path);
 
-    request_headers = KeyValueList(PoolAllocator(*pool), src.request_headers);
-    expand_request_headers = KeyValueList(PoolAllocator(*pool),
-                                          src.expand_request_headers);
-    response_headers = KeyValueList(PoolAllocator(*pool), src.response_headers);
-    expand_response_headers = KeyValueList(PoolAllocator(*pool),
-                                           src.expand_response_headers);
+    request_headers = KeyValueList(alloc, src.request_headers);
+    expand_request_headers = KeyValueList(alloc, src.expand_request_headers);
+    response_headers = KeyValueList(alloc, src.response_headers);
+    expand_response_headers = KeyValueList(alloc, src.expand_response_headers);
 
     views = src.views != nullptr
-        ? src.views->CloneChain(*pool)
+        ? src.views->CloneChain(alloc)
         : nullptr;
 
-    vary = DupBuffer(*pool, src.vary);
-    invalidate = DupBuffer(*pool, src.invalidate);
-    want = DupBuffer(*pool, src.want);
-    file_not_found = DupBuffer(*pool, src.file_not_found);
-    content_type = p_strdup_checked(pool, src.content_type);
-    enotdir = DupBuffer(*pool, src.enotdir);
-    directory_index = DupBuffer(*pool, src.directory_index);
-    error_document = DupBuffer(*pool, src.error_document);
-    probe_path_suffixes = DupBuffer(*pool, src.probe_path_suffixes);
-    CopyArray(*pool, probe_suffixes, src.probe_suffixes);
-    read_file = p_strdup_checked(pool, src.read_file);
-    expand_read_file = p_strdup_checked(pool, src.expand_read_file);
+    vary = alloc.Dup(src.vary);
+    invalidate = alloc.Dup(src.invalidate);
+    want = alloc.Dup(src.want);
+    file_not_found = alloc.Dup(src.file_not_found);
+    content_type = alloc.CheckDup(src.content_type);
+    enotdir = alloc.Dup(src.enotdir);
+    directory_index = alloc.Dup(src.directory_index);
+    error_document = alloc.Dup(src.error_document);
+    probe_path_suffixes = alloc.Dup(src.probe_path_suffixes);
+    CopyArray(alloc, probe_suffixes, src.probe_suffixes);
+    read_file = alloc.CheckDup(src.read_file);
+    expand_read_file = alloc.CheckDup(src.expand_read_file);
 
     validate_mtime.mtime = src.validate_mtime.mtime;
-    validate_mtime.path =
-        p_strdup_checked(pool, src.validate_mtime.path);
+    validate_mtime.path = alloc.CheckDup(src.validate_mtime.path);
 }
 
 bool
-TranslateResponse::CacheStore(struct pool *pool, const TranslateResponse &src,
+TranslateResponse::CacheStore(AllocatorPtr alloc, const TranslateResponse &src,
                               const char *request_uri)
 {
-    CopyFrom(pool, src);
+    CopyFrom(alloc, src);
 
     const char *new_base = nullptr;
     if (auto_base) {
         assert(base == nullptr);
         assert(request_uri != nullptr);
 
-        base = new_base = src.address.AutoBase(*pool, request_uri);
+        base = new_base = src.address.AutoBase(alloc, request_uri);
     }
 
     const bool expandable = src.IsExpandable();
 
-    const bool has_base = address.CacheStore(*pool, src.address,
+    const bool has_base = address.CacheStore(alloc, src.address,
                                              request_uri, base,
                                              easy_base,
                                              expandable);
@@ -322,7 +317,7 @@ TranslateResponse::CacheStore(struct pool *pool, const TranslateResponse &src,
             if (uri != nullptr) {
                 size_t length = base_string(uri, tail);
                 uri = length != (size_t)-1
-                    ? p_strndup(pool, uri, length)
+                    ? alloc.DupZ({uri, length})
                     : nullptr;
 
                 if (uri == nullptr && !internal_redirect.IsNull())
@@ -335,9 +330,9 @@ TranslateResponse::CacheStore(struct pool *pool, const TranslateResponse &src,
             }
 
             if (test_path != nullptr) {
-                size_t length = base_string_unescape(*pool, test_path, tail);
+                size_t length = base_string_unescape(alloc, test_path, tail);
                 test_path = length != (size_t)-1
-                    ? p_strndup(pool, test_path, length)
+                    ? alloc.DupZ({test_path, length})
                     : nullptr;
             }
         }
@@ -347,29 +342,29 @@ TranslateResponse::CacheStore(struct pool *pool, const TranslateResponse &src,
 }
 
 void
-TranslateResponse::CacheLoad(struct pool *pool, const TranslateResponse &src,
+TranslateResponse::CacheLoad(AllocatorPtr alloc, const TranslateResponse &src,
                              const char *request_uri)
 {
     const bool expandable = src.IsExpandable();
 
-    address.CacheLoad(*pool, src.address, request_uri, src.base,
+    address.CacheLoad(alloc, src.address, request_uri, src.base,
                       src.unsafe_base, expandable);
 
     if (this != &src)
-        CopyFrom(pool, src);
+        CopyFrom(alloc, src);
 
     if (base != nullptr && !expandable) {
         const char *tail = require_base_tail(request_uri, base);
 
         if (uri != nullptr)
-            uri = p_strcat(pool, uri, tail, nullptr);
+            uri = alloc.Concat(uri, tail);
 
         if (test_path != nullptr) {
-            char *unescaped = uri_unescape_dup(*pool, tail);
+            char *unescaped = uri_unescape_dup(alloc, tail);
             if (unescaped == nullptr)
                 throw HttpMessageResponse(HTTP_STATUS_BAD_REQUEST, "Malformed URI tail");
 
-            test_path = p_strcat(pool, test_path, unescaped, nullptr);
+            test_path = alloc.Concat(test_path, unescaped);
         }
     }
 }

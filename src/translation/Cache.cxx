@@ -749,7 +749,7 @@ tcache_store_response(struct pool &pool, TranslateResponse &dest,
                       const TranslateResponse &src,
                       const TranslateRequest &request)
 {
-    const bool has_base = dest.CacheStore(&pool, src, request.uri);
+    const bool has_base = dest.CacheStore(pool, src, request.uri);
     return has_base
         /* generate a new cache key for the BASE */
         ? tcache_uri_key(pool, dest.base, request.host,
@@ -1293,7 +1293,7 @@ tcache_handler_response(TranslateResponse &response, void *ctx)
     } else if (response.easy_base) {
         /* create a writable copy and apply the BASE */
         try {
-            response.CacheLoad(tcr.pool, response, tcr.request.uri);
+            response.CacheLoad(*tcr.pool, response, tcr.request.uri);
         } catch (...) {
             tcr.handler->error(std::current_exception(), tcr.handler_ctx);
             return;
@@ -1339,7 +1339,7 @@ tcache_hit(struct pool &pool,
     cache_log(4, "translate_cache: hit %s\n", key);
 
     try {
-        response->CacheLoad(&pool, item.response, uri);
+        response->CacheLoad(pool, item.response, uri);
     } catch (...) {
         handler.error(std::current_exception(), ctx);
         return;

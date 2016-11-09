@@ -68,10 +68,11 @@ struct MakeResponse : TranslateResponse {
         base = _base;
     }
 
-    MakeResponse &&FullCopyFrom(struct pool &p, const TranslateResponse &src) {
-        CopyFrom(&p, src);
+    MakeResponse &&FullCopyFrom(AllocatorPtr alloc,
+                                const TranslateResponse &src) {
+        CopyFrom(alloc, src);
         max_age = src.max_age;
-        address.CopyFrom(p, src.address);
+        address.CopyFrom(alloc, src.address);
         user = src.user;
         return std::move(*this);
     }

@@ -38,7 +38,7 @@ public:
     template<typename Alloc>
     KeyValueList(Alloc &&alloc, const KeyValueList &src) {
         for (const auto &i : src)
-            Add(alloc, alloc.DupString(i.key), alloc.DupString(i.value));
+            Add(alloc, alloc.Dup(i.key), alloc.Dup(i.value));
     }
 
     KeyValueList &operator=(KeyValueList &&src) {

@@ -22,8 +22,8 @@
 #include <assert.h>
 #include <stdint.h>
 
-struct pool;
 struct WidgetView;
+class AllocatorPtr;
 class UniqueRegex;
 class MatchInfo;
 class Error;
@@ -295,7 +295,7 @@ struct TranslateResponse {
             untrusted_raw_site_suffix != nullptr;
     }
 
-    void CopyFrom(struct pool *pool, const TranslateResponse &src);
+    void CopyFrom(AllocatorPtr alloc, const TranslateResponse &src);
 
     /**
      * Copy data from #src for storing in the translation cache.
@@ -303,13 +303,13 @@ struct TranslateResponse {
      * @return true if a #base was given and it was applied
      * successfully
      */
-    bool CacheStore(struct pool *pool, const TranslateResponse &src,
+    bool CacheStore(AllocatorPtr alloc, const TranslateResponse &src,
                     const char *uri);
 
     /**
      * Throws std::runtime_error on error.
      */
-    void CacheLoad(struct pool *pool, const TranslateResponse &src,
+    void CacheLoad(AllocatorPtr alloc, const TranslateResponse &src,
                    const char *uri);
 
     /**
