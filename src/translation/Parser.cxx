@@ -2505,10 +2505,10 @@ TranslateParser::HandlePacket(enum beng_translation_command command,
     assert(payload != nullptr);
 
     if (command == TRANSLATE_BEGIN) {
-        if (response.status != (http_status_t)-1)
+        if (begun)
             throw std::runtime_error("double BEGIN from translation server");
     } else {
-        if (response.status == (http_status_t)-1)
+        if (!begun)
             throw std::runtime_error("no BEGIN from translation server");
     }
 
@@ -2520,6 +2520,7 @@ TranslateParser::HandlePacket(enum beng_translation_command command,
         return Result::DONE;
 
     case TRANSLATE_BEGIN:
+        begun = true;
         response.Clear();
         previous_command = command;
         resource_address = &response.address;

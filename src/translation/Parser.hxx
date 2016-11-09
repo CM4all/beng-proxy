@@ -45,6 +45,11 @@ class TranslateParser {
              content_type_lookup(!r.content_type_lookup.IsNull()) {}
     } from_request;
 
+    /**
+     * Has #TRANSLATE_BEGIN been seen already?
+     */
+    bool begun = false;
+
     TranslatePacketReader reader;
     TranslateResponse response;
 
@@ -105,7 +110,6 @@ class TranslateParser {
 public:
     TranslateParser(AllocatorPtr _alloc, const TranslateRequest &r)
         :alloc(_alloc), from_request(r) {
-        response.status = (http_status_t)-1;
     }
 
     size_t Feed(const uint8_t *data, size_t length) {
