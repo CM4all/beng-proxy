@@ -274,7 +274,7 @@ public:
      * @return a newly allocated base, or nullptr if that is not possible
      */
     gcc_malloc
-    char *AutoBase(struct pool &pool, const char *uri) const;
+    const char *AutoBase(AllocatorPtr alloc, const char *uri) const;
 
     /**
      * Duplicate a resource address, but return the base address.

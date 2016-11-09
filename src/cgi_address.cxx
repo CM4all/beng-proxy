@@ -158,8 +158,8 @@ CgiAddress::IsValidBase() const
     return IsExpandable() || (path_info != nullptr && is_base(path_info));
 }
 
-char *
-CgiAddress::AutoBase(struct pool *pool, const char *request_uri) const
+const char *
+CgiAddress::AutoBase(AllocatorPtr alloc, const char *request_uri) const
 {
     /* auto-generate the BASE only if the path info begins with a
        slash and matches the URI */
@@ -175,7 +175,7 @@ CgiAddress::AutoBase(struct pool *pool, const char *request_uri) const
     if (length == 0 || length == (size_t)-1)
         return nullptr;
 
-    return p_strndup(pool, request_uri, length);
+    return alloc.DupZ({request_uri, length});
 }
 
 CgiAddress *

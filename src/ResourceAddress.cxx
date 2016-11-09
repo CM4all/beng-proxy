@@ -197,8 +197,8 @@ ResourceAddress::WithArgs(struct pool &pool,
     gcc_unreachable();
 }
 
-char *
-ResourceAddress::AutoBase(struct pool &pool, const char *uri) const
+const char *
+ResourceAddress::AutoBase(AllocatorPtr alloc, const char *uri) const
 {
     assert(uri != nullptr);
 
@@ -214,7 +214,7 @@ ResourceAddress::AutoBase(struct pool &pool, const char *uri) const
     case Type::CGI:
     case Type::FASTCGI:
     case Type::WAS:
-        return u.cgi->AutoBase(&pool, uri);
+        return u.cgi->AutoBase(alloc, uri);
     }
 
     assert(false);

@@ -132,7 +132,7 @@ struct CgiAddress {
     gcc_pure
     bool IsValidBase() const;
 
-    char *AutoBase(struct pool *pool, const char *request_uri) const;
+    const char *AutoBase(AllocatorPtr alloc, const char *request_uri) const;
 
     CgiAddress *SaveBase(AllocatorPtr alloc, const char *suffix) const;
 

@@ -295,7 +295,7 @@ TranslateResponse::CacheStore(struct pool *pool, const TranslateResponse &src,
 {
     CopyFrom(pool, src);
 
-    char *new_base = nullptr;
+    const char *new_base = nullptr;
     if (auto_base) {
         assert(base == nullptr);
         assert(request_uri != nullptr);

@@ -32,7 +32,7 @@ test_auto_base(struct pool *pool)
     assert(ra2.AutoBase(*pool, "/") == NULL);
     assert(ra2.AutoBase(*pool, "/foobar/baz") == NULL);
 
-    char *a = ra2.AutoBase(*pool, "/foo/bar/baz");
+    const char *a = ra2.AutoBase(*pool, "/foo/bar/baz");
     assert(a != NULL);
     assert(strcmp(a, "/foo/") == 0);
 }
