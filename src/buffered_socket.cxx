@@ -6,7 +6,6 @@
  */
 
 #include "buffered_socket.hxx"
-#include "fb_pool.hxx"
 #include "system/Error.hxx"
 #include "util/ConstBuffer.hxx"
 
@@ -153,7 +152,7 @@ BufferedSocket::SubmitFromBuffer()
         assert(input.IsEmpty());
         assert(!expect_more);
 
-        input.Free(fb_pool_get());
+        input.Free();
 
         if (!IsConnected()) {
             Ended();
@@ -189,7 +188,7 @@ BufferedSocket::SubmitFromBuffer()
             return false;
         }
 
-        input.FreeIfEmpty(fb_pool_get());
+        input.FreeIfEmpty();
 
         if (!base.IsReadPending())
             /* reschedule the read event just in case the buffer was
@@ -279,7 +278,7 @@ BufferedSocket::FillBuffer()
     assert(IsConnected());
 
     if (input.IsNull())
-        input.Allocate(fb_pool_get());
+        input.Allocate();
 
     ssize_t nbytes = base.ReadToBuffer(input, INT_MAX);
     if (gcc_likely(nbytes > 0)) {
@@ -302,7 +301,7 @@ BufferedSocket::FillBuffer()
 
     if (nbytes == -1) {
         if (errno == EAGAIN) {
-            input.FreeIfEmpty(fb_pool_get());
+            input.FreeIfEmpty();
 
             /* schedule read, but don't refresh timeout of old
                scheduled read */
@@ -536,7 +535,7 @@ BufferedSocket::Destroy()
     assert(!base.IsValid());
     assert(!destroyed);
 
-    input.FreeIfDefined(fb_pool_get());
+    input.FreeIfDefined();
 
     destroyed = true;
 }

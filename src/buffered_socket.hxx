@@ -8,7 +8,7 @@
 #define BENG_PROXY_BUFFERED_SOCKET_HXX
 
 #include "socket_wrapper.hxx"
-#include "SliceFifoBuffer.hxx"
+#include "DefaultFifoBuffer.hxx"
 #include "event/DeferEvent.hxx"
 #include "util/DestructObserver.hxx"
 
@@ -265,7 +265,7 @@ class BufferedSocket final : DestructAnchor {
     const BufferedSocketHandler *handler;
     void *handler_ctx;
 
-    SliceFifoBuffer input;
+    DefaultFifoBuffer input;
 
     /**
      * Attempt to do "direct" transfers?
