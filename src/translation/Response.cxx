@@ -5,7 +5,6 @@
  */
 
 #include "Response.hxx"
-#include "strmap.hxx"
 #include "widget_view.hxx"
 #include "uri/uri_base.hxx"
 #include "puri_base.hxx"
@@ -16,10 +15,6 @@
 #include "http_address.hxx"
 #include "HttpMessageResponse.hxx"
 #include "util/StringView.hxx"
-
-#include <glib.h>
-
-#include <string.h>
 
 void
 TranslateResponse::Clear()

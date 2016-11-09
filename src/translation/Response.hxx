@@ -13,7 +13,6 @@
 #include "util/StringSet.hxx"
 #include "ResourceAddress.hxx"
 #include "header_forward.hxx"
-#include "glibfwd.hxx"
 
 #include <http/status.h>
 
@@ -26,7 +25,6 @@ struct WidgetView;
 class AllocatorPtr;
 class UniqueRegex;
 class MatchInfo;
-class Error;
 
 struct TranslateResponse {
     /**
