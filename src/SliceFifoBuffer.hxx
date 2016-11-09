@@ -5,7 +5,6 @@
 #ifndef BENG_PROXY_SLICE_FIFO_BUFFER_HXX
 #define BENG_PROXY_SLICE_FIFO_BUFFER_HXX
 
-#include "socket_wrapper.hxx"
 #include "util/ForeignFifoBuffer.hxx"
 
 #include <stdint.h>
