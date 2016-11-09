@@ -282,7 +282,7 @@ ResourceAddress::SaveBase(AllocatorPtr alloc, const char *suffix) const
 }
 
 bool
-ResourceAddress::CacheStore(struct pool &pool,
+ResourceAddress::CacheStore(AllocatorPtr alloc,
                             const ResourceAddress &src,
                             const char *uri, const char *base,
                             bool easy_base, bool expandable)
@@ -295,7 +295,7 @@ ResourceAddress::CacheStore(struct pool &pool,
         if (easy_base || expandable) {
             /* when the response is expandable, skip appending the
                tail URI, don't call resource_address_save_base() */
-            CopyFrom(pool, src);
+            CopyFrom(alloc, src);
             return true;
         }
 
@@ -307,12 +307,12 @@ ResourceAddress::CacheStore(struct pool &pool,
             return true;
         }
 
-        *this = src.SaveBase(pool, tail);
+        *this = src.SaveBase(alloc, tail);
         if (IsDefined())
             return true;
     }
 
-    CopyFrom(pool, src);
+    CopyFrom(alloc, src);
     return false;
 }
 
@@ -378,7 +378,7 @@ ResourceAddress::LoadBase(AllocatorPtr alloc, const char *suffix) const
 }
 
 void
-ResourceAddress::CacheLoad(struct pool &pool, const ResourceAddress &src,
+ResourceAddress::CacheLoad(AllocatorPtr alloc, const ResourceAddress &src,
                            const char *uri, const char *base,
                            bool unsafe_base, bool expandable)
 {
@@ -394,12 +394,12 @@ ResourceAddress::CacheLoad(struct pool &pool, const ResourceAddress &src,
             return;
         }
 
-        *this = src.LoadBase(pool, tail);
+        *this = src.LoadBase(alloc, tail);
         if (IsDefined())
             return;
     }
 
-    CopyFrom(pool, src);
+    CopyFrom(alloc, src);
 }
 
 ResourceAddress

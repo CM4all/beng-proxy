@@ -304,7 +304,7 @@ public:
      * @return true if a #base was given and it was applied
      * successfully
      */
-    bool CacheStore(struct pool &pool, const ResourceAddress &src,
+    bool CacheStore(AllocatorPtr alloc, const ResourceAddress &src,
                     const char *uri, const char *base,
                     bool easy_base, bool expandable);
 
@@ -314,7 +314,7 @@ public:
      *
      * Throws std::runtime_error on error.
      */
-    void CacheLoad(struct pool &pool, const ResourceAddress &src,
+    void CacheLoad(AllocatorPtr alloc, const ResourceAddress &src,
                    const char *uri, const char *base,
                    bool unsafe_base, bool expandable);
 
