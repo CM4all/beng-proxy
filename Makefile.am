@@ -712,6 +712,7 @@ libmemory_a_SOURCES = \
 	src/fb_pool.cxx src/fb_pool.hxx \
 	src/SlicePool.cxx src/SlicePool.hxx \
 	src/SliceFifoBuffer.cxx src/SliceFifoBuffer.hxx \
+	src/DefaultFifoBuffer.cxx src/DefaultFifoBuffer.hxx \
 	src/rubber.cxx src/rubber.hxx
 
 libpool_a_SOURCES = \
