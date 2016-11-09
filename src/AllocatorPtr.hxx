@@ -50,6 +50,12 @@ public:
     }
 
     ConstBuffer<void> Dup(ConstBuffer<void> src);
+
+    template<typename T>
+    ConstBuffer<T> Dup(ConstBuffer<T> src) {
+        return ConstBuffer<T>::FromVoid(Dup(src.ToVoid()));
+    }
+
     StringView Dup(StringView src);
     const char *DupZ(StringView src);
 
