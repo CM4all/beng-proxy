@@ -18,7 +18,7 @@ class SliceFifoBuffer : public ForeignFifoBuffer<uint8_t> {
 public:
     SliceFifoBuffer():ForeignFifoBuffer<uint8_t>(nullptr) {}
 
-    SliceFifoBuffer(SlicePool &pool)
+    explicit SliceFifoBuffer(SlicePool &pool)
         :ForeignFifoBuffer<uint8_t>(nullptr) {
         Allocate(pool);
     }
