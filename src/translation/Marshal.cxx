@@ -17,12 +17,11 @@ static void
 write_packet_n(GrowingBuffer *gb, uint16_t command,
                const void *payload, size_t length)
 {
-    static struct beng_translation_header header;
-
     if (length >= 0xffff)
         throw FormatRuntimeError("payload for translate command %u too large",
                                  command);
 
+    struct beng_translation_header header;
     header.length = (uint16_t)length;
     header.command = command;
 
