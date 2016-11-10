@@ -70,6 +70,7 @@ class Request:
         self.login = False
         self.password = None
         self.service = None
+        self.cron = False
 
     def __getattr__(self, name):
         if name == 'uri':
@@ -159,6 +160,8 @@ class Request:
             self.password = packet.payload
         elif packet.command == TRANSLATE_SERVICE:
             self.service = packet.payload
+        elif packet.command == TRANSLATE_CRON:
+            self.cron = True
         elif packet.command != TRANSLATE_LOCAL_ADDRESS:
             print "Invalid command:", packet.command
         return False

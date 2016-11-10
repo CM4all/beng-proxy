@@ -2149,6 +2149,7 @@ enabled.
 "\texttt{controller.name=value}", e.g. "\texttt{cpu.shares=42}".
 
 \subsection{Other Child Process Options}
+\label{childoptions}
 
 \verb|UID_GID| specifies uid and gid (and supplementary groups) for
 the child process.  Payload is an array of 32 bit integers.  All
@@ -2449,6 +2450,59 @@ the child process.  Payload is an array of 32 bit integers. \\
 
 \hline
 \end{longtabu*}
+
+\subsection{Cron translation}
+\label{cron}
+
+This sub-protocol can tell the \texttt{cron} job execution layer of
+\emph{Workshop} how to spawn a child process.
+
+The request contains the following packets:
+
+\begin{longtabu*}{|l|X|}
+\hline
+
+\verb|CRON| & Marks this request as a ``cron'' request.  No
+payload. \\
+
+\hline
+
+\verb|USER| & The account id owning the job. \\
+
+\hline
+
+\verb|PARAM| & An opaque string from the cron job table.  Its contents
+are specific to the translation server. \\
+
+\hline
+\end{longtabu*}
+
+If the account does not exist, the translation server shall respond
+with \texttt{STATUS=404}.
+
+If no \texttt{STATUS} packet is present, the request is assumed to be
+successful.
+
+A successful response must contain at least \verb|HOME| and
+\verb|UID_GID|:
+
+\begin{longtabu*}{|l|X|}
+\hline
+
+\verb|HOME| & Path of the user's home directory. \\
+
+\hline
+
+\verb|UID_GID| & Specify uid and gid (and supplementary groups) for
+the child process.  Payload is an array of 32 bit integers. \\
+
+\hline
+\end{longtabu*}
+
+Additional packets may configure resource limits (\ref{rlimits},
+\ref{refence}), namespaces (\ref{ns}) and so on (\ref{childoptions}).
+
+The client may assume that all responses may be cached indefinitely.
 
 \section{Remote Control Protocol}
 \label{control}

@@ -979,6 +979,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
     case TRANSLATE_SUFFIX:
     case TRANSLATE_LISTENER_TAG:
     case TRANSLATE_LOGIN:
+    case TRANSLATE_CRON:
     case TRANSLATE_PASSWORD:
     case TRANSLATE_SERVICE:
         throw std::runtime_error("misplaced translate request packet");

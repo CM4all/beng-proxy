@@ -779,6 +779,11 @@ enum beng_translation_command {
      * refresh (GET) calls on #TRANSLATE_EXTERNAL_SESSION_MANAGER.
      */
     TRANSLATE_EXTERNAL_SESSION_KEEPALIVE = 180,
+
+    /**
+     * Mark this request as a "cron job" request.  No payload.
+     */
+    TRANSLATE_CRON = 181,
 };
 
 struct beng_translation_header {
