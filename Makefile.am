@@ -822,6 +822,7 @@ libtranslation_a_SOURCES = \
 	src/translation/Stock.cxx src/translation/Stock.hxx \
 	src/translation/PReader.cxx src/translation/PReader.hxx \
 	src/translation/Parser.cxx src/translation/Parser.hxx \
+	src/translation/Marshal.cxx src/translation/Marshal.hxx \
 	src/translation/Client.cxx src/translation/Client.hxx \
 	src/translation/Handler.hxx \
 	src/translation/Request.hxx \
