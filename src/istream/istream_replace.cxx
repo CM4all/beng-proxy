@@ -75,8 +75,6 @@ struct ReplaceIstream final : FacadeIstream {
      */
     off_t settled_position = 0;
 
-    GrowingBufferReader reader;
-
     Substitution *first_substitution = nullptr,
         **append_substitution_p = &first_substitution;
 
@@ -180,7 +178,7 @@ ReplaceIstream::ToNextSubstitution(ReplaceIstream::Substitution *s)
     assert(!s->IsDefined());
     assert(s->start <= s->end);
 
-    reader.Skip(s->end - s->start);
+    buffer.Skip(s->end - s->start);
     position = s->end;
 
     first_substitution = s->next;
@@ -295,7 +293,7 @@ ReplaceIstream::ReadFromBuffer(size_t max_length)
 {
     assert(max_length > 0);
 
-    auto src = reader.Read();
+    auto src = buffer.Read();
     assert(!src.IsNull());
     assert(!src.IsEmpty());
 
@@ -310,7 +308,7 @@ ReplaceIstream::ReadFromBuffer(size_t max_length)
         /* istream_replace has been closed */
         return src.size;
 
-    reader.Consume(nbytes);
+    buffer.Consume(nbytes);
     position += nbytes;
 
     assert(position <= source_length);
@@ -434,8 +432,6 @@ ReplaceIstream::OnData(const void *data, size_t length)
     buffer.Write(data, length);
     source_length += (off_t)length;
 
-    reader.Update(buffer);
-
     const ScopePoolRef ref(GetPool() TRACE_ARGS);
 
     TryReadFromBuffer();
@@ -557,8 +553,7 @@ ReplaceIstream::_Close()
 
 inline ReplaceIstream::ReplaceIstream(struct pool &p, Istream &_input)
     :FacadeIstream(p, _input),
-     buffer(p, 4096),
-     reader(buffer)
+     buffer(p, 4096)
 {
 }
 

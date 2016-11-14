@@ -44,6 +44,8 @@ class GrowingBuffer {
 
     Buffer *head = nullptr, *tail = nullptr;
 
+    size_t position = 0;
+
 public:
     GrowingBuffer(struct pool &_pool, size_t _default_size);
 
@@ -72,6 +74,7 @@ public:
      */
     void Release() {
         head = tail = nullptr;
+        position = 0;
     }
 
     void *Write(size_t length);
@@ -93,6 +96,20 @@ public:
      * contiguous buffer.
      */
     WritableBuffer<void> Dup(struct pool &pool) const;
+
+    gcc_pure
+    ConstBuffer<void> Read() const;
+
+    /**
+     * Skip an arbitrary number of data bytes, which may span over
+     * multiple internal buffers.
+     */
+    void Skip(size_t length);
+
+    /**
+     * Consume data returned by Read().
+     */
+    void Consume(size_t length);
 
 private:
     void AppendBuffer(Buffer &buffer);

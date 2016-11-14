@@ -130,6 +130,77 @@ GrowingBuffer::GetSize() const
     return result;
 }
 
+ConstBuffer<void>
+GrowingBuffer::Read() const
+{
+    if (head == nullptr)
+        return nullptr;
+
+    if (head->size == 0) {
+        assert(position == 0);
+        assert(head->next == nullptr);
+
+        return nullptr;
+    }
+
+    assert(position < head->size);
+
+    return { head->data + position, head->fill - position };
+}
+
+void
+GrowingBuffer::Consume(size_t length)
+{
+    if (length == 0)
+        return;
+
+    assert(head != nullptr);
+
+    position += length;
+
+    assert(position <= head->fill);
+
+    if (position >= head->fill) {
+        if (head->next == nullptr) {
+            assert(head == tail);
+
+            head->fill = 0;
+        } else {
+            head = head->next;
+        }
+
+        position = 0;
+    }
+}
+
+void
+GrowingBuffer::Skip(size_t length)
+{
+    while (length > 0) {
+        assert(head != nullptr);
+
+        size_t remaining = head->fill - position;
+        if (length < remaining) {
+            position += length;
+            return;
+        }
+
+        length -= remaining;
+        position = 0;
+
+        if (head->next == nullptr) {
+            assert(head == tail);
+            assert(length == 0);
+
+            head->fill = 0;
+            return;
+        }
+
+        assert(head->next != nullptr);
+        head = head->next;
+    }
+}
+
 GrowingBufferReader::GrowingBufferReader(const GrowingBuffer &gb)
 #ifndef NDEBUG
     :growing_buffer(&gb)
