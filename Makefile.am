@@ -714,6 +714,7 @@ libmemory_a_SOURCES = \
 	src/SlicePool.cxx src/SlicePool.hxx \
 	src/SliceFifoBuffer.cxx src/SliceFifoBuffer.hxx \
 	src/DefaultFifoBuffer.cxx src/DefaultFifoBuffer.hxx \
+	src/DefaultChunkAllocator.cxx src/DefaultChunkAllocator.hxx \
 	src/rubber.cxx src/rubber.hxx
 
 libpool_a_SOURCES = \
