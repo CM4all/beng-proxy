@@ -297,24 +297,6 @@ GrowingBufferReader::Consume(size_t length)
     }
 }
 
-ConstBuffer<void>
-GrowingBufferReader::PeekNext() const
-{
-    const auto *b = buffer;
-    if (b == nullptr)
-        return nullptr;
-
-    assert(b->fill > 0);
-
-    b = b->next;
-
-    if (b == nullptr)
-        return nullptr;
-
-    assert(b->fill > 0);
-    return { b->data, b->fill };
-}
-
 void
 GrowingBufferReader::Skip(size_t length)
 {

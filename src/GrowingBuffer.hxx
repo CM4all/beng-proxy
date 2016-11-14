@@ -153,11 +153,6 @@ public:
     void Consume(size_t length);
 
     /**
-     * Peek data from the buffer following the current one.
-     */
-    ConstBuffer<void> PeekNext() const;
-
-    /**
      * Skip an arbitrary number of data bytes, which may span over
      * multiple internal buffers.
      */
