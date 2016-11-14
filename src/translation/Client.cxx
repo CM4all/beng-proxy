@@ -37,7 +37,6 @@ struct TranslateClient final : Cancellable {
 
 
     /** the marshalled translate request */
-    GrowingBufferReader request_buffer;
     GrowingBufferReader request;
 
     const TranslateHandler &handler;
@@ -257,8 +256,7 @@ TranslateClient::TranslateClient(struct pool &p, EventLoop &event_loop,
     :pool(p),
      stopwatch(stopwatch_fd_new(&p, fd, request2.GetDiagnosticName())),
      socket(event_loop),
-     request_buffer(std::move(_request)),
-     request(request_buffer),
+     request(std::move(_request)),
      handler(_handler), handler_ctx(_ctx),
      parser(p, request2)
 {
