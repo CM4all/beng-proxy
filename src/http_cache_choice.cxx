@@ -14,7 +14,7 @@
 #include "format.h"
 #include "strmap.hxx"
 #include "serialize.hxx"
-#include "growing_buffer.hxx"
+#include "GrowingBuffer.hxx"
 #include "uset.h"
 #include "istream/sink_buffer.hxx"
 #include "istream/istream.hxx"

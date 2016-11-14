@@ -5,7 +5,7 @@
 #ifndef BENG_PROXY_TRANSLATION_MARSHAL_HXX
 #define BENG_PROXY_TRANSLATION_MARSHAL_HXX
 
-#include "growing_buffer.hxx"
+#include "GrowingBuffer.hxx"
 #include "util/ConstBuffer.hxx"
 
 #include <beng-proxy/translation.h>

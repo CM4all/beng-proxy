@@ -686,7 +686,7 @@ libutil_a_SOURCES = \
 
 libputil_a_SOURCES = \
 	src/expansible_buffer.cxx src/expansible_buffer.hxx \
-	src/growing_buffer.cxx src/growing_buffer.hxx \
+	src/GrowingBuffer.cxx src/GrowingBuffer.hxx \
 	src/please.hxx \
 	src/strmap.cxx src/strmap.hxx \
 	src/PStringSet.cxx \

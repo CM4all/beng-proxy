@@ -8,7 +8,6 @@
 #include "ajp_protocol.hxx"
 #include "ajp_serialize.hxx"
 #include "serialize.hxx"
-#include "growing_buffer.hxx"
 #include "strmap.hxx"
 #include "pool.hxx"
 #include "util/ConstBuffer.hxx"

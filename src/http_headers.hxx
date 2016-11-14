@@ -6,7 +6,7 @@
 #define BENG_PROXY_HTTP_HEADERS_HXX
 
 #include "strmap.hxx"
-#include "growing_buffer.hxx"
+#include "GrowingBuffer.hxx"
 #include "header_writer.hxx"
 #include "header_parser.hxx"
 

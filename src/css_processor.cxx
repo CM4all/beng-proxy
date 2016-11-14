@@ -10,7 +10,6 @@
 #include "penv.hxx"
 #include "strmap.hxx"
 #include "widget.hxx"
-#include "growing_buffer.hxx"
 #include "tpool.hxx"
 #include "rewrite_uri.hxx"
 #include "bp_global.hxx"

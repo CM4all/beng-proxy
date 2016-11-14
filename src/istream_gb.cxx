@@ -7,7 +7,7 @@
 #include "istream_gb.hxx"
 #include "istream/istream.hxx"
 #include "istream/Bucket.hxx"
-#include "growing_buffer.hxx"
+#include "GrowingBuffer.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/Cast.hxx"
 

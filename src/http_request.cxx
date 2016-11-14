@@ -14,7 +14,6 @@
 #include "tcp_balancer.hxx"
 #include "stock/GetHandler.hxx"
 #include "stock/Item.hxx"
-#include "growing_buffer.hxx"
 #include "lease.hxx"
 #include "abort_close.hxx"
 #include "failure.hxx"

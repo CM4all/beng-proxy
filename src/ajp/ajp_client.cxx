@@ -10,7 +10,7 @@
 #include "ajp_protocol.hxx"
 #include "buffered_socket.hxx"
 #include "http_response.hxx"
-#include "growing_buffer.hxx"
+#include "GrowingBuffer.hxx"
 #include "format.h"
 #include "GException.hxx"
 #include "istream_ajp_body.hxx"

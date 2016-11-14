@@ -6,7 +6,7 @@
 
 #include "Serialize.hxx"
 #include "Protocol.hxx"
-#include "growing_buffer.hxx"
+#include "GrowingBuffer.hxx"
 #include "strmap.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/CharUtil.hxx"

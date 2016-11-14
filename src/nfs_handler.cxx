@@ -11,7 +11,7 @@
 #include "translation/Vary.hxx"
 #include "header_writer.hxx"
 #include "generate_response.hxx"
-#include "growing_buffer.hxx"
+#include "GrowingBuffer.hxx"
 #include "request.hxx"
 #include "bp_instance.hxx"
 #include "http_headers.hxx"

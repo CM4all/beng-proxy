@@ -5,7 +5,7 @@
 #include "Vary.hxx"
 #include "Response.hxx"
 #include "strmap.hxx"
-#include "growing_buffer.hxx"
+#include "GrowingBuffer.hxx"
 #include "header_writer.hxx"
 #include "pool.hxx"
 

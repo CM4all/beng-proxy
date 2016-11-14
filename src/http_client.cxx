@@ -21,7 +21,7 @@
 #include "istream/istream_dechunk.hxx"
 #include "istream/istream_string.hxx"
 #include "istream/istream_null.hxx"
-#include "growing_buffer.hxx"
+#include "GrowingBuffer.hxx"
 #include "uri/uri_verify.hxx"
 #include "direct.hxx"
 #include "stopwatch.hxx"

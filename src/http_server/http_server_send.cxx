@@ -12,7 +12,7 @@
 #include "direct.hxx"
 #include "header_writer.hxx"
 #include "format.h"
-#include "growing_buffer.hxx"
+#include "GrowingBuffer.hxx"
 #include "istream_gb.hxx"
 #include "istream/istream_cat.hxx"
 #include "istream/istream_chunked.hxx"

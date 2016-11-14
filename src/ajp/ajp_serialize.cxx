@@ -6,7 +6,7 @@
 
 #include "ajp_serialize.hxx"
 #include "serialize.hxx"
-#include "growing_buffer.hxx"
+#include "GrowingBuffer.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/ByteOrder.hxx"
 

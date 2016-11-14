@@ -3,7 +3,6 @@
 #include "system/SetupProcess.hxx"
 #include "system/fd-util.h"
 #include "system/fd_util.h"
-#include "growing_buffer.hxx"
 #include "header_writer.hxx"
 #include "lease.hxx"
 #include "direct.hxx"

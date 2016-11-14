@@ -4,7 +4,7 @@
 #include "ResourceLoader.hxx"
 #include "ResourceAddress.hxx"
 #include "http_address.hxx"
-#include "growing_buffer.hxx"
+#include "GrowingBuffer.hxx"
 #include "header_parser.hxx"
 #include "strmap.hxx"
 #include "http_response.hxx"

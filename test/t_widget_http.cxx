@@ -5,7 +5,6 @@
 #include "widget_lookup.hxx"
 #include "http_address.hxx"
 #include "strmap.hxx"
-#include "growing_buffer.hxx"
 #include "header_parser.hxx"
 #include "RootPool.hxx"
 #include "ResourceLoader.hxx"

@@ -1,6 +1,6 @@
 #include "RootPool.hxx"
 #include "header_parser.hxx"
-#include "growing_buffer.hxx"
+#include "GrowingBuffer.hxx"
 #include "strmap.hxx"
 
 #include <unistd.h>

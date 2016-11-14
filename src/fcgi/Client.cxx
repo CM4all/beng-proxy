@@ -10,7 +10,7 @@
 #include "Serialize.hxx"
 #include "GException.hxx"
 #include "buffered_socket.hxx"
-#include "growing_buffer.hxx"
+#include "GrowingBuffer.hxx"
 #include "http_response.hxx"
 #include "istream_fcgi.hxx"
 #include "istream_gb.hxx"

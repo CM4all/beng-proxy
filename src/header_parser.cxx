@@ -7,7 +7,7 @@
 #include "header_parser.hxx"
 #include "pool.hxx"
 #include "strmap.hxx"
-#include "growing_buffer.hxx"
+#include "GrowingBuffer.hxx"
 #include "util/StringView.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/StaticFifoBuffer.hxx"

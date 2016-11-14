@@ -11,7 +11,6 @@
 #include "Handler.hxx"
 #include "buffered_socket.hxx"
 #include "please.hxx"
-#include "growing_buffer.hxx"
 #include "stopwatch.hxx"
 #include "GException.hxx"
 #include "gerrno.h"

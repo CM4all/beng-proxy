@@ -19,7 +19,7 @@
 #include "widget_dump.hxx"
 #include "proxy_widget.hxx"
 #include "session.hxx"
-#include "growing_buffer.hxx"
+#include "GrowingBuffer.hxx"
 #include "ResourceLoader.hxx"
 #include "resource_tag.hxx"
 #include "hostname.hxx"

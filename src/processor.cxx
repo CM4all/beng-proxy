@@ -17,7 +17,6 @@
 #include "widget_lookup.hxx"
 #include "widget_class.hxx"
 #include "widget-quark.h"
-#include "growing_buffer.hxx"
 #include "tpool.hxx"
 #include "inline_widget.hxx"
 #include "rewrite_uri.hxx"

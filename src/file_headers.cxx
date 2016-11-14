@@ -6,7 +6,7 @@
 
 #include "file_headers.hxx"
 #include "static_headers.hxx"
-#include "growing_buffer.hxx"
+#include "GrowingBuffer.hxx"
 #include "header_writer.hxx"
 #include "format.h"
 #include "http_date.hxx"

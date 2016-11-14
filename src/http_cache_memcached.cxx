@@ -11,7 +11,7 @@
 #include "http_cache_internal.hxx"
 #include "memcached/memcached_stock.hxx"
 #include "memcached/memcached_client.hxx"
-#include "growing_buffer.hxx"
+#include "GrowingBuffer.hxx"
 #include "serialize.hxx"
 #include "strmap.hxx"
 #include "tpool.hxx"

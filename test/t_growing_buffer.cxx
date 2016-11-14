@@ -1,5 +1,5 @@
 #include "RootPool.hxx"
-#include "growing_buffer.hxx"
+#include "GrowingBuffer.hxx"
 #include "direct.hxx"
 #include "istream_gb.hxx"
 #include "istream/istream.hxx"

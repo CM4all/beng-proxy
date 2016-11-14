@@ -7,7 +7,7 @@
 #include "istream_replace.hxx"
 #include "FacadeIstream.hxx"
 #include "Sink.hxx"
-#include "growing_buffer.hxx"
+#include "GrowingBuffer.hxx"
 #include "util/ConstBuffer.hxx"
 #include "pool.hxx"
 

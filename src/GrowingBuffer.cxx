@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "growing_buffer.hxx"
+#include "GrowingBuffer.hxx"
 #include "pool.hxx"
 #include "istream/Bucket.hxx"
 #include "util/ConstBuffer.hxx"
