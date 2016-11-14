@@ -21,10 +21,6 @@ class TranslationMarshaller {
     GrowingBuffer buffer;
 
 public:
-    explicit TranslationMarshaller(struct pool &pool,
-                                   size_t default_size=512)
-        :buffer(pool, default_size) {}
-
     void Write(enum beng_translation_command command,
                ConstBuffer<void> payload=nullptr);
 
@@ -73,7 +69,7 @@ public:
 };
 
 GrowingBuffer
-MarshalTranslateRequest(struct pool &pool, uint8_t PROTOCOL_VERSION,
+MarshalTranslateRequest(uint8_t PROTOCOL_VERSION,
                         const TranslateRequest &request);
 
 #endif

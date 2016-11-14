@@ -172,7 +172,7 @@ void
 http_server_send_message(const HttpServerRequest *request,
                          http_status_t status, const char *msg)
 {
-    HttpHeaders headers(request->pool, 256);
+    HttpHeaders headers(request->pool);
 
     headers.Write("content-type", "text/plain");
 

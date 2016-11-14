@@ -1100,7 +1100,7 @@ fcgi_client_request(struct pool *pool, EventLoop &event_loop,
                                           header.request_id, method,
                                           handler, cancel_ptr);
 
-    GrowingBuffer buffer(*pool, 1024);
+    GrowingBuffer buffer;
     header.content_length = ToBE16(sizeof(begin_request));
     buffer.Write(&header, sizeof(header));
     buffer.Write(&begin_request, sizeof(begin_request));

@@ -843,7 +843,7 @@ ajp_client_request(struct pool &pool, EventLoop &event_loop,
                                          fd, fd_type,
                                          lease, handler);
 
-    GrowingBuffer gb(pool, 256);
+    GrowingBuffer gb;
 
     struct ajp_header *header = (struct ajp_header *)gb.Write(sizeof(*header));
     header->a = 0x12;
@@ -884,7 +884,7 @@ ajp_client_request(struct pool &pool, EventLoop &event_loop,
     serialize_ajp_integer(gb, server_port);
     serialize_ajp_bool(gb, is_ssl);
 
-    GrowingBuffer headers_buffer(pool, 2048);
+    GrowingBuffer headers_buffer;
     /* serialize the request headers - note that
        serialize_ajp_headers() ignores the Content-Length header, we
        will append it later */

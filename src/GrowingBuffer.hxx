@@ -7,11 +7,14 @@
 #ifndef BENG_PROXY_GROWING_BUFFER_HXX
 #define BENG_PROXY_GROWING_BUFFER_HXX
 
+#include "DefaultChunkAllocator.hxx"
+
 #include <inline/compiler.h>
+
+#include <utility>
 
 #include <stddef.h>
 
-struct pool;
 template<typename T> struct ConstBuffer;
 template<typename T> struct WritableBuffer;
 class IstreamBucketList;
@@ -19,16 +22,66 @@ class IstreamBucketList;
 class GrowingBuffer {
     friend class GrowingBufferReader;
 
+    struct Buffer;
+
+    struct BufferPtr {
+        Buffer *buffer = nullptr;
+        DefaultChunkAllocator allocator;
+
+        BufferPtr() = default;
+
+        BufferPtr(BufferPtr &&src)
+            :buffer(src.buffer), allocator(std::move(src.allocator)) {
+            src.buffer = nullptr;
+        }
+
+        ~BufferPtr() {
+            if (buffer != nullptr)
+                Free();
+        }
+
+        BufferPtr &operator=(BufferPtr &&src) {
+            using std::swap;
+            swap(buffer, src.buffer);
+            swap(allocator, src.allocator);
+            return *this;
+        }
+
+        operator bool() const {
+            return buffer != nullptr;
+        }
+
+        Buffer &Allocate();
+        void Free();
+
+        void Pop();
+
+        const Buffer &operator*() const {
+            return *buffer;
+        }
+
+        Buffer &operator*() {
+            return *buffer;
+        }
+
+        const Buffer *operator->() const {
+            return buffer;
+        }
+
+        Buffer *operator->() {
+            return buffer;
+        }
+    };
+
     struct Buffer {
-        Buffer *next = nullptr;
+        BufferPtr next;
+
         const size_t size;
         size_t fill = 0;
         char data[sizeof(size_t)];
 
         explicit Buffer(size_t _size)
             :size(_size) {}
-
-        static Buffer *New(struct pool &pool, size_t size);
 
         bool IsFull() const {
             return fill == size;
@@ -38,30 +91,21 @@ class GrowingBuffer {
         size_t WriteSome(ConstBuffer<void> src);
     };
 
-    struct pool &pool;
-
-    const size_t default_size;
-
-    Buffer *head = nullptr, *tail = nullptr;
+    BufferPtr head;
+    Buffer *tail = nullptr;
 
     size_t position = 0;
 
 public:
-    GrowingBuffer(struct pool &_pool, size_t _default_size);
+    GrowingBuffer() = default;
 
     GrowingBuffer(GrowingBuffer &&src)
-        :pool(src.pool),
-         default_size(src.default_size),
-         head(src.head), tail(src.tail) {
-        src.Release();
-    }
-
-    struct pool &GetPool() {
-        return pool;
+        :head(std::move(src.head)), tail(src.tail) {
+        src.tail = nullptr;
     }
 
     bool IsEmpty() const {
-        return head == nullptr || position == head->fill;
+        return tail == nullptr;
     }
 
     void Clear() {
@@ -73,12 +117,15 @@ public:
      * else.
      */
     void Release() {
-        head = tail = nullptr;
+        if (head)
+            head.Free();
+        tail = nullptr;
         position = 0;
     }
 
     void *Write(size_t length);
 
+    size_t WriteSome(const void *p, size_t length);
     void Write(const void *p, size_t length);
 
     void Write(const char *p);
@@ -112,34 +159,26 @@ public:
     void Consume(size_t length);
 
 private:
-    void AppendBuffer(Buffer &buffer);
-    Buffer &AppendBuffer(size_t min_size);
+    Buffer &AppendBuffer();
 
     void CopyTo(void *dest) const;
 
     template<typename F>
     void ForEachBuffer(F &&f) const {
-        const auto *i = head;
+        const auto *i = &*head;
         if (i == nullptr)
             return;
 
         f(ConstBuffer<void>(i->data + position, i->fill - position));
 
-        while ((i = i->next) != nullptr)
+        while ((i = &*i->next) != nullptr)
             f(ConstBuffer<void>(i->data, i->fill));
     }
 };
 
 class GrowingBufferReader {
-#ifndef NDEBUG
-#ifdef __clang__
-    gcc_unused
-#endif
-    const GrowingBuffer *growing_buffer;
-#endif
-
-    const GrowingBuffer::Buffer *buffer;
-    size_t position;
+    GrowingBuffer::BufferPtr buffer;
+    size_t position = 0;
 
 public:
     explicit GrowingBufferReader(GrowingBuffer &&gb);
@@ -170,13 +209,13 @@ public:
 private:
     template<typename F>
     void ForEachBuffer(F &&f) const {
-        const auto *i = buffer;
+        const auto *i = &*buffer;
         if (i == nullptr)
             return;
 
         f(ConstBuffer<void>(i->data + position, i->fill - position));
 
-        while ((i = i->next) != nullptr)
+        while ((i = &*i->next) != nullptr)
             f(ConstBuffer<void>(i->data, i->fill));
     }
 };

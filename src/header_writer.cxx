@@ -93,9 +93,9 @@ headers_copy_most(const StringMap &in, GrowingBuffer &out)
 }
 
 GrowingBuffer
-headers_dup(struct pool &pool, const StringMap &in)
+headers_dup(const StringMap &in)
 {
-    GrowingBuffer out(pool, 2048);
+    GrowingBuffer out;
     headers_copy_most(in, out);
     return out;
 }

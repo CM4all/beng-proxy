@@ -288,7 +288,7 @@ try {
     assert(handler.response != nullptr);
     assert(handler.error != nullptr);
 
-    GrowingBuffer gb = MarshalTranslateRequest(pool, PROTOCOL_VERSION,
+    GrowingBuffer gb = MarshalTranslateRequest(PROTOCOL_VERSION,
                                                request);
 
     auto *client = NewFromPool<TranslateClient>(pool, pool, event_loop,

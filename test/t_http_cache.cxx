@@ -9,6 +9,7 @@
 #include "strmap.hxx"
 #include "http_response.hxx"
 #include "RootPool.hxx"
+#include "fb_pool.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream_string.hxx"
 #include "event/Event.hxx"
@@ -165,7 +166,7 @@ parse_headers(struct pool &pool, const char *raw)
     if (raw == NULL)
         return NULL;
 
-    GrowingBuffer gb(pool, 512);
+    GrowingBuffer gb;
     StringMap *headers = strmap_new(&pool);
     gb.Write(raw);
     header_parse_buffer(pool, *headers, std::move(gb));
@@ -235,7 +236,7 @@ MyResourceLoader::SendRequest(struct pool &pool,
 
     StringMap response_headers(pool);
     if (request->response_headers != NULL) {
-        GrowingBuffer gb(pool, 512);
+        GrowingBuffer gb;
         gb.Write(request->response_headers);
 
         header_parse_buffer(pool, response_headers, std::move(gb));
@@ -313,7 +314,7 @@ run_cache_test(struct pool *root_pool, unsigned num, bool cached)
 
     StringMap headers(*pool);
     if (request->request_headers != NULL) {
-        GrowingBuffer gb(*pool, 512);
+        GrowingBuffer gb;
         gb.Write(request->request_headers);
 
         header_parse_buffer(*pool, headers, std::move(gb));
@@ -338,6 +339,7 @@ int main(int argc, char **argv) {
     (void)argc;
     (void)argv;
 
+    const ScopeFbPoolInit fb_pool_init;
     EventLoop event_loop;
 
     RootPool pool;

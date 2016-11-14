@@ -15,12 +15,33 @@
 #include <assert.h>
 #include <string.h>
 
-GrowingBuffer::Buffer *
-GrowingBuffer::Buffer::New(struct pool &pool, size_t size)
+GrowingBuffer::Buffer &
+GrowingBuffer::BufferPtr::Allocate()
 {
-    Buffer *buffer;
-    void *p = p_malloc(&pool, sizeof(*buffer) - sizeof(buffer->data) + size);
-    return new(p) Buffer(size);
+    assert(buffer == nullptr);
+
+    auto a = allocator.Allocate();
+    buffer = ::new(a.data) Buffer(a.size - sizeof(buffer) + sizeof(buffer->data));
+    return *buffer;
+}
+
+void
+GrowingBuffer::BufferPtr::Free()
+{
+    assert(buffer != nullptr);
+
+    buffer->~Buffer();
+    allocator.Free(buffer);
+    buffer = nullptr;
+}
+
+void
+GrowingBuffer::BufferPtr::Pop()
+{
+    assert(buffer != nullptr);
+
+    auto next = std::move(buffer->next);
+    *this = std::move(next);
 }
 
 WritableBuffer<void>
@@ -39,40 +60,27 @@ GrowingBuffer::Buffer::WriteSome(ConstBuffer<void> src)
     return nbytes;
 }
 
-GrowingBuffer::GrowingBuffer(struct pool &_pool, size_t _default_size)
-    :pool(_pool),
-     default_size(_default_size)
-{
-}
-
-void
-GrowingBuffer::AppendBuffer(Buffer &buffer)
-{
-    assert(buffer.next == nullptr);
-
-    if (tail != nullptr) {
-        tail->next = &buffer;
-        tail = &buffer;
-    } else {
-        head = tail = &buffer;
-    }
-}
-
 GrowingBuffer::Buffer &
-GrowingBuffer::AppendBuffer(size_t min_size)
+GrowingBuffer::AppendBuffer()
 {
-    size_t size = std::max(min_size, default_size);
-    auto *buffer = Buffer::New(pool, size);
-    AppendBuffer(*buffer);
-    return *buffer;
+    tail = tail != nullptr
+        ? &tail->next.Allocate()
+        : &head.Allocate();
+
+    return *tail;
 }
+
 
 void *
 GrowingBuffer::Write(size_t length)
 {
+    /* this method is only allowed with "tiny" sizes which fit well
+       into any buffer */
+    assert(tail == nullptr || length <= tail->size);
+
     auto *buffer = tail;
     if (buffer == nullptr || buffer->fill + length > buffer->size)
-        buffer = &AppendBuffer(length);
+        buffer = &AppendBuffer();
 
     assert(buffer->fill + length <= buffer->size);
 
@@ -82,22 +90,24 @@ GrowingBuffer::Write(size_t length)
     return ret;
 }
 
-void
-GrowingBuffer::Write(const void *p, size_t length)
+size_t
+GrowingBuffer::WriteSome(const void *p, size_t length)
 {
     auto *buffer = tail;
     if (buffer == nullptr || buffer->IsFull())
-        buffer = &AppendBuffer(length);
+        buffer = &AppendBuffer();
 
-    size_t nbytes = buffer->WriteSome({p, length});
-    if (nbytes == length)
-        return;
+    return buffer->WriteSome({p, length});
+}
 
-    p = ((const char *)p) + nbytes;
-    length -= nbytes;
-
-    buffer = &AppendBuffer(length);
-    buffer->WriteSome({p, length});
+void
+GrowingBuffer::Write(const void *p, size_t length)
+{
+    while (length > 0) {
+        size_t nbytes = WriteSome(p, length);
+        p = ((const char *)p) + nbytes;
+        length -= nbytes;
+    }
 }
 
 void
@@ -112,10 +122,9 @@ GrowingBuffer::AppendMoveFrom(GrowingBuffer &&src)
     if (src.IsEmpty())
         return;
 
-    tail->next = src.head;
+    tail->next = std::move(src.head);
     tail = src.tail;
-
-    src.Release();
+    src.tail = nullptr;
 }
 
 size_t
@@ -133,12 +142,12 @@ GrowingBuffer::GetSize() const
 ConstBuffer<void>
 GrowingBuffer::Read() const
 {
-    if (head == nullptr)
+    if (!head)
         return nullptr;
 
     if (head->size == 0) {
         assert(position == 0);
-        assert(head->next == nullptr);
+        assert(!head->next);
 
         return nullptr;
     }
@@ -154,20 +163,16 @@ GrowingBuffer::Consume(size_t length)
     if (length == 0)
         return;
 
-    assert(head != nullptr);
+    assert(head);
 
     position += length;
 
     assert(position <= head->fill);
 
     if (position >= head->fill) {
-        if (head->next == nullptr) {
-            assert(head == tail);
-
-            head->fill = 0;
-        } else {
-            head = head->next;
-        }
+        head.Pop();
+        if (!head)
+            tail = nullptr;
 
         position = 0;
     }
@@ -177,7 +182,7 @@ void
 GrowingBuffer::Skip(size_t length)
 {
     while (length > 0) {
-        assert(head != nullptr);
+        assert(head);
 
         size_t remaining = head->fill - position;
         if (length < remaining) {
@@ -187,40 +192,24 @@ GrowingBuffer::Skip(size_t length)
 
         length -= remaining;
         position = 0;
-
-        if (head->next == nullptr) {
-            assert(head == tail);
-            assert(length == 0);
-
-            head->fill = 0;
-            return;
-        }
-
-        assert(head->next != nullptr);
-        head = head->next;
+        head.Pop();
+        if (!head)
+            tail = nullptr;
     }
 }
 
 GrowingBufferReader::GrowingBufferReader(GrowingBuffer &&gb)
-#ifndef NDEBUG
-    :growing_buffer(&gb)
-#endif
+    :buffer(std::move(gb.head))
 {
-    assert(gb.head == nullptr || gb.head->fill > 0);
-
-    buffer = gb.head;
-
-    assert(buffer == nullptr || buffer->fill > 0);
-
-    position = 0;
+    assert(!buffer || buffer->fill > 0);
 }
 
 bool
 GrowingBufferReader::IsEOF() const
 {
-    assert(buffer == nullptr || position <= buffer->fill);
+    assert(!buffer || position <= buffer->fill);
 
-    return buffer == nullptr || position == buffer->fill;
+    return !buffer || position == buffer->fill;
 }
 
 size_t
@@ -238,26 +227,18 @@ GrowingBufferReader::Available() const
 ConstBuffer<void>
 GrowingBufferReader::Read() const
 {
-    if (buffer == nullptr)
+    if (!buffer)
         return nullptr;
 
-    assert(buffer != nullptr);
+    assert(position < buffer->fill);
 
-    const auto *b = buffer;
-
-    if (position >= b->fill) {
-        assert(position == b->fill);
-        assert(buffer->next == nullptr);
-        return nullptr;
-    }
-
-    return { b->data + position, b->fill - position };
+    return { buffer->data + position, buffer->fill - position };
 }
 
 void
 GrowingBufferReader::Consume(size_t length)
 {
-    assert(buffer != nullptr);
+    assert(buffer);
 
     if (length == 0)
         return;
@@ -267,10 +248,7 @@ GrowingBufferReader::Consume(size_t length)
     assert(position <= buffer->fill);
 
     if (position >= buffer->fill) {
-        if (buffer->next == nullptr)
-            return;
-
-        buffer = buffer->next;
+        buffer.Pop();
         position = 0;
     }
 }
@@ -279,25 +257,16 @@ void
 GrowingBufferReader::Skip(size_t length)
 {
     while (length > 0) {
-        assert(buffer != nullptr);
+        assert(buffer);
 
         size_t remaining = buffer->fill - position;
-        if (length < remaining ||
-            (length == remaining && buffer->next == nullptr)) {
+        if (length < remaining) {
             position += length;
             return;
         }
 
         length -= remaining;
-
-        if (buffer->next == nullptr) {
-            assert(position + remaining == length);
-            position = length;
-            return;
-        }
-
-        assert(buffer->next != nullptr);
-        buffer = buffer->next;
+        buffer.Pop();
         position = 0;
     }
 }
@@ -334,11 +303,8 @@ GrowingBufferReader::FillBucketList(IstreamBucketList &list) const
 size_t
 GrowingBufferReader::ConsumeBucketList(size_t nbytes)
 {
-    if (buffer == nullptr)
-        return 0;
-
     size_t result = 0;
-    while (nbytes > 0) {
+    while (nbytes > 0 && buffer) {
         size_t available = buffer->fill - position;
         if (nbytes < available) {
             position += nbytes;
@@ -349,13 +315,8 @@ GrowingBufferReader::ConsumeBucketList(size_t nbytes)
         result += available;
         nbytes -= available;
 
-        if (buffer->next != nullptr) {
-            buffer = buffer->next;
-            position = 0;
-        } else {
-            position += available;
-            break;
-        }
+        buffer.Pop();
+        position = 0;
     }
 
     return result;

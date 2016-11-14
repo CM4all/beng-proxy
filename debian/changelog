@@ -1,6 +1,6 @@
 cm4all-beng-proxy (12.0.1) unstable; urgency=low
 
-  * 
+  * move various buffers from the pool allocator to the slice allocator
 
  --   
 

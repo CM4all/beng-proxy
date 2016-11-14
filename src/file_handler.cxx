@@ -47,7 +47,7 @@ file_dispatch(Request &request2, const struct stat &st,
     if (override_content_type == nullptr)
         override_content_type = address.content_type;
 
-    HttpHeaders headers(request2.pool, 2048);
+    HttpHeaders headers(request2.pool);
     GrowingBuffer &headers2 = headers.GetBuffer();
     file_response_headers(headers2, override_content_type,
                           istream_file_fd(*body), st,
@@ -127,7 +127,7 @@ file_dispatch_compressed(Request &request2, const struct stat &st,
     if (override_content_type == nullptr)
         override_content_type = address.content_type;
 
-    HttpHeaders headers(request2.pool, 2048);
+    HttpHeaders headers(request2.pool);
     GrowingBuffer &headers2 = headers.GetBuffer();
     file_response_headers(headers2, override_content_type,
                           istream_file_fd(body), st,

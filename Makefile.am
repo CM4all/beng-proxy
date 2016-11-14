@@ -687,7 +687,6 @@ libutil_a_SOURCES = \
 
 libputil_a_SOURCES = \
 	src/expansible_buffer.cxx src/expansible_buffer.hxx \
-	src/GrowingBuffer.cxx src/GrowingBuffer.hxx \
 	src/please.hxx \
 	src/strmap.cxx src/strmap.hxx \
 	src/PStringSet.cxx \
@@ -715,6 +714,7 @@ libmemory_a_SOURCES = \
 	src/SliceFifoBuffer.cxx src/SliceFifoBuffer.hxx \
 	src/DefaultFifoBuffer.cxx src/DefaultFifoBuffer.hxx \
 	src/DefaultChunkAllocator.cxx src/DefaultChunkAllocator.hxx \
+	src/GrowingBuffer.cxx src/GrowingBuffer.hxx \
 	src/rubber.cxx src/rubber.hxx
 
 libpool_a_SOURCES = \

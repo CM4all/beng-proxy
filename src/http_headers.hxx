@@ -23,14 +23,14 @@ class HttpHeaders {
     GrowingBuffer buffer;
 
 public:
-    explicit HttpHeaders(struct pool &pool, size_t initial_size=1024)
-        :map(pool), buffer(pool, initial_size) {}
+    explicit HttpHeaders(struct pool &pool)
+        :map(pool) {}
 
-    explicit HttpHeaders(StringMap &&_map, size_t initial_size=1024)
-        :map(std::move(_map)), buffer(map.GetPool(), initial_size) {}
+    explicit HttpHeaders(StringMap &&_map)
+        :map(std::move(_map)) {}
 
-    explicit HttpHeaders(GrowingBuffer &&_buffer)
-        :map(_buffer.GetPool()), buffer(std::move(_buffer)) {}
+    HttpHeaders(struct pool &pool, GrowingBuffer &&_buffer)
+        :map(pool), buffer(std::move(_buffer)) {}
 
     HttpHeaders(HttpHeaders &&) = default;
     HttpHeaders &operator=(HttpHeaders &&) = default;

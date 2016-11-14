@@ -12,7 +12,7 @@ int main(int argc gcc_unused, char **argv gcc_unused) {
 
     RootPool pool;
 
-    GrowingBuffer gb(pool, sizeof(buffer));
+    GrowingBuffer gb;
 
     /* read input from stdin */
 

@@ -2,6 +2,7 @@
 #include "cookie_jar.hxx"
 #include "header_writer.hxx"
 #include "RootPool.hxx"
+#include "fb_pool.hxx"
 #include "shm/shm.hxx"
 #include "shm/dpool.hxx"
 #include "strmap.hxx"
@@ -13,6 +14,7 @@
 #include <string.h>
 
 int main(int argc, char **argv) {
+    const ScopeFbPoolInit fb_pool_init;
     RootPool pool;
 
     struct shm *shm = shm_new(1024, 512);
@@ -26,7 +28,7 @@ int main(int argc, char **argv) {
     StringMap headers(*pool);
     cookie_jar_http_header(jar, "foo.bar", "/x", headers, pool);
 
-    GrowingBufferReader reader(headers_dup(pool, headers));
+    GrowingBufferReader reader(headers_dup(headers));
 
     ConstBuffer<void> src;
     while (!(src = reader.Read()).IsNull()) {

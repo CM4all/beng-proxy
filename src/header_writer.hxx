@@ -7,7 +7,6 @@
 #ifndef BENG_PROXY_HEADER_WRITER_HXX
 #define BENG_PROXY_HEADER_WRITER_HXX
 
-struct pool;
 class StringMap;
 class GrowingBuffer;
 
@@ -47,6 +46,6 @@ void
 headers_copy_most(const StringMap &in, GrowingBuffer &out);
 
 GrowingBuffer
-headers_dup(struct pool &pool, const StringMap &in);
+headers_dup(const StringMap &in);
 
 #endif

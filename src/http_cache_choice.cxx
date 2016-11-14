@@ -294,7 +294,7 @@ http_cache_choice_prepare(struct pool &pool, const char *uri,
                           const HttpCacheResponseInfo &info,
                           const StringMap &vary)
 {
-    GrowingBuffer gb(*tpool, 1024);
+    GrowingBuffer gb;
     serialize_uint32(gb, CHOICE_MAGIC);
     serialize_uint64(gb, std::chrono::system_clock::to_time_t(info.expires));
     serialize_strmap(gb, vary);

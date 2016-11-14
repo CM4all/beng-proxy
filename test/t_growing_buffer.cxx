@@ -4,6 +4,7 @@
 #include "istream_gb.hxx"
 #include "istream/istream.hxx"
 #include "istream/Pointer.hxx"
+#include "fb_pool.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/WritableBuffer.hxx"
 
@@ -117,7 +118,7 @@ run_istream(struct pool *pool, Istream *istream)
 static Istream *
 create_test(struct pool *pool)
 {
-    GrowingBuffer gb(*pool, 64);
+    GrowingBuffer gb;
     gb.Write("foo");
     return istream_gb_new(*pool, std::move(gb));
 }
@@ -125,7 +126,7 @@ create_test(struct pool *pool)
 static Istream *
 create_empty(struct pool *pool)
 {
-    GrowingBuffer gb(*pool, 64);
+    GrowingBuffer gb;
     return istream_gb_new(*pool, std::move(gb));
 }
 
@@ -170,7 +171,7 @@ static void
 test_first_empty(struct pool *pool)
 {
     pool = pool_new_linear(pool, "test", 8192);
-    GrowingBuffer buffer(*pool, 16);
+    GrowingBuffer buffer;
 
     buffer.Write("0123456789abcdefg");
 
@@ -194,7 +195,7 @@ static void
 test_skip(struct pool *pool)
 {
     pool = pool_new_linear(pool, "test", 8192);
-    GrowingBuffer buffer(*pool, 3);
+    GrowingBuffer buffer;
 
     buffer.Write("0123");
     buffer.Write("4567");
@@ -204,8 +205,12 @@ test_skip(struct pool *pool)
     assert(buffer.GetSize() == 16);
     assert(Equals(buffer.Dup(*pool), "0123456789abcdef"));
 
+    static char zero[16384];
+    buffer.Write(zero, sizeof(zero));
+    assert(buffer.GetSize() == 16 + 16384);
+
     GrowingBufferReader reader(std::move(buffer));
-    reader.Skip(6);
+    reader.Skip(8190);
 
     auto x = reader.Read();
     assert(!x.IsNull());
@@ -216,8 +221,20 @@ test_skip(struct pool *pool)
 
     x = reader.Read();
     assert(!x.IsNull());
-    assert(x.size == 4);
+    assert(x.size == 8188);
     reader.Consume(4);
+
+    x = reader.Read();
+    assert(!x.IsNull());
+    assert(x.size == 8184);
+
+    reader.Skip(8192);
+
+    x = reader.Read();
+    assert(!x.IsNull());
+    assert(x.size == 8);
+
+    reader.Skip(8);
 
     x = reader.Read();
     assert(x.IsNull());
@@ -232,7 +249,7 @@ static void
 test_concurrent_rw(struct pool *pool)
 {
     pool = pool_new_linear(pool, "test", 8192);
-    GrowingBuffer buffer(*pool, 3);
+    GrowingBuffer buffer;
 
     buffer.Write("0123");
     buffer.Write("4567");
@@ -324,6 +341,7 @@ int main(int argc, char **argv) {
     (void)argv;
 
     direct_global_init();
+    const ScopeFbPoolInit fb_pool_init;
 
     /* run test suite */
 

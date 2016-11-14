@@ -62,10 +62,10 @@ TranslationMarshaller::WriteOptional(enum beng_translation_command command,
 }
 
 GrowingBuffer
-MarshalTranslateRequest(struct pool &pool, uint8_t PROTOCOL_VERSION,
+MarshalTranslateRequest(uint8_t PROTOCOL_VERSION,
                         const TranslateRequest &request)
 {
-    TranslationMarshaller m(pool);
+    TranslationMarshaller m;
 
     m.WriteT(TRANSLATE_BEGIN, PROTOCOL_VERSION);
     m.WriteOptional(TRANSLATE_ERROR_DOCUMENT,

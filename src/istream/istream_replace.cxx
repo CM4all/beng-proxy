@@ -552,8 +552,7 @@ ReplaceIstream::_Close()
  */
 
 inline ReplaceIstream::ReplaceIstream(struct pool &p, Istream &_input)
-    :FacadeIstream(p, _input),
-     buffer(p, 4096)
+    :FacadeIstream(p, _input)
 {
 }
 
