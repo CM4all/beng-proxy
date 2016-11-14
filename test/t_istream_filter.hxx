@@ -581,7 +581,7 @@ int main(int argc, char **argv) {
     Instance instance;
 
     direct_global_init();
-    fb_pool_init(instance.event_loop, false);
+    fb_pool_init();
 
     /* run test suite */
 

@@ -220,7 +220,7 @@ int main(int argc, char **argv) {
 
     direct_global_init();
     Instance instance;
-    fb_pool_init(instance.event_loop, false);
+    fb_pool_init();
     instance.shutdown_listener.Enable();
 
     RootPool pool;

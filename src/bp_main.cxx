@@ -201,8 +201,6 @@ BpInstance::ShutdownCallback()
     local_control_handler_deinit(this);
     global_control_handler_deinit(this);
 
-    fb_pool_disable();
-
     pool_commit();
 }
 
@@ -311,7 +309,7 @@ try {
            only the one worker handle control commands */
         global_control_handler_disable(instance);
 
-    fb_pool_init(instance.event_loop, false);
+    fb_pool_init();
 
 #ifdef USE_SPAWNER
     /* note: this function call passes a temporary SpawnConfig copy,

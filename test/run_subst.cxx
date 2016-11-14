@@ -13,7 +13,7 @@ int main(int argc, char **argv) {
     int i;
 
     EventLoop event_loop;
-    fb_pool_init(event_loop, false);
+    fb_pool_init();
 
     RootPool root_pool;
 

@@ -155,7 +155,7 @@ int main(int argc, char **argv) {
     SpawnConfig spawn_config;
 
     EventLoop event_loop;
-    fb_pool_init(event_loop, false);
+    fb_pool_init();
 
     ChildOptions child_options;
 

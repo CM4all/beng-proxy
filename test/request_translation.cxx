@@ -145,7 +145,7 @@ int main(int argc, char **argv) {
     (void)argv;
 
     EventLoop event_loop;
-    fb_pool_init(event_loop, false);
+    fb_pool_init();
 
     RootPool pool;
 

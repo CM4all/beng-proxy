@@ -231,7 +231,7 @@ int main(int argc, char **argv) {
 
     SetupProcess();
 
-    fb_pool_init(ctx.event_loop, false);
+    fb_pool_init();
     ctx.shutdown_listener.Enable();
 
     RootPool root_pool;

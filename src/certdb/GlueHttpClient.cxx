@@ -70,7 +70,7 @@ GlueHttpClient::GlueHttpClient(struct pool &p, EventLoop &event_loop)
      tcp_stock(tcp_stock_new(event_loop, 0)),
      tcp_balancer(tcp_balancer_new(*tcp_stock, *balancer))
 {
-    fb_pool_init(event_loop, false);
+    fb_pool_init();
     ssl_client_init();
 }
 

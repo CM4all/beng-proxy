@@ -361,7 +361,7 @@ int main(int argc, char **argv) {
 
     direct_global_init();
     EventLoop event_loop;
-    fb_pool_init(event_loop, false);
+    fb_pool_init();
 
     run_all_tests<Connection>(RootPool());
 

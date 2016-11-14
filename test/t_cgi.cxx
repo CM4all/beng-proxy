@@ -697,7 +697,7 @@ int main(int argc, char **argv) {
 
     direct_global_init();
     crash_global_init();
-    fb_pool_init(event_loop, false);
+    fb_pool_init();
 
     run_all_tests();
 

@@ -163,8 +163,6 @@ LbInstance::ShutdownCallback()
     if (pipe_stock != nullptr)
         pipe_stock_free(pipe_stock);
 
-    fb_pool_disable();
-
     pool_commit();
 }
 
@@ -244,7 +242,7 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    fb_pool_init(instance.event_loop, false);
+    fb_pool_init();
 
     instance.balancer = balancer_new(*instance.pool, instance.event_loop);
     instance.tcp_stock = tcp_stock_new(instance.event_loop,

@@ -58,7 +58,7 @@ try {
     EventLoop event_loop;
 
     direct_global_init();
-    fb_pool_init(event_loop, false);
+    fb_pool_init();
 
     RootPool root_pool;
     auto *pool = pool_new_linear(root_pool, "test", 8192);

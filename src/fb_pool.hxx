@@ -11,19 +11,18 @@
 #include <inline/compiler.h>
 
 struct SlicePool;
-class EventLoop;
 
 /**
  * Global initialization.
  */
 void
-fb_pool_init(EventLoop &event_loop, bool auto_cleanup);
+fb_pool_init();
 
 /**
  * Global deinitialization.
  */
 void
-fb_pool_deinit(void);
+fb_pool_deinit();
 
 void
 fb_pool_fork_cow(bool inherit);
@@ -31,13 +30,6 @@ fb_pool_fork_cow(bool inherit);
 gcc_const
 SlicePool &
 fb_pool_get();
-
-/**
- * Disable the cleanup timer.  Do this during shutdown, to let
- * libevent quit the main loop.
- */
-void
-fb_pool_disable(void);
 
 /**
  * Give free memory back to the kernel.  The library will
