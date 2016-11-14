@@ -201,7 +201,7 @@ GrowingBuffer::Skip(size_t length)
     }
 }
 
-GrowingBufferReader::GrowingBufferReader(const GrowingBuffer &gb)
+GrowingBufferReader::GrowingBufferReader(GrowingBuffer &&gb)
 #ifndef NDEBUG
     :growing_buffer(&gb)
 #endif

@@ -130,7 +130,7 @@ class GrowingBufferReader {
     size_t position;
 
 public:
-    explicit GrowingBufferReader(const GrowingBuffer &gb);
+    explicit GrowingBufferReader(GrowingBuffer &&gb);
 
     /**
      * Update the reader object after data has been appended to the

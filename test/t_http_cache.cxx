@@ -168,7 +168,7 @@ parse_headers(struct pool &pool, const char *raw)
     GrowingBuffer gb(pool, 512);
     StringMap *headers = strmap_new(&pool);
     gb.Write(raw);
-    header_parse_buffer(pool, *headers, gb);
+    header_parse_buffer(pool, *headers, std::move(gb));
 
     return headers;
 }
@@ -238,7 +238,7 @@ MyResourceLoader::SendRequest(struct pool &pool,
         GrowingBuffer gb(pool, 512);
         gb.Write(request->response_headers);
 
-        header_parse_buffer(pool, response_headers, gb);
+        header_parse_buffer(pool, response_headers, std::move(gb));
     }
 
     if (request->response_body != NULL)
@@ -316,7 +316,7 @@ run_cache_test(struct pool *root_pool, unsigned num, bool cached)
         GrowingBuffer gb(*pool, 512);
         gb.Write(request->request_headers);
 
-        header_parse_buffer(*pool, headers, gb);
+        header_parse_buffer(*pool, headers, std::move(gb));
     }
 
     body = NULL;

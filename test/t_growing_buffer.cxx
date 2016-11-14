@@ -186,7 +186,7 @@ test_first_empty(struct pool *pool)
     assert(buffer.GetSize() == 17);
     assert(Equals(buffer.Dup(*pool), "0123456789abcdefg"));
 
-    GrowingBufferReader reader(buffer);
+    GrowingBufferReader reader(std::move(buffer));
     auto x = reader.Read();
     assert(!x.IsNull());
     assert(x.size == 17);
@@ -213,7 +213,7 @@ test_skip(struct pool *pool)
     assert(buffer.GetSize() == 16);
     assert(Equals(buffer.Dup(*pool), "0123456789abcdef"));
 
-    GrowingBufferReader reader(buffer);
+    GrowingBufferReader reader(std::move(buffer));
     reader.Skip(6);
 
     auto x = reader.Read();
@@ -247,7 +247,7 @@ test_concurrent_rw(struct pool *pool)
     buffer.Write("4567");
     buffer.Write("89ab");
 
-    GrowingBufferReader reader(buffer);
+    GrowingBufferReader reader(std::move(buffer));
     assert(reader.Available() == 12);
 
     assert(buffer.GetSize() == 12);

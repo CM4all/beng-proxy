@@ -22,7 +22,7 @@ int main(int argc gcc_unused, char **argv gcc_unused) {
     /* parse the headers */
 
     auto *headers = strmap_new(pool);
-    header_parse_buffer(pool, *headers, gb);
+    header_parse_buffer(pool, *headers, std::move(gb));
 
     /* dump headers */
 

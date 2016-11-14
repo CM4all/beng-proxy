@@ -41,9 +41,9 @@ header_parse_line(struct pool &pool, StringMap &headers,
 
 void
 header_parse_buffer(struct pool &pool, StringMap &headers,
-                    const GrowingBuffer &_gb)
+                    GrowingBuffer &&_gb)
 {
-    GrowingBufferReader reader(_gb);
+    GrowingBufferReader reader(std::move(_gb));
 
     StaticFifoBuffer<char, 4096> buffer;
 

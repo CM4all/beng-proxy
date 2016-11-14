@@ -18,7 +18,7 @@ class GrowingBufferIstream final : public Istream {
 
 public:
     GrowingBufferIstream(struct pool &p, GrowingBuffer &&_gb)
-        :Istream(p), reader(_gb) {
+        :Istream(p), reader(std::move(_gb)) {
         _gb.Release();
     }
 

@@ -26,8 +26,7 @@ int main(int argc, char **argv) {
     StringMap headers(*pool);
     cookie_jar_http_header(jar, "foo.bar", "/x", headers, pool);
 
-    const GrowingBuffer gb = headers_dup(pool, headers);
-    GrowingBufferReader reader(gb);
+    GrowingBufferReader reader(headers_dup(pool, headers));
 
     ConstBuffer<void> src;
     while (!(src = reader.Read()).IsNull()) {

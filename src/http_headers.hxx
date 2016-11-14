@@ -43,8 +43,8 @@ public:
         return map;
     }
 
-    StringMap &&ToMap() {
-        header_parse_buffer(GetPool(), map, buffer);
+    StringMap &&ToMap() && {
+        header_parse_buffer(GetPool(), map, std::move(buffer));
         return std::move(map);
     }
 

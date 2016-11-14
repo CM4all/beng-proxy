@@ -697,7 +697,7 @@ response_dispatch(Request &request2,
     if (transformation != nullptr &&
         filter_enabled(*request2.translate.response, status)) {
         response_apply_transformation(request2, status,
-                                      headers.ToMap(),
+                                      std::move(headers).ToMap(),
                                       body,
                                       *transformation);
     } else {
