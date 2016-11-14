@@ -235,10 +235,10 @@ MyResourceLoader::SendRequest(struct pool &pool,
 
     StringMap response_headers(pool);
     if (request->response_headers != NULL) {
-        GrowingBuffer *gb = growing_buffer_new(&pool, 512);
-        gb->Write(request->response_headers);
+        GrowingBuffer gb(pool, 512);
+        gb.Write(request->response_headers);
 
-        header_parse_buffer(pool, response_headers, *gb);
+        header_parse_buffer(pool, response_headers, gb);
     }
 
     if (request->response_body != NULL)

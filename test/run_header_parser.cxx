@@ -12,17 +12,17 @@ int main(int argc gcc_unused, char **argv gcc_unused) {
 
     RootPool pool;
 
-    GrowingBuffer *gb = growing_buffer_new(pool, sizeof(buffer));
+    GrowingBuffer gb(pool, sizeof(buffer));
 
     /* read input from stdin */
 
     while ((nbytes = read(0, buffer, sizeof(buffer))) > 0)
-        gb->Write(buffer, (size_t)nbytes);
+        gb.Write(buffer, (size_t)nbytes);
 
     /* parse the headers */
 
     auto *headers = strmap_new(pool);
-    header_parse_buffer(pool, *headers, *gb);
+    header_parse_buffer(pool, *headers, gb);
 
     /* dump headers */
 

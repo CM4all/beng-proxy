@@ -150,7 +150,4 @@ public:
     size_t ConsumeBucketList(size_t nbytes);
 };
 
-GrowingBuffer *gcc_malloc
-growing_buffer_new(struct pool *pool, size_t initial_size);
-
 #endif

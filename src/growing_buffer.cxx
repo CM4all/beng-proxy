@@ -45,12 +45,6 @@ GrowingBuffer::GrowingBuffer(struct pool &_pool, size_t _default_size)
 {
 }
 
-GrowingBuffer *gcc_malloc
-growing_buffer_new(struct pool *pool, size_t initial_size)
-{
-    return NewFromPool<GrowingBuffer>(*pool, *pool, initial_size);
-}
-
 void
 GrowingBuffer::AppendBuffer(Buffer &buffer)
 {
