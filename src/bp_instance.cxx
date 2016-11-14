@@ -25,9 +25,12 @@
 
 #include <sys/signal.h>
 
+static constexpr auto &COMPRESS_INTERVAL = EventDuration<600>::value;
+
 BpInstance::BpInstance()
     :shutdown_listener(event_loop, BIND_THIS_METHOD(ShutdownCallback)),
      sighup_event(event_loop, SIGHUP, BIND_THIS_METHOD(ReloadEventCallback)),
+     compress_timer(event_loop, BIND_THIS_METHOD(OnCompressTimer)),
      child_process_registry(event_loop),
      spawn_worker_event(event_loop,
                         BIND_THIS_METHOD(RespawnWorkerCallback)),
@@ -63,6 +66,25 @@ BpInstance::ForkCow(bool inherit)
     if (nfs_cache != nullptr)
         nfs_cache_fork_cow(*nfs_cache, inherit);
 #endif
+}
+
+void
+BpInstance::Compress()
+{
+    fb_pool_compress();
+}
+
+void
+BpInstance::ScheduleCompress()
+{
+    compress_timer.Add(COMPRESS_INTERVAL);
+}
+
+void
+BpInstance::OnCompressTimer()
+{
+    Compress();
+    ScheduleCompress();
 }
 
 void

@@ -125,6 +125,8 @@ BpInstance::ShutdownCallback()
 
     avahi_client.Close();
 
+    compress_timer.Cancel();
+
     spawn_worker_event.Cancel();
 
     child_process_registry.SetVolatile();
@@ -214,7 +216,7 @@ BpInstance::ReloadEventCallback(int)
     http_cache_flush(*http_cache);
     if (filter_cache != nullptr)
         filter_cache_flush(*filter_cache);
-    fb_pool_compress();
+    Compress();
 }
 
 void
@@ -309,7 +311,7 @@ try {
            only the one worker handle control commands */
         global_control_handler_disable(instance);
 
-    fb_pool_init(instance.event_loop, true);
+    fb_pool_init(instance.event_loop, false);
 
 #ifdef USE_SPAWNER
     /* note: this function call passes a temporary SpawnConfig copy,

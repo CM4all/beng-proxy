@@ -67,6 +67,8 @@ struct BpInstance final : ControlHandler {
     ShutdownListener shutdown_listener;
     SignalEvent sighup_event;
 
+    TimerEvent compress_timer;
+
     /**
      * Registry for jobs running in background, created by the request
      * handler code.
@@ -147,6 +149,10 @@ struct BpInstance final : ControlHandler {
 
     void ForkCow(bool inherit);
 
+    void Compress();
+    void ScheduleCompress();
+    void OnCompressTimer();
+
     void ScheduleSaveSessions();
 
     /**
@@ -184,6 +190,8 @@ struct BpInstance final : ControlHandler {
 
 private:
     void RespawnWorkerCallback();
+
+    bool AllocatorCompressCallback();
 
     void SaveSesssions();
 };

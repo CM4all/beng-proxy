@@ -80,6 +80,7 @@ void
 BpInstance::InitWorker()
 {
     ForkCow(false);
+    ScheduleCompress();
 }
 
 pid_t
