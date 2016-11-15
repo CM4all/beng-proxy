@@ -92,9 +92,8 @@ struct HttpRequest final
 
     void Failed(GError *error) {
         body.Clear();
-        auto &h = handler;
+        handler.InvokeError(error);
         Destroy();
-        h.InvokeError(error);
     }
 
     /* virtual methods from class Cancellable */
@@ -143,9 +142,8 @@ HttpRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
 {
     failure_unset(current_address, FAILURE_RESPONSE);
 
-    auto &h = handler;
+    handler.InvokeResponse(status, std::move(_headers), _body);
     Destroy();
-    h.InvokeResponse(status, std::move(_headers), _body);
 }
 
 void
