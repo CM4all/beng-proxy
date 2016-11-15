@@ -77,6 +77,15 @@ struct HttpRequest final
         _cancel_ptr = *this;
     }
 
+    void BeginConnect() {
+        tcp_balancer_get(tcp_balancer, pool,
+                         false, SocketAddress::Null(),
+                         session_sticky,
+                         address.addresses,
+                         30,
+                         *this, cancel_ptr);
+    }
+
     void Failed(GError *error) {
         body.Clear();
         handler.InvokeError(error);
@@ -142,12 +151,7 @@ HttpRequest::OnHttpError(GError *error)
         g_error_free(error);
 
         --retries;
-        tcp_balancer_get(tcp_balancer, pool,
-                         false, SocketAddress::Null(),
-                         session_sticky,
-                         address.addresses,
-                         30,
-                         *this, cancel_ptr);
+        BeginConnect();
     } else {
         if (is_server_failure(error))
             failure_set(current_address, FAILURE_RESPONSE,
@@ -228,10 +232,5 @@ http_request(struct pool &pool, EventLoop &event_loop,
 
     hr->headers.Write("connection", "keep-alive");
 
-    tcp_balancer_get(tcp_balancer, pool,
-                     false, SocketAddress::Null(),
-                     session_sticky,
-                     uwa.addresses,
-                     30,
-                     *hr, hr->cancel_ptr);
+    hr->BeginConnect();
 }
