@@ -116,6 +116,18 @@ private:
     Buffer &AppendBuffer(size_t min_size);
 
     void CopyTo(void *dest) const;
+
+    template<typename F>
+    void ForEachBuffer(F &&f) const {
+        const auto *i = head;
+        if (i == nullptr)
+            return;
+
+        f(ConstBuffer<void>(i->data + position, i->fill - position));
+
+        while ((i = i->next) != nullptr)
+            f(ConstBuffer<void>(i->data, i->fill));
+    }
 };
 
 class GrowingBufferReader {
@@ -160,6 +172,19 @@ public:
 
     void FillBucketList(IstreamBucketList &list) const;
     size_t ConsumeBucketList(size_t nbytes);
+
+private:
+    template<typename F>
+    void ForEachBuffer(F &&f) const {
+        const auto *i = buffer;
+        if (i == nullptr)
+            return;
+
+        f(ConstBuffer<void>(i->data + position, i->fill - position));
+
+        while ((i = i->next) != nullptr)
+            f(ConstBuffer<void>(i->data, i->fill));
+    }
 };
 
 #endif
