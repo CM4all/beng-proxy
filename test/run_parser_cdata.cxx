@@ -47,8 +47,8 @@ int main(int argc, char **argv) {
     (void)argc;
     (void)argv;
 
+    const ScopeFbPoolInit fb_pool_init;
     EventLoop event_loop;
-    fb_pool_init();
 
     RootPool root_pool;
 
@@ -64,6 +64,4 @@ int main(int argc, char **argv) {
         parser_read(parser);
 
     pool_unref(pool);
-
-    fb_pool_deinit();
 }

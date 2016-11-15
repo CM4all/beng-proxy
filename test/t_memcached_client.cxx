@@ -510,7 +510,7 @@ int main(int argc, char **argv) {
     SetupProcess();
 
     direct_global_init();
-    fb_pool_init();
+    const ScopeFbPoolInit fb_pool_init;
 
     RootPool pool;
 
@@ -522,6 +522,4 @@ int main(int argc, char **argv) {
     run_test(pool, test_request_value);
     run_test(pool, test_request_value_close);
     run_test(pool, test_request_value_abort);
-
-    fb_pool_deinit();
 }

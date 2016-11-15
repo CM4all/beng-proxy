@@ -55,10 +55,9 @@ try {
 
     SetupProcess();
 
-    EventLoop event_loop;
-
     direct_global_init();
-    fb_pool_init();
+    const ScopeFbPoolInit fb_pool_init;
+    EventLoop event_loop;
 
     RootPool root_pool;
     auto *pool = pool_new_linear(root_pool, "test", 8192);
@@ -93,8 +92,6 @@ try {
     delete tcp_stock;
 
     /* cleanup */
-
-    fb_pool_deinit();
 
     return EXIT_SUCCESS;
 } catch (const std::exception &e) {

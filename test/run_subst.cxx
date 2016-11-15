@@ -12,8 +12,8 @@ int main(int argc, char **argv) {
     Istream *istream;
     int i;
 
+    const ScopeFbPoolInit fb_pool_init;
     EventLoop event_loop;
-    fb_pool_init();
 
     RootPool root_pool;
 
@@ -39,6 +39,4 @@ int main(int argc, char **argv) {
     pool_commit();
 
     sink.LoopRead();
-
-    fb_pool_deinit();
 }

@@ -111,10 +111,8 @@ int main(int argc, char **argv) {
     (void)argv;
 
     direct_global_init();
+    const ScopeFbPoolInit fb_pool_init;
     EventLoop event_loop;
-    fb_pool_init();
 
     test_catch(event_loop, RootPool());
-
-    fb_pool_deinit();
 }

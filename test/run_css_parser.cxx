@@ -101,8 +101,8 @@ int main(int argc, char **argv) {
     (void)argc;
     (void)argv;
 
+    const ScopeFbPoolInit fb_pool_init;
     EventLoop event_loop;
-    fb_pool_init();
 
     RootPool root_pool;
     LinearPool pool(root_pool, "test", 8192);
@@ -115,6 +115,4 @@ int main(int argc, char **argv) {
 
     while (!should_exit)
         css_parser_read(parser);
-
-    fb_pool_deinit();
 }

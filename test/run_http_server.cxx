@@ -219,8 +219,9 @@ int main(int argc, char **argv) {
     }
 
     direct_global_init();
+    const ScopeFbPoolInit fb_pool_init;
+
     Instance instance;
-    fb_pool_init();
     instance.shutdown_listener.Enable();
 
     RootPool pool;
@@ -262,8 +263,6 @@ int main(int argc, char **argv) {
                                                      true, instance);
 
     instance.event_loop.Dispatch();
-
-    fb_pool_deinit();
 
     return EXIT_SUCCESS;
 }

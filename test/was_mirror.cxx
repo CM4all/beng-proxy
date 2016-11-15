@@ -33,8 +33,9 @@ int main(int argc, char **argv) {
     int in_fd = 0, out_fd = 1, control_fd = 3;
 
     direct_global_init();
+    const ScopeFbPoolInit fb_pool_init;
+
     EventLoop event_loop;
-    fb_pool_init();
 
     RootPool pool;
 
@@ -46,6 +47,4 @@ int main(int argc, char **argv) {
     event_loop.Dispatch();
 
     was_server_free(instance.server);
-
-    fb_pool_deinit();
 }

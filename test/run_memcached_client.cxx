@@ -230,8 +230,8 @@ int main(int argc, char **argv) {
     /* initialize */
 
     SetupProcess();
+    const ScopeFbPoolInit fb_pool_init;
 
-    fb_pool_init();
     ctx.shutdown_listener.Enable();
 
     RootPool root_pool;
@@ -256,8 +256,6 @@ int main(int argc, char **argv) {
 
     pool_unref(pool);
     pool_commit();
-
-    fb_pool_deinit();
 
     return ctx.value_eof ? 0 : 2;
 }

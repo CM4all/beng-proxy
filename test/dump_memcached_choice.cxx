@@ -164,6 +164,7 @@ int main(int argc, char **argv) {
     }
 
     direct_global_init();
+    const ScopeFbPoolInit fb_pool_init;
 
     Context ctx;
 
@@ -182,7 +183,6 @@ int main(int argc, char **argv) {
     SetupProcess();
 
     EventLoop event_loop;
-    fb_pool_init();
 
     RootPool root_pool;
     ctx.pool = pool_new_linear(root_pool, "test", 8192);
@@ -206,8 +206,6 @@ int main(int argc, char **argv) {
     event_loop.Dispatch();
 
     /* cleanup */
-
-    fb_pool_deinit();
 
     return ctx.success ? 0 : 2;
 }

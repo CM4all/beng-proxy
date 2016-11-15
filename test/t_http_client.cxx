@@ -228,10 +228,8 @@ int main(int argc, char **argv) {
     SetupProcess();
 
     direct_global_init();
-    fb_pool_init();
+    const ScopeFbPoolInit fb_pool_init;
 
     run_all_tests<Connection>(RootPool());
     run_test<Connection>(RootPool(), test_no_keepalive);
-
-    fb_pool_deinit();
 }

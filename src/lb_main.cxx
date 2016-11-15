@@ -191,6 +191,7 @@ deinit_signals(LbInstance *instance)
 
 int main(int argc, char **argv)
 {
+    const ScopeFbPoolInit fb_pool_init;
     LbInstance instance;
 
     /* configuration */
@@ -241,8 +242,6 @@ int main(int argc, char **argv)
         fprintf(stderr, "%s\n", e.what());
         return EXIT_FAILURE;
     }
-
-    fb_pool_init();
 
     instance.balancer = balancer_new(*instance.pool, instance.event_loop);
     instance.tcp_stock = tcp_stock_new(instance.event_loop,
@@ -312,8 +311,6 @@ int main(int argc, char **argv)
     deinit_all_controls(&instance);
 
     thread_pool_deinit();
-
-    fb_pool_deinit();
 
     delete instance.config;
 

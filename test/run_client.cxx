@@ -324,10 +324,12 @@ main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
+    direct_global_init();
+    SetupProcess();
+    const ScopeFbPoolInit fb_pool_init;
+
     const ScopeSslGlobalInit ssl_init;
     ssl_client_init();
-
-    direct_global_init();
 
     /* connect socket */
 
@@ -344,10 +346,6 @@ main(int argc, char **argv)
     }
 
     /* initialize */
-
-    SetupProcess();
-
-    fb_pool_init();
 
     ctx.shutdown_listener.Enable();
 
@@ -407,8 +405,6 @@ main(int argc, char **argv)
 
     pool_unref(pool);
     pool_commit();
-
-    fb_pool_deinit();
 
     ssl_client_deinit();
 

@@ -39,4 +39,15 @@ fb_pool_get();
 void
 fb_pool_compress(void);
 
+class ScopeFbPoolInit {
+public:
+    ScopeFbPoolInit() {
+        fb_pool_init();
+    }
+
+    ~ScopeFbPoolInit() {
+        fb_pool_deinit();
+    }
+};
+
 #endif

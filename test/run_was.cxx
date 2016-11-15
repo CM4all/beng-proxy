@@ -154,8 +154,8 @@ int main(int argc, char **argv) {
 
     SpawnConfig spawn_config;
 
+    const ScopeFbPoolInit fb_pool_init;
     EventLoop event_loop;
-    fb_pool_init();
 
     ChildOptions child_options;
 
@@ -193,8 +193,6 @@ int main(int argc, char **argv) {
                        context, context.cancel_ptr);
 
     event_loop.Dispatch();
-
-    fb_pool_deinit();
 
     return context.error;
 }

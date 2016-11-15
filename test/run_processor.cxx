@@ -70,8 +70,8 @@ int main(int argc, char **argv) {
     (void)argc;
     (void)argv;
 
+    const ScopeFbPoolInit fb_pool_init;
     EventLoop event_loop;
-    fb_pool_init();
 
     RootPool pool;
 
@@ -110,6 +110,4 @@ int main(int argc, char **argv) {
 
     StdioSink sink(*result);
     sink.LoopRead();
-
-    fb_pool_deinit();
 }

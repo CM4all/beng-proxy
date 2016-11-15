@@ -136,6 +136,8 @@ static const TranslateHandler my_translate_handler = {
 };
 
 int main(int argc, char **argv) {
+    const ScopeFbPoolInit fb_pool_init;
+
     TranslateRequest request;
     request.Clear();
     request.host = "example.com";
@@ -145,7 +147,6 @@ int main(int argc, char **argv) {
     (void)argv;
 
     EventLoop event_loop;
-    fb_pool_init();
 
     RootPool pool;
 
@@ -156,5 +157,4 @@ int main(int argc, char **argv) {
                      request, my_translate_handler, nullptr, cancel_ptr);
 
     event_loop.Dispatch();
-    fb_pool_deinit();
 }

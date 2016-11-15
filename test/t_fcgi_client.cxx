@@ -358,14 +358,12 @@ int main(int argc, char **argv) {
     (void)argv;
 
     SetupProcess();
-
     direct_global_init();
+    const ScopeFbPoolInit fb_pool_init;
+
     EventLoop event_loop;
-    fb_pool_init();
 
     run_all_tests<Connection>(RootPool());
-
-    fb_pool_deinit();
 
     int status;
     while (wait(&status) > 0) {

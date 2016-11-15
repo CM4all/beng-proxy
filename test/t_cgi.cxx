@@ -697,13 +697,12 @@ int main(int argc, char **argv) {
 
     direct_global_init();
     crash_global_init();
-    fb_pool_init();
+    const ScopeFbPoolInit fb_pool_init;
 
     run_all_tests();
 
     my_handler_direct = FD_ANY;
     run_all_tests();
 
-    fb_pool_deinit();
     crash_global_deinit();
 }

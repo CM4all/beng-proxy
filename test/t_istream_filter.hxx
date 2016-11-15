@@ -578,10 +578,10 @@ int main(int argc, char **argv) {
     (void)argc;
     (void)argv;
 
-    Instance instance;
-
     direct_global_init();
-    fb_pool_init();
+    const ScopeFbPoolInit fb_pool_init;
+
+    Instance instance;
 
     /* run test suite */
 
@@ -612,8 +612,4 @@ int main(int argc, char **argv) {
 #ifdef CUSTOM_TEST
     test_custom(instance.event_loop, RootPool());
 #endif
-
-    /* cleanup */
-
-    fb_pool_deinit();
 }

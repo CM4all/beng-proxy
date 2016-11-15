@@ -270,6 +270,8 @@ try {
         debug_mode = true;
 #endif
 
+    const ScopeFbPoolInit fb_pool_init;
+
     BpInstance instance;
 
     /* configuration */
@@ -308,8 +310,6 @@ try {
         /* in single-worker mode with watchdog master process, let
            only the one worker handle control commands */
         global_control_handler_disable(instance);
-
-    fb_pool_init();
 
 #ifdef USE_SPAWNER
     /* note: this function call passes a temporary SpawnConfig copy,
@@ -498,8 +498,6 @@ try {
 #endif
 
     thread_pool_deinit();
-
-    fb_pool_deinit();
 
     ssl_client_deinit();
 
