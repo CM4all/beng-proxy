@@ -61,7 +61,7 @@ public:
     }
 
     bool IsEmpty() const {
-        return head == nullptr;
+        return head == nullptr || position == head->fill;
     }
 
     void Clear() {
