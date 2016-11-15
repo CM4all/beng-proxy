@@ -96,6 +96,9 @@ run_istream_ctx(Context *ctx, struct pool *pool, Istream *_istream)
         istream->Read();
 #endif
 
+    if (!ctx->eof && !ctx->abort)
+        istream.Close();
+
     if (!ctx->eof) {
         pool_trash(pool);
         pool_unref(pool);
