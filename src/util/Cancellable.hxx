@@ -30,7 +30,7 @@
 #ifndef CANCELLABLE_HXX
 #define CANCELLABLE_HXX
 
-#include <cstddef>
+#include <utility>
 
 /**
  * An asynchronous operation that can be cancelled.  Upon
@@ -47,8 +47,16 @@ class CancellablePointer {
 public:
 	constexpr CancellablePointer() = default;
 
-	CancellablePointer(const CancellablePointer &) = delete;
-	CancellablePointer &operator=(const CancellablePointer &) = delete;
+	CancellablePointer(CancellablePointer &&src)
+		:cancellable(src.cancellable) {
+		src.cancellable = nullptr;
+	}
+
+	CancellablePointer &operator=(CancellablePointer &&src) {
+		using std::swap;
+		swap(cancellable, src.cancellable);
+		return *this;
+	}
 
 	CancellablePointer &operator=(std::nullptr_t n) {
 		cancellable = n;
