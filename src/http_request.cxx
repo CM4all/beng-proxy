@@ -52,9 +52,7 @@ struct HttpRequest final
     unsigned retries;
 
     HttpResponseHandler &handler;
-    CancellablePointer &cancel_ptr;
-
-    CancellablePointer next_cancel_ptr;
+    CancellablePointer cancel_ptr;
 
     HttpRequest(struct pool &_pool, EventLoop &_event_loop,
                 TcpBalancer &_tcp_balancer,
@@ -74,9 +72,9 @@ struct HttpRequest final
          headers(std::move(_headers)), body(pool, _body),
          /* can only retry if there is no request body */
          retries(_body != nullptr ? 2 : 0),
-         handler(_handler), cancel_ptr(_cancel_ptr)
+         handler(_handler)
     {
-        cancel_ptr = *this;
+        _cancel_ptr = *this;
     }
 
     void Failed(GError *error) {
@@ -87,7 +85,7 @@ struct HttpRequest final
     /* virtual methods from class Cancellable */
     void Cancel() override {
         body.Clear();
-        next_cancel_ptr.Cancel();
+        cancel_ptr.Cancel();
     }
 
     /* virtual methods from class StockGetHandler */
@@ -235,5 +233,5 @@ http_request(struct pool &pool, EventLoop &event_loop,
                      session_sticky,
                      uwa.addresses,
                      30,
-                     *hr, hr->next_cancel_ptr);
+                     *hr, hr->cancel_ptr);
 }
