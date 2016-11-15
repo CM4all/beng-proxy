@@ -15,7 +15,6 @@
 #include "stock/GetHandler.hxx"
 #include "stock/Item.hxx"
 #include "lease.hxx"
-#include "abort_close.hxx"
 #include "failure.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream_hold.hxx"
@@ -29,7 +28,9 @@
 
 #include <string.h>
 
-struct HttpRequest final : public StockGetHandler, Lease, HttpResponseHandler {
+struct HttpRequest final
+    : Cancellable, StockGetHandler, Lease, HttpResponseHandler {
+
     struct pool &pool;
     EventLoop &event_loop;
 
@@ -53,6 +54,8 @@ struct HttpRequest final : public StockGetHandler, Lease, HttpResponseHandler {
     HttpResponseHandler &handler;
     CancellablePointer &cancel_ptr;
 
+    CancellablePointer next_cancel_ptr;
+
     HttpRequest(struct pool &_pool, EventLoop &_event_loop,
                 TcpBalancer &_tcp_balancer,
                 unsigned _session_sticky,
@@ -70,6 +73,7 @@ struct HttpRequest final : public StockGetHandler, Lease, HttpResponseHandler {
          headers(std::move(_headers)),
          handler(_handler), cancel_ptr(_cancel_ptr)
     {
+        cancel_ptr = *this;
     }
 
     void Dispose() {
@@ -80,6 +84,12 @@ struct HttpRequest final : public StockGetHandler, Lease, HttpResponseHandler {
     void Failed(GError *error) {
         Dispose();
         handler.InvokeError(error);
+    }
+
+    /* virtual methods from class Cancellable */
+    void Cancel() override {
+        Dispose();
+        next_cancel_ptr.Cancel();
     }
 
     /* virtual methods from class StockGetHandler */
@@ -217,11 +227,8 @@ http_request(struct pool &pool, EventLoop &event_loop,
                                        method, uwa, std::move(headers),
                                        handler, _cancel_ptr);
 
-    CancellablePointer *cancel_ptr = &_cancel_ptr;
-    if (body != nullptr) {
+    if (body != nullptr)
         body = istream_hold_new(pool, *body);
-        cancel_ptr = &async_close_on_abort(pool, *body, *cancel_ptr);
-    }
 
     hr->body = body;
 
@@ -236,5 +243,5 @@ http_request(struct pool &pool, EventLoop &event_loop,
                      session_sticky,
                      uwa.addresses,
                      30,
-                     *hr, *cancel_ptr);
+                     *hr, hr->next_cancel_ptr);
 }
