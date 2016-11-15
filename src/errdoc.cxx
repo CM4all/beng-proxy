@@ -15,7 +15,7 @@
 #include "ResourceLoader.hxx"
 #include "http_response.hxx"
 #include "istream/istream.hxx"
-#include "istream/istream_hold.hxx"
+#include "istream/UnusedHoldPtr.hxx"
 #include "util/Exception.hxx"
 
 #include <glib.h>
@@ -29,7 +29,7 @@ struct ErrorResponseLoader final : HttpResponseHandler, Cancellable {
 
     http_status_t status;
     HttpHeaders headers;
-    Istream *body;
+    UnusedHoldIstreamPtr body;
 
     TranslateRequest translate_request;
 
@@ -37,9 +37,7 @@ struct ErrorResponseLoader final : HttpResponseHandler, Cancellable {
                         HttpHeaders &&_headers, Istream *_body)
         :request2(&_request), status(_status),
          headers(std::move(_headers)),
-         body(_body != nullptr
-              ? istream_hold_new(request2->pool, *_body)
-              : nullptr) {}
+         body(_request.pool, _body) {}
 
     void Destroy() {
         DeleteFromPool(request2->pool, this);
@@ -57,7 +55,8 @@ struct ErrorResponseLoader final : HttpResponseHandler, Cancellable {
 static void
 errdoc_resubmit(ErrorResponseLoader &er)
 {
-    response_dispatch(*er.request2, er.status, std::move(er.headers), er.body);
+    response_dispatch(*er.request2, er.status, std::move(er.headers),
+                      er.body.Steal());
 }
 
 /*
@@ -70,15 +69,13 @@ ErrorResponseLoader::OnHttpResponse(http_status_t _status, StringMap &&_headers,
                                     Istream *_body)
 {
     if (http_status_is_success(_status)) {
-        if (body != nullptr)
-            /* close the original (error) response body */
-            body->CloseUnused();
+        /* close the original (error) response body */
+        body.Clear();
 
         request2->InvokeResponse(status, std::move(_headers), _body);
     } else {
-        if (_body != nullptr)
-            /* discard the error document response */
-            body->CloseUnused();
+        /* close the original (error) response body */
+        body.Clear();
 
         errdoc_resubmit(*this);
     }
@@ -161,8 +158,7 @@ fill_translate_request(TranslateRequest *t,
 void
 ErrorResponseLoader::Cancel()
 {
-    if (body != nullptr)
-        body->CloseUnused();
+    body.Clear();
 
     CancellablePointer c(std::move(cancel_ptr));
     Destroy();
