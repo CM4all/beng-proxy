@@ -52,6 +52,11 @@ struct TranslateClient final : Cancellable {
                     const TranslateHandler &_handler, void *_ctx,
                     CancellablePointer &cancel_ptr);
 
+    void Destroy() {
+        this->~TranslateClient();
+        pool_unref(&pool);
+    }
+
     void ReleaseSocket(bool reuse);
     void Release(bool reuse);
 
@@ -97,7 +102,7 @@ void
 TranslateClient::Release(bool reuse)
 {
     ReleaseSocket(reuse);
-    pool_unref(&pool);
+    Destroy();
 }
 
 void
@@ -324,7 +329,7 @@ TranslateClient::Feed(const uint8_t *data, size_t length)
         case TranslateParser::Result::DONE:
             ReleaseSocket(true);
             handler.response(parser.GetResponse(), handler_ctx);
-            pool_unref(&pool);
+            Destroy();
             return BufferedResult::CLOSED;
         }
     }
