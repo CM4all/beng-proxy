@@ -144,12 +144,6 @@ class GrowingBufferReader {
 public:
     explicit GrowingBufferReader(GrowingBuffer &&gb);
 
-    /**
-     * Update the reader object after data has been appended to the
-     * underlying buffer.
-     */
-    void Update(const GrowingBuffer &gb);
-
     gcc_pure
     bool IsEOF() const;
 

@@ -215,22 +215,6 @@ GrowingBufferReader::GrowingBufferReader(GrowingBuffer &&gb)
     position = 0;
 }
 
-void
-GrowingBufferReader::Update(const GrowingBuffer &gb)
-{
-    assert(position == 0 || position <= buffer->fill);
-
-    if (buffer == nullptr)
-        buffer = gb.head;
-    else if (position == buffer->fill &&
-             buffer->next != nullptr) {
-        /* the reader was at the end of all buffers, but then a new
-           buffer was appended */
-        buffer = buffer->next;
-        position = 0;
-    }
-}
-
 bool
 GrowingBufferReader::IsEOF() const
 {

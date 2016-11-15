@@ -247,27 +247,20 @@ test_concurrent_rw(struct pool *pool)
     buffer.Write("4567");
     buffer.Write("89ab");
 
-    GrowingBufferReader reader(std::move(buffer));
-    assert(reader.Available() == 12);
-
     assert(buffer.GetSize() == 12);
     assert(Equals(buffer.Dup(*pool), "0123456789ab"));
 
-    reader.Skip(12);
-    assert(reader.IsEOF());
-    assert(reader.Available() == 0);
+    buffer.Skip(12);
+    assert(buffer.IsEmpty());
+    assert(buffer.GetSize() == 0);
 
     buffer.Write("cdef");
 
-    assert(buffer.GetSize() == 16);
-    assert(Equals(buffer.Dup(*pool), "0123456789abcdef"));
+    assert(!buffer.IsEmpty());
+    assert(buffer.GetSize() == 4);
+    assert(Equals(buffer.Dup(*pool), "cdef"));
 
-    reader.Update(buffer);
-
-    assert(!reader.IsEOF());
-    assert(reader.Available() == 4);
-
-    auto x = reader.Read();
+    auto x = buffer.Read();
     assert(!x.IsNull());
     assert(x.size == 4);
 
