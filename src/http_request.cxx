@@ -17,7 +17,7 @@
 #include "lease.hxx"
 #include "failure.hxx"
 #include "istream/istream.hxx"
-#include "istream/istream_hold.hxx"
+#include "istream/UnusedHoldPtr.hxx"
 #include "filtered_socket.hxx"
 #include "pool.hxx"
 #include "GException.hxx"
@@ -47,7 +47,7 @@ struct HttpRequest final
     const http_method_t method;
     const HttpAddress &address;
     HttpHeaders headers;
-    Istream *body;
+    UnusedHoldIstreamPtr body;
 
     unsigned retries;
 
@@ -64,31 +64,29 @@ struct HttpRequest final
                 http_method_t _method,
                 const HttpAddress &_address,
                 HttpHeaders &&_headers,
+                Istream *_body,
                 HttpResponseHandler &_handler,
                 CancellablePointer &_cancel_ptr)
         :pool(_pool), event_loop(_event_loop), tcp_balancer(_tcp_balancer),
          session_sticky(_session_sticky),
          filter(_filter), filter_factory(_filter_factory),
          method(_method), address(_address),
-         headers(std::move(_headers)),
+         headers(std::move(_headers)), body(pool, _body),
+         /* can only retry if there is no request body */
+         retries(_body != nullptr ? 2 : 0),
          handler(_handler), cancel_ptr(_cancel_ptr)
     {
         cancel_ptr = *this;
     }
 
-    void Dispose() {
-        if (body != nullptr)
-            body->CloseUnused();
-    }
-
     void Failed(GError *error) {
-        Dispose();
+        body.Clear();
         handler.InvokeError(error);
     }
 
     /* virtual methods from class Cancellable */
     void Cancel() override {
-        Dispose();
+        body.Clear();
         next_cancel_ptr.Cancel();
     }
 
@@ -136,7 +134,7 @@ HttpRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
 void
 HttpRequest::OnHttpError(GError *error)
 {
-    if (retries > 0 && body == nullptr &&
+    if (retries > 0 &&
         error->domain == http_client_quark() &&
         error->code == HTTP_CLIENT_REFUSED) {
         /* the server has closed the connection prematurely, maybe
@@ -191,7 +189,7 @@ HttpRequest::OnStockItemReady(StockItem &item)
                         item.GetStockName(),
                         filter, filter_ctx,
                         method, address.path, std::move(headers),
-                        body, true,
+                        body.Steal(), true,
                         *this, cancel_ptr);
 }
 
@@ -224,20 +222,14 @@ http_request(struct pool &pool, EventLoop &event_loop,
 
     auto hr = NewFromPool<HttpRequest>(pool, pool, event_loop, tcp_balancer,
                                        session_sticky, filter, filter_factory,
-                                       method, uwa, std::move(headers),
+                                       method, uwa, std::move(headers), body,
                                        handler, _cancel_ptr);
-
-    if (body != nullptr)
-        body = istream_hold_new(pool, *body);
-
-    hr->body = body;
 
     if (uwa.host_and_port != nullptr)
         hr->headers.Write("host", uwa.host_and_port);
 
     hr->headers.Write("connection", "keep-alive");
 
-    hr->retries = 2;
     tcp_balancer_get(tcp_balancer, pool,
                      false, SocketAddress::Null(),
                      session_sticky,

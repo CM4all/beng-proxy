@@ -25,16 +25,6 @@ public:
     UnusedHoldIstreamPtr(UnusedHoldIstreamPtr &&src) = default;
 
     UnusedHoldIstreamPtr &operator=(UnusedHoldIstreamPtr &&src) = default;
-
-    Istream *Steal() {
-        return std::exchange(stream, nullptr);
-    }
-
-    void Clear() {
-        auto *s = Steal();
-        if (s != nullptr)
-            s->Close();
-    }
 };
 
 #endif
