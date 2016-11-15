@@ -97,7 +97,7 @@ void
 TranslateClient::Release(bool reuse)
 {
     ReleaseSocket(reuse);
-    pool_unref(&pool);
+    DeleteUnrefPool(pool, this);
 }
 
 void
