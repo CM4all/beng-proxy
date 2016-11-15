@@ -348,7 +348,13 @@ GrowingBuffer::Dup(struct pool &_pool) const
 void
 GrowingBufferReader::FillBucketList(IstreamBucketList &list) const
 {
-    for (const auto *b = buffer; b != nullptr; b = b->next)
+    const auto *b = buffer;
+    if (b == nullptr)
+        return;
+
+    list.Push({b->data + position, b->fill - position});
+
+    while ((b = b->next) != nullptr)
         list.Push({b->data, b->fill});
 }
 
