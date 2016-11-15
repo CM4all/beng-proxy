@@ -641,6 +641,7 @@ libutil_a_SOURCES = \
 	src/util/Expiry.hxx \
 	src/util/InstanceList.hxx \
 	src/util/IterableSplitString.hxx \
+	src/util/LeakDetector.cxx src/util/LeakDetector.hxx \
 	src/util/StringAPI.hxx \
 	src/util/StringUtil.cxx src/util/StringUtil.hxx \
 	src/util/StringView.cxx src/util/StringView.hxx \
