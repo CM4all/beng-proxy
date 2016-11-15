@@ -9,6 +9,7 @@
 
 #include "pool.hxx"
 #include "Handler.hxx"
+#include "util/LeakDetector.hxx"
 
 #include <algorithm>
 
@@ -27,7 +28,7 @@ class IstreamBucketList;
  * - it has reached end-of-file
  * - an error has occurred
  */
-class Istream : PoolHolder {
+class Istream : PoolHolder, LeakDetector {
     /** data sink */
     IstreamHandler *handler = nullptr;
 

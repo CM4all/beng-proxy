@@ -1640,6 +1640,7 @@ test_t_sink_rubber_SOURCES = \
 test_t_sink_rubber_CPPFLAGS = $(AM_CPPFLAGS) $(CPPUNIT_CFLAGS)
 test_t_sink_rubber_LDADD = $(AM_LDADD) \
 	libistream.a libpool.a libmemory.a \
+	libutil.a \
 	$(LIBCM4ALL_DAEMON_LIBS) \
 	$(CPPUNIT_LIBS)
 
@@ -1808,6 +1809,7 @@ test_run_subst_LDADD = $(AM_LDADD) \
 	libputil.a \
 	libio.a \
 	libsystem.a \
+	libutil.a \
 	$(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS)
 
 test_run_cookie_client_SOURCES = test/run_cookie_client.cxx \
@@ -2171,6 +2173,7 @@ test_t_memcached_client_LDADD = $(AM_LDADD) \
 	libputil.a \
 	libio.a \
 	libsystem.a \
+	libutil.a \
 	$(LIBCM4ALL_SOCKET_LIBS) \
 	$(LIBCM4ALL_DAEMON_LIBS)
 
@@ -2236,6 +2239,7 @@ test_run_parser_cdata_LDADD = $(AM_LDADD) \
 	libistream.a libpool.a libmemory.a libevent.a \
 	libio.a \
 	libsystem.a \
+	libutil.a \
 	$(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS)
 
 test_run_css_parser_SOURCES = test/run_css_parser.cxx \
