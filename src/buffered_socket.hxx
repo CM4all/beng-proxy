@@ -11,6 +11,7 @@
 #include "DefaultFifoBuffer.hxx"
 #include "event/DeferEvent.hxx"
 #include "util/DestructObserver.hxx"
+#include "util/LeakDetector.hxx"
 
 #include <exception>
 
@@ -252,7 +253,7 @@ struct BufferedSocketHandler {
  *
  * - destroyed (after buffered_socket_destroy())
  */
-class BufferedSocket final : DestructAnchor {
+class BufferedSocket final : DestructAnchor, LeakDetector {
     SocketWrapper base;
 
     const struct timeval *read_timeout, *write_timeout;
