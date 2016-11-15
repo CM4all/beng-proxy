@@ -110,7 +110,7 @@ CGIClient::ReturnResponse()
         buffer.Free(fb_pool_get());
         input.ClearAndClose();
         handler.InvokeResponse(status, std::move(headers), nullptr);
-        pool_unref(&GetPool());
+        Destroy();
         return false;
     } else if (parser.IsEOF()) {
         /* the response body is empty */
@@ -122,7 +122,7 @@ CGIClient::ReturnResponse()
         input.ClearAndClose();
         handler.InvokeResponse(status, std::move(headers),
                                istream_null_new(&GetPool()));
-        pool_unref(&GetPool());
+        Destroy();
         return false;
     } else {
         stopwatch_event(stopwatch, "headers");
@@ -171,7 +171,7 @@ CGIClient::FeedHeaders(const void *data, size_t length)
         buffer.Free(fb_pool_get());
         input.ClearAndClose();
         handler.InvokeError(error);
-        pool_unref(&GetPool());
+        Destroy();
         return 0;
 
     case Completion::CLOSED:
@@ -333,7 +333,7 @@ CGIClient::OnEof()
             g_error_new_literal(cgi_quark(), 0,
                                 "premature end of headers from CGI script");
         handler.InvokeError(error);
-        pool_unref(&GetPool());
+        Destroy();
     } else if (parser.DoesRequireMore()) {
         stopwatch_event(stopwatch, "malformed");
         stopwatch_dump(stopwatch);
@@ -370,7 +370,7 @@ CGIClient::OnError(GError *error)
 
         g_prefix_error(&error, "CGI request body failed: ");
         handler.InvokeError(error);
-        pool_unref(&GetPool());
+        Destroy();
     } else {
         /* response has been sent: abort only the output stream */
         buffer.Free(fb_pool_get());
@@ -447,7 +447,7 @@ CGIClient::Cancel()
 
     buffer.Free(fb_pool_get());
     input.Close();
-    pool_unref(&GetPool());
+    Destroy();
 }
 
 
