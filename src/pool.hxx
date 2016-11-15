@@ -264,6 +264,31 @@ public:
     }
 };
 
+/**
+ * Base class for classes which hold a reference to a #pool.
+ */
+class PoolHolder {
+protected:
+    struct pool &pool;
+
+    explicit PoolHolder(struct pool &_pool)
+        :pool(_pool)
+    {
+        pool_ref(&_pool);
+    }
+
+    PoolHolder(const PoolHolder &) = delete;
+    PoolHolder &operator=(const PoolHolder &) = delete;
+
+    ~PoolHolder() {
+        pool_unref(&pool);
+    }
+
+    struct pool &GetPool() {
+        return pool;
+    }
+};
+
 #ifndef NDEBUG
 
 void
