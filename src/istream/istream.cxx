@@ -13,8 +13,6 @@ Istream::~Istream()
     assert(!destroyed);
     destroyed = true;
 #endif
-
-    pool_unref(&pool);
 }
 
 bool

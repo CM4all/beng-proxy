@@ -27,10 +27,7 @@ class IstreamBucketList;
  * - it has reached end-of-file
  * - an error has occurred
  */
-class Istream {
-    /** the memory pool which allocated this object */
-    struct pool &pool;
-
+class Istream : PoolHolder {
     /** data sink */
     IstreamHandler *handler = nullptr;
 
@@ -52,18 +49,14 @@ class Istream {
 
 protected:
     explicit Istream(struct pool &_pool)
-        :pool(_pool) {
-        pool_ref(&pool);
-    }
+        :PoolHolder(_pool) {}
 
     Istream(const Istream &) = delete;
     Istream &operator=(const Istream &) = delete;
 
     virtual ~Istream();
 
-    struct pool &GetPool() {
-        return pool;
-    }
+    using PoolHolder::GetPool;
 
 public:
     FdTypeMask GetHandlerDirect() const {
