@@ -31,7 +31,7 @@ ajp_server_null(struct pool *pool)
     read_ajp_request(pool, &request);
 
     if (request.code != AJP_CODE_FORWARD_REQUEST)
-        exit(EXIT_FAILURE);
+        _exit(EXIT_FAILURE);
 
     write_headers(HTTP_STATUS_NO_CONTENT, nullptr);
     write_end();
@@ -44,7 +44,7 @@ ajp_server_hello(struct pool *pool)
     read_ajp_request(pool, &request);
 
     if (request.code != AJP_CODE_FORWARD_REQUEST)
-        exit(EXIT_FAILURE);
+        _exit(EXIT_FAILURE);
 
     write_headers(HTTP_STATUS_OK, nullptr);
     write_body_chunk("hello", 5, 0);
@@ -58,7 +58,7 @@ ajp_server_tiny(struct pool *pool)
     read_ajp_request(pool, &request);
 
     if (request.code != AJP_CODE_FORWARD_REQUEST)
-        exit(EXIT_FAILURE);
+        _exit(EXIT_FAILURE);
 
     auto *headers = strmap_new(pool);
     headers->Add("content-length", "5");
@@ -75,7 +75,7 @@ ajp_server_mirror(struct pool *pool)
     read_ajp_request(pool, &request);
 
     if (request.code != AJP_CODE_FORWARD_REQUEST)
-        exit(EXIT_FAILURE);
+        _exit(EXIT_FAILURE);
 
     http_status_t status = request.length == 0
         ? HTTP_STATUS_NO_CONTENT
@@ -254,7 +254,7 @@ Connection::New(EventLoop &event_loop, void (*f)(struct pool *pool))
         f(pool);
         shutdown(0, SHUT_RDWR);
         pool_unref(pool);
-        exit(EXIT_SUCCESS);
+        _exit(EXIT_SUCCESS);
     }
 
     close(sv[1]);

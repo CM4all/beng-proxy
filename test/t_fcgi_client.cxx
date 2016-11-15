@@ -39,7 +39,7 @@ mirror_data(size_t length)
 
         ssize_t nbytes = recv(0, buffer, l, MSG_WAITALL);
         if (nbytes <= 0)
-            exit(EXIT_FAILURE);
+            _exit(EXIT_FAILURE);
 
         write_full(buffer, nbytes);
         length -= nbytes;
@@ -322,7 +322,7 @@ Connection::New(EventLoop &event_loop, void (*f)(struct pool *pool))
         f(pool);
         shutdown(0, SHUT_RDWR);
         pool_unref(pool);
-        exit(EXIT_SUCCESS);
+        _exit(EXIT_SUCCESS);
     }
 
     close(sv[1]);

@@ -135,7 +135,7 @@ Connection::New(EventLoop &event_loop, const char *path, const char *mode)
         }
 
         perror("exec() failed");
-        exit(EXIT_FAILURE);
+        _exit(EXIT_FAILURE);
     }
 
     close(sv[1]);
@@ -170,7 +170,7 @@ Connection::NewClose100(struct pool &, EventLoop &event_loop)
         char buffer[64];
         while (read(sv[1], buffer, sizeof(buffer)) > 0) {}
 
-        exit(EXIT_SUCCESS);
+        _exit(EXIT_SUCCESS);
     }
 
     close(sv[1]);

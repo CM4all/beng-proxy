@@ -10,6 +10,7 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <unistd.h>
 #include <stdlib.h>
 #include <stdint.h>
 
@@ -21,7 +22,7 @@ read_full(void *_p, size_t length)
     while (p < end) {
         ssize_t nbytes = recv(0, p, length, MSG_WAITALL);
         if (nbytes <= 0)
-            exit(EXIT_FAILURE);
+            _exit(EXIT_FAILURE);
         p += nbytes;
     }
 }
@@ -33,7 +34,7 @@ read_byte(size_t *remaining_r)
     uint8_t value;
 
     if (*remaining_r < sizeof(value))
-        exit(EXIT_FAILURE);
+        _exit(EXIT_FAILURE);
 
     read_full(&value, sizeof(value));
     (*remaining_r) -= sizeof(value);
@@ -47,7 +48,7 @@ read_short(size_t *remaining_r)
     uint16_t value;
 
     if (*remaining_r < sizeof(value))
-        exit(EXIT_FAILURE);
+        _exit(EXIT_FAILURE);
 
     read_full(&value, sizeof(value));
     (*remaining_r) -= sizeof(value);
@@ -76,7 +77,7 @@ write_full(const void *_p, size_t length)
     while (p < end) {
         ssize_t nbytes = send(0, p, length, MSG_NOSIGNAL);
         if (nbytes <= 0)
-            exit(EXIT_FAILURE);
+            _exit(EXIT_FAILURE);
         p += nbytes;
     }
 }
