@@ -40,6 +40,10 @@ struct ErrorResponseLoader final : HttpResponseHandler, Cancellable {
               ? istream_hold_new(request2->pool, *_body)
               : nullptr) {}
 
+    void Destroy() {
+        DeleteFromPool(request2->pool, this);
+    }
+
     /* virtual methods from class Cancellable */
     void Cancel() override;
 
@@ -77,6 +81,8 @@ ErrorResponseLoader::OnHttpResponse(http_status_t _status, StringMap &&_headers,
 
         errdoc_resubmit(*this);
     }
+
+    Destroy();
 }
 
 void
@@ -87,6 +93,8 @@ ErrorResponseLoader::OnHttpError(GError *error)
     g_error_free(error);
 
     errdoc_resubmit(*this);
+
+    Destroy();
 }
 
 /*
@@ -110,8 +118,10 @@ errdoc_translate_response(TranslateResponse &response, void *ctx)
                           response.address, HTTP_STATUS_OK,
                           StringMap(request2->pool), nullptr, nullptr,
                           er, request2->cancel_ptr);
-    } else
+    } else {
         errdoc_resubmit(er);
+        er.Destroy();
+    }
 }
 
 static void
@@ -123,6 +133,7 @@ errdoc_translate_error(GError *error, void *ctx)
     g_error_free(error);
 
     errdoc_resubmit(er);
+    er.Destroy();
 }
 
 static const TranslateHandler errdoc_translate_handler = {
@@ -152,7 +163,9 @@ ErrorResponseLoader::Cancel()
     if (body != nullptr)
         body->CloseUnused();
 
-    cancel_ptr.Cancel();
+    CancellablePointer c(std::move(cancel_ptr));
+    Destroy();
+    c.Cancel();
 }
 
 /*
