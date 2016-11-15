@@ -123,9 +123,9 @@ GrowingBuffer::GetSize() const
 {
     size_t result = 0;
 
-    for (const auto *buffer = head;
-         buffer != nullptr; buffer = buffer->next)
-        result += buffer->fill;
+    ForEachBuffer([&result](ConstBuffer<void> b){
+            result += b.size;
+        });
 
     return result;
 }
@@ -242,19 +242,13 @@ GrowingBufferReader::IsEOF() const
 size_t
 GrowingBufferReader::Available() const
 {
-    if (buffer == nullptr)
-        return 0;
+    size_t result = 0;
 
-    assert(position <= buffer->fill);
+    ForEachBuffer([&result](ConstBuffer<void> b){
+            result += b.size;
+        });
 
-    size_t available = buffer->fill - position;
-    for (const auto *b = buffer->next; b != nullptr; b = b->next) {
-        assert(b->fill > 0);
-
-        available += b->fill;
-    }
-
-    return available;
+    return result;
 }
 
 ConstBuffer<void>
@@ -327,9 +321,9 @@ GrowingBufferReader::Skip(size_t length)
 void
 GrowingBuffer::CopyTo(void *dest) const
 {
-    for (const auto *buffer = head; buffer != nullptr;
-         buffer = buffer->next)
-        dest = mempcpy(dest, buffer->data, buffer->fill);
+    ForEachBuffer([&dest](ConstBuffer<void> b){
+            dest = mempcpy(dest, b.data, b.size);
+        });
 }
 
 WritableBuffer<void>
