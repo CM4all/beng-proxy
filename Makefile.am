@@ -789,6 +789,7 @@ libspawn_a_CPPFLAGS = $(AM_CPPFLAGS) \
 	$(LIBSYSTEMD_CFLAGS)
 
 libnet_a_SOURCES = \
+	src/net/Features.hxx \
 	src/net/ConnectSocket.cxx src/net/ConnectSocket.hxx \
 	src/net/ServerSocket.cxx src/net/ServerSocket.hxx \
 	src/net/UdpDistribute.cxx src/net/UdpDistribute.hxx \
