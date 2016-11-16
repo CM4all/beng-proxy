@@ -120,8 +120,6 @@ private:
 
     /**
      * Receive data on the control channel.
-     *
-     * @return true on success
      */
     ReceiveResult ReceiveControl(void *p, size_t size);
 
