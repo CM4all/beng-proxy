@@ -145,6 +145,23 @@ struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler, C
         lease.ReleaseWas(reuse);
     }
 
+    void ReleaseControlStop(uint64_t received) {
+        assert(response.body == nullptr);
+
+        if (!control.IsDefined())
+            /* already released */
+            return;
+
+        request.ClearBody();
+
+        if (!control.SendEmpty(WAS_COMMAND_STOP))
+            return;
+
+        control.ReleaseSocket();
+
+        lease.ReleaseWasStop(received);
+    }
+
     /**
      * Destroys the objects was_control, was_input, was_output and
      * releases the socket lease.
@@ -621,17 +638,7 @@ WasClient::WasInputClose(uint64_t received)
 
     response.body = nullptr;
 
-    if (control.IsDefined()) {
-        request.ClearBody();
-
-        if (!control.SendEmpty(WAS_COMMAND_STOP))
-            return;
-
-        control.ReleaseSocket();
-
-        lease.ReleaseWasStop(received);
-    }
-
+    ReleaseControlStop(received);
     Destroy();
 }
 
