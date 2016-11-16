@@ -229,8 +229,17 @@ WasChild::RecoverStop()
 
     while (true) {
         struct was_header header;
-        if (ReceiveControl(&header, sizeof(header)) != ReceiveResult::SUCCESS) {
+        switch (ReceiveControl(&header, sizeof(header))) {
+        case ReceiveResult::SUCCESS:
+            break;
+
+        case ReceiveResult::ERROR:
             InvokeIdleDisconnect();
+            return;
+
+        case ReceiveResult::AGAIN:
+            /* wait for more data */
+            event.Add(was_idle_timeout);
             return;
         }
 
