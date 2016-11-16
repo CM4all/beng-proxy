@@ -273,9 +273,7 @@ struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler, C
         stopwatch_event(stopwatch, "cancel");
 
         ClearUnused();
-
-        pool_unref(&caller_pool);
-        pool_unref(&pool);
+        Destroy();
     }
 
     /* virtual methods from class WasControlHandler */
