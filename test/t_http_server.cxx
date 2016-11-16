@@ -70,6 +70,8 @@ Instance::HandleHttpRequest(HttpServerRequest &request,
 void
 Instance::HttpConnectionError(GError *error)
 {
+    connection = nullptr;
+
     g_printerr("%s\n", error->message);
     g_error_free(error);
 }
@@ -77,6 +79,7 @@ Instance::HttpConnectionError(GError *error)
 void
 Instance::HttpConnectionClosed()
 {
+    connection = nullptr;
 }
 
 static void
