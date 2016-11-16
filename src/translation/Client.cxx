@@ -52,7 +52,8 @@ struct TranslateClient final : Cancellable {
                     CancellablePointer &cancel_ptr);
 
     void Destroy() {
-        DeleteUnrefPool(pool, this);
+        this->~TranslateClient();
+        pool_unref(&pool);
     }
 
     void ReleaseSocket(bool reuse);
