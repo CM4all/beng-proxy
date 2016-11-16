@@ -114,12 +114,16 @@ public:
     }
 
 private:
+    enum class ReceiveResult {
+        SUCCESS, ERROR, AGAIN,
+    };
+
     /**
      * Receive data on the control channel.
      *
      * @return true on success
      */
-    bool ReceiveControl(void *p, size_t size);
+    ReceiveResult ReceiveControl(void *p, size_t size);
 
     /**
      * Discard the given amount of data from the input pipe.
@@ -180,17 +184,17 @@ WasChildParams::GetStockKey(struct pool &pool) const
     return key;
 }
 
-inline bool
+WasChild::ReceiveResult
 WasChild::ReceiveControl(void *p, size_t size)
 {
     ssize_t nbytes = recv(process.control.Get(), p, size, MSG_DONTWAIT);
     if (nbytes == (ssize_t)size)
-        return true;
+        return ReceiveResult::SUCCESS;
 
     if (nbytes < 0 && errno == EAGAIN) {
         /* the WAS application didn't send enough data (yet); don't
            bother waiting for more, just give up on this process */
-        return false;
+        return ReceiveResult::AGAIN;
     }
 
     if (nbytes < 0)
@@ -199,7 +203,7 @@ WasChild::ReceiveControl(void *p, size_t size)
     else if (nbytes > 0)
         daemon_log(2, "unexpected data from idle WAS control connection '%s'\n",
                    GetStockName());
-    return false;
+    return ReceiveResult::ERROR;
 }
 
 inline bool
@@ -225,7 +229,7 @@ WasChild::RecoverStop()
 
     while (true) {
         struct was_header header;
-        if (!ReceiveControl(&header, sizeof(header))) {
+        if (ReceiveControl(&header, sizeof(header)) != ReceiveResult::SUCCESS) {
             InvokeIdleDisconnect();
             return;
         }
@@ -240,7 +244,7 @@ WasChild::RecoverStop()
         case WAS_COMMAND_LENGTH:
         case WAS_COMMAND_STOP:
             /* discard & ignore */
-            if (!ReceiveControl(&dummy, sizeof(dummy))) {
+            if (ReceiveControl(&dummy, sizeof(dummy)) != ReceiveResult::SUCCESS) {
                 InvokeIdleDisconnect();
                 return;
             }
@@ -267,7 +271,7 @@ WasChild::RecoverStop()
             break;
         }
 
-        if (!ReceiveControl(&premature, sizeof(premature))) {
+        if (ReceiveControl(&premature, sizeof(premature)) != ReceiveResult::SUCCESS) {
             InvokeIdleDisconnect();
             return;
         }
