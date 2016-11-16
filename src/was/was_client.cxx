@@ -202,16 +202,6 @@ struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler, C
     }
 
     /**
-     * Abort after
-     */
-    void AbortResponseEmpty() {
-        assert(response.WasSubmitted());
-
-        ClearUnused();
-        Destroy();
-    }
-
-    /**
      * Call this when end of the response body has been seen.  It will
      * take care of releasing the #WasClient.
      */
@@ -684,7 +674,12 @@ WasClient::WasInputError()
 
     response.body = nullptr;
 
-    AbortResponseEmpty();
+    if (control.IsDefined())
+        control.ReleaseSocket();
+
+    lease.ReleaseWas(false);
+
+    Destroy();
 }
 
 /*
