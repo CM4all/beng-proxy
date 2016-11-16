@@ -124,6 +124,13 @@ private:
     ReceiveResult ReceiveControl(void *p, size_t size);
 
     /**
+     * Receive and discard data on the control channel.
+     *
+     * @return true on success
+     */
+    bool DiscardControl(size_t size);
+
+    /**
      * Discard the given amount of data from the input pipe.
      *
      * @return true on success
@@ -204,6 +211,23 @@ WasChild::ReceiveControl(void *p, size_t size)
     return ReceiveResult::ERROR;
 }
 
+bool
+WasChild::DiscardControl(size_t size)
+{
+    while (size > 0) {
+        char buffer[1024];
+        ssize_t nbytes = recv(process.control.Get(), buffer,
+                              std::min(size, sizeof(buffer)),
+                              MSG_DONTWAIT);
+        if (nbytes <= 0)
+            return false;
+
+        size -= nbytes;
+    }
+
+    return true;
+}
+
 inline bool
 WasChild::DiscardInput(uint64_t remaining)
 {
@@ -241,8 +265,6 @@ WasChild::RecoverStop()
             return;
         }
 
-        uint64_t dummy;
-
         switch ((enum was_command)header.command) {
         case WAS_COMMAND_NOP:
             /* ignore */
@@ -251,7 +273,7 @@ WasChild::RecoverStop()
         case WAS_COMMAND_LENGTH:
         case WAS_COMMAND_STOP:
             /* discard & ignore */
-            if (ReceiveControl(&dummy, sizeof(dummy)) != ReceiveResult::SUCCESS) {
+            if (!DiscardControl(header.length)) {
                 InvokeIdleDisconnect();
                 return;
             }
