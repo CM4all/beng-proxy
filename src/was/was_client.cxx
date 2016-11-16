@@ -272,7 +272,10 @@ struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler, C
 
         stopwatch_event(stopwatch, "cancel");
 
-        ClearUnused();
+        if (response.body != nullptr)
+            was_input_free_unused_p(&response.body);
+
+        ReleaseControlStop(0);
         Destroy();
     }
 
