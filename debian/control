@@ -42,6 +42,7 @@ Conflicts: libevent1 (>= 1.4~), libevent2,
  cm4all-beng-proxy-toi-dbg,
  cm4all-jailcgi-wrapper (<< 1.4)
 Breaks: libcm4all-beng-proxy-js (<< 0.9.14),
+ libcm4all-was-simple1 (<< 1.8),
  cm4all-coma-fastcgi (<< 2.11),
  cm4all-ticket-fastcgi (<< 2.6),
  python-cm4all-translation (<< 1.9.1),
