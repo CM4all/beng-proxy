@@ -270,6 +270,10 @@ WasChild::RecoverStop()
             /* ignore */
             continue;
 
+        case WAS_COMMAND_HEADER:
+        case WAS_COMMAND_STATUS:
+        case WAS_COMMAND_NO_DATA:
+        case WAS_COMMAND_DATA:
         case WAS_COMMAND_LENGTH:
         case WAS_COMMAND_STOP:
             /* discard & ignore */
@@ -285,11 +289,7 @@ WasChild::RecoverStop()
         case WAS_COMMAND_SCRIPT_NAME:
         case WAS_COMMAND_PATH_INFO:
         case WAS_COMMAND_QUERY_STRING:
-        case WAS_COMMAND_HEADER:
         case WAS_COMMAND_PARAMETER:
-        case WAS_COMMAND_STATUS:
-        case WAS_COMMAND_NO_DATA:
-        case WAS_COMMAND_DATA:
             daemon_log(2, "unexpected data from idle WAS control connection '%s'\n",
                        GetStockName());
             InvokeIdleDisconnect();
