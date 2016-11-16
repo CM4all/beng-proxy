@@ -32,7 +32,9 @@ class TranslateParser {
     struct FromRequest {
         const char *uri;
 
+#if TRANSLATION_ENABLE_HTTP
         bool want_full_uri;
+#endif
 
         bool want;
 
