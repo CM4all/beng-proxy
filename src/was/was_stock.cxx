@@ -114,12 +114,21 @@ public:
     }
 
 private:
+    enum class ReceiveResult {
+        SUCCESS, ERROR, AGAIN,
+    };
+
     /**
      * Receive data on the control channel.
+     */
+    ReceiveResult ReceiveControl(void *p, size_t size);
+
+    /**
+     * Receive and discard data on the control channel.
      *
      * @return true on success
      */
-    bool ReceiveControl(void *p, size_t size);
+    bool DiscardControl(size_t size);
 
     /**
      * Discard the given amount of data from the input pipe.
@@ -180,17 +189,17 @@ WasChildParams::GetStockKey(struct pool &pool) const
     return key;
 }
 
-inline bool
+WasChild::ReceiveResult
 WasChild::ReceiveControl(void *p, size_t size)
 {
     ssize_t nbytes = recv(process.control.Get(), p, size, MSG_DONTWAIT);
     if (nbytes == (ssize_t)size)
-        return true;
+        return ReceiveResult::SUCCESS;
 
     if (nbytes < 0 && errno == EAGAIN) {
         /* the WAS application didn't send enough data (yet); don't
            bother waiting for more, just give up on this process */
-        return false;
+        return ReceiveResult::AGAIN;
     }
 
     if (nbytes < 0)
@@ -199,7 +208,24 @@ WasChild::ReceiveControl(void *p, size_t size)
     else if (nbytes > 0)
         daemon_log(2, "unexpected data from idle WAS control connection '%s'\n",
                    GetStockName());
-    return false;
+    return ReceiveResult::ERROR;
+}
+
+bool
+WasChild::DiscardControl(size_t size)
+{
+    while (size > 0) {
+        char buffer[1024];
+        ssize_t nbytes = recv(process.control.Get(), buffer,
+                              std::min(size, sizeof(buffer)),
+                              MSG_DONTWAIT);
+        if (nbytes <= 0)
+            return false;
+
+        size -= nbytes;
+    }
+
+    return true;
 }
 
 inline bool
@@ -225,22 +251,33 @@ WasChild::RecoverStop()
 
     while (true) {
         struct was_header header;
-        if (!ReceiveControl(&header, sizeof(header))) {
+        switch (ReceiveControl(&header, sizeof(header))) {
+        case ReceiveResult::SUCCESS:
+            break;
+
+        case ReceiveResult::ERROR:
             InvokeIdleDisconnect();
             return;
-        }
 
-        uint64_t dummy;
+        case ReceiveResult::AGAIN:
+            /* wait for more data */
+            event.Add(was_idle_timeout);
+            return;
+        }
 
         switch ((enum was_command)header.command) {
         case WAS_COMMAND_NOP:
             /* ignore */
             continue;
 
+        case WAS_COMMAND_HEADER:
+        case WAS_COMMAND_STATUS:
+        case WAS_COMMAND_NO_DATA:
+        case WAS_COMMAND_DATA:
         case WAS_COMMAND_LENGTH:
         case WAS_COMMAND_STOP:
             /* discard & ignore */
-            if (!ReceiveControl(&dummy, sizeof(dummy))) {
+            if (!DiscardControl(header.length)) {
                 InvokeIdleDisconnect();
                 return;
             }
@@ -252,11 +289,7 @@ WasChild::RecoverStop()
         case WAS_COMMAND_SCRIPT_NAME:
         case WAS_COMMAND_PATH_INFO:
         case WAS_COMMAND_QUERY_STRING:
-        case WAS_COMMAND_HEADER:
         case WAS_COMMAND_PARAMETER:
-        case WAS_COMMAND_STATUS:
-        case WAS_COMMAND_NO_DATA:
-        case WAS_COMMAND_DATA:
             daemon_log(2, "unexpected data from idle WAS control connection '%s'\n",
                        GetStockName());
             InvokeIdleDisconnect();
@@ -267,7 +300,7 @@ WasChild::RecoverStop()
             break;
         }
 
-        if (!ReceiveControl(&premature, sizeof(premature))) {
+        if (ReceiveControl(&premature, sizeof(premature)) != ReceiveResult::SUCCESS) {
             InvokeIdleDisconnect();
             return;
         }

@@ -145,6 +145,23 @@ struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler, C
         lease.ReleaseWas(reuse);
     }
 
+    void ReleaseControlStop(uint64_t received) {
+        assert(response.body == nullptr);
+
+        if (!control.IsDefined())
+            /* already released */
+            return;
+
+        request.ClearBody();
+
+        if (!control.SendEmpty(WAS_COMMAND_STOP))
+            return;
+
+        control.ReleaseSocket();
+
+        lease.ReleaseWasStop(received);
+    }
+
     /**
      * Destroys the objects was_control, was_input, was_output and
      * releases the socket lease.
@@ -202,16 +219,6 @@ struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler, C
     }
 
     /**
-     * Abort after
-     */
-    void AbortResponseEmpty() {
-        assert(response.WasSubmitted());
-
-        ClearUnused();
-        Destroy();
-    }
-
-    /**
      * Call this when end of the response body has been seen.  It will
      * take care of releasing the #WasClient.
      */
@@ -265,10 +272,11 @@ struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler, C
 
         stopwatch_event(stopwatch, "cancel");
 
-        ClearUnused();
+        if (response.body != nullptr)
+            was_input_free_unused_p(&response.body);
 
-        pool_unref(&caller_pool);
-        pool_unref(&pool);
+        ReleaseControlStop(0);
+        Destroy();
     }
 
     /* virtual methods from class WasControlHandler */
@@ -631,17 +639,7 @@ WasClient::WasInputClose(uint64_t received)
 
     response.body = nullptr;
 
-    if (control.IsDefined()) {
-        request.ClearBody();
-
-        if (!control.SendEmpty(WAS_COMMAND_STOP))
-            return;
-
-        control.ReleaseSocket();
-
-        lease.ReleaseWasStop(received);
-    }
-
+    ReleaseControlStop(received);
     Destroy();
 }
 
@@ -684,7 +682,12 @@ WasClient::WasInputError()
 
     response.body = nullptr;
 
-    AbortResponseEmpty();
+    if (control.IsDefined())
+        control.ReleaseSocket();
+
+    lease.ReleaseWas(false);
+
+    Destroy();
 }
 
 /*
