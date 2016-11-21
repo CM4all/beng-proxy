@@ -35,6 +35,11 @@ TranslateResponse::Clear()
 #else
     status = 0;
 #endif
+
+#if TRANSLATION_ENABLE_CHILD_OPTIONS
+    child_options = ChildOptions();
+#endif
+
 #if TRANSLATION_ENABLE_RADDRESS
     address.Clear();
 #endif

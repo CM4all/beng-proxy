@@ -21,6 +21,9 @@
 #include "ResourceAddress.hxx"
 #include "header_forward.hxx"
 #endif
+#if TRANSLATION_ENABLE_CHILD_OPTIONS
+#include "spawn/ChildOptions.hxx"
+#endif
 
 #include <http/status.h>
 
@@ -51,6 +54,10 @@ struct TranslateResponse {
     http_status_t status;
 #else
     int status;
+#endif
+
+#if TRANSLATION_ENABLE_CHILD_OPTIONS
+    ChildOptions child_options;
 #endif
 
 #if TRANSLATION_ENABLE_RADDRESS

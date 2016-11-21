@@ -237,7 +237,11 @@ TranslateParser::AddView(const char *name)
     widget_view_tail = &new_view->next;
     resource_address = &new_view->address;
     jail = nullptr;
+#if TRANSLATION_ENABLE_CHILD_OPTIONS
+    child_options = &response.child_options;
+#else
     child_options = nullptr;
+#endif
     ns_options = nullptr;
     mount_list = nullptr;
     file_address = nullptr;
