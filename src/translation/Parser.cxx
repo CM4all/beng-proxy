@@ -173,8 +173,6 @@ parse_address_string(AllocatorPtr alloc, AddressList *list,
 
 #endif
 
-#if TRANSLATION_ENABLE_WIDGET
-
 static bool
 valid_view_name_char(char ch)
 {
@@ -193,6 +191,8 @@ valid_view_name(const char *name)
 
     return true;
 }
+
+#if TRANSLATION_ENABLE_WIDGET
 
 void
 TranslateParser::FinishView()
@@ -3017,7 +3017,6 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         child_options->no_new_privs = true;
         return;
 
-#if TRANSLATION_ENABLE_V12
     case TRANSLATE_CGROUP:
         if (child_options == nullptr ||
             child_options->cgroup.name != nullptr)
@@ -3067,7 +3066,6 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         response.external_session_keepalive = std::chrono::seconds(*value);
         return;
     }
-#endif
     }
 
     throw FormatRuntimeError("unknown translation packet: %u", command);
