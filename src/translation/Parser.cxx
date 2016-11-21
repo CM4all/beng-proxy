@@ -3109,12 +3109,12 @@ TranslateParser::HandlePacket(enum beng_translation_command command,
         jail = nullptr;
 #endif
 #if TRANSLATION_ENABLE_CHILD_OPTIONS
-        child_options = &response.child_options;
+        SetChildOptions(response.child_options);
 #else
         child_options = nullptr;
-#endif
         ns_options = nullptr;
         mount_list = nullptr;
+#endif
 #if TRANSLATION_ENABLE_RADDRESS
         file_address = nullptr;
         http_address = nullptr;
