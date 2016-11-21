@@ -93,6 +93,23 @@ class Translation(Protocol):
             response.packet(TRANSLATE_UTS_NAMESPACE, 'host-' + user)
         return response
 
+    def _handle_cron(self, user, param):
+        response = Response(protocol_version=1)
+        if user is None or not re.match(r'^[-_\w]+$', user):
+            response.status(400)
+            return response
+
+        response.packet(TRANSLATE_HOME, os.path.join('/var/www', user))
+        response.packet(TRANSLATE_USER_NAMESPACE)
+        response.packet(TRANSLATE_PID_NAMESPACE)
+        #response.uid_gid(500, 100)
+        response.packet(TRANSLATE_PIVOT_ROOT, '/srv/chroot/squeeze')
+        response.packet(TRANSLATE_MOUNT_HOME, '/home')
+        response.packet(TRANSLATE_MOUNT_PROC)
+        response.packet(TRANSLATE_MOUNT_TMP_TMPFS)
+        response.packet(TRANSLATE_UTS_NAMESPACE, 'host-' + user)
+        return response
+
     def _handle_auth(self, auth, uri, session):
         log.msg("auth '%s' uri='%s' session='%s'" % (auth, uri, session))
 
@@ -809,6 +826,9 @@ class Translation(Protocol):
         if request.login:
             return self._handle_login(request.user, request.password,
                                       request.service, request.listener_tag)
+
+        if request.cron:
+            return self._handle_cron(request.user, request.param)
 
         if request.auth is not None:
             return self._handle_auth(request.auth, request.uri, request.session)
