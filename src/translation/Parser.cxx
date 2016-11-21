@@ -3053,6 +3053,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 #endif
 
     case TRANSLATE_EXTERNAL_SESSION_KEEPALIVE: {
+#if TRANSLATION_ENABLE_SESSION
         const uint16_t *value = (const uint16_t *)(const void *)payload;
         if (payload_length != sizeof(*value) || *value == 0)
             throw std::runtime_error("malformed EXTERNAL_SESSION_KEEPALIVE packet");
@@ -3065,6 +3066,9 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
         response.external_session_keepalive = std::chrono::seconds(*value);
         return;
+#else
+        break;
+#endif
     }
     }
 
