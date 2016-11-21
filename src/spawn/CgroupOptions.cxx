@@ -9,7 +9,6 @@
 #include "AllocatorPtr.hxx"
 #include "system/pivot_root.h"
 #include "system/bind_mount.h"
-#include "pexpand.hxx"
 #include "util/StringView.hxx"
 
 #include <assert.h>
