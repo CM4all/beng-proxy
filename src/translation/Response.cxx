@@ -32,6 +32,8 @@ TranslateResponse::Clear()
     expires_relative = std::chrono::seconds::zero();
 #if TRANSLATION_ENABLE_HTTP
     status = (http_status_t)0;
+#else
+    status = 0;
 #endif
 #if TRANSLATION_ENABLE_RADDRESS
     address.Clear();

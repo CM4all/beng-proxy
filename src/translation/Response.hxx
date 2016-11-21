@@ -49,6 +49,8 @@ struct TranslateResponse {
 
 #if TRANSLATION_ENABLE_HTTP
     http_status_t status;
+#else
+    int status;
 #endif
 
 #if TRANSLATION_ENABLE_RADDRESS

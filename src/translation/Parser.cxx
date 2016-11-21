@@ -989,20 +989,20 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         return;
 
     case TRANSLATE_STATUS:
-#if TRANSLATION_ENABLE_HTTP
         if (payload_length != 2)
             throw std::runtime_error("size mismatch in STATUS packet from translation server");
 
+#if TRANSLATION_ENABLE_HTTP
         response.status = http_status_t(*(const uint16_t*)(const void *)payload);
 
         if (!http_status_is_valid(response.status))
             throw FormatRuntimeError("invalid HTTP status code %u",
                                      response.status);
+#else
+        response.status = *(const uint16_t *)(const void *)payload;
+#endif
 
         return;
-#else
-        break;
-#endif
 
     case TRANSLATE_PATH:
 #if TRANSLATION_ENABLE_RADDRESS
