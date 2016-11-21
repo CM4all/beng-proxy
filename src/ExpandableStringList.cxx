@@ -4,8 +4,11 @@
 
 #include "ExpandableStringList.hxx"
 #include "AllocatorPtr.hxx"
-#include "pexpand.hxx"
 #include "util/ConstBuffer.hxx"
+
+#if TRANSLATION_ENABLE_EXPAND
+#include "pexpand.hxx"
+#endif
 
 #include <algorithm>
 
@@ -17,8 +20,16 @@ ExpandableStringList::ExpandableStringList(AllocatorPtr alloc,
     Builder builder(*this);
 
     for (const auto *i = src.head; i != nullptr; i = i->next)
-        builder.Add(alloc, alloc.Dup(i->value), i->expandable);
+        builder.Add(alloc, alloc.Dup(i->value),
+#if TRANSLATION_ENABLE_EXPAND
+                    i->expandable
+#else
+                    false
+#endif
+                    );
 }
+
+#if TRANSLATION_ENABLE_EXPAND
 
 bool
 ExpandableStringList::IsExpandable() const
@@ -40,6 +51,8 @@ ExpandableStringList::Expand(struct pool *pool, const MatchInfo &match_info)
         i->value = expand_string_unescaped(pool, i->value, match_info);
     }
 }
+
+#endif
 
 void
 ExpandableStringList::Builder::Add(AllocatorPtr alloc,

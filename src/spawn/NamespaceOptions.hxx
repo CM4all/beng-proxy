@@ -5,6 +5,8 @@
 #ifndef BENG_PROXY_NAMESPACE_OPTIONS_HXX
 #define BENG_PROXY_NAMESPACE_OPTIONS_HXX
 
+#include "translation/Features.hxx"
+
 #include <inline/compiler.h>
 
 class AllocatorPtr;
@@ -44,7 +46,10 @@ struct NamespaceOptions {
     const char *pivot_root = nullptr;
 
     const char *home = nullptr;
+
+#if TRANSLATION_ENABLE_EXPAND
     const char *expand_home = nullptr;
+#endif
 
     /**
      * Mount the given home directory?  Value is the mount point.
@@ -69,6 +74,7 @@ struct NamespaceOptions {
     NamespaceOptions() = default;
     NamespaceOptions(AllocatorPtr alloc, const NamespaceOptions &src);
 
+#if TRANSLATION_ENABLE_EXPAND
     gcc_pure
     bool IsExpandable() const;
 
@@ -76,6 +82,7 @@ struct NamespaceOptions {
      * Throws std::runtime_error on error.
      */
     void Expand(struct pool &pool, const MatchInfo &match_info);
+#endif
 
     gcc_pure
     int GetCloneFlags(const SpawnConfig &config, int flags) const;

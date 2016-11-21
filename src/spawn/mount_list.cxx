@@ -5,7 +5,10 @@
 #include "mount_list.hxx"
 #include "system/bind_mount.h"
 #include "AllocatorPtr.hxx"
+
+#if TRANSLATION_ENABLE_EXPAND
 #include "pexpand.hxx"
+#endif
 
 #include <sys/mount.h>
 #include <unistd.h>
@@ -18,7 +21,9 @@ MountList::MountList(AllocatorPtr alloc, const MountList &src)
     :next(nullptr),
      source(alloc.Dup(src.source)),
      target(alloc.Dup(src.target)),
+#if TRANSLATION_ENABLE_EXPAND
      expand_source(src.expand_source),
+#endif
      writable(src.writable) {}
 
 MountList *
@@ -34,6 +39,8 @@ MountList::CloneAll(AllocatorPtr alloc, const MountList *src)
 
     return head;
 }
+
+#if TRANSLATION_ENABLE_EXPAND
 
 void
 MountList::Expand(struct pool &pool, const MatchInfo &match_info)
@@ -52,6 +59,8 @@ MountList::ExpandAll(struct pool &pool, MountList *m,
     for (; m != nullptr; m = m->next)
         m->Expand(pool, match_info);
 }
+
+#endif
 
 inline void
 MountList::Apply() const

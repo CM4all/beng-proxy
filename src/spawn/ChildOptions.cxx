@@ -4,12 +4,18 @@
 
 #include "ChildOptions.hxx"
 #include "ResourceLimits.hxx"
-#include "JailParams.hxx"
 #include "Prepared.hxx"
 #include "AllocatorPtr.hxx"
-#include "pexpand.hxx"
 #include "system/Error.hxx"
 #include "util/djbhash.h"
+
+#if TRANSLATION_ENABLE_JAILCGI
+#include "JailParams.hxx"
+#endif
+
+#if TRANSLATION_ENABLE_EXPAND
+#include "pexpand.hxx"
+#endif
 
 #include <assert.h>
 #include <string.h>
@@ -29,9 +35,11 @@ ChildOptions::ChildOptions(AllocatorPtr alloc,
              : nullptr),
      refence(alloc, src.refence),
      ns(alloc, src.ns),
+#if TRANSLATION_ENABLE_JAILCGI
      jail(src.jail != nullptr
           ? alloc.New<JailParams>(*src.jail)
           : nullptr),
+#endif
      uid_gid(src.uid_gid),
      no_new_privs(src.no_new_privs)
 {
@@ -40,9 +48,13 @@ ChildOptions::ChildOptions(AllocatorPtr alloc,
 void
 ChildOptions::Check() const
 {
+#if TRANSLATION_ENABLE_JAILCGI
     if (jail != nullptr)
         jail->Check();
+#endif
 }
+
+#if TRANSLATION_ENABLE_EXPAND
 
 bool
 ChildOptions::IsExpandable() const
@@ -67,6 +79,8 @@ ChildOptions::Expand(struct pool &pool, const MatchInfo &match_info)
         jail->Expand(pool, match_info);
 }
 
+#endif
+
 char *
 ChildOptions::MakeId(char *p) const
 {
@@ -83,8 +97,10 @@ ChildOptions::MakeId(char *p) const
         p = rlimits->MakeId(p);
     p = refence.MakeId(p);
     p = ns.MakeId(p);
+#if TRANSLATION_ENABLE_JAILCGI
     if (jail != nullptr)
         p = jail->MakeId(p);
+#endif
     p = uid_gid.MakeId(p);
 
     if (no_new_privs) {
@@ -105,12 +121,16 @@ ChildOptions::OpenStderrPath() const
 }
 
 void
-ChildOptions::CopyTo(PreparedChildProcess &dest,
-                     bool use_jail,
-                     const char *document_root) const
+ChildOptions::CopyTo(PreparedChildProcess &dest
+#if TRANSLATION_ENABLE_JAILCGI
+                     , bool use_jail, const char *document_root
+#endif
+                     ) const
 {
+#if TRANSLATION_ENABLE_JAILCGI
     if (use_jail && jail != nullptr)
         jail->InsertWrapper(dest, document_root);
+#endif
 
     if (stderr_path != nullptr) {
         int fd = OpenStderrPath();

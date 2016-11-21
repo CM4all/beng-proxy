@@ -5,6 +5,7 @@
 #ifndef BENG_PROXY_CHILD_OPTIONS_HXX
 #define BENG_PROXY_CHILD_OPTIONS_HXX
 
+#include "translation/Features.hxx"
 #include "ExpandableStringList.hxx"
 #include "CgroupOptions.hxx"
 #include "RefenceOptions.hxx"
@@ -40,7 +41,9 @@ struct ChildOptions {
 
     NamespaceOptions ns;
 
+#if TRANSLATION_ENABLE_JAILCGI
     JailParams *jail = nullptr;
+#endif
 
     UidGid uid_gid;
 
@@ -56,7 +59,9 @@ struct ChildOptions {
          rlimits(src.rlimits),
          refence(src.refence),
          ns(src.ns),
+#if TRANSLATION_ENABLE_JAILCGI
          jail(src.jail),
+#endif
          uid_gid(src.uid_gid),
          no_new_privs(src.no_new_privs) {}
 
@@ -86,8 +91,11 @@ struct ChildOptions {
      * which have a non-standard way of calling the JailCGI wrapper,
      * e.g. basic CGI
      */
-    void CopyTo(PreparedChildProcess &dest, bool use_jail,
-                const char *document_root) const;
+    void CopyTo(PreparedChildProcess &dest
+#if TRANSLATION_ENABLE_JAILCGI
+                , bool use_jail, const char *document_root
+#endif
+                ) const;
 };
 
 #endif
