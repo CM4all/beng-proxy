@@ -169,10 +169,10 @@ private:
         if (i == nullptr)
             return;
 
-        f(ConstBuffer<void>(i->data + position, i->fill - position));
+        f({i->data + position, i->fill - position});
 
         while ((i = &*i->next) != nullptr)
-            f(ConstBuffer<void>(i->data, i->fill));
+            f({i->data, i->fill});
     }
 };
 
@@ -213,10 +213,10 @@ private:
         if (i == nullptr)
             return;
 
-        f(ConstBuffer<void>(i->data + position, i->fill - position));
+        f({i->data + position, i->fill - position});
 
         while ((i = &*i->next) != nullptr)
-            f(ConstBuffer<void>(i->data, i->fill));
+            f({i->data, i->fill});
     }
 };
 
