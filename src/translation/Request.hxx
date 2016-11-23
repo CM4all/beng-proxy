@@ -13,7 +13,9 @@
 #endif
 #include "util/ConstBuffer.hxx"
 
+#if TRANSLATION_ENABLE_HTTP
 #include <http/status.h>
+#endif
 
 #include <stddef.h>
 #include <stdint.h>
@@ -89,9 +91,11 @@ struct TranslateRequest {
 
     ConstBuffer<void> directory_index;
 
+#if TRANSLATION_ENABLE_HTTP
     ConstBuffer<void> error_document;
 
     http_status_t error_document_status;
+#endif
 
     ConstBuffer<void> probe_path_suffixes;
     const char *probe_suffix;
@@ -138,8 +142,10 @@ struct TranslateRequest {
         suffix = nullptr;
         enotdir = nullptr;
         directory_index = nullptr;
+#if TRANSLATION_ENABLE_HTTP
         error_document = nullptr;
         error_document_status = http_status_t(0);
+#endif
         probe_path_suffixes = nullptr;
         probe_suffix = nullptr;
         read_file = nullptr;
