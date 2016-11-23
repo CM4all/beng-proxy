@@ -15,7 +15,7 @@
 #include <stdint.h>
 
 struct TranslateRequest;
-struct SocketAddress;
+class SocketAddress;
 
 class TranslationMarshaller {
     GrowingBuffer buffer;
