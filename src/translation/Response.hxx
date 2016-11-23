@@ -25,7 +25,9 @@
 #include "spawn/ChildOptions.hxx"
 #endif
 
+#if TRANSLATION_ENABLE_HTTP
 #include <http/status.h>
+#endif
 
 #include <chrono>
 
