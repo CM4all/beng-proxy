@@ -160,7 +160,7 @@ my_sink_fd_input_error(GError *error, void *ctx)
 {
     auto *c = (Context *)ctx;
 
-    g_printerr("%s\n", error->message);
+    fprintf(stderr, "%s\n", error->message);
     g_error_free(error);
 
     c->body = nullptr;
@@ -174,7 +174,7 @@ my_sink_fd_send_error(int error, void *ctx)
 {
     auto *c = (Context *)ctx;
 
-    g_printerr("%s\n", g_strerror(error));
+    fprintf(stderr, "%s\n", strerror(error));
 
     c->body = nullptr;
     c->body_abort = true;

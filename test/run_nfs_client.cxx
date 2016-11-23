@@ -12,6 +12,7 @@
 #include "direct.hxx"
 #include "util/Cancellable.hxx"
 
+#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -91,7 +92,7 @@ my_sink_fd_send_error(int error, void *ctx)
 {
     Context *c = (Context *)ctx;
 
-    g_printerr("%s\n", g_strerror(error));
+    fprintf(stderr, "%s\n", strerror(error));
 
     sink_fd_close(c->body);
 

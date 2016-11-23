@@ -106,7 +106,7 @@ my_sink_fd_send_error(int error, void *ctx)
 {
     auto *c = (Context *)ctx;
 
-    g_printerr("%s\n", g_strerror(error));
+    fprintf(stderr, "%s\n", strerror(error));
 
     c->value = NULL;
     c->value_abort = true;

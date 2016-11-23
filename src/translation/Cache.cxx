@@ -1400,7 +1400,7 @@ tcache_validate_mtime(const TranslateResponse &response,
         }
 
         cache_log(3, "translate_cache: [%s] failed to stat '%s': %s\n",
-                  key, response.validate_mtime.path, g_strerror(errno));
+                  key, response.validate_mtime.path, strerror(errno));
         return false;
     }
 
