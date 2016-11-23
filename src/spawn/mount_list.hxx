@@ -25,15 +25,15 @@ struct MountList {
     bool writable;
 
     constexpr MountList(const char *_source, const char *_target,
+#if !TRANSLATION_ENABLE_EXPAND
+                        gcc_unused
+#endif
                         bool _expand_source=false, bool _writable=false)
         :next(nullptr), source(_source), target(_target),
 #if TRANSLATION_ENABLE_EXPAND
          expand_source(_expand_source),
 #endif
          writable(_writable) {
-#if !TRANSLATION_ENABLE_EXPAND
-        (void)_expand_source;
-#endif
     }
 
     MountList(AllocatorPtr alloc, const MountList &src);
