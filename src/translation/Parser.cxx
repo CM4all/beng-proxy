@@ -36,7 +36,9 @@
 #include "util/CharUtil.hxx"
 #include "util/RuntimeError.hxx"
 
+#if TRANSLATION_ENABLE_HTTP
 #include <http/header.h>
+#endif
 
 #include <assert.h>
 #include <string.h>
