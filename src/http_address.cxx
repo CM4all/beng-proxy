@@ -23,13 +23,6 @@
 
 #include <string.h>
 
-gcc_const
-static inline GQuark
-http_address_quark(void)
-{
-    return g_quark_from_static_string("http_address");
-}
-
 HttpAddress::HttpAddress(Protocol _protocol, bool _ssl,
                          const char *_host_and_port, const char *_path)
     :protocol(_protocol), ssl(_ssl),
