@@ -56,6 +56,14 @@ class GrowingBuffer {
 
         void Pop();
 
+        const Buffer *get() const {
+            return buffer;
+        }
+
+        Buffer *get() {
+            return buffer;
+        }
+
         const Buffer &operator*() const {
             return *buffer;
         }
@@ -165,13 +173,13 @@ private:
 
     template<typename F>
     void ForEachBuffer(F &&f) const {
-        const auto *i = &*head;
+        const auto *i = head.get();
         if (i == nullptr)
             return;
 
         f({i->data + position, i->fill - position});
 
-        while ((i = &*i->next) != nullptr)
+        while ((i = i->next.get()) != nullptr)
             f({i->data, i->fill});
     }
 };
@@ -209,13 +217,13 @@ public:
 private:
     template<typename F>
     void ForEachBuffer(F &&f) const {
-        const auto *i = &*buffer;
+        const auto *i = buffer.get();
         if (i == nullptr)
             return;
 
         f({i->data + position, i->fill - position});
 
-        while ((i = &*i->next) != nullptr)
+        while ((i = i->next.get()) != nullptr)
             f({i->data, i->fill});
     }
 };
