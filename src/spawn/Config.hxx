@@ -21,6 +21,13 @@ struct SpawnConfig {
     std::set<gid_t> allowed_gids;
 
     /**
+     * Ignore #allowed_uids and #allowed_gids, and allow all uids/gids
+     * (except for root:root)?  This is a kludge for the Workshop
+     * project for backwards compatibility with version 1.
+     */
+    bool allow_any_uid_gid = false;
+
+    /**
      * Ignore the user namespaces setting?  This is used as a
      * workaround to allow the spawner run as root.
      *
@@ -54,6 +61,9 @@ struct SpawnConfig {
 
     gcc_pure
     bool Verify(const UidGid &uid_gid) const {
+        if (allow_any_uid_gid)
+            return true;
+
         return VerifyUid(uid_gid.uid) && VerifyGid(uid_gid.gid) &&
             VerifyGroups(uid_gid.groups.begin(), uid_gid.groups.end());
     }
