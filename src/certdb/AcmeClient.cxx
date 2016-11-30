@@ -127,11 +127,19 @@ AcmeClient::NextNonce()
 static std::string
 MakeJwk(EVP_PKEY &key)
 {
-    if (EVP_PKEY_type(key.type) != EVP_PKEY_RSA)
+    if (EVP_PKEY_base_id(&key) != EVP_PKEY_RSA)
         throw std::runtime_error("RSA key expected");
 
-    const auto exponent = UrlSafeBase64(*key.pkey.rsa->e);
-    const auto modulus = UrlSafeBase64(*key.pkey.rsa->n);
+    const BIGNUM *n, *e;
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+    RSA_get0_key(EVP_PKEY_get0_RSA(&key), &n, &e, nullptr);
+#else
+    n = key.pkey.rsa->n;
+    e = key.pkey.rsa->e;
+#endif
+
+    const auto exponent = UrlSafeBase64(*e);
+    const auto modulus = UrlSafeBase64(*n);
     std::string jwk("{\"e\":\"");
     jwk += exponent.c_str();
     jwk += "\",\"kty\":\"RSA\",\"n\":\"";
