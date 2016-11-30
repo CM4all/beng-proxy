@@ -11,7 +11,11 @@ FillNameList(std::list<std::string> &list, GENERAL_NAMES &gn)
     for (int i = 0, n = sk_GENERAL_NAME_num(&gn); i < n; ++i) {
         const GENERAL_NAME *name = sk_GENERAL_NAME_value(&gn, i);
         if (name->type == GEN_DNS) {
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+            const unsigned char *dns_name = ASN1_STRING_get0_data(name->d.dNSName);
+#else
             unsigned char *dns_name = ASN1_STRING_data(name->d.dNSName);
+#endif
             if (dns_name == nullptr)
                 continue;
 
