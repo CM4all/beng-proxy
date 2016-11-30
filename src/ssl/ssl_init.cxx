@@ -17,6 +17,8 @@
 
 #include <pthread.h>
 
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+
 static std::mutex *ssl_mutexes;
 
 static void
@@ -35,6 +37,8 @@ id_function()
     return pthread_self();
 }
 
+#endif
+
 void
 ssl_global_init()
 {
@@ -42,6 +46,7 @@ ssl_global_init()
     SSL_library_init();
     ENGINE_load_builtin_engines();
 
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
     /* initialise OpenSSL multi-threading; this is needed because the
        SSL_CTX object is shared among all threads, which need to
        modify it in a safe manner */
@@ -50,6 +55,7 @@ ssl_global_init()
 
     CRYPTO_set_locking_callback(locking_function);
     CRYPTO_set_id_callback(id_function);
+#endif
 }
 
 void
@@ -62,23 +68,29 @@ ssl_global_deinit()
     CRYPTO_set_id_callback(nullptr);
     CRYPTO_set_locking_callback(nullptr);
 
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
     delete[] ssl_mutexes;
+#endif
 
     ERR_free_strings();
 
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
 #if OPENSSL_VERSION_NUMBER >= 0x10000000L
     ERR_remove_thread_state(nullptr);
 #else
     ERR_remove_state(0);
+#endif
 #endif
 }
 
 void
 ssl_thread_deinit()
 {
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
 #if OPENSSL_VERSION_NUMBER >= 0x10000000L
     ERR_remove_thread_state(nullptr);
 #else
     ERR_remove_state(0);
+#endif
 #endif
 }
