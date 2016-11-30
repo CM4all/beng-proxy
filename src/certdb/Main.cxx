@@ -466,7 +466,7 @@ Acme(ConstBuffer<const char *> args)
         const ScopeSslGlobalInit ssl_init;
 
         const auto key = LoadKeyFile(key_path);
-        if (EVP_PKEY_type(key->type) != EVP_PKEY_RSA)
+        if (EVP_PKEY_base_id(key.get()) != EVP_PKEY_RSA)
             throw "RSA key expected";
 
         const auto account = AcmeClient(staging).NewReg(*key, email);
@@ -480,7 +480,7 @@ Acme(ConstBuffer<const char *> args)
         const ScopeSslGlobalInit ssl_init;
 
         const auto key = LoadKeyFile(key_path);
-        if (EVP_PKEY_type(key->type) != EVP_PKEY_RSA)
+        if (EVP_PKEY_base_id(key.get()) != EVP_PKEY_RSA)
             throw "RSA key expected";
 
         CertDatabase db(*db_config);
@@ -497,7 +497,7 @@ Acme(ConstBuffer<const char *> args)
         const ScopeSslGlobalInit ssl_init;
 
         const auto key = LoadKeyFile(key_path);
-        if (EVP_PKEY_type(key->type) != EVP_PKEY_RSA)
+        if (EVP_PKEY_base_id(key.get()) != EVP_PKEY_RSA)
             throw "RSA key expected";
 
         CertDatabase db(*db_config);
@@ -514,7 +514,7 @@ Acme(ConstBuffer<const char *> args)
         const ScopeSslGlobalInit ssl_init;
 
         const auto key = LoadKeyFile(key_path);
-        if (EVP_PKEY_type(key->type) != EVP_PKEY_RSA)
+        if (EVP_PKEY_base_id(key.get()) != EVP_PKEY_RSA)
             throw "RSA key expected";
 
         CertDatabase db(*db_config);

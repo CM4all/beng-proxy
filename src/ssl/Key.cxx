@@ -44,21 +44,63 @@ GenerateRsaKey()
     return key;
 }
 
+static bool
+MatchModulus(RSA &key1, RSA &key2)
+{
+    const BIGNUM *n1, *n2;
+
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+    RSA_get0_key(&key1, &n1, nullptr, nullptr);
+    RSA_get0_key(&key2, &n2, nullptr, nullptr);
+#else
+    n1 = key1.n;
+    n2 = key2.n;
+#endif
+
+    return BN_cmp(n1, n2) == 0;
+}
+
+static bool
+MatchModulus(DSA &key1, DSA &key2)
+{
+    const BIGNUM *n1, *n2;
+
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+    DSA_get0_key(&key1, &n1, nullptr);
+    DSA_get0_key(&key2, &n2, nullptr);
+#else
+    n1 = key1.pub_key;
+    n2 = key2.pub_key;
+#endif
+
+    return BN_cmp(n1, n2) == 0;
+}
+
 /**
  * Are both public keys equal?
  */
 bool
-MatchModulus(const EVP_PKEY &key1, const EVP_PKEY &key2)
+MatchModulus(EVP_PKEY &key1, EVP_PKEY &key2)
 {
-    if (key1.type != key2.type)
+    if (EVP_PKEY_base_id(&key1) != EVP_PKEY_base_id(&key2))
         return false;
 
-    switch (key1.type) {
+    switch (EVP_PKEY_base_id(&key1)) {
     case EVP_PKEY_RSA:
-        return BN_cmp(key1.pkey.rsa->n, key2.pkey.rsa->n) == 0;
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+        return MatchModulus(*EVP_PKEY_get0_RSA(&key1),
+                            *EVP_PKEY_get0_RSA(&key2));
+#else
+        return MatchModulus(*key1.pkey.rsa, *key2.pkey.rsa);
+#endif
 
     case EVP_PKEY_DSA:
-        return BN_cmp(key1.pkey.dsa->pub_key, key2.pkey.dsa->pub_key) == 0;
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+        return MatchModulus(*EVP_PKEY_get0_DSA(&key1),
+                            *EVP_PKEY_get0_DSA(&key2));
+#else
+        return MatchModulus(*key1.pkey.dsa, *key2.pkey.dsa);
+#endif
 
     default:
         return false;
@@ -69,7 +111,7 @@ MatchModulus(const EVP_PKEY &key1, const EVP_PKEY &key2)
  * Does the certificate belong to the given key?
  */
 bool
-MatchModulus(X509 &cert, const EVP_PKEY &key)
+MatchModulus(X509 &cert, EVP_PKEY &key)
 {
     UniqueEVP_PKEY public_key(X509_get_pubkey(&cert));
     if (public_key == nullptr)
