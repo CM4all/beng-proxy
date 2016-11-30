@@ -13,6 +13,8 @@
 
 #include <string>
 
+#include <string.h>
+
 /**
  * Call a function that writes into a memory BIO and return the BIO
  * memory as Base64-encoded #AllocatedString instance.

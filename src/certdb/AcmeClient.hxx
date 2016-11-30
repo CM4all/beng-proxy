@@ -13,6 +13,8 @@
 
 #include <string>
 
+#include <string.h>
+
 /**
  * Implementation of a ACME client, i.e. the protocol of the "Let's
  * Encrypt" project.
