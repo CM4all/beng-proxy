@@ -187,6 +187,8 @@ BpConfigParser::ParseLine2(LineParser &line)
         CreateListener(line);
     else if (strcmp(word, "control") == 0)
         CreateControl(line);
+    else if (strcmp(word, "access_logger") == 0)
+        config.access_logger = line.ExpectValueAndEnd();
     else if (strcmp(word, "set") == 0) {
         const char *name = line.ExpectWord();
         line.ExpectSymbol('=');

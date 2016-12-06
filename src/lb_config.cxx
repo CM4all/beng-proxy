@@ -920,6 +920,8 @@ LbConfigParser::ParseLine2(LineParser &line)
         CreateCertDatabase(line);
     else if (strcmp(word, "control") == 0)
         CreateControl(line);
+    else if (strcmp(word, "access_logger") == 0)
+        config.access_logger = line.ExpectValueAndEnd();
     else
         throw LineParser::Error("Unknown option");
 }

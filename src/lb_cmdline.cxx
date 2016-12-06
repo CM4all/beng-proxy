@@ -53,12 +53,6 @@ PrintUsage()
          " -C             check configuration file syntax\n"
 #endif
 #ifdef __GLIBC__
-         " --access-logger program\n"
-#endif
-         " -A program     specifies an access logger program (executed by /bin/sh)\n"
-         "                \"internal\" logs into the error log\n"
-         "                \"null\" disables the access logger\n"
-#ifdef __GLIBC__
          " --user name\n"
 #endif
          " -u name        switch to another user id\n"

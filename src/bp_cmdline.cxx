@@ -66,12 +66,6 @@ PrintUsage()
 #endif
          " -l program     specifies an error logger program (executed by /bin/sh)\n"
 #ifdef __GLIBC__
-         " --access-logger program\n"
-#endif
-         " -A program     specifies an access logger program (executed by /bin/sh)\n"
-         "                \"internal\" logs into the error log\n"
-         "                \"null\" disables the access logger\n"
-#ifdef __GLIBC__
          " --config-file file\n"
 #endif
          " -f file        load this configuration file\n"
