@@ -7,11 +7,7 @@
 #ifndef LB_CMDLINE_HXX
 #define LB_CMDLINE_HXX
 
-#include "util/TrivialArray.hxx"
-
 #include <daemon/user.h>
-
-#include <string.h>
 
 struct LbCmdLine {
     struct daemon_user user, logger_user;
@@ -38,10 +34,7 @@ struct LbCmdLine {
      */
     bool check = false;
 
-    LbCmdLine() {
-        memset(&user, 0, sizeof(user));
-        memset(&logger_user, 0, sizeof(logger_user));
-    }
+    LbCmdLine();
 };
 
 void

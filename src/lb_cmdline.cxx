@@ -18,6 +18,12 @@
 #include <string.h>
 #include <unistd.h>
 
+LbCmdLine::LbCmdLine()
+{
+    memset(&user, 0, sizeof(user));
+    memset(&logger_user, 0, sizeof(logger_user));
+}
+
 static void
 PrintUsage()
 {
