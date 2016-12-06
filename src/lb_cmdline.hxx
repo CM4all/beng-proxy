@@ -38,7 +38,7 @@ struct LbCmdLine {
 };
 
 void
-ParseCommandLine(LbCmdLine *config,
+ParseCommandLine(LbCmdLine &config,
                  int argc, char **argv);
 
 #endif

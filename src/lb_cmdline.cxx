@@ -108,7 +108,7 @@ static void arg_error(const char *argv0, const char *fmt, ...) {
 }
 
 static void
-HandleSet(LbCmdLine *config, const char *argv0,
+HandleSet(LbCmdLine &cmdline, const char *argv0,
           const char *name, size_t name_length, const char *value)
 {
     static const char tcp_stock_limit[] = "tcp_stock_limit";
@@ -121,13 +121,13 @@ HandleSet(LbCmdLine *config, const char *argv0,
         if (*endptr != 0 || l < 0)
             arg_error(argv0, "Invalid value for tcp_stock_limit");
 
-        config->tcp_stock_limit = l;
+        cmdline.tcp_stock_limit = l;
     } else
         arg_error(argv0, "Unknown variable: %.*s", (int)name_length, name);
 }
 
 static void
-HandleSet(LbCmdLine *config, const char *argv0, const char *p)
+HandleSet(LbCmdLine &cmdline, const char *argv0, const char *p)
 {
     const char *eq;
 
@@ -138,12 +138,12 @@ HandleSet(LbCmdLine *config, const char *argv0, const char *p)
     if (eq == p)
         arg_error(argv0, "No name found in --set argument");
 
-    HandleSet(config, argv0, p, eq - p, eq + 1);
+    HandleSet(cmdline, argv0, p, eq - p, eq + 1);
 }
 
 /** read configuration options from the command line */
 void
-ParseCommandLine(LbCmdLine *config,
+ParseCommandLine(LbCmdLine &cmdline,
                  int argc, char **argv)
 {
     int ret;
@@ -200,11 +200,11 @@ ParseCommandLine(LbCmdLine *config,
             break;
 
         case 'f':
-            config->config_path = optarg;
+            cmdline.config_path = optarg;
             break;
 
         case 'C':
-            config->check = true;
+            cmdline.check = true;
             break;
 
         case 'D':
@@ -214,7 +214,7 @@ ParseCommandLine(LbCmdLine *config,
             break;
 
         case 'A':
-            config->access_logger = *optarg == 0
+            cmdline.access_logger = *optarg == 0
                 ? NULL : optarg;
             break;
 
@@ -227,7 +227,7 @@ ParseCommandLine(LbCmdLine *config,
             break;
 
         case 'U':
-            daemon_user_by_name(&config->logger_user, optarg, NULL);
+            daemon_user_by_name(&cmdline.logger_user, optarg, NULL);
             break;
 
         case 'W':
@@ -236,15 +236,15 @@ ParseCommandLine(LbCmdLine *config,
                    on us */
                 break;
 
-            config->watchdog = true;
+            cmdline.watchdog = true;
             break;
 
         case 'B':
-            config->bulldog_path = optarg;
+            cmdline.bulldog_path = optarg;
             break;
 
         case 's':
-            HandleSet(config, argv[0], optarg);
+            HandleSet(cmdline, argv[0], optarg);
             break;
 
         case '?':
@@ -263,8 +263,8 @@ ParseCommandLine(LbCmdLine *config,
     /* check completeness */
 
     if (user_name != NULL) {
-        daemon_user_by_name(&config->user, user_name, group_name);
-        if (!daemon_user_defined(&config->user))
+        daemon_user_by_name(&cmdline.user, user_name, group_name);
+        if (!daemon_user_defined(&cmdline.user))
             arg_error(argv[0], "refusing to run as root");
     } else if (group_name != NULL)
         arg_error(argv[0], "cannot set --group without --user");

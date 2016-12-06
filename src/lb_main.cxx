@@ -196,7 +196,7 @@ int main(int argc, char **argv)
 
     /* configuration */
 
-    ParseCommandLine(&instance.cmdline, argc, argv);
+    ParseCommandLine(instance.cmdline, argc, argv);
 
     try {
         instance.config = new LbConfig(lb_config_load(instance.pool,
