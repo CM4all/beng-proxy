@@ -9,14 +9,13 @@
 
 #include <sys/socket.h>
 
-struct pool;
 struct Balancer;
 struct AddressList;
 class EventLoop;
 class SocketAddress;
 
 Balancer *
-balancer_new(struct pool &pool, EventLoop &event_loop);
+balancer_new(EventLoop &event_loop);
 
 void
 balancer_free(Balancer *balancer);

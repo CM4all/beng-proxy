@@ -38,17 +38,14 @@ struct Balancer {
         }
     };
 
-    struct pool *pool;
-
     /**
      * This library uses the cache library to store remote host
      * states in a lossy way.
      */
     Cache cache;
 
-    Balancer(struct pool &_pool, EventLoop &event_loop)
-        :pool(&_pool),
-         cache(event_loop, 1021, 2048) {}
+    explicit Balancer(EventLoop &event_loop)
+        :cache(event_loop, 1021, 2048) {}
 };
 
 static bool
@@ -157,9 +154,9 @@ next_sticky_address_checked(const AddressList &al, unsigned session)
  */
 
 Balancer *
-balancer_new(struct pool &pool, EventLoop &event_loop)
+balancer_new(EventLoop &event_loop)
 {
-    return new Balancer(pool, event_loop);
+    return new Balancer(event_loop);
 }
 
 void

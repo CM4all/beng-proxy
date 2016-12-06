@@ -77,7 +77,7 @@ main(int argc, char **argv)
     failure_init();
 
     Context ctx;
-    ctx.balancer = balancer_new(*pool, event_loop);
+    ctx.balancer = balancer_new(event_loop);
 
     AddressList address_list;
 

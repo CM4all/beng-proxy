@@ -183,7 +183,7 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    instance.balancer = balancer_new(*instance.pool, instance.event_loop);
+    instance.balancer = balancer_new(instance.event_loop);
     instance.tcp_stock = tcp_stock_new(instance.event_loop,
                                        instance.cmdline.tcp_stock_limit);
     instance.tcp_balancer = tcp_balancer_new(*instance.tcp_stock,
