@@ -349,8 +349,8 @@ try {
                          instance.config.cluster_size,
                          instance.config.cluster_node);
 
-    if (instance.config.session_save_path != nullptr) {
-        session_save_init(instance.config.session_save_path);
+    if (!instance.config.session_save_path.empty()) {
+        session_save_init(instance.config.session_save_path.c_str());
         instance.ScheduleSaveSessions();
     }
 

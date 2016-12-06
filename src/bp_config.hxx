@@ -50,7 +50,7 @@ struct BpConfig {
 
     std::chrono::seconds session_idle_timeout = std::chrono::minutes(30);
 
-    const char *session_save_path = nullptr;
+    std::string session_save_path;
 
     struct ControlListener {
         AllocatedSocketAddress address;
