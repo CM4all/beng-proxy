@@ -30,6 +30,9 @@ struct Balancer {
              pool(&_pool), addresses(_pool, _addresses) {
         }
 
+        const SocketAddress &NextAddress();
+        const SocketAddress &NextAddressChecked(bool allow_fade);
+
         /* virtual methods from class CacheItem */
         void Destroy() override {
             pool_unref(pool);
@@ -87,31 +90,31 @@ next_failover_address(const AddressList &list)
     return list[0];
 }
 
-static const SocketAddress &
-next_address(Balancer::Item *item)
+const SocketAddress &
+Balancer::Item::NextAddress()
 {
-    assert(item->addresses.GetSize() >= 2);
-    assert(item->next < item->addresses.GetSize());
+    assert(addresses.GetSize() >= 2);
+    assert(next < addresses.GetSize());
 
-    const SocketAddress &address = item->addresses[item->next];
+    const SocketAddress &address = addresses[next];
 
-    ++item->next;
-    if (item->next >= item->addresses.GetSize())
-        item->next = 0;
+    ++next;
+    if (next >= addresses.GetSize())
+        next = 0;
 
     return address;
 }
 
-static const SocketAddress &
-next_address_checked(Balancer::Item *item, bool allow_fade)
+const SocketAddress &
+Balancer::Item::NextAddressChecked(bool allow_fade)
 {
-    const SocketAddress &first = next_address(item);
+    const auto &first = NextAddress();
     const SocketAddress *ret = &first;
     do {
         if (CheckAddress(*ret, allow_fade))
             return *ret;
 
-        ret = &next_address(item);
+        ret = &NextAddress();
     } while (ret != &first);
 
     /* all addresses failed: */
@@ -200,7 +203,7 @@ balancer_get(Balancer &balancer, const AddressList &list,
         balancer.cache.Put(p_strdup(pool, key), *item);
     }
 
-    return next_address_checked(item, list.sticky_mode == StickyMode::NONE);
+    return item->NextAddressChecked(list.sticky_mode == StickyMode::NONE);
 }
 
 void
