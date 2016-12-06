@@ -370,6 +370,8 @@ class Translation(Protocol):
                 response.packet(TRANSLATE_AUTO_BASE)
 
             response.packet(TRANSLATE_TRANSPARENT)
+        elif raw_uri[:6] == '/1234/':
+            response.http('http://localhost:1234/' + raw_uri[4:])
         elif raw_uri[:11] == '/cfatest01/':
             response.http('http://cfatest01.intern.cm-ag/' + raw_uri[11:])
         elif raw_uri[:13] == '/transparent/':
