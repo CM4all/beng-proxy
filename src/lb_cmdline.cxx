@@ -10,8 +10,6 @@
 
 #include <daemon/log.h>
 
-#include <systemd/sd-daemon.h>
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -64,10 +62,6 @@ PrintUsage()
          " --logger-user name\n"
 #endif
          " -U name        execute the access logger program with this user id\n"
-#ifdef __GLIBC__
-         " --watchdog\n"
-#endif
-         " -W             enable the watchdog that auto-restarts beng-lb on crash\n"
 #ifdef __GLIBC__
          " --bulldog-path PATH\n"
 #endif
@@ -154,7 +148,6 @@ ParseCommandLine(LbCmdLine &cmdline, LbConfig &config,
         {"user", 1, NULL, 'u'},
         {"group", 1, NULL, 'g'},
         {"logger-user", 1, NULL, 'U'},
-        {"watchdog", 0, NULL, 'W'},
         {"bulldog-path", 1, NULL, 'B'},
         {"set", 1, NULL, 's'},
         {NULL,0,NULL,0}
@@ -166,10 +159,10 @@ ParseCommandLine(LbCmdLine &cmdline, LbConfig &config,
 #ifdef __GLIBC__
         int option_index = 0;
 
-        ret = getopt_long(argc, argv, "hVvqf:CA:u:g:U:WB:s:",
+        ret = getopt_long(argc, argv, "hVvqf:CA:u:g:U:B:s:",
                           long_options, &option_index);
 #else
-        ret = getopt(argc, argv, "hVvqf:CA:u:g:U:WB:s:");
+        ret = getopt(argc, argv, "hVvqf:CA:u:g:U:B:s:");
 #endif
         if (ret == -1)
             break;
@@ -213,15 +206,6 @@ ParseCommandLine(LbCmdLine &cmdline, LbConfig &config,
 
         case 'U':
             daemon_user_by_name(&cmdline.logger_user, optarg, NULL);
-            break;
-
-        case 'W':
-            if (sd_booted())
-                /* we don't need a watchdog process if systemd watches
-                   on us */
-                break;
-
-            cmdline.watchdog = true;
             break;
 
         case 'B':

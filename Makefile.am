@@ -431,7 +431,6 @@ cm4all_beng_lb_LDADD = $(AM_LDADD) \
 	libeutil.a \
 	libistream.a libevent.a \
 	libnet.a \
-	libspawn.a \
 	libputil.a \
 	libpool.a libmemory.a \
 	libio.a \

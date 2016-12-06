@@ -58,59 +58,6 @@ static constexpr cap_value_t cap_keep_list[1] = {
     CAP_NET_RAW,
 };
 
-static constexpr struct timeval launch_worker_now = {
-    0,
-    10000,
-};
-
-static constexpr struct timeval launch_worker_delayed = {
-    10,
-    0,
-};
-
-static bool is_watchdog;
-static pid_t worker_pid;
-
-void
-LbInstance::OnChildProcessExit(gcc_unused int status)
-{
-    worker_pid = 0;
-
-    if (!should_exit)
-        launch_worker_event.Add(launch_worker_delayed);
-}
-
-void
-LbInstance::LaunchWorker()
-{
-    assert(is_watchdog);
-    assert(worker_pid <= 0);
-
-    worker_pid = fork();
-    if (worker_pid < 0) {
-        fprintf(stderr, "Failed to fork: %s\n", strerror(errno));
-
-        launch_worker_event.Add(launch_worker_delayed);
-        return;
-    }
-
-    if (worker_pid == 0) {
-        is_watchdog = false;
-
-        event_loop.Reinit();
-
-        child_process_registry.Clear();
-        all_listeners_event_add(this);
-
-        enable_all_controls(this);
-
-        InitWorker();
-        return;
-    }
-
-    child_process_registry.Add(worker_pid, "worker", this);
-}
-
 void
 LbInstance::ShutdownCallback()
 {
@@ -121,23 +68,13 @@ LbInstance::ShutdownCallback()
     deinit_signals(this);
     thread_pool_stop();
 
-    if (is_watchdog && worker_pid > 0)
-        kill(worker_pid, SIGTERM);
-
     avahi_client.Close();
 
-    child_process_registry.SetVolatile();
-
-    if (is_watchdog)
-        launch_worker_event.Cancel();
-    else {
-        compress_event.Cancel();
-    }
+    compress_event.Cancel();
 
     deinit_all_controls(this);
 
-    if (!is_watchdog)
-        DisconnectCertCaches();
+    DisconnectCertCaches();
 
     while (!connections.empty())
         lb_connection_close(&connections.front());
@@ -286,17 +223,7 @@ int main(int argc, char **argv)
 
     /* main loop */
 
-    if (instance.cmdline.watchdog) {
-        /* watchdog */
-
-        all_listeners_event_del(&instance);
-
-        is_watchdog = true;
-        instance.launch_worker_event.Add(launch_worker_now);
-    } else {
-        /* this is already the worker process: enable monitors here */
-        instance.InitWorker();
-    }
+    instance.InitWorker();
 
     /* tell systemd we're ready */
     sd_notify(0, "READY=1");

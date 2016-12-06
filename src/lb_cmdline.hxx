@@ -26,8 +26,6 @@ struct LbCmdLine {
 
     unsigned tcp_stock_limit = 256;
 
-    bool watchdog = false;
-
     /**
      * If true, then the environment (e.g. the configuration file) is
      * checked, and the process exits.

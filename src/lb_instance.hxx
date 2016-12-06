@@ -12,12 +12,10 @@
 #include "lb_cluster.hxx"
 #include "lb_connection.hxx"
 #include "lb_hmonitor.hxx"
-#include "spawn/ExitListener.hxx"
 #include "event/Loop.hxx"
 #include "event/TimerEvent.hxx"
 #include "event/SignalEvent.hxx"
 #include "event/ShutdownListener.hxx"
-#include "spawn/Registry.hxx"
 #include "avahi/Client.hxx"
 
 #include <forward_list>
@@ -33,7 +31,7 @@ struct LbControl;
 class lb_listener;
 class CertCache;
 
-struct LbInstance final : ExitListener {
+struct LbInstance final {
     RootPool pool;
 
     LbCmdLine cmdline;
@@ -58,9 +56,6 @@ struct LbInstance final : ExitListener {
     LbMonitorMap monitors;
 
     MyAvahiClient avahi_client;
-
-    ChildProcessRegistry child_process_registry;
-    TimerEvent launch_worker_event;
 
     TimerEvent compress_event;
 
@@ -108,11 +103,7 @@ struct LbInstance final : ExitListener {
 
     void ReloadEventCallback(int signo);
 
-    /* virtual methods from class ExitListener */
-    void OnChildProcessExit(int status) override;
-
 private:
-    void LaunchWorker();
     void OnCompressTimer();
 };
 

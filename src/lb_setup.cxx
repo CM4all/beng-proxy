@@ -98,11 +98,6 @@ init_all_controls(LbInstance *instance)
         instance->controls.emplace_front(*instance);
         auto &control = instance->controls.front();
         control.Open(config);
-
-        if (instance->cmdline.watchdog)
-            /* disable the control channel in the "master" process, it
-               shall only apply to the one worker */
-            control.Disable();
     }
 }
 
