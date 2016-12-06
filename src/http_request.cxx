@@ -14,7 +14,7 @@
 #include "tcp_balancer.hxx"
 #include "stock/GetHandler.hxx"
 #include "stock/Item.hxx"
-#include "lease.hxx"
+#include "stock/Lease.hxx"
 #include "failure.hxx"
 #include "istream/istream.hxx"
 #include "istream/UnusedHoldPtr.hxx"
@@ -29,7 +29,7 @@
 #include <string.h>
 
 struct HttpRequest final
-    : Cancellable, StockGetHandler, Lease, HttpResponseHandler {
+    : Cancellable, StockGetHandler, HttpResponseHandler {
 
     struct pool &pool;
     EventLoop &event_loop;
@@ -109,11 +109,6 @@ struct HttpRequest final
     void OnStockItemError(GError *error) override;
 
 private:
-    /* virtual methods from class Lease */
-    void ReleaseLease(bool reuse) override {
-        stock_item->Put(!reuse);
-    }
-
     /* virtual methods from class HttpResponseHandler */
     void OnHttpResponse(http_status_t status, StringMap &&headers,
                         Istream *body) override;
@@ -185,17 +180,19 @@ HttpRequest::OnStockItemReady(StockItem &item)
         try {
             filter_ctx = filter_factory->CreateFilter();
         } catch (const std::runtime_error &e) {
-            ReleaseLease(true);
+            item.Put(false);
             Failed(ToGError(e));
             return;
         }
     }
 
+    auto *lease = NewFromPool<StockItemLease>(pool, item);
+
     http_client_request(pool, event_loop,
                         tcp_stock_item_get(item),
                         tcp_stock_item_get_domain(item) == AF_LOCAL
                         ? FdType::FD_SOCKET : FdType::FD_TCP,
-                        *this,
+                        *lease,
                         item.GetStockName(),
                         filter, filter_ctx,
                         method, address.path, std::move(headers),
