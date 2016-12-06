@@ -18,6 +18,7 @@ user_agent_is_bot(const char *user_agent)
         strstr(user_agent, "bot@") != NULL || /* Ezooms */
         strstr(user_agent, "ysearch") != NULL || /* Yahoo */
         strstr(user_agent, "bot.php") != NULL || /* Majestic */
+        strstr(user_agent, "MJ12bot/") != NULL || /* Majestic */
         strstr(user_agent, "webspider.htm") != NULL || /* Sosospider */
         strstr(user_agent, "+crawler") != NULL || /* Pixray-Seeker */
         strstr(user_agent, "crawler@") != NULL || /* Alexa */
