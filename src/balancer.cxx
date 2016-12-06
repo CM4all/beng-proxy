@@ -169,8 +169,6 @@ SocketAddress
 balancer_get(Balancer &balancer, const AddressList &list,
              unsigned session)
 {
-    struct pool *pool;
-
     if (list.IsSingle())
         return list[0];
 
@@ -196,7 +194,7 @@ balancer_get(Balancer &balancer, const AddressList &list,
     if (item == nullptr) {
         /* create a new cache item */
 
-        pool = pool_new_linear(balancer.pool, "balancer_item", 1024);
+        auto *pool = pool_new_linear(balancer.pool, "balancer_item", 1024);
         item = NewFromPool<Balancer::Item>(*pool, *pool, list);
 
         balancer.cache.Put(p_strdup(pool, key), *item);
