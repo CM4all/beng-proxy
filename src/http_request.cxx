@@ -42,7 +42,6 @@ struct HttpRequest final
     SocketFilterFactory *const filter_factory;
 
     StockItem *stock_item;
-    SocketAddress current_address;
 
     const http_method_t method;
     const HttpAddress &address;
@@ -135,7 +134,7 @@ void
 HttpRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
                             Istream *_body)
 {
-    failure_unset(current_address, FAILURE_RESPONSE);
+    failure_unset(tcp_stock_item_get_address(*stock_item), FAILURE_RESPONSE);
 
     handler.InvokeResponse(status, std::move(_headers), _body);
     Destroy();
@@ -157,7 +156,8 @@ HttpRequest::OnHttpError(GError *error)
         BeginConnect();
     } else {
         if (is_server_failure(error))
-            failure_set(current_address, FAILURE_RESPONSE,
+            failure_set(tcp_stock_item_get_address(*stock_item),
+                        FAILURE_RESPONSE,
                         std::chrono::seconds(20));
 
         Failed(error);
@@ -173,7 +173,6 @@ void
 HttpRequest::OnStockItemReady(StockItem &item)
 {
     stock_item = &item;
-    current_address = tcp_balancer_get_last();
 
     void *filter_ctx = nullptr;
     if (filter_factory != nullptr) {
