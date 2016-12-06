@@ -205,12 +205,14 @@ test_skip(struct pool *pool)
     assert(buffer.GetSize() == 16);
     assert(Equals(buffer.Dup(*pool), "0123456789abcdef"));
 
-    static char zero[16384];
+    constexpr size_t buffer_size = 8192 - 2 * sizeof(void*) - 2 * sizeof(size_t);
+
+    static char zero[buffer_size * 2];
     buffer.Write(zero, sizeof(zero));
-    assert(buffer.GetSize() == 16 + 16384);
+    assert(buffer.GetSize() == 16 + buffer_size * 2);
 
     GrowingBufferReader reader(std::move(buffer));
-    reader.Skip(8190);
+    reader.Skip(buffer_size - 2);
 
     auto x = reader.Read();
     assert(!x.IsNull());
@@ -221,14 +223,14 @@ test_skip(struct pool *pool)
 
     x = reader.Read();
     assert(!x.IsNull());
-    assert(x.size == 8188);
+    assert(x.size == buffer_size - 4);
     reader.Consume(4);
 
     x = reader.Read();
     assert(!x.IsNull());
-    assert(x.size == 8184);
+    assert(x.size == buffer_size - 8);
 
-    reader.Skip(8192);
+    reader.Skip(buffer_size);
 
     x = reader.Read();
     assert(!x.IsNull());
