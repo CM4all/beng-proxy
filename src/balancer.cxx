@@ -12,21 +12,21 @@
 #include "bulldog.h"
 #include "AllocatorPtr.hxx"
 
+#include <string>
+
 #include <assert.h>
-#include <stdbool.h>
 #include <time.h>
 
 struct Balancer {
     struct Item final : CacheItem {
-        struct pool *const pool;
+        const std::string key;
 
         /** the index of the item that will be returned next */
         unsigned next = 0;
 
-        explicit Item(struct pool &_pool)
+        explicit Item(const char *_key)
             :CacheItem(std::chrono::minutes(30), 1),
-             pool(&_pool) {
-        }
+             key(_key) {}
 
         const SocketAddress &NextAddress(const AddressList &addresses);
         const SocketAddress &NextAddressChecked(const AddressList &addresses,
@@ -34,7 +34,7 @@ struct Balancer {
 
         /* virtual methods from class CacheItem */
         void Destroy() override {
-            pool_unref(pool);
+            delete this;
         }
     };
 
@@ -196,11 +196,8 @@ balancer_get(Balancer &balancer, const AddressList &list,
 
     if (item == nullptr) {
         /* create a new cache item */
-
-        auto *pool = pool_new_linear(balancer.pool, "balancer_item", 1024);
-        item = NewFromPool<Balancer::Item>(*pool, *pool);
-
-        balancer.cache.Put(p_strdup(pool, key), *item);
+        item = new Balancer::Item(key);
+        balancer.cache.Put(item->key.c_str(), *item);
     }
 
     return item->NextAddressChecked(list,
