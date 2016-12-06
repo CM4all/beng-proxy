@@ -21,7 +21,7 @@ log_global_init(const char *program, const struct daemon_user *user)
 {
     assert(global_log_client == NULL);
 
-    if (program == NULL || strcmp(program, "internal") == 0) {
+    if (program == NULL || *program == 0 || strcmp(program, "internal") == 0) {
         global_log_enabled = false;
         return true;
     }
