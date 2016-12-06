@@ -6,7 +6,7 @@ cm4all-beng-proxy (12.0.2) unstable; urgency=low
   * spawn/Systemd: fix hang while creating systemd scope
   * config: fix session_save_path corruption
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 06 Dec 2016 11:01:26 -0000
 
 cm4all-beng-proxy (12.0.1) unstable; urgency=low
 
