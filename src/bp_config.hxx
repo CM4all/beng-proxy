@@ -46,6 +46,8 @@ struct BpConfig {
 
     std::forward_list<Listener> listen;
 
+    std::string access_logger;
+
     std::string session_cookie = "beng_proxy_session";
 
     std::chrono::seconds session_idle_timeout = std::chrono::minutes(30);

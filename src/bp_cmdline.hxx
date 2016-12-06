@@ -20,8 +20,6 @@ extern bool debug_mode;
 struct BpCmdLine {
     struct daemon_user user, logger_user;
 
-    const char *access_logger = nullptr;
-
     const char *config_file = "/etc/cm4all/beng/proxy/beng-proxy.conf";
 
     BpCmdLine();

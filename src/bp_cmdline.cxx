@@ -367,8 +367,7 @@ ParseCommandLine(BpCmdLine &cmdline, BpConfig &config, int argc, char **argv)
             break;
 
         case 'A':
-            cmdline.access_logger = *optarg == 0
-                ? NULL : optarg;
+            config.access_logger = optarg;
             break;
 
         case 'f':

@@ -452,7 +452,7 @@ try {
 
     /* launch the access logger */
 
-    if (!log_global_init(instance.cmdline.access_logger,
+    if (!log_global_init(instance.config.access_logger.c_str(),
                          &instance.cmdline.logger_user))
         return EXIT_FAILURE;
 
