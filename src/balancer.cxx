@@ -23,15 +23,14 @@ struct Balancer {
         /** the index of the item that will be returned next */
         unsigned next = 0;
 
-        AddressList addresses;
-
-        Item(struct pool &_pool, const AddressList &_addresses)
+        explicit Item(struct pool &_pool)
             :CacheItem(std::chrono::minutes(30), 1),
-             pool(&_pool), addresses(_pool, _addresses) {
+             pool(&_pool) {
         }
 
-        const SocketAddress &NextAddress();
-        const SocketAddress &NextAddressChecked(bool allow_fade);
+        const SocketAddress &NextAddress(const AddressList &addresses);
+        const SocketAddress &NextAddressChecked(const AddressList &addresses,
+                                                bool allow_fade);
 
         /* virtual methods from class CacheItem */
         void Destroy() override {
@@ -91,7 +90,7 @@ next_failover_address(const AddressList &list)
 }
 
 const SocketAddress &
-Balancer::Item::NextAddress()
+Balancer::Item::NextAddress(const AddressList &addresses)
 {
     assert(addresses.GetSize() >= 2);
     assert(next < addresses.GetSize());
@@ -106,15 +105,16 @@ Balancer::Item::NextAddress()
 }
 
 const SocketAddress &
-Balancer::Item::NextAddressChecked(bool allow_fade)
+Balancer::Item::NextAddressChecked(const AddressList &addresses,
+                                   bool allow_fade)
 {
-    const auto &first = NextAddress();
+    const auto &first = NextAddress(addresses);
     const SocketAddress *ret = &first;
     do {
         if (CheckAddress(*ret, allow_fade))
             return *ret;
 
-        ret = &NextAddress();
+        ret = &NextAddress(addresses);
     } while (ret != &first);
 
     /* all addresses failed: */
@@ -198,12 +198,13 @@ balancer_get(Balancer &balancer, const AddressList &list,
         /* create a new cache item */
 
         auto *pool = pool_new_linear(balancer.pool, "balancer_item", 1024);
-        item = NewFromPool<Balancer::Item>(*pool, *pool, list);
+        item = NewFromPool<Balancer::Item>(*pool, *pool);
 
         balancer.cache.Put(p_strdup(pool, key), *item);
     }
 
-    return item->NextAddressChecked(list.sticky_mode == StickyMode::NONE);
+    return item->NextAddressChecked(list,
+                                    list.sticky_mode == StickyMode::NONE);
 }
 
 void
