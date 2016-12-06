@@ -4,7 +4,7 @@ cm4all-beng-proxy (10.35) unstable; urgency=low
   * bot: add another Majestic bot user agent string
   * systemd: depend on network-online.target
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 06 Dec 2016 07:42:56 -0000
 
 cm4all-beng-proxy (10.34) unstable; urgency=low
 
