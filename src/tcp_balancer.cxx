@@ -48,8 +48,6 @@ struct TcpBalancerRequest : public StockGetHandler {
     void OnStockItemError(GError *error) override;
 };
 
-static SocketAddress last_address;
-
 inline void
 TcpBalancerRequest::Send(struct pool &pool, SocketAddress address,
                          CancellablePointer &cancel_ptr)
@@ -73,7 +71,6 @@ void
 TcpBalancerRequest::OnStockItemReady(StockItem &item)
 {
     auto &base = BalancerRequest<TcpBalancerRequest>::Cast(*this);
-    last_address = base.GetAddress();
     base.Success();
 
     handler.OnStockItemReady(item);
@@ -121,10 +118,4 @@ tcp_balancer_get(TcpBalancer &tcp_balancer, struct pool &pool,
                                                ip_transparent,
                                                bind_address, timeout,
                                                handler);
-}
-
-SocketAddress
-tcp_balancer_get_last()
-{
-    return last_address;
 }

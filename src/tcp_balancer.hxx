@@ -48,13 +48,4 @@ tcp_balancer_get(TcpBalancer &tcp_balancer, struct pool &pool,
                  StockGetHandler &handler,
                  CancellablePointer &cancel_ptr);
 
-/**
- * Returns the address of the last connection that was established
- * successfully.  This is a dirty hack to allow the #tcp_stock's
- * #stock_handler to find this out.
- */
-gcc_pure
-SocketAddress
-tcp_balancer_get_last();
-
 #endif
