@@ -145,13 +145,6 @@ GrowingBuffer::Read() const
     if (!head)
         return nullptr;
 
-    if (head->size == 0) {
-        assert(position == 0);
-        assert(!head->next);
-
-        return nullptr;
-    }
-
     assert(position < head->size);
 
     return { head->data + position, head->fill - position };
