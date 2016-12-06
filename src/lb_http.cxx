@@ -58,7 +58,6 @@ struct LbRequest final : public StockGetHandler, Lease, HttpResponseHandler {
     CancellablePointer &cancel_ptr;
 
     StockItem *stock_item;
-    SocketAddress current_address;
 
     unsigned new_cookie = 0;
 
@@ -242,7 +241,7 @@ void
 LbRequest::OnHttpError(GError *error)
 {
     if (is_server_failure(error))
-        failure_add(current_address);
+        failure_add(tcp_stock_item_get_address(*stock_item));
 
     lb_connection_log_gerror(2, &connection, "Error", error);
 
@@ -266,7 +265,6 @@ void
 LbRequest::OnStockItemReady(StockItem &item)
 {
     stock_item = &item;
-    current_address = tcp_balancer_get_last();
 
     const char *peer_subject = connection.ssl_filter != nullptr
         ? ssl_filter_get_peer_subject(connection.ssl_filter)
