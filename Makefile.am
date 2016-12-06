@@ -706,6 +706,7 @@ libeutil_a_SOURCES = \
 	src/stock/MapStock.cxx src/stock/MapStock.hxx \
 	src/stock/MultiStock.cxx src/stock/MultiStock.hxx \
 	src/stock/ThreadedStock.hxx \
+	src/stock/Lease.cxx src/stock/Lease.hxx \
 	src/cache.cxx src/cache.hxx
 
 libmemory_a_SOURCES = \
