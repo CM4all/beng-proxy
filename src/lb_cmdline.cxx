@@ -18,7 +18,9 @@
 #include <string.h>
 #include <unistd.h>
 
-static void usage(void) {
+static void
+PrintUsage()
+{
     puts("usage: cm4all-beng-lb [options]\n\n"
          "valid options:\n"
          " -h             help (this text)\n"
@@ -100,8 +102,8 @@ static void arg_error(const char *argv0, const char *fmt, ...) {
 }
 
 static void
-handle_set2(struct lb_cmdline *config, const char *argv0,
-            const char *name, size_t name_length, const char *value)
+HandleSet(LbCmdLine *config, const char *argv0,
+          const char *name, size_t name_length, const char *value)
 {
     static const char tcp_stock_limit[] = "tcp_stock_limit";
     char *endptr;
@@ -119,7 +121,7 @@ handle_set2(struct lb_cmdline *config, const char *argv0,
 }
 
 static void
-handle_set(struct lb_cmdline *config, const char *argv0, const char *p)
+HandleSet(LbCmdLine *config, const char *argv0, const char *p)
 {
     const char *eq;
 
@@ -130,13 +132,13 @@ handle_set(struct lb_cmdline *config, const char *argv0, const char *p)
     if (eq == p)
         arg_error(argv0, "No name found in --set argument");
 
-    handle_set2(config, argv0, p, eq - p, eq + 1);
+    HandleSet(config, argv0, p, eq - p, eq + 1);
 }
 
 /** read configuration options from the command line */
 void
-parse_cmdline(struct lb_cmdline *config,
-              int argc, char **argv)
+ParseCommandLine(LbCmdLine *config,
+                 int argc, char **argv)
 {
     int ret;
 #ifdef __GLIBC__
@@ -176,7 +178,7 @@ parse_cmdline(struct lb_cmdline *config,
 
         switch (ret) {
         case 'h':
-            usage();
+            PrintUsage();
             exit(0);
 
         case 'V':
@@ -236,7 +238,7 @@ parse_cmdline(struct lb_cmdline *config,
             break;
 
         case 's':
-            handle_set(config, argv[0], optarg);
+            HandleSet(config, argv[0], optarg);
             break;
 
         case '?':

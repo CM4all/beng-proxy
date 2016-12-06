@@ -28,6 +28,6 @@ struct BpCmdLine {
 };
 
 void
-parse_cmdline(BpCmdLine &cmdline, BpConfig &config, int argc, char **argv);
+ParseCommandLine(BpCmdLine &cmdline, BpConfig &config, int argc, char **argv);
 
 #endif

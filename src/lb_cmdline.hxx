@@ -13,7 +13,7 @@
 
 #include <string.h>
 
-struct lb_cmdline {
+struct LbCmdLine {
     struct daemon_user user, logger_user;
 
     /**
@@ -38,14 +38,14 @@ struct lb_cmdline {
      */
     bool check = false;
 
-    lb_cmdline() {
+    LbCmdLine() {
         memset(&user, 0, sizeof(user));
         memset(&logger_user, 0, sizeof(logger_user));
     }
 };
 
 void
-parse_cmdline(struct lb_cmdline *config,
-              int argc, char **argv);
+ParseCommandLine(LbCmdLine *config,
+                 int argc, char **argv);
 
 #endif

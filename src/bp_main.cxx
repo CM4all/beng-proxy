@@ -276,7 +276,7 @@ try {
 
     /* configuration */
 
-    parse_cmdline(instance.cmdline, instance.config, argc, argv);
+    ParseCommandLine(instance.cmdline, instance.config, argc, argv);
 
     if (instance.cmdline.config_file != nullptr)
         LoadConfigFile(instance.config, instance.cmdline.config_file);

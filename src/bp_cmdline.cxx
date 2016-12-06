@@ -40,7 +40,9 @@ BpCmdLine::BpCmdLine()
     memset(&logger_user, 0, sizeof(logger_user));
 }
 
-static void usage(void) {
+static void
+PrintUsage()
+{
     puts("usage: cm4all-beng-proxy [options]\n\n"
          "valid options:\n"
 #ifdef __GLIBC__
@@ -249,8 +251,8 @@ ParseAllowGroup(SpawnConfig &config, const char *arg)
 }
 
 static void
-handle_set(BpConfig &config,
-           const char *argv0, const char *p)
+HandleSet(BpConfig &config,
+          const char *argv0, const char *p)
 {
     const char *eq;
 
@@ -286,7 +288,7 @@ Copy(UidGid &dest, const struct daemon_user &src)
 
 /** read configuration options from the command line */
 void
-parse_cmdline(BpCmdLine &cmdline, BpConfig &config, int argc, char **argv)
+ParseCommandLine(BpCmdLine &cmdline, BpConfig &config, int argc, char **argv)
 {
     int ret;
     char *endptr;
@@ -343,7 +345,7 @@ parse_cmdline(BpCmdLine &cmdline, BpConfig &config, int argc, char **argv)
 
         switch (ret) {
         case 'h':
-            usage();
+            PrintUsage();
             exit(0);
 
         case 'V':
@@ -492,7 +494,7 @@ parse_cmdline(BpCmdLine &cmdline, BpConfig &config, int argc, char **argv)
             break;
 
         case 's':
-            handle_set(config, argv[0], optarg);
+            HandleSet(config, argv[0], optarg);
             break;
 
         case '?':

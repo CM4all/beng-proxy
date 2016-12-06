@@ -36,7 +36,7 @@ class CertCache;
 struct LbInstance final : ExitListener {
     RootPool pool;
 
-    struct lb_cmdline cmdline;
+    LbCmdLine cmdline;
 
     LbConfig *config;
 
