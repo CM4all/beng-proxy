@@ -150,10 +150,7 @@ ParseCommandLine(LbCmdLine &cmdline, LbConfig &config,
         {"quiet", 0, NULL, 'q'},
         {"config-file", 1, NULL, 'f'},
         {"check", 0, NULL, 'C'},
-        {"logger", 1, NULL, 'l'}, /* obsolete */
         {"access-logger", 1, NULL, 'A'},
-        {"no-daemon", 0, NULL, 'D'}, /* obsolete */
-        {"pidfile", 1, NULL, 'P'}, /* obsolete */
         {"user", 1, NULL, 'u'},
         {"group", 1, NULL, 'g'},
         {"logger-user", 1, NULL, 'U'},
@@ -169,10 +166,10 @@ ParseCommandLine(LbCmdLine &cmdline, LbConfig &config,
 #ifdef __GLIBC__
         int option_index = 0;
 
-        ret = getopt_long(argc, argv, "hVvqf:CDP:l:A:u:g:U:WB:s:",
+        ret = getopt_long(argc, argv, "hVvqf:CA:u:g:U:WB:s:",
                           long_options, &option_index);
 #else
-        ret = getopt(argc, argv, "hVvqf:CDP:l:A:u:g:U:WB:s:");
+        ret = getopt(argc, argv, "hVvqf:CA:u:g:U:WB:s:");
 #endif
         if (ret == -1)
             break;
@@ -200,12 +197,6 @@ ParseCommandLine(LbCmdLine &cmdline, LbConfig &config,
 
         case 'C':
             cmdline.check = true;
-            break;
-
-        case 'D':
-        case 'P':
-        case 'l':
-            /* obsolete */
             break;
 
         case 'A':

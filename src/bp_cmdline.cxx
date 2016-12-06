@@ -62,10 +62,6 @@ PrintUsage()
 #endif
          " -q             be quiet\n"
 #ifdef __GLIBC__
-         " --logger program\n"
-#endif
-         " -l program     specifies an error logger program (executed by /bin/sh)\n"
-#ifdef __GLIBC__
          " --config-file file\n"
 #endif
          " -f file        load this configuration file\n"
@@ -292,10 +288,7 @@ ParseCommandLine(BpCmdLine &cmdline, BpConfig &config, int argc, char **argv)
         {"version", 0, NULL, 'V'},
         {"verbose", 0, NULL, 'v'},
         {"quiet", 0, NULL, 'q'},
-        {"logger", 1, NULL, 'l'}, /* obsolete */
         {"access-logger", 1, NULL, 'A'},
-        {"no-daemon", 0, NULL, 'D'}, /* obsolete */
-        {"pidfile", 1, NULL, 'P'}, /* obsolete */
         {"config-file", 1, nullptr, 'f'},
         {"user", 1, NULL, 'u'},
         {"group", 1, NULL, 'g'},
@@ -328,11 +321,11 @@ ParseCommandLine(BpCmdLine &cmdline, BpConfig &config, int argc, char **argv)
         int option_index = 0;
 
         ret = getopt_long(argc, argv,
-                          "hVvqDP:l:A:f:u:g:U:p:L:c:m:w:r:t:M:B:C:N:s:",
+                          "hVvqA:f:u:g:U:p:L:c:m:w:r:t:M:B:C:N:s:",
                           long_options, &option_index);
 #else
         ret = getopt(argc, argv,
-                     "hVvqDP:l:A:f:u:g:U:p:L:c:m:w:r:t:M:B:C:N:s:");
+                     "hVvqA:f:u:g:U:p:L:c:m:w:r:t:M:B:C:N:s:");
 #endif
         if (ret == -1)
             break;
@@ -352,12 +345,6 @@ ParseCommandLine(BpCmdLine &cmdline, BpConfig &config, int argc, char **argv)
 
         case 'q':
             daemon_log_config.verbose = 0;
-            break;
-
-        case 'D':
-        case 'P':
-        case 'l':
-            /* obsolete */
             break;
 
         case 'A':
