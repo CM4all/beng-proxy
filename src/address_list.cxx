@@ -43,15 +43,6 @@ AddressList::Add(AllocatorPtr alloc, const SocketAddress address)
     return true;
 }
 
-const SocketAddress *
-AddressList::GetFirst() const
-{
-    if (addresses.empty())
-        return nullptr;
-
-    return &addresses.front();
-}
-
 const char *
 AddressList::GetKey() const
 {

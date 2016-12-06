@@ -89,9 +89,6 @@ struct AddressList {
         return addresses[n];
     }
 
-    gcc_pure
-    const SocketAddress *GetFirst() const;
-
     /**
      * Generates a unique string which identifies this object in a hash
      * table.  This string stored in a statically allocated buffer.
