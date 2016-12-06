@@ -45,6 +45,13 @@ gcc_pure
 int
 tcp_stock_item_get(const StockItem &item);
 
+/**
+ * Returns the (peer) address this object is connected to.
+ */
+gcc_pure
+SocketAddress
+tcp_stock_item_get_address(const StockItem &item);
+
 gcc_pure
 int
 tcp_stock_item_get_domain(const StockItem &item);

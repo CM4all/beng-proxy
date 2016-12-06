@@ -15,6 +15,7 @@
 #include "event/SocketEvent.hxx"
 #include "event/Duration.hxx"
 #include "net/ConnectSocket.hxx"
+#include "net/AllocatedSocketAddress.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "util/Cancellable.hxx"
@@ -47,13 +48,13 @@ struct TcpStockConnection final
 
     int fd = -1;
 
-    const int domain;
+    const AllocatedSocketAddress address;
 
     SocketEvent event;
 
-    TcpStockConnection(CreateStockItem c, int _domain,
+    TcpStockConnection(CreateStockItem c, SocketAddress _address,
                        CancellablePointer &_cancel_ptr)
-        :HeapStockItem(c), domain(_domain),
+        :HeapStockItem(c), address(_address),
          event(c.stock.GetEventLoop(), BIND_THIS_METHOD(EventCallback)) {
         _cancel_ptr = *this;
 
@@ -157,11 +158,11 @@ tcp_stock_create(gcc_unused void *ctx,
     TcpStockRequest *request = (TcpStockRequest *)info;
 
     auto *connection = new TcpStockConnection(c,
-                                              request->address.GetFamily(),
+                                              request->address,
                                               cancel_ptr);
 
     client_socket_new(c.stock.GetEventLoop(), caller_pool,
-                      connection->domain, SOCK_STREAM, 0,
+                      request->address.GetFamily(), SOCK_STREAM, 0,
                       request->ip_transparent,
                       request->bind_address,
                       request->address,
@@ -242,6 +243,16 @@ tcp_stock_item_get(const StockItem &item)
     return connection->fd;
 }
 
+SocketAddress
+tcp_stock_item_get_address(const StockItem &item)
+{
+    auto &connection = (const TcpStockConnection &)item;
+
+    assert(connection.fd >= 0);
+
+    return connection.address;
+}
+
 int
 tcp_stock_item_get_domain(const StockItem &item)
 {
@@ -249,5 +260,5 @@ tcp_stock_item_get_domain(const StockItem &item)
 
     assert(connection->fd >= 0);
 
-    return connection->domain;
+    return connection->address.GetFamily();
 }
