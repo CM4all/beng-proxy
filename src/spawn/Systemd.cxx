@@ -105,12 +105,13 @@ WaitJobRemoved(DBusConnection *connection, const char *object_path)
     using namespace ODBus;
 
     while (true) {
-        if (!dbus_connection_read_write(connection, -1))
-            break;
-
         auto msg = Message::Pop(*connection);
-        if (!msg.IsDefined())
-            break;
+        if (!msg.IsDefined()) {
+            if (dbus_connection_read_write(connection, -1))
+                continue;
+            else
+                break;
+        }
 
         if (msg.IsSignal("org.freedesktop.systemd1.Manager", "JobRemoved")) {
             DBusError err;
