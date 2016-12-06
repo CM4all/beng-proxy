@@ -10,7 +10,9 @@
 
 #include <string.h>
 
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
 #define BIO_TYPE_FIFO_BUFFER (43|BIO_TYPE_SOURCE_SINK)
+#endif
 
 struct FifoBufferBio {
     ForeignFifoBuffer<uint8_t> &buffer;
@@ -19,9 +21,13 @@ struct FifoBufferBio {
 static int
 fb_new(BIO *b)
 {
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+    BIO_set_init(b, 1);
+#else
     b->init = 1;
     b->num = 0;
     b->ptr = nullptr;
+#endif
     return 1;
 }
 
@@ -31,11 +37,19 @@ fb_free(BIO *b)
     if (b == nullptr)
         return 0;
 
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+    auto *fb = (FifoBufferBio *)BIO_get_data(b);
+    BIO_set_data(b, nullptr);
+#else
     auto *fb = (FifoBufferBio *)b->ptr;
     b->ptr = nullptr;
+#endif
     delete fb;
 
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
     b->num = -1;
+#endif
+
     return 1;
 }
 
@@ -44,7 +58,11 @@ fb_read(BIO *b, char *out, int outl)
 {
     BIO_clear_retry_flags(b);
 
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+    auto &fb = *(FifoBufferBio *)BIO_get_data(b);
+#else
     auto &fb = *(FifoBufferBio *)b->ptr;
+#endif
 
     auto r = fb.buffer.Read();
     if (r.IsEmpty()) {
@@ -79,12 +97,16 @@ fb_write(BIO *b, const char *in, int inl)
         return -1;
     }
 
-    if (b->flags & BIO_FLAGS_MEM_RDONLY) {
+    if (BIO_test_flags(b, BIO_FLAGS_MEM_RDONLY)) {
         BIOerr(BIO_F_MEM_WRITE, BIO_R_WRITE_TO_READ_ONLY_BIO);
         return -1;
     }
 
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+    auto &fb = *(FifoBufferBio *)BIO_get_data(b);
+#else
     auto &fb = *(FifoBufferBio *)b->ptr;
+#endif
 
     auto w = fb.buffer.Write();
     if (w.IsEmpty()) {
@@ -101,7 +123,11 @@ fb_write(BIO *b, const char *in, int inl)
 static long
 fb_ctrl(BIO *b, int cmd, gcc_unused long num, gcc_unused void *ptr)
 {
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+    auto &fb = *(FifoBufferBio *)BIO_get_data(b);
+#else
     auto &fb = *(FifoBufferBio *)b->ptr;
+#endif
 
     switch(cmd) {
     case BIO_CTRL_EOF:
@@ -141,6 +167,25 @@ fb_puts(BIO *b, const char *str)
     gcc_unreachable();
 }
 
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+
+static BIO_METHOD *fb_method;
+
+static void
+InitFifoBufferBio()
+{
+    fb_method = BIO_meth_new(BIO_get_new_index(), "FIFO buffer");
+    BIO_meth_set_write(fb_method, fb_write);
+    BIO_meth_set_read(fb_method, fb_read);
+    BIO_meth_set_puts(fb_method, fb_puts);
+    BIO_meth_set_gets(fb_method, fb_gets);
+    BIO_meth_set_ctrl(fb_method, fb_ctrl);
+    BIO_meth_set_create(fb_method, fb_new);
+    BIO_meth_set_destroy(fb_method, fb_free);
+}
+
+#else
+
 static BIO_METHOD fb_method = {
     .type = BIO_TYPE_FIFO_BUFFER,
     .name = "FIFO buffer",
@@ -154,10 +199,20 @@ static BIO_METHOD fb_method = {
     .callback_ctrl = nullptr,
 };
 
+#endif
+
 BIO *
 NewFifoBufferBio(ForeignFifoBuffer<uint8_t> &buffer)
 {
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+    if (fb_method == nullptr)
+        InitFifoBufferBio();
+
+    BIO *b = BIO_new(fb_method);
+    BIO_set_data(b, new FifoBufferBio{buffer});
+#else
     BIO *b = BIO_new(&fb_method);
     b->ptr = new FifoBufferBio{buffer};
+#endif
     return b;
 }

@@ -1,14 +1,13 @@
 [Unit]
 Description=CM4all beng-proxy
-After=network.target
+Wants=network-online.target
+After=network-online.target
 
 [Service]
 Type=notify
 ExecStart=/usr/lib/cm4all/beng-proxy/systemd/run.sh
 ExecReload=/bin/kill -HUP $MAINPID
 Restart=on-failure
-
-LimitNOFILE=65536
 
 SyslogIdentifier=cm4all-beng-proxy
 
