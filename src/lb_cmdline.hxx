@@ -9,6 +9,8 @@
 
 #include <daemon/user.h>
 
+struct LbConfig;
+
 struct LbCmdLine {
     struct daemon_user user, logger_user;
 
@@ -16,8 +18,6 @@ struct LbCmdLine {
      * The configuration file.
      */
     const char *config_path = "/etc/cm4all/beng/lb.conf";
-
-    const char *access_logger = nullptr;
 
     /**
      * The Bulldog data path.
@@ -38,7 +38,7 @@ struct LbCmdLine {
 };
 
 void
-ParseCommandLine(LbCmdLine &config,
+ParseCommandLine(LbCmdLine &cmdline, LbConfig &config,
                  int argc, char **argv);
 
 #endif

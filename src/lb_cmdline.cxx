@@ -5,6 +5,7 @@
  */
 
 #include "lb_cmdline.hxx"
+#include "lb_config.hxx"
 #include "stopwatch.hxx"
 
 #include <daemon/log.h>
@@ -143,7 +144,7 @@ HandleSet(LbCmdLine &cmdline, const char *argv0, const char *p)
 
 /** read configuration options from the command line */
 void
-ParseCommandLine(LbCmdLine &cmdline,
+ParseCommandLine(LbCmdLine &cmdline, LbConfig &config,
                  int argc, char **argv)
 {
     int ret;
@@ -214,8 +215,7 @@ ParseCommandLine(LbCmdLine &cmdline,
             break;
 
         case 'A':
-            cmdline.access_logger = *optarg == 0
-                ? NULL : optarg;
+            config.access_logger = optarg;
             break;
 
         case 'u':

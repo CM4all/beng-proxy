@@ -196,9 +196,9 @@ int main(int argc, char **argv)
 
     /* configuration */
 
-    ParseCommandLine(instance.cmdline, argc, argv);
-
     LbConfig config;
+    ParseCommandLine(instance.cmdline, config, argc, argv);
+
     try {
         LoadConfigFile(*instance.pool, config,
                        instance.cmdline.config_path);
@@ -259,7 +259,7 @@ int main(int argc, char **argv)
 
     /* launch the access logger */
 
-    if (!log_global_init(instance.cmdline.access_logger,
+    if (!log_global_init(config.access_logger.c_str(),
                          &instance.cmdline.logger_user))
         return EXIT_FAILURE;
 

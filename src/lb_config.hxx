@@ -385,6 +385,8 @@ struct LbListenerConfig {
 };
 
 struct LbConfig {
+    std::string access_logger;
+
     std::list<LbControlConfig> controls;
 
     std::map<std::string, LbCertDatabaseConfig> cert_dbs;
