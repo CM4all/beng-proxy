@@ -198,13 +198,16 @@ int main(int argc, char **argv)
 
     ParseCommandLine(instance.cmdline, argc, argv);
 
+    LbConfig config;
     try {
-        instance.config = new LbConfig(lb_config_load(instance.pool,
-                                                      instance.cmdline.config_path));
+        LoadConfigFile(*instance.pool, config,
+                       instance.cmdline.config_path);
     } catch (const std::exception &e) {
         PrintException(e);
         return EXIT_FAILURE;
     }
+
+    instance.config = &config;
 
     if (instance.cmdline.check) {
         int status = EXIT_SUCCESS;
@@ -311,8 +314,6 @@ int main(int argc, char **argv)
     deinit_all_controls(&instance);
 
     thread_pool_deinit();
-
-    delete instance.config;
 
     pool_recycler_clear();
 }

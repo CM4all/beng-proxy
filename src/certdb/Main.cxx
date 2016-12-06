@@ -579,7 +579,8 @@ Populate(const char *key_path, const char *suffix, unsigned n)
 static CertDatabaseConfig
 LoadCertDatabaseConfig(const char *path)
 {
-    LbConfig lb_config = lb_config_load(RootPool(), path);
+    LbConfig lb_config;
+    LoadConfigFile(RootPool(), lb_config, path);
 
     auto i = lb_config.cert_dbs.begin();
     if (i == lb_config.cert_dbs.end())

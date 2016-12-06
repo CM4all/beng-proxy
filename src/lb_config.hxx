@@ -484,9 +484,10 @@ struct LbConfig {
 };
 
 /**
- * Load and parse the specified configuration file.
+ * Load and parse the specified configuration file.  Throws an
+ * exception on error.
  */
-LbConfig
-lb_config_load(struct pool *pool, const char *path);
+void
+LoadConfigFile(struct pool &pool, LbConfig &config, const char *path);
 
 #endif

@@ -948,17 +948,15 @@ LbConfigParser::Finish()
     NestedConfigParser::Finish();
 }
 
-LbConfig
-lb_config_load(struct pool *pool, const char *path)
+void
+LoadConfigFile(struct pool &pool, LbConfig &config, const char *path)
 {
-    LbConfig config;
-    LbConfigParser parser(*pool, config);
+    LbConfigParser parser(pool, config);
     VariableConfigParser v_parser(parser);
     CommentConfigParser parser2(v_parser);
     IncludeConfigParser parser3(path, parser2);
 
     ParseConfigFile(path, parser3);
-    return config;
 }
 
 int
