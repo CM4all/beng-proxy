@@ -21,12 +21,12 @@
 #include "http_client.hxx"
 #include "tcp_stock.hxx"
 #include "tcp_balancer.hxx"
-#include "lease.hxx"
 #include "header_writer.hxx"
 #include "http_response.hxx"
 #include "http_headers.hxx"
 #include "stock/GetHandler.hxx"
 #include "stock/Item.hxx"
+#include "stock/Lease.hxx"
 #include "access_log.hxx"
 #include "strmap.hxx"
 #include "failure.hxx"
@@ -42,7 +42,7 @@
 #include <daemon/log.h>
 
 struct LbRequest final
-    : Cancellable, StockGetHandler, Lease, HttpResponseHandler {
+    : Cancellable, StockGetHandler, HttpResponseHandler {
 
     LbConnection &connection;
     const LbClusterConfig *cluster;
@@ -81,11 +81,6 @@ struct LbRequest final
     /* virtual methods from class StockGetHandler */
     void OnStockItemReady(StockItem &item) override;
     void OnStockItemError(GError *error) override;
-
-    /* virtual methods from class Lease */
-    void ReleaseLease(bool reuse) override {
-        stock_item->Put(!reuse);
-    }
 
     /* virtual methods from class HttpResponseHandler */
     void OnHttpResponse(http_status_t status, StringMap &&headers,
@@ -286,12 +281,14 @@ LbRequest::OnStockItemReady(StockItem &item)
                                peer_subject, peer_issuer_subject,
                                cluster->mangle_via);
 
+    auto *lease = NewFromPool<StockItemLease>(request.pool, item);
+
     http_client_request(request.pool,
                         connection.instance.event_loop,
                         tcp_stock_item_get(item),
                         tcp_stock_item_get_domain(item) == AF_LOCAL
                         ? FdType::FD_SOCKET : FdType::FD_TCP,
-                        *this,
+                        *lease,
                         item.GetStockName(),
                         NULL, NULL,
                         request.method, request.uri,
