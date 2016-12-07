@@ -72,10 +72,16 @@ struct LbRequest final
         _cancel_ptr = *this;
     }
 
+    void Destroy() {
+        DeleteFromPool(request.pool, this);
+    }
+
     /* virtual methods from class Cancellable */
     void Cancel() override {
         body.Clear();
-        cancel_ptr.Cancel();
+        CancellablePointer c(std::move(cancel_ptr));
+        Destroy();
+        c.Cancel();
     }
 
     /* virtual methods from class StockGetHandler */
@@ -236,6 +242,7 @@ LbRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
     }
 
     http_server_response(&request, status, std::move(headers), response_body);
+    Destroy();
 }
 
 void
@@ -255,6 +262,7 @@ LbRequest::OnHttpError(GError *error)
     }
 
     g_error_free(error);
+    Destroy();
 }
 
 /*
