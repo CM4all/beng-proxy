@@ -31,7 +31,6 @@
 #include "strmap.hxx"
 #include "failure.hxx"
 #include "bulldog.h"
-#include "abort_close.hxx"
 #include "pool.hxx"
 #include "net/SocketAddress.hxx"
 #include "istream/istream.hxx"
@@ -42,7 +41,9 @@
 #include <http/status.h>
 #include <daemon/log.h>
 
-struct LbRequest final : public StockGetHandler, Lease, HttpResponseHandler {
+struct LbRequest final
+    : Cancellable, StockGetHandler, Lease, HttpResponseHandler {
+
     LbConnection &connection;
     const LbClusterConfig *cluster;
 
@@ -55,7 +56,7 @@ struct LbRequest final : public StockGetHandler, Lease, HttpResponseHandler {
      */
     Istream *body;
 
-    CancellablePointer &cancel_ptr;
+    CancellablePointer cancel_ptr;
 
     StockItem *stock_item;
 
@@ -69,8 +70,17 @@ struct LbRequest final : public StockGetHandler, Lease, HttpResponseHandler {
          request(_request),
          body(request.body != nullptr
               ? istream_hold_new(request.pool, *request.body)
-              : nullptr),
-         cancel_ptr(_cancel_ptr) {}
+              : nullptr) {
+        _cancel_ptr = *this;
+    }
+
+    /* virtual methods from class Cancellable */
+    void Cancel() override {
+        if (body != nullptr)
+            body->CloseUnused();
+
+        cancel_ptr.Cancel();
+    }
 
     /* virtual methods from class StockGetHandler */
     void OnStockItemReady(StockItem &item) override;
@@ -289,7 +299,8 @@ LbRequest::OnStockItemReady(StockItem &item)
                         item.GetStockName(),
                         NULL, NULL,
                         request.method, request.uri,
-                        HttpHeaders(std::move(headers)), body, true,
+                        HttpHeaders(std::move(headers)),
+                        std::exchange(body, nullptr), true,
                         *this, cancel_ptr);
 }
 
@@ -381,10 +392,7 @@ LbConnection::HandleHttpRequest(HttpServerRequest &request,
                       transparent_source, bind_address,
                       member.second,
                       20,
-                      *request2,
-                      async_optional_close_on_abort(request.pool,
-                                                    request2->body,
-                                                    cancel_ptr));
+                      *request2, request2->cancel_ptr);
 
         return;
     }
@@ -431,10 +439,7 @@ LbConnection::HandleHttpRequest(HttpServerRequest &request,
                      session_sticky,
                      cluster->address_list,
                      20,
-                     *request2,
-                     async_optional_close_on_abort(request.pool,
-                                                   request2->body,
-                                                   cancel_ptr));
+                     *request2, request2->cancel_ptr);
 }
 
 void
