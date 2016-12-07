@@ -34,7 +34,7 @@
 #include "pool.hxx"
 #include "net/SocketAddress.hxx"
 #include "istream/istream.hxx"
-#include "istream/istream_hold.hxx"
+#include "istream/UnusedHoldPtr.hxx"
 #include "gerrno.h"
 #include "util/Cancellable.hxx"
 
@@ -52,9 +52,9 @@ struct LbRequest final
     HttpServerRequest &request;
 
     /**
-     * The request body (wrapped with istream_hold).
+     * The request body.
      */
-    Istream *body;
+    UnusedHoldIstreamPtr body;
 
     CancellablePointer cancel_ptr;
 
@@ -68,17 +68,13 @@ struct LbRequest final
         :connection(_connection),
          balancer(_balancer),
          request(_request),
-         body(request.body != nullptr
-              ? istream_hold_new(request.pool, *request.body)
-              : nullptr) {
+         body(request.pool, request.body) {
         _cancel_ptr = *this;
     }
 
     /* virtual methods from class Cancellable */
     void Cancel() override {
-        if (body != nullptr)
-            body->CloseUnused();
-
+        body.Clear();
         cancel_ptr.Cancel();
     }
 
@@ -300,7 +296,7 @@ LbRequest::OnStockItemReady(StockItem &item)
                         NULL, NULL,
                         request.method, request.uri,
                         HttpHeaders(std::move(headers)),
-                        std::exchange(body, nullptr), true,
+                        body.Steal(), true,
                         *this, cancel_ptr);
 }
 
@@ -309,8 +305,7 @@ LbRequest::OnStockItemError(GError *error)
 {
     lb_connection_log_gerror(2, &connection, "Connect error", error);
 
-    if (body != nullptr)
-        body->CloseUnused();
+    body.Clear();
 
     if (!send_fallback(&request, &cluster->fallback)) {
         const char *msg = connection.listener.verbose_response
