@@ -2097,7 +2097,9 @@ options \texttt{ro,noexec,nosuid,nodev}.
 source directory is expanded using \verb|REGEX| results.
 
 \verb|BIND_MOUNT_RW| and \verb|EXPAND_BIND_MOUNT_RW| do the same, just
-in writable mode (mount option \verb|rw|).
+in writable mode (mount option \verb|rw|).  \verb|BIND_MOUNT_EXEC| and
+\verb|EXPAND_BIND_MOUNT_EXEC| omit the \verb|noexec| option.  (There
+is no way to make a mount both writable and executable.)
 
 \verb|PIVOT_ROOT| depends on user namespaces.  \verb|MOUNT_PROC|,
 \verb|MOUNT_HOME| and \verb|MOUNT_TMP_TMPFS| depend on

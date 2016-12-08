@@ -1,6 +1,7 @@
 cm4all-beng-proxy (12.0.3) unstable; urgency=low
 
   * config: add "access_logger", replacing the *.default setting
+  * translation: add packet BIND_MOUNT_EXEC
 
  --   
 

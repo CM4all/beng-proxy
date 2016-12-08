@@ -589,7 +589,7 @@ translate_client_mount_tmpfs(NamespaceOptions *ns,
 
 inline void
 TranslateParser::HandleBindMount(const char *payload, size_t payload_length,
-                                 bool expand, bool writable)
+                                 bool expand, bool writable, bool exec)
 {
     if (*payload != '/')
         throw std::runtime_error("malformed BIND_MOUNT packet");
@@ -604,7 +604,7 @@ TranslateParser::HandleBindMount(const char *payload, size_t payload_length,
     auto *m = alloc.New<MountList>(/* skip the slash to make it relative */
                                    payload + 1,
                                    separator + 1,
-                                   expand, writable);
+                                   expand, writable, exec);
     *mount_list = m;
     mount_list = &m->next;
 }
@@ -3072,6 +3072,18 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         break;
 #endif
     }
+
+    case TRANSLATE_BIND_MOUNT_EXEC:
+        HandleBindMount(payload, payload_length, false, false, true);
+        return;
+
+    case TRANSLATE_EXPAND_BIND_MOUNT_EXEC:
+#if TRANSLATION_ENABLE_EXPAND
+        HandleBindMount(payload, payload_length, true, false, true);
+        return;
+#else
+        break;
+#endif
     }
 
     throw FormatRuntimeError("unknown translation packet: %u", command);

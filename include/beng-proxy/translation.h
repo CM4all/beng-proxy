@@ -784,6 +784,17 @@ enum beng_translation_command {
      * Mark this request as a "cron job" request.  No payload.
      */
     TRANSLATE_CRON = 181,
+
+    /**
+     * Same as #TRANSLATE_BIND_MOUNT, but don't set the "noexec" flag.
+     */
+    TRANSLATE_BIND_MOUNT_EXEC = 182,
+
+    /**
+     * Same as #TRANSLATE_EXPAND_BIND_MOUNT, but don't set the
+     * "noexec" flag.
+     */
+    TRANSLATE_EXPAND_BIND_MOUNT_EXEC = 183,
 };
 
 struct beng_translation_header {

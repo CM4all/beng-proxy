@@ -173,6 +173,7 @@ Serialize(SpawnSerializer &s, const NamespaceOptions &ns)
         s.WriteString(i->source);
         s.WriteString(i->target);
         s.WriteByte(i->writable);
+        s.WriteByte(i->exec);
     }
 
     s.WriteOptionalString(SpawnExecCommand::HOSTNAME, ns.hostname);

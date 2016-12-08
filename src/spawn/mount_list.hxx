@@ -24,16 +24,22 @@ struct MountList {
 
     bool writable;
 
+    /**
+     * Omit the MS_NOEXEC flag?
+     */
+    bool exec;
+
     constexpr MountList(const char *_source, const char *_target,
 #if !TRANSLATION_ENABLE_EXPAND
                         gcc_unused
 #endif
-                        bool _expand_source=false, bool _writable=false)
+                        bool _expand_source=false, bool _writable=false,
+                        bool _exec=false)
         :next(nullptr), source(_source), target(_target),
 #if TRANSLATION_ENABLE_EXPAND
          expand_source(_expand_source),
 #endif
-         writable(_writable) {
+         writable(_writable), exec(_exec) {
     }
 
     MountList(AllocatorPtr alloc, const MountList &src);

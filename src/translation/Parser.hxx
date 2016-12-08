@@ -176,7 +176,7 @@ private:
 #endif
 
     void HandleBindMount(const char *payload, size_t payload_length,
-                         bool expand, bool writable);
+                         bool expand, bool writable, bool exec=false);
 
     void HandleRefence(StringView payload);
 
