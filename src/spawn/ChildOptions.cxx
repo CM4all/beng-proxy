@@ -41,6 +41,7 @@ ChildOptions::ChildOptions(AllocatorPtr alloc,
           : nullptr),
 #endif
      uid_gid(src.uid_gid),
+     stderr_null(src.stderr_null),
      no_new_privs(src.no_new_privs)
 {
 }
@@ -103,6 +104,12 @@ ChildOptions::MakeId(char *p) const
 #endif
     p = uid_gid.MakeId(p);
 
+    if (stderr_null) {
+        *p++ = ';';
+        *p++ = 'e';
+        *p++ = 'n';
+    }
+
     if (no_new_privs) {
         *p++ = ';';
         *p++ = 'n';
@@ -138,6 +145,11 @@ ChildOptions::CopyTo(PreparedChildProcess &dest
             throw FormatErrno("open('%s') failed", stderr_path);
 
         dest.SetStderr(fd);
+    } else if (stderr_null) {
+        const char *path = "/dev/null";
+        int fd = open(path, O_WRONLY|O_CLOEXEC|O_NOCTTY);
+        if (fd >= 0)
+            dest.SetStderr(fd);
     }
 
     for (const char *e : env)

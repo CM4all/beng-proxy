@@ -792,7 +792,7 @@ translate_client_stderr_path(ChildOptions *child_options,
     if (!is_valid_absolute_path(path, payload.size))
         throw std::runtime_error("malformed STDERR_PATH packet");
 
-    if (child_options == nullptr)
+    if (child_options == nullptr || child_options->stderr_null)
         throw std::runtime_error("misplaced STDERR_PATH packet");
 
     if (child_options->stderr_path != nullptr)
@@ -3084,6 +3084,19 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 #else
         break;
 #endif
+
+    case TRANSLATE_STDERR_NULL:
+        if (payload_length > 0)
+            throw std::runtime_error("malformed STDERR_NULL packet");
+
+        if (child_options == nullptr || child_options->stderr_path != nullptr)
+            throw std::runtime_error("misplaced STDERR_NULL packet");
+
+        if (child_options->stderr_null)
+            throw std::runtime_error("duplicate STDERR_NULL packet");
+
+        child_options->stderr_null = true;
+        return;
     }
 
     throw FormatRuntimeError("unknown translation packet: %u", command);

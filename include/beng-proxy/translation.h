@@ -795,6 +795,11 @@ enum beng_translation_command {
      * "noexec" flag.
      */
     TRANSLATE_EXPAND_BIND_MOUNT_EXEC = 183,
+
+    /**
+     * Redirect STDERR to /dev/null?
+     */
+    TRANSLATE_STDERR_NULL = 184,
 };
 
 struct beng_translation_header {

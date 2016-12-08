@@ -47,6 +47,11 @@ struct ChildOptions {
 
     UidGid uid_gid;
 
+    /**
+     * Redirect STDERR to /dev/null?
+     */
+    bool stderr_null = false;
+
     bool no_new_privs = false;
 
     ChildOptions() = default;
@@ -63,6 +68,7 @@ struct ChildOptions {
          jail(src.jail),
 #endif
          uid_gid(src.uid_gid),
+         stderr_null(src.stderr_null),
          no_new_privs(src.no_new_privs) {}
 
     ChildOptions(AllocatorPtr alloc, const ChildOptions &src);
