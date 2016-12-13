@@ -46,7 +46,7 @@ UidGid::Apply() const
         }
     } else if (gid != 0) {
         if (setgroups(0, &gid) < 0) {
-            fprintf(stderr, "setgroups(%d) failedd: %s\n",
+            fprintf(stderr, "setgroups(%d) failed: %s\n",
                     int(gid), strerror(errno));
             _exit(EXIT_FAILURE);
         }
