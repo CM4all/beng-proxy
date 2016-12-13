@@ -945,7 +945,8 @@ libistream_a_SOURCES = \
 	src/istream/sink_gstring.cxx src/istream/sink_gstring.hxx \
 	src/istream/sink_fd.cxx src/istream/sink_fd.hxx
 
-pkginclude_HEADERS = \
+bpincludedir = $(includedir)/beng-proxy
+bpinclude_HEADERS = \
 	include/beng-proxy/headers.h \
 	include/beng-proxy/translation.h
 
