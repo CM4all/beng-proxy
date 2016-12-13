@@ -19,7 +19,6 @@
 
 LbCmdLine::LbCmdLine()
 {
-    memset(&user, 0, sizeof(user));
     memset(&logger_user, 0, sizeof(logger_user));
 }
 
@@ -223,8 +222,8 @@ ParseCommandLine(LbCmdLine &cmdline, LbConfig &config,
     /* check completeness */
 
     if (user_name != NULL) {
-        daemon_user_by_name(&cmdline.user, user_name, nullptr);
-        if (!daemon_user_defined(&cmdline.user))
+        cmdline.user.Lookup(user_name);
+        if (!cmdline.user.IsComplete())
             arg_error(argv[0], "refusing to run as root");
     } else if (geteuid() == 0)
         arg_error(argv[0], "no user name specified (-u)");

@@ -7,12 +7,16 @@
 #ifndef LB_CMDLINE_HXX
 #define LB_CMDLINE_HXX
 
+#include "spawn/UidGid.hxx"
+
 #include <daemon/user.h>
 
 struct LbConfig;
 
 struct LbCmdLine {
-    struct daemon_user user, logger_user;
+    UidGid user;
+
+    struct daemon_user logger_user;
 
     /**
      * The configuration file.

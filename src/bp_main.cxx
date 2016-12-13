@@ -458,13 +458,12 @@ try {
 
     /* daemonize II */
 
-    if (daemon_user_defined(&instance.cmdline.user))
+    if (!instance.cmdline.user.IsEmpty())
         capabilities_pre_setuid();
 
-    if (daemon_user_set(&instance.cmdline.user) < 0)
-        return EXIT_FAILURE;
+    instance.cmdline.user.Apply();
 
-    if (daemon_user_defined(&instance.cmdline.user))
+    if (!instance.cmdline.user.IsEmpty())
         capabilities_post_setuid(cap_keep_list, ARRAY_SIZE(cap_keep_list));
 
     /* create worker processes */

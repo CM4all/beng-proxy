@@ -36,7 +36,6 @@ enum Options {
 
 BpCmdLine::BpCmdLine()
 {
-    memset(&user, 0, sizeof(user));
     memset(&logger_user, 0, sizeof(logger_user));
 }
 
@@ -260,18 +259,6 @@ HandleSet(BpConfig &config,
     }
 }
 
-static void
-Copy(UidGid &dest, const struct daemon_user &src)
-{
-    dest.uid = src.uid;
-    dest.gid = src.gid;
-
-    size_t n_groups = std::min(src.num_groups, dest.groups.max_size());
-    std::copy_n(src.groups, n_groups, dest.groups.begin());
-    if (n_groups < dest.groups.max_size())
-        dest.groups[n_groups] = 0;
-}
-
 /** read configuration options from the command line */
 void
 ParseCommandLine(BpCmdLine &cmdline, BpConfig &config, int argc, char **argv)
@@ -481,8 +468,8 @@ ParseCommandLine(BpCmdLine &cmdline, BpConfig &config, int argc, char **argv)
     /* check completeness */
 
     if (user_name != NULL) {
-        daemon_user_by_name(&cmdline.user, user_name, nullptr);
-        if (!daemon_user_defined(&cmdline.user))
+        cmdline.user.Lookup(user_name);
+        if (!cmdline.user.IsComplete())
             arg_error(argv[0], "refusing to run as root");
     } else if (!debug_mode)
         arg_error(argv[0], "no user name specified (-u)");
@@ -508,7 +495,7 @@ ParseCommandLine(BpCmdLine &cmdline, BpConfig &config, int argc, char **argv)
         for (size_t i = 0; i < u.groups.size() && u.groups[i] != 0; ++i)
             config.spawn.allowed_gids.insert(u.groups[i]);
     } else {
-        Copy(config.spawn.default_uid_gid, cmdline.user);
+        config.spawn.default_uid_gid = cmdline.user;
         config.spawn.ignore_userns = true;
     }
 

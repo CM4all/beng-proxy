@@ -7,6 +7,8 @@
 #ifndef BENG_PROXY_CMDLINE_HXX
 #define BENG_PROXY_CMDLINE_HXX
 
+#include "spawn/UidGid.hxx"
+
 #include <daemon/user.h>
 
 struct BpConfig;
@@ -18,7 +20,9 @@ extern bool debug_mode;
 #endif
 
 struct BpCmdLine {
-    struct daemon_user user, logger_user;
+    UidGid user;
+
+    struct daemon_user logger_user;
 
     const char *config_file = "/etc/cm4all/beng/proxy/beng-proxy.conf";
 

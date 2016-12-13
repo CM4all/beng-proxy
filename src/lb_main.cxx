@@ -202,11 +202,10 @@ int main(int argc, char **argv)
 
     /* daemonize II */
 
-    if (daemon_user_defined(&instance.cmdline.user))
+    if (!instance.cmdline.user.IsEmpty())
         capabilities_pre_setuid();
 
-    if (daemon_user_set(&instance.cmdline.user) < 0)
-        return EXIT_FAILURE;
+    instance.cmdline.user.Apply();
 
     /* can't change to new (empty) rootfs if we may need to reconnect
        to PostgreSQL eventually */
@@ -214,7 +213,7 @@ int main(int argc, char **argv)
     if (!instance.config->HasCertDatabase())
         isolate_from_filesystem(instance.config->HasZeroConf());
 
-    if (daemon_user_defined(&instance.cmdline.user))
+    if (!instance.cmdline.user.IsEmpty())
         capabilities_post_setuid(cap_keep_list, ARRAY_SIZE(cap_keep_list));
 
 #ifdef __linux
