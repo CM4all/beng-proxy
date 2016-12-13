@@ -318,6 +318,12 @@ SpawnServerConnection::SpawnChild(int id, const char *name,
         return;
     }
 
+    if (p.uid_gid.IsEmpty() && config.default_uid_gid.IsEmpty()) {
+        daemon_log(1, "No uid/gid specified\n");
+        SendExit(id, W_EXITCODE(0xff, 0));
+        return;
+    }
+
     pid_t pid = SpawnChildProcess(std::move(p), config,
                                   process.GetCgroupState());
     if (pid < 0) {
