@@ -18,6 +18,14 @@ struct UidGid {
 
     constexpr UidGid():uid(0), gid(0), groups{{0}} {}
 
+    /**
+     * Look up a user name in the system user database (/etc/passwd)
+     * and fill #uid, #gid and #groups.
+     *
+     * Throws std::runtime_error on error.
+     */
+    void Lookup(const char *username);
+
     void LoadEffective();
 
     constexpr bool IsEmpty() const {
