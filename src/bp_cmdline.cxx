@@ -69,10 +69,6 @@ PrintUsage()
          " --user name\n"
 #endif
          " -u name        switch to another user id\n"
-#ifdef __GLIBC__
-         " --group name\n"
-#endif
-         " -g name        switch to another group id\n"
          " --allow-user NAME,NAME,...\n"
          "                allow spawning child processes as the given users\n"
          " --allow-group NAME,NAME,...\n"
@@ -291,7 +287,6 @@ ParseCommandLine(BpCmdLine &cmdline, BpConfig &config, int argc, char **argv)
         {"access-logger", 1, NULL, 'A'},
         {"config-file", 1, nullptr, 'f'},
         {"user", 1, NULL, 'u'},
-        {"group", 1, NULL, 'g'},
         {"logger-user", 1, NULL, 'U'},
         {"allow-user", 1, NULL, ALLOW_USER},
         {"allow-group", 1, NULL, ALLOW_GROUP},
@@ -313,7 +308,7 @@ ParseCommandLine(BpCmdLine &cmdline, BpConfig &config, int argc, char **argv)
     };
 #endif
     struct addrinfo hints;
-    const char *user_name = NULL, *group_name = NULL;
+    const char *user_name = NULL;
     const char *spawn_user = nullptr;
 
     while (1) {
@@ -321,11 +316,11 @@ ParseCommandLine(BpCmdLine &cmdline, BpConfig &config, int argc, char **argv)
         int option_index = 0;
 
         ret = getopt_long(argc, argv,
-                          "hVvqA:f:u:g:U:p:L:c:m:w:r:t:M:B:C:N:s:",
+                          "hVvqA:f:u:U:p:L:c:m:w:r:t:M:B:C:N:s:",
                           long_options, &option_index);
 #else
         ret = getopt(argc, argv,
-                     "hVvqA:f:u:g:U:p:L:c:m:w:r:t:M:B:C:N:s:");
+                     "hVvqA:f:u:U:p:L:c:m:w:r:t:M:B:C:N:s:");
 #endif
         if (ret == -1)
             break;
@@ -360,13 +355,6 @@ ParseCommandLine(BpCmdLine &cmdline, BpConfig &config, int argc, char **argv)
                 arg_error(argv[0], "cannot specify a user in debug mode");
 
             user_name = optarg;
-            break;
-
-        case 'g':
-            if (debug_mode)
-                arg_error(argv[0], "cannot specify a group in debug mode");
-
-            group_name = optarg;
             break;
 
         case ALLOW_USER:
@@ -493,12 +481,10 @@ ParseCommandLine(BpCmdLine &cmdline, BpConfig &config, int argc, char **argv)
     /* check completeness */
 
     if (user_name != NULL) {
-        daemon_user_by_name(&cmdline.user, user_name, group_name);
+        daemon_user_by_name(&cmdline.user, user_name, nullptr);
         if (!daemon_user_defined(&cmdline.user))
             arg_error(argv[0], "refusing to run as root");
-    } else if (group_name != NULL)
-        arg_error(argv[0], "cannot set --group without --user");
-    else if (!debug_mode)
+    } else if (!debug_mode)
         arg_error(argv[0], "no user name specified (-u)");
 
     if (!config.memcached_server.empty() && config.http_cache_size_set)

@@ -55,10 +55,6 @@ PrintUsage()
 #endif
          " -u name        switch to another user id\n"
 #ifdef __GLIBC__
-         " --group name\n"
-#endif
-         " -g name        switch to another group id\n"
-#ifdef __GLIBC__
          " --logger-user name\n"
 #endif
          " -U name        execute the access logger program with this user id\n"
@@ -146,23 +142,22 @@ ParseCommandLine(LbCmdLine &cmdline, LbConfig &config,
         {"check", 0, NULL, 'C'},
         {"access-logger", 1, NULL, 'A'},
         {"user", 1, NULL, 'u'},
-        {"group", 1, NULL, 'g'},
         {"logger-user", 1, NULL, 'U'},
         {"bulldog-path", 1, NULL, 'B'},
         {"set", 1, NULL, 's'},
         {NULL,0,NULL,0}
     };
 #endif
-    const char *user_name = NULL, *group_name = NULL;
+    const char *user_name = NULL;
 
     while (1) {
 #ifdef __GLIBC__
         int option_index = 0;
 
-        ret = getopt_long(argc, argv, "hVvqf:CA:u:g:U:B:s:",
+        ret = getopt_long(argc, argv, "hVvqf:CA:u:U:B:s:",
                           long_options, &option_index);
 #else
-        ret = getopt(argc, argv, "hVvqf:CA:u:g:U:B:s:");
+        ret = getopt(argc, argv, "hVvqf:CA:u:U:B:s:");
 #endif
         if (ret == -1)
             break;
@@ -200,10 +195,6 @@ ParseCommandLine(LbCmdLine &cmdline, LbConfig &config,
             user_name = optarg;
             break;
 
-        case 'g':
-            group_name = optarg;
-            break;
-
         case 'U':
             daemon_user_by_name(&cmdline.logger_user, optarg, NULL);
             break;
@@ -232,11 +223,9 @@ ParseCommandLine(LbCmdLine &cmdline, LbConfig &config,
     /* check completeness */
 
     if (user_name != NULL) {
-        daemon_user_by_name(&cmdline.user, user_name, group_name);
+        daemon_user_by_name(&cmdline.user, user_name, nullptr);
         if (!daemon_user_defined(&cmdline.user))
             arg_error(argv[0], "refusing to run as root");
-    } else if (group_name != NULL)
-        arg_error(argv[0], "cannot set --group without --user");
-    else if (geteuid() == 0)
+    } else if (geteuid() == 0)
         arg_error(argv[0], "no user name specified (-u)");
 }
