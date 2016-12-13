@@ -496,19 +496,16 @@ ParseCommandLine(BpCmdLine &cmdline, BpConfig &config, int argc, char **argv)
 
         config.spawn.default_uid_gid.LoadEffective();
     } else if (spawn_user != nullptr) {
-        struct daemon_user u;
-        if (daemon_user_by_name(&u, spawn_user, nullptr) < 0)
-            arg_error(argv[0], "Failed to look up user '%s'", spawn_user);
-
-        if (!daemon_user_defined(&cmdline.user))
+        auto &u = config.spawn.default_uid_gid;
+        u.Lookup(spawn_user);
+        if (!u.IsComplete())
             arg_error(argv[0], "refusing to spawn child processes as root");
 
-        Copy(config.spawn.default_uid_gid, u);
         config.spawn.ignore_userns = true;
 
         config.spawn.allowed_uids.insert(u.uid);
         config.spawn.allowed_gids.insert(u.gid);
-        for (size_t i = 0; i < u.num_groups; ++i)
+        for (size_t i = 0; i < u.groups.size() && u.groups[i] != 0; ++i)
             config.spawn.allowed_gids.insert(u.groups[i]);
     } else {
         Copy(config.spawn.default_uid_gid, cmdline.user);
