@@ -158,7 +158,10 @@ NamespaceOptions::Setup(const SpawnConfig &config,
             ? _uid_gid
             : config.default_uid_gid;
 
-        setup_gid_map(uid_gid.gid);
+        if (uid_gid.gid != 0)
+            setup_gid_map(uid_gid.gid);
+        // TODO: map the current effective gid if no gid was given?
+
         setup_uid_map(uid_gid.uid);
     }
 
