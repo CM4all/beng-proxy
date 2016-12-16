@@ -43,7 +43,7 @@ Exec(const char *path, const PreparedChildProcess &p,
 {
     p.cgroup.Apply(cgroup_state);
     p.refence.Apply();
-    p.ns.Setup(config);
+    p.ns.Setup(config, p.uid_gid);
     p.rlimits.Apply();
 
     if (p.chroot != nullptr && chroot(p.chroot) < 0) {

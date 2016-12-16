@@ -146,14 +146,20 @@ deny_setgroups()
 }
 
 void
-NamespaceOptions::Setup(const SpawnConfig &config) const
+NamespaceOptions::Setup(const SpawnConfig &config,
+                        const UidGid &_uid_gid) const
 {
     /* set up UID/GID mapping in the old /proc */
     if (enable_user && !config.ignore_userns) {
         // TODO: rewrite the namespace_superuser workaround
         deny_setgroups();
-        setup_gid_map(config.default_uid_gid.gid);
-        setup_uid_map(config.default_uid_gid.uid);
+
+        const auto &uid_gid = !_uid_gid.IsEmpty()
+            ? _uid_gid
+            : config.default_uid_gid;
+
+        setup_gid_map(uid_gid.gid);
+        setup_uid_map(uid_gid.uid);
     }
 
     if (enable_mount)

@@ -13,6 +13,7 @@ class AllocatorPtr;
 struct pool;
 struct MountList;
 struct SpawnConfig;
+struct UidGid;
 class MatchInfo;
 
 struct NamespaceOptions {
@@ -87,7 +88,7 @@ struct NamespaceOptions {
     gcc_pure
     int GetCloneFlags(const SpawnConfig &config, int flags) const;
 
-    void Setup(const SpawnConfig &config) const;
+    void Setup(const SpawnConfig &config, const UidGid &uid_gid) const;
 
     char *MakeId(char *p) const;
 };
