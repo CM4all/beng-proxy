@@ -16,7 +16,7 @@
 
 static const size_t NFS_BUFFER_SIZE = 32768;
 
-struct NfsIstream final : Istream {
+struct NfsIstream final : Istream, NfsClientReadFileHandler {
     NfsFileHandle *handle;
 
     /**
@@ -86,6 +86,10 @@ struct NfsIstream final : Istream {
         nfs_client_close_file(handle);
         Istream::_Close();
     }
+
+    /* virtual methods from class NfsClientReadFileHandler */
+    void OnNfsRead(const void *data, size_t length) override;
+    void OnNfsReadError(GError *error) override;
 };
 
 void
@@ -144,46 +148,39 @@ NfsIstream::ReadFromBuffer()
  *
  */
 
-static void
-istream_nfs_read_data(const void *data, size_t _length, void *ctx)
+void
+NfsIstream::OnNfsRead(const void *data, size_t _length)
 {
-    auto *n = (NfsIstream *)ctx;
-    assert(n->pending_read > 0);
-    assert(n->discard_read <= n->pending_read);
-    assert(_length <= n->pending_read);
+    assert(pending_read > 0);
+    assert(discard_read <= pending_read);
+    assert(_length <= pending_read);
 
-    if (_length < n->pending_read) {
-        nfs_client_close_file(n->handle);
+    if (_length < pending_read) {
+        nfs_client_close_file(handle);
         GError *error = g_error_new_literal(g_file_error_quark(), 0,
                                             "premature end of file");
-        n->DestroyError(error);
+        DestroyError(error);
         return;
     }
 
-    const size_t discard = n->discard_read;
-    const size_t length = n->pending_read - discard;
-    n->pending_read = 0;
-    n->discard_read = 0;
+    const size_t discard = discard_read;
+    const size_t length = pending_read - discard;
+    pending_read = 0;
+    discard_read = 0;
 
     if (length > 0)
-        n->Feed((const char *)data + discard, length);
-    n->ReadFromBuffer();
+        Feed((const char *)data + discard, length);
+    ReadFromBuffer();
 }
 
-static void
-istream_nfs_read_error(GError *error, void *ctx)
+void
+NfsIstream::OnNfsReadError(GError *error)
 {
-    auto *n = (NfsIstream *)ctx;
-    assert(n->pending_read > 0);
+    assert(pending_read > 0);
 
-    nfs_client_close_file(n->handle);
-    n->DestroyError(error);
+    nfs_client_close_file(handle);
+    DestroyError(error);
 }
-
-static constexpr NfsClientReadFileHandler istream_nfs_read_handler = {
-    istream_nfs_read_data,
-    istream_nfs_read_error,
-};
 
 inline void
 NfsIstream::ScheduleRead()
@@ -203,8 +200,7 @@ NfsIstream::ScheduleRead()
     remaining -= nbytes;
     pending_read = nbytes;
 
-    nfs_client_read_file(handle, read_offset, nbytes,
-                         &istream_nfs_read_handler, this);
+    nfs_client_read_file(handle, read_offset, nbytes, *this);
 }
 
 /*

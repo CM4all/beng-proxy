@@ -59,16 +59,17 @@ public:
 /**
  * Handler for nfs_client_read_file().
  */
-struct NfsClientReadFileHandler {
+class NfsClientReadFileHandler {
+public:
     /**
      * Data has been read from the file.
      */
-    void (*data)(const void *data, size_t length, void *ctx);
+    virtual void OnNfsRead(const void *data, size_t length) = 0;
 
     /**
      * An I/O error has occurred while reading.
      */
-    void (*error)(GError *error, void *ctx);
+    virtual void OnNfsReadError(GError *error) = 0;
 };
 
 G_GNUC_CONST
@@ -99,7 +100,6 @@ nfs_client_close_file(NfsFileHandle *handle);
 void
 nfs_client_read_file(NfsFileHandle *handle,
                      uint64_t offset, size_t length,
-                     const NfsClientReadFileHandler *handler,
-                     void *ctx);
+                     NfsClientReadFileHandler &handler);
 
 #endif

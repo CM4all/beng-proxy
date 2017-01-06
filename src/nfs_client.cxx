@@ -84,8 +84,7 @@ struct NfsFileHandle final
     } state;
 
     NfsClientOpenFileHandler *open_handler;
-    const NfsClientReadFileHandler *read_handler;
-    void *handler_ctx;
+    NfsClientReadFileHandler *read_handler;
 
     NfsFileHandle(NfsFile &_file, struct pool &_pool,
                   struct pool &_caller_pool)
@@ -107,7 +106,7 @@ struct NfsFileHandle final
 
     void Close();
     void Read(uint64_t offset, size_t length,
-              const NfsClientReadFileHandler &handler, void *ctx);
+              NfsClientReadFileHandler &handler);
 
     /* virtual methods from class Cancellable */
     void Cancel() override;
@@ -594,11 +593,11 @@ nfs_read_cb(int status, struct nfs_context *nfs,
     if (status < 0) {
         GError *error = nfs_client_new_error(status, nfs, data,
                                              "nfs_pread_async() failed");
-        handle.read_handler->error(error, handle.handler_ctx);
+        handle.read_handler->OnNfsReadError(error);
         return;
     }
 
-    handle.read_handler->data(data, status, handle.handler_ctx);
+    handle.read_handler->OnNfsRead(data, status);
 }
 
 /*
@@ -1017,8 +1016,7 @@ nfs_client_close_file(NfsFileHandle *handle)
 
 inline void
 NfsFileHandle::Read(uint64_t offset, size_t length,
-                    const NfsClientReadFileHandler &handler,
-                    void *ctx)
+                    NfsClientReadFileHandler &handler)
 {
     assert(state == IDLE);
 
@@ -1030,12 +1028,11 @@ NfsFileHandle::Read(uint64_t offset, size_t length,
         GError *error = g_error_new(nfs_client_quark(), 0,
                                     "nfs_fstat_async() failed: %s",
                                     nfs_get_error(client.context));
-        handler.error(error, ctx);
+        handler.OnNfsReadError(error);
         return;
     }
 
     read_handler = &handler;
-    handler_ctx = ctx;
     state = PENDING;
 
     client.UpdateEvent();
@@ -1044,8 +1041,7 @@ NfsFileHandle::Read(uint64_t offset, size_t length,
 void
 nfs_client_read_file(NfsFileHandle *handle,
                      uint64_t offset, size_t length,
-                     const NfsClientReadFileHandler *handler,
-                     void *ctx)
+                     NfsClientReadFileHandler &handler)
 {
-    return handle->Read(offset, length, *handler, ctx);
+    return handle->Read(offset, length, handler);
 }
