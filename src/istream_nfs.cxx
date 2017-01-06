@@ -16,7 +16,7 @@
 
 static const size_t NFS_BUFFER_SIZE = 32768;
 
-struct NfsIstream final : Istream, NfsClientReadFileHandler {
+class NfsIstream final : public Istream, NfsClientReadFileHandler {
     NfsFileHandle *handle;
 
     /**
@@ -44,14 +44,14 @@ struct NfsIstream final : Istream, NfsClientReadFileHandler {
 
     ForeignFifoBuffer<uint8_t> buffer;
 
+public:
     explicit NfsIstream(struct pool &p, NfsFileHandle &_handle,
                         uint64_t start, uint64_t end)
         :Istream(p), handle(&_handle),
          offset(start), remaining(end - start),
          buffer(nullptr) {}
 
-    using Istream::DestroyError;
-
+private:
     void ScheduleRead();
 
     /**
