@@ -14,7 +14,7 @@
 #include <assert.h>
 #include <string.h>
 
-static const size_t NFS_BUFFER_SIZE = 32768;
+static constexpr size_t NFS_BUFFER_SIZE = 32768;
 
 class NfsIstream final : public Istream, NfsClientReadFileHandler {
     NfsFileHandle *handle;
