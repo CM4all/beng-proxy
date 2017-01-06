@@ -45,8 +45,8 @@ class NfsIstream final : public Istream, NfsClientReadFileHandler {
     ForeignFifoBuffer<uint8_t> buffer;
 
 public:
-    explicit NfsIstream(struct pool &p, NfsFileHandle &_handle,
-                        uint64_t start, uint64_t end)
+    NfsIstream(struct pool &p, NfsFileHandle &_handle,
+               uint64_t start, uint64_t end)
         :Istream(p), handle(&_handle),
          offset(start), remaining(end - start),
          buffer(nullptr) {}
