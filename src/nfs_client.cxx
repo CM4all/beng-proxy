@@ -926,12 +926,13 @@ NfsClient::OpenFile(struct pool &caller_pool,
         file = NewFromPool<NfsFile>(*f_pool, GetEventLoop(), *f_pool,
                                     *this, path);
 
-        file_map.insert_commit(*file, hint);
+        auto i = file_map.insert_commit(*file, hint);
         file_list.push_front(*file);
 
         if (nfs_open_async(context, file->path, O_RDONLY,
                            nfs_open_cb, file) != 0) {
             file_list.erase(file_list.iterator_to(*file));
+            file_map.erase(i);
             pool_unref(&file->pool);
 
             GError *error = g_error_new(nfs_client_quark(), 0,
