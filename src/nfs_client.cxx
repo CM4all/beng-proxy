@@ -33,8 +33,8 @@ struct NfsFile;
  * public "handles", one for each caller.  That way, only one #nfsfh
  * (inside #NfsFile) is needed.
  */
-struct NfsFileHandle final
-    : boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>,
+class NfsFileHandle final
+    : public boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>,
       Cancellable {
 
     NfsFile &file;
@@ -86,6 +86,7 @@ struct NfsFileHandle final
     NfsClientOpenFileHandler *open_handler;
     NfsClientReadFileHandler *read_handler;
 
+public:
     NfsFileHandle(NfsFile &_file, struct pool &_pool,
                   struct pool &_caller_pool)
         :file(_file), pool(_pool), caller_pool(_caller_pool) {}
@@ -148,9 +149,9 @@ struct NfsFileHandle final
  * After a while (#nfs_file_expiry), this object expires, and will not
  * accept any more callers; a new one will be created on demand.
  */
-struct NfsFile
-    : boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>,
-      boost::intrusive::set_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
+class NfsFile
+    : public boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>,
+      public boost::intrusive::set_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
 
     struct pool &pool;
     NfsClient &client;
@@ -206,6 +207,7 @@ struct NfsFile
      */
     TimerEvent expire_event;
 
+public:
     NfsFile(EventLoop &event_loop, struct pool &_pool,
             NfsClient &_client, const char *_path)
         :pool(_pool), client(_client),
@@ -315,7 +317,7 @@ struct NfsFile
     };
 };
 
-struct NfsClient final : Cancellable {
+class NfsClient final : Cancellable {
     struct pool &pool;
 
     NfsClientHandler &handler;
@@ -377,6 +379,7 @@ struct NfsClient final : Cancellable {
 
     bool mount_finished = false;
 
+public:
     NfsClient(EventLoop &event_loop, struct pool &_pool,
               NfsClientHandler &_handler,
               struct nfs_context &_context)
@@ -589,8 +592,6 @@ inline void
 NfsFile::AbortHandles(GError *error)
 {
     handles.clear_and_dispose([this, error](NfsFileHandle *handle){
-            assert(&handle->file == this);
-
             handle->Abort(g_error_copy(error));
         });
 
@@ -729,8 +730,6 @@ NfsFile::Continue()
     handles.clear();
 
     tmp.clear_and_dispose([this](NfsFileHandle *handle){
-            assert(&handle->file == this);
-
             handles.push_front(*handle);
 
             handle->Continue(stat);
