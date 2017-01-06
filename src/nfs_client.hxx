@@ -42,18 +42,18 @@ struct NfsFileHandle;
 /**
  * Handler for nfs_client_open_file().
  */
-struct NfsClientOpenFileHandler {
+class NfsClientOpenFileHandler {
+public:
     /**
      * The file has been opened and metadata is available.  The
      * consumer may now start I/O operations.
      */
-    void (*ready)(NfsFileHandle *handle, const struct stat *st,
-                  void *ctx);
+    virtual void OnNfsOpen(NfsFileHandle *handle, const struct stat *st) = 0;
 
     /**
      * An error has occurred while opening the file.
      */
-    void (*error)(GError *error, void *ctx);
+    virtual void OnNfsOpenError(GError *error) = 0;
 };
 
 /**
@@ -90,8 +90,7 @@ nfs_client_free(NfsClient *client);
 void
 nfs_client_open_file(NfsClient *client, struct pool *pool,
                      const char *path,
-                     const NfsClientOpenFileHandler *handler,
-                     void *ctx,
+                     NfsClientOpenFileHandler &handler,
                      CancellablePointer &cancel_ptr);
 
 void

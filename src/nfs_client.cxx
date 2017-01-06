@@ -83,7 +83,7 @@ struct NfsFileHandle final
         RELEASED,
     } state;
 
-    const NfsClientOpenFileHandler *open_handler;
+    NfsClientOpenFileHandler *open_handler;
     const NfsClientReadFileHandler *read_handler;
     void *handler_ctx;
 
@@ -325,7 +325,7 @@ struct NfsClient final : Cancellable {
 
     void OpenFile(struct pool &caller_pool,
                   const char *path,
-                  const NfsClientOpenFileHandler &handler, void *ctx,
+                  NfsClientOpenFileHandler &handler,
                   CancellablePointer &cancel_ptr);
 
     /* virtual methods from class Cancellable */
@@ -467,7 +467,7 @@ NfsFileHandle::Abort(GError *error)
 {
     Deactivate();
 
-    open_handler->error(error, handler_ctx);
+    open_handler->OnNfsOpenError(error);
 
     pool_unref(&caller_pool);
     pool_unref(&pool);
@@ -623,8 +623,7 @@ NfsFile::Continue()
             handle->state = NfsFileHandle::IDLE;
 
             struct pool &caller_pool = handle->caller_pool;
-            handle->open_handler->ready(handle, &stat,
-                                        handle->handler_ctx);
+            handle->open_handler->OnNfsOpen(handle, &stat);
             pool_unref(&caller_pool);
         });
 }
@@ -915,7 +914,7 @@ nfs_client_free(NfsClient *client)
 inline void
 NfsClient::OpenFile(struct pool &caller_pool,
                     const char *path,
-                    const NfsClientOpenFileHandler &_handler, void *ctx,
+                    NfsClientOpenFileHandler &_handler,
                     CancellablePointer &cancel_ptr)
 {
     assert(context != nullptr);
@@ -939,7 +938,7 @@ NfsClient::OpenFile(struct pool &caller_pool,
             GError *error = g_error_new(nfs_client_quark(), 0,
                                         "nfs_open_async() failed: %s",
                                         nfs_get_error(context));
-            _handler.error(error, ctx);
+            _handler.OnNfsOpenError(error);
             return;
         }
     } else
@@ -964,11 +963,10 @@ NfsClient::OpenFile(struct pool &caller_pool,
     if (file->IsReady()) {
         handle->state = NfsFileHandle::IDLE;
 
-        _handler.ready(handle, &file->stat, ctx);
+        _handler.OnNfsOpen(handle, &file->stat);
     } else {
         handle->state = NfsFileHandle::WAITING;
         handle->open_handler = &_handler;
-        handle->handler_ctx = ctx;
 
         cancel_ptr = *handle;
 
@@ -979,11 +977,10 @@ NfsClient::OpenFile(struct pool &caller_pool,
 void
 nfs_client_open_file(NfsClient *client, struct pool *caller_pool,
                      const char *path,
-                     const NfsClientOpenFileHandler *handler,
-                     void *ctx,
+                     NfsClientOpenFileHandler &handler,
                      CancellablePointer &cancel_ptr)
 {
-    client->OpenFile(*caller_pool, path, *handler, ctx, cancel_ptr);
+    client->OpenFile(*caller_pool, path, handler, cancel_ptr);
 }
 
 inline void

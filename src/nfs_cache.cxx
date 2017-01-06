@@ -122,7 +122,7 @@ private:
     }
 };
 
-struct NfsCacheRequest {
+struct NfsCacheRequest final : NfsClientOpenFileHandler {
     struct pool &pool;
 
     NfsCache &cache;
@@ -142,6 +142,16 @@ struct NfsCacheRequest {
          key(_key), path(_path),
          handler(_handler), handler_ctx(_ctx),
          cancel_ptr(_cancel_ptr) {}
+
+    void Error(GError *error) {
+        handler.error(error, handler_ctx);
+    }
+
+    /* virtual methods from class NfsClientOpenFileHandler */
+    void OnNfsOpen(NfsFileHandle *handle, const struct stat *st) override;
+    void OnNfsOpenError(GError *error) override {
+        Error(error);
+    }
 };
 
 struct NfsCacheHandle {
@@ -193,7 +203,7 @@ nfs_cache_request_error(GError *error, void *ctx)
 {
     NfsCacheRequest *r = (NfsCacheRequest *)ctx;
 
-    r->handler.error(error, r->handler_ctx);
+    r->Error(error);
 }
 
 NfsCacheStore::NfsCacheStore(struct pool &_pool, NfsCache &_cache,
@@ -287,30 +297,22 @@ NfsCacheStore::RubberError(GError *error)
  *
  */
 
-static void
-nfs_open_ready(NfsFileHandle *handle, const struct stat *st,
-               void *ctx)
+void
+NfsCacheRequest::OnNfsOpen(NfsFileHandle *handle, const struct stat *st)
 {
-    auto &r = *(NfsCacheRequest *)ctx;
-
     NfsCacheHandle handle2 = {
-        .cache = r.cache,
-        .key = r.key,
+        .cache = cache,
+        .key = key,
         .file = handle,
         .item = nullptr,
         .stat = *st,
     };
 
-    r.handler.response(handle2, *st, r.handler_ctx);
+    handler.response(handle2, *st, handler_ctx);
 
     if (handle2.file != nullptr)
         nfs_client_close_file(handle2.file);
 }
-
-static constexpr NfsClientOpenFileHandler nfs_open_handler = {
-    .ready = nfs_open_ready,
-    .error = nfs_cache_request_error,
-};
 
 /*
  * nfs_stock_get_handler
@@ -323,7 +325,7 @@ nfs_cache_request_stock_ready(NfsClient *client, void *ctx)
     auto &r = *(NfsCacheRequest *)ctx;
 
     nfs_client_open_file(client, &r.pool, r.path,
-                         &nfs_open_handler, &r, r.cancel_ptr);
+                         r, r.cancel_ptr);
 }
 
 static constexpr NfsStockGetHandler nfs_cache_request_stock_handler = {

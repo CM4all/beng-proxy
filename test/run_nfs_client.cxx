@@ -16,7 +16,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-struct Context final : NfsClientHandler {
+struct Context final : NfsClientHandler, NfsClientOpenFileHandler {
     EventLoop event_loop;
 
     struct pool *pool;
@@ -42,6 +42,10 @@ struct Context final : NfsClientHandler {
     void OnNfsClientReady(NfsClient &client) override;
     void OnNfsMountError(GError *error) override;
     void OnNfsClientClosed(GError *error) override;
+
+    /* virtual methods from class NfsClientOpenFileHandler */
+    void OnNfsOpen(NfsFileHandle *handle, const struct stat *st) override;
+    void OnNfsOpenError(GError *error) override;
 };
 
 void
@@ -115,44 +119,35 @@ static constexpr SinkFdHandler my_sink_fd_handler = {
  *
  */
 
-static void
-my_open_ready(NfsFileHandle *handle, const struct stat *st, void *ctx)
+void
+Context::OnNfsOpen(NfsFileHandle *handle, const struct stat *st)
 {
-    Context *c = (Context *)ctx;
+    assert(!aborted);
+    assert(!failed);
+    assert(connected);
 
-    assert(!c->aborted);
-    assert(!c->failed);
-    assert(c->connected);
-
-    Istream *body = istream_nfs_new(*c->pool, *handle, 0, st->st_size);
-    body = istream_pipe_new(c->pool, *body, nullptr);
-    c->body = sink_fd_new(*c->pool, *body, 1, guess_fd_type(1),
-                          my_sink_fd_handler, ctx);
-    body->Read();
+    auto *_body = istream_nfs_new(*pool, *handle, 0, st->st_size);
+    _body = istream_pipe_new(pool, *_body, nullptr);
+    body = sink_fd_new(*pool, *_body, 1, guess_fd_type(1),
+                       my_sink_fd_handler, this);
+    _body->Read();
 }
 
-static void
-my_open_error(GError *error, void *ctx)
+void
+Context::OnNfsOpenError(GError *error)
 {
-    Context *c = (Context *)ctx;
+    assert(!aborted);
+    assert(!failed);
+    assert(connected);
 
-    assert(!c->aborted);
-    assert(!c->failed);
-    assert(c->connected);
-
-    c->failed = true;
+    failed = true;
 
     g_printerr("open error: %s\n", error->message);
     g_error_free(error);
 
-    c->shutdown_listener.Disable();
-    nfs_client_free(c->client);
+    shutdown_listener.Disable();
+    nfs_client_free(client);
 }
-
-static constexpr NfsClientOpenFileHandler my_open_handler = {
-    .ready = my_open_ready,
-    .error = my_open_error,
-};
 
 /*
  * nfs_client_handler
@@ -171,8 +166,7 @@ Context::OnNfsClientReady(NfsClient &_client)
     client = &_client;
 
     nfs_client_open_file(client, pool, path,
-                         &my_open_handler, this,
-                         cancel_ptr);
+                         *this, cancel_ptr);
 }
 
 void
