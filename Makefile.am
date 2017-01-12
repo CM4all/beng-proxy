@@ -316,6 +316,7 @@ cm4all_beng_proxy_LDADD = $(AM_LDADD) \
 	$(BOOST_FILESYSTEM_LIB) \
 	$(BOOST_SYSTEM_LIB) \
 	$(AVAHI_LIBS) \
+	$(LIBSECCOMP_LIBS) \
 	$(DBUS_LIBS) \
 	$(LIBSYSTEMD_LIBS) \
 	$(LIBPCRE_LIBS) \
@@ -767,6 +768,7 @@ libodbus_a_CPPFLAGS = $(AM_CPPFLAGS) \
 
 libspawn_a_SOURCES = \
 	src/spawn/Config.hxx \
+	src/spawn/SeccompFilter.cxx src/spawn/SeccompFilter.hxx \
 	src/spawn/Systemd.cxx src/spawn/Systemd.hxx \
 	src/spawn/CgroupState.hxx \
 	src/spawn/Prepared.cxx src/spawn/Prepared.hxx \
@@ -786,6 +788,7 @@ libspawn_a_SOURCES = \
 	src/spawn/ResourceLimits.cxx src/spawn/ResourceLimits.hxx \
 	src/spawn/RefenceOptions.cxx src/spawn/RefenceOptions.hxx
 libspawn_a_CPPFLAGS = $(AM_CPPFLAGS) \
+	$(SECCOMP_CFLAGS) \
 	$(DBUS_CFLAGS) \
 	$(LIBSYSTEMD_CFLAGS)
 
@@ -1138,6 +1141,7 @@ test_run_was_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_HTTP_LIBS) \
 	$(LIBSYSTEMD_LIBS) \
 	$(LIBPCRE_LIBS) \
+	$(LIBSECCOMP_LIBS) \
 	$(GLIB_LIBS)
 
 test_was_mirror_SOURCES = test/was_mirror.cxx \
@@ -1470,6 +1474,7 @@ test_t_cgi_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_DAEMON_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS) \
 	$(LIBSYSTEMD_LIBS) \
+	$(LIBSECCOMP_LIBS) \
 	$(LIBPCRE_LIBS)
 
 test_t_http_server_SOURCES = test/t_http_server.cxx \
@@ -2198,6 +2203,7 @@ test_run_delegate_LDADD = $(AM_LDADD) \
 	libutil.a \
 	$(LIBCM4ALL_DAEMON_LIBS) \
 	$(LIBSYSTEMD_LIBS) \
+	$(LIBSECCOMP_LIBS) \
 	$(LIBPCRE_LIBS)
 
 test_dump_udp_SOURCES = test/dump_udp.cxx

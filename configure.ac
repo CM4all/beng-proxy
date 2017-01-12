@@ -89,6 +89,9 @@ PKG_CHECK_MODULES([LIBPCRE], [libpcre],,
 PKG_CHECK_MODULES([LIBSSL], [openssl],,
 	[AC_MSG_ERROR([OpenSSL not found])])
 
+PKG_CHECK_MODULES([LIBSECCOMP], [libseccomp],,
+	[AC_MSG_ERROR([libseccomp not found])])
+
 AC_ARG_WITH(pg-config,
 	AS_HELP_STRING([--with-pg-config=PATH],
 		[The path of libpq's pg_config script]),
