@@ -93,8 +93,6 @@ public:
 #endif
 
     class Builder final {
-        ExpandableStringList *list;
-
         Item **tail_r;
 
         Item *last;
@@ -103,7 +101,7 @@ public:
         Builder() = default;
 
         Builder(ExpandableStringList &_list)
-            :list(&_list), tail_r(&_list.head), last(nullptr) {}
+            :tail_r(&_list.head), last(nullptr) {}
 
         /**
          * Add a new item to the end of the list.  The pool is only

@@ -58,8 +58,6 @@ void
 ExpandableStringList::Builder::Add(AllocatorPtr alloc,
                                    const char *value, bool expandable)
 {
-    assert(list != nullptr);
-
     auto *item = last = alloc.New<Item>(value, expandable);
     *tail_r = item;
     tail_r = &item->next;
