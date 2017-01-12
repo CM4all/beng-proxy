@@ -1,6 +1,7 @@
 cm4all-beng-proxy (10.36) unstable; urgency=low
 
   * certdb: fix crash bug
+  * lb: allow core dumps from within the isolated process
 
  --   
 

@@ -111,6 +111,27 @@ isolate_from_filesystem()
     symlink("/run", "var/run");
     chmod("var", 0111);
 
+    struct stat st;
+    if (stat("/var/lib/cm4all/save-core/incoming", &st) == 0 && S_ISDIR(st.st_mode)) {
+        /* bind-mount the cm4all-save-core "incoming" directory so
+           beng-lb can generate core dumps */
+
+        mkdir("var/lib", 0700);
+        mkdir("var/lib/cm4all", 0700);
+        mkdir("var/lib/cm4all/save-core", 0700);
+        mkdir("var/lib/cm4all/save-core/incoming", 0);
+
+        mount("/var/lib/cm4all/save-core/incoming",
+              "var/lib/cm4all/save-core/incoming",
+              nullptr, MS_BIND, nullptr);
+        mount(nullptr, "var/lib/cm4all/save-core/incoming", nullptr,
+              MS_REMOUNT|MS_BIND|MS_NOEXEC|MS_NOSUID, nullptr);
+
+        chmod("var/lib", 0111);
+        chmod("var/lib/cm4all", 0111);
+        chmod("var/lib/cm4all/save-core", 0111);
+    }
+
     /* enter the new root */
     mkdir(put_old, 0);
     if (my_pivot_root(new_root, put_old) < 0) {
