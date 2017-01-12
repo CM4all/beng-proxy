@@ -169,8 +169,12 @@ private:
                                   "SELECT id FROM server_certificate_alt_name"
                                   " WHERE server_certificate_id=server_certificate.id"
                                   " AND name=$1))"
+                                  "ORDER BY"
+                                  /* prefer certificates which expire later */
+                                  " not_after DESC,"
                                   /* prefer exact match in common_name: */
-                                  "ORDER BY common_name=$1 DESC LIMIT 1",
+                                  " common_name=$1 DESC "
+                                  "LIMIT 1",
                                   common_name);
     }
 
@@ -184,8 +188,12 @@ public:
                                   "SELECT id FROM server_certificate_alt_name"
                                   " WHERE server_certificate_id=server_certificate.id"
                                   " AND name=$1))"
+                                  "ORDER BY"
+                                  /* prefer certificates which expire later */
+                                  " not_after DESC,"
                                   /* prefer exact match in common_name: */
-                                  "ORDER BY common_name=$1 DESC LIMIT 1",
+                                  " common_name=$1 DESC "
+                                  "LIMIT 1",
                                   common_name);
     }
 
