@@ -5,6 +5,7 @@
 #include "Direct.hxx"
 #include "Prepared.hxx"
 #include "Config.hxx"
+#include "SeccompFilter.hxx"
 #include "system/sigutil.h"
 #include "io/FileDescriptor.hxx"
 
@@ -86,6 +87,29 @@ Exec(const char *path, const PreparedChildProcess &p,
     CheckedDup2(p.control_fd, CONTROL_FILENO);
 
     setsid();
+
+    try {
+        SeccompFilter sf(SCMP_ACT_ALLOW);
+
+        /* forbid a bunch of dangerous system calls */
+
+        sf.AddRule(SCMP_ACT_KILL, SCMP_SYS(init_module));
+        sf.AddRule(SCMP_ACT_KILL, SCMP_SYS(delete_module));
+        sf.AddRule(SCMP_ACT_KILL, SCMP_SYS(reboot));
+        sf.AddRule(SCMP_ACT_KILL, SCMP_SYS(settimeofday));
+        sf.AddRule(SCMP_ACT_KILL, SCMP_SYS(adjtimex));
+        sf.AddRule(SCMP_ACT_KILL, SCMP_SYS(swapon));
+        sf.AddRule(SCMP_ACT_KILL, SCMP_SYS(swapoff));
+
+        /* ptrace() is dangerous because it allows breaking out of
+           namespaces */
+        sf.AddRule(SCMP_ACT_KILL, SCMP_SYS(ptrace));
+
+        sf.Load();
+    } catch (const std::runtime_error &e) {
+        fprintf(stderr, "Failed to setup seccomp filter for '%s': %s\n",
+                path, e.what());
+    }
 
     execve(path, const_cast<char *const*>(p.args.raw()),
            const_cast<char *const*>(p.env.raw()));

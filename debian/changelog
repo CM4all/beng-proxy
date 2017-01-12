@@ -1,6 +1,7 @@
 cm4all-beng-proxy (12.0.4) unstable; urgency=low
 
   * merge release 11.13
+  * spawn: forbid ptrace() and other dangerous system calls
 
  --   
 
