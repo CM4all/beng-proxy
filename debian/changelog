@@ -1,6 +1,6 @@
 cm4all-beng-proxy (10.36) unstable; urgency=low
 
-  * 
+  * certdb: fix crash bug
 
  --   
 
