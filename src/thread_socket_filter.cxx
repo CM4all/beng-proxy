@@ -655,6 +655,8 @@ thread_socket_filter_closed(void *ctx)
 
     f->connected = false;
     f->want_write = false;
+
+    f->handshake_timeout_event.Cancel();
 }
 
 static bool

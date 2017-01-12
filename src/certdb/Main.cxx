@@ -437,6 +437,18 @@ AcmeNewCert(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
 static void
 Acme(ConstBuffer<const char *> args)
 {
+    bool staging = false;
+
+    while (!args.IsEmpty() && args.front()[0] == '-') {
+        const char *arg = args.front();
+
+        if (strcmp(arg, "--staging") == 0) {
+            args.shift();
+            staging = true;
+        } else
+            break;
+    }
+
     if (args.IsEmpty())
         throw "acme commands:\n"
             "  new-reg EMAIL\n"
@@ -448,12 +460,6 @@ Acme(ConstBuffer<const char *> args)
             "  --staging     use the Let's Encrypt staging server\n";
 
     const char *key_path = "/etc/cm4all/acme/account.key";
-
-    bool staging = false;
-    if (!args.IsEmpty() && strcmp(args.front(), "--staging") == 0) {
-        args.shift();
-        staging = true;
-    }
 
     const auto cmd = args.shift();
 
