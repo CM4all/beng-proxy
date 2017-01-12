@@ -1,5 +1,6 @@
 cm4all-beng-proxy (11.13) unstable; urgency=low
 
+  * merge release 10.36
   * certdb: prefer certificates which expire later
 
  --   
@@ -134,6 +135,13 @@ cm4all-beng-proxy (11.0.1) unstable; urgency=low
   * ZeroConf publish support
 
  -- Max Kellermann <mk@cm4all.com>  Tue, 30 Aug 2016 22:24:03 -0000
+
+cm4all-beng-proxy (10.36) unstable; urgency=low
+
+  * certdb: fix crash bug
+  * lb: allow core dumps from within the isolated process
+
+ -- Max Kellermann <mk@cm4all.com>  Thu, 12 Jan 2017 20:08:07 -0000
 
 cm4all-beng-proxy (10.35) unstable; urgency=low
 
