@@ -12,6 +12,8 @@
 
 #include <systemd/sd-journal.h>
 
+#include <exception>
+
 #include <assert.h>
 #include <string.h>
 #include <unistd.h>
@@ -117,7 +119,12 @@ spawn_fn(void *_ctx)
     install_default_signal_handlers();
     leave_signal_section(&ctx.signals);
 
-    Exec(ctx.path, ctx.params, ctx.config, ctx.cgroup_state);
+    try {
+        Exec(ctx.path, ctx.params, ctx.config, ctx.cgroup_state);
+    } catch (const std::exception &e) {
+        fprintf(stderr, "%s\n", e.what());
+        _exit(EXIT_FAILURE);
+    }
 }
 
 pid_t
