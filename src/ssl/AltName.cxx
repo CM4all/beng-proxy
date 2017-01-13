@@ -3,25 +3,20 @@
  */
 
 #include "AltName.hxx"
+#include "GeneralName.hxx"
 #include "Unique.hxx"
 
 static void
 FillNameList(std::list<std::string> &list, GENERAL_NAMES &gn)
 {
     for (int i = 0, n = sk_GENERAL_NAME_num(&gn); i < n; ++i) {
-        const GENERAL_NAME *name = sk_GENERAL_NAME_value(&gn, i);
-        if (name->type == GEN_DNS) {
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L
-            const unsigned char *dns_name = ASN1_STRING_get0_data(name->d.dNSName);
-#else
-            unsigned char *dns_name = ASN1_STRING_data(name->d.dNSName);
-#endif
-            if (dns_name == nullptr)
+        const OpenSSL::GeneralName name(sk_GENERAL_NAME_value(&gn, i));
+        if (name.GetType() == GEN_DNS) {
+            const auto dns_name = name.GetDnsName();
+            if (dns_name.IsNull())
                 continue;
 
-            int dns_name_len = ASN1_STRING_length(name->d.dNSName);
-            list.push_back(std::string(reinterpret_cast<const char *>(dns_name),
-                                       dns_name_len));
+            list.push_back(std::string(dns_name.data, dns_name.size));
         }
     }
 }

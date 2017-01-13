@@ -859,6 +859,7 @@ libssl_a_SOURCES = \
 	src/ssl/LoadFile.cxx src/ssl/LoadFile.hxx \
 	src/ssl/AltName.cxx src/ssl/AltName.hxx \
 	src/ssl/Name.cxx src/ssl/Name.hxx \
+	src/ssl/GeneralName.hxx \
 	src/ssl/MemBio.hxx \
 	src/ssl/Base64.hxx \
 	src/ssl/Error.cxx src/ssl/Error.hxx \

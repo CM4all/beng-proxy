@@ -9,6 +9,7 @@
 #include "ssl/LoadFile.hxx"
 #include "ssl/AltName.hxx"
 #include "ssl/Name.hxx"
+#include "ssl/GeneralName.hxx"
 #include "ssl/MemBio.hxx"
 #include "ssl/Unique.hxx"
 #include "ssl/Error.hxx"
@@ -284,9 +285,8 @@ AddDnsAltNames(X509_REQ &req, const L &hosts)
     std::unique_ptr<GENERAL_NAMES, GeneralNamePopFree>
         ns(sk_GENERAL_NAME_new_null());
     for (const auto &host : hosts) {
-        GENERAL_NAME *n = a2i_GENERAL_NAME(nullptr, nullptr, nullptr, GEN_DNS,
-                                           const_cast<char *>(host), 0);
-        sk_GENERAL_NAME_push(ns.get(), n);
+        auto n = OpenSSL::ToDnsName(host);
+        sk_GENERAL_NAME_push(ns.get(), n.release());
     }
 
     std::unique_ptr<STACK_OF(X509_EXTENSION), ExtensionPopFree>
