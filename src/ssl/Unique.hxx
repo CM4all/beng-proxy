@@ -8,7 +8,6 @@
 #define BENG_PROXY_SSL_UNIQUE_HXX
 
 #include <openssl/ssl.h>
-#include <openssl/x509v3.h>
 #include <openssl/bn.h>
 
 #include <memory>
