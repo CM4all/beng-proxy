@@ -93,6 +93,14 @@ public:
 
     UniqueX509 GetServerCertificate(const char *name);
 
+    /**
+     * Throws std:;runtime_error on error.
+     *
+     * @return a pair of certificate and key, or {nullptr, nullptr} if
+     * no matching certificate was found
+     */
+    std::pair<UniqueX509, UniqueEVP_PKEY> GetServerCertificateKey(const char *name);
+
 private:
     PgResult InsertServerCertificate(const char *common_name,
                                      const char *not_before,

@@ -72,36 +72,15 @@ ReloadCertificate(const char *host)
 
     CertDatabase db(*db_config);
 
-    auto result = CheckError(db.FindServerCertificateKeyByName(host));
-    if (result.GetRowCount() == 0)
+    auto cert_key = db.GetServerCertificateKey(host);
+    if (!cert_key.second)
         throw "Certificate not found";
-
-    const auto cert_der = result.GetBinaryValue(0, 0);
-    auto key_der = result.GetBinaryValue(0, 1);
-
-    std::unique_ptr<unsigned char[]> unwrapped;
-    if (!result.IsValueNull(0, 2)) {
-        /* the private key is encrypted; descrypt it using the AES key
-           from the configuration file */
-        const auto key_wrap_name = result.GetValue(0, 2);
-        key_der = UnwrapKey(key_der, *db_config, key_wrap_name,
-                            unwrapped);
-    }
-
-    auto cert_data = (const unsigned char *)cert_der.data;
-    UniqueX509 cert(d2i_X509(nullptr, &cert_data, cert_der.size));
-    if (!cert)
-        throw SslError("d2i_X509() failed");
-
-    auto key_data = (const unsigned char *)key_der.data;
-    UniqueEVP_PKEY key(d2i_AutoPrivateKey(nullptr, &key_data, key_der.size));
-    if (!key)
-        throw SslError("d2i_AutoPrivateKey() failed");
 
     WrapKeyHelper wrap_key_helper;
     const auto wrap_key = wrap_key_helper.SetEncryptKey(*db_config);
 
-    db.LoadServerCertificate(*cert, *key, wrap_key.first, wrap_key.second);
+    db.LoadServerCertificate(*cert_key.first, *cert_key.second,
+                             wrap_key.first, wrap_key.second);
 }
 
 static void
@@ -125,30 +104,7 @@ DeleteCertificate(const char *host)
 static UniqueEVP_PKEY
 FindKeyByName(CertDatabase &db, const char *common_name)
 {
-    auto result = CheckError(db.FindServerCertificateKeyByName(common_name));
-    if (result.GetRowCount() == 0)
-        return nullptr;
-
-    if (!result.IsColumnBinary(1) || result.IsValueNull(0, 1))
-        throw std::runtime_error("Unexpected result");
-
-    auto key_der = result.GetBinaryValue(0, 1);
-
-    std::unique_ptr<unsigned char[]> unwrapped;
-    if (!result.IsValueNull(0, 2)) {
-        /* the private key is encrypted; descrypt it using the AES key
-           from the configuration file */
-        const auto key_wrap_name = result.GetValue(0, 2);
-        key_der = UnwrapKey(key_der, *db_config, key_wrap_name,
-                            unwrapped);
-    }
-
-    auto key_data = (const unsigned char *)key_der.data;
-    UniqueEVP_PKEY key(d2i_AutoPrivateKey(nullptr, &key_data, key_der.size));
-    if (!key)
-        throw SslError("d2i_AutoPrivateKey() failed");
-
-    return key;
+    return db.GetServerCertificateKey(common_name).second;
 }
 
 static UniqueX509

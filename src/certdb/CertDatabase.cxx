@@ -4,13 +4,16 @@
 
 #include "CertDatabase.hxx"
 #include "Config.hxx"
+#include "WrapKey.hxx"
 #include "pg/CheckError.hxx"
 #include "ssl/MemBio.hxx"
 #include "ssl/Buffer.hxx"
 #include "ssl/Name.hxx"
 #include "ssl/AltName.hxx"
+#include "ssl/Key.hxx"
 
 #include <openssl/aes.h>
+#include <openssl/err.h>
 
 #include <sys/poll.h>
 
@@ -229,4 +232,46 @@ CertDatabase::GetServerCertificate(const char *name)
         throw "d2i_X509() failed";
 
     return cert;
+}
+
+std::pair<UniqueX509, UniqueEVP_PKEY>
+CertDatabase::GetServerCertificateKey(const char *name)
+{
+    auto result = CheckError(FindServerCertificateKeyByName(name));
+    if (result.GetRowCount() == 0)
+        return std::make_pair(nullptr, nullptr);
+
+    if (!result.IsColumnBinary(0) || result.IsValueNull(0, 0) ||
+        !result.IsColumnBinary(1) || result.IsValueNull(0, 1))
+        throw std::runtime_error("Unexpected result");
+
+    const auto cert_der = result.GetBinaryValue(0, 0);
+    auto key_der = result.GetBinaryValue(0, 1);
+
+    ERR_clear_error();
+
+    std::unique_ptr<unsigned char[]> unwrapped;
+    if (!result.IsValueNull(0, 2)) {
+        /* the private key is encrypted; descrypt it using the AES key
+           from the configuration file */
+        const auto key_wrap_name = result.GetValue(0, 2);
+        key_der = UnwrapKey(key_der, config, key_wrap_name,
+                            unwrapped);
+    }
+
+    auto cert_data = (const unsigned char *)cert_der.data;
+    UniqueX509 cert(d2i_X509(nullptr, &cert_data, cert_der.size));
+    if (!cert)
+        throw SslError("d2i_X509() failed");
+
+    auto key_data = (const unsigned char *)key_der.data;
+    UniqueEVP_PKEY key(d2i_AutoPrivateKey(nullptr, &key_data, key_der.size));
+    if (!key)
+        throw SslError("d2i_AutoPrivateKey() failed");
+
+    if (!MatchModulus(*cert, *key))
+        throw std::runtime_error(std::string("Key does not match certificate for '")
+                                 + name + "'");
+
+    return std::make_pair(std::move(cert), std::move(key));
 }

@@ -6,12 +6,10 @@
 
 #include "Cache.hxx"
 #include "Basic.hxx"
-#include "Key.hxx"
 #include "Name.hxx"
 #include "Error.hxx"
 #include "LoadFile.hxx"
 #include "certdb/Wildcard.hxx"
-#include "certdb/WrapKey.hxx"
 #include "pg/CheckError.hxx"
 #include "util/AllocatedString.hxx"
 
@@ -80,40 +78,11 @@ CertCache::Query(const char *host)
     auto db = dbs.Get(config);
     db->EnsureConnected();
 
-    auto result = CheckError(db->FindServerCertificateKeyByName(host));
-    if (result.GetRowCount() < 1 ||
-        result.IsValueNull(0, 0) || result.IsValueNull(0, 1))
+    auto cert_key = db->GetServerCertificateKey(host);
+    if (!cert_key.second)
         return std::shared_ptr<SSL_CTX>();
 
-    const auto cert_der = result.GetBinaryValue(0, 0);
-    auto key_der = result.GetBinaryValue(0, 1);
-
-    ERR_clear_error();
-
-    std::unique_ptr<unsigned char[]> unwrapped;
-    if (!result.IsValueNull(0, 2)) {
-        /* the private key is encrypted; descrypt it using the AES key
-           from the configuration file */
-        const auto key_wrap_name = result.GetValue(0, 2);
-        key_der = UnwrapKey(key_der, config, key_wrap_name,
-                            unwrapped);
-    }
-
-    auto cert_data = (const unsigned char *)cert_der.data;
-    UniqueX509 cert(d2i_X509(nullptr, &cert_data, cert_der.size));
-    if (!cert)
-        throw SslError("d2i_X509() failed");
-
-    auto key_data = (const unsigned char *)key_der.data;
-    UniqueEVP_PKEY key(d2i_AutoPrivateKey(nullptr, &key_data, key_der.size));
-    if (!key)
-        throw SslError("d2i_AutoPrivateKey() failed");
-
-    if (!MatchModulus(*cert, *key))
-        throw SslError(std::string("Key does not match certificate for '")
-                       + host + "'");
-
-    return Add(std::move(cert), std::move(key));
+    return Add(std::move(cert_key.first), std::move(cert_key.second));
 }
 
 std::shared_ptr<SSL_CTX>
