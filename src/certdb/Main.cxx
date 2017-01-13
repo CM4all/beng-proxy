@@ -29,6 +29,7 @@
 #include <json/json.h>
 
 #include <stdexcept>
+#include <set>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -204,6 +205,22 @@ Tail()
                row.GetValue(2));
 }
 
+static void
+CopyCommonName(X509_REQ &req, X509 &src)
+{
+    X509_NAME *src_subject = X509_get_subject_name(&src);
+    if (src_subject == nullptr)
+        return;
+
+    int i = X509_NAME_get_index_by_NID(src_subject, NID_commonName, -1);
+    if (i < 0)
+        return;
+
+    auto *common_name = X509_NAME_get_entry(src_subject, i);
+    auto *dest_subject = X509_REQ_get_subject_name(&req);
+    X509_NAME_add_entry(dest_subject, common_name, -1, 0);
+}
+
 /**
  * Add a subject_alt_name extension for each host name in the list.
  */
@@ -216,6 +233,29 @@ AddDnsAltNames(X509_REQ &req, const L &hosts)
         ns.push_back(OpenSSL::ToDnsName(host));
 
     AddAltNames(req, ns);
+}
+
+/**
+ * Copy the subject_alt_name extension from the source certificate to
+ * the request.
+ */
+static void
+CopyDnsAltNames(X509_REQ &req, X509 &src)
+{
+    int i = X509_get_ext_by_NID(&src, NID_subject_alt_name, -1);
+    if (i < 0)
+        /* no subject_alt_name found, no-op */
+        return;
+
+    auto ext = X509_get_ext(&src, i);
+    if (ext == nullptr)
+        return;
+
+    OpenSSL::UniqueGeneralNames gn(reinterpret_cast<GENERAL_NAMES *>(X509V3_EXT_d2i(ext)));
+    if (!gn)
+        return;
+
+    AddAltNames(req, gn);
 }
 
 static UniqueX509
@@ -254,6 +294,24 @@ MakeCertRequest(EVP_PKEY &key, const char *common_name,
         throw SslError("X509_NAME_add_entry_by_NID() failed");
 
     AddDnsAltNames(*req, alt_hosts);
+
+    X509_REQ_set_pubkey(req.get(), &key);
+
+    if (!X509_REQ_sign(req.get(), &key, EVP_sha1()))
+        throw SslError("X509_REQ_sign() failed");
+
+    return req;
+}
+
+static UniqueX509_REQ
+MakeCertRequest(EVP_PKEY &key, X509 &src)
+{
+    UniqueX509_REQ req(X509_REQ_new());
+    if (req == nullptr)
+        throw "X509_REQ_new() failed";
+
+    CopyCommonName(*req, src);
+    CopyDnsAltNames(*req, src);
 
     X509_REQ_set_pubkey(req.get(), &key);
 
@@ -325,6 +383,25 @@ AcmeNewCert(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
 }
 
 static void
+AcmeNewCertAll(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
+               X509 &old_cert, EVP_PKEY &cert_key)
+{
+    const auto req = MakeCertRequest(cert_key, old_cert);
+    AcmeNewCert(key, db, client, cert_key, *req);
+}
+
+static void
+AcmeNewCertAll(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
+               const char *host)
+{
+    const auto old_cert_key = db.GetServerCertificateKey(host);
+    if (!old_cert_key.second)
+        throw "Old certificate not found in database";
+
+    AcmeNewCertAll(key, db, client, *old_cert_key.first, *old_cert_key.second);
+}
+
+static void
 AcmeNewAuthzCert(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
                  const char *host, ConstBuffer<const char *> alt_hosts)
 {
@@ -335,10 +412,42 @@ AcmeNewAuthzCert(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
     AcmeNewCert(key, db, client, host, alt_hosts);
 }
 
+static std::set<std::string>
+AllNames(X509 &cert)
+{
+    std::set<std::string> result;
+
+    for (auto &i : GetSubjectAltNames(cert))
+        result.emplace(std::move(i));
+
+    const auto cn = GetCommonName(cert);
+    if (!cn.IsNull())
+        result.emplace(cn.c_str());
+
+    return result;
+}
+
+static void
+AcmeNewAuthzCertAll(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
+                    const char *host)
+{
+    const auto old_cert_key = db.GetServerCertificateKey(host);
+    if (!old_cert_key.second)
+        throw "Old certificate not found in database";
+
+    auto &old_cert = *old_cert_key.first;
+    auto &old_key = *old_cert_key.second;
+
+    for (const auto &i : AllNames(old_cert))
+        AcmeNewAuthz(key, db, client, i.c_str());
+
+    AcmeNewCertAll(key, db, client, old_cert, old_key);
+}
+
 static void
 Acme(ConstBuffer<const char *> args)
 {
-    bool staging = false, fake = false;
+    bool staging = false, fake = false, all = false;
 
     while (!args.IsEmpty() && args.front()[0] == '-') {
         const char *arg = args.front();
@@ -351,6 +460,9 @@ Acme(ConstBuffer<const char *> args)
                ACME responses */
             args.shift();
             fake = true;
+        } else if (strcmp(arg, "--all") == 0) {
+            args.shift();
+            all = true;
         } else
             break;
     }
@@ -363,7 +475,9 @@ Acme(ConstBuffer<const char *> args)
             "  new-authz-cert HOST...\n"
             "\n"
             "options:\n"
-            "  --staging     use the Let's Encrypt staging server\n";
+            "  --staging     use the Let's Encrypt staging server\n"
+            "  --all         let new-cert and new-authz-cert operate on all alternative\n"
+            "                names of the specified certificate\n";
 
     const char *key_path = "/etc/cm4all/acme/account.key";
 
@@ -404,6 +518,9 @@ Acme(ConstBuffer<const char *> args)
         if (args.size < 1)
             throw "Usage: acme new-cert HOST...";
 
+        if (all && args.size > 1)
+            throw "With --all, only one host name is allowed";
+
         const char *host = args.shift();
 
         const ScopeSslGlobalInit ssl_init;
@@ -415,12 +532,20 @@ Acme(ConstBuffer<const char *> args)
         CertDatabase db(*db_config);
         AcmeClient client(staging, fake);
 
-        AcmeNewCert(*key, db, client, host, args);
+        if (all) {
+            AcmeNewCertAll(*key, db, client, host);
+        } else {
+            AcmeNewCert(*key, db, client, host, args);
+        }
+
         printf("OK\n");
     } else if (strcmp(cmd, "new-authz-cert") == 0) {
         if (args.size < 1)
             throw "Usage: acme new-authz-cert HOST ...";
 
+        if (all && args.size > 1)
+            throw "With --all, only one host name is allowed";
+
         const char *host = args.shift();
 
         const ScopeSslGlobalInit ssl_init;
@@ -432,7 +557,12 @@ Acme(ConstBuffer<const char *> args)
         CertDatabase db(*db_config);
         AcmeClient client(staging, fake);
 
-        AcmeNewAuthzCert(*key, db, client, host, args);
+        if (all) {
+            AcmeNewAuthzCertAll(*key, db, client, host);
+        } else {
+            AcmeNewAuthzCert(*key, db, client, host, args);
+        }
+
         printf("OK\n");
     } else
         throw "Unknown acme command";

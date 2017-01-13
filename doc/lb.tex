@@ -600,6 +600,13 @@ To obtain a signed certificate, type:
 cm4all-certdb acme --staging new-authz-cert www.example.com
 \end{verbatim*}
 
+To update all names in an existing certificate, use the option
+\texttt{--all}:
+
+\begin{verbatim*}
+cm4all-certdb acme --staging --all new-authz-cert www.example.com
+\end{verbatim*}
+
 This requires that \emph{beng-lb} runs on the same machine and can be
 contacted at \texttt{www.example.com} port 443, with the certificate
 database enabled on that listener.
