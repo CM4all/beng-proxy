@@ -403,6 +403,24 @@ AcmeNewAuthz(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
 
 static void
 AcmeNewCert(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
+            EVP_PKEY &cert_key, X509_REQ &req)
+{
+    const auto cert = client.NewCert(key, req);
+
+    WrapKeyHelper wrap_key_helper;
+    const auto wrap_key = wrap_key_helper.SetEncryptKey(*db_config);
+
+    db.BeginSerializable();
+    db.LoadServerCertificate(*cert, cert_key,
+                             wrap_key.first, wrap_key.second);
+    db.DeleteAcmeInvalidAlt(*cert);
+    db.Commit();
+
+    db.NotifyModified();
+}
+
+static void
+AcmeNewCert(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
             const char *host, ConstBuffer<const char *> alt_hosts)
 {
     const auto cert_key = FindKeyByName(db, host);
@@ -410,18 +428,7 @@ AcmeNewCert(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
         throw "Challenge certificate not found in database";
 
     const auto req = MakeCertRequest(*cert_key, host, alt_hosts);
-    const auto cert = client.NewCert(key, *req);
-
-    WrapKeyHelper wrap_key_helper;
-    const auto wrap_key = wrap_key_helper.SetEncryptKey(*db_config);
-
-    db.BeginSerializable();
-    db.LoadServerCertificate(*cert, *cert_key,
-                             wrap_key.first, wrap_key.second);
-    db.DeleteAcmeInvalidAlt(*cert);
-    db.Commit();
-
-    db.NotifyModified();
+    AcmeNewCert(key, db, client, *cert_key, *req);
 }
 
 static void
