@@ -263,12 +263,6 @@ AddExt(X509 &cert, int nid, const char *value)
     X509_add_ext(&cert, MakeExt(nid, value).get(), -1);
 }
 
-struct ExtensionPopFree {
-    void operator()(STACK_OF(X509_EXTENSION) *sk) {
-        sk_X509_EXTENSION_pop_free(sk, X509_EXTENSION_free);
-    }
-};
-
 /**
  * Add a subject_alt_name extension for each host name in the list.
  */
@@ -280,8 +274,7 @@ AddDnsAltNames(X509_REQ &req, const L &hosts)
     for (const auto &host : hosts)
         ns.push_back(OpenSSL::ToDnsName(host));
 
-    std::unique_ptr<STACK_OF(X509_EXTENSION), ExtensionPopFree>
-        sk(sk_X509_EXTENSION_new_null());
+    UniqueX509_EXTENSIONS sk(sk_X509_EXTENSION_new_null());
     sk_X509_EXTENSION_push(sk.get(),
                            X509V3_EXT_i2d(NID_subject_alt_name, 0, ns.get()));
 
