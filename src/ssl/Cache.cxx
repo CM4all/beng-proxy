@@ -35,23 +35,6 @@ CertCache::LoadCaCertificate(const char *path)
         throw SslError(std::string("Duplicate CA certificate: ") + path);
 }
 
-gcc_pure
-static AllocatedString<>
-GetCommonName(X509_NAME &name)
-{
-    return NidToString(name, NID_commonName);
-}
-
-gcc_pure
-static AllocatedString<>
-GetCommonName(X509 *cert)
-{
-    X509_NAME *subject = X509_get_subject_name(cert);
-    return subject != nullptr
-        ? GetCommonName(*subject)
-        : nullptr;
-}
-
 std::shared_ptr<SSL_CTX>
 CertCache::Add(UniqueX509 &&cert, UniqueEVP_PKEY &&key)
 {
@@ -63,7 +46,7 @@ CertCache::Add(UniqueX509 &&cert, UniqueEVP_PKEY &&key)
 
     ERR_clear_error();
 
-    const auto name = GetCommonName(cert.get());
+    const auto name = GetCommonName(*cert);
 
     X509_NAME *issuer = X509_get_issuer_name(cert.get());
 
