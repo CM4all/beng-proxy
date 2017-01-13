@@ -432,6 +432,17 @@ AcmeNewCert(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
 }
 
 static void
+AcmeNewAuthzCert(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
+                 const char *host, ConstBuffer<const char *> alt_hosts)
+{
+    AcmeNewAuthz(key, db, client, host);
+    for (const auto *alt_host : alt_hosts)
+        AcmeNewAuthz(key, db, client, alt_host);
+
+    AcmeNewCert(key, db, client, host, alt_hosts);
+}
+
+static void
 Acme(ConstBuffer<const char *> args)
 {
     bool staging = false;
@@ -523,11 +534,7 @@ Acme(ConstBuffer<const char *> args)
         CertDatabase db(*db_config);
         AcmeClient client(staging);
 
-        AcmeNewAuthz(*key, db, client, host);
-        for (const auto *alt_host : args)
-            AcmeNewAuthz(*key, db, client, alt_host);
-
-        AcmeNewCert(*key, db, client, host, args);
+        AcmeNewAuthzCert(*key, db, client, host, args);
         printf("OK\n");
     } else
         throw "Unknown acme command";
