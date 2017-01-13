@@ -8,8 +8,7 @@
 static void
 FillNameList(std::list<std::string> &list, OpenSSL::GeneralNames src)
 {
-    for (size_t i = 0, n = src.size(); i < n; ++i) {
-        const auto name = src[i];
+    for (const auto &name : src) {
         if (name.GetType() == GEN_DNS) {
             const auto dns_name = name.GetDnsName();
             if (dns_name.IsNull())

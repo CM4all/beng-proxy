@@ -149,6 +149,44 @@ public:
     void push_back(UniqueGeneralName &&n) {
         sk_GENERAL_NAME_push(value, n.release());
     }
+
+    class const_iterator {
+        const GeneralNames *sk;
+        size_t i;
+
+    public:
+        constexpr const_iterator(const GeneralNames &_sk, size_t _i)
+            :sk(&_sk), i(_i) {}
+
+        const_iterator &operator++() {
+            ++i;
+            return *this;
+        }
+
+        constexpr bool operator==(const_iterator other) const {
+            return sk == other.sk && i == other.i;
+        }
+
+        constexpr bool operator!=(const_iterator other) const {
+            return !(*this == other);
+        }
+
+        GeneralName operator*() const {
+            return (*sk)[i];
+        }
+
+        GeneralName operator->() const {
+            return (*sk)[i];
+        }
+    };
+
+    const_iterator begin() const {
+        return const_iterator(*this, 0);
+    }
+
+    const_iterator end() const {
+        return const_iterator(*this, size());
+    }
 };
 
 /**
