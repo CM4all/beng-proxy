@@ -51,6 +51,15 @@
 }
 
 {
+   g_quark_init
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:*alloc
+   ...
+   fun:g_quark_init
+}
+
+{
    <insert_a_suppression_name_here>
    Memcheck:Leak
    fun:*alloc
@@ -113,4 +122,15 @@
    ...
    fun:load_builtin_compressions
    fun:SSL_COMP_get_compression_methods
+}
+
+# Other
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:_Znwm
+   fun:_ZN4Json5Value13nullSingletonEv
+   fun:__static_initialization_and_destruction_0
 }
