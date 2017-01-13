@@ -106,6 +106,75 @@ ToDnsName(const char *value)
                                               const_cast<char *>(value), 0));
 }
 
+class GeneralNames {
+    GENERAL_NAMES *value = nullptr;
+
+public:
+    constexpr GeneralNames(GENERAL_NAMES *_value):value(_value) {}
+
+    friend void swap(GeneralNames &a, GeneralNames &b) {
+        std::swap(a.value, b.value);
+    }
+
+    constexpr operator bool() const {
+        return value != nullptr;
+    }
+
+    constexpr GENERAL_NAMES *get() {
+        return value;
+    }
+
+    GENERAL_NAMES *release() {
+        return std::exchange(value, nullptr);
+    }
+
+    void clear() {
+        assert(value != nullptr);
+
+        sk_GENERAL_NAME_free(release());
+    }
+
+    size_t size() const {
+        assert(value != nullptr);
+
+        return sk_GENERAL_NAME_num(value);
+    }
+
+    GeneralName operator[](size_t i) const {
+        assert(value != nullptr);
+
+        return sk_GENERAL_NAME_value(value, i);
+    }
+
+    void push_back(UniqueGeneralName &&n) {
+        sk_GENERAL_NAME_push(value, n.release());
+    }
+};
+
+/**
+ * A managed GENERAL_NAMES* wrapper.
+ */
+class UniqueGeneralNames : public GeneralNames {
+public:
+    UniqueGeneralNames()
+        :GeneralNames(sk_GENERAL_NAME_new_null()) {}
+
+    explicit UniqueGeneralNames(GENERAL_NAMES *_value):GeneralNames(_value) {}
+
+    UniqueGeneralNames(GeneralNames &&src)
+        :GeneralNames(src.release()) {}
+
+    ~UniqueGeneralNames() {
+        if (*this)
+            clear();
+    }
+
+    UniqueGeneralNames &operator=(UniqueGeneralNames &&src) {
+        swap(*this, src);
+        return *this;
+    }
+};
+
 }
 
 #endif

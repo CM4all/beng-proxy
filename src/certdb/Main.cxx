@@ -263,12 +263,6 @@ AddExt(X509 &cert, int nid, const char *value)
     X509_add_ext(&cert, MakeExt(nid, value).get(), -1);
 }
 
-struct GeneralNamePopFree {
-    void operator()(GENERAL_NAMES *sk) {
-        sk_GENERAL_NAME_pop_free(sk, GENERAL_NAME_free);
-    }
-};
-
 struct ExtensionPopFree {
     void operator()(STACK_OF(X509_EXTENSION) *sk) {
         sk_X509_EXTENSION_pop_free(sk, X509_EXTENSION_free);
@@ -282,12 +276,9 @@ template<typename L>
 static void
 AddDnsAltNames(X509_REQ &req, const L &hosts)
 {
-    std::unique_ptr<GENERAL_NAMES, GeneralNamePopFree>
-        ns(sk_GENERAL_NAME_new_null());
-    for (const auto &host : hosts) {
-        auto n = OpenSSL::ToDnsName(host);
-        sk_GENERAL_NAME_push(ns.get(), n.release());
-    }
+    OpenSSL::UniqueGeneralNames ns;
+    for (const auto &host : hosts)
+        ns.push_back(OpenSSL::ToDnsName(host));
 
     std::unique_ptr<STACK_OF(X509_EXTENSION), ExtensionPopFree>
         sk(sk_X509_EXTENSION_new_null());
