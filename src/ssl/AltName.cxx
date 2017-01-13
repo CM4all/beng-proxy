@@ -4,13 +4,12 @@
 
 #include "AltName.hxx"
 #include "GeneralName.hxx"
-#include "Unique.hxx"
 
 static void
-FillNameList(std::list<std::string> &list, GENERAL_NAMES &gn)
+FillNameList(std::list<std::string> &list, OpenSSL::GeneralNames src)
 {
-    for (int i = 0, n = sk_GENERAL_NAME_num(&gn); i < n; ++i) {
-        const OpenSSL::GeneralName name(sk_GENERAL_NAME_value(&gn, i));
+    for (size_t i = 0, n = src.size(); i < n; ++i) {
+        const auto name = src[i];
         if (name.GetType() == GEN_DNS) {
             const auto dns_name = name.GetDnsName();
             if (dns_name.IsNull())
@@ -33,11 +32,11 @@ GetSubjectAltNames(X509 &cert)
         if (ext == nullptr)
             continue;
 
-        UniqueGENERAL_NAMES gn(reinterpret_cast<GENERAL_NAMES *>(X509V3_EXT_d2i(ext)));
+        OpenSSL::UniqueGeneralNames gn(reinterpret_cast<GENERAL_NAMES *>(X509V3_EXT_d2i(ext)));
         if (!gn)
             continue;
 
-        FillNameList(list, *gn);
+        FillNameList(list, gn);
     }
 
     return list;
