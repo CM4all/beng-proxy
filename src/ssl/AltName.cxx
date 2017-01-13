@@ -25,7 +25,7 @@ GetSubjectAltNames(X509 &cert)
 {
     std::list<std::string> list;
 
-    for (int i = 0;
+    for (int i = -1;
          (i = X509_get_ext_by_NID(&cert, NID_subject_alt_name, i)) >= 0;) {
         auto ext = X509_get_ext(&cert, i);
         if (ext == nullptr)
