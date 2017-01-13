@@ -7,11 +7,10 @@
 #include "stopwatch.hxx"
 #include "pool.hxx"
 #include "util/StaticArray.hxx"
+#include "util/WritableBuffer.hxx"
 
 #include <daemon/log.h>
 #include <socket/address.h>
-
-#include <glib.h>
 
 #include <chrono>
 
@@ -158,10 +157,18 @@ timeval_diff_ms(const struct timeval *a, const struct timeval *b)
         (a->tv_usec - b->tv_usec) / 1000;
 }
 
+template<typename... Args>
+static void
+AppendFormat(WritableBuffer<char> &buffer, const char *fmt, Args&&... args)
+{
+    int r = snprintf(buffer.data, buffer.size, fmt, args...);
+    if (r > 0)
+        buffer.skip_front(std::min(size_t(r), buffer.size - 1));
+}
+
 void
 stopwatch_dump(const Stopwatch *stopwatch)
 {
-    GString *message;
     struct rusage self;
 
     if (!stopwatch_enabled || daemon_log_config.verbose < STOPWATCH_VERBOSE)
@@ -174,22 +181,22 @@ stopwatch_dump(const Stopwatch *stopwatch)
         /* nothing was recorded (except for the initial event) */
         return;
 
-    message = g_string_sized_new(1024);
-    g_string_printf(message, "stopwatch[%s]:", stopwatch->name);
+    char message[1024];
+
+    WritableBuffer<char> b(message, sizeof(message));
+    AppendFormat(b, "stopwatch[%s]:", stopwatch->name);
 
     for (const auto &i : stopwatch->events)
-        g_string_append_printf(message, " %s=%ldms",
-                               i.name,
-                               ToLongMs(i.time - stopwatch->events.front().time));
+        AppendFormat(b, " %s=%ldms",
+                     i.name,
+                     ToLongMs(i.time - stopwatch->events.front().time));
 
     getrusage(RUSAGE_SELF, &self);
-    g_string_append_printf(message, " (beng-proxy=%ld+%ldms)",
-                           timeval_diff_ms(&self.ru_utime,
-                                           &stopwatch->self.ru_utime),
-                           timeval_diff_ms(&self.ru_stime,
-                                           &stopwatch->self.ru_stime));
+    AppendFormat(b, " (beng-proxy=%ld+%ldms)",
+                 timeval_diff_ms(&self.ru_utime,
+                                 &stopwatch->self.ru_utime),
+                 timeval_diff_ms(&self.ru_stime,
+                                 &stopwatch->self.ru_stime));
 
-    daemon_log(STOPWATCH_VERBOSE, "%s\n", message->str);
-
-    g_string_free(message, true);
+    daemon_log(STOPWATCH_VERBOSE, "%s\n", message);
 }
