@@ -438,9 +438,12 @@ AcmeNewAuthzCertAll(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
     auto &old_cert = *old_cert_key.first;
     auto &old_key = *old_cert_key.second;
 
-    for (const auto &i : AllNames(old_cert))
+    for (const auto &i : AllNames(old_cert)) {
+        printf("new-authz '%s'\n", i.c_str());
         AcmeNewAuthz(key, db, client, i.c_str());
+    }
 
+    printf("new-cert\n");
     AcmeNewCertAll(key, db, client, old_cert, old_key);
 }
 
