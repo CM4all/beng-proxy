@@ -60,6 +60,9 @@ public:
     explicit GlueHttpClient(EventLoop &event_loop);
     ~GlueHttpClient();
 
+    GlueHttpClient(const GlueHttpClient &) = delete;
+    GlueHttpClient &operator=(const GlueHttpClient &) = delete;
+
     void Request(struct pool &p, EventLoop &event_loop,
                  GlueHttpServerAddress &server,
                  http_method_t method, const char *uri,
