@@ -4,7 +4,7 @@ cm4all-beng-proxy (12.0.4) unstable; urgency=low
   * spawn: forbid ptrace() and other dangerous system calls
   * certdb: add "--all" option to "new-cert" and "new-authz-cert"
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Mon, 16 Jan 2017 19:47:31 -0000
 
 cm4all-beng-proxy (12.0.3) unstable; urgency=low
 
