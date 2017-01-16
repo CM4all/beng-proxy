@@ -188,7 +188,6 @@ private:
                                   common_name);
     }
 
-public:
     PgResult FindServerCertificateKeyByName(const char *common_name) {
         return conn.ExecuteParams(true,
                                   "SELECT certificate_der, key_der, key_wrap_name "
@@ -207,6 +206,7 @@ public:
                                   common_name);
     }
 
+public:
     PgResult GetModifiedServerCertificatesMeta(const char *since) {
         return conn.ExecuteParams("SELECT deleted, modified, common_name "
                                   "FROM server_certificate "
