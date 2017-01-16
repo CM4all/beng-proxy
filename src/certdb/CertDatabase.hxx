@@ -167,7 +167,7 @@ private:
                                   "SELECT id FROM server_certificate_alt_name"
                                   " WHERE server_certificate_id=server_certificate.id"
                                   " AND name LIKE '%.acme.invalid')",
-                                  &names);
+                                  names);
     }
 
     PgResult FindServerCertificateByName(const char *common_name) {
