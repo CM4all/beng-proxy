@@ -11,7 +11,7 @@
 
 struct pool;
 struct NfsStock;
-struct NfsClient;
+class NfsClient;
 class CancellablePointer;
 class EventLoop;
 

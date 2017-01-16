@@ -13,7 +13,7 @@
 
 struct stat;
 struct pool;
-struct NfsClient;
+class NfsClient;
 class HttpResponseHandler;
 class CancellablePointer;
 class EventLoop;
@@ -37,7 +37,7 @@ public:
     virtual void OnNfsClientClosed(GError *error) = 0;
 };
 
-struct NfsFileHandle;
+class NfsFileHandle;
 
 /**
  * Handler for nfs_client_open_file().

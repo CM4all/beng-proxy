@@ -26,7 +26,7 @@ extern "C" {
 #include <sys/poll.h>
 #include <sys/stat.h>
 
-struct NfsFile;
+class NfsFile;
 
 /**
  * A handle that is passed to the caller.  Each file can have multiple

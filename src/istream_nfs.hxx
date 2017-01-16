@@ -11,7 +11,7 @@
 
 struct pool;
 class Istream;
-struct NfsFileHandle;
+class NfsFileHandle;
 
 Istream *
 istream_nfs_new(struct pool &pool, NfsFileHandle &handle,
