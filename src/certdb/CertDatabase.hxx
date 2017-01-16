@@ -15,6 +15,8 @@ typedef struct aes_key_st AES_KEY;
 struct CertDatabaseConfig;
 
 class CertDatabase {
+    const CertDatabaseConfig &config;
+
     PgConnection conn;
 
     const std::string schema;

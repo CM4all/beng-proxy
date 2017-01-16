@@ -15,10 +15,10 @@
 #include <sys/poll.h>
 
 CertDatabase::CertDatabase(const CertDatabaseConfig &_config)
-    :conn(_config.connect.c_str()), schema(_config.schema)
+    :config(_config), conn(config.connect.c_str())
 {
-    if (!schema.empty() && !conn.SetSchema(schema.c_str()))
-        throw std::runtime_error("Failed to set schema '" + schema + ": " +
+    if (!config.schema.empty() && !conn.SetSchema(config.schema.c_str()))
+        throw std::runtime_error("Failed to set schema '" + config.schema + ": " +
                                  conn.GetErrorMessage());
 }
 
@@ -61,10 +61,10 @@ PgResult
 CertDatabase::ListenModified()
 {
     std::string sql("LISTEN \"");
-    if (!schema.empty() && schema != "public") {
+    if (!config.schema.empty() && config.schema != "public") {
         /* prefix the notify name unless we're in the default
            schema */
-        sql += schema;
+        sql += config.schema;
         sql += ':';
     }
 
@@ -77,10 +77,10 @@ PgResult
 CertDatabase::NotifyModified()
 {
     std::string sql("NOTIFY \"");
-    if (!schema.empty() && schema != "public") {
+    if (!config.schema.empty() && config.schema != "public") {
         /* prefix the notify name unless we're in the default
            schema */
-        sql += schema;
+        sql += config.schema;
         sql += ':';
     }
 
