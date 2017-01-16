@@ -9,7 +9,6 @@
 #include "ssl/Unique.hxx"
 
 #include <string>
-#include <vector>
 
 typedef struct aes_key_st AES_KEY;
 struct CertDatabaseConfig;
@@ -158,7 +157,8 @@ public:
     }
 
 private:
-    PgResult DeleteAcmeInvalidByNames(const std::list<std::string> &names) {
+    template<typename T>
+    PgResult DeleteAcmeInvalidByNames(const T &names) {
         return conn.ExecuteParams(true,
                                   "UPDATE server_certificate SET "
                                   "modified=CURRENT_TIMESTAMP, deleted=TRUE "

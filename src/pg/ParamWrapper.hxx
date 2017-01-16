@@ -12,7 +12,7 @@
 #include <cstdio>
 #include <cstddef>
 
-template<typename T>
+template<typename T, typename Enable=void>
 struct PgParamWrapper {
     PgParamWrapper(const T &t);
     const char *GetValue() const;
@@ -134,11 +134,16 @@ struct PgParamWrapper<bool> {
     }
 };
 
-template<>
-struct PgParamWrapper<std::list<std::string>> {
+/**
+ * Specialization for STL container types of std::string instances.
+ */
+template<typename T>
+struct PgParamWrapper<T,
+                      std::enable_if_t<std::is_same<typename T::value_type,
+                                                    std::string>::value>> {
     std::string value;
 
-    PgParamWrapper(const std::list<std::string> &list)
+    PgParamWrapper(const T &list)
       :value(pg_encode_array(list)) {}
 
     static constexpr bool IsBinary() {
