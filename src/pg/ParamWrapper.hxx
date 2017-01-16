@@ -135,7 +135,7 @@ struct PgParamWrapper<bool> {
 };
 
 template<>
-struct PgParamWrapper<const std::list<std::string> &> {
+struct PgParamWrapper<std::list<std::string>> {
     std::string value;
 
     PgParamWrapper(const std::list<std::string> &list)
