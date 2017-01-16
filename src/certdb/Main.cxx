@@ -338,7 +338,7 @@ AcmeNewAuthzCert(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
 static void
 Acme(ConstBuffer<const char *> args)
 {
-    bool staging = false;
+    bool staging = false, fake = false;
 
     while (!args.IsEmpty() && args.front()[0] == '-') {
         const char *arg = args.front();
@@ -346,6 +346,11 @@ Acme(ConstBuffer<const char *> args)
         if (strcmp(arg, "--staging") == 0) {
             args.shift();
             staging = true;
+        } else if (strcmp(arg, "--fake") == 0) {
+            /* undocumented debugging option: no HTTP requests, fake
+               ACME responses */
+            args.shift();
+            fake = true;
         } else
             break;
     }
@@ -376,7 +381,7 @@ Acme(ConstBuffer<const char *> args)
         if (EVP_PKEY_base_id(key.get()) != EVP_PKEY_RSA)
             throw "RSA key expected";
 
-        const auto account = AcmeClient(staging).NewReg(*key, email);
+        const auto account = AcmeClient(staging, fake).NewReg(*key, email);
         printf("location: %s\n", account.location.c_str());
     } else if (strcmp(cmd, "new-authz") == 0) {
         if (args.size != 1)
@@ -391,7 +396,7 @@ Acme(ConstBuffer<const char *> args)
             throw "RSA key expected";
 
         CertDatabase db(*db_config);
-        AcmeClient client(staging);
+        AcmeClient client(staging, fake);
 
         AcmeNewAuthz(*key, db, client, host);
         printf("OK\n");
@@ -408,7 +413,7 @@ Acme(ConstBuffer<const char *> args)
             throw "RSA key expected";
 
         CertDatabase db(*db_config);
-        AcmeClient client(staging);
+        AcmeClient client(staging, fake);
 
         AcmeNewCert(*key, db, client, host, args);
         printf("OK\n");
@@ -425,7 +430,7 @@ Acme(ConstBuffer<const char *> args)
             throw "RSA key expected";
 
         CertDatabase db(*db_config);
-        AcmeClient client(staging);
+        AcmeClient client(staging, fake);
 
         AcmeNewAuthzCert(*key, db, client, host, args);
         printf("OK\n");

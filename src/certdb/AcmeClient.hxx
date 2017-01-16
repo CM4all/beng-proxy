@@ -34,8 +34,10 @@ class AcmeClient {
      */
     std::string next_nonce;
 
+    const bool fake;
+
 public:
-    explicit AcmeClient(bool staging);
+    explicit AcmeClient(bool staging, bool fake);
     ~AcmeClient();
 
     struct pool &GetRootPool() {

@@ -5,8 +5,12 @@
 #include "AcmeClient.hxx"
 #include "direct.hxx"
 #include "pool.hxx"
+#include "istream/istream.hxx"
 #include "istream/istream_string.hxx"
 #include "ssl/Base64.hxx"
+#include "ssl/Buffer.hxx"
+#include "ssl/Dummy.hxx"
+#include "ssl/Key.hxx"
 #include "uri/uri_extract.hxx"
 #include "util/ScopeExit.hxx"
 
@@ -84,13 +88,14 @@ ThrowError(GlueHttpResponse &&response, const char *msg)
     throw std::runtime_error(std::move(what));
 }
 
-AcmeClient::AcmeClient(bool staging)
+AcmeClient::AcmeClient(bool staging, bool _fake)
     :glue_http_client(event_loop),
      server(true,
             staging
             ? "acme-staging.api.letsencrypt.org"
             : "acme-v01.api.letsencrypt.org",
-            443)
+            443),
+     fake(_fake)
 {
     direct_global_init();
 }
@@ -102,6 +107,9 @@ AcmeClient::~AcmeClient()
 std::string
 AcmeClient::RequestNonce()
 {
+    if (fake)
+        return "foo";
+
     LinearPool pool(root_pool, "RequestNonce", 8192);
     auto response = glue_http_client.Request(event_loop, pool, server,
                                              HTTP_METHOD_HEAD, "/directory",
@@ -225,6 +233,51 @@ AcmeClient::Request(struct pool &p,
                     HttpHeaders &&headers,
                     Istream *body)
 {
+    if (fake) {
+        if (body != nullptr)
+            body->CloseUnused();
+
+        if (strcmp(uri, "/acme/new-authz") == 0) {
+            StringMap response_headers(p);
+            response_headers.Add("content-type", "application/json");
+
+            return GlueHttpResponse(HTTP_STATUS_CREATED,
+                                    std::move(response_headers),
+                                    "{"
+                                    "  \"status\": \"pending\","
+                                    "  \"identifier\": {\"type\": \"dns\", \"value\": \"example.org\"},"
+                                    "  \"challenges\": ["
+                                    "    {"
+                                    "      \"type\": \"tls-sni-01\","
+                                    "      \"token\": \"example-token-tls-sni-01\","
+                                    "      \"uri\": \"http://xyz/example/tls-sni-01/uri\""
+                                    "    }"
+                                    "  ]"
+                                    "}");
+        } else if (strcmp(uri, "/example/tls-sni-01/uri") == 0) {
+            StringMap response_headers(p);
+            response_headers.Add("content-type", "application/json");
+
+            return GlueHttpResponse(HTTP_STATUS_ACCEPTED,
+                                    std::move(response_headers),
+                                    "{"
+                                    "  \"status\": \"valid\""
+                                    "}");
+        } else if (strcmp(uri, "/acme/new-cert") == 0) {
+            auto key = GenerateRsaKey();
+            auto cert = MakeSelfSignedDummyCert(*key, "example.com");
+
+            const SslBuffer cert_buffer(*cert);
+
+            auto response_body = ConstBuffer<char>::FromVoid(cert_buffer.get());
+            return GlueHttpResponse(HTTP_STATUS_CREATED, StringMap(p),
+                                    std::string(response_body.data,
+                                                response_body.size));
+        } else
+            return GlueHttpResponse(HTTP_STATUS_NOT_FOUND, StringMap(p),
+                                    "Not found");
+    }
+
     auto response = glue_http_client.Request(event_loop, p, server,
                                              method, uri, std::move(headers),
                                              body);
