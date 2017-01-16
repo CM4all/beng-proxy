@@ -82,33 +82,3 @@ pg_decode_array(const char *p)
 
     return dest;
 }
-
-std::string
-pg_encode_array(const std::list<std::string> &src)
-{
-    if (src.empty())
-        return "{}";
-
-    std::string dest("{");
-
-    bool first = true;
-    for (const auto &i : src) {
-        if (first)
-            first = false;
-        else
-            dest.push_back(',');
-
-        dest.push_back('"');
-
-        for (const auto ch : i) {
-            if (ch == '\\' || ch == '"')
-                dest.push_back('\\');
-            dest.push_back(ch);
-        }
-
-        dest.push_back('"');
-    }
-
-    dest.push_back('}');
-    return dest;
-}
