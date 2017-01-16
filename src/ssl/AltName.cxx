@@ -6,7 +6,7 @@
 #include "GeneralName.hxx"
 
 static void
-FillNameList(std::list<std::string> &list, OpenSSL::GeneralNames src)
+FillNameList(std::forward_list<std::string> &list, OpenSSL::GeneralNames src)
 {
     for (const auto &name : src) {
         if (name.GetType() == GEN_DNS) {
@@ -14,16 +14,16 @@ FillNameList(std::list<std::string> &list, OpenSSL::GeneralNames src)
             if (dns_name.IsNull())
                 continue;
 
-            list.emplace_back(dns_name.data, dns_name.size);
+            list.emplace_front(dns_name.data, dns_name.size);
         }
     }
 }
 
 gcc_pure
-std::list<std::string>
+std::forward_list<std::string>
 GetSubjectAltNames(X509 &cert)
 {
-    std::list<std::string> list;
+    std::forward_list<std::string> list;
 
     for (int i = -1;
          (i = X509_get_ext_by_NID(&cert, NID_subject_alt_name, i)) >= 0;) {

@@ -9,11 +9,11 @@
 
 #include <openssl/ossl_typ.h>
 
-#include <list>
+#include <forward_list>
 #include <string>
 
 gcc_pure
-std::list<std::string>
+std::forward_list<std::string>
 GetSubjectAltNames(X509 &cert);
 
 #endif
