@@ -14,7 +14,7 @@ FillNameList(std::list<std::string> &list, OpenSSL::GeneralNames src)
             if (dns_name.IsNull())
                 continue;
 
-            list.push_back(std::string(dns_name.data, dns_name.size));
+            list.emplace_back(dns_name.data, dns_name.size);
         }
     }
 }
