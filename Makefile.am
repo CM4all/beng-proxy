@@ -853,6 +853,7 @@ libssl_a_SOURCES = \
 	src/certdb/WrapKey.cxx src/certdb/WrapKey.hxx \
 	src/certdb/Wildcard.cxx src/certdb/Wildcard.hxx \
 	src/ssl/Buffer.cxx src/ssl/Buffer.hxx \
+	src/ssl/Edit.cxx src/ssl/Edit.hxx \
 	src/ssl/Unique.hxx \
 	src/ssl/Key.cxx src/ssl/Key.hxx \
 	src/ssl/Hash.cxx src/ssl/Hash.hxx \

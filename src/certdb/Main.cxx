@@ -5,6 +5,7 @@
 #include "Wildcard.hxx"
 #include "ssl/ssl_init.hxx"
 #include "ssl/Buffer.hxx"
+#include "ssl/Edit.hxx"
 #include "ssl/Key.hxx"
 #include "ssl/LoadFile.hxx"
 #include "ssl/AltName.hxx"
@@ -200,33 +201,6 @@ Tail()
                row.GetValue(1),
                *row.GetValue(0) == 't' ? "deleted" : "modified",
                row.GetValue(2));
-}
-
-static UniqueX509_EXTENSION
-MakeExt(int nid, const char *value)
-{
-    UniqueX509_EXTENSION ext(X509V3_EXT_conf_nid(nullptr, nullptr, nid,
-                                                 const_cast<char *>(value)));
-    if (ext == nullptr)
-        throw SslError("X509V3_EXT_conf_nid() failed");
-
-    return ext;
-}
-
-static void
-AddExt(X509 &cert, int nid, const char *value)
-{
-    X509_add_ext(&cert, MakeExt(nid, value).get(), -1);
-}
-
-static void
-AddAltNames(X509_REQ &req, OpenSSL::GeneralNames gn)
-{
-    UniqueX509_EXTENSIONS sk(sk_X509_EXTENSION_new_null());
-    sk_X509_EXTENSION_push(sk.get(),
-                           X509V3_EXT_i2d(NID_subject_alt_name, 0, gn.get()));
-
-    X509_REQ_add_extensions(&req, sk.get());
 }
 
 /**
