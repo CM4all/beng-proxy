@@ -55,18 +55,18 @@ struct SslFactoryCertKey {
     void LoadServer(const SslConfig &parent_config,
                     const SslCertKeyConfig &config);
 
-    void CacheCommonName(X509_NAME *subject) {
-        auto common_name = NidToString(*subject, NID_commonName);
+    void CacheCommonName(X509_NAME &subject) {
+        auto common_name = NidToString(subject, NID_commonName);
         if (common_name != nullptr)
             names.emplace_front(std::move(common_name));
     }
 
-    void CacheCommonName(X509 *cert) {
-        X509_NAME *subject = X509_get_subject_name(cert);
+    void CacheCommonName(X509 &cert) {
+        X509_NAME *subject = X509_get_subject_name(&cert);
         if (subject != nullptr)
-            CacheCommonName(subject);
+            CacheCommonName(*subject);
 
-        for (const auto &i : GetSubjectAltNames(*cert))
+        for (const auto &i : GetSubjectAltNames(cert))
             names.emplace_front(i.c_str());
     }
 
@@ -273,7 +273,7 @@ SslFactoryCertKey::LoadServer(const SslConfig &parent_config,
                        "' does not match certificate '" +
                        config.cert_file + "'");
 
-    CacheCommonName(cert);
+    CacheCommonName(*cert);
 }
 
 SslFactory *
