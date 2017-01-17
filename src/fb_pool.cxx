@@ -11,7 +11,13 @@
 
 #include <assert.h>
 
-static constexpr size_t FB_SIZE = 8192;
+/* TODO: this increase from 8 kB to 16 kB is only here to work around
+ * a OpenSSL problem; TLS packets may be up to 16 kB, and our
+ * FifoBufferBio can't handle the resulting SSL_ERROR_WANT_READ when
+ * the buffer is already full; we need a better general solution for
+ * this */
+static constexpr size_t FB_SIZE = 2 * 8192;
+//static constexpr size_t FB_SIZE = 8192;
 
 class SliceFifoBufferPool {
     SlicePool *const pool;
