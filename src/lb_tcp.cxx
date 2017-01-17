@@ -82,6 +82,8 @@ LbTcpConnection::Destroy()
         cancel_connect.Cancel();
     else if (outbound.IsValid())
         DestroyOutbound();
+
+    this->~LbTcpConnection();
 }
 
 /*
