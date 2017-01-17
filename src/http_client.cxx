@@ -401,7 +401,17 @@ HttpClient::GetAvailable(bool partial) const
 inline void
 HttpClient::Read()
 {
-    assert(response_body_reader.IsSocketDone(socket) || !socket.HasEnded());
+    assert(response_body_reader.IsSocketDone(socket) ||
+           /* the following condition avoids calling
+              FilteredSocketLease::HasEnded() when it would
+              assert-fail; this can happen if the socket has been
+              disconnected while there was still pending data, but our
+              handler had been blocking it; in that case,
+              HttpBodyReader::SocketEOF() leaves handling this
+              condition to the dechunker, which however is never
+              called while the handler blocks */
+           (response_body_reader.IsChunked() && !IsConnected()) ||
+           !socket.HasEnded());
     assert(response.state == Response::State::BODY);
     assert(response_body_reader.HasHandler());
 
