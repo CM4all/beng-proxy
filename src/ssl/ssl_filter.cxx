@@ -126,6 +126,12 @@ check_ssl_error(SSL *ssl, int result, GError **error_r)
 
 enum class SslDecryptResult {
     SUCCESS,
+
+    /**
+     * More encrypted_input data is required.
+     */
+    MORE,
+
     ERROR,
     CLOSE_NOTIFY_ALERT,
 };
@@ -142,6 +148,9 @@ ssl_decrypt(SSL *ssl, ForeignFifoBuffer<uint8_t> &buffer, GError **error_r)
             return SslDecryptResult::SUCCESS;
 
         int result = SSL_read(ssl, w.data, w.size);
+        if (result < 0 && SSL_get_error(ssl, result) == SSL_ERROR_WANT_READ)
+            return SslDecryptResult::MORE;
+
         if (result <= 0) {
             if (SSL_get_error(ssl, result) == SSL_ERROR_ZERO_RETURN)
                 /* got a "close notify" alert from the peer */
@@ -249,6 +258,15 @@ SslFilter::Run(ThreadSocketFilter &f, GError **error_r)
 
         switch (ssl_decrypt(ssl.get(), decrypted_input, error_r)) {
         case SslDecryptResult::SUCCESS:
+            break;
+
+        case SslDecryptResult::MORE:
+            if (encrypted_input.IsDefinedAndFull()) {
+                g_set_error_literal(error_r, ssl_quark(), 0,
+                                    "SSL encrypted_input buffer is full");
+                return false;
+            }
+
             break;
 
         case SslDecryptResult::ERROR:
