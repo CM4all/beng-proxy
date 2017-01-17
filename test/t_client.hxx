@@ -38,7 +38,7 @@
 #include <signal.h>
 
 #ifndef HAVE_CHUNKED_REQUEST_BODY
-static constexpr size_t HEAD_SIZE = 8192;
+static constexpr size_t HEAD_SIZE = 16384;
 #endif
 
 static inline GQuark
