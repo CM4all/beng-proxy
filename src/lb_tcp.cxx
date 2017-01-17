@@ -45,6 +45,7 @@ struct LbTcpConnection final : ConnectSocketHandler {
 
     void DestroyInbound();
     void DestroyOutbound();
+    void Destroy();
 
     /* virtual methods from class ConnectSocketHandler */
     void OnSocketConnectSuccess(SocketDescriptor &&fd) override;
@@ -72,6 +73,20 @@ LbTcpConnection::DestroyOutbound()
     outbound.Destroy();
 }
 
+void
+LbTcpConnection::Destroy()
+{
+    if (inbound.IsValid())
+        DestroyInbound();
+
+    if (cancel_connect)
+        cancel_connect.Cancel();
+    else if (outbound.IsValid())
+        DestroyOutbound();
+
+    this->~LbTcpConnection();
+}
+
 /*
  * inbound BufferedSocketHandler
  *
@@ -89,7 +104,7 @@ inbound_buffered_socket_data(const void *buffer, size_t size, void *ctx)
         return BufferedResult::BLOCKING;
 
     if (!tcp->outbound.IsValid()) {
-        lb_tcp_close(tcp);
+        tcp->Destroy();
         tcp->handler->error("Send error", "Broken socket", tcp->handler_ctx);
         return BufferedResult::CLOSED;
     }
@@ -108,7 +123,7 @@ inbound_buffered_socket_data(const void *buffer, size_t size, void *ctx)
         gcc_unreachable();
 
     case WRITE_ERRNO:
-        lb_tcp_close(tcp);
+        tcp->Destroy();
         tcp->handler->_errno("Send failed", errno, tcp->handler_ctx);
         return BufferedResult::CLOSED;
 
@@ -119,7 +134,7 @@ inbound_buffered_socket_data(const void *buffer, size_t size, void *ctx)
         return BufferedResult::CLOSED;
 
     case WRITE_BROKEN:
-        lb_tcp_close(tcp);
+        tcp->Destroy();
         tcp->handler->eof(tcp->handler_ctx);
         return BufferedResult::CLOSED;
     }
@@ -133,7 +148,7 @@ inbound_buffered_socket_closed(void *ctx)
 {
     LbTcpConnection *tcp = (LbTcpConnection *)ctx;
 
-    lb_tcp_close(tcp);
+    tcp->Destroy();
     tcp->handler->eof(tcp->handler_ctx);
     return false;
 }
@@ -162,7 +177,7 @@ inbound_buffered_socket_drained(void *ctx)
         /* now that inbound's output buffers are drained, we can
            finally close the connection (postponed from
            outbound_buffered_socket_end()) */
-        lb_tcp_close(tcp);
+        tcp->Destroy();
         tcp->handler->eof(tcp->handler_ctx);
         return false;
     }
@@ -175,7 +190,7 @@ inbound_buffered_socket_broken(void *ctx)
 {
     LbTcpConnection *tcp = (LbTcpConnection *)ctx;
 
-    lb_tcp_close(tcp);
+    tcp->Destroy();
     tcp->handler->eof(tcp->handler_ctx);
     return WRITE_DESTROYED;
 }
@@ -185,7 +200,7 @@ inbound_buffered_socket_error(std::exception_ptr ep, void *ctx)
 {
     LbTcpConnection *tcp = (LbTcpConnection *)ctx;
 
-    lb_tcp_close(tcp);
+    tcp->Destroy();
     tcp->handler->exception("Error", ep, tcp->handler_ctx);
 }
 
@@ -231,7 +246,7 @@ outbound_buffered_socket_data(const void *buffer, size_t size, void *ctx)
 
     case WRITE_ERRNO:
         save_errno = errno;
-        lb_tcp_close(tcp);
+        tcp->Destroy();
         tcp->handler->_errno("Send failed", save_errno, tcp->handler_ctx);
         return BufferedResult::CLOSED;
 
@@ -242,7 +257,7 @@ outbound_buffered_socket_data(const void *buffer, size_t size, void *ctx)
         return BufferedResult::CLOSED;
 
     case WRITE_BROKEN:
-        lb_tcp_close(tcp);
+        tcp->Destroy();
         tcp->handler->eof(tcp->handler_ctx);
         return BufferedResult::CLOSED;
     }
@@ -272,7 +287,7 @@ outbound_buffered_socket_end(void *ctx)
     if (tcp->inbound.IsDrained()) {
         /* all output buffers to "inbound" are drained; close the
            connection, because there's nothing left to do */
-        lb_tcp_close(tcp);
+        tcp->Destroy();
         tcp->handler->eof(tcp->handler_ctx);
 
         /* nothing will be done if the buffers are not yet drained;
@@ -301,7 +316,7 @@ outbound_buffered_socket_broken(void *ctx)
 {
     LbTcpConnection *tcp = (LbTcpConnection *)ctx;
 
-    lb_tcp_close(tcp);
+    tcp->Destroy();
     tcp->handler->eof(tcp->handler_ctx);
     return WRITE_DESTROYED;
 }
@@ -311,7 +326,7 @@ outbound_buffered_socket_error(std::exception_ptr ep, void *ctx)
 {
     LbTcpConnection *tcp = (LbTcpConnection *)ctx;
 
-    lb_tcp_close(tcp);
+    tcp->Destroy();
     tcp->handler->exception("Error", ep, tcp->handler_ctx);
 }
 
@@ -494,11 +509,5 @@ lb_tcp_new(struct pool &pool, EventLoop &event_loop, Stock *pipe_stock,
 void
 lb_tcp_close(LbTcpConnection *tcp)
 {
-    if (tcp->inbound.IsValid())
-        tcp->DestroyInbound();
-
-    if (tcp->cancel_connect)
-        tcp->cancel_connect.Cancel();
-    else if (tcp->outbound.IsValid())
-        tcp->DestroyOutbound();
+    tcp->Destroy();
 }

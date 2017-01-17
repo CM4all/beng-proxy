@@ -37,6 +37,10 @@
 #include <string.h>
 #include <signal.h>
 
+#ifndef HAVE_CHUNKED_REQUEST_BODY
+static constexpr size_t HEAD_SIZE = 16384;
+#endif
+
 static inline GQuark
 test_quark(void)
 {
@@ -617,7 +621,7 @@ wrap_fake_request_body(gcc_unused struct pool *pool, Istream *i)
 {
 #ifndef HAVE_CHUNKED_REQUEST_BODY
     if (i->GetAvailable(false) < 0)
-        i = istream_head_new(pool, *i, 8192, true);
+        i = istream_head_new(pool, *i, HEAD_SIZE, true);
 #endif
     return i;
 }
@@ -697,7 +701,7 @@ test_close_request_body_fail(Context<Connection> &c)
 #ifdef HAVE_CHUNKED_REQUEST_BODY
     assert(c.available == -1);
 #else
-    assert(c.available == 8192);
+    assert(c.available == HEAD_SIZE);
 #endif
     assert(!c.body.IsDefined());
     assert(!c.body_eof);
@@ -718,8 +722,9 @@ template<class Connection>
 static void
 test_data_blocking(Context<Connection> &c)
 {
+    fprintf(stderr, "TEST_DATA_BLOCKING\n");
     Istream *request_body =
-        istream_head_new(c.pool, *istream_zero_new(c.pool), 65536, false);
+        istream_head_new(c.pool, *istream_zero_new(c.pool), 2*65536, false);
 
     c.data_blocking = 5;
     c.connection = Connection::NewMirror(*c.pool, c.event_loop);
@@ -747,7 +752,7 @@ test_data_blocking(Context<Connection> &c)
 #ifdef HAVE_CHUNKED_REQUEST_BODY
     assert(c.available == -1);
 #else
-    assert(c.available == 8192);
+    assert(c.available == HEAD_SIZE);
 #endif
     assert(c.body.IsDefined());
     assert(c.body_data > 0);

@@ -205,7 +205,7 @@ test_skip(struct pool *pool)
     assert(buffer.GetSize() == 16);
     assert(Equals(buffer.Dup(*pool), "0123456789abcdef"));
 
-    constexpr size_t buffer_size = 8192 - 2 * sizeof(void*) - 2 * sizeof(size_t);
+    constexpr size_t buffer_size = 16384 - 2 * sizeof(void*) - 2 * sizeof(size_t);
 
     static char zero[buffer_size * 2];
     buffer.Write(zero, sizeof(zero));

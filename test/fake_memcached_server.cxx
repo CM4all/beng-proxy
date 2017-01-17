@@ -67,7 +67,7 @@ int main(int argc, char **argv)
     struct memcached_request_header request_header;
     static constexpr char response_key[3] = {'f','o','o'};
     static char response_body1[1024];
-    static char response_body2[8192];
+    static char response_body2[16384];
     const struct memcached_response_header response_header = {
         .magic = MEMCACHED_MAGIC_RESPONSE,
         .opcode = 0,
