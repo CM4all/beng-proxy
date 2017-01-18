@@ -501,7 +501,7 @@ class LbStats(gdb.Command):
             print "not a lb_instance"
             return None
 
-        print "n_connections", instance['num_connections']
+        print "n_connections", instance['connections']['data_']['root_plus_size_']['size_']
 
         n = 0
         n_ssl = 0
@@ -509,24 +509,46 @@ class LbStats(gdb.Command):
         n_tcp = 0
         n_buffers = 0
 
-        connection_type = gdb.lookup_type('struct lb_connection').pointer()
-        for c in for_each_list_item(instance['connections'], connection_type):
+        connection_type = gdb.lookup_type('LbConnection').pointer()
+        void_ptr_type = gdb.lookup_type('void').pointer()
+        long_type = gdb.lookup_type('long')
+        for c in for_each_intrusive_list_item(instance['connections'], connection_type):
             n += 1
 
             if not is_null(c['ssl_filter']):
                 n_ssl += 1
-                n_buffers += 2
+                ssl_filter = c['ssl_filter']
+                if not is_null(ssl_filter['encrypted_input']['data'].cast(void_ptr_type)):
+                    n_buffers += 1
+                if not is_null(ssl_filter['decrypted_input']['data'].cast(void_ptr_type)):
+                    n_buffers += 1
+                if not is_null(ssl_filter['plain_output']['data'].cast(void_ptr_type)):
+                    n_buffers += 1
+                if not is_null(ssl_filter['encrypted_output']['data'].cast(void_ptr_type)):
+                    n_buffers += 1
+
+            if not is_null(c['thread_socket_filter']):
+                n_ssl += 1
+                f = c['thread_socket_filter']
+                if not is_null(f['encrypted_input']['data'].cast(void_ptr_type)):
+                    n_buffers += 1
+                if not is_null(f['decrypted_input']['data'].cast(void_ptr_type)):
+                    n_buffers += 1
+                if not is_null(f['plain_output']['data'].cast(void_ptr_type)):
+                    n_buffers += 1
+                if not is_null(f['encrypted_output']['data'].cast(void_ptr_type)):
+                    n_buffers += 1
 
             protocol = str(lb_listener_get_any_cluster(c['listener'])['protocol'])
-            if protocol == 'LB_PROTOCOL_HTTP':
+            if protocol == 'HTTP':
                 n_http += 1
                 n_buffers += 1
-            elif protocol == 'LB_PROTOCOL_TCP':
+            elif protocol == 'TCP':
                 n_tcp += 1
                 tcp = c['tcp']
-                if not is_null(tcp['outbound']['input']):
+                if not is_null(tcp['outbound']['input']['data'].cast(void_ptr_type)):
                     n_buffers += 1
-                if not is_null(tcp['inbound']['base']['input']):
+                if not is_null(tcp['inbound']['base']['input']['data'].cast(void_ptr_type)):
                     n_buffers += 1
 
         print "n_connections", n
