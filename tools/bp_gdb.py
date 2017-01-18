@@ -187,6 +187,28 @@ def pool_recursive_sizes(pool):
 
     return brutto_size, netto_size
 
+#
+# beng-lb specific code
+#
+
+def lb_goto_get_any_cluster(g):
+    if g['cluster']:
+        return g['cluster']
+    elif g['branch']:
+        return lb_branch_get_any_cluster(g['branch'])
+    else:
+        return None
+
+def lb_branch_get_any_cluster(b):
+    return lb_goto_get_any_cluster(b['fallback'])
+
+def lb_listener_get_any_cluster(l):
+    return lb_goto_get_any_cluster(l['destination'])
+
+#
+# gdb Commands
+#
+
 class PoolTree(gdb.Command):
     def __init__(self):
         gdb.Command.__init__(self, "bp_pool_tree", gdb.COMMAND_DATA, gdb.COMPLETE_SYMBOL, True)
@@ -495,7 +517,7 @@ class LbStats(gdb.Command):
                 n_ssl += 1
                 n_buffers += 2
 
-            protocol = str(c['listener']['destination']['cluster']['protocol'])
+            protocol = str(lb_listener_get_any_cluster(c['listener'])['protocol'])
             if protocol == 'LB_PROTOCOL_HTTP':
                 n_http += 1
                 n_buffers += 1
