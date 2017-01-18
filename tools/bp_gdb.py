@@ -510,6 +510,7 @@ class LbStats(gdb.Command):
         print "n_connections", n
         print "n_ssl", n_ssl
         print "n_http", n_http
+        print "n_tcp", n_tcp
         print "n_buffers", n_buffers
 
 DumpHashmapSlot()
