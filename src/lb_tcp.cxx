@@ -33,6 +33,12 @@ struct LbTcpConnection final : ConnectSocketHandler {
 
     BufferedSocket outbound;
 
+    StaticSocketAddress bind_address;
+    const LbClusterConfig &cluster;
+    LbClusterMap &clusters;
+    Balancer &balancer;
+    const unsigned session_sticky;
+
     CancellablePointer cancel_connect;
 
     bool got_inbound_data, got_outbound_data;
@@ -41,17 +47,24 @@ struct LbTcpConnection final : ConnectSocketHandler {
                     Stock *_pipe_stock,
                     SocketDescriptor &&fd, FdType fd_type,
                     const SocketFilter *filter, void *filter_ctx,
+                    SocketAddress remote_address,
+                    const LbClusterConfig &cluster,
+                    LbClusterMap &clusters,
+                    Balancer &balancer,
                     const LbTcpConnectionHandler &_handler, void *ctx);
 
-    void ConnectOutbound(const LbClusterConfig &cluster,
-                         LbClusterMap &clusters,
-                         Balancer &balancer,
-                         SocketAddress bind_address,
-                         unsigned session_sticky);
+    void ScheduleHandshakeCallback() {
+        inbound.ScheduleReadNoTimeout(false);
+        inbound.SetHandshakeCallback(BIND_THIS_METHOD(OnHandshake));
+    }
+
+    void ConnectOutbound();
 
     void DestroyInbound();
     void DestroyOutbound();
     void Destroy();
+
+    void OnHandshake();
 
     /* virtual methods from class ConnectSocketHandler */
     void OnSocketConnectSuccess(SocketDescriptor &&fd) override;
@@ -426,10 +439,16 @@ LbTcpConnection::LbTcpConnection(struct pool &_pool, EventLoop &event_loop,
                                  Stock *_pipe_stock,
                                  SocketDescriptor &&fd, FdType fd_type,
                                  const SocketFilter *filter, void *filter_ctx,
+                                 SocketAddress remote_address,
+                                 const LbClusterConfig &_cluster,
+                                 LbClusterMap &_clusters,
+                                 Balancer &_balancer,
                                  const LbTcpConnectionHandler &_handler, void *ctx)
     :pool(_pool), pipe_stock(_pipe_stock),
      handler(&_handler), handler_ctx(ctx),
-     inbound(event_loop), outbound(event_loop)
+     inbound(event_loop), outbound(event_loop),
+     cluster(_cluster), clusters(_clusters), balancer(_balancer),
+     session_sticky(lb_tcp_sticky(cluster.address_list, remote_address))
 {
     inbound.Init(fd.Steal(), fd_type,
                  nullptr, &write_timeout,
@@ -440,14 +459,16 @@ LbTcpConnection::LbTcpConnection(struct pool &_pool, EventLoop &event_loop,
         (ISTREAM_TO_PIPE & fd_type) != 0 &&
         (ISTREAM_TO_TCP & FdType::FD_PIPE) != 0;
     */
+
+    if (cluster.transparent_source) {
+        bind_address = remote_address;
+        bind_address.SetPort(0);
+    } else
+        bind_address.Clear();
 }
 
 void
-LbTcpConnection::ConnectOutbound(const LbClusterConfig &cluster,
-                                 LbClusterMap &clusters,
-                                 Balancer &balancer,
-                                 SocketAddress bind_address,
-                                 unsigned session_sticky)
+LbTcpConnection::ConnectOutbound()
 {
     if (cluster.HasZeroConf()) {
         /* TODO: generalize the Zeroconf code, implement sticky */
@@ -494,6 +515,15 @@ LbTcpConnection::ConnectOutbound(const LbClusterConfig &cluster,
 }
 
 void
+LbTcpConnection::OnHandshake()
+{
+    assert(!cancel_connect);
+    assert(!outbound.IsValid());
+
+    ConnectOutbound();
+}
+
+void
 lb_tcp_new(struct pool &pool, EventLoop &event_loop, Stock *pipe_stock,
            SocketDescriptor &&fd, FdType fd_type,
            const SocketFilter *filter, void *filter_ctx,
@@ -508,29 +538,13 @@ lb_tcp_new(struct pool &pool, EventLoop &event_loop, Stock *pipe_stock,
                                              pipe_stock,
                                              std::move(fd), fd_type,
                                              filter, filter_ctx,
+                                             remote_address,
+                                             cluster, clusters, balancer,
                                              handler, ctx);
-
-    unsigned session_sticky = lb_tcp_sticky(cluster.address_list,
-                                            remote_address);
-
-    SocketAddress bind_address = SocketAddress::Null();
-    StaticSocketAddress bind_address_buffer;
-
-    if (cluster.transparent_source) {
-        bind_address = remote_address;
-
-        /* reset the port to 0 to allow the kernel to choose one */
-        if (bind_address.GetPort() != 0) {
-            bind_address_buffer = bind_address;
-            if (bind_address_buffer.SetPort(0))
-                bind_address = bind_address_buffer;
-        }
-    }
 
     *tcp_r = tcp;
 
-    tcp->ConnectOutbound(cluster, clusters, balancer,
-                         bind_address, session_sticky);
+    tcp->ScheduleHandshakeCallback();
 }
 
 void
