@@ -217,6 +217,11 @@ struct ThreadSocketFilter : ThreadJob {
      */
     bool SubmitDecryptedInput();
 
+    /**
+     * @return the number of bytes appended to #plain_output
+     */
+    size_t LockWritePlainOutput(const void *data, size_t size);
+
     /* virtual methods from class ThreadJob */
     void Run() final;
     void Done() final;
