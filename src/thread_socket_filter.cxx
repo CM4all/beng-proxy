@@ -498,8 +498,11 @@ thread_socket_filter_write(const void *data, size_t length, void *ctx)
 {
     ThreadSocketFilter *f = (ThreadSocketFilter *)ctx;
 
-    ssize_t nbytes = WRITE_BLOCKING;
-    bool w_empty;
+    // TODO: is this check necessary?
+    if (length == 0)
+        return 0;
+
+    size_t nbytes;
 
     {
         const std::lock_guard<std::mutex> lock(f->mutex);
@@ -507,24 +510,22 @@ thread_socket_filter_write(const void *data, size_t length, void *ctx)
         f->plain_output.AllocateIfNull(fb_pool_get());
 
         auto w = f->plain_output.Write();
-        w_empty = w.IsEmpty();
-        if (!w_empty) {
-            nbytes = std::min(length, w.size);
-            memcpy(w.data, data, nbytes);
-            f->plain_output.Append(nbytes);
-        }
+        nbytes = std::min(length, w.size);
+        memcpy(w.data, data, nbytes);
+        f->plain_output.Append(nbytes);
     }
 
-    if (!w_empty) {
-        f->socket->InternalUndrained();
-        f->Schedule();
-    }
-
-    if (nbytes == WRITE_BLOCKING || size_t(nbytes) < length)
+    if (nbytes < length)
         /* set the "want_write" flag but don't schedule an event to
            avoid a busy loop; as soon as the worker thread returns, we
            will retry to write according to this flag */
         f->want_write = true;
+
+    if (nbytes == 0)
+        return WRITE_BLOCKING;
+
+    f->socket->InternalUndrained();
+    f->Schedule();
 
     return nbytes;
 }
