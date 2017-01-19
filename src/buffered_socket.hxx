@@ -284,7 +284,7 @@ class BufferedSocket final : DestructAnchor, LeakDetector {
      */
     bool got_data;
 
-    bool destroyed;
+    bool destroyed = true;
 
 #ifndef NDEBUG
     bool reading, ended;
@@ -357,8 +357,9 @@ public:
     void Destroy();
 
     /**
-     * Is the object still usable?  That is, was Destroy() NOT called
-     * yet?  The socket may be closed already, though.
+     * Is the object (already and) still usable?  That is, Init() was
+     * called, but Destroy() was NOT called yet?  The socket may be closed
+     * already, though.
      */
     bool IsValid() const {
         return !destroyed;
