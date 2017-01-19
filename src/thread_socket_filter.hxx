@@ -68,6 +68,8 @@ struct ThreadSocketFilter : ThreadJob {
      */
     ThreadSocketFilterHandler *const handler;
 
+    BoundMethod<void()> handshake_callback{nullptr};
+
     /**
      * This event moves a call out of the current stack frame.  It is
      * used by ScheduleWrite() to avoid calling InvokeWrite()
@@ -206,6 +208,8 @@ struct ThreadSocketFilter : ThreadJob {
     ~ThreadSocketFilter();
 
     void Destroy();
+
+    void SetHandshakeCallback(BoundMethod<void()> callback);
 
     /**
      * Schedule a Run() call in a worker thread.

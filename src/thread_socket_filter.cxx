@@ -69,6 +69,21 @@ ThreadSocketFilter::Schedule()
     thread_queue_add(queue, *this);
 }
 
+void
+ThreadSocketFilter::SetHandshakeCallback(BoundMethod<void()> callback)
+{
+    assert(!handshake_callback);
+    assert(callback);
+
+    const std::lock_guard<std::mutex> lock(mutex);
+    if (handshaking)
+        /* defer */
+        handshake_callback = callback;
+    else
+        /* handshake is already complete */
+        callback();
+}
+
 /**
  * @return false if the object has been destroyed
  */
@@ -346,6 +361,12 @@ ThreadSocketFilter::Done()
     if (connected) {
         // TODO: timeouts?
 
+        if (!handshaking && handshake_callback) {
+            auto callback = handshake_callback;
+            handshake_callback = nullptr;
+            callback();
+        }
+
         if (!encrypted_input.IsDefinedAndFull())
             socket->InternalScheduleRead(expect_more, nullptr);
 
@@ -391,6 +412,15 @@ thread_socket_filter_init_(FilteredSocket &s, void *ctx)
     ThreadSocketFilter *f = (ThreadSocketFilter *)ctx;
 
     f->socket = &s;
+}
+
+static void
+thread_socket_filter_set_handshake_callback(BoundMethod<void()> callback,
+                                            void *ctx)
+{
+    auto &f = *(ThreadSocketFilter *)ctx;
+
+    f.SetHandshakeCallback(callback);
 }
 
 static BufferedResult
@@ -753,6 +783,7 @@ thread_socket_filter_close(void *ctx)
 
 const SocketFilter thread_socket_filter = {
     .init = thread_socket_filter_init_,
+    .set_handshake_callback = thread_socket_filter_set_handshake_callback,
     .data = thread_socket_filter_data,
     .is_empty = thread_socket_filter_is_empty,
     .is_full = thread_socket_filter_is_full,

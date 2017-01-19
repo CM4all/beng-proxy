@@ -9,7 +9,7 @@
 #define BENG_PROXY_FILTERED_SOCKET_HXX
 
 #include "buffered_socket.hxx"
-#include "glibfwd.hxx"
+#include "util/BindMethod.hxx"
 
 #include <pthread.h>
 
@@ -17,6 +17,11 @@ struct FilteredSocket;
 
 struct SocketFilter {
     void (*init)(FilteredSocket &s, void *ctx);
+
+    /**
+     * @see FilteredSocket::SetHandshakeCallback()
+     */
+    void (*set_handshake_callback)(BoundMethod<void()> callback, void *ctx);
 
     /**
      * Data has been read from the socket into the input buffer.  Call
@@ -167,6 +172,20 @@ struct FilteredSocket {
             ? base.GetType()
             /* can't do splice() with a filter */
             : FdType::FD_NONE;
+    }
+
+    /**
+     * Install a callback that will be invoked as soon as the filter's
+     * protocol "handshake" is complete.  Before this time, no data
+     * transfer is possible.  If the handshake is already complete (or
+     * the filter has no handshake), the callback will be invoked
+     * synchronously by this method.
+     */
+    void SetHandshakeCallback(BoundMethod<void()> callback) {
+        if (filter != nullptr && filter->set_handshake_callback != nullptr)
+            filter->set_handshake_callback(callback, filter_ctx);
+        else
+            callback();
     }
 
     void Shutdown() {

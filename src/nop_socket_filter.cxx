@@ -120,6 +120,7 @@ nop_socket_filter_close(void *ctx)
 
 const SocketFilter nop_socket_filter = {
     .init = nop_socket_filter_init,
+    .set_handshake_callback = nullptr,
     .data = nop_socket_filter_data,
     .is_empty = nop_socket_filter_is_empty,
     .is_full = nop_socket_filter_is_full,
