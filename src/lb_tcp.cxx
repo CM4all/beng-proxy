@@ -23,7 +23,7 @@
 #include <errno.h>
 
 struct LbTcpConnection final : ConnectSocketHandler {
-    struct pool *pool;
+    struct pool &pool;
     Stock *pipe_stock;
 
     const LbTcpConnectionHandler *handler;
@@ -415,7 +415,7 @@ LbTcpConnection::LbTcpConnection(struct pool &_pool, EventLoop &event_loop,
                                  SocketDescriptor &&fd, FdType fd_type,
                                  const SocketFilter *filter, void *filter_ctx,
                                  const LbTcpConnectionHandler &_handler, void *ctx)
-    :pool(&_pool), pipe_stock(_pipe_stock),
+    :pool(_pool), pipe_stock(_pipe_stock),
      handler(&_handler), handler_ctx(ctx),
      inbound(event_loop), outbound(event_loop)
 {
