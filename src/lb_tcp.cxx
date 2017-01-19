@@ -43,6 +43,12 @@ struct LbTcpConnection final : ConnectSocketHandler {
                     const SocketFilter *filter, void *filter_ctx,
                     const LbTcpConnectionHandler &_handler, void *ctx);
 
+    void ConnectOutbound(const LbClusterConfig &cluster,
+                         LbClusterMap &clusters,
+                         Balancer &balancer,
+                         SocketAddress bind_address,
+                         unsigned session_sticky);
+
     void DestroyInbound();
     void DestroyOutbound();
     void Destroy();
@@ -431,6 +437,55 @@ LbTcpConnection::LbTcpConnection(struct pool &_pool, EventLoop &event_loop,
 }
 
 void
+LbTcpConnection::ConnectOutbound(const LbClusterConfig &cluster,
+                                 LbClusterMap &clusters,
+                                 Balancer &balancer,
+                                 SocketAddress bind_address,
+                                 unsigned session_sticky)
+{
+    if (cluster.HasZeroConf()) {
+        /* TODO: generalize the Zeroconf code, implement sticky */
+
+        auto *cluster2 = clusters.Find(cluster.name);
+        if (cluster2 == nullptr) {
+            DestroyInbound();
+            handler->error("Zeroconf error", "Zeroconf cluster not found",
+                           handler_ctx);
+            return;
+        }
+
+        const auto member = cluster2->Pick();
+        if (member.first == nullptr) {
+            DestroyInbound();
+            handler->error("Zeroconf error", "Zeroconf cluster is empty",
+                           handler_ctx);
+            return;
+        }
+
+        const auto address = member.second;
+        assert(address.IsDefined());
+
+        client_socket_new(inbound.GetEventLoop(), pool,
+                          address.GetFamily(), SOCK_STREAM, 0,
+                          cluster.transparent_source, bind_address,
+                          address,
+                          20,
+                          *this,
+                          cancel_connect);
+        return;
+    }
+
+    client_balancer_connect(inbound.GetEventLoop(), pool, balancer,
+                            cluster.transparent_source,
+                            bind_address,
+                            session_sticky,
+                            &cluster.address_list,
+                            20,
+                            *this,
+                            cancel_connect);
+}
+
+void
 lb_tcp_new(struct pool &pool, EventLoop &event_loop, Stock *pipe_stock,
            SocketDescriptor &&fd, FdType fd_type,
            const SocketFilter *filter, void *filter_ctx,
@@ -466,44 +521,8 @@ lb_tcp_new(struct pool &pool, EventLoop &event_loop, Stock *pipe_stock,
 
     *tcp_r = tcp;
 
-    if (cluster.HasZeroConf()) {
-        /* TODO: generalize the Zeroconf code, implement sticky */
-
-        auto *cluster2 = clusters.Find(cluster.name);
-        if (cluster2 == nullptr) {
-            tcp->DestroyInbound();
-            handler.error("Zeroconf error", "Zeroconf cluster not found", ctx);
-            return;
-        }
-
-        const auto member = cluster2->Pick();
-        if (member.first == nullptr) {
-            tcp->DestroyInbound();
-            handler.error("Zeroconf error", "Zeroconf cluster is empty", ctx);
-            return;
-        }
-
-        const auto address = member.second;
-        assert(address.IsDefined());
-
-        client_socket_new(event_loop, pool,
-                          address.GetFamily(), SOCK_STREAM, 0,
-                          cluster.transparent_source, bind_address,
-                          address,
-                          20,
-                          *tcp,
-                          tcp->cancel_connect);
-        return;
-    }
-
-    client_balancer_connect(event_loop, pool, balancer,
-                            cluster.transparent_source,
-                            bind_address,
-                            session_sticky,
-                            &cluster.address_list,
-                            20,
-                            *tcp,
-                            tcp->cancel_connect);
+    tcp->ConnectOutbound(cluster, clusters, balancer,
+                         bind_address, session_sticky);
 }
 
 void
