@@ -38,8 +38,6 @@ struct SslFilter final : ThreadSocketFilterHandler {
 
     bool handshaking = true;
 
-    bool eof;
-
     AllocatedString<> peer_subject = nullptr, peer_issuer_subject = nullptr;
 
     SslFilter(UniqueSSL &&_ssl)
