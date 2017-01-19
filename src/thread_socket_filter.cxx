@@ -493,6 +493,21 @@ thread_socket_filter_read(bool expect_more, void *ctx)
          f->socket->InternalRead(false));
 }
 
+inline size_t
+ThreadSocketFilter::LockWritePlainOutput(const void *data, size_t size)
+{
+    const std::lock_guard<std::mutex> lock(mutex);
+
+    plain_output.AllocateIfNull(fb_pool_get());
+
+    auto w = plain_output.Write();
+    size_t nbytes = std::min(size, w.size);
+    memcpy(w.data, data, nbytes);
+    plain_output.Append(nbytes);
+
+    return nbytes;
+}
+
 static ssize_t
 thread_socket_filter_write(const void *data, size_t length, void *ctx)
 {
@@ -502,18 +517,7 @@ thread_socket_filter_write(const void *data, size_t length, void *ctx)
     if (length == 0)
         return 0;
 
-    size_t nbytes;
-
-    {
-        const std::lock_guard<std::mutex> lock(f->mutex);
-
-        f->plain_output.AllocateIfNull(fb_pool_get());
-
-        auto w = f->plain_output.Write();
-        nbytes = std::min(length, w.size);
-        memcpy(w.data, data, nbytes);
-        f->plain_output.Append(nbytes);
-    }
+    const size_t nbytes = f->LockWritePlainOutput(data, length);
 
     if (nbytes < length)
         /* set the "want_write" flag but don't schedule an event to
