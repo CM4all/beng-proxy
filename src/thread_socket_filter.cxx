@@ -520,7 +520,7 @@ thread_socket_filter_write(const void *data, size_t length, void *ctx)
         f->Schedule();
     }
 
-    if (nbytes == WRITE_BLOCKING)
+    if (nbytes == WRITE_BLOCKING || size_t(nbytes) < length)
         /* set the "want_write" flag but don't schedule an event to
            avoid a busy loop; as soon as the worker thread returns, we
            will retry to write according to this flag */
