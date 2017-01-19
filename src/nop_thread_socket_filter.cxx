@@ -25,6 +25,7 @@ void
 NopThreadSocketFilter::Run(ThreadSocketFilter &f)
 {
     const std::lock_guard<std::mutex> lock(f.mutex);
+    f.handshaking = false;
     f.decrypted_input.MoveFrom(f.encrypted_input);
     f.encrypted_output.MoveFrom(f.plain_output);
 }
