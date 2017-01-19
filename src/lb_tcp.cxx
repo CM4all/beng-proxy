@@ -26,8 +26,8 @@ struct LbTcpConnection final : ConnectSocketHandler {
     struct pool &pool;
     Stock *pipe_stock;
 
-    const LbTcpConnectionHandler *handler;
-    void *handler_ctx;
+    const LbTcpConnectionHandler *const handler;
+    void *const handler_ctx;
 
     FilteredSocket inbound;
 
