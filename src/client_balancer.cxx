@@ -33,7 +33,7 @@ struct ClientBalancerRequest : ConnectSocketHandler {
         :event_loop(_event_loop), ip_transparent(_ip_transparent),
          timeout(_timeout),
          handler(_handler) {
-        if (_bind_address.IsNull())
+        if (_bind_address.IsNull() || !_bind_address.IsDefined())
             bind_address.Clear();
         else
             bind_address = _bind_address;
