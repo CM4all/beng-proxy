@@ -4,7 +4,7 @@ cm4all-beng-proxy (12.0.5) unstable; urgency=low
   * lb/tcp: fix crash bug after connect failure
   * lb/tcp: connect outbound after SSL handshake is finished
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Fri, 20 Jan 2017 14:12:25 -0000
 
 cm4all-beng-proxy (12.0.4) unstable; urgency=low
 
