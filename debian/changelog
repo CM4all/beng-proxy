@@ -1,6 +1,7 @@
 cm4all-beng-proxy (12.0.5) unstable; urgency=low
 
   * merge release 11.15
+  * lb/tcp: fix crash bug after connect failure
 
  --   
 

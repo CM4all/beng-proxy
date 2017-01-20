@@ -376,15 +376,21 @@ LbTcpConnection::OnSocketConnectSuccess(SocketDescriptor &&fd)
 void
 LbTcpConnection::OnSocketConnectTimeout()
 {
+    cancel_connect = nullptr;
+
     DestroyInbound();
     handler->error("Connect error", "Timeout", handler_ctx);
+    Destroy();
 }
 
 void
 LbTcpConnection::OnSocketConnectError(std::exception_ptr ep)
 {
+    cancel_connect = nullptr;
+
     DestroyInbound();
     handler->exception("Connect error", ep, handler_ctx);
+    Destroy();
 }
 
 /*
@@ -451,6 +457,7 @@ LbTcpConnection::ConnectOutbound(const LbClusterConfig &cluster,
             DestroyInbound();
             handler->error("Zeroconf error", "Zeroconf cluster not found",
                            handler_ctx);
+            Destroy();
             return;
         }
 
@@ -459,6 +466,7 @@ LbTcpConnection::ConnectOutbound(const LbClusterConfig &cluster,
             DestroyInbound();
             handler->error("Zeroconf error", "Zeroconf cluster is empty",
                            handler_ctx);
+            Destroy();
             return;
         }
 
