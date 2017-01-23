@@ -103,6 +103,9 @@ class LbConfigParser final : public NestedConfigParser {
         Branch(LbConfigParser &_parent, const char *_name)
             :parent(_parent), config(_name) {}
 
+    private:
+        void AddGoto(LbGoto destination, LineParser &line);
+
     protected:
         /* virtual methods from class ConfigParser */
         void ParseLine(LineParser &line) override;
@@ -688,6 +691,36 @@ ParseCondition(LineParser &line)
 }
 
 void
+LbConfigParser::Branch::AddGoto(LbGoto destination, LineParser &line)
+{
+    if (line.IsEnd()) {
+        if (config.HasFallback())
+            throw LineParser::Error("Fallback already specified");
+
+        if (!config.conditions.empty() &&
+            config.conditions.front().destination.GetProtocol() != destination.GetProtocol())
+            throw LineParser::Error("Protocol mismatch");
+
+        config.fallback = destination;
+    } else {
+        if (config.fallback.IsDefined() &&
+            config.fallback.GetProtocol() != destination.GetProtocol())
+            throw LineParser::Error("Protocol mismatch");
+
+        const char *if_ = line.NextWord();
+        if (if_ == nullptr || strcmp(if_, "if") != 0)
+            throw LineParser::Error("'if' or end of line expected");
+
+        auto condition = ParseCondition(line);
+
+        line.ExpectEnd();
+
+        config.conditions.emplace_back(std::move(condition),
+                                       destination);
+    }
+}
+
+void
 LbConfigParser::Branch::ParseLine(LineParser &line)
 {
     const char *word = line.ExpectWord();
@@ -699,33 +732,7 @@ LbConfigParser::Branch::ParseLine(LineParser &line)
         if (!destination.IsDefined())
             throw LineParser::Error("No such pool");
 
-        if (line.IsEnd()) {
-            if (config.HasFallback())
-                throw LineParser::Error("Fallback already specified");
-
-            if (!config.conditions.empty() &&
-                config.conditions.front().destination.GetProtocol() != destination.GetProtocol())
-                throw LineParser::Error("Protocol mismatch");
-
-            config.fallback = destination;
-            return;
-        }
-
-        if (config.fallback.IsDefined() &&
-            config.fallback.GetProtocol() != destination.GetProtocol())
-                throw LineParser::Error("Protocol mismatch");
-
-        const char *if_ = line.NextWord();
-        if (if_ == nullptr || strcmp(if_, "if") != 0)
-            throw LineParser::Error("'if' or end of line expected");
-
-        auto condition = ParseCondition(line);
-
-        line.ExpectEnd();
-
-        LbGotoIfConfig gif(std::move(condition),
-                           destination);
-        config.conditions.emplace_back(std::move(gif));
+        AddGoto(destination, line);
     } else
         throw LineParser::Error("Unknown option");
 }
