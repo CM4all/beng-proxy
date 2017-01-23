@@ -616,31 +616,28 @@ LbConfigParser::CreateCluster(LineParser &line)
     SetChild(std::make_unique<Cluster>(*this, name));
 }
 
-static bool
-parse_attribute_reference(LbAttributeReference &a, const char *p)
+static LbAttributeReference
+ParseAttributeReference(const char *p)
 {
     if (strcmp(p, "request_method") == 0) {
-        a.type = LbAttributeReference::Type::METHOD;
-        return true;
+        return LbAttributeReference::Type::METHOD;
     } else if (strcmp(p, "request_uri") == 0) {
-        a.type = LbAttributeReference::Type::URI;
-        return true;
+        return LbAttributeReference::Type::URI;
     } else if (memcmp(p, "http_", 5) == 0) {
-        a.type = LbAttributeReference::Type::HEADER;
-        a.name = p + 5;
+        LbAttributeReference a(LbAttributeReference::Type::HEADER, p + 5);
         if (a.name.empty())
-            return false;
+            throw LineParser::Error("Empty HTTP header name");
 
         for (auto &ch : a.name) {
             if (ch == '_')
                 ch = '-';
             else if (!g_ascii_islower(ch) && !g_ascii_isdigit(ch))
-                return false;
+                throw LineParser::Error("Malformed HTTP header name");
         }
 
-        return true;
+        return a;
     } else
-        return false;
+        throw LineParser::Error("Unknown attribute reference");
 }
 
 void
@@ -682,6 +679,8 @@ LbConfigParser::Branch::ParseLine(LineParser &line)
         if (attribute == nullptr)
             throw LineParser::Error("Attribute name starting with '$' expected");
 
+        auto a = ParseAttributeReference(attribute);
+
         LbConditionConfig::Operator op;
         bool negate;
 
@@ -707,10 +706,6 @@ LbConfigParser::Branch::ParseLine(LineParser &line)
             throw LineParser::Error("Regular expression expected");
 
         line.ExpectEnd();
-
-        LbAttributeReference a(LbAttributeReference::Type::HEADER, "");
-        if (!parse_attribute_reference(a, attribute))
-            throw LineParser::Error("Unknown attribute reference");
 
         UniqueRegex regex;
         if (op == LbConditionConfig::Operator::REGEX)

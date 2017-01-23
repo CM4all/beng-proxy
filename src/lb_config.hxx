@@ -198,6 +198,9 @@ struct LbAttributeReference {
 
     std::string name;
 
+    LbAttributeReference(Type _type)
+        :type(_type) {}
+
     template<typename N>
     LbAttributeReference(Type _type, N &&_name)
         :type(_type), name(std::forward<N>(_name)) {}
