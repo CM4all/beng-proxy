@@ -488,9 +488,7 @@ TranslateResponse::CompileRegex() const
 {
     assert(regex != nullptr);
 
-    UniqueRegex r;
-    r.Compile(regex, protocol_version >= 3, IsExpandable());
-    return r;
+    return {regex, protocol_version >= 3, IsExpandable()};
 }
 
 UniqueRegex
@@ -498,9 +496,7 @@ TranslateResponse::CompileInverseRegex() const
 {
     assert(inverse_regex != nullptr);
 
-    UniqueRegex r;
-    r.Compile(inverse_regex, protocol_version >= 3, false);
-    return r;
+    return {inverse_regex, protocol_version >= 3, false};
 }
 
 bool

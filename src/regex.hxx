@@ -92,6 +92,10 @@ class UniqueRegex : public RegexPointer {
 public:
     UniqueRegex() = default;
 
+    UniqueRegex(const char *pattern, bool anchored, bool capture) {
+        Compile(pattern, anchored, capture);
+    }
+
     UniqueRegex(UniqueRegex &&src):RegexPointer(src) {
         src.re = nullptr;
         src.extra = nullptr;
