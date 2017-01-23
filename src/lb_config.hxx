@@ -230,6 +230,7 @@ struct LbBranchConfig;
 struct LbGoto {
     const LbClusterConfig *cluster = nullptr;
     const LbBranchConfig *branch = nullptr;
+    http_status_t status = http_status_t(0);
 
     LbGoto() = default;
 
@@ -239,8 +240,12 @@ struct LbGoto {
     explicit LbGoto(LbBranchConfig *_branch)
         :branch(_branch) {}
 
+    explicit LbGoto(http_status_t _status)
+        :status(_status) {}
+
     bool IsDefined() const {
-        return cluster != nullptr || branch != nullptr;
+        return cluster != nullptr || branch != nullptr ||
+            status != http_status_t(0);
     }
 
     gcc_pure
@@ -376,6 +381,9 @@ inline LbProtocol
 LbGoto::GetProtocol() const
 {
     assert(IsDefined());
+
+    if (status != http_status_t(0))
+        return LbProtocol::HTTP;
 
     return cluster != nullptr
         ? cluster->protocol

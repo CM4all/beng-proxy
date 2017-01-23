@@ -690,6 +690,21 @@ ParseCondition(LineParser &line)
     gcc_unreachable();
 }
 
+static http_status_t
+ParseStatus(const char *s)
+{
+    char *endptr;
+    auto l = strtoul(s, &endptr, 10);
+    if (endptr == s || *endptr != 0)
+        throw LineParser::Error("Failed to parse status number");
+
+    auto status = http_status_t(l);
+    if (l < 200 || l >= 600 || !http_status_is_valid(status))
+        throw LineParser::Error("Invalid status");
+
+    return status;
+}
+
 void
 LbConfigParser::Branch::AddGoto(LbGoto destination, LineParser &line)
 {
@@ -731,6 +746,11 @@ LbConfigParser::Branch::ParseLine(LineParser &line)
         LbGoto destination = parent.config.FindGoto(name);
         if (!destination.IsDefined())
             throw LineParser::Error("No such pool");
+
+        AddGoto(destination, line);
+    } else if (strcmp(word, "status") == 0) {
+        const auto status = ParseStatus(line.ExpectValue());
+        const LbGoto destination(status);
 
         AddGoto(destination, line);
     } else

@@ -30,7 +30,7 @@ init_monitors(LbInstance &instance, const LbGoto &g)
 {
     if (g.cluster != nullptr)
         init_monitors(instance, *g.cluster);
-    else
+    else if (g.branch != nullptr)
         init_monitors(instance, *g.branch);
 }
 

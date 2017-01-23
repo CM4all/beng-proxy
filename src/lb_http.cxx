@@ -276,6 +276,12 @@ LbConnection::HandleHttpRequest(HttpServerRequest &request,
     request_start_time = std::chrono::steady_clock::now();
 
     const auto &goto_ = listener.destination.FindRequestLeaf(request);
+    if (goto_.status != http_status_t(0)) {
+        http_server_send_message(&request,
+                                 goto_.status,
+                                 http_status_to_string(goto_.status));
+        return;
+    }
 
     const auto request2 =
         NewFromPool<LbRequest>(request.pool,

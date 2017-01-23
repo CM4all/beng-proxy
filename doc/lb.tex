@@ -246,6 +246,17 @@ The following operators are available:
 The last token is a quoted string decpiting the value to compare with,
 or the regular expression.
 
+Instead of \verb|goto|, you can use \verb|status| to let
+\emph{beng-lb} generate a brief response with the given HTTP status
+code:
+
+\begin{verbatim*}
+branch foo {
+  status 418 if $http_user_agent =~ "BadBot"
+  goto bar
+}
+\end{verbatim*}
+
 At the time of this writing, conditional pools work only for HTTP, not
 for TCP.
 
