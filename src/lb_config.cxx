@@ -640,6 +640,53 @@ ParseAttributeReference(const char *p)
         throw LineParser::Error("Unknown attribute reference");
 }
 
+static LbConditionConfig
+ParseCondition(LineParser &line)
+{
+    if (!line.SkipSymbol('$'))
+        throw LineParser::Error("Attribute name starting with '$' expected");
+
+    const char *attribute = line.NextWord();
+    if (attribute == nullptr)
+        throw LineParser::Error("Attribute name starting with '$' expected");
+
+    auto a = ParseAttributeReference(attribute);
+
+    LbConditionConfig::Operator op;
+    bool negate;
+
+    if (line.SkipSymbol('=', '=')) {
+        op = LbConditionConfig::Operator::EQUALS;
+        negate = false;
+    } else if (line.SkipSymbol('!', '=')) {
+        op = LbConditionConfig::Operator::EQUALS;
+        negate = true;
+    } else if (line.SkipSymbol('=', '~')) {
+        op = LbConditionConfig::Operator::REGEX;
+        negate = false;
+    } else if (line.SkipSymbol('!', '~')) {
+        op = LbConditionConfig::Operator::REGEX;
+        negate = true;
+    } else
+        throw LineParser::Error("Comparison operator expected");
+
+    line.ExpectWhitespace();
+
+    const char *string = line.NextUnescape();
+    if (string == nullptr)
+        throw LineParser::Error("Regular expression expected");
+
+    switch (op) {
+    case LbConditionConfig::Operator::EQUALS:
+        return {std::move(a), negate, string};
+
+    case LbConditionConfig::Operator::REGEX:
+        return {std::move(a), negate, UniqueRegex(string, false, false)};
+    }
+
+    gcc_unreachable();
+}
+
 void
 LbConfigParser::Branch::ParseLine(LineParser &line)
 {
@@ -672,50 +719,11 @@ LbConfigParser::Branch::ParseLine(LineParser &line)
         if (if_ == nullptr || strcmp(if_, "if") != 0)
             throw LineParser::Error("'if' or end of line expected");
 
-        if (!line.SkipSymbol('$'))
-            throw LineParser::Error("Attribute name starting with '$' expected");
-
-        const char *attribute = line.NextWord();
-        if (attribute == nullptr)
-            throw LineParser::Error("Attribute name starting with '$' expected");
-
-        auto a = ParseAttributeReference(attribute);
-
-        LbConditionConfig::Operator op;
-        bool negate;
-
-        if (line.SkipSymbol('=', '=')) {
-            op = LbConditionConfig::Operator::EQUALS;
-            negate = false;
-        } else if (line.SkipSymbol('!', '=')) {
-            op = LbConditionConfig::Operator::EQUALS;
-            negate = true;
-        } else if (line.SkipSymbol('=', '~')) {
-            op = LbConditionConfig::Operator::REGEX;
-            negate = false;
-        } else if (line.SkipSymbol('!', '~')) {
-            op = LbConditionConfig::Operator::REGEX;
-            negate = true;
-        } else
-            throw LineParser::Error("Comparison operator expected");
-
-        line.ExpectWhitespace();
-
-        const char *string = line.NextUnescape();
-        if (string == nullptr)
-            throw LineParser::Error("Regular expression expected");
+        auto condition = ParseCondition(line);
 
         line.ExpectEnd();
 
-        UniqueRegex regex;
-        if (op == LbConditionConfig::Operator::REGEX)
-            regex.Compile(string, false, false);
-
-        LbGotoIfConfig gif(regex.IsDefined()
-                           ? LbConditionConfig(std::move(a), negate,
-                                               std::move(regex))
-                           : LbConditionConfig(std::move(a), negate,
-                                               string),
+        LbGotoIfConfig gif(std::move(condition),
                            destination);
         config.conditions.emplace_back(std::move(gif));
     } else
