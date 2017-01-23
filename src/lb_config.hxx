@@ -204,6 +204,25 @@ struct LbAttributeReference {
     template<typename N>
     LbAttributeReference(Type _type, N &&_name)
         :type(_type), name(std::forward<N>(_name)) {}
+
+    template<typename R>
+    gcc_pure
+    const char *GetRequestAttribute(const R &request) const {
+        switch (type) {
+        case Type::METHOD:
+            return http_method_to_string(request.method);
+
+        case Type::URI:
+            return request.uri;
+
+        case Type::HEADER:
+            return request.headers.Get(name.c_str());
+        }
+
+        assert(false);
+        gcc_unreachable();
+    }
+
 };
 
 struct LbBranchConfig;
@@ -274,6 +293,16 @@ struct LbConditionConfig {
         }
 
         gcc_unreachable();
+    }
+
+    template<typename R>
+    gcc_pure
+    bool MatchRequest(const R &request) const {
+        const char *value = attribute_reference.GetRequestAttribute(request);
+        if (value == nullptr)
+            value = "";
+
+        return Match(value);
     }
 };
 

@@ -95,39 +95,6 @@ struct LbRequest final
 };
 
 gcc_pure
-static const char *
-lb_http_get_attribute(const HttpServerRequest &request,
-                      const LbAttributeReference &reference)
-{
-    switch (reference.type) {
-    case LbAttributeReference::Type::METHOD:
-        return http_method_to_string(request.method);
-
-    case LbAttributeReference::Type::URI:
-        return request.uri;
-
-    case LbAttributeReference::Type::HEADER:
-        return request.headers.Get(reference.name.c_str());
-    }
-
-    assert(false);
-    gcc_unreachable();
-}
-
-gcc_pure
-static bool
-lb_http_check_condition(const LbConditionConfig &condition,
-                        const HttpServerRequest &request)
-{
-    const char *value = lb_http_get_attribute(request,
-                                              condition.attribute_reference);
-    if (value == nullptr)
-        value = "";
-
-    return condition.Match(value);
-}
-
-gcc_pure
 static const LbClusterConfig *
 lb_http_select_cluster(const LbGoto &destination,
                        const HttpServerRequest &request);
@@ -138,7 +105,7 @@ lb_http_select_cluster(const LbBranchConfig &branch,
                        const HttpServerRequest &request)
 {
     for (const auto &i : branch.conditions)
-        if (lb_http_check_condition(i.condition, request))
+        if (i.condition.MatchRequest(request))
             return lb_http_select_cluster(i.destination, request);
 
     return lb_http_select_cluster(branch.fallback, request);
