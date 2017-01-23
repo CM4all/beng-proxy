@@ -250,6 +250,10 @@ struct LbGoto {
     const char *GetName() const;
 
     bool HasZeroConf() const;
+
+    template<typename R>
+    gcc_pure
+    const LbGoto &FindRequestLeaf(const R &request) const;
 };
 
 struct LbConditionConfig {
@@ -356,6 +360,16 @@ struct LbBranchConfig {
 
         return false;
     }
+
+    template<typename R>
+    gcc_pure
+    const LbGoto &FindRequestLeaf(const R &request) const {
+        for (const auto &i : conditions)
+            if (i.condition.MatchRequest(request))
+                return i.destination.FindRequestLeaf(request);
+
+        return fallback.FindRequestLeaf(request);
+    }
 };
 
 inline LbProtocol
@@ -383,6 +397,16 @@ LbGoto::HasZeroConf() const
 {
     return (cluster != nullptr && cluster->HasZeroConf()) ||
         (branch != nullptr && branch->HasZeroConf());
+}
+
+template<typename R>
+const LbGoto &
+LbGoto::FindRequestLeaf(const R &request) const
+{
+    if (branch != nullptr)
+        return branch->FindRequestLeaf(request);
+
+    return *this;
 }
 
 struct LbListenerConfig {

@@ -94,35 +94,6 @@ struct LbRequest final
     void OnHttpError(GError *error) override;
 };
 
-gcc_pure
-static const LbClusterConfig *
-lb_http_select_cluster(const LbGoto &destination,
-                       const HttpServerRequest &request);
-
-gcc_pure
-static const LbClusterConfig *
-lb_http_select_cluster(const LbBranchConfig &branch,
-                       const HttpServerRequest &request)
-{
-    for (const auto &i : branch.conditions)
-        if (i.condition.MatchRequest(request))
-            return lb_http_select_cluster(i.destination, request);
-
-    return lb_http_select_cluster(branch.fallback, request);
-}
-
-gcc_pure
-static const LbClusterConfig *
-lb_http_select_cluster(const LbGoto &destination,
-                       const HttpServerRequest &request)
-{
-    if (gcc_likely(destination.cluster != nullptr))
-        return destination.cluster;
-
-    assert(destination.branch != nullptr);
-    return lb_http_select_cluster(*destination.branch, request);
-}
-
 static bool
 send_fallback(HttpServerRequest *request,
               const LbFallbackConfig *fallback)
@@ -304,12 +275,13 @@ LbConnection::HandleHttpRequest(HttpServerRequest &request,
 
     request_start_time = std::chrono::steady_clock::now();
 
+    const auto &goto_ = listener.destination.FindRequestLeaf(request);
+
     const auto request2 =
         NewFromPool<LbRequest>(request.pool,
                                *this, *instance.tcp_balancer,
                                request, cancel_ptr);
-    const auto *cluster = request2->cluster =
-        lb_http_select_cluster(listener.destination, request);
+    const auto *cluster = request2->cluster = goto_.cluster;
 
     SocketAddress bind_address = SocketAddress::Null();
     const bool transparent_source = cluster->transparent_source;
