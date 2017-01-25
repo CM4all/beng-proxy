@@ -150,7 +150,9 @@ public:
 
 private:
     bool HasArgs() const {
-#if TRANSLATION_ENABLE_RADDRESS
+#if TRANSLATION_ENABLE_EXECUTE
+        return true;
+#elif TRANSLATION_ENABLE_RADDRESS
         return cgi_address != nullptr || lhttp_address != nullptr;
 #else
         return false;

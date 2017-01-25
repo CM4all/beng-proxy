@@ -22,6 +22,7 @@
 #include "header_forward.hxx"
 #endif
 #if TRANSLATION_ENABLE_EXECUTE
+#include "ExpandableStringList.hxx"
 #include "spawn/ChildOptions.hxx"
 #endif
 
@@ -60,6 +61,12 @@ struct TranslateResponse {
 
 #if TRANSLATION_ENABLE_EXECUTE
     const char *execute;
+
+    /**
+     * Command-line arguments for #execute.
+     */
+    ExpandableStringList args;
+
     ChildOptions child_options;
 #endif
 

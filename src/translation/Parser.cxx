@@ -3139,6 +3139,7 @@ TranslateParser::HandlePacket(enum beng_translation_command command,
         jail = nullptr;
 #endif
 #if TRANSLATION_ENABLE_EXECUTE
+        args_builder = response.args;
         SetChildOptions(response.child_options);
 #else
         child_options = nullptr;

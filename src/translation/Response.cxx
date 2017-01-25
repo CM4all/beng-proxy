@@ -236,6 +236,7 @@ TranslateResponse::CopyFrom(AllocatorPtr alloc, const TranslateResponse &src)
 
 #if TRANSLATION_ENABLE_EXECUTE
     execute = alloc.CheckDup(src.execute);
+    args = ExpandableStringList(alloc, src.args);
     child_options = ChildOptions(alloc, src.child_options);
 #endif
 
