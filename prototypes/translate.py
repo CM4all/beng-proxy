@@ -93,11 +93,17 @@ class Translation(Protocol):
             response.packet(TRANSLATE_UTS_NAMESPACE, 'host-' + user)
         return response
 
-    def _handle_cron(self, user, param):
+    def _handle_cron(self, user, uri, param):
+        print("CRON!", repr(user), repr(uri), repr(param))
         response = Response(protocol_version=1)
         if user is None or not re.match(r'^[-_\w]+$', user):
             response.status(400)
             return response
+
+        if uri is not None:
+            response.packet(TRANSLATE_EXECUTE, '/bin/echo')
+            response.packet(TRANSLATE_APPEND, 'Hello, World!')
+            response.packet(TRANSLATE_APPEND, uri)
 
         response.packet(TRANSLATE_HOME, os.path.join('/var/www', user))
         response.packet(TRANSLATE_USER_NAMESPACE)
@@ -828,7 +834,7 @@ class Translation(Protocol):
                                       request.service, request.listener_tag)
 
         if request.cron:
-            return self._handle_cron(request.user, request.param)
+            return self._handle_cron(request.user, request.uri, request.param)
 
         if request.auth is not None:
             return self._handle_auth(request.auth, request.uri, request.session)
