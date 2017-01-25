@@ -3089,7 +3089,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
     case TRANSLATE_EXECUTE:
 #if TRANSLATION_ENABLE_EXECUTE
-        if (payload == nullptr)
+        if (!is_valid_absolute_path(payload, payload_length))
             throw std::runtime_error("malformed EXECUTE packet");
 
         if (response.execute != nullptr)
