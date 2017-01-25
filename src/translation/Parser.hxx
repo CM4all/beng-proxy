@@ -150,13 +150,17 @@ public:
 
 private:
     bool HasArgs() const {
-#if TRANSLATION_ENABLE_EXECUTE
-        return true;
-#elif TRANSLATION_ENABLE_RADDRESS
-        return cgi_address != nullptr || lhttp_address != nullptr;
-#else
-        return false;
+#if TRANSLATION_ENABLE_RADDRESS
+        if (cgi_address != nullptr || lhttp_address != nullptr)
+            return true;
 #endif
+
+#if TRANSLATION_ENABLE_EXECUTE
+        if (response.execute != nullptr)
+            return true;
+#endif
+
+        return false;
     }
 
     void SetChildOptions(ChildOptions &_child_options);

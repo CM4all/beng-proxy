@@ -3096,6 +3096,7 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
             throw std::runtime_error("duplicate EXECUTE packet");
 
         response.execute = payload;
+        args_builder = response.args;
         return;
 #else
         break;
@@ -3139,7 +3140,6 @@ TranslateParser::HandlePacket(enum beng_translation_command command,
         jail = nullptr;
 #endif
 #if TRANSLATION_ENABLE_EXECUTE
-        args_builder = response.args;
         SetChildOptions(response.child_options);
 #else
         child_options = nullptr;
