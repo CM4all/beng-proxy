@@ -3,7 +3,7 @@ cm4all-beng-proxy (12.0.6) unstable; urgency=low
   * lb/http: add "status" as a possible destination for "branch"
   * translation: add packet EXECUTE
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Wed, 25 Jan 2017 21:11:58 -0000
 
 cm4all-beng-proxy (12.0.5) unstable; urgency=low
 
