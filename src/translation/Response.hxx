@@ -21,7 +21,7 @@
 #include "ResourceAddress.hxx"
 #include "header_forward.hxx"
 #endif
-#if TRANSLATION_ENABLE_CHILD_OPTIONS
+#if TRANSLATION_ENABLE_EXECUTE
 #include "spawn/ChildOptions.hxx"
 #endif
 
@@ -58,7 +58,7 @@ struct TranslateResponse {
     int status;
 #endif
 
-#if TRANSLATION_ENABLE_CHILD_OPTIONS
+#if TRANSLATION_ENABLE_EXECUTE
     ChildOptions child_options;
 #endif
 

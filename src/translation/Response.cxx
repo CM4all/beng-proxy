@@ -36,7 +36,7 @@ TranslateResponse::Clear()
     status = 0;
 #endif
 
-#if TRANSLATION_ENABLE_CHILD_OPTIONS
+#if TRANSLATION_ENABLE_EXECUTE
     child_options = ChildOptions();
 #endif
 

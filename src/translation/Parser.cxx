@@ -3135,7 +3135,7 @@ TranslateParser::HandlePacket(enum beng_translation_command command,
 #if TRANSLATION_ENABLE_JAILCGI
         jail = nullptr;
 #endif
-#if TRANSLATION_ENABLE_CHILD_OPTIONS
+#if TRANSLATION_ENABLE_EXECUTE
         SetChildOptions(response.child_options);
 #else
         child_options = nullptr;
