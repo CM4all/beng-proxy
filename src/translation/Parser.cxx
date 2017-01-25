@@ -1942,6 +1942,8 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         } else
             throw std::runtime_error("misplaced APPEND packet");
         return;
+#else
+        break;
 #endif
 
     case TRANSLATE_PAIR:
