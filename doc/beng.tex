@@ -2470,6 +2470,13 @@ payload. \\
 
 \hline
 
+\verb|URI| & If the job refers to a URN instead of a command, then
+this packet is present and contains the URN.  A successful response
+must specify the program to be executed in \verb|EXECUTE| with
+command-line arguments in \verb|APPEND| packets. \\
+
+\hline
+
 \verb|USER| & The account id owning the job. \\
 
 \hline
