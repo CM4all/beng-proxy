@@ -800,6 +800,12 @@ enum beng_translation_command {
      * Redirect STDERR to /dev/null?
      */
     TRANSLATE_STDERR_NULL = 184,
+
+    /**
+     * Execute the specified program.  May be followed by
+     * #TRANSLATE_APPEND packets.  This is used by Workshop/Cron.
+     */
+    TRANSLATE_EXECUTE = 185,
 };
 
 struct beng_translation_header {

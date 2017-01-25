@@ -3097,6 +3097,20 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 
         child_options->stderr_null = true;
         return;
+
+    case TRANSLATE_EXECUTE:
+#if TRANSLATION_ENABLE_EXECUTE
+        if (payload == nullptr)
+            throw std::runtime_error("malformed EXECUTE packet");
+
+        if (response.execute != nullptr)
+            throw std::runtime_error("duplicate EXECUTE packet");
+
+        response.execute = payload;
+        return;
+#else
+        break;
+#endif
     }
 
     throw FormatRuntimeError("unknown translation packet: %u", command);

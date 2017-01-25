@@ -59,6 +59,7 @@ struct TranslateResponse {
 #endif
 
 #if TRANSLATION_ENABLE_EXECUTE
+    const char *execute;
     ChildOptions child_options;
 #endif
 
