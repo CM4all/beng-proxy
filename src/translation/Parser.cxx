@@ -1909,38 +1909,25 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
 #endif
 
     case TRANSLATE_APPEND:
-#if TRANSLATION_ENABLE_RADDRESS
         if (!is_valid_nonempty_string(payload, payload_length))
             throw std::runtime_error("malformed APPEND packet");
 
-        if (resource_address == nullptr)
+        if (!HasArgs())
             throw std::runtime_error("misplaced APPEND packet");
 
-        if (cgi_address != nullptr || lhttp_address != nullptr) {
-            args_builder.Add(alloc, payload, false);
-        } else
-            throw std::runtime_error("misplaced APPEND packet");
-
+        args_builder.Add(alloc, payload, false);
         return;
-#else
-        break;
-#endif
 
     case TRANSLATE_EXPAND_APPEND:
-#if TRANSLATION_ENABLE_RADDRESS && TRANSLATION_ENABLE_EXPAND
+#if TRANSLATION_ENABLE_EXPAND
         if (!is_valid_nonempty_string(payload, payload_length))
             throw std::runtime_error("malformed EXPAND_APPEND packet");
 
-        if (response.regex == nullptr || resource_address == nullptr)
+        if (response.regex == nullptr || !HasArgs() ||
+            !args_builder.CanSetExpand())
             throw std::runtime_error("misplaced EXPAND_APPEND packet");
 
-        if (cgi_address != nullptr || lhttp_address != nullptr) {
-            if (!args_builder.CanSetExpand())
-                throw std::runtime_error("misplaced EXPAND_APPEND packet");
-
-            args_builder.SetExpand(payload);
-        } else
-            throw std::runtime_error("misplaced APPEND packet");
+        args_builder.SetExpand(payload);
         return;
 #else
         break;

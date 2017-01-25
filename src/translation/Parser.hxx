@@ -149,6 +149,14 @@ public:
     }
 
 private:
+    bool HasArgs() const {
+#if TRANSLATION_ENABLE_RADDRESS
+        return cgi_address != nullptr || lhttp_address != nullptr;
+#else
+        return false;
+#endif
+    }
+
     void SetChildOptions(ChildOptions &_child_options);
 
 #if TRANSLATION_ENABLE_RADDRESS
