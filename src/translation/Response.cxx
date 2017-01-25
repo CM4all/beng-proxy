@@ -233,6 +233,10 @@ TranslateResponse::CopyFrom(AllocatorPtr alloc, const TranslateResponse &src)
     status = src.status;
 #endif
 
+#if TRANSLATION_ENABLE_EXECUTE
+    child_options = ChildOptions(alloc, src.child_options);
+#endif
+
 #if TRANSLATION_ENABLE_HTTP
     request_header_forward = src.request_header_forward;
     response_header_forward = src.response_header_forward;
