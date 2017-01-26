@@ -277,9 +277,7 @@ LbConnection::HandleHttpRequest(HttpServerRequest &request,
 
     const auto &goto_ = listener.destination.FindRequestLeaf(request);
     if (goto_.status != http_status_t(0)) {
-        http_server_send_message(&request,
-                                 goto_.status,
-                                 http_status_to_string(goto_.status));
+        http_server_simple_response(request, goto_.status, nullptr, nullptr);
         return;
     }
 
