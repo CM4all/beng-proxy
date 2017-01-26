@@ -104,8 +104,6 @@ send_fallback(HttpServerRequest *request,
         return true;
     } else if (!fallback->message.empty()) {
         /* custom status + error message */
-        assert(http_status_is_valid(fallback->status));
-
         http_server_send_message(request, fallback->status,
                                  fallback->message.c_str());
         return true;

@@ -74,6 +74,7 @@ HttpServerConnection::SubmitResponse(http_status_t status,
                                      HttpHeaders &&headers,
                                      Istream *body)
 {
+    assert(http_status_is_valid(status));
     assert(score != HTTP_SERVER_NEW);
     assert(socket.IsConnected());
 
