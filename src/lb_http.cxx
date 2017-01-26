@@ -99,13 +99,13 @@ send_fallback(HttpServerRequest *request,
               const LbFallbackConfig *fallback)
 {
     if (!fallback->location.empty()) {
-        http_server_send_redirect(request, HTTP_STATUS_FOUND,
-                                  fallback->location.c_str(), "Found");
+        http_server_simple_response(*request, HTTP_STATUS_FOUND,
+                                    fallback->location.c_str(), nullptr);
         return true;
     } else if (!fallback->message.empty()) {
         /* custom status + error message */
-        http_server_send_message(request, fallback->status,
-                                 fallback->message.c_str());
+        http_server_simple_response(*request, fallback->status, nullptr,
+                                    fallback->message.c_str());
         return true;
     } else
         return false;
