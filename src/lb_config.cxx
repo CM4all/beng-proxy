@@ -562,6 +562,7 @@ LbConfigParser::Cluster::ParseLine(LineParser &line)
         if (strstr(location, "://") != nullptr) {
             line.ExpectEnd();
 
+            config.fallback.status = HTTP_STATUS_FOUND;
             config.fallback.location = location;
         } else {
             char *endptr;

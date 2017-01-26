@@ -126,7 +126,7 @@ struct LbMemberConfig {
 };
 
 struct LbFallbackConfig {
-    http_status_t status;
+    http_status_t status = http_status_t(0);
 
     /**
      * The "Location" response header.
@@ -136,7 +136,7 @@ struct LbFallbackConfig {
     std::string message;
 
     bool IsDefined() const {
-        return !location.empty() || !message.empty();
+        return status != http_status_t(0);
     }
 };
 

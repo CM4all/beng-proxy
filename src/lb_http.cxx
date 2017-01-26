@@ -99,7 +99,7 @@ send_fallback(HttpServerRequest *request,
               const LbFallbackConfig *fallback)
 {
     if (!fallback->location.empty()) {
-        http_server_simple_response(*request, HTTP_STATUS_FOUND,
+        http_server_simple_response(*request, fallback->status,
                                     fallback->location.c_str(), nullptr);
         return true;
     } else if (!fallback->message.empty()) {
