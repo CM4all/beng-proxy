@@ -94,6 +94,17 @@ struct LbRequest final
     void OnHttpError(GError *error) override;
 };
 
+static void
+SendResponse(HttpServerRequest &request,
+             const LbSimpleHttpResponse &response)
+{
+    assert(response.IsDefined());
+
+    http_server_simple_response(request, response.status,
+                                response.location.empty() ? nullptr : response.location.c_str(),
+                                response.message.empty() ? nullptr : response.message.c_str());
+}
+
 static bool
 send_fallback(HttpServerRequest &request,
               const LbSimpleHttpResponse &fallback)
@@ -101,9 +112,7 @@ send_fallback(HttpServerRequest &request,
     if (!fallback.IsDefined())
         return false;
 
-    http_server_simple_response(request, fallback.status,
-                                fallback.location.empty() ? nullptr : fallback.location.c_str(),
-                                fallback.message.empty() ? nullptr : fallback.message.c_str());
+    SendResponse(request, fallback);
     return true;
 }
 
