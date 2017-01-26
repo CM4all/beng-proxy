@@ -88,6 +88,15 @@ http_server_response(const HttpServerRequest *request,
                      HttpHeaders &&headers,
                      Istream *body);
 
+/**
+ * Generate a "simple" response with an optional plain-text body and
+ * an optional "Location" redirect header.
+ */
+void
+http_server_simple_response(const HttpServerRequest &request,
+                            http_status_t status, const char *location,
+                            const char *msg);
+
 void
 http_server_send_message(const HttpServerRequest *request,
                          http_status_t status, const char *msg);

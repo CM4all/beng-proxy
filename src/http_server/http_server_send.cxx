@@ -169,6 +169,36 @@ http_server_response(const HttpServerRequest *request,
 }
 
 void
+http_server_simple_response(const HttpServerRequest &request,
+                            http_status_t status, const char *location,
+                            const char *msg)
+{
+    assert(status >= 200 && status < 600);
+
+    if (http_status_is_empty(status))
+        msg = nullptr;
+    else if (msg == nullptr)
+        msg = http_status_to_string(status);
+
+    HttpHeaders headers(request.pool);
+
+#ifndef NO_DATE_HEADER
+    headers.Write("date", http_date_format(std::chrono::system_clock::now()));
+#endif
+
+    if (location != nullptr)
+        headers.Write("location", location);
+
+    Istream *body = nullptr;
+    if (msg != nullptr) {
+        headers.Write("content-type", "text/plain");
+        body = istream_string_new(&request.pool, msg);
+    }
+
+    http_server_response(&request, status, std::move(headers), body);
+}
+
+void
 http_server_send_message(const HttpServerRequest *request,
                          http_status_t status, const char *msg)
 {
