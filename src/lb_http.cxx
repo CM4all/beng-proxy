@@ -96,7 +96,7 @@ struct LbRequest final
 
 static bool
 send_fallback(HttpServerRequest &request,
-              const LbFallbackConfig &fallback)
+              const LbSimpleHttpResponse &fallback)
 {
     if (!fallback.IsDefined())
         return false;

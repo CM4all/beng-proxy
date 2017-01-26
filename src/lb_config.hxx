@@ -125,7 +125,7 @@ struct LbMemberConfig {
     unsigned port = 0;
 };
 
-struct LbFallbackConfig {
+struct LbSimpleHttpResponse {
     http_status_t status = http_status_t(0);
 
     /**
@@ -157,7 +157,7 @@ struct LbClusterConfig {
 
     bool mangle_via = false;
 
-    LbFallbackConfig fallback;
+    LbSimpleHttpResponse fallback;
 
     StickyMode sticky_mode = StickyMode::NONE;
 
