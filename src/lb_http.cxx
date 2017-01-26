@@ -279,8 +279,8 @@ LbConnection::HandleHttpRequest(HttpServerRequest &request,
     request_start_time = std::chrono::steady_clock::now();
 
     const auto &goto_ = listener.destination.FindRequestLeaf(request);
-    if (goto_.status != http_status_t(0)) {
-        http_server_simple_response(request, goto_.status, nullptr, nullptr);
+    if (goto_.response.IsDefined()) {
+        SendResponse(request, goto_.response);
         return;
     }
 

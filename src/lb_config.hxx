@@ -135,6 +135,10 @@ struct LbSimpleHttpResponse {
 
     std::string message;
 
+    LbSimpleHttpResponse() = default;
+    explicit LbSimpleHttpResponse(http_status_t _status)
+        :status(_status) {}
+
     bool IsDefined() const {
         return status != http_status_t(0);
     }
@@ -230,7 +234,7 @@ struct LbBranchConfig;
 struct LbGoto {
     const LbClusterConfig *cluster = nullptr;
     const LbBranchConfig *branch = nullptr;
-    http_status_t status = http_status_t(0);
+    LbSimpleHttpResponse response;
 
     LbGoto() = default;
 
@@ -241,11 +245,11 @@ struct LbGoto {
         :branch(_branch) {}
 
     explicit LbGoto(http_status_t _status)
-        :status(_status) {}
+        :response(_status) {}
 
     bool IsDefined() const {
         return cluster != nullptr || branch != nullptr ||
-            status != http_status_t(0);
+            response.IsDefined();
     }
 
     gcc_pure
@@ -382,7 +386,7 @@ LbGoto::GetProtocol() const
 {
     assert(IsDefined());
 
-    if (status != http_status_t(0))
+    if (response.IsDefined())
         return LbProtocol::HTTP;
 
     return cluster != nullptr
