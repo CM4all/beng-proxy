@@ -95,15 +95,15 @@ struct LbRequest final
 };
 
 static bool
-send_fallback(HttpServerRequest *request,
-              const LbFallbackConfig *fallback)
+send_fallback(HttpServerRequest &request,
+              const LbFallbackConfig &fallback)
 {
-    if (!fallback->IsDefined())
+    if (!fallback.IsDefined())
         return false;
 
-    http_server_simple_response(*request, fallback->status,
-                                fallback->location.empty() ? nullptr : fallback->location.c_str(),
-                                fallback->message.empty() ? nullptr : fallback->message.c_str());
+    http_server_simple_response(request, fallback.status,
+                                fallback.location.empty() ? nullptr : fallback.location.c_str(),
+                                fallback.message.empty() ? nullptr : fallback.message.c_str());
     return true;
 }
 
@@ -185,7 +185,7 @@ LbRequest::OnHttpError(GError *error)
 
     lb_connection_log_gerror(2, &connection, "Error", error);
 
-    if (!send_fallback(&request, &cluster->fallback)) {
+    if (!send_fallback(request, cluster->fallback)) {
         const char *msg = connection.listener.verbose_response
             ? error->message
             : "Server failure";
@@ -244,7 +244,7 @@ LbRequest::OnStockItemError(GError *error)
 
     body.Clear();
 
-    if (!send_fallback(&request, &cluster->fallback)) {
+    if (!send_fallback(request, cluster->fallback)) {
         const char *msg = connection.listener.verbose_response
             ? error->message
             : "Connection failure";
