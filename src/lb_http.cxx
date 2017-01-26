@@ -98,17 +98,13 @@ static bool
 send_fallback(HttpServerRequest *request,
               const LbFallbackConfig *fallback)
 {
-    if (!fallback->location.empty()) {
-        http_server_simple_response(*request, fallback->status,
-                                    fallback->location.c_str(), nullptr);
-        return true;
-    } else if (!fallback->message.empty()) {
-        /* custom status + error message */
-        http_server_simple_response(*request, fallback->status, nullptr,
-                                    fallback->message.c_str());
-        return true;
-    } else
+    if (!fallback->IsDefined())
         return false;
+
+    http_server_simple_response(*request, fallback->status,
+                                fallback->location.empty() ? nullptr : fallback->location.c_str(),
+                                fallback->message.empty() ? nullptr : fallback->message.c_str());
+    return true;
 }
 
 /**
