@@ -104,7 +104,7 @@ class LbConfigParser final : public NestedConfigParser {
             :parent(_parent), config(_name) {}
 
     private:
-        void AddGoto(LbGoto destination, LineParser &line);
+        void AddGoto(LbGoto &&destination, LineParser &line);
 
     protected:
         /* virtual methods from class ConfigParser */
@@ -707,7 +707,7 @@ ParseStatus(const char *s)
 }
 
 void
-LbConfigParser::Branch::AddGoto(LbGoto destination, LineParser &line)
+LbConfigParser::Branch::AddGoto(LbGoto &&destination, LineParser &line)
 {
     if (line.IsEnd()) {
         if (config.HasFallback())
@@ -717,7 +717,7 @@ LbConfigParser::Branch::AddGoto(LbGoto destination, LineParser &line)
             config.conditions.front().destination.GetProtocol() != destination.GetProtocol())
             throw LineParser::Error("Protocol mismatch");
 
-        config.fallback = destination;
+        config.fallback = std::move(destination);
     } else {
         if (config.fallback.IsDefined() &&
             config.fallback.GetProtocol() != destination.GetProtocol())
@@ -732,7 +732,7 @@ LbConfigParser::Branch::AddGoto(LbGoto destination, LineParser &line)
         line.ExpectEnd();
 
         config.conditions.emplace_back(std::move(condition),
-                                       destination);
+                                       std::move(destination));
     }
 }
 
@@ -748,12 +748,12 @@ LbConfigParser::Branch::ParseLine(LineParser &line)
         if (!destination.IsDefined())
             throw LineParser::Error("No such pool");
 
-        AddGoto(destination, line);
+        AddGoto(std::move(destination), line);
     } else if (strcmp(word, "status") == 0) {
         const auto status = ParseStatus(line.ExpectValue());
-        const LbGoto destination(status);
+        LbGoto destination(status);
 
-        AddGoto(destination, line);
+        AddGoto(std::move(destination), line);
     } else
         throw LineParser::Error("Unknown option");
 }
