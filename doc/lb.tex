@@ -246,13 +246,14 @@ The following operators are available:
 The last token is a quoted string decpiting the value to compare with,
 or the regular expression.
 
-Instead of \verb|goto|, you can use \verb|status| to let
-\emph{beng-lb} generate a brief response with the given HTTP status
-code:
+Instead of \verb|goto|, you can use \verb|status| or \verb|redirect|
+to let \emph{beng-lb} generate a brief response with the given HTTP
+status code or \verb|Location| header:
 
 \begin{verbatim*}
 branch foo {
   status 418 if $http_user_agent =~ "BadBot"
+  redirect "http://www.cm4all.com/" if $http_user_agent =~ "Foo"
   goto bar
 }
 \end{verbatim*}

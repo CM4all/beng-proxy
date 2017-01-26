@@ -1,6 +1,6 @@
 cm4all-beng-proxy (12.0.7) unstable; urgency=low
 
-  * 
+  * lb/http: add "redirect" as a possible destination for "branch"
 
  --   
 

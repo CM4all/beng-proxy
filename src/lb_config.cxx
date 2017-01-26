@@ -754,6 +754,11 @@ LbConfigParser::Branch::ParseLine(LineParser &line)
         LbGoto destination(status);
 
         AddGoto(std::move(destination), line);
+    } else if (strcmp(word, "redirect") == 0) {
+        LbGoto destination(HTTP_STATUS_FOUND);
+        destination.response.location = line.ExpectValue();
+
+        AddGoto(std::move(destination), line);
     } else
         throw LineParser::Error("Unknown option");
 }
