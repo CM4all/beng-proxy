@@ -26,7 +26,7 @@ CertCache::FlushSessionCache(long tm)
     unsigned n = 0;
 
     for (auto &i : map)
-        n += ::FlushSessionCache(*i.second, tm);
+        n += ::FlushSessionCache(*i.second.ssl_ctx, tm);
 
     return n;
 }
@@ -152,7 +152,7 @@ CertCache::GetNoWildCard(const char *host)
         const std::unique_lock<std::mutex> lock(mutex);
         auto i = map.find(host);
         if (i != map.end())
-            return i->second;
+            return i->second.ssl_ctx;
     }
 
     if (name_cache.Lookup(host)) {

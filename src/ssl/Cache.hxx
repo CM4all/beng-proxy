@@ -52,11 +52,19 @@ class CertCache final : CertNameCacheHandler {
 
     std::mutex mutex;
 
+    struct Item {
+        std::shared_ptr<SSL_CTX> ssl_ctx;
+
+        template<typename T>
+        explicit Item(T &&_ssl_ctx)
+            :ssl_ctx(std::forward<T>(_ssl_ctx)) {}
+    };
+
     /**
      * Map host names to SSL_CTX instances.  The key may be a
      * wildcard.
      */
-    std::unordered_map<std::string, std::shared_ptr<SSL_CTX>> map;
+    std::unordered_map<std::string, Item> map;
 
 public:
     explicit CertCache(EventLoop &event_loop,
