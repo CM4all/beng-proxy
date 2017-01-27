@@ -74,6 +74,13 @@ public:
     }
 
     /**
+     * Flush expired sessions from the OpenSSL session cache.
+     *
+     * @return the number of expired sessions
+     */
+    unsigned FlushSessionCache(long tm);
+
+    /**
      * Look up a certificate by host name.  Returns the SSL_CTX
      * pointer on success, nullptr if no matching certificate was
      * found, and throws an exception on error.

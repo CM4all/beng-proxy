@@ -5,6 +5,7 @@
  */
 
 #include "Cache.hxx"
+#include "SessionCache.hxx"
 #include "Basic.hxx"
 #include "Key.hxx"
 #include "Name.hxx"
@@ -18,6 +19,17 @@
 #include <daemon/log.h>
 
 #include <openssl/err.h>
+
+unsigned
+CertCache::FlushSessionCache(long tm)
+{
+    unsigned n = 0;
+
+    for (auto &i : map)
+        n += ::FlushSessionCache(*i.second, tm);
+
+    return n;
+}
 
 void
 CertCache::LoadCaCertificate(const char *path)
