@@ -43,6 +43,14 @@
 }
 
 {
+   g_quark_init
+   Memcheck:Leak
+   fun:*alloc
+   ...
+   fun:g_quark_init
+}
+
+{
    g_quark_from_string
    Memcheck:Leak
    fun:*alloc
