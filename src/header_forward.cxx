@@ -74,6 +74,15 @@ static const char *const cors_request_headers[] = {
 };
 
 /**
+ * A list of response headers to be excluded from the "ssl" setting.
+ */
+static const char *const ssl_request_headers[] = {
+    "x-cm4all-beng-peer-subject",
+    "x-cm4all-beng-peer-issuer-subject",
+    nullptr,
+};
+
+/**
  * A list of request headers to be excluded from the "other" setting.
  */
 static const char *const exclude_request_headers[] = {
@@ -163,11 +172,28 @@ forward_upgrade_response_headers(StringMap &dest, http_status_t status,
 }
 
 /**
+ * @see #HEADER_GROUP_SSL
+ */
+gcc_pure
+static bool
+is_ssl_header(const char *name)
+{
+    return string_in_array(ssl_request_headers, name);
+}
+
+/**
  * @see #HEADER_GROUP_SECURE
  */
 gcc_pure
 static bool
 is_secure_header(const char *name)
+{
+    return StringStartsWith(name, "x-cm4all-beng-") && !is_ssl_header(name);
+}
+
+gcc_pure
+static bool
+is_secure_or_ssl_header(const char *name)
 {
     return StringStartsWith(name, "x-cm4all-beng-");
 }
@@ -196,6 +222,14 @@ forward_secure_headers(StringMap &dest, const StringMap &src)
 {
     for (const auto &i : src)
         if (is_secure_header(i.key))
+            dest.Add(i.key, i.value);
+}
+
+static void
+forward_ssl_headers(StringMap &dest, const StringMap &src)
+{
+    for (const auto &i : src)
+        if (is_ssl_header(i.key))
             dest.Add(i.key, i.value);
 }
 
@@ -307,7 +341,7 @@ forward_other_headers(StringMap &dest, const StringMap &src)
             !string_in_array(cors_request_headers, i.key) &&
             !string_in_array(cache_request_headers, i.key) &&
             !string_in_array(exclude_request_headers, i.key) &&
-            !is_secure_header(i.key) &&
+            !is_secure_or_ssl_header(i.key) &&
             strcmp(i.key, "range") != 0 &&
             !http_header_is_hop_by_hop(i.key))
             dest.Add(i.key, i.value);
@@ -396,6 +430,9 @@ forward_request_headers(struct pool &pool, const StringMap &src,
     if (settings.modes[HEADER_GROUP_SECURE] == HEADER_FORWARD_YES)
         forward_secure_headers(dest, src);
 
+    if (settings.modes[HEADER_GROUP_SSL] == HEADER_FORWARD_YES)
+        forward_ssl_headers(dest, src);
+
     if (settings.modes[HEADER_GROUP_OTHER] == HEADER_FORWARD_YES)
         forward_other_headers(dest, src);
 
@@ -466,7 +503,7 @@ forward_other_response_headers(StringMap &dest, const StringMap &src)
             !string_in_array(cors_response_headers, i.key) &&
             !string_in_array(exclude_response_headers, i.key) &&
             !is_link_header(i.key) &&
-            !is_secure_header(i.key) &&
+            !is_secure_or_ssl_header(i.key) &&
             !is_transformation_header(i.key) &&
             !http_header_is_hop_by_hop(i.key))
             dest.Add(i.key, i.value);

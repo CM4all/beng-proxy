@@ -107,6 +107,13 @@ enum beng_header_group {
     HEADER_GROUP_LINK,
 
     /**
+     * Information about the SSL connection,
+     * i.e. X-CM4all-BENG-Peer-Subject and
+     * X-CM4all-BENG-Peer-Issuer-Subject.
+     */
+    HEADER_GROUP_SSL,
+
+    /**
      * Internal definition for estimating the size of an array.
      */
     HEADER_GROUP_MAX,

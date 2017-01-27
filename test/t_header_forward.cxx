@@ -42,6 +42,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
     settings.modes[HEADER_GROUP_FORWARD] = HEADER_FORWARD_NO;
     settings.modes[HEADER_GROUP_CORS] = HEADER_FORWARD_NO;
     settings.modes[HEADER_GROUP_SECURE] = HEADER_FORWARD_NO;
+    settings.modes[HEADER_GROUP_SSL] = HEADER_FORWARD_NO;
     settings.modes[HEADER_GROUP_TRANSFORMATION] = HEADER_FORWARD_NO;
     settings.modes[HEADER_GROUP_LINK] = HEADER_FORWARD_YES;
 
@@ -56,11 +57,13 @@ main(gcc_unused int argc, gcc_unused char **argv)
     headers->Add("via", "1.1 192.168.0.1");
     headers->Add("x-forwarded-for", "10.0.0.2");
     headers->Add("x-cm4all-beng-user", "hans");
+    headers->Add("x-cm4all-beng-peer-subject", "CN=hans");
 
     /* verify strmap_to_string() */
     check_strmap(headers, "abc=def;accept=text/*;"
                  "content-type=image/jpeg;cookie=a=b;from=foo;"
                  "via=1.1 192.168.0.1;"
+                 "x-cm4all-beng-peer-subject=CN=hans;"
                  "x-cm4all-beng-user=hans;"
                  "x-forwarded-for=10.0.0.2;");
 
@@ -267,6 +270,22 @@ main(gcc_unused int argc, gcc_unused char **argv)
                  "from=foo;"
                  "origin=example.com;"
                  "x-cm4all-beng-user=hans;");
+
+    /* forward ssl headers */
+
+    settings.modes[HEADER_GROUP_SECURE] = HEADER_FORWARD_NO;
+    settings.modes[HEADER_GROUP_SSL] = HEADER_FORWARD_YES;
+
+    auto q = forward_request_headers(pool, *headers,
+                                     "192.168.0.2", "192.168.0.3",
+                                     false, false, false, false, false,
+                                     settings,
+                                     nullptr, nullptr, nullptr, nullptr);
+    check_strmap(&q, "abc=def;accept=text/*;accept-charset=utf-8;"
+                 "access-control-request-method=POST;"
+                 "from=foo;"
+                 "origin=example.com;"
+                 "x-cm4all-beng-peer-subject=CN=hans;");
 
     /* response headers: nullptr */
 
