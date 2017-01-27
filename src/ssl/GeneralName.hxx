@@ -131,7 +131,7 @@ public:
     void clear() {
         assert(value != nullptr);
 
-        sk_GENERAL_NAME_free(release());
+        GENERAL_NAMES_free(release());
     }
 
     size_t size() const {
