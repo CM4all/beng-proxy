@@ -216,3 +216,12 @@ NewFifoBufferBio(ForeignFifoBuffer<uint8_t> &buffer)
 #endif
     return b;
 }
+
+void
+DeinitFifoBufferBio()
+{
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+    if (fb_method != nullptr)
+        BIO_meth_free(std::exchange(fb_method, nullptr));
+#endif
+}

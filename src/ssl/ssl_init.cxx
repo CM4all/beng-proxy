@@ -5,6 +5,7 @@
  */
 
 #include "ssl_init.hxx"
+#include "FifoBufferBio.hxx"
 
 #include <inline/compiler.h>
 
@@ -61,6 +62,8 @@ ssl_global_init()
 void
 ssl_global_deinit()
 {
+    DeinitFifoBufferBio();
+
     ENGINE_cleanup();
     EVP_cleanup();
     CRYPTO_cleanup_all_ex_data();
