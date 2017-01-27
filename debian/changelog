@@ -2,6 +2,7 @@ cm4all-beng-proxy (11.16) unstable; urgency=low
 
   * http_{server,client}: reduce memory pool sizes
   * lb: SIGHUP flushes the certdb SSL session cache as well
+  * lb: flush expired OpenSSL sessions every 10 minutes
 
  --   
 

@@ -49,8 +49,15 @@ SetupBasicSslCtx(SSL_CTX *ssl_ctx, bool server)
 
     SSL_CTX_set_mode(ssl_ctx, mode);
 
-    if (server)
+    if (server) {
         enable_ecdh(ssl_ctx);
+
+        /* no auto-clear, because LbInstance::compress_event will do
+           this every 10 minutes, which is more reliable */
+        SSL_CTX_set_session_cache_mode(ssl_ctx,
+                                       SSL_SESS_CACHE_SERVER|
+                                       SSL_SESS_CACHE_NO_AUTO_CLEAR);
+    }
 
     /* disable protocols that are known to be insecure */
     SSL_CTX_set_options(ssl_ctx, SSL_OP_NO_SSLv2|SSL_OP_NO_SSLv3);
