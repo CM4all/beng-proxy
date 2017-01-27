@@ -54,6 +54,9 @@ LbInstance::Compress()
 {
     fb_pool_compress();
 
+    for (auto &i : cert_dbs)
+        i.second.Expire();
+
     unsigned n_ssl_sessions = FlushSSLSessionCache(time(nullptr));
     daemon_log(3, "flushed %u SSL sessions\n", n_ssl_sessions);
 }

@@ -32,6 +32,20 @@ CertCache::FlushSessionCache(long tm)
 }
 
 void
+CertCache::Expire()
+{
+    const auto now = std::chrono::steady_clock::now();
+
+    for (auto i = map.begin(), end = map.end(); i != end;) {
+        if (now >= i->second.expires) {
+            daemon_log(5, "flushed certificate '%s'\n", i->first.c_str());
+            i = map.erase(i);
+        } else
+            ++i;
+    }
+}
+
+void
 CertCache::LoadCaCertificate(const char *path)
 {
     auto chain = LoadCertChainFile(path);
@@ -151,8 +165,10 @@ CertCache::GetNoWildCard(const char *host)
     {
         const std::unique_lock<std::mutex> lock(mutex);
         auto i = map.find(host);
-        if (i != map.end())
+        if (i != map.end()) {
+            i->second.expires = std::chrono::steady_clock::now() + std::chrono::hours(24);
             return i->second.ssl_ctx;
+        }
     }
 
     if (name_cache.Lookup(host)) {

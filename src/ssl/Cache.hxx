@@ -21,6 +21,7 @@
 #include <forward_list>
 #include <string>
 #include <mutex>
+#include <chrono>
 
 #include <string.h>
 
@@ -55,9 +56,14 @@ class CertCache final : CertNameCacheHandler {
     struct Item {
         std::shared_ptr<SSL_CTX> ssl_ctx;
 
+        std::chrono::steady_clock::time_point expires;
+
         template<typename T>
         explicit Item(T &&_ssl_ctx)
-            :ssl_ctx(std::forward<T>(_ssl_ctx)) {}
+            :ssl_ctx(std::forward<T>(_ssl_ctx)),
+             /* the initial expiration is 6 hours; it will be raised
+                to 24 hours if the certificate is used again */
+             expires(std::chrono::steady_clock::now() + std::chrono::hours(6)) {}
     };
 
     /**
@@ -87,6 +93,8 @@ public:
      * @return the number of expired sessions
      */
     unsigned FlushSessionCache(long tm);
+
+    void Expire();
 
     /**
      * Look up a certificate by host name.  Returns the SSL_CTX
