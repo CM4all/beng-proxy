@@ -68,7 +68,7 @@ struct LbInstance final : ExitListener {
                            boost::intrusive::constant_time_size<true>> connections;
 
     /**
-     * Number of #lb_tcp instances.
+     * Number of #LbTcpConnection instances.
      */
     unsigned n_tcp_connections = 0;
 
