@@ -10,6 +10,7 @@
 #include "lb_listener.hxx"
 #include "lb_hmonitor.hxx"
 #include "lb_control.hxx"
+#include "ssl/Cache.hxx"
 
 static void
 init_monitors(LbInstance &instance, const LbClusterConfig &cluster)
@@ -92,6 +93,10 @@ LbInstance::FlushSSLSessionCache(long tm)
     unsigned n = 0;
     for (auto &listener : listeners)
         n += listener.FlushSSLSessionCache(tm);
+
+    for (auto &db : cert_dbs)
+        n += db.second.FlushSessionCache(tm);
+
     return n;
 }
 
