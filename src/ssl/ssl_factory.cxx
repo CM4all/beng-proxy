@@ -7,6 +7,7 @@
 #include "ssl_factory.hxx"
 #include "ssl_config.hxx"
 #include "ssl_domain.hxx"
+#include "SessionCache.hxx"
 #include "SniCallback.hxx"
 #include "Error.hxx"
 #include "Basic.hxx"
@@ -86,7 +87,9 @@ struct SslFactoryCertKey {
         SSL_set_SSL_CTX(ssl, ssl_ctx.get());
     }
 
-    unsigned Flush(long tm);
+    unsigned Flush(long tm) {
+        return ::FlushSessionCache(*ssl_ctx, tm);
+    }
 };
 
 struct SslFactory {
@@ -226,15 +229,6 @@ SslFactory::Make()
     SSL_set_accept_state(ssl.get());
 
     return ssl;
-}
-
-inline unsigned
-SslFactoryCertKey::Flush(long tm)
-{
-    unsigned before = SSL_CTX_sess_number(ssl_ctx.get());
-    SSL_CTX_flush_sessions(ssl_ctx.get(), tm);
-    unsigned after = SSL_CTX_sess_number(ssl_ctx.get());
-    return after < before ? before - after : 0;
 }
 
 inline unsigned
