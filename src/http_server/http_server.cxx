@@ -67,7 +67,7 @@ http_server_request_new(HttpServerConnection *connection,
     connection->response.status = http_status_t(0);
 
     struct pool *pool = pool_new_linear(connection->pool,
-                                        "http_server_request", 32768);
+                                        "http_server_request", 8192);
     pool_set_major(pool);
 
     return NewFromPool<HttpServerRequest>(*pool, *pool,

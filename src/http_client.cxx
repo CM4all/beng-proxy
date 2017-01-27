@@ -1400,7 +1400,7 @@ http_client_request(struct pool &caller_pool, EventLoop &event_loop,
     }
 
     struct pool *pool =
-        pool_new_linear(&caller_pool, "http_client_request", 8192);
+        pool_new_linear(&caller_pool, "http_client_request", 4096);
 
     NewFromPool<HttpClient>(*pool, caller_pool, *pool, event_loop,
                             fd, fd_type,
