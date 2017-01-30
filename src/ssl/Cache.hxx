@@ -59,7 +59,7 @@ class CertCache final : CertNameCacheHandler {
         std::chrono::steady_clock::time_point expires;
 
         template<typename T>
-        explicit Item(T &&_ssl_ctx)
+        Item(T &&_ssl_ctx)
             :ssl_ctx(std::forward<T>(_ssl_ctx)),
              /* the initial expiration is 6 hours; it will be raised
                 to 24 hours if the certificate is used again */
