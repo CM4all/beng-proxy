@@ -135,6 +135,17 @@ static const char *const exclude_response_headers[] = {
     nullptr,
 };
 
+gcc_pure
+static bool
+string_in_array(const char *const array[], const char *value)
+{
+    for (unsigned i = 0; array[i] != nullptr; ++i)
+        if (strcmp(array[i], value) == 0)
+            return true;
+
+    return false;
+}
+
 static void
 forward_upgrade_request_headers(StringMap &dest, const StringMap &src,
                                 bool with_body)
@@ -283,16 +294,6 @@ forward_identity(struct pool &pool,
 {
     forward_via(pool, dest, src, local_host, mangle);
     forward_xff(pool, dest, src, remote_host, mangle);
-}
-
-static bool
-string_in_array(const char *const array[], const char *value)
-{
-    for (unsigned i = 0; array[i] != nullptr; ++i)
-        if (strcmp(array[i], value) == 0)
-            return true;
-
-    return false;
 }
 
 static void
