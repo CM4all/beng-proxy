@@ -38,10 +38,12 @@ main(gcc_unused int argc, gcc_unused char **argv)
     settings.modes[HEADER_GROUP_IDENTITY] = HEADER_FORWARD_MANGLE;
     settings.modes[HEADER_GROUP_CAPABILITIES] = HEADER_FORWARD_YES;
     settings.modes[HEADER_GROUP_COOKIE] = HEADER_FORWARD_MANGLE;
+    settings.modes[HEADER_GROUP_OTHER] = HEADER_FORWARD_NO;
     settings.modes[HEADER_GROUP_FORWARD] = HEADER_FORWARD_NO;
     settings.modes[HEADER_GROUP_CORS] = HEADER_FORWARD_NO;
     settings.modes[HEADER_GROUP_SECURE] = HEADER_FORWARD_NO;
-    settings.modes[HEADER_GROUP_OTHER] = HEADER_FORWARD_NO;
+    settings.modes[HEADER_GROUP_TRANSFORMATION] = HEADER_FORWARD_NO;
+    settings.modes[HEADER_GROUP_LINK] = HEADER_FORWARD_YES;
 
     RootPool pool;
 
