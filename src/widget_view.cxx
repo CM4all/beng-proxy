@@ -30,6 +30,8 @@ WidgetView::Init(const char *_name)
             [HEADER_GROUP_CORS] = HEADER_FORWARD_NO,
             [HEADER_GROUP_SECURE] = HEADER_FORWARD_NO,
             [HEADER_GROUP_TRANSFORMATION] = HEADER_FORWARD_NO,
+            [HEADER_GROUP_LINK] = HEADER_FORWARD_YES,
+            [HEADER_GROUP_SSL] = HEADER_FORWARD_NO,
         },
     };
 
@@ -43,6 +45,8 @@ WidgetView::Init(const char *_name)
             [HEADER_GROUP_CORS] = HEADER_FORWARD_NO,
             [HEADER_GROUP_SECURE] = HEADER_FORWARD_NO,
             [HEADER_GROUP_TRANSFORMATION] = HEADER_FORWARD_MANGLE,
+            [HEADER_GROUP_LINK] = HEADER_FORWARD_YES,
+            [HEADER_GROUP_SSL] = HEADER_FORWARD_NO,
         },
     };
 }

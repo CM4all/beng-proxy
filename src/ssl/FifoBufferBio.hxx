@@ -16,4 +16,10 @@ template<typename T> class ForeignFifoBuffer;
 BIO *
 NewFifoBufferBio(ForeignFifoBuffer<uint8_t> &buffer);
 
+/**
+ * Global deinitialization.
+ */
+void
+DeinitFifoBufferBio();
+
 #endif

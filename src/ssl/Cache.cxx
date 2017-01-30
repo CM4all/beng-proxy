@@ -5,6 +5,7 @@
  */
 
 #include "Cache.hxx"
+#include "SessionCache.hxx"
 #include "Basic.hxx"
 #include "Name.hxx"
 #include "Error.hxx"
@@ -16,6 +17,31 @@
 #include <daemon/log.h>
 
 #include <openssl/err.h>
+
+unsigned
+CertCache::FlushSessionCache(long tm)
+{
+    unsigned n = 0;
+
+    for (auto &i : map)
+        n += ::FlushSessionCache(*i.second.ssl_ctx, tm);
+
+    return n;
+}
+
+void
+CertCache::Expire()
+{
+    const auto now = std::chrono::steady_clock::now();
+
+    for (auto i = map.begin(), end = map.end(); i != end;) {
+        if (now >= i->second.expires) {
+            daemon_log(5, "flushed certificate '%s'\n", i->first.c_str());
+            i = map.erase(i);
+        } else
+            ++i;
+    }
+}
 
 void
 CertCache::LoadCaCertificate(const char *path)
@@ -91,8 +117,10 @@ CertCache::GetNoWildCard(const char *host)
     {
         const std::unique_lock<std::mutex> lock(mutex);
         auto i = map.find(host);
-        if (i != map.end())
-            return i->second;
+        if (i != map.end()) {
+            i->second.expires = std::chrono::steady_clock::now() + std::chrono::hours(24);
+            return i->second.ssl_ctx;
+        }
     }
 
     if (name_cache.Lookup(host)) {

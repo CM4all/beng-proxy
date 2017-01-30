@@ -21,6 +21,7 @@
 #include <forward_list>
 #include <string>
 #include <mutex>
+#include <chrono>
 
 #include <string.h>
 
@@ -52,11 +53,24 @@ class CertCache final : CertNameCacheHandler {
 
     std::mutex mutex;
 
+    struct Item {
+        std::shared_ptr<SSL_CTX> ssl_ctx;
+
+        std::chrono::steady_clock::time_point expires;
+
+        template<typename T>
+        Item(T &&_ssl_ctx)
+            :ssl_ctx(std::forward<T>(_ssl_ctx)),
+             /* the initial expiration is 6 hours; it will be raised
+                to 24 hours if the certificate is used again */
+             expires(std::chrono::steady_clock::now() + std::chrono::hours(6)) {}
+    };
+
     /**
      * Map host names to SSL_CTX instances.  The key may be a
      * wildcard.
      */
-    std::unordered_map<std::string, std::shared_ptr<SSL_CTX>> map;
+    std::unordered_map<std::string, Item> map;
 
 public:
     explicit CertCache(EventLoop &event_loop,
@@ -72,6 +86,15 @@ public:
     void Disconnect() {
         name_cache.Disconnect();
     }
+
+    /**
+     * Flush expired sessions from the OpenSSL session cache.
+     *
+     * @return the number of expired sessions
+     */
+    unsigned FlushSessionCache(long tm);
+
+    void Expire();
 
     /**
      * Look up a certificate by host name.  Returns the SSL_CTX

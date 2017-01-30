@@ -866,6 +866,7 @@ libssl_a_SOURCES = \
 	src/ssl/Base64.hxx \
 	src/ssl/Error.cxx src/ssl/Error.hxx \
 	src/ssl/Basic.cxx src/ssl/Basic.hxx \
+	src/ssl/SessionCache.hxx \
 	src/ssl/Cache.cxx src/ssl/Cache.hxx \
 	src/ssl/NameCache.cxx src/ssl/NameCache.hxx \
 	src/ssl/ssl_quark.hxx \

@@ -677,7 +677,7 @@ main(int argc, char **argv)
                 "  tail\n"
                 "  acme ...\n"
                 "  genwrap\n"
-                "  populate KEY COUNT SUFFIX\n"
+                "  populate KEY SUFFIX COUNT\n"
                 "\n", argv[0]);
         return EXIT_FAILURE;
     }

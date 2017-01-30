@@ -1436,6 +1436,10 @@ request handler.  The payload is a list of group/mode pairs
 \item \texttt{SECURE}: forward ``secure'' request/response headers
   such as \texttt{X-CM4all-BENG-User}
 
+\item \texttt{SSL}: forward information about the SSL connection,
+  i.e. \verb|X-CM4all-BENG-Peer-Subject| and
+  \verb|X-CM4all-BENG-Peer-Issuer-Subject|
+
 \item \texttt{TRANSFORMATION}: forward headers that affect the
   transformation (i.e. \texttt{X-CM4all-View})
 
@@ -1446,7 +1450,8 @@ request handler.  The payload is a list of group/mode pairs
 \item \texttt{OTHER}: other end-to-end headers not explicitly
   mentioned here
 
-\item \texttt{ALL}: all of the above except for \texttt{SECURE}
+\item \texttt{ALL}: all of the above except for \texttt{SECURE} and
+  \texttt{SSL}
 
 \end{itemize}
 
