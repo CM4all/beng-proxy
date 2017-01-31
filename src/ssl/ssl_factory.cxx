@@ -250,7 +250,7 @@ SslFactoryCertKey::LoadServer(const SslConfig &parent_config,
     assert(!parent_config.cert_key.empty());
 
     ApplyServerConfig(ssl_ctx.get(), config);
-    ApplyServerConfig(ssl_ctx.get(), parent_config);
+    ApplyServerConfig(*ssl_ctx, parent_config);
 
     auto ssl = Make();
 

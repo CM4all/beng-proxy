@@ -15,6 +15,6 @@ UniqueSSL_CTX
 CreateBasicSslCtx(bool server);
 
 void
-ApplyServerConfig(SSL_CTX *ssl_ctx, const SslConfig &config);
+ApplyServerConfig(SSL_CTX &ssl_ctx, const SslConfig &config);
 
 #endif

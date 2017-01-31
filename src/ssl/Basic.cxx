@@ -17,7 +17,7 @@
  * secrecy.  By default, it OpenSSL disables it.
  */
 static void
-enable_ecdh(SSL_CTX *ssl_ctx)
+enable_ecdh(SSL_CTX &ssl_ctx)
 {
     /* OpenSSL 1.0.2 will allow this instead:
 
@@ -28,12 +28,12 @@ enable_ecdh(SSL_CTX *ssl_ctx)
     if (ecdh == nullptr)
         throw SslError("EC_KEY_new_by_curve_name() failed");
 
-    if (SSL_CTX_set_tmp_ecdh(ssl_ctx, ecdh.get()) != 1)
+    if (SSL_CTX_set_tmp_ecdh(&ssl_ctx, ecdh.get()) != 1)
         throw SslError("SSL_CTX_set_tmp_ecdh() failed");
 }
 
 static void
-SetupBasicSslCtx(SSL_CTX *ssl_ctx, bool server)
+SetupBasicSslCtx(SSL_CTX &ssl_ctx, bool server)
 {
     long mode = SSL_MODE_ENABLE_PARTIAL_WRITE
         | SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER;
@@ -47,23 +47,23 @@ SetupBasicSslCtx(SSL_CTX *ssl_ctx, bool server)
        time */
     mode |= SSL_MODE_NO_AUTO_CHAIN;
 
-    SSL_CTX_set_mode(ssl_ctx, mode);
+    SSL_CTX_set_mode(&ssl_ctx, mode);
 
     if (server) {
         enable_ecdh(ssl_ctx);
 
         /* no auto-clear, because LbInstance::compress_event will do
            this every 10 minutes, which is more reliable */
-        SSL_CTX_set_session_cache_mode(ssl_ctx,
+        SSL_CTX_set_session_cache_mode(&ssl_ctx,
                                        SSL_SESS_CACHE_SERVER|
                                        SSL_SESS_CACHE_NO_AUTO_CLEAR);
     }
 
     /* disable protocols that are known to be insecure */
-    SSL_CTX_set_options(ssl_ctx, SSL_OP_NO_SSLv2|SSL_OP_NO_SSLv3);
+    SSL_CTX_set_options(&ssl_ctx, SSL_OP_NO_SSLv2|SSL_OP_NO_SSLv3);
 
     /* disable weak ciphers */
-    SSL_CTX_set_cipher_list(ssl_ctx, "DEFAULT:!EXPORT:!LOW:!RC4");
+    SSL_CTX_set_cipher_list(&ssl_ctx, "DEFAULT:!EXPORT:!LOW:!RC4");
 
     /* let us choose the cipher based on our own priority; so if a
        client prefers to use a weak cipher (which would be rather
@@ -71,7 +71,7 @@ SetupBasicSslCtx(SSL_CTX *ssl_ctx, bool server)
        the client; this call is only here to maximize our SSL/TLS
        "score" in benchmarks which think following the client's
        preferences is bad */
-    SSL_CTX_set_options(ssl_ctx, SSL_OP_CIPHER_SERVER_PREFERENCE);
+    SSL_CTX_set_options(&ssl_ctx, SSL_OP_CIPHER_SERVER_PREFERENCE);
 }
 
 UniqueSSL_CTX
@@ -91,7 +91,7 @@ CreateBasicSslCtx(bool server)
     if (ssl_ctx == nullptr)
         throw SslError("SSL_CTX_new() failed");
 
-    SetupBasicSslCtx(ssl_ctx.get(), server);
+    SetupBasicSslCtx(*ssl_ctx, server);
     return ssl_ctx;
 }
 
@@ -102,12 +102,12 @@ verify_callback(int ok, gcc_unused X509_STORE_CTX *ctx)
 }
 
 void
-ApplyServerConfig(SSL_CTX *ssl_ctx, const SslConfig &config)
+ApplyServerConfig(SSL_CTX &ssl_ctx, const SslConfig &config)
 {
     ERR_clear_error();
 
     if (!config.ca_cert_file.empty()) {
-        if (SSL_CTX_load_verify_locations(ssl_ctx,
+        if (SSL_CTX_load_verify_locations(&ssl_ctx,
                                           config.ca_cert_file.c_str(),
                                           nullptr) != 1)
             throw SslError("Failed to load CA certificate file " +
@@ -122,7 +122,7 @@ ApplyServerConfig(SSL_CTX *ssl_ctx, const SslConfig &config)
             throw SslError("Failed to load CA certificate list from file " +
                            config.ca_cert_file);
 
-        SSL_CTX_set_client_CA_list(ssl_ctx, list);
+        SSL_CTX_set_client_CA_list(&ssl_ctx, list);
     }
 
     if (config.verify != SslVerify::NO) {
@@ -132,6 +132,6 @@ ApplyServerConfig(SSL_CTX *ssl_ctx, const SslConfig &config)
         if (config.verify == SslVerify::YES)
             mode |= SSL_VERIFY_FAIL_IF_NO_PEER_CERT;
 
-        SSL_CTX_set_verify(ssl_ctx, mode, verify_callback);
+        SSL_CTX_set_verify(&ssl_ctx, mode, verify_callback);
     }
 }
