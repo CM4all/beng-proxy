@@ -10,8 +10,9 @@
 #include "Unique.hxx"
 
 struct SslConfig;
+class SslCtx;
 
-UniqueSSL_CTX
+SslCtx
 CreateBasicSslCtx(bool server);
 
 void

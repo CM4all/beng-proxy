@@ -17,10 +17,6 @@ struct OpenSslDelete {
         SSL_free(ssl);
     }
 
-    void operator()(SSL_CTX *ssl_ctx) {
-        SSL_CTX_free(ssl_ctx);
-    }
-
     void operator()(X509 *x509) {
         X509_free(x509);
     }
@@ -67,7 +63,6 @@ struct OpenSslDelete {
 };
 
 using UniqueSSL = std::unique_ptr<SSL, OpenSslDelete>;
-using UniqueSSL_CTX = std::unique_ptr<SSL_CTX, OpenSslDelete>;
 using UniqueX509 = std::unique_ptr<X509, OpenSslDelete>;
 using UniqueX509_REQ = std::unique_ptr<X509_REQ, OpenSslDelete>;
 using UniqueX509_NAME = std::unique_ptr<X509_NAME, OpenSslDelete>;

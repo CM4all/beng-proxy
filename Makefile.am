@@ -855,6 +855,7 @@ libssl_a_SOURCES = \
 	src/ssl/Buffer.cxx src/ssl/Buffer.hxx \
 	src/ssl/Dummy.cxx src/ssl/Dummy.hxx \
 	src/ssl/Edit.cxx src/ssl/Edit.hxx \
+	src/ssl/Ctx.hxx \
 	src/ssl/Unique.hxx \
 	src/ssl/Key.cxx src/ssl/Key.hxx \
 	src/ssl/Hash.cxx src/ssl/Hash.hxx \

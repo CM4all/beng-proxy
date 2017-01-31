@@ -10,6 +10,7 @@
 #include "SniCallback.hxx"
 #include "Error.hxx"
 #include "Basic.hxx"
+#include "Ctx.hxx"
 #include "Unique.hxx"
 #include "Name.hxx"
 #include "AltName.hxx"
@@ -44,7 +45,7 @@ struct SslFactoryCertKey {
         bool Match(StringView host_name) const;
     };
 
-    UniqueSSL_CTX ssl_ctx;
+    SslCtx ssl_ctx;
 
     std::forward_list<Name> names;
 
@@ -243,7 +244,7 @@ void
 SslFactoryCertKey::LoadServer(const SslConfig &parent_config,
                               const SslCertKeyConfig &config)
 {
-    assert(ssl_ctx == nullptr);
+    assert(!ssl_ctx);
 
     ssl_ctx = CreateBasicSslCtx(true);
 

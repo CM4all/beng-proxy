@@ -6,6 +6,7 @@
 
 #include "Basic.hxx"
 #include "Error.hxx"
+#include "Ctx.hxx"
 #include "ssl_config.hxx"
 
 #include <inline/compiler.h>
@@ -74,7 +75,7 @@ SetupBasicSslCtx(SSL_CTX &ssl_ctx, bool server)
     SSL_CTX_set_options(&ssl_ctx, SSL_OP_CIPHER_SERVER_PREFERENCE);
 }
 
-UniqueSSL_CTX
+SslCtx
 CreateBasicSslCtx(bool server)
 {
     ERR_clear_error();
@@ -87,10 +88,7 @@ CreateBasicSslCtx(bool server)
         ? SSLv23_server_method()
         : SSLv23_client_method();
 
-    UniqueSSL_CTX ssl_ctx(SSL_CTX_new(method));
-    if (ssl_ctx == nullptr)
-        throw SslError("SSL_CTX_new() failed");
-
+    SslCtx ssl_ctx(method);
     SetupBasicSslCtx(*ssl_ctx, server);
     return ssl_ctx;
 }

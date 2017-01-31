@@ -10,6 +10,7 @@
 #include "NameCache.hxx"
 #include "Hash.hxx"
 #include "Unique.hxx"
+#include "Ctx.hxx"
 #include "certdb/Config.hxx"
 #include "certdb/CertDatabase.hxx"
 #include "stock/ThreadedStock.hxx"
@@ -54,7 +55,7 @@ class CertCache final : CertNameCacheHandler {
     std::mutex mutex;
 
     struct Item {
-        std::shared_ptr<SSL_CTX> ssl_ctx;
+        SslCtx ssl_ctx;
 
         std::chrono::steady_clock::time_point expires;
 
@@ -101,12 +102,12 @@ public:
      * pointer on success, nullptr if no matching certificate was
      * found, and throws an exception on error.
      */
-    std::shared_ptr<SSL_CTX> Get(const char *host);
+    SslCtx Get(const char *host);
 
 private:
-    std::shared_ptr<SSL_CTX> Add(UniqueX509 &&cert, UniqueEVP_PKEY &&key);
-    std::shared_ptr<SSL_CTX> Query(const char *host);
-    std::shared_ptr<SSL_CTX> GetNoWildCard(const char *host);
+    SslCtx Add(UniqueX509 &&cert, UniqueEVP_PKEY &&key);
+    SslCtx Query(const char *host);
+    SslCtx GetNoWildCard(const char *host);
 
     /* virtual methods from class CertNameCacheHandler */
     void OnCertModified(const std::string &name, bool deleted) override;

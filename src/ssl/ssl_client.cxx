@@ -7,6 +7,7 @@
 #include "ssl_client.hxx"
 #include "ssl_config.hxx"
 #include "Basic.hxx"
+#include "Ctx.hxx"
 #include "ssl_filter.hxx"
 #include "ssl_quark.hxx"
 #include "Error.hxx"

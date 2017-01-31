@@ -59,7 +59,7 @@ CertCache::LoadCaCertificate(const char *path)
         throw SslError(std::string("Duplicate CA certificate: ") + path);
 }
 
-std::shared_ptr<SSL_CTX>
+SslCtx
 CertCache::Add(UniqueX509 &&cert, UniqueEVP_PKEY &&key)
 {
     assert(cert);
@@ -88,17 +88,15 @@ CertCache::Add(UniqueX509 &&cert, UniqueEVP_PKEY &&key)
                                              X509_dup(ca_cert.get()));
     }
 
-    std::shared_ptr<SSL_CTX> shared(std::move(ssl_ctx));
-
     if (name != nullptr) {
         const std::unique_lock<std::mutex> lock(mutex);
-        map.emplace(name.c_str(), shared);
+        map.emplace(name.c_str(), ssl_ctx);
     }
 
-    return shared;
+    return ssl_ctx;
 }
 
-std::shared_ptr<SSL_CTX>
+SslCtx
 CertCache::Query(const char *host)
 {
     auto db = dbs.Get(config);
@@ -106,12 +104,12 @@ CertCache::Query(const char *host)
 
     auto cert_key = db->GetServerCertificateKey(host);
     if (!cert_key.second)
-        return std::shared_ptr<SSL_CTX>();
+        return SslCtx();
 
     return Add(std::move(cert_key.first), std::move(cert_key.second));
 }
 
-std::shared_ptr<SSL_CTX>
+SslCtx
 CertCache::GetNoWildCard(const char *host)
 {
     {
@@ -132,7 +130,7 @@ CertCache::GetNoWildCard(const char *host)
     return {};
 }
 
-std::shared_ptr<SSL_CTX>
+SslCtx
 CertCache::Get(const char *host)
 {
     auto ssl_ctx = GetNoWildCard(host);
