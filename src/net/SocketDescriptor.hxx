@@ -12,7 +12,6 @@
 #include <assert.h>
 #include <stddef.h>
 
-struct sockaddr;
 class Error;
 class SocketAddress;
 class StaticSocketAddress;
@@ -21,10 +20,10 @@ class StaticSocketAddress;
  * Wrapper for a socket file descriptor.
  */
 class SocketDescriptor {
-    int fd;
+    int fd = -1;
 
 public:
-    SocketDescriptor():fd(-1) {}
+    SocketDescriptor() = default;
 
     explicit SocketDescriptor(int _fd):fd(_fd) {
         assert(fd >= 0);
