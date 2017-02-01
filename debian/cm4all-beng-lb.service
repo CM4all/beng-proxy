@@ -8,8 +8,6 @@ Type=notify
 ExecStart=/usr/lib/cm4all/beng-lb/systemd/run.sh
 Restart=on-failure
 
-LimitNOFILE=65536
-
 SyslogIdentifier=cm4all-beng-lb
 
 # enable crash dumps
