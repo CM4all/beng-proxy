@@ -18,6 +18,10 @@ class ShutdownListener {
 public:
     ShutdownListener(EventLoop &loop, Callback _callback);
 
+    ~ShutdownListener() {
+        Disable();
+    }
+
     ShutdownListener(const ShutdownListener &) = delete;
     ShutdownListener &operator=(const ShutdownListener &) = delete;
 
