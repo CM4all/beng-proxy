@@ -28,32 +28,16 @@
 #include <string.h>
 #include <fcntl.h>
 
+ServerSocket::~ServerSocket()
+{
+    if (fd.IsDefined())
+        event.Delete();
+}
+
 static bool
 IsTCP(SocketAddress address)
 {
     return address.GetFamily() == AF_INET || address.GetFamily() == AF_INET6;
-}
-
-void
-ServerSocket::EventCallback(gcc_unused short events)
-{
-    StaticSocketAddress remote_address;
-    auto remote_fd = fd.Accept(remote_address);
-    if (!remote_fd.IsDefined()) {
-        const int e = errno;
-        if (e != EAGAIN && e != EWOULDBLOCK)
-            OnAcceptError(std::make_exception_ptr(MakeErrno(e, "Failed to accept connection")));
-
-        return;
-    }
-
-    if (IsTCP(remote_address) &&
-        !socket_set_nodelay(remote_fd.Get(), true)) {
-        OnAcceptError(std::make_exception_ptr(MakeErrno("setsockopt(TCP_NODELAY) failed")));
-        return;
-    }
-
-    OnAccept(std::move(remote_fd), remote_address);
 }
 
 void
@@ -169,8 +153,24 @@ ServerSocket::GetLocalAddress() const
     return fd.GetLocalAddress();
 }
 
-ServerSocket::~ServerSocket()
+void
+ServerSocket::EventCallback(gcc_unused short events)
 {
-    if (fd.IsDefined())
-        event.Delete();
+    StaticSocketAddress remote_address;
+    auto remote_fd = fd.Accept(remote_address);
+    if (!remote_fd.IsDefined()) {
+        const int e = errno;
+        if (e != EAGAIN && e != EWOULDBLOCK)
+            OnAcceptError(std::make_exception_ptr(MakeErrno(e, "Failed to accept connection")));
+
+        return;
+    }
+
+    if (IsTCP(remote_address) &&
+        !socket_set_nodelay(remote_fd.Get(), true)) {
+        OnAcceptError(std::make_exception_ptr(MakeErrno("setsockopt(TCP_NODELAY) failed")));
+        return;
+    }
+
+    OnAccept(std::move(remote_fd), remote_address);
 }
