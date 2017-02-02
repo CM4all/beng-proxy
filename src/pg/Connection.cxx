@@ -27,6 +27,9 @@ PgConnection::StartConnect(const char *conninfo)
     conn = ::PQconnectStart(conninfo);
     if (conn == nullptr)
         throw std::bad_alloc();
+
+    if (GetStatus() == CONNECTION_BAD)
+        throw std::runtime_error(GetErrorMessage());
 }
 
 bool
