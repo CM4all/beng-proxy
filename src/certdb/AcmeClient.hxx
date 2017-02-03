@@ -123,18 +123,17 @@ private:
      */
     std::string NextNonce();
 
-    GlueHttpResponse Request(struct pool &p,
-                             http_method_t method, const char *uri,
+    GlueHttpResponse Request(http_method_t method, const char *uri,
                              ConstBuffer<void> body);
 
-    GlueHttpResponse SignedRequest(struct pool &p, EVP_PKEY &key,
+    GlueHttpResponse SignedRequest(EVP_PKEY &key,
                                    http_method_t method, const char *uri,
                                    ConstBuffer<void> payload);
 
-    GlueHttpResponse SignedRequest(struct pool &p, EVP_PKEY &key,
+    GlueHttpResponse SignedRequest(EVP_PKEY &key,
                                    http_method_t method, const char *uri,
                                    const char *payload) {
-        return SignedRequest(p, key, method, uri,
+        return SignedRequest(key, method, uri,
                              ConstBuffer<void>(payload, strlen(payload)));
     }
 };

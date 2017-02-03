@@ -3,14 +3,11 @@
  */
 
 #include "AcmeClient.hxx"
-#include "direct.hxx"
-#include "pool.hxx"
 #include "ssl/Base64.hxx"
 #include "ssl/Buffer.hxx"
 #include "ssl/Dummy.hxx"
 #include "ssl/Key.hxx"
 #include "uri/uri_extract.hxx"
-#include "util/ScopeExit.hxx"
 
 #include <json/json.h>
 
@@ -94,11 +91,9 @@ AcmeClient::AcmeClient(bool staging, bool _fake)
      server(true,
             staging
             ? "acme-staging.api.letsencrypt.org"
-            : "acme-v01.api.letsencrypt.org",
-            443),
+            : "acme-v01.api.letsencrypt.org"),
      fake(_fake)
 {
-    direct_global_init();
 }
 
 AcmeClient::~AcmeClient()
@@ -111,8 +106,7 @@ AcmeClient::RequestNonce()
     if (fake)
         return "foo";
 
-    LinearPool pool(root_pool, "RequestNonce", 8192);
-    auto response = glue_http_client.Request(event_loop, pool, server,
+    auto response = glue_http_client.Request(event_loop, server,
                                              HTTP_METHOD_HEAD, "/directory",
                                              nullptr);
     if (response.status != HTTP_STATUS_OK)
@@ -229,8 +223,7 @@ Sign(EVP_PKEY &key, const char *protected_header_b64, const char *payload_b64)
 }
 
 GlueHttpResponse
-AcmeClient::Request(struct pool &p,
-                    http_method_t method, const char *uri,
+AcmeClient::Request(http_method_t method, const char *uri,
                     ConstBuffer<void> body)
 {
     if (fake) {
@@ -277,7 +270,7 @@ AcmeClient::Request(struct pool &p,
                                     "Not found");
     }
 
-    auto response = glue_http_client.Request(event_loop, p, server,
+    auto response = glue_http_client.Request(event_loop, server,
                                              method, uri,
                                              body);
 
@@ -289,7 +282,7 @@ AcmeClient::Request(struct pool &p,
 }
 
 GlueHttpResponse
-AcmeClient::SignedRequest(struct pool &p, EVP_PKEY &key,
+AcmeClient::SignedRequest(EVP_PKEY &key,
                           http_method_t method, const char *uri,
                           ConstBuffer<void> payload)
 {
@@ -316,15 +309,13 @@ AcmeClient::SignedRequest(struct pool &p, EVP_PKEY &key,
     body += protected_header_b64.c_str();
     body += "\"}";
 
-    return Request(p, method, uri,
+    return Request(method, uri,
                    {body.data(), body.length()});
 }
 
 AcmeClient::Account
 AcmeClient::NewReg(EVP_PKEY &key, const char *email)
 {
-    LinearPool p(root_pool, "new-authz", 8192);
-
     std::string payload("{\"resource\": \"new-reg\", ");
 
     if (email != nullptr) {
@@ -335,7 +326,7 @@ AcmeClient::NewReg(EVP_PKEY &key, const char *email)
 
     payload += "\"agreement\": \"https://letsencrypt.org/documents/LE-SA-v1.0.1-July-27-2015.pdf\"}";
 
-    auto response = SignedRequest(p, key,
+    auto response = SignedRequest(key,
                                   HTTP_METHOD_POST, "/acme/new-reg",
                                   payload.c_str());
     if (response.status != HTTP_STATUS_CREATED)
@@ -365,8 +356,6 @@ FindInArray(const Json::Value &v, const char *key, const char *value)
 AcmeClient::AuthzTlsSni01
 AcmeClient::NewAuthz(EVP_PKEY &key, const char *host)
 {
-    LinearPool p(root_pool, "new-authz", 8192);
-
     std::string payload("{\"resource\": \"new-authz\", "
                         "\"identifier\": { "
                         "\"type\": \"dns\", "
@@ -374,7 +363,7 @@ AcmeClient::NewAuthz(EVP_PKEY &key, const char *host)
     payload += host;
     payload += "\" } }";
 
-    auto response = SignedRequest(p, key,
+    auto response = SignedRequest(key,
                                   HTTP_METHOD_POST, "/acme/new-authz",
                                   payload.c_str());
     if (response.status != HTTP_STATUS_CREATED)
@@ -402,8 +391,6 @@ AcmeClient::NewAuthz(EVP_PKEY &key, const char *host)
 bool
 AcmeClient::UpdateAuthz(EVP_PKEY &key, const AuthzTlsSni01 &authz)
 {
-    LinearPool p(root_pool, "update-authz", 8192);
-
     const char *uri = uri_path(authz.uri.c_str());
     if (uri == nullptr)
         throw std::runtime_error("Malformed URI in AuthzTlsSni01");
@@ -416,7 +403,7 @@ AcmeClient::UpdateAuthz(EVP_PKEY &key, const AuthzTlsSni01 &authz)
     payload += UrlSafeBase64SHA256(MakeJwk(key)).c_str();
     payload += "\" }";
 
-    auto response = SignedRequest(p, key,
+    auto response = SignedRequest(key,
                                   HTTP_METHOD_POST, uri,
                                   payload.c_str());
     if (response.status != HTTP_STATUS_ACCEPTED)
@@ -430,13 +417,11 @@ AcmeClient::UpdateAuthz(EVP_PKEY &key, const AuthzTlsSni01 &authz)
 bool
 AcmeClient::CheckAuthz(const AuthzTlsSni01 &authz)
 {
-    LinearPool p(root_pool, "check-authz", 8192);
-
     const char *uri = uri_path(authz.uri.c_str());
     if (uri == nullptr)
         throw std::runtime_error("Malformed URI in AuthzTlsSni01");
 
-    auto response = Request(p, HTTP_METHOD_GET, uri,
+    auto response = Request(HTTP_METHOD_GET, uri,
                             nullptr);
     if (response.status != HTTP_STATUS_ACCEPTED)
         ThrowError(std::move(response), "Failed to check authz");
@@ -449,14 +434,12 @@ AcmeClient::CheckAuthz(const AuthzTlsSni01 &authz)
 UniqueX509
 AcmeClient::NewCert(EVP_PKEY &key, X509_REQ &req)
 {
-    LinearPool p(root_pool, "new-cert", 8192);
-
     std::string payload("{\"resource\": \"new-cert\", "
                         "\"csr\": \"");
     payload += UrlSafeBase64(req).c_str();
     payload += "\" }";
 
-    auto response = SignedRequest(p, key,
+    auto response = SignedRequest(key,
                                   HTTP_METHOD_POST, "/acme/new-cert",
                                   payload.c_str());
     if (response.status != HTTP_STATUS_CREATED)
