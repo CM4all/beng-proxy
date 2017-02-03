@@ -12,7 +12,7 @@ class SignalEvent {
     Event event;
 
     typedef BoundMethod<void(int)> Callback;
-    Callback callback;
+    const Callback callback;
 
 public:
     SignalEvent(EventLoop &loop, int sig, Callback _callback)
