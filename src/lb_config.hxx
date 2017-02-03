@@ -566,6 +566,6 @@ struct LbConfig {
  * exception on error.
  */
 void
-LoadConfigFile(struct pool &pool, LbConfig &config, const char *path);
+LoadConfigFile(LbConfig &config, const char *path);
 
 #endif

@@ -137,7 +137,7 @@ int main(int argc, char **argv)
     ParseCommandLine(instance.cmdline, config, argc, argv);
 
     try {
-        LoadConfigFile(*instance.pool, config,
+        LoadConfigFile(config,
                        instance.cmdline.config_path);
     } catch (const std::exception &e) {
         PrintException(e);

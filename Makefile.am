@@ -451,6 +451,7 @@ cm4all_beng_lb_LDADD = $(AM_LDADD) \
 	$(LIBEVENT_LIBS)
 
 cm4all_certdb_SOURCES = \
+	src/regex.cxx src/regex.hxx \
 	src/lb_config.cxx \
 	src/certdb/Config.hxx \
 	src/certdb/WrapKey.cxx src/certdb/WrapKey.hxx \
@@ -466,9 +467,8 @@ cm4all_certdb_CPPFLAGS = $(AM_CPPFLAGS) \
 cm4all_certdb_LDADD = $(AM_LDADD) \
 	libcurl.a \
 	libssl.a \
-	libraddress.a \
 	libpg.a \
-	libpool.a libmemory.a libevent.a \
+	libevent.a \
 	libnet.a \
 	libio.a \
 	libsystem.a \

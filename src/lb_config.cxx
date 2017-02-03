@@ -22,7 +22,6 @@
 #include <netdb.h>
 
 class LbConfigParser final : public NestedConfigParser {
-    struct pool &pool;
     LbConfig &config;
 
     class Control final : public ConfigParser {
@@ -127,8 +126,8 @@ class LbConfigParser final : public NestedConfigParser {
     };
 
 public:
-    LbConfigParser(struct pool &_pool, LbConfig &_config)
-        :pool(_pool), config(_config) {}
+    explicit LbConfigParser(LbConfig &_config)
+        :config(_config) {}
 
 protected:
     /* virtual methods from class ConfigParser */
@@ -988,9 +987,9 @@ LbConfigParser::Finish()
 }
 
 void
-LoadConfigFile(struct pool &pool, LbConfig &config, const char *path)
+LoadConfigFile(LbConfig &config, const char *path)
 {
-    LbConfigParser parser(pool, config);
+    LbConfigParser parser(config);
     VariableConfigParser v_parser(parser);
     CommentConfigParser parser2(v_parser);
     IncludeConfigParser parser3(path, parser2);

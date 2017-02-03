@@ -17,7 +17,6 @@
 #include "ssl/Error.hxx"
 #include "pg/CheckError.hxx"
 #include "lb_config.hxx"
-#include "RootPool.hxx"
 #include "system/urandom.hxx"
 #include "system/Error.hxx"
 #include "system/StringFile.hxx"
@@ -621,7 +620,7 @@ static CertDatabaseConfig
 LoadCertDatabaseConfig(const char *path)
 {
     LbConfig lb_config;
-    LoadConfigFile(RootPool(), lb_config, path);
+    LoadConfigFile(lb_config, path);
 
     auto i = lb_config.cert_dbs.begin();
     if (i == lb_config.cert_dbs.end())
