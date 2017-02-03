@@ -9,12 +9,12 @@
 
 #include "http_headers.hxx"
 #include "net/AddressInfo.hxx"
-#include "strmap.hxx"
 
 #include <http/method.h>
 #include <http/status.h>
 
 #include <string>
+#include <map>
 
 template<typename T> struct ConstBuffer;
 struct pool;
@@ -40,12 +40,13 @@ struct GlueHttpServerAddress {
 struct GlueHttpResponse {
     http_status_t status;
 
-    StringMap headers;
+    std::multimap<std::string, std::string> headers;
 
     std::string body;
 
     GlueHttpResponse(http_status_t _status,
-                     StringMap &&_headers, std::string &&_body)
+                     std::multimap<std::string, std::string> &&_headers,
+                     std::string &&_body)
         :status(_status), headers(std::move(_headers)), body(_body) {}
 };
 

@@ -144,7 +144,7 @@ GlueHttpClient::Request(struct pool &p, EventLoop &event_loop,
 
 class GlueHttpRequest final : IstreamHandler, public HttpResponseHandler {
     http_status_t status;
-    StringMap headers;
+    std::multimap<std::string, std::string> headers;
     IstreamPointer body;
 
     std::string body_string;
@@ -154,8 +154,8 @@ class GlueHttpRequest final : IstreamHandler, public HttpResponseHandler {
     bool done = false;
 
 public:
-    explicit GlueHttpRequest(struct pool &pool)
-        :headers(pool), body(nullptr) {}
+    GlueHttpRequest()
+        :body(nullptr) {}
 
     ~GlueHttpRequest() {
         if (error != nullptr)
@@ -199,7 +199,9 @@ private:
         assert(error == nullptr);
 
         status = _status;
-        headers = std::move(_headers);
+
+        for (const auto &i : _headers)
+            headers.emplace(i.key, i.value);
 
         if (_body != nullptr) {
             body.Set(*_body, *this);
@@ -224,7 +226,7 @@ GlueHttpClient::Request(EventLoop &event_loop,
 {
     CancellablePointer cancel_ptr;
 
-    GlueHttpRequest request(p);
+    GlueHttpRequest request;
     Request(p, event_loop, server, method, uri, body,
             request, cancel_ptr);
     while (!request.IsDone() && event_loop.LoopOnce()) {}

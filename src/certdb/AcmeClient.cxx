@@ -21,10 +21,13 @@ gcc_pure
 static bool
 IsJson(const GlueHttpResponse &response)
 {
-    const char *content_type = response.headers.Get("content-type");
-    return content_type != nullptr &&
-        (strcmp(content_type, "application/json") == 0 ||
-         strcmp(content_type, "application/problem+json") == 0);
+    auto i = response.headers.find("content-type");
+    if (i == response.headers.end())
+        return false;
+
+    const char *content_type = i->second.c_str();
+    return strcmp(content_type, "application/json") == 0 ||
+        strcmp(content_type, "application/problem+json") == 0;
 }
 
 gcc_pure
@@ -114,10 +117,10 @@ AcmeClient::RequestNonce()
                                              nullptr);
     if (response.status != HTTP_STATUS_OK)
         throw std::runtime_error("Unexpected response status");
-    const char *nonce = response.headers.Get("replay-nonce");
-    if (nonce == nullptr)
+    auto nonce = response.headers.find("replay-nonce");
+    if (nonce == response.headers.end())
         throw std::runtime_error("No Replay-Nonce response header");
-    return nonce;
+    return nonce->second.c_str();
 }
 
 std::string
@@ -232,8 +235,9 @@ AcmeClient::Request(struct pool &p,
 {
     if (fake) {
         if (strcmp(uri, "/acme/new-authz") == 0) {
-            StringMap response_headers(p);
-            response_headers.Add("content-type", "application/json");
+            std::multimap<std::string, std::string> response_headers = {
+                {"content-type", "application/json"},
+            };
 
             return GlueHttpResponse(HTTP_STATUS_CREATED,
                                     std::move(response_headers),
@@ -249,8 +253,9 @@ AcmeClient::Request(struct pool &p,
                                     "  ]"
                                     "}");
         } else if (strcmp(uri, "/example/tls-sni-01/uri") == 0) {
-            StringMap response_headers(p);
-            response_headers.Add("content-type", "application/json");
+            std::multimap<std::string, std::string> response_headers = {
+                {"content-type", "application/json"},
+            };
 
             return GlueHttpResponse(HTTP_STATUS_ACCEPTED,
                                     std::move(response_headers),
@@ -264,20 +269,21 @@ AcmeClient::Request(struct pool &p,
             const SslBuffer cert_buffer(*cert);
 
             auto response_body = ConstBuffer<char>::FromVoid(cert_buffer.get());
-            return GlueHttpResponse(HTTP_STATUS_CREATED, StringMap(p),
+            return GlueHttpResponse(HTTP_STATUS_CREATED, {},
                                     std::string(response_body.data,
                                                 response_body.size));
         } else
-            return GlueHttpResponse(HTTP_STATUS_NOT_FOUND, StringMap(p),
+            return GlueHttpResponse(HTTP_STATUS_NOT_FOUND, {},
                                     "Not found");
     }
 
     auto response = glue_http_client.Request(event_loop, p, server,
                                              method, uri,
                                              body);
-    const char *new_nonce = response.headers.Get("replay-nonce");
-    if (new_nonce != nullptr)
-        next_nonce = new_nonce;
+
+    auto new_nonce = response.headers.find("replay-nonce");
+    if (new_nonce != response.headers.end())
+        next_nonce = std::move(new_nonce->second);
 
     return response;
 }
@@ -337,9 +343,9 @@ AcmeClient::NewReg(EVP_PKEY &key, const char *email)
 
     Account account;
 
-    const char *location = response.headers.Get("location");
-    if (location != nullptr)
-        account.location = location;
+    auto location = response.headers.find("location");
+    if (location != response.headers.end())
+        account.location = std::move(location->second);
 
     return account;
 }
