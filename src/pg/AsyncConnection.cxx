@@ -5,11 +5,13 @@
 #include "AsyncConnection.hxx"
 #include "event/Callback.hxx"
 
-AsyncPgConnection::AsyncPgConnection(const char *_conninfo, const char *_schema,
+AsyncPgConnection::AsyncPgConnection(EventLoop &event_loop,
+                                     const char *_conninfo, const char *_schema,
                                      AsyncPgConnectionHandler &_handler)
     :conninfo(_conninfo), schema(_schema),
      handler(_handler),
-     event(-1, 0, MakeSimpleEventCallback(AsyncPgConnection, OnEvent), this)
+     event(-1, 0, MakeSimpleEventCallback(AsyncPgConnection, OnEvent), this),
+     reconnect_timer(event_loop, BIND_THIS_METHOD(OnReconnectTimer))
 {
 }
 
@@ -199,9 +201,7 @@ AsyncPgConnection::ScheduleReconnect()
     assert(state == State::DISCONNECTED);
 
     state = State::WAITING;
-    event.SetTimer(MakeSimpleEventCallback(AsyncPgConnection, OnReconnectTimer),
-                   this);
-    event.Add(delay);
+    reconnect_timer.Add(delay);
 }
 
 inline void

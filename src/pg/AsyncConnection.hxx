@@ -7,6 +7,7 @@
 
 #include "Connection.hxx"
 #include "event/Event.hxx"
+#include "event/TimerEvent.hxx"
 
 #include <cassert>
 
@@ -92,9 +93,14 @@ class AsyncPgConnection : public PgConnection {
      *
      * READY: used by PollNotify().
      *
-     * WAITING: a timer which reconnects.
+     * WAITING: not used.
      */
     Event event;
+
+    /**
+     * A timer which reconnects during State::WAITING.
+     */
+    TimerEvent reconnect_timer;
 
     AsyncPgResultHandler *result_handler = nullptr;
 
@@ -103,7 +109,8 @@ public:
      * Construct the object, but do not initiate the connect yet.
      * Call Connect() to do that.
      */
-    AsyncPgConnection(const char *conninfo, const char *schema,
+    AsyncPgConnection(EventLoop &event_loop,
+                      const char *conninfo, const char *schema,
                       AsyncPgConnectionHandler &handler);
 
     ~AsyncPgConnection() {
