@@ -6,7 +6,6 @@
 #define BENG_PROXY_ACME_CLIENT_HXX
 
 #include "event/Loop.hxx"
-#include "RootPool.hxx"
 #include "GlueHttpClient.hxx"
 #include "ssl/Unique.hxx"
 #include "util/ConstBuffer.hxx"
@@ -23,7 +22,6 @@
  */
 class AcmeClient {
     EventLoop event_loop;
-    RootPool root_pool;
     GlueHttpClient glue_http_client;
     GlueHttpServerAddress server;
 
@@ -39,10 +37,6 @@ class AcmeClient {
 public:
     explicit AcmeClient(bool staging, bool fake);
     ~AcmeClient();
-
-    struct pool &GetRootPool() {
-        return root_pool;
-    }
 
     struct Account {
         std::string location;
