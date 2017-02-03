@@ -6,7 +6,7 @@
 #define ASYNC_PG_CONNECTION_HXX
 
 #include "Connection.hxx"
-#include "event/Event.hxx"
+#include "event/SocketEvent.hxx"
 #include "event/TimerEvent.hxx"
 
 #include <cassert>
@@ -95,7 +95,7 @@ class AsyncPgConnection : public PgConnection {
      *
      * WAITING: not used.
      */
-    Event event;
+    SocketEvent socket_event;
 
     /**
      * A timer which reconnects during State::WAITING.
@@ -179,7 +179,7 @@ protected:
     void ScheduleReconnect();
 
 private:
-    void OnEvent();
+    void OnSocketEvent(short events);
     void OnReconnectTimer();
 };
 

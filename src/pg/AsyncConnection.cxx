@@ -3,14 +3,13 @@
  */
 
 #include "AsyncConnection.hxx"
-#include "event/Callback.hxx"
 
 AsyncPgConnection::AsyncPgConnection(EventLoop &event_loop,
                                      const char *_conninfo, const char *_schema,
                                      AsyncPgConnectionHandler &_handler)
     :conninfo(_conninfo), schema(_schema),
      handler(_handler),
-     event(-1, 0, MakeSimpleEventCallback(AsyncPgConnection, OnEvent), this),
+     socket_event(event_loop, BIND_THIS_METHOD(OnSocketEvent)),
      reconnect_timer(event_loop, BIND_THIS_METHOD(OnReconnectTimer))
 {
 }
@@ -22,7 +21,7 @@ AsyncPgConnection::Error()
            state == State::RECONNECTING ||
            state == State::READY);
 
-    event.Delete();
+    socket_event.Delete();
 
     const bool was_connected = state == State::READY;
     state = State::DISCONNECTED;
@@ -49,15 +48,13 @@ AsyncPgConnection::Poll(PostgresPollingStatusType status)
         break;
 
     case PGRES_POLLING_READING:
-        event.Set(GetSocket(), EV_READ,
-                  MakeSimpleEventCallback(AsyncPgConnection, OnEvent), this);
-        event.Add();
+        socket_event.Set(GetSocket(), EV_READ);
+        socket_event.Add();
         break;
 
     case PGRES_POLLING_WRITING:
-        event.Set(GetSocket(), EV_WRITE,
-                  MakeSimpleEventCallback(AsyncPgConnection, OnEvent), this);
-        event.Add();
+        socket_event.Set(GetSocket(), EV_WRITE);
+        socket_event.Add();
         break;
 
     case PGRES_POLLING_OK:
@@ -70,9 +67,8 @@ AsyncPgConnection::Poll(PostgresPollingStatusType status)
         }
 
         state = State::READY;
-        event.Set(GetSocket(), EV_READ|EV_PERSIST,
-                  MakeSimpleEventCallback(AsyncPgConnection, OnEvent), this);
-        event.Add();
+        socket_event.Set(GetSocket(), EV_READ|EV_PERSIST);
+        socket_event.Add();
 
         handler.OnConnect();
 
@@ -174,7 +170,7 @@ AsyncPgConnection::Reconnect()
 {
     assert(state != State::UNINITIALIZED);
 
-    event.Delete();
+    socket_event.Delete();
     StartReconnect();
     state = State::RECONNECTING;
     PollReconnect();
@@ -186,7 +182,7 @@ AsyncPgConnection::Disconnect()
     if (state == State::UNINITIALIZED)
         return;
 
-    event.Delete();
+    socket_event.Delete();
     PgConnection::Disconnect();
     state = State::DISCONNECTED;
 }
@@ -205,7 +201,7 @@ AsyncPgConnection::ScheduleReconnect()
 }
 
 inline void
-AsyncPgConnection::OnEvent()
+AsyncPgConnection::OnSocketEvent(short)
 {
     switch (state) {
     case State::UNINITIALIZED:
