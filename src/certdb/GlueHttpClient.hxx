@@ -61,6 +61,7 @@ public:
     GlueHttpClient(const GlueHttpClient &) = delete;
     GlueHttpClient &operator=(const GlueHttpClient &) = delete;
 
+private:
     void Request(struct pool &p, EventLoop &event_loop,
                  GlueHttpServerAddress &server,
                  http_method_t method, const char *uri,
@@ -68,6 +69,7 @@ public:
                  HttpResponseHandler &handler,
                  CancellablePointer &cancel_ptr);
 
+public:
     GlueHttpResponse Request(EventLoop &event_loop,
                              struct pool &p, GlueHttpServerAddress &server,
                              http_method_t method, const char *uri,
