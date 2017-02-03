@@ -13,7 +13,6 @@
 #include "fb_pool.hxx"
 #include "SliceFifoBuffer.hxx"
 #include "event/TimerEvent.hxx"
-#include "event/Callback.hxx"
 
 #include <assert.h>
 #include <sys/types.h>

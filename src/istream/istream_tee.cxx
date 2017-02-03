@@ -9,7 +9,6 @@
 #include "Bucket.hxx"
 #include "pool.hxx"
 #include "event/DeferEvent.hxx"
-#include "event/Callback.hxx"
 #include "util/Cast.hxx"
 
 #include <glib.h>

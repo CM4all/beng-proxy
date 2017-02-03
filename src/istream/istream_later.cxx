@@ -5,7 +5,6 @@
 #include "istream_later.hxx"
 #include "ForwardIstream.hxx"
 #include "event/DeferEvent.hxx"
-#include "event/Callback.hxx"
 
 class LaterIstream final : public ForwardIstream {
     DeferEvent defer_event;

@@ -821,7 +821,6 @@ libevent_a_SOURCES = \
 	src/event/Loop.cxx src/event/Loop.hxx \
 	src/event/ShutdownListener.cxx src/event/ShutdownListener.hxx \
 	src/event/CleanupTimer.cxx src/event/CleanupTimer.hxx \
-	src/event/Callback.hxx \
 	src/event/Duration.hxx \
 	src/event/SocketEvent.hxx \
 	src/event/TimerEvent.hxx \

@@ -7,7 +7,6 @@
 
 #include "system/SetupProcess.hxx"
 #include "event/ShutdownListener.hxx"
-#include "event/Callback.hxx"
 #include "Handler.hxx"
 #include "Server.hxx"
 #include "Connection.hxx"

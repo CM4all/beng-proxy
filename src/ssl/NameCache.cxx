@@ -4,7 +4,6 @@
 
 #include "NameCache.hxx"
 #include "certdb/Config.hxx"
-#include "event/Callback.hxx"
 #include "event/Duration.hxx"
 
 #include <daemon/log.h>

@@ -11,7 +11,6 @@
 #include "AllocatedSocketAddress.hxx"
 #include "system/fd_util.h"
 #include "system/Error.hxx"
-#include "event/Callback.hxx"
 
 #include <socket/util.h>
 #include <socket/address.h>

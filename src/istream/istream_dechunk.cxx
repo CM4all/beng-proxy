@@ -9,7 +9,6 @@
 #include "FacadeIstream.hxx"
 #include "pool.hxx"
 #include "event/DeferEvent.hxx"
-#include "event/Callback.hxx"
 
 #include <algorithm>
 

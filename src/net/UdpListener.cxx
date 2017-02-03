@@ -9,7 +9,6 @@
 #include "AllocatedSocketAddress.hxx"
 #include "Parser.hxx"
 #include "system/fd_util.h"
-#include "event/Callback.hxx"
 #include "system/Error.hxx"
 
 #include <socket/address.h>

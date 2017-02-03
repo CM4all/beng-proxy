@@ -4,7 +4,6 @@
 
 #include "Registry.hxx"
 #include "ExitListener.hxx"
-#include "event/Callback.hxx"
 #include "util/DeleteDisposer.hxx"
 
 #include <daemon/log.h>

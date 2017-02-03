@@ -6,7 +6,6 @@
 #include "Listener.hxx"
 #include "Handler.hxx"
 #include "Response.hxx"
-#include "event/Callback.hxx"
 
 #include <beng-proxy/translation.h>
 

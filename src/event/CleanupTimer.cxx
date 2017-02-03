@@ -6,11 +6,6 @@
  */
 
 #include "CleanupTimer.hxx"
-#include "Callback.hxx"
-
-#include <inline/compiler.h>
-
-#include <stddef.h>
 
 void
 CleanupTimer::OnTimer()
