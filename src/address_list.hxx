@@ -79,6 +79,10 @@ struct AddressList {
     /**
      * @return false if the list is full
      */
+    bool AddPointer(SocketAddress address) {
+        return addresses.checked_append(address);
+    }
+
     bool Add(AllocatorPtr alloc, SocketAddress address);
 
     bool Add(struct dpool &pool, SocketAddress address);
