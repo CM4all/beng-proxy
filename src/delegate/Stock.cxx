@@ -48,12 +48,13 @@ struct DelegateArgs {
     }
 };
 
-struct DelegateProcess final : HeapStockItem {
+class DelegateProcess final : public HeapStockItem {
     const pid_t pid;
     const int fd;
 
     SocketEvent event;
 
+public:
     explicit DelegateProcess(CreateStockItem c,
                              pid_t _pid, int _fd)
         :HeapStockItem(c), pid(_pid), fd(_fd),
@@ -66,6 +67,10 @@ struct DelegateProcess final : HeapStockItem {
             event.Delete();
             close(fd);
         }
+    }
+
+    int GetSocket() const {
+        return fd;
     }
 
     /* virtual methods from class StockItem */
@@ -186,5 +191,5 @@ delegate_stock_item_get(StockItem &item)
 {
     auto *process = (DelegateProcess *)&item;
 
-    return process->fd;
+    return process->GetSocket();
 }
