@@ -6,7 +6,7 @@
 #include "event/SocketEvent.hxx"
 #include "event/TimerEvent.hxx"
 
-static short
+static unsigned
 FromAvahiWatchEvent(AvahiWatchEvent e)
 {
     // TODO: what about AVAHI_WATCH_ERR and AVAHI_WATCH_HUP?
