@@ -125,19 +125,16 @@ private:
 
     GlueHttpResponse Request(struct pool &p,
                              http_method_t method, const char *uri,
-                             HttpHeaders &&headers,
                              ConstBuffer<void> body);
 
     GlueHttpResponse SignedRequest(struct pool &p, EVP_PKEY &key,
                                    http_method_t method, const char *uri,
-                                   HttpHeaders &&headers,
                                    ConstBuffer<void> payload);
 
     GlueHttpResponse SignedRequest(struct pool &p, EVP_PKEY &key,
                                    http_method_t method, const char *uri,
-                                   HttpHeaders &&headers,
                                    const char *payload) {
-        return SignedRequest(p, key, method, uri, std::move(headers),
+        return SignedRequest(p, key, method, uri,
                              ConstBuffer<void>(payload, strlen(payload)));
     }
 };

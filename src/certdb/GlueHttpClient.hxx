@@ -65,7 +65,7 @@ private:
     void Request(struct pool &p, EventLoop &event_loop,
                  GlueHttpServerAddress &server,
                  http_method_t method, const char *uri,
-                 HttpHeaders &&headers, ConstBuffer<void> body,
+                 ConstBuffer<void> body,
                  HttpResponseHandler &handler,
                  CancellablePointer &cancel_ptr);
 
@@ -73,7 +73,6 @@ public:
     GlueHttpResponse Request(EventLoop &event_loop,
                              struct pool &p, GlueHttpServerAddress &server,
                              http_method_t method, const char *uri,
-                             HttpHeaders &&headers,
                              ConstBuffer<void> body);
 };
 

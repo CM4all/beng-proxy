@@ -110,7 +110,7 @@ void
 GlueHttpClient::Request(struct pool &p, EventLoop &event_loop,
                         GlueHttpServerAddress &server,
                         http_method_t method, const char *uri,
-                        HttpHeaders &&headers, ConstBuffer<void> _body,
+                        ConstBuffer<void> _body,
                         HttpResponseHandler &handler,
                         CancellablePointer &cancel_ptr)
 {
@@ -138,7 +138,7 @@ GlueHttpClient::Request(struct pool &p, EventLoop &event_loop,
     http_request(p, event_loop, *tcp_balancer, 0,
                  filter, filter_factory,
                  method, *address,
-                 std::move(headers), body,
+                 HttpHeaders(p), body,
                  handler, cancel_ptr);
 }
 
@@ -220,12 +220,12 @@ GlueHttpResponse
 GlueHttpClient::Request(EventLoop &event_loop,
                         struct pool &p, GlueHttpServerAddress &server,
                         http_method_t method, const char *uri,
-                        HttpHeaders &&headers, ConstBuffer<void> body)
+                        ConstBuffer<void> body)
 {
     CancellablePointer cancel_ptr;
 
     GlueHttpRequest request(p);
-    Request(p, event_loop, server, method, uri, std::move(headers), body,
+    Request(p, event_loop, server, method, uri, body,
             request, cancel_ptr);
     while (!request.IsDone() && event_loop.LoopOnce()) {}
 

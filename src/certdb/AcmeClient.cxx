@@ -111,7 +111,7 @@ AcmeClient::RequestNonce()
     LinearPool pool(root_pool, "RequestNonce", 8192);
     auto response = glue_http_client.Request(event_loop, pool, server,
                                              HTTP_METHOD_HEAD, "/directory",
-                                             HttpHeaders(pool), nullptr);
+                                             nullptr);
     if (response.status != HTTP_STATUS_OK)
         throw std::runtime_error("Unexpected response status");
     const char *nonce = response.headers.Get("replay-nonce");
@@ -228,7 +228,6 @@ Sign(EVP_PKEY &key, const char *protected_header_b64, const char *payload_b64)
 GlueHttpResponse
 AcmeClient::Request(struct pool &p,
                     http_method_t method, const char *uri,
-                    HttpHeaders &&headers,
                     ConstBuffer<void> body)
 {
     if (fake) {
@@ -274,7 +273,7 @@ AcmeClient::Request(struct pool &p,
     }
 
     auto response = glue_http_client.Request(event_loop, p, server,
-                                             method, uri, std::move(headers),
+                                             method, uri,
                                              body);
     const char *new_nonce = response.headers.Get("replay-nonce");
     if (new_nonce != nullptr)
@@ -286,7 +285,6 @@ AcmeClient::Request(struct pool &p,
 GlueHttpResponse
 AcmeClient::SignedRequest(struct pool &p, EVP_PKEY &key,
                           http_method_t method, const char *uri,
-                          HttpHeaders &&headers,
                           ConstBuffer<void> payload)
 {
     const auto payload_b64 = UrlSafeBase64(payload);
@@ -312,7 +310,7 @@ AcmeClient::SignedRequest(struct pool &p, EVP_PKEY &key,
     body += protected_header_b64.c_str();
     body += "\"}";
 
-    return Request(p, method, uri, std::move(headers),
+    return Request(p, method, uri,
                    {body.data(), body.length()});
 }
 
@@ -333,7 +331,6 @@ AcmeClient::NewReg(EVP_PKEY &key, const char *email)
 
     auto response = SignedRequest(p, key,
                                   HTTP_METHOD_POST, "/acme/new-reg",
-                                  HttpHeaders(p),
                                   payload.c_str());
     if (response.status != HTTP_STATUS_CREATED)
         ThrowError(std::move(response), "Failed to register account");
@@ -373,7 +370,6 @@ AcmeClient::NewAuthz(EVP_PKEY &key, const char *host)
 
     auto response = SignedRequest(p, key,
                                   HTTP_METHOD_POST, "/acme/new-authz",
-                                  HttpHeaders(p),
                                   payload.c_str());
     if (response.status != HTTP_STATUS_CREATED)
         ThrowError(std::move(response), "Failed to create authz");
@@ -416,7 +412,6 @@ AcmeClient::UpdateAuthz(EVP_PKEY &key, const AuthzTlsSni01 &authz)
 
     auto response = SignedRequest(p, key,
                                   HTTP_METHOD_POST, uri,
-                                  HttpHeaders(p),
                                   payload.c_str());
     if (response.status != HTTP_STATUS_ACCEPTED)
         ThrowError(std::move(response), "Failed to update authz");
@@ -436,7 +431,7 @@ AcmeClient::CheckAuthz(const AuthzTlsSni01 &authz)
         throw std::runtime_error("Malformed URI in AuthzTlsSni01");
 
     auto response = Request(p, HTTP_METHOD_GET, uri,
-                            HttpHeaders(p), nullptr);
+                            nullptr);
     if (response.status != HTTP_STATUS_ACCEPTED)
         ThrowError(std::move(response), "Failed to check authz");
 
@@ -457,7 +452,6 @@ AcmeClient::NewCert(EVP_PKEY &key, X509_REQ &req)
 
     auto response = SignedRequest(p, key,
                                   HTTP_METHOD_POST, "/acme/new-cert",
-                                  HttpHeaders(p),
                                   payload.c_str());
     if (response.status != HTTP_STATUS_CREATED)
         ThrowError(std::move(response), "Failed to create certificate");
