@@ -9,9 +9,6 @@ EXTRA_DIST = \
 # Compiler/linker flags
 #
 
-LIBEVENT_CFLAGS =
-LIBEVENT_LIBS = -levent_core
-
 LIBATTR_CFLAGS =
 if HAVE_ATTR_XATTR_H
 LIBATTR_LIBS = -lattr
