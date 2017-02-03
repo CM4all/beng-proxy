@@ -12,7 +12,6 @@
 #include <assert.h>
 #include <stddef.h>
 
-class Error;
 class SocketAddress;
 class StaticSocketAddress;
 
@@ -67,8 +66,6 @@ public:
      * @return false on error (with errno set)
      */
     bool Create(int domain, int type, int protocol);
-
-    bool Create(int domain, int type, int protocol, Error &error);
 
     bool Bind(SocketAddress address);
 
