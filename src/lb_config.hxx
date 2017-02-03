@@ -20,6 +20,7 @@
 
 #include <map>
 #include <list>
+#include <forward_list>
 #include <vector>
 #include <string>
 
@@ -173,6 +174,8 @@ struct LbClusterConfig {
 
     std::string zeroconf_service, zeroconf_domain;
 
+    std::forward_list<AllocatedSocketAddress> address_allocations;
+
     /**
      * A list of node addresses.
      */
@@ -180,6 +183,11 @@ struct LbClusterConfig {
 
     explicit LbClusterConfig(const char *_name)
         :name(_name) {}
+
+    LbClusterConfig(LbClusterConfig &&) = default;
+
+    LbClusterConfig(const LbClusterConfig &) = delete;
+    LbClusterConfig &operator=(const LbClusterConfig &) = delete;
 
     /**
      * Returns the member index of the node with the specified

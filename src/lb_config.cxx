@@ -963,16 +963,17 @@ LbConfigParser::ParseLine2(LineParser &line)
 }
 
 static void
-lb_cluster_config_finish(struct pool *pool, LbClusterConfig &config)
+lb_cluster_config_finish(LbClusterConfig &config)
 {
     config.address_list.SetStickyMode(config.sticky_mode);
 
     for (auto &member : config.members) {
-        AllocatedSocketAddress address = member.node->address;
+        config.address_allocations.emplace_front(member.node->address);
+        auto &address = config.address_allocations.front();
         if (member.port != 0)
             address.SetPort(member.port);
 
-        if (!config.address_list.Add(*pool, address))
+        if (!config.address_list.AddPointer(address))
             throw LineParser::Error("Too many members");
     }
 }
@@ -981,7 +982,7 @@ void
 LbConfigParser::Finish()
 {
     for (auto &i : config.clusters)
-        lb_cluster_config_finish(&pool, i.second);
+        lb_cluster_config_finish(i.second);
 
     NestedConfigParser::Finish();
 }
