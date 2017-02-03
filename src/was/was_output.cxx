@@ -40,7 +40,7 @@ public:
     WasOutput(EventLoop &event_loop, int _fd, Istream &_input,
               WasOutputHandler &_handler)
         :fd(_fd),
-         event(event_loop, fd, EV_WRITE|EV_TIMEOUT,
+         event(event_loop, fd, EV_WRITE,
                BIND_THIS_METHOD(WriteEventCallback)),
          handler(_handler),
          input(_input, *this, ISTREAM_TO_PIPE) {

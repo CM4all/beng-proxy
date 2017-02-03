@@ -250,7 +250,7 @@ fcgi_stock_create(void *ctx, CreateStockItem c, void *info,
         return;
     }
 
-    connection->event.Set(connection->fd, EV_READ|EV_TIMEOUT);
+    connection->event.Set(connection->fd, EV_READ);
 
     connection->InvokeCreateSuccess();
 }

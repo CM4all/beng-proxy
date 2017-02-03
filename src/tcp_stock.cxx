@@ -128,7 +128,7 @@ TcpStockConnection::OnSocketConnectSuccess(SocketDescriptor &&new_fd)
     cancel_ptr = nullptr;
 
     fd = new_fd.Steal();
-    event.Set(fd, EV_READ|EV_TIMEOUT);
+    event.Set(fd, EV_READ);
 
     InvokeCreateSuccess();
 }

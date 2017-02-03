@@ -28,9 +28,9 @@ static constexpr struct timeval was_control_timeout = {
 WasControl::WasControl(EventLoop &event_loop, int _fd,
                        WasControlHandler &_handler)
     :fd(_fd), handler(_handler),
-     read_event(event_loop, fd, EV_READ|EV_TIMEOUT,
+     read_event(event_loop, fd, EV_READ,
                 BIND_THIS_METHOD(ReadEventCallback)),
-     write_event(event_loop, fd, EV_WRITE|EV_TIMEOUT,
+     write_event(event_loop, fd, EV_WRITE,
                  BIND_THIS_METHOD(WriteEventCallback)),
      input_buffer(fb_pool_get()),
      output_buffer(fb_pool_get())

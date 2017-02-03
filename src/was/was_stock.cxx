@@ -97,7 +97,7 @@ public:
             return false;
         }
 
-        event.Set(process.control.Get(), EV_READ|EV_TIMEOUT);
+        event.Set(process.control.Get(), EV_READ);
         return true;
     }
 

@@ -46,8 +46,7 @@ public:
     WasInput(struct pool &p, EventLoop &event_loop, int _fd,
              WasInputHandler &_handler)
         :Istream(p), fd(_fd),
-         event(event_loop, fd, EV_READ|EV_TIMEOUT,
-               BIND_THIS_METHOD(EventCallback)),
+         event(event_loop, fd, EV_READ, BIND_THIS_METHOD(EventCallback)),
          handler(_handler) {
     }
 

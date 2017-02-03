@@ -176,7 +176,7 @@ ExpectMonitor::OnSocketConnectSuccess(SocketDescriptor &&new_fd)
     };
 
     fd = new_fd.Steal();
-    event.Set(fd, EV_READ|EV_TIMEOUT);
+    event.Set(fd, EV_READ);
     event.Add(expect_timeout);
 
     cancel_ptr = *this;

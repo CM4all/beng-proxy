@@ -58,7 +58,7 @@ public:
     explicit DelegateProcess(CreateStockItem c,
                              pid_t _pid, int _fd)
         :HeapStockItem(c), pid(_pid), fd(_fd),
-         event(c.stock.GetEventLoop(), fd, EV_READ|EV_TIMEOUT,
+         event(c.stock.GetEventLoop(), fd, EV_READ,
                BIND_THIS_METHOD(SocketEventCallback)) {
     }
 

@@ -54,8 +54,8 @@ SocketWrapper::Init(int _fd, FdType _fd_type,
     fd_type = _fd_type;
     direct_mask = istream_direct_mask_to(fd_type);
 
-    read_event.Set(fd, EV_READ|EV_PERSIST|EV_TIMEOUT);
-    write_event.Set(fd, EV_WRITE|EV_PERSIST|EV_TIMEOUT);
+    read_event.Set(fd, EV_READ|EV_PERSIST);
+    write_event.Set(fd, EV_WRITE|EV_PERSIST);
 
     handler = &_handler;
     handler_ctx = _ctx;
