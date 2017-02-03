@@ -14,7 +14,7 @@
 class TimerEvent {
     Event event;
 
-    BoundMethod<void()> callback;
+    const BoundMethod<void()> callback;
 
 public:
     TimerEvent(EventLoop &loop, BoundMethod<void()> _callback)
