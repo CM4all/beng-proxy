@@ -621,6 +621,7 @@ noinst_LIBRARIES = libutil.a libmemory.a libpool.a \
 	libeutil.a \
 	libraddress.a \
 	libtranslation.a \
+	libcurl.a \
 	libevent.a \
 	libssl.a \
 	libpg.a \
@@ -832,6 +833,18 @@ libtranslation_a_SOURCES = \
 	src/translation/Transformation.cxx src/translation/Transformation.hxx \
 	src/translation/Response.cxx src/translation/Response.hxx \
 	src/translation/Vary.cxx src/translation/Vary.hxx
+
+libcurl_a_SOURCES = \
+	src/curl/Version.cxx src/curl/Version.hxx \
+	src/curl/Easy.hxx \
+	src/curl/Multi.hxx \
+	src/curl/Slist.hxx \
+	src/curl/Request.cxx src/curl/Request.hxx \
+	src/curl/Global.cxx src/curl/Global.hxx \
+	src/curl/Init.cxx src/curl/Init.hxx
+libcurl_a_CPPFLAGS = $(AM_CPPFLAGS) \
+	$(LIBCM4ALL_INLINE_CFLAGS) \
+	$(CURL_CFLAGS)
 
 libevent_a_SOURCES = \
 	src/event/Loop.cxx src/event/Loop.hxx \

@@ -75,6 +75,9 @@ AX_BOOST_FILESYSTEM([1.54], [], AC_MSG_ERROR([boost::filesystem not found]))
 PKG_CHECK_MODULES([LIBEVENT], [libevent >= 2.0.19],,
 	[AC_MSG_ERROR([libevent not found])])
 
+PKG_CHECK_MODULES([CURL], [libcurl >= 7.38],,
+	[AC_MSG_ERROR([libCURL not found])])
+
 PKG_CHECK_MODULES([LIBSYSTEMD], [libsystemd],,
 	[AC_MSG_ERROR([libsystemd not found])])
 
