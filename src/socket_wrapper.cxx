@@ -17,7 +17,7 @@
 #include <sys/socket.h>
 
 void
-SocketWrapper::ReadEventCallback(short events)
+SocketWrapper::ReadEventCallback(unsigned events)
 {
     assert(IsValid());
 
@@ -30,7 +30,7 @@ SocketWrapper::ReadEventCallback(short events)
 }
 
 void
-SocketWrapper::WriteEventCallback(short events)
+SocketWrapper::WriteEventCallback(unsigned events)
 {
     assert(IsValid());
 

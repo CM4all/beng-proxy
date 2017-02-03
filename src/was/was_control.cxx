@@ -182,7 +182,7 @@ WasControl::TryWrite()
  */
 
 inline void
-WasControl::ReadEventCallback(short events)
+WasControl::ReadEventCallback(unsigned events)
 {
     assert(fd >= 0);
 
@@ -206,7 +206,7 @@ WasControl::ReadEventCallback(short events)
 }
 
 inline void
-WasControl::WriteEventCallback(short events)
+WasControl::WriteEventCallback(unsigned events)
 {
     assert(fd >= 0);
     assert(!output_buffer.IsEmpty());

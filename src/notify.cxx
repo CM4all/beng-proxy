@@ -35,7 +35,7 @@ Notify::~Notify()
 }
 
 inline void
-Notify::EventFdCallback(gcc_unused short events)
+Notify::EventFdCallback(unsigned)
 {
     uint64_t value;
     (void)read(fd, &value, sizeof(value));

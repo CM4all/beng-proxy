@@ -62,11 +62,11 @@ private:
 
     void TryWrite();
 
-    void ReadEventCallback(gcc_unused short events) {
+    void ReadEventCallback(unsigned) {
         TryRead();
     }
 
-    void WriteEventCallback(gcc_unused short events) {
+    void WriteEventCallback(unsigned) {
         TryWrite();
     }
 };

@@ -62,7 +62,7 @@ protected:
     virtual void OnAcceptError(std::exception_ptr ep) = 0;
 
 private:
-    void EventCallback(short events);
+    void EventCallback(unsigned events);
 };
 
 #endif

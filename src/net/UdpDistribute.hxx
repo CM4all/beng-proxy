@@ -30,7 +30,7 @@ class UdpDistribute {
         }
 
     private:
-        void EventCallback(short) {
+        void EventCallback(unsigned) {
             RemoveAndDestroy();
         }
     };

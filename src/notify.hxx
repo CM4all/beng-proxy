@@ -41,7 +41,7 @@ public:
     }
 
 private:
-    void EventFdCallback(short events);
+    void EventFdCallback(unsigned events);
 };
 
 #endif

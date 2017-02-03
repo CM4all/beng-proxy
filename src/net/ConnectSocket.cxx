@@ -78,7 +78,7 @@ public:
     }
 
 private:
-    void EventCallback(short events);
+    void EventCallback(unsigned events);
 
     /* virtual methods from class Cancellable */
     void Cancel() override;
@@ -106,7 +106,7 @@ ConnectSocket::Cancel()
  */
 
 inline void
-ConnectSocket::EventCallback(short events)
+ConnectSocket::EventCallback(unsigned events)
 {
     if (events & EV_TIMEOUT) {
         handler.OnSocketConnectTimeout();

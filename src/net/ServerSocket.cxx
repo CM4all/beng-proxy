@@ -153,7 +153,7 @@ ServerSocket::GetLocalAddress() const
 }
 
 void
-ServerSocket::EventCallback(gcc_unused short events)
+ServerSocket::EventCallback(unsigned)
 {
     StaticSocketAddress remote_address;
     auto remote_fd = fd.Accept(remote_address);

@@ -111,7 +111,7 @@ struct FcgiConnection final : HeapStockItem {
     bool Release(gcc_unused void *ctx) override;
 
 private:
-    void OnSocketEvent(short events);
+    void OnSocketEvent(unsigned events);
 };
 
 const char *
@@ -139,7 +139,7 @@ FcgiChildParams::GetStockKey(struct pool &pool) const
  */
 
 void
-FcgiConnection::OnSocketEvent(short events)
+FcgiConnection::OnSocketEvent(unsigned events)
 {
     if ((events & EV_TIMEOUT) == 0) {
         char buffer;

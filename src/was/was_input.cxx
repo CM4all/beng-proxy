@@ -166,7 +166,7 @@ public:
         }
     }
 
-    void EventCallback(short events);
+    void EventCallback(unsigned events);
 
     /* virtual methods from class Istream */
 
@@ -315,7 +315,7 @@ WasInput::TryDirect()
  */
 
 inline void
-WasInput::EventCallback(short events)
+WasInput::EventCallback(unsigned events)
 {
     assert(fd >= 0);
 

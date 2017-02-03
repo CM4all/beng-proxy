@@ -75,7 +75,7 @@ struct SinkFd final : IstreamSink {
         event.Add();
     }
 
-    void EventCallback(short events);
+    void EventCallback(unsigned events);
 
     /* virtual methods from class IstreamHandler */
     size_t OnData(const void *data, size_t length) override;
@@ -172,7 +172,7 @@ SinkFd::OnError(GError *error)
  */
 
 inline void
-SinkFd::EventCallback(short)
+SinkFd::EventCallback(unsigned)
 {
     pool_ref(pool);
 

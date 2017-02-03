@@ -413,7 +413,7 @@ public:
 
     void AddEvent();
     void UpdateEvent();
-    void SocketEventCallback(short events);
+    void SocketEventCallback(unsigned events);
     void TimeoutCallback();
 
     void OpenFile(struct pool &caller_pool,
@@ -801,7 +801,7 @@ NfsFile::ExpireCallback()
 }
 
 inline void
-NfsClient::SocketEventCallback(short events)
+NfsClient::SocketEventCallback(unsigned events)
 {
     assert(context != nullptr);
 

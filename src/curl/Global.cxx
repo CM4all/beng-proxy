@@ -66,7 +66,7 @@ public:
 		   better solution? */
 	}
 
-	void Schedule(short events) {
+	void Schedule(unsigned events) {
 		socket_event.Delete();
 		socket_event.Set(fd, events|EV_PERSIST);
 		socket_event.Add();
@@ -80,7 +80,7 @@ public:
 				  void *userp, void *socketp);
 
 private:
-	void OnSocketReady(short events);
+	void OnSocketReady(unsigned events);
 
 	static constexpr int LibEventToCurlCSelect(unsigned flags) {
 		return (flags & EV_READ ? CURL_CSELECT_IN : 0) |
@@ -144,7 +144,7 @@ CurlSocket::SocketFunction(gcc_unused CURL *easy,
 }
 
 void
-CurlSocket::OnSocketReady(short events)
+CurlSocket::OnSocketReady(unsigned events)
 {
 	global.SocketAction(fd, LibEventToCurlCSelect(events));
 }

@@ -54,7 +54,7 @@ public:
     }
 
 private:
-    void OnSocket(short) {
+    void OnSocket(unsigned) {
         callback();
     }
 };
@@ -127,8 +127,8 @@ private:
 
     void ReadEventCallback();
     void WriteEventCallback();
-    void SocketReadEventCallback(short);
-    void SocketWriteEventCallback(short);
+    void SocketReadEventCallback(unsigned);
+    void SocketWriteEventCallback(unsigned);
 };
 
 void
@@ -198,7 +198,7 @@ Duplex::WriteEventCallback()
 }
 
 inline void
-Duplex::SocketReadEventCallback(short)
+Duplex::SocketReadEventCallback(unsigned)
 {
     ssize_t nbytes = recv_to_buffer(sock_fd, to_write, INT_MAX);
     if (nbytes == -1) {
@@ -218,7 +218,7 @@ Duplex::SocketReadEventCallback(short)
 }
 
 inline void
-Duplex::SocketWriteEventCallback(short)
+Duplex::SocketWriteEventCallback(unsigned)
 {
     ssize_t nbytes = send_from_buffer(sock_fd, from_read);
     if (nbytes == -1) {

@@ -63,7 +63,7 @@ public:
                const void *data, size_t data_length);
 
 private:
-    void EventCallback(short events);
+    void EventCallback(unsigned events);
 };
 
 UdpListener *

@@ -172,8 +172,8 @@ public:
                       size_t length);
 
 private:
-    void ReadEventCallback(short events);
-    void WriteEventCallback(short events);
+    void ReadEventCallback(unsigned events);
+    void WriteEventCallback(unsigned events);
 };
 
 #endif

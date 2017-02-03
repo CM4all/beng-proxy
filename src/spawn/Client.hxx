@@ -71,7 +71,7 @@ private:
 
     void HandleExitMessage(SpawnPayload payload);
     void HandleMessage(ConstBuffer<uint8_t> payload);
-    void OnSocketEvent(short events);
+    void OnSocketEvent(unsigned events);
 
 public:
     /* virtual methods from class SpawnService */

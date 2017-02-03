@@ -70,7 +70,7 @@ struct ExpectMonitor final : ConnectSocketHandler, Cancellable {
     }
 
 private:
-    void EventCallback(short events);
+    void EventCallback(unsigned events);
     void DelayCallback();
 };
 
@@ -102,7 +102,7 @@ ExpectMonitor::Cancel()
  */
 
 inline void
-ExpectMonitor::EventCallback(short events)
+ExpectMonitor::EventCallback(unsigned events)
 {
     if (events & EV_TIMEOUT) {
         close(fd);

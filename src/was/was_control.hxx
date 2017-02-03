@@ -142,8 +142,8 @@ private:
     void TryRead();
     bool TryWrite();
 
-    void ReadEventCallback(short events);
-    void WriteEventCallback(short events);
+    void ReadEventCallback(unsigned events);
+    void WriteEventCallback(unsigned events);
 };
 
 #endif

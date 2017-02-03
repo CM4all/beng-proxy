@@ -54,7 +54,7 @@ UdpListener::SetFd(int _fd)
 }
 
 void
-UdpListener::EventCallback(short)
+UdpListener::EventCallback(unsigned)
 {
     char buffer[4096];
     struct iovec iov;

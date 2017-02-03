@@ -16,7 +16,7 @@ FromAvahiWatchEvent(AvahiWatchEvent e)
 }
 
 static AvahiWatchEvent
-ToAvahiWatchEvent(short events)
+ToAvahiWatchEvent(unsigned events)
 {
     // TODO: what about AVAHI_WATCH_ERR and AVAHI_WATCH_HUP?
 
@@ -61,7 +61,7 @@ public:
     }
 
 protected:
-    void OnSocketReady(short events) {
+    void OnSocketReady(unsigned events) {
         received = ToAvahiWatchEvent(events);
         callback(this, event.GetFd(), received, userdata);
         received = AvahiWatchEvent(0);

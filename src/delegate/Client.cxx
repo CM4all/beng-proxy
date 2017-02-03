@@ -69,7 +69,7 @@ struct DelegateClient final : Cancellable {
     void TryRead();
 
 private:
-    void SocketEventCallback(gcc_unused short events) {
+    void SocketEventCallback(unsigned) {
         TryRead();
     }
 

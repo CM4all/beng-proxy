@@ -73,7 +73,7 @@ struct LhttpConnection final : HeapStockItem {
     }
 
 private:
-    void EventCallback(short events);
+    void EventCallback(unsigned events);
 };
 
 static const char *
@@ -88,7 +88,7 @@ lhttp_stock_key(struct pool *pool, const LhttpAddress *address)
  */
 
 inline void
-LhttpConnection::EventCallback(short events)
+LhttpConnection::EventCallback(unsigned events)
 {
     if ((events & EV_TIMEOUT) == 0) {
         char buffer;

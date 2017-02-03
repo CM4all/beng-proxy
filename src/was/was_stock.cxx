@@ -144,7 +144,7 @@ private:
      */
     void RecoverStop();
 
-    void EventCallback(short events);
+    void EventCallback(unsigned events);
 
 public:
     /* virtual methods from class StockItem */
@@ -329,7 +329,7 @@ WasChild::RecoverStop()
  */
 
 inline void
-WasChild::EventCallback(short events)
+WasChild::EventCallback(unsigned events)
 {
     if ((events & EV_TIMEOUT) == 0) {
         if (stopping) {

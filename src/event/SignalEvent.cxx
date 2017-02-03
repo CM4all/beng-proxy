@@ -42,7 +42,7 @@ SignalEvent::Disable()
 }
 
 void
-SignalEvent::EventCallback(short)
+SignalEvent::EventCallback(unsigned)
 {
     struct signalfd_siginfo info;
     ssize_t nbytes = read(fd, &info, sizeof(info));

@@ -179,7 +179,7 @@ protected:
     void ScheduleReconnect();
 
 private:
-    void OnSocketEvent(short events);
+    void OnSocketEvent(unsigned events);
     void OnReconnectTimer();
 };
 

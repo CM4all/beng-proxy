@@ -359,7 +359,7 @@ SpawnServerClient::HandleMessage(ConstBuffer<uint8_t> payload)
 }
 
 inline void
-SpawnServerClient::OnSocketEvent(gcc_unused short events)
+SpawnServerClient::OnSocketEvent(unsigned)
 {
     constexpr size_t N = 64;
     std::array<uint8_t[16], N> payloads;

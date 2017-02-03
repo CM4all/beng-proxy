@@ -74,11 +74,11 @@ struct SpawnIstream final : Istream, IstreamHandler, ExitListener {
 
     void ReadFromOutput();
 
-    void InputEventCallback(gcc_unused short events) {
+    void InputEventCallback(unsigned) {
         input.Read();
     }
 
-    void OutputEventCallback(gcc_unused short events) {
+    void OutputEventCallback(unsigned) {
         ReadFromOutput();
     }
 

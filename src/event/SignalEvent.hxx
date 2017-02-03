@@ -41,7 +41,7 @@ public:
     void Disable();
 
 private:
-    void EventCallback(short events);
+    void EventCallback(unsigned events);
 };
 
 #endif

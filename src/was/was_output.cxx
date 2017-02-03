@@ -62,7 +62,7 @@ public:
 
     bool CheckLength();
 
-    void WriteEventCallback(short events);
+    void WriteEventCallback(unsigned events);
 
     /* virtual methods from class IstreamHandler */
     size_t OnData(const void *data, size_t length) override;
@@ -91,7 +91,7 @@ WasOutput::CheckLength()
  */
 
 inline void
-WasOutput::WriteEventCallback(short events)
+WasOutput::WriteEventCallback(unsigned events)
 {
     assert(fd >= 0);
     assert(input.IsDefined());

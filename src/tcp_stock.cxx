@@ -63,7 +63,7 @@ struct TcpStockConnection final
 
     ~TcpStockConnection() override;
 
-    void EventCallback(short events);
+    void EventCallback(unsigned events);
 
     /* virtual methods from class Cancellable */
     void Cancel() override {
@@ -96,7 +96,7 @@ struct TcpStockConnection final
  */
 
 inline void
-TcpStockConnection::EventCallback(short events)
+TcpStockConnection::EventCallback(unsigned events)
 {
     if ((events & EV_TIMEOUT) == 0) {
         char buffer;

@@ -158,7 +158,7 @@ private:
     void HandleMessage(ConstBuffer<uint8_t> payload, SpawnFdList &&fds);
     void HandleMessage(const struct msghdr &msg, ConstBuffer<uint8_t> payload);
 
-    void ReadEventCallback(short events);
+    void ReadEventCallback(unsigned events);
 };
 
 void
@@ -584,7 +584,7 @@ SpawnServerConnection::HandleMessage(const struct msghdr &msg,
 }
 
 inline void
-SpawnServerConnection::ReadEventCallback(gcc_unused short events)
+SpawnServerConnection::ReadEventCallback(unsigned)
 {
     uint8_t payload[8192];
 

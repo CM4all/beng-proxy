@@ -68,7 +68,7 @@ public:
     }
 
 private:
-    void EventCallback(gcc_unused short events) {
+    void EventCallback(unsigned) {
         char buffer;
         ssize_t nbytes = recv(s.Get(), &buffer, sizeof(buffer), MSG_DONTWAIT);
         if (nbytes < 0)

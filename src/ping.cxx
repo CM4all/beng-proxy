@@ -47,7 +47,7 @@ public:
     }
 
 private:
-    void EventCallback(short events);
+    void EventCallback(unsigned events);
 
     void Read();
 
@@ -150,7 +150,7 @@ PingClient::Read()
  */
 
 inline void
-PingClient::EventCallback(short events)
+PingClient::EventCallback(unsigned events)
 {
     assert(fd >= 0);
 

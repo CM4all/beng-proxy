@@ -85,7 +85,7 @@ public:
     }
 
 private:
-    void SocketEventCallback(short events);
+    void SocketEventCallback(unsigned events);
 };
 
 /*
@@ -94,7 +94,7 @@ private:
  */
 
 inline void
-DelegateProcess::SocketEventCallback(short events)
+DelegateProcess::SocketEventCallback(unsigned events)
 {
     if ((events & EV_TIMEOUT) == 0) {
         assert((events & EV_READ) != 0);
