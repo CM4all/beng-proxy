@@ -13,7 +13,7 @@ struct SslFactory;
 struct LbListenerConfig;
 struct LbInstance;
 
-class lb_listener final : public ServerSocket {
+class LbListener final : public ServerSocket {
 public:
     LbInstance &instance;
 
@@ -21,9 +21,9 @@ public:
 
     SslFactory *ssl_factory = nullptr;
 
-    lb_listener(LbInstance &_instance,
-                const LbListenerConfig &_config);
-    ~lb_listener();
+    LbListener(LbInstance &_instance,
+               const LbListenerConfig &_config);
+    ~LbListener();
 
     void Setup();
 

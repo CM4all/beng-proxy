@@ -17,7 +17,7 @@
 #include <daemon/log.h>
 
 void
-lb_listener::OnAccept(SocketDescriptor &&new_fd, SocketAddress address)
+LbListener::OnAccept(SocketDescriptor &&new_fd, SocketAddress address)
 {
     lb_connection_new(instance, config,
                       ssl_factory,
@@ -25,7 +25,7 @@ lb_listener::OnAccept(SocketDescriptor &&new_fd, SocketAddress address)
 }
 
 void
-lb_listener::OnAcceptError(std::exception_ptr ep)
+LbListener::OnAcceptError(std::exception_ptr ep)
 {
     daemon_log(2, "%s\n", GetFullMessage(ep).c_str());
 }
@@ -35,15 +35,15 @@ lb_listener::OnAcceptError(std::exception_ptr ep)
  *
  */
 
-lb_listener::lb_listener(LbInstance &_instance,
-                         const LbListenerConfig &_config)
+LbListener::LbListener(LbInstance &_instance,
+                       const LbListenerConfig &_config)
     :ServerSocket(_instance.event_loop),
      instance(_instance), config(_config)
 {
 }
 
 void
-lb_listener::Setup()
+LbListener::Setup()
 {
     assert(ssl_factory == nullptr);
 
@@ -70,14 +70,14 @@ lb_listener::Setup()
         SetTcpDeferAccept(10);
 }
 
-lb_listener::~lb_listener()
+LbListener::~LbListener()
 {
     if (ssl_factory != nullptr)
         ssl_factory_free(ssl_factory);
 }
 
 unsigned
-lb_listener::FlushSSLSessionCache(long tm)
+LbListener::FlushSSLSessionCache(long tm)
 {
     return ssl_factory != nullptr
         ? ssl_factory_flush(*ssl_factory, tm)

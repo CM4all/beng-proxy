@@ -28,7 +28,7 @@ struct TcpBalancer;
 struct LbConfig;
 struct LbCertDatabaseConfig;
 struct LbControl;
-class lb_listener;
+class LbListener;
 class CertCache;
 
 struct LbInstance final {
@@ -49,7 +49,7 @@ struct LbInstance final {
      */
     LbClusterMap clusters;
 
-    std::forward_list<lb_listener> listeners;
+    std::forward_list<LbListener> listeners;
 
     std::map<std::string, CertCache> cert_dbs;
 
