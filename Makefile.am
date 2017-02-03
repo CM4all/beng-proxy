@@ -825,7 +825,7 @@ libevent_a_SOURCES = \
 	src/event/SocketEvent.hxx \
 	src/event/TimerEvent.hxx \
 	src/event/DeferEvent.cxx src/event/DeferEvent.hxx \
-	src/event/SignalEvent.hxx
+	src/event/SignalEvent.cxx src/event/SignalEvent.hxx
 	src/event/Event.hxx
 
 libssl_a_SOURCES = \
@@ -2179,8 +2179,8 @@ test_run_delegate_SOURCES = test/run_delegate.cxx \
 test_run_delegate_LDADD = $(AM_LDADD) \
 	libeutil.a \
 	libraddress.a \
-	libevent.a \
 	libspawn.a \
+	libevent.a \
 	libpool.a libmemory.a \
 	libio.a \
 	libsystem.a \

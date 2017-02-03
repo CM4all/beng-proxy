@@ -28,12 +28,7 @@ public:
     }
 
 private:
-    static void SignalCallback(evutil_socket_t fd,
-                               gcc_unused short events,
-                               void *ctx) {
-        auto &event = *(SignalEvent *)ctx;
-        event.callback(fd);
-    }
+    static void SignalCallback(evutil_socket_t fd, short events, void *ctx);
 };
 
 #endif
