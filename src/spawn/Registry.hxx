@@ -160,7 +160,7 @@ private:
 
     void CheckVolatileEvent() {
         if (volatile_event && IsEmpty())
-            sigchld_event.Delete();
+            sigchld_event.Disable();
     }
 
     void OnExit(pid_t pid, int status, const struct rusage &rusage);

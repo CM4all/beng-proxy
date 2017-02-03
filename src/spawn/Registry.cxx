@@ -85,7 +85,7 @@ ChildProcessRegistry::ChildProcessRegistry(EventLoop &_event_loop)
     :event_loop(_event_loop),
      sigchld_event(event_loop, SIGCHLD, BIND_THIS_METHOD(OnSigChld))
 {
-    sigchld_event.Add();
+    sigchld_event.Enable();
 }
 
 void
@@ -102,7 +102,7 @@ ChildProcessRegistry::Add(pid_t pid, const char *name, ExitListener *listener)
     assert(name != nullptr);
 
     if (volatile_event && IsEmpty())
-        sigchld_event.Add();
+        sigchld_event.Enable();
 
     daemon_log(5, "added child process '%s' (pid %d)\n", name, (int)pid);
 

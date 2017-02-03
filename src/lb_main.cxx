@@ -115,14 +115,14 @@ void
 init_signals(LbInstance *instance)
 {
     instance->shutdown_listener.Enable();
-    instance->sighup_event.Add();
+    instance->sighup_event.Enable();
 }
 
 void
 deinit_signals(LbInstance *instance)
 {
     instance->shutdown_listener.Disable();
-    instance->sighup_event.Delete();
+    instance->sighup_event.Disable();
 }
 
 int main(int argc, char **argv)

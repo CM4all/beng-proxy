@@ -3,12 +3,54 @@
  */
 
 #include "SignalEvent.hxx"
+#include "system/Error.hxx"
+
+#include <sys/signalfd.h>
+#include <unistd.h>
+
+SignalEvent::SignalEvent(EventLoop &loop, Callback _callback)
+    :event(loop, BIND_THIS_METHOD(EventCallback)), callback(_callback)
+{
+    sigemptyset(&mask);
+}
+
+SignalEvent::~SignalEvent()
+{
+    if (fd >= 0)
+        close(fd);
+}
 
 void
-SignalEvent::SignalCallback(evutil_socket_t fd,
-                            gcc_unused short events,
-                            void *ctx)
+SignalEvent::Enable()
 {
-    auto &event = *(SignalEvent *)ctx;
-    event.callback(fd);
+    fd = signalfd(fd, &mask, SFD_NONBLOCK|SFD_CLOEXEC);
+    if (fd < 0)
+        throw MakeErrno("signalfd() failed");
+
+    event.Set(fd, EV_READ|EV_PERSIST);
+    event.Add();
+
+    sigprocmask(SIG_BLOCK, &mask, nullptr);
+}
+
+void
+SignalEvent::Disable()
+{
+    sigprocmask(SIG_UNBLOCK, &mask, nullptr);
+
+    event.Delete();
+}
+
+void
+SignalEvent::EventCallback(short)
+{
+    struct signalfd_siginfo info;
+    ssize_t nbytes = read(fd, &info, sizeof(info));
+    if (nbytes <= 0) {
+        // TODO: log error?
+        Disable();
+        return;
+    }
+
+    callback(info.ssi_signo);
 }

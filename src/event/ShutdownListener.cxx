@@ -23,26 +23,10 @@ ShutdownListener::SignalCallback(int signo)
 }
 
 ShutdownListener::ShutdownListener(EventLoop &loop, Callback _callback)
-    :sigterm_event(loop, SIGTERM, BIND_THIS_METHOD(SignalCallback)),
-     sigint_event(loop, SIGINT, BIND_THIS_METHOD(SignalCallback)),
-     sigquit_event(loop, SIGQUIT, BIND_THIS_METHOD(SignalCallback)),
+    :event(loop, BIND_THIS_METHOD(SignalCallback)),
      callback(_callback)
 {
+    event.Add(SIGTERM);
+    event.Add(SIGINT);
+    event.Add(SIGQUIT);
 }
-
-void
-ShutdownListener::Enable()
-{
-    sigterm_event.Add();
-    sigint_event.Add();
-    sigquit_event.Add();
-}
-
-void
-ShutdownListener::Disable()
-{
-    sigterm_event.Delete();
-    sigint_event.Delete();
-    sigquit_event.Delete();
-}
-

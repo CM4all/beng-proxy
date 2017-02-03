@@ -221,14 +221,14 @@ void
 BpInstance::EnableSignals()
 {
     shutdown_listener.Enable();
-    sighup_event.Add();
+    sighup_event.Enable();
 }
 
 void
 BpInstance::DisableSignals()
 {
     shutdown_listener.Disable();
-    sighup_event.Delete();
+    sighup_event.Disable();
 }
 
 void

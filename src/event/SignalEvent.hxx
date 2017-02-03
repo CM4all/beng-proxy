@@ -5,30 +5,43 @@
 #ifndef SIGNAL_EVENT_HXX
 #define SIGNAL_EVENT_HXX
 
-#include "Event.hxx"
+#include "SocketEvent.hxx"
 #include "util/BindMethod.hxx"
 
+#include <assert.h>
+#include <signal.h>
+
 class SignalEvent {
-    Event event;
+    int fd = -1;
+
+    SocketEvent event;
+
+    sigset_t mask;
 
     typedef BoundMethod<void(int)> Callback;
     const Callback callback;
 
 public:
-    SignalEvent(EventLoop &loop, int sig, Callback _callback)
-        :event(loop, sig, EV_SIGNAL|EV_PERSIST, SignalCallback, this),
-         callback(_callback) {}
+    SignalEvent(EventLoop &loop, Callback _callback);
 
-    void Add(const struct timeval *timeout=nullptr) {
-        event.Add(timeout);
+    SignalEvent(EventLoop &loop, int signo, Callback _callback)
+        :SignalEvent(loop, _callback) {
+        Add(signo);
     }
 
-    void Delete() {
-        event.Delete();
+    ~SignalEvent();
+
+    void Add(int signo) {
+        assert(fd < 0);
+
+        sigaddset(&mask, signo);
     }
+
+    void Enable();
+    void Disable();
 
 private:
-    static void SignalCallback(evutil_socket_t fd, short events, void *ctx);
+    void EventCallback(short events);
 };
 
 #endif

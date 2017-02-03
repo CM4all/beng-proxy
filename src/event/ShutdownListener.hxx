@@ -10,7 +10,7 @@
 #include "SignalEvent.hxx"
 
 class ShutdownListener {
-    SignalEvent sigterm_event, sigint_event, sigquit_event;
+    SignalEvent event;
 
     typedef BoundMethod<> Callback;
     const Callback callback;
@@ -25,8 +25,13 @@ public:
     ShutdownListener(const ShutdownListener &) = delete;
     ShutdownListener &operator=(const ShutdownListener &) = delete;
 
-    void Enable();
-    void Disable();
+    void Enable() {
+        event.Enable();
+    }
+
+    void Disable() {
+        event.Disable();
+    }
 
 private:
     void SignalCallback(int signo);
