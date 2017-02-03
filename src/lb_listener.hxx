@@ -14,13 +14,13 @@ struct LbListenerConfig;
 struct LbInstance;
 
 class LbListener final : public ServerSocket {
-public:
     LbInstance &instance;
 
     const LbListenerConfig &config;
 
     SslFactory *ssl_factory = nullptr;
 
+public:
     LbListener(LbInstance &_instance,
                const LbListenerConfig &_config);
     ~LbListener();
