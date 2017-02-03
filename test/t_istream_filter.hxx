@@ -11,7 +11,7 @@
 #include "istream/istream_inject.hxx"
 #include "istream/istream_later.hxx"
 #include "istream/Pointer.hxx"
-#include "event/Event.hxx"
+#include "event/Loop.hxx"
 #include "event/DeferEvent.hxx"
 
 #include <glib.h>

@@ -13,7 +13,6 @@
 #include "direct.hxx"
 #include "fb_pool.hxx"
 #include "RootPool.hxx"
-#include "event/Event.hxx"
 
 #include <sys/wait.h>
 

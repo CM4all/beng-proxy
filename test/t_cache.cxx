@@ -1,7 +1,7 @@
 #include "cache.hxx"
 #include "pool.hxx"
 #include "RootPool.hxx"
-#include "event/Event.hxx"
+#include "event/Loop.hxx"
 
 #include <assert.h>
 #include <time.h>

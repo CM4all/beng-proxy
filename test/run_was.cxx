@@ -14,7 +14,7 @@
 #include "spawn/ChildOptions.hxx"
 #include "spawn/Registry.hxx"
 #include "spawn/Local.hxx"
-#include "event/Event.hxx"
+#include "event/Loop.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/Cancellable.hxx"
 

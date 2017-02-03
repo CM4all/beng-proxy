@@ -12,7 +12,7 @@
 #include "fb_pool.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream_string.hxx"
-#include "event/Event.hxx"
+#include "event/Loop.hxx"
 #include "util/Cancellable.hxx"
 
 #include <inline/compiler.h>

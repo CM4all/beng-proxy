@@ -9,7 +9,7 @@
 #include "istream/istream_catch.hxx"
 #include "fb_pool.hxx"
 #include "system/fd_util.h"
-#include "event/Event.hxx"
+#include "event/Loop.hxx"
 
 #include <stdio.h>
 #include <stdlib.h>

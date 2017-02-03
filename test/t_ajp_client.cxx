@@ -17,7 +17,7 @@
 #include "strmap.hxx"
 #include "RootPool.hxx"
 #include "fb_pool.hxx"
-#include "event/Event.hxx"
+#include "event/Loop.hxx"
 #include "util/ByteOrder.hxx"
 
 #include <inline/compiler.h>

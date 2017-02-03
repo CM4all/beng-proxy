@@ -7,7 +7,7 @@
 #include "istream/sink_close.hxx"
 #include "istream/sink_gstring.hxx"
 #include "istream/Bucket.hxx"
-#include "event/Event.hxx"
+#include "event/Loop.hxx"
 #include "util/Cancellable.hxx"
 
 #include <glib.h>

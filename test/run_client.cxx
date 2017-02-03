@@ -19,7 +19,7 @@
 #include "net/ConnectSocket.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
-#include "event/Event.hxx"
+#include "event/Loop.hxx"
 #include "event/ShutdownListener.hxx"
 #include "util/Cancellable.hxx"
 #include "util/PrintException.hxx"

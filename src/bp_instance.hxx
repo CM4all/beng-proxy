@@ -13,7 +13,6 @@
 #include "bp_listener.hxx"
 #include "bp_connection.hxx"
 #include "bp_worker.hxx"
-#include "event/Event.hxx"
 #include "event/SignalEvent.hxx"
 #include "event/ShutdownListener.hxx"
 #include "event/TimerEvent.hxx"

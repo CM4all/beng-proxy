@@ -10,7 +10,6 @@
 #include "istream/istream.hxx"
 #include "RootPool.hxx"
 #include "fb_pool.hxx"
-#include "event/Event.hxx"
 #include "event/Loop.hxx"
 #include "spawn/Config.hxx"
 #include "spawn/Registry.hxx"
