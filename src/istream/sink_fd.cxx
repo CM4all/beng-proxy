@@ -9,8 +9,7 @@
 #include "pool.hxx"
 #include "direct.hxx"
 #include "system/fd-util.h"
-#include "event/Event.hxx"
-#include "event/Callback.hxx"
+#include "event/SocketEvent.hxx"
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -25,7 +24,7 @@ struct SinkFd final : IstreamSink {
     const SinkFdHandler *handler;
     void *handler_ctx;
 
-    Event event;
+    SocketEvent event;
 
     /**
      * Set to true each time data was received from the istream.
@@ -44,15 +43,15 @@ struct SinkFd final : IstreamSink {
     bool valid = true;
 #endif
 
-    SinkFd(struct pool &_pool, Istream &_istream,
+    SinkFd(EventLoop &event_loop, struct pool &_pool, Istream &_istream,
            int _fd, FdType _fd_type,
            const SinkFdHandler &_handler, void *_handler_ctx)
         :IstreamSink(_istream, istream_direct_mask_to(_fd_type)),
          pool(&_pool),
          fd(_fd), fd_type(_fd_type),
          handler(&_handler), handler_ctx(_handler_ctx),
-         event(fd, EV_WRITE|EV_PERSIST,
-               MakeSimpleEventCallback(SinkFd, EventCallback), this) {
+         event(event_loop, fd, EV_WRITE|EV_PERSIST,
+               BIND_THIS_METHOD(EventCallback)) {
         ScheduleWrite();
     }
 
@@ -76,7 +75,7 @@ struct SinkFd final : IstreamSink {
         event.Add();
     }
 
-    void EventCallback();
+    void EventCallback(short events);
 
     /* virtual methods from class IstreamHandler */
     size_t OnData(const void *data, size_t length) override;
@@ -173,7 +172,7 @@ SinkFd::OnError(GError *error)
  */
 
 inline void
-SinkFd::EventCallback()
+SinkFd::EventCallback(short)
 {
     pool_ref(pool);
 
@@ -196,7 +195,7 @@ SinkFd::EventCallback()
  */
 
 SinkFd *
-sink_fd_new(struct pool &pool, Istream &istream,
+sink_fd_new(EventLoop &event_loop, struct pool &pool, Istream &istream,
             int fd, FdType fd_type,
             const SinkFdHandler &handler, void *ctx)
 {
@@ -205,7 +204,7 @@ sink_fd_new(struct pool &pool, Istream &istream,
     assert(handler.input_error != nullptr);
     assert(handler.send_error != nullptr);
 
-    return NewFromPool<SinkFd>(pool, pool, istream, fd, fd_type,
+    return NewFromPool<SinkFd>(pool, event_loop, pool, istream, fd, fd_type,
                                handler, ctx);
 }
 

@@ -128,7 +128,7 @@ Context::OnNfsOpen(NfsFileHandle *handle, const struct stat *st)
 
     auto *_body = istream_nfs_new(*pool, *handle, 0, st->st_size);
     _body = istream_pipe_new(pool, *_body, nullptr);
-    body = sink_fd_new(*pool, *_body, 1, guess_fd_type(1),
+    body = sink_fd_new(event_loop, *pool, *_body, 1, guess_fd_type(1),
                        my_sink_fd_handler, this);
     _body->Read();
 }

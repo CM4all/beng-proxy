@@ -143,7 +143,7 @@ my_mcd_response(enum memcached_response_status status,
 
     if (value != NULL) {
         value = istream_pipe_new(c->pool, *value, nullptr);
-        c->value = sink_fd_new(*c->pool, *value,
+        c->value = sink_fd_new(c->event_loop, *c->pool, *value,
                                1, guess_fd_type(1),
                                my_sink_fd_handler, c);
         value->Read();
