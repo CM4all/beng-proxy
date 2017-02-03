@@ -20,8 +20,6 @@ struct pool;
 struct Balancer;
 class StockMap;
 struct TcpBalancer;
-struct SocketFilter;
-class SocketFilterFactory;
 class Istream;
 class EventLoop;
 class HttpHeaders;
