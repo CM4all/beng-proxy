@@ -16,11 +16,11 @@
 
 #include <string>
 
+template<typename T> struct ConstBuffer;
 struct pool;
 struct Balancer;
 class StockMap;
 struct TcpBalancer;
-class Istream;
 class EventLoop;
 class HttpHeaders;
 class HttpResponseHandler;
@@ -64,7 +64,7 @@ public:
     void Request(struct pool &p, EventLoop &event_loop,
                  GlueHttpServerAddress &server,
                  http_method_t method, const char *uri,
-                 HttpHeaders &&headers, Istream *body,
+                 HttpHeaders &&headers, ConstBuffer<void> body,
                  HttpResponseHandler &handler,
                  CancellablePointer &cancel_ptr);
 
@@ -72,7 +72,7 @@ public:
                              struct pool &p, GlueHttpServerAddress &server,
                              http_method_t method, const char *uri,
                              HttpHeaders &&headers,
-                             Istream *body=nullptr);
+                             ConstBuffer<void> body);
 };
 
 #endif

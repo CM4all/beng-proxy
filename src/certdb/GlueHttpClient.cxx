@@ -18,10 +18,12 @@
 #include "event/Loop.hxx"
 #include "istream/Handler.hxx"
 #include "istream/Pointer.hxx"
+#include "istream/istream_memory.hxx"
 #include "fb_pool.hxx"
 #include "thread_pool.hxx"
 #include "net/Resolver.hxx"
 #include "util/ScopeExit.hxx"
+#include "util/ConstBuffer.hxx"
 
 #include <glib.h>
 
@@ -108,7 +110,7 @@ void
 GlueHttpClient::Request(struct pool &p, EventLoop &event_loop,
                         GlueHttpServerAddress &server,
                         http_method_t method, const char *uri,
-                        HttpHeaders &&headers, Istream *body,
+                        HttpHeaders &&headers, ConstBuffer<void> _body,
                         HttpResponseHandler &handler,
                         CancellablePointer &cancel_ptr)
 {
@@ -128,6 +130,10 @@ GlueHttpClient::Request(struct pool &p, EventLoop &event_loop,
                                              server.host_and_port, uri,
                                              AddressList(ShallowCopy(),
                                                          server.addresses));
+
+    auto *body = _body.IsNull()
+        ? nullptr
+        : istream_memory_new(&p, _body.data, _body.size);
 
     http_request(p, event_loop, *tcp_balancer, 0,
                  filter, filter_factory,
@@ -214,7 +220,7 @@ GlueHttpResponse
 GlueHttpClient::Request(EventLoop &event_loop,
                         struct pool &p, GlueHttpServerAddress &server,
                         http_method_t method, const char *uri,
-                        HttpHeaders &&headers, Istream *body)
+                        HttpHeaders &&headers, ConstBuffer<void> body)
 {
     CancellablePointer cancel_ptr;
 

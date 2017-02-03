@@ -5,8 +5,6 @@
 #include "AcmeClient.hxx"
 #include "direct.hxx"
 #include "pool.hxx"
-#include "istream/istream.hxx"
-#include "istream/istream_string.hxx"
 #include "ssl/Base64.hxx"
 #include "ssl/Buffer.hxx"
 #include "ssl/Dummy.hxx"
@@ -113,7 +111,7 @@ AcmeClient::RequestNonce()
     LinearPool pool(root_pool, "RequestNonce", 8192);
     auto response = glue_http_client.Request(event_loop, pool, server,
                                              HTTP_METHOD_HEAD, "/directory",
-                                             HttpHeaders(pool));
+                                             HttpHeaders(pool), nullptr);
     if (response.status != HTTP_STATUS_OK)
         throw std::runtime_error("Unexpected response status");
     const char *nonce = response.headers.Get("replay-nonce");
@@ -231,12 +229,9 @@ GlueHttpResponse
 AcmeClient::Request(struct pool &p,
                     http_method_t method, const char *uri,
                     HttpHeaders &&headers,
-                    Istream *body)
+                    ConstBuffer<void> body)
 {
     if (fake) {
-        if (body != nullptr)
-            body->CloseUnused();
-
         if (strcmp(uri, "/acme/new-authz") == 0) {
             StringMap response_headers(p);
             response_headers.Add("content-type", "application/json");
@@ -318,7 +313,7 @@ AcmeClient::SignedRequest(struct pool &p, EVP_PKEY &key,
     body += "\"}";
 
     return Request(p, method, uri, std::move(headers),
-                   istream_string_new(&p, body.c_str()));
+                   {body.data(), body.length()});
 }
 
 AcmeClient::Account
@@ -441,7 +436,7 @@ AcmeClient::CheckAuthz(const AuthzTlsSni01 &authz)
         throw std::runtime_error("Malformed URI in AuthzTlsSni01");
 
     auto response = Request(p, HTTP_METHOD_GET, uri,
-                            HttpHeaders(p));
+                            HttpHeaders(p), nullptr);
     if (response.status != HTTP_STATUS_ACCEPTED)
         ThrowError(std::move(response), "Failed to check authz");
 

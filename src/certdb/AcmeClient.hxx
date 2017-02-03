@@ -126,7 +126,7 @@ private:
     GlueHttpResponse Request(struct pool &p,
                              http_method_t method, const char *uri,
                              HttpHeaders &&headers,
-                             Istream *body=nullptr);
+                             ConstBuffer<void> body);
 
     GlueHttpResponse SignedRequest(struct pool &p, EVP_PKEY &key,
                                    http_method_t method, const char *uri,
