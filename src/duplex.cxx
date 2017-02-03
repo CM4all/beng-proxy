@@ -10,8 +10,8 @@
 #include "duplex.hxx"
 #include "system/fd-util.h"
 #include "system/fd_util.h"
-#include "event/Event.hxx"
-#include "event/Callback.hxx"
+#include "event/SocketEvent.hxx"
+#include "event/DeferEvent.hxx"
 #include "io/Buffered.hxx"
 #include "pool.hxx"
 #include "fb_pool.hxx"
@@ -27,11 +27,35 @@
 #include <unistd.h>
 #include <limits.h>
 
-class FallbackEvent : public Event {
+class FallbackEvent {
+    SocketEvent socket_event;
+    DeferEvent defer_event;
+
+    const BoundMethod<void()> callback;
+
 public:
+    FallbackEvent(EventLoop &event_loop, int fd, short events,
+                  BoundMethod<void()> _callback)
+        :socket_event(event_loop, fd, events, BIND_THIS_METHOD(OnSocket)),
+         defer_event(event_loop, _callback),
+         callback(_callback) {}
+
     void Add() {
-        if (!Event::Add())
-            MakeActive(EV_TIMEOUT);
+        if (!socket_event.Add())
+            /* if "fd" is a regular file, trigger the event repeatedly
+               using DeferEvent, because we can't use EV_READ on
+               regular files */
+            defer_event.Schedule();
+    }
+
+    void Delete() {
+        socket_event.Delete();
+        defer_event.Cancel();
+    }
+
+private:
+    void OnSocket(short) {
+        callback();
     }
 };
 
@@ -44,36 +68,25 @@ class Duplex {
     SliceFifoBuffer from_read, to_write;
 
     FallbackEvent read_event, write_event;
-    Event socket_read_event, socket_write_event;
+    SocketEvent socket_read_event, socket_write_event;
 
 public:
-    Duplex(int _read_fd, int _write_fd, int _sock_fd)
-        :read_fd(_read_fd), write_fd(_write_fd), sock_fd(_sock_fd) {
+    Duplex(EventLoop &event_loop, int _read_fd, int _write_fd, int _sock_fd)
+        :read_fd(_read_fd), write_fd(_write_fd), sock_fd(_sock_fd),
+         read_event(event_loop, read_fd, EV_READ,
+                    BIND_THIS_METHOD(ReadEventCallback)),
+         write_event(event_loop, write_fd, EV_WRITE,
+                     BIND_THIS_METHOD(WriteEventCallback)),
+         socket_read_event(event_loop, sock_fd, EV_READ,
+                           BIND_THIS_METHOD(SocketReadEventCallback)),
+         socket_write_event(event_loop, sock_fd, EV_WRITE,
+                           BIND_THIS_METHOD(SocketWriteEventCallback))
+    {
         from_read.Allocate(fb_pool_get());
         to_write.Allocate(fb_pool_get());
 
-        /* if read_fd is a regular file, read repeatedly using
-           EV_TIMEOUT with a zero timeout, because we can't use
-           EV_READ on regular files */
-        read_event.Set(read_fd, EV_READ,
-                       MakeSimpleEventCallback(Duplex, ReadEventCallback),
-                       this);
         read_event.Add();
-
-        write_event.Set(write_fd, EV_WRITE,
-                        MakeSimpleEventCallback(Duplex, WriteEventCallback),
-                        this);
-
-        socket_read_event.Set(sock_fd, EV_READ,
-                              MakeSimpleEventCallback(Duplex,
-                                                      SocketReadEventCallback),
-                              this);
         socket_read_event.Add();
-
-        socket_write_event.Set(sock_fd, EV_WRITE,
-                               MakeSimpleEventCallback(Duplex,
-                                                       SocketWriteEventCallback),
-                               this);
     }
 
 private:
@@ -114,8 +127,8 @@ private:
 
     void ReadEventCallback();
     void WriteEventCallback();
-    void SocketReadEventCallback();
-    void SocketWriteEventCallback();
+    void SocketReadEventCallback(short);
+    void SocketWriteEventCallback(short);
 };
 
 void
@@ -185,7 +198,7 @@ Duplex::WriteEventCallback()
 }
 
 inline void
-Duplex::SocketReadEventCallback()
+Duplex::SocketReadEventCallback(short)
 {
     ssize_t nbytes = recv_to_buffer(sock_fd, to_write, INT_MAX);
     if (nbytes == -1) {
@@ -205,7 +218,7 @@ Duplex::SocketReadEventCallback()
 }
 
 inline void
-Duplex::SocketWriteEventCallback()
+Duplex::SocketWriteEventCallback(short)
 {
     ssize_t nbytes = send_from_buffer(sock_fd, from_read);
     if (nbytes == -1) {
@@ -221,7 +234,7 @@ Duplex::SocketWriteEventCallback()
 }
 
 int
-duplex_new(struct pool *pool, int read_fd, int write_fd)
+duplex_new(EventLoop &event_loop, struct pool *pool, int read_fd, int write_fd)
 {
     assert(pool != nullptr);
     assert(read_fd >= 0);
@@ -239,6 +252,6 @@ duplex_new(struct pool *pool, int read_fd, int write_fd)
         return -1;
     }
 
-    NewFromPool<Duplex>(*pool, read_fd, write_fd, fds[0]);
+    NewFromPool<Duplex>(*pool, event_loop, read_fd, write_fd, fds[0]);
     return fds[1];
 }

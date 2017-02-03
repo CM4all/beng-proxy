@@ -7,9 +7,10 @@
 #ifndef BENG_PROXY_DUPLEX_HXX
 #define BENG_PROXY_DUPLEX_HXX
 
+class EventLoop;
 struct pool;
 
 int
-duplex_new(struct pool *pool, int read_fd, int write_fd);
+duplex_new(EventLoop &event_loop, struct pool *pool, int read_fd, int write_fd);
 
 #endif

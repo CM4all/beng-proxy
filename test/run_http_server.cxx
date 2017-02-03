@@ -228,7 +228,7 @@ int main(int argc, char **argv) {
 
     int sockfd;
     if (in_fd != out_fd) {
-        sockfd = duplex_new(pool, in_fd, out_fd);
+        sockfd = duplex_new(instance.event_loop, pool, in_fd, out_fd);
         if (sockfd < 0) {
             perror("duplex_new() failed");
             exit(2);
