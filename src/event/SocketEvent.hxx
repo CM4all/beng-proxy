@@ -58,10 +58,6 @@ public:
         event.Delete();
     }
 
-    void MakeActive(short events) {
-        event.MakeActive(events);
-    }
-
     gcc_pure
     bool IsPending(short events) const {
         return event.IsPending(events);
