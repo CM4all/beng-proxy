@@ -18,13 +18,13 @@
 
 #include <daemon/log.h>
 
-static SSL_CTX *ssl_client_ctx;
+static SslCtx ssl_client_ctx;
 
 void
 ssl_client_init()
 {
     try {
-        ssl_client_ctx = CreateBasicSslCtx(false).release();
+        ssl_client_ctx = CreateBasicSslCtx(false);
     } catch (const SslError &e) {
         daemon_log(1, "ssl_factory_new() failed: %s\n", e.what());
     }
@@ -33,8 +33,7 @@ ssl_client_init()
 void
 ssl_client_deinit()
 {
-    if (ssl_client_ctx != nullptr)
-        SSL_CTX_free(ssl_client_ctx);
+    ssl_client_ctx.reset();
 }
 
 const SocketFilter &
@@ -47,7 +46,7 @@ static void *
 ssl_client_create2(struct pool *pool, EventLoop &event_loop,
                    const char *hostname)
 {
-    UniqueSSL ssl(SSL_new(ssl_client_ctx));
+    UniqueSSL ssl(SSL_new(ssl_client_ctx.get()));
     if (!ssl)
         throw SslError("SSL_new() failed");
 
