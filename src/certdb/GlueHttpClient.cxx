@@ -95,6 +95,7 @@ private:
     size_t Read(char *buffer, size_t size) {
         size_t n = std::min(size, data.size);
         std::copy_n(data.begin(), n, buffer);
+        data.skip_front(n);
         return n;
     }
 
