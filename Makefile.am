@@ -458,7 +458,7 @@ cm4all_certdb_SOURCES = \
 	src/certdb/CertDatabase.cxx src/certdb/CertDatabase.hxx \
 	src/certdb/Wildcard.cxx src/certdb/Wildcard.hxx \
 	src/certdb/GlueHttpClient.cxx src/certdb/GlueHttpClient.hxx \
-	src/certdb/AcmeClient.cxx src/certdb/AcmeClien.hxx \
+	src/certdb/AcmeClient.cxx src/certdb/AcmeClient.hxx \
 	src/certdb/Main.cxx
 cm4all_certdb_CPPFLAGS = $(AM_CPPFLAGS) \
 	$(JSONCPP_CFLAGS) \
