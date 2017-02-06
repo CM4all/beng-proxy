@@ -174,7 +174,7 @@ http_server_simple_response(const HttpServerRequest &request,
                             http_status_t status, const char *location,
                             const char *msg)
 {
-    assert(status >= 200 && status < 600);
+    assert(unsigned(status) >= 200 && unsigned(status) < 600);
 
     if (http_status_is_empty(status))
         msg = nullptr;
