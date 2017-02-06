@@ -850,7 +850,6 @@ libssl_a_SOURCES = \
 	src/ssl/SessionCache.hxx \
 	src/ssl/Cache.cxx src/ssl/Cache.hxx \
 	src/ssl/NameCache.cxx src/ssl/NameCache.hxx \
-	src/ssl/ssl_quark.hxx \
 	src/ssl/ssl_client.cxx src/ssl/ssl_client.hxx \
 	src/ssl/ssl_config.hxx \
 	src/ssl/ssl_factory.cxx src/ssl/ssl_factory.hxx \

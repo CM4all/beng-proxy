@@ -7,7 +7,6 @@
 #include "ssl_filter.hxx"
 #include "ssl_factory.hxx"
 #include "ssl_config.hxx"
-#include "ssl_quark.hxx"
 #include "Unique.hxx"
 #include "Name.hxx"
 #include "Error.hxx"

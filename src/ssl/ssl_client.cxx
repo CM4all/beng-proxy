@@ -9,7 +9,6 @@
 #include "Basic.hxx"
 #include "Ctx.hxx"
 #include "ssl_filter.hxx"
-#include "ssl_quark.hxx"
 #include "Error.hxx"
 #include "thread_socket_filter.hxx"
 #include "thread_pool.hxx"
