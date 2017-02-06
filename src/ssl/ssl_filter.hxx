@@ -8,13 +8,10 @@
 #define BENG_PROXY_SSL_FILTER_H
 
 #include "Unique.hxx"
-#include "glibfwd.hxx"
 
 #include <inline/compiler.h>
 
 struct pool;
-struct notify;
-struct ssl_config;
 struct SslFactory;
 struct SslFilter;
 class ThreadSocketFilterHandler;

@@ -13,7 +13,6 @@
 #include "FifoBufferBio.hxx"
 #include "thread_socket_filter.hxx"
 #include "pool.hxx"
-#include "gerrno.h"
 #include "fb_pool.hxx"
 #include "SliceFifoBuffer.hxx"
 #include "util/AllocatedString.hxx"

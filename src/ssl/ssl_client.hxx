@@ -7,8 +7,6 @@
 #ifndef BENG_PROXY_SSL_CLIENT_HXX
 #define BENG_PROXY_SSL_CLIENT_HXX
 
-#include "glibfwd.hxx"
-
 struct pool;
 struct SocketFilter;
 class EventLoop;
