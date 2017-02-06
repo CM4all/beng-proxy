@@ -61,15 +61,15 @@ public:
         headers = std::move(_headers);
     }
 
-    void OnData(ConstBuffer<void> data) {
+    void OnData(ConstBuffer<void> data) override {
         body_string.append((const char *)data.data, data.size);
     }
 
-    void OnEnd() {
+    void OnEnd() override {
         done = true;
     }
 
-    void OnError(std::exception_ptr e) {
+    void OnError(std::exception_ptr e) override {
         error = std::move(e);
         done = true;
     }
