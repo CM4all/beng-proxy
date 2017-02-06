@@ -11,16 +11,31 @@
 
 #include <utility>
 
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+#include <memory>
+#endif
+
 /**
  * A wrapper for SSL_CTX which takes advantage of OpenSSL's reference
  * counting.
  */
 class SslCtx {
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
     SSL_CTX *ssl_ctx = nullptr;
+#else
+    struct Deleter {
+        void operator()(SSL_CTX *p) {
+            SSL_CTX_free(p);
+        }
+    };
+
+    std::shared_ptr<SSL_CTX> ssl_ctx;
+#endif
 
 public:
     SslCtx() = default;
 
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
     explicit SslCtx(const SSL_METHOD *meth)
         :ssl_ctx(SSL_CTX_new(meth)) {
         if (ssl_ctx == nullptr)
@@ -67,15 +82,34 @@ public:
     SSL_CTX *get() const {
         return ssl_ctx;
     }
+#else
+    explicit SslCtx(const SSL_METHOD *meth)
+        :ssl_ctx(SSL_CTX_new(meth), Deleter()) {
+        if (ssl_ctx == nullptr)
+            throw SslError("SSL_CTX_new() failed");
+    }
+
+    operator bool() const {
+        return (bool)ssl_ctx;
+    }
+
+    SSL_CTX *get() const {
+        return ssl_ctx.get();
+    }
+#endif
 
     SSL_CTX &operator*() const {
         return *ssl_ctx;
     }
 
     void reset() {
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
         if (ssl_ctx != nullptr)
             SSL_CTX_free(ssl_ctx);
         ssl_ctx = nullptr;
+#else
+        ssl_ctx.reset();
+#endif
     }
 };
 
