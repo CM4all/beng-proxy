@@ -75,42 +75,11 @@ public:
     }
 };
 
-/**
- * A helper class which feeds a (foreign) memory buffer into the
- * CURLOPT_READFUNCTION.
- */
-class CurlRequestBody {
-    ConstBuffer<char> data;
-
-public:
-    explicit CurlRequestBody(ConstBuffer<void> _data)
-        :data(ConstBuffer<char>::FromVoid(_data)) {}
-
-    void Enable(CurlRequest &request) {
-        request.SetOption(CURLOPT_READFUNCTION, Callback);
-        request.SetOption(CURLOPT_READDATA, this);
-    }
-
-private:
-    size_t Read(char *buffer, size_t size) {
-        size_t n = std::min(size, data.size);
-        std::copy_n(data.begin(), n, buffer);
-        data.skip_front(n);
-        return n;
-    }
-
-    static size_t Callback(char *buffer, size_t size, size_t nitems,
-                           void *instream) {
-        auto &rb = *(CurlRequestBody *)instream;
-        return rb.Read(buffer, size * nitems);
-    }
-};
-
 GlueHttpResponse
 GlueHttpClient::Request(EventLoop &event_loop,
                         GlueHttpServerAddress &server,
                         http_method_t method, const char *uri,
-                        ConstBuffer<void> _body)
+                        ConstBuffer<void> body)
 {
     std::string url = server.url + uri;
 
@@ -122,9 +91,10 @@ GlueHttpClient::Request(EventLoop &event_loop,
     else if (method == HTTP_METHOD_POST)
         request.SetOption(CURLOPT_POST, 1l);
 
-    CurlRequestBody body(_body);
-    if (!_body.IsNull())
-        body.Enable(request);
+    if (!body.IsNull()) {
+        request.SetOption(CURLOPT_POSTFIELDS, (const char *)body.data);
+        request.SetOption(CURLOPT_POSTFIELDSIZE, long(body.size));
+    }
 
     request.Start();
 
