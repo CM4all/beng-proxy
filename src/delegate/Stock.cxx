@@ -49,15 +49,13 @@ struct DelegateArgs {
 };
 
 class DelegateProcess final : public HeapStockItem {
-    const pid_t pid;
     const int fd;
 
     SocketEvent event;
 
 public:
-    explicit DelegateProcess(CreateStockItem c,
-                             pid_t _pid, int _fd)
-        :HeapStockItem(c), pid(_pid), fd(_fd),
+    explicit DelegateProcess(CreateStockItem c, int _fd)
+        :HeapStockItem(c), fd(_fd),
          event(c.stock.GetEventLoop(), fd, EV_READ,
                BIND_THIS_METHOD(SocketEventCallback)) {
     }
@@ -147,10 +145,10 @@ delegate_stock_create(void *ctx,
     p.SetStdin(fds[1]);
 
     try {
-        int pid = spawn_service.SpawnChildProcess(info.executable_path,
-                                                  std::move(p), nullptr);
+        spawn_service.SpawnChildProcess(info.executable_path,
+                                        std::move(p), nullptr);
 
-        auto *process = new DelegateProcess(c, pid, fds[0]);
+        auto *process = new DelegateProcess(c, fds[0]);
         process->InvokeCreateSuccess();
     } catch (const std::runtime_error &e) {
         close(fds[0]);
