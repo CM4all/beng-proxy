@@ -72,6 +72,12 @@ public:
         return *ssl_ctx;
     }
 
+    void reset() {
+        if (ssl_ctx != nullptr)
+            SSL_CTX_free(ssl_ctx);
+        ssl_ctx = nullptr;
+    }
+
     SSL_CTX *release() {
         return std::exchange(ssl_ctx, nullptr);
     }
