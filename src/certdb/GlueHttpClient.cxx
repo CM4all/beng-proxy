@@ -8,6 +8,7 @@
 #include "event/Loop.hxx"
 #include "curl/Request.hxx"
 #include "curl/Handler.hxx"
+#include "curl/Slist.hxx"
 #include "util/ConstBuffer.hxx"
 
 #include <exception>
@@ -83,6 +84,8 @@ GlueHttpClient::Request(EventLoop &event_loop,
 {
     std::string url = server.url + uri;
 
+    CurlSlist header_list;
+
     GlueHttpResponseHandler handler;
     CurlRequest request(curl_global, url.c_str(), handler);
 
@@ -94,7 +97,10 @@ GlueHttpClient::Request(EventLoop &event_loop,
     if (!body.IsNull()) {
         request.SetOption(CURLOPT_POSTFIELDS, (const char *)body.data);
         request.SetOption(CURLOPT_POSTFIELDSIZE, long(body.size));
+        header_list.Append("Content-Type: application/json");
     }
+
+    request.SetOption(CURLOPT_HTTPHEADER, header_list.Get());
 
     request.Start();
 
