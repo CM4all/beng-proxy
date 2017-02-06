@@ -52,7 +52,7 @@ CurlRequest::CurlRequest(CurlGlobal &_global, const char *url,
 	error_buffer[0] = 0;
 
 	easy.SetOption(CURLOPT_PRIVATE, (void *)this);
-	easy.SetOption(CURLOPT_USERAGENT, "CM4all Workshop " VERSION);
+	easy.SetOption(CURLOPT_USERAGENT, PACKAGE " " VERSION);
 	easy.SetOption(CURLOPT_HEADERFUNCTION, _HeaderFunction);
 	easy.SetOption(CURLOPT_WRITEHEADER, this);
 	easy.SetOption(CURLOPT_WRITEFUNCTION, WriteFunction);
