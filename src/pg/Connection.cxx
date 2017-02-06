@@ -19,6 +19,19 @@ PgConnection::Connect(const char *conninfo)
         throw std::runtime_error(GetErrorMessage());
 }
 
+void
+PgConnection::StartConnect(const char *conninfo)
+{
+    assert(!IsDefined());
+
+    conn = ::PQconnectStart(conninfo);
+    if (conn == nullptr)
+        throw std::bad_alloc();
+
+    if (GetStatus() == CONNECTION_BAD)
+        throw std::runtime_error(GetErrorMessage());
+}
+
 bool
 PgConnection::SetSchema(const char *schema)
 {

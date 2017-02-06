@@ -110,14 +110,7 @@ public:
     }
 
     void Connect(const char *conninfo);
-
-    void StartConnect(const char *conninfo) {
-        assert(!IsDefined());
-
-        conn = ::PQconnectStart(conninfo);
-        if (conn == nullptr)
-            throw std::bad_alloc();
-    }
+    void StartConnect(const char *conninfo);
 
     PostgresPollingStatusType PollConnect() {
         assert(IsDefined());
