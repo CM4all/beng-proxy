@@ -1,3 +1,4 @@
+#include "AcmeUtil.hxx"
 #include "AcmeClient.hxx"
 #include "Config.hxx"
 #include "CertDatabase.hxx"
@@ -417,7 +418,8 @@ AllNames(X509 &cert)
     std::set<std::string> result;
 
     for (auto &i : GetSubjectAltNames(cert))
-        result.emplace(std::move(i));
+        if (!IsAcmeInvalid(i))
+            result.emplace(std::move(i));
 
     const auto cn = GetCommonName(cert);
     if (!cn.IsNull())
@@ -438,6 +440,10 @@ AcmeNewAuthzCertAll(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
     auto &old_key = *old_cert_key.second;
 
     for (const auto &i : AllNames(old_cert)) {
+        if (IsAcmeInvalid(i))
+            /* ignore "*.acme.invalid" */
+            continue;
+
         printf("new-authz '%s'\n", i.c_str());
         AcmeNewAuthz(key, db, client, i.c_str());
     }
