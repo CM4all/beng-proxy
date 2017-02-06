@@ -7,6 +7,7 @@
 #include "Basic.hxx"
 #include "Error.hxx"
 #include "Ctx.hxx"
+#include "Unique.hxx"
 #include "ssl_config.hxx"
 
 #include <inline/compiler.h>

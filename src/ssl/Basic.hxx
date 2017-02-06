@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_SSL_BASIC_HXX
 #define BENG_PROXY_SSL_BASIC_HXX
 
-#include "Unique.hxx"
+#include <openssl/ossl_typ.h>
 
 struct SslConfig;
 class SslCtx;
