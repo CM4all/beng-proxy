@@ -646,6 +646,12 @@ main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
+    /* force line buffering, because this program may be used
+       non-interactively, and mixing stdout/stderr is confusing in
+       block-buffered mode */
+    setvbuf(stdout, nullptr, _IOLBF, 0);
+    setvbuf(stderr, nullptr, _IOLBF, 0);
+
     const auto cmd = args.shift();
 
     try {
