@@ -33,7 +33,7 @@ public:
     }
 
     SslCtx(SslCtx &&src)
-        :ssl_ctx(src.release()) {}
+        :ssl_ctx(std::exchange(src.ssl_ctx, nullptr)) {}
 
     ~SslCtx() {
         if (ssl_ctx != nullptr)
@@ -76,10 +76,6 @@ public:
         if (ssl_ctx != nullptr)
             SSL_CTX_free(ssl_ctx);
         ssl_ctx = nullptr;
-    }
-
-    SSL_CTX *release() {
-        return std::exchange(ssl_ctx, nullptr);
     }
 };
 
