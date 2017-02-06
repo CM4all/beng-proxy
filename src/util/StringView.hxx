@@ -93,6 +93,13 @@ struct StringView : ConstBuffer<char> {
 	}
 
 	gcc_pure
+	bool EndsWith(StringView needle) const {
+		return size >= needle.size &&
+			memcmp(data + size - needle.size,
+			       needle.data, needle.size) == 0;
+	}
+
+	gcc_pure
 	bool Equals(StringView other) const {
 		return size == other.size &&
 			memcmp(data, other.data, size) == 0;
