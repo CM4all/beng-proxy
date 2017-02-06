@@ -119,6 +119,8 @@ GlueHttpClient::Request(EventLoop &event_loop,
 
     if (method == HTTP_METHOD_HEAD)
         request.SetOption(CURLOPT_NOBODY, 1l);
+    else if (method == HTTP_METHOD_POST)
+        request.SetOption(CURLOPT_POST, 1l);
 
     CurlRequestBody body(_body);
     if (!_body.IsNull())
