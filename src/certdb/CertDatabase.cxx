@@ -10,6 +10,7 @@
 #include "ssl/Buffer.hxx"
 #include "ssl/Name.hxx"
 #include "ssl/AltName.hxx"
+#include "ssl/Certificate.hxx"
 #include "ssl/Key.hxx"
 
 #include <openssl/aes.h>
@@ -225,13 +226,7 @@ CertDatabase::GetServerCertificate(const char *name)
         throw "Unexpected result";
 
     auto cert_der = result.GetBinaryValue(0, 0);
-
-    auto data = (const unsigned char *)cert_der.data;
-    UniqueX509 cert(d2i_X509(nullptr, &data, cert_der.size));
-    if (!cert)
-        throw "d2i_X509() failed";
-
-    return cert;
+    return DecodeDerCertificate(cert_der);
 }
 
 std::pair<UniqueX509, UniqueEVP_PKEY>
@@ -259,10 +254,7 @@ CertDatabase::GetServerCertificateKey(const char *name)
                             unwrapped);
     }
 
-    auto cert_data = (const unsigned char *)cert_der.data;
-    UniqueX509 cert(d2i_X509(nullptr, &cert_data, cert_der.size));
-    if (!cert)
-        throw SslError("d2i_X509() failed");
+    auto cert = DecodeDerCertificate(cert_der);
 
     auto key_data = (const unsigned char *)key_der.data;
     UniqueEVP_PKEY key(d2i_AutoPrivateKey(nullptr, &key_data, key_der.size));

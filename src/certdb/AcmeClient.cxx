@@ -6,6 +6,7 @@
 #include "ssl/Base64.hxx"
 #include "ssl/Buffer.hxx"
 #include "ssl/Dummy.hxx"
+#include "ssl/Certificate.hxx"
 #include "ssl/Key.hxx"
 #include "uri/uri_extract.hxx"
 
@@ -473,12 +474,7 @@ AcmeClient::NewCert(EVP_PKEY &key, X509_REQ &req)
     CheckThrowStatusError(std::move(response), HTTP_STATUS_CREATED,
                           "Failed to create certificate");
 
-    auto data = (const unsigned char *)response.body.data();
-    UniqueX509 cert(d2i_X509(nullptr, &data, response.body.length()));
-    if (!cert)
-        throw "d2i_X509() failed";
-
-    return cert;
+    return DecodeDerCertificate({response.body.data(), response.body.length()});
 }
 
 static char *

@@ -838,6 +838,7 @@ libssl_a_SOURCES = \
 	src/ssl/Edit.cxx src/ssl/Edit.hxx \
 	src/ssl/Ctx.hxx \
 	src/ssl/Unique.hxx \
+	src/ssl/Certificate.cxx src/ssl/Certificate.hxx \
 	src/ssl/Key.cxx src/ssl/Key.hxx \
 	src/ssl/Hash.cxx src/ssl/Hash.hxx \
 	src/ssl/LoadFile.cxx src/ssl/LoadFile.hxx \
