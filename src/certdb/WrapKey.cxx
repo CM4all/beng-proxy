@@ -4,6 +4,8 @@
 
 #include "WrapKey.hxx"
 
+#include <openssl/err.h>
+
 PgBinaryValue
 UnwrapKey(PgBinaryValue key_der,
           const CertDatabaseConfig &config, const std::string &key_wrap_name,
@@ -20,6 +22,8 @@ UnwrapKey(PgBinaryValue key_der,
     WrapKeyHelper wrap_key_helper;
     const auto wrap_key =
         wrap_key_helper.SetDecryptKey(config, key_wrap_name);
+
+    ERR_clear_error();
 
     unwrapped.reset(new unsigned char[key_der.size - 8]);
     int r = AES_unwrap_key(wrap_key, nullptr,

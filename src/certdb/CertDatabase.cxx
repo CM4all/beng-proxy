@@ -14,7 +14,6 @@
 #include "ssl/Key.hxx"
 
 #include <openssl/aes.h>
-#include <openssl/err.h>
 
 #include <sys/poll.h>
 
@@ -242,8 +241,6 @@ CertDatabase::GetServerCertificateKey(const char *name)
 
     const auto cert_der = result.GetBinaryValue(0, 0);
     auto key_der = result.GetBinaryValue(0, 1);
-
-    ERR_clear_error();
 
     std::unique_ptr<unsigned char[]> unwrapped;
     if (!result.IsValueNull(0, 2)) {
