@@ -255,11 +255,7 @@ CertDatabase::GetServerCertificateKey(const char *name)
     }
 
     auto cert = DecodeDerCertificate(cert_der);
-
-    auto key_data = (const unsigned char *)key_der.data;
-    UniqueEVP_PKEY key(d2i_AutoPrivateKey(nullptr, &key_data, key_der.size));
-    if (!key)
-        throw SslError("d2i_AutoPrivateKey() failed");
+    auto key = DecodeDerKey(key_der);
 
     if (!MatchModulus(*cert, *key))
         throw std::runtime_error(std::string("Key does not match certificate for '")

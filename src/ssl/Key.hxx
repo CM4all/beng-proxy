@@ -13,8 +13,19 @@
 
 #include <openssl/ossl_typ.h>
 
+template<typename T> struct ConstBuffer;
+
 UniqueEVP_PKEY
 GenerateRsaKey();
+
+/**
+ * Decode a private key encoded with DER.  It is a wrapper for
+ * d2i_AutoPrivateKey().
+ *
+ * Throws SslError on error.
+ */
+UniqueEVP_PKEY
+DecodeDerKey(ConstBuffer<void> der);
 
 gcc_pure
 bool

@@ -7,11 +7,13 @@
 #include "Key.hxx"
 #include "Unique.hxx"
 #include "Error.hxx"
+#include "util/ConstBuffer.hxx"
 
 #include <openssl/bn.h>
 #include <openssl/evp.h>
 #include <openssl/rsa.h>
 #include <openssl/x509.h>
+#include <openssl/err.h>
 
 #include <assert.h>
 
@@ -40,6 +42,19 @@ GenerateRsaKey()
         throw SslError("EVP_PKEY_assign_RSA() failed");
 
     rsa.release();
+
+    return key;
+}
+
+UniqueEVP_PKEY
+DecodeDerKey(ConstBuffer<void> der)
+{
+    ERR_clear_error();
+
+    auto data = (const unsigned char *)der.data;
+    UniqueEVP_PKEY key(d2i_AutoPrivateKey(nullptr, &data, der.size));
+    if (!key)
+        throw SslError("d2i_AutoPrivateKey() failed");
 
     return key;
 }
