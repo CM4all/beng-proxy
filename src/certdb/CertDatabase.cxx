@@ -6,8 +6,8 @@
 #include "Config.hxx"
 #include "WrapKey.hxx"
 #include "pg/CheckError.hxx"
-#include "ssl/MemBio.hxx"
 #include "ssl/Buffer.hxx"
+#include "ssl/Time.hxx"
 #include "ssl/Name.hxx"
 #include "ssl/AltName.hxx"
 #include "ssl/Certificate.hxx"
@@ -90,25 +90,6 @@ CertDatabase::NotifyModified()
     sql += "modified\"";
 
     return conn.Execute(sql.c_str());
-}
-
-gcc_pure
-static AllocatedString<>
-FormatTime(ASN1_TIME &t)
-{
-    return BioWriterToString([&t](BIO &bio){
-            ASN1_TIME_print(&bio, &t);
-        });
-}
-
-gcc_pure
-static AllocatedString<>
-FormatTime(ASN1_TIME *t)
-{
-    if (t == nullptr)
-        return nullptr;
-
-    return FormatTime(*t);
 }
 
 void

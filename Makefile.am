@@ -842,6 +842,7 @@ libssl_a_SOURCES = \
 	src/ssl/Key.cxx src/ssl/Key.hxx \
 	src/ssl/Hash.cxx src/ssl/Hash.hxx \
 	src/ssl/LoadFile.cxx src/ssl/LoadFile.hxx \
+	src/ssl/Time.cxx src/ssl/Time.hxx \
 	src/ssl/AltName.cxx src/ssl/AltName.hxx \
 	src/ssl/Name.cxx src/ssl/Name.hxx \
 	src/ssl/GeneralName.hxx \
