@@ -257,3 +257,13 @@ CertDatabase::GetServerCertificateKey(const char *name)
 
     return LoadCertificateKey(config, result, 0, 0);
 }
+
+std::pair<UniqueX509, UniqueEVP_PKEY>
+CertDatabase::GetServerCertificateKey(unsigned id)
+{
+    auto result = CheckError(FindServerCertificateKeyById(id));
+    if (result.GetRowCount() == 0)
+        return std::make_pair(nullptr, nullptr);
+
+    return LoadCertificateKey(config, result, 0, 0);
+}

@@ -99,6 +99,7 @@ public:
      * no matching certificate was found
      */
     std::pair<UniqueX509, UniqueEVP_PKEY> GetServerCertificateKey(const char *name);
+    std::pair<UniqueX509, UniqueEVP_PKEY> GetServerCertificateKey(unsigned id);
 
 private:
     PgResult InsertServerCertificate(const char *common_name,
@@ -204,6 +205,14 @@ private:
                                   " common_name=$1 DESC "
                                   "LIMIT 1",
                                   common_name);
+    }
+
+    PgResult FindServerCertificateKeyById(unsigned id) {
+        return conn.ExecuteParams(true,
+                                  "SELECT certificate_der, key_der, key_wrap_name "
+                                  "FROM server_certificate "
+                                  "WHERE id=$1",
+                                  id);
     }
 
 public:
