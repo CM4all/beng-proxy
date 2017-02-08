@@ -183,6 +183,7 @@ AsyncPgConnection::Disconnect()
         return;
 
     socket_event.Delete();
+    reconnect_timer.Cancel();
     PgConnection::Disconnect();
     state = State::DISCONNECTED;
 }
