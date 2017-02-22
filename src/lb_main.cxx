@@ -13,7 +13,7 @@
 #include "tcp_balancer.hxx"
 #include "stock/MapStock.hxx"
 #include "failure.hxx"
-#include "bulldog.h"
+#include "bulldog.hxx"
 #include "balancer.hxx"
 #include "pipe_stock.hxx"
 #include "log-glue.h"

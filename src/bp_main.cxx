@@ -30,7 +30,7 @@
 #include "thread_pool.hxx"
 #include "stopwatch.hxx"
 #include "failure.hxx"
-#include "bulldog.h"
+#include "bulldog.hxx"
 #include "balancer.hxx"
 #include "pipe_stock.hxx"
 #include "nfs_stock.hxx"

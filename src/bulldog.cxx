@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "bulldog.h"
+#include "bulldog.hxx"
 
 #include <daemon/log.h>
 #include <socket/address.h>
@@ -29,7 +29,7 @@ static struct {
 void
 bulldog_init(const char *path)
 {
-    if (path == NULL)
+    if (path == nullptr)
         return;
 
     if (strlen(path) + sizeof(WORKERS) + 16 >= sizeof(bulldog.path)) {
@@ -43,7 +43,7 @@ bulldog_init(const char *path)
 }
 
 void
-bulldog_deinit(void)
+bulldog_deinit()
 {
 }
 
@@ -52,19 +52,19 @@ static const char *
 bulldog_node_path(const struct sockaddr *address, socklen_t address_size,
                   const char *attribute_name)
 {
-    assert(address != NULL);
+    assert(address != nullptr);
     assert(address_size > 0);
-    assert(attribute_name != NULL);
+    assert(attribute_name != nullptr);
     assert(*attribute_name != 0);
 
     if (bulldog.path[0] == 0)
         /* disabled */
-        return NULL;
+        return nullptr;
 
     if (!socket_address_to_string(bulldog.path + bulldog.path_length,
                                   sizeof(bulldog.path) - bulldog.path_length,
                                   address, address_size))
-        return NULL;
+        return nullptr;
 
     g_strlcat(bulldog.path, "/", sizeof(bulldog.path));
     g_strlcat(bulldog.path, attribute_name, sizeof(bulldog.path));
@@ -75,23 +75,23 @@ gcc_pure
 static const char *
 read_first_line(const char *path, char *buffer, size_t buffer_size)
 {
-    assert(path != NULL);
-    assert(buffer != NULL);
+    assert(path != nullptr);
+    assert(buffer != nullptr);
     assert(buffer_size > 0);
 
     int fd = open(path, O_RDONLY|O_CLOEXEC|O_NOCTTY);
     if (fd < 0)
-        return NULL;
+        return nullptr;
 
     ssize_t nbytes = read(fd, buffer, buffer_size - 1);
     if (nbytes < 0)
-        return NULL;
+        return nullptr;
 
     close(fd);
 
     /* use only the first line */
-    char *p = memchr(buffer, '\n', nbytes);
-    if (p == NULL)
+    char *p = (char *)memchr(buffer, '\n', nbytes);
+    if (p == nullptr)
         p = buffer + nbytes;
 
     *p = 0;
@@ -103,13 +103,13 @@ bool
 bulldog_check(const struct sockaddr *addr, socklen_t addrlen)
 {
     const char *path = bulldog_node_path(addr, addrlen, "status");
-    if (path == NULL)
+    if (path == nullptr)
         /* disabled */
         return true;
 
     char buffer[32];
     const char *value = read_first_line(path, buffer, sizeof(buffer));
-    if (value == NULL) {
+    if (value == nullptr) {
         if (errno != ENOENT)
             daemon_log(2, "Failed to read %s: %s\n",
                        path, strerror(errno));
@@ -128,13 +128,13 @@ bool
 bulldog_is_fading(const struct sockaddr *addr, socklen_t addrlen)
 {
     const char *path = bulldog_node_path(addr, addrlen, "graceful");
-    if (path == NULL)
+    if (path == nullptr)
         /* disabled */
         return false;
 
     char buffer[32];
     const char *value = read_first_line(path, buffer, sizeof(buffer));
-    if (value == NULL)
+    if (value == nullptr)
         return false;
 
     daemon_log(5, "bulldog: %s='%s'\n", path, value);

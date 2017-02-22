@@ -87,7 +87,7 @@ cm4all_beng_proxy_SOURCES = \
 	src/args.cxx src/args.hxx \
 	src/balancer.cxx src/balancer.hxx \
 	src/bot.c src/bot.h \
-	src/bulldog.c src/bulldog.h \
+	src/bulldog.cxx src/bulldog.hxx \
 	src/spawn/Protocol.hxx \
 	src/spawn/Parser.hxx \
 	src/spawn/Builder.hxx \
@@ -339,7 +339,7 @@ cm4all_beng_lb_SOURCES = \
 	src/address_sticky.cxx src/address_sticky.hxx \
 	src/generic_balancer.hxx \
 	src/client_balancer.cxx src/client_balancer.hxx \
-	src/bulldog.c \
+	src/bulldog.cxx \
 	src/http_body.cxx \
 	src/http_client.cxx \
 	src/http_string.cxx \
@@ -1406,7 +1406,7 @@ test_t_growing_buffer_LDADD = $(T_ISTREAM_FILTER_LIB)
 
 test_t_balancer_SOURCES = test/t_balancer.cxx \
 	test/PoolTest.hxx \
-	src/bulldog.c \
+	src/bulldog.cxx \
 	src/balancer.cxx src/failure.cxx \
 	src/address_list.cxx
 test_t_balancer_CPPFLAGS = $(AM_CPPFLAGS) $(CPPUNIT_CFLAGS)
@@ -1760,7 +1760,7 @@ test_format_http_date_LDADD = $(AM_LDADD) libutil.a
 test_request_translation_SOURCES = test/request_translation.cxx \
 	src/socket_wrapper.cxx src/buffered_socket.cxx \
 	src/direct.cxx \
-	src/failure.cxx src/bulldog.c src/balancer.cxx \
+	src/failure.cxx src/bulldog.cxx src/balancer.cxx \
 	src/abort_unref.cxx \
 	src/widget_view.cxx \
 	src/ExpandableStringList.cxx \
@@ -1867,7 +1867,7 @@ test_run_processor_SOURCES = test/run_processor.cxx \
 	src/header_parser.cxx \
 	src/widget_request.cxx \
 	src/widget_view.cxx \
-	src/failure.cxx src/bulldog.c \
+	src/failure.cxx src/bulldog.cxx \
 	src/balancer.cxx src/http_address.cxx src/\
 	src/ExpandableStringList.cxx \
 	src/pexpand.cxx \
@@ -1904,7 +1904,7 @@ test_t_processor_SOURCES = test/t_processor.cxx \
 	src/header_parser.cxx \
 	src/widget_request.cxx \
 	src/widget_view.cxx \
-	src/failure.cxx src/bulldog.c \
+	src/failure.cxx src/bulldog.cxx \
 	src/balancer.cxx \
 	src/ExpandableStringList.cxx \
 	src/pexpand.cxx \
@@ -1932,7 +1932,7 @@ test_run_client_balancer_SOURCES = test/run_client_balancer.cxx \
 	src/client_balancer.cxx \
 	src/balancer.cxx \
 	src/failure.cxx \
-	src/bulldog.c \
+	src/bulldog.cxx \
 	$(STOPWATCH_SRC)
 test_run_client_balancer_LDADD = $(AM_LDADD) \
 	libputil.a \
@@ -2113,7 +2113,7 @@ test_dump_memcached_choice_LDADD = $(LIBEVENT_LIBS) $(GLIB_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
 test_cleanup_memcached_choice_SOURCES = test/cleanup_memcached_choice.cxx \
-	src/failure.cxx src/bulldog.c src/balancer.cxx \
+	src/failure.cxx src/bulldog.cxx src/balancer.cxx \
 	src/tcp_stock.cxx src/tcp_balancer.cxx \
 	src/socket_wrapper.cxx src/buffered_socket.cxx \
 	src/direct.cxx \

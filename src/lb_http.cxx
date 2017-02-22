@@ -30,7 +30,7 @@
 #include "access_log.hxx"
 #include "strmap.hxx"
 #include "failure.hxx"
-#include "bulldog.h"
+#include "bulldog.hxx"
 #include "pool.hxx"
 #include "net/SocketAddress.hxx"
 #include "istream/istream.hxx"

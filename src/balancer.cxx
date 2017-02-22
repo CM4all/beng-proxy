@@ -9,7 +9,7 @@
 #include "address_list.hxx"
 #include "net/SocketAddress.hxx"
 #include "failure.hxx"
-#include "bulldog.h"
+#include "bulldog.hxx"
 #include "AllocatorPtr.hxx"
 
 #include <string>

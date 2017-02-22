@@ -4,17 +4,12 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_BULLDOG_H
-#define BENG_PROXY_BULLDOG_H
+#ifndef BENG_PROXY_BULLDOG_HXX
+#define BENG_PROXY_BULLDOG_HXX
 
 #include <inline/compiler.h>
 
-#include <stdbool.h>
 #include <sys/socket.h>
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /**
  * Initialized the bulldog-tyke library.
@@ -25,7 +20,7 @@ void
 bulldog_init(const char *path);
 
 void
-bulldog_deinit(void);
+bulldog_deinit();
 
 /**
  * Returns true if the socket address is either not present in the
@@ -42,9 +37,5 @@ bulldog_check(const struct sockaddr *addr, socklen_t addrlen);
 gcc_pure
 bool
 bulldog_is_fading(const struct sockaddr *address, socklen_t address_size);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif
