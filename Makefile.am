@@ -603,6 +603,7 @@ libutil_a_SOURCES = \
 	src/util/IterableSplitString.hxx \
 	src/util/LeakDetector.cxx src/util/LeakDetector.hxx \
 	src/util/StringAPI.hxx \
+	src/util/StringBuilder.cxx src/util/StringBuilder.hxx \
 	src/util/StringUtil.cxx src/util/StringUtil.hxx \
 	src/util/StringView.cxx src/util/StringView.hxx \
 	src/util/StringParser.cxx src/util/StringParser.hxx \
