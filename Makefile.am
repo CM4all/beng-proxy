@@ -482,22 +482,19 @@ cm4all_beng_proxy_log_cat_SOURCES = \
 	src/log_server.cxx \
 	src/log-cat.c
 cm4all_beng_proxy_log_cat_LDADD = \
-	$(LIBCM4ALL_HTTP_LIBS) \
-	$(GLIB_LIBS)
+	$(LIBCM4ALL_HTTP_LIBS)
 
 cm4all_beng_proxy_log_traffic_SOURCES = \
 	src/log_server.cxx \
 	src/log-traffic.c
 cm4all_beng_proxy_log_traffic_LDADD = \
-	$(LIBCM4ALL_HTTP_LIBS) \
-	$(GLIB_LIBS)
+	$(LIBCM4ALL_HTTP_LIBS)
 
 cm4all_beng_proxy_log_split_SOURCES = \
 	src/log_server.cxx \
 	src/log-split.c
 cm4all_beng_proxy_log_split_LDADD = \
-	$(LIBCM4ALL_HTTP_LIBS) \
-	$(GLIB_LIBS)
+	$(LIBCM4ALL_HTTP_LIBS)
 
 cm4all_beng_proxy_log_forward_SOURCES = \
 	src/log-forward.c

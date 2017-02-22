@@ -9,12 +9,11 @@
 
 #include <beng-proxy/log.h>
 
-#include <glib.h>
-
 #include <string.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <unistd.h>
+#include <stdlib.h>
 #include <errno.h>
 
 struct log_server {
@@ -28,7 +27,7 @@ struct log_server {
 struct log_server *
 log_server_new(int fd)
 {
-    struct log_server *server = g_new(struct log_server, 1);
+    auto server = new log_server;
     server->fd = fd;
     return server;
 }
@@ -37,7 +36,7 @@ void
 log_server_free(struct log_server *server)
 {
     close(server->fd);
-    g_free(server);
+    delete server;
 }
 
 static const void *
