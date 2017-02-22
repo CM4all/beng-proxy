@@ -5,6 +5,7 @@
  */
 
 #include "log-server.h"
+#include "util/ByteOrder.hxx"
 
 #include <beng-proxy/log.h>
 
@@ -60,7 +61,7 @@ read_uint16(uint16_t *value_r, const void *p, const uint8_t *end)
     uint16_t value;
     memcpy(&value, src, sizeof(value));
 
-    *value_r = GUINT16_FROM_BE(value);
+    *value_r = FromBE16(value);
     return src + 1;
 }
 
@@ -74,7 +75,7 @@ read_uint64(uint64_t *value_r, const void *p, const uint8_t *end)
     uint64_t value;
     memcpy(&value, src, sizeof(value));
 
-    *value_r = GUINT64_FROM_BE(value);
+    *value_r = FromBE64(value);
     return src + 1;
 }
 
