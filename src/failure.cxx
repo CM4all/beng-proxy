@@ -12,8 +12,6 @@
 #include "util/DeleteDisposer.hxx"
 #include "util/Expiry.hxx"
 
-#include <daemon/log.h>
-
 #include <boost/intrusive/unordered_set.hpp>
 
 #include <assert.h>
