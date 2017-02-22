@@ -81,6 +81,13 @@ private:
     }
 };
 
+gcc_const
+static inline GQuark
+delegate_client_quark(void)
+{
+    return g_quark_from_static_string("delegate_client");
+}
+
 inline void
 DelegateClient::HandleFd(const struct msghdr &msg, size_t length)
 {
