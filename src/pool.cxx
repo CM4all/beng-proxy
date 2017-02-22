@@ -44,8 +44,11 @@
 struct allocation_info {
     struct list_head siblings;
     size_t size;
+
+#ifdef TRACE
     const char *file;
     unsigned line;
+#endif
 };
 
 struct attachment final
@@ -1160,8 +1163,10 @@ p_malloc_libc(struct pool *pool, size_t size TRACE_ARGS_DECL)
 
 #ifndef NDEBUG
     list_add(&chunk->info.siblings, &pool->allocations);
+#ifdef TRACE
     chunk->info.file = file;
     chunk->info.line = line;
+#endif
     chunk->info.size = size;
 #endif
 
@@ -1244,8 +1249,10 @@ p_malloc_linear(struct pool *pool, const size_t original_size
 
 #ifndef NDEBUG
     struct allocation_info *info = (struct allocation_info *)p;
+#ifdef TRACE
     info->file = file;
     info->line = line;
+#endif
     info->size = original_size;
     list_add(&info->siblings, &pool->allocations);
 #endif
