@@ -363,7 +363,7 @@ test_post(struct pool *pool, Context *c)
             pool, HTTP_METHOD_POST, &address,
             nullptr, StringMap(*pool),
             istream_file_new(c->event_loop, *pool,
-                                         "Makefile", 8192, NULL),
+                             "build.ninja", 8192, NULL),
             *c, c->cancel_ptr);
 
     pool_unref(pool);

@@ -1,12 +1,3 @@
-#!/bin/sh
-
-set -e
-
-./configure \
-	CC=clang CXX=clang++ \
-	CFLAGS="-O2 -ggdb" CXXFLAGS="-O2 -ggdb -D__STRICT_ANSI__" \
-	--prefix=/usr/local/stow/cm4all-beng-proxy \
-	--disable-debug \
-	--enable-werror \
-	--enable-silent-rules \
-	"$@"
+#!/bin/sh -e
+rm -rf build/release
+exec meson . build/release --buildtype=release -Dprefix=/usr/local/stow/cm4all-beng-proxy -Dwerror=true -Db_ndebug=true

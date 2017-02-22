@@ -2,6 +2,7 @@
 /stamp-*
 /*.substvars
 /*.debhelper
+/*.log
 
 /cm4all-*/
 /libcm4all-*/

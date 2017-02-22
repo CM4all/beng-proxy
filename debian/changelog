@@ -1,6 +1,7 @@
 cm4all-beng-proxy (12.0.8) unstable; urgency=low
 
   * merge release 11.18
+  * build with Meson and Ninja
   * lb/certdb: fix assertion failure during shutdown
 
  --   
