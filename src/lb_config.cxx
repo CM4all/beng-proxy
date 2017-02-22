@@ -634,7 +634,7 @@ ParseAttributeReference(const char *p)
         for (auto &ch : a.name) {
             if (ch == '_')
                 ch = '-';
-            else if (!g_ascii_islower(ch) && !g_ascii_isdigit(ch))
+            else if (!IsLowerAlphaASCII(ch) && !IsDigitASCII(ch))
                 throw LineParser::Error("Malformed HTTP header name");
         }
 

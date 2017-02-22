@@ -14,6 +14,8 @@
 
 #include <daemon/log.h>
 
+#include <glib.h>
+
 struct LbMonitor final : public LbMonitorHandler {
     EventLoop &event_loop;
     struct pool &pool;

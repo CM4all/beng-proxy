@@ -16,8 +16,6 @@
 
 #include <http/status.h>
 
-#include <glib.h>
-
 #include <map>
 #include <list>
 #include <forward_list>

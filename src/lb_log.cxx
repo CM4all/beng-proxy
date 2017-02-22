@@ -10,6 +10,8 @@
 
 #include <daemon/log.h>
 
+#include <glib.h>
+
 #include <string.h>
 
 void
