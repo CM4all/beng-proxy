@@ -61,9 +61,6 @@ AC_CHECK_FUNCS(pipe2 accept4)
 
 AC_SEARCH_LIBS([clock_gettime], [rt])
 
-AC_CHECK_HEADERS(attr/xattr.h)
-AM_CONDITIONAL(HAVE_ATTR_XATTR_H, test x$ac_cv_header_attr_xattr_h = xyes)
-
 AC_CHECK_HEADER([sys/capability.h],, [AC_MSG_ERROR([libcap-dev not found])])
 
 dnl Checks for libraries.

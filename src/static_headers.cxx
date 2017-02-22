@@ -10,17 +10,11 @@
 #include "http_date.hxx"
 #include "pool.hxx"
 
+#include <attr/xattr.h>
+
 #include <assert.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-
-#ifndef HAVE_ATTR_XATTR_H
-#define NO_XATTR 1
-#endif
-
-#ifndef NO_XATTR
-#include <attr/xattr.h>
-#endif
 
 void
 static_etag(char *p, const struct stat &st)
@@ -44,13 +38,6 @@ static_etag(char *p, const struct stat &st)
 bool
 load_xattr_content_type(char *buffer, size_t size, int fd)
 {
-#ifdef NO_XATTR
-    (void)buffer;
-    (void)size;
-    (void)fd;
-
-    return false;
-#else
     if (fd < 0)
         return false;
 
@@ -62,7 +49,6 @@ load_xattr_content_type(char *buffer, size_t size, int fd)
     assert((size_t)nbytes < size);
     buffer[nbytes] = 0;
     return true;
-#endif
 }
 
 StringMap

@@ -16,17 +16,11 @@
 #include "http_headers.hxx"
 #include "translation/Vary.hxx"
 
+#include <attr/xattr.h>
+
 #include <assert.h>
 #include <stdlib.h>
 #include <sys/stat.h>
-
-#ifndef HAVE_ATTR_XATTR_H
-#define NO_XATTR 1
-#endif
-
-#ifndef NO_XATTR
-#include <attr/xattr.h>
-#endif
 
 static enum range_type
 parse_range_header(const char *p, off_t *skip_r, off_t *size_r)
@@ -227,11 +221,6 @@ file_cache_headers(GrowingBuffer &headers,
 
     char buffer[64];
 
-#ifdef NO_XATTR
-    (void)fd;
-#endif
-
-#ifndef NO_XATTR
     ssize_t nbytes;
     char etag[512];
 
@@ -244,17 +233,13 @@ file_cache_headers(GrowingBuffer &headers,
         etag[nbytes + 2] = 0;
         header_write(headers, "etag", etag);
     } else {
-#endif
         static_etag(buffer, st);
         header_write(headers, "etag", buffer);
-#ifndef NO_XATTR
     }
-#endif
 
-#ifndef NO_XATTR
     if (max_age == std::chrono::seconds::zero())
         max_age = read_xattr_max_age(fd);
-#endif
+
     if (max_age > std::chrono::seconds::zero())
         generate_expires(headers, max_age);
 }
@@ -281,16 +266,12 @@ file_response_headers(GrowingBuffer &headers,
         /* content type override from the translation server */
         header_write(headers, "content-type", override_content_type);
     } else {
-#ifndef NO_XATTR
         char content_type[256];
         if (load_xattr_content_type(content_type, sizeof(content_type), fd)) {
             header_write(headers, "content-type", content_type);
         } else {
-#endif /* #ifndef NO_XATTR */
             header_write(headers, "content-type", "application/octet-stream");
-#ifndef NO_XATTR
         }
-#endif /* #ifndef NO_XATTR */
     }
 
 #ifndef NO_LAST_MODIFIED_HEADER
