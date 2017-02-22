@@ -7,8 +7,6 @@
 #include "fd_util.h"
 #include "util/ScopeExit.hxx"
 
-#include <daemon/log.h>
-
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
