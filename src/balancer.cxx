@@ -61,9 +61,8 @@ gcc_pure
 static bool
 check_bulldog(const SocketAddress address, bool allow_fade)
 {
-    return bulldog_check(address.GetAddress(), address.GetSize()) &&
-        (allow_fade ||
-         !bulldog_is_fading(address.GetAddress(), address.GetSize()));
+    return bulldog_check(address) &&
+        (allow_fade || !bulldog_is_fading(address));
 }
 
 static bool

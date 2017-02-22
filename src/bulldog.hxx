@@ -9,7 +9,7 @@
 
 #include <inline/compiler.h>
 
-#include <sys/socket.h>
+class SocketAddress;
 
 /**
  * Initialized the bulldog-tyke library.
@@ -28,7 +28,7 @@ bulldog_deinit();
  */
 gcc_pure
 bool
-bulldog_check(const struct sockaddr *addr, socklen_t addrlen);
+bulldog_check(SocketAddress address);
 
 /**
  * Returns true if the socket address is currently in "graceful"
@@ -36,6 +36,6 @@ bulldog_check(const struct sockaddr *addr, socklen_t addrlen);
  */
 gcc_pure
 bool
-bulldog_is_fading(const struct sockaddr *address, socklen_t address_size);
+bulldog_is_fading(SocketAddress address);
 
 #endif

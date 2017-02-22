@@ -5,6 +5,7 @@
  */
 
 #include "bulldog.hxx"
+#include "net/SocketAddress.hxx"
 
 #include <daemon/log.h>
 #include <socket/address.h>
@@ -49,11 +50,10 @@ bulldog_deinit()
 
 gcc_pure
 static const char *
-bulldog_node_path(const struct sockaddr *address, socklen_t address_size,
+bulldog_node_path(SocketAddress address,
                   const char *attribute_name)
 {
-    assert(address != nullptr);
-    assert(address_size > 0);
+    assert(!address.IsNull());
     assert(attribute_name != nullptr);
     assert(*attribute_name != 0);
 
@@ -63,7 +63,7 @@ bulldog_node_path(const struct sockaddr *address, socklen_t address_size,
 
     if (!socket_address_to_string(bulldog.path + bulldog.path_length,
                                   sizeof(bulldog.path) - bulldog.path_length,
-                                  address, address_size))
+                                  address.GetAddress(), address.GetSize()))
         return nullptr;
 
     g_strlcat(bulldog.path, "/", sizeof(bulldog.path));
@@ -100,9 +100,9 @@ read_first_line(const char *path, char *buffer, size_t buffer_size)
 }
 
 bool
-bulldog_check(const struct sockaddr *addr, socklen_t addrlen)
+bulldog_check(SocketAddress address)
 {
-    const char *path = bulldog_node_path(addr, addrlen, "status");
+    const char *path = bulldog_node_path(address, "status");
     if (path == nullptr)
         /* disabled */
         return true;
@@ -125,9 +125,9 @@ bulldog_check(const struct sockaddr *addr, socklen_t addrlen)
 }
 
 bool
-bulldog_is_fading(const struct sockaddr *addr, socklen_t addrlen)
+bulldog_is_fading(SocketAddress address)
 {
-    const char *path = bulldog_node_path(addr, addrlen, "graceful");
+    const char *path = bulldog_node_path(address, "graceful");
     if (path == nullptr)
         /* disabled */
         return false;

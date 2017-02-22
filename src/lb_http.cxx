@@ -133,8 +133,7 @@ generate_cookie(const AddressList *list)
         assert(i >= 1 && i <= list->GetSize());
         const SocketAddress address = list->addresses[i % list->GetSize()];
         if (failure_get_status(address) == FAILURE_OK &&
-            bulldog_check(address.GetAddress(), address.GetSize()) &&
-            !bulldog_is_fading(address.GetAddress(), address.GetSize()))
+            bulldog_check(address) && !bulldog_is_fading(address))
             return i;
 
         i = lb_cookie_next(list->GetSize(), i);
