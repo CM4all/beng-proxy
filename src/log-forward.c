@@ -7,10 +7,9 @@
 
 #include "log-server.h"
 #include "system/fd_util.h"
+#include "util/Macros.hxx"
 
 #include <socket/resolver.h>
-
-#include <glib.h>
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -74,7 +73,7 @@ int main(int argc, char **argv)
     static struct destination destinations[256];
     unsigned num_destinations = argc - 1;
 
-    if (num_destinations > G_N_ELEMENTS(destinations)) {
+    if (num_destinations > ARRAY_SIZE(destinations)) {
         fprintf(stderr, "Too many hosts\n");
         return EXIT_FAILURE;
     }
