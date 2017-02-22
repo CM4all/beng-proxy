@@ -18,10 +18,7 @@
 #include "stock/MapStock.hxx"
 #include "session_save.hxx"
 #include "event/Duration.hxx"
-
-#ifdef HAVE_LIBNFS
 #include "nfs_cache.hxx"
-#endif
 
 #include <sys/signal.h>
 
@@ -62,10 +59,8 @@ BpInstance::ForkCow(bool inherit)
     if (filter_cache != nullptr)
         filter_cache_fork_cow(*filter_cache, inherit);
 
-#ifdef HAVE_LIBNFS
     if (nfs_cache != nullptr)
         nfs_cache_fork_cow(*nfs_cache, inherit);
-#endif
 }
 
 void

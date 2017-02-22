@@ -113,16 +113,8 @@ PKG_CHECK_MODULES([JSONCPP], [jsoncpp],,
 PKG_CHECK_MODULES([AVAHI], [avahi-client],,
 	[AC_MSG_ERROR([avahi-client not found])])
 
-AC_ARG_ENABLE(nfs,
-	AS_HELP_STRING([--enable-nfs],
-		[Enable the NFS client (default: enabled)]),,
-	enable_nfs=yes)
-AM_CONDITIONAL(HAVE_LIBNFS, test x$enable_nfs = xyes)
-if test x$enable_nfs = xyes; then
-	AC_DEFINE_UNQUOTED([HAVE_LIBNFS], 1)
-	PKG_CHECK_MODULES([LIBNFS], [libnfs],,
-		[AC_MSG_ERROR([libnfs not found])])
-fi
+PKG_CHECK_MODULES([LIBNFS], [libnfs],,
+	[AC_MSG_ERROR([libnfs not found])])
 
 PKG_CHECK_MODULES([LIBCM4ALL_DAEMON], [libcm4all-daemon >= 0.4.1],,
 	[AC_MSG_ERROR([libcm4all-daemon not found])])

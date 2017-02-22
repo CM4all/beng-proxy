@@ -27,10 +27,7 @@ class DirectResourceLoader final : public ResourceLoader {
     FcgiStock *fcgi_stock;
     StockMap *was_stock;
     StockMap *delegate_stock;
-
-#ifdef HAVE_LIBNFS
     NfsCache *nfs_cache;
-#endif
 
 public:
     DirectResourceLoader(EventLoop &_event_loop,
@@ -45,14 +42,9 @@ public:
          spawn_service(_spawn_service),
          lhttp_stock(_lhttp_stock),
          fcgi_stock(_fcgi_stock), was_stock(_was_stock),
-         delegate_stock(_delegate_stock)
-#ifdef HAVE_LIBNFS
-        , nfs_cache(_nfs_cache)
-#endif
+         delegate_stock(_delegate_stock),
+         nfs_cache(_nfs_cache)
     {
-#ifndef HAVE_LIBNFS
-        (void)_nfs_cache;
-#endif
     }
 
     /* virtual methods from class ResourceLoader */

@@ -140,6 +140,12 @@ cm4all_beng_proxy_SOURCES = \
 	src/was/was_launch.cxx src/was/was_launch.hxx \
 	src/was/was_glue.cxx src/was/was_glue.hxx \
 	src/was/Lease.hxx \
+	src/nfs_handler.cxx src/nfs_handler.hxx \
+	src/istream_nfs.cxx src/istream_nfs.hxx \
+	src/nfs_stock.cxx src/nfs_stock.hxx \
+	src/nfs_client.cxx src/nfs_client.hxx \
+	src/nfs_cache.cxx src/nfs_cache.hxx \
+	src/nfs_request.cxx src/nfs_request.hxx \
 	src/file_headers.cxx src/file_headers.hxx \
 	src/file_handler.cxx src/file_handler.hxx \
 	src/bp_global.cxx src/bp_global.hxx \
@@ -322,16 +328,6 @@ cm4all_beng_proxy_LDADD = $(AM_LDADD) \
 	$(LIBNFS_LIBS) \
 	$(LIBSSL_LIBS) \
 	$(LIBZ_LIBS)
-
-if HAVE_LIBNFS
-cm4all_beng_proxy_SOURCES += \
-	src/nfs_handler.cxx src/nfs_handler.hxx \
-	src/istream_nfs.cxx src/istream_nfs.hxx \
-	src/nfs_stock.cxx src/nfs_stock.hxx \
-	src/nfs_client.cxx src/nfs_client.hxx \
-	src/nfs_cache.cxx src/nfs_cache.hxx \
-	src/nfs_request.cxx src/nfs_request.hxx
-endif
 
 cm4all_beng_lb_SOURCES = \
 	src/isolate.cxx src/isolate.hxx \
@@ -968,6 +964,7 @@ noinst_PROGRAMS = \
 	test/run_client_balancer \
 	test/run_client \
 	test/run_memcached_client \
+	test/run_nfs_client \
 	test/run_http_cache \
 	test/dump_memcached_choice \
 	test/cleanup_memcached_choice \
@@ -976,10 +973,6 @@ noinst_PROGRAMS = \
 	test/dump_udp test/dump_control test/send_control \
 	test/run_ua_parser \
 	test/run_parser_cdata
-
-if HAVE_LIBNFS
-noinst_PROGRAMS += test/run_nfs_client
-endif
 
 FILTER_TESTS = test/t_istream_cat test/t_istream_chunked test/t_istream_dechunk \
 	test/t_istream_dechunk_verbatim1 \
@@ -1961,8 +1954,6 @@ test_run_client_balancer_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_SOCKET_LIBS) \
 	$(GLIB_LIBS)
 
-if HAVE_LIBNFS
-
 test_run_nfs_client_SOURCES = test/run_nfs_client.cxx \
 	src/nfs_client.cxx src/istream_nfs.cxx \
 	src/direct.cxx \
@@ -1980,7 +1971,6 @@ test_run_nfs_client_LDADD = $(AM_LDADD) \
 	$(LIBEVENT_LIBS) \
 	$(LIBNFS_LIBS) \
 	$(GLIB_LIBS)
-endif
 
 test_t_fcgi_client_SOURCES = test/t_fcgi_client.cxx \
 	test/fcgi_server.cxx test/fcgi_server.hxx \

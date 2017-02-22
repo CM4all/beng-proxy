@@ -33,6 +33,8 @@
 #include "bulldog.h"
 #include "balancer.hxx"
 #include "pipe_stock.hxx"
+#include "nfs_stock.hxx"
+#include "nfs_cache.hxx"
 #include "DirectResourceLoader.hxx"
 #include "CachedResourceLoader.hxx"
 #include "FilterResourceLoader.hxx"
@@ -66,11 +68,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#ifdef HAVE_LIBNFS
-#include "nfs_stock.hxx"
-#include "nfs_cache.hxx"
-#endif
-
 #ifndef NDEBUG
 bool debug_mode = false;
 #endif
@@ -82,11 +79,9 @@ static constexpr cap_value_t cap_keep_list[] = {
     CAP_KILL,
 #endif
 
-#ifdef HAVE_LIBNFS
     /* allow libnfs to bind to privileged ports, which in turn allows
        disabling the "insecure" flag on the NFS server */
     CAP_NET_BIND_SERVICE,
-#endif
 };
 
 void
@@ -187,13 +182,11 @@ BpInstance::ShutdownCallback()
     if (delegate_stock != nullptr)
         delete delegate_stock;
 
-#ifdef HAVE_LIBNFS
     if (nfs_cache != nullptr)
         nfs_cache_free(nfs_cache);
 
     if (nfs_stock != nullptr)
         nfs_stock_free(nfs_stock);
-#endif
 
     if (pipe_stock != nullptr)
         pipe_stock_free(pipe_stock);
@@ -405,13 +398,11 @@ try {
     instance.delegate_stock = delegate_stock_new(instance.event_loop,
                                                  *instance.spawn_service);
 
-#ifdef HAVE_LIBNFS
     instance.nfs_stock = nfs_stock_new(instance.event_loop, instance.pool);
     instance.nfs_cache = nfs_cache_new(*instance.pool,
                                        instance.config.nfs_cache_size,
                                        *instance.nfs_stock,
                                        instance.event_loop);
-#endif
 
     instance.direct_resource_loader =
         new DirectResourceLoader(instance.event_loop,

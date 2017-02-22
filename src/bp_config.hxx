@@ -87,9 +87,7 @@ struct BpConfig {
 
     size_t filter_cache_size = 128 * 1024 * 1024;
 
-#ifdef HAVE_LIBNFS
     size_t nfs_cache_size = 256 * 1024 * 1024;
-#endif
 
     unsigned translate_cache_size = 131072;
     unsigned translate_stock_limit = 64;

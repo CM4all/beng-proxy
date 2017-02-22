@@ -113,11 +113,9 @@ Request::HandleAddress(const ResourceAddress &address)
             file_callback(*this, address.GetFile());
         break;
 
-#ifdef HAVE_LIBNFS
     case ResourceAddress::Type::NFS:
         nfs_handler(*this);
         break;
-#endif
 
     default:
         proxy_handler(*this);

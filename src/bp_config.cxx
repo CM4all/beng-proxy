@@ -33,10 +33,8 @@ BpConfig::HandleSet(StringView name, const char *value)
         http_cache_size_set = true;
     } else if (name.Equals("filter_cache_size")) {
         filter_cache_size = ParseSize(value);
-#ifdef HAVE_LIBNFS
     } else if (name.Equals("nfs_cache_size")) {
         nfs_cache_size = ParseSize(value);
-#endif
     } else if (name.Equals("translate_cache_size")) {
         translate_cache_size = ParseUnsignedLong(value);
     } else if (name.Equals("translate_stock_limit")) {

@@ -52,11 +52,7 @@ bp_get_stats(const BpInstance *instance,
     data->http_cache_brutto_size = ToBE64(http_cache_stats.brutto_size);
     data->filter_cache_brutto_size = ToBE64(fcache_stats.brutto_size);
 
-#ifdef HAVE_LIBNFS
     const auto nfs_cache_stats = nfs_cache_get_stats(*instance->nfs_cache);
-#else
-    const auto nfs_cache_stats = AllocatorStats::Zero();
-#endif
     data->nfs_cache_size = ToBE64(nfs_cache_stats.netto_size);
     data->nfs_cache_brutto_size = ToBE64(nfs_cache_stats.brutto_size);
 

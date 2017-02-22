@@ -19,6 +19,7 @@
 #include "nfs_address.hxx"
 #include "was/was_glue.hxx"
 #include "ajp/ajp_request.hxx"
+#include "nfs_request.hxx"
 #include "header_writer.hxx"
 #include "pipe_filter.hxx"
 #include "delegate/Address.hxx"
@@ -30,10 +31,6 @@
 #include "pool.hxx"
 #include "AllocatorPtr.hxx"
 #include "util/ConstBuffer.hxx"
-
-#ifdef HAVE_LIBNFS
-#include "nfs_request.hxx"
-#endif
 
 #include <socket/parser.h>
 
@@ -136,9 +133,7 @@ DirectResourceLoader::SendRequest(struct pool &pool,
     switch (address.type) {
         const FileAddress *file;
         const CgiAddress *cgi;
-#ifdef HAVE_LIBNFS
         const NfsAddress *nfs;
-#endif
         int stderr_fd;
         const char *server_name;
         unsigned server_port;
@@ -182,17 +177,12 @@ DirectResourceLoader::SendRequest(struct pool &pool,
             /* NFS files cannot receive a request body, close it */
             body->CloseUnused();
 
-#ifdef HAVE_LIBNFS
         nfs = &address.GetNfs();
 
         nfs_request(pool, *nfs_cache,
                     nfs->server, nfs->export_name,
                     nfs->path, nfs->content_type,
                     handler, cancel_ptr);
-#else
-        handler.InvokeError(g_error_new_literal(resource_loader_quark(), 0,
-                                                "libnfs disabled"));
-#endif
         return;
 
     case ResourceAddress::Type::PIPE:

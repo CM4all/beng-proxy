@@ -7,6 +7,7 @@
 #include "request.hxx"
 #include "bp_instance.hxx"
 #include "http_client.hxx"
+#include "nfs_client.hxx"
 #include "ajp/ajp_client.hxx"
 #include "memcached/memcached_client.hxx"
 #include "cgi/cgi_quark.h"
@@ -25,10 +26,7 @@
 
 #include <daemon/log.h>
 
-#ifdef HAVE_LIBNFS
-#include "nfs_client.hxx"
 #include <nfsc/libnfs-raw-nfs.h>
-#endif
 
 static void
 response_dispatch_error(Request &request, GError *error,
@@ -80,7 +78,6 @@ response_dispatch_error(Request &request, GError *error)
         }
     }
 
-#ifdef HAVE_LIBNFS
     if (error->domain == nfs_client_quark()) {
         switch (error->code) {
         case NFS3ERR_NOENT:
@@ -90,7 +87,6 @@ response_dispatch_error(Request &request, GError *error)
             return;
         }
     }
-#endif
 
     if (error->domain == http_client_quark() ||
              error->domain == ajp_client_quark())
