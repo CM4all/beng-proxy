@@ -27,14 +27,6 @@
 #include <errno.h>
 #include <stdlib.h>
 
-#ifndef HAVE_ATTR_XATTR_H
-#define NO_XATTR 1
-#endif
-
-#ifndef NO_XATTR
-#include <attr/xattr.h>
-#endif
-
 void
 file_dispatch(Request &request2, const struct stat &st,
               const struct file_request &file_request,
