@@ -6,11 +6,10 @@
 
 #include "bulldog.hxx"
 #include "net/SocketAddress.hxx"
+#include "util/StringBuilder.hxx"
 
 #include <daemon/log.h>
 #include <socket/address.h>
-
-#include <glib.h>
 
 #include <assert.h>
 #include <string.h>
@@ -29,18 +28,18 @@ static struct {
 
 void
 bulldog_init(const char *path)
-{
+try {
     if (path == nullptr)
         return;
 
-    if (strlen(path) + sizeof(WORKERS) + 16 >= sizeof(bulldog.path)) {
-        daemon_log(1, "bulldog path is too long\n");
-        return;
-    }
+    StringBuilder<> b(bulldog.path, sizeof(bulldog.path));
+    b.Append(path);
+    b.Append(WORKERS);
 
-    strcpy(bulldog.path, path);
-    strcat(bulldog.path, WORKERS);
     bulldog.path_length = strlen(bulldog.path);
+} catch (StringBuilder<>::Overflow) {
+    bulldog.path[0] = 0;
+    daemon_log(1, "bulldog path is too long\n");
 }
 
 void
@@ -52,7 +51,7 @@ gcc_pure
 static const char *
 bulldog_node_path(SocketAddress address,
                   const char *attribute_name)
-{
+try {
     assert(!address.IsNull());
     assert(attribute_name != nullptr);
     assert(*attribute_name != 0);
@@ -66,9 +65,13 @@ bulldog_node_path(SocketAddress address,
                                   address.GetAddress(), address.GetSize()))
         return nullptr;
 
-    g_strlcat(bulldog.path, "/", sizeof(bulldog.path));
-    g_strlcat(bulldog.path, attribute_name, sizeof(bulldog.path));
+    StringBuilder<> b(bulldog.path + strlen(bulldog.path),
+                      bulldog.path + sizeof(bulldog.path));
+    b.Append('/');
+    b.Append(attribute_name);
     return bulldog.path;
+} catch (StringBuilder<>::Overflow) {
+    return nullptr;
 }
 
 gcc_pure
