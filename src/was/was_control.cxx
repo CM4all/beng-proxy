@@ -11,7 +11,6 @@
 #include "io/Buffered.hxx"
 #include "util/ConstBuffer.hxx"
 
-#include <daemon/log.h>
 #include <was/protocol.h>
 
 #include <errno.h>

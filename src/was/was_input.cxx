@@ -16,7 +16,6 @@
 #include "util/Cast.hxx"
 #include "gerrno.h"
 
-#include <daemon/log.h>
 #include <was/protocol.h>
 
 #include <errno.h>

@@ -20,7 +20,6 @@
 #include "util/ConstBuffer.hxx"
 #include "util/Cancellable.hxx"
 
-#include <daemon/log.h>
 #include <was/protocol.h>
 
 #include <errno.h>

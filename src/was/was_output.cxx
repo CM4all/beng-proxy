@@ -12,7 +12,6 @@
 #include "istream/Pointer.hxx"
 #include "pool.hxx"
 
-#include <daemon/log.h>
 #include <was/protocol.h>
 
 #include <errno.h>

@@ -5,7 +5,6 @@
  */
 
 #include "was_glue.hxx"
-#include "was_quark.h"
 #include "was_stock.hxx"
 #include "was_launch.hxx"
 #include "was_client.hxx"
@@ -24,8 +23,6 @@
 #include "util/Cancellable.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/StringCompare.hxx"
-
-#include <daemon/log.h>
 
 #include <assert.h>
 #include <sys/socket.h>

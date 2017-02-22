@@ -14,7 +14,6 @@
 #include "GException.hxx"
 #include "util/ConstBuffer.hxx"
 
-#include <daemon/log.h>
 #include <inline/compiler.h>
 
 #include <sys/socket.h>
