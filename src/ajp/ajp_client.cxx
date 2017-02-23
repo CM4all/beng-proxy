@@ -30,9 +30,6 @@
 #include "util/ByteOrder.hxx"
 #include "pool.hxx"
 
-#include <daemon/log.h>
-#include <socket/util.h>
-
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
