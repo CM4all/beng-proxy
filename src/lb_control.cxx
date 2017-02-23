@@ -124,7 +124,7 @@ failure_status_to_string(enum failure_status status)
 }
 
 static void
-node_status_response(ControlServer *server, struct pool *pool,
+node_status_response(ControlServer *server,
                      SocketAddress address,
                      const char *payload, size_t length, const char *status)
 {
@@ -136,7 +136,7 @@ node_status_response(ControlServer *server, struct pool *pool,
     response[length] = 0;
     memcpy(response + length + 1, status, status_length);
 
-    server->Reply(pool, address,
+    server->Reply(address,
                   CONTROL_NODE_STATUS, response, response_length);
 }
 
@@ -153,7 +153,7 @@ try {
     const char *colon = (const char *)memchr(payload, ':', length);
     if (colon == nullptr || colon == payload || colon == payload + length - 1) {
         daemon_log(3, "malformed NODE_STATUS control packet: no port\n");
-        node_status_response(control->server.get(), tpool, address,
+        node_status_response(control->server.get(), address,
                              payload, length, "malformed");
         return;
     }
@@ -167,7 +167,7 @@ try {
     const auto *node = control->instance.config->FindNode(node_name);
     if (node == nullptr) {
         daemon_log(3, "unknown node in NODE_STATUS control packet\n");
-        node_status_response(control->server.get(), tpool, address,
+        node_status_response(control->server.get(), address,
                              payload, length, "unknown");
         return;
     }
@@ -176,7 +176,7 @@ try {
     unsigned port = strtoul(port_string, &endptr, 10);
     if (port == 0 || *endptr != 0) {
         daemon_log(3, "malformed NODE_STATUS control packet: port is not a number\n");
-        node_status_response(control->server.get(), tpool, address,
+        node_status_response(control->server.get(), address,
                              payload, length, "malformed");
         return;
     }
@@ -191,7 +191,7 @@ try {
         failure_get_status({with_port, node->address.GetSize()});
     const char *s = failure_status_to_string(status);
 
-    node_status_response(&control_server, tpool, address,
+    node_status_response(&control_server, address,
                          payload, length, s);
 } catch (const std::runtime_error &e) {
     daemon_log(3, "%s\n", e.what());
@@ -204,10 +204,7 @@ try {
     struct beng_control_stats stats;
     lb_get_stats(&control->instance, &stats);
 
-    const AutoRewindPool auto_rewind(*tpool);
-
-    control_server.Reply(tpool,
-                         address,
+    control_server.Reply(address,
                          CONTROL_STATS, &stats, sizeof(stats));
 } catch (const std::runtime_error &e) {
     daemon_log(3, "%s\n", e.what());

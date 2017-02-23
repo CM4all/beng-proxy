@@ -181,11 +181,8 @@ query_stats(BpInstance *instance, ControlServer *server,
     struct beng_control_stats stats;
     bp_get_stats(instance, &stats);
 
-    const AutoRewindPool auto_rewind(*tpool);
-
     try {
-        server->Reply(tpool,
-                      address,
+        server->Reply(address,
                       CONTROL_STATS, &stats, sizeof(stats));
     } catch (const std::runtime_error &e) {
         daemon_log(3, "%s\n", e.what());

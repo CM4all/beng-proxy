@@ -5,7 +5,6 @@
  */
 
 #include "control_server.hxx"
-#include "pool.hxx"
 #include "net/UdpListener.hxx"
 #include "net/SocketAddress.hxx"
 #include "util/ByteOrder.hxx"
@@ -15,6 +14,7 @@
 
 #include <assert.h>
 #include <string.h>
+#include <alloca.h>
 
 static void
 control_server_decode(ControlServer &control_server,
@@ -148,15 +148,18 @@ ControlServer::SetFd(int fd)
 }
 
 void
-ControlServer::Reply(struct pool *pool,
-                     SocketAddress address,
+ControlServer::Reply(SocketAddress address,
                      enum beng_control_command command,
                      const void *payload, size_t payload_length)
 {
     assert(udp != nullptr);
 
+    // TODO: use sendmsg() with iovec[2] instead of assembling a new buffer
     struct beng_control_header *header = (struct beng_control_header *)
-        p_malloc(pool, sizeof(*header) + payload_length);
+        alloca(sizeof(*header) + payload_length);
+    if (header == nullptr)
+        throw std::runtime_error("alloca() failed");
+
     header->length = ToBE16(payload_length);
     header->command = ToBE16(command);
     memcpy(header + 1, payload, payload_length);

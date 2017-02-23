@@ -13,7 +13,6 @@
 
 #include <stddef.h>
 
-struct pool;
 struct in_addr;
 class SocketAddress;
 class Error;
@@ -50,8 +49,7 @@ struct ControlServer final : UdpHandler {
     /**
      * Throws std::runtime_error on error.
      */
-    void Reply(struct pool *pool,
-               SocketAddress address,
+    void Reply(SocketAddress address,
                enum beng_control_command command,
                const void *payload, size_t payload_length);
 
