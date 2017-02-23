@@ -1,5 +1,7 @@
-#include "istream.hxx"
-#include "istream_string.hxx"
+#include "istream/istream_string.hxx"
+#include "fcgi/istream_fcgi.hxx"
+
+class EventLoop;
 
 static Istream *
 create_input(struct pool *pool)
@@ -8,9 +10,9 @@ create_input(struct pool *pool)
 }
 
 static Istream *
-create_test(struct pool *pool, Istream *input)
+create_test(EventLoop &, struct pool *pool, Istream *input)
 {
-    return istream_fcgi_new(pool, input, 1);
+    return istream_fcgi_new(*pool, *input, 1);
 }
 
 #include "t_istream_filter.hxx"

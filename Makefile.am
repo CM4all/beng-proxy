@@ -1345,7 +1345,7 @@ test_t_istream_html_escape_SOURCES = \
 	test/t_istream_html_escape.cxx $(T_ISTREAM_FILTER_SRC)
 test_t_istream_html_escape_LDADD = $(T_ISTREAM_FILTER_LIB)
 
-test_t_istream_fcgi_SOURCES = test/t_istream_cat.cxx \
+test_t_istream_fcgi_SOURCES = test/t_istream_fcgi.cxx \
 	src/fcgi/istream_fcgi.cxx \
 	$(T_ISTREAM_FILTER_SRC)
 test_t_istream_fcgi_LDADD = $(T_ISTREAM_FILTER_LIB)
