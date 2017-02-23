@@ -9,10 +9,7 @@
 #include "stock/Class.hxx"
 #include "stock/Item.hxx"
 #include "system/fd_util.h"
-#include "pool.hxx"
 #include "gerrno.h"
-
-#include <daemon/log.h>
 
 #include <assert.h>
 #include <unistd.h>
