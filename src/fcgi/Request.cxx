@@ -10,20 +10,14 @@
 #include "http_response.hxx"
 #include "lease.hxx"
 #include "tcp_stock.hxx"
-#include "stock/Stock.hxx"
 #include "stock/Item.hxx"
-#include "spawn/ChildOptions.hxx"
 #include "istream/istream.hxx"
 #include "pool.hxx"
 #include "util/Cast.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/Cancellable.hxx"
 
-#include <daemon/log.h>
-
 #include <sys/socket.h>
-#include <errno.h>
-#include <string.h>
 #include <unistd.h>
 
 struct FcgiRequest final : Lease, Cancellable {

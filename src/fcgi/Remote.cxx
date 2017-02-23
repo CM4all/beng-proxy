@@ -22,8 +22,6 @@
 #include "util/ConstBuffer.hxx"
 #include "util/Cancellable.hxx"
 
-#include <daemon/log.h>
-
 #include <sys/socket.h>
 #include <errno.h>
 #include <string.h>
