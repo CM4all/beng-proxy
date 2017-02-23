@@ -15,8 +15,6 @@
 #include "util/Cast.hxx"
 #include "util/ByteOrder.hxx"
 
-#include <daemon/log.h>
-
 #include <glib.h>
 
 #include <errno.h>
