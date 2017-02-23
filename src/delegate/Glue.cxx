@@ -13,11 +13,6 @@
 #include "stock/MapStock.hxx"
 #include "lease.hxx"
 #include "pool.hxx"
-#include "util/Cancellable.hxx"
-
-#include <daemon/log.h>
-
-#include <errno.h>
 
 struct DelegateGlue final : Lease {
     StockItem &item;
