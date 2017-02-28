@@ -448,6 +448,13 @@ TranslateResponse::CacheStore(AllocatorPtr alloc, const TranslateResponse &src,
                     base = nullptr;
             }
 
+            if (redirect != nullptr) {
+                size_t length = base_string(redirect, tail);
+                redirect = length != (size_t)-1
+                    ? alloc.DupZ({redirect, length})
+                    : nullptr;
+            }
+
             if (test_path != nullptr) {
                 size_t length = base_string_unescape(alloc, test_path, tail);
                 test_path = length != (size_t)-1
@@ -477,6 +484,9 @@ TranslateResponse::CacheLoad(AllocatorPtr alloc, const TranslateResponse &src,
 
         if (uri != nullptr)
             uri = alloc.Concat(uri, tail);
+
+        if (redirect != nullptr)
+            redirect = alloc.Concat(redirect, tail);
 
         if (test_path != nullptr) {
             char *unescaped = uri_unescape_dup(alloc, tail);
