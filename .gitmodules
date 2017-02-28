@@ -1,0 +1,3 @@
+[submodule "libcommon"]
+	path = libcommon
+	url = git@dev.intern.cm-ag:max/libcommon.git

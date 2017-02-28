@@ -97,18 +97,18 @@ libdaemon = dependency('libcm4all-daemon', version: '>= 0.4.1')
 libhttp = dependency('libcm4all-http', version: '>= 1.2.5')
 libwas = dependency('libcm4all-was-protocol', version: '>= 1.0')
 
-inc = include_directories('src', 'include')
+inc = include_directories('src', 'include', 'libcommon/src')
 
 util = static_library('util',
-  'src/util/LeakDetector.cxx',
-  'src/util/StringBuilder.cxx',
-  'src/util/StringUtil.cxx',
-  'src/util/StringView.cxx',
-  'src/util/StringParser.cxx',
-  'src/util/AllocatedString.cxx',
+  'libcommon/src/util/AllocatedString.cxx',
+  'libcommon/src/util/Exception.cxx',
+  'libcommon/src/util/LeakDetector.cxx',
+  'libcommon/src/util/PrintException.cxx',
+  'libcommon/src/util/StringBuilder.cxx',
+  'libcommon/src/util/StringParser.cxx',
+  'libcommon/src/util/StringUtil.cxx',
+  'libcommon/src/util/StringView.cxx',
   'src/util/StringSet.cxx',
-  'src/util/PrintException.cxx',
-  'src/util/Exception.cxx',
   'src/util/djbhash.c',
   'src/format.c',
   'src/http_date.cxx',
