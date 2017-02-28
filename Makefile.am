@@ -70,7 +70,7 @@ cm4all_beng_proxy_SOURCES = \
 	src/FdType.hxx \
 	src/capabilities.cxx src/capabilities.hxx \
 	src/gerrno.h \
-	src/GException.hxx \
+	src/GException.cxx src/GException.hxx \
 	src/glibfwd.hxx \
 	src/abort_close.cxx src/abort_close.hxx \
 	src/abort_flag.hxx \
@@ -326,6 +326,7 @@ cm4all_beng_proxy_LDADD = $(AM_LDADD) \
 	$(LIBZ_LIBS)
 
 cm4all_beng_lb_SOURCES = \
+	src/GException.cxx \
 	src/isolate.cxx src/isolate.hxx \
 	src/abort_close.cxx src/abort_close.hxx \
 	src/capabilities.cxx src/capabilities.hxx \
@@ -1453,6 +1454,7 @@ test_t_cgi_LDADD = $(AM_LDADD) \
 
 test_t_http_server_SOURCES = test/t_http_server.cxx \
 	src/http_upgrade.cxx src/http_util.cxx \
+	src/GException.cxx \
 	src/socket_wrapper.cxx src/buffered_socket.cxx src/filtered_socket.cxx \
 	src/address_string.cxx \
 	src/header_writer.cxx \
@@ -1476,6 +1478,7 @@ test_t_http_server_LDADD = $(AM_LDADD) \
 
 test_run_http_server_SOURCES = test/run_http_server.cxx \
 	src/http_upgrade.cxx src/http_util.cxx \
+	src/GException.cxx \
 	src/socket_wrapper.cxx src/buffered_socket.cxx src/filtered_socket.cxx \
 	src/address_string.cxx \
 	src/duplex.cxx src/duplex.hxx \
@@ -1502,6 +1505,7 @@ test_t_http_client_SOURCES = test/t_http_client.cxx \
 	src/t_client.hxx \
 	src/http_client.cxx \
 	src/http_upgrade.cxx src/http_util.cxx \
+	src/GException.cxx \
 	src/socket_wrapper.cxx src/buffered_socket.cxx src/filtered_socket.cxx \
 	$(STOPWATCH_SRC) \
 	src/header_writer.cxx \
@@ -1720,6 +1724,7 @@ test_t_widget_http_SOURCES = test/t_widget_http.cxx \
 	src/daddress_list.cxx \
 	src/dhttp_address.cxx \
 	src/esession.cxx \
+	src/GException.cxx \
 	src/widget_session.cxx src/session.cxx src/session_manager.cxx src/session_id.cxx \
 	src/widget_view.cxx src/widget.cxx src/widget_init.cxx \
 	src/widget_class.cxx \
@@ -1970,6 +1975,7 @@ test_t_fcgi_client_SOURCES = test/t_fcgi_client.cxx \
 	test/fcgi_server.cxx test/fcgi_server.hxx \
 	src/fcgi/Client.cxx src/fcgi/Serialize.cxx \
 	src/fcgi/istream_fcgi.cxx \
+	src/GException.cxx \
 	src/socket_wrapper.cxx src/buffered_socket.cxx \
 	src/header_parser.cxx \
 	src/istream_gb.cxx \
@@ -2005,7 +2011,8 @@ test_t_was_client_LDADD = $(AM_LDADD) \
 
 test_t_ajp_client_SOURCES = test/t_ajp_client.cxx \
 	test/ajp_server.cxx test/ajp_server.hxx \
-	src/t_client.hxx src/tio.hxx \
+	src/t_client.hxx test/tio.hxx \
+	src/GException.cxx \
 	src/ajp/ajp_client.cxx src/ajp/ajp_serialize.cxx \
 	src/ajp/ajp_headers.cxx src/ajp/ajp_protocol.cxx \
 	src/ajp/istream_ajp_body.cxx src/ajp/istream_ajp_body.hxx \
@@ -2037,6 +2044,7 @@ test_run_client_SOURCES = test/run_client.cxx \
 	src/serialize.cxx \
 	src/istream_gb.cxx \
 	src/pipe_stock.cxx \
+	src/GException.cxx \
 	$(STOPWATCH_SRC) \
 	src/direct.cxx
 test_run_client_LDADD = $(AM_LDADD) \
@@ -2086,6 +2094,7 @@ test_run_memcached_client_SOURCES = test/run_memcached_client.cxx \
 	src/memcached/memcached_client.cxx src/memcached/memcached_packet.cxx \
 	src/socket_wrapper.cxx src/buffered_socket.cxx \
 	src/pipe_stock.cxx \
+	src/GException.cxx \
 	src/direct.cxx
 test_run_memcached_client_LDADD = $(LIBEVENT_LIBS) $(GLIB_LIBS) \
 	libeutil.a \
@@ -2102,6 +2111,7 @@ test_dump_memcached_choice_SOURCES = test/dump_memcached_choice.cxx \
 	src/memcached/memcached_client.cxx src/memcached/memcached_packet.cxx \
 	src/socket_wrapper.cxx src/buffered_socket.cxx \
 	src/direct.cxx \
+	src/GException.cxx \
 	src/serialize.cxx
 test_dump_memcached_choice_LDADD = $(LIBEVENT_LIBS) $(GLIB_LIBS) \
 	libistream.a libpool.a libmemory.a libevent.a \
@@ -2125,6 +2135,7 @@ test_cleanup_memcached_choice_SOURCES = test/cleanup_memcached_choice.cxx \
 	src/serialize.cxx \
 	src/ExpandableStringList.cxx \
 	src/pexpand.cxx \
+	src/GException.cxx \
 	$(STOPWATCH_SRC)
 test_cleanup_memcached_choice_LDADD = $(AM_LDADD) \
 	libeutil.a \
@@ -2146,6 +2157,7 @@ test_fake_memcached_server_SOURCES = test/fake_memcached_server.cxx
 test_t_memcached_client_SOURCES = test/t_memcached_client.cxx \
 	src/memcached/memcached_client.cxx src/memcached/memcached_packet.cxx \
 	src/socket_wrapper.cxx src/buffered_socket.cxx \
+	src/GException.cxx \
 	src/direct.cxx
 test_t_memcached_client_LDADD = $(AM_LDADD) \
 	libistream.a libpool.a libmemory.a libevent.a \
