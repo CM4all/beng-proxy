@@ -120,6 +120,11 @@ struct MakeResponse : TranslateResponse {
         return std::move(*this);
     }
 
+    MakeResponse &&Redirect(const char *value) {
+        redirect = value;
+        return std::move(*this);
+    }
+
     MakeResponse &&TestPath(const char *value) {
         test_path = value;
         return std::move(*this);

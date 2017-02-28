@@ -334,6 +334,13 @@ TranslateResponse::CacheStore(struct pool *pool, const TranslateResponse &src,
                     base = nullptr;
             }
 
+            if (redirect != nullptr) {
+                size_t length = base_string(redirect, tail);
+                redirect = length != (size_t)-1
+                    ? p_strndup(pool, redirect, length)
+                    : nullptr;
+            }
+
             if (test_path != nullptr) {
                 size_t length = base_string_unescape(pool, test_path, tail);
                 test_path = length != (size_t)-1
@@ -364,6 +371,9 @@ TranslateResponse::CacheLoad(struct pool *pool, const TranslateResponse &src,
 
         if (uri != nullptr)
             uri = p_strcat(pool, uri, tail, nullptr);
+
+        if (redirect != nullptr)
+            redirect = p_strcat(pool, redirect, tail, nullptr);
 
         if (test_path != nullptr) {
             char *unescaped = uri_unescape_dup(pool, tail);

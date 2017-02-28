@@ -237,6 +237,7 @@ translate_response_equals(const TranslateResponse *a,
         a->easy_base == b->easy_base &&
         a->unsafe_base == b->unsafe_base &&
         string_equals(a->uri, b->uri) &&
+        string_equals(a->redirect, b->redirect) &&
         string_equals(a->test_path, b->test_path) &&
         buffer_equals(a->check, b->check) &&
         buffer_equals(a->want_full_uri, b->want_full_uri) &&
@@ -407,6 +408,34 @@ test_base_uri(struct pool *pool, struct tcache *cache)
     expected_response = &response2;
     translate_cache(*pool, *cache, request2,
                     my_translate_handler, nullptr, cancel_ptr);
+}
+
+/**
+ * Test BASE+REDIRECT.
+ */
+static void
+test_base_redirect(struct pool *pool, struct tcache *cache)
+{
+    CancellablePointer cancel_ref;
+
+    const auto request1 = MakeRequest("/base_redirect/foo");
+    const auto response1 = MakeResponse().Base("/base_redirect/")
+        .File("/var/www/foo")
+        .Redirect("http://modified/foo");
+
+    next_response = expected_response = &response1;
+    translate_cache(*pool, *cache, request1,
+                    my_translate_handler, nullptr, cancel_ref);
+
+    const auto request2 = MakeRequest("/base_redirect/hansi");
+    const auto response2 = MakeResponse().Base("/base_redirect/")
+        .File("/var/www/hansi")
+        .Redirect("http://modified/hansi");
+
+    next_response = nullptr;
+    expected_response = &response2;
+    translate_cache(*pool, *cache, request2,
+                    my_translate_handler, nullptr, cancel_ref);
 }
 
 /**
@@ -1313,6 +1342,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
     test_base_root(pool, cache);
     test_base_mismatch(pool, cache);
     test_base_uri(pool, cache);
+    test_base_redirect(pool, cache);
     test_base_test_path(pool, cache);
     test_easy_base(pool, cache);
     test_easy_base_uri(pool, cache);
