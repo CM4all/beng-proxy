@@ -25,11 +25,6 @@ public:
         Set(loop, fd, mask, callback, ctx);
     }
 
-    Event(evutil_socket_t fd, short mask,
-          event_callback_fn callback, void *ctx) {
-        Set(fd, mask, callback, ctx);
-    }
-
 #ifndef NDEBUG
     ~Event() {
         event_debug_unassign(&event);
@@ -72,11 +67,6 @@ public:
     void Set(EventLoop &loop, evutil_socket_t fd, short mask,
              event_callback_fn callback, void *ctx) {
         ::event_assign(&event, loop.Get(), fd, mask, callback, ctx);
-    }
-
-    void Set(evutil_socket_t fd, short mask,
-             event_callback_fn callback, void *ctx) {
-        ::event_set(&event, fd, mask, callback, ctx);
     }
 
     bool Add(const struct timeval *timeout=nullptr) {
