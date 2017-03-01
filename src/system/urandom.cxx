@@ -3,7 +3,7 @@
  */
 
 #include "urandom.hxx"
-#include "Error.hxx"
+#include "system/Error.hxx"
 #include "fd_util.h"
 #include "util/ScopeExit.hxx"
 
