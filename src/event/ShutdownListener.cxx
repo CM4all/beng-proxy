@@ -6,15 +6,14 @@
 
 #include "ShutdownListener.hxx"
 
-#include <daemon/log.h>
-
 #include <signal.h>
+#include <stdio.h>
 
 inline void
 ShutdownListener::SignalCallback(int signo)
 {
-    daemon_log(2, "caught signal %d, shutting down (pid=%d)\n",
-               signo, (int)getpid());
+    fprintf(stderr, "caught signal %d, shutting down (pid=%d)\n",
+            signo, (int)getpid());
 
     Disable();
     callback();

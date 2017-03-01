@@ -192,7 +192,6 @@ event = static_library('event',
   include_directories: inc,
   dependencies: [
     libinline,
-    libdaemon,
     libevent,
     util_dep,
   ])
