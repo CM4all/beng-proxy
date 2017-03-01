@@ -6,11 +6,9 @@
 
 #include "ShutdownListener.hxx"
 
-#include <inline/compiler.h>
 #include <daemon/log.h>
 
 #include <signal.h>
-#include <unistd.h>
 
 inline void
 ShutdownListener::SignalCallback(int signo)
