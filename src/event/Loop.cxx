@@ -1,6 +1,4 @@
 /*
- * C++ wrappers for libevent.
- *
  * author: Max Kellermann <mk@cm4all.com>
  */
 

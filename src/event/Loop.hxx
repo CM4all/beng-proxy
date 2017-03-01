@@ -1,6 +1,4 @@
 /*
- * C++ wrappers for libevent.
- *
  * author: Max Kellermann <mk@cm4all.com>
  */
 
@@ -13,6 +11,9 @@
 
 #include <assert.h>
 
+/**
+ * Wrapper for a struct event_base.
+ */
 class EventLoop {
     struct event_base *const event_base;
 
