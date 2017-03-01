@@ -1,6 +1,4 @@
 /*
- * C++ wrappers for libevent.
- *
  * author: Max Kellermann <mk@cm4all.com>
  */
 
@@ -13,6 +11,9 @@
 
 #include <event.h>
 
+/**
+ * Wrapper for a struct event.
+ */
 class Event {
     struct event event;
 
