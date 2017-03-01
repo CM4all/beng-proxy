@@ -1,7 +1,4 @@
 /*
- * Wrapper for event.h which aims to simplify installing recurring
- * events.
- *
  * author: Max Kellermann <mk@cm4all.com>
  */
 

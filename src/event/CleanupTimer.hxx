@@ -1,7 +1,4 @@
 /*
- * Wrapper for event.h which aims to simplify installing recurring
- * events.
- *
  * author: Max Kellermann <mk@cm4all.com>
  */
 
@@ -10,6 +7,10 @@
 
 #include "TimerEvent.hxx"
 
+/**
+ * Wrapper for #TimerEvent which aims to simplify installing recurring
+ * events.
+ */
 class CleanupTimer {
     TimerEvent event;
 
