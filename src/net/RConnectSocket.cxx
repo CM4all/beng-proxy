@@ -3,9 +3,9 @@
  */
 
 #include "RConnectSocket.hxx"
-#include "Resolver.hxx"
-#include "AddressInfo.hxx"
-#include "SocketDescriptor.hxx"
+#include "net/Resolver.hxx"
+#include "net/AddressInfo.hxx"
+#include "net/SocketDescriptor.hxx"
 #include "system/Error.hxx"
 #include "io/FileDescriptor.hxx"
 

@@ -6,8 +6,8 @@
 
 #include "UdpListener.hxx"
 #include "UdpHandler.hxx"
-#include "AllocatedSocketAddress.hxx"
-#include "Parser.hxx"
+#include "net/AllocatedSocketAddress.hxx"
+#include "net/Parser.hxx"
 #include "system/fd_util.h"
 #include "system/Error.hxx"
 

@@ -5,10 +5,10 @@
  */
 
 #include "ServerSocket.hxx"
-#include "SocketDescriptor.hxx"
-#include "SocketAddress.hxx"
-#include "StaticSocketAddress.hxx"
-#include "AllocatedSocketAddress.hxx"
+#include "net/SocketDescriptor.hxx"
+#include "net/SocketAddress.hxx"
+#include "net/StaticSocketAddress.hxx"
+#include "net/AllocatedSocketAddress.hxx"
 #include "system/fd_util.h"
 #include "system/Error.hxx"
 
