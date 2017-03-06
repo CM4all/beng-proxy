@@ -339,17 +339,15 @@ pg = static_library('pg',
   ])
 
 curl = static_library('curl',
-  'src/curl/Version.cxx',
-  'src/curl/Request.cxx',
-  'src/curl/Global.cxx',
-  'src/curl/Init.cxx',
+  'libcommon/src/curl/Version.cxx',
+  'libcommon/src/curl/Request.cxx',
+  'libcommon/src/curl/Global.cxx',
+  'libcommon/src/curl/Init.cxx',
   include_directories: inc,
   dependencies: [
-    boost,
     libcurl,
-    libinline, libhttp,
+    libinline,
     util_dep,
-    declare_dependency(link_with: io),
     declare_dependency(link_with: event),
   ])
 
