@@ -8,7 +8,7 @@
 #include "istream/istream.hxx"
 #include "istream/istream_catch.hxx"
 #include "fb_pool.hxx"
-#include "system/fd_util.h"
+#include "io/FileDescriptor.hxx"
 #include "event/Loop.hxx"
 
 #include <stdio.h>
@@ -85,20 +85,21 @@ Instance::HttpConnectionClosed()
 static void
 test_catch(EventLoop &event_loop, struct pool *_pool)
 {
-    int fds[2];
-    if (socketpair_cloexec(AF_UNIX, SOCK_STREAM, 0, fds) < 0) {
-        perror("socketpair()");
-        abort();
+    FileDescriptor client_socket, server_socket;
+    if (!FileDescriptor::CreateSocketPair(AF_LOCAL, SOCK_STREAM, 0,
+                                          client_socket, server_socket)) {
+        perror("socketpair() failed");
+        exit(EXIT_FAILURE);
     }
 
     static constexpr char request[] =
         "POST / HTTP/1.1\r\nContent-Length: 1024\r\n\r\nfoo";
-    send(fds[1], request, sizeof(request) - 1, 0);
+    send(client_socket.Get(), request, sizeof(request) - 1, 0);
 
     Instance instance(*_pool);
     instance.connection =
         http_server_connection_new(instance.pool, event_loop,
-                                   fds[0], FdType::FD_SOCKET,
+                                   server_socket.Get(), FdType::FD_SOCKET,
                                    nullptr, nullptr,
                                    nullptr, nullptr,
                                    true, instance);
@@ -106,7 +107,7 @@ test_catch(EventLoop &event_loop, struct pool *_pool)
 
     event_loop.Dispatch();
 
-    close(fds[1]);
+    client_socket.Close();
 }
 
 int main(int argc, char **argv) {

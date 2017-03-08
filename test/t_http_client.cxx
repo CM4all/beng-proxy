@@ -8,8 +8,7 @@
 #include "http_client.hxx"
 #include "http_headers.hxx"
 #include "system/SetupProcess.hxx"
-#include "system/fd-util.h"
-#include "system/fd_util.h"
+#include "io/FileDescriptor.hxx"
 #include "direct.hxx"
 #include "fb_pool.hxx"
 #include "RootPool.hxx"
@@ -103,25 +102,23 @@ Connection::~Connection()
 Connection *
 Connection::New(EventLoop &event_loop, const char *path, const char *mode)
 {
-    int ret, sv[2];
-    pid_t pid;
-
-    ret = socketpair_cloexec(AF_UNIX, SOCK_STREAM, 0, sv);
-    if (ret < 0) {
+    FileDescriptor client_socket, server_socket;
+    if (!FileDescriptor::CreateSocketPair(AF_LOCAL, SOCK_STREAM, 0,
+                                          client_socket, server_socket)) {
         perror("socketpair() failed");
         exit(EXIT_FAILURE);
     }
 
-    pid = fork();
+    const auto pid = fork();
     if (pid < 0) {
         perror("fork() failed");
         exit(EXIT_FAILURE);
     }
 
     if (pid == 0) {
-        dup2(sv[1], 0);
-        close(sv[0]);
-        close(sv[1]);
+        server_socket.CheckDuplicate(FileDescriptor(STDIN_FILENO));
+        server_socket.CheckDuplicate(FileDescriptor(STDOUT_FILENO));
+
         execl(path, path,
               "0", "0", mode, nullptr);
 
@@ -137,18 +134,17 @@ Connection::New(EventLoop &event_loop, const char *path, const char *mode)
         _exit(EXIT_FAILURE);
     }
 
-    close(sv[1]);
-
-    fd_set_nonblock(sv[0], 1);
-
-    return new Connection(event_loop, pid, sv[0]);
+    server_socket.Close();
+    client_socket.SetNonBlocking();
+    return new Connection(event_loop, pid, client_socket.Get());
 }
 
 Connection *
 Connection::NewClose100(struct pool &, EventLoop &event_loop)
 {
-    int sv[2];
-    if (socketpair_cloexec(AF_UNIX, SOCK_STREAM, 0, sv) < 0) {
+    FileDescriptor client_socket, server_socket;
+    if (!FileDescriptor::CreateSocketPair(AF_LOCAL, SOCK_STREAM, 0,
+                                          client_socket, server_socket)) {
         perror("socketpair() failed");
         exit(EXIT_FAILURE);
     }
@@ -160,23 +156,21 @@ Connection::NewClose100(struct pool &, EventLoop &event_loop)
     }
 
     if (pid == 0) {
-        close(sv[0]);
+        client_socket.Close();
 
         static const char response[] = "HTTP/1.1 100 Continue\n\n";
-        (void)write(sv[1], response, sizeof(response) - 1);
-        shutdown(sv[1], SHUT_WR);
+        (void)server_socket.Write(response, sizeof(response) - 1);
+        shutdown(server_socket.Get(), SHUT_WR);
 
         char buffer[64];
-        while (read(sv[1], buffer, sizeof(buffer)) > 0) {}
+        while (server_socket.Read(buffer, sizeof(buffer)) > 0) {}
 
         _exit(EXIT_SUCCESS);
     }
 
-    close(sv[1]);
-
-    fd_set_nonblock(sv[0], 1);
-
-    return new Connection(event_loop, pid, sv[0]);
+    server_socket.Close();
+    client_socket.SetNonBlocking();
+    return new Connection(event_loop, pid, client_socket.Get());
 }
 
 /**

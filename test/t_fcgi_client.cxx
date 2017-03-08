@@ -10,8 +10,7 @@
 #include "fcgi/Client.hxx"
 #include "http_response.hxx"
 #include "system/SetupProcess.hxx"
-#include "system/fd-util.h"
-#include "system/fd_util.h"
+#include "io/FileDescriptor.hxx"
 #include "lease.hxx"
 #include "direct.hxx"
 #include "istream/istream.hxx"
@@ -222,9 +221,9 @@ fcgi_server_excess_data(struct pool *pool)
 struct Connection {
     EventLoop &event_loop;
     const pid_t pid;
-    const int fd;
+    FileDescriptor fd;
 
-    Connection(EventLoop &_event_loop, pid_t _pid, int _fd)
+    Connection(EventLoop &_event_loop, pid_t _pid, FileDescriptor _fd)
         :event_loop(_event_loop), pid(_pid), fd(_fd) {}
     static Connection *New(EventLoop &event_loop,
                            void (*f)(struct pool *pool));
@@ -237,7 +236,7 @@ struct Connection {
                  StringMap &&headers, Istream *body,
                  HttpResponseHandler &handler,
                  CancellablePointer &cancel_ptr) {
-        fcgi_client_request(pool, event_loop, fd, FdType::FD_SOCKET,
+        fcgi_client_request(pool, event_loop, fd.Get(), FdType::FD_SOCKET,
                             lease,
                             method, uri, uri, nullptr, nullptr, nullptr,
                             nullptr, "192.168.1.100",
@@ -297,25 +296,24 @@ struct Connection {
 Connection *
 Connection::New(EventLoop &event_loop, void (*f)(struct pool *pool))
 {
-    int sv[2];
-    pid_t pid;
-
-    if (socketpair_cloexec(AF_UNIX, SOCK_STREAM, 0, sv) < 0) {
+    FileDescriptor server_socket, client_socket;
+    if (!FileDescriptor::CreateSocketPair(AF_LOCAL, SOCK_STREAM, 0,
+                                          server_socket, client_socket)) {
         perror("socketpair() failed");
-        abort();
+        exit(EXIT_FAILURE);
     }
 
-    pid = fork();
+    const auto pid = fork();
     if (pid < 0) {
         perror("fork() failed");
         abort();
     }
 
     if (pid == 0) {
-        dup2(sv[1], 0);
-        dup2(sv[1], 1);
-        close(sv[0]);
-        close(sv[1]);
+        server_socket.Duplicate(FileDescriptor(STDIN_FILENO));
+        server_socket.Duplicate(FileDescriptor(STDOUT_FILENO));
+        server_socket.Close();
+        client_socket.Close();
 
         struct pool *pool = pool_new_libc(nullptr, "f");
         f(pool);
@@ -324,19 +322,17 @@ Connection::New(EventLoop &event_loop, void (*f)(struct pool *pool))
         _exit(EXIT_SUCCESS);
     }
 
-    close(sv[1]);
-
-    fd_set_nonblock(sv[0], 1);
-
-    return new Connection(event_loop, pid, sv[0]);
+    server_socket.Close();
+    client_socket.SetNonBlocking();
+    return new Connection(event_loop, pid, client_socket);
 }
 
 Connection::~Connection()
 {
     assert(pid >= 1);
-    assert(fd >= 0);
+    assert(fd.IsDefined());
 
-    close(fd);
+    fd.Close();
 
     int status;
     if (waitpid(pid, &status, 0) < 0) {

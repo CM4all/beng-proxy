@@ -9,8 +9,7 @@
 #include "was/Lease.hxx"
 #include "http_response.hxx"
 #include "system/SetupProcess.hxx"
-#include "system/fd-util.h"
-#include "system/fd_util.h"
+#include "io/FileDescriptor.hxx"
 #include "lease.hxx"
 #include "direct.hxx"
 #include "istream/istream.hxx"
@@ -93,7 +92,7 @@ RunMirror(WasServer &server, gcc_unused struct pool &pool,
 class WasConnection final : WasServerHandler, WasLease {
     EventLoop &event_loop;
 
-    int control_fd, input_fd, output_fd;
+    FileDescriptor control_fd, input_fd, output_fd;
 
     WasServer *server;
 
@@ -110,35 +109,34 @@ public:
     WasConnection(struct pool &pool, EventLoop &_event_loop,
                   Callback &&_callback)
         :event_loop(_event_loop), callback(std::move(_callback)) {
-        int a[2];
-        if (pipe_cloexec_nonblock(a) < 0) {
+        FileDescriptor input_w;
+        if (!FileDescriptor::CreatePipeNonBlock(input_fd, input_w)) {
             perror("pipe");
             exit(EXIT_FAILURE);
         }
 
-        int b[2];
-        if (pipe_cloexec_nonblock(b) < 0) {
+        FileDescriptor output_r;
+        if (!FileDescriptor::CreatePipeNonBlock(output_r, output_fd)) {
             perror("pipe");
             exit(EXIT_FAILURE);
         }
 
-        int c[2];
-        if (socketpair_cloexec_nonblock(AF_LOCAL, SOCK_STREAM, 0, c) < 0) {
+        FileDescriptor control_server;
+        if (!FileDescriptor::CreateSocketPairNonBlock(AF_LOCAL, SOCK_STREAM, 0,
+                                                      control_fd,
+                                                      control_server)) {
             perror("socketpair");
             exit(EXIT_FAILURE);
         }
 
-        control_fd = c[0];
-        input_fd = a[0];
-        output_fd = b[1];
-
-        server = was_server_new(pool, event_loop, c[1], b[0], a[1], *this);
+        server = was_server_new(pool, event_loop, control_server.Get(),
+                                output_r.Get(), input_w.Get(), *this);
     }
 
     ~WasConnection() {
-        close(control_fd);
-        close(input_fd);
-        close(output_fd);
+        control_fd.Close();
+        input_fd.Close();
+        output_fd.Close();
 
         if (server != nullptr)
             was_server_free(server);
@@ -152,7 +150,8 @@ public:
                  CancellablePointer &cancel_ptr) {
         lease = &_lease;
         was_client_request(*pool, event_loop, nullptr,
-                           control_fd, input_fd, output_fd, *this,
+                           control_fd.Get(), input_fd.Get(), output_fd.Get(),
+                           *this,
                            method, uri, uri, nullptr, nullptr,
                            headers, body, nullptr,
                            handler, cancel_ptr);

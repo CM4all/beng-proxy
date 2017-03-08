@@ -1,8 +1,7 @@
 #include "memcached/memcached_client.hxx"
 #include "http_response.hxx"
 #include "system/SetupProcess.hxx"
-#include "system/fd-util.h"
-#include "system/fd_util.h"
+#include "io/FileDescriptor.hxx"
 #include "header_writer.hxx"
 #include "lease.hxx"
 #include "direct.hxx"
@@ -31,39 +30,34 @@ test_quark(void)
 }
 
 static int
-connect_fake_server(void)
+connect_fake_server()
 {
-    int ret, sv[2];
-    pid_t pid;
-
-    ret = socketpair_cloexec(AF_UNIX, SOCK_STREAM, 0, sv);
-    if (ret < 0) {
+    FileDescriptor client_socket, server_socket;
+    if (!FileDescriptor::CreateSocketPair(AF_LOCAL, SOCK_STREAM, 0,
+                                          client_socket, server_socket)) {
         perror("socketpair() failed");
         exit(EXIT_FAILURE);
     }
 
-    pid = fork();
+    const auto pid = fork();
     if (pid < 0) {
         perror("fork() failed");
         exit(EXIT_FAILURE);
     }
 
     if (pid == 0) {
-        dup2(sv[1], 0);
-        dup2(sv[1], 1);
-        close(sv[0]);
-        close(sv[1]);
+        server_socket.CheckDuplicate(FileDescriptor(STDIN_FILENO));
+        server_socket.CheckDuplicate(FileDescriptor(STDOUT_FILENO));
+
         execl("./test/fake_memcached_server", "fake_memcached_server",
               nullptr);
         perror("exec() failed");
         exit(EXIT_FAILURE);
     }
 
-    close(sv[1]);
-
-    fd_set_nonblock(sv[0], true);
-
-    return sv[0];
+    server_socket.Close();
+    client_socket.SetNonBlocking();
+    return client_socket.Get();
 }
 
 struct Context final : Lease, IstreamHandler {
