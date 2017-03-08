@@ -162,10 +162,8 @@ BpInstance::ShutdownCallback()
         fcgi_stock = nullptr;
     }
 
-    if (was_stock != nullptr) {
-        delete was_stock;
-        was_stock = nullptr;
-    }
+    delete was_stock;
+    was_stock = nullptr;
 
     if (memcached_stock != nullptr)
         memcached_stock_free(memcached_stock);
@@ -173,14 +171,12 @@ BpInstance::ShutdownCallback()
     if (tcp_balancer != nullptr)
         tcp_balancer_free(tcp_balancer);
 
-    if (tcp_stock != nullptr)
-        delete tcp_stock;
+    delete tcp_stock;
 
     if (balancer != nullptr)
         balancer_free(balancer);
 
-    if (delegate_stock != nullptr)
-        delete delegate_stock;
+    delete delegate_stock;
 
     if (nfs_cache != nullptr)
         nfs_cache_free(nfs_cache);
