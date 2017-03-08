@@ -81,13 +81,11 @@ FileDescriptor::OpenNonBlocking(const char *pathname)
 	return Open(pathname, O_RDWR | O_NONBLOCK);
 }
 
+#ifdef __linux__
 bool
-FileDescriptor::CreatePipe(FileDescriptor &r, FileDescriptor &w)
+FileDescriptor::CreatePipe(FileDescriptor &r, FileDescriptor &w, int flags)
 {
 	int fds[2];
-
-#ifdef __linux__
-	const int flags = O_CLOEXEC;
 #ifdef __BIONIC__
 	/* Bionic provides the pipe2() function only since Android 2.3,
 	   therefore we must roll our own system call here */
@@ -95,16 +93,30 @@ FileDescriptor::CreatePipe(FileDescriptor &r, FileDescriptor &w)
 #else
 	const int result = pipe2(fds, flags);
 #endif
-#else
-	const int result = pipe(fds);
-#endif
-
 	if (result < 0)
 		return false;
 
 	r = FileDescriptor(fds[0]);
 	w = FileDescriptor(fds[1]);
 	return true;
+}
+#endif
+
+bool
+FileDescriptor::CreatePipe(FileDescriptor &r, FileDescriptor &w)
+{
+#ifdef __linux__
+	return CreatePipe(r, w, O_CLOEXEC);
+#else
+	int fds[2];
+	const int result = pipe(fds);
+	if (result < 0)
+		return false;
+
+	r = FileDescriptor(fds[0]);
+	w = FileDescriptor(fds[1]);
+	return true;
+#endif
 }
 
 void

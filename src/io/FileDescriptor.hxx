@@ -102,6 +102,11 @@ public:
 #ifdef HAVE_POSIX
 	bool OpenNonBlocking(const char *pathname);
 
+#ifdef __linux__
+	static bool CreatePipe(FileDescriptor &r, FileDescriptor &w,
+			       int flags);
+#endif
+
 	static bool CreatePipe(FileDescriptor &r, FileDescriptor &w);
 
 	/**
