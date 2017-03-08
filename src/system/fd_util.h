@@ -112,15 +112,6 @@ socketpair_cloexec_nonblock(int domain, int type, int protocol, int sv[2]);
 int
 socket_cloexec_nonblock(int domain, int type, int protocol);
 
-/**
- * Wrapper for accept(), which sets the CLOEXEC and the NONBLOCK flags
- * (atomically if supported by the OS).
- */
-int
-accept_cloexec_nonblock(int fd, struct sockaddr *address,
-			size_t *address_length_r);
-
-
 #ifndef WIN32
 
 struct msghdr;
@@ -133,13 +124,6 @@ ssize_t
 recvmsg_cloexec(int sockfd, struct msghdr *msg, int flags);
 
 #endif
-
-/**
- * Wrapper for inotify_init(), which sets the CLOEXEC flag (atomically
- * if supported by the OS).
- */
-int
-inotify_init_cloexec(void);
 
 #ifdef __cplusplus
 }

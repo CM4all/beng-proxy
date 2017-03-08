@@ -255,34 +255,6 @@ socket_cloexec_nonblock(int domain, int type, int protocol)
 	return fd;
 }
 
-int
-accept_cloexec_nonblock(int fd, struct sockaddr *address,
-			size_t *address_length_r)
-{
-	int ret;
-	socklen_t address_length = *address_length_r;
-
-#ifdef HAVE_ACCEPT4
-	ret = accept4(fd, address, &address_length,
-		      SOCK_CLOEXEC|SOCK_NONBLOCK);
-	if (ret >= 0 || errno != ENOSYS) {
-		if (ret >= 0)
-			*address_length_r = address_length;
-
-		return ret;
-	}
-#endif
-
-	ret = accept(fd, address, &address_length);
-	if (ret >= 0) {
-		fd_set_cloexec(ret, true);
-		fd_set_nonblock(ret);
-		*address_length_r = address_length;
-	}
-
-	return ret;
-}
-
 #ifndef WIN32
 
 ssize_t
@@ -306,28 +278,6 @@ recvmsg_cloexec(int sockfd, struct msghdr *msg, int flags)
 	}
 
 	return result;
-}
-
-#endif
-
-#ifdef HAVE_INOTIFY_INIT
-
-int
-inotify_init_cloexec(void)
-{
-	int fd;
-
-#ifdef HAVE_INOTIFY_INIT1
-	fd = inotify_init1(IN_CLOEXEC);
-	if (fd >= 0 || errno != ENOSYS)
-		return fd;
-#endif
-
-	fd = inotify_init();
-	if (fd >= 0)
-		fd_set_cloexec(fd, true);
-
-	return fd;
 }
 
 #endif
