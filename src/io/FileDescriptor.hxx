@@ -110,6 +110,11 @@ public:
 	static bool CreatePipe(FileDescriptor &r, FileDescriptor &w);
 	static bool CreatePipeNonBlock(FileDescriptor &r, FileDescriptor &w);
 
+	static bool CreateSocketPair(int domain, int type, int protocol,
+				     FileDescriptor &a, FileDescriptor &b);
+	static bool CreateSocketPairNonBlock(int domain, int type, int protocol,
+					     FileDescriptor &a, FileDescriptor &b);
+
 	/**
 	 * Enable non-blocking mode on this file descriptor.
 	 */

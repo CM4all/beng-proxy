@@ -38,6 +38,7 @@
 
 #ifdef HAVE_POSIX
 #include <poll.h>
+#include <sys/socket.h>
 #endif
 
 #if defined(HAVE_EVENTFD) && !defined(__BIONIC__)
@@ -132,6 +133,41 @@ FileDescriptor::CreatePipeNonBlock(FileDescriptor &r, FileDescriptor &w)
 	w.SetNonBlocking();
 	return true;
 #endif
+}
+
+bool
+FileDescriptor::CreateSocketPair(int domain, int type, int protocol,
+				 FileDescriptor &a, FileDescriptor &b)
+{
+#ifdef __linux__
+	type |= O_CLOEXEC;
+#endif
+
+	int fds[2];
+	if (socketpair(domain, type, protocol, fds) < 0)
+		return false;
+
+	a = FileDescriptor(fds[0]);
+	b = FileDescriptor(fds[1]);
+	return true;
+}
+
+bool
+FileDescriptor::CreateSocketPairNonBlock(int domain, int type, int protocol,
+					 FileDescriptor &a, FileDescriptor &b)
+{
+#ifdef __linux__
+	type |= O_NONBLOCK;
+#endif
+	if (!CreateSocketPair(domain, type, protocol, a, b))
+		return false;
+
+#ifndef __linux__
+	a.SetNonBlocking();
+	b.SetNonBlocking();
+#endif
+
+	return true;
 }
 
 void
