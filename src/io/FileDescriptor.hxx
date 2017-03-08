@@ -32,6 +32,8 @@
 
 #include <inline/compiler.h>
 
+#include <utility>
+
 #include <assert.h>
 #include <unistd.h>
 #include <sys/types.h>
@@ -85,9 +87,7 @@ public:
 	int Steal() {
 		assert(IsDefined());
 
-		int _fd = fd;
-		fd = -1;
-		return _fd;
+		return std::exchange(fd, -1);
 	}
 
 	void SetUndefined() {
