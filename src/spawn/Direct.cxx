@@ -6,7 +6,6 @@
 #include "Prepared.hxx"
 #include "Config.hxx"
 #include "SeccompFilter.hxx"
-#include "system/sigutil.h"
 #include "io/FileDescriptor.hxx"
 
 #include <inline/compiler.h>
@@ -125,8 +124,6 @@ struct SpawnChildProcessContext {
 
     const char *path;
 
-    sigset_t signals;
-
     SpawnChildProcessContext(PreparedChildProcess &_params,
                              const SpawnConfig &_config,
                              const CgroupState &_cgroup_state)
@@ -139,9 +136,6 @@ static int
 spawn_fn(void *_ctx)
 {
     auto &ctx = *(SpawnChildProcessContext *)_ctx;
-
-    install_default_signal_handlers();
-    leave_signal_section(&ctx.signals);
 
     try {
         Exec(ctx.path, ctx.params, ctx.config, ctx.cgroup_state);
@@ -160,15 +154,10 @@ SpawnChildProcess(PreparedChildProcess &&params, const SpawnConfig &config,
 
     SpawnChildProcessContext ctx(params, config, cgroup_state);
 
-    /* avoid race condition due to libevent signal handler in child
-       process */
-    enter_signal_section(&ctx.signals);
-
     char stack[8192];
     long pid = clone(spawn_fn, stack + sizeof(stack), clone_flags, &ctx);
     if (pid < 0)
         pid = -errno;
 
-    leave_signal_section(&ctx.signals);
     return pid;
 }
