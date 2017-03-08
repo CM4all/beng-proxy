@@ -85,8 +85,6 @@ public:
 	}
 
 	int Steal() {
-		assert(IsDefined());
-
 		return std::exchange(fd, -1);
 	}
 
@@ -162,6 +160,8 @@ public:
 	 * to return false, and this object may be reused.
 	 */
 	bool Close() {
+		assert(IsDefined());
+
 		return ::close(Steal()) == 0;
 	}
 
