@@ -92,6 +92,11 @@ public:
 		return FileDescriptor::CreatePipe(r, w);
 	}
 
+	static bool CreatePipeNonBlock(UniqueFileDescriptor &r,
+				       UniqueFileDescriptor &w) {
+		return FileDescriptor::CreatePipeNonBlock(r, w);
+	}
+
 	using FileDescriptor::SetNonBlocking;
 	using FileDescriptor::SetBlocking;
 	using FileDescriptor::EnableCloseOnExec;

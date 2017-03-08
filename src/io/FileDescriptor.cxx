@@ -119,6 +119,21 @@ FileDescriptor::CreatePipe(FileDescriptor &r, FileDescriptor &w)
 #endif
 }
 
+bool
+FileDescriptor::CreatePipeNonBlock(FileDescriptor &r, FileDescriptor &w)
+{
+#ifdef __linux__
+	return CreatePipe(r, w, O_CLOEXEC|O_NONBLOCK);
+#else
+	if (!CreatePipe(r, w))
+		return false;
+
+	r.SetNonBlocking();
+	w.SetNonBlocking();
+	return true;
+#endif
+}
+
 void
 FileDescriptor::SetNonBlocking()
 {

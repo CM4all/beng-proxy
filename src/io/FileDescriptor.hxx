@@ -108,6 +108,7 @@ public:
 #endif
 
 	static bool CreatePipe(FileDescriptor &r, FileDescriptor &w);
+	static bool CreatePipeNonBlock(FileDescriptor &r, FileDescriptor &w);
 
 	/**
 	 * Enable non-blocking mode on this file descriptor.
