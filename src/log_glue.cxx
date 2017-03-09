@@ -7,8 +7,7 @@
 #include "log_glue.hxx"
 #include "log_launch.hxx"
 #include "log_client.hxx"
-
-#include <glib.h>
+#include "util/ByteOrder.hxx"
 
 #include <assert.h>
 #include <string.h>
@@ -89,8 +88,8 @@ log_http_request(uint64_t timestamp, http_method_t method, const char *uri,
     struct {
         uint64_t received, sent;
     } traffic = {
-        .received = GUINT64_TO_BE(traffic_received),
-        .sent = GUINT64_TO_BE(traffic_sent),
+        .received = ToBE64(traffic_received),
+        .sent = ToBE64(traffic_sent),
     };
 
     log_client_append_attribute(global_log_client, LOG_TRAFFIC,
