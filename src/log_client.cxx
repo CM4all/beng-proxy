@@ -5,6 +5,7 @@
  */
 
 #include "log_client.hxx"
+#include "io/UniqueFileDescriptor.hxx"
 #include "util/ByteOrder.hxx"
 
 #include <daemon/log.h>
@@ -16,26 +17,26 @@
 #include <string.h>
 
 struct LogClient {
-    int fd;
+    UniqueFileDescriptor fd;
 
     size_t position;
     char buffer[32768];
+
+    explicit LogClient(UniqueFileDescriptor &&_fd)
+        :fd(std::move(_fd)) {}
 };
 
 LogClient *
-log_client_new(int fd)
+log_client_new(UniqueFileDescriptor &&fd)
 {
-    assert(fd >= 0);
+    assert(fd.IsDefined());
 
-    auto *l = new LogClient();
-    l->fd = fd;
-    return l;
+    return new LogClient(std::move(fd));
 }
 
 void
 log_client_free(LogClient *l)
 {
-    close(l->fd);
     delete l;
 }
 
@@ -96,14 +97,14 @@ bool
 log_client_commit(LogClient *client)
 {
     assert(client != nullptr);
-    assert(client->fd >= 0);
+    assert(client->fd.IsDefined());
     assert(client->position > 0);
 
     if (client->position > sizeof(client->buffer))
         /* datagram is too large */
         return false;
 
-    ssize_t nbytes = send(client->fd, client->buffer, client->position,
+    ssize_t nbytes = send(client->fd.Get(), client->buffer, client->position,
                           MSG_DONTWAIT|MSG_NOSIGNAL);
     if (nbytes < 0) {
         if (errno == EAGAIN || errno == EWOULDBLOCK)

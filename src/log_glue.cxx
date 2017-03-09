@@ -34,7 +34,7 @@ log_global_init(const char *program, const struct daemon_user *user)
     auto lp = log_launch(program, user);
     assert(lp.fd.IsDefined());
 
-    global_log_client = log_client_new(lp.fd.Steal());
+    global_log_client = log_client_new(std::move(lp.fd));
     assert(global_log_client != nullptr);
     global_log_enabled = global_log_client != nullptr;
 }
