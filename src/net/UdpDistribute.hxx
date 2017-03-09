@@ -47,6 +47,9 @@ public:
         Clear();
     }
 
+    /**
+     * Throws std::system_error on error.
+     */
     int Add();
     void Clear();
 

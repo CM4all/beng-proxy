@@ -6,6 +6,7 @@
 
 #include "UdpDistribute.hxx"
 #include "system/fd_util.h"
+#include "system/Error.hxx"
 #include "util/DeleteDisposer.hxx"
 
 #include <assert.h>
@@ -37,7 +38,7 @@ UdpDistribute::Add()
 {
     int fds[2];
     if (socketpair_cloexec(AF_UNIX, SOCK_DGRAM, 0, fds) < 0)
-        return -1;
+        throw MakeErrno("socketpair() failed");
 
     auto *ur = new Recipient(event_loop, fds[0]);
     recipients.push_back(*ur);
