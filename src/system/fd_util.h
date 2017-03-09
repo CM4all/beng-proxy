@@ -53,35 +53,11 @@ int
 fd_set_cloexec(int fd, bool enable);
 
 /**
- * Wrapper for dup(), which sets the CLOEXEC flag on the new
- * descriptor.
- */
-int
-dup_cloexec(int oldfd);
-
-/**
  * Wrapper for open(), which sets the CLOEXEC flag (atomically if
  * supported by the OS).
  */
 int
 open_cloexec(const char *path_fs, int flags, int mode);
-
-/**
- * Wrapper for pipe(), which sets the CLOEXEC flag (atomically if
- * supported by the OS).
- */
-int
-pipe_cloexec(int fd[2]);
-
-/**
- * Wrapper for pipe(), which sets the CLOEXEC flag (atomically if
- * supported by the OS).
- *
- * On systems that supports it (everybody except for Windows), it also
- * sets the NONBLOCK flag.
- */
-int
-pipe_cloexec_nonblock(int fd[2]);
 
 /**
  * Wrapper for socket(), which sets the CLOEXEC and the NONBLOCK flag

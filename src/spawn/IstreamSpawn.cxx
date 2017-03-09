@@ -399,7 +399,7 @@ SpawnChildProcess(EventLoop &event_loop, struct pool *pool, const char *name,
     if (input != nullptr) {
         UniqueFileDescriptor stdin_r;
         if (!UniqueFileDescriptor::CreatePipe(stdin_r, stdin_pipe)) {
-            set_error_errno_msg(error_r, "pipe_cloexec() failed");
+            set_error_errno_msg(error_r, "pipe() failed");
             input->CloseUnused();
             return -1;
         }
