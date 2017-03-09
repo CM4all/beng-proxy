@@ -239,7 +239,6 @@ stock_dep = declare_dependency(link_with: stock)
 system = static_library('system',
   'src/system/StringFile.cxx',
   'src/system/SetupProcess.cxx',
-  'src/system/fd-util.c',
   'src/system/fd_util.c',
   'src/system/bind_mount.c',
   'src/system/urandom.cxx',

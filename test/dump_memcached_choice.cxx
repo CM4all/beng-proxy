@@ -2,7 +2,6 @@
 #include "http_cache_document.hxx"
 #include "lease.hxx"
 #include "system/SetupProcess.hxx"
-#include "system/fd-util.h"
 #include "strmap.hxx"
 #include "tpool.hxx"
 #include "RootPool.hxx"

@@ -7,7 +7,6 @@
 #include "Prepared.hxx"
 #include "ExitListener.hxx"
 #include "system/fd_util.h"
-#include "system/fd-util.h"
 #include "istream/istream.hxx"
 #include "istream/Pointer.hxx"
 #include "io/Buffered.hxx"
