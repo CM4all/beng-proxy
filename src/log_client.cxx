@@ -9,7 +9,6 @@
 
 #include <daemon/log.h>
 
-#include <glib.h>
 #include <assert.h>
 #include <unistd.h>
 #include <sys/socket.h>
@@ -28,7 +27,7 @@ log_client_new(int fd)
 {
     assert(fd >= 0);
 
-    LogClient *l = g_new(LogClient, 1);
+    auto *l = new LogClient();
     l->fd = fd;
     return l;
 }
@@ -37,7 +36,7 @@ void
 log_client_free(LogClient *l)
 {
     close(l->fd);
-    g_free(l);
+    delete l;
 }
 
 static void
