@@ -8,11 +8,10 @@
  */
 
 #include "duplex.hxx"
-#include "system/fd-util.h"
-#include "system/fd_util.h"
 #include "event/SocketEvent.hxx"
 #include "event/DeferEvent.hxx"
 #include "io/Buffered.hxx"
+#include "io/UniqueFileDescriptor.hxx"
 #include "pool.hxx"
 #include "fb_pool.hxx"
 #include "SliceFifoBuffer.hxx"
@@ -240,18 +239,12 @@ duplex_new(EventLoop &event_loop, struct pool *pool, int read_fd, int write_fd)
     assert(read_fd >= 0);
     assert(write_fd >= 0);
 
-    int fds[2];
-    if (socketpair_cloexec(AF_UNIX, SOCK_STREAM, 0, fds) < 0)
+    UniqueFileDescriptor result_fd, duplex_fd;
+    if (!UniqueFileDescriptor::CreateSocketPairNonBlock(AF_LOCAL, SOCK_STREAM, 0,
+                                                        result_fd, duplex_fd))
         return -1;
 
-    if (fd_set_nonblock(fds[1], 1) < 0) {
-        int save_errno = errno;
-        close(fds[0]);
-        close(fds[1]);
-        errno = save_errno;
-        return -1;
-    }
-
-    NewFromPool<Duplex>(*pool, event_loop, read_fd, write_fd, fds[0]);
-    return fds[1];
+    NewFromPool<Duplex>(*pool, event_loop, read_fd, write_fd,
+                        duplex_fd.Steal());
+    return result_fd.Steal();
 }
