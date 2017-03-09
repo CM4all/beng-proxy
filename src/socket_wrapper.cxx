@@ -107,7 +107,7 @@ SocketWrapper::AsFD()
 {
     assert(IsValid());
 
-    const int result = dup_cloexec(fd);
+    const int result = fd;
     Abandon();
     return result;
 }
