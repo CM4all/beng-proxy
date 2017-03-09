@@ -9,7 +9,7 @@
 #include "stock/Class.hxx"
 #include "stock/Item.hxx"
 #include "failure.hxx"
-#include "system/fd_util.h"
+#include "io/UniqueFileDescriptor.hxx"
 #include "event/SocketEvent.hxx"
 #include "event/Duration.hxx"
 #include "spawn/Interface.hxx"
@@ -54,8 +54,8 @@ class DelegateProcess final : public HeapStockItem {
     SocketEvent event;
 
 public:
-    explicit DelegateProcess(CreateStockItem c, int _fd)
-        :HeapStockItem(c), fd(_fd),
+    explicit DelegateProcess(CreateStockItem c, UniqueFileDescriptor &&_fd)
+        :HeapStockItem(c), fd(_fd.Steal()),
          event(c.stock.GetEventLoop(), fd, EV_READ,
                BIND_THIS_METHOD(SocketEventCallback)) {
     }
@@ -135,23 +135,23 @@ delegate_stock_create(void *ctx,
         return;
     }
 
-    int fds[2];
-    if (socketpair_cloexec(AF_UNIX, SOCK_STREAM, 0, fds) < 0) {
+    UniqueFileDescriptor server_fd, client_fd;
+    if (!UniqueFileDescriptor::CreateSocketPair(AF_LOCAL, SOCK_STREAM, 0,
+                                                server_fd, client_fd)) {
         auto *error = new_error_errno_msg("socketpair() failed: %s");
         c.InvokeCreateError(error);
         return;
     }
 
-    p.SetStdin(fds[1]);
+    p.SetStdin(std::move(server_fd));
 
     try {
         spawn_service.SpawnChildProcess(info.executable_path,
                                         std::move(p), nullptr);
 
-        auto *process = new DelegateProcess(c, fds[0]);
+        auto *process = new DelegateProcess(c, std::move(client_fd));
         process->InvokeCreateSuccess();
     } catch (const std::runtime_error &e) {
-        close(fds[0]);
         c.InvokeCreateError(ToGError(e));
     }
 }
