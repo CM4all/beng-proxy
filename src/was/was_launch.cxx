@@ -5,8 +5,6 @@
  */
 
 #include "was_launch.hxx"
-#include "system/fd_util.h"
-#include "system/fd-util.h"
 #include "spawn/Interface.hxx"
 #include "spawn/Prepared.hxx"
 #include "spawn/ChildOptions.hxx"
@@ -30,17 +28,16 @@ was_launch(SpawnService &spawn_service,
 {
     WasProcess process;
 
-    int control_fds[2];
-
     PreparedChildProcess p;
 
-    if (socketpair_cloexec(AF_UNIX, SOCK_STREAM, 0, control_fds) < 0) {
+    UniqueFileDescriptor control_fd;
+    if (!UniqueFileDescriptor::CreateSocketPair(AF_LOCAL, SOCK_STREAM, 0,
+                                                control_fd, process.control)) {
         set_error_errno_msg(error_r, "failed to create socket pair");
         return process;
     }
 
-    process.control = UniqueFileDescriptor(FileDescriptor(control_fds[0]));
-    p.SetControl(control_fds[1]);
+    p.SetControl(std::move(control_fd));
 
     UniqueFileDescriptor input_r, input_w;
     if (!UniqueFileDescriptor::CreatePipe(input_r, input_w)) {
