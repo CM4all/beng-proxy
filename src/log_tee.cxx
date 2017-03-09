@@ -5,9 +5,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-extern "C" {
-#include "log-launch.h"
-}
+#include "log_launch.hxx"
 
 #include <stdio.h>
 #include <stdlib.h>

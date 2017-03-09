@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "log-launch.h"
+#include "log_launch.hxx"
 #include "system/fd_util.h"
 
 #include <daemon/user.h>
@@ -24,7 +24,7 @@ log_run(const char *program, int fd)
 {
     dup2(fd, 0);
 
-    execl("/bin/sh", "sh", "-c", program, NULL);
+    execl("/bin/sh", "sh", "-c", program, nullptr);
     fprintf(stderr, "failed to execute %s: %s\n",
             program, strerror(errno));
     _exit(1);
@@ -52,7 +52,7 @@ log_launch(struct log_process *process, const char *program,
     }
 
     if (pid == 0) {
-        if (user != NULL && daemon_user_set(user) < 0)
+        if (user != nullptr && daemon_user_set(user) < 0)
             _exit(EXIT_FAILURE);
 
         log_run(program, fds[1]);

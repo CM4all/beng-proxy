@@ -5,9 +5,9 @@
  */
 
 #include "log_glue.hxx"
+#include "log_launch.hxx"
 
 extern "C" {
-#include "log-launch.h"
 #include "log-client.h"
 }
 

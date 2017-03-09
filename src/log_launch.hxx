@@ -7,7 +7,6 @@
 #ifndef BENG_PROXY_LOG_LAUNCH_H
 #define BENG_PROXY_LOG_LAUNCH_H
 
-#include <stdbool.h>
 #include <sys/types.h>
 
 struct daemon_user;
