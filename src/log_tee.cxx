@@ -58,9 +58,7 @@ try {
 
     for (int i = 1; i < argc; ++i) {
         const char *program = argv[i];
-        LogProcess process;
-
-        log_launch(&process, program, nullptr);
+        auto process = log_launch(program, nullptr);
         Child &child = children[n_children++];
         child.fd = process.fd;
     }

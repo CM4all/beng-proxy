@@ -31,9 +31,7 @@ log_global_init(const char *program, const struct daemon_user *user)
         return;
     }
 
-    LogProcess lp;
-    log_launch(&lp, program, user);
-
+    auto lp = log_launch(program, user);
     assert(lp.fd >= 0);
 
     global_log_client = log_client_new(lp.fd);

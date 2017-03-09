@@ -31,8 +31,8 @@ log_run(const char *program, int fd)
     _exit(1);
 }
 
-void
-log_launch(LogProcess *process, const char *program,
+LogProcess
+log_launch(const char *program,
            const struct daemon_user *user)
 {
     int fds[2];
@@ -61,6 +61,5 @@ log_launch(LogProcess *process, const char *program,
 
     close(fds[1]);
 
-    process->pid = pid;
-    process->fd = fds[0];
+    return {pid, fds[0]};
 }
