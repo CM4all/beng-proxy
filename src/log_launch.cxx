@@ -5,7 +5,6 @@
  */
 
 #include "log_launch.hxx"
-#include "system/fd_util.h"
 #include "system/Error.hxx"
 
 #include <daemon/user.h>
@@ -21,9 +20,9 @@
 
 gcc_noreturn
 static void
-log_run(const char *program, int fd)
+log_run(const char *program, UniqueFileDescriptor &&fd)
 {
-    dup2(fd, 0);
+    fd.CheckDuplicate(FileDescriptor(STDIN_FILENO));
 
     execl("/bin/sh", "sh", "-c", program, nullptr);
     fprintf(stderr, "failed to execute %s: %s\n",
@@ -35,31 +34,27 @@ LogProcess
 log_launch(const char *program,
            const struct daemon_user *user)
 {
-    int fds[2];
+    LogProcess p;
+    UniqueFileDescriptor server_fd;
 
-    if (socketpair_cloexec(AF_UNIX, SOCK_SEQPACKET, 0, fds) < 0)
+    if (!UniqueFileDescriptor::CreateSocketPair(AF_LOCAL, SOCK_SEQPACKET, 0,
+                                                server_fd, p.fd))
         throw MakeErrno("socketpair() failed");
 
     /* we need an unidirectional socket only */
-    shutdown(fds[0], SHUT_RD);
-    shutdown(fds[1], SHUT_WR);
+    shutdown(p.fd.Get(), SHUT_RD);
+    shutdown(server_fd.Get(), SHUT_WR);
 
-    pid_t pid = fork();
-    if (pid < 0) {
-        int e = errno;
-        close(fds[0]);
-        close(fds[1]);
-        throw MakeErrno(e, "fork() failed");
-    }
+    p.pid = fork();
+    if (p.pid < 0)
+        throw MakeErrno("fork() failed");
 
-    if (pid == 0) {
+    if (p.pid == 0) {
         if (user != nullptr && daemon_user_set(user) < 0)
             _exit(EXIT_FAILURE);
 
-        log_run(program, fds[1]);
+        log_run(program, std::move(server_fd));
     }
 
-    close(fds[1]);
-
-    return {pid, fds[0]};
+    return p;
 }

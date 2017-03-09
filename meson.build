@@ -262,6 +262,7 @@ io = static_library('io',
     util_dep,
     system_dep,
   ])
+io_dep = declare_dependency(link_with: io)
 
 net = static_library('net',
   'src/net/ConnectSocket.cxx',
@@ -1095,6 +1096,7 @@ executable('cm4all-beng-proxy-log-tee',
   dependencies: [
     libinline, libsocket, libdaemon,
     system_dep,
+    io_dep,
   ])
 
 executable('cm4all-beng-proxy-delegate-helper',

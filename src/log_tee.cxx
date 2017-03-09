@@ -60,7 +60,7 @@ try {
         const char *program = argv[i];
         auto process = log_launch(program, nullptr);
         Child &child = children[n_children++];
-        child.fd = process.fd;
+        child.fd = process.fd.Steal();
     }
 
     while (Forward()) {}
