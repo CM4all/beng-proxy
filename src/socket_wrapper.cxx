@@ -6,8 +6,6 @@
 
 #include "socket_wrapper.hxx"
 #include "direct.hxx"
-#include "system/fd-util.h"
-#include "system/fd_util.h"
 #include "io/Buffered.hxx"
 #include "pool.hxx"
 
@@ -50,12 +48,12 @@ SocketWrapper::Init(int _fd, FdType _fd_type,
     assert(_handler.read != nullptr);
     assert(_handler.write != nullptr);
 
-    fd = _fd;
+    fd = SocketDescriptor::FromFileDescriptor(FileDescriptor(_fd));
     fd_type = _fd_type;
     direct_mask = istream_direct_mask_to(fd_type);
 
-    read_event.Set(fd, EV_READ|EV_PERSIST);
-    write_event.Set(fd, EV_WRITE|EV_PERSIST);
+    read_event.Set(fd.Get(), EV_READ|EV_PERSIST);
+    write_event.Set(fd.Get(), EV_WRITE|EV_PERSIST);
 
     handler = &_handler;
     handler_ctx = _ctx;
@@ -65,41 +63,40 @@ void
 SocketWrapper::Init(SocketWrapper &&src,
                     const struct socket_handler &_handler, void *_ctx)
 {
-    Init(src.fd, src.fd_type, _handler, _ctx);
+    Init(src.fd.Get(), src.fd_type, _handler, _ctx);
     src.Abandon();
 }
 
 void
 SocketWrapper::Shutdown()
 {
-    if (fd < 0)
+    if (!fd.IsDefined())
         return;
 
-    shutdown(fd, SHUT_RDWR);
+    shutdown(fd.Get(), SHUT_RDWR);
 }
 
 void
 SocketWrapper::Close()
 {
-    if (fd < 0)
+    if (!fd.IsDefined())
         return;
 
     read_event.Delete();
     write_event.Delete();
 
-    close(fd);
-    fd = -1;
+    fd.Close();
 }
 
 void
 SocketWrapper::Abandon()
 {
-    assert(fd >= 0);
+    assert(fd.IsDefined());
 
     read_event.Delete();
     write_event.Delete();
 
-    fd = -1;
+    fd = SocketDescriptor::Undefined();
 }
 
 int
@@ -107,7 +104,7 @@ SocketWrapper::AsFD()
 {
     assert(IsValid());
 
-    const int result = fd;
+    const int result = fd.Get();
     Abandon();
     return result;
 }
@@ -117,7 +114,7 @@ SocketWrapper::ReadToBuffer(ForeignFifoBuffer<uint8_t> &buffer, size_t length)
 {
     assert(IsValid());
 
-    return recv_to_buffer(fd, buffer, length);
+    return recv_to_buffer(fd.Get(), buffer, length);
 }
 
 void
@@ -125,7 +122,7 @@ SocketWrapper::SetCork(bool cork)
 {
     assert(IsValid());
 
-    socket_set_cork(fd, cork);
+    socket_set_cork(fd.Get(), cork);
 }
 
 bool
@@ -133,7 +130,7 @@ SocketWrapper::IsReadyForWriting() const
 {
     assert(IsValid());
 
-    return fd_ready_for_writing(fd);
+    return fd.IsReadyForWriting();
 }
 
 ssize_t
@@ -141,7 +138,7 @@ SocketWrapper::Write(const void *data, size_t length)
 {
     assert(IsValid());
 
-    return send(fd, data, length, MSG_DONTWAIT|MSG_NOSIGNAL);
+    return send(fd.Get(), data, length, MSG_DONTWAIT|MSG_NOSIGNAL);
 }
 
 ssize_t
@@ -159,13 +156,13 @@ SocketWrapper::WriteV(const struct iovec *v, size_t n)
         .msg_flags = 0,
     };
 
-    return sendmsg(fd, &m, MSG_DONTWAIT|MSG_NOSIGNAL);
+    return sendmsg(fd.Get(), &m, MSG_DONTWAIT|MSG_NOSIGNAL);
 }
 
 ssize_t
 SocketWrapper::WriteFrom(int other_fd, FdType other_fd_type,
                          size_t length)
 {
-    return istream_direct_to_socket(other_fd_type, other_fd, fd, length);
+    return istream_direct_to_socket(other_fd_type, other_fd, fd.Get(), length);
 }
 

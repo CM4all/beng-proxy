@@ -637,7 +637,7 @@ BufferedSocket::WriteFrom(int other_fd, FdType other_fd_type,
 
             /* try again, just in case our fd has become ready between
                the first socket_wrapper_write_from() call and
-               fd_ready_for_writing() */
+               IsReadyForWriting() */
             nbytes = base.WriteFrom(other_fd, other_fd_type, length);
         }
     }

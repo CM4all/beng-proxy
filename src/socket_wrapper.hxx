@@ -9,6 +9,7 @@
 
 #include "FdType.hxx"
 #include "event/SocketEvent.hxx"
+#include "net/SocketDescriptor.hxx"
 
 #include <inline/compiler.h>
 
@@ -41,7 +42,7 @@ struct socket_handler {
 };
 
 class SocketWrapper {
-    int fd;
+    SocketDescriptor fd;
     FdType fd_type;
 
     FdTypeMask direct_mask;
@@ -95,11 +96,11 @@ public:
     int AsFD();
 
     bool IsValid() const {
-        return fd >= 0;
+        return fd.IsDefined();
     }
 
     int GetFD() const {
-        return fd;
+        return fd.Get();
     }
 
     FdType GetType() const {
