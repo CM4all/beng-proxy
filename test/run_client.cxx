@@ -16,6 +16,7 @@
 #include "ssl/ssl_init.hxx"
 #include "ssl/ssl_client.hxx"
 #include "system/SetupProcess.hxx"
+#include "io/FileDescriptor.hxx"
 #include "net/ConnectSocket.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
@@ -204,7 +205,9 @@ Context::OnHttpResponse(http_status_t _status, gcc_unused StringMap &&headers,
 
     if (_body != nullptr) {
         _body = istream_pipe_new(pool, *_body, nullptr);
-        body = sink_fd_new(event_loop, *pool, *_body, 1, guess_fd_type(1),
+        body = sink_fd_new(event_loop, *pool, *_body,
+                           FileDescriptor(STDOUT_FILENO),
+                           guess_fd_type(STDOUT_FILENO),
                            my_sink_fd_handler, this);
         _body->Read();
     } else {

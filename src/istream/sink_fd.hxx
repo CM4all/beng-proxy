@@ -12,6 +12,7 @@
 
 struct pool;
 class EventLoop;
+class FileDescriptor;
 class Istream;
 struct SinkFd;
 
@@ -39,7 +40,7 @@ struct SinkFdHandler {
 
 SinkFd *
 sink_fd_new(EventLoop &event_loop, struct pool &pool, Istream &istream,
-            int fd, FdType fd_type,
+            FileDescriptor fd, FdType fd_type,
             const SinkFdHandler &handler, void *ctx);
 
 void

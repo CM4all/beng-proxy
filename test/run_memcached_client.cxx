@@ -13,6 +13,7 @@
 #include "net/SocketDescriptor.hxx"
 #include "net/RConnectSocket.hxx"
 #include "system/SetupProcess.hxx"
+#include "io/FileDescriptor.hxx"
 #include "util/ByteOrder.hxx"
 #include "util/Cancellable.hxx"
 
@@ -144,7 +145,8 @@ my_mcd_response(enum memcached_response_status status,
     if (value != NULL) {
         value = istream_pipe_new(c->pool, *value, nullptr);
         c->value = sink_fd_new(c->event_loop, *c->pool, *value,
-                               1, guess_fd_type(1),
+                               FileDescriptor(STDOUT_FILENO),
+                               guess_fd_type(STDOUT_FILENO),
                                my_sink_fd_handler, c);
         value->Read();
     } else {

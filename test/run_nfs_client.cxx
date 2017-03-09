@@ -6,6 +6,7 @@
 #include "event/Loop.hxx"
 #include "event/ShutdownListener.hxx"
 #include "system/SetupProcess.hxx"
+#include "io/FileDescriptor.hxx"
 #include "pool.hxx"
 #include "RootPool.hxx"
 #include "http_response.hxx"
@@ -128,7 +129,9 @@ Context::OnNfsOpen(NfsFileHandle *handle, const struct stat *st)
 
     auto *_body = istream_nfs_new(*pool, *handle, 0, st->st_size);
     _body = istream_pipe_new(pool, *_body, nullptr);
-    body = sink_fd_new(event_loop, *pool, *_body, 1, guess_fd_type(1),
+    body = sink_fd_new(event_loop, *pool, *_body,
+                       FileDescriptor(STDOUT_FILENO),
+                       guess_fd_type(STDOUT_FILENO),
                        my_sink_fd_handler, this);
     _body->Read();
 }

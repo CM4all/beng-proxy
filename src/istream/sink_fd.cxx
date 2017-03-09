@@ -8,7 +8,7 @@
 #include "Sink.hxx"
 #include "pool.hxx"
 #include "direct.hxx"
-#include "system/fd-util.h"
+#include "io/FileDescriptor.hxx"
 #include "event/SocketEvent.hxx"
 
 #include <sys/types.h>
@@ -19,7 +19,7 @@
 struct SinkFd final : IstreamSink {
     struct pool *pool;
 
-    int fd;
+    FileDescriptor fd;
     FdType fd_type;
     const SinkFdHandler *handler;
     void *handler_ctx;
@@ -44,13 +44,13 @@ struct SinkFd final : IstreamSink {
 #endif
 
     SinkFd(EventLoop &event_loop, struct pool &_pool, Istream &_istream,
-           int _fd, FdType _fd_type,
+           FileDescriptor _fd, FdType _fd_type,
            const SinkFdHandler &_handler, void *_handler_ctx)
         :IstreamSink(_istream, istream_direct_mask_to(_fd_type)),
          pool(&_pool),
          fd(_fd), fd_type(_fd_type),
          handler(&_handler), handler_ctx(_handler_ctx),
-         event(event_loop, fd, EV_WRITE|EV_PERSIST,
+         event(event_loop, fd.Get(), EV_WRITE|EV_PERSIST,
                BIND_THIS_METHOD(EventCallback)) {
         ScheduleWrite();
     }
@@ -68,7 +68,7 @@ struct SinkFd final : IstreamSink {
     }
 
     void ScheduleWrite() {
-        assert(fd >= 0);
+        assert(fd.IsDefined());
         assert(input.IsDefined());
 
         got_event = false;
@@ -95,8 +95,8 @@ SinkFd::OnData(const void *data, size_t length)
     got_data = true;
 
     ssize_t nbytes = IsAnySocket(fd_type)
-        ? send(fd, data, length, MSG_DONTWAIT|MSG_NOSIGNAL)
-        : write(fd, data, length);
+        ? send(fd.Get(), data, length, MSG_DONTWAIT|MSG_NOSIGNAL)
+        : fd.Write(data, length);
     if (nbytes >= 0) {
         ScheduleWrite();
         return nbytes;
@@ -116,10 +116,10 @@ SinkFd::OnDirect(FdType type, int _fd, size_t max_length)
 {
     got_data = true;
 
-    ssize_t nbytes = istream_direct_to(_fd, type, fd, fd_type,
+    ssize_t nbytes = istream_direct_to(_fd, type, fd.Get(), fd_type,
                                        max_length);
     if (unlikely(nbytes < 0 && errno == EAGAIN)) {
-        if (!fd_ready_for_writing(fd)) {
+        if (!fd.IsReadyForWriting()) {
             ScheduleWrite();
             return ISTREAM_RESULT_BLOCKING;
         }
@@ -127,7 +127,7 @@ SinkFd::OnDirect(FdType type, int _fd, size_t max_length)
         /* try again, just in case connection->fd has become ready
            between the first istream_direct_to_socket() call and
            fd_ready_for_writing() */
-        nbytes = istream_direct_to(_fd, type, fd, fd_type, max_length);
+        nbytes = istream_direct_to(_fd, type, fd.Get(), fd_type, max_length);
     }
 
     if (likely(nbytes > 0) && (got_event || type == FdType::FD_FILE))
@@ -196,10 +196,10 @@ SinkFd::EventCallback(unsigned)
 
 SinkFd *
 sink_fd_new(EventLoop &event_loop, struct pool &pool, Istream &istream,
-            int fd, FdType fd_type,
+            FileDescriptor fd, FdType fd_type,
             const SinkFdHandler &handler, void *ctx)
 {
-    assert(fd >= 0);
+    assert(fd.IsDefined());
     assert(handler.input_eof != nullptr);
     assert(handler.input_error != nullptr);
     assert(handler.send_error != nullptr);
