@@ -14,7 +14,7 @@
 #include <string.h>
 
 static bool global_log_enabled;
-static struct log_client *global_log_client;
+static LogClient *global_log_client;
 
 void
 log_global_init(const char *program, const struct daemon_user *user)

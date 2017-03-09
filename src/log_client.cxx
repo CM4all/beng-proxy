@@ -15,32 +15,32 @@
 #include <errno.h>
 #include <string.h>
 
-struct log_client {
+struct LogClient {
     int fd;
 
     size_t position;
     char buffer[32768];
 };
 
-struct log_client *
+LogClient *
 log_client_new(int fd)
 {
     assert(fd >= 0);
 
-    struct log_client *l = g_new(struct log_client, 1);
+    LogClient *l = g_new(LogClient, 1);
     l->fd = fd;
     return l;
 }
 
 void
-log_client_free(struct log_client *l)
+log_client_free(LogClient *l)
 {
     close(l->fd);
     g_free(l);
 }
 
 static void
-log_client_append(struct log_client *client,
+log_client_append(LogClient *client,
                   const void *p, size_t length)
 {
     if (client->position + length <= sizeof(client->buffer))
@@ -50,7 +50,7 @@ log_client_append(struct log_client *client,
 }
 
 void
-log_client_begin(struct log_client *client)
+log_client_begin(LogClient *client)
 {
     client->position = 0;
 
@@ -58,7 +58,7 @@ log_client_begin(struct log_client *client)
 }
 
 void
-log_client_append_attribute(struct log_client *client,
+log_client_append_attribute(LogClient *client,
                             enum beng_log_attribute attribute,
                             const void *value, size_t length)
 {
@@ -68,7 +68,7 @@ log_client_append_attribute(struct log_client *client,
 }
 
 void
-log_client_append_u16(struct log_client *client,
+log_client_append_u16(LogClient *client,
                       enum beng_log_attribute attribute, uint16_t value)
 {
     const uint16_t value2 = GUINT16_TO_BE(value);
@@ -76,7 +76,7 @@ log_client_append_u16(struct log_client *client,
 }
 
 void
-log_client_append_u64(struct log_client *client,
+log_client_append_u64(LogClient *client,
                       enum beng_log_attribute attribute, uint64_t value)
 {
     const uint64_t value2 = GUINT64_TO_BE(value);
@@ -84,7 +84,7 @@ log_client_append_u64(struct log_client *client,
 }
 
 void
-log_client_append_string(struct log_client *client,
+log_client_append_string(LogClient *client,
                          enum beng_log_attribute attribute, const char *value)
 {
     assert(value != nullptr);
@@ -93,7 +93,7 @@ log_client_append_string(struct log_client *client,
 }
 
 bool
-log_client_commit(struct log_client *client)
+log_client_commit(LogClient *client)
 {
     assert(client != nullptr);
     assert(client->fd >= 0);
