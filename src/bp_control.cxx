@@ -298,7 +298,7 @@ global_control_handler_disable(BpInstance &instance)
         c.Disable();
 }
 
-int
+UniqueFileDescriptor
 global_control_handler_add_fd(BpInstance *instance)
 {
     assert(!instance->control_servers.empty());
@@ -308,7 +308,7 @@ global_control_handler_add_fd(BpInstance *instance)
 }
 
 void
-global_control_handler_set_fd(BpInstance *instance, int fd)
+global_control_handler_set_fd(BpInstance *instance, UniqueFileDescriptor &&fd)
 {
     assert(!instance->control_servers.empty());
     assert(instance->control_distribute != nullptr);
@@ -320,7 +320,7 @@ global_control_handler_set_fd(BpInstance *instance, int fd)
                                           instance->control_servers.end());
 
     /* replace the one */
-    instance->control_servers.front().SetFd(fd);
+    instance->control_servers.front().SetFd(fd.Steal());
 }
 
 /*

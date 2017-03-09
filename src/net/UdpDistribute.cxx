@@ -5,7 +5,6 @@
  */
 
 #include "UdpDistribute.hxx"
-#include "system/fd_util.h"
 #include "system/Error.hxx"
 #include "util/DeleteDisposer.hxx"
 
@@ -13,9 +12,10 @@
 #include <unistd.h>
 #include <sys/socket.h>
 
-UdpDistribute::Recipient::Recipient(EventLoop &_event_loop, int _fd)
-    :fd(_fd),
-     event(_event_loop, fd, EV_READ,
+UdpDistribute::Recipient::Recipient(EventLoop &_event_loop,
+                                    UniqueFileDescriptor &&_fd)
+    :fd(std::move(_fd)),
+     event(_event_loop, fd.Get(), EV_READ,
            BIND_THIS_METHOD(EventCallback))
 {
     event.Add();
@@ -24,7 +24,6 @@ UdpDistribute::Recipient::Recipient(EventLoop &_event_loop, int _fd)
 UdpDistribute::Recipient::~Recipient()
 {
     event.Delete();
-    close(fd);
 }
 
 void
@@ -33,21 +32,22 @@ UdpDistribute::Clear()
     recipients.clear_and_dispose(DeleteDisposer());
 }
 
-int
+UniqueFileDescriptor
 UdpDistribute::Add()
 {
-    int fds[2];
-    if (socketpair_cloexec(AF_UNIX, SOCK_DGRAM, 0, fds) < 0)
+    UniqueFileDescriptor result_fd, recipient_fd;
+    if (!UniqueFileDescriptor::CreateSocketPair(AF_LOCAL, SOCK_DGRAM, 0,
+                                                result_fd, recipient_fd))
         throw MakeErrno("socketpair() failed");
 
-    auto *ur = new Recipient(event_loop, fds[0]);
+    auto *ur = new Recipient(event_loop, std::move(recipient_fd));
     recipients.push_back(*ur);
-    return fds[1];
+    return result_fd;
 }
 
 void
 UdpDistribute::Packet(const void *payload, size_t payload_length)
 {
     for (auto &ur : recipients)
-        send(ur.fd, payload, payload_length, MSG_DONTWAIT|MSG_NOSIGNAL);
+        send(ur.fd.Get(), payload, payload_length, MSG_DONTWAIT|MSG_NOSIGNAL);
 }

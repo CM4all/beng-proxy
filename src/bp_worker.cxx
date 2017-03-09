@@ -12,6 +12,7 @@
 #include "bp_control.hxx"
 #include "spawn/Client.hxx"
 #include "event/Duration.hxx"
+#include "io/UniqueFileDescriptor.hxx"
 #include "net/ServerSocket.hxx"
 #include "util/DeleteDisposer.hxx"
 #include "util/PrintException.hxx"
@@ -97,7 +98,7 @@ BpInstance::SpawnWorker()
     int spawn_fd = spawn->Connect();
 #endif
 
-    int distribute_socket = -1;
+    UniqueFileDescriptor distribute_socket;
     if (!config.control_listen.empty() && config.num_workers != 1)
         distribute_socket = global_control_handler_add_fd(this);
 
@@ -113,9 +114,6 @@ BpInstance::SpawnWorker()
         close(spawn_fd);
 #endif
 
-        if (distribute_socket >= 0)
-            close(distribute_socket);
-
         crash_deinit(&crash);
     } else if (pid == 0) {
         event_loop.Reinit();
@@ -129,8 +127,8 @@ BpInstance::SpawnWorker()
         spawn->ReplaceSocket(spawn_fd);
 #endif
 
-        if (distribute_socket >= 0)
-            global_control_handler_set_fd(this, distribute_socket);
+        if (distribute_socket.IsDefined())
+            global_control_handler_set_fd(this, std::move(distribute_socket));
         else if (config.num_workers == 1)
             /* in single-worker mode with watchdog master process, let
                only the one worker handle control commands */
@@ -157,9 +155,6 @@ BpInstance::SpawnWorker()
 #ifdef USE_SPAWNER
         close(spawn_fd);
 #endif
-
-        if (distribute_socket >= 0)
-            close(distribute_socket);
 
         event_loop.Reinit();
 
