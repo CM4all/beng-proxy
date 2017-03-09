@@ -11,13 +11,13 @@
 
 struct daemon_user;
 
-struct log_process {
+struct LogProcess {
     pid_t pid;
     int fd;
 };
 
 void
-log_launch(struct log_process *process, const char *program,
+log_launch(LogProcess *process, const char *program,
            const struct daemon_user *user);
 
 #endif

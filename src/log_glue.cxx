@@ -31,7 +31,7 @@ log_global_init(const char *program, const struct daemon_user *user)
         return;
     }
 
-    struct log_process lp;
+    LogProcess lp;
     log_launch(&lp, program, user);
 
     assert(lp.fd >= 0);

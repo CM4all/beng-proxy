@@ -32,7 +32,7 @@ log_run(const char *program, int fd)
 }
 
 void
-log_launch(struct log_process *process, const char *program,
+log_launch(LogProcess *process, const char *program,
            const struct daemon_user *user)
 {
     int fds[2];

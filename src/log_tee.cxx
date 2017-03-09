@@ -58,7 +58,7 @@ try {
 
     for (int i = 1; i < argc; ++i) {
         const char *program = argv[i];
-        struct log_process process;
+        LogProcess process;
 
         log_launch(&process, program, nullptr);
         Child &child = children[n_children++];
