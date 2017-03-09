@@ -112,11 +112,11 @@ SinkFd::OnData(const void *data, size_t length)
 }
 
 inline ssize_t
-SinkFd::OnDirect(FdType type, gcc_unused int _fd, size_t max_length)
+SinkFd::OnDirect(FdType type, int _fd, size_t max_length)
 {
     got_data = true;
 
-    ssize_t nbytes = istream_direct_to(fd, type, fd, fd_type,
+    ssize_t nbytes = istream_direct_to(_fd, type, fd, fd_type,
                                        max_length);
     if (unlikely(nbytes < 0 && errno == EAGAIN)) {
         if (!fd_ready_for_writing(fd)) {
@@ -127,7 +127,7 @@ SinkFd::OnDirect(FdType type, gcc_unused int _fd, size_t max_length)
         /* try again, just in case connection->fd has become ready
            between the first istream_direct_to_socket() call and
            fd_ready_for_writing() */
-        nbytes = istream_direct_to(fd, type, fd, fd_type, max_length);
+        nbytes = istream_direct_to(_fd, type, fd, fd_type, max_length);
     }
 
     if (likely(nbytes > 0) && (got_event || type == FdType::FD_FILE))
