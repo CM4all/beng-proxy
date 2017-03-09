@@ -16,7 +16,7 @@ struct log_process {
     int fd;
 };
 
-bool
+void
 log_launch(struct log_process *process, const char *program,
            const struct daemon_user *user);
 

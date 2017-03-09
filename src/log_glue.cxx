@@ -19,32 +19,29 @@ extern "C" {
 static bool global_log_enabled;
 static struct log_client *global_log_client;
 
-bool
+void
 log_global_init(const char *program, const struct daemon_user *user)
 {
     assert(global_log_client == nullptr);
 
     if (program == nullptr || *program == 0 || strcmp(program, "internal") == 0) {
         global_log_enabled = false;
-        return true;
+        return;
     }
 
     if (strcmp(program, "null") == 0) {
         global_log_enabled = true;
-        return true;
+        return;
     }
 
     struct log_process lp;
-    if (!log_launch(&lp, program, user))
-        return false;
+    log_launch(&lp, program, user);
 
     assert(lp.fd >= 0);
 
     global_log_client = log_client_new(lp.fd);
     assert(global_log_client != nullptr);
     global_log_enabled = global_log_client != nullptr;
-
-    return true;
 }
 
 void

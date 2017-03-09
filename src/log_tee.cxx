@@ -6,6 +6,7 @@
  */
 
 #include "log_launch.hxx"
+#include "util/PrintException.hxx"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -49,7 +50,7 @@ Forward()
 
 int
 main(int argc, char **argv)
-{
+try {
     if (argc < 2 || unsigned(argc) > 1 + MAX_CHILDREN) {
         fprintf(stderr, "Usage: %s PROGRAM1 PROGRAM2 ...\n", argv[0]);
         return EXIT_FAILURE;
@@ -59,12 +60,14 @@ main(int argc, char **argv)
         const char *program = argv[i];
         struct log_process process;
 
-        if (log_launch(&process, program, nullptr)) {
-            Child &child = children[n_children++];
-            child.fd = process.fd;
-        }
+        log_launch(&process, program, nullptr);
+        Child &child = children[n_children++];
+        child.fd = process.fd;
     }
 
     while (Forward()) {}
     return EXIT_SUCCESS;
+} catch (const std::exception &e) {
+    PrintException(e);
+    return EXIT_FAILURE;
 }

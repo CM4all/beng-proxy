@@ -14,7 +14,7 @@
 
 struct daemon_user;
 
-bool
+void
 log_global_init(const char *program, const struct daemon_user *user);
 
 void

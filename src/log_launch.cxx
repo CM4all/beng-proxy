@@ -6,6 +6,7 @@
 
 #include "log_launch.hxx"
 #include "system/fd_util.h"
+#include "system/Error.hxx"
 
 #include <daemon/user.h>
 #include <daemon/log.h>
@@ -30,14 +31,14 @@ log_run(const char *program, int fd)
     _exit(1);
 }
 
-bool
+void
 log_launch(struct log_process *process, const char *program,
            const struct daemon_user *user)
 {
     int fds[2];
 
     if (socketpair_cloexec(AF_UNIX, SOCK_SEQPACKET, 0, fds) < 0)
-        return false;
+        throw MakeErrno("socketpair() failed");
 
     /* we need an unidirectional socket only */
     shutdown(fds[0], SHUT_RD);
@@ -45,10 +46,10 @@ log_launch(struct log_process *process, const char *program,
 
     pid_t pid = fork();
     if (pid < 0) {
-        daemon_log(2, "fork() failed: %s\n", strerror(errno));
+        int e = errno;
         close(fds[0]);
         close(fds[1]);
-        return false;
+        throw MakeErrno(e, "fork() failed");
     }
 
     if (pid == 0) {
@@ -62,5 +63,4 @@ log_launch(struct log_process *process, const char *program,
 
     process->pid = pid;
     process->fd = fds[0];
-    return true;
 }

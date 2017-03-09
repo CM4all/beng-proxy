@@ -194,9 +194,8 @@ int main(int argc, char **argv)
 
     /* launch the access logger */
 
-    if (!log_global_init(config.access_logger.c_str(),
-                         &instance.cmdline.logger_user))
-        return EXIT_FAILURE;
+    log_global_init(config.access_logger.c_str(),
+                    &instance.cmdline.logger_user);
 
     /* daemonize II */
 
