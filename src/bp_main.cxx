@@ -39,7 +39,7 @@
 #include "CachedResourceLoader.hxx"
 #include "FilterResourceLoader.hxx"
 #include "bp_control.hxx"
-#include "log-glue.h"
+#include "log_glue.hxx"
 #include "ua_classification.hxx"
 #include "ssl/ssl_init.hxx"
 #include "ssl/ssl_client.hxx"

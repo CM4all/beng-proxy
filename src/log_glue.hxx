@@ -4,20 +4,15 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_LOG_GLUE_H
-#define BENG_PROXY_LOG_GLUE_H
+#ifndef BENG_PROXY_LOG_GLUE_HXX
+#define BENG_PROXY_LOG_GLUE_HXX
 
 #include <http/method.h>
 #include <http/status.h>
 
-#include <stdbool.h>
 #include <stdint.h>
 
 struct daemon_user;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 bool
 log_global_init(const char *program, const struct daemon_user *user);
@@ -45,9 +40,5 @@ log_http_request(uint64_t timestamp, http_method_t method, const char *uri,
                  http_status_t status, int64_t length,
                  uint64_t traffic_received, uint64_t traffic_sent,
                  uint64_t duration);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

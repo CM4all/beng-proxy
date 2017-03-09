@@ -16,7 +16,7 @@
 #include "bulldog.hxx"
 #include "balancer.hxx"
 #include "pipe_stock.hxx"
-#include "log-glue.h"
+#include "log_glue.hxx"
 #include "lb_config.hxx"
 #include "ssl/ssl_init.hxx"
 #include "pool.hxx"

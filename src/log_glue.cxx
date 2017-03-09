@@ -4,9 +4,12 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "log-glue.h"
+#include "log_glue.hxx"
+
+extern "C" {
 #include "log-launch.h"
 #include "log-client.h"
+}
 
 #include <glib.h>
 
@@ -19,9 +22,9 @@ static struct log_client *global_log_client;
 bool
 log_global_init(const char *program, const struct daemon_user *user)
 {
-    assert(global_log_client == NULL);
+    assert(global_log_client == nullptr);
 
-    if (program == NULL || *program == 0 || strcmp(program, "internal") == 0) {
+    if (program == nullptr || *program == 0 || strcmp(program, "internal") == 0) {
         global_log_enabled = false;
         return true;
     }
@@ -38,8 +41,8 @@ log_global_init(const char *program, const struct daemon_user *user)
     assert(lp.fd >= 0);
 
     global_log_client = log_client_new(lp.fd);
-    assert(global_log_client != NULL);
-    global_log_enabled = global_log_client != NULL;
+    assert(global_log_client != nullptr);
+    global_log_enabled = global_log_client != nullptr;
 
     return true;
 }
@@ -47,7 +50,7 @@ log_global_init(const char *program, const struct daemon_user *user)
 void
 log_global_deinit(void)
 {
-    if (global_log_client != NULL)
+    if (global_log_client != nullptr)
         log_client_free(global_log_client);
 }
 
@@ -66,24 +69,24 @@ log_http_request(uint64_t timestamp, http_method_t method, const char *uri,
                  uint64_t duration)
 {
     assert(http_method_is_valid(method));
-    assert(uri != NULL);
+    assert(uri != nullptr);
     assert(http_status_is_valid(status));
 
-    if (global_log_client == NULL)
+    if (global_log_client == nullptr)
         return true;
 
     log_client_begin(global_log_client);
     log_client_append_u64(global_log_client, LOG_TIMESTAMP, timestamp);
-    if (remote_host != NULL)
+    if (remote_host != nullptr)
         log_client_append_string(global_log_client, LOG_REMOTE_HOST,
                                  remote_host);
-    if (site != NULL)
+    if (site != nullptr)
         log_client_append_string(global_log_client, LOG_SITE, site);
     log_client_append_u8(global_log_client, LOG_HTTP_METHOD, method);
     log_client_append_string(global_log_client, LOG_HTTP_URI, uri);
-    if (referer != NULL)
+    if (referer != nullptr)
         log_client_append_string(global_log_client, LOG_HTTP_REFERER, referer);
-    if (user_agent != NULL)
+    if (user_agent != nullptr)
         log_client_append_string(global_log_client, LOG_USER_AGENT,
                                  user_agent);
     log_client_append_u16(global_log_client, LOG_HTTP_STATUS, status);
