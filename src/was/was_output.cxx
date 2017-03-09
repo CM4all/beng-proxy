@@ -8,7 +8,7 @@
 #include "was_quark.h"
 #include "event/SocketEvent.hxx"
 #include "direct.hxx"
-#include "system/fd-util.h"
+#include "io/FileDescriptor.hxx"
 #include "istream/Pointer.hxx"
 #include "pool.hxx"
 
@@ -25,7 +25,7 @@ static constexpr struct timeval was_output_timeout = {
 
 class WasOutput final : IstreamHandler {
 public:
-    const int fd;
+    FileDescriptor fd;
     SocketEvent event;
 
     WasOutputHandler &handler;
@@ -36,10 +36,10 @@ public:
 
     bool known_length = false;
 
-    WasOutput(EventLoop &event_loop, int _fd, Istream &_input,
+    WasOutput(EventLoop &event_loop, FileDescriptor _fd, Istream &_input,
               WasOutputHandler &_handler)
         :fd(_fd),
-         event(event_loop, fd, EV_WRITE,
+         event(event_loop, fd.Get(), EV_WRITE,
                BIND_THIS_METHOD(WriteEventCallback)),
          handler(_handler),
          input(_input, *this, ISTREAM_TO_PIPE) {
@@ -92,7 +92,7 @@ WasOutput::CheckLength()
 inline void
 WasOutput::WriteEventCallback(unsigned events)
 {
-    assert(fd >= 0);
+    assert(fd.IsDefined());
     assert(input.IsDefined());
 
     if (unlikely(events & EV_TIMEOUT)) {
@@ -116,10 +116,10 @@ WasOutput::WriteEventCallback(unsigned events)
 inline size_t
 WasOutput::OnData(const void *p, size_t length)
 {
-    assert(fd >= 0);
+    assert(fd.IsDefined());
     assert(input.IsDefined());
 
-    ssize_t nbytes = write(fd, p, length);
+    ssize_t nbytes = fd.Write(p, length);
     if (likely(nbytes > 0)) {
         sent += nbytes;
         ScheduleWrite();
@@ -141,22 +141,23 @@ WasOutput::OnData(const void *p, size_t length)
 inline ssize_t
 WasOutput::OnDirect(FdType type, int source_fd, size_t max_length)
 {
-    assert(fd >= 0);
+    assert(fd.IsDefined());
 
-    ssize_t nbytes = istream_direct_to_pipe(type, source_fd, fd, max_length);
+    ssize_t nbytes = istream_direct_to_pipe(type, source_fd,
+                                            fd.Get(), max_length);
     if (likely(nbytes > 0)) {
         sent += nbytes;
         ScheduleWrite();
     } else if (nbytes < 0 && errno == EAGAIN) {
-        if (!fd_ready_for_writing(fd)) {
+        if (!fd.IsReadyForWriting()) {
             ScheduleWrite();
             return ISTREAM_RESULT_BLOCKING;
         }
 
         /* try again, just in case fd has become ready between
            the first istream_direct_to_pipe() call and
-           fd_ready_for_writing() */
-        nbytes = istream_direct_to_pipe(type, source_fd, fd, max_length);
+           fd.IsReadyForWriting() */
+        nbytes = istream_direct_to_pipe(type, source_fd, fd.Get(), max_length);
     }
 
     return nbytes;
@@ -194,10 +195,10 @@ WasOutput::OnError(GError *error)
 
 WasOutput *
 was_output_new(struct pool &pool, EventLoop &event_loop,
-               int fd, Istream &input,
+               FileDescriptor fd, Istream &input,
                WasOutputHandler &handler)
 {
-    assert(fd >= 0);
+    assert(fd.IsDefined());
 
     return NewFromPool<WasOutput>(pool, event_loop, fd, input, handler);
 }

@@ -16,6 +16,7 @@
 #include "strmap.hxx"
 #include "pool.hxx"
 #include "stopwatch.hxx"
+#include "io/FileDescriptor.hxx"
 #include "util/Cast.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/Cancellable.hxx"
@@ -96,7 +97,7 @@ struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler, C
     WasClient(struct pool &_pool, struct pool &_caller_pool,
               EventLoop &event_loop,
               Stopwatch *_stopwatch,
-              int control_fd, int input_fd, int output_fd,
+              int control_fd, int input_fd, FileDescriptor output_fd,
               WasLease &_lease,
               http_method_t method, Istream *body,
               HttpResponseHandler &_handler,
@@ -698,7 +699,7 @@ inline
 WasClient::WasClient(struct pool &_pool, struct pool &_caller_pool,
                      EventLoop &event_loop,
                      Stopwatch *_stopwatch,
-                     int control_fd, int input_fd, int output_fd,
+                     int control_fd, int input_fd, FileDescriptor output_fd,
                      WasLease &_lease,
                      http_method_t method, Istream *body,
                      HttpResponseHandler &_handler,
@@ -768,7 +769,8 @@ was_client_request(struct pool &caller_pool, EventLoop &event_loop,
     struct pool *pool = pool_new_linear(&caller_pool, "was_client_request", 32768);
     auto client = NewFromPool<WasClient>(*pool, *pool, caller_pool,
                                          event_loop, stopwatch,
-                                         control_fd, input_fd, output_fd,
+                                         control_fd, input_fd,
+                                         FileDescriptor(output_fd),
                                          lease, method, body,
                                          handler, cancel_ptr);
 

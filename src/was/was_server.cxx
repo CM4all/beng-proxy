@@ -15,6 +15,7 @@
 #include "istream/istream_null.hxx"
 #include "strmap.hxx"
 #include "pool.hxx"
+#include "io/FileDescriptor.hxx"
 #include "util/ConstBuffer.hxx"
 
 #include <was/protocol.h>
@@ -27,7 +28,8 @@
 struct WasServer final : WasControlHandler, WasOutputHandler, WasInputHandler {
     struct pool &pool;
 
-    const int control_fd, input_fd, output_fd;
+    const int control_fd, input_fd;
+    FileDescriptor output_fd;
 
     WasControl control;
 
@@ -61,7 +63,7 @@ struct WasServer final : WasControlHandler, WasOutputHandler, WasInputHandler {
     } response;
 
     WasServer(struct pool &_pool, EventLoop &event_loop,
-              int _control_fd, int _input_fd, int _output_fd,
+              int _control_fd, int _input_fd, FileDescriptor _output_fd,
               WasServerHandler &_handler)
         :pool(_pool),
          control_fd(_control_fd), input_fd(_input_fd), output_fd(_output_fd),
@@ -71,7 +73,7 @@ struct WasServer final : WasControlHandler, WasOutputHandler, WasInputHandler {
     void CloseFiles() {
         close(control_fd);
         close(input_fd);
-        close(output_fd);
+        output_fd.Close();
     }
 
     void ReleaseError(GError *error);
@@ -481,7 +483,8 @@ was_server_new(struct pool &pool, EventLoop &event_loop,
     assert(output_fd >= 0);
 
     return NewFromPool<WasServer>(pool, pool, event_loop,
-                                  control_fd, input_fd, output_fd,
+                                  control_fd, input_fd,
+                                  FileDescriptor(output_fd),
                                   handler);
 }
 
