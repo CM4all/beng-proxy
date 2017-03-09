@@ -31,9 +31,13 @@ BpInstance::RespawnWorkerCallback()
 
     daemon_log(2, "respawning child\n");
 
-    pid_t pid = SpawnWorker();
-    if (pid != 0)
-        ScheduleSpawnWorker();
+    try {
+        pid_t pid = SpawnWorker();
+        if (pid != 0)
+            ScheduleSpawnWorker();
+    } catch (const std::exception &e) {
+        PrintException(e);
+    }
 }
 
 void
@@ -90,14 +94,7 @@ BpInstance::SpawnWorker()
     assert(connections.empty());
 
 #ifdef USE_SPAWNER
-    int spawn_fd;
-
-    try {
-        spawn_fd = spawn->Connect();
-    } catch (const std::exception &e) {
-        PrintException(e);
-        return -1;
-    }
+    int spawn_fd = spawn->Connect();
 #endif
 
     int distribute_socket = -1;
