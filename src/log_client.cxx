@@ -5,6 +5,7 @@
  */
 
 #include "log_client.hxx"
+#include "util/ByteOrder.hxx"
 
 #include <daemon/log.h>
 
@@ -71,7 +72,7 @@ void
 log_client_append_u16(LogClient *client,
                       enum beng_log_attribute attribute, uint16_t value)
 {
-    const uint16_t value2 = GUINT16_TO_BE(value);
+    const uint16_t value2 = ToBE16(value);
     log_client_append_attribute(client, attribute, &value2, sizeof(value2));
 }
 
@@ -79,7 +80,7 @@ void
 log_client_append_u64(LogClient *client,
                       enum beng_log_attribute attribute, uint64_t value)
 {
-    const uint64_t value2 = GUINT64_TO_BE(value);
+    const uint64_t value2 = ToBE64(value);
     log_client_append_attribute(client, attribute, &value2, sizeof(value2));
 }
 
