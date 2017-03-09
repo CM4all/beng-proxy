@@ -346,6 +346,7 @@ executable('run_nfs_client',
     declare_dependency(link_with: nfs_client),
     declare_dependency(link_with: istream),
     stock_dep,
+    io_dep,
   ])
 
 test('t_cache', executable('t_cache',

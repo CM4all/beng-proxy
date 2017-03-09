@@ -8,6 +8,7 @@
 #define BENG_PROXY_PIPE_STOCK_HXX
 
 class EventLoop;
+class FileDescriptor;
 class Stock;
 struct StockItem;
 
@@ -18,6 +19,6 @@ void
 pipe_stock_free(Stock *stock);
 
 void
-pipe_stock_item_get(StockItem *item, int fds[2]);
+pipe_stock_item_get(StockItem *item, FileDescriptor fds[2]);
 
 #endif

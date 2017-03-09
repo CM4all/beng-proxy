@@ -8,7 +8,7 @@
 
 #include "istream_pipe.hxx"
 #include "ForwardIstream.hxx"
-#include "system/fd_util.h"
+#include "io/FileDescriptor.hxx"
 #include "direct.hxx"
 #include "pipe_stock.hxx"
 #include "stock/Stock.hxx"
@@ -20,13 +20,11 @@
 #include <assert.h>
 #include <errno.h>
 #include <string.h>
-#include <fcntl.h>
-#include <unistd.h>
 
 class PipeIstream final : public ForwardIstream {
     Stock *const stock;
     StockItem *stock_item = nullptr;
-    int fds[2] = { -1, -1 };
+    FileDescriptor fds[2] = { FileDescriptor::Undefined(), FileDescriptor::Undefined() };
     size_t piped = 0;
 
 public:
@@ -83,15 +81,9 @@ PipeIstream::CloseInternal()
             /* reuse the pipe only if it's empty */
             stock_item->Put(piped > 0);
     } else {
-        if (fds[0] >= 0) {
-            close(fds[0]);
-            fds[0] = -1;
-        }
-
-        if (fds[1] >= 0) {
-            close(fds[1]);
-            fds[1] = -1;
-        }
+        for (auto &fd : fds)
+            if (fd.IsDefined())
+                fd.Close();
     }
 }
 
@@ -109,11 +101,11 @@ PipeIstream::Abort(GError *error)
 ssize_t
 PipeIstream::Consume()
 {
-    assert(fds[0] >= 0);
+    assert(fds[0].IsDefined());
     assert(piped > 0);
     assert(stock_item != nullptr || stock == nullptr);
 
-    ssize_t nbytes = InvokeDirect(FdType::FD_PIPE, fds[0], piped);
+    ssize_t nbytes = InvokeDirect(FdType::FD_PIPE, fds[0].Get(), piped);
     if (unlikely(nbytes == ISTREAM_RESULT_BLOCKING ||
                  nbytes == ISTREAM_RESULT_CLOSED))
         /* handler blocks (-2) or pipe was closed (-3) */
@@ -135,8 +127,9 @@ PipeIstream::Consume()
 
             stock_item->Put(false);
             stock_item = nullptr;
-            fds[0] = -1;
-            fds[1] = -1;
+
+            for (auto &fd : fds)
+                fd.SetUndefined();
         }
 
         if (piped == 0 && !input.IsDefined()) {
@@ -179,8 +172,8 @@ PipeIstream::OnData(const void *data, size_t length)
 inline bool
 PipeIstream::Create(GError **error_r)
 {
-    assert(fds[0] < 0);
-    assert(fds[1] < 0);
+    assert(!fds[0].IsDefined());
+    assert(!fds[1].IsDefined());
 
     if (stock != nullptr) {
         assert(stock_item == nullptr);
@@ -191,7 +184,7 @@ PipeIstream::Create(GError **error_r)
 
         pipe_stock_item_get(stock_item, fds);
     } else {
-        if (pipe_cloexec_nonblock(fds) < 0) {
+        if (!FileDescriptor::CreatePipeNonBlock(fds[0], fds[1])) {
             set_error_errno_msg(error_r, "pipe() failed");
             return false;
         }
@@ -224,7 +217,7 @@ PipeIstream::OnDirect(FdType type, int fd, size_t max_length)
 
     assert((type & ISTREAM_TO_PIPE) == type);
 
-    if (fds[1] < 0) {
+    if (!fds[1].IsDefined()) {
         GError *error = nullptr;
         if (!Create(&error)) {
             Abort(error);
@@ -232,7 +225,7 @@ PipeIstream::OnDirect(FdType type, int fd, size_t max_length)
         }
     }
 
-    ssize_t nbytes = splice(fd, nullptr, fds[1], nullptr, max_length,
+    ssize_t nbytes = splice(fd, nullptr, fds[1].Get(), nullptr, max_length,
                             SPLICE_F_NONBLOCK | SPLICE_F_MOVE);
     /* don't check EAGAIN here (and don't return -2).  We assume that
        splicing to the pipe cannot possibly block, since we flushed
@@ -255,10 +248,8 @@ PipeIstream::OnEof()
 {
     input.Clear();
 
-    if (stock == nullptr && fds[1] >= 0) {
-        close(fds[1]);
-        fds[1] = -1;
-    }
+    if (stock == nullptr && fds[1].IsDefined())
+        fds[1].Close();
 
     if (piped == 0) {
         CloseInternal();
