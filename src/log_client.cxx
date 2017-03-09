@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "log-client.h"
+#include "log_client.hxx"
 
 #include <daemon/log.h>
 
@@ -87,7 +87,7 @@ void
 log_client_append_string(struct log_client *client,
                          enum beng_log_attribute attribute, const char *value)
 {
-    assert(value != NULL);
+    assert(value != nullptr);
 
     log_client_append_attribute(client, attribute, value, strlen(value) + 1);
 }
@@ -95,7 +95,7 @@ log_client_append_string(struct log_client *client,
 bool
 log_client_commit(struct log_client *client)
 {
-    assert(client != NULL);
+    assert(client != nullptr);
     assert(client->fd >= 0);
     assert(client->position > 0);
 

@@ -6,10 +6,7 @@
 
 #include "log_glue.hxx"
 #include "log_launch.hxx"
-
-extern "C" {
-#include "log-client.h"
-}
+#include "log_client.hxx"
 
 #include <glib.h>
 

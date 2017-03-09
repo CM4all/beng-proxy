@@ -4,13 +4,12 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_LOG_CLIENT_H
-#define BENG_PROXY_LOG_CLIENT_H
+#ifndef BENG_PROXY_LOG_CLIENT_HXX
+#define BENG_PROXY_LOG_CLIENT_HXX
 
 #include <beng-proxy/log.h>
 
 #include <stddef.h>
-#include <stdbool.h>
 
 struct log_client *
 log_client_new(int fd);
