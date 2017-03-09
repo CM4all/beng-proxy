@@ -7,7 +7,7 @@
 #ifndef SERVER_SOCKET_HXX
 #define SERVER_SOCKET_HXX
 
-#include "net/SocketDescriptor.hxx"
+#include "net/UniqueSocketDescriptor.hxx"
 #include "event/SocketEvent.hxx"
 
 #include <exception>
@@ -15,7 +15,7 @@
 class SocketAddress;
 
 class ServerSocket {
-    SocketDescriptor fd;
+    UniqueSocketDescriptor fd;
     SocketEvent event;
 
 public:
@@ -58,7 +58,8 @@ protected:
      *
      * @param fd the socket owned by the callee
      */
-    virtual void OnAccept(SocketDescriptor &&fd, SocketAddress address) = 0;
+    virtual void OnAccept(UniqueSocketDescriptor &&fd,
+                          SocketAddress address) = 0;
     virtual void OnAcceptError(std::exception_ptr ep) = 0;
 
 private:

@@ -6,9 +6,9 @@
 #define BENG_PROXY_RESOLVE_CONNECT_SOCKET_HXX
 
 struct addrinfo;
-class SocketDescriptor;
+class UniqueSocketDescriptor;
 
-SocketDescriptor
+UniqueSocketDescriptor
 ResolveConnectSocket(const char *host_and_port, int default_port,
                      const struct addrinfo &hints);
 

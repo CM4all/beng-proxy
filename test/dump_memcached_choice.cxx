@@ -13,7 +13,7 @@
 #include "pool.hxx"
 #include "fb_pool.hxx"
 #include "event/Loop.hxx"
-#include "net/SocketDescriptor.hxx"
+#include "net/UniqueSocketDescriptor.hxx"
 #include "net/RConnectSocket.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/Cancellable.hxx"
@@ -31,7 +31,7 @@
 struct Context final : Lease{
     struct pool *pool;
 
-    SocketDescriptor s;
+    UniqueSocketDescriptor s;
     bool idle = false, reuse;
 
     bool success = false;

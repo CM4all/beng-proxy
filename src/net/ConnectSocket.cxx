@@ -5,7 +5,7 @@
  */
 
 #include "ConnectSocket.hxx"
-#include "net/SocketDescriptor.hxx"
+#include "net/UniqueSocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
 #include "system/fd_util.h"
 #include "stopwatch.hxx"
@@ -38,7 +38,7 @@ ConnectSocketHandler::OnSocketConnectTimeout()
 
 class ConnectSocket final : Cancellable {
     struct pool &pool;
-    SocketDescriptor fd;
+    UniqueSocketDescriptor fd;
     SocketEvent event;
 
 #ifdef ENABLE_STOPWATCH
@@ -49,7 +49,7 @@ class ConnectSocket final : Cancellable {
 
 public:
     ConnectSocket(EventLoop &event_loop, struct pool &_pool,
-                  SocketDescriptor &&_fd, unsigned timeout,
+                  UniqueSocketDescriptor &&_fd, unsigned timeout,
 #ifdef ENABLE_STOPWATCH
                   Stopwatch &_stopwatch,
 #endif
@@ -149,7 +149,7 @@ client_socket_new(EventLoop &event_loop, struct pool &pool,
 {
     assert(!address.IsNull());
 
-    SocketDescriptor fd;
+    UniqueSocketDescriptor fd;
     if (!fd.Create(domain, type, protocol)) {
         handler.OnSocketConnectError(std::make_exception_ptr(MakeErrno("Failed to create socket")));
         return;

@@ -14,7 +14,7 @@
 #include "access_log.hxx"
 #include "drop.hxx"
 #include "gerrno.h"
-#include "net/SocketDescriptor.hxx"
+#include "net/UniqueSocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/StaticSocketAddress.hxx"
 #include "pool.hxx"
@@ -120,7 +120,7 @@ BpConnection::HttpConnectionClosed()
 
 void
 new_connection(BpInstance &instance,
-               SocketDescriptor &&fd, SocketAddress address,
+               UniqueSocketDescriptor &&fd, SocketAddress address,
                const char *listener_tag)
 {
     struct pool *pool;

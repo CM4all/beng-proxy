@@ -18,7 +18,7 @@
 #include "system/SetupProcess.hxx"
 #include "io/FileDescriptor.hxx"
 #include "net/ConnectSocket.hxx"
-#include "net/SocketDescriptor.hxx"
+#include "net/UniqueSocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
 #include "event/Loop.hxx"
 #include "event/ShutdownListener.hxx"
@@ -94,7 +94,7 @@ struct Context final : ConnectSocketHandler, Lease, HttpResponseHandler {
     http_method_t method;
     Istream *request_body;
 
-    SocketDescriptor fd;
+    UniqueSocketDescriptor fd;
     bool idle, reuse, aborted, got_response = false;
     http_status_t status;
 
@@ -107,7 +107,7 @@ struct Context final : ConnectSocketHandler, Lease, HttpResponseHandler {
     void ShutdownCallback();
 
     /* virtual methods from class ConnectSocketHandler */
-    void OnSocketConnectSuccess(SocketDescriptor &&fd) override;
+    void OnSocketConnectSuccess(UniqueSocketDescriptor &&fd) override;
     void OnSocketConnectError(std::exception_ptr ep) override;
 
     /* virtual methods from class Lease */
@@ -232,7 +232,7 @@ Context::OnHttpError(GError *error)
  */
 
 void
-Context::OnSocketConnectSuccess(SocketDescriptor &&new_fd)
+Context::OnSocketConnectSuccess(UniqueSocketDescriptor &&new_fd)
 try {
     fd = std::move(new_fd);
     idle = false;

@@ -10,14 +10,13 @@
 #include "lb_config.hxx"
 #include "ssl/ssl_factory.hxx"
 #include "ssl/DbSniCallback.hxx"
-#include "net/SocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
 #include "util/Exception.hxx"
 
 #include <daemon/log.h>
 
 void
-LbListener::OnAccept(SocketDescriptor &&new_fd, SocketAddress address)
+LbListener::OnAccept(UniqueSocketDescriptor &&new_fd, SocketAddress address)
 {
     lb_connection_new(instance, config,
                       ssl_factory,

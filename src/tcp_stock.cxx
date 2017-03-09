@@ -17,7 +17,7 @@
 #include "net/ConnectSocket.hxx"
 #include "net/AllocatedSocketAddress.hxx"
 #include "net/SocketAddress.hxx"
-#include "net/SocketDescriptor.hxx"
+#include "net/UniqueSocketDescriptor.hxx"
 #include "util/Cancellable.hxx"
 
 #include <daemon/log.h>
@@ -74,7 +74,7 @@ struct TcpStockConnection final
     }
 
     /* virtual methods from class ConnectSocketHandler */
-    void OnSocketConnectSuccess(SocketDescriptor &&fd) override;
+    void OnSocketConnectSuccess(UniqueSocketDescriptor &&fd) override;
     void OnSocketConnectError(std::exception_ptr ep) override;
 
     /* virtual methods from class StockItem */
@@ -123,7 +123,7 @@ TcpStockConnection::EventCallback(unsigned events)
  */
 
 void
-TcpStockConnection::OnSocketConnectSuccess(SocketDescriptor &&new_fd)
+TcpStockConnection::OnSocketConnectSuccess(UniqueSocketDescriptor &&new_fd)
 {
     cancel_ptr = nullptr;
 

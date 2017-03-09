@@ -30,7 +30,7 @@ public:
     unsigned FlushSSLSessionCache(long tm);
 
 protected:
-    void OnAccept(SocketDescriptor &&fd, SocketAddress address) override;
+    void OnAccept(UniqueSocketDescriptor &&fd, SocketAddress address) override;
     void OnAcceptError(std::exception_ptr ep) override;
 };
 

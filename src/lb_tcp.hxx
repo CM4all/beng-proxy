@@ -19,7 +19,7 @@ struct AddressList;
 struct Balancer;
 struct LbClusterConfig;
 struct LbTcpConnection;
-class SocketDescriptor;
+class UniqueSocketDescriptor;
 class SocketAddress;
 class LbClusterMap;
 
@@ -35,7 +35,7 @@ struct LbTcpConnectionHandler {
  */
 void
 lb_tcp_new(struct pool &pool, EventLoop &event_loop, Stock *pipe_stock,
-           SocketDescriptor &&fd, FdType fd_type,
+           UniqueSocketDescriptor &&fd, FdType fd_type,
            const SocketFilter *filter, void *filter_ctx,
            SocketAddress remote_address,
            const LbClusterConfig &cluster,

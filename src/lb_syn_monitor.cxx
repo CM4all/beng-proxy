@@ -23,7 +23,7 @@ public:
     explicit LbSynMonitor(LbMonitorHandler &_handler):handler(_handler) {}
 
     /* virtual methods from class ConnectSocketHandler */
-    void OnSocketConnectSuccess(gcc_unused SocketDescriptor &&fd) override {
+    void OnSocketConnectSuccess(UniqueSocketDescriptor &&) override {
         /* ignore the socket, we don't need it */
 
         handler.Success();

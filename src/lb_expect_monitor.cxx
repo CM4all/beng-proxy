@@ -11,7 +11,7 @@
 #include "gerrno.h"
 #include "GException.hxx"
 #include "net/ConnectSocket.hxx"
-#include "net/SocketDescriptor.hxx"
+#include "net/UniqueSocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
 #include "event/SocketEvent.hxx"
 #include "event/TimerEvent.hxx"
@@ -57,7 +57,7 @@ struct ExpectMonitor final : ConnectSocketHandler, Cancellable {
     void Cancel() override;
 
     /* virtual methods from class ConnectSocketHandler */
-    void OnSocketConnectSuccess(SocketDescriptor &&fd) override;
+    void OnSocketConnectSuccess(UniqueSocketDescriptor &&fd) override;
 
     void OnSocketConnectTimeout() override {
         handler.Timeout();
@@ -157,7 +157,7 @@ ExpectMonitor::DelayCallback()
  */
 
 void
-ExpectMonitor::OnSocketConnectSuccess(SocketDescriptor &&new_fd)
+ExpectMonitor::OnSocketConnectSuccess(UniqueSocketDescriptor &&new_fd)
 {
     if (!config.send.empty()) {
         ssize_t nbytes = send(new_fd.Get(), config.send.data(),

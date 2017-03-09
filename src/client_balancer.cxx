@@ -43,7 +43,7 @@ struct ClientBalancerRequest : ConnectSocketHandler {
               CancellablePointer &cancel_ptr);
 
     /* virtual methods from class ConnectSocketHandler */
-    void OnSocketConnectSuccess(SocketDescriptor &&fd) override;
+    void OnSocketConnectSuccess(UniqueSocketDescriptor &&fd) override;
     void OnSocketConnectTimeout() override;
     void OnSocketConnectError(std::exception_ptr ep) override;
 };
@@ -68,7 +68,7 @@ ClientBalancerRequest::Send(struct pool &pool, SocketAddress address,
  */
 
 void
-ClientBalancerRequest::OnSocketConnectSuccess(SocketDescriptor &&fd)
+ClientBalancerRequest::OnSocketConnectSuccess(UniqueSocketDescriptor &&fd)
 {
     auto &base = BalancerRequest<ClientBalancerRequest>::Cast(*this);
     base.Success();

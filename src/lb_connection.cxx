@@ -19,7 +19,7 @@
 #include "thread_pool.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/StaticSocketAddress.hxx"
-#include "net/SocketDescriptor.hxx"
+#include "net/UniqueSocketDescriptor.hxx"
 #include "address_string.hxx"
 
 #include <assert.h>
@@ -96,7 +96,7 @@ LbConnection *
 lb_connection_new(LbInstance &instance,
                   const LbListenerConfig &listener,
                   SslFactory *ssl_factory,
-                  SocketDescriptor &&fd, SocketAddress address)
+                  UniqueSocketDescriptor &&fd, SocketAddress address)
 {
     /* determine the local socket address */
     StaticSocketAddress local_address = fd.GetLocalAddress();

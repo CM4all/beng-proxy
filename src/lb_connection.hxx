@@ -19,7 +19,7 @@ struct pool;
 struct SslFactory;
 struct SslFilter;
 struct ThreadSocketFilter;
-class SocketDescriptor;
+class UniqueSocketDescriptor;
 class SocketAddress;
 struct HttpServerConnection;
 struct LbListenerConfig;
@@ -75,7 +75,7 @@ LbConnection *
 lb_connection_new(LbInstance &instance,
                   const LbListenerConfig &listener,
                   SslFactory *ssl_factory,
-                  SocketDescriptor &&fd, SocketAddress address);
+                  UniqueSocketDescriptor &&fd, SocketAddress address);
 
 void
 lb_connection_remove(LbConnection *connection);

@@ -12,12 +12,12 @@
 struct pool;
 class EventLoop;
 class SocketAddress;
-class SocketDescriptor;
+class UniqueSocketDescriptor;
 class CancellablePointer;
 
 class ConnectSocketHandler {
 public:
-    virtual void OnSocketConnectSuccess(SocketDescriptor &&fd) = 0;
+    virtual void OnSocketConnectSuccess(UniqueSocketDescriptor &&fd) = 0;
     virtual void OnSocketConnectTimeout();
     virtual void OnSocketConnectError(std::exception_ptr ep) = 0;
 };

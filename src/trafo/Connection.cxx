@@ -18,7 +18,7 @@
 TrafoConnection::TrafoConnection(EventLoop &event_loop,
                                  TrafoListener &_listener,
                                  TrafoHandler &_handler,
-                                 SocketDescriptor &&_fd)
+                                 UniqueSocketDescriptor &&_fd)
     :listener(_listener), handler(_handler),
      fd(std::move(_fd)),
      read_event(event_loop, fd.Get(), EV_READ|EV_PERSIST,

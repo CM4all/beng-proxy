@@ -1,5 +1,5 @@
 #include "beng-proxy/control.h"
-#include "net/SocketDescriptor.hxx"
+#include "net/UniqueSocketDescriptor.hxx"
 #include "net/RConnectSocket.hxx"
 #include "util/ByteOrder.hxx"
 
@@ -23,7 +23,7 @@ int main(int argc, char **argv) {
     hints.ai_flags = AI_ADDRCONFIG|AI_PASSIVE;
     hints.ai_socktype = SOCK_DGRAM;
 
-    SocketDescriptor s = ResolveConnectSocket(argv[1], 1234, hints);
+    UniqueSocketDescriptor s = ResolveConnectSocket(argv[1], 1234, hints);
 
     static constexpr struct {
         uint32_t magic;

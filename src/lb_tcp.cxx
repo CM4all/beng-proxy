@@ -14,7 +14,7 @@
 #include "pool.hxx"
 #include "GException.hxx"
 #include "net/ConnectSocket.hxx"
-#include "net/SocketDescriptor.hxx"
+#include "net/UniqueSocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/StaticSocketAddress.hxx"
 #include "util/Cancellable.hxx"
@@ -45,7 +45,7 @@ struct LbTcpConnection final : ConnectSocketHandler {
 
     LbTcpConnection(struct pool &_pool, EventLoop &event_loop,
                     Stock *_pipe_stock,
-                    SocketDescriptor &&fd, FdType fd_type,
+                    UniqueSocketDescriptor &&fd, FdType fd_type,
                     const SocketFilter *filter, void *filter_ctx,
                     SocketAddress remote_address,
                     const LbClusterConfig &cluster,
@@ -67,7 +67,7 @@ struct LbTcpConnection final : ConnectSocketHandler {
     void OnHandshake();
 
     /* virtual methods from class ConnectSocketHandler */
-    void OnSocketConnectSuccess(SocketDescriptor &&fd) override;
+    void OnSocketConnectSuccess(UniqueSocketDescriptor &&fd) override;
     void OnSocketConnectTimeout() override;
     void OnSocketConnectError(std::exception_ptr ep) override;
 };
@@ -368,7 +368,7 @@ static constexpr BufferedSocketHandler outbound_buffered_socket_handler = {
  */
 
 void
-LbTcpConnection::OnSocketConnectSuccess(SocketDescriptor &&fd)
+LbTcpConnection::OnSocketConnectSuccess(UniqueSocketDescriptor &&fd)
 {
     cancel_connect = nullptr;
 
@@ -437,7 +437,7 @@ lb_tcp_sticky(const AddressList &address_list,
 inline
 LbTcpConnection::LbTcpConnection(struct pool &_pool, EventLoop &event_loop,
                                  Stock *_pipe_stock,
-                                 SocketDescriptor &&fd, FdType fd_type,
+                                 UniqueSocketDescriptor &&fd, FdType fd_type,
                                  const SocketFilter *filter, void *filter_ctx,
                                  SocketAddress remote_address,
                                  const LbClusterConfig &_cluster,
@@ -525,7 +525,7 @@ LbTcpConnection::OnHandshake()
 
 void
 lb_tcp_new(struct pool &pool, EventLoop &event_loop, Stock *pipe_stock,
-           SocketDescriptor &&fd, FdType fd_type,
+           UniqueSocketDescriptor &&fd, FdType fd_type,
            const SocketFilter *filter, void *filter_ctx,
            SocketAddress remote_address,
            const LbClusterConfig &cluster,

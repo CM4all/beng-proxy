@@ -1,6 +1,6 @@
 #include "client_balancer.hxx"
 #include "net/ConnectSocket.hxx"
-#include "net/SocketDescriptor.hxx"
+#include "net/UniqueSocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
 #include "event/Loop.hxx"
 #include "pool.hxx"
@@ -31,11 +31,11 @@ struct Context final : ConnectSocketHandler {
         NONE, SUCCESS, TIMEOUT, ERROR,
     } result = TIMEOUT;
 
-    SocketDescriptor fd;
+    UniqueSocketDescriptor fd;
     std::exception_ptr error;
 
     /* virtual methods from class ConnectSocketHandler */
-    void OnSocketConnectSuccess(SocketDescriptor &&new_fd) override {
+    void OnSocketConnectSuccess(UniqueSocketDescriptor &&new_fd) override {
         result = SUCCESS;
         fd = std::move(new_fd);
         balancer_free(balancer);

@@ -6,7 +6,7 @@
 #define TRAFO_CONNECTION_HXX
 
 #include "event/SocketEvent.hxx"
-#include "net/SocketDescriptor.hxx"
+#include "net/UniqueSocketDescriptor.hxx"
 #include "util/DynamicFifoBuffer.hxx"
 #include "AllocatedRequest.hxx"
 
@@ -22,7 +22,7 @@ class TrafoConnection {
     TrafoListener &listener;
     TrafoHandler &handler;
 
-    const SocketDescriptor fd;
+    const UniqueSocketDescriptor fd;
     SocketEvent read_event, write_event;
 
     enum class State {
@@ -43,7 +43,7 @@ class TrafoConnection {
 public:
     TrafoConnection(EventLoop &event_loop,
                     TrafoListener &_listener, TrafoHandler &_handler,
-                    SocketDescriptor &&_fd);
+                    UniqueSocketDescriptor &&_fd);
     ~TrafoConnection();
 
     /**

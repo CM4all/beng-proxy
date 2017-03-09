@@ -21,7 +21,7 @@ public:
     BPListener(BpInstance &_instance, const char *_tag);
 
 protected:
-    void OnAccept(SocketDescriptor &&fd, SocketAddress address) override;
+    void OnAccept(UniqueSocketDescriptor &&fd, SocketAddress address) override;
     void OnAcceptError(std::exception_ptr ep) override;
 };
 

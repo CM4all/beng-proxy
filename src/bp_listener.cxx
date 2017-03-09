@@ -16,7 +16,7 @@ BPListener::BPListener(BpInstance &_instance, const char *_tag)
 }
 
 void
-BPListener::OnAccept(SocketDescriptor &&_fd, SocketAddress address)
+BPListener::OnAccept(UniqueSocketDescriptor &&_fd, SocketAddress address)
 {
     new_connection(instance, std::move(_fd), address, tag);
 }

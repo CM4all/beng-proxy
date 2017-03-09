@@ -10,7 +10,7 @@
 #include "event/ShutdownListener.hxx"
 #include "fb_pool.hxx"
 #include "RootPool.hxx"
-#include "net/SocketDescriptor.hxx"
+#include "net/UniqueSocketDescriptor.hxx"
 #include "net/RConnectSocket.hxx"
 #include "system/SetupProcess.hxx"
 #include "io/FileDescriptor.hxx"
@@ -35,7 +35,7 @@ struct Context final : Lease {
     ShutdownListener shutdown_listener;
     CancellablePointer cancel_ptr;
 
-    SocketDescriptor s;
+    UniqueSocketDescriptor s;
     bool idle = false, reuse, aborted = false;
     enum memcached_response_status status;
 

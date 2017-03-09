@@ -15,7 +15,7 @@ TrafoListener::RemoveConnection(TrafoConnection &connection)
 }
 
 void
-TrafoListener::OnAccept(SocketDescriptor &&new_fd,
+TrafoListener::OnAccept(UniqueSocketDescriptor &&new_fd,
                         gcc_unused SocketAddress address)
 {
     connections.emplace_back(event_loop, *this, handler, std::move(new_fd));

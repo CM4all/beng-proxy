@@ -276,7 +276,7 @@ net = static_library('net',
   'libcommon/src/net/Parser.cxx',
   'src/net/RConnectSocket.cxx',
   'libcommon/src/net/Interface.cxx',
-  'libcommon/src/net/SocketDescriptor.cxx',
+  'libcommon/src/net/UniqueSocketDescriptor.cxx',
   include_directories: inc,
   dependencies: [
     libinline, libdaemon, libsocket,

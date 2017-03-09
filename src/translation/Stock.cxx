@@ -15,7 +15,7 @@
 #include "pool.hxx"
 #include "gerrno.h"
 #include "net/AllocatedSocketAddress.hxx"
-#include "net/SocketDescriptor.hxx"
+#include "net/UniqueSocketDescriptor.hxx"
 #include "event/SocketEvent.hxx"
 
 #include <daemon/log.h>
@@ -26,7 +26,7 @@
 #include <errno.h>
 
 class TranslateConnection final : public HeapStockItem {
-    SocketDescriptor s;
+    UniqueSocketDescriptor s;
 
     SocketEvent event;
 

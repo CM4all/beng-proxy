@@ -5,17 +5,17 @@
 #include "RConnectSocket.hxx"
 #include "net/Resolver.hxx"
 #include "net/AddressInfo.hxx"
-#include "net/SocketDescriptor.hxx"
+#include "net/UniqueSocketDescriptor.hxx"
 #include "system/Error.hxx"
 #include "io/FileDescriptor.hxx"
 
-SocketDescriptor
+UniqueSocketDescriptor
 ResolveConnectSocket(const char *host_and_port, int default_port,
                      const struct addrinfo &hints)
 {
     const auto ai = Resolve(host_and_port, default_port, &hints);
 
-    SocketDescriptor s;
+    UniqueSocketDescriptor s;
     if (!s.Create(ai->ai_family, ai->ai_socktype, ai->ai_protocol))
         throw MakeErrno("Failed to create socket");
 

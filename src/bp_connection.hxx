@@ -17,7 +17,7 @@
 
 struct BpConfig;
 struct BpInstance;
-class SocketDescriptor;
+class UniqueSocketDescriptor;
 class SocketAddress;
 struct HttpServerConnection;
 
@@ -69,7 +69,7 @@ struct BpConnection final
 
 void
 new_connection(BpInstance &instance,
-               SocketDescriptor &&fd, SocketAddress address,
+               UniqueSocketDescriptor &&fd, SocketAddress address,
                const char *listener_tag);
 
 void
