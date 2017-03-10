@@ -156,7 +156,7 @@ void
 ServerSocket::EventCallback(unsigned)
 {
     StaticSocketAddress remote_address;
-    auto remote_fd = fd.Accept(remote_address);
+    auto remote_fd = fd.AcceptNonBlock(remote_address);
     if (!remote_fd.IsDefined()) {
         const int e = errno;
         if (e != EAGAIN && e != EWOULDBLOCK)
