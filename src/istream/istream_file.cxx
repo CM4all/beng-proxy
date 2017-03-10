@@ -7,7 +7,7 @@
 #include "istream_file.hxx"
 #include "istream.hxx"
 #include "io/Buffered.hxx"
-#include "system/fd_util.h"
+#include "io/UniqueFileDescriptor.hxx"
 #include "gerrno.h"
 #include "pool.hxx"
 #include "fb_pool.hxx"
@@ -331,17 +331,16 @@ istream_file_stat_new(EventLoop &event_loop, struct pool &pool,
 {
     assert(path != nullptr);
 
-    int fd = open_cloexec(path, O_RDONLY|O_NOCTTY, 0);
-    if (fd < 0) {
+    UniqueFileDescriptor fd;
+    if (!fd.OpenReadOnly(path)) {
         set_error_errno(error_r);
         g_prefix_error(error_r, "Failed to open %s: ", path);
         return nullptr;
     }
 
-    if (fstat(fd, &st) < 0) {
+    if (fstat(fd.Get(), &st) < 0) {
         set_error_errno(error_r);
         g_prefix_error(error_r, "Failed to stat %s: ", path);
-        close(fd);
         return nullptr;
     }
 
@@ -353,7 +352,8 @@ istream_file_stat_new(EventLoop &event_loop, struct pool &pool,
         size = -1;
     }
 
-    return istream_file_fd_new(event_loop, pool, path, fd, fd_type, size);
+    return istream_file_fd_new(event_loop, pool, path,
+                               fd.Steal(), fd_type, size);
 }
 
 Istream *
@@ -363,15 +363,15 @@ istream_file_new(EventLoop &event_loop, struct pool &pool,
 {
     assert(length >= -1);
 
-    int fd = open_cloexec(path, O_RDONLY|O_NOCTTY, 0);
-    if (fd < 0) {
+    UniqueFileDescriptor fd;
+    if (!fd.OpenReadOnly(path)) {
         set_error_errno(error_r);
         g_prefix_error(error_r, "Failed to open %s: ", path);
         return nullptr;
     }
 
-    return istream_file_fd_new(event_loop, pool,
-                               path, fd, FdType::FD_FILE, length);
+    return istream_file_fd_new(event_loop, pool, path,
+                               fd.Steal(), FdType::FD_FILE, length);
 }
 
 int
