@@ -35,7 +35,7 @@ open_udp(const char *host, int default_port)
         return -1;
     }
 
-    for (const struct addrinfo *i = ai; i != NULL; i = i->ai_next) {
+    for (const struct addrinfo *i = ai; i != nullptr; i = i->ai_next) {
         int fd = socket_cloexec_nonblock(i->ai_family, i->ai_socktype,
                                          i->ai_protocol);
         if (fd < 0) {

@@ -1075,7 +1075,7 @@ executable('cm4all-beng-proxy-log-split',
   ])
 
 executable('cm4all-beng-proxy-log-forward',
-  'src/log-forward.c',
+  'src/log_forward.cxx',
   include_directories: inc,
   dependencies: [
     libsocket, libhttp,
