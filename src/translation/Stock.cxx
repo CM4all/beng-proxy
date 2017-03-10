@@ -44,7 +44,7 @@ private:
     bool CreateAndConnect(SocketAddress address) {
         assert(!s.IsDefined());
 
-        return s.Create(AF_LOCAL, SOCK_STREAM, 0) &&
+        return s.CreateNonBlock(AF_LOCAL, SOCK_STREAM, 0) &&
             s.Connect(address);
     }
 

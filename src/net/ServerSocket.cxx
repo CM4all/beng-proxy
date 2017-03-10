@@ -52,7 +52,7 @@ try {
             unlink(sun->sun_path);
     }
 
-    if (!fd.Create(family, socktype, protocol))
+    if (!fd.CreateNonBlock(family, socktype, protocol))
         throw MakeErrno("Failed to create socket");
 
     if (!fd.SetBoolOption(SOL_SOCKET, SO_REUSEADDR, true))

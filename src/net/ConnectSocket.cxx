@@ -150,7 +150,7 @@ client_socket_new(EventLoop &event_loop, struct pool &pool,
     assert(!address.IsNull());
 
     UniqueSocketDescriptor fd;
-    if (!fd.Create(domain, type, protocol)) {
+    if (!fd.CreateNonBlock(domain, type, protocol)) {
         handler.OnSocketConnectError(std::make_exception_ptr(MakeErrno("Failed to create socket")));
         return;
     }

@@ -16,7 +16,7 @@ ResolveConnectSocket(const char *host_and_port, int default_port,
     const auto ai = Resolve(host_and_port, default_port, &hints);
 
     UniqueSocketDescriptor s;
-    if (!s.Create(ai->ai_family, ai->ai_socktype, ai->ai_protocol))
+    if (!s.CreateNonBlock(ai->ai_family, ai->ai_socktype, ai->ai_protocol))
         throw MakeErrno("Failed to create socket");
 
     if (!s.Connect(ai.front())) {
