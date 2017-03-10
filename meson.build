@@ -284,6 +284,7 @@ net = static_library('net',
     system_dep,
     declare_dependency(link_with: io),
   ])
+net_dep = declare_dependency(link_with: net)
 
 ssl = static_library('ssl',
   'src/certdb/CertDatabase.cxx',
@@ -1078,8 +1079,8 @@ executable('cm4all-beng-proxy-log-forward',
   'src/log_forward.cxx',
   include_directories: inc,
   dependencies: [
-    libsocket, libhttp,
-    system_dep,
+    libinline, libsocket, libhttp,
+    net_dep,
   ])
 
 executable('cm4all-beng-proxy-log-exec',

@@ -6,7 +6,8 @@
  */
 
 #include "log-server.h"
-#include "system/fd_util.h"
+#include "net/SocketDescriptor.hxx"
+#include "net/SocketAddress.hxx"
 #include "util/Macros.hxx"
 
 #include <socket/resolver.h>
@@ -19,7 +20,7 @@
 #include <unistd.h>
 #include <sys/socket.h>
 
-static int
+static SocketDescriptor
 open_udp(const char *host, int default_port)
 {
     struct addrinfo hints;
@@ -32,21 +33,19 @@ open_udp(const char *host, int default_port)
     if (ret != 0) {
         fprintf(stderr, "Failed to resolve '%s': %s\n",
                 host, gai_strerror(ret));
-        return -1;
+        return SocketDescriptor::Undefined();
     }
 
     for (const struct addrinfo *i = ai; i != nullptr; i = i->ai_next) {
-        int fd = socket_cloexec_nonblock(i->ai_family, i->ai_socktype,
-                                         i->ai_protocol);
-        if (fd < 0) {
+        SocketDescriptor fd;
+        if (!fd.CreateNonBlock(i->ai_family, i->ai_socktype, i->ai_protocol)) {
             fprintf(stderr, "socket() failed: %s\n", strerror(errno));
             continue;
         }
 
-        ret = connect(fd, i->ai_addr, i->ai_addrlen);
-        if (ret < 0) {
+        if (!fd.Connect({i->ai_addr, i->ai_addrlen})) {
             fprintf(stderr, "connect() failed: %s\n", strerror(errno));
-            close(fd);
+            fd.Close();
             continue;
         }
 
@@ -55,11 +54,11 @@ open_udp(const char *host, int default_port)
     }
 
     freeaddrinfo(ai);
-    return -1;
+    return SocketDescriptor::Undefined();
 }
 
 struct destination {
-    int fd;
+    SocketDescriptor fd;
     bool failed;
 };
 
@@ -80,7 +79,7 @@ int main(int argc, char **argv)
 
     for (unsigned i = 0; i < num_destinations; ++i) {
         destinations[i].fd = open_udp(argv[1 + i], 5479);
-        if (destinations[i].fd < 0)
+        if (!destinations[i].fd.IsDefined())
             return EXIT_FAILURE;
     }
 
@@ -89,7 +88,7 @@ int main(int argc, char **argv)
     while ((nbytes = recv(0, buffer, sizeof(buffer), 0)) > 0) {
         size_t length = (size_t)nbytes;
         for (unsigned i = 0; i < num_destinations; ++i) {
-            nbytes = send(destinations[i].fd, buffer, length, MSG_DONTWAIT);
+            nbytes = destinations[i].fd.Write(buffer, length);
             if (nbytes == (ssize_t)length)
                 destinations[i].failed = false;
             else if (nbytes < 0 && errno != EAGAIN && errno != EWOULDBLOCK &&
