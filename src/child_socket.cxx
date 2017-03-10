@@ -5,8 +5,8 @@
  */
 
 #include "child_socket.hxx"
-#include "system/fd_util.h"
 #include "io/UniqueFileDescriptor.hxx"
+#include "net/SocketDescriptor.hxx"
 #include "gerrno.h"
 
 #include <stdlib.h>
@@ -66,17 +66,17 @@ ChildSocket::Unlink()
 int
 ChildSocket::Connect(GError **error_r) const
 {
-    int fd = socket_cloexec_nonblock(PF_UNIX, SOCK_STREAM, 0);
-    if (fd < 0) {
+    SocketDescriptor fd;
+    if (!fd.CreateNonBlock(AF_LOCAL, SOCK_STREAM, 0)) {
         set_error_errno(error_r);
         return -1;
     }
 
-    if (connect(fd, GetAddress().GetAddress(), GetAddress().GetSize()) < 0) {
+    if (!fd.Connect(GetAddress())) {
         set_error_errno_msg(error_r, "connect failed");
-        close(fd);
+        fd.Close();
         return -1;
     }
 
-    return fd;
+    return fd.Get();
 }
