@@ -20,7 +20,7 @@
 #include "lb_config.hxx"
 #include "system/urandom.hxx"
 #include "system/Error.hxx"
-#include "system/StringFile.hxx"
+#include "io/StringFile.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/PrintException.hxx"
 

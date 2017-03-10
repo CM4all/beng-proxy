@@ -237,7 +237,6 @@ stock = static_library('stock',
 stock_dep = declare_dependency(link_with: stock)
 
 system = static_library('system',
-  'src/system/StringFile.cxx',
   'src/system/SetupProcess.cxx',
   'src/system/fd_util.c',
   'src/system/bind_mount.c',
@@ -254,6 +253,7 @@ io = static_library('io',
   'libcommon/src/io/FileDescriptor.cxx',
   'src/io/LineParser.cxx',
   'src/io/ConfigParser.cxx',
+  'src/io/StringFile.cxx',
   include_directories: inc,
   dependencies: [
     boost,
