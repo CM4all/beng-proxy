@@ -265,7 +265,7 @@ system_dep = declare_dependency(link_with: system)
 
 net = static_library('net',
   'src/net/ConnectSocket.cxx',
-  'src/net/ServerSocket.cxx',
+  'libcommon/src/net/ServerSocket.cxx',
   'src/net/UdpDistribute.cxx',
   'src/net/UdpListener.cxx',
   'libcommon/src/net/SocketAddress.cxx',

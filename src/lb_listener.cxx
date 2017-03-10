@@ -59,8 +59,7 @@ LbListener::Setup()
                                              std::move(sni_callback));
     }
 
-    Listen(config.bind_address.GetFamily(), SOCK_STREAM, 0,
-           config.bind_address,
+    Listen(config.bind_address,
            config.reuse_port,
            config.interface.empty() ? nullptr : config.interface.c_str());
 

@@ -226,8 +226,7 @@ BpInstance::AddListener(const BpConfig::Listener &c)
     listeners.emplace_front(*this, c.tag.empty() ? nullptr : c.tag.c_str());
     auto &listener = listeners.front();
 
-    listener.Listen(c.address.GetFamily(), SOCK_STREAM, 0,
-                    c.address, c.reuse_port,
+    listener.Listen(c.address, c.reuse_port,
                     c.interface.empty() ? nullptr : c.interface.c_str());
 
     listener.SetTcpDeferAccept(10);
