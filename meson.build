@@ -236,18 +236,6 @@ stock = static_library('stock',
   ])
 stock_dep = declare_dependency(link_with: stock)
 
-system = static_library('system',
-  'src/system/SetupProcess.cxx',
-  'src/system/fd_util.c',
-  'src/system/bind_mount.c',
-  'src/system/urandom.cxx',
-  include_directories: inc,
-  dependencies: [
-    libinline,
-    util_dep,
-  ])
-system_dep = declare_dependency(link_with: system)
-
 io = static_library('io',
   'src/io/Buffered.cxx',
   'libcommon/src/io/FileDescriptor.cxx',
@@ -259,9 +247,21 @@ io = static_library('io',
     boost,
     libinline,
     util_dep,
-    system_dep,
   ])
 io_dep = declare_dependency(link_with: io)
+
+system = static_library('system',
+  'src/system/SetupProcess.cxx',
+  'src/system/fd_util.c',
+  'src/system/bind_mount.c',
+  'src/system/urandom.cxx',
+  include_directories: inc,
+  dependencies: [
+    libinline,
+    util_dep,
+    io_dep,
+  ])
+system_dep = declare_dependency(link_with: system)
 
 net = static_library('net',
   'src/net/ConnectSocket.cxx',

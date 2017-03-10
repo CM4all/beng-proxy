@@ -4,8 +4,7 @@
 
 #include "urandom.hxx"
 #include "system/Error.hxx"
-#include "fd_util.h"
-#include "util/ScopeExit.hxx"
+#include "io/UniqueFileDescriptor.hxx"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -16,20 +15,20 @@
 #include <stdint.h>
 #include <stddef.h>
 
-static int
-Open(const char *path, int flags)
+static UniqueFileDescriptor
+Open(const char *path)
 {
-    int fd = open_cloexec("/dev/urandom", flags, 0);
-    if (fd < 0)
+    UniqueFileDescriptor fd;
+    if (!fd.OpenReadOnly(path))
         throw FormatErrno("Failed to open %s", path);
 
     return fd;
 }
 
 static size_t
-Read(const char *path, int fd, void *p, size_t size)
+Read(const char *path, FileDescriptor fd, void *p, size_t size)
 {
-    ssize_t nbytes = read(fd, p, size);
+    ssize_t nbytes = fd.Read(p, size);
     if (nbytes < 0)
         throw FormatErrno("Failed to read from %s", path);
 
@@ -40,7 +39,7 @@ Read(const char *path, int fd, void *p, size_t size)
 }
 
 static void
-FullRead(const char *path, int fd, void *_p, size_t size)
+FullRead(const char *path, FileDescriptor fd, void *_p, size_t size)
 {
     uint8_t *p = (uint8_t *)_p;
 
@@ -53,19 +52,13 @@ FullRead(const char *path, int fd, void *_p, size_t size)
 static size_t
 Read(const char *path, void *p, size_t size)
 {
-    int fd = Open(path, O_RDONLY);
-    AtScopeExit(fd) { close(fd); };
-
-    return Read(path, fd, p, size);
+    return Read(path, Open(path).ToFileDescriptor(), p, size);
 }
 
 static void
 FullRead(const char *path, void *p, size_t size)
 {
-    int fd = Open(path, O_RDONLY);
-    AtScopeExit(fd) { close(fd); };
-
-    FullRead(path, fd, p, size);
+    FullRead(path, Open(path).ToFileDescriptor(), p, size);
 }
 
 size_t
