@@ -272,11 +272,10 @@ WidgetRequest::ProcessResponse(http_status_t status,
                                unsigned options)
 {
     if (body == nullptr) {
-        GError *error =
-            g_error_new(widget_quark(), WIDGET_ERROR_EMPTY,
-                        "widget '%s' didn't send a response body",
-                        widget.GetLogName());
-        DispatchError(error);
+        /* this should not happen, but we're ignoring this formal
+           mistake and pretend everything's alright */
+        DispatchResponse(status, processor_header_forward(pool, headers),
+                         nullptr);
         return;
     }
 
@@ -320,11 +319,10 @@ WidgetRequest::CssProcessResponse(http_status_t status,
                                   unsigned options)
 {
     if (body == nullptr) {
-        GError *error =
-            g_error_new(widget_quark(), WIDGET_ERROR_EMPTY,
-                        "widget '%s' didn't send a response body",
-                        widget.GetLogName());
-        DispatchError(error);
+        /* this should not happen, but we're ignoring this formal
+           mistake and pretend everything's alright */
+        DispatchResponse(status, processor_header_forward(pool, headers),
+                         nullptr);
         return;
     }
 
@@ -348,11 +346,10 @@ WidgetRequest::TextProcessResponse(http_status_t status,
                                    StringMap &headers, Istream *body)
 {
     if (body == nullptr) {
-        GError *error =
-            g_error_new(widget_quark(), WIDGET_ERROR_EMPTY,
-                        "widget '%s' didn't send a response body",
-                        widget.GetLogName());
-        DispatchError(error);
+        /* this should not happen, but we're ignoring this formal
+           mistake and pretend everything's alright */
+        DispatchResponse(status, processor_header_forward(pool, headers),
+                         nullptr);
         return;
     }
 
