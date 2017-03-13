@@ -94,6 +94,12 @@ struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler, C
         }
     } response;
 
+    /**
+     * This is set to true while the final STOP is being sent to avoid
+     * recursive errors.
+     */
+    bool ignore_control_errors = false;
+
     WasClient(struct pool &_pool, struct pool &_caller_pool,
               EventLoop &event_loop,
               Stopwatch *_stopwatch,
@@ -153,6 +159,10 @@ struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler, C
             return;
 
         request.ClearBody();
+
+        /* if an error occurs while sending STOP, don't pass it to our
+           handler - he's not interested anymore */
+        ignore_control_errors = true;
 
         if (!control.SendEmpty(WAS_COMMAND_STOP))
             return;
@@ -293,6 +303,9 @@ struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler, C
     void OnWasControlError(GError *error) override {
         assert(!control.IsDefined());
 
+        if (ignore_control_errors)
+            return;
+
         stopwatch_event(stopwatch, "control_error");
 
         AbortResponse(error);
@@ -401,7 +414,10 @@ WasClient::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload)
             stopwatch_event(stopwatch, "control_error");
             error = g_error_new_literal(was_quark(), 0,
                                 "STATUS after body start");
-            AbortResponseBody(error);
+            /* note: using AbortResponse() instead of
+               AbortResponseBody() because the response may be still
+               "pending" */
+            AbortResponse(error);
             return false;
         }
 
