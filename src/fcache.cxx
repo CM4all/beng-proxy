@@ -522,6 +522,7 @@ inline FilterCache::~FilterCache()
 
     compress_timer.Cancel();
 
+    cache.Flush();
     slice_pool_free(slice_pool);
     rubber_free(rubber);
 
