@@ -414,7 +414,10 @@ WasClient::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload)
             stopwatch_event(stopwatch, "control_error");
             error = g_error_new_literal(was_quark(), 0,
                                 "STATUS after body start");
-            AbortResponseBody(error);
+            /* note: using AbortResponse() instead of
+               AbortResponseBody() because the response may be still
+               "pending" */
+            AbortResponse(error);
             return false;
         }
 
