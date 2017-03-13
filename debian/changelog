@@ -1,6 +1,6 @@
 cm4all-beng-proxy (12.0.8) unstable; urgency=low
 
-  * merge release 11.18
+  * merge release 11.19
   * build with Meson and Ninja
   * lb/certdb: fix assertion failure during shutdown
 
@@ -62,6 +62,13 @@ cm4all-beng-proxy (12.0.1) unstable; urgency=low
   * translation: add packet CRON
 
  -- Max Kellermann <mk@cm4all.com>  Wed, 23 Nov 2016 14:57:02 -0000
+
+cm4all-beng-proxy (11.19) unstable; urgency=low
+
+  * fix crash bug (assertion failure)
+  * debian: remove unnecessary dependency on cm4all-certdb-sql
+
+ -- Max Kellermann <mk@cm4all.com>  Mon, 13 Mar 2017 17:12:25 -0000
 
 cm4all-beng-proxy (11.18) unstable; urgency=low
 
