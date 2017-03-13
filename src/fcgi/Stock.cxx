@@ -46,6 +46,11 @@ struct FcgiStock {
               EventLoop &event_loop, SpawnService &spawn_service);
 
     ~FcgiStock() {
+        /* this one must be cleared before #child_stock; FadeAll()
+           calls ClearIdle(), so this method is the best match for
+           what we want to do (though a kludge) */
+        hstock.FadeAll();
+
         child_stock_free(child_stock);
     }
 
