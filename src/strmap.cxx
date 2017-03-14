@@ -7,6 +7,8 @@
 #include "strmap.hxx"
 #include "pool.hxx"
 
+#include <iterator>
+
 #include <string.h>
 
 bool
