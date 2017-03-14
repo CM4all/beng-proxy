@@ -53,8 +53,6 @@ public:
  * pool (see #thread_job).
  */
 struct ThreadSocketFilter final : ThreadJob {
-    struct pool &pool;
-
     ThreadQueue &queue;
 
     FilteredSocket *socket;
@@ -193,16 +191,13 @@ struct ThreadSocketFilter final : ThreadJob {
      */
     SliceFifoBuffer encrypted_output;
 
-    ThreadSocketFilter(struct pool &pool,
-                       EventLoop &_event_loop,
+    ThreadSocketFilter(EventLoop &_event_loop,
                        ThreadQueue &queue,
                        ThreadSocketFilterHandler *handler);
 
     ThreadSocketFilter(const ThreadSocketFilter &) = delete;
 
     ~ThreadSocketFilter();
-
-    void Destroy();
 
     /**
      * Schedule a Run() call in a worker thread.
@@ -250,11 +245,6 @@ private:
      */
     void OnDeferred();
 };
-
-ThreadSocketFilter *
-thread_socket_filter_new(struct pool &pool, EventLoop &event_loop,
-                         ThreadQueue &queue,
-                         ThreadSocketFilterHandler *handler);
 
 extern const SocketFilter thread_socket_filter;
 

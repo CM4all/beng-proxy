@@ -12,7 +12,6 @@
 #include "Error.hxx"
 #include "thread_socket_filter.hxx"
 #include "thread_pool.hxx"
-#include "pool.hxx"
 
 #include <daemon/log.h>
 
@@ -43,10 +42,10 @@ ssl_client_get_filter()
     return thread_socket_filter;;
 }
 
-static void *
-ssl_client_create2(struct pool *pool, EventLoop &event_loop,
-                   const char *hostname,
-                   GError **error_r)
+void *
+ssl_client_create(EventLoop &event_loop,
+                  const char *hostname,
+                  GError **error_r)
 {
     UniqueSSL ssl(SSL_new(ssl_client_ctx));
     if (!ssl) {
@@ -61,22 +60,6 @@ ssl_client_create2(struct pool *pool, EventLoop &event_loop,
     auto f = ssl_filter_new(std::move(ssl));
 
     auto &queue = thread_pool_get_queue(event_loop);
-    return thread_socket_filter_new(*pool, event_loop, queue,
-                                    &ssl_filter_get_handler(*f));
-}
-
-void *
-ssl_client_create(struct pool *pool, EventLoop &event_loop,
-                  const char *hostname,
-                  GError **error_r)
-{
-    /* create a new pool for the SSL filter; this is necessary because
-       thread_socket_filter_close() may need to invoke
-       pool_set_persistent(), which is only possible if nobody else
-       has "trashed" the pool yet */
-    pool = pool_new_linear(pool, "ssl_client", 1024);
-
-    void *result = ssl_client_create2(pool, event_loop, hostname, error_r);
-    pool_unref(pool);
-    return result;
+    return new ThreadSocketFilter(event_loop, queue,
+                                  &ssl_filter_get_handler(*f));
 }

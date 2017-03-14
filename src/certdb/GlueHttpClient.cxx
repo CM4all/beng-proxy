@@ -87,18 +87,16 @@ GlueHttpClient::~GlueHttpClient()
 }
 
 class SslSocketFilterFactory final : public SocketFilterFactory {
-    struct pool &pool;
     EventLoop &event_loop;
     const char *const host;
 
 public:
-    SslSocketFilterFactory(struct pool &_pool,
-                           EventLoop &_event_loop,
+    SslSocketFilterFactory(EventLoop &_event_loop,
                            const char *_host)
-        :pool(_pool), event_loop(_event_loop), host(_host) {}
+        :event_loop(_event_loop), host(_host) {}
 
     void *CreateFilter(GError **error_r) override {
-        return ssl_client_create(&pool, event_loop, host, error_r);
+        return ssl_client_create(event_loop, host, error_r);
     }
 };
 
@@ -115,7 +113,7 @@ GlueHttpClient::Request(struct pool &p, EventLoop &event_loop,
 
     if (server.ssl) {
         filter = &ssl_client_get_filter();
-        filter_factory = NewFromPool<SslSocketFilterFactory>(p, p, event_loop,
+        filter_factory = NewFromPool<SslSocketFilterFactory>(p, event_loop,
                                                              /* TODO: only host */
                                                              server.host_and_port);
     }

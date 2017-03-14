@@ -263,7 +263,7 @@ Context::OnSocketConnectSuccess(SocketDescriptor &&new_fd)
 
     case parsed_url::HTTPS: {
         GError *error = nullptr;
-        void *filter_ctx = ssl_client_create(pool, event_loop,
+        void *filter_ctx = ssl_client_create(event_loop,
                                              url.host,
                                              &error);
         if (filter_ctx == nullptr) {
