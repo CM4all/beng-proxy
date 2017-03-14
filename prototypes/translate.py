@@ -910,8 +910,8 @@ if __name__ == '__main__':
             elif os.path.isdir('../../cgi-coma'):
                 src_dir = os.path.join(os.getcwd(), '../..')
 
-        coma_fastcgi = os.path.join(src_dir, 'cgi-coma/src/cm4all-coma-fastcgi')
-        coma_was = os.path.join(src_dir, 'cgi-coma/src/coma-was')
+        coma_fastcgi = os.path.join(src_dir, 'cgi-coma/build/cm4all-coma-fastcgi')
+        coma_was = os.path.join(src_dir, 'cgi-coma/build/coma-was')
         coma_demo = os.path.join(src_dir, 'cgi-coma/demo')
         image_processor_path = os.path.join(src_dir, 'image-processor/src')
         ticket_fastcgi_dir = os.path.join(src_dir, 'mod_ticket/src')
