@@ -18,7 +18,7 @@ public:
     bool Run(ThreadSocketFilter &f, GError **error_r) override;
 
     void Destroy(ThreadSocketFilter &) override {
-        this->~NopThreadSocketFilter();
+        delete this;
     }
 };
 
@@ -37,7 +37,7 @@ NopThreadSocketFilter::Run(ThreadSocketFilter &f, gcc_unused GError **error_r)
  */
 
 ThreadSocketFilterHandler *
-nop_thread_socket_filter_new(struct pool *pool)
+nop_thread_socket_filter_new()
 {
-    return NewFromPool<NopThreadSocketFilter>(*pool);
+    return new NopThreadSocketFilter();
 }

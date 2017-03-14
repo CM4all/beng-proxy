@@ -8,10 +8,9 @@
 #ifndef BENG_PROXY_NOP_THREAD_SOCKET_FILTER_H
 #define BENG_PROXY_NOP_THREAD_SOCKET_FILTER_H
 
-struct pool;
 class ThreadSocketFilterHandler;
 
 ThreadSocketFilterHandler *
-nop_thread_socket_filter_new(struct pool *pool);
+nop_thread_socket_filter_new();
 
 #endif
