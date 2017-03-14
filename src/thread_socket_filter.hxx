@@ -41,11 +41,6 @@ public:
      * finished successfully.
      */
     virtual void PostRun(ThreadSocketFilter &) {}
-
-    /**
-     * The #ThreadSocketFilter is about to be destroyed.
-     */
-    virtual void Destroy(ThreadSocketFilter &f) = 0;
 };
 
 /**

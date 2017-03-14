@@ -16,10 +16,6 @@ class NopThreadSocketFilter final : public ThreadSocketFilterHandler {
 public:
     /* virtual methods from class ThreadSocketFilterHandler */
     bool Run(ThreadSocketFilter &f, GError **error_r) override;
-
-    void Destroy(ThreadSocketFilter &) override {
-        delete this;
-    }
 };
 
 bool

@@ -33,7 +33,7 @@ ThreadSocketFilter::ThreadSocketFilter(EventLoop &_event_loop,
 
 ThreadSocketFilter::~ThreadSocketFilter()
 {
-    handler->Destroy(*this);
+    delete handler;
 
     defer_event.Cancel();
     handshake_timeout_event.Cancel();

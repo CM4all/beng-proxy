@@ -59,10 +59,6 @@ struct SslFilter final : ThreadSocketFilterHandler {
     void PreRun(ThreadSocketFilter &f) override;
     bool Run(ThreadSocketFilter &f, GError **error_r) override;
     void PostRun(ThreadSocketFilter &f) override;
-
-    void Destroy(ThreadSocketFilter &) override {
-        delete this;
-    }
 };
 
 static void
