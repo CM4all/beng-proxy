@@ -236,7 +236,7 @@ static void
 filter_cache_request_abort(struct FilterCacheRequest *request)
 {
     assert(request != nullptr);
-    assert(!request->response.cancel_ptr);
+    assert(request->response.cancel_ptr);
 
     request->response.cancel_ptr.CancelAndClear();
     filter_cache_request_release(request);
