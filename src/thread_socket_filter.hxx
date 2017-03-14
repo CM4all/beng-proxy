@@ -52,7 +52,7 @@ public:
  * A module for #filtered_socket that moves the filter to a thread
  * pool (see #thread_job).
  */
-struct ThreadSocketFilter : ThreadJob {
+struct ThreadSocketFilter final : ThreadJob {
     struct pool &pool;
 
     ThreadQueue &queue;
