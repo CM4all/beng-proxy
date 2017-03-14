@@ -12,7 +12,6 @@
 
 #include <inline/compiler.h>
 
-struct pool;
 struct notify;
 struct ssl_config;
 struct SslFactory;
@@ -23,7 +22,7 @@ class ThreadSocketFilterHandler;
  * Create a new SSL filter.
  */
 SslFilter *
-ssl_filter_new(struct pool &pool, UniqueSSL &&ssl);
+ssl_filter_new(UniqueSSL &&ssl);
 
 /**
  * Create a new SSL filter.
@@ -33,8 +32,7 @@ ssl_filter_new(struct pool &pool, UniqueSSL &&ssl);
  * to local service)
  */
 SslFilter *
-ssl_filter_new(struct pool *pool, SslFactory &factory,
-               GError **error_r);
+ssl_filter_new(SslFactory &factory, GError **error_r);
 
 ThreadSocketFilterHandler &
 ssl_filter_get_handler(SslFilter &ssl);

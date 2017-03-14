@@ -116,8 +116,7 @@ lb_connection_new(LbInstance &instance,
 
     if (ssl_factory != nullptr) {
         GError *error = nullptr;
-        connection->ssl_filter = ssl_filter_new(pool, *ssl_factory,
-                                                &error);
+        connection->ssl_filter = ssl_filter_new(*ssl_factory, &error);
         if (connection->ssl_filter == nullptr) {
             lb_connection_log_gerror(1, connection, "SSL", error);
             g_error_free(error);

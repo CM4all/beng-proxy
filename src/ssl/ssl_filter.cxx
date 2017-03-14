@@ -13,7 +13,6 @@
 #include "Error.hxx"
 #include "FifoBufferBio.hxx"
 #include "thread_socket_filter.hxx"
-#include "pool.hxx"
 #include "gerrno.h"
 #include "fb_pool.hxx"
 #include "SliceFifoBuffer.hxx"
@@ -62,7 +61,7 @@ struct SslFilter final : ThreadSocketFilterHandler {
     void PostRun(ThreadSocketFilter &f) override;
 
     void Destroy(ThreadSocketFilter &) override {
-        this->~SslFilter();
+        delete this;
     }
 };
 
@@ -317,19 +316,16 @@ SslFilter::PostRun(ThreadSocketFilter &f)
  */
 
 SslFilter *
-ssl_filter_new(struct pool &pool, UniqueSSL &&ssl)
+ssl_filter_new(UniqueSSL &&ssl)
 {
-    return NewFromPool<SslFilter>(pool, std::move(ssl));
+    return new SslFilter(std::move(ssl));
 }
 
 SslFilter *
-ssl_filter_new(struct pool *pool, SslFactory &factory,
-               GError **error_r)
+ssl_filter_new(SslFactory &factory, GError **error_r)
 {
-    assert(pool != nullptr);
-
     try {
-        return NewFromPool<SslFilter>(*pool, ssl_factory_make(factory));
+        return new SslFilter(ssl_factory_make(factory));
     } catch (const SslError &e) {
         g_set_error(error_r, ssl_quark(), 0, "SSL_new() failed: %s",
                     e.what());
