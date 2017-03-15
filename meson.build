@@ -75,6 +75,7 @@ add_global_arguments(debug_flags, language: 'cpp')
 
 threads = dependency('threads')
 boost = dependency('boost', modules: ['system', 'filesystem'], version: '>= 1.54')
+liblua = dependency('luajit')
 libcap = dependency('libcap')
 libseccomp = dependency('libseccomp')
 libevent = dependency('libevent', version: '>= 2.0.19')
@@ -140,6 +141,16 @@ util = static_library('util',
     libinline,
   ])
 util_dep = declare_dependency(link_with: util)
+
+lua = static_library('lua',
+  'libcommon/src/lua/Error.cxx',
+  'libcommon/src/lua/RunFile.cxx',
+  'libcommon/src/lua/State.cxx',
+  dependencies: [
+    liblua,
+  ]
+)
+lua_dep = declare_dependency(link_with: lua)
 
 memory = static_library('memory',
   'src/fb_pool.cxx',
