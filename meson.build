@@ -89,6 +89,17 @@ libavahi_client = dependency('avahi-client')
 libnfs = dependency('libnfs')
 zlib = dependency('zlib')
 cppunit = dependency('cppunit')
+
+gtest = declare_dependency(
+  dependencies: [dependency('gtest', main: true)],
+  compile_args: [
+    '-Wno-undef',
+    '-Wno-suggest-attribute=format',
+    '-Wno-suggest-attribute=noreturn',
+    '-Wno-missing-declarations',
+  ],
+)
+
 glib = dependency('glib-2.0', version: '>= 2.24')
 
 libinline = dependency('libcm4all-inline', version: '>= 0.3.4')
