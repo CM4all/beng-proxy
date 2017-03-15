@@ -34,7 +34,7 @@ widget_check_untrusted_prefix(const char *untrusted_prefix, const char *host)
     /* untrusted widget only allowed on matching untrusted host
        name */
     size_t length = strlen(untrusted_prefix);
-    return memcmp(host, untrusted_prefix, length) == 0 &&
+    return strncmp(host, untrusted_prefix, length) == 0 &&
         host[length] == '.';
 }
 
@@ -49,7 +49,7 @@ widget_check_untrusted_site_suffix(const char *untrusted_site_suffix,
         return false;
 
     size_t site_name_length = strlen(site_name);
-    return memcmp(host, site_name, site_name_length) == 0 &&
+    return strncmp(host, site_name, site_name_length) == 0 &&
         host[site_name_length] == '.' &&
         strcmp(host + site_name_length + 1,
                untrusted_site_suffix) == 0;
@@ -66,7 +66,7 @@ widget_check_untrusted_raw_site_suffix(const char *untrusted_raw_site_suffix,
         return false;
 
     size_t site_name_length = strlen(site_name);
-    return memcmp(host, site_name, site_name_length) == 0 &&
+    return strncmp(host, site_name, site_name_length) == 0 &&
         strcmp(host + site_name_length,
                untrusted_raw_site_suffix) == 0;
 }
