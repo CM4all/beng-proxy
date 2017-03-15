@@ -11,10 +11,7 @@
 static bool
 widget_check_untrusted_host(const WidgetClass &cls, const char *host)
 {
-    if (cls.untrusted_host == nullptr)
-        /* trusted widget is only allowed on a trusted host name
-           (host==nullptr) */
-        return host == nullptr;
+    assert(cls.untrusted_host != nullptr);
 
     if (host == nullptr)
         /* untrusted widget not allowed on trusted host name */
@@ -28,10 +25,7 @@ widget_check_untrusted_host(const WidgetClass &cls, const char *host)
 static bool
 widget_check_untrusted_prefix(const WidgetClass &cls, const char *host)
 {
-    if (cls.untrusted_prefix == nullptr)
-        /* trusted widget is only allowed on a trusted host name
-           (host==nullptr) */
-        return host == nullptr;
+    assert(cls.untrusted_prefix != nullptr);
 
     if (host == nullptr)
         /* untrusted widget not allowed on trusted host name */
@@ -48,10 +42,7 @@ static bool
 widget_check_untrusted_site_suffix(const WidgetClass &cls,
                                    const char *host, const char *site_name)
 {
-    if (cls.untrusted_site_suffix == nullptr)
-        /* trusted widget is only allowed on a trusted host name
-           (host==nullptr) */
-        return host == nullptr;
+    assert(cls.untrusted_site_suffix != nullptr);
 
     if (host == nullptr || site_name == nullptr)
         /* untrusted widget not allowed on trusted host name */
@@ -68,10 +59,7 @@ static bool
 widget_check_untrusted_raw_site_suffix(const WidgetClass &cls,
                                        const char *host, const char *site_name)
 {
-    if (cls.untrusted_raw_site_suffix == nullptr)
-        /* trusted widget is only allowed on a trusted host name
-           (host==nullptr) */
-        return host == nullptr;
+    assert(cls.untrusted_raw_site_suffix != nullptr);
 
     if (host == nullptr || site_name == nullptr)
         /* untrusted widget not allowed on trusted host name */
