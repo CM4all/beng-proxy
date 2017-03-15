@@ -31,7 +31,7 @@ BioWriterToBase64String(W &&writer)
             BIO_push(b64.get(), &bio);
             BIO_set_flags(b64.get(), BIO_FLAGS_BASE64_NO_NL);
             writer(*b64);
-            BIO_flush(b64.get());
+            (void)BIO_flush(b64.get());
         });
 }
 
