@@ -770,20 +770,13 @@ test('t_uri_extract', executable('t_uri_extract',
     util_dep,
   ]))
 
-test('t_html_escape', executable('t_html_escape',
+test('t_escape', executable('t_escape',
   't_html_escape.cxx',
-  '../src/escape_static.cxx',
-  include_directories: inc,
-  dependencies: [
-    libinline,
-    util_dep,
-  ]))
-
-test('t_escape_css', executable('t_escape_css',
   't_escape_css.cxx',
   '../src/escape_static.cxx',
   include_directories: inc,
   dependencies: [
+    gtest,
     libinline,
     util_dep,
   ]))
