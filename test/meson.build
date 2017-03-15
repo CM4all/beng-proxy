@@ -606,6 +606,7 @@ test('t_shm', executable('t_shm',
   't_shm.cxx',
   include_directories: inc,
   dependencies: [
+    gtest,
     threads,
     libinline,
     declare_dependency(link_with: shm),

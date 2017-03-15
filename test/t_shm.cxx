@@ -1,50 +1,49 @@
 #include "shm/shm.hxx"
 
-#include <inline/compiler.h>
+#include <gtest/gtest.h>
 
-#include <assert.h>
-
-int main(int argc gcc_unused, char **argv gcc_unused) {
+TEST(ShmTest, Basic)
+{
     struct shm *shm;
     void *a, *b, *c, *d, *e;
 
     shm = shm_new(1024, 2);
 
     a = shm_alloc(shm, 1);
-    assert(a != nullptr);
+    ASSERT_NE(a, nullptr);
 
     b = shm_alloc(shm, 2);
-    assert(b == nullptr);
+    ASSERT_EQ(b, nullptr);
 
     b = shm_alloc(shm, 1);
-    assert(b != nullptr);
+    ASSERT_NE(b, nullptr);
 
     c = shm_alloc(shm, 1);
-    assert(c == nullptr);
+    ASSERT_EQ(c, nullptr);
 
     shm_free(shm, a);
     c = shm_alloc(shm, 1);
-    assert(c != nullptr);
+    ASSERT_NE(c, nullptr);
 
     a = shm_alloc(shm, 1);
-    assert(a == nullptr);
+    ASSERT_EQ(a, nullptr);
 
     shm_free(shm, b);
     shm_free(shm, c);
 
     a = shm_alloc(shm, 2);
-    assert(a != nullptr);
+    ASSERT_NE(a, nullptr);
 
     b = shm_alloc(shm, 2);
-    assert(b == nullptr);
+    ASSERT_EQ(b, nullptr);
 
     b = shm_alloc(shm, 1);
-    assert(b == nullptr);
+    ASSERT_EQ(b, nullptr);
 
     shm_free(shm, a);
 
     a = shm_alloc(shm, 2);
-    assert(a != nullptr);
+    ASSERT_NE(a, nullptr);
 
     shm_close(shm);
 
@@ -54,44 +53,44 @@ int main(int argc gcc_unused, char **argv gcc_unused) {
     shm = shm_new(1024, 5);
 
     a = shm_alloc(shm, 1);
-    assert(a != nullptr);
+    ASSERT_NE(a, nullptr);
 
     b = shm_alloc(shm, 2);
-    assert(b != nullptr);
+    ASSERT_NE(b, nullptr);
 
     c = shm_alloc(shm, 1);
-    assert(c != nullptr);
+    ASSERT_NE(c, nullptr);
 
     d = shm_alloc(shm, 1);
-    assert(d != nullptr);
+    ASSERT_NE(d, nullptr);
 
     e = shm_alloc(shm, 1);
-    assert(e == nullptr);
+    ASSERT_EQ(e, nullptr);
 
     shm_free(shm, b);
     shm_free(shm, c);
 
     e = shm_alloc(shm, 4);
-    assert(e == nullptr);
+    ASSERT_EQ(e, nullptr);
 
     e = shm_alloc(shm, 3);
-    assert(e != nullptr);
+    ASSERT_NE(e, nullptr);
     shm_free(shm, e);
 
     b = shm_alloc(shm, 2);
-    assert(b != nullptr);
+    ASSERT_NE(b, nullptr);
 
     c = shm_alloc(shm, 1);
-    assert(c != nullptr);
+    ASSERT_NE(c, nullptr);
 
     shm_free(shm, c);
     shm_free(shm, b);
 
     e = shm_alloc(shm, 4);
-    assert(e == nullptr);
+    ASSERT_EQ(e, nullptr);
 
     e = shm_alloc(shm, 3);
-    assert(e != nullptr);
+    ASSERT_NE(e, nullptr);
     shm_free(shm, e);
 
     shm_close(shm);
