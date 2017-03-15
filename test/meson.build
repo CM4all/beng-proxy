@@ -418,25 +418,11 @@ test('t_stock', executable('t_stock',
 
 test('t_resource_address', executable('t_resource_address',
   't_resource_address.cxx',
-  include_directories: inc,
-  dependencies: [
-    libinline, libhttp,
-    declare_dependency(link_with: raddress),
-  ]))
-
-test('t_http_address', executable('t_http_address',
   't_http_address.cxx',
-  include_directories: inc,
-  dependencies: [
-    libinline,
-    declare_dependency(link_with: raddress),
-  ]))
-
-test('t_cgi_address', executable('t_cgi_address',
   't_cgi_address.cxx',
   include_directories: inc,
   dependencies: [
-    cppunit,
+    gtest,
     libinline, libhttp,
     declare_dependency(link_with: raddress),
   ]))

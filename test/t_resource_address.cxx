@@ -5,88 +5,89 @@
 #include "pool.hxx"
 #include "RootPool.hxx"
 
+#include <gtest/gtest.h>
+
 #include <assert.h>
 #include <string.h>
 
-static void
-test_auto_base(struct pool *pool)
+TEST(ResourceAddressTest, AutoBase)
 {
+    RootPool pool;
+
     static const auto cgi0 =
         MakeCgiAddress("/usr/lib/cgi-bin/foo.pl", nullptr, "/");
     static constexpr ResourceAddress ra0(ResourceAddress::Type::CGI, cgi0);
 
-    assert(ra0.AutoBase(*pool, "/") == NULL);
-    assert(ra0.AutoBase(*pool, "/foo") == NULL);
+    ASSERT_EQ(ra0.AutoBase(*pool, "/"), nullptr);
+    ASSERT_EQ(ra0.AutoBase(*pool, "/foo"), nullptr);
 
     static const auto cgi1 =
         MakeCgiAddress("/usr/lib/cgi-bin/foo.pl", nullptr, "foo/bar");
     static constexpr ResourceAddress ra1(ResourceAddress::Type::CGI, cgi1);
 
-    assert(ra1.AutoBase(*pool, "/") == NULL);
-    assert(ra1.AutoBase(*pool, "/foo/bar") == NULL);
+    ASSERT_EQ(ra1.AutoBase(*pool, "/"), nullptr);
+    ASSERT_EQ(ra1.AutoBase(*pool, "/foo/bar"), nullptr);
 
     static const auto cgi2 =
         MakeCgiAddress("/usr/lib/cgi-bin/foo.pl", nullptr, "/bar/baz");
     static constexpr ResourceAddress ra2(ResourceAddress::Type::CGI, cgi2);
 
-    assert(ra2.AutoBase(*pool, "/") == NULL);
-    assert(ra2.AutoBase(*pool, "/foobar/baz") == NULL);
+    ASSERT_EQ(ra2.AutoBase(*pool, "/"), nullptr);
+    ASSERT_EQ(ra2.AutoBase(*pool, "/foobar/baz"), nullptr);
 
     const char *a = ra2.AutoBase(*pool, "/foo/bar/baz");
-    assert(a != NULL);
-    assert(strcmp(a, "/foo/") == 0);
+    ASSERT_NE(a, nullptr);
+    ASSERT_STREQ(a, "/foo/");
 }
 
-static void
-test_base_no_path_info(struct pool *pool)
+TEST(ResourceAddressTest, BaseNoPathInfo)
 {
+    RootPool pool;
+
     static const auto cgi0 = MakeCgiAddress("/usr/lib/cgi-bin/foo.pl");
     static constexpr ResourceAddress ra0(ResourceAddress::Type::CGI, cgi0);
 
     auto dest = ra0.SaveBase(*pool, "");
-    assert(dest.IsDefined());
-    assert(dest.type == ResourceAddress::Type::CGI);
-    assert(strcmp(dest.GetCgi().path, ra0.GetCgi().path) == 0);
-    assert(dest.GetCgi().path_info == nullptr ||
-           strcmp(dest.GetCgi().path_info, "") == 0);
+    ASSERT_TRUE(dest.IsDefined());
+    ASSERT_EQ(dest.type, ResourceAddress::Type::CGI);
+    ASSERT_STREQ(dest.GetCgi().path, ra0.GetCgi().path);
+    ASSERT_TRUE(dest.GetCgi().path_info == nullptr ||
+                strcmp(dest.GetCgi().path_info, "") == 0);
 
     dest = ra0.LoadBase(*pool, "foo/bar");
-    assert(dest.IsDefined());
-    assert(dest.type == ResourceAddress::Type::CGI);
-    assert(strcmp(dest.GetCgi().path, ra0.GetCgi().path) == 0);
-    assert(strcmp(dest.GetCgi().path_info, "foo/bar") == 0);
+    ASSERT_TRUE(dest.IsDefined());
+    ASSERT_EQ(dest.type, ResourceAddress::Type::CGI);
+    ASSERT_STREQ(dest.GetCgi().path, ra0.GetCgi().path);
+    ASSERT_STREQ(dest.GetCgi().path_info, "foo/bar");
 }
 
-static void
-test_cgi_apply(struct pool *pool)
+TEST(ResourceAddressTest, CgiApply)
 {
+    RootPool pool;
+
     static const auto cgi0 =
         MakeCgiAddress("/usr/lib/cgi-bin/foo.pl", nullptr, "/foo/");
     static constexpr ResourceAddress ra0(ResourceAddress::Type::CGI, cgi0);
 
     auto result = ra0.Apply(*pool, "");
-    assert(&result.GetCgi() == &ra0.GetCgi());
+    ASSERT_EQ(&result.GetCgi(), &ra0.GetCgi());
 
     result = ra0.Apply(*pool, "bar");
-    assert(strcmp(result.GetCgi().path_info, "/foo/bar") == 0);
+    ASSERT_STREQ(result.GetCgi().path_info, "/foo/bar");
 
     result = ra0.Apply(*pool, "/bar");
-    assert(strcmp(result.GetCgi().path_info, "/bar") == 0);
+    ASSERT_STREQ(result.GetCgi().path_info, "/bar");
 
     /* PATH_INFO is unescaped (RFC 3875 4.1.5) */
     result = ra0.Apply(*pool, "bar%2etxt");
-    assert(strcmp(result.GetCgi().path_info, "/foo/bar.txt") == 0);
+    ASSERT_STREQ(result.GetCgi().path_info, "/foo/bar.txt");
 
     result = ra0.Apply(*pool, "http://localhost/");
-    assert(!result.IsDefined());
+    ASSERT_TRUE(!result.IsDefined());
 }
 
-/*
- * main
- *
- */
-
-int main(int argc, char **argv) {
+TEST(ResourceAddressTest, Basic)
+{
     static const FileAddress file1("/var/www/foo/bar.html");
     static constexpr ResourceAddress ra1(file1);
 
@@ -99,73 +100,66 @@ int main(int argc, char **argv) {
                        "/bar/baz");
     static constexpr ResourceAddress ra3(ResourceAddress::Type::CGI, cgi3);
 
-    (void)argc;
-    (void)argv;
-
     RootPool pool;
 
     auto a = ra1.SaveBase(*pool, "bar.html");
-    assert(a.IsDefined());
-    assert(a.type == ResourceAddress::Type::LOCAL);
-    assert(strcmp(a.GetFile().path, "/var/www/foo/") == 0);
+    ASSERT_TRUE(a.IsDefined());
+    ASSERT_EQ(a.type, ResourceAddress::Type::LOCAL);
+    ASSERT_STREQ(a.GetFile().path, "/var/www/foo/");
 
     auto b = a.LoadBase(*pool, "index.html");
-    assert(b.IsDefined());
-    assert(b.type == ResourceAddress::Type::LOCAL);
-    assert(strcmp(b.GetFile().path, "/var/www/foo/index.html") == 0);
+    ASSERT_TRUE(b.IsDefined());
+    ASSERT_EQ(b.type, ResourceAddress::Type::LOCAL);
+    ASSERT_STREQ(b.GetFile().path, "/var/www/foo/index.html");
 
     a = ra2.SaveBase(*pool, "space%20.txt");
-    assert(a.IsDefined());
-    assert(a.type == ResourceAddress::Type::LOCAL);
-    assert(strcmp(a.GetFile().path, "/var/www/foo/") == 0);
+    ASSERT_TRUE(a.IsDefined());
+    ASSERT_EQ(a.type, ResourceAddress::Type::LOCAL);
+    ASSERT_STREQ(a.GetFile().path, "/var/www/foo/");
 
     b = a.LoadBase(*pool, "index%2ehtml");
-    assert(b.IsDefined());
-    assert(b.type == ResourceAddress::Type::LOCAL);
-    assert(strcmp(b.GetFile().path, "/var/www/foo/index.html") == 0);
+    ASSERT_TRUE(b.IsDefined());
+    ASSERT_EQ(b.type, ResourceAddress::Type::LOCAL);
+    ASSERT_STREQ(b.GetFile().path, "/var/www/foo/index.html");
 
     a = ra3.SaveBase(*pool, "bar/baz");
-    assert(a.IsDefined());
-    assert(a.type == ResourceAddress::Type::CGI);
-    assert(strcmp(a.GetCgi().path, ra3.GetCgi().path) == 0);
-    assert(strcmp(a.GetCgi().path_info, "/") == 0);
+    ASSERT_TRUE(a.IsDefined());
+    ASSERT_EQ(a.type, ResourceAddress::Type::CGI);
+    ASSERT_STREQ(a.GetCgi().path, ra3.GetCgi().path);
+    ASSERT_STREQ(a.GetCgi().path_info, "/");
 
     b = a.LoadBase(*pool, "");
-    assert(b.IsDefined());
-    assert(b.type == ResourceAddress::Type::CGI);
-    assert(strcmp(b.GetCgi().path, ra3.GetCgi().path) == 0);
-    assert(strcmp(b.GetCgi().uri, "/foo/") == 0);
-    assert(strcmp(b.GetCgi().path_info, "/") == 0);
+    ASSERT_TRUE(b.IsDefined());
+    ASSERT_EQ(b.type, ResourceAddress::Type::CGI);
+    ASSERT_STREQ(b.GetCgi().path, ra3.GetCgi().path);
+    ASSERT_STREQ(b.GetCgi().uri, "/foo/");
+    ASSERT_STREQ(b.GetCgi().path_info, "/");
 
     b = a.LoadBase(*pool, "xyz");
-    assert(b.IsDefined());
-    assert(b.type == ResourceAddress::Type::CGI);
-    assert(strcmp(b.GetCgi().path, ra3.GetCgi().path) == 0);
-    assert(strcmp(b.GetCgi().uri, "/foo/xyz") == 0);
-    assert(strcmp(b.GetCgi().path_info, "/xyz") == 0);
+    ASSERT_TRUE(b.IsDefined());
+    ASSERT_EQ(b.type, ResourceAddress::Type::CGI);
+    ASSERT_STREQ(b.GetCgi().path, ra3.GetCgi().path);
+    ASSERT_STREQ(b.GetCgi().uri, "/foo/xyz");
+    ASSERT_STREQ(b.GetCgi().path_info, "/xyz");
 
     a = ra3.SaveBase(*pool, "baz");
-    assert(a.IsDefined());
-    assert(a.type == ResourceAddress::Type::CGI);
-    assert(strcmp(a.GetCgi().path, ra3.GetCgi().path) == 0);
-    assert(strcmp(a.GetCgi().uri, "/foo/bar/") == 0);
-    assert(strcmp(a.GetCgi().path_info, "/bar/") == 0);
+    ASSERT_TRUE(a.IsDefined());
+    ASSERT_EQ(a.type, ResourceAddress::Type::CGI);
+    ASSERT_STREQ(a.GetCgi().path, ra3.GetCgi().path);
+    ASSERT_STREQ(a.GetCgi().uri, "/foo/bar/");
+    ASSERT_STREQ(a.GetCgi().path_info, "/bar/");
 
     b = a.LoadBase(*pool, "bar/");
-    assert(b.IsDefined());
-    assert(b.type == ResourceAddress::Type::CGI);
-    assert(strcmp(b.GetCgi().path, ra3.GetCgi().path) == 0);
-    assert(strcmp(b.GetCgi().uri, "/foo/bar/bar/") == 0);
-    assert(strcmp(b.GetCgi().path_info, "/bar/bar/") == 0);
+    ASSERT_TRUE(b.IsDefined());
+    ASSERT_EQ(b.type, ResourceAddress::Type::CGI);
+    ASSERT_STREQ(b.GetCgi().path, ra3.GetCgi().path);
+    ASSERT_STREQ(b.GetCgi().uri, "/foo/bar/bar/");
+    ASSERT_STREQ(b.GetCgi().path_info, "/bar/bar/");
 
     b = a.LoadBase(*pool, "bar/xyz");
-    assert(b.IsDefined());
-    assert(b.type == ResourceAddress::Type::CGI);
-    assert(strcmp(b.GetCgi().path, ra3.GetCgi().path) == 0);
-    assert(strcmp(b.GetCgi().uri, "/foo/bar/bar/xyz") == 0);
-    assert(strcmp(b.GetCgi().path_info, "/bar/bar/xyz") == 0);
-
-    test_auto_base(pool);
-    test_base_no_path_info(pool);
-    test_cgi_apply(pool);
+    ASSERT_TRUE(b.IsDefined());
+    ASSERT_EQ(b.type, ResourceAddress::Type::CGI);
+    ASSERT_STREQ(b.GetCgi().path, ra3.GetCgi().path);
+    ASSERT_STREQ(b.GetCgi().uri, "/foo/bar/bar/xyz");
+    ASSERT_STREQ(b.GetCgi().path_info, "/bar/bar/xyz");
 }

@@ -1,67 +1,65 @@
 #include "http_address.hxx"
 #include "RootPool.hxx"
 #include "AllocatorPtr.hxx"
-#include "util/StringView.hxx"
+
+#include <gtest/gtest.h>
 
 #include <assert.h>
 #include <string.h>
 
-static void
-test_unix(AllocatorPtr alloc)
+TEST(HttpAddressTest, Unix)
 {
+    RootPool root_pool;
+    AllocatorPtr alloc(root_pool);
+
     auto *a = http_address_parse(alloc, "unix:/var/run/foo");
-    assert(a != NULL);
-    assert(a->host_and_port == NULL);
-    assert(strcmp(a->path, "/var/run/foo") == 0);
+    ASSERT_NE(a, nullptr);
+    ASSERT_EQ(a->host_and_port, nullptr);
+    ASSERT_STREQ(a->path, "/var/run/foo");
 }
 
-static void
-test_apply(AllocatorPtr alloc)
+TEST(HttpAddressTest, Apply)
 {
+    RootPool root_pool;
+    AllocatorPtr alloc(root_pool);
+
     auto *a = http_address_parse(alloc, "http://localhost/foo");
-    assert(a != NULL);
-    assert(a->protocol == HttpAddress::Protocol::HTTP);
-    assert(a->host_and_port != NULL);
-    assert(strcmp(a->host_and_port, "localhost") == 0);
-    assert(strcmp(a->path, "/foo") == 0);
+    ASSERT_NE(a, nullptr);
+    ASSERT_EQ(a->protocol, HttpAddress::Protocol::HTTP);
+    ASSERT_NE(a->host_and_port, nullptr);
+    ASSERT_STREQ(a->host_and_port, "localhost");
+    ASSERT_STREQ(a->path, "/foo");
 
     const auto *b = a->Apply(alloc, "");
-    assert(b != NULL);
-    assert(b->protocol == a->protocol);
-    assert(strcmp(b->host_and_port, a->host_and_port) == 0);
-    assert(strcmp(b->path, "/foo") == 0);
+    ASSERT_NE(b, nullptr);
+    ASSERT_EQ(b->protocol, a->protocol);
+    ASSERT_STREQ(b->host_and_port, a->host_and_port);
+    ASSERT_STREQ(b->path, "/foo");
 
     b = a->Apply(alloc, "bar");
-    assert(b != NULL);
-    assert(b->protocol == a->protocol);
-    assert(strcmp(b->host_and_port, a->host_and_port) == 0);
-    assert(strcmp(b->path, "/bar") == 0);
+    ASSERT_NE(b, nullptr);
+    ASSERT_EQ(b->protocol, a->protocol);
+    ASSERT_STREQ(b->host_and_port, a->host_and_port);
+    ASSERT_STREQ(b->path, "/bar");
 
     b = a->Apply(alloc, "/");
-    assert(b != NULL);
-    assert(b->protocol == a->protocol);
-    assert(strcmp(b->host_and_port, a->host_and_port) == 0);
-    assert(strcmp(b->path, "/") == 0);
+    ASSERT_NE(b, nullptr);
+    ASSERT_EQ(b->protocol, a->protocol);
+    ASSERT_STREQ(b->host_and_port, a->host_and_port);
+    ASSERT_STREQ(b->path, "/");
 
     b = a->Apply(alloc, "http://example.com/");
-    assert(b == NULL);
+    ASSERT_EQ(b, nullptr);
 
     b = a->Apply(alloc, "http://localhost/bar");
-    assert(b != NULL);
-    assert(b->protocol == a->protocol);
-    assert(strcmp(b->host_and_port, a->host_and_port) == 0);
-    assert(strcmp(b->path, "/bar") == 0);
+    ASSERT_NE(b, nullptr);
+    ASSERT_EQ(b->protocol, a->protocol);
+    ASSERT_STREQ(b->host_and_port, a->host_and_port);
+    ASSERT_STREQ(b->path, "/bar");
 
     b = a->Apply(alloc, "?query");
-    assert(b != NULL);
-    assert(b->protocol == a->protocol);
-    assert(strcmp(b->host_and_port, a->host_and_port) == 0);
-    assert(strcmp(b->path, "/foo?query") == 0);
-}
-
-int
-main(gcc_unused int argc, gcc_unused char **argv)
-{
-    test_unix(AllocatorPtr(RootPool()));
-    test_apply(AllocatorPtr(RootPool()));
+    ASSERT_NE(b, nullptr);
+    ASSERT_EQ(b->protocol, a->protocol);
+    ASSERT_STREQ(b->host_and_port, a->host_and_port);
+    ASSERT_STREQ(b->path, "/foo?query");
 }
