@@ -575,7 +575,8 @@ SpawnServerConnection::HandleMessage(const struct msghdr &msg,
     const struct cmsghdr *cmsg = CMSG_FIRSTHDR(&msg);
     if (cmsg != nullptr && cmsg->cmsg_level == SOL_SOCKET &&
         cmsg->cmsg_type == SCM_RIGHTS) {
-        auto data = ConstBuffer<void>(CMSG_DATA(cmsg),
+        /* with gcc 4.9, we need const_cast to work around warning */
+        auto data = ConstBuffer<void>(CMSG_DATA(const_cast<struct cmsghdr *>(cmsg)),
                                       cmsg->cmsg_len - CMSG_LEN(0));
         fds = SpawnFdList(ConstBuffer<int>::FromVoid(data));
     }
