@@ -173,7 +173,7 @@ Widget::CheckHost(const char *host, const char *site_name) const
 {
     assert(cls != nullptr);
 
-    CheckHost(host, site_name);
+    cls->CheckHost(host, site_name);
 }
 
 bool
