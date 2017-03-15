@@ -97,6 +97,9 @@ gtest = declare_dependency(
     '-Wno-suggest-attribute=format',
     '-Wno-suggest-attribute=noreturn',
     '-Wno-missing-declarations',
+
+    # needed on Jessie for gtest's IsNullLiteralHelper
+    '-Wno-conversion-null',
   ],
 )
 
