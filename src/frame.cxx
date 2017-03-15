@@ -42,10 +42,12 @@ frame_top_widget(struct pool *pool, Widget *widget,
         return;
     }
 
-    if (!widget->CheckHost(env->untrusted_host, env->site_name)) {
+    try {
+        widget->CheckHost(env->untrusted_host, env->site_name);
+    } catch (const std::runtime_error &e) {
         GError *error =
-            g_error_new(widget_quark(), WIDGET_ERROR_FORBIDDEN,
-                        "untrusted host name mismatch");
+            g_error_new_literal(widget_quark(), WIDGET_ERROR_FORBIDDEN,
+                                e.what());
         widget->Cancel();
         handler.InvokeError(error);
         return;

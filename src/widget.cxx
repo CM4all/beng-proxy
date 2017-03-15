@@ -168,12 +168,12 @@ Widget::FindChild(const char *child_id)
     return nullptr;
 }
 
-bool
+void
 Widget::CheckHost(const char *host, const char *site_name) const
 {
     assert(cls != nullptr);
 
-    return cls->CheckHost(host, site_name);
+    CheckHost(host, site_name);
 }
 
 bool
