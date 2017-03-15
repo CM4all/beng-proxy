@@ -682,6 +682,7 @@ libutil_a_SOURCES = \
 	src/util/TrivialArray.hxx \
 	src/util/StaticArray.hxx \
 	src/util/Domain.hxx \
+	src/util/RuntimerError.hxx \
 	src/util/Error.cxx src/util/Error.hxx \
 	src/util/PrintException.cxx src/util/PrintException.hxx \
 	src/util/djbhash.c src/util/djbhash.h \
