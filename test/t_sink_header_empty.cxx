@@ -18,7 +18,8 @@ create_input(struct pool *pool)
 }
 
 static void
-my_sink_header_done(void *header, size_t length, Istream &tail,
+my_sink_header_done(gcc_unused void *header, gcc_unused size_t length,
+                    Istream &tail,
                     void *ctx)
 {
     Istream *delayed = (Istream *)ctx;
