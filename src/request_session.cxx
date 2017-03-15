@@ -274,12 +274,6 @@ Request::ApplyTranslateRealm(const TranslateResponse &response,
 RealmSessionLease
 Request::ApplyTranslateSession(const TranslateResponse &response)
 {
-    if (response.session.IsNull() && response.user == nullptr &&
-        response.session_site == nullptr &&
-        response.language == nullptr &&
-        response.external_session_manager == nullptr)
-        return nullptr;
-
     auto session = GetRealmSession();
 
     if (!response.session.IsNull()) {
