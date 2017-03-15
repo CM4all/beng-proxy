@@ -945,6 +945,7 @@ test_head_discard2(Context<Connection> &c)
     assert(c.connection == nullptr);
     assert(c.status == HTTP_STATUS_OK);
     assert(c.content_length != nullptr);
+    gcc_unused
     unsigned long content_length = strtoul(c.content_length, nullptr, 10);
     assert(content_length == 5 || content_length == 256);
     assert(!c.body.IsDefined());

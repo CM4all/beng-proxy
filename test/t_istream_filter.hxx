@@ -98,6 +98,7 @@ struct Context final : IstreamHandler {
 
         got_data = false;
 
+        gcc_unused
         const auto ret = ReadEvent();
         assert(eof || got_data || ret == 0);
 
