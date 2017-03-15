@@ -269,6 +269,7 @@ cm4all_beng_proxy_SOURCES = \
 	src/widget_init.cxx \
 	src/widget_root.cxx \
 	src/widget_class.cxx \
+	src/widget_untrusted.cxx \
 	src/widget_view.cxx src/widget_view.hxx \
 	src/widget_ref.cxx src/widget_ref.hxx \
 	src/widget_session.cxx \
@@ -1384,6 +1385,7 @@ test_t_istream_processor_SOURCES = test/t_istream_processor.cxx \
 	src/widget.cxx src/widget_init.cxx src/widget_ref.cxx src/widget_uri.cxx src/args.cxx \
 	src/widget_session.cxx src/xml_parser.cxx src/widget_class.cxx \
 	src/widget_view.cxx \
+	src/widget_untrusted.cxx \
 	src/rewrite_uri.cxx src/widget_resolver.cxx \
 	src/bp_global.cxx src/transformation.cxx \
 	src/ExpandableStringList.cxx \
@@ -1657,6 +1659,7 @@ test_t_rewrite_uri_SOURCES = test/t_rewrite_uri.cxx \
 	src/widget_init.cxx src/widget_root.cxx \
 	src/widget_view.cxx src/transformation.cxx \
 	src/widget_class.cxx \
+	src/widget_untrusted.cxx \
 	src/ExpandableStringList.cxx \
 	src/expand.cxx src/pexpand.cxx \
 	src/args.cxx
@@ -1732,6 +1735,7 @@ test_t_widget_http_SOURCES = test/t_widget_http.cxx \
 	src/widget_session.cxx src/session.cxx src/session_manager.cxx src/session_id.cxx \
 	src/widget_view.cxx src/widget.cxx src/widget_init.cxx \
 	src/widget_class.cxx \
+	src/widget_untrusted.cxx \
 	src/random.cxx src/random.hxx \
 	src/args.cxx \
 	src/resource_tag.cxx \
@@ -1872,6 +1876,7 @@ test_run_processor_SOURCES = test/run_processor.cxx \
 	src/css_processor.cxx src/css_parser.cxx src/css_rewrite.cxx \
 	src/widget.cxx src/widget_init.cxx src/widget_approval.cxx src/widget_ref.cxx \
 	src/widget_class.cxx \
+	src/widget_untrusted.cxx \
 	src/istream_escape.cxx \
 	src/istream_html_escape.cxx \
 	src/header_writer.cxx src/args.cxx src/buffered_io.cxx \
@@ -1906,6 +1911,7 @@ test_t_processor_SOURCES = test/t_processor.cxx \
 	src/css_processor.cxx src/css_parser.cxx src/css_rewrite.cxx \
 	src/widget.cxx src/widget_init.cxx src/widget_approval.cxx src/widget_ref.cxx \
 	src/widget_class.cxx \
+	src/widget_untrusted.cxx \
 	src/istream_escape.cxx \
 	src/istream_html_escape.cxx \
 	src/header_writer.cxx src/args.cxx src/buffered_io.cxx \

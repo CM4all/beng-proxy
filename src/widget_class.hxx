@@ -125,6 +125,13 @@ struct WidgetClass {
         info_headers = false;
         dump_headers = false;
     }
+
+    /**
+     * Determines whether it is allowed to embed the widget in a page with
+     * the specified host name.
+     */
+    gcc_pure
+    bool CheckHost(const char *host, const char *site_name) const;
 };
 
 extern const WidgetClass root_widget_class;

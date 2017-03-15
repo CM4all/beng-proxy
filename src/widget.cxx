@@ -168,106 +168,12 @@ Widget::FindChild(const char *child_id)
     return nullptr;
 }
 
-static bool
-widget_check_untrusted_host(const Widget *widget, const char *host)
-{
-    assert(widget->cls != nullptr);
-
-    if (widget->cls->untrusted_host == nullptr)
-        /* trusted widget is only allowed on a trusted host name
-           (host==nullptr) */
-        return host == nullptr;
-
-    if (host == nullptr)
-        /* untrusted widget not allowed on trusted host name */
-        return false;
-
-    /* untrusted widget only allowed on matching untrusted host
-       name */
-    return strcmp(host, widget->cls->untrusted_host) == 0;
-}
-
-static bool
-widget_check_untrusted_prefix(const Widget *widget, const char *host)
-{
-    assert(widget->cls != nullptr);
-
-    if (widget->cls->untrusted_prefix == nullptr)
-        /* trusted widget is only allowed on a trusted host name
-           (host==nullptr) */
-        return host == nullptr;
-
-    if (host == nullptr)
-        /* untrusted widget not allowed on trusted host name */
-        return false;
-
-    /* untrusted widget only allowed on matching untrusted host
-       name */
-    size_t length = strlen(widget->cls->untrusted_prefix);
-    return memcmp(host, widget->cls->untrusted_prefix, length) == 0 &&
-        host[length] == '.';
-}
-
-static bool
-widget_check_untrusted_site_suffix(const Widget *widget,
-                                   const char *host, const char *site_name)
-{
-    assert(widget->cls != nullptr);
-
-    if (widget->cls->untrusted_site_suffix == nullptr)
-        /* trusted widget is only allowed on a trusted host name
-           (host==nullptr) */
-        return host == nullptr;
-
-    if (host == nullptr || site_name == nullptr)
-        /* untrusted widget not allowed on trusted host name */
-        return false;
-
-    size_t site_name_length = strlen(site_name);
-    return memcmp(host, site_name, site_name_length) == 0 &&
-        host[site_name_length] == '.' &&
-        strcmp(host + site_name_length + 1,
-               widget->cls->untrusted_site_suffix) == 0;
-}
-
-static bool
-widget_check_untrusted_raw_site_suffix(const Widget *widget,
-                                       const char *host, const char *site_name)
-{
-    assert(widget->cls != nullptr);
-
-    if (widget->cls->untrusted_raw_site_suffix == nullptr)
-        /* trusted widget is only allowed on a trusted host name
-           (host==nullptr) */
-        return host == nullptr;
-
-    if (host == nullptr || site_name == nullptr)
-        /* untrusted widget not allowed on trusted host name */
-        return false;
-
-    size_t site_name_length = strlen(site_name);
-    return memcmp(host, site_name, site_name_length) == 0 &&
-        strcmp(host + site_name_length,
-               widget->cls->untrusted_raw_site_suffix) == 0;
-}
-
 bool
 Widget::CheckHost(const char *host, const char *site_name) const
 {
     assert(cls != nullptr);
 
-    if (cls->untrusted_host != nullptr)
-        return widget_check_untrusted_host(this, host);
-    else if (cls->untrusted_prefix != nullptr)
-        return widget_check_untrusted_prefix(this, host);
-    else if (cls->untrusted_site_suffix != nullptr)
-        return widget_check_untrusted_site_suffix(this, host, site_name);
-    else if (cls->untrusted_raw_site_suffix != nullptr)
-        return widget_check_untrusted_raw_site_suffix(this, host, site_name);
-    else
-        /* trusted widget is only allowed on a trusted host name
-           (host==nullptr) */
-        return host == nullptr;
+    return cls->CheckHost(host, site_name);
 }
 
 bool
