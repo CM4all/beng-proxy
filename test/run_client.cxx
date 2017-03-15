@@ -266,7 +266,7 @@ try {
         break;
 
     case parsed_url::HTTPS: {
-        void *filter_ctx = ssl_client_create(pool, event_loop,
+        void *filter_ctx = ssl_client_create(event_loop,
                                              url.host);
 
         auto filter = &ssl_client_get_filter();

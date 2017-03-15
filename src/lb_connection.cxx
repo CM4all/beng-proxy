@@ -115,7 +115,7 @@ lb_connection_new(LbInstance &instance,
 
     if (ssl_factory != nullptr) {
         try {
-            connection->ssl_filter = ssl_filter_new(pool, *ssl_factory);
+            connection->ssl_filter = ssl_filter_new(*ssl_factory);
         } catch (const std::runtime_error &e) {
             lb_connection_log_error(1, connection, "SSL", e);
             pool_unref(pool);
@@ -124,9 +124,9 @@ lb_connection_new(LbInstance &instance,
 
         filter = &thread_socket_filter;
         filter_ctx = connection->thread_socket_filter =
-            thread_socket_filter_new(*pool, instance.event_loop,
-                                     thread_pool_get_queue(instance.event_loop),
-                                     &ssl_filter_get_handler(*connection->ssl_filter));
+            new ThreadSocketFilter(instance.event_loop,
+                                   thread_pool_get_queue(instance.event_loop),
+                                   &ssl_filter_get_handler(*connection->ssl_filter));
     }
 
     instance.connections.push_back(*connection);

@@ -15,10 +15,6 @@ class NopThreadSocketFilter final : public ThreadSocketFilterHandler {
 public:
     /* virtual methods from class ThreadSocketFilterHandler */
     void Run(ThreadSocketFilter &f) override;
-
-    void Destroy(ThreadSocketFilter &) override {
-        this->~NopThreadSocketFilter();
-    }
 };
 
 void
@@ -36,7 +32,7 @@ NopThreadSocketFilter::Run(ThreadSocketFilter &f)
  */
 
 ThreadSocketFilterHandler *
-nop_thread_socket_filter_new(struct pool *pool)
+nop_thread_socket_filter_new()
 {
-    return NewFromPool<NopThreadSocketFilter>(*pool);
+    return new NopThreadSocketFilter();
 }

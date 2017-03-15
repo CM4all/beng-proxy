@@ -44,20 +44,13 @@ public:
      * finished successfully.
      */
     virtual void PostRun(ThreadSocketFilter &) {}
-
-    /**
-     * The #ThreadSocketFilter is about to be destroyed.
-     */
-    virtual void Destroy(ThreadSocketFilter &f) = 0;
 };
 
 /**
  * A module for #filtered_socket that moves the filter to a thread
  * pool (see #thread_job).
  */
-struct ThreadSocketFilter : ThreadJob {
-    struct pool &pool;
-
+struct ThreadSocketFilter final : ThreadJob {
     ThreadQueue &queue;
 
     FilteredSocket *socket;
@@ -198,16 +191,13 @@ struct ThreadSocketFilter : ThreadJob {
      */
     SliceFifoBuffer encrypted_output;
 
-    ThreadSocketFilter(struct pool &pool,
-                       EventLoop &_event_loop,
+    ThreadSocketFilter(EventLoop &_event_loop,
                        ThreadQueue &queue,
                        ThreadSocketFilterHandler *handler);
 
     ThreadSocketFilter(const ThreadSocketFilter &) = delete;
 
     ~ThreadSocketFilter();
-
-    void Destroy();
 
     void SetHandshakeCallback(BoundMethod<void()> callback);
 
@@ -257,11 +247,6 @@ private:
      */
     void OnDeferred();
 };
-
-ThreadSocketFilter *
-thread_socket_filter_new(struct pool &pool, EventLoop &event_loop,
-                         ThreadQueue &queue,
-                         ThreadSocketFilterHandler *handler);
 
 extern const SocketFilter thread_socket_filter;
 

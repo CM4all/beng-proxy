@@ -25,7 +25,7 @@ ssl_client_get_filter();
  * Throws std::runtime_error on error.
  */
 void *
-ssl_client_create(struct pool *pool, EventLoop &event_loop,
+ssl_client_create(EventLoop &event_loop,
                   const char *hostname);
 
 #endif

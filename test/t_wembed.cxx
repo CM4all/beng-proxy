@@ -41,10 +41,9 @@ Widget::Cancel()
 {
 }
 
-bool
+void
 Widget::CheckHost(const char *, const char *) const
 {
-    return true;
 }
 
 RealmSessionLease

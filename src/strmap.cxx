@@ -7,6 +7,8 @@
 #include "strmap.hxx"
 #include "pool.hxx"
 
+#include <iterator>
+
 #include <string.h>
 
 bool
@@ -63,7 +65,8 @@ const char *
 StringMap::Set(const char *key, const char *value)
 {
     auto i = map.upper_bound(key, Item::Compare());
-    if (i != map.end() && strcmp(i->key, key) == 0) {
+    if (i != map.begin() && strcmp(std::prev(i)->key, key) == 0) {
+        --i;
         const char *old_value = i->value;
         i->value = value;
         return old_value;

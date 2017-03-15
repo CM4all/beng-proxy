@@ -350,11 +350,11 @@ struct Widget final
     }
 
     /**
-     * Determines whether it is allowed to embed the widget in a page with
-     * the specified host name.
+     * Determines whether it is allowed to embed the widget in a page
+     * with the specified host name.  If not, throws a
+     * std::runtime_error with an explanatory message.
      */
-    gcc_pure
-    bool CheckHost(const char *host, const char *site_name) const;
+    void CheckHost(const char *host, const char *site_name) const;
 
     const ResourceAddress *DetermineAddress(bool stateful) const;
 

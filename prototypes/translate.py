@@ -936,13 +936,13 @@ if __name__ == '__main__':
             elif os.path.isdir('../../cgi-coma'):
                 src_dir = os.path.join(os.getcwd(), '../..')
 
-        coma_fastcgi = os.path.join(src_dir, 'cgi-coma/src/cm4all-coma-fastcgi')
-        coma_was = os.path.join(src_dir, 'cgi-coma/src/coma-was')
+        coma_fastcgi = os.path.join(src_dir, 'cgi-coma/build/cm4all-coma-fastcgi')
+        coma_was = os.path.join(src_dir, 'cgi-coma/build/coma-was')
         coma_demo = os.path.join(src_dir, 'cgi-coma/demo')
         image_processor_path = os.path.join(src_dir, 'image-processor/src')
         ticket_fastcgi_dir = os.path.join(src_dir, 'mod_ticket/src')
-        xslt_fastcgi = os.path.join(src_dir, 'filters/xslt')
-        xmlstrip = os.path.join(src_dir, 'filters/xmlstrip')
+        xslt_fastcgi = os.path.join(src_dir, 'filters/build/xslt')
+        xmlstrip = os.path.join(src_dir, 'filters/build/xmlstrip')
         sed_fastcgi = os.path.join(src_dir, 'sed/sed/fsed')
         davos_plain = os.path.join(src_dir, 'davos/src/davos-plain')
         davos_od = os.path.join(src_dir, 'davos/src/davos-od')

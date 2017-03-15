@@ -12,7 +12,6 @@
 #include "Error.hxx"
 #include "FifoBufferBio.hxx"
 #include "thread_socket_filter.hxx"
-#include "pool.hxx"
 #include "fb_pool.hxx"
 #include "SliceFifoBuffer.hxx"
 #include "util/AllocatedString.hxx"
@@ -58,10 +57,6 @@ struct SslFilter final : ThreadSocketFilterHandler {
     void PreRun(ThreadSocketFilter &f) override;
     void Run(ThreadSocketFilter &f) override;
     void PostRun(ThreadSocketFilter &f) override;
-
-    void Destroy(ThreadSocketFilter &) override {
-        this->~SslFilter();
-    }
 };
 
 static std::runtime_error
@@ -299,17 +294,15 @@ SslFilter::PostRun(ThreadSocketFilter &f)
  */
 
 SslFilter *
-ssl_filter_new(struct pool &pool, UniqueSSL &&ssl)
+ssl_filter_new(UniqueSSL &&ssl)
 {
-    return NewFromPool<SslFilter>(pool, std::move(ssl));
+    return new SslFilter(std::move(ssl));
 }
 
 SslFilter *
-ssl_filter_new(struct pool *pool, SslFactory &factory)
+ssl_filter_new(SslFactory &factory)
 {
-    assert(pool != nullptr);
-
-    return NewFromPool<SslFilter>(*pool, ssl_factory_make(factory));
+    return new SslFilter(ssl_factory_make(factory));
 }
 
 ThreadSocketFilterHandler &

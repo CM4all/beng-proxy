@@ -38,18 +38,16 @@
 #include <stdlib.h>
 
 class SslSocketFilterFactory final : public SocketFilterFactory {
-    struct pool &pool;
     EventLoop &event_loop;
     const char *const host;
 
 public:
-    SslSocketFilterFactory(struct pool &_pool,
-                           EventLoop &_event_loop,
+    SslSocketFilterFactory(EventLoop &_event_loop,
                            const char *_host)
-        :pool(_pool), event_loop(_event_loop), host(_host) {}
+        :event_loop(_event_loop), host(_host) {}
 
     void *CreateFilter() override {
-        return ssl_client_create(&pool, event_loop, host);
+        return ssl_client_create(event_loop, host);
     }
 };
 
@@ -275,7 +273,7 @@ DirectResourceLoader::SendRequest(struct pool &pool,
         case HttpAddress::Protocol::HTTP:
             if (address.GetHttp().ssl) {
                 filter = &ssl_client_get_filter();
-                filter_factory = NewFromPool<SslSocketFilterFactory>(pool, pool,
+                filter_factory = NewFromPool<SslSocketFilterFactory>(pool,
                                                                      event_loop,
                                                                      /* TODO: only host */
                                                                      address.GetHttp().host_and_port);

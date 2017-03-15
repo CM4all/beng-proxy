@@ -18,25 +18,21 @@
 #include <string.h>
 #include <errno.h>
 
-inline
-ThreadSocketFilter::ThreadSocketFilter(struct pool &_pool,
-                                       EventLoop &_event_loop,
+ThreadSocketFilter::ThreadSocketFilter(EventLoop &_event_loop,
                                        ThreadQueue &_queue,
                                        ThreadSocketFilterHandler *_handler)
-    :pool(_pool), queue(_queue),
+    :queue(_queue),
      handler(_handler),
      defer_event(_event_loop, BIND_THIS_METHOD(OnDeferred)),
      handshake_timeout_event(_event_loop,
                              BIND_THIS_METHOD(HandshakeTimeoutCallback))
 {
-    pool_ref(&pool);
-
     handshake_timeout_event.Add(EventDuration<60>::value);
 }
 
 ThreadSocketFilter::~ThreadSocketFilter()
 {
-    handler->Destroy(*this);
+    delete handler;
 
     defer_event.Cancel();
     handshake_timeout_event.Cancel();
@@ -51,12 +47,6 @@ void
 ThreadSocketFilter::ClosedPrematurely()
 {
     socket->InvokeError(std::make_exception_ptr(std::runtime_error("Peer closed the socket prematurely")));
-}
-
-void
-ThreadSocketFilter::Destroy()
-{
-    DeleteUnrefPool(pool, this);
 }
 
 void
@@ -255,7 +245,7 @@ ThreadSocketFilter::Done()
     if (postponed_destroy) {
         /* the object has been closed, and now that the thread has
            finished, we can finally destroy it */
-        Destroy();
+        delete this;
         return;
     }
 
@@ -767,18 +757,17 @@ thread_socket_filter_end(void *ctx)
 static void
 thread_socket_filter_close(void *ctx)
 {
-    auto &f = *(ThreadSocketFilter *)ctx;
+    auto *f = (ThreadSocketFilter *)ctx;
 
-    f.defer_event.Cancel();
+    f->defer_event.Cancel();
 
-    if (!thread_queue_cancel(f.queue, f)) {
-        /* detach the pool, postpone the destruction */
-        pool_set_persistent(&f.pool);
-        f.postponed_destroy = true;
+    if (!thread_queue_cancel(f->queue, *f)) {
+        /* postpone the destruction */
+        f->postponed_destroy = true;
         return;
     }
 
-    f.Destroy();
+    delete f;
 }
 
 const SocketFilter thread_socket_filter = {
@@ -800,18 +789,3 @@ const SocketFilter thread_socket_filter = {
     .end = thread_socket_filter_end,
     .close = thread_socket_filter_close,
 };
-
-/*
- * constructor
- *
- */
-
-ThreadSocketFilter *
-thread_socket_filter_new(struct pool &pool, EventLoop &event_loop,
-                         ThreadQueue &queue,
-                         ThreadSocketFilterHandler *handler)
-{
-    return NewFromPool<ThreadSocketFilter>(pool, pool,
-                                           event_loop, queue,
-                                           handler);
-}

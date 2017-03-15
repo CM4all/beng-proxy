@@ -131,14 +131,6 @@ struct pool {
     /** this is a major pool, i.e. pool commits are performed after
         the major pool is freed */
     bool major;
-
-    /**
-     * Does the pool survive the destruction of the parent pool?  It
-     * will be reparented across destroyed "major" pools.  This flag
-     * is only relevant in the debug build, because it disables the
-     * memory leak checks.
-     */
-    bool persistent = false;
 #endif
 
     enum pool_type type;
@@ -376,7 +368,6 @@ pool_new(struct pool *parent, const char *name)
 
 #ifndef NDEBUG
     pool->major = parent == nullptr;
-    pool->persistent = false;
 #endif
 
     return pool;
@@ -522,18 +513,8 @@ pool_set_major(struct pool *pool)
 {
     assert(!pool->trashed);
     assert(list_empty(&pool->children));
-    assert(!pool->persistent);
 
     pool->major = true;
-}
-
-void
-pool_set_persistent(struct pool *pool)
-{
-    assert(!pool->trashed);
-
-    pool->major = true;
-    pool->persistent = true;
 }
 
 #endif
@@ -604,17 +585,8 @@ pool_destroy(struct pool *pool, gcc_unused struct pool *parent,
             assert(pool->major || pool->trashed);
 
 #ifndef NDEBUG
-            if (child->persistent) {
-                assert(child->major);
-
-                if (parent != nullptr)
-                    pool_add_child(parent, child);
-                else
-                    child->parent = nullptr;
-            } else {
-                list_add(&child->siblings, &trash);
-                child->trashed = true;
-            }
+            list_add(&child->siblings, &trash);
+            child->trashed = true;
 #else
             child->parent = nullptr;
 #endif
@@ -972,11 +944,6 @@ pool_trash(struct pool *pool)
         return;
 
     assert(pool->parent != nullptr);
-
-#ifndef NDEBUG
-    if (pool->persistent)
-        return;
-#endif
 
     pool_remove_child(pool->parent, pool);
     list_add(&pool->siblings, &trash);
