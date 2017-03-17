@@ -280,6 +280,7 @@ system = static_library('system',
   'src/system/SetupProcess.cxx',
   'src/system/fd_util.c',
   'src/system/bind_mount.c',
+  'src/system/Isolate.cxx',
   'src/system/urandom.cxx',
   include_directories: inc,
   dependencies: [
@@ -967,7 +968,6 @@ executable('cm4all-beng-proxy',
   ])
 
 executable('cm4all-beng-lb',
-  'src/isolate.cxx',
   'src/abort_close.cxx',
   'src/capabilities.cxx',
   'src/tcp_stock.cxx',

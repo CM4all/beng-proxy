@@ -23,7 +23,7 @@
 #include "thread_pool.hxx"
 #include "fb_pool.hxx"
 #include "capabilities.hxx"
-#include "isolate.hxx"
+#include "system/Isolate.hxx"
 #include "system/SetupProcess.hxx"
 #include "util/PrintException.hxx"
 #include "util/Macros.hxx"
