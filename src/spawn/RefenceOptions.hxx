@@ -8,6 +8,7 @@
 #include "util/StringView.hxx"
 
 class AllocatorPtr;
+class FileDescriptor;
 
 /**
  * Options for Refence.
@@ -38,7 +39,7 @@ public:
 private:
     unsigned GetHash() const;
 
-    void Apply(int fd) const;
+    void Apply(FileDescriptor fd) const;
 };
 
 #endif

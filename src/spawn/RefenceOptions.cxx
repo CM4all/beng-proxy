@@ -4,15 +4,14 @@
 
 #include "RefenceOptions.hxx"
 #include "AllocatorPtr.hxx"
+#include "io/UniqueFileDescriptor.hxx"
 #include "util/djbhash.h"
 
 #include <algorithm>
 
 #include <stdio.h>
-#include <unistd.h>
 #include <fcntl.h>
 #include <string.h>
-#include <errno.h>
 
 RefenceOptions::RefenceOptions(AllocatorPtr alloc, const RefenceOptions &src)
     :data(alloc.Dup(src.data))
@@ -39,7 +38,7 @@ RefenceOptions::MakeId(char *p) const
 }
 
 inline void
-RefenceOptions::Apply(int fd) const
+RefenceOptions::Apply(FileDescriptor fd) const
 {
     // TODO: set name, script
 
@@ -48,7 +47,7 @@ RefenceOptions::Apply(int fd) const
 
     while (true) {
         const auto n = std::find(p, end, '\0');
-        ssize_t nbytes = write(fd, p, n - p);
+        ssize_t nbytes = fd.Write(p, n - p);
         if (nbytes < 0) {
             perror("Failed to write to Refence");
             _exit(2);
@@ -68,12 +67,11 @@ RefenceOptions::Apply() const
         return;
 
     constexpr auto path = "/proc/cm4all/refence/self";
-    int fd = open(path, O_WRONLY|O_CLOEXEC|O_NOCTTY);
-    if (fd < 0) {
+    UniqueFileDescriptor fd;
+    if (!fd.Open(path, O_WRONLY)) {
         perror("Failed to open Refence");
         _exit(2);
     }
 
-    Apply(fd);
-    close(fd);
+    Apply(fd.ToFileDescriptor());
 }
