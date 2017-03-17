@@ -7,15 +7,15 @@
 #ifndef BENG_PING_HXX
 #define BENG_PING_HXX
 
-#include "glibfwd.hxx"
-
 #include <inline/compiler.h>
+
+#include <exception>
 
 class PingClientHandler {
 public:
     virtual void PingResponse() = 0;
     virtual void PingTimeout() = 0;
-    virtual void PingError(GError *error) = 0;
+    virtual void PingError(std::exception_ptr ep) = 0;
 };
 
 struct pool;

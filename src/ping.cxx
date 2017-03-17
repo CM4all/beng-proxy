@@ -6,10 +6,10 @@
 
 #include "ping.hxx"
 #include "pool.hxx"
+#include "system/Error.hxx"
 #include "net/SocketAddress.hxx"
 #include "event/SocketEvent.hxx"
 #include "event/Duration.hxx"
-#include "gerrno.h"
 #include "util/Cancellable.hxx"
 
 #include <sys/socket.h>
@@ -136,9 +136,9 @@ PingClient::Read()
     } else if (errno == EAGAIN || errno == EINTR) {
         ScheduleRead();
     } else {
-        GError *error = new_error_errno();
+        const int e = errno;
         close(fd);
-        handler.PingError(error);
+        handler.PingError(std::make_exception_ptr(MakeErrno(e)));
         pool_unref(&pool);
     }
 }
@@ -201,8 +201,7 @@ ping(EventLoop &event_loop, struct pool &pool, SocketAddress address,
 {
     int fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_ICMP);
     if (fd < 0) {
-        GError *error = new_error_errno_msg("Failed to create ping socket");
-        handler.PingError(error);
+        handler.PingError(std::make_exception_ptr(MakeErrno("Failed to create ping socket")));
         return;
     }
 
@@ -212,8 +211,7 @@ ping(EventLoop &event_loop, struct pool &pool, SocketAddress address,
     socklen_t sin_length = sizeof(sin);
     if (bind(fd, (const struct sockaddr *)&sin, sin_length) < 0 ||
         getsockname(fd, (struct sockaddr *)&sin, &sin_length) < 0) {
-        GError *error = new_error_errno();
-        handler.PingError(error);
+        handler.PingError(std::make_exception_ptr(MakeErrno()));
         return;
     }
 
@@ -249,9 +247,9 @@ ping(EventLoop &event_loop, struct pool &pool, SocketAddress address,
 
     ssize_t nbytes = sendmsg(fd, &m, 0);
     if (nbytes < 0) {
-        GError *error = new_error_errno();
+        const int e = errno;
         close(fd);
-        handler.PingError(error);
+        handler.PingError(std::make_exception_ptr(MakeErrno(e)));
         return;
     }
 

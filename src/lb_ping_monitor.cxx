@@ -8,6 +8,7 @@
 #include "lb_monitor.hxx"
 #include "ping.hxx"
 #include "pool.hxx"
+#include "GException.hxx"
 #include "net/SocketAddress.hxx"
 #include "util/Cancellable.hxx"
 
@@ -26,8 +27,8 @@ public:
         handler.Timeout();
     }
 
-    void PingError(GError *error) override {
-        handler.Error(error);
+    void PingError(std::exception_ptr ep) override {
+        handler.Error(ToGError(ep));
     }
 };
 

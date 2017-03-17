@@ -7,8 +7,6 @@
 #include "util/Cancellable.hxx"
 #include "util/PrintException.hxx"
 
-#include <glib.h>
-
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -26,9 +24,8 @@ public:
         fprintf(stderr, "timeout\n");
     }
 
-    void PingError(GError *error) override {
-        fprintf(stderr, "%s\n", error->message);
-        g_error_free(error);
+    void PingError(std::exception_ptr ep) override {
+        PrintException(ep);
     }
 };
 
