@@ -4,6 +4,7 @@
 
 #include "isolate.hxx"
 #include "system/pivot_root.h"
+#include "io/WriteFile.hxx"
 #include "util/ScopeExit.hxx"
 
 #include <daemon/log.h>
@@ -14,37 +15,25 @@
 #include <errno.h>
 #include <sys/mount.h>
 #include <sys/stat.h>
-#include <fcntl.h>
 
 #ifndef __linux
 #error This library requires Linux
 #endif
 
-static bool
-try_write_file(const char *path, const char *data)
-{
-    int fd = open(path, O_WRONLY|O_CLOEXEC);
-    if (fd < 0)
-        return false;
-
-    AtScopeExit(fd) { close(fd); };
-    return write(fd, data, strlen(data)) > 0;
-}
-
-static bool
+static WriteFileResult
 setup_uid_map(int uid)
 {
     char buffer[64];
     sprintf(buffer, "%d %d 1", uid, uid);
-    return try_write_file("/proc/self/uid_map", buffer);
+    return TryWriteExistingFile("/proc/self/uid_map", buffer);
 }
 
-static void
+static WriteFileResult
 setup_gid_map(int gid)
 {
     char buffer[64];
     sprintf(buffer, "%d %d 1", gid, gid);
-    try_write_file("/proc/self/gid_map", buffer);
+    return TryWriteExistingFile("/proc/self/gid_map", buffer);
 }
 
 /**
@@ -55,7 +44,7 @@ setup_gid_map(int gid)
 static void
 deny_setgroups()
 {
-    try_write_file("/proc/self/setgroups", "deny");
+    TryWriteExistingFile("/proc/self/setgroups", "deny");
 }
 
 void

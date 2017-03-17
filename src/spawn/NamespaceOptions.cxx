@@ -8,6 +8,7 @@
 #include "AllocatorPtr.hxx"
 #include "system/pivot_root.h"
 #include "system/bind_mount.h"
+#include "io/WriteFile.hxx"
 #include "util/ScopeExit.hxx"
 
 #if TRANSLATION_ENABLE_EXPAND
@@ -20,7 +21,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
-#include <fcntl.h>
 #include <sys/mount.h>
 #include <sys/prctl.h>
 
@@ -91,31 +91,11 @@ NamespaceOptions::GetCloneFlags(const SpawnConfig &config, int flags) const
 static void
 write_file(const char *path, const char *data)
 {
-    int fd = open(path, O_WRONLY|O_CLOEXEC);
-    if (fd < 0) {
-        fprintf(stderr, "open('%s') failed: %s\n",
-                path, strerror(errno));
-        _exit(2);
-    }
-
-    if (write(fd, data, strlen(data)) < 0) {
+    if (TryWriteExistingFile(path, data) == WriteFileResult::ERROR) {
         fprintf(stderr, "write('%s') failed: %s\n",
                 path, strerror(errno));
         _exit(2);
     }
-
-    close(fd);
-}
-
-static bool
-try_write_file(const char *path, const char *data)
-{
-    int fd = open(path, O_WRONLY|O_CLOEXEC);
-    if (fd < 0)
-        return false;
-
-    AtScopeExit(fd) { close(fd); };
-    return write(fd, data, strlen(data)) > 0;
 }
 
 static void
@@ -142,7 +122,7 @@ setup_gid_map(int gid)
 static void
 deny_setgroups()
 {
-    try_write_file("/proc/self/setgroups", "deny");
+    TryWriteExistingFile("/proc/self/setgroups", "deny");
 }
 
 void

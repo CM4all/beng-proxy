@@ -264,6 +264,7 @@ stock_dep = declare_dependency(link_with: stock)
 io = static_library('io',
   'src/io/Buffered.cxx',
   'libcommon/src/io/FileDescriptor.cxx',
+  'libcommon/src/io/WriteFile.cxx',
   'src/io/LineParser.cxx',
   'src/io/ConfigParser.cxx',
   'src/io/StringFile.cxx',
