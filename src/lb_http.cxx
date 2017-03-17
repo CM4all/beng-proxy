@@ -76,6 +76,9 @@ struct LbRequest final
         DeleteFromPool(request.pool, this);
     }
 
+    unsigned GetStickyHash();
+    unsigned MakeCookieHash();
+
     /* virtual methods from class Cancellable */
     void Cancel() override {
         body.Clear();
@@ -141,6 +144,48 @@ generate_cookie(const AddressList *list)
 
     /* all nodes have failed */
     return first;
+}
+
+unsigned
+LbRequest::MakeCookieHash()
+{
+    unsigned hash = lb_cookie_get(request.headers);
+    if (hash == 0)
+        new_cookie = hash = generate_cookie(&cluster->address_list);
+
+    return hash;
+}
+
+unsigned
+LbRequest::GetStickyHash()
+{
+    switch (cluster->address_list.sticky_mode) {
+    case StickyMode::NONE:
+    case StickyMode::FAILOVER:
+        /* these modes require no preparation; they are handled
+           completely by balancer_get() */
+        return 0;
+
+    case StickyMode::SOURCE_IP:
+        /* calculate session_sticky from remote address */
+        return socket_address_sticky(request.remote_address);
+
+    case StickyMode::SESSION_MODULO:
+        /* calculate session_sticky from beng-proxy session id */
+        return lb_session_get(request.headers,
+                              cluster->session_cookie.c_str());
+
+    case StickyMode::COOKIE:
+        /* calculate session_sticky from beng-lb cookie */
+        return MakeCookieHash();
+
+    case StickyMode::JVM_ROUTE:
+        /* calculate session_sticky from JSESSIONID cookie suffix */
+        return lb_jvm_route_get(request.headers, *cluster);
+    }
+
+    assert(false);
+    gcc_unreachable();
 }
 
 /**
@@ -342,46 +387,10 @@ LbConnection::HandleHttpRequest(HttpServerRequest &request,
         return;
     }
 
-    /* prepare for the balancer */
-
-    unsigned session_sticky = 0;
-    switch (cluster->address_list.sticky_mode) {
-    case StickyMode::NONE:
-    case StickyMode::FAILOVER:
-        /* these modes require no preparation; they are handled
-           completely by balancer_get() */
-        break;
-
-    case StickyMode::SOURCE_IP:
-        /* calculate session_sticky from remote address */
-        session_sticky = socket_address_sticky(request.remote_address);
-        break;
-
-    case StickyMode::SESSION_MODULO:
-        /* calculate session_sticky from beng-proxy session id */
-        session_sticky = lb_session_get(request.headers,
-                                        cluster->session_cookie.c_str());
-        break;
-
-    case StickyMode::COOKIE:
-        /* calculate session_sticky from beng-lb cookie */
-        session_sticky = lb_cookie_get(request.headers);
-        if (session_sticky == 0)
-            request2->new_cookie = session_sticky =
-                generate_cookie(&cluster->address_list);
-
-        break;
-
-    case StickyMode::JVM_ROUTE:
-        /* calculate session_sticky from JSESSIONID cookie suffix */
-        session_sticky = lb_jvm_route_get(request.headers, *cluster);
-        break;
-    }
-
     tcp_balancer_get(request2->balancer, request.pool,
                      transparent_source,
                      bind_address,
-                     session_sticky,
+                     request2->GetStickyHash(),
                      cluster->address_list,
                      20,
                      *request2, request2->cancel_ptr);
