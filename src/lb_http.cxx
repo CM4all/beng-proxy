@@ -45,7 +45,7 @@ struct LbRequest final
     : Cancellable, StockGetHandler, HttpResponseHandler {
 
     LbConnection &connection;
-    const LbClusterConfig *cluster;
+    const LbClusterConfig &cluster_config;
 
     TcpBalancer &balancer;
 
@@ -62,10 +62,11 @@ struct LbRequest final
 
     unsigned new_cookie = 0;
 
-    LbRequest(LbConnection &_connection, TcpBalancer &_balancer,
+    LbRequest(LbConnection &_connection, const LbClusterConfig &_cluster_config,
+              TcpBalancer &_balancer,
               HttpServerRequest &_request,
               CancellablePointer &_cancel_ptr)
-        :connection(_connection),
+        :connection(_connection), cluster_config(_cluster_config),
          balancer(_balancer),
          request(_request),
          body(request.pool, request.body) {
@@ -151,7 +152,7 @@ LbRequest::MakeCookieHash()
 {
     unsigned hash = lb_cookie_get(request.headers);
     if (hash == 0)
-        new_cookie = hash = generate_cookie(&cluster->address_list);
+        new_cookie = hash = generate_cookie(&cluster_config.address_list);
 
     return hash;
 }
@@ -159,7 +160,7 @@ LbRequest::MakeCookieHash()
 unsigned
 LbRequest::GetStickyHash()
 {
-    switch (cluster->address_list.sticky_mode) {
+    switch (cluster_config.address_list.sticky_mode) {
     case StickyMode::NONE:
     case StickyMode::FAILOVER:
         /* these modes require no preparation; they are handled
@@ -173,7 +174,7 @@ LbRequest::GetStickyHash()
     case StickyMode::SESSION_MODULO:
         /* calculate session_sticky from beng-proxy session id */
         return lb_session_get(request.headers,
-                              cluster->session_cookie.c_str());
+                              cluster_config.session_cookie.c_str());
 
     case StickyMode::COOKIE:
         /* calculate session_sticky from beng-lb cookie */
@@ -181,7 +182,7 @@ LbRequest::GetStickyHash()
 
     case StickyMode::JVM_ROUTE:
         /* calculate session_sticky from JSESSIONID cookie suffix */
-        return lb_jvm_route_get(request.headers, *cluster);
+        return lb_jvm_route_get(request.headers, cluster_config);
     }
 
     assert(false);
@@ -238,7 +239,7 @@ LbRequest::OnHttpError(GError *error)
 
     lb_connection_log_gerror(2, &connection, "Error", error);
 
-    if (!send_fallback(request, cluster->fallback)) {
+    if (!send_fallback(request, cluster_config.fallback)) {
         const char *msg = connection.listener.verbose_response
             ? error->message
             : "Server failure";
@@ -272,7 +273,7 @@ LbRequest::OnStockItemReady(StockItem &item)
                                request.local_host_and_port,
                                request.remote_host,
                                peer_subject, peer_issuer_subject,
-                               cluster->mangle_via);
+                               cluster_config.mangle_via);
 
     auto *lease = NewFromPool<StockItemLease>(request.pool, item);
 
@@ -297,7 +298,7 @@ LbRequest::OnStockItemError(GError *error)
 
     body.Clear();
 
-    if (!send_fallback(request, cluster->fallback)) {
+    if (!send_fallback(request, cluster_config.fallback)) {
         const char *msg = connection.listener.verbose_response
             ? error->message
             : "Connection failure";
@@ -328,14 +329,15 @@ LbConnection::HandleHttpRequest(HttpServerRequest &request,
         return;
     }
 
+    const auto &cluster_config = *goto_.cluster;
     const auto request2 =
         NewFromPool<LbRequest>(request.pool,
-                               *this, *instance.tcp_balancer,
+                               *this, cluster_config,
+                               *instance.tcp_balancer,
                                request, cancel_ptr);
-    const auto *cluster = request2->cluster = goto_.cluster;
 
     SocketAddress bind_address = SocketAddress::Null();
-    const bool transparent_source = cluster->transparent_source;
+    const bool transparent_source = cluster_config.transparent_source;
     if (transparent_source) {
         bind_address = request.remote_address;
 
@@ -357,10 +359,10 @@ LbConnection::HandleHttpRequest(HttpServerRequest &request,
         }
     }
 
-    if (cluster->HasZeroConf()) {
+    if (cluster_config.HasZeroConf()) {
         /* TODO: generalize the Zeroconf code, implement sticky */
 
-        auto *cluster2 = instance.clusters.Find(cluster->name);
+        auto *cluster2 = instance.clusters.Find(cluster_config.name);
         if (cluster2 == nullptr) {
             http_server_send_message(&request,
                                      HTTP_STATUS_INTERNAL_SERVER_ERROR,
@@ -391,7 +393,7 @@ LbConnection::HandleHttpRequest(HttpServerRequest &request,
                      transparent_source,
                      bind_address,
                      request2->GetStickyHash(),
-                     cluster->address_list,
+                     cluster_config.address_list,
                      20,
                      *request2, request2->cancel_ptr);
 }
