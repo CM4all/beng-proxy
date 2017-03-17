@@ -15,7 +15,7 @@
 #include "strmap.hxx"
 #include "serialize.hxx"
 #include "GrowingBuffer.hxx"
-#include "uset.hxx"
+#include "util/uset.hxx"
 #include "istream/sink_buffer.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream_memory.hxx"
