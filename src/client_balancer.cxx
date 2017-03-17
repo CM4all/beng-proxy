@@ -11,8 +11,6 @@
 #include "balancer.hxx"
 #include "net/StaticSocketAddress.hxx"
 
-#include <glib.h>
-
 struct ClientBalancerRequest : ConnectSocketHandler {
     EventLoop &event_loop;
 

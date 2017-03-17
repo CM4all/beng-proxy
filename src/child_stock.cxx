@@ -18,8 +18,6 @@
 #include "io/UniqueFileDescriptor.hxx"
 #include "pool.hxx"
 
-#include <glib.h>
-
 #include <string>
 
 #include <assert.h>
