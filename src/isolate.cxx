@@ -7,9 +7,8 @@
 #include "io/WriteFile.hxx"
 #include "util/ScopeExit.hxx"
 
-#include <daemon/log.h>
-
 #include <sched.h>
+#include <stdio.h>
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
@@ -54,7 +53,7 @@ isolate_from_filesystem(bool allow_dbus)
 
     constexpr int flags = CLONE_NEWUSER|CLONE_NEWNS;
     if (unshare(flags) < 0) {
-        daemon_log(3, "unshare(0x%x) failed: %s\n", flags, strerror(errno));
+        fprintf(stderr, "unshare(0x%x) failed: %s\n", flags, strerror(errno));
         return;
     }
 
@@ -74,7 +73,7 @@ isolate_from_filesystem(bool allow_dbus)
 
     if (mount(nullptr, new_root, "tmpfs", MS_NODEV|MS_NOEXEC|MS_NOSUID,
               "size=16k,nr_inodes=16,mode=700") < 0) {
-        daemon_log(3, "failed to mount tmpfs: %s\n", strerror(errno));
+        fprintf(stderr, "failed to mount tmpfs: %s\n", strerror(errno));
         return;
     }
 
