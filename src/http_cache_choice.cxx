@@ -15,7 +15,7 @@
 #include "strmap.hxx"
 #include "serialize.hxx"
 #include "GrowingBuffer.hxx"
-#include "uset.h"
+#include "uset.hxx"
 #include "istream/sink_buffer.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream_memory.hxx"
@@ -196,7 +196,7 @@ http_cache_choice_buffer_done(void *data0, size_t length, void *ctx)
 
         hash = mcd_vary_hash(vary);
         if (hash != 0) {
-            if (uset_contains_or_add(&uset, hash))
+            if (uset.ContainsOrInsert(hash))
                 /* duplicate: mark the record as
                    "unclean", queue the garbage collector */
                 unclean = true;
@@ -596,7 +596,7 @@ http_cache_choice_cleanup_filter_callback(const HttpCacheChoiceInfo *info,
 
     if (info != nullptr) {
         unsigned hash = mcd_vary_hash(info->vary);
-        bool duplicate = uset_contains_or_add(&cleanup.uset, hash);
+        bool duplicate = cleanup.uset.ContainsOrInsert(hash);
         return (info->expires == std::chrono::system_clock::from_time_t(-1) ||
                 info->expires >= cleanup.now) &&
             !duplicate;
