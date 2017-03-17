@@ -6,9 +6,9 @@
 
 #include "lb_ping_monitor.hxx"
 #include "lb_monitor.hxx"
-#include "ping.hxx"
 #include "pool.hxx"
 #include "GException.hxx"
+#include "net/Ping.hxx"
 #include "net/SocketAddress.hxx"
 #include "util/Cancellable.hxx"
 

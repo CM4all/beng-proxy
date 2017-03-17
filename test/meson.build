@@ -186,7 +186,6 @@ executable('fake_memcached_server',
 
 executable('run_ping',
   'run_ping.cxx',
-  '../src/ping.cxx',
   include_directories: inc,
   dependencies: [
     glib,

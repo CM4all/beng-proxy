@@ -1,10 +1,8 @@
 /*
- * Sending ICMP echo-request messages (ping).
- *
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "ping.hxx"
+#include "Ping.hxx"
 #include "pool.hxx"
 #include "system/Error.hxx"
 #include "net/SocketAddress.hxx"

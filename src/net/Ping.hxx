@@ -1,11 +1,9 @@
 /*
- * Sending ICMP echo-request messages (ping).
- *
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PING_HXX
-#define BENG_PING_HXX
+#ifndef PING_HXX
+#define PING_HXX
 
 #include <inline/compiler.h>
 
@@ -31,7 +29,8 @@ bool
 ping_available();
 
 /**
- * Sends a "ping" to the server, and waits for the reply.
+ * Sends a "ping" (ICMP echo-request) to the server, and waits for the
+ * reply.
  */
 void
 ping(EventLoop &event_loop, struct pool &pool, SocketAddress address,

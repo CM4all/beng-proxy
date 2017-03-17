@@ -1,6 +1,6 @@
-#include "ping.hxx"
 #include "pool.hxx"
 #include "RootPool.hxx"
+#include "net/Ping.hxx"
 #include "net/AllocatedSocketAddress.hxx"
 #include "net/Parser.hxx"
 #include "event/Loop.hxx"
