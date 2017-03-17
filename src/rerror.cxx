@@ -18,7 +18,6 @@
 #include "http_server/http_server.hxx"
 #include "http_server/Request.hxx"
 #include "http_quark.h"
-#include "http_domain.hxx"
 #include "HttpMessageResponse.hxx"
 #include "gerrno.h"
 #include "pool.hxx"
