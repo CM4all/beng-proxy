@@ -160,7 +160,7 @@ LbRequest::MakeCookieHash()
 unsigned
 LbRequest::GetStickyHash()
 {
-    switch (cluster_config.address_list.sticky_mode) {
+    switch (cluster_config.sticky_mode) {
     case StickyMode::NONE:
     case StickyMode::FAILOVER:
         /* these modes require no preparation; they are handled
