@@ -370,7 +370,7 @@ LbConnection::HandleHttpRequest(HttpServerRequest &request,
             return;
         }
 
-        const auto member = cluster2->Pick();
+        const auto member = cluster2->Pick(request2->GetStickyHash());
         if (member.first == nullptr) {
             http_server_send_message(&request,
                                      HTTP_STATUS_INTERNAL_SERVER_ERROR,

@@ -482,7 +482,7 @@ LbTcpConnection::ConnectOutbound()
             return;
         }
 
-        const auto member = cluster2->Pick();
+        const auto member = cluster2->Pick(session_sticky);
         if (member.first == nullptr) {
             DestroyInbound();
             handler->error("Zeroconf error", "Zeroconf cluster is empty",

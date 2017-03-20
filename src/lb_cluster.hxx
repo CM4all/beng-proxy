@@ -21,11 +21,14 @@ struct LbGoto;
 struct LbListenerConfig;
 struct LbClusterConfig;
 class MyAvahiClient;
+class StickyCache;
 
 class LbCluster final : AvahiConnectionListener {
     const LbClusterConfig &config;
     MyAvahiClient &avahi_client;
     AvahiServiceBrowser *avahi_browser = nullptr;
+
+    StickyCache *sticky_cache = nullptr;
 
     class Member {
         LbCluster &cluster;
@@ -95,7 +98,7 @@ public:
               MyAvahiClient &_avahi_client);
     ~LbCluster();
 
-    std::pair<const char *, SocketAddress> Pick();
+    std::pair<const char *, SocketAddress> Pick(uint32_t sticky_hash);
 
 private:
     void FillActive();

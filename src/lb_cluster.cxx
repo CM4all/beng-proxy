@@ -5,6 +5,7 @@
 #include "lb_cluster.hxx"
 #include "lb_config.hxx"
 #include "avahi/Client.hxx"
+#include "StickyCache.hxx"
 
 #include <daemon/log.h>
 
@@ -145,6 +146,8 @@ LbCluster::LbCluster(const LbClusterConfig &_config,
 
 LbCluster::~LbCluster()
 {
+    delete sticky_cache;
+
     if (avahi_browser != nullptr)
         avahi_service_browser_free(avahi_browser);
 
@@ -153,7 +156,7 @@ LbCluster::~LbCluster()
 }
 
 std::pair<const char *, SocketAddress>
-LbCluster::Pick()
+LbCluster::Pick(uint32_t sticky_hash)
 {
     if (dirty) {
         dirty = false;
@@ -163,11 +166,38 @@ LbCluster::Pick()
     if (active_members.empty())
         return std::make_pair(nullptr, nullptr);
 
+    if (sticky_hash != 0) {
+        /* look up the sticky_hash in the StickyCache */
+
+        assert(config.sticky_mode != StickyMode::NONE);
+
+        if (sticky_cache == nullptr)
+            /* lazy cache allocation */
+            sticky_cache = new StickyCache();
+
+        const auto *cached = sticky_cache->Get(sticky_hash);
+        if (cached != nullptr) {
+            /* cache hit */
+            auto i = members.find(*cached);
+            if (i != members.end() && i->second.IsActive())
+                /* the node is active, we can use it */
+                return std::make_pair(i->first.c_str(),
+                                      i->second.GetAddress());
+        }
+
+        /* cache miss or cached node not active: fall back to
+           round-robin and remember the new pick in the cache */
+    }
+
     ++last_pick;
     if (last_pick >= active_members.size())
         last_pick = 0;
 
     const auto &i = *active_members[last_pick];
+
+    if (sticky_hash != 0)
+        sticky_cache->Put(sticky_hash, i.first);
+
     return std::make_pair(i.first.c_str(), i.second.GetAddress());
 }
 
