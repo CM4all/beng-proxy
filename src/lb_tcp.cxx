@@ -413,10 +413,10 @@ LbTcpConnection::OnSocketConnectError(std::exception_ptr ep)
 
 gcc_pure
 static unsigned
-lb_tcp_sticky(const AddressList &address_list,
+lb_tcp_sticky(StickyMode sticky_mode,
               SocketAddress remote_address)
 {
-    switch (address_list.sticky_mode) {
+    switch (sticky_mode) {
     case StickyMode::NONE:
     case StickyMode::FAILOVER:
         break;
@@ -448,7 +448,7 @@ LbTcpConnection::LbTcpConnection(struct pool &_pool, EventLoop &event_loop,
      handler(&_handler), handler_ctx(ctx),
      inbound(event_loop), outbound(event_loop),
      cluster(_cluster), clusters(_clusters), balancer(_balancer),
-     session_sticky(lb_tcp_sticky(cluster.address_list, remote_address))
+     session_sticky(lb_tcp_sticky(cluster.sticky_mode, remote_address))
 {
     inbound.Init(fd.Steal(), fd_type,
                  nullptr, &write_timeout,
