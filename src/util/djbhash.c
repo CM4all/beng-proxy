@@ -13,7 +13,7 @@ gcc_const
 static uint_fast32_t
 djb_hash_update(uint_fast32_t hash, uint8_t b)
 {
-    return ((hash << 5) + hash) ^ b;
+    return (hash * 33) ^ b;
 }
 
 uint32_t
