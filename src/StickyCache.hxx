@@ -9,7 +9,7 @@
 
 #include <stdint.h>
 
-class StickyCache : public Cache<uint32_t, std::string, 1021>
+class StickyCache : public Cache<uint32_t, std::string, 32768, 4093>
 {
 };
 
