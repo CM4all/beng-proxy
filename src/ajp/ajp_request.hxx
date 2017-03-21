@@ -7,6 +7,8 @@
 #ifndef BENG_PROXY_AJP_REQUEST_HXX
 #define BENG_PROXY_AJP_REQUEST_HXX
 
+#include "StickyHash.hxx"
+
 #include <http/method.h>
 
 struct pool;
@@ -25,7 +27,7 @@ class CancellablePointer;
 void
 ajp_stock_request(struct pool &pool, EventLoop &event_loop,
                   TcpBalancer &tcp_balancer,
-                  unsigned session_sticky,
+                  sticky_hash_t session_sticky,
                   const char *protocol, const char *remote_addr,
                   const char *remote_host, const char *server_name,
                   unsigned server_port, bool is_ssl,

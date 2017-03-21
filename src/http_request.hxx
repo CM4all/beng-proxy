@@ -7,6 +7,8 @@
 #ifndef BENG_PROXY_HTTP_REQUEST_HXX
 #define BENG_PROXY_HTTP_REQUEST_HXX
 
+#include "StickyHash.hxx"
+
 #include <http/method.h>
 
 struct pool;
@@ -27,7 +29,7 @@ class HttpHeaders;
 void
 http_request(struct pool &pool, EventLoop &event_loop,
              TcpBalancer &tcp_balancer,
-             unsigned session_sticky,
+             sticky_hash_t session_sticky,
              const SocketFilter *filter, SocketFilterFactory *filter_factory,
              http_method_t method,
              const HttpAddress &address,

@@ -36,7 +36,7 @@ struct HttpRequest final
 
     TcpBalancer &tcp_balancer;
 
-    const unsigned session_sticky;
+    const sticky_hash_t session_sticky;
 
     const SocketFilter *const filter;
     SocketFilterFactory *const filter_factory;
@@ -55,7 +55,7 @@ struct HttpRequest final
 
     HttpRequest(struct pool &_pool, EventLoop &_event_loop,
                 TcpBalancer &_tcp_balancer,
-                unsigned _session_sticky,
+                sticky_hash_t _session_sticky,
                 const SocketFilter *_filter,
                 SocketFilterFactory *_filter_factory,
                 http_method_t _method,
@@ -213,7 +213,7 @@ HttpRequest::OnStockItemError(GError *error)
 void
 http_request(struct pool &pool, EventLoop &event_loop,
              TcpBalancer &tcp_balancer,
-             unsigned session_sticky,
+             sticky_hash_t session_sticky,
              const SocketFilter *filter, SocketFilterFactory *filter_factory,
              http_method_t method,
              const HttpAddress &uwa,

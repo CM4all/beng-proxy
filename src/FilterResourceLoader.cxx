@@ -9,7 +9,7 @@
 
 void
 FilterResourceLoader::SendRequest(struct pool &pool,
-                                  gcc_unused unsigned session_sticky,
+                                  gcc_unused sticky_hash_t session_sticky,
                                   gcc_unused http_method_t method,
                                   const ResourceAddress &address,
                                   http_status_t status,

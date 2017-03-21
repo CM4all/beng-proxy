@@ -12,7 +12,7 @@ test_quark(void)
 
 void
 FailingResourceLoader::SendRequest(struct pool &,
-                                   unsigned,
+                                   sticky_hash_t,
                                    http_method_t,
                                    const ResourceAddress &,
                                    http_status_t,

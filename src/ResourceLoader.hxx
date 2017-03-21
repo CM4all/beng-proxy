@@ -5,6 +5,8 @@
 #ifndef BENG_PROXY_RESOURCE_LOADER_HXX
 #define BENG_PROXY_RESOURCE_LOADER_HXX
 
+#include "StickyHash.hxx"
+
 #include <http/method.h>
 #include <http/status.h>
 
@@ -32,7 +34,7 @@ public:
      * not nullptr, it may be used to cache POST requests
      */
     virtual void SendRequest(struct pool &pool,
-                             unsigned session_sticky,
+                             sticky_hash_t session_sticky,
                              http_method_t method,
                              const ResourceAddress &address,
                              http_status_t status, StringMap &&headers,

@@ -57,7 +57,7 @@ public:
     struct pool_notify_state caller_pool_notify;
 #endif
 
-    unsigned session_sticky;
+    sticky_hash_t session_sticky;
 
     /**
      * The cache object which got this request.
@@ -109,7 +109,7 @@ public:
     CancellablePointer cancel_ptr;
 
     HttpCacheRequest(struct pool &_pool, struct pool &_caller_pool,
-                     unsigned _session_sticky,
+                     sticky_hash_t _session_sticky,
                      HttpCache &_cache,
                      http_method_t _method,
                      const ResourceAddress &_address,
@@ -496,7 +496,7 @@ HttpCacheRequest::Cancel()
 
 HttpCacheRequest::HttpCacheRequest(struct pool &_pool,
                                    struct pool &_caller_pool,
-                                   unsigned _session_sticky,
+                                   sticky_hash_t _session_sticky,
                                    HttpCache &_cache,
                                    http_method_t _method,
                                    const ResourceAddress &_address,
@@ -667,7 +667,7 @@ http_cache_flush(HttpCache &cache)
  */
 static void
 http_cache_miss(HttpCache &cache, struct pool &caller_pool,
-                unsigned session_sticky,
+                sticky_hash_t session_sticky,
                 HttpCacheRequestInfo &info,
                 http_method_t method,
                 const ResourceAddress &address,
@@ -798,7 +798,7 @@ http_cache_test(HttpCacheRequest &request,
  */
 static void
 http_cache_heap_test(HttpCache &cache, struct pool &caller_pool,
-                     unsigned session_sticky,
+                     sticky_hash_t session_sticky,
                      HttpCacheRequestInfo &info,
                      HttpCacheDocument &document,
                      http_method_t method,
@@ -847,7 +847,7 @@ http_cache_found(HttpCache &cache,
                  HttpCacheRequestInfo &info,
                  HttpCacheDocument &document,
                  struct pool &pool,
-                 unsigned session_sticky,
+                 sticky_hash_t session_sticky,
                  http_method_t method,
                  const ResourceAddress &address,
                  StringMap &&headers,
@@ -872,7 +872,7 @@ http_cache_found(HttpCache &cache,
  */
 static void
 http_cache_heap_use(HttpCache &cache,
-                    struct pool &pool, unsigned session_sticky,
+                    struct pool &pool, sticky_hash_t session_sticky,
                     http_method_t method,
                     const ResourceAddress &address,
                     StringMap &&headers,
@@ -986,7 +986,8 @@ http_cache_memcached_get_callback(HttpCacheDocument *document,
  */
 static void
 http_cache_memcached_use(HttpCache &cache,
-                         struct pool &caller_pool, unsigned session_sticky,
+                         struct pool &caller_pool,
+                         sticky_hash_t session_sticky,
                          http_method_t method,
                          const ResourceAddress &address,
                          StringMap &headers,
@@ -1021,7 +1022,7 @@ http_cache_memcached_use(HttpCache &cache,
 
 void
 http_cache_request(HttpCache &cache,
-                   struct pool &pool, unsigned session_sticky,
+                   struct pool &pool, sticky_hash_t session_sticky,
                    http_method_t method,
                    const ResourceAddress &address,
                    StringMap &&headers, Istream *body,

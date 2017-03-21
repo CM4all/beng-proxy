@@ -7,6 +7,8 @@
 #ifndef BENG_PROXY_LB_COOKIE_H
 #define BENG_PROXY_LB_COOKIE_H
 
+#include "StickyHash.hxx"
+
 #include <assert.h>
 
 class StringMap;
@@ -14,7 +16,7 @@ class StringMap;
 /**
  * Extract a node cookie from the request headers.
  */
-unsigned
+sticky_hash_t
 lb_cookie_get(const StringMap &request_headers);
 
 /**
@@ -23,7 +25,7 @@ lb_cookie_get(const StringMap &request_headers);
  * @param n the number of nodes in the cluster
  * @return a random number between 1 and n (both including)
  */
-unsigned
+sticky_hash_t
 lb_cookie_generate(unsigned n);
 
 /**

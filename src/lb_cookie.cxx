@@ -14,7 +14,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-unsigned
+sticky_hash_t
 lb_cookie_get(const StringMap &request_headers)
 {
     const AutoRewindPool auto_rewind(*tpool);
@@ -36,10 +36,10 @@ lb_cookie_get(const StringMap &request_headers)
     if (endptr == p || *endptr != 0)
         return 0;
 
-    return (unsigned)id;
+    return (sticky_hash_t)id;
 }
 
-unsigned
+sticky_hash_t
 lb_cookie_generate(unsigned n)
 {
     assert(n >= 2);

@@ -7,6 +7,8 @@
 #ifndef BENG_PROXY_HTTP_CACHE_H
 #define BENG_PROXY_HTTP_CACHE_H
 
+#include "StickyHash.hxx"
+
 #include <inline/compiler.h>
 #include <http/method.h>
 
@@ -48,7 +50,7 @@ http_cache_flush(HttpCache &cache);
  */
 void
 http_cache_request(HttpCache &cache,
-                   struct pool &pool, unsigned session_sticky,
+                   struct pool &pool, sticky_hash_t session_sticky,
                    http_method_t method,
                    const ResourceAddress &address,
                    StringMap &&headers, Istream *body,

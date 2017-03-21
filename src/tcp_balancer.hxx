@@ -7,6 +7,8 @@
 #ifndef BENG_PROXY_TCP_BALANCER_HXX
 #define BENG_PROXY_TCP_BALANCER_HXX
 
+#include "StickyHash.hxx"
+
 #include <inline/compiler.h>
 
 struct pool;
@@ -42,7 +44,7 @@ void
 tcp_balancer_get(TcpBalancer &tcp_balancer, struct pool &pool,
                  bool ip_transparent,
                  SocketAddress bind_address,
-                 unsigned session_sticky,
+                 sticky_hash_t session_sticky,
                  const AddressList &address_list,
                  unsigned timeout,
                  StockGetHandler &handler,

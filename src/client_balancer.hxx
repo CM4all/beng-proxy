@@ -7,6 +7,8 @@
 #ifndef BENG_PROXY_CLIENT_BALANCER_HXX
 #define BENG_PROXY_CLIENT_BALANCER_HXX
 
+#include "StickyHash.hxx"
+
 struct pool;
 struct Balancer;
 struct AddressList;
@@ -27,7 +29,7 @@ client_balancer_connect(EventLoop &event_loop, struct pool &pool,
                         Balancer &balancer,
                         bool ip_transparent,
                         SocketAddress bind_address,
-                        unsigned session_sticky,
+                        sticky_hash_t session_sticky,
                         const AddressList *address_list,
                         unsigned timeout,
                         ConnectSocketHandler &handler,

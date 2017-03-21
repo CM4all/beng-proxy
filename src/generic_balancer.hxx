@@ -30,7 +30,7 @@ struct BalancerRequest : R {
     /**
      * The "sticky id" of the incoming HTTP request.
      */
-    const unsigned session_sticky;
+    const sticky_hash_t session_sticky;
 
     /**
      * The number of remaining connection attempts.  We give up when
@@ -45,7 +45,7 @@ struct BalancerRequest : R {
                     Balancer &_balancer,
                     const AddressList &_address_list,
                     CancellablePointer &_cancel_ptr,
-                    unsigned _session_sticky,
+                    sticky_hash_t _session_sticky,
                     Args&&... args)
         :R(std::forward<Args>(args)...),
          pool(_pool), balancer(_balancer),

@@ -37,7 +37,7 @@ struct LbTcpConnection final : ConnectSocketHandler {
     const LbClusterConfig &cluster;
     LbClusterMap &clusters;
     Balancer &balancer;
-    const unsigned session_sticky;
+    const sticky_hash_t session_sticky;
 
     CancellablePointer cancel_connect;
 
@@ -412,7 +412,7 @@ LbTcpConnection::OnSocketConnectError(std::exception_ptr ep)
  */
 
 gcc_pure
-static unsigned
+static sticky_hash_t
 lb_tcp_sticky(StickyMode sticky_mode,
               SocketAddress remote_address)
 {

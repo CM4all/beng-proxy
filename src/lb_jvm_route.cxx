@@ -15,7 +15,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-unsigned
+sticky_hash_t
 lb_jvm_route_get(const StringMap &request_headers,
                  const LbClusterConfig &cluster)
 {

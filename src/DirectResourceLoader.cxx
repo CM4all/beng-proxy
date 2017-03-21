@@ -119,7 +119,7 @@ extract_server_name(struct pool *pool, const StringMap *headers,
 
 void
 DirectResourceLoader::SendRequest(struct pool &pool,
-                                  unsigned session_sticky,
+                                  sticky_hash_t session_sticky,
                                   http_method_t method,
                                   const ResourceAddress &address,
                                   http_status_t status, StringMap &&headers,

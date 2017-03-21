@@ -77,8 +77,8 @@ struct LbRequest final
         DeleteFromPool(request.pool, this);
     }
 
-    unsigned GetStickyHash();
-    unsigned MakeCookieHash();
+    sticky_hash_t GetStickyHash();
+    sticky_hash_t MakeCookieHash();
 
     /* virtual methods from class Cancellable */
     void Cancel() override {
@@ -147,7 +147,7 @@ generate_cookie(const AddressList *list)
     return first;
 }
 
-unsigned
+sticky_hash_t
 LbRequest::MakeCookieHash()
 {
     unsigned hash = lb_cookie_get(request.headers);
@@ -157,7 +157,7 @@ LbRequest::MakeCookieHash()
     return hash;
 }
 
-unsigned
+sticky_hash_t
 LbRequest::GetStickyHash()
 {
     switch (cluster_config.sticky_mode) {

@@ -9,7 +9,7 @@
 
 void
 CachedResourceLoader::SendRequest(struct pool &pool,
-                                  unsigned session_sticky,
+                                  sticky_hash_t session_sticky,
                                   http_method_t method,
                                   const ResourceAddress &address,
                                   gcc_unused http_status_t status,

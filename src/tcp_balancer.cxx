@@ -105,7 +105,7 @@ void
 tcp_balancer_get(TcpBalancer &tcp_balancer, struct pool &pool,
                  bool ip_transparent,
                  SocketAddress bind_address,
-                 unsigned session_sticky,
+                 sticky_hash_t session_sticky,
                  const AddressList &address_list,
                  unsigned timeout,
                  StockGetHandler &handler,

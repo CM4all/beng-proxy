@@ -10,14 +10,14 @@
 #include <netinet/in.h>
 
 gcc_pure
-static unsigned
+static sticky_hash_t
 ipv4_sticky(const struct sockaddr_in *address)
 {
     return djb_hash(&address->sin_addr, sizeof(address->sin_addr));
 }
 
 gcc_pure
-static unsigned
+static sticky_hash_t
 ipv6_sticky(const struct sockaddr_in6 *address)
 {
     return djb_hash(&address->sin6_addr, sizeof(address->sin6_addr));

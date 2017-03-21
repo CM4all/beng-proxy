@@ -5,6 +5,7 @@
 #ifndef BENG_LB_CLUSTER_HXX
 #define BENG_LB_CLUSTER_HXX
 
+#include "StickyHash.hxx"
 #include "avahi/ConnectionListener.hxx"
 #include "net/AllocatedSocketAddress.hxx"
 
@@ -98,7 +99,7 @@ public:
               MyAvahiClient &_avahi_client);
     ~LbCluster();
 
-    std::pair<const char *, SocketAddress> Pick(uint32_t sticky_hash);
+    std::pair<const char *, SocketAddress> Pick(sticky_hash_t sticky_hash);
 
 private:
     void FillActive();

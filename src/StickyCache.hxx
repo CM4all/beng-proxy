@@ -5,11 +5,10 @@
 #ifndef BENG_PROXY_STICKY_CACHE_HXX
 #define BENG_PROXY_STICKY_CACHE_HXX
 
+#include "StickyHash.hxx"
 #include "util/Cache.hxx"
 
-#include <stdint.h>
-
-class StickyCache : public Cache<uint32_t, std::string, 32768, 4093>
+class StickyCache : public Cache<sticky_hash_t, std::string, 32768, 4093>
 {
 };
 
