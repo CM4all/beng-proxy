@@ -3,7 +3,7 @@ cm4all-beng-proxy (12.0.9) unstable; urgency=low
   * fix error "Failed to accept connection: Invalid argument"
   * lb: implement "sticky" in ZeroConf pools
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 21 Mar 2017 09:38:04 -0000
 
 cm4all-beng-proxy (12.0.8) unstable; urgency=low
 
