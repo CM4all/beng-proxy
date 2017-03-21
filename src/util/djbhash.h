@@ -11,17 +11,18 @@
 #include <inline/compiler.h>
 
 #include <stddef.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 gcc_pure
-unsigned
+uint32_t
 djb_hash(const void *p, size_t size);
 
 gcc_pure
-unsigned
+uint32_t
 djb_hash_string(const char *p);
 
 #ifdef __cplusplus
