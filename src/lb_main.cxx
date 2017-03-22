@@ -204,6 +204,9 @@ int main(int argc, char **argv)
 
     instance.cmdline.user.Apply();
 
+    for (const auto &path : config.lua_files)
+        instance.RunLuaFile(path.c_str());
+
     /* can't change to new (empty) rootfs if we may need to reconnect
        to PostgreSQL eventually */
     // TODO: bind-mount the PostgreSQL socket into the new rootfs

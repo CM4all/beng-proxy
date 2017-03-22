@@ -461,6 +461,8 @@ struct LbListenerConfig {
 struct LbConfig {
     std::string access_logger;
 
+    std::list<std::string> lua_files;
+
     std::list<LbControlConfig> controls;
 
     std::map<std::string, LbCertDatabaseConfig> cert_dbs;

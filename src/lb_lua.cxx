@@ -3,7 +3,6 @@
  */
 
 #include "lb_instance.hxx"
-#include "lb_lua.hxx"
 #include "lua/RunFile.hxx"
 
 extern "C" {
@@ -29,11 +28,4 @@ LbInstance::RunLuaFile(const char *path)
         EnableLua();
 
     Lua::RunFile(lua_state.get(), path);
-}
-
-LbLua::LbLua(const char *path)
-    :state(luaL_newstate())
-{
-    luaL_openlibs(state.get());
-    Lua::RunFile(state.get(), path);
 }
