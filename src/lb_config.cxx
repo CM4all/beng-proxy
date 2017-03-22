@@ -5,6 +5,7 @@
  */
 
 #include "lb_config.hxx"
+#include "lb_lua.hxx"
 #include "AllocatorPtr.hxx"
 #include "io/LineParser.hxx"
 #include "io/ConfigParser.hxx"
@@ -957,6 +958,9 @@ LbConfigParser::ParseLine2(LineParser &line)
         CreateControl(line);
     else if (strcmp(word, "access_logger") == 0)
         config.access_logger = line.ExpectValueAndEnd();
+    else if (strcmp(word, "lua") == 0)
+        // TODO: experimental; implement properly
+        LbLua(line.ExpectValueAndEnd());
     else
         throw LineParser::Error("Unknown option");
 }
