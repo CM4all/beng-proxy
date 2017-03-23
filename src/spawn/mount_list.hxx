@@ -58,8 +58,8 @@ struct MountList {
         return false;
     }
 
-    void Expand(struct pool &pool, const MatchInfo &match_info);
-    static void ExpandAll(struct pool &pool, MountList *m,
+    void Expand(AllocatorPtr alloc, const MatchInfo &match_info);
+    static void ExpandAll(AllocatorPtr alloc, MountList *m,
                           const MatchInfo &match_info);
 #endif
 

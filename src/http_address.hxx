@@ -147,7 +147,7 @@ struct HttpAddress {
     /**
      * Throws std::runtime_error on error.
      */
-    void Expand(struct pool *pool, const MatchInfo &match_info);
+    void Expand(AllocatorPtr alloc, const MatchInfo &match_info);
 
     gcc_pure
     int GetDefaultPort() const {

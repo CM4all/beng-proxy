@@ -85,18 +85,15 @@ NfsAddress::LoadBase(AllocatorPtr alloc, const char *suffix) const
 }
 
 const NfsAddress *
-NfsAddress::Expand(struct pool *pool, const MatchInfo &match_info) const
+NfsAddress::Expand(AllocatorPtr alloc, const MatchInfo &match_info) const
 {
-    assert(pool != nullptr);
-
     if (expand_path == nullptr)
         return this;
 
-    const char *new_path = expand_string_unescaped(pool, expand_path,
+    const char *new_path = expand_string_unescaped(alloc, expand_path,
                                                    match_info);
 
-    auto dest = NewFromPool<NfsAddress>(*pool, server, export_name,
-                                        new_path);
-    dest->content_type = p_strdup_checked(pool, content_type);
+    auto dest = alloc.New<NfsAddress>(server, export_name, new_path);
+    dest->content_type = alloc.CheckDup(content_type);
     return dest;
 }

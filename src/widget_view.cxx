@@ -184,20 +184,18 @@ widget_view_any_is_expandable(const WidgetView *view)
 }
 
 void
-WidgetView::Expand(struct pool &pool, const MatchInfo &match_info)
+WidgetView::Expand(AllocatorPtr alloc, const MatchInfo &match_info)
 {
-    address.Expand(pool, match_info);
-    transformation->ExpandChain(&pool, match_info);
+    address.Expand(alloc, match_info);
+    transformation->ExpandChain(alloc, match_info);
 }
 
 void
-widget_view_expand_all(struct pool *pool, WidgetView *view,
+widget_view_expand_all(AllocatorPtr alloc, WidgetView *view,
                        const MatchInfo &match_info)
 {
-    assert(pool != nullptr);
-
     while (view != nullptr) {
-        view->Expand(*pool, match_info);
+        view->Expand(alloc, match_info);
         view = view->next;
     }
 }

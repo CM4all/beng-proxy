@@ -8,6 +8,7 @@
 #include "Prepared.hxx"
 #include "pool.hxx"
 #include "pexpand.hxx"
+#include "AllocatorPtr.hxx"
 #include "util/CharUtil.hxx"
 #include "util/ConstBuffer.hxx"
 
@@ -92,9 +93,9 @@ JailParams::InsertWrapper(PreparedChildProcess &p,
 }
 
 void
-JailParams::Expand(struct pool &pool, const MatchInfo &match_info)
+JailParams::Expand(AllocatorPtr alloc, const MatchInfo &match_info)
 {
     if (expand_home_directory)
         home_directory =
-            expand_string_unescaped(&pool, home_directory, match_info);
+            expand_string_unescaped(alloc, home_directory, match_info);
 }

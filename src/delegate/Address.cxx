@@ -15,7 +15,7 @@ DelegateAddress::DelegateAddress(AllocatorPtr alloc, const DelegateAddress &src)
      child_options(alloc, src.child_options) {}
 
 void
-DelegateAddress::Expand(struct pool &pool, const MatchInfo &match_info)
+DelegateAddress::Expand(AllocatorPtr alloc, const MatchInfo &match_info)
 {
-    child_options.Expand(pool, match_info);
+    child_options.Expand(alloc, match_info);
 }

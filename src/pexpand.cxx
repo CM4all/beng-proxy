@@ -7,7 +7,7 @@
 #include "pexpand.hxx"
 #include "expand.hxx"
 #include "regex.hxx"
-#include "pool.hxx"
+#include "AllocatorPtr.hxx"
 #include "uri/uri_escape.hxx"
 #include "util/StringView.hxx"
 
@@ -15,15 +15,14 @@
 #include <string.h>
 
 const char *
-expand_string(struct pool *pool, const char *src,
+expand_string(AllocatorPtr alloc, const char *src,
               const MatchInfo &match_info)
 {
-    assert(pool != nullptr);
     assert(src != nullptr);
     assert(match_info.IsDefined());
 
     const size_t length = ExpandStringLength(src, match_info);
-    const auto buffer = (char *)p_malloc(pool, length + 1);
+    const auto buffer = alloc.NewArray<char>(length + 1);
 
     struct Result {
         char *q;
@@ -57,15 +56,14 @@ expand_string(struct pool *pool, const char *src,
 }
 
 const char *
-expand_string_unescaped(struct pool *pool, const char *src,
+expand_string_unescaped(AllocatorPtr alloc, const char *src,
                         const MatchInfo &match_info)
 {
-    assert(pool != nullptr);
     assert(src != nullptr);
     assert(match_info.IsDefined());
 
     const size_t length = ExpandStringLength(src, match_info);
-    const auto buffer = (char *)p_malloc(pool, length + 1);
+    const auto buffer = alloc.NewArray<char>(length + 1);
 
     struct Result {
         char *q;

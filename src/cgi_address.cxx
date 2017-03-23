@@ -246,30 +246,28 @@ CgiAddress::Apply(struct pool *pool,
 }
 
 void
-CgiAddress::Expand(struct pool *pool, const MatchInfo &match_info)
+CgiAddress::Expand(AllocatorPtr alloc, const MatchInfo &match_info)
 {
-    assert(pool != nullptr);
-
-    options.Expand(*pool, match_info);
+    options.Expand(alloc, match_info);
 
     if (expand_path != nullptr)
-        path = expand_string_unescaped(pool, expand_path, match_info);
+        path = expand_string_unescaped(alloc, expand_path, match_info);
 
     if (expand_uri != nullptr)
-        uri = expand_string_unescaped(pool, expand_uri, match_info);
+        uri = expand_string_unescaped(alloc, expand_uri, match_info);
 
     if (expand_script_name != nullptr)
-        script_name = expand_string_unescaped(pool, expand_script_name,
+        script_name = expand_string_unescaped(alloc, expand_script_name,
                                               match_info);
 
     if (expand_path_info != nullptr)
-        path_info = expand_string_unescaped(pool, expand_path_info,
+        path_info = expand_string_unescaped(alloc, expand_path_info,
                                             match_info);
 
     if (expand_document_root != nullptr)
-        document_root = expand_string_unescaped(pool, expand_document_root,
+        document_root = expand_string_unescaped(alloc, expand_document_root,
                                                 match_info);
 
-    args.Expand(pool, match_info);
-    params.Expand(pool, match_info);
+    args.Expand(alloc, match_info);
+    params.Expand(alloc, match_info);
 }

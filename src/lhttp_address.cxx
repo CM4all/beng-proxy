@@ -167,16 +167,14 @@ LhttpAddress::RelativeTo(const LhttpAddress &base) const
 }
 
 void
-LhttpAddress::Expand(struct pool *pool, const MatchInfo &match_info)
+LhttpAddress::Expand(AllocatorPtr alloc, const MatchInfo &match_info)
 {
-    assert(pool != NULL);
-
-    options.Expand(*pool, match_info);
+    options.Expand(alloc, match_info);
 
     if (expand_uri != NULL)
-        uri = expand_string(pool, expand_uri, match_info);
+        uri = expand_string(alloc, expand_uri, match_info);
 
-    args.Expand(pool, match_info);
+    args.Expand(alloc, match_info);
 }
 
 void

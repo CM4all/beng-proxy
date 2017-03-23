@@ -10,7 +10,6 @@
 #include <inline/compiler.h>
 
 class AllocatorPtr;
-struct pool;
 struct MountList;
 struct SpawnConfig;
 struct UidGid;
@@ -82,7 +81,7 @@ struct NamespaceOptions {
     /**
      * Throws std::runtime_error on error.
      */
-    void Expand(struct pool &pool, const MatchInfo &match_info);
+    void Expand(AllocatorPtr alloc, const MatchInfo &match_info);
 #endif
 
     gcc_pure

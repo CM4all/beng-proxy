@@ -67,17 +67,17 @@ ChildOptions::IsExpandable() const
 }
 
 void
-ChildOptions::Expand(struct pool &pool, const MatchInfo &match_info)
+ChildOptions::Expand(AllocatorPtr alloc, const MatchInfo &match_info)
 {
     if (expand_stderr_path != nullptr)
-        stderr_path = expand_string_unescaped(&pool, expand_stderr_path,
+        stderr_path = expand_string_unescaped(alloc, expand_stderr_path,
                                               match_info);
 
-    env.Expand(&pool, match_info);
-    ns.Expand(pool, match_info);
+    env.Expand(alloc, match_info);
+    ns.Expand(alloc, match_info);
 
     if (jail != nullptr)
-        jail->Expand(pool, match_info);
+        jail->Expand(alloc, match_info);
 }
 
 #endif

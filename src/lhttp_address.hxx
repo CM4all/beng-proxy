@@ -149,7 +149,7 @@ struct LhttpAddress {
             args.IsExpandable();
     }
 
-    void Expand(struct pool *pool, const MatchInfo &match_info);
+    void Expand(AllocatorPtr alloc, const MatchInfo &match_info);
 
     /**
      * Throws std::runtime_error on error.

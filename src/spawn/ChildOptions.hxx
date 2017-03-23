@@ -84,7 +84,7 @@ struct ChildOptions {
     gcc_pure
     bool IsExpandable() const;
 
-    void Expand(struct pool &pool, const MatchInfo &match_info);
+    void Expand(AllocatorPtr alloc, const MatchInfo &match_info);
 
     char *MakeId(char *p) const;
 

@@ -83,10 +83,8 @@ Transformation::IsChainExpandable() const
 }
 
 void
-Transformation::Expand(struct pool *pool, const MatchInfo &match_info)
+Transformation::Expand(AllocatorPtr alloc, const MatchInfo &match_info)
 {
-    assert(pool != nullptr);
-
     switch (type) {
     case Type::PROCESS:
     case Type::PROCESS_CSS:
@@ -94,16 +92,14 @@ Transformation::Expand(struct pool *pool, const MatchInfo &match_info)
         break;
 
     case Type::FILTER:
-        u.filter.address.Expand(*pool, match_info);
+        u.filter.address.Expand(alloc, match_info);
         break;
     }
 }
 
 void
-Transformation::ExpandChain(struct pool *pool, const MatchInfo &match_info)
+Transformation::ExpandChain(AllocatorPtr alloc, const MatchInfo &match_info)
 {
-    assert(pool != nullptr);
-
     for (auto t = this; t != nullptr; t = t->next)
-        t->Expand(pool, match_info);
+        t->Expand(alloc, match_info);
 }

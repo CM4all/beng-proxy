@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_PEXPAND_HXX
 #define BENG_PROXY_PEXPAND_HXX
 
-struct pool;
+class AllocatorPtr;
 class MatchInfo;
 class Error;
 
@@ -15,7 +15,8 @@ class Error;
  * Throws std::runtime_error on error.
  */
 const char *
-expand_string(struct pool *pool, const char *src, const MatchInfo &match_info);
+expand_string(AllocatorPtr alloc, const char *src,
+              const MatchInfo &match_info);
 
 /**
  * Like expand_string(), but unescape the substitutions with the '%'
@@ -24,7 +25,7 @@ expand_string(struct pool *pool, const char *src, const MatchInfo &match_info);
  * Throws std::runtime_error on error.
  */
 const char *
-expand_string_unescaped(struct pool *pool, const char *src,
+expand_string_unescaped(AllocatorPtr alloc, const char *src,
                         const MatchInfo &match_info);
 
 #endif

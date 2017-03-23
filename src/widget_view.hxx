@@ -12,7 +12,6 @@
 
 #include <inline/compiler.h>
 
-struct pool;
 struct Transformation;
 class AllocatorPtr;
 
@@ -112,7 +111,7 @@ struct WidgetView {
      *
      * Throws std::runtime_error on error.
      */
-    void Expand(struct pool &pool, const MatchInfo &match_info);
+    void Expand(AllocatorPtr alloc, const MatchInfo &match_info);
 };
 
 /**
@@ -136,7 +135,7 @@ widget_view_any_is_expandable(const WidgetView *view);
  * the linked list.
  */
 void
-widget_view_expand_all(struct pool *pool, WidgetView *view,
+widget_view_expand_all(AllocatorPtr alloc, WidgetView *view,
                        const MatchInfo &match_info);
 
 #endif

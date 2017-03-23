@@ -295,10 +295,8 @@ HttpAddress::RelativeTo(const HttpAddress &base) const
 }
 
 void
-HttpAddress::Expand(struct pool *pool, const MatchInfo &match_info)
+HttpAddress::Expand(AllocatorPtr alloc, const MatchInfo &match_info)
 {
-    assert(pool != nullptr);
-
     if (expand_path != nullptr)
-        path = expand_string(pool, expand_path, match_info);
+        path = expand_string(alloc, expand_path, match_info);
 }

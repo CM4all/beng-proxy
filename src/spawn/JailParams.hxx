@@ -11,6 +11,7 @@
 
 struct pool;
 struct PreparedChildProcess;
+class AllocatorPtr;
 class MatchInfo;
 
 struct JailParams {
@@ -41,7 +42,7 @@ struct JailParams {
         return expand_home_directory;
     }
 
-    void Expand(struct pool &pool, const MatchInfo &match_info);
+    void Expand(AllocatorPtr alloc, const MatchInfo &match_info);
 };
 
 #endif

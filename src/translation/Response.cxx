@@ -540,62 +540,61 @@ TranslateResponse::IsExpandable() const
 }
 
 void
-TranslateResponse::Expand(struct pool *pool, const MatchInfo &match_info)
+TranslateResponse::Expand(AllocatorPtr alloc, const MatchInfo &match_info)
 {
-    assert(pool != nullptr);
     assert(regex != nullptr);
 
     if (expand_redirect != nullptr)
-        redirect = expand_string_unescaped(pool, expand_redirect, match_info);
+        redirect = expand_string_unescaped(alloc, expand_redirect, match_info);
 
     if (expand_site != nullptr)
-        site = expand_string_unescaped(pool, expand_site, match_info);
+        site = expand_string_unescaped(alloc, expand_site, match_info);
 
     if (expand_document_root != nullptr)
-        document_root = expand_string_unescaped(pool, expand_document_root,
+        document_root = expand_string_unescaped(alloc, expand_document_root,
                                                 match_info);
 
     if (expand_uri != nullptr)
-        uri = expand_string_unescaped(pool, expand_uri, match_info);
+        uri = expand_string_unescaped(alloc, expand_uri, match_info);
 
     if (expand_test_path != nullptr)
-        test_path = expand_string_unescaped(pool, expand_test_path,
+        test_path = expand_string_unescaped(alloc, expand_test_path,
                                             match_info);
 
     if (expand_auth_file != nullptr)
-        auth_file = expand_string_unescaped(pool, expand_auth_file,
+        auth_file = expand_string_unescaped(alloc, expand_auth_file,
                                             match_info);
 
     if (expand_read_file != nullptr)
-        read_file = expand_string_unescaped(pool, expand_read_file,
+        read_file = expand_string_unescaped(alloc, expand_read_file,
                                             match_info);
 
     if (expand_append_auth != nullptr) {
-        const char *value = expand_string_unescaped(pool, expand_append_auth,
+        const char *value = expand_string_unescaped(alloc, expand_append_auth,
                                                     match_info);
         append_auth = { value, strlen(value) };
     }
 
     if (expand_cookie_host != nullptr)
-        cookie_host = expand_string_unescaped(pool, expand_cookie_host,
+        cookie_host = expand_string_unescaped(alloc, expand_cookie_host,
                                               match_info);
 
     for (const auto &i : expand_request_headers) {
-        const char *value = expand_string_unescaped(pool, i.value, match_info);
-        request_headers.Add(PoolAllocator(*pool), i.key, value);
+        const char *value = expand_string_unescaped(alloc, i.value, match_info);
+        request_headers.Add(alloc, i.key, value);
     }
 
     for (const auto &i : expand_response_headers) {
-        const char *value = expand_string_unescaped(pool, i.value, match_info);
-        response_headers.Add(PoolAllocator(*pool), i.key, value);
+        const char *value = expand_string_unescaped(alloc, i.value, match_info);
+        response_headers.Add(alloc, i.key, value);
     }
 
-    address.Expand(*pool, match_info);
+    address.Expand(alloc, match_info);
 
     if (external_session_manager != nullptr)
-        external_session_manager->Expand(pool, match_info);
+        external_session_manager->Expand(alloc, match_info);
 
-    widget_view_expand_all(pool, views, match_info);
+    widget_view_expand_all(alloc, views, match_info);
 }
 
 #endif

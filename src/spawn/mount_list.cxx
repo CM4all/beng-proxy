@@ -44,21 +44,21 @@ MountList::CloneAll(AllocatorPtr alloc, const MountList *src)
 #if TRANSLATION_ENABLE_EXPAND
 
 void
-MountList::Expand(struct pool &pool, const MatchInfo &match_info)
+MountList::Expand(AllocatorPtr alloc, const MatchInfo &match_info)
 {
     if (expand_source) {
         expand_source = false;
 
-        source = expand_string_unescaped(&pool, source, match_info);
+        source = expand_string_unescaped(alloc, source, match_info);
     }
 }
 
 void
-MountList::ExpandAll(struct pool &pool, MountList *m,
+MountList::ExpandAll(AllocatorPtr alloc, MountList *m,
                      const MatchInfo &match_info)
 {
     for (; m != nullptr; m = m->next)
-        m->Expand(pool, match_info);
+        m->Expand(alloc, match_info);
 }
 
 #endif

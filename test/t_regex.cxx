@@ -1,6 +1,7 @@
 #include "regex.hxx"
 #include "pexpand.hxx"
 #include "RootPool.hxx"
+#include "AllocatorPtr.hxx"
 
 #include <inline/compiler.h>
 
@@ -75,26 +76,28 @@ public:
         CPPUNIT_ASSERT(match_info.IsDefined());
 
         RootPool pool;
-        auto e = expand_string(pool, "\\1-\\2-\\3-\\\\", match_info);
+        AllocatorPtr alloc(pool);
+
+        auto e = expand_string(alloc, "\\1-\\2-\\3-\\\\", match_info);
         CPPUNIT_ASSERT(e != nullptr);
         CPPUNIT_ASSERT(strcmp(e, "bar-a-b/c.html-\\") == 0);
 
         match_info = r.MatchCapture("/foo/bar/a/b/");
         CPPUNIT_ASSERT(match_info.IsDefined());
 
-        e = expand_string(pool, "\\1-\\2-\\3-\\\\", match_info);
+        e = expand_string(alloc, "\\1-\\2-\\3-\\\\", match_info);
         CPPUNIT_ASSERT(e != nullptr);
         CPPUNIT_ASSERT(strcmp(e, "bar-a-b/-\\") == 0);
 
         match_info = r.MatchCapture("/foo/bar/a%20b/c%2520.html");
         CPPUNIT_ASSERT(match_info.IsDefined());
 
-        e = expand_string_unescaped(pool, "\\1-\\2-\\3", match_info);
+        e = expand_string_unescaped(alloc, "\\1-\\2-\\3", match_info);
         CPPUNIT_ASSERT(e != nullptr);
         CPPUNIT_ASSERT(strcmp(e, "bar-a b-c%20.html") == 0);
 
         try {
-            e = expand_string_unescaped(pool, "\\4", match_info);
+            e = expand_string_unescaped(alloc, "\\4", match_info);
             CPPUNIT_FAIL("Must fail");
         } catch (...) {
         }
@@ -110,12 +113,14 @@ public:
         CPPUNIT_ASSERT(match_info.IsDefined());
 
         RootPool pool;
-        auto e = expand_string(pool, "-\\1-", match_info);
+        AllocatorPtr alloc(pool);
+
+        auto e = expand_string(alloc, "-\\1-", match_info);
         CPPUNIT_ASSERT(e != nullptr);
         CPPUNIT_ASSERT(strcmp(e, "-%xxx-") == 0);
 
         try {
-            e = expand_string_unescaped(pool, "-\\1-", match_info);
+            e = expand_string_unescaped(alloc, "-\\1-", match_info);
             CPPUNIT_FAIL("Must fail");
         } catch (...) {
         }
@@ -131,13 +136,15 @@ public:
         CPPUNIT_ASSERT(match_info.IsDefined());
 
         RootPool pool;
-        auto e = expand_string(pool, "\\1-\\2-\\3", match_info);
+        AllocatorPtr alloc(pool);
+
+        auto e = expand_string(alloc, "\\1-\\2-\\3", match_info);
         CPPUNIT_ASSERT(e != nullptr);
         CPPUNIT_ASSERT(strcmp(e, "a-b-c") == 0);
 
         match_info = r.MatchCapture("ac");
         CPPUNIT_ASSERT(match_info.IsDefined());
-        e = expand_string(pool, "\\1-\\2-\\3", match_info);
+        e = expand_string(alloc, "\\1-\\2-\\3", match_info);
         CPPUNIT_ASSERT(e != nullptr);
         CPPUNIT_ASSERT(strcmp(e, "a--c") == 0);
     }
@@ -152,19 +159,21 @@ public:
         CPPUNIT_ASSERT(match_info.IsDefined());
 
         RootPool pool;
-        auto e = expand_string(pool, "\\1-\\2-\\3", match_info);
+        AllocatorPtr alloc(pool);
+
+        auto e = expand_string(alloc, "\\1-\\2-\\3", match_info);
         CPPUNIT_ASSERT(e != nullptr);
         CPPUNIT_ASSERT(strcmp(e, "a-b-c") == 0);
 
         match_info = r.MatchCapture("ac");
         CPPUNIT_ASSERT(match_info.IsDefined());
-        e = expand_string(pool, "\\1-\\2-\\3", match_info);
+        e = expand_string(alloc, "\\1-\\2-\\3", match_info);
         CPPUNIT_ASSERT(e != nullptr);
         CPPUNIT_ASSERT(strcmp(e, "a--c") == 0);
 
         match_info = r.MatchCapture("ab");
         CPPUNIT_ASSERT(match_info.IsDefined());
-        e = expand_string(pool, "\\1-\\2-\\3", match_info);
+        e = expand_string(alloc, "\\1-\\2-\\3", match_info);
         CPPUNIT_ASSERT(e != nullptr);
         CPPUNIT_ASSERT(strcmp(e, "a-b-") == 0);
     }

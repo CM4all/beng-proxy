@@ -72,7 +72,7 @@ struct NfsAddress {
     /**
      * Throws std::runtime_error on error.
      */
-    const NfsAddress *Expand(struct pool *pool,
+    const NfsAddress *Expand(AllocatorPtr alloc,
                              const MatchInfo &match_info) const;
 };
 

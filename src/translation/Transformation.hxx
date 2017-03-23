@@ -89,13 +89,13 @@ struct Transformation {
      *
      * Throws std::runtime_error on error.
      */
-    void Expand(struct pool *pool, const MatchInfo &match_info);
+    void Expand(AllocatorPtr alloc, const MatchInfo &match_info);
 
     /**
-     * The same as transformation_expand(), but expand all transformations
-     * in the linked list.
+     * The same as Expand(), but expand all transformations in the
+     * linked list.
      */
-    void ExpandChain(struct pool *pool, const MatchInfo &match_info);
+    void ExpandChain(AllocatorPtr alloc, const MatchInfo &match_info);
 };
 
 #endif

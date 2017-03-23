@@ -58,12 +58,12 @@ NamespaceOptions::IsExpandable() const
 }
 
 void
-NamespaceOptions::Expand(struct pool &pool, const MatchInfo &match_info)
+NamespaceOptions::Expand(AllocatorPtr alloc, const MatchInfo &match_info)
 {
     if (expand_home != nullptr)
-        home = expand_string_unescaped(&pool, expand_home, match_info);
+        home = expand_string_unescaped(alloc, expand_home, match_info);
 
-    MountList::ExpandAll(pool, mounts, match_info);
+    MountList::ExpandAll(alloc, mounts, match_info);
 }
 
 #endif

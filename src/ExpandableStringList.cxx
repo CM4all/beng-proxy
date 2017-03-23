@@ -42,13 +42,13 @@ ExpandableStringList::IsExpandable() const
 }
 
 void
-ExpandableStringList::Expand(struct pool *pool, const MatchInfo &match_info)
+ExpandableStringList::Expand(AllocatorPtr alloc, const MatchInfo &match_info)
 {
     for (auto *i = head; i != nullptr; i = i->next) {
         if (!i->expandable)
             continue;
 
-        i->value = expand_string_unescaped(pool, i->value, match_info);
+        i->value = expand_string_unescaped(alloc, i->value, match_info);
     }
 }
 

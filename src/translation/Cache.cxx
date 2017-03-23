@@ -712,7 +712,7 @@ tcache_regex_input(struct pool *pool,
  * Throws std::runtime_error on error.
  */
 static void
-tcache_expand_response(struct pool &pool, TranslateResponse &response,
+tcache_expand_response(AllocatorPtr alloc, TranslateResponse &response,
                        RegexPointer regex,
                        const char *uri, const char *host, const char *user)
 {
@@ -740,7 +740,7 @@ tcache_expand_response(struct pool &pool, TranslateResponse &response,
         throw HttpMessageResponse(HTTP_STATUS_BAD_REQUEST,
                                   "Regex mismatch");
 
-    response.Expand(&pool, match_info);
+    response.Expand(alloc, match_info);
 }
 
 static const char *

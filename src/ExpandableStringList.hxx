@@ -12,7 +12,6 @@
 
 #include <iterator>
 
-struct pool;
 class AllocatorPtr;
 class MatchInfo;
 template<typename T> struct ConstBuffer;
@@ -89,7 +88,7 @@ public:
     /**
      * Throws std::runtime_error on error.
      */
-    void Expand(struct pool *pool, const MatchInfo &match_info);
+    void Expand(AllocatorPtr alloc, const MatchInfo &match_info);
 #endif
 
     class Builder final {
@@ -104,7 +103,7 @@ public:
             :tail_r(&_list.head), last(nullptr) {}
 
         /**
-         * Add a new item to the end of the list.  The pool is only
+         * Add a new item to the end of the list.  The allocator is only
          * used to allocate the item structure, it does not copy the
          * string.
          */

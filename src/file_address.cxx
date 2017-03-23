@@ -88,17 +88,15 @@ FileAddress::IsExpandable() const
 }
 
 void
-FileAddress::Expand(struct pool *pool, const MatchInfo &match_info)
+FileAddress::Expand(AllocatorPtr alloc, const MatchInfo &match_info)
 {
-    assert(pool != nullptr);
-
     if (expand_path != nullptr)
-        path = expand_string_unescaped(pool, expand_path, match_info);
+        path = expand_string_unescaped(alloc, expand_path, match_info);
 
     if (expand_document_root != nullptr)
-        document_root = expand_string_unescaped(pool, expand_document_root,
+        document_root = expand_string_unescaped(alloc, expand_document_root,
                                                 match_info);
 
     if (delegate != nullptr)
-        delegate->Expand(*pool, match_info);
+        delegate->Expand(alloc, match_info);
 }
