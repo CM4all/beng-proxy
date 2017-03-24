@@ -6,8 +6,8 @@
 #define BENG_PROXY_CGI_ADDRESS_HXX
 
 #include "spawn/ChildOptions.hxx"
+#include "translation/ExpandableStringList.hxx"
 #include "address_list.hxx"
-#include "ExpandableStringList.hxx"
 
 #include <inline/compiler.h>
 

@@ -438,7 +438,6 @@ istream = static_library('istream',
 
 expand = static_library('expand',
   'src/regex.cxx',
-  'src/ExpandableStringList.cxx',
   'src/pexpand.cxx',
   include_directories: inc,
   dependencies: [

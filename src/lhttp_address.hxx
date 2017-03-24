@@ -6,7 +6,7 @@
 #define BENG_PROXY_LHTTP_ADDRESS_HXX
 
 #include "spawn/ChildOptions.hxx"
-#include "ExpandableStringList.hxx"
+#include "translation/ExpandableStringList.hxx"
 #include "glibfwd.hxx"
 #include "util/ShallowCopy.hxx"
 
