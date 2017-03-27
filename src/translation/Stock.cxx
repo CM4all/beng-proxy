@@ -5,7 +5,7 @@
  */
 
 #include "Stock.hxx"
-#include "Handler.hxx"
+#include "translation/Handler.hxx"
 #include "Client.hxx"
 #include "stock/Stock.hxx"
 #include "stock/Class.hxx"

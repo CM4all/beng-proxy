@@ -6,9 +6,9 @@
 
 #include "Cache.hxx"
 #include "Stock.hxx"
-#include "Handler.hxx"
-#include "Request.hxx"
-#include "Response.hxx"
+#include "translation/Handler.hxx"
+#include "translation/Request.hxx"
+#include "translation/Response.hxx"
 #include "regex.hxx"
 #include "http_quark.h"
 #include "HttpMessageResponse.hxx"

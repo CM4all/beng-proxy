@@ -3,7 +3,7 @@
  */
 
 #include "Vary.hxx"
-#include "Response.hxx"
+#include "translation/Response.hxx"
 #include "strmap.hxx"
 #include "GrowingBuffer.hxx"
 #include "header_writer.hxx"

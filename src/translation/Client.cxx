@@ -6,9 +6,9 @@
 
 #include "Client.hxx"
 #include "Marshal.hxx"
-#include "Parser.hxx"
-#include "Request.hxx"
-#include "Handler.hxx"
+#include "translation/Parser.hxx"
+#include "translation/Request.hxx"
+#include "translation/Handler.hxx"
 #include "buffered_socket.hxx"
 #include "please.hxx"
 #include "stopwatch.hxx"
