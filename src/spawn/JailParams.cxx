@@ -6,7 +6,6 @@
 
 #include "JailParams.hxx"
 #include "Prepared.hxx"
-#include "pool.hxx"
 #include "pexpand.hxx"
 #include "AllocatorPtr.hxx"
 #include "util/CharUtil.hxx"
@@ -26,14 +25,14 @@ JailParams::Check() const
         throw std::runtime_error("No JailCGI home directory");
 }
 
-JailParams::JailParams(struct pool *pool, const JailParams &src)
+JailParams::JailParams(AllocatorPtr alloc, const JailParams &src)
     :enabled(src.enabled),
      expand_home_directory(src.expand_home_directory),
-     account_id(p_strdup_checked(pool, src.account_id)),
-     site_id(p_strdup_checked(pool, src.site_id)),
-     user_name(p_strdup_checked(pool, src.user_name)),
-     host_name(p_strdup_checked(pool, src.host_name)),
-     home_directory(p_strdup_checked(pool, src.home_directory))
+     account_id(alloc.CheckDup(src.account_id)),
+     site_id(alloc.CheckDup(src.site_id)),
+     user_name(alloc.CheckDup(src.user_name)),
+     host_name(alloc.CheckDup(src.host_name)),
+     home_directory(alloc.CheckDup(src.home_directory))
 {
 }
 

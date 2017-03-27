@@ -7,7 +7,6 @@
 #ifndef BENG_PROXY_JAIL_PARAMS_HXX
 #define BENG_PROXY_JAIL_PARAMS_HXX
 
-struct pool;
 struct PreparedChildProcess;
 class AllocatorPtr;
 class MatchInfo;
@@ -24,7 +23,7 @@ struct JailParams {
     const char *home_directory = nullptr;
 
     JailParams() = default;
-    JailParams(struct pool *pool, const JailParams &src);
+    JailParams(AllocatorPtr alloc, const JailParams &src);
 
     /**
      * Throws std::runtime_error on error.
