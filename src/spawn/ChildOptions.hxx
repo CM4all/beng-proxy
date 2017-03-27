@@ -6,7 +6,7 @@
 #define BENG_PROXY_CHILD_OPTIONS_HXX
 
 #include "translation/Features.hxx"
-#include "translation/ExpandableStringList.hxx"
+#include "ExpandableStringList.hxx"
 #include "CgroupOptions.hxx"
 #include "RefenceOptions.hxx"
 #include "NamespaceOptions.hxx"
