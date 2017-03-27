@@ -7,8 +7,6 @@
 #ifndef BENG_PROXY_JAIL_PARAMS_HXX
 #define BENG_PROXY_JAIL_PARAMS_HXX
 
-#include "glibfwd.hxx"
-
 struct pool;
 struct PreparedChildProcess;
 class AllocatorPtr;
