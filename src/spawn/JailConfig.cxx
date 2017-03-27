@@ -5,7 +5,7 @@
  */
 
 #include "JailConfig.hxx"
-#include "pool.hxx"
+#include "AllocatorPtr.hxx"
 #include "util/CharUtil.hxx"
 #include "util/StringUtil.hxx"
 
@@ -68,7 +68,7 @@ JailConfig::Load(const char *path)
 static const char *
 jail_try_translate_path(const char *path,
                         const char *global_prefix, const char *jailed_prefix,
-                        struct pool *pool)
+                        AllocatorPtr alloc)
 {
     if (jailed_prefix == nullptr)
         return nullptr;
@@ -78,8 +78,7 @@ jail_try_translate_path(const char *path,
         return nullptr;
 
     if (path[global_prefix_length] == '/')
-        return p_strcat(pool, jailed_prefix, path + global_prefix_length,
-                        nullptr);
+        return alloc.Concat(jailed_prefix, path + global_prefix_length);
     else if (path[global_prefix_length] == 0)
         return jailed_prefix;
     else
@@ -88,12 +87,13 @@ jail_try_translate_path(const char *path,
 
 const char *
 JailConfig::TranslatePath(const char *path,
-                          const char *document_root, struct pool *pool) const
+                          const char *document_root, AllocatorPtr alloc) const
 {
     const char *translated =
-        jail_try_translate_path(path, document_root, jailed_home.c_str(),
-                                pool);
+        jail_try_translate_path(path, document_root,
+                                jailed_home.c_str(), alloc);
     if (translated == nullptr)
-        translated = jail_try_translate_path(path, root_dir.c_str(), "", pool);
+        translated = jail_try_translate_path(path, root_dir.c_str(),
+                                             "", alloc);
     return translated;
 }

@@ -14,6 +14,7 @@ struct StockItem;
 struct FcgiStock;
 struct ChildOptions;
 template<typename T> struct ConstBuffer;
+class AllocatorPtr;
 class EventLoop;
 class SpawnService;
 
@@ -51,7 +52,7 @@ fcgi_stock_item_get_domain(const StockItem &item);
  */
 const char *
 fcgi_stock_translate_path(const StockItem &item,
-                          const char *path, struct pool *pool);
+                          const char *path, AllocatorPtr alloc);
 
 /**
  * Let the fcgi_stock know that the client is being aborted.  The

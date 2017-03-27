@@ -13,6 +13,7 @@
 #include "stock/Item.hxx"
 #include "istream/istream.hxx"
 #include "pool.hxx"
+#include "AllocatorPtr.hxx"
 #include "util/Cast.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/Cancellable.hxx"
@@ -89,9 +90,9 @@ fcgi_request(struct pool *pool, EventLoop &event_loop,
     cancel_ptr = *request;
 
     const char *script_filename = fcgi_stock_translate_path(*stock_item, path,
-                                                            &request->pool);
+                                                            request->pool);
     document_root = fcgi_stock_translate_path(*stock_item, document_root,
-                                              &request->pool);
+                                              request->pool);
 
     fcgi_client_request(&request->pool, event_loop,
                         fcgi_stock_item_get(*stock_item),

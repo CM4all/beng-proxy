@@ -17,6 +17,7 @@
 #include "spawn/JailConfig.hxx"
 #include "GException.hxx"
 #include "pool.hxx"
+#include "AllocatorPtr.hxx"
 #include "event/SocketEvent.hxx"
 #include "event/Duration.hxx"
 #include "io/UniqueFileDescriptor.hxx"
@@ -382,7 +383,7 @@ fcgi_stock_item_get(const StockItem &item)
 
 const char *
 fcgi_stock_translate_path(const StockItem &item,
-                          const char *path, struct pool *pool)
+                          const char *path, AllocatorPtr alloc)
 {
     const auto *connection = (const FcgiConnection *)&item;
 
@@ -393,7 +394,7 @@ fcgi_stock_translate_path(const StockItem &item,
 
     const char *jailed = connection->jail_config.TranslatePath(path,
                                                                connection->jail_home_directory.c_str(),
-                                                               pool);
+                                                               alloc);
     return jailed != nullptr ? jailed : path;
 }
 

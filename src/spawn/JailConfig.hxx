@@ -11,7 +11,7 @@
 
 #include <string>
 
-struct pool;
+class AllocatorPtr;
 
 struct JailConfig {
     std::string root_dir;
@@ -33,7 +33,7 @@ struct JailConfig {
      */
     gcc_pure
     const char *TranslatePath(const char *path, const char *document_root,
-                              struct pool *pool) const;
+                              AllocatorPtr alloc) const;
 };
 
 #endif
