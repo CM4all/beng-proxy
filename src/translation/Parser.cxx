@@ -636,6 +636,8 @@ translate_client_rlimits(AllocatorPtr alloc, ChildOptions *child_options,
         throw std::runtime_error("malformed RLIMITS packet");
 }
 
+#if TRANSLATION_ENABLE_WANT
+
 inline void
 TranslateParser::HandleWant(const uint16_t *payload, size_t payload_length)
 {
@@ -653,6 +655,8 @@ TranslateParser::HandleWant(const uint16_t *payload, size_t payload_length)
 
     response.want = { payload, payload_length / sizeof(payload[0]) };
 }
+
+#endif
 
 #if TRANSLATION_ENABLE_RADDRESS
 
@@ -2448,8 +2452,12 @@ TranslateParser::HandleRegularPacket(enum beng_translation_command command,
         return;
 
     case TRANSLATE_WANT:
+#if TRANSLATION_ENABLE_WANT
         HandleWant((const uint16_t *)_payload, payload_length);
         return;
+#else
+        break;
+#endif
 
     case TRANSLATE_FILE_NOT_FOUND:
 #if TRANSLATION_ENABLE_RADDRESS

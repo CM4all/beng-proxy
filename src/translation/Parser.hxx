@@ -9,9 +9,12 @@
 
 #include "PReader.hxx"
 #include "Response.hxx"
-#include "Request.hxx"
 #include "adata/ExpandableStringList.hxx"
 #include "AllocatorPtr.hxx"
+
+#if TRANSLATION_ENABLE_RADDRESS || TRANSLATION_ENABLE_HTTP || TRANSLATION_ENABLE_WANT || TRANSLATION_ENABLE_RADDRESS
+#include "Request.hxx"
+#endif
 
 struct FileAddress;
 struct CgiAddress;
@@ -29,6 +32,7 @@ struct StringView;
 class TranslateParser {
     AllocatorPtr alloc;
 
+#if TRANSLATION_ENABLE_RADDRESS || TRANSLATION_ENABLE_HTTP || TRANSLATION_ENABLE_WANT || TRANSLATION_ENABLE_RADDRESS
     struct FromRequest {
 #if TRANSLATION_ENABLE_RADDRESS
         const char *uri;
@@ -58,6 +62,7 @@ class TranslateParser {
 #endif
         {}
     } from_request;
+#endif
 
     /**
      * Has #TRANSLATE_BEGIN been seen already?
@@ -126,8 +131,16 @@ class TranslateParser {
     Transformation **transformation_tail;
 
 public:
-    TranslateParser(AllocatorPtr _alloc, const TranslateRequest &r)
-        :alloc(_alloc), from_request(r) {
+    explicit TranslateParser(AllocatorPtr _alloc
+#if TRANSLATION_ENABLE_RADDRESS || TRANSLATION_ENABLE_HTTP || TRANSLATION_ENABLE_WANT || TRANSLATION_ENABLE_RADDRESS
+                             , const TranslateRequest &r
+#endif
+                             )
+        :alloc(_alloc)
+#if TRANSLATION_ENABLE_RADDRESS || TRANSLATION_ENABLE_HTTP || TRANSLATION_ENABLE_WANT || TRANSLATION_ENABLE_RADDRESS
+        , from_request(r)
+#endif
+    {
     }
 
     size_t Feed(const uint8_t *data, size_t length) {
@@ -194,7 +207,9 @@ private:
 
     void HandleRefence(StringView payload);
 
+#if TRANSLATION_ENABLE_WANT
     void HandleWant(const uint16_t *payload, size_t payload_length);
+#endif
 
 #if TRANSLATION_ENABLE_RADDRESS
     void HandleContentTypeLookup(ConstBuffer<void> payload);
