@@ -6,10 +6,13 @@
 
 #include "JailParams.hxx"
 #include "Prepared.hxx"
-#include "pexpand.hxx"
 #include "AllocatorPtr.hxx"
 #include "util/CharUtil.hxx"
 #include "util/ConstBuffer.hxx"
+
+#if TRANSLATION_ENABLE_EXPAND
+#include "pexpand.hxx"
+#endif
 
 #include <stdexcept>
 
@@ -27,7 +30,9 @@ JailParams::Check() const
 
 JailParams::JailParams(AllocatorPtr alloc, const JailParams &src)
     :enabled(src.enabled),
+#if TRANSLATION_ENABLE_EXPAND
      expand_home_directory(src.expand_home_directory),
+#endif
      account_id(alloc.CheckDup(src.account_id)),
      site_id(alloc.CheckDup(src.site_id)),
      user_name(alloc.CheckDup(src.user_name)),
@@ -91,6 +96,8 @@ JailParams::InsertWrapper(PreparedChildProcess &p,
     return p.InsertWrapper({w.raw(), w.size()});
 }
 
+#if TRANSLATION_ENABLE_EXPAND
+
 void
 JailParams::Expand(AllocatorPtr alloc, const MatchInfo &match_info)
 {
@@ -98,3 +105,5 @@ JailParams::Expand(AllocatorPtr alloc, const MatchInfo &match_info)
         home_directory =
             expand_string_unescaped(alloc, home_directory, match_info);
 }
+
+#endif

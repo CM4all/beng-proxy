@@ -7,6 +7,8 @@
 #ifndef BENG_PROXY_JAIL_PARAMS_HXX
 #define BENG_PROXY_JAIL_PARAMS_HXX
 
+#include "translation/Features.hxx"
+
 struct PreparedChildProcess;
 class AllocatorPtr;
 class MatchInfo;
@@ -14,7 +16,9 @@ class MatchInfo;
 struct JailParams {
     bool enabled = false;
 
+#if TRANSLATION_ENABLE_EXPAND
     bool expand_home_directory = false;
+#endif
 
     const char *account_id = nullptr;
     const char *site_id = nullptr;
@@ -35,11 +39,13 @@ struct JailParams {
     bool InsertWrapper(PreparedChildProcess &p,
                        const char *document_root) const;
 
+#if TRANSLATION_ENABLE_EXPAND
     bool IsExpandable() const {
         return expand_home_directory;
     }
 
     void Expand(AllocatorPtr alloc, const MatchInfo &match_info);
+#endif
 };
 
 #endif
