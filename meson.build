@@ -382,7 +382,7 @@ curl = static_library('curl',
   ])
 
 odbus = static_library('odbus',
-  'src/odbus/Message.cxx',
+  'libcommon/src/odbus/Message.cxx',
   include_directories: inc,
   dependencies: [
     libdbus,
