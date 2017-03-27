@@ -3,7 +3,7 @@
  */
 
 #include "Isolate.hxx"
-#include "pivot_root.h"
+#include "system/pivot_root.h"
 #include "io/WriteFile.hxx"
 #include "util/ScopeExit.hxx"
 

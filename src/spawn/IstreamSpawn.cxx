@@ -3,9 +3,9 @@
  */
 
 #include "IstreamSpawn.hxx"
-#include "Interface.hxx"
-#include "Prepared.hxx"
-#include "ExitListener.hxx"
+#include "spawn/Interface.hxx"
+#include "spawn/Prepared.hxx"
+#include "spawn/ExitListener.hxx"
 #include "system/fd_util.h"
 #include "istream/istream.hxx"
 #include "istream/Pointer.hxx"
