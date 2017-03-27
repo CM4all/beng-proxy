@@ -7,7 +7,7 @@
 
 #include "spawn/ChildOptions.hxx"
 #include "address_list.hxx"
-#include "ExpandableStringList.hxx"
+#include "adata/ExpandableStringList.hxx"
 
 #include <inline/compiler.h>
 

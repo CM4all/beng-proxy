@@ -10,7 +10,7 @@
 #include "PReader.hxx"
 #include "Response.hxx"
 #include "Request.hxx"
-#include "ExpandableStringList.hxx"
+#include "adata/ExpandableStringList.hxx"
 #include "AllocatorPtr.hxx"
 
 struct FileAddress;

@@ -438,7 +438,6 @@ istream = static_library('istream',
 
 expand = static_library('expand',
   'src/regex.cxx',
-  'src/ExpandableStringList.cxx',
   'src/pexpand.cxx',
   include_directories: inc,
   dependencies: [
@@ -446,6 +445,14 @@ expand = static_library('expand',
     libinline,
     putil_dep,
   ])
+
+adata = static_library('adata',
+  'libcommon/src/adata/ExpandableStringList.cxx',
+  include_directories: inc,
+  dependencies: [
+    libinline,
+  ])
+adata_dep = declare_dependency(link_with: adata)
 
 spawn = static_library('spawn',
   'src/spawn/SeccompFilter.cxx',
@@ -473,6 +480,7 @@ spawn = static_library('spawn',
     libsystemd,
     libinline, libdaemon,
     system_dep,
+    adata_dep,
     declare_dependency(link_with: io),
     declare_dependency(link_with: odbus),
     declare_dependency(link_with: expand),
@@ -495,6 +503,7 @@ raddress = static_library('raddress',
     libinline, libhttp, libsocket,
     declare_dependency(link_with: spawn),
     putil_dep,
+    adata_dep,
     declare_dependency(link_with: expand),
   ])
 
