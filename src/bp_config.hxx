@@ -118,6 +118,11 @@ struct BpConfig {
 
     SpawnConfig spawn;
 
+    BpConfig() {
+        spawn.systemd_scope = "cm4all-beng-spawn.scope";
+        spawn.systemd_scope_description = "The cm4all-beng-proxy child process spawner";
+    }
+
     void HandleSet(StringView name, const char *value);
 };
 
