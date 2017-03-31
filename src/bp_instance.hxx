@@ -25,9 +25,6 @@
 
 #include <forward_list>
 
-// TODO: make this non-optional as soon as the spawner is mature
-#define USE_SPAWNER
-
 class Stock;
 class ResourceLoader;
 class StockMap;
@@ -79,9 +76,7 @@ struct BpInstance final : ControlHandler {
     SpawnService *spawn_service;
     TimerEvent spawn_worker_event;
 
-#ifdef USE_SPAWNER
     SpawnServerClient *spawn = nullptr;
-#endif
 
     boost::intrusive::list<BpWorker,
                            boost::intrusive::constant_time_size<true>> workers;

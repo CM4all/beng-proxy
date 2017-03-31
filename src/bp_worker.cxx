@@ -94,9 +94,7 @@ BpInstance::SpawnWorker()
     assert(!crash_in_unsafe());
     assert(connections.empty());
 
-#ifdef USE_SPAWNER
     int spawn_fd = spawn->Connect();
-#endif
 
     UniqueFileDescriptor distribute_socket;
     if (!config.control_listen.empty() && config.num_workers != 1)
@@ -110,9 +108,7 @@ BpInstance::SpawnWorker()
     if (pid < 0) {
         daemon_log(1, "fork() failed: %s\n", strerror(errno));
 
-#ifdef USE_SPAWNER
         close(spawn_fd);
-#endif
 
         crash_deinit(&crash);
     } else if (pid == 0) {
@@ -123,9 +119,7 @@ BpInstance::SpawnWorker()
 
         InitWorker();
 
-#ifdef USE_SPAWNER
         spawn->ReplaceSocket(spawn_fd);
-#endif
 
         if (distribute_socket.IsDefined())
             global_control_handler_set_fd(this, std::move(distribute_socket));
@@ -152,9 +146,7 @@ BpInstance::SpawnWorker()
 
         EnableListeners();
     } else {
-#ifdef USE_SPAWNER
         close(spawn_fd);
-#endif
 
         event_loop.Reinit();
 

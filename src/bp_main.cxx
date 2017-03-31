@@ -73,12 +73,6 @@ bool debug_mode = false;
 #endif
 
 static constexpr cap_value_t cap_keep_list[] = {
-#ifndef USE_SPAWNER
-    /* keep the KILL capability to be able to kill child processes
-       that have switched to another uid (e.g. via JailCGI) */
-    CAP_KILL,
-#endif
-
     /* allow libnfs to bind to privileged ports, which in turn allows
        disabling the "insecure" flag on the NFS server */
     CAP_NET_BIND_SERVICE,
@@ -108,9 +102,7 @@ BpInstance::ShutdownCallback()
     DisableSignals();
     thread_pool_stop();
 
-#ifdef USE_SPAWNER
     spawn->Shutdown();
-#endif
 
     listeners.clear();
 
@@ -299,7 +291,6 @@ try {
            only the one worker handle control commands */
         global_control_handler_disable(instance);
 
-#ifdef USE_SPAWNER
     /* note: this function call passes a temporary SpawnConfig copy,
        because the reference will be evaluated in the child process
        after ~BpInstance() has been called */
@@ -321,11 +312,6 @@ try {
             instance.~BpInstance();
         });
     instance.spawn_service = instance.spawn;
-#else
-    LocalSpawnService spawn_service(instance.config.spawn,
-                                    instance.child_process_registry);
-    instance.spawn_service = &spawn_service;
-#endif
 
     if (!crash_global_init()) {
         fprintf(stderr, "crash_global_init() failed\n");
@@ -477,9 +463,7 @@ try {
     bulldog_deinit();
     failure_deinit();
 
-#ifdef USE_SPAWNER
     delete instance.spawn;
-#endif
 
     thread_pool_deinit();
 
