@@ -279,7 +279,7 @@ io_dep = declare_dependency(link_with: io)
 system = static_library('system',
   'src/system/SetupProcess.cxx',
   'src/system/fd_util.c',
-  'libcommon/src/system/bind_mount.c',
+  'libcommon/src/system/BindMount.cxx',
   'src/system/Isolate.cxx',
   'src/system/urandom.cxx',
   include_directories: inc,
