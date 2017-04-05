@@ -6,8 +6,8 @@
 
 #include "resource_tag.hxx"
 #include "strmap.hxx"
-#include "http_util.hxx"
 #include "pool.hxx"
+#include "http/List.hxx"
 
 const char *
 resource_tag_append_etag(struct pool *pool, const char *tag,

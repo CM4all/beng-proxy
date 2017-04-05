@@ -6,8 +6,8 @@
 
 #include "http_upgrade.hxx"
 #include "http_headers.hxx"
-#include "http_util.hxx"
 #include "strmap.hxx"
+#include "http/List.hxx"
 
 const char *const http_upgrade_request_headers[] = {
     "connection",

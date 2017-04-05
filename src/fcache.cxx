@@ -13,7 +13,6 @@
 #include "http_date.hxx"
 #include "abort_unref.hxx"
 #include "tpool.hxx"
-#include "http_util.hxx"
 #include "ResourceAddress.hxx"
 #include "ResourceLoader.hxx"
 #include "istream/istream.hxx"
@@ -27,6 +26,7 @@
 #include "AllocatorStats.hxx"
 #include "pool.hxx"
 #include "event/TimerEvent.hxx"
+#include "http/List.hxx"
 #include "util/Cancellable.hxx"
 
 #include <boost/intrusive/list.hpp>

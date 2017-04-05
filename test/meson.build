@@ -400,6 +400,7 @@ test('t_header_forward', executable('t_header_forward',
     libpcre,
     libinline, libdaemon, libhttp,
     putil_dep,
+    http_dep,
     declare_dependency(link_with: cookie),
     system_dep,
   ]))
