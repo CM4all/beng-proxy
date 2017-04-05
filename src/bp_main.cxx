@@ -296,6 +296,7 @@ try {
        after ~BpInstance() has been called */
     instance.spawn = StartSpawnServer(SpawnConfig(instance.config.spawn),
                                       instance.child_process_registry,
+                                      nullptr,
                                       [argc, argv, &instance](){
             /* rename the process */
             size_t name_size = strlen(argv[0]);
