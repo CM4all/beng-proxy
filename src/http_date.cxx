@@ -6,6 +6,7 @@
 
 #include "http_date.hxx"
 #include "format.h"
+#include "util/CharUtil.hxx"
 
 extern "C" {
 #include "gmtime.h"
@@ -86,16 +87,10 @@ http_date_format(std::chrono::system_clock::time_point t)
     return buffer;
 }
 
-static gcc_always_inline bool
-char_is_digit(char ch)
-{
-    return ch >= '0' && ch <= '9';
-}
-
 static int
 parse_2digit(const char *p)
 {
-    if (!char_is_digit(p[0]) || !char_is_digit(p[1]))
+    if (!IsDigitASCII(p[0]) || !IsDigitASCII(p[1]))
         return -1;
 
     return (p[0] - '0') * 10 + (p[1] - '0');
@@ -104,8 +99,8 @@ parse_2digit(const char *p)
 static int
 parse_4digit(const char *p)
 {
-    if (!char_is_digit(p[0]) || !char_is_digit(p[1]) ||
-        !char_is_digit(p[2]) || !char_is_digit(p[3]))
+    if (!IsDigitASCII(p[0]) || !IsDigitASCII(p[1]) ||
+        !IsDigitASCII(p[2]) || !IsDigitASCII(p[3]))
         return -1;
 
     return (p[0] - '0') * 1000 + (p[1] - '0') * 100
