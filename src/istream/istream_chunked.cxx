@@ -7,9 +7,9 @@
 #include "istream_chunked.hxx"
 #include "FacadeIstream.hxx"
 #include "Bucket.hxx"
-#include "format.h"
 #include "util/ConstBuffer.hxx"
 #include "util/Cast.hxx"
+#include "util/HexFormat.h"
 
 #include <algorithm>
 

@@ -15,8 +15,8 @@
 #include "bot.h"
 #include "pbuffer.hxx"
 #include "strmap.hxx"
+#include "util/HexFormat.h"
 #include "util/djbhash.h"
-#include "format.h"
 
 #include <daemon/log.h>
 

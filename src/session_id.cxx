@@ -6,7 +6,7 @@
 
 #include "session_id.hxx"
 #include "random.hxx"
-#include "format.h"
+#include "util/HexFormat.h"
 
 #include <assert.h>
 #include <stdlib.h>

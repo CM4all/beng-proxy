@@ -6,7 +6,6 @@
 
 #include "pipe_filter.hxx"
 #include "http_response.hxx"
-#include "format.h"
 #include "stopwatch.hxx"
 #include "istream_stopwatch.hxx"
 #include "strmap.hxx"
@@ -18,6 +17,7 @@
 #include "spawn/Prepared.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "util/ConstBuffer.hxx"
+#include "util/HexFormat.h"
 #include "util/djbhash.h"
 
 #include <daemon/log.h>

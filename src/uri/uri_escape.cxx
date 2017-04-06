@@ -5,9 +5,9 @@
  */
 
 #include "uri_escape.hxx"
-#include "format.h"
 #include "util/CharUtil.hxx"
 #include "util/StringView.hxx"
+#include "util/HexFormat.h"
 
 #include <algorithm>
 

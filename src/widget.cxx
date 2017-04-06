@@ -9,8 +9,8 @@
 #include "widget_view.hxx"
 #include "widget_ref.hxx"
 #include "pool.hxx"
-#include "format.h"
 #include "istream/istream.hxx"
+#include "util/HexFormat.h"
 
 #include <string.h>
 #include <assert.h>

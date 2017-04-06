@@ -11,7 +11,6 @@
 #include "memcached/memcached_stock.hxx"
 #include "memcached/memcached_client.hxx"
 #include "tpool.hxx"
-#include "format.h"
 #include "strmap.hxx"
 #include "serialize.hxx"
 #include "GrowingBuffer.hxx"
@@ -24,6 +23,7 @@
 #include "util/ConstBuffer.hxx"
 #include "util/WritableBuffer.hxx"
 #include "util/ByteOrder.hxx"
+#include "util/HexFormat.h"
 
 #include <inline/compiler.h>
 
