@@ -117,6 +117,7 @@ inc = include_directories('src', 'include', 'libcommon/src')
 util = static_library('util',
   'libcommon/src/util/AllocatedString.cxx',
   'libcommon/src/util/Exception.cxx',
+  'libcommon/src/util/HexFormat.c',
   'libcommon/src/util/LeakDetector.cxx',
   'libcommon/src/util/PrintException.cxx',
   'libcommon/src/util/StringBuilder.cxx',
