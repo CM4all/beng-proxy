@@ -12,13 +12,13 @@
 #include "generate_response.hxx"
 #include "header_writer.hxx"
 #include "http_date.hxx"
-#include "format.h"
 #include "http_util.hxx"
 #include "http_headers.hxx"
 #include "http_server/Request.hxx"
 #include "istream/istream_file.hxx"
 #include "istream/istream.hxx"
 #include "translation/Vary.hxx"
+#include "util/DecimalFormat.h"
 
 #include <glib.h>
 

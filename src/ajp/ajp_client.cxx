@@ -11,7 +11,6 @@
 #include "buffered_socket.hxx"
 #include "http_response.hxx"
 #include "GrowingBuffer.hxx"
-#include "format.h"
 #include "GException.hxx"
 #include "istream_ajp_body.hxx"
 #include "istream_gb.hxx"
@@ -28,6 +27,7 @@
 #include "util/Cancellable.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/ByteOrder.hxx"
+#include "util/DecimalFormat.h"
 #include "pool.hxx"
 
 #include <string.h>
