@@ -5,12 +5,9 @@
  */
 
 #include "http_date.hxx"
+#include "time/gmtime.h"
 #include "util/CharUtil.hxx"
 #include "util/DecimalFormat.h"
-
-extern "C" {
-#include "gmtime.h"
-}
 
 #include <stdint.h>
 #include <stdbool.h>

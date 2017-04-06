@@ -127,7 +127,6 @@ util = static_library('util',
   'src/util/StringSet.cxx',
   'libcommon/src/util/djbhash.c',
   'src/http_date.cxx',
-  'src/gmtime.c',
   'src/uri/uri_base.cxx',
   'src/uri/uri_parser.cxx',
   'src/uri/uri_verify.cxx',
@@ -142,12 +141,21 @@ util = static_library('util',
   ])
 util_dep = declare_dependency(link_with: util)
 
+time = static_library('time',
+  'libcommon/src/time/gmtime.c',
+  include_directories: inc,
+  dependencies: [
+    libinline,
+  ])
+time_dep = declare_dependency(link_with: time)
+
 http = static_library('http',
   'libcommon/src/http/List.cxx',
   include_directories: inc,
   dependencies: [
     libinline,
     util_dep,
+    time_dep,
   ])
 http_dep = declare_dependency(link_with: http)
 

@@ -223,6 +223,7 @@ executable('benchmark-gmtime',
   dependencies: [
     libinline,
     util_dep,
+    time_dep,
   ])
 
 executable('format_http_date',
@@ -231,6 +232,7 @@ executable('format_http_date',
   dependencies: [
     libinline,
     util_dep,
+    time_dep,
   ])
 
 executable('request_translation',
@@ -746,6 +748,7 @@ test('t_widget_http', executable('t_widget_http',
     declare_dependency(link_with: http_util),
     session_dep,
     processor_dep,
+    time_dep,
   ]))
 
 test('t_uri_escape', executable('t_uri_escape',

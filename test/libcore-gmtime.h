@@ -3,7 +3,7 @@
  * optimized one, this file provides libcore's unmodified version.
  */
 
-#include "gmtime.h"
+#include "time/gmtime.h"
 
 typedef int64_t				xtime;
 
