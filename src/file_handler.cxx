@@ -185,10 +185,7 @@ file_callback(Request &request2, const FileAddress &address)
     request2.handler.file.address = &address;
 
     const auto &request = request2.request;
-    struct file_request file_request = {
-        .range = RANGE_NONE,
-        .skip = 0,
-    };
+    struct file_request file_request;
 
     assert(address.path != nullptr);
     assert(address.delegate == nullptr);

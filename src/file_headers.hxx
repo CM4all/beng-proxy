@@ -22,9 +22,9 @@ enum range_type {
 };
 
 struct file_request {
-    enum range_type range;
+    enum range_type range = RANGE_NONE;
 
-    off_t skip;
+    off_t skip = 0;
     off_t size;
 };
 
