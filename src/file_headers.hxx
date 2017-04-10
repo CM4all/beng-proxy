@@ -15,14 +15,14 @@ class GrowingBuffer;
 struct Request;
 struct stat;
 
-enum range_type {
-    RANGE_NONE,
-    RANGE_VALID,
-    RANGE_INVALID
+enum class HttpRangeType {
+    NONE,
+    VALID,
+    INVALID
 };
 
 struct file_request {
-    enum range_type range = RANGE_NONE;
+    HttpRangeType range = HttpRangeType::NONE;
 
     off_t skip = 0;
     off_t size;

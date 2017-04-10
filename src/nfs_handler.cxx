@@ -75,10 +75,10 @@ nfs_handler_cache_response(NfsCacheHandle &handle,
     bool no_body = false;
 
     switch (file_request.range) {
-    case RANGE_NONE:
+    case HttpRangeType::NONE:
         break;
 
-    case RANGE_VALID:
+    case HttpRangeType::VALID:
         status = HTTP_STATUS_PARTIAL_CONTENT;
 
         header_write(headers2, "content-range",
@@ -88,7 +88,7 @@ nfs_handler_cache_response(NfsCacheHandle &handle,
                                (unsigned long)st.st_size));
         break;
 
-    case RANGE_INVALID:
+    case HttpRangeType::INVALID:
         status = HTTP_STATUS_REQUESTED_RANGE_NOT_SATISFIABLE;
 
         header_write(headers2, "content-range",

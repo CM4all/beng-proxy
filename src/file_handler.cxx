@@ -55,10 +55,10 @@ file_dispatch(Request &request2, const struct stat &st,
     header_write(headers2, "accept-ranges", "bytes");
 
     switch (file_request.range) {
-    case RANGE_NONE:
+    case HttpRangeType::NONE:
         break;
 
-    case RANGE_VALID:
+    case HttpRangeType::VALID:
         istream_file_set_range(*body, file_request.skip,
                                file_request.size);
 
@@ -74,7 +74,7 @@ file_dispatch(Request &request2, const struct stat &st,
                                (unsigned long)st.st_size));
         break;
 
-    case RANGE_INVALID:
+    case HttpRangeType::INVALID:
         status = HTTP_STATUS_REQUESTED_RANGE_NOT_SATISFIABLE;
 
         header_write(headers2, "content-range",
@@ -242,7 +242,7 @@ file_callback(Request &request2, const FileAddress &address)
     /* precompressed? */
 
     if (!request2.compressed &&
-        file_request.range == RANGE_NONE &&
+        file_request.range == HttpRangeType::NONE &&
         !request2.IsTransformationEnabled() &&
         (file_check_compressed(request2, st, *body, "deflate",
                                address.deflated) ||
