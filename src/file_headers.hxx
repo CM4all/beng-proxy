@@ -7,6 +7,8 @@
 #ifndef BENG_PROXY_FILE_HEADERS_HXX
 #define BENG_PROXY_FILE_HEADERS_HXX
 
+#include "http/Range.hxx"
+
 #include <chrono>
 
 #include <sys/types.h>
@@ -15,19 +17,10 @@ class GrowingBuffer;
 struct Request;
 struct stat;
 
-enum class HttpRangeType {
-    NONE,
-    VALID,
-    INVALID
-};
-
 struct file_request {
-    HttpRangeType range = HttpRangeType::NONE;
+    HttpRangeRequest range;
 
-    off_t skip = 0;
-    off_t size;
-
-    explicit file_request(off_t _size):size(_size) {}
+    explicit file_request(off_t _size):range(_size) {}
 };
 
 bool

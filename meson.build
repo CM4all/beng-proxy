@@ -151,6 +151,7 @@ time_dep = declare_dependency(link_with: time)
 http = static_library('http',
   'libcommon/src/http/List.cxx',
   'libcommon/src/http/Date.cxx',
+  'libcommon/src/http/Range.cxx',
   include_directories: inc,
   dependencies: [
     libinline,

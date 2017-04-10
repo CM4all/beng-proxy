@@ -54,27 +54,27 @@ file_dispatch(Request &request2, const struct stat &st,
 
     header_write(headers2, "accept-ranges", "bytes");
 
-    switch (file_request.range) {
-    case HttpRangeType::NONE:
+    switch (file_request.range.type) {
+    case HttpRangeRequest::Type::NONE:
         break;
 
-    case HttpRangeType::VALID:
-        istream_file_set_range(*body, file_request.skip,
-                               file_request.size);
+    case HttpRangeRequest::Type::VALID:
+        istream_file_set_range(*body, file_request.range.skip,
+                               file_request.range.size);
 
         assert(body->GetAvailable(false) ==
-               file_request.size - file_request.skip);
+               off_t(file_request.range.size - file_request.range.skip));
 
         status = HTTP_STATUS_PARTIAL_CONTENT;
 
         header_write(headers2, "content-range",
                      p_sprintf(&request2.pool, "bytes %lu-%lu/%lu",
-                               (unsigned long)file_request.skip,
-                               (unsigned long)(file_request.size - 1),
+                               (unsigned long)file_request.range.skip,
+                               (unsigned long)(file_request.range.size - 1),
                                (unsigned long)st.st_size));
         break;
 
-    case HttpRangeType::INVALID:
+    case HttpRangeRequest::Type::INVALID:
         status = HTTP_STATUS_REQUESTED_RANGE_NOT_SATISFIABLE;
 
         header_write(headers2, "content-range",
@@ -242,7 +242,7 @@ file_callback(Request &request2, const FileAddress &address)
     /* precompressed? */
 
     if (!request2.compressed &&
-        file_request.range == HttpRangeType::NONE &&
+        file_request.range.type == HttpRangeRequest::Type::NONE &&
         !request2.IsTransformationEnabled() &&
         (file_check_compressed(request2, st, *body, "deflate",
                                address.deflated) ||

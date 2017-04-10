@@ -63,7 +63,8 @@ Request::OnDelegateSuccess(int fd)
     file_dispatch(*this, st, file_request,
                   istream_file_fd_new(instance.event_loop, pool,
                                       handler.delegate.path,
-                                      fd, FdType::FD_FILE, file_request.size));
+                                      fd, FdType::FD_FILE,
+                                      file_request.range.size));
 }
 
 void

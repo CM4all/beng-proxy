@@ -22,53 +22,6 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 
-static HttpRangeType
-parse_range_header(const char *p, off_t *skip_r, off_t *size_r)
-{
-    unsigned long v;
-    char *endptr;
-
-    assert(p != nullptr);
-    assert(skip_r != nullptr);
-    assert(size_r != nullptr);
-
-    if (memcmp(p, "bytes=", 6) != 0)
-        return HttpRangeType::INVALID;
-
-    p += 6;
-
-    if (*p == '-') {
-        /* suffix-byte-range-spec */
-        ++p;
-
-        v = strtoul(p, &endptr, 10);
-        if (v >= (unsigned long)*size_r)
-            return HttpRangeType::NONE;
-
-        *skip_r = *size_r - v;
-    } else {
-        *skip_r = strtoul(p, &endptr, 10);
-        if (*skip_r >= *size_r)
-            return HttpRangeType::INVALID;
-
-        if (*endptr == '-') {
-            p = endptr + 1;
-            if (*p == 0)
-                /* "wget -c" */
-                return HttpRangeType::VALID;
-
-            v = strtoul(p, &endptr, 10);
-            if (*endptr != 0 || v < (unsigned long)*skip_r ||
-                v >= (unsigned long)*size_r)
-                return HttpRangeType::INVALID;
-
-            *size_r = v + 1;
-        }
-    }
-
-    return HttpRangeType::VALID;
-}
-
 /**
  * Verifies the If-Range request header (RFC 2616 14.27).
  */
@@ -104,9 +57,7 @@ file_evaluate_request(Request &request2,
 
         if (p != nullptr &&
             check_if_range(request_headers.Get("if-range"), st))
-            file_request.range =
-                parse_range_header(p, &file_request.skip,
-                                   &file_request.size);
+            file_request.range.ParseRangeHeader(p);
     }
 
     if (!request2.IsProcessorEnabled()) {

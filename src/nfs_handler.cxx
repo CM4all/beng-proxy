@@ -74,21 +74,21 @@ nfs_handler_cache_response(NfsCacheHandle &handle,
 
     bool no_body = false;
 
-    switch (file_request.range) {
-    case HttpRangeType::NONE:
+    switch (file_request.range.type) {
+    case HttpRangeRequest::Type::NONE:
         break;
 
-    case HttpRangeType::VALID:
+    case HttpRangeRequest::Type::VALID:
         status = HTTP_STATUS_PARTIAL_CONTENT;
 
         header_write(headers2, "content-range",
                      p_sprintf(&pool, "bytes %lu-%lu/%lu",
-                               (unsigned long)file_request.skip,
-                               (unsigned long)(file_request.size - 1),
+                               (unsigned long)file_request.range.skip,
+                               (unsigned long)(file_request.range.size - 1),
                                (unsigned long)st.st_size));
         break;
 
-    case HttpRangeType::INVALID:
+    case HttpRangeRequest::Type::INVALID:
         status = HTTP_STATUS_REQUESTED_RANGE_NOT_SATISFIABLE;
 
         header_write(headers2, "content-range",
@@ -104,7 +104,8 @@ nfs_handler_cache_response(NfsCacheHandle &handle,
         body = NULL;
     else
         body = nfs_cache_handle_open(pool, handle,
-                                     file_request.skip, file_request.size);
+                                     file_request.range.skip,
+                                     file_request.range.size);
 
     response_dispatch(request2, status, std::move(headers), body);
 }
