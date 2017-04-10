@@ -50,14 +50,9 @@ Request::OnDelegateSuccess(int fd)
         return;
     }
 
-    struct file_request file_request = {
-        .range = RANGE_NONE,
-        .skip = 0,
-        .size = st.st_size,
-    };
-
     /* request options */
 
+    struct file_request file_request(st.st_size);
     if (!file_evaluate_request(*this, fd, st, file_request)) {
         close(fd);
         return;

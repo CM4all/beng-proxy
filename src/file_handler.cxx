@@ -185,7 +185,6 @@ file_callback(Request &request2, const FileAddress &address)
     request2.handler.file.address = &address;
 
     const auto &request = request2.request;
-    struct file_request file_request;
 
     assert(address.path != nullptr);
     assert(address.delegate == nullptr);
@@ -230,7 +229,7 @@ file_callback(Request &request2, const FileAddress &address)
         return;
     }
 
-    file_request.size = st.st_size;
+    struct file_request file_request(st.st_size);
 
     /* request options */
 

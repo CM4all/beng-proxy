@@ -26,6 +26,8 @@ struct file_request {
 
     off_t skip = 0;
     off_t size;
+
+    explicit file_request(off_t _size):size(_size) {}
 };
 
 bool

@@ -46,12 +46,7 @@ nfs_handler_cache_response(NfsCacheHandle &handle,
     struct pool &pool = request2.pool;
     const TranslateResponse *const tr = request2.translate.response;
 
-    struct file_request file_request = {
-        .range = RANGE_NONE,
-        .skip = 0,
-        .size = st.st_size,
-    };
-
+    struct file_request file_request(st.st_size);
     if (!file_evaluate_request(request2, -1, st, file_request))
         return;
 
