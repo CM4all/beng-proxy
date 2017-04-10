@@ -9,13 +9,13 @@
 #include "http_cache_document.hxx"
 #include "http_cache_internal.hxx"
 #include "http_address.hxx"
-#include "http_date.hxx"
 #include "http_util.hxx"
 #include "strmap.hxx"
 #include "ResourceAddress.hxx"
 #include "cgi_address.hxx"
 #include "lhttp_address.hxx"
 #include "pool.hxx"
+#include "http/Date.hxx"
 #include "util/StringView.hxx"
 
 #include <assert.h>

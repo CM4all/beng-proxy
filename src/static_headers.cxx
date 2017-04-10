@@ -6,8 +6,8 @@
 
 #include "static_headers.hxx"
 #include "strmap.hxx"
-#include "http_date.hxx"
 #include "pool.hxx"
+#include "http/Date.hxx"
 #include "util/HexFormat.h"
 
 #include <attr/xattr.h>

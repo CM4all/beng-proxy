@@ -37,7 +37,7 @@
 #include "istream/istream_string.hxx"
 #include "translation/Vary.hxx"
 #include "translation/Transformation.hxx"
-#include "http_date.hxx"
+#include "http/Date.hxx"
 #include "product.h"
 #include "http_address.hxx"
 #include "relocate_uri.hxx"

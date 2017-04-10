@@ -8,12 +8,12 @@
 #include "static_headers.hxx"
 #include "GrowingBuffer.hxx"
 #include "header_writer.hxx"
-#include "http_date.hxx"
 #include "request.hxx"
 #include "http_server/Request.hxx"
 #include "http_headers.hxx"
 #include "translation/Vary.hxx"
 #include "http/List.hxx"
+#include "http/Date.hxx"
 #include "util/DecimalFormat.h"
 
 #include <attr/xattr.h>

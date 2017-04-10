@@ -10,7 +10,6 @@
 #include "header_writer.hxx"
 #include "strmap.hxx"
 #include "http_response.hxx"
-#include "http_date.hxx"
 #include "abort_unref.hxx"
 #include "tpool.hxx"
 #include "ResourceAddress.hxx"
@@ -27,6 +26,7 @@
 #include "pool.hxx"
 #include "event/TimerEvent.hxx"
 #include "http/List.hxx"
+#include "http/Date.hxx"
 #include "util/Cancellable.hxx"
 
 #include <boost/intrusive/list.hpp>

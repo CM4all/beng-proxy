@@ -8,7 +8,6 @@
 #include "Request.hxx"
 #include "http_headers.hxx"
 #include "http_upgrade.hxx"
-#include "http_date.hxx"
 #include "direct.hxx"
 #include "header_writer.hxx"
 #include "GrowingBuffer.hxx"
@@ -18,6 +17,7 @@
 #include "istream/istream_dechunk.hxx"
 #include "istream/istream_memory.hxx"
 #include "istream/istream_string.hxx"
+#include "http/Date.hxx"
 #include "util/DecimalFormat.h"
 
 #include <string.h>
