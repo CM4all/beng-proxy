@@ -251,7 +251,9 @@ struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler, C
         assert(!response.IsReceivingMetadata() &&
                !response.WasSubmitted());
 
-        Clear(error);
+        ClearUnused();
+
+        handler.InvokeError(error);
         Destroy();
     }
 
