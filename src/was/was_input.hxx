@@ -115,6 +115,13 @@ was_input_set_length(WasInput *input, uint64_t length);
 bool
 was_input_premature(WasInput *input, uint64_t length);
 
+/**
+ * Same as above, but return the #GError instead of reporting it to
+ * the #IstreamHandler.
+ */
+bool
+was_input_premature(WasInput *input, uint64_t length, GError **error_r);
+
 void
 was_input_enable_timeout(WasInput *input);
 
