@@ -233,6 +233,7 @@ executable('format_http_date',
     libinline,
     util_dep,
     time_dep,
+    http_dep,
   ])
 
 executable('request_translation',
