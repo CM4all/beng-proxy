@@ -3,6 +3,7 @@
  */
 
 #include "AcmeClient.hxx"
+#include "AcmeConfig.hxx"
 #include "ssl/Base64.hxx"
 #include "ssl/Buffer.hxx"
 #include "ssl/Dummy.hxx"
@@ -115,12 +116,12 @@ CheckThrowStatusError(GlueHttpResponse &&response,
         ThrowStatusError(std::move(response), msg);
 }
 
-AcmeClient::AcmeClient(bool staging, bool _fake)
+AcmeClient::AcmeClient(const AcmeConfig &config)
     :glue_http_client(event_loop),
-     server(staging
+     server(config.staging
             ? "https://acme-staging.api.letsencrypt.org"
             : "https://acme-v01.api.letsencrypt.org"),
-     fake(_fake)
+     fake(config.fake)
 {
 }
 

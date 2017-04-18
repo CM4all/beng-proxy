@@ -1,5 +1,6 @@
 #include "AcmeUtil.hxx"
 #include "AcmeClient.hxx"
+#include "AcmeConfig.hxx"
 #include "Config.hxx"
 #include "CertDatabase.hxx"
 #include "WrapKey.hxx"
@@ -455,19 +456,20 @@ AcmeNewAuthzCertAll(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
 static void
 Acme(ConstBuffer<const char *> args)
 {
-    bool staging = false, fake = false, all = false;
+    AcmeConfig config;
+    bool all = false;
 
     while (!args.IsEmpty() && args.front()[0] == '-') {
         const char *arg = args.front();
 
         if (strcmp(arg, "--staging") == 0) {
             args.shift();
-            staging = true;
+            config.staging = true;
         } else if (strcmp(arg, "--fake") == 0) {
             /* undocumented debugging option: no HTTP requests, fake
                ACME responses */
             args.shift();
-            fake = true;
+            config.fake = true;
         } else if (strcmp(arg, "--all") == 0) {
             args.shift();
             all = true;
@@ -503,7 +505,7 @@ Acme(ConstBuffer<const char *> args)
         if (EVP_PKEY_base_id(key.get()) != EVP_PKEY_RSA)
             throw "RSA key expected";
 
-        const auto account = AcmeClient(staging, fake).NewReg(*key, email);
+        const auto account = AcmeClient(config).NewReg(*key, email);
         printf("location: %s\n", account.location.c_str());
     } else if (strcmp(cmd, "new-authz") == 0) {
         if (args.size != 1)
@@ -518,7 +520,7 @@ Acme(ConstBuffer<const char *> args)
             throw "RSA key expected";
 
         CertDatabase db(*db_config);
-        AcmeClient client(staging, fake);
+        AcmeClient client(config);
 
         AcmeNewAuthz(*key, db, client, host);
         printf("OK\n");
@@ -538,7 +540,7 @@ Acme(ConstBuffer<const char *> args)
             throw "RSA key expected";
 
         CertDatabase db(*db_config);
-        AcmeClient client(staging, fake);
+        AcmeClient client(config);
 
         if (all) {
             AcmeNewCertAll(*key, db, client, host);
@@ -563,7 +565,7 @@ Acme(ConstBuffer<const char *> args)
             throw "RSA key expected";
 
         CertDatabase db(*db_config);
-        AcmeClient client(staging, fake);
+        AcmeClient client(config);
 
         if (all) {
             AcmeNewAuthzCertAll(*key, db, client, host);

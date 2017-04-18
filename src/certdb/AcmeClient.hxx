@@ -14,6 +14,8 @@
 
 #include <string.h>
 
+struct AcmeConfig;
+
 /**
  * Implementation of a ACME client, i.e. the protocol of the "Let's
  * Encrypt" project.
@@ -35,7 +37,7 @@ class AcmeClient {
     const bool fake;
 
 public:
-    explicit AcmeClient(bool staging, bool fake);
+    explicit AcmeClient(const AcmeConfig &config);
     ~AcmeClient();
 
     struct Account {
