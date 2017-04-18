@@ -19,12 +19,6 @@
 template<typename T> struct ConstBuffer;
 class EventLoop;
 
-struct GlueHttpServerAddress {
-    std::string url;
-
-    GlueHttpServerAddress(bool _ssl, const char *_host_and_port);
-};
-
 struct GlueHttpResponse {
     http_status_t status;
 
@@ -49,7 +43,6 @@ public:
     GlueHttpClient &operator=(const GlueHttpClient &) = delete;
 
     GlueHttpResponse Request(EventLoop &event_loop,
-                             GlueHttpServerAddress &server,
                              http_method_t method, const char *uri,
                              ConstBuffer<void> body);
 };

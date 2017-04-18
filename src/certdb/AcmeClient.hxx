@@ -23,7 +23,7 @@
 class AcmeClient {
     EventLoop event_loop;
     GlueHttpClient glue_http_client;
-    GlueHttpServerAddress server;
+    const std::string server;
 
     /**
      * A replay nonce that was received in the previous request.  It

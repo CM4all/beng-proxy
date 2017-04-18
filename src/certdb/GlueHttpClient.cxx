@@ -13,13 +13,6 @@
 
 #include <exception>
 
-GlueHttpServerAddress::GlueHttpServerAddress(bool ssl,
-                                             const char *_host_and_port)
-    :url(ssl ? "https://" : "http://")
-{
-    url += _host_and_port;
-}
-
 GlueHttpClient::GlueHttpClient(EventLoop &event_loop)
     :curl_global(event_loop)
 {
@@ -78,16 +71,13 @@ public:
 
 GlueHttpResponse
 GlueHttpClient::Request(EventLoop &event_loop,
-                        GlueHttpServerAddress &server,
                         http_method_t method, const char *uri,
                         ConstBuffer<void> body)
 {
-    std::string url = server.url + uri;
-
     CurlSlist header_list;
 
     GlueHttpResponseHandler handler;
-    CurlRequest request(curl_global, url.c_str(), handler);
+    CurlRequest request(curl_global, uri, handler);
 
     if (method == HTTP_METHOD_HEAD)
         request.SetOption(CURLOPT_NOBODY, 1l);

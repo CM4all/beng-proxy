@@ -117,10 +117,9 @@ CheckThrowStatusError(GlueHttpResponse &&response,
 
 AcmeClient::AcmeClient(bool staging, bool _fake)
     :glue_http_client(event_loop),
-     server(true,
-            staging
-            ? "acme-staging.api.letsencrypt.org"
-            : "acme-v01.api.letsencrypt.org"),
+     server(staging
+            ? "https://acme-staging.api.letsencrypt.org"
+            : "https://acme-v01.api.letsencrypt.org"),
      fake(_fake)
 {
 }
@@ -135,8 +134,9 @@ AcmeClient::RequestNonce()
     if (fake)
         return "foo";
 
-    auto response = glue_http_client.Request(event_loop, server,
-                                             HTTP_METHOD_HEAD, "/directory",
+    auto response = glue_http_client.Request(event_loop,
+                                             HTTP_METHOD_HEAD,
+                                             (server + "/directory").c_str(),
                                              nullptr);
     if (response.status != HTTP_STATUS_OK)
         throw std::runtime_error("Unexpected response status");
@@ -299,8 +299,8 @@ AcmeClient::Request(http_method_t method, const char *uri,
                                     "Not found");
     }
 
-    auto response = glue_http_client.Request(event_loop, server,
-                                             method, uri,
+    auto response = glue_http_client.Request(event_loop,
+                                             method, (server + uri).c_str(),
                                              body);
 
     auto new_nonce = response.headers.find("replay-nonce");
