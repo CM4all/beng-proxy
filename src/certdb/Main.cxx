@@ -473,6 +473,14 @@ Acme(ConstBuffer<const char *> args)
         } else if (strcmp(arg, "--all") == 0) {
             args.shift();
             all = true;
+        } else if (strcmp(arg, "--agreement") == 0) {
+            args.shift();
+
+            if (args.IsEmpty())
+                throw std::runtime_error("Agreement URL missing");
+
+            config.agreement_url = args.front();
+            args.shift();
         } else
             break;
     }
@@ -486,6 +494,8 @@ Acme(ConstBuffer<const char *> args)
             "\n"
             "options:\n"
             "  --staging     use the Let's Encrypt staging server\n"
+            "  --agreement URL\n"
+            "                use a custom ACME agreement URL\n"
             "  --all         let new-cert and new-authz-cert operate on all alternative\n"
             "                names of the specified certificate\n";
 

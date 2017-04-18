@@ -4,6 +4,7 @@ cm4all-beng-proxy (12.0.10) unstable; urgency=low
   * lb: implement "sticky" in ZeroConf TCP pools
   * improved uid/gid verify error messages
   * certdb: update the Let's Encrypt agreement URL
+  * certdb: add option "--agreement"
 
  --   
 
