@@ -34,6 +34,8 @@ class AcmeClient {
      */
     std::string next_nonce;
 
+    const std::string agreement_url;
+
     const bool fake;
 
 public:

@@ -121,6 +121,7 @@ AcmeClient::AcmeClient(const AcmeConfig &config)
      server(config.staging
             ? "https://acme-staging.api.letsencrypt.org"
             : "https://acme-v01.api.letsencrypt.org"),
+     agreement_url(config.agreement_url),
      fake(config.fake)
 {
 }
@@ -354,7 +355,9 @@ AcmeClient::NewReg(EVP_PKEY &key, const char *email)
         payload += "\" ], ";
     }
 
-    payload += "\"agreement\": \"https://letsencrypt.org/documents/LE-SA-v1.1.1-August-1-2016.pdf\"}";
+    payload += "\"agreement\": \"";
+    payload += agreement_url;
+    payload += "\"}";
 
     auto response = SignedRequest(key,
                                   HTTP_METHOD_POST, "/acme/new-reg",
