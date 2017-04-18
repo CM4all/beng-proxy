@@ -59,6 +59,7 @@ public:
     }
 
     bool SetLength(uint64_t _length);
+    bool Premature(uint64_t _length, GError **error_r);
     bool Premature(uint64_t _length);
 
     bool CanRelease() const {
@@ -424,25 +425,21 @@ was_input_set_length(WasInput *input, uint64_t length)
     return input->SetLength(length);
 }
 
-inline bool
-WasInput::Premature(uint64_t _length)
+bool
+WasInput::Premature(uint64_t _length, GError **error_r)
 {
     buffer.FreeIfDefined(fb_pool_get());
     event.Delete();
 
     if (known_length && _length > length) {
-        GError *error =
-            g_error_new_literal(was_quark(), 0,
-                                "announced premature length is too large");
-        DestroyError(error);
+        g_set_error_literal(error_r, was_quark(), 0,
+                            "announced premature length is too large");
         return false;
     }
 
     if (_length < received) {
-        GError *error =
-            g_error_new_literal(was_quark(), 0,
-                                "announced premature length is too small");
-        DestroyError(error);
+        g_set_error_literal(error_r, was_quark(), 0,
+                            "announced premature length is too small");
         return false;
     }
 
@@ -453,29 +450,43 @@ WasInput::Premature(uint64_t _length)
         size_t size = std::min(remaining, uint64_t(sizeof(discard_buffer)));
         ssize_t nbytes = read(fd, discard_buffer, size);
         if (nbytes < 0) {
-            DestroyError(new_error_errno_msg("read error on WAS data connection"));
+            set_error_errno_msg(error_r, "read error on WAS data connection");
             return false;
         }
 
         if (nbytes == 0) {
-            GError *error =
-                g_error_new_literal(was_quark(), 0,
-                                    "server closed the WAS data connection");
-            DestroyError(error);
+            g_set_error_literal(error_r, was_quark(), 0,
+                                "server closed the WAS data connection");
             return false;
         }
 
         remaining -= nbytes;
     }
 
-    GError *error = g_error_new_literal(was_quark(), 0,
-                                        "premature end of WAS response");
-    DestroyError(error);
+    g_set_error_literal(error_r, was_quark(), 0,
+                        "premature end of WAS response");
     return true;
+}
+
+inline bool
+WasInput::Premature(uint64_t _length)
+{
+    GError *error = nullptr;
+    bool result = Premature(_length, &error);
+    DestroyError(error);
+    return result;
 }
 
 bool
 was_input_premature(WasInput *input, uint64_t length)
 {
     return input->Premature(length);
+}
+
+bool
+was_input_premature(WasInput *input, uint64_t length, GError **error_r)
+{
+    bool result = input->Premature(length, error_r);
+    input->Destroy();
+    return result;
 }

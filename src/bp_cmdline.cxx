@@ -162,7 +162,7 @@ ParseListenerConfig(const char *s,
 {
     std::string tag;
 
-    const char *equals = strchr(s, '=');
+    const char *equals = strrchr(s, '=');
     if (equals != nullptr) {
         tag.assign(s, equals);
         s = equals + 1;

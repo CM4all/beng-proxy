@@ -251,7 +251,9 @@ struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler, C
         assert(!response.IsReceivingMetadata() &&
                !response.WasSubmitted());
 
-        Clear(error);
+        ClearUnused();
+
+        handler.InvokeError(error);
         Destroy();
     }
 
@@ -569,8 +571,19 @@ WasClient::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload)
         if (response.body == nullptr)
             break;
 
-        if (!was_input_premature(response.body, *length_p))
+        if (response.pending) {
+            /* we can't let was_input report the error to its handler,
+               because it cannot possibly have a handler yet; thus
+               catch it and report it to the #HttpResponseHandler */
+            error = nullptr;
+            was_input_premature(response.body, *length_p, &error);
+            response.body = nullptr;
+            AbortPending(error);
             return false;
+        } else {
+            if (!was_input_premature(response.body, *length_p))
+                return false;
+        }
 
         response.body = nullptr;
         ResponseEof();
