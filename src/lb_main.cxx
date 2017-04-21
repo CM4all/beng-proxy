@@ -240,6 +240,4 @@ int main(int argc, char **argv)
     deinit_all_controls(&instance);
 
     thread_pool_deinit();
-
-    pool_recycler_clear();
 }
