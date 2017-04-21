@@ -243,7 +243,7 @@ LbControl::OnControlPacket(ControlServer &control_server,
 
     case CONTROL_DUMP_POOLS:
         if (is_privileged)
-            pool_dump_tree(instance.pool);
+            pool_dump_tree(instance.root_pool);
         break;
 
     case CONTROL_STATS:

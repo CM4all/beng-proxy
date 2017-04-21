@@ -13,9 +13,8 @@
 #include "cgi_address.hxx"
 #include "spawn/mount_list.hxx"
 #include "spawn/NamespaceOptions.hxx"
-#include "event/Loop.hxx"
 #include "pool.hxx"
-#include "RootPool.hxx"
+#include "PInstance.hxx"
 #include "util/Cancellable.hxx"
 
 #include <string.h>
@@ -1325,14 +1324,13 @@ test_expand_bind_mount(struct pool *pool, struct tcache *cache)
 int
 main(gcc_unused int argc, gcc_unused char **argv)
 {
+    PInstance instance;
+
     const auto translate_stock = (TranslateStock *)0x1;
-    struct tcache *cache;
+    auto *cache = translate_cache_new(instance.root_pool, instance.event_loop,
+                                      *translate_stock, 1024);
 
-    EventLoop event_loop;
-
-    RootPool pool;
-
-    cache = translate_cache_new(*pool, event_loop, *translate_stock, 1024);
+    struct pool *pool = instance.root_pool;
 
     /* test */
 

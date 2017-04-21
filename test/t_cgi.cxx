@@ -8,9 +8,8 @@
 #include "istream/istream_file.hxx"
 #include "istream/Pointer.hxx"
 #include "istream/istream.hxx"
-#include "RootPool.hxx"
+#include "PInstance.hxx"
 #include "fb_pool.hxx"
-#include "event/Loop.hxx"
 #include "spawn/Config.hxx"
 #include "spawn/Registry.hxx"
 #include "spawn/Local.hxx"
@@ -30,9 +29,7 @@
 
 static SpawnConfig spawn_config;
 
-struct Context final : HttpResponseHandler, IstreamHandler {
-    EventLoop event_loop;
-
+struct Context final : PInstance, HttpResponseHandler, IstreamHandler {
     ChildProcessRegistry child_process_registry;
     LocalSpawnService spawn_service;
 
@@ -661,8 +658,7 @@ run_test(void (*test)(struct pool *pool, Context *c))
 {
     Context c;
 
-    RootPool root_pool;
-    auto pool = pool_new_linear(root_pool, "test", 16384);
+    auto pool = pool_new_linear(c.root_pool, "test", 16384);
     test(pool, &c);
 }
 
@@ -689,8 +685,6 @@ run_all_tests()
 int main(int argc, char **argv) {
     (void)argc;
     (void)argv;
-
-    EventLoop event_loop;
 
     SetupProcess();
 

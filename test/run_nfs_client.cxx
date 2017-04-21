@@ -3,12 +3,11 @@
 #include "istream/istream_pipe.hxx"
 #include "istream/istream.hxx"
 #include "istream/sink_fd.hxx"
-#include "event/Loop.hxx"
 #include "event/ShutdownListener.hxx"
 #include "system/SetupProcess.hxx"
 #include "io/FileDescriptor.hxx"
+#include "PInstance.hxx"
 #include "pool.hxx"
-#include "RootPool.hxx"
 #include "http_response.hxx"
 #include "direct.hxx"
 #include "util/Cancellable.hxx"
@@ -17,9 +16,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-struct Context final : NfsClientHandler, NfsClientOpenFileHandler {
-    EventLoop event_loop;
-
+struct Context final : PInstance, NfsClientHandler, NfsClientOpenFileHandler {
     struct pool *pool;
 
     const char *path;
@@ -227,8 +224,7 @@ int main(int argc, char **argv) {
 
     ctx.shutdown_listener.Enable();
 
-    RootPool root_pool;
-    ctx.pool = pool_new_libc(root_pool, "pool");
+    ctx.pool = pool_new_libc(ctx.root_pool, "pool");
 
     /* open NFS connection */
 

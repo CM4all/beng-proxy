@@ -3,13 +3,12 @@
 #include "http_server/Handler.hxx"
 #include "http_headers.hxx"
 #include "direct.hxx"
-#include "RootPool.hxx"
+#include "PInstance.hxx"
 #include "pool.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream_catch.hxx"
 #include "fb_pool.hxx"
 #include "io/FileDescriptor.hxx"
-#include "event/Loop.hxx"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -116,7 +115,7 @@ int main(int argc, char **argv) {
 
     direct_global_init();
     const ScopeFbPoolInit fb_pool_init;
-    EventLoop event_loop;
+    PInstance instance;
 
-    test_catch(event_loop, RootPool());
+    test_catch(instance.event_loop, instance.root_pool);
 }

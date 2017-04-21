@@ -1,13 +1,12 @@
+#include "PInstance.hxx"
 #include "pool.hxx"
 #include "tpool.hxx"
-#include "RootPool.hxx"
 #include "cache.hxx"
 #include "http_cache_heap.hxx"
 #include "http_cache_info.hxx"
 #include "strmap.hxx"
 #include "rubber.hxx"
 #include "AllocatorStats.hxx"
-#include "event/Loop.hxx"
 
 #include <inline/compiler.h>
 
@@ -73,14 +72,12 @@ main(gcc_unused int argc, gcc_unused char **argv)
     if (rubber == NULL)
         return EXIT_FAILURE;
 
-    EventLoop event_loop;
+    PInstance instance;
 
-    RootPool pool;
-
-    struct pool *pool2 = pool_new_libc(pool, "cache");
+    struct pool *pool2 = pool_new_libc(instance.root_pool, "cache");
 
     HttpCacheHeap cache;
-    cache.Init(*pool2, event_loop, max_size);
+    cache.Init(*pool2, instance.event_loop, max_size);
 
     for (unsigned i = 0; i < 32 * 1024; ++i)
         put_random(&cache, rubber);

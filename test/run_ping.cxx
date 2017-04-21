@@ -1,9 +1,8 @@
+#include "PInstance.hxx"
 #include "pool.hxx"
-#include "RootPool.hxx"
 #include "net/Ping.hxx"
 #include "net/AllocatedSocketAddress.hxx"
 #include "net/Parser.hxx"
-#include "event/Loop.hxx"
 #include "util/Cancellable.hxx"
 #include "util/PrintException.hxx"
 
@@ -36,19 +35,17 @@ try {
         return EXIT_FAILURE;
     }
 
-    RootPool root_pool;
-    LinearPool pool(root_pool, "test", 8192);
+    PInstance instance;
+    LinearPool pool(instance.root_pool, "test", 8192);
 
     const auto address = ParseSocketAddress(argv[1], 0, false);
 
-    EventLoop event_loop;
-
     MyPingClientHandler handler;
-    ping(event_loop, *pool, address,
+    ping(instance.event_loop, *pool, address,
          handler,
          my_cancel_ptr);
 
-    event_loop.Dispatch();
+    instance.event_loop.Dispatch();
 
     return success ? EXIT_SUCCESS : EXIT_FAILURE;
 } catch (const std::exception &e) {

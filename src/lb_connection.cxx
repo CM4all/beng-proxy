@@ -101,7 +101,8 @@ lb_connection_new(LbInstance &instance,
     /* determine the local socket address */
     StaticSocketAddress local_address = fd.GetLocalAddress();
 
-    struct pool *pool = pool_new_linear(instance.pool, "client_connection",
+    struct pool *pool = pool_new_linear(instance.root_pool,
+                                        "client_connection",
                                         2048);
     pool_set_major(pool);
 

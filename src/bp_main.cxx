@@ -357,7 +357,7 @@ try {
                        instance.config.translation_socket,
                        instance.config.translate_stock_limit);
 
-        instance.translate_cache = translate_cache_new(*instance.pool,
+        instance.translate_cache = translate_cache_new(instance.root_pool,
                                                        instance.event_loop,
                                                        *instance.translate_stock,
                                                        instance.config.translate_cache_size,
@@ -380,8 +380,9 @@ try {
     instance.delegate_stock = delegate_stock_new(instance.event_loop,
                                                  *instance.spawn_service);
 
-    instance.nfs_stock = nfs_stock_new(instance.event_loop, instance.pool);
-    instance.nfs_cache = nfs_cache_new(*instance.pool,
+    instance.nfs_stock = nfs_stock_new(instance.event_loop,
+                                       instance.root_pool);
+    instance.nfs_cache = nfs_cache_new(instance.root_pool,
                                        instance.config.nfs_cache_size,
                                        *instance.nfs_stock,
                                        instance.event_loop);
@@ -396,7 +397,7 @@ try {
                                  instance.delegate_stock,
                                  instance.nfs_cache);
 
-    instance.http_cache = http_cache_new(*instance.pool,
+    instance.http_cache = http_cache_new(instance.root_pool,
                                          instance.config.http_cache_size,
                                          instance.memcached_stock,
                                          instance.event_loop,
@@ -408,7 +409,7 @@ try {
     instance.pipe_stock = pipe_stock_new(instance.event_loop);
 
     if (instance.config.filter_cache_size > 0) {
-        instance.filter_cache = filter_cache_new(instance.pool,
+        instance.filter_cache = filter_cache_new(instance.root_pool,
                                                  instance.config.filter_cache_size,
                                                  instance.event_loop,
                                                  *instance.direct_resource_loader);

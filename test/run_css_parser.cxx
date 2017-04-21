@@ -1,9 +1,8 @@
 #include "css_parser.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream_file.hxx"
-#include "event/Loop.hxx"
+#include "PInstance.hxx"
 #include "fb_pool.hxx"
-#include "RootPool.hxx"
 #include "pool.hxx"
 
 #include <glib.h>
@@ -102,12 +101,11 @@ int main(int argc, char **argv) {
     (void)argv;
 
     const ScopeFbPoolInit fb_pool_init;
-    EventLoop event_loop;
 
-    RootPool root_pool;
-    LinearPool pool(root_pool, "test", 8192);
+    PInstance instance;
+    LinearPool pool(instance.root_pool, "test", 8192);
 
-    Istream *istream = istream_file_new(event_loop, *pool,
+    Istream *istream = istream_file_new(instance.event_loop, *pool,
                                         "/dev/stdin", (off_t)-1,
                                         nullptr);
     auto *parser =

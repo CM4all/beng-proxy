@@ -12,9 +12,8 @@
 #include "istream/istream_memory.hxx"
 #include "istream/istream_zero.hxx"
 #include "istream/istream.hxx"
-#include "RootPool.hxx"
+#include "PInstance.hxx"
 #include "pool.hxx"
-#include "event/Loop.hxx"
 #include "event/TimerEvent.hxx"
 #include "event/ShutdownListener.hxx"
 #include "fb_pool.hxx"
@@ -24,9 +23,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-struct Instance final : HttpServerConnectionHandler, Cancellable {
-    EventLoop event_loop;
-
+struct Instance final : PInstance, HttpServerConnectionHandler, Cancellable {
     ShutdownListener shutdown_listener;
 
     enum class Mode {
@@ -224,11 +221,10 @@ int main(int argc, char **argv) {
     Instance instance;
     instance.shutdown_listener.Enable();
 
-    RootPool pool;
-
     int sockfd;
     if (in_fd != out_fd) {
-        sockfd = duplex_new(instance.event_loop, pool, in_fd, out_fd);
+        sockfd = duplex_new(instance.event_loop, instance.root_pool,
+                            in_fd, out_fd);
         if (sockfd < 0) {
             perror("duplex_new() failed");
             exit(2);
@@ -256,7 +252,8 @@ int main(int argc, char **argv) {
         return EXIT_FAILURE;
     }
 
-    instance.connection = http_server_connection_new(pool, instance.event_loop,
+    instance.connection = http_server_connection_new(instance.root_pool,
+                                                     instance.event_loop,
                                                      sockfd, FdType::FD_SOCKET,
                                                      nullptr, nullptr,
                                                      nullptr, nullptr,

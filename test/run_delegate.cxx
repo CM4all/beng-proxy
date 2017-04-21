@@ -6,9 +6,8 @@
 #include "spawn/Registry.hxx"
 #include "spawn/Local.hxx"
 #include "stock/MapStock.hxx"
-#include "event/Loop.hxx"
 #include "event/DeferEvent.hxx"
-#include "RootPool.hxx"
+#include "PInstance.hxx"
 #include "pool.hxx"
 #include "util/Cancellable.hxx"
 
@@ -56,24 +55,23 @@ int main(int argc, char **argv)
 
     SpawnConfig spawn_config;
 
-    EventLoop event_loop;
+    PInstance instance;
 
-    ChildProcessRegistry child_process_registry(event_loop);
+    ChildProcessRegistry child_process_registry(instance.event_loop);
     child_process_registry.SetVolatile();
 
     LocalSpawnService spawn_service(spawn_config, child_process_registry);
 
-    RootPool root_pool;
-    delegate_stock = delegate_stock_new(event_loop, spawn_service);
-    LinearPool pool(root_pool, "test", 8192);
+    delegate_stock = delegate_stock_new(instance.event_loop, spawn_service);
+    LinearPool pool(instance.root_pool, "test", 8192);
 
     ChildOptions child_options;
 
-    MyDelegateHandler handler(event_loop);
+    MyDelegateHandler handler(instance.event_loop);
     CancellablePointer cancel_ptr;
     delegate_stock_open(delegate_stock, pool, helper_path, child_options,
                         argv[1],
                         handler, cancel_ptr);
 
-    event_loop.Dispatch();
+    instance.event_loop.Dispatch();
 }

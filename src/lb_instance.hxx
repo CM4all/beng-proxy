@@ -7,12 +7,11 @@
 #ifndef BENG_PROXY_LB_INSTANCE_HXX
 #define BENG_PROXY_LB_INSTANCE_HXX
 
-#include "RootPool.hxx"
+#include "PInstance.hxx"
 #include "lb_cmdline.hxx"
 #include "lb_cluster.hxx"
 #include "lb_connection.hxx"
 #include "lb_hmonitor.hxx"
-#include "event/Loop.hxx"
 #include "event/TimerEvent.hxx"
 #include "event/SignalEvent.hxx"
 #include "event/ShutdownListener.hxx"
@@ -32,14 +31,10 @@ struct LbControl;
 class LbListener;
 class CertCache;
 
-struct LbInstance final {
-    RootPool pool;
-
+struct LbInstance final : PInstance {
     LbCmdLine cmdline;
 
     LbConfig *config;
-
-    EventLoop event_loop;
 
     uint64_t http_request_counter = 0;
 

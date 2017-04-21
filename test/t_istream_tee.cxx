@@ -1,4 +1,4 @@
-#include "RootPool.hxx"
+#include "PInstance.hxx"
 #include "istream/istream_tee.hxx"
 #include "istream/istream_delayed.hxx"
 #include "istream/istream_string.hxx"
@@ -7,7 +7,6 @@
 #include "istream/sink_close.hxx"
 #include "istream/sink_gstring.hxx"
 #include "istream/Bucket.hxx"
-#include "event/Loop.hxx"
 #include "util/Cancellable.hxx"
 
 #include <glib.h>
@@ -281,18 +280,18 @@ int main(int argc, char **argv) {
     (void)argc;
     (void)argv;
 
-    EventLoop event_loop;
+    PInstance instance;
 
     /* run test suite */
 
-    test_block1(event_loop);
-    test_close_data(event_loop, RootPool());
-    test_close_skipped(event_loop, RootPool());
-    test_error(event_loop, RootPool(), false, false, true);
-    test_error(event_loop, RootPool(), false, false, false);
-    test_error(event_loop, RootPool(), true, false, false);
-    test_error(event_loop, RootPool(), false, true, true);
-    test_bucket_error(event_loop, RootPool(), false, false);
-    test_bucket_error(event_loop, RootPool(), true, false);
-    test_bucket_error(event_loop, RootPool(), false, true);
+    test_block1(instance.event_loop);
+    test_close_data(instance.event_loop, instance.root_pool);
+    test_close_skipped(instance.event_loop, instance.root_pool);
+    test_error(instance.event_loop, instance.root_pool, false, false, true);
+    test_error(instance.event_loop, instance.root_pool, false, false, false);
+    test_error(instance.event_loop, instance.root_pool, true, false, false);
+    test_error(instance.event_loop, instance.root_pool, false, true, true);
+    test_bucket_error(instance.event_loop, instance.root_pool, false, false);
+    test_bucket_error(instance.event_loop, instance.root_pool, true, false);
+    test_bucket_error(instance.event_loop, instance.root_pool, false, true);
 }

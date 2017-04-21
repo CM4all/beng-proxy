@@ -11,9 +11,9 @@
 #include "istream/istream_null.hxx"
 #include "istream/istream_string.hxx"
 #include "istream/istream_zero.hxx"
-#include "event/Loop.hxx"
 #include "event/TimerEvent.hxx"
 #include "event/Duration.hxx"
+#include "PInstance.hxx"
 #include "strmap.hxx"
 #include "fb_pool.hxx"
 #include "util/Cast.hxx"
@@ -56,8 +56,8 @@ NewMajorPool(struct pool &parent, const char *name)
 }
 
 template<class Connection>
-struct Context final : Cancellable, Lease, HttpResponseHandler, IstreamHandler {
-    EventLoop event_loop;
+struct Context final
+    : PInstance, Cancellable, Lease, HttpResponseHandler, IstreamHandler {
 
     struct pool *const parent_pool, *const pool;
 
@@ -109,7 +109,7 @@ struct Context final : Cancellable, Lease, HttpResponseHandler, IstreamHandler {
     TimerEvent defer_event;
     bool deferred = false;
 
-    Context(struct pool &root_pool)
+    Context()
         :parent_pool(NewMajorPool(root_pool, "parent")),
          pool(pool_new_linear(parent_pool, "test", 16384)),
          body(nullptr),
@@ -1529,8 +1529,8 @@ test_excess_data(Context<Connection> &c)
 
 template<class Connection>
 static void
-run_test(struct pool *pool, void (*test)(Context<Connection> &c)) {
-    Context<Connection> c(*pool);
+run_test(void (*test)(Context<Connection> &c)) {
+    Context<Connection> c;
     test(c);
 }
 
@@ -1538,9 +1538,9 @@ run_test(struct pool *pool, void (*test)(Context<Connection> &c)) {
 
 template<class Connection>
 static void
-run_bucket_test(struct pool *pool, void (*test)(Context<Connection> &c))
+run_bucket_test(void (*test)(Context<Connection> &c))
 {
-    Context<Connection> c(*pool);
+    Context<Connection> c;
     c.use_buckets = true;
     c.read_after_buckets = true;
     test(c);
@@ -1550,66 +1550,66 @@ run_bucket_test(struct pool *pool, void (*test)(Context<Connection> &c))
 
 template<class Connection>
 static void
-run_test_and_buckets(struct pool *pool, void (*test)(Context<Connection> &c))
+run_test_and_buckets(void (*test)(Context<Connection> &c))
 {
     /* regular run */
-    run_test(pool, test);
+    run_test(test);
 
 #ifdef USE_BUCKETS
-    run_bucket_test(pool, test);
+    run_bucket_test(test);
 #endif
 }
 
 template<class Connection>
 static void
-run_all_tests(struct pool *pool)
+run_all_tests()
 {
-    run_test(pool, test_empty<Connection>);
-    run_test_and_buckets(pool, test_body<Connection>);
-    run_test(pool, test_read_body<Connection>);
+    run_test(test_empty<Connection>);
+    run_test_and_buckets(test_body<Connection>);
+    run_test(test_read_body<Connection>);
 #ifdef ENABLE_HUGE_BODY
-    run_test_and_buckets(pool, test_huge<Connection>);
+    run_test_and_buckets(test_huge<Connection>);
 #endif
-    run_test(pool, test_close_response_body_early<Connection>);
-    run_test(pool, test_close_response_body_late<Connection>);
-    run_test(pool, test_close_response_body_data<Connection>);
-    run_test(pool, test_close_request_body_early<Connection>);
-    run_test(pool, test_close_request_body_fail<Connection>);
-    run_test(pool, test_data_blocking<Connection>);
-    run_test(pool, test_data_blocking2<Connection>);
-    run_test(pool, test_body_fail<Connection>);
-    run_test(pool, test_head<Connection>);
-    run_test(pool, test_head_discard<Connection>);
-    run_test(pool, test_head_discard2<Connection>);
-    run_test(pool, test_ignored_body<Connection>);
+    run_test(test_close_response_body_early<Connection>);
+    run_test(test_close_response_body_late<Connection>);
+    run_test(test_close_response_body_data<Connection>);
+    run_test(test_close_request_body_early<Connection>);
+    run_test(test_close_request_body_fail<Connection>);
+    run_test(test_data_blocking<Connection>);
+    run_test(test_data_blocking2<Connection>);
+    run_test(test_body_fail<Connection>);
+    run_test(test_head<Connection>);
+    run_test(test_head_discard<Connection>);
+    run_test(test_head_discard2<Connection>);
+    run_test(test_ignored_body<Connection>);
 #ifdef ENABLE_CLOSE_IGNORED_REQUEST_BODY
-    run_test(pool, test_close_ignored_request_body<Connection>);
-    run_test(pool, test_head_close_ignored_request_body<Connection>);
-    run_test(pool, test_close_request_body_eor<Connection>);
-    run_test(pool, test_close_request_body_eor2<Connection>);
+    run_test(test_close_ignored_request_body<Connection>);
+    run_test(test_head_close_ignored_request_body<Connection>);
+    run_test(test_close_request_body_eor<Connection>);
+    run_test(test_close_request_body_eor2<Connection>);
 #endif
 #ifdef HAVE_EXPECT_100
-    run_test(pool, test_bogus_100<Connection>);
-    run_test(pool, test_twice_100<Connection>);
-    run_test(pool, test_close_100<Connection>);
+    run_test(test_bogus_100<Connection>);
+    run_test(test_twice_100<Connection>);
+    run_test(test_close_100<Connection>);
 #endif
-    run_test(pool, test_no_body_while_sending<Connection>);
-    run_test(pool, test_hold<Connection>);
+    run_test(test_no_body_while_sending<Connection>);
+    run_test(test_hold<Connection>);
 #ifdef ENABLE_PREMATURE_CLOSE_HEADERS
-    run_test(pool, test_premature_close_headers<Connection>);
+    run_test(test_premature_close_headers<Connection>);
 #endif
 #ifdef ENABLE_PREMATURE_CLOSE_BODY
-    run_test_and_buckets(pool, test_premature_close_body<Connection>);
+    run_test_and_buckets(test_premature_close_body<Connection>);
 #endif
 #ifdef USE_BUCKETS
-    run_test(pool, test_buckets<Connection>);
-    run_test(pool, test_buckets_close<Connection>);
+    run_test(test_buckets<Connection>);
+    run_test(test_buckets_close<Connection>);
 #endif
 #ifdef ENABLE_PREMATURE_END
-    run_test_and_buckets(pool, test_premature_end<Connection>);
+    run_test_and_buckets(test_premature_end<Connection>);
 #endif
 #ifdef ENABLE_EXCESS_DATA
-    run_test_and_buckets(pool, test_excess_data<Connection>);
+    run_test_and_buckets(test_excess_data<Connection>);
 #endif
-    run_test(pool, test_post_empty<Connection>);
+    run_test(test_post_empty<Connection>);
 }

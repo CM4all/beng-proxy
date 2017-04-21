@@ -1,3 +1,4 @@
+#include "PInstance.hxx"
 #include "tcp_stock.hxx"
 #include "tcp_balancer.hxx"
 #include "balancer.hxx"
@@ -8,10 +9,8 @@
 #include "lease.hxx"
 #include "strmap.hxx"
 #include "pool.hxx"
-#include "RootPool.hxx"
 #include "direct.hxx"
 #include "fb_pool.hxx"
-#include "event/Loop.hxx"
 #include "system/SetupProcess.hxx"
 #include "net/AddressInfo.hxx"
 #include "net/Resolver.hxx"
@@ -57,10 +56,10 @@ try {
 
     direct_global_init();
     const ScopeFbPoolInit fb_pool_init;
-    EventLoop event_loop;
 
-    RootPool root_pool;
-    auto *pool = pool_new_linear(root_pool, "test", 8192);
+    PInstance instance;
+
+    auto *pool = pool_new_linear(instance.root_pool, "test", 8192);
 
     struct addrinfo hints;
     memset(&hints, 0, sizeof(hints));
@@ -70,10 +69,11 @@ try {
     const auto address_info = Resolve(argv[1], 11211, &hints);
     const AddressList address_list(ShallowCopy(), address_info);
 
-    auto *tcp_stock = tcp_stock_new(event_loop, 0);
+    auto *tcp_stock = tcp_stock_new(instance.event_loop, 0);
     TcpBalancer *tcp_balancer = tcp_balancer_new(*tcp_stock,
-                                                 *balancer_new(event_loop));
-    auto *stock = memcached_stock_new(event_loop, *tcp_balancer, address_list);
+                                                 *balancer_new(instance.event_loop));
+    auto *stock = memcached_stock_new(instance.event_loop, *tcp_balancer,
+                                      address_list);
 
     /* send memcached request */
 
@@ -85,7 +85,7 @@ try {
     pool_unref(pool);
     pool_commit();
 
-    event_loop.Dispatch();
+    instance.event_loop.Dispatch();
 
     tcp_balancer_free(tcp_balancer);
     delete tcp_stock;

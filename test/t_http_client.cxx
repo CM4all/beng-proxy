@@ -11,7 +11,6 @@
 #include "io/FileDescriptor.hxx"
 #include "direct.hxx"
 #include "fb_pool.hxx"
-#include "RootPool.hxx"
 
 #include <sys/wait.h>
 
@@ -216,13 +215,11 @@ int main(int argc, char **argv) {
     (void)argc;
     (void)argv;
 
-    EventLoop event_loop;
-
     SetupProcess();
 
     direct_global_init();
     const ScopeFbPoolInit fb_pool_init;
 
-    run_all_tests<Connection>(RootPool());
-    run_test<Connection>(RootPool(), test_no_keepalive);
+    run_all_tests<Connection>();
+    run_test<Connection>(test_no_keepalive);
 }

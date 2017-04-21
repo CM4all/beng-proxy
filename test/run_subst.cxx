@@ -1,26 +1,22 @@
 #include "StdioSink.hxx"
 #include "istream/istream_subst.hxx"
 #include "istream/istream_file.hxx"
-#include "event/Loop.hxx"
 #include "fb_pool.hxx"
-#include "RootPool.hxx"
+#include "PInstance.hxx"
 
 #include <inline/compiler.h>
 
 int main(int argc, char **argv) {
-    struct pool *pool;
     Istream *istream;
     int i;
 
     const ScopeFbPoolInit fb_pool_init;
-    EventLoop event_loop;
+    PInstance instance;
 
-    RootPool root_pool;
-
-    pool = pool_new_linear(root_pool, "test", 8192);
+    auto *pool = pool_new_linear(instance.root_pool, "test", 8192);
 
     istream = istream_subst_new(pool,
-                                *istream_file_new(event_loop, *pool,
+                                *istream_file_new(instance.event_loop, *pool,
                                                   "/dev/stdin", (off_t)-1,
                                                   nullptr));
 

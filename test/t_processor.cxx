@@ -1,7 +1,7 @@
 #include "FailingResourceLoader.hxx"
 #include "processor.hxx"
 #include "penv.hxx"
-#include "RootPool.hxx"
+#include "PInstance.hxx"
 #include "uri/uri_parser.hxx"
 #include "inline_widget.hxx"
 #include "widget.hxx"
@@ -11,7 +11,6 @@
 #include "istream/istream.hxx"
 #include "istream/istream_block.hxx"
 #include "istream/istream_string.hxx"
-#include "event/Loop.hxx"
 #include "util/Cancellable.hxx"
 
 #include <glib.h>
@@ -98,11 +97,13 @@ public:
  */
 
 static void
-test_proxy_abort(struct pool *pool)
+test_proxy_abort()
 {
+    PInstance instance;
+
     bool success;
 
-    pool = pool_new_libc(pool, "test");
+    auto *pool = pool_new_libc(instance.root_pool, "test");
 
     struct parsed_uri parsed_uri;
     const char *uri = "/beng.html";
@@ -114,9 +115,8 @@ test_proxy_abort(struct pool *pool)
     SessionId session_id;
     session_id.Generate();
 
-    EventLoop event_loop;
     FailingResourceLoader resource_loader;
-    struct processor_env env(pool, event_loop,
+    struct processor_env env(pool, instance.event_loop,
                              resource_loader, resource_loader,
                              nullptr, nullptr,
                              "localhost:8080",
@@ -145,5 +145,5 @@ int main(int argc, char **argv) {
     (void)argc;
     (void)argv;
 
-    test_proxy_abort(RootPool());
+    test_proxy_abort();
 }

@@ -6,13 +6,12 @@
 #include "widget_view.hxx"
 #include "fb_pool.hxx"
 #include "pool.hxx"
-#include "RootPool.hxx"
+#include "PInstance.hxx"
 #include "lhttp_address.hxx"
 #include "http_address.hxx"
 #include "file_address.hxx"
 #include "cgi_address.hxx"
 #include "nfs_address.hxx"
-#include "event/Loop.hxx"
 #include "util/Cancellable.hxx"
 #include "util/PrintException.hxx"
 
@@ -146,15 +145,13 @@ int main(int argc, char **argv) {
     (void)argc;
     (void)argv;
 
-    EventLoop event_loop;
+    PInstance instance;
 
-    RootPool pool;
-
-    auto *translate_stock = tstock_new(event_loop, "@translation", 0);
+    auto *translate_stock = tstock_new(instance.event_loop, "@translation", 0);
 
     CancellablePointer cancel_ptr;
-    tstock_translate(*translate_stock, *pool,
+    tstock_translate(*translate_stock, instance.root_pool,
                      request, my_translate_handler, nullptr, cancel_ptr);
 
-    event_loop.Dispatch();
+    instance.event_loop.Dispatch();
 }

@@ -2,9 +2,8 @@
 #include "net/ConnectSocket.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
-#include "event/Loop.hxx"
+#include "PInstance.hxx"
 #include "pool.hxx"
-#include "RootPool.hxx"
 #include "AllocatorPtr.hxx"
 #include "balancer.hxx"
 #include "failure.hxx"
@@ -24,8 +23,8 @@
 #include <string.h>
 #include <netdb.h>
 
-struct Context final : ConnectSocketHandler {
-    Balancer *balancer;
+struct Context final : PInstance, ConnectSocketHandler {
+    Balancer *const balancer;
 
     enum {
         NONE, SUCCESS, TIMEOUT, ERROR,
@@ -33,6 +32,11 @@ struct Context final : ConnectSocketHandler {
 
     UniqueSocketDescriptor fd;
     std::exception_ptr error;
+
+    Context()
+        :balancer(balancer_new(event_loop))
+    {
+    }
 
     /* virtual methods from class ConnectSocketHandler */
     void OnSocketConnectSuccess(UniqueSocketDescriptor &&new_fd) override {
@@ -68,16 +72,12 @@ main(int argc, char **argv)
 
     /* initialize */
 
-    EventLoop event_loop;
+    Context ctx;
 
-    RootPool root_pool;
-    LinearPool pool(root_pool, "test", 8192);
+    LinearPool pool(ctx.root_pool, "test", 8192);
     AllocatorPtr alloc(pool);
 
     failure_init();
-
-    Context ctx;
-    ctx.balancer = balancer_new(event_loop);
 
     AddressList address_list;
 
@@ -106,12 +106,12 @@ main(int argc, char **argv)
     /* connect */
 
     CancellablePointer cancel_ptr;
-    client_balancer_connect(event_loop, *pool, *ctx.balancer,
+    client_balancer_connect(ctx.event_loop, *pool, *ctx.balancer,
                             false, SocketAddress::Null(),
                             0, &address_list, 30,
                             ctx, cancel_ptr);
 
-    event_loop.Dispatch();
+    ctx.event_loop.Dispatch();
 
     assert(ctx.result != Context::NONE);
 

@@ -138,7 +138,7 @@ new_connection(BpInstance &instance,
     /* determine the local socket address */
     const StaticSocketAddress local_address = fd.GetLocalAddress();
 
-    pool = pool_new_linear(instance.pool, "connection", 2048);
+    pool = pool_new_linear(instance.root_pool, "connection", 2048);
     pool_set_major(pool);
 
     auto *connection = NewFromPool<BpConnection>(*pool, instance, *pool,

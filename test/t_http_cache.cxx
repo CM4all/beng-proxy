@@ -8,11 +8,10 @@
 #include "header_parser.hxx"
 #include "strmap.hxx"
 #include "http_response.hxx"
-#include "RootPool.hxx"
+#include "PInstance.hxx"
 #include "fb_pool.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream_string.hxx"
-#include "event/Loop.hxx"
 #include "util/Cancellable.hxx"
 
 #include <inline/compiler.h>
@@ -340,40 +339,39 @@ int main(int argc, char **argv) {
     (void)argv;
 
     const ScopeFbPoolInit fb_pool_init;
-    EventLoop event_loop;
+    PInstance instance;
 
-    RootPool pool;
     MyResourceLoader resource_loader;
 
-    cache = http_cache_new(*pool, 1024 * 1024, nullptr,
-                           event_loop, resource_loader);
+    cache = http_cache_new(instance.root_pool, 1024 * 1024, nullptr,
+                           instance.event_loop, resource_loader);
 
     /* request one resource, cold and warm cache */
-    run_cache_test(pool, 0, false);
-    run_cache_test(pool, 0, true);
+    run_cache_test(instance.root_pool, 0, false);
+    run_cache_test(instance.root_pool, 0, true);
 
     /* another resource, different header */
-    run_cache_test(pool, 1, false);
-    run_cache_test(pool, 1, true);
+    run_cache_test(instance.root_pool, 1, false);
+    run_cache_test(instance.root_pool, 1, true);
 
     /* see if the first resource is still cached */
-    run_cache_test(pool, 0, true);
+    run_cache_test(instance.root_pool, 0, true);
 
     /* see if the second resource is still cached */
-    run_cache_test(pool, 1, true);
+    run_cache_test(instance.root_pool, 1, true);
 
     /* query string: should not be cached */
 
-    run_cache_test(pool, 2, false);
+    run_cache_test(instance.root_pool, 2, false);
 
     validated = false;
-    run_cache_test(pool, 2, false);
+    run_cache_test(instance.root_pool, 2, false);
     assert(!validated);
 
     /* double check with a cacheable query string ("Expires" is
        set) */
-    run_cache_test(pool, 3, false);
-    run_cache_test(pool, 3, true);
+    run_cache_test(instance.root_pool, 3, false);
+    run_cache_test(instance.root_pool, 3, true);
 
     http_cache_close(cache);
 }

@@ -1,7 +1,6 @@
 #include "cache.hxx"
 #include "pool.hxx"
-#include "RootPool.hxx"
-#include "event/Loop.hxx"
+#include "PInstance.hxx"
 
 #include <assert.h>
 #include <time.h>
@@ -57,20 +56,18 @@ my_match(const CacheItem *item, void *ctx)
 int main(int argc gcc_unused, char **argv gcc_unused) {
     MyCacheItem *i;
 
-    EventLoop event_loop;
+    PInstance instance;
 
-    RootPool pool;
-
-    auto *cache = new Cache(event_loop, 1024, 4);
+    auto *cache = new Cache(instance.event_loop, 1024, 4);
 
     /* add first item */
 
-    i = my_cache_item_new(pool, 1, 0);
+    i = my_cache_item_new(instance.root_pool, 1, 0);
     cache->Put("foo", *i);
 
     /* overwrite first item */
 
-    i = my_cache_item_new(pool, 2, 0);
+    i = my_cache_item_new(instance.root_pool, 2, 0);
     cache->Put("foo", *i);
 
     /* check overwrite result */
@@ -90,7 +87,7 @@ int main(int argc gcc_unused, char **argv gcc_unused) {
 
     /* add new item */
 
-    i = my_cache_item_new(pool, 1, 1);
+    i = my_cache_item_new(instance.root_pool, 1, 1);
     cache->PutMatch("foo", *i, my_match, match_to_ptr(1));
 
     /* check second item */
@@ -109,7 +106,7 @@ int main(int argc gcc_unused, char **argv gcc_unused) {
 
     /* overwrite first item */
 
-    i = my_cache_item_new(pool, 1, 3);
+    i = my_cache_item_new(instance.root_pool, 1, 3);
     cache->PutMatch("foo", *i, my_match, match_to_ptr(1));
 
     i = (MyCacheItem *)cache->GetMatch("foo", my_match, match_to_ptr(1));
@@ -124,7 +121,7 @@ int main(int argc gcc_unused, char **argv gcc_unused) {
 
     /* overwrite second item */
 
-    i = my_cache_item_new(pool, 2, 4);
+    i = my_cache_item_new(instance.root_pool, 2, 4);
     cache->PutMatch("foo", *i, my_match, match_to_ptr(2));
 
     i = (MyCacheItem *)cache->GetMatch("foo", my_match, match_to_ptr(1));

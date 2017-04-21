@@ -9,12 +9,11 @@
 #include "istream/Pointer.hxx"
 #include "istream/istream_file.hxx"
 #include "fb_pool.hxx"
-#include "RootPool.hxx"
+#include "PInstance.hxx"
 #include "spawn/Config.hxx"
 #include "spawn/ChildOptions.hxx"
 #include "spawn/Registry.hxx"
 #include "spawn/Local.hxx"
-#include "event/Loop.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/Cancellable.hxx"
 
@@ -29,7 +28,9 @@
 #include <unistd.h>
 #include <signal.h>
 
-struct Context final : WasLease, IstreamHandler, HttpResponseHandler {
+struct Context final
+    : PInstance, WasLease, IstreamHandler, HttpResponseHandler {
+
     WasProcess process;
 
     IstreamPointer body;
@@ -155,12 +156,11 @@ int main(int argc, char **argv) {
     SpawnConfig spawn_config;
 
     const ScopeFbPoolInit fb_pool_init;
-    EventLoop event_loop;
 
     ChildOptions child_options;
 
     Context context;
-    ChildProcessRegistry child_process_registry(event_loop);
+    ChildProcessRegistry child_process_registry(context.event_loop);
     child_process_registry.SetVolatile();
     LocalSpawnService spawn_service(spawn_config, child_process_registry);
 
@@ -173,14 +173,12 @@ int main(int argc, char **argv) {
         return 2;
     }
 
-    RootPool pool;
-
     unsigned num_parameters = 0;
     if (parameters != nullptr)
         while (parameters[num_parameters] != nullptr)
             ++num_parameters;
 
-    was_client_request(*pool, event_loop, nullptr,
+    was_client_request(context.root_pool, context.event_loop, nullptr,
                        context.process.control.Get(),
                        context.process.input.Get(),
                        context.process.output.Get(),
@@ -188,11 +186,12 @@ int main(int argc, char **argv) {
                        HTTP_METHOD_GET, "/",
                        nullptr,
                        nullptr, nullptr,
-                       *strmap_new(pool), request_body(event_loop, pool),
+                       *strmap_new(context.root_pool),
+                       request_body(context.event_loop, context.root_pool),
                        { (const char *const*)parameters, num_parameters },
                        context, context.cancel_ptr);
 
-    event_loop.Dispatch();
+    context.event_loop.Dispatch();
 
     return context.error;
 }

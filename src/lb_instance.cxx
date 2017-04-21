@@ -21,7 +21,7 @@
 static constexpr auto &COMPRESS_INTERVAL = EventDuration<600>::value;
 
 LbInstance::LbInstance()
-    :monitors(pool),
+    :monitors(root_pool),
      avahi_client(event_loop, "beng-lb"),
      compress_event(event_loop, BIND_THIS_METHOD(OnCompressTimer)),
      shutdown_listener(event_loop, BIND_THIS_METHOD(ShutdownCallback)),

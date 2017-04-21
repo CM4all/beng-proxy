@@ -5,10 +5,9 @@
 #include "istream/istream_string.hxx"
 #include "istream/sink_fd.hxx"
 #include "direct.hxx"
-#include "event/Loop.hxx"
+#include "PInstance.hxx"
 #include "event/ShutdownListener.hxx"
 #include "fb_pool.hxx"
-#include "RootPool.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "net/RConnectSocket.hxx"
 #include "system/SetupProcess.hxx"
@@ -26,9 +25,7 @@
 #include <errno.h>
 #include <string.h>
 
-struct Context final : Lease {
-    EventLoop event_loop;
-
+struct Context final : PInstance, Lease {
     struct pool *pool;
 
     ShutdownListener shutdown_listener;
@@ -235,8 +232,7 @@ int main(int argc, char **argv) {
 
     ctx.shutdown_listener.Enable();
 
-    RootPool root_pool;
-    ctx.pool = pool = pool_new_linear(root_pool, "test", 8192);
+    ctx.pool = pool = pool_new_linear(ctx.root_pool, "test", 8192);
 
     /* run test */
 

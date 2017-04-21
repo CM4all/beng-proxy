@@ -9,9 +9,8 @@
 #include "istream/istream.hxx"
 #include "istream/istream_iconv.hxx"
 #include "pool.hxx"
-#include "RootPool.hxx"
+#include "PInstance.hxx"
 #include "session.hxx"
-#include "event/Loop.hxx"
 #include "util/Cancellable.hxx"
 
 #include <glib.h>
@@ -99,17 +98,17 @@ ResolveWidget(struct pool &pool,
 }
 
 static void
-test_abort_resolver(struct pool *pool)
+test_abort_resolver()
 {
+    PInstance instance;
     const char *uri;
     bool ret;
     struct parsed_uri parsed_uri;
-    EventLoop event_loop;
     struct processor_env env;
-    env.event_loop = &event_loop;
+    env.event_loop = &instance.event_loop;
     Istream *istream;
 
-    pool = pool_new_linear(pool, "test", 4096);
+    auto *pool = pool_new_linear(instance.root_pool, "test", 4096);
 
     uri = "/beng.html";
     ret = parsed_uri.Parse(uri);
@@ -130,5 +129,5 @@ int main(int argc, char **argv) {
     (void)argc;
     (void)argv;
 
-    test_abort_resolver(RootPool());
+    test_abort_resolver();
 }

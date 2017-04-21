@@ -1,15 +1,14 @@
 #include "was/was_server.hxx"
 #include "direct.hxx"
-#include "RootPool.hxx"
+#include "PInstance.hxx"
 #include "fb_pool.hxx"
-#include "event/Loop.hxx"
 
 #include <daemon/log.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 
-struct Instance final : WasServerHandler {
+struct Instance final : PInstance, WasServerHandler {
     WasServer *server;
 
     void OnWasRequest(gcc_unused struct pool &pool,
@@ -35,16 +34,12 @@ int main(int argc, char **argv) {
     direct_global_init();
     const ScopeFbPoolInit fb_pool_init;
 
-    EventLoop event_loop;
-
-    RootPool pool;
-
     Instance instance;
-    instance.server = was_server_new(pool, event_loop,
+    instance.server = was_server_new(instance.root_pool, instance.event_loop,
                                      control_fd, in_fd, out_fd,
                                      instance);
 
-    event_loop.Dispatch();
+    instance.event_loop.Dispatch();
 
     was_server_free(instance.server);
 }

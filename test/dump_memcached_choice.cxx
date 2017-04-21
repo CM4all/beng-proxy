@@ -1,17 +1,16 @@
+#include "PInstance.hxx"
 #include "memcached/memcached_client.hxx"
 #include "http_cache_document.hxx"
 #include "lease.hxx"
 #include "system/SetupProcess.hxx"
 #include "strmap.hxx"
 #include "tpool.hxx"
-#include "RootPool.hxx"
 #include "serialize.hxx"
 #include "istream/sink_buffer.hxx"
 #include "istream/istream.hxx"
 #include "direct.hxx"
 #include "pool.hxx"
 #include "fb_pool.hxx"
-#include "event/Loop.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "net/RConnectSocket.hxx"
 #include "util/ConstBuffer.hxx"
@@ -27,7 +26,7 @@
 #include <errno.h>
 #include <string.h>
 
-struct Context final : Lease{
+struct Context final : PInstance, Lease {
     struct pool *pool;
 
     UniqueSocketDescriptor s;
@@ -181,17 +180,15 @@ int main(int argc, char **argv) {
 
     SetupProcess();
 
-    EventLoop event_loop;
-
-    RootPool root_pool;
-    ctx.pool = pool_new_linear(root_pool, "test", 8192);
+    ctx.pool = pool_new_linear(ctx.root_pool, "test", 8192);
 
     key = p_strcat(ctx.pool, argv[2], " choice", NULL);
     printf("key='%s'\n", key);
 
     /* send memcached request */
 
-    memcached_client_invoke(ctx.pool, event_loop, ctx.s.Get(), FdType::FD_TCP,
+    memcached_client_invoke(ctx.pool, ctx.event_loop,
+                            ctx.s.Get(), FdType::FD_TCP,
                             ctx,
                             MEMCACHED_OPCODE_GET,
                             NULL, 0,
@@ -202,7 +199,7 @@ int main(int argc, char **argv) {
     pool_unref(ctx.pool);
     pool_commit();
 
-    event_loop.Dispatch();
+    ctx.event_loop.Dispatch();
 
     /* cleanup */
 

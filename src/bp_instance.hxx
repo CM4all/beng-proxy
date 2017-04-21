@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_INSTANCE_HXX
 #define BENG_PROXY_INSTANCE_HXX
 
-#include "RootPool.hxx"
+#include "PInstance.hxx"
 #include "bp_cmdline.hxx"
 #include "bp_config.hxx"
 #include "bp_listener.hxx"
@@ -44,13 +44,9 @@ struct NfsCache;
 class HttpCache;
 class FilterCache;
 
-struct BpInstance final : ControlHandler {
-    RootPool pool;
-
+struct BpInstance final : PInstance, ControlHandler {
     BpCmdLine cmdline;
     BpConfig config;
-
-    EventLoop event_loop;
 
     uint64_t http_request_counter = 0;
 

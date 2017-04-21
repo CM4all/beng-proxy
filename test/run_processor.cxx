@@ -1,6 +1,6 @@
 #include "StdioSink.hxx"
 #include "FailingResourceLoader.hxx"
-#include "RootPool.hxx"
+#include "PInstance.hxx"
 #include "fb_pool.hxx"
 #include "processor.hxx"
 #include "penv.hxx"
@@ -11,7 +11,6 @@
 #include "rewrite_uri.hxx"
 #include "istream/istream_file.hxx"
 #include "istream/istream_string.hxx"
-#include "event/Loop.hxx"
 #include "util/StringView.hxx"
 
 /*
@@ -71,9 +70,7 @@ int main(int argc, char **argv) {
     (void)argv;
 
     const ScopeFbPoolInit fb_pool_init;
-    EventLoop event_loop;
-
-    RootPool pool;
+    PInstance instance;
 
     uri = "/beng.html";
     ret = parsed_uri.Parse(uri);
@@ -82,13 +79,13 @@ int main(int argc, char **argv) {
         exit(2);
     }
 
-    Widget widget(*pool, &root_widget_class);
+    Widget widget(instance.root_pool, &root_widget_class);
 
     SessionId session_id;
     session_id.Generate();
 
     FailingResourceLoader resource_loader;
-    struct processor_env env(pool, event_loop,
+    struct processor_env env(instance.root_pool, instance.event_loop,
                              resource_loader, resource_loader,
                              nullptr, nullptr,
                              "localhost:8080",
@@ -102,8 +99,9 @@ int main(int argc, char **argv) {
                              HTTP_METHOD_GET, nullptr);
 
     Istream *result =
-        processor_process(*pool,
-                          *istream_file_new(event_loop, *pool,
+        processor_process(instance.root_pool,
+                          *istream_file_new(instance.event_loop,
+                                            instance.root_pool,
                                             "/dev/stdin", (off_t)-1,
                                             NULL),
                           widget, env, PROCESSOR_CONTAINER);

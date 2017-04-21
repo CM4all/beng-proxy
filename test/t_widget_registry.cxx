@@ -10,8 +10,7 @@
 #include "widget_class.hxx"
 #include "AllocatorPtr.hxx"
 #include "pool.hxx"
-#include "RootPool.hxx"
-#include "event/Loop.hxx"
+#include "PInstance.hxx"
 #include "util/Cancellable.hxx"
 
 #include <string.h>
@@ -26,7 +25,7 @@ public:
     }
 };
 
-struct Context {
+struct Context : PInstance {
     bool got_class = false;
     const WidgetClass *cls = nullptr;
 
@@ -75,15 +74,15 @@ tstock_translate(gcc_unused TranslateStock &stock, struct pool &pool,
 
 /** normal run */
 static void
-test_normal(struct pool *pool, EventLoop &event_loop)
+test_normal()
 {
     TranslateStock translate_stock;
     Context data;
     CancellablePointer cancel_ptr;
 
-    pool = pool_new_linear(pool, "test", 8192);
+    auto *pool = pool_new_linear(data.root_pool, "test", 8192);
 
-    auto *tcache = translate_cache_new(*pool, event_loop,
+    auto *tcache = translate_cache_new(*pool, data.event_loop,
                                        translate_stock, 1024);
 
     widget_class_lookup(*pool, *pool, *tcache, "sync",
@@ -108,15 +107,15 @@ test_normal(struct pool *pool, EventLoop &event_loop)
 
 /** caller aborts */
 static void
-test_abort(struct pool *pool, EventLoop &event_loop)
+test_abort()
 {
     TranslateStock translate_stock;
     Context data;
     CancellablePointer cancel_ptr;
 
-    pool = pool_new_linear(pool, "test", 8192);
+    auto *pool = pool_new_linear(data.root_pool, "test", 8192);
 
-    auto *tcache = translate_cache_new(*pool, event_loop,
+    auto *tcache = translate_cache_new(*pool, data.event_loop,
                                        translate_stock, 1024);
 
     widget_class_lookup(*pool, *pool, *tcache,  "block",
@@ -149,9 +148,6 @@ test_abort(struct pool *pool, EventLoop &event_loop)
 int
 main(gcc_unused int argc, gcc_unused char **argv)
 {
-    EventLoop event_loop;
-    RootPool root_pool;
-
-    test_normal(root_pool, event_loop);
-    test_abort(root_pool, event_loop);
+    test_normal();
+    test_abort();
 }

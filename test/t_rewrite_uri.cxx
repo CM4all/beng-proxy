@@ -7,7 +7,7 @@
 #include "widget_class.hxx"
 #include "widget_resolver.hxx"
 #include "uri/uri_parser.hxx"
-#include "RootPool.hxx"
+#include "PInstance.hxx"
 #include "escape_pool.hxx"
 #include "escape_html.hxx"
 #include "istream/istream.hxx"
@@ -15,7 +15,6 @@
 #include "istream/sink_gstring.hxx"
 #include "penv.hxx"
 #include "inline_widget.hxx"
-#include "event/Loop.hxx"
 #include "util/Cancellable.hxx"
 
 #include <glib.h>
@@ -240,13 +239,12 @@ assert_rewrite_check(EventLoop &event_loop,
 
 int main(gcc_unused int argc, gcc_unused char **argv)
 {
-    EventLoop event_loop;
-    RootPool root_pool;
+    PInstance instance;
+    auto &event_loop = instance.event_loop;
 
     bool ret;
-    struct pool *pool;
 
-    pool = pool_new_libc(root_pool, "pool");
+    auto *pool = pool_new_libc(instance.root_pool, "pool");
 
     /* set up input objects */
 

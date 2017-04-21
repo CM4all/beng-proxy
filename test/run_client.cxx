@@ -10,8 +10,7 @@
 #include "istream/istream.hxx"
 #include "istream/sink_fd.hxx"
 #include "direct.hxx"
-#include "tpool.hxx"
-#include "RootPool.hxx"
+#include "PInstance.hxx"
 #include "fb_pool.hxx"
 #include "ssl/ssl_init.hxx"
 #include "ssl/ssl_client.hxx"
@@ -20,7 +19,6 @@
 #include "net/ConnectSocket.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
-#include "event/Loop.hxx"
 #include "event/ShutdownListener.hxx"
 #include "util/Cancellable.hxx"
 #include "util/PrintException.hxx"
@@ -80,8 +78,8 @@ parse_url(struct parsed_url *dest, const char *url)
     return true;
 }
 
-struct Context final : ConnectSocketHandler, Lease, HttpResponseHandler {
-    EventLoop event_loop;
+struct Context final
+    : PInstance, ConnectSocketHandler, Lease, HttpResponseHandler {
 
     struct pool *pool;
 
@@ -352,9 +350,7 @@ main(int argc, char **argv)
 
     ctx.shutdown_listener.Enable();
 
-    RootPool root_pool;
-
-    struct pool *pool = pool_new_linear(root_pool, "test", 8192);
+    struct pool *pool = pool_new_linear(ctx.root_pool, "test", 8192);
     ctx.pool = pool;
 
     /* open request body */

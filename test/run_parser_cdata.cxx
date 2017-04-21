@@ -1,9 +1,8 @@
 #include "xml_parser.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream_file.hxx"
-#include "event/Loop.hxx"
+#include "PInstance.hxx"
 #include "fb_pool.hxx"
-#include "RootPool.hxx"
 
 #include <glib.h>
 
@@ -48,13 +47,11 @@ int main(int argc, char **argv) {
     (void)argv;
 
     const ScopeFbPoolInit fb_pool_init;
-    EventLoop event_loop;
+    PInstance instance;
 
-    RootPool root_pool;
+    pool = pool_new_linear(instance.root_pool, "test", 8192);
 
-    pool = pool_new_linear(root_pool, "test", 8192);
-
-    istream = istream_file_new(event_loop, *pool,
+    istream = istream_file_new(instance.event_loop, *pool,
                                "/dev/stdin", (off_t)-1, nullptr);
 
     MyXmlParserHandler handler;

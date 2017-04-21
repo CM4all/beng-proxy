@@ -6,7 +6,7 @@
 #include "http_address.hxx"
 #include "strmap.hxx"
 #include "header_parser.hxx"
-#include "RootPool.hxx"
+#include "PInstance.hxx"
 #include "ResourceLoader.hxx"
 #include "http_response.hxx"
 #include "processor.hxx"
@@ -22,7 +22,6 @@
 #include "session.hxx"
 #include "suffix_registry.hxx"
 #include "address_suffix_registry.hxx"
-#include "event/Loop.hxx"
 #include "util/Cancellable.hxx"
 
 #include <inline/compiler.h>
@@ -276,12 +275,12 @@ int main(int argc, char **argv) {
     (void)argc;
     (void)argv;
 
-    EventLoop event_loop;
+    PInstance instance;
 
     crash_global_init();
-    session_manager_init(event_loop, std::chrono::minutes(30), 0, 0);
+    session_manager_init(instance.event_loop, std::chrono::minutes(30), 0, 0);
 
-    test_cookie_client(RootPool());
+    test_cookie_client(instance.root_pool);
 
     session_manager_deinit();
     crash_global_deinit();

@@ -82,7 +82,7 @@ RefreshExternalSession(BpInstance &instance, Session &session)
 
     session.next_external_keepalive = now + session.external_keepalive;
 
-    struct pool *pool = pool_new_linear(instance.pool,
+    struct pool *pool = pool_new_linear(instance.root_pool,
                                         "external_session_refresh", 4096);
 
     auto *refresh = NewFromPool<ExternalSessionRefresh>(*pool, *pool,

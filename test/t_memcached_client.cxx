@@ -9,8 +9,7 @@
 #include "istream/istream.hxx"
 #include "fb_pool.hxx"
 #include "pool.hxx"
-#include "RootPool.hxx"
-#include "event/Loop.hxx"
+#include "PInstance.hxx"
 #include "util/Cast.hxx"
 #include "util/Cancellable.hxx"
 
@@ -60,9 +59,7 @@ connect_fake_server()
     return client_socket.Get();
 }
 
-struct Context final : Lease, IstreamHandler {
-    EventLoop event_loop;
-
+struct Context final : PInstance, Lease, IstreamHandler {
     struct pool *pool;
 
     unsigned data_blocking = 0;
@@ -486,11 +483,11 @@ test_request_value_abort(struct pool *pool, Context *c)
  */
 
 static void
-run_test(struct pool *pool, void (*test)(struct pool *pool, Context *c))
+run_test(void (*test)(struct pool *pool, Context *c))
 {
     Context c;
 
-    c.pool = pool_new_linear(pool, "test", 16384);
+    c.pool = pool_new_linear(c.root_pool, "test", 16384);
     test(c.pool, &c);
     pool_commit();
 }
@@ -499,21 +496,17 @@ int main(int argc, char **argv) {
     (void)argc;
     (void)argv;
 
-    EventLoop event_loop;
-
     SetupProcess();
 
     direct_global_init();
     const ScopeFbPoolInit fb_pool_init;
 
-    RootPool pool;
-
-    run_test(pool, test_basic);
-    run_test(pool, test_close_early);
-    run_test(pool, test_close_late);
-    run_test(pool, test_close_data);
-    run_test(pool, test_abort);
-    run_test(pool, test_request_value);
-    run_test(pool, test_request_value_close);
-    run_test(pool, test_request_value_abort);
+    run_test(test_basic);
+    run_test(test_close_early);
+    run_test(test_close_late);
+    run_test(test_close_data);
+    run_test(test_abort);
+    run_test(test_request_value);
+    run_test(test_request_value_close);
+    run_test(test_request_value_abort);
 }

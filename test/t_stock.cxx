@@ -2,9 +2,8 @@
 #include "stock/Class.hxx"
 #include "stock/GetHandler.hxx"
 #include "stock/Item.hxx"
-#include "event/Loop.hxx"
 #include "pool.hxx"
-#include "RootPool.hxx"
+#include "PInstance.hxx"
 #include "util/Cancellable.hxx"
 
 #include <glib.h>
@@ -99,12 +98,13 @@ int main(gcc_unused int argc, gcc_unused char **argv)
     CancellablePointer cancel_ptr;
     StockItem *item, *second, *third;
 
-    EventLoop event_loop;
-    RootPool pool;
+    PInstance instance;
 
-    stock = new Stock(event_loop, my_stock_class, nullptr, "test", 3, 8);
+    stock = new Stock(instance.event_loop, my_stock_class, nullptr, "test", 3, 8);
 
     MyStockGetHandler handler;
+
+    struct pool *pool = instance.root_pool;
 
     /* create first item */
 
@@ -118,7 +118,7 @@ int main(gcc_unused int argc, gcc_unused char **argv)
     /* release first item */
 
     stock->Put(*item, false);
-    event_loop.LoopNonBlock();
+    instance.event_loop.LoopNonBlock();
     assert(num_create == 1 && num_fail == 0);
     assert(num_borrow == 0 && num_release == 1 && num_destroy == 0);
 
@@ -186,7 +186,7 @@ int main(gcc_unused int argc, gcc_unused char **argv)
     /* return third item */
 
     stock->Put(*third, false);
-    event_loop.LoopNonBlock();
+    instance.event_loop.LoopNonBlock();
     assert(num_create == 3 && num_fail == 1);
     assert(num_borrow == 2 && num_release == 2 && num_destroy == 1);
     assert(got_item);
@@ -197,7 +197,7 @@ int main(gcc_unused int argc, gcc_unused char **argv)
     got_item = false;
     last_item = nullptr;
     stock->Put(*second, true);
-    event_loop.LoopNonBlock();
+    instance.event_loop.LoopNonBlock();
     assert(num_create == 4 && num_fail == 1);
     assert(num_borrow == 2 && num_release == 2 && num_destroy == 2);
     assert(got_item);
