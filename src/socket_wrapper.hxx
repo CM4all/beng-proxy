@@ -50,12 +50,13 @@ class SocketWrapper {
 
     SocketEvent read_event, write_event;
 
-    SocketHandler *handler;
+    SocketHandler &handler;
 
 public:
-    SocketWrapper(EventLoop &event_loop)
+    SocketWrapper(EventLoop &event_loop, SocketHandler &_handler)
         :read_event(event_loop, BIND_THIS_METHOD(ReadEventCallback)),
-         write_event(event_loop, BIND_THIS_METHOD(WriteEventCallback)) {}
+         write_event(event_loop, BIND_THIS_METHOD(WriteEventCallback)),
+         handler(_handler) {}
 
     SocketWrapper(const SocketWrapper &) = delete;
 
@@ -63,15 +64,13 @@ public:
         return read_event.GetEventLoop();
     }
 
-    void Init(int _fd, FdType _fd_type,
-              SocketHandler &_handler);
+    void Init(int _fd, FdType _fd_type);
 
     /**
      * Move the socket from another #SocketWrapper instance.  This
-     * disables scheduled events and installs a new handler.
+     * disables scheduled events.
      */
-    void Init(SocketWrapper &&src,
-              SocketHandler &_handler);
+    void Init(SocketWrapper &&src);
 
     /**
      * Shut down the socket gracefully, allowing the TCP stack to

@@ -444,7 +444,7 @@ BufferedSocket::Init(int _fd, FdType _fd_type,
     assert(_handler.write != nullptr);
     assert(_handler.error != nullptr);
 
-    base.Init(_fd, _fd_type, *this);
+    base.Init(_fd, _fd_type);
 
     read_timeout = _read_timeout;
     write_timeout = _write_timeout;
@@ -496,7 +496,7 @@ BufferedSocket::Init(BufferedSocket &&src,
     assert(_handler.write != nullptr);
     assert(_handler.error != nullptr);
 
-    base.Init(std::move(src.base), *this);
+    base.Init(std::move(src.base));
 
     read_timeout = _read_timeout;
     write_timeout = _write_timeout;

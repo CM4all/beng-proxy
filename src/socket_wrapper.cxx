@@ -20,9 +20,9 @@ SocketWrapper::ReadEventCallback(unsigned events)
     assert(IsValid());
 
     if (events & EV_TIMEOUT)
-        handler->OnSocketTimeout();
+        handler.OnSocketTimeout();
     else
-        handler->OnSocketRead();
+        handler.OnSocketRead();
 
     pool_commit();
 }
@@ -33,16 +33,15 @@ SocketWrapper::WriteEventCallback(unsigned events)
     assert(IsValid());
 
     if (events & EV_TIMEOUT)
-        handler->OnSocketTimeout();
+        handler.OnSocketTimeout();
     else
-        handler->OnSocketWrite();
+        handler.OnSocketWrite();
 
     pool_commit();
 }
 
 void
-SocketWrapper::Init(int _fd, FdType _fd_type,
-                    SocketHandler &_handler)
+SocketWrapper::Init(int _fd, FdType _fd_type)
 {
     assert(_fd >= 0);
 
@@ -52,15 +51,12 @@ SocketWrapper::Init(int _fd, FdType _fd_type,
 
     read_event.Set(fd.Get(), EV_READ|EV_PERSIST);
     write_event.Set(fd.Get(), EV_WRITE|EV_PERSIST);
-
-    handler = &_handler;
 }
 
 void
-SocketWrapper::Init(SocketWrapper &&src,
-                    SocketHandler &_handler)
+SocketWrapper::Init(SocketWrapper &&src)
 {
-    Init(src.fd.Get(), src.fd_type, _handler);
+    Init(src.fd.Get(), src.fd_type);
     src.Abandon();
 }
 
