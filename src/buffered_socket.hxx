@@ -253,7 +253,7 @@ struct BufferedSocketHandler {
  *
  * - destroyed (after buffered_socket_destroy())
  */
-class BufferedSocket final : DestructAnchor, LeakDetector {
+class BufferedSocket final : DestructAnchor, LeakDetector, SocketHandler {
     SocketWrapper base;
 
     const struct timeval *read_timeout, *write_timeout;
@@ -557,6 +557,11 @@ private:
     void DeferReadCallback() {
         Read(false);
     }
+
+    /* virtual methods from class SocketHandler */
+    bool OnSocketRead() override;
+    bool OnSocketWrite() override;
+    bool OnSocketTimeout() override;
 };
 
 #endif

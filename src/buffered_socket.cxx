@@ -397,45 +397,36 @@ BufferedSocket::TryRead()
  */
 
 bool
-BufferedSocket::OnWrite(void *ctx)
+BufferedSocket::OnSocketWrite()
 {
-    BufferedSocket *s = (BufferedSocket *)ctx;
-    assert(!s->destroyed);
-    assert(!s->ended);
+    assert(!destroyed);
+    assert(!ended);
 
-    return s->handler->write(s->handler_ctx);
+    return handler->write(handler_ctx);
 }
 
 bool
-BufferedSocket::OnRead(void *ctx)
+BufferedSocket::OnSocketRead()
 {
-    BufferedSocket *s = (BufferedSocket *)ctx;
-    assert(!s->destroyed);
-    assert(!s->ended);
+    assert(!destroyed);
+    assert(!ended);
 
-    return s->TryRead();
+    return TryRead();
 }
 
 bool
-BufferedSocket::OnTimeout(void *ctx)
+BufferedSocket::OnSocketTimeout()
 {
-    BufferedSocket *s = (BufferedSocket *)ctx;
-    assert(!s->destroyed);
-    assert(!s->ended);
+    assert(!destroyed);
+    assert(!ended);
 
-    if (s->handler->timeout != nullptr)
-        return s->handler->timeout(s->handler_ctx);
+    if (handler->timeout != nullptr)
+        return handler->timeout(handler_ctx);
 
-    s->handler->error(std::make_exception_ptr(std::runtime_error("Timeout")),
-                      s->handler_ctx);
+    handler->error(std::make_exception_ptr(std::runtime_error("Timeout")),
+                   handler_ctx);
     return false;
 }
-
-const struct socket_handler BufferedSocket::buffered_socket_handler = {
-    .read = OnRead,
-    .write = OnWrite,
-    .timeout = OnTimeout,
-};
 
 /*
  * public API
@@ -453,8 +444,7 @@ BufferedSocket::Init(int _fd, FdType _fd_type,
     assert(_handler.write != nullptr);
     assert(_handler.error != nullptr);
 
-    base.Init(_fd, _fd_type,
-              buffered_socket_handler, this);
+    base.Init(_fd, _fd_type, *this);
 
     read_timeout = _read_timeout;
     write_timeout = _write_timeout;
@@ -506,8 +496,7 @@ BufferedSocket::Init(BufferedSocket &&src,
     assert(_handler.write != nullptr);
     assert(_handler.error != nullptr);
 
-    base.Init(std::move(src.base),
-              buffered_socket_handler, this);
+    base.Init(std::move(src.base), *this);
 
     read_timeout = _read_timeout;
     write_timeout = _write_timeout;

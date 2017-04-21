@@ -20,9 +20,9 @@ SocketWrapper::ReadEventCallback(unsigned events)
     assert(IsValid());
 
     if (events & EV_TIMEOUT)
-        handler->timeout(handler_ctx);
+        handler->OnSocketTimeout();
     else
-        handler->read(handler_ctx);
+        handler->OnSocketRead();
 
     pool_commit();
 }
@@ -33,20 +33,18 @@ SocketWrapper::WriteEventCallback(unsigned events)
     assert(IsValid());
 
     if (events & EV_TIMEOUT)
-        handler->timeout(handler_ctx);
+        handler->OnSocketTimeout();
     else
-        handler->write(handler_ctx);
+        handler->OnSocketWrite();
 
     pool_commit();
 }
 
 void
 SocketWrapper::Init(int _fd, FdType _fd_type,
-                    const struct socket_handler &_handler, void *_ctx)
+                    SocketHandler &_handler)
 {
     assert(_fd >= 0);
-    assert(_handler.read != nullptr);
-    assert(_handler.write != nullptr);
 
     fd = SocketDescriptor::FromFileDescriptor(FileDescriptor(_fd));
     fd_type = _fd_type;
@@ -56,14 +54,13 @@ SocketWrapper::Init(int _fd, FdType _fd_type,
     write_event.Set(fd.Get(), EV_WRITE|EV_PERSIST);
 
     handler = &_handler;
-    handler_ctx = _ctx;
 }
 
 void
 SocketWrapper::Init(SocketWrapper &&src,
-                    const struct socket_handler &_handler, void *_ctx)
+                    SocketHandler &_handler)
 {
-    Init(src.fd.Get(), src.fd_type, _handler, _ctx);
+    Init(src.fd.Get(), src.fd_type, _handler);
     src.Abandon();
 }
 

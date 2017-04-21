@@ -20,25 +20,26 @@
 
 template<typename T> class ForeignFifoBuffer;
 
-struct socket_handler {
+class SocketHandler {
+public:
     /**
      * The socket is ready for reading.
      *
      * @return false when the socket has been closed
      */
-    bool (*read)(void *ctx);
+    virtual bool OnSocketRead() = 0;
 
     /**
      * The socket is ready for writing.
      *
      * @return false when the socket has been closed
      */
-    bool (*write)(void *ctx);
+    virtual bool OnSocketWrite() = 0;
 
     /**
      * @return false when the socket has been closed
      */
-    bool (*timeout)(void *ctx);
+    virtual bool OnSocketTimeout() = 0;
 };
 
 class SocketWrapper {
@@ -49,8 +50,7 @@ class SocketWrapper {
 
     SocketEvent read_event, write_event;
 
-    const struct socket_handler *handler;
-    void *handler_ctx;
+    SocketHandler *handler;
 
 public:
     SocketWrapper(EventLoop &event_loop)
@@ -64,14 +64,14 @@ public:
     }
 
     void Init(int _fd, FdType _fd_type,
-              const struct socket_handler &_handler, void *_ctx);
+              SocketHandler &_handler);
 
     /**
      * Move the socket from another #SocketWrapper instance.  This
      * disables scheduled events and installs a new handler.
      */
     void Init(SocketWrapper &&src,
-              const struct socket_handler &_handler, void *_ctx);
+              SocketHandler &_handler);
 
     /**
      * Shut down the socket gracefully, allowing the TCP stack to
