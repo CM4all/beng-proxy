@@ -106,6 +106,10 @@ void
 Request::DetermineSession()
 {
     const char *user_agent = request.headers.Get("user-agent");
+
+    /* note: this method is called very early in the request handler,
+       and the "stateless" flag may later be updated by
+       MakeStateless() if the TranslateResponse suggests to do so */
     stateless = user_agent == nullptr || user_agent_is_bot(user_agent);
     if (stateless) {
         /* don't propagate a stale session id to processed URIs */
