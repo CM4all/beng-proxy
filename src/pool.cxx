@@ -30,12 +30,13 @@
 #endif
 
 #if defined(__x86_64__) || defined(__PPC64__)
-static constexpr size_t ALIGN_SIZE = 8;
-static constexpr size_t ALIGN_MASK = 0x7;
+static constexpr unsigned ALIGN_BITS = 3;
 #else
-static constexpr size_t ALIGN_SIZE = 4;
-static constexpr size_t ALIGN_MASK = 0x3;
+static constexpr unsigned ALIGN_BITS = 2;
 #endif
+
+static constexpr size_t ALIGN_SIZE = 1 << ALIGN_BITS;
+static constexpr size_t ALIGN_MASK = ALIGN_SIZE - 1;
 
 static constexpr unsigned RECYCLER_MAX_POOLS = 256;
 static constexpr unsigned RECYCLER_MAX_LINEAR_AREAS = 256;
