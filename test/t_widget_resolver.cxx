@@ -4,7 +4,6 @@
 #include "widget_class.hxx"
 #include "pool.hxx"
 #include "RootPool.hxx"
-#include "event/Loop.hxx"
 #include "util/Cancellable.hxx"
 #include "util/Cast.hxx"
 
@@ -263,8 +262,6 @@ test_two_abort(struct pool *pool)
  */
 
 int main(int argc __attr_unused, char **argv __attr_unused) {
-    EventLoop event_loop;
-
     /* run test suite */
 
     test_normal(RootPool());
