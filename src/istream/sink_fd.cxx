@@ -186,7 +186,6 @@ SinkFd::EventCallback(unsigned)
         event.Delete();
 
     pool_unref(pool);
-    pool_commit();
 }
 
 /*

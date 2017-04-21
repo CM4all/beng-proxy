@@ -127,8 +127,6 @@ ConnectSocket::EventCallback(unsigned events)
     }
 
     Delete();
-
-    pool_commit();
 }
 
 

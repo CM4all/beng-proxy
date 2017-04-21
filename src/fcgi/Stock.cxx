@@ -159,7 +159,6 @@ FcgiConnection::OnSocketEvent(unsigned events)
     }
 
     InvokeIdleDisconnect();
-    pool_commit();
 }
 
 /*

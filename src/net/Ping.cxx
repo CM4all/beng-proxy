@@ -159,8 +159,6 @@ PingClient::EventCallback(unsigned events)
         handler.PingTimeout();
         pool_unref(&pool);
     }
-
-    pool_commit();
 }
 
 /*

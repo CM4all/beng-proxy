@@ -78,7 +78,6 @@ private:
             daemon_log(2, "unexpected data in idle translation server connection\n");
 
         InvokeIdleDisconnect();
-        pool_commit();
     }
 
 public:

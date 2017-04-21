@@ -17,7 +17,6 @@
 #include "spawn/JailParams.hxx"
 #include "spawn/Prepared.hxx"
 #include "GException.hxx"
-#include "pool.hxx"
 #include "event/SocketEvent.hxx"
 
 #include <daemon/log.h>
@@ -101,7 +100,6 @@ LhttpConnection::EventCallback(unsigned events)
     }
 
     InvokeIdleDisconnect();
-    pool_commit();
 }
 
 /*

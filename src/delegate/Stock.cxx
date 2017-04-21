@@ -107,7 +107,6 @@ DelegateProcess::SocketEventCallback(unsigned events)
     }
 
     InvokeIdleDisconnect();
-    pool_commit();
 }
 
 /*

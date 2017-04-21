@@ -327,8 +327,6 @@ WasInput::EventCallback(unsigned events)
     }
 
     TryRead();
-
-    pool_commit();
 }
 
 /*

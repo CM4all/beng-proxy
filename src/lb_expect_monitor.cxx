@@ -115,7 +115,6 @@ ExpectMonitor::EventCallback(unsigned events)
 
     pool_unref(&pool);
     delete this;
-    pool_commit();
 }
 
 void
@@ -148,7 +147,6 @@ ExpectMonitor::DelayCallback()
 
     pool_unref(&pool);
     delete this;
-    pool_commit();
 }
 
 /*

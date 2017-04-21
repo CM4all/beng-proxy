@@ -325,7 +325,6 @@ HttpServerConnection::IdleTimeoutCallback()
                : (request.read_state == Request::HEADERS ? "header" : "read"),
                remote_host_and_port);
     Cancel();
-    pool_commit();
 }
 
 inline

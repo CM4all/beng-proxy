@@ -7,7 +7,6 @@
 #include "socket_wrapper.hxx"
 #include "direct.hxx"
 #include "io/Buffered.hxx"
-#include "pool.hxx"
 
 #include <socket/util.h>
 
@@ -23,8 +22,6 @@ SocketWrapper::ReadEventCallback(unsigned events)
         handler.OnSocketTimeout();
     else
         handler.OnSocketRead();
-
-    pool_commit();
 }
 
 void
@@ -36,8 +33,6 @@ SocketWrapper::WriteEventCallback(unsigned events)
         handler.OnSocketTimeout();
     else
         handler.OnSocketWrite();
-
-    pool_commit();
 }
 
 void

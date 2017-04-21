@@ -103,8 +103,6 @@ WasOutput::WriteEventCallback(unsigned events)
 
     if (CheckLength())
         input.Read();
-
-    pool_commit();
 }
 
 

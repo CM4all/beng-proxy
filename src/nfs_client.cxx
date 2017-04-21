@@ -796,8 +796,6 @@ NfsFile::ExpireCallback()
         state = EXPIRED;
         client.ExpireFile(*this);
     }
-
-    pool_commit();
 }
 
 inline void
@@ -874,8 +872,6 @@ NfsClient::TimeoutCallback()
                                             "Mount timeout");
         MountError(error);
     }
-
-    pool_commit();
 }
 
 /*
