@@ -320,6 +320,14 @@ struct Request final : HttpResponseHandler, DelegateHandler, Cancellable {
      */
     void DiscardRequestBody();
 
+private:
+    const StringMap *GetCookies();
+    const char *GetCookieSessionId();
+    const char *GetUriSessionId();
+
+    SessionLease LoadSession(const char *_session_id);
+
+public:
     void DetermineSession();
 
     SessionLease GetSession() const {

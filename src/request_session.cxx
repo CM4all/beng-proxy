@@ -20,41 +20,37 @@
 
 #include <daemon/log.h>
 
-static const StringMap *
-request_get_cookies(Request &request)
+inline const StringMap *
+Request::GetCookies()
 {
-    if (request.cookies != nullptr)
-        return request.cookies;
+    if (cookies != nullptr)
+        return cookies;
 
-    const char *cookie = request.request.headers.Get("cookie");
+    const char *cookie = request.headers.Get("cookie");
     if (cookie == nullptr)
         return nullptr;
 
-    request.cookies = NewFromPool<StringMap>(request.pool,
-                                             cookie_map_parse(request.pool,
-                                                              cookie));
-
-    return request.cookies;
+    return cookies = NewFromPool<StringMap>(pool,
+                                            cookie_map_parse(pool, cookie));
 }
 
-static SessionLease
-request_load_session(Request &request, const char *session_id)
+inline SessionLease
+Request::LoadSession(const char *_session_id)
 {
-    assert(!request.stateless);
-    assert(!request.session_id.IsDefined());
-    assert(session_id != nullptr);
+    assert(!stateless);
+    assert(!session_id.IsDefined());
+    assert(_session_id != nullptr);
 
-    if (!request.session_id.Parse(session_id))
+    if (!session_id.Parse(_session_id))
         return nullptr;
 
-    auto session = request.GetSession();
+    auto session = GetSession();
     if (session) {
         if (!session->translate.IsNull())
-            request.translate.request.session = DupBuffer(request.pool,
-                                                          session->translate);
+            translate.request.session = DupBuffer(pool, session->translate);
 
         if (!session->cookie_sent)
-            request.send_session_cookie = true;
+            send_session_cookie = true;
 
         session->is_new = false;
 
@@ -83,23 +79,21 @@ build_session_cookie_name(struct pool *pool, const BpConfig *config,
     return name;
 }
 
-static const char *
-request_get_uri_session_id(const Request &request)
+inline const char *
+Request::GetUriSessionId()
 {
-    assert(!request.stateless);
+    assert(!stateless);
 
-    return strmap_get_checked(request.args, "session");
+    return strmap_get_checked(args, "session");
 }
 
-static const char *
-request_get_cookie_session_id(Request &request)
+inline const char *
+Request::GetCookieSessionId()
 {
-    assert(!request.stateless);
-    assert(request.session_cookie != nullptr);
+    assert(!stateless);
+    assert(session_cookie != nullptr);
 
-    const auto *cookies = request_get_cookies(request);
-
-    return strmap_get_checked(cookies, request.session_cookie);
+    return strmap_get_checked(GetCookies(), session_cookie);
 }
 
 void
@@ -122,17 +116,17 @@ Request::DetermineSession()
                                                &instance.config,
                                                request.headers);
 
-    const char *sid = request_get_uri_session_id(*this);
+    const char *sid = GetUriSessionId();
     bool cookie_received = false;
     if (sid == nullptr || *sid == 0) {
-        sid = request_get_cookie_session_id(*this);
+        sid = GetCookieSessionId();
         if (sid == nullptr)
             return;
 
         cookie_received = true;
     }
 
-    auto session = request_load_session(*this, sid);
+    auto session = LoadSession(sid);
     if (!session) {
         if (!cookie_received && args != nullptr)
             /* remove invalid session id from URI args */
@@ -142,7 +136,7 @@ Request::DetermineSession()
     }
 
     if (!cookie_received) {
-        const char *p = request_get_cookie_session_id(*this);
+        const char *p = GetCookieSessionId();
         if (p != nullptr && strcmp(p, sid) == 0)
             cookie_received = true;
     }
