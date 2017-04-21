@@ -15,7 +15,7 @@ build/debug/build.ninja: meson.build
 
 build/optimized/build.ninja: meson.build
 	rm -rf $(@D)
-	meson . $(@D) --buildtype release $(MESON_OPTIONS) -Db_ndebug=true
+	meson . $(@D) --buildtype=debugoptimized $(MESON_OPTIONS) -Db_ndebug=true
 
 debian/stamp-build-debug: build/debug/build.ninja
 	ninja -C $(<D) test

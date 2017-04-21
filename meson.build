@@ -12,7 +12,8 @@ pkg_mod.generate(version: meson.project_version(),
                  requires: ['libcm4all-inline >= 0.3.5'],
                  description: 'CM4all BENG proxy library')
 
-if get_option('buildtype') == 'debug' or get_option('buildtype') == 'debugoptimized'
+# TODO: use get_option('b_ndebug'), but that doesn't work with Meson 0.37.1
+if get_option('buildtype') == 'debug'
   debug = true
 else
   debug = false
