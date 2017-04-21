@@ -7,8 +7,8 @@
 #ifndef BENG_PROXY_BUFFERED_SOCKET_HXX
 #define BENG_PROXY_BUFFERED_SOCKET_HXX
 
-#include "socket_wrapper.hxx"
 #include "DefaultFifoBuffer.hxx"
+#include "event/SocketWrapper.hxx"
 #include "event/DeferEvent.hxx"
 #include "util/DestructObserver.hxx"
 #include "util/LeakDetector.hxx"
