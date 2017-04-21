@@ -31,10 +31,10 @@
 
 #if defined(__x86_64__) || defined(__PPC64__)
 #define ALIGN 8
-#define ALIGN_BITS 0x7
+#define ALIGN_MASK 0x7
 #else
 #define ALIGN 4
-#define ALIGN_BITS 0x3
+#define ALIGN_MASK 0x3
 #endif
 
 #define RECYCLER_MAX_POOLS 256
@@ -206,7 +206,7 @@ xmalloc(size_t size)
 static inline size_t gcc_const
 align_size(size_t size)
 {
-    return ((size - 1) | ALIGN_BITS) + 1;
+    return ((size - 1) | ALIGN_MASK) + 1;
 }
 
 #ifndef NDEBUG
@@ -1273,7 +1273,7 @@ p_free(struct pool *pool, const void *cptr)
 
     assert(pool != nullptr);
     assert(ptr != nullptr);
-    assert((((unsigned long)ptr) & ALIGN_BITS) == 0);
+    assert((((unsigned long)ptr) & ALIGN_MASK) == 0);
     assert(pool_contains(pool, ptr, 1));
 
     if (pool->type == POOL_LIBC)
