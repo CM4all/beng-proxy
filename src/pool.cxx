@@ -573,6 +573,8 @@ pool_destroy(struct pool *pool, gcc_unused struct pool *parent,
 
     if (pool->trashed)
         list_remove(&pool->siblings);
+#else
+    TRACE_ARGS_IGNORE;
 #endif
 
     while (!list_empty(&pool->children)) {
@@ -1136,6 +1138,8 @@ p_malloc_libc(struct pool *pool, size_t size TRACE_ARGS_DECL)
     chunk->info.line = line;
 #endif
     chunk->info.size = size;
+#else
+    TRACE_ARGS_IGNORE;
 #endif
 
     list_add(&chunk->siblings, &pool->current_area.libc);
