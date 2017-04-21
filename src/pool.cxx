@@ -30,15 +30,15 @@
 #endif
 
 #if defined(__x86_64__) || defined(__PPC64__)
-#define ALIGN 8
-#define ALIGN_MASK 0x7
+static constexpr size_t ALIGN = 8;
+static constexpr size_t ALIGN_MASK = 0x7;
 #else
-#define ALIGN 4
-#define ALIGN_MASK 0x3
+static constexpr size_t ALIGN = 4;
+static constexpr size_t ALIGN_MASK = 0x3;
 #endif
 
-#define RECYCLER_MAX_POOLS 256
-#define RECYCLER_MAX_LINEAR_AREAS 256
+static constexpr unsigned RECYCLER_MAX_POOLS = 256;
+static constexpr unsigned RECYCLER_MAX_LINEAR_AREAS = 256;
 
 #ifndef NDEBUG
 struct allocation_info {
@@ -59,9 +59,9 @@ struct attachment final
     const char *name;
 };
 
-#define LINEAR_PREFIX sizeof(struct allocation_info)
+static constexpr size_t LINEAR_PREFIX = sizeof(struct allocation_info);
 #else
-#define LINEAR_PREFIX 0
+static constexpr size_t LINEAR_PREFIX = 0;
 #endif
 
 enum pool_type {
