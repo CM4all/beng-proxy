@@ -7,7 +7,7 @@
 #ifndef __BENG_HTTP_SERVER_H
 #define __BENG_HTTP_SERVER_H
 
-#include "FdType.hxx"
+#include "io/FdType.hxx"
 
 #include <http/status.h>
 

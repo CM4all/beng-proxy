@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_SINK_FD_HXX
 #define BENG_PROXY_SINK_FD_HXX
 
-#include "FdType.hxx"
+#include "io/FdType.hxx"
 #include "glibfwd.hxx"
 
 struct pool;

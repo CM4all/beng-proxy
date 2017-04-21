@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_DIRECT_HXX
 #define BENG_PROXY_DIRECT_HXX
 
-#include "FdType.hxx"
+#include "io/FdType.hxx"
 
 #include <inline/compiler.h>
 

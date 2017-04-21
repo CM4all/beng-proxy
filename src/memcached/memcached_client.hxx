@@ -7,7 +7,7 @@
 #ifndef MEMCACHED_CLIENT_HXX
 #define MEMCACHED_CLIENT_HXX
 
-#include "FdType.hxx"
+#include "io/FdType.hxx"
 #include "memcached_protocol.hxx"
 
 #include <glib.h>

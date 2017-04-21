@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_LHTTP_STOCK_HXX
 #define BENG_PROXY_LHTTP_STOCK_HXX
 
-#include "FdType.hxx"
+#include "io/FdType.hxx"
 #include "glibfwd.hxx"
 
 #include <inline/compiler.h>

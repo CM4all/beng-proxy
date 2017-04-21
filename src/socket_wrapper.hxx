@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_SOCKET_WRAPPER_HXX
 #define BENG_PROXY_SOCKET_WRAPPER_HXX
 
-#include "FdType.hxx"
+#include "io/FdType.hxx"
 #include "event/SocketEvent.hxx"
 #include "net/SocketDescriptor.hxx"
 

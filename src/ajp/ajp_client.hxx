@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_AJP_CLIENT_HXX
 #define BENG_PROXY_AJP_CLIENT_HXX
 
-#include "FdType.hxx"
+#include "io/FdType.hxx"
 
 #include <http/method.h>
 

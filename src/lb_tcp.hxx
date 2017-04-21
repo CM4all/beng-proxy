@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_LB_TCP_H
 #define BENG_PROXY_LB_TCP_H
 
-#include "FdType.hxx"
+#include "io/FdType.hxx"
 
 #include <exception>
 

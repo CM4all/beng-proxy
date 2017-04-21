@@ -7,7 +7,7 @@
 #ifndef ISTREAM_HANDLER_HXX
 #define ISTREAM_HANDLER_HXX
 
-#include "FdType.hxx"
+#include "io/FdType.hxx"
 #include "glibfwd.hxx"
 
 #include <inline/compiler.h>
