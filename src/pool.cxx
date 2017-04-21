@@ -30,10 +30,10 @@
 #endif
 
 #if defined(__x86_64__) || defined(__PPC64__)
-static constexpr size_t ALIGN = 8;
+static constexpr size_t ALIGN_SIZE = 8;
 static constexpr size_t ALIGN_MASK = 0x7;
 #else
-static constexpr size_t ALIGN = 4;
+static constexpr size_t ALIGN_SIZE = 4;
 static constexpr size_t ALIGN_MASK = 0x3;
 #endif
 
@@ -1288,7 +1288,7 @@ p_free(struct pool *pool, const void *cptr)
     else
         /* we don't know the exact size of this buffer, so we only
            mark the first ALIGN bytes */
-        poison_noaccess(ptr, ALIGN);
+        poison_noaccess(ptr, ALIGN_SIZE);
 }
 
 static inline void
