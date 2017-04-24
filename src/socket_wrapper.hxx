@@ -148,8 +148,6 @@ public:
 
     ssize_t ReadToBuffer(ForeignFifoBuffer<uint8_t> &buffer, size_t length);
 
-    void SetCork(bool cork);
-
     gcc_pure
     bool IsReadyForWriting() const;
 

@@ -8,8 +8,6 @@
 #include "io/Buffered.hxx"
 #include "io/Splice.hxx"
 
-#include <socket/util.h>
-
 #include <unistd.h>
 #include <sys/socket.h>
 
@@ -102,14 +100,6 @@ SocketWrapper::ReadToBuffer(ForeignFifoBuffer<uint8_t> &buffer, size_t length)
     assert(IsValid());
 
     return recv_to_buffer(fd.Get(), buffer, length);
-}
-
-void
-SocketWrapper::SetCork(bool cork)
-{
-    assert(IsValid());
-
-    socket_set_cork(fd.Get(), cork);
 }
 
 bool

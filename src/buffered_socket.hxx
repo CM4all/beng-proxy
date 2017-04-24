@@ -449,10 +449,6 @@ public:
      */
     bool Read(bool expect_more);
 
-    void SetCork(bool cork) {
-        base.SetCork(cork);
-    }
-
     /**
      * Variant of Write() which does not touch events and does not
      * invoke any callbacks.  It circumvents all the #BufferedSocket

@@ -330,10 +330,6 @@ struct FilteredSocket {
      */
     bool Read(bool expect_more);
 
-    void SetCork(bool cork) {
-        base.SetCork(cork);
-    }
-
     ssize_t Write(const void *data, size_t length);
 
     ssize_t WriteV(const struct iovec *v, size_t n) {
