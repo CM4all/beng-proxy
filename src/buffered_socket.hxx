@@ -113,7 +113,7 @@ enum class DirectResult {
 enum write_result {
     /**
      * The source has reached end-of-file.  Only valid for
-     * buffered_socket_write_from(), i.e. when there is a source file
+     * BufferedSocket::WriteFrom(), i.e. when there is a source file
      * descriptor.
      */
     WRITE_SOURCE_EOF = 0,
@@ -136,7 +136,7 @@ enum write_result {
     WRITE_DESTROYED = -3,
 
     /**
-     * See buffered_socket_handler::broken
+     * See BufferedSocketHandler::broken()
      */
     WRITE_BROKEN = -4,
 };
@@ -144,7 +144,7 @@ enum write_result {
 struct BufferedSocketHandler {
     /**
      * Data has been read from the socket into the input buffer.  Call
-     * buffered_socket_consumed() each time you consume data from the
+     * BufferedSocket::Consumed() each time you consume data from the
      * given buffer.
      */
     BufferedResult (*data)(const void *buffer, size_t size, void *ctx);
@@ -201,10 +201,10 @@ struct BufferedSocketHandler {
 
     /**
      * The output buffer was drained, and all data that has been
-     * passed to buffered_socket_write() was written to the socket.
+     * passed to BufferedSocket::Write() was written to the socket.
      *
      * This method is not actually used by #BufferedSocket; it is
-     * only implemented for #filtered_socket.
+     * only implemented for #FilteredSocket.
      *
      * @return false if the method has destroyed the socket
      */
@@ -243,15 +243,16 @@ struct BufferedSocketHandler {
  *
  * - uninitialised
  *
- * - connected (after buffered_socket_init())
+ * - connected (after Init())
  *
- * - disconnected (after buffered_socket_close() or
- * buffered_socket_abandon()); in this state, the remaining data
+ * - disconnected (after Close() or
+ * Abandon()); in this state, the remaining data
  * from the input buffer will be delivered
  *
- * - ended (when the handler method end() is invoked)
+ * - ended (when the handler method BufferedSocketHandler::end() is
+ * invoked)
  *
- * - destroyed (after buffered_socket_destroy())
+ * - destroyed (after Destroy())
  */
 class BufferedSocket final : DestructAnchor, LeakDetector, SocketHandler {
     SocketWrapper base;
@@ -337,7 +338,7 @@ public:
     }
 
     /**
-     * Just like buffered_socket_close(), but do not actually close the
+     * Just like Close(), but do not actually close the
      * socket.  The caller is responsible for closing the socket (or
      * scheduling it for reuse).
      */
@@ -351,8 +352,7 @@ public:
 
     /**
      * Destroy the object.  Prior to that, the socket must be removed by
-     * calling either buffered_socket_close() or
-     * buffered_socket_abandon().
+     * calling either Close() or Abandon().
      */
     void Destroy();
 
@@ -398,7 +398,7 @@ public:
     }
 
     /**
-     * Returns the socket descriptor and calls buffered_socket_abandon().
+     * Returns the socket descriptor and calls Abandon().
      * Returns -1 if the input buffer is not empty.
      */
     int AsFD();
@@ -430,17 +430,17 @@ public:
 
     /**
      * Mark the specified number of bytes of the input buffer as
-     * "consumed".  Call this in the data() method.  Note that this method
-     * does not invalidate the buffer passed to data().  It may be called
-     * repeatedly.
+     * "consumed".  Call this in the data() method.  Note that this
+     * method does not invalidate the buffer passed to
+     * BufferedSocketHandler::data().  It may be called repeatedly.
      */
     void Consumed(size_t nbytes);
 
     /**
      * The caller wants to read more data from the socket.  There are four
-     * possible outcomes: a call to buffered_socket_handler.read, a call
-     * to buffered_socket_handler.direct, a call to
-     * buffered_socket_handler.error or (if there is no data available
+     * possible outcomes: a call to BufferedSocketHandler::read(), a call
+     * to BufferedSocketHandler::direct(), a call to
+     * BufferedSocketHandler::error() or (if there is no data available
      * yet) an event gets scheduled and the function returns immediately.
      *
      * @param expect_more if true, generates an error if no more data can
