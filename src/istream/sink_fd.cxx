@@ -8,6 +8,7 @@
 #include "Sink.hxx"
 #include "pool.hxx"
 #include "direct.hxx"
+#include "io/Splice.hxx"
 #include "io/FileDescriptor.hxx"
 #include "event/SocketEvent.hxx"
 
@@ -116,8 +117,7 @@ SinkFd::OnDirect(FdType type, int _fd, size_t max_length)
 {
     got_data = true;
 
-    ssize_t nbytes = istream_direct_to(_fd, type, fd.Get(), fd_type,
-                                       max_length);
+    ssize_t nbytes = SpliceTo(_fd, type, fd.Get(), fd_type, max_length);
     if (unlikely(nbytes < 0 && errno == EAGAIN)) {
         if (!fd.IsReadyForWriting()) {
             ScheduleWrite();
@@ -127,7 +127,7 @@ SinkFd::OnDirect(FdType type, int _fd, size_t max_length)
         /* try again, just in case connection->fd has become ready
            between the first istream_direct_to_socket() call and
            fd_ready_for_writing() */
-        nbytes = istream_direct_to(_fd, type, fd.Get(), fd_type, max_length);
+        nbytes = SpliceTo(_fd, type, fd.Get(), fd_type, max_length);
     }
 
     if (likely(nbytes > 0) && (got_event || type == FdType::FD_FILE))

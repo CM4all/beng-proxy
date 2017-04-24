@@ -13,10 +13,9 @@
 
 #include <assert.h>
 #include <stddef.h>
+#include <sys/types.h>
 
 #ifdef __linux
-#include <fcntl.h>
-#include <sys/sendfile.h>
 
 #ifdef SPLICE
 
@@ -47,53 +46,6 @@ enum {
 }
 
 #endif /* !SPLICE */
-
-static inline ssize_t
-istream_direct_to_socket(FdType src_type, int src_fd,
-                         int dest_fd, size_t max_length)
-{
-    assert(src_fd != dest_fd);
-#ifdef SPLICE
-    if (src_type == FdType::FD_PIPE) {
-        return splice(src_fd, NULL, dest_fd, NULL, max_length,
-                      SPLICE_F_NONBLOCK | SPLICE_F_MOVE);
-    } else {
-#endif
-        assert(src_type == FdType::FD_FILE);
-
-        (void)src_type;
-
-        return sendfile(dest_fd, src_fd, NULL, max_length);
-#ifdef SPLICE
-    }
-#endif
-}
-
-static inline ssize_t
-istream_direct_to_pipe(FdType src_type, int src_fd,
-                       int dest_fd, size_t max_length)
-{
-    (void)src_type;
-
-    assert(src_fd != dest_fd);
-
-#ifdef SPLICE
-    return splice(src_fd, NULL, dest_fd, NULL, max_length,
-                  SPLICE_F_NONBLOCK | SPLICE_F_MOVE);
-#else
-    return -1;
-#endif
-}
-
-static inline ssize_t
-istream_direct_to(int src_fd, FdType src_type,
-                  int dest_fd, FdType dest_type,
-                  size_t max_length)
-{
-    return IsAnySocket(dest_type)
-        ? istream_direct_to_socket(src_type, src_fd, dest_fd, max_length)
-        : istream_direct_to_pipe(src_type, src_fd, dest_fd, max_length);
-}
 
 gcc_const
 static inline FdTypeMask

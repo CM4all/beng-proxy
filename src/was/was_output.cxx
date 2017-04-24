@@ -8,6 +8,7 @@
 #include "was_quark.h"
 #include "event/SocketEvent.hxx"
 #include "direct.hxx"
+#include "io/Splice.hxx"
 #include "io/FileDescriptor.hxx"
 #include "istream/Pointer.hxx"
 #include "pool.hxx"
@@ -137,12 +138,11 @@ WasOutput::OnData(const void *p, size_t length)
 }
 
 inline ssize_t
-WasOutput::OnDirect(FdType type, int source_fd, size_t max_length)
+WasOutput::OnDirect(gcc_unused FdType type, int source_fd, size_t max_length)
 {
     assert(fd.IsDefined());
 
-    ssize_t nbytes = istream_direct_to_pipe(type, source_fd,
-                                            fd.Get(), max_length);
+    ssize_t nbytes = SpliceToPipe(source_fd, fd.Get(), max_length);
     if (likely(nbytes > 0)) {
         sent += nbytes;
         ScheduleWrite();
@@ -155,7 +155,7 @@ WasOutput::OnDirect(FdType type, int source_fd, size_t max_length)
         /* try again, just in case fd has become ready between
            the first istream_direct_to_pipe() call and
            fd.IsReadyForWriting() */
-        nbytes = istream_direct_to_pipe(type, source_fd, fd.Get(), max_length);
+        nbytes = SpliceToPipe(source_fd, fd.Get(), max_length);
     }
 
     return nbytes;

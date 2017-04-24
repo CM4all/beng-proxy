@@ -9,6 +9,7 @@
 #include "system/fd_util.h"
 #include "istream/istream.hxx"
 #include "istream/Pointer.hxx"
+#include "io/Splice.hxx"
 #include "io/Buffered.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "direct.hxx"
@@ -174,12 +175,11 @@ SpawnIstream::OnData(const void *data, size_t length)
 }
 
 inline ssize_t
-SpawnIstream::OnDirect(FdType type, int fd, size_t max_length)
+SpawnIstream::OnDirect(gcc_unused FdType type, int fd, size_t max_length)
 {
     assert(input_fd.IsDefined());
 
-    ssize_t nbytes = istream_direct_to_pipe(type, fd, input_fd.Get(),
-                                            max_length);
+    ssize_t nbytes = SpliceToPipe(fd, input_fd.Get(), max_length);
     if (nbytes > 0)
         input_event.Add();
     else if (nbytes < 0) {
@@ -192,8 +192,7 @@ SpawnIstream::OnDirect(FdType type, int fd, size_t max_length)
             /* try again, just in case connection->fd has become ready
                between the first splice() call and
                fd_ready_for_writing() */
-            nbytes = istream_direct_to_pipe(type, fd, input_fd.Get(),
-                                            max_length);
+            nbytes = SpliceToPipe(fd, input_fd.Get(), max_length);
         }
     }
 

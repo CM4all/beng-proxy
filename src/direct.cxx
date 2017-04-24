@@ -12,6 +12,7 @@
 #include <sys/stat.h>
 #include <errno.h>
 #include <stdlib.h>
+#include <fcntl.h>
 
 #ifdef __linux
 #ifdef SPLICE

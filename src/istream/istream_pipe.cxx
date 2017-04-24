@@ -14,6 +14,7 @@
 #include "stock/Stock.hxx"
 #include "stock/Item.hxx"
 #include "gerrno.h"
+#include "io/Splice.hxx"
 
 #include <daemon/log.h>
 
@@ -225,8 +226,7 @@ PipeIstream::OnDirect(FdType type, int fd, size_t max_length)
         }
     }
 
-    ssize_t nbytes = splice(fd, nullptr, fds[1].Get(), nullptr, max_length,
-                            SPLICE_F_NONBLOCK | SPLICE_F_MOVE);
+    ssize_t nbytes = Splice(fd, fds[1].Get(), max_length);
     /* don't check EAGAIN here (and don't return -2).  We assume that
        splicing to the pipe cannot possibly block, since we flushed
        the pipe; assume that it can only be the source file which is

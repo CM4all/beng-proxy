@@ -5,8 +5,8 @@
  */
 
 #include "socket_wrapper.hxx"
-#include "direct.hxx"
 #include "io/Buffered.hxx"
+#include "io/Splice.hxx"
 
 #include <socket/util.h>
 
@@ -150,6 +150,6 @@ ssize_t
 SocketWrapper::WriteFrom(int other_fd, FdType other_fd_type,
                          size_t length)
 {
-    return istream_direct_to_socket(other_fd_type, other_fd, fd.Get(), length);
+    return SpliceToSocket(other_fd_type, other_fd, fd.Get(), length);
 }
 

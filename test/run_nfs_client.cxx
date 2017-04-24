@@ -15,6 +15,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/stat.h>
 
 struct Context final : PInstance, NfsClientHandler, NfsClientOpenFileHandler {
     struct pool *pool;
