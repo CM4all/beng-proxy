@@ -27,7 +27,7 @@ memcached_request_packet(struct pool &pool, enum memcached_opcode opcode,
     if (value_length == -1 || value_length >= 0x10000000)
         return nullptr;
 
-    auto header = PoolAlloc<memcached_request_header>(pool);
+    auto header = NewFromPool<memcached_request_header>(pool);
     header->magic = MEMCACHED_MAGIC_REQUEST;
     header->opcode = opcode;
     header->key_length = ToBE16(key_length);
