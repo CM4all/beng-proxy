@@ -1353,7 +1353,8 @@ HttpClient::HttpClient(struct pool &_caller_pool, struct pool &_pool,
                                          request_line_stream,
                                          header_stream,
                                          body),
-                        *this, socket.GetDirectMask());
+                        *this,
+                        istream_direct_mask_to(socket.GetType()));
 
     socket.ScheduleReadNoTimeout(true);
 

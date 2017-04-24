@@ -60,12 +60,6 @@ public:
         return socket.HasFilter();
     }
 
-    FdTypeMask GetDirectMask() const {
-        assert(!IsReleased());
-
-        return socket.GetDirectMask();
-    }
-
 #ifndef NDEBUG
     gcc_pure
     bool HasEnded() const {

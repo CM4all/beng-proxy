@@ -46,8 +46,6 @@ class SocketWrapper {
     SocketDescriptor fd;
     FdType fd_type;
 
-    FdTypeMask direct_mask;
-
     SocketEvent read_event, write_event;
 
     SocketHandler &handler;
@@ -104,15 +102,6 @@ public:
 
     FdType GetType() const {
         return fd_type;
-    }
-
-    /**
-     * Returns the FdTypeMask for splicing data into this socket.
-     */
-    FdTypeMask GetDirectMask() const {
-        assert(IsValid());
-
-        return direct_mask;
     }
 
     void ScheduleRead(const struct timeval *timeout) {

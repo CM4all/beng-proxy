@@ -101,7 +101,7 @@ HttpServerConnection::OnError(GError *error)
 void
 HttpServerConnection::SetResponseIstream(Istream &r)
 {
-    response.istream.Set(r, *this, socket.GetDirectMask());
+    response.istream.Set(r, *this, istream_direct_mask_to(socket.GetType()));
 }
 
 bool

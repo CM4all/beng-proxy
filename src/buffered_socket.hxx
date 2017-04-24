@@ -437,16 +437,6 @@ public:
     void Consumed(size_t nbytes);
 
     /**
-     * Returns the FdTypeMask for splicing data into this socket.
-     */
-    FdTypeMask GetDirectMask() const {
-        assert(!ended);
-        assert(!destroyed);
-
-        return base.GetDirectMask();
-    }
-
-    /**
      * The caller wants to read more data from the socket.  There are four
      * possible outcomes: a call to buffered_socket_handler.read, a call
      * to buffered_socket_handler.direct, a call to

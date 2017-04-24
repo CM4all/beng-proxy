@@ -314,15 +314,6 @@ struct FilteredSocket {
      */
     void Consumed(size_t nbytes);
 
-    /**
-     * Returns the istream_direct mask for splicing data into this socket.
-     */
-    FdTypeMask GetDirectMask() const {
-        return filter != nullptr
-            ? FdTypeMask(FdType::FD_NONE)
-            : base.GetDirectMask();
-    }
-
     void SetDirect(bool _direct) {
         assert(!_direct || !HasFilter());
 

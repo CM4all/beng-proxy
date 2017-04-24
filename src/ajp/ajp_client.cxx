@@ -951,7 +951,7 @@ ajp_client_request(struct pool &pool, EventLoop &event_loop,
     }
 
     client->request.istream.Set(*request, *client,
-                                client->socket.GetDirectMask());
+                                istream_direct_mask_to(client->socket.GetType()));
 
     cancel_ptr = *client;
 

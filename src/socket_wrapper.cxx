@@ -42,7 +42,6 @@ SocketWrapper::Init(int _fd, FdType _fd_type)
 
     fd = SocketDescriptor::FromFileDescriptor(FileDescriptor(_fd));
     fd_type = _fd_type;
-    direct_mask = istream_direct_mask_to(fd_type);
 
     read_event.Set(fd.Get(), EV_READ|EV_PERSIST);
     write_event.Set(fd.Get(), EV_WRITE|EV_PERSIST);
