@@ -5,8 +5,8 @@
  */
 
 #include "socket_wrapper.hxx"
-#include "io/Buffered.hxx"
 #include "io/Splice.hxx"
+#include "net/Buffered.hxx"
 
 #include <unistd.h>
 #include <sys/socket.h>
@@ -95,11 +95,11 @@ SocketWrapper::AsFD()
 }
 
 ssize_t
-SocketWrapper::ReadToBuffer(ForeignFifoBuffer<uint8_t> &buffer, size_t length)
+SocketWrapper::ReadToBuffer(ForeignFifoBuffer<uint8_t> &buffer)
 {
     assert(IsValid());
 
-    return recv_to_buffer(fd.Get(), buffer, length);
+    return ReceiveToBuffer(fd.Get(), buffer);
 }
 
 bool

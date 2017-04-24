@@ -324,6 +324,7 @@ net = static_library('net',
   'libcommon/src/net/Interface.cxx',
   'libcommon/src/net/SocketDescriptor.cxx',
   'libcommon/src/net/UniqueSocketDescriptor.cxx',
+  'libcommon/src/net/Buffered.cxx',
   include_directories: inc,
   dependencies: [
     libinline, libdaemon, libsocket,
@@ -536,6 +537,7 @@ was_common = static_library('was_common',
     libinline, libhttp, libwas,
     declare_dependency(link_with: istream),
     declare_dependency(link_with: event),
+    net_dep,
     putil_dep,
     declare_dependency(link_with: io),
   ])
@@ -613,6 +615,7 @@ socket = static_library('socket',
   include_directories: inc,
   dependencies: [
     libinline, libsocket, libhttp,
+    net_dep,
   ])
 
 memcached_client = static_library('memcached_client',

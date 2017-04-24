@@ -12,7 +12,6 @@
 #include <utility>
 #include <stdexcept>
 
-#include <limits.h>
 #include <errno.h>
 
 void
@@ -280,7 +279,7 @@ BufferedSocket::FillBuffer()
     if (input.IsNull())
         input.Allocate();
 
-    ssize_t nbytes = base.ReadToBuffer(input, INT_MAX);
+    ssize_t nbytes = base.ReadToBuffer(input);
     if (gcc_likely(nbytes > 0)) {
         /* success: data was added to the buffer */
         expect_more = false;

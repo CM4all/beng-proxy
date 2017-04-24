@@ -146,7 +146,7 @@ public:
         return write_event.IsPending(EV_WRITE);
     }
 
-    ssize_t ReadToBuffer(ForeignFifoBuffer<uint8_t> &buffer, size_t length);
+    ssize_t ReadToBuffer(ForeignFifoBuffer<uint8_t> &buffer);
 
     gcc_pure
     bool IsReadyForWriting() const;

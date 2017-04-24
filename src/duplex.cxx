@@ -10,6 +10,7 @@
 #include "duplex.hxx"
 #include "event/SocketEvent.hxx"
 #include "event/DeferEvent.hxx"
+#include "net/Buffered.hxx"
 #include "io/Buffered.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "pool.hxx"
@@ -199,7 +200,7 @@ Duplex::WriteEventCallback()
 inline void
 Duplex::SocketReadEventCallback(unsigned)
 {
-    ssize_t nbytes = recv_to_buffer(sock_fd, to_write, INT_MAX);
+    ssize_t nbytes = ReceiveToBuffer(sock_fd, to_write);
     if (nbytes == -1) {
         daemon_log(1, "failed to read: %s\n", strerror(errno));
         Destroy();
@@ -219,7 +220,7 @@ Duplex::SocketReadEventCallback(unsigned)
 inline void
 Duplex::SocketWriteEventCallback(unsigned)
 {
-    ssize_t nbytes = send_from_buffer(sock_fd, from_read);
+    ssize_t nbytes = SendFromBuffer(sock_fd, from_read);
     if (nbytes == -1) {
         Destroy();
         return;

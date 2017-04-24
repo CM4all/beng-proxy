@@ -8,7 +8,7 @@
 #include "was_quark.h"
 #include "strmap.hxx"
 #include "fb_pool.hxx"
-#include "io/Buffered.hxx"
+#include "net/Buffered.hxx"
 #include "util/ConstBuffer.hxx"
 
 #include <was/protocol.h>
@@ -113,7 +113,7 @@ WasControl::TryRead()
 {
     assert(IsDefined());
 
-    ssize_t nbytes = recv_to_buffer(fd, input_buffer, 0xffff);
+    ssize_t nbytes = ReceiveToBuffer(fd, input_buffer);
     assert(nbytes != -2);
 
     if (nbytes == 0) {
@@ -148,7 +148,7 @@ WasControl::TryWrite()
 {
     assert(IsDefined());
 
-    ssize_t nbytes = send_from_buffer(fd, output_buffer);
+    ssize_t nbytes = SendFromBuffer(fd, output_buffer);
     assert(nbytes != -2);
 
     if (nbytes == 0) {
