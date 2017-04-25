@@ -45,7 +45,7 @@ struct TranslateClient final : Cancellable {
     TranslateParser parser;
 
     TranslateClient(struct pool &p, EventLoop &event_loop,
-                    int fd, Lease &lease,
+                    SocketDescriptor fd, Lease &lease,
                     const TranslateRequest &request2,
                     GrowingBuffer &&_request,
                     const TranslateHandler &_handler, void *_ctx,
@@ -253,19 +253,19 @@ static constexpr BufferedSocketHandler translate_client_socket_handler = {
 
 inline
 TranslateClient::TranslateClient(struct pool &p, EventLoop &event_loop,
-                                 int fd, Lease &lease,
+                                 SocketDescriptor fd, Lease &lease,
                                  const TranslateRequest &request2,
                                  GrowingBuffer &&_request,
                                  const TranslateHandler &_handler, void *_ctx,
                                  CancellablePointer &cancel_ptr)
     :pool(p),
-     stopwatch(stopwatch_new(&p, SocketDescriptor::FromFileDescriptor(FileDescriptor(fd)), request2.GetDiagnosticName())),
+     stopwatch(stopwatch_new(&p, fd, request2.GetDiagnosticName())),
      socket(event_loop),
      request(std::move(_request)),
      handler(_handler), handler_ctx(_ctx),
      parser(p, request2)
 {
-    socket.Init(fd, FdType::FD_SOCKET,
+    socket.Init(fd.Get(), FdType::FD_SOCKET,
                 &translate_read_timeout,
                 &translate_write_timeout,
                 translate_client_socket_handler, this);
@@ -276,12 +276,12 @@ TranslateClient::TranslateClient(struct pool &p, EventLoop &event_loop,
 
 void
 translate(struct pool &pool, EventLoop &event_loop,
-          int fd, Lease &lease,
+          SocketDescriptor fd, Lease &lease,
           const TranslateRequest &request,
           const TranslateHandler &handler, void *ctx,
           CancellablePointer &cancel_ptr)
 try {
-    assert(fd >= 0);
+    assert(fd.IsDefined());
     assert(request.uri != nullptr || request.widget_type != nullptr ||
            (!request.content_type_lookup.IsNull() &&
             request.suffix != nullptr));

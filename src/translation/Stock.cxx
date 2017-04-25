@@ -63,8 +63,8 @@ public:
         }
     }
 
-    int GetSocket() {
-        return s.Get();
+    SocketDescriptor GetSocket() {
+        return s;
     }
 
 private:

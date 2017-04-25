@@ -11,12 +11,13 @@ struct pool;
 class EventLoop;
 class Lease;
 class CancellablePointer;
+class SocketDescriptor;
 struct TranslateRequest;
 struct TranslateHandler;
 
 void
 translate(struct pool &pool, EventLoop &event_loop,
-          int fd, Lease &lease,
+          SocketDescriptor fd, Lease &lease,
           const TranslateRequest &request,
           const TranslateHandler &handler, void *ctx,
           CancellablePointer &cancel_ptr);
