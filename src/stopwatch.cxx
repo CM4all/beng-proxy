@@ -6,6 +6,7 @@
 
 #include "stopwatch.hxx"
 #include "pool.hxx"
+#include "net/SocketAddress.hxx"
 #include "util/StaticArray.hxx"
 #include "util/WritableBuffer.hxx"
 
@@ -97,8 +98,7 @@ stopwatch_new(struct pool *pool, const char *name, const char *suffix)
 }
 
 Stopwatch *
-stopwatch_sockaddr_new(struct pool *pool, const struct sockaddr *address,
-                       size_t address_length, const char *suffix)
+stopwatch_new(struct pool *pool, SocketAddress address, const char *suffix)
 {
     char buffer[1024];
 
@@ -106,7 +106,8 @@ stopwatch_sockaddr_new(struct pool *pool, const struct sockaddr *address,
         return nullptr;
 
     const char *name = socket_address_to_string(buffer, sizeof(buffer),
-                                                address, address_length)
+                                                address.GetAddress(),
+                                                address.GetSize())
         ? buffer
         : "unknown";
 
@@ -123,8 +124,9 @@ stopwatch_fd_new(struct pool *pool, int fd, const char *suffix)
         return nullptr;
 
     return getpeername(fd, (struct sockaddr *)&address, &address_length) >= 0
-        ? stopwatch_sockaddr_new(pool, (struct sockaddr *)&address,
-                                 address_length, suffix)
+        ? stopwatch_new(pool, SocketAddress((const struct sockaddr *)&address,
+                                            address_length),
+                        suffix)
         : stopwatch_new(pool, "unknown", suffix);
 }
 

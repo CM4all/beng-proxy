@@ -13,7 +13,7 @@
 
 struct pool;
 struct Stopwatch;
-struct sockaddr;
+class SocketAddress;
 
 #ifdef ENABLE_STOPWATCH
 
@@ -28,8 +28,7 @@ Stopwatch *
 stopwatch_new(struct pool *pool, const char *name, const char *suffix=nullptr);
 
 Stopwatch *
-stopwatch_sockaddr_new(struct pool *pool, const struct sockaddr *address,
-                       size_t address_length, const char *suffix);
+stopwatch_new(struct pool *pool, SocketAddress address, const char *suffix);
 
 Stopwatch *
 stopwatch_fd_new(struct pool *pool, int fd, const char *suffix);
