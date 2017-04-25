@@ -6,7 +6,8 @@
 
 #include "stopwatch.hxx"
 #include "pool.hxx"
-#include "net/SocketAddress.hxx"
+#include "net/SocketDescriptor.hxx"
+#include "net/StaticSocketAddress.hxx"
 #include "util/StaticArray.hxx"
 #include "util/WritableBuffer.hxx"
 
@@ -17,7 +18,6 @@
 
 #include <time.h>
 #include <assert.h>
-#include <sys/socket.h>
 #include <string.h>
 #include <sys/resource.h>
 
@@ -117,16 +117,12 @@ stopwatch_new(struct pool *pool, SocketAddress address, const char *suffix)
 Stopwatch *
 stopwatch_fd_new(struct pool *pool, int fd, const char *suffix)
 {
-    struct sockaddr_storage address;
-    socklen_t address_length = sizeof(address);
-
     if (!stopwatch_enabled || daemon_log_config.verbose < STOPWATCH_VERBOSE)
         return nullptr;
 
-    return getpeername(fd, (struct sockaddr *)&address, &address_length) >= 0
-        ? stopwatch_new(pool, SocketAddress((const struct sockaddr *)&address,
-                                            address_length),
-                        suffix)
+    const auto address = SocketDescriptor::FromFileDescriptor(FileDescriptor(fd)).GetPeerAddress();
+    return address.IsDefined()
+        ? stopwatch_new(pool, address, suffix)
         : stopwatch_new(pool, "unknown", suffix);
 }
 

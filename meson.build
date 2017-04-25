@@ -251,21 +251,6 @@ eutil = static_library('eutil',
     declare_dependency(link_with: event),
   ])
 
-if stopwatch
-  stopwatch = static_library('stopwatch',
-    'src/istream_stopwatch.cxx',
-    'src/stopwatch.cxx',
-    include_directories: inc,
-    dependencies: [
-      libinline, libdaemon, libsocket,
-      pool_dep,
-      util_dep,
-    ])
-  stopwatch_dep = declare_dependency(link_with: stopwatch)
-else
-  stopwatch_dep = []
-endif
-
 stock = static_library('stock',
   'src/stock/Item.cxx',
   'src/stock/Stock.cxx',
@@ -334,6 +319,21 @@ net = static_library('net',
     declare_dependency(link_with: io),
   ])
 net_dep = declare_dependency(link_with: net)
+
+if stopwatch
+  stopwatch = static_library('stopwatch',
+    'src/istream_stopwatch.cxx',
+    'src/stopwatch.cxx',
+    include_directories: inc,
+    dependencies: [
+      libinline, libdaemon, libsocket,
+      pool_dep,
+      net_dep,
+    ])
+  stopwatch_dep = declare_dependency(link_with: stopwatch)
+else
+  stopwatch_dep = []
+endif
 
 ssl = static_library('ssl',
   'src/certdb/CertDatabase.cxx',
