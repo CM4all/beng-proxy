@@ -41,6 +41,8 @@ stopwatch_dump(const Stopwatch *stopwatch);
 
 #else
 
+#include "net/SocketAddress.hxx"
+
 static inline void
 stopwatch_enable()
 {
@@ -63,12 +65,9 @@ stopwatch_new(struct pool *pool, const char *name, const char *suffix=nullptr)
 }
 
 static inline Stopwatch *
-stopwatch_sockaddr_new(struct pool *pool, const struct sockaddr *address,
-                       size_t address_length, const char *suffix)
+stopwatch_new(struct pool *pool, SocketAddress, const char *suffix)
 {
     (void)pool;
-    (void)address;
-    (void)address_length;
     (void)suffix;
 
     return nullptr;
