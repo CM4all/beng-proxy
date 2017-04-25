@@ -14,6 +14,7 @@
 struct pool;
 struct Stopwatch;
 class SocketAddress;
+class SocketDescriptor;
 
 #ifdef ENABLE_STOPWATCH
 
@@ -31,7 +32,7 @@ Stopwatch *
 stopwatch_new(struct pool *pool, SocketAddress address, const char *suffix);
 
 Stopwatch *
-stopwatch_fd_new(struct pool *pool, int fd, const char *suffix);
+stopwatch_new(struct pool *pool, SocketDescriptor fd, const char *suffix);
 
 void
 stopwatch_event(Stopwatch *stopwatch, const char *name);
@@ -42,6 +43,7 @@ stopwatch_dump(const Stopwatch *stopwatch);
 #else
 
 #include "net/SocketAddress.hxx"
+#include "net/SocketDescriptor.hxx"
 
 static inline void
 stopwatch_enable()
@@ -74,10 +76,9 @@ stopwatch_new(struct pool *pool, SocketAddress, const char *suffix)
 }
 
 static inline Stopwatch *
-stopwatch_fd_new(struct pool *pool, int fd, const char *suffix)
+stopwatch_new(struct pool *pool, SocketDescriptor, const char *suffix)
 {
     (void)pool;
-    (void)fd;
     (void)suffix;
 
     return nullptr;

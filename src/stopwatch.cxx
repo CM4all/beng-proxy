@@ -115,12 +115,12 @@ stopwatch_new(struct pool *pool, SocketAddress address, const char *suffix)
 }
 
 Stopwatch *
-stopwatch_fd_new(struct pool *pool, int fd, const char *suffix)
+stopwatch_new(struct pool *pool, SocketDescriptor fd, const char *suffix)
 {
     if (!stopwatch_enabled || daemon_log_config.verbose < STOPWATCH_VERBOSE)
         return nullptr;
 
-    const auto address = SocketDescriptor::FromFileDescriptor(FileDescriptor(fd)).GetPeerAddress();
+    const auto address = fd.GetPeerAddress();
     return address.IsDefined()
         ? stopwatch_new(pool, address, suffix)
         : stopwatch_new(pool, "unknown", suffix);

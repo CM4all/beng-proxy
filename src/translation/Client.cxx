@@ -259,7 +259,7 @@ TranslateClient::TranslateClient(struct pool &p, EventLoop &event_loop,
                                  const TranslateHandler &_handler, void *_ctx,
                                  CancellablePointer &cancel_ptr)
     :pool(p),
-     stopwatch(stopwatch_fd_new(&p, fd, request2.GetDiagnosticName())),
+     stopwatch(stopwatch_new(&p, SocketDescriptor::FromFileDescriptor(FileDescriptor(fd)), request2.GetDiagnosticName())),
      socket(event_loop),
      request(std::move(_request)),
      handler(_handler), handler_ctx(_ctx),
