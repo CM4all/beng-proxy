@@ -17,6 +17,7 @@
 #include "event/TimerEvent.hxx"
 #include "event/ShutdownListener.hxx"
 #include "fb_pool.hxx"
+#include "net/SocketDescriptor.hxx"
 #include "util/Cancellable.hxx"
 
 #include <stdio.h>
@@ -254,7 +255,8 @@ int main(int argc, char **argv) {
 
     instance.connection = http_server_connection_new(instance.root_pool,
                                                      instance.event_loop,
-                                                     sockfd, FdType::FD_SOCKET,
+                                                     SocketDescriptor::FromFileDescriptor(FileDescriptor(sockfd)),
+                                                     FdType::FD_SOCKET,
                                                      nullptr, nullptr,
                                                      nullptr, nullptr,
                                                      true, instance);

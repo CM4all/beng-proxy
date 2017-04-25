@@ -265,7 +265,7 @@ TranslateClient::TranslateClient(struct pool &p, EventLoop &event_loop,
      handler(_handler), handler_ctx(_ctx),
      parser(p, request2)
 {
-    socket.Init(fd.Get(), FdType::FD_SOCKET,
+    socket.Init(fd, FdType::FD_SOCKET,
                 &translate_read_timeout,
                 &translate_write_timeout,
                 translate_client_socket_handler, this);

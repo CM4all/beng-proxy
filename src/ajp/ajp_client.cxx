@@ -115,7 +115,7 @@ struct AjpClient final : Istream, IstreamHandler, Cancellable {
     } response;
 
     AjpClient(struct pool &p, EventLoop &event_loop,
-              int fd, FdType fd_type, Lease &lease,
+              SocketDescriptor fd, FdType fd_type, Lease &lease,
               HttpResponseHandler &handler);
 
     using Istream::GetPool;
@@ -796,7 +796,7 @@ AjpClient::Cancel()
 
 inline
 AjpClient::AjpClient(struct pool &p, EventLoop &event_loop,
-                     int fd, FdType fd_type,
+                     SocketDescriptor fd, FdType fd_type,
                      Lease &lease, HttpResponseHandler &_handler)
     :Istream(p), socket(event_loop),
      request(_handler), response(p)
@@ -811,7 +811,7 @@ AjpClient::AjpClient(struct pool &p, EventLoop &event_loop,
 
 void
 ajp_client_request(struct pool &pool, EventLoop &event_loop,
-                   int fd, FdType fd_type, Lease &lease,
+                   SocketDescriptor fd, FdType fd_type, Lease &lease,
                    const char *protocol, const char *remote_addr,
                    const char *remote_host, const char *server_name,
                    unsigned server_port, bool is_ssl,

@@ -330,7 +330,7 @@ HttpServerConnection::IdleTimeoutCallback()
 inline
 HttpServerConnection::HttpServerConnection(struct pool &_pool,
                                            EventLoop &_loop,
-                                           int fd, FdType fd_type,
+                                           SocketDescriptor fd, FdType fd_type,
                                            const SocketFilter *filter,
                                            void *filter_ctx,
                                            SocketAddress _local_address,
@@ -366,7 +366,7 @@ HttpServerConnection::HttpServerConnection(struct pool &_pool,
 HttpServerConnection *
 http_server_connection_new(struct pool *pool,
                            EventLoop &loop,
-                           int fd, FdType fd_type,
+                           SocketDescriptor fd, FdType fd_type,
                            const SocketFilter *filter,
                            void *filter_ctx,
                            SocketAddress local_address,
@@ -374,7 +374,7 @@ http_server_connection_new(struct pool *pool,
                            bool date_header,
                            HttpServerConnectionHandler &handler)
 {
-    assert(fd >= 0);
+    assert(fd.IsDefined());
 
     return NewFromPool<HttpServerConnection>(*pool, *pool, loop, fd, fd_type,
                                              filter, filter_ctx,

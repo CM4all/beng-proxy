@@ -13,6 +13,7 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 
+class SocketDescriptor;
 class UniqueFileDescriptor;
 
 struct ChildSocket {
@@ -38,7 +39,7 @@ struct ChildSocket {
                              SUN_LEN(&address));
     }
 
-    int Connect(GError **error_r) const;
+    SocketDescriptor Connect(GError **error_r) const;
 };
 
 #endif

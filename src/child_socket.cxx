@@ -63,20 +63,20 @@ ChildSocket::Unlink()
     unlink(address.sun_path);
 }
 
-int
+SocketDescriptor
 ChildSocket::Connect(GError **error_r) const
 {
     SocketDescriptor fd;
     if (!fd.CreateNonBlock(AF_LOCAL, SOCK_STREAM, 0)) {
         set_error_errno(error_r);
-        return -1;
+        return fd;
     }
 
     if (!fd.Connect(GetAddress())) {
         set_error_errno_msg(error_r, "connect failed");
         fd.Close();
-        return -1;
+        return fd;
     }
 
-    return fd.Get();
+    return fd;
 }

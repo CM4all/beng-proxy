@@ -19,6 +19,7 @@ static constexpr size_t MEMCACHED_KEY_MAX = 0x7fff;
 struct pool;
 class EventLoop;
 class Istream;
+class SocketDescriptor;
 class Lease;
 class HttpResponseHandler;
 class StringMap;
@@ -59,7 +60,7 @@ memcached_client_quark(void)
  */
 void
 memcached_client_invoke(struct pool *pool, EventLoop &event_loop,
-                        int fd, FdType fd_type,
+                        SocketDescriptor fd, FdType fd_type,
                         Lease &lease,
                         enum memcached_opcode opcode,
                         const void *extras, size_t extras_length,

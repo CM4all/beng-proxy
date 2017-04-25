@@ -9,6 +9,7 @@
 #include "http_headers.hxx"
 #include "system/SetupProcess.hxx"
 #include "io/FileDescriptor.hxx"
+#include "net/SocketDescriptor.hxx"
 #include "direct.hxx"
 #include "fb_pool.hxx"
 
@@ -17,9 +18,9 @@
 struct Connection {
     EventLoop &event_loop;
     const pid_t pid;
-    const int fd;
+    SocketDescriptor fd;
 
-    Connection(EventLoop &_event_loop, pid_t _pid, int _fd)
+    Connection(EventLoop &_event_loop, pid_t _pid, SocketDescriptor _fd)
         :event_loop(_event_loop), pid(_pid), fd(_fd) {}
     static Connection *New(EventLoop &event_loop,
                            const char *path, const char *mode);
@@ -85,9 +86,9 @@ struct Connection {
 Connection::~Connection()
 {
     assert(pid >= 1);
-    assert(fd >= 0);
+    assert(fd.IsDefined());
 
-    close(fd);
+    fd.Close();
 
     int status;
     if (waitpid(pid, &status, 0) < 0) {
@@ -135,7 +136,8 @@ Connection::New(EventLoop &event_loop, const char *path, const char *mode)
 
     server_socket.Close();
     client_socket.SetNonBlocking();
-    return new Connection(event_loop, pid, client_socket.Get());
+    return new Connection(event_loop, pid,
+                          SocketDescriptor::FromFileDescriptor(client_socket));
 }
 
 Connection *
@@ -169,7 +171,8 @@ Connection::NewClose100(struct pool &, EventLoop &event_loop)
 
     server_socket.Close();
     client_socket.SetNonBlocking();
-    return new Connection(event_loop, pid, client_socket.Get());
+    return new Connection(event_loop, pid,
+                          SocketDescriptor::FromFileDescriptor(client_socket));
 }
 
 /**

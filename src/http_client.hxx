@@ -16,6 +16,7 @@
 struct pool;
 class EventLoop;
 class Istream;
+class SocketDescriptor;
 class Lease;
 struct SocketFilter;
 class HttpResponseHandler;
@@ -83,7 +84,7 @@ http_client_quark(void)
  */
 void
 http_client_request(struct pool &pool, EventLoop &event_loop,
-                    int fd, FdType fd_type,
+                    SocketDescriptor fd, FdType fd_type,
                     Lease &lease,
                     const char *peer_name,
                     const SocketFilter *filter, void *filter_ctx,

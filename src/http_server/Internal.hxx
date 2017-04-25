@@ -146,7 +146,7 @@ struct HttpServerConnection final : IstreamHandler {
 
     HttpServerConnection(struct pool &_pool,
                          EventLoop &_loop,
-                         int fd, FdType fd_type,
+                         SocketDescriptor fd, FdType fd_type,
                          const SocketFilter *filter,
                          void *filter_ctx,
                          SocketAddress _local_address,

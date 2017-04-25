@@ -17,6 +17,7 @@
 class StockMap;
 struct StockItem;
 struct PreparedChildProcess;
+class SocketDescriptor;
 class UniqueFileDescriptor;
 class EventLoop;
 class SpawnService;
@@ -42,7 +43,7 @@ child_stock_free(StockMap *stock);
  *
  * @return a socket descriptor or -1 on error
  */
-int
+SocketDescriptor
 child_stock_item_connect(StockItem *item,
                          GError **error_r);
 

@@ -10,6 +10,7 @@
 #include "fb_pool.hxx"
 #include "pool.hxx"
 #include "PInstance.hxx"
+#include "net/SocketDescriptor.hxx"
 #include "util/Cast.hxx"
 #include "util/Cancellable.hxx"
 
@@ -28,7 +29,7 @@ test_quark(void)
     return g_quark_from_static_string("test");
 }
 
-static int
+static SocketDescriptor
 connect_fake_server()
 {
     FileDescriptor client_socket, server_socket;
@@ -56,7 +57,7 @@ connect_fake_server()
 
     server_socket.Close();
     client_socket.SetNonBlocking();
-    return client_socket.Get();
+    return SocketDescriptor::FromFileDescriptor(client_socket);
 }
 
 struct Context final : PInstance, Lease, IstreamHandler {
@@ -67,7 +68,7 @@ struct Context final : PInstance, Lease, IstreamHandler {
     bool close_value_late = false;
     bool close_value_data = false;
     CancellablePointer cancel_ptr;
-    int fd = -1;
+    SocketDescriptor fd = SocketDescriptor::Undefined();
     bool released = false, reuse = false, got_response = false;
     enum memcached_response_status status;
 
@@ -84,8 +85,7 @@ struct Context final : PInstance, Lease, IstreamHandler {
 
     /* virtual methods from class Lease */
     void ReleaseLease(bool _reuse) override {
-        close(fd);
-        fd = -1;
+        fd.Close();
         released = true;
         reuse = _reuse;
     }
@@ -268,7 +268,7 @@ test_basic(struct pool *pool, Context *c)
 
     assert(c->released);
     assert(c->reuse);
-    assert(c->fd < 0);
+    assert(!c->fd.IsDefined());
     assert(c->status == MEMCACHED_STATUS_NO_ERROR);
     assert(!c->value.IsDefined());
     assert(c->value_eof);
@@ -296,7 +296,7 @@ test_close_early(struct pool *pool, Context *c)
 
     assert(c->released);
     assert(!c->reuse);
-    assert(c->fd < 0);
+    assert(!c->fd.IsDefined());
     assert(c->status == MEMCACHED_STATUS_NO_ERROR);
     assert(!c->value.IsDefined());
     assert(!c->value_eof);
@@ -325,7 +325,7 @@ test_close_late(struct pool *pool, Context *c)
 
     assert(c->released);
     assert(!c->reuse);
-    assert(c->fd < 0);
+    assert(!c->fd.IsDefined());
     assert(c->status == MEMCACHED_STATUS_NO_ERROR);
     assert(!c->value.IsDefined());
     assert(!c->value_eof);
@@ -355,7 +355,7 @@ test_close_data(struct pool *pool, Context *c)
 
     assert(c->released);
     assert(!c->reuse);
-    assert(c->fd < 0);
+    assert(!c->fd.IsDefined());
     assert(c->status == MEMCACHED_STATUS_NO_ERROR);
     assert(!c->value.IsDefined());
     assert(!c->value_eof);
@@ -386,7 +386,7 @@ test_abort(struct pool *pool, Context *c)
     assert(!c->got_response);
     assert(c->released);
     assert(!c->reuse);
-    assert(c->fd < 0);
+    assert(!c->fd.IsDefined());
     assert(!c->value.IsDefined());
     assert(!c->value_eof);
     assert(!c->value_abort);
@@ -416,7 +416,7 @@ test_request_value(struct pool *pool, Context *c)
 
     assert(c->released);
     assert(c->reuse);
-    assert(c->fd < 0);
+    assert(!c->fd.IsDefined());
     assert(c->status == MEMCACHED_STATUS_NO_ERROR);
     assert(!c->value.IsDefined());
     assert(c->value_eof);
@@ -447,7 +447,7 @@ test_request_value_close(struct pool *pool, Context *c)
 
     assert(c->released);
     assert(!c->reuse);
-    assert(c->fd < 0);
+    assert(!c->fd.IsDefined());
 }
 
 static void
@@ -474,7 +474,7 @@ test_request_value_abort(struct pool *pool, Context *c)
 
     assert(c->released);
     assert(!c->reuse);
-    assert(c->fd < 0);
+    assert(!c->fd.IsDefined());
 }
 
 /*

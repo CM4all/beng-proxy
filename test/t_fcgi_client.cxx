@@ -16,6 +16,7 @@
 #include "istream/istream.hxx"
 #include "strmap.hxx"
 #include "fb_pool.hxx"
+#include "net/SocketDescriptor.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/ByteOrder.hxx"
 #include "fcgi_server.hxx"
@@ -220,9 +221,9 @@ fcgi_server_excess_data(struct pool *pool)
 struct Connection {
     EventLoop &event_loop;
     const pid_t pid;
-    FileDescriptor fd;
+    SocketDescriptor fd;
 
-    Connection(EventLoop &_event_loop, pid_t _pid, FileDescriptor _fd)
+    Connection(EventLoop &_event_loop, pid_t _pid, SocketDescriptor _fd)
         :event_loop(_event_loop), pid(_pid), fd(_fd) {}
     static Connection *New(EventLoop &event_loop,
                            void (*f)(struct pool *pool));
@@ -235,7 +236,7 @@ struct Connection {
                  StringMap &&headers, Istream *body,
                  HttpResponseHandler &handler,
                  CancellablePointer &cancel_ptr) {
-        fcgi_client_request(pool, event_loop, fd.Get(), FdType::FD_SOCKET,
+        fcgi_client_request(pool, event_loop, fd, FdType::FD_SOCKET,
                             lease,
                             method, uri, uri, nullptr, nullptr, nullptr,
                             nullptr, "192.168.1.100",
@@ -323,7 +324,8 @@ Connection::New(EventLoop &event_loop, void (*f)(struct pool *pool))
 
     server_socket.Close();
     client_socket.SetNonBlocking();
-    return new Connection(event_loop, pid, client_socket);
+    return new Connection(event_loop, pid,
+                          SocketDescriptor::FromFileDescriptor(client_socket));
 }
 
 Connection::~Connection()

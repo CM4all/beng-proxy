@@ -15,6 +15,7 @@
 #include "istream/istream.hxx"
 #include "strmap.hxx"
 #include "fb_pool.hxx"
+#include "net/SocketDescriptor.hxx"
 #include "util/ByteOrder.hxx"
 
 #include <inline/compiler.h>
@@ -152,9 +153,9 @@ ajp_server_premature_close_body(gcc_unused struct pool *pool)
 struct Connection {
     EventLoop &event_loop;
     const pid_t pid;
-    FileDescriptor fd;
+    SocketDescriptor fd;
 
-    Connection(EventLoop &_event_loop, pid_t _pid, FileDescriptor _fd)
+    Connection(EventLoop &_event_loop, pid_t _pid, SocketDescriptor _fd)
         :event_loop(_event_loop), pid(_pid), fd(_fd) {}
     static Connection *New(EventLoop &event_loop, void (*f)(struct pool *pool));
     ~Connection();
@@ -166,7 +167,7 @@ struct Connection {
                  Istream *body,
                  HttpResponseHandler &handler,
                  CancellablePointer &cancel_ptr) {
-        ajp_client_request(*pool, event_loop, fd.Get(), FdType::FD_SOCKET,
+        ajp_client_request(*pool, event_loop, fd, FdType::FD_SOCKET,
                            lease,
                            "http", "192.168.1.100", "remote", "server", 80, false,
                            method, uri, headers, body,
@@ -255,7 +256,8 @@ Connection::New(EventLoop &event_loop, void (*f)(struct pool *pool))
 
     server_socket.Close();
     client_socket.SetNonBlocking();
-    return new Connection(event_loop, pid, client_socket);
+    return new Connection(event_loop, pid,
+                          SocketDescriptor::FromFileDescriptor(client_socket));
 }
 
 /*

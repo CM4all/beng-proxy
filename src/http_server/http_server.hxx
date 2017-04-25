@@ -17,6 +17,7 @@ struct pool;
 class EventLoop;
 class Istream;
 struct SocketFilter;
+class SocketDescriptor;
 class SocketAddress;
 class HttpHeaders;
 
@@ -65,7 +66,7 @@ http_server_quark(void)
 HttpServerConnection *
 http_server_connection_new(struct pool *pool,
                            EventLoop &loop,
-                           int fd, FdType fd_type,
+                           SocketDescriptor fd, FdType fd_type,
                            const SocketFilter *filter,
                            void *filter_ctx,
                            SocketAddress local_address,

@@ -8,6 +8,7 @@
 #include "istream/istream.hxx"
 #include "istream/istream_catch.hxx"
 #include "fb_pool.hxx"
+#include "net/SocketDescriptor.hxx"
 #include "io/FileDescriptor.hxx"
 
 #include <stdio.h>
@@ -98,7 +99,8 @@ test_catch(EventLoop &event_loop, struct pool *_pool)
     Instance instance(*_pool);
     instance.connection =
         http_server_connection_new(instance.pool, event_loop,
-                                   server_socket.Get(), FdType::FD_SOCKET,
+                                   SocketDescriptor::FromFileDescriptor(server_socket),
+                                   FdType::FD_SOCKET,
                                    nullptr, nullptr,
                                    nullptr, nullptr,
                                    true, instance);

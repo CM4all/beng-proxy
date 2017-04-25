@@ -135,7 +135,7 @@ lb_connection_new(LbInstance &instance,
     switch (listener.destination.GetProtocol()) {
     case LbProtocol::HTTP:
         connection->http = http_server_connection_new(pool, instance.event_loop,
-                                                      fd.Steal(), fd_type,
+                                                      fd.Release(), fd_type,
                                                       filter, filter_ctx,
                                                       local_address.IsDefined()
                                                       ? (SocketAddress)local_address

@@ -14,6 +14,7 @@
 #include "istream/istream.hxx"
 #include "pool.hxx"
 #include "AllocatorPtr.hxx"
+#include "net/SocketDescriptor.hxx"
 #include "util/Cast.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/Cancellable.hxx"

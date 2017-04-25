@@ -18,6 +18,7 @@
 #include "spawn/Prepared.hxx"
 #include "GException.hxx"
 #include "event/SocketEvent.hxx"
+#include "net/SocketDescriptor.hxx"
 
 #include <daemon/log.h>
 
@@ -51,7 +52,7 @@ struct LhttpConnection final : HeapStockItem {
 
     struct lease_ref lease_ref;
 
-    int fd = -1;
+    SocketDescriptor fd = SocketDescriptor::Undefined();
     SocketEvent event;
 
     explicit LhttpConnection(CreateStockItem c)
@@ -91,7 +92,7 @@ LhttpConnection::EventCallback(unsigned events)
 {
     if ((events & EV_TIMEOUT) == 0) {
         char buffer;
-        ssize_t nbytes = recv(fd, &buffer, sizeof(buffer), MSG_DONTWAIT);
+        ssize_t nbytes = fd.Read(&buffer, sizeof(buffer));
         if (nbytes < 0)
             daemon_log(2, "error on idle LHTTP connection: %s\n",
                        strerror(errno));
@@ -175,23 +176,23 @@ lhttp_stock_create(void *ctx, CreateStockItem c, void *info,
 
     connection->fd = child_stock_item_connect(connection->child, &error);
 
-    if (connection->fd < 0) {
+    if (!connection->fd.IsDefined()) {
         g_prefix_error(&error, "failed to connect to LHTTP server '%s': ",
                        key);
         connection->InvokeCreateError(error);
         return;
     }
 
-    connection->event.Set(connection->fd, EV_READ);
+    connection->event.Set(connection->fd.Get(), EV_READ);
 
     connection->InvokeCreateSuccess();
 }
 
 LhttpConnection::~LhttpConnection()
 {
-    if (fd >= 0) {
+    if (fd.IsDefined()) {
         event.Delete();
-        close(fd);
+        fd.Close();
     }
 
     if (child != nullptr)
@@ -258,12 +259,12 @@ lhttp_stock_get(LhttpStock *lhttp_stock, struct pool *pool,
                                       deconst.out, error_r);
 }
 
-int
+SocketDescriptor
 lhttp_stock_item_get_socket(const StockItem &item)
 {
     const auto *connection = (const LhttpConnection *)&item;
 
-    assert(connection->fd >= 0);
+    assert(connection->fd.IsDefined());
 
     return connection->fd;
 }

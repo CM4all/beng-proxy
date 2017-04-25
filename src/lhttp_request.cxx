@@ -16,6 +16,7 @@
 #include "header_writer.hxx"
 #include "pool.hxx"
 #include "GException.hxx"
+#include "net/SocketDescriptor.hxx"
 
 #include <stdexcept>
 

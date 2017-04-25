@@ -143,7 +143,7 @@ struct FilteredSocket {
         return base.GetEventLoop();
     }
 
-    void Init(int fd, FdType fd_type,
+    void Init(SocketDescriptor fd, FdType fd_type,
               const struct timeval *read_timeout,
               const struct timeval *write_timeout,
               const SocketFilter *filter, void *filter_ctx,

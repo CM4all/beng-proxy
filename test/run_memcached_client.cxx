@@ -236,7 +236,7 @@ int main(int argc, char **argv) {
 
     /* run test */
 
-    memcached_client_invoke(pool, ctx.event_loop, ctx.s.Get(), FdType::FD_TCP,
+    memcached_client_invoke(pool, ctx.event_loop, ctx.s, FdType::FD_TCP,
                             ctx,
                             opcode,
                             extras, extras_length,

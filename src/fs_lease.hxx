@@ -18,7 +18,7 @@ class FilteredSocketLease {
 
 public:
     FilteredSocketLease(EventLoop &event_loop,
-                        int fd, FdType fd_type,
+                        SocketDescriptor fd, FdType fd_type,
                         Lease &lease,
                         const struct timeval *read_timeout,
                         const struct timeval *write_timeout,

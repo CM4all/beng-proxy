@@ -20,6 +20,7 @@
 #include "AllocatorPtr.hxx"
 #include "event/SocketEvent.hxx"
 #include "event/Duration.hxx"
+#include "net/SocketDescriptor.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "util/ConstBuffer.hxx"
 
@@ -88,7 +89,7 @@ struct FcgiConnection final : HeapStockItem {
 
     StockItem *child = nullptr;
 
-    int fd = -1;
+    SocketDescriptor fd = SocketDescriptor::Undefined();
     SocketEvent event;
 
     /**
@@ -149,7 +150,7 @@ FcgiConnection::OnSocketEvent(unsigned events)
 {
     if ((events & EV_TIMEOUT) == 0) {
         char buffer;
-        ssize_t nbytes = recv(fd, &buffer, sizeof(buffer), MSG_DONTWAIT);
+        ssize_t nbytes = fd.Read(&buffer, sizeof(buffer));
         if (nbytes < 0)
             daemon_log(2, "error on idle FastCGI connection '%s': %s\n",
                        GetStockName(), strerror(errno));
@@ -246,7 +247,7 @@ fcgi_stock_create(void *ctx, CreateStockItem c, void *info,
     }
 
     connection->fd = child_stock_item_connect(connection->child, &error);
-    if (connection->fd < 0) {
+    if (!connection->fd.IsDefined()) {
         g_prefix_error(&error, "failed to connect to FastCGI server '%s': ",
                        key);
 
@@ -255,7 +256,7 @@ fcgi_stock_create(void *ctx, CreateStockItem c, void *info,
         return;
     }
 
-    connection->event.Set(connection->fd, EV_READ);
+    connection->event.Set(connection->fd.Get(), EV_READ);
 
     connection->InvokeCreateSuccess();
 }
@@ -267,7 +268,7 @@ FcgiConnection::Borrow(gcc_unused void *ctx)
        FastCGI server has decided to close the connection before
        fcgi_connection_event_callback() got invoked */
     char buffer;
-    ssize_t nbytes = recv(fd, &buffer, sizeof(buffer), MSG_DONTWAIT);
+    ssize_t nbytes = fd.Read(&buffer, sizeof(buffer));
     if (nbytes > 0) {
         daemon_log(2, "unexpected data from idle FastCGI connection '%s'\n",
                    GetStockName());
@@ -296,9 +297,9 @@ FcgiConnection::Release(gcc_unused void *ctx)
 
 FcgiConnection::~FcgiConnection()
 {
-    if (fd >= 0) {
+    if (fd.IsDefined()) {
         event.Delete();
-        close(fd);
+        fd.Close();
     }
 
     if (fresh && aborted)
@@ -370,12 +371,12 @@ fcgi_stock_item_get_domain(gcc_unused const StockItem &item)
     return AF_UNIX;
 }
 
-int
+SocketDescriptor
 fcgi_stock_item_get(const StockItem &item)
 {
     const auto *connection = (const FcgiConnection *)&item;
 
-    assert(connection->fd >= 0);
+    assert(connection->fd.IsDefined());
 
     return connection->fd;
 }

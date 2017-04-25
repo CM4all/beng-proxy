@@ -15,6 +15,7 @@ struct pool;
 class EventLoop;
 class Istream;
 class Lease;
+class SocketDescriptor;
 class StringMap;
 class HttpResponseHandler;
 class CancellablePointer;
@@ -45,7 +46,7 @@ template<typename T> struct ConstBuffer;
  */
 void
 fcgi_client_request(struct pool *pool, EventLoop &event_loop,
-                    int fd, FdType fd_type, Lease &lease,
+                    SocketDescriptor fd, FdType fd_type, Lease &lease,
                     http_method_t method, const char *uri,
                     const char *script_filename,
                     const char *script_name, const char *path_info,

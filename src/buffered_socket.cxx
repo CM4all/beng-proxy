@@ -433,7 +433,7 @@ BufferedSocket::OnSocketTimeout()
  */
 
 void
-BufferedSocket::Init(int _fd, FdType _fd_type,
+BufferedSocket::Init(SocketDescriptor _fd, FdType _fd_type,
                      const struct timeval *_read_timeout,
                      const struct timeval *_write_timeout,
                      const BufferedSocketHandler &_handler, void *_ctx)

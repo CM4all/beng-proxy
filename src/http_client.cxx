@@ -180,7 +180,7 @@ struct HttpClient final : IstreamHandler, Cancellable {
 
     HttpClient(struct pool &_caller_pool, struct pool &_pool,
                EventLoop &event_loop,
-               int fd, FdType fd_type,
+               SocketDescriptor fd, FdType fd_type,
                Lease &lease,
                const char *_peer_name,
                const SocketFilter *filter, void *filter_ctx,
@@ -1267,7 +1267,7 @@ HttpClient::Cancel()
 inline
 HttpClient::HttpClient(struct pool &_caller_pool, struct pool &_pool,
                        EventLoop &event_loop,
-                       int fd, FdType fd_type,
+                       SocketDescriptor fd, FdType fd_type,
                        Lease &lease,
                        const char *_peer_name,
                        const SocketFilter *filter, void *filter_ctx,
@@ -1373,7 +1373,7 @@ HttpClient::HttpClient(struct pool &_caller_pool, struct pool &_pool,
 
 void
 http_client_request(struct pool &caller_pool, EventLoop &event_loop,
-                    int fd, FdType fd_type,
+                    SocketDescriptor fd, FdType fd_type,
                     Lease &lease,
                     const char *peer_name,
                     const SocketFilter *filter, void *filter_ctx,
@@ -1383,7 +1383,7 @@ http_client_request(struct pool &caller_pool, EventLoop &event_loop,
                     HttpResponseHandler &handler,
                     CancellablePointer &cancel_ptr)
 {
-    assert(fd >= 0);
+    assert(fd.IsDefined());
     assert(http_method_is_valid(method));
 
     if (!uri_path_verify_quick(uri)) {

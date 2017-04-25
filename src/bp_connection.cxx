@@ -148,7 +148,7 @@ new_connection(BpInstance &instance,
     connection->http =
         http_server_connection_new(pool,
                                    instance.event_loop,
-                                   fd.Steal(), FdType::FD_TCP,
+                                   fd.Release(), FdType::FD_TCP,
                                    nullptr, nullptr,
                                    local_address.IsDefined()
                                    ? (SocketAddress)local_address

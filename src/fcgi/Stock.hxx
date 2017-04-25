@@ -13,6 +13,7 @@ struct pool;
 struct StockItem;
 struct FcgiStock;
 struct ChildOptions;
+class SocketDescriptor;
 template<typename T> struct ConstBuffer;
 class AllocatorPtr;
 class EventLoop;
@@ -41,7 +42,7 @@ fcgi_stock_get(FcgiStock *fcgi_stock, struct pool *pool,
 /**
  * Returns the socket descriptor of the specified stock item.
  */
-int
+SocketDescriptor
 fcgi_stock_item_get(const StockItem &item);
 
 int

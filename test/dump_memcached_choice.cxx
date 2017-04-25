@@ -188,7 +188,7 @@ int main(int argc, char **argv) {
     /* send memcached request */
 
     memcached_client_invoke(ctx.pool, ctx.event_loop,
-                            ctx.s.Get(), FdType::FD_TCP,
+                            ctx.s, FdType::FD_TCP,
                             ctx,
                             MEMCACHED_OPCODE_GET,
                             NULL, 0,

@@ -33,6 +33,7 @@
 #include "bulldog.hxx"
 #include "pool.hxx"
 #include "net/SocketAddress.hxx"
+#include "net/SocketDescriptor.hxx"
 #include "istream/istream.hxx"
 #include "istream/UnusedHoldPtr.hxx"
 #include "gerrno.h"
@@ -279,7 +280,7 @@ LbRequest::OnStockItemReady(StockItem &item)
 
     http_client_request(request.pool,
                         connection.instance.event_loop,
-                        tcp_stock_item_get(item),
+                        SocketDescriptor::FromFileDescriptor(FileDescriptor(tcp_stock_item_get(item))),
                         tcp_stock_item_get_domain(item) == AF_LOCAL
                         ? FdType::FD_SOCKET : FdType::FD_TCP,
                         *lease,

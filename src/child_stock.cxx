@@ -16,6 +16,7 @@
 #include "spawn/Interface.hxx"
 #include "spawn/Prepared.hxx"
 #include "io/UniqueFileDescriptor.hxx"
+#include "net/SocketDescriptor.hxx"
 #include "pool.hxx"
 
 #include <string>
@@ -169,13 +170,13 @@ child_stock_free(StockMap *stock)
     delete s;
 }
 
-int
+SocketDescriptor
 child_stock_item_connect(StockItem *_item, GError **error_r)
 {
     auto *item = (ChildStockItem *)_item;
 
-    int fd = item->socket.Connect(error_r);
-    if (fd < 0)
+    auto fd = item->socket.Connect(error_r);
+    if (!fd.IsDefined())
         /* if the connection fails, abandon the child process, don't
            try again - it will never work! */
         item->fade = true;

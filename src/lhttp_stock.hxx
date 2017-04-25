@@ -16,6 +16,7 @@ struct pool;
 struct LhttpStock;
 struct StockItem;
 struct LhttpAddress;
+class SocketDescriptor;
 class EventLoop;
 class SpawnService;
 
@@ -38,7 +39,7 @@ lhttp_stock_get(LhttpStock *lhttp_stock, struct pool *pool,
  * Returns the socket descriptor of the specified stock item.
  */
 gcc_pure
-int
+SocketDescriptor
 lhttp_stock_item_get_socket(const StockItem &item);
 
 gcc_pure

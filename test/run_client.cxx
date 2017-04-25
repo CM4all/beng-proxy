@@ -241,7 +241,7 @@ try {
     switch (url.protocol) {
     case parsed_url::AJP:
         ajp_client_request(*pool, event_loop,
-                           fd.Get(), FdType::FD_TCP,
+                           fd, FdType::FD_TCP,
                            *this,
                            "http", "127.0.0.1", "localhost",
                            "localhost", 80, false,
@@ -252,7 +252,7 @@ try {
 
     case parsed_url::HTTP:
         http_client_request(*pool, event_loop,
-                            fd.Get(), FdType::FD_TCP,
+                            fd, FdType::FD_TCP,
                             *this,
                             "localhost",
                             nullptr, nullptr,
@@ -269,7 +269,7 @@ try {
 
         auto filter = &ssl_client_get_filter();
         http_client_request(*pool, event_loop,
-                            fd.Get(), FdType::FD_TCP,
+                            fd, FdType::FD_TCP,
                             *this,
                             "localhost",
                             filter, filter_ctx,

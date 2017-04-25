@@ -80,7 +80,7 @@ struct MemcachedClient final : Istream, IstreamHandler, Cancellable {
     } response;
 
     MemcachedClient(struct pool &_pool, EventLoop &event_loop,
-                    int fd, FdType fd_type,
+                    SocketDescriptor fd, FdType fd_type,
                     Lease &lease,
                     Istream &_request,
                     const struct memcached_client_handler &_handler,
@@ -686,7 +686,7 @@ MemcachedClient::Cancel()
 
 inline
 MemcachedClient::MemcachedClient(struct pool &_pool, EventLoop &event_loop,
-                                 int fd, FdType fd_type,
+                                 SocketDescriptor fd, FdType fd_type,
                                  Lease &lease,
                                  Istream &_request,
                                  const struct memcached_client_handler &_handler,
@@ -711,7 +711,7 @@ MemcachedClient::MemcachedClient(struct pool &_pool, EventLoop &event_loop,
 
 void
 memcached_client_invoke(struct pool *pool, EventLoop &event_loop,
-                        int fd, FdType fd_type,
+                        SocketDescriptor fd, FdType fd_type,
                         Lease &lease,
                         enum memcached_opcode opcode,
                         const void *extras, size_t extras_length,

@@ -372,7 +372,7 @@ LbTcpConnection::OnSocketConnectSuccess(UniqueSocketDescriptor &&fd)
 {
     cancel_connect = nullptr;
 
-    outbound.Init(fd.Steal(), FdType::FD_TCP,
+    outbound.Init(fd.Release(), FdType::FD_TCP,
                   nullptr, &write_timeout,
                   outbound_buffered_socket_handler, this);
 
@@ -450,7 +450,7 @@ LbTcpConnection::LbTcpConnection(struct pool &_pool, EventLoop &event_loop,
      cluster(_cluster), clusters(_clusters), balancer(_balancer),
      session_sticky(lb_tcp_sticky(cluster.sticky_mode, remote_address))
 {
-    inbound.Init(fd.Steal(), fd_type,
+    inbound.Init(fd.Release(), fd_type,
                  nullptr, &write_timeout,
                  filter, filter_ctx,
                  inbound_buffered_socket_handler, this);
