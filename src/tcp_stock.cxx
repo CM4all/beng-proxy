@@ -46,7 +46,7 @@ struct TcpStockConnection final
      */
     CancellablePointer cancel_ptr;
 
-    int fd = -1;
+    SocketDescriptor fd = SocketDescriptor::Undefined();
 
     const AllocatedSocketAddress address;
 
@@ -104,7 +104,7 @@ TcpStockConnection::EventCallback(unsigned events)
 
         assert((events & EV_READ) != 0);
 
-        nbytes = recv(fd, &buffer, sizeof(buffer), MSG_DONTWAIT);
+        nbytes = fd.Read(&buffer, sizeof(buffer));
         if (nbytes < 0)
             daemon_log(2, "error on idle TCP connection: %s\n",
                        strerror(errno));
@@ -126,8 +126,8 @@ TcpStockConnection::OnSocketConnectSuccess(UniqueSocketDescriptor &&new_fd)
 {
     cancel_ptr = nullptr;
 
-    fd = new_fd.Steal();
-    event.Set(fd, EV_READ);
+    fd = new_fd.Release();
+    event.Set(fd.Get(), EV_READ);
 
     InvokeCreateSuccess();
 }
@@ -174,9 +174,9 @@ TcpStockConnection::~TcpStockConnection()
 {
     if (cancel_ptr)
         cancel_ptr.Cancel();
-    else if (fd >= 0) {
+    else if (fd.IsDefined()) {
         event.Delete();
-        close(fd);
+        fd.Close();
     }
 }
 
@@ -234,7 +234,7 @@ tcp_stock_get(StockMap *tcp_stock, struct pool *pool, const char *name,
     tcp_stock->Get(*pool, name, request, handler, cancel_ptr);
 }
 
-int
+SocketDescriptor
 tcp_stock_item_get(const StockItem &item)
 {
     auto *connection = (const TcpStockConnection *)&item;
@@ -247,7 +247,7 @@ tcp_stock_item_get_address(const StockItem &item)
 {
     auto &connection = (const TcpStockConnection &)item;
 
-    assert(connection.fd >= 0);
+    assert(connection.fd.IsDefined());
 
     return connection.address;
 }
@@ -257,7 +257,7 @@ tcp_stock_item_get_domain(const StockItem &item)
 {
     auto *connection = (const TcpStockConnection *)&item;
 
-    assert(connection->fd >= 0);
+    assert(connection->fd.IsDefined());
 
     return connection->address.GetFamily();
 }

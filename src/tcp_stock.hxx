@@ -13,6 +13,7 @@ struct pool;
 struct balancer;
 class StockMap;
 struct StockItem;
+class SocketDescriptor;
 class StockGetHandler;
 class CancellablePointer;
 class SocketAddress;
@@ -42,7 +43,7 @@ tcp_stock_get(StockMap *tcp_stock, struct pool *pool, const char *name,
               CancellablePointer &cancel_ptr);
 
 gcc_pure
-int
+SocketDescriptor
 tcp_stock_item_get(const StockItem &item);
 
 /**

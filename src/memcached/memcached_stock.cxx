@@ -109,7 +109,7 @@ MemcachedStockRequest::OnStockItemReady(StockItem &_item)
     item = &_item;
 
     memcached_client_invoke(&pool, event_loop,
-                            SocketDescriptor::FromFileDescriptor(FileDescriptor(tcp_stock_item_get(_item))),
+                            tcp_stock_item_get(_item),
                             tcp_stock_item_get_domain(_item) == AF_LOCAL
                             ? FdType::FD_SOCKET : FdType::FD_TCP,
                             *this,

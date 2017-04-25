@@ -97,7 +97,7 @@ FcgiRemoteRequest::OnStockItemReady(StockItem &item)
     stock_item = &item;
 
     fcgi_client_request(&pool, event_loop,
-                        SocketDescriptor::FromFileDescriptor(FileDescriptor(tcp_stock_item_get(item))),
+                        tcp_stock_item_get(item),
                         tcp_stock_item_get_domain(item) == AF_LOCAL
                         ? FdType::FD_SOCKET : FdType::FD_TCP,
                         *this,
