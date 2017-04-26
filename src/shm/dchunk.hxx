@@ -41,8 +41,7 @@ struct DpoolChunk {
         assert(shm_page_size(&shm) >= sizeof(DpoolChunk));
 
         DpoolChunk *chunk;
-        const size_t size = shm_page_size(&shm) - sizeof(*chunk) + sizeof(chunk->data);
-        chunk = NewFromShm<DpoolChunk>(&shm, 1, size);
+        chunk = NewFromShm<DpoolChunk>(&shm, 1, shm_page_size(&shm));
         if (chunk == nullptr)
             return nullptr;
 
