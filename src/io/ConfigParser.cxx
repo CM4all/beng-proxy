@@ -246,22 +246,16 @@ IncludeConfigParser::ParseLine(FileLineParser &line)
 {
     if (line.SkipWord("@include") ||
         /* v11.2 legacy: */ line.SkipWord("include")) {
-        const char *p = line.NextUnescape();
-        if (p == nullptr)
-            throw LineParser::Error("Quoted path expected");
-
+        auto p = line.ExpectPath();
         line.ExpectEnd();
 
-        IncludePath(p);
+        IncludePath(std::move(p));
     } else if (line.SkipWord("@include_optional") ||
                /* v11.2 legacy: */ line.SkipWord("include_optional")) {
-        const char *p = line.NextUnescape();
-        if (p == nullptr)
-            throw LineParser::Error("Quoted path expected");
-
+        auto p = line.ExpectPath();
         line.ExpectEnd();
 
-        IncludeOptionalPath(p);
+        IncludeOptionalPath(std::move(p));
     } else
         child.ParseLine(line);
 }
@@ -272,21 +266,9 @@ IncludeConfigParser::Finish()
     child.Finish();
 }
 
-static fs::path
-ApplyPath(const fs::path &base, fs::path &&p)
-{
-    if (p.is_absolute())
-        /* is already absolute */
-        return p;
-
-    return base.parent_path() / p;
-}
-
 inline void
 IncludeConfigParser::IncludePath(boost::filesystem::path &&p)
 {
-    p = ApplyPath(path, std::move(p));
-
     auto directory = p.parent_path();
     if (directory.empty())
         directory = ".";
@@ -339,7 +321,7 @@ ParseConfigFile(const boost::filesystem::path &path, FILE *file,
 inline void
 IncludeConfigParser::IncludeOptionalPath(boost::filesystem::path &&p)
 {
-    IncludeConfigParser sub(ApplyPath(path, std::move(p)), child);
+    IncludeConfigParser sub(std::move(p), child);
 
     FILE *file = fopen(sub.path.c_str(), "r");
     if (file == nullptr) {
