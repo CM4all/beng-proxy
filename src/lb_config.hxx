@@ -16,6 +16,8 @@
 
 #include <http/status.h>
 
+#include <boost/filesystem/path.hpp>
+
 #include <map>
 #include <list>
 #include <forward_list>
@@ -461,7 +463,7 @@ struct LbListenerConfig {
 struct LbConfig {
     std::string access_logger;
 
-    std::list<std::string> lua_files;
+    std::list<boost::filesystem::path> lua_files;
 
     std::list<LbControlConfig> controls;
 
