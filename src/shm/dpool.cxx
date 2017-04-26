@@ -43,7 +43,7 @@ private:
 dpool::dpool(struct shm &_shm)
     :shm(&_shm),
      first_chunk(shm_page_size(shm) - sizeof(*this) +
-                 sizeof(first_chunk.data))
+                 sizeof(first_chunk))
 {
     assert(shm_page_size(shm) >= sizeof(*this));
 

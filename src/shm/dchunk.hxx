@@ -26,8 +26,16 @@ struct DpoolChunk {
         size_t data[1];
     } data;
 
-    explicit DpoolChunk(size_t size)
-        :m(boost::interprocess::create_only, &data, size) {}
+    /**
+     * @param total_size the size of the memory allocation this
+     * #DpoolChunk lives in; it is used to calculate the usable chunk
+     * size
+     */
+    explicit DpoolChunk(size_t total_size)
+        :m(boost::interprocess::create_only, &data,
+           total_size - sizeof(*this) + sizeof(data)) {
+        assert(total_size >= sizeof(*this));
+    }
 
     static DpoolChunk *New(struct shm &shm, struct list_head &chunks_head) {
         assert(shm_page_size(&shm) >= sizeof(DpoolChunk));
