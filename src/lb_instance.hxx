@@ -17,7 +17,6 @@
 #include "event/SignalEvent.hxx"
 #include "event/ShutdownListener.hxx"
 #include "avahi/Client.hxx"
-#include "lua/State.hxx"
 
 #include <forward_list>
 #include <map>
@@ -80,13 +79,8 @@ struct LbInstance final : PInstance {
 
     Stock *pipe_stock;
 
-    Lua::State lua_state;
-
     LbInstance();
     ~LbInstance();
-
-    void EnableLua();
-    void RunLuaFile(const char *path);
 
     /**
      * Transition the current process from "master" to "worker".  Call

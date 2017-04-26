@@ -1019,8 +1019,6 @@ LbConfigParser::ParseLine2(FileLineParser &line)
         CreateControl(line);
     else if (strcmp(word, "access_logger") == 0)
         config.access_logger = line.ExpectValueAndEnd();
-    else if (strcmp(word, "lua") == 0)
-        config.lua_files.emplace_back(line.ExpectPathAndEnd());
     else
         throw LineParser::Error("Unknown option");
 }
