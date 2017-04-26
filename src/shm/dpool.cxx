@@ -27,6 +27,8 @@ struct dpool {
      */
     unsigned free_counter = 0;
 
+    struct list_head chunks;
+
     DpoolChunk first_chunk;
 
     explicit dpool(struct shm &_shm);
@@ -47,16 +49,19 @@ dpool::dpool(struct shm &_shm)
 {
     assert(shm_page_size(shm) >= sizeof(*this));
 
-    list_init(&first_chunk.siblings);
+    list_init(&chunks);
+    list_add(&first_chunk.siblings, &chunks);
 }
 
 dpool::~dpool()
 {
     assert(shm != nullptr);
 
+    list_remove(&first_chunk.siblings);
+
     DpoolChunk *chunk, *n;
-    for (chunk = (DpoolChunk *)(void *)first_chunk.siblings.next;
-         chunk != &first_chunk; chunk = n) {
+    for (chunk = (DpoolChunk *)(void *)chunks.next;
+         &chunk->siblings != &chunks; chunk = n) {
         n = (DpoolChunk *)(void *)chunk->siblings.next;
 
         chunk->Destroy(*shm);
@@ -99,22 +104,20 @@ dpool::Allocate(size_t size) throw(std::bad_alloc)
 
     /* find a chunk with enough room */
 
-    auto *chunk = &first_chunk;
-    do {
+    for (auto *chunk = (DpoolChunk *)(void *)chunks.next;
+         &chunk->siblings != &chunks; chunk = (DpoolChunk *)(void *)chunk->siblings.next) {
         void *p = chunk->Allocate(size);
         if (p != nullptr)
             return p;
-
-        chunk = (DpoolChunk *)(void *)chunk->siblings.next;
-    } while (chunk != &first_chunk);
+    }
 
     /* none found; try to allocate a new chunk */
 
-    chunk = DpoolChunk::New(*shm);
+    auto *chunk = DpoolChunk::New(*shm);
     if (chunk == nullptr)
         throw std::bad_alloc();
 
-    list_add(&chunk->siblings, &first_chunk.siblings);
+    list_add(&chunk->siblings, &chunks);
 
     void *p = chunk->Allocate(size);
     assert(p != nullptr);
@@ -131,15 +134,10 @@ d_malloc(struct dpool &pool, size_t size)
 inline DpoolChunk *
 dpool::FindChunk(const void *p)
 {
-    if (first_chunk.Contains(p))
-        return &first_chunk;
-
-    for (auto *chunk = (DpoolChunk *)(void *)first_chunk.siblings.next;
-         chunk != &first_chunk;
-         chunk = (DpoolChunk *)(void *)chunk->siblings.next) {
+    for (auto *chunk = (DpoolChunk *)(void *)chunks.next;
+         &chunk->siblings != &chunks; chunk = (DpoolChunk *)(void *)chunk->siblings.next)
         if (chunk->Contains(p))
             return chunk;
-    }
 
     return nullptr;
 }
