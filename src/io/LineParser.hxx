@@ -20,6 +20,14 @@ public:
         StripRight(p);
     }
 
+    /**
+     * Replace the string pointer.  This is a kludge for class
+     * #VariableConfigParser.
+     */
+    void Replace(char *_p) {
+        p = _p;
+    }
+
     char *Rest() {
         return p;
     }

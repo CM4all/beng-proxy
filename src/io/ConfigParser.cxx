@@ -232,7 +232,7 @@ VariableConfigParser::Expand(LineParser &line) const
 {
     char *p = Expand(line.Rest());
     if (p != nullptr)
-        line = LineParser(p);
+        line.Replace(p);
 }
 
 bool
