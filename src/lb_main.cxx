@@ -125,7 +125,7 @@ deinit_signals(LbInstance *instance)
 }
 
 int main(int argc, char **argv)
-{
+try {
     const ScopeFbPoolInit fb_pool_init;
     LbInstance instance;
 
@@ -134,29 +134,14 @@ int main(int argc, char **argv)
     LbConfig config;
     ParseCommandLine(instance.cmdline, config, argc, argv);
 
-    try {
-        LoadConfigFile(config,
-                       instance.cmdline.config_path);
-    } catch (const std::exception &e) {
-        PrintException(e);
-        return EXIT_FAILURE;
-    }
+    LoadConfigFile(config, instance.cmdline.config_path);
 
     instance.config = &config;
 
     if (instance.cmdline.check) {
-        int status = EXIT_SUCCESS;
-
         const ScopeSslGlobalInit ssl_init;
-
-        try {
-            lb_check(instance.event_loop, *instance.config);
-        } catch (const std::exception &e) {
-            PrintException(e);
-            status = EXIT_FAILURE;
-        }
-
-        return status;
+        lb_check(instance.event_loop, *instance.config);
+        return EXIT_SUCCESS;
     }
 
     /* initialize */
@@ -172,13 +157,8 @@ int main(int argc, char **argv)
 
     init_signals(&instance);
 
-    try {
-        init_all_controls(&instance);
-        init_all_listeners(instance);
-    } catch (const std::exception &e) {
-        fprintf(stderr, "%s\n", e.what());
-        return EXIT_FAILURE;
-    }
+    init_all_controls(&instance);
+    init_all_listeners(instance);
 
     instance.balancer = balancer_new(instance.event_loop);
     instance.tcp_stock = tcp_stock_new(instance.event_loop,
@@ -239,4 +219,7 @@ int main(int argc, char **argv)
     deinit_all_controls(&instance);
 
     thread_pool_deinit();
+} catch (const std::exception &e) {
+    PrintException(e);
+    return EXIT_FAILURE;
 }
