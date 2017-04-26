@@ -110,9 +110,11 @@ dpool::Allocate(size_t size) throw(std::bad_alloc)
 
     /* none found; try to allocate a new chunk */
 
-    chunk = DpoolChunk::New(*shm, first_chunk.siblings);
+    chunk = DpoolChunk::New(*shm);
     if (chunk == nullptr)
         throw std::bad_alloc();
+
+    list_add(&chunk->siblings, &first_chunk.siblings);
 
     void *p = chunk->Allocate(size);
     assert(p != nullptr);

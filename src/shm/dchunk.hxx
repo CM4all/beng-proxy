@@ -37,16 +37,10 @@ struct DpoolChunk {
         assert(total_size >= sizeof(*this));
     }
 
-    static DpoolChunk *New(struct shm &shm, struct list_head &chunks_head) {
+    static DpoolChunk *New(struct shm &shm) {
         assert(shm_page_size(&shm) >= sizeof(DpoolChunk));
 
-        DpoolChunk *chunk;
-        chunk = NewFromShm<DpoolChunk>(&shm, 1, shm_page_size(&shm));
-        if (chunk == nullptr)
-            return nullptr;
-
-        list_add(&chunk->siblings, &chunks_head);
-        return chunk;
+        return NewFromShm<DpoolChunk>(&shm, 1, shm_page_size(&shm));
     }
 
     void Destroy(struct shm &shm) {
