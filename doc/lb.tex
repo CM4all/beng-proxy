@@ -261,6 +261,77 @@ branch foo {
 At the time of this writing, conditional pools work only for HTTP, not
 for TCP.
 
+\subsection{Lua Request Handlers}
+
+HTTP requests can be handled by Lua scripts.  The \verb|lua_handler|
+section declares such a request handler:
+
+\begin{verbatim*}
+lua_handler "my_lua_handler" {
+  path "test.lua"
+  function "handle_request"
+}
+\end{verbatim*}
+
+The name \verb|my_lua_handler| can be referred to by a
+\verb|listener|'s \verb|pool| setting.
+
+A simple Lua script may look like this:
+
+\begin{verbatim*}
+function handle_request(r)
+   r:send_message("Hello world")
+end
+\end{verbatim*}
+
+The configured function receives one parameter: the request object.
+The following attributes are available:
+
+\begin{longtabu*}{|l|X|}
+\hline
+\verb|uri| & the request URI \\
+\hline
+\verb|method| & the request method \\
+\hline
+\verb|has_body| & \verb|true| if a request body is present \\
+\hline
+\verb|remote_host| & the client's IP address \\
+\hline
+\end{longtabu*}
+
+Read-only methods:
+
+\begin{longtabu*}{|l|X|}
+\hline
+
+\verb|get_header|(\verb|name|) & Look up a request header.  For
+performance reasons, the name must be lower-case. \\
+
+\hline
+\end{longtabu*}
+
+The following methods can be used to generate a response:
+
+\begin{longtabu*}{|l|X|}
+\hline
+
+\verb|send_message|(\verb|msg|) & Send a plain-text response. \\
+
+\hline
+
+\verb|send_message|(\verb|status|, \verb|msg|) & Send a plain-text
+response with the given status.\\
+
+\hline
+\end{longtabu*}
+
+Caution: while a Lua script runs, the whole \emph{beng-lb} process is
+blocked.  It is very easy to make \emph{beng-lb} unusable with a Lua
+script.  Each Lua invocation adds big amounts of overhead.  This
+feature is only meant for development and quick'n'dirty hacks.  Don't
+use in production, and if you really must do, take extreme care to
+make the Lua code finish quickly.
+
 \subsection{Listener}
 
 A listener is a socket address (IP and port) which accepts incoming

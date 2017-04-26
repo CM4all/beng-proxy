@@ -111,6 +111,20 @@ class LbConfigParser final : public NestedConfigParser {
         void Finish() override;
     };
 
+    class LuaHandler final : public ConfigParser {
+        LbConfigParser &parent;
+        LbLuaHandlerConfig config;
+
+    public:
+        LuaHandler(LbConfigParser &_parent, const char *_name)
+            :parent(_parent), config(_name) {}
+
+    protected:
+        /* virtual methods from class ConfigParser */
+        void ParseLine(FileLineParser &line) override;
+        void Finish() override;
+    };
+
     class Listener final : public ConfigParser {
         LbConfigParser &parent;
         LbListenerConfig config;
@@ -147,6 +161,7 @@ private:
 
     void CreateCluster(FileLineParser &line);
     void CreateBranch(FileLineParser &line);
+    void CreateLuaHandler(FileLineParser &line);
     void CreateListener(FileLineParser &line);
 };
 
@@ -789,6 +804,51 @@ LbConfigParser::CreateBranch(FileLineParser &line)
 }
 
 void
+LbConfigParser::LuaHandler::ParseLine(FileLineParser &line)
+{
+    const char *word = line.ExpectWord();
+
+    if (strcmp(word, "path") == 0) {
+        if (!config.path.empty())
+            throw LineParser::Error("Duplicate 'path'");
+
+        config.path = line.ExpectPathAndEnd();
+    } else if (strcmp(word, "function") == 0) {
+        if (!config.function.empty())
+            throw LineParser::Error("Duplicate 'function'");
+
+        config.function = line.ExpectValueAndEnd();
+    } else
+        throw LineParser::Error("Unknown option");
+}
+
+void
+LbConfigParser::LuaHandler::Finish()
+{
+    if (config.path.empty())
+        throw LineParser::Error("lua_handler has no 'path'");
+
+    if (config.function.empty())
+        throw LineParser::Error("lua_handler has no 'function'");
+
+    auto i = parent.config.lua_handlers.emplace(std::string(config.name),
+                                                std::move(config));
+    if (!i.second)
+        throw LineParser::Error("Duplicate pool/branch name");
+
+    ConfigParser::Finish();
+}
+
+inline void
+LbConfigParser::CreateLuaHandler(FileLineParser &line)
+{
+    const char *name = line.ExpectValue();
+    line.ExpectSymbolAndEol('{');
+
+    SetChild(std::make_unique<LuaHandler>(*this, name));
+}
+
+void
 LbConfigParser::Listener::ParseLine(FileLineParser &line)
 {
     const char *word = line.ExpectWord();
@@ -947,6 +1007,8 @@ LbConfigParser::ParseLine2(FileLineParser &line)
         CreateCluster(line);
     else if (strcmp(word, "branch") == 0)
         CreateBranch(line);
+    else if (strcmp(word, "lua_handler") == 0)
+        CreateLuaHandler(line);
     else if (strcmp(word, "listener") == 0)
         CreateListener(line);
     else if (strcmp(word, "monitor") == 0)

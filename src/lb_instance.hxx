@@ -12,6 +12,7 @@
 #include "lb_cluster.hxx"
 #include "lb_connection.hxx"
 #include "lb_hmonitor.hxx"
+#include "lb/LuaHandler.hxx"
 #include "event/TimerEvent.hxx"
 #include "event/SignalEvent.hxx"
 #include "event/ShutdownListener.hxx"
@@ -44,6 +45,11 @@ struct LbInstance final : PInstance {
      * A map of clusters which need run-time data.
      */
     LbClusterMap clusters;
+
+    /**
+     * A map of configured #LbLuaHandler instances.
+     */
+    LbLuaHandlerMap lua_handlers;
 
     std::forward_list<LbListener> listeners;
 

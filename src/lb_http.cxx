@@ -311,6 +311,61 @@ LbRequest::OnStockItemError(GError *error)
     g_error_free(error);
 }
 
+class LbLuaResponseHandler final : public HttpResponseHandler {
+    LbConnection &connection;
+
+    HttpServerRequest &request;
+
+    bool finished = false;
+
+public:
+    LbLuaResponseHandler(LbConnection &_connection,
+                         HttpServerRequest &_request)
+        :connection(_connection), request(_request) {}
+
+    bool IsFinished() const {
+        return finished;
+    }
+
+    /* virtual methods from class HttpResponseHandler */
+    void OnHttpResponse(http_status_t status, StringMap &&headers,
+                        Istream *body) override;
+    void OnHttpError(GError *error) override;
+};
+
+void
+LbLuaResponseHandler::OnHttpResponse(http_status_t status,
+                                     StringMap &&_headers,
+                                     Istream *response_body)
+{
+    finished = true;
+
+    HttpHeaders headers(std::move(_headers));
+
+    if (request.method == HTTP_METHOD_HEAD)
+        /* pass Content-Length, even though there is no response body
+           (RFC 2616 14.13) */
+        headers.MoveToBuffer("content-length");
+
+    http_server_response(&request, status, std::move(headers), response_body);
+}
+
+void
+LbLuaResponseHandler::OnHttpError(GError *error)
+{
+    finished = true;
+
+    lb_connection_log_gerror(2, &connection, "Error", error);
+
+    const char *msg = connection.listener.verbose_response
+        ? error->message
+        : "Server failure";
+
+    http_server_send_message(&request, HTTP_STATUS_BAD_GATEWAY, msg);
+
+    g_error_free(error);
+}
+
 /*
  * http connection handler
  *
@@ -327,6 +382,20 @@ LbConnection::HandleHttpRequest(HttpServerRequest &request,
     const auto &goto_ = listener.destination.FindRequestLeaf(request);
     if (goto_.response.IsDefined()) {
         SendResponse(request, goto_.response);
+        return;
+    }
+
+    if (goto_.lua != nullptr) {
+        auto *handler = instance.lua_handlers.Find(goto_.lua->name);
+        assert(handler != nullptr);
+
+        LbLuaResponseHandler response_handler(*this, request);
+        handler->HandleRequest(request, response_handler);
+        if (response_handler.IsFinished())
+            return;
+
+        http_server_send_message(&request, HTTP_STATUS_BAD_GATEWAY,
+                                 "No response from Lua handler");
         return;
     }
 

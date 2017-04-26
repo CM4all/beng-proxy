@@ -43,6 +43,7 @@ LbInstance::InitWorker()
     monitors.Enable();
 
     clusters.Scan(*config, avahi_client);
+    lua_handlers.Scan(*config);
 
     ConnectCertCaches();
 }

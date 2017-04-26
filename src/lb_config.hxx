@@ -238,10 +238,12 @@ struct LbAttributeReference {
 };
 
 struct LbBranchConfig;
+struct LbLuaHandlerConfig;
 
 struct LbGoto {
     const LbClusterConfig *cluster = nullptr;
     const LbBranchConfig *branch = nullptr;
+    const LbLuaHandlerConfig *lua = nullptr;
     LbSimpleHttpResponse response;
 
     LbGoto() = default;
@@ -252,11 +254,15 @@ struct LbGoto {
     explicit LbGoto(LbBranchConfig *_branch)
         :branch(_branch) {}
 
+    explicit LbGoto(LbLuaHandlerConfig *_lua)
+        :lua(_lua) {}
+
     explicit LbGoto(http_status_t _status)
         :response(_status) {}
 
     bool IsDefined() const {
         return cluster != nullptr || branch != nullptr ||
+            lua != nullptr ||
             response.IsDefined();
     }
 
@@ -389,12 +395,30 @@ struct LbBranchConfig {
     }
 };
 
+/**
+ * An HTTP request handler implemented in Lua.
+ */
+struct LbLuaHandlerConfig {
+    std::string name;
+
+    boost::filesystem::path path;
+    std::string function;
+
+    LbLuaHandlerConfig(const char *_name)
+        :name(_name) {}
+
+    LbLuaHandlerConfig(LbLuaHandlerConfig &&) = default;
+
+    LbLuaHandlerConfig(const LbLuaHandlerConfig &) = delete;
+    LbLuaHandlerConfig &operator=(const LbLuaHandlerConfig &) = delete;
+};
+
 inline LbProtocol
 LbGoto::GetProtocol() const
 {
     assert(IsDefined());
 
-    if (response.IsDefined())
+    if (response.IsDefined() || lua != nullptr)
         return LbProtocol::HTTP;
 
     return cluster != nullptr
@@ -406,6 +430,9 @@ inline const char *
 LbGoto::GetName() const
 {
     assert(IsDefined());
+
+    if (lua != nullptr)
+        return lua->name.c_str();
 
     return cluster != nullptr
         ? cluster->name.c_str()
@@ -475,6 +502,7 @@ struct LbConfig {
 
     std::map<std::string, LbClusterConfig> clusters;
     std::map<std::string, LbBranchConfig> branches;
+    std::map<std::string, LbLuaHandlerConfig> lua_handlers;
 
     std::list<LbListenerConfig> listeners;
 
@@ -520,8 +548,12 @@ struct LbConfig {
         LbGoto g;
 
         g.cluster = FindCluster(t);
-        if (g.cluster == nullptr)
-            g.branch = FindBranch(std::forward<T>(t));
+        if (g.cluster == nullptr) {
+            g.branch = FindBranch(t);
+            if (g.branch == nullptr) {
+                g.lua = FindLuaHandler(t);
+            }
+        }
 
         return g;
     }
@@ -531,6 +563,15 @@ struct LbConfig {
     const LbBranchConfig *FindBranch(T &&t) const {
         const auto i = branches.find(std::forward<T>(t));
         return i != branches.end()
+            ? &i->second
+            : nullptr;
+    }
+
+    template<typename T>
+    gcc_pure
+    const LbLuaHandlerConfig *FindLuaHandler(T &&t) const {
+        const auto i = lua_handlers.find(std::forward<T>(t));
+        return i != lua_handlers.end()
             ? &i->second
             : nullptr;
     }
