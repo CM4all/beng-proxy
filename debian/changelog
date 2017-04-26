@@ -4,7 +4,7 @@ cm4all-beng-proxy (12.0.11) unstable; urgency=low
   * transformation: fix crash due to compiler optimization
   * lb: fix crash while waiting for the Avahi resolver
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Wed, 26 Apr 2017 11:49:48 -0000
 
 cm4all-beng-proxy (12.0.10) unstable; urgency=low
 
