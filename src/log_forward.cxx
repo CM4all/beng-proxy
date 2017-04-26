@@ -57,7 +57,7 @@ open_udp(const char *host, int default_port)
     return SocketDescriptor::Undefined();
 }
 
-struct destination {
+struct Destination {
     SocketDescriptor fd;
     bool failed;
 };
@@ -69,7 +69,7 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    static struct destination destinations[256];
+    static Destination destinations[256];
     unsigned num_destinations = argc - 1;
 
     if (num_destinations > ARRAY_SIZE(destinations)) {
