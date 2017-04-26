@@ -156,7 +156,6 @@ int main(int argc, char **argv)
             status = EXIT_FAILURE;
         }
 
-        delete instance.config;
         return status;
     }
 
