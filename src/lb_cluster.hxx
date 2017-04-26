@@ -47,7 +47,7 @@ class LbCluster final : AvahiConnectionListener {
         Member &operator=(const Member &) = delete;
 
         bool IsActive() const {
-            return address.IsDefined();
+            return !address.IsNull();
         }
 
         bool HasFailed() const {
