@@ -8,9 +8,10 @@
 #include "log-server.h"
 #include "net/SocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
-#include "util/Macros.hxx"
 
 #include <socket/resolver.h>
+
+#include <array>
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -69,10 +70,10 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    static Destination destinations[256];
+    static std::array<Destination, 256> destinations;
     unsigned num_destinations = argc - 1;
 
-    if (num_destinations > ARRAY_SIZE(destinations)) {
+    if (num_destinations > destinations.size()) {
         fprintf(stderr, "Too many hosts\n");
         return EXIT_FAILURE;
     }
