@@ -26,7 +26,7 @@ struct DpoolChunk {
         size_t data[1];
     } data;
 
-    DpoolChunk(size_t size)
+    explicit DpoolChunk(size_t size)
         :m(boost::interprocess::create_only, &data, size) {}
 
     static DpoolChunk *New(struct shm &shm, struct list_head &chunks_head) {
