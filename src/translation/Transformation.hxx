@@ -50,14 +50,14 @@ struct Transformation {
      * transformation.
      */
     gcc_pure
-    bool HasProcessor() const;
+    static bool HasProcessor(const Transformation *head);
 
     /**
      * Returns true if the first "PROCESS" transformation in the chain (if
      * any) includes the "CONTAINER" processor option.
      */
     gcc_pure
-    bool IsContainer() const;
+    static bool IsContainer(const Transformation *head);
 
     /**
      * Does this transformation need to be expanded with

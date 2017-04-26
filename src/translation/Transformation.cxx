@@ -11,9 +11,9 @@
 #include <string.h>
 
 bool
-Transformation::HasProcessor() const
+Transformation::HasProcessor(const Transformation *t)
 {
-    for (auto t = this; t != nullptr; t = t->next)
+    for (; t != nullptr; t = t->next)
         if (t->type == Type::PROCESS)
             return true;
 
@@ -21,9 +21,9 @@ Transformation::HasProcessor() const
 }
 
 bool
-Transformation::IsContainer() const
+Transformation::IsContainer(const Transformation *t)
 {
-    for (auto t = this; t != nullptr; t = t->next)
+    for (; t != nullptr; t = t->next)
         if (t->type == Type::PROCESS)
             return (t->u.processor.options & PROCESSOR_CONTAINER) != 0;
 

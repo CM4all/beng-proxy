@@ -154,20 +154,21 @@ widget_view_lookup(const WidgetView *view, const char *name)
 bool
 WidgetView::HasProcessor() const
 {
-    return transformation->HasProcessor();
+    return Transformation::HasProcessor(transformation);
 }
 
 bool
 WidgetView::IsContainer() const
 {
-    return transformation->IsContainer();
+    return Transformation::IsContainer(transformation);
 }
 
 bool
 WidgetView::IsExpandable() const
 {
     return address.IsExpandable() ||
-        transformation->IsChainExpandable();
+        (transformation != nullptr &&
+         transformation->IsChainExpandable());
 }
 
 bool
@@ -187,7 +188,8 @@ void
 WidgetView::Expand(AllocatorPtr alloc, const MatchInfo &match_info)
 {
     address.Expand(alloc, match_info);
-    transformation->ExpandChain(alloc, match_info);
+    if (transformation != nullptr)
+        transformation->ExpandChain(alloc, match_info);
 }
 
 void

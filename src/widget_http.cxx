@@ -589,7 +589,7 @@ WidgetRequest::OnHttpResponse(http_status_t status, StringMap &&headers,
         headers.Set("content-type", content_type);
 
     if (widget.session_save_pending &&
-        transformation->HasProcessor()) {
+        Transformation::HasProcessor(transformation)) {
         auto session = env.GetRealmSession();
         if (session)
             widget.SaveToSession(*session);
