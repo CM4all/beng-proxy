@@ -5,7 +5,7 @@
  */
 
 #include "bp_config.hxx"
-#include "io/LineParser.hxx"
+#include "io/FileLineParser.hxx"
 #include "io/ConfigParser.hxx"
 #include "net/Parser.hxx"
 #include "util/StringView.hxx"
@@ -72,7 +72,7 @@ class BpConfigParser final : public NestedConfigParser {
 
     protected:
         /* virtual methods from class ConfigParser */
-        void ParseLine(LineParser &line) override;
+        void ParseLine(FileLineParser &line) override;
         void Finish() override;
     };
 
@@ -86,7 +86,7 @@ class BpConfigParser final : public NestedConfigParser {
 
     protected:
         /* virtual methods from class ConfigParser */
-        void ParseLine(LineParser &line) override;
+        void ParseLine(FileLineParser &line) override;
         void Finish() override;
     };
 
@@ -96,15 +96,15 @@ public:
 
 protected:
     /* virtual methods from class NestedConfigParser */
-    void ParseLine2(LineParser &line) override;
+    void ParseLine2(FileLineParser &line) override;
 
 private:
-    void CreateListener(LineParser &line);
-    void CreateControl(LineParser &line);
+    void CreateListener(FileLineParser &line);
+    void CreateControl(FileLineParser &line);
 };
 
 void
-BpConfigParser::Listener::ParseLine(LineParser &line)
+BpConfigParser::Listener::ParseLine(FileLineParser &line)
 {
     const char *word = line.ExpectWord();
 
@@ -139,7 +139,7 @@ BpConfigParser::Listener::Finish()
 }
 
 inline void
-BpConfigParser::CreateListener(LineParser &line)
+BpConfigParser::CreateListener(FileLineParser &line)
 {
     line.ExpectSymbolAndEol('{');
 
@@ -147,7 +147,7 @@ BpConfigParser::CreateListener(LineParser &line)
 }
 
 void
-BpConfigParser::Control::ParseLine(LineParser &line)
+BpConfigParser::Control::ParseLine(FileLineParser &line)
 {
     const char *word = line.ExpectWord();
 
@@ -170,14 +170,14 @@ BpConfigParser::Control::Finish()
 }
 
 inline void
-BpConfigParser::CreateControl(LineParser &line)
+BpConfigParser::CreateControl(FileLineParser &line)
 {
     line.ExpectSymbolAndEol('{');
     SetChild(std::make_unique<Control>(*this));
 }
 
 void
-BpConfigParser::ParseLine2(LineParser &line)
+BpConfigParser::ParseLine2(FileLineParser &line)
 {
     const char *word = line.ExpectWord();
 

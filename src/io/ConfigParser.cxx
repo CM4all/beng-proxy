@@ -3,7 +3,7 @@
  */
 
 #include "ConfigParser.hxx"
-#include "LineParser.hxx"
+#include "FileLineParser.hxx"
 #include "system/Error.hxx"
 #include "util/ScopeExit.hxx"
 
@@ -16,13 +16,13 @@
 namespace fs = boost::filesystem;
 
 bool
-ConfigParser::PreParseLine(gcc_unused LineParser &line)
+ConfigParser::PreParseLine(gcc_unused FileLineParser &line)
 {
     return false;
 }
 
 bool
-NestedConfigParser::PreParseLine(LineParser &line)
+NestedConfigParser::PreParseLine(FileLineParser &line)
 {
     if (child) {
         if (child->PreParseLine(line))
@@ -40,7 +40,7 @@ NestedConfigParser::PreParseLine(LineParser &line)
 }
 
 void
-NestedConfigParser::ParseLine(LineParser &line)
+NestedConfigParser::ParseLine(FileLineParser &line)
 {
     if (child)
         child->ParseLine(line);
@@ -66,7 +66,7 @@ NestedConfigParser::SetChild(std::unique_ptr<ConfigParser> &&_child)
 }
 
 bool
-CommentConfigParser::PreParseLine(LineParser &line)
+CommentConfigParser::PreParseLine(FileLineParser &line)
 {
     if (child.PreParseLine(line))
         return true;
@@ -79,7 +79,7 @@ CommentConfigParser::PreParseLine(LineParser &line)
 }
 
 void
-CommentConfigParser::ParseLine(LineParser &line)
+CommentConfigParser::ParseLine(FileLineParser &line)
 {
     child.ParseLine(line);
 }
@@ -92,13 +92,13 @@ CommentConfigParser::Finish()
 }
 
 bool
-VariableConfigParser::PreParseLine(LineParser &line)
+VariableConfigParser::PreParseLine(FileLineParser &line)
 {
     return child.PreParseLine(line);
 }
 
 void
-VariableConfigParser::ParseLine(LineParser &line)
+VariableConfigParser::ParseLine(FileLineParser &line)
 {
     Expand(line);
 
@@ -228,7 +228,7 @@ VariableConfigParser::Expand(const char *src) const
 }
 
 void
-VariableConfigParser::Expand(LineParser &line) const
+VariableConfigParser::Expand(FileLineParser &line) const
 {
     char *p = Expand(line.Rest());
     if (p != nullptr)
@@ -236,13 +236,13 @@ VariableConfigParser::Expand(LineParser &line) const
 }
 
 bool
-IncludeConfigParser::PreParseLine(LineParser &line)
+IncludeConfigParser::PreParseLine(FileLineParser &line)
 {
     return child.PreParseLine(line);
 }
 
 void
-IncludeConfigParser::ParseLine(LineParser &line)
+IncludeConfigParser::ParseLine(FileLineParser &line)
 {
     if (line.SkipWord("@include") ||
         /* v11.2 legacy: */ line.SkipWord("include")) {
@@ -323,7 +323,7 @@ ParseConfigFile(const boost::filesystem::path &path, FILE *file,
     char buffer[4096], *line;
     unsigned i = 1;
     while ((line = fgets(buffer, sizeof(buffer), file)) != nullptr) {
-        LineParser line_parser(line);
+        FileLineParser line_parser(path, line);
 
         try {
             if (!parser.PreParseLine(line_parser))

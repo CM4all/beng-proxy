@@ -10,14 +10,14 @@
 #include <memory>
 #include <map>
 
-class LineParser;
+class FileLineParser;
 
 class ConfigParser {
 public:
     virtual ~ConfigParser() {}
 
-    virtual bool PreParseLine(LineParser &line);
-    virtual void ParseLine(LineParser &line) = 0;
+    virtual bool PreParseLine(FileLineParser &line);
+    virtual void ParseLine(FileLineParser &line) = 0;
     virtual void Finish() {}
 };
 
@@ -30,13 +30,13 @@ class NestedConfigParser : public ConfigParser {
 
 public:
     /* virtual methods from class ConfigParser */
-    bool PreParseLine(LineParser &line) override;
-    void ParseLine(LineParser &line) final;
+    bool PreParseLine(FileLineParser &line) override;
+    void ParseLine(FileLineParser &line) final;
     void Finish() override;
 
 protected:
     void SetChild(std::unique_ptr<ConfigParser> &&_child);
-    virtual void ParseLine2(LineParser &line) = 0;
+    virtual void ParseLine2(FileLineParser &line) = 0;
 };
 
 /**
@@ -50,8 +50,8 @@ public:
         :child(_child) {}
 
     /* virtual methods from class ConfigParser */
-    bool PreParseLine(LineParser &line) override;
-    void ParseLine(LineParser &line) final;
+    bool PreParseLine(FileLineParser &line) override;
+    void ParseLine(FileLineParser &line) final;
     void Finish() override;
 };
 
@@ -70,8 +70,8 @@ public:
         :child(_child) {}
 
     /* virtual methods from class ConfigParser */
-    bool PreParseLine(LineParser &line) override;
-    void ParseLine(LineParser &line) final;
+    bool PreParseLine(FileLineParser &line) override;
+    void ParseLine(FileLineParser &line) final;
     void Finish() override;
 
 private:
@@ -81,7 +81,7 @@ private:
                       const char *src, const char *end) const;
     void Expand(std::string &dest, const char *src) const;
     char *Expand(const char *src) const;
-    void Expand(LineParser &line) const;
+    void Expand(FileLineParser &line) const;
 };
 
 /**
@@ -97,8 +97,8 @@ public:
         :path(std::move(_path)), child(_child) {}
 
     /* virtual methods from class ConfigParser */
-    bool PreParseLine(LineParser &line) override;
-    void ParseLine(LineParser &line) override;
+    bool PreParseLine(FileLineParser &line) override;
+    void ParseLine(FileLineParser &line) override;
     void Finish() override;
 
 private:

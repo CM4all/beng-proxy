@@ -1,5 +1,5 @@
 #include "io/ConfigParser.hxx"
-#include "io/LineParser.hxx"
+#include "io/FileLineParser.hxx"
 #include "util/ScopeExit.hxx"
 
 #include <inline/compiler.h>
@@ -15,7 +15,7 @@
 class MyConfigParser final
     : public ConfigParser, public std::vector<std::string> {
 public:
-    void ParseLine(LineParser &line) override {
+    void ParseLine(FileLineParser &line) override {
         const char *value = line.NextUnescape();
         if (value == nullptr)
             throw LineParser::Error("Quoted value expected");
@@ -31,7 +31,7 @@ ParseConfigFile(ConfigParser &parser, const char *const*lines)
         char *line = strdup(*lines++);
         AtScopeExit(line) { free(line); };
 
-        LineParser line_parser(line);
+        FileLineParser line_parser({}, line);
         if (!parser.PreParseLine(line_parser))
             parser.ParseLine(line_parser);
     }

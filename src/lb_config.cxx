@@ -6,7 +6,7 @@
 
 #include "lb_config.hxx"
 #include "AllocatorPtr.hxx"
-#include "io/LineParser.hxx"
+#include "io/FileLineParser.hxx"
 #include "io/ConfigParser.hxx"
 #include "system/Error.hxx"
 #include "net/Parser.hxx"
@@ -34,7 +34,7 @@ class LbConfigParser final : public NestedConfigParser {
 
     protected:
         /* virtual methods from class ConfigParser */
-        void ParseLine(LineParser &line) override;
+        void ParseLine(FileLineParser &line) override;
         void Finish() override;
     };
 
@@ -48,7 +48,7 @@ class LbConfigParser final : public NestedConfigParser {
 
     protected:
         /* virtual methods from class ConfigParser */
-        void ParseLine(LineParser &line) override;
+        void ParseLine(FileLineParser &line) override;
         void Finish() override;
     };
 
@@ -62,7 +62,7 @@ class LbConfigParser final : public NestedConfigParser {
 
     protected:
         /* virtual methods from class ConfigParser */
-        void ParseLine(LineParser &line) override;
+        void ParseLine(FileLineParser &line) override;
         void Finish() override;
     };
 
@@ -76,7 +76,7 @@ class LbConfigParser final : public NestedConfigParser {
 
     protected:
         /* virtual methods from class ConfigParser */
-        void ParseLine(LineParser &line) override;
+        void ParseLine(FileLineParser &line) override;
         void Finish() override;
     };
 
@@ -90,7 +90,7 @@ class LbConfigParser final : public NestedConfigParser {
 
     protected:
         /* virtual methods from class ConfigParser */
-        void ParseLine(LineParser &line) override;
+        void ParseLine(FileLineParser &line) override;
         void Finish() override;
     };
 
@@ -103,11 +103,11 @@ class LbConfigParser final : public NestedConfigParser {
             :parent(_parent), config(_name) {}
 
     private:
-        void AddGoto(LbGoto &&destination, LineParser &line);
+        void AddGoto(LbGoto &&destination, FileLineParser &line);
 
     protected:
         /* virtual methods from class ConfigParser */
-        void ParseLine(LineParser &line) override;
+        void ParseLine(FileLineParser &line) override;
         void Finish() override;
     };
 
@@ -121,7 +121,7 @@ class LbConfigParser final : public NestedConfigParser {
 
     protected:
         /* virtual methods from class ConfigParser */
-        void ParseLine(LineParser &line) override;
+        void ParseLine(FileLineParser &line) override;
         void Finish() override;
     };
 
@@ -134,24 +134,24 @@ protected:
     void Finish() override;
 
     /* virtual methods from class NestedConfigParser */
-    void ParseLine2(LineParser &line) override;
+    void ParseLine2(FileLineParser &line) override;
 
 private:
-    void CreateControl(LineParser &line);
-    void CreateCertDatabase(LineParser &line);
-    void CreateMonitor(LineParser &line);
-    void CreateNode(LineParser &line);
+    void CreateControl(FileLineParser &line);
+    void CreateCertDatabase(FileLineParser &line);
+    void CreateMonitor(FileLineParser &line);
+    void CreateNode(FileLineParser &line);
 
     LbNodeConfig &AutoCreateNode(const char *name);
     void AutoCreateMember(LbMemberConfig &member, const char *name);
 
-    void CreateCluster(LineParser &line);
-    void CreateBranch(LineParser &line);
-    void CreateListener(LineParser &line);
+    void CreateCluster(FileLineParser &line);
+    void CreateBranch(FileLineParser &line);
+    void CreateListener(FileLineParser &line);
 };
 
 void
-LbConfigParser::Control::ParseLine(LineParser &line)
+LbConfigParser::Control::ParseLine(FileLineParser &line)
 {
     const char *word = line.ExpectWord();
 
@@ -175,14 +175,14 @@ LbConfigParser::Control::Finish()
 }
 
 inline void
-LbConfigParser::CreateControl(LineParser &line)
+LbConfigParser::CreateControl(FileLineParser &line)
 {
     line.ExpectSymbolAndEol('{');
     SetChild(std::make_unique<Control>(*this));
 }
 
 void
-LbConfigParser::CertDatabase::ParseLine(LineParser &line)
+LbConfigParser::CertDatabase::ParseLine(FileLineParser &line)
 {
     const char *word = line.ExpectWord();
 
@@ -235,7 +235,7 @@ LbConfigParser::CertDatabase::Finish()
 }
 
 inline void
-LbConfigParser::CreateCertDatabase(LineParser &line)
+LbConfigParser::CreateCertDatabase(FileLineParser &line)
 {
     const char *name = line.ExpectValue();
     line.ExpectSymbolAndEol('{');
@@ -244,7 +244,7 @@ LbConfigParser::CreateCertDatabase(LineParser &line)
 }
 
 void
-LbConfigParser::Monitor::ParseLine(LineParser &line)
+LbConfigParser::Monitor::ParseLine(FileLineParser &line)
 {
     const char *word = line.ExpectWord();
 
@@ -329,7 +329,7 @@ LbConfigParser::Monitor::Finish()
 }
 
 inline void
-LbConfigParser::CreateMonitor(LineParser &line)
+LbConfigParser::CreateMonitor(FileLineParser &line)
 {
     const char *name = line.ExpectValue();
     line.ExpectSymbolAndEol('{');
@@ -338,7 +338,7 @@ LbConfigParser::CreateMonitor(LineParser &line)
 }
 
 void
-LbConfigParser::Node::ParseLine(LineParser &line)
+LbConfigParser::Node::ParseLine(FileLineParser &line)
 {
     const char *word = line.ExpectWord();
 
@@ -373,7 +373,7 @@ LbConfigParser::Node::Finish()
 }
 
 inline void
-LbConfigParser::CreateNode(LineParser &line)
+LbConfigParser::CreateNode(FileLineParser &line)
 {
     const char *name = line.ExpectValue();
     line.ExpectSymbolAndEol('{');
@@ -462,7 +462,7 @@ ParseStickyMode(const char *s)
 }
 
 void
-LbConfigParser::Cluster::ParseLine(LineParser &line)
+LbConfigParser::Cluster::ParseLine(FileLineParser &line)
 {
     const char *word = line.ExpectWord();
 
@@ -611,7 +611,7 @@ LbConfigParser::Cluster::Finish()
 }
 
 inline void
-LbConfigParser::CreateCluster(LineParser &line)
+LbConfigParser::CreateCluster(FileLineParser &line)
 {
     const char *name = line.ExpectValue();
     line.ExpectSymbolAndEol('{');
@@ -644,7 +644,7 @@ ParseAttributeReference(const char *p)
 }
 
 static LbConditionConfig
-ParseCondition(LineParser &line)
+ParseCondition(FileLineParser &line)
 {
     if (!line.SkipSymbol('$'))
         throw LineParser::Error("Attribute name starting with '$' expected");
@@ -706,7 +706,7 @@ ParseStatus(const char *s)
 }
 
 void
-LbConfigParser::Branch::AddGoto(LbGoto &&destination, LineParser &line)
+LbConfigParser::Branch::AddGoto(LbGoto &&destination, FileLineParser &line)
 {
     if (line.IsEnd()) {
         if (config.HasFallback())
@@ -736,7 +736,7 @@ LbConfigParser::Branch::AddGoto(LbGoto &&destination, LineParser &line)
 }
 
 void
-LbConfigParser::Branch::ParseLine(LineParser &line)
+LbConfigParser::Branch::ParseLine(FileLineParser &line)
 {
     const char *word = line.ExpectWord();
 
@@ -780,7 +780,7 @@ LbConfigParser::Branch::Finish()
 }
 
 inline void
-LbConfigParser::CreateBranch(LineParser &line)
+LbConfigParser::CreateBranch(FileLineParser &line)
 {
     const char *name = line.ExpectValue();
     line.ExpectSymbolAndEol('{');
@@ -789,7 +789,7 @@ LbConfigParser::CreateBranch(LineParser &line)
 }
 
 void
-LbConfigParser::Listener::ParseLine(LineParser &line)
+LbConfigParser::Listener::ParseLine(FileLineParser &line)
 {
     const char *word = line.ExpectWord();
 
@@ -928,7 +928,7 @@ LbConfigParser::Listener::Finish()
 }
 
 inline void
-LbConfigParser::CreateListener(LineParser &line)
+LbConfigParser::CreateListener(FileLineParser &line)
 {
     const char *name = line.ExpectValue();
     line.ExpectSymbolAndEol('{');
@@ -937,7 +937,7 @@ LbConfigParser::CreateListener(LineParser &line)
 }
 
 void
-LbConfigParser::ParseLine2(LineParser &line)
+LbConfigParser::ParseLine2(FileLineParser &line)
 {
     const char *word = line.ExpectWord();
 
