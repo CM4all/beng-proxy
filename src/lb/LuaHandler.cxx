@@ -3,6 +3,7 @@
  */
 
 #include "LuaHandler.hxx"
+#include "LuaGoto.hxx"
 #include "lb_config.hxx"
 #include "http_server/Request.hxx"
 #include "http_response.hxx"
@@ -194,7 +195,7 @@ LbLuaHandler::~LbLuaHandler()
 {
 }
 
-void
+const LbGoto *
 LbLuaHandler::HandleRequest(HttpServerRequest &request,
                             HttpResponseHandler &handler)
 {
@@ -204,12 +205,17 @@ LbLuaHandler::HandleRequest(HttpServerRequest &request,
     auto *data = NewLuaRequest(L, request, handler);
     AtScopeExit(data) { data->stale = true; };
 
-    if (lua_pcall(L, 1, 0, 0)) {
+    if (lua_pcall(L, 1, 1, 0)) {
         auto error = Lua::PopError(L);
         if (!data->stale)
             handler.InvokeError(ToGError(error));
-        return;
+        return nullptr;
     }
+
+    if (lua_isnil(L, -1))
+        return nullptr;
+
+    return &CheckLuaGoto(L, -1);
 }
 
 void

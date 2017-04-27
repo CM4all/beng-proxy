@@ -29,8 +29,8 @@ public:
     LbLuaHandler(LuaInitHook &init_hook, const LbLuaHandlerConfig &config);
     ~LbLuaHandler();
 
-    void HandleRequest(HttpServerRequest &request,
-                       HttpResponseHandler &handler);
+    const LbGoto *HandleRequest(HttpServerRequest &request,
+                                HttpResponseHandler &handler);
 };
 
 class LbLuaHandlerMap {
