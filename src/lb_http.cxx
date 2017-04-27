@@ -398,12 +398,17 @@ LbConnection::HandleHttpRequest(const LbGoto &destination,
         assert(handler != nullptr);
 
         LbLuaResponseHandler response_handler(*this, request);
-        handler->HandleRequest(request, response_handler);
+        const auto *g = handler->HandleRequest(request, response_handler);
         if (response_handler.IsFinished())
             return;
 
-        http_server_send_message(&request, HTTP_STATUS_BAD_GATEWAY,
-                                 "No response from Lua handler");
+        if (g == nullptr) {
+            http_server_send_message(&request, HTTP_STATUS_BAD_GATEWAY,
+                                     "No response from Lua handler");
+            return;
+        }
+
+        HandleHttpRequest(*g, request, cancel_ptr);
         return;
     }
 
