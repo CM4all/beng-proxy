@@ -450,7 +450,7 @@ LbConnection::HandleHttpRequest(HttpServerRequest &request,
 
         assert(member.second.IsDefined());
 
-        tcp_stock_get(instance.tcp_stock, &request.pool, member.first,
+        tcp_stock_get(*instance.tcp_stock, request.pool, member.first,
                       transparent_source, bind_address,
                       member.second,
                       20,

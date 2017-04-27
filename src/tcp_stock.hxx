@@ -34,7 +34,7 @@ tcp_stock_new(EventLoop &event_loop, unsigned limit);
  * @param timeout the connect timeout in seconds
  */
 void
-tcp_stock_get(StockMap *tcp_stock, struct pool *pool, const char *name,
+tcp_stock_get(StockMap &tcp_stock, struct pool &pool, const char *name,
               bool ip_transparent,
               SocketAddress bind_address,
               SocketAddress address,

@@ -203,7 +203,7 @@ tcp_stock_new(EventLoop &event_loop, unsigned limit)
 }
 
 void
-tcp_stock_get(StockMap *tcp_stock, struct pool *pool, const char *name,
+tcp_stock_get(StockMap &tcp_stock, struct pool &pool, const char *name,
               bool ip_transparent,
               SocketAddress bind_address,
               SocketAddress address,
@@ -213,7 +213,7 @@ tcp_stock_get(StockMap *tcp_stock, struct pool *pool, const char *name,
 {
     assert(!address.IsNull());
 
-    auto request = NewFromPool<TcpStockRequest>(*pool, ip_transparent,
+    auto request = NewFromPool<TcpStockRequest>(pool, ip_transparent,
                                                 bind_address, address,
                                                 timeout);
 
@@ -229,12 +229,12 @@ tcp_stock_get(StockMap *tcp_stock, struct pool *pool, const char *name,
                                           bind_address.GetAddress(),
                                           bind_address.GetSize()))
                 bind_buffer[0] = 0;
-            name = p_strcat(pool, bind_buffer, ">", buffer, nullptr);
+            name = p_strcat(&pool, bind_buffer, ">", buffer, nullptr);
         } else
-            name = p_strdup(pool, buffer);
+            name = p_strdup(&pool, buffer);
     }
 
-    tcp_stock->Get(*pool, name, request, handler, cancel_ptr);
+    tcp_stock.Get(pool, name, request, handler, cancel_ptr);
 }
 
 SocketDescriptor

@@ -52,7 +52,7 @@ inline void
 TcpBalancerRequest::Send(struct pool &pool, SocketAddress address,
                          CancellablePointer &cancel_ptr)
 {
-    tcp_stock_get(&tcp_balancer.tcp_stock, &pool,
+    tcp_stock_get(tcp_balancer.tcp_stock, pool,
                   nullptr,
                   ip_transparent,
                   bind_address,
