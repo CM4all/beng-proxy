@@ -132,6 +132,7 @@ class LbClusterMap {
 
 public:
     void Scan(const LbConfig &config, MyAvahiClient &avahi_client);
+    void Scan(const LbGoto &g, MyAvahiClient &avahi_client);
 
     LbCluster *Find(const std::string &name) {
         auto i = clusters.find(name);
@@ -143,7 +144,6 @@ public:
 private:
     void Scan(const LbGotoIfConfig &config, MyAvahiClient &avahi_client);
     void Scan(const LbBranchConfig &config, MyAvahiClient &avahi_client);
-    void Scan(const LbGoto &g, MyAvahiClient &avahi_client);
     void Scan(const LbListenerConfig &config, MyAvahiClient &avahi_client);
 
     void Scan(const LbClusterConfig &config, MyAvahiClient &avahi_client);

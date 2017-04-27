@@ -9,7 +9,7 @@
 #include "lb_listener.hxx"
 #include "lb_hmonitor.hxx"
 #include "lb_config.hxx"
-#include "lua/InitHook.hxx"
+#include "lb/LuaInitHook.hxx"
 #include "ssl/Cache.hxx"
 #include "fb_pool.hxx"
 #include "event/Duration.hxx"
@@ -46,7 +46,7 @@ LbInstance::InitWorker()
     clusters.Scan(*config, avahi_client);
 
     {
-        NopLuaInitHook init_hook;
+        LbLuaInitHook init_hook(*config, &clusters, &avahi_client);
         lua_handlers.Scan(init_hook, *config);
     }
 

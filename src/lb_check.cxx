@@ -7,7 +7,7 @@
 #include "lb_check.hxx"
 #include "lb_config.hxx"
 #include "lb/LuaHandler.hxx"
-#include "lua/InitHook.hxx"
+#include "lb/LuaInitHook.hxx"
 #include "ssl/ssl_factory.hxx"
 #include "ssl/SniCallback.hxx"
 #include "ssl/Cache.hxx"
@@ -51,7 +51,7 @@ lb_check(EventLoop &event_loop, const LbConfig &config)
     }
 
     {
-        NopLuaInitHook init_hook;
+        LbLuaInitHook init_hook(config, nullptr, nullptr);
         LbLuaHandlerMap().Scan(init_hook, config);
     }
 }
