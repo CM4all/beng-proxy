@@ -325,6 +325,23 @@ response with the given status.\\
 \hline
 \end{longtabu*}
 
+To forward the HTTP request to a configured pool, the Lua script
+should look up that pool in the \verb|pools| table (which is, for
+performance reasons, only available during global initialization), and
+then return that pool from the handler function, e.g.:
+
+\begin{verbatim*}
+foo = pools['foo']
+function handle_request(r)
+   return foo
+end
+\end{verbatim*}
+
+The \verb|pools| table contains all configured \verb|pool|,
+\verb|branch| and \verb|lua_handler| sections.  This means that Lua
+code can direct the HTTP request into a \verb|branch| or into another
+Lua script.  Be careful to avoid loops!
+
 Caution: while a Lua script runs, the whole \emph{beng-lb} process is
 blocked.  It is very easy to make \emph{beng-lb} unusable with a Lua
 script.  Each Lua invocation adds big amounts of overhead.  This
