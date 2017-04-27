@@ -379,7 +379,15 @@ LbConnection::HandleHttpRequest(HttpServerRequest &request,
 
     request_start_time = std::chrono::steady_clock::now();
 
-    const auto &goto_ = listener.destination.FindRequestLeaf(request);
+    HandleHttpRequest(listener.destination, request, cancel_ptr);
+}
+
+void
+LbConnection::HandleHttpRequest(const LbGoto &destination,
+                                HttpServerRequest &request,
+                                CancellablePointer &cancel_ptr)
+{
+    const auto &goto_ = destination.FindRequestLeaf(request);
     if (goto_.response.IsDefined()) {
         SendResponse(request, goto_.response);
         return;

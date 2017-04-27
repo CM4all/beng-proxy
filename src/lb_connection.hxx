@@ -24,6 +24,7 @@ class SocketAddress;
 struct HttpServerConnection;
 struct LbListenerConfig;
 struct LbClusterConfig;
+struct LbGoto;
 struct LbTcpConnection;
 struct LbInstance;
 
@@ -72,6 +73,9 @@ struct LbConnection final
     void HttpConnectionClosed() override;
 
 private:
+    void HandleHttpRequest(const LbGoto &destination,
+                           HttpServerRequest &request,
+                           CancellablePointer &cancel_ptr);
     void ForwardHttpRequest(const LbClusterConfig &cluster_config,
                             HttpServerRequest &request,
                             CancellablePointer &cancel_ptr);
