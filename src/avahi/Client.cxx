@@ -16,6 +16,7 @@
 
 #include <stdio.h>
 #include <unistd.h>
+#include <net/if.h>
 
 /**
  * Append the process id to the given prefix string.  This is used as
@@ -68,13 +69,20 @@ MyAvahiClient::AddService(AvahiIfIndex interface, AvahiProtocol protocol,
 }
 
 void
-MyAvahiClient::AddService(const char *type, SocketAddress address)
+MyAvahiClient::AddService(const char *type, const char *interface,
+                          SocketAddress address)
 {
     unsigned port = address.GetPort();
     if (port == 0)
         return;
 
-    unsigned i = FindNetworkInterface(address);
+    unsigned i = 0;
+    if (interface != nullptr)
+        i = if_nametoindex(interface);
+
+    if (i == 0)
+        i = FindNetworkInterface(address);
+
     AvahiIfIndex ii = i > 0
         ? AvahiIfIndex(i)
         : AVAHI_IF_UNSPEC;

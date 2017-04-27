@@ -230,7 +230,7 @@ BpInstance::AddListener(const BpConfig::Listener &c)
         const auto local_address = listener.GetLocalAddress();
         if (local_address.IsDefined())
             avahi_client.AddService(c.zeroconf_type.c_str(),
-                                    local_address);
+                                    nullptr, local_address);
     }
 }
 

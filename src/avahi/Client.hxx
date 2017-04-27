@@ -65,7 +65,8 @@ public:
 
     void AddService(AvahiIfIndex interface, AvahiProtocol protocol,
                     const char *type, uint16_t port);
-    void AddService(const char *type, SocketAddress address);
+    void AddService(const char *type, const char *interface,
+                    SocketAddress address);
 
 private:
     void GroupCallback(AvahiEntryGroup *g, AvahiEntryGroupState state);
