@@ -31,11 +31,16 @@
 #include <sys/socket.h>
 
 struct TcpStockRequest {
-    bool ip_transparent;
+    const bool ip_transparent;
 
-    SocketAddress bind_address, address;
+    const SocketAddress bind_address, address;
 
-    unsigned timeout;
+    const unsigned timeout;
+
+    TcpStockRequest(bool _ip_transparent, SocketAddress _bind_address,
+                    SocketAddress _address, unsigned _timeout)
+        :ip_transparent(_ip_transparent), bind_address(_bind_address),
+         address(_address), timeout(_timeout) {}
 };
 
 struct TcpStockConnection final
@@ -208,11 +213,9 @@ tcp_stock_get(StockMap *tcp_stock, struct pool *pool, const char *name,
 {
     assert(!address.IsNull());
 
-    auto request = NewFromPool<TcpStockRequest>(*pool);
-    request->ip_transparent = ip_transparent;
-    request->bind_address = bind_address;
-    request->address = address;
-    request->timeout = timeout;
+    auto request = NewFromPool<TcpStockRequest>(*pool, ip_transparent,
+                                                bind_address, address,
+                                                timeout);
 
     if (name == nullptr) {
         char buffer[1024];
