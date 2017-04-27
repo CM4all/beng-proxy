@@ -23,6 +23,7 @@ class UniqueSocketDescriptor;
 class SocketAddress;
 struct HttpServerConnection;
 struct LbListenerConfig;
+struct LbClusterConfig;
 struct LbTcpConnection;
 struct LbInstance;
 
@@ -69,6 +70,11 @@ struct LbConnection final
 
     void HttpConnectionError(GError *error) override;
     void HttpConnectionClosed() override;
+
+private:
+    void ForwardHttpRequest(const LbClusterConfig &cluster_config,
+                            HttpServerRequest &request,
+                            CancellablePointer &cancel_ptr);
 };
 
 LbConnection *

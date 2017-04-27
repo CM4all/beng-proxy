@@ -399,7 +399,15 @@ LbConnection::HandleHttpRequest(HttpServerRequest &request,
         return;
     }
 
-    const auto &cluster_config = *goto_.cluster;
+    assert(goto_.cluster != nullptr);
+    ForwardHttpRequest(*goto_.cluster, request, cancel_ptr);
+}
+
+inline void
+LbConnection::ForwardHttpRequest(const LbClusterConfig &cluster_config,
+                                 HttpServerRequest &request,
+                                 CancellablePointer &cancel_ptr)
+{
     const auto request2 =
         NewFromPool<LbRequest>(request.pool,
                                *this, cluster_config,
