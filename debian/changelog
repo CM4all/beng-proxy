@@ -1,5 +1,6 @@
 cm4all-beng-proxy (12.0.12) unstable; urgency=low
 
+  * bp: pass the listener "interface" setting to Avahi
   * lb: fix crash with --check
   * lb: allow Lua scripts to handle HTTP requests
 
