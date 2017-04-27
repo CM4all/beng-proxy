@@ -12,6 +12,7 @@
 #include "lua/Util.hxx"
 #include "lua/Class.hxx"
 #include "lua/Error.hxx"
+#include "lua/InitHook.hxx"
 #include "util/RuntimeError.hxx"
 #include "util/ScopeExit.hxx"
 
@@ -155,13 +156,18 @@ LbLuaRequestIndex(lua_State *L)
     return luaL_error(L, "Unknown attribute");
 }
 
-LbLuaHandler::LbLuaHandler(const LbLuaHandlerConfig &config)
+LbLuaHandler::LbLuaHandler(LuaInitHook &init_hook,
+                           const LbLuaHandlerConfig &config)
     :state(luaL_newstate()), function(state.get())
 {
     auto *L = state.get();
     luaL_openlibs(L);
 
+    init_hook.PreInit(L);
+
     Lua::RunFile(L, config.path.c_str());
+
+    init_hook.PostInit(L);
 
     lua_getglobal(L, config.function.c_str());
     AtScopeExit(L) { lua_pop(L, 1); };
@@ -207,45 +213,45 @@ LbLuaHandler::HandleRequest(HttpServerRequest &request,
 }
 
 void
-LbLuaHandlerMap::Scan(const LbConfig &config)
+LbLuaHandlerMap::Scan(LuaInitHook &init_hook, const LbConfig &config)
 {
     for (const auto &i : config.listeners)
-        Scan(i);
+        Scan(init_hook, i);
 }
 
 void
-LbLuaHandlerMap::Scan(const LbGotoIfConfig &config)
+LbLuaHandlerMap::Scan(LuaInitHook &init_hook, const LbGotoIfConfig &config)
 {
-    Scan(config.destination);
+    Scan(init_hook, config.destination);
 }
 
 void
-LbLuaHandlerMap::Scan(const LbBranchConfig &config)
+LbLuaHandlerMap::Scan(LuaInitHook &init_hook, const LbBranchConfig &config)
 {
-    Scan(config.fallback);
+    Scan(init_hook, config.fallback);
 
     for (const auto &i : config.conditions)
-        Scan(i);
+        Scan(init_hook, i);
 }
 
 void
-LbLuaHandlerMap::Scan(const LbGoto &g)
+LbLuaHandlerMap::Scan(LuaInitHook &init_hook, const LbGoto &g)
 {
     if (g.lua != nullptr)
-        Scan(*g.lua);
+        Scan(init_hook, *g.lua);
 
     if (g.branch != nullptr)
-        Scan(*g.branch);
+        Scan(init_hook, *g.branch);
 }
 
 void
-LbLuaHandlerMap::Scan(const LbListenerConfig &config)
+LbLuaHandlerMap::Scan(LuaInitHook &init_hook, const LbListenerConfig &config)
 {
-    Scan(config.destination);
+    Scan(init_hook, config.destination);
 }
 
 void
-LbLuaHandlerMap::Scan(const LbLuaHandlerConfig &config)
+LbLuaHandlerMap::Scan(LuaInitHook &init_hook, const LbLuaHandlerConfig &config)
 {
     auto i = handlers.find(config.name);
     if (i != handlers.end())
@@ -254,5 +260,5 @@ LbLuaHandlerMap::Scan(const LbLuaHandlerConfig &config)
 
     handlers.emplace(std::piecewise_construct,
                      std::forward_as_tuple(config.name),
-                     std::forward_as_tuple(config));
+                     std::forward_as_tuple(init_hook, config));
 }

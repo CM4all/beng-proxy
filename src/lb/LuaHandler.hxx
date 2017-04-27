@@ -19,13 +19,14 @@ struct LbListenerConfig;
 struct LbLuaHandlerConfig;
 struct HttpServerRequest;
 struct HttpResponseHandler;
+class LuaInitHook;
 
 class LbLuaHandler final {
     Lua::State state;
     Lua::Value function;
 
 public:
-    LbLuaHandler(const LbLuaHandlerConfig &config);
+    LbLuaHandler(LuaInitHook &init_hook, const LbLuaHandlerConfig &config);
     ~LbLuaHandler();
 
     void HandleRequest(HttpServerRequest &request,
@@ -36,7 +37,7 @@ class LbLuaHandlerMap {
     std::map<std::string, LbLuaHandler> handlers;
 
 public:
-    void Scan(const LbConfig &config);
+    void Scan(LuaInitHook &init_hook, const LbConfig &config);
 
     LbLuaHandler *Find(const std::string &name) {
         auto i = handlers.find(name);
@@ -46,12 +47,12 @@ public:
     }
 
 private:
-    void Scan(const LbGotoIfConfig &config);
-    void Scan(const LbBranchConfig &config);
-    void Scan(const LbGoto &g);
-    void Scan(const LbListenerConfig &config);
+    void Scan(LuaInitHook &init_hook, const LbGotoIfConfig &config);
+    void Scan(LuaInitHook &init_hook, const LbBranchConfig &config);
+    void Scan(LuaInitHook &init_hook, const LbGoto &g);
+    void Scan(LuaInitHook &init_hook, const LbListenerConfig &config);
 
-    void Scan(const LbLuaHandlerConfig &config);
+    void Scan(LuaInitHook &init_hook, const LbLuaHandlerConfig &config);
 };
 
 #endif
