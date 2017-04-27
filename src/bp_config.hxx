@@ -42,6 +42,12 @@ struct BpConfig {
 
         Listener(SocketAddress _address, const std::string &_tag)
             :address(_address), tag(_tag) {}
+
+        const char *GetInterface() const {
+            return interface.empty()
+                ? nullptr
+                : interface.c_str();
+        }
     };
 
     std::forward_list<Listener> listen;
