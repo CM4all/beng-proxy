@@ -16,7 +16,7 @@ typedef Lua::Class<LbLuaInitHook *, lua_pools_class> LuaPools;
 static LbLuaInitHook &
 CheckLuaPools(lua_State *L, int idx)
 {
-    return **LuaPools::Check(L, idx);
+    return *LuaPools::Cast(L, idx);
 }
 
 int

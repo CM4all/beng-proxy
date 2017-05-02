@@ -45,11 +45,11 @@ NewLuaRequest(lua_State *L, HttpServerRequest &request,
     return LbLuaRequest::New(L, request, handler);
 }
 
-static LbLuaRequestData *
-CheckLuaRequestData(lua_State *L, int idx)
+static LbLuaRequestData &
+CastLuaRequestData(lua_State *L, int idx)
 {
-    auto *data = LbLuaRequest::Check(L, idx);
-    if (data->stale)
+    auto &data = LbLuaRequest::Cast(L, idx);
+    if (data.stale)
         luaL_error(L, "Stale request");
 
     return data;
@@ -61,7 +61,7 @@ GetHeader(lua_State *L)
     if (lua_gettop(L) != 2)
         return luaL_error(L, "Invalid parameters");
 
-    auto &data = *(LbLuaRequestData *)CheckLuaRequestData(L, 1);
+    auto &data = CastLuaRequestData(L, 1);
 
     if (!lua_isstring(L, 2))
         return luaL_argerror(L, 2, "String expected");
@@ -83,7 +83,7 @@ SendMessage(lua_State *L)
     if (top < 2 || top > 3)
         return luaL_error(L, "Invalid parameters");
 
-    auto &data = *(LbLuaRequestData *)CheckLuaRequestData(L, 1);
+    auto &data = CastLuaRequestData(L, 1);
 
     http_status_t status = HTTP_STATUS_OK;
     const char *msg;
@@ -127,7 +127,7 @@ LbLuaRequestIndex(lua_State *L)
     if (lua_gettop(L) != 2)
         return luaL_error(L, "Invalid parameters");
 
-    auto &data = *(LbLuaRequestData *)CheckLuaRequestData(L, 1);
+    auto &data = CastLuaRequestData(L, 1);
 
     if (!lua_isstring(L, 2))
         luaL_argerror(L, 2, "string expected");
