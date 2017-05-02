@@ -8,6 +8,7 @@
 #include "lb_cluster.hxx"
 #include "lua/Util.hxx"
 #include "lua/Class.hxx"
+#include "lua/Assert.hxx"
 
 static constexpr char lua_pools_class[] = "lb.pools";
 typedef Lua::Class<LbLuaInitHook *, lua_pools_class> LuaPools;
@@ -51,6 +52,8 @@ LuaPoolsIndex(lua_State *L)
 void
 LbLuaInitHook::PreInit(lua_State *L)
 {
+    const Lua::ScopeCheckStack check_stack(L);
+
     RegisterLuaGoto(L);
 
     LuaPools::Register(L);
@@ -65,5 +68,7 @@ LbLuaInitHook::PreInit(lua_State *L)
 void
 LbLuaInitHook::PostInit(lua_State *L)
 {
+    const Lua::ScopeCheckStack check_stack(L);
+
     Lua::SetGlobal(L, "pools", nullptr);
 }
