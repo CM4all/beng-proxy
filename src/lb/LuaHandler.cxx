@@ -213,6 +213,8 @@ LbLuaHandler::HandleRequest(HttpServerRequest &request,
         return nullptr;
     }
 
+    AtScopeExit(L) { lua_pop(L, 1); };
+
     if (lua_isnil(L, -1))
         return nullptr;
 
