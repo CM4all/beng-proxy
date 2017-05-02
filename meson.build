@@ -163,9 +163,12 @@ http_dep = declare_dependency(link_with: http)
 
 lua = static_library('lua',
   'libcommon/src/lua/Error.cxx',
+  'libcommon/src/lua/Panic.cxx',
   'libcommon/src/lua/RunFile.cxx',
   'libcommon/src/lua/State.cxx',
+  include_directories: inc,
   dependencies: [
+    libinline,
     liblua,
   ]
 )
