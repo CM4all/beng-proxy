@@ -57,8 +57,9 @@ LbLuaInitHook::PreInit(lua_State *L)
     Lua::SetTable(L, -3, "__index", LuaPoolsIndex);
     lua_pop(L, 1);
 
-    LuaPools::New(L, this);
-    Lua::SetGlobal(L, "pools", Lua::StackIndex(-1));
+    Lua::SetGlobal(L, "pools", Lua::Lambda([this, L](){
+                LuaPools::New(L, this);
+            }));
 }
 
 void
