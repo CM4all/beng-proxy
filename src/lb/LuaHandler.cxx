@@ -11,6 +11,7 @@
 #include "GException.hxx"
 #include "lua/RunFile.hxx"
 #include "lua/Util.hxx"
+#include "lua/Assert.hxx"
 #include "lua/Class.hxx"
 #include "lua/Error.hxx"
 #include "lua/InitHook.hxx"
@@ -160,6 +161,8 @@ LbLuaHandler::LbLuaHandler(LuaInitHook &init_hook,
     :state(luaL_newstate()), function(state.get())
 {
     auto *L = state.get();
+    const Lua::ScopeCheckStack check_stack(L);
+
     luaL_openlibs(L);
 
     init_hook.PreInit(L);
@@ -198,6 +201,7 @@ LbLuaHandler::HandleRequest(HttpServerRequest &request,
                             HttpResponseHandler &handler)
 {
     auto *L = state.get();
+    const Lua::ScopeCheckStack check_stack(L);
 
     function.Push();
     auto *data = NewLuaRequest(L, request, handler);
