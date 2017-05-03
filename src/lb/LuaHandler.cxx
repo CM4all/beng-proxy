@@ -218,13 +218,9 @@ LbLuaHandler::HandleRequest(HttpServerRequest &request,
     if (lua_isnil(L, -1))
         return nullptr;
 
-    Lua::ScopePanicHandler panic(L);
-    if (setjmp(panic.j) != 0) {
-        handler.InvokeError(ToGError(Lua::PopError(L)));
-        return nullptr;
-    }
-
-    return &CheckLuaGoto(L, -1);
+    return Lua::WithPanicHandler(L, [L](){
+            return &CheckLuaGoto(L, -1);
+        });
 }
 
 void
