@@ -9,13 +9,19 @@
 static constexpr char lua_goto_class[] = "lb.goto";
 typedef Lua::Class<LbGoto, lua_goto_class> LuaGoto;
 
+static LbGoto &
+CastLuaGoto(lua_State *L, int idx)
+{
+    return LuaGoto::Cast(L, idx);
+}
+
 static int
 LuaGotoIndex(lua_State *L)
 {
     if (lua_gettop(L) != 2)
         return luaL_error(L, "Invalid parameters");
 
-    auto &g = CheckLuaGoto(L, 1);
+    auto &g = CastLuaGoto(L, 1);
 
     if (!lua_isstring(L, 2))
         luaL_argerror(L, 2, "string expected");
