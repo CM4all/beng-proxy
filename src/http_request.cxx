@@ -80,6 +80,10 @@ struct HttpRequest final
         DeleteFromPool(pool, this);
     }
 
+    void ResponseSent() {
+        Destroy();
+    }
+
     void BeginConnect() {
         tcp_balancer_get(tcp_balancer, pool,
                          false, SocketAddress::Null(),
@@ -92,7 +96,7 @@ struct HttpRequest final
     void Failed(GError *error) {
         body.Clear();
         handler.InvokeError(error);
-        Destroy();
+        ResponseSent();
     }
 
     /* virtual methods from class Cancellable */
@@ -137,7 +141,7 @@ HttpRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
     failure_unset(tcp_stock_item_get_address(*stock_item), FAILURE_RESPONSE);
 
     handler.InvokeResponse(status, std::move(_headers), _body);
-    Destroy();
+    ResponseSent();
 }
 
 void
