@@ -108,10 +108,14 @@ private:
 
     /* virtual methods from class Cancellable */
     void Cancel() override {
+        /* this pool reference is necessary because
+           cancel_ptr.Cancel() may release the only remaining
+           reference on the pool */
+        const ScopePoolRef ref(pool TRACE_ARGS);
+
         body.Clear();
-        CancellablePointer c(std::move(cancel_ptr));
+        cancel_ptr.Cancel();
         Destroy();
-        c.Cancel();
     }
 
     /* virtual methods from class StockGetHandler */
