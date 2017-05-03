@@ -74,6 +74,11 @@ struct HttpRequest final
          handler(_handler)
     {
         _cancel_ptr = *this;
+
+        if (address.host_and_port != nullptr)
+            headers.Write("host", address.host_and_port);
+
+        headers.Write("connection", "keep-alive");
     }
 
     void Destroy() {
@@ -234,11 +239,6 @@ http_request(struct pool &pool, EventLoop &event_loop,
                                        session_sticky, filter, filter_factory,
                                        method, uwa, std::move(headers), body,
                                        handler, _cancel_ptr);
-
-    if (uwa.host_and_port != nullptr)
-        hr->headers.Write("host", uwa.host_and_port);
-
-    hr->headers.Write("connection", "keep-alive");
 
     hr->BeginConnect();
 }
