@@ -18,6 +18,10 @@ class StockItemLease final : public Lease {
 public:
     explicit StockItemLease(StockItem &_item):item(_item) {}
 
+    StockItem &GetItem() {
+        return item;
+    }
+
     /* virtual methods from class Lease */
     void ReleaseLease(bool reuse) override;
 };
