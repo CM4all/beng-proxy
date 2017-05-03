@@ -34,7 +34,7 @@
 #include "istream/UnusedHoldPtr.hxx"
 #include "util/Cancellable.hxx"
 
-struct LbRequest final
+class LbRequest final
     : Cancellable, StockGetHandler, HttpResponseHandler {
 
     LbConnection &connection;
@@ -55,6 +55,7 @@ struct LbRequest final
 
     unsigned new_cookie = 0;
 
+public:
     LbRequest(LbConnection &_connection, const LbClusterConfig &_cluster_config,
               TcpBalancer &_balancer,
               HttpServerRequest &_request,
@@ -68,6 +69,7 @@ struct LbRequest final
 
     void Start();
 
+private:
     void Destroy() {
         DeleteFromPool(request.pool, this);
     }
