@@ -91,8 +91,8 @@ NewLuaGoto(lua_State *L, LbGoto &&src)
     return LuaGoto::New(L, std::move(src));
 }
 
-LbGoto &
+LbGoto *
 CheckLuaGoto(lua_State *L, int idx)
 {
-    return *LuaGoto::Check(L, idx);
+    return LuaGoto::Check(L, idx);
 }

@@ -14,7 +14,7 @@ RegisterLuaGoto(lua_State *L);
 LbGoto *
 NewLuaGoto(lua_State *L, LbGoto &&src);
 
-LbGoto &
+LbGoto *
 CheckLuaGoto(lua_State *L, int idx);
 
 #endif

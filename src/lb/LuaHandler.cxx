@@ -13,7 +13,6 @@
 #include "lua/Util.hxx"
 #include "lua/Class.hxx"
 #include "lua/Error.hxx"
-#include "lua/Panic.hxx"
 #include "lua/InitHook.hxx"
 #include "util/RuntimeError.hxx"
 #include "util/ScopeExit.hxx"
@@ -212,9 +211,11 @@ LbLuaHandler::HandleRequest(HttpServerRequest &request,
     if (lua_isnil(L, -1))
         return nullptr;
 
-    return Lua::WithPanicHandler(L, [L](){
-            return &CheckLuaGoto(L, -1);
-        });
+    const auto *g = CheckLuaGoto(L, -1);
+    if (g == nullptr)
+        throw std::runtime_error("Wrong return type from Lua handler");
+
+    return g;
 }
 
 void
