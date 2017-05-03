@@ -37,6 +37,7 @@
 #include "istream/istream.hxx"
 #include "istream/UnusedHoldPtr.hxx"
 #include "gerrno.h"
+#include "GException.hxx"
 #include "util/Cancellable.hxx"
 
 #include <http/status.h>
@@ -398,7 +399,18 @@ LbConnection::HandleHttpRequest(const LbGoto &destination,
         assert(handler != nullptr);
 
         LbLuaResponseHandler response_handler(*this, request);
-        const auto *g = handler->HandleRequest(request, response_handler);
+        const LbGoto *g;
+
+        try {
+            g = handler->HandleRequest(request, response_handler);
+        } catch (const std::runtime_error &e) {
+            if (response_handler.IsFinished())
+                daemon_log(1, "Lua error: %s\n", e.what());
+            else
+                response_handler.InvokeError(ToGError(e));
+            return;
+        }
+
         if (response_handler.IsFinished())
             return;
 

@@ -18,8 +18,6 @@
 #include "util/RuntimeError.hxx"
 #include "util/ScopeExit.hxx"
 
-#include <daemon/log.h>
-
 extern "C" {
 #include <lauxlib.h>
 #include <lualib.h>
@@ -206,12 +204,8 @@ LbLuaHandler::HandleRequest(HttpServerRequest &request,
     auto *data = NewLuaRequest(L, request, handler);
     AtScopeExit(data) { data->stale = true; };
 
-    if (lua_pcall(L, 1, 1, 0)) {
-        auto error = Lua::PopError(L);
-        if (!data->stale)
-            handler.InvokeError(ToGError(error));
-        return nullptr;
-    }
+    if (lua_pcall(L, 1, 1, 0))
+        throw Lua::PopError(L);
 
     AtScopeExit(L) { lua_pop(L, 1); };
 
