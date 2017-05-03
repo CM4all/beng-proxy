@@ -28,7 +28,7 @@
 
 #include <string.h>
 
-struct HttpRequest final
+class HttpRequest final
     : Cancellable, StockGetHandler, HttpResponseHandler {
 
     struct pool &pool;
@@ -53,6 +53,7 @@ struct HttpRequest final
     HttpResponseHandler &handler;
     CancellablePointer cancel_ptr;
 
+public:
     HttpRequest(struct pool &_pool, EventLoop &_event_loop,
                 TcpBalancer &_tcp_balancer,
                 sticky_hash_t _session_sticky,
@@ -81,14 +82,6 @@ struct HttpRequest final
         headers.Write("connection", "keep-alive");
     }
 
-    void Destroy() {
-        DeleteFromPool(pool, this);
-    }
-
-    void ResponseSent() {
-        Destroy();
-    }
-
     void BeginConnect() {
         tcp_balancer_get(tcp_balancer, pool,
                          false, SocketAddress::Null(),
@@ -96,6 +89,15 @@ struct HttpRequest final
                          address.addresses,
                          30,
                          *this, cancel_ptr);
+    }
+
+private:
+    void Destroy() {
+        DeleteFromPool(pool, this);
+    }
+
+    void ResponseSent() {
+        Destroy();
     }
 
     void Failed(GError *error) {
@@ -116,7 +118,6 @@ struct HttpRequest final
     void OnStockItemReady(StockItem &item) override;
     void OnStockItemError(GError *error) override;
 
-private:
     /* virtual methods from class HttpResponseHandler */
     void OnHttpResponse(http_status_t status, StringMap &&headers,
                         Istream *body) override;
