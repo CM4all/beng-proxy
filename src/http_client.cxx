@@ -680,7 +680,7 @@ HttpClient::HeadersFinished()
                 GError *error =
                     g_error_new_literal(http_client_quark(),
                                         HTTP_CLIENT_UNSPECIFIED,
-                                        "no Content-Length header response");
+                                        "no Content-Length response header");
                 AbortResponseHeaders(error);
                 return false;
             }
