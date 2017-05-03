@@ -310,6 +310,7 @@ LbRequest::OnStockItemError(GError *error)
     }
 
     g_error_free(error);
+    ResponseSent();
 }
 
 /*
