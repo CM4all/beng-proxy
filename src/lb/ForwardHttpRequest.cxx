@@ -33,9 +33,10 @@
 #include "istream/istream.hxx"
 #include "istream/UnusedHoldPtr.hxx"
 #include "util/Cancellable.hxx"
+#include "util/LeakDetector.hxx"
 
 class LbRequest final
-    : Cancellable, StockGetHandler, HttpResponseHandler {
+    : LeakDetector, Cancellable, StockGetHandler, HttpResponseHandler {
 
     LbConnection &connection;
     const LbClusterConfig &cluster_config;
