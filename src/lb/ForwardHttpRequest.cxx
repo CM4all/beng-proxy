@@ -75,6 +75,10 @@ private:
         DeleteFromPool(request.pool, this);
     }
 
+    void ResponseSent() {
+        Destroy();
+    }
+
     sticky_hash_t GetStickyHash();
     sticky_hash_t MakeCookieHash();
 
@@ -226,7 +230,7 @@ LbRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
     }
 
     http_server_response(&request, status, std::move(headers), response_body);
-    Destroy();
+    ResponseSent();
 }
 
 void
@@ -246,7 +250,7 @@ LbRequest::OnHttpError(GError *error)
     }
 
     g_error_free(error);
-    Destroy();
+    ResponseSent();
 }
 
 /*
