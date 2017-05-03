@@ -413,8 +413,6 @@ LbRequest::Start()
     }
 
     if (cluster_config.HasZeroConf()) {
-        /* TODO: generalize the Zeroconf code, implement sticky */
-
         auto *cluster2 = connection.instance.clusters.Find(cluster_config.name);
         if (cluster2 == nullptr) {
             http_server_send_message(&request,
