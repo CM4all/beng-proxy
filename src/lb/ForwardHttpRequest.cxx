@@ -23,7 +23,7 @@
 #include "http_headers.hxx"
 #include "stock/GetHandler.hxx"
 #include "stock/Item.hxx"
-#include "stock/Lease.hxx"
+#include "lease.hxx"
 #include "strmap.hxx"
 #include "failure.hxx"
 #include "bulldog.hxx"
@@ -36,7 +36,7 @@
 #include "util/LeakDetector.hxx"
 
 class LbRequest final
-    : LeakDetector, Cancellable, StockGetHandler, HttpResponseHandler {
+    : LeakDetector, Cancellable, StockGetHandler, Lease, HttpResponseHandler {
 
     LbConnection &connection;
     const LbClusterConfig &cluster_config;
@@ -56,6 +56,14 @@ class LbRequest final
 
     unsigned new_cookie = 0;
 
+    bool response_sent = false, reuse;
+
+    enum class LeaseState : uint8_t {
+        NONE,
+        BUSY,
+        PENDING,
+    } lease_state = LeaseState::NONE;
+
 public:
     LbRequest(LbConnection &_connection, const LbClusterConfig &_cluster_config,
               TcpBalancer &_balancer,
@@ -72,11 +80,30 @@ public:
 
 private:
     void Destroy() {
+        assert(lease_state == LeaseState::NONE);
+
         DeleteFromPool(request.pool, this);
     }
 
+    void DoRelease() {
+        assert(lease_state == LeaseState::PENDING);
+
+        lease_state = LeaseState::NONE;
+        stock_item->Put(!reuse);
+    }
+
+    bool CheckRelease() {
+        if (lease_state == LeaseState::PENDING)
+            DoRelease();
+        return lease_state == LeaseState::NONE;
+    }
+
     void ResponseSent() {
-        Destroy();
+        assert(!response_sent);
+        response_sent = true;
+
+        if (CheckRelease())
+            Destroy();
     }
 
     sticky_hash_t GetStickyHash();
@@ -84,6 +111,8 @@ private:
 
     /* virtual methods from class Cancellable */
     void Cancel() override {
+        assert(!response_sent);
+
         /* this pool reference is necessary because
            cancel_ptr.Cancel() may release the only remaining
            reference on the pool */
@@ -91,12 +120,17 @@ private:
 
         body.Clear();
         cancel_ptr.Cancel();
+
+        CheckRelease();
         Destroy();
     }
 
     /* virtual methods from class StockGetHandler */
     void OnStockItemReady(StockItem &item) override;
     void OnStockItemError(GError *error) override;
+
+    /* virtual methods from class Lease */
+    void ReleaseLease(bool reuse) override;
 
     /* virtual methods from class HttpResponseHandler */
     void OnHttpResponse(http_status_t status, StringMap &&headers,
@@ -215,6 +249,9 @@ void
 LbRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
                           Istream *response_body)
 {
+    assert(lease_state != LeaseState::NONE);
+    assert(!response_sent);
+
     HttpHeaders headers(std::move(_headers));
 
     if (request.method == HTTP_METHOD_HEAD)
@@ -240,6 +277,9 @@ LbRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
 void
 LbRequest::OnHttpError(GError *error)
 {
+    assert(lease_state != LeaseState::NONE);
+    assert(!response_sent);
+
     if (is_server_failure(error))
         failure_add(tcp_stock_item_get_address(*stock_item));
 
@@ -265,7 +305,11 @@ LbRequest::OnHttpError(GError *error)
 void
 LbRequest::OnStockItemReady(StockItem &item)
 {
+    assert(lease_state == LeaseState::NONE);
+    assert(!response_sent);
+
     stock_item = &item;
+    lease_state = LeaseState::BUSY;
 
     const char *peer_subject = connection.ssl_filter != nullptr
         ? ssl_filter_get_peer_subject(connection.ssl_filter)
@@ -281,14 +325,12 @@ LbRequest::OnStockItemReady(StockItem &item)
                                peer_subject, peer_issuer_subject,
                                cluster_config.mangle_via);
 
-    auto *lease = NewFromPool<StockItemLease>(request.pool, item);
-
     http_client_request(request.pool,
                         connection.instance.event_loop,
                         tcp_stock_item_get(item),
                         tcp_stock_item_get_domain(item) == AF_LOCAL
                         ? FdType::FD_SOCKET : FdType::FD_TCP,
-                        *lease,
+                        *this,
                         item.GetStockName(),
                         NULL, NULL,
                         request.method, request.uri,
@@ -300,6 +342,9 @@ LbRequest::OnStockItemReady(StockItem &item)
 void
 LbRequest::OnStockItemError(GError *error)
 {
+    assert(lease_state == LeaseState::NONE);
+    assert(!response_sent);
+
     lb_connection_log_gerror(2, &connection, "Connect error", error);
 
     body.Clear();
@@ -315,6 +360,25 @@ LbRequest::OnStockItemError(GError *error)
 
     g_error_free(error);
     ResponseSent();
+}
+
+/*
+ * Lease
+ *
+ */
+
+void
+LbRequest::ReleaseLease(bool _reuse)
+{
+    assert(lease_state == LeaseState::BUSY);
+
+    lease_state = LeaseState::PENDING;
+    reuse = _reuse;
+
+    if (response_sent) {
+        DoRelease();
+        Destroy();
+    }
 }
 
 /*

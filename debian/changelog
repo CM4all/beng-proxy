@@ -2,6 +2,7 @@ cm4all-beng-proxy (12.0.13) unstable; urgency=low
 
   * lb/lua: catch "panics" and report error
   * lb/lau: fix Lua stack leaks
+  * fix use-after-free bug in HTTP request handler
 
  --   
 

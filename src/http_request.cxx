@@ -14,7 +14,7 @@
 #include "tcp_balancer.hxx"
 #include "stock/GetHandler.hxx"
 #include "stock/Item.hxx"
-#include "stock/Lease.hxx"
+#include "lease.hxx"
 #include "failure.hxx"
 #include "istream/istream.hxx"
 #include "istream/UnusedHoldPtr.hxx"
@@ -29,7 +29,7 @@
 #include <string.h>
 
 class HttpRequest final
-    : Cancellable, StockGetHandler, HttpResponseHandler {
+    : Cancellable, StockGetHandler, Lease, HttpResponseHandler {
 
     struct pool &pool;
     EventLoop &event_loop;
@@ -52,6 +52,14 @@ class HttpRequest final
 
     HttpResponseHandler &handler;
     CancellablePointer cancel_ptr;
+
+    bool response_sent = false, reuse;
+
+    enum class LeaseState : uint8_t {
+        NONE,
+        BUSY,
+        PENDING,
+    } lease_state = LeaseState::NONE;
 
 public:
     HttpRequest(struct pool &_pool, EventLoop &_event_loop,
@@ -93,11 +101,30 @@ public:
 
 private:
     void Destroy() {
+        assert(lease_state == LeaseState::NONE);
+
         DeleteFromPool(pool, this);
     }
 
+    void DoRelease() {
+        assert(lease_state == LeaseState::PENDING);
+
+        lease_state = LeaseState::NONE;
+        stock_item->Put(!reuse);
+    }
+
+    bool CheckRelease() {
+        if (lease_state == LeaseState::PENDING)
+            DoRelease();
+        return lease_state == LeaseState::NONE;
+    }
+
     void ResponseSent() {
-        Destroy();
+        assert(!response_sent);
+        response_sent = true;
+
+        if (CheckRelease())
+            Destroy();
     }
 
     void Failed(GError *error) {
@@ -108,6 +135,8 @@ private:
 
     /* virtual methods from class Cancellable */
     void Cancel() override {
+        assert(!response_sent);
+
         /* this pool reference is necessary because
            cancel_ptr.Cancel() may release the only remaining
            reference on the pool */
@@ -115,12 +144,17 @@ private:
 
         body.Clear();
         cancel_ptr.Cancel();
+
+        CheckRelease();
         Destroy();
     }
 
     /* virtual methods from class StockGetHandler */
     void OnStockItemReady(StockItem &item) override;
     void OnStockItemError(GError *error) override;
+
+    /* virtual methods from class Lease */
+    void ReleaseLease(bool reuse) override;
 
     /* virtual methods from class HttpResponseHandler */
     void OnHttpResponse(http_status_t status, StringMap &&headers,
@@ -148,6 +182,9 @@ void
 HttpRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
                             Istream *_body)
 {
+    assert(lease_state != LeaseState::NONE);
+    assert(!response_sent);
+
     failure_unset(tcp_stock_item_get_address(*stock_item), FAILURE_RESPONSE);
 
     handler.InvokeResponse(status, std::move(_headers), _body);
@@ -157,6 +194,9 @@ HttpRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
 void
 HttpRequest::OnHttpError(GError *error)
 {
+    assert(lease_state != LeaseState::NONE);
+    assert(!response_sent);
+
     if (retries > 0 &&
         error->domain == http_client_quark() &&
         error->code == HTTP_CLIENT_REFUSED) {
@@ -186,7 +226,11 @@ HttpRequest::OnHttpError(GError *error)
 void
 HttpRequest::OnStockItemReady(StockItem &item)
 {
+    assert(lease_state == LeaseState::NONE);
+    assert(!response_sent);
+
     stock_item = &item;
+    lease_state = LeaseState::BUSY;
 
     void *filter_ctx = nullptr;
     if (filter_factory != nullptr) {
@@ -199,13 +243,11 @@ HttpRequest::OnStockItemReady(StockItem &item)
         }
     }
 
-    auto *lease = NewFromPool<StockItemLease>(pool, item);
-
     http_client_request(pool, event_loop,
                         tcp_stock_item_get(item),
                         tcp_stock_item_get_domain(item) == AF_LOCAL
                         ? FdType::FD_SOCKET : FdType::FD_TCP,
-                        *lease,
+                        *this,
                         item.GetStockName(),
                         filter, filter_ctx,
                         method, address.path, std::move(headers),
@@ -216,7 +258,29 @@ HttpRequest::OnStockItemReady(StockItem &item)
 void
 HttpRequest::OnStockItemError(GError *error)
 {
+    assert(lease_state == LeaseState::NONE);
+    assert(!response_sent);
+
     Failed(error);
+}
+
+/*
+ * Lease
+ *
+ */
+
+void
+HttpRequest::ReleaseLease(bool _reuse)
+{
+    assert(lease_state == LeaseState::BUSY);
+
+    lease_state = LeaseState::PENDING;
+    reuse = _reuse;
+
+    if (response_sent) {
+        DoRelease();
+        Destroy();
+    }
 }
 
 /*
