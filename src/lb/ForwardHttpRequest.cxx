@@ -66,6 +66,8 @@ struct LbRequest final
         _cancel_ptr = *this;
     }
 
+    void Start();
+
     void Destroy() {
         DeleteFromPool(request.pool, this);
     }
@@ -308,18 +310,9 @@ LbRequest::OnStockItemError(GError *error)
  *
  */
 
-void
-ForwardHttpRequest(LbConnection &connection,
-                   HttpServerRequest &request,
-                   const LbClusterConfig &cluster_config,
-                   CancellablePointer &cancel_ptr)
+inline void
+LbRequest::Start()
 {
-    const auto request2 =
-        NewFromPool<LbRequest>(request.pool,
-                               connection, cluster_config,
-                               *connection.instance.tcp_balancer,
-                               request, cancel_ptr);
-
     SocketAddress bind_address = SocketAddress::Null();
     const bool transparent_source = cluster_config.transparent_source;
     if (transparent_source) {
@@ -354,7 +347,7 @@ ForwardHttpRequest(LbConnection &connection,
             return;
         }
 
-        const auto member = cluster2->Pick(request2->GetStickyHash());
+        const auto member = cluster2->Pick(GetStickyHash());
         if (member.first == nullptr) {
             http_server_send_message(&request,
                                      HTTP_STATUS_INTERNAL_SERVER_ERROR,
@@ -369,16 +362,30 @@ ForwardHttpRequest(LbConnection &connection,
                       transparent_source, bind_address,
                       member.second,
                       20,
-                      *request2, request2->cancel_ptr);
+                      *this, cancel_ptr);
 
         return;
     }
 
-    tcp_balancer_get(request2->balancer, request.pool,
+    tcp_balancer_get(balancer, request.pool,
                      transparent_source,
                      bind_address,
-                     request2->GetStickyHash(),
+                     GetStickyHash(),
                      cluster_config.address_list,
                      20,
-                     *request2, request2->cancel_ptr);
+                     *this, cancel_ptr);
+}
+
+void
+ForwardHttpRequest(LbConnection &connection,
+                   HttpServerRequest &request,
+                   const LbClusterConfig &cluster_config,
+                   CancellablePointer &cancel_ptr)
+{
+    const auto request2 =
+        NewFromPool<LbRequest>(request.pool,
+                               connection, cluster_config,
+                               *connection.instance.tcp_balancer,
+                               request, cancel_ptr);
+    request2->Start();
 }
