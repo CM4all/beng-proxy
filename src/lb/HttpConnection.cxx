@@ -105,9 +105,7 @@ LbHttpConnection::Destroy()
     auto &connections = instance.http_connections;
     connections.erase(connections.iterator_to(*this));
 
-    struct pool &p = pool;
-    pool_trash(&p);
-    pool_unref(&p);
+    DeleteUnrefTrashPool(pool, this);
 }
 
 void
