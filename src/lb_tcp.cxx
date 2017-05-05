@@ -471,8 +471,6 @@ void
 LbTcpConnection::ConnectOutbound()
 {
     if (cluster.HasZeroConf()) {
-        /* TODO: generalize the Zeroconf code, implement sticky */
-
         auto *cluster2 = clusters.Find(cluster.name);
         if (cluster2 == nullptr) {
             DestroyInbound();
