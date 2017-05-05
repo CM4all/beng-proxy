@@ -13,6 +13,14 @@ LbClusterMap::Scan(const LbConfig &config, MyAvahiClient &avahi_client)
 }
 
 void
+LbClusterMap::Scan(const LbTranslationHandlerConfig &config,
+                   MyAvahiClient &avahi_client)
+{
+    for (const auto &i : config.clusters)
+        Scan(*i.second, avahi_client);
+}
+
+void
 LbClusterMap::Scan(const LbGotoIfConfig &config, MyAvahiClient &avahi_client)
 {
     Scan(config.destination, avahi_client);
@@ -35,6 +43,9 @@ LbClusterMap::Scan(const LbGoto &g, MyAvahiClient &avahi_client)
 
     if (g.branch != nullptr)
         Scan(*g.branch, avahi_client);
+
+    if (g.translation != nullptr)
+        Scan(*g.translation, avahi_client);
 }
 
 void

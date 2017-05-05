@@ -811,6 +811,15 @@ enum beng_translation_command {
      * Forbid the child process to create new user namespaces.
      */
     TRANSLATE_FORBID_USER_NS = 186,
+
+    /**
+     * Request: ask the translation server which configured pool to
+     * send this HTTP request to.  Payload is the translation_handler
+     * name (may be empty, though).
+     *
+     * Response: payload specifies the pool name.
+     */
+    TRANSLATE_POOL = 187,
 };
 
 struct beng_translation_header {

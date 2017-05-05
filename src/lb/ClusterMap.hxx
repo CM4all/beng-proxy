@@ -11,6 +11,7 @@
 #include <map>
 
 class MyAvahiClient;
+struct LbTranslationHandlerConfig;
 
 class LbClusterMap {
     std::map<std::string, LbCluster> clusters;
@@ -27,6 +28,8 @@ public:
     }
 
 private:
+    void Scan(const LbTranslationHandlerConfig &config,
+              MyAvahiClient &avahi_client);
     void Scan(const LbGotoIfConfig &config, MyAvahiClient &avahi_client);
     void Scan(const LbBranchConfig &config, MyAvahiClient &avahi_client);
     void Scan(const LbListenerConfig &config, MyAvahiClient &avahi_client);

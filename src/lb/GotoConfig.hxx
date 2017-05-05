@@ -15,6 +15,7 @@
 
 #include <string>
 #include <list>
+#include <map>
 
 struct LbAttributeReference {
     enum class Type {
@@ -54,11 +55,13 @@ struct LbAttributeReference {
 
 struct LbBranchConfig;
 struct LbLuaHandlerConfig;
+struct LbTranslationHandlerConfig;
 
 struct LbGoto {
     const LbClusterConfig *cluster = nullptr;
     const LbBranchConfig *branch = nullptr;
     const LbLuaHandlerConfig *lua = nullptr;
+    const LbTranslationHandlerConfig *translation = nullptr;
     LbSimpleHttpResponse response;
 
     LbGoto() = default;
@@ -72,12 +75,16 @@ struct LbGoto {
     explicit LbGoto(LbLuaHandlerConfig *_lua)
         :lua(_lua) {}
 
+    explicit LbGoto(LbTranslationHandlerConfig *_translation)
+        :translation(_translation) {}
+
     explicit LbGoto(http_status_t _status)
         :response(_status) {}
 
     bool IsDefined() const {
         return cluster != nullptr || branch != nullptr ||
             lua != nullptr ||
+            translation != nullptr ||
             response.IsDefined();
     }
 
@@ -217,6 +224,17 @@ struct LbLuaHandlerConfig {
 
     LbLuaHandlerConfig(const LbLuaHandlerConfig &) = delete;
     LbLuaHandlerConfig &operator=(const LbLuaHandlerConfig &) = delete;
+};
+
+struct LbTranslationHandlerConfig {
+    std::string name;
+
+    AllocatedSocketAddress address;
+
+    std::map<std::string, const LbClusterConfig *> clusters;
+
+    explicit LbTranslationHandlerConfig(const char *_name)
+        :name(_name) {}
 };
 
 template<typename R>

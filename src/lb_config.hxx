@@ -48,6 +48,7 @@ struct LbConfig {
     std::map<std::string, LbClusterConfig> clusters;
     std::map<std::string, LbBranchConfig> branches;
     std::map<std::string, LbLuaHandlerConfig> lua_handlers;
+    std::map<std::string, LbTranslationHandlerConfig> translation_handlers;
 
     std::list<LbListenerConfig> listeners;
 
@@ -97,6 +98,8 @@ struct LbConfig {
             g.branch = FindBranch(t);
             if (g.branch == nullptr) {
                 g.lua = FindLuaHandler(t);
+                if (g.lua == nullptr)
+                    g.translation = FindTranslationHandler(t);
             }
         }
 
@@ -117,6 +120,15 @@ struct LbConfig {
     const LbLuaHandlerConfig *FindLuaHandler(T &&t) const {
         const auto i = lua_handlers.find(std::forward<T>(t));
         return i != lua_handlers.end()
+            ? &i->second
+            : nullptr;
+    }
+
+    template<typename T>
+    gcc_pure
+    const LbTranslationHandlerConfig *FindTranslationHandler(T &&t) const {
+        const auto i = translation_handlers.find(std::forward<T>(t));
+        return i != translation_handlers.end()
             ? &i->second
             : nullptr;
     }

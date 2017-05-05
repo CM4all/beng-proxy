@@ -3,6 +3,7 @@ cm4all-beng-proxy (12.0.13) unstable; urgency=low
   * merge release 11.23
   * lb/lua: catch "panics" and report error
   * lb/lua: fix Lua stack leaks
+  * lb: allow a translation server to pick a cluster
   * fix use-after-free bug in HTTP request handler
   * spawn: forbid more dangerous system calls
   * spawn: activate system call filter for all architectures

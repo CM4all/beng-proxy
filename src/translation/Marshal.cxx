@@ -113,6 +113,7 @@ MarshalTranslateRequest(uint8_t PROTOCOL_VERSION,
     m.WriteOptional(TRANSLATE_READ_FILE,
                           request.read_file);
     m.WriteOptional(TRANSLATE_USER, request.user);
+    m.WriteOptional(TRANSLATE_POOL, request.pool);
     m.Write(TRANSLATE_END);
 
     return m.Commit();

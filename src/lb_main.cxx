@@ -72,6 +72,8 @@ LbInstance::ShutdownCallback()
 
     deinit_all_controls(this);
 
+    translation_handlers.Clear();
+
     DisconnectCertCaches();
 
     while (!tcp_connections.empty())

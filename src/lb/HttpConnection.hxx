@@ -25,6 +25,7 @@ struct LbListenerConfig;
 struct LbClusterConfig;
 struct LbLuaHandlerConfig;
 struct LbGoto;
+struct LbTranslationHandlerConfig;
 struct LbInstance;
 
 struct LbHttpConnection final
@@ -78,13 +79,20 @@ private:
     void HandleHttpRequest(const LbGoto &destination,
                            HttpServerRequest &request,
                            CancellablePointer &cancel_ptr);
+
+public:
     void ForwardHttpRequest(const LbClusterConfig &cluster_config,
                             HttpServerRequest &request,
                             CancellablePointer &cancel_ptr);
 
+private:
     void InvokeLua(const LbLuaHandlerConfig &config,
                    HttpServerRequest &request,
                    CancellablePointer &cancel_ptr);
+
+    void AskTranslationServer(const LbTranslationHandlerConfig &destination,
+                              HttpServerRequest &request,
+                              CancellablePointer &cancel_ptr);
 
 protected:
     /* virtual methods from class Logger */

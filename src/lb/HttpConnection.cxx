@@ -6,6 +6,7 @@
 #include "ClusterConfig.hxx"
 #include "ListenerConfig.hxx"
 #include "ForwardHttpRequest.hxx"
+#include "TranslationHandler.hxx"
 #include "lb_instance.hxx"
 #include "lb_cookie.hxx"
 #include "http_server/http_server.hxx"
@@ -168,6 +169,11 @@ LbHttpConnection::HandleHttpRequest(const LbGoto &destination,
 
     if (goto_.lua != nullptr) {
         InvokeLua(*goto_.lua, request, cancel_ptr);
+        return;
+    }
+
+    if (goto_.translation != nullptr) {
+        AskTranslationServer(*goto_.translation, request, cancel_ptr);
         return;
     }
 

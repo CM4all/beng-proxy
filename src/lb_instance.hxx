@@ -12,6 +12,7 @@
 #include "lb/ClusterMap.hxx"
 #include "lb/MonitorMap.hxx"
 #include "lb/LuaHandler.hxx"
+#include "lb/TranslationHandlerMap.hxx"
 #include "lb/HttpConnection.hxx"
 #include "lb/TcpConnection.hxx"
 #include "event/TimerEvent.hxx"
@@ -45,6 +46,8 @@ struct LbInstance final : PInstance {
      * A map of clusters which need run-time data.
      */
     LbClusterMap clusters;
+
+    LbTranslationHandlerMap translation_handlers;
 
     /**
      * A map of configured #LbLuaHandler instances.

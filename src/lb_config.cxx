@@ -13,6 +13,7 @@
 #include "util/StringUtil.hxx"
 #include "util/CharUtil.hxx"
 #include "util/ScopeExit.hxx"
+#include "util/RuntimeError.hxx"
 
 #include <assert.h>
 #include <stdio.h>
@@ -125,6 +126,20 @@ class LbConfigParser final : public NestedConfigParser {
         void Finish() override;
     };
 
+    class TranslationHandler final : public ConfigParser {
+        LbConfigParser &parent;
+        LbTranslationHandlerConfig config;
+
+    public:
+        TranslationHandler(LbConfigParser &_parent, const char *_name)
+            :parent(_parent), config(_name) {}
+
+    protected:
+        /* virtual methods from class ConfigParser */
+        void ParseLine(FileLineParser &line) override;
+        void Finish() override;
+    };
+
     class Listener final : public ConfigParser {
         LbConfigParser &parent;
         LbListenerConfig config;
@@ -162,6 +177,7 @@ private:
     void CreateCluster(FileLineParser &line);
     void CreateBranch(FileLineParser &line);
     void CreateLuaHandler(FileLineParser &line);
+    void CreateTranslationHandler(FileLineParser &line);
     void CreateListener(FileLineParser &line);
 };
 
@@ -849,6 +865,60 @@ LbConfigParser::CreateLuaHandler(FileLineParser &line)
 }
 
 void
+LbConfigParser::TranslationHandler::ParseLine(FileLineParser &line)
+{
+    const char *word = line.ExpectWord();
+
+    if (strcmp(word, "connect") == 0) {
+        if (!config.address.IsNull())
+            throw LineParser::Error("Duplicate 'connect'");
+
+        config.address.SetLocal(line.ExpectValueAndEnd());
+    } else if (strcmp(word, "pools") == 0) {
+        while (!line.IsEnd()) {
+            const char *name = line.ExpectValue();
+            const auto *cluster = parent.config.FindCluster(name);
+            if (cluster == nullptr)
+                throw FormatRuntimeError("No such pool: %s", name);
+
+            if (cluster->protocol != LbProtocol::HTTP)
+                throw LineParser::Error("Only HTTP pools allowed");
+
+            auto i = config.clusters.emplace(name, cluster);
+            if (!i.second)
+                throw FormatRuntimeError("Duplicate pool: %s", name);
+        }
+    } else
+        throw LineParser::Error("Unknown option");
+}
+
+void
+LbConfigParser::TranslationHandler::Finish()
+{
+    if (config.address.IsNull())
+        throw LineParser::Error("translation_handler has no 'connect'");
+
+    if (config.clusters.empty())
+        throw LineParser::Error("translation_handler has no pools");
+
+    auto i = parent.config.translation_handlers.emplace(std::string(config.name),
+                                                        std::move(config));
+    if (!i.second)
+        throw LineParser::Error("Duplicate translation_handler name");
+
+    ConfigParser::Finish();
+}
+
+inline void
+LbConfigParser::CreateTranslationHandler(FileLineParser &line)
+{
+    const char *name = line.ExpectValue();
+    line.ExpectSymbolAndEol('{');
+
+    SetChild(std::make_unique<TranslationHandler>(*this, name));
+}
+
+void
 LbConfigParser::Listener::ParseLine(FileLineParser &line)
 {
     const char *word = line.ExpectWord();
@@ -1009,6 +1079,8 @@ LbConfigParser::ParseLine2(FileLineParser &line)
         CreateBranch(line);
     else if (strcmp(word, "lua_handler") == 0)
         CreateLuaHandler(line);
+    else if (strcmp(word, "translation_handler") == 0)
+        CreateTranslationHandler(line);
     else if (strcmp(word, "listener") == 0)
         CreateListener(line);
     else if (strcmp(word, "monitor") == 0)

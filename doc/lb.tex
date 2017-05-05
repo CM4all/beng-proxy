@@ -349,6 +349,25 @@ feature is only meant for development and quick'n'dirty hacks.  Don't
 use in production, and if you really must do, take extreme care to
 make the Lua code finish quickly.
 
+\subsection{Translation Request Handlers}
+
+This handler asks a translation server which pool shall be used to
+handle a HTTP request.  The \verb|translation_handler| section
+declares such a request handler:
+
+\begin{verbatim*}
+translation_handler "my_translation_handler" {
+  connect "@translation"
+  pools "a" "b" "c"
+}
+\end{verbatim*}
+
+The \verb|pools| line specifies the pools which may be chosen from.
+
+Details about the wire protocol between \emph{beng-lb} and the
+translation server can be found in the \emph{beng-proxy}
+documentation.
+
 \subsection{Listener}
 
 A listener is a socket address (IP and port) which accepts incoming

@@ -22,7 +22,7 @@ LbGoto::GetProtocol() const
 {
     assert(IsDefined());
 
-    if (response.IsDefined() || lua != nullptr)
+    if (response.IsDefined() || lua != nullptr || translation != nullptr)
         return LbProtocol::HTTP;
 
     return cluster != nullptr
@@ -37,6 +37,9 @@ LbGoto::GetName() const
 
     if (lua != nullptr)
         return lua->name.c_str();
+
+    if (translation != nullptr)
+        return translation->name.c_str();
 
     return cluster != nullptr
         ? cluster->name.c_str()

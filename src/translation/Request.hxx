@@ -107,6 +107,8 @@ struct TranslateRequest {
 
     const char *user;
 
+    const char *pool;
+
     bool cron;
 
     void Clear() {
@@ -150,6 +152,7 @@ struct TranslateRequest {
         probe_suffix = nullptr;
         read_file = nullptr;
         user = nullptr;
+        pool = nullptr;
         cron = false;
     }
 

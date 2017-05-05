@@ -2524,6 +2524,48 @@ Additional packets may configure resource limits (\ref{rlimits},
 
 The client may assume that all responses may be cached indefinitely.
 
+
+\subsection{Pool translation}
+\label{pooltrans}
+
+This sub-protocol is used \emph{beng-lb}.  It allows the translation
+server to choose a pool which shall handle a specific HTTP request.
+
+The request contains the following packets:
+
+\begin{longtabu*}{|l|X|}
+\hline
+
+\verb|POOL| & Marks this request as a ``pool request.  The payload is
+the name of the \verb|translation_handler| section in
+\texttt{lb.conf}. \\
+
+\hline
+
+\verb|HOST| & the \texttt{Host} HTTP request header \\
+
+\hline
+\end{longtabu*}
+
+The response contains the following packets:
+
+\begin{longtabu*}{|l|X|}
+\hline
+
+\verb|POOL| & The name of the pool which shall handle the HTTP
+request. \\
+
+\hline
+
+\verb|STATUS| & Can be used instead of \verb|POOL| to generate a brief
+error response. \\
+
+\hline
+\end{longtabu*}
+
+The client may assume that all responses may be cached indefinitely.
+
+
 \section{Remote Control Protocol}
 \label{control}
 

@@ -125,6 +125,14 @@ class Translation(Protocol):
         response.max_age(20)
         return response
 
+    def _handle_pool(self, name):
+        log.msg("pool '%s'" % (name,))
+
+        response = Response(protocol_version=1)
+        response.max_age(0)
+        response.packet(TRANSLATE_POOL, name + '_')
+        return response
+
     def _handle_hosting(self, request, response, base, uri,
                         document_root='/var/www'):
         response.packet(TRANSLATE_BASE, base)
@@ -840,6 +848,9 @@ class Translation(Protocol):
 
         if request.auth is not None:
             return self._handle_auth(request.auth, request.uri, request.session)
+
+        if request.pool is not None:
+            return self._handle_pool(request.pool)
 
         if request.error_document:
             log.msg("error %s %s %u" % (request.uri, repr(request.error_document_payload), request.status))

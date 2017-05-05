@@ -283,6 +283,7 @@ translate(struct pool &pool, EventLoop &event_loop,
 try {
     assert(fd.IsDefined());
     assert(request.uri != nullptr || request.widget_type != nullptr ||
+           request.pool != nullptr ||
            (!request.content_type_lookup.IsNull() &&
             request.suffix != nullptr));
     assert(handler.response != nullptr);

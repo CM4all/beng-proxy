@@ -50,6 +50,8 @@ LbInstance::InitWorker()
         lua_handlers.Scan(init_hook, *config);
     }
 
+    translation_handlers.Scan(*config, event_loop);
+
     ConnectCertCaches();
 }
 
