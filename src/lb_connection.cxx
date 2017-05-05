@@ -138,9 +138,7 @@ lb_connection_remove(LbConnection *connection)
     auto &connections = connection->instance.tcp_connections;
     connections.erase(connections.iterator_to(*connection));
 
-    struct pool &pool = connection->pool;
-    pool_trash(&pool);
-    pool_unref(&pool);
+    DeleteUnrefTrashPool(connection->pool, connection);
 }
 
 void
