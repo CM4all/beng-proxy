@@ -3,8 +3,8 @@
  */
 
 #include "ForwardHttpRequest.hxx"
+#include "HttpConnection.hxx"
 #include "lb_instance.hxx"
-#include "lb_connection.hxx"
 #include "lb_config.hxx"
 #include "lb_session.hxx"
 #include "lb_cookie.hxx"
@@ -38,7 +38,7 @@
 class LbRequest final
     : LeakDetector, Cancellable, StockGetHandler, Lease, HttpResponseHandler {
 
-    LbConnection &connection;
+    LbHttpConnection &connection;
     const LbClusterConfig &cluster_config;
 
     TcpBalancer &balancer;
@@ -65,7 +65,7 @@ class LbRequest final
     } lease_state = LeaseState::NONE;
 
 public:
-    LbRequest(LbConnection &_connection, const LbClusterConfig &_cluster_config,
+    LbRequest(LbHttpConnection &_connection, const LbClusterConfig &_cluster_config,
               TcpBalancer &_balancer,
               HttpServerRequest &_request,
               CancellablePointer &_cancel_ptr)
@@ -451,7 +451,7 @@ LbRequest::Start()
 }
 
 void
-ForwardHttpRequest(LbConnection &connection,
+ForwardHttpRequest(LbHttpConnection &connection,
                    HttpServerRequest &request,
                    const LbClusterConfig &cluster_config,
                    CancellablePointer &cancel_ptr)

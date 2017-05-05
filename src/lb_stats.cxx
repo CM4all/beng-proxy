@@ -25,7 +25,8 @@ lb_get_stats(const LbInstance *instance,
 
     instance->tcp_stock->AddStats(tcp_stock_stats);
 
-    data->incoming_connections = ToBE32(instance->connections.size());
+    data->incoming_connections = ToBE32(instance->http_connections.size()
+                                        + instance->connections.size());
     data->outgoing_connections = ToBE32(tcp_stock_stats.busy
                                         + tcp_stock_stats.idle
                                         + instance->n_tcp_connections);

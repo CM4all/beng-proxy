@@ -5,7 +5,6 @@
 #include "HttpConnection.hxx"
 #include "lb/ForwardHttpRequest.hxx"
 #include "lb_instance.hxx"
-#include "lb_connection.hxx"
 #include "lb_config.hxx"
 #include "lb_cookie.hxx"
 #include "lb_log.hxx"
@@ -18,8 +17,109 @@
 #include "pool.hxx"
 #include "gerrno.h"
 #include "GException.hxx"
+#include "address_string.hxx"
+#include "thread_socket_filter.hxx"
+#include "thread_pool.hxx"
+#include "ssl/ssl_filter.hxx"
+#include "net/StaticSocketAddress.hxx"
+#include "net/UniqueSocketDescriptor.hxx"
 
 #include <daemon/log.h>
+
+#include <assert.h>
+
+LbHttpConnection::LbHttpConnection(struct pool &_pool, LbInstance &_instance,
+                                   const LbListenerConfig &_listener,
+                                   SocketAddress _client_address)
+    :pool(_pool), instance(_instance), listener(_listener),
+     client_address(address_to_string(pool, _client_address))
+{
+    if (client_address == nullptr)
+        client_address = "unknown";
+}
+
+/*
+ * public
+ *
+ */
+
+LbHttpConnection *
+NewLbHttpConnection(LbInstance &instance,
+                    const LbListenerConfig &listener,
+                    SslFactory *ssl_factory,
+                    UniqueSocketDescriptor &&fd, SocketAddress address)
+{
+    assert(listener.destination.GetProtocol() == LbProtocol::HTTP);
+
+    /* determine the local socket address */
+    StaticSocketAddress local_address = fd.GetLocalAddress();
+
+    struct pool *pool = pool_new_linear(instance.root_pool,
+                                        "http_connection",
+                                        2048);
+    pool_set_major(pool);
+
+    auto *connection = NewFromPool<LbHttpConnection>(*pool, *pool, instance,
+                                                     listener, address);
+
+    auto fd_type = FdType::FD_TCP;
+
+    const SocketFilter *filter = nullptr;
+    void *filter_ctx = nullptr;
+
+    if (ssl_factory != nullptr) {
+        try {
+            connection->ssl_filter = ssl_filter_new(*ssl_factory);
+        } catch (const std::runtime_error &e) {
+            lb_connection_log_error(1, connection, "SSL", e);
+            pool_unref(pool);
+            return nullptr;
+        }
+
+        filter = &thread_socket_filter;
+        filter_ctx = connection->thread_socket_filter =
+            new ThreadSocketFilter(instance.event_loop,
+                                   thread_pool_get_queue(instance.event_loop),
+                                   &ssl_filter_get_handler(*connection->ssl_filter));
+    }
+
+    instance.http_connections.push_back(*connection);
+
+    connection->http = http_server_connection_new(pool, instance.event_loop,
+                                                  fd.Release(), fd_type,
+                                                  filter, filter_ctx,
+                                                  local_address.IsDefined()
+                                                  ? (SocketAddress)local_address
+                                                  : nullptr,
+                                                  address,
+                                                  false,
+                                                  *connection);
+    return connection;
+}
+
+void
+LbHttpConnection::Destroy()
+{
+    assert(!instance.http_connections.empty());
+
+    auto &connections = instance.http_connections;
+    connections.erase(connections.iterator_to(*this));
+
+    struct pool &p = pool;
+    pool_trash(&p);
+    pool_unref(&p);
+}
+
+void
+LbHttpConnection::CloseAndDestroy()
+{
+    assert(listener.destination.GetProtocol() == LbProtocol::HTTP);
+    assert(http != nullptr);
+
+    http_server_connection_close(http);
+
+    Destroy();
+}
 
 static void
 SendResponse(HttpServerRequest &request,
@@ -33,14 +133,14 @@ SendResponse(HttpServerRequest &request,
 }
 
 class LbLuaResponseHandler final : public HttpResponseHandler {
-    LbConnection &connection;
+    LbHttpConnection &connection;
 
     HttpServerRequest &request;
 
     bool finished = false;
 
 public:
-    LbLuaResponseHandler(LbConnection &_connection,
+    LbLuaResponseHandler(LbHttpConnection &_connection,
                          HttpServerRequest &_request)
         :connection(_connection), request(_request) {}
 
@@ -93,8 +193,8 @@ LbLuaResponseHandler::OnHttpError(GError *error)
  */
 
 void
-LbConnection::HandleHttpRequest(HttpServerRequest &request,
-                                CancellablePointer &cancel_ptr)
+LbHttpConnection::HandleHttpRequest(HttpServerRequest &request,
+                                    CancellablePointer &cancel_ptr)
 {
     ++instance.http_request_counter;
 
@@ -104,9 +204,9 @@ LbConnection::HandleHttpRequest(HttpServerRequest &request,
 }
 
 void
-LbConnection::HandleHttpRequest(const LbGoto &destination,
-                                HttpServerRequest &request,
-                                CancellablePointer &cancel_ptr)
+LbHttpConnection::HandleHttpRequest(const LbGoto &destination,
+                                    HttpServerRequest &request,
+                                    CancellablePointer &cancel_ptr)
 {
     const auto &goto_ = destination.FindRequestLeaf(request);
     if (goto_.response.IsDefined()) {
@@ -149,17 +249,17 @@ LbConnection::HandleHttpRequest(const LbGoto &destination,
 }
 
 inline void
-LbConnection::ForwardHttpRequest(const LbClusterConfig &cluster_config,
-                                 HttpServerRequest &request,
-                                 CancellablePointer &cancel_ptr)
+LbHttpConnection::ForwardHttpRequest(const LbClusterConfig &cluster_config,
+                                     HttpServerRequest &request,
+                                     CancellablePointer &cancel_ptr)
 {
     ::ForwardHttpRequest(*this, request, cluster_config, cancel_ptr);
 }
 
 void
-LbConnection::LogHttpRequest(HttpServerRequest &request,
-                             http_status_t status, int64_t length,
-                             uint64_t bytes_received, uint64_t bytes_sent)
+LbHttpConnection::LogHttpRequest(HttpServerRequest &request,
+                                 http_status_t status, int64_t length,
+                                 uint64_t bytes_received, uint64_t bytes_sent)
 {
     access_log(&request, nullptr,
                request.headers.Get("referer"),
@@ -170,7 +270,7 @@ LbConnection::LogHttpRequest(HttpServerRequest &request,
 }
 
 void
-LbConnection::HttpConnectionError(GError *error)
+LbHttpConnection::HttpConnectionError(GError *error)
 {
     int level = 2;
 
@@ -183,14 +283,14 @@ LbConnection::HttpConnectionError(GError *error)
     assert(http != nullptr);
     http = nullptr;
 
-    lb_connection_remove(this);
+    Destroy();
 }
 
 void
-LbConnection::HttpConnectionClosed()
+LbHttpConnection::HttpConnectionClosed()
 {
     assert(http != nullptr);
     http = nullptr;
 
-    lb_connection_remove(this);
+    Destroy();
 }

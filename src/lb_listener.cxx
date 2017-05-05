@@ -8,6 +8,7 @@
 #include "lb_instance.hxx"
 #include "lb_connection.hxx"
 #include "lb_config.hxx"
+#include "lb/HttpConnection.hxx"
 #include "ssl/ssl_factory.hxx"
 #include "ssl/DbSniCallback.hxx"
 #include "net/SocketAddress.hxx"
@@ -18,9 +19,18 @@
 void
 LbListener::OnAccept(UniqueSocketDescriptor &&new_fd, SocketAddress address)
 {
-    lb_connection_new(instance, config,
-                      ssl_factory,
-                      std::move(new_fd), address);
+    switch (config.destination.GetProtocol()) {
+    case LbProtocol::HTTP:
+        NewLbHttpConnection(instance, config, ssl_factory,
+                            std::move(new_fd), address);
+        break;
+
+    case LbProtocol::TCP:
+        lb_connection_new(instance, config,
+                          ssl_factory,
+                          std::move(new_fd), address);
+        break;
+    }
 }
 
 void

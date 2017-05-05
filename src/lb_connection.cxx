@@ -1,6 +1,4 @@
 /*
- * Handler for HTTP requests.
- *
  * author: Max Kellermann <mk@cm4all.com>
  */
 
@@ -9,21 +7,14 @@
 #include "lb_config.hxx"
 #include "lb_instance.hxx"
 #include "lb_tcp.hxx"
-#include "strmap.hxx"
-#include "http_server/http_server.hxx"
-#include "drop.hxx"
 #include "ssl/ssl_filter.hxx"
 #include "pool.hxx"
 #include "thread_socket_filter.hxx"
 #include "thread_pool.hxx"
 #include "net/SocketAddress.hxx"
-#include "net/StaticSocketAddress.hxx"
-#include "net/UniqueSocketDescriptor.hxx"
 #include "address_string.hxx"
 
 #include <assert.h>
-#include <unistd.h>
-#include <sys/socket.h>
 
 LbConnection::LbConnection(struct pool &_pool, LbInstance &_instance,
                            const LbListenerConfig &_listener,
@@ -97,8 +88,7 @@ lb_connection_new(LbInstance &instance,
                   SslFactory *ssl_factory,
                   UniqueSocketDescriptor &&fd, SocketAddress address)
 {
-    /* determine the local socket address */
-    StaticSocketAddress local_address = fd.GetLocalAddress();
+    assert(listener.destination.GetProtocol() == LbProtocol::TCP);
 
     struct pool *pool = pool_new_linear(instance.root_pool,
                                         "client_connection",
@@ -131,31 +121,15 @@ lb_connection_new(LbInstance &instance,
 
     instance.connections.push_back(*connection);
 
-    switch (listener.destination.GetProtocol()) {
-    case LbProtocol::HTTP:
-        connection->http = http_server_connection_new(pool, instance.event_loop,
-                                                      fd.Release(), fd_type,
-                                                      filter, filter_ctx,
-                                                      local_address.IsDefined()
-                                                      ? (SocketAddress)local_address
-                                                      : nullptr,
-                                                      address,
-                                                      false,
-                                                      *connection);
-        break;
-
-    case LbProtocol::TCP:
-        ++instance.n_tcp_connections;
-        lb_tcp_new(connection->pool, instance.event_loop,
-                   instance.pipe_stock,
-                   std::move(fd), fd_type, filter, filter_ctx, address,
-                   *listener.destination.cluster,
-                   instance.clusters,
-                   *connection->instance.balancer,
-                   tcp_handler, connection,
-                   &connection->tcp);
-        break;
-    }
+    ++instance.n_tcp_connections;
+    lb_tcp_new(connection->pool, instance.event_loop,
+               instance.pipe_stock,
+               std::move(fd), fd_type, filter, filter_ctx, address,
+               *listener.destination.cluster,
+               instance.clusters,
+               *connection->instance.balancer,
+               tcp_handler, connection,
+               &connection->tcp);
 
     return connection;
 }
@@ -177,17 +151,10 @@ lb_connection_remove(LbConnection *connection)
 void
 lb_connection_close(LbConnection *connection)
 {
-    switch (connection->listener.destination.GetProtocol()) {
-    case LbProtocol::HTTP:
-        assert(connection->http != nullptr);
-        http_server_connection_close(connection->http);
-        break;
+    assert(connection->listener.destination.GetProtocol() == LbProtocol::TCP);
 
-    case LbProtocol::TCP:
-        lb_tcp_close(connection->tcp);
-        --connection->instance.n_tcp_connections;
-        break;
-    }
+    lb_tcp_close(connection->tcp);
+    --connection->instance.n_tcp_connections;
 
     lb_connection_remove(connection);
 }

@@ -79,6 +79,9 @@ LbInstance::ShutdownCallback()
         lb_connection_close(&connections.front());
     assert(n_tcp_connections == 0);
 
+    while (!http_connections.empty())
+        http_connections.front().CloseAndDestroy();
+
     deinit_all_listeners(this);
 
     thread_pool_join();

@@ -13,6 +13,7 @@
 #include "lb_connection.hxx"
 #include "lb_hmonitor.hxx"
 #include "lb/LuaHandler.hxx"
+#include "lb/HttpConnection.hxx"
 #include "event/TimerEvent.hxx"
 #include "event/SignalEvent.hxx"
 #include "event/ShutdownListener.hxx"
@@ -59,6 +60,9 @@ struct LbInstance final : PInstance {
     MyAvahiClient avahi_client;
 
     TimerEvent compress_event;
+
+    boost::intrusive::list<LbHttpConnection,
+                           boost::intrusive::constant_time_size<true>> http_connections;
 
     boost::intrusive::list<LbConnection,
                            boost::intrusive::constant_time_size<true>> connections;
