@@ -41,12 +41,6 @@ struct LbConnection final
     SslFilter *ssl_filter = nullptr;
     ThreadSocketFilter *thread_socket_filter = nullptr;
 
-    /**
-     * The time stamp at the start of the request.  Used to calculate
-     * the request duration.
-     */
-    std::chrono::steady_clock::time_point request_start_time;
-
     LbTcpConnection *tcp;
 
     LbConnection(struct pool &_pool, LbInstance &_instance,
