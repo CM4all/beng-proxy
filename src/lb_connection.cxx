@@ -36,7 +36,6 @@ tcp_eof(void *ctx)
 {
     auto *connection = (LbConnection *)ctx;
 
-    --connection->instance.n_tcp_connections;
     lb_connection_remove(connection);
 }
 
@@ -46,7 +45,6 @@ tcp_error(const char *prefix, const char *error, void *ctx)
     auto *connection = (LbConnection *)ctx;
 
     lb_connection_log_error(3, connection, prefix, error);
-    --connection->instance.n_tcp_connections;
     lb_connection_remove(connection);
 }
 
@@ -56,7 +54,6 @@ tcp_errno(const char *prefix, int error, void *ctx)
     auto *connection = (LbConnection *)ctx;
 
     lb_connection_log_errno(3, connection, prefix, error);
-    --connection->instance.n_tcp_connections;
     lb_connection_remove(connection);
 }
 
@@ -66,7 +63,6 @@ tcp_exception(const char *prefix, std::exception_ptr ep, void *ctx)
     auto *connection = (LbConnection *)ctx;
 
     lb_connection_log_error(3, connection, prefix, ep);
-    --connection->instance.n_tcp_connections;
     lb_connection_remove(connection);
 }
 
@@ -119,9 +115,8 @@ lb_connection_new(LbInstance &instance,
                                    &ssl_filter_get_handler(*connection->ssl_filter));
     }
 
-    instance.connections.push_back(*connection);
+    instance.tcp_connections.push_back(*connection);
 
-    ++instance.n_tcp_connections;
     lb_tcp_new(connection->pool, instance.event_loop,
                instance.pipe_stock,
                std::move(fd), fd_type, filter, filter_ctx, address,
@@ -138,9 +133,9 @@ void
 lb_connection_remove(LbConnection *connection)
 {
     assert(connection != nullptr);
-    assert(!connection->instance.connections.empty());
+    assert(!connection->instance.tcp_connections.empty());
 
-    auto &connections = connection->instance.connections;
+    auto &connections = connection->instance.tcp_connections;
     connections.erase(connections.iterator_to(*connection));
 
     struct pool &pool = connection->pool;
@@ -154,7 +149,6 @@ lb_connection_close(LbConnection *connection)
     assert(connection->listener.destination.GetProtocol() == LbProtocol::TCP);
 
     lb_tcp_close(connection->tcp);
-    --connection->instance.n_tcp_connections;
 
     lb_connection_remove(connection);
 }

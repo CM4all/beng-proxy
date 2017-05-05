@@ -32,7 +32,8 @@ LbInstance::LbInstance()
 
 LbInstance::~LbInstance()
 {
-    assert(n_tcp_connections == 0);
+    assert(tcp_connections.empty());
+    assert(http_connections.empty());
 }
 
 void

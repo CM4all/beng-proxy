@@ -65,12 +65,7 @@ struct LbInstance final : PInstance {
                            boost::intrusive::constant_time_size<true>> http_connections;
 
     boost::intrusive::list<LbConnection,
-                           boost::intrusive::constant_time_size<true>> connections;
-
-    /**
-     * Number of #LbTcpConnection instances.
-     */
-    unsigned n_tcp_connections = 0;
+                           boost::intrusive::constant_time_size<true>> tcp_connections;
 
     bool should_exit = false;
     ShutdownListener shutdown_listener;
