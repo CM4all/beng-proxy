@@ -8,7 +8,6 @@
 #include "lb_log.hxx"
 #include "lb_config.hxx"
 #include "lb_instance.hxx"
-#include "lb_http.hxx"
 #include "lb_tcp.hxx"
 #include "strmap.hxx"
 #include "http_server/http_server.hxx"

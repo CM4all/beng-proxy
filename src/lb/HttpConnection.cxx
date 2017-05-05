@@ -1,10 +1,8 @@
 /*
- * Handler for HTTP requests.
- *
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "lb_http.hxx"
+#include "HttpConnection.hxx"
 #include "lb/ForwardHttpRequest.hxx"
 #include "lb_instance.hxx"
 #include "lb_connection.hxx"
