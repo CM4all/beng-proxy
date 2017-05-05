@@ -8,6 +8,7 @@
 #include "lb_connection.hxx"
 #include "lb/HttpConnection.hxx"
 #include "lb_config.hxx"
+#include "util/Exception.hxx"
 
 #include <daemon/log.h>
 
@@ -38,30 +39,16 @@ void
 lb_connection_log_error(int level, const LbConnection *connection,
                         const char *prefix, const std::exception &e)
 {
-    lb_connection_log_error(level, connection, prefix, e.what());
-
-    try {
-        std::rethrow_if_nested(e);
-    } catch (const std::exception &nested) {
-        lb_connection_log_error(level, connection, prefix, nested);
-    } catch (...) {
-        lb_connection_log_error(level, connection, prefix,
-                                "Unrecognized nested exception");
-    }
+    lb_connection_log_error(level, connection, prefix,
+                            GetFullMessage(e).c_str());
 }
 
 void
 lb_connection_log_error(int level, const LbConnection *connection,
                         const char *prefix, std::exception_ptr ep)
 {
-    try {
-        std::rethrow_exception(ep);
-    } catch (const std::exception &e) {
-        lb_connection_log_error(level, connection, prefix, e);
-    } catch (...) {
-        lb_connection_log_error(level, connection, prefix,
-                                "Unrecognized exception");
-    }
+    lb_connection_log_error(level, connection, prefix,
+                            GetFullMessage(ep).c_str());
 }
 
 void
@@ -87,30 +74,16 @@ void
 lb_connection_log_error(int level, const LbHttpConnection *connection,
                         const char *prefix, const std::exception &e)
 {
-    lb_connection_log_error(level, connection, prefix, e.what());
-
-    try {
-        std::rethrow_if_nested(e);
-    } catch (const std::exception &nested) {
-        lb_connection_log_error(level, connection, prefix, nested);
-    } catch (...) {
-        lb_connection_log_error(level, connection, prefix,
-                                "Unrecognized nested exception");
-    }
+    lb_connection_log_error(level, connection, prefix,
+                            GetFullMessage(e).c_str());
 }
 
 void
 lb_connection_log_error(int level, const LbHttpConnection *connection,
                         const char *prefix, std::exception_ptr ep)
 {
-    try {
-        std::rethrow_exception(ep);
-    } catch (const std::exception &e) {
-        lb_connection_log_error(level, connection, prefix, e);
-    } catch (...) {
-        lb_connection_log_error(level, connection, prefix,
-                                "Unrecognized exception");
-    }
+    lb_connection_log_error(level, connection, prefix,
+                            GetFullMessage(ep).c_str());
 }
 
 void
