@@ -404,7 +404,7 @@ struct LbLuaHandlerConfig {
     boost::filesystem::path path;
     std::string function;
 
-    LbLuaHandlerConfig(const char *_name)
+    explicit LbLuaHandlerConfig(const char *_name)
         :name(_name) {}
 
     LbLuaHandlerConfig(LbLuaHandlerConfig &&) = default;
