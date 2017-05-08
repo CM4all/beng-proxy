@@ -7,7 +7,6 @@
 #include "lb_instance.hxx"
 #include "lb_config.hxx"
 #include "lb_cookie.hxx"
-#include "lb_log.hxx"
 #include "http_server/http_server.hxx"
 #include "http_server/Request.hxx"
 #include "http_server/Handler.hxx"
@@ -71,7 +70,7 @@ NewLbHttpConnection(LbInstance &instance,
         try {
             connection->ssl_filter = ssl_filter_new(*ssl_factory);
         } catch (const std::runtime_error &e) {
-            lb_connection_log_error(1, connection, "SSL", e);
+            connection->Log(1, "Failed to create SSL filter", e);
             DeleteUnrefTrashPool(*pool, connection);
             return nullptr;
         }
@@ -174,7 +173,7 @@ LbLuaResponseHandler::OnHttpError(GError *error)
 {
     finished = true;
 
-    lb_connection_log_gerror(2, &connection, "Error", error);
+    connection.Log(2, "Error", error);
 
     const char *msg = connection.listener.verbose_response
         ? error->message
@@ -275,7 +274,7 @@ LbHttpConnection::HttpConnectionError(GError *error)
     if (error->domain == errno_quark() && error->code == ECONNRESET)
         level = 4;
 
-    lb_connection_log_gerror(level, this, "Error", error);
+    Log(level, "Error", error);
     g_error_free(error);
 
     assert(http != nullptr);
@@ -291,4 +290,13 @@ LbHttpConnection::HttpConnectionClosed()
     http = nullptr;
 
     Destroy();
+}
+
+std::string
+LbHttpConnection::MakeLogName() const noexcept
+{
+    return "listener='" + listener.name
+        + "' cluster='" + listener.destination.GetName()
+        + "' client='" + client_address
+        + "'";
 }

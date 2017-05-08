@@ -10,7 +10,6 @@
 #include "lb_cookie.hxx"
 #include "lb_jvm_route.hxx"
 #include "lb_headers.hxx"
-#include "lb_log.hxx"
 #include "ssl/ssl_filter.hxx"
 #include "address_sticky.hxx"
 #include "http_server/http_server.hxx"
@@ -283,7 +282,7 @@ LbRequest::OnHttpError(GError *error)
     if (is_server_failure(error))
         failure_add(tcp_stock_item_get_address(*stock_item));
 
-    lb_connection_log_gerror(2, &connection, "Error", error);
+    connection.Log(2, "Error", error);
 
     if (!send_fallback(request, cluster_config.fallback)) {
         const char *msg = connection.listener.verbose_response
@@ -345,7 +344,7 @@ LbRequest::OnStockItemError(GError *error)
     assert(lease_state == LeaseState::NONE);
     assert(!response_sent);
 
-    lb_connection_log_gerror(2, &connection, "Connect error", error);
+    connection.Log(2, "Connect error", error);
 
     body.Clear();
 

@@ -3,7 +3,6 @@
  */
 
 #include "lb_connection.hxx"
-#include "lb_log.hxx"
 #include "lb_config.hxx"
 #include "lb_instance.hxx"
 #include "lb_tcp.hxx"
@@ -26,6 +25,15 @@ LbConnection::LbConnection(struct pool &_pool, LbInstance &_instance,
         client_address = "unknown";
 }
 
+std::string
+LbConnection::MakeLogName() const noexcept
+{
+    return "listener='" + listener.name
+        + "' cluster='" + listener.destination.GetName()
+        + "' client='" + client_address
+        + "'";
+}
+
 /*
  * lb_tcp_handler
  *
@@ -44,7 +52,7 @@ tcp_error(const char *prefix, const char *error, void *ctx)
 {
     auto *connection = (LbConnection *)ctx;
 
-    lb_connection_log_error(3, connection, prefix, error);
+    connection->LogPrefix(3, prefix, error);
     lb_connection_remove(connection);
 }
 
@@ -53,7 +61,7 @@ tcp_errno(const char *prefix, int error, void *ctx)
 {
     auto *connection = (LbConnection *)ctx;
 
-    lb_connection_log_errno(3, connection, prefix, error);
+    connection->LogErrno(3, prefix, error);
     lb_connection_remove(connection);
 }
 
@@ -62,7 +70,7 @@ tcp_exception(const char *prefix, std::exception_ptr ep, void *ctx)
 {
     auto *connection = (LbConnection *)ctx;
 
-    lb_connection_log_error(3, connection, prefix, ep);
+    connection->Log(3, prefix, ep);
     lb_connection_remove(connection);
 }
 
@@ -103,7 +111,7 @@ lb_connection_new(LbInstance &instance,
         try {
             connection->ssl_filter = ssl_filter_new(*ssl_factory);
         } catch (const std::runtime_error &e) {
-            lb_connection_log_error(1, connection, "SSL", e);
+            connection->Log(1, "Failed to create SSL filter", e);
             DeleteUnrefTrashPool(*pool, connection);
             return nullptr;
         }
