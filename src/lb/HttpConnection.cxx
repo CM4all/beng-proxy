@@ -72,7 +72,7 @@ NewLbHttpConnection(LbInstance &instance,
             connection->ssl_filter = ssl_filter_new(*ssl_factory);
         } catch (const std::runtime_error &e) {
             lb_connection_log_error(1, connection, "SSL", e);
-            pool_unref(pool);
+            DeleteUnrefTrashPool(*pool, connection);
             return nullptr;
         }
 
