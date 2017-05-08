@@ -23,7 +23,6 @@ struct HttpServerConnection;
 struct LbListenerConfig;
 struct LbClusterConfig;
 struct LbGoto;
-struct LbTcpConnection;
 struct LbInstance;
 
 struct LbHttpConnection final
@@ -52,8 +51,6 @@ struct LbHttpConnection final
      * the request duration.
      */
     std::chrono::steady_clock::time_point request_start_time;
-
-    LbTcpConnection *tcp;
 
     LbHttpConnection(struct pool &_pool, LbInstance &_instance,
                      const LbListenerConfig &_listener,
