@@ -74,6 +74,7 @@ inbound_buffered_socket_data(const void *buffer, size_t size, void *ctx)
 
     ssize_t nbytes = tcp->outbound.Write(buffer, size);
     if (nbytes > 0) {
+        tcp->outbound.ScheduleWrite();
         tcp->inbound.Consumed(nbytes);
         return (size_t)nbytes == size
             ? BufferedResult::OK
@@ -194,6 +195,7 @@ outbound_buffered_socket_data(const void *buffer, size_t size, void *ctx)
 
     ssize_t nbytes = tcp->inbound.Write(buffer, size);
     if (nbytes > 0) {
+        tcp->inbound.ScheduleWrite();
         tcp->outbound.Consumed(nbytes);
         return (size_t)nbytes == size
             ? BufferedResult::OK

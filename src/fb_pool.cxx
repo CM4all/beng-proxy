@@ -15,6 +15,8 @@
  * FifoBufferBio can't handle the resulting SSL_ERROR_WANT_READ when
  * the buffer is already full; we need a better general solution for
  * this */
+/* TODO: after restoring this buffer to 8 kB, shrink the stack buffer
+ * in ThreadSocketFilter::SubmitDecryptedInput() as well */
 static constexpr size_t FB_SIZE = 2 * 8192;
 //static constexpr size_t FB_SIZE = 8192;
 
