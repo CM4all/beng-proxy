@@ -40,7 +40,7 @@ struct LbConnection final
      */
     const char *client_address;
 
-    LbTcpConnection *tcp;
+    LbTcpConnection tcp;
 
     LbConnection(struct pool &_pool, LbInstance &_instance,
                  const LbListenerConfig &_listener,

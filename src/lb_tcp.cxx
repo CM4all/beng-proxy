@@ -48,8 +48,6 @@ LbTcpConnection::Destroy()
         cancel_connect.Cancel();
     else if (outbound.IsValid())
         DestroyOutbound();
-
-    this->~LbTcpConnection();
 }
 
 /*
@@ -339,7 +337,6 @@ LbTcpConnection::OnSocketConnectTimeout()
 
     DestroyInbound();
     handler.OnTcpError("Connect error", "Timeout");
-    Destroy();
 }
 
 void
@@ -349,7 +346,6 @@ LbTcpConnection::OnSocketConnectError(std::exception_ptr ep)
 
     DestroyInbound();
     handler.OnTcpError("Connect error", ep);
-    Destroy();
 }
 
 /*
@@ -380,7 +376,6 @@ lb_tcp_sticky(StickyMode sticky_mode,
     return 0;
 }
 
-inline
 LbTcpConnection::LbTcpConnection(struct pool &_pool, EventLoop &event_loop,
                                  Stock *_pipe_stock,
                                  UniqueSocketDescriptor &&fd, FdType fd_type,
@@ -421,7 +416,6 @@ LbTcpConnection::ConnectOutbound()
         if (cluster2 == nullptr) {
             DestroyInbound();
             handler.OnTcpError("Zeroconf error", "Zeroconf cluster not found");
-            Destroy();
             return;
         }
 
@@ -429,7 +423,6 @@ LbTcpConnection::ConnectOutbound()
         if (member.first == nullptr) {
             DestroyInbound();
             handler.OnTcpError("Zeroconf error", "Zeroconf cluster is empty");
-            Destroy();
             return;
         }
 
@@ -463,32 +456,4 @@ LbTcpConnection::OnHandshake()
     assert(!outbound.IsValid());
 
     ConnectOutbound();
-}
-
-LbTcpConnection *
-lb_tcp_new(struct pool &pool, EventLoop &event_loop, Stock *pipe_stock,
-           UniqueSocketDescriptor &&fd, FdType fd_type,
-           const SocketFilter *filter, void *filter_ctx,
-           SocketAddress remote_address,
-           const LbClusterConfig &cluster,
-           LbClusterMap &clusters,
-           Balancer &balancer,
-           LbTcpConnectionHandler &handler)
-{
-    auto *tcp = NewFromPool<LbTcpConnection>(pool, pool, event_loop,
-                                             pipe_stock,
-                                             std::move(fd), fd_type,
-                                             filter, filter_ctx,
-                                             remote_address,
-                                             cluster, clusters, balancer,
-                                             handler);
-
-    tcp->ScheduleHandshakeCallback();
-    return tcp;
-}
-
-void
-lb_tcp_close(LbTcpConnection *tcp)
-{
-    tcp->Destroy();
 }

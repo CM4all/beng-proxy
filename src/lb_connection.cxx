@@ -22,16 +22,19 @@ LbConnection::LbConnection(struct pool &_pool, LbInstance &_instance,
                            SocketAddress _client_address)
     :pool(_pool), instance(_instance), listener(_listener),
      client_address(address_to_string(pool, _client_address)),
-     tcp(lb_tcp_new(pool, instance.event_loop, instance.pipe_stock,
-                    std::move(fd), fd_type,
-                    filter, filter_ctx, _client_address,
-                    *listener.destination.cluster,
-                    instance.clusters,
-                    *instance.balancer,
-                    *this))
+     tcp(pool, instance.event_loop, instance.pipe_stock,
+         std::move(fd), fd_type,
+         filter, filter_ctx,
+         _client_address,
+         *listener.destination.cluster,
+         instance.clusters,
+         *instance.balancer,
+         *this)
 {
     if (client_address == nullptr)
         client_address = "unknown";
+
+    tcp.ScheduleHandshakeCallback();
 }
 
 std::string
@@ -135,8 +138,6 @@ void
 lb_connection_close(LbConnection *connection)
 {
     assert(connection->listener.destination.GetProtocol() == LbProtocol::TCP);
-
-    lb_tcp_close(connection->tcp);
 
     lb_connection_remove(connection);
 }

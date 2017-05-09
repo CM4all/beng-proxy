@@ -64,6 +64,10 @@ struct LbTcpConnection final : ConnectSocketHandler {
                     Balancer &balancer,
                     LbTcpConnectionHandler &_handler);
 
+    ~LbTcpConnection() {
+        Destroy();
+    }
+
     void ScheduleHandshakeCallback() {
         inbound.ScheduleReadNoTimeout(false);
         inbound.SetHandshakeCallback(BIND_THIS_METHOD(OnHandshake));
@@ -82,21 +86,5 @@ struct LbTcpConnection final : ConnectSocketHandler {
     void OnSocketConnectTimeout() override;
     void OnSocketConnectError(std::exception_ptr ep) override;
 };
-
-/**
- * @param transparent_source see #lb_cluster_config::transparent_source
- */
-LbTcpConnection *
-lb_tcp_new(struct pool &pool, EventLoop &event_loop, Stock *pipe_stock,
-           UniqueSocketDescriptor &&fd, FdType fd_type,
-           const SocketFilter *filter, void *filter_ctx,
-           SocketAddress remote_address,
-           const LbClusterConfig &cluster,
-           LbClusterMap &clusters,
-           Balancer &balancer,
-           LbTcpConnectionHandler &handler);
-
-void
-lb_tcp_close(LbTcpConnection *tcp);
 
 #endif
