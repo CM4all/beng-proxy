@@ -24,9 +24,9 @@ struct LbGoto;
 struct LbTcpConnection;
 struct LbInstance;
 
-struct LbConnection final
-    : Logger, LbTcpConnectionHandler,
-      boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
+class LbConnection final
+    : public Logger, LbTcpConnectionHandler,
+      public boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
 
     struct pool &pool;
 
@@ -42,6 +42,7 @@ struct LbConnection final
 
     LbTcpConnection tcp;
 
+public:
     LbConnection(struct pool &_pool, LbInstance &_instance,
                  const LbListenerConfig &_listener,
                  UniqueSocketDescriptor &&fd, FdType fd_type,
