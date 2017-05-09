@@ -53,6 +53,21 @@ NewLbHttpConnection(LbInstance &instance,
     /* determine the local socket address */
     StaticSocketAddress local_address = fd.GetLocalAddress();
 
+    auto fd_type = FdType::FD_TCP;
+
+    SslFilter *ssl_filter = nullptr;
+    const SocketFilter *filter = nullptr;
+    void *filter_ctx = nullptr;
+
+    if (ssl_factory != nullptr) {
+        ssl_filter = ssl_filter_new(*ssl_factory);
+        filter = &thread_socket_filter;
+        filter_ctx =
+            new ThreadSocketFilter(instance.event_loop,
+                                   thread_pool_get_queue(instance.event_loop),
+                                   &ssl_filter_get_handler(*ssl_filter));
+    }
+
     struct pool *pool = pool_new_linear(instance.root_pool,
                                         "http_connection",
                                         2048);
@@ -60,26 +75,7 @@ NewLbHttpConnection(LbInstance &instance,
 
     auto *connection = NewFromPool<LbHttpConnection>(*pool, *pool, instance,
                                                      listener, address);
-
-    auto fd_type = FdType::FD_TCP;
-
-    const SocketFilter *filter = nullptr;
-    void *filter_ctx = nullptr;
-
-    if (ssl_factory != nullptr) {
-        try {
-            connection->ssl_filter = ssl_filter_new(*ssl_factory);
-        } catch (const std::runtime_error &e) {
-            DeleteUnrefTrashPool(*pool, connection);
-            throw;
-        }
-
-        filter = &thread_socket_filter;
-        filter_ctx =
-            new ThreadSocketFilter(instance.event_loop,
-                                   thread_pool_get_queue(instance.event_loop),
-                                   &ssl_filter_get_handler(*connection->ssl_filter));
-    }
+    connection->ssl_filter = ssl_filter;
 
     instance.http_connections.push_back(*connection);
 
