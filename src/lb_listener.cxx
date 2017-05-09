@@ -23,7 +23,7 @@ try {
         break;
 
     case LbProtocol::TCP:
-        lb_connection_new(instance, config,
+        LbConnection::New(instance, config,
                           ssl_factory,
                           std::move(new_fd), address);
         break;

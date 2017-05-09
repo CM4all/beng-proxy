@@ -48,6 +48,14 @@ struct LbConnection final
                  const SocketFilter *filter, void *filter_ctx,
                  SocketAddress _client_address);
 
+    static LbConnection *New(LbInstance &instance,
+                             const LbListenerConfig &listener,
+                             SslFactory *ssl_factory,
+                             UniqueSocketDescriptor &&fd,
+                             SocketAddress address);
+
+    void Destroy();
+
 protected:
     /* virtual methods from class Logger */
     std::string MakeLogName() const noexcept override;
@@ -59,17 +67,5 @@ private:
     void OnTcpErrno(const char *prefix, int error) override;
     void OnTcpError(const char *prefix, std::exception_ptr ep) override;
 };
-
-LbConnection *
-lb_connection_new(LbInstance &instance,
-                  const LbListenerConfig &listener,
-                  SslFactory *ssl_factory,
-                  UniqueSocketDescriptor &&fd, SocketAddress address);
-
-void
-lb_connection_remove(LbConnection *connection);
-
-void
-lb_connection_close(LbConnection *connection);
 
 #endif

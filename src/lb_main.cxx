@@ -76,7 +76,7 @@ LbInstance::ShutdownCallback()
     DisconnectCertCaches();
 
     while (!tcp_connections.empty())
-        lb_connection_close(&tcp_connections.front());
+        tcp_connections.front().Destroy();
 
     while (!http_connections.empty())
         http_connections.front().CloseAndDestroy();

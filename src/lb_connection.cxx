@@ -54,28 +54,28 @@ LbConnection::MakeLogName() const noexcept
 void
 LbConnection::OnTcpEnd()
 {
-    lb_connection_remove(this);
+    Destroy();
 }
 
 void
 LbConnection::OnTcpError(const char *prefix, const char *error)
 {
     LogPrefix(3, prefix, error);
-    lb_connection_remove(this);
+    Destroy();
 }
 
 void
 LbConnection::OnTcpErrno(const char *prefix, int error)
 {
     LogErrno(3, prefix, error);
-    lb_connection_remove(this);
+    Destroy();
 }
 
 void
 LbConnection::OnTcpError(const char *prefix, std::exception_ptr ep)
 {
     Log(3, prefix, ep);
-    lb_connection_remove(this);
+    Destroy();
 }
 
 /*
@@ -84,7 +84,7 @@ LbConnection::OnTcpError(const char *prefix, std::exception_ptr ep)
  */
 
 LbConnection *
-lb_connection_new(LbInstance &instance,
+LbConnection::New(LbInstance &instance,
                   const LbListenerConfig &listener,
                   SslFactory *ssl_factory,
                   UniqueSocketDescriptor &&fd, SocketAddress address)
@@ -123,21 +123,13 @@ lb_connection_new(LbInstance &instance,
 }
 
 void
-lb_connection_remove(LbConnection *connection)
+LbConnection::Destroy()
 {
-    assert(connection != nullptr);
-    assert(!connection->instance.tcp_connections.empty());
+    assert(!instance.tcp_connections.empty());
+    assert(listener.destination.GetProtocol() == LbProtocol::TCP);
 
-    auto &connections = connection->instance.tcp_connections;
-    connections.erase(connections.iterator_to(*connection));
+    auto &connections = instance.tcp_connections;
+    connections.erase(connections.iterator_to(*this));
 
-    DeleteUnrefTrashPool(connection->pool, connection);
-}
-
-void
-lb_connection_close(LbConnection *connection)
-{
-    assert(connection->listener.destination.GetProtocol() == LbProtocol::TCP);
-
-    lb_connection_remove(connection);
+    DeleteUnrefTrashPool(pool, this);
 }
