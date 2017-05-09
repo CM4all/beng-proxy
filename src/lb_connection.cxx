@@ -17,9 +17,18 @@
 
 LbConnection::LbConnection(struct pool &_pool, LbInstance &_instance,
                            const LbListenerConfig &_listener,
+                           UniqueSocketDescriptor &&fd, FdType fd_type,
+                           const SocketFilter *filter, void *filter_ctx,
                            SocketAddress _client_address)
     :pool(_pool), instance(_instance), listener(_listener),
-     client_address(address_to_string(pool, _client_address))
+     client_address(address_to_string(pool, _client_address)),
+     tcp(lb_tcp_new(pool, instance.event_loop, instance.pipe_stock,
+                    std::move(fd), fd_type,
+                    filter, filter_ctx, _client_address,
+                    *listener.destination.cluster,
+                    instance.clusters,
+                    *instance.balancer,
+                    *this))
 {
     if (client_address == nullptr)
         client_address = "unknown";
@@ -100,18 +109,12 @@ lb_connection_new(LbInstance &instance,
     pool_set_major(pool);
 
     auto *connection = NewFromPool<LbConnection>(*pool, *pool, instance,
-                                                 listener, address);
+                                                 listener,
+                                                 std::move(fd), fd_type,
+                                                 filter, filter_ctx,
+                                                 address);
 
     instance.tcp_connections.push_back(*connection);
-
-    connection->tcp = lb_tcp_new(connection->pool, instance.event_loop,
-                                 instance.pipe_stock,
-                                 std::move(fd), fd_type,
-                                 filter, filter_ctx, address,
-                                 *listener.destination.cluster,
-                                 instance.clusters,
-                                 *connection->instance.balancer,
-                                 *connection);
 
     return connection;
 }

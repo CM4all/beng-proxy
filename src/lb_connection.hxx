@@ -44,6 +44,8 @@ struct LbConnection final
 
     LbConnection(struct pool &_pool, LbInstance &_instance,
                  const LbListenerConfig &_listener,
+                 UniqueSocketDescriptor &&fd, FdType fd_type,
+                 const SocketFilter *filter, void *filter_ctx,
                  SocketAddress _client_address);
 
 protected:
