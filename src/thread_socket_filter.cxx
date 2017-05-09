@@ -75,6 +75,7 @@ ThreadSocketFilter::SubmitDecryptedInput()
     while (true) {
         uint8_t copy[8192];
         size_t size;
+        bool more;
 
         {
             const std::lock_guard<std::mutex> lock(mutex);
@@ -85,6 +86,7 @@ ThreadSocketFilter::SubmitDecryptedInput()
 
             /* copy to stack, unlock */
             size = std::min(r.size, sizeof(copy));
+            more = r.size > sizeof(copy);
             memcpy(copy, r.data, size);
         }
 
@@ -93,6 +95,10 @@ ThreadSocketFilter::SubmitDecryptedInput()
 
         switch (socket->InvokeData(copy, size)) {
         case BufferedResult::OK:
+            if (more)
+                /* there's more data in decrypted_input which did not
+                   fit in the stack buffer; try again */
+                continue;
             return true;
 
         case BufferedResult::PARTIAL:
