@@ -110,14 +110,14 @@ lb_connection_new(LbInstance &instance,
 
     instance.tcp_connections.push_back(*connection);
 
-    lb_tcp_new(connection->pool, instance.event_loop,
-               instance.pipe_stock,
-               std::move(fd), fd_type, filter, filter_ctx, address,
-               *listener.destination.cluster,
-               instance.clusters,
-               *connection->instance.balancer,
-               *connection,
-               &connection->tcp);
+    connection->tcp = lb_tcp_new(connection->pool, instance.event_loop,
+                                 instance.pipe_stock,
+                                 std::move(fd), fd_type,
+                                 filter, filter_ctx, address,
+                                 *listener.destination.cluster,
+                                 instance.clusters,
+                                 *connection->instance.balancer,
+                                 *connection);
 
     return connection;
 }

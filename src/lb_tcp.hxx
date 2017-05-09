@@ -86,7 +86,7 @@ struct LbTcpConnection final : ConnectSocketHandler {
 /**
  * @param transparent_source see #lb_cluster_config::transparent_source
  */
-void
+LbTcpConnection *
 lb_tcp_new(struct pool &pool, EventLoop &event_loop, Stock *pipe_stock,
            UniqueSocketDescriptor &&fd, FdType fd_type,
            const SocketFilter *filter, void *filter_ctx,
@@ -94,8 +94,7 @@ lb_tcp_new(struct pool &pool, EventLoop &event_loop, Stock *pipe_stock,
            const LbClusterConfig &cluster,
            LbClusterMap &clusters,
            Balancer &balancer,
-           LbTcpConnectionHandler &handler,
-           LbTcpConnection **tcp_r);
+           LbTcpConnectionHandler &handler);
 
 void
 lb_tcp_close(LbTcpConnection *tcp);

@@ -465,7 +465,7 @@ LbTcpConnection::OnHandshake()
     ConnectOutbound();
 }
 
-void
+LbTcpConnection *
 lb_tcp_new(struct pool &pool, EventLoop &event_loop, Stock *pipe_stock,
            UniqueSocketDescriptor &&fd, FdType fd_type,
            const SocketFilter *filter, void *filter_ctx,
@@ -473,8 +473,7 @@ lb_tcp_new(struct pool &pool, EventLoop &event_loop, Stock *pipe_stock,
            const LbClusterConfig &cluster,
            LbClusterMap &clusters,
            Balancer &balancer,
-           LbTcpConnectionHandler &handler,
-           LbTcpConnection **tcp_r)
+           LbTcpConnectionHandler &handler)
 {
     auto *tcp = NewFromPool<LbTcpConnection>(pool, pool, event_loop,
                                              pipe_stock,
@@ -484,9 +483,8 @@ lb_tcp_new(struct pool &pool, EventLoop &event_loop, Stock *pipe_stock,
                                              cluster, clusters, balancer,
                                              handler);
 
-    *tcp_r = tcp;
-
     tcp->ScheduleHandshakeCallback();
+    return tcp;
 }
 
 void
