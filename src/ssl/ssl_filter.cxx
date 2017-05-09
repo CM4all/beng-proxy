@@ -214,6 +214,13 @@ SslFilter::Run(ThreadSocketFilter &f, GError **error_r)
 
         plain_output.MoveFromAllowNull(f.plain_output);
         encrypted_input.MoveFromAllowSrcNull(f.encrypted_input);
+        if (!f.encrypted_input.IsEmpty())
+            /* the destination buffer is full, and data still remains
+               in the source buffer; after completing this iteration,
+               we need to do another iteration to process the
+               remaining data */
+            f.again = true;
+
         f.encrypted_output.MoveFromAllowNull(encrypted_output);
 
         if (decrypted_input.IsNull() || encrypted_output.IsNull()) {
