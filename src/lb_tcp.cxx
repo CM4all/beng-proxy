@@ -70,7 +70,7 @@ inbound_buffered_socket_data(const void *buffer, size_t size, void *ctx)
 
     if (!tcp->outbound.IsValid()) {
         tcp->Destroy();
-        tcp->handler->error("Send error", "Broken socket", tcp->handler_ctx);
+        tcp->handler.OnTcpError("Send error", "Broken socket");
         return BufferedResult::CLOSED;
     }
 
@@ -89,7 +89,7 @@ inbound_buffered_socket_data(const void *buffer, size_t size, void *ctx)
 
     case WRITE_ERRNO:
         tcp->Destroy();
-        tcp->handler->_errno("Send failed", errno, tcp->handler_ctx);
+        tcp->handler.OnTcpErrno("Send failed", errno);
         return BufferedResult::CLOSED;
 
     case WRITE_BLOCKING:
@@ -100,7 +100,7 @@ inbound_buffered_socket_data(const void *buffer, size_t size, void *ctx)
 
     case WRITE_BROKEN:
         tcp->Destroy();
-        tcp->handler->eof(tcp->handler_ctx);
+        tcp->handler.OnTcpEnd();
         return BufferedResult::CLOSED;
     }
 
@@ -114,7 +114,7 @@ inbound_buffered_socket_closed(void *ctx)
     LbTcpConnection *tcp = (LbTcpConnection *)ctx;
 
     tcp->Destroy();
-    tcp->handler->eof(tcp->handler_ctx);
+    tcp->handler.OnTcpEnd();
     return false;
 }
 
@@ -143,7 +143,7 @@ inbound_buffered_socket_drained(void *ctx)
            finally close the connection (postponed from
            outbound_buffered_socket_end()) */
         tcp->Destroy();
-        tcp->handler->eof(tcp->handler_ctx);
+        tcp->handler.OnTcpEnd();
         return false;
     }
 
@@ -156,7 +156,7 @@ inbound_buffered_socket_broken(void *ctx)
     LbTcpConnection *tcp = (LbTcpConnection *)ctx;
 
     tcp->Destroy();
-    tcp->handler->eof(tcp->handler_ctx);
+    tcp->handler.OnTcpEnd();
     return WRITE_DESTROYED;
 }
 
@@ -166,7 +166,7 @@ inbound_buffered_socket_error(std::exception_ptr ep, void *ctx)
     LbTcpConnection *tcp = (LbTcpConnection *)ctx;
 
     tcp->Destroy();
-    tcp->handler->exception("Error", ep, tcp->handler_ctx);
+    tcp->handler.OnTcpError("Error", ep);
 }
 
 static constexpr BufferedSocketHandler inbound_buffered_socket_handler = {
@@ -212,7 +212,7 @@ outbound_buffered_socket_data(const void *buffer, size_t size, void *ctx)
     case WRITE_ERRNO:
         save_errno = errno;
         tcp->Destroy();
-        tcp->handler->_errno("Send failed", save_errno, tcp->handler_ctx);
+        tcp->handler.OnTcpErrno("Send failed", save_errno);
         return BufferedResult::CLOSED;
 
     case WRITE_BLOCKING:
@@ -223,7 +223,7 @@ outbound_buffered_socket_data(const void *buffer, size_t size, void *ctx)
 
     case WRITE_BROKEN:
         tcp->Destroy();
-        tcp->handler->eof(tcp->handler_ctx);
+        tcp->handler.OnTcpEnd();
         return BufferedResult::CLOSED;
     }
 
@@ -253,7 +253,7 @@ outbound_buffered_socket_end(void *ctx)
         /* all output buffers to "inbound" are drained; close the
            connection, because there's nothing left to do */
         tcp->Destroy();
-        tcp->handler->eof(tcp->handler_ctx);
+        tcp->handler.OnTcpEnd();
 
         /* nothing will be done if the buffers are not yet drained;
            we're waiting for inbound_buffered_socket_drained() to be
@@ -282,7 +282,7 @@ outbound_buffered_socket_broken(void *ctx)
     LbTcpConnection *tcp = (LbTcpConnection *)ctx;
 
     tcp->Destroy();
-    tcp->handler->eof(tcp->handler_ctx);
+    tcp->handler.OnTcpEnd();
     return WRITE_DESTROYED;
 }
 
@@ -292,7 +292,7 @@ outbound_buffered_socket_error(std::exception_ptr ep, void *ctx)
     LbTcpConnection *tcp = (LbTcpConnection *)ctx;
 
     tcp->Destroy();
-    tcp->handler->exception("Error", ep, tcp->handler_ctx);
+    tcp->handler.OnTcpError("Error", ep);
 }
 
 static constexpr BufferedSocketHandler outbound_buffered_socket_handler = {
@@ -338,7 +338,7 @@ LbTcpConnection::OnSocketConnectTimeout()
     cancel_connect = nullptr;
 
     DestroyInbound();
-    handler->error("Connect error", "Timeout", handler_ctx);
+    handler.OnTcpError("Connect error", "Timeout");
     Destroy();
 }
 
@@ -348,7 +348,7 @@ LbTcpConnection::OnSocketConnectError(std::exception_ptr ep)
     cancel_connect = nullptr;
 
     DestroyInbound();
-    handler->exception("Connect error", ep, handler_ctx);
+    handler.OnTcpError("Connect error", ep);
     Destroy();
 }
 
@@ -389,9 +389,9 @@ LbTcpConnection::LbTcpConnection(struct pool &_pool, EventLoop &event_loop,
                                  const LbClusterConfig &_cluster,
                                  LbClusterMap &_clusters,
                                  Balancer &_balancer,
-                                 const LbTcpConnectionHandler &_handler, void *ctx)
+                                 LbTcpConnectionHandler &_handler)
     :pool(_pool), pipe_stock(_pipe_stock),
-     handler(&_handler), handler_ctx(ctx),
+     handler(_handler),
      inbound(event_loop), outbound(event_loop),
      cluster(_cluster), clusters(_clusters), balancer(_balancer),
      session_sticky(lb_tcp_sticky(cluster.sticky_mode, remote_address))
@@ -420,8 +420,7 @@ LbTcpConnection::ConnectOutbound()
         auto *cluster2 = clusters.Find(cluster.name);
         if (cluster2 == nullptr) {
             DestroyInbound();
-            handler->error("Zeroconf error", "Zeroconf cluster not found",
-                           handler_ctx);
+            handler.OnTcpError("Zeroconf error", "Zeroconf cluster not found");
             Destroy();
             return;
         }
@@ -429,8 +428,7 @@ LbTcpConnection::ConnectOutbound()
         const auto member = cluster2->Pick(session_sticky);
         if (member.first == nullptr) {
             DestroyInbound();
-            handler->error("Zeroconf error", "Zeroconf cluster is empty",
-                           handler_ctx);
+            handler.OnTcpError("Zeroconf error", "Zeroconf cluster is empty");
             Destroy();
             return;
         }
@@ -475,7 +473,7 @@ lb_tcp_new(struct pool &pool, EventLoop &event_loop, Stock *pipe_stock,
            const LbClusterConfig &cluster,
            LbClusterMap &clusters,
            Balancer &balancer,
-           const LbTcpConnectionHandler &handler, void *ctx,
+           LbTcpConnectionHandler &handler,
            LbTcpConnection **tcp_r)
 {
     auto *tcp = NewFromPool<LbTcpConnection>(pool, pool, event_loop,
@@ -484,7 +482,7 @@ lb_tcp_new(struct pool &pool, EventLoop &event_loop, Stock *pipe_stock,
                                              filter, filter_ctx,
                                              remote_address,
                                              cluster, clusters, balancer,
-                                             handler, ctx);
+                                             handler);
 
     *tcp_r = tcp;
 

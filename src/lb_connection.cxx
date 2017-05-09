@@ -35,51 +35,36 @@ LbConnection::MakeLogName() const noexcept
 }
 
 /*
- * lb_tcp_handler
+ * LbTcpConnectionHandler
  *
  */
 
-static void
-tcp_eof(void *ctx)
+void
+LbConnection::OnTcpEnd()
 {
-    auto *connection = (LbConnection *)ctx;
-
-    lb_connection_remove(connection);
+    lb_connection_remove(this);
 }
 
-static void
-tcp_error(const char *prefix, const char *error, void *ctx)
+void
+LbConnection::OnTcpError(const char *prefix, const char *error)
 {
-    auto *connection = (LbConnection *)ctx;
-
-    connection->LogPrefix(3, prefix, error);
-    lb_connection_remove(connection);
+    LogPrefix(3, prefix, error);
+    lb_connection_remove(this);
 }
 
-static void
-tcp_errno(const char *prefix, int error, void *ctx)
+void
+LbConnection::OnTcpErrno(const char *prefix, int error)
 {
-    auto *connection = (LbConnection *)ctx;
-
-    connection->LogErrno(3, prefix, error);
-    lb_connection_remove(connection);
+    LogErrno(3, prefix, error);
+    lb_connection_remove(this);
 }
 
-static void
-tcp_exception(const char *prefix, std::exception_ptr ep, void *ctx)
+void
+LbConnection::OnTcpError(const char *prefix, std::exception_ptr ep)
 {
-    auto *connection = (LbConnection *)ctx;
-
-    connection->Log(3, prefix, ep);
-    lb_connection_remove(connection);
+    Log(3, prefix, ep);
+    lb_connection_remove(this);
 }
-
-static constexpr LbTcpConnectionHandler tcp_handler = {
-    .eof = tcp_eof,
-    .error = tcp_error,
-    ._errno = tcp_errno,
-    .exception = tcp_exception,
-};
 
 /*
  * public
@@ -131,7 +116,7 @@ lb_connection_new(LbInstance &instance,
                *listener.destination.cluster,
                instance.clusters,
                *connection->instance.balancer,
-               tcp_handler, connection,
+               *connection,
                &connection->tcp);
 
     return connection;

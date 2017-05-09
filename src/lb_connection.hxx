@@ -5,6 +5,7 @@
 #ifndef BENG_PROXY_LB_CONNECTION_H
 #define BENG_PROXY_LB_CONNECTION_H
 
+#include "lb_tcp.hxx"
 #include "Logger.hxx"
 
 #include <boost/intrusive/list.hpp>
@@ -24,7 +25,7 @@ struct LbTcpConnection;
 struct LbInstance;
 
 struct LbConnection final
-    : Logger,
+    : Logger, LbTcpConnectionHandler,
       boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
 
     struct pool &pool;
@@ -51,6 +52,13 @@ struct LbConnection final
 protected:
     /* virtual methods from class Logger */
     std::string MakeLogName() const noexcept override;
+
+private:
+    /* virtual methods from class LbTcpConnectionHandler */
+    void OnTcpEnd() override;
+    void OnTcpError(const char *prefix, const char *error) override;
+    void OnTcpErrno(const char *prefix, int error) override;
+    void OnTcpError(const char *prefix, std::exception_ptr ep) override;
 };
 
 LbConnection *

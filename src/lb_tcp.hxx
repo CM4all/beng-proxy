@@ -26,19 +26,19 @@ struct LbTcpConnection;
 class UniqueSocketDescriptor;
 class LbClusterMap;
 
-struct LbTcpConnectionHandler {
-    void (*eof)(void *ctx);
-    void (*error)(const char *prefix, const char *error, void *ctx);
-    void (*_errno)(const char *prefix, int error, void *ctx);
-    void (*exception)(const char *prefix, std::exception_ptr ep, void *ctx);
+class LbTcpConnectionHandler {
+public:
+    virtual void OnTcpEnd() = 0;
+    virtual void OnTcpError(const char *prefix, const char *error) = 0;
+    virtual void OnTcpErrno(const char *prefix, int error) = 0;
+    virtual void OnTcpError(const char *prefix, std::exception_ptr ep) = 0;
 };
 
 struct LbTcpConnection final : ConnectSocketHandler {
     struct pool &pool;
     Stock *pipe_stock;
 
-    const LbTcpConnectionHandler *const handler;
-    void *const handler_ctx;
+    LbTcpConnectionHandler &handler;
 
     FilteredSocket inbound;
 
@@ -62,7 +62,7 @@ struct LbTcpConnection final : ConnectSocketHandler {
                     const LbClusterConfig &cluster,
                     LbClusterMap &clusters,
                     Balancer &balancer,
-                    const LbTcpConnectionHandler &_handler, void *ctx);
+                    LbTcpConnectionHandler &_handler);
 
     void ScheduleHandshakeCallback() {
         inbound.ScheduleReadNoTimeout(false);
@@ -94,7 +94,7 @@ lb_tcp_new(struct pool &pool, EventLoop &event_loop, Stock *pipe_stock,
            const LbClusterConfig &cluster,
            LbClusterMap &clusters,
            Balancer &balancer,
-           const LbTcpConnectionHandler &handler, void *ctx,
+           LbTcpConnectionHandler &handler,
            LbTcpConnection **tcp_r);
 
 void
