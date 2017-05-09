@@ -10,10 +10,10 @@
 #include "PInstance.hxx"
 #include "lb_cmdline.hxx"
 #include "lb_cluster.hxx"
-#include "lb_connection.hxx"
 #include "lb_hmonitor.hxx"
 #include "lb/LuaHandler.hxx"
 #include "lb/HttpConnection.hxx"
+#include "lb/TcpConnection.hxx"
 #include "event/TimerEvent.hxx"
 #include "event/SignalEvent.hxx"
 #include "event/ShutdownListener.hxx"
@@ -64,7 +64,7 @@ struct LbInstance final : PInstance {
     boost::intrusive::list<LbHttpConnection,
                            boost::intrusive::constant_time_size<true>> http_connections;
 
-    boost::intrusive::list<LbConnection,
+    boost::intrusive::list<LbTcpConnection,
                            boost::intrusive::constant_time_size<true>> tcp_connections;
 
     bool should_exit = false;

@@ -8,7 +8,6 @@
 #include "lb_instance.hxx"
 #include "lb_check.hxx"
 #include "lb_setup.hxx"
-#include "lb_connection.hxx"
 #include "tcp_stock.hxx"
 #include "tcp_balancer.hxx"
 #include "stock/MapStock.hxx"

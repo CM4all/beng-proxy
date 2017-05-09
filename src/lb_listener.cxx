@@ -6,9 +6,9 @@
 
 #include "lb_listener.hxx"
 #include "lb_instance.hxx"
-#include "lb_connection.hxx"
 #include "lb_config.hxx"
 #include "lb/HttpConnection.hxx"
+#include "lb/TcpConnection.hxx"
 #include "ssl/ssl_factory.hxx"
 #include "ssl/DbSniCallback.hxx"
 #include "net/SocketAddress.hxx"
@@ -23,9 +23,9 @@ try {
         break;
 
     case LbProtocol::TCP:
-        LbConnection::New(instance, config,
-                          ssl_factory,
-                          std::move(new_fd), address);
+        LbTcpConnection::New(instance, config,
+                             ssl_factory,
+                             std::move(new_fd), address);
         break;
     }
 } catch (const std::runtime_error &e) {

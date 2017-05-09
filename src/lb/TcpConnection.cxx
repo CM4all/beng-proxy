@@ -1,53 +1,45 @@
 /*
- * Handler for raw TCP connections.
- *
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "lb_tcp.hxx"
+#include "TcpConnection.hxx"
 #include "lb_config.hxx"
-#include "lb_cluster.hxx"
+#include "lb_instance.hxx"
 #include "client_balancer.hxx"
 #include "address_sticky.hxx"
-#include "direct.hxx"
+#include "ssl/ssl_filter.hxx"
 #include "pool.hxx"
-#include "GException.hxx"
-#include "net/UniqueSocketDescriptor.hxx"
+#include "thread_socket_filter.hxx"
+#include "thread_pool.hxx"
 #include "net/SocketAddress.hxx"
+#include "net/UniqueSocketDescriptor.hxx"
+#include "address_string.hxx"
 
-#include <unistd.h>
-#include <errno.h>
+#include <assert.h>
 
 static constexpr timeval write_timeout = { 30, 0 };
 
-void
-LbTcpConnection::DestroyInbound()
+gcc_pure
+static sticky_hash_t
+lb_tcp_sticky(StickyMode sticky_mode,
+              SocketAddress remote_address)
 {
-    if (inbound.IsConnected())
-        inbound.Close();
+    switch (sticky_mode) {
+    case StickyMode::NONE:
+    case StickyMode::FAILOVER:
+        break;
 
-    inbound.Destroy();
-}
+    case StickyMode::SOURCE_IP:
+        return socket_address_sticky(remote_address);
 
-void
-LbTcpConnection::DestroyOutbound()
-{
-    if (outbound.IsConnected())
-        outbound.Close();
+    case StickyMode::SESSION_MODULO:
+    case StickyMode::COOKIE:
+    case StickyMode::JVM_ROUTE:
+        /* not implemented here */
+        break;
+    }
 
-    outbound.Destroy();
-}
-
-void
-LbTcpConnection::Destroy()
-{
-    if (inbound.IsValid())
-        DestroyInbound();
-
-    if (cancel_connect)
-        cancel_connect.Cancel();
-    else if (outbound.IsValid())
-        DestroyOutbound();
+    return 0;
 }
 
 /*
@@ -58,7 +50,7 @@ LbTcpConnection::Destroy()
 static BufferedResult
 inbound_buffered_socket_data(const void *buffer, size_t size, void *ctx)
 {
-    LbTcpConnection *tcp = (LbTcpConnection *)ctx;
+    auto *tcp = (LbTcpConnection *)ctx;
 
     tcp->got_inbound_data = true;
 
@@ -67,8 +59,8 @@ inbound_buffered_socket_data(const void *buffer, size_t size, void *ctx)
         return BufferedResult::BLOCKING;
 
     if (!tcp->outbound.IsValid()) {
-        tcp->Destroy();
-        tcp->handler.OnTcpError("Send error", "Broken socket");
+        tcp->DestroyBoth();
+        tcp->OnTcpError("Send error", "Broken socket");
         return BufferedResult::CLOSED;
     }
 
@@ -87,8 +79,8 @@ inbound_buffered_socket_data(const void *buffer, size_t size, void *ctx)
         gcc_unreachable();
 
     case WRITE_ERRNO:
-        tcp->Destroy();
-        tcp->handler.OnTcpErrno("Send failed", errno);
+        tcp->DestroyBoth();
+        tcp->OnTcpErrno("Send failed", errno);
         return BufferedResult::CLOSED;
 
     case WRITE_BLOCKING:
@@ -98,8 +90,8 @@ inbound_buffered_socket_data(const void *buffer, size_t size, void *ctx)
         return BufferedResult::CLOSED;
 
     case WRITE_BROKEN:
-        tcp->Destroy();
-        tcp->handler.OnTcpEnd();
+        tcp->DestroyBoth();
+        tcp->OnTcpEnd();
         return BufferedResult::CLOSED;
     }
 
@@ -110,17 +102,17 @@ inbound_buffered_socket_data(const void *buffer, size_t size, void *ctx)
 static bool
 inbound_buffered_socket_closed(void *ctx)
 {
-    LbTcpConnection *tcp = (LbTcpConnection *)ctx;
+    auto *tcp = (LbTcpConnection *)ctx;
 
-    tcp->Destroy();
-    tcp->handler.OnTcpEnd();
+    tcp->DestroyBoth();
+    tcp->OnTcpEnd();
     return false;
 }
 
 static bool
 inbound_buffered_socket_write(void *ctx)
 {
-    LbTcpConnection *tcp = (LbTcpConnection *)ctx;
+    auto *tcp = (LbTcpConnection *)ctx;
 
     tcp->got_outbound_data = false;
 
@@ -135,14 +127,14 @@ inbound_buffered_socket_write(void *ctx)
 static bool
 inbound_buffered_socket_drained(void *ctx)
 {
-    LbTcpConnection *tcp = (LbTcpConnection *)ctx;
+    auto *tcp = (LbTcpConnection *)ctx;
 
     if (!tcp->outbound.IsValid()) {
         /* now that inbound's output buffers are drained, we can
            finally close the connection (postponed from
            outbound_buffered_socket_end()) */
-        tcp->Destroy();
-        tcp->handler.OnTcpEnd();
+        tcp->DestroyBoth();
+        tcp->OnTcpEnd();
         return false;
     }
 
@@ -152,20 +144,20 @@ inbound_buffered_socket_drained(void *ctx)
 static enum write_result
 inbound_buffered_socket_broken(void *ctx)
 {
-    LbTcpConnection *tcp = (LbTcpConnection *)ctx;
+    auto *tcp = (LbTcpConnection *)ctx;
 
-    tcp->Destroy();
-    tcp->handler.OnTcpEnd();
+    tcp->DestroyBoth();
+    tcp->OnTcpEnd();
     return WRITE_DESTROYED;
 }
 
 static void
 inbound_buffered_socket_error(std::exception_ptr ep, void *ctx)
 {
-    LbTcpConnection *tcp = (LbTcpConnection *)ctx;
+    auto *tcp = (LbTcpConnection *)ctx;
 
-    tcp->Destroy();
-    tcp->handler.OnTcpError("Error", ep);
+    tcp->DestroyBoth();
+    tcp->OnTcpError("Error", ep);
 }
 
 static constexpr BufferedSocketHandler inbound_buffered_socket_handler = {
@@ -189,7 +181,7 @@ static constexpr BufferedSocketHandler inbound_buffered_socket_handler = {
 static BufferedResult
 outbound_buffered_socket_data(const void *buffer, size_t size, void *ctx)
 {
-    LbTcpConnection *tcp = (LbTcpConnection *)ctx;
+    auto *tcp = (LbTcpConnection *)ctx;
 
     tcp->got_outbound_data = true;
 
@@ -211,8 +203,8 @@ outbound_buffered_socket_data(const void *buffer, size_t size, void *ctx)
 
     case WRITE_ERRNO:
         save_errno = errno;
-        tcp->Destroy();
-        tcp->handler.OnTcpErrno("Send failed", save_errno);
+        tcp->DestroyBoth();
+        tcp->OnTcpErrno("Send failed", save_errno);
         return BufferedResult::CLOSED;
 
     case WRITE_BLOCKING:
@@ -222,8 +214,8 @@ outbound_buffered_socket_data(const void *buffer, size_t size, void *ctx)
         return BufferedResult::CLOSED;
 
     case WRITE_BROKEN:
-        tcp->Destroy();
-        tcp->handler.OnTcpEnd();
+        tcp->DestroyBoth();
+        tcp->OnTcpEnd();
         return BufferedResult::CLOSED;
     }
 
@@ -234,7 +226,7 @@ outbound_buffered_socket_data(const void *buffer, size_t size, void *ctx)
 static bool
 outbound_buffered_socket_closed(void *ctx)
 {
-    LbTcpConnection *tcp = (LbTcpConnection *)ctx;
+    auto *tcp = (LbTcpConnection *)ctx;
 
     tcp->outbound.Close();
     return true;
@@ -243,7 +235,7 @@ outbound_buffered_socket_closed(void *ctx)
 static void
 outbound_buffered_socket_end(void *ctx)
 {
-    LbTcpConnection *tcp = (LbTcpConnection *)ctx;
+    auto *tcp = (LbTcpConnection *)ctx;
 
     tcp->outbound.Destroy();
 
@@ -252,8 +244,8 @@ outbound_buffered_socket_end(void *ctx)
     if (tcp->inbound.IsDrained()) {
         /* all output buffers to "inbound" are drained; close the
            connection, because there's nothing left to do */
-        tcp->Destroy();
-        tcp->handler.OnTcpEnd();
+        tcp->DestroyBoth();
+        tcp->OnTcpEnd();
 
         /* nothing will be done if the buffers are not yet drained;
            we're waiting for inbound_buffered_socket_drained() to be
@@ -264,7 +256,7 @@ outbound_buffered_socket_end(void *ctx)
 static bool
 outbound_buffered_socket_write(void *ctx)
 {
-    LbTcpConnection *tcp = (LbTcpConnection *)ctx;
+    auto *tcp = (LbTcpConnection *)ctx;
 
     tcp->got_inbound_data = false;
 
@@ -279,20 +271,20 @@ outbound_buffered_socket_write(void *ctx)
 static enum write_result
 outbound_buffered_socket_broken(void *ctx)
 {
-    LbTcpConnection *tcp = (LbTcpConnection *)ctx;
+    auto *tcp = (LbTcpConnection *)ctx;
 
-    tcp->Destroy();
-    tcp->handler.OnTcpEnd();
+    tcp->DestroyBoth();
+    tcp->OnTcpEnd();
     return WRITE_DESTROYED;
 }
 
 static void
 outbound_buffered_socket_error(std::exception_ptr ep, void *ctx)
 {
-    LbTcpConnection *tcp = (LbTcpConnection *)ctx;
+    auto *tcp = (LbTcpConnection *)ctx;
 
-    tcp->Destroy();
-    tcp->handler.OnTcpError("Error", ep);
+    tcp->DestroyBoth();
+    tcp->OnTcpError("Error", ep);
 }
 
 static constexpr BufferedSocketHandler outbound_buffered_socket_handler = {
@@ -307,6 +299,81 @@ static constexpr BufferedSocketHandler outbound_buffered_socket_handler = {
     outbound_buffered_socket_broken,
     outbound_buffered_socket_error,
 };
+
+std::string
+LbTcpConnection::MakeLogName() const noexcept
+{
+    return "listener='" + listener.name
+        + "' cluster='" + listener.destination.GetName()
+        + "' client='" + client_address
+        + "'";
+}
+
+void
+LbTcpConnection::DestroyInbound()
+{
+    if (inbound.IsConnected())
+        inbound.Close();
+
+    inbound.Destroy();
+}
+
+void
+LbTcpConnection::DestroyOutbound()
+{
+    if (outbound.IsConnected())
+        outbound.Close();
+
+    outbound.Destroy();
+}
+
+void
+LbTcpConnection::DestroyBoth()
+{
+    if (inbound.IsValid())
+        DestroyInbound();
+
+    if (cancel_connect)
+        cancel_connect.Cancel();
+    else if (outbound.IsValid())
+        DestroyOutbound();
+}
+
+void
+LbTcpConnection::OnHandshake()
+{
+    assert(!cancel_connect);
+    assert(!outbound.IsValid());
+
+    ConnectOutbound();
+}
+
+void
+LbTcpConnection::OnTcpEnd()
+{
+    Destroy();
+}
+
+void
+LbTcpConnection::OnTcpError(const char *prefix, const char *error)
+{
+    LogPrefix(3, prefix, error);
+    Destroy();
+}
+
+void
+LbTcpConnection::OnTcpErrno(const char *prefix, int error)
+{
+    LogErrno(3, prefix, error);
+    Destroy();
+}
+
+void
+LbTcpConnection::OnTcpError(const char *prefix, std::exception_ptr ep)
+{
+    Log(3, prefix, ep);
+    Destroy();
+}
 
 /*
  * ConnectSocketHandler
@@ -338,7 +405,7 @@ LbTcpConnection::OnSocketConnectTimeout()
     cancel_connect = nullptr;
 
     DestroyInbound();
-    handler.OnTcpError("Connect error", "Timeout");
+    OnTcpError("Connect error", "Timeout");
 }
 
 void
@@ -347,84 +414,24 @@ LbTcpConnection::OnSocketConnectError(std::exception_ptr ep)
     cancel_connect = nullptr;
 
     DestroyInbound();
-    handler.OnTcpError("Connect error", ep);
-}
-
-/*
- * constructor
- *
- */
-
-gcc_pure
-static sticky_hash_t
-lb_tcp_sticky(StickyMode sticky_mode,
-              SocketAddress remote_address)
-{
-    switch (sticky_mode) {
-    case StickyMode::NONE:
-    case StickyMode::FAILOVER:
-        break;
-
-    case StickyMode::SOURCE_IP:
-        return socket_address_sticky(remote_address);
-
-    case StickyMode::SESSION_MODULO:
-    case StickyMode::COOKIE:
-    case StickyMode::JVM_ROUTE:
-        /* not implemented here */
-        break;
-    }
-
-    return 0;
-}
-
-LbTcpConnection::LbTcpConnection(struct pool &_pool, EventLoop &event_loop,
-                                 Stock *_pipe_stock,
-                                 UniqueSocketDescriptor &&fd, FdType fd_type,
-                                 const SocketFilter *filter, void *filter_ctx,
-                                 SocketAddress remote_address,
-                                 const LbClusterConfig &_cluster,
-                                 LbClusterMap &_clusters,
-                                 Balancer &_balancer,
-                                 LbTcpConnectionHandler &_handler)
-    :pool(_pool), pipe_stock(_pipe_stock),
-     handler(_handler),
-     inbound(event_loop), outbound(event_loop),
-     cluster(_cluster), clusters(_clusters), balancer(_balancer),
-     session_sticky(lb_tcp_sticky(cluster.sticky_mode, remote_address))
-{
-    inbound.Init(fd.Release(), fd_type,
-                 nullptr, &write_timeout,
-                 filter, filter_ctx,
-                 inbound_buffered_socket_handler, this);
-    /* TODO
-    inbound.base.direct = pipe_stock != nullptr &&
-        (ISTREAM_TO_PIPE & fd_type) != 0 &&
-        (ISTREAM_TO_TCP & FdType::FD_PIPE) != 0;
-    */
-
-    if (cluster.transparent_source) {
-        bind_address = remote_address;
-        bind_address.SetPort(0);
-    } else
-        bind_address.Clear();
+    OnTcpError("Connect error", ep);
 }
 
 void
 LbTcpConnection::ConnectOutbound()
 {
     if (cluster.HasZeroConf()) {
-        auto *cluster2 = clusters.Find(cluster.name);
+        auto *cluster2 = instance.clusters.Find(cluster.name);
         if (cluster2 == nullptr) {
             DestroyInbound();
-            handler.OnTcpError("Zeroconf error", "Zeroconf cluster not found");
+            OnTcpError("Zeroconf error", "Zeroconf cluster not found");
             return;
         }
 
         const auto member = cluster2->Pick(session_sticky);
         if (member.first == nullptr) {
             DestroyInbound();
-            handler.OnTcpError("Zeroconf error", "Zeroconf cluster is empty");
+            OnTcpError("Zeroconf error", "Zeroconf cluster is empty");
             return;
         }
 
@@ -441,7 +448,7 @@ LbTcpConnection::ConnectOutbound()
         return;
     }
 
-    client_balancer_connect(inbound.GetEventLoop(), pool, balancer,
+    client_balancer_connect(inbound.GetEventLoop(), pool, *instance.balancer,
                             cluster.transparent_source,
                             bind_address,
                             session_sticky,
@@ -451,11 +458,94 @@ LbTcpConnection::ConnectOutbound()
                             cancel_connect);
 }
 
-void
-LbTcpConnection::OnHandshake()
-{
-    assert(!cancel_connect);
-    assert(!outbound.IsValid());
+/*
+ * public
+ *
+ */
 
-    ConnectOutbound();
+LbTcpConnection::LbTcpConnection(struct pool &_pool, LbInstance &_instance,
+                           const LbListenerConfig &_listener,
+                           UniqueSocketDescriptor &&fd, FdType fd_type,
+                           const SocketFilter *filter, void *filter_ctx,
+                           SocketAddress _client_address)
+    :pool(_pool), instance(_instance), listener(_listener),
+     cluster(*listener.destination.cluster),
+     client_address(address_to_string(pool, _client_address)),
+     session_sticky(lb_tcp_sticky(cluster.sticky_mode, _client_address)),
+     inbound(instance.event_loop), outbound(instance.event_loop)
+{
+    if (client_address == nullptr)
+        client_address = "unknown";
+
+    inbound.Init(fd.Release(), fd_type,
+                 nullptr, &write_timeout,
+                 filter, filter_ctx,
+                 inbound_buffered_socket_handler, this);
+    /* TODO
+    inbound.base.direct = pipe_stock != nullptr &&
+        (ISTREAM_TO_PIPE & fd_type) != 0 &&
+        (ISTREAM_TO_TCP & FdType::FD_PIPE) != 0;
+    */
+
+    if (cluster.transparent_source) {
+        bind_address = _client_address;
+        bind_address.SetPort(0);
+    } else
+        bind_address.Clear();
+
+    ScheduleHandshakeCallback();
+
+    instance.tcp_connections.push_back(*this);
+}
+
+LbTcpConnection::~LbTcpConnection()
+{
+    DestroyBoth();
+
+    auto &connections = instance.tcp_connections;
+    connections.erase(connections.iterator_to(*this));
+}
+
+LbTcpConnection *
+LbTcpConnection::New(LbInstance &instance,
+                  const LbListenerConfig &listener,
+                  SslFactory *ssl_factory,
+                  UniqueSocketDescriptor &&fd, SocketAddress address)
+{
+    assert(listener.destination.GetProtocol() == LbProtocol::TCP);
+
+    auto fd_type = FdType::FD_TCP;
+
+    const SocketFilter *filter = nullptr;
+    void *filter_ctx = nullptr;
+
+    if (ssl_factory != nullptr) {
+        auto *ssl_filter = ssl_filter_new(*ssl_factory);
+
+        filter = &thread_socket_filter;
+        filter_ctx =
+            new ThreadSocketFilter(instance.event_loop,
+                                   thread_pool_get_queue(instance.event_loop),
+                                   &ssl_filter_get_handler(*ssl_filter));
+    }
+
+    struct pool *pool = pool_new_linear(instance.root_pool,
+                                        "client_connection",
+                                        2048);
+    pool_set_major(pool);
+
+    return NewFromPool<LbTcpConnection>(*pool, *pool, instance,
+                                     listener,
+                                     std::move(fd), fd_type,
+                                     filter, filter_ctx,
+                                     address);
+}
+
+void
+LbTcpConnection::Destroy()
+{
+    assert(!instance.tcp_connections.empty());
+    assert(listener.destination.GetProtocol() == LbProtocol::TCP);
+
+    DeleteUnrefTrashPool(pool, this);
 }
