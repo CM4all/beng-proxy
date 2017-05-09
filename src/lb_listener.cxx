@@ -12,9 +12,6 @@
 #include "ssl/ssl_factory.hxx"
 #include "ssl/DbSniCallback.hxx"
 #include "net/SocketAddress.hxx"
-#include "util/Exception.hxx"
-
-#include <daemon/log.h>
 
 void
 LbListener::OnAccept(UniqueSocketDescriptor &&new_fd, SocketAddress address)
@@ -36,7 +33,13 @@ LbListener::OnAccept(UniqueSocketDescriptor &&new_fd, SocketAddress address)
 void
 LbListener::OnAcceptError(std::exception_ptr ep)
 {
-    daemon_log(2, "%s\n", GetFullMessage(ep).c_str());
+    Log(2, "Failed to accept", ep);
+}
+
+std::string
+LbListener::MakeLogName() const noexcept
+{
+    return "listener " + config.name;
 }
 
 /*
