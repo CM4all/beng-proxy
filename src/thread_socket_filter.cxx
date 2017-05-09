@@ -73,7 +73,9 @@ bool
 ThreadSocketFilter::SubmitDecryptedInput()
 {
     while (true) {
-        uint8_t copy[8192];
+        /* this buffer is large enough to hold the contents of one
+           SliceFifoBuffer buffer (see SliceFifoBufferPool.cxx) */
+        uint8_t copy[16384];
         size_t size;
         bool more;
 
