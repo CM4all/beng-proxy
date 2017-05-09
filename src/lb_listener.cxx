@@ -15,7 +15,7 @@
 
 void
 LbListener::OnAccept(UniqueSocketDescriptor &&new_fd, SocketAddress address)
-{
+try {
     switch (config.destination.GetProtocol()) {
     case LbProtocol::HTTP:
         NewLbHttpConnection(instance, config, ssl_factory,
@@ -28,7 +28,9 @@ LbListener::OnAccept(UniqueSocketDescriptor &&new_fd, SocketAddress address)
                           std::move(new_fd), address);
         break;
     }
-}
+} catch (const std::runtime_error &e) {
+    Log(1, "Failed to setup accepted connection", e);
+ }
 
 void
 LbListener::OnAcceptError(std::exception_ptr ep)
