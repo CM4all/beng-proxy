@@ -76,7 +76,7 @@ NewLbHttpConnection(LbInstance &instance,
         }
 
         filter = &thread_socket_filter;
-        filter_ctx = connection->thread_socket_filter =
+        filter_ctx =
             new ThreadSocketFilter(instance.event_loop,
                                    thread_pool_get_queue(instance.event_loop),
                                    &ssl_filter_get_handler(*connection->ssl_filter));

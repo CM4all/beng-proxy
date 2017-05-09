@@ -94,18 +94,18 @@ lb_connection_new(LbInstance &instance,
 
     if (ssl_factory != nullptr) {
         try {
-            connection->ssl_filter = ssl_filter_new(*ssl_factory);
+            auto *ssl_filter = ssl_filter_new(*ssl_factory);
+
+            filter = &thread_socket_filter;
+            filter_ctx =
+                new ThreadSocketFilter(instance.event_loop,
+                                       thread_pool_get_queue(instance.event_loop),
+                                       &ssl_filter_get_handler(*ssl_filter));
         } catch (const std::runtime_error &e) {
             connection->Log(1, "Failed to create SSL filter", e);
             DeleteUnrefTrashPool(*pool, connection);
             return nullptr;
         }
-
-        filter = &thread_socket_filter;
-        filter_ctx = connection->thread_socket_filter =
-            new ThreadSocketFilter(instance.event_loop,
-                                   thread_pool_get_queue(instance.event_loop),
-                                   &ssl_filter_get_handler(*connection->ssl_filter));
     }
 
     instance.tcp_connections.push_back(*connection);

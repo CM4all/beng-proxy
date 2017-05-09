@@ -40,9 +40,6 @@ struct LbConnection final
      */
     const char *client_address;
 
-    SslFilter *ssl_filter = nullptr;
-    ThreadSocketFilter *thread_socket_filter = nullptr;
-
     LbTcpConnection *tcp;
 
     LbConnection(struct pool &_pool, LbInstance &_instance,

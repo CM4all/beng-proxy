@@ -43,7 +43,6 @@ struct LbHttpConnection final
     const char *client_address;
 
     SslFilter *ssl_filter = nullptr;
-    ThreadSocketFilter *thread_socket_filter = nullptr;
 
     HttpServerConnection *http;
 
