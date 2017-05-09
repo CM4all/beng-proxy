@@ -49,6 +49,8 @@ public:
                  const SocketFilter *filter, void *filter_ctx,
                  SocketAddress _client_address);
 
+    ~LbConnection();
+
     static LbConnection *New(LbInstance &instance,
                              const LbListenerConfig &listener,
                              SslFactory *ssl_factory,

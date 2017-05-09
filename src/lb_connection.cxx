@@ -35,6 +35,14 @@ LbConnection::LbConnection(struct pool &_pool, LbInstance &_instance,
         client_address = "unknown";
 
     tcp.ScheduleHandshakeCallback();
+
+    instance.tcp_connections.push_back(*this);
+}
+
+LbConnection::~LbConnection()
+{
+    auto &connections = instance.tcp_connections;
+    connections.erase(connections.iterator_to(*this));
 }
 
 std::string
@@ -111,15 +119,11 @@ LbConnection::New(LbInstance &instance,
                                         2048);
     pool_set_major(pool);
 
-    auto *connection = NewFromPool<LbConnection>(*pool, *pool, instance,
-                                                 listener,
-                                                 std::move(fd), fd_type,
-                                                 filter, filter_ctx,
-                                                 address);
-
-    instance.tcp_connections.push_back(*connection);
-
-    return connection;
+    return NewFromPool<LbConnection>(*pool, *pool, instance,
+                                     listener,
+                                     std::move(fd), fd_type,
+                                     filter, filter_ctx,
+                                     address);
 }
 
 void
@@ -127,9 +131,6 @@ LbConnection::Destroy()
 {
     assert(!instance.tcp_connections.empty());
     assert(listener.destination.GetProtocol() == LbProtocol::TCP);
-
-    auto &connections = instance.tcp_connections;
-    connections.erase(connections.iterator_to(*this));
 
     DeleteUnrefTrashPool(pool, this);
 }
