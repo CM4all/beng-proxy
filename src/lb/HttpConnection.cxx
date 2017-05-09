@@ -70,9 +70,8 @@ NewLbHttpConnection(LbInstance &instance,
         try {
             connection->ssl_filter = ssl_filter_new(*ssl_factory);
         } catch (const std::runtime_error &e) {
-            connection->Log(1, "Failed to create SSL filter", e);
             DeleteUnrefTrashPool(*pool, connection);
-            return nullptr;
+            throw;
         }
 
         filter = &thread_socket_filter;

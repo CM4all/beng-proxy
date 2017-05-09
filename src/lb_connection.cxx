@@ -102,9 +102,8 @@ lb_connection_new(LbInstance &instance,
                                        thread_pool_get_queue(instance.event_loop),
                                        &ssl_filter_get_handler(*ssl_filter));
         } catch (const std::runtime_error &e) {
-            connection->Log(1, "Failed to create SSL filter", e);
             DeleteUnrefTrashPool(*pool, connection);
-            return nullptr;
+            throw;
         }
     }
 
