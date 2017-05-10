@@ -54,7 +54,7 @@ void
 LbMonitorMap::Enable()
 {
     for (auto i : map)
-        lb_monitor_enable(i.second);
+        i.second->Enable();
 }
 
 void
@@ -95,10 +95,10 @@ LbMonitorMap::Add(const LbNodeConfig &node, unsigned port,
             address.SetPort(port);
 
         r.first->second =
-            lb_monitor_new(event_loop, *_pool, key.ToString(*_pool), config,
-                           SocketAddress(address,
-                                         node.address.GetSize()),
-                           *class_);
+                   new LbMonitorController(event_loop, *_pool, key.ToString(*_pool), config,
+                                           SocketAddress(address,
+                                                         node.address.GetSize()),
+                                           *class_);
         pool_unref(_pool);
     }
 }
@@ -107,7 +107,7 @@ void
 LbMonitorMap::Clear()
 {
     for (auto i : map)
-        lb_monitor_free(i.second);
+        delete i.second;
 
     map.clear();
 }

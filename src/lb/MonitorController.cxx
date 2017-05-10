@@ -110,7 +110,6 @@ LbMonitorController::TimeoutCallback()
     interval_event.Add(interval);
 }
 
-inline
 LbMonitorController::LbMonitorController(EventLoop &_event_loop,
                                          struct pool &_pool, const char *_name,
                                          const LbMonitorConfig &_config,
@@ -135,27 +134,4 @@ LbMonitorController::~LbMonitorController()
         cancel_ptr.Cancel();
 
     pool_unref(&pool);
-}
-
-LbMonitorController *
-lb_monitor_new(EventLoop &event_loop, struct pool &pool, const char *name,
-               const LbMonitorConfig &config,
-               SocketAddress address,
-               const LbMonitorClass &class_)
-{
-    return new LbMonitorController(event_loop, pool, name, config,
-                                   address,
-                                   class_);
-}
-
-void
-lb_monitor_free(LbMonitorController *monitor)
-{
-    delete monitor;
-}
-
-void
-lb_monitor_enable(LbMonitorController *monitor)
-{
-    monitor->Enable();
 }
