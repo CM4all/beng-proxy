@@ -6,7 +6,7 @@
 
 #include "ExpectMonitor.hxx"
 #include "Monitor.hxx"
-#include "lb_config.hxx"
+#include "MonitorConfig.hxx"
 #include "pool.hxx"
 #include "gerrno.h"
 #include "system/Error.hxx"

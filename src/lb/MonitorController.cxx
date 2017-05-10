@@ -3,7 +3,7 @@
  */
 
 #include "MonitorController.hxx"
-#include "lb_config.hxx"
+#include "MonitorConfig.hxx"
 #include "pool.hxx"
 #include "failure.hxx"
 

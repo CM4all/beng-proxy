@@ -6,7 +6,7 @@
 
 #include "SynMonitor.hxx"
 #include "Monitor.hxx"
-#include "lb_config.hxx"
+#include "MonitorConfig.hxx"
 #include "pool.hxx"
 #include "net/ConnectSocket.hxx"
 #include "net/SocketAddress.hxx"
