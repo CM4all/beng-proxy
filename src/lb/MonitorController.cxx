@@ -16,7 +16,7 @@
 
 #include <glib.h>
 
-struct LbMonitorController final : Logger, public LbMonitorHandler {
+class LbMonitorController final : public Logger, public LbMonitorHandler {
     EventLoop &event_loop;
     struct pool &pool;
 
@@ -36,6 +36,7 @@ struct LbMonitorController final : Logger, public LbMonitorHandler {
     bool state = true;
     bool fade = false;
 
+public:
     LbMonitorController(EventLoop &_event_loop, struct pool &_pool, const char *_name,
               const LbMonitorConfig &_config,
               SocketAddress _address,
@@ -48,6 +49,11 @@ struct LbMonitorController final : Logger, public LbMonitorHandler {
             cancel_ptr.Cancel();
 
         pool_unref(&pool);
+    }
+
+    void Enable() {
+        static constexpr struct timeval immediately = { 0, 0 };
+        interval_event.Add(immediately);
     }
 
 private:
@@ -205,6 +211,5 @@ lb_monitor_free(LbMonitorController *monitor)
 void
 lb_monitor_enable(LbMonitorController *monitor)
 {
-    static constexpr struct timeval immediately = { 0, 0 };
-    monitor->interval_event.Add(immediately);
+    monitor->Enable();
 }

@@ -14,7 +14,7 @@
 struct pool;
 struct LbNodeConfig;
 struct LbMonitorConfig;
-struct LbMonitorController;
+class LbMonitorController;
 class EventLoop;
 
 class LbMonitorMap {

@@ -9,8 +9,8 @@ struct pool;
 class EventLoop;
 class SocketAddress;
 struct LbMonitorConfig;
-struct LbMonitorController;
 struct LbMonitorClass;
+class LbMonitorController;
 
 LbMonitorController *
 lb_monitor_new(EventLoop &event_loop, struct pool &pool, const char *name,
