@@ -20,9 +20,6 @@
 #include <list>
 #include <string>
 
-struct pool;
-class Error;
-
 struct LbControlConfig {
     AllocatedSocketAddress bind_address;
 };
