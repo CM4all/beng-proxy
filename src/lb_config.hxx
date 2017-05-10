@@ -7,6 +7,7 @@
 #ifndef BENG_LB_CONFIG_H
 #define BENG_LB_CONFIG_H
 
+#include "lb/SimpleHttpResponse.hxx"
 #include "lb/MonitorConfig.hxx"
 #include "address_list.hxx"
 #include "StickyMode.hxx"
@@ -14,8 +15,6 @@
 #include "regex.hxx"
 #include "net/AllocatedSocketAddress.hxx"
 #include "certdb/Config.hxx"
-
-#include <http/status.h>
 
 #include <boost/filesystem/path.hpp>
 
@@ -75,25 +74,6 @@ struct LbMemberConfig {
     const struct LbNodeConfig *node = nullptr;
 
     unsigned port = 0;
-};
-
-struct LbSimpleHttpResponse {
-    http_status_t status = http_status_t(0);
-
-    /**
-     * The "Location" response header.
-     */
-    std::string location;
-
-    std::string message;
-
-    LbSimpleHttpResponse() = default;
-    explicit LbSimpleHttpResponse(http_status_t _status)
-        :status(_status) {}
-
-    bool IsDefined() const {
-        return status != http_status_t(0);
-    }
 };
 
 struct LbClusterConfig {
