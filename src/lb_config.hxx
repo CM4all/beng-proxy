@@ -7,10 +7,8 @@
 #ifndef BENG_LB_CONFIG_H
 #define BENG_LB_CONFIG_H
 
-#include "lb/SimpleHttpResponse.hxx"
+#include "lb/ClusterConfig.hxx"
 #include "lb/MonitorConfig.hxx"
-#include "address_list.hxx"
-#include "StickyMode.hxx"
 #include "ssl/ssl_config.hxx"
 #include "regex.hxx"
 #include "net/AllocatedSocketAddress.hxx"
@@ -20,17 +18,10 @@
 
 #include <map>
 #include <list>
-#include <forward_list>
-#include <vector>
 #include <string>
 
 struct pool;
 class Error;
-
-enum class LbProtocol {
-    HTTP,
-    TCP,
-};
 
 struct LbControlConfig {
     AllocatedSocketAddress bind_address;
@@ -46,90 +37,6 @@ struct LbCertDatabaseConfig : CertDatabaseConfig {
     std::list<std::string> ca_certs;
 
     explicit LbCertDatabaseConfig(const char *_name):name(_name) {}
-};
-
-struct LbNodeConfig {
-    std::string name;
-
-    AllocatedSocketAddress address;
-
-    /**
-     * The Tomcat "jvmRoute" setting of this node.  It is used for
-     * #StickyMode::JVM_ROUTE.
-     */
-    std::string jvm_route;
-
-    explicit LbNodeConfig(const char *_name)
-        :name(_name) {}
-
-    LbNodeConfig(const char *_name, AllocatedSocketAddress &&_address)
-        :name(_name), address(std::move(_address)) {}
-
-    LbNodeConfig(LbNodeConfig &&src)
-        :name(std::move(src.name)), address(std::move(src.address)),
-         jvm_route(std::move(src.jvm_route)) {}
-};
-
-struct LbMemberConfig {
-    const struct LbNodeConfig *node = nullptr;
-
-    unsigned port = 0;
-};
-
-struct LbClusterConfig {
-    std::string name;
-
-    /**
-     * The protocol that is spoken on this cluster.
-     */
-    LbProtocol protocol = LbProtocol::HTTP;
-
-    /**
-     * Use the client's source IP for the connection to the backend?
-     * This is implemented using IP_TRANSPARENT and requires the
-     * "tproxy" Linux kernel module.
-     */
-    bool transparent_source = false;
-
-    bool mangle_via = false;
-
-    LbSimpleHttpResponse fallback;
-
-    StickyMode sticky_mode = StickyMode::NONE;
-
-    std::string session_cookie = "beng_proxy_session";
-
-    const LbMonitorConfig *monitor = nullptr;
-
-    std::vector<LbMemberConfig> members;
-
-    std::string zeroconf_service, zeroconf_domain;
-
-    std::forward_list<AllocatedSocketAddress> address_allocations;
-
-    /**
-     * A list of node addresses.
-     */
-    AddressList address_list;
-
-    explicit LbClusterConfig(const char *_name)
-        :name(_name) {}
-
-    LbClusterConfig(LbClusterConfig &&) = default;
-
-    LbClusterConfig(const LbClusterConfig &) = delete;
-    LbClusterConfig &operator=(const LbClusterConfig &) = delete;
-
-    /**
-     * Returns the member index of the node with the specified
-     * jvm_route value, or -1 if not found.
-     */
-    gcc_pure
-    int FindJVMRoute(const char *jvm_route) const;
-
-    bool HasZeroConf() const {
-        return !zeroconf_service.empty();
-    }
 };
 
 struct LbAttributeReference {
