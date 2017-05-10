@@ -9,7 +9,7 @@
 #include "lb_config.hxx"
 #include "pool.hxx"
 #include "gerrno.h"
-#include "GException.hxx"
+#include "system/Error.hxx"
 #include "net/ConnectSocket.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
@@ -65,7 +65,7 @@ struct ExpectMonitor final : ConnectSocketHandler, Cancellable {
     }
 
     void OnSocketConnectError(std::exception_ptr ep) override {
-        handler.Error(ToGError(ep));
+        handler.Error(ep);
         delete this;
     }
 
@@ -125,9 +125,9 @@ ExpectMonitor::DelayCallback()
     ssize_t nbytes = recv(fd, buffer, sizeof(buffer),
                           MSG_DONTWAIT);
     if (nbytes < 0) {
-        GError *error = new_error_errno();
+        auto e = MakeErrno("Failed to receive");
         close(fd);
-        handler.Error(error);
+        handler.Error(std::make_exception_ptr(e));
     } else if (!config.fade_expect.empty() &&
                check_expectation(buffer, nbytes,
                                  config.fade_expect.c_str())) {
@@ -140,9 +140,7 @@ ExpectMonitor::DelayCallback()
         handler.Success();
     } else {
         close(fd);
-        GError *error = g_error_new_literal(g_file_error_quark(), 0,
-                                            "Expectation failed");
-        handler.Error(error);
+        handler.Error(std::make_exception_ptr(std::runtime_error("Expectation failed")));
     }
 
     pool_unref(&pool);
@@ -162,8 +160,7 @@ ExpectMonitor::OnSocketConnectSuccess(UniqueSocketDescriptor &&new_fd)
                               config.send.length(),
                               MSG_DONTWAIT);
         if (nbytes < 0) {
-            GError *error = new_error_errno();
-            handler.Error(error);
+            handler.Error(std::make_exception_ptr(MakeErrno("Failed to send")));
             return;
         }
     }

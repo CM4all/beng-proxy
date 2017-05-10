@@ -59,7 +59,7 @@ private:
     virtual void Success() override;
     virtual void Fade() override;
     virtual void Timeout() override;
-    virtual void Error(GError *error) override;
+    virtual void Error(std::exception_ptr e) override;
 
 protected:
     /* virtual methods from class Logger */

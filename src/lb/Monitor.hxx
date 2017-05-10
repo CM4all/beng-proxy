@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_LB_MONITOR_HXX
 #define BENG_PROXY_LB_MONITOR_HXX
 
-#include "glibfwd.hxx"
+#include <exception>
 
 struct pool;
 class EventLoop;
@@ -20,7 +20,7 @@ public:
     virtual void Success() = 0;
     virtual void Fade() = 0;
     virtual void Timeout() = 0;
-    virtual void Error(GError *error) = 0;
+    virtual void Error(std::exception_ptr e) = 0;
 };
 
 struct LbMonitorClass {

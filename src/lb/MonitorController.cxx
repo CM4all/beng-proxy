@@ -66,13 +66,12 @@ LbMonitorController::Timeout()
 }
 
 void
-LbMonitorController::Error(GError *error)
+LbMonitorController::Error(std::exception_ptr e)
 {
     cancel_ptr = nullptr;
     timeout_event.Cancel();
 
-    Log(state ? 2 : 4, "error", error);
-    g_error_free(error);
+    Log(state ? 2 : 4, "error", e);
 
     state = false;
     failure_set(address, FAILURE_MONITOR, std::chrono::seconds::zero());

@@ -8,7 +8,6 @@
 #include "Monitor.hxx"
 #include "lb_config.hxx"
 #include "pool.hxx"
-#include "GException.hxx"
 #include "net/ConnectSocket.hxx"
 #include "net/SocketAddress.hxx"
 #include "util/Cancellable.hxx"
@@ -34,7 +33,7 @@ public:
     }
 
     void OnSocketConnectError(std::exception_ptr ep) override {
-        handler.Error(ToGError(ep));
+        handler.Error(ep);
     }
 };
 
