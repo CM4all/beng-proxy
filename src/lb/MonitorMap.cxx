@@ -4,11 +4,11 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "lb_hmonitor.hxx"
-#include "lb_monitor.hxx"
-#include "lb_ping_monitor.hxx"
-#include "lb_syn_monitor.hxx"
-#include "lb_expect_monitor.hxx"
+#include "MonitorMap.hxx"
+#include "Monitor.hxx"
+#include "PingMonitor.hxx"
+#include "SynMonitor.hxx"
+#include "ExpectMonitor.hxx"
 #include "lb_config.hxx"
 #include "pool.hxx"
 #include "tpool.hxx"

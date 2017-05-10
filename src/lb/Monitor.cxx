@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "lb_monitor.hxx"
+#include "Monitor.hxx"
 #include "lb_config.hxx"
 #include "pool.hxx"
 #include "failure.hxx"

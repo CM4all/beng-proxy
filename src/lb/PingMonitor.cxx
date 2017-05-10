@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "lb_ping_monitor.hxx"
-#include "lb_monitor.hxx"
+#include "PingMonitor.hxx"
+#include "Monitor.hxx"
 #include "pool.hxx"
 #include "GException.hxx"
 #include "net/Ping.hxx"

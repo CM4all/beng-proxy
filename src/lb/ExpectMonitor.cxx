@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "lb_expect_monitor.hxx"
-#include "lb_monitor.hxx"
+#include "ExpectMonitor.hxx"
+#include "Monitor.hxx"
 #include "lb_config.hxx"
 #include "pool.hxx"
 #include "gerrno.h"

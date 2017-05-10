@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "lb_syn_monitor.hxx"
-#include "lb_monitor.hxx"
+#include "SynMonitor.hxx"
+#include "Monitor.hxx"
 #include "lb_config.hxx"
 #include "pool.hxx"
 #include "GException.hxx"

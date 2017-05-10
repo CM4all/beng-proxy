@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_LB_MONITOR_H
-#define BENG_PROXY_LB_MONITOR_H
+#ifndef BENG_PROXY_LB_MONITOR_HXX
+#define BENG_PROXY_LB_MONITOR_HXX
 
 #include "glibfwd.hxx"
 
