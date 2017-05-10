@@ -3,7 +3,7 @@
  */
 
 #include "LuaGoto.hxx"
-#include "lb_config.hxx"
+#include "GotoConfig.hxx"
 #include "lua/Class.hxx"
 
 static constexpr char lua_goto_class[] = "lb.goto";
