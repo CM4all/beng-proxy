@@ -188,16 +188,7 @@ struct LbBranchConfig {
         return fallback.GetProtocol();
     }
 
-    bool HasZeroConf() const {
-        if (fallback.HasZeroConf())
-            return true;
-
-        for (const auto &i : conditions)
-            if (i.HasZeroConf())
-                return true;
-
-        return false;
-    }
+    bool HasZeroConf() const;
 
     template<typename R>
     gcc_pure
@@ -227,39 +218,6 @@ struct LbLuaHandlerConfig {
     LbLuaHandlerConfig(const LbLuaHandlerConfig &) = delete;
     LbLuaHandlerConfig &operator=(const LbLuaHandlerConfig &) = delete;
 };
-
-inline LbProtocol
-LbGoto::GetProtocol() const
-{
-    assert(IsDefined());
-
-    if (response.IsDefined() || lua != nullptr)
-        return LbProtocol::HTTP;
-
-    return cluster != nullptr
-        ? cluster->protocol
-        : branch->GetProtocol();
-}
-
-inline const char *
-LbGoto::GetName() const
-{
-    assert(IsDefined());
-
-    if (lua != nullptr)
-        return lua->name.c_str();
-
-    return cluster != nullptr
-        ? cluster->name.c_str()
-        : branch->name.c_str();
-}
-
-inline bool
-LbGoto::HasZeroConf() const
-{
-    return (cluster != nullptr && cluster->HasZeroConf()) ||
-        (branch != nullptr && branch->HasZeroConf());
-}
 
 template<typename R>
 const LbGoto &
