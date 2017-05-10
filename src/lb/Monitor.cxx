@@ -8,19 +8,18 @@
 #include "lb_config.hxx"
 #include "pool.hxx"
 #include "failure.hxx"
+#include "Logger.hxx"
 #include "net/SocketAddress.hxx"
 #include "event/TimerEvent.hxx"
 #include "util/Cancellable.hxx"
 
-#include <daemon/log.h>
-
 #include <glib.h>
 
-struct LbMonitor final : public LbMonitorHandler {
+struct LbMonitor final : Logger, public LbMonitorHandler {
     EventLoop &event_loop;
     struct pool &pool;
 
-    const char *const name;
+    const std::string name;
     const LbMonitorConfig &config;
     const AllocatedSocketAddress address;
     const LbMonitorClass &class_;
@@ -59,6 +58,12 @@ private:
     virtual void Fade() override;
     virtual void Timeout() override;
     virtual void Error(GError *error) override;
+
+protected:
+    /* virtual methods from class Logger */
+    std::string MakeLogName() const noexcept override {
+        return "monitor " + name;
+    }
 };
 
 void
@@ -68,11 +73,11 @@ LbMonitor::Success()
     timeout_event.Cancel();
 
     if (!state)
-        daemon_log(5, "monitor recovered: %s\n", name);
+        Log(5, "recovered");
     else if (fade)
-        daemon_log(5, "monitor finished fade: %s\n", name);
+        Log(5, "finished fade");
     else
-        daemon_log(6, "monitor ok: %s\n", name);
+        Log(6, "ok");
 
     state = true;
 
@@ -93,9 +98,9 @@ LbMonitor::Fade()
     timeout_event.Cancel();
 
     if (!fade)
-        daemon_log(5, "monitor fade: %s\n", name);
+        Log(5, "fade");
     else
-        daemon_log(6, "monitor still fade: %s\n", name);
+        Log(6, "still fade");
 
     fade = true;
     failure_set(address, FAILURE_FADE, std::chrono::minutes(5));
@@ -109,7 +114,7 @@ LbMonitor::Timeout()
     cancel_ptr = nullptr;
     timeout_event.Cancel();
 
-    daemon_log(state ? 3 : 6, "monitor timeout: %s\n", name);
+    Log(state ? 3 : 6, "timeout");
 
     state = false;
     failure_set(address, FAILURE_MONITOR, std::chrono::seconds::zero());
@@ -123,12 +128,7 @@ LbMonitor::Error(GError *error)
     cancel_ptr = nullptr;
     timeout_event.Cancel();
 
-    if (state)
-        daemon_log(2, "monitor error: %s: %s\n",
-                   name, error->message);
-    else
-        daemon_log(4, "monitor error: %s: %s\n",
-                   name, error->message);
+    Log(state ? 2 : 4, "error", error);
     g_error_free(error);
 
     state = false;
@@ -142,7 +142,7 @@ LbMonitor::IntervalCallback()
 {
     assert(!cancel_ptr);
 
-    daemon_log(6, "running monitor %s\n", name);
+    Log(6, "run");
 
     if (config.timeout > 0)
         timeout_event.Add(timeout);
@@ -157,7 +157,7 @@ LbMonitor::TimeoutCallback()
 {
     assert(cancel_ptr);
 
-    daemon_log(6, "monitor timeout: %s\n", name);
+    Log(6, "timeout");
 
     cancel_ptr.CancelAndClear();
 
