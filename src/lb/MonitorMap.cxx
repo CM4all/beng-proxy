@@ -5,7 +5,7 @@
  */
 
 #include "MonitorMap.hxx"
-#include "Monitor.hxx"
+#include "MonitorController.hxx"
 #include "PingMonitor.hxx"
 #include "SynMonitor.hxx"
 #include "ExpectMonitor.hxx"

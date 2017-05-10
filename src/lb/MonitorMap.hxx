@@ -14,7 +14,7 @@
 struct pool;
 struct LbNodeConfig;
 struct LbMonitorConfig;
-struct LbMonitor;
+struct LbMonitorController;
 class EventLoop;
 
 class LbMonitorMap {
@@ -31,7 +31,7 @@ class LbMonitorMap {
 
     struct pool *const pool;
 
-    std::map<Key, LbMonitor *> map;
+    std::map<Key, LbMonitorController *> map;
 
 public:
     LbMonitorMap(struct pool &_pool);

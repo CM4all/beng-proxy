@@ -9,14 +9,11 @@
 
 #include "glibfwd.hxx"
 
-#include <inline/compiler.h>
-
 struct pool;
 class EventLoop;
 class SocketAddress;
 class CancellablePointer;
 struct LbMonitorConfig;
-struct LbMonitor;
 
 class LbMonitorHandler {
 public:
@@ -33,21 +30,5 @@ struct LbMonitorClass {
                 LbMonitorHandler &handler,
                 CancellablePointer &cancel_ptr);
 };
-
-LbMonitor *
-lb_monitor_new(EventLoop &event_loop, struct pool &pool, const char *name,
-               const LbMonitorConfig &config,
-               SocketAddress address,
-               const LbMonitorClass &class_);
-
-void
-lb_monitor_free(LbMonitor *monitor);
-
-void
-lb_monitor_enable(LbMonitor *monitor);
-
-gcc_pure
-bool
-lb_monitor_get_state(const LbMonitor *monitor);
 
 #endif

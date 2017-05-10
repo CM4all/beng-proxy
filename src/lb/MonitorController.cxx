@@ -4,6 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
+#include "MonitorController.hxx"
 #include "Monitor.hxx"
 #include "lb_config.hxx"
 #include "pool.hxx"
@@ -15,7 +16,7 @@
 
 #include <glib.h>
 
-struct LbMonitor final : Logger, public LbMonitorHandler {
+struct LbMonitorController final : Logger, public LbMonitorHandler {
     EventLoop &event_loop;
     struct pool &pool;
 
@@ -35,12 +36,12 @@ struct LbMonitor final : Logger, public LbMonitorHandler {
     bool state = true;
     bool fade = false;
 
-    LbMonitor(EventLoop &_event_loop, struct pool &_pool, const char *_name,
+    LbMonitorController(EventLoop &_event_loop, struct pool &_pool, const char *_name,
               const LbMonitorConfig &_config,
               SocketAddress _address,
               const LbMonitorClass &_class);
 
-    ~LbMonitor() {
+    ~LbMonitorController() {
         interval_event.Cancel();
 
         if (cancel_ptr)
@@ -67,7 +68,7 @@ protected:
 };
 
 void
-LbMonitor::Success()
+LbMonitorController::Success()
 {
     cancel_ptr = nullptr;
     timeout_event.Cancel();
@@ -92,7 +93,7 @@ LbMonitor::Success()
 }
 
 void
-LbMonitor::Fade()
+LbMonitorController::Fade()
 {
     cancel_ptr = nullptr;
     timeout_event.Cancel();
@@ -109,7 +110,7 @@ LbMonitor::Fade()
 }
 
 void
-LbMonitor::Timeout()
+LbMonitorController::Timeout()
 {
     cancel_ptr = nullptr;
     timeout_event.Cancel();
@@ -123,7 +124,7 @@ LbMonitor::Timeout()
 }
 
 void
-LbMonitor::Error(GError *error)
+LbMonitorController::Error(GError *error)
 {
     cancel_ptr = nullptr;
     timeout_event.Cancel();
@@ -138,7 +139,7 @@ LbMonitor::Error(GError *error)
 }
 
 inline void
-LbMonitor::IntervalCallback()
+LbMonitorController::IntervalCallback()
 {
     assert(!cancel_ptr);
 
@@ -153,7 +154,7 @@ LbMonitor::IntervalCallback()
 }
 
 inline void
-LbMonitor::TimeoutCallback()
+LbMonitorController::TimeoutCallback()
 {
     assert(cancel_ptr);
 
@@ -168,11 +169,11 @@ LbMonitor::TimeoutCallback()
 }
 
 inline
-LbMonitor::LbMonitor(EventLoop &_event_loop,
-                     struct pool &_pool, const char *_name,
-                     const LbMonitorConfig &_config,
-                     SocketAddress _address,
-                     const LbMonitorClass &_class)
+LbMonitorController::LbMonitorController(EventLoop &_event_loop,
+                                         struct pool &_pool, const char *_name,
+                                         const LbMonitorConfig &_config,
+                                         SocketAddress _address,
+                                         const LbMonitorClass &_class)
     :event_loop(_event_loop), pool(_pool), name(_name), config(_config),
      address(_address),
      class_(_class),
@@ -184,32 +185,32 @@ LbMonitor::LbMonitor(EventLoop &_event_loop,
     pool_ref(&pool);
 }
 
-LbMonitor *
+LbMonitorController *
 lb_monitor_new(EventLoop &event_loop, struct pool &pool, const char *name,
                const LbMonitorConfig &config,
                SocketAddress address,
                const LbMonitorClass &class_)
 {
-    return new LbMonitor(event_loop, pool, name, config,
-                         address,
-                         class_);
+    return new LbMonitorController(event_loop, pool, name, config,
+                                   address,
+                                   class_);
 }
 
 void
-lb_monitor_free(LbMonitor *monitor)
+lb_monitor_free(LbMonitorController *monitor)
 {
     delete monitor;
 }
 
 void
-lb_monitor_enable(LbMonitor *monitor)
+lb_monitor_enable(LbMonitorController *monitor)
 {
     static constexpr struct timeval immediately = { 0, 0 };
     monitor->interval_event.Add(immediately);
 }
 
 bool
-lb_monitor_get_state(const LbMonitor *monitor)
+lb_monitor_get_state(const LbMonitorController *monitor)
 {
     return monitor->state;
 }
