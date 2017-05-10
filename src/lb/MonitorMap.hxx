@@ -10,6 +10,7 @@
 #include <inline/compiler.h>
 
 #include <map>
+#include <memory>
 
 struct pool;
 struct LbNodeConfig;
@@ -31,7 +32,7 @@ class LbMonitorMap {
 
     struct pool *const pool;
 
-    std::map<Key, LbMonitorController *> map;
+    std::map<Key, std::unique_ptr<LbMonitorController>> map;
 
 public:
     LbMonitorMap(struct pool &_pool);
