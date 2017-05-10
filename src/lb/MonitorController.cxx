@@ -208,9 +208,3 @@ lb_monitor_enable(LbMonitorController *monitor)
     static constexpr struct timeval immediately = { 0, 0 };
     monitor->interval_event.Add(immediately);
 }
-
-bool
-lb_monitor_get_state(const LbMonitorController *monitor)
-{
-    return monitor->state;
-}
