@@ -6,7 +6,7 @@
 
 #include "Listener.hxx"
 #include "lb_instance.hxx"
-#include "lb_config.hxx"
+#include "ListenerConfig.hxx"
 #include "HttpConnection.hxx"
 #include "TcpConnection.hxx"
 #include "ssl/ssl_factory.hxx"

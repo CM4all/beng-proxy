@@ -4,8 +4,9 @@
 
 #include "ForwardHttpRequest.hxx"
 #include "HttpConnection.hxx"
+#include "ClusterConfig.hxx"
+#include "ListenerConfig.hxx"
 #include "lb_instance.hxx"
-#include "lb_config.hxx"
 #include "lb_session.hxx"
 #include "lb_cookie.hxx"
 #include "lb_jvm_route.hxx"

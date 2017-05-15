@@ -7,10 +7,10 @@
 #ifndef BENG_LB_CONFIG_H
 #define BENG_LB_CONFIG_H
 
+#include "lb/ListenerConfig.hxx"
 #include "lb/GotoConfig.hxx"
 #include "lb/ClusterConfig.hxx"
 #include "lb/MonitorConfig.hxx"
-#include "ssl/ssl_config.hxx"
 #include "net/AllocatedSocketAddress.hxx"
 #include "certdb/Config.hxx"
 
@@ -32,37 +32,6 @@ struct LbCertDatabaseConfig : CertDatabaseConfig {
     std::list<std::string> ca_certs;
 
     explicit LbCertDatabaseConfig(const char *_name):name(_name) {}
-};
-
-struct LbListenerConfig {
-    std::string name;
-
-    AllocatedSocketAddress bind_address;
-
-    LbGoto destination;
-
-    /**
-     * If non-empty, sets SO_BINDTODEVICE.
-     */
-    std::string interface;
-
-    bool reuse_port = false;
-
-    bool verbose_response = false;
-
-    bool ssl = false;
-
-    SslConfig ssl_config;
-
-    const LbCertDatabaseConfig *cert_db = nullptr;
-
-    explicit LbListenerConfig(const char *_name)
-        :name(_name) {}
-
-    gcc_pure
-    bool HasZeroConf() const {
-        return destination.HasZeroConf();
-    }
 };
 
 struct LbConfig {

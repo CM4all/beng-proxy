@@ -3,9 +3,10 @@
  */
 
 #include "HttpConnection.hxx"
-#include "lb/ForwardHttpRequest.hxx"
+#include "ClusterConfig.hxx"
+#include "ListenerConfig.hxx"
+#include "ForwardHttpRequest.hxx"
 #include "lb_instance.hxx"
-#include "lb_config.hxx"
 #include "lb_cookie.hxx"
 #include "http_server/http_server.hxx"
 #include "http_server/Request.hxx"
