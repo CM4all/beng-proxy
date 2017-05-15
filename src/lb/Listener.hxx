@@ -1,11 +1,9 @@
 /*
- * Listener on a TCP port.
- *
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_LB_LISTENER_HXX
-#define BENG_PROXY_LB_LISTENER_HXX
+#ifndef BENG_LB_LISTENER_HXX
+#define BENG_LB_LISTENER_HXX
 
 #include "Logger.hxx"
 #include "net/ServerSocket.hxx"
@@ -14,6 +12,9 @@ struct SslFactory;
 struct LbListenerConfig;
 struct LbInstance;
 
+/**
+ * Listener on a TCP port.
+ */
 class LbListener final : Logger, public ServerSocket {
     LbInstance &instance;
 

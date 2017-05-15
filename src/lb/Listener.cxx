@@ -4,11 +4,11 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "lb_listener.hxx"
+#include "Listener.hxx"
 #include "lb_instance.hxx"
 #include "lb_config.hxx"
-#include "lb/HttpConnection.hxx"
-#include "lb/TcpConnection.hxx"
+#include "HttpConnection.hxx"
+#include "TcpConnection.hxx"
 #include "ssl/ssl_factory.hxx"
 #include "ssl/DbSniCallback.hxx"
 #include "net/SocketAddress.hxx"

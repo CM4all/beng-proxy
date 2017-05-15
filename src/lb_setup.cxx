@@ -7,7 +7,7 @@
 #include "lb_setup.hxx"
 #include "lb_config.hxx"
 #include "lb_instance.hxx"
-#include "lb_listener.hxx"
+#include "lb/Listener.hxx"
 #include "lb_control.hxx"
 #include "ssl/Cache.hxx"
 

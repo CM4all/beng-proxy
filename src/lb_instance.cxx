@@ -6,8 +6,8 @@
 
 #include "lb_instance.hxx"
 #include "lb_control.hxx"
-#include "lb_listener.hxx"
 #include "lb_config.hxx"
+#include "lb/Listener.hxx"
 #include "lb/LuaInitHook.hxx"
 #include "ssl/Cache.hxx"
 #include "fb_pool.hxx"
