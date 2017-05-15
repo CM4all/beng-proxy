@@ -806,6 +806,11 @@ enum beng_translation_command {
      * #TRANSLATE_APPEND packets.  This is used by Workshop/Cron.
      */
     TRANSLATE_EXECUTE = 185,
+
+    /**
+     * Forbid the child process to create new user namespaces.
+     */
+    TRANSLATE_FORBID_USER_NS = 186,
 };
 
 struct beng_translation_header {

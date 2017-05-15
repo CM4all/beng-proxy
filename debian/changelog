@@ -6,6 +6,7 @@ cm4all-beng-proxy (12.0.13) unstable; urgency=low
   * fix use-after-free bug in HTTP request handler
   * spawn: forbid more dangerous system calls
   * spawn: activate system call filter for all architectures
+  * translation: add packet FORBID_USER_NS
 
  --   
 
