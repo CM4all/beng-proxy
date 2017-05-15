@@ -481,6 +481,7 @@ adata_dep = declare_dependency(link_with: adata)
 
 spawn = static_library('spawn',
   'libcommon/src/spawn/SeccompFilter.cxx',
+  'libcommon/src/spawn/SyscallFilter.cxx',
   'libcommon/src/spawn/Systemd.cxx',
   'libcommon/src/spawn/Prepared.cxx',
   'libcommon/src/spawn/Registry.cxx',
