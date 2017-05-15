@@ -5,7 +5,7 @@
  */
 
 #include "lb_jvm_route.hxx"
-#include "lb_config.hxx"
+#include "lb/ClusterConfig.hxx"
 #include "strmap.hxx"
 #include "tpool.hxx"
 #include "cookie_server.hxx"

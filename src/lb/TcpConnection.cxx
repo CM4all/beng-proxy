@@ -3,7 +3,8 @@
  */
 
 #include "TcpConnection.hxx"
-#include "lb_config.hxx"
+#include "ClusterConfig.hxx"
+#include "ListenerConfig.hxx"
 #include "lb_instance.hxx"
 #include "client_balancer.hxx"
 #include "address_sticky.hxx"
