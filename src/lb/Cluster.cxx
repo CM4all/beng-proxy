@@ -2,8 +2,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "lb_cluster.hxx"
-#include "lb/ClusterConfig.hxx"
+#include "Cluster.hxx"
+#include "ClusterConfig.hxx"
 #include "avahi/Client.hxx"
 #include "StickyCache.hxx"
 

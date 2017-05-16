@@ -5,7 +5,7 @@
 #ifndef BENG_LB_CLUSTER_MAP_HXX
 #define BENG_LB_CLUSTER_MAP_HXX
 
-#include "lb_cluster.hxx"
+#include "Cluster.hxx"
 
 #include <string>
 #include <map>
