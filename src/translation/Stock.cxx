@@ -111,21 +111,18 @@ static constexpr StockClass tstock_class = {
 };
 
 class TranslateStock {
-    EventLoop &event_loop;
-
     Stock stock;
 
     AllocatedSocketAddress address;
 
 public:
-    TranslateStock(EventLoop &_event_loop, const char *path, unsigned limit)
-        :event_loop(_event_loop),
-         stock(event_loop, tstock_class, nullptr, "translation", limit, 8) {
+    TranslateStock(EventLoop &event_loop, const char *path, unsigned limit)
+        :stock(event_loop, tstock_class, nullptr, "translation", limit, 8) {
         address.SetLocal(path);
     }
 
     EventLoop &GetEventLoop() {
-        return event_loop;
+        return stock.GetEventLoop();
     }
 
     void Get(struct pool &pool, StockGetHandler &handler,
