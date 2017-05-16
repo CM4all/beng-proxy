@@ -406,7 +406,7 @@ ParseCommandLine(BpCmdLine &cmdline, BpConfig &config, int argc, char **argv)
             break;
 
         case 't':
-            config.translation_socket = optarg;
+            config.translation_socket = ParseSocketAddress(optarg, 0, false);
             break;
 
         case 'M':

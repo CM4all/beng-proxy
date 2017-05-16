@@ -75,7 +75,7 @@ struct BpConfig {
 
     const char *document_root = "/var/www";
 
-    const char *translation_socket = "@translation";
+    AllocatedSocketAddress translation_socket;
 
     AddressInfo memcached_server;
 
@@ -125,6 +125,7 @@ struct BpConfig {
     SpawnConfig spawn;
 
     BpConfig() {
+        translation_socket.SetLocal("@translation");
         spawn.systemd_scope = "cm4all-beng-spawn.scope";
         spawn.systemd_scope_description = "The cm4all-beng-proxy child process spawner";
     }

@@ -12,6 +12,7 @@
 #include "file_address.hxx"
 #include "cgi_address.hxx"
 #include "nfs_address.hxx"
+#include "net/AllocatedSocketAddress.hxx"
 #include "util/Cancellable.hxx"
 #include "util/PrintException.hxx"
 
@@ -147,7 +148,11 @@ int main(int argc, char **argv) {
 
     PInstance instance;
 
-    auto *translate_stock = tstock_new(instance.event_loop, "@translation", 0);
+    AllocatedSocketAddress translation_socket;
+    translation_socket.SetLocal("@translation");
+
+    auto *translate_stock = tstock_new(instance.event_loop,
+                                       translation_socket, 0);
 
     CancellablePointer cancel_ptr;
     tstock_translate(*translate_stock, instance.root_pool,

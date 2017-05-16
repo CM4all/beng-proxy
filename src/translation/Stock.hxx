@@ -10,12 +10,13 @@
 struct pool;
 class EventLoop;
 class TranslateStock;
+class SocketAddress;
 struct TranslateHandler;
 struct TranslateRequest;
 class CancellablePointer;
 
 TranslateStock *
-tstock_new(EventLoop &event_loop, const char *socket_path, unsigned limit);
+tstock_new(EventLoop &event_loop, SocketAddress address, unsigned limit);
 
 void
 tstock_free(TranslateStock *stock);

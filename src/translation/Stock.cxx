@@ -116,9 +116,10 @@ class TranslateStock {
     AllocatedSocketAddress address;
 
 public:
-    TranslateStock(EventLoop &event_loop, const char *path, unsigned limit)
-        :stock(event_loop, tstock_class, nullptr, "translation", limit, 8) {
-        address.SetLocal(path);
+    TranslateStock(EventLoop &event_loop, SocketAddress _address,
+                   unsigned limit)
+        :stock(event_loop, tstock_class, nullptr, "translation", limit, 8),
+         address(_address) {
     }
 
     EventLoop &GetEventLoop() {
@@ -198,9 +199,9 @@ TranslateStockRequest::OnStockItemError(GError *error)
  */
 
 TranslateStock *
-tstock_new(EventLoop &event_loop, const char *socket_path, unsigned limit)
+tstock_new(EventLoop &event_loop, SocketAddress address, unsigned limit)
 {
-    return new TranslateStock(event_loop, socket_path, limit);
+    return new TranslateStock(event_loop, address, limit);
 }
 
 void
