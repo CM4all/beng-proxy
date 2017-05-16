@@ -9,7 +9,7 @@
 
 #include "PInstance.hxx"
 #include "lb_cmdline.hxx"
-#include "lb_cluster.hxx"
+#include "lb/ClusterMap.hxx"
 #include "lb/MonitorMap.hxx"
 #include "lb/LuaHandler.hxx"
 #include "lb/HttpConnection.hxx"

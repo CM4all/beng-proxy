@@ -4,8 +4,8 @@
 
 #include "LuaInitHook.hxx"
 #include "LuaGoto.hxx"
+#include "ClusterMap.hxx"
 #include "lb_config.hxx"
-#include "lb_cluster.hxx"
 #include "lua/Util.hxx"
 #include "lua/Class.hxx"
 #include "lua/Assert.hxx"
