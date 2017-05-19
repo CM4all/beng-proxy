@@ -285,13 +285,8 @@ LbRequest::OnHttpError(GError *error)
 
     connection.Log(2, "Error", error);
 
-    if (!send_fallback(request, cluster_config.fallback)) {
-        const char *msg = connection.listener.verbose_response
-            ? error->message
-            : "Server failure";
-
-        http_server_send_message(&request, HTTP_STATUS_BAD_GATEWAY, msg);
-    }
+    if (!send_fallback(request, cluster_config.fallback))
+        connection.SendError(request, error);
 
     g_error_free(error);
     ResponseSent();
@@ -349,14 +344,8 @@ LbRequest::OnStockItemError(GError *error)
 
     body.Clear();
 
-    if (!send_fallback(request, cluster_config.fallback)) {
-        const char *msg = connection.listener.verbose_response
-            ? error->message
-            : "Connection failure";
-
-        http_server_send_message(&request, HTTP_STATUS_BAD_GATEWAY,
-                                 msg);
-    }
+    if (!send_fallback(request, cluster_config.fallback))
+        connection.SendError(request, error);
 
     g_error_free(error);
     ResponseSent();

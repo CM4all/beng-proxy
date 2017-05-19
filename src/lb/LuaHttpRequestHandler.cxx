@@ -56,13 +56,7 @@ LbLuaResponseHandler::OnHttpError(GError *error)
 {
     finished = true;
 
-    connection.Log(2, "Error", error);
-
-    const char *msg = connection.listener.verbose_response
-        ? error->message
-        : "Server failure";
-
-    http_server_send_message(&request, HTTP_STATUS_BAD_GATEWAY, msg);
+    connection.LogSendError(request, error);
 
     g_error_free(error);
 }

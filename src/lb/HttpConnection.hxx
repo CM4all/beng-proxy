@@ -60,6 +60,9 @@ struct LbHttpConnection final
     void Destroy();
     void CloseAndDestroy();
 
+    void SendError(HttpServerRequest &request, GError *error);
+    void LogSendError(HttpServerRequest &request, GError *error);
+
     /* virtual methods from class HttpServerConnectionHandler */
     void HandleHttpRequest(HttpServerRequest &request,
                            CancellablePointer &cancel_ptr) override;
