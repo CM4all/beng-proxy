@@ -23,6 +23,7 @@ class SocketAddress;
 struct HttpServerConnection;
 struct LbListenerConfig;
 struct LbClusterConfig;
+struct LbLuaHandlerConfig;
 struct LbGoto;
 struct LbInstance;
 
@@ -77,6 +78,10 @@ private:
     void ForwardHttpRequest(const LbClusterConfig &cluster_config,
                             HttpServerRequest &request,
                             CancellablePointer &cancel_ptr);
+
+    void InvokeLua(const LbLuaHandlerConfig &config,
+                   HttpServerRequest &request,
+                   CancellablePointer &cancel_ptr);
 
 protected:
     /* virtual methods from class Logger */
