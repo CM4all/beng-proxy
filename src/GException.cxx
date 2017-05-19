@@ -17,7 +17,8 @@ SetGError(GError **error_r, const std::exception &e)
 GError *
 ToGError(const std::exception &e)
 {
-    return g_error_new_literal(exception_quark(), 0, e.what());
+    return g_error_new_literal(exception_quark(), 0,
+                               GetFullMessage(e).c_str());
 }
 
 GError *
@@ -30,12 +31,6 @@ ToGError(std::exception_ptr ep)
                                    e.what());
     }
 
-    try {
-        std::rethrow_exception(ep);
-    } catch (const std::exception &e) {
-        return ToGError(e);
-    } catch (...) {
-        return g_error_new_literal(exception_quark(), 0,
-                                   "Unexpected C++ exception");
-    }
+    return g_error_new_literal(exception_quark(), 0,
+                               GetFullMessage(ep).c_str());
 }
