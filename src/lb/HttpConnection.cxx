@@ -181,7 +181,7 @@ LbHttpConnection::HandleHttpRequest(const LbGoto &destination,
     ForwardHttpRequest(*goto_.cluster, request, cancel_ptr);
 }
 
-inline void
+void
 LbHttpConnection::ForwardHttpRequest(const LbClusterConfig &cluster_config,
                                      HttpServerRequest &request,
                                      CancellablePointer &cancel_ptr)
