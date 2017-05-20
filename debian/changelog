@@ -9,7 +9,7 @@ cm4all-beng-proxy (12.0.13) unstable; urgency=low
   * spawn: activate system call filter for all architectures
   * translation: add packet FORBID_USER_NS
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Sat, 20 May 2017 11:40:50 -0000
 
 cm4all-beng-proxy (12.0.12) unstable; urgency=low
 
