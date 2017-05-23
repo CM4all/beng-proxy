@@ -45,3 +45,12 @@ GetCommonName(X509 &cert)
         ? GetCommonName(*subject)
         : nullptr;
 }
+
+AllocatedString<>
+GetIssuerCommonName(X509 &cert)
+{
+    X509_NAME *subject = X509_get_issuer_name(&cert);
+    return subject != nullptr
+        ? GetCommonName(*subject)
+        : nullptr;
+}

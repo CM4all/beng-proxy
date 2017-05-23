@@ -20,4 +20,7 @@ NidToString(X509_NAME &name, int nid);
 AllocatedString<>
 GetCommonName(X509 &cert);
 
+AllocatedString<>
+GetIssuerCommonName(X509 &cert);
+
 #endif
