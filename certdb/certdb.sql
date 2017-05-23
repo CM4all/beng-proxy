@@ -22,6 +22,7 @@ CREATE TABLE server_certificate (
     --------------------------------
 
     common_name varchar(256) NOT NULL,
+    issuer_common_name varchar(256) NULL,
 
     not_before timestamp NOT NULL,
     not_after timestamp NOT NULL,
