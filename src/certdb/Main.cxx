@@ -794,6 +794,14 @@ main(int argc, char **argv)
             }
 
             Populate(key, suffix, count);
+        } else if (strcmp(cmd, "migrate") == 0) {
+            if (args.size != 0) {
+                fprintf(stderr, "Usage: %s migrate\n", argv[0]);
+                return EXIT_FAILURE;
+            }
+
+            CertDatabase db(*db_config);
+            db.Migrate();
         } else {
             fprintf(stderr, "Unknown command: %s\n", cmd);
             return EXIT_FAILURE;

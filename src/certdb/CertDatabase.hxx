@@ -69,6 +69,8 @@ public:
         return conn.Commit();
     }
 
+    void Migrate();
+
     void InsertServerCertificate(const char *common_name,
                                  const char *not_before,
                                  const char *not_after,

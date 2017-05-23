@@ -668,6 +668,19 @@ database in \emph{beng-lb}.
 Create a PostgreSQL database and run the file \texttt{certdb.sql} to
 create the table.
 
+\subsection{Migrating the Database}
+
+To update the database schema after an update, type:
+
+\begin{verbatim*}
+cm4all-certdb migrate
+\end{verbatim*}
+
+After the schema update, all users of the database should be updated
+quickly to the same version.  While it is attempted to keep read-only
+backwards compatibility as much as possible, applications with write
+access may cease to work after the migration.
+
 \subsection{Managing Certificates}
 
 The program \texttt{cm4all-certdb} is a frontend for the database.  It
