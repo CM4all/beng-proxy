@@ -18,8 +18,6 @@ class CertDatabase {
 
     PgConnection conn;
 
-    const std::string schema;
-
 public:
     explicit CertDatabase(const CertDatabaseConfig &_config);
 
