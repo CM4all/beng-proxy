@@ -1,5 +1,6 @@
 cm4all-beng-proxy (12.0.14) unstable; urgency=low
 
+  * merge release 11.24
   * certdb: add column "issuer_common_name"
 
  --   
@@ -114,6 +115,12 @@ cm4all-beng-proxy (12.0.1) unstable; urgency=low
   * translation: add packet CRON
 
  -- Max Kellermann <mk@cm4all.com>  Wed, 23 Nov 2016 14:57:02 -0000
+
+cm4all-beng-proxy (11.24) unstable; urgency=low
+
+  * {http,ajp}_client: fix crash after malformed URI without Keep-Alive
+
+ -- Max Kellermann <mk@cm4all.com>  Wed, 24 May 2017 10:15:04 -0000
 
 cm4all-beng-proxy (11.23) unstable; urgency=low
 
