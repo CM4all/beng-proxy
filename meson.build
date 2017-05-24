@@ -371,6 +371,7 @@ ssl = static_library('ssl',
     util_dep,
     declare_dependency(link_with: event),
   ])
+ssl_dep = declare_dependency(link_with: ssl)
 
 avahi = static_library('avahi',
   'src/avahi/Client.cxx',
@@ -393,6 +394,7 @@ pg = static_library('pg',
     libpq,
     libinline,
   ])
+pg_dep = declare_dependency(link_with: pg)
 
 curl = static_library('curl',
   'libcommon/src/curl/Version.cxx',
