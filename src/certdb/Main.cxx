@@ -36,6 +36,12 @@
 #include <stdlib.h>
 #include <poll.h>
 
+struct Usage {
+    const char *text;
+
+    explicit Usage(const char *_text):text(_text) {}
+};
+
 static const CertDatabaseConfig *db_config;
 
 static void
@@ -505,7 +511,7 @@ Acme(ConstBuffer<const char *> args)
 
     if (strcmp(cmd, "new-reg") == 0) {
         if (args.size != 1)
-            throw "Usage: acme new-reg EMAIL";
+            throw Usage("acme new-reg EMAIL");
 
         const char *email = args[0];
 
@@ -519,7 +525,7 @@ Acme(ConstBuffer<const char *> args)
         printf("location: %s\n", account.location.c_str());
     } else if (strcmp(cmd, "new-authz") == 0) {
         if (args.size != 1)
-            throw "Usage: acme new-authz HOST";
+            throw Usage("acme new-authz HOST");
 
         const char *host = args[0];
 
@@ -536,7 +542,7 @@ Acme(ConstBuffer<const char *> args)
         printf("OK\n");
     } else if (strcmp(cmd, "new-cert") == 0) {
         if (args.size < 1)
-            throw "Usage: acme new-cert HOST...";
+            throw Usage("acme new-cert HOST...");
 
         if (all && args.size > 1)
             throw "With --all, only one host name is allowed";
@@ -561,7 +567,7 @@ Acme(ConstBuffer<const char *> args)
         printf("OK\n");
     } else if (strcmp(cmd, "new-authz-cert") == 0) {
         if (args.size < 1)
-            throw "Usage: acme new-authz-cert HOST ...";
+            throw Usage("acme new-authz-cert HOST ...");
 
         if (all && args.size > 1)
             throw "With --all, only one host name is allowed";
@@ -712,61 +718,45 @@ main(int argc, char **argv)
         db_config = &_db_config;
 
         if (strcmp(cmd, "load") == 0) {
-            if (args.size != 2) {
-                fprintf(stderr, "Usage: %s load CERT KEY\n", argv[0]);
-                return EXIT_FAILURE;
-            }
+            if (args.size != 2)
+                throw Usage("load CERT KEY");
 
             LoadCertificate(args[0], args[1]);
         } else if (strcmp(cmd, "reload") == 0) {
-            if (args.size != 1) {
-                fprintf(stderr, "Usage: %s reload HOST\n", argv[0]);
-                return EXIT_FAILURE;
-            }
+            if (args.size != 1)
+                throw Usage("reload HOST");
 
             ReloadCertificate(args[0]);
         } else if (strcmp(cmd, "delete") == 0) {
-            if (args.size != 1) {
-                fprintf(stderr, "Usage: %s delete HOST\n", argv[0]);
-                return EXIT_FAILURE;
-            }
+            if (args.size != 1)
+                throw Usage("delete HOST");
 
             DeleteCertificate(args[0]);
         } else if (strcmp(cmd, "find") == 0) {
-            if (args.size != 1) {
-                fprintf(stderr, "Usage: %s find HOST\n", argv[0]);
-                return EXIT_FAILURE;
-            }
+            if (args.size != 1)
+                throw Usage("find HOST");
 
             FindCertificate(args[0]);
         } else if (strcmp(cmd, "dumpkey") == 0) {
-            if (args.size != 1) {
-                fprintf(stderr, "Usage: %s dumpkey HOST\n", argv[0]);
-                return EXIT_FAILURE;
-            }
+            if (args.size != 1)
+                throw Usage("dumpkey HOST");
 
             DumpKey(args.front());
         } else if (strcmp(cmd, "monitor") == 0) {
-            if (args.size != 0) {
-                fprintf(stderr, "Usage: %s monitor\n", argv[0]);
-                return EXIT_FAILURE;
-            }
+            if (args.size != 0)
+                throw Usage("monitor");
 
             Monitor();
         } else if (strcmp(cmd, "tail") == 0) {
-            if (args.size != 0) {
-                fprintf(stderr, "Usage: %s tail\n", argv[0]);
-                return EXIT_FAILURE;
-            }
+            if (args.size != 0)
+                throw Usage("tail");
 
             Tail();
         } else if (strcmp(cmd, "acme") == 0) {
             Acme(args);
         } else if (strcmp(cmd, "genwrap") == 0) {
-            if (args.size != 0) {
-                fprintf(stderr, "Usage: %s genwrap\n", argv[0]);
-                return EXIT_FAILURE;
-            }
+            if (args.size != 0)
+                throw Usage("genwrap");
 
             CertDatabaseConfig::AES256 key;
             UrandomFill(&key, sizeof(key));
@@ -795,10 +785,8 @@ main(int argc, char **argv)
 
             Populate(key, suffix, count);
         } else if (strcmp(cmd, "migrate") == 0) {
-            if (args.size != 0) {
-                fprintf(stderr, "Usage: %s migrate\n", argv[0]);
-                return EXIT_FAILURE;
-            }
+            if (args.size != 0)
+                throw Usage("migrate");
 
             CertDatabase db(*db_config);
             db.Migrate();
@@ -810,6 +798,9 @@ main(int argc, char **argv)
         return EXIT_SUCCESS;
     } catch (const std::exception &e) {
         PrintException(e);
+        return EXIT_FAILURE;
+    } catch (Usage u) {
+        fprintf(stderr, "Usage: %s %s\n", argv[0], u.text);
         return EXIT_FAILURE;
     } catch (const char *msg) {
         fprintf(stderr, "%s\n", msg);
