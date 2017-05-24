@@ -23,6 +23,18 @@ ColumnExists(PgConnection &c, const char *schema,
 
 }
 
+static bool
+IndexExists(PgConnection &c, const char *schema,
+            const char *table_name, const char *index_name)
+{
+    if (schema == nullptr || *schema == 0)
+        schema = "public";
+
+    return CheckError(c.ExecuteParams("SELECT indexdef FROM pg_indexes "
+                                      "WHERE schemaname=$1 AND tablename=$2 AND indexname=$3",
+                                      schema, table_name, index_name)).GetRowCount() > 0;
+}
+
 static void
 FillIssuerCommonName(PgConnection &c)
 {
@@ -65,4 +77,17 @@ CertDatabase::Migrate()
                                 "ADD COLUMN issuer_common_name varchar(256) NULL"));
 
     FillIssuerCommonName(conn);
+
+    /* server_certificate.handle added in version 12.0.15 */
+
+    if (!ColumnExists(conn, config.schema.c_str(), "server_certificate",
+                      "handle"))
+        CheckError(conn.Execute("ALTER TABLE server_certificate "
+                                "ADD COLUMN handle varchar(256) NULL"));
+
+
+    if (!IndexExists(conn, config.schema.c_str(), "server_certificate",
+                     "server_certificate_handle"))
+        CheckError(conn.Execute("CREATE UNIQUE INDEX server_certificate_handle "
+                                "ON server_certificate(handle);"));
 }

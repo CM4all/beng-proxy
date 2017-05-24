@@ -18,6 +18,14 @@ CREATE TABLE server_certificate (
     modified timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     --------------------------------
+    -- Additional (external) data
+    --------------------------------
+
+    -- an identifier string assigned by the administrator to address
+    -- this certificate
+    handle varchar(256) NULL,
+
+    --------------------------------
     -- Mirrors of X.509 attributes
     --------------------------------
 
@@ -67,6 +75,9 @@ CREATE TABLE server_certificate_alt_name (
 
 -- for looking up a certificate by its name
 CREATE UNIQUE INDEX server_certificate_name ON server_certificate(common_name);
+
+-- for looking up a certificate by its handle
+CREATE UNIQUE INDEX server_certificate_handle ON server_certificate(handle);
 
 -- for looking up a certificate by its alternative name
 CREATE INDEX server_certificate_alt_name_name ON server_certificate_alt_name(name);
