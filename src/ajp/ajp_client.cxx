@@ -844,6 +844,8 @@ ajp_client_request(struct pool &pool, EventLoop &event_loop,
     const enum ajp_method ajp_method = to_ajp_method(method);
     if (ajp_method == AJP_METHOD_NULL) {
         /* invalid or unknown method */
+        const ScopePoolRef ref(pool TRACE_ARGS);
+
         lease.ReleaseLease(true);
         if (body != nullptr)
             body->CloseUnused();
@@ -861,6 +863,8 @@ ajp_client_request(struct pool &pool, EventLoop &event_loop,
         available = body->GetAvailable(false);
         if (available == -1) {
             /* AJPv13 does not support chunked request bodies */
+            const ScopePoolRef ref(pool TRACE_ARGS);
+
             lease.ReleaseLease(true);
             body->CloseUnused();
 
