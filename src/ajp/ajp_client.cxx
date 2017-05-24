@@ -841,20 +841,10 @@ ajp_client_request(struct pool &pool, EventLoop &event_loop,
         return;
     }
 
-    auto client = NewFromPool<AjpClient>(pool, pool, event_loop,
-                                         fd, fd_type,
-                                         lease, handler);
-
-    GrowingBuffer gb;
-
-    struct ajp_header *header = (struct ajp_header *)gb.Write(sizeof(*header));
-    header->a = 0x12;
-    header->b = 0x34;
-
     const enum ajp_method ajp_method = to_ajp_method(method);
     if (ajp_method == AJP_METHOD_NULL) {
         /* invalid or unknown method */
-        p_lease_release(client->lease_ref, true, client->GetPool());
+        lease.ReleaseLease(true);
         if (body != nullptr)
             body->CloseUnused();
 
@@ -864,6 +854,38 @@ ajp_client_request(struct pool &pool, EventLoop &event_loop,
         handler.InvokeError(error);
         return;
     }
+
+    off_t available = -1;
+    size_t requested;
+    if (body != nullptr) {
+        available = body->GetAvailable(false);
+        if (available == -1) {
+            /* AJPv13 does not support chunked request bodies */
+            lease.ReleaseLease(true);
+            body->CloseUnused();
+
+            GError *error =
+                g_error_new_literal(ajp_client_quark(), 0,
+                                    "AJPv13 does not support chunked request bodies");
+            handler.InvokeError(error);
+            return;
+        }
+
+        if (available == 0)
+            istream_free_unused(&body);
+        else
+            requested = 1024;
+    }
+
+    auto client = NewFromPool<AjpClient>(pool, pool, event_loop,
+                                         fd, fd_type,
+                                         lease, handler);
+
+    GrowingBuffer gb;
+
+    struct ajp_header *header = (struct ajp_header *)gb.Write(sizeof(*header));
+    header->a = 0x12;
+    header->b = 0x34;
 
     struct {
         uint8_t prefix_code, method;
@@ -894,34 +916,11 @@ ajp_client_request(struct pool &pool, EventLoop &event_loop,
 
     /* Content-Length */
 
-    if (body != nullptr)
+    if (available >= 0)
         ++num_headers;
 
     serialize_ajp_integer(gb, num_headers);
     gb.AppendMoveFrom(std::move(headers_buffer));
-
-    off_t available = -1;
-
-    size_t requested;
-    if (body != nullptr) {
-        available = body->GetAvailable(false);
-        if (available == -1) {
-            /* AJPv13 does not support chunked request bodies */
-            p_lease_release(client->lease_ref, true, client->GetPool());
-            body->CloseUnused();
-
-            GError *error =
-                g_error_new_literal(ajp_client_quark(), 0,
-                                    "AJPv13 does not support chunked request bodies");
-            handler.InvokeError(error);
-            return;
-        }
-
-        if (available == 0)
-            istream_free_unused(&body);
-        else
-            requested = 1024;
-    }
 
     if (available >= 0) {
         char buffer[32];
