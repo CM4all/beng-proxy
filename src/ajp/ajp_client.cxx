@@ -826,6 +826,11 @@ ajp_client_request(struct pool &pool, EventLoop &event_loop,
     assert(http_method_is_valid(method));
 
     if (!uri_path_verify_quick(uri)) {
+        /* need to hold this pool reference because it is guaranteed
+           that the pool stays alive while the HttpResponseHandler
+           runs, even if all other pool references are removed */
+        const ScopePoolRef ref(pool TRACE_ARGS);
+
         lease.ReleaseLease(true);
         if (body != nullptr)
             body->CloseUnused();
