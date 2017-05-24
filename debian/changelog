@@ -3,7 +3,7 @@ cm4all-beng-proxy (12.0.14) unstable; urgency=low
   * merge release 11.24
   * certdb: add column "issuer_common_name"
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Wed, 24 May 2017 10:27:17 -0000
 
 cm4all-beng-proxy (12.0.13) unstable; urgency=low
 
