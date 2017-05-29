@@ -111,6 +111,11 @@ public:
     std::pair<UniqueX509, UniqueEVP_PKEY> GetServerCertificateKey(const char *name);
     std::pair<UniqueX509, UniqueEVP_PKEY> GetServerCertificateKey(id_t id);
 
+    /**
+     * Result columns: id, handle, issuer_common_name, not_after
+     */
+    PgResult FindServerCertificatesByName(const char *name);
+
 private:
     PgResult InsertServerCertificate(const char *handle,
                                      const char *common_name,

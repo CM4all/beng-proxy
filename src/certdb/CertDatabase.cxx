@@ -265,3 +265,19 @@ CertDatabase::GetServerCertificateKey(id_t id)
 
     return LoadCertificateKey(config, result, 0, 0);
 }
+
+PgResult
+CertDatabase::FindServerCertificatesByName(const char *name)
+{
+    return conn.ExecuteParams(false,
+                              "SELECT id, handle, issuer_common_name, not_after "
+                              "FROM server_certificate "
+                              "WHERE NOT deleted AND "
+                              "(common_name=$1 OR EXISTS("
+                              "SELECT id FROM server_certificate_alt_name"
+                              " WHERE server_certificate_id=server_certificate.id"
+                              " AND name=$1))"
+                              "ORDER BY"
+                              " not_after DESC",
+                              name);
+}

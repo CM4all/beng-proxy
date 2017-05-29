@@ -135,32 +135,28 @@ FindKeyByName(CertDatabase &db, const char *common_name)
     return db.GetServerCertificateKey(common_name).second;
 }
 
-static UniqueX509
-FindCertByHost(const char *host)
+static void
+FindPrintCertificates(CertDatabase &db, const char *name)
 {
-    CertDatabase db(*db_config);
-
-    auto cert = db.GetServerCertificate(host);
-    if (!cert) {
-        auto wildcard = MakeCommonNameWildcard(host);
-        if (!wildcard.empty())
-            cert = db.GetServerCertificate(wildcard.c_str());
-
-        if (!cert)
-            throw "Certificate not found";
-    }
-
-    return cert;
+    for (const auto &row : CheckError(db.FindServerCertificatesByName(name)))
+        printf("%s\t%s\t%s\t%s\n",
+               row.GetValue(0), row.GetValue(1),
+               row.GetValue(2), row.GetValue(3));
 }
 
 static void
 FindCertificate(const char *host)
 {
-    const ScopeSslGlobalInit ssl_init;
+    printf("id\thandle\tissuer\tnot_after\n");
 
-    auto cert = FindCertByHost(host);
-    X509_print_fp(stdout, cert.get());
-    PEM_write_X509(stdout, cert.get());
+    const ScopeSslGlobalInit ssl_init;
+    CertDatabase db(*db_config);
+
+    FindPrintCertificates(db, host);
+
+    const auto wildcard = MakeCommonNameWildcard(host);
+    if (!wildcard.empty())
+        FindPrintCertificates(db, wildcard.c_str());
 }
 
 static void
