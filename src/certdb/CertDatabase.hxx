@@ -259,14 +259,14 @@ private:
 
 public:
     Pg::Result GetModifiedServerCertificatesMeta(const char *since) {
-        return conn.ExecuteParams("SELECT deleted, modified, common_name "
+        return conn.ExecuteParams("SELECT deleted, modified, handle "
                                   "FROM server_certificate "
                                   "WHERE modified>$1",
                                   since);
     }
 
     Pg::Result TailModifiedServerCertificatesMeta() {
-        return conn.Execute("SELECT deleted, modified, common_name "
+        return conn.Execute("SELECT deleted, modified, handle "
                             "FROM server_certificate "
                             "ORDER BY modified LIMIT 20");
     }
