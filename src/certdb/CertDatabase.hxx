@@ -102,7 +102,7 @@ public:
     UniqueX509 GetServerCertificate(const char *name);
 
     /**
-     * Throws std:;runtime_error on error.
+     * Throws std::runtime_error on error.
      *
      * @return a pair of certificate and key, or {nullptr, nullptr} if
      * no matching certificate was found
