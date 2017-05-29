@@ -89,5 +89,6 @@ CertDatabase::Migrate()
     if (!IndexExists(conn, config.schema.c_str(), "server_certificate",
                      "server_certificate_handle"))
         CheckError(conn.Execute("CREATE UNIQUE INDEX server_certificate_handle "
-                                "ON server_certificate(handle);"));
+                                "ON server_certificate(handle) "
+                                "WHERE NOT deleted;"));
 }

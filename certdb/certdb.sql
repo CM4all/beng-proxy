@@ -77,7 +77,8 @@ CREATE TABLE server_certificate_alt_name (
 CREATE UNIQUE INDEX server_certificate_name ON server_certificate(common_name);
 
 -- for looking up a certificate by its handle
-CREATE UNIQUE INDEX server_certificate_handle ON server_certificate(handle);
+CREATE UNIQUE INDEX server_certificate_handle ON server_certificate(handle)
+        WHERE NOT deleted;
 
 -- for looking up a certificate by its alternative name
 CREATE INDEX server_certificate_alt_name_name ON server_certificate_alt_name(name);
