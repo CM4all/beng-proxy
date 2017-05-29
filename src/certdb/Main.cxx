@@ -479,6 +479,30 @@ AcmeNewAuthzCertAll(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
 }
 
 static void
+AcmeRenewCert(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
+              const char *handle)
+{
+    const auto old_cert_key = db.GetServerCertificateKeyByHandle(handle);
+    if (!old_cert_key.second)
+        throw "Old certificate not found in database";
+
+    auto &old_cert = *old_cert_key.first;
+    auto &old_key = *old_cert_key.second;
+
+    for (const auto &i : AllNames(old_cert)) {
+        if (IsAcmeInvalid(i))
+            /* ignore "*.acme.invalid" */
+            continue;
+
+        printf("new-authz '%s'\n", i.c_str());
+        AcmeNewAuthz(key, db, client, nullptr, i.c_str());
+    }
+
+    printf("new-cert\n");
+    AcmeNewCertAll(key, db, client, handle, old_cert, old_key);
+}
+
+static void
 Acme(ConstBuffer<const char *> args)
 {
     AcmeConfig config;
@@ -516,6 +540,7 @@ Acme(ConstBuffer<const char *> args)
             "  new-authz HOST\n"
             "  new-cert HANDLE HOST...\n"
             "  new-authz-cert HOST...\n"
+            "  renew-cert HANDLE\n"
             "\n"
             "options:\n"
             "  --staging     use the Let's Encrypt staging server\n"
@@ -610,6 +635,24 @@ Acme(ConstBuffer<const char *> args)
         } else {
             AcmeNewAuthzCert(*key, db, client, handle, host, args);
         }
+
+        printf("OK\n");
+    } else if (strcmp(cmd, "renew-cert") == 0) {
+        if (args.size != 1)
+            throw Usage("acme renew-cert HANDLE");
+
+        const char *handle = args.front();
+
+        const ScopeSslGlobalInit ssl_init;
+
+        const auto key = LoadKeyFile(key_path);
+        if (EVP_PKEY_base_id(key.get()) != EVP_PKEY_RSA)
+            throw "RSA key expected";
+
+        CertDatabase db(*db_config);
+        AcmeClient client(config);
+
+        AcmeRenewCert(*key, db, client, handle);
 
         printf("OK\n");
     } else
