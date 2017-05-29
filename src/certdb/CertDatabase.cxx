@@ -290,7 +290,7 @@ CertDatabase::GetNamesByHandle(const char *handle)
     const char *sql = "SELECT common_name, "
         "ARRAY(SELECT name FROM server_certificate_alt_name WHERE server_certificate_id=server_certificate.id)"
         " FROM server_certificate"
-        " WHERE handle=$1";
+        " WHERE handle=$1 AND NOT deleted";
 
     for (const auto &row : CheckError(conn.ExecuteParams(sql, handle))) {
         names.emplace_back(row.GetValue(0));
