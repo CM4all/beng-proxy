@@ -97,8 +97,6 @@ public:
 
     UniqueX509 GetServerCertificateByHandle(const char *handle);
 
-    UniqueX509 GetServerCertificate(const char *name);
-
     /**
      * Throws std::runtime_error on error.
      *
@@ -202,24 +200,6 @@ private:
                                   "WHERE NOT deleted AND handle=$1"
                                   "LIMIT 1",
                                   handle);
-    }
-
-    Pg::Result FindServerCertificateByName(const char *common_name) {
-        return conn.ExecuteParams(true,
-                                  "SELECT certificate_der "
-                                  "FROM server_certificate "
-                                  "WHERE NOT deleted AND "
-                                  "(common_name=$1 OR EXISTS("
-                                  "SELECT id FROM server_certificate_alt_name"
-                                  " WHERE server_certificate_id=server_certificate.id"
-                                  " AND name=$1))"
-                                  "ORDER BY"
-                                  /* prefer certificates which expire later */
-                                  " not_after DESC,"
-                                  /* prefer exact match in common_name: */
-                                  " common_name=$1 DESC "
-                                  "LIMIT 1",
-                                  common_name);
     }
 
     Pg::Result FindServerCertificateKeyByHandle(const char *handle) {
