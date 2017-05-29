@@ -47,7 +47,8 @@ struct AutoUsage {};
 static const CertDatabaseConfig *db_config;
 
 static void
-LoadCertificate(const char *cert_path, const char *key_path)
+LoadCertificate(const char *handle,
+                const char *cert_path, const char *key_path)
 {
     const ScopeSslGlobalInit ssl_init;
 
@@ -66,7 +67,8 @@ LoadCertificate(const char *cert_path, const char *key_path)
     CertDatabase db(*db_config);
 
     db.BeginSerializable();
-    bool inserted = db.LoadServerCertificate(*cert, *key, wrap_key.first,
+    bool inserted = db.LoadServerCertificate(handle,
+                                             *cert, *key, wrap_key.first,
                                              wrap_key.second);
     unsigned deleted = db.DeleteAcmeInvalidAlt(*cert);
     db.Commit();
@@ -91,7 +93,8 @@ ReloadCertificate(const char *host)
     WrapKeyHelper wrap_key_helper;
     const auto wrap_key = wrap_key_helper.SetEncryptKey(*db_config);
 
-    db.LoadServerCertificate(*cert_key.first, *cert_key.second,
+    db.LoadServerCertificate(nullptr,
+                             *cert_key.first, *cert_key.second,
                              wrap_key.first, wrap_key.second);
 }
 
@@ -332,7 +335,7 @@ MakeCertRequest(EVP_PKEY &key, X509 &src)
 
 static void
 AcmeNewAuthz(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
-             const char *host)
+             const char *handle, const char *host)
 {
     const auto response = client.NewAuthz(key, host);
 
@@ -342,7 +345,7 @@ AcmeNewAuthz(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
     WrapKeyHelper wrap_key_helper;
     const auto wrap_key = wrap_key_helper.SetEncryptKey(*db_config);
 
-    db.LoadServerCertificate(*cert, *cert_key,
+    db.LoadServerCertificate(handle, *cert, *cert_key,
                              wrap_key.first, wrap_key.second);
     db.NotifyModified();
 
@@ -363,6 +366,7 @@ AcmeNewAuthz(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
 
 static void
 AcmeNewCert(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
+            const char *handle,
             EVP_PKEY &cert_key, X509_REQ &req)
 {
     const auto cert = client.NewCert(key, req);
@@ -371,7 +375,7 @@ AcmeNewCert(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
     const auto wrap_key = wrap_key_helper.SetEncryptKey(*db_config);
 
     db.BeginSerializable();
-    db.LoadServerCertificate(*cert, cert_key,
+    db.LoadServerCertificate(handle, *cert, cert_key,
                              wrap_key.first, wrap_key.second);
     db.DeleteAcmeInvalidAlt(*cert);
     db.Commit();
@@ -381,6 +385,7 @@ AcmeNewCert(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
 
 static void
 AcmeNewCert(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
+            const char *handle,
             const char *host, ConstBuffer<const char *> alt_hosts)
 {
     const auto cert_key = FindKeyByName(db, host);
@@ -388,37 +393,40 @@ AcmeNewCert(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
         throw "Challenge certificate not found in database";
 
     const auto req = MakeCertRequest(*cert_key, host, alt_hosts);
-    AcmeNewCert(key, db, client, *cert_key, *req);
+    AcmeNewCert(key, db, client, handle, *cert_key, *req);
 }
 
 static void
 AcmeNewCertAll(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
+               const char *handle,
                X509 &old_cert, EVP_PKEY &cert_key)
 {
     const auto req = MakeCertRequest(cert_key, old_cert);
-    AcmeNewCert(key, db, client, cert_key, *req);
+    AcmeNewCert(key, db, client, handle, cert_key, *req);
 }
 
 static void
 AcmeNewCertAll(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
-               const char *host)
+               const char *handle, const char *host)
 {
     const auto old_cert_key = db.GetServerCertificateKey(host);
     if (!old_cert_key.second)
         throw "Old certificate not found in database";
 
-    AcmeNewCertAll(key, db, client, *old_cert_key.first, *old_cert_key.second);
+    AcmeNewCertAll(key, db, client, handle,
+                   *old_cert_key.first, *old_cert_key.second);
 }
 
 static void
 AcmeNewAuthzCert(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
+                 const char *handle,
                  const char *host, ConstBuffer<const char *> alt_hosts)
 {
-    AcmeNewAuthz(key, db, client, host);
+    AcmeNewAuthz(key, db, client, handle, host);
     for (const auto *alt_host : alt_hosts)
-        AcmeNewAuthz(key, db, client, alt_host);
+        AcmeNewAuthz(key, db, client, nullptr, alt_host);
 
-    AcmeNewCert(key, db, client, host, alt_hosts);
+    AcmeNewCert(key, db, client, handle, host, alt_hosts);
 }
 
 static std::set<std::string>
@@ -439,7 +447,7 @@ AllNames(X509 &cert)
 
 static void
 AcmeNewAuthzCertAll(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
-                    const char *host)
+                    const char *handle, const char *host)
 {
     const auto old_cert_key = db.GetServerCertificateKey(host);
     if (!old_cert_key.second)
@@ -454,11 +462,11 @@ AcmeNewAuthzCertAll(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
             continue;
 
         printf("new-authz '%s'\n", i.c_str());
-        AcmeNewAuthz(key, db, client, i.c_str());
+        AcmeNewAuthz(key, db, client, nullptr, i.c_str());
     }
 
     printf("new-cert\n");
-    AcmeNewCertAll(key, db, client, old_cert, old_key);
+    AcmeNewCertAll(key, db, client, handle, old_cert, old_key);
 }
 
 static void
@@ -529,6 +537,7 @@ Acme(ConstBuffer<const char *> args)
         if (args.size != 1)
             throw Usage("acme new-authz HOST");
 
+        const char *handle = nullptr;
         const char *host = args[0];
 
         const ScopeSslGlobalInit ssl_init;
@@ -540,7 +549,7 @@ Acme(ConstBuffer<const char *> args)
         CertDatabase db(*db_config);
         AcmeClient client(config);
 
-        AcmeNewAuthz(*key, db, client, host);
+        AcmeNewAuthz(*key, db, client, handle, host);
         printf("OK\n");
     } else if (strcmp(cmd, "new-cert") == 0) {
         if (args.size < 1)
@@ -549,6 +558,7 @@ Acme(ConstBuffer<const char *> args)
         if (all && args.size > 1)
             throw "With --all, only one host name is allowed";
 
+        const char *handle = nullptr;
         const char *host = args.shift();
 
         const ScopeSslGlobalInit ssl_init;
@@ -561,9 +571,9 @@ Acme(ConstBuffer<const char *> args)
         AcmeClient client(config);
 
         if (all) {
-            AcmeNewCertAll(*key, db, client, host);
+            AcmeNewCertAll(*key, db, client, handle, host);
         } else {
-            AcmeNewCert(*key, db, client, host, args);
+            AcmeNewCert(*key, db, client, handle, host, args);
         }
 
         printf("OK\n");
@@ -574,6 +584,7 @@ Acme(ConstBuffer<const char *> args)
         if (all && args.size > 1)
             throw "With --all, only one host name is allowed";
 
+        const char *handle = nullptr;
         const char *host = args.shift();
 
         const ScopeSslGlobalInit ssl_init;
@@ -586,9 +597,9 @@ Acme(ConstBuffer<const char *> args)
         AcmeClient client(config);
 
         if (all) {
-            AcmeNewAuthzCertAll(*key, db, client, host);
+            AcmeNewAuthzCertAll(*key, db, client, handle, host);
         } else {
-            AcmeNewAuthzCert(*key, db, client, host, args);
+            AcmeNewAuthzCert(*key, db, client, handle, host, args);
         }
 
         printf("OK\n");
@@ -607,7 +618,7 @@ Populate(CertDatabase &db, EVP_PKEY *key, ConstBuffer<void> key_der,
     const char *not_after = "1971-01-01";
 
     auto cert = MakeSelfSignedDummyCert(*key, common_name);
-    db.InsertServerCertificate(common_name, common_name,
+    db.InsertServerCertificate(nullptr, common_name, common_name,
                                not_before, not_after,
                                *cert, key_der,
                                nullptr);
@@ -693,7 +704,7 @@ HandleLoad(ConstBuffer<const char *> args)
     if (args.size != 2)
         throw AutoUsage();
 
-    LoadCertificate(args[0], args[1]);
+    LoadCertificate(nullptr, args[0], args[1]);
 }
 
 static void

@@ -92,7 +92,8 @@ CertDatabase::NotifyModified()
 }
 
 void
-CertDatabase::InsertServerCertificate(const char *common_name,
+CertDatabase::InsertServerCertificate(const char *handle,
+                                      const char *common_name,
                                       const char *issuer_common_name,
                                       const char *not_before,
                                       const char *not_after,
@@ -104,13 +105,15 @@ CertDatabase::InsertServerCertificate(const char *common_name,
 
     const PgBinaryValue key_der(key);
 
-    CheckError(InsertServerCertificate(common_name, issuer_common_name,
+    CheckError(InsertServerCertificate(handle,
+                                       common_name, issuer_common_name,
                                        not_before, not_after,
                                        cert_der, key_der, key_wrap_name));
 }
 
 bool
-CertDatabase::LoadServerCertificate(X509 &cert, EVP_PKEY &key,
+CertDatabase::LoadServerCertificate(const char *handle,
+                                    X509 &cert, EVP_PKEY &key,
                                     const char *key_wrap_name,
                                     AES_KEY *wrap_key)
 {
@@ -180,7 +183,7 @@ CertDatabase::LoadServerCertificate(X509 &cert, EVP_PKEY &key,
             CheckError(InsertAltName(id, alt_name.c_str()));
         return false;
     } else {
-        result = CheckError(InsertServerCertificate(common_name.c_str(),
+        result = CheckError(InsertServerCertificate(handle, common_name.c_str(),
                                                     issuer_common_name.c_str(),
                                                     not_before.c_str(),
                                                     not_after.c_str(),

@@ -71,7 +71,8 @@ public:
 
     void Migrate();
 
-    void InsertServerCertificate(const char *common_name,
+    void InsertServerCertificate(const char *handle,
+                                 const char *common_name,
                                  const char *issuer_common_name,
                                  const char *not_before,
                                  const char *not_after,
@@ -82,7 +83,8 @@ public:
      * @return true when new certificate has been inserted, false when an
      * existing certificate has been updated
      */
-    bool LoadServerCertificate(X509 &cert, EVP_PKEY &key,
+    bool LoadServerCertificate(const char *handle,
+                               X509 &cert, EVP_PKEY &key,
                                const char *key_wrap_name,
                                AES_KEY *wrap_key);
 
@@ -103,19 +105,20 @@ public:
     std::pair<UniqueX509, UniqueEVP_PKEY> GetServerCertificateKey(unsigned id);
 
 private:
-    PgResult InsertServerCertificate(const char *common_name,
+    PgResult InsertServerCertificate(const char *handle,
+                                     const char *common_name,
                                      const char *issuer_common_name,
                                      const char *not_before,
                                      const char *not_after,
                                      PgBinaryValue cert, PgBinaryValue key,
                                      const char *key_wrap_name) {
         return conn.ExecuteBinary("INSERT INTO server_certificate("
-                                  "common_name, issuer_common_name, "
+                                  "handle, common_name, issuer_common_name, "
                                   "not_before, not_after, "
                                   "certificate_der, key_der, key_wrap_name) "
-                                  "VALUES($1, $2, $3, $4, $5, $6)"
+                                  "VALUES($1, $2, $3, $4, $5, $6, $7, $8)"
                                   " RETURNING id",
-                                  common_name, issuer_common_name,
+                                  handle, common_name, issuer_common_name,
                                   not_before, not_after,
                                   cert, key, key_wrap_name);
     }
