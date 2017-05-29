@@ -59,8 +59,8 @@ public:
     }
 };
 
-PgBinaryValue
-UnwrapKey(PgBinaryValue key_der,
+Pg::BinaryValue
+UnwrapKey(Pg::BinaryValue key_der,
           const CertDatabaseConfig &config, const std::string &key_wrap_name,
           std::unique_ptr<unsigned char[]> &unwrapped);
 

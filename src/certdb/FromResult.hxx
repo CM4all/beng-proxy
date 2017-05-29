@@ -10,17 +10,17 @@
 #include <utility>
 
 struct CertDatabaseConfig;
-class PgResult;
+namespace Pg { class Result; }
 
 UniqueX509
-LoadCertificate(const PgResult &result, unsigned row, unsigned column);
+LoadCertificate(const Pg::Result &result, unsigned row, unsigned column);
 
 UniqueEVP_PKEY
 LoadWrappedKey(const CertDatabaseConfig &config,
-               const PgResult &result, unsigned row, unsigned column);
+               const Pg::Result &result, unsigned row, unsigned column);
 
 std::pair<UniqueX509, UniqueEVP_PKEY>
 LoadCertificateKey(const CertDatabaseConfig &config,
-                   const PgResult &result, unsigned row, unsigned column);
+                   const Pg::Result &result, unsigned row, unsigned column);
 
 #endif

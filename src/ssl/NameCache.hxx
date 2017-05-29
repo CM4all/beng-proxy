@@ -29,10 +29,10 @@ public:
  * std::unordered_set queries may be executed from any thread
  * (protected by the mutex).
  */
-class CertNameCache final : AsyncPgConnectionHandler, AsyncPgResultHandler {
+class CertNameCache final : Pg::AsyncConnectionHandler, Pg::AsyncResultHandler {
     CertNameCacheHandler &handler;
 
-    AsyncPgConnection conn;
+    Pg::AsyncConnection conn;
 
     TimerEvent update_timer;
 
@@ -102,14 +102,14 @@ private:
     void RemoveAltNames(const std::string &common_name,
                         std::list<std::string> &&list);
 
-    /* virtual methods from AsyncPgConnectionHandler */
+    /* virtual methods from Pg::AsyncConnectionHandler */
     void OnConnect() override;
     void OnDisconnect() override;
     void OnNotify(const char *name) override;
     void OnError(const char *prefix, const char *error) override;
 
-    /* virtual methods from AsyncPgResultHandler */
-    void OnResult(PgResult &&result) override;
+    /* virtual methods from Pg::AsyncResultHandler */
+    void OnResult(Pg::Result &&result) override;
     void OnResultEnd() override;
     void OnResultError() override;
 };

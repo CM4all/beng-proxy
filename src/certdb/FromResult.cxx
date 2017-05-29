@@ -9,7 +9,7 @@
 #include "ssl/Key.hxx"
 
 UniqueX509
-LoadCertificate(const PgResult &result, unsigned row, unsigned column)
+LoadCertificate(const Pg::Result &result, unsigned row, unsigned column)
 {
     if (!result.IsColumnBinary(column) || result.IsValueNull(row, column))
         throw std::runtime_error("Unexpected result");
@@ -20,7 +20,7 @@ LoadCertificate(const PgResult &result, unsigned row, unsigned column)
 
 UniqueEVP_PKEY
 LoadWrappedKey(const CertDatabaseConfig &config,
-               const PgResult &result, unsigned row, unsigned column)
+               const Pg::Result &result, unsigned row, unsigned column)
 {
     if (!result.IsColumnBinary(column) || result.IsValueNull(row, column))
         throw std::runtime_error("Unexpected result");
@@ -40,7 +40,7 @@ LoadWrappedKey(const CertDatabaseConfig &config,
 
 std::pair<UniqueX509, UniqueEVP_PKEY>
 LoadCertificateKey(const CertDatabaseConfig &config,
-                   const PgResult &result, unsigned row, unsigned column)
+                   const Pg::Result &result, unsigned row, unsigned column)
 {
     auto pair = std::make_pair(LoadCertificate(result, row, column),
                                LoadWrappedKey(config, result, row, column + 1));

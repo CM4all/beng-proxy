@@ -143,7 +143,7 @@ CertNameCache::OnError(const char *prefix, const char *error)
 }
 
 void
-CertNameCache::OnResult(PgResult &&result)
+CertNameCache::OnResult(Pg::Result &&result)
 {
     if (result.IsError()) {
         daemon_log(1, "query error from certificate database: %s\n",
@@ -158,7 +158,7 @@ CertNameCache::OnResult(PgResult &&result)
         std::string name(row.GetValue(0));
         std::list<std::string> _alt_names = row.IsValueNull(1)
             ? std::list<std::string>()
-            : pg_decode_array(row.GetValue(1));
+            : Pg::DecodeArray(row.GetValue(1));
         modified = row.GetValue(2);
         const bool deleted = complete && *row.GetValue(3) == 't';
 

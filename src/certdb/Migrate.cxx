@@ -11,7 +11,7 @@
 #include "util/PrintException.hxx"
 
 static bool
-ColumnExists(PgConnection &c, const char *schema,
+ColumnExists(Pg::Connection &c, const char *schema,
              const char *table_name, const char *column_name)
 {
     if (schema == nullptr || *schema == 0)
@@ -24,7 +24,7 @@ ColumnExists(PgConnection &c, const char *schema,
 }
 
 static bool
-IndexExists(PgConnection &c, const char *schema,
+IndexExists(Pg::Connection &c, const char *schema,
             const char *table_name, const char *index_name)
 {
     if (schema == nullptr || *schema == 0)
@@ -36,7 +36,7 @@ IndexExists(PgConnection &c, const char *schema,
 }
 
 static void
-FillIssuerCommonName(PgConnection &c)
+FillIssuerCommonName(Pg::Connection &c)
 {
     auto result = CheckError(c.ExecuteParams(true,
                                              "SELECT id::int8, certificate_der FROM server_certificate "

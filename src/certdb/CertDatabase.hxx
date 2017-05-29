@@ -16,7 +16,7 @@ struct CertDatabaseConfig;
 class CertDatabase {
     const CertDatabaseConfig &config;
 
-    PgConnection conn;
+    Pg::Connection conn;
 
 public:
     typedef unsigned id_t;
@@ -44,12 +44,12 @@ public:
         conn.ConsumeInput();
     }
 
-    PgNotify GetNextNotify() {
+    Pg::Notify GetNextNotify() {
         return conn.GetNextNotify();
     }
 
-    PgResult ListenModified();
-    PgResult NotifyModified();
+    Pg::Result ListenModified();
+    Pg::Result NotifyModified();
 
     gcc_pure
     std::string GetCurrentTimestamp() {
@@ -114,15 +114,15 @@ public:
     /**
      * Result columns: id, handle, issuer_common_name, not_after
      */
-    PgResult FindServerCertificatesByName(const char *name);
+    Pg::Result FindServerCertificatesByName(const char *name);
 
 private:
-    PgResult InsertServerCertificate(const char *handle,
+    Pg::Result InsertServerCertificate(const char *handle,
                                      const char *common_name,
                                      const char *issuer_common_name,
                                      const char *not_before,
                                      const char *not_after,
-                                     PgBinaryValue cert, PgBinaryValue key,
+                                     Pg::BinaryValue cert, Pg::BinaryValue key,
                                      const char *key_wrap_name) {
         return conn.ExecuteBinary("INSERT INTO server_certificate("
                                   "handle, common_name, issuer_common_name, "
@@ -135,12 +135,12 @@ private:
                                   cert, key, key_wrap_name);
     }
 
-    PgResult UpdateServerCertificate(const char *handle,
+    Pg::Result UpdateServerCertificate(const char *handle,
                                      const char *common_name,
                                      const char *issuer_common_name,
                                      const char *not_before,
                                      const char *not_after,
-                                     PgBinaryValue cert, PgBinaryValue key,
+                                     Pg::BinaryValue cert, Pg::BinaryValue key,
                                      const char *key_wrap_name) {
         return conn.ExecuteBinary("UPDATE server_certificate SET "
                                   "common_name=$1, "
@@ -156,13 +156,13 @@ private:
                                   issuer_common_name, handle);
     }
 
-    PgResult DeleteAltNames(const char *server_certificate_id) {
+    Pg::Result DeleteAltNames(const char *server_certificate_id) {
         return conn.ExecuteParams("DELETE FROM server_certificate_alt_name"
                                   " WHERE server_certificate_id=$1",
                                   server_certificate_id);
     }
 
-    PgResult InsertAltName(const char *server_certificate_id,
+    Pg::Result InsertAltName(const char *server_certificate_id,
                            const char *name) {
         return conn.ExecuteParams("INSERT INTO server_certificate_alt_name"
                                   "(server_certificate_id, name)"
@@ -171,7 +171,7 @@ private:
     }
 
 public:
-    PgResult DeleteServerCertificateByHandle(const char *handle) {
+    Pg::Result DeleteServerCertificateByHandle(const char *handle) {
         return conn.ExecuteParams(true,
                                   "UPDATE server_certificate SET "
                                   "modified=CURRENT_TIMESTAMP, deleted=TRUE "
@@ -181,7 +181,7 @@ public:
 
 private:
     template<typename T>
-    PgResult DeleteAcmeInvalidByNames(const T &names) {
+    Pg::Result DeleteAcmeInvalidByNames(const T &names) {
         return conn.ExecuteParams(true,
                                   "UPDATE server_certificate SET "
                                   "modified=CURRENT_TIMESTAMP, deleted=TRUE "
@@ -193,7 +193,7 @@ private:
                                   names);
     }
 
-    PgResult FindServerCertificateByHandle(const char *handle) {
+    Pg::Result FindServerCertificateByHandle(const char *handle) {
         return conn.ExecuteParams(true,
                                   "SELECT certificate_der "
                                   "FROM server_certificate "
@@ -202,7 +202,7 @@ private:
                                   handle);
     }
 
-    PgResult FindServerCertificateByName(const char *common_name) {
+    Pg::Result FindServerCertificateByName(const char *common_name) {
         return conn.ExecuteParams(true,
                                   "SELECT certificate_der "
                                   "FROM server_certificate "
@@ -220,7 +220,7 @@ private:
                                   common_name);
     }
 
-    PgResult FindServerCertificateKeyByHandle(const char *handle) {
+    Pg::Result FindServerCertificateKeyByHandle(const char *handle) {
         return conn.ExecuteParams(true,
                                   "SELECT certificate_der, key_der, key_wrap_name "
                                   "FROM server_certificate "
@@ -229,7 +229,7 @@ private:
                                   handle);
     }
 
-    PgResult FindServerCertificateKeyByName(const char *common_name) {
+    Pg::Result FindServerCertificateKeyByName(const char *common_name) {
         return conn.ExecuteParams(true,
                                   "SELECT certificate_der, key_der, key_wrap_name "
                                   "FROM server_certificate "
@@ -247,7 +247,7 @@ private:
                                   common_name);
     }
 
-    PgResult FindServerCertificateKeyById(id_t id) {
+    Pg::Result FindServerCertificateKeyById(id_t id) {
         return conn.ExecuteParams(true,
                                   "SELECT certificate_der, key_der, key_wrap_name "
                                   "FROM server_certificate "
@@ -256,14 +256,14 @@ private:
     }
 
 public:
-    PgResult GetModifiedServerCertificatesMeta(const char *since) {
+    Pg::Result GetModifiedServerCertificatesMeta(const char *since) {
         return conn.ExecuteParams("SELECT deleted, modified, common_name "
                                   "FROM server_certificate "
                                   "WHERE modified>$1",
                                   since);
     }
 
-    PgResult TailModifiedServerCertificatesMeta() {
+    Pg::Result TailModifiedServerCertificatesMeta() {
         return conn.Execute("SELECT deleted, modified, common_name "
                             "FROM server_certificate "
                             "ORDER BY modified LIMIT 20");

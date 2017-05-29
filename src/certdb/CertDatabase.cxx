@@ -59,7 +59,7 @@ CertDatabase::EnsureConnected()
         conn.Reconnect();
 }
 
-PgResult
+Pg::Result
 CertDatabase::ListenModified()
 {
     std::string sql("LISTEN \"");
@@ -75,7 +75,7 @@ CertDatabase::ListenModified()
     return conn.Execute(sql.c_str());
 }
 
-PgResult
+Pg::Result
 CertDatabase::NotifyModified()
 {
     std::string sql("NOTIFY \"");
@@ -114,9 +114,9 @@ CertDatabase::InsertServerCertificate(const char *handle,
                                       const char *key_wrap_name)
 {
     const SslBuffer cert_buffer(cert);
-    const PgBinaryValue cert_der(cert_buffer.get());
+    const Pg::BinaryValue cert_der(cert_buffer.get());
 
-    const PgBinaryValue key_der(key);
+    const Pg::BinaryValue key_der(key);
 
     CheckError(InsertServerCertificate(handle,
                                        common_name, issuer_common_name,
@@ -136,10 +136,10 @@ CertDatabase::LoadServerCertificate(const char *handle,
     const auto issuer_common_name = GetIssuerCommonName(cert);
 
     const SslBuffer cert_buffer(cert);
-    const PgBinaryValue cert_der(cert_buffer.get());
+    const Pg::BinaryValue cert_der(cert_buffer.get());
 
     const SslBuffer key_buffer(key);
-    PgBinaryValue key_der(key_buffer.get());
+    Pg::BinaryValue key_der(key_buffer.get());
 
     std::unique_ptr<unsigned char[]> wrapped;
 
@@ -266,7 +266,7 @@ CertDatabase::GetServerCertificateKey(id_t id)
     return LoadCertificateKey(config, result, 0, 0);
 }
 
-PgResult
+Pg::Result
 CertDatabase::FindServerCertificatesByName(const char *name)
 {
     return conn.ExecuteParams(false,
