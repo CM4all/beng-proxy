@@ -135,13 +135,13 @@ private:
                                      PgBinaryValue cert, PgBinaryValue key,
                                      const char *key_wrap_name) {
         return conn.ExecuteBinary("UPDATE server_certificate SET "
+                                  "common_name=$1, "
                                   "not_before=$2, not_after=$3, "
                                   "certificate_der=$4, key_der=$5, "
                                   "key_wrap_name=$6, "
                                   "issuer_common_name=$7, "
-                                  "handle=$8, "
                                   "modified=CURRENT_TIMESTAMP, deleted=FALSE "
-                                  "WHERE common_name=$1"
+                                  "WHERE handle=$8"
                                   " RETURNING id",
                                   common_name, not_before, not_after,
                                   cert, key, key_wrap_name,
