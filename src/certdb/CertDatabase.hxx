@@ -120,12 +120,12 @@ public:
 
 private:
     Pg::Result InsertServerCertificate(const char *handle,
-                                     const char *common_name,
-                                     const char *issuer_common_name,
-                                     const char *not_before,
-                                     const char *not_after,
-                                     Pg::BinaryValue cert, Pg::BinaryValue key,
-                                     const char *key_wrap_name) {
+                                       const char *common_name,
+                                       const char *issuer_common_name,
+                                       const char *not_before,
+                                       const char *not_after,
+                                       Pg::BinaryValue cert, Pg::BinaryValue key,
+                                       const char *key_wrap_name) {
         return conn.ExecuteBinary("INSERT INTO server_certificate("
                                   "handle, common_name, issuer_common_name, "
                                   "not_before, not_after, "
@@ -138,12 +138,12 @@ private:
     }
 
     Pg::Result UpdateServerCertificate(const char *handle,
-                                     const char *common_name,
-                                     const char *issuer_common_name,
-                                     const char *not_before,
-                                     const char *not_after,
-                                     Pg::BinaryValue cert, Pg::BinaryValue key,
-                                     const char *key_wrap_name) {
+                                       const char *common_name,
+                                       const char *issuer_common_name,
+                                       const char *not_before,
+                                       const char *not_after,
+                                       Pg::BinaryValue cert, Pg::BinaryValue key,
+                                       const char *key_wrap_name) {
         return conn.ExecuteBinary("UPDATE server_certificate SET "
                                   "common_name=$1, "
                                   "not_before=$2, not_after=$3, "
@@ -165,7 +165,7 @@ private:
     }
 
     Pg::Result InsertAltName(const char *server_certificate_id,
-                           const char *name) {
+                             const char *name) {
         return conn.ExecuteParams("INSERT INTO server_certificate_alt_name"
                                   "(server_certificate_id, name)"
                                   " VALUES($1, $2)",
