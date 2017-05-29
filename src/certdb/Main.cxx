@@ -99,11 +99,11 @@ ReloadCertificate(const char *host)
 }
 
 static void
-DeleteCertificate(const char *host)
+DeleteCertificate(const char *handle)
 {
     CertDatabase db(*db_config);
 
-    const auto result = CheckError(db.DeleteServerCertificateByName(host));
+    const auto result = CheckError(db.DeleteServerCertificateByHandle(handle));
     if (result.GetAffectedRows() == 0)
         throw "Certificate not found";
 
@@ -839,7 +839,7 @@ static constexpr struct Command {
 } commands[] = {
     { "load", "HANDLE CERT KEY", HandleLoad },
     { "reload", "HOST", HandleReload, true },
-    { "delete", "HOST", HandleDelete },
+    { "delete", "HANDLE", HandleDelete },
     { "get", "HANDLE", HandleGet },
     { "find", "HOST", HandleFind },
     { "dumpkey", "HOST", HandleDumpKey, true },

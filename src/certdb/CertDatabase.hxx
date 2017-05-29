@@ -163,12 +163,12 @@ private:
     }
 
 public:
-    PgResult DeleteServerCertificateByName(const char *common_name) {
+    PgResult DeleteServerCertificateByHandle(const char *handle) {
         return conn.ExecuteParams(true,
                                   "UPDATE server_certificate SET "
                                   "modified=CURRENT_TIMESTAMP, deleted=TRUE "
-                                  "WHERE common_name=$1 AND NOT deleted",
-                                  common_name);
+                                  "WHERE handle=$1 AND NOT deleted",
+                                  handle);
     }
 
 private:
