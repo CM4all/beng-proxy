@@ -2,6 +2,7 @@ cm4all-beng-proxy (12.0.15) unstable; urgency=low
 
   * certdb: fix column "issuer_common_name" management
   * certdb: add column "handle"
+    - new command "set-handle"
     - command "load" requires handle parameter
     - command "delete" uses handle
   * certdb: add command "get"

@@ -281,3 +281,14 @@ CertDatabase::FindServerCertificatesByName(const char *name)
                               " not_after DESC",
                               name);
 }
+
+void
+CertDatabase::SetHandle(Pg::Serial id, const char *handle)
+{
+    auto result = CheckError(conn.ExecuteParams("UPDATE server_certificate"
+                                                " SET handle=$2"
+                                                " WHERE id=$1",
+                                                id, handle));
+    if (result.GetAffectedRows() < 1)
+        throw std::runtime_error("No such record");
+}

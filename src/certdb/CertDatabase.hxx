@@ -114,6 +114,8 @@ public:
      */
     Pg::Result FindServerCertificatesByName(const char *name);
 
+    void SetHandle(Pg::Serial id, const char *handle);
+
 private:
     Pg::Result InsertServerCertificate(const char *handle,
                                      const char *common_name,

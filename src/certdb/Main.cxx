@@ -753,6 +753,22 @@ HandleFind(ConstBuffer<const char *> args)
 }
 
 static void
+SetHandle(Pg::Serial id, const char *handle)
+{
+    CertDatabase db(*db_config);
+    db.SetHandle(id, handle);
+}
+
+static void
+HandleSetHandle(ConstBuffer<const char *> args)
+{
+    if (args.size != 2)
+        throw AutoUsage();
+
+    SetHandle(Pg::Serial::Parse(args[0]), args[1]);
+}
+
+static void
 HandleDumpKey(ConstBuffer<const char *> args)
 {
     if (args.size != 1)
@@ -838,6 +854,7 @@ static constexpr struct Command {
     { "delete", "HANDLE", HandleDelete },
     { "get", "HANDLE", HandleGet },
     { "find", "HOST", HandleFind },
+    { "set-handle", "ID HANDLE", HandleSetHandle },
     { "dumpkey", "HOST", HandleDumpKey, true },
     { "monitor", nullptr, HandleMonitor },
     { "tail", nullptr, HandleTail },
