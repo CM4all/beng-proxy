@@ -19,6 +19,8 @@ class CertDatabase {
     PgConnection conn;
 
 public:
+    typedef unsigned id_t;
+
     explicit CertDatabase(const CertDatabaseConfig &_config);
 
     ConnStatusType GetStatus() const {
@@ -102,7 +104,7 @@ public:
      * no matching certificate was found
      */
     std::pair<UniqueX509, UniqueEVP_PKEY> GetServerCertificateKey(const char *name);
-    std::pair<UniqueX509, UniqueEVP_PKEY> GetServerCertificateKey(unsigned id);
+    std::pair<UniqueX509, UniqueEVP_PKEY> GetServerCertificateKey(id_t id);
 
 private:
     PgResult InsertServerCertificate(const char *handle,
@@ -217,7 +219,7 @@ private:
                                   common_name);
     }
 
-    PgResult FindServerCertificateKeyById(unsigned id) {
+    PgResult FindServerCertificateKeyById(id_t id) {
         return conn.ExecuteParams(true,
                                   "SELECT certificate_der, key_der, key_wrap_name "
                                   "FROM server_certificate "

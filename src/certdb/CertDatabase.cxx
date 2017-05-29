@@ -224,7 +224,7 @@ CertDatabase::GetServerCertificateKey(const char *name)
 }
 
 std::pair<UniqueX509, UniqueEVP_PKEY>
-CertDatabase::GetServerCertificateKey(unsigned id)
+CertDatabase::GetServerCertificateKey(id_t id)
 {
     auto result = CheckError(FindServerCertificateKeyById(id));
     if (result.GetRowCount() == 0)
