@@ -142,7 +142,9 @@ private:
                                        const char *not_after,
                                        Pg::BinaryValue cert, Pg::BinaryValue key,
                                        const char *key_wrap_name) {
-        return conn.ExecuteBinary("UPDATE server_certificate SET "
+        // TODO: remove handle==nullptr support eventually
+        return conn.ExecuteBinary(handle != nullptr
+                                  ? "UPDATE server_certificate SET "
                                   "common_name=$1, "
                                   "not_before=$2, not_after=$3, "
                                   "certificate_der=$4, key_der=$5, "
@@ -150,10 +152,19 @@ private:
                                   "issuer_common_name=$7, "
                                   "modified=CURRENT_TIMESTAMP, deleted=FALSE "
                                   "WHERE handle=$8"
+                                  " RETURNING id"
+                                  : "UPDATE server_certificate SET "
+                                  "not_before=$2, not_after=$3, "
+                                  "certificate_der=$4, key_der=$5, "
+                                  "key_wrap_name=$6, "
+                                  "issuer_common_name=$7, "
+                                  "handle=$8, "
+                                  "modified=CURRENT_TIMESTAMP, deleted=FALSE "
+                                  "WHERE common_name=$1"
                                   " RETURNING id",
-                                  common_name, not_before, not_after,
-                                  cert, key, key_wrap_name,
-                                  issuer_common_name, handle);
+                                 common_name, not_before, not_after,
+                                 cert, key, key_wrap_name,
+                                 issuer_common_name, handle);
     }
 
     Pg::Result DeleteAltNames(const char *server_certificate_id) {
