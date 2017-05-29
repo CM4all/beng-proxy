@@ -385,6 +385,7 @@ avahi = static_library('avahi',
   ])
 
 pg = static_library('pg',
+  'libcommon/src/pg/Serial.cxx',
   'libcommon/src/pg/Array.cxx',
   'libcommon/src/pg/Connection.cxx',
   'libcommon/src/pg/AsyncConnection.cxx',

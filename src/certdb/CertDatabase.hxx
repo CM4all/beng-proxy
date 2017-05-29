@@ -19,8 +19,6 @@ class CertDatabase {
     Pg::Connection conn;
 
 public:
-    typedef unsigned id_t;
-
     explicit CertDatabase(const CertDatabaseConfig &_config);
 
     ConnStatusType GetStatus() const {
@@ -73,7 +71,7 @@ public:
 
     void Migrate();
 
-    id_t GetIdByHandle(const char *handle);
+    Pg::Serial GetIdByHandle(const char *handle);
 
     void InsertServerCertificate(const char *handle,
                                  const char *common_name,
@@ -109,7 +107,7 @@ public:
      */
     std::pair<UniqueX509, UniqueEVP_PKEY> GetServerCertificateKeyByHandle(const char *handle);
     std::pair<UniqueX509, UniqueEVP_PKEY> GetServerCertificateKey(const char *name);
-    std::pair<UniqueX509, UniqueEVP_PKEY> GetServerCertificateKey(id_t id);
+    std::pair<UniqueX509, UniqueEVP_PKEY> GetServerCertificateKey(Pg::Serial id);
 
     /**
      * Result columns: id, handle, issuer_common_name, not_after
@@ -247,7 +245,7 @@ private:
                                   common_name);
     }
 
-    Pg::Result FindServerCertificateKeyById(id_t id) {
+    Pg::Result FindServerCertificateKeyById(Pg::Serial id) {
         return conn.ExecuteParams(true,
                                   "SELECT certificate_der, key_der, key_wrap_name "
                                   "FROM server_certificate "

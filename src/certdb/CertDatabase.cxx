@@ -91,7 +91,7 @@ CertDatabase::NotifyModified()
     return conn.Execute(sql.c_str());
 }
 
-CertDatabase::id_t
+Pg::Serial
 CertDatabase::GetIdByHandle(const char *handle)
 {
     auto result = CheckError(conn.ExecuteParams("SELECT id FROM server_certificate "
@@ -99,9 +99,9 @@ CertDatabase::GetIdByHandle(const char *handle)
                                                 "LIMIT 1",
                                                 handle));
     if (result.GetRowCount() == 0)
-        return 0;
+        return Pg::Serial();
 
-    return strtoul(result.GetValue(0, 0), nullptr, 10);
+    return Pg::Serial::Parse(result.GetValue(0, 0));
 }
 
 void
@@ -257,7 +257,7 @@ CertDatabase::GetServerCertificateKey(const char *name)
 }
 
 std::pair<UniqueX509, UniqueEVP_PKEY>
-CertDatabase::GetServerCertificateKey(id_t id)
+CertDatabase::GetServerCertificateKey(Pg::Serial id)
 {
     auto result = CheckError(FindServerCertificateKeyById(id));
     if (result.GetRowCount() == 0)
