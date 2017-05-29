@@ -110,6 +110,19 @@ DeleteCertificate(const char *host)
     db.NotifyModified();
 }
 
+static void
+GetCertificate(const char *handle)
+{
+    const ScopeSslGlobalInit ssl_init;
+    CertDatabase db(*db_config);
+    auto cert = db.GetServerCertificateByHandle(handle);
+    if (!cert)
+        throw "Certificate not found";
+
+    X509_print_fp(stdout, cert.get());
+    PEM_write_X509(stdout, cert.get());
+}
+
 /**
  * Load the private key for the given host name from the database.
  *
@@ -726,6 +739,15 @@ HandleDelete(ConstBuffer<const char *> args)
 }
 
 static void
+HandleGet(ConstBuffer<const char *> args)
+{
+    if (args.size != 1)
+        throw AutoUsage();
+
+    GetCertificate(args[0]);
+}
+
+static void
 HandleFind(ConstBuffer<const char *> args)
 {
     if (args.size != 1)
@@ -818,6 +840,7 @@ static constexpr struct Command {
     { "load", "HANDLE CERT KEY", HandleLoad },
     { "reload", "HOST", HandleReload, true },
     { "delete", "HOST", HandleDelete },
+    { "get", "HANDLE", HandleGet },
     { "find", "HOST", HandleFind },
     { "dumpkey", "HOST", HandleDumpKey, true },
     { "monitor", nullptr, HandleMonitor },
