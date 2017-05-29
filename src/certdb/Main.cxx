@@ -80,20 +80,20 @@ LoadCertificate(const char *handle,
 }
 
 static void
-ReloadCertificate(const char *host)
+ReloadCertificate(const char *handle)
 {
     const ScopeSslGlobalInit ssl_init;
 
     CertDatabase db(*db_config);
 
-    auto cert_key = db.GetServerCertificateKey(host);
+    auto cert_key = db.GetServerCertificateKeyByHandle(handle);
     if (!cert_key.second)
         throw "Certificate not found";
 
     WrapKeyHelper wrap_key_helper;
     const auto wrap_key = wrap_key_helper.SetEncryptKey(*db_config);
 
-    db.LoadServerCertificate(nullptr,
+    db.LoadServerCertificate(handle,
                              *cert_key.first, *cert_key.second,
                              wrap_key.first, wrap_key.second);
 }
@@ -838,7 +838,7 @@ static constexpr struct Command {
     bool undocumented = false;
 } commands[] = {
     { "load", "HANDLE CERT KEY", HandleLoad },
-    { "reload", "HOST", HandleReload, true },
+    { "reload", "HANDLE", HandleReload, true },
     { "delete", "HANDLE", HandleDelete },
     { "get", "HANDLE", HandleGet },
     { "find", "HOST", HandleFind },

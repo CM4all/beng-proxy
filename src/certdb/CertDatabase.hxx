@@ -107,6 +107,7 @@ public:
      * @return a pair of certificate and key, or {nullptr, nullptr} if
      * no matching certificate was found
      */
+    std::pair<UniqueX509, UniqueEVP_PKEY> GetServerCertificateKeyByHandle(const char *handle);
     std::pair<UniqueX509, UniqueEVP_PKEY> GetServerCertificateKey(const char *name);
     std::pair<UniqueX509, UniqueEVP_PKEY> GetServerCertificateKey(id_t id);
 
@@ -212,6 +213,15 @@ private:
                                   " common_name=$1 DESC "
                                   "LIMIT 1",
                                   common_name);
+    }
+
+    PgResult FindServerCertificateKeyByHandle(const char *handle) {
+        return conn.ExecuteParams(true,
+                                  "SELECT certificate_der, key_der, key_wrap_name "
+                                  "FROM server_certificate "
+                                  "WHERE handle=$1 AND NOT deleted "
+                                  "LIMIT 1",
+                                  handle);
     }
 
     PgResult FindServerCertificateKeyByName(const char *common_name) {
