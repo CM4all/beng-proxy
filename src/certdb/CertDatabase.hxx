@@ -95,6 +95,8 @@ public:
      */
     unsigned DeleteAcmeInvalidAlt(X509 &cert);
 
+    UniqueX509 GetServerCertificateByHandle(const char *handle);
+
     UniqueX509 GetServerCertificate(const char *name);
 
     /**
@@ -181,6 +183,15 @@ private:
                                   " WHERE server_certificate_id=server_certificate.id"
                                   " AND name LIKE '%.acme.invalid')",
                                   names);
+    }
+
+    PgResult FindServerCertificateByHandle(const char *handle) {
+        return conn.ExecuteParams(true,
+                                  "SELECT certificate_der "
+                                  "FROM server_certificate "
+                                  "WHERE NOT deleted AND handle=$1"
+                                  "LIMIT 1",
+                                  handle);
     }
 
     PgResult FindServerCertificateByName(const char *common_name) {

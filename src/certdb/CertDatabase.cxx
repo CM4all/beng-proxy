@@ -204,6 +204,16 @@ CertDatabase::DeleteAcmeInvalidAlt(X509 &cert)
 }
 
 UniqueX509
+CertDatabase::GetServerCertificateByHandle(const char *handle)
+{
+    auto result = CheckError(FindServerCertificateByHandle(handle));
+    if (result.GetRowCount() == 0)
+        return nullptr;
+
+    return LoadCertificate(result, 0, 0);
+}
+
+UniqueX509
 CertDatabase::GetServerCertificate(const char *name)
 {
     auto result = CheckError(FindServerCertificateByName(name));
