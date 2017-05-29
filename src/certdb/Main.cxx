@@ -42,6 +42,8 @@ struct Usage {
     explicit Usage(const char *_text):text(_text) {}
 };
 
+struct AutoUsage {};
+
 static const CertDatabaseConfig *db_config;
 
 static void
@@ -684,6 +686,146 @@ LoadPatchCertDatabaseConfig()
     return config;
 }
 
+static void
+HandleLoad(ConstBuffer<const char *> args)
+{
+    if (args.size != 2)
+        throw AutoUsage();
+
+    LoadCertificate(args[0], args[1]);
+}
+
+static void
+HandleReload(ConstBuffer<const char *> args)
+{
+    if (args.size != 1)
+        throw AutoUsage();
+
+    ReloadCertificate(args[0]);
+}
+
+static void
+HandleDelete(ConstBuffer<const char *> args)
+{
+    if (args.size != 1)
+        throw AutoUsage();
+
+    DeleteCertificate(args[0]);
+}
+
+static void
+HandleFind(ConstBuffer<const char *> args)
+{
+    if (args.size != 1)
+        throw AutoUsage();
+
+    FindCertificate(args[0]);
+}
+
+static void
+HandleDumpKey(ConstBuffer<const char *> args)
+{
+    if (args.size != 1)
+        throw AutoUsage();
+
+    DumpKey(args[0]);
+}
+
+static void
+HandleMonitor(ConstBuffer<const char *> args)
+{
+    if (args.size != 0)
+        throw AutoUsage();
+
+    Monitor();
+}
+
+static void
+HandleTail(ConstBuffer<const char *> args)
+{
+    if (args.size != 0)
+        throw AutoUsage();
+
+    Tail();
+}
+
+static void
+HandleAcme(ConstBuffer<const char *> args)
+{
+    Acme(args);
+}
+
+static void
+HandleGenwrap(ConstBuffer<const char *> args)
+{
+    if (args.size != 0)
+        throw AutoUsage();
+
+    CertDatabaseConfig::AES256 key;
+    UrandomFill(&key, sizeof(key));
+
+    for (auto b : key)
+        printf("%02x", b);
+    printf("\n");
+}
+
+static void
+HandlePopulate(ConstBuffer<const char *> args)
+{
+    if (args.size < 2 || args.size > 3)
+        throw AutoUsage();
+
+    const char *key = args[0];
+    const char *suffix = args[1];
+    unsigned count = 0;
+
+    if (args.size == 3) {
+        count = strtoul(args[2], nullptr, 10);
+        if (count == 0)
+            throw std::runtime_error("Invalid COUNT parameter");
+    }
+
+    Populate(key, suffix, count);
+}
+
+static void
+HandleMigrate(ConstBuffer<const char *> args)
+{
+    if (args.size != 0)
+        throw AutoUsage();
+
+    CertDatabase db(*db_config);
+    db.Migrate();
+}
+
+static constexpr struct Command {
+    const char *name, *usage;
+    void (*function)(ConstBuffer<const char *> args);
+    bool undocumented = false;
+} commands[] = {
+    { "load", "CERT KEY", HandleLoad },
+    { "reload", "HOST", HandleReload, true },
+    { "delete", "HOST", HandleDelete },
+    { "find", "HOST", HandleFind },
+    { "dumpkey", "HOST", HandleDumpKey, true },
+    { "monitor", nullptr, HandleMonitor },
+    { "tail", nullptr, HandleTail },
+    { "acme", "[OPTIONS] COMMAND ...", HandleAcme },
+    { "genwrap", "", HandleGenwrap },
+    { "populate", "KEY SUFFIX COUNT", HandlePopulate, true },
+    { "migrate", nullptr, HandleMigrate },
+};
+
+static const Command *
+FindCommand(const char *name)
+{
+    for (const auto &i : commands)
+        if (strcmp(i.name, name) == 0)
+            return &i;
+
+    return nullptr;
+}
+
 int
 main(int argc, char **argv)
 {
@@ -692,16 +834,19 @@ main(int argc, char **argv)
     if (args.IsEmpty()) {
         fprintf(stderr, "Usage: %s COMMAND ...\n"
                 "\n"
-                "Commands:\n"
-                "  load CERT KEY\n"
-                "  delete HOST\n"
-                "  find HOST\n"
-                "  monitor\n"
-                "  tail\n"
-                "  acme ...\n"
-                "  genwrap\n"
-                "  populate KEY SUFFIX COUNT\n"
-                "\n", argv[0]);
+                "Commands:\n", argv[0]);
+
+        for (const auto &i : commands) {
+            if (i.undocumented)
+                continue;
+
+            if (i.usage != nullptr)
+                fprintf(stderr, "  %s %s\n", i.name, i.usage);
+            else
+                fprintf(stderr, "  %s\n", i.name);
+        }
+
+        fprintf(stderr, "\n");
         return EXIT_FAILURE;
     }
 
@@ -717,81 +862,21 @@ main(int argc, char **argv)
         const auto _db_config = LoadPatchCertDatabaseConfig();
         db_config = &_db_config;
 
-        if (strcmp(cmd, "load") == 0) {
-            if (args.size != 2)
-                throw Usage("load CERT KEY");
-
-            LoadCertificate(args[0], args[1]);
-        } else if (strcmp(cmd, "reload") == 0) {
-            if (args.size != 1)
-                throw Usage("reload HOST");
-
-            ReloadCertificate(args[0]);
-        } else if (strcmp(cmd, "delete") == 0) {
-            if (args.size != 1)
-                throw Usage("delete HOST");
-
-            DeleteCertificate(args[0]);
-        } else if (strcmp(cmd, "find") == 0) {
-            if (args.size != 1)
-                throw Usage("find HOST");
-
-            FindCertificate(args[0]);
-        } else if (strcmp(cmd, "dumpkey") == 0) {
-            if (args.size != 1)
-                throw Usage("dumpkey HOST");
-
-            DumpKey(args.front());
-        } else if (strcmp(cmd, "monitor") == 0) {
-            if (args.size != 0)
-                throw Usage("monitor");
-
-            Monitor();
-        } else if (strcmp(cmd, "tail") == 0) {
-            if (args.size != 0)
-                throw Usage("tail");
-
-            Tail();
-        } else if (strcmp(cmd, "acme") == 0) {
-            Acme(args);
-        } else if (strcmp(cmd, "genwrap") == 0) {
-            if (args.size != 0)
-                throw Usage("genwrap");
-
-            CertDatabaseConfig::AES256 key;
-            UrandomFill(&key, sizeof(key));
-
-            for (auto b : key)
-                printf("%02x", b);
-            printf("\n");
-        } else if (strcmp(cmd, "populate") == 0) {
-            if (args.size < 2 || args.size > 3) {
-                fprintf(stderr, "Usage: %s populate KEY {HOST|SUFFIX COUNT}\n",
-                        argv[0]);
-                return EXIT_FAILURE;
-            }
-
-            const char *key = args[0];
-            const char *suffix = args[1];
-            unsigned count = 0;
-
-            if (args.size == 3) {
-                count = strtoul(args[2], nullptr, 10);
-                if (count == 0) {
-                    fprintf(stderr, "Invalid COUNT parameter\n");
-                    return EXIT_FAILURE;
-                }
-            }
-
-            Populate(key, suffix, count);
-        } else if (strcmp(cmd, "migrate") == 0) {
-            if (args.size != 0)
-                throw Usage("migrate");
-
-            CertDatabase db(*db_config);
-            db.Migrate();
-        } else {
+        const auto *cmd2 = FindCommand(cmd);
+        if (cmd2 == nullptr) {
             fprintf(stderr, "Unknown command: %s\n", cmd);
+            return EXIT_FAILURE;
+        }
+
+        try {
+            cmd2->function(args);
+        } catch (AutoUsage) {
+            if (cmd2->usage != nullptr)
+                fprintf(stderr, "Usage: %s %s %s\n", argv[0],
+                        cmd2->name, cmd2->usage);
+            else
+                fprintf(stderr, "Usage: %s %s\n", argv[0],
+                        cmd2->name);
             return EXIT_FAILURE;
         }
 
