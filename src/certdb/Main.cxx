@@ -701,26 +701,10 @@ LoadPatchCertDatabaseConfig()
 static void
 HandleLoad(ConstBuffer<const char *> args)
 {
-    const char *handle = nullptr;
-
-    while (!args.IsEmpty() && args.front()[0] == '-') {
-        const char *arg = args.front();
-
-        if (strcmp(arg, "--handle") == 0) {
-            args.shift();
-            if (args.IsEmpty())
-                throw std::runtime_error("Handle missing");
-
-            handle = args.front();
-            args.shift();
-        } else
-            break;
-    }
-
-    if (args.size != 2)
+    if (args.size != 3)
         throw AutoUsage();
 
-    LoadCertificate(handle, args[0], args[1]);
+    LoadCertificate(args[0], args[1], args[2]);
 }
 
 static void
@@ -831,7 +815,7 @@ static constexpr struct Command {
     void (*function)(ConstBuffer<const char *> args);
     bool undocumented = false;
 } commands[] = {
-    { "load", "[--handle HANDLE] CERT KEY", HandleLoad },
+    { "load", "HANDLE CERT KEY", HandleLoad },
     { "reload", "HOST", HandleReload, true },
     { "delete", "HOST", HandleDelete },
     { "find", "HOST", HandleFind },
