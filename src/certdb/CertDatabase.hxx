@@ -123,7 +123,8 @@ private:
                                   cert, key, key_wrap_name);
     }
 
-    PgResult UpdateServerCertificate(const char *common_name,
+    PgResult UpdateServerCertificate(const char *handle,
+                                     const char *common_name,
                                      const char *issuer_common_name,
                                      const char *not_before,
                                      const char *not_after,
@@ -134,12 +135,13 @@ private:
                                   "certificate_der=$4, key_der=$5, "
                                   "key_wrap_name=$6, "
                                   "issuer_common_name=$7, "
+                                  "handle=$8, "
                                   "modified=CURRENT_TIMESTAMP, deleted=FALSE "
                                   "WHERE common_name=$1"
                                   " RETURNING id",
                                   common_name, not_before, not_after,
                                   cert, key, key_wrap_name,
-                                  issuer_common_name);
+                                  issuer_common_name, handle);
     }
 
     PgResult DeleteAltNames(const char *server_certificate_id) {

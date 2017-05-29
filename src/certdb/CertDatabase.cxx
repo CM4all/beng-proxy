@@ -170,7 +170,8 @@ CertDatabase::LoadServerCertificate(const char *handle,
     if (not_after == nullptr)
         throw "Certificate does not have a notAfter time stamp";
 
-    auto result = CheckError(UpdateServerCertificate(common_name.c_str(),
+    auto result = CheckError(UpdateServerCertificate(handle,
+                                                     common_name.c_str(),
                                                      issuer_common_name.c_str(),
                                                      not_before.c_str(),
                                                      not_after.c_str(),
