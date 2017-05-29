@@ -282,6 +282,26 @@ CertDatabase::FindServerCertificatesByName(const char *name)
                               name);
 }
 
+std::list<std::string>
+CertDatabase::GetNamesByHandle(const char *handle)
+{
+    std::list<std::string> names;
+
+    const char *sql = "SELECT common_name, "
+        "ARRAY(SELECT name FROM server_certificate_alt_name WHERE server_certificate_id=server_certificate.id)"
+        " FROM server_certificate"
+        " WHERE handle=$1";
+
+    for (const auto &row : CheckError(conn.ExecuteParams(sql, handle))) {
+        names.emplace_back(row.GetValue(0));
+        if (!row.IsValueNull(1))
+            names.splice(names.end(),
+                         Pg::DecodeArray(row.GetValue(1)));
+    }
+
+    return names;
+}
+
 void
 CertDatabase::SetHandle(Pg::Serial id, const char *handle)
 {

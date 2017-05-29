@@ -735,6 +735,23 @@ HandleDelete(ConstBuffer<const char *> args)
 }
 
 static void
+PrintNames(const char *handle)
+{
+    CertDatabase db(*db_config);
+    for (const auto &name : db.GetNamesByHandle(handle))
+        printf("%s\n", name.c_str());
+}
+
+static void
+HandleNames(ConstBuffer<const char *> args)
+{
+    if (args.size != 1)
+        throw AutoUsage();
+
+    PrintNames(args[0]);
+}
+
+static void
 HandleGet(ConstBuffer<const char *> args)
 {
     if (args.size != 1)
@@ -852,6 +869,7 @@ static constexpr struct Command {
     { "load", "HANDLE CERT KEY", HandleLoad },
     { "reload", "HANDLE", HandleReload, true },
     { "delete", "HANDLE", HandleDelete },
+    { "names", "HANDLE", HandleNames },
     { "get", "HANDLE", HandleGet },
     { "find", "HOST", HandleFind },
     { "set-handle", "ID HANDLE", HandleSetHandle },

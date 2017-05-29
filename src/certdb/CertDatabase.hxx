@@ -114,6 +114,8 @@ public:
      */
     Pg::Result FindServerCertificatesByName(const char *name);
 
+    std::list<std::string> GetNamesByHandle(const char *handle);
+
     void SetHandle(Pg::Serial id, const char *handle);
 
 private:
