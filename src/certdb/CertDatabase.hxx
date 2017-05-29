@@ -72,6 +72,7 @@ public:
     void Migrate();
 
     void InsertServerCertificate(const char *common_name,
+                                 const char *issuer_common_name,
                                  const char *not_before,
                                  const char *not_after,
                                  X509 &cert, ConstBuffer<void> key,
@@ -103,22 +104,24 @@ public:
 
 private:
     PgResult InsertServerCertificate(const char *common_name,
+                                     const char *issuer_common_name,
                                      const char *not_before,
                                      const char *not_after,
                                      PgBinaryValue cert, PgBinaryValue key,
                                      const char *key_wrap_name) {
         return conn.ExecuteBinary("INSERT INTO server_certificate("
-                                  "common_name, "
+                                  "common_name, issuer_common_name, "
                                   "not_before, not_after, "
                                   "certificate_der, key_der, key_wrap_name) "
                                   "VALUES($1, $2, $3, $4, $5, $6)"
                                   " RETURNING id",
-                                  common_name,
+                                  common_name, issuer_common_name,
                                   not_before, not_after,
                                   cert, key, key_wrap_name);
     }
 
     PgResult UpdateServerCertificate(const char *common_name,
+                                     const char *issuer_common_name,
                                      const char *not_before,
                                      const char *not_after,
                                      PgBinaryValue cert, PgBinaryValue key,
@@ -127,11 +130,13 @@ private:
                                   "not_before=$2, not_after=$3, "
                                   "certificate_der=$4, key_der=$5, "
                                   "key_wrap_name=$6, "
+                                  "issuer_common_name=$7, "
                                   "modified=CURRENT_TIMESTAMP, deleted=FALSE "
                                   "WHERE common_name=$1"
                                   " RETURNING id",
                                   common_name, not_before, not_after,
-                                  cert, key, key_wrap_name);
+                                  cert, key, key_wrap_name,
+                                  issuer_common_name);
     }
 
     PgResult DeleteAltNames(const char *server_certificate_id) {

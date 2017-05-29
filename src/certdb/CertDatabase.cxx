@@ -93,6 +93,7 @@ CertDatabase::NotifyModified()
 
 void
 CertDatabase::InsertServerCertificate(const char *common_name,
+                                      const char *issuer_common_name,
                                       const char *not_before,
                                       const char *not_after,
                                       X509 &cert, ConstBuffer<void> key,
@@ -103,7 +104,7 @@ CertDatabase::InsertServerCertificate(const char *common_name,
 
     const PgBinaryValue key_der(key);
 
-    CheckError(InsertServerCertificate(common_name,
+    CheckError(InsertServerCertificate(common_name, issuer_common_name,
                                        not_before, not_after,
                                        cert_der, key_der, key_wrap_name));
 }
@@ -115,6 +116,8 @@ CertDatabase::LoadServerCertificate(X509 &cert, EVP_PKEY &key,
 {
     const auto common_name = GetCommonName(cert);
     assert(common_name != nullptr);
+
+    const auto issuer_common_name = GetIssuerCommonName(cert);
 
     const SslBuffer cert_buffer(cert);
     const PgBinaryValue cert_der(cert_buffer.get());
@@ -165,6 +168,7 @@ CertDatabase::LoadServerCertificate(X509 &cert, EVP_PKEY &key,
         throw "Certificate does not have a notAfter time stamp";
 
     auto result = CheckError(UpdateServerCertificate(common_name.c_str(),
+                                                     issuer_common_name.c_str(),
                                                      not_before.c_str(),
                                                      not_after.c_str(),
                                                      cert_der, key_der,
@@ -177,6 +181,7 @@ CertDatabase::LoadServerCertificate(X509 &cert, EVP_PKEY &key,
         return false;
     } else {
         result = CheckError(InsertServerCertificate(common_name.c_str(),
+                                                    issuer_common_name.c_str(),
                                                     not_before.c_str(),
                                                     not_after.c_str(),
                                                     cert_der, key_der,

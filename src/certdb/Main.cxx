@@ -607,7 +607,8 @@ Populate(CertDatabase &db, EVP_PKEY *key, ConstBuffer<void> key_der,
     const char *not_after = "1971-01-01";
 
     auto cert = MakeSelfSignedDummyCert(*key, common_name);
-    db.InsertServerCertificate(common_name, not_before, not_after,
+    db.InsertServerCertificate(common_name, common_name,
+                               not_before, not_after,
                                *cert, key_der,
                                nullptr);
 }
