@@ -91,6 +91,19 @@ CertDatabase::NotifyModified()
     return conn.Execute(sql.c_str());
 }
 
+CertDatabase::id_t
+CertDatabase::GetIdByHandle(const char *handle)
+{
+    auto result = CheckError(conn.ExecuteParams("SELECT id FROM server_certificate "
+                                                "WHERE handle=$1 AND NOT deleted "
+                                                "LIMIT 1",
+                                                handle));
+    if (result.GetRowCount() == 0)
+        return 0;
+
+    return strtoul(result.GetValue(0, 0), nullptr, 10);
+}
+
 void
 CertDatabase::InsertServerCertificate(const char *handle,
                                       const char *common_name,

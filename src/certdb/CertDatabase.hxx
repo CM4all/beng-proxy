@@ -73,6 +73,8 @@ public:
 
     void Migrate();
 
+    id_t GetIdByHandle(const char *handle);
+
     void InsertServerCertificate(const char *handle,
                                  const char *common_name,
                                  const char *issuer_common_name,
