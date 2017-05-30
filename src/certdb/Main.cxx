@@ -478,12 +478,20 @@ AcmeRenewCert(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
     auto &old_cert = *old_cert_key.first;
     auto &old_key = *old_cert_key.second;
 
+    const auto cn = GetCommonName(old_cert);
+    if (cn.IsNull())
+        throw "Old certificate has no common name";
+
     const auto names = AllNames(old_cert);
     StepProgress progress(_progress, names.size() + 1);
 
     for (const auto &i : names) {
+        const char *current_handle = strcmp(cn.c_str(), i.c_str()) == 0
+            ? handle
+            : nullptr;
+
         printf("new-authz '%s'\n", i.c_str());
-        AcmeNewAuthz(key, db, client, nullptr, i.c_str());
+        AcmeNewAuthz(key, db, client, current_handle, i.c_str());
         progress();
     }
 
