@@ -269,7 +269,8 @@ IncludeConfigParser::ParseLine(LineParser &line)
 void
 IncludeConfigParser::Finish()
 {
-    child.Finish();
+    if (finish_child)
+        child.Finish();
 }
 
 static fs::path
@@ -307,11 +308,11 @@ IncludeConfigParser::IncludePath(boost::filesystem::path &&p)
         std::sort(files.begin(), files.end());
 
         for (auto &i : files) {
-            IncludeConfigParser sub(std::move(i), child);
+            IncludeConfigParser sub(std::move(i), child, false);
             ParseConfigFile(sub.path.c_str(), sub);
         }
     } else {
-        IncludeConfigParser sub(std::move(p), child);
+        IncludeConfigParser sub(std::move(p), child, false);
         ParseConfigFile(sub.path.c_str(), sub);
     }
 }
@@ -339,7 +340,7 @@ ParseConfigFile(const boost::filesystem::path &path, FILE *file,
 inline void
 IncludeConfigParser::IncludeOptionalPath(boost::filesystem::path &&p)
 {
-    IncludeConfigParser sub(ApplyPath(path, std::move(p)), child);
+    IncludeConfigParser sub(ApplyPath(path, std::move(p)), child, false);
 
     FILE *file = fopen(sub.path.c_str(), "r");
     if (file == nullptr) {
