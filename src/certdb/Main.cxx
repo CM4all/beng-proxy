@@ -612,13 +612,13 @@ Acme(ConstBuffer<const char *> args)
 
         printf("OK\n");
     } else if (strcmp(cmd, "new-authz-cert") == 0) {
-        if (args.size < 1)
-            throw Usage("acme new-authz-cert HOST ...");
+        if (args.size < 2)
+            throw Usage("acme new-authz-cert HANDLE HOST ...");
 
-        if (all && args.size > 1)
+        if (all && args.size > 2)
             throw "With --all, only one host name is allowed";
 
-        const char *handle = nullptr;
+        const char *handle = args.shift();
         const char *host = args.shift();
 
         const ScopeSslGlobalInit ssl_init;
