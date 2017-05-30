@@ -57,28 +57,28 @@ struct LbBranchConfig;
 struct LbLuaHandlerConfig;
 struct LbTranslationHandlerConfig;
 
-struct LbGoto {
+struct LbGotoConfig {
     const LbClusterConfig *cluster = nullptr;
     const LbBranchConfig *branch = nullptr;
     const LbLuaHandlerConfig *lua = nullptr;
     const LbTranslationHandlerConfig *translation = nullptr;
     LbSimpleHttpResponse response;
 
-    LbGoto() = default;
+    LbGotoConfig() = default;
 
-    explicit LbGoto(LbClusterConfig *_cluster)
+    explicit LbGotoConfig(LbClusterConfig *_cluster)
         :cluster(_cluster) {}
 
-    explicit LbGoto(LbBranchConfig *_branch)
+    explicit LbGotoConfig(LbBranchConfig *_branch)
         :branch(_branch) {}
 
-    explicit LbGoto(LbLuaHandlerConfig *_lua)
+    explicit LbGotoConfig(LbLuaHandlerConfig *_lua)
         :lua(_lua) {}
 
-    explicit LbGoto(LbTranslationHandlerConfig *_translation)
+    explicit LbGotoConfig(LbTranslationHandlerConfig *_translation)
         :translation(_translation) {}
 
-    explicit LbGoto(http_status_t _status)
+    explicit LbGotoConfig(http_status_t _status)
         :response(_status) {}
 
     bool IsDefined() const {
@@ -98,7 +98,7 @@ struct LbGoto {
 
     template<typename R>
     gcc_pure
-    const LbGoto &FindRequestLeaf(const R &request) const;
+    const LbGotoConfig &FindRequestLeaf(const R &request) const;
 };
 
 struct LbConditionConfig {
@@ -158,9 +158,9 @@ struct LbConditionConfig {
 struct LbGotoIfConfig {
     LbConditionConfig condition;
 
-    LbGoto destination;
+    LbGotoConfig destination;
 
-    LbGotoIfConfig(LbConditionConfig &&c, LbGoto d)
+    LbGotoIfConfig(LbConditionConfig &&c, LbGotoConfig d)
         :condition(std::move(c)), destination(d) {}
 
     bool HasZeroConf() const {
@@ -175,7 +175,7 @@ struct LbGotoIfConfig {
 struct LbBranchConfig {
     std::string name;
 
-    LbGoto fallback;
+    LbGotoConfig fallback;
 
     std::list<LbGotoIfConfig> conditions;
 
@@ -199,7 +199,7 @@ struct LbBranchConfig {
 
     template<typename R>
     gcc_pure
-    const LbGoto &FindRequestLeaf(const R &request) const {
+    const LbGotoConfig &FindRequestLeaf(const R &request) const {
         for (const auto &i : conditions)
             if (i.condition.MatchRequest(request))
                 return i.destination.FindRequestLeaf(request);
@@ -238,8 +238,8 @@ struct LbTranslationHandlerConfig {
 };
 
 template<typename R>
-const LbGoto &
-LbGoto::FindRequestLeaf(const R &request) const
+const LbGotoConfig &
+LbGotoConfig::FindRequestLeaf(const R &request) const
 {
     if (branch != nullptr)
         return branch->FindRequestLeaf(request);

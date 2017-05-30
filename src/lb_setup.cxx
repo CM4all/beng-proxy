@@ -26,7 +26,7 @@ static void
 init_monitors(LbInstance &instance, const LbBranchConfig &cluster);
 
 static void
-init_monitors(LbInstance &instance, const LbGoto &g)
+init_monitors(LbInstance &instance, const LbGotoConfig &g)
 {
     if (g.cluster != nullptr)
         init_monitors(instance, *g.cluster);

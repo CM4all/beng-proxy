@@ -18,7 +18,7 @@ LbBranchConfig::HasZeroConf() const
 }
 
 LbProtocol
-LbGoto::GetProtocol() const
+LbGotoConfig::GetProtocol() const
 {
     assert(IsDefined());
 
@@ -31,7 +31,7 @@ LbGoto::GetProtocol() const
 }
 
 const char *
-LbGoto::GetName() const
+LbGotoConfig::GetName() const
 {
     assert(IsDefined());
 
@@ -47,7 +47,7 @@ LbGoto::GetName() const
 }
 
 bool
-LbGoto::HasZeroConf() const
+LbGotoConfig::HasZeroConf() const
 {
     return (cluster != nullptr && cluster->HasZeroConf()) ||
         (branch != nullptr && branch->HasZeroConf());

@@ -24,7 +24,7 @@ struct HttpServerConnection;
 struct LbListenerConfig;
 struct LbClusterConfig;
 struct LbLuaHandlerConfig;
-struct LbGoto;
+struct LbGotoConfig;
 struct LbTranslationHandlerConfig;
 struct LbInstance;
 
@@ -76,7 +76,7 @@ struct LbHttpConnection final
     void HttpConnectionClosed() override;
 
 private:
-    void HandleHttpRequest(const LbGoto &destination,
+    void HandleHttpRequest(const LbGotoConfig &destination,
                            HttpServerRequest &request,
                            CancellablePointer &cancel_ptr);
 

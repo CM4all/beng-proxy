@@ -14,7 +14,7 @@
 struct LbConfig;
 struct LbGotoIfConfig;
 struct LbBranchConfig;
-struct LbGoto;
+struct LbGotoConfig;
 struct LbListenerConfig;
 struct LbLuaHandlerConfig;
 struct HttpServerRequest;
@@ -29,8 +29,8 @@ public:
     LbLuaHandler(LuaInitHook &init_hook, const LbLuaHandlerConfig &config);
     ~LbLuaHandler();
 
-    const LbGoto *HandleRequest(HttpServerRequest &request,
-                                HttpResponseHandler &handler);
+    const LbGotoConfig *HandleRequest(HttpServerRequest &request,
+                                      HttpResponseHandler &handler);
 };
 
 class LbLuaHandlerMap {
@@ -49,7 +49,7 @@ public:
 private:
     void Scan(LuaInitHook &init_hook, const LbGotoIfConfig &config);
     void Scan(LuaInitHook &init_hook, const LbBranchConfig &config);
-    void Scan(LuaInitHook &init_hook, const LbGoto &g);
+    void Scan(LuaInitHook &init_hook, const LbGotoConfig &g);
     void Scan(LuaInitHook &init_hook, const LbListenerConfig &config);
 
     void Scan(LuaInitHook &init_hook, const LbLuaHandlerConfig &config);

@@ -90,8 +90,8 @@ struct LbConfig {
 
     template<typename T>
     gcc_pure
-    const LbGoto FindGoto(T &&t) const {
-        LbGoto g;
+    const LbGotoConfig FindGoto(T &&t) const {
+        LbGotoConfig g;
 
         g.cluster = FindCluster(t);
         if (g.cluster == nullptr) {

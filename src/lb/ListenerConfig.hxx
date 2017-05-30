@@ -18,7 +18,7 @@ struct LbListenerConfig {
 
     AllocatedSocketAddress bind_address;
 
-    LbGoto destination;
+    LbGotoConfig destination;
 
     /**
      * If non-empty, sets SO_BINDTODEVICE.

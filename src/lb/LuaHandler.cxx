@@ -196,7 +196,7 @@ LbLuaHandler::~LbLuaHandler()
 {
 }
 
-const LbGoto *
+const LbGotoConfig *
 LbLuaHandler::HandleRequest(HttpServerRequest &request,
                             HttpResponseHandler &handler)
 {
@@ -245,7 +245,7 @@ LbLuaHandlerMap::Scan(LuaInitHook &init_hook, const LbBranchConfig &config)
 }
 
 void
-LbLuaHandlerMap::Scan(LuaInitHook &init_hook, const LbGoto &g)
+LbLuaHandlerMap::Scan(LuaInitHook &init_hook, const LbGotoConfig &g)
 {
     if (g.lua != nullptr)
         Scan(init_hook, *g.lua);

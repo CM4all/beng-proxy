@@ -11,6 +11,8 @@
 #include <map>
 
 class MyAvahiClient;
+struct LbGotoConfig;
+struct LbBranchConfig;
 struct LbTranslationHandlerConfig;
 
 class LbClusterMap {
@@ -18,7 +20,7 @@ class LbClusterMap {
 
 public:
     void Scan(const LbConfig &config, MyAvahiClient &avahi_client);
-    void Scan(const LbGoto &g, MyAvahiClient &avahi_client);
+    void Scan(const LbGotoConfig &g, MyAvahiClient &avahi_client);
 
     LbCluster *Find(const std::string &name) {
         auto i = clusters.find(name);

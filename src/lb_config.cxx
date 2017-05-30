@@ -104,7 +104,7 @@ class LbConfigParser final : public NestedConfigParser {
             :parent(_parent), config(_name) {}
 
     private:
-        void AddGoto(LbGoto &&destination, FileLineParser &line);
+        void AddGoto(LbGotoConfig &&destination, FileLineParser &line);
 
     protected:
         /* virtual methods from class ConfigParser */
@@ -736,7 +736,8 @@ ParseStatus(const char *s)
 }
 
 void
-LbConfigParser::Branch::AddGoto(LbGoto &&destination, FileLineParser &line)
+LbConfigParser::Branch::AddGoto(LbGotoConfig &&destination,
+                                FileLineParser &line)
 {
     if (line.IsEnd()) {
         if (config.HasFallback())
@@ -773,18 +774,18 @@ LbConfigParser::Branch::ParseLine(FileLineParser &line)
     if (strcmp(word, "goto") == 0) {
         const char *name = line.ExpectValue();
 
-        LbGoto destination = parent.config.FindGoto(name);
+        LbGotoConfig destination = parent.config.FindGoto(name);
         if (!destination.IsDefined())
             throw LineParser::Error("No such pool");
 
         AddGoto(std::move(destination), line);
     } else if (strcmp(word, "status") == 0) {
         const auto status = ParseStatus(line.ExpectValue());
-        LbGoto destination(status);
+        LbGotoConfig destination(status);
 
         AddGoto(std::move(destination), line);
     } else if (strcmp(word, "redirect") == 0) {
-        LbGoto destination(HTTP_STATUS_FOUND);
+        LbGotoConfig destination(HTTP_STATUS_FOUND);
         destination.response.location = line.ExpectValue();
 
         AddGoto(std::move(destination), line);

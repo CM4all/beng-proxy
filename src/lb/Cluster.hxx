@@ -17,8 +17,6 @@
 
 struct LbConfig;
 struct LbGotoIfConfig;
-struct LbBranchConfig;
-struct LbGoto;
 struct LbListenerConfig;
 struct LbClusterConfig;
 class MyAvahiClient;

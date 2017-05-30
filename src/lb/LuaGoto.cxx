@@ -7,9 +7,9 @@
 #include "lua/Class.hxx"
 
 static constexpr char lua_goto_class[] = "lb.goto";
-typedef Lua::Class<LbGoto, lua_goto_class> LuaGoto;
+typedef Lua::Class<LbGotoConfig, lua_goto_class> LuaGoto;
 
-static LbGoto &
+static LbGotoConfig &
 CastLuaGoto(lua_State *L, int idx)
 {
     return LuaGoto::Cast(L, idx);
@@ -85,13 +85,13 @@ RegisterLuaGoto(lua_State *L)
     lua_pop(L, 1);
 }
 
-LbGoto *
-NewLuaGoto(lua_State *L, LbGoto &&src)
+LbGotoConfig *
+NewLuaGoto(lua_State *L, LbGotoConfig &&src)
 {
     return LuaGoto::New(L, std::move(src));
 }
 
-LbGoto *
+LbGotoConfig *
 CheckLuaGoto(lua_State *L, int idx)
 {
     return LuaGoto::Check(L, idx);

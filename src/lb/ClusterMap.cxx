@@ -36,7 +36,7 @@ LbClusterMap::Scan(const LbBranchConfig &config, MyAvahiClient &avahi_client)
 }
 
 void
-LbClusterMap::Scan(const LbGoto &g, MyAvahiClient &avahi_client)
+LbClusterMap::Scan(const LbGotoConfig &g, MyAvahiClient &avahi_client)
 {
     if (g.cluster != nullptr)
         Scan(*g.cluster, avahi_client);

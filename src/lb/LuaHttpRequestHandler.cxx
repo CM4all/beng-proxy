@@ -70,7 +70,7 @@ LbHttpConnection::InvokeLua(const LbLuaHandlerConfig &config,
     assert(handler != nullptr);
 
     LbLuaResponseHandler response_handler(*this, request);
-    const LbGoto *g;
+    const LbGotoConfig *g;
 
     try {
         g = handler->HandleRequest(request, response_handler);

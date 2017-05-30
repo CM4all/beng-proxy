@@ -157,7 +157,7 @@ LbHttpConnection::HandleHttpRequest(HttpServerRequest &request,
 }
 
 void
-LbHttpConnection::HandleHttpRequest(const LbGoto &destination,
+LbHttpConnection::HandleHttpRequest(const LbGotoConfig &destination,
                                     HttpServerRequest &request,
                                     CancellablePointer &cancel_ptr)
 {
