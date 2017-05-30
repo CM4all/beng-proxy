@@ -466,36 +466,6 @@ AllNames(X509 &cert)
 }
 
 static void
-AcmeNewAuthzCertAll(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
-                    WorkshopProgress _progress,
-                    const char *handle, const char *host)
-{
-    const auto old_cert_key = db.GetServerCertificateKey(host);
-    if (!old_cert_key.second)
-        throw "Old certificate not found in database";
-
-    auto &old_cert = *old_cert_key.first;
-    auto &old_key = *old_cert_key.second;
-
-    const auto names = AllNames(old_cert);
-    StepProgress progress(_progress, names.size() + 1);
-
-    for (const auto &i : names) {
-        if (IsAcmeInvalid(i))
-            /* ignore "*.acme.invalid" */
-            continue;
-
-        printf("new-authz '%s'\n", i.c_str());
-        AcmeNewAuthz(key, db, client, nullptr, i.c_str());
-        progress();
-    }
-
-    printf("new-cert\n");
-    AcmeNewCertAll(key, db, client, handle, old_cert, old_key);
-    progress();
-}
-
-static void
 AcmeRenewCert(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
               WorkshopProgress _progress,
               const char *handle)
@@ -638,9 +608,6 @@ Acme(ConstBuffer<const char *> args)
         if (args.size < 2)
             throw Usage("acme new-authz-cert HANDLE HOST ...");
 
-        if (all && args.size > 2)
-            throw "With --all, only one host name is allowed";
-
         const char *handle = args.shift();
         const char *host = args.shift();
 
@@ -653,13 +620,8 @@ Acme(ConstBuffer<const char *> args)
         CertDatabase db(*db_config);
         AcmeClient client(config);
 
-        if (all) {
-            AcmeNewAuthzCertAll(*key, db, client, root_progress,
-                                handle, host);
-        } else {
-            AcmeNewAuthzCert(*key, db, client, root_progress,
-                             handle, host, args);
-        }
+        AcmeNewAuthzCert(*key, db, client, root_progress,
+                         handle, host, args);
 
         printf("OK\n");
     } else if (strcmp(cmd, "renew-cert") == 0) {

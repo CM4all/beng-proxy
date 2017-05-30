@@ -8,7 +8,7 @@ cm4all-beng-proxy (12.0.15) unstable; urgency=low
     - command "delete" uses handle
     - commands "monitor" and "tail" print handles
     - acme commands "new-cert" and "new-authz-cert" require handle parameter
-    - new acme command "renew-cert"
+    - new acme command "renew-cert", replacing "new-authz-cert --all"
   * certdb: add command "get"
   * certdb: command "find" prints a list of matching certificates
   * certdb: add option "--progress" for Workshop
