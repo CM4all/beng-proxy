@@ -456,6 +456,7 @@ AllNames(X509 &cert)
 
     for (auto &i : GetSubjectAltNames(cert))
         if (!IsAcmeInvalid(i))
+            /* ignore "*.acme.invalid" */
             result.emplace(std::move(i));
 
     const auto cn = GetCommonName(cert);
@@ -481,10 +482,6 @@ AcmeRenewCert(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
     StepProgress progress(_progress, names.size() + 1);
 
     for (const auto &i : names) {
-        if (IsAcmeInvalid(i))
-            /* ignore "*.acme.invalid" */
-            continue;
-
         printf("new-authz '%s'\n", i.c_str());
         AcmeNewAuthz(key, db, client, nullptr, i.c_str());
         progress();
