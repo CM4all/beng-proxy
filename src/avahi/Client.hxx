@@ -51,6 +51,10 @@ public:
     MyAvahiClient(const MyAvahiClient &) = delete;
     MyAvahiClient &operator=(const MyAvahiClient &) = delete;
 
+    EventLoop &GetEventLoop() {
+        return poll.GetEventLoop();
+    }
+
     void Close();
 
     void Enable();

@@ -18,6 +18,10 @@ public:
     MyAvahiPoll(const MyAvahiPoll &) = delete;
     MyAvahiPoll &operator=(const MyAvahiPoll &) = delete;
 
+    EventLoop &GetEventLoop() {
+        return event_loop;
+    }
+
 private:
     static AvahiWatch *WatchNew(const AvahiPoll *api, int fd,
                                 AvahiWatchEvent event,
