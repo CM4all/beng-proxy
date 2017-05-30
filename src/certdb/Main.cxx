@@ -937,7 +937,7 @@ FindCommand(const char *name)
 
 int
 main(int argc, char **argv)
-{
+try {
     ConstBuffer<const char *> args(argv + 1, argc - 1);
 
     if (args.IsEmpty()) {
@@ -967,37 +967,35 @@ main(int argc, char **argv)
 
     const auto cmd = args.shift();
 
-    try {
-        const auto _db_config = LoadPatchCertDatabaseConfig();
-        db_config = &_db_config;
+    const auto _db_config = LoadPatchCertDatabaseConfig();
+    db_config = &_db_config;
 
-        const auto *cmd2 = FindCommand(cmd);
-        if (cmd2 == nullptr) {
-            fprintf(stderr, "Unknown command: %s\n", cmd);
-            return EXIT_FAILURE;
-        }
-
-        try {
-            cmd2->function(args);
-        } catch (AutoUsage) {
-            if (cmd2->usage != nullptr)
-                fprintf(stderr, "Usage: %s %s %s\n", argv[0],
-                        cmd2->name, cmd2->usage);
-            else
-                fprintf(stderr, "Usage: %s %s\n", argv[0],
-                        cmd2->name);
-            return EXIT_FAILURE;
-        }
-
-        return EXIT_SUCCESS;
-    } catch (const std::exception &e) {
-        PrintException(e);
-        return EXIT_FAILURE;
-    } catch (Usage u) {
-        fprintf(stderr, "Usage: %s %s\n", argv[0], u.text);
-        return EXIT_FAILURE;
-    } catch (const char *msg) {
-        fprintf(stderr, "%s\n", msg);
+    const auto *cmd2 = FindCommand(cmd);
+    if (cmd2 == nullptr) {
+        fprintf(stderr, "Unknown command: %s\n", cmd);
         return EXIT_FAILURE;
     }
+
+    try {
+        cmd2->function(args);
+    } catch (AutoUsage) {
+        if (cmd2->usage != nullptr)
+            fprintf(stderr, "Usage: %s %s %s\n", argv[0],
+                    cmd2->name, cmd2->usage);
+        else
+            fprintf(stderr, "Usage: %s %s\n", argv[0],
+                    cmd2->name);
+        return EXIT_FAILURE;
+    }
+
+    return EXIT_SUCCESS;
+} catch (const std::exception &e) {
+    PrintException(e);
+    return EXIT_FAILURE;
+} catch (Usage u) {
+    fprintf(stderr, "Usage: %s %s\n", argv[0], u.text);
+    return EXIT_FAILURE;
+} catch (const char *msg) {
+    fprintf(stderr, "%s\n", msg);
+    return EXIT_FAILURE;
 }
