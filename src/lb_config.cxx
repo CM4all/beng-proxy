@@ -159,9 +159,6 @@ public:
         :config(_config) {}
 
 protected:
-    /* virtual methods from class ConfigParser */
-    void Finish() override;
-
     /* virtual methods from class NestedConfigParser */
     void ParseLine2(FileLineParser &line) override;
 
@@ -638,6 +635,8 @@ LbConfigParser::Cluster::Finish()
     if (!i.second)
         throw LineParser::Error("Duplicate pool name");
 
+    i.first->second.FillAddressList();
+
     ConfigParser::Finish();
 }
 
@@ -1093,15 +1092,6 @@ LbConfigParser::ParseLine2(FileLineParser &line)
         config.access_logger = line.ExpectValueAndEnd();
     else
         throw LineParser::Error("Unknown option");
-}
-
-void
-LbConfigParser::Finish()
-{
-    for (auto &i : config.clusters)
-        i.second.FillAddressList();
-
-    NestedConfigParser::Finish();
 }
 
 void
