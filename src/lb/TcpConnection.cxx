@@ -465,10 +465,10 @@ LbTcpConnection::ConnectOutbound()
  */
 
 LbTcpConnection::LbTcpConnection(struct pool &_pool, LbInstance &_instance,
-                           const LbListenerConfig &_listener,
-                           UniqueSocketDescriptor &&fd, FdType fd_type,
-                           const SocketFilter *filter, void *filter_ctx,
-                           SocketAddress _client_address)
+                                 const LbListenerConfig &_listener,
+                                 UniqueSocketDescriptor &&fd, FdType fd_type,
+                                 const SocketFilter *filter, void *filter_ctx,
+                                 SocketAddress _client_address)
     :pool(_pool), instance(_instance), listener(_listener),
      cluster(*listener.destination.cluster),
      client_address(address_to_string(pool, _client_address)),
@@ -483,9 +483,9 @@ LbTcpConnection::LbTcpConnection(struct pool &_pool, LbInstance &_instance,
                  filter, filter_ctx,
                  inbound_buffered_socket_handler, this);
     /* TODO
-    inbound.base.direct = pipe_stock != nullptr &&
-        (ISTREAM_TO_PIPE & fd_type) != 0 &&
-        (ISTREAM_TO_TCP & FdType::FD_PIPE) != 0;
+       inbound.base.direct = pipe_stock != nullptr &&
+       (ISTREAM_TO_PIPE & fd_type) != 0 &&
+       (ISTREAM_TO_TCP & FdType::FD_PIPE) != 0;
     */
 
     if (cluster.transparent_source) {
@@ -509,9 +509,9 @@ LbTcpConnection::~LbTcpConnection()
 
 LbTcpConnection *
 LbTcpConnection::New(LbInstance &instance,
-                  const LbListenerConfig &listener,
-                  SslFactory *ssl_factory,
-                  UniqueSocketDescriptor &&fd, SocketAddress address)
+                     const LbListenerConfig &listener,
+                     SslFactory *ssl_factory,
+                     UniqueSocketDescriptor &&fd, SocketAddress address)
 {
     assert(listener.destination.GetProtocol() == LbProtocol::TCP);
 
