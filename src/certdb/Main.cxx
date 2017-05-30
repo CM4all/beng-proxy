@@ -1,3 +1,4 @@
+#include "Progress.hxx"
 #include "AcmeUtil.hxx"
 #include "AcmeClient.hxx"
 #include "AcmeConfig.hxx"
@@ -45,6 +46,8 @@ struct Usage {
 struct AutoUsage {};
 
 static const CertDatabaseConfig *db_config;
+
+static WorkshopProgress root_progress;
 
 static void
 LoadCertificate(const char *handle,
@@ -428,14 +431,22 @@ AcmeNewCertAll(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
 
 static void
 AcmeNewAuthzCert(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
+                 WorkshopProgress _progress,
                  const char *handle,
                  const char *host, ConstBuffer<const char *> alt_hosts)
 {
+    StepProgress progress(_progress, 1 + alt_hosts.size + 1);
+
     AcmeNewAuthz(key, db, client, handle, host);
-    for (const auto *alt_host : alt_hosts)
+    progress();
+
+    for (const auto *alt_host : alt_hosts) {
         AcmeNewAuthz(key, db, client, nullptr, alt_host);
+        progress();
+    }
 
     AcmeNewCert(key, db, client, handle, host, alt_hosts);
+    progress();
 }
 
 static std::set<std::string>
@@ -456,6 +467,7 @@ AllNames(X509 &cert)
 
 static void
 AcmeNewAuthzCertAll(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
+                    WorkshopProgress _progress,
                     const char *handle, const char *host)
 {
     const auto old_cert_key = db.GetServerCertificateKey(host);
@@ -465,21 +477,27 @@ AcmeNewAuthzCertAll(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
     auto &old_cert = *old_cert_key.first;
     auto &old_key = *old_cert_key.second;
 
-    for (const auto &i : AllNames(old_cert)) {
+    const auto names = AllNames(old_cert);
+    StepProgress progress(_progress, names.size() + 1);
+
+    for (const auto &i : names) {
         if (IsAcmeInvalid(i))
             /* ignore "*.acme.invalid" */
             continue;
 
         printf("new-authz '%s'\n", i.c_str());
         AcmeNewAuthz(key, db, client, nullptr, i.c_str());
+        progress();
     }
 
     printf("new-cert\n");
     AcmeNewCertAll(key, db, client, handle, old_cert, old_key);
+    progress();
 }
 
 static void
 AcmeRenewCert(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
+              WorkshopProgress _progress,
               const char *handle)
 {
     const auto old_cert_key = db.GetServerCertificateKeyByHandle(handle);
@@ -489,17 +507,22 @@ AcmeRenewCert(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
     auto &old_cert = *old_cert_key.first;
     auto &old_key = *old_cert_key.second;
 
-    for (const auto &i : AllNames(old_cert)) {
+    const auto names = AllNames(old_cert);
+    StepProgress progress(_progress, names.size() + 1);
+
+    for (const auto &i : names) {
         if (IsAcmeInvalid(i))
             /* ignore "*.acme.invalid" */
             continue;
 
         printf("new-authz '%s'\n", i.c_str());
         AcmeNewAuthz(key, db, client, nullptr, i.c_str());
+        progress();
     }
 
     printf("new-cert\n");
     AcmeNewCertAll(key, db, client, handle, old_cert, old_key);
+    progress();
 }
 
 static void
@@ -631,9 +654,11 @@ Acme(ConstBuffer<const char *> args)
         AcmeClient client(config);
 
         if (all) {
-            AcmeNewAuthzCertAll(*key, db, client, handle, host);
+            AcmeNewAuthzCertAll(*key, db, client, root_progress,
+                                handle, host);
         } else {
-            AcmeNewAuthzCert(*key, db, client, handle, host, args);
+            AcmeNewAuthzCert(*key, db, client, root_progress,
+                             handle, host, args);
         }
 
         printf("OK\n");
@@ -652,7 +677,7 @@ Acme(ConstBuffer<const char *> args)
         CertDatabase db(*db_config);
         AcmeClient client(config);
 
-        AcmeRenewCert(*key, db, client, handle);
+        AcmeRenewCert(*key, db, client, root_progress, handle);
 
         printf("OK\n");
     } else
@@ -947,8 +972,29 @@ main(int argc, char **argv)
 try {
     ConstBuffer<const char *> args(argv + 1, argc - 1);
 
+    if (!args.IsEmpty() && strcmp(args.front(), "--progress") == 0) {
+        args.shift();
+        root_progress = WorkshopProgress(0, 100);
+    } else if (!args.IsEmpty() &&
+               strncmp(args.front(), "--progress=", 11) == 0) {
+        const char *range = args.front() + 11;
+        args.shift();
+
+        char *endptr;
+        unsigned min = strtoul(range, &endptr, 10);
+        if (endptr == range || *endptr != '-' || min > 100)
+            throw "Failed to parse progress range";
+
+        range = endptr + 1;
+        unsigned max = strtoul(range, &endptr, 10);
+        if (endptr == range || *endptr != 0 || max < min || max > 100)
+            throw "Failed to parse progress range";
+
+        root_progress = WorkshopProgress(min, max);
+    }
+
     if (args.IsEmpty()) {
-        fprintf(stderr, "Usage: %s COMMAND ...\n"
+        fprintf(stderr, "Usage: %s [OPTIONS] COMMAND ...\n"
                 "\n"
                 "Commands:\n", argv[0]);
 
@@ -962,7 +1008,10 @@ try {
                 fprintf(stderr, "  %s\n", i.name);
         }
 
-        fprintf(stderr, "\n");
+        fprintf(stderr, "\n"
+                "Global options:\n"
+                "  --progress[=MIN,MAX]  print Workshop job progress\n");
+
         return EXIT_FAILURE;
     }
 
