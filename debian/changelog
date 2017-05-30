@@ -14,7 +14,7 @@ cm4all-beng-proxy (12.0.15) unstable; urgency=low
   * certdb: add option "--progress" for Workshop
   * translation: add packet MESSAGE
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 30 May 2017 21:42:23 -0000
 
 cm4all-beng-proxy (12.0.14) unstable; urgency=low
 
