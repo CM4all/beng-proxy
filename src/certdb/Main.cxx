@@ -539,7 +539,7 @@ Acme(ConstBuffer<const char *> args)
             "  new-reg EMAIL\n"
             "  new-authz HOST\n"
             "  new-cert HANDLE HOST...\n"
-            "  new-authz-cert HOST...\n"
+            "  new-authz-cert HANDLE HOST...\n"
             "  renew-cert HANDLE\n"
             "\n"
             "options:\n"
