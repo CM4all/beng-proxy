@@ -263,6 +263,7 @@ struct Request final : HttpResponseHandler, DelegateHandler, Cancellable {
     bool CheckHandleRedirect(const TranslateResponse &response);
     bool CheckHandleBounce(const TranslateResponse &response);
     bool CheckHandleStatus(const TranslateResponse &response);
+    bool CheckHandleMessage(const TranslateResponse &response);
     bool CheckHandleRedirectBounceStatus(const TranslateResponse &response);
 
     /**

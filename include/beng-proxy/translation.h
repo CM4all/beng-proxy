@@ -820,6 +820,12 @@ enum beng_translation_command {
      * Response: payload specifies the pool name.
      */
     TRANSLATE_POOL = 187,
+
+    /**
+     * Payload is a "text/plain" response body.  It should be short
+     * and US-ASCII.
+     */
+    TRANSLATE_MESSAGE = 188,
 };
 
 struct beng_translation_header {

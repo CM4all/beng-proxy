@@ -36,13 +36,19 @@ lb_http_translate_response(TranslateResponse &response, void *ctx)
     auto &c = r.connection;
     auto &request = r.request;
 
-    if (response.status != http_status_t(0) || response.redirect != nullptr) {
+    if (response.status != http_status_t(0) || response.redirect != nullptr ||
+        response.message != nullptr) {
         auto status = response.status;
         if (status == http_status_t(0))
             status = HTTP_STATUS_SEE_OTHER;
+
+        const char *body = response.message;
+        if (body == nullptr)
+            body = http_status_to_string(status);
+
         http_server_simple_response(request, status,
                                     response.redirect,
-                                    http_status_to_string(status));
+                                    body);
     } else if (response.pool != nullptr) {
         const auto *cluster = c.instance.config->FindCluster(response.pool);
         if (cluster == nullptr) {

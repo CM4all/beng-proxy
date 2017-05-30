@@ -198,7 +198,8 @@ Request::CheckHandleRedirect(const TranslateResponse &response)
         redirect_uri = uri_append_query_string_n(&pool, redirect_uri,
                                                  uri.query);
 
-    response_dispatch_redirect(*this, status, redirect_uri, nullptr);
+    response_dispatch_redirect(*this, status, redirect_uri,
+                               response.message);
     return true;
 }
 
@@ -225,11 +226,26 @@ Request::CheckHandleStatus(const TranslateResponse &response)
     return true;
 }
 
+inline bool
+Request::CheckHandleMessage(const TranslateResponse &response)
+{
+    if (response.message == nullptr)
+        return false;
+
+    http_status_t status = response.status != (http_status_t)0
+        ? response.status
+        : HTTP_STATUS_OK;
+
+    response_dispatch_message(*this, status, response.message);
+    return true;
+}
+
 bool
 Request::CheckHandleRedirectBounceStatus(const TranslateResponse &response)
 {
     return CheckHandleRedirect(response) ||
         CheckHandleBounce(response) ||
+        CheckHandleMessage(response) ||
         CheckHandleStatus(response);
 }
 

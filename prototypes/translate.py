@@ -824,6 +824,8 @@ class Translation(Protocol):
         elif uri[:19] == '/internal_redirect/':
             response.packet(TRANSLATE_INTERNAL_REDIRECT, 'hans')
             response.packet(TRANSLATE_URI, '/proxy/' + uri[19:])
+        elif uri[:9] == '/message/':
+            response.packet(TRANSLATE_MESSAGE, uri[9:])
         else:
             self._handle_local_file('/var/www' + uri, response,
                                     error_document=True)

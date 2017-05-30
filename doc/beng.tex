@@ -1134,6 +1134,11 @@ will need to redirect back to the original URI. \\
 
 \hline
 
+\verb|MESSAGE| & Generate a response with the given body
+(\texttt{text/plain} and US-ASCII). \\
+
+\hline
+
 \verb|EXPAND_PATH| & Override the \verb|PATH| with the given value
 (applicable to static files, CGI, FastCGI, WAS, \verb|HTTP|,
 \verb|AJP|).
@@ -2566,6 +2571,12 @@ error response. \\
 redirect response (\texttt{303 See Other} with the specified
 \texttt{Location} header value).  Can be combined with \verb|STATUS|
 to select a different status code. \\
+
+\hline
+
+\verb|MESSAGE| & Can be used instead of \verb|POOL| to generate a
+\texttt{text/plain} response.  Can be combined with \verb|STATUS| and
+\verb|REDIRECT|. \\
 
 \hline
 \end{longtabu*}
