@@ -95,7 +95,7 @@ Pg::Serial
 CertDatabase::GetIdByHandle(const char *handle)
 {
     auto result = CheckError(conn.ExecuteParams("SELECT id FROM server_certificate "
-                                                "WHERE handle=$1 AND NOT deleted "
+                                                "WHERE handle=$1 "
                                                 "LIMIT 1",
                                                 handle));
     if (result.GetRowCount() == 0)
@@ -280,7 +280,7 @@ CertDatabase::GetNamesByHandle(const char *handle)
     const char *sql = "SELECT common_name, "
         "ARRAY(SELECT name FROM server_certificate_alt_name WHERE server_certificate_id=server_certificate.id)"
         " FROM server_certificate"
-        " WHERE handle=$1 AND NOT deleted";
+        " WHERE handle=$1";
 
     for (const auto &row : CheckError(conn.ExecuteParams(sql, handle))) {
         names.emplace_back(row.GetValue(0));
