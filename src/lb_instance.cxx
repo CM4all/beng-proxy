@@ -8,7 +8,6 @@
 #include "lb_control.hxx"
 #include "lb_config.hxx"
 #include "lb/Listener.hxx"
-#include "lb/LuaInitHook.hxx"
 #include "ssl/Cache.hxx"
 #include "fb_pool.hxx"
 #include "event/Duration.hxx"
@@ -43,14 +42,7 @@ LbInstance::InitWorker()
     /* run monitors only in the worker process */
     monitors.Enable();
 
-    clusters.Scan(*config, avahi_client);
-
-    {
-        LbLuaInitHook init_hook(*config, &clusters, &avahi_client);
-        lua_handlers.Scan(init_hook, *config);
-    }
-
-    translation_handlers.Scan(*config, event_loop);
+    goto_map.Scan(*config, avahi_client);
 
     ConnectCertCaches();
 }

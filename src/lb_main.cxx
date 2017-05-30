@@ -72,7 +72,7 @@ LbInstance::ShutdownCallback()
 
     deinit_all_controls(this);
 
-    translation_handlers.Clear();
+    goto_map.Clear();
 
     DisconnectCertCaches();
 

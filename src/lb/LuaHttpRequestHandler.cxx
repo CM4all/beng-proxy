@@ -66,7 +66,7 @@ LbHttpConnection::InvokeLua(const LbLuaHandlerConfig &config,
                             HttpServerRequest &request,
                             CancellablePointer &cancel_ptr)
 {
-    auto *handler = instance.lua_handlers.Find(config.name);
+    auto *handler = instance.goto_map.FindLuaHandler(config.name);
     assert(handler != nullptr);
 
     LbLuaResponseHandler response_handler(*this, request);

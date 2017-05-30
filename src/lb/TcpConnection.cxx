@@ -422,7 +422,7 @@ void
 LbTcpConnection::ConnectOutbound()
 {
     if (cluster.HasZeroConf()) {
-        auto *cluster2 = instance.clusters.Find(cluster.name);
+        auto *cluster2 = instance.goto_map.FindCluster(cluster.name);
         if (cluster2 == nullptr) {
             DestroyInbound();
             OnTcpError("Zeroconf error", "Zeroconf cluster not found");
