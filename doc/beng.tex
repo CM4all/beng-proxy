@@ -2561,6 +2561,13 @@ request. \\
 error response. \\
 
 \hline
+
+\verb|REDIRECT| & Can be used instead of \verb|POOL| to generate a
+redirect response (\texttt{303 See Other} with the specified
+\texttt{Location} header value).  Can be combined with \verb|STATUS|
+to select a different status code. \\
+
+\hline
 \end{longtabu*}
 
 The client may assume that all responses may be cached indefinitely.
