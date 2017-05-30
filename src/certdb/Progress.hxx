@@ -5,6 +5,8 @@
 #ifndef PROGRESS_HXX
 #define PROGRESS_HXX
 
+#include <inline/compiler.h>
+
 #include <algorithm>
 
 #include <stdio.h>
@@ -35,7 +37,10 @@ public:
     }
 
 private:
-    static constexpr unsigned Clamp(int x) {
+#if !GCC_OLDER_THAN(5,0)
+    constexpr
+#endif
+    static unsigned Clamp(int x) {
         return std::min(100u, (unsigned)std::max(0, x));
     }
 
