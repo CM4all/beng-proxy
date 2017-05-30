@@ -92,9 +92,17 @@ class IncludeConfigParser final : public ConfigParser {
 
     ConfigParser &child;
 
+    /**
+     * Does our Finish() override call child.Finish()?  This is a
+     * kludge to avoid calling a foreign child's Finish() method
+     * multiple times, once for each included file.
+     */
+    const bool finish_child;
+
 public:
-    IncludeConfigParser(boost::filesystem::path &&_path, ConfigParser &_child)
-        :path(std::move(_path)), child(_child) {}
+    IncludeConfigParser(boost::filesystem::path &&_path, ConfigParser &_child,
+                        bool _finish_child=true)
+        :path(std::move(_path)), child(_child), finish_child(_finish_child) {}
 
     /* virtual methods from class ConfigParser */
     bool PreParseLine(FileLineParser &line) override;

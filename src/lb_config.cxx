@@ -1098,6 +1098,8 @@ LbConfigParser::ParseLine2(FileLineParser &line)
 static void
 lb_cluster_config_finish(LbClusterConfig &config)
 {
+    assert(config.address_list.IsEmpty());
+
     config.address_list.SetStickyMode(config.sticky_mode);
 
     for (auto &member : config.members) {
