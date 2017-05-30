@@ -930,6 +930,8 @@ LbConfigParser::ParseLine2(LineParser &line)
 static void
 lb_cluster_config_finish(struct pool *pool, LbClusterConfig &config)
 {
+    assert(config.address_list.IsEmpty());
+
     config.address_list.SetStickyMode(config.sticky_mode);
 
     for (auto &member : config.members) {
