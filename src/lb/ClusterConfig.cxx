@@ -4,6 +4,24 @@
 
 #include "ClusterConfig.hxx"
 
+void
+LbClusterConfig::FillAddressList()
+{
+    assert(address_list.IsEmpty());
+
+    address_list.SetStickyMode(sticky_mode);
+
+    for (auto &member : members) {
+        address_allocations.emplace_front(member.node->address);
+        auto &address = address_allocations.front();
+        if (member.port != 0)
+            address.SetPort(member.port);
+
+        if (!address_list.AddPointer(address))
+            throw std::runtime_error("Too many members");
+    }
+}
+
 int
 LbClusterConfig::FindJVMRoute(const char *jvm_route) const
 {

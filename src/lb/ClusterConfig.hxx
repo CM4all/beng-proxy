@@ -94,6 +94,12 @@ struct LbClusterConfig {
     LbClusterConfig &operator=(const LbClusterConfig &) = delete;
 
     /**
+     * Copy addresses of all members into the #AddressList.  This
+     * needs to be called before using this instance.
+     */
+    void FillAddressList();
+
+    /**
      * Returns the member index of the node with the specified
      * jvm_route value, or -1 if not found.
      */

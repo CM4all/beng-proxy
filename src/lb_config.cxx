@@ -1095,29 +1095,11 @@ LbConfigParser::ParseLine2(FileLineParser &line)
         throw LineParser::Error("Unknown option");
 }
 
-static void
-lb_cluster_config_finish(LbClusterConfig &config)
-{
-    assert(config.address_list.IsEmpty());
-
-    config.address_list.SetStickyMode(config.sticky_mode);
-
-    for (auto &member : config.members) {
-        config.address_allocations.emplace_front(member.node->address);
-        auto &address = config.address_allocations.front();
-        if (member.port != 0)
-            address.SetPort(member.port);
-
-        if (!config.address_list.AddPointer(address))
-            throw LineParser::Error("Too many members");
-    }
-}
-
 void
 LbConfigParser::Finish()
 {
     for (auto &i : config.clusters)
-        lb_cluster_config_finish(i.second);
+        i.second.FillAddressList();
 
     NestedConfigParser::Finish();
 }
