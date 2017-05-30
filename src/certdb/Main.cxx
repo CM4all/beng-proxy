@@ -908,6 +908,13 @@ static constexpr struct Command {
     const char *name, *usage;
     void (*function)(ConstBuffer<const char *> args);
     bool undocumented = false;
+
+    constexpr Command(const char *_name, const char *_usage,
+                      void (*_function)(ConstBuffer<const char *> args),
+                      bool _undocumented = false)
+       :name(_name), usage(_usage),
+        function(_function), undocumented(_undocumented) {}
+
 } commands[] = {
     { "load", "HANDLE CERT KEY", HandleLoad },
     { "reload", "HANDLE", HandleReload, true },
