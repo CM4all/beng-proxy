@@ -59,7 +59,7 @@ enable_node(const LbInstance *instance,
                              node->address.GetSize());
     daemon_log(4, "enabling node %s (%s)\n", node_name, buffer);
 
-    failure_unset({with_port, node->address.GetSize()}, FAILURE_OK);
+    failure_unset(with_port, FAILURE_OK);
 }
 
 static void
@@ -99,7 +99,7 @@ fade_node(const LbInstance *instance,
     daemon_log(4, "fading node %s (%s)\n", node_name, buffer);
 
     /* set status "FADE" for 3 hours */
-    failure_set({with_port, node->address.GetSize()}, FAILURE_FADE,
+    failure_set(with_port, FAILURE_FADE,
                 std::chrono::hours(3));
 }
 
@@ -187,8 +187,7 @@ try {
     socket_address_to_string(buffer, sizeof(buffer), with_port,
                              node->address.GetSize());
 
-    enum failure_status status =
-        failure_get_status({with_port, node->address.GetSize()});
+    enum failure_status status = failure_get_status(with_port);
     const char *s = failure_status_to_string(status);
 
     node_status_response(&control_server, address,
