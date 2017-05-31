@@ -11,7 +11,9 @@
 
 LbTranslationHandler::LbTranslationHandler(EventLoop &event_loop,
                                            const LbTranslationHandlerConfig &config)
-    :name(config.name.c_str()), stock(tstock_new(event_loop, config.address, 0))
+    :name(config.name.c_str()),
+     stock(tstock_new(event_loop, config.address, 0)),
+     clusters(config.clusters)
 {
 }
 
