@@ -8,7 +8,7 @@ cm4all-beng-proxy (12.0.16) unstable; urgency=low
   * lb: fix crash bug when Zeroconf cluster is empty
   * bp: fix crash bug
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Wed, 31 May 2017 22:21:38 -0000
 
 cm4all-beng-proxy (12.0.15) unstable; urgency=low
 
