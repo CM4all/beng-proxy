@@ -57,10 +57,6 @@ LbClusterMap::Scan(const LbListenerConfig &config, MyAvahiClient &avahi_client)
 void
 LbClusterMap::Scan(const LbClusterConfig &config, MyAvahiClient &avahi_client)
 {
-    if (!config.HasZeroConf())
-        /* doesn't need runtime data */
-        return;
-
     auto i = clusters.find(config.name);
     if (i != clusters.end())
         /* already added */
