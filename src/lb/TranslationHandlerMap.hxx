@@ -6,15 +6,15 @@
 #define BENG_LB_TRANSLATION_HANDLER_MAP_HXX
 
 #include "TranslationHandler.hxx"
+#include "util/StringLess.hxx"
 
-#include <string>
 #include <map>
 
 struct LbConfig;
 class EventLoop;
 
 class LbTranslationHandlerMap {
-    std::map<std::string, LbTranslationHandler> handlers;
+    std::map<const char *, LbTranslationHandler, StringLess> handlers;
 
 public:
     void Clear() {
@@ -23,7 +23,7 @@ public:
 
     void Scan(const LbConfig &config, EventLoop &event_loop);
 
-    LbTranslationHandler *Find(const std::string &name) {
+    LbTranslationHandler *Find(const char *name) {
         auto i = handlers.find(name);
         return i != handlers.end()
             ? &i->second

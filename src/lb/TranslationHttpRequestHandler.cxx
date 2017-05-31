@@ -87,7 +87,7 @@ LbHttpConnection::AskTranslationServer(const LbTranslationHandlerConfig &destina
                                        HttpServerRequest &request,
                                        CancellablePointer &cancel_ptr)
 {
-    auto *h = instance.goto_map.FindTranslationHandler(destination.name);
+    auto *h = instance.goto_map.FindTranslationHandler(destination.name.c_str());
     assert(h != nullptr);
 
     auto *r = NewFromPool<LbHttpRequest>(request.pool, *this, request,

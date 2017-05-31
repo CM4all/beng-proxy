@@ -7,9 +7,9 @@
 
 #include "lua/State.hxx"
 #include "lua/Value.hxx"
+#include "util/StringLess.hxx"
 
 #include <map>
-#include <string>
 
 struct LbConfig;
 struct LbGotoIfConfig;
@@ -34,12 +34,12 @@ public:
 };
 
 class LbLuaHandlerMap {
-    std::map<std::string, LbLuaHandler> handlers;
+    std::map<const char *, LbLuaHandler, StringLess> handlers;
 
 public:
     void Scan(LuaInitHook &init_hook, const LbConfig &config);
 
-    LbLuaHandler *Find(const std::string &name) {
+    LbLuaHandler *Find(const char *name) {
         auto i = handlers.find(name);
         return i != handlers.end()
             ? &i->second

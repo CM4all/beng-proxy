@@ -29,7 +29,7 @@ public:
 
     void Scan(const LbConfig &config, MyAvahiClient &avahi_client);
 
-    LbCluster *FindCluster(const std::string &name) {
+    LbCluster *FindCluster(const char *name) {
         return clusters.Find(name);
     }
 
@@ -38,11 +38,11 @@ public:
         clusters.ForEach(std::forward<F>(f));
     }
 
-    LbTranslationHandler *FindTranslationHandler(const std::string &name) {
+    LbTranslationHandler *FindTranslationHandler(const char *name) {
         return translation_handlers.Find(name);
     }
 
-    LbLuaHandler *FindLuaHandler(const std::string &name) {
+    LbLuaHandler *FindLuaHandler(const char *name) {
         return lua_handlers.Find(name);
     }
 };

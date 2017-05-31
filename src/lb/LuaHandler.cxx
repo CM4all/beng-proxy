@@ -263,12 +263,12 @@ LbLuaHandlerMap::Scan(LuaInitHook &init_hook, const LbListenerConfig &config)
 void
 LbLuaHandlerMap::Scan(LuaInitHook &init_hook, const LbLuaHandlerConfig &config)
 {
-    auto i = handlers.find(config.name);
+    auto i = handlers.find(config.name.c_str());
     if (i != handlers.end())
         /* already added */
         return;
 
     handlers.emplace(std::piecewise_construct,
-                     std::forward_as_tuple(config.name),
+                     std::forward_as_tuple(config.name.c_str()),
                      std::forward_as_tuple(init_hook, config));
 }

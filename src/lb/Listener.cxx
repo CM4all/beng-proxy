@@ -88,7 +88,7 @@ LbListener::Scan()
 {
     if (config.destination.GetProtocol() == LbProtocol::TCP) {
         assert(config.destination.cluster != nullptr);
-        tcp_cluster = instance.goto_map.FindCluster(config.destination.cluster->name);
+        tcp_cluster = instance.goto_map.FindCluster(config.destination.cluster->name.c_str());
         assert(tcp_cluster != nullptr);
     }
 }

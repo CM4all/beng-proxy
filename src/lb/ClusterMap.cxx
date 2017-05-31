@@ -57,12 +57,12 @@ LbClusterMap::Scan(const LbListenerConfig &config, MyAvahiClient &avahi_client)
 void
 LbClusterMap::Scan(const LbClusterConfig &config, MyAvahiClient &avahi_client)
 {
-    auto i = clusters.find(config.name);
+    auto i = clusters.find(config.name.c_str());
     if (i != clusters.end())
         /* already added */
         return;
 
     clusters.emplace(std::piecewise_construct,
-                     std::forward_as_tuple(config.name),
+                     std::forward_as_tuple(config.name.c_str()),
                      std::forward_as_tuple(config, avahi_client));
 }

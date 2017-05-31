@@ -402,7 +402,7 @@ LbRequest::Start()
     }
 
     if (cluster_config.HasZeroConf()) {
-        auto *cluster2 = connection.instance.goto_map.FindCluster(cluster_config.name);
+        auto *cluster2 = connection.instance.goto_map.FindCluster(cluster_config.name.c_str());
         if (cluster2 == nullptr) {
             http_server_send_message(&request,
                                      HTTP_STATUS_INTERNAL_SERVER_ERROR,

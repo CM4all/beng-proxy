@@ -6,8 +6,8 @@
 #define BENG_LB_CLUSTER_MAP_HXX
 
 #include "Cluster.hxx"
+#include "util/StringLess.hxx"
 
-#include <string>
 #include <map>
 
 class MyAvahiClient;
@@ -16,13 +16,13 @@ struct LbBranchConfig;
 struct LbTranslationHandlerConfig;
 
 class LbClusterMap {
-    std::map<std::string, LbCluster> clusters;
+    std::map<const char *, LbCluster, StringLess> clusters;
 
 public:
     void Scan(const LbConfig &config, MyAvahiClient &avahi_client);
     void Scan(const LbGotoConfig &g, MyAvahiClient &avahi_client);
 
-    LbCluster *Find(const std::string &name) {
+    LbCluster *Find(const char *name) {
         auto i = clusters.find(name);
         return i != clusters.end()
             ? &i->second
