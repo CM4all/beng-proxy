@@ -16,12 +16,6 @@ void
 deinit_all_listeners(LbInstance *instance);
 
 void
-all_listeners_event_add(LbInstance *instance);
-
-void
-all_listeners_event_del(LbInstance *instance);
-
-void
 init_all_controls(LbInstance *instance);
 
 void

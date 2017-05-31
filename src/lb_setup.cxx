@@ -68,20 +68,6 @@ deinit_all_listeners(LbInstance *instance)
     instance->listeners.clear();
 }
 
-void
-all_listeners_event_add(LbInstance *instance)
-{
-    for (auto &listener : instance->listeners)
-        listener.AddEvent();
-}
-
-void
-all_listeners_event_del(LbInstance *instance)
-{
-    for (auto &listener : instance->listeners)
-        listener.RemoveEvent();
-}
-
 unsigned
 LbInstance::FlushSSLSessionCache(long tm)
 {
