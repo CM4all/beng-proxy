@@ -50,7 +50,7 @@ lb_http_translate_response(TranslateResponse &response, void *ctx)
                                     response.redirect,
                                     body);
     } else if (response.pool != nullptr) {
-        const auto *cluster = c.instance.config->FindCluster(response.pool);
+        const auto *cluster = c.instance.config.FindCluster(response.pool);
         if (cluster == nullptr) {
             c.LogSendError(request,
                            ToGError(std::runtime_error("No such pool")));

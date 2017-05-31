@@ -31,7 +31,7 @@ class LbListener;
 class CertCache;
 
 struct LbInstance final : PInstance {
-    LbConfig *config;
+    const LbConfig &config;
 
     uint64_t http_request_counter = 0;
 
@@ -66,7 +66,7 @@ struct LbInstance final : PInstance {
 
     Stock *pipe_stock;
 
-    LbInstance();
+    explicit LbInstance(const LbConfig &_config);
     ~LbInstance();
 
     /**

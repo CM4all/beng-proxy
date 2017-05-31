@@ -54,7 +54,7 @@ init_all_listeners(LbInstance &instance)
 {
     auto &listeners = instance.listeners;
 
-    for (const auto &config : instance.config->listeners) {
+    for (const auto &config : instance.config.listeners) {
         listeners.emplace_front(instance, config);
         auto &listener = listeners.front();
         listener.Setup();
@@ -98,7 +98,7 @@ LbInstance::FlushSSLSessionCache(long tm)
 void
 init_all_controls(LbInstance *instance)
 {
-    for (const auto &config : instance->config->controls) {
+    for (const auto &config : instance->config.controls) {
         instance->controls.emplace_front(*instance);
         auto &control = instance->controls.front();
         control.Open(config);

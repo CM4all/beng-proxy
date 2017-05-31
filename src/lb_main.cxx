@@ -140,12 +140,11 @@ try {
 
     LoadConfigFile(config, cmdline.config_path);
 
-    LbInstance instance;
-    instance.config = &config;
+    LbInstance instance(config);
 
     if (cmdline.check) {
         const ScopeSslGlobalInit ssl_init;
-        lb_check(instance.event_loop, *instance.config);
+        lb_check(instance.event_loop, config);
         return EXIT_SUCCESS;
     }
 
@@ -191,8 +190,8 @@ try {
     /* can't change to new (empty) rootfs if we may need to reconnect
        to PostgreSQL eventually */
     // TODO: bind-mount the PostgreSQL socket into the new rootfs
-    if (!instance.config->HasCertDatabase())
-        isolate_from_filesystem(instance.config->HasZeroConf());
+    if (!config.HasCertDatabase())
+        isolate_from_filesystem(config.HasZeroConf());
 
     if (!cmdline.user.IsEmpty())
         capabilities_post_setuid(cap_keep_list, ARRAY_SIZE(cap_keep_list));

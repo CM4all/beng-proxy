@@ -39,7 +39,7 @@ enable_node(const LbInstance *instance,
     char *port_string = node_name + (colon - payload);
     *port_string++ = 0;
 
-    const auto *node = instance->config->FindNode(node_name);
+    const auto *node = instance->config.FindNode(node_name);
     if (node == nullptr) {
         daemon_log(3, "unknown node in FADE_NODE control packet\n");
         return;
@@ -78,7 +78,7 @@ fade_node(const LbInstance *instance,
     char *port_string = node_name + (colon - payload);
     *port_string++ = 0;
 
-    const auto *node = instance->config->FindNode(node_name);
+    const auto *node = instance->config.FindNode(node_name);
     if (node == nullptr) {
         daemon_log(3, "unknown node in FADE_NODE control packet\n");
         return;
@@ -164,7 +164,7 @@ try {
     char *port_string = node_name + (colon - payload);
     *port_string++ = 0;
 
-    const auto *node = control->instance.config->FindNode(node_name);
+    const auto *node = control->instance.config.FindNode(node_name);
     if (node == nullptr) {
         daemon_log(3, "unknown node in NODE_STATUS control packet\n");
         node_status_response(control->server.get(), address,
