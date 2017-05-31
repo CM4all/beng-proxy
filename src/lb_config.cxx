@@ -884,7 +884,7 @@ LbConfigParser::TranslationHandler::ParseLine(FileLineParser &line)
             if (cluster->protocol != LbProtocol::HTTP)
                 throw LineParser::Error("Only HTTP pools allowed");
 
-            auto i = config.clusters.emplace(name, cluster);
+            auto i = config.clusters.emplace(cluster->name.c_str(), *cluster);
             if (!i.second)
                 throw FormatRuntimeError("Duplicate pool: %s", name);
         }

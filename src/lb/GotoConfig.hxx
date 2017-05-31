@@ -232,7 +232,7 @@ struct LbTranslationHandlerConfig {
 
     AllocatedSocketAddress address;
 
-    std::map<const char *, const LbClusterConfig *, StringLess> clusters;
+    std::map<const char *, const LbClusterConfig &, StringLess> clusters;
 
     explicit LbTranslationHandlerConfig(const char *_name)
         :name(_name) {}

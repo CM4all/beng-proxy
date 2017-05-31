@@ -17,7 +17,7 @@ LbClusterMap::Scan(const LbTranslationHandlerConfig &config,
                    MyAvahiClient &avahi_client)
 {
     for (const auto &i : config.clusters)
-        Scan(*i.second, avahi_client);
+        Scan(i.second, avahi_client);
 }
 
 void
