@@ -50,14 +50,14 @@ lb_http_translate_response(TranslateResponse &response, void *ctx)
                                     response.redirect,
                                     body);
     } else if (response.pool != nullptr) {
-        auto *cluster = c.current_translation_handler->FindCluster(response.pool);
-        if (cluster == nullptr) {
+        auto *destination = c.current_translation_handler->FindDestination(response.pool);
+        if (destination == nullptr) {
             c.LogSendError(request,
                            ToGError(std::runtime_error("No such pool")));
             return;
         }
 
-        c.ForwardHttpRequest(*cluster, request, r.cancel_ptr);
+        c.HandleHttpRequest(*destination, request, r.cancel_ptr);
     } else {
         c.LogSendError(request,
                        ToGError(std::runtime_error("Invalid translation server response")));

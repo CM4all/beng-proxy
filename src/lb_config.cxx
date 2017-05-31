@@ -877,14 +877,18 @@ LbConfigParser::TranslationHandler::ParseLine(FileLineParser &line)
     } else if (strcmp(word, "pools") == 0) {
         while (!line.IsEnd()) {
             const char *name = line.ExpectValue();
-            const auto *cluster = parent.config.FindCluster(name);
-            if (cluster == nullptr)
+            const auto destination = parent.config.FindGoto(name);
+            if (!destination.IsDefined())
                 throw FormatRuntimeError("No such pool: %s", name);
 
-            if (cluster->protocol != LbProtocol::HTTP)
+            if (destination.GetProtocol() != LbProtocol::HTTP)
                 throw LineParser::Error("Only HTTP pools allowed");
 
-            auto i = config.clusters.emplace(cluster->name.c_str(), *cluster);
+            assert(destination.GetName() != nullptr);
+            assert(strcmp(destination.GetName(), name) == 0);
+
+            auto i = config.destinations.emplace(destination.GetName(),
+                                                 std::move(destination));
             if (!i.second)
                 throw FormatRuntimeError("Duplicate pool: %s", name);
         }
@@ -898,7 +902,7 @@ LbConfigParser::TranslationHandler::Finish()
     if (config.address.IsNull())
         throw LineParser::Error("translation_handler has no 'connect'");
 
-    if (config.clusters.empty())
+    if (config.destinations.empty())
         throw LineParser::Error("translation_handler has no pools");
 
     auto i = parent.config.translation_handlers.emplace(std::string(config.name),

@@ -218,7 +218,7 @@ struct LbTranslationHandlerConfig {
 
     AllocatedSocketAddress address;
 
-    std::map<const char *, const LbClusterConfig &, StringLess> clusters;
+    std::map<const char *, LbGotoConfig, StringLess> destinations;
 
     explicit LbTranslationHandlerConfig(const char *_name)
         :name(_name) {}

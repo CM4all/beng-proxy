@@ -5,12 +5,12 @@
 #ifndef BENG_LB_TRANSLATION_HANDLER_HXX
 #define BENG_LB_TRANSLATION_HANDLER_HXX
 
+#include "Goto.hxx"
 #include "util/StringLess.hxx"
 
 #include <map>
 
 struct LbTranslationHandlerConfig;
-class LbCluster;
 class LbGotoMap;
 struct HttpServerRequest;
 struct TranslateHandler;
@@ -23,16 +23,16 @@ class LbTranslationHandler final {
 
     TranslateStock *const stock;
 
-    const std::map<const char *, LbCluster &, StringLess> clusters;
+    const std::map<const char *, LbGoto, StringLess> destinations;
 
 public:
     LbTranslationHandler(EventLoop &event_loop, LbGotoMap &goto_map,
                          const LbTranslationHandlerConfig &_config);
     ~LbTranslationHandler();
 
-    LbCluster *FindCluster(const char *cluster_name) const {
-        auto i = clusters.find(cluster_name);
-        return i != clusters.end()
+    const LbGoto *FindDestination(const char *destination_name) const {
+        auto i = destinations.find(destination_name);
+        return i != destinations.end()
             ? &i->second
             : nullptr;
     }

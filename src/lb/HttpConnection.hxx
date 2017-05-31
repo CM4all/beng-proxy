@@ -84,17 +84,16 @@ struct LbHttpConnection final
     void HttpConnectionError(GError *error) override;
     void HttpConnectionClosed() override;
 
-private:
+public:
     void HandleHttpRequest(const LbGoto &destination,
                            HttpServerRequest &request,
                            CancellablePointer &cancel_ptr);
 
-public:
+private:
     void ForwardHttpRequest(LbCluster &cluster,
                             HttpServerRequest &request,
                             CancellablePointer &cancel_ptr);
 
-private:
     void InvokeLua(LbLuaHandler &handler,
                    HttpServerRequest &request,
                    CancellablePointer &cancel_ptr);
