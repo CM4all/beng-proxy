@@ -128,6 +128,7 @@ LbMonitorController::LbMonitorController(EventLoop &_event_loop,
 LbMonitorController::~LbMonitorController()
 {
     interval_event.Cancel();
+    timeout_event.Cancel();
 
     if (cancel_ptr)
         cancel_ptr.Cancel();
