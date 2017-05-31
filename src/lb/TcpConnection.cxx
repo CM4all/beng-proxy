@@ -536,10 +536,10 @@ LbTcpConnection::New(LbInstance &instance,
     pool_set_major(pool);
 
     return NewFromPool<LbTcpConnection>(*pool, *pool, instance,
-                                     listener,
-                                     std::move(fd), fd_type,
-                                     filter, filter_ctx,
-                                     address);
+                                        listener,
+                                        std::move(fd), fd_type,
+                                        filter, filter_ctx,
+                                        address);
 }
 
 void
