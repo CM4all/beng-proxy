@@ -183,6 +183,8 @@ LbCluster::Pick(uint32_t sticky_hash)
                 /* the node is active, we can use it */
                 return std::make_pair(i->first.c_str(),
                                       i->second.GetAddress());
+
+            sticky_cache->Remove(sticky_hash);
         }
 
         /* cache miss or cached node not active: fall back to
