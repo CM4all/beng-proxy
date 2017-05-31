@@ -4,6 +4,7 @@ cm4all-beng-proxy (12.0.16) unstable; urgency=low
   * lb: allow the translation server to refer to branches and other types
   * lb/monitor: fix shutdown hang due to event leak
   * lb: add sticky mode "host"
+  * bp: fix crash bug
 
  --   
 

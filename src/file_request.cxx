@@ -25,6 +25,11 @@ static_file_get(EventLoop &event_loop, struct pool &pool,
 {
     assert(path != nullptr);
 
+    /* need to hold this pool reference because it is guaranteed that
+       the pool stays alive while the HttpResponseHandler runs, even
+       if all other pool references are removed */
+    const ScopePoolRef ref(pool TRACE_ARGS);
+
     struct stat st;
     if (lstat(path, &st) != 0) {
         GError *error = new_error_errno();

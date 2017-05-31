@@ -49,6 +49,11 @@ lhttp_request(struct pool &pool, EventLoop &event_loop,
     try {
         address.options.Check();
     } catch (const std::runtime_error &e) {
+        /* need to hold this pool reference because it is guaranteed
+           that the pool stays alive while the HttpResponseHandler
+           runs, even if all other pool references are removed */
+        const ScopePoolRef ref(pool TRACE_ARGS);
+
         if (body != nullptr)
             body->CloseUnused();
 
@@ -61,6 +66,11 @@ lhttp_request(struct pool &pool, EventLoop &event_loop,
         lhttp_stock_get(&lhttp_stock, &pool, &address,
                         &error);
     if (stock_item == nullptr) {
+        /* need to hold this pool reference because it is guaranteed
+           that the pool stays alive while the HttpResponseHandler
+           runs, even if all other pool references are removed */
+        const ScopePoolRef ref(pool TRACE_ARGS);
+
         if (body != nullptr)
             body->CloseUnused();
 
