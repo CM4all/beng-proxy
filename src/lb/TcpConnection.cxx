@@ -33,6 +33,7 @@ lb_tcp_sticky(StickyMode sticky_mode,
     case StickyMode::SOURCE_IP:
         return socket_address_sticky(remote_address);
 
+    case StickyMode::HOST:
     case StickyMode::SESSION_MODULO:
     case StickyMode::COOKIE:
     case StickyMode::JVM_ROUTE:

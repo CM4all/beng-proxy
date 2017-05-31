@@ -28,6 +28,11 @@ enum class StickyMode {
     SOURCE_IP,
 
     /**
+     * Select the node with a hash of the "Host" request header.
+     */
+    HOST,
+
+    /**
      * A modulo of the lower 32 bit of the beng-proxy session id is
      * used to determine which worker shall be used.  Requires
      * cooperation from beng-proxy on the nodes.

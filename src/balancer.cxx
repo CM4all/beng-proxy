@@ -179,6 +179,7 @@ balancer_get(Balancer &balancer, const AddressList &list,
         return next_failover_address(list);
 
     case StickyMode::SOURCE_IP:
+    case StickyMode::HOST:
     case StickyMode::SESSION_MODULO:
     case StickyMode::COOKIE:
     case StickyMode::JVM_ROUTE:
