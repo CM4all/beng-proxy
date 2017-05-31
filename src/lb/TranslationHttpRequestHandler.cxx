@@ -50,7 +50,7 @@ lb_http_translate_response(TranslateResponse &response, void *ctx)
                                     response.redirect,
                                     body);
     } else if (response.pool != nullptr) {
-        const auto *cluster = c.current_translation_handler->FindCluster(response.pool);
+        auto *cluster = c.current_translation_handler->FindCluster(response.pool);
         if (cluster == nullptr) {
             c.LogSendError(request,
                            ToGError(std::runtime_error("No such pool")));
@@ -83,19 +83,16 @@ static constexpr TranslateHandler lb_http_translate_handler = {
  */
 
 void
-LbHttpConnection::AskTranslationServer(const LbTranslationHandlerConfig &destination,
+LbHttpConnection::AskTranslationServer(LbTranslationHandler &handler,
                                        HttpServerRequest &request,
                                        CancellablePointer &cancel_ptr)
 {
-    auto *h = instance.goto_map.FindTranslationHandler(destination.name.c_str());
-    assert(h != nullptr);
-
-    current_translation_handler = h;
+    current_translation_handler = &handler;
 
     auto *r = NewFromPool<LbHttpRequest>(request.pool, *this, request,
                                          cancel_ptr);
 
-    h->Pick(request.pool, request,
-            lb_http_translate_handler, r,
-            cancel_ptr);
+    handler.Pick(request.pool, request,
+                 lb_http_translate_handler, r,
+                 cancel_ptr);
 }

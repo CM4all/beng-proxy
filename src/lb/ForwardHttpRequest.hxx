@@ -7,13 +7,13 @@
 
 struct LbHttpConnection;
 struct HttpServerRequest;
-struct LbClusterConfig;
+class LbCluster;
 class CancellablePointer;
 
 void
 ForwardHttpRequest(LbHttpConnection &connection,
                    HttpServerRequest &request,
-                   const LbClusterConfig &cluster_config,
+                   LbCluster &cluster,
                    CancellablePointer &cancel_ptr);
 
 #endif

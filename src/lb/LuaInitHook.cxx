@@ -4,8 +4,8 @@
 
 #include "LuaInitHook.hxx"
 #include "LuaGoto.hxx"
-#include "ClusterMap.hxx"
-#include "lb_config.hxx"
+#include "GotoMap.hxx"
+#include "Goto.hxx"
 #include "lua/Util.hxx"
 #include "lua/Class.hxx"
 #include "lua/Assert.hxx"
@@ -22,13 +22,12 @@ CheckLuaPools(lua_State *L, int idx)
 int
 LbLuaInitHook::GetPool(lua_State *L, const char *name)
 {
-    auto g = config.FindGoto(name);
-    if (!g.IsDefined())
+    if (goto_map == nullptr)
         return 0;
 
-    if (clusters != nullptr)
-        /* mark the referenced pools as "used" */
-        clusters->Scan(g, *avahi_client);
+    auto g = goto_map->GetInstance(name);
+    if (!g.IsDefined())
+        return 0;
 
     NewLuaGoto(L, std::move(g));
     return 1;

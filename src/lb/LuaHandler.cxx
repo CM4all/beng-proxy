@@ -157,8 +157,9 @@ LbLuaRequestIndex(lua_State *L)
 }
 
 LbLuaHandler::LbLuaHandler(LuaInitHook &init_hook,
-                           const LbLuaHandlerConfig &config)
-    :state(luaL_newstate()), function(state.get())
+                           const LbLuaHandlerConfig &_config)
+    :config(_config),
+     state(luaL_newstate()), function(state.get())
 {
     auto *L = state.get();
     const Lua::ScopeCheckStack check_stack(L);
@@ -196,7 +197,7 @@ LbLuaHandler::~LbLuaHandler()
 {
 }
 
-const LbGotoConfig *
+const LbGoto *
 LbLuaHandler::HandleRequest(HttpServerRequest &request,
                             HttpResponseHandler &handler)
 {
@@ -220,55 +221,4 @@ LbLuaHandler::HandleRequest(HttpServerRequest &request,
         throw std::runtime_error("Wrong return type from Lua handler");
 
     return g;
-}
-
-void
-LbLuaHandlerMap::Scan(LuaInitHook &init_hook, const LbConfig &config)
-{
-    for (const auto &i : config.listeners)
-        Scan(init_hook, i);
-}
-
-void
-LbLuaHandlerMap::Scan(LuaInitHook &init_hook, const LbGotoIfConfig &config)
-{
-    Scan(init_hook, config.destination);
-}
-
-void
-LbLuaHandlerMap::Scan(LuaInitHook &init_hook, const LbBranchConfig &config)
-{
-    Scan(init_hook, config.fallback);
-
-    for (const auto &i : config.conditions)
-        Scan(init_hook, i);
-}
-
-void
-LbLuaHandlerMap::Scan(LuaInitHook &init_hook, const LbGotoConfig &g)
-{
-    if (g.lua != nullptr)
-        Scan(init_hook, *g.lua);
-
-    if (g.branch != nullptr)
-        Scan(init_hook, *g.branch);
-}
-
-void
-LbLuaHandlerMap::Scan(LuaInitHook &init_hook, const LbListenerConfig &config)
-{
-    Scan(init_hook, config.destination);
-}
-
-void
-LbLuaHandlerMap::Scan(LuaInitHook &init_hook, const LbLuaHandlerConfig &config)
-{
-    auto i = handlers.find(config.name.c_str());
-    if (i != handlers.end())
-        /* already added */
-        return;
-
-    handlers.emplace(std::piecewise_construct,
-                     std::forward_as_tuple(config.name.c_str()),
-                     std::forward_as_tuple(init_hook, config));
 }

@@ -5,13 +5,14 @@
 #ifndef BENG_LB_LISTENER_HXX
 #define BENG_LB_LISTENER_HXX
 
+#include "Goto.hxx"
 #include "Logger.hxx"
 #include "net/ServerSocket.hxx"
 
 struct SslFactory;
 struct LbListenerConfig;
 struct LbInstance;
-class LbCluster;
+class LbGotoMap;
 
 /**
  * Listener on a TCP port.
@@ -21,7 +22,7 @@ class LbListener final : Logger, public ServerSocket {
 
     const LbListenerConfig &config;
 
-    LbCluster *tcp_cluster;
+    LbGoto destination;
 
     SslFactory *ssl_factory = nullptr;
 
@@ -31,7 +32,7 @@ public:
     ~LbListener();
 
     void Setup();
-    void Scan();
+    void Scan(LbGotoMap &goto_map);
 
     unsigned FlushSSLSessionCache(long tm);
 

@@ -10,7 +10,8 @@
 #include <map>
 
 struct LbTranslationHandlerConfig;
-struct LbClusterConfig;
+class LbCluster;
+class LbGotoMap;
 struct HttpServerRequest;
 struct TranslateHandler;
 class TranslateStock;
@@ -22,14 +23,14 @@ class LbTranslationHandler final {
 
     TranslateStock *const stock;
 
-    const std::map<const char *, const LbClusterConfig &, StringLess> clusters;
+    const std::map<const char *, LbCluster &, StringLess> clusters;
 
 public:
-    LbTranslationHandler(EventLoop &event_loop,
+    LbTranslationHandler(EventLoop &event_loop, LbGotoMap &goto_map,
                          const LbTranslationHandlerConfig &_config);
     ~LbTranslationHandler();
 
-    const LbClusterConfig *FindCluster(const char *cluster_name) const {
+    LbCluster *FindCluster(const char *cluster_name) const {
         auto i = clusters.find(cluster_name);
         return i != clusters.end()
             ? &i->second

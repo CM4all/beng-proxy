@@ -96,10 +96,6 @@ struct LbGotoConfig {
     const char *GetName() const;
 
     bool HasZeroConf() const;
-
-    template<typename R>
-    gcc_pure
-    const LbGotoConfig &FindRequestLeaf(const R &request) const;
 };
 
 struct LbConditionConfig {
@@ -197,16 +193,6 @@ struct LbBranchConfig {
     }
 
     bool HasZeroConf() const;
-
-    template<typename R>
-    gcc_pure
-    const LbGotoConfig &FindRequestLeaf(const R &request) const {
-        for (const auto &i : conditions)
-            if (i.condition.MatchRequest(request))
-                return i.destination.FindRequestLeaf(request);
-
-        return fallback.FindRequestLeaf(request);
-    }
 };
 
 /**
@@ -237,15 +223,5 @@ struct LbTranslationHandlerConfig {
     explicit LbTranslationHandlerConfig(const char *_name)
         :name(_name) {}
 };
-
-template<typename R>
-const LbGotoConfig &
-LbGotoConfig::FindRequestLeaf(const R &request) const
-{
-    if (branch != nullptr)
-        return branch->FindRequestLeaf(request);
-
-    return *this;
-}
 
 #endif

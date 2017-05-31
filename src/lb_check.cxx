@@ -51,7 +51,9 @@ lb_check(EventLoop &event_loop, const LbConfig &config)
     }
 
     {
-        LbLuaInitHook init_hook(config, nullptr, nullptr);
-        LbLuaHandlerMap().Scan(init_hook, config);
+        LbLuaInitHook init_hook(nullptr);
+
+        for (const auto &i : config.lua_handlers)
+            LbLuaHandler(init_hook, i.second);
     }
 }

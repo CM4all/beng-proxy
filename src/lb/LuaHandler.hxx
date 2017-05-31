@@ -7,21 +7,16 @@
 
 #include "lua/State.hxx"
 #include "lua/Value.hxx"
-#include "util/StringLess.hxx"
 
-#include <map>
-
-struct LbConfig;
-struct LbGotoIfConfig;
-struct LbBranchConfig;
-struct LbGotoConfig;
-struct LbListenerConfig;
+struct LbGoto;
 struct LbLuaHandlerConfig;
 struct HttpServerRequest;
 struct HttpResponseHandler;
 class LuaInitHook;
 
 class LbLuaHandler final {
+    const LbLuaHandlerConfig &config;
+
     Lua::State state;
     Lua::Value function;
 
@@ -29,30 +24,12 @@ public:
     LbLuaHandler(LuaInitHook &init_hook, const LbLuaHandlerConfig &config);
     ~LbLuaHandler();
 
-    const LbGotoConfig *HandleRequest(HttpServerRequest &request,
-                                      HttpResponseHandler &handler);
-};
-
-class LbLuaHandlerMap {
-    std::map<const char *, LbLuaHandler, StringLess> handlers;
-
-public:
-    void Scan(LuaInitHook &init_hook, const LbConfig &config);
-
-    LbLuaHandler *Find(const char *name) {
-        auto i = handlers.find(name);
-        return i != handlers.end()
-            ? &i->second
-            : nullptr;
+    const LbLuaHandlerConfig &GetConfig() const {
+        return config;
     }
 
-private:
-    void Scan(LuaInitHook &init_hook, const LbGotoIfConfig &config);
-    void Scan(LuaInitHook &init_hook, const LbBranchConfig &config);
-    void Scan(LuaInitHook &init_hook, const LbGotoConfig &g);
-    void Scan(LuaInitHook &init_hook, const LbListenerConfig &config);
-
-    void Scan(LuaInitHook &init_hook, const LbLuaHandlerConfig &config);
+    const LbGoto *HandleRequest(HttpServerRequest &request,
+                                HttpResponseHandler &handler);
 };
 
 #endif

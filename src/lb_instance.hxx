@@ -37,6 +37,8 @@ struct LbInstance final : PInstance {
 
     std::forward_list<LbControl> controls;
 
+    MyAvahiClient avahi_client;
+
     LbGotoMap goto_map;
 
     std::forward_list<LbListener> listeners;
@@ -44,8 +46,6 @@ struct LbInstance final : PInstance {
     std::map<std::string, CertCache> cert_dbs;
 
     LbMonitorMap monitors;
-
-    MyAvahiClient avahi_client;
 
     TimerEvent compress_event;
 
@@ -77,7 +77,7 @@ struct LbInstance final : PInstance {
 
     /**
      * Create monitors for all members of all active clusters (from
-     * #LbClusterMap).
+     * #LbGotoMap).
      */
     void CreateMonitors();
 

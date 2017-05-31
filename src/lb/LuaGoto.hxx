@@ -6,15 +6,15 @@
 #define BENG_LB_LUA_GOTO_HXX
 
 struct lua_State;
-struct LbGotoConfig;
+struct LbGoto;
 
 void
 RegisterLuaGoto(lua_State *L);
 
-LbGotoConfig *
-NewLuaGoto(lua_State *L, LbGotoConfig &&src);
+LbGoto *
+NewLuaGoto(lua_State *L, LbGoto &&src);
 
-LbGotoConfig *
+LbGoto *
 CheckLuaGoto(lua_State *L, int idx);
 
 #endif

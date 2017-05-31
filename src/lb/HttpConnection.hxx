@@ -22,10 +22,10 @@ class UniqueSocketDescriptor;
 class SocketAddress;
 struct HttpServerConnection;
 struct LbListenerConfig;
-struct LbClusterConfig;
-struct LbLuaHandlerConfig;
-struct LbGotoConfig;
-struct LbTranslationHandlerConfig;
+class LbCluster;
+class LbLuaHandler;
+class LbTranslationHandler;
+struct LbGoto;
 class LbTranslationHandler;
 struct LbInstance;
 
@@ -38,6 +38,8 @@ struct LbHttpConnection final
     LbInstance &instance;
 
     const LbListenerConfig &listener;
+
+    const LbGoto &initial_destination;
 
     /**
      * The client's address formatted as a string (for logging).  This
@@ -62,6 +64,7 @@ struct LbHttpConnection final
 
     LbHttpConnection(struct pool &_pool, LbInstance &_instance,
                      const LbListenerConfig &_listener,
+                     const LbGoto &_destination,
                      SocketAddress _client_address);
 
     void Destroy();
@@ -82,21 +85,21 @@ struct LbHttpConnection final
     void HttpConnectionClosed() override;
 
 private:
-    void HandleHttpRequest(const LbGotoConfig &destination,
+    void HandleHttpRequest(const LbGoto &destination,
                            HttpServerRequest &request,
                            CancellablePointer &cancel_ptr);
 
 public:
-    void ForwardHttpRequest(const LbClusterConfig &cluster_config,
+    void ForwardHttpRequest(LbCluster &cluster,
                             HttpServerRequest &request,
                             CancellablePointer &cancel_ptr);
 
 private:
-    void InvokeLua(const LbLuaHandlerConfig &config,
+    void InvokeLua(LbLuaHandler &handler,
                    HttpServerRequest &request,
                    CancellablePointer &cancel_ptr);
 
-    void AskTranslationServer(const LbTranslationHandlerConfig &destination,
+    void AskTranslationServer(LbTranslationHandler &handler,
                               HttpServerRequest &request,
                               CancellablePointer &cancel_ptr);
 
@@ -108,6 +111,7 @@ protected:
 LbHttpConnection *
 NewLbHttpConnection(LbInstance &instance,
                     const LbListenerConfig &listener,
+                    const LbGoto &destination,
                     SslFactory *ssl_factory,
                     UniqueSocketDescriptor &&fd, SocketAddress address);
 

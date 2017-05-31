@@ -5,46 +5,58 @@
 #ifndef BENG_LB_GOTO_MAP_HXX
 #define BENG_LB_GOTO_MAP_HXX
 
-#include "ClusterMap.hxx"
+#include "Cluster.hxx"
+#include "Branch.hxx"
+#include "TranslationHandler.hxx"
 #include "LuaHandler.hxx"
-#include "TranslationHandlerMap.hxx"
+#include "LuaInitHook.hxx"
+
+#include <map>
+
+struct LbGoto;
+struct LbGotoConfig;
 
 class LbGotoMap final {
-    /**
-     * A map of clusters which need run-time data.
-     */
-    LbClusterMap clusters;
+    const LbConfig &root_config;
+    MyAvahiClient &avahi_client;
 
-    LbTranslationHandlerMap translation_handlers;
+    LbLuaInitHook lua_init_hook;
 
-    /**
-     * A map of configured #LbLuaHandler instances.
-     */
-    LbLuaHandlerMap lua_handlers;
+    std::map<const LbClusterConfig *, LbCluster> clusters;
+    std::map<const LbBranchConfig *, LbBranch> branches;
+    std::map<const LbTranslationHandlerConfig *,
+             LbTranslationHandler> translation_handlers;
+    std::map<const LbLuaHandlerConfig *,
+             LbLuaHandler> lua_handlers;
 
 public:
+    LbGotoMap(const LbConfig &_config,
+              MyAvahiClient &_avahi_client)
+        :root_config(_config), avahi_client(_avahi_client),
+         lua_init_hook(this) {}
+
+    LbGotoMap(const LbGotoMap &) = delete;
+    LbGotoMap &operator=(const LbGotoMap &) = delete;
+
     void Clear() {
-        translation_handlers.Clear();
-    }
-
-    void Scan(const LbConfig &config, MyAvahiClient &avahi_client);
-
-    LbCluster *FindCluster(const char *name) {
-        return clusters.Find(name);
+        translation_handlers.clear();
     }
 
     template<typename F>
     void ForEachCluster(F &&f) {
-        clusters.ForEach(std::forward<F>(f));
+        for (auto &i : clusters)
+            f(i.second);
     }
 
-    LbTranslationHandler *FindTranslationHandler(const char *name) {
-        return translation_handlers.Find(name);
-    }
+    LbGoto GetInstance(const char *name);
+    LbGoto GetInstance(const LbGotoConfig &config);
 
-    LbLuaHandler *FindLuaHandler(const char *name) {
-        return lua_handlers.Find(name);
-    }
+    LbCluster &GetInstance(const LbClusterConfig &config);
+
+private:
+    LbBranch &GetInstance(const LbBranchConfig &config);
+    LbLuaHandler &GetInstance(const LbLuaHandlerConfig &config);
+    LbTranslationHandler &GetInstance(const LbTranslationHandlerConfig &config);
 };
 
 #endif

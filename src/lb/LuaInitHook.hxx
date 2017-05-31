@@ -7,20 +7,14 @@
 
 #include "lua/InitHook.hxx"
 
-struct LbConfig;
-class LbClusterMap;
-class MyAvahiClient;
+class LbGotoMap;
 
 class LbLuaInitHook final : public LuaInitHook {
-    const LbConfig &config;
-
-    LbClusterMap *const clusters;
-    MyAvahiClient *const avahi_client;
+    LbGotoMap *const goto_map;
 
 public:
-    LbLuaInitHook(const LbConfig &_config,
-                  LbClusterMap *_clusters, MyAvahiClient *_avahi_client)
-        :config(_config), clusters(_clusters), avahi_client(_avahi_client) {}
+    explicit LbLuaInitHook(LbGotoMap *_goto_map)
+        :goto_map(_goto_map) {}
 
     int GetPool(lua_State *L, const char *name);
 

@@ -5,6 +5,7 @@
 #include "HttpConnection.hxx"
 #include "ClusterConfig.hxx"
 #include "ListenerConfig.hxx"
+#include "Goto.txx"
 #include "ForwardHttpRequest.hxx"
 #include "TranslationHandler.hxx"
 #include "lb_instance.hxx"
@@ -28,8 +29,10 @@
 
 LbHttpConnection::LbHttpConnection(struct pool &_pool, LbInstance &_instance,
                                    const LbListenerConfig &_listener,
+                                   const LbGoto &_destination,
                                    SocketAddress _client_address)
     :pool(_pool), instance(_instance), listener(_listener),
+     initial_destination(_destination),
      client_address(address_to_string(pool, _client_address))
 {
     if (client_address == nullptr)
@@ -44,6 +47,7 @@ LbHttpConnection::LbHttpConnection(struct pool &_pool, LbInstance &_instance,
 LbHttpConnection *
 NewLbHttpConnection(LbInstance &instance,
                     const LbListenerConfig &listener,
+                    const LbGoto &destination,
                     SslFactory *ssl_factory,
                     UniqueSocketDescriptor &&fd, SocketAddress address)
 {
@@ -73,7 +77,8 @@ NewLbHttpConnection(LbInstance &instance,
     pool_set_major(pool);
 
     auto *connection = NewFromPool<LbHttpConnection>(*pool, *pool, instance,
-                                                     listener, address);
+                                                     listener, destination,
+                                                     address);
     connection->ssl_filter = ssl_filter;
 
     instance.http_connections.push_back(*connection);
@@ -153,17 +158,17 @@ LbHttpConnection::HandleHttpRequest(HttpServerRequest &request,
 
     request_start_time = std::chrono::steady_clock::now();
 
-    HandleHttpRequest(listener.destination, request, cancel_ptr);
+    HandleHttpRequest(initial_destination, request, cancel_ptr);
 }
 
 void
-LbHttpConnection::HandleHttpRequest(const LbGotoConfig &destination,
+LbHttpConnection::HandleHttpRequest(const LbGoto &destination,
                                     HttpServerRequest &request,
                                     CancellablePointer &cancel_ptr)
 {
     const auto &goto_ = destination.FindRequestLeaf(request);
-    if (goto_.response.IsDefined()) {
-        SendResponse(request, goto_.response);
+    if (goto_.response != nullptr) {
+        SendResponse(request, *goto_.response);
         return;
     }
 
@@ -182,11 +187,11 @@ LbHttpConnection::HandleHttpRequest(const LbGotoConfig &destination,
 }
 
 void
-LbHttpConnection::ForwardHttpRequest(const LbClusterConfig &cluster_config,
+LbHttpConnection::ForwardHttpRequest(LbCluster &cluster,
                                      HttpServerRequest &request,
                                      CancellablePointer &cancel_ptr)
 {
-    ::ForwardHttpRequest(*this, request, cluster_config, cancel_ptr);
+    ::ForwardHttpRequest(*this, request, cluster, cancel_ptr);
 }
 
 void

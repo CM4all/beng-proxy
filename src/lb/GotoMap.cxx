@@ -3,18 +3,68 @@
  */
 
 #include "GotoMap.hxx"
+#include "Goto.hxx"
+#include "GotoConfig.hxx"
 #include "lb/LuaInitHook.hxx"
+#include "lb_config.hxx"
 #include "avahi/Client.hxx"
 
-void
-LbGotoMap::Scan(const LbConfig &config, MyAvahiClient &avahi_client)
+LbGoto
+LbGotoMap::GetInstance(const char *name)
 {
-    clusters.Scan(config, avahi_client);
+    return GetInstance(root_config.FindGoto(name));
+}
 
-    {
-        LbLuaInitHook init_hook(config, &clusters, &avahi_client);
-        lua_handlers.Scan(init_hook, config);
-    }
+LbGoto
+LbGotoMap::GetInstance(const LbGotoConfig &config)
+{
+    if (config.cluster != nullptr)
+        return GetInstance(*config.cluster);
+    else if (config.branch != nullptr)
+        return GetInstance(*config.branch);
+    else if (config.lua != nullptr)
+        return GetInstance(*config.lua);
+    else if (config.translation != nullptr)
+        return GetInstance(*config.translation);
+    else if (config.response.IsDefined())
+        return config.response;
+    else
+        return LbGoto();
+}
 
-    translation_handlers.Scan(config, avahi_client.GetEventLoop());
+LbCluster &
+LbGotoMap::GetInstance(const LbClusterConfig &config)
+{
+    return clusters.emplace(std::piecewise_construct,
+                            std::forward_as_tuple(&config),
+                            std::forward_as_tuple(config, avahi_client))
+        .first->second;
+}
+
+LbBranch &
+LbGotoMap::GetInstance(const LbBranchConfig &config)
+{
+    return branches.emplace(std::piecewise_construct,
+                            std::forward_as_tuple(&config),
+                            std::forward_as_tuple(*this, config))
+        .first->second;
+}
+
+LbLuaHandler &
+LbGotoMap::GetInstance(const LbLuaHandlerConfig &config)
+{
+    return lua_handlers.emplace(std::piecewise_construct,
+                                std::forward_as_tuple(&config),
+                                std::forward_as_tuple(lua_init_hook, config))
+        .first->second;
+}
+
+LbTranslationHandler &
+LbGotoMap::GetInstance(const LbTranslationHandlerConfig &config)
+{
+    return translation_handlers.emplace(std::piecewise_construct,
+                                        std::forward_as_tuple(&config),
+                                        std::forward_as_tuple(avahi_client.GetEventLoop(),
+                                                              *this, config))
+        .first->second;
 }

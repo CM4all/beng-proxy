@@ -3,9 +3,8 @@
  */
 
 #include "HttpConnection.hxx"
-#include "GotoConfig.hxx"
+#include "LuaHandler.hxx"
 #include "ListenerConfig.hxx"
-#include "lb_instance.hxx"
 #include "http_server/http_server.hxx"
 #include "http_server/Request.hxx"
 #include "http_response.hxx"
@@ -62,18 +61,15 @@ LbLuaResponseHandler::OnHttpError(GError *error)
 }
 
 void
-LbHttpConnection::InvokeLua(const LbLuaHandlerConfig &config,
+LbHttpConnection::InvokeLua(LbLuaHandler &handler,
                             HttpServerRequest &request,
                             CancellablePointer &cancel_ptr)
 {
-    auto *handler = instance.goto_map.FindLuaHandler(config.name.c_str());
-    assert(handler != nullptr);
-
     LbLuaResponseHandler response_handler(*this, request);
-    const LbGotoConfig *g;
+    const LbGoto *g;
 
     try {
-        g = handler->HandleRequest(request, response_handler);
+        g = handler.HandleRequest(request, response_handler);
     } catch (const std::runtime_error &e) {
         if (response_handler.IsFinished())
             daemon_log(1, "Lua error: %s\n", e.what());

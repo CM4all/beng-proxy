@@ -18,12 +18,15 @@ LbListener::OnAccept(UniqueSocketDescriptor &&new_fd, SocketAddress address)
 try {
     switch (config.destination.GetProtocol()) {
     case LbProtocol::HTTP:
-        NewLbHttpConnection(instance, config, ssl_factory,
+        NewLbHttpConnection(instance, config, destination,
+                            ssl_factory,
                             std::move(new_fd), address);
         break;
 
     case LbProtocol::TCP:
-        LbTcpConnection::New(instance, config, *tcp_cluster,
+        assert(destination.cluster != nullptr);
+
+        LbTcpConnection::New(instance, config, *destination.cluster,
                              ssl_factory,
                              std::move(new_fd), address);
         break;
@@ -84,13 +87,9 @@ LbListener::Setup()
 }
 
 void
-LbListener::Scan()
+LbListener::Scan(LbGotoMap &goto_map)
 {
-    if (config.destination.GetProtocol() == LbProtocol::TCP) {
-        assert(config.destination.cluster != nullptr);
-        tcp_cluster = instance.goto_map.FindCluster(config.destination.cluster->name.c_str());
-        assert(tcp_cluster != nullptr);
-    }
+    destination = goto_map.GetInstance(config.destination);
 }
 
 LbListener::~LbListener()

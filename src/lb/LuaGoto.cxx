@@ -3,13 +3,18 @@
  */
 
 #include "LuaGoto.hxx"
+#include "LuaHandler.hxx"
+#include "Goto.hxx"
 #include "GotoConfig.hxx"
+#include "Cluster.hxx"
+#include "ClusterConfig.hxx"
+#include "Branch.hxx"
 #include "lua/Class.hxx"
 
 static constexpr char lua_goto_class[] = "lb.goto";
-typedef Lua::Class<LbGotoConfig, lua_goto_class> LuaGoto;
+typedef Lua::Class<LbGoto, lua_goto_class> LuaGoto;
 
-static LbGotoConfig &
+static LbGoto &
 CastLuaGoto(lua_State *L, int idx)
 {
     return LuaGoto::Cast(L, idx);
@@ -37,38 +42,38 @@ LuaGotoIndex(lua_State *L)
         } else if (g.lua != nullptr) {
             Lua::Push(L, "lua_handler");
             return 1;
-        } else if (g.response.IsDefined()) {
+        } else if (g.response != nullptr) {
             Lua::Push(L, "response");
             return 1;
         } else
             return 0;
     } else if (strcmp(name, "name") == 0) {
         if (g.cluster != nullptr) {
-            Lua::Push(L, g.cluster->name.c_str());
+            Lua::Push(L, g.cluster->GetConfig().name.c_str());
             return 1;
         } else if (g.cluster != nullptr) {
-            Lua::Push(L, g.branch->name.c_str());
+            Lua::Push(L, g.branch->GetConfig().name.c_str());
             return 1;
         } else if (g.lua != nullptr) {
-            Lua::Push(L, g.lua->name.c_str());
+            Lua::Push(L, g.lua->GetConfig().name.c_str());
             return 1;
         }
     } else if (strcmp(name, "status") == 0) {
-        if (g.response.IsDefined()) {
-            Lua::Push(L, int(g.response.status));
+        if (g.response != nullptr) {
+            Lua::Push(L, int(g.response->status));
             return 1;
         }
     } else if (strcmp(name, "location") == 0) {
-        if (g.response.IsDefined()) {
-            if (!g.response.location.empty()) {
-                Lua::Push(L, g.response.location.c_str());
+        if (g.response != nullptr) {
+            if (!g.response->location.empty()) {
+                Lua::Push(L, g.response->location.c_str());
                 return 1;
             }
         }
     } else if (strcmp(name, "message") == 0) {
-        if (g.response.IsDefined()) {
-            if (!g.response.message.empty()) {
-                Lua::Push(L, g.response.message.c_str());
+        if (g.response != nullptr) {
+            if (!g.response->message.empty()) {
+                Lua::Push(L, g.response->message.c_str());
                 return 1;
             }
         }
@@ -85,13 +90,13 @@ RegisterLuaGoto(lua_State *L)
     lua_pop(L, 1);
 }
 
-LbGotoConfig *
-NewLuaGoto(lua_State *L, LbGotoConfig &&src)
+LbGoto *
+NewLuaGoto(lua_State *L, LbGoto &&src)
 {
     return LuaGoto::New(L, std::move(src));
 }
 
-LbGotoConfig *
+LbGoto *
 CheckLuaGoto(lua_State *L, int idx)
 {
     return LuaGoto::Check(L, idx);

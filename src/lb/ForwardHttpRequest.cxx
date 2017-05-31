@@ -39,6 +39,7 @@ class LbRequest final
     : LeakDetector, Cancellable, StockGetHandler, Lease, HttpResponseHandler {
 
     LbHttpConnection &connection;
+    LbCluster &cluster;
     const LbClusterConfig &cluster_config;
 
     TcpBalancer &balancer;
@@ -65,11 +66,12 @@ class LbRequest final
     } lease_state = LeaseState::NONE;
 
 public:
-    LbRequest(LbHttpConnection &_connection, const LbClusterConfig &_cluster_config,
+    LbRequest(LbHttpConnection &_connection, LbCluster &_cluster,
               TcpBalancer &_balancer,
               HttpServerRequest &_request,
               CancellablePointer &_cancel_ptr)
-        :connection(_connection), cluster_config(_cluster_config),
+        :connection(_connection), cluster(_cluster),
+         cluster_config(cluster.GetConfig()),
          balancer(_balancer),
          request(_request),
          body(request.pool, request.body) {
@@ -402,15 +404,7 @@ LbRequest::Start()
     }
 
     if (cluster_config.HasZeroConf()) {
-        auto *cluster2 = connection.instance.goto_map.FindCluster(cluster_config.name.c_str());
-        if (cluster2 == nullptr) {
-            http_server_send_message(&request,
-                                     HTTP_STATUS_INTERNAL_SERVER_ERROR,
-                                     "Zeroconf cluster not found");
-            return;
-        }
-
-        const auto member = cluster2->Pick(GetStickyHash());
+        const auto member = cluster.Pick(GetStickyHash());
         if (member.first == nullptr) {
             http_server_send_message(&request,
                                      HTTP_STATUS_INTERNAL_SERVER_ERROR,
@@ -442,12 +436,12 @@ LbRequest::Start()
 void
 ForwardHttpRequest(LbHttpConnection &connection,
                    HttpServerRequest &request,
-                   const LbClusterConfig &cluster_config,
+                   LbCluster &cluster,
                    CancellablePointer &cancel_ptr)
 {
     const auto request2 =
         NewFromPool<LbRequest>(request.pool,
-                               connection, cluster_config,
+                               connection, cluster,
                                *connection.instance.tcp_balancer,
                                request, cancel_ptr);
     request2->Start();
