@@ -8,6 +8,7 @@
 #include "regex.hxx"
 #include "ClusterConfig.hxx"
 #include "SimpleHttpResponse.hxx"
+#include "util/StringLess.hxx"
 
 #include <inline/compiler.h>
 
@@ -231,7 +232,7 @@ struct LbTranslationHandlerConfig {
 
     AllocatedSocketAddress address;
 
-    std::map<std::string, const LbClusterConfig *> clusters;
+    std::map<const char *, const LbClusterConfig *, StringLess> clusters;
 
     explicit LbTranslationHandlerConfig(const char *_name)
         :name(_name) {}
