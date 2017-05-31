@@ -422,9 +422,11 @@ LbRequest::Start()
     if (cluster_config.HasZeroConf()) {
         const auto member = cluster.Pick(GetStickyHash());
         if (member.first == nullptr) {
+            const ScopePoolRef ref(request.pool TRACE_ARGS);
             http_server_send_message(&request,
                                      HTTP_STATUS_INTERNAL_SERVER_ERROR,
                                      "Zeroconf cluster is empty");
+            Destroy();
             return;
         }
 
