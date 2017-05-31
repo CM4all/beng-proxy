@@ -23,7 +23,7 @@ try {
         break;
 
     case LbProtocol::TCP:
-        LbTcpConnection::New(instance, config,
+        LbTcpConnection::New(instance, config, *tcp_cluster,
                              ssl_factory,
                              std::move(new_fd), address);
         break;
@@ -81,6 +81,16 @@ LbListener::Setup()
     if (config.destination.GetProtocol() == LbProtocol::HTTP ||
         config.ssl)
         SetTcpDeferAccept(10);
+}
+
+void
+LbListener::Scan()
+{
+    if (config.destination.GetProtocol() == LbProtocol::TCP) {
+        assert(config.destination.cluster != nullptr);
+        tcp_cluster = instance.goto_map.FindCluster(config.destination.cluster->name);
+        assert(tcp_cluster != nullptr);
+    }
 }
 
 LbListener::~LbListener()

@@ -11,6 +11,7 @@
 struct SslFactory;
 struct LbListenerConfig;
 struct LbInstance;
+class LbCluster;
 
 /**
  * Listener on a TCP port.
@@ -20,6 +21,8 @@ class LbListener final : Logger, public ServerSocket {
 
     const LbListenerConfig &config;
 
+    LbCluster *tcp_cluster;
+
     SslFactory *ssl_factory = nullptr;
 
 public:
@@ -28,6 +31,7 @@ public:
     ~LbListener();
 
     void Setup();
+    void Scan();
 
     unsigned FlushSSLSessionCache(long tm);
 

@@ -421,15 +421,10 @@ LbTcpConnection::OnSocketConnectError(std::exception_ptr ep)
 void
 LbTcpConnection::ConnectOutbound()
 {
-    if (cluster.HasZeroConf()) {
-        auto *cluster2 = instance.goto_map.FindCluster(cluster.name);
-        if (cluster2 == nullptr) {
-            DestroyInbound();
-            OnTcpError("Zeroconf error", "Zeroconf cluster not found");
-            return;
-        }
+    const auto &cluster_config = cluster.GetConfig();
 
-        const auto member = cluster2->Pick(session_sticky);
+    if (cluster_config.HasZeroConf()) {
+        const auto member = cluster.Pick(session_sticky);
         if (member.first == nullptr) {
             DestroyInbound();
             OnTcpError("Zeroconf error", "Zeroconf cluster is empty");
@@ -441,7 +436,7 @@ LbTcpConnection::ConnectOutbound()
 
         client_socket_new(inbound.GetEventLoop(), pool,
                           address.GetFamily(), SOCK_STREAM, 0,
-                          cluster.transparent_source, bind_address,
+                          cluster_config.transparent_source, bind_address,
                           address,
                           20,
                           *this,
@@ -450,10 +445,10 @@ LbTcpConnection::ConnectOutbound()
     }
 
     client_balancer_connect(inbound.GetEventLoop(), pool, *instance.balancer,
-                            cluster.transparent_source,
+                            cluster_config.transparent_source,
                             bind_address,
                             session_sticky,
-                            &cluster.address_list,
+                            &cluster_config.address_list,
                             20,
                             *this,
                             cancel_connect);
@@ -466,13 +461,14 @@ LbTcpConnection::ConnectOutbound()
 
 LbTcpConnection::LbTcpConnection(struct pool &_pool, LbInstance &_instance,
                                  const LbListenerConfig &_listener,
+                                 LbCluster &_cluster,
                                  UniqueSocketDescriptor &&fd, FdType fd_type,
                                  const SocketFilter *filter, void *filter_ctx,
                                  SocketAddress _client_address)
-    :pool(_pool), instance(_instance), listener(_listener),
-     cluster(*listener.destination.cluster),
+    :pool(_pool), instance(_instance), listener(_listener), cluster(_cluster),
      client_address(address_to_string(pool, _client_address)),
-     session_sticky(lb_tcp_sticky(cluster.sticky_mode, _client_address)),
+     session_sticky(lb_tcp_sticky(cluster.GetConfig().sticky_mode,
+                                  _client_address)),
      inbound(instance.event_loop), outbound(instance.event_loop)
 {
     if (client_address == nullptr)
@@ -488,7 +484,7 @@ LbTcpConnection::LbTcpConnection(struct pool &_pool, LbInstance &_instance,
        (ISTREAM_TO_TCP & FdType::FD_PIPE) != 0;
     */
 
-    if (cluster.transparent_source) {
+    if (cluster.GetConfig().transparent_source) {
         bind_address = _client_address;
         bind_address.SetPort(0);
     } else
@@ -510,6 +506,7 @@ LbTcpConnection::~LbTcpConnection()
 LbTcpConnection *
 LbTcpConnection::New(LbInstance &instance,
                      const LbListenerConfig &listener,
+                     LbCluster &cluster,
                      SslFactory *ssl_factory,
                      UniqueSocketDescriptor &&fd, SocketAddress address)
 {
@@ -536,7 +533,7 @@ LbTcpConnection::New(LbInstance &instance,
     pool_set_major(pool);
 
     return NewFromPool<LbTcpConnection>(*pool, *pool, instance,
-                                        listener,
+                                        listener, cluster,
                                         std::move(fd), fd_type,
                                         filter, filter_ctx,
                                         address);

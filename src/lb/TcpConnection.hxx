@@ -26,7 +26,7 @@ struct ThreadSocketFilter;
 class UniqueSocketDescriptor;
 class SocketAddress;
 struct LbListenerConfig;
-struct LbClusterConfig;
+class LbCluster;
 struct LbGoto;
 struct LbInstance;
 
@@ -39,7 +39,7 @@ class LbTcpConnection final
     LbInstance &instance;
 
     const LbListenerConfig &listener;
-    const LbClusterConfig &cluster;
+    LbCluster &cluster;
 
     /**
      * The client's address formatted as a string (for logging).  This
@@ -60,6 +60,7 @@ public:
 
     LbTcpConnection(struct pool &_pool, LbInstance &_instance,
                     const LbListenerConfig &_listener,
+                    LbCluster &_cluster,
                     UniqueSocketDescriptor &&fd, FdType fd_type,
                     const SocketFilter *filter, void *filter_ctx,
                     SocketAddress _client_address);
@@ -68,6 +69,7 @@ public:
 
     static LbTcpConnection *New(LbInstance &instance,
                                 const LbListenerConfig &listener,
+                                LbCluster &cluster,
                                 SslFactory *ssl_factory,
                                 UniqueSocketDescriptor &&fd,
                                 SocketAddress address);

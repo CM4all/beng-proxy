@@ -42,6 +42,9 @@ LbInstance::InitWorker()
 
     goto_map.Scan(config, avahi_client);
 
+    for (auto &listener : listeners)
+        listener.Scan();
+
     CreateMonitors();
 
     /* run monitors only in the worker process */
