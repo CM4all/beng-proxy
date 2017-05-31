@@ -41,6 +41,7 @@ struct LbMonitor final : public LbMonitorHandler {
 
     ~LbMonitor() {
         interval_event.Cancel();
+        timeout_event.Cancel();
 
         if (cancel_ptr)
             cancel_ptr.Cancel();
