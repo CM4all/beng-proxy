@@ -26,6 +26,7 @@ struct LbClusterConfig;
 struct LbLuaHandlerConfig;
 struct LbGotoConfig;
 struct LbTranslationHandlerConfig;
+class LbTranslationHandler;
 struct LbInstance;
 
 struct LbHttpConnection final
@@ -53,6 +54,11 @@ struct LbHttpConnection final
      * the request duration.
      */
     std::chrono::steady_clock::time_point request_start_time;
+
+    /**
+     * Internal state used by AskTranslationServer().
+     */
+    const LbTranslationHandler *current_translation_handler;
 
     LbHttpConnection(struct pool &_pool, LbInstance &_instance,
                      const LbListenerConfig &_listener,
