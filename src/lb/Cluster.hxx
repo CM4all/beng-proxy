@@ -97,6 +97,10 @@ public:
               MyAvahiClient &_avahi_client);
     ~LbCluster();
 
+    const LbClusterConfig &GetConfig() const {
+        return config;
+    }
+
     std::pair<const char *, SocketAddress> Pick(sticky_hash_t sticky_hash);
 
 private:
