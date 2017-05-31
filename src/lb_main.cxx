@@ -5,6 +5,7 @@
  */
 
 #include "direct.hxx"
+#include "lb_cmdline.hxx"
 #include "lb_instance.hxx"
 #include "lb_check.hxx"
 #include "lb_setup.hxx"
@@ -130,18 +131,19 @@ deinit_signals(LbInstance *instance)
 int main(int argc, char **argv)
 try {
     const ScopeFbPoolInit fb_pool_init;
-    LbInstance instance;
 
     /* configuration */
 
+    LbCmdLine cmdline;
     LbConfig config;
-    ParseCommandLine(instance.cmdline, config, argc, argv);
+    ParseCommandLine(cmdline, config, argc, argv);
 
-    LoadConfigFile(config, instance.cmdline.config_path);
+    LoadConfigFile(config, cmdline.config_path);
 
+    LbInstance instance;
     instance.config = &config;
 
-    if (instance.cmdline.check) {
+    if (cmdline.check) {
         const ScopeSslGlobalInit ssl_init;
         lb_check(instance.event_loop, *instance.config);
         return EXIT_SUCCESS;
@@ -165,26 +167,26 @@ try {
 
     instance.balancer = balancer_new(instance.event_loop);
     instance.tcp_stock = tcp_stock_new(instance.event_loop,
-                                       instance.cmdline.tcp_stock_limit);
+                                       cmdline.tcp_stock_limit);
     instance.tcp_balancer = tcp_balancer_new(*instance.tcp_stock,
                                              *instance.balancer);
 
     instance.pipe_stock = pipe_stock_new(instance.event_loop);
 
     failure_init();
-    bulldog_init(instance.cmdline.bulldog_path);
+    bulldog_init(cmdline.bulldog_path);
 
     /* launch the access logger */
 
     log_global_init(config.access_logger.c_str(),
-                    &instance.cmdline.logger_user);
+                    &cmdline.logger_user);
 
     /* daemonize II */
 
-    if (!instance.cmdline.user.IsEmpty())
+    if (!cmdline.user.IsEmpty())
         capabilities_pre_setuid();
 
-    instance.cmdline.user.Apply();
+    cmdline.user.Apply();
 
     /* can't change to new (empty) rootfs if we may need to reconnect
        to PostgreSQL eventually */
@@ -192,7 +194,7 @@ try {
     if (!instance.config->HasCertDatabase())
         isolate_from_filesystem(instance.config->HasZeroConf());
 
-    if (!instance.cmdline.user.IsEmpty())
+    if (!cmdline.user.IsEmpty())
         capabilities_post_setuid(cap_keep_list, ARRAY_SIZE(cap_keep_list));
 
 #ifdef __linux

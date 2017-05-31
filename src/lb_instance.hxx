@@ -8,7 +8,6 @@
 #define BENG_PROXY_LB_INSTANCE_HXX
 
 #include "PInstance.hxx"
-#include "lb_cmdline.hxx"
 #include "lb/GotoMap.hxx"
 #include "lb/MonitorMap.hxx"
 #include "lb/HttpConnection.hxx"
@@ -32,8 +31,6 @@ class LbListener;
 class CertCache;
 
 struct LbInstance final : PInstance {
-    LbCmdLine cmdline;
-
     LbConfig *config;
 
     uint64_t http_request_counter = 0;
