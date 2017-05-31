@@ -29,6 +29,12 @@ public:
             : nullptr;
     }
 
+    template<typename F>
+    void ForEach(F &&f) {
+        for (auto &i : clusters)
+            f(i.second);
+    }
+
 private:
     void Scan(const LbTranslationHandlerConfig &config,
               MyAvahiClient &avahi_client);

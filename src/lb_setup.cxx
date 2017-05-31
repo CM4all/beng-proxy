@@ -11,44 +11,6 @@
 #include "lb_control.hxx"
 #include "ssl/Cache.hxx"
 
-static void
-init_monitors(LbInstance &instance, const LbClusterConfig &cluster)
-{
-    if (cluster.monitor == NULL)
-        return;
-
-    for (const auto &member : cluster.members)
-        instance.monitors.Add(*member.node, member.port, *cluster.monitor,
-                              instance.event_loop);
-}
-
-static void
-init_monitors(LbInstance &instance, const LbBranchConfig &cluster);
-
-static void
-init_monitors(LbInstance &instance, const LbGotoConfig &g)
-{
-    if (g.cluster != nullptr)
-        init_monitors(instance, *g.cluster);
-    else if (g.branch != nullptr)
-        init_monitors(instance, *g.branch);
-}
-
-static void
-init_monitors(LbInstance &instance, const LbGotoIfConfig &gif)
-{
-    init_monitors(instance, gif.destination);
-}
-
-static void
-init_monitors(LbInstance &instance, const LbBranchConfig &cluster)
-{
-    init_monitors(instance, cluster.fallback);
-
-    for (const auto &i : cluster.conditions)
-        init_monitors(instance, i);
-}
-
 void
 init_all_listeners(LbInstance &instance)
 {
@@ -58,7 +20,6 @@ init_all_listeners(LbInstance &instance)
         listeners.emplace_front(instance, config);
         auto &listener = listeners.front();
         listener.Setup();
-        init_monitors(instance, config.destination);
     }
 }
 

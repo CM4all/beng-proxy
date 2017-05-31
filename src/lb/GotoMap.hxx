@@ -33,6 +33,11 @@ public:
         return clusters.Find(name);
     }
 
+    template<typename F>
+    void ForEachCluster(F &&f) {
+        clusters.ForEach(std::forward<F>(f));
+    }
+
     LbTranslationHandler *FindTranslationHandler(const std::string &name) {
         return translation_handlers.Find(name);
     }

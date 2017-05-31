@@ -76,6 +76,12 @@ struct LbInstance final : PInstance {
     void InitWorker();
 
     /**
+     * Create monitors for all members of all active clusters (from
+     * #LbClusterMap).
+     */
+    void CreateMonitors();
+
+    /**
      * Compress memory allocators, try to return unused memory areas
      * to the kernel.
      */

@@ -40,12 +40,28 @@ LbInstance::InitWorker()
 {
     compress_event.Add(COMPRESS_INTERVAL);
 
+    goto_map.Scan(config, avahi_client);
+
+    CreateMonitors();
+
     /* run monitors only in the worker process */
     monitors.Enable();
 
-    goto_map.Scan(config, avahi_client);
-
     ConnectCertCaches();
+}
+
+void
+LbInstance::CreateMonitors()
+{
+    goto_map.ForEachCluster([this](const LbCluster &_cluster){
+            const auto &cluster = _cluster.GetConfig();
+            if (cluster.monitor == nullptr)
+                return;
+
+            for (const auto &member : cluster.members)
+                monitors.Add(*member.node, member.port, *cluster.monitor,
+                             event_loop);
+        });
 }
 
 void
