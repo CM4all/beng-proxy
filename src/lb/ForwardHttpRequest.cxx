@@ -109,6 +109,8 @@ private:
             Destroy();
     }
 
+    const char *GetCanonicalHost() const;
+
     sticky_hash_t GetStickyHash();
     sticky_hash_t GetHostHash() const;
     sticky_hash_t MakeCookieHash();
@@ -164,10 +166,18 @@ send_fallback(HttpServerRequest &request,
     return true;
 }
 
+inline const char *
+LbRequest::GetCanonicalHost() const
+{
+    return connection.canonical_host != nullptr
+        ? connection.canonical_host
+        : request.headers.Get("host");
+}
+
 inline sticky_hash_t
 LbRequest::GetHostHash() const
 {
-    const char *host = request.headers.Get("host");
+    const char *host = GetCanonicalHost();
     if (host == nullptr)
         return 0;
 

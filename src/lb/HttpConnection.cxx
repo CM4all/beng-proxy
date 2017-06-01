@@ -157,6 +157,7 @@ LbHttpConnection::HandleHttpRequest(HttpServerRequest &request,
     ++instance.http_request_counter;
 
     request_start_time = std::chrono::steady_clock::now();
+    canonical_host = nullptr;
 
     HandleHttpRequest(initial_destination, request, cancel_ptr);
 }

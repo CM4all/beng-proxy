@@ -826,6 +826,13 @@ enum beng_translation_command {
      * and US-ASCII.
      */
     TRANSLATE_MESSAGE = 188,
+
+    /**
+     * Payload is the canonical name for this host, to be used instead
+     * of the "Host" request header.  Its designed use is
+     * StickyMode::HOST.
+     */
+    TRANSLATE_CANONICAL_HOST = 189,
 };
 
 struct beng_translation_header {

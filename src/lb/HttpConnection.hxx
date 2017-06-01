@@ -62,6 +62,14 @@ struct LbHttpConnection final
      */
     const LbTranslationHandler *current_translation_handler;
 
+    /**
+     * The current request's canonical host name (from
+     * #TRANSLATE_CANONICAL_HOST).  If set, then the string is
+     * allocated from the request pool, and is only valid for that one
+     * request.  It must be cleared each time a new request starts.
+     */
+    const char *canonical_host;
+
     LbHttpConnection(struct pool &_pool, LbInstance &_instance,
                      const LbListenerConfig &_listener,
                      const LbGoto &_destination,

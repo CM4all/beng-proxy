@@ -57,6 +57,9 @@ lb_http_translate_response(TranslateResponse &response, void *ctx)
             return;
         }
 
+        if (response.canonical_host != nullptr)
+            c.canonical_host = response.canonical_host;
+
         c.HandleHttpRequest(*destination, request, r.cancel_ptr);
     } else {
         c.LogSendError(request,
