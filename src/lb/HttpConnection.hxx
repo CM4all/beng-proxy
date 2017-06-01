@@ -58,11 +58,6 @@ struct LbHttpConnection final
     std::chrono::steady_clock::time_point request_start_time;
 
     /**
-     * Internal state used by AskTranslationServer().
-     */
-    const LbTranslationHandler *current_translation_handler;
-
-    /**
      * The current request's canonical host name (from
      * #TRANSLATE_CANONICAL_HOST).  If set, then the string is
      * allocated from the request pool, and is only valid for that one

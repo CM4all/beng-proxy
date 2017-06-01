@@ -20,13 +20,16 @@
 
 struct LbHttpRequest {
     LbHttpConnection &connection;
+    LbTranslationHandler &handler;
     HttpServerRequest &request;
     CancellablePointer &cancel_ptr;
 
     LbHttpRequest(LbHttpConnection &_connection,
+                  LbTranslationHandler &_handler,
                   HttpServerRequest &_request,
                   CancellablePointer &_cancel_ptr)
-        :connection(_connection), request(_request), cancel_ptr(_cancel_ptr) {}
+        :connection(_connection), handler(_handler),
+         request(_request), cancel_ptr(_cancel_ptr) {}
 };
 
 static void
@@ -50,7 +53,7 @@ lb_http_translate_response(TranslateResponse &response, void *ctx)
                                     response.redirect,
                                     body);
     } else if (response.pool != nullptr) {
-        auto *destination = c.current_translation_handler->FindDestination(response.pool);
+        auto *destination = r.handler.FindDestination(response.pool);
         if (destination == nullptr) {
             c.LogSendError(request,
                            ToGError(std::runtime_error("No such pool")));
@@ -90,9 +93,7 @@ LbHttpConnection::AskTranslationServer(LbTranslationHandler &handler,
                                        HttpServerRequest &request,
                                        CancellablePointer &cancel_ptr)
 {
-    current_translation_handler = &handler;
-
-    auto *r = NewFromPool<LbHttpRequest>(request.pool, *this, request,
+    auto *r = NewFromPool<LbHttpRequest>(request.pool, *this, handler, request,
                                          cancel_ptr);
 
     handler.Pick(request.pool, request,
