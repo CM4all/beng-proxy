@@ -9,14 +9,17 @@
 #include "util/StringLess.hxx"
 
 #include <map>
+#include <memory>
 
 struct LbTranslationHandlerConfig;
 class LbGotoMap;
 struct HttpServerRequest;
 struct TranslateHandler;
+struct TranslateResponse;
 class TranslateStock;
 class EventLoop;
 class CancellablePointer;
+class LbTranslationCache;
 
 class LbTranslationHandler final {
     const char *const name;
@@ -24,6 +27,8 @@ class LbTranslationHandler final {
     TranslateStock *const stock;
 
     const std::map<const char *, LbGoto, StringLess> destinations;
+
+    std::unique_ptr<LbTranslationCache> cache;
 
 public:
     LbTranslationHandler(EventLoop &event_loop, LbGotoMap &goto_map,
@@ -40,6 +45,9 @@ public:
     void Pick(struct pool &pool, const HttpServerRequest &request,
               const TranslateHandler &handler, void *ctx,
               CancellablePointer &cancel_ptr);
+
+    void PutCache(const HttpServerRequest &request,
+                  const TranslateResponse &response);
 };
 
 #endif

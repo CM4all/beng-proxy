@@ -1,6 +1,7 @@
 cm4all-beng-proxy (12.0.17) unstable; urgency=low
 
   * translation: add packet CANONICAL_HOST
+  * lb: implement a translation_handler cache
 
  --   
 
