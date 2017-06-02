@@ -42,6 +42,8 @@ public:
         translation_handlers.clear();
     }
 
+    void FlushCaches();
+
     template<typename F>
     void ForEachCluster(F &&f) {
         for (auto &i : clusters)

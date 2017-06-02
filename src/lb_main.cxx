@@ -111,6 +111,8 @@ LbInstance::ReloadEventCallback(int)
     unsigned n_ssl_sessions = FlushSSLSessionCache(LONG_MAX);
     daemon_log(3, "flushed %u SSL sessions\n", n_ssl_sessions);
 
+    goto_map.FlushCaches();
+
     Compress();
 }
 

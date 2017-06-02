@@ -35,6 +35,8 @@ public:
                          const LbTranslationHandlerConfig &_config);
     ~LbTranslationHandler();
 
+    void FlushCache();
+
     const LbGoto *FindDestination(const char *destination_name) const {
         auto i = destinations.find(destination_name);
         return i != destinations.end()

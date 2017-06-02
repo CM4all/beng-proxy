@@ -38,6 +38,12 @@ LbTranslationHandler::~LbTranslationHandler()
     tstock_free(stock);
 }
 
+void
+LbTranslationHandler::FlushCache()
+{
+    cache.reset();
+}
+
 static void
 Fill(TranslateRequest &t, const char *name,
      const HttpServerRequest &request)

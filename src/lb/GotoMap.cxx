@@ -9,6 +9,13 @@
 #include "lb_config.hxx"
 #include "avahi/Client.hxx"
 
+void
+LbGotoMap::FlushCaches()
+{
+    for (auto &i : translation_handlers)
+        i.second.FlushCache();
+}
+
 LbGoto
 LbGotoMap::GetInstance(const char *name)
 {
