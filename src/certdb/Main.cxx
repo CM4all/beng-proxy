@@ -148,9 +148,10 @@ FindPrintCertificates(CertDatabase &db, const char *name)
 }
 
 static void
-FindCertificate(const char *host)
+FindCertificate(const char *host, bool headers)
 {
-    printf("id\thandle\tissuer\tnot_after\n");
+    if (headers)
+        printf("id\thandle\tissuer\tnot_after\n");
 
     const ScopeSslGlobalInit ssl_init;
     CertDatabase db(*db_config);
@@ -798,10 +799,22 @@ HandleGet(ConstBuffer<const char *> args)
 static void
 HandleFind(ConstBuffer<const char *> args)
 {
+    bool headers = false;
+
+    while (!args.IsEmpty() && args.front()[0] == '-') {
+        const char *arg = args.front();
+
+        if (strcmp(arg, "--headers") == 0) {
+            args.shift();
+            headers = true;
+        } else
+            break;
+    }
+
     if (args.size != 1)
         throw AutoUsage();
 
-    FindCertificate(args[0]);
+    FindCertificate(args[0], headers);
 }
 
 static void
@@ -913,7 +926,7 @@ static constexpr struct Command {
     { "delete", "HANDLE", HandleDelete },
     { "names", "HANDLE", HandleNames },
     { "get", "HANDLE", HandleGet },
-    { "find", "HOST", HandleFind },
+    { "find", "[--headers] HOST", HandleFind },
     { "set-handle", "ID HANDLE", HandleSetHandle },
     { "dumpkey", "HOST", HandleDumpKey, true },
     { "monitor", nullptr, HandleMonitor },
