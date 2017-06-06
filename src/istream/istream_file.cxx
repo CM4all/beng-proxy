@@ -41,7 +41,7 @@ struct FileIstream final : public Istream {
     /**
      * A timer to retry reading after EAGAIN.
      */
-    TimerEvent event;
+    TimerEvent retry_event;
 
     off_t rest;
     SliceFifoBuffer buffer;
@@ -52,19 +52,19 @@ struct FileIstream final : public Istream {
                 const char *_path)
         :Istream(p),
          fd(_fd), fd_type(_fd_type),
-         event(event_loop, BIND_THIS_METHOD(EventCallback)),
+         retry_event(event_loop, BIND_THIS_METHOD(EventCallback)),
          rest(_length),
          path(_path) {}
 
     ~FileIstream() {
-        event.Cancel();
+        retry_event.Cancel();
     }
 
     void CloseHandle() {
         if (fd < 0)
             return;
 
-        event.Cancel();
+        retry_event.Cancel();
 
         close(fd);
         fd = -1;
@@ -119,7 +119,7 @@ struct FileIstream final : public Istream {
     off_t _Skip(gcc_unused off_t length) override;
 
     void _Read() override {
-        event.Cancel();
+        retry_event.Cancel();
         TryRead();
     }
 
@@ -227,7 +227,7 @@ FileIstream::TryDirect()
            NFS files - unfortunately we cannot use EV_READ here, so we
            just install a timer which retries after 100ms */
 
-        event.Add(file_retry_timeout);
+        retry_event.Add(file_retry_timeout);
     } else {
         /* XXX */
         GError *error =
@@ -261,7 +261,7 @@ FileIstream::_GetAvailable(bool partial)
 off_t
 FileIstream::_Skip(off_t length)
 {
-    event.Cancel();
+    retry_event.Cancel();
 
     if (rest == (off_t)-1)
         return (off_t)-1;
