@@ -3,6 +3,7 @@ cm4all-beng-proxy (12.0.18) unstable; urgency=low
   * lb: SIGHUP flushes all translate_handler caches
   * certdb: command "names" obeys the "deleted" flag
   * certdb: command "find" prints column headers only with "--headers"
+  * certdb: remove obsolete option "--all"
 
  --   
 

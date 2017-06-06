@@ -419,18 +419,6 @@ AcmeNewCertAll(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
 }
 
 static void
-AcmeNewCertAll(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
-               const char *handle, const char *host)
-{
-    const auto old_cert_key = db.GetServerCertificateKey(host);
-    if (!old_cert_key.second)
-        throw "Old certificate not found in database";
-
-    AcmeNewCertAll(key, db, client, handle,
-                   *old_cert_key.first, *old_cert_key.second);
-}
-
-static void
 AcmeNewAuthzCert(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
                  WorkshopProgress _progress,
                  const char *handle,
@@ -505,7 +493,6 @@ static void
 Acme(ConstBuffer<const char *> args)
 {
     AcmeConfig config;
-    bool all = false;
 
     while (!args.IsEmpty() && args.front()[0] == '-') {
         const char *arg = args.front();
@@ -518,9 +505,6 @@ Acme(ConstBuffer<const char *> args)
                ACME responses */
             args.shift();
             config.fake = true;
-        } else if (strcmp(arg, "--all") == 0) {
-            args.shift();
-            all = true;
         } else if (strcmp(arg, "--agreement") == 0) {
             args.shift();
 
@@ -544,9 +528,7 @@ Acme(ConstBuffer<const char *> args)
             "options:\n"
             "  --staging     use the Let's Encrypt staging server\n"
             "  --agreement URL\n"
-            "                use a custom ACME agreement URL\n"
-            "  --all         let new-cert and new-authz-cert operate on all alternative\n"
-            "                names of the specified certificate\n";
+            "                use a custom ACME agreement URL\n";
 
     const char *key_path = "/etc/cm4all/acme/account.key";
 
@@ -588,9 +570,6 @@ Acme(ConstBuffer<const char *> args)
         if (args.size < 2)
             throw Usage("acme new-cert HANDLE HOST...");
 
-        if (all && args.size > 2)
-            throw "With --all, only one host name is allowed";
-
         const char *handle = args.shift();
         const char *host = args.shift();
 
@@ -603,11 +582,7 @@ Acme(ConstBuffer<const char *> args)
         CertDatabase db(*db_config);
         AcmeClient client(config);
 
-        if (all) {
-            AcmeNewCertAll(*key, db, client, handle, host);
-        } else {
-            AcmeNewCert(*key, db, client, handle, host, args);
-        }
+        AcmeNewCert(*key, db, client, handle, host, args);
 
         printf("OK\n");
     } else if (strcmp(cmd, "new-authz-cert") == 0) {
