@@ -56,7 +56,7 @@ class DelegateProcess final : public HeapStockItem {
 public:
     explicit DelegateProcess(CreateStockItem c, UniqueFileDescriptor &&_fd)
         :HeapStockItem(c), fd(_fd.Steal()),
-         event(c.stock.GetEventLoop(), fd, EV_READ,
+         event(c.stock.GetEventLoop(), fd, SocketEvent::READ,
                BIND_THIS_METHOD(SocketEventCallback)) {
     }
 
@@ -94,8 +94,8 @@ private:
 inline void
 DelegateProcess::SocketEventCallback(unsigned events)
 {
-    if ((events & EV_TIMEOUT) == 0) {
-        assert((events & EV_READ) != 0);
+    if ((events & SocketEvent::TIMEOUT) == 0) {
+        assert((events & SocketEvent::READ) != 0);
 
         char buffer;
         ssize_t nbytes = recv(fd, &buffer, sizeof(buffer), MSG_DONTWAIT);

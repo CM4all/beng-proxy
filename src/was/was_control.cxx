@@ -27,9 +27,9 @@ static constexpr struct timeval was_control_timeout = {
 WasControl::WasControl(EventLoop &event_loop, int _fd,
                        WasControlHandler &_handler)
     :fd(_fd), handler(_handler),
-     read_event(event_loop, fd, EV_READ,
+     read_event(event_loop, fd, SocketEvent::READ,
                 BIND_THIS_METHOD(ReadEventCallback)),
-     write_event(event_loop, fd, EV_WRITE,
+     write_event(event_loop, fd, SocketEvent::WRITE,
                  BIND_THIS_METHOD(WriteEventCallback)),
      input_buffer(fb_pool_get()),
      output_buffer(fb_pool_get())
@@ -193,7 +193,7 @@ WasControl::ReadEventCallback(unsigned events)
         return;
     }
 
-    if (unlikely(events & EV_TIMEOUT)) {
+    if (unlikely(events & SocketEvent::TIMEOUT)) {
         GError *error =
             g_error_new_literal(was_quark(), 0,
                                 "control receive timeout");
@@ -210,7 +210,7 @@ WasControl::WriteEventCallback(unsigned events)
     assert(fd >= 0);
     assert(!output_buffer.IsEmpty());
 
-    if (unlikely(events & EV_TIMEOUT)) {
+    if (unlikely(events & SocketEvent::TIMEOUT)) {
         GError *error =
             g_error_new_literal(was_quark(), 0,
                                 "control send timeout");

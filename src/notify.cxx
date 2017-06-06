@@ -22,7 +22,7 @@ MakeEventFd()
 Notify::Notify(EventLoop &event_loop, Callback _callback)
     :callback(_callback),
      fd(MakeEventFd()),
-     event(event_loop, fd, EV_READ|EV_PERSIST,
+     event(event_loop, fd, SocketEvent::READ|SocketEvent::PERSIST,
            BIND_THIS_METHOD(EventFdCallback)),
      pending(false) {
     event.Add();

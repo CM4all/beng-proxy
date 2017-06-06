@@ -40,7 +40,7 @@ public:
     WasOutput(EventLoop &event_loop, FileDescriptor _fd, Istream &_input,
               WasOutputHandler &_handler)
         :fd(_fd),
-         event(event_loop, fd.Get(), EV_WRITE,
+         event(event_loop, fd.Get(), SocketEvent::WRITE,
                BIND_THIS_METHOD(WriteEventCallback)),
          handler(_handler),
          input(_input, *this, ISTREAM_TO_PIPE) {
@@ -96,7 +96,7 @@ WasOutput::WriteEventCallback(unsigned events)
     assert(fd.IsDefined());
     assert(input.IsDefined());
 
-    if (unlikely(events & EV_TIMEOUT)) {
+    if (unlikely(events & SocketEvent::TIMEOUT)) {
         GError *error = g_error_new_literal(was_quark(), 0, "send timeout");
         AbortError(error);
         return;

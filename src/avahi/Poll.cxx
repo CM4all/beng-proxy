@@ -11,8 +11,8 @@ FromAvahiWatchEvent(AvahiWatchEvent e)
 {
     // TODO: what about AVAHI_WATCH_ERR and AVAHI_WATCH_HUP?
 
-    return (e & AVAHI_WATCH_IN ? EV_READ : 0) |
-        (e & AVAHI_WATCH_OUT ? EV_WRITE : 0);
+    return (e & AVAHI_WATCH_IN ? SocketEvent::READ : 0) |
+        (e & AVAHI_WATCH_OUT ? SocketEvent::WRITE : 0);
 }
 
 static AvahiWatchEvent
@@ -20,8 +20,8 @@ ToAvahiWatchEvent(unsigned events)
 {
     // TODO: what about AVAHI_WATCH_ERR and AVAHI_WATCH_HUP?
 
-    return AvahiWatchEvent((events & EV_READ ? AVAHI_WATCH_IN : 0) |
-                           (events & EV_WRITE ? AVAHI_WATCH_OUT : 0));
+    return AvahiWatchEvent((events & SocketEvent::READ ? AVAHI_WATCH_IN : 0) |
+                           (events & SocketEvent::WRITE ? AVAHI_WATCH_OUT : 0));
 }
 
 struct AvahiWatch final {

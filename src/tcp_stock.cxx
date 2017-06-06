@@ -103,11 +103,11 @@ struct TcpStockConnection final
 inline void
 TcpStockConnection::EventCallback(unsigned events)
 {
-    if ((events & EV_TIMEOUT) == 0) {
+    if ((events & SocketEvent::TIMEOUT) == 0) {
         char buffer;
         ssize_t nbytes;
 
-        assert((events & EV_READ) != 0);
+        assert((events & SocketEvent::READ) != 0);
 
         nbytes = fd.Read(&buffer, sizeof(buffer));
         if (nbytes < 0)
@@ -132,7 +132,7 @@ TcpStockConnection::OnSocketConnectSuccess(UniqueSocketDescriptor &&new_fd)
     cancel_ptr = nullptr;
 
     fd = new_fd.Release();
-    event.Set(fd.Get(), EV_READ);
+    event.Set(fd.Get(), SocketEvent::READ);
 
     InvokeCreateSuccess();
 }

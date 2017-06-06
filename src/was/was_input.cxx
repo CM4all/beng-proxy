@@ -45,7 +45,8 @@ public:
     WasInput(struct pool &p, EventLoop &event_loop, int _fd,
              WasInputHandler &_handler)
         :Istream(p), fd(_fd),
-         event(event_loop, fd, EV_READ, BIND_THIS_METHOD(EventCallback)),
+         event(event_loop, fd, SocketEvent::READ,
+               BIND_THIS_METHOD(EventCallback)),
          handler(_handler) {
     }
 
@@ -318,7 +319,7 @@ WasInput::EventCallback(unsigned events)
 {
     assert(fd >= 0);
 
-    if (unlikely(events & EV_TIMEOUT)) {
+    if (unlikely(events & SocketEvent::TIMEOUT)) {
         GError *error =
             g_error_new_literal(was_quark(), 0,
                                 "data receive timeout");

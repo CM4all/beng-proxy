@@ -34,7 +34,7 @@ public:
                PingClientHandler &_handler,
                CancellablePointer &cancel_ptr)
         :pool(_pool), fd(_fd), ident(_ident),
-         event(event_loop, fd, EV_READ,
+         event(event_loop, fd, SocketEvent::READ,
                BIND_THIS_METHOD(EventCallback)),
          handler(_handler) {
         cancel_ptr = *this;
@@ -152,7 +152,7 @@ PingClient::EventCallback(unsigned events)
 {
     assert(fd >= 0);
 
-    if (events & EV_READ) {
+    if (events & SocketEvent::READ) {
         Read();
     } else {
         close(fd);

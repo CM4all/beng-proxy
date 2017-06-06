@@ -364,7 +364,7 @@ SpawnIstream::SpawnIstream(SpawnService &_spawn_service, EventLoop &event_loop,
     :Istream(p),
      spawn_service(_spawn_service),
      output_fd(std::move(_output_fd)),
-     output_event(event_loop, output_fd.Get(), EV_READ,
+     output_event(event_loop, output_fd.Get(), SocketEvent::READ,
                   BIND_THIS_METHOD(OutputEventCallback)),
      input(_input, *this, ISTREAM_TO_PIPE),
      input_fd(std::move(_input_fd)),
@@ -372,7 +372,7 @@ SpawnIstream::SpawnIstream(SpawnService &_spawn_service, EventLoop &event_loop,
      pid(_pid)
 {
     if (_input != nullptr) {
-        input_event.Set(input_fd.Get(), EV_WRITE);
+        input_event.Set(input_fd.Get(), SocketEvent::WRITE);
         input_event.Add();
     }
 

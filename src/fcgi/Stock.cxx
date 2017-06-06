@@ -148,7 +148,7 @@ FcgiChildParams::GetStockKey(struct pool &pool) const
 void
 FcgiConnection::OnSocketEvent(unsigned events)
 {
-    if ((events & EV_TIMEOUT) == 0) {
+    if ((events & SocketEvent::TIMEOUT) == 0) {
         char buffer;
         ssize_t nbytes = fd.Read(&buffer, sizeof(buffer));
         if (nbytes < 0)
@@ -256,7 +256,7 @@ fcgi_stock_create(void *ctx, CreateStockItem c, void *info,
         return;
     }
 
-    connection->event.Set(connection->fd.Get(), EV_READ);
+    connection->event.Set(connection->fd.Get(), SocketEvent::READ);
 
     connection->InvokeCreateSuccess();
 }

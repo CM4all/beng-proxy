@@ -22,7 +22,7 @@
 
 UdpListener::UdpListener(EventLoop &event_loop, int _fd, UdpHandler &_handler)
     :fd(_fd),
-     event(event_loop, fd, EV_READ|EV_PERSIST,
+     event(event_loop, fd, SocketEvent::READ|SocketEvent::PERSIST,
            BIND_THIS_METHOD(EventCallback)),
      handler(_handler)
 {
@@ -49,7 +49,7 @@ UdpListener::SetFd(int _fd)
     close(fd);
     fd = _fd;
 
-    event.Set(fd, EV_READ|EV_PERSIST);
+    event.Set(fd, SocketEvent::READ|SocketEvent::PERSIST);
     event.Add();
 }
 

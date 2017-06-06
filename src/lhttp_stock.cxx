@@ -90,7 +90,7 @@ lhttp_stock_key(struct pool *pool, const LhttpAddress *address)
 inline void
 LhttpConnection::EventCallback(unsigned events)
 {
-    if ((events & EV_TIMEOUT) == 0) {
+    if ((events & SocketEvent::TIMEOUT) == 0) {
         char buffer;
         ssize_t nbytes = fd.Read(&buffer, sizeof(buffer));
         if (nbytes < 0)
@@ -183,7 +183,7 @@ lhttp_stock_create(void *ctx, CreateStockItem c, void *info,
         return;
     }
 
-    connection->event.Set(connection->fd.Get(), EV_READ);
+    connection->event.Set(connection->fd.Get(), SocketEvent::READ);
 
     connection->InvokeCreateSuccess();
 }

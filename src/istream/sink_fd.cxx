@@ -33,10 +33,10 @@ struct SinkFd final : IstreamSink {
     bool got_data;
 
     /**
-     * This flag is used to determine if the EV_WRITE event shall be
-     * scheduled after a splice().  We need to add the event only if
-     * the splice() was triggered by EV_WRITE, because then we're
-     * responsible for querying more data.
+     * This flag is used to determine if the SocketEvent::WRITE event
+     * shall be scheduled after a splice().  We need to add the event
+     * only if the splice() was triggered by SocketEvent::WRITE,
+     * because then we're responsible for querying more data.
      */
     bool got_event = false;
 
@@ -51,7 +51,7 @@ struct SinkFd final : IstreamSink {
          pool(&_pool),
          fd(_fd), fd_type(_fd_type),
          handler(&_handler), handler_ctx(_handler_ctx),
-         event(event_loop, fd.Get(), EV_WRITE|EV_PERSIST,
+         event(event_loop, fd.Get(), SocketEvent::WRITE|SocketEvent::PERSIST,
                BIND_THIS_METHOD(EventCallback)) {
         ScheduleWrite();
     }
@@ -131,8 +131,9 @@ SinkFd::OnDirect(FdType type, int _fd, size_t max_length)
     }
 
     if (likely(nbytes > 0) && (got_event || type == FdType::FD_FILE))
-        /* regular files don't have support for EV_READ, and thus the
-           sink is responsible for triggering the next splice */
+        /* regular files don't have support for SocketEvent::READ, and
+           thus the sink is responsible for triggering the next
+           splice */
         ScheduleWrite();
 
     return nbytes;

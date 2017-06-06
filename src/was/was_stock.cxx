@@ -97,7 +97,7 @@ public:
             return false;
         }
 
-        event.Set(process.control.Get(), EV_READ);
+        event.Set(process.control.Get(), SocketEvent::READ);
         return true;
     }
 
@@ -331,7 +331,7 @@ WasChild::RecoverStop()
 inline void
 WasChild::EventCallback(unsigned events)
 {
-    if ((events & EV_TIMEOUT) == 0) {
+    if ((events & SocketEvent::TIMEOUT) == 0) {
         if (stopping) {
             RecoverStop();
             return;

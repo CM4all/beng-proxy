@@ -25,7 +25,7 @@
 
 /**
  * If EAGAIN occurs (on NFS), we try again after 100ms.  We can't
- * check EV_READ, because the kernel always indicates VFS files as
+ * check SocketEvent::READ, because the kernel always indicates VFS files as
  * "readable without blocking".
  */
 static const struct timeval file_retry_timeout = {
@@ -224,8 +224,9 @@ FileIstream::TryDirect()
         }
     } else if (errno == EAGAIN) {
         /* this should only happen for splice(SPLICE_F_NONBLOCK) from
-           NFS files - unfortunately we cannot use EV_READ here, so we
-           just install a timer which retries after 100ms */
+           NFS files - unfortunately we cannot use SocketEvent::READ
+           here, so we just install a timer which retries after
+           100ms */
 
         retry_event.Add(file_retry_timeout);
     } else {

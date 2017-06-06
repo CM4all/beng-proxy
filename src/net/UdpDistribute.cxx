@@ -15,7 +15,7 @@
 UdpDistribute::Recipient::Recipient(EventLoop &_event_loop,
                                     UniqueFileDescriptor &&_fd)
     :fd(std::move(_fd)),
-     event(_event_loop, fd.Get(), EV_READ,
+     event(_event_loop, fd.Get(), SocketEvent::READ,
            BIND_THIS_METHOD(EventCallback))
 {
     event.Add();

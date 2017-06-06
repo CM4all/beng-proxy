@@ -43,7 +43,7 @@ public:
     void Add() {
         if (!socket_event.Add())
             /* if "fd" is a regular file, trigger the event repeatedly
-               using DeferEvent, because we can't use EV_READ on
+               using DeferEvent, because we can't use SocketEvent::READ on
                regular files */
             defer_event.Schedule();
     }
@@ -73,13 +73,13 @@ class Duplex {
 public:
     Duplex(EventLoop &event_loop, int _read_fd, int _write_fd, int _sock_fd)
         :read_fd(_read_fd), write_fd(_write_fd), sock_fd(_sock_fd),
-         read_event(event_loop, read_fd, EV_READ,
+         read_event(event_loop, read_fd, SocketEvent::READ,
                     BIND_THIS_METHOD(ReadEventCallback)),
-         write_event(event_loop, write_fd, EV_WRITE,
+         write_event(event_loop, write_fd, SocketEvent::WRITE,
                      BIND_THIS_METHOD(WriteEventCallback)),
-         socket_read_event(event_loop, sock_fd, EV_READ,
+         socket_read_event(event_loop, sock_fd, SocketEvent::READ,
                            BIND_THIS_METHOD(SocketReadEventCallback)),
-         socket_write_event(event_loop, sock_fd, EV_WRITE,
+         socket_write_event(event_loop, sock_fd, SocketEvent::WRITE,
                            BIND_THIS_METHOD(SocketWriteEventCallback))
     {
         from_read.Allocate(fb_pool_get());

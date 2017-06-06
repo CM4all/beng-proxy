@@ -104,7 +104,7 @@ ExpectMonitor::Cancel()
 inline void
 ExpectMonitor::EventCallback(unsigned events)
 {
-    if (events & EV_TIMEOUT) {
+    if (events & SocketEvent::TIMEOUT) {
         close(fd);
         handler.Timeout();
     } else {
@@ -171,7 +171,7 @@ ExpectMonitor::OnSocketConnectSuccess(UniqueSocketDescriptor &&new_fd)
     };
 
     fd = new_fd.Steal();
-    event.Set(fd, EV_READ);
+    event.Set(fd, SocketEvent::READ);
     event.Add(expect_timeout);
 
     cancel_ptr = *this;

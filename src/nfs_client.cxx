@@ -483,10 +483,10 @@ libnfs_to_libevent(int i)
     int o = 0;
 
     if (i & POLLIN)
-        o |= EV_READ;
+        o |= SocketEvent::READ;
 
     if (i & POLLOUT)
-        o |= EV_WRITE;
+        o |= SocketEvent::WRITE;
 
     return o;
 }
@@ -496,10 +496,10 @@ libevent_to_libnfs(int i)
 {
     int o = 0;
 
-    if (i & EV_READ)
+    if (i & SocketEvent::READ)
         o |= POLLIN;
 
-    if (i & EV_WRITE)
+    if (i & SocketEvent::WRITE)
         o |= POLLOUT;
 
     return o;

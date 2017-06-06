@@ -21,9 +21,9 @@ TrafoConnection::TrafoConnection(EventLoop &event_loop,
                                  UniqueSocketDescriptor &&_fd)
     :listener(_listener), handler(_handler),
      fd(std::move(_fd)),
-     read_event(event_loop, fd.Get(), EV_READ|EV_PERSIST,
+     read_event(event_loop, fd.Get(), SocketEvent::READ|SocketEvent::PERSIST,
                 BIND_THIS_METHOD(ReadEventCallback)),
-     write_event(event_loop, fd.Get(), EV_WRITE|EV_PERSIST,
+     write_event(event_loop, fd.Get(), SocketEvent::WRITE|SocketEvent::PERSIST,
                  BIND_THIS_METHOD(WriteEventCallback)),
      state(State::INIT),
      input(8192)

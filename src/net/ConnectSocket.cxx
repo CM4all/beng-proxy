@@ -56,7 +56,7 @@ public:
                   ConnectSocketHandler &_handler,
                   CancellablePointer &cancel_ptr)
         :pool(_pool), fd(std::move(_fd)),
-         event(event_loop, fd.Get(), EV_WRITE,
+         event(event_loop, fd.Get(), SocketEvent::WRITE,
                BIND_THIS_METHOD(EventCallback)),
 #ifdef ENABLE_STOPWATCH
          stopwatch(_stopwatch),
@@ -108,7 +108,7 @@ ConnectSocket::Cancel()
 inline void
 ConnectSocket::EventCallback(unsigned events)
 {
-    if (events & EV_TIMEOUT) {
+    if (events & SocketEvent::TIMEOUT) {
         handler.OnSocketConnectTimeout();
         Delete();
         return;

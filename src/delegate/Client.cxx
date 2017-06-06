@@ -32,7 +32,7 @@ struct DelegateClient final : Cancellable {
     DelegateClient(EventLoop &event_loop, int _fd, Lease &lease,
                    struct pool &_pool,
                    DelegateHandler &_handler)
-        :fd(_fd), event(event_loop, fd, EV_READ,
+        :fd(_fd), event(event_loop, fd, SocketEvent::READ,
                         BIND_THIS_METHOD(SocketEventCallback)),
          pool(_pool),
          handler(_handler) {

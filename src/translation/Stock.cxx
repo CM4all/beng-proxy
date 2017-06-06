@@ -51,7 +51,7 @@ private:
 public:
     void CreateAndConnectAndFinish(SocketAddress address) {
         if (CreateAndConnect(address)) {
-            event.Set(s.Get(), EV_READ);
+            event.Set(s.Get(), SocketEvent::READ);
             InvokeCreateSuccess();
         } else {
             auto error = new_error_errno();
