@@ -7,20 +7,13 @@
 #ifndef BENG_PROXY_CONNECT_SOCKET_HXX
 #define BENG_PROXY_CONNECT_SOCKET_HXX
 
-#include <exception>
+#include "net/ConnectSocket.hxx"
 
 struct pool;
 class EventLoop;
 class SocketAddress;
 class UniqueSocketDescriptor;
 class CancellablePointer;
-
-class ConnectSocketHandler {
-public:
-    virtual void OnSocketConnectSuccess(UniqueSocketDescriptor &&fd) = 0;
-    virtual void OnSocketConnectTimeout();
-    virtual void OnSocketConnectError(std::exception_ptr ep) = 0;
-};
 
 /**
  * @param ip_transparent enable the IP_TRANSPARENT option?

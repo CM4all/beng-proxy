@@ -14,21 +14,12 @@
 #include "system/Error.hxx"
 #include "util/Cancellable.hxx"
 
-#include <stdexcept>
-
 #include <assert.h>
 #include <stddef.h>
 #include <sys/socket.h>
 #include <errno.h>
 #include <string.h>
 #include <unistd.h>
-
-void
-ConnectSocketHandler::OnSocketConnectTimeout()
-{
-    /* default implementation falls back to OnSocketConnectError() */
-    OnSocketConnectError(std::make_exception_ptr(std::runtime_error("Timeout")));
-}
 
 class PConnectSocket final : Cancellable {
     struct pool &pool;
