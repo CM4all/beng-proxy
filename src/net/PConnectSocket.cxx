@@ -5,11 +5,10 @@
  */
 
 #include "PConnectSocket.hxx"
-#include "net/UniqueSocketDescriptor.hxx"
+#include "net/ConnectSocket.hxx"
 #include "net/SocketAddress.hxx"
 #include "system/fd_util.h"
 #include "stopwatch.hxx"
-#include "event/SocketEvent.hxx"
 #include "pool.hxx"
 #include "system/Error.hxx"
 #include "util/Cancellable.hxx"
@@ -21,10 +20,10 @@
 #include <string.h>
 #include <unistd.h>
 
-class PConnectSocket final : Cancellable {
+class PConnectSocket final : Cancellable, ConnectSocketHandler {
     struct pool &pool;
-    UniqueSocketDescriptor fd;
-    SocketEvent event;
+
+    ConnectSocket connect;
 
 #ifdef ENABLE_STOPWATCH
     Stopwatch &stopwatch;
@@ -40,9 +39,8 @@ public:
 #endif
                    ConnectSocketHandler &_handler,
                    CancellablePointer &cancel_ptr)
-        :pool(_pool), fd(std::move(_fd)),
-         event(event_loop, fd.Get(), SocketEvent::WRITE,
-               BIND_THIS_METHOD(EventCallback)),
+        :pool(_pool),
+         connect(event_loop, *this),
 #ifdef ENABLE_STOPWATCH
          stopwatch(_stopwatch),
 #endif
@@ -55,7 +53,8 @@ public:
             .tv_sec = time_t(timeout),
             .tv_usec = 0,
         };
-        event.Add(tv);
+
+        connect.WaitConnected(std::move(_fd), tv);
     }
 
     void Delete() {
@@ -67,6 +66,11 @@ private:
 
     /* virtual methods from class Cancellable */
     void Cancel() override;
+
+    /* virtual methods from class ConnectSocketHandler */
+    void OnSocketConnectSuccess(UniqueSocketDescriptor &&fd) override;
+    void OnSocketConnectTimeout() override;
+    void OnSocketConnectError(std::exception_ptr ep) override;
 };
 
 
@@ -78,42 +82,52 @@ private:
 void
 PConnectSocket::Cancel()
 {
-    assert(fd.IsDefined());
+    assert(connect.IsPending());
 
-    event.Delete();
     Delete();
 }
 
 
 /*
- * libevent callback
+ * ConnectSocketHandler
  *
  */
 
-inline void
-PConnectSocket::EventCallback(unsigned events)
+void
+PConnectSocket::OnSocketConnectSuccess(UniqueSocketDescriptor &&fd)
 {
-    if (events & SocketEvent::TIMEOUT) {
-        handler.OnSocketConnectTimeout();
-        Delete();
-        return;
-    }
-
-    int s_err = fd.GetError();
-    if (s_err == 0) {
 #ifdef ENABLE_STOPWATCH
-        stopwatch_event(&stopwatch, "connect");
-        stopwatch_dump(&stopwatch);
+    stopwatch_event(&stopwatch, "connect");
+    stopwatch_dump(&stopwatch);
 #endif
 
-        handler.OnSocketConnectSuccess(std::move(fd));
-    } else {
-        handler.OnSocketConnectError(std::make_exception_ptr(MakeErrno(s_err)));
-    }
-
+    handler.OnSocketConnectSuccess(std::move(fd));
     Delete();
 }
 
+void
+PConnectSocket::OnSocketConnectTimeout()
+{
+#ifdef ENABLE_STOPWATCH
+    stopwatch_event(&stopwatch, "timeout");
+    stopwatch_dump(&stopwatch);
+#endif
+
+    handler.OnSocketConnectTimeout();
+    Delete();
+}
+
+void
+PConnectSocket::OnSocketConnectError(std::exception_ptr ep)
+{
+#ifdef ENABLE_STOPWATCH
+    stopwatch_event(&stopwatch, "error");
+    stopwatch_dump(&stopwatch);
+#endif
+
+    handler.OnSocketConnectError(ep);
+    Delete();
+}
 
 /*
  * constructor
