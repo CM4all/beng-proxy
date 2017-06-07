@@ -8,8 +8,9 @@
 #include "log-server.h"
 #include "net/SocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
-
-#include <socket/resolver.h>
+#include "net/Resolver.hxx"
+#include "net/AddressInfo.hxx"
+#include "util/PrintException.hxx"
 
 #include <array>
 
@@ -17,7 +18,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
-#include <netdb.h>
 #include <unistd.h>
 #include <sys/socket.h>
 
@@ -29,32 +29,22 @@ open_udp(const char *host, int default_port)
     hints.ai_flags = AI_ADDRCONFIG;
     hints.ai_socktype = SOCK_DGRAM;
 
-    struct addrinfo *ai;
-    int ret = socket_resolve_host_port(host, default_port, &hints, &ai);
-    if (ret != 0) {
-        fprintf(stderr, "Failed to resolve '%s': %s\n",
-                host, gai_strerror(ret));
-        return SocketDescriptor::Undefined();
-    }
-
-    for (const struct addrinfo *i = ai; i != nullptr; i = i->ai_next) {
+    for (const auto &i : Resolve(host, default_port, &hints)) {
         SocketDescriptor fd;
-        if (!fd.CreateNonBlock(i->ai_family, i->ai_socktype, i->ai_protocol)) {
+        if (!fd.CreateNonBlock(i.GetFamily(), i.GetType(), i.GetProtocol())) {
             fprintf(stderr, "socket() failed: %s\n", strerror(errno));
             continue;
         }
 
-        if (!fd.Connect({i->ai_addr, i->ai_addrlen})) {
+        if (!fd.Connect(i)) {
             fprintf(stderr, "connect() failed: %s\n", strerror(errno));
             fd.Close();
             continue;
         }
 
-        freeaddrinfo(ai);
         return fd;
     }
 
-    freeaddrinfo(ai);
     return SocketDescriptor::Undefined();
 }
 
@@ -64,7 +54,7 @@ struct Destination {
 };
 
 int main(int argc, char **argv)
-{
+try {
     if (argc < 2) {
         fprintf(stderr, "Usage: log-forward HOST ...\n");
         return EXIT_FAILURE;
@@ -102,4 +92,7 @@ int main(int argc, char **argv)
     }
 
     return 0;
+} catch (const std::exception &e) {
+    PrintException(e);
+    return EXIT_FAILURE;
 }

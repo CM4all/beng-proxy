@@ -7,18 +7,16 @@
 
 #include "log-server.h"
 #include "system/Error.hxx"
+#include "net/Resolver.hxx"
+#include "net/AddressInfo.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
 #include "util/PrintException.hxx"
-#include "util/RuntimeError.hxx"
-
-#include <socket/resolver.h>
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
-#include <netdb.h>
 #include <unistd.h>
 #include <sys/socket.h>
 
@@ -30,26 +28,16 @@ open_udp(const char *host, int default_port)
     hints.ai_flags = AI_ADDRCONFIG|AI_PASSIVE;
     hints.ai_socktype = SOCK_DGRAM;
 
-    struct addrinfo *ai;
-    int ret = socket_resolve_host_port(host, default_port, &hints, &ai);
-    if (ret != 0)
-        throw FormatRuntimeError("Failed to resolve '%s': %s",
-                                 host, gai_strerror(ret));
+    const auto ail = Resolve(host, default_port, &hints);
+    const auto &ai = ail.front();
 
     UniqueSocketDescriptor fd;
-    if (!fd.Create(ai->ai_family, ai->ai_socktype, ai->ai_protocol)) {
-        const int e = errno;
-        freeaddrinfo(ai);
-        throw MakeErrno(e, "socket() failed");
-    }
+    if (!fd.Create(ai.GetFamily(), ai.GetType(), ai.GetProtocol()))
+        throw MakeErrno("socket() failed");
 
-    if (!fd.Bind({ai->ai_addr, ai->ai_addrlen})) {
-        const int e = errno;
-        freeaddrinfo(ai);
-        throw MakeErrno(e, "bind() failed");
-    }
+    if (!fd.Bind(ai))
+        throw MakeErrno("bind() failed");
 
-    freeaddrinfo(ai);
     return fd;
 }
 

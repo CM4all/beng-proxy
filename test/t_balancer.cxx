@@ -4,9 +4,10 @@
 #include "AllocatorPtr.hxx"
 #include "address_list.hxx"
 #include "event/Loop.hxx"
+#include "net/Resolver.hxx"
+#include "net/AddressInfo.hxx"
 
 #include <inline/compiler.h>
-#include <socket/resolver.h>
 
 #include <cppunit/CompilerOutputter.h>
 #include <cppunit/extensions/TestFactoryRegistry.h>
@@ -15,7 +16,6 @@
 
 #include <string.h>
 #include <stdlib.h>
-#include <netdb.h>
 
 class FailureTest : public PoolTest {
 public:
@@ -61,14 +61,8 @@ public:
     }
 
     bool Add(const char *host_and_port) {
-        struct addrinfo *ai;
-        int result = socket_resolve_host_port(host_and_port, 80, NULL, &ai);
-        if (result != 0)
-            return false;
-
-        bool success = AddressList::Add(*pool, {ai->ai_addr, ai->ai_addrlen});
-        freeaddrinfo(ai);
-        return success;
+        return AddressList::Add(*pool,
+                                Resolve(host_and_port, 80, nullptr).front());
     }
 
     int Find(SocketAddress address) const {
@@ -84,43 +78,24 @@ gcc_pure
 static enum failure_status
 FailureGet(const char *host_and_port)
 {
-    struct addrinfo *ai;
-    int result = socket_resolve_host_port(host_and_port, 80, NULL, &ai);
-    if (result != 0)
-        return FAILURE_FAILED;
-
-    enum failure_status status = failure_get_status({ai->ai_addr, ai->ai_addrlen});
-    freeaddrinfo(ai);
-    return status;
+    return failure_get_status(Resolve(host_and_port, 80, nullptr).front());
 }
 
-static bool
+static void
 FailureAdd(const char *host_and_port,
            enum failure_status status=FAILURE_FAILED,
            std::chrono::seconds duration=std::chrono::hours(1))
 {
-    struct addrinfo *ai;
-    int result = socket_resolve_host_port(host_and_port, 80, NULL, &ai);
-    if (result != 0)
-        return false;
-
-    failure_set({ai->ai_addr, ai->ai_addrlen}, status, duration);
-    freeaddrinfo(ai);
-    return true;
+    failure_set(Resolve(host_and_port, 80, nullptr).front(),
+                status, duration);
 }
 
-static bool
+static void
 FailureRemove(const char *host_and_port,
               enum failure_status status=FAILURE_FAILED)
 {
-    struct addrinfo *ai;
-    int result = socket_resolve_host_port(host_and_port, 80, NULL, &ai);
-    if (result != 0)
-        return false;
-
-    failure_unset({ai->ai_addr, ai->ai_addrlen}, status);
-    freeaddrinfo(ai);
-    return true;
+    failure_unset(Resolve(host_and_port, 80, nullptr).front(),
+                status);
 }
 
 class BalancerTest : public FailureTest {

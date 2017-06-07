@@ -16,6 +16,8 @@
 #include "ssl/ssl_client.hxx"
 #include "system/SetupProcess.hxx"
 #include "io/FileDescriptor.hxx"
+#include "net/Resolver.hxx"
+#include "net/AddressInfo.hxx"
 #include "net/ConnectSocket.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
@@ -24,8 +26,6 @@
 #include "util/PrintException.hxx"
 
 #include <inline/compiler.h>
-#include <socket/resolver.h>
-#include <socket/util.h>
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -34,7 +34,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include <netdb.h>
 #include <errno.h>
 
 struct parsed_url {
@@ -312,7 +311,7 @@ Context::OnSocketConnectError(std::exception_ptr ep)
 
 int
 main(int argc, char **argv)
-{
+try {
     Context ctx;
 
     if (argc < 2 || argc > 3) {
@@ -334,17 +333,13 @@ main(int argc, char **argv)
 
     /* connect socket */
 
-    struct addrinfo hints, *ai;
+    struct addrinfo hints;
     memset(&hints, 0, sizeof(hints));
     hints.ai_flags = AI_ADDRCONFIG;
     hints.ai_socktype = SOCK_STREAM;
 
-    int ret = socket_resolve_host_port(ctx.url.host, ctx.url.default_port,
-                                       &hints, &ai);
-    if (ret != 0) {
-        fprintf(stderr, "Failed to resolve host name\n");
-        return EXIT_FAILURE;
-    }
+    const auto ail = Resolve(ctx.url.host, ctx.url.default_port, &hints);
+    const auto &ai = ail.front();
 
     /* initialize */
 
@@ -358,8 +353,7 @@ main(int argc, char **argv)
     if (argc >= 3) {
         struct stat st;
 
-        ret = stat(argv[2], &st);
-        if (ret < 0) {
+        if (stat(argv[2], &st) < 0) {
             fprintf(stderr, "Failed to stat %s: %s\n",
                     argv[2], strerror(errno));
             return EXIT_FAILURE;
@@ -383,13 +377,12 @@ main(int argc, char **argv)
     /* connect */
 
     client_socket_new(ctx.event_loop, *pool,
-                      ai->ai_family, ai->ai_socktype, ai->ai_protocol,
+                      ai.GetFamily(), ai.GetType(), ai.GetProtocol(),
                       false,
                       SocketAddress::Null(),
-                      SocketAddress(ai->ai_addr, ai->ai_addrlen),
+                      ai,
                       30,
                       ctx, ctx.cancel_ptr);
-    freeaddrinfo(ai);
 
     /* run test */
 
@@ -410,4 +403,7 @@ main(int argc, char **argv)
     g_free(ctx.url.host);
 
     return ctx.got_response && ctx.body_eof ? EXIT_SUCCESS : EXIT_FAILURE;
+} catch (const std::exception &e) {
+    PrintException(e);
+    return EXIT_FAILURE;
 }

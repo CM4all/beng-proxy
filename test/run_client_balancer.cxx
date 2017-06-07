@@ -8,20 +8,16 @@
 #include "balancer.hxx"
 #include "failure.hxx"
 #include "address_list.hxx"
+#include "net/Resolver.hxx"
+#include "net/AddressInfo.hxx"
 #include "util/Cancellable.hxx"
 #include "util/PrintException.hxx"
-
-#include <socket/resolver.h>
-#include <socket/util.h>
-
-#include <glib.h>
 
 #include <assert.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <netdb.h>
 
 struct Context final : PInstance, ConnectSocketHandler {
     Balancer *const balancer;
@@ -64,7 +60,7 @@ struct Context final : PInstance, ConnectSocketHandler {
 
 int
 main(int argc, char **argv)
-{
+try {
     if (argc <= 1) {
         fprintf(stderr, "Usage: run-client-balancer ADDRESS ...\n");
         return EXIT_FAILURE;
@@ -86,22 +82,8 @@ main(int argc, char **argv)
     hints.ai_flags = AI_ADDRCONFIG;
     hints.ai_socktype = SOCK_STREAM;
 
-    for (int i = 1; i < argc; ++i) {
-        const char *p = argv[i];
-
-        struct addrinfo *ai;
-        int ret = socket_resolve_host_port(p, 80, &hints, &ai);
-        if (ret != 0) {
-            fprintf(stderr, "Failed to resolve '%s': %s\n",
-                    p, gai_strerror(ret));
-            return EXIT_FAILURE;
-        }
-
-        for (struct addrinfo *j = ai; j != nullptr; j = j->ai_next)
-            address_list.Add(alloc, {ai->ai_addr, ai->ai_addrlen});
-
-        freeaddrinfo(ai);
-    }
+    for (int i = 1; i < argc; ++i)
+        address_list.Add(alloc, Resolve(argv[i], 80, &hints));
 
     /* connect */
 
@@ -136,5 +118,8 @@ main(int argc, char **argv)
     }
 
     assert(false);
+    return EXIT_FAILURE;
+} catch (const std::exception &e) {
+    PrintException(e);
     return EXIT_FAILURE;
 }
