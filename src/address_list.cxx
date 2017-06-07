@@ -12,7 +12,7 @@
 
 #include <string.h>
 
-AddressList::AddressList(ShallowCopy, const AddressInfo &src)
+AddressList::AddressList(ShallowCopy, const AddressInfoList &src)
 {
     for (const auto &i : src) {
         if (addresses.full())

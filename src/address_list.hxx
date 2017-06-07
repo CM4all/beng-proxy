@@ -20,7 +20,7 @@
 struct dpool;
 class AllocatorPtr;
 class SocketAddress;
-class AddressInfo;
+class AddressInfoList;
 
 struct AddressList {
     static constexpr size_t MAX_ADDRESSES = 16;
@@ -40,7 +40,7 @@ struct AddressList {
     {
     }
 
-    AddressList(ShallowCopy, const AddressInfo &src);
+    AddressList(ShallowCopy, const AddressInfoList &src);
 
     AddressList(AllocatorPtr alloc, const AddressList &src);
 
