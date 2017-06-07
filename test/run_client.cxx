@@ -18,10 +18,11 @@
 #include "io/FileDescriptor.hxx"
 #include "net/Resolver.hxx"
 #include "net/AddressInfo.hxx"
-#include "net/PConnectSocket.hxx"
+#include "net/ConnectSocket.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
 #include "event/ShutdownListener.hxx"
+#include "event/Duration.hxx"
 #include "util/Cancellable.hxx"
 #include "util/PrintException.hxx"
 
@@ -376,13 +377,9 @@ try {
 
     /* connect */
 
-    client_socket_new(ctx.event_loop, *pool,
-                      ai.GetFamily(), ai.GetType(), ai.GetProtocol(),
-                      false,
-                      SocketAddress::Null(),
-                      ai,
-                      30,
-                      ctx, ctx.cancel_ptr);
+    ConnectSocket connect(ctx.event_loop, ctx);
+    ctx.cancel_ptr = connect;
+    connect.Connect(ai, EventDuration<30>::value);
 
     /* run test */
 

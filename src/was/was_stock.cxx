@@ -11,7 +11,6 @@
 #include "stock/Stock.hxx"
 #include "stock/Class.hxx"
 #include "stock/Item.hxx"
-#include "net/PConnectSocket.hxx"
 #include "spawn/ChildOptions.hxx"
 #include "spawn/ExitListener.hxx"
 #include "spawn/Interface.hxx"
