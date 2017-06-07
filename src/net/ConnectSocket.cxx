@@ -16,10 +16,6 @@
 
 #include <socket/util.h>
 
-#ifdef ENABLE_STOPWATCH
-#include <socket/address.h>
-#endif
-
 #include <stdexcept>
 
 #include <assert.h>
