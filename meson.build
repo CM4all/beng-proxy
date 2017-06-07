@@ -1182,6 +1182,7 @@ executable('cm4all-beng-proxy-log-exec',
     libinline,
     libhttp, libsocket,
     util_dep,
+    net_dep,
   ])
 
 executable('cm4all-beng-proxy-log-tee',
