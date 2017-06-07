@@ -84,6 +84,7 @@ struct AddressList {
     }
 
     bool Add(AllocatorPtr alloc, SocketAddress address);
+    bool Add(AllocatorPtr alloc, const AddressInfoList &list);
 
     bool Add(struct dpool &pool, SocketAddress address);
 

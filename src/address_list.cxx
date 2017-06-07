@@ -43,6 +43,16 @@ AddressList::Add(AllocatorPtr alloc, const SocketAddress address)
     return true;
 }
 
+bool
+AddressList::Add(AllocatorPtr alloc, const AddressInfoList &list)
+{
+    for (const auto &i : list)
+        if (!Add(alloc, i))
+            return false;
+
+    return true;
+}
+
 const char *
 AddressList::GetKey() const
 {
