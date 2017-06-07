@@ -14,8 +14,6 @@
 #include "system/Error.hxx"
 #include "util/Cancellable.hxx"
 
-#include <socket/util.h>
-
 #include <stdexcept>
 
 #include <assert.h>
@@ -150,7 +148,7 @@ client_socket_new(EventLoop &event_loop, struct pool &pool,
     }
 
     if ((domain == PF_INET || domain == PF_INET6) && type == SOCK_STREAM &&
-        !socket_set_nodelay(fd.Get(), true)) {
+        !fd.SetNoDelay()) {
         handler.OnSocketConnectError(std::make_exception_ptr(MakeErrno()));
         return;
     }
