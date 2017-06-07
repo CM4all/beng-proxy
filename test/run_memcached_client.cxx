@@ -15,8 +15,6 @@
 #include "util/ByteOrder.hxx"
 #include "util/Cancellable.hxx"
 
-#include <socket/util.h>
-
 #include <glib.h>
 
 #include <unistd.h>
@@ -222,8 +220,7 @@ int main(int argc, char **argv) {
 
     Context ctx;
     ctx.s = ResolveConnectSocket(argv[1], 11211, hints);
-
-    socket_set_nodelay(ctx.s.Get(), true);
+    ctx.s.SetNoDelay();
 
     /* initialize */
 

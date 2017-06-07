@@ -3,8 +3,6 @@
 #include "net/RConnectSocket.hxx"
 #include "util/ByteOrder.hxx"
 
-#include <socket/util.h>
-
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>

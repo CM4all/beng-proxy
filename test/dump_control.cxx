@@ -6,7 +6,6 @@
 
 #include <inline/compiler.h>
 #include <daemon/log.h>
-#include <socket/util.h>
 
 #include <stdio.h>
 #include <sys/socket.h>

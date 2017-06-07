@@ -17,9 +17,6 @@
 #include "util/Cancellable.hxx"
 #include "util/PrintException.hxx"
 
-#include <socket/resolver.h>
-#include <socket/util.h>
-
 #include <glib.h>
 
 #include <unistd.h>

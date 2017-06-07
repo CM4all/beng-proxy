@@ -16,8 +16,6 @@
 #include "util/ConstBuffer.hxx"
 #include "util/Cancellable.hxx"
 
-#include <socket/util.h>
-
 #include <glib.h>
 
 #include <unistd.h>
@@ -173,8 +171,7 @@ int main(int argc, char **argv) {
     hints.ai_socktype = SOCK_STREAM;
 
     ctx.s = ResolveConnectSocket(argv[1], 11211, hints);
-
-    socket_set_nodelay(ctx.s.Get(), true);
+    ctx.s.SetNoDelay();
 
     /* initialize */
 
