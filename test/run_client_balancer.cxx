@@ -1,5 +1,5 @@
 #include "client_balancer.hxx"
-#include "net/ConnectSocket.hxx"
+#include "net/PConnectSocket.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
 #include "PInstance.hxx"

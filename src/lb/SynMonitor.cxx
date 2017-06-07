@@ -8,7 +8,7 @@
 #include "Monitor.hxx"
 #include "MonitorConfig.hxx"
 #include "pool.hxx"
-#include "net/ConnectSocket.hxx"
+#include "net/PConnectSocket.hxx"
 #include "net/SocketAddress.hxx"
 #include "util/Cancellable.hxx"
 

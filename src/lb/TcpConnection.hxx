@@ -9,7 +9,7 @@
 #include "StickyHash.hxx"
 #include "Logger.hxx"
 #include "net/StaticSocketAddress.hxx"
-#include "net/ConnectSocket.hxx"
+#include "net/PConnectSocket.hxx"
 #include "io/FdType.hxx"
 #include "util/Cancellable.hxx"
 

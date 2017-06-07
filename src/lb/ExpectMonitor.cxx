@@ -10,7 +10,7 @@
 #include "pool.hxx"
 #include "gerrno.h"
 #include "system/Error.hxx"
-#include "net/ConnectSocket.hxx"
+#include "net/PConnectSocket.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
 #include "event/SocketEvent.hxx"

@@ -6,7 +6,7 @@
 
 #include "client_balancer.hxx"
 #include "generic_balancer.hxx"
-#include "net/ConnectSocket.hxx"
+#include "net/PConnectSocket.hxx"
 #include "address_list.hxx"
 #include "balancer.hxx"
 #include "net/StaticSocketAddress.hxx"

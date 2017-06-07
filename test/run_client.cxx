@@ -18,7 +18,7 @@
 #include "io/FileDescriptor.hxx"
 #include "net/Resolver.hxx"
 #include "net/AddressInfo.hxx"
-#include "net/ConnectSocket.hxx"
+#include "net/PConnectSocket.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
 #include "event/ShutdownListener.hxx"

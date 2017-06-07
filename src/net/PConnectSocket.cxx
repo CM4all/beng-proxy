@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "ConnectSocket.hxx"
+#include "PConnectSocket.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
 #include "system/fd_util.h"
@@ -30,7 +30,7 @@ ConnectSocketHandler::OnSocketConnectTimeout()
     OnSocketConnectError(std::make_exception_ptr(std::runtime_error("Timeout")));
 }
 
-class ConnectSocket final : Cancellable {
+class PConnectSocket final : Cancellable {
     struct pool &pool;
     UniqueSocketDescriptor fd;
     SocketEvent event;
@@ -42,13 +42,13 @@ class ConnectSocket final : Cancellable {
     ConnectSocketHandler &handler;
 
 public:
-    ConnectSocket(EventLoop &event_loop, struct pool &_pool,
-                  UniqueSocketDescriptor &&_fd, unsigned timeout,
+    PConnectSocket(EventLoop &event_loop, struct pool &_pool,
+                   UniqueSocketDescriptor &&_fd, unsigned timeout,
 #ifdef ENABLE_STOPWATCH
-                  Stopwatch &_stopwatch,
+                   Stopwatch &_stopwatch,
 #endif
-                  ConnectSocketHandler &_handler,
-                  CancellablePointer &cancel_ptr)
+                   ConnectSocketHandler &_handler,
+                   CancellablePointer &cancel_ptr)
         :pool(_pool), fd(std::move(_fd)),
          event(event_loop, fd.Get(), SocketEvent::WRITE,
                BIND_THIS_METHOD(EventCallback)),
@@ -85,7 +85,7 @@ private:
  */
 
 void
-ConnectSocket::Cancel()
+PConnectSocket::Cancel()
 {
     assert(fd.IsDefined());
 
@@ -100,7 +100,7 @@ ConnectSocket::Cancel()
  */
 
 inline void
-ConnectSocket::EventCallback(unsigned events)
+PConnectSocket::EventCallback(unsigned events)
 {
     if (events & SocketEvent::TIMEOUT) {
         handler.OnSocketConnectTimeout();
@@ -179,12 +179,12 @@ client_socket_new(EventLoop &event_loop, struct pool &pool,
 
         handler.OnSocketConnectSuccess(std::move(fd));
     } else if (errno == EINPROGRESS) {
-        NewFromPool<ConnectSocket>(pool, event_loop, pool,
-                                   std::move(fd), timeout,
+        NewFromPool<PConnectSocket>(pool, event_loop, pool,
+                                    std::move(fd), timeout,
 #ifdef ENABLE_STOPWATCH
-                                   *stopwatch,
+                                    *stopwatch,
 #endif
-                                   handler, cancel_ptr);
+                                    handler, cancel_ptr);
     } else {
         handler.OnSocketConnectError(std::make_exception_ptr(MakeErrno()));
     }

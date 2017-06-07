@@ -14,7 +14,7 @@
 #include "pool.hxx"
 #include "event/SocketEvent.hxx"
 #include "event/Duration.hxx"
-#include "net/ConnectSocket.hxx"
+#include "net/PConnectSocket.hxx"
 #include "net/AllocatedSocketAddress.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
