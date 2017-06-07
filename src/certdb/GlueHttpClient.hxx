@@ -7,7 +7,6 @@
 #ifndef BENG_PROXY_GLUE_HTTP_CLIENT_HXX
 #define BENG_PROXY_GLUE_HTTP_CLIENT_HXX
 
-#include "net/AddressInfo.hxx"
 #include "curl/Global.hxx"
 
 #include <http/method.h>
