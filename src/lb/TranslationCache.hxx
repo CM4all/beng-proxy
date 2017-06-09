@@ -27,7 +27,8 @@ public:
 private:
     typedef ::Cache<std::string, Item, 32768, 4093> Cache;
     std::unique_ptr<Cache> cache;
-    std::unique_ptr<Item> one_item;
+
+    bool seen_vary_host = false;
 
 public:
     void Clear();
@@ -35,6 +36,9 @@ public:
     const Item *Get(const HttpServerRequest &request);
     void Put(const HttpServerRequest &request,
              const TranslateResponse &response);
+
+private:
+    std::string GetKey(const HttpServerRequest &request) const noexcept;
 };
 
 #endif

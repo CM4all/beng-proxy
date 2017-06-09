@@ -29,7 +29,7 @@ void
 LbTranslationCache::Clear()
 {
     cache.reset();
-    one_item.reset();
+    seen_vary_host = false;
 }
 
 static std::string
@@ -44,16 +44,22 @@ GetHost(const HttpServerRequest &request)
     return result;
 }
 
+inline std::string
+LbTranslationCache::GetKey(const HttpServerRequest &request) const noexcept
+{
+    if (seen_vary_host)
+        return GetHost(request);
+    else
+        return std::string();
+}
+
 const LbTranslationCache::Item *
 LbTranslationCache::Get(const HttpServerRequest &request)
 {
     if (cache) {
-        auto host = GetHost(request);
-        daemon_log(4, "[TranslationCache] hit %s\n", host.c_str());
-        return cache->Get(host);
-    } else if (one_item) {
-        daemon_log(4, "[TranslationCache] hit\n");
-        return one_item.get();
+        auto key = GetKey(request);
+        daemon_log(4, "[TranslationCache] hit '%s'\n", key.c_str());
+        return cache->Get(key);
     } else
         return nullptr;
 }
@@ -63,26 +69,21 @@ LbTranslationCache::Put(const HttpServerRequest &request,
                         const TranslateResponse &response)
 {
     bool vary_host = response.VaryContains(TRANSLATE_HOST);
-    if (vary_host) {
-        if (one_item) {
-            daemon_log(4, "[TranslationCache] vary_host appeared, clearing cache\n");
-            one_item.reset();
+    if (vary_host != seen_vary_host) {
+        if (cache && !cache->IsEmpty()) {
+            daemon_log(4, "[TranslationCache] vary_host changed to %d, clearing cache\n",
+                       vary_host);
+            Clear();
         }
 
-        if (!cache)
-            cache.reset(new Cache());
-
-        auto host = GetHost(request);
-        daemon_log(4, "[TranslationCache] store %s\n", host.c_str());
-
-        cache->PutOrReplace(std::move(host), Item(response));
-    } else {
-        if (cache) {
-            daemon_log(4, "[TranslationCache] vary_host disappeared, clearing cache\n");
-            cache.reset();
-        }
-
-        daemon_log(4, "[TranslationCache] store\n");
-        one_item.reset(new Item(response));
+        seen_vary_host = vary_host;
     }
+
+    if (!cache)
+        cache.reset(new Cache());
+
+    auto key = GetKey(request);
+    daemon_log(4, "[TranslationCache] store '%s'\n", key.c_str());
+
+    cache->PutOrReplace(std::move(key), Item(response));
 }
