@@ -94,7 +94,8 @@ class Translation(Protocol):
         return response
 
     def _handle_cron(self, user, uri, param):
-        print("CRON!", repr(user), repr(uri), repr(param))
+        log.msg("cron user=%s uri=%s param=%s" % (repr(user), repr(uri), repr(param)))
+
         response = Response(protocol_version=1)
         if user is None or not re.match(r'^[-_\w]+$', user):
             response.status(400)
