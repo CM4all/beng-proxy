@@ -25,21 +25,24 @@ public:
 
     struct Vary {
         bool host = false;
+        bool listener_tag = false;
 
     public:
         Vary() = default;
         explicit Vary(const TranslateResponse &response);
 
         constexpr operator bool() const {
-            return host;
+            return host || listener_tag;
         }
 
         void Clear() {
             host = false;
+            listener_tag = false;
         }
 
         Vary &operator|=(const Vary other) {
             host |= other.host;
+            listener_tag |= other.listener_tag;
             return *this;
         }
     };
@@ -59,9 +62,6 @@ public:
     void Put(const HttpServerRequest &request,
              const char *listener_tag,
              const TranslateResponse &response);
-
-private:
-    std::string GetKey(const HttpServerRequest &request) const noexcept;
 };
 
 #endif
