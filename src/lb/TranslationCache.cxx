@@ -28,7 +28,7 @@ LbTranslationCache::Item::Item(const TranslateResponse &response)
 void
 LbTranslationCache::Clear()
 {
-    cache.reset();
+    cache.Clear();
     seen_vary_host = false;
 }
 
@@ -56,12 +56,9 @@ LbTranslationCache::GetKey(const HttpServerRequest &request) const noexcept
 const LbTranslationCache::Item *
 LbTranslationCache::Get(const HttpServerRequest &request)
 {
-    if (cache) {
-        auto key = GetKey(request);
-        daemon_log(4, "[TranslationCache] hit '%s'\n", key.c_str());
-        return cache->Get(key);
-    } else
-        return nullptr;
+    auto key = GetKey(request);
+    daemon_log(4, "[TranslationCache] hit '%s'\n", key.c_str());
+    return cache.Get(key);
 }
 
 void
@@ -70,7 +67,7 @@ LbTranslationCache::Put(const HttpServerRequest &request,
 {
     bool vary_host = response.VaryContains(TRANSLATE_HOST);
     if (vary_host != seen_vary_host) {
-        if (cache && !cache->IsEmpty()) {
+        if (!cache.IsEmpty()) {
             daemon_log(4, "[TranslationCache] vary_host changed to %d, clearing cache\n",
                        vary_host);
             Clear();
@@ -79,11 +76,8 @@ LbTranslationCache::Put(const HttpServerRequest &request,
         seen_vary_host = vary_host;
     }
 
-    if (!cache)
-        cache.reset(new Cache());
-
     auto key = GetKey(request);
     daemon_log(4, "[TranslationCache] store '%s'\n", key.c_str());
 
-    cache->PutOrReplace(std::move(key), Item(response));
+    cache.PutOrReplace(std::move(key), Item(response));
 }

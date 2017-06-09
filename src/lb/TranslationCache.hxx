@@ -10,7 +10,6 @@
 #include <http/status.h>
 
 #include <string>
-#include <memory>
 
 struct HttpServerRequest;
 struct TranslateResponse;
@@ -26,7 +25,7 @@ public:
 
 private:
     typedef ::Cache<std::string, Item, 32768, 4093> Cache;
-    std::unique_ptr<Cache> cache;
+    Cache cache;
 
     bool seen_vary_host = false;
 
