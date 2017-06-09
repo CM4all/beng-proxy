@@ -65,6 +65,12 @@ struct HttpServerRequest {
     bool HasBody() const {
         return body != nullptr;
     }
+
+    /**
+     * Close the still-unused request body.  This is a no-op if there
+     * is no request body.
+     */
+    void CheckCloseUnusedBody();
 };
 
 #endif

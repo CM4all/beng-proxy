@@ -6,6 +6,7 @@
 
 #include "Request.hxx"
 #include "pool.hxx"
+#include "istream/istream.hxx"
 #include "util/StringView.hxx"
 
 HttpServerRequest::HttpServerRequest(struct pool &_pool,
@@ -26,3 +27,10 @@ HttpServerRequest::HttpServerRequest(struct pool &_pool,
      method(_method),
      uri(p_strdup(pool, _uri)),
      headers(pool) {}
+
+void
+HttpServerRequest::CheckCloseUnusedBody()
+{
+    if (body != nullptr)
+        body->CloseUnused();
+}
