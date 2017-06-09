@@ -41,6 +41,8 @@ lb_http_translate_response(TranslateResponse &response, void *ctx)
 
     if (response.status != http_status_t(0) || response.redirect != nullptr ||
         response.message != nullptr) {
+        request.CheckCloseUnusedBody();
+
         auto status = response.status;
         if (status == http_status_t(0))
             status = HTTP_STATUS_SEE_OTHER;
@@ -55,6 +57,8 @@ lb_http_translate_response(TranslateResponse &response, void *ctx)
     } else if (response.pool != nullptr) {
         auto *destination = r.handler.FindDestination(response.pool);
         if (destination == nullptr) {
+            request.CheckCloseUnusedBody();
+
             c.LogSendError(request,
                            ToGError(std::runtime_error("No such pool")));
             return;
@@ -65,6 +69,8 @@ lb_http_translate_response(TranslateResponse &response, void *ctx)
 
         c.HandleHttpRequest(*destination, request, r.cancel_ptr);
     } else {
+        request.CheckCloseUnusedBody();
+
         c.LogSendError(request,
                        ToGError(std::runtime_error("Invalid translation server response")));
     }
@@ -74,6 +80,8 @@ static void
 lb_http_translate_error(std::exception_ptr ep, void *ctx)
 {
     auto &r = *(LbHttpRequest *)ctx;
+
+    r.request.CheckCloseUnusedBody();
 
     r.connection.LogSendError(r.request, ToGError(ep));
 }
