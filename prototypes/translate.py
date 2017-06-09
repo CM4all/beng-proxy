@@ -93,8 +93,8 @@ class Translation(Protocol):
             response.packet(TRANSLATE_UTS_NAMESPACE, 'host-' + user)
         return response
 
-    def _handle_cron(self, user, uri, param):
-        log.msg("cron user=%s uri=%s param=%s" % (repr(user), repr(uri), repr(param)))
+    def _handle_cron(self, listener_tag, user, uri, param):
+        log.msg("cron listener_tag=%s user=%s uri=%s param=%s" % (repr(listener_tag), repr(user), repr(uri), repr(param)))
 
         response = Response(protocol_version=1)
         if user is None or not re.match(r'^[-_\w]+$', user):
@@ -847,7 +847,7 @@ class Translation(Protocol):
                                       request.service, request.listener_tag)
 
         if request.cron:
-            return self._handle_cron(request.user, request.uri, request.param)
+            return self._handle_cron(request.listener_tag, request.user, request.uri, request.param)
 
         if request.auth is not None:
             return self._handle_auth(request.auth, request.uri, request.session)
