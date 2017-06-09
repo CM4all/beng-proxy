@@ -131,7 +131,13 @@ class Translation(Protocol):
 
         response = Response(protocol_version=1)
         response.max_age(0)
-        response.packet(TRANSLATE_POOL, name + '_')
+        response.vary(TRANSLATE_HOST)
+
+        if host == '404':
+            response.status(404)
+        else:
+            response.packet(TRANSLATE_POOL, name + '_')
+
         return response
 
     def _handle_hosting(self, request, response, base, uri,
