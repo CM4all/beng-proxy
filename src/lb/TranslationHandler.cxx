@@ -119,8 +119,8 @@ LbTranslationHandler::Pick(struct pool &pool, const HttpServerRequest &request,
     }
 
     auto *r = NewFromPool<LbTranslateHandlerRequest>(pool,
-                                                      *this, name, request,
-                                                      handler, ctx);
+                                                     *this, name, request,
+                                                     handler, ctx);
     tstock_translate(*stock, pool, r->request,
                      lbth_translate_handler, r, cancel_ptr);
 }
