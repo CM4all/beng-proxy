@@ -30,6 +30,8 @@ private:
     std::unique_ptr<Item> one_item;
 
 public:
+    void Clear();
+
     const Item *Get(const HttpServerRequest &request);
     void Put(const HttpServerRequest &request,
              const TranslateResponse &response);

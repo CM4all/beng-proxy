@@ -25,6 +25,13 @@ LbTranslationCache::Item::Item(const TranslateResponse &response)
         canonical_host = response.canonical_host;
 }
 
+void
+LbTranslationCache::Clear()
+{
+    cache.reset();
+    one_item.reset();
+}
+
 static std::string
 GetHost(const HttpServerRequest &request)
 {
