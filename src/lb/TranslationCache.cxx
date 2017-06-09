@@ -75,11 +75,7 @@ LbTranslationCache::Put(const HttpServerRequest &request,
         auto host = GetHost(request);
         daemon_log(4, "[TranslationCache] store %s\n", host.c_str());
 
-        // TODO: replace existing item and eliminate these two calls
-        if (cache->Get(host) != nullptr)
-            cache->Remove(host);
-
-        cache->Put(std::move(host), Item(response));
+        cache->PutOrReplace(std::move(host), Item(response));
     } else {
         if (cache) {
             daemon_log(4, "[TranslationCache] vary_host disappeared, clearing cache\n");
