@@ -1374,6 +1374,7 @@ packets:
 
 \hline
 
+\label{tvary}
 \verb|VARY| & similar to the HTTP \texttt{Vary} response header;
 the payload contains an array of translation request commands which
 this response depends upon.
@@ -2584,6 +2585,10 @@ to select a different status code. \\
 \verb|MESSAGE| & Can be used instead of \verb|POOL| to generate a
 \texttt{text/plain} response.  Can be combined with \verb|STATUS| and
 \verb|REDIRECT|. \\
+
+\hline
+
+\verb|VARY| & See page \pageref{tvary}. \\
 
 \hline
 \end{longtabu*}
