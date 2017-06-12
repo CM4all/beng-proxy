@@ -131,12 +131,17 @@ class Translation(Protocol):
 
         response = Response(protocol_version=1)
         response.max_age(0)
-        response.vary(TRANSLATE_HOST)
 
         if host == '404':
             response.status(404)
+            response.message(listener_tag or 'no LISTENER_TAG')
+            response.vary(TRANSLATE_HOST, TRANSLATE_LISTENER_TAG)
+        elif host == '403':
+            response.status(403)
+            response.vary(TRANSLATE_HOST)
         else:
             response.packet(TRANSLATE_POOL, name + '_')
+            response.vary(TRANSLATE_HOST)
 
         return response
 
