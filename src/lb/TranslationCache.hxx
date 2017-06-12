@@ -23,11 +23,32 @@ public:
         explicit Item(const TranslateResponse &response);
     };
 
+    struct Vary {
+        bool host = false;
+
+    public:
+        Vary() = default;
+        explicit Vary(const TranslateResponse &response);
+
+        constexpr operator bool() const {
+            return host;
+        }
+
+        void Clear() {
+            host = false;
+        }
+
+        Vary &operator|=(const Vary other) {
+            host |= other.host;
+            return *this;
+        }
+    };
+
 private:
     typedef ::Cache<std::string, Item, 32768, 4093> Cache;
     Cache cache;
 
-    bool seen_vary_host = false;
+    Vary seen_vary;
 
 public:
     void Clear();

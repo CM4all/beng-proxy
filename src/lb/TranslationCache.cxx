@@ -9,6 +9,9 @@
 
 #include <daemon/log.h>
 
+LbTranslationCache::Vary::Vary(const TranslateResponse &response)
+    :host(response.VaryContains(TRANSLATE_HOST)) {}
+
 LbTranslationCache::Item::Item(const TranslateResponse &response)
     :status(response.status)
 {
@@ -29,7 +32,7 @@ void
 LbTranslationCache::Clear()
 {
     cache.Clear();
-    seen_vary_host = false;
+    seen_vary.Clear();
 }
 
 static std::string
@@ -47,7 +50,7 @@ GetHost(const HttpServerRequest &request)
 inline std::string
 LbTranslationCache::GetKey(const HttpServerRequest &request) const noexcept
 {
-    if (seen_vary_host)
+    if (seen_vary.host)
         return GetHost(request);
     else
         return std::string();
@@ -65,15 +68,16 @@ void
 LbTranslationCache::Put(const HttpServerRequest &request,
                         const TranslateResponse &response)
 {
-    bool vary_host = response.VaryContains(TRANSLATE_HOST);
-    if (vary_host != seen_vary_host) {
+    const Vary vary(response);
+
+    if (vary != seen_vary) {
         if (!cache.IsEmpty()) {
             daemon_log(4, "[TranslationCache] vary_host changed to %d, clearing cache\n",
-                       vary_host);
+                       vary.host);
             Clear();
         }
 
-        seen_vary_host = vary_host;
+        seen_vary |= vary;
     }
 
     auto key = GetKey(request);
