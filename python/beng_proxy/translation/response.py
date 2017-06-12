@@ -43,6 +43,14 @@ class Response:
         assert status >= 200 and status < 600
         return self.packet(TRANSLATE_STATUS, struct.pack('H', status))
 
+    def redirect(self, url):
+        """Append a REDIRECT packet."""
+        return self.packet(TRANSLATE_REDIRECT, url)
+
+    def message(self, msg):
+        """Append a MESSAGE packet."""
+        return self.packet(TRANSLATE_MESSAGE, msg.encode('us-ascii'))
+
     def view(self, name):
         """Append a VIEW packet."""
         assert isinstance(name, str)
