@@ -164,7 +164,7 @@ class Request:
         elif packet.command == TRANSLATE_SERVICE:
             self.service = packet.payload
         elif packet.command == TRANSLATE_CRON:
-            self.cron = True
+            self.cron = packet.payload or True
         elif packet.command != TRANSLATE_LOCAL_ADDRESS:
             print "Invalid command:", packet.command
         return False

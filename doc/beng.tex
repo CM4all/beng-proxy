@@ -2479,13 +2479,9 @@ The request contains the following packets:
 \begin{longtabu*}{|l|X|}
 \hline
 
-\verb|CRON| & Marks this request as a ``cron'' request.  No
-payload. \\
-
-\hline
-
-\verb|LISTENER_TAG| & The name of the \texttt{cron} section in
-Workshop's configuration file (optional). \\
+\verb|CRON| & Marks this request as a ``cron'' request.  The payload
+is the name of the \texttt{cron} section in Workshop's configuration
+file, or none if none was specified there. \\
 
 \hline
 
