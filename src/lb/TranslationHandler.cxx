@@ -59,6 +59,7 @@ struct LbTranslateHandlerRequest {
     LbTranslationHandler &th;
 
     const HttpServerRequest &http_request;
+    const char *const listener_tag;
 
     TranslateRequest request;
 
@@ -67,10 +68,11 @@ struct LbTranslateHandlerRequest {
 
     LbTranslateHandlerRequest(LbTranslationHandler &_th,
                               const char *name,
-                              const char *listener_tag,
+                              const char *_listener_tag,
                               const HttpServerRequest &_request,
                               const TranslateHandler &_handler, void *_ctx)
-        :th(_th), http_request(_request), handler(_handler), handler_ctx(_ctx)
+        :th(_th), http_request(_request), listener_tag(_listener_tag),
+         handler(_handler), handler_ctx(_ctx)
     {
         Fill(request, name, listener_tag, _request);
     }
@@ -81,7 +83,7 @@ lbth_translate_response(TranslateResponse &response, void *ctx)
 {
     auto &r = *(LbTranslateHandlerRequest *)ctx;
 
-    r.th.PutCache(r.http_request, response);
+    r.th.PutCache(r.http_request, r.listener_tag, response);
     r.handler.response(response, r.handler_ctx);
 }
 
@@ -105,7 +107,7 @@ LbTranslationHandler::Pick(struct pool &pool, const HttpServerRequest &request,
                            CancellablePointer &cancel_ptr)
 {
     if (cache) {
-        const auto *item = cache->Get(request);
+        const auto *item = cache->Get(request, listener_tag);
         if (item != nullptr) {
             /* cache hit */
 
@@ -132,10 +134,11 @@ LbTranslationHandler::Pick(struct pool &pool, const HttpServerRequest &request,
 
 void
 LbTranslationHandler::PutCache(const HttpServerRequest &request,
+                               const char *listener_tag,
                                const TranslateResponse &response)
 {
     if (!cache)
         cache.reset(new LbTranslationCache());
 
-    cache->Put(request, response);
+    cache->Put(request, listener_tag, response);
 }

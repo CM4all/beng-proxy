@@ -50,6 +50,7 @@ public:
               CancellablePointer &cancel_ptr);
 
     void PutCache(const HttpServerRequest &request,
+                  const char *listener_tag,
                   const TranslateResponse &response);
 };
 

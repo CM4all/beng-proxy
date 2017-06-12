@@ -53,8 +53,11 @@ private:
 public:
     void Clear();
 
-    const Item *Get(const HttpServerRequest &request);
+    const Item *Get(const HttpServerRequest &request,
+                    const char *listener_tag);
+
     void Put(const HttpServerRequest &request,
+             const char *listener_tag,
              const TranslateResponse &response);
 
 private:

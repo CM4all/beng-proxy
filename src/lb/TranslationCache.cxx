@@ -57,8 +57,13 @@ LbTranslationCache::GetKey(const HttpServerRequest &request) const noexcept
 }
 
 const LbTranslationCache::Item *
-LbTranslationCache::Get(const HttpServerRequest &request)
+LbTranslationCache::Get(const HttpServerRequest &request,
+                        const char *listener_tag)
 {
+    if (listener_tag != nullptr)
+        /* ignore requests with listener_tag for now */
+        return nullptr;
+
     auto key = GetKey(request);
     daemon_log(4, "[TranslationCache] hit '%s'\n", key.c_str());
     return cache.Get(key);
@@ -66,8 +71,13 @@ LbTranslationCache::Get(const HttpServerRequest &request)
 
 void
 LbTranslationCache::Put(const HttpServerRequest &request,
+                        const char *listener_tag,
                         const TranslateResponse &response)
 {
+    if (listener_tag != nullptr)
+        /* ignore requests with listener_tag for now */
+        return;
+
     const Vary vary(response);
 
     if (vary != seen_vary) {
