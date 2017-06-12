@@ -105,6 +105,7 @@ LbHttpConnection::AskTranslationServer(LbTranslationHandler &handler,
                                          cancel_ptr);
 
     handler.Pick(request.pool, request,
+                 listener.tag.empty() ? nullptr : listener.tag.c_str(),
                  lb_http_translate_handler, r,
                  cancel_ptr);
 }

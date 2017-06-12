@@ -45,6 +45,7 @@ public:
     }
 
     void Pick(struct pool &pool, const HttpServerRequest &request,
+              const char *listener_tag,
               const TranslateHandler &handler, void *ctx,
               CancellablePointer &cancel_ptr);
 

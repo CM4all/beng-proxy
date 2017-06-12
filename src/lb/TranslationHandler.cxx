@@ -46,10 +46,12 @@ LbTranslationHandler::FlushCache()
 
 static void
 Fill(TranslateRequest &t, const char *name,
+     const char *listener_tag,
      const HttpServerRequest &request)
 {
     t.Clear();
     t.pool = name;
+    t.listener_tag = listener_tag;
     t.host = request.headers.Get("host");
 }
 
@@ -65,11 +67,12 @@ struct LbTranslateHandlerRequest {
 
     LbTranslateHandlerRequest(LbTranslationHandler &_th,
                               const char *name,
+                              const char *listener_tag,
                               const HttpServerRequest &_request,
                               const TranslateHandler &_handler, void *_ctx)
         :th(_th), http_request(_request), handler(_handler), handler_ctx(_ctx)
     {
-        Fill(request, name, _request);
+        Fill(request, name, listener_tag, _request);
     }
 };
 
@@ -97,6 +100,7 @@ static constexpr TranslateHandler lbth_translate_handler = {
 
 void
 LbTranslationHandler::Pick(struct pool &pool, const HttpServerRequest &request,
+                           const char *listener_tag,
                            const TranslateHandler &handler, void *ctx,
                            CancellablePointer &cancel_ptr)
 {
@@ -119,7 +123,8 @@ LbTranslationHandler::Pick(struct pool &pool, const HttpServerRequest &request,
     }
 
     auto *r = NewFromPool<LbTranslateHandlerRequest>(pool,
-                                                     *this, name, request,
+                                                     *this, name, listener_tag,
+                                                     request,
                                                      handler, ctx);
     tstock_translate(*stock, pool, r->request,
                      lbth_translate_handler, r, cancel_ptr);
