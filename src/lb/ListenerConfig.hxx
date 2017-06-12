@@ -25,6 +25,8 @@ struct LbListenerConfig {
      */
     std::string interface;
 
+    std::string tag;
+
     bool reuse_port = false;
 
     bool verbose_response = false;

@@ -377,6 +377,7 @@ TCP connections.
 \begin{verbatim*}
 listener port80 {
   bind "*:80"
+  tag "foo"
   pool "demo"
 }
 \end{verbatim*}
@@ -387,6 +388,10 @@ port).  To handle requests, it is associated with exactly one pool.
 Known attributes:
 
 \begin{longtabu*}{|l|X|}\hline
+
+\verb|tag| & An optional tag, to be passed to the translation server
+in a \verb|LISTENER_TAG| packet (if a translation server is ever
+queried during a HTTP request). \\\hline
 
 \verb|bind| & An adddress to bind to.  May be the wildcard ``*'' or an
 IPv4/IPv6 address followed by a port.  IPv6 addresses should be
