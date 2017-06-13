@@ -7,7 +7,6 @@
 #include "net/AddressInfo.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "system/Error.hxx"
-#include "io/FileDescriptor.hxx"
 
 UniqueSocketDescriptor
 ResolveConnectSocket(const char *host_and_port, int default_port,
@@ -24,7 +23,7 @@ ResolveConnectSocket(const char *host_and_port, int default_port,
         if (errno != EINPROGRESS)
             throw MakeErrno("Failed to connect");
 
-        int w = FileDescriptor(s.Get()).WaitWritable(60000);
+        int w = s.WaitWritable(60000);
         if (w < 0)
             throw MakeErrno("Connect wait error");
         else if (w == 0)
