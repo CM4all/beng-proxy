@@ -236,6 +236,8 @@ Stock::DestroyItem(StockItem &item)
 bool
 Stock::GetIdle(StockGetHandler &get_handler)
 {
+    unsigned retry_unclean = idle.size();
+
     auto i = idle.begin();
     const auto end = idle.end();
     while (i != end) {
@@ -243,6 +245,14 @@ Stock::GetIdle(StockGetHandler &get_handler)
         assert(item.is_idle);
 
         i = idle.erase(i);
+
+        if (item.unclean && retry_unclean > 0) {
+            /* postpone reusal of this item until it's "clean" */
+            // TODO: replace this kludge
+            --retry_unclean;
+            idle.push_back(item);
+            continue;
+        }
 
         if (idle.size() == max_idle)
             UnscheduleCleanup();
