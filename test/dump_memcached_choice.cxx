@@ -20,7 +20,6 @@
 
 #include <unistd.h>
 #include <stdio.h>
-#include <netdb.h>
 #include <errno.h>
 #include <string.h>
 
@@ -166,11 +165,7 @@ int main(int argc, char **argv) {
 
     /* connect socket */
 
-    struct addrinfo hints;
-    memset(&hints, 0, sizeof(hints));
-    hints.ai_socktype = SOCK_STREAM;
-
-    ctx.s = ResolveConnectSocket(argv[1], 11211, hints);
+    ctx.s = ResolveConnectStreamSocket(argv[1], 11211);
     ctx.s.SetNoDelay();
 
     /* initialize */

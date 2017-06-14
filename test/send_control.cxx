@@ -8,7 +8,6 @@
 #include <unistd.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
-#include <netdb.h>
 
 int main(int argc, char **argv) {
     if (argc != 2) {
@@ -16,12 +15,7 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    struct addrinfo hints;
-    memset(&hints, 0, sizeof(hints));
-    hints.ai_flags = AI_ADDRCONFIG|AI_PASSIVE;
-    hints.ai_socktype = SOCK_DGRAM;
-
-    UniqueSocketDescriptor s = ResolveConnectSocket(argv[1], 1234, hints);
+    UniqueSocketDescriptor s = ResolveConnectDatagramSocket(argv[1], 1234);
 
     static constexpr struct {
         uint32_t magic;

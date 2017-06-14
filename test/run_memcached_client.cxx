@@ -213,13 +213,8 @@ int main(int argc, char **argv) {
 
     /* connect socket */
 
-    struct addrinfo hints;
-    memset(&hints, 0, sizeof(hints));
-    hints.ai_flags = AI_ADDRCONFIG|AI_PASSIVE;
-    hints.ai_socktype = SOCK_STREAM;
-
     Context ctx;
-    ctx.s = ResolveConnectSocket(argv[1], 11211, hints);
+    ctx.s = ResolveConnectStreamSocket(argv[1], 11211);
     ctx.s.SetNoDelay();
 
     /* initialize */
