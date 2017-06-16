@@ -1197,7 +1197,7 @@ executable('cm4all-beng-proxy-log-tee',
     io_dep,
   ])
 
-executable('cm4all-beng-proxy-delegate-helper',
+executable('delegate-helper',
   'src/delegate/Helper.cxx',
   include_directories: inc,
   dependencies: [

@@ -18,7 +18,7 @@
 #include <unistd.h>
 #include <string.h>
 
-static const char helper_path[] = "./cm4all-beng-proxy-delegate-helper";
+static const char helper_path[] = "./delegate-helper";
 static StockMap *delegate_stock;
 
 class MyDelegateHandler final : public DelegateHandler {

@@ -14,7 +14,8 @@ from beng_proxy.translation import *
 from beng_proxy.translation.widget import WidgetRegistry
 
 widgets_path = '/etc/cm4all/beng/widgets'
-helpers_path = '/usr/bin'
+default_helpers_path = '/usr/lib/cm4all/beng-proxy/delegate/bin'
+helpers_path = default_helpers_path
 cgi_path = '/usr/lib/cgi-bin'
 was_path = '/usr/lib/cm4all/was/bin'
 demo_path = '/usr/share/cm4all/beng-proxy/demo/htdocs'
@@ -291,11 +292,12 @@ class Translation(Protocol):
             response.path(path)
             response.expires_relative(1800)
             if delegate and jail:
-                response.delegate('/usr/bin/cm4all-beng-proxy-delegate-helper')
+                response.delegate(os.path.join(default_helpers_path,
+                                               'delegate-helper'))
                 response.packet(TRANSLATE_JAILCGI)
             elif delegate:
                 response.delegate(os.path.join(helpers_path,
-                                               'cm4all-beng-proxy-delegate-helper'))
+                                               'delegate-helper'))
             if path[-5:] == '.html':
                 response.content_type('text/html; charset=utf-8')
                 response.process(container=True)
@@ -961,7 +963,7 @@ if __name__ == '__main__':
         # debug mode, run from svn working directory
         import os
         widgets_path = 'demo/widgets'
-        helpers_path = os.getcwd()
+        helpers_path = os.path.join(os.getcwd(), 'build')
         cgi_path = os.path.join(os.getcwd(), 'demo/cgi-bin')
         demo_path = os.path.join(os.getcwd(), 'demo', 'htdocs')
 
