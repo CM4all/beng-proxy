@@ -16,21 +16,24 @@ from beng_proxy.translation.widget import WidgetRegistry
 widgets_path = '/etc/cm4all/beng/widgets'
 helpers_path = '/usr/bin'
 cgi_path = '/usr/lib/cgi-bin'
+was_path = '/usr/lib/cm4all/was/bin'
 demo_path = '/usr/share/cm4all/beng-proxy/demo/htdocs'
 test_path = os.path.join(os.getcwd(), 'test')
+was_examples_path = was_path
+was_examples = ['hello', 'random', 'mirror']
 coma_fastcgi = '/usr/bin/cm4all-coma-fastcgi'
-coma_was = '/usr/lib/cm4all/was/bin/coma-was'
+coma_was = os.path.join(was_path, 'coma-was')
 coma_demo = '/var/www'
 image_processor_path = '/usr/share/cm4all/coma/apps/imageprocessor/htdocs'
 ticket_fastcgi_dir = '/usr/lib/cm4all/ticket/cgi-bin'
 ticket_database_uri = 'codb:sqlite:/tmp/ticket.sqlite'
 xslt_fastcgi = '/usr/lib/cm4all/fcgi-bin/xslt'
-xmlstrip = '/usr/lib/cm4all/was/bin/xmlstrip'
+xmlstrip = os.path.join(was_path, 'xmlstrip')
 sed_fastcgi = '/usr/lib/cm4all/fcgi-bin/fsed'
 apache_lhttpd = '/usr/lib/cm4all/lhttp/bin/apache-lhttpd'
 
-davos_plain = '/usr/lib/cm4all/was/bin/davos-plain'
-davos_od = '/usr/lib/cm4all/was/bin/davos-od'
+davos_plain = os.path.join(was_path, 'davos-plain')
+davos_od = os.path.join(was_path, 'davos-od')
 od_conf = '/etc/cm4all/davos/od.conf'
 od_section = 'test'
 
@@ -594,6 +597,12 @@ class Translation(Protocol):
         elif uri[:8] == '/header/':
             response.header('X-Foo', 'Bar')
             self._handle_local_file('/var/www' + uri[7:], response)
+        elif uri[:5] == '/was/':
+            name = uri[5:]
+            if name in was_examples:
+                response.packet(TRANSLATE_WAS, os.path.join(was_examples_path, name))
+            else:
+                response.status(404)
         elif uri == '/xslt':
             response.packet(TRANSLATE_FASTCGI, xslt_fastcgi)
             response.pair('STYLESHEET_PATH', os.path.join(demo_path, '../filter.xsl'))
@@ -963,6 +972,7 @@ if __name__ == '__main__':
             elif os.path.isdir('../../cgi-coma'):
                 src_dir = os.path.join(os.getcwd(), '../..')
 
+        was_examples_path = os.path.join(src_dir, 'libwas')
         coma_fastcgi = os.path.join(src_dir, 'cgi-coma/build/cm4all-coma-fastcgi')
         coma_was = os.path.join(src_dir, 'cgi-coma/build/coma-was')
         coma_demo = os.path.join(src_dir, 'cgi-coma/demo')

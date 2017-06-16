@@ -1,6 +1,6 @@
 cm4all-beng-proxy (12.0.20) unstable; urgency=low
 
-  * 
+  * merge release 11.26
 
  --   
 
@@ -174,6 +174,13 @@ cm4all-beng-proxy (12.0.1) unstable; urgency=low
   * translation: add packet CRON
 
  -- Max Kellermann <mk@cm4all.com>  Wed, 23 Nov 2016 14:57:02 -0000
+
+cm4all-beng-proxy (11.26) unstable; urgency=low
+
+  * was: added kludge to avoid killing process after STOP
+  * lb/monitor: fix shutdown hang due to event leak
+
+ -- Max Kellermann <mk@cm4all.com>  Fri, 16 Jun 2017 20:53:29 -0000
 
 cm4all-beng-proxy (11.25) unstable; urgency=low
 

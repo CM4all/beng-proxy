@@ -49,6 +49,14 @@ struct StockItem
      */
     bool fade = false;
 
+    /**
+     * Kludge: this flag is true if this item is idle and is not yet
+     * in a "clean" state (e.g. a WAS process after STOP), and cannot
+     * yet be reused.  It will be postponed until this flag is false
+     * again.  TODO: replace this kludge.
+     */
+    bool unclean = false;
+
 #ifndef NDEBUG
     bool is_idle = false;
 #endif

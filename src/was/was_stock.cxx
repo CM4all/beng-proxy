@@ -160,6 +160,7 @@ public:
 
     bool Release(gcc_unused void *ctx) override {
         event.Add(was_idle_timeout);
+        unclean = stopping;
         return true;
     }
 
@@ -318,6 +319,7 @@ WasChild::RecoverStop()
     }
 
     stopping = false;
+    unclean = false;
 
     event.Add(was_idle_timeout);
 }
