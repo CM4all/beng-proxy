@@ -16,21 +16,22 @@ from beng_proxy.translation.widget import WidgetRegistry
 widgets_path = '/etc/cm4all/beng/widgets'
 helpers_path = '/usr/bin'
 cgi_path = '/usr/lib/cgi-bin'
+was_path = '/usr/lib/cm4all/was/bin'
 demo_path = '/usr/share/cm4all/beng-proxy/demo/htdocs'
 test_path = os.path.join(os.getcwd(), 'test')
 coma_fastcgi = '/usr/bin/cm4all-coma-fastcgi'
-coma_was = '/usr/lib/cm4all/was/bin/coma-was'
+coma_was = os.path.join(was_path, 'coma-was')
 coma_demo = '/var/www'
 image_processor_path = '/usr/share/cm4all/coma/apps/imageprocessor/htdocs'
 ticket_fastcgi_dir = '/usr/lib/cm4all/ticket/cgi-bin'
 ticket_database_uri = 'codb:sqlite:/tmp/ticket.sqlite'
 xslt_fastcgi = '/usr/lib/cm4all/fcgi-bin/xslt'
-xmlstrip = '/usr/lib/cm4all/was/bin/xmlstrip'
+xmlstrip = os.path.join(was_path, 'xmlstrip')
 sed_fastcgi = '/usr/lib/cm4all/fcgi-bin/fsed'
 apache_lhttpd = '/usr/lib/cm4all/lhttp/bin/apache-lhttpd'
 
-davos_plain = '/usr/lib/cm4all/was/bin/davos-plain'
-davos_od = '/usr/lib/cm4all/was/bin/davos-od'
+davos_plain = os.path.join(was_path, 'davos-plain')
+davos_od = os.path.join(was_path, 'davos-od')
 od_conf = '/etc/cm4all/davos/od.conf'
 od_section = 'test'
 
