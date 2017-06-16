@@ -19,6 +19,8 @@ cgi_path = '/usr/lib/cgi-bin'
 was_path = '/usr/lib/cm4all/was/bin'
 demo_path = '/usr/share/cm4all/beng-proxy/demo/htdocs'
 test_path = os.path.join(os.getcwd(), 'test')
+was_examples_path = was_path
+was_examples = ['hello', 'random', 'mirror']
 coma_fastcgi = '/usr/bin/cm4all-coma-fastcgi'
 coma_was = os.path.join(was_path, 'coma-was')
 coma_demo = '/var/www'
@@ -550,6 +552,12 @@ class Translation(Protocol):
         elif uri[:8] == '/header/':
             response.header('X-Foo', 'Bar')
             self._handle_local_file('/var/www' + uri[7:], response)
+        elif uri[:5] == '/was/':
+            name = uri[5:]
+            if name in was_examples:
+                response.packet(TRANSLATE_WAS, os.path.join(was_examples_path, name))
+            else:
+                response.status(404)
         elif uri == '/xslt':
             response.packet(TRANSLATE_FASTCGI, xslt_fastcgi)
             response.pair('STYLESHEET_PATH', os.path.join(demo_path, '../filter.xsl'))
@@ -911,6 +919,7 @@ if __name__ == '__main__':
             elif os.path.isdir('../../cgi-coma'):
                 src_dir = os.path.join(os.getcwd(), '../..')
 
+        was_examples_path = os.path.join(src_dir, 'libwas')
         coma_fastcgi = os.path.join(src_dir, 'cgi-coma/build/cm4all-coma-fastcgi')
         coma_was = os.path.join(src_dir, 'cgi-coma/build/coma-was')
         coma_demo = os.path.join(src_dir, 'cgi-coma/demo')
