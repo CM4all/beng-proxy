@@ -1735,7 +1735,8 @@ for how to configure namespaces.
 \subsection{Proxying requests}
 
 When proxying HTTP requests with the a \verb|HTTP| packet,
-\emph{beng-proxy} forwards the request to the specified location,
+\emph{beng-proxy} forwards the request to the specified location (with
+headers filtered as described in \ref{tfwdheader}),
 including the HTTP method and the request body.  There is one
 exception: if \verb|PROCESS| is enabled and a widget is focused (see
 \ref{focus}), the
