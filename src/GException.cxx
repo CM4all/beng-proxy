@@ -28,7 +28,7 @@ ToGError(std::exception_ptr ep)
         FindRetrowNested<HttpMessageResponse>(ep);
     } catch (const HttpMessageResponse &e) {
         return g_error_new_literal(http_response_quark(), e.GetStatus(),
-                                   e.what());
+                                   GetFullMessage(ep).c_str());
     }
 
     return g_error_new_literal(exception_quark(), 0,
