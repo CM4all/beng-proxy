@@ -1415,75 +1415,11 @@ items for the current session.
 
 \hline
 
-\label{tfwdheader}
-\verb|REQUEST_HEADER_FORWARD| &
-
-This packet specifies which request headers are forwarded to the
-request handler.  The payload is a list of group/mode pairs
-(\texttt{struct beng\_header\_forward\_packet}).  Group is one of:
-
-\begin{itemize}
-\item \texttt{IDENTITY}: headers \texttt{Via} and
-  \texttt{X-Forwarded-For}
-\item \texttt{CAPABILITIES}: \texttt{Server}, \texttt{User-Agent},
-  \texttt{Accept-*}
-\item \texttt{COOKIE}: \texttt{Cookie[2]}, \texttt{Set-Cookie[2]}
-
-\item \texttt{FORWARD}: forward information about the original
-  request/response that would usually not be visible.  If set to
-  \verb|MANGLE|, then \texttt{Host} is translated to
-  \texttt{X-Forwarded-Host}.
-
-\item \texttt{CORS}: forward
-  \href{http://www.w3.org/TR/cors/#syntax}{CORS} request/response
-  headers
-
-\item \texttt{SECURE}: forward ``secure'' request/response headers
-  such as \texttt{X-CM4all-BENG-User}
-
-\item \texttt{SSL}: forward information about the SSL connection,
-  i.e. \verb|X-CM4all-BENG-Peer-Subject| and
-  \verb|X-CM4all-BENG-Peer-Issuer-Subject|
-
-\item \texttt{TRANSFORMATION}: forward headers that affect the
-  transformation (i.e. \texttt{X-CM4all-View})
-
-\item \texttt{LINK}: forward headers that contain links, such as
-  \texttt{Location}; if set to \verb|MANGLE|, then \emph{beng-proxy}
-  attempts to rewrite the URI relative to itself
-
-\item \texttt{OTHER}: other end-to-end headers not explicitly
-  mentioned here
-
-\item \texttt{ALL}: all of the above except for \texttt{SECURE} and
-  \texttt{SSL}
-
-\end{itemize}
-
-Mode is one of:
-
-\begin{itemize}
-\item \texttt{NO}: don't forward the headers
-\item \texttt{YES}: forward the headers
-\item \texttt{MANGLE}: \emph{beng-proxy} processes the headers
-\item \texttt{BOTH}: both \emph{beng-proxy} and the backend server
-  process the headers (special case for cookie headers, which is a
-  combination of \texttt{YES} and \texttt{MANGLE})
-\end{itemize}
-
-\emph{beng-proxy}'s session management is only active when
-\texttt{COOKIE} is \texttt{MANGLE} (which is the default) or
-\texttt{BOTH}.  The behavior of the \texttt{COOKIE} setting on widgets
-is undefined.
-
-\\
+\verb|REQUEST_HEADER_FORWARD| & See \ref{tfwdheader} \\
 
 \hline
 
-\verb|RESPONSE_HEADER_FORWARD| &
-
-Same as \verb|REQUEST_HEADER_FORWARD|, but applies to response
-headers forwarded to the client. \\
+\verb|RESPONSE_HEADER_FORWARD| & See \ref{tfwdheader} \\
 
 \hline
 
@@ -1893,6 +1829,89 @@ for how to configure namespaces.
 
 See \ref{rlimits} for how to configure resource limits and \ref{ns}
 for how to configure namespaces.
+
+
+\subsection{Forwarding HTTP Headers}
+\label{tfwdheader}
+
+There are two translation packets which control which HTTP headers are
+going to be forwarded:
+
+\begin{longtabu*}{|l|X|}
+\hline
+
+\verb|REQUEST_HEADER_FORWARD| &
+
+This packet specifies which request headers are forwarded to the
+request handler.  The payload is a list of group/mode pairs
+(\texttt{struct beng\_header\_forward\_packet}).  Group is one of:
+
+\begin{itemize}
+\item \texttt{IDENTITY}: headers \texttt{Via} and
+  \texttt{X-Forwarded-For}
+\item \texttt{CAPABILITIES}: \texttt{Server}, \texttt{User-Agent},
+  \texttt{Accept-*}
+\item \texttt{COOKIE}: \texttt{Cookie[2]}, \texttt{Set-Cookie[2]}
+
+\item \texttt{FORWARD}: forward information about the original
+  request/response that would usually not be visible.  If set to
+  \verb|MANGLE|, then \texttt{Host} is translated to
+  \texttt{X-Forwarded-Host}.
+
+\item \texttt{CORS}: forward
+  \href{http://www.w3.org/TR/cors/#syntax}{CORS} request/response
+  headers
+
+\item \texttt{SECURE}: forward ``secure'' request/response headers
+  such as \texttt{X-CM4all-BENG-User}
+
+\item \texttt{SSL}: forward information about the SSL connection,
+  i.e. \verb|X-CM4all-BENG-Peer-Subject| and
+  \verb|X-CM4all-BENG-Peer-Issuer-Subject|
+
+\item \texttt{TRANSFORMATION}: forward headers that affect the
+  transformation (i.e. \texttt{X-CM4all-View})
+
+\item \texttt{LINK}: forward headers that contain links, such as
+  \texttt{Location}; if set to \verb|MANGLE|, then \emph{beng-proxy}
+  attempts to rewrite the URI relative to itself
+
+\item \texttt{OTHER}: other end-to-end headers not explicitly
+  mentioned here
+
+\item \texttt{ALL}: all of the above except for \texttt{SECURE} and
+  \texttt{SSL}
+
+\end{itemize}
+
+Mode is one of:
+
+\begin{itemize}
+\item \texttt{NO}: don't forward the headers
+\item \texttt{YES}: forward the headers
+\item \texttt{MANGLE}: \emph{beng-proxy} processes the headers
+\item \texttt{BOTH}: both \emph{beng-proxy} and the backend server
+  process the headers (special case for cookie headers, which is a
+  combination of \texttt{YES} and \texttt{MANGLE})
+\end{itemize}
+
+\emph{beng-proxy}'s session management is only active when
+\texttt{COOKIE} is \texttt{MANGLE} (which is the default) or
+\texttt{BOTH}.  The behavior of the \texttt{COOKIE} setting on widgets
+is undefined.
+
+\\
+
+\hline
+
+\verb|RESPONSE_HEADER_FORWARD| &
+
+Same as \verb|REQUEST_HEADER_FORWARD|, but applies to response
+headers forwarded to the client. \\
+
+\hline
+\end{longtabu*}
+
 
 \subsection{Resource Limits}
 \label{rlimits}
