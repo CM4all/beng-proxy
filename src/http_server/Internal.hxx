@@ -267,8 +267,9 @@ struct HttpServerConnection final : IstreamHandler {
     /**
      * A fatal error has occurred, and the connection should be closed
      * immediately, without sending any further information to the
-     * client.  This invokes the error() handler method, but not
-     * free().
+     * client.  This invokes
+     * HttpServerConnectionHandler::HttpConnectionError(), but not
+     * HttpServerConnectionHandler::HttpConnectionClosed().
      */
     void Error(GError *error);
 
