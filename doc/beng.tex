@@ -1844,7 +1844,19 @@ going to be forwarded:
 
 This packet specifies which request headers are forwarded to the
 request handler.  The payload is a list of group/mode pairs
-(\texttt{struct beng\_header\_forward\_packet}).  Group is one of:
+(\texttt{struct beng\_header\_forward\_packet}). \\
+
+\hline
+
+\verb|RESPONSE_HEADER_FORWARD| &
+
+Same as \verb|REQUEST_HEADER_FORWARD|, but applies to response
+headers forwarded to the client. \\
+
+\hline
+\end{longtabu*}
+
+Group is one of:
 
 \begin{itemize}
 \item \texttt{IDENTITY}: headers \texttt{Via} and
@@ -1899,18 +1911,6 @@ Mode is one of:
 \texttt{COOKIE} is \texttt{MANGLE} (which is the default) or
 \texttt{BOTH}.  The behavior of the \texttt{COOKIE} setting on widgets
 is undefined.
-
-\\
-
-\hline
-
-\verb|RESPONSE_HEADER_FORWARD| &
-
-Same as \verb|REQUEST_HEADER_FORWARD|, but applies to response
-headers forwarded to the client. \\
-
-\hline
-\end{longtabu*}
 
 
 \subsection{Resource Limits}
