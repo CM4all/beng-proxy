@@ -300,7 +300,7 @@ http_server_socket_error(std::exception_ptr ep, void *ctx)
 {
     auto *connection = (HttpServerConnection *)ctx;
 
-    connection->Error(ToGError(ep));
+    connection->Error(ep);
 }
 
 static constexpr BufferedSocketHandler http_server_socket_handler = {
@@ -495,6 +495,12 @@ HttpServerConnection::Error(GError *error)
         g_error_free(error);
 
     Delete();
+}
+
+void
+HttpServerConnection::Error(std::exception_ptr e)
+{
+    Error(ToGError(e));
 }
 
 void

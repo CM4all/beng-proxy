@@ -273,6 +273,8 @@ struct HttpServerConnection final : IstreamHandler {
      */
     void Error(GError *error);
 
+    void Error(std::exception_ptr e);
+
     void Error(const char *msg);
 
     void ErrorErrno(const char *msg);
