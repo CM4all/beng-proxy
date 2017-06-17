@@ -243,7 +243,7 @@ forward_transformation_headers(StringMap &dest, const StringMap &src)
  */
 gcc_pure
 static bool
-is_link_header(const char *name)
+IsLinkResponseHeader(const char *name)
 {
     return strcmp(name, "location") == 0;
 }
@@ -501,7 +501,7 @@ forward_other_response_headers(StringMap &dest, const StringMap &src)
             !string_in_array(cookie_response_headers, i.key) &&
             !string_in_array(cors_response_headers, i.key) &&
             !string_in_array(exclude_response_headers, i.key) &&
-            !is_link_header(i.key) &&
+            !IsLinkResponseHeader(i.key) &&
             !is_secure_or_ssl_header(i.key) &&
             !is_transformation_header(i.key) &&
             !http_header_is_hop_by_hop(i.key))
