@@ -113,7 +113,7 @@ Package: cm4all-beng-proxy-delegate-helper
 Architecture: any
 Depends: ${shlibs:Depends}
 Enhances: cm4all-beng-proxy, cm4all-beng-proxy-optimized
-Description: HTTP proxy server, delegate helper for JailCGI
+Description: HTTP proxy server, delegate helper
  BENG proxy is an HTTP proxy server which includes a HTML template
  processor.
  .
