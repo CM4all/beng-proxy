@@ -243,6 +243,22 @@ forward_transformation_headers(StringMap &dest, const StringMap &src)
  */
 gcc_pure
 static bool
+IsLinkRequestHeader(const char *name)
+{
+    return strcmp(name, "referer") == 0;
+}
+
+static void
+ForwardLinkRequestHeaders(StringMap &dest, const StringMap &src)
+{
+    header_copy_one(src, dest, "referer");
+}
+
+/**
+ * @see #HEADER_GROUP_LINK
+ */
+gcc_pure
+static bool
 IsLinkResponseHeader(const char *name)
 {
     return strcmp(name, "location") == 0;
@@ -341,6 +357,7 @@ forward_other_headers(StringMap &dest, const StringMap &src)
             !string_in_array(cache_request_headers, i.key) &&
             !string_in_array(exclude_request_headers, i.key) &&
             !is_secure_or_ssl_header(i.key) &&
+            !IsLinkRequestHeader(i.key) &&
             strcmp(i.key, "range") != 0 &&
             !http_header_is_hop_by_hop(i.key))
             dest.Add(i.key, i.value);
@@ -431,6 +448,9 @@ forward_request_headers(struct pool &pool, const StringMap &src,
 
     if (settings.modes[HEADER_GROUP_SSL] == HEADER_FORWARD_YES)
         forward_ssl_headers(dest, src);
+
+    if (settings.modes[HEADER_GROUP_LINK] == HEADER_FORWARD_YES)
+        ForwardLinkRequestHeaders(dest, src);
 
     if (settings.modes[HEADER_GROUP_OTHER] == HEADER_FORWARD_YES)
         forward_other_headers(dest, src);

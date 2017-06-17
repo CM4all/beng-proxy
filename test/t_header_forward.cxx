@@ -43,7 +43,7 @@ TEST(HeaderForwardTest, RequestHeaders)
     settings.modes[HEADER_GROUP_SECURE] = HEADER_FORWARD_NO;
     settings.modes[HEADER_GROUP_SSL] = HEADER_FORWARD_NO;
     settings.modes[HEADER_GROUP_TRANSFORMATION] = HEADER_FORWARD_NO;
-    settings.modes[HEADER_GROUP_LINK] = HEADER_FORWARD_YES;
+    settings.modes[HEADER_GROUP_LINK] = HEADER_FORWARD_NO;
 
     RootPool pool;
 
@@ -57,10 +57,12 @@ TEST(HeaderForwardTest, RequestHeaders)
     headers.Add("x-forwarded-for", "10.0.0.2");
     headers.Add("x-cm4all-beng-user", "hans");
     headers.Add("x-cm4all-beng-peer-subject", "CN=hans");
+    headers.Add("referer", "http://referer.example/");
 
     /* verify strmap_to_string() */
     check_strmap(headers, "abc=def;accept=text/*;"
                  "content-type=image/jpeg;cookie=a=b;from=foo;"
+                 "referer=http://referer.example/;"
                  "via=1.1 192.168.0.1;"
                  "x-cm4all-beng-peer-subject=CN=hans;"
                  "x-cm4all-beng-user=hans;"
@@ -284,6 +286,22 @@ TEST(HeaderForwardTest, RequestHeaders)
                  "access-control-request-method=POST;"
                  "from=foo;"
                  "origin=example.com;"
+                 "x-cm4all-beng-peer-subject=CN=hans;");
+
+    /* forward referer headers */
+
+    settings.modes[HEADER_GROUP_LINK] = HEADER_FORWARD_YES;
+
+    q = forward_request_headers(pool, headers,
+                                "192.168.0.2", "192.168.0.3",
+                                false, false, false, false, false,
+                                settings,
+                                nullptr, nullptr, nullptr, nullptr);
+    check_strmap(q, "abc=def;accept=text/*;accept-charset=utf-8;"
+                 "access-control-request-method=POST;"
+                 "from=foo;"
+                 "origin=example.com;"
+                 "referer=http://referer.example/;"
                  "x-cm4all-beng-peer-subject=CN=hans;");
 }
 
