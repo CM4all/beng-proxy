@@ -45,3 +45,34 @@ ToGError(std::exception_ptr ep)
 
     return g_error_new_literal(exception_quark(), 0, msg.c_str());
 }
+
+#if CLANG_OR_GCC_VERSION(4,0)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsuggest-attribute=noreturn"
+#endif
+
+void
+ThrowGError(const GError &error)
+{
+    if (error.domain == http_response_quark())
+        throw HttpMessageResponse(http_status_t(error.code), error.message);
+    else if (error.domain == errno_quark())
+        throw MakeErrno(error.code, error.message);
+    else
+        throw std::runtime_error(error.message);
+}
+
+#if CLANG_OR_GCC_VERSION(4,0)
+#pragma GCC diagnostic pop
+#endif
+
+std::exception_ptr
+ToException(const GError &error)
+{
+    try {
+        ThrowGError(error);
+        gcc_unreachable();
+    } catch (...) {
+        return std::current_exception();
+    }
+}

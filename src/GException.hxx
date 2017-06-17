@@ -28,4 +28,18 @@ ToGError(const std::exception &e);
 GError *
 ToGError(std::exception_ptr ep);
 
+/**
+ * Attempt to convert a #GError to a C++ exception (best-effort), and
+ * throw it.
+ */
+void
+ThrowGError(const GError &error);
+
+/**
+ * Attempt to convert a #GError to a C++ exception (best-effort), and
+ * return it.
+ */
+std::exception_ptr
+ToException(const GError &error);
+
 #endif
