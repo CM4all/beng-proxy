@@ -15,13 +15,14 @@
 #include "http_server/Handler.hxx"
 #include "access_log.hxx"
 #include "pool.hxx"
-#include "gerrno.h"
 #include "address_string.hxx"
 #include "thread_socket_filter.hxx"
 #include "thread_pool.hxx"
 #include "ssl/ssl_filter.hxx"
 #include "net/StaticSocketAddress.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
+#include "system/Error.hxx"
+#include "util/Exception.hxx"
 
 #include <daemon/log.h>
 
@@ -209,15 +210,19 @@ LbHttpConnection::LogHttpRequest(HttpServerRequest &request,
 }
 
 void
-LbHttpConnection::HttpConnectionError(GError *error)
+LbHttpConnection::HttpConnectionError(std::exception_ptr e)
 {
     int level = 2;
 
-    if (error->domain == errno_quark() && error->code == ECONNRESET)
-        level = 4;
+    try {
+        FindRetrowNested<std::system_error>(e);
+    } catch (const std::system_error &se) {
+        if (se.code().category() == ErrnoCategory() &&
+            se.code().value() == ECONNRESET)
+            level = 4;
+    }
 
-    Log(level, "Error", error);
-    g_error_free(error);
+    Log(level, "Error", e);
 
     assert(http != nullptr);
     http = nullptr;

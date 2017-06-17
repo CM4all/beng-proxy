@@ -13,10 +13,11 @@
 #include "handler.hxx"
 #include "access_log.hxx"
 #include "drop.hxx"
-#include "gerrno.h"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/StaticSocketAddress.hxx"
+#include "system/Error.hxx"
+#include "util/Exception.hxx"
 #include "pool.hxx"
 
 #include <daemon/log.h>
@@ -90,17 +91,21 @@ BpConnection::LogHttpRequest(HttpServerRequest &request,
 }
 
 void
-BpConnection::HttpConnectionError(GError *error)
+BpConnection::HttpConnectionError(std::exception_ptr e)
 {
     http = nullptr;
 
     int level = 2;
 
-    if (error->domain == errno_quark() && error->code == ECONNRESET)
-        level = 4;
+    try {
+        FindRetrowNested<std::system_error>(e);
+    } catch (const std::system_error &se) {
+        if (se.code().category() == ErrnoCategory() &&
+            se.code().value() == ECONNRESET)
+            level = 4;
+    }
 
-    daemon_log(level, "%s\n", error->message);
-    g_error_free(error);
+    daemon_log(level, "%s\n", GetFullMessage(e).c_str());
 
     close_connection(this);
 }

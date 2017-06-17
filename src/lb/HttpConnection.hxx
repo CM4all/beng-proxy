@@ -84,7 +84,7 @@ struct LbHttpConnection final
                         http_status_t status, off_t length,
                         uint64_t bytes_received, uint64_t bytes_sent) override;
 
-    void HttpConnectionError(GError *error) override;
+    void HttpConnectionError(std::exception_ptr e) override;
     void HttpConnectionClosed() override;
 
 public:

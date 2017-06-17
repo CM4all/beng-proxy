@@ -10,6 +10,7 @@
 #include "fb_pool.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "io/FileDescriptor.hxx"
+#include "util/PrintException.hxx"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -44,7 +45,7 @@ struct Instance final : HttpServerConnectionHandler {
                         http_status_t, int64_t,
                         uint64_t, uint64_t) override {}
 
-    void HttpConnectionError(GError *error) override;
+    void HttpConnectionError(std::exception_ptr e) override;
     void HttpConnectionClosed() override;
 };
 
@@ -68,12 +69,11 @@ Instance::HandleHttpRequest(HttpServerRequest &request,
 }
 
 void
-Instance::HttpConnectionError(GError *error)
+Instance::HttpConnectionError(std::exception_ptr e)
 {
     connection = nullptr;
 
-    g_printerr("%s\n", error->message);
-    g_error_free(error);
+    PrintException(e);
 }
 
 void

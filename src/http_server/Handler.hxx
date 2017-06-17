@@ -7,9 +7,9 @@
 #ifndef BENG_HTTP_SERVER_HANDLER_HXX
 #define BENG_HTTP_SERVER_HANDLER_HXX
 
-#include "glibfwd.hxx"
-
 #include <http/status.h>
+
+#include <exception>
 
 #include <stdint.h>
 
@@ -41,7 +41,7 @@ public:
      *
      * This will be called instead of HttpConnectionClosed().
      */
-    virtual void HttpConnectionError(GError *error) = 0;
+    virtual void HttpConnectionError(std::exception_ptr e) = 0;
 
     virtual void HttpConnectionClosed() = 0;
 };

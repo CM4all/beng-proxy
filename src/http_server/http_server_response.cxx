@@ -7,6 +7,8 @@
 #include "Internal.hxx"
 #include "Request.hxx"
 #include "direct.hxx"
+#include "GException.hxx"
+#include "util/Exception.hxx"
 
 #include <daemon/log.h>
 
@@ -94,8 +96,12 @@ HttpServerConnection::OnError(GError *error)
        won't think we havn't sent a response yet */
     request.cancel_ptr = nullptr;
 
-    g_prefix_error(&error, "error on HTTP response stream: ");
-    Error(error);
+    try {
+        ThrowGError(*error);
+    } catch (...) {
+        Error(NestException(std::current_exception(),
+                            std::runtime_error("error on HTTP response stream")));
+    }
 }
 
 void

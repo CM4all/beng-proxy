@@ -9,13 +9,15 @@
 #include "Request.hxx"
 #include "strmap.hxx"
 #include "address_string.hxx"
-#include "gerrno.h"
 #include "pool.hxx"
 #include "paddress.hxx"
 #include "GException.hxx"
 #include "istream/Bucket.hxx"
+#include "system/Error.hxx"
 #include "util/StringView.hxx"
 #include "util/StaticArray.hxx"
+#include "util/RuntimeError.hxx"
+#include "util/Exception.hxx"
 
 #include <inline/compiler.h>
 #include <daemon/log.h>
@@ -174,7 +176,7 @@ HttpServerConnection::TryWriteBuckets()
            won't think we havn't sent a response yet */
         request.cancel_ptr = nullptr;
 
-        Error(error);
+        Error(ToException(*error));
         result = BucketResult::DESTROYED;
         break;
 
@@ -473,7 +475,7 @@ HttpServerConnection::Cancel()
 }
 
 void
-HttpServerConnection::Error(GError *error)
+HttpServerConnection::Error(std::exception_ptr e)
 {
     assert(handler != nullptr);
 
@@ -485,29 +487,22 @@ HttpServerConnection::Error(GError *error)
         CloseRequest();
 
     if (handler != nullptr) {
-        g_prefix_error(&error, "error on HTTP connection from '%s': ",
-                       remote_host_and_port);
+        e = NestException(e,
+                          FormatRuntimeError("error on HTTP connection from '%s'",
+                                             remote_host_and_port));
 
         auto *_handler = handler;
         handler = nullptr;
-        _handler->HttpConnectionError(error);
-    } else
-        g_error_free(error);
+        _handler->HttpConnectionError(e);
+    }
 
     Delete();
 }
 
 void
-HttpServerConnection::Error(std::exception_ptr e)
-{
-    Error(ToGError(e));
-}
-
-void
 HttpServerConnection::Error(const char *msg)
 {
-    GError *error = g_error_new_literal(http_server_quark(), 0, msg);
-    Error(error);
+    Error(std::make_exception_ptr(std::runtime_error(msg)));
 }
 
 void
@@ -534,8 +529,7 @@ HttpServerConnection::ErrorErrno(const char *msg)
         return;
     }
 
-    GError *error = new_error_errno_msg(msg);
-    Error(error);
+    Error(std::make_exception_ptr(MakeErrno(msg)));
 }
 
 void

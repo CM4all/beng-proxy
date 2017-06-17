@@ -271,8 +271,6 @@ struct HttpServerConnection final : IstreamHandler {
      * HttpServerConnectionHandler::HttpConnectionError(), but not
      * HttpServerConnectionHandler::HttpConnectionClosed().
      */
-    void Error(GError *error);
-
     void Error(std::exception_ptr e);
 
     void Error(const char *msg);
