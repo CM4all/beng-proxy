@@ -5,6 +5,8 @@
 #include "GException.hxx"
 #include "HttpMessageResponse.hxx"
 #include "http_quark.h"
+#include "gerrno.h"
+#include "system/Error.hxx"
 #include "util/Exception.hxx"
 
 void
@@ -31,6 +33,14 @@ ToGError(std::exception_ptr ep)
     } catch (const HttpMessageResponse &e) {
         return g_error_new_literal(http_response_quark(), e.GetStatus(),
                                    msg.c_str());
+    }
+
+    try {
+        FindRetrowNested<std::system_error>(ep);
+    } catch (const std::system_error &e) {
+        if (e.code().category() == ErrnoCategory())
+            return g_error_new_literal(errno_quark(), e.code().value(),
+                                       msg.c_str());
     }
 
     return g_error_new_literal(exception_quark(), 0, msg.c_str());
