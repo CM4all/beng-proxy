@@ -24,13 +24,14 @@ ToGError(const std::exception &e)
 GError *
 ToGError(std::exception_ptr ep)
 {
+    const auto msg = GetFullMessage(ep);
+
     try {
         FindRetrowNested<HttpMessageResponse>(ep);
     } catch (const HttpMessageResponse &e) {
         return g_error_new_literal(http_response_quark(), e.GetStatus(),
-                                   GetFullMessage(ep).c_str());
+                                   msg.c_str());
     }
 
-    return g_error_new_literal(exception_quark(), 0,
-                               GetFullMessage(ep).c_str());
+    return g_error_new_literal(exception_quark(), 0, msg.c_str());
 }
