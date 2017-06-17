@@ -3,7 +3,8 @@
 #include "strmap.hxx"
 #include "product.h"
 
-#include <assert.h>
+#include <gtest/gtest.h>
+
 #include <string.h>
 
 static const char *
@@ -27,13 +28,11 @@ check_strmap(StringMap *map, const char *p)
 {
     const char *q = strmap_to_string(map);
 
-    assert(strcmp(q, p) == 0);
+    ASSERT_STREQ(q, p);
 }
 
-int
-main(gcc_unused int argc, gcc_unused char **argv)
+TEST(HeaderForwardTest, RequestHeaders)
 {
-    StringMap *headers;
     struct header_forward_settings settings;
     settings.modes[HEADER_GROUP_IDENTITY] = HEADER_FORWARD_MANGLE;
     settings.modes[HEADER_GROUP_CAPABILITIES] = HEADER_FORWARD_YES;
@@ -48,7 +47,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
 
     RootPool pool;
 
-    headers = strmap_new(pool);
+    auto *headers = strmap_new(pool);
     headers->Add("from", "foo");
     headers->Add("abc", "def");
     headers->Add("cookie", "a=b");
@@ -73,7 +72,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
                                      false, false, false, false, false,
                                      settings,
                                      nullptr, nullptr, nullptr, nullptr);
-    assert(strcmp(a.Remove("user-agent"), PRODUCT_TOKEN) == 0);
+    ASSERT_STREQ(a.Remove("user-agent"), PRODUCT_TOKEN);
     check_strmap(&a, "accept-charset=utf-8;"
                  "via=1.1 192.168.0.2;x-forwarded-for=192.168.0.3;");
 
@@ -146,7 +145,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
                                      false, false, false, false, false,
                                      settings,
                                      nullptr, nullptr, nullptr, nullptr);
-    assert(strcmp(g.Remove("user-agent"), PRODUCT_TOKEN) == 0);
+    ASSERT_STREQ(g.Remove("user-agent"), PRODUCT_TOKEN);
     check_strmap(&g, "accept=text/*;accept-charset=utf-8;"
                  "from=foo;"
                  "via=1.1 192.168.0.1, 1.1 192.168.0.2;"
@@ -286,9 +285,11 @@ main(gcc_unused int argc, gcc_unused char **argv)
                  "from=foo;"
                  "origin=example.com;"
                  "x-cm4all-beng-peer-subject=CN=hans;");
+}
 
-    /* response headers: nullptr */
-
+TEST(HeaderForwardTest, ResponseHeaders)
+{
+    struct header_forward_settings settings;
     settings.modes[HEADER_GROUP_IDENTITY] = HEADER_FORWARD_NO;
     settings.modes[HEADER_GROUP_CAPABILITIES] = HEADER_FORWARD_NO;
     settings.modes[HEADER_GROUP_COOKIE] = HEADER_FORWARD_NO;
@@ -296,18 +297,13 @@ main(gcc_unused int argc, gcc_unused char **argv)
     settings.modes[HEADER_GROUP_FORWARD] = HEADER_FORWARD_NO;
     settings.modes[HEADER_GROUP_CORS] = HEADER_FORWARD_NO;
     settings.modes[HEADER_GROUP_SECURE] = HEADER_FORWARD_NO;
+    settings.modes[HEADER_GROUP_SSL] = HEADER_FORWARD_NO;
+    settings.modes[HEADER_GROUP_TRANSFORMATION] = HEADER_FORWARD_NO;
+    settings.modes[HEADER_GROUP_LINK] = HEADER_FORWARD_YES;
 
-    auto out1 = forward_response_headers(*pool, HTTP_STATUS_OK,
-                                         StringMap(*pool),
-                                         "192.168.0.2", nullptr,
-                                         nullptr, nullptr,
-                                         settings);
-    assert(out1.Remove("server") == nullptr);
-    check_strmap(&out1, "");
+    RootPool pool;
 
-    /* response headers: basic test */
-
-    headers = strmap_new(pool);
+    auto *headers = strmap_new(pool);
     headers->Add("server", "apache");
     headers->Add("abc", "def");
     headers->Add("set-cookie", "a=b");
@@ -315,11 +311,23 @@ main(gcc_unused int argc, gcc_unused char **argv)
     headers->Add("via", "1.1 192.168.0.1");
     headers->Add("x-cm4all-beng-user", "hans");
 
+    /* response headers: nullptr */
+
+    auto out1 = forward_response_headers(*pool, HTTP_STATUS_OK,
+                                         StringMap(*pool),
+                                         "192.168.0.2", nullptr,
+                                         nullptr, nullptr,
+                                         settings);
+    ASSERT_EQ(out1.Remove("server"), nullptr);
+    check_strmap(&out1, "");
+
+    /* response headers: basic test */
+
     auto out2 = forward_response_headers(*pool, HTTP_STATUS_OK, *headers,
                                          "192.168.0.2", nullptr,
                                          nullptr, nullptr,
                                          settings);
-    assert(out2.Get("server") == nullptr);
+    ASSERT_EQ(out2.Get("server"), nullptr);
     check_strmap(&out2, "content-type=image/jpeg;");
 
     /* response headers: server */

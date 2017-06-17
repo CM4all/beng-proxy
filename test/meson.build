@@ -419,6 +419,7 @@ test('t_header_forward', executable('t_header_forward',
   '../src/session_id.cxx',
   include_directories: inc,
   dependencies: [
+    gtest,
     threads,
     cppunit,
     libpcre,
