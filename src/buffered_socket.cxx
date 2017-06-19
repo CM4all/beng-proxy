@@ -214,7 +214,7 @@ BufferedSocket::SubmitFromBuffer()
         return false;
 
     case BufferedResult::CLOSED:
-        /* the buffered_socket object has been destroyed by the
+        /* the BufferedSocket object has been destroyed by the
            handler */
         return false;
     }

@@ -64,7 +64,7 @@ enum class BufferedResult {
     BLOCKING,
 
     /**
-     * The buffered_socket object has been closed by the handler.
+     * The #BufferedSocket object has been closed by the handler.
      */
     CLOSED,
 };
@@ -94,7 +94,7 @@ enum class DirectResult {
     END,
 
     /**
-     * The buffered_socket object has been closed by the handler.
+     * The #BufferedSocket object has been closed by the handler.
      */
     CLOSED,
 
@@ -327,7 +327,7 @@ public:
 
     /**
      * Close the physical socket, but do not destroy the input buffer.  To
-     * do the latter, call buffered_socket_destroy().
+     * do the latter, call Destroy().
      */
     void Close() {
         assert(!ended);
