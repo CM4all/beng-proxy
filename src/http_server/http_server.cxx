@@ -131,7 +131,7 @@ HttpServerConnection::TryWriteBuckets2(GError **error_r)
         if (nbytes == WRITE_DESTROYED)
             return BucketResult::DESTROYED;
 
-        ErrorErrno("write error on HTTP connection");
+        SocketErrorErrno("write error on HTTP connection");
         return BucketResult::DESTROYED;
     }
 
@@ -302,7 +302,7 @@ http_server_socket_error(std::exception_ptr ep, void *ctx)
 {
     auto *connection = (HttpServerConnection *)ctx;
 
-    connection->Error(ep);
+    connection->SocketError(ep);
 }
 
 static constexpr BufferedSocketHandler http_server_socket_handler = {
@@ -521,7 +521,7 @@ http_server_connection_close(HttpServerConnection *connection)
 }
 
 void
-HttpServerConnection::ErrorErrno(const char *msg)
+HttpServerConnection::SocketErrorErrno(const char *msg)
 {
     if (errno == EPIPE || errno == ECONNRESET) {
         /* don't report this common problem */

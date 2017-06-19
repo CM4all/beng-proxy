@@ -275,7 +275,19 @@ struct HttpServerConnection final : IstreamHandler {
 
     void Error(const char *msg);
 
-    void ErrorErrno(const char *msg);
+    void SocketErrorErrno(const char *msg);
+
+    void SocketError(std::exception_ptr ep) {
+        Error(ep);
+    }
+
+    void SocketError(const char *msg) {
+        Error(msg);
+    }
+
+    void ProtocolError(const char *msg) {
+        Error(msg);
+    }
 
     /* virtual methods from class IstreamHandler */
     size_t OnData(const void *data, size_t length) override;

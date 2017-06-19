@@ -43,7 +43,7 @@ HttpServerConnection::OnData(const void *data, size_t length)
     if (nbytes == WRITE_DESTROYED)
         return 0;
 
-    ErrorErrno("write error on HTTP connection");
+    SocketErrorErrno("write error on HTTP connection");
     return 0;
 }
 

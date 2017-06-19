@@ -35,7 +35,7 @@ HttpServerConnection::ParseRequestLine(const char *line, size_t length)
     assert(!response.pending_drained);
 
     if (unlikely(length < 5)) {
-        Error("malformed request line");
+        ProtocolError("malformed request line");
         return false;
     }
 
@@ -136,7 +136,7 @@ HttpServerConnection::ParseRequestLine(const char *line, size_t length)
     if (method == HTTP_METHOD_NULL) {
         /* invalid request method */
 
-        Error("unrecognized request method");
+        ProtocolError("unrecognized request method");
         return false;
     }
 
@@ -201,7 +201,7 @@ HttpServerConnection::HeadersFinished()
 
         if (upgrade) {
             if (value != nullptr) {
-                Error("cannot upgrade with Content-Length request header");
+                ProtocolError("cannot upgrade with Content-Length request header");
                 return false;
             }
 
@@ -223,7 +223,7 @@ HttpServerConnection::HeadersFinished()
 
             content_length = strtoul(value, &endptr, 10);
             if (unlikely(*endptr != 0 || content_length < 0)) {
-                Error("invalid Content-Length header in HTTP request");
+                ProtocolError("invalid Content-Length header in HTTP request");
                 return false;
             }
 
@@ -237,7 +237,7 @@ HttpServerConnection::HeadersFinished()
             }
         }
     } else if (upgrade) {
-        Error("cannot upgrade chunked request");
+        ProtocolError("cannot upgrade chunked request");
         return false;
     }
 

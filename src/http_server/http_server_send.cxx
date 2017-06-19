@@ -45,9 +45,9 @@ HttpServerConnection::MaybeSend100Continue()
         return true;
 
     if (nbytes == WRITE_ERRNO)
-        ErrorErrno("write error");
+        SocketErrorErrno("write error");
     else if (nbytes != WRITE_DESTROYED)
-        Error("write error");
+        SocketError("write error");
     return false;
 }
 
