@@ -87,7 +87,7 @@ widget_response_format(struct pool &pool, const Widget &widget,
 
     const char *p = headers.Get("content-encoding");
     if (p != nullptr && strcmp(p, "identity") != 0) {
-        g_set_error(error_r, widget_quark(), WIDGET_ERROR_UNSUPPORTED_ENCODING,
+        g_set_error(error_r, widget_quark(), (int)WidgetErrorCode::UNSUPPORTED_ENCODING,
                     "widget '%s' sent non-identity response, cannot embed",
                     widget.GetLogName());
         body->CloseUnused();
@@ -99,7 +99,7 @@ widget_response_format(struct pool &pool, const Widget &widget,
     if (plain_text) {
         if (content_type == nullptr ||
             memcmp(content_type, "text/plain", 10) != 0) {
-            g_set_error(error_r, widget_quark(), WIDGET_ERROR_WRONG_TYPE,
+            g_set_error(error_r, widget_quark(), (int)WidgetErrorCode::WRONG_TYPE,
                         "widget '%s' sent non-text/plain response",
                         widget.GetLogName());
             body->CloseUnused();
@@ -113,7 +113,7 @@ widget_response_format(struct pool &pool, const Widget &widget,
         (strncmp(content_type, "text/", 5) != 0 &&
          strncmp(content_type, "application/xml", 15) != 0 &&
          strncmp(content_type, "application/xhtml+xml", 21) != 0)) {
-        g_set_error(error_r, widget_quark(), WIDGET_ERROR_WRONG_TYPE,
+        g_set_error(error_r, widget_quark(), (int)WidgetErrorCode::WRONG_TYPE,
                     "widget '%s' sent non-text response",
                     widget.GetLogName());
         body->CloseUnused();
@@ -129,7 +129,7 @@ widget_response_format(struct pool &pool, const Widget &widget,
         const char *charset2 = p_strdup(pool, charset);
         Istream *ic = istream_iconv_new(&pool, *body, "utf-8", charset2);
         if (ic == nullptr) {
-            g_set_error(error_r, widget_quark(), WIDGET_ERROR_WRONG_TYPE,
+            g_set_error(error_r, widget_quark(), (int)WidgetErrorCode::WRONG_TYPE,
                         "widget '%s' sent unknown charset '%s'",
                         widget.GetLogName(), charset2);
             body->CloseUnused();
@@ -177,7 +177,7 @@ InlineWidget::OnHttpResponse(http_status_t status, StringMap &&headers,
             body->CloseUnused();
 
         GError *error =
-            g_error_new(widget_quark(), WIDGET_ERROR_UNSPECIFIED,
+            g_error_new(widget_quark(), (int)WidgetErrorCode::UNSPECIFIED,
                         "response status %d from widget '%s'",
                         status, widget.GetLogName());
         inline_widget_close(this, error);
@@ -219,7 +219,7 @@ InlineWidget::SendRequest()
 {
     if (!widget_check_approval(&widget)) {
         GError *error =
-            g_error_new(widget_quark(), WIDGET_ERROR_FORBIDDEN,
+            g_error_new(widget_quark(), (int)WidgetErrorCode::FORBIDDEN,
                         "widget '%s' is not allowed to embed widget class '%s'",
                         widget.parent->GetLogName(),
                         widget.class_name);
@@ -232,7 +232,7 @@ InlineWidget::SendRequest()
         widget.CheckHost(env.untrusted_host, env.site_name);
     } catch (const std::runtime_error &e) {
         GError *error =
-            g_error_new_literal(widget_quark(), WIDGET_ERROR_FORBIDDEN,
+            g_error_new_literal(widget_quark(), (int)WidgetErrorCode::FORBIDDEN,
                                 e.what());
         widget.Cancel();
         istream_delayed_set_abort(*delayed, error);
@@ -241,7 +241,7 @@ InlineWidget::SendRequest()
 
     if (!widget.HasDefaultView()) {
         GError *error =
-            g_error_new(widget_quark(), WIDGET_ERROR_NO_SUCH_VIEW,
+            g_error_new(widget_quark(), (int)WidgetErrorCode::NO_SUCH_VIEW,
                         "No such view in widget '%s': %s",
                         widget.GetLogName(),
                         widget.from_template.view_name);
@@ -276,7 +276,7 @@ InlineWidget::ResolverCallback()
         SendRequest();
     } else {
         GError *error =
-            g_error_new(widget_quark(), WIDGET_ERROR_UNSPECIFIED,
+            g_error_new(widget_quark(), (int)WidgetErrorCode::UNSPECIFIED,
                         "failed to look up widget class '%s'",
                         widget.class_name);
         widget.Cancel();

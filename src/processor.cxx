@@ -394,7 +394,7 @@ processor_lookup_widget(struct pool &caller_pool,
 
     if ((options & PROCESSOR_CONTAINER) == 0) {
         GError *error =
-            g_error_new_literal(widget_quark(), WIDGET_ERROR_NOT_A_CONTAINER,
+            g_error_new_literal(widget_quark(), (int)WidgetErrorCode::NOT_A_CONTAINER,
                                 "Not a container");
         handler.WidgetLookupError(error);
         return;

@@ -48,28 +48,28 @@ response_dispatch_error(Request &request, GError *error)
     }
 
     if (error->domain == widget_quark()) {
-        switch ((enum widget_error)error->code) {
-        case WIDGET_ERROR_UNSPECIFIED:
+        switch (WidgetErrorCode(error->code)) {
+        case WidgetErrorCode::UNSPECIFIED:
             break;
 
-        case WIDGET_ERROR_WRONG_TYPE:
-        case WIDGET_ERROR_UNSUPPORTED_ENCODING:
+        case WidgetErrorCode::WRONG_TYPE:
+        case WidgetErrorCode::UNSUPPORTED_ENCODING:
             response_dispatch_error(request, error, HTTP_STATUS_BAD_GATEWAY,
                                     "Malformed widget response");
             return;
 
-        case WIDGET_ERROR_NO_SUCH_VIEW:
+        case WidgetErrorCode::NO_SUCH_VIEW:
             response_dispatch_error(request, error, HTTP_STATUS_NOT_FOUND,
                                     "No such view");
             return;
 
-        case WIDGET_ERROR_NOT_A_CONTAINER:
+        case WidgetErrorCode::NOT_A_CONTAINER:
             response_dispatch_message(request, HTTP_STATUS_NOT_FOUND,
                                       p_strdup(&request.pool,
                                                error->message));
             return;
 
-        case WIDGET_ERROR_FORBIDDEN:
+        case WidgetErrorCode::FORBIDDEN:
             response_dispatch_error(request, error, HTTP_STATUS_FORBIDDEN,
                                     "Forbidden");
             return;

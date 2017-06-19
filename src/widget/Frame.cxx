@@ -33,7 +33,7 @@ frame_top_widget(struct pool *pool, Widget *widget,
 
     if (!widget_check_approval(widget)) {
         GError *error =
-            g_error_new(widget_quark(), WIDGET_ERROR_FORBIDDEN,
+            g_error_new(widget_quark(), (int)WidgetErrorCode::FORBIDDEN,
                         "widget '%s' is not allowed to embed widget '%s'",
                         widget->parent->GetLogName(),
                         widget->GetLogName());
@@ -46,7 +46,7 @@ frame_top_widget(struct pool *pool, Widget *widget,
         widget->CheckHost(env->untrusted_host, env->site_name);
     } catch (const std::runtime_error &e) {
         GError *error =
-            g_error_new_literal(widget_quark(), WIDGET_ERROR_FORBIDDEN,
+            g_error_new_literal(widget_quark(), (int)WidgetErrorCode::FORBIDDEN,
                                 e.what());
         widget->Cancel();
         handler.InvokeError(error);
@@ -83,7 +83,7 @@ frame_parent_widget(struct pool *pool, Widget *widget, const char *id,
            widget if it is not a container */
 
         GError *error =
-            g_error_new(widget_quark(), WIDGET_ERROR_NOT_A_CONTAINER,
+            g_error_new(widget_quark(), (int)WidgetErrorCode::NOT_A_CONTAINER,
                         "frame within non-container requested");
         widget->Cancel();
         handler.WidgetLookupError(error);
@@ -92,7 +92,7 @@ frame_parent_widget(struct pool *pool, Widget *widget, const char *id,
 
     if (!widget_check_approval(widget)) {
         GError *error =
-            g_error_new(widget_quark(), WIDGET_ERROR_FORBIDDEN,
+            g_error_new(widget_quark(), (int)WidgetErrorCode::FORBIDDEN,
                         "widget '%s' is not allowed to embed widget '%s'",
                         widget->parent->GetLogName(),
                         widget->GetLogName());

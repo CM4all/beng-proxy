@@ -7,35 +7,35 @@
 
 #include <glib.h>
 
-enum widget_error {
-    WIDGET_ERROR_UNSPECIFIED,
+enum class WidgetErrorCode {
+    UNSPECIFIED,
 
     /**
      * The content-type of the server's response does not meet our
      * expectations.
      */
-    WIDGET_ERROR_WRONG_TYPE,
+    WRONG_TYPE,
 
     /**
      * The response body is encoded in an unsupported way.
      */
-    WIDGET_ERROR_UNSUPPORTED_ENCODING,
+    UNSUPPORTED_ENCODING,
 
     /**
      * The requested view does not exist.
      */
-    WIDGET_ERROR_NO_SUCH_VIEW,
+    NO_SUCH_VIEW,
 
     /**
      * Looking for a child widget inside a widget that is not a
      * container.
      */
-    WIDGET_ERROR_NOT_A_CONTAINER,
+    NOT_A_CONTAINER,
 
     /**
      * The client request is forbidden due to formal reasons.
      */
-    WIDGET_ERROR_FORBIDDEN,
+    FORBIDDEN,
 };
 
 static inline GQuark

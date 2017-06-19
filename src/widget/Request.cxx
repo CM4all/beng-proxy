@@ -284,7 +284,7 @@ WidgetRequest::ProcessResponse(http_status_t status,
         body->CloseUnused();
 
         GError *error =
-            g_error_new(widget_quark(), WIDGET_ERROR_WRONG_TYPE,
+            g_error_new(widget_quark(), (int)WidgetErrorCode::WRONG_TYPE,
                         "widget '%s' sent non-HTML response",
                         widget.GetLogName());
         DispatchError(error);
@@ -331,7 +331,7 @@ WidgetRequest::CssProcessResponse(http_status_t status,
         body->CloseUnused();
 
         GError *error =
-            g_error_new(widget_quark(), WIDGET_ERROR_WRONG_TYPE,
+            g_error_new(widget_quark(), (int)WidgetErrorCode::WRONG_TYPE,
                         "widget '%s' sent non-CSS response",
                         widget.GetLogName());
         DispatchError(error);
@@ -358,7 +358,7 @@ WidgetRequest::TextProcessResponse(http_status_t status,
         body->CloseUnused();
 
         GError *error =
-            g_error_new(widget_quark(), WIDGET_ERROR_WRONG_TYPE,
+            g_error_new(widget_quark(), (int)WidgetErrorCode::WRONG_TYPE,
                         "widget '%s' sent non-text response",
                         widget.GetLogName());
         DispatchError(error);
@@ -410,7 +410,7 @@ WidgetRequest::TransformResponse(http_status_t status,
             body->CloseUnused();
 
         GError *error =
-            g_error_new(widget_quark(), WIDGET_ERROR_UNSUPPORTED_ENCODING,
+            g_error_new(widget_quark(), (int)WidgetErrorCode::UNSUPPORTED_ENCODING,
                         "widget '%s' sent non-identity response, "
                         "cannot transform",
                         widget.GetLogName());
@@ -475,7 +475,7 @@ WidgetRequest::DispatchResponse(http_status_t status, StringMap &&headers,
             body->CloseUnused();
 
         GError *error =
-            g_error_new(widget_quark(), WIDGET_ERROR_NOT_A_CONTAINER,
+            g_error_new(widget_quark(), (int)WidgetErrorCode::NOT_A_CONTAINER,
                         "Cannot process container widget response of %s",
                         widget.GetLogName());
         lookup_handler->WidgetLookupError(error);
@@ -513,7 +513,7 @@ WidgetRequest::UpdateView(StringMap &headers, GError **error_r)
                exist, bail out */
 
             daemon_log(4, "No such view: %s\n", view_name);
-            g_set_error(error_r, widget_quark(), WIDGET_ERROR_NO_SUCH_VIEW,
+            g_set_error(error_r, widget_quark(), (int)WidgetErrorCode::NO_SUCH_VIEW,
                         "No such view: %s", view_name);
             return false;
         }
@@ -528,7 +528,7 @@ WidgetRequest::UpdateView(StringMap &headers, GError **error_r)
            the output is not processable; if it is, we may expose
            internal widget parameters */
 
-        g_set_error(error_r, widget_quark(), WIDGET_ERROR_FORBIDDEN,
+        g_set_error(error_r, widget_quark(), (int)WidgetErrorCode::FORBIDDEN,
                     "view '%s' of widget class '%s' cannot be requested "
                     "because the response is processable",
                     widget.GetTransformationView()->name,
@@ -626,7 +626,7 @@ WidgetRequest::SendRequest()
             view_name = "[default]";
 
         GError *error =
-            g_error_new(widget_quark(), WIDGET_ERROR_UNSPECIFIED,
+            g_error_new(widget_quark(), (int)WidgetErrorCode::UNSPECIFIED,
                         "Widget '%s' view '%s' does not have an address",
                         widget.GetLogName(), view_name);
         DispatchError(error);

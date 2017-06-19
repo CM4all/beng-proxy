@@ -63,7 +63,7 @@ Widget::CopyFromRequest(struct processor_env &env, GError **error_r)
             from_request.path_info =
                 uri_compress(*env.pool, from_request.path_info);
             if (from_request.path_info == nullptr) {
-                g_set_error(error_r, widget_quark(), WIDGET_ERROR_FORBIDDEN,
+                g_set_error(error_r, widget_quark(), (int)WidgetErrorCode::FORBIDDEN,
                             "path compression failed");
                 return false;
             }
