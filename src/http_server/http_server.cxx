@@ -529,7 +529,11 @@ HttpServerConnection::SocketErrorErrno(const char *msg)
         return;
     }
 
-    Error(std::make_exception_ptr(MakeErrno(msg)));
+    try {
+        throw MakeErrno(msg);
+    } catch (...) {
+        Error(std::make_exception_ptr(HttpServerSocketError()));
+    }
 }
 
 void

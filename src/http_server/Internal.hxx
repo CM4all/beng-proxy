@@ -7,6 +7,7 @@
 #ifndef __BENG_HTTP_SERVER_INTERNAL_H
 #define __BENG_HTTP_SERVER_INTERNAL_H
 
+#include "Error.hxx"
 #include "http_server.hxx"
 #include "http_body.hxx"
 #include "filtered_socket.hxx"
@@ -15,6 +16,7 @@
 #include "event/DeferEvent.hxx"
 #include "istream/Pointer.hxx"
 #include "util/Cancellable.hxx"
+#include "util/Exception.hxx"
 
 #include <http/method.h>
 
@@ -277,16 +279,21 @@ struct HttpServerConnection final : IstreamHandler {
 
     void SocketErrorErrno(const char *msg);
 
-    void SocketError(std::exception_ptr ep) {
-        Error(ep);
+    template<typename T>
+    void SocketError(T &&t) {
+        try {
+            ThrowException(std::forward<T>(t));
+        } catch (...) {
+            Error(std::make_exception_ptr(HttpServerSocketError()));
+        }
     }
 
     void SocketError(const char *msg) {
-        Error(msg);
+        SocketError(std::runtime_error(msg));
     }
 
     void ProtocolError(const char *msg) {
-        Error(msg);
+        Error(std::make_exception_ptr(HttpServerProtocolError(msg)));
     }
 
     /* virtual methods from class IstreamHandler */
