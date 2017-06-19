@@ -14,6 +14,7 @@
 #include "handler.hxx"
 #include "access_log.hxx"
 #include "drop.hxx"
+#include "SocketProtocolError.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/StaticSocketAddress.hxx"
@@ -77,6 +78,12 @@ HttpServerLogLevel(std::exception_ptr e)
             if (se.code().category() == ErrnoCategory() &&
                 se.code().value() == ECONNRESET)
                 return 4;
+        }
+
+        try {
+            FindRetrowNested<SocketProtocolError>(e);
+        } catch (...) {
+            return 4;
         }
     }
 

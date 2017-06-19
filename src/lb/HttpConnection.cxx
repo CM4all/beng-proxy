@@ -14,6 +14,7 @@
 #include "http_server/Request.hxx"
 #include "http_server/Handler.hxx"
 #include "http_server/Error.hxx"
+#include "SocketProtocolError.hxx"
 #include "access_log.hxx"
 #include "pool.hxx"
 #include "address_string.hxx"
@@ -59,6 +60,13 @@ HttpServerLogLevel(std::exception_ptr e)
             if (se.code().category() == ErrnoCategory() &&
                 se.code().value() == ECONNRESET)
                 return 4;
+            return 4;
+        }
+
+        try {
+            FindRetrowNested<SocketProtocolError>(e);
+        } catch (...) {
+            return 4;
         }
     }
 
