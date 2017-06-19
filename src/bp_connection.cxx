@@ -58,6 +58,21 @@ close_connection(BpConnection *connection)
                                   BpConnection::Disposer());
 }
 
+gcc_pure
+static int
+HttpServerLogLevel(std::exception_ptr e)
+{
+    try {
+        FindRetrowNested<std::system_error>(e);
+    } catch (const std::system_error &se) {
+        if (se.code().category() == ErrnoCategory() &&
+            se.code().value() == ECONNRESET)
+            return 4;
+    }
+
+    return 2;
+}
+
 
 /*
  * http connection handler
@@ -95,17 +110,7 @@ BpConnection::HttpConnectionError(std::exception_ptr e)
 {
     http = nullptr;
 
-    int level = 2;
-
-    try {
-        FindRetrowNested<std::system_error>(e);
-    } catch (const std::system_error &se) {
-        if (se.code().category() == ErrnoCategory() &&
-            se.code().value() == ECONNRESET)
-            level = 4;
-    }
-
-    daemon_log(level, "%s\n", GetFullMessage(e).c_str());
+    daemon_log(HttpServerLogLevel(e), "%s\n", GetFullMessage(e).c_str());
 
     close_connection(this);
 }

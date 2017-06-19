@@ -40,6 +40,21 @@ LbHttpConnection::LbHttpConnection(struct pool &_pool, LbInstance &_instance,
         client_address = "unknown";
 }
 
+gcc_pure
+static int
+HttpServerLogLevel(std::exception_ptr e)
+{
+    try {
+        FindRetrowNested<std::system_error>(e);
+    } catch (const std::system_error &se) {
+        if (se.code().category() == ErrnoCategory() &&
+            se.code().value() == ECONNRESET)
+            return 4;
+    }
+
+    return 2;
+}
+
 /*
  * public
  *
@@ -212,17 +227,7 @@ LbHttpConnection::LogHttpRequest(HttpServerRequest &request,
 void
 LbHttpConnection::HttpConnectionError(std::exception_ptr e)
 {
-    int level = 2;
-
-    try {
-        FindRetrowNested<std::system_error>(e);
-    } catch (const std::system_error &se) {
-        if (se.code().category() == ErrnoCategory() &&
-            se.code().value() == ECONNRESET)
-            level = 4;
-    }
-
-    Log(level, "Error", e);
+    Log(HttpServerLogLevel(e), "Error", e);
 
     assert(http != nullptr);
     http = nullptr;
