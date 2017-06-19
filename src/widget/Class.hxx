@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_WIDGET_CLASS_HXX
 #define BENG_PROXY_WIDGET_CLASS_HXX
 
-#include "widget_view.hxx"
+#include "View.hxx"
 #include "util/StringSet.hxx"
 
 /**

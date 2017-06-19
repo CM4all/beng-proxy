@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "widget.hxx"
-#include "widget_class.hxx"
+#include "Widget.hxx"
+#include "Class.hxx"
 #include "uri/uri_parser.hxx"
 #include "puri_edit.hxx"
 #include "puri_relative.hxx"

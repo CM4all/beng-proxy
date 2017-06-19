@@ -15,7 +15,7 @@
 #include "delegate/Handler.hxx"
 #include "penv.hxx"
 #include "session.hxx"
-#include "widget_class.hxx"
+#include "widget/View.hxx"
 #include "http_response.hxx"
 #include "glibfwd.hxx"
 #include "util/Cancellable.hxx"

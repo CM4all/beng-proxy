@@ -6,10 +6,10 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "widget_resolver.hxx"
-#include "widget_registry.hxx"
-#include "widget.hxx"
-#include "widget_class.hxx"
+#include "Resolver.hxx"
+#include "Registry.hxx"
+#include "Widget.hxx"
+#include "Class.hxx"
 #include "pool.hxx"
 #include "util/Cancellable.hxx"
 

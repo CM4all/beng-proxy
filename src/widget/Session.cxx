@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "widget.hxx"
+#include "Widget.hxx"
 #include "session.hxx"
 #include "tpool.hxx"
 

@@ -2,7 +2,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "widget_class.hxx"
+#include "Class.hxx"
 #include "util/RuntimeError.hxx"
 
 #include <string.h>

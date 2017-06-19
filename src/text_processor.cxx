@@ -8,8 +8,8 @@
 #include "strmap.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream_subst.hxx"
-#include "widget.hxx"
-#include "widget_class.hxx"
+#include "widget/Widget.hxx"
+#include "widget/Class.hxx"
 #include "penv.hxx"
 
 #include <assert.h>

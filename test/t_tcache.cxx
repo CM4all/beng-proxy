@@ -5,7 +5,7 @@
 #include "translation/Request.hxx"
 #include "translation/Response.hxx"
 #include "translation/Transformation.hxx"
-#include "widget_view.hxx"
+#include "widget/View.hxx"
 #include "beng-proxy/translation.h"
 #include "http_address.hxx"
 #include "file_address.hxx"

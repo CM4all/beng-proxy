@@ -4,12 +4,13 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "rewrite_uri.hxx"
-#include "penv.hxx"
-#include "widget.hxx"
-#include "widget_resolver.hxx"
-#include "widget_class.hxx"
+#include "RewriteUri.hxx"
+#include "Widget.hxx"
+#include "Resolver.hxx"
+#include "Class.hxx"
+#include "Inline.hxx"
 #include "uri/uri_extract.hxx"
+#include "penv.hxx"
 #include "tpool.hxx"
 #include "escape_class.hxx"
 #include "istream_escape.hxx"
@@ -21,7 +22,6 @@
 #include "istream/istream.hxx"
 #include "strmap.hxx"
 #include "session.hxx"
-#include "inline_widget.hxx"
 #include "pool.hxx"
 #include "pbuffer.hxx"
 #include "util/StringView.hxx"

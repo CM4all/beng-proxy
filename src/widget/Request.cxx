@@ -4,17 +4,17 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "widget_http.hxx"
+#include "Request.hxx"
+#include "Widget.hxx"
+#include "Class.hxx"
+#include "Error.hxx"
+#include "LookupHandler.hxx"
 #include "http_response.hxx"
 #include "pheaders.hxx"
 #include "processor.hxx"
 #include "css_processor.hxx"
 #include "text_processor.hxx"
 #include "penv.hxx"
-#include "widget.hxx"
-#include "widget_class.hxx"
-#include "widget_lookup.hxx"
-#include "widget-quark.h"
 #include "session.hxx"
 #include "cookie_client.hxx"
 #include "ResourceLoader.hxx"

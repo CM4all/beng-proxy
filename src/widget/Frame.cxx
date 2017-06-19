@@ -4,15 +4,15 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "frame.hxx"
-#include "widget_http.hxx"
-#include "widget-quark.h"
+#include "Frame.hxx"
+#include "Request.hxx"
+#include "Error.hxx"
+#include "Widget.hxx"
+#include "Class.hxx"
+#include "Approval.hxx"
+#include "Resolver.hxx"
+#include "LookupHandler.hxx"
 #include "penv.hxx"
-#include "widget.hxx"
-#include "widget_class.hxx"
-#include "widget_approval.hxx"
-#include "widget_resolver.hxx"
-#include "widget_lookup.hxx"
 #include "http_response.hxx"
 #include "istream/istream.hxx"
 #include "session.hxx"

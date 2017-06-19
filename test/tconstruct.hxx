@@ -1,7 +1,7 @@
 #include "translation/Request.hxx"
 #include "translation/Transformation.hxx"
 #include "translation/Response.hxx"
-#include "widget_view.hxx"
+#include "widget/View.hxx"
 #include "http_address.hxx"
 #include "file_address.hxx"
 #include "cgi_address.hxx"

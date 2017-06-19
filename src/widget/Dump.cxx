@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "widget_dump.hxx"
-#include "widget.hxx"
+#include "Dump.hxx"
+#include "Widget.hxx"
 #include "istream/istream_notify.hxx"
 
 #include <daemon/log.h>

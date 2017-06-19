@@ -1,11 +1,9 @@
 /*
- * Widget declarations.
- *
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_WIDGET_QUARK_H
-#define BENG_PROXY_WIDGET_QUARK_H
+#ifndef BENG_PROXY_WIDGET_ERROR_HXX
+#define BENG_PROXY_WIDGET_ERROR_HXX
 
 #include <glib.h>
 
@@ -47,7 +45,7 @@ enum widget_error {
 };
 
 static inline GQuark
-widget_quark(void)
+widget_quark()
 {
     return g_quark_from_static_string("widget");
 }

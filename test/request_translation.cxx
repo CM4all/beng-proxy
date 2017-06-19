@@ -3,7 +3,7 @@
 #include "translation/Request.hxx"
 #include "translation/Response.hxx"
 #include "translation/Transformation.hxx"
-#include "widget_view.hxx"
+#include "widget/View.hxx"
 #include "fb_pool.hxx"
 #include "pool.hxx"
 #include "PInstance.hxx"

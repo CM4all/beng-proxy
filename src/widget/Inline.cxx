@@ -4,14 +4,14 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "inline_widget.hxx"
-#include "widget_http.hxx"
-#include "widget-quark.h"
+#include "Inline.hxx"
+#include "Request.hxx"
+#include "Error.hxx"
+#include "Widget.hxx"
+#include "Class.hxx"
+#include "Resolver.hxx"
+#include "Approval.hxx"
 #include "penv.hxx"
-#include "widget.hxx"
-#include "widget_class.hxx"
-#include "widget_resolver.hxx"
-#include "widget_approval.hxx"
 #include "bp_global.hxx"
 #include "http_util.hxx"
 #include "http_response.hxx"

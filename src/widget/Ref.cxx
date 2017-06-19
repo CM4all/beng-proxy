@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "widget_ref.hxx"
+#include "Ref.hxx"
 #include "pool.hxx"
 #include "util/IterableSplitString.hxx"
 

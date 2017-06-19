@@ -1,16 +1,17 @@
 /*
- * A handler class for looking up a widget in a container.
- *
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_WIDGET_LOOKUP_HXX
-#define BENG_PROXY_WIDGET_LOOKUP_HXX
+#ifndef BENG_PROXY_WIDGET_LOOKUP_HANDLER_HXX
+#define BENG_PROXY_WIDGET_LOOKUP_HANDLER_HXX
 
 #include "glibfwd.hxx"
 
 struct Widget;
 
+/**
+ * A handler class for looking up a widget in a container.
+ */
 class WidgetLookupHandler {
 public:
     virtual void WidgetFound(Widget &widget) = 0;

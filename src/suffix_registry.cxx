@@ -10,7 +10,7 @@
 #include "translation/Handler.hxx"
 #include "translation/Request.hxx"
 #include "translation/Response.hxx"
-#include "widget_view.hxx"
+#include "widget/View.hxx"
 #include "pool.hxx"
 
 struct SuffixRegistryLookup {

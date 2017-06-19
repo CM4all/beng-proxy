@@ -4,10 +4,10 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "widget.hxx"
-#include "widget_class.hxx"
-#include "widget_view.hxx"
-#include "widget_ref.hxx"
+#include "Widget.hxx"
+#include "Class.hxx"
+#include "View.hxx"
+#include "Ref.hxx"
 #include "pool.hxx"
 #include "istream/istream.hxx"
 #include "util/HexFormat.h"

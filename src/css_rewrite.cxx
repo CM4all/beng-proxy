@@ -6,7 +6,7 @@
 
 #include "css_rewrite.hxx"
 #include "css_parser.hxx"
-#include "rewrite_uri.hxx"
+#include "widget/RewriteUri.hxx"
 #include "pool.hxx"
 #include "tpool.hxx"
 #include "istream/istream.hxx"

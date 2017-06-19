@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "widget_view.hxx"
+#include "View.hxx"
 #include "translation/Transformation.hxx"
 #include "AllocatorPtr.hxx"
 

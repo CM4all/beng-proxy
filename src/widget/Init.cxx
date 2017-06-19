@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "widget.hxx"
-#include "widget_class.hxx"
+#include "Widget.hxx"
+#include "Class.hxx"
 
 Widget::Widget(struct pool &_pool,
                const WidgetClass *_cls)

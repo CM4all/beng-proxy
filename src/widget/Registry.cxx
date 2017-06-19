@@ -5,10 +5,9 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "widget_registry.hxx"
-#include "widget_class.hxx"
+#include "Registry.hxx"
+#include "Class.hxx"
 #include "processor.hxx"
-#include "widget.hxx"
 #include "translation/Cache.hxx"
 #include "translation/Handler.hxx"
 #include "translation/Request.hxx"

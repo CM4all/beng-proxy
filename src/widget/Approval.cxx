@@ -4,9 +4,9 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "widget_approval.hxx"
-#include "widget_class.hxx"
-#include "widget.hxx"
+#include "Approval.hxx"
+#include "Class.hxx"
+#include "Widget.hxx"
 
 bool
 widget_init_approval(Widget *widget, bool self_container)
