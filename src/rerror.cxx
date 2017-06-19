@@ -52,7 +52,6 @@ response_dispatch_error(Request &request, GError *error)
         case WIDGET_ERROR_UNSPECIFIED:
             break;
 
-        case WIDGET_ERROR_EMPTY:
         case WIDGET_ERROR_WRONG_TYPE:
         case WIDGET_ERROR_UNSUPPORTED_ENCODING:
             response_dispatch_error(request, error, HTTP_STATUS_BAD_GATEWAY,

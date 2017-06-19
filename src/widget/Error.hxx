@@ -11,12 +11,6 @@ enum widget_error {
     WIDGET_ERROR_UNSPECIFIED,
 
     /**
-     * The widget server did not send a response body, when one was
-     * expected.
-     */
-    WIDGET_ERROR_EMPTY,
-
-    /**
      * The content-type of the server's response does not meet our
      * expectations.
      */
