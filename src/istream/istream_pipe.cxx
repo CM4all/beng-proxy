@@ -39,15 +39,16 @@ public:
     off_t _GetAvailable(bool partial) override;
     void _Read() override;
 
-    bool _FillBucketList(IstreamBucketList &list, GError **error_r) override {
+    void _FillBucketList(IstreamBucketList &list) override {
         if (piped > 0)
-            return Istream::_FillBucketList(list, error_r);
+            return Istream::_FillBucketList(list);
 
-        bool success = input.FillBucketList(list, error_r);
-        if (!success)
+        try {
+            input.FillBucketList(list);
+        } catch (...) {
             Destroy();
-
-        return success;
+            throw;
+        }
     }
 
     size_t _ConsumeBucketList(size_t nbytes) override {

@@ -4,8 +4,7 @@
 
 #include "istream_fail.hxx"
 #include "istream.hxx"
-
-#include <glib.h>
+#include "GException.hxx"
 
 #include <unistd.h>
 
@@ -22,11 +21,10 @@ public:
         DestroyError(error);
     }
 
-    bool _FillBucketList(gcc_unused IstreamBucketList &list,
-                         GError **error_r) override {
-        g_propagate_error(error_r, error);
+    void _FillBucketList(gcc_unused IstreamBucketList &list) override {
+        auto e = ToException(*error);
         Destroy();
-        return false;
+        std::rethrow_exception(e);
     }
 
     void _Close() override {

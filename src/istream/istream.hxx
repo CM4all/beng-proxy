@@ -295,10 +295,10 @@ public:
      * the returned data marks the end of the stream,
      * IstreamBucketList::SetMore() must be called.
      *
-     * @return true on success, false on error (with error_r filled
-     * and this #Istream instance destroyed)
+     * On error, this method destroys the #Istream instance and throws
+     * std::runtime_error.
      */
-    bool FillBucketList(IstreamBucketList &list, GError **error_r) {
+    void FillBucketList(IstreamBucketList &list) {
 #ifndef NDEBUG
         assert(!destroyed);
         assert(!closing);
@@ -309,38 +309,41 @@ public:
         struct pool_notify_state notify;
         pool_notify(&pool, &notify);
         reading = true;
+
+        try {
 #endif
 
-        bool result = _FillBucketList(list, error_r);
+            _FillBucketList(list);
 
 #ifndef NDEBUG
-        if (pool_denotify(&notify) || destroyed) {
-            assert(!result);
-            return result;
+        } catch (...) {
+            if (!pool_denotify(&notify)) {
+                assert(destroyed);
+            }
+
+            throw;
         }
 
-        assert(result);
+        assert(!pool_denotify(&notify));
+        assert(!destroyed);
+        assert(reading);
 
         reading = false;
 
 #if 0
         // TODO: not possible currently due to include dependencies
-        if (result) {
-            size_t total_size = list.GetTotalBufferSize();
-            if ((off_t)total_size > available_partial)
-                available_partial = total_size;
+        size_t total_size = list.GetTotalBufferSize();
+        if ((off_t)total_size > available_partial)
+            available_partial = total_size;
 
-            if (!list.HasMore() && !list.HasNonBuffer()) {
-                if (available_full_set)
-                    assert((off_t)total_size == available_full);
-                else
-                    available_full = total_size;
-            }
+        if (!list.HasMore() && !list.HasNonBuffer()) {
+            if (available_full_set)
+                assert((off_t)total_size == available_full);
+            else
+                available_full = total_size;
         }
 #endif
 #endif
-
-        return result;
     }
 
     /**
@@ -441,7 +444,7 @@ protected:
 
     virtual void _Read() = 0;
 
-    virtual bool _FillBucketList(IstreamBucketList &list, GError **error_r);
+    virtual void _FillBucketList(IstreamBucketList &list);
     virtual size_t _ConsumeBucketList(size_t nbytes);
 
     virtual int _AsFd() {

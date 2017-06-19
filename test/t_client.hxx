@@ -16,6 +16,7 @@
 #include "PInstance.hxx"
 #include "strmap.hxx"
 #include "fb_pool.hxx"
+#include "GException.hxx"
 #include "util/Cast.hxx"
 #include "util/Cancellable.hxx"
 
@@ -164,9 +165,11 @@ struct Context final
 #ifdef USE_BUCKETS
     void DoBuckets() {
         IstreamBucketList list;
-        GError *error = nullptr;
-        if (!body.FillBucketList(list, &error)) {
-            body_error = error;
+
+        try {
+            body.FillBucketList(list);
+        } catch (...) {
+            body_error = ToGError(std::current_exception());
             return;
         }
 

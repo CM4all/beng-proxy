@@ -15,11 +15,10 @@ Istream::~Istream()
 #endif
 }
 
-bool
-Istream::_FillBucketList(IstreamBucketList &list, GError **)
+void
+Istream::_FillBucketList(IstreamBucketList &list)
 {
     list.SetMore();
-    return true;
 }
 
 gcc_noreturn

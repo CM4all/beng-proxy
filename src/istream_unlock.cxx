@@ -23,11 +23,13 @@ public:
         item.Unlock();
     }
 
-    bool _FillBucketList(IstreamBucketList &list, GError **error_r) override {
-        bool success = input.FillBucketList(list, error_r);
-        if (!success)
+    void _FillBucketList(IstreamBucketList &list) override {
+        try {
+            input.FillBucketList(list);
+        } catch (...) {
             Destroy();
-        return success;
+            throw;
+        }
     }
 
     size_t _ConsumeBucketList(size_t nbytes) override {

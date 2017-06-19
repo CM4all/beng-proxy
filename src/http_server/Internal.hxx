@@ -25,7 +25,6 @@ struct HttpServerConnection final : IstreamHandler {
         MORE,
         BLOCKING,
         DEPLETED,
-        ERROR,
         DESTROYED,
     };
 
@@ -247,7 +246,7 @@ struct HttpServerConnection final : IstreamHandler {
      * @return false if the connection has been closed
      */
     bool TryWrite();
-    BucketResult TryWriteBuckets2(GError **error_r);
+    BucketResult TryWriteBuckets2();
     BucketResult TryWriteBuckets();
 
     void CloseRequest();

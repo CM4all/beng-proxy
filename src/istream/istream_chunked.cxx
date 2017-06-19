@@ -37,7 +37,7 @@ public:
     /* virtual methods from class Istream */
 
     void _Read() override;
-    bool _FillBucketList(IstreamBucketList &list, GError **) override;
+    void _FillBucketList(IstreamBucketList &list) override;
     size_t _ConsumeBucketList(size_t nbytes) override;
     void _Close() override;
 
@@ -276,8 +276,8 @@ ChunkedIstream::_Read()
     input.Read();
 }
 
-bool
-ChunkedIstream::_FillBucketList(IstreamBucketList &list, GError **error_r)
+void
+ChunkedIstream::_FillBucketList(IstreamBucketList &list)
 {
     auto b = ReadBuffer();
     if (b.IsEmpty() && missing_from_current_chunk == 0) {
@@ -295,16 +295,17 @@ ChunkedIstream::_FillBucketList(IstreamBucketList &list, GError **error_r)
         assert(input.IsDefined());
 
         IstreamBucketList sub;
-        if (!input.FillBucketList(sub, error_r)) {
+        try {
+            input.FillBucketList(sub);
+        } catch (...) {
             Destroy();
-            return false;
+            throw;
         }
 
         list.SpliceBuffersFrom(sub, missing_from_current_chunk);
     }
 
     list.SetMore();
-    return true;
 }
 
 size_t

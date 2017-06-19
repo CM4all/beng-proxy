@@ -61,9 +61,8 @@ public:
         }
     }
 
-    bool _FillBucketList(IstreamBucketList &list, GError **) override {
+    void _FillBucketList(IstreamBucketList &list) override {
         reader.FillBucketList(list);
-        return true;
     }
 
     size_t _ConsumeBucketList(size_t nbytes) override {

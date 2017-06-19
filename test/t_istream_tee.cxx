@@ -8,6 +8,7 @@
 #include "istream/sink_gstring.hxx"
 #include "istream/Bucket.hxx"
 #include "util/Cancellable.hxx"
+#include "util/Exception.hxx"
 
 #include <glib.h>
 
@@ -251,11 +252,14 @@ test_bucket_error(EventLoop &event_loop, struct pool *pool,
         tee2.SetHandler(second);
 
     IstreamBucketList list;
-    GError *error = nullptr;
-    bool success = tee->FillBucketList(list, &error);
-    assert(!success);
-    assert(error != nullptr);
-    g_error_free(error);
+
+    try {
+        tee->FillBucketList(list);
+        assert(false);
+    } catch (...) {
+        assert(strcmp(GetFullMessage(std::current_exception()).c_str(),
+                      "error") == 0);
+    }
 
     if (close_second_late)
         tee2.Close();

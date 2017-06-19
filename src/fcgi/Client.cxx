@@ -5,6 +5,7 @@
  */
 
 #include "Client.hxx"
+#include "Error.hxx"
 #include "Quark.hxx"
 #include "Protocol.hxx"
 #include "Serialize.hxx"
@@ -226,7 +227,7 @@ struct FcgiClient final : Cancellable, Istream, IstreamHandler, WithInstanceList
 
     off_t _GetAvailable(bool partial) override;
     void _Read() override;
-    bool _FillBucketList(IstreamBucketList &list, GError **) override;
+    void _FillBucketList(IstreamBucketList &list) override;
     size_t _ConsumeBucketList(size_t nbytes) override;
     void _Close() override;
 
@@ -743,15 +744,15 @@ FcgiClient::_Read()
     socket.Read(true);
 }
 
-bool
-FcgiClient::_FillBucketList(IstreamBucketList &list, GError **error_r)
+void
+FcgiClient::_FillBucketList(IstreamBucketList &list)
 {
     if (response.available == 0)
-        return true;
+        return;
 
     if (response.read_state != Response::READ_BODY || response.stderr) {
         list.SetMore();
-        return true;
+        return;
     }
 
     auto b = socket.ReadBuffer();
@@ -779,10 +780,8 @@ FcgiClient::_FillBucketList(IstreamBucketList &list, GError **error_r)
 
                 Destroy();
 
-                g_set_error_literal(error_r, fcgi_quark(), 0,
-                                    "excess data at end of body "
-                                    "from FastCGI application");
-                return false;
+                throw FcgiClientError("excess data at end of body "
+                                      "from FastCGI application");
             }
 
             const size_t remaining = end - data;
@@ -839,8 +838,6 @@ FcgiClient::_FillBucketList(IstreamBucketList &list, GError **error_r)
 
     if (available > 0 || (available < 0 && !found_end_request))
         list.SetMore();
-
-    return true;
 }
 
 size_t

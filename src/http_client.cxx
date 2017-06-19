@@ -34,6 +34,7 @@
 #include "util/CharUtil.hxx"
 #include "util/StringUtil.hxx"
 #include "util/StringView.hxx"
+#include "util/StringFormat.hxx"
 #include "util/StaticArray.hxx"
 
 #include <inline/compiler.h>
@@ -64,7 +65,6 @@ struct HttpClient final : IstreamHandler, Cancellable {
         MORE,
         BLOCKING,
         DEPLETED,
-        ERROR,
         DESTROYED,
     };
 
@@ -86,9 +86,8 @@ struct HttpClient final : IstreamHandler, Cancellable {
             GetClient().Read();
         }
 
-        bool _FillBucketList(IstreamBucketList &list, GError **) override {
+        void _FillBucketList(IstreamBucketList &list) override {
             GetClient().FillBucketList(list);
-            return true;
         }
 
         size_t _ConsumeBucketList(size_t nbytes) override {
@@ -278,10 +277,7 @@ struct HttpClient final : IstreamHandler, Cancellable {
     int AsFD();
     void Close();
 
-    /**
-     * @return false if the connection has been closed
-     */
-    BucketResult TryWriteBuckets2(GError **error_r);
+    BucketResult TryWriteBuckets2();
     BucketResult TryWriteBuckets();
 
     /**
@@ -485,15 +481,18 @@ HttpClient::Close()
 }
 
 inline HttpClient::BucketResult
-HttpClient::TryWriteBuckets2(GError **error_r)
+HttpClient::TryWriteBuckets2()
 {
     if (socket.HasFilter())
         return BucketResult::MORE;
 
     IstreamBucketList list;
-    if (!request.istream.FillBucketList(list, error_r)) {
+
+    try {
+        request.istream.FillBucketList(list);
+    } catch (...) {
         request.istream.Clear();
-        return BucketResult::ERROR;
+        throw;
     }
 
     StaticArray<struct iovec, 64> v;
@@ -529,9 +528,9 @@ HttpClient::TryWriteBuckets2(GError **error_r)
 
         stopwatch_event(stopwatch, "error");
 
-        g_set_error(error_r, http_client_quark(), int(HttpClientErrorCode::IO),
-                    "write error (%s)", strerror(_errno));
-        return BucketResult::ERROR;
+        throw HttpClientError(HttpClientErrorCode::IO,
+                              StringFormat<64>("write error (%s)",
+                                               strerror(_errno)));
     }
 
     size_t consumed = request.istream.ConsumeBucketList(nbytes);
@@ -545,8 +544,17 @@ HttpClient::TryWriteBuckets2(GError **error_r)
 HttpClient::BucketResult
 HttpClient::TryWriteBuckets()
 {
-    GError *error = nullptr;
-    auto result = TryWriteBuckets2(&error);
+    BucketResult result;
+
+    try {
+        result = TryWriteBuckets2();
+    } catch (...) {
+        assert(!request.istream.IsDefined());
+        stopwatch_event(stopwatch, "error");
+        AbortResponse(ToGError(std::current_exception()));
+        return BucketResult::DESTROYED;
+    }
+
     switch (result) {
     case BucketResult::MORE:
         assert(request.istream.IsDefined());
@@ -561,13 +569,6 @@ HttpClient::TryWriteBuckets()
         assert(request.istream.IsDefined());
         request.istream.ClearAndClose();
         socket.ScheduleReadTimeout(true, &http_client_timeout);
-        break;
-
-    case BucketResult::ERROR:
-        assert(!request.istream.IsDefined());
-        stopwatch_event(stopwatch, "error");
-        AbortResponse(error);
-        result = BucketResult::DESTROYED;
         break;
 
     case BucketResult::DESTROYED:
@@ -1090,7 +1091,6 @@ http_client_socket_write(void *ctx)
     case HttpClient::BucketResult::DEPLETED:
         return true;
 
-    case HttpClient::BucketResult::ERROR:
     case HttpClient::BucketResult::DESTROYED:
         return false;
     }
@@ -1368,7 +1368,6 @@ HttpClient::HttpClient(struct pool &_caller_pool, struct pool &_pool,
 
     case HttpClient::BucketResult::BLOCKING:
     case HttpClient::BucketResult::DEPLETED:
-    case HttpClient::BucketResult::ERROR:
     case HttpClient::BucketResult::DESTROYED:
         break;
     }

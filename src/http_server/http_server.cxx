@@ -84,7 +84,7 @@ http_server_request_new(HttpServerConnection *connection,
 }
 
 HttpServerConnection::BucketResult
-HttpServerConnection::TryWriteBuckets2(GError **error_r)
+HttpServerConnection::TryWriteBuckets2()
 {
     assert(IsValid());
     assert(request.read_state != Request::START &&
@@ -96,11 +96,12 @@ HttpServerConnection::TryWriteBuckets2(GError **error_r)
         return BucketResult::MORE;
 
     IstreamBucketList list;
-    if (!response.istream.FillBucketList(list, error_r)) {
-        response.istream.Clear();
 
-        g_prefix_error(error_r, "error on HTTP response stream: ");
-        return BucketResult::ERROR;
+    try {
+        response.istream.FillBucketList(list);
+    } catch (...) {
+        response.istream.Clear();
+        std::throw_with_nested(std::runtime_error("error on HTTP response stream"));
     }
 
     StaticArray<struct iovec, 64> v;
@@ -149,8 +150,21 @@ HttpServerConnection::TryWriteBuckets2(GError **error_r)
 HttpServerConnection::BucketResult
 HttpServerConnection::TryWriteBuckets()
 {
-    GError *error = nullptr;
-    auto result = TryWriteBuckets2(&error);
+    BucketResult result;
+
+    try {
+        result = TryWriteBuckets2();
+    } catch (...) {
+        assert(!response.istream.IsDefined());
+
+        /* we clear this CancellablePointer here so CloseRequest()
+           won't think we havn't sent a response yet */
+        request.cancel_ptr = nullptr;
+
+        Error(std::current_exception());
+        return BucketResult::DESTROYED;
+    }
+
     switch (result) {
     case BucketResult::MORE:
         assert(response.istream.IsDefined());
@@ -167,18 +181,6 @@ HttpServerConnection::TryWriteBuckets()
         response.istream.ClearAndClose();
         if (!ResponseIstreamFinished())
             result = BucketResult::DESTROYED;
-        break;
-
-    case BucketResult::ERROR:
-        assert(!response.istream.IsDefined());
-
-        /* we clear this CancellablePointer here so CloseRequest()
-           won't think we havn't sent a response yet */
-        request.cancel_ptr = nullptr;
-
-        Error(ToException(*error));
-        g_error_free(error);
-        result = BucketResult::DESTROYED;
         break;
 
     case BucketResult::DESTROYED:
@@ -205,7 +207,6 @@ HttpServerConnection::TryWrite()
     case BucketResult::DEPLETED:
         return true;
 
-    case BucketResult::ERROR:
     case BucketResult::DESTROYED:
         return false;
     }

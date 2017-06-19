@@ -39,8 +39,8 @@ struct CatIstream final : public Istream {
             input.Read();
         }
 
-        bool FillBucketList(IstreamBucketList &list, GError **error_r) {
-            return input.FillBucketList(list, error_r);
+        void FillBucketList(IstreamBucketList &list) {
+            input.FillBucketList(list);
         }
 
         size_t ConsumeBucketList(size_t nbytes) {
@@ -150,7 +150,7 @@ struct CatIstream final : public Istream {
     off_t _GetAvailable(bool partial) override;
     off_t _Skip(gcc_unused off_t length) override;
     void _Read() override;
-    bool _FillBucketList(IstreamBucketList &list, GError **error_r) override;
+    void _FillBucketList(IstreamBucketList &list) override;
     size_t _ConsumeBucketList(size_t nbytes) override;
     int _AsFd() override;
     void _Close() override;
@@ -214,24 +214,24 @@ CatIstream::_Read()
     reading = false;
 }
 
-bool
-CatIstream::_FillBucketList(IstreamBucketList &list, GError **error_r)
+void
+CatIstream::_FillBucketList(IstreamBucketList &list)
 {
     assert(!list.HasMore());
 
     for (auto &input : inputs) {
-        if (!input.FillBucketList(list, error_r)) {
+        try {
+            input.FillBucketList(list);
+        } catch (...) {
             inputs.erase(inputs.iterator_to(input));
             CloseAllInputs();
             Destroy();
-            return false;
+            throw;
         }
 
         if (list.HasMore())
             break;
     }
-
-    return true;
 }
 
 size_t

@@ -46,11 +46,9 @@ public:
             DestroyEof();
     }
 
-    bool _FillBucketList(IstreamBucketList &list, GError **) override {
+    void _FillBucketList(IstreamBucketList &list) override {
         if (!data.IsEmpty())
             list.Push(data.ToVoid());
-
-        return true;
     }
 
     size_t _ConsumeBucketList(size_t nbytes) override {

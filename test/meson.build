@@ -564,6 +564,7 @@ test('t_was_client', executable('t_was_client',
   't_was_client.cxx',
   '../src/PInstance.cxx',
   '../src/direct.cxx',
+  '../src/GException.cxx',
   include_directories: inc,
   dependencies: [
     glib,
@@ -608,6 +609,7 @@ test('t_http_cache', executable('t_http_cache',
   '../src/istream_unlock.cxx',
   '../src/istream_rubber.cxx',
   '../src/sink_rubber.cxx',
+  '../src/GException.cxx',
   include_directories: inc,
   dependencies: [
     glib,
@@ -685,11 +687,13 @@ test('t_rubber', executable('t_rubber',
 test('t_sink_rubber', executable('t_sink_rubber',
   't_sink_rubber.cxx',
   '../src/sink_rubber.cxx',
+  '../src/GException.cxx',
   include_directories: inc,
   dependencies: [
     glib,
     cppunit,
     libinline,
+    libhttp,
     declare_dependency(link_with: istream),
   ]))
 
@@ -840,10 +844,10 @@ test('t_processor', executable('t_processor',
   ]))
 
 t_istream_filter = static_library('t_istream_filter',
+  '../src/GException.cxx',
   '../src/PInstance.cxx',
   '../src/direct.cxx',
   '../src/pipe_stock.cxx',
-  '../src/GException.cxx',
   include_directories: inc,
   dependencies: [
     glib,
@@ -856,6 +860,7 @@ t_istream_filter = static_library('t_istream_filter',
 t_istream_filter_deps = [
   glib,
   libinline,
+  declare_dependency(link_with: istream),
   declare_dependency(link_with: t_istream_filter),
 ]
 

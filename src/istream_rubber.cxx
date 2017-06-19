@@ -70,13 +70,12 @@ public:
         }
     }
 
-    bool _FillBucketList(IstreamBucketList &list, GError **) override {
+    void _FillBucketList(IstreamBucketList &list) override {
         const uint8_t *data = (const uint8_t *)rubber_read(&rubber, id);
         const size_t remaining = end - position;
 
         if (remaining > 0)
             list.Push(ConstBuffer<void>(data + position, remaining));
-        return true;
     }
 
     size_t _ConsumeBucketList(size_t nbytes) override {

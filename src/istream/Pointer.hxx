@@ -102,10 +102,10 @@ public:
         stream->Read();
     }
 
-    bool FillBucketList(IstreamBucketList &list, GError **error_r) {
+    void FillBucketList(IstreamBucketList &list) {
         assert(IsDefined());
 
-        return stream->FillBucketList(list, error_r);
+        stream->FillBucketList(list);
     }
 
     size_t ConsumeBucketList(size_t nbytes) {

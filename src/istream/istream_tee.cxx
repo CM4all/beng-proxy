@@ -8,6 +8,7 @@
 #include "Pointer.hxx"
 #include "Bucket.hxx"
 #include "pool.hxx"
+#include "GException.hxx"
 #include "event/DeferEvent.hxx"
 #include "util/Cast.hxx"
 
@@ -72,8 +73,7 @@ struct TeeIstream final : IstreamHandler {
             tee.ReadInput();
         }
 
-        bool _FillBucketList(IstreamBucketList &list,
-                             GError **error_r) override {
+        void _FillBucketList(IstreamBucketList &list) override {
             TeeIstream &tee = GetParent();
 
             if (tee.skip > 0) {
@@ -81,23 +81,23 @@ struct TeeIstream final : IstreamHandler {
                    new buckets */
                 list.SetMore();
                 bucket_list_size = 0;
-                return true;
+                return;
             }
 
             IstreamBucketList sub;
-            GError *error = nullptr;
-            if (!tee.input.FillBucketList(sub, &error)) {
+
+            try {
+                tee.input.FillBucketList(sub);
+            } catch (...) {
                 tee.input.Clear();
                 tee.defer_event.Cancel();
                 enabled = false;
-                tee.PostponeErrorCopyForSecond(error);
+                tee.PostponeErrorCopyForSecond(std::current_exception());
                 Destroy();
-                g_propagate_error(error_r, error);
-                return false;
+                throw;
             }
 
             bucket_list_size = list.SpliceBuffersFrom(sub);
-            return true;
         }
 
         size_t _ConsumeBucketList(size_t nbytes) override {
@@ -124,15 +124,13 @@ struct TeeIstream final : IstreamHandler {
         /**
          * Postponed by PostponeErrorCopyForSecond().
          */
-        GError *postponed_error = nullptr;
+        std::exception_ptr postponed_error;
 
         explicit SecondOutput(struct pool &p, bool _weak):Output(p, _weak) {}
 
         ~SecondOutput() override {
-            if (postponed_error != nullptr) {
-                g_error_free(postponed_error);
+            if (postponed_error)
                 GetParent().defer_event.Cancel();
-            }
         }
 
         TeeIstream &GetParent() {
@@ -201,9 +199,9 @@ struct TeeIstream final : IstreamHandler {
 
             defer_event.Cancel();
 
-            GError *error = second_output.postponed_error;
-            second_output.postponed_error = nullptr;
-            second_output.DestroyError(error);
+            auto error = std::exchange(second_output.postponed_error,
+                                       std::exception_ptr());
+            second_output.DestroyError(ToGError(error));
             return;
         }
 
@@ -220,14 +218,14 @@ struct TeeIstream final : IstreamHandler {
         defer_event.Schedule();
     }
 
-    void PostponeErrorCopyForSecond(GError *error) {
+    void PostponeErrorCopyForSecond(std::exception_ptr e) {
         assert(!first_output.enabled);
 
         if (!second_output.enabled)
             return;
 
-        assert(second_output.postponed_error == nullptr);
-        second_output.postponed_error = g_error_copy(error);
+        assert(!second_output.postponed_error);
+        second_output.postponed_error = e;
         DeferRead();
     }
 
