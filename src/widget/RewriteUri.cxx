@@ -62,7 +62,7 @@ uri_replace_hostname(struct pool &pool, const char *uri, const char *hostname)
                        uri, nullptr)
             : nullptr;
 
-    const char *colon = (const char *)memchr(old_host.data, ':', old_host.size);
+    const char *colon = old_host.Find(':');
     const char *end = colon != nullptr ? colon : old_host.end();
 
     return p_strncat(&pool,

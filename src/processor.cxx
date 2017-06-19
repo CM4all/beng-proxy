@@ -1329,7 +1329,7 @@ XmlProcessor::OnXmlTagFinished(const XmlParserTag &xml_tag)
         const AutoRewindPool auto_rewind(*tpool);
 
         auto value = widget.param.value.ReadStringView();
-        if (memchr(value.data, '&', value.size) != nullptr) {
+        if (value.Find('&') != nullptr) {
             char *q = (char *)p_memdup(tpool, value.data, value.size);
             value.size = unescape_inplace(&html_escape_class, q, value.size);
             value.data = q;
