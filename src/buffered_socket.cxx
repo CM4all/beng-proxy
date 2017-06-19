@@ -6,6 +6,7 @@
  */
 
 #include "buffered_socket.hxx"
+#include "SocketProtocolError.hxx"
 #include "system/Error.hxx"
 #include "util/ConstBuffer.hxx"
 
@@ -17,7 +18,7 @@
 void
 BufferedSocket::ClosedPrematurely()
 {
-    handler->error(std::make_exception_ptr(std::runtime_error("Peer closed the socket prematurely")),
+    handler->error(std::make_exception_ptr(SocketClosedPrematurelyError()),
                    handler_ctx);
 }
 
@@ -182,7 +183,7 @@ BufferedSocket::SubmitFromBuffer()
         }
 
         if (IsFull()) {
-            handler->error(std::make_exception_ptr(std::runtime_error("Input buffer overflow")),
+            handler->error(std::make_exception_ptr(SocketBufferFullError()),
                            handler_ctx);
             return false;
         }
@@ -422,7 +423,7 @@ BufferedSocket::OnSocketTimeout()
     if (handler->timeout != nullptr)
         return handler->timeout(handler_ctx);
 
-    handler->error(std::make_exception_ptr(std::runtime_error("Timeout")),
+    handler->error(std::make_exception_ptr(SocketTimeoutError()),
                    handler_ctx);
     return false;
 }
