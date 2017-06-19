@@ -13,6 +13,7 @@
 #include "http_server/http_server.hxx"
 #include "http_server/Request.hxx"
 #include "http_server/Handler.hxx"
+#include "http_server/Error.hxx"
 #include "access_log.hxx"
 #include "pool.hxx"
 #include "address_string.hxx"
@@ -45,11 +46,20 @@ static int
 HttpServerLogLevel(std::exception_ptr e)
 {
     try {
-        FindRetrowNested<std::system_error>(e);
-    } catch (const std::system_error &se) {
-        if (se.code().category() == ErrnoCategory() &&
-            se.code().value() == ECONNRESET)
-            return 4;
+        FindRetrowNested<HttpServerSocketError>(e);
+    } catch (const HttpServerSocketError &) {
+        e = std::current_exception();
+
+        /* some socket errors caused by our client are less
+           important */
+
+        try {
+            FindRetrowNested<std::system_error>(e);
+        } catch (const std::system_error &se) {
+            if (se.code().category() == ErrnoCategory() &&
+                se.code().value() == ECONNRESET)
+                return 4;
+        }
     }
 
     return 2;
