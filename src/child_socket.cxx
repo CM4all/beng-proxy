@@ -6,7 +6,7 @@
 
 #include "child_socket.hxx"
 #include "io/UniqueFileDescriptor.hxx"
-#include "net/SocketDescriptor.hxx"
+#include "net/UniqueSocketDescriptor.hxx"
 #include "system/Error.hxx"
 
 #include <stdlib.h>
@@ -55,10 +55,10 @@ ChildSocket::Unlink()
     unlink(address.sun_path);
 }
 
-SocketDescriptor
+UniqueSocketDescriptor
 ChildSocket::Connect() const
 {
-    SocketDescriptor fd;
+    UniqueSocketDescriptor fd;
     if (!fd.CreateNonBlock(AF_LOCAL, SOCK_STREAM, 0))
         throw MakeErrno("Failed to create socket");
 

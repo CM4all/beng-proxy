@@ -18,7 +18,7 @@
 #include "spawn/Prepared.hxx"
 #include "GException.hxx"
 #include "event/SocketEvent.hxx"
-#include "net/SocketDescriptor.hxx"
+#include "net/UniqueSocketDescriptor.hxx"
 #include "util/RuntimeError.hxx"
 #include "util/Exception.hxx"
 
@@ -54,7 +54,7 @@ struct LhttpConnection final : HeapStockItem {
 
     struct lease_ref lease_ref;
 
-    SocketDescriptor fd = SocketDescriptor::Undefined();
+    UniqueSocketDescriptor fd;
     SocketEvent event;
 
     explicit LhttpConnection(CreateStockItem c)

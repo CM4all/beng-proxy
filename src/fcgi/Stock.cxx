@@ -20,7 +20,7 @@
 #include "AllocatorPtr.hxx"
 #include "event/SocketEvent.hxx"
 #include "event/Duration.hxx"
-#include "net/SocketDescriptor.hxx"
+#include "net/UniqueSocketDescriptor.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/RuntimeError.hxx"
@@ -91,7 +91,7 @@ struct FcgiConnection final : HeapStockItem {
 
     StockItem *child = nullptr;
 
-    SocketDescriptor fd = SocketDescriptor::Undefined();
+    UniqueSocketDescriptor fd;
     SocketEvent event;
 
     /**

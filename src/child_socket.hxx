@@ -14,6 +14,7 @@
 
 class SocketDescriptor;
 class UniqueFileDescriptor;
+class UniqueSocketDescriptor;
 
 struct ChildSocket {
     struct sockaddr_un address;
@@ -41,7 +42,7 @@ struct ChildSocket {
     /**
      * Throws std::runtime_error on error.
      */
-    SocketDescriptor Connect() const;
+    UniqueSocketDescriptor Connect() const;
 };
 
 #endif

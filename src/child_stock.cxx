@@ -16,7 +16,7 @@
 #include "spawn/Interface.hxx"
 #include "spawn/Prepared.hxx"
 #include "io/UniqueFileDescriptor.hxx"
-#include "net/SocketDescriptor.hxx"
+#include "net/UniqueSocketDescriptor.hxx"
 #include "pool.hxx"
 
 #include <string>
@@ -162,7 +162,7 @@ child_stock_free(StockMap *stock)
     delete s;
 }
 
-SocketDescriptor
+UniqueSocketDescriptor
 child_stock_item_connect(StockItem *_item)
 {
     auto *item = (ChildStockItem *)_item;
