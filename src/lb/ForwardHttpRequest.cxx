@@ -257,17 +257,6 @@ LbRequest::GetStickyHash()
     gcc_unreachable();
 }
 
-/**
- * Is the specified error a server failure, that justifies
- * blacklisting the server for a while?
- */
-static bool
-is_server_failure(GError *error)
-{
-    return error->domain == http_client_quark() &&
-        error->code != HTTP_CLIENT_UNSPECIFIED;
-}
-
 /*
  * HTTP response handler
  *
@@ -308,7 +297,7 @@ LbRequest::OnHttpError(GError *error)
     assert(lease_state != LeaseState::NONE);
     assert(!response_sent);
 
-    if (is_server_failure(error))
+    if (IsHttpClientServerFailure(*error))
         failure_add(tcp_stock_item_get_address(*stock_item));
 
     connection.Log(2, "Error", error);

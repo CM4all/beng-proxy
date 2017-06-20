@@ -64,6 +64,17 @@ http_client_quark(void)
 }
 
 /**
+ * Is the specified error a server failure, that justifies
+ * blacklisting the server for a while?
+ */
+static inline bool
+IsHttpClientServerFailure(const GError &error)
+{
+    return error.domain == http_client_quark() &&
+        error.code != HTTP_CLIENT_UNSPECIFIED;
+}
+
+/**
  * Sends a HTTP request on a socket, and passes the response to the
  * handler.
  *

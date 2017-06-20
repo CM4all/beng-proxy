@@ -162,17 +162,6 @@ private:
     void OnHttpError(GError *error) override;
 };
 
-/**
- * Is the specified error a server failure, that justifies
- * blacklisting the server for a while?
- */
-static bool
-is_server_failure(GError *error)
-{
-    return error->domain == http_client_quark() &&
-        error->code != HTTP_CLIENT_UNSPECIFIED;
-}
-
 /*
  * HTTP response handler
  *
@@ -209,7 +198,7 @@ HttpRequest::OnHttpError(GError *error)
         --retries;
         BeginConnect();
     } else {
-        if (is_server_failure(error))
+        if (IsHttpClientServerFailure(*error))
             failure_set(tcp_stock_item_get_address(*stock_item),
                         FAILURE_RESPONSE,
                         std::chrono::seconds(20));
