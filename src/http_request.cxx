@@ -236,9 +236,9 @@ HttpRequest::OnStockItemReady(StockItem &item)
     if (filter_factory != nullptr) {
         try {
             filter_ctx = filter_factory->CreateFilter();
-        } catch (const std::runtime_error &e) {
+        } catch (...) {
             item.Put(false);
-            Failed(ToGError(e));
+            Failed(ToGError(std::current_exception()));
             return;
         }
     }

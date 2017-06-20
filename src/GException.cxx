@@ -10,13 +10,6 @@
 #include "util/Exception.hxx"
 
 GError *
-ToGError(const std::exception &e)
-{
-    return g_error_new_literal(exception_quark(), 0,
-                               GetFullMessage(e).c_str());
-}
-
-GError *
 ToGError(std::exception_ptr ep)
 {
     const auto msg = GetFullMessage(ep);

@@ -20,9 +20,6 @@ exception_quark()
 }
 
 GError *
-ToGError(const std::exception &e);
-
-GError *
 ToGError(std::exception_ptr ep);
 
 /**
