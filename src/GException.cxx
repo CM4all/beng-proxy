@@ -9,13 +9,6 @@
 #include "system/Error.hxx"
 #include "util/Exception.hxx"
 
-void
-SetGError(GError **error_r, const std::exception &e)
-{
-    g_set_error_literal(error_r, exception_quark(), 0,
-                        GetFullMessage(e).c_str());
-}
-
 GError *
 ToGError(const std::exception &e)
 {

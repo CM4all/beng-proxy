@@ -19,9 +19,6 @@ exception_quark()
     return g_quark_from_static_string("std::exception");
 }
 
-void
-SetGError(GError **error_r, const std::exception &e);
-
 GError *
 ToGError(const std::exception &e);
 
