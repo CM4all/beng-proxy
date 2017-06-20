@@ -105,7 +105,7 @@ failure_init()
 }
 
 void
-failure_deinit(void)
+failure_deinit()
 {
     failures.clear_and_dispose(DeleteDisposer());
 }

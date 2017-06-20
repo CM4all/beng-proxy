@@ -47,7 +47,7 @@ void
 failure_init();
 
 void
-failure_deinit(void);
+failure_deinit();
 
 void
 failure_set(SocketAddress address,
