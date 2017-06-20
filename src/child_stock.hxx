@@ -24,9 +24,12 @@ class SpawnService;
 
 struct ChildStockClass {
     int (*socket_type)(void *info);
-    bool (*prepare)(void *info, UniqueFileDescriptor &&fd,
-                    PreparedChildProcess &p,
-                    GError **error_r);
+
+    /**
+     * Throws std::runtime_error on error.
+     */
+    void (*prepare)(void *info, UniqueFileDescriptor &&fd,
+                    PreparedChildProcess &p);
 };
 
 StockMap *

@@ -167,9 +167,9 @@ FcgiConnection::OnSocketEvent(unsigned events)
  *
  */
 
-static bool
+static void
 fcgi_child_stock_prepare(void *info, UniqueFileDescriptor &&fd,
-                         PreparedChildProcess &p, GError **error_r)
+                         PreparedChildProcess &p)
 {
     const auto &params = *(const FcgiChildParams *)info;
     const ChildOptions &options = params.options;
@@ -189,14 +189,7 @@ fcgi_child_stock_prepare(void *info, UniqueFileDescriptor &&fd,
     for (auto i : params.args)
         p.Append(i);
 
-    try {
-        options.CopyTo(p, true, nullptr);
-    } catch (const std::runtime_error &e) {
-        SetGError(error_r, e);
-        return false;
-    }
-
-    return true;
+    options.CopyTo(p, true, nullptr);
 }
 
 static const ChildStockClass fcgi_child_stock_class = {

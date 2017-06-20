@@ -120,22 +120,14 @@ lhttp_child_stock_socket_type(void *info)
     return type;
 }
 
-static bool
+static void
 lhttp_child_stock_prepare(void *info, UniqueFileDescriptor &&fd,
-                          PreparedChildProcess &p, GError **error_r)
+                          PreparedChildProcess &p)
 {
     const auto &address = *(const LhttpAddress *)info;
 
     p.SetStdin(std::move(fd));
-
-    try {
-        address.CopyTo(p);
-    } catch (const std::runtime_error &e) {
-        SetGError(error_r, e);
-        return false;
-    }
-
-    return true;
+    address.CopyTo(p);
 }
 
 static const ChildStockClass lhttp_child_stock_class = {
