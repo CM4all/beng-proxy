@@ -839,6 +839,13 @@ enum beng_translation_command {
      * #TRANSLATE_LOGIN).
      */
     TRANSLATE_SHELL = 190,
+
+    /**
+     * An opaque token passed from the translation server to the
+     * software (e.g. to be evaluated by a frontend script or to be
+     * matched by a configuration file).
+     */
+    TRANSLATE_TOKEN = 191,
 };
 
 struct beng_translation_header {
