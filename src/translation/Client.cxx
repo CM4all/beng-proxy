@@ -60,7 +60,6 @@ struct TranslateClient final : Cancellable {
     void Release(bool reuse);
 
     void Fail(std::exception_ptr ep);
-    void Fail(const std::exception &e);
 
     BufferedResult Feed(const uint8_t *data, size_t length);
 
@@ -116,12 +115,6 @@ TranslateClient::Fail(std::exception_ptr ep)
     Destroy();
 }
 
-void
-TranslateClient::Fail(const std::exception &e)
-{
-    Fail(std::make_exception_ptr(e));
-}
-
 /*
  * receive response
  *
@@ -154,8 +147,8 @@ try {
     }
 
     return BufferedResult::MORE;
-} catch (const std::runtime_error &e) {
-    Fail(e);
+} catch (...) {
+    Fail(std::current_exception());
     return BufferedResult::CLOSED;
 }
 
@@ -175,7 +168,7 @@ translate_try_write(TranslateClient *client)
         if (gcc_likely(nbytes == WRITE_BLOCKING))
             return true;
 
-        client->Fail(MakeErrno("write error to translation server"));
+        client->Fail(std::make_exception_ptr(MakeErrno("write error to translation server")));
         return false;
     }
 
