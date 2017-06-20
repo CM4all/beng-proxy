@@ -19,6 +19,8 @@
 #include "GException.hxx"
 #include "event/SocketEvent.hxx"
 #include "net/SocketDescriptor.hxx"
+#include "util/RuntimeError.hxx"
+#include "util/Exception.hxx"
 
 #include <daemon/log.h>
 
@@ -166,12 +168,13 @@ lhttp_stock_create(void *ctx, CreateStockItem c, void *info,
         return;
     }
 
-    connection->fd = child_stock_item_connect(connection->child, &error);
-
-    if (!connection->fd.IsDefined()) {
-        g_prefix_error(&error, "failed to connect to LHTTP server '%s': ",
-                       key);
-        connection->InvokeCreateError(error);
+    try {
+        connection->fd = child_stock_item_connect(connection->child);
+    } catch (...) {
+        auto e = NestException(std::current_exception(),
+                               FormatRuntimeError("Failed to connect to LHTTP server '%s'",
+                                                  key));
+        connection->InvokeCreateError(ToGError(e));
         return;
     }
 

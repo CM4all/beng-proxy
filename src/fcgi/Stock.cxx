@@ -23,6 +23,8 @@
 #include "net/SocketDescriptor.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "util/ConstBuffer.hxx"
+#include "util/RuntimeError.hxx"
+#include "util/Exception.hxx"
 
 #include <daemon/log.h>
 
@@ -239,13 +241,14 @@ fcgi_stock_create(void *ctx, CreateStockItem c, void *info,
         return;
     }
 
-    connection->fd = child_stock_item_connect(connection->child, &error);
-    if (!connection->fd.IsDefined()) {
-        g_prefix_error(&error, "failed to connect to FastCGI server '%s': ",
-                       key);
-
+    try {
+        connection->fd = child_stock_item_connect(connection->child);
+    } catch (...) {
+        auto e = NestException(std::current_exception(),
+                               FormatRuntimeError("Failed to connect to FastCGI server '%s'",
+                                                  key));
         connection->kill = true;
-        connection->InvokeCreateError(error);
+        connection->InvokeCreateError(ToGError(e));
         return;
     }
 

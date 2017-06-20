@@ -89,17 +89,18 @@ ChildStockItem::OnChildProcessExit(gcc_unused int status)
 inline void
 ChildStock::Create(CreateStockItem c, void *info)
 {
-    GError *error = nullptr;
-
     auto *item = new ChildStockItem(c, spawn_service);
 
     int socket_type = cls.socket_type != nullptr
         ? cls.socket_type(info)
         : SOCK_STREAM;
 
-    auto fd = item->socket.Create(socket_type, &error);
-    if (!fd.IsDefined()) {
-        item->InvokeCreateError(error);
+    UniqueFileDescriptor fd;
+
+    try {
+        fd = item->socket.Create(socket_type);
+    } catch (...) {
+        item->InvokeCreateError(ToGError(std::current_exception()));
         return;
     }
 
@@ -174,15 +175,16 @@ child_stock_free(StockMap *stock)
 }
 
 SocketDescriptor
-child_stock_item_connect(StockItem *_item, GError **error_r)
+child_stock_item_connect(StockItem *_item)
 {
     auto *item = (ChildStockItem *)_item;
 
-    auto fd = item->socket.Connect(error_r);
-    if (!fd.IsDefined())
+    try {
+        return item->socket.Connect();
+    } catch (...) {
         /* if the connection fails, abandon the child process, don't
            try again - it will never work! */
         item->fade = true;
-
-    return fd;
+        throw;
+    }
 }

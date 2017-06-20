@@ -8,7 +8,6 @@
 #define BENG_PROXY_CHILD_STOCK_HXX
 
 #include "io/FdType.hxx"
-#include "glibfwd.hxx"
 
 #include <inline/compiler.h>
 
@@ -44,11 +43,12 @@ child_stock_free(StockMap *stock);
  * Connect a socket to the given child process.  The socket must be
  * closed before the #stock_item is returned.
  *
- * @return a socket descriptor or -1 on error
+ * Throws std::runtime_error on error.
+ *
+ * @return a socket descriptor
  */
 SocketDescriptor
-child_stock_item_connect(StockItem *item,
-                         GError **error_r);
+child_stock_item_connect(StockItem *item);
 
 gcc_pure
 static inline FdType

@@ -8,7 +8,6 @@
 #define BENG_PROXY_CHILD_SOCKET_HXX
 
 #include "net/SocketAddress.hxx"
-#include "glibfwd.hxx"
 
 #include <sys/socket.h>
 #include <sys/un.h>
@@ -28,9 +27,9 @@ struct ChildSocket {
     }
 
     /**
-     * @return the listener socket descriptor or -1 on error
+     * Throws std::runtime_error on error.
      */
-    UniqueFileDescriptor Create(int socket_type, GError **error_r);
+    UniqueFileDescriptor Create(int socket_type);
 
     void Unlink();
 
@@ -39,7 +38,10 @@ struct ChildSocket {
                              SUN_LEN(&address));
     }
 
-    SocketDescriptor Connect(GError **error_r) const;
+    /**
+     * Throws std::runtime_error on error.
+     */
+    SocketDescriptor Connect() const;
 };
 
 #endif
