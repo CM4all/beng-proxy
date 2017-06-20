@@ -95,31 +95,19 @@ ChildStock::Create(CreateStockItem c, void *info)
         ? cls.socket_type(info)
         : SOCK_STREAM;
 
-    UniqueFileDescriptor fd;
-
     try {
-        fd = item->socket.Create(socket_type);
-    } catch (...) {
-        item->InvokeCreateError(ToGError(std::current_exception()));
-        return;
-    }
+        auto fd = item->socket.Create(socket_type);
 
-    PreparedChildProcess p;
-
-    try {
+        PreparedChildProcess p;
         cls.prepare(info, std::move(fd), p);
-    } catch (...) {
-        item->InvokeCreateError(ToGError(std::current_exception()));
-        return;
-    }
 
-    try {
         item->pid = spawn_service.SpawnChildProcess(item->GetStockName(),
                                                     std::move(p),
                                                     item);
         item->InvokeCreateSuccess();
-    } catch (const std::runtime_error &e) {
-        item->InvokeCreateError(ToGError(e));
+    } catch (...) {
+        item->InvokeCreateError(ToGError(std::current_exception()));
+        return;
     }
 }
 
