@@ -20,6 +20,7 @@
 #include "address_string.hxx"
 #include "thread_socket_filter.hxx"
 #include "thread_pool.hxx"
+#include "uri/uri_verify.hxx"
 #include "ssl/ssl_filter.hxx"
 #include "net/StaticSocketAddress.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
@@ -210,6 +211,12 @@ LbHttpConnection::HandleHttpRequest(HttpServerRequest &request,
 
     request_start_time = std::chrono::steady_clock::now();
     canonical_host = nullptr;
+
+    if (!uri_path_verify_quick(request.uri)) {
+        http_server_send_message(&request, HTTP_STATUS_BAD_REQUEST,
+                                 "Malformed request URI");
+        return;
+    }
 
     HandleHttpRequest(initial_destination, request, cancel_ptr);
 }
