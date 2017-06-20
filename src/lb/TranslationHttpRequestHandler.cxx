@@ -10,7 +10,6 @@
 #include "http_server/Request.hxx"
 #include "translation/Handler.hxx"
 #include "translation/Response.hxx"
-#include "GException.hxx"
 #include "pool.hxx"
 
 /*
@@ -60,7 +59,7 @@ lb_http_translate_response(TranslateResponse &response, void *ctx)
             request.CheckCloseUnusedBody();
 
             c.LogSendError(request,
-                           ToGError(std::runtime_error("No such pool")));
+                           std::make_exception_ptr(std::runtime_error("No such pool")));
             return;
         }
 
@@ -72,7 +71,7 @@ lb_http_translate_response(TranslateResponse &response, void *ctx)
         request.CheckCloseUnusedBody();
 
         c.LogSendError(request,
-                       ToGError(std::runtime_error("Invalid translation server response")));
+                       std::make_exception_ptr(std::runtime_error("Invalid translation server response")));
     }
 }
 
@@ -83,7 +82,7 @@ lb_http_translate_error(std::exception_ptr ep, void *ctx)
 
     r.request.CheckCloseUnusedBody();
 
-    r.connection.LogSendError(r.request, ToGError(ep));
+    r.connection.LogSendError(r.request, ep);
 }
 
 static constexpr TranslateHandler lb_http_translate_handler = {

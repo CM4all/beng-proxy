@@ -168,6 +168,24 @@ LbHttpConnection::LogSendError(HttpServerRequest &request, GError *error)
     SendError(request, error);
 }
 
+void
+LbHttpConnection::SendError(HttpServerRequest &request, std::exception_ptr ep)
+{
+    const char *msg = listener.verbose_response
+        ? p_strdup(request.pool, GetFullMessage(ep).c_str())
+        : "Bad gateway";
+
+    http_server_send_message(&request, HTTP_STATUS_BAD_GATEWAY, msg);
+}
+
+void
+LbHttpConnection::LogSendError(HttpServerRequest &request,
+                               std::exception_ptr ep)
+{
+    Log(2, "Error", ep);
+    SendError(request, ep);
+}
+
 static void
 SendResponse(HttpServerRequest &request,
              const LbSimpleHttpResponse &response)
