@@ -529,7 +529,7 @@ HttpClient::TryWriteBuckets2(GError **error_r)
 
         stopwatch_event(stopwatch, "error");
 
-        g_set_error(error_r, http_client_quark(), HTTP_CLIENT_IO,
+        g_set_error(error_r, http_client_quark(), int(HttpClientErrorCode::IO),
                     "write error (%s)", strerror(_errno));
         return BucketResult::ERROR;
     }
@@ -588,7 +588,8 @@ HttpClient::ParseStatusLine(const char *line, size_t length)
         stopwatch_event(stopwatch, "malformed");
 
         GError *error =
-            g_error_new_literal(http_client_quark(), HTTP_CLIENT_GARBAGE,
+            g_error_new_literal(http_client_quark(),
+                                int(HttpClientErrorCode::GARBAGE),
                                 "malformed HTTP status line");
         AbortResponseHeaders(error);
         return false;
@@ -604,7 +605,8 @@ HttpClient::ParseStatusLine(const char *line, size_t length)
         stopwatch_event(stopwatch, "malformed");
 
         GError *error =
-            g_error_new_literal(http_client_quark(), HTTP_CLIENT_GARBAGE,
+            g_error_new_literal(http_client_quark(),
+                                int(HttpClientErrorCode::GARBAGE),
                                 "no HTTP status found");
         AbortResponseHeaders(error);
         return false;
@@ -615,7 +617,7 @@ HttpClient::ParseStatusLine(const char *line, size_t length)
         stopwatch_event(stopwatch, "malformed");
 
         GError *error =
-            g_error_new(http_client_quark(), HTTP_CLIENT_GARBAGE,
+            g_error_new(http_client_quark(), int(HttpClientErrorCode::GARBAGE),
                         "invalid HTTP status %d",
                         response.status);
         AbortResponseHeaders(error);
@@ -679,7 +681,7 @@ HttpClient::HeadersFinished()
 
                 GError *error =
                     g_error_new_literal(http_client_quark(),
-                                        HTTP_CLIENT_UNSPECIFIED,
+                                        int(HttpClientErrorCode::UNSPECIFIED),
                                         "no Content-Length response header");
                 AbortResponseHeaders(error);
                 return false;
@@ -695,7 +697,7 @@ HttpClient::HeadersFinished()
 
                 GError *error =
                     g_error_new_literal(http_client_quark(),
-                                        HTTP_CLIENT_UNSPECIFIED,
+                                        int(HttpClientErrorCode::UNSPECIFIED),
                                         "invalid Content-Length header in response");
                 AbortResponseHeaders(error);
                 return false;
@@ -872,7 +874,7 @@ HttpClient::FeedHeaders(const void *data, size_t length)
 
         if (request.body == nullptr) {
             GError *error = g_error_new_literal(http_client_quark(),
-                                                HTTP_CLIENT_UNSPECIFIED,
+                                                int(HttpClientErrorCode::UNSPECIFIED),
                                                 "unexpected status 100");
 #ifndef NDEBUG
             /* assertion workaround */
@@ -890,7 +892,7 @@ HttpClient::FeedHeaders(const void *data, size_t length)
 
         if (!IsConnected()) {
             GError *error = g_error_new_literal(http_client_quark(),
-                                                HTTP_CLIENT_UNSPECIFIED,
+                                                int(HttpClientErrorCode::UNSPECIFIED),
                                                 "Peer closed the socket prematurely after status 100");
 #ifndef NDEBUG
             /* assertion workaround */
@@ -1176,7 +1178,8 @@ HttpClient::OnData(const void *data, size_t length)
 
     stopwatch_event(stopwatch, "error");
 
-    GError *error = g_error_new(http_client_quark(), HTTP_CLIENT_IO,
+    GError *error = g_error_new(http_client_quark(),
+                                int(HttpClientErrorCode::IO),
                                 "write error (%s)", strerror(_errno));
     AbortResponse(error);
     return 0;
@@ -1400,7 +1403,7 @@ http_client_request(struct pool &caller_pool, EventLoop &event_loop,
             filter->close(filter_ctx);
 
         GError *error = g_error_new(http_client_quark(),
-                                    HTTP_CLIENT_UNSPECIFIED,
+                                    int(HttpClientErrorCode::UNSPECIFIED),
                                     "malformed request URI '%s'", uri);
         handler.InvokeError(error);
         return;

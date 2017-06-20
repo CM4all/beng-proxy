@@ -26,34 +26,34 @@ class HttpHeaders;
 /**
  * GError codes for http_client_quark().
  */
-enum http_client_error {
-    HTTP_CLIENT_UNSPECIFIED,
+enum class HttpClientErrorCode {
+    UNSPECIFIED,
 
     /**
      * The server has closed the connection before the first response
      * byte.
      */
-    HTTP_CLIENT_REFUSED,
+    REFUSED,
 
     /**
      * The server has closed the connection prematurely.
      */
-    HTTP_CLIENT_PREMATURE,
+    PREMATURE,
 
     /**
      * A socket I/O error has occurred.
      */
-    HTTP_CLIENT_IO,
+    IO,
 
     /**
      * Non-HTTP garbage was received.
      */
-    HTTP_CLIENT_GARBAGE,
+    GARBAGE,
 
     /**
      * The server has failed to respond or accept data in time.
      */
-    HTTP_CLIENT_TIMEOUT,
+    TIMEOUT,
 };
 
 G_GNUC_CONST
@@ -71,7 +71,7 @@ static inline bool
 IsHttpClientServerFailure(const GError &error)
 {
     return error.domain == http_client_quark() &&
-        error.code != HTTP_CLIENT_UNSPECIFIED;
+        HttpClientErrorCode(error.code) != HttpClientErrorCode::UNSPECIFIED;
 }
 
 /**

@@ -188,7 +188,7 @@ HttpRequest::OnHttpError(GError *error)
 
     if (retries > 0 &&
         error->domain == http_client_quark() &&
-        error->code == HTTP_CLIENT_REFUSED) {
+        HttpClientErrorCode(error->code) == HttpClientErrorCode::REFUSED) {
         /* the server has closed the connection prematurely, maybe
            because it didn't want to get any further requests on that
            TCP connection.  Let's try again. */

@@ -1149,7 +1149,7 @@ test_bogus_100(Context<Connection> &c)
     assert(c.aborted);
     assert(c.request_error != nullptr);
     assert(c.request_error->domain == http_client_quark());
-    assert(c.request_error->code == HTTP_CLIENT_UNSPECIFIED);
+    assert(HttpClientErrorCode(c.request_error->code) == HttpClientErrorCode::UNSPECIFIED);
     assert(strstr(c.request_error->message, "unexpected status 100") != nullptr);
     g_error_free(c.request_error);
     assert(c.body_error == nullptr);
@@ -1182,7 +1182,7 @@ test_twice_100(Context<Connection> &c)
     assert(c.aborted);
     assert(c.request_error != nullptr);
     assert(c.request_error->domain == http_client_quark());
-    assert(c.request_error->code == HTTP_CLIENT_UNSPECIFIED);
+    assert(HttpClientErrorCode(c.request_error->code) == HttpClientErrorCode::UNSPECIFIED);
     assert(strstr(c.request_error->message, "unexpected status 100") != nullptr);
     g_error_free(c.request_error);
     assert(c.body_error == nullptr);
