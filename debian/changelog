@@ -4,7 +4,7 @@ cm4all-beng-proxy (12.0.22) unstable; urgency=low
   * was: fix assertion failure
   * translation: add packets SHELL, TOKEN
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 20 Jun 2017 21:59:58 -0000
 
 cm4all-beng-proxy (12.0.21) unstable; urgency=low
 
