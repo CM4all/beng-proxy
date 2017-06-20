@@ -170,7 +170,7 @@ FcgiConnection::OnSocketEvent(unsigned events)
  */
 
 static void
-fcgi_child_stock_prepare(void *info, UniqueFileDescriptor &&fd,
+fcgi_child_stock_prepare(void *info, UniqueSocketDescriptor &&fd,
                          PreparedChildProcess &p)
 {
     const auto &params = *(const FcgiChildParams *)info;

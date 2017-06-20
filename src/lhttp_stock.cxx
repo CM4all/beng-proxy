@@ -123,7 +123,7 @@ lhttp_child_stock_socket_type(void *info)
 }
 
 static void
-lhttp_child_stock_prepare(void *info, UniqueFileDescriptor &&fd,
+lhttp_child_stock_prepare(void *info, UniqueSocketDescriptor &&fd,
                           PreparedChildProcess &p)
 {
     const auto &address = *(const LhttpAddress *)info;

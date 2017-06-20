@@ -17,7 +17,6 @@ class StockMap;
 struct StockItem;
 struct PreparedChildProcess;
 class UniqueSocketDescriptor;
-class UniqueFileDescriptor;
 class EventLoop;
 class SpawnService;
 
@@ -27,7 +26,7 @@ struct ChildStockClass {
     /**
      * Throws std::runtime_error on error.
      */
-    void (*prepare)(void *info, UniqueFileDescriptor &&fd,
+    void (*prepare)(void *info, UniqueSocketDescriptor &&fd,
                     PreparedChildProcess &p);
 };
 

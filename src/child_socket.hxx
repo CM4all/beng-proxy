@@ -12,8 +12,6 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 
-class SocketDescriptor;
-class UniqueFileDescriptor;
 class UniqueSocketDescriptor;
 
 struct ChildSocket {
@@ -30,7 +28,7 @@ struct ChildSocket {
     /**
      * Throws std::runtime_error on error.
      */
-    UniqueFileDescriptor Create(int socket_type);
+    UniqueSocketDescriptor Create(int socket_type);
 
     void Unlink();
 

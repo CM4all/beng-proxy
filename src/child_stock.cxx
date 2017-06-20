@@ -15,7 +15,6 @@
 #include "GException.hxx"
 #include "spawn/Interface.hxx"
 #include "spawn/Prepared.hxx"
-#include "io/UniqueFileDescriptor.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "pool.hxx"
 
