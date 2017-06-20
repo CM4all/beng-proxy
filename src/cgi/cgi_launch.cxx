@@ -149,28 +149,17 @@ cgi_launch(EventLoop &event_loop, struct pool *pool,
            const CgiAddress *address,
            const char *remote_addr,
            const StringMap &headers, Istream *body,
-           SpawnService &spawn_service,
-           GError **error_r)
+           SpawnService &spawn_service)
 {
     PreparedChildProcess p;
-
-    try {
-        PrepareCgi(*pool, p, method,
-                   *address, remote_addr, headers,
-                   body != nullptr ? body->GetAvailable(false) : -1);
-    } catch (const std::runtime_error &e) {
-        SetGError(error_r, e);
-        return nullptr;
-    }
+    PrepareCgi(*pool, p, method,
+               *address, remote_addr, headers,
+               body != nullptr ? body->GetAvailable(false) : -1);
 
     Istream *input;
-    int pid = SpawnChildProcess(event_loop, pool,
-                                cgi_address_name(address), body, &input,
-                                std::move(p),
-                                spawn_service,
-                                error_r);
-    if (pid < 0)
-        return nullptr;
-
+    SpawnChildProcess(event_loop, pool,
+                      cgi_address_name(address), body, &input,
+                      std::move(p),
+                      spawn_service);
     return input;
 }

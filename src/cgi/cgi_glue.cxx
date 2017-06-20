@@ -11,9 +11,8 @@
 #include "abort_flag.hxx"
 #include "stopwatch.hxx"
 #include "http_response.hxx"
+#include "GException.hxx"
 #include "istream/istream.hxx"
-
-#include <glib.h>
 
 void
 cgi_new(SpawnService &spawn_service, EventLoop &event_loop,
@@ -28,19 +27,20 @@ cgi_new(SpawnService &spawn_service, EventLoop &event_loop,
 
     AbortFlag abort_flag(cancel_ptr);
 
-    GError *error = nullptr;
-    Istream *input = cgi_launch(event_loop, pool, method, address,
+    Istream *input;
+
+    try {
+        input = cgi_launch(event_loop, pool, method, address,
                                 remote_addr, headers, body,
-                                spawn_service, &error);
-    if (input == nullptr) {
+                                spawn_service);
+    } catch (...) {
         if (abort_flag.aborted) {
             /* the operation was aborted - don't call the
                http_response_handler */
-            g_error_free(error);
             return;
         }
 
-        handler.InvokeError(error);
+        handler.InvokeError(ToGError(std::current_exception()));
         return;
     }
 

@@ -102,20 +102,15 @@ pipe_filter(SpawnService &spawn_service, EventLoop &event_loop,
     for (auto i : args)
         p.Append(i);
 
+    Istream *response;
+
     try {
         options.CopyTo(p, true, nullptr);
-    } catch (const std::runtime_error &e) {
-        handler.InvokeError(ToGError(e));
-        return;
-    }
-
-    Istream *response;
-    GError *error = nullptr;
-    pid_t pid = SpawnChildProcess(event_loop, pool, path, body, &response,
-                                  std::move(p),
-                                  spawn_service, &error);
-    if (pid < 0) {
-        handler.InvokeError(error);
+        SpawnChildProcess(event_loop, pool, path, body, &response,
+                          std::move(p),
+                          spawn_service);
+    } catch (...) {
+        handler.InvokeError(ToGError(std::current_exception()));
         return;
     }
 

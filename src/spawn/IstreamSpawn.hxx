@@ -21,18 +21,19 @@ class Istream;
  * contents of another istream to the child's standard input.
  * Registers the child process and invokes a callback when it exits.
  *
+ * Throws std::runtime_error on error.
+ *
  * @param name a symbolic name for the process to be used in log
  * messages
  * @param input a stream which will be passed as standard input to the
  * new process; will be consumed or closed by this function in any
  * case
- * @return the child pid or -1 on failure
+ * @return the child pid
  */
 int
 SpawnChildProcess(EventLoop &event_loop, struct pool *pool, const char *name,
                   Istream *input, Istream **output_r,
                   PreparedChildProcess &&prepared,
-                  SpawnService &spawn_service,
-                  GError **error_r);
+                  SpawnService &spawn_service);
 
 #endif

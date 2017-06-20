@@ -19,6 +19,7 @@
 #include "pool.hxx"
 #include "fb_pool.hxx"
 #include "SliceFifoBuffer.hxx"
+#include "system/Error.hxx"
 #include "util/Cast.hxx"
 
 #ifdef __linux
@@ -383,8 +384,7 @@ int
 SpawnChildProcess(EventLoop &event_loop, struct pool *pool, const char *name,
                   Istream *input, Istream **output_r,
                   PreparedChildProcess &&prepared,
-                  SpawnService &spawn_service,
-                  GError **error_r)
+                  SpawnService &spawn_service)
 {
     if (input != nullptr) {
         int fd = input->AsFd();
@@ -398,9 +398,9 @@ SpawnChildProcess(EventLoop &event_loop, struct pool *pool, const char *name,
     if (input != nullptr) {
         UniqueFileDescriptor stdin_r;
         if (!UniqueFileDescriptor::CreatePipe(stdin_r, stdin_pipe)) {
-            set_error_errno_msg(error_r, "pipe() failed");
+            int e = errno;
             input->CloseUnused();
-            return -1;
+            throw MakeErrno(e, "pipe() failed");
         }
 
         prepared.SetStdin(std::move(stdin_r));
@@ -410,12 +410,12 @@ SpawnChildProcess(EventLoop &event_loop, struct pool *pool, const char *name,
 
     UniqueFileDescriptor stdout_pipe, stdout_w;
     if (!UniqueFileDescriptor::CreatePipe(stdout_pipe, stdout_w)) {
-        set_error_errno_msg(error_r, "pipe() failed");
+        int e = errno;
 
         if (input != nullptr)
             input->CloseUnused();
 
-        return -1;
+        throw MakeErrno(e, "pipe() failed");
     }
 
     prepared.SetStdout(std::move(stdout_w));
@@ -436,11 +436,10 @@ SpawnChildProcess(EventLoop &event_loop, struct pool *pool, const char *name,
         *output_r = f;
 
         return pid;
-    } catch (const std::runtime_error &e) {
+    } catch (...) {
         if (input != nullptr)
             input->CloseUnused();
 
-        SetGError(error_r, e);
-        return -1;
+        throw;
     }
 }
