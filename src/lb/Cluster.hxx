@@ -106,6 +106,12 @@ public:
 private:
     void FillActive();
 
+    /**
+     * Pick the next active Zeroconf member in a round-robin way.
+     * Does not update the #StickyCache.
+     */
+    const MemberMap::value_type &PickNextZeroconf();
+
     void ServiceBrowserCallback(AvahiServiceBrowser *b,
                                 AvahiIfIndex interface,
                                 AvahiProtocol protocol,

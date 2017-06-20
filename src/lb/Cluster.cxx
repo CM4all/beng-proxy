@@ -155,6 +155,18 @@ LbCluster::~LbCluster()
         avahi_client.RemoveListener(*this);
 }
 
+const LbCluster::MemberMap::value_type &
+LbCluster::PickNextZeroconf()
+{
+    assert(!active_members.empty());
+
+    ++last_pick;
+    if (last_pick >= active_members.size())
+        last_pick = 0;
+
+    return *active_members[last_pick];
+}
+
 std::pair<const char *, SocketAddress>
 LbCluster::Pick(uint32_t sticky_hash)
 {
@@ -191,11 +203,7 @@ LbCluster::Pick(uint32_t sticky_hash)
            round-robin and remember the new pick in the cache */
     }
 
-    ++last_pick;
-    if (last_pick >= active_members.size())
-        last_pick = 0;
-
-    const auto &i = *active_members[last_pick];
+    const auto &i = PickNextZeroconf();
 
     if (sticky_hash != 0)
         sticky_cache->Put(sticky_hash, i.first);
