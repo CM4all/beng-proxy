@@ -52,7 +52,7 @@ struct MakeResponse : TranslateResponse {
         Clear();
     }
 
-    MakeResponse(const MakeResponse &src) {
+    MakeResponse(const MakeResponse &src):TranslateResponse() {
         FullCopyFrom(*tpool, src);
     }
 
