@@ -76,7 +76,11 @@ class WasChild final : public HeapStockItem, ExitListener {
 public:
     explicit WasChild(CreateStockItem c, SpawnService &_spawn_service)
         :HeapStockItem(c), spawn_service(_spawn_service),
-         event(c.stock.GetEventLoop(), BIND_THIS_METHOD(EventCallback)) {}
+         event(c.stock.GetEventLoop(), BIND_THIS_METHOD(EventCallback)) {
+        /* mark this object as "unused" so the destructor doesn't
+           attempt to kill the process */
+        process.pid = -1;
+    }
 
     ~WasChild() override;
 
