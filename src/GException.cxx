@@ -6,6 +6,7 @@
 #include "HttpMessageResponse.hxx"
 #include "http_quark.h"
 #include "gerrno.h"
+#include "widget/Error.hxx"
 #include "system/Error.hxx"
 #include "util/Exception.hxx"
 
@@ -29,6 +30,13 @@ ToGError(std::exception_ptr ep)
                                        msg.c_str());
     }
 
+    try {
+        FindRetrowNested<WidgetError>(ep);
+    } catch (const WidgetError &e) {
+        return g_error_new_literal(widget_quark(), int(e.GetCode()),
+                                   msg.c_str());
+    }
+
     return g_error_new_literal(exception_quark(), 0, msg.c_str());
 }
 
@@ -44,6 +52,8 @@ ThrowGError(const GError &error)
         throw HttpMessageResponse(http_status_t(error.code), error.message);
     else if (error.domain == errno_quark())
         throw MakeErrno(error.code, error.message);
+    else if (error.domain == widget_quark())
+        throw WidgetError(WidgetErrorCode(error.code), error.message);
     else
         throw std::runtime_error(error.message);
 }

@@ -7,6 +7,8 @@
 
 #include <glib.h>
 
+#include <stdexcept>
+
 enum class WidgetErrorCode {
     UNSPECIFIED,
 
@@ -43,5 +45,17 @@ widget_quark()
 {
     return g_quark_from_static_string("widget");
 }
+
+class WidgetError : public std::runtime_error {
+    WidgetErrorCode code;
+
+public:
+    WidgetError(WidgetErrorCode _code, const char *_msg)
+        :std::runtime_error(_msg), code(_code) {}
+
+    WidgetErrorCode GetCode() const {
+        return code;
+    }
+};
 
 #endif
