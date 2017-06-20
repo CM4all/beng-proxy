@@ -15,7 +15,6 @@
 #include "spawn/ChildOptions.hxx"
 #include "spawn/JailParams.hxx"
 #include "spawn/JailConfig.hxx"
-#include "GException.hxx"
 #include "pool.hxx"
 #include "AllocatorPtr.hxx"
 #include "event/SocketEvent.hxx"
@@ -248,7 +247,7 @@ fcgi_stock_create(void *ctx, CreateStockItem c, void *info,
                                FormatRuntimeError("Failed to connect to FastCGI server '%s'",
                                                   key));
         connection->kill = true;
-        connection->InvokeCreateError(ToGError(e));
+        connection->InvokeCreateError(e);
         return;
     }
 

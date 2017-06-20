@@ -4,12 +4,18 @@
 
 #include "Item.hxx"
 #include "Stock.hxx"
-#include "pool.hxx"
+#include "GException.hxx"
 
 const char *
 CreateStockItem::GetStockName() const
 {
     return stock.GetName();
+}
+
+void
+CreateStockItem::InvokeCreateError(std::exception_ptr ep)
+{
+    InvokeCreateError(ToGError(ep));
 }
 
 void
@@ -44,6 +50,12 @@ void
 StockItem::InvokeCreateSuccess()
 {
     stock.ItemCreateSuccess(*this);
+}
+
+void
+StockItem::InvokeCreateError(std::exception_ptr ep)
+{
+    InvokeCreateError(ToGError(ep));
 }
 
 void

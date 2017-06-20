@@ -10,7 +10,6 @@
 #include "stock/Class.hxx"
 #include "stock/Item.hxx"
 #include "address_list.hxx"
-#include "GException.hxx"
 #include "pool.hxx"
 #include "event/SocketEvent.hxx"
 #include "event/Duration.hxx"
@@ -19,6 +18,8 @@
 #include "net/SocketAddress.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "util/Cancellable.hxx"
+#include "util/RuntimeError.hxx"
+#include "util/Exception.hxx"
 
 #include <daemon/log.h>
 #include <socket/address.h>
@@ -142,9 +143,10 @@ TcpStockConnection::OnSocketConnectError(std::exception_ptr ep)
 {
     cancel_ptr = nullptr;
 
-    auto *error = ToGError(ep);
-    g_prefix_error(&error, "failed to connect to '%s': ", GetStockName());
-    InvokeCreateError(error);
+    ep = NestException(ep,
+                       FormatRuntimeError("Failed to connect to '%s'",
+                                          GetStockName()));
+    InvokeCreateError(ep);
 }
 
 /*

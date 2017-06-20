@@ -16,7 +16,6 @@
 #include "spawn/Prepared.hxx"
 #include "spawn/ChildOptions.hxx"
 #include "gerrno.h"
-#include "GException.hxx"
 #include "AllocatorPtr.hxx"
 #include "pool.hxx"
 
@@ -129,8 +128,8 @@ delegate_stock_create(void *ctx,
 
     try {
         info.options.CopyTo(p, true, nullptr);
-    } catch (const std::runtime_error &e) {
-        c.InvokeCreateError(ToGError(e));
+    } catch (...) {
+        c.InvokeCreateError(std::current_exception());
         return;
     }
 
@@ -150,8 +149,8 @@ delegate_stock_create(void *ctx,
 
         auto *process = new DelegateProcess(c, std::move(client_fd));
         process->InvokeCreateSuccess();
-    } catch (const std::runtime_error &e) {
-        c.InvokeCreateError(ToGError(e));
+    } catch (...) {
+        c.InvokeCreateError(std::current_exception());
     }
 }
 

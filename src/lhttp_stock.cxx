@@ -16,7 +16,6 @@
 #include "child_stock.hxx"
 #include "spawn/JailParams.hxx"
 #include "spawn/Prepared.hxx"
-#include "GException.hxx"
 #include "event/SocketEvent.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "util/RuntimeError.hxx"
@@ -174,7 +173,7 @@ lhttp_stock_create(void *ctx, CreateStockItem c, void *info,
         auto e = NestException(std::current_exception(),
                                FormatRuntimeError("Failed to connect to LHTTP server '%s'",
                                                   key));
-        connection->InvokeCreateError(ToGError(e));
+        connection->InvokeCreateError(e);
         return;
     }
 

@@ -254,6 +254,7 @@ executable('request_translation',
   'request_translation.cxx',
   '../src/PInstance.cxx',
   '../src/direct.cxx',
+  '../src/GException.cxx',
   include_directories: inc,
   dependencies: [
     glib,
@@ -360,6 +361,7 @@ executable('run_nfs_client',
   '../src/direct.cxx',
   '../src/pipe_stock.cxx',
   '../src/istream_nfs.cxx',
+  '../src/GException.cxx',
   include_directories: inc,
   dependencies: [
     glib,
@@ -434,10 +436,12 @@ test('t_header_forward', executable('t_header_forward',
 test('t_stock', executable('t_stock',
   't_stock.cxx',
   '../src/PInstance.cxx',
+  '../src/GException.cxx',
   include_directories: inc,
   dependencies: [
     glib,
     libinline,
+    libhttp,
     stock_dep,
   ]))
 
@@ -844,10 +848,12 @@ t_istream_filter = static_library('t_istream_filter',
   '../src/PInstance.cxx',
   '../src/direct.cxx',
   '../src/pipe_stock.cxx',
+  '../src/GException.cxx',
   include_directories: inc,
   dependencies: [
     glib,
     libinline,
+    libhttp,
     declare_dependency(link_with: eutil),
     declare_dependency(link_with: istream),
   ])
@@ -897,7 +903,7 @@ test('t_istream_pipe', executable('t_istream_pipe',
   't_istream_pipe.cxx',
   '../src/pipe_stock.cxx',
   include_directories: inc,
-  dependencies: t_istream_filter_deps + [stock_dep]))
+  dependencies: [stock_dep] + t_istream_filter_deps))
 
 test('t_istream_hold', executable('t_istream_hold',
   't_istream_hold.cxx',

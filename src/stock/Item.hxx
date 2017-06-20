@@ -11,6 +11,8 @@
 
 #include <boost/intrusive/list.hpp>
 
+#include <exception>
+
 struct pool;
 class Stock;
 class StockGetHandler;
@@ -28,6 +30,7 @@ struct CreateStockItem {
     /**
      * Announce that the creation of this item has failed.
      */
+    void InvokeCreateError(std::exception_ptr ep);
     void InvokeCreateError(GError *error);
 
     /**
@@ -112,6 +115,7 @@ struct StockItem
     /**
      * Announce that the creation of this item has failed.
      */
+    void InvokeCreateError(std::exception_ptr ep);
     void InvokeCreateError(GError *error);
 
     /**

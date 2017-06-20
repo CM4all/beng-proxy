@@ -12,7 +12,6 @@
 #include "stock/Class.hxx"
 #include "stock/Item.hxx"
 #include "gerrno.h"
-#include "GException.hxx"
 #include "spawn/Interface.hxx"
 #include "spawn/Prepared.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
@@ -105,7 +104,7 @@ ChildStock::Create(CreateStockItem c, void *info)
                                                     item);
         item->InvokeCreateSuccess();
     } catch (...) {
-        item->InvokeCreateError(ToGError(std::current_exception()));
+        item->InvokeCreateError(std::current_exception());
         return;
     }
 }

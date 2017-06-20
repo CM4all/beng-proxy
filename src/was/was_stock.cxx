@@ -365,7 +365,7 @@ was_stock_create(gcc_unused void *ctx,
     try {
         child->Launch(*params);
     } catch (...) {
-        child->InvokeCreateError(ToGError(std::current_exception()));
+        child->InvokeCreateError(std::current_exception());
         return;
     }
 
