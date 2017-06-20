@@ -6,6 +6,7 @@
 #include "ClusterConfig.hxx"
 #include "avahi/Client.hxx"
 #include "StickyCache.hxx"
+#include "failure.hxx"
 
 #include <socket/address.h>
 #include <daemon/log.h>
@@ -189,6 +190,21 @@ LbCluster::PickNextZeroconf()
     return *active_members[last_pick];
 }
 
+const LbCluster::MemberMap::value_type &
+LbCluster::PickNextGoodZeroconf()
+{
+    assert(!active_members.empty());
+
+    unsigned remaining = active_members.size();
+
+    while (true) {
+        const auto &m = PickNextZeroconf();
+        if (--remaining == 0 ||
+            failure_get_status(m.second.GetAddress()) == FAILURE_OK)
+            return m;
+    }
+}
+
 std::pair<const char *, SocketAddress>
 LbCluster::Pick(uint32_t sticky_hash)
 {
@@ -213,7 +229,9 @@ LbCluster::Pick(uint32_t sticky_hash)
         if (cached != nullptr) {
             /* cache hit */
             auto i = members.find(*cached);
-            if (i != members.end() && i->second.IsActive())
+            if (i != members.end() && i->second.IsActive() &&
+                // TODO: allow FAILURE_FADE here?
+                failure_get_status(i->second.GetAddress()) == FAILURE_OK)
                 /* the node is active, we can use it */
                 return std::make_pair(i->second.GetLogName(i->first.c_str()),
                                       i->second.GetAddress());
@@ -225,7 +243,7 @@ LbCluster::Pick(uint32_t sticky_hash)
            round-robin and remember the new pick in the cache */
     }
 
-    const auto &i = PickNextZeroconf();
+    const auto &i = PickNextGoodZeroconf();
 
     if (sticky_hash != 0)
         sticky_cache->Put(sticky_hash, i.first);
@@ -282,6 +300,10 @@ LbCluster::ServiceBrowserCallback(AvahiServiceBrowser *b,
         auto i = members.find(MakeKey(interface, protocol, name,
                                       type, domain));
         if (i != members.end()) {
+            /* purge this entry from the "failure" map, because it
+               will never be used again anyway */
+            failure_unset(i->second.GetAddress(), FAILURE_OK);
+
             if (i->second.IsActive())
                 dirty = true;
             members.erase(i);

@@ -120,6 +120,13 @@ private:
      */
     const MemberMap::value_type &PickNextZeroconf();
 
+    /**
+     * Like PickNextZeroconf(), but skips members which are bad
+     * according to failure_get_status().  If all are bad, a random
+     * (bad) one is returned.
+     */
+    const MemberMap::value_type &PickNextGoodZeroconf();
+
     void ServiceBrowserCallback(AvahiServiceBrowser *b,
                                 AvahiIfIndex interface,
                                 AvahiProtocol protocol,
