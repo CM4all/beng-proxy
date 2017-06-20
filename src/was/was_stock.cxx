@@ -15,6 +15,7 @@
 #include "spawn/ExitListener.hxx"
 #include "spawn/Interface.hxx"
 #include "pool.hxx"
+#include "GException.hxx"
 #include "event/SocketEvent.hxx"
 #include "util/Cancellable.hxx"
 #include "util/ConstBuffer.hxx"
@@ -23,7 +24,6 @@
 #include <was/protocol.h>
 #include <daemon/log.h>
 
-#include <glib.h>
 #include <assert.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -80,24 +80,14 @@ public:
 
     ~WasChild() override;
 
-    bool Launch(const WasChildParams &params, GError **error_r) {
+    void Launch(const WasChildParams &params) {
         process = was_launch(spawn_service,
                              GetStockName(),
                              params.executable_path,
                              params.args,
                              params.options,
-                             this,
-                             error_r);
-        if (!process.IsDefined()) {
-            /* explicitly Close() the WasProcess, so our destructor
-               doesn't believe we have already initialized the
-               Event */
-            process.Close();
-            return false;
-        }
-
+                             this);
         event.Set(process.control.Get(), SocketEvent::READ);
-        return true;
     }
 
     const WasProcess &GetProcess() const {
@@ -372,10 +362,10 @@ was_stock_create(gcc_unused void *ctx,
     assert(params != nullptr);
     assert(params->executable_path != nullptr);
 
-    GError *error = nullptr;
-    if (!child->Launch(*params, &error)) {
-        assert(error != nullptr);
-        child->InvokeCreateError(error);
+    try {
+        child->Launch(*params);
+    } catch (...) {
+        child->InvokeCreateError(ToGError(std::current_exception()));
         return;
     }
 

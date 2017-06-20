@@ -8,8 +8,7 @@
 #include "spawn/Interface.hxx"
 #include "spawn/Prepared.hxx"
 #include "spawn/ChildOptions.hxx"
-#include "gerrno.h"
-#include "GException.hxx"
+#include "system/Error.hxx"
 #include "util/ConstBuffer.hxx"
 
 #include <inline/compiler.h>
@@ -23,8 +22,7 @@ was_launch(SpawnService &spawn_service,
            const char *executable_path,
            ConstBuffer<const char *> args,
            const ChildOptions &options,
-           ExitListener *listener,
-           GError **error_r)
+           ExitListener *listener)
 {
     WasProcess process;
 
@@ -32,28 +30,22 @@ was_launch(SpawnService &spawn_service,
 
     UniqueFileDescriptor control_fd;
     if (!UniqueFileDescriptor::CreateSocketPair(AF_LOCAL, SOCK_STREAM, 0,
-                                                control_fd, process.control)) {
-        set_error_errno_msg(error_r, "failed to create socket pair");
-        return process;
-    }
+                                                control_fd, process.control))
+        throw MakeErrno("Failed to create socket pair");
 
     p.SetControl(std::move(control_fd));
 
     UniqueFileDescriptor input_r, input_w;
-    if (!UniqueFileDescriptor::CreatePipe(input_r, input_w)) {
-        set_error_errno_msg(error_r, "failed to create first pipe");
-        return process;
-    }
+    if (!UniqueFileDescriptor::CreatePipe(input_r, input_w))
+        throw MakeErrno("Failed to create first pipe");
 
     input_r.SetNonBlocking();
     process.input = std::move(input_r);
     p.SetStdout(std::move(input_w));
 
     UniqueFileDescriptor output_r, output_w;
-    if (!UniqueFileDescriptor::CreatePipe(output_r, output_w)) {
-        set_error_errno_msg(error_r, "failed to create second pipe");
-        return process;
-    }
+    if (!UniqueFileDescriptor::CreatePipe(output_r, output_w))
+        throw MakeErrno("Failed to create second pipe");
 
     p.SetStdin(std::move(output_r));
     output_w.SetNonBlocking();
@@ -63,20 +55,8 @@ was_launch(SpawnService &spawn_service,
     for (auto i : args)
         p.Append(i);
 
-    try {
-        options.CopyTo(p, true, nullptr);
-    } catch (const std::runtime_error &e) {
-        SetGError(error_r, e);
-        return process;
-    }
-
-    try {
-        process.pid = spawn_service.SpawnChildProcess(name, std::move(p),
-                                                      listener);
-    } catch (const std::runtime_error &e) {
-        process.pid = -1;
-        SetGError(error_r, e);
-    }
-
+    options.CopyTo(p, true, nullptr);
+    process.pid = spawn_service.SpawnChildProcess(name, std::move(p),
+                                                  listener);
     return process;
 }

@@ -16,6 +16,7 @@
 #include "spawn/Local.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/Cancellable.hxx"
+#include "util/PrintException.hxx"
 
 #include <daemon/log.h>
 
@@ -124,7 +125,9 @@ request_body(EventLoop &event_loop, struct pool &pool)
         : nullptr;
 }
 
-int main(int argc, char **argv) {
+int
+main(int argc, char **argv)
+try {
     daemon_log_config.verbose = 5;
 
     gchar **parameters = nullptr;
@@ -166,12 +169,7 @@ int main(int argc, char **argv) {
 
     context.process = was_launch(spawn_service, "was",
                                  argv[1], nullptr,
-                                 child_options, nullptr, &error);
-    if (!context.process.IsDefined()) {
-        g_printerr("%s\n", error->message);
-        g_error_free(error);
-        return 2;
-    }
+                                 child_options, nullptr);
 
     unsigned num_parameters = 0;
     if (parameters != nullptr)
@@ -194,4 +192,7 @@ int main(int argc, char **argv) {
     context.event_loop.Dispatch();
 
     return context.error;
+} catch (const std::exception &e) {
+    PrintException(e);
+    return EXIT_FAILURE;
 }
