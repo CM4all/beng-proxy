@@ -833,6 +833,12 @@ enum beng_translation_command {
      * StickyMode::HOST.
      */
     TRANSLATE_CANONICAL_HOST = 189,
+
+    /**
+     * An absolute path specifying the user's shell (for
+     * #TRANSLATE_LOGIN).
+     */
+    TRANSLATE_SHELL = 190,
 };
 
 struct beng_translation_header {
