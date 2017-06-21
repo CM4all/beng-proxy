@@ -7,6 +7,7 @@
 #include "avahi/Client.hxx"
 #include "StickyCache.hxx"
 
+#include <socket/address.h>
 #include <daemon/log.h>
 
 #include <avahi-common/error.h>
@@ -15,6 +16,27 @@ LbCluster::Member::~Member()
 {
     if (resolver != nullptr)
         avahi_service_resolver_free(resolver);
+}
+
+const char *
+LbCluster::Member::GetLogName(const char *key) const noexcept
+{
+    if (log_name.empty()) {
+        if (address.IsNull())
+            return key;
+
+        log_name = key;
+
+        char buffer[512];
+        if (socket_address_to_string(buffer, sizeof(buffer),
+                                     address.GetAddress(), address.GetSize())) {
+            log_name += " (";
+            log_name += buffer;
+            log_name += ")";
+        }
+    }
+
+    return log_name.c_str();
 }
 
 void
@@ -193,7 +215,7 @@ LbCluster::Pick(uint32_t sticky_hash)
             auto i = members.find(*cached);
             if (i != members.end() && i->second.IsActive())
                 /* the node is active, we can use it */
-                return std::make_pair(i->first.c_str(),
+                return std::make_pair(i->second.GetLogName(i->first.c_str()),
                                       i->second.GetAddress());
 
             sticky_cache->Remove(sticky_hash);
@@ -208,7 +230,8 @@ LbCluster::Pick(uint32_t sticky_hash)
     if (sticky_hash != 0)
         sticky_cache->Put(sticky_hash, i.first);
 
-    return std::make_pair(i.first.c_str(), i.second.GetAddress());
+    return std::make_pair(i.second.GetLogName(i.first.c_str()),
+                          i.second.GetAddress());
 }
 
 void

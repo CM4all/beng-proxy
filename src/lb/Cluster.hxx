@@ -36,6 +36,8 @@ class LbCluster final : AvahiConnectionListener {
 
         AllocatedSocketAddress address;
 
+        mutable std::string log_name;
+
     public:
         explicit Member(LbCluster &_cluster)
             :cluster(_cluster) {}
@@ -55,6 +57,12 @@ class LbCluster final : AvahiConnectionListener {
         SocketAddress GetAddress() const {
             return address;
         }
+
+        /**
+         * Obtain a name identifying this object for logging.
+         */
+        gcc_pure
+        const char *GetLogName(const char *key) const noexcept;
 
         void Resolve(AvahiClient *client, AvahiIfIndex interface,
                      AvahiProtocol protocol,
