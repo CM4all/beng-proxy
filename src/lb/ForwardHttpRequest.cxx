@@ -54,6 +54,13 @@ class LbRequest final
 
     CancellablePointer cancel_ptr;
 
+    /**
+     * The address we're currently connecting to (waiting for
+     * #StockGetHandler to be called).  Only used for Zeroconf to be
+     * able to call failure_set().
+     */
+    SocketAddress current_address;
+
     StockItem *stock_item;
 
     unsigned new_cookie = 0;
@@ -322,6 +329,11 @@ LbRequest::OnStockItemReady(StockItem &item)
     assert(lease_state == LeaseState::NONE);
     assert(!response_sent);
 
+    if (cluster_config.HasZeroConf())
+        /* without the tcp_balancer, we have to roll our own failure
+           updates */
+        failure_unset(current_address, FAILURE_FAILED);
+
     stock_item = &item;
     lease_state = LeaseState::BUSY;
 
@@ -360,6 +372,11 @@ LbRequest::OnStockItemError(GError *error)
     assert(!response_sent);
 
     connection.Log(2, "Connect error", error);
+
+    if (cluster_config.HasZeroConf())
+        /* without the tcp_balancer, we have to roll our own failure
+           updates */
+        failure_add(current_address);
 
     body.Clear();
 
@@ -432,6 +449,8 @@ LbRequest::Start()
         }
 
         assert(member.second.IsDefined());
+
+        current_address = member.second;
 
         tcp_stock_get(*connection.instance.tcp_stock, request.pool,
                       member.first,
