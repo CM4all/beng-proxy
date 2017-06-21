@@ -269,6 +269,8 @@ LbRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
     assert(lease_state != LeaseState::NONE);
     assert(!response_sent);
 
+    failure_unset(tcp_stock_item_get_address(*stock_item), FAILURE_RESPONSE);
+
     HttpHeaders headers(std::move(_headers));
 
     if (request.method == HTTP_METHOD_HEAD)
