@@ -273,9 +273,9 @@ io = static_library('io',
   'src/io/Buffered.cxx',
   'libcommon/src/io/FileDescriptor.cxx',
   'libcommon/src/io/WriteFile.cxx',
-  'src/io/LineParser.cxx',
-  'src/io/FileLineParser.cxx',
-  'src/io/ConfigParser.cxx',
+  'libcommon/src/io/LineParser.cxx',
+  'libcommon/src/io/FileLineParser.cxx',
+  'libcommon/src/io/ConfigParser.cxx',
   'src/io/StringFile.cxx',
   include_directories: inc,
   dependencies: [
@@ -1207,4 +1207,5 @@ executable('delegate-helper',
 
 subdir('test')
 subdir('libcommon/test/http')
+subdir('libcommon/test/io')
 subdir('libcommon/test/pg')

@@ -393,15 +393,6 @@ test('t_tcache', executable('t_tcache',
     declare_dependency(link_with: translation),
   ]))
 
-test('t_ConfigParser', executable('t_ConfigParser',
-  't_ConfigParser.cxx',
-  include_directories: inc,
-  dependencies: [
-    gtest,
-    libinline,
-    declare_dependency(link_with: io),
-  ]))
-
 test('t_regex', executable('t_regex',
   't_regex.cxx',
   '../src/pexpand.cxx',
