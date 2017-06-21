@@ -504,6 +504,7 @@ spawn = static_library('spawn',
   'libcommon/src/spawn/UidGid.cxx',
   'libcommon/src/spawn/ResourceLimits.cxx',
   'libcommon/src/spawn/RefenceOptions.cxx',
+  'libcommon/src/spawn/ConfigParser.cxx',
   include_directories: inc,
   dependencies: [
     glib,

@@ -2187,7 +2187,8 @@ enabled.
 \verb|UID_GID| specifies uid and gid (and supplementary groups) for
 the child process.  Payload is an array of 32 bit integers.  All
 selected users and groups must be explicitly allowed with the
-command-line options \texttt{--allow-user} and \texttt{--allow-group}.
+\texttt{user} and \texttt{group} settings in the \texttt{spawn}
+configuration.
 The default is to run child processes with the same unprivileged
 credentials as \emph{beng-proxy} itself (or the one specified with
 \texttt{--spawn-user}).

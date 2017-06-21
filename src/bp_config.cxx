@@ -5,6 +5,7 @@
  */
 
 #include "bp_config.hxx"
+#include "spawn/ConfigParser.hxx"
 #include "io/FileLineParser.hxx"
 #include "io/ConfigParser.hxx"
 #include "net/Parser.hxx"
@@ -192,6 +193,9 @@ BpConfigParser::ParseLine2(FileLineParser &line)
         line.ExpectSymbol('=');
         const char *value = line.ExpectValueAndEnd();
         config.HandleSet(name, value);
+    } else if (strcmp(word, "spawn") == 0) {
+        line.ExpectSymbolAndEol('{');
+        SetChild(std::make_unique<SpawnConfigParser>(config.spawn));
     } else
         throw LineParser::Error("Unknown option");
 }

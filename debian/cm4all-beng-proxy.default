@@ -6,11 +6,6 @@
 # Which group should beng-proxy run as?
 #DAEMON_GROUP=
 
-# Allow beng-proxy to spawn child processes as one of the specified
-# user/group (multiple user/group names separated by comma allowed).
-#ALLOW_USER=
-#ALLOW_GROUP=
-
 # Spawn child processes as this user/group by default.
 #SPAWN_USER=www-data
 
