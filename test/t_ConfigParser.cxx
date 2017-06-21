@@ -4,10 +4,7 @@
 
 #include <inline/compiler.h>
 
-#include <cppunit/CompilerOutputter.h>
-#include <cppunit/extensions/TestFactoryRegistry.h>
-#include <cppunit/ui/text/TestRunner.h>
-#include <cppunit/extensions/HelperMacros.h>
+#include <gtest/gtest.h>
 
 #include <string.h>
 #include <stdlib.h>
@@ -64,39 +61,15 @@ static const char *const v_output[] = {
     nullptr
 };
 
-class ConfigParserTest : public CppUnit::TestFixture {
-    CPPUNIT_TEST_SUITE(ConfigParserTest);
-    CPPUNIT_TEST(TestVariableConfigParser);
-    CPPUNIT_TEST_SUITE_END();
-
-public:
-    void TestVariableConfigParser() {
-        MyConfigParser p;
-        VariableConfigParser v(p);
-
-        ParseConfigFile(v, v_data);
-
-        for (size_t i = 0; v_output[i] != nullptr; ++i) {
-            CPPUNIT_ASSERT(i < p.size());
-            CPPUNIT_ASSERT(strcmp(v_output[i], p[i].c_str()) == 0);
-        }
-    }
-};
-
-CPPUNIT_TEST_SUITE_REGISTRATION(ConfigParserTest);
-
-int
-main(gcc_unused int argc, gcc_unused char **argv)
+TEST(ConfigParserTest, VariableConfigParser)
 {
-    CppUnit::Test *suite =
-        CppUnit::TestFactoryRegistry::getRegistry().makeTest();
+    MyConfigParser p;
+    VariableConfigParser v(p);
 
-    CppUnit::TextUi::TestRunner runner;
-    runner.addTest(suite);
+    ParseConfigFile(v, v_data);
 
-    runner.setOutputter(new CppUnit::CompilerOutputter(&runner.result(),
-                                                       std::cerr));
-    bool success = runner.run();
-
-    return success ? EXIT_SUCCESS : EXIT_FAILURE;
+    for (size_t i = 0; v_output[i] != nullptr; ++i) {
+        ASSERT_LT(i, p.size());
+        ASSERT_STREQ(v_output[i], p[i].c_str());
+    }
 }

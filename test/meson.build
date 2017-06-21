@@ -397,7 +397,7 @@ test('t_ConfigParser', executable('t_ConfigParser',
   't_ConfigParser.cxx',
   include_directories: inc,
   dependencies: [
-    cppunit,
+    gtest,
     libinline,
     declare_dependency(link_with: io),
   ]))
