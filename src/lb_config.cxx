@@ -292,24 +292,12 @@ LbConfigParser::Monitor::ParseLine(FileLineParser &line)
         else
             throw LineParser::Error("Unknown monitor type");
     } else if (strcmp(word, "interval") == 0) {
-        unsigned value = line.NextPositiveInteger();
-        if (value == 0)
-            throw LineParser::Error("Positive integer expected");
-
-        config.interval = value;
+        config.interval = line.NextPositiveInteger();
     } else if (strcmp(word, "timeout") == 0) {
-        unsigned value = line.NextPositiveInteger();
-        if (value == 0)
-            throw LineParser::Error("Positive integer expected");
-
-        config.timeout = value;
+        config.timeout = line.NextPositiveInteger();
     } else if (config.type == LbMonitorConfig::Type::TCP_EXPECT &&
                strcmp(word, "connect_timeout") == 0) {
-        unsigned value = line.NextPositiveInteger();
-        if (value == 0)
-            throw LineParser::Error("Positive integer expected");
-
-        config.connect_timeout = value;
+        config.connect_timeout = line.NextPositiveInteger();
     } else if (config.type == LbMonitorConfig::Type::TCP_EXPECT &&
                strcmp(word, "send") == 0) {
         const char *value = line.NextUnescape();
