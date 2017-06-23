@@ -1,6 +1,6 @@
 cm4all-beng-proxy (12.0.24) unstable; urgency=low
 
-  * 
+  * spawn: unblock signals
 
  --   
 
