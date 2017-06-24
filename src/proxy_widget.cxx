@@ -61,7 +61,7 @@ struct ProxyWidget final : WidgetLookupHandler, HttpResponseHandler, Cancellable
     /* virtual methods from class WidgetLookupHandler */
     void WidgetFound(Widget &widget) override;
     void WidgetNotFound() override;
-    void WidgetLookupError(GError *error) override;
+    void WidgetLookupError(std::exception_ptr ep) override;
 
     /* virtual methods from class HttpResponseHandler */
     void OnHttpResponse(http_status_t status, StringMap &&headers,
@@ -273,15 +273,10 @@ ProxyWidget::WidgetNotFound()
 }
 
 void
-ProxyWidget::WidgetLookupError(GError *error)
+ProxyWidget::WidgetLookupError(std::exception_ptr ep)
 {
-    daemon_log(2, "error from widget on %s: %s\n",
-               request.request.uri, error->message);
-
     widget->Cancel();
-    response_dispatch_error(request, error);
-
-    g_error_free(error);
+    response_dispatch_log(request, ep);
 }
 
 /*

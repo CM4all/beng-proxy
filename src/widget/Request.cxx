@@ -269,7 +269,7 @@ void
 WidgetRequest::DispatchError(std::exception_ptr ep)
 {
     if (lookup_id != nullptr)
-        lookup_handler->WidgetLookupError(ToGError(ep));
+        lookup_handler->WidgetLookupError(ep);
     else
         http_handler->InvokeError(ToGError(ep));
 }
@@ -280,7 +280,7 @@ WidgetRequest::DispatchError(GError *error)
     assert(error != nullptr);
 
     if (lookup_id != nullptr)
-        lookup_handler->WidgetLookupError(error);
+        lookup_handler->WidgetLookupError(ToException(*error));
     else
         http_handler->InvokeError(error);
 }
@@ -476,11 +476,9 @@ WidgetRequest::DispatchResponse(http_status_t status, StringMap &&headers,
         if (body != nullptr)
             body->CloseUnused();
 
-        GError *error =
-            g_error_new(widget_quark(), (int)WidgetErrorCode::NOT_A_CONTAINER,
-                        "Cannot process container widget response of %s",
-                        widget.GetLogName());
-        lookup_handler->WidgetLookupError(error);
+        WidgetError error(WidgetErrorCode::NOT_A_CONTAINER,
+                          "Cannot process container widget response");
+        lookup_handler->WidgetLookupError(std::make_exception_ptr(error));
     } else {
         /* no transformation left */
 

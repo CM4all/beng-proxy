@@ -394,10 +394,9 @@ processor_lookup_widget(struct pool &caller_pool,
     assert(id != nullptr);
 
     if ((options & PROCESSOR_CONTAINER) == 0) {
-        GError *error =
-            g_error_new_literal(widget_quark(), (int)WidgetErrorCode::NOT_A_CONTAINER,
-                                "Not a container");
-        handler.WidgetLookupError(error);
+        auto e = WidgetError(WidgetErrorCode::NOT_A_CONTAINER,
+                             "Not a container");
+        handler.WidgetLookupError(std::make_exception_ptr(e));
         return;
     }
 
@@ -1215,7 +1214,7 @@ XmlProcessor::EmbedWidget(Widget &child_widget)
             child_widget.CopyFromRequest(env);
         } catch (...) {
             child_widget.Cancel();
-            handler2.WidgetLookupError(ToGError(std::current_exception()));
+            handler2.WidgetLookupError(std::current_exception());
             pool_unref(&widget_pool);
             pool_unref(&caller_pool);
             return nullptr;
@@ -1477,7 +1476,7 @@ XmlProcessor::OnXmlError(std::exception_ptr ep)
         istream_free_unused(&container.for_focused.body);
 
     if (lookup_id != nullptr) {
-        handler->WidgetLookupError(ToGError(ep));
+        handler->WidgetLookupError(ep);
         pool_unref(&caller_pool);
     }
 

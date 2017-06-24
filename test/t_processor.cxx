@@ -12,8 +12,7 @@
 #include "istream/istream_block.hxx"
 #include "istream/istream_string.hxx"
 #include "util/Cancellable.hxx"
-
-#include <glib.h>
+#include "util/PrintException.hxx"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -85,9 +84,8 @@ public:
         fprintf(stderr, "widget not found\n");
     }
 
-    void WidgetLookupError(GError *error) override {
-        g_printerr("%s\n", error->message);
-        g_error_free(error);
+    void WidgetLookupError(std::exception_ptr ep) override {
+        PrintException(ep);
     }
 };
 

@@ -78,26 +78,30 @@ frame_parent_widget(struct pool *pool, Widget *widget, const char *id,
     assert(id != nullptr);
     assert(env != nullptr);
 
-    if (!widget->IsContainer()) {
-        /* this widget cannot possibly be the parent of a framed
-           widget if it is not a container */
+    try {
+        if (!widget->IsContainer()) {
+            /* this widget cannot possibly be the parent of a framed
+               widget if it is not a container */
 
-        GError *error =
-            g_error_new(widget_quark(), (int)WidgetErrorCode::NOT_A_CONTAINER,
-                        "frame within non-container requested");
-        widget->Cancel();
-        handler.WidgetLookupError(error);
-        return;
-    }
+            widget->Cancel();
 
-    if (!widget_check_approval(widget)) {
-        GError *error =
-            g_error_new(widget_quark(), (int)WidgetErrorCode::FORBIDDEN,
-                        "widget '%s' is not allowed to embed widget '%s'",
-                        widget->parent->GetLogName(),
-                        widget->GetLogName());
-        widget->Cancel();
-        handler.WidgetLookupError(error);
+            throw WidgetError(WidgetErrorCode::NOT_A_CONTAINER,
+                              "frame within non-container requested");
+        }
+
+        if (!widget_check_approval(widget)) {
+            char msg[256];
+            snprintf(msg, sizeof(msg),
+                     "widget '%s' is not allowed to embed widget '%s'",
+                     widget->parent->GetLogName(),
+                     widget->GetLogName());
+
+            widget->Cancel();
+
+            throw WidgetError(WidgetErrorCode::FORBIDDEN, msg);
+        }
+    } catch (...) {
+        handler.WidgetLookupError(std::current_exception());
         return;
     }
 

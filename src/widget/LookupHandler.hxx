@@ -5,7 +5,7 @@
 #ifndef BENG_PROXY_WIDGET_LOOKUP_HANDLER_HXX
 #define BENG_PROXY_WIDGET_LOOKUP_HANDLER_HXX
 
-#include "glibfwd.hxx"
+#include <exception>
 
 struct Widget;
 
@@ -16,7 +16,7 @@ class WidgetLookupHandler {
 public:
     virtual void WidgetFound(Widget &widget) = 0;
     virtual void WidgetNotFound() = 0;
-    virtual void WidgetLookupError(GError *error) = 0;
+    virtual void WidgetLookupError(std::exception_ptr ep) = 0;
 };
 
 #endif
