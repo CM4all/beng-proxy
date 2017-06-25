@@ -98,6 +98,7 @@ HttpServerConnection::OnError(GError *error)
 
     Error(NestException(ToException(*error),
                         std::runtime_error("error on HTTP response stream")));
+    g_error_free(error);
 }
 
 void

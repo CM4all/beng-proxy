@@ -177,6 +177,7 @@ HttpServerConnection::TryWriteBuckets()
         request.cancel_ptr = nullptr;
 
         Error(ToException(*error));
+        g_error_free(error);
         result = BucketResult::DESTROYED;
         break;
 
