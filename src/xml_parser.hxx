@@ -8,7 +8,8 @@
 #define BENG_PROXY_XML_PARSER_HXX
 
 #include "util/StringView.hxx"
-#include "glibfwd.hxx"
+
+#include <exception>
 
 #include <sys/types.h>
 
@@ -50,7 +51,7 @@ public:
     virtual size_t OnXmlCdata(const char *p, size_t length, bool escaped,
                               off_t start) = 0;
     virtual void OnXmlEof(off_t length) = 0;
-    virtual void OnXmlError(GError *error) = 0;
+    virtual void OnXmlError(std::exception_ptr ep) = 0;
 };
 
 class XmlParser;

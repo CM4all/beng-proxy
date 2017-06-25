@@ -291,7 +291,7 @@ struct XmlProcessor final : XmlParserHandler, Cancellable {
     size_t OnXmlCdata(const char *p, size_t length, bool escaped,
                       off_t start) override;
     void OnXmlEof(off_t length) override;
-    void OnXmlError(GError *error) override;
+    void OnXmlError(std::exception_ptr ep) override;
 };
 
 bool
@@ -1461,7 +1461,7 @@ XmlProcessor::OnXmlEof(gcc_unused off_t length)
 }
 
 void
-XmlProcessor::OnXmlError(GError *error)
+XmlProcessor::OnXmlError(std::exception_ptr ep)
 {
     auto &widget_pool = container.pool;
 
@@ -1477,10 +1477,9 @@ XmlProcessor::OnXmlError(GError *error)
         istream_free_unused(&container.for_focused.body);
 
     if (lookup_id != nullptr) {
-        handler->WidgetLookupError(error);
+        handler->WidgetLookupError(ToGError(ep));
         pool_unref(&caller_pool);
-    } else
-        g_error_free(error);
+    }
 
     pool_unref(&widget_pool);
 }

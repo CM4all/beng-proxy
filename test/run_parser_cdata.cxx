@@ -3,8 +3,7 @@
 #include "istream/istream_file.hxx"
 #include "PInstance.hxx"
 #include "fb_pool.hxx"
-
-#include <glib.h>
+#include "util/Exception.hxx"
 
 #include <unistd.h>
 #include <stdlib.h>
@@ -32,9 +31,8 @@ public:
         should_exit = true;
     }
 
-    void OnXmlError(GError *error) override {
-        fprintf(stderr, "ABORT: %s\n", error->message);
-        g_error_free(error);
+    void OnXmlError(std::exception_ptr ep) override {
+        fprintf(stderr, "ABORT: %s\n", GetFullMessage(ep).c_str());
         exit(2);
     }
 };

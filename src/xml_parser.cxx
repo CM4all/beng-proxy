@@ -9,6 +9,7 @@
 #include "html_chars.hxx"
 #include "expansible_buffer.hxx"
 #include "istream/Sink.hxx"
+#include "GException.hxx"
 #include "util/CharUtil.hxx"
 
 #include <inline/poison.h>
@@ -141,7 +142,8 @@ public:
         assert(input.IsDefined());
 
         input.Clear();
-        handler.OnXmlError(error);
+        handler.OnXmlError(ToException(*error));
+        g_error_free(error);
         pool_unref(pool);
     }
 };

@@ -50,10 +50,12 @@ executable('run_ua_parser',
 executable('run_parser_cdata',
   'run_parser_cdata.cxx',
   '../src/PInstance.cxx',
+  '../src/GException.cxx',
   include_directories: inc,
   dependencies: [
     glib,
     libinline,
+    libhttp,
     processor_dep,
   ])
 
