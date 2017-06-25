@@ -96,12 +96,8 @@ HttpServerConnection::OnError(GError *error)
        won't think we havn't sent a response yet */
     request.cancel_ptr = nullptr;
 
-    try {
-        ThrowGError(*error);
-    } catch (...) {
-        Error(NestException(std::current_exception(),
-                            std::runtime_error("error on HTTP response stream")));
-    }
+    Error(NestException(ToException(*error),
+                        std::runtime_error("error on HTTP response stream")));
 }
 
 void
