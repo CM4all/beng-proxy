@@ -328,6 +328,7 @@ executable('run_processor',
   '../src/random.cxx',
   '../src/istream_escape.cxx',
   '../src/istream_html_escape.cxx',
+  '../src/GException.cxx',
   include_directories: inc,
   dependencies: [
     threads,
@@ -824,6 +825,7 @@ test('t_processor', executable('t_processor',
   '../src/random.cxx',
   '../src/istream_escape.cxx',
   '../src/istream_html_escape.cxx',
+  '../src/GException.cxx',
   't_processor.cxx',
   include_directories: inc,
   dependencies: [
@@ -962,13 +964,13 @@ test('t_istream_processor', executable('t_istream_processor',
   '../src/istream_escape.cxx',
   '../src/istream_html_escape.cxx',
   include_directories: inc,
-  dependencies: t_istream_filter_deps + [
+  dependencies: [
     libhttp, libdaemon,
     threads,
     processor_dep,
     widget_dep,
     session_dep,
-  ]))
+  ] + t_istream_filter_deps))
 
 test('t_sink_header', executable('t_sink_header',
   't_sink_header.cxx',

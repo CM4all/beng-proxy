@@ -40,8 +40,8 @@ Widget::DescendantHasFocus() const
         parent->from_request.focus_ref->next != nullptr;
 }
 
-bool
-Widget::CopyFromRequest(struct processor_env &env, GError **error_r)
+void
+Widget::CopyFromRequest(struct processor_env &env)
 {
     assert(parent != nullptr);
     assert(lazy.address == nullptr);
@@ -52,7 +52,7 @@ Widget::CopyFromRequest(struct processor_env &env, GError **error_r)
     assert(from_request.body == nullptr);
 
     if (id == nullptr)
-        return true;
+        return;
 
     /* are we focused? */
 
@@ -62,11 +62,9 @@ Widget::CopyFromRequest(struct processor_env &env, GError **error_r)
         if (from_request.path_info != nullptr) {
             from_request.path_info =
                 uri_compress(*env.pool, from_request.path_info);
-            if (from_request.path_info == nullptr) {
-                g_set_error(error_r, widget_quark(), (int)WidgetErrorCode::FORBIDDEN,
-                            "path compression failed");
-                return false;
-            }
+            if (from_request.path_info == nullptr)
+                throw WidgetError(WidgetErrorCode::FORBIDDEN,
+                                  "path compression failed");
         }
 
         from_request.query_string = env.external_uri->query;
@@ -84,8 +82,6 @@ Widget::CopyFromRequest(struct processor_env &env, GError **error_r)
         for_focused = parent->for_focused;
         parent->for_focused.body = nullptr;
     }
-
-    return true;
 }
 
 void

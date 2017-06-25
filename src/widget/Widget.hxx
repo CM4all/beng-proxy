@@ -415,8 +415,10 @@ public:
 
     /**
      * Copy parameters from the request to the widget.
+     *
+     * Throws #WidgetError on error.
      */
-    bool CopyFromRequest(struct processor_env &env, GError **error_r);
+    void CopyFromRequest(struct processor_env &env);
 
     gcc_pure
     bool ShouldSyncSession() const {

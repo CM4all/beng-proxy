@@ -9,6 +9,7 @@
 #include "css_processor.hxx"
 #include "css_rewrite.hxx"
 #include "penv.hxx"
+#include "GException.hxx"
 #include "xml_parser.hxx"
 #include "uri/uri_escape.hxx"
 #include "uri/uri_extract.hxx"
@@ -1183,8 +1184,14 @@ XmlProcessor::EmbedWidget(Widget &child_widget)
     assert(child_widget.class_name != nullptr);
 
     if (replace != nullptr) {
-        if (!child_widget.CopyFromRequest(env, nullptr) ||
-            child_widget.display == Widget::Display::NONE) {
+        try {
+            child_widget.CopyFromRequest(env);
+        } catch (...) {
+            child_widget.Cancel();
+            return nullptr;
+        }
+
+        if (child_widget.display == Widget::Display::NONE) {
             child_widget.Cancel();
             return nullptr;
         }
@@ -1204,10 +1211,11 @@ XmlProcessor::EmbedWidget(Widget &child_widget)
         parser_close(parser);
         parser = nullptr;
 
-        GError *error = nullptr;
-        if (!child_widget.CopyFromRequest(env, &error)) {
+        try {
+            child_widget.CopyFromRequest(env);
+        } catch (...) {
             child_widget.Cancel();
-            handler2.WidgetLookupError(error);
+            handler2.WidgetLookupError(ToGError(std::current_exception()));
             pool_unref(&widget_pool);
             pool_unref(&caller_pool);
             return nullptr;
