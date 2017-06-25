@@ -105,6 +105,28 @@ ToResponse(struct pool &pool, std::exception_ptr ep)
         return Dup(pool, e.GetStatus(), e.what());
     }
 
+    try {
+        FindRetrowNested<WidgetError>(ep);
+    } catch (const WidgetError &e) {
+        switch (e.GetCode()) {
+        case WidgetErrorCode::UNSPECIFIED:
+            break;
+
+        case WidgetErrorCode::WRONG_TYPE:
+        case WidgetErrorCode::UNSUPPORTED_ENCODING:
+            return {HTTP_STATUS_BAD_GATEWAY, "Malformed widget response"};
+
+        case WidgetErrorCode::NO_SUCH_VIEW:
+            return {HTTP_STATUS_NOT_FOUND, "No such view"};
+
+        case WidgetErrorCode::NOT_A_CONTAINER:
+            return Dup(pool, HTTP_STATUS_NOT_FOUND, e.what());
+
+        case WidgetErrorCode::FORBIDDEN:
+            return {HTTP_STATUS_FORBIDDEN, "Forbidden"};
+        }
+    }
+
     return {HTTP_STATUS_INTERNAL_SERVER_ERROR, "Internal server error"};
 }
 
