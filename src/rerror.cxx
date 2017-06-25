@@ -18,6 +18,7 @@
 #include "http_server/http_server.hxx"
 #include "http_server/Request.hxx"
 #include "http_quark.h"
+#include "http/MessageHttpResponse.hxx"
 #include "HttpMessageResponse.hxx"
 #include "gerrno.h"
 #include "pool.hxx"
@@ -27,95 +28,81 @@
 
 #include <nfsc/libnfs-raw-nfs.h>
 
-static void
-response_dispatch_error(Request &request, GError *error,
-                        http_status_t status, const char *message)
+static MessageHttpResponse
+Dup(struct pool &pool, http_status_t status, const char *msg)
 {
-    if (request.instance.config.verbose_response)
-        message = p_strdup(&request.pool, error->message);
-
-    response_dispatch_message(request, status, message);
+    return {status, p_strdup(&pool, msg)};
 }
 
-void
-response_dispatch_error(Request &request, GError *error)
+gcc_pure
+static MessageHttpResponse
+ToResponse(struct pool &pool, GError &error)
 {
-    if (error->domain == http_response_quark()) {
-        response_dispatch_message(request, http_status_t(error->code),
-                                  p_strdup(&request.pool,
-                                           error->message));
-        return;
-    }
+    if (error.domain == http_response_quark())
+        return Dup(pool, http_status_t(error.code), error.message);
 
-    if (error->domain == widget_quark()) {
-        switch (WidgetErrorCode(error->code)) {
+    if (error.domain == widget_quark()) {
+        switch (WidgetErrorCode(error.code)) {
         case WidgetErrorCode::UNSPECIFIED:
             break;
 
         case WidgetErrorCode::WRONG_TYPE:
         case WidgetErrorCode::UNSUPPORTED_ENCODING:
-            response_dispatch_error(request, error, HTTP_STATUS_BAD_GATEWAY,
-                                    "Malformed widget response");
-            return;
+            return {HTTP_STATUS_BAD_GATEWAY, "Malformed widget response"};
 
         case WidgetErrorCode::NO_SUCH_VIEW:
-            response_dispatch_error(request, error, HTTP_STATUS_NOT_FOUND,
-                                    "No such view");
-            return;
+            return {HTTP_STATUS_NOT_FOUND, "No such view"};
 
         case WidgetErrorCode::NOT_A_CONTAINER:
-            response_dispatch_message(request, HTTP_STATUS_NOT_FOUND,
-                                      p_strdup(&request.pool,
-                                               error->message));
-            return;
+            return Dup(pool, HTTP_STATUS_NOT_FOUND, error.message);
 
         case WidgetErrorCode::FORBIDDEN:
-            response_dispatch_error(request, error, HTTP_STATUS_FORBIDDEN,
-                                    "Forbidden");
-            return;
+            return {HTTP_STATUS_FORBIDDEN, "Forbidden"};
         }
     }
 
-    if (error->domain == nfs_client_quark()) {
-        switch (error->code) {
+    if (error.domain == nfs_client_quark()) {
+        switch (error.code) {
         case NFS3ERR_NOENT:
         case NFS3ERR_NOTDIR:
-            response_dispatch_error(request, error, HTTP_STATUS_NOT_FOUND,
-                                    "The requested file does not exist.");
-            return;
+            return {HTTP_STATUS_NOT_FOUND,
+                    "The requested file does not exist."};
         }
     }
 
-    if (error->domain == http_client_quark() ||
-             error->domain == ajp_client_quark())
-        response_dispatch_error(request, error, HTTP_STATUS_BAD_GATEWAY,
-                                "Upstream server failed");
-    else if (error->domain == cgi_quark() ||
-             error->domain == fcgi_quark() ||
-             error->domain == was_quark())
-        response_dispatch_error(request, error, HTTP_STATUS_BAD_GATEWAY,
-                                "Script failed");
-    else if (error->domain == errno_quark()) {
-        switch (error->code) {
+    if (error.domain == http_client_quark() ||
+             error.domain == ajp_client_quark())
+        return {HTTP_STATUS_BAD_GATEWAY, "Upstream server failed"};
+    else if (error.domain == cgi_quark() ||
+             error.domain == fcgi_quark() ||
+             error.domain == was_quark())
+        return {HTTP_STATUS_BAD_GATEWAY, "Script failed"};
+    else if (error.domain == errno_quark()) {
+        switch (error.code) {
         case ENOENT:
         case ENOTDIR:
-            response_dispatch_error(request, error, HTTP_STATUS_NOT_FOUND,
-                                    "The requested file does not exist.");
+            return {HTTP_STATUS_NOT_FOUND,
+                    "The requested file does not exist."};
             break;
 
         default:
-            response_dispatch_error(request, error,
-                                    HTTP_STATUS_INTERNAL_SERVER_ERROR,
-                                    "Internal server error");
+            return {HTTP_STATUS_INTERNAL_SERVER_ERROR,
+                    "Internal server error"};
         }
-    } else if (error->domain == memcached_client_quark())
-        response_dispatch_error(request, error,
-                                HTTP_STATUS_BAD_GATEWAY,
-                                "Cache server failed");
+    } else if (error.domain == memcached_client_quark())
+        return {HTTP_STATUS_BAD_GATEWAY, "Cache server failed"};
     else
-        response_dispatch_error(request, error,
-                                HTTP_STATUS_BAD_GATEWAY,
-                                "Internal server error");
+        return {HTTP_STATUS_INTERNAL_SERVER_ERROR, "Internal server error"};
+}
+
+void
+response_dispatch_error(Request &request, GError *error)
+{
+    auto response = ToResponse(request.pool, *error);
+    if (request.instance.config.verbose_response)
+        response.message = p_strdup(&request.pool, error->message);
+
+    response_dispatch_message(request, response.status, response.message);
 }
 
 void
