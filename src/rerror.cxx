@@ -95,6 +95,19 @@ ToResponse(struct pool &pool, GError &error)
         return {HTTP_STATUS_INTERNAL_SERVER_ERROR, "Internal server error"};
 }
 
+gcc_pure
+static MessageHttpResponse
+ToResponse(struct pool &pool, std::exception_ptr ep)
+{
+    try {
+        FindRetrowNested<HttpMessageResponse>(ep);
+    } catch (const HttpMessageResponse &e) {
+        return Dup(pool, e.GetStatus(), e.what());
+    }
+
+    return {HTTP_STATUS_INTERNAL_SERVER_ERROR, "Internal server error"};
+}
+
 void
 response_dispatch_error(Request &request, GError *error)
 {
@@ -126,22 +139,14 @@ response_dispatch_log(Request &request, http_status_t status,
 }
 
 void
-response_dispatch_log(Request &request, http_status_t status,
-                      const char *msg,
-                      std::exception_ptr ep)
+response_dispatch_log(Request &request, std::exception_ptr ep)
 {
     auto log_msg = GetFullMessage(ep);
     daemon_log(2, "error on '%s': %s\n", request.request.uri, log_msg.c_str());
 
-    try {
-        FindRetrowNested<HttpMessageResponse>(ep);
-    } catch (const HttpMessageResponse &e) {
-        status = e.GetStatus();
-        msg = p_strdup(&request.pool, e.what());
-    }
-
+    auto response = ToResponse(request.pool, ep);
     if (request.instance.config.verbose_response)
-        msg = p_strdup(&request.pool, log_msg.c_str());
+        response.message = p_strdup(&request.pool, log_msg.c_str());
 
-    response_dispatch_message(request, status, msg);
+    response_dispatch_message(request, response.status, response.message);
 }

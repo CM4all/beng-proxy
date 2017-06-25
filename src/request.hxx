@@ -393,9 +393,7 @@ response_dispatch_log(Request &request, http_status_t status,
                       const char *msg, const char *log_msg);
 
 void
-response_dispatch_log(Request &request, http_status_t status,
-                      const char *msg,
-                      std::exception_ptr ep);
+response_dispatch_log(Request &request, std::exception_ptr ep);
 
 void
 response_dispatch_redirect(Request &request, http_status_t status,
