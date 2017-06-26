@@ -113,9 +113,7 @@ struct WidgetRequest final : HttpResponseHandler, Cancellable {
     void DispatchError(GError *error);
 
     void DispatchError(WidgetErrorCode code, const char *msg) {
-        DispatchError(g_error_new(widget_quark(), (int)code,
-                                  "Error from widget '%s': %s",
-                                  widget.GetLogName(), msg));
+        DispatchError(std::make_exception_ptr(WidgetError(widget, code, msg)));
     }
 
     /**
