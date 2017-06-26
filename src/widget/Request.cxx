@@ -33,6 +33,7 @@
 #include "address_suffix_registry.hxx"
 #include "util/Cast.hxx"
 #include "util/Cancellable.hxx"
+#include "util/StringFormat.hxx"
 
 #include <daemon/log.h>
 
@@ -109,6 +110,12 @@ struct WidgetRequest final : HttpResponseHandler, Cancellable {
     bool HandleRedirect(const char *location, Istream *body);
 
     void DispatchError(GError *error);
+
+    void DispatchError(WidgetErrorCode code, const char *msg) {
+        DispatchError(g_error_new(widget_quark(), (int)code,
+                                  "Error from widget '%s': %s",
+                                  widget.GetLogName(), msg));
+    }
 
     /**
      * A response was received from the widget server; apply
@@ -283,11 +290,7 @@ WidgetRequest::ProcessResponse(http_status_t status,
     if (!processable(headers)) {
         body->CloseUnused();
 
-        GError *error =
-            g_error_new(widget_quark(), (int)WidgetErrorCode::WRONG_TYPE,
-                        "widget '%s' sent non-HTML response",
-                        widget.GetLogName());
-        DispatchError(error);
+        DispatchError(WidgetErrorCode::WRONG_TYPE, "Got non-HTML response");
         return;
     }
 
@@ -330,11 +333,7 @@ WidgetRequest::CssProcessResponse(http_status_t status,
     if (!css_processable(headers)) {
         body->CloseUnused();
 
-        GError *error =
-            g_error_new(widget_quark(), (int)WidgetErrorCode::WRONG_TYPE,
-                        "widget '%s' sent non-CSS response",
-                        widget.GetLogName());
-        DispatchError(error);
+        DispatchError(WidgetErrorCode::WRONG_TYPE, "Got non-CSS response");
         return;
     }
 
@@ -357,11 +356,7 @@ WidgetRequest::TextProcessResponse(http_status_t status,
     if (!text_processor_allowed(headers)) {
         body->CloseUnused();
 
-        GError *error =
-            g_error_new(widget_quark(), (int)WidgetErrorCode::WRONG_TYPE,
-                        "widget '%s' sent non-text response",
-                        widget.GetLogName());
-        DispatchError(error);
+        DispatchError(WidgetErrorCode::WRONG_TYPE, "Got non-text response");
         return;
     }
 
@@ -409,12 +404,8 @@ WidgetRequest::TransformResponse(http_status_t status,
         if (body != nullptr)
             body->CloseUnused();
 
-        GError *error =
-            g_error_new(widget_quark(), (int)WidgetErrorCode::UNSUPPORTED_ENCODING,
-                        "widget '%s' sent non-identity response, "
-                        "cannot transform",
-                        widget.GetLogName());
-        DispatchError(error);
+        DispatchError(WidgetErrorCode::UNSUPPORTED_ENCODING,
+                      "Got non-identity response, cannot transform");
         return;
     }
 
@@ -625,11 +616,9 @@ WidgetRequest::SendRequest()
         if (view_name == nullptr)
             view_name = "[default]";
 
-        GError *error =
-            g_error_new(widget_quark(), (int)WidgetErrorCode::UNSPECIFIED,
-                        "Widget '%s' view '%s' does not have an address",
-                        widget.GetLogName(), view_name);
-        DispatchError(error);
+        DispatchError(WidgetErrorCode::UNSPECIFIED,
+                      StringFormat<256>("View '%s' does not have an address",
+                                        view_name));
         return;
     }
 
