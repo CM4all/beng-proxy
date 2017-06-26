@@ -109,6 +109,7 @@ struct WidgetRequest final : HttpResponseHandler, Cancellable {
 
     bool HandleRedirect(const char *location, Istream *body);
 
+    void DispatchError(std::exception_ptr ep);
     void DispatchError(GError *error);
 
     void DispatchError(WidgetErrorCode code, const char *msg) {
@@ -261,6 +262,15 @@ WidgetRequest::HandleRedirect(const char *location, Istream *body)
                                      cancel_ptr);
 
     return true;
+}
+
+void
+WidgetRequest::DispatchError(std::exception_ptr ep)
+{
+    if (lookup_id != nullptr)
+        lookup_handler->WidgetLookupError(ToGError(ep));
+    else
+        http_handler->InvokeError(ToGError(ep));
 }
 
 void
@@ -665,7 +675,7 @@ widget_suffix_registry_error(std::exception_ptr ep, void *ctx)
     WidgetRequest &embed = *(WidgetRequest *)ctx;
 
     embed.widget.Cancel();
-    embed.DispatchError(ToGError(ep));
+    embed.DispatchError(ep);
 }
 
 static constexpr SuffixRegistryHandler widget_suffix_registry_handler = {
