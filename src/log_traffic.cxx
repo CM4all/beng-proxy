@@ -11,7 +11,7 @@
 static void
 dump(const struct log_datagram *d)
 {
-    if (d->site != NULL && d->valid_traffic)
+    if (d->site != nullptr && d->valid_traffic)
         printf("%s %llu\n", d->site,
                (unsigned long long)(d->traffic_received + d->traffic_sent));
 }
@@ -23,7 +23,7 @@ int main(int argc, char **argv)
 
     struct log_server *server = log_server_new(0);
     const struct log_datagram *d;
-    while ((d = log_server_receive(server)) != NULL)
+    while ((d = log_server_receive(server)) != nullptr)
         dump(d);
 
     return 0;

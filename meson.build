@@ -1159,7 +1159,7 @@ executable('cm4all-beng-proxy-log-cat',
 
 executable('cm4all-beng-proxy-log-traffic',
   'src/log_server.cxx',
-  'src/log-traffic.c',
+  'src/log_traffic.cxx',
   include_directories: inc,
   dependencies: [
     libinline, libhttp,
