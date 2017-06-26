@@ -102,9 +102,6 @@ int main(int argc, char **argv)
     (void)argc;
     (void)argv;
 
-    AccessLogServer server(0);
-    while (const auto *d = server.Receive())
-        dump(*d);
-
+    AccessLogServer(0).Run(dump);
     return 0;
 }

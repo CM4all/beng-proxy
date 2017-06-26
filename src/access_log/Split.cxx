@@ -297,12 +297,11 @@ int main(int argc, char **argv)
 
     ConstBuffer<const char *> templates(&argv[argi], argc - argi);
 
-    AccessLogServer server(0);
-    while (auto *d = server.Receive()) {
-        for (const char *t : templates)
-            if (Dump(t, *d))
-                break;
-    }
+    AccessLogServer(0).Run([templates](const AccessLogDatagram &d){
+            for (const char *t : templates)
+                if (Dump(t, d))
+                    break;
+        });
 
     return 0;
 }

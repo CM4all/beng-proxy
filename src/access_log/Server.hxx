@@ -22,6 +22,12 @@ public:
     ~AccessLogServer();
 
     const AccessLogDatagram *Receive();
+
+    template<typename F>
+    void Run(F &&f) {
+        while (const auto *d = Receive())
+            f(*d);
+    }
 };
 
 #endif
