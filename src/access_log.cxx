@@ -9,7 +9,7 @@
 #ifndef NO_ACCESS_LOG
 
 #include "http_server/Request.hxx"
-#include "log_glue.hxx"
+#include "access_log/Glue.hxx"
 
 #include <daemon/log.h>
 

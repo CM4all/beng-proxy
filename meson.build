@@ -968,9 +968,9 @@ executable('cm4all-beng-proxy',
   'src/istream_gb.cxx',
   'src/istream_unlock.cxx',
   'src/ua_classification.cxx',
-  'src/log_client.cxx',
-  'src/log_launch.cxx',
-  'src/log_glue.cxx',
+  'src/access_log/Client.cxx',
+  'src/access_log/Launch.cxx',
+  'src/access_log/Glue.cxx',
   'src/PInstance.cxx',
   'src/bp_instance.cxx',
   'src/bp_main.cxx',
@@ -1040,9 +1040,9 @@ executable('cm4all-beng-lb',
   'src/istream_gb.cxx',
   'src/direct.cxx',
   'src/access_log.cxx',
-  'src/log_glue.cxx',
-  'src/log_client.cxx',
-  'src/log_launch.cxx',
+  'src/access_log/Client.cxx',
+  'src/access_log/Launch.cxx',
+  'src/access_log/Glue.cxx',
   'src/thread_queue.cxx',
   'src/thread_worker.cxx',
   'src/thread_pool.cxx',
@@ -1150,24 +1150,24 @@ executable('cm4all-certdb',
   ])
 
 executable('cm4all-beng-proxy-log-cat',
-  'src/log_server.cxx',
-  'src/log_cat.cxx',
+  'src/access_log/Server.cxx',
+  'src/access_log/Cat.cxx',
   include_directories: inc,
   dependencies: [
     libinline, libhttp,
   ])
 
 executable('cm4all-beng-proxy-log-traffic',
-  'src/log_server.cxx',
-  'src/log_traffic.cxx',
+  'src/access_log/Server.cxx',
+  'src/access_log/Traffic.cxx',
   include_directories: inc,
   dependencies: [
     libinline, libhttp,
   ])
 
 executable('cm4all-beng-proxy-log-split',
-  'src/log_server.cxx',
-  'src/log_split.cxx',
+  'src/access_log/Server.cxx',
+  'src/access_log/Split.cxx',
   include_directories: inc,
   dependencies: [
     libinline, libhttp,
@@ -1175,7 +1175,7 @@ executable('cm4all-beng-proxy-log-split',
   ])
 
 executable('cm4all-beng-proxy-log-forward',
-  'src/log_forward.cxx',
+  'src/access_log/Forward.cxx',
   include_directories: inc,
   dependencies: [
     libinline, libsocket, libhttp,
@@ -1183,7 +1183,7 @@ executable('cm4all-beng-proxy-log-forward',
   ])
 
 executable('cm4all-beng-proxy-log-exec',
-  'src/log_exec.cxx',
+  'src/access_log/Exec.cxx',
   include_directories: inc,
   dependencies: [
     libinline,
@@ -1193,8 +1193,8 @@ executable('cm4all-beng-proxy-log-exec',
   ])
 
 executable('cm4all-beng-proxy-log-tee',
-  'src/log_launch.cxx',
-  'src/log_tee.cxx',
+  'src/access_log/Launch.cxx',
+  'src/access_log/Tee.cxx',
   include_directories: inc,
   dependencies: [
     libinline, libsocket, libdaemon,

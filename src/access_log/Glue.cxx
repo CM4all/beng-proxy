@@ -4,9 +4,9 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "log_glue.hxx"
-#include "log_launch.hxx"
-#include "log_client.hxx"
+#include "Glue.hxx"
+#include "Launch.hxx"
+#include "Client.hxx"
 #include "util/ByteOrder.hxx"
 
 #include <assert.h>

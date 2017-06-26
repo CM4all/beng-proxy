@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "log_client.hxx"
+#include "Client.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "util/ByteOrder.hxx"
 

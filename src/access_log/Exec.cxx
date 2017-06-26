@@ -5,7 +5,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "log_server.hxx"
+#include "Server.hxx"
 #include "system/Error.hxx"
 #include "net/Resolver.hxx"
 #include "net/AddressInfo.hxx"

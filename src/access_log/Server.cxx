@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "log_server.hxx"
+#include "Server.hxx"
 #include "util/ByteOrder.hxx"
 
 #include <beng-proxy/log.h>

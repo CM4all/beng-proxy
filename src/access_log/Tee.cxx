@@ -5,7 +5,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "log_launch.hxx"
+#include "Launch.hxx"
 #include "util/PrintException.hxx"
 
 #include <stdio.h>
