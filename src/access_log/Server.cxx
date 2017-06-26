@@ -17,25 +17,29 @@
 #include <errno.h>
 
 struct log_server {
-    int fd;
+    const int fd;
 
     struct log_datagram datagram;
 
     char buffer[65536];
+
+public:
+    log_server(int _fd):fd(_fd) {}
+
+    ~log_server() {
+        close(fd);
+    }
 };
 
 struct log_server *
 log_server_new(int fd)
 {
-    auto server = new log_server;
-    server->fd = fd;
-    return server;
+    return new log_server(fd);
 }
 
 void
 log_server_free(struct log_server *server)
 {
-    close(server->fd);
     delete server;
 }
 
