@@ -68,10 +68,9 @@ Request::OnDelegateSuccess(int fd)
 }
 
 void
-Request::OnDelegateError(GError *error)
+Request::OnDelegateError(std::exception_ptr ep)
 {
-    response_dispatch_error(*this, error);
-    g_error_free(error);
+    response_dispatch_log(*this, ep);
 }
 
 /*

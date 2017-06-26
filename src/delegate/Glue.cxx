@@ -9,6 +9,7 @@
 #include "Client.hxx"
 #include "Handler.hxx"
 #include "Stock.hxx"
+#include "GException.hxx"
 #include "stock/Item.hxx"
 #include "stock/MapStock.hxx"
 #include "lease.hxx"
@@ -36,7 +37,7 @@ delegate_stock_open(StockMap *stock, struct pool *pool,
     GError *error = nullptr;
     auto *item = delegate_stock_get(stock, pool, helper, options, &error);
     if (item == nullptr) {
-        handler.OnDelegateError(error);
+        handler.OnDelegateError(ToException(*error));
         return;
     }
 

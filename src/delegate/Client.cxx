@@ -10,22 +10,17 @@
 #include "Protocol.hxx"
 #include "please.hxx"
 #include "system/fd_util.h"
-#include "gerrno.h"
 #include "pool.hxx"
 #include "event/SocketEvent.hxx"
+#include "system/Error.hxx"
 #include "util/Cancellable.hxx"
 #include "util/Macros.hxx"
+
+#include <stdexcept>
 
 #include <assert.h>
 #include <string.h>
 #include <sys/socket.h>
-
-gcc_const
-static inline GQuark
-delegate_client_quark(void)
-{
-    return g_quark_from_static_string("delegate_client");
-}
 
 struct DelegateClient final : Cancellable {
     struct lease_ref lease_ref;
@@ -63,14 +58,14 @@ struct DelegateClient final : Cancellable {
         p_lease_release(lease_ref, reuse, pool);
     }
 
-    void DestroyError(GError *error) {
+    void DestroyError(std::exception_ptr ep) {
         ReleaseSocket(false);
-        handler.OnDelegateError(error);
+        handler.OnDelegateError(ep);
         Destroy();
     }
 
     void DestroyError(const char *msg) {
-        DestroyError(g_error_new_literal(delegate_client_quark(), 0, msg));
+        DestroyError(std::make_exception_ptr(std::runtime_error(msg)));
     }
 
     void HandleFd(const struct msghdr &msg, size_t length);
@@ -132,20 +127,19 @@ DelegateClient::HandleErrno(size_t length)
     }
 
     ssize_t nbytes = recv(fd, &e, sizeof(e), 0);
-    GError *error;
+    std::exception_ptr ep;
 
     if (nbytes == sizeof(e)) {
         ReleaseSocket(true);
 
-        error = new_error_errno2(e);
+        ep = std::make_exception_ptr(MakeErrno(e));
     } else {
         ReleaseSocket(false);
 
-        error = g_error_new_literal(delegate_client_quark(), 0,
-                                    "Failed to receive errno");
+        ep = std::make_exception_ptr(std::runtime_error("Failed to receive errno"));
     }
 
-    handler.OnDelegateError(error);
+    handler.OnDelegateError(ep);
     Destroy();
 }
 
@@ -189,8 +183,7 @@ DelegateClient::TryRead()
 
     nbytes = recvmsg_cloexec(fd, &msg, 0);
     if (nbytes < 0) {
-        GError *error = new_error_errno_msg("recvmsg() failed");
-        DestroyError(error);
+        DestroyError(std::make_exception_ptr(MakeErrno("recvmsg() failed")));
         return;
     }
 
@@ -207,10 +200,9 @@ DelegateClient::TryRead()
  *
  */
 
-static bool
+static void
 SendDelegatePacket(int fd, DelegateRequestCommand cmd,
-                   const void *payload, size_t length,
-                   GError **error_r)
+                   const void *payload, size_t length)
 {
     const DelegateRequestHeader header = {
         .length = (uint16_t)length,
@@ -233,18 +225,11 @@ SendDelegatePacket(int fd, DelegateRequestCommand cmd,
     };
 
     auto nbytes = sendmsg(fd, &msg, MSG_DONTWAIT);
-    if (nbytes < 0) {
-        set_error_errno_msg(error_r, "Failed to send to delegate");
-        return false;
-    }
+    if (nbytes < 0)
+        throw MakeErrno("Failed to send to delegate");
 
-    if (size_t(nbytes) != sizeof(header) + length) {
-        g_set_error_literal(error_r, delegate_client_quark(), 0,
-                            "Short send to delegate");
-        return false;
-    }
-
-    return true;
+    if (size_t(nbytes) != sizeof(header) + length)
+        throw std::runtime_error("Short send to delegate");
 }
 
 void
@@ -253,12 +238,12 @@ delegate_open(EventLoop &event_loop, int fd, Lease &lease,
               DelegateHandler &handler,
               CancellablePointer &cancel_ptr)
 {
-    GError *error = nullptr;
-    if (!SendDelegatePacket(fd, DelegateRequestCommand::OPEN,
-                            path, strlen(path),
-                            &error)) {
+    try {
+        SendDelegatePacket(fd, DelegateRequestCommand::OPEN,
+                           path, strlen(path));
+    } catch (...) {
         lease.ReleaseLease(false);
-        handler.OnDelegateError(error);
+        handler.OnDelegateError(std::current_exception());
         return;
     }
 

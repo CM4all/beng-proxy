@@ -365,7 +365,7 @@ public:
 
     /* virtual methods from class DelegateHandler */
     void OnDelegateSuccess(int fd) override;
-    void OnDelegateError(GError *error) override;
+    void OnDelegateError(std::exception_ptr ep) override;
 };
 
 void

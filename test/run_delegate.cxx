@@ -10,8 +10,7 @@
 #include "PInstance.hxx"
 #include "pool.hxx"
 #include "util/Cancellable.hxx"
-
-#include <glib.h>
+#include "util/PrintException.hxx"
 
 #include <assert.h>
 #include <stdio.h>
@@ -38,9 +37,8 @@ public:
         defer_stop.Schedule();
     }
 
-    void OnDelegateError(GError *error) override {
-        g_printerr("%s\n", error->message);
-        g_error_free(error);
+    void OnDelegateError(std::exception_ptr ep) override {
+        PrintException(ep);
 
         defer_stop.Schedule();
     }

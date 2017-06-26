@@ -13,6 +13,7 @@
 #include "strmap.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream_file.hxx"
+#include "GException.hxx"
 #include "gerrno.h"
 #include "pool.hxx"
 
@@ -48,8 +49,8 @@ private:
     /* virtual methods from class DelegateHandler */
     void OnDelegateSuccess(int fd) override;
 
-    void OnDelegateError(GError *error) override {
-        handler.InvokeError(error);
+    void OnDelegateError(std::exception_ptr ep) override {
+        handler.InvokeError(ToGError(ep));
     }
 };
 
