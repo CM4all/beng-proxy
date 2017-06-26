@@ -6,6 +6,8 @@
 #include "HttpMessageResponse.hxx"
 #include "http_quark.h"
 #include "http_client.hxx"
+#include "nfs/Error.hxx"
+#include "nfs/Quark.hxx"
 #include "fcgi/Error.hxx"
 #include "fcgi/Quark.hxx"
 #include "gerrno.h"
@@ -31,6 +33,12 @@ ToGError(std::exception_ptr ep)
         if (e.code().category() == ErrnoCategory())
             return g_error_new_literal(errno_quark(), e.code().value(),
                                        msg.c_str());
+    }
+
+    try {
+        FindRetrowNested<NfsClientError>(ep);
+    } catch (const NfsClientError &e) {
+        return g_error_new_literal(nfs_client_quark(), e.GetCode(), msg.c_str());
     }
 
     try {
@@ -68,6 +76,8 @@ ThrowGError(const GError &error)
         throw HttpMessageResponse(http_status_t(error.code), error.message);
     else if (error.domain == errno_quark())
         throw MakeErrno(error.code, error.message);
+    else if (error.domain == nfs_client_quark())
+        throw NfsClientError(error.code, error.message);
     else if (error.domain == http_client_quark())
         throw HttpClientError(HttpClientErrorCode(error.code), error.message);
     else if (error.domain == fcgi_quark())
