@@ -13,7 +13,7 @@
 struct AccessLogDatagram {
     uint64_t timestamp;
 
-    const char *remote_host, *site;
+    const char *remote_host, *host, *site;
 
     http_method_t http_method;
 

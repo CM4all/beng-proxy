@@ -53,7 +53,7 @@ log_global_enabled(void)
 
 bool
 log_http_request(uint64_t timestamp, http_method_t method, const char *uri,
-                 const char *remote_host, const char *site,
+                 const char *remote_host, const char *host, const char *site,
                  const char *referer, const char *user_agent,
                  http_status_t status, int64_t length,
                  uint64_t traffic_received, uint64_t traffic_sent,
@@ -71,6 +71,8 @@ log_http_request(uint64_t timestamp, http_method_t method, const char *uri,
     if (remote_host != nullptr)
         log_client_append_string(global_log_client, LOG_REMOTE_HOST,
                                  remote_host);
+    if (host != nullptr)
+        log_client_append_string(global_log_client, LOG_HOST, host);
     if (site != nullptr)
         log_client_append_string(global_log_client, LOG_SITE, site);
     log_client_append_u8(global_log_client, LOG_HTTP_METHOD, method);

@@ -69,6 +69,11 @@ enum beng_log_attribute {
      * integer specifying the number of microseconds.
      */
     LOG_DURATION,
+
+    /**
+     * The "Host" request header.
+     */
+    LOG_HOST,
 };
 
 /**

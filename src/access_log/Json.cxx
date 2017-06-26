@@ -32,6 +32,9 @@ ToJson(const AccessLogDatagram &d)
     if (d.remote_host != nullptr)
         root["remote_host"] = d.remote_host;
 
+    if (d.host != nullptr)
+        root["host"] = d.host;
+
     if (d.site != nullptr)
         root["site"] = d.site;
 

@@ -104,6 +104,10 @@ log_server_apply_attributes(AccessLogDatagram *datagram, const void *p,
             p = read_string(&datagram->remote_host, p, end);
             break;
 
+        case LOG_HOST:
+            p = read_string(&datagram->host, p, end);
+            break;
+
         case LOG_SITE:
             p = read_string(&datagram->site, p, end);
             break;
