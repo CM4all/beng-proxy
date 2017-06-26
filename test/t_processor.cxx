@@ -78,11 +78,11 @@ class MyWidgetLookupHandler final : public WidgetLookupHandler {
 public:
     /* virtual methods from class WidgetLookupHandler */
     void WidgetFound(gcc_unused Widget &widget) override {
-        g_printerr("widget found\n");
+        fprintf(stderr, "widget found\n");
     }
 
     void WidgetNotFound() override {
-        g_printerr("widget not found\n");
+        fprintf(stderr, "widget not found\n");
     }
 
     void WidgetLookupError(GError *error) override {
