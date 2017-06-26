@@ -781,7 +781,7 @@ nfs_client = static_library('nfs_client',
   'src/nfs/Stock.cxx',
   'src/nfs/Client.cxx',
   'src/nfs/Cache.cxx',
-  'src/nfs/Request.cxx',
+  'src/nfs/Glue.cxx',
   include_directories: inc,
   dependencies: [
     glib,

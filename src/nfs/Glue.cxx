@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "Request.hxx"
+#include "Glue.hxx"
 #include "Cache.hxx"
 #include "http_response.hxx"
 #include "static_headers.hxx"

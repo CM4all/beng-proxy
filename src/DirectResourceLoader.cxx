@@ -19,7 +19,7 @@
 #include "was/was_glue.hxx"
 #include "ajp/ajp_request.hxx"
 #include "nfs/Address.hxx"
-#include "nfs/Request.hxx"
+#include "nfs/Glue.hxx"
 #include "header_writer.hxx"
 #include "pipe_filter.hxx"
 #include "delegate/Address.hxx"
