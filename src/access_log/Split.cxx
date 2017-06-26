@@ -267,6 +267,20 @@ dump(int fd, const AccessLogDatagram &d)
         dump_http(fd, d);
 }
 
+static bool
+Dump(const char *template_path, const AccessLogDatagram &d)
+{
+    const char *path = generate_path(template_path, d);
+    if (path == nullptr)
+        return false;
+
+    int fd = open_log_file(path);
+    if (fd >= 0)
+        dump(fd, d);
+
+    return true;
+}
+
 int main(int argc, char **argv)
 {
     int argi = 1;
@@ -283,16 +297,8 @@ int main(int argc, char **argv)
     AccessLogServer server(0);
     while (auto *d = server.Receive()) {
         for (int i = argi; i < argc; ++i) {
-            const char *path = generate_path(argv[i], *d);
-            if (path == nullptr)
-                continue;
-
-            int fd = open_log_file(path);
-            if (fd < 0)
+            if (Dump(argv[i], *d))
                 break;
-
-            dump(fd, *d);
-            break;
         }
     }
 
