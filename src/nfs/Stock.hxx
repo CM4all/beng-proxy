@@ -15,9 +15,10 @@ class NfsClient;
 class CancellablePointer;
 class EventLoop;
 
-struct NfsStockGetHandler {
-    void (*ready)(NfsClient *client, void *ctx);
-    void (*error)(GError *error, void *ctx);
+class NfsStockGetHandler {
+public:
+    virtual void OnNfsStockReady(NfsClient &client) = 0;
+    virtual void OnNfsStockError(GError *error) = 0;
 };
 
 NfsStock *
@@ -29,7 +30,7 @@ nfs_stock_free(NfsStock *stock);
 void
 nfs_stock_get(NfsStock *stock, struct pool *pool,
               const char *server, const char *export_name,
-              const NfsStockGetHandler *handler, void *ctx,
+              NfsStockGetHandler &handler,
               CancellablePointer &cancel_ptr);
 
 #endif

@@ -27,14 +27,13 @@ struct NfsStockRequest final
     NfsStockConnection &connection;
 
     struct pool &pool;
-    const NfsStockGetHandler &handler;
-    void *handler_ctx;
+    NfsStockGetHandler &handler;
 
     NfsStockRequest(NfsStockConnection &_connection, struct pool &_pool,
-                    const NfsStockGetHandler &_handler, void *ctx,
+                    NfsStockGetHandler &_handler,
                     CancellablePointer &cancel_ptr)
         :connection(_connection), pool(_pool),
-         handler(_handler), handler_ctx(ctx) {
+         handler(_handler) {
         pool_ref(&pool);
         cancel_ptr = *this;
     }
@@ -107,7 +106,7 @@ struct NfsStock {
 
     void Get(struct pool &pool,
              const char *server, const char *export_name,
-             const NfsStockGetHandler &handler, void *ctx,
+             NfsStockGetHandler &handler,
              CancellablePointer &cancel_ptr);
 
     void Remove(NfsStockConnection &c) {
@@ -128,7 +127,7 @@ NfsStockConnection::OnNfsClientReady(NfsClient &_client)
     client = &_client;
 
     requests.clear_and_dispose([&_client](NfsStockRequest *request){
-            request->handler.ready(&_client, request->handler_ctx);
+            request->handler.OnNfsStockReady(_client);
             DeleteUnrefPool(request->pool, request);
         });
 }
@@ -139,7 +138,7 @@ NfsStockConnection::OnNfsMountError(GError *error)
     assert(!stock.connections.empty());
 
     requests.clear_and_dispose([error](NfsStockRequest *request){
-            request->handler.error(g_error_copy(error), request->handler_ctx);
+            request->handler.OnNfsStockError(g_error_copy(error));
             DeleteUnrefPool(request->pool, request);
         });
 
@@ -209,7 +208,7 @@ nfs_stock_free(NfsStock *stock)
 inline void
 NfsStock::Get(struct pool &caller_pool,
               const char *server, const char *export_name,
-              const NfsStockGetHandler &handler, void *ctx,
+              NfsStockGetHandler &handler,
               CancellablePointer &cancel_ptr)
 {
     const char *key = p_strcat(&caller_pool, server, ":", export_name,
@@ -232,13 +231,13 @@ NfsStock::Get(struct pool &caller_pool,
         connection = &*result.first;
         if (connection->client != nullptr) {
             /* already connected */
-            handler.ready(connection->client, ctx);
+            handler.OnNfsStockReady(*connection->client);
             return;
         }
     }
 
     auto request = NewFromPool<NfsStockRequest>(caller_pool, *connection,
-                                                caller_pool, handler, ctx,
+                                                caller_pool, handler,
                                                 cancel_ptr);
     connection->requests.push_front(*request);
 
@@ -251,8 +250,8 @@ NfsStock::Get(struct pool &caller_pool,
 void
 nfs_stock_get(NfsStock *stock, struct pool *pool,
               const char *server, const char *export_name,
-              const NfsStockGetHandler *handler, void *ctx,
+              NfsStockGetHandler &handler,
               CancellablePointer &cancel_ptr)
 {
-    stock->Get(*pool, server, export_name, *handler, ctx, cancel_ptr);
+    stock->Get(*pool, server, export_name, handler, cancel_ptr);
 }

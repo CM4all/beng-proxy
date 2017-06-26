@@ -125,7 +125,7 @@ private:
     }
 };
 
-struct NfsCacheRequest final : NfsClientOpenFileHandler {
+struct NfsCacheRequest final : NfsStockGetHandler, NfsClientOpenFileHandler {
     struct pool &pool;
 
     NfsCache &cache;
@@ -149,6 +149,10 @@ struct NfsCacheRequest final : NfsClientOpenFileHandler {
     void Error(GError *error) {
         handler.error(error, handler_ctx);
     }
+
+    /* virtual methods from class NfsStockGetHandler */
+    void OnNfsStockReady(NfsClient &client) override;
+    void OnNfsStockError(GError *error) override;
 
     /* virtual methods from class NfsClientOpenFileHandler */
     void OnNfsOpen(NfsFileHandle *handle, const struct stat *st) override;
@@ -199,14 +203,6 @@ nfs_cache_key(struct pool &pool, const char *server,
               const char *_export, const char *path)
 {
     return p_strcat(&pool, server, ":", _export, path, nullptr);
-}
-
-static void
-nfs_cache_request_error(GError *error, void *ctx)
-{
-    NfsCacheRequest *r = (NfsCacheRequest *)ctx;
-
-    r->Error(error);
 }
 
 NfsCacheStore::NfsCacheStore(struct pool &_pool, NfsCache &_cache,
@@ -322,19 +318,18 @@ NfsCacheRequest::OnNfsOpen(NfsFileHandle *handle, const struct stat *st)
  *
  */
 
-static void
-nfs_cache_request_stock_ready(NfsClient *client, void *ctx)
+void
+NfsCacheRequest::OnNfsStockReady(NfsClient &client)
 {
-    auto &r = *(NfsCacheRequest *)ctx;
-
-    nfs_client_open_file(client, &r.pool, r.path,
-                         r, r.cancel_ptr);
+    nfs_client_open_file(&client, &pool, path,
+                         *this, cancel_ptr);
 }
 
-static constexpr NfsStockGetHandler nfs_cache_request_stock_handler = {
-    .ready = nfs_cache_request_stock_ready,
-    .error = nfs_cache_request_error,
-};
+void
+NfsCacheRequest::OnNfsStockError(GError *error)
+{
+    Error(error);
+}
 
 /*
  * constructor
@@ -421,8 +416,7 @@ nfs_cache_request(struct pool &pool, NfsCache &cache,
                                           key, path,
                                           handler, ctx, cancel_ptr);
     nfs_stock_get(&cache.stock, &pool, server, _export,
-                  &nfs_cache_request_stock_handler, r,
-                  cancel_ptr);
+                  *r, cancel_ptr);
 }
 
 static Istream *
