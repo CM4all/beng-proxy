@@ -10,7 +10,7 @@
 #include <stdio.h>
 
 static void
-dump(const struct log_datagram *d)
+dump(const AccessLogDatagram *d)
 {
     if (d->site != nullptr && d->valid_traffic)
         printf("%s %llu\n", d->site,
@@ -23,8 +23,7 @@ int main(int argc, char **argv)
     (void)argv;
 
     struct log_server *server = log_server_new(0);
-    const struct log_datagram *d;
-    while ((d = log_server_receive(server)) != nullptr)
+    while (const auto *d = log_server_receive(server))
         dump(d);
 
     return 0;

@@ -20,7 +20,7 @@
 struct log_server {
     const int fd;
 
-    struct log_datagram datagram;
+    AccessLogDatagram datagram;
 
     char buffer[65536];
 
@@ -95,7 +95,7 @@ read_string(const char **value_r, const void *p, const uint8_t *end)
 }
 
 static bool
-log_server_apply_attributes(struct log_datagram *datagram, const void *p,
+log_server_apply_attributes(AccessLogDatagram *datagram, const void *p,
                             const uint8_t *end)
 {
     assert(datagram != nullptr);
@@ -191,7 +191,7 @@ log_server_apply_attributes(struct log_datagram *datagram, const void *p,
 }
 
 static bool
-log_server_apply_datagram(struct log_datagram *datagram, const void *p,
+log_server_apply_datagram(AccessLogDatagram *datagram, const void *p,
                           const void *end)
 {
     auto magic = (const uint32_t *)p;
@@ -202,7 +202,7 @@ log_server_apply_datagram(struct log_datagram *datagram, const void *p,
                                        (const uint8_t *)end);
 }
 
-const struct log_datagram *
+const AccessLogDatagram *
 log_server_receive(struct log_server *server)
 {
     while (true) {

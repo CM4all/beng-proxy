@@ -35,7 +35,7 @@ split_time_t(time_t t)
 }
 
 static const char *
-expand_timestamp(const char *fmt, const struct log_datagram *d)
+expand_timestamp(const char *fmt, const AccessLogDatagram *d)
 {
     if (!d->valid_timestamp)
         return nullptr;
@@ -47,7 +47,7 @@ expand_timestamp(const char *fmt, const struct log_datagram *d)
 }
 
 static const char *
-expand(const char *name, size_t length, const struct log_datagram *d)
+expand(const char *name, size_t length, const AccessLogDatagram *d)
 {
     if (string_equals(name, length, "site"))
         return d->site;
@@ -68,7 +68,7 @@ expand(const char *name, size_t length, const struct log_datagram *d)
 }
 
 static const char *
-generate_path(const char *template_, const struct log_datagram *d)
+generate_path(const char *template_, const AccessLogDatagram *d)
 {
     static char buffer[8192];
     char *dest = buffer;
@@ -218,7 +218,7 @@ escape_string(const char *value, char *const buffer, size_t buffer_size)
 }
 
 static void
-dump_http(int fd, const struct log_datagram *d)
+dump_http(int fd, const AccessLogDatagram *d)
 {
     const char *method = d->valid_http_method &&
         http_method_is_valid(d->http_method)
@@ -261,7 +261,7 @@ dump_http(int fd, const struct log_datagram *d)
 }
 
 static void
-dump(int fd, const struct log_datagram *d)
+dump(int fd, const AccessLogDatagram *d)
 {
     if (d->http_uri != nullptr && d->valid_http_status)
         dump_http(fd, d);
@@ -281,7 +281,7 @@ int main(int argc, char **argv)
     }
 
     struct log_server *server = log_server_new(0);
-    const struct log_datagram *d;
+    const AccessLogDatagram *d;
     while ((d = log_server_receive(server)) != nullptr) {
         for (int i = argi; i < argc; ++i) {
             const char *path = generate_path(argv[i], d);

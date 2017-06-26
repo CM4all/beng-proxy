@@ -43,7 +43,7 @@ escape_string(const char *value, char *const buffer, size_t buffer_size)
 }
 
 static void
-dump_http(const struct log_datagram *d)
+dump_http(const AccessLogDatagram *d)
 {
     const char *method = d->valid_http_method &&
         http_method_is_valid(d->http_method)
@@ -91,7 +91,7 @@ dump_http(const struct log_datagram *d)
 }
 
 static void
-dump(const struct log_datagram *d)
+dump(const AccessLogDatagram *d)
 {
     if (d->http_uri != nullptr && d->valid_http_status)
         dump_http(d);
@@ -103,8 +103,7 @@ int main(int argc, char **argv)
     (void)argv;
 
     struct log_server *server = log_server_new(0);
-    const struct log_datagram *d;
-    while ((d = log_server_receive(server)) != nullptr)
+    while (const auto *d = log_server_receive(server))
         dump(d);
 
     return 0;

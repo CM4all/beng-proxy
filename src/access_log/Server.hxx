@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_LOG_SERVER_H
 #define BENG_PROXY_LOG_SERVER_H
 
-struct log_datagram;
+struct AccessLogDatagram;
 
 struct log_server *
 log_server_new(int fd);
@@ -15,7 +15,7 @@ log_server_new(int fd);
 void
 log_server_free(struct log_server *server);
 
-const struct log_datagram *
+const AccessLogDatagram *
 log_server_receive(struct log_server *server);
 
 #endif

@@ -10,7 +10,7 @@
 
 #include <stdint.h>
 
-struct log_datagram {
+struct AccessLogDatagram {
     uint64_t timestamp;
 
     const char *remote_host, *site;
