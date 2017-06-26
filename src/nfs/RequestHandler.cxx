@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "Handler.hxx"
+#include "RequestHandler.hxx"
 #include "Cache.hxx"
 #include "Address.hxx"
 #include "file_headers.hxx"

@@ -15,7 +15,7 @@
 #include "file_handler.hxx"
 #include "file_address.hxx"
 #include "nfs/Address.hxx"
-#include "nfs/Handler.hxx"
+#include "nfs/RequestHandler.hxx"
 #include "request.hxx"
 #include "args.hxx"
 #include "session.hxx"
