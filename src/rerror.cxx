@@ -8,6 +8,7 @@
 #include "bp_instance.hxx"
 #include "http_client.hxx"
 #include "nfs/Quark.hxx"
+#include "nfs/Error.hxx"
 #include "ajp/ajp_client.hxx"
 #include "memcached/memcached_client.hxx"
 #include "cgi/cgi_quark.h"
@@ -124,6 +125,17 @@ ToResponse(struct pool &pool, std::exception_ptr ep)
 
         case WidgetErrorCode::FORBIDDEN:
             return {HTTP_STATUS_FORBIDDEN, "Forbidden"};
+        }
+    }
+
+    try {
+        FindRetrowNested<NfsClientError>(ep);
+    } catch (const NfsClientError &e) {
+        switch (e.GetCode()) {
+        case NFS3ERR_NOENT:
+        case NFS3ERR_NOTDIR:
+            return {HTTP_STATUS_NOT_FOUND,
+                    "The requested file does not exist."};
         }
     }
 
