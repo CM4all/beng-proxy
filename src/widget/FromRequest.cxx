@@ -63,7 +63,7 @@ Widget::CopyFromRequest(struct processor_env &env)
             from_request.path_info =
                 uri_compress(*env.pool, from_request.path_info);
             if (from_request.path_info == nullptr)
-                throw WidgetError(WidgetErrorCode::FORBIDDEN,
+                throw WidgetError(*this, WidgetErrorCode::FORBIDDEN,
                                   "path compression failed");
         }
 

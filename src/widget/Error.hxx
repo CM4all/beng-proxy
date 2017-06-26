@@ -9,6 +9,8 @@
 
 #include <stdexcept>
 
+struct Widget;
+
 enum class WidgetErrorCode {
     UNSPECIFIED,
 
@@ -52,6 +54,8 @@ class WidgetError : public std::runtime_error {
 public:
     WidgetError(WidgetErrorCode _code, const char *_msg)
         :std::runtime_error(_msg), code(_code) {}
+
+    WidgetError(const Widget &widget, WidgetErrorCode _code, const char *_msg);
 
     WidgetErrorCode GetCode() const {
         return code;
