@@ -1151,7 +1151,7 @@ executable('cm4all-certdb',
 
 executable('cm4all-beng-proxy-log-cat',
   'src/log_server.cxx',
-  'src/log-cat.c',
+  'src/log_cat.cxx',
   include_directories: inc,
   dependencies: [
     libinline, libhttp,
