@@ -37,7 +37,7 @@ static const char *
 expand_timestamp(const char *fmt, const struct log_datagram *d)
 {
     if (!d->valid_timestamp)
-        return NULL;
+        return nullptr;
 
     time_t t = (time_t)(d->timestamp / 1000000);
     static char buffer[64];
@@ -63,52 +63,52 @@ expand(const char *name, size_t length, const struct log_datagram *d)
     else if (string_equals(name, length, "minute"))
         return expand_timestamp("%M", d);
     else
-        return NULL;
+        return nullptr;
 }
 
 static const char *
-generate_path(const char *template, const struct log_datagram *d)
+generate_path(const char *template_, const struct log_datagram *d)
 {
     static char buffer[8192];
     char *dest = buffer;
 
     while (true) {
-        const char *escape = strchr(template, '%');
-        if (escape == NULL) {
-            strcpy(dest, template);
+        const char *escape = strchr(template_, '%');
+        if (escape == nullptr) {
+            strcpy(dest, template_);
             return buffer;
         }
 
-        if (dest + (escape - template) + 1 >= buffer + sizeof(buffer))
+        if (dest + (escape - template_) + 1 >= buffer + sizeof(buffer))
             /* too long */
-            return NULL;
+            return nullptr;
 
-        memcpy(dest, template, escape - template);
-        dest += escape - template;
-        template = escape + 1;
-        if (*template != '{') {
+        memcpy(dest, template_, escape - template_);
+        dest += escape - template_;
+        template_ = escape + 1;
+        if (*template_ != '{') {
             *dest++ = *escape;
             continue;
         }
 
-        ++template;
-        const char *end = strchr(template, '}');
-        if (end == NULL)
-            return NULL;
+        ++template_;
+        const char *end = strchr(template_, '}');
+        if (end == nullptr)
+            return nullptr;
 
-        const char *value = expand(template, end - template, d);
-        if (value == NULL)
-            return NULL;
+        const char *value = expand(template_, end - template_, d);
+        if (value == nullptr)
+            return nullptr;
 
         size_t length = strlen(value);
         if (dest + length >= buffer + sizeof(buffer))
             /* too long */
-            return NULL;
+            return nullptr;
 
         memcpy(dest, value, length);
         dest += length;
 
-        template = end + 1;
+        template_ = end + 1;
     }
 }
 
@@ -116,7 +116,7 @@ static bool
 make_parent_directory_recursive(char *path)
 {
     char *slash = strrchr(path, '/');
-    if (slash == NULL || slash == path)
+    if (slash == nullptr || slash == path)
         return true;
 
     *slash = 0;
@@ -188,7 +188,7 @@ open_log_file(const char *path)
 static const char *
 optional_string(const char *p)
 {
-    if (p == NULL)
+    if (p == nullptr)
         return "-";
 
     return p;
@@ -262,7 +262,7 @@ dump_http(int fd, const struct log_datagram *d)
 static void
 dump(int fd, const struct log_datagram *d)
 {
-    if (d->http_uri != NULL && d->valid_http_status)
+    if (d->http_uri != nullptr && d->valid_http_status)
         dump_http(fd, d);
 }
 
@@ -281,10 +281,10 @@ int main(int argc, char **argv)
 
     struct log_server *server = log_server_new(0);
     const struct log_datagram *d;
-    while ((d = log_server_receive(server)) != NULL) {
+    while ((d = log_server_receive(server)) != nullptr) {
         for (int i = argi; i < argc; ++i) {
             const char *path = generate_path(argv[i], d);
-            if (path == NULL)
+            if (path == nullptr)
                 continue;
 
             int fd = open_log_file(path);

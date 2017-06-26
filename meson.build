@@ -1167,7 +1167,7 @@ executable('cm4all-beng-proxy-log-traffic',
 
 executable('cm4all-beng-proxy-log-split',
   'src/log_server.cxx',
-  'src/log-split.c',
+  'src/log_split.cxx',
   include_directories: inc,
   dependencies: [
     libinline, libhttp,
