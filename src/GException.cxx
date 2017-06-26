@@ -6,6 +6,8 @@
 #include "HttpMessageResponse.hxx"
 #include "http_quark.h"
 #include "http_client.hxx"
+#include "fcgi/Error.hxx"
+#include "fcgi/Quark.hxx"
 #include "gerrno.h"
 #include "widget/Error.hxx"
 #include "system/Error.hxx"
@@ -39,6 +41,12 @@ ToGError(std::exception_ptr ep)
     }
 
     try {
+        FindRetrowNested<FcgiClientError>(ep);
+    } catch (const FcgiClientError &e) {
+        return g_error_new_literal(fcgi_quark(), 0, msg.c_str());
+    }
+
+    try {
         FindRetrowNested<WidgetError>(ep);
     } catch (const WidgetError &e) {
         return g_error_new_literal(widget_quark(), int(e.GetCode()),
@@ -62,6 +70,8 @@ ThrowGError(const GError &error)
         throw MakeErrno(error.code, error.message);
     else if (error.domain == http_client_quark())
         throw HttpClientError(HttpClientErrorCode(error.code), error.message);
+    else if (error.domain == fcgi_quark())
+        throw FcgiClientError(error.message);
     else if (error.domain == widget_quark())
         throw WidgetError(WidgetErrorCode(error.code), error.message);
     else
