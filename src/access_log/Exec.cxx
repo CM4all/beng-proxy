@@ -5,7 +5,6 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "Server.hxx"
 #include "system/Error.hxx"
 #include "net/Resolver.hxx"
 #include "net/AddressInfo.hxx"
@@ -18,7 +17,6 @@
 #include <string.h>
 #include <errno.h>
 #include <unistd.h>
-#include <sys/socket.h>
 
 static UniqueSocketDescriptor
 open_udp(const char *host, int default_port)
