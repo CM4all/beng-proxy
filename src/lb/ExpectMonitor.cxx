@@ -17,6 +17,8 @@
 #include "event/Duration.hxx"
 #include "util/Cancellable.hxx"
 
+#include <glib.h> // for g_strrstr_len()
+
 #include <unistd.h>
 #include <sys/socket.h>
 #include <string.h>
