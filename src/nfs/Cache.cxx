@@ -145,18 +145,18 @@ struct NfsCacheRequest final : NfsStockGetHandler, NfsClientOpenFileHandler {
          handler(_handler),
          cancel_ptr(_cancel_ptr) {}
 
-    void Error(GError *error) {
-        handler.OnNfsCacheError(error);
+    void Error(std::exception_ptr ep) {
+        handler.OnNfsCacheError(ep);
     }
 
     /* virtual methods from class NfsStockGetHandler */
     void OnNfsStockReady(NfsClient &client) override;
-    void OnNfsStockError(GError *error) override;
+    void OnNfsStockError(std::exception_ptr ep) override;
 
     /* virtual methods from class NfsClientOpenFileHandler */
     void OnNfsOpen(NfsFileHandle *handle, const struct stat *st) override;
-    void OnNfsOpenError(GError *error) override {
-        Error(error);
+    void OnNfsOpenError(std::exception_ptr ep) override {
+        Error(ep);
     }
 };
 
@@ -325,9 +325,9 @@ NfsCacheRequest::OnNfsStockReady(NfsClient &client)
 }
 
 void
-NfsCacheRequest::OnNfsStockError(GError *error)
+NfsCacheRequest::OnNfsStockError(std::exception_ptr ep)
 {
-    Error(error);
+    Error(ep);
 }
 
 /*

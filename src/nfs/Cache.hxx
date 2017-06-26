@@ -7,9 +7,9 @@
 #ifndef BENG_PROXY_NFS_CACHE_HXX
 #define BENG_PROXY_NFS_CACHE_HXX
 
-#include "glibfwd.hxx"
-
 #include <inline/compiler.h>
+
+#include <exception>
 
 #include <stddef.h>
 #include <stdint.h>
@@ -28,7 +28,7 @@ class NfsCacheHandler {
 public:
     virtual void OnNfsCacheResponse(NfsCacheHandle &handle,
                                     const struct stat &st) = 0;
-    virtual void OnNfsCacheError(GError *error) = 0;
+    virtual void OnNfsCacheError(std::exception_ptr ep) = 0;
 };
 
 NfsCache *

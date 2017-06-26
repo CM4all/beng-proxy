@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_NFS_STOCK_HXX
 #define BENG_PROXY_NFS_STOCK_HXX
 
-#include "glibfwd.hxx"
+#include <exception>
 
 struct pool;
 struct NfsStock;
@@ -18,7 +18,7 @@ class EventLoop;
 class NfsStockGetHandler {
 public:
     virtual void OnNfsStockReady(NfsClient &client) = 0;
-    virtual void OnNfsStockError(GError *error) = 0;
+    virtual void OnNfsStockError(std::exception_ptr ep) = 0;
 };
 
 NfsStock *

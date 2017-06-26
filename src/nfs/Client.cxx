@@ -6,9 +6,11 @@
 
 #include "Client.hxx"
 #include "Quark.hxx"
+#include "Error.hxx"
 #include "Handler.hxx"
 #include "pool.hxx"
 #include "gerrno.h"
+#include "system/Error.hxx"
 #include "system/fd_util.h"
 #include "event/SocketEvent.hxx"
 #include "event/TimerEvent.hxx"
@@ -131,7 +133,7 @@ public:
      */
     void Release();
 
-    void Abort(GError *error);
+    void Abort(std::exception_ptr ep);
 
     void Close();
     void Read(uint64_t offset, size_t length,
@@ -216,7 +218,10 @@ public:
          path(p_strdup(&pool, _path)),
          expire_event(event_loop, BIND_THIS_METHOD(ExpireCallback)) {}
 
-    bool Open(struct nfs_context *context, GError **error_r);
+    /**
+     * Throws exception on error.
+     */
+    void Open(struct nfs_context *context);
 
     void Destroy() {
         pool_unref(&pool);
@@ -285,19 +290,21 @@ public:
             Release();
     }
 
-    void AbortHandles(GError *error);
+    void AbortHandles(std::exception_ptr ep);
 
     /**
      * Opening this file has failed.  Remove it from the client and notify
      * all waiting #http_response_handler instances.
      */
-    void Abort(GError *error);
+    void Abort(std::exception_ptr ep);
 
     void Continue();
 
-    bool ReadAsync(uint64_t offset, uint64_t count,
-                   nfs_cb cb, void *private_data,
-                   GError **error_r);
+    /**
+     * Throws exception on error.
+     */
+    void ReadAsync(uint64_t offset, uint64_t count,
+                   nfs_cb cb, void *private_data);
 
     void ExpireCallback();
 
@@ -358,7 +365,7 @@ class NfsClient final : Cancellable {
      */
     unsigned n_active_files;
 
-    GError *postponed_mount_error;
+    std::exception_ptr postponed_mount_error;
 
     /**
      * True when nfs_service() is being called.  During that,
@@ -406,12 +413,12 @@ public:
      * Mounting has failed.  Destroy the #NfsClientHandler object and
      * report the error to the handler.
      */
-    void MountError(GError *error);
+    void MountError(std::exception_ptr ep);
     void MountCallback(int status, struct nfs_context *nfs, void *data);
 
     void CleanupFiles();
-    void AbortAllFiles(GError *error);
-    void Error(GError *error);
+    void AbortAllFiles(std::exception_ptr ep);
+    void Error(std::exception_ptr ep);
 
     void AddEvent();
     void UpdateEvent();
@@ -436,15 +443,22 @@ public:
         file_list.erase(file_list.iterator_to(file));
     }
 
-    bool MountAsync(const char *server, const char *exportname,
-                    nfs_cb cb, void *private_data,
-                    GError **error_r);
+    /**
+     * Throws exception on error.
+     */
+    void MountAsync(const char *server, const char *exportname,
+                    nfs_cb cb, void *private_data);
 
-    bool ReadAsync(struct nfsfh *nfsfh, uint64_t offset, uint64_t count,
-                   nfs_cb cb, void *private_data, GError **error_r);
+    /**
+     * Throws exception on error.
+     */
+    void ReadAsync(struct nfsfh *nfsfh, uint64_t offset, uint64_t count,
+                   nfs_cb cb, void *private_data);
 
-    bool FstatAsync(struct nfsfh *nfsfh, nfs_cb cb, void *private_data,
-                    GError **error_r);
+    /**
+     * Throws exception on error.
+     */
+    void FstatAsync(struct nfsfh *nfsfh, nfs_cb cb, void *private_data);
 
     /* virtual methods from class Cancellable */
     void Cancel() override;
@@ -462,21 +476,11 @@ static const struct timeval nfs_file_expiry = {
     .tv_sec = 60,
 };
 
-static GError *
+static std::exception_ptr
 nfs_client_new_error(int status, struct nfs_context *nfs, void *data,
                      const char *msg)
 {
-    assert(msg != nullptr);
-    assert(status < 0);
-
-    const char *msg2 = (const char *)data;
-    if (data == nullptr || *(const char *)data == 0) {
-        msg2 = nfs_get_error(nfs);
-        if (msg2 == nullptr)
-            msg2 = g_strerror(-status);
-    }
-
-    return g_error_new(nfs_client_quark(), -status, "%s: %s", msg, msg2);
+    return std::make_exception_ptr(NfsClientError(status, nfs, data, msg));
 }
 
 static int
@@ -580,30 +584,30 @@ NfsFileHandle::Release()
 }
 
 void
-NfsFileHandle::Abort(GError *error)
+NfsFileHandle::Abort(std::exception_ptr ep)
 {
     Deactivate();
 
-    open_handler->OnNfsOpenError(error);
+    open_handler->OnNfsOpenError(ep);
 
     pool_unref(&caller_pool);
     pool_unref(&pool);
 }
 
 inline void
-NfsFile::AbortHandles(GError *error)
+NfsFile::AbortHandles(std::exception_ptr ep)
 {
-    handles.clear_and_dispose([this, error](NfsFileHandle *handle){
-            handle->Abort(g_error_copy(error));
+    handles.clear_and_dispose([this, &ep](NfsFileHandle *handle){
+            handle->Abort(ep);
         });
 
     assert(n_active_handles == 0);
 }
 
 void
-NfsFile::Abort(GError *error)
+NfsFile::Abort(std::exception_ptr ep)
 {
-    AbortHandles(error);
+    AbortHandles(ep);
     Release();
 }
 
@@ -619,7 +623,7 @@ NfsClient::DestroyContext()
 }
 
 void
-NfsClient::MountError(GError *error)
+NfsClient::MountError(std::exception_ptr ep)
 {
     assert(context != nullptr);
     assert(!in_service);
@@ -628,7 +632,7 @@ NfsClient::MountError(GError *error)
 
     DestroyContext();
 
-    handler.OnNfsMountError(error);
+    handler.OnNfsMountError(ep);
     pool_unref(&pool);
 }
 
@@ -646,26 +650,26 @@ NfsClient::CleanupFiles()
 }
 
 inline void
-NfsClient::AbortAllFiles(GError *error)
+NfsClient::AbortAllFiles(std::exception_ptr ep)
 {
-    file_list.clear_and_dispose([error](NfsFile *file){
-            file->Abort(g_error_copy(error));
+    file_list.clear_and_dispose([&ep](NfsFile *file){
+            file->Abort(ep);
         });
 }
 
 inline void
-NfsClient::Error(GError *error)
+NfsClient::Error(std::exception_ptr ep)
 {
     if (mount_finished) {
         timeout_event.Cancel();
 
-        AbortAllFiles(error);
+        AbortAllFiles(ep);
 
         DestroyContext();
-        handler.OnNfsClientClosed(error);
+        handler.OnNfsClientClosed(ep);
         pool_unref(&pool);
     } else {
-        MountError(error);
+        MountError(ep);
     }
 }
 
@@ -701,9 +705,8 @@ NfsFileHandle::ReadCallback(int status, struct nfs_context *nfs, void *data)
     }
 
     if (status < 0) {
-        GError *error = nfs_client_new_error(status, nfs, data,
-                                             "nfs_pread_async() failed");
-        read_handler->OnNfsReadError(error);
+        read_handler->OnNfsReadError(nfs_client_new_error(status, nfs, data,
+                                                          "nfs_pread_async() failed"));
         return;
     }
 
@@ -738,13 +741,11 @@ NfsFile::Continue()
         });
 }
 
-bool
+void
 NfsFile::ReadAsync(uint64_t offset, uint64_t count,
-                   nfs_cb cb, void *private_data,
-                   GError **error_r)
+                   nfs_cb cb, void *private_data)
 {
-    return client.ReadAsync(nfsfh, offset, count,
-                            cb, private_data, error_r);
+    client.ReadAsync(nfsfh, offset, count, cb, private_data);
 }
 
 /*
@@ -828,16 +829,14 @@ NfsClient::SocketEventCallback(unsigned events)
         DestroyContext();
         CleanupFiles();
     } else if (!was_mounted && mount_finished) {
-        if (postponed_mount_error != nullptr)
+        if (postponed_mount_error)
             MountError(postponed_mount_error);
         else if (result == 0)
             handler.OnNfsClientReady(*this);
     } else if (result < 0) {
         /* the connection has failed */
-        GError *error = g_error_new(nfs_client_quark(), 0,
-                                    "NFS connection has failed: %s",
-                                    nfs_get_error(context));
-        Error(error);
+        Error(std::make_exception_ptr(NfsClientError(context,
+                                                     "NFS connection has failed")));
     }
 
     assert(in_event);
@@ -863,16 +862,12 @@ NfsClient::TimeoutCallback()
         assert(n_active_files == 0);
 
         DestroyContext();
-        GError *error = g_error_new_literal(nfs_client_quark(), 0,
-                                            "Idle timeout");
-        handler.OnNfsClientClosed(error);
+        handler.OnNfsClientClosed(std::make_exception_ptr(NfsClientError("Idle timeout")));
         pool_unref(&pool);
     } else {
         mount_finished = true;
 
-        GError *error = g_error_new_literal(nfs_client_quark(), 0,
-                                            "Mount timeout");
-        MountError(error);
+        MountError(std::make_exception_ptr(NfsClientError("Mount timeout")));
     }
 }
 
@@ -912,9 +907,10 @@ NfsClient::Mount(const char *server, const char *exportname,
     assert(context != nullptr);
     assert(!in_service);
 
-    GError *error = nullptr;
-    if (!MountAsync(server, exportname, nfs_mount_cb, this, &error)) {
-        MountError(error);
+    try {
+        MountAsync(server, exportname, nfs_mount_cb, this);
+    } catch (...) {
+        MountError(std::current_exception());
         return false;
     }
 
@@ -935,20 +931,15 @@ NfsFile::FstatCallback(int status, struct nfs_context *nfs, void *data)
     assert(state == NfsFile::PENDING_FSTAT);
 
     if (status < 0) {
-        GError *error = nfs_client_new_error(status, nfs, data,
-                                             "nfs_fstat_async() failed");
-        Abort(error);
-        g_error_free(error);
+        Abort(nfs_client_new_error(status, nfs, data,
+                                   "nfs_fstat_async() failed"));
         return;
     }
 
     const struct stat *st = (const struct stat *)data;
 
     if (!S_ISREG(st->st_mode)) {
-        GError *error = g_error_new_literal(errno_quark(), ENOENT,
-                                            "Not a regular file");
-        Abort(error);
-        g_error_free(error);
+        Abort(std::make_exception_ptr(MakeErrno(ENOENT, "Not a regular file")));
         return;
     }
 
@@ -973,20 +964,18 @@ NfsFile::OpenCallback(int status, struct nfs_context *nfs, void *data)
     assert(state == NfsFile::PENDING_OPEN);
 
     if (status < 0) {
-        GError *error = nfs_client_new_error(status, nfs, data,
-                                             "nfs_open_async() failed");
-        Abort(error);
-        g_error_free(error);
+        Abort(nfs_client_new_error(status, nfs, data,
+                                   "nfs_open_async() failed"));
         return;
     }
 
     nfsfh = (struct nfsfh *)data;
     state = NfsFile::PENDING_FSTAT;
 
-    GError *error = nullptr;
-    if (!client.FstatAsync(nfsfh, nfs_fstat_cb, this, &error)) {
-        Abort(error);
-        g_error_free(error);
+    try {
+        client.FstatAsync(nfsfh, nfs_fstat_cb, this);
+    } catch (...) {
+        Abort(std::current_exception());
         return;
     }
 }
@@ -999,65 +988,40 @@ nfs_open_cb(int status, gcc_unused struct nfs_context *nfs,
     file->OpenCallback(status, nfs, data);
 }
 
-inline bool
-NfsFile::Open(struct nfs_context *context, GError **error_r)
+inline void
+NfsFile::Open(struct nfs_context *context)
 {
     if (nfs_open_async(context, path, O_RDONLY,
-                       nfs_open_cb, this) != 0) {
-        g_set_error(error_r, nfs_client_quark(), 0,
-                    "nfs_open_async() failed: %s",
-                    nfs_get_error(context));
-        return false;
-    }
-
-    return true;
+                       nfs_open_cb, this) != 0)
+        throw NfsClientError(context, "nfs_open_async() failed");
 }
 
-bool
+inline void
 NfsClient::MountAsync(const char *server, const char *exportname,
-                      nfs_cb cb, void *private_data,
-                      GError **error_r)
+                      nfs_cb cb, void *private_data)
 {
     if (nfs_mount_async(context, server, exportname,
-                        cb, private_data) != 0) {
-        g_set_error(error_r, nfs_client_quark(), 0,
-                    "nfs_mount_async() failed: %s",
-                    nfs_get_error(context));
-        return false;
-    }
-
-    return true;
+                        cb, private_data) != 0)
+        throw NfsClientError(context, "nfs_mount_async() failed");
 }
 
-bool
+inline void
 NfsClient::ReadAsync(struct nfsfh *nfsfh, uint64_t offset, uint64_t count,
-                     nfs_cb cb, void *private_data, GError **error_r)
+                     nfs_cb cb, void *private_data)
 {
     if (nfs_pread_async(context, nfsfh,
                         offset, count,
-                        cb, private_data) != 0) {
-        g_set_error(error_r, nfs_client_quark(), 0,
-                    "nfs_pread_async() failed: %s",
-                    nfs_get_error(context));
-        return false;
-    }
+                        cb, private_data) != 0)
+        throw NfsClientError(context, "nfs_pread_async() failed");
 
     UpdateEvent();
-    return true;
 }
 
-bool
-NfsClient::FstatAsync(struct nfsfh *nfsfh, nfs_cb cb, void *private_data,
-                      GError **error_r)
+inline void
+NfsClient::FstatAsync(struct nfsfh *nfsfh, nfs_cb cb, void *private_data)
 {
-    if (nfs_fstat_async(context, nfsfh, cb, private_data) != 0) {
-        g_set_error(error_r, nfs_client_quark(), 0,
-                    "nfs_fstat_async() failed: %s",
-                    nfs_get_error(context));
-        return false;
-    }
-
-    return true;
+    if (nfs_fstat_async(context, nfsfh, cb, private_data) != 0)
+        throw NfsClientError(context, "nfs_stat_async() failed");
 }
 
 /*
@@ -1076,8 +1040,7 @@ nfs_client_new(EventLoop &event_loop, struct pool &pool,
 
     auto *context = nfs_init_context();
     if (context == nullptr) {
-        handler.OnNfsMountError(g_error_new(nfs_client_quark(), 0,
-                                            "nfs_init_context() failed"));
+        handler.OnNfsMountError(std::make_exception_ptr(NfsClientError("nfs_init_context() failed")));
         return;
     }
 
@@ -1130,13 +1093,14 @@ NfsClient::OpenFile(struct pool &caller_pool,
         auto i = file_map.insert_commit(*file, hint);
         file_list.push_front(*file);
 
-        GError *error = nullptr;
-        if (!file->Open(context, &error)) {
+        try {
+            file->Open(context);
+        } catch (...) {
             file_list.erase(file_list.iterator_to(*file));
             file_map.erase(i);
             file->Destroy();
 
-            _handler.OnNfsOpenError(error);
+            _handler.OnNfsOpenError(std::current_exception());
             return;
         }
     } else
@@ -1212,9 +1176,10 @@ NfsFileHandle::Read(uint64_t offset, size_t length,
 {
     assert(state == IDLE);
 
-    GError *error = nullptr;
-    if (!file.ReadAsync(offset, length, nfs_read_cb, this, &error)) {
-        handler.OnNfsReadError(error);
+    try {
+        file.ReadAsync(offset, length, nfs_read_cb, this);
+    } catch (...) {
+        handler.OnNfsReadError(std::current_exception());
         return;
     }
 

@@ -12,6 +12,7 @@
 #include "http_response.hxx"
 #include "direct.hxx"
 #include "util/Cancellable.hxx"
+#include "util/PrintException.hxx"
 
 #include <glib.h>
 
@@ -42,12 +43,12 @@ struct Context final : PInstance, NfsClientHandler, NfsClientOpenFileHandler {
 
     /* virtual methods from NfsClientHandler */
     void OnNfsClientReady(NfsClient &client) override;
-    void OnNfsMountError(GError *error) override;
-    void OnNfsClientClosed(GError *error) override;
+    void OnNfsMountError(std::exception_ptr ep) override;
+    void OnNfsClientClosed(std::exception_ptr ep) override;
 
     /* virtual methods from class NfsClientOpenFileHandler */
     void OnNfsOpen(NfsFileHandle *handle, const struct stat *st) override;
-    void OnNfsOpenError(GError *error) override;
+    void OnNfsOpenError(std::exception_ptr ep) override;
 };
 
 void
@@ -138,7 +139,7 @@ Context::OnNfsOpen(NfsFileHandle *handle, const struct stat *st)
 }
 
 void
-Context::OnNfsOpenError(GError *error)
+Context::OnNfsOpenError(std::exception_ptr ep)
 {
     assert(!aborted);
     assert(!failed);
@@ -146,8 +147,7 @@ Context::OnNfsOpenError(GError *error)
 
     failed = true;
 
-    g_printerr("open error: %s\n", error->message);
-    g_error_free(error);
+    PrintException(ep);
 
     shutdown_listener.Disable();
     nfs_client_free(client);
@@ -174,7 +174,7 @@ Context::OnNfsClientReady(NfsClient &_client)
 }
 
 void
-Context::OnNfsMountError(GError *error)
+Context::OnNfsMountError(std::exception_ptr ep)
 {
     assert(!aborted);
     assert(!failed);
@@ -183,14 +183,13 @@ Context::OnNfsMountError(GError *error)
 
     failed = true;
 
-    g_printerr("mount error: %s\n", error->message);
-    g_error_free(error);
+    PrintException(ep);
 
     shutdown_listener.Disable();
 }
 
 void
-Context::OnNfsClientClosed(GError *error)
+Context::OnNfsClientClosed(std::exception_ptr ep)
 {
     assert(!aborted);
     assert(!failed);
@@ -199,8 +198,7 @@ Context::OnNfsClientClosed(GError *error)
 
     closed = true;
 
-    g_printerr("closed: %s\n", error->message);
-    g_error_free(error);
+    PrintException(ep);
 }
 
 /*

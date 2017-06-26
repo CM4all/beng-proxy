@@ -7,8 +7,10 @@
 #include "Stock.hxx"
 #include "Client.hxx"
 #include "Handler.hxx"
+#include "GException.hxx"
 #include "pool.hxx"
 #include "util/Cancellable.hxx"
+#include "util/Exception.hxx"
 
 #include <daemon/log.h>
 
@@ -69,8 +71,8 @@ struct NfsStockConnection
 
     /* virtual methods from NfsClientHandler */
     void OnNfsClientReady(NfsClient &client) override;
-    void OnNfsMountError(GError *error) override;
-    void OnNfsClientClosed(GError *error) override;
+    void OnNfsMountError(std::exception_ptr ep) override;
+    void OnNfsClientClosed(std::exception_ptr ep) override;
 
     struct Compare {
         bool operator()(const NfsStockConnection &a, const NfsStockConnection &b) const {
@@ -133,29 +135,27 @@ NfsStockConnection::OnNfsClientReady(NfsClient &_client)
 }
 
 void
-NfsStockConnection::OnNfsMountError(GError *error)
+NfsStockConnection::OnNfsMountError(std::exception_ptr ep)
 {
     assert(!stock.connections.empty());
 
-    requests.clear_and_dispose([error](NfsStockRequest *request){
-            request->handler.OnNfsStockError(g_error_copy(error));
+    requests.clear_and_dispose([&ep](NfsStockRequest *request){
+            request->handler.OnNfsStockError(ep);
             DeleteUnrefPool(request->pool, request);
         });
-
-    g_error_free(error);
 
     stock.Remove(*this);
     DeleteUnrefTrashPool(pool, this);
 }
 
 void
-NfsStockConnection::OnNfsClientClosed(GError *error)
+NfsStockConnection::OnNfsClientClosed(std::exception_ptr ep)
 {
     assert(requests.empty());
     assert(!stock.connections.empty());
 
-    daemon_log(1, "Connection to %s closed: %s\n", key, error->message);
-    g_error_free(error);
+    daemon_log(1, "Connection to %s closed: %s\n",
+               key, GetFullMessage(ep).c_str());
 
     stock.Remove(*this);
     DeleteUnrefTrashPool(pool, this);

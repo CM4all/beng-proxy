@@ -9,6 +9,7 @@
 #include "Handler.hxx"
 #include "istream/istream.hxx"
 #include "pool.hxx"
+#include "GException.hxx"
 #include "util/Cast.hxx"
 #include "util/ForeignFifoBuffer.hxx"
 
@@ -92,7 +93,7 @@ private:
 
     /* virtual methods from class NfsClientReadFileHandler */
     void OnNfsRead(const void *data, size_t length) override;
-    void OnNfsReadError(GError *error) override;
+    void OnNfsReadError(std::exception_ptr ep) override;
 };
 
 void
@@ -177,12 +178,12 @@ NfsIstream::OnNfsRead(const void *data, size_t _length)
 }
 
 void
-NfsIstream::OnNfsReadError(GError *error)
+NfsIstream::OnNfsReadError(std::exception_ptr ep)
 {
     assert(pending_read > 0);
 
     nfs_client_close_file(handle);
-    DestroyError(error);
+    DestroyError(ToGError(ep));
 }
 
 inline void

@@ -373,7 +373,7 @@ public:
     /* virtual methods from class NfsCacheHandler */
     void OnNfsCacheResponse(NfsCacheHandle &handle,
                             const struct stat &st) override;
-    void OnNfsCacheError(GError *error) override;
+    void OnNfsCacheError(std::exception_ptr ep) override;
 };
 
 void

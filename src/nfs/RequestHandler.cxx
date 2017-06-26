@@ -99,10 +99,9 @@ Request::OnNfsCacheResponse(NfsCacheHandle &handle, const struct stat &st)
 }
 
 void
-Request::OnNfsCacheError(GError *error)
+Request::OnNfsCacheError(std::exception_ptr ep)
 {
-    response_dispatch_error(*this, error);
-    g_error_free(error);
+    response_dispatch_log(*this, ep);
 }
 
 /*
