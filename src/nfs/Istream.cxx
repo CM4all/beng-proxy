@@ -6,6 +6,7 @@
 
 #include "Istream.hxx"
 #include "Client.hxx"
+#include "Handler.hxx"
 #include "istream/istream.hxx"
 #include "pool.hxx"
 #include "util/Cast.hxx"

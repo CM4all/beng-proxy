@@ -7,6 +7,7 @@
 #include "Cache.hxx"
 #include "Stock.hxx"
 #include "Client.hxx"
+#include "Handler.hxx"
 #include "Istream.hxx"
 #include "strmap.hxx"
 #include "pool.hxx"

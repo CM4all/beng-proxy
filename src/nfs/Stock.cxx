@@ -6,6 +6,7 @@
 
 #include "Stock.hxx"
 #include "Client.hxx"
+#include "Handler.hxx"
 #include "pool.hxx"
 #include "util/Cancellable.hxx"
 

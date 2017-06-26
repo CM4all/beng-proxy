@@ -1,3 +1,4 @@
+#include "nfs/Handler.hxx"
 #include "nfs/Client.hxx"
 #include "nfs/Istream.hxx"
 #include "istream/istream_pipe.hxx"
