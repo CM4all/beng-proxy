@@ -152,7 +152,10 @@ struct WidgetRequest final : HttpResponseHandler, Cancellable {
                            StringMap &&headers, Istream *body,
                            const Transformation &t);
 
-    bool UpdateView(StringMap &headers, GError **error_r);
+    /**
+     * Throws exception on error.
+     */
+    void UpdateView(StringMap &headers);
 
     bool ContentTypeLookup();
     void SendRequest();
@@ -498,8 +501,8 @@ widget_collect_cookies(CookieJar &jar, const StringMap &headers,
         cookie_jar_set_cookie2(jar, i->value, host_and_port, nullptr);
 }
 
-bool
-WidgetRequest::UpdateView(StringMap &headers, GError **error_r)
+void
+WidgetRequest::UpdateView(StringMap &headers)
 {
     const char *view_name = headers.Get("x-cm4all-view");
     if (view_name != nullptr) {
@@ -511,10 +514,9 @@ WidgetRequest::UpdateView(StringMap &headers, GError **error_r)
             /* the view specified in the response header does not
                exist, bail out */
 
-            daemon_log(4, "No such view: %s\n", view_name);
-            g_set_error(error_r, widget_quark(), (int)WidgetErrorCode::NO_SUCH_VIEW,
-                        "No such view: %s", view_name);
-            return false;
+            throw WidgetError(widget, WidgetErrorCode::NO_SUCH_VIEW,
+                              StringFormat<256>("No such view: '%s'",
+                                                view_name));
         }
 
         /* install the new view */
@@ -527,15 +529,11 @@ WidgetRequest::UpdateView(StringMap &headers, GError **error_r)
            the output is not processable; if it is, we may expose
            internal widget parameters */
 
-        g_set_error(error_r, widget_quark(), (int)WidgetErrorCode::FORBIDDEN,
-                    "view '%s' of widget class '%s' cannot be requested "
-                    "because the response is processable",
-                    widget.GetTransformationView()->name,
-                    widget.class_name);
-        return false;
+        throw WidgetError(widget, WidgetErrorCode::FORBIDDEN,
+                          StringFormat<256>("View '%s' cannot be requested "
+                                            "because the response is processable",
+                                            widget.GetTransformationView()->name));
     }
-
-    return true;
 }
 
 void
@@ -575,12 +573,13 @@ WidgetRequest::OnHttpResponse(http_status_t status, StringMap &&headers,
 
     /* select a new view? */
 
-    GError *error = nullptr;
-    if (!UpdateView(headers, &error)) {
+    try {
+        UpdateView(headers);
+    } catch (...) {
         if (body != nullptr)
             body->CloseUnused();
 
-        DispatchError(error);
+        DispatchError(std::current_exception());
         return;
     }
 
