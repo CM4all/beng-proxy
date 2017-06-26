@@ -20,6 +20,13 @@
 #include <string.h>
 #include <sys/socket.h>
 
+gcc_const
+static inline GQuark
+delegate_client_quark(void)
+{
+    return g_quark_from_static_string("delegate_client");
+}
+
 struct DelegateClient final : Cancellable {
     struct lease_ref lease_ref;
     const int fd;
@@ -62,6 +69,10 @@ struct DelegateClient final : Cancellable {
         Destroy();
     }
 
+    void DestroyError(const char *msg) {
+        DestroyError(g_error_new_literal(delegate_client_quark(), 0, msg));
+    }
+
     void HandleFd(const struct msghdr &msg, size_t length);
     void HandleErrno(size_t length);
     void HandleMsg(const struct msghdr &msg,
@@ -81,36 +92,22 @@ private:
     }
 };
 
-gcc_const
-static inline GQuark
-delegate_client_quark(void)
-{
-    return g_quark_from_static_string("delegate_client");
-}
-
 inline void
 DelegateClient::HandleFd(const struct msghdr &msg, size_t length)
 {
     if (length != 0) {
-        GError *error = g_error_new_literal(delegate_client_quark(), 0,
-                                            "Invalid message length");
-        DestroyError(error);
+        DestroyError("Invalid message length");
         return;
     }
 
     struct cmsghdr *cmsg = CMSG_FIRSTHDR(&msg);
     if (cmsg == nullptr) {
-        GError *error = g_error_new_literal(delegate_client_quark(), 0,
-                                            "No fd passed");
-        DestroyError(error);
+        DestroyError("No fd passed");
         return;
     }
 
     if (cmsg->cmsg_type != SCM_RIGHTS) {
-        GError *error = g_error_new(delegate_client_quark(), 0,
-                                    "got control message of unknown type %d",
-                                    cmsg->cmsg_type);
-        DestroyError(error);
+        DestroyError("got control message of unknown type");
         return;
     }
 
@@ -130,9 +127,7 @@ DelegateClient::HandleErrno(size_t length)
     int e;
 
     if (length != sizeof(e)) {
-        GError *error = g_error_new_literal(delegate_client_quark(), 0,
-                                            "Invalid message length");
-        DestroyError(error);
+        DestroyError("Invalid message length");
         return;
     }
 
@@ -169,9 +164,7 @@ DelegateClient::HandleMsg(const struct msghdr &msg,
         return;
     }
 
-    GError *error = g_error_new_literal(delegate_client_quark(), 0,
-                                        "Invalid delegate response");
-    DestroyError(error);
+    DestroyError("Invalid delegate response");
 }
 
 inline void
@@ -202,9 +195,7 @@ DelegateClient::TryRead()
     }
 
     if ((size_t)nbytes != sizeof(header)) {
-        GError *error = g_error_new_literal(delegate_client_quark(), 0,
-                                            "short recvmsg()");
-        DestroyError(error);
+        DestroyError("short recvmsg()");
         return;
     }
 
