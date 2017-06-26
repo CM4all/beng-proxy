@@ -5,7 +5,6 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "Server.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/Resolver.hxx"
