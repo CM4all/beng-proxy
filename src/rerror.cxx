@@ -23,6 +23,7 @@
 #include "HttpMessageResponse.hxx"
 #include "gerrno.h"
 #include "pool.hxx"
+#include "system/Error.hxx"
 #include "util/Exception.hxx"
 
 #include <daemon/log.h>
@@ -104,6 +105,20 @@ ToResponse(struct pool &pool, std::exception_ptr ep)
         FindRetrowNested<HttpMessageResponse>(ep);
     } catch (const HttpMessageResponse &e) {
         return Dup(pool, e.GetStatus(), e.what());
+    }
+
+    try {
+        FindRetrowNested<std::system_error>(ep);
+    } catch (const std::system_error &e) {
+        if (e.code().category() == ErrnoCategory()) {
+            switch (e.code().value()) {
+            case ENOENT:
+            case ENOTDIR:
+                return {HTTP_STATUS_NOT_FOUND,
+                        "The requested file does not exist."};
+                break;
+            }
+        }
     }
 
     try {
