@@ -5,6 +5,7 @@
  */
 
 #include "Server.hxx"
+#include "Datagram.hxx"
 #include "util/ByteOrder.hxx"
 
 #include <beng-proxy/log.h>

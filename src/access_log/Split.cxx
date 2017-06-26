@@ -6,6 +6,7 @@
  */
 
 #include "Server.hxx"
+#include "Datagram.hxx"
 
 #include <sys/stat.h>
 #include <sys/types.h>

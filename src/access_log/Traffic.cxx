@@ -5,6 +5,7 @@
  */
 
 #include "Server.hxx"
+#include "Datagram.hxx"
 
 #include <stdio.h>
 
