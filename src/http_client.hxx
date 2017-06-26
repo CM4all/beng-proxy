@@ -13,6 +13,8 @@
 
 #include <glib.h>
 
+#include <stdexcept>
+
 struct pool;
 class EventLoop;
 class Istream;
@@ -54,6 +56,18 @@ enum class HttpClientErrorCode {
      * The server has failed to respond or accept data in time.
      */
     TIMEOUT,
+};
+
+class HttpClientError : public std::runtime_error {
+    HttpClientErrorCode code;
+
+public:
+    HttpClientError(HttpClientErrorCode _code, const char *_msg)
+        :std::runtime_error(_msg), code(_code) {}
+
+    HttpClientErrorCode GetCode() const {
+        return code;
+    }
 };
 
 G_GNUC_CONST
