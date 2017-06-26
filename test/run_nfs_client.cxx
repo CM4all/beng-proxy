@@ -1,5 +1,5 @@
-#include "nfs_client.hxx"
-#include "istream_nfs.hxx"
+#include "nfs/Client.hxx"
+#include "nfs/Istream.hxx"
 #include "istream/istream_pipe.hxx"
 #include "istream/istream.hxx"
 #include "istream/sink_fd.hxx"

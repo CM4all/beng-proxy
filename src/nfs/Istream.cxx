@@ -4,9 +4,9 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "istream_nfs.hxx"
+#include "Istream.hxx"
+#include "Client.hxx"
 #include "istream/istream.hxx"
-#include "nfs_client.hxx"
 #include "pool.hxx"
 #include "util/Cast.hxx"
 #include "util/ForeignFifoBuffer.hxx"

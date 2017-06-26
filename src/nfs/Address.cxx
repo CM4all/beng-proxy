@@ -2,7 +2,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "nfs_address.hxx"
+#include "Address.hxx"
 #include "uri/uri_base.hxx"
 #include "puri_base.hxx"
 #include "puri_escape.hxx"

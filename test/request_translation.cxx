@@ -11,7 +11,7 @@
 #include "http_address.hxx"
 #include "file_address.hxx"
 #include "cgi_address.hxx"
-#include "nfs_address.hxx"
+#include "nfs/Address.hxx"
 #include "net/AllocatedSocketAddress.hxx"
 #include "util/Cancellable.hxx"
 #include "util/PrintException.hxx"

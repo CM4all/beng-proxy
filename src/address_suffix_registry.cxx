@@ -8,7 +8,7 @@
 #include "suffix_registry.hxx"
 #include "ResourceAddress.hxx"
 #include "file_address.hxx"
-#include "nfs_address.hxx"
+#include "nfs/Address.hxx"
 #include "pool.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/CharUtil.hxx"

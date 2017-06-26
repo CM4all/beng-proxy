@@ -7,7 +7,7 @@
 #include "request.hxx"
 #include "bp_instance.hxx"
 #include "http_client.hxx"
-#include "nfs_client.hxx"
+#include "nfs/Client.hxx"
 #include "ajp/ajp_client.hxx"
 #include "memcached/memcached_client.hxx"
 #include "cgi/cgi_quark.h"

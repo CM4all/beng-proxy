@@ -363,7 +363,7 @@ executable('run_nfs_client',
   '../src/PInstance.cxx',
   '../src/direct.cxx',
   '../src/pipe_stock.cxx',
-  '../src/istream_nfs.cxx',
+  '../src/nfs/Istream.cxx',
   '../src/GException.cxx',
   include_directories: inc,
   dependencies: [

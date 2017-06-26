@@ -4,10 +4,10 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "nfs_cache.hxx"
-#include "nfs_stock.hxx"
-#include "nfs_client.hxx"
-#include "istream_nfs.hxx"
+#include "Cache.hxx"
+#include "Stock.hxx"
+#include "Client.hxx"
+#include "Istream.hxx"
 #include "strmap.hxx"
 #include "pool.hxx"
 #include "rubber.hxx"

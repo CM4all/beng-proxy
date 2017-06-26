@@ -13,7 +13,7 @@
 #include "translation/Cache.hxx"
 #include "http_cache.hxx"
 #include "fcache.hxx"
-#include "nfs_cache.hxx"
+#include "nfs/Cache.hxx"
 #include "session_manager.hxx"
 #include "AllocatorStats.hxx"
 #include "beng-proxy/control.h"

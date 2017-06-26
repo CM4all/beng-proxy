@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "nfs_client.hxx"
+#include "Client.hxx"
 #include "pool.hxx"
 #include "gerrno.h"
 #include "system/fd_util.h"

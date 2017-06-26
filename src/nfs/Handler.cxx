@@ -4,9 +4,9 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "nfs_handler.hxx"
-#include "nfs_cache.hxx"
-#include "nfs_address.hxx"
+#include "Handler.hxx"
+#include "Cache.hxx"
+#include "Address.hxx"
 #include "file_headers.hxx"
 #include "translation/Vary.hxx"
 #include "header_writer.hxx"

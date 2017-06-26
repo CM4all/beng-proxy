@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "nfs_request.hxx"
-#include "nfs_cache.hxx"
+#include "Request.hxx"
+#include "Cache.hxx"
 #include "http_response.hxx"
 #include "static_headers.hxx"
 #include "strmap.hxx"

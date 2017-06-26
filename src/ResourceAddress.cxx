@@ -10,7 +10,7 @@
 #include "lhttp_address.hxx"
 #include "http_address.hxx"
 #include "cgi_address.hxx"
-#include "nfs_address.hxx"
+#include "nfs/Address.hxx"
 #include "uri/uri_relative.hxx"
 #include "uri/uri_extract.hxx"
 #include "uri/uri_verify.hxx"

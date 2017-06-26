@@ -18,7 +18,7 @@
 #include "stock/MapStock.hxx"
 #include "session_save.hxx"
 #include "event/Duration.hxx"
-#include "nfs_cache.hxx"
+#include "nfs/Cache.hxx"
 
 #include <sys/signal.h>
 

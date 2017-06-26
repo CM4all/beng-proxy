@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "nfs_stock.hxx"
-#include "nfs_client.hxx"
+#include "Stock.hxx"
+#include "Client.hxx"
 #include "pool.hxx"
 #include "util/Cancellable.hxx"
 
