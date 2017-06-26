@@ -12,6 +12,8 @@
 #include "util/Cast.hxx"
 #include "util/ForeignFifoBuffer.hxx"
 
+#include <glib.h>
+
 #include <assert.h>
 #include <string.h>
 

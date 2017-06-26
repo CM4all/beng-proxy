@@ -13,6 +13,8 @@
 #include "direct.hxx"
 #include "util/Cancellable.hxx"
 
+#include <glib.h>
+
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>

@@ -8,8 +8,7 @@
 #define BENG_PROXY_NFS_CLIENT_HXX
 
 #include <stdint.h>
-
-#include <glib.h>
+#include <stddef.h>
 
 struct pool;
 class NfsClient;
@@ -20,13 +19,6 @@ class NfsFileHandle;
 class HttpResponseHandler;
 class CancellablePointer;
 class EventLoop;
-
-G_GNUC_CONST
-static inline GQuark
-nfs_client_quark(void)
-{
-    return g_quark_from_static_string("nfs_client");
-}
 
 void
 nfs_client_new(EventLoop &event_loop,

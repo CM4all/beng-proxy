@@ -15,6 +15,8 @@
 #include <boost/intrusive/list.hpp>
 #include <boost/intrusive/set.hpp>
 
+#include <glib.h>
+
 #include <string.h>
 
 struct NfsStockConnection;
