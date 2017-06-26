@@ -7,6 +7,7 @@
 
 #include "Server.hxx"
 #include "Datagram.hxx"
+#include "util/ConstBuffer.hxx"
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -294,12 +295,13 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
+    ConstBuffer<const char *> templates(&argv[argi], argc - argi);
+
     AccessLogServer server(0);
     while (auto *d = server.Receive()) {
-        for (int i = argi; i < argc; ++i) {
-            if (Dump(argv[i], *d))
+        for (const char *t : templates)
+            if (Dump(t, *d))
                 break;
-        }
     }
 
     return 0;
