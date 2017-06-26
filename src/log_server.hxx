@@ -11,7 +11,6 @@
 #include <http/status.h>
 
 #include <stdint.h>
-#include <stdbool.h>
 
 struct log_datagram {
     uint64_t timestamp;
@@ -35,10 +34,6 @@ struct log_datagram {
     bool valid_duration;
 };
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 struct log_server *
 log_server_new(int fd);
 
@@ -47,9 +42,5 @@ log_server_free(struct log_server *server);
 
 const struct log_datagram *
 log_server_receive(struct log_server *server);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

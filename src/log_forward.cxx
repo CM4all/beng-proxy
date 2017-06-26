@@ -5,7 +5,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "log-server.h"
+#include "log_server.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/Resolver.hxx"
