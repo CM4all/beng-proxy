@@ -13,6 +13,7 @@
 #include "translation/Response.hxx"
 #include "translation/Transformation.hxx"
 #include "delegate/Handler.hxx"
+#include "nfs/Cache.hxx"
 #include "penv.hxx"
 #include "session.hxx"
 #include "widget/View.hxx"
@@ -29,7 +30,9 @@ struct BpInstance;
 struct BpConnection;
 struct HttpServerRequest;
 
-struct Request final : HttpResponseHandler, DelegateHandler, Cancellable {
+struct Request final : HttpResponseHandler, DelegateHandler,
+    NfsCacheHandler, Cancellable {
+
     struct pool &pool;
 
     BpInstance &instance;
@@ -366,6 +369,11 @@ public:
     /* virtual methods from class DelegateHandler */
     void OnDelegateSuccess(int fd) override;
     void OnDelegateError(std::exception_ptr ep) override;
+
+    /* virtual methods from class NfsCacheHandler */
+    void OnNfsCacheResponse(NfsCacheHandle &handle,
+                            const struct stat &st) override;
+    void OnNfsCacheError(GError *error) override;
 };
 
 void

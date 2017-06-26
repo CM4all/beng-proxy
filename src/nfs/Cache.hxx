@@ -24,10 +24,11 @@ class CancellablePointer;
 struct stat;
 struct AllocatorStats;
 
-struct NfsCacheHandler {
-    void (*response)(NfsCacheHandle &handle,
-                     const struct stat &st, void *ctx);
-    void (*error)(GError *error, void *ctx);
+class NfsCacheHandler {
+public:
+    virtual void OnNfsCacheResponse(NfsCacheHandle &handle,
+                                    const struct stat &st) = 0;
+    virtual void OnNfsCacheError(GError *error) = 0;
 };
 
 NfsCache *
@@ -48,7 +49,7 @@ void
 nfs_cache_request(struct pool &pool, NfsCache &cache,
                   const char *server, const char *export_name,
                   const char *path,
-                  const NfsCacheHandler &handler, void *ctx,
+                  NfsCacheHandler &handler,
                   CancellablePointer &cancel_ptr);
 
 Istream *

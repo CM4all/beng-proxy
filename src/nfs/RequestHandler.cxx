@@ -24,35 +24,23 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-static void
-nfs_handler_error(GError *error, void *ctx)
-{
-    auto &request2 = *(Request *)ctx;
-
-    response_dispatch_error(request2, error);
-    g_error_free(error);
-}
-
 /*
  * nfs_cache_handler
  *
  */
 
-static void
-nfs_handler_cache_response(NfsCacheHandle &handle,
-                           const struct stat &st, void *ctx)
+void
+Request::OnNfsCacheResponse(NfsCacheHandle &handle, const struct stat &st)
 {
-    auto &request2 = *(Request *)ctx;
-    struct pool &pool = request2.pool;
-    const TranslateResponse *const tr = request2.translate.response;
+    const TranslateResponse *const tr = translate.response;
 
     struct file_request file_request(st.st_size);
-    if (!file_evaluate_request(request2, -1, st, file_request))
+    if (!file_evaluate_request(*this, -1, st, file_request))
         return;
 
-    const char *override_content_type = request2.translate.content_type;
+    const char *override_content_type = translate.content_type;
     if (override_content_type == nullptr)
-        override_content_type = request2.translate.address.GetNfs().content_type;
+        override_content_type = translate.address.GetNfs().content_type;
 
     HttpHeaders headers(pool);
     GrowingBuffer &headers2 = headers.GetBuffer();
@@ -62,8 +50,8 @@ nfs_handler_cache_response(NfsCacheHandle &handle,
                           override_content_type,
                           -1, st,
                           tr->expires_relative,
-                          request2.IsProcessorEnabled(),
-                          request2.IsProcessorFirst());
+                          IsProcessorEnabled(),
+                          IsProcessorFirst());
     write_translation_vary_header(headers2, *tr);
 
     http_status_t status = tr->status == 0 ? HTTP_STATUS_OK : tr->status;
@@ -99,21 +87,23 @@ nfs_handler_cache_response(NfsCacheHandle &handle,
         break;
     }
 
-    Istream *body;
+    Istream *response_body;
     if (no_body)
-        body = NULL;
+        response_body = nullptr;
     else
-        body = nfs_cache_handle_open(pool, handle,
-                                     file_request.range.skip,
-                                     file_request.range.size);
+        response_body = nfs_cache_handle_open(pool, handle,
+                                              file_request.range.skip,
+                                              file_request.range.size);
 
-    response_dispatch(request2, status, std::move(headers), body);
+    response_dispatch(*this, status, std::move(headers), response_body);
 }
 
-static constexpr NfsCacheHandler nfs_handler_cache_handler = {
-    .response = nfs_handler_cache_response,
-    .error = nfs_handler_error,
-};
+void
+Request::OnNfsCacheError(GError *error)
+{
+    response_dispatch_error(*this, error);
+    g_error_free(error);
+}
 
 /*
  * public
@@ -144,6 +134,5 @@ nfs_handler(Request &request2)
 
     nfs_cache_request(pool, *request2.instance.nfs_cache,
                       address.server, address.export_name, address.path,
-                      nfs_handler_cache_handler, &request2,
-                      request2.cancel_ptr);
+                      request2, request2.cancel_ptr);
 }

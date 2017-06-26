@@ -133,21 +133,20 @@ struct NfsCacheRequest final : NfsStockGetHandler, NfsClientOpenFileHandler {
     const char *key;
     const char *path;
 
-    const NfsCacheHandler &handler;
-    void *handler_ctx;
+    NfsCacheHandler &handler;
     CancellablePointer &cancel_ptr;
 
     NfsCacheRequest(struct pool &_pool, NfsCache &_cache,
                     const char *_key, const char *_path,
-                    const NfsCacheHandler &_handler, void *_ctx,
+                    NfsCacheHandler &_handler,
                     CancellablePointer &_cancel_ptr)
         :pool(_pool), cache(_cache),
          key(_key), path(_path),
-         handler(_handler), handler_ctx(_ctx),
+         handler(_handler),
          cancel_ptr(_cancel_ptr) {}
 
     void Error(GError *error) {
-        handler.error(error, handler_ctx);
+        handler.OnNfsCacheError(error);
     }
 
     /* virtual methods from class NfsStockGetHandler */
@@ -307,7 +306,7 @@ NfsCacheRequest::OnNfsOpen(NfsFileHandle *handle, const struct stat *st)
         .stat = *st,
     };
 
-    handler.response(handle2, *st, handler_ctx);
+    handler.OnNfsCacheResponse(handle2, *st);
 
     if (handle2.file != nullptr)
         nfs_client_close_file(handle2.file);
@@ -390,7 +389,7 @@ nfs_cache_fork_cow(NfsCache &cache, bool inherit)
 void
 nfs_cache_request(struct pool &pool, NfsCache &cache,
                   const char *server, const char *_export, const char *path,
-                  const NfsCacheHandler &handler, void *ctx,
+                  NfsCacheHandler &handler,
                   CancellablePointer &cancel_ptr)
 {
     const char *key = nfs_cache_key(pool, server, _export, path);
@@ -406,7 +405,7 @@ nfs_cache_request(struct pool &pool, NfsCache &cache,
             .stat = item->stat,
         };
 
-        handler.response(handle2, item->stat, ctx);
+        handler.OnNfsCacheResponse(handle2, item->stat);
         return;
     }
 
@@ -414,7 +413,7 @@ nfs_cache_request(struct pool &pool, NfsCache &cache,
 
     auto r = NewFromPool<NfsCacheRequest>(pool, pool, cache,
                                           key, path,
-                                          handler, ctx, cancel_ptr);
+                                          handler, cancel_ptr);
     nfs_stock_get(&cache.stock, &pool, server, _export,
                   *r, cancel_ptr);
 }

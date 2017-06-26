@@ -13,7 +13,7 @@
 
 #include <sys/stat.h>
 
-struct NfsRequest {
+struct NfsRequest final : NfsCacheHandler {
     struct pool &pool;
 
     const char *const path;
@@ -27,41 +27,28 @@ struct NfsRequest {
         :pool(_pool), path(_path), content_type(_content_type),
          handler(_handler) {
     }
+
+    /* virtual methods from NfsCacheHandler */
+    void OnNfsCacheResponse(NfsCacheHandle &handle,
+                            const struct stat &st) override;
+
+    void OnNfsCacheError(GError *error) override {
+        handler.InvokeError(error);
+    }
 };
 
-/*
- * NfsCacheHandler
- *
- */
-
-static void
-nfs_request_response(NfsCacheHandle &handle,
-                     const struct stat &st, void *ctx)
+void
+NfsRequest::OnNfsCacheResponse(NfsCacheHandle &handle, const struct stat &st)
 {
-    NfsRequest *r = (NfsRequest *)ctx;
-
-    auto headers = static_response_headers(r->pool, -1, st,
-                                           r->content_type);
+    auto headers = static_response_headers(pool, -1, st,
+                                           content_type);
     headers.Add("cache-control", "max-age=60");
 
-    Istream *body = nfs_cache_handle_open(r->pool, handle, 0, st.st_size);
+    Istream *body = nfs_cache_handle_open(pool, handle, 0, st.st_size);
 
     // TODO: handle revalidation etc.
-    r->handler.InvokeResponse(HTTP_STATUS_OK, std::move(headers), body);
+    handler.InvokeResponse(HTTP_STATUS_OK, std::move(headers), body);
 }
-
-static void
-nfs_request_error(GError *error, void *ctx)
-{
-    NfsRequest *r = (NfsRequest *)ctx;
-
-    r->handler.InvokeError(error);
-}
-
-static constexpr NfsCacheHandler nfs_request_cache_handler = {
-    .response = nfs_request_response,
-    .error = nfs_request_error,
-};
 
 /*
  * constructor
@@ -79,6 +66,5 @@ nfs_request(struct pool &pool, NfsCache &nfs_cache,
                                      handler);
 
     nfs_cache_request(pool, nfs_cache, server, export_name, path,
-                      nfs_request_cache_handler, r,
-                      cancel_ptr);
+                      *r, cancel_ptr);
 }
