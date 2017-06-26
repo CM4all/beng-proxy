@@ -5,7 +5,6 @@
  */
 
 #include "Server.hxx"
-#include "Datagram.hxx"
 #include "util/ByteOrder.hxx"
 
 #include <beng-proxy/log.h>
@@ -17,31 +16,9 @@
 #include <stdlib.h>
 #include <errno.h>
 
-struct log_server {
-    const int fd;
-
-    AccessLogDatagram datagram;
-
-    char buffer[65536];
-
-public:
-    log_server(int _fd):fd(_fd) {}
-
-    ~log_server() {
-        close(fd);
-    }
-};
-
-struct log_server *
-log_server_new(int fd)
+AccessLogServer::~AccessLogServer()
 {
-    return new log_server(fd);
-}
-
-void
-log_server_free(struct log_server *server)
-{
-    delete server;
+    close(fd);
 }
 
 static const void *
@@ -203,11 +180,10 @@ log_server_apply_datagram(AccessLogDatagram *datagram, const void *p,
 }
 
 const AccessLogDatagram *
-log_server_receive(struct log_server *server)
+AccessLogServer::Receive()
 {
     while (true) {
-        ssize_t nbytes = recv(server->fd, server->buffer,
-                              sizeof(server->buffer) - 1, 0);
+        ssize_t nbytes = recv(fd, buffer, sizeof(buffer) - 1, 0);
         if (nbytes <= 0) {
             if (nbytes < 0 && errno == EAGAIN)
                 continue;
@@ -216,13 +192,12 @@ log_server_receive(struct log_server *server)
 
         /* force null termination so we can use string functions inside
            the buffer */
-        server->buffer[nbytes] = 0;
+        buffer[nbytes] = 0;
 
-        memset(&server->datagram, 0, sizeof(server->datagram));
+        memset(&datagram, 0, sizeof(datagram));
 
-        if (log_server_apply_datagram(&server->datagram, server->buffer,
-                                      server->buffer + nbytes))
-            return &server->datagram;
+        if (log_server_apply_datagram(&datagram, buffer, buffer + nbytes))
+            return &datagram;
     }
 }
 

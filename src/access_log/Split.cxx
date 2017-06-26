@@ -280,9 +280,8 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    struct log_server *server = log_server_new(0);
-    const AccessLogDatagram *d;
-    while ((d = log_server_receive(server)) != nullptr) {
+    AccessLogServer server(0);
+    while (auto *d = server.Receive()) {
         for (int i = argi; i < argc; ++i) {
             const char *path = generate_path(argv[i], d);
             if (path == nullptr)

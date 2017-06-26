@@ -7,15 +7,21 @@
 #ifndef BENG_PROXY_LOG_SERVER_H
 #define BENG_PROXY_LOG_SERVER_H
 
-struct AccessLogDatagram;
+#include "Datagram.hxx"
 
-struct log_server *
-log_server_new(int fd);
+class AccessLogServer {
+    const int fd;
 
-void
-log_server_free(struct log_server *server);
+    AccessLogDatagram datagram;
 
-const AccessLogDatagram *
-log_server_receive(struct log_server *server);
+    char buffer[65536];
+
+public:
+    explicit AccessLogServer(int _fd):fd(_fd) {}
+
+    ~AccessLogServer();
+
+    const AccessLogDatagram *Receive();
+};
 
 #endif

@@ -22,8 +22,8 @@ int main(int argc, char **argv)
     (void)argc;
     (void)argv;
 
-    struct log_server *server = log_server_new(0);
-    while (const auto *d = log_server_receive(server))
+    AccessLogServer server(0);
+    while (const auto *d = server.Receive())
         dump(d);
 
     return 0;
