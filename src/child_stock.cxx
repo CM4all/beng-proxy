@@ -11,7 +11,6 @@
 #include "stock/Stock.hxx"
 #include "stock/Class.hxx"
 #include "stock/Item.hxx"
-#include "gerrno.h"
 #include "spawn/Interface.hxx"
 #include "spawn/Prepared.hxx"
 #include "net/UniqueSocketDescriptor.hxx"

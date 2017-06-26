@@ -8,7 +8,6 @@
 #include "Monitor.hxx"
 #include "MonitorConfig.hxx"
 #include "pool.hxx"
-#include "gerrno.h"
 #include "system/Error.hxx"
 #include "net/PConnectSocket.hxx"
 #include "net/UniqueSocketDescriptor.hxx"

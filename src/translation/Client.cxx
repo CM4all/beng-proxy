@@ -13,7 +13,6 @@
 #include "please.hxx"
 #include "stopwatch.hxx"
 #include "GException.hxx"
-#include "gerrno.h"
 #include "pool.hxx"
 #include "system/Error.hxx"
 #include "util/Cancellable.hxx"
