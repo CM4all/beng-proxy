@@ -10,11 +10,11 @@
 #include <stdio.h>
 
 static void
-dump(const AccessLogDatagram *d)
+dump(const AccessLogDatagram &d)
 {
-    if (d->site != nullptr && d->valid_traffic)
-        printf("%s %llu\n", d->site,
-               (unsigned long long)(d->traffic_received + d->traffic_sent));
+    if (d.site != nullptr && d.valid_traffic)
+        printf("%s %llu\n", d.site,
+               (unsigned long long)(d.traffic_received + d.traffic_sent));
 }
 
 int main(int argc, char **argv)
@@ -24,7 +24,7 @@ int main(int argc, char **argv)
 
     AccessLogServer server(0);
     while (const auto *d = server.Receive())
-        dump(d);
+        dump(*d);
 
     return 0;
 }

@@ -35,22 +35,22 @@ split_time_t(time_t t)
 }
 
 static const char *
-expand_timestamp(const char *fmt, const AccessLogDatagram *d)
+expand_timestamp(const char *fmt, const AccessLogDatagram &d)
 {
-    if (!d->valid_timestamp)
+    if (!d.valid_timestamp)
         return nullptr;
 
-    time_t t = (time_t)(d->timestamp / 1000000);
+    time_t t = (time_t)(d.timestamp / 1000000);
     static char buffer[64];
     strftime(buffer, sizeof(buffer), fmt, split_time_t(t));
     return buffer;
 }
 
 static const char *
-expand(const char *name, size_t length, const AccessLogDatagram *d)
+expand(const char *name, size_t length, const AccessLogDatagram &d)
 {
     if (string_equals(name, length, "site"))
-        return d->site;
+        return d.site;
     else if (string_equals(name, length, "date"))
         return expand_timestamp("%Y-%m-%d", d);
     else if (string_equals(name, length, "year"))
@@ -68,7 +68,7 @@ expand(const char *name, size_t length, const AccessLogDatagram *d)
 }
 
 static const char *
-generate_path(const char *template_, const AccessLogDatagram *d)
+generate_path(const char *template_, const AccessLogDatagram &d)
 {
     static char buffer[8192];
     char *dest = buffer;
@@ -218,17 +218,17 @@ escape_string(const char *value, char *const buffer, size_t buffer_size)
 }
 
 static void
-dump_http(int fd, const AccessLogDatagram *d)
+dump_http(int fd, const AccessLogDatagram &d)
 {
-    const char *method = d->valid_http_method &&
-        http_method_is_valid(d->http_method)
-        ? http_method_to_string(d->http_method)
+    const char *method = d.valid_http_method &&
+        http_method_is_valid(d.http_method)
+        ? http_method_to_string(d.http_method)
         : "?";
 
     char stamp_buffer[32];
     const char *stamp = "-";
-    if (d->valid_timestamp) {
-        time_t t = d->timestamp / 1000000;
+    if (d.valid_timestamp) {
+        time_t t = d.timestamp / 1000000;
         strftime(stamp_buffer, sizeof(stamp_buffer),
                  "%d/%b/%Y:%H:%M:%S %z", split_time_t(t));
         stamp = stamp_buffer;
@@ -236,9 +236,9 @@ dump_http(int fd, const AccessLogDatagram *d)
 
     char length_buffer[32];
     const char *length = "-";
-    if (d->valid_length) {
+    if (d.valid_length) {
         snprintf(length_buffer, sizeof(length_buffer), "%llu",
-                 (unsigned long long)d->length);
+                 (unsigned long long)d.length);
         length = length_buffer;
     }
 
@@ -247,23 +247,23 @@ dump_http(int fd, const AccessLogDatagram *d)
     static char buffer[8192];
     snprintf(buffer, sizeof(buffer),
              "%s %s - - [%s] \"%s %s HTTP/1.1\" %u %s \"%s\" \"%s\"\n",
-             optional_string(d->site),
-             optional_string(d->remote_host),
+             optional_string(d.site),
+             optional_string(d.remote_host),
              stamp, method,
-             escape_string(d->http_uri, escaped_uri, sizeof(escaped_uri)),
-             d->http_status, length,
-             escape_string(optional_string(d->http_referer),
+             escape_string(d.http_uri, escaped_uri, sizeof(escaped_uri)),
+             d.http_status, length,
+             escape_string(optional_string(d.http_referer),
                            escaped_referer, sizeof(escaped_referer)),
-             escape_string(optional_string(d->user_agent),
+             escape_string(optional_string(d.user_agent),
                            escaped_ua, sizeof(escaped_ua)));
 
     (void)write(fd, buffer, strlen(buffer));
 }
 
 static void
-dump(int fd, const AccessLogDatagram *d)
+dump(int fd, const AccessLogDatagram &d)
 {
-    if (d->http_uri != nullptr && d->valid_http_status)
+    if (d.http_uri != nullptr && d.valid_http_status)
         dump_http(fd, d);
 }
 
@@ -283,7 +283,7 @@ int main(int argc, char **argv)
     AccessLogServer server(0);
     while (auto *d = server.Receive()) {
         for (int i = argi; i < argc; ++i) {
-            const char *path = generate_path(argv[i], d);
+            const char *path = generate_path(argv[i], *d);
             if (path == nullptr)
                 continue;
 
@@ -291,7 +291,7 @@ int main(int argc, char **argv)
             if (fd < 0)
                 break;
 
-            dump(fd, d);
+            dump(fd, *d);
             break;
         }
     }
