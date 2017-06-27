@@ -108,6 +108,10 @@ public:
         DestroyError(error);
     }
 
+    void AbortError(const char *msg) {
+        AbortError(g_error_new_literal(was_quark(), 0, msg));
+    }
+
     void Eof() {
         assert(known_length);
         assert(received == length);
@@ -220,10 +224,7 @@ WasInput::ReadToBuffer()
     assert(nbytes != -2);
 
     if (nbytes == 0) {
-        GError *error =
-            g_error_new_literal(was_quark(), 0,
-                                "server closed the data connection");
-        AbortError(error);
+        AbortError("server closed the data connection");
         return false;
     }
 
@@ -320,10 +321,7 @@ WasInput::EventCallback(unsigned events)
     assert(fd >= 0);
 
     if (unlikely(events & SocketEvent::TIMEOUT)) {
-        GError *error =
-            g_error_new_literal(was_quark(), 0,
-                                "data receive timeout");
-        AbortError(error);
+        AbortError("data receive timeout");
         return;
     }
 
@@ -390,19 +388,13 @@ WasInput::SetLength(uint64_t _length)
             return true;
 
         // TODO: don't invoke Istream::DestroyError() if not yet enabled
-        GError *error =
-            g_error_new_literal(was_quark(), 0,
-                                "wrong input length announced");
-        AbortError(error);
+        AbortError("wrong input length announced");
         return false;
     }
 
     if (_length < received) {
         /* this length must be bogus, because we already received more than that from the socket */
-        GError *error =
-            g_error_new_literal(was_quark(), 0,
-                                "announced length is too small");
-        AbortError(error);
+        AbortError("announced length is too small");
         return false;
     }
 
