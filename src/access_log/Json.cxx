@@ -68,6 +68,8 @@ ToJson(const AccessLogDatagram &d)
     return root;
 }
 
+#ifdef JSONCPP_VERSION_MAJOR
+
 static void
 Dump(Json::StreamWriter &writer, const AccessLogDatagram &d)
 {
@@ -75,16 +77,33 @@ Dump(Json::StreamWriter &writer, const AccessLogDatagram &d)
     std::cout << std::endl;
 }
 
+#else
+// libjsoncpp 0.6 (Debian Jessie)
+
+static void
+Dump(Json::StyledStreamWriter &writer, const AccessLogDatagram &d)
+{
+    writer.write(std::cout, ToJson(d));
+    std::cout << std::endl;
+}
+
+#endif
+
 int main(int argc, char **argv)
 {
     (void)argc;
     (void)argv;
 
+#ifdef JSONCPP_VERSION_MAJOR
     Json::StreamWriterBuilder builder;
     builder["commentStyle"] = "None";
     builder["indentation"] = "   ";
 
     std::unique_ptr<Json::StreamWriter> writer(builder.newStreamWriter());
+#else
+    // libjsoncpp 0.6 (Debian Jessie)
+    auto writer = std::make_unique<Json::StyledStreamWriter>();
+#endif
 
     AccessLogServer(0).Run(std::bind(Dump, std::ref(*writer),
                                      std::placeholders::_1));
