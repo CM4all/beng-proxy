@@ -5,6 +5,7 @@
  */
 
 #include "Server.hxx"
+#include "Error.hxx"
 #include "Quark.hxx"
 #include "Control.hxx"
 #include "Output.hxx"
@@ -18,6 +19,7 @@
 #include "pool.hxx"
 #include "io/FileDescriptor.hxx"
 #include "util/ConstBuffer.hxx"
+#include "util/StringFormat.hxx"
 
 #include <was/protocol.h>
 
@@ -78,6 +80,11 @@ struct WasServer final : WasControlHandler, WasOutputHandler, WasInputHandler {
     }
 
     void ReleaseError(GError *error);
+
+    void ReleaseError(const char *msg) {
+        ReleaseError(g_error_new_literal(was_quark(), 0, msg));
+    }
+
     void ReleaseUnused();
 
     /**
@@ -90,6 +97,10 @@ struct WasServer final : WasControlHandler, WasOutputHandler, WasInputHandler {
 
     void AbortError(std::exception_ptr ep) {
         AbortError(ToGError(ep));
+    }
+
+    void AbortError(const char *msg) {
+        AbortError(std::make_exception_ptr(WasProtocolError(msg)));
     }
 
     /**
@@ -297,8 +308,6 @@ WasServer::WasInputError()
 bool
 WasServer::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload)
 {
-    GError *error;
-
     switch (cmd) {
         const uint64_t *length_p;
         const char *p;
@@ -309,9 +318,7 @@ WasServer::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload)
 
     case WAS_COMMAND_REQUEST:
         if (request.pool != nullptr) {
-            error = g_error_new_literal(was_quark(), 0,
-                                        "misplaced REQUEST packet");
-            AbortError(error);
+            AbortError("misplaced REQUEST packet");
             return false;
         }
 
@@ -325,9 +332,7 @@ WasServer::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload)
 
     case WAS_COMMAND_METHOD:
         if (payload.size != sizeof(method)) {
-            error = g_error_new_literal(was_quark(), 0,
-                                        "malformed METHOD packet");
-            AbortError(error);
+            AbortError("malformed METHOD packet");
             return false;
         }
 
@@ -335,16 +340,12 @@ WasServer::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload)
         if (request.method != HTTP_METHOD_GET &&
             method != request.method) {
             /* sending that packet twice is illegal */
-            error = g_error_new_literal(was_quark(), 0,
-                                        "misplaced METHOD packet");
-            AbortError(error);
+            AbortError("misplaced METHOD packet");
             return false;
         }
 
         if (!http_method_is_valid(method)) {
-            error = g_error_new_literal(was_quark(), 0,
-                                        "invalid METHOD packet");
-            AbortError(error);
+            AbortError("invalid METHOD packet");
             return false;
         }
 
@@ -353,9 +354,7 @@ WasServer::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload)
 
     case WAS_COMMAND_URI:
         if (request.pool == nullptr || request.uri != nullptr) {
-            error = g_error_new_literal(was_quark(), 0,
-                                        "misplaced URI packet");
-            AbortError(error);
+            AbortError("misplaced URI packet");
             return false;
         }
 
@@ -371,17 +370,13 @@ WasServer::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload)
 
     case WAS_COMMAND_HEADER:
         if (request.pool == nullptr || request.headers == nullptr) {
-            error = g_error_new_literal(was_quark(), 0,
-                                        "misplaced HEADER packet");
-            AbortError(error);
+            AbortError("misplaced HEADER packet");
             return false;
         }
 
         p = (const char *)memchr(payload.data, '=', payload.size);
         if (p == nullptr) {
-            error = g_error_new_literal(was_quark(), 0,
-                                        "malformed HEADER packet");
-            AbortError(error);
+            AbortError("malformed HEADER packet");
             return false;
         }
 
@@ -394,17 +389,13 @@ WasServer::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload)
         break;
 
     case WAS_COMMAND_STATUS:
-        error = g_error_new_literal(was_quark(), 0,
-                                    "misplaced STATUS packet");
-        AbortError(error);
+        AbortError("misplaced STATUS packet");
         return false;
 
     case WAS_COMMAND_NO_DATA:
         if (request.pool == nullptr || request.uri == nullptr ||
             request.headers == nullptr) {
-            error = g_error_new_literal(was_quark(), 0,
-                                        "misplaced NO_DATA packet");
-            AbortError(error);
+            AbortError("misplaced NO_DATA packet");
             return false;
         }
 
@@ -415,9 +406,7 @@ WasServer::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload)
     case WAS_COMMAND_DATA:
         if (request.pool == nullptr || request.uri == nullptr ||
             request.headers == nullptr) {
-            error = g_error_new_literal(was_quark(), 0,
-                                        "misplaced DATA packet");
-            AbortError(error);
+            AbortError("misplaced DATA packet");
             return false;
         }
 
@@ -430,24 +419,18 @@ WasServer::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload)
         if (request.pool == nullptr ||
             request.body == nullptr ||
             (request.headers != nullptr && !request.pending)) {
-            error = g_error_new_literal(was_quark(), 0,
-                                        "misplaced LENGTH packet");
-            AbortError(error);
+            AbortError("misplaced LENGTH packet");
             return false;
         }
 
         length_p = (const uint64_t *)payload.data;
         if (payload.size != sizeof(*length_p)) {
-            error = g_error_new_literal(was_quark(), 0,
-                                        "malformed LENGTH packet");
-            AbortError(error);
+            AbortError("malformed LENGTH packet");
             return false;
         }
 
         if (!was_input_set_length(request.body, *length_p)) {
-            error = g_error_new_literal(was_quark(), 0,
-                                        "invalid LENGTH packet");
-            AbortError(error);
+            AbortError("invalid LENGTH packet");
             return false;
         }
 
@@ -456,9 +439,7 @@ WasServer::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload)
     case WAS_COMMAND_STOP:
     case WAS_COMMAND_PREMATURE:
         // XXX
-        error = g_error_new(was_quark(), 0,
-                            "unexpected packet: %d", cmd);
-        AbortError(error);
+        AbortError(StringFormat<64>("unexpected packet: %d", cmd));
         return false;
     }
 
@@ -496,9 +477,7 @@ was_server_new(struct pool &pool, EventLoop &event_loop,
 void
 was_server_free(WasServer *server)
 {
-    GError *error = g_error_new_literal(was_quark(), 0,
-                                        "shutting down WAS connection");
-    server->ReleaseError(error);
+    server->ReleaseError("shutting down WAS connection");
 }
 
 void
