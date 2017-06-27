@@ -5,11 +5,13 @@
  */
 
 #include "Control.hxx"
-#include "Quark.hxx"
+#include "Error.hxx"
 #include "strmap.hxx"
 #include "fb_pool.hxx"
 #include "net/Buffered.hxx"
+#include "system/Error.hxx"
 #include "util/ConstBuffer.hxx"
+#include "util/StringFormat.hxx"
 
 #include <was/protocol.h>
 
@@ -71,7 +73,7 @@ WasControl::ReleaseSocket()
 void
 WasControl::InvokeError(const char *msg)
 {
-    InvokeError(g_error_new_literal(was_quark(), 0, msg));
+    InvokeError(std::make_exception_ptr(WasProtocolError(msg)));
 }
 
 bool
@@ -88,10 +90,8 @@ WasControl::ConsumeInput()
             /* not enough data yet */
 
             if (input_buffer.IsFull()) {
-                GError *error = g_error_new(was_quark(), 0,
-                                            "control header too long (%u)",
-                                            header->length);
-                InvokeError(error);
+                InvokeError(std::make_exception_ptr(WasProtocolError(StringFormat<64>("control header too long (%u)",
+                                                                                      header->length))));
                 return false;
             }
 
@@ -133,10 +133,7 @@ WasControl::TryRead()
             return;
         }
 
-        GError *error =
-            g_error_new(was_quark(), 0,
-                        "control receive error: %s", strerror(errno));
-        InvokeError(error);
+        InvokeError(std::make_exception_ptr(MakeErrno("WAS control receive error")));
         return;
     }
 
@@ -160,10 +157,7 @@ WasControl::TryWrite()
     }
 
     if (nbytes < 0) {
-        GError *error =
-            g_error_new(was_quark(), 0,
-                        "control send error: %s", strerror(errno));
-        InvokeError(error);
+        InvokeError(std::make_exception_ptr(MakeErrno("WAS control send error")));
         return false;
     }
 

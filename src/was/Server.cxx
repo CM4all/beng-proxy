@@ -131,7 +131,7 @@ struct WasServer final : WasControlHandler, WasOutputHandler, WasInputHandler {
         assert(!control.IsDefined());
     }
 
-    void OnWasControlError(GError *error) override;
+    void OnWasControlError(std::exception_ptr ep) override;
 
     /* virtual methods from class WasOutputHandler */
     bool WasOutputLength(uint64_t length) override;
@@ -466,11 +466,11 @@ WasServer::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload)
 }
 
 void
-WasServer::OnWasControlError(GError *error)
+WasServer::OnWasControlError(std::exception_ptr ep)
 {
     assert(!control.IsDefined());
 
-    AbortError(error);
+    AbortError(ep);
 }
 
 /*

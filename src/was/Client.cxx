@@ -307,7 +307,7 @@ struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler, C
         assert(!control.IsDefined());
     }
 
-    void OnWasControlError(GError *error) override {
+    void OnWasControlError(std::exception_ptr ep) override {
         assert(!control.IsDefined());
 
         if (ignore_control_errors)
@@ -315,7 +315,7 @@ struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler, C
 
         stopwatch_event(stopwatch, "control_error");
 
-        AbortResponse(error);
+        AbortResponse(ep);
     }
 
     /* virtual methods from class WasOutputHandler */

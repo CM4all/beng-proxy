@@ -9,7 +9,8 @@
 
 #include "event/SocketEvent.hxx"
 #include "SliceFifoBuffer.hxx"
-#include "glibfwd.hxx"
+
+#include <exception>
 
 #include <was/protocol.h>
 
@@ -39,7 +40,7 @@ public:
     }
 
     virtual void OnWasControlDone() = 0;
-    virtual void OnWasControlError(GError *error) = 0;
+    virtual void OnWasControlError(std::exception_ptr ep) = 0;
 };
 
 class WasControl {
@@ -122,11 +123,9 @@ private:
         handler.OnWasControlDone();
     }
 
-    void InvokeError(GError *error) {
-        assert(error != nullptr);
-
+    void InvokeError(std::exception_ptr ep) {
         ReleaseSocket();
-        handler.OnWasControlError(error);
+        handler.OnWasControlError(ep);
     }
 
     void InvokeError(const char *msg);
