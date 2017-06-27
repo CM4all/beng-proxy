@@ -8,6 +8,7 @@
 #include "css_syntax.hxx"
 #include "pool.hxx"
 #include "istream/Sink.hxx"
+#include "GException.hxx"
 #include "util/StringUtil.hxx"
 #include "util/TrivialArray.hxx"
 
@@ -124,7 +125,8 @@ struct CssParser final : IstreamSink {
         assert(input.IsDefined());
 
         input.Clear();
-        handler->error(error, handler_ctx);
+        handler->error(ToException(*error), handler_ctx);
+        g_error_free(error);
         pool_unref(pool);
     }
 };

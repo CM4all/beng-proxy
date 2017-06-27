@@ -8,7 +8,8 @@
 #define BENG_PROXY_CSS_PARSER_HXX
 
 #include "util/StringView.hxx"
-#include "glibfwd.hxx"
+
+#include <exception>
 
 #include <sys/types.h>
 
@@ -61,7 +62,7 @@ struct CssParserHandler {
     /**
      * An I/O error has occurred.
      */
-    void (*error)(GError *error, void *ctx);
+    void (*error)(std::exception_ptr ep, void *ctx);
 };
 
 /**

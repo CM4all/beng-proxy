@@ -4,8 +4,7 @@
 #include "PInstance.hxx"
 #include "fb_pool.hxx"
 #include "pool.hxx"
-
-#include <glib.h>
+#include "util/Exception.hxx"
 
 #include <unistd.h>
 #include <stdlib.h>
@@ -70,12 +69,11 @@ my_parser_eof(void *ctx, off_t length)
 }
 
 static gcc_noreturn void
-my_parser_error(GError *error, void *ctx)
+my_parser_error(std::exception_ptr ep, void *ctx)
 {
     (void)ctx;
 
-    fprintf(stderr, "ABORT: %s\n", error->message);
-    g_error_free(error);
+    fprintf(stderr, "ABORT: %s\n", GetFullMessage(ep).c_str());
     exit(2);
 }
 

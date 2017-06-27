@@ -236,15 +236,13 @@ css_processor_parser_eof(void *ctx, off_t length gcc_unused)
 }
 
 static void
-css_processor_parser_error(GError *error, void *ctx)
+css_processor_parser_error(std::exception_ptr, void *ctx)
 {
     CssProcessor *processor = (CssProcessor *)ctx;
 
     assert(processor->parser != nullptr);
 
     processor->parser = nullptr;
-
-    g_error_free(error);
 }
 
 static constexpr CssParserHandler css_processor_parser_handler = {

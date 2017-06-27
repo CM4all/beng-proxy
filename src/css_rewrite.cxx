@@ -15,8 +15,6 @@
 #include "util/Macros.hxx"
 #include "util/StringView.hxx"
 
-#include <glib.h>
-
 struct css_url {
     size_t start, end;
 };
@@ -59,14 +57,13 @@ css_rewrite_parser_eof(void *ctx, off_t length gcc_unused)
 gcc_noreturn
 #endif
 static void
-css_rewrite_parser_error(GError *error, void *ctx)
+css_rewrite_parser_error(std::exception_ptr, void *ctx)
 {
     struct css_rewrite *rewrite = (struct css_rewrite *)ctx;
     (void)rewrite;
 
     /* shouldn't happen - input is an istream_memory which never
        fails */
-    g_error_free(error);
     assert(false);
 }
 

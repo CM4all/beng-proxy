@@ -62,10 +62,12 @@ executable('run_parser_cdata',
 executable('run_css_parser',
   'run_css_parser.cxx',
   '../src/PInstance.cxx',
+  '../src/GException.cxx',
   include_directories: inc,
   dependencies: [
     glib,
     libinline,
+    libhttp,
     processor_dep,
   ])
 
