@@ -73,11 +73,10 @@ Request::HandleAuth(const TranslateResponse &response)
         /* load #TRANSLATE_AUTH_FILE */
         assert(response.auth_file != nullptr);
 
-        GError *error = nullptr;
-        auth = LoadFile(pool, response.auth_file, 64, &error);
-        if (auth.IsNull()) {
-            response_dispatch_error(*this, error);
-            g_error_free(error);
+        try {
+            auth = LoadFile(pool, response.auth_file, 64);
+        } catch (...) {
+            response_dispatch_log(*this, std::current_exception());
             return;
         }
     } else {

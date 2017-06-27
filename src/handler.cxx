@@ -693,11 +693,16 @@ Request::CheckHandleReadFile(const TranslateResponse &response)
         return true;
     }
 
-    auto contents = LoadFile(pool, response.read_file, 256, nullptr);
-    if (contents.IsNull())
+    ConstBuffer<void> contents;
+
+    try {
+        contents = LoadFile(pool, response.read_file, 256);
+    } catch (...) {
         /* special case: if the file does not exist, return an empty
            READ_FILE packet to the translation server */
         contents.data = "";
+        contents.size = 0;
+    }
 
     translate.request.read_file = contents;
     SubmitTranslateRequest();
