@@ -28,13 +28,13 @@
 #include <string.h>
 
 struct CssProcessor {
-    struct pool *pool, *caller_pool;
+    struct pool &pool, &caller_pool;
 
-    Widget *container;
-    struct processor_env *env;
-    unsigned options;
+    Widget &container;
+    struct processor_env &env;
+    const unsigned options;
 
-    Istream *replace;
+    Istream &replace;
 
     CssParser *parser;
     bool had_input;
@@ -76,7 +76,7 @@ css_processor_replace_add(CssProcessor *processor,
                           off_t start, off_t end,
                           Istream *istream)
 {
-    istream_replace_add(*processor->replace, start, end, istream);
+    istream_replace_add(processor->replace, start, end, istream);
 }
 
 /*
@@ -98,22 +98,22 @@ css_processor_parser_class_name(const CssParserValue *name, void *ctx)
     if (n == 3) {
         /* triple underscore: add widget path prefix */
 
-        const char *prefix = processor->container->GetPrefix();
+        const char *prefix = processor->container.GetPrefix();
         if (prefix == nullptr)
             return;
 
         css_processor_replace_add(processor, name->start, name->start + 3,
-                                  istream_string_new(processor->pool,
+                                  istream_string_new(&processor->pool,
                                                      prefix));
     } else if (n == 2) {
         /* double underscore: add class name prefix */
 
-        const char *class_name = processor->container->GetQuotedClassName();
+        const char *class_name = processor->container.GetQuotedClassName();
         if (class_name == nullptr)
             return;
 
         css_processor_replace_add(processor, name->start, name->start + 2,
-                                  istream_string_new(processor->pool,
+                                  istream_string_new(&processor->pool,
                                                      class_name));
     }
 }
@@ -132,22 +132,22 @@ css_processor_parser_xml_id(const CssParserValue *name, void *ctx)
     if (n == 3) {
         /* triple underscore: add widget path prefix */
 
-        const char *prefix = processor->container->GetPrefix();
+        const char *prefix = processor->container.GetPrefix();
         if (prefix == nullptr)
             return;
 
         css_processor_replace_add(processor, name->start, name->start + 3,
-                                  istream_string_new(processor->pool,
+                                  istream_string_new(&processor->pool,
                                                      prefix));
     } else if (n == 2) {
         /* double underscore: add class name prefix */
 
-        const char *class_name = processor->container->GetQuotedClassName();
+        const char *class_name = processor->container.GetQuotedClassName();
         if (class_name == nullptr)
             return;
 
         css_processor_replace_add(processor, name->start, name->start + 1,
-                                  istream_string_new(processor->pool,
+                                  istream_string_new(&processor->pool,
                                                      class_name));
     }
 }
@@ -190,10 +190,10 @@ css_processor_parser_url(const CssParserValue *url, void *ctx)
         return;
 
     Istream *istream =
-        rewrite_widget_uri(*processor->pool,
-                           *processor->env,
+        rewrite_widget_uri(processor->pool,
+                           processor->env,
                            *global_translate_cache,
-                           *processor->container,
+                           processor->container,
                            url->value,
                            processor->uri_rewrite.mode, false,
                            processor->uri_rewrite.view[0] != 0
@@ -212,10 +212,10 @@ css_processor_parser_import(const CssParserValue *url, void *ctx)
         return;
 
     Istream *istream =
-        rewrite_widget_uri(*processor->pool,
-                           *processor->env,
+        rewrite_widget_uri(processor->pool,
+                           processor->env,
                            *global_translate_cache,
-                           *processor->container,
+                           processor->container,
                            url->value,
                            URI_MODE_PARTIAL, false, nullptr,
                            &css_escape_class);
@@ -232,7 +232,7 @@ css_processor_parser_eof(void *ctx, off_t length gcc_unused)
 
     processor->parser = nullptr;
 
-    istream_replace_finish(*processor->replace);
+    istream_replace_finish(processor->replace);
 }
 
 static void
@@ -269,11 +269,11 @@ CssProcessor::CssProcessor(struct pool &_pool, struct pool &_caller_pool,
                            Widget &_container,
                            struct processor_env &_env,
                            unsigned _options)
-    :pool(&_pool), caller_pool(&_caller_pool),
-     container(&_container), env(&_env),
+    :pool(_pool), caller_pool(_caller_pool),
+     container(_container), env(_env),
      options(_options),
-     replace(istream_replace_new(*pool, istream_tee_second(tee))),
-     parser(css_parser_new(*pool, tee, false,
+     replace(*istream_replace_new(pool, istream_tee_second(tee))),
+     parser(css_parser_new(pool, tee, false,
                            css_processor_parser_handler, this)) {}
 
 Istream *
@@ -293,5 +293,5 @@ css_processor(struct pool &caller_pool, Istream &input,
                                                options);
     pool_unref(pool);
 
-    return processor->replace;
+    return &processor->replace;
 }
