@@ -22,7 +22,7 @@ FormatNfsClientError(struct nfs_context *nfs, const char *msg)
 }
 
 NfsClientError::NfsClientError(struct nfs_context *nfs, const char *msg)
-    :std::runtime_error(FormatNfsClientError(nfs, msg)),
+    :std::runtime_error(FormatNfsClientError(nfs, msg).c_str()),
      code(0) {}
 
 static StringBuffer<char, 256>
@@ -44,5 +44,5 @@ FormatNfsClientError(int err, struct nfs_context *nfs, void *data,
 
 NfsClientError::NfsClientError(int err, struct nfs_context *nfs, void *data,
                                const char *msg)
-    :std::runtime_error(FormatNfsClientError(err, nfs, data, msg)),
+    :std::runtime_error(FormatNfsClientError(err, nfs, data, msg).c_str()),
      code(-err) {}

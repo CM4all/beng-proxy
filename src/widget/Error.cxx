@@ -16,6 +16,6 @@ FormatWidgetError(const Widget &widget, const char *msg)
 
 WidgetError::WidgetError(const Widget &widget,
                          WidgetErrorCode _code, const char *_msg)
-    :std::runtime_error(FormatWidgetError(widget, _msg)), code(_code)
+    :std::runtime_error(FormatWidgetError(widget, _msg).c_str()), code(_code)
 {
 }
