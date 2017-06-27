@@ -27,13 +27,7 @@
 #include <assert.h>
 #include <string.h>
 
-struct uri_rewrite {
-    enum uri_mode mode;
-
-    char view[64];
-};
-
-struct css_processor {
+struct CssProcessor {
     struct pool *pool, *caller_pool;
 
     Widget *container;
@@ -45,29 +39,35 @@ struct css_processor {
     CssParser *parser;
     bool had_input;
 
-    struct uri_rewrite uri_rewrite;
+    struct UriRewrite {
+        enum uri_mode mode;
+
+        char view[64];
+    };
+
+    UriRewrite uri_rewrite;
 };
 
 static inline bool
-css_processor_option_rewrite_url(const struct css_processor *processor)
+css_processor_option_rewrite_url(const CssProcessor *processor)
 {
     return (processor->options & CSS_PROCESSOR_REWRITE_URL) != 0;
 }
 
 static inline bool
-css_processor_option_prefix_class(const struct css_processor *processor)
+css_processor_option_prefix_class(const CssProcessor *processor)
 {
     return (processor->options & CSS_PROCESSOR_PREFIX_CLASS) != 0;
 }
 
 static inline bool
-css_processor_option_prefix_id(const struct css_processor *processor)
+css_processor_option_prefix_id(const CssProcessor *processor)
 {
     return (processor->options & CSS_PROCESSOR_PREFIX_ID) != 0;
 }
 
 static void
-css_processor_replace_add(struct css_processor *processor,
+css_processor_replace_add(CssProcessor *processor,
                           off_t start, off_t end,
                           Istream *istream)
 {
@@ -82,7 +82,7 @@ css_processor_replace_add(struct css_processor *processor,
 static void
 css_processor_parser_class_name(const CssParserValue *name, void *ctx)
 {
-    struct css_processor *processor = (struct css_processor *)ctx;
+    CssProcessor *processor = (CssProcessor *)ctx;
 
     assert(!name->value.IsEmpty());
 
@@ -116,7 +116,7 @@ css_processor_parser_class_name(const CssParserValue *name, void *ctx)
 static void
 css_processor_parser_xml_id(const CssParserValue *name, void *ctx)
 {
-    struct css_processor *processor = (struct css_processor *)ctx;
+    CssProcessor *processor = (CssProcessor *)ctx;
 
     assert(!name->value.IsEmpty());
 
@@ -150,7 +150,7 @@ css_processor_parser_xml_id(const CssParserValue *name, void *ctx)
 static void
 css_processor_parser_block(void *ctx)
 {
-    struct css_processor *processor = (struct css_processor *)ctx;
+    CssProcessor *processor = (CssProcessor *)ctx;
 
     processor->uri_rewrite.mode = URI_MODE_PARTIAL;
     processor->uri_rewrite.view[0] = 0;
@@ -160,7 +160,7 @@ static void
 css_processor_parser_property_keyword(const char *name, const char *value,
                                       off_t start, off_t end, void *ctx)
 {
-    struct css_processor *processor = (struct css_processor *)ctx;
+    CssProcessor *processor = (CssProcessor *)ctx;
 
     if (css_processor_option_rewrite_url(processor) &&
         strcmp(name, "-c-mode") == 0) {
@@ -179,7 +179,7 @@ css_processor_parser_property_keyword(const char *name, const char *value,
 static void
 css_processor_parser_url(const CssParserValue *url, void *ctx)
 {
-    struct css_processor *processor = (struct css_processor *)ctx;
+    CssProcessor *processor = (CssProcessor *)ctx;
 
     if (!css_processor_option_rewrite_url(processor))
         return;
@@ -201,7 +201,7 @@ css_processor_parser_url(const CssParserValue *url, void *ctx)
 static void
 css_processor_parser_import(const CssParserValue *url, void *ctx)
 {
-    struct css_processor *processor = (struct css_processor *)ctx;
+    CssProcessor *processor = (CssProcessor *)ctx;
 
     if (!css_processor_option_rewrite_url(processor))
         return;
@@ -221,7 +221,7 @@ css_processor_parser_import(const CssParserValue *url, void *ctx)
 static void
 css_processor_parser_eof(void *ctx, off_t length gcc_unused)
 {
-    struct css_processor *processor = (struct css_processor *)ctx;
+    CssProcessor *processor = (CssProcessor *)ctx;
 
     assert(processor->parser != nullptr);
 
@@ -233,7 +233,7 @@ css_processor_parser_eof(void *ctx, off_t length gcc_unused)
 static void
 css_processor_parser_error(GError *error, void *ctx)
 {
-    struct css_processor *processor = (struct css_processor *)ctx;
+    CssProcessor *processor = (CssProcessor *)ctx;
 
     assert(processor->parser != nullptr);
 
@@ -265,7 +265,7 @@ css_processor(struct pool &caller_pool, Istream &input,
               unsigned options)
 {
     struct pool *pool = pool_new_linear(&caller_pool, "css_processor", 32768);
-    auto processor = NewFromPool<struct css_processor>(*pool);
+    auto processor = NewFromPool<CssProcessor>(*pool);
     processor->pool = pool;
     processor->caller_pool = &caller_pool;
 
