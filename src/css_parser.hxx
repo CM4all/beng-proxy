@@ -41,7 +41,7 @@ struct CssParserHandler {
     /**
      * A property value with a keyword value.  Optional method.
      */
-    void (*property_keyword)(const char *name, const char *value,
+    void (*property_keyword)(const char *name, StringView value,
                              off_t start, off_t end, void *ctx);
 
     /**

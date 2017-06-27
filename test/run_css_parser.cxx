@@ -34,13 +34,13 @@ my_parser_xml_id(const CssParserValue *id, void *ctx)
 }
 
 static void
-my_parser_property_keyword(const char *name, const char *value,
+my_parser_property_keyword(const char *name, StringView value,
                            gcc_unused off_t start, gcc_unused off_t end,
                            void *ctx)
 {
     (void)ctx;
 
-    printf("%s = %s\n", name, value);
+    printf("%s = %.*s\n", name, int(value.size), value.data);
 }
 
 static void

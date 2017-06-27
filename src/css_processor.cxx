@@ -160,7 +160,7 @@ css_processor_parser_block(void *ctx)
 }
 
 static void
-css_processor_parser_property_keyword(const char *name, const char *value,
+css_processor_parser_property_keyword(const char *name, StringView value,
                                       off_t start, off_t end, void *ctx)
 {
     CssProcessor *processor = (CssProcessor *)ctx;
@@ -173,8 +173,9 @@ css_processor_parser_property_keyword(const char *name, const char *value,
 
     if (css_processor_option_rewrite_url(processor) &&
         strcmp(name, "-c-view") == 0 &&
-        strlen(value) < sizeof(processor->uri_rewrite.view)) {
-        strcpy(processor->uri_rewrite.view, value);
+        value.size < sizeof(processor->uri_rewrite.view)) {
+        memcpy(processor->uri_rewrite.view, value.data, value.size);
+        processor->uri_rewrite.view[value.size] = 0;
         css_processor_replace_add(processor, start, end, nullptr);
     }
 }

@@ -380,10 +380,9 @@ CssParser::Feed(const char *start, size_t length)
                         assert(handler->property_keyword != nullptr);
 
                         name_buffer.push_back('\0');
-                        value_buffer.push_back('\0');
 
                         handler->property_keyword(name_buffer.raw(),
-                                                  value_buffer.raw(),
+                                                  value_buffer,
                                                   name_start,
                                                   position + (off_t)(buffer - start) + 1,
                                                   handler_ctx);
