@@ -129,6 +129,8 @@ private:
         handler.OnWasControlError(error);
     }
 
+    void InvokeError(const char *msg);
+
     bool InvokeDrained() {
         return handler.OnWasControlDrained();
     }

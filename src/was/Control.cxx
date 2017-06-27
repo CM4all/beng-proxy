@@ -68,6 +68,12 @@ WasControl::ReleaseSocket()
     fd = -1;
 }
 
+void
+WasControl::InvokeError(const char *msg)
+{
+    InvokeError(g_error_new_literal(was_quark(), 0, msg));
+}
+
 bool
 WasControl::ConsumeInput()
 {
@@ -117,10 +123,7 @@ WasControl::TryRead()
     assert(nbytes != -2);
 
     if (nbytes == 0) {
-        GError *error =
-            g_error_new_literal(was_quark(), 0,
-                                "server closed the control connection");
-        InvokeError(error);
+        InvokeError("server closed the control connection");
         return;
     }
 
@@ -186,18 +189,12 @@ WasControl::ReadEventCallback(unsigned events)
     assert(fd >= 0);
 
     if (done) {
-        GError *error =
-            g_error_new_literal(was_quark(), 0,
-                                "received too much control data");
-        InvokeError(error);
+        InvokeError("received too much control data");
         return;
     }
 
     if (unlikely(events & SocketEvent::TIMEOUT)) {
-        GError *error =
-            g_error_new_literal(was_quark(), 0,
-                                "control receive timeout");
-        InvokeError(error);
+        InvokeError("control receive timeout");
         return;
     }
 
@@ -211,10 +208,7 @@ WasControl::WriteEventCallback(unsigned events)
     assert(!output_buffer.IsEmpty());
 
     if (unlikely(events & SocketEvent::TIMEOUT)) {
-        GError *error =
-            g_error_new_literal(was_quark(), 0,
-                                "control send timeout");
-        InvokeError(error);
+        InvokeError("control send timeout");
         return;
     }
 
@@ -235,10 +229,7 @@ WasControl::Start(enum was_command cmd, size_t payload_length)
     auto w = output_buffer.Write().ToVoid();
     struct was_header *header = (struct was_header *)w.data;
     if (w.size < sizeof(*header) + payload_length) {
-        GError *error =
-            g_error_new_literal(was_quark(), 0,
-                                "control output is too large");
-        InvokeError(error);
+        InvokeError("control output is too large");
         return nullptr;
     }
 
@@ -331,10 +322,7 @@ WasControl::Done()
     done = true;
 
     if (!input_buffer.IsEmpty()) {
-        GError *error =
-            g_error_new_literal(was_quark(), 0,
-                                "received too much control data");
-        InvokeError(error);
+        InvokeError("received too much control data");
         return;
     }
 
