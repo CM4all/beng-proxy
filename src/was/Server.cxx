@@ -79,10 +79,10 @@ struct WasServer final : WasControlHandler, WasOutputHandler, WasInputHandler {
         output_fd.Close();
     }
 
-    void ReleaseError(GError *error);
+    void ReleaseError(std::exception_ptr ep);
 
     void ReleaseError(const char *msg) {
-        ReleaseError(g_error_new_literal(was_quark(), 0, msg));
+        ReleaseError(std::make_exception_ptr(WasProtocolError(msg)));
     }
 
     void ReleaseUnused();
@@ -90,13 +90,9 @@ struct WasServer final : WasControlHandler, WasOutputHandler, WasInputHandler {
     /**
      * Abort receiving the response status/headers from the WAS server.
      */
-    void AbortError(GError *error) {
-        ReleaseError(error);
-        handler.OnWasClosed();
-    }
-
     void AbortError(std::exception_ptr ep) {
-        AbortError(ToGError(ep));
+        ReleaseError(ep);
+        handler.OnWasClosed();
     }
 
     void AbortError(const char *msg) {
@@ -158,23 +154,20 @@ struct WasServer final : WasControlHandler, WasOutputHandler, WasInputHandler {
 };
 
 void
-WasServer::ReleaseError(GError *error)
+WasServer::ReleaseError(std::exception_ptr ep)
 {
     if (control.IsDefined())
         control.ReleaseSocket();
 
     if (request.pool != nullptr) {
         if (request.body != nullptr)
-            was_input_free_p(&request.body, error);
-        else
-            g_error_free(error);
+            was_input_free_p(&request.body, ToGError(ep));
 
         if (request.headers == nullptr && response.body != nullptr)
             was_output_free_p(&response.body);
 
         pool_unref(request.pool);
-    } else
-        g_error_free(error);
+    }
 
     CloseFiles();
 }
