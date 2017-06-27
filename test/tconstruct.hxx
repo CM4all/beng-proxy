@@ -5,7 +5,7 @@
 #include "http_address.hxx"
 #include "file_address.hxx"
 #include "cgi_address.hxx"
-#include "spawn/mount_list.hxx"
+#include "spawn/MountList.hxx"
 #include "spawn/NamespaceOptions.hxx"
 #include "AllocatorPtr.hxx"
 #include "pool.hxx"
