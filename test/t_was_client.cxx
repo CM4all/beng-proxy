@@ -4,8 +4,8 @@
 
 #include "t_client.hxx"
 #include "tio.hxx"
-#include "was/was_client.hxx"
-#include "was/was_server.hxx"
+#include "was/Client.hxx"
+#include "was/Server.hxx"
 #include "was/Lease.hxx"
 #include "http_response.hxx"
 #include "system/SetupProcess.hxx"

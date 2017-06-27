@@ -24,7 +24,7 @@
 #include "http_cache.hxx"
 #include "lhttp_stock.hxx"
 #include "fcgi/Stock.hxx"
-#include "was/was_stock.hxx"
+#include "was/Stock.hxx"
 #include "delegate/Stock.hxx"
 #include "fcache.hxx"
 #include "thread_pool.hxx"

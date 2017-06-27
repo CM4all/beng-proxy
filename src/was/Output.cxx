@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "was_output.hxx"
-#include "was_quark.h"
+#include "Output.hxx"
+#include "Quark.hxx"
 #include "event/SocketEvent.hxx"
 #include "direct.hxx"
 #include "io/Splice.hxx"

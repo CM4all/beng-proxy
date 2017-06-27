@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "was_control.hxx"
-#include "was_quark.h"
+#include "Control.hxx"
+#include "Quark.hxx"
 #include "strmap.hxx"
 #include "fb_pool.hxx"
 #include "net/Buffered.hxx"

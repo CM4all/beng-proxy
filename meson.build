@@ -542,9 +542,9 @@ raddress = static_library('raddress',
   ])
 
 was_common = static_library('was_common',
-  'src/was/was_control.cxx',
-  'src/was/was_output.cxx',
-  'src/was/was_input.cxx',
+  'src/was/Control.cxx',
+  'src/was/Output.cxx',
+  'src/was/Input.cxx',
   include_directories: inc,
   dependencies: [
     glib,
@@ -557,10 +557,10 @@ was_common = static_library('was_common',
   ])
 
 was_client = static_library('was_client',
-  'src/was/was_client.cxx',
-  'src/was/was_stock.cxx',
-  'src/was/was_launch.cxx',
-  'src/was/was_glue.cxx',
+  'src/was/Client.cxx',
+  'src/was/Stock.cxx',
+  'src/was/Launch.cxx',
+  'src/was/Glue.cxx',
   include_directories: inc,
   dependencies: [
     glib,
@@ -572,7 +572,7 @@ was_client = static_library('was_client',
   ])
 
 was_server = static_library('was_server',
-  'src/was/was_server.cxx',
+  'src/was/Server.cxx',
   include_directories: inc,
   dependencies: [
     glib,

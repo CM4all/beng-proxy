@@ -4,9 +4,9 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "was_stock.hxx"
-#include "was_quark.h"
-#include "was_launch.hxx"
+#include "Stock.hxx"
+#include "Quark.hxx"
+#include "Launch.hxx"
 #include "stock/MapStock.hxx"
 #include "stock/Stock.hxx"
 #include "stock/Class.hxx"

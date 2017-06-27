@@ -16,7 +16,7 @@
 #include "cgi_address.hxx"
 #include "fcgi/Request.hxx"
 #include "fcgi/Remote.hxx"
-#include "was/was_glue.hxx"
+#include "was/Glue.hxx"
 #include "ajp/ajp_request.hxx"
 #include "nfs/Address.hxx"
 #include "nfs/Glue.hxx"

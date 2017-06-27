@@ -14,7 +14,7 @@
 #include "cgi/cgi_quark.h"
 #include "fcgi/Quark.hxx"
 #include "fcgi/Error.hxx"
-#include "was/was_quark.h"
+#include "was/Quark.hxx"
 #include "widget/Error.hxx"
 #include "http_response.hxx"
 #include "http_server/http_server.hxx"

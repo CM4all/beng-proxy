@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "was_input.hxx"
-#include "was_quark.h"
+#include "Input.hxx"
+#include "Quark.hxx"
 #include "event/SocketEvent.hxx"
 #include "direct.hxx"
 #include "istream/istream.hxx"

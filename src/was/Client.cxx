@@ -4,11 +4,11 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "was_client.hxx"
-#include "was_quark.h"
-#include "was_control.hxx"
-#include "was_output.hxx"
-#include "was_input.hxx"
+#include "Client.hxx"
+#include "Quark.hxx"
+#include "Control.hxx"
+#include "Output.hxx"
+#include "Input.hxx"
 #include "Lease.hxx"
 #include "http_response.hxx"
 #include "direct.hxx"

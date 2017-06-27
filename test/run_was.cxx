@@ -1,5 +1,5 @@
-#include "was/was_client.hxx"
-#include "was/was_launch.hxx"
+#include "was/Client.hxx"
+#include "was/Launch.hxx"
 #include "was/Lease.hxx"
 #include "lease.hxx"
 #include "http_response.hxx"

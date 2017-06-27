@@ -4,10 +4,10 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "was_glue.hxx"
-#include "was_stock.hxx"
-#include "was_launch.hxx"
-#include "was_client.hxx"
+#include "Glue.hxx"
+#include "Stock.hxx"
+#include "Launch.hxx"
+#include "Client.hxx"
 #include "http_response.hxx"
 #include "Lease.hxx"
 #include "tcp_stock.hxx"

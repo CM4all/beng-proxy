@@ -1,4 +1,4 @@
-#include "was/was_server.hxx"
+#include "was/Server.hxx"
 #include "direct.hxx"
 #include "PInstance.hxx"
 #include "fb_pool.hxx"
