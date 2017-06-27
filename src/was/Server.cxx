@@ -9,6 +9,7 @@
 #include "Control.hxx"
 #include "Output.hxx"
 #include "Input.hxx"
+#include "GException.hxx"
 #include "http_response.hxx"
 #include "direct.hxx"
 #include "istream/istream.hxx"
@@ -87,6 +88,10 @@ struct WasServer final : WasControlHandler, WasOutputHandler, WasInputHandler {
         handler.OnWasClosed();
     }
 
+    void AbortError(std::exception_ptr ep) {
+        AbortError(ToGError(ep));
+    }
+
     /**
      * Abort receiving the response status/headers from the WAS server.
      */
@@ -130,9 +135,9 @@ struct WasServer final : WasControlHandler, WasOutputHandler, WasInputHandler {
 
     /* virtual methods from class WasOutputHandler */
     bool WasOutputLength(uint64_t length) override;
-    bool WasOutputPremature(uint64_t length, GError *error) override;
+    bool WasOutputPremature(uint64_t length, std::exception_ptr ep) override;
     void WasOutputEof() override;
-    void WasOutputError(GError *error) override;
+    void WasOutputError(std::exception_ptr ep) override;
 
     /* virtual methods from class WasInputHandler */
     void WasInputClose(uint64_t received) override;
@@ -196,7 +201,7 @@ WasServer::WasOutputLength(uint64_t length)
 }
 
 bool
-WasServer::WasOutputPremature(uint64_t length, GError *error)
+WasServer::WasOutputPremature(uint64_t length, std::exception_ptr ep)
 {
     if (!control.IsDefined())
         /* this can happen if was_input_free() call destroys the
@@ -210,7 +215,7 @@ WasServer::WasOutputPremature(uint64_t length, GError *error)
 
     /* XXX send PREMATURE, recover */
     (void)length;
-    AbortError(error);
+    AbortError(ep);
     return false;
 }
 
@@ -223,12 +228,12 @@ WasServer::WasOutputEof()
 }
 
 void
-WasServer::WasOutputError(GError *error)
+WasServer::WasOutputError(std::exception_ptr ep)
 {
     assert(response.body != nullptr);
 
     response.body = nullptr;
-    AbortError(error);
+    AbortError(ep);
 }
 
 /*

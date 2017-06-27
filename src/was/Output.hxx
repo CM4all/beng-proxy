@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_WAS_OUTPUT_HXX
 #define BENG_PROXY_WAS_OUTPUT_HXX
 
-#include "glibfwd.hxx"
+#include <exception>
 
 #include <stdint.h>
 
@@ -35,11 +35,12 @@ public:
      * @param true on success, false if the #WasOutput object has been
      * deleted
      */
-    virtual bool WasOutputPremature(uint64_t length, GError *error) = 0;
+    virtual bool WasOutputPremature(uint64_t length,
+                                    std::exception_ptr ep) = 0;
 
     virtual void WasOutputEof() = 0;
 
-    virtual void WasOutputError(GError *error) = 0;
+    virtual void WasOutputError(std::exception_ptr ep) = 0;
 };
 
 WasOutput *

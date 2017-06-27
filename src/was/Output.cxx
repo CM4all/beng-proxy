@@ -5,11 +5,13 @@
  */
 
 #include "Output.hxx"
-#include "Quark.hxx"
+#include "Error.hxx"
+#include "GException.hxx"
 #include "event/SocketEvent.hxx"
 #include "direct.hxx"
 #include "io/Splice.hxx"
 #include "io/FileDescriptor.hxx"
+#include "system/Error.hxx"
 #include "istream/Pointer.hxx"
 #include "pool.hxx"
 
@@ -51,13 +53,13 @@ public:
         event.Add(was_output_timeout);
     }
 
-    void AbortError(GError *error) {
+    void AbortError(std::exception_ptr ep) {
         event.Delete();
 
         if (input.IsDefined())
             input.ClearAndClose();
 
-        handler.WasOutputError(error);
+        handler.WasOutputError(ep);
     }
 
     bool CheckLength();
@@ -97,8 +99,7 @@ WasOutput::WriteEventCallback(unsigned events)
     assert(input.IsDefined());
 
     if (unlikely(events & SocketEvent::TIMEOUT)) {
-        GError *error = g_error_new_literal(was_quark(), 0, "send timeout");
-        AbortError(error);
+        AbortError(std::make_exception_ptr(WasError("send timeout")));
         return;
     }
 
@@ -128,9 +129,7 @@ WasOutput::OnData(const void *p, size_t length)
             return 0;
         }
 
-        GError *error = g_error_new(was_quark(), errno,
-                                    "data write failed: %s", strerror(errno));
-        AbortError(error);
+        AbortError(std::make_exception_ptr(MakeErrno("Write to WAS process failed")));
         return 0;
     }
 
@@ -183,7 +182,8 @@ WasOutput::OnError(GError *error)
     input.Clear();
     event.Delete();
 
-    handler.WasOutputPremature(sent, error);
+    handler.WasOutputPremature(sent, ToException(*error));
+    g_error_free(error);
 }
 
 /*

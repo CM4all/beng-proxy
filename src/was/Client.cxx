@@ -16,6 +16,7 @@
 #include "strmap.hxx"
 #include "pool.hxx"
 #include "stopwatch.hxx"
+#include "GException.hxx"
 #include "io/FileDescriptor.hxx"
 #include "util/Cast.hxx"
 #include "util/ConstBuffer.hxx"
@@ -269,6 +270,10 @@ struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler, C
             AbortPending(error);
     }
 
+    void AbortResponse(std::exception_ptr ep) {
+        AbortResponse(ToGError(ep));
+    }
+
     /**
      * Submit the pending response to our handler.
      *
@@ -315,9 +320,9 @@ struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler, C
 
     /* virtual methods from class WasOutputHandler */
     bool WasOutputLength(uint64_t length) override;
-    bool WasOutputPremature(uint64_t length, GError *error) override;
+    bool WasOutputPremature(uint64_t length, std::exception_ptr ep) override;
     void WasOutputEof() override;
-    void WasOutputError(GError *error) override;
+    void WasOutputError(std::exception_ptr ep) override;
 
     /* virtual methods from class WasInputHandler */
     void WasInputClose(uint64_t received) override;
@@ -616,7 +621,7 @@ WasClient::WasOutputLength(uint64_t length)
 }
 
 bool
-WasClient::WasOutputPremature(uint64_t length, GError *error)
+WasClient::WasOutputPremature(uint64_t length, std::exception_ptr ep)
 {
     assert(control.IsDefined());
     assert(request.body != nullptr);
@@ -628,7 +633,7 @@ WasClient::WasOutputPremature(uint64_t length, GError *error)
     /* XXX send PREMATURE, recover */
     (void)length;
 
-    AbortResponse(error);
+    AbortResponse(ep);
     return false;
 }
 
@@ -643,7 +648,7 @@ WasClient::WasOutputEof()
 }
 
 void
-WasClient::WasOutputError(GError *error)
+WasClient::WasOutputError(std::exception_ptr ep)
 {
     assert(request.body != nullptr);
 
@@ -651,7 +656,7 @@ WasClient::WasOutputError(GError *error)
 
     request.body = nullptr;
 
-    AbortResponse(error);
+    AbortResponse(ep);
 }
 
 /*
