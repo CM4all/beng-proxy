@@ -9,6 +9,8 @@
 
 #include "glibfwd.hxx"
 
+#include <inline/compiler.h>
+
 #include <stdint.h>
 
 struct pool;
@@ -116,11 +118,12 @@ bool
 was_input_premature(WasInput *input, uint64_t length);
 
 /**
- * Same as above, but return the #GError instead of reporting it to
- * the #IstreamHandler.
+ * Same as above, but throw exception instead of reporting the error
+ * to the #IstreamHandler.
  */
-bool
-was_input_premature(WasInput *input, uint64_t length, GError **error_r);
+gcc_noreturn
+void
+was_input_premature_throw(WasInput *input, uint64_t length);
 
 void
 was_input_enable_timeout(WasInput *input);

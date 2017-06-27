@@ -5,6 +5,7 @@
  */
 
 #include "Input.hxx"
+#include "Error.hxx"
 #include "Quark.hxx"
 #include "event/SocketEvent.hxx"
 #include "direct.hxx"
@@ -13,7 +14,9 @@
 #include "fb_pool.hxx"
 #include "SliceFifoBuffer.hxx"
 #include "io/Buffered.hxx"
-#include "util/Cast.hxx"
+#include "system/Error.hxx"
+#include "util/ScopeExit.hxx"
+#include "util/Exception.hxx"
 #include "gerrno.h"
 
 #include <was/protocol.h>
@@ -60,7 +63,7 @@ public:
     }
 
     bool SetLength(uint64_t _length);
-    bool Premature(uint64_t _length, GError **error_r);
+    void PrematureThrow(uint64_t _length);
     bool Premature(uint64_t _length);
 
     bool CanRelease() const {
@@ -416,23 +419,17 @@ was_input_set_length(WasInput *input, uint64_t length)
     return input->SetLength(length);
 }
 
-bool
-WasInput::Premature(uint64_t _length, GError **error_r)
+void
+WasInput::PrematureThrow(uint64_t _length)
 {
     buffer.FreeIfDefined(fb_pool_get());
     event.Delete();
 
-    if (known_length && _length > length) {
-        g_set_error_literal(error_r, was_quark(), 0,
-                            "announced premature length is too large");
-        return false;
-    }
+    if (known_length && _length > length)
+        throw WasProtocolError("announced premature length is too large");
 
-    if (_length < received) {
-        g_set_error_literal(error_r, was_quark(), 0,
-                            "announced premature length is too small");
-        return false;
-    }
+    if (_length < received)
+        throw WasProtocolError("announced premature length is too small");
 
     uint64_t remaining = received - _length;
 
@@ -440,31 +437,29 @@ WasInput::Premature(uint64_t _length, GError **error_r)
         uint8_t discard_buffer[4096];
         size_t size = std::min(remaining, uint64_t(sizeof(discard_buffer)));
         ssize_t nbytes = read(fd, discard_buffer, size);
-        if (nbytes < 0) {
-            set_error_errno_msg(error_r, "read error on WAS data connection");
-            return false;
-        }
+        if (nbytes < 0)
+            throw NestException(std::make_exception_ptr(MakeErrno()),
+                                WasError("read error on WAS data connection"));
 
-        if (nbytes == 0) {
-            g_set_error_literal(error_r, was_quark(), 0,
-                                "server closed the WAS data connection");
-            return false;
-        }
+        if (nbytes == 0)
+            throw WasProtocolError("server closed the WAS data connection");
 
         remaining -= nbytes;
     }
-
-    g_set_error_literal(error_r, was_quark(), 0,
-                        "premature end of WAS response");
-    return true;
 }
 
 inline bool
 WasInput::Premature(uint64_t _length)
 {
-    GError *error = nullptr;
-    bool result = Premature(_length, &error);
-    DestroyError(error);
+    bool result = false;
+    try {
+        PrematureThrow(_length);
+        result = true;
+        throw WasProtocolError("premature end of WAS response");
+    } catch (...) {
+        DestroyError(std::current_exception());
+    }
+
     return result;
 }
 
@@ -474,10 +469,10 @@ was_input_premature(WasInput *input, uint64_t length)
     return input->Premature(length);
 }
 
-bool
-was_input_premature(WasInput *input, uint64_t length, GError **error_r)
+void
+was_input_premature_throw(WasInput *input, uint64_t length)
 {
-    bool result = input->Premature(length, error_r);
-    input->Destroy();
-    return result;
+    AtScopeExit(input) { input->Destroy(); };
+    input->PrematureThrow(length);
+    throw WasProtocolError("premature end of WAS response");
 }

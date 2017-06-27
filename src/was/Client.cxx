@@ -23,6 +23,7 @@
 #include "util/ConstBuffer.hxx"
 #include "util/Cancellable.hxx"
 #include "util/StringFormat.hxx"
+#include "util/ScopeExit.hxx"
 
 #include <was/protocol.h>
 
@@ -548,11 +549,12 @@ WasClient::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload)
             /* we can't let was_input report the error to its handler,
                because it cannot possibly have a handler yet; thus
                catch it and report it to the #HttpResponseHandler */
-            GError *error = nullptr;
-            was_input_premature(response.body, *length_p, &error);
-            response.body = nullptr;
-            AbortPending(ToException(*error));
-            g_error_free(error);
+            try {
+                AtScopeExit(this) { response.body = nullptr; };
+                was_input_premature_throw(response.body, *length_p);
+            } catch (...) {
+                AbortPending(std::current_exception());
+            }
             return false;
         } else {
             if (!was_input_premature(response.body, *length_p))
