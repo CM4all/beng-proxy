@@ -279,9 +279,10 @@ WidgetRequest::DispatchError(GError *error)
 {
     assert(error != nullptr);
 
-    if (lookup_id != nullptr)
+    if (lookup_id != nullptr) {
         lookup_handler->WidgetLookupError(ToException(*error));
-    else
+        g_error_free(error);
+    } else
         http_handler->InvokeError(error);
 }
 

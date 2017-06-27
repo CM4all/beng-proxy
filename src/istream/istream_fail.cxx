@@ -23,6 +23,7 @@ public:
 
     void _FillBucketList(gcc_unused IstreamBucketList &list) override {
         auto e = ToException(*error);
+        g_error_free(error);
         Destroy();
         std::rethrow_exception(e);
     }

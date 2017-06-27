@@ -38,6 +38,7 @@ delegate_stock_open(StockMap *stock, struct pool *pool,
     auto *item = delegate_stock_get(stock, pool, helper, options, &error);
     if (item == nullptr) {
         handler.OnDelegateError(ToException(*error));
+        g_error_free(error);
         return;
     }
 
