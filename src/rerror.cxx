@@ -13,6 +13,7 @@
 #include "memcached/memcached_client.hxx"
 #include "cgi/cgi_quark.h"
 #include "fcgi/Quark.hxx"
+#include "fcgi/Error.hxx"
 #include "was/was_quark.h"
 #include "widget/Error.hxx"
 #include "http_response.hxx"
@@ -141,6 +142,18 @@ ToResponse(struct pool &pool, std::exception_ptr ep)
         case WidgetErrorCode::FORBIDDEN:
             return {HTTP_STATUS_FORBIDDEN, "Forbidden"};
         }
+    }
+
+    try {
+        FindRetrowNested<HttpClientError>(ep);
+    } catch (...) {
+        return {HTTP_STATUS_BAD_GATEWAY, "Upstream server failed"};
+    }
+
+    try {
+        FindRetrowNested<FcgiClientError>(ep);
+    } catch (...) {
+        return {HTTP_STATUS_BAD_GATEWAY, "Script failed"};
     }
 
     try {
