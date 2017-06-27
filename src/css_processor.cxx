@@ -22,8 +22,6 @@
 
 #include <daemon/log.h>
 
-#include <glib.h>
-
 #include <assert.h>
 #include <string.h>
 
@@ -174,9 +172,9 @@ css_processor_parser_property_keyword(const char *name, const char *value,
     }
 
     if (css_processor_option_rewrite_url(processor) &&
-        strcmp(name, "-c-view") == 0) {
-        g_strlcpy(processor->uri_rewrite.view, value,
-                  sizeof(processor->uri_rewrite.view));
+        strcmp(name, "-c-view") == 0 &&
+        strlen(value) < sizeof(processor->uri_rewrite.view)) {
+        strcpy(processor->uri_rewrite.view, value);
         css_processor_replace_add(processor, start, end, nullptr);
     }
 }
