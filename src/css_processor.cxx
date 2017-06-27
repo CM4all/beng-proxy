@@ -46,6 +46,11 @@ struct CssProcessor {
     };
 
     UriRewrite uri_rewrite;
+
+    CssProcessor(struct pool &_pool, struct pool &_caller_pool, Istream &tee,
+                 Widget &_container,
+                 struct processor_env &_env,
+                 unsigned _options);
 };
 
 static inline bool
@@ -258,6 +263,19 @@ static constexpr CssParserHandler css_processor_parser_handler = {
  *
  */
 
+inline
+CssProcessor::CssProcessor(struct pool &_pool, struct pool &_caller_pool,
+                           Istream &tee,
+                           Widget &_container,
+                           struct processor_env &_env,
+                           unsigned _options)
+    :pool(&_pool), caller_pool(&_caller_pool),
+     container(&_container), env(&_env),
+     options(_options),
+     replace(istream_replace_new(*pool, istream_tee_second(tee))),
+     parser(css_parser_new(*pool, tee, false,
+                           css_processor_parser_handler, this)) {}
+
 Istream *
 css_processor(struct pool &caller_pool, Istream &input,
               Widget &widget,
@@ -265,24 +283,15 @@ css_processor(struct pool &caller_pool, Istream &input,
               unsigned options)
 {
     struct pool *pool = pool_new_linear(&caller_pool, "css_processor", 32768);
-    auto processor = NewFromPool<CssProcessor>(*pool);
-    processor->pool = pool;
-    processor->caller_pool = &caller_pool;
 
-    processor->container = &widget;
-    processor->env = &env;
-    processor->options = options;
-
-    Istream *tee = istream_tee_new(*processor->pool, input,
+    Istream *tee = istream_tee_new(*pool, input,
                                    *env.event_loop,
                                    true, true);
-    processor->replace = istream_replace_new(*processor->pool,
-                                             istream_tee_second(*tee));
 
-    processor->parser = css_parser_new(*processor->pool, *tee, false,
-                                       css_processor_parser_handler,
-                                       processor);
-    pool_unref(processor->pool);
+    auto processor = NewFromPool<CssProcessor>(*pool, *pool, caller_pool, *tee,
+                                               widget, env,
+                                               options);
+    pool_unref(pool);
 
     return processor->replace;
 }
