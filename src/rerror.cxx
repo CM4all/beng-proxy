@@ -15,6 +15,7 @@
 #include "fcgi/Quark.hxx"
 #include "fcgi/Error.hxx"
 #include "was/Quark.hxx"
+#include "was/Error.hxx"
 #include "widget/Error.hxx"
 #include "http_response.hxx"
 #include "http_server/http_server.hxx"
@@ -148,6 +149,12 @@ ToResponse(struct pool &pool, std::exception_ptr ep)
         FindRetrowNested<HttpClientError>(ep);
     } catch (...) {
         return {HTTP_STATUS_BAD_GATEWAY, "Upstream server failed"};
+    }
+
+    try {
+        FindRetrowNested<WasError>(ep);
+    } catch (...) {
+        return {HTTP_STATUS_BAD_GATEWAY, "Script failed"};
     }
 
     try {

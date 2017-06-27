@@ -8,6 +8,8 @@
 #include "http_client.hxx"
 #include "nfs/Error.hxx"
 #include "nfs/Quark.hxx"
+#include "was/Error.hxx"
+#include "was/Quark.hxx"
 #include "fcgi/Error.hxx"
 #include "fcgi/Quark.hxx"
 #include "gerrno.h"
@@ -49,6 +51,12 @@ ToGError(std::exception_ptr ep)
     }
 
     try {
+        FindRetrowNested<WasError>(ep);
+    } catch (const WasError &e) {
+        return g_error_new_literal(was_quark(), 0, msg.c_str());
+    }
+
+    try {
         FindRetrowNested<FcgiClientError>(ep);
     } catch (const FcgiClientError &e) {
         return g_error_new_literal(fcgi_quark(), 0, msg.c_str());
@@ -80,6 +88,8 @@ ThrowGError(const GError &error)
         throw NfsClientError(error.code, error.message);
     else if (error.domain == http_client_quark())
         throw HttpClientError(HttpClientErrorCode(error.code), error.message);
+    else if (error.domain == was_quark())
+        throw WasError(error.message);
     else if (error.domain == fcgi_quark())
         throw FcgiClientError(error.message);
     else if (error.domain == widget_quark())
