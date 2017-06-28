@@ -2,9 +2,12 @@
 #include "istream.hxx"
 #include "Sink.hxx"
 #include "pool.hxx"
+#include "GException.hxx"
 #include "util/Cancellable.hxx"
 
 #include <glib.h>
+
+#include <stdexcept>
 
 #include <assert.h>
 #include <string.h>
@@ -40,12 +43,6 @@ struct BufferSink final : IstreamSink, Cancellable {
     void OnEof() override;
     void OnError(GError *error) override;
 };
-
-static GQuark
-sink_buffer_quark(void)
-{
-    return g_quark_from_static_string("sink_buffer");
-}
 
 /*
  * istream handler
@@ -91,7 +88,8 @@ BufferSink::OnEof()
 inline void
 BufferSink::OnError(GError *error)
 {
-    handler->error(error, handler_ctx);
+    handler->error(ToException(*error), handler_ctx);
+    g_error_free(error);
 }
 
 
@@ -128,12 +126,10 @@ sink_buffer_new(struct pool &pool, Istream &input,
     if (available == -1 || available >= 0x10000000) {
         input.CloseUnused();
 
-        GError *error =
-            g_error_new_literal(sink_buffer_quark(), 0,
-                                available < 0
-                                ? "unknown stream length"
-                                : "stream is too large");
-        handler.error(error, ctx);
+        handler.error(std::make_exception_ptr(std::runtime_error(available < 0
+                                                                 ? "unknown stream length"
+                                                                 : "stream is too large")),
+                      ctx);
         return;
     }
 

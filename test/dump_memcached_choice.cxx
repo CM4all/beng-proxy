@@ -95,10 +95,9 @@ my_sink_done(void *data0, size_t length, void *_ctx)
 }
 
 static void
-my_sink_error(GError *error, gcc_unused void *ctx)
+my_sink_error(std::exception_ptr ep, gcc_unused void *ctx)
 {
-    fprintf(stderr, "sink_buffer has failed: %s\n", error->message);
-    g_error_free(error);
+    PrintException(ep);
 }
 
 static const struct sink_buffer_handler my_sink_handler = {

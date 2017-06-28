@@ -228,11 +228,11 @@ http_cache_choice_buffer_done(void *data0, size_t length, void *ctx)
 }
 
 static void
-http_cache_choice_buffer_error(GError *error, void *ctx)
+http_cache_choice_buffer_error(std::exception_ptr ep, void *ctx)
 {
     auto choice = (HttpCacheChoice *)ctx;
 
-    choice->callback.get(nullptr, true, error, choice->callback_ctx);
+    choice->callback.get(nullptr, true, ToGError(ep), choice->callback_ctx);
 }
 
 static const struct sink_buffer_handler http_cache_choice_buffer_handler = {
@@ -513,11 +513,11 @@ http_cache_choice_filter_buffer_done(void *data0, size_t length, void *ctx)
 }
 
 static void
-http_cache_choice_filter_buffer_error(GError *error, void *ctx)
+http_cache_choice_filter_buffer_error(std::exception_ptr ep, void *ctx)
 {
     auto choice = (HttpCacheChoice *)ctx;
 
-    choice->callback.filter(nullptr, error, choice->callback_ctx);
+    choice->callback.filter(nullptr, ToGError(ep), choice->callback_ctx);
 }
 
 static const struct sink_buffer_handler http_cache_choice_filter_buffer_handler = {

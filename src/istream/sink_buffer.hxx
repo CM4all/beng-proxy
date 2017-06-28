@@ -1,7 +1,7 @@
 #ifndef BENG_PROXY_SINK_BUFFER_HXX
 #define BENG_PROXY_SINK_BUFFER_HXX
 
-#include "glibfwd.hxx"
+#include <exception>
 
 #include <stddef.h>
 
@@ -11,7 +11,7 @@ class CancellablePointer;
 
 struct sink_buffer_handler {
     void (*done)(void *data, size_t length, void *ctx);
-    void (*error)(GError *error, void *ctx);
+    void (*error)(std::exception_ptr ep, void *ctx);
 };
 
 void
