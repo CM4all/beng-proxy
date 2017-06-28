@@ -5,9 +5,8 @@
 #include "TimeoutIstream.hxx"
 #include "ForwardIstream.hxx"
 #include "event/TimerEvent.hxx"
-#include "gerrno.h"
 
-#include <errno.h>
+#include <stdexcept>
 
 class TimeoutIstream final : public ForwardIstream {
     TimerEvent timeout_event;
@@ -28,9 +27,8 @@ public:
 
 private:
     void OnTimeout() {
-        auto error = g_error_new_literal(errno_quark(), ETIMEDOUT, "timeout");
         input.Close();
-        DestroyError(error);
+        DestroyError(std::make_exception_ptr(std::runtime_error("timeout")));
     }
 
 public:
