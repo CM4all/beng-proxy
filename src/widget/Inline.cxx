@@ -29,6 +29,7 @@
 #include "istream/TimeoutIstream.hxx"
 #include "session.hxx"
 #include "pool.hxx"
+#include "util/StringFormat.hxx"
 
 #include <daemon/log.h>
 
@@ -70,16 +71,23 @@ inline_widget_close(InlineWidget *iw, GError *error)
     istream_delayed_set_abort(*iw->delayed, error);
 }
 
+static void
+inline_widget_close(InlineWidget *iw, std::exception_ptr ep)
+{
+    istream_delayed_set_abort(*iw->delayed, ep);
+}
+
 /**
  * Ensure that a widget has the correct type for embedding it into a
  * HTML/XML document.  Returns nullptr (and closes body) if that is
  * impossible.
+ *
+ * Throws exception on error.
  */
 static Istream *
 widget_response_format(struct pool &pool, const Widget &widget,
                        const StringMap &headers, Istream &_body,
-                       bool plain_text,
-                       GError **error_r)
+                       bool plain_text)
 {
     auto *body = &_body;
 
@@ -87,11 +95,9 @@ widget_response_format(struct pool &pool, const Widget &widget,
 
     const char *p = headers.Get("content-encoding");
     if (p != nullptr && strcmp(p, "identity") != 0) {
-        g_set_error(error_r, widget_quark(), (int)WidgetErrorCode::UNSUPPORTED_ENCODING,
-                    "widget '%s' sent non-identity response, cannot embed",
-                    widget.GetLogName());
         body->CloseUnused();
-        return nullptr;
+        throw WidgetError(widget, WidgetErrorCode::UNSUPPORTED_ENCODING,
+                          "widget sent non-identity response, cannot embed");
     }
 
     const char *content_type = headers.Get("content-type");
@@ -99,11 +105,9 @@ widget_response_format(struct pool &pool, const Widget &widget,
     if (plain_text) {
         if (content_type == nullptr ||
             memcmp(content_type, "text/plain", 10) != 0) {
-            g_set_error(error_r, widget_quark(), (int)WidgetErrorCode::WRONG_TYPE,
-                        "widget '%s' sent non-text/plain response",
-                        widget.GetLogName());
             body->CloseUnused();
-            return nullptr;
+            throw WidgetError(widget, WidgetErrorCode::UNSUPPORTED_ENCODING,
+                              "widget sent non-text/plain response");
         }
 
         return body;
@@ -113,11 +117,9 @@ widget_response_format(struct pool &pool, const Widget &widget,
         (strncmp(content_type, "text/", 5) != 0 &&
          strncmp(content_type, "application/xml", 15) != 0 &&
          strncmp(content_type, "application/xhtml+xml", 21) != 0)) {
-        g_set_error(error_r, widget_quark(), (int)WidgetErrorCode::WRONG_TYPE,
-                    "widget '%s' sent non-text response",
-                    widget.GetLogName());
         body->CloseUnused();
-        return nullptr;
+        throw WidgetError(widget, WidgetErrorCode::UNSUPPORTED_ENCODING,
+                          "widget sent non-text response");
     }
 
     const auto charset = http_header_param(content_type, "charset");
@@ -129,11 +131,10 @@ widget_response_format(struct pool &pool, const Widget &widget,
         const char *charset2 = p_strdup(pool, charset);
         Istream *ic = istream_iconv_new(&pool, *body, "utf-8", charset2);
         if (ic == nullptr) {
-            g_set_error(error_r, widget_quark(), (int)WidgetErrorCode::WRONG_TYPE,
-                        "widget '%s' sent unknown charset '%s'",
-                        widget.GetLogName(), charset2);
             body->CloseUnused();
-            return nullptr;
+            throw WidgetError(widget, WidgetErrorCode::UNSUPPORTED_ENCODING,
+                              StringFormat<64>("widget sent unknown charset '%s'",
+                                               charset2));
         }
 
         daemon_log(6, "widget '%s': charset conversion '%s' -> utf-8\n",
@@ -187,11 +188,11 @@ InlineWidget::OnHttpResponse(http_status_t status, StringMap &&headers,
     if (body != nullptr) {
         /* check if the content-type is correct for embedding into
            a template, and convert if possible */
-        GError *error = nullptr;
-        body = widget_response_format(pool, widget,
-                                      headers, *body, plain_text, &error);
-        if (body == nullptr) {
-            inline_widget_close(this, error);
+        try {
+            body = widget_response_format(pool, widget,
+                                          headers, *body, plain_text);
+        } catch (...) {
+            inline_widget_close(this, std::current_exception());
             return;
         }
     } else
