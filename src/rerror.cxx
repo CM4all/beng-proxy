@@ -10,7 +10,7 @@
 #include "nfs/Quark.hxx"
 #include "nfs/Error.hxx"
 #include "ajp/ajp_client.hxx"
-#include "memcached/memcached_client.hxx"
+#include "memcached/Quark.hxx"
 #include "cgi/cgi_quark.h"
 #include "fcgi/Quark.hxx"
 #include "fcgi/Error.hxx"

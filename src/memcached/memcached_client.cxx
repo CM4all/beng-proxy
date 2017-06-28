@@ -6,6 +6,7 @@
 
 #include "memcached_client.hxx"
 #include "memcached_packet.hxx"
+#include "Quark.hxx"
 #include "buffered_socket.hxx"
 #include "please.hxx"
 #include "istream/Pointer.hxx"

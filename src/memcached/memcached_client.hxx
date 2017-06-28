@@ -9,8 +9,8 @@
 
 #include "io/FdType.hxx"
 #include "memcached_protocol.hxx"
+#include "glibfwd.hxx"
 
-#include <glib.h>
 #include <stddef.h>
 
 static constexpr size_t MEMCACHED_EXTRAS_MAX = 0xff;
@@ -33,13 +33,6 @@ struct memcached_client_handler {
 
     void (*error)(GError *error, void *ctx);
 };
-
-G_GNUC_CONST
-static inline GQuark
-memcached_client_quark(void)
-{
-    return g_quark_from_static_string("memcached_client");
-}
 
 /**
  * Invoke a call to the memcached server.  The result will be
