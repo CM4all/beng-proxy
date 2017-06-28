@@ -189,6 +189,7 @@ executable('cleanup_memcached_choice',
     declare_dependency(link_with: eutil),
     stopwatch_dep,
     declare_dependency(link_with: http_cache),
+    declare_dependency(link_with: ssl),
   ])
 
 executable('fake_memcached_server',

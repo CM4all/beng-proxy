@@ -19,6 +19,7 @@
 #include "istream/istream.hxx"
 #include "istream/istream_memory.hxx"
 #include "pool.hxx"
+#include "ssl/Hash.hxx"
 #include "util/djbhash.h"
 #include "util/ConstBuffer.hxx"
 #include "util/WritableBuffer.hxx"
@@ -46,10 +47,16 @@ maybe_abbreviate(const char *p)
         return p;
 
     static char buffer[256];
-    char *checksum = g_compute_checksum_for_string(G_CHECKSUM_MD5, p + 200,
-                                                   length - 200);
-    snprintf(buffer, sizeof(buffer), "%.*s~%s", 200, p, checksum);
-    g_free(checksum);
+    char *dest = buffer;
+    dest = (char *)mempcpy(dest, p, 200);
+
+    for (uint8_t i : CalcSHA1({p, length}).data) {
+        format_uint8_hex_fixed(dest, i);
+        dest += 2;
+    }
+
+    *dest = 0;
+
     return buffer;
 }
 
