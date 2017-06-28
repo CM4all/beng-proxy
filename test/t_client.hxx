@@ -656,7 +656,7 @@ test_close_request_body_early(Context<Connection> &c)
 
     GError *error = g_error_new_literal(test_quark(), 0,
                                         "fail_request_body_early");
-    istream_delayed_set_abort(*request_body, error);
+    istream_delayed_set_abort(*request_body, g_error_copy(error));
 
     pool_unref(c.pool);
     pool_commit();
@@ -669,7 +669,9 @@ test_close_request_body_early(Context<Connection> &c)
     assert(!c.body_eof);
     assert(!c.body_abort);
     assert(c.body_error == nullptr);
-    assert(c.request_error == error);
+    assert(c.request_error != nullptr);
+    assert(strstr(c.request_error->message, error->message) != nullptr);
+    g_error_free(c.request_error);
     g_error_free(error);
 }
 
@@ -841,7 +843,7 @@ test_body_fail(Context<Connection> &c)
 
     c.connection->Request(c.pool, c,
                           HTTP_METHOD_GET, "/foo", StringMap(*c.pool),
-                          wrap_fake_request_body(c.pool, istream_fail_new(c.pool, error)),
+                          wrap_fake_request_body(c.pool, istream_fail_new(c.pool, g_error_copy(error))),
 #ifdef HAVE_EXPECT_100
                           false,
 #endif
@@ -859,7 +861,9 @@ test_body_fail(Context<Connection> &c)
         c.body_error = nullptr;
     }
 
-    assert(c.request_error == error);
+    assert(c.request_error != nullptr);
+    assert(strstr(c.request_error->message, error->message) != nullptr);
+    g_error_free(c.request_error);
     g_error_free(error);
     assert(c.body_error == nullptr);
 }
