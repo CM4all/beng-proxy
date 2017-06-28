@@ -228,8 +228,10 @@ executable('was_mirror',
   'was_mirror.cxx',
   '../src/PInstance.cxx',
   '../src/direct.cxx',
+  '../src/GException.cxx',
   include_directories: inc,
   dependencies: [
+    glib,
     libinline, libhttp, libdaemon,
     declare_dependency(link_with: was_server),
   ])
