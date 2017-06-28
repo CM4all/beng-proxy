@@ -34,11 +34,11 @@ my_sink_header_done(gcc_unused void *header, gcc_unused size_t length,
 }
 
 static void
-my_sink_header_error(GError *error, void *ctx)
+my_sink_header_error(std::exception_ptr ep, void *ctx)
 {
     Istream *delayed = (Istream *)ctx;
 
-    istream_delayed_set_abort(*delayed, error);
+    istream_delayed_set_abort(*delayed, ep);
 }
 
 static const struct sink_header_handler my_sink_header_handler = {

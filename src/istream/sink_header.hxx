@@ -9,7 +9,7 @@
 #ifndef BENG_PROXY_SINK_HEADER_HXX
 #define BENG_PROXY_SINK_HEADER_HXX
 
-#include "glibfwd.hxx"
+#include <exception>
 
 #include <stddef.h>
 
@@ -19,7 +19,7 @@ class CancellablePointer;
 
 struct sink_header_handler {
     void (*done)(void *header, size_t length, Istream &tail, void *ctx);
-    void (*error)(GError *error, void *ctx);
+    void (*error)(std::exception_ptr ep, void *ctx);
 };
 
 void

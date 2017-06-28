@@ -8,9 +8,12 @@
 
 #include "sink_header.hxx"
 #include "ForwardIstream.hxx"
+#include "GException.hxx"
 #include "util/Cancellable.hxx"
 #include "util/Cast.hxx"
 #include "util/ByteOrder.hxx"
+
+#include <stdexcept>
 
 #include <glib.h>
 
@@ -78,12 +81,6 @@ public:
     void OnError(GError *error) override;
 };
 
-static GQuark
-sink_header_quark(void)
-{
-    return g_quark_from_static_string("sink_header");
-}
-
 size_t
 HeaderSink::InvokeCallback(size_t consumed)
 {
@@ -129,10 +126,8 @@ HeaderSink::ConsumeSize(const void *data, size_t length)
         /* header too large */
         input.Close();
 
-        GError *error =
-            g_error_new_literal(sink_header_quark(), 0,
-                                "header is too large");
-        handler->error(error, handler_ctx);
+        handler->error(std::make_exception_ptr(std::runtime_error("header is too large")),
+                       handler_ctx);
         Destroy();
         return 0;
     }
@@ -241,14 +236,11 @@ HeaderSink::OnDirect(FdType type, int fd, size_t max_length)
 inline void
 HeaderSink::OnEof()
 {
-    GError *error;
-
     switch (state) {
     case SIZE:
     case HEADER:
-        error = g_error_new_literal(sink_header_quark(), 0,
-                                    "premature end of file");
-        handler->error(error, handler_ctx);
+        handler->error(std::make_exception_ptr(std::runtime_error("premature end of file")),
+                       handler_ctx);
         Destroy();
         break;
 
@@ -268,7 +260,8 @@ HeaderSink::OnError(GError *error)
     switch (state) {
     case SIZE:
     case HEADER:
-        handler->error(error, handler_ctx);
+        handler->error(ToException(*error), handler_ctx);
+        g_error_free(error);
         Destroy();
         break;
 

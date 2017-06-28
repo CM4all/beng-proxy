@@ -295,11 +295,11 @@ http_cache_memcached_header_done(void *header_ptr, size_t length,
 }
 
 static void
-http_cache_memcached_header_error(GError *error, void *ctx)
+http_cache_memcached_header_error(std::exception_ptr ep, void *ctx)
 {
     auto &request = *(HttpCacheMemcachedRequest *)ctx;
 
-    request.callback.get(nullptr, nullptr, error, request.callback_ctx);
+    request.callback.get(nullptr, nullptr, ToGError(ep), request.callback_ctx);
 }
 
 static const struct sink_header_handler http_cache_memcached_header_handler = {
