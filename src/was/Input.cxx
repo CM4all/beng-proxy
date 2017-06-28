@@ -17,7 +17,6 @@
 #include "system/Error.hxx"
 #include "util/ScopeExit.hxx"
 #include "util/Exception.hxx"
-#include "gerrno.h"
 
 #include <was/protocol.h>
 
@@ -99,7 +98,7 @@ public:
         event.Add(timeout ? &was_input_timeout : nullptr);
     }
 
-    void AbortError(GError *error) {
+    void AbortError(std::exception_ptr ep) {
         buffer.FreeIfDefined(fb_pool_get());
         event.Delete();
 
@@ -108,11 +107,11 @@ public:
         closed = true;
 
         handler.WasInputError();
-        DestroyError(error);
+        DestroyError(ep);
     }
 
     void AbortError(const char *msg) {
-        AbortError(g_error_new_literal(was_quark(), 0, msg));
+        AbortError(std::make_exception_ptr(WasProtocolError(msg)));
     }
 
     void Eof() {
@@ -240,8 +239,8 @@ WasInput::ReadToBuffer()
             return true;
         }
 
-        AbortError(new_error_errno_msg2(e,
-                                        "read error on WAS data connection"));
+        AbortError(std::make_exception_ptr(MakeErrno(e,
+                                                     "read error on WAS data connection")));
         return false;
     }
 
@@ -296,8 +295,8 @@ WasInput::TryDirect()
             return false;
         }
 
-        AbortError(new_error_errno_msg2(e,
-                                        "read error on WAS data connection"));
+        AbortError(std::make_exception_ptr(MakeErrno(e,
+                                                     "read error on WAS data connection")));
         return false;
     }
 
