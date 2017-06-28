@@ -8,7 +8,8 @@
 #define BENG_PROXY_SINK_FD_HXX
 
 #include "io/FdType.hxx"
-#include "glibfwd.hxx"
+
+#include <exception>
 
 struct pool;
 class EventLoop;
@@ -26,7 +27,7 @@ struct SinkFdHandler {
      * Called when an error has been reported by the istream, right
      * before the sink is destructed.
      */
-    void (*input_error)(GError *error, void *ctx);
+    void (*input_error)(std::exception_ptr ep, void *ctx);
 
     /**
      * Called when a send error has occurred on the socket, right

@@ -84,12 +84,11 @@ my_sink_fd_input_eof(void *ctx)
 }
 
 static void
-my_sink_fd_input_error(GError *error, void *ctx)
+my_sink_fd_input_error(std::exception_ptr ep, void *ctx)
 {
     auto *c = (Context *)ctx;
 
-    g_printerr("%s\n", error->message);
-    g_error_free(error);
+    PrintException(ep);
 
     c->value = NULL;
     c->value_abort = true;

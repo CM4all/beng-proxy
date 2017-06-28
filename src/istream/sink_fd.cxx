@@ -8,9 +8,12 @@
 #include "Sink.hxx"
 #include "pool.hxx"
 #include "direct.hxx"
+#include "GException.hxx"
 #include "io/Splice.hxx"
 #include "io/FileDescriptor.hxx"
 #include "event/SocketEvent.hxx"
+
+#include <glib.h>
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -164,7 +167,8 @@ SinkFd::OnError(GError *error)
 
     event.Delete();
 
-    handler->input_error(error, handler_ctx);
+    handler->input_error(ToException(*error), handler_ctx);
+    g_error_free(error);
 }
 
 /*
