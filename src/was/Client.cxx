@@ -17,7 +17,6 @@
 #include "strmap.hxx"
 #include "pool.hxx"
 #include "stopwatch.hxx"
-#include "GException.hxx"
 #include "io/FileDescriptor.hxx"
 #include "util/Cast.hxx"
 #include "util/ConstBuffer.hxx"
@@ -180,13 +179,11 @@ struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler, C
      * Destroys the objects was_control, was_input, was_output and
      * releases the socket lease.
      */
-    void Clear(GError *error) {
+    void Clear(std::exception_ptr ep) {
         request.ClearBody();
 
         if (response.body != nullptr)
-            was_input_free_p(&response.body, error);
-        else
-            g_error_free(error);
+            was_input_free_p(&response.body, ep);
 
         if (control.IsDefined())
             control.ReleaseSocket();
@@ -228,7 +225,7 @@ struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler, C
     void AbortResponseBody(std::exception_ptr ep) {
         assert(response.WasSubmitted());
 
-        Clear(ToGError(ep));
+        Clear(ep);
         Destroy();
     }
 

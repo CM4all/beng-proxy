@@ -161,7 +161,7 @@ WasServer::ReleaseError(std::exception_ptr ep)
 
     if (request.pool != nullptr) {
         if (request.body != nullptr)
-            was_input_free_p(&request.body, ToGError(ep));
+            was_input_free_p(&request.body, ep);
 
         if (request.headers == nullptr && response.body != nullptr)
             was_output_free_p(&response.body);

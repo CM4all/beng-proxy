@@ -52,7 +52,7 @@ public:
          handler(_handler) {
     }
 
-    void Free(GError *error);
+    void Free(std::exception_ptr ep);
 
     Istream &Enable() {
         assert(!enabled);
@@ -346,24 +346,22 @@ was_input_new(struct pool &pool, EventLoop &event_loop, int fd,
 }
 
 inline void
-WasInput::Free(GError *error)
+WasInput::Free(std::exception_ptr ep)
 {
-    assert(error != nullptr || closed || !enabled);
+    assert(ep || closed || !enabled);
 
     buffer.FreeIfDefined(fb_pool_get());
 
     event.Delete();
 
     if (!closed && enabled)
-        DestroyError(error);
-    else if (error != nullptr)
-        g_error_free(error);
+        DestroyError(ep);
 }
 
 void
-was_input_free(WasInput *input, GError *error)
+was_input_free(WasInput *input, std::exception_ptr ep)
 {
-    input->Free(error);
+    input->Free(ep);
 }
 
 void

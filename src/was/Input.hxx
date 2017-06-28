@@ -7,9 +7,9 @@
 #ifndef BENG_PROXY_WAS_INPUT_HXX
 #define BENG_PROXY_WAS_INPUT_HXX
 
-#include "glibfwd.hxx"
-
 #include <inline/compiler.h>
+
+#include <exception>
 
 #include <stdint.h>
 
@@ -69,14 +69,14 @@ was_input_new(struct pool &pool, EventLoop &event_loop, int fd,
  * @param error the error reported to the istream handler
  */
 void
-was_input_free(WasInput *input, GError *error);
+was_input_free(WasInput *input, std::exception_ptr ep);
 
 static inline void
-was_input_free_p(WasInput **input_p, GError *error)
+was_input_free_p(WasInput **input_p, std::exception_ptr ep)
 {
     WasInput *input = *input_p;
     *input_p = nullptr;
-    was_input_free(input, error);
+    was_input_free(input, ep);
 }
 
 /**
