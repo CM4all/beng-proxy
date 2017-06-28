@@ -11,8 +11,6 @@
 
 #include <http/method.h>
 
-#include <glib.h>
-
 struct pool;
 class EventLoop;
 class Istream;
@@ -21,13 +19,6 @@ class Lease;
 class HttpResponseHandler;
 class StringMap;
 class CancellablePointer;
-
-G_GNUC_CONST
-static inline GQuark
-ajp_client_quark(void)
-{
-    return g_quark_from_static_string("ajp_client");
-}
 
 /**
  * Sends a HTTP request on a socket to an AJPv13 server, and passes
