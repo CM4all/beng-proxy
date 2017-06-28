@@ -12,6 +12,8 @@
 #include "util/StringUtil.hxx"
 #include "util/TrivialArray.hxx"
 
+#include <glib.h>
+
 struct CssParser final : IstreamSink {
     template<size_t max>
     class StringBuffer : public TrivialArray<char, max> {

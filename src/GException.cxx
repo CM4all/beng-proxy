@@ -18,6 +18,16 @@
 #include "util/Exception.hxx"
 #include "util/ScopeExit.hxx"
 
+/**
+ * A GQuark for std::exception.
+ */
+G_GNUC_CONST
+static inline GQuark
+exception_quark()
+{
+    return g_quark_from_static_string("std::exception");
+}
+
 GError *
 ToGError(std::exception_ptr ep)
 {

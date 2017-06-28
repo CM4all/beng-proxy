@@ -6,6 +6,8 @@
 #include "istream.hxx"
 #include "GException.hxx"
 
+#include <glib.h>
+
 #include <unistd.h>
 
 class FailIstream final : public Istream {

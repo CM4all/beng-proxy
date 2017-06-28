@@ -14,6 +14,8 @@
 
 #include <inline/poison.h>
 
+#include <glib.h>
+
 #include <assert.h>
 #include <string.h>
 
