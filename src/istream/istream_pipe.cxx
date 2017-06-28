@@ -14,7 +14,6 @@
 #include "pipe_stock.hxx"
 #include "stock/Stock.hxx"
 #include "stock/Item.hxx"
-#include "gerrno.h"
 #include "system/Error.hxx"
 #include "io/Splice.hxx"
 
@@ -70,7 +69,6 @@ public:
 
 private:
     void CloseInternal();
-    void Abort(GError *error);
     void Abort(std::exception_ptr ep);
     ssize_t Consume();
 
@@ -92,17 +90,6 @@ PipeIstream::CloseInternal()
             if (fd.IsDefined())
                 fd.Close();
     }
-}
-
-void
-PipeIstream::Abort(GError *error)
-{
-    CloseInternal();
-
-    if (input.IsDefined())
-        input.Close();
-
-    DestroyError(error);
 }
 
 void
@@ -130,8 +117,7 @@ PipeIstream::Consume()
         return nbytes;
 
     if (unlikely(nbytes == ISTREAM_RESULT_ERRNO && errno != EAGAIN)) {
-        GError *error = new_error_errno_msg("read from pipe failed");
-        Abort(error);
+        Abort(std::make_exception_ptr(MakeErrno("read from pipe failed")));
         return ISTREAM_RESULT_CLOSED;
     }
 
