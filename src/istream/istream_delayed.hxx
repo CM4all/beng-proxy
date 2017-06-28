@@ -7,6 +7,8 @@
 
 #include "glibfwd.hxx"
 
+#include <exception>
+
 struct pool;
 class Istream;
 class CancellablePointer;
@@ -31,5 +33,8 @@ istream_delayed_set_eof(Istream &istream_delayed);
  */
 void
 istream_delayed_set_abort(Istream &istream_delayed, GError *error);
+
+void
+istream_delayed_set_abort(Istream &istream_delayed, std::exception_ptr ep);
 
 #endif

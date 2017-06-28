@@ -39,6 +39,12 @@ public:
         DestroyError(error);
     }
 
+    void SetError(std::exception_ptr ep) {
+        assert(!HasInput());
+
+        DestroyError(ep);
+    }
+
     /* virtual methods from class Istream */
 
     off_t _GetAvailable(bool partial) override {
@@ -106,4 +112,12 @@ istream_delayed_set_abort(Istream &i_delayed, GError *error)
     auto &delayed = (DelayedIstream &)i_delayed;
 
     delayed.SetError(error);
+}
+
+void
+istream_delayed_set_abort(Istream &i_delayed, std::exception_ptr ep)
+{
+    auto &delayed = (DelayedIstream &)i_delayed;
+
+    delayed.SetError(ep);
 }
