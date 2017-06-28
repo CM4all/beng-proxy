@@ -6,6 +6,7 @@
 #include "Class.hxx"
 #include "GetHandler.hxx"
 #include "pool.hxx"
+#include "GException.hxx"
 #include "util/Cancellable.hxx"
 #include "util/Cast.hxx"
 
@@ -282,8 +283,12 @@ Stock::GetCreate(struct pool &caller_pool, void *info,
 {
     ++num_create;
 
-    cls.create(class_ctx, {*this, get_handler},
-               info, caller_pool, cancel_ptr);
+    try {
+        cls.create(class_ctx, {*this, get_handler},
+                   info, caller_pool, cancel_ptr);
+    } catch (...) {
+        ItemCreateError(get_handler, ToGError(std::current_exception()));
+    }
 }
 
 void

@@ -9,13 +9,13 @@
 #include "stock/Class.hxx"
 #include "stock/Item.hxx"
 #include "failure.hxx"
+#include "system/Error.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "event/SocketEvent.hxx"
 #include "event/Duration.hxx"
 #include "spawn/Interface.hxx"
 #include "spawn/Prepared.hxx"
 #include "spawn/ChildOptions.hxx"
-#include "gerrno.h"
 #include "AllocatorPtr.hxx"
 #include "pool.hxx"
 
@@ -126,32 +126,20 @@ delegate_stock_create(void *ctx,
     PreparedChildProcess p;
     p.Append(info.executable_path);
 
-    try {
-        info.options.CopyTo(p, true, nullptr);
-    } catch (...) {
-        c.InvokeCreateError(std::current_exception());
-        return;
-    }
+    info.options.CopyTo(p, true, nullptr);
 
     UniqueFileDescriptor server_fd, client_fd;
     if (!UniqueFileDescriptor::CreateSocketPair(AF_LOCAL, SOCK_STREAM, 0,
-                                                server_fd, client_fd)) {
-        auto *error = new_error_errno_msg("socketpair() failed: %s");
-        c.InvokeCreateError(error);
-        return;
-    }
+                                                server_fd, client_fd))
+        throw MakeErrno("socketpair() failed");
 
     p.SetStdin(std::move(server_fd));
 
-    try {
-        spawn_service.SpawnChildProcess(info.executable_path,
-                                        std::move(p), nullptr);
+    spawn_service.SpawnChildProcess(info.executable_path,
+                                    std::move(p), nullptr);
 
-        auto *process = new DelegateProcess(c, std::move(client_fd));
-        process->InvokeCreateSuccess();
-    } catch (...) {
-        c.InvokeCreateError(std::current_exception());
-    }
+    auto *process = new DelegateProcess(c, std::move(client_fd));
+    process->InvokeCreateSuccess();
 }
 
 static constexpr StockClass delegate_stock_class = {

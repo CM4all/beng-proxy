@@ -6,6 +6,8 @@
 #include "PInstance.hxx"
 #include "util/Cancellable.hxx"
 
+#include <stdexcept>
+
 #include <glib.h>
 
 #include <assert.h>
@@ -37,12 +39,6 @@ struct MyStockItem final : HeapStockItem {
     }
 };
 
-static inline GQuark
-test_quark(void)
-{
-    return g_quark_from_static_string("test");
-}
-
 /*
  * stock class
  *
@@ -60,9 +56,8 @@ my_stock_create(gcc_unused void *ctx, CreateStockItem c,
 
     if (next_fail) {
         ++num_fail;
-
-        GError *error = g_error_new_literal(test_quark(), 0, "next_fail");
-        item->InvokeCreateError(error);
+        delete item;
+        throw std::runtime_error("next_fail");
     } else {
         ++num_create;
         item->InvokeCreateSuccess();

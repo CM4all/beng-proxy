@@ -9,6 +9,9 @@ class CancellablePointer;
 struct CreateStockItem;
 
 struct StockClass {
+    /**
+     * May throw exception instead of calling InvokeCreateError().
+     */
     void (*create)(void *ctx, CreateStockItem c,
                    void *info,
                    struct pool &caller_pool,

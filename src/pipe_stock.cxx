@@ -8,8 +8,8 @@
 #include "stock/Stock.hxx"
 #include "stock/Class.hxx"
 #include "stock/Item.hxx"
+#include "system/Error.hxx"
 #include "io/UniqueFileDescriptor.hxx"
-#include "gerrno.h"
 
 #include <assert.h>
 #include <unistd.h>
@@ -43,9 +43,9 @@ pipe_stock_create(gcc_unused void *ctx,
 
     if (!UniqueFileDescriptor::CreatePipeNonBlock(item->fds[0],
                                                   item->fds[1])) {
-        GError *error = new_error_errno_msg("pipe() failed");
-        item->InvokeCreateError(error);
-        return;
+        int e = errno;
+        delete item;
+        throw MakeErrno(e, "pipe() failed");
     }
 
     item->InvokeCreateSuccess();

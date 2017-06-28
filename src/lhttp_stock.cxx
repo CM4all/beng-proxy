@@ -170,11 +170,9 @@ lhttp_stock_create(void *ctx, CreateStockItem c, void *info,
     try {
         connection->fd = child_stock_item_connect(connection->child);
     } catch (...) {
-        auto e = NestException(std::current_exception(),
-                               FormatRuntimeError("Failed to connect to LHTTP server '%s'",
+        delete connection;
+        std::throw_with_nested(FormatRuntimeError("Failed to connect to LHTTP server '%s'",
                                                   key));
-        connection->InvokeCreateError(e);
-        return;
     }
 
     connection->event.Set(connection->fd.Get(), SocketEvent::READ);

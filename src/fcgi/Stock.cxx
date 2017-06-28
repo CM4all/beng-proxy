@@ -5,7 +5,7 @@
  */
 
 #include "Stock.hxx"
-#include "Quark.hxx"
+#include "Error.hxx"
 #include "stock/MapStock.hxx"
 #include "stock/Stock.hxx"
 #include "stock/Class.hxx"
@@ -24,6 +24,7 @@
 #include "util/ConstBuffer.hxx"
 #include "util/RuntimeError.hxx"
 #include "util/Exception.hxx"
+#include "util/StringFormat.hxx"
 
 #include <daemon/log.h>
 
@@ -221,10 +222,8 @@ fcgi_stock_create(void *ctx, CreateStockItem c, void *info,
         connection->jail_home_directory = options.jail->home_directory;
 
         if (!connection->jail_config.Load("/etc/cm4all/jailcgi/jail.conf")) {
-            GError *error = g_error_new(fcgi_quark(), 0,
-                                        "Failed to load /etc/cm4all/jailcgi/jail.conf");
-            connection->InvokeCreateError(error);
-            return;
+            delete connection;
+            throw FcgiClientError("Failed to load /etc/cm4all/jailcgi/jail.conf");
         }
     }
 
@@ -243,12 +242,10 @@ fcgi_stock_create(void *ctx, CreateStockItem c, void *info,
     try {
         connection->fd = child_stock_item_connect(connection->child);
     } catch (...) {
-        auto e = NestException(std::current_exception(),
-                               FormatRuntimeError("Failed to connect to FastCGI server '%s'",
-                                                  key));
         connection->kill = true;
-        connection->InvokeCreateError(e);
-        return;
+        delete connection;
+        std::throw_with_nested(FcgiClientError(StringFormat<256>("Failed to connect to FastCGI server '%s'",
+                                                                 key)));
     }
 
     connection->event.Set(connection->fd.Get(), SocketEvent::READ);

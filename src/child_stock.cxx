@@ -88,11 +88,11 @@ ChildStock::Create(CreateStockItem c, void *info)
 {
     auto *item = new ChildStockItem(c, spawn_service);
 
-    int socket_type = cls.socket_type != nullptr
-        ? cls.socket_type(info)
-        : SOCK_STREAM;
-
     try {
+        int socket_type = cls.socket_type != nullptr
+            ? cls.socket_type(info)
+            : SOCK_STREAM;
+
         auto fd = item->socket.Create(socket_type);
 
         PreparedChildProcess p;
@@ -101,11 +101,12 @@ ChildStock::Create(CreateStockItem c, void *info)
         item->pid = spawn_service.SpawnChildProcess(item->GetStockName(),
                                                     std::move(p),
                                                     item);
-        item->InvokeCreateSuccess();
     } catch (...) {
-        item->InvokeCreateError(std::current_exception());
-        return;
+        delete item;
+        throw;
     }
+
+    item->InvokeCreateSuccess();
 }
 
 static void
