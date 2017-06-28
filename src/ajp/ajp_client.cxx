@@ -141,11 +141,15 @@ struct AjpClient final : Istream, IstreamHandler, Cancellable {
     void Release(bool reuse);
 
     void AbortResponseHeaders(std::exception_ptr ep);
-    void AbortResponseBody(GError *error);
+    void AbortResponseBody(std::exception_ptr ep);
     void AbortResponse(std::exception_ptr ep);
 
     void AbortResponseHeaders(const char *msg) {
         AbortResponseHeaders(std::make_exception_ptr(AjpClientError(msg)));
+    }
+
+    void AbortResponseBody(const char *msg) {
+        AbortResponseBody(std::make_exception_ptr(AjpClientError(msg)));
     }
 
     void AbortResponse(const char *msg) {
@@ -248,14 +252,14 @@ AjpClient::AbortResponseHeaders(std::exception_ptr ep)
 }
 
 void
-AjpClient::AbortResponseBody(GError *error)
+AjpClient::AbortResponseBody(std::exception_ptr ep)
 {
     assert(response.read_state == Response::READ_BODY);
 
     const ScopePoolRef ref(GetPool() TRACE_ARGS);
 
     response.read_state = Response::READ_END;
-    InvokeError(error);
+    InvokeError(ep);
 
     Release(false);
 }
@@ -272,7 +276,7 @@ AjpClient::AbortResponse(std::exception_ptr ep)
         break;
 
     case Response::READ_BODY:
-        AbortResponseBody(ToGError(ep));
+        AbortResponseBody(ep);
         break;
 
     case Response::READ_END:
@@ -336,10 +340,7 @@ AjpClient::ConsumeSendHeaders(const uint8_t *data, size_t length)
     unsigned num_headers;
 
     if (response.read_state != Response::READ_BEGIN) {
-        GError *error =
-            g_error_new(ajp_client_quark(), 0,
-                        "unexpected SEND_HEADERS packet from AJP server");
-        AbortResponseBody(error);
+        AbortResponseBody("unexpected SEND_HEADERS packet from AJP server");
         return false;
     }
 
