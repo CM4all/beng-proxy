@@ -5,7 +5,7 @@
 #ifndef BENG_PROXY_ISTREAM_FAIL_HXX
 #define BENG_PROXY_ISTREAM_FAIL_HXX
 
-#include "glibfwd.hxx"
+#include <exception>
 
 struct pool;
 class Istream;
@@ -14,6 +14,6 @@ class Istream;
  * istream implementation which produces a failure.
  */
 Istream *
-istream_fail_new(struct pool *pool, GError *error);
+istream_fail_new(struct pool *pool, std::exception_ptr ep);
 
 #endif

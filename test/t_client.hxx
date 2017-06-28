@@ -34,6 +34,8 @@
 
 #include <glib.h>
 
+#include <stdexcept>
+
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
@@ -376,9 +378,8 @@ Context<Connection>::OnHttpResponse(http_status_t _status,
     }
 
     if (delayed != nullptr) {
-        GError *error = g_error_new_literal(test_quark(), 0,
-                                            "delayed_fail");
-        istream_delayed_set(*delayed, *istream_fail_new(pool, error));
+        std::runtime_error error("delayed_fail");
+        istream_delayed_set(*delayed, *istream_fail_new(pool, std::make_exception_ptr(error)));
         delayed->Read();
     }
 
@@ -838,12 +839,11 @@ test_body_fail(Context<Connection> &c)
 {
     c.connection = Connection::NewMirror(*c.pool, c.event_loop);
 
-    GError *error = g_error_new_literal(test_quark(), 0,
-                                        "body_fail");
+    const std::runtime_error error("body_fail");
 
     c.connection->Request(c.pool, c,
                           HTTP_METHOD_GET, "/foo", StringMap(*c.pool),
-                          wrap_fake_request_body(c.pool, istream_fail_new(c.pool, g_error_copy(error))),
+                          wrap_fake_request_body(c.pool, istream_fail_new(c.pool, std::make_exception_ptr(error))),
 #ifdef HAVE_EXPECT_100
                           false,
 #endif
@@ -863,8 +863,7 @@ test_body_fail(Context<Connection> &c)
     }
 
     assert(c.request_error != nullptr);
-    assert(strstr(GetFullMessage(c.request_error).c_str(), error->message) != nullptr);
-    g_error_free(error);
+    assert(strstr(GetFullMessage(c.request_error).c_str(), error.what()) != nullptr);
     assert(c.body_error == nullptr);
 }
 

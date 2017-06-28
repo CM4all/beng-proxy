@@ -19,8 +19,6 @@
 #include <cppunit/ui/text/TestRunner.h>
 #include <cppunit/extensions/HelperMacros.h>
 
-#include <glib.h>
-
 #include <assert.h>
 #include <stdint.h>
 #include <string.h>
@@ -215,7 +213,7 @@ public:
         Data data(r);
 
         Istream *input = istream_fail_new(GetPool(),
-                                          g_error_new(g_file_error_quark(), 0, "error"));
+                                          std::make_exception_ptr(std::runtime_error("error")));
         sink_rubber_new(*GetPool(), *input, *r, 1024,
                         data, data.cancel_ptr);
 

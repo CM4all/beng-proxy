@@ -30,12 +30,6 @@ enum {
 #endif
 };
 
-static inline GQuark
-test_quark(void)
-{
-    return g_quark_from_static_string("test");
-}
-
 #ifndef FILTER_CLEANUP
 static void
 cleanup(void)
@@ -418,9 +412,9 @@ test_fail(Instance &instance)
 {
     auto *pool = pool_new_linear(instance.root_pool, "test_fail", 8192);
 
-    GError *error = g_error_new_literal(test_quark(), 0, "test_fail");
+    const std::runtime_error error("test_fail");
     auto *istream = create_test(instance.event_loop, pool,
-                                istream_fail_new(pool, error));
+                                istream_fail_new(pool, std::make_exception_ptr(error)));
     run_istream(instance, pool, istream, false);
 }
 
@@ -430,13 +424,13 @@ test_fail_1byte(Instance &instance)
 {
     auto *pool = pool_new_linear(instance.root_pool, "test_fail_1byte", 8192);
 
-    GError *error = g_error_new_literal(test_quark(), 0, "test_fail");
+    const std::runtime_error error("test_fail");
     auto *istream =
         create_test(instance.event_loop, pool,
                     istream_cat_new(*pool,
                                     istream_head_new(pool, *create_input(pool),
                                                      1, false),
-                                    istream_fail_new(pool, error)));
+                                    istream_fail_new(pool, std::make_exception_ptr(error))));
     run_istream(instance, pool, istream, false);
 }
 

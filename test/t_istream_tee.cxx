@@ -53,12 +53,6 @@ struct BlockContext final : Context, StatsIstreamHandler {
     }
 };
 
-static inline GQuark
-test_quark(void)
-{
-    return g_quark_from_static_string("test");
-}
-
 /*
  * tests
  *
@@ -190,7 +184,7 @@ test_error(EventLoop &event_loop, struct pool *pool,
     pool = pool_new_libc(nullptr, "test");
     Istream *tee =
         istream_tee_new(*pool, *istream_fail_new(pool,
-                                                 g_error_new_literal(test_quark(), 0, "error")),
+                                                 std::make_exception_ptr(std::runtime_error("error"))),
                         event_loop,
                         false, false);
     pool_unref(pool);
@@ -236,7 +230,7 @@ test_bucket_error(EventLoop &event_loop, struct pool *pool,
     pool = pool_new_libc(nullptr, "test");
     Istream *tee =
         istream_tee_new(*pool, *istream_fail_new(pool,
-                                                 g_error_new_literal(test_quark(), 0, "error")),
+                                                 std::make_exception_ptr(std::runtime_error("error"))),
                         event_loop,
                         false, false);
     pool_unref(pool);

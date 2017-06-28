@@ -6,41 +6,34 @@
 #include "istream.hxx"
 #include "GException.hxx"
 
-#include <glib.h>
-
 #include <unistd.h>
 
 class FailIstream final : public Istream {
-    GError *const error;
+    const std::exception_ptr error;
 
 public:
-    FailIstream(struct pool &p, GError *_error)
+    FailIstream(struct pool &p, std::exception_ptr _error)
         :Istream(p), error(_error) {}
 
     /* virtual methods from class Istream */
 
     void _Read() override {
+        assert(error);
         DestroyError(error);
     }
 
     void _FillBucketList(gcc_unused IstreamBucketList &list) override {
-        auto e = ToException(*error);
-        g_error_free(error);
+        auto copy = error;
         Destroy();
-        std::rethrow_exception(e);
-    }
-
-    void _Close() override {
-        g_error_free(error);
-        Istream::_Close();
+        std::rethrow_exception(copy);
     }
 };
 
 Istream *
-istream_fail_new(struct pool *pool, GError *error)
+istream_fail_new(struct pool *pool, std::exception_ptr ep)
 {
     assert(pool != nullptr);
-    assert(error != nullptr);
+    assert(ep);
 
-    return NewIstream<FailIstream>(*pool, error);
+    return NewIstream<FailIstream>(*pool, ep);
 }
