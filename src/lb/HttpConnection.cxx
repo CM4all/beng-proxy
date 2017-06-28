@@ -155,23 +155,6 @@ LbHttpConnection::CloseAndDestroy()
 }
 
 void
-LbHttpConnection::SendError(HttpServerRequest &request, GError *error)
-{
-    const char *msg = listener.verbose_response
-        ? error->message
-        : "Bad gateway";
-
-    http_server_send_message(&request, HTTP_STATUS_BAD_GATEWAY, msg);
-}
-
-void
-LbHttpConnection::LogSendError(HttpServerRequest &request, GError *error)
-{
-    Log(2, "Error", error);
-    SendError(request, error);
-}
-
-void
 LbHttpConnection::SendError(HttpServerRequest &request, std::exception_ptr ep)
 {
     const char *msg = listener.verbose_response

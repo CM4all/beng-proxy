@@ -73,9 +73,6 @@ struct LbHttpConnection final
     void Destroy();
     void CloseAndDestroy();
 
-    void SendError(HttpServerRequest &request, GError *error);
-    void LogSendError(HttpServerRequest &request, GError *error);
-
     void SendError(HttpServerRequest &request, std::exception_ptr ep);
     void LogSendError(HttpServerRequest &request, std::exception_ptr ep);
 
