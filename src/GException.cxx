@@ -16,6 +16,7 @@
 #include "widget/Error.hxx"
 #include "system/Error.hxx"
 #include "util/Exception.hxx"
+#include "util/ScopeExit.hxx"
 
 GError *
 ToGError(std::exception_ptr ep)
@@ -101,6 +102,13 @@ ThrowGError(const GError &error)
 #if CLANG_OR_GCC_VERSION(4,0)
 #pragma GCC diagnostic pop
 #endif
+
+void
+ThrowFreeGError(GError *error)
+{
+    AtScopeExit(error) { g_error_free(error); };
+    ThrowGError(*error);
+}
 
 std::exception_ptr
 ToException(const GError &error)

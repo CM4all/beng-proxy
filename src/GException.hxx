@@ -30,6 +30,12 @@ void
 ThrowGError(const GError &error);
 
 /**
+ * Like ThrowGError(), but also free the GError.
+ */
+void
+ThrowFreeGError(GError *error);
+
+/**
  * Attempt to convert a #GError to a C++ exception (best-effort), and
  * return it.
  */
