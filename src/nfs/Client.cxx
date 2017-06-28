@@ -5,7 +5,6 @@
  */
 
 #include "Client.hxx"
-#include "Quark.hxx"
 #include "Error.hxx"
 #include "Handler.hxx"
 #include "pool.hxx"

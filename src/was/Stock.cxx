@@ -5,7 +5,6 @@
  */
 
 #include "Stock.hxx"
-#include "Quark.hxx"
 #include "Launch.hxx"
 #include "stock/MapStock.hxx"
 #include "stock/Stock.hxx"

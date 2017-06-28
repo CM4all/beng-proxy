@@ -8,7 +8,6 @@
 #include "ajp_headers.hxx"
 #include "ajp_serialize.hxx"
 #include "ajp_protocol.hxx"
-#include "Quark.hxx"
 #include "Error.hxx"
 #include "buffered_socket.hxx"
 #include "http_response.hxx"

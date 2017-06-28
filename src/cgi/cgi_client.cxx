@@ -6,7 +6,6 @@
 
 #include "cgi_client.hxx"
 #include "Error.hxx"
-#include "cgi_quark.h"
 #include "cgi_parser.hxx"
 #include "pool.hxx"
 #include "istream/Pointer.hxx"

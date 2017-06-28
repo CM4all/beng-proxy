@@ -13,7 +13,6 @@
 #include "translation/Cache.hxx"
 #include "translation/Handler.hxx"
 #include "load_file.hxx"
-#include "http_quark.h"
 #include "util/Exception.hxx"
 
 #include <daemon/log.h>

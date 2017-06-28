@@ -11,8 +11,6 @@
 
 #include <http/method.h>
 
-#include <glib.h>
-
 #include <stdexcept>
 
 struct pool;
@@ -26,7 +24,7 @@ class CancellablePointer;
 class HttpHeaders;
 
 /**
- * GError codes for http_client_quark().
+ * Error codes for #HttpClientError.
  */
 enum class HttpClientErrorCode {
     UNSPECIFIED,
@@ -70,26 +68,12 @@ public:
     }
 };
 
-G_GNUC_CONST
-static inline GQuark
-http_client_quark(void)
-{
-    return g_quark_from_static_string("http_client");
-}
-
 /**
  * Is the specified error a server failure, that justifies
  * blacklisting the server for a while?
  */
 bool
 IsHttpClientServerFailure(std::exception_ptr ep);
-
-static inline bool
-IsHttpClientServerFailure(const GError &error)
-{
-    return error.domain == http_client_quark() &&
-        HttpClientErrorCode(error.code) != HttpClientErrorCode::UNSPECIFIED;
-}
 
 /**
  * Sends a HTTP request on a socket, and passes the response to the

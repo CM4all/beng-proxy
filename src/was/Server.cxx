@@ -6,7 +6,6 @@
 
 #include "Server.hxx"
 #include "Error.hxx"
-#include "Quark.hxx"
 #include "Control.hxx"
 #include "Output.hxx"
 #include "Input.hxx"

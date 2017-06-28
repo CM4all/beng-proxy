@@ -28,6 +28,8 @@
 
 #include <inline/compiler.h>
 
+#include <glib.h>
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/stat.h>

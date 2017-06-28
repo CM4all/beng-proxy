@@ -5,8 +5,6 @@
 #ifndef BENG_PROXY_WIDGET_ERROR_HXX
 #define BENG_PROXY_WIDGET_ERROR_HXX
 
-#include <glib.h>
-
 #include <stdexcept>
 
 struct Widget;
@@ -41,12 +39,6 @@ enum class WidgetErrorCode {
      */
     FORBIDDEN,
 };
-
-static inline GQuark
-widget_quark()
-{
-    return g_quark_from_static_string("widget");
-}
 
 class WidgetError : public std::runtime_error {
     WidgetErrorCode code;

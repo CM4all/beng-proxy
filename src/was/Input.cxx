@@ -6,7 +6,6 @@
 
 #include "Input.hxx"
 #include "Error.hxx"
-#include "Quark.hxx"
 #include "event/SocketEvent.hxx"
 #include "direct.hxx"
 #include "istream/istream.hxx"
