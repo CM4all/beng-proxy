@@ -3,10 +3,13 @@
 #include "istream/istream_file.hxx"
 #include "fb_pool.hxx"
 #include "PInstance.hxx"
+#include "util/PrintException.hxx"
 
 #include <inline/compiler.h>
 
-int main(int argc, char **argv) {
+int
+main(int argc, char **argv)
+try {
     Istream *istream;
     int i;
 
@@ -17,8 +20,7 @@ int main(int argc, char **argv) {
 
     istream = istream_subst_new(pool,
                                 *istream_file_new(instance.event_loop, *pool,
-                                                  "/dev/stdin", (off_t)-1,
-                                                  nullptr));
+                                                  "/dev/stdin", (off_t)-1));
 
     for (i = 1; i <= argc - 2; i += 2) {
         istream_subst_add(*istream, argv[i], argv[i + 1]);
@@ -35,4 +37,7 @@ int main(int argc, char **argv) {
     pool_commit();
 
     sink.LoopRead();
+} catch (...) {
+    PrintException(std::current_exception());
+    return EXIT_FAILURE;
 }

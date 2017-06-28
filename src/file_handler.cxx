@@ -102,11 +102,14 @@ file_dispatch_compressed(Request &request2, const struct stat &st,
     /* open compressed file */
 
     struct stat st2;
-    Istream *compressed_body =
-        istream_file_stat_new(request2.instance.event_loop, request2.pool,
-                              path, st2, nullptr);
-    if (compressed_body == nullptr)
+    Istream *compressed_body;
+
+    try {
+        compressed_body = istream_file_stat_new(request2.instance.event_loop, request2.pool,
+                                                path, st2);
+    } catch (...) {
         return false;
+    }
 
     if (!S_ISREG(st2.st_mode)) {
         compressed_body->CloseUnused();
@@ -202,14 +205,15 @@ file_callback(Request &request2, const FileAddress &address)
 
     /* open the file */
 
-    GError *error = nullptr;
     struct stat st;
-    Istream *body = istream_file_stat_new(request2.instance.event_loop,
-                                          request2.pool,
-                                          path, st, &error);
-    if (body == nullptr) {
-        response_dispatch_error(request2, error);
-        g_error_free(error);
+    Istream *body;
+
+    try {
+        body = istream_file_stat_new(request2.instance.event_loop,
+                                     request2.pool,
+                                     path, st);
+    } catch (...) {
+        response_dispatch_log(request2, std::current_exception());
         return;
     }
 

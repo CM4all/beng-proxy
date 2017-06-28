@@ -8,6 +8,7 @@
 #include "static_headers.hxx"
 #include "http_response.hxx"
 #include "gerrno.h"
+#include "GException.hxx"
 #include "strmap.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream_file.hxx"
@@ -47,10 +48,12 @@ static_file_get(EventLoop &event_loop, struct pool &pool,
     const off_t size = S_ISCHR(st.st_mode)
         ? -1 : st.st_size;
 
-    GError *error = nullptr;
-    Istream *body = istream_file_new(event_loop, pool, path, size, &error);
-    if (body == nullptr) {
-        handler.InvokeError(error);
+    Istream *body;
+
+    try {
+        body = istream_file_new(event_loop, pool, path, size);
+    } catch (...) {
+        handler.InvokeError(ToGError(std::current_exception()));
         return;
     }
 

@@ -26,16 +26,19 @@ istream_file_fd_new(EventLoop &event_loop, struct pool &pool,
 
 /**
  * Opens a file and stats it.
+ *
+ * Throws exception on error.
  */
 Istream *
 istream_file_stat_new(EventLoop &event_loop, struct pool &pool,
-                      const char *path, struct stat &st,
-                      GError **error_r);
+                      const char *path, struct stat &st);
 
+/**
+ * Throws exception on error.
+ */
 Istream *
 istream_file_new(EventLoop &event_loop, struct pool &pool,
-                 const char *path, off_t length,
-                 GError **error_r);
+                 const char *path, off_t length);
 
 int
 istream_file_fd(Istream &istream);

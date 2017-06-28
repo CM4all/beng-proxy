@@ -5,6 +5,7 @@
 #include "fb_pool.hxx"
 #include "pool.hxx"
 #include "util/Exception.hxx"
+#include "util/PrintException.hxx"
 
 #include <unistd.h>
 #include <stdlib.h>
@@ -94,7 +95,9 @@ static constexpr CssParserHandler my_parser_handler = {
  *
  */
 
-int main(int argc, char **argv) {
+int
+main(int argc, char **argv)
+try {
     (void)argc;
     (void)argv;
 
@@ -104,11 +107,13 @@ int main(int argc, char **argv) {
     LinearPool pool(instance.root_pool, "test", 8192);
 
     Istream *istream = istream_file_new(instance.event_loop, *pool,
-                                        "/dev/stdin", (off_t)-1,
-                                        nullptr);
+                                        "/dev/stdin", (off_t)-1);
     auto *parser =
         css_parser_new(*pool, *istream, false, my_parser_handler, nullptr);
 
     while (!should_exit)
         css_parser_read(parser);
+} catch (...) {
+    PrintException(std::current_exception());
+    return EXIT_FAILURE;
 }

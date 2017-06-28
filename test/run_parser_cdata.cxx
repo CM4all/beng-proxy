@@ -4,6 +4,7 @@
 #include "PInstance.hxx"
 #include "fb_pool.hxx"
 #include "util/Exception.hxx"
+#include "util/PrintException.hxx"
 
 #include <unistd.h>
 #include <stdlib.h>
@@ -37,7 +38,9 @@ public:
     }
 };
 
-int main(int argc, char **argv) {
+int
+main(int argc, char **argv)
+try {
     struct pool *pool;
     Istream *istream;
 
@@ -50,7 +53,7 @@ int main(int argc, char **argv) {
     pool = pool_new_linear(instance.root_pool, "test", 8192);
 
     istream = istream_file_new(instance.event_loop, *pool,
-                               "/dev/stdin", (off_t)-1, nullptr);
+                               "/dev/stdin", (off_t)-1);
 
     MyXmlParserHandler handler;
     auto *parser = parser_new(*pool, *istream, handler);
@@ -59,4 +62,7 @@ int main(int argc, char **argv) {
         parser_read(parser);
 
     pool_unref(pool);
+} catch (...) {
+    PrintException(std::current_exception());
+    return EXIT_FAILURE;
 }

@@ -12,6 +12,7 @@
 #include "pool.hxx"
 #include "fb_pool.hxx"
 #include "SliceFifoBuffer.hxx"
+#include "system/Error.hxx"
 #include "event/TimerEvent.hxx"
 
 #include <assert.h>
@@ -327,23 +328,16 @@ istream_file_fd_new(EventLoop &event_loop, struct pool &pool,
 
 Istream *
 istream_file_stat_new(EventLoop &event_loop, struct pool &pool,
-                      const char *path, struct stat &st,
-                      GError **error_r)
+                      const char *path, struct stat &st)
 {
     assert(path != nullptr);
 
     UniqueFileDescriptor fd;
-    if (!fd.OpenReadOnly(path)) {
-        set_error_errno(error_r);
-        g_prefix_error(error_r, "Failed to open %s: ", path);
-        return nullptr;
-    }
+    if (!fd.OpenReadOnly(path))
+        throw FormatErrno("Failed to open %s", path);
 
-    if (fstat(fd.Get(), &st) < 0) {
-        set_error_errno(error_r);
-        g_prefix_error(error_r, "Failed to stat %s: ", path);
-        return nullptr;
-    }
+    if (fstat(fd.Get(), &st) < 0)
+        throw FormatErrno("Failed to stat %s", path);
 
     FdType fd_type = FdType::FD_FILE;
     off_t size = st.st_size;
@@ -359,17 +353,13 @@ istream_file_stat_new(EventLoop &event_loop, struct pool &pool,
 
 Istream *
 istream_file_new(EventLoop &event_loop, struct pool &pool,
-                 const char *path, off_t length,
-                 GError **error_r)
+                 const char *path, off_t length)
 {
     assert(length >= -1);
 
     UniqueFileDescriptor fd;
-    if (!fd.OpenReadOnly(path)) {
-        set_error_errno(error_r);
-        g_prefix_error(error_r, "Failed to open %s: ", path);
-        return nullptr;
-    }
+    if (!fd.OpenReadOnly(path))
+        throw FormatErrno("Failed to open %s", path);
 
     return istream_file_fd_new(event_loop, pool, path,
                                fd.Steal(), FdType::FD_FILE, length);

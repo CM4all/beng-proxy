@@ -15,6 +15,7 @@
 #include "spawn/Local.hxx"
 #include "system/SetupProcess.hxx"
 #include "util/Cancellable.hxx"
+#include "util/PrintException.hxx"
 
 #include <inline/compiler.h>
 
@@ -360,7 +361,7 @@ test_post(struct pool *pool, Context *c)
             pool, HTTP_METHOD_POST, &address,
             nullptr, StringMap(*pool),
             istream_file_new(c->event_loop, *pool,
-                             "build.ninja", 8192, NULL),
+                             "build.ninja", 8192),
             *c, c->cancel_ptr);
 
     pool_unref(pool);
@@ -682,7 +683,9 @@ run_all_tests()
     run_test(test_large_header);
 }
 
-int main(int argc, char **argv) {
+int
+main(int argc, char **argv)
+try {
     (void)argc;
     (void)argv;
 
@@ -698,4 +701,7 @@ int main(int argc, char **argv) {
     run_all_tests();
 
     crash_global_deinit();
+} catch (...) {
+    PrintException(std::current_exception());
+    return EXIT_FAILURE;
 }

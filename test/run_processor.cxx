@@ -12,6 +12,7 @@
 #include "istream/istream_file.hxx"
 #include "istream/istream_string.hxx"
 #include "util/StringView.hxx"
+#include "util/PrintException.hxx"
 
 /*
  * emulate missing libraries
@@ -61,7 +62,9 @@ rewrite_widget_uri(gcc_unused struct pool &pool,
     return nullptr;
 }
 
-int main(int argc, char **argv) {
+int
+main(int argc, char **argv)
+try {
     const char *uri;
     bool ret;
     struct parsed_uri parsed_uri;
@@ -102,10 +105,12 @@ int main(int argc, char **argv) {
         processor_process(instance.root_pool,
                           *istream_file_new(instance.event_loop,
                                             instance.root_pool,
-                                            "/dev/stdin", (off_t)-1,
-                                            NULL),
+                                            "/dev/stdin", (off_t)-1),
                           widget, env, PROCESSOR_CONTAINER);
 
     StdioSink sink(*result);
     sink.LoopRead();
+} catch (...) {
+    PrintException(std::current_exception());
+    return EXIT_FAILURE;
 }
