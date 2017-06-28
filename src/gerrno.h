@@ -19,18 +19,6 @@ errno_quark(void)
 }
 
 static inline void
-set_error_errno2(GError **error_r, int code)
-{
-    g_set_error_literal(error_r, errno_quark(), code, g_strerror(code));
-}
-
-static inline void
-set_error_errno(GError **error_r)
-{
-    set_error_errno2(error_r, errno);
-}
-
-static inline void
 set_error_errno_msg2(GError **error_r, int code, const char *msg)
 {
     g_set_error(error_r, errno_quark(), code, "%s: %s", msg, g_strerror(code));
