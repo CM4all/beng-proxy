@@ -25,6 +25,7 @@
 #include "product.h"
 #include "pool.hxx"
 #include "system/Error.hxx"
+#include "util/ByteOrder.hxx"
 #include "util/Cast.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/StringUtil.hxx"
@@ -1069,7 +1070,7 @@ fcgi_client_request(struct pool *pool, EventLoop &event_loop,
     struct fcgi_record_header header = {
         .version = FCGI_VERSION_1,
         .type = FCGI_BEGIN_REQUEST,
-        .request_id = GUINT16_TO_BE(next_request_id),
+        .request_id = ToBE16(next_request_id),
         .content_length = 0,
         .padding_length = 0,
         .reserved = 0,
