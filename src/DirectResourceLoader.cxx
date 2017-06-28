@@ -27,9 +27,9 @@
 #include "strmap.hxx"
 #include "istream/istream.hxx"
 #include "ssl/ssl_client.hxx"
-#include "gerrno.h"
 #include "pool.hxx"
 #include "AllocatorPtr.hxx"
+#include "system/Error.hxx"
 #include "util/ConstBuffer.hxx"
 
 #include <socket/parser.h>
@@ -50,12 +50,6 @@ public:
         return ssl_client_create(event_loop, host);
     }
 };
-
-static inline GQuark
-resource_loader_quark(void)
-{
-    return g_quark_from_static_string("resource_loader");
-}
 
 static const char *
 extract_remote_addr(const StringMap *headers)
@@ -149,9 +143,7 @@ DirectResourceLoader::SendRequest(struct pool &pool,
         file = &address.GetFile();
         if (file->delegate != nullptr) {
             if (delegate_stock == nullptr) {
-                GError *error = g_error_new_literal(resource_loader_quark(), 0,
-                                                    "No delegate stock");
-                handler.InvokeError(error);
+                handler.InvokeError(std::make_exception_ptr(std::runtime_error("No delegate stock")));
                 return;
             }
 
@@ -211,11 +203,8 @@ DirectResourceLoader::SendRequest(struct pool &pool,
                 if (body != nullptr)
                     body->CloseUnused();
 
-                GError *error =
-                    g_error_new(errno_quark(), code, "open('%s') failed: %s",
-                                cgi->options.stderr_path,
-                                g_strerror(code));
-                handler.InvokeError(error);
+                handler.InvokeError(std::make_exception_ptr(FormatErrno(code, "Failed to open '%s'",
+                                                                        cgi->options.stderr_path)));
                 return;
             }
         } else
@@ -319,7 +308,5 @@ DirectResourceLoader::SendRequest(struct pool &pool,
     if (body != nullptr)
         body->CloseUnused();
 
-    GError *error = g_error_new_literal(resource_loader_quark(), 0,
-                                        "Could not locate resource");
-    handler.InvokeError(error);
+    handler.InvokeError(std::make_exception_ptr(std::runtime_error("Could not locate resource")));
 }

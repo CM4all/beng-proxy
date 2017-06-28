@@ -30,7 +30,7 @@ public:
     /* virtual methods from class HttpResponseHandler */
     void OnHttpResponse(http_status_t status, StringMap &&headers,
                         Istream *body) override;
-    void OnHttpError(GError *error) override;
+    void OnHttpError(std::exception_ptr ep) override;
 };
 
 void
@@ -51,13 +51,11 @@ LbLuaResponseHandler::OnHttpResponse(http_status_t status,
 }
 
 void
-LbLuaResponseHandler::OnHttpError(GError *error)
+LbLuaResponseHandler::OnHttpError(std::exception_ptr ep)
 {
     finished = true;
 
-    connection.LogSendError(request, error);
-
-    g_error_free(error);
+    connection.LogSendError(request, ep);
 }
 
 void

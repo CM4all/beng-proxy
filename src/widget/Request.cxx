@@ -110,7 +110,6 @@ struct WidgetRequest final : HttpResponseHandler, Cancellable {
     bool HandleRedirect(const char *location, Istream *body);
 
     void DispatchError(std::exception_ptr ep);
-    void DispatchError(GError *error);
 
     void DispatchError(WidgetErrorCode code, const char *msg) {
         DispatchError(std::make_exception_ptr(WidgetError(widget, code, msg)));
@@ -169,7 +168,7 @@ struct WidgetRequest final : HttpResponseHandler, Cancellable {
     /* virtual methods from class HttpResponseHandler */
     void OnHttpResponse(http_status_t status, StringMap &&headers,
                         Istream *body) override;
-    void OnHttpError(GError *error) override;
+    void OnHttpError(std::exception_ptr ep) override;
 };
 
 static const char *
@@ -272,18 +271,6 @@ WidgetRequest::DispatchError(std::exception_ptr ep)
         lookup_handler->WidgetLookupError(ep);
     else
         http_handler->InvokeError(ep);
-}
-
-void
-WidgetRequest::DispatchError(GError *error)
-{
-    assert(error != nullptr);
-
-    if (lookup_id != nullptr) {
-        lookup_handler->WidgetLookupError(ToException(*error));
-        g_error_free(error);
-    } else
-        http_handler->InvokeError(error);
 }
 
 void
@@ -596,9 +583,9 @@ WidgetRequest::OnHttpResponse(http_status_t status, StringMap &&headers,
 }
 
 void
-WidgetRequest::OnHttpError(GError *error)
+WidgetRequest::OnHttpError(std::exception_ptr ep)
 {
-    DispatchError(error);
+    DispatchError(ep);
 }
 
 void

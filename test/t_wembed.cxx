@@ -13,8 +13,6 @@
 #include "session.hxx"
 #include "util/Cancellable.hxx"
 
-#include <glib.h>
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -68,9 +66,7 @@ widget_http_request(gcc_unused struct pool &pool,
                     HttpResponseHandler &handler,
                     gcc_unused CancellablePointer &cancel_ptr)
 {
-    GError *error = g_error_new_literal(g_quark_from_static_string("test"), 0,
-                                        "Test");
-    handler.InvokeError(error);
+    handler.InvokeError(std::make_exception_ptr(std::runtime_error("Test")));
 }
 
 struct TestOperation final : Cancellable {

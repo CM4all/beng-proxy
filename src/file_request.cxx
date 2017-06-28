@@ -7,11 +7,11 @@
 #include "file_request.hxx"
 #include "static_headers.hxx"
 #include "http_response.hxx"
-#include "gerrno.h"
 #include "strmap.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream_file.hxx"
 #include "pool.hxx"
+#include "system/Error.hxx"
 
 #include <http/status.h>
 
@@ -32,9 +32,7 @@ static_file_get(EventLoop &event_loop, struct pool &pool,
 
     struct stat st;
     if (lstat(path, &st) != 0) {
-        GError *error = new_error_errno();
-        g_prefix_error(&error, "Failed to open %s: ", path);
-        handler.InvokeError(error);
+        handler.InvokeError(std::make_exception_ptr(FormatErrno("Failed to open %s: ", path)));
         return;
     }
 

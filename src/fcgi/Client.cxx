@@ -6,7 +6,6 @@
 
 #include "Client.hxx"
 #include "Error.hxx"
-#include "Quark.hxx"
 #include "Protocol.hxx"
 #include "Serialize.hxx"
 #include "GException.hxx"
@@ -25,6 +24,7 @@
 #include "strmap.hxx"
 #include "product.h"
 #include "pool.hxx"
+#include "system/Error.hxx"
 #include "util/Cast.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/StringUtil.hxx"
@@ -32,6 +32,7 @@
 #include "util/StringView.hxx"
 #include "util/InstanceList.hxx"
 #include "util/Cancellable.hxx"
+#include "util/Exception.hxx"
 
 #include <glib.h>
 
@@ -139,19 +140,19 @@ struct FcgiClient final : Cancellable, Istream, IstreamHandler, WithInstanceList
      * Abort receiving the response status/headers from the FastCGI
      * server, and notify the HTTP response handler.
      */
-    void AbortResponseHeaders(GError *error);
+    void AbortResponseHeaders(std::exception_ptr ep);
 
     /**
      * Abort receiving the response body from the FastCGI server, and
      * notify the response body istream handler.
      */
-    void AbortResponseBody(GError *error);
+    void AbortResponseBody(std::exception_ptr ep);
 
     /**
      * Abort receiving the response from the FastCGI server.  This is
      * a wrapper for AbortResponseHeaders() or AbortResponseBody().
      */
-    void AbortResponse(GError *error);
+    void AbortResponse(std::exception_ptr ep);
 
     /**
      * Close the response body.  This is a request from the istream
@@ -252,7 +253,7 @@ inline FcgiClient::~FcgiClient()
 }
 
 void
-FcgiClient::AbortResponseHeaders(GError *error)
+FcgiClient::AbortResponseHeaders(std::exception_ptr ep)
 {
     assert(response.read_state == Response::READ_HEADERS ||
            response.read_state == Response::READ_NO_BODY);
@@ -263,12 +264,12 @@ FcgiClient::AbortResponseHeaders(GError *error)
     if (request.input.IsDefined())
         request.input.ClearAndClose();
 
-    handler.InvokeError(error);
+    handler.InvokeError(ep);
     Destroy();
 }
 
 void
-FcgiClient::AbortResponseBody(GError *error)
+FcgiClient::AbortResponseBody(std::exception_ptr ep)
 {
     assert(response.read_state == Response::READ_BODY);
 
@@ -278,20 +279,20 @@ FcgiClient::AbortResponseBody(GError *error)
     if (request.input.IsDefined())
         request.input.ClearAndClose();
 
-    DestroyError(error);
+    DestroyError(ep);
 }
 
 void
-FcgiClient::AbortResponse(GError *error)
+FcgiClient::AbortResponse(std::exception_ptr ep)
 {
     assert(response.read_state == Response::READ_HEADERS ||
            response.read_state == Response::READ_NO_BODY ||
            response.read_state == Response::READ_BODY);
 
     if (response.read_state != Response::READ_BODY)
-        AbortResponseHeaders(error);
+        AbortResponseHeaders(ep);
     else
-        AbortResponseBody(error);
+        AbortResponseBody(ep);
 }
 
 void
@@ -475,11 +476,8 @@ FcgiClient::HandleEnd()
     assert(!socket.IsConnected());
 
     if (response.read_state == FcgiClient::Response::READ_HEADERS) {
-        GError *error =
-            g_error_new_literal(fcgi_quark(), 0,
-                                "premature end of headers "
-                                "from FastCGI application");
-        AbortResponseHeaders(error);
+        AbortResponseHeaders(std::make_exception_ptr(FcgiClientError("premature end of headers "
+                                                                     "from FastCGI application")));
         return;
     }
 
@@ -491,11 +489,8 @@ FcgiClient::HandleEnd()
                                nullptr);
         Destroy();
     } else if (response.available > 0) {
-        GError *error =
-            g_error_new_literal(fcgi_quark(), 0,
-                                "premature end of body "
-                                "from FastCGI application");
-        AbortResponseBody(error);
+        AbortResponseBody(std::make_exception_ptr(FcgiClientError("premature end of body "
+                                                                  "from FastCGI application")));
     } else
         DestroyEof();
 }
@@ -558,11 +553,8 @@ FcgiClient::ConsumeInput(const uint8_t *data0, size_t length0)
                 (off_t)length > response.available) {
                 /* the DATA packet was larger than the Content-Length
                    declaration - fail */
-                GError *error =
-                    g_error_new_literal(fcgi_quark(), 0,
-                                        "excess data at end of body "
-                                        "from FastCGI application");
-                AbortResponseBody(error);
+                AbortResponseBody(std::make_exception_ptr(FcgiClientError("excess data at end of body "
+                                                                          "from FastCGI application")));
                 return BufferedResult::CLOSED;
             }
 
@@ -659,10 +651,8 @@ FcgiClient::OnData(const void *data, size_t length)
     else if (gcc_likely(nbytes == WRITE_BLOCKING || nbytes == WRITE_DESTROYED))
         return 0;
     else if (nbytes < 0) {
-        GError *error = g_error_new(fcgi_quark(), errno,
-                                    "write to FastCGI application failed: %s",
-                                    strerror(errno));
-        AbortResponse(error);
+        AbortResponse(NestException(std::make_exception_ptr(MakeErrno()),
+                                    FcgiClientError("write to FastCGI application failed")));
         return 0;
     }
 
@@ -708,8 +698,9 @@ FcgiClient::OnError(GError *error)
 
     request.input.Clear();
 
-    g_prefix_error(&error, "FastCGI request stream failed: ");
-    AbortResponse(error);
+    AbortResponse(NestException(ToException(*error),
+                                std::runtime_error("FastCGI request stream failed")));
+    g_error_free(error);
 }
 
 /*
@@ -982,8 +973,7 @@ fcgi_client_socket_timeout(void *ctx)
 {
     FcgiClient *client = (FcgiClient *)ctx;
 
-    GError *error = g_error_new_literal(fcgi_quark(), 0, "timeout");
-    client->AbortResponse(error);
+    client->AbortResponse(std::make_exception_ptr(FcgiClientError("timeout")));
     return false;
 }
 
@@ -992,7 +982,7 @@ fcgi_client_socket_error(std::exception_ptr ep, void *ctx)
 {
     FcgiClient *client = (FcgiClient *)ctx;
 
-    client->AbortResponse(ToGError(ep));
+    client->AbortResponse(ep);
 }
 
 static constexpr BufferedSocketHandler fcgi_client_socket_handler = {

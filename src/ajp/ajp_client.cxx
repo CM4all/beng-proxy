@@ -9,6 +9,7 @@
 #include "ajp_serialize.hxx"
 #include "ajp_protocol.hxx"
 #include "Quark.hxx"
+#include "Error.hxx"
 #include "buffered_socket.hxx"
 #include "http_response.hxx"
 #include "GrowingBuffer.hxx"
@@ -24,11 +25,14 @@
 #include "uri/uri_verify.hxx"
 #include "direct.hxx"
 #include "strmap.hxx"
+#include "system/Error.hxx"
 #include "util/Cast.hxx"
 #include "util/Cancellable.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/ByteOrder.hxx"
 #include "util/DecimalFormat.h"
+#include "util/StringFormat.hxx"
+#include "util/Exception.hxx"
 #include "pool.hxx"
 
 #include <string.h>
@@ -136,16 +140,16 @@ struct AjpClient final : Istream, IstreamHandler, Cancellable {
      */
     void Release(bool reuse);
 
-    void AbortResponseHeaders(GError *error);
+    void AbortResponseHeaders(std::exception_ptr ep);
     void AbortResponseBody(GError *error);
-    void AbortResponse(GError *error);
+    void AbortResponse(std::exception_ptr ep);
 
     void AbortResponseHeaders(const char *msg) {
-        AbortResponseHeaders(g_error_new_literal(ajp_client_quark(), 0, msg));
+        AbortResponseHeaders(std::make_exception_ptr(AjpClientError(msg)));
     }
 
     void AbortResponse(const char *msg) {
-        AbortResponse(g_error_new_literal(ajp_client_quark(), 0, msg));
+        AbortResponse(std::make_exception_ptr(AjpClientError(msg)));
     }
 
     /**
@@ -230,7 +234,7 @@ AjpClient::Release(bool reuse)
 }
 
 void
-AjpClient::AbortResponseHeaders(GError *error)
+AjpClient::AbortResponseHeaders(std::exception_ptr ep)
 {
     assert(response.read_state == Response::READ_BEGIN ||
            response.read_state == Response::READ_NO_BODY);
@@ -238,7 +242,7 @@ AjpClient::AbortResponseHeaders(GError *error)
     const ScopePoolRef ref(GetPool() TRACE_ARGS);
 
     response.read_state = Response::READ_END;
-    request.handler.InvokeError(error);
+    request.handler.InvokeError(ep);
 
     Release(false);
 }
@@ -257,18 +261,18 @@ AjpClient::AbortResponseBody(GError *error)
 }
 
 void
-AjpClient::AbortResponse(GError *error)
+AjpClient::AbortResponse(std::exception_ptr ep)
 {
     assert(response.read_state != Response::READ_END);
 
     switch (response.read_state) {
     case Response::READ_BEGIN:
     case Response::READ_NO_BODY:
-        AbortResponseHeaders(error);
+        AbortResponseHeaders(ep);
         break;
 
     case Response::READ_BODY:
-        AbortResponseBody(error);
+        AbortResponseBody(ToGError(ep));
         break;
 
     case Response::READ_END:
@@ -353,10 +357,7 @@ AjpClient::ConsumeSendHeaders(const uint8_t *data, size_t length)
     }
 
     if (!http_status_is_valid(status)) {
-        GError *error =
-            g_error_new(ajp_client_quark(), 0,
-                        "invalid status %u from AJP server", status);
-        AbortResponseHeaders(error);
+        AbortResponseHeaders(StringFormat<64>("invalid status %u from AJP server", status));
         return false;
     }
 
@@ -640,11 +641,7 @@ AjpClient::OnData(const void *data, size_t length)
     if (likely(nbytes == WRITE_BLOCKING || nbytes == WRITE_DESTROYED))
         return 0;
 
-    GError *error =
-        g_error_new(ajp_client_quark(), 0,
-                    "write error on AJP client connection: %s",
-                    strerror(errno));
-    AbortResponse(error);
+    AbortResponse(std::make_exception_ptr(FormatErrno("write error on AJP client connection")));
     return 0;
 }
 
@@ -692,8 +689,9 @@ AjpClient::OnError(GError *error)
            destructed further up the stack */
         return;
 
-    g_prefix_error(&error, "AJP request stream failed: ");
-    AbortResponse(error);
+    AbortResponse(NestException(ToException(*error),
+                                std::runtime_error("AJP request stream failed")));
+    g_error_free(error);
 }
 
 /*
@@ -760,9 +758,8 @@ ajp_client_socket_error(std::exception_ptr ep, void *ctx)
 {
     AjpClient *client = (AjpClient *)ctx;
 
-    auto *error = ToGError(ep);
-    g_prefix_error(&error, "AJP connection failed: ");
-    client->AbortResponse(error);
+    client->AbortResponse(NestException(ep,
+                                        AjpClientError("AJP connection failed")));
 }
 
 static constexpr BufferedSocketHandler ajp_client_socket_handler = {
@@ -835,10 +832,7 @@ ajp_client_request(struct pool &pool, EventLoop &event_loop,
         if (body != nullptr)
             body->CloseUnused();
 
-        GError *error =
-            g_error_new(ajp_client_quark(), 0,
-                        "malformed request URI '%s'", uri);
-        handler.InvokeError(error);
+        handler.InvokeError(std::make_exception_ptr(AjpClientError(StringFormat<256>("malformed request URI '%s'", uri))));
         return;
     }
 
@@ -851,10 +845,7 @@ ajp_client_request(struct pool &pool, EventLoop &event_loop,
         if (body != nullptr)
             body->CloseUnused();
 
-        GError *error =
-            g_error_new_literal(ajp_client_quark(), 0,
-                                "unknown request method");
-        handler.InvokeError(error);
+        handler.InvokeError(std::make_exception_ptr(AjpClientError("unknown request method")));
         return;
     }
 
@@ -869,10 +860,7 @@ ajp_client_request(struct pool &pool, EventLoop &event_loop,
             lease.ReleaseLease(true);
             body->CloseUnused();
 
-            GError *error =
-                g_error_new_literal(ajp_client_quark(), 0,
-                                    "AJPv13 does not support chunked request bodies");
-            handler.InvokeError(error);
+            handler.InvokeError(std::make_exception_ptr(AjpClientError("AJPv13 does not support chunked request bodies")));
             return;
         }
 

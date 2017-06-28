@@ -6,7 +6,6 @@
 
 #include "http_response.hxx"
 #include "strmap.hxx"
-#include "GException.hxx"
 #include "istream/istream_string.hxx"
 
 void
@@ -21,10 +20,4 @@ HttpResponseHandler::InvokeResponse(struct pool &pool,
     headers.Add("content-type", "text/plain; charset=utf-8");
     InvokeResponse(status, std::move(headers),
                    istream_string_new(&pool, msg));
-}
-
-void
-HttpResponseHandler::InvokeError(std::exception_ptr ep)
-{
-    InvokeError(ToGError(ep));
 }

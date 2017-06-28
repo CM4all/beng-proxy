@@ -6,6 +6,7 @@
 
 #include "Client.hxx"
 #include "Quark.hxx"
+#include "Error.hxx"
 #include "Control.hxx"
 #include "Output.hxx"
 #include "Input.hxx"
@@ -21,6 +22,7 @@
 #include "util/Cast.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/Cancellable.hxx"
+#include "util/StringFormat.hxx"
 
 #include <was/protocol.h>
 
@@ -210,22 +212,22 @@ struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler, C
     /**
      * Abort receiving the response status/headers from the WAS server.
      */
-    void AbortResponseHeaders(GError *error) {
+    void AbortResponseHeaders(std::exception_ptr ep) {
         assert(response.IsReceivingMetadata());
 
         ClearUnused();
 
-        handler.InvokeError(error);
+        handler.InvokeError(ep);
         Destroy();
     }
 
     /**
      * Abort receiving the response body from the WAS server.
      */
-    void AbortResponseBody(GError *error) {
+    void AbortResponseBody(std::exception_ptr ep) {
         assert(response.WasSubmitted());
 
-        Clear(error);
+        Clear(ToGError(ep));
         Destroy();
     }
 
@@ -248,30 +250,26 @@ struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler, C
      * Abort a pending response (BODY has been received, but the response
      * handler has not yet been invoked).
      */
-    void AbortPending(GError *error) {
+    void AbortPending(std::exception_ptr ep) {
         assert(!response.IsReceivingMetadata() &&
                !response.WasSubmitted());
 
         ClearUnused();
 
-        handler.InvokeError(error);
+        handler.InvokeError(ep);
         Destroy();
     }
 
     /**
      * Abort receiving the response status/headers from the WAS server.
      */
-    void AbortResponse(GError *error) {
-        if (response.IsReceivingMetadata())
-            AbortResponseHeaders(error);
-        else if (response.WasSubmitted())
-            AbortResponseBody(error);
-        else
-            AbortPending(error);
-    }
-
     void AbortResponse(std::exception_ptr ep) {
-        AbortResponse(ToGError(ep));
+        if (response.IsReceivingMetadata())
+            AbortResponseHeaders(ep);
+        else if (response.WasSubmitted())
+            AbortResponseBody(ep);
+        else
+            AbortPending(ep);
     }
 
     /**
@@ -367,8 +365,6 @@ WasClient::SubmitPendingResponse()
 bool
 WasClient::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload)
 {
-    GError *error;
-
     switch (cmd) {
         const uint32_t *status32_r;
         const uint16_t *status16_r;
@@ -387,26 +383,20 @@ WasClient::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload)
     case WAS_COMMAND_QUERY_STRING:
     case WAS_COMMAND_PARAMETER:
         stopwatch_event(stopwatch, "control_error");
-        error = g_error_new(was_quark(), 0,
-                            "Unexpected WAS packet %d", cmd);
-        AbortResponse(error);
+        AbortResponse(std::make_exception_ptr(WasProtocolError(StringFormat<64>("Unexpected WAS packet %d", cmd))));
         return false;
 
     case WAS_COMMAND_HEADER:
         if (!response.IsReceivingMetadata()) {
             stopwatch_event(stopwatch, "control_error");
-            error = g_error_new_literal(was_quark(), 0,
-                                        "response header was too late");
-            AbortResponseBody(error);
+            AbortResponse(std::make_exception_ptr(WasProtocolError("response header was too late")));
             return false;
         }
 
         p = (const char *)memchr(payload.data, '=', payload.size);
         if (p == nullptr || p == payload.data) {
             stopwatch_event(stopwatch, "control_error");
-            error = g_error_new_literal(was_quark(), 0,
-                                        "Malformed WAS HEADER packet");
-            AbortResponseHeaders(error);
+            AbortResponse(std::make_exception_ptr(WasProtocolError("Malformed WAS HEADER packet")));
             return false;
         }
 
@@ -419,12 +409,10 @@ WasClient::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload)
     case WAS_COMMAND_STATUS:
         if (!response.IsReceivingMetadata()) {
             stopwatch_event(stopwatch, "control_error");
-            error = g_error_new_literal(was_quark(), 0,
-                                "STATUS after body start");
             /* note: using AbortResponse() instead of
                AbortResponseBody() because the response may be still
                "pending" */
-            AbortResponse(error);
+            AbortResponse(std::make_exception_ptr(WasProtocolError("STATUS after body start")));
             return false;
         }
 
@@ -437,17 +425,13 @@ WasClient::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload)
             status = (http_status_t)*status16_r;
         else {
             stopwatch_event(stopwatch, "control_error");
-            error = g_error_new_literal(was_quark(), 0,
-                                        "malformed STATUS");
-            AbortResponseHeaders(error);
+            AbortResponseHeaders(std::make_exception_ptr(WasProtocolError("malformed STATUS")));
             return false;
         }
 
         if (!http_status_is_valid(status)) {
             stopwatch_event(stopwatch, "control_error");
-            error = g_error_new_literal(was_quark(), 0,
-                                        "malformed STATUS");
-            AbortResponseHeaders(error);
+            AbortResponseHeaders(std::make_exception_ptr(WasProtocolError("malformed STATUS")));
             return false;
         }
 
@@ -464,9 +448,7 @@ WasClient::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload)
     case WAS_COMMAND_NO_DATA:
         if (!response.IsReceivingMetadata()) {
             stopwatch_event(stopwatch, "control_error");
-            error = g_error_new_literal(was_quark(), 0,
-                                        "NO_DATA after body start");
-            AbortResponseBody(error);
+            AbortResponseBody(std::make_exception_ptr(WasProtocolError("NO_DATA after body start")));
             return false;
         }
 
@@ -489,17 +471,13 @@ WasClient::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload)
     case WAS_COMMAND_DATA:
         if (!response.IsReceivingMetadata()) {
             stopwatch_event(stopwatch, "control_error");
-            error = g_error_new_literal(was_quark(), 0,
-                                        "DATA after body start");
-            AbortResponseBody(error);
+            AbortResponseBody(std::make_exception_ptr(WasProtocolError("DATA after body start")));
             return false;
         }
 
         if (response.body == nullptr) {
             stopwatch_event(stopwatch, "control_error");
-            error = g_error_new_literal(was_quark(), 0,
-                                        "no response body allowed");
-            AbortResponseHeaders(error);
+            AbortResponseBody(std::make_exception_ptr(WasProtocolError("no response body allowed")));
             return false;
         }
 
@@ -509,26 +487,20 @@ WasClient::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload)
     case WAS_COMMAND_LENGTH:
         if (response.IsReceivingMetadata()) {
             stopwatch_event(stopwatch, "control_error");
-            error = g_error_new_literal(was_quark(), 0,
-                                        "LENGTH before DATA");
-            AbortResponseHeaders(error);
+            AbortResponseHeaders(std::make_exception_ptr(WasProtocolError("LENGTH before DATA")));
             return false;
         }
 
         if (response.body == nullptr) {
             stopwatch_event(stopwatch, "control_error");
-            error = g_error_new_literal(was_quark(), 0,
-                                        "LENGTH after NO_DATA");
-            AbortResponseBody(error);
+            AbortResponseBody(std::make_exception_ptr(WasProtocolError("LENGTH after NO_DATA")));
             return false;
         }
 
         length_p = (const uint64_t *)payload.data;
         if (payload.size != sizeof(*length_p)) {
             stopwatch_event(stopwatch, "control_error");
-            error = g_error_new_literal(was_quark(), 0,
-                                        "malformed LENGTH packet");
-            AbortResponseBody(error);
+            AbortResponseBody(std::make_exception_ptr(WasProtocolError("malformed LENGTH packet")));
             return false;
         }
 
@@ -558,18 +530,14 @@ WasClient::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload)
     case WAS_COMMAND_PREMATURE:
         if (response.IsReceivingMetadata()) {
             stopwatch_event(stopwatch, "control_error");
-            error = g_error_new_literal(was_quark(), 0,
-                                        "PREMATURE before DATA");
-            AbortResponseHeaders(error);
+            AbortResponseHeaders(std::make_exception_ptr(WasProtocolError("PREMATURE before DATA")));
             return false;
         }
 
         length_p = (const uint64_t *)payload.data;
         if (payload.size != sizeof(*length_p)) {
             stopwatch_event(stopwatch, "control_error");
-            error = g_error_new_literal(was_quark(), 0,
-                                        "malformed PREMATURE packet");
-            AbortResponseBody(error);
+            AbortResponseBody(std::make_exception_ptr(WasProtocolError("malformed PREMATURE packet")));
             return false;
         }
 
@@ -580,10 +548,11 @@ WasClient::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload)
             /* we can't let was_input report the error to its handler,
                because it cannot possibly have a handler yet; thus
                catch it and report it to the #HttpResponseHandler */
-            error = nullptr;
+            GError *error = nullptr;
             was_input_premature(response.body, *length_p, &error);
             response.body = nullptr;
-            AbortPending(error);
+            AbortPending(ToException(*error));
+            g_error_free(error);
             return false;
         } else {
             if (!was_input_premature(response.body, *length_p))

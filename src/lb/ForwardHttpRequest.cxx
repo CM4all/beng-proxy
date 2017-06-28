@@ -148,7 +148,7 @@ private:
     /* virtual methods from class HttpResponseHandler */
     void OnHttpResponse(http_status_t status, StringMap &&headers,
                         Istream *body) override;
-    void OnHttpError(GError *error) override;
+    void OnHttpError(std::exception_ptr ep) override;
 };
 
 static void
@@ -301,20 +301,19 @@ LbRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
 }
 
 void
-LbRequest::OnHttpError(GError *error)
+LbRequest::OnHttpError(std::exception_ptr ep)
 {
     assert(lease_state != LeaseState::NONE);
     assert(!response_sent);
 
-    if (IsHttpClientServerFailure(*error))
+    if (IsHttpClientServerFailure(ep))
         failure_add(tcp_stock_item_get_address(*stock_item));
 
-    connection.Log(2, "Error", error);
+    connection.Log(2, "Error", ep);
 
     if (!send_fallback(request, cluster_config.fallback))
-        connection.SendError(request, error);
+        connection.SendError(request, ep);
 
-    g_error_free(error);
     ResponseSent();
 }
 

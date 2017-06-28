@@ -13,8 +13,8 @@
 #include "strmap.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream_file.hxx"
-#include "gerrno.h"
 #include "pool.hxx"
+#include "system/Error.hxx"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -58,9 +58,7 @@ DelegateHttpRequest::OnDelegateSuccess(int fd)
 {
     struct stat st;
     if (fstat(fd, &st) < 0) {
-        GError *error = new_error_errno();
-        g_prefix_error(&error, "Failed to stat %s: ", path);
-        handler.InvokeError(error);
+        handler.InvokeError(std::make_exception_ptr(FormatErrno("Failed to stat %s: ", path)));
         return;
     }
 

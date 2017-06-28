@@ -18,8 +18,6 @@
 #include "istream/UnusedHoldPtr.hxx"
 #include "util/Exception.hxx"
 
-#include <glib.h>
-
 #include <daemon/log.h>
 
 struct ErrorResponseLoader final : HttpResponseHandler, Cancellable {
@@ -49,7 +47,7 @@ struct ErrorResponseLoader final : HttpResponseHandler, Cancellable {
     /* virtual methods from class HttpResponseHandler */
     void OnHttpResponse(http_status_t status, StringMap &&headers,
                         Istream *body) override;
-    void OnHttpError(GError *error) override;
+    void OnHttpError(std::exception_ptr ep) override;
 };
 
 static void
@@ -84,11 +82,10 @@ ErrorResponseLoader::OnHttpResponse(http_status_t _status, StringMap &&_headers,
 }
 
 void
-ErrorResponseLoader::OnHttpError(GError *error)
+ErrorResponseLoader::OnHttpError(std::exception_ptr ep)
 {
     daemon_log(2, "error on error document of %s: %s\n",
-               request2->request.uri, error->message);
-    g_error_free(error);
+               request2->request.uri, GetFullMessage(ep).c_str());
 
     errdoc_resubmit(*this);
 

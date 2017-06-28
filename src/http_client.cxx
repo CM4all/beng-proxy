@@ -29,6 +29,7 @@
 #include "GException.hxx"
 #include "fs_lease.hxx"
 #include "pool.hxx"
+#include "system/Error.hxx"
 #include "util/Cancellable.hxx"
 #include "util/Cast.hxx"
 #include "util/CharUtil.hxx"
@@ -36,6 +37,8 @@
 #include "util/StringView.hxx"
 #include "util/StringFormat.hxx"
 #include "util/StaticArray.hxx"
+#include "util/RuntimeError.hxx"
+#include "util/Exception.hxx"
 
 #include <inline/compiler.h>
 #include <inline/poison.h>
@@ -48,6 +51,17 @@
 #include <errno.h>
 #include <string.h>
 #include <unistd.h>
+
+bool
+IsHttpClientServerFailure(std::exception_ptr ep)
+{
+    try {
+        FindRetrowNested<HttpClientError>(ep);
+        return false;
+    } catch (const HttpClientError &e) {
+        return e.GetCode() != HttpClientErrorCode::UNSPECIFIED;
+    }
+}
 
 /**
  * With a request body of this size or larger, we send "Expect:
@@ -257,14 +271,23 @@ struct HttpClient final : IstreamHandler, Cancellable {
         this->~HttpClient();
     }
 
-    void PrefixError(GError **error_r) const {
-        g_prefix_error(error_r, "error on HTTP connection to '%s': ",
-                       peer_name);
+    std::exception_ptr PrefixError(std::exception_ptr ep) const {
+        return NestException(ep,
+                             FormatRuntimeError("error on HTTP connection to '%s'",
+                                                peer_name));
     }
 
-    void AbortResponseHeaders(GError *error);
-    void AbortResponseBody(GError *error);
-    void AbortResponse(GError *error);
+    void AbortResponseHeaders(std::exception_ptr ep);
+    void AbortResponseBody(std::exception_ptr ep);
+    void AbortResponse(std::exception_ptr ep);
+
+    void AbortResponseHeaders(HttpClientErrorCode code, const char *msg) {
+        AbortResponseHeaders(std::make_exception_ptr(HttpClientError(code, msg)));
+    }
+
+    void AbortResponse(HttpClientErrorCode code, const char *msg) {
+        AbortResponse(std::make_exception_ptr(HttpClientError(code, msg)));
+    }
 
     gcc_pure
     off_t GetAvailable(bool partial) const;
@@ -321,7 +344,7 @@ struct HttpClient final : IstreamHandler, Cancellable {
  * Abort receiving the response status/headers from the HTTP server.
  */
 void
-HttpClient::AbortResponseHeaders(GError *error)
+HttpClient::AbortResponseHeaders(std::exception_ptr ep)
 {
     assert(response.state == Response::State::STATUS ||
            response.state == Response::State::HEADERS);
@@ -332,8 +355,7 @@ HttpClient::AbortResponseHeaders(GError *error)
     if (request.istream.IsDefined())
         request.istream.Close();
 
-    PrefixError(&error);
-    request.handler.InvokeError(error);
+    request.handler.InvokeError(PrefixError(ep));
     Release(false);
 }
 
@@ -341,7 +363,7 @@ HttpClient::AbortResponseHeaders(GError *error)
  * Abort receiving the response status/headers from the HTTP server.
  */
 void
-HttpClient::AbortResponseBody(GError *error)
+HttpClient::AbortResponseBody(std::exception_ptr ep)
 {
     assert(response.state == Response::State::BODY);
     assert(response.body != nullptr);
@@ -354,10 +376,8 @@ HttpClient::AbortResponseBody(GError *error)
            reports EOF, and that handler closes the HttpClient, which
            then destroys HttpBodyReader, which finally destroys
            DechunkIstream ... */
-        g_error_free(error);
     } else {
-        PrefixError(&error);
-        response_body_reader.InvokeError(error);
+        response_body_reader.InvokeError(PrefixError(ep));
     }
 
     Release(false);
@@ -368,16 +388,16 @@ HttpClient::AbortResponseBody(GError *error)
  * server.
  */
 void
-HttpClient::AbortResponse(GError *error)
+HttpClient::AbortResponse(std::exception_ptr ep)
 {
     assert(response.state == Response::State::STATUS ||
            response.state == Response::State::HEADERS ||
            response.state == Response::State::BODY);
 
     if (response.state != Response::State::BODY)
-        AbortResponseHeaders(error);
+        AbortResponseHeaders(ep);
     else
-        AbortResponseBody(error);
+        AbortResponseBody(ep);
 }
 
 
@@ -551,7 +571,7 @@ HttpClient::TryWriteBuckets()
     } catch (...) {
         assert(!request.istream.IsDefined());
         stopwatch_event(stopwatch, "error");
-        AbortResponse(ToGError(std::current_exception()));
+        AbortResponse(std::current_exception());
         return BucketResult::DESTROYED;
     }
 
@@ -588,11 +608,8 @@ HttpClient::ParseStatusLine(const char *line, size_t length)
         (space = (const char *)memchr(line + 6, ' ', length - 6)) == nullptr) {
         stopwatch_event(stopwatch, "malformed");
 
-        GError *error =
-            g_error_new_literal(http_client_quark(),
-                                int(HttpClientErrorCode::GARBAGE),
-                                "malformed HTTP status line");
-        AbortResponseHeaders(error);
+        AbortResponseHeaders(HttpClientErrorCode::GARBAGE,
+                             "malformed HTTP status line");
         return false;
     }
 
@@ -605,11 +622,8 @@ HttpClient::ParseStatusLine(const char *line, size_t length)
                  !IsDigitASCII(line[1]) || !IsDigitASCII(line[2]))) {
         stopwatch_event(stopwatch, "malformed");
 
-        GError *error =
-            g_error_new_literal(http_client_quark(),
-                                int(HttpClientErrorCode::GARBAGE),
-                                "no HTTP status found");
-        AbortResponseHeaders(error);
+        AbortResponseHeaders(HttpClientErrorCode::GARBAGE,
+                             "no HTTP status found");
         return false;
     }
 
@@ -617,11 +631,9 @@ HttpClient::ParseStatusLine(const char *line, size_t length)
     if (gcc_unlikely(!http_status_is_valid(response.status))) {
         stopwatch_event(stopwatch, "malformed");
 
-        GError *error =
-            g_error_new(http_client_quark(), int(HttpClientErrorCode::GARBAGE),
-                        "invalid HTTP status %d",
-                        response.status);
-        AbortResponseHeaders(error);
+        AbortResponseHeaders(HttpClientErrorCode::GARBAGE,
+                             StringFormat<64>("invalid HTTP status %d",
+                                              response.status));
         return false;
     }
 
@@ -680,11 +692,8 @@ HttpClient::HeadersFinished()
             if (keep_alive) {
                 stopwatch_event(stopwatch, "malformed");
 
-                GError *error =
-                    g_error_new_literal(http_client_quark(),
-                                        int(HttpClientErrorCode::UNSPECIFIED),
-                                        "no Content-Length response header");
-                AbortResponseHeaders(error);
+                AbortResponseHeaders(HttpClientErrorCode::UNSPECIFIED,
+                                     "no Content-Length response header");
                 return false;
             }
             content_length = (off_t)-1;
@@ -696,11 +705,8 @@ HttpClient::HeadersFinished()
                          content_length < 0)) {
                 stopwatch_event(stopwatch, "malformed");
 
-                GError *error =
-                    g_error_new_literal(http_client_quark(),
-                                        int(HttpClientErrorCode::UNSPECIFIED),
-                                        "invalid Content-Length header in response");
-                AbortResponseHeaders(error);
+                AbortResponseHeaders(HttpClientErrorCode::UNSPECIFIED,
+                                     "invalid Content-Length header in response");
                 return false;
             }
 
@@ -874,14 +880,12 @@ HttpClient::FeedHeaders(const void *data, size_t length)
         assert(response.body == nullptr);
 
         if (request.body == nullptr) {
-            GError *error = g_error_new_literal(http_client_quark(),
-                                                int(HttpClientErrorCode::UNSPECIFIED),
-                                                "unexpected status 100");
 #ifndef NDEBUG
             /* assertion workaround */
             response.state = Response::State::STATUS;
 #endif
-            AbortResponseHeaders(error);
+            AbortResponseHeaders(HttpClientErrorCode::UNSPECIFIED,
+                                 "unexpected status 100");
             return BufferedResult::CLOSED;
         }
 
@@ -892,14 +896,12 @@ HttpClient::FeedHeaders(const void *data, size_t length)
         request.body = nullptr;
 
         if (!IsConnected()) {
-            GError *error = g_error_new_literal(http_client_quark(),
-                                                int(HttpClientErrorCode::UNSPECIFIED),
-                                                "Peer closed the socket prematurely after status 100");
 #ifndef NDEBUG
             /* assertion workaround */
             response.state = HttpClient::Response::State::STATUS;
 #endif
-            AbortResponseHeaders(error);
+            AbortResponseHeaders(HttpClientErrorCode::UNSPECIFIED,
+                                 "Peer closed the socket prematurely after status 100");
             return BufferedResult::CLOSED;
         }
 
@@ -1135,7 +1137,7 @@ http_client_socket_error(std::exception_ptr ep, void *ctx)
     HttpClient *client = (HttpClient *)ctx;
 
     stopwatch_event(client->stopwatch, "error");
-    client->AbortResponse(ToGError(ep));
+    client->AbortResponse(ep);
 }
 
 static constexpr BufferedSocketHandler http_client_socket_handler = {
@@ -1178,10 +1180,9 @@ HttpClient::OnData(const void *data, size_t length)
 
     stopwatch_event(stopwatch, "error");
 
-    GError *error = g_error_new(http_client_quark(),
-                                int(HttpClientErrorCode::IO),
-                                "write error (%s)", strerror(_errno));
-    AbortResponse(error);
+    AbortResponse(NestException(std::make_exception_ptr(MakeErrno(_errno)),
+                                HttpClientError(HttpClientErrorCode::IO,
+                                                "write error")));
     return 0;
 }
 
@@ -1234,11 +1235,11 @@ HttpClient::OnError(GError *error)
     request.istream.Clear();
 
     if (response.state != HttpClient::Response::State::BODY)
-        AbortResponseHeaders(error);
+        AbortResponseHeaders(ToException(*error));
     else if (response.body != nullptr)
-        AbortResponseBody(error);
-    else
-        g_error_free(error);
+        AbortResponseBody(ToException(*error));
+
+    g_error_free(error);
 }
 
 /*
@@ -1401,10 +1402,8 @@ http_client_request(struct pool &caller_pool, EventLoop &event_loop,
         if (filter != nullptr)
             filter->close(filter_ctx);
 
-        GError *error = g_error_new(http_client_quark(),
-                                    int(HttpClientErrorCode::UNSPECIFIED),
-                                    "malformed request URI '%s'", uri);
-        handler.InvokeError(error);
+        handler.InvokeError(std::make_exception_ptr(HttpClientError(HttpClientErrorCode::UNSPECIFIED,
+                                                                    StringFormat<256>("malformed request URI '%s'", uri))));
         return;
     }
 

@@ -19,6 +19,7 @@
 #include "GException.hxx"
 #include "util/Cast.hxx"
 #include "util/Cancellable.hxx"
+#include "util/Exception.hxx"
 
 #ifdef USE_BUCKETS
 #include "istream/Bucket.hxx"
@@ -83,7 +84,7 @@ struct Context final
     Connection *connection = nullptr;
     bool released = false, aborted = false;
     http_status_t status = http_status_t(0);
-    GError *request_error = nullptr;
+    std::exception_ptr request_error;
 
     char *content_length = nullptr;
     off_t available = 0;
@@ -124,7 +125,7 @@ struct Context final
     }
 
     bool WaitingForResponse() const {
-        return status == http_status_t(0) && request_error == nullptr;
+        return status == http_status_t(0) && !request_error;
     }
 
     void WaitForResponse() {
@@ -134,7 +135,7 @@ struct Context final
 
     void WaitForFirstBodyByte() {
         assert(status != http_status_t(0));
-        assert(request_error == nullptr);
+        assert(!request_error);
 
         while (body_data == 0 && body.IsDefined()) {
             assert(!body_eof);
@@ -243,7 +244,7 @@ struct Context final
     /* virtual methods from class HttpResponseHandler */
     void OnHttpResponse(http_status_t status, StringMap &&headers,
                         Istream *body) override;
-    void OnHttpError(GError *error) override;
+    void OnHttpError(std::exception_ptr ep) override;
 };
 
 template<class Connection>
@@ -386,10 +387,10 @@ Context<Connection>::OnHttpResponse(http_status_t _status,
 
 template<class Connection>
 void
-Context<Connection>::OnHttpError(GError *error)
+Context<Connection>::OnHttpError(std::exception_ptr ep)
 {
-    assert(request_error == nullptr);
-    request_error = error;
+    assert(!request_error);
+    request_error = ep;
 
     aborted = true;
 }
@@ -423,7 +424,7 @@ test_empty(Context<Connection> &c)
     assert(!c.body.IsDefined());
     assert(!c.body_eof);
     assert(!c.body_abort);
-    assert(c.request_error == nullptr);
+    assert(!c.request_error);
     assert(c.body_error == nullptr);
 }
 
@@ -445,7 +446,7 @@ test_body(Context<Connection> &c)
     c.WaitForResponse();
 
     assert(c.status == HTTP_STATUS_OK);
-    assert(c.request_error == nullptr);
+    assert(!c.request_error);
     assert(c.content_length == nullptr);
     assert(c.available == 6);
 
@@ -486,7 +487,7 @@ test_read_body(Context<Connection> &c)
     assert(c.available == 6);
     assert(c.body_eof);
     assert(c.body_data == 6);
-    assert(c.request_error == nullptr);
+    assert(!c.request_error);
     assert(c.body_error == nullptr);
 }
 
@@ -519,7 +520,7 @@ test_huge(Context<Connection> &c)
     assert(c.available >= 65536);
     assert(!c.body_eof);
     assert(c.body_data > 0);
-    assert(c.request_error == nullptr);
+    assert(!c.request_error);
     assert(c.body_error == nullptr);
 }
 
@@ -551,7 +552,7 @@ test_close_response_body_early(Context<Connection> &c)
     assert(c.body_data == 0);
     assert(!c.body_eof);
     assert(!c.body_abort);
-    assert(c.request_error == nullptr);
+    assert(!c.request_error);
     assert(c.body_error == nullptr);
 }
 
@@ -581,7 +582,7 @@ test_close_response_body_late(Context<Connection> &c)
     assert(c.body_data == 0);
     assert(!c.body_eof);
     assert(c.body_abort || c.body_closed);
-    assert(c.request_error == nullptr);
+    assert(!c.request_error);
     assert(c.body_error == nullptr);
 }
 
@@ -604,7 +605,7 @@ test_close_response_body_data(Context<Connection> &c)
     c.WaitForResponse();
 
     assert(c.status == HTTP_STATUS_OK);
-    assert(c.request_error == nullptr);
+    assert(!c.request_error);
     assert(c.content_length == nullptr);
     assert(c.available == 6);
 
@@ -670,8 +671,7 @@ test_close_request_body_early(Context<Connection> &c)
     assert(!c.body_abort);
     assert(c.body_error == nullptr);
     assert(c.request_error != nullptr);
-    assert(strstr(c.request_error->message, error->message) != nullptr);
-    g_error_free(c.request_error);
+    assert(strstr(GetFullMessage(c.request_error).c_str(), error->message) != nullptr);
     g_error_free(error);
 }
 
@@ -712,14 +712,14 @@ test_close_request_body_fail(Context<Connection> &c)
     assert(!c.body_eof);
     assert(c.body_abort);
 
-    if (c.body_error != nullptr && c.request_error == nullptr) {
-        c.request_error = c.body_error;
+    if (c.body_error != nullptr && !c.request_error) {
+        c.request_error = ToException(*c.body_error);
+        g_error_free(c.body_error);
         c.body_error = nullptr;
     }
 
     assert(c.request_error != nullptr);
-    assert(strstr(c.request_error->message, "delayed_fail") != 0);
-    g_error_free(c.request_error);
+    assert(strstr(GetFullMessage(c.request_error).c_str(), "delayed_fail") != nullptr);
     assert(c.body_error == nullptr);
 }
 
@@ -763,7 +763,7 @@ test_data_blocking(Context<Connection> &c)
     assert(c.body_data > 0);
     assert(!c.body_eof);
     assert(!c.body_abort);
-    assert(c.request_error == nullptr);
+    assert(!c.request_error);
     assert(c.body_error == nullptr);
 
     c.body.Close();
@@ -771,7 +771,7 @@ test_data_blocking(Context<Connection> &c)
     assert(c.released);
     assert(!c.body_eof);
     assert(!c.body_abort);
-    assert(c.request_error == nullptr);
+    assert(!c.request_error);
     assert(c.body_error == nullptr);
 
     /* flush all remaining events */
@@ -804,7 +804,7 @@ test_data_blocking2(Context<Connection> &c)
     c.WaitForResponse();
 
     assert(c.status == HTTP_STATUS_OK);
-    assert(c.request_error == nullptr);
+    assert(!c.request_error);
 
     c.WaitForFirstBodyByte();
 
@@ -828,7 +828,7 @@ test_data_blocking2(Context<Connection> &c)
     assert(c.body_eof);
     assert(!c.body_abort);
     assert(c.consumed_body_data == 256);
-    assert(c.request_error == nullptr);
+    assert(!c.request_error);
     assert(c.body_error == nullptr);
 }
 
@@ -856,14 +856,14 @@ test_body_fail(Context<Connection> &c)
     assert(c.released);
     assert(c.aborted || c.body_abort);
 
-    if (c.body_error != nullptr && c.request_error == nullptr) {
-        c.request_error = c.body_error;
+    if (c.body_error != nullptr && !c.request_error) {
+        c.request_error = ToException(*c.body_error);
+        g_error_free(c.body_error);
         c.body_error = nullptr;
     }
 
     assert(c.request_error != nullptr);
-    assert(strstr(c.request_error->message, error->message) != nullptr);
-    g_error_free(c.request_error);
+    assert(strstr(GetFullMessage(c.request_error).c_str(), error->message) != nullptr);
     g_error_free(error);
     assert(c.body_error == nullptr);
 }
@@ -893,7 +893,7 @@ test_head(Context<Connection> &c)
     assert(!c.body.IsDefined());
     assert(!c.body_eof);
     assert(!c.body_abort);
-    assert(c.request_error == nullptr);
+    assert(!c.request_error);
     assert(c.body_error == nullptr);
 }
 
@@ -924,7 +924,7 @@ test_head_discard(Context<Connection> &c)
     assert(!c.body.IsDefined());
     assert(!c.body_eof);
     assert(!c.body_abort);
-    assert(c.request_error == nullptr);
+    assert(!c.request_error);
     assert(c.body_error == nullptr);
 }
 
@@ -958,7 +958,7 @@ test_head_discard2(Context<Connection> &c)
     assert(!c.body.IsDefined());
     assert(!c.body_eof);
     assert(!c.body_abort);
-    assert(c.request_error == nullptr);
+    assert(!c.request_error);
     assert(c.body_error == nullptr);
 }
 
@@ -986,7 +986,7 @@ test_ignored_body(Context<Connection> &c)
     assert(!c.body.IsDefined());
     assert(!c.body_eof);
     assert(!c.body_abort);
-    assert(c.request_error == nullptr);
+    assert(!c.request_error);
     assert(c.body_error == nullptr);
 }
 
@@ -1022,7 +1022,7 @@ test_close_ignored_request_body(Context<Connection> &c)
     assert(!c.body.IsDefined());
     assert(!c.body_eof);
     assert(!c.body_abort);
-    assert(c.request_error == nullptr);
+    assert(!c.request_error);
     assert(c.body_error == nullptr);
 }
 
@@ -1057,7 +1057,7 @@ test_head_close_ignored_request_body(Context<Connection> &c)
     assert(!c.body.IsDefined());
     assert(!c.body_eof);
     assert(!c.body_abort);
-    assert(c.request_error == nullptr);
+    assert(!c.request_error);
     assert(c.body_error == nullptr);
 }
 
@@ -1091,7 +1091,7 @@ test_close_request_body_eor(Context<Connection> &c)
     assert(!c.body.IsDefined());
     assert(c.body_eof);
     assert(!c.body_abort);
-    assert(c.request_error == nullptr);
+    assert(!c.request_error);
     assert(c.body_error == nullptr);
 }
 
@@ -1125,7 +1125,7 @@ test_close_request_body_eor2(Context<Connection> &c)
     assert(!c.body.IsDefined());
     assert(c.body_eof);
     assert(!c.body_abort);
-    assert(c.request_error == nullptr);
+    assert(!c.request_error);
     assert(c.body_error == nullptr);
 }
 
@@ -1154,11 +1154,16 @@ test_bogus_100(Context<Connection> &c)
 
     assert(c.released);
     assert(c.aborted);
-    assert(c.request_error != nullptr);
-    assert(c.request_error->domain == http_client_quark());
-    assert(HttpClientErrorCode(c.request_error->code) == HttpClientErrorCode::UNSPECIFIED);
-    assert(strstr(c.request_error->message, "unexpected status 100") != nullptr);
-    g_error_free(c.request_error);
+    assert(c.request_error);
+
+    try {
+        FindRetrowNested<HttpClientError>(c.request_error);
+        assert(false);
+    } catch (const HttpClientError &e) {
+        assert(e.GetCode() == HttpClientErrorCode::UNSPECIFIED);
+    }
+
+    assert(strstr(GetFullMessage(c.request_error).c_str(), "unexpected status 100") != nullptr);
     assert(c.body_error == nullptr);
 }
 
@@ -1187,11 +1192,16 @@ test_twice_100(Context<Connection> &c)
 
     assert(c.released);
     assert(c.aborted);
-    assert(c.request_error != nullptr);
-    assert(c.request_error->domain == http_client_quark());
-    assert(HttpClientErrorCode(c.request_error->code) == HttpClientErrorCode::UNSPECIFIED);
-    assert(strstr(c.request_error->message, "unexpected status 100") != nullptr);
-    g_error_free(c.request_error);
+    assert(c.request_error);
+
+    try {
+        FindRetrowNested<HttpClientError>(c.request_error);
+        assert(false);
+    } catch (const HttpClientError &e) {
+        assert(e.GetCode() == HttpClientErrorCode::UNSPECIFIED);
+    }
+
+    assert(strstr(GetFullMessage(c.request_error).c_str(), "unexpected status 100") != nullptr);
     assert(c.body_error == nullptr);
 }
 
@@ -1219,8 +1229,7 @@ test_close_100(Context<Connection> &c)
     assert(c.released);
     assert(c.aborted);
     assert(c.request_error != nullptr);
-    assert(strstr(c.request_error->message, "closed the socket prematurely") != nullptr);
-    g_error_free(c.request_error);
+    assert(strstr(GetFullMessage(c.request_error).c_str(), "closed the socket prematurely") != nullptr);
     assert(c.body_error == nullptr);
 }
 
@@ -1255,7 +1264,7 @@ test_no_body_while_sending(Context<Connection> &c)
     assert(!c.body.IsDefined());
     assert(!c.body_eof);
     assert(!c.body_abort);
-    assert(c.request_error == nullptr);
+    assert(!c.request_error);
     assert(c.body_error == nullptr);
 }
 
@@ -1284,7 +1293,7 @@ test_hold(Context<Connection> &c)
     assert(!c.body.IsDefined());
     assert(!c.body_eof);
     assert(c.body_abort);
-    assert(c.request_error == nullptr);
+    assert(!c.request_error);
     assert(c.body_error != nullptr);
     g_error_free(c.body_error);
 }
@@ -1319,7 +1328,6 @@ test_premature_close_headers(Context<Connection> &c)
     assert(!c.body_eof);
     assert(!c.body_abort);
     assert(c.request_error != nullptr);
-    g_error_free(c.request_error);
 }
 
 #endif
@@ -1351,7 +1359,7 @@ test_premature_close_body(Context<Connection> &c)
     assert(c.status == HTTP_STATUS_OK);
     assert(!c.body_eof);
     assert(c.body_abort);
-    assert(c.request_error == nullptr);
+    assert(!c.request_error);
     assert(c.body_error != nullptr);
     g_error_free(c.body_error);
 }
@@ -1378,7 +1386,7 @@ test_post_empty(Context<Connection> &c)
 
     c.WaitForResponse();
 
-    assert(c.request_error == nullptr);
+    assert(!c.request_error);
     assert(c.status == HTTP_STATUS_OK ||
            c.status == HTTP_STATUS_NO_CONTENT);
     assert(c.content_length == nullptr ||

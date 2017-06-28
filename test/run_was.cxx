@@ -71,7 +71,7 @@ struct Context final
     /* virtual methods from class HttpResponseHandler */
     void OnHttpResponse(http_status_t status, StringMap &&headers,
                         Istream *body) override;
-    void OnHttpError(GError *error) override;
+    void OnHttpError(std::exception_ptr ep) override;
 };
 
 /*
@@ -107,10 +107,9 @@ Context::OnHttpResponse(gcc_unused http_status_t status,
 }
 
 void
-Context::OnHttpError(GError *_error)
+Context::OnHttpError(std::exception_ptr ep)
 {
-    g_printerr("%s\n", _error->message);
-    g_error_free(_error);
+    PrintException(ep);
 
     error = true;
 }

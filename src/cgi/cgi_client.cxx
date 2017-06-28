@@ -5,6 +5,7 @@
  */
 
 #include "cgi_client.hxx"
+#include "Error.hxx"
 #include "cgi_quark.h"
 #include "cgi_parser.hxx"
 #include "pool.hxx"
@@ -15,9 +16,11 @@
 #include "strmap.hxx"
 #include "http_response.hxx"
 #include "fb_pool.hxx"
+#include "GException.hxx"
 #include "SliceFifoBuffer.hxx"
 #include "util/Cast.hxx"
 #include "util/Cancellable.hxx"
+#include "util/Exception.hxx"
 
 #include <string.h>
 #include <stdlib.h>
@@ -327,10 +330,7 @@ CGIClient::OnEof()
 
         buffer.Free(fb_pool_get());
 
-        GError *error =
-            g_error_new_literal(cgi_quark(), 0,
-                                "premature end of headers from CGI script");
-        handler.InvokeError(error);
+        handler.InvokeError(std::make_exception_ptr(CgiError("premature end of headers from CGI script")));
         Destroy();
     } else if (parser.DoesRequireMore()) {
         stopwatch_event(stopwatch, "malformed");
@@ -338,10 +338,7 @@ CGIClient::OnEof()
 
         buffer.Free(fb_pool_get());
 
-        GError *error =
-            g_error_new_literal(cgi_quark(), 0,
-                                "premature end of response body from CGI script");
-        DestroyError(error);
+        DestroyError(std::make_exception_ptr(CgiError("premature end of response body from CGI script")));
     } else {
         stopwatch_event(stopwatch, "end");
         stopwatch_dump(stopwatch);
@@ -366,8 +363,9 @@ CGIClient::OnError(GError *error)
 
         buffer.Free(fb_pool_get());
 
-        g_prefix_error(&error, "CGI request body failed: ");
-        handler.InvokeError(error);
+        handler.InvokeError(NestException(ToException(*error),
+                                          std::runtime_error("CGI request body failed")));
+        g_error_free(error);
         Destroy();
     } else {
         /* response has been sent: abort only the output stream */

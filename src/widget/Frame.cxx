@@ -16,6 +16,8 @@
 #include "http_response.hxx"
 #include "istream/istream.hxx"
 #include "session.hxx"
+#include "util/Exception.hxx"
+#include "util/StringFormat.hxx"
 
 #include <assert.h>
 
@@ -32,24 +34,22 @@ frame_top_widget(struct pool *pool, Widget *widget,
     assert(env != nullptr);
 
     if (!widget_check_approval(widget)) {
-        GError *error =
-            g_error_new(widget_quark(), (int)WidgetErrorCode::FORBIDDEN,
-                        "widget '%s' is not allowed to embed widget '%s'",
-                        widget->parent->GetLogName(),
-                        widget->GetLogName());
+        WidgetError error(*widget->parent, WidgetErrorCode::FORBIDDEN,
+                          StringFormat<256>("widget '%s' is not allowed to embed widget '%s'",
+                                            widget->parent->GetLogName(),
+                                            widget->GetLogName()));
         widget->Cancel();
-        handler.InvokeError(error);
+        handler.InvokeError(std::make_exception_ptr(error));
         return;
     }
 
     try {
         widget->CheckHost(env->untrusted_host, env->site_name);
-    } catch (const std::runtime_error &e) {
-        GError *error =
-            g_error_new_literal(widget_quark(), (int)WidgetErrorCode::FORBIDDEN,
-                                e.what());
+    } catch (...) {
+        WidgetError error(*widget, WidgetErrorCode::FORBIDDEN,
+                          "Untrusted host");
         widget->Cancel();
-        handler.InvokeError(error);
+        handler.InvokeError(NestException(std::current_exception(), error));
         return;
     }
 

@@ -81,6 +81,9 @@ http_client_quark(void)
  * Is the specified error a server failure, that justifies
  * blacklisting the server for a while?
  */
+bool
+IsHttpClientServerFailure(std::exception_ptr ep);
+
 static inline bool
 IsHttpClientServerFailure(const GError &error)
 {

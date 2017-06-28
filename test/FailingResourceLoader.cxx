@@ -2,13 +2,7 @@
 #include "istream/istream.hxx"
 #include "http_response.hxx"
 
-#include <glib.h>
-
-static inline GQuark
-test_quark(void)
-{
-    return g_quark_from_static_string("test");
-}
+#include <stdexcept>
 
 void
 FailingResourceLoader::SendRequest(struct pool &,
@@ -24,5 +18,5 @@ FailingResourceLoader::SendRequest(struct pool &,
     if (body != nullptr)
         body->CloseUnused();
 
-    handler.InvokeError(g_error_new(test_quark(), 0, "unimplemented"));
+    handler.InvokeError(std::make_exception_ptr(std::runtime_error("unimplemented")));
 }

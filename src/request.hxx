@@ -364,7 +364,7 @@ public:
     /* virtual methods from class HttpResponseHandler */
     void OnHttpResponse(http_status_t status, StringMap &&headers,
                         Istream *body) override;
-    void OnHttpError(GError *error) override;
+    void OnHttpError(std::exception_ptr ep) override;
 
     /* virtual methods from class DelegateHandler */
     void OnDelegateSuccess(int fd) override;

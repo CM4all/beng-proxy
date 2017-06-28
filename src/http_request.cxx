@@ -23,6 +23,7 @@
 #include "GException.hxx"
 #include "net/SocketAddress.hxx"
 #include "util/Cancellable.hxx"
+#include "util/Exception.hxx"
 
 #include <inline/compiler.h>
 
@@ -127,12 +128,6 @@ private:
             Destroy();
     }
 
-    void Failed(GError *error) {
-        body.Clear();
-        handler.InvokeError(error);
-        ResponseSent();
-    }
-
     void Failed(std::exception_ptr ep) {
         body.Clear();
         handler.InvokeError(ep);
@@ -165,7 +160,7 @@ private:
     /* virtual methods from class HttpResponseHandler */
     void OnHttpResponse(http_status_t status, StringMap &&headers,
                         Istream *body) override;
-    void OnHttpError(GError *error) override;
+    void OnHttpError(std::exception_ptr ep) override;
 };
 
 /*
@@ -186,30 +181,38 @@ HttpRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
     ResponseSent();
 }
 
+static bool
+HasHttpClientErrorCode(std::exception_ptr ep, HttpClientErrorCode code)
+{
+    try {
+        FindRetrowNested<HttpClientError>(ep);
+        return false;
+    } catch (const HttpClientError &e) {
+        return e.GetCode() == code;
+    }
+}
+
 void
-HttpRequest::OnHttpError(GError *error)
+HttpRequest::OnHttpError(std::exception_ptr ep)
 {
     assert(lease_state != LeaseState::NONE);
     assert(!response_sent);
 
     if (retries > 0 &&
-        error->domain == http_client_quark() &&
-        HttpClientErrorCode(error->code) == HttpClientErrorCode::REFUSED) {
+        HasHttpClientErrorCode(ep, HttpClientErrorCode::REFUSED)) {
         /* the server has closed the connection prematurely, maybe
            because it didn't want to get any further requests on that
            TCP connection.  Let's try again. */
 
-        g_error_free(error);
-
         --retries;
         BeginConnect();
     } else {
-        if (IsHttpClientServerFailure(*error))
+        if (IsHttpClientServerFailure(ep))
             failure_set(tcp_stock_item_get_address(*stock_item),
                         FAILURE_RESPONSE,
                         std::chrono::seconds(20));
 
-        Failed(error);
+        Failed(ep);
     }
 }
 

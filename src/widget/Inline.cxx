@@ -62,7 +62,7 @@ struct InlineWidget final : HttpResponseHandler {
     /* virtual methods from class HttpResponseHandler */
     void OnHttpResponse(http_status_t status, StringMap &&headers,
                         Istream *body) override;
-    void OnHttpError(GError *error) override;
+    void OnHttpError(std::exception_ptr ep) override;
 };
 
 static void
@@ -205,9 +205,9 @@ InlineWidget::OnHttpResponse(http_status_t status, StringMap &&headers,
 }
 
 void
-InlineWidget::OnHttpError(GError *error)
+InlineWidget::OnHttpError(std::exception_ptr ep)
 {
-    inline_widget_close(this, error);
+    inline_widget_close(this, ep);
 }
 
 /*

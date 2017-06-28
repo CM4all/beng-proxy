@@ -7,8 +7,6 @@
 #ifndef BENG_PROXY_HTTP_RESPONSE_HXX
 #define BENG_PROXY_HTTP_RESPONSE_HXX
 
-#include "glibfwd.hxx"
-
 #include <http/status.h>
 
 #include <utility>
@@ -25,7 +23,7 @@ protected:
     virtual void OnHttpResponse(http_status_t status, StringMap &&headers,
                                 Istream *body) = 0;
 
-    virtual void OnHttpError(GError *error) = 0;
+    virtual void OnHttpError(std::exception_ptr ep) = 0;
 
 public:
     void InvokeResponse(http_status_t status, StringMap &&headers,
@@ -42,13 +40,11 @@ public:
     void InvokeResponse(struct pool &pool,
                         http_status_t status, const char *msg);
 
-    void InvokeError(GError *error) {
-        assert(error != nullptr);
+    void InvokeError(std::exception_ptr ep) {
+        assert(ep);
 
-        OnHttpError(error);
+        OnHttpError(ep);
     }
-
-    void InvokeError(std::exception_ptr ep);
 };
 
 struct http_response_handler_ref {
@@ -110,7 +106,7 @@ struct http_response_handler_ref {
         handler->InvokeResponse(pool, status, msg);
     }
 
-    void InvokeError(GError *error) {
+    void InvokeError(std::exception_ptr ep) {
         assert(handler != nullptr);
         assert(!IsUsed());
 
@@ -118,7 +114,7 @@ struct http_response_handler_ref {
         used = true;
 #endif
 
-        handler->InvokeError(error);
+        handler->InvokeError(ep);
     }
 };
 

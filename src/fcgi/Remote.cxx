@@ -16,7 +16,6 @@
 #include "address_list.hxx"
 #include "pool.hxx"
 #include "strmap.hxx"
-#include "GException.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream_hold.hxx"
 #include "net/SocketDescriptor.hxx"
@@ -121,7 +120,7 @@ FcgiRemoteRequest::OnStockItemError(std::exception_ptr ep)
     if (stderr_fd >= 0)
         close(stderr_fd);
 
-    handler.InvokeError(ToGError(ep));
+    handler.InvokeError(ep);
 }
 
 /*

@@ -13,6 +13,7 @@
 #include "istream/istream.hxx"
 #include "istream/istream_string.hxx"
 #include "util/Cancellable.hxx"
+#include "util/PrintException.hxx"
 
 #include <inline/compiler.h>
 
@@ -259,7 +260,7 @@ struct Context final : HttpResponseHandler {
     /* virtual methods from class HttpResponseHandler */
     void OnHttpResponse(http_status_t status, StringMap &&headers,
                         Istream *body) override;
-    void OnHttpError(GError *error) override;
+    void OnHttpError(std::exception_ptr ep) override;
 };
 
 void
@@ -290,10 +291,9 @@ Context::OnHttpResponse(http_status_t status, StringMap &&headers,
 }
 
 void gcc_noreturn
-Context::OnHttpError(GError *error)
+Context::OnHttpError(std::exception_ptr ep)
 {
-    g_printerr("%s\n", error->message);
-    g_error_free(error);
+    PrintException(ep);
 
     assert(false);
 }

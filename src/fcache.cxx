@@ -29,10 +29,9 @@
 #include "http/Date.hxx"
 #include "util/Cancellable.hxx"
 #include "util/Exception.hxx"
+#include "util/RuntimeError.hxx"
 
 #include <boost/intrusive/list.hpp>
-
-#include <glib.h>
 
 #include <string.h>
 #include <stdlib.h>
@@ -153,7 +152,7 @@ struct FilterCacheRequest final : HttpResponseHandler, RubberSinkHandler {
     /* virtual methods from class HttpResponseHandler */
     void OnHttpResponse(http_status_t status, StringMap &&headers,
                         Istream *body) override;
-    void OnHttpError(GError *error) override;
+    void OnHttpError(std::exception_ptr ep) override;
 
     /* virtual methods from class RubberSinkHandler */
     void RubberDone(unsigned rubber_id, size_t size) override;
@@ -470,12 +469,12 @@ FilterCacheRequest::OnHttpResponse(http_status_t status, StringMap &&headers,
 }
 
 void
-FilterCacheRequest::OnHttpError(GError *error)
+FilterCacheRequest::OnHttpError(std::exception_ptr ep)
 {
-    g_prefix_error(&error, "http_cache %s: ", info.key);
+    ep = NestException(ep, FormatRuntimeError("fcache %s", info.key));
 
     auto &_caller_pool = caller_pool;
-    handler.InvokeError(error);
+    handler.InvokeError(ep);
     pool_unref(&_caller_pool);
 }
 

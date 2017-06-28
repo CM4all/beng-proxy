@@ -863,13 +863,9 @@ Request::OnHttpResponse(http_status_t status, StringMap &&headers,
 }
 
 void
-Request::OnHttpError(GError *error)
+Request::OnHttpError(std::exception_ptr ep)
 {
     assert(!response_sent);
 
-    daemon_log(2, "error on %s: %s\n", request.uri, error->message);
-
-    response_dispatch_error(*this, error);
-
-    g_error_free(error);
+    response_dispatch_log(*this, ep);
 }

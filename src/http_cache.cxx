@@ -28,6 +28,7 @@
 #include "util/Cast.hxx"
 #include "util/Cancellable.hxx"
 #include "util/Exception.hxx"
+#include "util/RuntimeError.hxx"
 
 #include <glib.h>
 
@@ -140,7 +141,7 @@ public:
     /* virtual methods from class HttpResponseHandler */
     void OnHttpResponse(http_status_t status, StringMap &&headers,
                         Istream *body) override;
-    void OnHttpError(GError *error) override;
+    void OnHttpError(std::exception_ptr ep) override;
 
     /* virtual methods from class RubberSinkHandler */
     void RubberDone(unsigned rubber_id, size_t size) override;
@@ -447,9 +448,9 @@ HttpCacheRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
 }
 
 void
-HttpCacheRequest::OnHttpError(GError *error)
+HttpCacheRequest::OnHttpError(std::exception_ptr ep)
 {
-    g_prefix_error(&error, "http_cache %s: ", key);
+    ep = NestException(ep, FormatRuntimeError("http_cache %s", key));
 
     if (document != nullptr && cache.heap.IsDefined())
         http_cache_unlock(cache, document);
@@ -460,7 +461,7 @@ HttpCacheRequest::OnHttpError(GError *error)
         /* free the cached document istream (memcached) */
         document_body->CloseUnused();
 
-    handler.InvokeError(error);
+    handler.InvokeError(ep);
     pool_unref_denotify(&caller_pool, &caller_pool_notify);
 }
 

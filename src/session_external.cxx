@@ -14,10 +14,9 @@
 #include "istream/istream.hxx"
 #include "AllocatorPtr.hxx"
 #include "util/Background.hxx"
+#include "util/Exception.hxx"
 
 #include <daemon/log.h>
-
-#include <glib.h>
 
 class ExternalSessionRefresh final
     : public LinkedBackgroundJob, HttpResponseHandler {
@@ -55,10 +54,9 @@ public:
         Remove();
     }
 
-    void OnHttpError(GError *error) override {
+    void OnHttpError(std::exception_ptr ep) override {
         daemon_log(2, "Failed to refresh external session: %s\n",
-                   error->message);
-        g_error_free(error);
+                   GetFullMessage(ep).c_str());
 
         Remove();
     }
