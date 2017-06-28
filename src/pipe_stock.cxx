@@ -41,9 +41,8 @@ pipe_stock_create(gcc_unused void *ctx,
 {
     auto *item = new PipeStockItem(c);
 
-    int ret = UniqueFileDescriptor::CreatePipeNonBlock(item->fds[0],
-                                                       item->fds[1]);
-    if (ret < 0) {
+    if (!UniqueFileDescriptor::CreatePipeNonBlock(item->fds[0],
+                                                  item->fds[1])) {
         GError *error = new_error_errno_msg("pipe() failed");
         item->InvokeCreateError(error);
         return;
