@@ -232,7 +232,7 @@ http_cache_choice_buffer_error(std::exception_ptr ep, void *ctx)
 {
     auto choice = (HttpCacheChoice *)ctx;
 
-    choice->callback.get(nullptr, true, ToGError(ep), choice->callback_ctx);
+    choice->callback.get(nullptr, true, ep, choice->callback_ctx);
 }
 
 static const struct sink_buffer_handler http_cache_choice_buffer_handler = {
@@ -268,7 +268,7 @@ http_cache_choice_get_error(std::exception_ptr ep, void *ctx)
 {
     auto choice = (HttpCacheChoice *)ctx;
 
-    choice->callback.get(nullptr, false, ToGError(ep), choice->callback_ctx);
+    choice->callback.get(nullptr, false, ep, choice->callback_ctx);
 }
 
 static const struct memcached_client_handler http_cache_choice_get_handler = {
@@ -334,7 +334,7 @@ http_cache_choice_add_error(std::exception_ptr ep, void *ctx)
 {
     auto choice = (HttpCacheChoice *)ctx;
 
-    choice->callback.commit(ToGError(ep), choice->callback_ctx);
+    choice->callback.commit(ep, choice->callback_ctx);
 }
 
 static const struct memcached_client_handler http_cache_choice_add_handler = {
@@ -387,7 +387,7 @@ http_cache_choice_prepend_error(std::exception_ptr ep, void *ctx)
 {
     auto choice = (HttpCacheChoice *)ctx;
 
-    choice->callback.commit(ToGError(ep), choice->callback_ctx);
+    choice->callback.commit(ep, choice->callback_ctx);
 }
 
 static const struct memcached_client_handler http_cache_choice_prepend_handler = {
@@ -442,7 +442,7 @@ http_cache_choice_filter_set_error(std::exception_ptr ep, void *ctx)
 {
     auto choice = (HttpCacheChoice *)ctx;
 
-    choice->callback.filter(nullptr, ToGError(ep), choice->callback_ctx);
+    choice->callback.filter(nullptr, ep, choice->callback_ctx);
 }
 
 static const struct memcached_client_handler http_cache_choice_filter_set_handler = {
@@ -517,7 +517,7 @@ http_cache_choice_filter_buffer_error(std::exception_ptr ep, void *ctx)
 {
     auto choice = (HttpCacheChoice *)ctx;
 
-    choice->callback.filter(nullptr, ToGError(ep), choice->callback_ctx);
+    choice->callback.filter(nullptr, ep, choice->callback_ctx);
 }
 
 static const struct sink_buffer_handler http_cache_choice_filter_buffer_handler = {
@@ -553,7 +553,7 @@ http_cache_choice_filter_get_error(std::exception_ptr ep, void *ctx)
 {
     auto choice = (HttpCacheChoice *)ctx;
 
-    choice->callback.filter(nullptr, ToGError(ep), choice->callback_ctx);
+    choice->callback.filter(nullptr, ep, choice->callback_ctx);
 }
 
 static const struct memcached_client_handler http_cache_choice_filter_get_handler = {
@@ -598,7 +598,7 @@ struct HttpCacheChoiceCleanup {
 
 static bool
 http_cache_choice_cleanup_filter_callback(const HttpCacheChoiceInfo *info,
-                                          GError *error, void *ctx)
+                                          std::exception_ptr ep, void *ctx)
 {
     auto &cleanup = *(HttpCacheChoiceCleanup *)ctx;
 
@@ -609,7 +609,7 @@ http_cache_choice_cleanup_filter_callback(const HttpCacheChoiceInfo *info,
                 info->expires >= cleanup.now) &&
             !duplicate;
     } else {
-        cleanup.callback(error, cleanup.callback_ctx);
+        cleanup.callback(ep, cleanup.callback_ctx);
         return false;
     }
 }
@@ -650,7 +650,7 @@ http_cache_choice_delete_error(std::exception_ptr ep, void *ctx)
 {
     auto choice = (HttpCacheChoice *)ctx;
 
-    choice->callback.delete_(ToGError(ep), choice->callback_ctx);
+    choice->callback.delete_(ep, choice->callback_ctx);
 }
 
 static const struct memcached_client_handler http_cache_choice_delete_handler = {

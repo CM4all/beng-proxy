@@ -17,8 +17,6 @@
 #include "util/Cancellable.hxx"
 #include "util/PrintException.hxx"
 
-#include <glib.h>
-
 #include <unistd.h>
 #include <stdio.h>
 #include <netdb.h>
@@ -26,12 +24,10 @@
 #include <string.h>
 
 static void
-cleanup_callback(GError *error, gcc_unused void *ctx)
+cleanup_callback(std::exception_ptr ep, gcc_unused void *ctx)
 {
-    if (error != NULL) {
-        g_printerr("%s\n", error->message);
-        g_error_free(error);
-    }
+    if (ep)
+        PrintException(ep);
 }
 
 /*

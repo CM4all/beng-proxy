@@ -7,11 +7,10 @@
 #ifndef BENG_PROXY_HTTP_CACHE_CHOICE_HXX
 #define BENG_PROXY_HTTP_CACHE_CHOICE_HXX
 
-#include "glibfwd.hxx"
-
 #include <inline/compiler.h>
 
 #include <chrono>
+#include <exception>
 
 struct pool;
 struct HttpCacheChoice;
@@ -29,12 +28,12 @@ struct HttpCacheChoiceInfo {
 };
 
 typedef void (*http_cache_choice_get_t)(const char *key, bool unclean,
-                                        GError *error, void *ctx);
-typedef void (*http_cache_choice_commit_t)(GError *error, void *ctx);
+                                        std::exception_ptr ep, void *ctx);
+typedef void (*http_cache_choice_commit_t)(std::exception_ptr ep, void *ctx);
 typedef bool (*http_cache_choice_filter_t)(const HttpCacheChoiceInfo *info,
-                                           GError *error, void *ctx);
-typedef void (*http_cache_choice_cleanup_t)(GError *error, void *ctx);
-typedef void (*http_cache_choice_delete_t)(GError *error, void *ctx);
+                                           std::exception_ptr ep, void *ctx);
+typedef void (*http_cache_choice_cleanup_t)(std::exception_ptr ep, void *ctx);
+typedef void (*http_cache_choice_delete_t)(std::exception_ptr ep, void *ctx);
 
 const char *
 http_cache_choice_vary_key(struct pool &pool, const char *uri,

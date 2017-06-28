@@ -213,21 +213,19 @@ static const struct memcached_client_handler http_cache_memcached_get_handler = 
 };
 
 static void
-background_callback(GError *error, void *ctx)
+background_callback(std::exception_ptr ep, void *ctx)
 {
     LinkedBackgroundJob *job = (LinkedBackgroundJob *)ctx;
 
-    if (error != nullptr) {
-        cache_log(2, "http-cache: memcached failed: %s\n", error->message);
-        g_error_free(error);
-    }
+    if (ep)
+        cache_log(2, "http-cache: memcached failed: %s\n", GetFullMessage(ep).c_str());
 
     job->Remove();
 }
 
 static void
 mcd_choice_get_callback(const char *key, bool unclean,
-                        GError *error, void *ctx)
+                        std::exception_ptr ep, void *ctx)
 {
     auto &request = *(HttpCacheMemcachedRequest *)ctx;
 
@@ -246,7 +244,7 @@ mcd_choice_get_callback(const char *key, bool unclean,
     }
 
     if (key == nullptr) {
-        request.callback.get(nullptr, nullptr, error, request.callback_ctx);
+        request.callback.get(nullptr, nullptr, ToGError(ep), request.callback_ctx);
         return;
     }
 
@@ -369,11 +367,11 @@ http_cache_memcached_get(struct pool &pool, MemachedStock &stock,
 }
 
 static void
-mcd_choice_commit_callback(GError *error, void *ctx)
+mcd_choice_commit_callback(std::exception_ptr ep, void *ctx)
 {
     auto &request = *(HttpCacheMemcachedRequest *)ctx;
 
-    request.callback.put(error, request.callback_ctx);
+    request.callback.put(ToGError(ep), request.callback_ctx);
 }
 
 static void
@@ -564,7 +562,7 @@ struct match_data {
 
 static bool
 mcd_delete_filter_callback(const HttpCacheChoiceInfo *info,
-                           GError *error, void *ctx)
+                           std::exception_ptr ep, void *ctx)
 {
     match_data *data = (match_data *)ctx;
 
@@ -578,10 +576,8 @@ mcd_delete_filter_callback(const HttpCacheChoiceInfo *info,
         } else
             return true;
     } else {
-        if (error != nullptr) {
-            cache_log(2, "http-cache: memcached failed: %s\n", error->message);
-            g_error_free(error);
-        }
+        if (ep)
+            cache_log(2, "http-cache: memcached failed: %s\n", GetFullMessage(ep).c_str());
 
         data->background->Remove(data->job);
         return false;
