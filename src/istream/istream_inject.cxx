@@ -16,11 +16,11 @@ public:
     InjectIstream(struct pool &p, Istream &_input)
         :ForwardIstream(p, _input) {}
 
-    void InjectFault(GError *error) {
+    void InjectFault(std::exception_ptr ep) {
         if (HasInput())
             input.Close();
 
-        DestroyError(error);
+        DestroyError(ep);
     }
 
     /* virtual methods from class Istream */
@@ -66,8 +66,8 @@ istream_inject_new(struct pool &pool, Istream &input)
 }
 
 void
-istream_inject_fault(Istream &i_inject, GError *error)
+istream_inject_fault(Istream &i_inject, std::exception_ptr ep)
 {
     auto &inject = (InjectIstream &)i_inject;
-    inject.InjectFault(error);
+    inject.InjectFault(ep);
 }

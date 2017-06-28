@@ -15,6 +15,8 @@
 
 #include <glib.h>
 
+#include <stdexcept>
+
 #include <stdio.h>
 #ifdef EXPECTED_RESULT
 #include <string.h>
@@ -74,17 +76,12 @@ struct Context final : IstreamHandler {
 
     DeferEvent defer_inject_event;
     Istream *defer_inject_istream = nullptr;
-    GError *defer_inject_error = nullptr;
+    std::exception_ptr defer_inject_error;
 
     explicit Context(Instance &_instance, Istream &_input)
         :instance(_instance), input(_input, *this),
          defer_inject_event(instance.event_loop,
                             BIND_THIS_METHOD(DeferredInject)) {}
-
-    ~Context() {
-        if (defer_inject_error != nullptr)
-            g_error_free(defer_inject_error);
-    }
 
     int ReadEvent() {
         input.Read();
@@ -104,26 +101,25 @@ struct Context final : IstreamHandler {
         instance.event_loop.LoopOnceNonBlock();
     }
 
-    void DeferInject(Istream &istream, GError *error) {
-        assert(error != nullptr);
+    void DeferInject(Istream &istream, std::exception_ptr ep) {
+        assert(ep);
         assert(defer_inject_istream == nullptr);
-        assert(defer_inject_error == nullptr);
+        assert(!defer_inject_error);
 
         defer_inject_istream = &istream;
-        defer_inject_error = error;
+        defer_inject_error = ep;
         defer_inject_event.Schedule();
     }
 
     void DeferredInject() {
         assert(defer_inject_istream != nullptr);
-        assert(defer_inject_error != nullptr);
+        assert(defer_inject_error);
 
         auto &i = *defer_inject_istream;
         defer_inject_istream = nullptr;
-        auto e = defer_inject_error;
-        defer_inject_error = nullptr;
 
-        istream_inject_fault(i, e);
+        istream_inject_fault(i, std::exchange(defer_inject_error,
+                                              std::exception_ptr()));
     }
 
     /* virtual methods from class IstreamHandler */
@@ -145,7 +141,7 @@ Context::OnData(gcc_unused const void *data, size_t length)
 
     if (block_inject != nullptr) {
         DeferInject(*block_inject,
-                    g_error_new_literal(test_quark(), 0, "block_inject"));
+                    std::make_exception_ptr(std::runtime_error("block_inject")));
         block_inject = nullptr;
         return 0;
     }
@@ -158,7 +154,7 @@ Context::OnData(gcc_unused const void *data, size_t length)
 
     if (abort_istream != nullptr && abort_after-- == 0) {
         DeferInject(*abort_istream,
-                    g_error_new_literal(test_quark(), 0, "abort_istream"));
+                    std::make_exception_ptr(std::runtime_error("abort_istream")));
         abort_istream = nullptr;
         return 0;
     }
@@ -203,14 +199,14 @@ Context::OnDirect(gcc_unused FdType type, gcc_unused int fd, size_t max_length)
 
     if (block_inject != nullptr) {
         DeferInject(*block_inject,
-                    g_error_new_literal(test_quark(), 0, "block_inject"));
+                    std::make_exception_ptr(std::runtime_error("block_inject")));
         block_inject = nullptr;
         return 0;
     }
 
     if (abort_istream != nullptr) {
         DeferInject(*abort_istream,
-                    g_error_new_literal(test_quark(), 0, "abort_istream"));
+                    std::make_exception_ptr(std::runtime_error("abort_istream")));
         abort_istream = nullptr;
         return 0;
     }
