@@ -7,8 +7,6 @@
 #ifndef BENG_PROXY_CGI_LAUNCH_HXX
 #define BENG_PROXY_CGI_LAUNCH_HXX
 
-#include "glibfwd.hxx"
-
 #include <http/method.h>
 
 struct pool;

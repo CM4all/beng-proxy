@@ -17,8 +17,6 @@
 #include "util/Cancellable.hxx"
 #include "util/PrintException.hxx"
 
-#include <glib.h>
-
 #include <unistd.h>
 #include <stdio.h>
 #include <errno.h>

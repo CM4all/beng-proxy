@@ -27,8 +27,6 @@
 #include "pool.hxx"
 #include "util/Cast.hxx"
 
-#include <glib.h>
-
 #include <daemon/log.h>
 
 struct ProxyWidget final : WidgetLookupHandler, HttpResponseHandler, Cancellable {

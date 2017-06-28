@@ -7,8 +7,6 @@
 #include "pool.hxx"
 #include "failure.hxx"
 
-#include <glib.h>
-
 void
 LbMonitorController::Success()
 {

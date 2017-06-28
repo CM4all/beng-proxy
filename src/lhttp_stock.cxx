@@ -22,8 +22,6 @@
 
 #include <daemon/log.h>
 
-#include <glib.h>
-
 #include <assert.h>
 #include <unistd.h>
 #include <string.h>

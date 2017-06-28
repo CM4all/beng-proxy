@@ -5,8 +5,6 @@
 #ifndef SPAWN_ISTREAM_HXX
 #define SPAWN_ISTREAM_HXX
 
-#include "glibfwd.hxx"
-
 #include <sys/types.h>
 
 struct pool;

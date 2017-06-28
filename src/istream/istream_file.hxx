@@ -8,7 +8,6 @@
 #define BENG_PROXY_ISTREAM_FILE_HXX
 
 #include "io/FdType.hxx"
-#include "glibfwd.hxx"
 
 #include <inline/compiler.h>
 

@@ -14,8 +14,6 @@
 #include "util/Cancellable.hxx"
 #include "util/PrintException.hxx"
 
-#include <glib.h>
-
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -207,7 +205,7 @@ Context::OnNfsClientClosed(std::exception_ptr ep)
 
 int main(int argc, char **argv) {
     if (argc != 4) {
-        g_printerr("usage: run_nfs_client SERVER ROOT PATH\n");
+        fprintf(stderr, "usage: run_nfs_client SERVER ROOT PATH\n");
         return EXIT_FAILURE;
     }
 

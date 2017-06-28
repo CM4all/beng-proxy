@@ -8,7 +8,6 @@
 #define BENG_PROXY_WIDGET_HXX
 
 #include "util/StringView.hxx"
-#include "glibfwd.hxx"
 
 #include <inline/compiler.h>
 #include <http/method.h>

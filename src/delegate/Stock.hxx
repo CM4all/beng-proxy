@@ -7,8 +7,6 @@
 #ifndef BENG_DELEGATE_STOCK_HXX
 #define BENG_DELEGATE_STOCK_HXX
 
-#include "glibfwd.hxx"
-
 struct pool;
 struct ChildOptions;
 class StockMap;

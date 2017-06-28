@@ -6,8 +6,6 @@
 
 #include "capabilities.hxx"
 
-#include <glib.h>
-
 #include <sys/prctl.h>
 #include <string.h>
 #include <errno.h>

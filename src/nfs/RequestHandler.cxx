@@ -18,8 +18,6 @@
 #include "http_server/Request.hxx"
 #include "pool.hxx"
 
-#include <glib.h>
-
 #include <assert.h>
 #include <sys/stat.h>
 #include <unistd.h>

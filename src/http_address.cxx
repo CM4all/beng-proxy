@@ -17,8 +17,6 @@
 
 #include <socket/address.h>
 
-#include <glib.h>
-
 #include <stdexcept>
 
 #include <string.h>

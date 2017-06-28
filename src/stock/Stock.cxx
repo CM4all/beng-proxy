@@ -11,8 +11,6 @@
 
 #include <daemon/log.h>
 
-#include <glib.h>
-
 #include <assert.h>
 
 inline

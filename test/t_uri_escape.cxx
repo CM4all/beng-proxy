@@ -8,8 +8,6 @@
 #include <cppunit/ui/text/TestRunner.h>
 #include <cppunit/extensions/HelperMacros.h>
 
-#include <glib.h>
-
 #include <string.h>
 #include <stdlib.h>
 

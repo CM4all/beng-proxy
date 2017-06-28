@@ -16,8 +16,6 @@
 #include "util/Cancellable.hxx"
 #include "util/PrintException.hxx"
 
-#include <glib.h>
-
 #include <stdio.h>
 
 static void

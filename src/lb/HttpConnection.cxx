@@ -29,8 +29,6 @@
 
 #include <daemon/log.h>
 
-#include <glib.h>
-
 #include <assert.h>
 
 LbHttpConnection::LbHttpConnection(struct pool &_pool, LbInstance &_instance,

@@ -7,7 +7,6 @@
 
 #include "spawn/ChildOptions.hxx"
 #include "adata/ExpandableStringList.hxx"
-#include "glibfwd.hxx"
 #include "util/ShallowCopy.hxx"
 
 #include <inline/compiler.h>

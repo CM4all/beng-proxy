@@ -22,8 +22,6 @@
 #include "util/Exception.hxx"
 #include "util/Macros.hxx"
 
-#include <glib.h>
-
 #include <daemon/log.h>
 
 #include <memory>

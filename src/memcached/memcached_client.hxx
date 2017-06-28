@@ -9,7 +9,6 @@
 
 #include "io/FdType.hxx"
 #include "memcached_protocol.hxx"
-#include "glibfwd.hxx"
 
 #include <exception>
 

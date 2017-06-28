@@ -7,8 +7,6 @@
 #ifndef BENG_PROXY_ADDRESS_SUFFIX_REGISTRY_HXX
 #define BENG_PROXY_ADDRESS_SUFFIX_REGISTRY_HXX
 
-#include "glibfwd.hxx"
-
 struct pool;
 struct tcache;
 struct ResourceAddress;

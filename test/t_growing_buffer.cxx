@@ -8,8 +8,6 @@
 #include "util/ConstBuffer.hxx"
 #include "util/WritableBuffer.hxx"
 
-#include <glib.h>
-
 #include <string.h>
 #include <stdio.h>
 
