@@ -14,6 +14,7 @@
 #include "memcached/Quark.hxx"
 #include "memcached/Error.hxx"
 #include "cgi/cgi_quark.h"
+#include "cgi/Error.hxx"
 #include "fcgi/Quark.hxx"
 #include "fcgi/Error.hxx"
 #include "was/Quark.hxx"
@@ -167,6 +168,12 @@ ToResponse(struct pool &pool, std::exception_ptr ep)
 
     try {
         FindRetrowNested<FcgiClientError>(ep);
+    } catch (...) {
+        return {HTTP_STATUS_BAD_GATEWAY, "Script failed"};
+    }
+
+    try {
+        FindRetrowNested<CgiError>(ep);
     } catch (...) {
         return {HTTP_STATUS_BAD_GATEWAY, "Script failed"};
     }

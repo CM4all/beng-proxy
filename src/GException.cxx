@@ -12,6 +12,8 @@
 #include "was/Quark.hxx"
 #include "fcgi/Error.hxx"
 #include "fcgi/Quark.hxx"
+#include "cgi/Error.hxx"
+#include "cgi/cgi_quark.h"
 #include "ajp/Error.hxx"
 #include "ajp/Quark.hxx"
 #include "memcached/Error.hxx"
@@ -78,6 +80,12 @@ ToGError(std::exception_ptr ep)
     }
 
     try {
+        FindRetrowNested<CgiError>(ep);
+    } catch (const CgiError &e) {
+        return g_error_new_literal(cgi_quark(), 0, msg.c_str());
+    }
+
+    try {
         FindRetrowNested<AjpClientError>(ep);
     } catch (const AjpClientError &e) {
         return g_error_new_literal(ajp_client_quark(), 0, msg.c_str());
@@ -119,6 +127,8 @@ ThrowGError(const GError &error)
         throw WasError(error.message);
     else if (error.domain == fcgi_quark())
         throw FcgiClientError(error.message);
+    else if (error.domain == cgi_quark())
+        throw CgiError(error.message);
     else if (error.domain == ajp_client_quark())
         throw AjpClientError(error.message);
     else if (error.domain == memcached_client_quark())
