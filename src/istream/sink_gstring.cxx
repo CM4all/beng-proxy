@@ -5,6 +5,7 @@
 #include "sink_gstring.hxx"
 #include "Sink.hxx"
 #include "pool.hxx"
+#include "GException.hxx"
 #include "util/Cancellable.hxx"
 
 #include <glib.h>
@@ -14,11 +15,12 @@ struct GStringSink final : IstreamSink, Cancellable {
 
     GString *value;
 
-    void (*callback)(GString *value, GError *error, void *ctx);
+    void (*callback)(GString *value, std::exception_ptr error, void *ctx);
     void *callback_ctx;
 
     GStringSink(struct pool &_pool, Istream &_input,
-                void (*_callback)(GString *value, GError *error, void *ctx),
+                void (*_callback)(GString *value, std::exception_ptr error,
+                                  void *ctx),
                 void *_ctx,
                 CancellablePointer &cancel_ptr)
         :IstreamSink(_input, FD_ANY), pool(&_pool),
@@ -48,7 +50,8 @@ struct GStringSink final : IstreamSink, Cancellable {
 
     void OnError(GError *error) override {
         g_string_free(value, true);
-        callback(nullptr, error, callback_ctx);
+        callback(nullptr, ToException(*error), callback_ctx);
+        g_error_free(error);
     }
 };
 
@@ -59,7 +62,8 @@ struct GStringSink final : IstreamSink, Cancellable {
 
 void
 sink_gstring_new(struct pool &pool, Istream &input,
-                 void (*callback)(GString *value, GError *error, void *ctx),
+                 void (*callback)(GString *value, std::exception_ptr error,
+                                  void *ctx),
                  void *ctx, CancellablePointer &cancel_ptr)
 {
     NewFromPool<GStringSink>(pool, pool, input,

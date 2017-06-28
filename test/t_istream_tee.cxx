@@ -59,12 +59,11 @@ struct BlockContext final : Context, StatsIstreamHandler {
  */
 
 static void
-buffer_callback(GString *value, GError *error, void *_ctx)
+buffer_callback(GString *value, std::exception_ptr, void *_ctx)
 {
     auto *ctx = (Context *)_ctx;
 
     assert(value != nullptr);
-    assert(error == nullptr);
 
     ctx->value = value;
 }

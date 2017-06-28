@@ -7,13 +7,16 @@
 
 #include "glibfwd.hxx"
 
+#include <exception>
+
 struct pool;
 class Istream;
 class CancellablePointer;
 
 void
 sink_gstring_new(struct pool &pool, Istream &input,
-                 void (*callback)(GString *value, GError *error, void *ctx),
+                 void (*callback)(GString *value, std::exception_ptr error,
+                                  void *ctx),
                  void *ctx, CancellablePointer &cancel_ptr);
 
 #endif
