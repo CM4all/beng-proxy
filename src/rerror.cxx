@@ -7,26 +7,18 @@
 #include "request.hxx"
 #include "bp_instance.hxx"
 #include "http_client.hxx"
-#include "nfs/Quark.hxx"
 #include "nfs/Error.hxx"
-#include "ajp/Quark.hxx"
 #include "ajp/Error.hxx"
-#include "memcached/Quark.hxx"
 #include "memcached/Error.hxx"
-#include "cgi/cgi_quark.h"
 #include "cgi/Error.hxx"
-#include "fcgi/Quark.hxx"
 #include "fcgi/Error.hxx"
-#include "was/Quark.hxx"
 #include "was/Error.hxx"
 #include "widget/Error.hxx"
 #include "http_response.hxx"
 #include "http_server/http_server.hxx"
 #include "http_server/Request.hxx"
-#include "http_quark.h"
 #include "http/MessageHttpResponse.hxx"
 #include "HttpMessageResponse.hxx"
-#include "gerrno.h"
 #include "pool.hxx"
 #include "system/Error.hxx"
 #include "util/Exception.hxx"
@@ -39,67 +31,6 @@ static MessageHttpResponse
 Dup(struct pool &pool, http_status_t status, const char *msg)
 {
     return {status, p_strdup(&pool, msg)};
-}
-
-gcc_pure
-static MessageHttpResponse
-ToResponse(struct pool &pool, GError &error)
-{
-    if (error.domain == http_response_quark())
-        return Dup(pool, http_status_t(error.code), error.message);
-
-    if (error.domain == widget_quark()) {
-        switch (WidgetErrorCode(error.code)) {
-        case WidgetErrorCode::UNSPECIFIED:
-            break;
-
-        case WidgetErrorCode::WRONG_TYPE:
-        case WidgetErrorCode::UNSUPPORTED_ENCODING:
-            return {HTTP_STATUS_BAD_GATEWAY, "Malformed widget response"};
-
-        case WidgetErrorCode::NO_SUCH_VIEW:
-            return {HTTP_STATUS_NOT_FOUND, "No such view"};
-
-        case WidgetErrorCode::NOT_A_CONTAINER:
-            return Dup(pool, HTTP_STATUS_NOT_FOUND, error.message);
-
-        case WidgetErrorCode::FORBIDDEN:
-            return {HTTP_STATUS_FORBIDDEN, "Forbidden"};
-        }
-    }
-
-    if (error.domain == nfs_client_quark()) {
-        switch (error.code) {
-        case NFS3ERR_NOENT:
-        case NFS3ERR_NOTDIR:
-            return {HTTP_STATUS_NOT_FOUND,
-                    "The requested file does not exist."};
-        }
-    }
-
-    if (error.domain == http_client_quark() ||
-             error.domain == ajp_client_quark())
-        return {HTTP_STATUS_BAD_GATEWAY, "Upstream server failed"};
-    else if (error.domain == cgi_quark() ||
-             error.domain == fcgi_quark() ||
-             error.domain == was_quark())
-        return {HTTP_STATUS_BAD_GATEWAY, "Script failed"};
-    else if (error.domain == errno_quark()) {
-        switch (error.code) {
-        case ENOENT:
-        case ENOTDIR:
-            return {HTTP_STATUS_NOT_FOUND,
-                    "The requested file does not exist."};
-            break;
-
-        default:
-            return {HTTP_STATUS_INTERNAL_SERVER_ERROR,
-                    "Internal server error"};
-        }
-    } else if (error.domain == memcached_client_quark())
-        return {HTTP_STATUS_BAD_GATEWAY, "Cache server failed"};
-    else
-        return {HTTP_STATUS_INTERNAL_SERVER_ERROR, "Internal server error"};
 }
 
 gcc_pure
@@ -196,16 +127,6 @@ ToResponse(struct pool &pool, std::exception_ptr ep)
     }
 
     return {HTTP_STATUS_INTERNAL_SERVER_ERROR, "Internal server error"};
-}
-
-void
-response_dispatch_error(Request &request, GError *error)
-{
-    auto response = ToResponse(request.pool, *error);
-    if (request.instance.config.verbose_response)
-        response.message = p_strdup(&request.pool, error->message);
-
-    response_dispatch_message(request, response.status, response.message);
 }
 
 void

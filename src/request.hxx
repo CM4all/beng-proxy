@@ -18,7 +18,6 @@
 #include "session.hxx"
 #include "widget/View.hxx"
 #include "http_response.hxx"
-#include "glibfwd.hxx"
 #include "util/Cancellable.hxx"
 
 #include <exception>
@@ -388,9 +387,6 @@ response_dispatch_message(Request &request, http_status_t status,
 void
 response_dispatch_message2(Request &request, http_status_t status,
                            HttpHeaders &&headers, const char *msg);
-
-void
-response_dispatch_error(Request &request, GError *error);
 
 void
 response_dispatch_log(Request &request, http_status_t status,
