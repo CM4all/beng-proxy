@@ -7,8 +7,6 @@
 #ifndef BENG_PROXY_MULTI_STOCK_HXX
 #define BENG_PROXY_MULTI_STOCK_HXX
 
-#include "glibfwd.hxx"
-
 #include <inline/compiler.h>
 
 struct pool;
@@ -37,14 +35,14 @@ mstock_add_stats(const MultiStock &stock, StockStats &data);
  * This requires a stock class which finishes the create() method
  * immediately.
  *
+ * Throws exception on error.
+ *
  * @param max_leases the maximum number of leases per stock_item
  */
 gcc_pure
 StockItem *
 mstock_get_now(MultiStock &mstock, struct pool &caller_pool,
                const char *uri, void *info, unsigned max_leases,
-               struct lease_ref &lease_ref,
-               GError **error_r);
-
+               struct lease_ref &lease_ref);
 
 #endif

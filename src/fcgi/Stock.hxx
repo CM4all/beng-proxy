@@ -7,8 +7,6 @@
 #ifndef BENG_PROXY_FCGI_STOCK_HXX
 #define BENG_PROXY_FCGI_STOCK_HXX
 
-#include "glibfwd.hxx"
-
 struct pool;
 struct StockItem;
 struct FcgiStock;
@@ -30,14 +28,15 @@ void
 fcgi_stock_fade_all(FcgiStock &fs);
 
 /**
+ * Throws exception on error.
+ *
  * @param args command-line arguments
  */
 StockItem *
 fcgi_stock_get(FcgiStock *fcgi_stock, struct pool *pool,
                const ChildOptions &options,
                const char *executable_path,
-               ConstBuffer<const char *> args,
-               GError **error_r);
+               ConstBuffer<const char *> args);
 
 /**
  * Returns the socket descriptor of the specified stock item.

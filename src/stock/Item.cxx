@@ -15,13 +15,7 @@ CreateStockItem::GetStockName() const
 void
 CreateStockItem::InvokeCreateError(std::exception_ptr ep)
 {
-    InvokeCreateError(ToGError(ep));
-}
-
-void
-CreateStockItem::InvokeCreateError(GError *error)
-{
-    stock.ItemCreateError(handler, error);
+    stock.ItemCreateError(handler, ep);
 }
 
 void
@@ -55,13 +49,7 @@ StockItem::InvokeCreateSuccess()
 void
 StockItem::InvokeCreateError(std::exception_ptr ep)
 {
-    InvokeCreateError(ToGError(ep));
-}
-
-void
-StockItem::InvokeCreateError(GError *error)
-{
-    stock.ItemCreateError(*this, error);
+    stock.ItemCreateError(*this, ep);
 }
 
 void

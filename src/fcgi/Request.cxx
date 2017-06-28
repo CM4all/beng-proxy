@@ -69,20 +69,19 @@ fcgi_request(struct pool *pool, EventLoop &event_loop,
     if (action == nullptr)
         action = path;
 
-    GError *error = nullptr;
-    StockItem *stock_item =
-        fcgi_stock_get(fcgi_stock, pool, options,
-                       action,
-                       args,
-                       &error);
-    if (stock_item == nullptr) {
+    StockItem *stock_item;
+    try {
+        stock_item = fcgi_stock_get(fcgi_stock, pool, options,
+                                    action,
+                                    args);
+    } catch (...) {
         if (body != nullptr)
             body->CloseUnused();
 
         if (stderr_fd >= 0)
             close(stderr_fd);
 
-        handler.InvokeError(error);
+        handler.InvokeError(std::current_exception());
         return;
     }
 

@@ -13,7 +13,7 @@
 #include "stock/GetHandler.hxx"
 #include "lease.hxx"
 #include "pool.hxx"
-#include "gerrno.h"
+#include "system/Error.hxx"
 #include "net/AllocatedSocketAddress.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "event/SocketEvent.hxx"
@@ -54,7 +54,7 @@ public:
             event.Set(s.Get(), SocketEvent::READ);
             InvokeCreateSuccess();
         } else {
-            auto error = new_error_errno();
+            auto error = std::make_exception_ptr(MakeErrno());
 
             if (s.IsDefined())
                 s.Close();
@@ -161,7 +161,7 @@ public:
 
     /* virtual methods from class StockGetHandler */
     void OnStockItemReady(StockItem &item) override;
-    void OnStockItemError(GError *error) override;
+    void OnStockItemError(std::exception_ptr ep) override;
 
     /* virtual methods from class Lease */
     void ReleaseLease(bool reuse) override {
@@ -186,11 +186,9 @@ TranslateStockRequest::OnStockItemReady(StockItem &_item)
 }
 
 void
-TranslateStockRequest::OnStockItemError(GError *error)
+TranslateStockRequest::OnStockItemError(std::exception_ptr ep)
 {
-    handler.error(std::make_exception_ptr(std::runtime_error(error->message)),
-                  handler_ctx);
-    g_error_free(error);
+    handler.error(ep, handler_ctx);
 }
 
 /*

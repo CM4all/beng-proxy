@@ -16,6 +16,7 @@
 #include "address_list.hxx"
 #include "pool.hxx"
 #include "strmap.hxx"
+#include "GException.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream_hold.hxx"
 #include "net/SocketDescriptor.hxx"
@@ -78,7 +79,7 @@ struct FcgiRemoteRequest final : StockGetHandler, Lease {
 
     /* virtual methods from class StockGetHandler */
     void OnStockItemReady(StockItem &item) override;
-    void OnStockItemError(GError *error) override;
+    void OnStockItemError(std::exception_ptr ep) override;
 
     /* virtual methods from class Lease */
     void ReleaseLease(bool reuse) override {
@@ -115,12 +116,12 @@ FcgiRemoteRequest::OnStockItemReady(StockItem &item)
 }
 
 void
-FcgiRemoteRequest::OnStockItemError(GError *error)
+FcgiRemoteRequest::OnStockItemError(std::exception_ptr ep)
 {
     if (stderr_fd >= 0)
         close(stderr_fd);
 
-    handler.InvokeError(error);
+    handler.InvokeError(ToGError(ep));
 }
 
 /*

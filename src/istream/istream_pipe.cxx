@@ -196,11 +196,7 @@ PipeIstream::Create()
     if (stock != nullptr) {
         assert(stock_item == nullptr);
 
-        GError *error = nullptr;
-        stock_item = stock->GetNow(GetPool(), nullptr, &error);
-        if (stock_item == nullptr)
-            ThrowFreeGError(error);
-
+        stock_item = stock->GetNow(GetPool(), nullptr);
         pipe_stock_item_get(stock_item, fds);
     } else {
         if (!FileDescriptor::CreatePipeNonBlock(fds[0], fds[1]))

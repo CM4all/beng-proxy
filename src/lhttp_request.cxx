@@ -60,11 +60,11 @@ lhttp_request(struct pool &pool, EventLoop &event_loop,
         return;
     }
 
-    GError *error = nullptr;
-    StockItem *stock_item =
-        lhttp_stock_get(&lhttp_stock, &pool, &address,
-                        &error);
-    if (stock_item == nullptr) {
+    StockItem *stock_item;
+
+    try {
+        stock_item = lhttp_stock_get(&lhttp_stock, &pool, &address);
+    } catch (...) {
         /* need to hold this pool reference because it is guaranteed
            that the pool stays alive while the HttpResponseHandler
            runs, even if all other pool references are removed */
@@ -73,7 +73,7 @@ lhttp_request(struct pool &pool, EventLoop &event_loop,
         if (body != nullptr)
             body->CloseUnused();
 
-        handler.InvokeError(error);
+        handler.InvokeError(std::current_exception());
         return;
     }
 

@@ -5,14 +5,14 @@
 #ifndef BENG_PROXY_STOCK_GET_HANDLER_HXX
 #define BENG_PROXY_STOCK_GET_HANDLER_HXX
 
-#include "glibfwd.hxx"
+#include <exception>
 
 struct StockItem;
 
 class StockGetHandler {
 public:
     virtual void OnStockItemReady(StockItem &item) = 0;
-    virtual void OnStockItemError(GError *error) = 0;
+    virtual void OnStockItemError(std::exception_ptr ep) = 0;
 };
 
 #endif

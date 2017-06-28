@@ -6,7 +6,6 @@
 #include "Class.hxx"
 #include "GetHandler.hxx"
 #include "pool.hxx"
-#include "GException.hxx"
 #include "util/Cancellable.hxx"
 #include "util/Cast.hxx"
 
@@ -287,7 +286,7 @@ Stock::GetCreate(struct pool &caller_pool, void *info,
         cls.create(class_ctx, {*this, get_handler},
                    info, caller_pool, cancel_ptr);
     } catch (...) {
-        ItemCreateError(get_handler, ToGError(std::current_exception()));
+        ItemCreateError(get_handler, std::current_exception());
     }
 }
 
@@ -314,14 +313,14 @@ Stock::Get(struct pool &caller_pool, void *info,
 }
 
 StockItem *
-Stock::GetNow(struct pool &caller_pool, void *info, GError **error_r)
+Stock::GetNow(struct pool &caller_pool, void *info)
 {
     struct NowRequest final : public StockGetHandler {
 #ifndef NDEBUG
         bool created = false;
 #endif
         StockItem *item;
-        GError *error;
+        std::exception_ptr error;
 
         /* virtual methods from class StockGetHandler */
         void OnStockItemReady(StockItem &_item) override {
@@ -332,13 +331,12 @@ Stock::GetNow(struct pool &caller_pool, void *info, GError **error_r)
             item = &_item;
         }
 
-        void OnStockItemError(GError *_error) override {
+        void OnStockItemError(std::exception_ptr ep) override {
 #ifndef NDEBUG
             created = true;
 #endif
 
-            item = nullptr;
-            error = _error;
+            error = ep;
         }
     };
 
@@ -351,8 +349,8 @@ Stock::GetNow(struct pool &caller_pool, void *info, GError **error_r)
     Get(caller_pool, info, data, cancel_ptr);
     assert(data.created);
 
-    if (data.item == nullptr)
-        g_propagate_error(error_r, data.error);
+    if (data.error)
+        std::rethrow_exception(data.error);
 
     return data.item;
 }
@@ -369,9 +367,9 @@ Stock::ItemCreateSuccess(StockItem &item)
 }
 
 void
-Stock::ItemCreateError(StockItem &item, GError *error)
+Stock::ItemCreateError(StockItem &item, std::exception_ptr ep)
 {
-    ItemCreateError(item.handler, error);
+    ItemCreateError(item.handler, ep);
     item.Destroy(class_ctx);
 }
 
@@ -383,13 +381,12 @@ Stock::ItemCreateAborted(StockItem &item)
 }
 
 void
-Stock::ItemCreateError(StockGetHandler &get_handler, GError *error)
+Stock::ItemCreateError(StockGetHandler &get_handler, std::exception_ptr ep)
 {
-    assert(error != nullptr);
     assert(num_create > 0);
     --num_create;
 
-    get_handler.OnStockItemError(error);
+    get_handler.OnStockItemError(ep);
 
     ScheduleCheckEmpty();
     ScheduleRetryWaiting();

@@ -162,12 +162,10 @@ delegate_stock_new(EventLoop &event_loop, SpawnService &spawn_service)
 StockItem *
 delegate_stock_get(StockMap *delegate_stock, struct pool *pool,
                    const char *helper,
-                   const ChildOptions &options,
-                   GError **error_r)
+                   const ChildOptions &options)
 {
     DelegateArgs args(helper, options);
-    return delegate_stock->GetNow(*pool, args.GetStockKey(*pool),
-                                  &args, error_r);
+    return delegate_stock->GetNow(*pool, args.GetStockKey(*pool), &args);
 }
 
 int

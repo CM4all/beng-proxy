@@ -157,7 +157,7 @@ private:
 
     /* virtual methods from class StockGetHandler */
     void OnStockItemReady(StockItem &item) override;
-    void OnStockItemError(GError *error) override;
+    void OnStockItemError(std::exception_ptr ep) override;
 
     /* virtual methods from class Lease */
     void ReleaseLease(bool reuse) override;
@@ -251,12 +251,12 @@ HttpRequest::OnStockItemReady(StockItem &item)
 }
 
 void
-HttpRequest::OnStockItemError(GError *error)
+HttpRequest::OnStockItemError(std::exception_ptr ep)
 {
     assert(lease_state == LeaseState::NONE);
     assert(!response_sent);
 
-    Failed(error);
+    Failed(ep);
 }
 
 /*

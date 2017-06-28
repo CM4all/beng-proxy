@@ -191,18 +191,20 @@ public:
      * Obtains an item from the stock without going through the
      * callback.  This requires a stock class which finishes the
      * create() method immediately.
+     *
+     * Throws exception on error.
      */
-    StockItem *GetNow(struct pool &caller_pool, void *info, GError **error_r);
+    StockItem *GetNow(struct pool &caller_pool, void *info);
 
     void Put(StockItem &item, bool destroy);
 
     void ItemIdleDisconnect(StockItem &item);
 
     void ItemCreateSuccess(StockItem &item);
-    void ItemCreateError(StockItem &item, GError *error);
+    void ItemCreateError(StockItem &item, std::exception_ptr ep);
     void ItemCreateAborted(StockItem &item);
 
-    void ItemCreateError(StockGetHandler &get_handler, GError *error);
+    void ItemCreateError(StockGetHandler &get_handler, std::exception_ptr ep);
     void ItemCreateAborted();
 
     /**

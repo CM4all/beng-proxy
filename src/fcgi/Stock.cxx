@@ -229,14 +229,13 @@ fcgi_stock_create(void *ctx, CreateStockItem c, void *info,
 
     const char *key = c.GetStockName();
 
-    GError *error = nullptr;
-    connection->child = fcgi_stock->child_stock->GetNow(caller_pool,
-                                                        key, params, &error);
-    if (connection->child == nullptr) {
-        g_prefix_error(&error, "failed to start to FastCGI server '%s': ",
-                       key);
-        connection->InvokeCreateError(error);
-        return;
+    try {
+        connection->child = fcgi_stock->child_stock->GetNow(caller_pool,
+                                                            key, params);
+    } catch (...) {
+        delete connection;
+        std::throw_with_nested(FcgiClientError(StringFormat<256>("Failed to start FastCGI server '%s'",
+                                                                 key)));
     }
 
     try {
@@ -346,15 +345,13 @@ StockItem *
 fcgi_stock_get(FcgiStock *fcgi_stock, struct pool *pool,
                const ChildOptions &options,
                const char *executable_path,
-               ConstBuffer<const char *> args,
-               GError **error_r)
+               ConstBuffer<const char *> args)
 {
     auto params = NewFromPool<FcgiChildParams>(*pool, executable_path,
                                                args, options);
 
     return fcgi_stock->hstock.GetNow(*pool,
-                                     params->GetStockKey(*pool), params,
-                                     error_r);
+                                     params->GetStockKey(*pool), params);
 }
 
 int

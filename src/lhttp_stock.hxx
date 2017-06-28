@@ -8,7 +8,6 @@
 #define BENG_PROXY_LHTTP_STOCK_HXX
 
 #include "io/FdType.hxx"
-#include "glibfwd.hxx"
 
 #include <inline/compiler.h>
 
@@ -30,10 +29,12 @@ lhttp_stock_free(LhttpStock *lhttp_stock);
 void
 lhttp_stock_fade_all(LhttpStock &ls);
 
+/**
+ * Throws exception on error.
+ */
 StockItem *
 lhttp_stock_get(LhttpStock *lhttp_stock, struct pool *pool,
-                const LhttpAddress *address,
-                GError **error_r);
+                const LhttpAddress *address);
 
 /**
  * Returns the socket descriptor of the specified stock item.

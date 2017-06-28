@@ -13,6 +13,7 @@
 #include "address_list.hxx"
 #include "lease.hxx"
 #include "pool.hxx"
+#include "GException.hxx"
 #include "istream/istream.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
@@ -90,7 +91,7 @@ struct MemcachedStockRequest final : public StockGetHandler, Lease {
 
     /* virtual methods from class StockGetHandler */
     void OnStockItemReady(StockItem &item) override;
-    void OnStockItemError(GError *error) override;
+    void OnStockItemError(std::exception_ptr ep) override;
 
     /* virtual methods from class Lease */
     void ReleaseLease(bool reuse) override {
@@ -122,9 +123,9 @@ MemcachedStockRequest::OnStockItemReady(StockItem &_item)
 }
 
 void
-MemcachedStockRequest::OnStockItemError(GError *error)
+MemcachedStockRequest::OnStockItemError(std::exception_ptr ep)
 {
-    handler.error(error, handler_ctx);
+    handler.error(ToGError(ep), handler_ctx);
 
     if (value != nullptr)
         value->CloseUnused();

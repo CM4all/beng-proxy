@@ -70,7 +70,7 @@ struct AjpRequest final : public StockGetHandler, Lease {
 
     /* virtual methods from class StockGetHandler */
     void OnStockItemReady(StockItem &item) override;
-    void OnStockItemError(GError *error) override;
+    void OnStockItemError(std::exception_ptr ep) override;
 
     /* virtual methods from class Lease */
     void ReleaseLease(bool reuse) override {
@@ -101,9 +101,9 @@ AjpRequest::OnStockItemReady(StockItem &item)
 }
 
 void
-AjpRequest::OnStockItemError(GError *error)
+AjpRequest::OnStockItemError(std::exception_ptr ep)
 {
-    handler.InvokeError(error);
+    handler.InvokeError(ep);
 
     if (body != nullptr)
         body->CloseUnused();

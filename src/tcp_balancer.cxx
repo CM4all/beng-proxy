@@ -45,7 +45,7 @@ struct TcpBalancerRequest : public StockGetHandler {
 
     /* virtual methods from class StockGetHandler */
     void OnStockItemReady(StockItem &item) override;
-    void OnStockItemError(GError *error) override;
+    void OnStockItemError(std::exception_ptr ep) override;
 };
 
 inline void
@@ -77,11 +77,11 @@ TcpBalancerRequest::OnStockItemReady(StockItem &item)
 }
 
 void
-TcpBalancerRequest::OnStockItemError(GError *error)
+TcpBalancerRequest::OnStockItemError(std::exception_ptr ep)
 {
     auto &base = BalancerRequest<TcpBalancerRequest>::Cast(*this);
     if (!base.Failure())
-        handler.OnStockItemError(error);
+        handler.OnStockItemError(ep);
 }
 
 /*

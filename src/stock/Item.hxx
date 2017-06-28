@@ -5,8 +5,6 @@
 #ifndef BENG_PROXY_STOCK_ITEM_HXX
 #define BENG_PROXY_STOCK_ITEM_HXX
 
-#include "glibfwd.hxx"
-
 #include <inline/compiler.h>
 
 #include <boost/intrusive/list.hpp>
@@ -31,7 +29,6 @@ struct CreateStockItem {
      * Announce that the creation of this item has failed.
      */
     void InvokeCreateError(std::exception_ptr ep);
-    void InvokeCreateError(GError *error);
 
     /**
      * Announce that the creation of this item has been aborted by the
@@ -116,7 +113,6 @@ struct StockItem
      * Announce that the creation of this item has failed.
      */
     void InvokeCreateError(std::exception_ptr ep);
-    void InvokeCreateError(GError *error);
 
     /**
      * Announce that the creation of this item has been aborted by the

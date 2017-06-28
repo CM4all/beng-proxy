@@ -135,11 +135,12 @@ public:
      * Obtains an item from the stock without going through the
      * callback.  This requires a stock class which finishes the
      * create() method immediately.
+     *
+     * Throws exception on error.
      */
-    StockItem *GetNow(struct pool &caller_pool, const char *uri, void *info,
-                      GError **error_r) {
+    StockItem *GetNow(struct pool &caller_pool, const char *uri, void *info) {
         Stock &stock = GetStock(uri);
-        return stock.GetNow(caller_pool, info, error_r);
+        return stock.GetNow(caller_pool, info);
     }
 
     /* virtual methods from class StockHandler */

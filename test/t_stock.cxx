@@ -5,10 +5,9 @@
 #include "pool.hxx"
 #include "PInstance.hxx"
 #include "util/Cancellable.hxx"
+#include "util/PrintException.hxx"
 
 #include <stdexcept>
-
-#include <glib.h>
 
 #include <assert.h>
 
@@ -78,9 +77,8 @@ public:
         last_item = &item;
     }
 
-    void OnStockItemError(GError *error) override {
-        g_printerr("%s\n", error->message);
-        g_error_free(error);
+    void OnStockItemError(std::exception_ptr ep) override {
+        PrintException(ep);
 
         got_item = true;
         last_item = nullptr;

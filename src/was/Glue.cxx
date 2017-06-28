@@ -83,7 +83,7 @@ public:
 
     /* virtual methods from class StockGetHandler */
     void OnStockItemReady(StockItem &item) override;
-    void OnStockItemError(GError *error) override;
+    void OnStockItemError(std::exception_ptr ep) override;
 
 private:
     /* virtual methods from class WasLease */
@@ -122,12 +122,12 @@ WasRequest::OnStockItemReady(StockItem &item)
 }
 
 void
-WasRequest::OnStockItemError(GError *error)
+WasRequest::OnStockItemError(std::exception_ptr ep)
 {
     if (body != nullptr)
         body->CloseUnused();
 
-    handler.InvokeError(error);
+    handler.InvokeError(ep);
 }
 
 /*

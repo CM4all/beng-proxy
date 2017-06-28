@@ -5,7 +5,6 @@
  */
 
 #include "lhttp_stock.hxx"
-#include "lhttp_quark.hxx"
 #include "lhttp_address.hxx"
 #include "stock/Stock.hxx"
 #include "stock/MapStock.hxx"
@@ -156,15 +155,14 @@ lhttp_stock_create(void *ctx, CreateStockItem c, void *info,
 
     const char *key = c.GetStockName();
 
-    GError *error = nullptr;
-    connection->child = mstock_get_now(*lhttp_stock->mchild_stock, caller_pool,
-                                       key, info, address->concurrency,
-                                       connection->lease_ref,
-                                       &error);
-    if (connection->child == nullptr) {
-        g_prefix_error(&error, "failed to launch LHTTP server '%s': ", key);
-        connection->InvokeCreateError(error);
-        return;
+    try {
+        connection->child = mstock_get_now(*lhttp_stock->mchild_stock, caller_pool,
+                                           key, info, address->concurrency,
+                                           connection->lease_ref);
+    } catch (...) {
+        delete connection;
+        std::throw_with_nested(FormatRuntimeError("Failed to launch LHTTP server '%s'",
+                                                  key));
     }
 
     try {
@@ -231,15 +229,11 @@ lhttp_stock_fade_all(LhttpStock &ls)
 
 StockItem *
 lhttp_stock_get(LhttpStock *lhttp_stock, struct pool *pool,
-                const LhttpAddress *address,
-                GError **error_r)
+                const LhttpAddress *address)
 {
     const auto *const jail = address->options.jail;
-    if (jail != nullptr && jail->enabled && jail->home_directory == nullptr) {
-        g_set_error(error_r, lhttp_quark(), 0,
-                    "No home directory for jailed LHTTP");
-        return nullptr;
-    }
+    if (jail != nullptr && jail->enabled && jail->home_directory == nullptr)
+        throw std::runtime_error("No home directory for jailed LHTTP");
 
     union {
         const LhttpAddress *in;
@@ -248,7 +242,7 @@ lhttp_stock_get(LhttpStock *lhttp_stock, struct pool *pool,
 
     return lhttp_stock->hstock.GetNow(*pool,
                                       lhttp_stock_key(pool, address),
-                                      deconst.out, error_r);
+                                      deconst.out);
 }
 
 SocketDescriptor

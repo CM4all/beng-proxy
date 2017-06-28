@@ -34,11 +34,12 @@ delegate_stock_open(StockMap *stock, struct pool *pool,
                     DelegateHandler &handler,
                     CancellablePointer &cancel_ptr)
 {
-    GError *error = nullptr;
-    auto *item = delegate_stock_get(stock, pool, helper, options, &error);
-    if (item == nullptr) {
-        handler.OnDelegateError(ToException(*error));
-        g_error_free(error);
+    StockItem *item;
+
+    try {
+        item = delegate_stock_get(stock, pool, helper, options);
+    } catch (...) {
+        handler.OnDelegateError(std::current_exception());
         return;
     }
 
