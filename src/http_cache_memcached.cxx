@@ -131,7 +131,7 @@ http_cache_memcached_flush_error(std::exception_ptr ep, void *ctx)
 {
     auto request = (HttpCacheMemcachedRequest *)ctx;
 
-    request->callback.flush(false, ToGError(ep), request->callback_ctx);
+    request->callback.flush(false, ep, request->callback_ctx);
 }
 
 static const struct memcached_client_handler http_cache_memcached_flush_handler = {
@@ -204,7 +204,7 @@ http_cache_memcached_get_error(std::exception_ptr ep, void *ctx)
 {
     auto request = (HttpCacheMemcachedRequest *)ctx;
 
-    request->callback.get(nullptr, nullptr, ToGError(ep), request->callback_ctx);
+    request->callback.get(nullptr, nullptr, ep, request->callback_ctx);
 }
 
 static const struct memcached_client_handler http_cache_memcached_get_handler = {
@@ -244,7 +244,7 @@ mcd_choice_get_callback(const char *key, bool unclean,
     }
 
     if (key == nullptr) {
-        request.callback.get(nullptr, nullptr, ToGError(ep), request.callback_ctx);
+        request.callback.get(nullptr, nullptr, ep, request.callback_ctx);
         return;
     }
 
@@ -297,7 +297,7 @@ http_cache_memcached_header_error(std::exception_ptr ep, void *ctx)
 {
     auto &request = *(HttpCacheMemcachedRequest *)ctx;
 
-    request.callback.get(nullptr, nullptr, ToGError(ep), request.callback_ctx);
+    request.callback.get(nullptr, nullptr, ep, request.callback_ctx);
 }
 
 static const struct sink_header_handler http_cache_memcached_header_handler = {
@@ -371,7 +371,7 @@ mcd_choice_commit_callback(std::exception_ptr ep, void *ctx)
 {
     auto &request = *(HttpCacheMemcachedRequest *)ctx;
 
-    request.callback.put(ToGError(ep), request.callback_ctx);
+    request.callback.put(ep, request.callback_ctx);
 }
 
 static void
@@ -403,7 +403,7 @@ http_cache_memcached_put_error(std::exception_ptr ep, void *ctx)
 {
     auto &request = *(HttpCacheMemcachedRequest *)ctx;
 
-    request.callback.put(ToGError(ep), request.callback_ctx);
+    request.callback.put(ep, request.callback_ctx);
 }
 
 static const struct memcached_client_handler http_cache_memcached_put_handler = {

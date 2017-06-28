@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_HTTP_CACHE_MEMCACHED_HXX
 #define BENG_PROXY_HTTP_CACHE_MEMCACHED_HXX
 
-#include "glibfwd.hxx"
+#include <exception>
 
 #include <http/status.h>
 
@@ -21,13 +21,13 @@ struct HttpCacheResponseInfo;
 struct HttpCacheDocument;
 
 typedef void (*http_cache_memcached_flush_t)(bool success,
-                                             GError *error, void *ctx);
+                                             std::exception_ptr ep, void *ctx);
 
 typedef void (*http_cache_memcached_get_t)(HttpCacheDocument *document,
                                            Istream *body,
-                                           GError *error, void *ctx);
+                                           std::exception_ptr ep, void *ctx);
 
-typedef void (*http_cache_memcached_put_t)(GError *error, void *ctx);
+typedef void (*http_cache_memcached_put_t)(std::exception_ptr ep, void *ctx);
 
 void
 http_cache_memcached_flush(struct pool &pool, MemachedStock &stock,

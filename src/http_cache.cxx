@@ -27,6 +27,7 @@
 #include "util/Background.hxx"
 #include "util/Cast.hxx"
 #include "util/Cancellable.hxx"
+#include "util/Exception.hxx"
 
 #include <glib.h>
 
@@ -220,14 +221,12 @@ http_cache_key(struct pool &pool, const ResourceAddress &address)
 }
 
 static void
-http_cache_memcached_put_callback(GError *error, void *ctx)
+http_cache_memcached_put_callback(std::exception_ptr ep, void *ctx)
 {
     LinkedBackgroundJob *job = (LinkedBackgroundJob *)ctx;
 
-    if (error != nullptr) {
-        cache_log(2, "http-cache: put failed: %s\n", error->message);
-        g_error_free(error);
-    }
+    if (ep)
+        cache_log(2, "http-cache: put failed: %s\n", GetFullMessage(ep).c_str());
 
     job->Remove();
 }
@@ -624,7 +623,7 @@ http_cache_get_stats(const HttpCache &cache)
 }
 
 static void
-http_cache_flush_callback(bool success, GError *error, void *ctx)
+http_cache_flush_callback(bool success, std::exception_ptr ep, void *ctx)
 {
     LinkedBackgroundJob *flush = (LinkedBackgroundJob *)ctx;
 
@@ -632,11 +631,10 @@ http_cache_flush_callback(bool success, GError *error, void *ctx)
 
     if (success)
         cache_log(5, "http_cache_memcached: flushed\n");
-    else if (error != nullptr) {
+    else if (ep)
         cache_log(5, "http_cache_memcached: flush has failed: %s\n",
-                  error->message);
-        g_error_free(error);
-    } else
+                  GetFullMessage(ep).c_str());
+    else
         cache_log(5, "http_cache_memcached: flush has failed\n");
 }
 
@@ -945,15 +943,14 @@ http_cache_memcached_miss(HttpCacheRequest &request)
  */
 static void
 http_cache_memcached_get_callback(HttpCacheDocument *document,
-                                  Istream *body, GError *error, void *ctx)
+                                  Istream *body, std::exception_ptr ep,
+                                  void *ctx)
 {
     HttpCacheRequest &request = *(HttpCacheRequest *)ctx;
 
     if (document == nullptr) {
-        if (error != nullptr) {
-            cache_log(2, "http_cache: get failed: %s\n", error->message);
-            g_error_free(error);
-        }
+        if (ep)
+            cache_log(2, "http_cache: get failed: %s\n", GetFullMessage(ep).c_str());
 
         http_cache_memcached_miss(request);
         return;
