@@ -274,10 +274,12 @@ executable('request_translation',
 executable('run_subst',
   'run_subst.cxx',
   '../src/PInstance.cxx',
+  '../src/GException.cxx',
   include_directories: inc,
   dependencies: [
     glib,
     libinline,
+    libhttp,
     declare_dependency(link_with: istream),
   ])
 

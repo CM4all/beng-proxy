@@ -8,12 +8,12 @@
 #include "istream.hxx"
 #include "io/Buffered.hxx"
 #include "io/UniqueFileDescriptor.hxx"
-#include "gerrno.h"
 #include "pool.hxx"
 #include "fb_pool.hxx"
 #include "SliceFifoBuffer.hxx"
 #include "system/Error.hxx"
 #include "event/TimerEvent.hxx"
+#include "util/RuntimeError.hxx"
 
 #include <assert.h>
 #include <sys/types.h>
@@ -73,9 +73,9 @@ struct FileIstream final : public Istream {
         buffer.FreeIfDefined(fb_pool_get());
     }
 
-    void Abort(GError *error) {
+    void Abort(std::exception_ptr ep) {
         CloseHandle();
-        DestroyError(error);
+        DestroyError(ep);
     }
 
     /**
@@ -163,18 +163,13 @@ FileIstream::TryData()
             if (buffer_rest == 0)
                 EofDetected();
         } else {
-            GError *error =
-                g_error_new(g_file_error_quark(), 0,
-                            "premature end of file in '%s'", path);
-            Abort(error);
+            Abort(std::make_exception_ptr(FormatRuntimeError("premature end of file in '%s'",
+                                                             path)));
         }
         return;
     } else if (nbytes == -1) {
-        GError *error =
-            g_error_new(errno_quark(), errno,
-                        "failed to read from '%s': %s",
-                        path, strerror(errno));
-        Abort(error);
+        Abort(std::make_exception_ptr(FormatErrno("Failed to read from '%s'",
+                                                  path)));
         return;
     } else if (nbytes > 0 && rest != (off_t)-1) {
         rest -= (off_t)nbytes;
@@ -218,10 +213,8 @@ FileIstream::TryDirect()
         if (rest == (off_t)-1) {
             EofDetected();
         } else {
-            GError *error =
-                g_error_new(g_file_error_quark(), 0,
-                            "premature end of file in '%s'", path);
-            Abort(error);
+            Abort(std::make_exception_ptr(FormatRuntimeError("premature end of file in '%s'",
+                                                             path)));
         }
     } else if (errno == EAGAIN) {
         /* this should only happen for splice(SPLICE_F_NONBLOCK) from
@@ -232,11 +225,8 @@ FileIstream::TryDirect()
         retry_event.Add(file_retry_timeout);
     } else {
         /* XXX */
-        GError *error =
-            g_error_new(errno_quark(), errno,
-                        "failed to read from '%s': %s",
-                        path, strerror(errno));
-        Abort(error);
+        Abort(std::make_exception_ptr(FormatErrno("Failed to read from '%s'",
+                                                  path)));
     }
 }
 
