@@ -15,7 +15,6 @@
 #include "istream/istream.hxx"
 #include "header_writer.hxx"
 #include "pool.hxx"
-#include "GException.hxx"
 #include "net/SocketDescriptor.hxx"
 
 #include <stdexcept>
@@ -57,7 +56,7 @@ lhttp_request(struct pool &pool, EventLoop &event_loop,
         if (body != nullptr)
             body->CloseUnused();
 
-        handler.InvokeError(ToGError(std::current_exception()));
+        handler.InvokeError(std::current_exception());
         return;
     }
 

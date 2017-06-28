@@ -10,7 +10,6 @@
 #include "istream_stopwatch.hxx"
 #include "strmap.hxx"
 #include "pool.hxx"
-#include "GException.hxx"
 #include "istream/istream.hxx"
 #include "spawn/ChildOptions.hxx"
 #include "spawn/IstreamSpawn.hxx"
@@ -110,7 +109,7 @@ pipe_filter(SpawnService &spawn_service, EventLoop &event_loop,
                           std::move(p),
                           spawn_service);
     } catch (...) {
-        handler.InvokeError(ToGError(std::current_exception()));
+        handler.InvokeError(std::current_exception());
         return;
     }
 

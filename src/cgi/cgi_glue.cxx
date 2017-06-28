@@ -11,7 +11,6 @@
 #include "abort_flag.hxx"
 #include "stopwatch.hxx"
 #include "http_response.hxx"
-#include "GException.hxx"
 #include "istream/istream.hxx"
 
 void
@@ -40,7 +39,7 @@ cgi_new(SpawnService &spawn_service, EventLoop &event_loop,
             return;
         }
 
-        handler.InvokeError(ToGError(std::current_exception()));
+        handler.InvokeError(std::current_exception());
         return;
     }
 

@@ -12,6 +12,7 @@
 #include <http/status.h>
 
 #include <utility>
+#include <exception>
 
 #include <assert.h>
 
@@ -46,6 +47,8 @@ public:
 
         OnHttpError(error);
     }
+
+    void InvokeError(std::exception_ptr ep);
 };
 
 struct http_response_handler_ref {

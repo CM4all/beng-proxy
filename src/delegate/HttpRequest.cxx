@@ -13,7 +13,6 @@
 #include "strmap.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream_file.hxx"
-#include "GException.hxx"
 #include "gerrno.h"
 #include "pool.hxx"
 
@@ -50,7 +49,7 @@ private:
     void OnDelegateSuccess(int fd) override;
 
     void OnDelegateError(std::exception_ptr ep) override {
-        handler.InvokeError(ToGError(ep));
+        handler.InvokeError(ep);
     }
 };
 

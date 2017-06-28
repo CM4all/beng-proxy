@@ -10,7 +10,6 @@
 #include "static_headers.hxx"
 #include "strmap.hxx"
 #include "pool.hxx"
-#include "GException.hxx"
 
 #include <sys/stat.h>
 
@@ -34,7 +33,7 @@ struct NfsRequest final : NfsCacheHandler {
                             const struct stat &st) override;
 
     void OnNfsCacheError(std::exception_ptr ep) override {
-        handler.InvokeError(ToGError(ep));
+        handler.InvokeError(ep);
     }
 };
 

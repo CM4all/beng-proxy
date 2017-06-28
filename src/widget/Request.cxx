@@ -271,7 +271,7 @@ WidgetRequest::DispatchError(std::exception_ptr ep)
     if (lookup_id != nullptr)
         lookup_handler->WidgetLookupError(ep);
     else
-        http_handler->InvokeError(ToGError(ep));
+        http_handler->InvokeError(ep);
 }
 
 void
