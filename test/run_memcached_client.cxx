@@ -14,6 +14,7 @@
 #include "io/FileDescriptor.hxx"
 #include "util/ByteOrder.hxx"
 #include "util/Cancellable.hxx"
+#include "util/PrintException.hxx"
 
 #include <glib.h>
 
@@ -150,11 +151,11 @@ my_mcd_response(enum memcached_response_status status,
 }
 
 static void
-my_mcd_error(GError *error, void *ctx)
+my_mcd_error(std::exception_ptr ep, void *ctx)
 {
     auto *c = (Context *)ctx;
 
-    g_error_free(error);
+    PrintException(ep);
 
     c->status = (memcached_response_status)-1;
     c->value_eof = true;

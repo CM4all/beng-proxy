@@ -19,6 +19,7 @@
 #include "istream/istream.hxx"
 #include "istream/istream_memory.hxx"
 #include "pool.hxx"
+#include "GException.hxx"
 #include "ssl/Hash.hxx"
 #include "util/djbhash.h"
 #include "util/ConstBuffer.hxx"
@@ -263,11 +264,11 @@ http_cache_choice_get_response(enum memcached_response_status status,
 }
 
 static void
-http_cache_choice_get_error(GError *error, void *ctx)
+http_cache_choice_get_error(std::exception_ptr ep, void *ctx)
 {
     auto choice = (HttpCacheChoice *)ctx;
 
-    choice->callback.get(nullptr, false, error, choice->callback_ctx);
+    choice->callback.get(nullptr, false, ToGError(ep), choice->callback_ctx);
 }
 
 static const struct memcached_client_handler http_cache_choice_get_handler = {
@@ -329,11 +330,11 @@ http_cache_choice_add_response(gcc_unused enum memcached_response_status status,
 }
 
 static void
-http_cache_choice_add_error(GError *error, void *ctx)
+http_cache_choice_add_error(std::exception_ptr ep, void *ctx)
 {
     auto choice = (HttpCacheChoice *)ctx;
 
-    choice->callback.commit(error, choice->callback_ctx);
+    choice->callback.commit(ToGError(ep), choice->callback_ctx);
 }
 
 static const struct memcached_client_handler http_cache_choice_add_handler = {
@@ -382,11 +383,11 @@ http_cache_choice_prepend_response(enum memcached_response_status status,
 }
 
 static void
-http_cache_choice_prepend_error(GError *error, void *ctx)
+http_cache_choice_prepend_error(std::exception_ptr ep, void *ctx)
 {
     auto choice = (HttpCacheChoice *)ctx;
 
-    choice->callback.commit(error, choice->callback_ctx);
+    choice->callback.commit(ToGError(ep), choice->callback_ctx);
 }
 
 static const struct memcached_client_handler http_cache_choice_prepend_handler = {
@@ -437,11 +438,11 @@ http_cache_choice_filter_set_response(gcc_unused enum memcached_response_status 
 }
 
 static void
-http_cache_choice_filter_set_error(GError *error, void *ctx)
+http_cache_choice_filter_set_error(std::exception_ptr ep, void *ctx)
 {
     auto choice = (HttpCacheChoice *)ctx;
 
-    choice->callback.filter(nullptr, error, choice->callback_ctx);
+    choice->callback.filter(nullptr, ToGError(ep), choice->callback_ctx);
 }
 
 static const struct memcached_client_handler http_cache_choice_filter_set_handler = {
@@ -548,11 +549,11 @@ http_cache_choice_filter_get_response(enum memcached_response_status status,
 }
 
 static void
-http_cache_choice_filter_get_error(GError *error, void *ctx)
+http_cache_choice_filter_get_error(std::exception_ptr ep, void *ctx)
 {
     auto choice = (HttpCacheChoice *)ctx;
 
-    choice->callback.filter(nullptr, error, choice->callback_ctx);
+    choice->callback.filter(nullptr, ToGError(ep), choice->callback_ctx);
 }
 
 static const struct memcached_client_handler http_cache_choice_filter_get_handler = {
@@ -645,11 +646,11 @@ http_cache_choice_delete_response(gcc_unused enum memcached_response_status stat
 }
 
 static void
-http_cache_choice_delete_error(GError *error, void *ctx)
+http_cache_choice_delete_error(std::exception_ptr ep, void *ctx)
 {
     auto choice = (HttpCacheChoice *)ctx;
 
-    choice->callback.delete_(error, choice->callback_ctx);
+    choice->callback.delete_(ToGError(ep), choice->callback_ctx);
 }
 
 static const struct memcached_client_handler http_cache_choice_delete_handler = {

@@ -11,6 +11,8 @@
 #include "memcached_protocol.hxx"
 #include "glibfwd.hxx"
 
+#include <exception>
+
 #include <stddef.h>
 
 static constexpr size_t MEMCACHED_EXTRAS_MAX = 0xff;
@@ -31,7 +33,7 @@ struct memcached_client_handler {
                      const void *key, size_t key_length,
                      Istream *value, void *ctx);
 
-    void (*error)(GError *error, void *ctx);
+    void (*error)(std::exception_ptr ep, void *ctx);
 };
 
 /**

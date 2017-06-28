@@ -225,13 +225,11 @@ my_mcd_response(enum memcached_response_status status,
 }
 
 static void
-my_mcd_error(GError *error, gcc_unused void *ctx)
+my_mcd_error(std::exception_ptr, gcc_unused void *ctx)
 {
     auto *c = (Context *)ctx;
 
     assert(!c->got_response);
-
-    g_error_free(error);
 
     c->got_response = true;
     c->status = (memcached_response_status)-1;

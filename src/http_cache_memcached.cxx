@@ -21,9 +21,11 @@
 #include "istream/istream.hxx"
 #include "istream/sink_header.hxx"
 #include "pool.hxx"
+#include "GException.hxx"
 #include "util/Background.hxx"
 #include "util/ByteOrder.hxx"
 #include "util/ConstBuffer.hxx"
+#include "util/Exception.hxx"
 
 #include <inline/compiler.h>
 
@@ -125,11 +127,11 @@ http_cache_memcached_flush_response(enum memcached_response_status status,
 }
 
 static void
-http_cache_memcached_flush_error(GError *error, void *ctx)
+http_cache_memcached_flush_error(std::exception_ptr ep, void *ctx)
 {
     auto request = (HttpCacheMemcachedRequest *)ctx;
 
-    request->callback.flush(false, error, request->callback_ctx);
+    request->callback.flush(false, ToGError(ep), request->callback_ctx);
 }
 
 static const struct memcached_client_handler http_cache_memcached_flush_handler = {
@@ -198,11 +200,11 @@ http_cache_memcached_get_response(enum memcached_response_status status,
                                   Istream *value, void *ctx);
 
 static void
-http_cache_memcached_get_error(GError *error, void *ctx)
+http_cache_memcached_get_error(std::exception_ptr ep, void *ctx)
 {
     auto request = (HttpCacheMemcachedRequest *)ctx;
 
-    request->callback.get(nullptr, nullptr, error, request->callback_ctx);
+    request->callback.get(nullptr, nullptr, ToGError(ep), request->callback_ctx);
 }
 
 static const struct memcached_client_handler http_cache_memcached_get_handler = {
@@ -399,11 +401,11 @@ http_cache_memcached_put_response(enum memcached_response_status status,
 }
 
 static void
-http_cache_memcached_put_error(GError *error, void *ctx)
+http_cache_memcached_put_error(std::exception_ptr ep, void *ctx)
 {
     auto &request = *(HttpCacheMemcachedRequest *)ctx;
 
-    request.callback.put(error, request.callback_ctx);
+    request.callback.put(ToGError(ep), request.callback_ctx);
 }
 
 static const struct memcached_client_handler http_cache_memcached_put_handler = {
@@ -497,14 +499,11 @@ mcd_background_response(gcc_unused enum memcached_response_status status,
 }
 
 static void
-mcd_background_error(GError *error, void *ctx)
+mcd_background_error(std::exception_ptr ep, void *ctx)
 {
     LinkedBackgroundJob *job = (LinkedBackgroundJob *)ctx;
 
-    if (error != nullptr) {
-        cache_log(2, "http-cache: put failed: %s\n", error->message);
-        g_error_free(error);
-    }
+    cache_log(2, "http-cache: put failed: %s\n", GetFullMessage(ep).c_str());
 
     job->Remove();
 }

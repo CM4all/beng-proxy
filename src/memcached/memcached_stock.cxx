@@ -125,7 +125,7 @@ MemcachedStockRequest::OnStockItemReady(StockItem &_item)
 void
 MemcachedStockRequest::OnStockItemError(std::exception_ptr ep)
 {
-    handler.error(ToGError(ep), handler_ctx);
+    handler.error(ep, handler_ctx);
 
     if (value != nullptr)
         value->CloseUnused();

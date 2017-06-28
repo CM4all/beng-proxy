@@ -6,15 +6,17 @@
 
 #include "memcached_client.hxx"
 #include "memcached_packet.hxx"
-#include "Quark.hxx"
+#include "Error.hxx"
 #include "buffered_socket.hxx"
 #include "please.hxx"
 #include "istream/Pointer.hxx"
 #include "pool.hxx"
 #include "GException.hxx"
+#include "system/Error.hxx"
 #include "util/Cancellable.hxx"
 #include "util/Cast.hxx"
 #include "util/ByteOrder.hxx"
+#include "util/Exception.hxx"
 
 #include <glib.h>
 
@@ -130,9 +132,9 @@ struct MemcachedClient final : Istream, IstreamHandler, Cancellable {
         Destroy();
     }
 
-    void AbortResponseHeaders(GError *error);
-    void AbortResponseValue(GError *error);
-    void AbortResponse(GError *error);
+    void AbortResponseHeaders(std::exception_ptr ep);
+    void AbortResponseValue(std::exception_ptr ep);
+    void AbortResponse(std::exception_ptr ep);
 
     BufferedResult SubmitResponse();
     BufferedResult BeginKey();
@@ -165,7 +167,7 @@ static const struct timeval memcached_client_timeout = {
 };
 
 void
-MemcachedClient::AbortResponseHeaders(GError *error)
+MemcachedClient::AbortResponseHeaders(std::exception_ptr ep)
 {
     assert(response.read_state == ReadState::HEADER ||
            response.read_state == ReadState::EXTRAS ||
@@ -174,7 +176,7 @@ MemcachedClient::AbortResponseHeaders(GError *error)
     if (socket.IsValid())
         DestroySocket(false);
 
-    request.handler->error(error, request.handler_ctx);
+    request.handler->error(ep, request.handler_ctx);
     response.read_state = ReadState::END;
 
     if (request.istream.IsDefined())
@@ -184,7 +186,7 @@ MemcachedClient::AbortResponseHeaders(GError *error)
 }
 
 void
-MemcachedClient::AbortResponseValue(GError *error)
+MemcachedClient::AbortResponseValue(std::exception_ptr ep)
 {
     assert(response.read_state == ReadState::VALUE);
     assert(!request.istream.IsDefined());
@@ -193,11 +195,11 @@ MemcachedClient::AbortResponseValue(GError *error)
         DestroySocket(false);
 
     response.read_state = ReadState::END;
-    DestroyError(error);
+    DestroyError(ep);
 }
 
 void
-MemcachedClient::AbortResponse(GError *error)
+MemcachedClient::AbortResponse(std::exception_ptr ep)
 {
     assert(response.read_state != ReadState::END);
 
@@ -205,11 +207,11 @@ MemcachedClient::AbortResponse(GError *error)
     case ReadState::HEADER:
     case ReadState::EXTRAS:
     case ReadState::KEY:
-        AbortResponseHeaders(error);
+        AbortResponseHeaders(ep);
         return;
 
     case ReadState::VALUE:
-        AbortResponseValue(error);
+        AbortResponseValue(ep);
         return;
 
     case ReadState::END:
@@ -271,10 +273,7 @@ MemcachedClient::SubmitResponse()
 
     if (request.istream.IsDefined()) {
         /* at this point, the request must have been sent */
-        GError *error =
-            g_error_new_literal(memcached_client_quark(), 0,
-                                "memcached server sends response too early");
-        AbortResponseHeaders(error);
+        AbortResponseHeaders(std::make_exception_ptr(MemcachedClientError("memcached server sends response too early")));
         return BufferedResult::CLOSED;
     }
 
@@ -365,10 +364,7 @@ MemcachedClient::FeedHeader(const void *data, size_t length)
         FromBE16(response.header.key_length) +
         response.header.extras_length > response.remaining) {
         /* protocol error: abort the connection */
-        GError *error =
-            g_error_new_literal(memcached_client_quark(), 0,
-                                "memcached protocol error");
-        AbortResponseHeaders(error);
+        AbortResponseHeaders(std::make_exception_ptr(MemcachedClientError("memcached protocol error")));
         return BufferedResult::CLOSED;
     }
 
@@ -582,9 +578,8 @@ memcached_client_socket_error(std::exception_ptr ep, void *ctx)
 {
     auto *client = (MemcachedClient *)ctx;
 
-    auto *error = ToGError(ep);
-    g_prefix_error(&error, "memcached connection failed: ");
-    client->AbortResponse(error);
+    client->AbortResponse(NestException(ep,
+                                        MemcachedClientError("memcached connection failed")));
 }
 
 static constexpr BufferedSocketHandler memcached_client_socket_handler = {
@@ -620,11 +615,7 @@ MemcachedClient::OnData(const void *data, size_t length)
         if (nbytes == WRITE_BLOCKING || nbytes == WRITE_DESTROYED)
             return 0;
 
-        GError *error =
-            g_error_new(memcached_client_quark(), 0,
-                        "write error on memcached connection: %s",
-                        strerror(errno));
-        AbortResponse(error);
+        AbortResponseHeaders(std::make_exception_ptr(MakeErrno("write error on memcached connection")));
         return 0;
     }
 
@@ -655,7 +646,8 @@ MemcachedClient::OnError(GError *error)
            response.read_state == ReadState::KEY);
 
     request.istream.Clear();
-    AbortResponse(error);
+    AbortResponse(ToException(*error));
+    g_error_free(error);
 }
 
 /*
@@ -732,10 +724,8 @@ memcached_client_invoke(struct pool *pool, EventLoop &event_loop,
     if (request == nullptr) {
         lease.ReleaseLease(true);
 
-        GError *error =
-            g_error_new_literal(memcached_client_quark(), 0,
-                                "failed to generate memcached request packet");
-        handler->error(error, handler_ctx);
+        handler->error(std::make_exception_ptr(MemcachedClientError("failed to generate memcached request packet")),
+                       handler_ctx);
         return;
     }
 

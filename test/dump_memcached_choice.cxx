@@ -15,6 +15,7 @@
 #include "net/RConnectSocket.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/Cancellable.hxx"
+#include "util/PrintException.hxx"
 
 #include <glib.h>
 
@@ -134,10 +135,9 @@ my_mcd_response(enum memcached_response_status status,
 }
 
 static void
-my_mcd_error(GError *error, gcc_unused void *ctx)
+my_mcd_error(std::exception_ptr ep, gcc_unused void *ctx)
 {
-    fprintf(stderr, "%s\n", error->message);
-    g_error_free(error);
+    PrintException(ep);
 }
 
 static const struct memcached_client_handler my_mcd_handler = {
