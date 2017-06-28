@@ -49,12 +49,11 @@ struct Instance final : HttpServerConnectionHandler {
     void HttpConnectionClosed() override;
 };
 
-static GError *
-catch_callback(GError *error, gcc_unused void *ctx)
+static std::exception_ptr 
+catch_callback(std::exception_ptr ep, gcc_unused void *ctx)
 {
-    fprintf(stderr, "%s\n", error->message);
-    g_error_free(error);
-    return nullptr;
+    PrintException(ep);
+    return {};
 }
 
 void

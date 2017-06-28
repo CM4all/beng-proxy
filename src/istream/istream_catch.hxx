@@ -8,13 +8,13 @@
 #ifndef BENG_PROXY_ISTREAM_CATCH_HXX
 #define BENG_PROXY_ISTREAM_CATCH_HXX
 
-#include "glibfwd.hxx"
+#include <exception>
 
 struct pool;
 class Istream;
 
 Istream *
 istream_catch_new(struct pool *pool, Istream &input,
-                  GError *(*callback)(GError *error, void *ctx), void *ctx);
+                  std::exception_ptr (*callback)(std::exception_ptr ep, void *ctx), void *ctx);
 
 #endif

@@ -7,8 +7,11 @@
 
 #include "istream_catch.hxx"
 #include "ForwardIstream.hxx"
+#include "GException.hxx"
 
 #include <memory>
+
+#include <glib.h>
 
 #include <assert.h>
 
@@ -25,12 +28,12 @@ class CatchIstream final : public ForwardIstream {
      */
     size_t chunk = 0;
 
-    GError *(*const callback)(GError *error, void *ctx);
+    std::exception_ptr (*const callback)(std::exception_ptr ep, void *ctx);
     void *const callback_ctx;
 
 public:
     CatchIstream(struct pool &_pool, Istream &_input,
-                 GError *(*_callback)(GError *error, void *ctx), void *ctx)
+                 std::exception_ptr (*_callback)(std::exception_ptr ep, void *ctx), void *ctx)
         :ForwardIstream(_pool, _input),
          callback(_callback), callback_ctx(ctx) {}
 
@@ -168,10 +171,11 @@ CatchIstream::OnDirect(FdType type, int fd, size_t max_length)
 void
 CatchIstream::OnError(GError *error)
 {
-    error = callback(error, callback_ctx);
-    if (error != nullptr) {
+    auto ep = callback(ToException(*error), callback_ctx);
+    g_error_free(error);
+    if (ep) {
         /* forward error to our handler */
-        ForwardIstream::OnError(error);
+        ForwardIstream::OnError(ToGError(ep));
         return;
     }
 
@@ -233,7 +237,7 @@ CatchIstream::_Close()
 
 Istream *
 istream_catch_new(struct pool *pool, Istream &input,
-                  GError *(*callback)(GError *error, void *ctx), void *ctx)
+                  std::exception_ptr (*callback)(std::exception_ptr ep, void *ctx), void *ctx)
 {
     assert(callback != nullptr);
 

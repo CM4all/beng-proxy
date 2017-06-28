@@ -1,8 +1,7 @@
 #include "istream/istream_catch.hxx"
 #include "istream/istream_string.hxx"
 #include "istream/istream.hxx"
-
-#include <glib.h>
+#include "util/Exception.hxx"
 
 #include <stdio.h>
 
@@ -18,12 +17,11 @@ create_input(struct pool *pool)
     return istream_string_new(pool, EXPECTED_RESULT);
 }
 
-static GError *
-catch_callback(GError *error, gcc_unused void *ctx)
+static std::exception_ptr 
+catch_callback(std::exception_ptr ep, gcc_unused void *ctx)
 {
-    fprintf(stderr, "caught: %s\n", error->message);
-    g_error_free(error);
-    return nullptr;
+    fprintf(stderr, "caught: %s\n", GetFullMessage(ep).c_str());
+    return {};
 }
 
 static Istream *

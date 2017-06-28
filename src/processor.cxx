@@ -43,10 +43,9 @@
 #include "util/Macros.hxx"
 #include "util/StringView.hxx"
 #include "util/Cancellable.hxx"
+#include "util/Exception.hxx"
 
 #include <daemon/log.h>
-
-#include <glib.h>
 
 #include <assert.h>
 #include <string.h>
@@ -1166,15 +1165,14 @@ XmlProcessor::OnXmlAttributeFinished(const XmlParserAttribute &attr)
     }
 }
 
-static GError *
-widget_catch_callback(GError *error, void *ctx)
+static std::exception_ptr
+widget_catch_callback(std::exception_ptr ep, void *ctx)
 {
     auto *widget = (Widget *)ctx;
 
     daemon_log(3, "error from widget '%s': %s\n",
-               widget->GetLogName(), error->message);
-    g_error_free(error);
-    return nullptr;
+               widget->GetLogName(), GetFullMessage(ep).c_str());
+    return {};
 }
 
 inline Istream *
