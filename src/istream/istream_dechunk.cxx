@@ -84,7 +84,7 @@ public:
     }
 
 private:
-    void Abort(GError *error);
+    void Abort(std::exception_ptr ep);
 
     gcc_pure
     bool IsEofPending() const {
@@ -117,7 +117,7 @@ protected:
 };
 
 void
-DechunkIstream::Abort(GError *error)
+DechunkIstream::Abort(std::exception_ptr ep)
 {
     assert(!parser.HasEnded());
     assert(input.IsDefined());
@@ -126,7 +126,7 @@ DechunkIstream::Abort(GError *error)
     if (input.IsDefined())
         input.ClearAndClose();
 
-    DestroyError(error);
+    DestroyError(ep);
 }
 
 void
@@ -181,12 +181,14 @@ DechunkIstream::CalculateRemainingDataSize(const char *src,
     HttpChunkParser p(parser);
 
     while (src != src_end) {
-        GError *error = nullptr;
         const ConstBuffer<char> src_remaining(src, src_end - src);
-        auto data = ConstBuffer<char>::FromVoid(p.Parse(src_remaining.ToVoid(),
-                                                        &error));
-        if (data.IsNull()) {
-            Abort(error);
+
+        ConstBuffer<char> data;
+
+        try {
+            data = ConstBuffer<char>::FromVoid(p.Parse(src_remaining.ToVoid()));
+        } catch (...) {
+            Abort(std::current_exception());
             return false;
         }
 
@@ -226,12 +228,14 @@ DechunkIstream::Feed(const void *data0, size_t length)
         src += pending_verbatim;
 
     while (src != src_end) {
-        GError *error = nullptr;
         const ConstBuffer<char> src_remaining(src, src_end - src);
-        auto data = ConstBuffer<char>::FromVoid(parser.Parse(src_remaining.ToVoid(),
-                                                             &error));
-        if (data.IsNull()) {
-            Abort(error);
+
+        ConstBuffer<char> data;
+
+        try {
+            data = ConstBuffer<char>::FromVoid(parser.Parse(src_remaining.ToVoid()));
+        } catch (...) {
+            Abort(std::current_exception());
             return 0;
         }
 
@@ -362,10 +366,7 @@ DechunkIstream::OnEof()
     if (eof)
         return;
 
-    GError *error =
-        g_error_new_literal(dechunk_quark(), 0,
-                            "premature EOF in dechunker");
-    DestroyError(error);
+    DestroyError(std::make_exception_ptr(std::runtime_error("premature EOF in dechunker")));
 }
 
 void

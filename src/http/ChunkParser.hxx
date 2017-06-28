@@ -9,19 +9,11 @@
 
 #include <inline/compiler.h>
 
-#include <glib.h>
-
 #include <algorithm>
+#include <stdexcept>
 
 #include <assert.h>
 #include <stddef.h>
-
-gcc_const
-static GQuark
-dechunk_quark()
-{
-    return g_quark_from_static_string("dechunk");
-}
 
 /**
  * Incremental parser for "Transfer-Encoding:chunked".
@@ -48,10 +40,12 @@ public:
     /**
      * Find the next data chunk.
      *
+     * Throws exception on error.
+     *
      * @return a pointer to the data chunk, an empty chunk pointing to
-     * the end of input if there is no data chunk, or nullptr on error
+     * the end of input if there is no data chunk
      */
-    ConstBuffer<void> Parse(ConstBuffer<void> input, GError **error_r);
+    ConstBuffer<void> Parse(ConstBuffer<void> input);
 
     bool Consume(size_t nbytes) {
         assert(nbytes > 0);
@@ -74,7 +68,7 @@ public:
 };
 
 ConstBuffer<void>
-HttpChunkParser::Parse(ConstBuffer<void> _input, GError **error_r)
+HttpChunkParser::Parse(ConstBuffer<void> _input)
 {
     assert(!_input.IsNull());
 
@@ -100,9 +94,7 @@ HttpChunkParser::Parse(ConstBuffer<void> _input, GError **error_r)
                 state = State::AFTER_SIZE;
                 continue;
             } else {
-                g_set_error_literal(error_r, dechunk_quark(), 0,
-                                    "chunk length expected");
-                return nullptr;
+                throw std::runtime_error("chunk length expected");
             }
 
             if (state == State::NONE) {
@@ -134,9 +126,7 @@ HttpChunkParser::Parse(ConstBuffer<void> _input, GError **error_r)
             if (ch == '\n') {
                 state = State::NONE;
             } else if (ch != '\r') {
-                g_set_error_literal(error_r, dechunk_quark(), 0,
-                                    "newline expected");
-                return nullptr;
+                throw std::runtime_error("newline expected");
             }
 
             ++p;
