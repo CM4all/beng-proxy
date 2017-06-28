@@ -9,14 +9,14 @@
 #include "istream_pipe.hxx"
 #include "ForwardIstream.hxx"
 #include "io/FileDescriptor.hxx"
+#include "GException.hxx"
 #include "direct.hxx"
 #include "pipe_stock.hxx"
 #include "stock/Stock.hxx"
 #include "stock/Item.hxx"
 #include "gerrno.h"
+#include "system/Error.hxx"
 #include "io/Splice.hxx"
-
-#include <daemon/log.h>
 
 #include <assert.h>
 #include <errno.h>
@@ -71,8 +71,13 @@ public:
 private:
     void CloseInternal();
     void Abort(GError *error);
+    void Abort(std::exception_ptr ep);
     ssize_t Consume();
-    bool Create(GError **error_r);
+
+    /**
+     * Throws exception on error.
+     */
+    void Create();
 };
 
 void
@@ -98,6 +103,17 @@ PipeIstream::Abort(GError *error)
         input.Close();
 
     DestroyError(error);
+}
+
+void
+PipeIstream::Abort(std::exception_ptr ep)
+{
+    CloseInternal();
+
+    if (input.IsDefined())
+        input.Close();
+
+    DestroyError(ep);
 }
 
 ssize_t
@@ -171,8 +187,8 @@ PipeIstream::OnData(const void *data, size_t length)
     return InvokeData(data, length);
 }
 
-inline bool
-PipeIstream::Create(GError **error_r)
+inline void
+PipeIstream::Create()
 {
     assert(!fds[0].IsDefined());
     assert(!fds[1].IsDefined());
@@ -180,19 +196,16 @@ PipeIstream::Create(GError **error_r)
     if (stock != nullptr) {
         assert(stock_item == nullptr);
 
-        stock_item = stock->GetNow(GetPool(), nullptr, error_r);
+        GError *error = nullptr;
+        stock_item = stock->GetNow(GetPool(), nullptr, &error);
         if (stock_item == nullptr)
-            return false;
+            ThrowFreeGError(error);
 
         pipe_stock_item_get(stock_item, fds);
     } else {
-        if (!FileDescriptor::CreatePipeNonBlock(fds[0], fds[1])) {
-            set_error_errno_msg(error_r, "pipe() failed");
-            return false;
-        }
+        if (!FileDescriptor::CreatePipeNonBlock(fds[0], fds[1]))
+            throw MakeErrno("pipe() failed");
     }
-
-    return true;
 }
 
 inline ssize_t
@@ -220,9 +233,10 @@ PipeIstream::OnDirect(FdType type, int fd, size_t max_length)
     assert((type & ISTREAM_TO_PIPE) == type);
 
     if (!fds[1].IsDefined()) {
-        GError *error = nullptr;
-        if (!Create(&error)) {
-            Abort(error);
+        try {
+            Create();
+        } catch (...) {
+            Abort(std::current_exception());
             return ISTREAM_RESULT_CLOSED;
         }
     }
