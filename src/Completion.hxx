@@ -24,11 +24,6 @@ enum class Completion {
     MORE,
 
     /**
-     * An error has occurred.  Details are returned in a GError object.
-     */
-    ERROR,
-
-    /**
      * The object has been closed/destroyed.  Details have been
      * supplied to the handler.
      */

@@ -136,7 +136,7 @@ CGIClient::ReturnResponse()
 
 inline size_t
 CGIClient::FeedHeaders(const void *data, size_t length)
-{
+try {
     assert(!parser.AreHeadersFinished());
 
     auto w = buffer.Write();
@@ -148,8 +148,7 @@ CGIClient::FeedHeaders(const void *data, size_t length)
     memcpy(w.data, data, length);
     buffer.Append(length);
 
-    GError *error = nullptr;
-    switch (parser.FeedHeaders(GetPool(), buffer, &error)) {
+    switch (parser.FeedHeaders(GetPool(), buffer)) {
     case Completion::DONE:
         /* the DONE status can only be triggered by new data that
            was just received; therefore, the amount of data still in
@@ -167,13 +166,6 @@ CGIClient::FeedHeaders(const void *data, size_t length)
     case Completion::MORE:
         return length;
 
-    case Completion::ERROR:
-        buffer.Free(fb_pool_get());
-        input.ClearAndClose();
-        handler.InvokeError(error);
-        Destroy();
-        return 0;
-
     case Completion::CLOSED:
         /* unreachable */
         assert(false);
@@ -182,6 +174,12 @@ CGIClient::FeedHeaders(const void *data, size_t length)
 
     /* unreachable */
     assert(false);
+    return 0;
+} catch (...) {
+    buffer.Free(fb_pool_get());
+    input.ClearAndClose();
+    handler.InvokeError(std::current_exception());
+    Destroy();
     return 0;
 }
 

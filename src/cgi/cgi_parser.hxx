@@ -9,7 +9,6 @@
 
 #include "strmap.hxx"
 #include "Completion.hxx"
-#include "glibfwd.hxx"
 
 #include <http/status.h>
 
@@ -62,15 +61,16 @@ struct CGIParser {
      * Run the CGI response header parser with data from the specified
      * buffer.
      *
+     * Throws exception on error.
+     *
      * @param buffer a buffer containing data received from the CGI
      * program; consumed data will automatically be removed
      * @return DONE when the headers are finished (the remaining
      * buffer contains the response body); PARTIAL or NONE when more
-     * header data is expected; ERROR on error
+     * header data is expected
      */
     Completion FeedHeaders(struct pool &pool,
-                                ForeignFifoBuffer<uint8_t> &buffer,
-                                GError **error_r);
+                           ForeignFifoBuffer<uint8_t> &buffer);
 
     http_status_t GetStatus() const {
         assert(finished);
@@ -122,7 +122,13 @@ struct CGIParser {
     }
 
 private:
-    Completion Finish(ForeignFifoBuffer<uint8_t> &buffer, GError **error_r);
+    /**
+     * Evaluate the response headers after the headers have been finalized
+     * by an empty line.
+     *
+     * Throws exception on error.
+     */
+    Completion Finish(ForeignFifoBuffer<uint8_t> &buffer);
 };
 
 #endif

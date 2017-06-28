@@ -5,7 +5,7 @@
  */
 
 #include "cgi_parser.hxx"
-#include "cgi_quark.h"
+#include "Error.hxx"
 #include "header_parser.hxx"
 #include "util/ForeignFifoBuffer.hxx"
 #include "util/StringUtil.hxx"
@@ -19,12 +19,8 @@ CGIParser::CGIParser(struct pool &pool)
 {
 }
 
-/**
- * Evaluate the response headers after the headers have been finalized
- * by an empty line.
- */
 inline Completion
-CGIParser::Finish(ForeignFifoBuffer<uint8_t> &buffer, GError **error_r)
+CGIParser::Finish(ForeignFifoBuffer<uint8_t> &buffer)
 {
     /* parse the status */
     const char *p = headers.Remove("status");
@@ -50,10 +46,8 @@ CGIParser::Finish(ForeignFifoBuffer<uint8_t> &buffer, GError **error_r)
             remaining = -1;
     }
 
-    if (IsTooMuch(buffer.GetAvailable())) {
-        g_set_error(error_r, cgi_quark(), 0, "too much data from CGI script");
-        return Completion::ERROR;
-    }
+    if (IsTooMuch(buffer.GetAvailable()))
+        throw CgiError("too much data from CGI script");
 
 #ifndef NDEBUG
     finished = true;
@@ -62,8 +56,7 @@ CGIParser::Finish(ForeignFifoBuffer<uint8_t> &buffer, GError **error_r)
 }
 
 Completion
-CGIParser::FeedHeaders(struct pool &pool, ForeignFifoBuffer<uint8_t> &buffer,
-                       GError **error_r)
+CGIParser::FeedHeaders(struct pool &pool, ForeignFifoBuffer<uint8_t> &buffer)
 {
     assert(!AreHeadersFinished());
 
@@ -87,7 +80,7 @@ CGIParser::FeedHeaders(struct pool &pool, ForeignFifoBuffer<uint8_t> &buffer,
             /* found an empty line, which is the separator between
                headers and body */
             buffer.Consume(next - data);
-            return Finish(buffer, error_r);
+            return Finish(buffer);
         }
 
         header_parse_line(pool, headers, {start, line_length});
@@ -105,8 +98,7 @@ CGIParser::FeedHeaders(struct pool &pool, ForeignFifoBuffer<uint8_t> &buffer,
            means the current header is too large for the buffer; bail
            out */
 
-        g_set_error(error_r, cgi_quark(), 0, "CGI response header too long");
-        return Completion::ERROR;
+        throw CgiError("CGI response header too long");
     }
 
     return Completion::MORE;
