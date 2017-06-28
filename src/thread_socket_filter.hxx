@@ -15,7 +15,6 @@
 
 #include <mutex>
 
-typedef struct _GError GError;
 struct SocketFilter;
 struct FilteredSocket;
 struct ThreadSocketFilter;
