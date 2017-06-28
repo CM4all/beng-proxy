@@ -8,7 +8,10 @@
 #include "istream/Sink.hxx"
 #include "rubber.hxx"
 #include "pool.hxx"
+#include "GException.hxx"
 #include "util/Cancellable.hxx"
+
+#include <glib.h>
 
 #include <assert.h>
 #include <stdint.h>
@@ -163,7 +166,8 @@ RubberSink::OnError(GError *error)
     input.Clear();
 
     rubber_remove(&rubber, rubber_id);
-    handler.RubberError(error);
+    handler.RubberError(ToException(*error));
+    g_error_free(error);
 }
 
 /*

@@ -35,14 +35,12 @@ struct Data final : RubberSinkHandler {
 
     unsigned rubber_id;
     size_t size;
-    GError *error;
+    std::exception_ptr error;
 
     CancellablePointer cancel_ptr;
 
-    Data(Rubber *_r):result(NONE), r(_r), rubber_id(0), error(NULL) {}
+    Data(Rubber *_r):result(NONE), r(_r), rubber_id(0) {}
     ~Data() {
-        if (error != NULL)
-            g_error_free(error);
         if (rubber_id > 0)
             rubber_remove(r, rubber_id);
     }
@@ -51,7 +49,7 @@ struct Data final : RubberSinkHandler {
     void RubberDone(unsigned rubber_id, size_t size) override;
     void RubberOutOfMemory() override;
     void RubberTooLarge() override;
-    void RubberError(GError *error) override;
+    void RubberError(std::exception_ptr ep) override;
 };
 
 void
@@ -81,12 +79,12 @@ Data::RubberTooLarge()
 }
 
 void
-Data::RubberError(GError *_error)
+Data::RubberError(std::exception_ptr ep)
 {
     assert(result == NONE);
 
     result = ERROR;
-    error = _error;
+    error = ep;
 }
 
 class SinkRubberTest : public PoolTest {

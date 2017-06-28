@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_SINK_RUBBER_HXX
 #define BENG_PROXY_SINK_RUBBER_HXX
 
-#include "glibfwd.hxx"
+#include <exception>
 
 #include <stddef.h>
 
@@ -21,7 +21,7 @@ public:
     virtual void RubberDone(unsigned rubber_id, size_t size) = 0;
     virtual void RubberOutOfMemory() = 0;
     virtual void RubberTooLarge() = 0;
-    virtual void RubberError(GError *error) = 0;
+    virtual void RubberError(std::exception_ptr ep) = 0;
 };
 
 void

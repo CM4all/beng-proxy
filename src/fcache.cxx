@@ -28,6 +28,7 @@
 #include "http/List.hxx"
 #include "http/Date.hxx"
 #include "util/Cancellable.hxx"
+#include "util/Exception.hxx"
 
 #include <boost/intrusive/list.hpp>
 
@@ -158,7 +159,7 @@ struct FilterCacheRequest final : HttpResponseHandler, RubberSinkHandler {
     void RubberDone(unsigned rubber_id, size_t size) override;
     void RubberOutOfMemory() override;
     void RubberTooLarge() override;
-    void RubberError(GError *error) override;
+    void RubberError(std::exception_ptr ep) override;
 };
 
 class FilterCache {
@@ -391,13 +392,12 @@ FilterCacheRequest::RubberTooLarge()
 }
 
 void
-FilterCacheRequest::RubberError(GError *error)
+FilterCacheRequest::RubberError(std::exception_ptr ep)
 {
     response.cancel_ptr = nullptr;
 
     cache_log(4, "filter_cache: body_abort %s: %s\n",
-              info.key, error->message);
-    g_error_free(error);
+              info.key, GetFullMessage(ep).c_str());
 
     filter_cache_request_release(this);
 }

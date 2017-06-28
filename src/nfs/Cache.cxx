@@ -22,10 +22,9 @@
 #include "cache.hxx"
 #include "event/TimerEvent.hxx"
 #include "util/Cancellable.hxx"
+#include "util/Exception.hxx"
 
 #include <boost/intrusive/list.hpp>
-
-#include <glib.h>
 
 #include <sys/stat.h>
 #include <stdlib.h>
@@ -87,7 +86,7 @@ struct NfsCacheStore final
     void RubberDone(unsigned rubber_id, size_t size) override;
     void RubberOutOfMemory() override;
     void RubberTooLarge() override;
-    void RubberError(GError *error) override;
+    void RubberError(std::exception_ptr ep) override;
 };
 
 struct NfsCache {
@@ -280,12 +279,12 @@ NfsCacheStore::RubberTooLarge()
 }
 
 void
-NfsCacheStore::RubberError(GError *error)
+NfsCacheStore::RubberError(std::exception_ptr ep)
 {
     cancel_ptr = nullptr;
 
-    cache_log(4, "nfs_cache: body_abort %s: %s\n", key, error->message);
-    g_error_free(error);
+    cache_log(4, "nfs_cache: body_abort %s: %s\n",
+              key, GetFullMessage(ep).c_str());
 
     Release();
 }

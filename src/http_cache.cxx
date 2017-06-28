@@ -146,7 +146,7 @@ public:
     void RubberDone(unsigned rubber_id, size_t size) override;
     void RubberOutOfMemory() override;
     void RubberTooLarge() override;
-    void RubberError(GError *error) override;
+    void RubberError(std::exception_ptr ep) override;
 };
 
 class HttpCache {
@@ -334,11 +334,10 @@ HttpCacheRequest::RubberTooLarge()
 }
 
 void
-HttpCacheRequest::RubberError(GError *error)
+HttpCacheRequest::RubberError(std::exception_ptr ep)
 {
     cache_log(4, "http_cache: body_abort %s: %s\n",
-              key, error->message);
-    g_error_free(error);
+              key, GetFullMessage(ep).c_str());
 
     RubberStoreFinished();
 }
