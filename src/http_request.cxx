@@ -133,6 +133,12 @@ private:
         ResponseSent();
     }
 
+    void Failed(std::exception_ptr ep) {
+        body.Clear();
+        handler.InvokeError(ep);
+        ResponseSent();
+    }
+
     /* virtual methods from class Cancellable */
     void Cancel() override {
         assert(!response_sent);
@@ -227,7 +233,7 @@ HttpRequest::OnStockItemReady(StockItem &item)
             filter_ctx = filter_factory->CreateFilter();
         } catch (...) {
             item.Put(false);
-            Failed(ToGError(std::current_exception()));
+            Failed(std::current_exception());
             return;
         }
     }
