@@ -14,7 +14,6 @@
 #include "io/UniqueFileDescriptor.hxx"
 #include "direct.hxx"
 #include "event/SocketEvent.hxx"
-#include "gerrno.h"
 #include "GException.hxx"
 #include "pool.hxx"
 #include "fb_pool.hxx"
@@ -263,11 +262,10 @@ SpawnIstream::ReadFromOutput()
                 /* the CGI may be waiting for more data from stdin */
                 input.Read();
         } else {
-            GError *error =
-                new_error_errno_msg("failed to read from sub process");
+            auto error = MakeErrno("failed to read from sub process");
             FreeBuffer();
             Cancel();
-            DestroyError(error);
+            DestroyError(std::make_exception_ptr(error));
         }
     } else {
         if (Istream::ConsumeFromBuffer(buffer) > 0)
@@ -304,11 +302,10 @@ SpawnIstream::ReadFromOutput()
                 /* the CGI may be waiting for more data from stdin */
                 input.Read();
         } else {
-            GError *error =
-                new_error_errno_msg("failed to read from sub process");
+            auto error = MakeErrno("failed to read from sub process");
             FreeBuffer();
             Cancel();
-            DestroyError(error);
+            DestroyError(std::make_exception_ptr(error));
         }
     }
 }
