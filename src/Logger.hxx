@@ -5,8 +5,6 @@
 #ifndef LOGGER_HXX
 #define LOGGER_HXX
 
-#include "glibfwd.hxx"
-
 #include <daemon/log.h>
 
 #include <exception>
@@ -38,7 +36,6 @@ public:
         daemon_log(level, "[%s] %s: %s\n", GetLogName().c_str(), prefix, msg);
     }
 
-    void Log(int level, const char *prefix, const GError *error) const;
     void Log(int level, const char *prefix, const std::exception &e) const;
     void Log(int level, const char *prefix, std::exception_ptr ep) const;
     void LogErrno(int level, const char *prefix, int e) const;
