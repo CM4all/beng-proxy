@@ -12,6 +12,8 @@
 #include "was/Quark.hxx"
 #include "fcgi/Error.hxx"
 #include "fcgi/Quark.hxx"
+#include "memcached/Error.hxx"
+#include "memcached/Quark.hxx"
 #include "gerrno.h"
 #include "widget/Error.hxx"
 #include "system/Error.hxx"
@@ -74,6 +76,12 @@ ToGError(std::exception_ptr ep)
     }
 
     try {
+        FindRetrowNested<MemcachedClientError>(ep);
+    } catch (const MemcachedClientError &e) {
+        return g_error_new_literal(memcached_client_quark(), 0, msg.c_str());
+    }
+
+    try {
         FindRetrowNested<WidgetError>(ep);
     } catch (const WidgetError &e) {
         return g_error_new_literal(widget_quark(), int(e.GetCode()),
@@ -103,6 +111,8 @@ ThrowGError(const GError &error)
         throw WasError(error.message);
     else if (error.domain == fcgi_quark())
         throw FcgiClientError(error.message);
+    else if (error.domain == memcached_client_quark())
+        throw MemcachedClientError(error.message);
     else if (error.domain == widget_quark())
         throw WidgetError(WidgetErrorCode(error.code), error.message);
     else

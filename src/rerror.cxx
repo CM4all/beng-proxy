@@ -11,6 +11,7 @@
 #include "nfs/Error.hxx"
 #include "ajp/ajp_client.hxx"
 #include "memcached/Quark.hxx"
+#include "memcached/Error.hxx"
 #include "cgi/cgi_quark.h"
 #include "fcgi/Quark.hxx"
 #include "fcgi/Error.hxx"
@@ -161,6 +162,12 @@ ToResponse(struct pool &pool, std::exception_ptr ep)
         FindRetrowNested<FcgiClientError>(ep);
     } catch (...) {
         return {HTTP_STATUS_BAD_GATEWAY, "Script failed"};
+    }
+
+    try {
+        FindRetrowNested<MemcachedClientError>(ep);
+    } catch (...) {
+        return {HTTP_STATUS_BAD_GATEWAY, "Cache server failed"};
     }
 
     try {
