@@ -92,6 +92,7 @@ protected:
     ssize_t InvokeDirect(FdType type, int fd, size_t max_length);
     void InvokeEof();
     void InvokeError(GError *error);
+    void InvokeError(std::exception_ptr ep);
 
     void Destroy() {
         this->~Istream();
@@ -105,6 +106,11 @@ protected:
 
     void DestroyError(GError *error) {
         InvokeError(error);
+        Destroy();
+    }
+
+    void DestroyError(std::exception_ptr ep) {
+        InvokeError(ep);
         Destroy();
     }
 

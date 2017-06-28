@@ -8,7 +8,6 @@
 #include "Pointer.hxx"
 #include "Bucket.hxx"
 #include "pool.hxx"
-#include "GException.hxx"
 #include "event/DeferEvent.hxx"
 #include "util/Cast.hxx"
 
@@ -199,9 +198,8 @@ struct TeeIstream final : IstreamHandler {
 
             defer_event.Cancel();
 
-            auto error = std::exchange(second_output.postponed_error,
-                                       std::exception_ptr());
-            second_output.DestroyError(ToGError(error));
+            second_output.DestroyError(std::exchange(second_output.postponed_error,
+                                                     std::exception_ptr()));
             return;
         }
 

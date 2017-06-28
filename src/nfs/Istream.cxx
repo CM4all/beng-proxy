@@ -9,7 +9,6 @@
 #include "Handler.hxx"
 #include "istream/istream.hxx"
 #include "pool.hxx"
-#include "GException.hxx"
 #include "util/Cast.hxx"
 #include "util/ForeignFifoBuffer.hxx"
 
@@ -183,7 +182,7 @@ NfsIstream::OnNfsReadError(std::exception_ptr ep)
     assert(pending_read > 0);
 
     nfs_client_close_file(handle);
-    DestroyError(ToGError(ep));
+    DestroyError(ep);
 }
 
 inline void
