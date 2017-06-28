@@ -32,7 +32,7 @@ static_file_get(EventLoop &event_loop, struct pool &pool,
 
     struct stat st;
     if (lstat(path, &st) != 0) {
-        handler.InvokeError(std::make_exception_ptr(FormatErrno("Failed to open %s: ", path)));
+        handler.InvokeError(std::make_exception_ptr(FormatErrno("Failed to open %s", path)));
         return;
     }
 

@@ -34,9 +34,9 @@ public:
         ForwardIstream::OnEof();
     }
 
-    void OnError(GError *error) override {
+    void OnError(std::exception_ptr ep) override {
         handler.abort(handler_ctx);
-        ForwardIstream::OnError(error);
+        ForwardIstream::OnError(ep);
     }
 };
 

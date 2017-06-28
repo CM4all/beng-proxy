@@ -8,11 +8,8 @@
 #include "css_syntax.hxx"
 #include "pool.hxx"
 #include "istream/Sink.hxx"
-#include "GException.hxx"
 #include "util/StringUtil.hxx"
 #include "util/TrivialArray.hxx"
-
-#include <glib.h>
 
 struct CssParser final : IstreamSink {
     template<size_t max>
@@ -123,12 +120,11 @@ struct CssParser final : IstreamSink {
         pool_unref(pool);
     }
 
-    void OnError(GError *error) override {
+    void OnError(std::exception_ptr ep) override {
         assert(input.IsDefined());
 
         input.Clear();
-        handler->error(ToException(*error), handler_ctx);
-        g_error_free(error);
+        handler->error(ep, handler_ctx);
         pool_unref(pool);
     }
 };

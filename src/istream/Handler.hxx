@@ -8,9 +8,10 @@
 #define ISTREAM_HANDLER_HXX
 
 #include "io/FdType.hxx"
-#include "glibfwd.hxx"
 
 #include <inline/compiler.h>
+
+#include <exception>
 
 #include <sys/types.h>
 
@@ -83,10 +84,9 @@ public:
      * The method close() will not result in a call to this callback,
      * since the caller is assumed to be the istream handler.
      *
-     * @param error a GError describing the error condition, must be
-     * freed by the callee
+     * @param error an exception describing the error condition
      */
-    virtual void OnError(GError *error) = 0;
+    virtual void OnError(std::exception_ptr error) = 0;
 };
 
 #endif

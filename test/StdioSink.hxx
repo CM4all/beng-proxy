@@ -1,6 +1,5 @@
 #include "istream/Pointer.hxx"
-
-#include <glib.h>
+#include "util/PrintException.hxx"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -27,11 +26,10 @@ struct StdioSink final : IstreamHandler {
         input.Clear();
     }
 
-    void OnError(GError *error) override {
+    void OnError(std::exception_ptr ep) override {
         input.Clear();
 
-        fprintf(stderr, "%s\n", error->message);
-        g_error_free(error);
+        PrintException(ep);
     }
 };
 

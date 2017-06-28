@@ -15,7 +15,6 @@
 #include "spawn/ExitListener.hxx"
 #include "spawn/Interface.hxx"
 #include "pool.hxx"
-#include "GException.hxx"
 #include "event/SocketEvent.hxx"
 #include "util/Cancellable.hxx"
 #include "util/ConstBuffer.hxx"

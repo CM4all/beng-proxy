@@ -68,11 +68,11 @@ struct CatIstream final : public Istream {
             cat.OnInputEof(*this);
         }
 
-        void OnError(GError *error) override {
+        void OnError(std::exception_ptr ep) override {
             assert(input.IsDefined());
             ClearInput();
 
-            cat.OnInputError(*this, error);
+            cat.OnInputError(*this, ep);
         }
 
         struct Disposer {
@@ -139,10 +139,10 @@ struct CatIstream final : public Istream {
         }
     }
 
-    void OnInputError(gcc_unused Input &i, GError *error) {
+    void OnInputError(Input &i, std::exception_ptr ep) {
         inputs.erase(inputs.iterator_to(i));
         CloseAllInputs();
-        DestroyError(error);
+        DestroyError(ep);
     }
 
     /* virtual methods from class Istream */

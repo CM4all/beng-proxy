@@ -4,9 +4,6 @@
 
 #include "istream_fail.hxx"
 #include "istream.hxx"
-#include "GException.hxx"
-
-#include <unistd.h>
 
 class FailIstream final : public Istream {
     const std::exception_ptr error;

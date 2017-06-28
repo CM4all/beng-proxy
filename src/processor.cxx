@@ -9,7 +9,6 @@
 #include "css_processor.hxx"
 #include "css_rewrite.hxx"
 #include "penv.hxx"
-#include "GException.hxx"
 #include "xml_parser.hxx"
 #include "uri/uri_escape.hxx"
 #include "uri/uri_extract.hxx"

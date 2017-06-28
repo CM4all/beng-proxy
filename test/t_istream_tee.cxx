@@ -17,12 +17,7 @@
 struct StatsIstreamHandler : IstreamHandler {
     size_t total_data = 0;
     bool eof = false;
-    GError *error = nullptr;
-
-    ~StatsIstreamHandler() {
-        if (error != nullptr)
-            g_error_free(error);
-    }
+    std::exception_ptr error;
 
     /* virtual methods from class IstreamHandler */
 
@@ -35,8 +30,8 @@ struct StatsIstreamHandler : IstreamHandler {
         eof = true;
     }
 
-    void OnError(GError *_error) override {
-        error = _error;
+    void OnError(std::exception_ptr ep) override {
+        error = ep;
     }
 };
 

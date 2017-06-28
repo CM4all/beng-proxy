@@ -5,7 +5,6 @@
 #include "sink_gstring.hxx"
 #include "Sink.hxx"
 #include "pool.hxx"
-#include "GException.hxx"
 #include "util/Cancellable.hxx"
 
 #include <glib.h>
@@ -48,10 +47,9 @@ struct GStringSink final : IstreamSink, Cancellable {
         callback(value, nullptr, callback_ctx);
     }
 
-    void OnError(GError *error) override {
+    void OnError(std::exception_ptr ep) override {
         g_string_free(value, true);
-        callback(nullptr, ToException(*error), callback_ctx);
-        g_error_free(error);
+        callback(nullptr, ep, callback_ctx);
     }
 };
 

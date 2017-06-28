@@ -91,7 +91,6 @@ protected:
     size_t InvokeData(const void *data, size_t length);
     ssize_t InvokeDirect(FdType type, int fd, size_t max_length);
     void InvokeEof();
-    void InvokeError(GError *error);
     void InvokeError(std::exception_ptr ep);
 
     void Destroy() {
@@ -101,11 +100,6 @@ protected:
 
     void DestroyEof() {
         InvokeEof();
-        Destroy();
-    }
-
-    void DestroyError(GError *error) {
-        InvokeError(error);
         Destroy();
     }
 

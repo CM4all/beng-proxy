@@ -16,7 +16,6 @@
 #include "strmap.hxx"
 #include "http_response.hxx"
 #include "fb_pool.hxx"
-#include "GException.hxx"
 #include "SliceFifoBuffer.hxx"
 #include "util/Cast.hxx"
 #include "util/Cancellable.hxx"
@@ -94,7 +93,7 @@ struct CGIClient final : Istream, IstreamHandler, Cancellable {
     size_t OnData(const void *data, size_t length) override;
     ssize_t OnDirect(FdType type, int fd, size_t max_length) override;
     void OnEof() override;
-    void OnError(GError *error) override;
+    void OnError(std::exception_ptr ep) override;
 };
 
 inline bool
@@ -231,10 +230,7 @@ CGIClient::FeedBody(const char *data, size_t length)
         buffer.Free(fb_pool_get());
         input.ClearAndClose();
 
-        GError *error =
-            g_error_new_literal(cgi_quark(), 0,
-                                "too much data from CGI script");
-        DestroyError(error);
+        DestroyError(std::make_exception_ptr(CgiError("too much data from CGI script")));
         return 0;
     }
 
@@ -349,7 +345,7 @@ CGIClient::OnEof()
 }
 
 inline void
-CGIClient::OnError(GError *error)
+CGIClient::OnError(std::exception_ptr ep)
 {
     stopwatch_event(stopwatch, "abort");
     stopwatch_dump(stopwatch);
@@ -363,14 +359,13 @@ CGIClient::OnError(GError *error)
 
         buffer.Free(fb_pool_get());
 
-        handler.InvokeError(NestException(ToException(*error),
+        handler.InvokeError(NestException(ep,
                                           std::runtime_error("CGI request body failed")));
-        g_error_free(error);
         Destroy();
     } else {
         /* response has been sent: abort only the output stream */
         buffer.Free(fb_pool_get());
-        DestroyError(error);
+        DestroyError(ep);
     }
 }
 

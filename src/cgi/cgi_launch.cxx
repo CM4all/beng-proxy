@@ -9,7 +9,6 @@
 #include "istream/istream.hxx"
 #include "strmap.hxx"
 #include "product.h"
-#include "GException.hxx"
 #include "spawn/IstreamSpawn.hxx"
 #include "spawn/JailParams.hxx"
 #include "spawn/Prepared.hxx"

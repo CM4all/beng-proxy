@@ -12,7 +12,6 @@
 #include "buffered_socket.hxx"
 #include "please.hxx"
 #include "stopwatch.hxx"
-#include "GException.hxx"
 #include "pool.hxx"
 #include "system/Error.hxx"
 #include "util/Cancellable.hxx"

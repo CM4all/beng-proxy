@@ -60,8 +60,7 @@ struct Request final : IstreamHandler {
         eof = true;
     }
 
-    void OnError(GError *error) override {
-        g_error_free(error);
+    void OnError(std::exception_ptr) override {
         assert(false);
     }
 };

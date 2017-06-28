@@ -21,15 +21,12 @@
 #include "istream/istream.hxx"
 #include "istream/sink_header.hxx"
 #include "pool.hxx"
-#include "GException.hxx"
 #include "util/Background.hxx"
 #include "util/ByteOrder.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/Exception.hxx"
 
 #include <inline/compiler.h>
-
-#include <glib.h>
 
 #include <string.h>
 

@@ -5,13 +5,11 @@
 #include "istream_hold.hxx"
 #include "ForwardIstream.hxx"
 
-#include <glib.h>
-
 #include <assert.h>
 
 class HoldIstream final : public ForwardIstream {
     bool input_eof = false;
-    GError *input_error = nullptr;
+    std::exception_ptr input_error;
 
 public:
     HoldIstream(struct pool &p, Istream &_input)
@@ -22,7 +20,7 @@ private:
         if (gcc_unlikely(input_eof)) {
             DestroyEof();
             return false;
-        } else if (gcc_unlikely(input_error != nullptr)) {
+        } else if (gcc_unlikely(input_error)) {
             DestroyError(input_error);
             return false;
         } else
@@ -35,14 +33,14 @@ public:
     off_t _GetAvailable(bool partial) override {
         if (gcc_unlikely(input_eof))
             return 0;
-        else if (gcc_unlikely(input_error != nullptr))
+        else if (gcc_unlikely(input_error))
             return -1;
 
         return ForwardIstream::_GetAvailable(partial);
     }
 
     off_t _Skip(off_t length) override {
-        return gcc_likely(!input_eof && input_error == nullptr)
+        return gcc_likely(!input_eof && !input_error)
             ? ForwardIstream::_Skip(length)
             : -1;
     }
@@ -61,9 +59,8 @@ public:
     void _Close() override {
         if (input_eof)
             Destroy();
-        else if (input_error != nullptr) {
+        else if (input_error) {
             /* the handler is not interested in the error */
-            g_error_free(input_error);
             Destroy();
         } else {
             /* the input object is still there */
@@ -85,7 +82,7 @@ public:
 
     void OnEof() override {
         assert(!input_eof);
-        assert(input_error == nullptr);
+        assert(!input_error);
 
         if (HasHandler())
             ForwardIstream::OnEof();
@@ -94,15 +91,15 @@ public:
             input_eof = true;
     }
 
-    void OnError(GError *error) override {
+    void OnError(std::exception_ptr ep) override {
         assert(!input_eof);
-        assert(input_error == nullptr);
+        assert(!input_error);
 
         if (HasHandler())
-            ForwardIstream::OnError(error);
+            ForwardIstream::OnError(ep);
         else
             /* queue the abort() call */
-            input_error = error;
+            input_error = ep;
     }
 };
 

@@ -20,7 +20,6 @@
 #include "istream/UnusedHoldPtr.hxx"
 #include "filtered_socket.hxx"
 #include "pool.hxx"
-#include "GException.hxx"
 #include "net/SocketAddress.hxx"
 #include "util/Cancellable.hxx"
 #include "util/Exception.hxx"

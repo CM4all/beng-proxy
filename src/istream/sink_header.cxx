@@ -8,14 +8,11 @@
 
 #include "sink_header.hxx"
 #include "ForwardIstream.hxx"
-#include "GException.hxx"
 #include "util/Cancellable.hxx"
 #include "util/Cast.hxx"
 #include "util/ByteOrder.hxx"
 
 #include <stdexcept>
-
-#include <glib.h>
 
 #include <assert.h>
 #include <string.h>
@@ -78,7 +75,7 @@ public:
     size_t OnData(const void *data, size_t length) override;
     ssize_t OnDirect(FdType type, int fd, size_t max_length) override;
     void OnEof() override;
-    void OnError(GError *error) override;
+    void OnError(std::exception_ptr ep) override;
 };
 
 size_t
@@ -255,13 +252,12 @@ HeaderSink::OnEof()
 }
 
 inline void
-HeaderSink::OnError(GError *error)
+HeaderSink::OnError(std::exception_ptr ep)
 {
     switch (state) {
     case SIZE:
     case HEADER:
-        handler->error(ToException(*error), handler_ctx);
-        g_error_free(error);
+        handler->error(ep, handler_ctx);
         Destroy();
         break;
 
@@ -270,7 +266,7 @@ HeaderSink::OnError(GError *error)
         gcc_unreachable();
 
     case DATA:
-        DestroyError(error);
+        DestroyError(ep);
         break;
     }
 }

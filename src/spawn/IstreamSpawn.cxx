@@ -14,7 +14,6 @@
 #include "io/UniqueFileDescriptor.hxx"
 #include "direct.hxx"
 #include "event/SocketEvent.hxx"
-#include "GException.hxx"
 #include "pool.hxx"
 #include "fb_pool.hxx"
 #include "SliceFifoBuffer.hxx"
@@ -93,7 +92,7 @@ struct SpawnIstream final : Istream, IstreamHandler, ExitListener {
     size_t OnData(const void *data, size_t length) override;
     ssize_t OnDirect(FdType type, int fd, size_t max_length) override;
     void OnEof() override;
-    void OnError(GError *error) override;
+    void OnError(std::exception_ptr ep) override;
 
     /* virtual methods from class ExitListener */
     void OnChildProcessExit(int status) override;
@@ -212,7 +211,7 @@ SpawnIstream::OnEof()
 }
 
 void
-SpawnIstream::OnError(GError *error)
+SpawnIstream::OnError(std::exception_ptr ep)
 {
     assert(input.IsDefined());
     assert(input_fd.IsDefined());
@@ -224,7 +223,7 @@ SpawnIstream::OnError(GError *error)
     input.Clear();
 
     Cancel();
-    DestroyError(error);
+    DestroyError(ep);
 }
 
 /*

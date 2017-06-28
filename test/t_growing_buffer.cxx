@@ -24,7 +24,7 @@ struct Context final : IstreamHandler {
     /* virtual methods from class IstreamHandler */
     size_t OnData(const void *data, size_t length) override;
     void OnEof() override;
-    void OnError(GError *error) override;
+    void OnError(std::exception_ptr ep) override;
 };
 
 /*
@@ -56,10 +56,8 @@ Context::OnEof()
 }
 
 void
-Context::OnError(GError *error)
+Context::OnError(std::exception_ptr)
 {
-    g_error_free(error);
-
     abort = true;
 
     pool_unref(pool);

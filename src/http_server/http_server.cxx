@@ -11,7 +11,6 @@
 #include "address_string.hxx"
 #include "pool.hxx"
 #include "paddress.hxx"
-#include "GException.hxx"
 #include "istream/Bucket.hxx"
 #include "system/Error.hxx"
 #include "util/StringView.hxx"

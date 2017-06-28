@@ -11,8 +11,6 @@
 #include "event/DeferEvent.hxx"
 #include "util/Cast.hxx"
 
-#include <glib.h>
-
 #include <assert.h>
 
 struct TeeIstream final : IstreamHandler {
@@ -230,14 +228,8 @@ struct TeeIstream final : IstreamHandler {
     /* virtual methods from class IstreamHandler */
     size_t OnData(const void *data, size_t length) override;
     void OnEof() override;
-    void OnError(GError *error) override;
+    void OnError(std::exception_ptr ep) override;
 };
-
-static GQuark
-tee_quark(void)
-{
-    return g_quark_from_static_string("tee");
-}
 
 inline size_t
 TeeIstream::Feed0(const char *data, size_t length)
@@ -341,7 +333,7 @@ TeeIstream::OnEof()
 }
 
 inline void
-TeeIstream::OnError(GError *error)
+TeeIstream::OnError(std::exception_ptr ep)
 {
     assert(input.IsDefined());
     input.Clear();
@@ -353,15 +345,13 @@ TeeIstream::OnError(GError *error)
 
     if (second_output.enabled) {
         second_output.enabled = false;
-        second_output.DestroyError(g_error_copy(error));
+        second_output.DestroyError(ep);
     }
 
     if (first_output.enabled) {
         first_output.enabled = false;
-        first_output.DestroyError(g_error_copy(error));
+        first_output.DestroyError(ep);
     }
-
-    g_error_free(error);
 }
 
 /*
@@ -391,10 +381,7 @@ TeeIstream::FirstOutput::_Close()
             if (tee.second_output.enabled) {
                 tee.second_output.enabled = false;
 
-                GError *error =
-                    g_error_new_literal(tee_quark(), 0,
-                                        "closing the weak second output");
-                tee.second_output.DestroyError(error);
+                tee.second_output.DestroyError(std::make_exception_ptr(std::runtime_error("closing the weak second output")));
             }
         }
     }
@@ -433,10 +420,7 @@ TeeIstream::SecondOutput::_Close()
             if (tee.first_output.enabled) {
                 tee.first_output.enabled = false;
 
-                GError *error =
-                    g_error_new_literal(tee_quark(), 0,
-                                        "closing the weak first output");
-                tee.first_output.DestroyError(error);
+                tee.first_output.DestroyError(std::make_exception_ptr(std::runtime_error("closing the weak first output")));
             }
         }
     }

@@ -11,10 +11,7 @@
 #include "util/ConstBuffer.hxx"
 #include "pool.hxx"
 
-#include <inline/poison.h>
-#include <daemon/log.h>
-
-#include <glib.h>
+#include <stdexcept>
 
 #include <assert.h>
 
@@ -60,7 +57,7 @@ struct ReplaceIstream final : FacadeIstream {
         /* virtual methods from class IstreamHandler */
         size_t OnData(const void *data, size_t length) override;
         void OnEof() override;
-        void OnError(GError *error) override;
+        void OnError(std::exception_ptr ep) override;
     };
 
     bool finished = false, read_locked = false;
@@ -141,7 +138,7 @@ struct ReplaceIstream final : FacadeIstream {
     /* virtual methods from class IstreamHandler */
     size_t OnData(const void *data, size_t length) override;
     void OnEof() override;
-    void OnError(GError *error) override;
+    void OnError(std::exception_ptr ep) override;
 
     /* virtual methods from class Istream */
 
@@ -149,12 +146,6 @@ struct ReplaceIstream final : FacadeIstream {
     void _Read() override;
     void _Close() override;
 };
-
-static GQuark
-replace_quark(void)
-{
-    return g_quark_from_static_string("replace");
-}
 
 /**
  * Is this substitution object is active, i.e. its data is the next
@@ -229,7 +220,7 @@ ReplaceIstream::Substitution::OnEof()
 }
 
 inline void
-ReplaceIstream::Substitution::OnError(GError *error)
+ReplaceIstream::Substitution::OnError(std::exception_ptr ep)
 {
     ClearInput();
 
@@ -238,7 +229,7 @@ ReplaceIstream::Substitution::OnError(GError *error)
     if (replace.HasInput())
         replace.ClearAndCloseInput();
 
-    replace.DestroyError(error);
+    replace.DestroyError(ep);
 }
 
 /*
@@ -422,10 +413,7 @@ ReplaceIstream::OnData(const void *data, size_t length)
         ClearAndCloseInput();
         DestroyReplace();
 
-        GError *error =
-            g_error_new_literal(replace_quark(), 0,
-                                "file too large for processor");
-        DestroyError(error);
+        DestroyError(std::make_exception_ptr(std::runtime_error("file too large for processor")));
         return 0;
     }
 
@@ -453,11 +441,11 @@ ReplaceIstream::OnEof()
 }
 
 inline void
-ReplaceIstream::OnError(GError *error)
+ReplaceIstream::OnError(std::exception_ptr ep)
 {
     DestroyReplace();
     input.Clear();
-    DestroyError(error);
+    DestroyError(ep);
 }
 
 /*

@@ -17,8 +17,6 @@
 #include "http_response.hxx"
 #include "istream/istream_file.hxx"
 
-#include <glib.h>
-
 #include <assert.h>
 #include <sys/stat.h>
 #include <unistd.h>

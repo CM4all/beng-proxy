@@ -8,7 +8,6 @@
 #define __BENG_ISTREAM_FORWARD_H
 
 #include "FacadeIstream.hxx"
-#include "glibfwd.hxx"
 
 #include <stddef.h>
 #include <sys/types.h>
@@ -67,8 +66,8 @@ public:
         DestroyEof();
     }
 
-    void OnError(GError *error) override {
-        DestroyError(error);
+    void OnError(std::exception_ptr ep) override {
+        DestroyError(ep);
     }
 };
 

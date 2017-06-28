@@ -60,9 +60,9 @@ public:
             DestroyEof();
     }
 
-    void OnError(GError *error) override {
+    void OnError(std::exception_ptr ep) override {
         ClearInput();
-        DestroyError(error);
+        DestroyError(ep);
     }
 };
 

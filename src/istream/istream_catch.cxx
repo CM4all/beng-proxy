@@ -7,11 +7,8 @@
 
 #include "istream_catch.hxx"
 #include "ForwardIstream.hxx"
-#include "GException.hxx"
 
 #include <memory>
-
-#include <glib.h>
 
 #include <assert.h>
 
@@ -67,7 +64,7 @@ public:
 
     size_t OnData(const void *data, size_t length) override;
     ssize_t OnDirect(FdType type, int fd, size_t max_length) override;
-    void OnError(GError *error) override;
+    void OnError(std::exception_ptr ep) override;
 };
 
 static constexpr char space[] =
@@ -169,13 +166,12 @@ CatchIstream::OnDirect(FdType type, int fd, size_t max_length)
 }
 
 void
-CatchIstream::OnError(GError *error)
+CatchIstream::OnError(std::exception_ptr ep)
 {
-    auto ep = callback(ToException(*error), callback_ctx);
-    g_error_free(error);
+    ep = callback(ep, callback_ctx);
     if (ep) {
         /* forward error to our handler */
-        ForwardIstream::OnError(ToGError(ep));
+        ForwardIstream::OnError(ep);
         return;
     }
 

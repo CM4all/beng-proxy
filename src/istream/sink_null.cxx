@@ -5,8 +5,6 @@
 #include "sink_null.hxx"
 #include "Sink.hxx"
 
-#include <glib.h>
-
 class SinkNull final : IstreamSink {
 public:
     explicit SinkNull(Istream &_input)
@@ -21,8 +19,7 @@ public:
     void OnEof() override {
     }
 
-    void OnError(GError *error) override {
-        g_error_free(error);
+    void OnError(std::exception_ptr) override {
     }
 };
 

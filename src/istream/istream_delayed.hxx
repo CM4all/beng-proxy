@@ -5,8 +5,6 @@
 #ifndef BENG_PROXY_ISTREAM_DELAYED_HXX
 #define BENG_PROXY_ISTREAM_DELAYED_HXX
 
-#include "glibfwd.hxx"
-
 #include <exception>
 
 struct pool;
@@ -31,9 +29,6 @@ istream_delayed_set_eof(Istream &istream_delayed);
 /**
  * Injects a failure, to be called instead of istream_delayed_set().
  */
-void
-istream_delayed_set_abort(Istream &istream_delayed, GError *error);
-
 void
 istream_delayed_set_abort(Istream &istream_delayed, std::exception_ptr ep);
 

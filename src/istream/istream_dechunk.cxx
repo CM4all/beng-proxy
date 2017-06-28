@@ -12,8 +12,6 @@
 
 #include <algorithm>
 
-#include <glib.h>
-
 #include <assert.h>
 #include <string.h>
 
@@ -113,7 +111,7 @@ protected:
     /* virtual methods from class IstreamHandler */
     size_t OnData(const void *data, size_t length) override;
     void OnEof() override;
-    void OnError(GError *error) override;
+    void OnError(std::exception_ptr ep) override;
 };
 
 void
@@ -370,17 +368,15 @@ DechunkIstream::OnEof()
 }
 
 void
-DechunkIstream::OnError(GError *error)
+DechunkIstream::OnError(std::exception_ptr ep)
 {
     input.Clear();
 
-    if (IsEofPending()) {
+    if (IsEofPending())
         /* let DeferEvent handle this */
-        g_error_free(error);
         return;
-    }
 
-    DestroyError(error);
+    DestroyError(ep);
 }
 
 /*

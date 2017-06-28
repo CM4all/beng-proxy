@@ -13,8 +13,6 @@
 #include "istream/Pointer.hxx"
 #include "event/DeferEvent.hxx"
 
-#include <glib.h>
-
 #include <stdexcept>
 
 #include <stdio.h>
@@ -120,7 +118,7 @@ struct Context final : IstreamHandler {
     size_t OnData(const void *data, size_t length) override;
     ssize_t OnDirect(FdType type, int fd, size_t max_length) override;
     void OnEof() override;
-    void OnError(GError *error) override;
+    void OnError(std::exception_ptr ep) override;
 };
 
 /*
@@ -215,10 +213,8 @@ Context::OnEof()
 }
 
 void
-Context::OnError(GError *error)
+Context::OnError(std::exception_ptr)
 {
-    g_error_free(error);
-
 #ifdef EXPECTED_RESULT
     assert(!record);
 #endif

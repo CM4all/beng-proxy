@@ -105,19 +105,19 @@ Istream::InvokeEof()
 }
 
 inline void
-Istream::InvokeError(GError *error)
+Istream::InvokeError(std::exception_ptr ep)
 {
     assert(!destroyed);
     assert(!eof);
     assert(!closing);
     assert(handler != nullptr);
-    assert(error != nullptr);
+    assert(ep);
 
 #ifndef NDEBUG
     eof = false;
 #endif
 
-    handler->OnError(error);
+    handler->OnError(ep);
 }
 
 #endif

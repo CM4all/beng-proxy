@@ -30,6 +30,7 @@
 #include "session.hxx"
 #include "pool.hxx"
 #include "util/StringFormat.hxx"
+#include "util/Exception.hxx"
 
 #include <daemon/log.h>
 
@@ -64,12 +65,6 @@ struct InlineWidget final : HttpResponseHandler {
                         Istream *body) override;
     void OnHttpError(std::exception_ptr ep) override;
 };
-
-static void
-inline_widget_close(InlineWidget *iw, GError *error)
-{
-    istream_delayed_set_abort(*iw->delayed, error);
-}
 
 static void
 inline_widget_close(InlineWidget *iw, std::exception_ptr ep)
@@ -177,11 +172,9 @@ InlineWidget::OnHttpResponse(http_status_t status, StringMap &&headers,
         if (body != nullptr)
             body->CloseUnused();
 
-        GError *error =
-            g_error_new(widget_quark(), (int)WidgetErrorCode::UNSPECIFIED,
-                        "response status %d from widget '%s'",
-                        status, widget.GetLogName());
-        inline_widget_close(this, error);
+        WidgetError error(widget, WidgetErrorCode::UNSPECIFIED,
+                          StringFormat<64>("response status %d", status));
+        inline_widget_close(this, std::make_exception_ptr(error));
         return;
     }
 
@@ -219,35 +212,29 @@ void
 InlineWidget::SendRequest()
 {
     if (!widget_check_approval(&widget)) {
-        GError *error =
-            g_error_new(widget_quark(), (int)WidgetErrorCode::FORBIDDEN,
-                        "widget '%s' is not allowed to embed widget class '%s'",
-                        widget.parent->GetLogName(),
-                        widget.class_name);
+        WidgetError error(*widget.parent, WidgetErrorCode::FORBIDDEN,
+                          StringFormat<256>("not allowed to embed widget class '%s'",
+                                            widget.class_name));
         widget.Cancel();
-        istream_delayed_set_abort(*delayed, error);
+        istream_delayed_set_abort(*delayed, std::make_exception_ptr(error));
         return;
     }
 
     try {
         widget.CheckHost(env.untrusted_host, env.site_name);
     } catch (const std::runtime_error &e) {
-        GError *error =
-            g_error_new_literal(widget_quark(), (int)WidgetErrorCode::FORBIDDEN,
-                                e.what());
+        WidgetError error(widget, WidgetErrorCode::FORBIDDEN, "Untrusted host");
         widget.Cancel();
-        istream_delayed_set_abort(*delayed, error);
+        istream_delayed_set_abort(*delayed, NestException(std::current_exception(), error));
         return;
     }
 
     if (!widget.HasDefaultView()) {
-        GError *error =
-            g_error_new(widget_quark(), (int)WidgetErrorCode::NO_SUCH_VIEW,
-                        "No such view in widget '%s': %s",
-                        widget.GetLogName(),
-                        widget.from_template.view_name);
+        WidgetError error(widget, WidgetErrorCode::NO_SUCH_VIEW,
+                          StringFormat<256>("No such view: %s",
+                                            widget.from_template.view_name));
         widget.Cancel();
-        istream_delayed_set_abort(*delayed, error);
+        istream_delayed_set_abort(*delayed, std::make_exception_ptr(error));
         return;
     }
 
@@ -276,12 +263,10 @@ InlineWidget::ResolverCallback()
     if (widget.cls != nullptr) {
         SendRequest();
     } else {
-        GError *error =
-            g_error_new(widget_quark(), (int)WidgetErrorCode::UNSPECIFIED,
-                        "failed to look up widget class '%s'",
-                        widget.class_name);
+        WidgetError error(widget, WidgetErrorCode::UNSPECIFIED,
+                          "Failed to look up widget class");
         widget.Cancel();
-        inline_widget_close(this, error);
+        inline_widget_close(this, std::make_exception_ptr(error));
     }
 }
 

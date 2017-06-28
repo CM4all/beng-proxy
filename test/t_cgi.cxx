@@ -19,8 +19,6 @@
 
 #include <inline/compiler.h>
 
-#include <glib.h>
-
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <stdio.h>
@@ -64,7 +62,7 @@ struct Context final : PInstance, HttpResponseHandler, IstreamHandler {
     size_t OnData(const void *data, size_t length) override;
     ssize_t OnDirect(FdType type, int fd, size_t max_length) override;
     void OnEof() override;
-    void OnError(GError *error) override;
+    void OnError(std::exception_ptr ep) override;
 };
 
 static FdTypeMask my_handler_direct = 0;
@@ -127,10 +125,8 @@ Context::OnEof()
 }
 
 void
-Context::OnError(GError *error)
+Context::OnError(std::exception_ptr)
 {
-    g_error_free(error);
-
     body.Clear();
     body_abort = true;
 }

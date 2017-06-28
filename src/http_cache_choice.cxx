@@ -19,7 +19,6 @@
 #include "istream/istream.hxx"
 #include "istream/istream_memory.hxx"
 #include "pool.hxx"
-#include "GException.hxx"
 #include "ssl/Hash.hxx"
 #include "util/djbhash.h"
 #include "util/ConstBuffer.hxx"

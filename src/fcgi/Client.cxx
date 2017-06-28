@@ -8,7 +8,6 @@
 #include "Error.hxx"
 #include "Protocol.hxx"
 #include "Serialize.hxx"
-#include "GException.hxx"
 #include "buffered_socket.hxx"
 #include "GrowingBuffer.hxx"
 #include "http_response.hxx"
@@ -34,8 +33,6 @@
 #include "util/InstanceList.hxx"
 #include "util/Cancellable.hxx"
 #include "util/Exception.hxx"
-
-#include <glib.h>
 
 #include <sys/socket.h>
 #include <string.h>
@@ -237,7 +234,7 @@ struct FcgiClient final : Cancellable, Istream, IstreamHandler, WithInstanceList
     size_t OnData(const void *data, size_t length) override;
     ssize_t OnDirect(FdType type, int fd, size_t max_length) override;
     void OnEof() override;
-    void OnError(GError *error) override;
+    void OnError(std::exception_ptr ep) override;
 };
 
 static constexpr struct timeval fcgi_client_timeout = {
@@ -692,16 +689,15 @@ FcgiClient::OnEof()
     socket.UnscheduleWrite();
 }
 
-inline void
-FcgiClient::OnError(GError *error)
+void
+FcgiClient::OnError(std::exception_ptr ep)
 {
     assert(request.input.IsDefined());
 
     request.input.Clear();
 
-    AbortResponse(NestException(ToException(*error),
+    AbortResponse(NestException(ep,
                                 std::runtime_error("FastCGI request stream failed")));
-    g_error_free(error);
 }
 
 /*

@@ -4,7 +4,6 @@
 
 #include "Item.hxx"
 #include "Stock.hxx"
-#include "GException.hxx"
 
 const char *
 CreateStockItem::GetStockName() const

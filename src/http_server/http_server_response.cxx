@@ -7,7 +7,6 @@
 #include "Internal.hxx"
 #include "Request.hxx"
 #include "direct.hxx"
-#include "GException.hxx"
 #include "util/Exception.hxx"
 
 #include <daemon/log.h>
@@ -86,7 +85,7 @@ HttpServerConnection::OnEof()
 }
 
 void
-HttpServerConnection::OnError(GError *error)
+HttpServerConnection::OnError(std::exception_ptr ep)
 {
     assert(response.istream.IsDefined());
 
@@ -96,9 +95,8 @@ HttpServerConnection::OnError(GError *error)
        won't think we havn't sent a response yet */
     request.cancel_ptr = nullptr;
 
-    Error(NestException(ToException(*error),
+    Error(NestException(ep,
                         std::runtime_error("error on HTTP response stream")));
-    g_error_free(error);
 }
 
 void
@@ -132,10 +130,7 @@ HttpServerConnection::ResponseIstreamFinished()
         keep_alive = false;
         request.read_state = Request::END;
 
-        GError *error =
-            g_error_new_literal(http_server_quark(), 0,
-                                "request body discarded");
-        request_body_reader->DestroyError(error);
+        request_body_reader->DestroyError(std::make_exception_ptr(std::runtime_error("request body discarded")));
         if (!IsValid())
             return false;
     }

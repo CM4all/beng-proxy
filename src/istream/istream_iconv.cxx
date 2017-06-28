@@ -9,7 +9,7 @@
 
 #include <iconv.h>
 
-#include <glib.h>
+#include <stdexcept>
 
 #include <assert.h>
 #include <errno.h>
@@ -52,18 +52,11 @@ public:
 
     size_t OnData(const void *data, size_t length) override;
     void OnEof() override;
-    void OnError(GError *error) override;
+    void OnError(std::exception_ptr ep) override;
 
 private:
     size_t Feed(const char *data, size_t length);
 };
-
-gcc_const
-static GQuark
-iconv_quark(void)
-{
-    return g_quark_from_static_string("iconv");
-}
 
 static inline size_t
 deconst_iconv(iconv_t cd,
@@ -126,9 +119,7 @@ IconvIstream::Feed(const char *data, size_t length)
                        caller that we consumed it */
                     input.Close();
 
-                    GError *error = g_error_new_literal(iconv_quark(), 0,
-                                                        "incomplete sequence");
-                    DestroyError(error);
+                    DestroyError(std::make_exception_ptr(std::runtime_error("incomplete sequence")));
                     return 0;
                 }
 
@@ -190,11 +181,11 @@ IconvIstream::OnEof()
 }
 
 void
-IconvIstream::OnError(GError *error)
+IconvIstream::OnError(std::exception_ptr ep)
 {
     assert(input.IsDefined());
 
-    DestroyError(error);
+    DestroyError(ep);
 }
 
 /*

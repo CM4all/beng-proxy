@@ -8,7 +8,6 @@
 #include "http_server/Request.hxx"
 #include "http_response.hxx"
 #include "pool.hxx"
-#include "GException.hxx"
 #include "lua/RunFile.hxx"
 #include "lua/Util.hxx"
 #include "lua/Assert.hxx"

@@ -12,7 +12,7 @@
 #include "util/Cast.hxx"
 #include "util/ForeignFifoBuffer.hxx"
 
-#include <glib.h>
+#include <stdexcept>
 
 #include <assert.h>
 #include <string.h>
@@ -160,9 +160,7 @@ NfsIstream::OnNfsRead(const void *data, size_t _length)
 
     if (_length < pending_read) {
         nfs_client_close_file(handle);
-        GError *error = g_error_new_literal(g_file_error_quark(), 0,
-                                            "premature end of file");
-        DestroyError(error);
+        DestroyError(std::make_exception_ptr(std::runtime_error("premature end of file")));
         return;
     }
 

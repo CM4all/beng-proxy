@@ -13,12 +13,9 @@
 #include "address_list.hxx"
 #include "lease.hxx"
 #include "pool.hxx"
-#include "GException.hxx"
 #include "istream/istream.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
-
-#include <glib.h>
 
 #include <assert.h>
 #include <string.h>

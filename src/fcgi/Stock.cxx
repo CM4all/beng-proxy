@@ -28,8 +28,6 @@
 
 #include <daemon/log.h>
 
-#include <glib.h>
-
 #include <string>
 
 #include <assert.h>

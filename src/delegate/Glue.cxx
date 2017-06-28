@@ -9,7 +9,6 @@
 #include "Client.hxx"
 #include "Handler.hxx"
 #include "Stock.hxx"
-#include "GException.hxx"
 #include "stock/Item.hxx"
 #include "stock/MapStock.hxx"
 #include "lease.hxx"

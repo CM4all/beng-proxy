@@ -9,7 +9,6 @@
 #include "istream_pipe.hxx"
 #include "ForwardIstream.hxx"
 #include "io/FileDescriptor.hxx"
-#include "GException.hxx"
 #include "direct.hxx"
 #include "pipe_stock.hxx"
 #include "stock/Stock.hxx"
@@ -65,7 +64,7 @@ public:
     size_t OnData(const void *data, size_t length) override;
     ssize_t OnDirect(FdType type, int fd, size_t max_length) override;
     void OnEof() override;
-    void OnError(GError *error) override;
+    void OnError(std::exception_ptr ep) override;
 
 private:
     void CloseInternal();
@@ -255,11 +254,11 @@ PipeIstream::OnEof()
 }
 
 inline void
-PipeIstream::OnError(GError *error)
+PipeIstream::OnError(std::exception_ptr ep)
 {
     CloseInternal();
     input.Clear();
-    DestroyError(error);
+    DestroyError(ep);
 }
 
 /*

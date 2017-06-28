@@ -5,9 +5,7 @@
 #include "istream_trace.hxx"
 #include "ForwardIstream.hxx"
 #include "pool.hxx"
-#include "util/Cast.hxx"
-
-#include <glib.h>
+#include "util/Exception.hxx"
 
 #include <stdio.h>
 
@@ -86,11 +84,11 @@ public:
         ForwardIstream::OnEof();
     }
 
-    void OnError(GError *error) override {
+    void OnError(std::exception_ptr ep) override {
         fprintf(stderr, "%p abort('%s')\n", (const void *)this,
-                error->message);
+                GetFullMessage(ep).c_str());
 
-        ForwardIstream::OnError(error);
+        ForwardIstream::OnError(ep);
     }
 
 private:

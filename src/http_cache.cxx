@@ -30,8 +30,6 @@
 #include "util/Exception.hxx"
 #include "util/RuntimeError.hxx"
 
-#include <glib.h>
-
 #include <boost/intrusive/list.hpp>
 
 #include <functional>

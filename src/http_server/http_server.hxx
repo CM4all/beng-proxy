@@ -11,8 +11,6 @@
 
 #include <http/status.h>
 
-#include <glib.h>
-
 struct pool;
 class EventLoop;
 class Istream;
@@ -52,13 +50,6 @@ enum http_server_score {
      */
     HTTP_SERVER_SUCCESS,
 };
-
-G_GNUC_CONST
-static inline GQuark
-http_server_quark(void)
-{
-    return g_quark_from_static_string("http_server");
-}
 
 /**
  * @param date_header generate Date response headers?

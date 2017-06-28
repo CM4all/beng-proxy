@@ -16,7 +16,6 @@
 #include "PInstance.hxx"
 #include "strmap.hxx"
 #include "fb_pool.hxx"
-#include "GException.hxx"
 #include "util/Cast.hxx"
 #include "util/Cancellable.hxx"
 #include "util/Exception.hxx"
@@ -32,8 +31,6 @@
 #include <inline/compiler.h>
 #include <http/method.h>
 
-#include <glib.h>
-
 #include <stdexcept>
 
 #include <stdlib.h>
@@ -44,12 +41,6 @@
 #ifndef HAVE_CHUNKED_REQUEST_BODY
 static constexpr size_t HEAD_SIZE = 16384;
 #endif
-
-static inline GQuark
-test_quark(void)
-{
-    return g_quark_from_static_string("test");
-}
 
 static struct pool *
 NewMajorPool(struct pool &parent, const char *name)
@@ -100,7 +91,7 @@ struct Context final
     Istream *request_body = nullptr;
     bool aborted_request_body = false;
     bool close_request_body_early = false, close_request_body_eof = false;
-    GError *body_error = nullptr;
+    std::exception_ptr body_error;
 
 #ifdef USE_BUCKETS
     bool use_buckets = false;
@@ -172,7 +163,7 @@ struct Context final
         try {
             body.FillBucketList(list);
         } catch (...) {
-            body_error = ToGError(std::current_exception());
+            body_error = std::current_exception();
             return;
         }
 
@@ -232,7 +223,7 @@ struct Context final
     /* virtual methods from class IstreamHandler */
     size_t OnData(const void *data, size_t length) override;
     void OnEof() override;
-    void OnError(GError *error) override;
+    void OnError(std::exception_ptr ep) override;
 
     /* virtual methods from class Lease */
     void ReleaseLease(gcc_unused bool reuse) override {
@@ -253,7 +244,6 @@ template<class Connection>
 void
 Context<Connection>::Cancel()
 {
-    g_printerr("MY_ASYNC_ABORT\n");
     assert(request_body != nullptr);
     assert(!aborted_request_body);
 
@@ -298,21 +288,19 @@ Context<Connection>::OnEof()
     body_eof = true;
 
     if (close_request_body_eof && !aborted_request_body) {
-        GError *error = g_error_new_literal(test_quark(), 0,
-                                            "close_request_body_eof");
-        istream_delayed_set_abort(*request_body, error);
+        istream_delayed_set_abort(*request_body, std::make_exception_ptr(std::runtime_error("close_request_body_eof")));
     }
 }
 
 template<class Connection>
 void
-Context<Connection>::OnError(GError *error)
+Context<Connection>::OnError(std::exception_ptr ep)
 {
     body.Clear();
     body_abort = true;
 
-    assert(body_error == nullptr);
-    body_error = error;
+    assert(!body_error);
+    body_error = ep;
 }
 
 /*
@@ -335,9 +323,7 @@ Context<Connection>::OnHttpResponse(http_status_t _status,
         : -2;
 
     if (close_request_body_early && !aborted_request_body) {
-        GError *error = g_error_new_literal(test_quark(), 0,
-                                            "close_request_body_early");
-        istream_delayed_set_abort(*request_body, error);
+        istream_delayed_set_abort(*request_body, std::make_exception_ptr(std::runtime_error("close_request_body_early")));
     }
 
     if (response_body_byte) {
@@ -656,9 +642,8 @@ test_close_request_body_early(Context<Connection> &c)
 #endif
                           c, c.cancel_ptr);
 
-    GError *error = g_error_new_literal(test_quark(), 0,
-                                        "fail_request_body_early");
-    istream_delayed_set_abort(*request_body, g_error_copy(error));
+    const std::runtime_error error("fail_request_body_early");
+    istream_delayed_set_abort(*request_body, std::make_exception_ptr(error));
 
     pool_unref(c.pool);
     pool_commit();
@@ -672,8 +657,7 @@ test_close_request_body_early(Context<Connection> &c)
     assert(!c.body_abort);
     assert(c.body_error == nullptr);
     assert(c.request_error != nullptr);
-    assert(strstr(GetFullMessage(c.request_error).c_str(), error->message) != nullptr);
-    g_error_free(error);
+    assert(strstr(GetFullMessage(c.request_error).c_str(), error.what()) != nullptr);
 }
 
 template<class Connection>
@@ -714,9 +698,7 @@ test_close_request_body_fail(Context<Connection> &c)
     assert(c.body_abort);
 
     if (c.body_error != nullptr && !c.request_error) {
-        c.request_error = ToException(*c.body_error);
-        g_error_free(c.body_error);
-        c.body_error = nullptr;
+        c.request_error = std::exchange(c.body_error, std::exception_ptr());
     }
 
     assert(c.request_error != nullptr);
@@ -857,9 +839,7 @@ test_body_fail(Context<Connection> &c)
     assert(c.aborted || c.body_abort);
 
     if (c.body_error != nullptr && !c.request_error) {
-        c.request_error = ToException(*c.body_error);
-        g_error_free(c.body_error);
-        c.body_error = nullptr;
+        c.request_error = std::exchange(c.body_error, std::exception_ptr());
     }
 
     assert(c.request_error != nullptr);
@@ -1294,7 +1274,6 @@ test_hold(Context<Connection> &c)
     assert(c.body_abort);
     assert(!c.request_error);
     assert(c.body_error != nullptr);
-    g_error_free(c.body_error);
 }
 
 #ifdef ENABLE_PREMATURE_CLOSE_HEADERS
@@ -1360,7 +1339,6 @@ test_premature_close_body(Context<Connection> &c)
     assert(c.body_abort);
     assert(!c.request_error);
     assert(c.body_error != nullptr);
-    g_error_free(c.body_error);
 }
 
 #endif
@@ -1499,7 +1477,6 @@ test_premature_end(Context<Connection> &c)
     assert(c.available > 0);
     assert(!c.body_eof);
     assert(c.body_error != nullptr);
-    g_error_free(c.body_error);
 }
 
 #endif
@@ -1530,7 +1507,6 @@ test_excess_data(Context<Connection> &c)
     assert(c.available > 0);
     assert(!c.body_eof);
     assert(c.body_error != nullptr);
-    g_error_free(c.body_error);
 }
 
 #endif

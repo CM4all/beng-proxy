@@ -9,12 +9,9 @@
 #include "html_chars.hxx"
 #include "expansible_buffer.hxx"
 #include "istream/Sink.hxx"
-#include "GException.hxx"
 #include "util/CharUtil.hxx"
 
 #include <inline/poison.h>
-
-#include <glib.h>
 
 #include <assert.h>
 #include <string.h>
@@ -140,12 +137,11 @@ public:
         pool_unref(pool);
     }
 
-    void OnError(GError *error) override {
+    void OnError(std::exception_ptr ep) override {
         assert(input.IsDefined());
 
         input.Clear();
-        handler.OnXmlError(ToException(*error));
-        g_error_free(error);
+        handler.OnXmlError(ep);
         pool_unref(pool);
     }
 };

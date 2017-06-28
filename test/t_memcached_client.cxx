@@ -14,7 +14,7 @@
 #include "util/Cast.hxx"
 #include "util/Cancellable.hxx"
 
-#include <glib.h>
+#include <stdexcept>
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -22,12 +22,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-
-static inline GQuark
-test_quark(void)
-{
-    return g_quark_from_static_string("test");
-}
 
 static SocketDescriptor
 connect_fake_server()
@@ -81,7 +75,7 @@ struct Context final : PInstance, Lease, IstreamHandler {
     /* virtual methods from class IstreamHandler */
     size_t OnData(const void *data, size_t length) override;
     void OnEof() override;
-    void OnError(GError *error) override;
+    void OnError(std::exception_ptr ep) override;
 
     /* virtual methods from class Lease */
     void ReleaseLease(bool _reuse) override {
@@ -119,8 +113,7 @@ void
 RequestValueIstream::_Read()
 {
     if (read_close) {
-        GError *error = g_error_new_literal(test_quark(), 0, "read_close");
-        DestroyError(error);
+        DestroyError(std::make_exception_ptr(std::runtime_error("read_close")));
     } else if (read_abort)
         cancel_ptr.Cancel();
     else if (sent >= sizeof(request_value))
@@ -185,10 +178,8 @@ Context::OnEof()
 }
 
 void
-Context::OnError(GError *error)
+Context::OnError(std::exception_ptr)
 {
-    g_error_free(error);
-
     value.Clear();
     value_abort = true;
 }

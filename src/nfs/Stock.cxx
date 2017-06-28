@@ -7,7 +7,6 @@
 #include "Stock.hxx"
 #include "Client.hxx"
 #include "Handler.hxx"
-#include "GException.hxx"
 #include "pool.hxx"
 #include "util/Cancellable.hxx"
 #include "util/Exception.hxx"

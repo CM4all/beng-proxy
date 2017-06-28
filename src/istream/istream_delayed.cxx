@@ -33,12 +33,6 @@ public:
         DestroyEof();
     }
 
-    void SetError(GError *error) {
-        assert(!HasInput());
-
-        DestroyError(error);
-    }
-
     void SetError(std::exception_ptr ep) {
         assert(!HasInput());
 
@@ -104,14 +98,6 @@ istream_delayed_set_eof(Istream &i_delayed)
     auto &delayed = (DelayedIstream &)i_delayed;
 
     delayed.SetEof();
-}
-
-void
-istream_delayed_set_abort(Istream &i_delayed, GError *error)
-{
-    auto &delayed = (DelayedIstream &)i_delayed;
-
-    delayed.SetError(error);
 }
 
 void

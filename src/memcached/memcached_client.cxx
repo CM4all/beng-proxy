@@ -11,14 +11,11 @@
 #include "please.hxx"
 #include "istream/Pointer.hxx"
 #include "pool.hxx"
-#include "GException.hxx"
 #include "system/Error.hxx"
 #include "util/Cancellable.hxx"
 #include "util/Cast.hxx"
 #include "util/ByteOrder.hxx"
 #include "util/Exception.hxx"
-
-#include <glib.h>
 
 #include <errno.h>
 #include <sys/socket.h>
@@ -158,7 +155,7 @@ struct MemcachedClient final : Istream, IstreamHandler, Cancellable {
     /* virtual methods from class IstreamHandler */
     size_t OnData(const void *data, size_t length) override;
     void OnEof() override;
-    void OnError(GError *error) override;
+    void OnError(std::exception_ptr ep) override;
 };
 
 static const struct timeval memcached_client_timeout = {
@@ -638,7 +635,7 @@ MemcachedClient::OnEof()
 }
 
 inline void
-MemcachedClient::OnError(GError *error)
+MemcachedClient::OnError(std::exception_ptr ep)
 {
     assert(request.istream.IsDefined());
     assert(response.read_state == ReadState::HEADER ||
@@ -646,8 +643,7 @@ MemcachedClient::OnError(GError *error)
            response.read_state == ReadState::KEY);
 
     request.istream.Clear();
-    AbortResponse(ToException(*error));
-    g_error_free(error);
+    AbortResponse(ep);
 }
 
 /*

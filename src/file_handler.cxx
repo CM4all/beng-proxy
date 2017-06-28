@@ -20,8 +20,6 @@
 #include "translation/Vary.hxx"
 #include "util/DecimalFormat.h"
 
-#include <glib.h>
-
 #include <assert.h>
 #include <sys/stat.h>
 #include <errno.h>

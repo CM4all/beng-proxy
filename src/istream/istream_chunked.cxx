@@ -44,7 +44,7 @@ public:
     /* virtual methods from class IstreamHandler */
     size_t OnData(const void *data, size_t length) override;
     void OnEof() override;
-    void OnError(GError *error) override;
+    void OnError(std::exception_ptr ep) override;
 
 private:
     bool IsBufferEmpty() const {
@@ -240,12 +240,12 @@ ChunkedIstream::OnEof()
 }
 
 void
-ChunkedIstream::OnError(GError *error)
+ChunkedIstream::OnError(std::exception_ptr ep)
 {
     assert(input.IsDefined());
 
     input.Clear();
-    DestroyError(error);
+    DestroyError(ep);
 }
 
 /*

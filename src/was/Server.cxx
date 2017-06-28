@@ -10,7 +10,6 @@
 #include "Control.hxx"
 #include "Output.hxx"
 #include "Input.hxx"
-#include "GException.hxx"
 #include "http_response.hxx"
 #include "direct.hxx"
 #include "istream/istream.hxx"

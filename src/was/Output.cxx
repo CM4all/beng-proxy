@@ -6,7 +6,6 @@
 
 #include "Output.hxx"
 #include "Error.hxx"
-#include "GException.hxx"
 #include "event/SocketEvent.hxx"
 #include "direct.hxx"
 #include "io/Splice.hxx"
@@ -16,8 +15,6 @@
 #include "pool.hxx"
 
 #include <was/protocol.h>
-
-#include <glib.h>
 
 #include <errno.h>
 #include <string.h>
@@ -72,7 +69,7 @@ public:
     size_t OnData(const void *data, size_t length) override;
     ssize_t OnDirect(FdType type, int fd, size_t max_length) override;
     void OnEof() override;
-    void OnError(GError *error) override;
+    void OnError(std::exception_ptr ep) override;
 };
 
 bool
@@ -177,15 +174,14 @@ WasOutput::OnEof()
 }
 
 inline void
-WasOutput::OnError(GError *error)
+WasOutput::OnError(std::exception_ptr ep)
 {
     assert(input.IsDefined());
 
     input.Clear();
     event.Delete();
 
-    handler.WasOutputPremature(sent, ToException(*error));
-    g_error_free(error);
+    handler.WasOutputPremature(sent, ep);
 }
 
 /*

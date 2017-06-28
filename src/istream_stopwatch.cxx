@@ -21,7 +21,7 @@ public:
 
     /* virtual methods from class IstreamHandler */
     void OnEof() override;
-    void OnError(GError *error) override;
+    void OnError(std::exception_ptr ep) override;
 };
 
 
@@ -40,12 +40,12 @@ StopwatchIstream::OnEof()
 }
 
 void
-StopwatchIstream::OnError(GError *error)
+StopwatchIstream::OnError(std::exception_ptr ep)
 {
     stopwatch_event(&stopwatch, "abort");
     stopwatch_dump(&stopwatch);
 
-    ForwardIstream::OnError(error);
+    ForwardIstream::OnError(ep);
 }
 
 /*

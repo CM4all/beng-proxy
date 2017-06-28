@@ -21,7 +21,7 @@ create_test(EventLoop &, struct pool *pool, Istream *input)
 
 struct Custom final : Istream, IstreamHandler {
     bool eof;
-    GError *error;
+    std::exception_ptr error;
 
     explicit Custom(struct pool &p):Istream(p) {}
 
@@ -45,8 +45,8 @@ struct Custom final : Istream, IstreamHandler {
         eof = true;
     }
 
-    void OnError(GError *_error) override {
-        error = _error;
+    void OnError(std::exception_ptr ep) override {
+        error = ep;
     }
 };
 

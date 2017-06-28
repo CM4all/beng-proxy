@@ -26,7 +26,6 @@
 #include "direct.hxx"
 #include "stopwatch.hxx"
 #include "strmap.hxx"
-#include "GException.hxx"
 #include "fs_lease.hxx"
 #include "pool.hxx"
 #include "system/Error.hxx"
@@ -337,7 +336,7 @@ struct HttpClient final : IstreamHandler, Cancellable {
     size_t OnData(const void *data, size_t length) override;
     ssize_t OnDirect(FdType type, int fd, size_t max_length) override;
     void OnEof() override;
-    void OnError(GError *error) override;
+    void OnError(std::exception_ptr ep) override;
 };
 
 /**
@@ -1223,7 +1222,7 @@ HttpClient::OnEof()
 }
 
 inline void
-HttpClient::OnError(GError *error)
+HttpClient::OnError(std::exception_ptr ep)
 {
     assert(response.state == Response::State::STATUS ||
            response.state == Response::State::HEADERS ||
@@ -1235,11 +1234,9 @@ HttpClient::OnError(GError *error)
     request.istream.Clear();
 
     if (response.state != HttpClient::Response::State::BODY)
-        AbortResponseHeaders(ToException(*error));
+        AbortResponseHeaders(ep);
     else if (response.body != nullptr)
-        AbortResponseBody(ToException(*error));
-
-    g_error_free(error);
+        AbortResponseBody(ep);
 }
 
 /*

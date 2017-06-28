@@ -49,9 +49,8 @@ struct Context final
         body.Clear();
     }
 
-    void OnError(GError *gerror) override {
-        g_printerr("%s\n", gerror->message);
-        g_error_free(gerror);
+    void OnError(std::exception_ptr ep) override {
+        PrintException(ep);
 
         body.Clear();
         error = true;

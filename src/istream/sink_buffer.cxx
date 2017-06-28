@@ -2,10 +2,7 @@
 #include "istream.hxx"
 #include "Sink.hxx"
 #include "pool.hxx"
-#include "GException.hxx"
 #include "util/Cancellable.hxx"
-
-#include <glib.h>
 
 #include <stdexcept>
 
@@ -41,7 +38,7 @@ struct BufferSink final : IstreamSink, Cancellable {
     size_t OnData(const void *data, size_t length) override;
     ssize_t OnDirect(FdType type, int fd, size_t max_length) override;
     void OnEof() override;
-    void OnError(GError *error) override;
+    void OnError(std::exception_ptr ep) override;
 };
 
 /*
@@ -86,10 +83,9 @@ BufferSink::OnEof()
 }
 
 inline void
-BufferSink::OnError(GError *error)
+BufferSink::OnError(std::exception_ptr ep)
 {
-    handler->error(ToException(*error), handler_ctx);
-    g_error_free(error);
+    handler->error(ep, handler_ctx);
 }
 
 

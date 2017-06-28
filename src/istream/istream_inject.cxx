@@ -9,8 +9,6 @@
 #include "istream_inject.hxx"
 #include "ForwardIstream.hxx"
 
-#include <glib.h>
-
 class InjectIstream final : public ForwardIstream {
 public:
     InjectIstream(struct pool &p, Istream &_input)
@@ -48,8 +46,7 @@ public:
         ClearInput();
     }
 
-    void OnError(GError *error) override {
-        g_error_free(error);
+    void OnError(std::exception_ptr) override {
         ClearInput();
     }
 };

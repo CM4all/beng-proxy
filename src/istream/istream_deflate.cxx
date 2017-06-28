@@ -16,9 +16,17 @@
 
 #include <zlib.h>
 
-#include <glib.h>
+#include <stdexcept>
 
 #include <assert.h>
+
+class ZlibError : public std::runtime_error {
+    int code;
+
+public:
+    explicit ZlibError(int _code, const char *_msg)
+        :std::runtime_error(_msg), code(_code) {}
+};
 
 class DeflateIstream final : public FacadeIstream {
     const bool gzip;
@@ -59,13 +67,17 @@ public:
         }
     }
 
-    void Abort(GError *error) {
+    void Abort(std::exception_ptr ep) {
         DeinitZlib();
 
         if (HasInput())
             ClearAndCloseInput();
 
-        DestroyError(error);
+        DestroyError(ep);
+    }
+
+    void Abort(int code, const char *msg) {
+        Abort(std::make_exception_ptr(ZlibError(code, msg)));
     }
 
     /**
@@ -124,7 +136,7 @@ public:
     /* virtual methods from class IstreamHandler */
     size_t OnData(const void *data, size_t length) override;
     void OnEof() override;
-    void OnError(GError *error) override;
+    void OnError(std::exception_ptr ep) override;
 
 private:
     int GetWindowBits() const {
@@ -137,13 +149,6 @@ private:
         ForceRead();
     }
 };
-
-gcc_const
-static GQuark
-zlib_quark(void)
-{
-    return g_quark_from_static_string("zlib");
-}
 
 static voidpf z_alloc
 (voidpf opaque, uInt items, uInt size)
@@ -174,10 +179,7 @@ DeflateIstream::InitZlib()
                            Z_DEFLATED, GetWindowBits(), 8,
                            Z_DEFAULT_STRATEGY);
     if (err != Z_OK) {
-        GError *error =
-            g_error_new(zlib_quark(), err,
-                        "deflateInit(Z_FINISH) failed: %d", err);
-        Abort(error);
+        Abort(err, "deflateInit(Z_FINISH) failed");
         return false;
     }
 
@@ -224,10 +226,7 @@ DeflateIstream::TryFlush()
 
     int err = deflate(&z, Z_SYNC_FLUSH);
     if (err != Z_OK) {
-        GError *error =
-            g_error_new(zlib_quark(), err,
-                        "deflate(Z_SYNC_FLUSH) failed: %d", err);
-        Abort(error);
+        Abort(err, "deflate(Z_SYNC_FLUSH) failed");
         return;
     }
 
@@ -285,10 +284,7 @@ DeflateIstream::TryFinish()
     if (err == Z_STREAM_END)
         z_stream_end = true;
     else if (err != Z_OK) {
-        GError *error =
-            g_error_new(zlib_quark(), err,
-                        "deflate(Z_FINISH) failed: %d", err);
-        Abort(error);
+        Abort(err, "deflate(Z_FINISH) failed");
         return;
     }
 
@@ -333,10 +329,7 @@ DeflateIstream::OnData(const void *data, size_t length)
     do {
         auto err = deflate(&z, Z_NO_FLUSH);
         if (err != Z_OK) {
-            GError *error =
-                g_error_new(zlib_quark(), err,
-                            "deflate() failed: %d", err);
-            Abort(error);
+            Abort(err, "deflate() failed");
             return 0;
         }
 
@@ -383,13 +376,13 @@ DeflateIstream::OnEof()
 }
 
 void
-DeflateIstream::OnError(GError *error)
+DeflateIstream::OnError(std::exception_ptr ep)
 {
     ClearInput();
 
     DeinitZlib();
 
-    DestroyError(error);
+    DestroyError(ep);
 }
 
 /*

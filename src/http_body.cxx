@@ -8,8 +8,6 @@
 #include "istream/istream_dechunk.hxx"
 #include "buffered_socket.hxx"
 
-#include <glib.h>
-
 #include <limits.h>
 
 /** determine how much can be read from the body */
@@ -94,9 +92,7 @@ HttpBodyReader::SocketEOF(size_t remaining)
     } else {
         /* something has gone wrong: either not enough or too much
            data left in the buffer */
-        GError *error = g_error_new_literal(g_quark_from_static_string("buffered_socket"), 0,
-                                            "premature end of socket");
-        InvokeError(error);
+        InvokeError(std::make_exception_ptr(std::runtime_error("premature end of socket")));
         return false;
     }
 }

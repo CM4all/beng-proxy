@@ -28,7 +28,7 @@ public:
         abort();
     }
 
-    void OnError(gcc_unused GError *error) {
+    void OnError(std::exception_ptr) {
         /* should not be reachable, because we expect the Istream to
            call the OnData() callback at least once */
 

@@ -28,7 +28,6 @@
 #include "istream/istream.hxx"
 #include "istream/istream_pipe.hxx"
 #include "pool.hxx"
-#include "GException.hxx"
 #include "suffix_registry.hxx"
 #include "address_suffix_registry.hxx"
 #include "util/Cast.hxx"

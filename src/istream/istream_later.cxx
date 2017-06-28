@@ -51,9 +51,9 @@ public:
         Schedule();
     }
 
-    void OnError(GError *error) override {
+    void OnError(std::exception_ptr ep) override {
         defer_event.Cancel();
-        ForwardIstream::OnError(error);
+        ForwardIstream::OnError(ep);
     }
 
 private:

@@ -13,7 +13,6 @@
 #include "buffered_socket.hxx"
 #include "http_response.hxx"
 #include "GrowingBuffer.hxx"
-#include "GException.hxx"
 #include "istream_ajp_body.hxx"
 #include "istream_gb.hxx"
 #include "istream/istream.hxx"
@@ -197,7 +196,7 @@ struct AjpClient final : Istream, IstreamHandler, Cancellable {
     size_t OnData(const void *data, size_t length) override;
     ssize_t OnDirect(FdType type, int fd, size_t max_length) override;
     void OnEof() override;
-    void OnError(GError *error) override;
+    void OnError(std::exception_ptr ep) override;
 };
 
 static const struct timeval ajp_client_timeout = {
@@ -680,7 +679,7 @@ AjpClient::OnEof()
 }
 
 inline void
-AjpClient::OnError(GError *error)
+AjpClient::OnError(std::exception_ptr ep)
 {
     assert(request.istream.IsDefined());
     request.istream.Clear();
@@ -690,9 +689,8 @@ AjpClient::OnError(GError *error)
            destructed further up the stack */
         return;
 
-    AbortResponse(NestException(ToException(*error),
+    AbortResponse(NestException(ep,
                                 std::runtime_error("AJP request stream failed")));
-    g_error_free(error);
 }
 
 /*

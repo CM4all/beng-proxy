@@ -101,7 +101,7 @@ public:
     }
 
     void OnEof() override;
-    void OnError(GError *error) override;
+    void OnError(std::exception_ptr ep) override;
 };
 
 /*
@@ -584,14 +584,14 @@ SubstIstream::OnEof()
 }
 
 inline void
-SubstIstream::OnError(GError *error)
+SubstIstream::OnError(std::exception_ptr ep)
 {
     assert(input.IsDefined());
 
     state = STATE_CLOSED;
 
     input.Clear();
-    DestroyError(error);
+    DestroyError(ep);
 }
 
 /*

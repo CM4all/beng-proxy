@@ -8,12 +8,9 @@
 #include "Sink.hxx"
 #include "pool.hxx"
 #include "direct.hxx"
-#include "GException.hxx"
 #include "io/Splice.hxx"
 #include "io/FileDescriptor.hxx"
 #include "event/SocketEvent.hxx"
-
-#include <glib.h>
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -85,7 +82,7 @@ struct SinkFd final : IstreamSink {
     size_t OnData(const void *data, size_t length) override;
     ssize_t OnDirect(FdType type, int fd, size_t max_length) override;
     void OnEof() override;
-    void OnError(GError *error) override;
+    void OnError(std::exception_ptr ep) override;
 };
 
 /*
@@ -157,7 +154,7 @@ SinkFd::OnEof()
 }
 
 inline void
-SinkFd::OnError(GError *error)
+SinkFd::OnError(std::exception_ptr ep)
 {
     got_data = true;
 
@@ -167,8 +164,7 @@ SinkFd::OnError(GError *error)
 
     event.Delete();
 
-    handler->input_error(ToException(*error), handler_ctx);
-    g_error_free(error);
+    handler->input_error(ep, handler_ctx);
 }
 
 /*
