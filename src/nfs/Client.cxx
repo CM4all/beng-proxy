@@ -9,7 +9,6 @@
 #include "Error.hxx"
 #include "Handler.hxx"
 #include "pool.hxx"
-#include "gerrno.h"
 #include "system/Error.hxx"
 #include "system/fd_util.h"
 #include "event/SocketEvent.hxx"

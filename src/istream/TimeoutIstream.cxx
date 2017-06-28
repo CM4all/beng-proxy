@@ -7,6 +7,8 @@
 #include "event/TimerEvent.hxx"
 #include "gerrno.h"
 
+#include <errno.h>
+
 class TimeoutIstream final : public ForwardIstream {
     TimerEvent timeout_event;
 
