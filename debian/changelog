@@ -8,7 +8,7 @@ cm4all-beng-proxy (12.0.25) unstable; urgency=low
   * spawn: allow only local, IPv4 and IPv6 sockets
   * spawn: rename the PID namespace init process to "init"
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Thu, 29 Jun 2017 20:10:24 -0000
 
 cm4all-beng-proxy (12.0.24) unstable; urgency=low
 
