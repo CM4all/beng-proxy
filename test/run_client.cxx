@@ -51,32 +51,35 @@ struct parsed_url {
     const char *uri;
 };
 
-static void
-parse_url(struct parsed_url *dest, const char *url)
+static struct parsed_url
+parse_url(const char *url)
 {
-    assert(dest != nullptr);
     assert(url != nullptr);
+
+    struct parsed_url dest;
 
     if (memcmp(url, "ajp://", 6) == 0) {
         url += 6;
-        dest->protocol = parsed_url::AJP;
-        dest->default_port = 8009;
+        dest.protocol = parsed_url::AJP;
+        dest.default_port = 8009;
     } else if (memcmp(url, "http://", 7) == 0) {
         url += 7;
-        dest->protocol = parsed_url::HTTP;
-        dest->default_port = 80;
+        dest.protocol = parsed_url::HTTP;
+        dest.default_port = 80;
     } else if (memcmp(url, "https://", 8) == 0) {
         url += 8;
-        dest->protocol = parsed_url::HTTPS;
-        dest->default_port = 443;
+        dest.protocol = parsed_url::HTTPS;
+        dest.default_port = 443;
     } else
         throw std::runtime_error("Unsupported URL");
 
-    dest->uri = strchr(url, '/');
-    if (dest->uri == nullptr || dest->uri == url)
+    dest.uri = strchr(url, '/');
+    if (dest.uri == nullptr || dest.uri == url)
         throw std::runtime_error("Missing URI path");
 
-    dest->host = g_strndup(url, dest->uri - url);
+    dest.host = g_strndup(url, dest.uri - url);
+
+    return dest;
 }
 
 struct Context final
@@ -319,7 +322,7 @@ try {
         return EXIT_FAILURE;
     }
 
-    parse_url(&ctx.url, argv[1]);
+    ctx.url = parse_url(argv[1]);
 
     direct_global_init();
     SetupProcess();
