@@ -4,6 +4,7 @@ cm4all-beng-proxy (12.0.25) unstable; urgency=low
   * spawn: mount a new /proc for the PID namespace
   * spawn: implement user namespaces properly
   * spawn: fix seccomp filters on old kernels
+  * spawn: fix journal for jailed processes
   * spawn: allow only local, IPv4 and IPv6 sockets
   * spawn: rename the PID namespace init process to "init"
 
