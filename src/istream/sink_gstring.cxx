@@ -10,7 +10,7 @@
 #include <glib.h>
 
 struct GStringSink final : IstreamSink, Cancellable {
-    struct pool *pool;
+    struct pool &pool;
 
     GString *value;
 
@@ -22,7 +22,7 @@ struct GStringSink final : IstreamSink, Cancellable {
                                   void *ctx),
                 void *_ctx,
                 CancellablePointer &cancel_ptr)
-        :IstreamSink(_input, FD_ANY), pool(&_pool),
+        :IstreamSink(_input, FD_ANY), pool(_pool),
          value(g_string_sized_new(256)),
          callback(_callback), callback_ctx(_ctx) {
         cancel_ptr = *this;
@@ -32,7 +32,7 @@ struct GStringSink final : IstreamSink, Cancellable {
     void Cancel() override {
         g_string_free(value, true);
 
-        const ScopePoolRef ref(*pool TRACE_ARGS);
+        const ScopePoolRef ref(pool TRACE_ARGS);
         input.Close();
     }
 
