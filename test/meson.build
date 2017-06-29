@@ -79,7 +79,6 @@ executable('run_client',
   include_directories: inc,
   dependencies: [
     threads,
-    glib,
     libinline, libhttp, libsocket,
     declare_dependency(link_with: ssl),
     declare_dependency(link_with: ajp_client),

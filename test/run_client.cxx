@@ -28,8 +28,6 @@
 
 #include <inline/compiler.h>
 
-#include <glib.h>
-
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
@@ -44,7 +42,7 @@ struct parsed_url {
         HTTP, HTTPS, AJP,
     } protocol;
 
-    char *host;
+    std::string host;
 
     int default_port;
 
@@ -77,7 +75,7 @@ parse_url(const char *url)
     if (dest.uri == nullptr || dest.uri == url)
         throw std::runtime_error("Missing URI path");
 
-    dest.host = g_strndup(url, dest.uri - url);
+    dest.host = std::string(url, dest.uri);
 
     return dest;
 }
@@ -238,7 +236,7 @@ try {
     idle = false;
 
     StringMap headers(*pool);
-    headers.Add("host", url.host);
+    headers.Add("host", url.host.c_str());
 
     switch (url.protocol) {
     case parsed_url::AJP:
@@ -267,7 +265,7 @@ try {
 
     case parsed_url::HTTPS: {
         void *filter_ctx = ssl_client_create(event_loop,
-                                             url.host);
+                                             url.host.c_str());
 
         auto filter = &ssl_client_get_filter();
         http_client_request(*pool, event_loop,
@@ -338,7 +336,8 @@ try {
     hints.ai_flags = AI_ADDRCONFIG;
     hints.ai_socktype = SOCK_STREAM;
 
-    const auto ail = Resolve(ctx.url.host, ctx.url.default_port, &hints);
+    const auto ail = Resolve(ctx.url.host.c_str(), ctx.url.default_port,
+                             &hints);
     const auto &ai = ail.front();
 
     /* initialize */
@@ -389,8 +388,6 @@ try {
     pool_commit();
 
     ssl_client_deinit();
-
-    g_free(ctx.url.host);
 
     return ctx.got_response && ctx.body_eof ? EXIT_SUCCESS : EXIT_FAILURE;
 } catch (const std::exception &e) {
