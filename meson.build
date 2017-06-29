@@ -105,8 +105,6 @@ gtest = declare_dependency(
   ],
 )
 
-glib = dependency('glib-2.0', version: '>= 2.24')
-
 libinline = dependency('libcm4all-inline', version: '>= 0.3.4')
 libsocket = dependency('libcm4all-socket', version: '>= 0.3.5')
 libdaemon = dependency('libcm4all-daemon', version: '>= 0.4.1')
