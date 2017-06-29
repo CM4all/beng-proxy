@@ -51,7 +51,7 @@ struct parsed_url {
     const char *uri;
 };
 
-static bool
+static void
 parse_url(struct parsed_url *dest, const char *url)
 {
     assert(dest != nullptr);
@@ -70,14 +70,13 @@ parse_url(struct parsed_url *dest, const char *url)
         dest->protocol = parsed_url::HTTPS;
         dest->default_port = 443;
     } else
-        return false;
+        throw std::runtime_error("Unsupported URL");
 
     dest->uri = strchr(url, '/');
     if (dest->uri == nullptr || dest->uri == url)
-        return false;
+        throw std::runtime_error("Missing URI path");
 
     dest->host = g_strndup(url, dest->uri - url);
-    return true;
 }
 
 struct Context final
@@ -320,10 +319,7 @@ try {
         return EXIT_FAILURE;
     }
 
-    if (!parse_url(&ctx.url, argv[1])) {
-        fprintf(stderr, "Invalid or unsupported URL.\n");
-        return EXIT_FAILURE;
-    }
+    parse_url(&ctx.url, argv[1]);
 
     direct_global_init();
     SetupProcess();
