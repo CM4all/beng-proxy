@@ -26,6 +26,7 @@ common_flags = [
   '-DVERSION="' + meson.project_version() + '"',
   '-DHAVE_PIPE2',
   '-DHAVE_ACCEPT4',
+  '-DCACHE_LOG',
 ]
 
 add_global_arguments(common_flags,
@@ -60,7 +61,7 @@ add_global_arguments(common_flags,
 
 if debug
   debug_flags = ['-DPOISON', '-DTRACE']
-  debug_flags += ['-DDEBUG_POOL_REF', '-DCACHE_LOG']
+  debug_flags += ['-DDEBUG_POOL_REF']
   debug_flags += ['-DVALGRIND']
 else
   debug_flags = []
