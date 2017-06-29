@@ -17,8 +17,6 @@
 #include "event/Duration.hxx"
 #include "util/Cancellable.hxx"
 
-#include <glib.h> // for g_strrstr_len()
-
 #include <unistd.h>
 #include <sys/socket.h>
 #include <string.h>
@@ -79,7 +77,7 @@ static bool
 check_expectation(char *received, size_t received_length,
                   const char *expect)
 {
-    return g_strrstr_len(received, received_length, expect) != NULL;
+    return memmem(received, received_length, expect, strlen(expect)) != nullptr;
 }
 
 /*
