@@ -200,7 +200,6 @@ executable('run_was',
   '../src/direct.cxx',
   include_directories: inc,
   dependencies: [
-    glib,
     libinline, libhttp, libsocket, libdaemon,
     declare_dependency(link_with: net),
     declare_dependency(link_with: was_client),

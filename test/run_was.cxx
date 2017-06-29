@@ -17,10 +17,9 @@
 #include "util/ConstBuffer.hxx"
 #include "util/Cancellable.hxx"
 #include "util/PrintException.hxx"
+#include "util/StaticArray.hxx"
 
 #include <daemon/log.h>
-
-#include <glib.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -128,29 +127,27 @@ main(int argc, char **argv)
 try {
     daemon_log_config.verbose = 5;
 
-    gchar **parameters = nullptr;
-    const GOptionEntry option_entries[] = {
-        { .long_name = "parameter", .short_name = 'p',
-          .flags = 0,
-          .arg = G_OPTION_ARG_STRING_ARRAY,
-          .arg_data = &parameters,
-          .description = "Pass a parameter to the application",
-        },
-        GOptionEntry()
-    };
+    StaticArray<const char *, 64> params;
 
-    GOptionContext *option_context = g_option_context_new("PATH");
-    g_option_context_add_main_entries(option_context, option_entries, nullptr);
-    g_option_context_set_summary(option_context,
-                                 "Command-line interface for WAS applications.");
-
-    GError *error = nullptr;
-    if (!g_option_context_parse(option_context, &argc, &argv, &error)) {
-        g_printerr("option parsing failed: %s\n", error->message);
+    if (argc < 2) {
+        fprintf(stderr, "Usage: run_was PATH [--parameter a=b ...]\n");
         return EXIT_FAILURE;
     }
 
-    g_option_context_free(option_context);
+    for (int i = 2; i < argc;) {
+        if (strcmp(argv[i], "--parameter") == 0 ||
+            strcmp(argv[i], "-p") == 0) {
+            ++i;
+            if (i >= argc)
+                throw std::runtime_error("Parameter value missing");
+
+            if (params.full())
+                throw std::runtime_error("Too many parameters");
+
+            params.push_back(argv[i++]);
+        } else
+            throw std::runtime_error("Unrecognized parameter");
+    }
 
     direct_global_init();
 
@@ -169,11 +166,6 @@ try {
                                  argv[1], nullptr,
                                  child_options, nullptr);
 
-    unsigned num_parameters = 0;
-    if (parameters != nullptr)
-        while (parameters[num_parameters] != nullptr)
-            ++num_parameters;
-
     was_client_request(context.root_pool, context.event_loop, nullptr,
                        context.process.control.Get(),
                        context.process.input.Get(),
@@ -184,7 +176,7 @@ try {
                        nullptr, nullptr,
                        *strmap_new(context.root_pool),
                        request_body(context.event_loop, context.root_pool),
-                       { (const char *const*)parameters, num_parameters },
+                       { (const char *const*)params.raw(), params.size() },
                        context, context.cancel_ptr);
 
     context.event_loop.Dispatch();
