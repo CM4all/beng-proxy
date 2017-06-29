@@ -488,15 +488,12 @@ ParseCommandLine(BpCmdLine &cmdline, BpConfig &config, int argc, char **argv)
         if (!u.IsComplete())
             arg_error(argv[0], "refusing to spawn child processes as root");
 
-        config.spawn.ignore_userns = true;
-
         config.spawn.allowed_uids.insert(u.uid);
         config.spawn.allowed_gids.insert(u.gid);
         for (size_t i = 0; i < u.groups.size() && u.groups[i] != 0; ++i)
             config.spawn.allowed_gids.insert(u.groups[i]);
     } else {
         config.spawn.default_uid_gid = cmdline.user;
-        config.spawn.ignore_userns = true;
     }
 
     assert(config.spawn.default_uid_gid.IsComplete());
