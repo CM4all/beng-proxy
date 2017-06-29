@@ -466,6 +466,41 @@ class Translation(Protocol):
             response.packet(TRANSLATE_SCHEME, 'https')
             response.packet(TRANSLATE_HOST, 'xyz.intern.cm-ag')
             response.path('/var/www/')
+        elif uri[:8] == '/nsinfo/':
+            user_ns = pid_ns = False
+            pivot_root = None
+            for x in uri[8:]:
+                if x == 'U':
+                    user_ns = True
+                elif x == 'p':
+                    pid_ns = True
+                elif x == 'm':
+                    pivot_root = '/srv/chroot/jessie'
+                else:
+                    raise Exception('Unknown namespace: "%c"' % x)
+
+            home = cgi_path
+
+            if pivot_root is not None:
+                home = '/home'
+
+            response.packet(TRANSLATE_CGI, os.path.join(home, 'nsinfo.sh'))
+            response.packet(TRANSLATE_HOME, cgi_path)
+
+            if pivot_root is not None:
+                response.packet(TRANSLATE_PIVOT_ROOT, pivot_root)
+                response.packet(TRANSLATE_MOUNT_HOME, '/home')
+                response.packet(TRANSLATE_MOUNT_TMP_TMPFS)
+
+            if user_ns:
+                response.packet(TRANSLATE_USER_NAMESPACE)
+
+            if pid_ns:
+                response.packet(TRANSLATE_PID_NAMESPACE)
+
+            if pid_ns or pivot_root is not None:
+                response.packet(TRANSLATE_MOUNT_PROC)
+
         elif uri[:6] == '/coma/':
             self._handle_coma(response, uri[:6], uri[6:], coma_demo)
         elif uri[:10] == '/coma-was/':
