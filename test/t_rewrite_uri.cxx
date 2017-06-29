@@ -12,12 +12,10 @@
 #include "escape_html.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream_string.hxx"
-#include "istream/sink_gstring.hxx"
+#include "istream/StringSink.hxx"
 #include "penv.hxx"
 #include "widget/Inline.hxx"
 #include "util/Cancellable.hxx"
-
-#include <glib.h>
 
 const struct timeval inline_widget_timeout = {
     .tv_sec = 10,
@@ -115,39 +113,35 @@ ResolveWidget(gcc_unused struct pool &pool,
 
 static struct parsed_uri external_uri;
 
-struct sink_gstring_ctx {
-    GString *value;
+struct StringSinkCtx {
+    std::string value;
     bool finished = false;
 };
 
 static void
-sink_gstring_callback(GString *value, std::exception_ptr, void *_ctx)
+sink_gstring_callback(std::string &&value, std::exception_ptr, void *_ctx)
 {
-    struct sink_gstring_ctx *ctx = (struct sink_gstring_ctx *)_ctx;
+    auto &ctx = *(StringSinkCtx *)_ctx;
 
-    ctx->value = value;
-    ctx->finished = true;
+    ctx.value = std::move(value);
+    ctx.finished = true;
 }
 
 static void
 assert_istream_equals(struct pool *pool, Istream *istream, const char *value)
 {
-    struct sink_gstring_ctx ctx;
+    StringSinkCtx ctx;
     CancellablePointer cancel_ptr;
 
     assert(istream != NULL);
     assert(value != NULL);
 
-    sink_gstring_new(*pool, *istream, sink_gstring_callback, &ctx, cancel_ptr);
+    NewStringSink(*pool, *istream, sink_gstring_callback, &ctx, cancel_ptr);
 
     while (!ctx.finished)
         istream->Read();
 
-    assert(ctx.value != NULL);
-    /*g_print("value='%s'\n", sg->value->str);*/
-    assert(strcmp(ctx.value->str, value) == 0);
-
-    g_string_free(ctx.value, true);
+    assert(strcmp(ctx.value.c_str(), value) == 0);
 }
 
 static void

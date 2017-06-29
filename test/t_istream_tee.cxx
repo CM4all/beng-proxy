@@ -5,12 +5,10 @@
 #include "istream/istream_fail.hxx"
 #include "istream/istream.hxx"
 #include "istream/sink_close.hxx"
-#include "istream/sink_gstring.hxx"
+#include "istream/StringSink.hxx"
 #include "istream/Bucket.hxx"
 #include "util/Cancellable.hxx"
 #include "util/Exception.hxx"
-
-#include <glib.h>
 
 #include <string.h>
 
@@ -36,7 +34,7 @@ struct StatsIstreamHandler : IstreamHandler {
 };
 
 struct Context {
-    GString *value = nullptr;
+    std::string value;
 };
 
 struct BlockContext final : Context, StatsIstreamHandler {
@@ -54,13 +52,11 @@ struct BlockContext final : Context, StatsIstreamHandler {
  */
 
 static void
-buffer_callback(GString *value, std::exception_ptr, void *_ctx)
+buffer_callback(std::string &&value, std::exception_ptr, void *_ctx)
 {
-    auto *ctx = (Context *)_ctx;
+    auto &ctx = *(Context *)_ctx;
 
-    assert(value != nullptr);
-
-    ctx->value = value;
+    ctx.value = std::move(value);
 }
 
 static void
@@ -77,22 +73,22 @@ test_block1(EventLoop &event_loop)
 
     tee->SetHandler(ctx);
 
-    sink_gstring_new(*pool, *second, buffer_callback, (Context *)&ctx, cancel_ptr);
-    assert(ctx.value == nullptr);
+    NewStringSink(*pool, *second, buffer_callback, (Context *)&ctx, cancel_ptr);
+    assert(ctx.value.empty());
 
     pool_unref(pool);
 
     /* the input (istream_delayed) blocks */
     second->Read();
-    assert(ctx.value == nullptr);
+    assert(ctx.value.empty());
 
     /* feed data into input */
     istream_delayed_set(*delayed, *istream_string_new(pool, "foo"));
-    assert(ctx.value == nullptr);
+    assert(ctx.value.empty());
 
     /* the first output (block_istream_handler) blocks */
     second->Read();
-    assert(ctx.value == nullptr);
+    assert(ctx.value.empty());
 
     /* close the blocking output, this should release the "tee"
        object and restart reading (into the second output) */
@@ -101,9 +97,7 @@ test_block1(EventLoop &event_loop)
     event_loop.LoopOnceNonBlock();
 
     assert(ctx.error == nullptr && !ctx.eof);
-    assert(ctx.value != nullptr);
-    assert(strcmp(ctx.value->str, "foo") == 0);
-    g_string_free(ctx.value, true);
+    assert(strcmp(ctx.value.c_str(), "foo") == 0);
 
     pool_commit();
 }
@@ -122,19 +116,17 @@ test_close_data(EventLoop &event_loop, struct pool *pool)
     sink_close_new(*pool, *tee);
     Istream *second = &istream_tee_second(*tee);
 
-    sink_gstring_new(*pool, *second, buffer_callback, &ctx, cancel_ptr);
-    assert(ctx.value == nullptr);
+    NewStringSink(*pool, *second, buffer_callback, &ctx, cancel_ptr);
+    assert(ctx.value.empty());
 
     pool_unref(pool);
 
     second->Read();
 
     /* at this point, sink_close has closed itself, and istream_tee
-       should have passed the data to the sink_gstring */
+       should have passed the data to the StringSink */
 
-    assert(ctx.value != nullptr);
-    assert(strcmp(ctx.value->str, "foo") == 0);
-    g_string_free(ctx.value, true);
+    assert(strcmp(ctx.value.c_str(), "foo") == 0);
 
     pool_commit();
 }
@@ -153,19 +145,17 @@ test_close_skipped(EventLoop &event_loop, struct pool *pool)
     pool = pool_new_libc(nullptr, "test");
     Istream *input = istream_string_new(pool, "foo");
     Istream *tee = istream_tee_new(*pool, *input, event_loop, false, false);
-    sink_gstring_new(*pool, *tee, buffer_callback, &ctx, cancel_ptr);
+    NewStringSink(*pool, *tee, buffer_callback, &ctx, cancel_ptr);
 
     Istream *second = &istream_tee_second(*tee);
     sink_close_new(*pool, *second);
     pool_unref(pool);
 
-    assert(ctx.value == nullptr);
+    assert(ctx.value.empty());
 
     input->Read();
 
-    assert(ctx.value != nullptr);
-    assert(strcmp(ctx.value->str, "foo") == 0);
-    g_string_free(ctx.value, true);
+    assert(strcmp(ctx.value.c_str(), "foo") == 0);
 
     pool_commit();
 }
