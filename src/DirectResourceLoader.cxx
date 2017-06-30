@@ -31,6 +31,7 @@
 #include "AllocatorPtr.hxx"
 #include "system/Error.hxx"
 #include "util/ConstBuffer.hxx"
+#include "util/StringUtil.hxx"
 
 #include <socket/parser.h>
 
@@ -65,10 +66,7 @@ extract_remote_addr(const StringMap *headers)
     else
         ++p;
 
-    while (*p == ' ')
-        ++p;
-
-    return p;
+    return StripLeft(p);
 }
 
 static const char *
