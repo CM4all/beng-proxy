@@ -1,7 +1,7 @@
 #include "pool.hxx"
 #include "RootPool.hxx"
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 
 #include <cppunit/CompilerOutputter.h>
 #include <cppunit/extensions/TestFactoryRegistry.h>

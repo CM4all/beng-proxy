@@ -5,7 +5,7 @@
 #include "PInstance.hxx"
 #include "util/PrintException.hxx"
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 
 int
 main(int argc, char **argv)

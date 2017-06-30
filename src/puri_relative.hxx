@@ -7,7 +7,7 @@
 #ifndef BENG_PURI_RELATIVE_HXX
 #define BENG_PURI_RELATIVE_HXX
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 
 #include <stddef.h>
 

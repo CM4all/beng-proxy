@@ -9,7 +9,7 @@
 
 #include "shm.hxx"
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 
 #include <boost/interprocess/managed_external_buffer.hpp>
 #include <boost/intrusive/list.hpp>

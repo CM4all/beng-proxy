@@ -8,7 +8,7 @@
 #ifndef BENG_PROXY_FB_POOL_HXX
 #define BENG_PROXY_FB_POOL_HXX
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 
 struct SlicePool;
 

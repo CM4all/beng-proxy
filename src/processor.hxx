@@ -7,7 +7,7 @@
 #ifndef PROCESSOR_HXX
 #define PROCESSOR_HXX
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 #include <http/method.h>
 #include <http/status.h>
 

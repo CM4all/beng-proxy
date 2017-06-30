@@ -1,7 +1,7 @@
 #ifndef BENG_PROXY_HTTP_CACHE_RFC_HXX
 #define BENG_PROXY_HTTP_CACHE_RFC_HXX
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 #include <http/method.h>
 #include <http/status.h>
 

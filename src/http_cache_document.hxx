@@ -4,7 +4,7 @@
 #include "http_cache_info.hxx"
 #include "strmap.hxx"
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 #include <http/status.h>
 
 struct HttpCacheDocument {

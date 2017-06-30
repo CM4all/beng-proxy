@@ -12,7 +12,7 @@
 #include "util/ShallowCopy.hxx"
 #include "StickyMode.hxx"
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 
 #include <stddef.h>
 #include <assert.h>

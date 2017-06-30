@@ -9,7 +9,7 @@
 
 #include "Unique.hxx"
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 
 struct SslFactory;
 struct SslFilter;

@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_BOT_H
 #define BENG_PROXY_BOT_H
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 
 #include <stdbool.h>
 

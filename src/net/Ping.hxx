@@ -5,7 +5,7 @@
 #ifndef PING_HXX
 #define PING_HXX
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 
 #include <exception>
 

@@ -26,7 +26,7 @@
 #include "util/ByteOrder.hxx"
 #include "util/HexFormat.h"
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 
 #include <stdio.h>
 

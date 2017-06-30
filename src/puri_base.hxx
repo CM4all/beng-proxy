@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_PURI_BASE_HXX
 #define BENG_PROXY_PURI_BASE_HXX
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 
 #include <stddef.h>
 

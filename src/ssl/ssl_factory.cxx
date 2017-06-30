@@ -19,7 +19,7 @@
 #include "util/StringView.hxx"
 #include "util/PrintException.hxx"
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 
 #include <openssl/ssl.h>
 #include <openssl/err.h>

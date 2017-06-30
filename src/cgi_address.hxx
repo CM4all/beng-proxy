@@ -9,7 +9,7 @@
 #include "address_list.hxx"
 #include "adata/ExpandableStringList.hxx"
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 
 class AllocatorPtr;
 class MatchInfo;

@@ -5,7 +5,7 @@
 #ifndef BENG_LB_GOTO_HXX
 #define BENG_LB_GOTO_HXX
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 
 class LbCluster;
 class LbBranch;

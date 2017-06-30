@@ -7,7 +7,7 @@
 #include "net/Resolver.hxx"
 #include "net/AddressInfo.hxx"
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 
 #include <cppunit/CompilerOutputter.h>
 #include <cppunit/extensions/TestFactoryRegistry.h>

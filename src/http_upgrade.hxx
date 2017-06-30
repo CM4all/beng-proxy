@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_HTTP_UPGRADE_HXX
 #define BENG_PROXY_HTTP_UPGRADE_HXX
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 #include <http/status.h>
 
 class StringMap;

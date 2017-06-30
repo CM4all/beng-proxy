@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_WAS_INPUT_HXX
 #define BENG_PROXY_WAS_INPUT_HXX
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 
 #include <exception>
 

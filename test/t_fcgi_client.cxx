@@ -21,7 +21,7 @@
 #include "util/ByteOrder.hxx"
 #include "fcgi_server.hxx"
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 
 #include <sys/wait.h>
 

@@ -9,7 +9,7 @@
 
 #include "util/StringView.hxx"
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 
 struct pool;
 

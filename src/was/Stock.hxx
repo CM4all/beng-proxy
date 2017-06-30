@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_WAS_STOCK_HXX
 #define BENG_PROXY_WAS_STOCK_HXX
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 
 #include <stdint.h>
 

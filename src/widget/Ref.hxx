@@ -5,7 +5,7 @@
 #ifndef BENG_PROXY_WIDGET_REF_HXX
 #define BENG_PROXY_WIDGET_REF_HXX
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 
 struct pool;
 

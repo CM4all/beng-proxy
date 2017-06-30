@@ -8,7 +8,7 @@
 #include "dchunk.hxx"
 #include "shm.hxx"
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 #include <inline/poison.h>
 
 #include <boost/interprocess/sync/interprocess_mutex.hpp>

@@ -12,7 +12,7 @@
 #include "event/Duration.hxx"
 #include "util/Cancellable.hxx"
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 
 #include <string>
 

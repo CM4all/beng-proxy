@@ -10,7 +10,7 @@
 #include "header_writer.hxx"
 #include "header_parser.hxx"
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 
 /**
  * A class that stores HTTP headers in a map and a buffer.  Some

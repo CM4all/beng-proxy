@@ -7,7 +7,7 @@
 
 #include "util/ConstBuffer.hxx"
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 
 class AllocatorPtr;
 class MatchInfo;

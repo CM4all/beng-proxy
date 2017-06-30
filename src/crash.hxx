@@ -8,7 +8,7 @@
 #ifndef BENG_PROXY_CRASH_HXX
 #define BENG_PROXY_CRASH_HXX
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 
 #include <atomic>
 

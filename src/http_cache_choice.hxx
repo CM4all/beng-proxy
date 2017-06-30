@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_HTTP_CACHE_CHOICE_HXX
 #define BENG_PROXY_HTTP_CACHE_CHOICE_HXX
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 
 #include <chrono>
 #include <exception>

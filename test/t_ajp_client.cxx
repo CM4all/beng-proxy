@@ -18,7 +18,7 @@
 #include "net/SocketDescriptor.hxx"
 #include "util/ByteOrder.hxx"
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 
 #include <sys/wait.h>
 

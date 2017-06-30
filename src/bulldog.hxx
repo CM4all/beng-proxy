@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_BULLDOG_HXX
 #define BENG_PROXY_BULLDOG_HXX
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 
 class SocketAddress;
 

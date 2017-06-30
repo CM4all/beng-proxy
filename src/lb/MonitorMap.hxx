@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_LB_HMONITOR_HXX
 #define BENG_PROXY_LB_HMONITOR_HXX
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 
 #include <map>
 #include <memory>

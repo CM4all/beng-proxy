@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_URI_ESCAPE_HXX
 #define BENG_PROXY_URI_ESCAPE_HXX
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 
 #include <stddef.h>
 

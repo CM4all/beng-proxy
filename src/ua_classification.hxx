@@ -5,7 +5,7 @@
 #ifndef BENG_PROXY_UA_CLASSIFICATION_HXX
 #define BENG_PROXY_UA_CLASSIFICATION_HXX
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 
 /**
  * Throws std::runtime_error on error.

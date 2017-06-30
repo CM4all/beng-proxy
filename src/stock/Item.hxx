@@ -5,7 +5,7 @@
 #ifndef BENG_PROXY_STOCK_ITEM_HXX
 #define BENG_PROXY_STOCK_ITEM_HXX
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 
 #include <boost/intrusive/list.hpp>
 

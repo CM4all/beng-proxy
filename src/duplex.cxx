@@ -17,7 +17,7 @@
 #include "fb_pool.hxx"
 #include "SliceFifoBuffer.hxx"
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 #include <daemon/log.h>
 
 #include <sys/socket.h>

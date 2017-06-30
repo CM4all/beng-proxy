@@ -9,7 +9,7 @@
 
 #include "io/FdType.hxx"
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 
 struct pool;
 struct LhttpStock;

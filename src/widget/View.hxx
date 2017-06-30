@@ -10,7 +10,7 @@
 #include "ResourceAddress.hxx"
 #include "header_forward.hxx"
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 
 struct Transformation;
 class AllocatorPtr;

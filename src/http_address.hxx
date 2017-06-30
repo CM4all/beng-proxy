@@ -9,7 +9,7 @@
 
 #include "address_list.hxx"
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 
 #include <stddef.h>
 

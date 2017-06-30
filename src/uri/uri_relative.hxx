@@ -7,7 +7,7 @@
 #ifndef BENG_URI_RELATIVE_HXX
 #define BENG_URI_RELATIVE_HXX
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 
 struct StringView;
 

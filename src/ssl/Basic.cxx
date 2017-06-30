@@ -10,7 +10,7 @@
 #include "Unique.hxx"
 #include "ssl_config.hxx"
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 
 #include <openssl/err.h>
 

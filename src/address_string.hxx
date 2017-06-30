@@ -7,7 +7,7 @@
 #ifndef BENG_ADDRESS_STRING_HXX
 #define BENG_ADDRESS_STRING_HXX
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 
 struct pool;
 class SocketAddress;

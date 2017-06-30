@@ -9,7 +9,7 @@
 
 #include "util/ShallowCopy.hxx"
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 
 #include <boost/intrusive/set.hpp>
 

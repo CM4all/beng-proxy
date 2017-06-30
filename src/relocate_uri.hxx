@@ -5,7 +5,7 @@
 #ifndef BENG_PROXY_RELOCATE_HXX
 #define BENG_PROXY_RELOCATE_HXX
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 
 struct HttpAddress;
 struct StringView;

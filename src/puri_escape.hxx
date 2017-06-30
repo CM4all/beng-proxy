@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_PURI_ESCAPE_HXX
 #define BENG_PROXY_PURI_ESCAPE_HXX
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 
 class AllocatorPtr;
 struct StringView;

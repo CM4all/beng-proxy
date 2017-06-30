@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_URI_VERIFY_HXX
 #define BENG_PROXY_URI_VERIFY_HXX
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 
 struct StringView;
 

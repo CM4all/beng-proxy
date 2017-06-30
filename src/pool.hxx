@@ -9,7 +9,7 @@
 
 #include "trace.h"
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 
 #include <type_traits>
 #include <utility>

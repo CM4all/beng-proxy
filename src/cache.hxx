@@ -9,7 +9,7 @@
 
 #include "event/CleanupTimer.hxx"
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 
 #include <boost/intrusive/list.hpp>
 #include <boost/intrusive/unordered_set.hpp>

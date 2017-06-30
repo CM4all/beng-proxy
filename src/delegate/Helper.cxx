@@ -7,7 +7,7 @@
 
 #include "Protocol.hxx"
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 
 #include <stdbool.h>
 #include <sys/socket.h>

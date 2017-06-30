@@ -7,7 +7,7 @@
 #ifndef BENG_FILTER_CACHE_HXX
 #define BENG_FILTER_CACHE_HXX
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 #include <http/status.h>
 
 struct pool;

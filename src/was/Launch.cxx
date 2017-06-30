@@ -11,7 +11,7 @@
 #include "system/Error.hxx"
 #include "util/ConstBuffer.hxx"
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 
 #include <sys/socket.h>
 #include <unistd.h>

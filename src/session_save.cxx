@@ -12,7 +12,7 @@
 #include "session.hxx"
 #include "shm/dpool.hxx"
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 #include <daemon/log.h>
 
 #include <assert.h>

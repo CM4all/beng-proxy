@@ -9,7 +9,7 @@
 
 #include <daemon/user.h>
 #include <daemon/log.h>
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 
 #include <sys/socket.h>
 #include <stdio.h>

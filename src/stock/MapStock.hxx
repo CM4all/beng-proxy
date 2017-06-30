@@ -11,7 +11,7 @@
 #include "Stock.hxx"
 #include "util/Cast.hxx"
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 
 #include <boost/intrusive/unordered_set.hpp>
 

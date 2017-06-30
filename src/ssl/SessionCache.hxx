@@ -5,7 +5,7 @@
 #ifndef BENG_PROXY_SSL_SESSION_CACHE_HXX
 #define BENG_PROXY_SSL_SESSION_CACHE_HXX
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 
 #include <openssl/ssl.h>
 

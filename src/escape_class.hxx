@@ -9,7 +9,7 @@
 
 #include "util/StringView.hxx"
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 
 #include <assert.h>
 #include <stddef.h>

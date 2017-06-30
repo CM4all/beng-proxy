@@ -23,7 +23,7 @@
 #include "pool.hxx"
 #include "util/Cancellable.hxx"
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 
 #include <string.h>
 #include <sys/socket.h>

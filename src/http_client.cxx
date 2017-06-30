@@ -39,7 +39,7 @@
 #include "util/RuntimeError.hxx"
 #include "util/Exception.hxx"
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 #include <inline/poison.h>
 #include <daemon/log.h>
 

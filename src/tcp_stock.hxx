@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_TCP_STOCK_HXX
 #define BENG_PROXY_TCP_STOCK_HXX
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 
 struct pool;
 struct balancer;

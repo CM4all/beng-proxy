@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_SESSION_ID_H
 #define BENG_PROXY_SESSION_ID_H
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 
 #include <array>
 

@@ -5,7 +5,7 @@
 #ifndef BENG_PROXY_SSL_ALT_NAME_HXX
 #define BENG_PROXY_SSL_ALT_NAME_HXX
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 
 #include <openssl/ossl_typ.h>
 

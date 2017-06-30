@@ -7,7 +7,7 @@
 #include "ssl_init.hxx"
 #include "FifoBufferBio.hxx"
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 
 #include <openssl/ssl.h>
 #include <openssl/crypto.h>

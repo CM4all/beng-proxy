@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_SSL_HASH_HXX
 #define BENG_PROXY_SSL_HASH_HXX
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 
 #include <openssl/ossl_typ.h>
 #include <openssl/sha.h>

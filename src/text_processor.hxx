@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_TEXT_PROCESSOR_HXX
 #define BENG_PROXY_TEXT_PROCESSOR_HXX
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 
 struct pool;
 class Istream;

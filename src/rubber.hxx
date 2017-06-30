@@ -9,7 +9,7 @@
 #ifndef BENG_PROXY_RUBBER_HXX
 #define BENG_PROXY_RUBBER_HXX
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 
 #include <stddef.h>
 

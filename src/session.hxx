@@ -13,7 +13,7 @@
 #include "util/ConstBuffer.hxx"
 #include "util/Expiry.hxx"
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 
 #include <boost/intrusive/set.hpp>
 #include <boost/intrusive/unordered_set.hpp>

@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_COOKIE_SERVER_HXX
 #define BENG_PROXY_COOKIE_SERVER_HXX
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 
 struct pool;
 class StringMap;

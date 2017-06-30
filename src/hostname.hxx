@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_HOSTNAME_HXX
 #define BENG_PROXY_HOSTNAME_HXX
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 
 gcc_pure
 bool

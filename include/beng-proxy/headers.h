@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_HEADERS_H
 #define BENG_PROXY_HEADERS_H
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 
 #include <stdint.h>
 

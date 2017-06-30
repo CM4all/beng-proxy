@@ -7,7 +7,7 @@
 
 #include "StickyHash.hxx"
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 
 class SocketAddress;
 

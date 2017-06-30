@@ -1,6 +1,6 @@
 #include "uri/uri_verify.hxx"
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 
 #include <assert.h>
 

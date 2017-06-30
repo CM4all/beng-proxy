@@ -1,7 +1,7 @@
 #include "uri/uri_extract.hxx"
 #include "util/StringView.hxx"
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 
 #include <cppunit/CompilerOutputter.h>
 #include <cppunit/extensions/TestFactoryRegistry.h>

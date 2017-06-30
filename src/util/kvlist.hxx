@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_KVLIST_HXX
 #define BENG_PROXY_KVLIST_HXX
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 
 #include <boost/intrusive/slist.hpp>
 

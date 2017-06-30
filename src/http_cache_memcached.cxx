@@ -26,7 +26,7 @@
 #include "util/ConstBuffer.hxx"
 #include "util/Exception.hxx"
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 
 #include <string.h>
 

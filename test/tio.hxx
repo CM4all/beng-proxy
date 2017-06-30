@@ -6,7 +6,7 @@
 
 #include "util/ByteOrder.hxx"
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 
 #include <sys/types.h>
 #include <sys/socket.h>

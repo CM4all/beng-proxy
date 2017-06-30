@@ -5,7 +5,7 @@
 #ifndef BENG_EXPANSIBLE_BUFFER_HXX
 #define BENG_EXPANSIBLE_BUFFER_HXX
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 
 #include <stddef.h>
 

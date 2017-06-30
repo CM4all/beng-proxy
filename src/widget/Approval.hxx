@@ -5,7 +5,7 @@
 #ifndef BENG_PROXY_WIDGET_APPROVAL_HXX
 #define BENG_PROXY_WIDGET_APPROVAL_HXX
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 
 struct Widget;
 

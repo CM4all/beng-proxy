@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_THREAD_POOL_HXX
 #define BENG_PROXY_THREAD_POOL_HXX
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 
 class EventLoop;
 class ThreadQueue;

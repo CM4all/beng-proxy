@@ -9,7 +9,7 @@
 #include "adata/ExpandableStringList.hxx"
 #include "util/ShallowCopy.hxx"
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 
 #include <assert.h>
 

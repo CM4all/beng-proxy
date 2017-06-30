@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_NFS_CACHE_HXX
 #define BENG_PROXY_NFS_CACHE_HXX
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 
 #include <exception>
 

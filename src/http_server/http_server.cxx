@@ -18,7 +18,7 @@
 #include "util/RuntimeError.hxx"
 #include "util/Exception.hxx"
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 #include <daemon/log.h>
 
 #include <assert.h>

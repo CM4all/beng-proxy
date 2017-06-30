@@ -7,7 +7,7 @@
 #ifndef BENG_URI_EDIT_HXX
 #define BENG_URI_EDIT_HXX
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 
 #include <stddef.h>
 

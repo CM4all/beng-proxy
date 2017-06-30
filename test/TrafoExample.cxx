@@ -4,7 +4,7 @@
 
 #include "trafo/Framework.hxx"
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 
 class ExampleHandler final : public TrafoFrameworkHandler {
 public:

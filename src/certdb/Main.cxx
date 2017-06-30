@@ -26,7 +26,7 @@
 #include "util/ConstBuffer.hxx"
 #include "util/PrintException.hxx"
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 
 #include <json/json.h>
 

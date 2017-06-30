@@ -2,7 +2,7 @@
 #include "RootPool.hxx"
 #include "util/ConstBuffer.hxx"
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 
 #include <assert.h>
 #include <string.h>

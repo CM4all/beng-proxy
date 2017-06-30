@@ -15,7 +15,7 @@
 #include "certdb/CertDatabase.hxx"
 #include "stock/ThreadedStock.hxx"
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 
 #include <unordered_map>
 #include <map>

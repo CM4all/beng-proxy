@@ -8,7 +8,7 @@
 #include "thread_job.hxx"
 #include "notify.hxx"
 
-#include <inline/compiler.h>
+#include "util/Compiler.h"
 
 #include <mutex>
 #include <condition_variable>
