@@ -11,6 +11,7 @@
 
 #include <stdint.h>
 
+enum class TranslationCommand : uint16_t;
 struct pool;
 struct tcache;
 class EventLoop;
@@ -67,7 +68,7 @@ translate_cache(struct pool &pool, struct tcache &tcache,
 void
 translate_cache_invalidate(struct tcache &tcache,
                            const TranslateRequest &request,
-                           ConstBuffer<uint16_t> vary,
+                           ConstBuffer<TranslationCommand> vary,
                            const char *site);
 
 #endif

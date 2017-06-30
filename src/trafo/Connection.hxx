@@ -14,6 +14,7 @@
 
 #include <stdint.h>
 
+enum class TranslationCommand : uint16_t;
 class TrafoResponse;
 class TrafoListener;
 class TrafoHandler;
@@ -58,7 +59,7 @@ public:
 private:
     void TryRead();
     void OnReceived();
-    void OnPacket(unsigned cmd, const void *payload, size_t length);
+    void OnPacket(TranslationCommand cmd, const void *payload, size_t length);
 
     void TryWrite();
 

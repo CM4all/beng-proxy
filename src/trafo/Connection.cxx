@@ -6,8 +6,7 @@
 #include "Listener.hxx"
 #include "Handler.hxx"
 #include "Response.hxx"
-
-#include <beng-proxy/translation.h>
+#include "translation/Protocol.hxx"
 
 #include <daemon/log.h>
 
@@ -73,8 +72,7 @@ TrafoConnection::OnReceived()
     while (true) {
         auto r = input.Read();
         const void *p = r.data;
-        const beng_translation_header *header =
-            (const beng_translation_header *)p;
+        const auto *header = (const TranslationHeader *)p;
         if (r.size < sizeof(*header))
             break;
 
@@ -89,12 +87,11 @@ TrafoConnection::OnReceived()
 }
 
 inline void
-TrafoConnection::OnPacket(unsigned _cmd, const void *payload, size_t length)
+TrafoConnection::OnPacket(TranslationCommand cmd, const void *payload, size_t length)
 {
     assert(state != State::PROCESSING);
 
-    const beng_translation_command cmd = beng_translation_command(_cmd);
-    if (cmd == TRANSLATE_BEGIN) {
+    if (cmd == TranslationCommand::BEGIN) {
         if (state != State::INIT) {
             daemon_log(2, "Misplaced INIT\n");
             listener.RemoveConnection(*this);
@@ -110,7 +107,7 @@ TrafoConnection::OnPacket(unsigned _cmd, const void *payload, size_t length)
         return;
     }
 
-    if (gcc_unlikely(cmd == TRANSLATE_END)) {
+    if (gcc_unlikely(cmd == TranslationCommand::END)) {
         state = State::PROCESSING;
         read_event.Delete();
         handler.OnTrafoRequest(*this, request);

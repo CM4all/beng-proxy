@@ -5,10 +5,10 @@
 #ifndef TRAFO_RESPONSE_HXX
 #define TRAFO_RESPONSE_HXX
 
+#include "translation/Protocol.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/WritableBuffer.hxx"
 
-#include <beng-proxy/translation.h>
 #include <http/status.h>
 
 #include <stdint.h>
@@ -21,7 +21,7 @@ class TrafoResponse {
 public:
     TrafoResponse()
         :buffer(nullptr), capacity(0), size(0) {
-        Packet(TRANSLATE_BEGIN);
+        Packet(TranslationCommand::BEGIN);
     }
 
     TrafoResponse(TrafoResponse &&other)
@@ -36,20 +36,20 @@ public:
     /**
      * Append an empty packet.
      */
-    void Packet(beng_translation_command cmd);
+    void Packet(TranslationCommand cmd);
 
-    void Packet(beng_translation_command cmd, ConstBuffer<void> payload);
+    void Packet(TranslationCommand cmd, ConstBuffer<void> payload);
 
-    void Packet(beng_translation_command cmd,
+    void Packet(TranslationCommand cmd,
                 const void *payload, size_t length) {
         Packet(cmd, {payload, length});
     }
 
-    void Packet(beng_translation_command cmd, const char *payload);
+    void Packet(TranslationCommand cmd, const char *payload);
 
     void Status(http_status_t _status) {
         uint16_t status = uint16_t(_status);
-        Packet(TRANSLATE_STATUS, &status, sizeof(status));
+        Packet(TranslationCommand::STATUS, &status, sizeof(status));
     }
 
     class ProcessorContext {
@@ -59,12 +59,12 @@ public:
         ProcessorContext(TrafoResponse &_response):response(_response) {}
 
         void Container() {
-            response.Packet(TRANSLATE_CONTAINER);
+            response.Packet(TranslationCommand::CONTAINER);
         }
     };
 
     ProcessorContext Process() {
-        Packet(TRANSLATE_PROCESS);
+        Packet(TranslationCommand::PROCESS);
         return ProcessorContext(*this);
     }
 
@@ -75,11 +75,11 @@ public:
         JailCGIContext(TrafoResponse &_response):response(_response) {}
 
         void JailCGI() {
-            response.Packet(TRANSLATE_JAILCGI);
+            response.Packet(TranslationCommand::JAILCGI);
         }
 
         void Site(const char *value) {
-            response.Packet(TRANSLATE_JAILCGI, value);
+            response.Packet(TranslationCommand::JAILCGI, value);
         }
     };
 
@@ -91,19 +91,19 @@ public:
         MountNamespaceContext(TrafoResponse &_response):response(_response) {}
 
         void PivotRoot(const char *path) {
-            return response.Packet(TRANSLATE_PIVOT_ROOT, path);
+            return response.Packet(TranslationCommand::PIVOT_ROOT, path);
         }
 
         void MountProc() {
-            return response.Packet(TRANSLATE_MOUNT_PROC);
+            return response.Packet(TranslationCommand::MOUNT_PROC);
         }
 
         void MountTmpTmpfs() {
-            return response.Packet(TRANSLATE_MOUNT_TMP_TMPFS);
+            return response.Packet(TranslationCommand::MOUNT_TMP_TMPFS);
         }
 
         void MountHome(const char *mnt) {
-            return response.Packet(TRANSLATE_MOUNT_HOME, mnt);
+            return response.Packet(TranslationCommand::MOUNT_HOME, mnt);
         }
     };
 
@@ -115,32 +115,32 @@ public:
         ChildContext(TrafoResponse &_response):response(_response) {}
 
         JailCGIContext JailCGI() {
-            response.Packet(TRANSLATE_JAILCGI);
+            response.Packet(TranslationCommand::JAILCGI);
             return JailCGIContext(response);
         }
 
         void Site(const char *value) {
-            response.Packet(TRANSLATE_JAILCGI, value);
+            response.Packet(TranslationCommand::JAILCGI, value);
         }
 
         void Home(const char *value) {
-            response.Packet(TRANSLATE_HOME, value);
+            response.Packet(TranslationCommand::HOME, value);
         }
 
         void UserNamespace() {
-            response.Packet(TRANSLATE_USER_NAMESPACE);
+            response.Packet(TranslationCommand::USER_NAMESPACE);
         }
 
         void PidNamespace() {
-            response.Packet(TRANSLATE_PID_NAMESPACE);
+            response.Packet(TranslationCommand::PID_NAMESPACE);
         }
 
         void NetworkNamespace() {
-            response.Packet(TRANSLATE_NETWORK_NAMESPACE);
+            response.Packet(TranslationCommand::NETWORK_NAMESPACE);
         }
 
         void UtsNamespace() {
-            response.Packet(TRANSLATE_PID_NAMESPACE);
+            response.Packet(TranslationCommand::PID_NAMESPACE);
         }
 
         MountNamespaceContext MountNamespace() {
@@ -155,33 +155,33 @@ public:
         FileContext(TrafoResponse &_response):response(_response) {}
 
         void ExpandPath(const char *value) {
-            response.Packet(TRANSLATE_EXPAND_PATH, value);
+            response.Packet(TranslationCommand::EXPAND_PATH, value);
         }
 
         void ContentType(const char *value) {
-            response.Packet(TRANSLATE_CONTENT_TYPE, value);
+            response.Packet(TranslationCommand::CONTENT_TYPE, value);
         }
 
         void Deflated(const char *path) {
-            response.Packet(TRANSLATE_DEFLATED, path);
+            response.Packet(TranslationCommand::DEFLATED, path);
         }
 
         void Gzipped(const char *path) {
-            response.Packet(TRANSLATE_GZIPPED, path);
+            response.Packet(TranslationCommand::GZIPPED, path);
         }
 
         void DocumentRoot(const char *value) {
-            response.Packet(TRANSLATE_DOCUMENT_ROOT, value);
+            response.Packet(TranslationCommand::DOCUMENT_ROOT, value);
         }
 
         ChildContext Delegate(const char *helper) {
-            response.Packet(TRANSLATE_DELEGATE, helper);
+            response.Packet(TranslationCommand::DELEGATE, helper);
             return ChildContext(response);
         }
     };
 
     FileContext Path(const char *path) {
-        Packet(TRANSLATE_PATH, path);
+        Packet(TranslationCommand::PATH, path);
         return FileContext(*this);
     }
 
@@ -193,21 +193,21 @@ public:
         HttpContext(TrafoResponse &_response):response(_response) {}
 
         void ExpandPath(const char *value) {
-            response.Packet(TRANSLATE_EXPAND_PATH, value);
+            response.Packet(TranslationCommand::EXPAND_PATH, value);
         }
 
         void Address(const struct sockaddr *address, size_t length) {
-            response.Packet(TRANSLATE_ADDRESS, address, length);
+            response.Packet(TranslationCommand::ADDRESS, address, length);
         }
     };
 
     HttpContext Http(const char *url) {
-        Packet(TRANSLATE_HTTP, url);
+        Packet(TranslationCommand::HTTP, url);
         return HttpContext(*this);
     }
 
     WritableBuffer<uint8_t> Finish() {
-        Packet(TRANSLATE_END);
+        Packet(TranslationCommand::END);
 
         WritableBuffer<uint8_t> result(buffer, size);
         buffer = nullptr;

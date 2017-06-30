@@ -8,12 +8,11 @@
 #include "GrowingBuffer.hxx"
 #include "util/ConstBuffer.hxx"
 
-#include <beng-proxy/translation.h>
-
 #include <utility>
 
 #include <stdint.h>
 
+enum class TranslationCommand : uint16_t;
 struct TranslateRequest;
 class SocketAddress;
 
@@ -21,46 +20,46 @@ class TranslationMarshaller {
     GrowingBuffer buffer;
 
 public:
-    void Write(enum beng_translation_command command,
+    void Write(TranslationCommand command,
                ConstBuffer<void> payload=nullptr);
 
     template<typename T>
-    void Write(enum beng_translation_command command,
+    void Write(TranslationCommand command,
                ConstBuffer<T> payload) {
         Write(command, payload.ToVoid());
     }
 
-    void Write(enum beng_translation_command command,
+    void Write(TranslationCommand command,
                const char *payload);
 
     template<typename T>
-    void WriteOptional(enum beng_translation_command command,
+    void WriteOptional(TranslationCommand command,
                        ConstBuffer<T> payload) {
         if (!payload.IsNull())
             Write(command, payload);
     }
 
-    void WriteOptional(enum beng_translation_command command,
+    void WriteOptional(TranslationCommand command,
                        const char *payload) {
         if (payload != nullptr)
             Write(command, payload);
     }
 
     template<typename T>
-    void WriteT(enum beng_translation_command command, const T &payload) {
+    void WriteT(TranslationCommand command, const T &payload) {
         Write(command, ConstBuffer<T>(&payload, 1));
     }
 
-    void Write16(enum beng_translation_command command, uint16_t payload) {
+    void Write16(TranslationCommand command, uint16_t payload) {
         WriteT<uint16_t>(command, payload);
     }
 
-    void Write(enum beng_translation_command command,
-               enum beng_translation_command command_string,
+    void Write(TranslationCommand command,
+               TranslationCommand command_string,
                SocketAddress address);
 
-    void WriteOptional(enum beng_translation_command command,
-                       enum beng_translation_command command_string,
+    void WriteOptional(TranslationCommand command,
+                       TranslationCommand command_string,
                        SocketAddress address);
 
     GrowingBuffer Commit() {

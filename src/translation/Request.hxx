@@ -20,6 +20,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+enum class TranslationCommand : uint16_t;
+
 struct TranslateRequest {
     const char *listener_tag;
 
@@ -79,7 +81,7 @@ struct TranslateRequest {
     ConstBuffer<void> want_full_uri;
 #endif
 
-    ConstBuffer<uint16_t> want;
+    ConstBuffer<TranslationCommand> want;
 
     ConstBuffer<void> file_not_found;
 

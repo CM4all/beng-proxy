@@ -11,8 +11,6 @@
 #include "pool.hxx"
 #include "tpool.hxx"
 
-#include <beng-proxy/translation.h>
-
 #include <string.h>
 
 struct MakeRequest : TranslateRequest {
@@ -206,21 +204,13 @@ struct MakeResponse : TranslateResponse {
     }
 
     template<size_t n>
-    MakeResponse &&Vary(const uint16_t (&_vary)[n]) {
+    MakeResponse &&Vary(const TranslationCommand (&_vary)[n]) {
         vary = {_vary, n};
         return std::move(*this);
     }
 
     template<size_t n>
-    MakeResponse &&Vary(const beng_translation_command (&_vary)[n]) {
-        auto data = PoolAlloc<uint16_t>(*tpool, n);
-        std::copy_n(_vary, n, vary.data);
-        vary = {data, n};
-        return std::move(*this);
-    }
-
-    template<size_t n>
-    MakeResponse &&Invalidate(const uint16_t (&_invalidate)[n]) {
+    MakeResponse &&Invalidate(const TranslationCommand (&_invalidate)[n]) {
         invalidate = {_invalidate, n};
         return std::move(*this);
     }

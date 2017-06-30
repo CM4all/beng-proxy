@@ -130,7 +130,7 @@ Description: JavaScript library for cm4all-beng-proxy
  This package provides the JavaScript library for managing widgets
  from within a web browser.
 
-Package: libcm4all-beng-proxy-dev
+Package: libcm4all-beng-proxy2-dev
 Architecture: all
 Section: non-free/libdevel
 Depends: libc6-dev, libcm4all-inline-dev (>= 0.3.5),

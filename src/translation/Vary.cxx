@@ -4,32 +4,31 @@
 
 #include "Vary.hxx"
 #include "translation/Response.hxx"
+#include "translation/Protocol.hxx"
 #include "strmap.hxx"
 #include "GrowingBuffer.hxx"
 #include "header_writer.hxx"
 #include "pool.hxx"
 
-#include <beng-proxy/translation.h>
-
 #include <assert.h>
 #include <string.h>
 
 static const char *
-translation_vary_name(beng_translation_command cmd)
+translation_vary_name(TranslationCommand cmd)
 {
     switch (cmd) {
-    case TRANSLATE_SESSION:
+    case TranslationCommand::SESSION:
         /* XXX need both "cookie2" and "cookie"? */
         return "cookie2";
 
-    case TRANSLATE_LANGUAGE:
+    case TranslationCommand::LANGUAGE:
         return "accept-language";
 
-    case TRANSLATE_AUTHORIZATION:
+    case TranslationCommand::AUTHORIZATION:
         return "authorization";
 
-    case TRANSLATE_USER_AGENT:
-    case TRANSLATE_UA_CLASS:
+    case TranslationCommand::USER_AGENT:
+    case TranslationCommand::UA_CLASS:
         return "user-agent";
 
     default:
@@ -43,8 +42,7 @@ translation_vary_header(const TranslateResponse &response)
     static char buffer[256];
     char *p = buffer;
 
-    for (auto i : response.vary) {
-        const auto cmd = beng_translation_command(i);
+    for (const auto cmd : response.vary) {
         const char *name = translation_vary_name(cmd);
         if (name == nullptr)
             continue;
@@ -80,8 +78,7 @@ write_translation_vary_header(GrowingBuffer &headers,
                               const TranslateResponse &response)
 {
     bool active = false;
-    for (auto i : response.vary) {
-        const auto cmd = beng_translation_command(i);
+    for (const auto cmd : response.vary) {
         const char *name = translation_vary_name(cmd);
         if (name == nullptr)
             continue;

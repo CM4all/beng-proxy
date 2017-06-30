@@ -5,11 +5,11 @@
 #ifndef TRAFO_ALLOCATED_REQUEST_HXX
 #define TRAFO_ALLOCATED_REQUEST_HXX
 
-#include <beng-proxy/translation.h>
-
 #include "Request.hxx"
 
 #include <string>
+
+enum class TranslationCommand : uint16_t;
 
 class AllocatedTrafoRequest : public TrafoRequest {
     std::string uri_buffer, host_buffer;
@@ -20,7 +20,7 @@ class AllocatedTrafoRequest : public TrafoRequest {
     std::string authorization_buffer;
 
 public:
-    void Parse(beng_translation_command cmd,
+    void Parse(TranslationCommand cmd,
                const void *payload, size_t length);
 };
 

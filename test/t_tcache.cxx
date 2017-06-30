@@ -5,8 +5,8 @@
 #include "translation/Request.hxx"
 #include "translation/Response.hxx"
 #include "translation/Transformation.hxx"
+#include "translation/Protocol.hxx"
 #include "widget/View.hxx"
-#include "beng-proxy/translation.h"
 #include "http_address.hxx"
 #include "file_address.hxx"
 #include "delegate/Address.hxx"
@@ -557,12 +557,12 @@ test_easy_base_test_path(struct pool *pool, struct tcache *cache)
 static void
 test_vary_invalidate(struct pool *pool, struct tcache *cache)
 {
-    static const uint16_t response5_vary[] = {
-        TRANSLATE_QUERY_STRING,
+    static const TranslationCommand response5_vary[] = {
+        TranslationCommand::QUERY_STRING,
     };
 
-    static const uint16_t response5_invalidate[] = {
-        TRANSLATE_QUERY_STRING,
+    static const TranslationCommand response5_invalidate[] = {
+        TranslationCommand::QUERY_STRING,
     };
 
     const auto response5c = MakeResponse().File("/srv/qs3")
@@ -690,8 +690,8 @@ test_invalidate_uri(struct pool *pool, struct tcache *cache)
 
     const auto request5 = MakeRequest("/invalidate/uri")
         .ErrorDocumentStatus(HTTP_STATUS_NOT_FOUND);
-    static const uint16_t response5_invalidate[] = {
-        TRANSLATE_URI,
+    static const TranslationCommand response5_invalidate[] = {
+        TranslationCommand::URI,
     };
     const auto response5 = MakeResponse().File("/var/www/404/invalidate/uri")
         .Invalidate(response5_invalidate);

@@ -36,8 +36,8 @@
 #include "translation/Cache.hxx"
 #include "translation/Handler.hxx"
 #include "translation/Transformation.hxx"
+#include "translation/Protocol.hxx"
 #include "ua_classification.hxx"
-#include "beng-proxy/translation.h"
 #include "util/Cast.hxx"
 #include "util/CharUtil.hxx"
 #include "util/Exception.hxx"
@@ -512,7 +512,7 @@ repeat_translation(Request &request, const TranslateResponse &response)
         if (!response.want.IsNull())
             request.translate.request.want = response.want;
 
-        if (response.Wants(TRANSLATE_LISTENER_TAG)) {
+        if (response.Wants(TranslationCommand::LISTENER_TAG)) {
             if (response.protocol_version >= 2) {
                 response_dispatch_log(request, HTTP_STATUS_BAD_GATEWAY,
                                       "Translation protocol 2 doesn't allow WANT/LISTENER_TAG");
@@ -523,42 +523,42 @@ repeat_translation(Request &request, const TranslateResponse &response)
                                                 request);
         }
 
-        if (response.Wants(TRANSLATE_LOCAL_ADDRESS))
+        if (response.Wants(TranslationCommand::LOCAL_ADDRESS))
             fill_translate_request_local_address(request.translate.request,
                                                  request.request);
 
-        if (response.Wants(TRANSLATE_REMOTE_HOST))
+        if (response.Wants(TranslationCommand::REMOTE_HOST))
             fill_translate_request_remote_host(request.translate.request,
                                                request.request);
 
-        if (response.Wants(TRANSLATE_USER_AGENT))
+        if (response.Wants(TranslationCommand::USER_AGENT))
             fill_translate_request_user_agent(request.translate.request,
                                               request.request.headers);
 
-        if (response.Wants(TRANSLATE_UA_CLASS))
+        if (response.Wants(TranslationCommand::UA_CLASS))
             fill_translate_request_ua_class(request.translate.request,
                                             request.request.headers);
 
-        if (response.Wants(TRANSLATE_LANGUAGE))
+        if (response.Wants(TranslationCommand::LANGUAGE))
             fill_translate_request_language(request.translate.request,
                                             request.request.headers);
 
-        if (response.Wants(TRANSLATE_ARGS) &&
+        if (response.Wants(TranslationCommand::ARGS) &&
             request.translate.request.args == nullptr)
             fill_translate_request_args(request.translate.request,
                                         request.pool, request.args);
 
-        if (response.Wants(TRANSLATE_QUERY_STRING))
+        if (response.Wants(TranslationCommand::QUERY_STRING))
             fill_translate_request_query_string(request.translate.request,
                                                 request.pool,
                                                 request.uri);
 
-        if (response.Wants(TRANSLATE_QUERY_STRING))
+        if (response.Wants(TranslationCommand::QUERY_STRING))
             fill_translate_request_query_string(request.translate.request,
                                                 request.pool,
                                                 request.uri);
 
-        if (response.Wants(TRANSLATE_USER) ||
+        if (response.Wants(TranslationCommand::USER) ||
             request.translate.want_user) {
             request.translate.want_user = true;
             fill_translate_request_user(request, request.translate.request,

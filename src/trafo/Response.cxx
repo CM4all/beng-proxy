@@ -37,26 +37,26 @@ TrafoResponse::Write(size_t nbytes)
 }
 
 void
-TrafoResponse::Packet(beng_translation_command cmd)
+TrafoResponse::Packet(TranslationCommand cmd)
 {
-    const beng_translation_header header{0, uint16_t(cmd)};
+    const TranslationHeader header{0, cmd};
     void *p = Write(sizeof(header));
     memcpy(p, &header, sizeof(header));
 }
 
 void
-TrafoResponse::Packet(beng_translation_command cmd, ConstBuffer<void> payload)
+TrafoResponse::Packet(TranslationCommand cmd, ConstBuffer<void> payload)
 {
     assert(payload.size <= 0xffff);
 
-    const beng_translation_header header{uint16_t(payload.size), uint16_t(cmd)};
+    const TranslationHeader header{uint16_t(payload.size), cmd};
     void *p = Write(sizeof(header) + payload.size);
     p = mempcpy(p, &header, sizeof(header));
     memcpy(p, payload.data, payload.size);
 }
 
 void
-TrafoResponse::Packet(beng_translation_command cmd, const char *payload)
+TrafoResponse::Packet(TranslationCommand cmd, const char *payload)
 {
     assert(payload != nullptr);
 

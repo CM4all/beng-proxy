@@ -5,14 +5,14 @@
 #include "TranslationCache.hxx"
 #include "http_server/Request.hxx"
 #include "translation/Response.hxx"
-#include "beng-proxy/translation.h"
+#include "translation/Protocol.hxx"
 #include "util/StringView.hxx"
 
 #include <daemon/log.h>
 
 LbTranslationCache::Vary::Vary(const TranslateResponse &response)
-    :host(response.VaryContains(TRANSLATE_HOST)),
-     listener_tag(response.VaryContains(TRANSLATE_LISTENER_TAG)) {}
+    :host(response.VaryContains(TranslationCommand::HOST)),
+     listener_tag(response.VaryContains(TranslationCommand::LISTENER_TAG)) {}
 
 gcc_pure
 static StringView
