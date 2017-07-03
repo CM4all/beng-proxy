@@ -2,6 +2,7 @@ cm4all-beng-proxy (12.0.26) unstable; urgency=low
 
   * spawn: abort the process immediately after uid/gid_map failure
   * spawn: create STDERR_PATH with mode 0600
+  * translation: add packet STDERR_PATH_JAILED
 
  --   
 
