@@ -281,6 +281,10 @@ class Response:
 
         return self.packet(command, source + '\0' + target)
 
+    def umask(self, umask):
+        """Append a UMASK packet."""
+        return self.packet(TRANSLATE_UMASK, struct.pack('H', umask))
+
     def uid_gid(self, uid, gid, *supplementary_groups):
         assert isinstance(uid, int)
         assert isinstance(gid, int)
