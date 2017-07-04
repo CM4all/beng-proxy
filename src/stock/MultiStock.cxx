@@ -13,8 +13,6 @@
 #include "lease.hxx"
 #include "util/DeleteDisposer.hxx"
 
-#include <daemon/log.h>
-
 #include <boost/intrusive/list.hpp>
 
 #include <map>

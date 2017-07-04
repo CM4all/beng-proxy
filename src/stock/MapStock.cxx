@@ -9,8 +9,6 @@
 #include "util/djbhash.h"
 #include "util/DeleteDisposer.hxx"
 
-#include <daemon/log.h>
-
 #include <assert.h>
 
 inline size_t
@@ -38,8 +36,8 @@ StockMap::OnStockEmpty(Stock &stock)
 {
     auto &item = Item::Cast(stock);
 
-    daemon_log(5, "hstock(%p) remove empty stock(%p, '%s')\n",
-               (const void *)this, (const void *)&stock, stock.GetName());
+    logger.Format(5, "hstock(%p) remove empty stock(%p, '%s')",
+                  (const void *)this, (const void *)&stock, stock.GetName());
 
     Erase(item);
 }

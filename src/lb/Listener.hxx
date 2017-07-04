@@ -6,7 +6,7 @@
 #define BENG_LB_LISTENER_HXX
 
 #include "Goto.hxx"
-#include "Logger.hxx"
+#include "io/Logger.hxx"
 #include "net/ServerSocket.hxx"
 
 struct SslFactory;
@@ -17,7 +17,7 @@ class LbGotoMap;
 /**
  * Listener on a TCP port.
  */
-class LbListener final : Logger, public ServerSocket {
+class LbListener final : public ServerSocket {
     LbInstance &instance;
 
     const LbListenerConfig &config;
@@ -25,6 +25,8 @@ class LbListener final : Logger, public ServerSocket {
     LbGoto destination;
 
     SslFactory *ssl_factory = nullptr;
+
+    const Logger logger;
 
 public:
     LbListener(LbInstance &_instance,
@@ -39,9 +41,6 @@ public:
 protected:
     void OnAccept(UniqueSocketDescriptor &&fd, SocketAddress address) override;
     void OnAcceptError(std::exception_ptr ep) override;
-
-    /* virtual methods from class Logger */
-    std::string MakeLogName() const noexcept override;
 };
 
 #endif

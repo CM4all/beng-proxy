@@ -31,20 +31,15 @@ try {
                              std::move(new_fd), address);
         break;
     }
-} catch (const std::runtime_error &e) {
-    Log(1, "Failed to setup accepted connection", e);
+} catch (...) {
+    logger(1, "Failed to setup accepted connection: ",
+           std::current_exception());
  }
 
 void
 LbListener::OnAcceptError(std::exception_ptr ep)
 {
-    Log(2, "Failed to accept", ep);
-}
-
-std::string
-LbListener::MakeLogName() const noexcept
-{
-    return "listener " + config.name;
+    logger(2, "Failed to accept: ", ep);
 }
 
 /*
@@ -55,7 +50,8 @@ LbListener::MakeLogName() const noexcept
 LbListener::LbListener(LbInstance &_instance,
                        const LbListenerConfig &_config)
     :ServerSocket(_instance.event_loop),
-     instance(_instance), config(_config)
+     instance(_instance), config(_config),
+     logger("listener " + config.name)
 {
 }
 

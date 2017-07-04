@@ -6,10 +6,10 @@
 
 #include "shm.hxx"
 #include "system/Error.hxx"
+#include "io/Logger.hxx"
 #include "util/RefCount.hxx"
 
 #include <inline/poison.h>
-#include <daemon/log.h>
 
 #include <boost/interprocess/sync/interprocess_mutex.hpp>
 #include <boost/interprocess/sync/scoped_lock.hpp>
@@ -170,7 +170,7 @@ shm_close(struct shm *shm)
         shm->~shm();
 
     if (munmap(shm, size) < 0)
-        daemon_log(1, "munmap() failed: %s\n", strerror(errno));
+        LogConcat(1, "shm", "munmap() failed: ", strerror(errno));
 }
 
 size_t

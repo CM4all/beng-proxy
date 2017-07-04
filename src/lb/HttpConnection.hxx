@@ -6,7 +6,7 @@
 #define BENG_PROXY_LB_HTTP_CONNECTION_HXX
 
 #include "http_server/Handler.hxx"
-#include "Logger.hxx"
+#include "io/Logger.hxx"
 
 #include <boost/intrusive/list.hpp>
 
@@ -30,7 +30,7 @@ class LbTranslationHandler;
 struct LbInstance;
 
 struct LbHttpConnection final
-    : HttpServerConnectionHandler, Logger,
+    : HttpServerConnectionHandler, LoggerDomainFactory,
       boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
 
     struct pool &pool;
@@ -46,6 +46,8 @@ struct LbHttpConnection final
      * is guaranteed to be non-nullptr.
      */
     const char *client_address;
+
+    const LazyDomainLogger logger;
 
     SslFilter *ssl_filter = nullptr;
 
@@ -106,8 +108,8 @@ private:
                               CancellablePointer &cancel_ptr);
 
 protected:
-    /* virtual methods from class Logger */
-    std::string MakeLogName() const noexcept override;
+    /* virtual methods from class LoggerDomainFactory */
+    std::string MakeLoggerDomain() const noexcept override;
 };
 
 LbHttpConnection *

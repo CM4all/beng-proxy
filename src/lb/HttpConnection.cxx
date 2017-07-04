@@ -37,7 +37,8 @@ LbHttpConnection::LbHttpConnection(struct pool &_pool, LbInstance &_instance,
                                    SocketAddress _client_address)
     :pool(_pool), instance(_instance), listener(_listener),
      initial_destination(_destination),
-     client_address(address_to_string(pool, _client_address))
+     client_address(address_to_string(pool, _client_address)),
+     logger(*this)
 {
     if (client_address == nullptr)
         client_address = "unknown";
@@ -166,7 +167,7 @@ void
 LbHttpConnection::LogSendError(HttpServerRequest &request,
                                std::exception_ptr ep)
 {
-    Log(2, "Error", ep);
+    logger(2, ep);
     SendError(request, ep);
 }
 
@@ -253,7 +254,7 @@ LbHttpConnection::LogHttpRequest(HttpServerRequest &request,
 void
 LbHttpConnection::HttpConnectionError(std::exception_ptr e)
 {
-    Log(HttpServerLogLevel(e), "Error", e);
+    logger(HttpServerLogLevel(e), e);
 
     assert(http != nullptr);
     http = nullptr;
@@ -271,7 +272,7 @@ LbHttpConnection::HttpConnectionClosed()
 }
 
 std::string
-LbHttpConnection::MakeLogName() const noexcept
+LbHttpConnection::MakeLoggerDomain() const noexcept
 {
     return "listener='" + listener.name
         + "' cluster='" + listener.destination.GetName()

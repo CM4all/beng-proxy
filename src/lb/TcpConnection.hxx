@@ -7,7 +7,7 @@
 
 #include "filtered_socket.hxx"
 #include "StickyHash.hxx"
-#include "Logger.hxx"
+#include "io/Logger.hxx"
 #include "net/StaticSocketAddress.hxx"
 #include "net/PConnectSocket.hxx"
 #include "io/FdType.hxx"
@@ -31,7 +31,7 @@ struct LbGoto;
 struct LbInstance;
 
 class LbTcpConnection final
-    : public Logger, ConnectSocketHandler,
+    : LoggerDomainFactory, ConnectSocketHandler,
       public boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
 
     struct pool &pool;
@@ -48,6 +48,8 @@ class LbTcpConnection final
     const char *client_address;
 
     const sticky_hash_t session_sticky;
+
+    const LazyDomainLogger logger;
 
 public:
     FilteredSocket inbound;
@@ -77,8 +79,8 @@ public:
     void Destroy();
 
 protected:
-    /* virtual methods from class Logger */
-    std::string MakeLogName() const noexcept override;
+    /* virtual methods from class LoggerDomainFactory */
+    std::string MakeLoggerDomain() const noexcept override;
 
 private:
     void ScheduleHandshakeCallback() {

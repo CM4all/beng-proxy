@@ -12,6 +12,7 @@
 #include "io/Splice.hxx"
 #include "io/Buffered.hxx"
 #include "io/UniqueFileDescriptor.hxx"
+#include "io/Logger.hxx"
 #include "direct.hxx"
 #include "event/SocketEvent.hxx"
 #include "pool.hxx"
@@ -24,8 +25,6 @@
 #include <fcntl.h>
 #endif
 
-#include <daemon/log.h>
-
 #include <assert.h>
 #include <errno.h>
 #include <string.h>
@@ -35,6 +34,7 @@
 #include <limits.h>
 
 struct SpawnIstream final : Istream, IstreamHandler, ExitListener {
+    const Logger logger;
     SpawnService &spawn_service;
 
     UniqueFileDescriptor output_fd;
@@ -162,8 +162,7 @@ SpawnIstream::OnData(const void *data, size_t length)
             return 0;
         }
 
-        daemon_log(1, "write() to subprocess failed: %s\n",
-                   strerror(errno));
+        logger(1, "write() to subprocess failed: ", strerror(errno));
         input_event.Delete();
         input_fd.Close();
         input.ClearAndClose();
@@ -359,6 +358,7 @@ SpawnIstream::SpawnIstream(SpawnService &_spawn_service, EventLoop &event_loop,
                            UniqueFileDescriptor &&_output_fd,
                            pid_t _pid)
     :Istream(p),
+     logger("spawn"),
      spawn_service(_spawn_service),
      output_fd(std::move(_output_fd)),
      output_event(event_loop, output_fd.Get(), SocketEvent::READ,

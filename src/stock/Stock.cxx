@@ -9,8 +9,6 @@
 #include "util/Cancellable.hxx"
 #include "util/Cast.hxx"
 
-#include <daemon/log.h>
-
 #include <assert.h>
 
 inline
@@ -160,9 +158,8 @@ Stock::ScheduleRetryWaiting()
 void
 Stock::ClearIdle()
 {
-    daemon_log(5, "Stock::ClearIdle(%p, '%s') num_idle=%zu num_busy=%zu\n",
-               (const void *)this, name.c_str(),
-               idle.size(), busy.size());
+    logger.Format(5, "ClearIdle num_idle=%zu num_busy=%zu",
+                  idle.size(), busy.size());
 
     if (idle.size() > max_idle)
         UnscheduleCleanup();
@@ -175,8 +172,7 @@ Stock::ClearIdle()
 void
 Stock::ClearEventCallback()
 {
-    daemon_log(6, "Stock::ClearEvent(%p, '%s') may_clear=%d\n",
-               (const void *)this, name.c_str(), may_clear);
+    logger.Format(6, "ClearEvent may_clear=%d", may_clear);
 
     if (may_clear)
         ClearIdle();
@@ -199,6 +195,7 @@ Stock::Stock(EventLoop &event_loop, const StockClass &_cls, void *_class_ctx,
      name(_name),
      limit(_limit), max_idle(_max_idle),
      handler(_handler),
+     logger(name),
      retry_event(event_loop, BIND_THIS_METHOD(RetryWaiting)),
      empty_event(event_loop, BIND_THIS_METHOD(CheckEmpty)),
      cleanup_event(event_loop, BIND_THIS_METHOD(CleanupEventCallback)),

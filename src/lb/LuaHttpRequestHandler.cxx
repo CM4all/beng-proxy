@@ -9,7 +9,6 @@
 #include "http_server/Request.hxx"
 #include "http_response.hxx"
 #include "http_headers.hxx"
-#include "util/Exception.hxx"
 
 class LbLuaResponseHandler final : public HttpResponseHandler {
     LbHttpConnection &connection;
@@ -70,8 +69,7 @@ LbHttpConnection::InvokeLua(LbLuaHandler &handler,
         g = handler.HandleRequest(request, response_handler);
     } catch (...) {
         if (response_handler.IsFinished())
-            daemon_log(1, "Lua error: %s\n",
-                       GetFullMessage(std::current_exception()).c_str());
+            logger(1, "Lua error: ", std::current_exception());
         else
             response_handler.InvokeError(std::current_exception());
         return;

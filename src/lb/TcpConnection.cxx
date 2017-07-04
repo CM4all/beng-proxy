@@ -303,7 +303,7 @@ static constexpr BufferedSocketHandler outbound_buffered_socket_handler = {
 };
 
 std::string
-LbTcpConnection::MakeLogName() const noexcept
+LbTcpConnection::MakeLoggerDomain() const noexcept
 {
     return "listener='" + listener.name
         + "' cluster='" + listener.destination.GetName()
@@ -359,21 +359,21 @@ LbTcpConnection::OnTcpEnd()
 void
 LbTcpConnection::OnTcpError(const char *prefix, const char *error)
 {
-    LogPrefix(3, prefix, error);
+    logger(3, prefix, ": ", error);
     Destroy();
 }
 
 void
 LbTcpConnection::OnTcpErrno(const char *prefix, int error)
 {
-    LogErrno(3, prefix, error);
+    logger(3, prefix, ": ", strerror(error));
     Destroy();
 }
 
 void
 LbTcpConnection::OnTcpError(const char *prefix, std::exception_ptr ep)
 {
-    Log(3, prefix, ep);
+    logger(3, prefix, ": ", ep);
     Destroy();
 }
 
@@ -470,6 +470,7 @@ LbTcpConnection::LbTcpConnection(struct pool &_pool, LbInstance &_instance,
      client_address(address_to_string(pool, _client_address)),
      session_sticky(lb_tcp_sticky(cluster.GetConfig().sticky_mode,
                                   _client_address)),
+     logger(*this),
      inbound(instance.event_loop), outbound(instance.event_loop)
 {
     if (client_address == nullptr)

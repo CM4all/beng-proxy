@@ -7,6 +7,7 @@
 #include "lb_cmdline.hxx"
 #include "lb_config.hxx"
 #include "stopwatch.hxx"
+#include "io/Logger.hxx"
 
 #include <daemon/log.h>
 
@@ -213,6 +214,8 @@ ParseCommandLine(LbCmdLine &cmdline, LbConfig &config,
             exit(1);
         }
     }
+
+    SetLogLevel(daemon_log_config.verbose);
 
     /* check non-option arguments */
 

@@ -10,6 +10,7 @@
 #include "event/TimerEvent.hxx"
 #include "event/DeferEvent.hxx"
 #include "event/Duration.hxx"
+#include "io/Logger.hxx"
 #include "util/Cancellable.hxx"
 
 #include "util/Compiler.h"
@@ -59,6 +60,8 @@ class Stock {
     const unsigned max_idle;
 
     StockHandler *const handler;
+
+    const Logger logger;
 
     /**
      * This event is used to move the "retry waiting" code out of the

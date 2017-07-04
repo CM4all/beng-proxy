@@ -9,8 +9,8 @@
 #define BENG_PROXY_MAP_STOCK_HXX
 
 #include "Stock.hxx"
+#include "io/Logger.hxx"
 #include "util/Cast.hxx"
-
 #include "util/Compiler.h"
 
 #include <boost/intrusive/unordered_set.hpp>
@@ -65,6 +65,8 @@ class StockMap final : StockHandler {
                                             boost::intrusive::hash<Item::Hash>,
                                             boost::intrusive::equal<Item::Equal>,
                                             boost::intrusive::constant_time_size<false>> Map;
+
+    const Logger logger;
 
     EventLoop &event_loop;
 

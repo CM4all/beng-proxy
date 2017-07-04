@@ -11,6 +11,7 @@
 #include "net/Parser.hxx"
 #include "pool.hxx"
 #include "ua_classification.hxx"
+#include "io/Logger.hxx"
 #include "util/StringView.hxx"
 #include "util/IterableSplitString.hxx"
 
@@ -459,6 +460,8 @@ ParseCommandLine(BpCmdLine &cmdline, BpConfig &config, int argc, char **argv)
             exit(1);
         }
     }
+
+    SetLogLevel(daemon_log_config.verbose);
 
     /* check non-option arguments */
 

@@ -6,7 +6,7 @@
 #define BENG_PROXY_LB_MONITOR_CONTROLLER_HXX
 
 #include "Monitor.hxx"
-#include "Logger.hxx"
+#include "io/Logger.hxx"
 #include "event/TimerEvent.hxx"
 #include "net/AllocatedSocketAddress.hxx"
 #include "util/Cancellable.hxx"
@@ -18,7 +18,7 @@ struct LbMonitorConfig;
 struct LbMonitorClass;
 class LbMonitorController;
 
-class LbMonitorController final : public Logger, public LbMonitorHandler {
+class LbMonitorController final : public LbMonitorHandler {
     EventLoop &event_loop;
     struct pool &pool;
 
@@ -26,6 +26,8 @@ class LbMonitorController final : public Logger, public LbMonitorHandler {
     const LbMonitorConfig &config;
     const AllocatedSocketAddress address;
     const LbMonitorClass &class_;
+
+    const Logger logger;
 
     const struct timeval interval;
     TimerEvent interval_event;
@@ -60,12 +62,6 @@ private:
     virtual void Fade() override;
     virtual void Timeout() override;
     virtual void Error(std::exception_ptr e) override;
-
-protected:
-    /* virtual methods from class Logger */
-    std::string MakeLogName() const noexcept override {
-        return "monitor " + name;
-    }
 };
 
 #endif

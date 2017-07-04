@@ -309,7 +309,7 @@ LbRequest::OnHttpError(std::exception_ptr ep)
     if (IsHttpClientServerFailure(ep))
         failure_add(tcp_stock_item_get_address(*stock_item));
 
-    connection.Log(2, "Error", ep);
+    connection.logger(2, ep);
 
     if (!send_fallback(request, cluster_config.fallback))
         connection.SendError(request, ep);
@@ -370,7 +370,7 @@ LbRequest::OnStockItemError(std::exception_ptr ep)
     assert(lease_state == LeaseState::NONE);
     assert(!response_sent);
 
-    connection.Log(2, "Connect error", ep);
+    connection.logger(2, "Connect error: ", ep);
 
     if (cluster_config.HasZeroConf())
         /* without the tcp_balancer, we have to roll our own failure

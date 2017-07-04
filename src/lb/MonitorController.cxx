@@ -14,11 +14,11 @@ LbMonitorController::Success()
     timeout_event.Cancel();
 
     if (!state)
-        Log(5, "recovered");
+        logger(5, "recovered");
     else if (fade)
-        Log(5, "finished fade");
+        logger(5, "finished fade");
     else
-        Log(6, "ok");
+        logger(6, "ok");
 
     state = true;
 
@@ -39,9 +39,9 @@ LbMonitorController::Fade()
     timeout_event.Cancel();
 
     if (!fade)
-        Log(5, "fade");
+        logger(5, "fade");
     else
-        Log(6, "still fade");
+        logger(6, "still fade");
 
     fade = true;
     failure_set(address, FAILURE_FADE, std::chrono::minutes(5));
@@ -55,7 +55,7 @@ LbMonitorController::Timeout()
     cancel_ptr = nullptr;
     timeout_event.Cancel();
 
-    Log(state ? 3 : 6, "timeout");
+    logger(state ? 3 : 6, "timeout");
 
     state = false;
     failure_set(address, FAILURE_MONITOR, std::chrono::seconds::zero());
@@ -69,7 +69,7 @@ LbMonitorController::Error(std::exception_ptr e)
     cancel_ptr = nullptr;
     timeout_event.Cancel();
 
-    Log(state ? 2 : 4, "error", e);
+    logger(state ? 2 : 4, "error", e);
 
     state = false;
     failure_set(address, FAILURE_MONITOR, std::chrono::seconds::zero());
@@ -82,7 +82,7 @@ LbMonitorController::IntervalCallback()
 {
     assert(!cancel_ptr);
 
-    Log(6, "run");
+    logger(6, "run");
 
     if (config.timeout > 0)
         timeout_event.Add(timeout);
@@ -97,7 +97,7 @@ LbMonitorController::TimeoutCallback()
 {
     assert(cancel_ptr);
 
-    Log(6, "timeout");
+    logger(6, "timeout");
 
     cancel_ptr.CancelAndClear();
 
@@ -115,6 +115,7 @@ LbMonitorController::LbMonitorController(EventLoop &_event_loop,
     :event_loop(_event_loop), pool(_pool), name(_name), config(_config),
      address(_address),
      class_(_class),
+     logger("monitor " + name),
      interval{time_t(config.interval), 0},
      interval_event(event_loop, BIND_THIS_METHOD(IntervalCallback)),
      timeout{time_t(config.timeout), 0},

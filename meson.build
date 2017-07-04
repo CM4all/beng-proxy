@@ -187,17 +187,6 @@ memory = static_library('memory',
   ])
 memory_dep = declare_dependency(link_with: memory)
 
-shm = static_library('shm',
-  'src/shm/dpool.cxx',
-  'src/shm/dstring.cxx',
-  'src/shm/String.cxx',
-  'src/shm/shm.cxx',
-  include_directories: inc,
-  dependencies: [
-    threads,
-    libinline, libdaemon,
-  ])
-
 pool = static_library('pool',
   'src/AllocatorPtr.cxx',
   'src/RootPool.cxx',
@@ -253,20 +242,6 @@ eutil = static_library('eutil',
     declare_dependency(link_with: event),
   ])
 
-stock = static_library('stock',
-  'src/stock/Item.cxx',
-  'src/stock/Stock.cxx',
-  'src/stock/MapStock.cxx',
-  'src/stock/MultiStock.cxx',
-  'src/stock/Lease.cxx',
-  include_directories: inc,
-  dependencies: [
-    libinline, libdaemon,
-    declare_dependency(link_with: event),
-    pool_dep,
-  ])
-stock_dep = declare_dependency(link_with: stock)
-
 io = static_library('io',
   'src/io/Buffered.cxx',
   'libcommon/src/io/FileDescriptor.cxx',
@@ -274,6 +249,7 @@ io = static_library('io',
   'libcommon/src/io/LineParser.cxx',
   'libcommon/src/io/FileLineParser.cxx',
   'libcommon/src/io/ConfigParser.cxx',
+  'libcommon/src/io/Logger.cxx',
   'src/io/StringFile.cxx',
   include_directories: inc,
   dependencies: [
@@ -339,6 +315,32 @@ if stopwatch
 else
   stopwatch_dep = []
 endif
+
+stock = static_library('stock',
+  'src/stock/Item.cxx',
+  'src/stock/Stock.cxx',
+  'src/stock/MapStock.cxx',
+  'src/stock/MultiStock.cxx',
+  'src/stock/Lease.cxx',
+  include_directories: inc,
+  dependencies: [
+    declare_dependency(link_with: event),
+    pool_dep,
+    io_dep,
+  ])
+stock_dep = declare_dependency(link_with: stock)
+
+shm = static_library('shm',
+  'src/shm/dpool.cxx',
+  'src/shm/dstring.cxx',
+  'src/shm/String.cxx',
+  'src/shm/shm.cxx',
+  include_directories: inc,
+  dependencies: [
+    threads,
+    libinline,
+    io_dep,
+  ])
 
 ssl = static_library('ssl',
   'src/certdb/CertDatabase.cxx',
@@ -510,7 +512,7 @@ spawn = static_library('spawn',
     libdbus,
     libseccomp,
     libsystemd,
-    libinline, libdaemon,
+    libinline,
     system_dep,
     adata_dep,
     declare_dependency(link_with: io),
@@ -1028,7 +1030,6 @@ executable('cm4all-beng-lb',
   'src/filtered_socket.cxx',
   'src/thread_socket_filter.cxx',
   'src/nop_thread_socket_filter.cxx',
-  'src/Logger.cxx',
   'src/PInstance.cxx',
   'src/lb/Listener.cxx',
   'src/lb/HttpConnection.cxx',
