@@ -9,12 +9,17 @@
 
 #include "Datagram.hxx"
 
+#include <array>
+
 class AccessLogServer {
     const int fd;
 
     AccessLogDatagram datagram;
 
-    char buffer[65536];
+    static constexpr size_t N = 32;
+    std::array<uint8_t[16384], N> payloads;
+    std::array<size_t, N> sizes;
+    size_t n_payloads = 0, current_payload = 0;
 
 public:
     explicit AccessLogServer(int _fd):fd(_fd) {}
@@ -28,6 +33,9 @@ public:
         while (const auto *d = Receive())
             f(*d);
     }
+
+private:
+    bool Fill();
 };
 
 #endif

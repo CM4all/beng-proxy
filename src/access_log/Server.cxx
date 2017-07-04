@@ -183,16 +183,59 @@ log_server_apply_datagram(AccessLogDatagram *datagram, const void *p,
                                        (const uint8_t *)end);
 }
 
+bool
+AccessLogServer::Fill()
+{
+    assert(current_payload >= n_payloads);
+
+    std::array<struct iovec, N> iovs;
+    std::array<struct mmsghdr, N> msgs;
+
+    for (size_t i = 0; i < N; ++i) {
+        auto &iov = iovs[i];
+        iov.iov_base = payloads[i];
+        iov.iov_len = sizeof(payloads[i]) - 1;
+
+        auto &msg = msgs[i].msg_hdr;
+        msg.msg_name = nullptr;
+        msg.msg_namelen = 0;
+        msg.msg_iov = &iov;
+        msg.msg_iovlen = 1;
+        msg.msg_control = nullptr;
+        msg.msg_controllen = 0;
+    }
+
+    int n = recvmmsg(fd, &msgs.front(), msgs.size(),
+                     MSG_WAITFORONE|MSG_CMSG_CLOEXEC, nullptr);
+    if (n <= 0)
+        return false;
+
+    for (n_payloads = 0; n_payloads < size_t(n); ++n_payloads) {
+        if (msgs[n_payloads].msg_len == 0)
+            /* when the peer closes the socket, recvmmsg() doesn't
+               return 0; instead, it fills the mmsghdr array with
+               empty packets */
+            break;
+
+        sizes[n_payloads] = msgs[n_payloads].msg_len;
+    }
+
+    current_payload = 0;
+    return n_payloads > 0;
+}
+
 const AccessLogDatagram *
 AccessLogServer::Receive()
 {
     while (true) {
-        ssize_t nbytes = recv(fd, buffer, sizeof(buffer) - 1, 0);
-        if (nbytes <= 0) {
-            if (nbytes < 0 && errno == EAGAIN)
-                continue;
+        if (current_payload >= n_payloads && !Fill())
             return nullptr;
-        }
+
+        assert(current_payload < n_payloads);
+
+        uint8_t *buffer = payloads[current_payload];
+        size_t nbytes = sizes[current_payload];
+        ++current_payload;
 
         /* force null termination so we can use string functions inside
            the buffer */
