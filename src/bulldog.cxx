@@ -6,10 +6,10 @@
 
 #include "bulldog.hxx"
 #include "net/SocketAddress.hxx"
+#include "net/ToString.hxx"
 #include "util/StringBuilder.hxx"
 
 #include <daemon/log.h>
-#include <socket/address.h>
 
 #include <assert.h>
 #include <string.h>
@@ -60,9 +60,9 @@ try {
         /* disabled */
         return nullptr;
 
-    if (!socket_address_to_string(bulldog.path + bulldog.path_length,
-                                  sizeof(bulldog.path) - bulldog.path_length,
-                                  address.GetAddress(), address.GetSize()))
+    if (!ToString(bulldog.path + bulldog.path_length,
+                  sizeof(bulldog.path) - bulldog.path_length,
+                  address))
         return nullptr;
 
     StringBuilder<> b(bulldog.path + strlen(bulldog.path),

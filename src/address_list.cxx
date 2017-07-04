@@ -6,9 +6,8 @@
 
 #include "address_list.hxx"
 #include "net/AddressInfo.hxx"
+#include "net/ToString.hxx"
 #include "AllocatorPtr.hxx"
-
-#include <socket/address.h>
 
 #include <string.h>
 
@@ -64,9 +63,7 @@ AddressList::GetKey() const
         if (length > 0 && length < sizeof(buffer) - 1)
             buffer[length++] = ' ';
 
-        success = socket_address_to_string(buffer + length,
-                                           sizeof(buffer) - length,
-                                           i.GetAddress(), i.GetSize());
+        success = ToString(buffer + length, sizeof(buffer) - length, i);
         if (success)
             length += strlen(buffer + length);
     }

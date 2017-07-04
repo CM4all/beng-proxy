@@ -12,10 +12,10 @@
 #include "failure.hxx"
 #include "tpool.hxx"
 #include "pool.hxx"
+#include "net/ToString.hxx"
 #include "util/Exception.hxx"
 
 #include <daemon/log.h>
-#include <socket/address.h>
 
 #include <string.h>
 #include <stdlib.h>
@@ -55,8 +55,7 @@ enable_node(const LbInstance *instance,
     const auto with_port = node->address.WithPort(port);
 
     char buffer[64];
-    socket_address_to_string(buffer, sizeof(buffer), with_port,
-                             node->address.GetSize());
+    ToString(buffer, sizeof(buffer), with_port);
     daemon_log(4, "enabling node %s (%s)\n", node_name, buffer);
 
     failure_unset(with_port, FAILURE_OK);
@@ -94,8 +93,7 @@ fade_node(const LbInstance *instance,
     const auto with_port = node->address.WithPort(port);
 
     char buffer[64];
-    socket_address_to_string(buffer, sizeof(buffer), with_port,
-                             node->address.GetSize());
+    ToString(buffer, sizeof(buffer), with_port);
     daemon_log(4, "fading node %s (%s)\n", node_name, buffer);
 
     /* set status "FADE" for 3 hours */
@@ -184,8 +182,7 @@ try {
     const auto with_port = node->address.WithPort(port);
 
     char buffer[64];
-    socket_address_to_string(buffer, sizeof(buffer), with_port,
-                             node->address.GetSize());
+    ToString(buffer, sizeof(buffer), with_port);
 
     enum failure_status status = failure_get_status(with_port);
     const char *s = failure_status_to_string(status);

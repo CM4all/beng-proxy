@@ -8,10 +8,9 @@
 #include "UdpHandler.hxx"
 #include "net/AllocatedSocketAddress.hxx"
 #include "net/Parser.hxx"
+#include "net/ToString.hxx"
 #include "system/fd_util.h"
 #include "system/Error.hxx"
-
-#include <socket/address.h>
 
 #include <assert.h>
 #include <string.h>
@@ -148,8 +147,7 @@ udp_listener_new(EventLoop &event_loop,
 
         char buffer[256];
         const char *address_string =
-            socket_address_to_string(buffer, sizeof(buffer),
-                                     address.GetAddress(), address.GetSize())
+            ToString(buffer, sizeof(buffer), address)
             ? buffer
             : "?";
 

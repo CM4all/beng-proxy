@@ -7,8 +7,7 @@
 #include "address_string.hxx"
 #include "pool.hxx"
 #include "net/SocketAddress.hxx"
-
-#include <socket/address.h>
+#include "net/ToString.hxx"
 
 const char *
 address_to_string(struct pool &pool, SocketAddress address)
@@ -16,11 +15,8 @@ address_to_string(struct pool &pool, SocketAddress address)
     if (address.IsNull())
         return nullptr;
 
-    bool success;
     char host[512];
-
-    success = socket_address_to_string(host, sizeof(host),
-                                       address.GetAddress(), address.GetSize());
+    bool success = ToString(host, sizeof(host), address);
     if (!success || *host == 0)
         return nullptr;
 
@@ -33,11 +29,8 @@ address_to_host_string(struct pool &pool, SocketAddress address)
     if (address.IsNull())
         return nullptr;
 
-    bool success;
     char host[512];
-
-    success = socket_host_to_string(host, sizeof(host),
-                                    address.GetAddress(), address.GetSize());
+    bool success = HostToString(host, sizeof(host), address);
     if (!success || *host == 0)
         return nullptr;
 

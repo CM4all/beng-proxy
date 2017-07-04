@@ -17,12 +17,12 @@
 #include "net/AllocatedSocketAddress.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
+#include "net/ToString.hxx"
 #include "util/Cancellable.hxx"
 #include "util/RuntimeError.hxx"
 #include "util/Exception.hxx"
 
 #include <daemon/log.h>
-#include <socket/address.h>
 
 #include <assert.h>
 #include <errno.h>
@@ -221,15 +221,12 @@ tcp_stock_get(StockMap &tcp_stock, struct pool &pool, const char *name,
 
     if (name == nullptr) {
         char buffer[1024];
-        if (!socket_address_to_string(buffer, sizeof(buffer),
-                                      address.GetAddress(), address.GetSize()))
+        if (!ToString(buffer, sizeof(buffer), address))
             buffer[0] = 0;
 
         if (!bind_address.IsNull()) {
             char bind_buffer[1024];
-            if (!socket_address_to_string(bind_buffer, sizeof(bind_buffer),
-                                          bind_address.GetAddress(),
-                                          bind_address.GetSize()))
+            if (!ToString(bind_buffer, sizeof(bind_buffer), bind_address))
                 bind_buffer[0] = 0;
             name = p_strcat(&pool, bind_buffer, ">", buffer, nullptr);
         } else

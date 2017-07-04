@@ -8,11 +8,11 @@
 #include "pool.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "net/StaticSocketAddress.hxx"
+#include "net/ToString.hxx"
 #include "util/StaticArray.hxx"
 #include "util/WritableBuffer.hxx"
 
 #include <daemon/log.h>
-#include <socket/address.h>
 
 #include <chrono>
 
@@ -105,9 +105,7 @@ stopwatch_new(struct pool *pool, SocketAddress address, const char *suffix)
     if (!stopwatch_enabled || daemon_log_config.verbose < STOPWATCH_VERBOSE)
         return nullptr;
 
-    const char *name = socket_address_to_string(buffer, sizeof(buffer),
-                                                address.GetAddress(),
-                                                address.GetSize())
+    const char *name = ToString(buffer, sizeof(buffer), address)
         ? buffer
         : "unknown";
 

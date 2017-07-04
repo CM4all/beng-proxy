@@ -15,8 +15,6 @@
 #include "pexpand.hxx"
 #include "util/StringView.hxx"
 
-#include <socket/address.h>
-
 #include <stdexcept>
 
 #include <string.h>

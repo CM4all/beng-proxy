@@ -7,8 +7,8 @@
 #include "avahi/Client.hxx"
 #include "StickyCache.hxx"
 #include "failure.hxx"
+#include "net/ToString.hxx"
 
-#include <socket/address.h>
 #include <daemon/log.h>
 
 #include <avahi-common/error.h>
@@ -29,8 +29,7 @@ LbCluster::Member::GetLogName(const char *key) const noexcept
         log_name = key;
 
         char buffer[512];
-        if (socket_address_to_string(buffer, sizeof(buffer),
-                                     address.GetAddress(), address.GetSize())) {
+        if (ToString(buffer, sizeof(buffer), address)) {
             log_name += " (";
             log_name += buffer;
             log_name += ")";

@@ -5,10 +5,9 @@
 #include "Marshal.hxx"
 #include "Request.hxx"
 #include "translation/Protocol.hxx"
+#include "net/ToString.hxx"
 #include "util/RuntimeError.hxx"
 #include "util/StringView.hxx"
-
-#include <socket/address.h>
 
 #include <string.h>
 
@@ -48,8 +47,7 @@ TranslationMarshaller::Write(TranslationCommand command,
 
     char address_string[1024];
 
-    if (socket_address_to_string(address_string, sizeof(address_string),
-                                 address.GetAddress(), address.GetSize()))
+    if (ToString(address_string, sizeof(address_string), address))
         Write(command_string, address_string);
 }
 

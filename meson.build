@@ -107,7 +107,6 @@ gtest = declare_dependency(
 )
 
 libinline = dependency('libcm4all-inline', version: '>= 0.3.4')
-libsocket = dependency('libcm4all-socket', version: '>= 0.3.5')
 libdaemon = dependency('libcm4all-daemon', version: '>= 0.4.1')
 libhttp = dependency('libcm4all-http', version: '>= 1.2.5')
 libwas = dependency('libcm4all-was-protocol', version: '>= 1.0')
@@ -284,6 +283,7 @@ net = static_library('net',
   'libcommon/src/net/SocketAddress.cxx',
   'libcommon/src/net/StaticSocketAddress.cxx',
   'libcommon/src/net/AllocatedSocketAddress.cxx',
+  'libcommon/src/net/ToString.cxx',
   'libcommon/src/net/HostParser.cxx',
   'libcommon/src/net/Resolver.cxx',
   'libcommon/src/net/Parser.cxx',
@@ -294,7 +294,7 @@ net = static_library('net',
   'libcommon/src/net/Buffered.cxx',
   include_directories: inc,
   dependencies: [
-    libinline, libdaemon, libsocket,
+    libinline, libdaemon,
     declare_dependency(link_with: event),
     system_dep,
     declare_dependency(link_with: io),
@@ -307,7 +307,7 @@ if stopwatch
     'src/stopwatch.cxx',
     include_directories: inc,
     dependencies: [
-      libinline, libdaemon, libsocket,
+      libinline, libdaemon,
       pool_dep,
       net_dep,
     ])
@@ -533,7 +533,8 @@ raddress = static_library('raddress',
   include_directories: inc,
   dependencies: [
     libpcre,
-    libinline, libhttp, libsocket,
+    libinline, libhttp,
+    net_dep,
     declare_dependency(link_with: spawn),
     putil_dep,
     adata_dep,
@@ -623,7 +624,7 @@ socket = static_library('socket',
   'src/thread_socket_filter.cxx',
   include_directories: inc,
   dependencies: [
-    libinline, libsocket, libhttp,
+    libinline, libhttp,
     net_dep,
   ])
 
@@ -666,7 +667,7 @@ translation = static_library('translation',
   'src/translation/Vary.cxx',
   include_directories: inc,
   dependencies: [
-    libinline, libhttp, libsocket, libdaemon,
+    libinline, libhttp, libdaemon,
     declare_dependency(link_with: event),
     putil_dep,
     declare_dependency(link_with: eutil),
@@ -964,7 +965,7 @@ executable('cm4all-beng-proxy',
     libnfs,
     libsystemd,
     libdbus,
-    libinline, libdaemon, libsocket, libhttp,
+    libinline, libdaemon, libhttp,
     util_dep,
     declare_dependency(link_with: avahi),
     pool_dep,
@@ -1077,7 +1078,7 @@ executable('cm4all-beng-lb',
     libdbus,
     libpq,
     liblua,
-    libinline, libdaemon, libsocket, libhttp,
+    libinline, libdaemon, libhttp,
     libpcre,
     util_dep,
     declare_dependency(link_with: avahi),
@@ -1164,7 +1165,7 @@ executable('cm4all-beng-proxy-log-forward',
   'src/access_log/Forward.cxx',
   include_directories: inc,
   dependencies: [
-    libinline, libsocket, libhttp,
+    libinline, libhttp,
     net_dep,
   ])
 
@@ -1173,7 +1174,7 @@ executable('cm4all-beng-proxy-log-exec',
   include_directories: inc,
   dependencies: [
     libinline,
-    libhttp, libsocket,
+    libhttp,
     util_dep,
     net_dep,
   ])
@@ -1183,7 +1184,7 @@ executable('cm4all-beng-proxy-log-tee',
   'src/access_log/Tee.cxx',
   include_directories: inc,
   dependencies: [
-    libinline, libsocket, libdaemon,
+    libinline, libdaemon,
     system_dep,
     io_dep,
   ])

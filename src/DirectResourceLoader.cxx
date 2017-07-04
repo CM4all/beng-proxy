@@ -30,10 +30,9 @@
 #include "pool.hxx"
 #include "AllocatorPtr.hxx"
 #include "system/Error.hxx"
+#include "net/HostParser.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/StringUtil.hxx"
-
-#include <socket/parser.h>
 
 #include <string.h>
 #include <stdlib.h>
@@ -76,13 +75,11 @@ extract_remote_ip(struct pool *pool, const StringMap *headers)
     if (p == nullptr)
         return p;
 
-    size_t length;
-    const char *endptr;
-    const char *q = socket_extract_hostname(p, &length, &endptr);
-    if (q == p && length == strlen(p))
+    auto eh = ExtractHost(p);
+    if (eh.HasFailed() || eh.host.size == strlen(p))
         return p;
 
-    return p_strndup(pool, q, length);
+    return p_strdup(*pool, eh.host);
 }
 
 static const char *
