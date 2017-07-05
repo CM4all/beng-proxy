@@ -7,7 +7,7 @@
 #include "util/StringBuffer.hxx"
 #include "util/StringFormat.hxx"
 
-static StringBuffer<char, 256>
+static StringBuffer<256>
 FormatWidgetError(const Widget &widget, const char *msg)
 {
     return StringFormat<256>("Error from widget '%s': %s",

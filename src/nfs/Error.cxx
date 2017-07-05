@@ -12,7 +12,7 @@ extern "C" {
 #include <assert.h>
 #include <string.h>
 
-static StringBuffer<char, 256>
+static StringBuffer<256>
 FormatNfsClientError(struct nfs_context *nfs, const char *msg)
 {
     assert(msg != nullptr);
@@ -25,7 +25,7 @@ NfsClientError::NfsClientError(struct nfs_context *nfs, const char *msg)
     :std::runtime_error(FormatNfsClientError(nfs, msg).c_str()),
      code(0) {}
 
-static StringBuffer<char, 256>
+static StringBuffer<256>
 FormatNfsClientError(int err, struct nfs_context *nfs, void *data,
                      const char *msg)
 {
