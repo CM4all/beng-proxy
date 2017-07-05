@@ -86,7 +86,7 @@ struct HttpClient final : IstreamHandler, Cancellable {
             :HttpBodyReader(_pool) {}
 
         HttpClient &GetClient() {
-            return ContainerCast2(*this, &HttpClient::response_body_reader);
+            return ContainerCast(*this, &HttpClient::response_body_reader);
         }
 
         /* virtual methods from class Istream */

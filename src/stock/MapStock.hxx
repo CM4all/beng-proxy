@@ -24,7 +24,7 @@ class StockMap final : StockHandler {
         explicit Item(Args&&... args):stock(std::forward<Args>(args)...) {}
 
         static Item &Cast(Stock &s) {
-            return ContainerCast2(s, &Item::stock);
+            return ContainerCast(s, &Item::stock);
         }
 
         const char *GetKey() const {

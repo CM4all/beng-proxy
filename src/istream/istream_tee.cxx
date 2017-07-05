@@ -43,7 +43,7 @@ struct TeeIstream final : IstreamHandler {
         explicit FirstOutput(struct pool &p, bool _weak):Output(p, _weak) {}
 
         TeeIstream &GetParent() {
-            return ContainerCast2(*this, &TeeIstream::first_output);
+            return ContainerCast(*this, &TeeIstream::first_output);
         }
 
         off_t _GetAvailable(bool partial) override {
@@ -131,7 +131,7 @@ struct TeeIstream final : IstreamHandler {
         }
 
         TeeIstream &GetParent() {
-            return ContainerCast2(*this, &TeeIstream::second_output);
+            return ContainerCast(*this, &TeeIstream::second_output);
         }
 
         off_t _GetAvailable(bool partial) override {
@@ -180,8 +180,7 @@ struct TeeIstream final : IstreamHandler {
     }
 
     static TeeIstream &CastFromFirst(Istream &first) {
-        return ContainerCast2((FirstOutput &)first,
-                              &TeeIstream::first_output);
+        return ContainerCast((FirstOutput &)first, &TeeIstream::first_output);
     }
 
     struct pool &GetPool() {
