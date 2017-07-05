@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_SSL_FILTER_H
 #define BENG_PROXY_SSL_FILTER_H
 
-#include "Unique.hxx"
+#include "ssl/Unique.hxx"
 
 #include "util/Compiler.h"
 

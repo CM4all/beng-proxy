@@ -8,9 +8,9 @@
 #define BENG_PROXY_SSL_CERT_CACHE_HXX
 
 #include "NameCache.hxx"
-#include "Hash.hxx"
-#include "Unique.hxx"
-#include "Ctx.hxx"
+#include "ssl/Hash.hxx"
+#include "ssl/Unique.hxx"
+#include "ssl/Ctx.hxx"
 #include "certdb/Config.hxx"
 #include "certdb/CertDatabase.hxx"
 #include "stock/ThreadedStock.hxx"

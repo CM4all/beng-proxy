@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_SSL_FACTORY_H
 #define BENG_PROXY_SSL_FACTORY_H
 
-#include "Unique.hxx"
+#include "ssl/Unique.hxx"
 
 struct pool;
 struct SslConfig;

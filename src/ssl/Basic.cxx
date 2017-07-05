@@ -5,10 +5,10 @@
  */
 
 #include "Basic.hxx"
-#include "Error.hxx"
-#include "Ctx.hxx"
-#include "Unique.hxx"
 #include "ssl_config.hxx"
+#include "ssl/Error.hxx"
+#include "ssl/Ctx.hxx"
+#include "ssl/Unique.hxx"
 
 #include "util/Compiler.h"
 

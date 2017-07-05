@@ -6,10 +6,10 @@
 
 #include "ssl_client.hxx"
 #include "ssl_config.hxx"
-#include "Basic.hxx"
-#include "Ctx.hxx"
 #include "ssl_filter.hxx"
-#include "Error.hxx"
+#include "ssl/Basic.hxx"
+#include "ssl/Ctx.hxx"
+#include "ssl/Error.hxx"
 #include "thread_socket_filter.hxx"
 #include "thread_pool.hxx"
 #include "util/ScopeExit.hxx"
