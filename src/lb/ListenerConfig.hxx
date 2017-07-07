@@ -7,27 +7,18 @@
 
 #include "GotoConfig.hxx"
 #include "ssl/ssl_config.hxx"
-#include "net/AllocatedSocketAddress.hxx"
+#include "net/ListenerConfig.hxx"
 
 #include <string>
 
 struct LbCertDatabaseConfig;
 
-struct LbListenerConfig {
+struct LbListenerConfig : ListenerConfig {
     std::string name;
-
-    AllocatedSocketAddress bind_address;
 
     LbGotoConfig destination;
 
-    /**
-     * If non-empty, sets SO_BINDTODEVICE.
-     */
-    std::string interface;
-
     std::string tag;
-
-    bool reuse_port = false;
 
     bool verbose_response = false;
 

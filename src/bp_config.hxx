@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_CONFIG_HXX
 #define BENG_PROXY_CONFIG_HXX
 
-#include "net/AllocatedSocketAddress.hxx"
+#include "net/ListenerConfig.hxx"
 #include "net/AddressInfo.hxx"
 #include "util/StaticArray.hxx"
 #include "spawn/Config.hxx"
@@ -24,30 +24,15 @@ struct BpConfig {
 
     StaticArray<unsigned, MAX_PORTS> ports;
 
-    struct Listener {
-        AllocatedSocketAddress address;
-
-        /**
-         * If non-empty, sets SO_BINDTODEVICE.
-         */
-        std::string interface;
-
+    struct Listener : ListenerConfig {
         std::string tag;
 
         std::string zeroconf_type;
 
-        bool reuse_port = false;
-
         Listener() = default;
 
         Listener(SocketAddress _address, const std::string &_tag)
-            :address(_address), tag(_tag) {}
-
-        const char *GetInterface() const {
-            return interface.empty()
-                ? nullptr
-                : interface.c_str();
-        }
+            :ListenerConfig(_address), tag(_tag) {}
     };
 
     std::forward_list<Listener> listen;

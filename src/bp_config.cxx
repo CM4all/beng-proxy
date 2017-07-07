@@ -110,11 +110,11 @@ BpConfigParser::Listener::ParseLine(FileLineParser &line)
     const char *word = line.ExpectWord();
 
     if (strcmp(word, "bind") == 0) {
-        if (!config.address.IsNull())
+        if (!config.bind_address.IsNull())
             throw LineParser::Error("Bind address already specified");
 
-        config.address = ParseSocketAddress(line.ExpectValueAndEnd(),
-                                            80, true);
+        config.bind_address = ParseSocketAddress(line.ExpectValueAndEnd(),
+                                                 80, true);
     } else if (strcmp(word, "interface") == 0) {
         config.interface = line.ExpectValueAndEnd();
     } else if (strcmp(word, "tag") == 0) {
@@ -131,7 +131,7 @@ BpConfigParser::Listener::ParseLine(FileLineParser &line)
 void
 BpConfigParser::Listener::Finish()
 {
-    if (config.address.IsNull())
+    if (config.bind_address.IsNull())
         throw LineParser::Error("Listener has no bind address");
 
     parent.config.listen.emplace_front(std::move(config));
