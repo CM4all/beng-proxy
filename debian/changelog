@@ -1,6 +1,6 @@
 cm4all-beng-proxy (12.0.28) unstable; urgency=low
 
-  * 
+  * config: add listener option "free_bind"
 
  --   
 

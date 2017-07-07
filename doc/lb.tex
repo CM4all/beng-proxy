@@ -406,6 +406,11 @@ interface. \\\hline
 \verb|SO_REUSEPORT|, which allows multiple sockets to bind to the same
 port. \\\hline
 
+\verb|free_bind| & \texttt{yes} enables the socket option
+\verb|IP_FREEBIND|, which allows binding to an address which does not
+yet exist.  This is useful when the daemon shall be started before all
+network interfaces are up and configured. \\\hline
+
 \verb|ssl| & \texttt{yes} enables SSL/TLS.  See \ref{ssl} for more
 information and more SSL options. \\\hline
 

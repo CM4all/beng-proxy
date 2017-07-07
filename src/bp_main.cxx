@@ -221,7 +221,7 @@ BpInstance::AddListener(const BpConfig::Listener &c)
 
     const char *const interface = c.GetInterface();
 
-    listener.Listen(c.bind_address, c.reuse_port, interface);
+    listener.Listen(c.bind_address, c.reuse_port, c.free_bind, interface);
 
     listener.SetTcpDeferAccept(10);
 

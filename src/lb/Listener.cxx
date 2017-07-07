@@ -75,6 +75,7 @@ LbListener::Setup()
 
     Listen(config.bind_address,
            config.reuse_port,
+           config.free_bind,
            config.GetInterface());
 
     if (config.destination.GetProtocol() == LbProtocol::HTTP ||

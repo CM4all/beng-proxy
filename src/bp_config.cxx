@@ -124,6 +124,9 @@ BpConfigParser::Listener::ParseLine(FileLineParser &line)
     } else if (strcmp(word, "reuse_port") == 0) {
         config.reuse_port = line.NextBool();
         line.ExpectEnd();
+    } else if (strcmp(word, "free_bind") == 0) {
+        config.free_bind = line.NextBool();
+        line.ExpectEnd();
     } else
         throw LineParser::Error("Unknown option");
 }

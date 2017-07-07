@@ -19,6 +19,8 @@ struct ListenerConfig {
 
     bool reuse_port = false;
 
+    bool free_bind = false;
+
     ListenerConfig() = default;
 
     explicit ListenerConfig(SocketAddress _bind_address)
