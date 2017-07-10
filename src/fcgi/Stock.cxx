@@ -132,7 +132,7 @@ FcgiChildParams::GetStockKey(struct pool &pool) const
     for (auto i : options.env)
         key = p_strcat(&pool, key, "$", i, nullptr);
 
-    char options_buffer[4096];
+    char options_buffer[16384];
     *options.MakeId(options_buffer) = 0;
     if (*options_buffer != 0)
         key = p_strcat(&pool, key, options_buffer, nullptr);

@@ -42,7 +42,7 @@ LhttpAddress::LhttpAddress(AllocatorPtr alloc, const LhttpAddress &src)
 const char *
 LhttpAddress::GetServerId(struct pool *pool) const
 {
-    char child_options_buffer[4096];
+    char child_options_buffer[16384];
     *options.MakeId(child_options_buffer) = 0;
 
     const char *p = p_strcat(pool, path,
