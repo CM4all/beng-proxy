@@ -492,6 +492,9 @@ LbConfigParser::Cluster::ParseLine(FileLineParser &line)
         config.name = line.ExpectValueAndEnd();
     } else if (strcmp(word, "sticky") == 0) {
         config.sticky_mode = ParseStickyMode(line.ExpectValueAndEnd());
+    } else if (strcmp(word, "sticky_cache") == 0) {
+        config.sticky_cache = line.NextBool();
+        line.ExpectEnd();
     } else if (strcmp(word, "session_cookie") == 0) {
         config.session_cookie = line.ExpectValueAndEnd();
     } else if (strcmp(word, "monitor") == 0) {

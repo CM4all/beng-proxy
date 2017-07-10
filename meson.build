@@ -85,6 +85,7 @@ libcurl = dependency('libcurl', version: '>= 7.38')
 libsystemd = dependency('libsystemd')
 libdbus = dependency('dbus-1')
 libpcre = dependency('libpcre')
+libsodium = dependency('libsodium')
 libssl = dependency('openssl')
 libpq = dependency('libpq', version: '>= 8.4')
 libjsoncpp = dependency('jsoncpp')
@@ -1080,6 +1081,7 @@ executable('cm4all-beng-lb',
     liblua,
     libinline, libdaemon, libhttp,
     libpcre,
+    libsodium,
     util_dep,
     declare_dependency(link_with: avahi),
     pool_dep,

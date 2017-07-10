@@ -163,6 +163,17 @@ It will look up in the default domain; to use another domain, use the
 This requires \texttt{avahi-daemon} to be installed and running.  And,
 of course, it requires the pool members to publish their service.
 
+If ``sticky'' is enabled on the pool, then \emph{beng-lb} uses
+\href{https://en.wikipedia.org/wiki/Consistent_hashing}{consistent
+  hashing} to pick a member (to reduce member reassignments).
+
+With option \verb|sticky_cache| set to \verb|yes|, consistent hashing
+is disabled in favor of an assignment cache.  The advantage of that
+cache is that existing clients will not be reassigned when new nodes
+appear.  The major disadvantage is that this works only with a single
+\emph{beng-lb} instance, and the cache is lost on restart.  The
+default is \verb|no|.
+
 \subsubsection{Protocols}
 
 The protocol \texttt{tcp} forwards raw a raw bidirectional TCP stream.

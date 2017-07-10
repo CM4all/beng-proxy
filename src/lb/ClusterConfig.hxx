@@ -66,6 +66,12 @@ struct LbClusterConfig {
 
     bool mangle_via = false;
 
+    /**
+     * Enable the #StickyCache for Zeroconf?  By default, consistent
+     * hashing using #HashRing is used.
+     */
+    bool sticky_cache = false;
+
     LbSimpleHttpResponse fallback;
 
     StickyMode sticky_mode = StickyMode::NONE;

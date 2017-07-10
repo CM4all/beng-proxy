@@ -8,10 +8,17 @@
 #include "StickyCache.hxx"
 #include "failure.hxx"
 #include "net/ToString.hxx"
+#include "util/HashRing.hxx"
+#include "util/ConstBuffer.hxx"
 
 #include <daemon/log.h>
 
 #include <avahi-common/error.h>
+#include <sodium/crypto_generichash.h>
+
+class LbCluster::StickyRing final : public HashRing<const MemberMap::value_type *,
+                                                    sticky_hash_t,
+                                                    4096, 8> {};
 
 LbCluster::Member::~Member()
 {
@@ -169,6 +176,7 @@ LbCluster::LbCluster(const LbClusterConfig &_config,
 LbCluster::~LbCluster()
 {
     delete sticky_cache;
+    delete sticky_ring;
 
     if (avahi_browser != nullptr)
         avahi_service_browser_free(avahi_browser);
@@ -215,7 +223,7 @@ LbCluster::Pick(sticky_hash_t sticky_hash)
     if (active_members.empty())
         return std::make_pair(nullptr, nullptr);
 
-    if (sticky_hash != 0) {
+    if (sticky_hash != 0 && config.sticky_cache) {
         /* look up the sticky_hash in the StickyCache */
 
         assert(config.sticky_mode != StickyMode::NONE);
@@ -240,6 +248,26 @@ LbCluster::Pick(sticky_hash_t sticky_hash)
 
         /* cache miss or cached node not active: fall back to
            round-robin and remember the new pick in the cache */
+    } else if (sticky_hash != 0) {
+        /* use consistent hashing */
+
+        assert(sticky_ring != nullptr);
+
+        auto *i = sticky_ring->Pick(sticky_hash);
+        assert(i != nullptr);
+
+        unsigned retries = active_members.size();
+        while (true) {
+            if (--retries == 0 ||
+                failure_get_status(i->second.GetAddress()) == FAILURE_OK)
+                return std::make_pair(i->second.GetLogName(i->first.c_str()),
+                                      i->second.GetAddress());
+
+            /* the node is known-bad; pick the next one in the ring */
+            const auto next = sticky_ring->FindNext(sticky_hash);
+            sticky_hash = next.first;
+            i = next.second;
+        }
     }
 
     const auto &i = PickNextGoodZeroconf();
@@ -251,6 +279,28 @@ LbCluster::Pick(sticky_hash_t sticky_hash)
                           i.second.GetAddress());
 }
 
+static void
+UpdateHash(crypto_generichash_state &state, ConstBuffer<void> p)
+{
+    crypto_generichash_update(&state, (const unsigned char *)p.data, p.size);
+}
+
+static void
+UpdateHash(crypto_generichash_state &state, SocketAddress address)
+{
+    assert(!address.IsNull());
+
+    UpdateHash(state, address.GetSteadyPart());
+}
+
+template<typename T>
+static void
+UpdateHashT(crypto_generichash_state &state, const T &data)
+{
+    crypto_generichash_update(&state,
+                              (const unsigned char *)&data, sizeof(data));
+}
+
 void
 LbCluster::FillActive()
 {
@@ -260,6 +310,39 @@ LbCluster::FillActive()
     for (const auto &i : members)
         if (i.second.IsActive())
             active_members.push_back(&i);
+
+    if (!config.sticky_cache) {
+        if (sticky_ring == nullptr)
+            /* lazy allocation */
+            sticky_ring = new StickyRing();
+
+        /**
+         * Functor class which generates a #HashRing hash for a
+         * cluster member combined with a replica number.
+         */
+        struct MemberHasher {
+            gcc_pure
+            sticky_hash_t operator()(const MemberMap::value_type *member,
+                                     size_t replica) const {
+                /* use libsodium's "generichash" (BLAKE2b) which is
+                   secure enough for class HashRing */
+                union {
+                    unsigned char hash[crypto_generichash_BYTES];
+                    sticky_hash_t result;
+                } u;
+
+                crypto_generichash_state state;
+                crypto_generichash_init(&state, nullptr, 0, sizeof(u.hash));
+                UpdateHash(state, member->second.GetAddress());
+                UpdateHashT(state, replica);
+                crypto_generichash_final(&state, u.hash, sizeof(u.hash));
+
+                return u.result;
+            }
+        };
+
+        sticky_ring->Build(active_members, MemberHasher());
+    }
 }
 
 static std::string

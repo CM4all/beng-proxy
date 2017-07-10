@@ -1,6 +1,6 @@
 cm4all-beng-proxy (12.0.29) unstable; urgency=low
 
-  * 
+  * lb: use consistent hashing to pick Zeroconf members
 
  --   
 

@@ -27,6 +27,9 @@ class LbCluster final : AvahiConnectionListener {
     MyAvahiClient &avahi_client;
     AvahiServiceBrowser *avahi_browser = nullptr;
 
+    class StickyRing;
+    StickyRing *sticky_ring = nullptr;
+
     StickyCache *sticky_cache = nullptr;
 
     class Member {
