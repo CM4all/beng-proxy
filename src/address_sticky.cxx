@@ -23,7 +23,7 @@ ipv6_sticky(const struct sockaddr_in6 *address)
     return djb_hash(&address->sin6_addr, sizeof(address->sin6_addr));
 }
 
-unsigned
+sticky_hash_t
 socket_address_sticky(SocketAddress address)
 {
     if (address.IsNull())
