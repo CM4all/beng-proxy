@@ -205,7 +205,7 @@ LbCluster::PickNextGoodZeroconf()
 }
 
 std::pair<const char *, SocketAddress>
-LbCluster::Pick(uint32_t sticky_hash)
+LbCluster::Pick(sticky_hash_t sticky_hash)
 {
     if (dirty) {
         dirty = false;
