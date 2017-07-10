@@ -35,6 +35,10 @@ struct LhttpStock {
                EventLoop &event_loop, SpawnService &spawn_service);
 
     ~LhttpStock() {
+        /* call FadeAll() release all idle connections before calling
+           mstock_free() to avoid assertion failure */
+        hstock.FadeAll();
+
         mstock_free(mchild_stock);
         child_stock_free(child_stock);
     }
