@@ -1197,6 +1197,7 @@ executable('delegate-helper',
   ])
 
 subdir('test')
+subdir('libcommon/test/util')
 subdir('libcommon/test/http')
 subdir('libcommon/test/io')
 subdir('libcommon/test/pg')
