@@ -180,6 +180,7 @@ balancer_get(Balancer &balancer, const AddressList &list,
 
     case StickyMode::SOURCE_IP:
     case StickyMode::HOST:
+    case StickyMode::XHOST:
     case StickyMode::SESSION_MODULO:
     case StickyMode::COOKIE:
     case StickyMode::JVM_ROUTE:

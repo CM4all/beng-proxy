@@ -448,6 +448,7 @@ validate_protocol_sticky(LbProtocol protocol, StickyMode sticky)
             return true;
 
         case StickyMode::HOST:
+        case StickyMode::XHOST:
         case StickyMode::SESSION_MODULO:
         case StickyMode::COOKIE:
         case StickyMode::JVM_ROUTE:
@@ -470,6 +471,8 @@ ParseStickyMode(const char *s)
         return StickyMode::SOURCE_IP;
     else if (strcmp(s, "host") == 0)
         return StickyMode::HOST;
+    else if (strcmp(s, "xhost") == 0)
+        return StickyMode::XHOST;
     else if (strcmp(s, "session_modulo") == 0)
         return StickyMode::SESSION_MODULO;
     else if (strcmp(s, "cookie") == 0)

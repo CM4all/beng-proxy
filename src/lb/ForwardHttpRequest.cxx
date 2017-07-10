@@ -120,6 +120,7 @@ private:
 
     sticky_hash_t GetStickyHash();
     sticky_hash_t GetHostHash() const;
+    sticky_hash_t GetXHostHash() const;
     sticky_hash_t MakeCookieHash();
 
     /* virtual methods from class Cancellable */
@@ -191,6 +192,16 @@ LbRequest::GetHostHash() const
     return djb_hash_string(host);
 }
 
+inline sticky_hash_t
+LbRequest::GetXHostHash() const
+{
+    const char *host = request.headers.Get("x-cm4all-host");
+    if (host == nullptr)
+        return 0;
+
+    return djb_hash_string(host);
+}
+
 /**
  * Generate a cookie for sticky worker selection.  Return only worker
  * numbers that are not known to be failing.  Returns 0 on total
@@ -245,6 +256,11 @@ LbRequest::GetStickyHash()
     case StickyMode::HOST:
         /* calculate session_sticky from "Host" request header */
         return GetHostHash();
+
+    case StickyMode::XHOST:
+        /* calculate session_sticky from "X-CM4all-Host" request
+           header */
+        return GetXHostHash();
 
     case StickyMode::SESSION_MODULO:
         /* calculate session_sticky from beng-proxy session id */
