@@ -1,6 +1,7 @@
 /*
- * An example server for the logging protocol.  It prints the messages
- * to stdout.
+ * An access logger which binds to a UDP/datagram address and executes
+ * another access logger.  It can be used to receive data from
+ * "cm4all-beng-proxy-log-forward".
  *
  * author: Max Kellermann <mk@cm4all.com>
  */

@@ -1,6 +1,6 @@
 /*
- * An example server for the logging protocol.  It prints the messages
- * to stdout.
+ * An access logger which forwards all datagrams to one or more remote
+ * loggers via UDP or a local datagram socket.
  *
  * author: Max Kellermann <mk@cm4all.com>
  */
