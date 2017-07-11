@@ -384,7 +384,6 @@ avahi = static_library('avahi',
   include_directories: inc,
   dependencies: [
     libavahi_client,
-    libinline, libdaemon,
     util_dep,
     declare_dependency(link_with: event),
   ])

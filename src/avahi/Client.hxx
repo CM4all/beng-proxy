@@ -5,8 +5,9 @@
 #ifndef AVAHI_CLIENT_HXX
 #define AVAHI_CLIENT_HXX
 
-#include "event/TimerEvent.hxx"
 #include "Poll.hxx"
+#include "event/TimerEvent.hxx"
+#include "io/Logger.hxx"
 
 #include <avahi-client/client.h>
 #include <avahi-client/publish.h>
@@ -19,6 +20,8 @@ class SocketAddress;
 class AvahiConnectionListener;
 
 class MyAvahiClient final {
+    const Logger logger;
+
     std::string name;
 
     TimerEvent reconnect_timer;

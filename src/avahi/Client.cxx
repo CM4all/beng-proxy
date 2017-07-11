@@ -8,8 +8,6 @@
 #include "net/SocketAddress.hxx"
 #include "net/Interface.hxx"
 
-#include <daemon/log.h>
-
 #include <avahi-common/error.h>
 #include <avahi-common/malloc.h>
 #include <avahi-common/alternative.h>
@@ -37,7 +35,7 @@ MakePidName(const char *prefix)
 }
 
 MyAvahiClient::MyAvahiClient(EventLoop &event_loop, const char *_name)
-    :name(MakePidName(_name)),
+    :logger("avahi"), name(MakePidName(_name)),
      reconnect_timer(event_loop, BIND_THIS_METHOD(OnReconnectTimer)),
      poll(event_loop)
 {
@@ -141,8 +139,8 @@ MyAvahiClient::GroupCallback(AvahiEntryGroup *g, AvahiEntryGroupState state)
         break;
 
     case AVAHI_ENTRY_GROUP_FAILURE:
-        daemon_log(3, "Avahi service group failure: %s\n",
-                   avahi_strerror(avahi_client_errno(avahi_entry_group_get_client(g))));
+        logger(3, "Avahi service group failure: ",
+               avahi_strerror(avahi_client_errno(avahi_entry_group_get_client(g))));
         break;
 
     case AVAHI_ENTRY_GROUP_UNCOMMITED:
@@ -166,8 +164,8 @@ MyAvahiClient::RegisterServices(AvahiClient *c)
     if (group == nullptr) {
         group = avahi_entry_group_new(c, GroupCallback, this);
         if (group == nullptr) {
-            daemon_log(3, "Failed to create Avahi service group: %s\n",
-                       avahi_strerror(avahi_client_errno(c)));
+            logger(3, "Failed to create Avahi service group: ",
+                   avahi_strerror(avahi_client_errno(c)));
             return;
         }
     }
@@ -181,16 +179,16 @@ MyAvahiClient::RegisterServices(AvahiClient *c)
                                                   nullptr, nullptr,
                                                   i.port, nullptr);
         if (error < 0) {
-            daemon_log(3, "Failed to add Avahi service %s: %s\n",
-                       i.type.c_str(), avahi_strerror(error));
+            logger(3, "Failed to add Avahi service ", i.type.c_str(),
+                   ": ", avahi_strerror(error));
             return;
         }
     }
 
     int result = avahi_entry_group_commit(group);
     if (result < 0) {
-        daemon_log(3, "Failed to commit Avahi service group: %s\n",
-                   avahi_strerror(result));
+        logger(3, "Failed to commit Avahi service group: ",
+               avahi_strerror(result));
         return;
     }
 }
@@ -217,7 +215,7 @@ MyAvahiClient::ClientCallback(AvahiClient *c, AvahiClientState state)
 
             reconnect_timer.Add(EventDuration<10, 0>::value);
         } else {
-            daemon_log(3, "Avahi client failed: %s\n", avahi_strerror(error));
+            logger(3, "Avahi client failed: ", avahi_strerror(error));
             reconnect_timer.Add(EventDuration<60, 0>::value);
         }
 
@@ -254,8 +252,8 @@ MyAvahiClient::OnReconnectTimer()
                               ClientCallback, this,
                               &error);
     if (client == nullptr) {
-        daemon_log(3, "Failed to create avahi client: %s\n",
-                   avahi_strerror(error));
+        logger(3, "Failed to create avahi client: ",
+               avahi_strerror(error));
         reconnect_timer.Add(EventDuration<60, 0>::value);
         return;
     }
