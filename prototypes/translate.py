@@ -562,7 +562,7 @@ class Translation(Protocol):
             response.packet(TRANSLATE_CONCURRENCY, '\x04\x00')
         elif uri == '/apache/':
             response.packet(TRANSLATE_LHTTP_PATH, apache_lhttpd)
-            response.packet(TRANSLATE_APPEND, '-X')
+            response.packet(TRANSLATE_APPEND, '-DFOREGROUND')
             response.packet(TRANSLATE_LHTTP_URI, uri[7:])
             response.packet(TRANSLATE_LHTTP_HOST, 'localhost:80')
             response.packet(TRANSLATE_CONCURRENCY, '\x04\x00')
