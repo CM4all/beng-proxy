@@ -18,19 +18,21 @@
 
 int main(int argc, char **argv)
 try {
-    if (argc < 3) {
+    int i = 1;
+
+    if (i + 2 > argc) {
         fprintf(stderr, "Usage: log-exec IP PROGRAM ...\n");
         return EXIT_FAILURE;
     }
 
-    auto fd = ResolveBindDatagramSocket(argv[1], 5479);
+    auto fd = ResolveBindDatagramSocket(argv[i++], 5479);
     fd.SetBlocking();
     fd.CheckDuplicate(FileDescriptor(STDIN_FILENO));
 
-    execv(argv[2], &argv[2]);
+    execv(argv[i], &argv[i]);
 
     fprintf(stderr, "Failed to execute %s: %s\n",
-            argv[2], strerror(errno));
+            argv[i], strerror(errno));
     return EXIT_FAILURE;
 } catch (const std::exception &e) {
     PrintException(e);
