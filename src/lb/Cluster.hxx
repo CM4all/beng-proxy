@@ -8,6 +8,7 @@
 #include "StickyHash.hxx"
 #include "avahi/ConnectionListener.hxx"
 #include "net/AllocatedSocketAddress.hxx"
+#include "io/Logger.hxx"
 
 #include <avahi-client/lookup.h>
 
@@ -24,6 +25,9 @@ class StickyCache;
 
 class LbCluster final : AvahiConnectionListener {
     const LbClusterConfig &config;
+
+    const Logger logger;
+
     MyAvahiClient &avahi_client;
     AvahiServiceBrowser *avahi_browser = nullptr;
 

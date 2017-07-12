@@ -13,8 +13,6 @@
 #include "util/HashRing.hxx"
 #include "util/ConstBuffer.hxx"
 
-#include <daemon/log.h>
-
 #include <avahi-common/error.h>
 #include <sodium/crypto_generichash.h>
 
@@ -74,8 +72,8 @@ LbCluster::Member::Resolve(AvahiClient *client, AvahiIfIndex interface,
                                           AvahiLookupFlags(0),
                                           ServiceResolverCallback, this);
     if (resolver == nullptr)
-         daemon_log(2, "Failed to create Avahi service resolver: %s\n",
-                   avahi_strerror(avahi_client_errno(client)));
+         cluster.logger(2, "Failed to create Avahi service resolver: ",
+                        avahi_strerror(avahi_client_errno(client)));
 }
 
 void
@@ -156,7 +154,9 @@ LbCluster::Member::ServiceResolverCallback(AvahiServiceResolver *,
 
 LbCluster::LbCluster(const LbClusterConfig &_config,
                      MyAvahiClient &_avahi_client)
-    :config(_config), avahi_client(_avahi_client)
+    :config(_config),
+     logger("cluster " + config.name),
+     avahi_client(_avahi_client)
 {
     if (config.HasZeroConf()) {
         avahi_client.AddListener(*this);
@@ -412,8 +412,8 @@ LbCluster::OnAvahiConnect(AvahiClient *client)
                                               AvahiLookupFlags(0),
                                               ServiceBrowserCallback, this);
     if (avahi_browser == nullptr)
-        daemon_log(2, "Failed to create Avahi service browser: %s\n",
-                   avahi_strerror(avahi_client_errno(client)));
+        logger(2, "Failed to create Avahi service browser: ",
+               avahi_strerror(avahi_client_errno(client)));
 }
 
 void
