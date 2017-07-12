@@ -373,12 +373,14 @@ LbCluster::ServiceBrowserCallback(AvahiServiceBrowser *b,
         auto i = members.find(MakeKey(interface, protocol, name,
                                       type, domain));
         if (i != members.end()) {
-            /* purge this entry from the "failure" map, because it
-               will never be used again anyway */
-            failure_unset(i->second.GetAddress(), FAILURE_OK);
+            if (i->second.IsActive()) {
+                /* purge this entry from the "failure" map, because it
+                   will never be used again anyway */
+                failure_unset(i->second.GetAddress(), FAILURE_OK);
 
-            if (i->second.IsActive())
                 dirty = true;
+            }
+
             members.erase(i);
         }
     }
