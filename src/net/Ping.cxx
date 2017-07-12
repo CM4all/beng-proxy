@@ -6,6 +6,7 @@
 #include "pool.hxx"
 #include "system/Error.hxx"
 #include "net/SocketAddress.hxx"
+#include "net/UniqueSocketDescriptor.hxx"
 #include "event/SocketEvent.hxx"
 #include "event/Duration.hxx"
 #include "util/Cancellable.hxx"
@@ -20,7 +21,7 @@
 class PingClient final : Cancellable {
     struct pool &pool;
 
-    const int fd;
+    UniqueSocketDescriptor fd;
 
     const uint16_t ident;
 
@@ -30,11 +31,11 @@ class PingClient final : Cancellable {
 
 public:
     PingClient(EventLoop &event_loop, struct pool &_pool,
-               int _fd, uint16_t _ident,
+               UniqueSocketDescriptor &&_fd, uint16_t _ident,
                PingClientHandler &_handler,
                CancellablePointer &cancel_ptr)
-        :pool(_pool), fd(_fd), ident(_ident),
-         event(event_loop, fd, SocketEvent::READ,
+        :pool(_pool), fd(std::move(_fd)), ident(_ident),
+         event(event_loop, fd.Get(), SocketEvent::READ,
                BIND_THIS_METHOD(EventCallback)),
          handler(_handler) {
         cancel_ptr = *this;
@@ -127,10 +128,10 @@ PingClient::Read()
     msg.msg_control = ans_data;
     msg.msg_controllen = sizeof(ans_data);
 
-    int cc = recvmsg(fd, &msg, MSG_DONTWAIT);
+    int cc = recvmsg(fd.Get(), &msg, MSG_DONTWAIT);
     if (cc >= 0) {
         if (parse_reply(&msg, cc, ident)) {
-            close(fd);
+            fd.Close();
             handler.PingResponse();
             Destroy();
         } else
@@ -139,7 +140,7 @@ PingClient::Read()
         ScheduleRead();
     } else {
         const int e = errno;
-        close(fd);
+        fd.Close();
         handler.PingError(std::make_exception_ptr(MakeErrno(e)));
         Destroy();
     }
@@ -154,12 +155,12 @@ PingClient::Read()
 inline void
 PingClient::EventCallback(unsigned events)
 {
-    assert(fd >= 0);
+    assert(fd.IsDefined());
 
     if (events & SocketEvent::READ) {
         Read();
     } else {
-        close(fd);
+        fd.Close();
         handler.PingTimeout();
         Destroy();
     }
@@ -174,7 +175,6 @@ void
 PingClient::Cancel()
 {
     event.Delete();
-    close(fd);
     Destroy();
 }
 
@@ -199,8 +199,8 @@ ping(EventLoop &event_loop, struct pool &pool, SocketAddress address,
      PingClientHandler &handler,
      CancellablePointer &cancel_ptr)
 {
-    int fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_ICMP);
-    if (fd < 0) {
+    UniqueSocketDescriptor fd;
+    if (!fd.CreateNonBlock(AF_INET, SOCK_DGRAM, IPPROTO_ICMP)) {
         handler.PingError(std::make_exception_ptr(MakeErrno("Failed to create ping socket")));
         return;
     }
@@ -209,8 +209,8 @@ ping(EventLoop &event_loop, struct pool &pool, SocketAddress address,
     sin.sin_family = AF_INET;
     sin.sin_addr.s_addr = 0;
     socklen_t sin_length = sizeof(sin);
-    if (bind(fd, (const struct sockaddr *)&sin, sin_length) < 0 ||
-        getsockname(fd, (struct sockaddr *)&sin, &sin_length) < 0) {
+    if (!fd.Bind({(const struct sockaddr *)&sin, sin_length}) ||
+        getsockname(fd.Get(), (struct sockaddr *)&sin, &sin_length) < 0) {
         handler.PingError(std::make_exception_ptr(MakeErrno()));
         return;
     }
@@ -245,16 +245,15 @@ ping(EventLoop &event_loop, struct pool &pool, SocketAddress address,
         .msg_flags = 0,
     };
 
-    ssize_t nbytes = sendmsg(fd, &m, 0);
+    ssize_t nbytes = sendmsg(fd.Get(), &m, 0);
     if (nbytes < 0) {
-        const int e = errno;
-        close(fd);
-        handler.PingError(std::make_exception_ptr(MakeErrno(e)));
+        handler.PingError(std::make_exception_ptr(MakeErrno()));
         return;
     }
 
     pool_ref(&pool);
-    auto p = NewFromPool<PingClient>(pool, event_loop, pool, fd, ident,
+    auto p = NewFromPool<PingClient>(pool, event_loop, pool,
+                                     std::move(fd), ident,
                                      handler, cancel_ptr);
     p->ScheduleRead();
 }
