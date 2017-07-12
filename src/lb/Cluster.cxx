@@ -8,6 +8,7 @@
 #include "StickyCache.hxx"
 #include "failure.hxx"
 #include "net/IPv4Address.hxx"
+#include "net/IPv6Address.hxx"
 #include "net/ToString.hxx"
 #include "util/HashRing.hxx"
 #include "util/ConstBuffer.hxx"
@@ -95,15 +96,10 @@ Import(const AvahiIPv4Address &src, unsigned port)
 static AllocatedSocketAddress
 Import(AvahiIfIndex interface, const AvahiIPv6Address &src, unsigned port)
 {
-    struct sockaddr_in6 sin;
-    sin.sin6_family = AF_INET6;
-    sin.sin6_flowinfo = 0;
-    sin.sin6_port = htons(port);
-    static_assert(sizeof(sin.sin6_addr) == sizeof(src), "");
-    memcpy(&sin.sin6_addr, &src, sizeof(src));
-    sin.sin6_scope_id = IN6_IS_ADDR_LINKLOCAL(&sin.sin6_addr) ? interface : 0;
-    return AllocatedSocketAddress(SocketAddress((const struct sockaddr *)&sin,
-                                                sizeof(sin)));
+    struct in6_addr address;
+    static_assert(sizeof(src.address) == sizeof(address), "Wrong size");
+    std::copy_n(src.address, sizeof(src.address), address.s6_addr);
+    return AllocatedSocketAddress(IPv6Address(address, port, interface));
 }
 
 static AllocatedSocketAddress
