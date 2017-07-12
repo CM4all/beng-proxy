@@ -142,9 +142,9 @@ ControlServer::Disable()
 }
 
 void
-ControlServer::SetFd(int fd)
+ControlServer::SetFd(UniqueSocketDescriptor &&fd)
 {
-    udp->SetFd(fd);
+    udp->SetFd(std::move(fd));
 }
 
 void

@@ -7,6 +7,7 @@
 #ifndef UDP_LISTENER_HXX
 #define UDP_LISTENER_HXX
 
+#include "net/UniqueSocketDescriptor.hxx"
 #include "event/SocketEvent.hxx"
 
 #include <stddef.h>
@@ -16,13 +17,14 @@ class SocketAddress;
 class UdpHandler;
 
 class UdpListener {
-    int fd;
+    UniqueSocketDescriptor fd;
     SocketEvent event;
 
     UdpHandler &handler;
 
 public:
-    UdpListener(EventLoop &event_loop, int _fd, UdpHandler &_handler);
+    UdpListener(EventLoop &event_loop, UniqueSocketDescriptor &&_fd,
+                UdpHandler &_handler);
     ~UdpListener();
 
     /**
@@ -47,7 +49,7 @@ public:
      * This may only be called on an object that is "enabled", see
      * Enable().
      */
-    void SetFd(int _fd);
+    void SetFd(UniqueSocketDescriptor &&_fd);
 
     /**
      * Joins the specified multicast group.

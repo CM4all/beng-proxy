@@ -12,7 +12,7 @@
 #include "bp_control.hxx"
 #include "spawn/Client.hxx"
 #include "event/Duration.hxx"
-#include "io/UniqueFileDescriptor.hxx"
+#include "net/UniqueSocketDescriptor.hxx"
 #include "net/ServerSocket.hxx"
 #include "util/DeleteDisposer.hxx"
 #include "util/PrintException.hxx"
@@ -96,7 +96,7 @@ BpInstance::SpawnWorker()
 
     int spawn_fd = spawn->Connect();
 
-    UniqueFileDescriptor distribute_socket;
+    UniqueSocketDescriptor distribute_socket;
     if (!config.control_listen.empty() && config.num_workers != 1)
         distribute_socket = global_control_handler_add_fd(this);
 

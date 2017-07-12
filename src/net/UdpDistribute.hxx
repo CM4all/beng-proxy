@@ -7,7 +7,7 @@
 #ifndef UDP_DISTRIBUTE_HXX
 #define UDP_DISTRIBUTE_HXX
 
-#include "io/UniqueFileDescriptor.hxx"
+#include "net/UniqueSocketDescriptor.hxx"
 #include "event/SocketEvent.hxx"
 
 #include <boost/intrusive/list.hpp>
@@ -20,10 +20,10 @@ class UdpDistribute {
     struct Recipient
         : boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::auto_unlink>> {
 
-        UniqueFileDescriptor fd;
+        UniqueSocketDescriptor fd;
         SocketEvent event;
 
-        Recipient(EventLoop &_event_loop, UniqueFileDescriptor &&_fd);
+        Recipient(EventLoop &_event_loop, UniqueSocketDescriptor &&_fd);
         ~Recipient();
 
         void RemoveAndDestroy() {
@@ -51,7 +51,7 @@ public:
     /**
      * Throws std::system_error on error.
      */
-    UniqueFileDescriptor Add();
+    UniqueSocketDescriptor Add();
     void Clear();
 
     void Packet(const void *payload, size_t payload_length);

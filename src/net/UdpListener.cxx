@@ -19,9 +19,10 @@
 #include <sys/un.h>
 #include <unistd.h>
 
-UdpListener::UdpListener(EventLoop &event_loop, int _fd, UdpHandler &_handler)
-    :fd(_fd),
-     event(event_loop, fd, SocketEvent::READ|SocketEvent::PERSIST,
+UdpListener::UdpListener(EventLoop &event_loop, UniqueSocketDescriptor &&_fd,
+                         UdpHandler &_handler)
+    :fd(std::move(_fd)),
+     event(event_loop, fd.Get(), SocketEvent::READ|SocketEvent::PERSIST,
            BIND_THIS_METHOD(EventCallback)),
      handler(_handler)
 {
@@ -30,25 +31,22 @@ UdpListener::UdpListener(EventLoop &event_loop, int _fd, UdpHandler &_handler)
 
 UdpListener::~UdpListener()
 {
-    assert(fd >= 0);
+    assert(fd.IsDefined());
 
     event.Delete();
-    close(fd);
 }
 
 void
-UdpListener::SetFd(int _fd)
+UdpListener::SetFd(UniqueSocketDescriptor &&_fd)
 {
-    assert(fd >= 0);
-    assert(_fd >= 0);
-    assert(fd != _fd);
+    assert(fd.IsDefined());
+    assert(_fd.IsDefined());
 
     event.Delete();
 
-    close(fd);
-    fd = _fd;
+    fd = std::move(_fd);
 
-    event.Set(fd, SocketEvent::READ|SocketEvent::PERSIST);
+    event.Set(fd.Get(), SocketEvent::READ|SocketEvent::PERSIST);
     event.Add();
 }
 
@@ -71,7 +69,7 @@ UdpListener::EventCallback(unsigned)
         .msg_controllen = sizeof(cbuffer),
     };
 
-    ssize_t nbytes = recvmsg_cloexec(fd, &msg, MSG_DONTWAIT);
+    ssize_t nbytes = recvmsg_cloexec(fd.Get(), &msg, MSG_DONTWAIT);
     if (nbytes < 0) {
         handler.OnUdpError(std::make_exception_ptr(MakeErrno("recv() failed")));
         return;
@@ -117,9 +115,8 @@ udp_listener_new(EventLoop &event_loop,
                  SocketAddress address,
                  UdpHandler &handler)
 {
-    int fd = socket_cloexec_nonblock(address.GetFamily(),
-                                     SOCK_DGRAM, 0);
-    if (fd < 0)
+    UniqueSocketDescriptor fd;
+    if (!fd.CreateNonBlock(address.GetFamily(), SOCK_DGRAM, 0))
         throw MakeErrno("Failed to create socket");
 
     if (address.GetFamily() == AF_UNIX) {
@@ -130,19 +127,13 @@ udp_listener_new(EventLoop &event_loop,
             unlink(sun->sun_path);
 
         /* we want to receive the client's UID */
-        int value = 1;
-        setsockopt(fd, SOL_SOCKET, SO_PASSCRED, &value, sizeof(value));
+        fd.SetBoolOption(SOL_SOCKET, SO_PASSCRED, true);
     }
 
-    const int reuse = 1;
-    if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR,
-                   (const char *)&reuse, sizeof(reuse)) < 0) {
-        const int e = errno;
-        close(fd);
-        throw MakeErrno(e, "Failed to set SO_REUSEADDR");
-    }
+    if (!fd.SetReuseAddress(true))
+        throw MakeErrno("Failed to set SO_REUSEADDR");
 
-    if (bind(fd, address.GetAddress(), address.GetSize()) < 0) {
+    if (!fd.Bind(address)) {
         const int e = errno;
 
         char buffer[256];
@@ -151,11 +142,10 @@ udp_listener_new(EventLoop &event_loop,
             ? buffer
             : "?";
 
-        close(fd);
         throw FormatErrno(e, "Failed to bind to %s", address_string);
     }
 
-    return new UdpListener(event_loop, fd, handler);
+    return new UdpListener(event_loop, std::move(fd), handler);
 }
 
 UdpListener *
@@ -176,7 +166,7 @@ UdpListener::Join4(const struct in_addr *group)
     r.imr_multiaddr = *group;
     r.imr_interface.s_addr = INADDR_ANY;
 
-    if (setsockopt(fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &r, sizeof(r)) < 0)
+    if (setsockopt(fd.Get(), IPPROTO_IP, IP_ADD_MEMBERSHIP, &r, sizeof(r)) < 0)
         throw MakeErrno("Failed to join multicast group");
 }
 
@@ -184,9 +174,9 @@ void
 UdpListener::Reply(SocketAddress address,
                    const void *data, size_t data_length)
 {
-    assert(fd >= 0);
+    assert(fd.IsDefined());
 
-    ssize_t nbytes = sendto(fd, data, data_length,
+    ssize_t nbytes = sendto(fd.Get(), data, data_length,
                             MSG_DONTWAIT|MSG_NOSIGNAL,
                             address.GetAddress(), address.GetSize());
     if (gcc_unlikely(nbytes < 0))

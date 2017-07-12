@@ -15,6 +15,7 @@
 
 struct in_addr;
 class SocketAddress;
+class UniqueSocketDescriptor;
 class Error;
 class UdpListener;
 class EventLoop;
@@ -44,7 +45,7 @@ struct ControlServer final : UdpHandler {
      * Replaces the socket.  The old one is closed, and the new one is
      * now owned by this object.
      */
-    void SetFd(int fd);
+    void SetFd(UniqueSocketDescriptor &&fd);
 
     /**
      * Throws std::runtime_error on error.

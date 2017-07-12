@@ -25,7 +25,7 @@ class ControlDistribute final : public ControlHandler {
 public:
     ControlDistribute(EventLoop &event_loop, ControlHandler &_next_handler);
 
-    UniqueFileDescriptor Add() {
+    UniqueSocketDescriptor Add() {
         return distribute.Add();
     }
 

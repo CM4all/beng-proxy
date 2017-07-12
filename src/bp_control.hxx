@@ -8,7 +8,7 @@
 #define BENG_PROXY_CONTROL_HANDLER_HXX
 
 struct BpInstance;
-class UniqueFileDescriptor;
+class UniqueSocketDescriptor;
 
 void
 global_control_handler_init(BpInstance *instance);
@@ -28,7 +28,7 @@ global_control_handler_disable(BpInstance &instance);
  *
  * @return the socket for the child process, or -1 on error
  */
-UniqueFileDescriptor
+UniqueSocketDescriptor
 global_control_handler_add_fd(BpInstance *instance);
 
 /**
@@ -40,7 +40,8 @@ global_control_handler_add_fd(BpInstance *instance);
  * global_control_handler_add_fd()
  */
 void
-global_control_handler_set_fd(BpInstance *instance, UniqueFileDescriptor &&fd);
+global_control_handler_set_fd(BpInstance *instance,
+                              UniqueSocketDescriptor &&fd);
 
 void
 local_control_handler_init(BpInstance *instance);
