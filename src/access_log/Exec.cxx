@@ -9,6 +9,8 @@
 #include "system/Error.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "net/RBindSocket.hxx"
+#include "net/Parser.hxx"
+#include "net/AllocatedSocketAddress.hxx"
 #include "util/PrintException.hxx"
 
 #include <stdlib.h>
@@ -20,12 +22,22 @@ int main(int argc, char **argv)
 try {
     int i = 1;
 
+    AllocatedSocketAddress multicast_group;
+
+    if (i + 2 <= argc && strcmp(argv[i], "--multicast-group") == 0) {
+        ++i;
+        multicast_group = ParseSocketAddress(argv[i++], 0, false);
+    }
+
     if (i + 2 > argc) {
-        fprintf(stderr, "Usage: log-exec IP PROGRAM ...\n");
+        fprintf(stderr, "Usage: log-exec [--multicast-group MCAST_IP] IP PROGRAM ...\n");
         return EXIT_FAILURE;
     }
 
     auto fd = ResolveBindDatagramSocket(argv[i++], 5479);
+    if (!multicast_group.IsNull() && !fd.AddMembership(multicast_group))
+        throw MakeErrno("Failed to join multicast group");
+
     fd.SetBlocking();
     fd.CheckDuplicate(FileDescriptor(STDIN_FILENO));
 

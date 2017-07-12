@@ -3,6 +3,7 @@ cm4all-beng-proxy (12.0.30) unstable; urgency=low
   * bp: rename zeroconf_type to zeroconf_service
   * config: check Zeroconf service names
   * config: allow zeroconf_service with raw service name
+  * log-exec: multicast support
 
  --   
 

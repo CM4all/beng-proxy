@@ -2839,7 +2839,8 @@ daemon -o /var/log/access.log \
 \end{verbatim}
 
 The first parameter is the IP address to bind to; ``*'' means listen
-on all interfaces.
+on all interfaces.  The option ``\texttt{--multicast-group}'' can be
+used to join a multicast group.
 
 These two programs are useful in conjunction, to store logs on a
 central server.
