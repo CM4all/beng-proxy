@@ -119,8 +119,9 @@ BpConfigParser::Listener::ParseLine(FileLineParser &line)
         config.interface = line.ExpectValueAndEnd();
     } else if (strcmp(word, "tag") == 0) {
         config.tag = line.ExpectValueAndEnd();
-    } else if (strcmp(word, "zeroconf_type") == 0) {
-        config.zeroconf_type = line.ExpectValueAndEnd();
+    } else if (strcmp(word, "zeroconf_service") == 0 ||
+               /* old option name: */ strcmp(word, "zeroconf_type") == 0) {
+        config.zeroconf_service = line.ExpectValueAndEnd();
     } else if (strcmp(word, "reuse_port") == 0) {
         config.reuse_port = line.NextBool();
         line.ExpectEnd();

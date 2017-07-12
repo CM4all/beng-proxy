@@ -225,13 +225,13 @@ BpInstance::AddListener(const BpConfig::Listener &c)
 
     listener.SetTcpDeferAccept(10);
 
-    if (!c.zeroconf_type.empty()) {
+    if (!c.zeroconf_service.empty()) {
         /* ask the kernel for the effective address via getsockname(),
            because it may have changed, e.g. if the kernel has
            selected a port for us */
         const auto local_address = listener.GetLocalAddress();
         if (local_address.IsDefined())
-            avahi_client.AddService(c.zeroconf_type.c_str(),
+            avahi_client.AddService(c.zeroconf_service.c_str(),
                                     interface, local_address);
     }
 }

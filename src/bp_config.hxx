@@ -27,7 +27,7 @@ struct BpConfig {
     struct Listener : ListenerConfig {
         std::string tag;
 
-        std::string zeroconf_type;
+        std::string zeroconf_service;
 
         Listener() = default;
 

@@ -139,7 +139,7 @@ Listen for HTTP requests on the configured address.  Example:
 listener {
    bind "*:80"
    tag "foo"
-   zeroconf_type "_beng_proxy._tcp"
+   zeroconf_service "_beng_proxy._tcp"
 }
 \end{verbatim*}
 
@@ -173,7 +173,7 @@ network interfaces are up and configured. \\\hline
 \verb|tag| & A tag, to be passed to the translation server in a
 \verb|LISTENER_TAG| packet (see page \pageref{listenertag}). \\\hline
 
-\verb|zeroconf_type| & If specified, then register this listener as
+\verb|zeroconf_service| & If specified, then register this listener as
 Zeroconf service in the local Avahi daemon.  This can be used by
 \emph{beng-lb} to discover pool members. \\\hline
 
