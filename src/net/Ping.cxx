@@ -5,6 +5,7 @@
 #include "Ping.hxx"
 #include "pool.hxx"
 #include "system/Error.hxx"
+#include "net/IPv4Address.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "event/SocketEvent.hxx"
@@ -205,11 +206,13 @@ ping(EventLoop &event_loop, struct pool &pool, SocketAddress address,
         return;
     }
 
+    const IPv4Address bind_address(0);
+
     struct sockaddr_in sin;
     sin.sin_family = AF_INET;
     sin.sin_addr.s_addr = 0;
     socklen_t sin_length = sizeof(sin);
-    if (!fd.Bind({(const struct sockaddr *)&sin, sin_length}) ||
+    if (!fd.Bind(bind_address) ||
         getsockname(fd.Get(), (struct sockaddr *)&sin, &sin_length) < 0) {
         handler.PingError(std::make_exception_ptr(MakeErrno()));
         return;

@@ -7,6 +7,7 @@
 #include "avahi/Client.hxx"
 #include "StickyCache.hxx"
 #include "failure.hxx"
+#include "net/IPv4Address.hxx"
 #include "net/ToString.hxx"
 #include "util/HashRing.hxx"
 #include "util/ConstBuffer.hxx"
@@ -88,13 +89,7 @@ LbCluster::Member::CancelResolve()
 static AllocatedSocketAddress
 Import(const AvahiIPv4Address &src, unsigned port)
 {
-    struct sockaddr_in sin;
-    sin.sin_family = AF_INET;
-    sin.sin_port = htons(port);
-    sin.sin_addr.s_addr = src.address;
-    memset(sin.sin_zero, 0, sizeof(sin.sin_zero));
-    return AllocatedSocketAddress(SocketAddress((const struct sockaddr *)&sin,
-                                                sizeof(sin)));
+    return AllocatedSocketAddress(IPv4Address({src.address}, port));
 }
 
 static AllocatedSocketAddress

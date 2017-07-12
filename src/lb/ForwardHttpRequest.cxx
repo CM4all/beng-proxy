@@ -28,6 +28,7 @@
 #include "failure.hxx"
 #include "bulldog.hxx"
 #include "pool.hxx"
+#include "net/IPv4Address.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "istream/istream.hxx"
@@ -435,12 +436,10 @@ LbRequest::Start()
 
         /* reset the port to 0 to allow the kernel to choose one */
         if (bind_address.GetFamily() == AF_INET) {
-            struct sockaddr_in *s_in = (struct sockaddr_in *)
-                p_memdup(&request.pool, bind_address.GetAddress(),
-                         bind_address.GetSize());
-            s_in->sin_port = 0;
-            bind_address = SocketAddress((const struct sockaddr *)s_in,
-                                         bind_address.GetSize());
+            auto &address = *NewFromPool<IPv4Address>(request.pool,
+                                                      IPv4Address(bind_address));
+            address.SetPort(0);
+            bind_address = address;
         } else if (bind_address.GetFamily() == AF_INET6) {
             struct sockaddr_in6 *s_in = (struct sockaddr_in6 *)
                 p_memdup(&request.pool, bind_address.GetAddress(),
