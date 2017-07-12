@@ -388,6 +388,7 @@ avahi = static_library('avahi',
     util_dep,
     declare_dependency(link_with: event),
   ])
+avahi_dep = declare_dependency(link_with: avahi)
 
 pg = static_library('pg',
   'libcommon/src/pg/Serial.cxx',
@@ -1124,11 +1125,12 @@ executable('cm4all-certdb',
     libinline, libhttp,
     libpcre,
     util_dep,
+    avahi_dep,
     declare_dependency(link_with: ssl),
     declare_dependency(link_with: pg),
     declare_dependency(link_with: curl),
     declare_dependency(link_with: net),
-  ])
+])
 
 executable('cm4all-beng-proxy-log-cat',
   'src/access_log/Server.cxx',
