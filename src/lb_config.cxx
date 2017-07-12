@@ -6,6 +6,7 @@
 
 #include "lb_config.hxx"
 #include "AllocatorPtr.hxx"
+#include "avahi/Check.hxx"
 #include "io/FileLineParser.hxx"
 #include "io/ConfigParser.hxx"
 #include "system/Error.hxx"
@@ -551,7 +552,9 @@ LbConfigParser::Cluster::ParseLine(FileLineParser &line)
         if (!config.zeroconf_service.empty())
             throw LineParser::Error("Duplicate zeroconf_service");
 
-        config.zeroconf_service = line.ExpectValueAndEnd();
+        const char *value = line.ExpectValueAndEnd();
+        CheckZeroconfServiceType(value);
+        config.zeroconf_service = value;
     } else if (strcmp(word, "zeroconf_domain") == 0) {
         if (!config.members.empty())
             throw LineParser::Error("Cannot configure both hard-coded members and Zeroconf");

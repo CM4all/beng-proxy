@@ -5,6 +5,7 @@
  */
 
 #include "bp_config.hxx"
+#include "avahi/Check.hxx"
 #include "spawn/ConfigParser.hxx"
 #include "io/FileLineParser.hxx"
 #include "io/ConfigParser.hxx"
@@ -121,7 +122,9 @@ BpConfigParser::Listener::ParseLine(FileLineParser &line)
         config.tag = line.ExpectValueAndEnd();
     } else if (strcmp(word, "zeroconf_service") == 0 ||
                /* old option name: */ strcmp(word, "zeroconf_type") == 0) {
-        config.zeroconf_service = line.ExpectValueAndEnd();
+        const char *value = line.ExpectValueAndEnd();
+        CheckZeroconfServiceType(value);
+        config.zeroconf_service = value;
     } else if (strcmp(word, "reuse_port") == 0) {
         config.reuse_port = line.NextBool();
         line.ExpectEnd();

@@ -379,6 +379,7 @@ ssl = static_library('ssl',
 ssl_dep = declare_dependency(link_with: ssl)
 
 avahi = static_library('avahi',
+  'src/avahi/Check.cxx',
   'src/avahi/Client.cxx',
   'src/avahi/Poll.cxx',
   include_directories: inc,
