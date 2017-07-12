@@ -7,6 +7,7 @@
 #include "UdpListener.hxx"
 #include "UdpHandler.hxx"
 #include "net/AllocatedSocketAddress.hxx"
+#include "net/IPv4Address.hxx"
 #include "net/Parser.hxx"
 #include "net/ToString.hxx"
 #include "system/fd_util.h"
@@ -162,11 +163,7 @@ udp_listener_port_new(EventLoop &event_loop,
 void
 UdpListener::Join4(const struct in_addr *group)
 {
-    struct ip_mreq r;
-    r.imr_multiaddr = *group;
-    r.imr_interface.s_addr = INADDR_ANY;
-
-    if (setsockopt(fd.Get(), IPPROTO_IP, IP_ADD_MEMBERSHIP, &r, sizeof(r)) < 0)
+    if (!fd.AddMembership(IPv4Address(*group, 0)))
         throw MakeErrno("Failed to join multicast group");
 }
 
