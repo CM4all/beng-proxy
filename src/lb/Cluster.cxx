@@ -4,27 +4,18 @@
 
 #include "Cluster.hxx"
 #include "ClusterConfig.hxx"
-#include "avahi/Client.hxx"
+#include "avahi/Explorer.hxx"
 #include "StickyCache.hxx"
 #include "failure.hxx"
-#include "net/IPv4Address.hxx"
-#include "net/IPv6Address.hxx"
 #include "net/ToString.hxx"
 #include "util/HashRing.hxx"
 #include "util/ConstBuffer.hxx"
 
-#include <avahi-common/error.h>
 #include <sodium/crypto_generichash.h>
 
 class LbCluster::StickyRing final : public HashRing<const MemberMap::value_type *,
                                                     sticky_hash_t,
                                                     4096, 8> {};
-
-LbCluster::Member::~Member()
-{
-    if (resolver != nullptr)
-        avahi_service_resolver_free(resolver);
-}
 
 const char *
 LbCluster::Member::GetLogName(const char *key) const noexcept
@@ -46,134 +37,25 @@ LbCluster::Member::GetLogName(const char *key) const noexcept
     return log_name.c_str();
 }
 
-void
-LbCluster::Member::Resolve(AvahiClient *client, AvahiIfIndex interface,
-                           AvahiProtocol protocol,
-                           const char *name,
-                           const char *type,
-                           const char *domain)
-{
-    assert(resolver == nullptr);
-
-    resolver = avahi_service_resolver_new(client, interface, protocol,
-                                          name, type, domain,
-                                          /* workaround: the following
-                                             should be
-                                             AVAHI_PROTO_UNSPEC
-                                             (because we can deal with
-                                             either protocol), but
-                                             then avahi-daemon
-                                             sometimes returns IPv6
-                                             addresses from the cache,
-                                             even though the service
-                                             was registered as IPv4
-                                             only */
-                                          protocol,
-                                          AvahiLookupFlags(0),
-                                          ServiceResolverCallback, this);
-    if (resolver == nullptr)
-         cluster.logger(2, "Failed to create Avahi service resolver: ",
-                        avahi_strerror(avahi_client_errno(client)));
-}
-
-void
-LbCluster::Member::CancelResolve()
-{
-    if (resolver != nullptr) {
-        avahi_service_resolver_free(resolver);
-        resolver = nullptr;
-    }
-}
-
-static AllocatedSocketAddress
-Import(const AvahiIPv4Address &src, unsigned port)
-{
-    return AllocatedSocketAddress(IPv4Address({src.address}, port));
-}
-
-static AllocatedSocketAddress
-Import(AvahiIfIndex interface, const AvahiIPv6Address &src, unsigned port)
-{
-    struct in6_addr address;
-    static_assert(sizeof(src.address) == sizeof(address), "Wrong size");
-    std::copy_n(src.address, sizeof(src.address), address.s6_addr);
-    return AllocatedSocketAddress(IPv6Address(address, port, interface));
-}
-
-static AllocatedSocketAddress
-Import(AvahiIfIndex interface, const AvahiAddress &src, unsigned port)
-{
-    switch (src.proto) {
-    case AVAHI_PROTO_INET:
-        return Import(src.data.ipv4, port);
-
-    case AVAHI_PROTO_INET6:
-        return Import(interface, src.data.ipv6, port);
-    }
-
-    return AllocatedSocketAddress();
-}
-
-void
-LbCluster::Member::ServiceResolverCallback(AvahiIfIndex interface,
-                                           AvahiResolverEvent event,
-                                           const AvahiAddress *a,
-                                           uint16_t port)
-{
-    switch (event) {
-    case AVAHI_RESOLVER_FOUND:
-        address = Import(interface, *a, port);
-        cluster.dirty = true;
-        break;
-
-    case AVAHI_RESOLVER_FAILURE:
-        break;
-    }
-
-    CancelResolve();
-}
-
-void
-LbCluster::Member::ServiceResolverCallback(AvahiServiceResolver *,
-                                           AvahiIfIndex interface,
-                                           gcc_unused AvahiProtocol protocol,
-                                           AvahiResolverEvent event,
-                                           gcc_unused const char *name,
-                                           gcc_unused const char *type,
-                                           gcc_unused const char *domain,
-                                           gcc_unused const char *host_name,
-                                           const AvahiAddress *a,
-                                           uint16_t port,
-                                           gcc_unused AvahiStringList *txt,
-                                           gcc_unused AvahiLookupResultFlags flags,
-                                           void *userdata)
-{
-    auto &member = *(LbCluster::Member *)userdata;
-    member.ServiceResolverCallback(interface, event, a, port);
-}
-
 LbCluster::LbCluster(const LbClusterConfig &_config,
-                     MyAvahiClient &_avahi_client)
+                     MyAvahiClient &avahi_client)
     :config(_config),
-     logger("cluster " + config.name),
-     avahi_client(_avahi_client)
+     logger("cluster " + config.name)
 {
-    if (config.HasZeroConf()) {
-        avahi_client.AddListener(*this);
-        avahi_client.Enable();
-    }
+    if (config.HasZeroConf())
+        explorer.reset(new AvahiServiceExplorer(avahi_client, *this,
+                                                AVAHI_IF_UNSPEC,
+                                                AVAHI_PROTO_UNSPEC,
+                                                config.zeroconf_service.c_str(),
+                                                config.zeroconf_domain.empty()
+                                                ? nullptr
+                                                : config.zeroconf_domain.c_str()));
 }
 
 LbCluster::~LbCluster()
 {
     delete sticky_cache;
     delete sticky_ring;
-
-    if (avahi_browser != nullptr)
-        avahi_service_browser_free(avahi_browser);
-
-    if (config.HasZeroConf())
-        avahi_client.RemoveListener(*this);
 }
 
 const LbCluster::MemberMap::value_type &
@@ -227,7 +109,7 @@ LbCluster::Pick(sticky_hash_t sticky_hash)
         if (cached != nullptr) {
             /* cache hit */
             auto i = members.find(*cached);
-            if (i != members.end() && i->second.IsActive() &&
+            if (i != members.end() &&
                 // TODO: allow FAILURE_FADE here?
                 failure_get_status(i->second.GetAddress()) == FAILURE_OK)
                 /* the node is active, we can use it */
@@ -299,8 +181,7 @@ LbCluster::FillActive()
     active_members.reserve(members.size());
 
     for (const auto &i : members)
-        if (i.second.IsActive())
-            active_members.push_back(&i);
+        active_members.push_back(&i);
 
     if (!config.sticky_cache) {
         if (sticky_ring == nullptr)
@@ -336,96 +217,30 @@ LbCluster::FillActive()
     }
 }
 
-static std::string
-MakeKey(AvahiIfIndex interface,
-        AvahiProtocol protocol,
-        const char *name,
-        const char *type,
-        const char *domain)
+void
+LbCluster::OnAvahiNewObject(const std::string &key, SocketAddress address)
 {
-    char buffer[2048];
-    snprintf(buffer, sizeof(buffer), "%d/%d/%s/%s/%s",
-             (int)interface, (int)protocol, name, type, domain);
-    return buffer;
+    auto i = members.emplace(std::piecewise_construct,
+                             std::forward_as_tuple(key),
+                             std::forward_as_tuple(address));
+    if (!i.second)
+        /* update existing member */
+        i.first->second.SetAddress(address);
+
+    dirty = true;
 }
 
 void
-LbCluster::ServiceBrowserCallback(AvahiServiceBrowser *b,
-                                  AvahiIfIndex interface,
-                                  AvahiProtocol protocol,
-                                  AvahiBrowserEvent event,
-                                  const char *name,
-                                  const char *type,
-                                  const char *domain,
-                                  gcc_unused AvahiLookupResultFlags flags)
+LbCluster::OnAvahiRemoveObject(const std::string &key)
 {
-    if (event == AVAHI_BROWSER_NEW) {
-        auto i = members.emplace(std::piecewise_construct,
-                                 std::forward_as_tuple(MakeKey(interface,
-                                                               protocol, name,
-                                                               type, domain)),
-                                 std::forward_as_tuple(*this));
-        if (i.second || i.first->second.HasFailed())
-            i.first->second.Resolve(avahi_service_browser_get_client(b),
-                                    interface, protocol,
-                                    name, type, domain);
-    } else if (event == AVAHI_BROWSER_REMOVE) {
-        auto i = members.find(MakeKey(interface, protocol, name,
-                                      type, domain));
-        if (i != members.end()) {
-            if (i->second.IsActive()) {
-                /* purge this entry from the "failure" map, because it
-                   will never be used again anyway */
-                failure_unset(i->second.GetAddress(), FAILURE_OK);
+    auto i = members.find(key);
+    if (i == members.end())
+        return;
 
-                dirty = true;
-            }
+    /* purge this entry from the "failure" map, because it
+       will never be used again anyway */
+    failure_unset(i->second.GetAddress(), FAILURE_OK);
 
-            members.erase(i);
-        }
-    }
-}
-
-void
-LbCluster::ServiceBrowserCallback(AvahiServiceBrowser *b,
-                                  AvahiIfIndex interface,
-                                  AvahiProtocol protocol,
-                                  AvahiBrowserEvent event,
-                                  const char *name,
-                                  const char *type,
-                                  const char *domain,
-                                  AvahiLookupResultFlags flags,
-                                  void *userdata)
-{
-    auto &cluster = *(LbCluster *)userdata;
-    cluster.ServiceBrowserCallback(b, interface, protocol, event, name,
-                                   type, domain, flags);
-}
-
-void
-LbCluster::OnAvahiConnect(AvahiClient *client)
-{
-    avahi_browser = avahi_service_browser_new(client, AVAHI_IF_UNSPEC,
-                                              AVAHI_PROTO_UNSPEC,
-                                              config.zeroconf_service.c_str(),
-                                              config.zeroconf_domain.empty()
-                                              ? nullptr
-                                              : config.zeroconf_domain.c_str(),
-                                              AvahiLookupFlags(0),
-                                              ServiceBrowserCallback, this);
-    if (avahi_browser == nullptr)
-        logger(2, "Failed to create Avahi service browser: ",
-               avahi_strerror(avahi_client_errno(client)));
-}
-
-void
-LbCluster::OnAvahiDisconnect()
-{
-    for (auto &i : members)
-        i.second.CancelResolve();
-
-    if (avahi_browser != nullptr) {
-        avahi_service_browser_free(avahi_browser);
-        avahi_browser = nullptr;
-    }
+    members.erase(i);
+    dirty = true;
 }

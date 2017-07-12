@@ -384,6 +384,7 @@ avahi = static_library('avahi',
   'src/avahi/Check.cxx',
   'src/avahi/Client.cxx',
   'src/avahi/Poll.cxx',
+  'src/avahi/Explorer.cxx',
   include_directories: inc,
   dependencies: [
     libavahi_client,
