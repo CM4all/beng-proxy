@@ -9,6 +9,7 @@
 #include <stdexcept>
 
 #include <string.h>
+#include <stdio.h>
 
 void
 CheckZeroconfServiceName(StringView name)
@@ -45,4 +46,28 @@ CheckZeroconfServiceType(const char *type)
         throw std::runtime_error("Service type must end with '._tcp' oder '._udp'");
 
     CheckZeroconfServiceName({type + 1, type + length - 5});
+}
+
+std::string
+MakeZeroconfServiceType(const char *value, const char *default_suffix)
+{
+    assert(value != nullptr);
+    assert(default_suffix != nullptr);
+    assert(strcmp(default_suffix, "_tcp") == 0 ||
+           strcmp(default_suffix, "_udp") == 0);
+
+    if (*value == '_' && strchr(value, '.') != nullptr) {
+        /* this is a fully-qualified service type - validate it and
+           return it as-is */
+        CheckZeroconfServiceType(value);
+        return value;
+    } else {
+        /* this is a bare service name - validate it and add
+           prefix/suffix */
+        CheckZeroconfServiceName(value);
+
+        char buffer[32];
+        snprintf(buffer, sizeof(buffer), "_%s.%s", value, default_suffix);
+        return buffer;
+    }
 }

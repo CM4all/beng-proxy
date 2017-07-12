@@ -122,9 +122,8 @@ BpConfigParser::Listener::ParseLine(FileLineParser &line)
         config.tag = line.ExpectValueAndEnd();
     } else if (strcmp(word, "zeroconf_service") == 0 ||
                /* old option name: */ strcmp(word, "zeroconf_type") == 0) {
-        const char *value = line.ExpectValueAndEnd();
-        CheckZeroconfServiceType(value);
-        config.zeroconf_service = value;
+        config.zeroconf_service = MakeZeroconfServiceType(line.ExpectValueAndEnd(),
+                                                          "_tcp");
     } else if (strcmp(word, "reuse_port") == 0) {
         config.reuse_port = line.NextBool();
         line.ExpectEnd();

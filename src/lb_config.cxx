@@ -552,9 +552,8 @@ LbConfigParser::Cluster::ParseLine(FileLineParser &line)
         if (!config.zeroconf_service.empty())
             throw LineParser::Error("Duplicate zeroconf_service");
 
-        const char *value = line.ExpectValueAndEnd();
-        CheckZeroconfServiceType(value);
-        config.zeroconf_service = value;
+        config.zeroconf_service = MakeZeroconfServiceType(line.ExpectValueAndEnd(),
+                                                          "_tcp");
     } else if (strcmp(word, "zeroconf_domain") == 0) {
         if (!config.members.empty())
             throw LineParser::Error("Cannot configure both hard-coded members and Zeroconf");
