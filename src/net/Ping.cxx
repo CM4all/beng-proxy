@@ -40,6 +40,10 @@ public:
         cancel_ptr = *this;
     }
 
+    void Destroy() {
+        DeleteUnrefPool(pool, this);
+    }
+
     void ScheduleRead() {
         event.Add(EventDuration<10>::value);
     }
@@ -128,7 +132,7 @@ PingClient::Read()
         if (parse_reply(&msg, cc, ident)) {
             close(fd);
             handler.PingResponse();
-            pool_unref(&pool);
+            Destroy();
         } else
             ScheduleRead();
     } else if (errno == EAGAIN || errno == EINTR) {
@@ -137,7 +141,7 @@ PingClient::Read()
         const int e = errno;
         close(fd);
         handler.PingError(std::make_exception_ptr(MakeErrno(e)));
-        pool_unref(&pool);
+        Destroy();
     }
 }
 
@@ -157,7 +161,7 @@ PingClient::EventCallback(unsigned events)
     } else {
         close(fd);
         handler.PingTimeout();
-        pool_unref(&pool);
+        Destroy();
     }
 }
 
@@ -171,7 +175,7 @@ PingClient::Cancel()
 {
     event.Delete();
     close(fd);
-    pool_unref(&pool);
+    Destroy();
 }
 
 
