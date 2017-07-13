@@ -22,6 +22,7 @@ extern "C" {
 #include <boost/intrusive/set.hpp>
 
 #include <iterator>
+#include <string>
 
 #include <string.h>
 #include <fcntl.h>
@@ -149,13 +150,12 @@ public:
  * After a while (#nfs_file_expiry), this object expires, and will not
  * accept any more callers; a new one will be created on demand.
  */
-class NfsFile
+class NfsFile final
     : public boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>,
       public boost::intrusive::set_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
 
-    struct pool &pool;
     NfsClient &client;
-    const char *const path;
+    const std::string path;
 
     enum {
         /**
@@ -208,10 +208,10 @@ class NfsFile
     TimerEvent expire_event;
 
 public:
-    NfsFile(EventLoop &event_loop, struct pool &_pool,
+    NfsFile(EventLoop &event_loop,
             NfsClient &_client, const char *_path)
-        :pool(_pool), client(_client),
-         path(p_strdup(&pool, _path)),
+        :client(_client),
+         path(_path),
          expire_event(event_loop, BIND_THIS_METHOD(ExpireCallback)) {}
 
     /**
@@ -220,7 +220,7 @@ public:
     void Open(struct nfs_context *context);
 
     void Destroy() {
-        pool_unref(&pool);
+        delete this;
     }
 
     /**
@@ -307,15 +307,15 @@ public:
 
     struct Compare {
         bool operator()(const NfsFile &a, const NfsFile &b) const {
-            return strcmp(a.path, b.path) < 0;
+            return a.path < b.path;
         }
 
         bool operator()(const NfsFile &a, const char *b) const {
-            return strcmp(a.path, b) < 0;
+            return a.path < b;
         }
 
         bool operator()(const char *a, const NfsFile &b) const {
-            return strcmp(a, b.path) < 0;
+            return a < b.path;
         }
     };
 };
@@ -985,7 +985,7 @@ nfs_open_cb(int status, gcc_unused struct nfs_context *nfs,
 inline void
 NfsFile::Open(struct nfs_context *context)
 {
-    if (nfs_open_async(context, path, O_RDONLY,
+    if (nfs_open_async(context, path.c_str(), O_RDONLY,
                        nfs_open_cb, this) != 0)
         throw NfsClientError(context, "nfs_open_async() failed");
 }
@@ -1080,9 +1080,7 @@ NfsClient::OpenFile(struct pool &caller_pool,
     auto result = file_map.insert_check(path, NfsFile::Compare(), hint);
     NfsFile *file;
     if (result.second) {
-        struct pool *f_pool = pool_new_libc(&pool, "nfs_file");
-        file = NewFromPool<NfsFile>(*f_pool, GetEventLoop(), *f_pool,
-                                    *this, path);
+        file = new NfsFile(GetEventLoop(), *this, path);
 
         auto i = file_map.insert_commit(*file, hint);
         file_list.push_front(*file);
