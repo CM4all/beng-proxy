@@ -78,9 +78,4 @@ udp_listener_new(EventLoop &event_loop,
                  SocketAddress address,
                  UdpHandler &handler);
 
-UdpListener *
-udp_listener_port_new(EventLoop &event_loop,
-                      const char *host_and_port, int default_port,
-                      UdpHandler &handler);
-
 #endif

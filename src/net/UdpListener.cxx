@@ -8,7 +8,6 @@
 #include "UdpHandler.hxx"
 #include "net/AllocatedSocketAddress.hxx"
 #include "net/IPv4Address.hxx"
-#include "net/Parser.hxx"
 #include "net/ToString.hxx"
 #include "system/fd_util.h"
 #include "system/Error.hxx"
@@ -147,17 +146,6 @@ udp_listener_new(EventLoop &event_loop,
     }
 
     return new UdpListener(event_loop, std::move(fd), handler);
-}
-
-UdpListener *
-udp_listener_port_new(EventLoop &event_loop,
-                      const char *host_and_port, int default_port,
-                      UdpHandler &handler)
-{
-    assert(host_and_port != nullptr);
-
-    auto address = ParseSocketAddress(host_and_port, default_port, true);
-    return udp_listener_new(event_loop, address, handler);
 }
 
 void
