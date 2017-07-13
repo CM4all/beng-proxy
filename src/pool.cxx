@@ -10,8 +10,9 @@
 #include "util/Recycler.hxx"
 #include "util/Poison.hxx"
 
-#include <inline/list.h>
 #include <daemon/log.h>
+
+#include <boost/intrusive/list.hpp>
 
 #ifdef VALGRIND
 #include <valgrind/memcheck.h>
@@ -46,7 +47,9 @@ static constexpr unsigned RECYCLER_MAX_LINEAR_AREAS = 256;
 
 #ifndef NDEBUG
 struct allocation_info {
-    struct list_head siblings;
+    typedef boost::intrusive::list_member_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> SiblingsHook;
+    SiblingsHook siblings;
+
     size_t size;
 
 #ifdef TRACE
@@ -74,7 +77,9 @@ enum pool_type {
 };
 
 struct libc_pool_chunk {
-    struct list_head siblings;
+    typedef boost::intrusive::list_member_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> SiblingsHook;
+    SiblingsHook siblings;
+
 #ifdef POISON
     size_t size;
 #endif
@@ -82,12 +87,18 @@ struct libc_pool_chunk {
     struct allocation_info info;
 #endif
     unsigned char data[sizeof(size_t)];
-};
 
+    struct Disposer {
+        void operator()(struct libc_pool_chunk *chunk) {
 #ifdef POISON
-static const size_t LIBC_POOL_CHUNK_HEADER =
-    offsetof(struct libc_pool_chunk, data);
+            static constexpr size_t LIBC_POOL_CHUNK_HEADER =
+                offsetof(struct libc_pool_chunk, data);
+            PoisonUndefined(chunk, LIBC_POOL_CHUNK_HEADER + chunk->size);
 #endif
+            free(chunk);
+        }
+    };
+};
 
 struct linear_pool_area {
     struct linear_pool_area *prev;
@@ -116,8 +127,13 @@ struct PoolRef {
 };
 #endif
 
-struct pool {
-    struct list_head siblings, children;
+struct pool
+    : boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
+
+    typedef boost::intrusive::list<struct pool,
+                                   boost::intrusive::constant_time_size<false>> List;
+
+    List children;
 #ifdef DEBUG_POOL_REF
     std::forward_list<PoolRef> refs, unrefs;
 #endif
@@ -138,14 +154,26 @@ struct pool {
     enum pool_type type;
     const char *const name;
 
-    union {
-        struct list_head libc;
+    union CurrentArea {
+        boost::intrusive::list<struct libc_pool_chunk,
+                               boost::intrusive::member_hook<struct libc_pool_chunk,
+                                                             libc_pool_chunk::SiblingsHook,
+                                                             &libc_pool_chunk::siblings>,
+                               boost::intrusive::constant_time_size<false>> libc;
+
         struct linear_pool_area *linear;
         struct pool *recycler;
+
+        CurrentArea():libc() {}
+        ~CurrentArea() {}
     } current_area;
 
 #ifndef NDEBUG
-    struct list_head allocations;
+    boost::intrusive::list<struct allocation_info,
+                           boost::intrusive::member_hook<struct allocation_info,
+                                                         allocation_info::SiblingsHook,
+                                                         &allocation_info::siblings>,
+                           boost::intrusive::constant_time_size<false>> allocations;
 
     boost::intrusive::list<struct attachment,
                            boost::intrusive::constant_time_size<false>> attachments;
@@ -166,12 +194,6 @@ struct pool {
 
     explicit pool(const char *_name)
         :name(_name) {
-
-        list_init(&children);
-
-#ifndef NDEBUG
-        list_init(&allocations);
-#endif
     }
 
     pool(struct pool &&) = delete;
@@ -179,7 +201,7 @@ struct pool {
 };
 
 #ifndef NDEBUG
-static LIST_HEAD(trash);
+static pool::List trash;
 #endif
 
 static struct {
@@ -312,15 +334,16 @@ pool_add_child(struct pool *pool, struct pool *child)
     assert(child->parent == nullptr);
 
     child->parent = pool;
-    list_add(&child->siblings, &pool->children);
+
+    pool->children.push_back(*child);
 }
 
 static inline void
-pool_remove_child(gcc_unused struct pool *pool, struct pool *child)
+pool_remove_child(struct pool *pool, struct pool *child)
 {
     assert(child->parent == pool);
 
-    list_remove(&child->siblings);
+    pool->children.erase(pool->children.iterator_to(*child));
     child->parent = nullptr;
 }
 
@@ -348,7 +371,6 @@ pool_new_libc(struct pool *parent, const char *name)
 {
     struct pool *pool = pool_new(parent, name);
     pool->type = POOL_LIBC;
-    list_init(&pool->current_area.libc);
     return pool;
 }
 
@@ -482,7 +504,7 @@ void
 pool_set_major(struct pool *pool)
 {
     assert(!pool->trashed);
-    assert(list_empty(&pool->children));
+    assert(pool->children.empty());
 
     pool->major = true;
 }
@@ -541,13 +563,13 @@ pool_destroy(struct pool *pool, gcc_unused struct pool *parent,
         });
 
     if (pool->trashed)
-        list_remove(&pool->siblings);
+        trash.erase(trash.iterator_to(*pool));
 #else
     TRACE_ARGS_IGNORE;
 #endif
 
-    while (!list_empty(&pool->children)) {
-        struct pool *child = (struct pool *)pool->children.next;
+    while (!pool->children.empty()) {
+        struct pool *child = &pool->children.front();
         pool_remove_child(pool, child);
         assert(child->ref > 0);
 
@@ -557,7 +579,7 @@ pool_destroy(struct pool *pool, gcc_unused struct pool *parent,
             assert(pool->major || pool->trashed);
 
 #ifndef NDEBUG
-            list_add(&child->siblings, &trash);
+            trash.push_front(*child);
             child->trashed = true;
 #else
             child->parent = nullptr;
@@ -580,14 +602,7 @@ pool_destroy(struct pool *pool, gcc_unused struct pool *parent,
 
     switch (pool->type) {
     case POOL_LIBC:
-        while (!list_empty(&pool->current_area.libc)) {
-            struct libc_pool_chunk *chunk = (struct libc_pool_chunk *)pool->current_area.libc.next;
-            list_remove(&chunk->siblings);
-#ifdef POISON
-            PoisonUndefined(chunk, LIBC_POOL_CHUNK_HEADER + chunk->size);
-#endif
-            free(chunk);
-        }
+        pool->current_area.libc.clear_and_dispose(libc_pool_chunk::Disposer());
         break;
 
     case POOL_LINEAR:
@@ -742,10 +757,8 @@ pool_children_netto_size(const struct pool *pool)
 {
     size_t size = 0;
 
-    for (const struct pool *child = (const struct pool *)pool->children.next;
-         &child->siblings != &pool->children;
-         child = (const struct pool *)child->siblings.next)
-        size += pool_recursive_netto_size(child);
+    for (const auto &child : pool->children)
+        size += pool_recursive_netto_size(&child);
 
     return size;
 }
@@ -755,10 +768,8 @@ pool_children_brutto_size(const struct pool *pool)
 {
     size_t size = 0;
 
-    for (const struct pool *child = (const struct pool *)pool->children.next;
-         &child->siblings != &pool->children;
-         child = (const struct pool *)child->siblings.next)
-        size += pool_recursive_brutto_size(child);
+    for (const auto &child : pool->children)
+        size += pool_recursive_brutto_size(&child);
 
     return size;
 }
@@ -797,10 +808,8 @@ pool_dump_node(int indent, const struct pool &pool)
                (const void *)&pool);
 
     indent += 2;
-    for (auto *child = (const struct pool *)pool.children.next;
-         &child->siblings != &pool.children;
-         child = (const struct pool *)child->siblings.next)
-        pool_dump_node(indent, *child);
+    for (const auto &child : pool.children)
+        pool_dump_node(indent, child);
 }
 
 void
@@ -891,25 +900,23 @@ pool_trash(struct pool *pool)
     assert(pool->parent != nullptr);
 
     pool_remove_child(pool->parent, pool);
-    list_add(&pool->siblings, &trash);
+    trash.push_front(*pool);
     pool->trashed = true;
 }
 
 void
 pool_commit(void)
 {
-    if (list_empty(&trash))
+    if (trash.empty())
         return;
 
     daemon_log(0, "pool_commit(): there are unreleased pools in the trash:\n");
 
-    for (struct pool *pool = (struct pool *)trash.next;
-         &pool->siblings != &trash;
-         pool = (struct pool *)pool->siblings.next) {
+    for (const auto &pool : trash) {
 #ifdef DEBUG_POOL_REF
-        pool_dump_refs(*pool);
+        pool_dump_refs(pool);
 #else
-        daemon_log(0, "- '%s'(%u)\n", pool->name, pool->ref);
+        daemon_log(0, "- '%s'(%u)\n", pool.name, pool.ref);
 #endif
     }
     daemon_log(0, "\n");
@@ -976,17 +983,10 @@ static void
 pool_remove_allocations(struct pool *pool, const unsigned char *p, size_t length)
 {
 #ifndef NDEBUG
-    struct allocation_info *info =
-        (struct allocation_info *)pool->allocations.next;
-
-    while (info != (struct allocation_info *)&pool->allocations) {
-        struct allocation_info *next
-            = (struct allocation_info *)info->siblings.next;
-        if ((const unsigned char*)info >= p &&
-            (const unsigned char*)(info + 1) + info->size <= p + length)
-            list_remove(&info->siblings);
-        info = next;
-    }
+    pool->allocations.remove_if([p, length](const struct allocation_info &info){
+            return (const uint8_t *)&info >= p &&
+                (const uint8_t *)(&info + 1) + info.size <= p + length;
+        });
 #else
     (void)pool;
     (void)p;
@@ -1058,7 +1058,7 @@ pool_rewind(struct pool *pool, const struct pool_mark_state *mark)
 
     /* if the pool is empty again, the allocation list must be empty,
        too */
-    assert(!pool_linear_is_empty(pool) || list_empty(&pool->allocations));
+    assert(!pool_linear_is_empty(pool) || pool->allocations.empty());
 #else
     (void)pool;
     (void)mark;
@@ -1073,7 +1073,7 @@ p_malloc_libc(struct pool *pool, size_t size TRACE_ARGS_DECL)
         xmalloc(sizeof(*chunk) - sizeof(chunk->data) + aligned_size);
 
 #ifndef NDEBUG
-    list_add(&chunk->info.siblings, &pool->allocations);
+    pool->allocations.push_back(chunk->info);
 #ifdef TRACE
     chunk->info.file = file;
     chunk->info.line = line;
@@ -1083,7 +1083,7 @@ p_malloc_libc(struct pool *pool, size_t size TRACE_ARGS_DECL)
     TRACE_ARGS_IGNORE;
 #endif
 
-    list_add(&chunk->siblings, &pool->current_area.libc);
+    pool->current_area.libc.push_back(*chunk);
 #ifdef POISON
     chunk->size = size;
 #endif
@@ -1167,7 +1167,7 @@ p_malloc_linear(struct pool *pool, const size_t original_size
     info->line = line;
 #endif
     info->size = original_size;
-    list_add(&info->siblings, &pool->allocations);
+    pool->allocations.push_back(*info);
 #endif
 
     return (char*)p + LINEAR_PREFIX;
@@ -1194,17 +1194,17 @@ p_malloc_impl(struct pool *pool, size_t size TRACE_ARGS_DECL)
 }
 
 static void
-p_free_libc(gcc_unused struct pool *pool, void *ptr)
+p_free_libc(struct pool *pool, void *ptr)
 {
     void *q = (char *)ptr - offsetof(struct libc_pool_chunk, data);
     struct libc_pool_chunk *chunk = (struct libc_pool_chunk *)q;
 
 #ifndef NDEBUG
-    list_remove(&chunk->info.siblings);
+    pool->allocations.erase(pool->allocations.iterator_to(chunk->info));
 #endif
 
-    list_remove(&chunk->siblings);
-    free(chunk);
+    pool->current_area.libc.erase_and_dispose(pool->current_area.libc.iterator_to(*chunk),
+                                              libc_pool_chunk::Disposer());
 }
 
 void
@@ -1227,7 +1227,7 @@ p_free(struct pool *pool, const void *cptr)
 #ifndef NDEBUG
     else if (pool->type == POOL_LINEAR) {
         struct allocation_info *info = get_linear_allocation_info(ptr);
-        list_remove(&info->siblings);
+        pool->allocations.erase(pool->allocations.iterator_to(*info));
         PoisonInaccessible(ptr, info->size);
     }
 #endif
