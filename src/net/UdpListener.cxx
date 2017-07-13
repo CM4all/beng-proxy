@@ -130,7 +130,9 @@ udp_listener_new(EventLoop &event_loop,
         fd.SetBoolOption(SOL_SOCKET, SO_PASSCRED, true);
     }
 
-    if (!fd.SetReuseAddress(true))
+    /* set SO_REUSEADDR if we're using multicast; this option allows
+       multiple processes to join the same group on the same port */
+    if (!group_address.IsNull() && !fd.SetReuseAddress(true))
         throw MakeErrno("Failed to set SO_REUSEADDR");
 
     if (!fd.Bind(address)) {
