@@ -54,6 +54,11 @@ public:
     /**
      * Joins the specified multicast group.
      */
+    void AddMembership(SocketAddress address);
+
+    /**
+     * Joins the specified multicast group.
+     */
     void Join4(const struct in_addr *group);
 
     /**

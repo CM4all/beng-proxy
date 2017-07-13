@@ -161,6 +161,13 @@ udp_listener_port_new(EventLoop &event_loop,
 }
 
 void
+UdpListener::AddMembership(SocketAddress address)
+{
+    if (!fd.AddMembership(address))
+        throw MakeErrno("Failed to join multicast group");
+}
+
+void
 UdpListener::Join4(const struct in_addr *group)
 {
     if (!fd.AddMembership(IPv4Address(*group, 0)))
