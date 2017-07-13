@@ -93,7 +93,7 @@ class Translation(Protocol):
         response.packet(TRANSLATE_TOKEN, 'xyz')
         response.uid_gid(500, 100)
         if service != 'ftp':
-            response.packet(TRANSLATE_PIVOT_ROOT, '/srv/chroot/squeeze')
+            response.packet(TRANSLATE_PIVOT_ROOT, '/srv/chroot/jessie')
             response.packet(TRANSLATE_MOUNT_HOME, '/home')
             response.packet(TRANSLATE_MOUNT_PROC)
             response.packet(TRANSLATE_MOUNT_TMP_TMPFS)
@@ -117,7 +117,7 @@ class Translation(Protocol):
         response.packet(TRANSLATE_USER_NAMESPACE)
         response.packet(TRANSLATE_PID_NAMESPACE)
         #response.uid_gid(500, 100)
-        response.packet(TRANSLATE_PIVOT_ROOT, '/srv/chroot/squeeze')
+        response.packet(TRANSLATE_PIVOT_ROOT, '/srv/chroot/jessie')
         response.packet(TRANSLATE_MOUNT_HOME, '/home')
         response.packet(TRANSLATE_MOUNT_PROC)
         response.packet(TRANSLATE_MOUNT_TMP_TMPFS)
