@@ -1,5 +1,6 @@
 #include "control_server.hxx"
 #include "net/SocketAddress.hxx"
+#include "net/IPv4Address.hxx"
 #include "event/Loop.hxx"
 #include "system/SetupProcess.hxx"
 #include "util/PrintException.hxx"
@@ -49,7 +50,7 @@ try {
 
     ControlServer cs(handler);
     cs.OpenPort(event_loop, listen_host, 1234,
-                mcast_group != nullptr ? &mcast_group_addr : nullptr);
+                mcast_group != nullptr ? SocketAddress(IPv4Address(mcast_group_addr, 0)) : nullptr);
 
     event_loop.Dispatch();
 

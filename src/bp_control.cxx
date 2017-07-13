@@ -17,6 +17,7 @@
 #include "pool.hxx"
 #include "net/UdpDistribute.hxx"
 #include "net/SocketAddress.hxx"
+#include "net/IPv4Address.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/ByteOrder.hxx"
 #include "util/Exception.hxx"
@@ -257,11 +258,11 @@ global_control_handler_init(BpInstance *instance)
     if (instance->config.control_listen.empty())
         return;
 
-    struct in_addr group_buffer;
-    const struct in_addr *group = NULL;
+    IPv4Address group_buffer;
+    SocketAddress group = nullptr;
     if (instance->config.multicast_group != NULL) {
-        group_buffer.s_addr = inet_addr(instance->config.multicast_group);
-        group = &group_buffer;
+        group_buffer = {{inet_addr(instance->config.multicast_group)}, 0};
+        group = group_buffer;
     }
 
     instance->control_distribute = new ControlDistribute(instance->event_loop,

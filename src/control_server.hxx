@@ -13,7 +13,6 @@
 
 #include <stddef.h>
 
-struct in_addr;
 class SocketAddress;
 class UniqueSocketDescriptor;
 class Error;
@@ -32,11 +31,11 @@ struct ControlServer final : UdpHandler {
 
     void Open(EventLoop &event_loop,
               SocketAddress address,
-              const struct in_addr *group=nullptr);
+              SocketAddress group);
 
     void OpenPort(EventLoop &event_loop,
                   const char *host_and_port, int default_port,
-                  const struct in_addr *group);
+                  SocketAddress group);
 
     void Enable();
     void Disable();
