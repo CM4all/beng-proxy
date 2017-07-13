@@ -1194,7 +1194,7 @@ executable('cm4all-beng-proxy-log-tee',
   dependencies: [
     libinline, libdaemon,
     system_dep,
-    io_dep,
+    net_dep,
   ])
 
 executable('delegate-helper',

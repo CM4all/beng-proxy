@@ -5,7 +5,7 @@
  */
 
 #include "Client.hxx"
-#include "io/UniqueFileDescriptor.hxx"
+#include "net/UniqueSocketDescriptor.hxx"
 #include "util/ByteOrder.hxx"
 
 #include <daemon/log.h>
@@ -17,17 +17,17 @@
 #include <string.h>
 
 struct LogClient {
-    UniqueFileDescriptor fd;
+    UniqueSocketDescriptor fd;
 
     size_t position;
     char buffer[32768];
 
-    explicit LogClient(UniqueFileDescriptor &&_fd)
+    explicit LogClient(UniqueSocketDescriptor &&_fd)
         :fd(std::move(_fd)) {}
 };
 
 LogClient *
-log_client_new(UniqueFileDescriptor &&fd)
+log_client_new(UniqueSocketDescriptor &&fd)
 {
     assert(fd.IsDefined());
 

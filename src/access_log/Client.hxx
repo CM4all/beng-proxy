@@ -12,10 +12,10 @@
 #include <stddef.h>
 
 struct LogClient;
-class UniqueFileDescriptor;
+class UniqueSocketDescriptor;
 
 LogClient *
-log_client_new(UniqueFileDescriptor &&fd);
+log_client_new(UniqueSocketDescriptor &&fd);
 
 void
 log_client_free(LogClient *l);

@@ -20,7 +20,7 @@
 
 gcc_noreturn
 static void
-log_run(const char *program, UniqueFileDescriptor &&fd)
+log_run(const char *program, UniqueSocketDescriptor &&fd)
 {
     fd.CheckDuplicate(FileDescriptor(STDIN_FILENO));
 
@@ -35,10 +35,10 @@ log_launch(const char *program,
            const struct daemon_user *user)
 {
     LogProcess p;
-    UniqueFileDescriptor server_fd;
+    UniqueSocketDescriptor server_fd;
 
-    if (!UniqueFileDescriptor::CreateSocketPair(AF_LOCAL, SOCK_SEQPACKET, 0,
-                                                server_fd, p.fd))
+    if (!UniqueSocketDescriptor::CreateSocketPair(AF_LOCAL, SOCK_SEQPACKET, 0,
+                                                  server_fd, p.fd))
         throw MakeErrno("socketpair() failed");
 
     /* we need an unidirectional socket only */

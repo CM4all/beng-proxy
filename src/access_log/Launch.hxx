@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_LOG_LAUNCH_H
 #define BENG_PROXY_LOG_LAUNCH_H
 
-#include "io/UniqueFileDescriptor.hxx"
+#include "net/UniqueSocketDescriptor.hxx"
 
 #include <sys/types.h>
 
@@ -15,7 +15,7 @@ struct daemon_user;
 
 struct LogProcess {
     pid_t pid;
-    UniqueFileDescriptor fd;
+    UniqueSocketDescriptor fd;
 };
 
 LogProcess
