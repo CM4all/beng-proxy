@@ -10,7 +10,7 @@
 #include "stock/Item.hxx"
 #include "failure.hxx"
 #include "system/Error.hxx"
-#include "io/UniqueFileDescriptor.hxx"
+#include "net/UniqueSocketDescriptor.hxx"
 #include "event/SocketEvent.hxx"
 #include "event/Duration.hxx"
 #include "spawn/Interface.hxx"
@@ -53,7 +53,7 @@ class DelegateProcess final : public HeapStockItem {
     SocketEvent event;
 
 public:
-    explicit DelegateProcess(CreateStockItem c, UniqueFileDescriptor &&_fd)
+    explicit DelegateProcess(CreateStockItem c, UniqueSocketDescriptor &&_fd)
         :HeapStockItem(c), fd(_fd.Steal()),
          event(c.stock.GetEventLoop(), fd, SocketEvent::READ,
                BIND_THIS_METHOD(SocketEventCallback)) {
@@ -128,9 +128,9 @@ delegate_stock_create(void *ctx,
 
     info.options.CopyTo(p, true, nullptr);
 
-    UniqueFileDescriptor server_fd, client_fd;
-    if (!UniqueFileDescriptor::CreateSocketPair(AF_LOCAL, SOCK_STREAM, 0,
-                                                server_fd, client_fd))
+    UniqueSocketDescriptor server_fd, client_fd;
+    if (!UniqueSocketDescriptor::CreateSocketPair(AF_LOCAL, SOCK_STREAM, 0,
+                                                  server_fd, client_fd))
         throw MakeErrno("socketpair() failed");
 
     p.SetStdin(std::move(server_fd));
