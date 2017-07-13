@@ -48,26 +48,24 @@ struct DelegateArgs {
 };
 
 class DelegateProcess final : public HeapStockItem {
-    const int fd;
+    UniqueSocketDescriptor fd;
 
     SocketEvent event;
 
 public:
     explicit DelegateProcess(CreateStockItem c, UniqueSocketDescriptor &&_fd)
-        :HeapStockItem(c), fd(_fd.Steal()),
-         event(c.stock.GetEventLoop(), fd, SocketEvent::READ,
+        :HeapStockItem(c), fd(std::move(_fd)),
+         event(c.stock.GetEventLoop(), fd.Get(), SocketEvent::READ,
                BIND_THIS_METHOD(SocketEventCallback)) {
     }
 
     ~DelegateProcess() override {
-        if (fd >= 0) {
+        if (fd.IsDefined())
             event.Delete();
-            close(fd);
-        }
     }
 
     int GetSocket() const {
-        return fd;
+        return fd.Get();
     }
 
     /* virtual methods from class StockItem */
@@ -97,7 +95,7 @@ DelegateProcess::SocketEventCallback(unsigned events)
         assert((events & SocketEvent::READ) != 0);
 
         char buffer;
-        ssize_t nbytes = recv(fd, &buffer, sizeof(buffer), MSG_DONTWAIT);
+        ssize_t nbytes = recv(fd.Get(), &buffer, sizeof(buffer), MSG_DONTWAIT);
         if (nbytes < 0)
             daemon_log(2, "error on idle delegate process: %s\n",
                        strerror(errno));
