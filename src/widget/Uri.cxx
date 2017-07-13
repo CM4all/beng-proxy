@@ -113,7 +113,7 @@ Widget::DetermineAddress(bool stateful) const
             uri = uri_insert_query_string(&pool, uri,
                                           from_template.query_string);
 
-        if (stateful && !from_request.query_string.IsEmpty())
+        if (stateful && !from_request.query_string.IsNull())
             uri = uri_append_query_string_n(&pool, uri,
                                             from_request.query_string);
 
@@ -137,7 +137,7 @@ Widget::DetermineAddress(bool stateful) const
             uri = uri_insert_query_string(&pool, uri,
                                           from_template.query_string);
 
-        if (stateful && !from_request.query_string.IsEmpty())
+        if (stateful && !from_request.query_string.IsNull())
             uri = uri_append_query_string_n(&pool, uri,
                                             from_request.query_string);
 

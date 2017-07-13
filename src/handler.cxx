@@ -64,9 +64,9 @@ bounce_uri(struct pool &pool, const Request &request,
 
     const char *uri_path = response.uri != nullptr
         ? p_strncat(&pool, response.uri, strlen(response.uri),
-                    ";", request.uri.args.IsEmpty() ? (size_t)0 : 1,
+                    ";", request.uri.args.IsNull() ? (size_t)0 : 1,
                     request.uri.args.data, request.uri.args.size,
-                    "?", request.uri.query.IsEmpty() ? (size_t)0 : 1,
+                    "?", request.uri.query.IsNull() ? (size_t)0 : 1,
                     request.uri.query.data, request.uri.query.size,
                     nullptr)
         : request.request.uri;
@@ -193,7 +193,7 @@ Request::CheckHandleRedirect(const TranslateResponse &response)
         : HTTP_STATUS_SEE_OTHER;
 
     const char *redirect_uri = response.redirect;
-    if (response.redirect_query_string && !uri.query.IsEmpty())
+    if (response.redirect_query_string && !uri.query.IsNull())
         redirect_uri = uri_append_query_string_n(&pool, redirect_uri,
                                                  uri.query);
 

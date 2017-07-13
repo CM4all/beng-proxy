@@ -48,7 +48,7 @@ static const char *
 ForwardURI(const Request &r)
 {
     const TranslateResponse &t = *r.translate.response;
-    if (t.transparent || r.uri.args.IsEmpty())
+    if (t.transparent || r.uri.args.IsNull())
         /* transparent or no args: return the full URI as-is */
         return r.request.uri;
     else
@@ -69,7 +69,7 @@ proxy_handler(Request &request2)
            address.IsCgiAlike());
 
     if (request2.translate.response->transparent &&
-        (!request2.uri.args.IsEmpty() ||
+        (!request2.uri.args.IsNull() ||
          !request2.uri.path_info.IsEmpty()))
         address = address.WithArgs(pool,
                                    request2.uri.args,

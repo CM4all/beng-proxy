@@ -39,7 +39,6 @@ uri_append_query_string_n(struct pool *pool, const char *uri,
     assert(pool != nullptr);
     assert(uri != nullptr);
     assert(!query_string.IsNull());
-    assert(!query_string.IsEmpty());
 
     return p_strncat(pool, uri, strlen(uri),
                      strchr(uri, '?') == nullptr ? "?" : "&", (size_t)1,
