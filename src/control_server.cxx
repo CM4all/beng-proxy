@@ -96,22 +96,6 @@ ControlServer::OnUdpError(std::exception_ptr ep)
 }
 
 void
-ControlServer::OpenPort(EventLoop &event_loop,
-                        const char *host_and_port, int default_port,
-                        SocketAddress group)
-{
-    assert(host_and_port != nullptr);
-    assert(udp == nullptr);
-
-    udp = udp_listener_port_new(event_loop,
-                                host_and_port, default_port,
-                                *this);
-
-    if (!group.IsNull())
-        udp->AddMembership(group);
-}
-
-void
 ControlServer::Open(EventLoop &event_loop,
                     SocketAddress address,
                     SocketAddress group)

@@ -33,10 +33,6 @@ struct ControlServer final : UdpHandler {
               SocketAddress address,
               SocketAddress group);
 
-    void OpenPort(EventLoop &event_loop,
-                  const char *host_and_port, int default_port,
-                  SocketAddress group);
-
     void Enable();
     void Disable();
 
