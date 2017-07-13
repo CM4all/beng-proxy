@@ -624,6 +624,12 @@ class Translation(Protocol):
         elif uri == '/redirect/temporary':
             response.status(307)
             response.packet(TRANSLATE_REDIRECT, 'http://cfatest01.intern.cm-ag/')
+        elif uri[:19] == '/redirect/full-uri/':
+            response.packet(TRANSLATE_BASE, uri[:19])
+            response.packet(TRANSLATE_EASY_BASE)
+            response.packet(TRANSLATE_REDIRECT, 'http://other.server/foo/')
+            response.packet(TRANSLATE_REDIRECT_QUERY_STRING)
+            response.packet(TRANSLATE_REDIRECT_FULL_URI)
         elif uri == '/bounce':
             response.packet(TRANSLATE_BOUNCE, 'http://cfatest01.intern.cm-ag/test?uri=')
         elif uri[:6] == '/auth/':

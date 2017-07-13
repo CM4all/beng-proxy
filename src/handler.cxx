@@ -193,6 +193,14 @@ Request::CheckHandleRedirect(const TranslateResponse &response)
         : HTTP_STATUS_SEE_OTHER;
 
     const char *redirect_uri = response.redirect;
+
+    if (response.redirect_full_uri && !uri.args.IsNull())
+        redirect_uri = p_strncat(&pool, redirect_uri, strlen(redirect_uri),
+                                 ";", size_t(1),
+                                 uri.args.data, uri.args.size,
+                                 uri.path_info.data, uri.path_info.size,
+                                 nullptr);
+
     if (response.redirect_query_string && !uri.query.IsNull())
         redirect_uri = uri_append_query_string_n(&pool, redirect_uri,
                                                  uri.query);

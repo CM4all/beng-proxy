@@ -1132,6 +1132,14 @@ HTTP 3xx codes \\
 
 \hline
 
+\verb|REDIRECT_FULL_URI| & Use the full request URI path (including
+semicolon-arguments and the follow-up suffix, but excluding the query
+string) for expanding \verb|REDIRECT|.  This packet must be preceded
+by \verb|BASE|, \verb|EASY_BASE| and \verb|REDIRECT|.  It makes sense
+to combine it with \verb|REDIRECT_QUERY_STRING|. \\
+
+\hline
+
 \verb|BOUNCE| & Redirects the browser with a \texttt{303 See Other}
 status to this URI, and appends the current absolute URI
 (form-encoded).  This is useful to redirect to another server, which

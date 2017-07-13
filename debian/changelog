@@ -5,6 +5,7 @@ cm4all-beng-proxy (12.0.30) unstable; urgency=low
   * config: check Zeroconf service names
   * config: allow zeroconf_service with raw service name
   * log-exec: multicast support
+  * translation: add packet REDIRECT_FULL_URI
 
  --   
 
