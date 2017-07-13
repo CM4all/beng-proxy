@@ -16,6 +16,8 @@
 #include <valgrind/memcheck.h>
 #endif
 
+#include <forward_list>
+
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
@@ -104,8 +106,6 @@ static const size_t LINEAR_POOL_AREA_HEADER =
 
 #ifdef DEBUG_POOL_REF
 struct PoolRef {
-    struct list_head list_head;
-
 #ifdef TRACE
     const char *file;
     unsigned line;
@@ -118,7 +118,7 @@ struct PoolRef {
 struct pool {
     struct list_head siblings, children;
 #ifdef DEBUG_POOL_REF
-    struct list_head refs, unrefs;
+    std::forward_list<PoolRef> refs, unrefs;
 #endif
     struct pool *parent = nullptr;
     unsigned ref = 1;
@@ -167,11 +167,6 @@ struct pool {
         :name(_name) {
 
         list_init(&children);
-
-#ifdef DEBUG_POOL_REF
-        list_init(&refs);
-        list_init(&unrefs);
-#endif
 
 #ifndef NDEBUG
         list_init(&allocations);
@@ -605,17 +600,8 @@ pool_destroy(struct pool *pool, gcc_unused struct pool *parent,
     }
 
 #ifdef DEBUG_POOL_REF
-    while (!list_empty(&pool->refs)) {
-        auto *next = (PoolRef *)pool->refs.next;
-        list_remove(&next->list_head);
-        delete next;
-    }
-
-    while (!list_empty(&pool->unrefs)) {
-        auto *next = (PoolRef *)pool->unrefs.next;
-        list_remove(&next->list_head);
-        delete next;
-    }
+    pool->refs.clear();
+    pool->unrefs.clear();
 #endif
 
     switch (pool->type) {
@@ -648,32 +634,24 @@ pool_destroy(struct pool *pool, gcc_unused struct pool *parent,
 #ifdef DEBUG_POOL_REF
 static void
 pool_increment_ref(gcc_unused struct pool *pool,
-                   struct list_head *list TRACE_ARGS_DECL)
+                   std::forward_list<PoolRef> &list TRACE_ARGS_DECL)
 {
-    PoolRef *ref;
-
-    for (ref = (PoolRef *)list->next;
-         &ref->list_head != list;
-         ref = (PoolRef *)ref->list_head.next) {
-        assert(ref->list_head.next->prev == &ref->list_head);
-        assert(ref->list_head.prev->next == &ref->list_head);
-
 #ifdef TRACE
-        if (ref->line == line && strcmp(ref->file, file) == 0) {
-            ++ref->count;
+    for (auto &ref : list) {
+        if (ref.line == line && strcmp(ref.file, file) == 0) {
+            ++ref.count;
             return;
         }
-#endif
     }
+#endif
 
-    ref = new PoolRef;
+    list.emplace_front();
 
 #ifdef TRACE
-    ref->file = file;
-    ref->line = line;
+    auto &ref = list.front();
+    ref.file = file;
+    ref.line = line;
 #endif
-
-    list_add(&ref->list_head, list);
 }
 #endif
 
@@ -685,18 +663,12 @@ pool_dump_refs(struct pool *pool)
                (const void*)pool, pool->ref);
 
 #ifdef TRACE
-    const PoolRef *ref;
-    for (ref = (const PoolRef *)pool->refs.next;
-         &ref->list_head != &pool->refs;
-         ref = (const PoolRef *)ref->list_head.next) {
-        daemon_log(0, "\t%s:%u %u\n", ref->file, ref->line, ref->count);
-    }
+    for (auto &ref : pool->refs)
+        daemon_log(0, "\t%s:%u %u\n", ref.file, ref.line, ref.count);
+
     daemon_log(0, "    UNREF:\n");
-    for (ref = (const PoolRef *)pool->unrefs.next;
-         &ref->list_head != &pool->unrefs;
-         ref = (const PoolRef *)ref->list_head.next) {
-        daemon_log(0, "\t%s:%u %u\n", ref->file, ref->line, ref->count);
-    }
+    for (auto &ref : pool->unrefs)
+        daemon_log(0, "\t%s:%u %u\n", ref.file, ref.line, ref.count);
 #endif
 }
 #endif
@@ -712,7 +684,7 @@ pool_ref_impl(struct pool *pool TRACE_ARGS_DECL)
 #endif
 
 #ifdef DEBUG_POOL_REF
-    pool_increment_ref(pool, &pool->refs TRACE_ARGS_FWD);
+    pool_increment_ref(pool, pool->refs TRACE_ARGS_FWD);
 #endif
 }
 
@@ -727,7 +699,7 @@ pool_unref_impl(struct pool *pool TRACE_ARGS_DECL)
 #endif
 
 #ifdef DEBUG_POOL_REF
-    pool_increment_ref(pool, &pool->unrefs TRACE_ARGS_FWD);
+    pool_increment_ref(pool, pool->unrefs TRACE_ARGS_FWD);
 #endif
 
     if (unlikely(pool->ref == 0)) {
