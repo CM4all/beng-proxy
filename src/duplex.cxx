@@ -10,9 +10,9 @@
 #include "duplex.hxx"
 #include "event/SocketEvent.hxx"
 #include "event/DeferEvent.hxx"
+#include "net/UniqueSocketDescriptor.hxx"
 #include "net/Buffered.hxx"
 #include "io/Buffered.hxx"
-#include "io/UniqueFileDescriptor.hxx"
 #include "pool.hxx"
 #include "fb_pool.hxx"
 #include "SliceFifoBuffer.hxx"
@@ -240,9 +240,9 @@ duplex_new(EventLoop &event_loop, struct pool *pool, int read_fd, int write_fd)
     assert(read_fd >= 0);
     assert(write_fd >= 0);
 
-    UniqueFileDescriptor result_fd, duplex_fd;
-    if (!UniqueFileDescriptor::CreateSocketPairNonBlock(AF_LOCAL, SOCK_STREAM, 0,
-                                                        result_fd, duplex_fd))
+    UniqueSocketDescriptor result_fd, duplex_fd;
+    if (!UniqueSocketDescriptor::CreateSocketPairNonBlock(AF_LOCAL, SOCK_STREAM, 0,
+                                                          result_fd, duplex_fd))
         return -1;
 
     NewFromPool<Duplex>(*pool, event_loop, read_fd, write_fd,
