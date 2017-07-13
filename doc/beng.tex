@@ -2224,6 +2224,10 @@ namespaces and thus gaining a full set of capabilities.  This is
 useful because there have been lots of namespace-related
 vulnerabilities in the kernel.
 
+\verb|FORBID_MULTICAST| forbids the child process to add multicast
+group memberships.  This is useful because it disallows snooping on
+the host's multicast traffic.
+
 \verb|STDERR_PATH| specifies an absolute path that will be created.
 The child's error messages will be appended there.  \verb|STDERR_NULL|
 redirects standard error to \texttt{/dev/null} instead.
