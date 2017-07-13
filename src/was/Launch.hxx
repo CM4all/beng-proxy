@@ -8,6 +8,7 @@
 #define BENG_PROXY_WAS_LAUNCH_HXX
 
 #include "io/UniqueFileDescriptor.hxx"
+#include "net/UniqueSocketDescriptor.hxx"
 
 class SpawnService;
 class ExitListener;
@@ -16,7 +17,8 @@ template<typename T> struct ConstBuffer;
 
 struct WasProcess {
     int pid;
-    UniqueFileDescriptor control, input, output;
+    UniqueSocketDescriptor control;
+    UniqueFileDescriptor input, output;
 
     void Close() {
         control.Close();

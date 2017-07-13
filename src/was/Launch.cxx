@@ -28,9 +28,9 @@ was_launch(SpawnService &spawn_service,
 
     PreparedChildProcess p;
 
-    UniqueFileDescriptor control_fd;
-    if (!UniqueFileDescriptor::CreateSocketPair(AF_LOCAL, SOCK_STREAM, 0,
-                                                control_fd, process.control))
+    UniqueSocketDescriptor control_fd;
+    if (!UniqueSocketDescriptor::CreateSocketPair(AF_LOCAL, SOCK_STREAM, 0,
+                                                  control_fd, process.control))
         throw MakeErrno("Failed to create socket pair");
 
     p.SetControl(std::move(control_fd));
