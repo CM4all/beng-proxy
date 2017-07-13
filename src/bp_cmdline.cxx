@@ -385,7 +385,7 @@ ParseCommandLine(BpCmdLine &cmdline, BpConfig &config, int argc, char **argv)
             break;
 
         case 'm':
-            config.multicast_group = optarg;
+            config.multicast_group = ParseSocketAddress(optarg, 0, false);
             break;
 
         case 'w':

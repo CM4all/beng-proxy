@@ -56,7 +56,7 @@ struct BpConfig {
 
     std::forward_list<ControlListener> control_listen;
 
-    const char *multicast_group = nullptr;
+    AllocatedSocketAddress multicast_group;
 
     const char *document_root = "/var/www";
 

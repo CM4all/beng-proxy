@@ -28,7 +28,6 @@
 #include <memory>
 
 #include <assert.h>
-#include <arpa/inet.h>
 #include <string.h>
 
 static bool
@@ -258,20 +257,14 @@ global_control_handler_init(BpInstance *instance)
     if (instance->config.control_listen.empty())
         return;
 
-    IPv4Address group_buffer;
-    SocketAddress group = nullptr;
-    if (instance->config.multicast_group != NULL) {
-        group_buffer = {{inet_addr(instance->config.multicast_group)}, 0};
-        group = group_buffer;
-    }
-
     instance->control_distribute = new ControlDistribute(instance->event_loop,
                                                          *instance);
 
     for (const auto &control_listen : instance->config.control_listen) {
         instance->control_servers.emplace_front(*instance->control_distribute);
         auto &new_server = instance->control_servers.front();
-        new_server.Open(instance->event_loop, control_listen.address, group);
+        new_server.Open(instance->event_loop, control_listen.address,
+                        instance->config.multicast_group);
     }
 }
 
