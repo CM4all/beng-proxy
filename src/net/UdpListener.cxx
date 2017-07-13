@@ -7,7 +7,6 @@
 #include "UdpListener.hxx"
 #include "UdpHandler.hxx"
 #include "net/AllocatedSocketAddress.hxx"
-#include "net/IPv4Address.hxx"
 #include "net/ToString.hxx"
 #include "system/fd_util.h"
 #include "system/Error.hxx"
@@ -152,13 +151,6 @@ void
 UdpListener::AddMembership(SocketAddress address)
 {
     if (!fd.AddMembership(address))
-        throw MakeErrno("Failed to join multicast group");
-}
-
-void
-UdpListener::Join4(const struct in_addr *group)
-{
-    if (!fd.AddMembership(IPv4Address(*group, 0)))
         throw MakeErrno("Failed to join multicast group");
 }
 

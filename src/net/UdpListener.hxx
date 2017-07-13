@@ -12,7 +12,6 @@
 
 #include <stddef.h>
 
-struct in_addr;
 class SocketAddress;
 class UdpHandler;
 
@@ -55,11 +54,6 @@ public:
      * Joins the specified multicast group.
      */
     void AddMembership(SocketAddress address);
-
-    /**
-     * Joins the specified multicast group.
-     */
-    void Join4(const struct in_addr *group);
 
     /**
      * Send a reply datagram to a client.
