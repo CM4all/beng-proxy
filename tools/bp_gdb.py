@@ -258,7 +258,7 @@ class DumpPoolRefs(gdb.Command):
     def _dump_refs(self, pool, label, head):
         print "pool '%s' %s:" % (pool['name'].string(), label)
 
-        ref_pointer = gdb.lookup_type('struct pool_ref').pointer()
+        ref_pointer = gdb.lookup_type('PoolRef').pointer()
         for r in for_each_list_item_reverse(head, ref_pointer):
             print '%4u %s:%u' % (r['count'], r['file'].string().replace('../', ''), r['line'])
 

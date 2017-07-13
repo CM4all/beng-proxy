@@ -103,7 +103,7 @@ static const size_t LINEAR_POOL_AREA_HEADER =
     offsetof(struct linear_pool_area, data);
 
 #ifdef DEBUG_POOL_REF
-struct pool_ref {
+struct PoolRef {
     struct list_head list_head;
 
 #ifdef TRACE
@@ -650,11 +650,11 @@ static void
 pool_increment_ref(gcc_unused struct pool *pool,
                    struct list_head *list TRACE_ARGS_DECL)
 {
-    struct pool_ref *ref;
+    PoolRef *ref;
 
-    for (ref = (struct pool_ref *)list->next;
+    for (ref = (PoolRef *)list->next;
          &ref->list_head != list;
-         ref = (struct pool_ref *)ref->list_head.next) {
+         ref = (PoolRef *)ref->list_head.next) {
         assert(ref->list_head.next->prev == &ref->list_head);
         assert(ref->list_head.prev->next == &ref->list_head);
 
@@ -666,7 +666,7 @@ pool_increment_ref(gcc_unused struct pool *pool,
 #endif
     }
 
-    ref = (struct pool_ref *)xmalloc(sizeof(*ref));
+    ref = (PoolRef *)xmalloc(sizeof(*ref));
 
 #ifdef TRACE
     ref->file = file;
@@ -686,16 +686,16 @@ pool_dump_refs(struct pool *pool)
                (const void*)pool, pool->ref);
 
 #ifdef TRACE
-    const struct pool_ref *ref;
-    for (ref = (const struct pool_ref *)pool->refs.next;
+    const PoolRef *ref;
+    for (ref = (const PoolRef *)pool->refs.next;
          &ref->list_head != &pool->refs;
-         ref = (const struct pool_ref *)ref->list_head.next) {
+         ref = (const PoolRef *)ref->list_head.next) {
         daemon_log(0, "\t%s:%u %u\n", ref->file, ref->line, ref->count);
     }
     daemon_log(0, "    UNREF:\n");
-    for (ref = (const struct pool_ref *)pool->unrefs.next;
+    for (ref = (const PoolRef *)pool->unrefs.next;
          &ref->list_head != &pool->unrefs;
-         ref = (const struct pool_ref *)ref->list_head.next) {
+         ref = (const PoolRef *)ref->list_head.next) {
         daemon_log(0, "\t%s:%u %u\n", ref->file, ref->line, ref->count);
     }
 #endif
