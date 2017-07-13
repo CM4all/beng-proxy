@@ -2845,6 +2845,29 @@ used to join a multicast group.
 These two programs are useful in conjunction, to store logs on a
 central server.
 
+\subsubsection{Multicast example}
+
+Multicast can be used to send access logs to one or multiple loggers
+at the same time, without having to configure them manually.  If the
+senders and the receivers are on the same network, this usually works
+without extra configuration.
+
+First, you need to choose a multicast group address.  Usually, you
+should pick an address from the link-local network, which is
+\texttt{ff02::/16} for IPv6.
+
+This example launches a receiver:
+
+\begin{verbatim*}
+cm4all-beng-proxy-log-exec --multicast-group ff02::dead:beef :: \
+  cm4all-beng-proxy-log-cat
+\end{verbatim*}
+
+The following \emph{beng-proxy} command-line option will send its
+access log to all listening loggers: \texttt{--access-logger
+  './build/cm4all-beng-proxy-log-forward ff02::beef'}
+
+
 \subsubsection{\texttt{log-tee}}
 
 \texttt{log-tee} launches multiple child loggers given on the command
