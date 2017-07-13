@@ -2842,6 +2842,15 @@ than one).
 cm4all-beng-proxy-log-forward 192.168.1.133
 \end{verbatim}
 
+IPv6 addresses may come with a scope id, either numeric or the
+interface name, which is useful/necessary for link-local or multicast
+addresses:
+
+\begin{verbatim}
+cm4all-beng-proxy-log-forward fe80::42%1
+cm4all-beng-proxy-log-forward fe80::42%eth0
+\end{verbatim}
+
 \texttt{log-exec} listens on a UDP port, and launches the real logger
 bound to it:
 
