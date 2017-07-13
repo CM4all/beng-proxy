@@ -112,6 +112,7 @@ UdpListener::EventCallback(unsigned)
 UdpListener *
 udp_listener_new(EventLoop &event_loop,
                  SocketAddress address,
+                 SocketAddress group_address,
                  UdpHandler &handler)
 {
     UniqueSocketDescriptor fd;
@@ -144,14 +145,10 @@ udp_listener_new(EventLoop &event_loop,
         throw FormatErrno(e, "Failed to bind to %s", address_string);
     }
 
-    return new UdpListener(event_loop, std::move(fd), handler);
-}
-
-void
-UdpListener::AddMembership(SocketAddress address)
-{
-    if (!fd.AddMembership(address))
+    if (!group_address.IsNull() && !fd.AddMembership(group_address))
         throw MakeErrno("Failed to join multicast group");
+
+    return new UdpListener(event_loop, std::move(fd), handler);
 }
 
 void

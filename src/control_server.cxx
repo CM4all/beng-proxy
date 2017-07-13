@@ -102,10 +102,7 @@ ControlServer::Open(EventLoop &event_loop,
 {
     assert(udp == nullptr);
 
-    udp = udp_listener_new(event_loop, address, *this);
-
-    if (!group.IsNull())
-        udp->AddMembership(group);
+    udp = udp_listener_new(event_loop, address, group, *this);
 }
 
 ControlServer::~ControlServer()

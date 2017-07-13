@@ -51,11 +51,6 @@ public:
     void SetFd(UniqueSocketDescriptor &&_fd);
 
     /**
-     * Joins the specified multicast group.
-     */
-    void AddMembership(SocketAddress address);
-
-    /**
      * Send a reply datagram to a client.
      *
      * Throws std::runtime_error on error.
@@ -70,6 +65,7 @@ private:
 UdpListener *
 udp_listener_new(EventLoop &event_loop,
                  SocketAddress address,
+                 SocketAddress group_address,
                  UdpHandler &handler);
 
 #endif

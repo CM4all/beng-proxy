@@ -46,13 +46,12 @@ try {
         ? ParseSocketAddress(mcast_group, 0, false)
         : AllocatedSocketAddress();
 
-    auto *udp = udp_listener_new(event_loop, bind_address, handler);
-
-    if (!group_address.IsNull())
-        udp->AddMembership(group_address);
+    auto *udp = udp_listener_new(event_loop, bind_address,
+                                 group_address, handler);
 
     event_loop.Dispatch();
 
+    delete udp;
     return 0;
 } catch (const std::exception &e) {
     PrintException(e);
