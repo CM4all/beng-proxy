@@ -10,6 +10,7 @@
 #include "http_response.hxx"
 #include "system/SetupProcess.hxx"
 #include "io/FileDescriptor.hxx"
+#include "net/SocketDescriptor.hxx"
 #include "lease.hxx"
 #include "direct.hxx"
 #include "istream/istream.hxx"
@@ -90,7 +91,8 @@ RunMirror(WasServer &server, gcc_unused struct pool &pool,
 class WasConnection final : WasServerHandler, WasLease {
     EventLoop &event_loop;
 
-    FileDescriptor control_fd, input_fd, output_fd;
+    SocketDescriptor control_fd;
+    FileDescriptor input_fd, output_fd;
 
     WasServer *server;
 
@@ -119,10 +121,10 @@ public:
             exit(EXIT_FAILURE);
         }
 
-        FileDescriptor control_server;
-        if (!FileDescriptor::CreateSocketPairNonBlock(AF_LOCAL, SOCK_STREAM, 0,
-                                                      control_fd,
-                                                      control_server)) {
+        SocketDescriptor control_server;
+        if (!SocketDescriptor::CreateSocketPairNonBlock(AF_LOCAL, SOCK_STREAM, 0,
+                                                        control_fd,
+                                                        control_server)) {
             perror("socketpair");
             exit(EXIT_FAILURE);
         }

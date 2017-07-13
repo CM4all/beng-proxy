@@ -26,9 +26,9 @@
 static SocketDescriptor
 connect_fake_server()
 {
-    FileDescriptor client_socket, server_socket;
-    if (!FileDescriptor::CreateSocketPair(AF_LOCAL, SOCK_STREAM, 0,
-                                          client_socket, server_socket)) {
+    SocketDescriptor client_socket, server_socket;
+    if (!SocketDescriptor::CreateSocketPair(AF_LOCAL, SOCK_STREAM, 0,
+                                            client_socket, server_socket)) {
         perror("socketpair() failed");
         exit(EXIT_FAILURE);
     }
@@ -51,7 +51,7 @@ connect_fake_server()
 
     server_socket.Close();
     client_socket.SetNonBlocking();
-    return SocketDescriptor::FromFileDescriptor(client_socket);
+    return client_socket;
 }
 
 struct Context final : PInstance, Lease, IstreamHandler {

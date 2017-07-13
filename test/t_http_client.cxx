@@ -102,9 +102,9 @@ Connection::~Connection()
 Connection *
 Connection::New(EventLoop &event_loop, const char *path, const char *mode)
 {
-    FileDescriptor client_socket, server_socket;
-    if (!FileDescriptor::CreateSocketPair(AF_LOCAL, SOCK_STREAM, 0,
-                                          client_socket, server_socket)) {
+    SocketDescriptor client_socket, server_socket;
+    if (!SocketDescriptor::CreateSocketPair(AF_LOCAL, SOCK_STREAM, 0,
+                                            client_socket, server_socket)) {
         perror("socketpair() failed");
         exit(EXIT_FAILURE);
     }
@@ -136,16 +136,15 @@ Connection::New(EventLoop &event_loop, const char *path, const char *mode)
 
     server_socket.Close();
     client_socket.SetNonBlocking();
-    return new Connection(event_loop, pid,
-                          SocketDescriptor::FromFileDescriptor(client_socket));
+    return new Connection(event_loop, pid, client_socket);
 }
 
 Connection *
 Connection::NewClose100(struct pool &, EventLoop &event_loop)
 {
-    FileDescriptor client_socket, server_socket;
-    if (!FileDescriptor::CreateSocketPair(AF_LOCAL, SOCK_STREAM, 0,
-                                          client_socket, server_socket)) {
+    SocketDescriptor client_socket, server_socket;
+    if (!SocketDescriptor::CreateSocketPair(AF_LOCAL, SOCK_STREAM, 0,
+                                            client_socket, server_socket)) {
         perror("socketpair() failed");
         exit(EXIT_FAILURE);
     }
@@ -171,8 +170,7 @@ Connection::NewClose100(struct pool &, EventLoop &event_loop)
 
     server_socket.Close();
     client_socket.SetNonBlocking();
-    return new Connection(event_loop, pid,
-                          SocketDescriptor::FromFileDescriptor(client_socket));
+    return new Connection(event_loop, pid, client_socket);
 }
 
 /**

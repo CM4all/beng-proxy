@@ -296,9 +296,9 @@ struct Connection {
 Connection *
 Connection::New(EventLoop &event_loop, void (*f)(struct pool *pool))
 {
-    FileDescriptor server_socket, client_socket;
-    if (!FileDescriptor::CreateSocketPair(AF_LOCAL, SOCK_STREAM, 0,
-                                          server_socket, client_socket)) {
+    SocketDescriptor server_socket, client_socket;
+    if (!SocketDescriptor::CreateSocketPair(AF_LOCAL, SOCK_STREAM, 0,
+                                            server_socket, client_socket)) {
         perror("socketpair() failed");
         exit(EXIT_FAILURE);
     }
@@ -324,8 +324,7 @@ Connection::New(EventLoop &event_loop, void (*f)(struct pool *pool))
 
     server_socket.Close();
     client_socket.SetNonBlocking();
-    return new Connection(event_loop, pid,
-                          SocketDescriptor::FromFileDescriptor(client_socket));
+    return new Connection(event_loop, pid, client_socket);
 }
 
 Connection::~Connection()

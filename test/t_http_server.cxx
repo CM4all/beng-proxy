@@ -84,9 +84,9 @@ Instance::HttpConnectionClosed()
 static void
 test_catch(EventLoop &event_loop, struct pool *_pool)
 {
-    FileDescriptor client_socket, server_socket;
-    if (!FileDescriptor::CreateSocketPair(AF_LOCAL, SOCK_STREAM, 0,
-                                          client_socket, server_socket)) {
+    SocketDescriptor client_socket, server_socket;
+    if (!SocketDescriptor::CreateSocketPair(AF_LOCAL, SOCK_STREAM, 0,
+                                            client_socket, server_socket)) {
         perror("socketpair() failed");
         exit(EXIT_FAILURE);
     }
@@ -98,8 +98,7 @@ test_catch(EventLoop &event_loop, struct pool *_pool)
     Instance instance(*_pool);
     instance.connection =
         http_server_connection_new(instance.pool, event_loop,
-                                   SocketDescriptor::FromFileDescriptor(server_socket),
-                                   FdType::FD_SOCKET,
+                                   server_socket, FdType::FD_SOCKET,
                                    nullptr, nullptr,
                                    nullptr, nullptr,
                                    true, instance);
