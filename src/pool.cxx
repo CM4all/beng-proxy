@@ -606,15 +606,15 @@ pool_destroy(struct pool *pool, gcc_unused struct pool *parent,
 
 #ifdef DEBUG_POOL_REF
     while (!list_empty(&pool->refs)) {
-        struct list_head *next = pool->refs.next;
-        list_remove(next);
-        free(next);
+        auto *next = (PoolRef *)pool->refs.next;
+        list_remove(&next->list_head);
+        delete next;
     }
 
     while (!list_empty(&pool->unrefs)) {
-        struct list_head *next = pool->unrefs.next;
-        list_remove(next);
-        free(next);
+        auto *next = (PoolRef *)pool->unrefs.next;
+        list_remove(&next->list_head);
+        delete next;
     }
 #endif
 
@@ -666,7 +666,7 @@ pool_increment_ref(gcc_unused struct pool *pool,
 #endif
     }
 
-    ref = (PoolRef *)xmalloc(sizeof(*ref));
+    ref = new PoolRef;
 
 #ifdef TRACE
     ref->file = file;
