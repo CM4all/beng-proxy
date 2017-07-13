@@ -111,7 +111,7 @@ struct PoolRef {
     unsigned line;
 #endif
 
-    unsigned count;
+    unsigned count = 1;
 };
 #endif
 
@@ -673,7 +673,6 @@ pool_increment_ref(gcc_unused struct pool *pool,
     ref->line = line;
 #endif
 
-    ref->count = 1;
     list_add(&ref->list_head, list);
 }
 #endif
