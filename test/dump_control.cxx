@@ -1,6 +1,6 @@
 #include "control_server.hxx"
-#include "net/SocketAddress.hxx"
-#include "net/IPv4Address.hxx"
+#include "net/AllocatedSocketAddress.hxx"
+#include "net/Parser.hxx"
 #include "event/Loop.hxx"
 #include "system/SetupProcess.hxx"
 #include "util/PrintException.hxx"
@@ -9,8 +9,6 @@
 #include <daemon/log.h>
 
 #include <stdio.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
 
 class DumpControlHandler final : public ControlHandler {
 public:
@@ -42,15 +40,15 @@ try {
 
     EventLoop event_loop;
 
-    struct in_addr mcast_group_addr;
-    if (mcast_group != NULL)
-        mcast_group_addr.s_addr = inet_addr(mcast_group);
+    const auto bind_address = ParseSocketAddress(listen_host, 1234, true);
+    const auto group_address = mcast_group != nullptr
+        ? ParseSocketAddress(mcast_group, 0, false)
+        : AllocatedSocketAddress();
 
     DumpControlHandler handler;
 
     ControlServer cs(handler);
-    cs.OpenPort(event_loop, listen_host, 1234,
-                mcast_group != nullptr ? SocketAddress(IPv4Address(mcast_group_addr, 0)) : nullptr);
+    cs.Open(event_loop, bind_address, group_address);
 
     event_loop.Dispatch();
 

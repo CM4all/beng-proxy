@@ -1,15 +1,14 @@
 #include "system/SetupProcess.hxx"
 #include "net/UdpListener.hxx"
 #include "net/UdpHandler.hxx"
-#include "net/SocketAddress.hxx"
+#include "net/AllocatedSocketAddress.hxx"
+#include "net/Parser.hxx"
 #include "event/Loop.hxx"
 #include "util/PrintException.hxx"
 
 #include <daemon/log.h>
 
 #include <stdio.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
 
 class DumpUdpHandler final : public UdpHandler {
 public:
@@ -42,15 +41,15 @@ try {
 
     DumpUdpHandler handler;
 
-    auto *udp = udp_listener_port_new(event_loop, listen_host, 1234, handler);
+    const auto bind_address = ParseSocketAddress(listen_host, 1234, true);
+    const auto group_address = mcast_group != nullptr
+        ? ParseSocketAddress(mcast_group, 0, false)
+        : AllocatedSocketAddress();
 
-    if (mcast_group != nullptr) {
-        struct in_addr addr = {
-            .s_addr = inet_addr(mcast_group),
-        };
+    auto *udp = udp_listener_new(event_loop, bind_address, handler);
 
-        udp->Join4(&addr);
-    }
+    if (!group_address.IsNull())
+        udp->AddMembership(group_address);
 
     event_loop.Dispatch();
 
