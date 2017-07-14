@@ -7,6 +7,7 @@
 #include "pool.hxx"
 #include "SlicePool.hxx"
 #include "AllocatorStats.hxx"
+#include "util/Recycler.hxx"
 
 #include <inline/poison.h>
 #include <inline/list.h>
@@ -182,8 +183,8 @@ static LIST_HEAD(trash);
 #endif
 
 static struct {
-    unsigned num_pools;
-    struct pool *pools;
+    Recycler<struct pool, RECYCLER_MAX_POOLS> pools;
+
     unsigned num_linear_areas;
     struct linear_pool_area *linear_areas;
 } recycler;
@@ -217,13 +218,7 @@ get_linear_allocation_info(void *p)
 void
 pool_recycler_clear(void)
 {
-    while (recycler.pools != nullptr) {
-        struct pool *pool = recycler.pools;
-        recycler.pools = pool->current_area.recycler;
-        free(pool);
-    }
-
-    recycler.num_pools = 0;
+    recycler.pools.Clear();
 
     while (recycler.linear_areas != nullptr) {
         struct linear_pool_area *linear = recycler.linear_areas;
@@ -232,15 +227,6 @@ pool_recycler_clear(void)
     }
 
     recycler.num_linear_areas = 0;
-}
-
-static void
-pool_recycler_put(struct pool *pool)
-{
-    poison_undefined(pool, sizeof(*pool));
-    pool->current_area.recycler = recycler.pools;
-    recycler.pools = pool;
-    ++recycler.num_pools;
 }
 
 /**
@@ -338,22 +324,10 @@ pool_remove_child(gcc_unused struct pool *pool, struct pool *child)
     child->parent = nullptr;
 }
 
-static void *
-AllocatePool()
-{
-    if (recycler.pools != nullptr) {
-        auto *pool = recycler.pools;
-        recycler.pools = pool->current_area.recycler;
-        --recycler.num_pools;
-        return pool;
-    } else
-        return xmalloc(sizeof(struct pool));
-}
-
 static struct pool *gcc_malloc
 pool_new(struct pool *parent, const char *name)
 {
-    auto *pool = new(AllocatePool()) struct pool(name);
+    auto *pool = recycler.pools.Get(name);
 
 #ifndef NDEBUG
     pool->major = parent == nullptr;
@@ -625,10 +599,7 @@ pool_destroy(struct pool *pool, gcc_unused struct pool *parent,
         break;
     }
 
-    if (recycler.num_pools < RECYCLER_MAX_POOLS)
-        pool_recycler_put(pool);
-    else
-        free(pool);
+    recycler.pools.Put(pool);
 }
 
 #ifdef DEBUG_POOL_REF
