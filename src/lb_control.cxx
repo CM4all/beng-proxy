@@ -265,7 +265,8 @@ LbControl::Open(const LbControlConfig &config)
     assert(server == nullptr);
 
     std::unique_ptr<ControlServer> new_server(new ControlServer(*this));
-    new_server->Open(instance.event_loop, config.bind_address, nullptr);
+    new_server->Open(instance.event_loop, config.bind_address,
+                     config.multicast_group);
     server = std::move(new_server);
 }
 

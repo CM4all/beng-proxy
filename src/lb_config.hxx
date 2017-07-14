@@ -12,14 +12,14 @@
 #include "lb/ClusterConfig.hxx"
 #include "lb/MonitorConfig.hxx"
 #include "net/AllocatedSocketAddress.hxx"
+#include "net/UdpListenerConfig.hxx"
 #include "certdb/Config.hxx"
 
 #include <map>
 #include <list>
 #include <string>
 
-struct LbControlConfig {
-    AllocatedSocketAddress bind_address;
+struct LbControlConfig : UdpListenerConfig {
 };
 
 struct LbCertDatabaseConfig : CertDatabaseConfig {
