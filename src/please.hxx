@@ -18,7 +18,7 @@ p_lease_ref_set(struct lease_ref &lease_ref,
                 Lease &lease,
                 struct pool &pool, const char *name)
 {
-    assert(pool_contains(&pool, &lease_ref, sizeof(lease_ref)));
+    assert(pool_contains(pool, &lease_ref, sizeof(lease_ref)));
     assert(name != nullptr);
 
     pool_attach_checked(&pool, &lease, name);

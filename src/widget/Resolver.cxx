@@ -213,7 +213,7 @@ ResolveWidget(struct pool &pool,
     bool is_new = false;
 
     assert(widget.class_name != nullptr);
-    assert(pool_contains(&widget.pool, &widget, sizeof(widget)));
+    assert(pool_contains(widget.pool, &widget, sizeof(widget)));
 
     if (widget.cls != nullptr) {
         /* already resolved successfully */
@@ -234,7 +234,7 @@ ResolveWidget(struct pool &pool,
         return;
     }
 
-    assert(pool_contains(&widget.pool, widget.resolver,
+    assert(pool_contains(widget.pool, widget.resolver,
                          sizeof(*widget.resolver)));
 
     /* add a new listener to the resolver */

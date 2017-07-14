@@ -491,21 +491,21 @@ pool_set_major(struct pool *pool)
 
 #ifdef DUMP_POOL_ALLOC_ALL
 static void
-pool_dump_allocations(struct pool *pool);
+pool_dump_allocations(const struct pool &pool);
 #endif
 
 static void
-pool_check_attachments(struct pool *pool)
+pool_check_attachments(const struct pool &pool)
 {
 #ifdef NDEBUG
     (void)pool;
 #else
-    if (pool->attachments.empty())
+    if (pool.attachments.empty())
         return;
 
-    daemon_log(1, "pool '%s' has attachments left:\n", pool->name);
+    daemon_log(1, "pool '%s' has attachments left:\n", pool.name);
 
-    for (const auto &attachment : pool->attachments)
+    for (const auto &attachment : pool.attachments)
         daemon_log(1, "\tname='%s' value=%p\n",
                    attachment.name, attachment.value);
 
@@ -525,10 +525,10 @@ pool_destroy(struct pool *pool, gcc_unused struct pool *parent,
 #endif
 
 #ifdef DUMP_POOL_ALLOC_ALL
-    pool_dump_allocations(pool);
+    pool_dump_allocations(*pool);
 #endif
 
-    pool_check_attachments(pool);
+    pool_check_attachments(*pool);
 
 #ifndef NDEBUG
     pool->notify.clear_and_dispose([=](struct pool_notify_state *notify){
@@ -628,17 +628,17 @@ pool_increment_ref(gcc_unused struct pool *pool,
 
 #ifdef DEBUG_POOL_REF
 static void
-pool_dump_refs(struct pool *pool)
+pool_dump_refs(const struct pool &pool)
 {
-    daemon_log(0, "pool '%s'[%p](%u) REF:\n", pool->name,
-               (const void*)pool, pool->ref);
+    daemon_log(0, "pool '%s'[%p](%u) REF:\n", pool.name,
+               (const void *)&pool, pool.ref);
 
 #ifdef TRACE
-    for (auto &ref : pool->refs)
+    for (auto &ref : pool.refs)
         daemon_log(0, "\t%s:%u %u\n", ref.file, ref.line, ref.count);
 
     daemon_log(0, "    UNREF:\n");
-    for (auto &ref : pool->unrefs)
+    for (auto &ref : pool.unrefs)
         daemon_log(0, "\t%s:%u %u\n", ref.file, ref.line, ref.count);
 #endif
 }
@@ -683,7 +683,7 @@ pool_unref_impl(struct pool *pool TRACE_ARGS_DECL)
         if (parent != nullptr)
             pool_remove_child(parent, pool);
 #ifdef DUMP_POOL_UNREF
-        pool_dump_refs(pool);
+        pool_dump_refs(*pool);
 #endif
         pool_destroy(pool, parent, reparent_to TRACE_ARGS_FWD);
         return 0;
@@ -788,23 +788,23 @@ pool_type_string(enum pool_type type)
 }
 
 static void
-pool_dump_node(int indent, const struct pool *pool)
+pool_dump_node(int indent, const struct pool &pool)
 {
     daemon_log(2, "%*spool '%s' type=%s ref=%u size=%zu p=%p\n",
                indent, "",
-               pool->name, pool_type_string(pool->type),
-               pool->ref, pool->netto_size,
-               (const void *)pool);
+               pool.name, pool_type_string(pool.type),
+               pool.ref, pool.netto_size,
+               (const void *)&pool);
 
     indent += 2;
-    for (struct pool *child = (struct pool *)pool->children.next;
-         &child->siblings != &pool->children;
-         child = (struct pool *)child->siblings.next)
-        pool_dump_node(indent, child);
+    for (auto *child = (const struct pool *)pool.children.next;
+         &child->siblings != &pool.children;
+         child = (const struct pool *)child->siblings.next)
+        pool_dump_node(indent, *child);
 }
 
 void
-pool_dump_tree(const struct pool *pool)
+pool_dump_tree(const struct pool &pool)
 {
     pool_dump_node(0, pool);
 }
@@ -907,7 +907,7 @@ pool_commit(void)
          &pool->siblings != &trash;
          pool = (struct pool *)pool->siblings.next) {
 #ifdef DEBUG_POOL_REF
-        pool_dump_refs(pool);
+        pool_dump_refs(*pool);
 #else
         daemon_log(0, "- '%s'(%u)\n", pool->name, pool->ref);
 #endif
@@ -927,16 +927,15 @@ linear_pool_area_contains(const struct linear_pool_area *area,
 }
 
 bool
-pool_contains(struct pool *pool, const void *ptr, size_t size)
+pool_contains(const struct pool &pool, const void *ptr, size_t size)
 {
-    assert(pool != nullptr);
     assert(ptr != nullptr);
     assert(size > 0);
 
-    if (pool->type != POOL_LINEAR)
+    if (pool.type != POOL_LINEAR)
         return true;
 
-    for (const struct linear_pool_area *area = pool->current_area.linear;
+    for (const struct linear_pool_area *area = pool.current_area.linear;
          area != nullptr; area = area->prev)
         if (linear_pool_area_contains(area, ptr, size))
             return true;
@@ -1093,7 +1092,7 @@ p_malloc_libc(struct pool *pool, size_t size TRACE_ARGS_DECL)
 
 #ifdef DUMP_POOL_ALLOC
 static void
-pool_dump_allocations(struct pool *pool)
+pool_dump_allocations(const struct pool &pool)
 {
     size_t sum = 0;
     for (struct allocation_info *info = (struct allocation_info *)pool->allocations.prev;
@@ -1221,7 +1220,7 @@ p_free(struct pool *pool, const void *cptr)
     assert(pool != nullptr);
     assert(ptr != nullptr);
     assert((((unsigned long)ptr) & ALIGN_MASK) == 0);
-    assert(pool_contains(pool, ptr, 1));
+    assert(pool_contains(*pool, ptr, 1));
 
     if (pool->type == POOL_LIBC)
         p_free_libc(pool, ptr);

@@ -161,7 +161,7 @@ AllocatorStats
 pool_children_stats(const struct pool &pool);
 
 void
-pool_dump_tree(const struct pool *pool);
+pool_dump_tree(const struct pool &pool);
 
 #ifndef NDEBUG
 #include <boost/intrusive/list.hpp>
@@ -362,7 +362,7 @@ void
 pool_commit();
 
 bool
-pool_contains(struct pool *pool, const void *ptr, size_t size);
+pool_contains(const struct pool &pool, const void *ptr, size_t size);
 
 /**
  * Attach an opaque object to the pool.  It must be detached before
