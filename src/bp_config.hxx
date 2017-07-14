@@ -8,6 +8,7 @@
 #define BENG_PROXY_CONFIG_HXX
 
 #include "net/ListenerConfig.hxx"
+#include "net/UdpListenerConfig.hxx"
 #include "net/AddressInfo.hxx"
 #include "util/StaticArray.hxx"
 #include "spawn/Config.hxx"
@@ -45,13 +46,15 @@ struct BpConfig {
 
     std::string session_save_path;
 
-    struct ControlListener {
-        AllocatedSocketAddress address;
+    struct ControlListener : UdpListenerConfig {
+        ControlListener() {
+            pass_cred = true;
+        }
 
-        ControlListener() = default;
-
-        explicit ControlListener(SocketAddress _address)
-            :address(_address) {}
+        explicit ControlListener(SocketAddress _bind_address)
+            :UdpListenerConfig(_bind_address) {
+            pass_cred = true;
+        }
     };
 
     std::forward_list<ControlListener> control_listen;

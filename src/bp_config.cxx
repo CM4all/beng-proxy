@@ -159,8 +159,8 @@ BpConfigParser::Control::ParseLine(FileLineParser &line)
     const char *word = line.ExpectWord();
 
     if (strcmp(word, "bind") == 0) {
-        config.address = ParseSocketAddress(line.ExpectValueAndEnd(),
-                                            5478, true);
+        config.bind_address = ParseSocketAddress(line.ExpectValueAndEnd(),
+                                                 5478, true);
     } else
         throw LineParser::Error("Unknown option");
 }
@@ -168,8 +168,14 @@ BpConfigParser::Control::ParseLine(FileLineParser &line)
 void
 BpConfigParser::Control::Finish()
 {
-    if (config.address.IsNull())
+    if (config.bind_address.IsNull())
         throw LineParser::Error("Bind address is missing");
+
+    if (config.multicast_group.IsNull() &&
+        !parent.config.multicast_group.IsNull())
+        /* default to the --multicast-group setting (for backwards
+           compatibility) */
+        config.multicast_group = parent.config.multicast_group;
 
     parent.config.control_listen.emplace_front(std::move(config));
 

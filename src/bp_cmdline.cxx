@@ -468,6 +468,13 @@ ParseCommandLine(BpCmdLine &cmdline, BpConfig &config, int argc, char **argv)
     if (optind < argc)
         arg_error(argv[0], "unrecognized argument: %s", argv[optind]);
 
+    /* copy the multicast_group to all command-line control listeners
+       (for backwards compatibility) */
+
+    if (!config.multicast_group.IsNull())
+        for (auto &i : config.control_listen)
+            i.multicast_group = config.multicast_group;
+
     /* check completeness */
 
     if (user_name != NULL) {
