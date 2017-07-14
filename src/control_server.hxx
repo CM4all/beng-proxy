@@ -19,11 +19,12 @@ class Error;
 class UdpListener;
 class EventLoop;
 
-struct ControlServer final : UdpHandler {
+class ControlServer final : UdpHandler {
     UdpListener *udp = nullptr;
 
     ControlHandler &handler;
 
+public:
     explicit ControlServer(ControlHandler &_handler)
         :handler(_handler) {}
 
@@ -49,6 +50,7 @@ struct ControlServer final : UdpHandler {
                enum beng_control_command command,
                const void *payload, size_t payload_length);
 
+private:
     /* virtual methods from class UdpHandler */
     void OnUdpDatagram(const void *data, size_t length,
                        SocketAddress address, int uid) override;

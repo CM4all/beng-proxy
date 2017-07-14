@@ -33,7 +33,7 @@ struct TcpBalancer;
 struct MemachedStock;
 class SpawnService;
 class ControlDistribute;
-struct ControlServer;
+class ControlServer;
 struct LocalControl;
 class SpawnServerClient;
 class TranslateStock;

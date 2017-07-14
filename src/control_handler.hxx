@@ -14,7 +14,7 @@
 #include <stddef.h>
 
 class SocketAddress;
-struct ControlServer;
+class ControlServer;
 
 class ControlHandler {
 public:

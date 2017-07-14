@@ -13,7 +13,7 @@
 
 #include <stddef.h>
 
-struct ControlServer;
+class ControlServer;
 class EventLoop;
 class SocketAddress;
 

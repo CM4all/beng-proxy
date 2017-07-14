@@ -13,7 +13,7 @@
 
 struct LbInstance;
 struct LbControlConfig;
-struct ControlServer;
+class ControlServer;
 
 struct LbControl final : ControlHandler {
     LbInstance &instance;

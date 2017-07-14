@@ -8,7 +8,7 @@
 #define BENG_PROXY_CONTROL_LOCAL_HXX
 
 struct LocalControl;
-struct ControlServer;
+class ControlServer;
 class ControlHandler;
 class EventLoop;
 class Error;
