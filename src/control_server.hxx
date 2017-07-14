@@ -10,6 +10,7 @@
 #include "beng-proxy/control.h"
 #include "control_handler.hxx"
 #include "net/UdpHandler.hxx"
+#include "net/UdpListener.hxx"
 
 #include <stddef.h>
 
@@ -23,22 +24,27 @@ struct UdpListenerConfig;
 class ControlServer final : UdpHandler {
     ControlHandler &handler;
 
-    UdpListener *const udp;
+    UdpListener udp;
 
 public:
     ControlServer(EventLoop &event_loop, ControlHandler &_handler,
                   const UdpListenerConfig &config);
 
-    ~ControlServer();
+    void Enable() {
+        udp.Enable();
+    }
 
-    void Enable();
-    void Disable();
+    void Disable() {
+        udp.Disable();
+    }
 
     /**
      * Replaces the socket.  The old one is closed, and the new one is
      * now owned by this object.
      */
-    void SetFd(UniqueSocketDescriptor &&fd);
+    void SetFd(UniqueSocketDescriptor &&fd) {
+        udp.SetFd(std::move(fd));
+    }
 
     /**
      * Throws std::runtime_error on error.

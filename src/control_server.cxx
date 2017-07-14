@@ -5,7 +5,6 @@
  */
 
 #include "control_server.hxx"
-#include "net/UdpListener.hxx"
 #include "net/UdpListenerConfig.hxx"
 #include "net/SocketAddress.hxx"
 #include "util/ByteOrder.hxx"
@@ -20,7 +19,7 @@
 ControlServer::ControlServer(EventLoop &event_loop, ControlHandler &_handler,
                              const UdpListenerConfig &config)
     :handler(_handler),
-     udp(new UdpListener(event_loop, config.Create(), *this))
+     udp(event_loop, config.Create(), *this)
 {
 }
 
@@ -103,36 +102,11 @@ ControlServer::OnUdpError(std::exception_ptr ep)
     handler.OnControlError(ep);
 }
 
-ControlServer::~ControlServer()
-{
-    delete udp;
-}
-
-void
-ControlServer::Enable()
-{
-    udp->Enable();
-}
-
-void
-ControlServer::Disable()
-{
-    udp->Disable();
-}
-
-void
-ControlServer::SetFd(UniqueSocketDescriptor &&fd)
-{
-    udp->SetFd(std::move(fd));
-}
-
 void
 ControlServer::Reply(SocketAddress address,
                      enum beng_control_command command,
                      const void *payload, size_t payload_length)
 {
-    assert(udp != nullptr);
-
     // TODO: use sendmsg() with iovec[2] instead of assembling a new buffer
     struct beng_control_header *header = (struct beng_control_header *)
         alloca(sizeof(*header) + payload_length);
@@ -143,5 +117,5 @@ ControlServer::Reply(SocketAddress address,
     header->command = ToBE16(command);
     memcpy(header + 1, payload, payload_length);
 
-    udp->Reply(address, header, sizeof(*header) + payload_length);
+    udp.Reply(address, header, sizeof(*header) + payload_length);
 }
