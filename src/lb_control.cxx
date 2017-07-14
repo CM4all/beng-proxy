@@ -264,9 +264,8 @@ LbControl::Open(const LbControlConfig &config)
 {
     assert(server == nullptr);
 
-    std::unique_ptr<ControlServer> new_server(new ControlServer(*this));
-    new_server->Open(instance.event_loop, config);
-    server = std::move(new_server);
+    server = std::make_unique<ControlServer>(instance.event_loop, *this,
+                                             config);
 }
 
 LbControl::~LbControl()

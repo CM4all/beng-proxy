@@ -17,6 +17,13 @@
 #include <string.h>
 #include <alloca.h>
 
+ControlServer::ControlServer(EventLoop &event_loop, ControlHandler &_handler,
+                             const UdpListenerConfig &config)
+    :handler(_handler),
+     udp(new UdpListener(event_loop, config.Create(), *this))
+{
+}
+
 static void
 control_server_decode(ControlServer &control_server,
                       const void *data, size_t length,
@@ -94,14 +101,6 @@ void
 ControlServer::OnUdpError(std::exception_ptr ep)
 {
     handler.OnControlError(ep);
-}
-
-void
-ControlServer::Open(EventLoop &event_loop, const UdpListenerConfig &config)
-{
-    assert(udp == nullptr);
-
-    udp = new UdpListener(event_loop, config.Create(), *this);
 }
 
 ControlServer::~ControlServer()

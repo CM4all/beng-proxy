@@ -110,9 +110,7 @@ control_local_open(LocalControl *cl, EventLoop &event_loop)
                                         SUN_LEN(&sa) + 1 + strlen(sa.sun_path + 1)),
     config.pass_cred = true;
 
-    std::unique_ptr<ControlServer> new_server(new ControlServer(*cl));
-    new_server->Open(event_loop, config);
-    cl->server = std::move(new_server);
+    cl->server = std::make_unique<ControlServer>(event_loop, *cl, config);
 }
 
 ControlServer *

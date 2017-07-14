@@ -21,18 +21,15 @@ class EventLoop;
 struct UdpListenerConfig;
 
 class ControlServer final : UdpHandler {
-    UdpListener *udp = nullptr;
-
     ControlHandler &handler;
 
+    UdpListener *const udp;
+
 public:
-    explicit ControlServer(ControlHandler &_handler)
-        :handler(_handler) {}
+    ControlServer(EventLoop &event_loop, ControlHandler &_handler,
+                  const UdpListenerConfig &config);
 
     ~ControlServer();
-
-    void Open(EventLoop &event_loop,
-              const UdpListenerConfig &config);
 
     void Enable();
     void Disable();

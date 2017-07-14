@@ -48,8 +48,7 @@ try {
 
     DumpControlHandler handler;
 
-    ControlServer cs(handler);
-    cs.Open(event_loop, config);
+    ControlServer cs(event_loop, handler, config);
 
     event_loop.Dispatch();
 

@@ -261,9 +261,9 @@ global_control_handler_init(BpInstance *instance)
                                                          *instance);
 
     for (const auto &control_listen : instance->config.control_listen) {
-        instance->control_servers.emplace_front(*instance->control_distribute);
-        auto &new_server = instance->control_servers.front();
-        new_server.Open(instance->event_loop, control_listen);
+        instance->control_servers.emplace_front(instance->event_loop,
+                                                *instance->control_distribute,
+                                                control_listen);
     }
 }
 
