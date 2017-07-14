@@ -296,6 +296,7 @@ net = static_library('net',
   'libcommon/src/net/SocketDescriptor.cxx',
   'libcommon/src/net/UniqueSocketDescriptor.cxx',
   'libcommon/src/net/Buffered.cxx',
+  'libcommon/src/net/UdpListenerConfig.cxx',
   include_directories: inc,
   dependencies: [
     libinline, libdaemon,

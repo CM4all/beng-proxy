@@ -7,7 +7,6 @@
 #include "UdpListener.hxx"
 #include "UdpHandler.hxx"
 #include "net/AllocatedSocketAddress.hxx"
-#include "net/ToString.hxx"
 #include "system/fd_util.h"
 #include "system/Error.hxx"
 
@@ -15,7 +14,6 @@
 #include <string.h>
 #include <errno.h>
 #include <sys/socket.h>
-#include <sys/un.h>
 #include <unistd.h>
 
 UdpListener::UdpListener(EventLoop &event_loop, UniqueSocketDescriptor &&_fd,
@@ -107,50 +105,6 @@ UdpListener::EventCallback(unsigned)
                           SocketAddress((struct sockaddr *)&sa,
                                         msg.msg_namelen),
                           uid);
-}
-
-UdpListener *
-udp_listener_new(EventLoop &event_loop,
-                 SocketAddress address,
-                 SocketAddress group_address,
-                 UdpHandler &handler)
-{
-    UniqueSocketDescriptor fd;
-    if (!fd.CreateNonBlock(address.GetFamily(), SOCK_DGRAM, 0))
-        throw MakeErrno("Failed to create socket");
-
-    if (address.GetFamily() == AF_UNIX) {
-        const struct sockaddr_un *sun = (const struct sockaddr_un *)
-            address.GetAddress();
-        if (sun->sun_path[0] != '\0')
-            /* delete non-abstract socket files before reusing them */
-            unlink(sun->sun_path);
-
-        /* we want to receive the client's UID */
-        fd.SetBoolOption(SOL_SOCKET, SO_PASSCRED, true);
-    }
-
-    /* set SO_REUSEADDR if we're using multicast; this option allows
-       multiple processes to join the same group on the same port */
-    if (!group_address.IsNull() && !fd.SetReuseAddress(true))
-        throw MakeErrno("Failed to set SO_REUSEADDR");
-
-    if (!fd.Bind(address)) {
-        const int e = errno;
-
-        char buffer[256];
-        const char *address_string =
-            ToString(buffer, sizeof(buffer), address)
-            ? buffer
-            : "?";
-
-        throw FormatErrno(e, "Failed to bind to %s", address_string);
-    }
-
-    if (!group_address.IsNull() && !fd.AddMembership(group_address))
-        throw MakeErrno("Failed to join multicast group");
-
-    return new UdpListener(event_loop, std::move(fd), handler);
 }
 
 void

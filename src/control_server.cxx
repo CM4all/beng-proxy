@@ -6,6 +6,7 @@
 
 #include "control_server.hxx"
 #include "net/UdpListener.hxx"
+#include "net/UdpListenerConfig.hxx"
 #include "net/SocketAddress.hxx"
 #include "util/ByteOrder.hxx"
 #include "util/RuntimeError.hxx"
@@ -102,7 +103,12 @@ ControlServer::Open(EventLoop &event_loop,
 {
     assert(udp == nullptr);
 
-    udp = udp_listener_new(event_loop, address, group, *this);
+    UdpListenerConfig config;
+    config.bind_address = address;
+    config.multicast_group = group;
+    config.pass_cred = true;
+
+    udp = new UdpListener(event_loop, config.Create(), *this);
 }
 
 ControlServer::~ControlServer()

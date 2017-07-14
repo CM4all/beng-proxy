@@ -1,5 +1,6 @@
 #include "system/SetupProcess.hxx"
 #include "net/UdpListener.hxx"
+#include "net/UdpListenerConfig.hxx"
 #include "net/UdpHandler.hxx"
 #include "net/AllocatedSocketAddress.hxx"
 #include "net/Parser.hxx"
@@ -41,17 +42,16 @@ try {
 
     DumpUdpHandler handler;
 
-    const auto bind_address = ParseSocketAddress(listen_host, 1234, true);
-    const auto group_address = mcast_group != nullptr
-        ? ParseSocketAddress(mcast_group, 0, false)
-        : AllocatedSocketAddress();
+    UdpListenerConfig config;
+    config.bind_address = ParseSocketAddress(listen_host, 1234, true);
 
-    auto *udp = udp_listener_new(event_loop, bind_address,
-                                 group_address, handler);
+    if (mcast_group != nullptr)
+        config.multicast_group = ParseSocketAddress(mcast_group, 0, false);
+
+    UdpListener udp(event_loop, config.Create(), handler);
 
     event_loop.Dispatch();
 
-    delete udp;
     return 0;
 } catch (const std::exception &e) {
     PrintException(e);

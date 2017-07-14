@@ -62,10 +62,4 @@ private:
     void EventCallback(unsigned events);
 };
 
-UdpListener *
-udp_listener_new(EventLoop &event_loop,
-                 SocketAddress address,
-                 SocketAddress group_address,
-                 UdpHandler &handler);
-
 #endif
