@@ -44,7 +44,7 @@ CheckZeroconfServiceType(const char *type)
 
     if (length < 5 || (memcmp(type + length - 5, "._udp", 5) != 0 &&
                        memcmp(type + length - 5, "._tcp", 5)))
-        throw std::runtime_error("Service type must end with '._tcp' oder '._udp'");
+        throw std::runtime_error("Service type must end with '._tcp' or '._udp'");
 
     CheckZeroconfServiceName({type + 1, type + length - 5});
 }
