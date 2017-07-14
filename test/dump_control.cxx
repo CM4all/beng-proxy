@@ -1,5 +1,5 @@
 #include "control_server.hxx"
-#include "net/AllocatedSocketAddress.hxx"
+#include "net/UdpListenerConfig.hxx"
 #include "net/Parser.hxx"
 #include "event/Loop.hxx"
 #include "system/SetupProcess.hxx"
@@ -40,15 +40,16 @@ try {
 
     EventLoop event_loop;
 
-    const auto bind_address = ParseSocketAddress(listen_host, 1234, true);
-    const auto group_address = mcast_group != nullptr
-        ? ParseSocketAddress(mcast_group, 0, false)
-        : AllocatedSocketAddress();
+    UdpListenerConfig config;
+    config.bind_address = ParseSocketAddress(listen_host, 1234, true);
+
+    if (mcast_group != nullptr)
+        config.multicast_group = ParseSocketAddress(mcast_group, 0, false);
 
     DumpControlHandler handler;
 
     ControlServer cs(handler);
-    cs.Open(event_loop, bind_address, group_address);
+    cs.Open(event_loop, config);
 
     event_loop.Dispatch();
 

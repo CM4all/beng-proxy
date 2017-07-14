@@ -18,6 +18,7 @@ class UniqueSocketDescriptor;
 class Error;
 class UdpListener;
 class EventLoop;
+struct UdpListenerConfig;
 
 class ControlServer final : UdpHandler {
     UdpListener *udp = nullptr;
@@ -31,8 +32,7 @@ public:
     ~ControlServer();
 
     void Open(EventLoop &event_loop,
-              SocketAddress address,
-              SocketAddress group);
+              const UdpListenerConfig &config);
 
     void Enable();
     void Disable();

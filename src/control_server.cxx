@@ -97,16 +97,9 @@ ControlServer::OnUdpError(std::exception_ptr ep)
 }
 
 void
-ControlServer::Open(EventLoop &event_loop,
-                    SocketAddress address,
-                    SocketAddress group)
+ControlServer::Open(EventLoop &event_loop, const UdpListenerConfig &config)
 {
     assert(udp == nullptr);
-
-    UdpListenerConfig config;
-    config.bind_address = address;
-    config.multicast_group = group;
-    config.pass_cred = true;
 
     udp = new UdpListener(event_loop, config.Create(), *this);
 }
