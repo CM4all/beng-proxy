@@ -681,6 +681,38 @@ In addition to the generic total \verb|timeout| setting, the setting
 \verb|connect_timeout| can be used to limit the time for the TCP
 connect.
 
+
+\subsection{\texttt{control}}
+\label{config.control}
+
+Listen for control commands the configured address.  Example:
+
+\begin{verbatim*}
+control {
+  bind "@beng-lb"
+}
+\end{verbatim*}
+
+This binds to the abstract address \verb|beng-lb|.
+
+Known attributes:
+
+\begin{longtabu*}{|l|X|}\hline
+
+\verb|bind| & An adddress to bind to.  May be the wildcard ``*'' or an
+IPv4/IPv6 address followed by a port.  IPv6 addresses should be
+enclosed in square brackets to disambiguate the port separator.  Local
+sockets start with a slash ``/'', and abstract sockets start with an
+at symbol ``@''. \\\hline
+
+\verb|multicast_group| & Join this multicast group, which allows
+receiving multicast commands.  Value is a multicast IPv4/IPv6
+address.  IPv6 addresses may contain a scope identifier after a
+percent sign ('\%'). \\\hline
+
+\end{longtabu*}
+
+
 \section{Certificate Database}
 \label{certdb}
 
