@@ -20,6 +20,9 @@
 #include <string>
 
 struct LbControlConfig : UdpListenerConfig {
+    LbControlConfig() {
+        pass_cred = true;
+    }
 };
 
 struct LbCertDatabaseConfig : CertDatabaseConfig {
