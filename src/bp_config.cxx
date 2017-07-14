@@ -161,6 +161,9 @@ BpConfigParser::Control::ParseLine(FileLineParser &line)
     if (strcmp(word, "bind") == 0) {
         config.bind_address = ParseSocketAddress(line.ExpectValueAndEnd(),
                                                  5478, true);
+    } else if (strcmp(word, "multicast_group") == 0) {
+        config.multicast_group = ParseSocketAddress(line.ExpectValueAndEnd(),
+                                                    0, false);
     } else
         throw LineParser::Error("Unknown option");
 }

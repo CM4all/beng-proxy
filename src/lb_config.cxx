@@ -188,6 +188,9 @@ LbConfigParser::Control::ParseLine(FileLineParser &line)
         const char *address = line.ExpectValueAndEnd();
 
         config.bind_address = ParseSocketAddress(address, 5478, true);
+    } else if (strcmp(word, "multicast_group") == 0) {
+        config.multicast_group = ParseSocketAddress(line.ExpectValueAndEnd(),
+                                                    0, false);
     } else
         throw LineParser::Error("Unknown option");
 }

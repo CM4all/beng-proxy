@@ -4,6 +4,7 @@ cm4all-beng-proxy (12.0.31) unstable; urgency=low
   * spawn: system call filter errors are fatal if explicitly enabled
   * spawn: apply cgroup namespace again after moving to new cgroup
   * net: support interface name as scope id in IPv6 addresses
+  * config: support per-"control" setting "multicast_group"
   * log-exec: fix binding to wildcard address via "*"
 
  --   
