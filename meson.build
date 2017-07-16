@@ -11,7 +11,6 @@ pkg_mod = import('pkgconfig')
 pkg_mod.generate(version: meson.project_version(),
                  name: 'libcm4all-beng-proxy',
                  subdirs: ['cm4all/libbeng-proxy-0'],
-                 requires: ['libcm4all-inline >= 0.3.5'],
                  description: 'CM4all BENG proxy library')
 
 # TODO: use get_option('b_ndebug'), but that doesn't work with Meson 0.37.1
@@ -108,7 +107,6 @@ gtest = declare_dependency(
   ],
 )
 
-libinline = dependency('libcm4all-inline', version: '>= 0.3.4')
 libdaemon = dependency('libcm4all-daemon', version: '>= 0.4.1')
 libhttp = dependency('libcm4all-http', version: '>= 1.2.5')
 libwas = dependency('libcm4all-was-protocol', version: '>= 1.0')
@@ -137,7 +135,6 @@ util = static_library('util',
   'src/escape_css.cxx',
   include_directories: inc,
   dependencies: [
-    libinline,
   ])
 util_dep = declare_dependency(link_with: util)
 
@@ -145,7 +142,6 @@ time = static_library('time',
   'libcommon/src/time/gmtime.c',
   include_directories: inc,
   dependencies: [
-    libinline,
   ])
 time_dep = declare_dependency(link_with: time)
 
@@ -155,7 +151,6 @@ http = static_library('http',
   'libcommon/src/http/Range.cxx',
   include_directories: inc,
   dependencies: [
-    libinline,
     util_dep,
     time_dep,
   ])
@@ -168,7 +163,6 @@ lua = static_library('lua',
   'libcommon/src/lua/State.cxx',
   include_directories: inc,
   dependencies: [
-    libinline,
     liblua,
   ]
 )
@@ -184,7 +178,6 @@ memory = static_library('memory',
   'src/rubber.cxx',
   include_directories: inc,
   dependencies: [
-    libinline,
   ])
 memory_dep = declare_dependency(link_with: memory)
 
@@ -197,7 +190,7 @@ pool = static_library('pool',
   'src/pool.cxx',
   include_directories: inc,
   dependencies: [
-    libinline, libdaemon,
+    libdaemon,
     memory_dep,
   ])
 pool_dep = declare_dependency(link_with: pool)
@@ -213,7 +206,6 @@ putil = static_library('putil',
   'src/escape_pool.cxx',
   include_directories: inc,
   dependencies: [
-    libinline,
   ])
 putil_dep = declare_dependency(link_with: putil,
   dependencies: [util_dep, pool_dep]
@@ -228,7 +220,6 @@ event = static_library('event',
   'libcommon/src/event/SocketWrapper.cxx',
   include_directories: inc,
   dependencies: [
-    libinline,
     libevent,
     util_dep,
   ])
@@ -239,7 +230,6 @@ eutil = static_library('eutil',
   'src/cache.cxx',
   include_directories: inc,
   dependencies: [
-    libinline,
     declare_dependency(link_with: event),
   ])
 
@@ -255,7 +245,6 @@ io = static_library('io',
   include_directories: inc,
   dependencies: [
     boost,
-    libinline,
     util_dep,
   ])
 io_dep = declare_dependency(link_with: io)
@@ -269,7 +258,6 @@ system = static_library('system',
   'src/system/urandom.cxx',
   include_directories: inc,
   dependencies: [
-    libinline,
     util_dep,
     io_dep,
   ])
@@ -300,7 +288,7 @@ net = static_library('net',
   'libcommon/src/net/UdpListenerConfig.cxx',
   include_directories: inc,
   dependencies: [
-    libinline, libdaemon,
+    libdaemon,
     declare_dependency(link_with: event),
     system_dep,
     declare_dependency(link_with: io),
@@ -313,7 +301,7 @@ if stopwatch
     'src/stopwatch.cxx',
     include_directories: inc,
     dependencies: [
-      libinline, libdaemon,
+      libdaemon,
       pool_dep,
       net_dep,
     ])
@@ -344,7 +332,6 @@ shm = static_library('shm',
   include_directories: inc,
   dependencies: [
     threads,
-    libinline,
     io_dep,
   ])
 
@@ -376,7 +363,7 @@ ssl = static_library('ssl',
   include_directories: inc,
   dependencies: [
     libssl,
-    libinline, libdaemon,
+    libdaemon,
     util_dep,
     declare_dependency(link_with: event),
   ])
@@ -405,7 +392,6 @@ pg = static_library('pg',
   include_directories: inc,
   dependencies: [
     libpq,
-    libinline,
   ])
 pg_dep = declare_dependency(link_with: pg)
 
@@ -417,7 +403,6 @@ curl = static_library('curl',
   include_directories: inc,
   dependencies: [
     libcurl,
-    libinline,
     util_dep,
     declare_dependency(link_with: event),
   ])
@@ -427,7 +412,6 @@ odbus = static_library('odbus',
   include_directories: inc,
   dependencies: [
     libdbus,
-    libinline,
   ])
 
 istream = static_library('istream',
@@ -469,7 +453,7 @@ istream = static_library('istream',
   include_directories: inc,
   dependencies: [
     zlib,
-    libinline, libdaemon,
+    libdaemon,
     declare_dependency(link_with: event),
     pool_dep,
     system_dep,
@@ -482,7 +466,6 @@ expand = static_library('expand',
   include_directories: inc,
   dependencies: [
     libpcre,
-    libinline,
     putil_dep,
   ])
 
@@ -490,7 +473,6 @@ adata = static_library('adata',
   'libcommon/src/adata/ExpandableStringList.cxx',
   include_directories: inc,
   dependencies: [
-    libinline,
   ])
 adata_dep = declare_dependency(link_with: adata)
 
@@ -520,7 +502,6 @@ spawn = static_library('spawn',
     libdbus,
     libseccomp,
     libsystemd,
-    libinline,
     system_dep,
     adata_dep,
     declare_dependency(link_with: io),
@@ -541,7 +522,7 @@ raddress = static_library('raddress',
   include_directories: inc,
   dependencies: [
     libpcre,
-    libinline, libhttp,
+    libhttp,
     net_dep,
     declare_dependency(link_with: spawn),
     putil_dep,
@@ -555,7 +536,7 @@ was_common = static_library('was_common',
   'src/was/Input.cxx',
   include_directories: inc,
   dependencies: [
-    libinline, libhttp, libwas,
+    libhttp, libwas,
     declare_dependency(link_with: istream),
     declare_dependency(link_with: event),
     net_dep,
@@ -570,7 +551,7 @@ was_client = static_library('was_client',
   'src/was/Glue.cxx',
   include_directories: inc,
   dependencies: [
-    libinline, libhttp, libdaemon, libwas,
+    libhttp, libdaemon, libwas,
     declare_dependency(link_with: spawn),
     declare_dependency(link_with: raddress),
     declare_dependency(link_with: was_common),
@@ -581,7 +562,7 @@ was_server = static_library('was_server',
   'src/was/Server.cxx',
   include_directories: inc,
   dependencies: [
-    libinline, libhttp, libwas,
+    libhttp, libwas,
     declare_dependency(link_with: was_common),
   ])
 
@@ -594,7 +575,7 @@ http_util = static_library('http_util',
   'src/header_writer.cxx',
   include_directories: inc,
   dependencies: [
-    libinline, libhttp,
+    libhttp,
     pool_dep,
     util_dep,
     http_dep,
@@ -607,7 +588,6 @@ cookie = static_library('cookie',
   'src/cookie_string.cxx',
   include_directories: inc,
   dependencies: [
-    libinline,
     declare_dependency(link_with: shm),
     declare_dependency(link_with: http_util),
     util_dep,
@@ -620,7 +600,7 @@ thread_pool = static_library('thread_queue',
   'src/thread_pool.cxx',
   include_directories: inc,
   dependencies: [
-    libinline, libdaemon,
+    libdaemon,
     declare_dependency(link_with: event),
     declare_dependency(link_with: eutil),
   ])
@@ -632,7 +612,7 @@ socket = static_library('socket',
   'src/thread_socket_filter.cxx',
   include_directories: inc,
   dependencies: [
-    libinline, libhttp,
+    libhttp,
     net_dep,
   ])
 
@@ -642,7 +622,7 @@ memcached_client = static_library('memcached_client',
   'src/memcached/memcached_packet.cxx',
   include_directories: inc,
   dependencies: [
-    libinline, libhttp,
+    libhttp,
     declare_dependency(link_with: istream),
     declare_dependency(link_with: socket),
   ])
@@ -656,7 +636,7 @@ ajp_client = static_library('ajp_client',
   'src/ajp/istream_ajp_body.cxx',
   include_directories: inc,
   dependencies: [
-    libinline, libhttp,
+    libhttp,
     declare_dependency(link_with: istream),
     stopwatch_dep,
     declare_dependency(link_with: socket),
@@ -675,7 +655,7 @@ translation = static_library('translation',
   'src/translation/Vary.cxx',
   include_directories: inc,
   dependencies: [
-    libinline, libhttp, libdaemon,
+    libhttp, libdaemon,
     declare_dependency(link_with: event),
     putil_dep,
     declare_dependency(link_with: eutil),
@@ -691,7 +671,6 @@ http_common = static_library('http_common',
   'src/http_body.cxx',
   include_directories: inc,
   dependencies: [
-    libinline,
     declare_dependency(link_with: istream),
     declare_dependency(link_with: io),
   ])
@@ -700,7 +679,7 @@ http_client = static_library('http_client',
   'src/http_client.cxx',
   include_directories: inc,
   dependencies: [
-    libinline, libdaemon, libhttp,
+    libdaemon, libhttp,
     declare_dependency(link_with: socket),
     putil_dep,
     declare_dependency(link_with: http_util),
@@ -717,7 +696,7 @@ http_server = static_library('http_server',
   'src/http_server/http_server_response.cxx',
   include_directories: inc,
   dependencies: [
-    libinline, libhttp, libdaemon,
+    libhttp, libdaemon,
     declare_dependency(link_with: event),
     declare_dependency(link_with: istream),
     declare_dependency(link_with: http_util),
@@ -737,7 +716,7 @@ http_cache = static_library('http_cache',
   'src/http_cache_rfc.cxx',
   include_directories: inc,
   dependencies: [
-    libinline, libdaemon, libhttp,
+    libdaemon, libhttp,
     declare_dependency(link_with: eutil),
     declare_dependency(link_with: http_util),
     declare_dependency(link_with: istream),
@@ -751,7 +730,7 @@ cgi = static_library('cgi',
   'src/cgi/cgi_launch.cxx',
   include_directories: inc,
   dependencies: [
-    libinline, libdaemon, libhttp,
+    libdaemon, libhttp,
     declare_dependency(link_with: event),
     stopwatch_dep,
     declare_dependency(link_with: istream),
@@ -767,7 +746,7 @@ fcgi_client = static_library('fcgi_client',
   'src/fcgi/istream_fcgi.cxx',
   include_directories: inc,
   dependencies: [
-    libinline, libdaemon, libhttp,
+    libdaemon, libhttp,
     declare_dependency(link_with: socket),
     putil_dep,
     declare_dependency(link_with: istream),
@@ -782,7 +761,7 @@ nfs_client = static_library('nfs_client',
   'src/nfs/Glue.cxx',
   include_directories: inc,
   dependencies: [
-    libinline, libdaemon, libhttp,
+    libdaemon, libhttp,
     libnfs,
     declare_dependency(link_with: event),
   ])
@@ -794,7 +773,7 @@ delegate_client = static_library('delegate_client',
   'src/delegate/Stock.cxx',
   include_directories: inc,
   dependencies: [
-    libinline, libhttp, libdaemon,
+    libhttp, libdaemon,
     declare_dependency(link_with: socket),
     putil_dep,
     stock_dep,
@@ -812,7 +791,7 @@ session = static_library('session',
   'src/daddress_list.cxx',
   include_directories: inc,
   dependencies: [
-    libinline, libhttp, libdaemon,
+    libhttp, libdaemon,
     declare_dependency(link_with: shm),
     util_dep,
     declare_dependency(link_with: event),
@@ -836,7 +815,7 @@ widget = static_library('widget',
   'src/args.cxx',
   include_directories: inc,
   dependencies: [
-    libinline, libhttp,
+    libhttp,
     putil_dep,
     declare_dependency(link_with: raddress),
     declare_dependency(link_with: translation),
@@ -855,7 +834,7 @@ processor = static_library('processor',
   'src/esession.cxx',
   include_directories: inc,
   dependencies: [
-    libinline, libhttp, libdaemon,
+    libhttp, libdaemon,
     declare_dependency(link_with: istream),
     putil_dep,
   ])
@@ -868,7 +847,6 @@ control_server = static_library('control_server',
   'src/control_distribute.cxx',
   include_directories: inc,
   dependencies: [
-    libinline,
     declare_dependency(link_with: net),
   ])
 
@@ -973,7 +951,7 @@ executable('cm4all-beng-proxy',
     libnfs,
     libsystemd,
     libdbus,
-    libinline, libdaemon, libhttp,
+    libdaemon, libhttp,
     util_dep,
     declare_dependency(link_with: avahi),
     pool_dep,
@@ -1086,7 +1064,7 @@ executable('cm4all-beng-lb',
     libdbus,
     libpq,
     liblua,
-    libinline, libdaemon, libhttp,
+    libdaemon, libhttp,
     libpcre,
     libsodium,
     util_dep,
@@ -1127,7 +1105,7 @@ executable('cm4all-certdb',
   include_directories: inc,
   dependencies: [
     libjsoncpp,
-    libinline, libhttp,
+    libhttp,
     libpcre,
     util_dep,
     avahi_dep,
@@ -1142,7 +1120,7 @@ executable('cm4all-beng-proxy-log-cat',
   'src/access_log/Cat.cxx',
   include_directories: inc,
   dependencies: [
-    libinline, libhttp,
+    libhttp,
   ])
 
 executable('cm4all-beng-proxy-log-json',
@@ -1151,7 +1129,7 @@ executable('cm4all-beng-proxy-log-json',
   include_directories: inc,
   dependencies: [
     libjsoncpp,
-    libinline, libhttp,
+    libhttp,
   ])
 
 executable('cm4all-beng-proxy-log-traffic',
@@ -1159,7 +1137,7 @@ executable('cm4all-beng-proxy-log-traffic',
   'src/access_log/Traffic.cxx',
   include_directories: inc,
   dependencies: [
-    libinline, libhttp,
+    libhttp,
   ])
 
 executable('cm4all-beng-proxy-log-split',
@@ -1167,7 +1145,7 @@ executable('cm4all-beng-proxy-log-split',
   'src/access_log/Split.cxx',
   include_directories: inc,
   dependencies: [
-    libinline, libhttp,
+    libhttp,
     system_dep,
   ])
 
@@ -1175,7 +1153,7 @@ executable('cm4all-beng-proxy-log-forward',
   'src/access_log/Forward.cxx',
   include_directories: inc,
   dependencies: [
-    libinline, libhttp,
+    libhttp,
     net_dep,
   ])
 
@@ -1183,7 +1161,6 @@ executable('cm4all-beng-proxy-log-exec',
   'src/access_log/Exec.cxx',
   include_directories: inc,
   dependencies: [
-    libinline,
     libhttp,
     util_dep,
     net_dep,
@@ -1194,7 +1171,7 @@ executable('cm4all-beng-proxy-log-tee',
   'src/access_log/Tee.cxx',
   include_directories: inc,
   dependencies: [
-    libinline, libdaemon,
+    libdaemon,
     system_dep,
     net_dep,
   ])
@@ -1203,7 +1180,6 @@ executable('delegate-helper',
   'src/delegate/Helper.cxx',
   include_directories: inc,
   dependencies: [
-    libinline,
   ])
 
 subdir('test')
