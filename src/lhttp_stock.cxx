@@ -26,11 +26,12 @@
 #include <unistd.h>
 #include <string.h>
 
-struct LhttpStock {
+class LhttpStock {
     StockMap hstock;
     StockMap *const child_stock;
     MultiStock *const mchild_stock;
 
+public:
     LhttpStock(unsigned limit, unsigned max_idle,
                EventLoop &event_loop, SpawnService &spawn_service);
 
@@ -47,9 +48,17 @@ struct LhttpStock {
         hstock.FadeAll();
         child_stock->FadeAll();
     }
+
+    StockMap &GetConnectionStock() {
+        return hstock;
+    }
+
+    MultiStock &GetChildStock() {
+        return *mchild_stock;
+    }
 };
 
-struct LhttpConnection final : HeapStockItem {
+class LhttpConnection final : HeapStockItem {
     StockItem *child = nullptr;
 
     struct lease_ref lease_ref;
@@ -57,11 +66,24 @@ struct LhttpConnection final : HeapStockItem {
     UniqueSocketDescriptor fd;
     SocketEvent event;
 
+public:
     explicit LhttpConnection(CreateStockItem c)
         :HeapStockItem(c),
          event(c.stock.GetEventLoop(), BIND_THIS_METHOD(EventCallback)) {}
 
     ~LhttpConnection() override;
+
+    void Connect(MultiStock &child_stock, struct pool &caller_pool,
+                 const char *key, void *info,
+                 unsigned concurrency);
+
+    SocketDescriptor GetSocket() const {
+        assert(fd.IsDefined());
+        return fd;
+    }
+
+private:
+    void EventCallback(unsigned events);
 
     /* virtual methods from class StockItem */
     bool Borrow(gcc_unused void *ctx) override {
@@ -73,10 +95,35 @@ struct LhttpConnection final : HeapStockItem {
         event.Add(EventDuration<300>::value);
         return true;
     }
-
-private:
-    void EventCallback(unsigned events);
 };
+
+void
+LhttpConnection::Connect(MultiStock &child_stock, struct pool &caller_pool,
+                         const char *key, void *info,
+                         unsigned concurrency)
+{
+    try {
+        child = mstock_get_now(child_stock,
+                               caller_pool,
+                               key, info, concurrency,
+                               lease_ref);
+    } catch (...) {
+        delete this;
+        std::throw_with_nested(FormatRuntimeError("Failed to launch LHTTP server '%s'",
+                                                  key));
+    }
+
+    try {
+        fd = child_stock_item_connect(child);
+    } catch (...) {
+        delete this;
+        std::throw_with_nested(FormatRuntimeError("Failed to connect to LHTTP server '%s'",
+                                                  key));
+    }
+
+    event.Set(fd.Get(), SocketEvent::READ);
+    InvokeCreateSuccess();
+}
 
 static const char *
 lhttp_stock_key(struct pool *pool, const LhttpAddress *address)
@@ -155,29 +202,8 @@ lhttp_stock_create(void *ctx, CreateStockItem c, void *info,
 
     auto *connection = new LhttpConnection(c);
 
-    const char *key = c.GetStockName();
-
-    try {
-        connection->child = mstock_get_now(*lhttp_stock->mchild_stock, caller_pool,
-                                           key, info, address->concurrency,
-                                           connection->lease_ref);
-    } catch (...) {
-        delete connection;
-        std::throw_with_nested(FormatRuntimeError("Failed to launch LHTTP server '%s'",
-                                                  key));
-    }
-
-    try {
-        connection->fd = child_stock_item_connect(connection->child);
-    } catch (...) {
-        delete connection;
-        std::throw_with_nested(FormatRuntimeError("Failed to connect to LHTTP server '%s'",
-                                                  key));
-    }
-
-    connection->event.Set(connection->fd.Get(), SocketEvent::READ);
-
-    connection->InvokeCreateSuccess();
+    connection->Connect(lhttp_stock->GetChildStock(), caller_pool,
+                        c.GetStockName(), info, address->concurrency);
 }
 
 LhttpConnection::~LhttpConnection()
@@ -242,9 +268,9 @@ lhttp_stock_get(LhttpStock *lhttp_stock, struct pool *pool,
         void *out;
     } deconst = { .in = address };
 
-    return lhttp_stock->hstock.GetNow(*pool,
-                                      lhttp_stock_key(pool, address),
-                                      deconst.out);
+    return lhttp_stock->GetConnectionStock().GetNow(*pool,
+                                                    lhttp_stock_key(pool, address),
+                                                    deconst.out);
 }
 
 SocketDescriptor
@@ -252,9 +278,7 @@ lhttp_stock_item_get_socket(const StockItem &item)
 {
     const auto *connection = (const LhttpConnection *)&item;
 
-    assert(connection->fd.IsDefined());
-
-    return connection->fd;
+    return connection->GetSocket();
 }
 
 FdType
