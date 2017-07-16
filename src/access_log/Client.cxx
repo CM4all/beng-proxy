@@ -16,12 +16,13 @@
 #include <errno.h>
 #include <string.h>
 
-struct LogClient {
+class LogClient {
     UniqueSocketDescriptor fd;
 
     size_t position;
     char buffer[32768];
 
+public:
     explicit LogClient(UniqueSocketDescriptor &&_fd)
         :fd(std::move(_fd)) {}
 
