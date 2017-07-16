@@ -17,10 +17,9 @@
 #include "spawn/Prepared.hxx"
 #include "event/SocketEvent.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
+#include "io/Logger.hxx"
 #include "util/RuntimeError.hxx"
 #include "util/Exception.hxx"
-
-#include <daemon/log.h>
 
 #include <assert.h>
 #include <unistd.h>
@@ -58,7 +57,9 @@ public:
     }
 };
 
-class LhttpConnection final : HeapStockItem {
+class LhttpConnection final : LoggerDomainFactory, HeapStockItem {
+    LazyDomainLogger logger;
+
     StockItem *child = nullptr;
 
     struct lease_ref lease_ref;
@@ -69,6 +70,7 @@ class LhttpConnection final : HeapStockItem {
 public:
     explicit LhttpConnection(CreateStockItem c)
         :HeapStockItem(c),
+         logger(*this),
          event(c.stock.GetEventLoop(), BIND_THIS_METHOD(EventCallback)) {}
 
     ~LhttpConnection() override;
@@ -84,6 +86,11 @@ public:
 
 private:
     void EventCallback(unsigned events);
+
+    /* virtual methods from LoggerDomainFactory */
+    std::string MakeLoggerDomain() const noexcept {
+        return GetStockName();
+    }
 
     /* virtual methods from class StockItem */
     bool Borrow(gcc_unused void *ctx) override {
@@ -143,10 +150,9 @@ LhttpConnection::EventCallback(unsigned events)
         char buffer;
         ssize_t nbytes = fd.Read(&buffer, sizeof(buffer));
         if (nbytes < 0)
-            daemon_log(2, "error on idle LHTTP connection: %s\n",
-                       strerror(errno));
+            logger(2, "error on idle LHTTP connection: ", strerror(errno));
         else if (nbytes > 0)
-            daemon_log(2, "unexpected data from idle LHTTP connection\n");
+            logger(2, "unexpected data from idle LHTTP connection");
     }
 
     InvokeIdleDisconnect();
