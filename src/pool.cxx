@@ -8,8 +8,8 @@
 #include "SlicePool.hxx"
 #include "AllocatorStats.hxx"
 #include "util/Recycler.hxx"
+#include "util/Poison.hxx"
 
-#include <inline/poison.h>
 #include <inline/list.h>
 #include <daemon/log.h>
 
@@ -243,7 +243,7 @@ pool_recycler_put_linear(struct linear_pool_area *area)
     if (recycler.num_linear_areas >= RECYCLER_MAX_LINEAR_AREAS)
         return false;
 
-    poison_noaccess(area->data, area->used);
+    PoisonInaccessible(area->data, area->used);
 
     area->prev = recycler.linear_areas;
     recycler.linear_areas = area;
@@ -276,7 +276,7 @@ pool_free_linear_area(struct linear_pool_area *area)
 {
     assert(area->slice_area == nullptr);
 
-    poison_undefined(area->data, area->used);
+    PoisonUndefined(area->data, area->used);
     free(area);
 }
 
@@ -367,7 +367,7 @@ pool_new_slice_area(SlicePool *slice_pool,
     area->size = allocation.size - LINEAR_POOL_AREA_HEADER;
     area->used = 0;
 
-    poison_noaccess(area->data, area->size);
+    PoisonInaccessible(area->data, area->size);
 
     return area;
 }
@@ -385,7 +385,7 @@ pool_new_linear_area(struct linear_pool_area *prev, size_t size)
     area->size = size;
     area->used = 0;
 
-    poison_noaccess(area->data, area->size);
+    PoisonInaccessible(area->data, area->size);
 
     return area;
 }
@@ -584,7 +584,7 @@ pool_destroy(struct pool *pool, gcc_unused struct pool *parent,
             struct libc_pool_chunk *chunk = (struct libc_pool_chunk *)pool->current_area.libc.next;
             list_remove(&chunk->siblings);
 #ifdef POISON
-            poison_undefined(chunk, LIBC_POOL_CHUNK_HEADER + chunk->size);
+            PoisonUndefined(chunk, LIBC_POOL_CHUNK_HEADER + chunk->size);
 #endif
             free(chunk);
         }
@@ -1044,8 +1044,8 @@ pool_rewind(struct pool *pool, const struct pool_mark_state *mark)
         pool_remove_allocations(pool, marked_area->data + mark->position,
                                 marked_area->used - mark->position);
 
-        poison_noaccess(marked_area->data + mark->position,
-                        marked_area->used - mark->position);
+        PoisonInaccessible(marked_area->data + mark->position,
+                           marked_area->used - mark->position);
 
         marked_area->used = mark->position;
     }
@@ -1158,7 +1158,7 @@ p_malloc_linear(struct pool *pool, const size_t original_size
 
     assert(area->used <= area->size);
 
-    poison_undefined(p, size);
+    PoisonUndefined(p, size);
 
 #ifndef NDEBUG
     struct allocation_info *info = (struct allocation_info *)p;
@@ -1228,13 +1228,13 @@ p_free(struct pool *pool, const void *cptr)
     else if (pool->type == POOL_LINEAR) {
         struct allocation_info *info = get_linear_allocation_info(ptr);
         list_remove(&info->siblings);
-        poison_noaccess(ptr, info->size);
+        PoisonInaccessible(ptr, info->size);
     }
 #endif
     else
         /* we don't know the exact size of this buffer, so we only
            mark the first ALIGN bytes */
-        poison_noaccess(ptr, ALIGN_SIZE);
+        PoisonInaccessible(ptr, ALIGN_SIZE);
 }
 
 static inline void

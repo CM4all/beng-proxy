@@ -18,7 +18,6 @@
 #include "util/StringUtil.hxx"
 #include "util/StringView.hxx"
 
-#include <inline/poison.h>
 #include <daemon/log.h>
 
 #include <limits.h>

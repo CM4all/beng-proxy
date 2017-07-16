@@ -10,8 +10,7 @@
 #include "expansible_buffer.hxx"
 #include "istream/Sink.hxx"
 #include "util/CharUtil.hxx"
-
-#include <inline/poison.h>
+#include "util/Poison.hxx"
 
 #include <assert.h>
 #include <string.h>
@@ -117,7 +116,7 @@ public:
         attr.value = attr_value.ReadStringView();
 
         handler.OnXmlAttributeFinished(attr);
-        poison_undefined(&attr, sizeof(attr));
+        PoisonUndefinedT(attr);
     }
 
     size_t Feed(const char *start, size_t length);
@@ -285,7 +284,7 @@ XmlParser::Feed(const char *start, size_t length)
                     ++buffer;
                     tag.end = position + (off_t)(buffer - start);
                     handler.OnXmlTagFinished(tag);
-                    poison_undefined(&tag, sizeof(tag));
+                    PoisonUndefinedT(tag);
 
                     if (!input.IsDefined())
                         return 0;
@@ -440,7 +439,7 @@ XmlParser::Feed(const char *start, size_t length)
                     ++buffer;
                     tag.end = position + (off_t)(buffer - start);
                     handler.OnXmlTagFinished(tag);
-                    poison_undefined(&tag, sizeof(tag));
+                    PoisonUndefinedT(tag);
 
                     if (!input.IsDefined())
                         return 0;
@@ -453,7 +452,7 @@ XmlParser::Feed(const char *start, size_t length)
                     tag.end = position + (off_t)(buffer - start);
                     state = State::INSIDE;
                     handler.OnXmlTagFinished(tag);
-                    poison_undefined(&tag, sizeof(tag));
+                    PoisonUndefinedT(tag);
                     state = State::NONE;
 
                     if (!input.IsDefined())

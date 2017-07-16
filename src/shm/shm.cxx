@@ -8,8 +8,7 @@
 #include "system/Error.hxx"
 #include "io/Logger.hxx"
 #include "util/RefCount.hxx"
-
-#include <inline/poison.h>
+#include "util/Poison.hxx"
 
 #include <boost/interprocess/sync/interprocess_mutex.hpp>
 #include <boost/interprocess/sync/scoped_lock.hpp>
@@ -226,7 +225,7 @@ shm::Allocate(unsigned want_pages)
         lock.unlock();
 
         void *page_data = PageData(*page);
-        poison_undefined(page_data, page_size * want_pages);
+        PoisonUndefined(page_data, page_size * want_pages);
         return page_data;
     } else {
         page = SplitPage(page, want_pages);
@@ -234,7 +233,7 @@ shm::Allocate(unsigned want_pages)
         lock.unlock();
 
         void *page_data = PageData(*page);
-        poison_undefined(page_data, page_size * want_pages);
+        PoisonUndefined(page_data, page_size * want_pages);
         return page_data;
     }
 }
@@ -289,7 +288,7 @@ shm::Free(const void *p)
     unsigned page_number = PageNumber(p);
     Page *page = &pages[page_number];
 
-    poison_noaccess(PageData(*page), page_size * page->num_pages);
+    PoisonInaccessible(PageData(*page), page_size * page->num_pages);
 
     boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex> lock(mutex);
 

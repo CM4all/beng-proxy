@@ -9,7 +9,6 @@
 #include "shm.hxx"
 
 #include "util/Compiler.h"
-#include <inline/poison.h>
 
 #include <boost/interprocess/sync/interprocess_mutex.hpp>
 #include <boost/interprocess/sync/scoped_lock.hpp>

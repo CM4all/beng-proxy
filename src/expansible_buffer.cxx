@@ -5,8 +5,7 @@
 #include "expansible_buffer.hxx"
 #include "pool.hxx"
 #include "util/StringView.hxx"
-
-#include <inline/poison.h>
+#include "util/Poison.hxx"
 
 #include <assert.h>
 #include <string.h>
@@ -24,7 +23,7 @@ ExpansibleBuffer::ExpansibleBuffer(struct pool &_pool,
 void
 ExpansibleBuffer::Clear()
 {
-    poison_undefined(buffer, max_size);
+    PoisonUndefined(buffer, max_size);
 
     size = 0;
 }

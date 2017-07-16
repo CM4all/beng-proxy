@@ -5,6 +5,8 @@ project('CM4all beng-proxy', ['c', 'cpp'], version: '12.0.32',
   ],
 )
 
+compiler = meson.get_compiler('cpp')
+
 pkg_mod = import('pkgconfig')
 pkg_mod.generate(version: meson.project_version(),
                  name: 'libcm4all-beng-proxy',
@@ -87,6 +89,11 @@ libavahi_client = dependency('avahi-client')
 libnfs = dependency('libnfs')
 zlib = dependency('zlib')
 cppunit = dependency('cppunit')
+
+if compiler.has_header('valgrind/memcheck.h')
+  add_global_arguments('-DHAVE_VALGRIND_MEMCHECK_H', language: 'cpp')
+  add_global_arguments('-DHAVE_VALGRIND_MEMCHECK_H', language: 'c')
+endif
 
 gtest = declare_dependency(
   dependencies: [dependency('gtest', main: true)],
