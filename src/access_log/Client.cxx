@@ -6,8 +6,6 @@
 
 #include "Client.hxx"
 
-#include <daemon/log.h>
-
 #include <assert.h>
 #include <sys/socket.h>
 #include <errno.h>
@@ -37,12 +35,12 @@ LogClient::Commit()
             /* silently ignore EAGAIN */
             return true;
 
-        daemon_log(1, "Failed to send to logger: %s\n", strerror(errno));
+        logger(1, "Failed to send to logger: ", strerror(errno));
         return false;
     }
 
     if ((size_t)nbytes != position)
-        daemon_log(1, "Short send to logger: %s\n", strerror(errno));
+        logger(1, "Short send to logger");
 
     return true;
 }

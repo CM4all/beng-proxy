@@ -8,6 +8,7 @@
 #define BENG_PROXY_LOG_CLIENT_HXX
 
 #include "net/UniqueSocketDescriptor.hxx"
+#include "io/Logger.hxx"
 #include "util/ByteOrder.hxx"
 
 #include <beng-proxy/log.h>
@@ -15,6 +16,8 @@
 #include <string.h>
 
 class LogClient {
+    const Logger logger;
+
     UniqueSocketDescriptor fd;
 
     size_t position;
@@ -22,7 +25,7 @@ class LogClient {
 
 public:
     explicit LogClient(UniqueSocketDescriptor &&_fd)
-        :fd(std::move(_fd)) {}
+        :logger("access_log"), fd(std::move(_fd)) {}
 
     void Begin() {
         position = 0;
