@@ -9,8 +9,6 @@
 
 #include "spawn/UidGid.hxx"
 
-#include <daemon/user.h>
-
 struct BpConfig;
 
 #ifdef NDEBUG
@@ -22,11 +20,9 @@ extern bool debug_mode;
 struct BpCmdLine {
     UidGid user;
 
-    struct daemon_user logger_user;
+    UidGid logger_user;
 
     const char *config_file = "/etc/cm4all/beng/proxy/beng-proxy.conf";
-
-    BpCmdLine();
 };
 
 void

@@ -9,14 +9,12 @@
 
 #include "spawn/UidGid.hxx"
 
-#include <daemon/user.h>
-
 struct LbConfig;
 
 struct LbCmdLine {
     UidGid user;
 
-    struct daemon_user logger_user;
+    UidGid logger_user;
 
     /**
      * The configuration file.
@@ -35,8 +33,6 @@ struct LbCmdLine {
      * checked, and the process exits.
      */
     bool check = false;
-
-    LbCmdLine();
 };
 
 void

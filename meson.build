@@ -508,6 +508,7 @@ spawn = static_library('spawn',
     declare_dependency(link_with: odbus),
     declare_dependency(link_with: expand),
   ])
+spawn_dep = declare_dependency(link_with: spawn)
 
 raddress = static_library('raddress',
   'src/regex.cxx',
@@ -1171,7 +1172,7 @@ executable('cm4all-beng-proxy-log-tee',
   'src/access_log/Tee.cxx',
   include_directories: inc,
   dependencies: [
-    libdaemon,
+    spawn_dep,
     system_dep,
     net_dep,
   ])

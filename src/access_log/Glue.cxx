@@ -16,7 +16,7 @@ static bool global_log_enabled;
 static LogClient *global_log_client;
 
 void
-log_global_init(const char *program, const struct daemon_user *user)
+log_global_init(const char *program, const UidGid *user)
 {
     assert(global_log_client == nullptr);
 

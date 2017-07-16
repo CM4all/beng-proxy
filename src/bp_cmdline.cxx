@@ -35,11 +35,6 @@ enum Options {
     SPAWN_USER,
 };
 
-BpCmdLine::BpCmdLine()
-{
-    memset(&logger_user, 0, sizeof(logger_user));
-}
-
 static void
 PrintUsage()
 {
@@ -362,7 +357,7 @@ ParseCommandLine(BpCmdLine &cmdline, BpConfig &config, int argc, char **argv)
             if (debug_mode)
                 arg_error(argv[0], "cannot specify a user in debug mode");
 
-            daemon_user_by_name(&cmdline.logger_user, optarg, NULL);
+            cmdline.logger_user.Lookup(optarg);
             break;
 
         case 'p':

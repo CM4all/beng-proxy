@@ -18,11 +18,6 @@
 #include <string.h>
 #include <unistd.h>
 
-LbCmdLine::LbCmdLine()
-{
-    memset(&logger_user, 0, sizeof(logger_user));
-}
-
 static void
 PrintUsage()
 {
@@ -196,7 +191,7 @@ ParseCommandLine(LbCmdLine &cmdline, LbConfig &config,
             break;
 
         case 'U':
-            daemon_user_by_name(&cmdline.logger_user, optarg, NULL);
+            cmdline.logger_user.Lookup(optarg);
             break;
 
         case 'B':

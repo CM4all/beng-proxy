@@ -11,7 +11,7 @@
 
 #include <sys/types.h>
 
-struct daemon_user;
+struct UidGid;
 
 struct LogProcess {
     pid_t pid;
@@ -20,6 +20,6 @@ struct LogProcess {
 
 LogProcess
 log_launch(const char *program,
-           const struct daemon_user *user);
+           const UidGid *uid_gid);
 
 #endif

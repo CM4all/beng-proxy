@@ -5,10 +5,10 @@
  */
 
 #include "Launch.hxx"
+#include "spawn/UidGid.hxx"
 #include "system/Error.hxx"
+#include "util/PrintException.hxx"
 
-#include <daemon/user.h>
-#include <daemon/log.h>
 #include "util/Compiler.h"
 
 #include <sys/socket.h>
@@ -32,7 +32,7 @@ log_run(const char *program, UniqueSocketDescriptor &&fd)
 
 LogProcess
 log_launch(const char *program,
-           const struct daemon_user *user)
+           const UidGid *user)
 {
     LogProcess p;
     UniqueSocketDescriptor server_fd;
@@ -50,10 +50,15 @@ log_launch(const char *program,
         throw MakeErrno("fork() failed");
 
     if (p.pid == 0) {
-        if (user != nullptr && daemon_user_set(user) < 0)
-            _exit(EXIT_FAILURE);
+        try {
+            if (user != nullptr)
+                user->Apply();
 
-        log_run(program, std::move(server_fd));
+            log_run(program, std::move(server_fd));
+        } catch (...) {
+            PrintException(std::current_exception());
+            _exit(EXIT_FAILURE);
+        }
     }
 
     return p;

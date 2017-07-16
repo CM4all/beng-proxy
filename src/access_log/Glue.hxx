@@ -12,10 +12,10 @@
 
 #include <stdint.h>
 
-struct daemon_user;
+struct UidGid;
 
 void
-log_global_init(const char *program, const struct daemon_user *user);
+log_global_init(const char *program, const UidGid *user);
 
 void
 log_global_deinit(void);
