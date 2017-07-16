@@ -24,6 +24,39 @@ struct LogClient {
 
     explicit LogClient(UniqueSocketDescriptor &&_fd)
         :fd(std::move(_fd)) {}
+
+    void Begin() {
+        position = 0;
+        Append(&log_magic, sizeof(log_magic));
+    }
+
+    void Append(const void *p, size_t size) {
+        if (position + size <= sizeof(buffer))
+            memcpy(buffer + position, p, size);
+
+        position += size;
+    }
+
+    void AppendAttribute(enum beng_log_attribute attribute,
+                         const void *value, size_t size) {
+        const uint8_t attribute8 = (uint8_t)attribute;
+        Append(&attribute8, sizeof(attribute8));
+        Append(value, size);
+    }
+
+    void AppendU16(enum beng_log_attribute attribute, uint16_t value) {
+        const uint16_t value2 = ToBE16(value);
+        AppendAttribute(attribute, &value2, sizeof(value2));
+    }
+
+    void AppendU64(enum beng_log_attribute attribute, uint64_t value) {
+        const uint64_t value2 = ToBE64(value);
+        AppendAttribute(attribute, &value2, sizeof(value2));
+    }
+
+    void AppendString(enum beng_log_attribute attribute, const char *value);
+
+    bool Commit();
 };
 
 LogClient *
@@ -40,22 +73,10 @@ log_client_free(LogClient *l)
     delete l;
 }
 
-static void
-log_client_append(LogClient *client,
-                  const void *p, size_t length)
-{
-    if (client->position + length <= sizeof(client->buffer))
-        memcpy(client->buffer + client->position, p, length);
-
-    client->position += length;
-}
-
 void
 log_client_begin(LogClient *client)
 {
-    client->position = 0;
-
-    log_client_append(client, &log_magic, sizeof(log_magic));
+    client->Begin();
 }
 
 void
@@ -63,48 +84,49 @@ log_client_append_attribute(LogClient *client,
                             enum beng_log_attribute attribute,
                             const void *value, size_t length)
 {
-    uint8_t attribute8 = (uint8_t)attribute;
-    log_client_append(client, &attribute8, sizeof(attribute8));
-    log_client_append(client, value, length);
+    client->AppendAttribute(attribute, value, length);
 }
 
 void
 log_client_append_u16(LogClient *client,
                       enum beng_log_attribute attribute, uint16_t value)
 {
-    const uint16_t value2 = ToBE16(value);
-    log_client_append_attribute(client, attribute, &value2, sizeof(value2));
+    client->AppendU16(attribute, value);
 }
 
 void
 log_client_append_u64(LogClient *client,
                       enum beng_log_attribute attribute, uint64_t value)
 {
-    const uint64_t value2 = ToBE64(value);
-    log_client_append_attribute(client, attribute, &value2, sizeof(value2));
+    client->AppendU64(attribute, value);
+}
+
+void
+LogClient::AppendString(enum beng_log_attribute attribute, const char *value)
+{
+    assert(value != nullptr);
+
+    AppendAttribute(attribute, value, strlen(value) + 1);
 }
 
 void
 log_client_append_string(LogClient *client,
                          enum beng_log_attribute attribute, const char *value)
 {
-    assert(value != nullptr);
-
-    log_client_append_attribute(client, attribute, value, strlen(value) + 1);
+    client->AppendString(attribute, value);
 }
 
 bool
-log_client_commit(LogClient *client)
+LogClient::Commit()
 {
-    assert(client != nullptr);
-    assert(client->fd.IsDefined());
-    assert(client->position > 0);
+    assert(fd.IsDefined());
+    assert(position > 0);
 
-    if (client->position > sizeof(client->buffer))
+    if (position > sizeof(buffer))
         /* datagram is too large */
         return false;
 
-    ssize_t nbytes = send(client->fd.Get(), client->buffer, client->position,
+    ssize_t nbytes = send(fd.Get(), buffer, position,
                           MSG_DONTWAIT|MSG_NOSIGNAL);
     if (nbytes < 0) {
         if (errno == EAGAIN || errno == EWOULDBLOCK)
@@ -115,8 +137,16 @@ log_client_commit(LogClient *client)
         return false;
     }
 
-    if ((size_t)nbytes != client->position)
+    if ((size_t)nbytes != position)
         daemon_log(1, "Short send to logger: %s\n", strerror(errno));
 
     return true;
+}
+
+bool
+log_client_commit(LogClient *client)
+{
+    assert(client != nullptr);
+
+    return client->Commit();
 }
