@@ -1,1 +1,1 @@
-build/debug/cm4all-beng-proxy-log-{cat,json,traffic,forward,split,exec,tee} usr/bin
+build/debug/cm4all-beng-proxy-log-{cat,json,lua,traffic,forward,split,exec,tee} usr/bin

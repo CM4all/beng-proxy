@@ -1,6 +1,7 @@
 cm4all-beng-proxy (12.0.32) unstable; urgency=low
 
   * logger: fix log level
+  * log-lua: new access logger which calls a Lua script
 
  --   
 

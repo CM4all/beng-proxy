@@ -2788,6 +2788,81 @@ cm4all-beng-proxy-log-cat |multilog t /var/log/cm4all/access
 Prints the events to standard output in JSON format.  It has no
 arguments.
 
+\subsubsection{\texttt{log-lua}}
+
+Run a Lua function for each request.  Example code:
+
+\begin{verbatim*}
+function access_log(r)
+   print(r.http_method, r.http_uri)
+end
+\end{verbatim*}
+
+The function receives one parameter: the request object.  The
+following attributes are available (if they were received from the web
+server):
+
+\begin{longtabu*}{|l|X|}
+\hline
+
+\verb|timestamp| & The time stamp of the request in seconds since
+epoch. \\
+
+\hline
+
+\verb|remote_host| & The address of the remote host as a string. \\
+
+\hline
+
+\verb|host| & The "Host" request header. \\
+
+\hline
+
+\verb|site| & The name of the site which was accessed. \\
+
+\hline
+
+\verb|http_method| & The request method as an all-upper-case
+string. \\
+
+\hline
+
+\verb|http_uri| & The request URI. \\
+
+\hline
+
+\verb|http_referer| & The "Referer"[sic] request header. \\
+
+\hline
+
+\verb|user_agent| & The "User-Agent" request header. \\
+
+\hline
+
+\verb|http_status| & The response status as an integer. \\
+
+\hline
+
+\verb|length| & The netto length of the response body in bytes. \\
+
+\hline
+
+\verb|traffic_received| & The total number of raw bytes received.
+This includes all extra data such as headers. \\
+
+\hline
+
+\verb|traffic_sent| & The total number of raw bytes sent.  This
+includes all extra data such as headers. \\
+
+\hline
+
+\verb|duration| & The wallclock duration of the operation in
+seconds. \\
+
+\hline
+\end{longtabu*}
+
 \subsubsection{\texttt{log-traffic}}
 
 Print site traffic to standard output.  Each line is in the form
