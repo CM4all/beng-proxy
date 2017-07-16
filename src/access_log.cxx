@@ -11,8 +11,7 @@
 #include "http_server/Request.hxx"
 #include "access_log/Glue.hxx"
 
-#include <daemon/log.h>
-
+#include <stdio.h>
 #include <time.h>
 
 static const char *
@@ -69,14 +68,14 @@ access_log(HttpServerRequest *request, const char *site,
         length = length_buffer;
     }
 
-    daemon_log(1, "%s %s - - [%s] \"%s %s HTTP/1.1\" %u %s \"%s\" \"%s\" %llu\n",
-               site, optional_string(request->remote_host), stamp,
-               http_method_to_string(request->method),
-               request->uri,
-               status, length,
-               optional_string(referer),
-               optional_string(user_agent),
-               (unsigned long long)duration_us.count());
+    printf("%s %s - - [%s] \"%s %s HTTP/1.1\" %u %s \"%s\" \"%s\" %llu\n",
+           site, optional_string(request->remote_host), stamp,
+           http_method_to_string(request->method),
+           request->uri,
+           status, length,
+           optional_string(referer),
+           optional_string(user_agent),
+           (unsigned long long)duration_us.count());
 }
 
 #endif
