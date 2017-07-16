@@ -7,47 +7,59 @@
 #ifndef BENG_PROXY_LOG_CLIENT_HXX
 #define BENG_PROXY_LOG_CLIENT_HXX
 
+#include "net/UniqueSocketDescriptor.hxx"
+#include "util/ByteOrder.hxx"
+
 #include <beng-proxy/log.h>
 
-#include <stddef.h>
+#include <string.h>
 
-struct LogClient;
-class UniqueSocketDescriptor;
+class LogClient {
+    UniqueSocketDescriptor fd;
 
-LogClient *
-log_client_new(UniqueSocketDescriptor &&fd);
+    size_t position;
+    char buffer[32768];
 
-void
-log_client_free(LogClient *l);
+public:
+    explicit LogClient(UniqueSocketDescriptor &&_fd)
+        :fd(std::move(_fd)) {}
 
-void
-log_client_begin(LogClient *client);
+    void Begin() {
+        position = 0;
+        Append(&log_magic, sizeof(log_magic));
+    }
 
-void
-log_client_append_attribute(LogClient *client,
-                            enum beng_log_attribute attribute,
-                            const void *value, size_t length);
+    void Append(const void *p, size_t size) {
+        if (position + size <= sizeof(buffer))
+            memcpy(buffer + position, p, size);
 
-static inline void
-log_client_append_u8(LogClient *client,
-                     enum beng_log_attribute attribute, uint8_t value)
-{
-    log_client_append_attribute(client, attribute, &value, sizeof(value));
-}
+        position += size;
+    }
 
-void
-log_client_append_u16(LogClient *client,
-                      enum beng_log_attribute attribute, uint16_t value);
+    void AppendAttribute(enum beng_log_attribute attribute,
+                         const void *value, size_t size) {
+        const uint8_t attribute8 = (uint8_t)attribute;
+        Append(&attribute8, sizeof(attribute8));
+        Append(value, size);
+    }
 
-void
-log_client_append_u64(LogClient *client,
-                      enum beng_log_attribute attribute, uint64_t value);
+    void AppendU8(enum beng_log_attribute attribute, uint8_t value) {
+        AppendAttribute(attribute, &value, sizeof(value));
+    }
 
-void
-log_client_append_string(LogClient *client,
-                         enum beng_log_attribute attribute, const char *value);
+    void AppendU16(enum beng_log_attribute attribute, uint16_t value) {
+        const uint16_t value2 = ToBE16(value);
+        AppendAttribute(attribute, &value2, sizeof(value2));
+    }
 
-bool
-log_client_commit(LogClient *client);
+    void AppendU64(enum beng_log_attribute attribute, uint64_t value) {
+        const uint64_t value2 = ToBE64(value);
+        AppendAttribute(attribute, &value2, sizeof(value2));
+    }
+
+    void AppendString(enum beng_log_attribute attribute, const char *value);
+
+    bool Commit();
+};
 
 #endif

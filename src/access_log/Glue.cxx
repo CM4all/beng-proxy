@@ -33,16 +33,14 @@ log_global_init(const char *program, const struct daemon_user *user)
     auto lp = log_launch(program, user);
     assert(lp.fd.IsDefined());
 
-    global_log_client = log_client_new(std::move(lp.fd));
-    assert(global_log_client != nullptr);
-    global_log_enabled = global_log_client != nullptr;
+    global_log_client = new LogClient(std::move(lp.fd));
+    global_log_enabled = true;
 }
 
 void
 log_global_deinit(void)
 {
-    if (global_log_client != nullptr)
-        log_client_free(global_log_client);
+    delete global_log_client;
 }
 
 bool
@@ -66,26 +64,25 @@ log_http_request(uint64_t timestamp, http_method_t method, const char *uri,
     if (global_log_client == nullptr)
         return true;
 
-    log_client_begin(global_log_client);
-    log_client_append_u64(global_log_client, LOG_TIMESTAMP, timestamp);
+    auto &client = *global_log_client;
+    client.Begin();
+    client.AppendU64(LOG_TIMESTAMP, timestamp);
     if (remote_host != nullptr)
-        log_client_append_string(global_log_client, LOG_REMOTE_HOST,
-                                 remote_host);
+        client.AppendString(LOG_REMOTE_HOST, remote_host);
     if (host != nullptr)
-        log_client_append_string(global_log_client, LOG_HOST, host);
+        client.AppendString(LOG_HOST, host);
     if (site != nullptr)
-        log_client_append_string(global_log_client, LOG_SITE, site);
-    log_client_append_u8(global_log_client, LOG_HTTP_METHOD, method);
-    log_client_append_string(global_log_client, LOG_HTTP_URI, uri);
+        client.AppendString(LOG_SITE, site);
+    client.AppendU8(LOG_HTTP_METHOD, method);
+    client.AppendString(LOG_HTTP_URI, uri);
     if (referer != nullptr)
-        log_client_append_string(global_log_client, LOG_HTTP_REFERER, referer);
+        client.AppendString(LOG_HTTP_REFERER, referer);
     if (user_agent != nullptr)
-        log_client_append_string(global_log_client, LOG_USER_AGENT,
-                                 user_agent);
-    log_client_append_u16(global_log_client, LOG_HTTP_STATUS, status);
+        client.AppendString(LOG_USER_AGENT, user_agent);
+    client.AppendU16(LOG_HTTP_STATUS, status);
 
     if (length >= 0)
-        log_client_append_u64(global_log_client, LOG_LENGTH, length);
+        client.AppendU64(LOG_LENGTH, length);
 
     struct {
         uint64_t received, sent;
@@ -94,11 +91,10 @@ log_http_request(uint64_t timestamp, http_method_t method, const char *uri,
         .sent = ToBE64(traffic_sent),
     };
 
-    log_client_append_attribute(global_log_client, LOG_TRAFFIC,
-                                &traffic, sizeof(traffic));
+    client.AppendAttribute(LOG_TRAFFIC, &traffic, sizeof(traffic));
 
     if (duration > 0)
-        log_client_append_u64(global_log_client, LOG_DURATION, duration);
+        client.AppendU64(LOG_DURATION, duration);
 
-    return log_client_commit(global_log_client);
+    return client.Commit();
 }
