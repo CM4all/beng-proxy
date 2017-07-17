@@ -7,6 +7,7 @@
 
 #include "pg/AsyncConnection.hxx"
 #include "event/TimerEvent.hxx"
+#include "io/Logger.hxx"
 
 #include <unordered_set>
 #include <unordered_map>
@@ -30,6 +31,8 @@ public:
  * (protected by the mutex).
  */
 class CertNameCache final : Pg::AsyncConnectionHandler, Pg::AsyncResultHandler {
+    const Logger logger;
+
     CertNameCacheHandler &handler;
 
     Pg::AsyncConnection conn;

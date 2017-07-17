@@ -14,8 +14,6 @@
 #include "pg/CheckError.hxx"
 #include "util/AllocatedString.hxx"
 
-#include <daemon/log.h>
-
 #include <openssl/err.h>
 
 unsigned
@@ -36,7 +34,7 @@ CertCache::Expire()
 
     for (auto i = map.begin(), end = map.end(); i != end;) {
         if (now >= i->second.expires) {
-            daemon_log(5, "flushed certificate '%s'\n", i->first.c_str());
+            logger(5, "flushed certificate '", i->first, "'");
             i = map.erase(i);
         } else
             ++i;
@@ -152,8 +150,8 @@ CertCache::OnCertModified(const std::string &name, bool deleted)
     if (i != map.end()) {
         map.erase(i);
 
-        daemon_log(5, "flushed %s certificate '%s'\n",
-                   deleted ? "deleted" : "modified",
-                   name.c_str());
+        logger.Format(5, "flushed %s certificate '%s'",
+                      deleted ? "deleted" : "modified",
+                      name.c_str());
     }
 }

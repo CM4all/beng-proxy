@@ -10,11 +10,10 @@
 #include "ssl/Basic.hxx"
 #include "ssl/Ctx.hxx"
 #include "ssl/Error.hxx"
+#include "io/Logger.hxx"
 #include "thread_socket_filter.hxx"
 #include "thread_pool.hxx"
 #include "util/ScopeExit.hxx"
-
-#include <daemon/log.h>
 
 static SslCtx ssl_client_ctx;
 
@@ -24,7 +23,7 @@ ssl_client_init()
     try {
         ssl_client_ctx = CreateBasicSslCtx(false);
     } catch (const SslError &e) {
-        daemon_log(1, "ssl_factory_new() failed: %s\n", e.what());
+        LogConcat(1, "ssl_client", "ssl_factory_new() failed: ", e.what());
     }
 }
 

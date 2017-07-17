@@ -14,7 +14,7 @@
 #include "certdb/Config.hxx"
 #include "certdb/CertDatabase.hxx"
 #include "stock/ThreadedStock.hxx"
-
+#include "io/Logger.hxx"
 #include "util/Compiler.h"
 
 #include <unordered_map>
@@ -34,6 +34,8 @@ class CertDatabase;
  * by worker threads (via #SslFilter).
  */
 class CertCache final : CertNameCacheHandler {
+    const Logger logger;
+
     const CertDatabaseConfig config;
 
     CertNameCache name_cache;
@@ -76,7 +78,8 @@ class CertCache final : CertNameCacheHandler {
 public:
     explicit CertCache(EventLoop &event_loop,
                        const CertDatabaseConfig &_config)
-        :config(_config), name_cache(event_loop, _config, *this) {}
+        :logger("CertCache"), config(_config),
+         name_cache(event_loop, _config, *this) {}
 
     void LoadCaCertificate(const char *path);
 

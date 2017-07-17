@@ -6,15 +6,13 @@
 #include "certdb/Config.hxx"
 #include "event/Duration.hxx"
 
-#include <daemon/log.h>
-
 #include <assert.h>
 #include <string.h>
 
 CertNameCache::CertNameCache(EventLoop &event_loop,
                              const CertDatabaseConfig &config,
                              CertNameCacheHandler &_handler)
-    :handler(_handler),
+    :logger("CertNameCache"), handler(_handler),
      conn(event_loop, config.connect.c_str(), config.schema.c_str(), *this),
      update_timer(event_loop, BIND_THIS_METHOD(OnUpdateTimer))
 {
@@ -40,7 +38,7 @@ CertNameCache::OnUpdateTimer()
 {
     assert(conn.IsReady());
 
-    daemon_log(4, "updating certificate database name cache\n");
+    logger(4, "updating certificate database name cache");
 
     n_added = n_updated = n_deleted = 0;
 
@@ -111,7 +109,7 @@ CertNameCache::RemoveAltNames(const std::string &common_name,
 void
 CertNameCache::OnConnect()
 {
-    daemon_log(5, "connected to certificate database\n");
+    logger(5, "connected to certificate database");
 
     // TODO: make asynchronous
     conn.Execute("LISTEN modified");
@@ -123,7 +121,7 @@ CertNameCache::OnConnect()
 void
 CertNameCache::OnDisconnect()
 {
-    daemon_log(4, "disconnected from certificate database\n");
+    logger(4, "disconnected from certificate database");
 
     UnscheduleUpdate();
 }
@@ -131,7 +129,7 @@ CertNameCache::OnDisconnect()
 void
 CertNameCache::OnNotify(const char *name)
 {
-    daemon_log(5, "received notify '%s'\n", name);
+    logger(5, "received notify '", name, "'");
 
     ScheduleUpdate();
 }
@@ -139,15 +137,15 @@ CertNameCache::OnNotify(const char *name)
 void
 CertNameCache::OnError(const char *prefix, const char *error)
 {
-    daemon_log(2, "%s: %s\n", prefix, error);
+    logger(2, prefix, ": ", error);
 }
 
 void
 CertNameCache::OnResult(Pg::Result &&result)
 {
     if (result.IsError()) {
-        daemon_log(1, "query error from certificate database: %s\n",
-                   result.GetErrorMessage());
+        logger(1, "query error from certificate database: ",
+               result.GetErrorMessage());
         ScheduleUpdate();
         return;
     }
@@ -194,11 +192,11 @@ CertNameCache::OnResult(Pg::Result &&result)
 void
 CertNameCache::OnResultEnd()
 {
-    daemon_log(4, "certificate database name cache: %u added, %u updated, %u deleted\n",
-               n_added, n_updated, n_deleted);
+    logger.Format(4, "certificate database name cache: %u added, %u updated, %u deleted",
+                  n_added, n_updated, n_deleted);
 
     if (!complete) {
-        daemon_log(4, "certificate database name cache is complete\n");
+        logger(4, "certificate database name cache is complete");
         complete = true;
     }
 }

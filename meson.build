@@ -362,7 +362,7 @@ ssl = static_library('ssl',
   include_directories: inc,
   dependencies: [
     libssl,
-    libdaemon,
+    io_dep,
     util_dep,
     declare_dependency(link_with: event),
   ])
