@@ -22,8 +22,6 @@
 #include "util/RuntimeError.hxx"
 #include "util/Exception.hxx"
 
-#include <daemon/log.h>
-
 #include <assert.h>
 #include <errno.h>
 #include <string.h>
@@ -44,8 +42,21 @@ struct TcpStockRequest {
          address(_address), timeout(_timeout) {}
 };
 
+class StockLoggerDomain {
+    const Stock &stock;
+
+public:
+    explicit StockLoggerDomain(const Stock &_stock):stock(_stock) {}
+
+    StringView GetDomain() const {
+        return stock.GetName();
+    }
+};
+
 struct TcpStockConnection final
     : HeapStockItem, ConnectSocketHandler, Cancellable {
+
+    BasicLogger<StockLoggerDomain> logger;
 
     /**
      * To cancel the ClientSocket.
@@ -60,7 +71,9 @@ struct TcpStockConnection final
 
     TcpStockConnection(CreateStockItem c, SocketAddress _address,
                        CancellablePointer &_cancel_ptr)
-        :HeapStockItem(c), address(_address),
+        :HeapStockItem(c),
+         logger(c.stock),
+         address(_address),
          event(c.stock.GetEventLoop(), BIND_THIS_METHOD(EventCallback)) {
         _cancel_ptr = *this;
 
@@ -112,10 +125,9 @@ TcpStockConnection::EventCallback(unsigned events)
 
         nbytes = fd.Read(&buffer, sizeof(buffer));
         if (nbytes < 0)
-            daemon_log(2, "error on idle TCP connection: %s\n",
-                       strerror(errno));
+            logger(2, "error on idle TCP connection: ",strerror(errno));
         else if (nbytes > 0)
-            daemon_log(2, "unexpected data in idle TCP connection\n");
+            logger(2, "unexpected data in idle TCP connection");
     }
 
     InvokeIdleDisconnect();
