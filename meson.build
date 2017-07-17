@@ -1116,6 +1116,7 @@ executable('cm4all-certdb',
 
 executable('cm4all-beng-proxy-log-cat',
   'src/access_log/Server.cxx',
+  'src/access_log/OneLine.cxx',
   'src/access_log/Cat.cxx',
   include_directories: inc,
   dependencies: [
