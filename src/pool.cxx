@@ -7,10 +7,9 @@
 #include "pool.hxx"
 #include "SlicePool.hxx"
 #include "AllocatorStats.hxx"
+#include "io/Logger.hxx"
 #include "util/Recycler.hxx"
 #include "util/Poison.hxx"
-
-#include <daemon/log.h>
 
 #include <boost/intrusive/list.hpp>
 
@@ -130,6 +129,22 @@ struct PoolRef {
 struct pool
     : boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
 
+    class PoolLoggerDomain {
+        struct pool &p;
+        mutable StringView value;
+
+    public:
+        explicit PoolLoggerDomain(struct pool &_p):p(_p) {}
+
+        StringView GetDomain() const {
+            if (value.IsNull())
+                value = p_strcat(&p, "pool ", p.name);
+            return value;
+        }
+    };
+
+    const BasicLogger<PoolLoggerDomain> logger;
+
     typedef boost::intrusive::list<struct pool,
                                    boost::intrusive::constant_time_size<false>> List;
 
@@ -193,7 +208,7 @@ struct pool
     size_t netto_size = 0;
 
     explicit pool(const char *_name)
-        :name(_name) {
+        :logger(*this), name(_name) {
     }
 
     pool(struct pool &&) = delete;
@@ -525,11 +540,11 @@ pool_check_attachments(const struct pool &pool)
     if (pool.attachments.empty())
         return;
 
-    daemon_log(1, "pool '%s' has attachments left:\n", pool.name);
+    pool.logger(1, "pool has attachments left:");
 
     for (const auto &attachment : pool.attachments)
-        daemon_log(1, "\tname='%s' value=%p\n",
-                   attachment.name, attachment.value);
+        pool.logger.Format(1, " name='%s' value=%p",
+                           attachment.name, attachment.value);
 
     abort();
 #endif
@@ -543,7 +558,7 @@ pool_destroy(struct pool *pool, gcc_unused struct pool *parent,
     assert(pool->parent == nullptr);
 
 #ifdef DUMP_POOL_SIZE
-    daemon_log(4, "pool '%s' size=%zu\n", pool->name, pool->netto_size);
+    pool->logger.Format(4, "pool size=%zu", pool->netto_size);
 #endif
 
 #ifdef DUMP_POOL_ALLOC_ALL
@@ -645,16 +660,16 @@ pool_increment_ref(gcc_unused struct pool *pool,
 static void
 pool_dump_refs(const struct pool &pool)
 {
-    daemon_log(0, "pool '%s'[%p](%u) REF:\n", pool.name,
-               (const void *)&pool, pool.ref);
+    pool.logger.Format(0, "pool[%p](%u) REF:",
+                       (const void *)&pool, pool.ref);
 
 #ifdef TRACE
     for (auto &ref : pool.refs)
-        daemon_log(0, "\t%s:%u %u\n", ref.file, ref.line, ref.count);
+        pool.logger.Format(0, " %s:%u %u", ref.file, ref.line, ref.count);
 
-    daemon_log(0, "    UNREF:\n");
+    pool.logger.Format(0, "UNREF:");
     for (auto &ref : pool.unrefs)
-        daemon_log(0, "\t%s:%u %u\n", ref.file, ref.line, ref.count);
+        pool.logger.Format(0, " %s:%u %u", ref.file, ref.line, ref.count);
 #endif
 }
 #endif
@@ -666,7 +681,7 @@ pool_ref_impl(struct pool *pool TRACE_ARGS_DECL)
     ++pool->ref;
 
 #ifdef POOL_TRACE_REF
-    daemon_log(0, "pool_ref('%s')=%u\n", pool->name, pool->ref);
+    pool->logger(0, "pool_ref=", pool->ref);
 #endif
 
 #ifdef DEBUG_POOL_REF
@@ -681,7 +696,7 @@ pool_unref_impl(struct pool *pool TRACE_ARGS_DECL)
     --pool->ref;
 
 #ifdef POOL_TRACE_REF
-    daemon_log(0, "pool_unref('%s')=%u\n", pool->name, pool->ref);
+    pool->logger(0, "pool_unref=", pool->ref);
 #endif
 
 #ifdef DEBUG_POOL_REF
@@ -801,11 +816,11 @@ pool_type_string(enum pool_type type)
 static void
 pool_dump_node(int indent, const struct pool &pool)
 {
-    daemon_log(2, "%*spool '%s' type=%s ref=%u size=%zu p=%p\n",
-               indent, "",
-               pool.name, pool_type_string(pool.type),
-               pool.ref, pool.netto_size,
-               (const void *)&pool);
+    pool.logger.Format(2, "%*spool '%s' type=%s ref=%u size=%zu p=%p",
+                       indent, "",
+                       pool.name, pool_type_string(pool.type),
+                       pool.ref, pool.netto_size,
+                       (const void *)&pool);
 
     indent += 2;
     for (const auto &child : pool.children)
@@ -910,16 +925,15 @@ pool_commit(void)
     if (trash.empty())
         return;
 
-    daemon_log(0, "pool_commit(): there are unreleased pools in the trash:\n");
+    LogConcat(0, "pool", "pool_commit(): there are unreleased pools in the trash:");
 
     for (const auto &pool : trash) {
 #ifdef DEBUG_POOL_REF
         pool_dump_refs(pool);
 #else
-        daemon_log(0, "- '%s'(%u)\n", pool.name, pool.ref);
+        LogFormat(0, "pool", "- '%s'(%u)", pool.name, pool.ref);
 #endif
     }
-    daemon_log(0, "\n");
 
     abort();
 }
@@ -1108,6 +1122,7 @@ static void *
 p_malloc_linear(struct pool *pool, const size_t original_size
                 TRACE_ARGS_DECL)
 {
+    auto &logger = pool->logger;
     struct linear_pool_area *area = pool->current_area.linear;
 
     size_t size = align_size(original_size);
@@ -1117,11 +1132,11 @@ p_malloc_linear(struct pool *pool, const size_t original_size
         /* this allocation is larger than the standard area size;
            obtain a new area just for this allocation, and keep on
            using the last area */
-        daemon_log(5, "big allocation on linear pool '%s' (%zu bytes)\n",
-                   pool->name, original_size);
+        logger.Format(5, "big allocation on linear pool '%s' (%zu bytes)",
+                      pool->name, original_size);
 #ifdef DEBUG_POOL_GROW
         pool_dump_allocations(pool);
-        daemon_log(6, "+ %s:%u %zu\n", file, line, original_size);
+        logger.Format(6, "+ %s:%u %zu", file, line, original_size);
 #else
         TRACE_ARGS_IGNORE;
 #endif
@@ -1138,10 +1153,10 @@ p_malloc_linear(struct pool *pool, const size_t original_size
         }
     } else if (unlikely(area == nullptr || area->used + size > area->size)) {
         if (area != nullptr) {
-            daemon_log(5, "growing linear pool '%s'\n", pool->name);
+            logger.Format(5, "growing linear pool '%s'", pool->name);
 #ifdef DEBUG_POOL_GROW
             pool_dump_allocations(pool);
-            daemon_log(6, "+ %s:%u %zu\n", file, line, original_size);
+            logger.Format(6, "+ %s:%u %zu", file, line, original_size);
 #else
             TRACE_ARGS_IGNORE;
 #endif

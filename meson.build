@@ -145,6 +145,22 @@ time = static_library('time',
   ])
 time_dep = declare_dependency(link_with: time)
 
+io = static_library('io',
+  'src/io/Buffered.cxx',
+  'libcommon/src/io/FileDescriptor.cxx',
+  'libcommon/src/io/WriteFile.cxx',
+  'libcommon/src/io/LineParser.cxx',
+  'libcommon/src/io/FileLineParser.cxx',
+  'libcommon/src/io/ConfigParser.cxx',
+  'libcommon/src/io/Logger.cxx',
+  'src/io/StringFile.cxx',
+  include_directories: inc,
+  dependencies: [
+    boost,
+    util_dep,
+  ])
+io_dep = declare_dependency(link_with: io)
+
 http = static_library('http',
   'libcommon/src/http/List.cxx',
   'libcommon/src/http/Date.cxx',
@@ -190,8 +206,8 @@ pool = static_library('pool',
   'src/pool.cxx',
   include_directories: inc,
   dependencies: [
-    libdaemon,
     memory_dep,
+    io_dep,
   ])
 pool_dep = declare_dependency(link_with: pool)
 
@@ -232,22 +248,6 @@ eutil = static_library('eutil',
   dependencies: [
     declare_dependency(link_with: event),
   ])
-
-io = static_library('io',
-  'src/io/Buffered.cxx',
-  'libcommon/src/io/FileDescriptor.cxx',
-  'libcommon/src/io/WriteFile.cxx',
-  'libcommon/src/io/LineParser.cxx',
-  'libcommon/src/io/FileLineParser.cxx',
-  'libcommon/src/io/ConfigParser.cxx',
-  'libcommon/src/io/Logger.cxx',
-  'src/io/StringFile.cxx',
-  include_directories: inc,
-  dependencies: [
-    boost,
-    util_dep,
-  ])
-io_dep = declare_dependency(link_with: io)
 
 system = static_library('system',
   'src/system/SetupProcess.cxx',
