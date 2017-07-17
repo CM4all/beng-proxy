@@ -11,7 +11,7 @@ cm4all-beng-proxy (12.0.32) unstable; urgency=low
   * config: add "access_logger" options "trust_xff", "ignore_localhost_200"
   * headers: add "X-CM4all-BENG-SSL" to group "SSL"
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Mon, 17 Jul 2017 20:33:46 -0000
 
 cm4all-beng-proxy (12.0.31) unstable; urgency=low
 
