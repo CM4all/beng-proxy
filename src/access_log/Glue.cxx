@@ -15,7 +15,7 @@
 #include <assert.h>
 #include <string.h>
 
-static bool global_log_enabled;
+static AccessLogConfig::Type global_log_type;
 static LogClient *global_log_client;
 
 void
@@ -23,21 +23,23 @@ log_global_init(const AccessLogConfig &config, const UidGid *user)
 {
     assert(global_log_client == nullptr);
 
-    if (config.command.empty() || config.command == "internal") {
-        global_log_enabled = false;
-        return;
+    global_log_type = config.type;
+
+    switch (global_log_type) {
+    case AccessLogConfig::Type::DISABLED:
+    case AccessLogConfig::Type::INTERNAL:
+        break;
+
+    case AccessLogConfig::Type::EXECUTE:
+        {
+            auto lp = log_launch(config.command.c_str(), user);
+            assert(lp.fd.IsDefined());
+
+            global_log_client = new LogClient(std::move(lp.fd));
+        }
+
+        break;
     }
-
-    if (config.command == "null") {
-        global_log_enabled = true;
-        return;
-    }
-
-    auto lp = log_launch(config.command.c_str(), user);
-    assert(lp.fd.IsDefined());
-
-    global_log_client = new LogClient(std::move(lp.fd));
-    global_log_enabled = true;
 }
 
 void
@@ -49,10 +51,18 @@ log_global_deinit(void)
 static void
 log_http_request(const AccessLogDatagram &d)
 {
-    if (!global_log_enabled)
+    switch (global_log_type) {
+    case AccessLogConfig::Type::DISABLED:
+        return;
+
+    case AccessLogConfig::Type::INTERNAL:
         LogOneLine(d);
-    else if (global_log_client != nullptr)
+        break;
+
+    case AccessLogConfig::Type::EXECUTE:
         global_log_client->Send(d);
+        break;
+    }
 }
 
 void
@@ -66,7 +76,7 @@ access_log(HttpServerRequest *request, const char *site,
     assert(http_method_is_valid(request->method));
     assert(http_status_is_valid(status));
 
-    if (global_log_enabled && global_log_client == nullptr)
+    if (global_log_type == AccessLogConfig::Type::DISABLED)
         return;
 
     const AccessLogDatagram d(std::chrono::system_clock::now(),
