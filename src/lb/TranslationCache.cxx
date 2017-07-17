@@ -42,7 +42,7 @@ class LbTranslationCacheKeyIterator {
 
     std::unique_ptr<char[]> buffer;
 
-    int last = 4;
+    unsigned last = 4;
 
 public:
     LbTranslationCacheKeyIterator(LbTranslationCache::Vary vary,
@@ -58,13 +58,10 @@ public:
      * Generates the next key.  Call this until it returns nullptr.
      */
     const char *NextKey() {
-        assert(last >= 0);
-
         if (last <= 0)
             return nullptr;
 
         last = NextIndex(last);
-        assert(last >= 0);
         assert(last < 4);
         return MakeKey(last);
     }
@@ -78,32 +75,29 @@ public:
     }
 
 private:
-    static constexpr bool HasHost(int i) {
+    static constexpr bool HasHost(unsigned i) {
         return i == 1 || i == 3;
     }
 
-    static constexpr bool HasListenerTag(int i) {
+    static constexpr bool HasListenerTag(unsigned i) {
         return i == 2 || i == 3;
     }
 
     bool IsInactive(int i) const {
-        assert(i >= 0);
         assert(i < 4);
 
         return (HasHost(i) && host.IsNull()) ||
             (HasListenerTag(i) && listener_tag.IsNull());
     }
 
-    int NextIndex(int i) const {
-        assert(i > 0);
+    unsigned NextIndex(unsigned i) const {
         assert(i <= 4);
 
         for (--i; IsInactive(i); --i) {}
         return i;
     }
 
-    const char *MakeKey(int i) {
-        assert(i >= 0);
+    const char *MakeKey(unsigned i) {
         assert(i < 4);
 
         char *result = buffer.get(), *p = result;
