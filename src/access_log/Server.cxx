@@ -197,8 +197,8 @@ AccessLogServer::Fill()
         iov.iov_len = sizeof(payloads[i]) - 1;
 
         auto &msg = msgs[i].msg_hdr;
-        msg.msg_name = nullptr;
-        msg.msg_namelen = 0;
+        msg.msg_name = (struct sockaddr *)addresses[i];
+        msg.msg_namelen = addresses[i].GetCapacity();
         msg.msg_iov = &iov;
         msg.msg_iovlen = 1;
         msg.msg_control = nullptr;
@@ -217,6 +217,7 @@ AccessLogServer::Fill()
                empty packets */
             break;
 
+        addresses[n_payloads].SetSize(msgs[n_payloads].msg_hdr.msg_namelen);
         sizes[n_payloads] = msgs[n_payloads].msg_len;
     }
 
@@ -224,7 +225,7 @@ AccessLogServer::Fill()
     return n_payloads > 0;
 }
 
-const AccessLogDatagram *
+const ReceivedAccessLogDatagram *
 AccessLogServer::Receive()
 {
     while (true) {
@@ -233,6 +234,7 @@ AccessLogServer::Receive()
 
         assert(current_payload < n_payloads);
 
+        const SocketAddress address = addresses[current_payload];
         uint8_t *buffer = payloads[current_payload];
         size_t nbytes = sizes[current_payload];
         ++current_payload;
@@ -242,6 +244,8 @@ AccessLogServer::Receive()
         buffer[nbytes] = 0;
 
         memset(&datagram, 0, sizeof(datagram));
+
+        datagram.logger_client_address = address;
 
         if (log_server_apply_datagram(&datagram, buffer, buffer + nbytes))
             return &datagram;

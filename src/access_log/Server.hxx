@@ -8,15 +8,25 @@
 #define BENG_PROXY_LOG_SERVER_H
 
 #include "Datagram.hxx"
+#include "net/StaticSocketAddress.hxx"
 
 #include <array>
+
+/**
+ * An extension of #AccessLogDatagram which contains information on
+ * the receipt.
+ */
+struct ReceivedAccessLogDatagram : AccessLogDatagram {
+    SocketAddress logger_client_address;
+};
 
 class AccessLogServer {
     const int fd;
 
-    AccessLogDatagram datagram;
+    ReceivedAccessLogDatagram datagram;
 
     static constexpr size_t N = 32;
+    std::array<StaticSocketAddress, N> addresses;
     std::array<uint8_t[16384], N> payloads;
     std::array<size_t, N> sizes;
     size_t n_payloads = 0, current_payload = 0;
@@ -26,7 +36,7 @@ public:
 
     ~AccessLogServer();
 
-    const AccessLogDatagram *Receive();
+    const ReceivedAccessLogDatagram *Receive();
 
     template<typename F>
     void Run(F &&f) {
