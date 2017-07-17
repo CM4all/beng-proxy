@@ -8,6 +8,7 @@
 #include "thread_queue.hxx"
 #include "thread_job.hxx"
 #include "ssl/ssl_init.hxx"
+#include "util/ScopeExit.hxx"
 
 static void *
 thread_worker_run(void *ctx)
@@ -36,12 +37,11 @@ thread_worker_create(struct thread_worker &w, ThreadQueue &q)
 
     pthread_attr_t attr;
     pthread_attr_init(&attr);
+    AtScopeExit(&attr) { pthread_attr_destroy(&attr); };
 
     /* 64 kB stack ought to be enough */
     pthread_attr_setstacksize(&attr, 65536);
 
-    bool success = pthread_create(&w.thread, &attr,
-                                  thread_worker_run, &w) == 0;
-    pthread_attr_destroy(&attr);
-    return success;
+    return pthread_create(&w.thread, &attr,
+                          thread_worker_run, &w) == 0;
 }
