@@ -5,6 +5,7 @@
  */
 
 #include "bp_config.hxx"
+#include "access_log/ConfigParser.hxx"
 #include "avahi/Check.hxx"
 #include "spawn/ConfigParser.hxx"
 #include "io/FileLineParser.hxx"
@@ -99,6 +100,7 @@ public:
 protected:
     /* virtual methods from class NestedConfigParser */
     void ParseLine2(FileLineParser &line) override;
+    void FinishChild(std::unique_ptr<ConfigParser> &&child) override;
 
 private:
     void CreateListener(FileLineParser &line);
@@ -201,9 +203,15 @@ BpConfigParser::ParseLine2(FileLineParser &line)
         CreateListener(line);
     else if (strcmp(word, "control") == 0)
         CreateControl(line);
-    else if (strcmp(word, "access_logger") == 0)
-        config.access_log.SetLegacy(line.ExpectValueAndEnd());
-    else if (strcmp(word, "set") == 0) {
+    else if (strcmp(word, "access_logger") == 0) {
+        if (line.SkipSymbol('{')) {
+            line.ExpectEnd();
+
+            SetChild(std::make_unique<AccessLogConfigParser>());
+        } else
+            /* <12.0.32 legacy */
+            config.access_log.SetLegacy(line.ExpectValueAndEnd());
+    } else if (strcmp(word, "set") == 0) {
         const char *name = line.ExpectWord();
         line.ExpectSymbol('=');
         const char *value = line.ExpectValueAndEnd();
@@ -213,6 +221,14 @@ BpConfigParser::ParseLine2(FileLineParser &line)
         SetChild(std::make_unique<SpawnConfigParser>(config.spawn));
     } else
         throw LineParser::Error("Unknown option");
+}
+
+void
+BpConfigParser::FinishChild(std::unique_ptr<ConfigParser> &&c)
+{
+    if (auto *al = dynamic_cast<AccessLogConfigParser *>(c.get())) {
+        config.access_log = al->GetConfig();
+    }
 }
 
 void

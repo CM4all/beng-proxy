@@ -6,6 +6,7 @@
 
 #include "lb_config.hxx"
 #include "AllocatorPtr.hxx"
+#include "access_log/ConfigParser.hxx"
 #include "avahi/Check.hxx"
 #include "io/FileLineParser.hxx"
 #include "io/ConfigParser.hxx"
@@ -162,6 +163,7 @@ public:
 protected:
     /* virtual methods from class NestedConfigParser */
     void ParseLine2(FileLineParser &line) override;
+    void FinishChild(std::unique_ptr<ConfigParser> &&child) override;
 
 private:
     void CreateControl(FileLineParser &line);
@@ -1100,10 +1102,24 @@ LbConfigParser::ParseLine2(FileLineParser &line)
         CreateCertDatabase(line);
     else if (strcmp(word, "control") == 0)
         CreateControl(line);
-    else if (strcmp(word, "access_logger") == 0)
-        config.access_log.SetLegacy(line.ExpectValueAndEnd());
-    else
+    else if (strcmp(word, "access_logger") == 0) {
+        if (line.SkipSymbol('{')) {
+            line.ExpectEnd();
+
+            SetChild(std::make_unique<AccessLogConfigParser>());
+        } else
+            /* <12.0.32 legacy */
+            config.access_log.SetLegacy(line.ExpectValueAndEnd());
+    } else
         throw LineParser::Error("Unknown option");
+}
+
+void
+LbConfigParser::FinishChild(std::unique_ptr<ConfigParser> &&c)
+{
+    if (auto *al = dynamic_cast<AccessLogConfigParser *>(c.get())) {
+        config.access_log = al->GetConfig();
+    }
 }
 
 void

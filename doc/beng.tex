@@ -2761,9 +2761,26 @@ General rules:
 
 \subsection{Configuring}
 
-The configuration option \verb|access_logger| receives the command
-which launches the child process.  The command is executed with the
-shell (\texttt{/bin/sh -c}).
+The configuration block \verb|access_logger| configures the access
+logger.  Example which launches an external logger program:
+
+\begin{verbatim}
+access_logger {
+  shell "exec cm4all-beng-proxy-log-split /tmp/%{year}%{month}.log"
+}
+\end{verbatim}
+
+The specified command is executed with the shell (\texttt{/bin/sh -c}).
+
+The following example disables access logging completely:
+
+\begin{verbatim}
+access_logger {
+  enabled "no"
+}
+\end{verbatim}
+
+The default is to log to the journal.
 
 \subsection{Included Loggers}
 
