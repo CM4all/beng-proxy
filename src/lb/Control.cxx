@@ -21,14 +21,14 @@
 #include <stdlib.h>
 
 LbControl::LbControl(LbInstance &_instance)
-    :instance(_instance) {}
+    :logger("control"), instance(_instance) {}
 
 inline void
 LbControl::EnableNode(const char *payload, size_t length)
 {
     const char *colon = (const char *)memchr(payload, ':', length);
     if (colon == nullptr || colon == payload || colon == payload + length - 1) {
-        daemon_log(3, "malformed FADE_NODE control packet: no port\n");
+        logger(3, "malformed FADE_NODE control packet: no port");
         return;
     }
 
@@ -40,14 +40,14 @@ LbControl::EnableNode(const char *payload, size_t length)
 
     const auto *node = instance.config.FindNode(node_name);
     if (node == nullptr) {
-        daemon_log(3, "unknown node in FADE_NODE control packet\n");
+        logger(3, "unknown node in FADE_NODE control packet");
         return;
     }
 
     char *endptr;
     unsigned port = strtoul(port_string, &endptr, 10);
     if (port == 0 || *endptr != 0) {
-        daemon_log(3, "malformed FADE_NODE control packet: port is not a number\n");
+        logger(3, "malformed FADE_NODE control packet: port is not a number");
         return;
     }
 
@@ -55,7 +55,7 @@ LbControl::EnableNode(const char *payload, size_t length)
 
     char buffer[64];
     ToString(buffer, sizeof(buffer), with_port);
-    daemon_log(4, "enabling node %s (%s)\n", node_name, buffer);
+    logger(4, "enabling node ", node_name, " (", buffer, ")");
 
     failure_unset(with_port, FAILURE_OK);
 }
@@ -65,7 +65,7 @@ LbControl::FadeNode(const char *payload, size_t length)
 {
     const char *colon = (const char *)memchr(payload, ':', length);
     if (colon == nullptr || colon == payload || colon == payload + length - 1) {
-        daemon_log(3, "malformed FADE_NODE control packet: no port\n");
+        logger(3, "malformed FADE_NODE control packet: no port");
         return;
     }
 
@@ -77,14 +77,14 @@ LbControl::FadeNode(const char *payload, size_t length)
 
     const auto *node = instance.config.FindNode(node_name);
     if (node == nullptr) {
-        daemon_log(3, "unknown node in FADE_NODE control packet\n");
+        logger(3, "unknown node in FADE_NODE control packet");
         return;
     }
 
     char *endptr;
     unsigned port = strtoul(port_string, &endptr, 10);
     if (port == 0 || *endptr != 0) {
-        daemon_log(3, "malformed FADE_NODE control packet: port is not a number\n");
+        logger(3, "malformed FADE_NODE control packet: port is not a number");
         return;
     }
 
@@ -92,7 +92,7 @@ LbControl::FadeNode(const char *payload, size_t length)
 
     char buffer[64];
     ToString(buffer, sizeof(buffer), with_port);
-    daemon_log(4, "fading node %s (%s)\n", node_name, buffer);
+    logger(4, "fading node ", node_name, " (", buffer, ")");
 
     /* set status "FADE" for 3 hours */
     failure_set(with_port, FAILURE_FADE,
@@ -142,13 +142,13 @@ LbControl::QueryNodeStatus(ControlServer &control_server,
                            SocketAddress address)
 try {
     if (address.GetSize() == 0) {
-        daemon_log(3, "got NODE_STATUS from unbound client socket\n");
+        logger(3, "got NODE_STATUS from unbound client socket");
         return;
     }
 
     const char *colon = (const char *)memchr(payload, ':', length);
     if (colon == nullptr || colon == payload || colon == payload + length - 1) {
-        daemon_log(3, "malformed NODE_STATUS control packet: no port\n");
+        logger(3, "malformed NODE_STATUS control packet: no port");
         node_status_response(&control_server, address,
                              payload, length, "malformed");
         return;
@@ -162,7 +162,7 @@ try {
 
     const auto *node = instance.config.FindNode(node_name);
     if (node == nullptr) {
-        daemon_log(3, "unknown node in NODE_STATUS control packet\n");
+        logger(3, "unknown node in NODE_STATUS control packet");
         node_status_response(&control_server, address,
                              payload, length, "unknown");
         return;
@@ -171,7 +171,7 @@ try {
     char *endptr;
     unsigned port = strtoul(port_string, &endptr, 10);
     if (port == 0 || *endptr != 0) {
-        daemon_log(3, "malformed NODE_STATUS control packet: port is not a number\n");
+        logger(3, "malformed NODE_STATUS control packet: port is not a number");
         node_status_response(&control_server, address,
                              payload, length, "malformed");
         return;
@@ -188,7 +188,7 @@ try {
     node_status_response(&control_server, address,
                          payload, length, s);
 } catch (const std::runtime_error &e) {
-    daemon_log(3, "%s\n", e.what());
+    logger(3, GetFullMessage(e));
 }
 
 inline void
@@ -201,7 +201,7 @@ try {
     control_server.Reply(address,
                          CONTROL_STATS, &stats, sizeof(stats));
 } catch (const std::runtime_error &e) {
-    daemon_log(3, "%s\n", e.what());
+    logger(3, GetFullMessage(e));
 }
 
 void
@@ -245,8 +245,11 @@ LbControl::OnControlPacket(ControlServer &control_server,
         break;
 
     case CONTROL_VERBOSE:
-        if (is_privileged && payload_length == 1)
+        if (is_privileged && payload_length == 1) {
             daemon_log_config.verbose = *(const uint8_t *)payload;
+            SetLogLevel(*(const uint8_t *)payload);
+        }
+
         break;
     }
 }
@@ -254,7 +257,7 @@ LbControl::OnControlPacket(ControlServer &control_server,
 void
 LbControl::OnControlError(std::exception_ptr ep)
 {
-    daemon_log(2, "%s\n", GetFullMessage(ep).c_str());
+    logger(2, GetFullMessage(ep).c_str());
 }
 
 void

@@ -8,6 +8,7 @@
 #define BENG_PROXY_LB_CONTROL_H
 
 #include "control_handler.hxx"
+#include "io/Logger.hxx"
 
 #include <memory>
 
@@ -16,6 +17,8 @@ struct LbControlConfig;
 class ControlServer;
 
 class LbControl final : ControlHandler {
+    const Logger logger;
+
     LbInstance &instance;
 
     std::unique_ptr<ControlServer> server;
