@@ -326,7 +326,7 @@ ParseCommandLine(BpCmdLine &cmdline, BpConfig &config, int argc, char **argv)
             break;
 
         case 'A':
-            config.access_logger = optarg;
+            config.access_log.SetLegacy(optarg);
             break;
 
         case 'f':

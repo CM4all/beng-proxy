@@ -7,6 +7,7 @@
 #ifndef BENG_PROXY_CONFIG_HXX
 #define BENG_PROXY_CONFIG_HXX
 
+#include "access_log/Config.hxx"
 #include "net/ListenerConfig.hxx"
 #include "net/UdpListenerConfig.hxx"
 #include "net/AddressInfo.hxx"
@@ -38,7 +39,7 @@ struct BpConfig {
 
     std::forward_list<Listener> listen;
 
-    std::string access_logger;
+    AccessLogConfig access_log;
 
     std::string session_cookie = "beng_proxy_session";
 

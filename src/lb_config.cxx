@@ -1101,7 +1101,7 @@ LbConfigParser::ParseLine2(FileLineParser &line)
     else if (strcmp(word, "control") == 0)
         CreateControl(line);
     else if (strcmp(word, "access_logger") == 0)
-        config.access_logger = line.ExpectValueAndEnd();
+        config.access_log.SetLegacy(line.ExpectValueAndEnd());
     else
         throw LineParser::Error("Unknown option");
 }

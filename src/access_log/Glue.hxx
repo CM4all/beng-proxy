@@ -15,11 +15,12 @@
 #include <stdint.h>
 
 struct UidGid;
+struct AccessLogConfig;
 struct AccessLogDatagram;
 struct HttpServerRequest;
 
 void
-log_global_init(const char *program, const UidGid *user);
+log_global_init(const AccessLogConfig &config, const UidGid *user);
 
 void
 log_global_deinit(void);

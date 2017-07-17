@@ -11,6 +11,7 @@
 #include "lb/GotoConfig.hxx"
 #include "lb/ClusterConfig.hxx"
 #include "lb/MonitorConfig.hxx"
+#include "access_log/Config.hxx"
 #include "net/AllocatedSocketAddress.hxx"
 #include "net/UdpListenerConfig.hxx"
 #include "certdb/Config.hxx"
@@ -38,7 +39,7 @@ struct LbCertDatabaseConfig : CertDatabaseConfig {
 };
 
 struct LbConfig {
-    std::string access_logger;
+    AccessLogConfig access_log;
 
     std::list<LbControlConfig> controls;
 

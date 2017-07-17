@@ -424,7 +424,7 @@ try {
 
     /* launch the access logger */
 
-    log_global_init(instance.config.access_logger.c_str(),
+    log_global_init(instance.config.access_log,
                     &instance.cmdline.logger_user);
 
     /* daemonize II */

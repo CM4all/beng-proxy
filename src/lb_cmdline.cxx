@@ -182,7 +182,7 @@ ParseCommandLine(LbCmdLine &cmdline, LbConfig &config,
             break;
 
         case 'A':
-            config.access_logger = optarg;
+            config.access_log.SetLegacy(optarg);
             break;
 
         case 'u':

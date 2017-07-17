@@ -5,6 +5,7 @@
  */
 
 #include "Glue.hxx"
+#include "Config.hxx"
 #include "Launch.hxx"
 #include "Client.hxx"
 #include "Datagram.hxx"
@@ -18,21 +19,21 @@ static bool global_log_enabled;
 static LogClient *global_log_client;
 
 void
-log_global_init(const char *program, const UidGid *user)
+log_global_init(const AccessLogConfig &config, const UidGid *user)
 {
     assert(global_log_client == nullptr);
 
-    if (program == nullptr || *program == 0 || strcmp(program, "internal") == 0) {
+    if (config.command.empty() || config.command == "internal") {
         global_log_enabled = false;
         return;
     }
 
-    if (strcmp(program, "null") == 0) {
+    if (config.command == "null") {
         global_log_enabled = true;
         return;
     }
 
-    auto lp = log_launch(program, user);
+    auto lp = log_launch(config.command.c_str(), user);
     assert(lp.fd.IsDefined());
 
     global_log_client = new LogClient(std::move(lp.fd));
