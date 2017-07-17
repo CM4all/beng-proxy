@@ -12,8 +12,6 @@
 #include "util/ConstBuffer.hxx"
 #include "util/WritableBuffer.hxx"
 
-#include <daemon/log.h>
-
 #include <zlib.h>
 
 #include <stdexcept>

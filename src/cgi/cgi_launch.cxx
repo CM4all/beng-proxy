@@ -15,8 +15,6 @@
 #include "io/UniqueFileDescriptor.hxx"
 #include "util/CharUtil.hxx"
 
-#include <daemon/log.h>
-
 #include <sys/wait.h>
 #include <string.h>
 
