@@ -187,8 +187,8 @@ try {
 
     node_status_response(&control_server, address,
                          payload, length, s);
-} catch (const std::runtime_error &e) {
-    logger(3, GetFullMessage(e));
+} catch (...) {
+    logger(3, std::current_exception());
 }
 
 inline void
@@ -200,8 +200,8 @@ try {
 
     control_server.Reply(address,
                          CONTROL_STATS, &stats, sizeof(stats));
-} catch (const std::runtime_error &e) {
-    logger(3, GetFullMessage(e));
+} catch (...) {
+    logger(3, std::current_exception());
 }
 
 void
@@ -257,7 +257,7 @@ LbControl::OnControlPacket(ControlServer &control_server,
 void
 LbControl::OnControlError(std::exception_ptr ep)
 {
-    logger(2, GetFullMessage(ep).c_str());
+    logger(2, ep);
 }
 
 void
