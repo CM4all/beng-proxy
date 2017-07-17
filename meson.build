@@ -1127,6 +1127,7 @@ executable('cm4all-beng-proxy-log-json',
   'src/access_log/Json.cxx',
   include_directories: inc,
   dependencies: [
+    net_dep,
     libjsoncpp,
     libhttp,
   ])
@@ -1137,6 +1138,7 @@ executable('cm4all-beng-proxy-log-lua',
   include_directories: inc,
   dependencies: [
     lua_dep,
+    net_dep,
     util_dep,
     liblua,
     libhttp,

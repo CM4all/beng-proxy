@@ -6,6 +6,7 @@
 
 #include "Server.hxx"
 #include "Datagram.hxx"
+#include "net/ToString.hxx"
 #include "util/StringFormat.hxx"
 
 #include <json/json.h>
@@ -18,9 +19,16 @@
 #include <time.h>
 
 static Json::Value
-ToJson(const AccessLogDatagram &d)
+ToJson(const ReceivedAccessLogDatagram &d)
 {
     Json::Value root;
+
+    if (!d.logger_client_address.IsNull() &&
+        d.logger_client_address.IsDefined()) {
+        char buffer[1024];
+        if (ToString(buffer, sizeof(buffer), d.logger_client_address))
+            root["logger_client"] = buffer;
+    }
 
     if (d.valid_timestamp) {
         time_t t = d.timestamp / 1000000;
@@ -88,7 +96,7 @@ MaybeWriteComma()
 #ifdef JSONCPP_VERSION_MAJOR
 
 static void
-Dump(Json::StreamWriter &writer, const AccessLogDatagram &d)
+Dump(Json::StreamWriter &writer, const ReceivedAccessLogDatagram &d)
 {
     MaybeWriteComma();
     writer.write(ToJson(d), &std::cout);
@@ -99,7 +107,7 @@ Dump(Json::StreamWriter &writer, const AccessLogDatagram &d)
 // libjsoncpp 0.6 (Debian Jessie)
 
 static void
-Dump(Json::StyledStreamWriter &writer, const AccessLogDatagram &d)
+Dump(Json::StyledStreamWriter &writer, const ReceivedAccessLogDatagram &d)
 {
     MaybeWriteComma();
     writer.write(std::cout, ToJson(d));

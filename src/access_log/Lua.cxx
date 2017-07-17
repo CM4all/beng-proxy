@@ -11,6 +11,7 @@
 #include "lua/RunFile.hxx"
 #include "lua/Error.hxx"
 #include "lua/Util.hxx"
+#include "net/ToString.hxx"
 #include "util/PrintException.hxx"
 #include "util/RuntimeError.hxx"
 #include "util/ScopeExit.hxx"
@@ -50,15 +51,22 @@ public:
          LookupFunction(L, function, path, function_name);
     }
 
-    void Handle(const AccessLogDatagram &d);
+    void Handle(const ReceivedAccessLogDatagram &d);
 };
 
 void
-LuaAccessLogger::Handle(const AccessLogDatagram &d)
+LuaAccessLogger::Handle(const ReceivedAccessLogDatagram &d)
 try {
     function.Push();
 
     lua_newtable(L);
+
+    if (!d.logger_client_address.IsNull() &&
+        d.logger_client_address.IsDefined()) {
+        char buffer[1024];
+        if (ToString(buffer, sizeof(buffer), d.logger_client_address))
+            Lua::SetTable(L, -3, "logger_client", buffer);
+    }
 
     if (d.valid_timestamp)
         Lua::SetTable(L, -3, "timestamp", d.timestamp / 1000000.);
