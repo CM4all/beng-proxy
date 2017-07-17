@@ -8,6 +8,7 @@
 #include "thread_queue.hxx"
 #include "thread_job.hxx"
 #include "ssl/ssl_init.hxx"
+#include "system/Error.hxx"
 #include "util/ScopeExit.hxx"
 
 static void *
@@ -30,7 +31,7 @@ thread_worker_run(void *ctx)
     return nullptr;
 }
 
-bool
+void
 thread_worker_create(struct thread_worker &w, ThreadQueue &q)
 {
     w.queue = &q;
@@ -42,6 +43,7 @@ thread_worker_create(struct thread_worker &w, ThreadQueue &q)
     /* 64 kB stack ought to be enough */
     pthread_attr_setstacksize(&attr, 65536);
 
-    return pthread_create(&w.thread, &attr,
-                          thread_worker_run, &w) == 0;
+    int error = pthread_create(&w.thread, &attr, thread_worker_run, &w);
+    if (error != 0)
+        throw MakeErrno(error, "Failed to create worker thread");
 }

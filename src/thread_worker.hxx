@@ -17,7 +17,10 @@ struct thread_worker {
     ThreadQueue *queue;
 };
 
-bool
+/**
+ * Throws exception on error.
+ */
+void
 thread_worker_create(struct thread_worker &w, ThreadQueue &q);
 
 /**

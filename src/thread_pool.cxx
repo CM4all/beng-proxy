@@ -7,6 +7,7 @@
 #include "thread_pool.hxx"
 #include "thread_queue.hxx"
 #include "thread_worker.hxx"
+#include "util/Exception.hxx"
 
 #include <daemon/log.h>
 
@@ -26,15 +27,15 @@ thread_pool_init(EventLoop &event_loop)
 
 static void
 thread_pool_start(void)
-{
+try {
     assert(global_thread_queue != nullptr);
 
-    for (auto &i : worker_threads) {
-        if (!thread_worker_create(i, *global_thread_queue)) {
-            daemon_log(1, "Failed to launch worker thread\n");
-            exit(EXIT_FAILURE);
-        }
-    }
+    for (auto &i : worker_threads)
+        thread_worker_create(i, *global_thread_queue);
+} catch (...) {
+    daemon_log(1, "Failed to launch worker thread: %s\n",
+               GetFullMessage(std::current_exception()).c_str());
+    exit(EXIT_FAILURE);
 }
 
 ThreadQueue &
