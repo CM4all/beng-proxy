@@ -2782,6 +2782,22 @@ access_logger {
 
 The default is to log to the journal.
 
+The following \verb|access_logger| options are available:
+
+\begin{longtabu*}{|l|X|}
+\hline
+
+\verb|enabled| & ``no'' disables access logging completely. \\
+
+\hline
+
+\verb|shell| & Execute an external access logger program as child
+process.  The specified command is execute with the shell
+(\texttt{/bin/sh -c}). \\
+
+\hline
+\end{longtabu*}
+
 \subsection{Included Loggers}
 
 This section describes the loggers which are included in the Debian
