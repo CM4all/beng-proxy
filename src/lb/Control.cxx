@@ -151,7 +151,7 @@ try {
     const char *colon = (const char *)memchr(payload, ':', length);
     if (colon == nullptr || colon == payload || colon == payload + length - 1) {
         daemon_log(3, "malformed NODE_STATUS control packet: no port\n");
-        node_status_response(control->server.get(), address,
+        node_status_response(&control_server, address,
                              payload, length, "malformed");
         return;
     }
@@ -165,7 +165,7 @@ try {
     const auto *node = control->instance.config.FindNode(node_name);
     if (node == nullptr) {
         daemon_log(3, "unknown node in NODE_STATUS control packet\n");
-        node_status_response(control->server.get(), address,
+        node_status_response(&control_server, address,
                              payload, length, "unknown");
         return;
     }
@@ -174,7 +174,7 @@ try {
     unsigned port = strtoul(port_string, &endptr, 10);
     if (port == 0 || *endptr != 0) {
         daemon_log(3, "malformed NODE_STATUS control packet: port is not a number\n");
-        node_status_response(control->server.get(), address,
+        node_status_response(&control_server, address,
                              payload, length, "malformed");
         return;
     }
