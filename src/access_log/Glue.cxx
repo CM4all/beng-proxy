@@ -50,26 +50,10 @@ log_global_enabled(void)
 }
 
 bool
-log_http_request(std::chrono::system_clock::time_point timestamp,
-                 http_method_t method, const char *uri,
-                 const char *remote_host, const char *host, const char *site,
-                 const char *referer, const char *user_agent,
-                 http_status_t status, int64_t length,
-                 uint64_t traffic_received, uint64_t traffic_sent,
-                 std::chrono::steady_clock::duration duration)
+log_http_request(const AccessLogDatagram &d)
 {
-    assert(http_method_is_valid(method));
-    assert(uri != nullptr);
-    assert(http_status_is_valid(status));
-
     if (global_log_client == nullptr)
         return true;
 
-    const AccessLogDatagram d(timestamp, method, uri,
-                              remote_host, host, site,
-                              referer, user_agent,
-                              status, length,
-                              traffic_received, traffic_sent,
-                              duration);
     return global_log_client->Send(d);
 }

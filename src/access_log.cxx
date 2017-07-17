@@ -10,6 +10,7 @@
 
 #include "http_server/Request.hxx"
 #include "access_log/Glue.hxx"
+#include "access_log/Datagram.hxx"
 
 #include <stdio.h>
 #include <time.h>
@@ -34,16 +35,18 @@ access_log(HttpServerRequest *request, const char *site,
     assert(http_method_is_valid(request->method));
     assert(http_status_is_valid(status));
 
+    const AccessLogDatagram d(std::chrono::system_clock::now(),
+                              request->method, request->uri,
+                              request->remote_host,
+                              request->headers.Get("host"),
+                              site,
+                              referer, user_agent,
+                              status, content_length,
+                              bytes_received, bytes_sent,
+                              duration);
+
     if (log_global_enabled()) {
-        log_http_request(std::chrono::system_clock::now(),
-                         request->method, request->uri,
-                         request->remote_host,
-                         request->headers.Get("host"),
-                         site,
-                         referer, user_agent,
-                         status, content_length,
-                         bytes_received, bytes_sent,
-                         duration);
+        log_http_request(d);
         return;
     }
 
