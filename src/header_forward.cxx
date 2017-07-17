@@ -76,6 +76,7 @@ static const char *const cors_request_headers[] = {
  * A list of response headers to for the "ssl" setting.
  */
 static const char *const ssl_request_headers[] = {
+    "x-cm4all-beng-ssl",
     "x-cm4all-beng-peer-subject",
     "x-cm4all-beng-peer-issuer-subject",
     nullptr,
