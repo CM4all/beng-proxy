@@ -1113,7 +1113,7 @@ pool_dump_allocations(const struct pool &pool)
          info != (struct allocation_info *)&pool->allocations;
          info = (struct allocation_info *)info->siblings.prev) {
         sum += info->size;
-        daemon_log(6, "- %s:%u %zu => %zu\n", info->file, info->line, info->size, sum);
+        pool.logger(6, "- %s:%u %zu => %zu\n", info->file, info->line, info->size, sum);
     }
 }
 #endif
