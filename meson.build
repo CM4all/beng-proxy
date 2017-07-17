@@ -1103,6 +1103,7 @@ executable('cm4all-certdb',
   'src/certdb/GlueHttpClient.cxx',
   'src/certdb/AcmeClient.cxx',
   'src/certdb/Main.cxx',
+  'src/access_log/ConfigParser.cxx',
   include_directories: inc,
   dependencies: [
     libjsoncpp,
