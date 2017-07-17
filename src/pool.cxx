@@ -1109,11 +1109,10 @@ static void
 pool_dump_allocations(const struct pool &pool)
 {
     size_t sum = 0;
-    for (struct allocation_info *info = (struct allocation_info *)pool->allocations.prev;
-         info != (struct allocation_info *)&pool->allocations;
-         info = (struct allocation_info *)info->siblings.prev) {
-        sum += info->size;
-        pool.logger(6, "- %s:%u %zu => %zu\n", info->file, info->line, info->size, sum);
+    for (const auto &info : pool.allocations) {
+        sum += info.size;
+        pool.logger.Format(6, "- %s:%u %zu => %zu\n",
+                           info.file, info.line, info.size, sum);
     }
 }
 #endif
@@ -1135,7 +1134,7 @@ p_malloc_linear(struct pool *pool, const size_t original_size
         logger.Format(5, "big allocation on linear pool '%s' (%zu bytes)",
                       pool->name, original_size);
 #ifdef DEBUG_POOL_GROW
-        pool_dump_allocations(pool);
+        pool_dump_allocations(*pool);
         logger.Format(6, "+ %s:%u %zu", file, line, original_size);
 #else
         TRACE_ARGS_IGNORE;
@@ -1155,7 +1154,7 @@ p_malloc_linear(struct pool *pool, const size_t original_size
         if (area != nullptr) {
             logger.Format(5, "growing linear pool '%s'", pool->name);
 #ifdef DEBUG_POOL_GROW
-            pool_dump_allocations(pool);
+            pool_dump_allocations(*pool);
             logger.Format(6, "+ %s:%u %zu", file, line, original_size);
 #else
             TRACE_ARGS_IGNORE;
