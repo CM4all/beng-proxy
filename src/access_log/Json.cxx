@@ -68,11 +68,29 @@ ToJson(const AccessLogDatagram &d)
     return root;
 }
 
+/**
+ * Write a comma, but not if this is the first call.
+ *
+ * This is used to make the whole process output a valid JSON array.
+ * It begins with "[" and ends with "]", and between all request log
+ * objects, there is a comma, but not after the last one.
+ */
+static void
+MaybeWriteComma()
+{
+    static bool not_first;
+    if (not_first)
+        std::cout << ", ";
+    else
+        not_first = true;
+}
+
 #ifdef JSONCPP_VERSION_MAJOR
 
 static void
 Dump(Json::StreamWriter &writer, const AccessLogDatagram &d)
 {
+    MaybeWriteComma();
     writer.write(ToJson(d), &std::cout);
     std::cout << std::endl;
 }
@@ -83,6 +101,7 @@ Dump(Json::StreamWriter &writer, const AccessLogDatagram &d)
 static void
 Dump(Json::StyledStreamWriter &writer, const AccessLogDatagram &d)
 {
+    MaybeWriteComma();
     writer.write(std::cout, ToJson(d));
     std::cout << std::endl;
 }
@@ -105,7 +124,11 @@ int main(int argc, char **argv)
     auto writer = std::make_unique<Json::StyledStreamWriter>();
 #endif
 
+    std::cout << "[" << std::endl;
+
     AccessLogServer(0).Run(std::bind(Dump, std::ref(*writer),
                                      std::placeholders::_1));
+
+    std::cout << "]" << std::endl;
     return 0;
 }
