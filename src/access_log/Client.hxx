@@ -16,7 +16,7 @@
 #include <string.h>
 
 class LogClient {
-    const Logger logger;
+    const LLogger logger;
 
     UniqueSocketDescriptor fd;
 

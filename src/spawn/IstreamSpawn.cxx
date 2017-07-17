@@ -34,7 +34,7 @@
 #include <limits.h>
 
 struct SpawnIstream final : Istream, IstreamHandler, ExitListener {
-    const Logger logger;
+    const LLogger logger;
     SpawnService &spawn_service;
 
     UniqueFileDescriptor output_fd;

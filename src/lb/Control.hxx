@@ -17,7 +17,7 @@ struct LbControlConfig;
 class ControlServer;
 
 class LbControl final : ControlHandler {
-    const Logger logger;
+    const LLogger logger;
 
     LbInstance &instance;
 

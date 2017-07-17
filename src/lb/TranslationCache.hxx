@@ -16,7 +16,7 @@ struct HttpServerRequest;
 struct TranslateResponse;
 
 class LbTranslationCache final {
-    const Logger logger;
+    const LLogger logger;
 
 public:
     struct Item {

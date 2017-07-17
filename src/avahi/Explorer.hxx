@@ -24,7 +24,7 @@ class AvahiServiceExplorerListener;
  * change.
  */
 class AvahiServiceExplorer final : AvahiConnectionListener {
-    const Logger logger;
+    const LLogger logger;
 
     MyAvahiClient &avahi_client;
     AvahiServiceExplorerListener &listener;

@@ -20,7 +20,7 @@ class SocketAddress;
 class AvahiConnectionListener;
 
 class MyAvahiClient final {
-    const Logger logger;
+    const LLogger logger;
 
     std::string name;
 

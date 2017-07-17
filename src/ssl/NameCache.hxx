@@ -31,7 +31,7 @@ public:
  * (protected by the mutex).
  */
 class CertNameCache final : Pg::AsyncConnectionHandler, Pg::AsyncResultHandler {
-    const Logger logger;
+    const LLogger logger;
 
     CertNameCacheHandler &handler;
 

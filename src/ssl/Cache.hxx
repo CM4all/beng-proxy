@@ -34,7 +34,7 @@ class CertDatabase;
  * by worker threads (via #SslFilter).
  */
 class CertCache final : CertNameCacheHandler {
-    const Logger logger;
+    const LLogger logger;
 
     const CertDatabaseConfig config;
 
