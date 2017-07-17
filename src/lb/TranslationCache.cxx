@@ -98,7 +98,7 @@ private:
         assert(i > 0);
         assert(i <= 4);
 
-        for (--i; i >= 0 && IsInactive(i); --i) {}
+        for (--i; IsInactive(i); --i) {}
         return i;
     }
 
