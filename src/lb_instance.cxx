@@ -12,8 +12,6 @@
 #include "fb_pool.hxx"
 #include "event/Duration.hxx"
 
-#include <daemon/log.h>
-
 #include <assert.h>
 #include <sys/signal.h>
 
@@ -75,7 +73,7 @@ LbInstance::Compress()
         i.second.Expire();
 
     unsigned n_ssl_sessions = FlushSSLSessionCache(time(nullptr));
-    daemon_log(3, "flushed %u SSL sessions\n", n_ssl_sessions);
+    logger(3, "flushed ", n_ssl_sessions, " SSL sessions");
 }
 
 CertCache &

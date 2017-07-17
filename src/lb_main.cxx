@@ -28,8 +28,6 @@
 #include "util/PrintException.hxx"
 #include "util/Macros.hxx"
 
-#include <daemon/log.h>
-
 #include <systemd/sd-daemon.h>
 #include <postgresql/libpq-fe.h>
 
@@ -109,7 +107,7 @@ void
 LbInstance::ReloadEventCallback(int)
 {
     unsigned n_ssl_sessions = FlushSSLSessionCache(LONG_MAX);
-    daemon_log(3, "flushed %u SSL sessions\n", n_ssl_sessions);
+    logger(3, "flushed ", n_ssl_sessions, " SSL sessions");
 
     goto_map.FlushCaches();
 

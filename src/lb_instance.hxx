@@ -16,6 +16,7 @@
 #include "event/SignalEvent.hxx"
 #include "event/ShutdownListener.hxx"
 #include "avahi/Client.hxx"
+#include "io/Logger.hxx"
 
 #include <forward_list>
 #include <map>
@@ -32,6 +33,8 @@ class CertCache;
 
 struct LbInstance final : PInstance {
     const LbConfig &config;
+
+    const Logger logger;
 
     uint64_t http_request_counter = 0;
 
