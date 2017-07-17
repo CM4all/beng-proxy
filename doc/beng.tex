@@ -2797,6 +2797,12 @@ process.  The specified command is execute with the shell
 
 \hline
 
+\verb|trust_xff| & The specified IP address is a ``trusted'' proxy
+whose \texttt{X-Forwarded-For} value is used to determine the
+\verb|remote_host|.  This option can be specified multiple times. \\
+
+\hline
+
 \verb|ignore_localhost_200| & The value is an URI which is never
 logged if the \verb|Host| header is ``localhost'' and the response
 status is ``200 OK''. \\

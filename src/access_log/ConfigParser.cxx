@@ -22,6 +22,8 @@ AccessLogConfigParser::ParseLine(FileLineParser &line)
         config.command = line.ExpectValueAndEnd();
     } else if (strcmp(word, "ignore_localhost_200") == 0) {
         config.ignore_localhost_200 = line.ExpectValueAndEnd();
+    } else if (strcmp(word, "trust_xff") == 0) {
+        config.trust_xff.emplace(line.ExpectValueAndEnd());
     } else
         throw LineParser::Error("Unknown option");
 }

@@ -6,6 +6,7 @@
 #define ACCESS_LOG_CONFIG_HXX
 
 #include <string>
+#include <set>
 
 /**
  * Configuration which describes whether and how to log HTTP requests.
@@ -32,6 +33,12 @@ struct AccessLogConfig {
      * status==200.
      */
     std::string ignore_localhost_200;
+
+    /**
+     * A list of proxy servers whose "X-Forwarded-For" header will be
+     * trusted.
+     */
+    std::set<std::string> trust_xff;
 
     /**
      * Setter for the deprecated "--access-logger" command-line

@@ -8,7 +8,7 @@ cm4all-beng-proxy (12.0.32) unstable; urgency=low
   * log-json: add "logger_client" attribute
   * log-lua: new access logger which calls a Lua script
   * config: make "access_logger" a block
-  * config: add "access_logger" option "ignore_localhost_200"
+  * config: add "access_logger" options "trust_xff", "ignore_localhost_200"
   * headers: add "X-CM4all-BENG-SSL" to group "SSL"
 
  --   

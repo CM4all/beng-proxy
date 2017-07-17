@@ -12,6 +12,7 @@
 #include "http_server/Request.hxx"
 
 #include <assert.h>
+#include <string.h>
 
 AccessLogGlue::AccessLogGlue(const AccessLogConfig &_config,
                              LogClient *_client)
@@ -63,6 +64,61 @@ AccessLogGlue::Log(const AccessLogDatagram &d)
         LogOneLine(d);
 }
 
+/**
+ * Extract the right-most item of a comma-separated list, such as an
+ * X-Forwarded-For header value.  Returns the remaining string and the
+ * right-most item as a std::pair.
+ */
+gcc_pure
+static std::pair<StringView, StringView>
+LastListItem(StringView list)
+{
+    const char *comma = (const char *)memrchr(list.data, ',', list.size);
+    if (comma == nullptr) {
+        list.Strip();
+        if (list.IsEmpty())
+            return std::make_pair(nullptr, nullptr);
+
+        return std::make_pair("", list);
+    }
+
+    StringView value = list;
+    value.MoveFront(comma + 1);
+    value.Strip();
+
+    list.size = comma - list.data;
+
+    return std::make_pair(list, value);
+}
+
+/**
+ * Extract the "real" remote host from an X-Forwarded-For request header.
+ *
+ * @param trust a list of trusted proxies
+ */
+gcc_pure
+static StringView
+GetRealRemoteHost(const char *xff, const std::set<std::string> &trust)
+{
+    StringView list(xff);
+    StringView result(nullptr);
+
+    while (true) {
+        auto l = LastListItem(list);
+        if (l.second.IsEmpty())
+            /* list finished; return the last good address (even if
+               it's a trusted proxy) */
+            return result;
+
+        result = l.second;
+        if (trust.find(std::string(result.data, result.size)) == trust.end())
+            /* this address is not a trusted proxy; return it */
+            return result;
+
+        list = l.first;
+    }
+}
+
 void
 AccessLogGlue::Log(HttpServerRequest &request, const char *site,
                    const char *referer, const char *user_agent,
@@ -73,9 +129,25 @@ AccessLogGlue::Log(HttpServerRequest &request, const char *site,
     assert(http_method_is_valid(request.method));
     assert(http_status_is_valid(status));
 
+    const char *remote_host = request.remote_host;
+    std::string buffer;
+
+    if (remote_host != nullptr &&
+        !config.trust_xff.empty() &&
+        config.trust_xff.find(remote_host) != config.trust_xff.end()) {
+        const char *xff = request.headers.Get("x-forwarded-for");
+        if (xff != nullptr) {
+            auto r = GetRealRemoteHost(xff, config.trust_xff);
+            if (!r.IsNull()) {
+                buffer.assign(r.data, r.size);
+                remote_host = buffer.c_str();
+            }
+        }
+    }
+
     const AccessLogDatagram d(std::chrono::system_clock::now(),
                               request.method, request.uri,
-                              request.remote_host,
+                              remote_host,
                               request.headers.Get("host"),
                               site,
                               referer, user_agent,
