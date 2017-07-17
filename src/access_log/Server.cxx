@@ -217,7 +217,11 @@ AccessLogServer::Fill()
                empty packets */
             break;
 
-        addresses[n_payloads].SetSize(msgs[n_payloads].msg_hdr.msg_namelen);
+        if (msgs[n_payloads].msg_hdr.msg_namelen >= sizeof(struct sockaddr))
+            addresses[n_payloads].SetSize(msgs[n_payloads].msg_hdr.msg_namelen);
+        else
+            addresses[n_payloads].Clear();
+
         sizes[n_payloads] = msgs[n_payloads].msg_len;
     }
 
