@@ -34,10 +34,8 @@ access_log(HttpServerRequest *request, const char *site,
     assert(http_method_is_valid(request->method));
     assert(http_status_is_valid(status));
 
-    const auto duration_us = std::chrono::duration_cast<std::chrono::microseconds>(duration);
-
     if (log_global_enabled()) {
-        log_http_request(time(nullptr) * 1000000,
+        log_http_request(std::chrono::system_clock::now(),
                          request->method, request->uri,
                          request->remote_host,
                          request->headers.Get("host"),
@@ -45,7 +43,7 @@ access_log(HttpServerRequest *request, const char *site,
                          referer, user_agent,
                          status, content_length,
                          bytes_received, bytes_sent,
-                         duration_us.count());
+                         duration);
         return;
     }
 
@@ -67,6 +65,8 @@ access_log(HttpServerRequest *request, const char *site,
                  (unsigned long long)content_length);
         length = length_buffer;
     }
+
+    const auto duration_us = std::chrono::duration_cast<std::chrono::microseconds>(duration);
 
     printf("%s %s - - [%s] \"%s %s HTTP/1.1\" %u %s \"%s\" \"%s\" %llu\n",
            site, optional_string(request->remote_host), stamp,

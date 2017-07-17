@@ -1,6 +1,7 @@
 cm4all-beng-proxy (12.0.32) unstable; urgency=low
 
   * logger: fix log level
+  * access_log: use microsecond precision in "timestamp" attribute
   * log-json: enclose output in "[]" and put commas between records
   * log-json: add "logger_client" attribute
   * log-lua: new access logger which calls a Lua script
