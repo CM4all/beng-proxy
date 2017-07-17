@@ -101,7 +101,7 @@ private:
         if (HasHost(i))
             p = (char *)mempcpy(p, host.data, host.size);
 
-        *p++ = '\x7f';
+        *p++ = '|';
 
         if (HasListenerTag(i))
             p = (char *)mempcpy(p, listener_tag.data, listener_tag.size);
