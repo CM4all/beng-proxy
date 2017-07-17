@@ -58,10 +58,14 @@ public:
      * Generates the next key.  Call this until it returns nullptr.
      */
     const char *NextKey() {
+        assert(last >= 0);
+
         if (last <= 0)
             return nullptr;
 
         last = NextIndex(last);
+        assert(last >= 0);
+        assert(last < 4);
         return MakeKey(last);
     }
 
@@ -91,11 +95,17 @@ private:
     }
 
     int NextIndex(int i) const {
+        assert(i > 0);
+        assert(i <= 4);
+
         for (--i; i >= 0 && IsInactive(i); --i) {}
         return i;
     }
 
     const char *MakeKey(int i) {
+        assert(i >= 0);
+        assert(i < 4);
+
         char *result = buffer.get(), *p = result;
 
         if (HasHost(i))
