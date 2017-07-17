@@ -27,8 +27,6 @@
 #include "system/Error.hxx"
 #include "util/Exception.hxx"
 
-#include <daemon/log.h>
-
 #include <assert.h>
 
 LbHttpConnection::LbHttpConnection(struct pool &_pool, LbInstance &_instance,

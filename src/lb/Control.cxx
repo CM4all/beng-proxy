@@ -15,8 +15,6 @@
 #include "net/ToString.hxx"
 #include "util/Exception.hxx"
 
-#include <daemon/log.h>
-
 #include <string.h>
 #include <stdlib.h>
 
@@ -246,7 +244,6 @@ LbControl::OnControlPacket(ControlServer &control_server,
 
     case CONTROL_VERBOSE:
         if (is_privileged && payload_length == 1) {
-            daemon_log_config.verbose = *(const uint8_t *)payload;
             SetLogLevel(*(const uint8_t *)payload);
         }
 

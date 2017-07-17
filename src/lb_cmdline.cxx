@@ -9,8 +9,6 @@
 #include "stopwatch.hxx"
 #include "io/Logger.hxx"
 
-#include <daemon/log.h>
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -144,6 +142,7 @@ ParseCommandLine(LbCmdLine &cmdline, LbConfig &config,
     };
 #endif
     const char *user_name = NULL;
+    unsigned verbose = 1;
 
     while (1) {
 #ifdef __GLIBC__
@@ -167,11 +166,11 @@ ParseCommandLine(LbCmdLine &cmdline, LbConfig &config,
             exit(0);
 
         case 'v':
-            ++daemon_log_config.verbose;
+            ++verbose;
             break;
 
         case 'q':
-            daemon_log_config.verbose = 0;
+            verbose = 0;
             break;
 
         case 'f':
@@ -210,7 +209,7 @@ ParseCommandLine(LbCmdLine &cmdline, LbConfig &config,
         }
     }
 
-    SetLogLevel(daemon_log_config.verbose);
+    SetLogLevel(verbose);
 
     /* check non-option arguments */
 
