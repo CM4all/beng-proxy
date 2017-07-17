@@ -126,24 +126,11 @@ struct PoolRef {
 };
 #endif
 
-struct pool
-    : boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
+struct pool final
+    : boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>,
+      LoggerDomainFactory {
 
-    class PoolLoggerDomain {
-        struct pool &p;
-        mutable StringView value;
-
-    public:
-        explicit PoolLoggerDomain(struct pool &_p):p(_p) {}
-
-        StringView GetDomain() const {
-            if (value.IsNull())
-                value = p_strcat(&p, "pool ", p.name);
-            return value;
-        }
-    };
-
-    const BasicLogger<PoolLoggerDomain> logger;
+    const LazyDomainLogger logger;
 
     typedef boost::intrusive::list<struct pool,
                                    boost::intrusive::constant_time_size<false>> List;
@@ -213,6 +200,11 @@ struct pool
 
     pool(struct pool &&) = delete;
     pool &operator=(struct pool &&) = delete;
+
+    /* virtual methods from class LoggerDomainFactory */
+    std::string MakeLoggerDomain() const noexcept override {
+        return std::string("pool ") + name;
+    }
 };
 
 #ifndef NDEBUG
