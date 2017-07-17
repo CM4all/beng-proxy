@@ -28,6 +28,16 @@ struct LbControl final : ControlHandler {
     void Enable();
     void Disable();
 
+private:
+    void EnableNode(const char *payload, size_t length);
+    void FadeNode(const char *payload, size_t length);
+
+    void QueryNodeStatus(ControlServer &control_server,
+                         const char *payload, size_t length,
+                         SocketAddress address);
+
+    void QueryStats(ControlServer &control_server, SocketAddress address);
+
     /* virtual methods from class ControlHandler */
     void OnControlPacket(ControlServer &control_server,
                          enum beng_control_command command,

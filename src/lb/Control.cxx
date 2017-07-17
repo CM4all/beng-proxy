@@ -23,9 +23,8 @@
 LbControl::LbControl(LbInstance &_instance)
     :instance(_instance) {}
 
-static void
-enable_node(const LbInstance *instance,
-          const char *payload, size_t length)
+inline void
+LbControl::EnableNode(const char *payload, size_t length)
 {
     const char *colon = (const char *)memchr(payload, ':', length);
     if (colon == nullptr || colon == payload || colon == payload + length - 1) {
@@ -39,7 +38,7 @@ enable_node(const LbInstance *instance,
     char *port_string = node_name + (colon - payload);
     *port_string++ = 0;
 
-    const auto *node = instance->config.FindNode(node_name);
+    const auto *node = instance.config.FindNode(node_name);
     if (node == nullptr) {
         daemon_log(3, "unknown node in FADE_NODE control packet\n");
         return;
@@ -61,9 +60,8 @@ enable_node(const LbInstance *instance,
     failure_unset(with_port, FAILURE_OK);
 }
 
-static void
-fade_node(const LbInstance *instance,
-          const char *payload, size_t length)
+inline void
+LbControl::FadeNode(const char *payload, size_t length)
 {
     const char *colon = (const char *)memchr(payload, ':', length);
     if (colon == nullptr || colon == payload || colon == payload + length - 1) {
@@ -77,7 +75,7 @@ fade_node(const LbInstance *instance,
     char *port_string = node_name + (colon - payload);
     *port_string++ = 0;
 
-    const auto *node = instance->config.FindNode(node_name);
+    const auto *node = instance.config.FindNode(node_name);
     if (node == nullptr) {
         daemon_log(3, "unknown node in FADE_NODE control packet\n");
         return;
@@ -138,10 +136,10 @@ node_status_response(ControlServer *server,
                   CONTROL_NODE_STATUS, response, response_length);
 }
 
-static void
-query_node_status(LbControl *control, ControlServer &control_server,
-                  const char *payload, size_t length,
-                  SocketAddress address)
+inline void
+LbControl::QueryNodeStatus(ControlServer &control_server,
+                           const char *payload, size_t length,
+                           SocketAddress address)
 try {
     if (address.GetSize() == 0) {
         daemon_log(3, "got NODE_STATUS from unbound client socket\n");
@@ -162,7 +160,7 @@ try {
     char *port_string = node_name + (colon - payload);
     *port_string++ = 0;
 
-    const auto *node = control->instance.config.FindNode(node_name);
+    const auto *node = instance.config.FindNode(node_name);
     if (node == nullptr) {
         daemon_log(3, "unknown node in NODE_STATUS control packet\n");
         node_status_response(&control_server, address,
@@ -193,12 +191,12 @@ try {
     daemon_log(3, "%s\n", e.what());
 }
 
-static void
-query_stats(LbControl *control, ControlServer &control_server,
-            SocketAddress address)
+inline void
+LbControl::QueryStats(ControlServer &control_server,
+                      SocketAddress address)
 try {
     struct beng_control_stats stats;
-    lb_get_stats(&control->instance, &stats);
+    lb_get_stats(&instance, &stats);
 
     control_server.Reply(address,
                          CONTROL_STATS, &stats, sizeof(stats));
@@ -223,18 +221,18 @@ LbControl::OnControlPacket(ControlServer &control_server,
 
     case CONTROL_ENABLE_NODE:
         if (is_privileged)
-            enable_node(&instance, (const char *)payload, payload_length);
+            EnableNode((const char *)payload, payload_length);
         break;
 
     case CONTROL_FADE_NODE:
         if (is_privileged)
-            fade_node(&instance, (const char *)payload, payload_length);
+            FadeNode((const char *)payload, payload_length);
         break;
 
     case CONTROL_NODE_STATUS:
-        query_node_status(this, control_server,
-                          (const char *)payload, payload_length,
-                          address);
+        QueryNodeStatus(control_server,
+                        (const char *)payload, payload_length,
+                        address);
         break;
 
     case CONTROL_DUMP_POOLS:
@@ -243,7 +241,7 @@ LbControl::OnControlPacket(ControlServer &control_server,
         break;
 
     case CONTROL_STATS:
-        query_stats(this, control_server, address);
+        QueryStats(control_server, address);
         break;
 
     case CONTROL_VERBOSE:
