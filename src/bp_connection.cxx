@@ -12,7 +12,7 @@
 #include "http_server/Handler.hxx"
 #include "http_server/Error.hxx"
 #include "handler.hxx"
-#include "access_log.hxx"
+#include "access_log/Glue.hxx"
 #include "drop.hxx"
 #include "SocketProtocolError.hxx"
 #include "net/UniqueSocketDescriptor.hxx"

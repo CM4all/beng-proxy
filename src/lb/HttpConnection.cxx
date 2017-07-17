@@ -15,7 +15,7 @@
 #include "http_server/Handler.hxx"
 #include "http_server/Error.hxx"
 #include "SocketProtocolError.hxx"
-#include "access_log.hxx"
+#include "access_log/Glue.hxx"
 #include "pool.hxx"
 #include "address_string.hxx"
 #include "thread_socket_filter.hxx"
