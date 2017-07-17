@@ -76,11 +76,11 @@ public:
 
 private:
     static constexpr bool HasHost(unsigned i) {
-        return i == 1 || i == 3;
+        return i & 0x1;
     }
 
     static constexpr bool HasListenerTag(unsigned i) {
-        return i == 2 || i == 3;
+        return i & 0x2;
     }
 
     bool IsInactive(int i) const {
