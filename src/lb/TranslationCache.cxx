@@ -8,8 +8,6 @@
 #include "translation/Protocol.hxx"
 #include "util/StringView.hxx"
 
-#include <daemon/log.h>
-
 LbTranslationCache::Vary::Vary(const TranslateResponse &response)
     :host(response.VaryContains(TranslationCommand::HOST)),
      listener_tag(response.VaryContains(TranslationCommand::LISTENER_TAG)) {}
@@ -147,12 +145,12 @@ LbTranslationCache::Get(const HttpServerRequest &request,
     while (const char *key = ki.NextKey()) {
         const LbTranslationCache::Item *item = cache.Get(key);
         if (item != nullptr) {
-            daemon_log(4, "[TranslationCache] hit '%s'\n", key);
+            logger(4, "hit '", key, "'");
             return item;
         }
     }
 
-    daemon_log(5, "[TranslationCache] miss\n");
+    logger(5, "miss");
     return nullptr;
 }
 
@@ -164,7 +162,7 @@ LbTranslationCache::Put(const HttpServerRequest &request,
     const Vary vary(response);
 
     if (!vary && !cache.IsEmpty()) {
-        daemon_log(4, "[TranslationCache] VARY disappeared, clearing cache\n");
+        logger(4, "VARY disappeared, clearing cache");
         Clear();
     }
 
@@ -173,7 +171,7 @@ LbTranslationCache::Put(const HttpServerRequest &request,
     LbTranslationCacheKeyIterator ki(vary, request, listener_tag);
     const char *key = ki.FullKey();
 
-    daemon_log(4, "[TranslationCache] store '%s'\n", key);
+    logger(4, "store '", key, "'");
 
     cache.PutOrReplace(key, Item(response));
 }

@@ -5,6 +5,7 @@
 #ifndef BENG_LB_TRANSLATION_CACHE_HXX
 #define BENG_LB_TRANSLATION_CACHE_HXX
 
+#include "io/Logger.hxx"
 #include "util/Cache.hxx"
 
 #include <http/status.h>
@@ -15,6 +16,8 @@ struct HttpServerRequest;
 struct TranslateResponse;
 
 class LbTranslationCache final {
+    const Logger logger;
+
 public:
     struct Item {
         http_status_t status = http_status_t(0);
@@ -54,6 +57,9 @@ private:
     Vary seen_vary;
 
 public:
+    LbTranslationCache()
+        :logger("tcache") {}
+
     void Clear();
 
     const Item *Get(const HttpServerRequest &request,
