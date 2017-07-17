@@ -7,6 +7,8 @@
 #ifndef BENG_PROXY_LOG_GLUE_HXX
 #define BENG_PROXY_LOG_GLUE_HXX
 
+#include "Config.hxx"
+
 #include <http/method.h>
 #include <http/status.h>
 
@@ -22,7 +24,7 @@ struct HttpServerRequest;
 class LogClient;
 
 class AccessLogGlue {
-    const std::string ignore_localhost_200;
+    const AccessLogConfig config;
 
     LogClient *const client;
 

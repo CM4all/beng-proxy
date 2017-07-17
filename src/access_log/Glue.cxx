@@ -5,7 +5,6 @@
  */
 
 #include "Glue.hxx"
-#include "Config.hxx"
 #include "Launch.hxx"
 #include "Client.hxx"
 #include "Datagram.hxx"
@@ -14,10 +13,9 @@
 
 #include <assert.h>
 
-AccessLogGlue::AccessLogGlue(const AccessLogConfig &config,
+AccessLogGlue::AccessLogGlue(const AccessLogConfig &_config,
                              LogClient *_client)
-        :ignore_localhost_200(config.ignore_localhost_200),
-         client(_client) {}
+    :config(_config), client(_client) {}
 
 AccessLogGlue::~AccessLogGlue()
 {
@@ -51,9 +49,9 @@ AccessLogGlue::Create(const AccessLogConfig &config,
 void
 AccessLogGlue::Log(const AccessLogDatagram &d)
 {
-    if (!ignore_localhost_200.empty() &&
+    if (!config.ignore_localhost_200.empty() &&
         d.http_uri != nullptr &&
-        d.http_uri == ignore_localhost_200 &&
+        d.http_uri == config.ignore_localhost_200 &&
         d.host != nullptr &&
         strcmp(d.host, "localhost") == 0 &&
         d.http_status == HTTP_STATUS_OK)
