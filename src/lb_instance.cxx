@@ -11,6 +11,7 @@
 #include "ssl/Cache.hxx"
 #include "fb_pool.hxx"
 #include "event/Duration.hxx"
+#include "access_log/Glue.hxx"
 
 #include <assert.h>
 #include <sys/signal.h>

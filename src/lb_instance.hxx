@@ -19,8 +19,10 @@
 #include "io/Logger.hxx"
 
 #include <forward_list>
+#include <memory>
 #include <map>
 
+class AccessLogGlue;
 class Stock;
 class StockMap;
 struct Balancer;
@@ -57,6 +59,8 @@ struct LbInstance final : PInstance {
 
     boost::intrusive::list<LbTcpConnection,
                            boost::intrusive::constant_time_size<true>> tcp_connections;
+
+    std::unique_ptr<AccessLogGlue> access_log;
 
     bool should_exit = false;
     ShutdownListener shutdown_listener;

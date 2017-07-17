@@ -113,12 +113,14 @@ BpConnection::LogHttpRequest(HttpServerRequest &request,
                              http_status_t status, int64_t length,
                              uint64_t bytes_received, uint64_t bytes_sent)
 {
-    access_log(&request, site_name,
-               request.headers.Get("referer"),
-               request.headers.Get("user-agent"),
-               status, length,
-               bytes_received, bytes_sent,
-               std::chrono::steady_clock::now() - request_start_time);
+    if (instance.access_log != nullptr)
+        instance.access_log->Log(request, site_name,
+                                 request.headers.Get("referer"),
+                                 request.headers.Get("user-agent"),
+                                 status, length,
+                                 bytes_received, bytes_sent,
+                                 std::chrono::steady_clock::now() - request_start_time);
+
     site_name = nullptr;
 }
 

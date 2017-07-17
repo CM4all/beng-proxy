@@ -177,8 +177,8 @@ try {
 
     /* launch the access logger */
 
-    log_global_init(config.access_log,
-                    &cmdline.logger_user);
+    instance.access_log.reset(AccessLogGlue::Create(config.access_log,
+                                                    &cmdline.logger_user));
 
     /* daemonize II */
 
@@ -210,8 +210,6 @@ try {
     instance.event_loop.Dispatch();
 
     /* cleanup */
-
-    log_global_deinit();
 
     bulldog_deinit();
     failure_deinit();

@@ -19,6 +19,7 @@
 #include "session_save.hxx"
 #include "event/Duration.hxx"
 #include "nfs/Cache.hxx"
+#include "access_log/Glue.hxx"
 
 #include <sys/signal.h>
 

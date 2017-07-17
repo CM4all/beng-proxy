@@ -24,7 +24,9 @@
 #include <boost/intrusive/list.hpp>
 
 #include <forward_list>
+#include <memory>
 
+class AccessLogGlue;
 class Stock;
 class ResourceLoader;
 class StockMap;
@@ -54,6 +56,8 @@ struct BpInstance final : PInstance, ControlHandler {
 
     boost::intrusive::list<BpConnection,
                            boost::intrusive::constant_time_size<true>> connections;
+
+    std::unique_ptr<AccessLogGlue> access_log;
 
     bool should_exit = false;
     ShutdownListener shutdown_listener;
