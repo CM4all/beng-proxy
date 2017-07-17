@@ -5,7 +5,7 @@
  */
 
 #include "lb_instance.hxx"
-#include "lb_control.hxx"
+#include "lb/Control.hxx"
 #include "lb_config.hxx"
 #include "lb/Listener.hxx"
 #include "ssl/Cache.hxx"

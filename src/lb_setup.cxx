@@ -8,7 +8,7 @@
 #include "lb_config.hxx"
 #include "lb_instance.hxx"
 #include "lb/Listener.hxx"
-#include "lb_control.hxx"
+#include "lb/Control.hxx"
 #include "ssl/Cache.hxx"
 
 void
