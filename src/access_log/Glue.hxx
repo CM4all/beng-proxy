@@ -11,6 +11,7 @@
 #include <http/status.h>
 
 #include <chrono>
+#include <string>
 
 #include <stdint.h>
 
@@ -21,10 +22,11 @@ struct HttpServerRequest;
 class LogClient;
 
 class AccessLogGlue {
+    const std::string ignore_localhost_200;
+
     LogClient *const client;
 
-    explicit AccessLogGlue(LogClient *_client)
-        :client(_client) {}
+    AccessLogGlue(const AccessLogConfig &config, LogClient *_client);
 
 public:
     ~AccessLogGlue();

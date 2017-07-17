@@ -20,6 +20,8 @@ AccessLogConfigParser::ParseLine(FileLineParser &line)
         type_selected = true;
         config.type = AccessLogConfig::Type::EXECUTE;
         config.command = line.ExpectValueAndEnd();
+    } else if (strcmp(word, "ignore_localhost_200") == 0) {
+        config.ignore_localhost_200 = line.ExpectValueAndEnd();
     } else
         throw LineParser::Error("Unknown option");
 }

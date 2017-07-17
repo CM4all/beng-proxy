@@ -8,6 +8,7 @@ cm4all-beng-proxy (12.0.32) unstable; urgency=low
   * log-json: add "logger_client" attribute
   * log-lua: new access logger which calls a Lua script
   * config: make "access_logger" a block
+  * config: add "access_logger" option "ignore_localhost_200"
 
  --   
 

@@ -28,6 +28,12 @@ struct AccessLogConfig {
     std::string command;
 
     /**
+     * Don't log this request URI if host=="localhost" and
+     * status==200.
+     */
+    std::string ignore_localhost_200;
+
+    /**
      * Setter for the deprecated "--access-logger" command-line
      * option, which has a few special cases.
      */
