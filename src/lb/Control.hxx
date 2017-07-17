@@ -15,11 +15,12 @@ struct LbInstance;
 struct LbControlConfig;
 class ControlServer;
 
-struct LbControl final : ControlHandler {
+class LbControl final : ControlHandler {
     LbInstance &instance;
 
     std::unique_ptr<ControlServer> server;
 
+public:
     explicit LbControl(LbInstance &_instance);
     ~LbControl();
 
