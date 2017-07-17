@@ -134,7 +134,7 @@ Description: JavaScript library for cm4all-beng-proxy
 Package: libcm4all-beng-proxy2-dev
 Architecture: all
 Section: non-free/libdevel
-Depends: libc6-dev
+Depends: libc6-dev,
  pkg-config (>= 0.9.0)
 Description: Development files for cm4all-beng-proxy
  BENG proxy is an HTTP proxy server which includes a HTML template
