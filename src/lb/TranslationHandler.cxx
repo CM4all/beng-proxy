@@ -137,6 +137,10 @@ LbTranslationHandler::PutCache(const HttpServerRequest &request,
                                const char *listener_tag,
                                const TranslateResponse &response)
 {
+    if (response.max_age == std::chrono::seconds::zero())
+        /* not cacheable */
+        return;
+
     if (!cache)
         cache.reset(new LbTranslationCache());
 
