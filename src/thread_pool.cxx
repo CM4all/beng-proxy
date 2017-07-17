@@ -7,9 +7,7 @@
 #include "thread_pool.hxx"
 #include "thread_queue.hxx"
 #include "thread_worker.hxx"
-#include "util/Exception.hxx"
-
-#include <daemon/log.h>
+#include "io/Logger.hxx"
 
 #include <array>
 
@@ -33,8 +31,8 @@ try {
     for (auto &i : worker_threads)
         thread_worker_create(i, *global_thread_queue);
 } catch (...) {
-    daemon_log(1, "Failed to launch worker thread: %s\n",
-               GetFullMessage(std::current_exception()).c_str());
+    LogConcat(1, "thread_pool", "Failed to launch worker thread: ",
+              std::current_exception());
     exit(EXIT_FAILURE);
 }
 
