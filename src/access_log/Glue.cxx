@@ -45,21 +45,13 @@ log_global_deinit(void)
     delete global_log_client;
 }
 
-bool
-log_global_enabled(void)
-{
-    return global_log_enabled;
-}
-
-bool
+static void
 log_http_request(const AccessLogDatagram &d)
 {
-    if (global_log_enabled)
-        return global_log_client == nullptr || global_log_client->Send(d);
-    else {
+    if (!global_log_enabled)
         LogOneLine(d);
-        return true;
-    }
+    else if (global_log_client != nullptr)
+        global_log_client->Send(d);
 }
 
 void

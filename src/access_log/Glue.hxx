@@ -24,12 +24,6 @@ log_global_init(const char *program, const UidGid *user);
 void
 log_global_deinit(void);
 
-bool
-log_global_enabled(void);
-
-bool
-log_http_request(const AccessLogDatagram &d);
-
 #ifdef NO_ACCESS_LOG
 
 static inline void
