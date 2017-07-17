@@ -15,6 +15,8 @@
 
 #include <string.h>
 
+struct AccessLogDatagram;
+
 class LogClient {
     const LLogger logger;
 
@@ -63,6 +65,8 @@ public:
     void AppendString(enum beng_log_attribute attribute, const char *value);
 
     bool Commit();
+
+    bool Send(const AccessLogDatagram &d);
 };
 
 #endif

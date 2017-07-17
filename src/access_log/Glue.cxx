@@ -7,7 +7,7 @@
 #include "Glue.hxx"
 #include "Launch.hxx"
 #include "Client.hxx"
-#include "util/ByteOrder.hxx"
+#include "Datagram.hxx"
 
 #include <assert.h>
 #include <string.h>
@@ -64,37 +64,11 @@ log_http_request(uint64_t timestamp, http_method_t method, const char *uri,
     if (global_log_client == nullptr)
         return true;
 
-    auto &client = *global_log_client;
-    client.Begin();
-    client.AppendU64(LOG_TIMESTAMP, timestamp);
-    if (remote_host != nullptr)
-        client.AppendString(LOG_REMOTE_HOST, remote_host);
-    if (host != nullptr)
-        client.AppendString(LOG_HOST, host);
-    if (site != nullptr)
-        client.AppendString(LOG_SITE, site);
-    client.AppendU8(LOG_HTTP_METHOD, method);
-    client.AppendString(LOG_HTTP_URI, uri);
-    if (referer != nullptr)
-        client.AppendString(LOG_HTTP_REFERER, referer);
-    if (user_agent != nullptr)
-        client.AppendString(LOG_USER_AGENT, user_agent);
-    client.AppendU16(LOG_HTTP_STATUS, status);
-
-    if (length >= 0)
-        client.AppendU64(LOG_LENGTH, length);
-
-    struct {
-        uint64_t received, sent;
-    } traffic = {
-        .received = ToBE64(traffic_received),
-        .sent = ToBE64(traffic_sent),
-    };
-
-    client.AppendAttribute(LOG_TRAFFIC, &traffic, sizeof(traffic));
-
-    if (duration > 0)
-        client.AppendU64(LOG_DURATION, duration);
-
-    return client.Commit();
+    const AccessLogDatagram d(timestamp, method, uri,
+                              remote_host, host, site,
+                              referer, user_agent,
+                              status, length,
+                              traffic_received, traffic_sent,
+                              duration);
+    return global_log_client->Send(d);
 }
