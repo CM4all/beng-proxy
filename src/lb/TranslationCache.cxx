@@ -29,7 +29,8 @@ gcc_pure
 static size_t
 CalculateKeyIteratorBufferSize(StringView host, StringView listener_tag)
 {
-    return host.size + 1 + listener_tag.size + 1;
+    /* the ones are: underscore, separator, underscore, null terminator */
+    return 1 + host.size + 1 + 1 + listener_tag.size + 1;
 }
 
 /**
@@ -100,13 +101,21 @@ private:
 
         char *result = buffer.get(), *p = result;
 
-        if (HasHost(i))
+        if (HasHost(i)) {
+            /* the underscore is just here to make a difference
+               between "wildcard" (nothing) and "empty value"
+               (underscore) */
+            *p++ = '_';
             p = (char *)mempcpy(p, host.data, host.size);
+        }
 
         *p++ = '|';
 
-        if (HasListenerTag(i))
+        if (HasListenerTag(i)) {
+            /* see above for the underscore explanation */
+            *p++ = '_';
             p = (char *)mempcpy(p, listener_tag.data, listener_tag.size);
+        }
 
         *p = 0;
         return result;
