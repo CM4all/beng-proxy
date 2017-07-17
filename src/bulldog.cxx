@@ -7,9 +7,8 @@
 #include "bulldog.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/ToString.hxx"
+#include "io/Logger.hxx"
 #include "util/StringBuilder.hxx"
-
-#include <daemon/log.h>
 
 #include <assert.h>
 #include <string.h>
@@ -39,7 +38,7 @@ try {
     bulldog.path_length = strlen(bulldog.path);
 } catch (StringBuilder<>::Overflow) {
     bulldog.path[0] = 0;
-    daemon_log(1, "bulldog path is too long\n");
+    LogConcat(1, "bulldog", "bulldog path is too long");
 }
 
 void
@@ -114,15 +113,15 @@ bulldog_check(SocketAddress address)
     const char *value = read_first_line(path, buffer, sizeof(buffer));
     if (value == nullptr) {
         if (errno != ENOENT)
-            daemon_log(2, "Failed to read %s: %s\n",
-                       path, strerror(errno));
+            LogConcat(2, "bulldog", "Failed to read ",
+                      path, ": ", strerror(errno));
         else
-            daemon_log(4, "No such bulldog-tyke status file: %s\n",
-                       path);
+            LogConcat(4, "bulldog", "No such bulldog-tyke status file: ",
+                      path);
         return true;
     }
 
-    daemon_log(5, "bulldog: %s='%s'\n", path, value);
+    LogFormat(5, "bulldog", "%s='%s'", path, value);
 
     return strcmp(value, "alive") == 0;
 }
@@ -140,7 +139,7 @@ bulldog_is_fading(SocketAddress address)
     if (value == nullptr)
         return false;
 
-    daemon_log(5, "bulldog: %s='%s'\n", path, value);
+    LogFormat(5, "bulldog", "%s='%s'", path, value);
 
     return strcmp(value, "1") == 0;
 }
