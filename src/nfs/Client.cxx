@@ -393,6 +393,10 @@ public:
         pool_ref(&pool);
     }
 
+    void Destroy() {
+        pool_unref(&pool);
+    }
+
     EventLoop &GetEventLoop() {
         return event.GetEventLoop();
     }
@@ -627,7 +631,7 @@ NfsClient::MountError(std::exception_ptr ep)
     DestroyContext();
 
     handler.OnNfsMountError(ep);
-    pool_unref(&pool);
+    Destroy();
 }
 
 void
@@ -661,7 +665,7 @@ NfsClient::Error(std::exception_ptr ep)
 
         DestroyContext();
         handler.OnNfsClientClosed(ep);
-        pool_unref(&pool);
+        Destroy();
     } else {
         MountError(ep);
     }
@@ -771,8 +775,7 @@ NfsClient::Cancel()
     timeout_event.Cancel();
 
     DestroyContext();
-
-    pool_unref(&pool);
+    Destroy();
 }
 
 /*
@@ -857,7 +860,7 @@ NfsClient::TimeoutCallback()
 
         DestroyContext();
         handler.OnNfsClientClosed(std::make_exception_ptr(NfsClientError("Idle timeout")));
-        pool_unref(&pool);
+        Destroy();
     } else {
         mount_finished = true;
 
@@ -1057,7 +1060,7 @@ NfsClient::Free()
         CleanupFiles();
     }
 
-    pool_unref(&pool);
+    Destroy();
 }
 
 void
