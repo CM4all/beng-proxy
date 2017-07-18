@@ -8,7 +8,7 @@
 
 #include "system/Error.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
-#include "net/RBindSocket.hxx"
+#include "net/UdpListenerConfig.hxx"
 #include "net/Parser.hxx"
 #include "net/AllocatedSocketAddress.hxx"
 #include "util/PrintException.hxx"
@@ -22,11 +22,11 @@ int main(int argc, char **argv)
 try {
     int i = 1;
 
-    AllocatedSocketAddress multicast_group;
+    UdpListenerConfig config;
 
     if (i + 2 <= argc && strcmp(argv[i], "--multicast-group") == 0) {
         ++i;
-        multicast_group = ParseSocketAddress(argv[i++], 0, false);
+        config.multicast_group = ParseSocketAddress(argv[i++], 0, false);
     }
 
     if (i + 2 > argc) {
@@ -34,9 +34,9 @@ try {
         return EXIT_FAILURE;
     }
 
-    auto fd = ResolveBindDatagramSocket(argv[i++], 5479);
-    if (!multicast_group.IsNull() && !fd.AddMembership(multicast_group))
-        throw MakeErrno("Failed to join multicast group");
+    config.bind_address = ParseSocketAddress(argv[i++], 5479, true);
+
+    auto fd = config.Create();
 
     fd.SetBlocking();
     fd.CheckDuplicate(FileDescriptor(STDIN_FILENO));

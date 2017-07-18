@@ -1,6 +1,6 @@
 cm4all-beng-proxy (12.0.33) unstable; urgency=low
 
-  * 
+  * log-exec: allow multiple multicast processes on same host
 
  --   
 
