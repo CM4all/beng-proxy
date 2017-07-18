@@ -73,8 +73,19 @@ static const char *const cors_request_headers[] = {
 };
 
 /**
+ * A list of response headers to for the "ssl" setting.
+ *
+ * @see #old_ssl_request_headers
+ */
+static const char *const ssl_request_headers[] = {
+    nullptr,
+};
+
+/**
  * A list of response headers to for the "ssl" setting (the old
  * namespace "X-CM4all-BENG-*").
+ *
+ * @see #ssl_request_headers
  */
 static const char *const old_ssl_request_headers[] = {
     "x-cm4all-beng-ssl",
@@ -187,9 +198,19 @@ is_old_ssl_header(const char *name)
  */
 gcc_pure
 static bool
+is_new_ssl_header(const char *name)
+{
+    return string_in_array(ssl_request_headers, name);
+}
+
+/**
+ * @see #HEADER_GROUP_SSL
+ */
+gcc_pure
+static bool
 is_ssl_header(const char *name)
 {
-    return is_old_ssl_header(name);
+    return is_old_ssl_header(name) || is_new_ssl_header(name);
 }
 
 /**
@@ -207,7 +228,8 @@ gcc_pure
 static bool
 is_secure_or_ssl_header(const char *name)
 {
-    return StringStartsWith(name, "x-cm4all-beng-");
+    return StringStartsWith(name, "x-cm4all-beng-") ||
+        is_new_ssl_header(name);
 }
 
 /**
