@@ -1,6 +1,7 @@
 cm4all-beng-proxy (12.0.33) unstable; urgency=low
 
   * log-exec: allow multiple multicast processes on same host
+  * headers: rename "X-CM4all-BENG-SSL" to "X-CM4all-HTTPS"
 
  --   
 

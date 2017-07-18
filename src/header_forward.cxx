@@ -78,6 +78,7 @@ static const char *const cors_request_headers[] = {
  * @see #old_ssl_request_headers
  */
 static const char *const ssl_request_headers[] = {
+    "x-cm4all-https",
     nullptr,
 };
 
@@ -88,7 +89,6 @@ static const char *const ssl_request_headers[] = {
  * @see #ssl_request_headers
  */
 static const char *const old_ssl_request_headers[] = {
-    "x-cm4all-beng-ssl",
     "x-cm4all-beng-peer-subject",
     "x-cm4all-beng-peer-issuer-subject",
     nullptr,
