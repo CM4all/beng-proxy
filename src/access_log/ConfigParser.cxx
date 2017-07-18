@@ -3,6 +3,7 @@
  */
 
 #include "ConfigParser.hxx"
+#include "net/Parser.hxx"
 #include "io/FileLineParser.hxx"
 
 void
@@ -13,6 +14,14 @@ AccessLogConfigParser::ParseLine(FileLineParser &line)
     if (strcmp(word, "enabled") == 0) {
         enabled = line.NextBool();
         line.ExpectEnd();
+    } else if (strcmp(word, "send_to") == 0) {
+        if (type_selected)
+            throw LineParser::Error("Access logger already defined");
+
+        type_selected = true;
+        config.type = AccessLogConfig::Type::SEND;
+        config.send_to = ParseSocketAddress(line.ExpectValueAndEnd(),
+                                            5479, false);
     } else if (strcmp(word, "shell") == 0) {
         if (type_selected)
             throw LineParser::Error("Access logger already defined");

@@ -5,6 +5,8 @@
 #ifndef ACCESS_LOG_CONFIG_HXX
 #define ACCESS_LOG_CONFIG_HXX
 
+#include "net/AllocatedSocketAddress.hxx"
+
 #include <string>
 #include <set>
 
@@ -15,8 +17,14 @@ struct AccessLogConfig {
     enum class Type {
         DISABLED,
         INTERNAL,
+        SEND,
         EXECUTE,
     } type = Type::INTERNAL;
+
+    /**
+     * An address where we will send access log datagrams.
+     */
+    AllocatedSocketAddress send_to;
 
     /**
      * A command to be executed with a shell, where fd0 is a socket

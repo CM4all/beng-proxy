@@ -2772,6 +2772,14 @@ access_logger {
 
 The specified command is executed with the shell (\texttt{/bin/sh -c}).
 
+Another example sends log datagrams via UDP to a multicast address:
+
+\begin{verbatim}
+access_logger {
+  send_to "ff02::dead:beef"
+}
+\end{verbatim}
+
 The following example disables access logging completely:
 
 \begin{verbatim}
@@ -2788,6 +2796,11 @@ The following \verb|access_logger| options are available:
 \hline
 
 \verb|enabled| & ``no'' disables access logging completely. \\
+
+\hline
+
+\verb|send_to| & Send log datagrams to the specified IP address, which
+may be multicast. \\
 
 \hline
 

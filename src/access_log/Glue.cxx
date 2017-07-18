@@ -10,6 +10,8 @@
 #include "Datagram.hxx"
 #include "OneLine.hxx"
 #include "http_server/Request.hxx"
+#include "net/ToString.hxx"
+#include "system/Error.hxx"
 
 #include <assert.h>
 #include <string.h>
@@ -23,6 +25,23 @@ AccessLogGlue::~AccessLogGlue()
     delete client;
 }
 
+static UniqueSocketDescriptor
+CreateConnectDatagram(const SocketAddress address)
+{
+    UniqueSocketDescriptor fd;
+    if (!fd.CreateNonBlock(address.GetFamily(), SOCK_DGRAM, 0))
+        throw MakeErrno("Failed to create socket");
+
+    if (!fd.Connect(address)) {
+        const int e = errno;
+        char buffer[256];
+        throw FormatErrno(e, "Failed to connect to %s",
+                          ToString(buffer, sizeof(buffer), address));
+    }
+
+    return fd;
+}
+
 AccessLogGlue *
 AccessLogGlue::Create(const AccessLogConfig &config,
                       const UidGid *user)
@@ -33,6 +52,10 @@ AccessLogGlue::Create(const AccessLogConfig &config,
 
     case AccessLogConfig::Type::INTERNAL:
         return new AccessLogGlue(config, nullptr);
+
+    case AccessLogConfig::Type::SEND:
+        return new AccessLogGlue(config,
+                                 new LogClient(CreateConnectDatagram(config.send_to)));
 
     case AccessLogConfig::Type::EXECUTE:
         {
