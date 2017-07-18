@@ -57,6 +57,7 @@ TEST(HeaderForwardTest, RequestHeaders)
     headers.Add("x-forwarded-for", "10.0.0.2");
     headers.Add("x-cm4all-beng-user", "hans");
     headers.Add("x-cm4all-beng-peer-subject", "CN=hans");
+    headers.Add("x-cm4all-https", "tls");
     headers.Add("referer", "http://referer.example/");
 
     /* verify strmap_to_string() */
@@ -66,6 +67,7 @@ TEST(HeaderForwardTest, RequestHeaders)
                  "via=1.1 192.168.0.1;"
                  "x-cm4all-beng-peer-subject=CN=hans;"
                  "x-cm4all-beng-user=hans;"
+                 "x-cm4all-https=tls;"
                  "x-forwarded-for=10.0.0.2;");
 
     /* nullptr test */
@@ -286,7 +288,8 @@ TEST(HeaderForwardTest, RequestHeaders)
                  "access-control-request-method=POST;"
                  "from=foo;"
                  "origin=example.com;"
-                 "x-cm4all-beng-peer-subject=CN=hans;");
+                 "x-cm4all-beng-peer-subject=CN=hans;"
+                 "x-cm4all-https=tls;");
 
     /* forward referer headers */
 
@@ -302,7 +305,8 @@ TEST(HeaderForwardTest, RequestHeaders)
                  "from=foo;"
                  "origin=example.com;"
                  "referer=http://referer.example/;"
-                 "x-cm4all-beng-peer-subject=CN=hans;");
+                 "x-cm4all-beng-peer-subject=CN=hans;"
+                 "x-cm4all-https=tls;");
 }
 
 TEST(HeaderForwardTest, ResponseHeaders)
@@ -328,6 +332,7 @@ TEST(HeaderForwardTest, ResponseHeaders)
     headers.Add("content-type", "image/jpeg");
     headers.Add("via", "1.1 192.168.0.1");
     headers.Add("x-cm4all-beng-user", "hans");
+    headers.Add("x-cm4all-https", "tls");
 
     /* response headers: nullptr */
 
