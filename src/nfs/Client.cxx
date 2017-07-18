@@ -401,7 +401,7 @@ public:
                CancellablePointer &cancel_ptr);
 
     void DestroyContext();
-    void Destroy();
+    void Free();
 
     /**
      * Mounting has failed.  Destroy the #NfsClientHandler object and
@@ -1044,7 +1044,7 @@ nfs_client_new(EventLoop &event_loop, struct pool &pool,
 }
 
 inline void
-NfsClient::Destroy()
+NfsClient::Free()
 {
     assert(n_active_files == 0);
 
@@ -1065,7 +1065,7 @@ nfs_client_free(NfsClient *client)
 {
     assert(client != nullptr);
 
-    client->Destroy();
+    client->Free();
 }
 
 inline void
