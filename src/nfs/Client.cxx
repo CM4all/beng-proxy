@@ -55,13 +55,13 @@ class NfsFileHandle final
     enum {
         /**
          * Waiting for the file to be opened.  The
-         * nfs_client_open_file_handler will be invoked next.
+         * #NfsClientOpenFileHandler will be invoked next.
          */
         WAITING,
 
         /**
-         * The file is ready, the nfs_client_open_file_handler has
-         * been invoked already.
+         * The file is ready, the #NfsClientOpenFileHandler has been
+         * invoked already.
          */
         IDLE,
 
