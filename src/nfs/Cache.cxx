@@ -308,7 +308,7 @@ NfsCacheRequest::OnNfsOpen(NfsFileHandle *handle, const struct stat *st)
     handler.OnNfsCacheResponse(handle2, *st);
 
     if (handle2.file != nullptr)
-        nfs_client_close_file(handle2.file);
+        nfs_client_close_file(*handle2.file);
 }
 
 /*
@@ -319,7 +319,7 @@ NfsCacheRequest::OnNfsOpen(NfsFileHandle *handle, const struct stat *st)
 void
 NfsCacheRequest::OnNfsStockReady(NfsClient &client)
 {
-    nfs_client_open_file(&client, &pool, path,
+    nfs_client_open_file(client, pool, path,
                          *this, cancel_ptr);
 }
 

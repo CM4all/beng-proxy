@@ -1128,12 +1128,12 @@ NfsClient::OpenFile(struct pool &caller_pool,
 }
 
 void
-nfs_client_open_file(NfsClient *client, struct pool *caller_pool,
+nfs_client_open_file(NfsClient &client, struct pool &caller_pool,
                      const char *path,
                      NfsClientOpenFileHandler &handler,
                      CancellablePointer &cancel_ptr)
 {
-    client->OpenFile(*caller_pool, path, handler, cancel_ptr);
+    client.OpenFile(caller_pool, path, handler, cancel_ptr);
 }
 
 inline void
@@ -1163,9 +1163,9 @@ NfsFileHandle::Close()
 }
 
 void
-nfs_client_close_file(NfsFileHandle *handle)
+nfs_client_close_file(NfsFileHandle &handle)
 {
-    handle->Close();
+    handle.Close();
 }
 
 inline void
@@ -1186,9 +1186,9 @@ NfsFileHandle::Read(uint64_t offset, size_t length,
 }
 
 void
-nfs_client_read_file(NfsFileHandle *handle,
+nfs_client_read_file(NfsFileHandle &handle,
                      uint64_t offset, size_t length,
                      NfsClientReadFileHandler &handler)
 {
-    return handle->Read(offset, length, handler);
+    return handle.Read(offset, length, handler);
 }

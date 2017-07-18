@@ -30,16 +30,16 @@ void
 nfs_client_free(NfsClient *client);
 
 void
-nfs_client_open_file(NfsClient *client, struct pool *pool,
+nfs_client_open_file(NfsClient &client, struct pool &pool,
                      const char *path,
                      NfsClientOpenFileHandler &handler,
                      CancellablePointer &cancel_ptr);
 
 void
-nfs_client_close_file(NfsFileHandle *handle);
+nfs_client_close_file(NfsFileHandle &handle);
 
 void
-nfs_client_read_file(NfsFileHandle *handle,
+nfs_client_read_file(NfsFileHandle &handle,
                      uint64_t offset, size_t length,
                      NfsClientReadFileHandler &handler);
 

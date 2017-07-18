@@ -166,7 +166,7 @@ Context::OnNfsClientReady(NfsClient &_client)
     connected = true;
     client = &_client;
 
-    nfs_client_open_file(client, pool, path,
+    nfs_client_open_file(*client, *pool, path,
                          *this, cancel_ptr);
 }
 

@@ -86,7 +86,7 @@ private:
     }
 
     void Close() {
-        nfs_client_close_file(handle);
+        nfs_client_close_file(*handle);
         Istream::_Close();
     }
 
@@ -110,7 +110,7 @@ NfsIstream::ScheduleReadOrEof()
     } else {
         /* end of file */
 
-        nfs_client_close_file(handle);
+        nfs_client_close_file(*handle);
         DestroyEof();
     }
 }
@@ -159,7 +159,7 @@ NfsIstream::OnNfsRead(const void *data, size_t _length)
     assert(_length <= pending_read);
 
     if (_length < pending_read) {
-        nfs_client_close_file(handle);
+        nfs_client_close_file(*handle);
         DestroyError(std::make_exception_ptr(std::runtime_error("premature end of file")));
         return;
     }
@@ -179,7 +179,7 @@ NfsIstream::OnNfsReadError(std::exception_ptr ep)
 {
     assert(pending_read > 0);
 
-    nfs_client_close_file(handle);
+    nfs_client_close_file(*handle);
     DestroyError(ep);
 }
 
@@ -201,7 +201,7 @@ NfsIstream::ScheduleRead()
     remaining -= nbytes;
     pending_read = nbytes;
 
-    nfs_client_read_file(handle, read_offset, nbytes, *this);
+    nfs_client_read_file(*handle, read_offset, nbytes, *this);
 }
 
 /*
