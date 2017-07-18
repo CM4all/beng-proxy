@@ -42,11 +42,6 @@ class NfsFileHandle final
     NfsFile &file;
 
     /**
-     * A child of #NfsFile::pool.
-     */
-    struct pool &pool;
-
-    /**
      * The pool provided by the caller.  It must be referenced until
      * the response has been delivered.
      */
@@ -89,9 +84,12 @@ class NfsFileHandle final
     NfsClientReadFileHandler *read_handler;
 
 public:
-    NfsFileHandle(NfsFile &_file, struct pool &_pool,
-                  struct pool &_caller_pool)
-        :file(_file), pool(_pool), caller_pool(_caller_pool) {}
+    NfsFileHandle(NfsFile &_file, struct pool &_caller_pool)
+        :file(_file), caller_pool(_caller_pool) {}
+
+    void Destroy() {
+        delete this;
+    }
 
     void Continue(const struct stat &st) {
         assert(state == WAITING);
@@ -270,9 +268,7 @@ public:
     void Release();
 
     NfsFileHandle *NewHandle(struct pool &caller_pool) {
-        struct pool *r_pool = pool_new_libc(&pool, "NfsFileHandle");
-        auto *handle = NewFromPool<NfsFileHandle>(*r_pool, *this, *r_pool,
-                                                  caller_pool);
+        auto *handle = new NfsFileHandle(*this, caller_pool);
         handles.push_front(*handle);
         ++n_active_handles;
 
@@ -578,7 +574,7 @@ NfsFileHandle::Release()
     state = RELEASED;
 
     _file.RemoveHandle(*this);
-    pool_unref(&pool);
+    Destroy();
 }
 
 void
@@ -589,7 +585,7 @@ NfsFileHandle::Abort(std::exception_ptr ep)
     open_handler->OnNfsOpenError(ep);
 
     pool_unref(&caller_pool);
-    pool_unref(&pool);
+    Destroy();
 }
 
 inline void
