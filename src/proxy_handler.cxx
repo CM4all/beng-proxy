@@ -101,7 +101,7 @@ proxy_handler(Request &request2)
 #endif
 
     for (const auto &i : tr.request_headers)
-        forward.headers.Add(i.key, i.value);
+        forward.headers.SecureSet(i.key, i.value);
 
     request2.collect_cookies = true;
 
