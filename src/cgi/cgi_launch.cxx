@@ -131,6 +131,10 @@ PrepareCgi(struct pool &pool, PreparedChildProcess &p,
         p.SetEnv("CONTENT_LENGTH", value);
     }
 
+    const char *https = headers.Get("x-cm4all-https");
+    if (https != nullptr && strcmp(https, "on") == 0)
+        p.SetEnv("HTTPS", "on");
+
     p.Append(path);
     for (auto i : address.args)
         p.Append(i);
