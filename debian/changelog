@@ -2,7 +2,7 @@ cm4all-beng-proxy (12.0.34) unstable; urgency=low
 
   * http_client: disable the read timeout
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Wed, 19 Jul 2017 08:16:09 -0000
 
 cm4all-beng-proxy (12.0.33) unstable; urgency=low
 
