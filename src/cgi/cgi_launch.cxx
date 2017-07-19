@@ -105,6 +105,10 @@ PrepareCgi(struct pool &pool, PreparedChildProcess &p,
                clients; see CVE-2016-5385 and others */
             continue;
 
+        if (strcmp(pair.key, "x-cm4all-https") == 0)
+            /* this will be translated to HTTPS */
+            continue;
+
         char buffer[512] = "HTTP_";
         size_t i;
         for (i = 0; 5 + i < sizeof(buffer) - 1 && pair.key[i] != 0; ++i) {

@@ -144,6 +144,10 @@ fcgi_serialize_headers(GrowingBuffer &gb, uint16_t request_id,
     char buffer[512] = "HTTP_";
 
     for (const auto &pair : headers) {
+        if (strcmp(pair.key, "x-cm4all-https") == 0)
+            /* this will be translated to HTTPS */
+            continue;
+
         size_t i;
 
         for (i = 0; 5 + i < sizeof(buffer) - 1 && pair.key[i] != 0; ++i) {
