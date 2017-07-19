@@ -1127,8 +1127,15 @@ fcgi_client_request(struct pool *pool, EventLoop &event_loop,
                               nullptr);
     }
 
-    if (!headers.IsEmpty())
+    if (!headers.IsEmpty()) {
         fcgi_serialize_headers(buffer, header.request_id, headers);
+
+        const char *https = headers.Get("x-cm4all-https");
+        if (https != nullptr && strcmp(https, "on") == 0)
+            fcgi_serialize_params(buffer, header.request_id,
+                                  "HTTPS", "on",
+                                  nullptr);
+    }
 
     if (!params.IsEmpty())
         fcgi_serialize_vparams(buffer, header.request_id, params);
