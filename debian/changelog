@@ -1,5 +1,6 @@
 cm4all-beng-proxy (12.0.35) unstable; urgency=low
 
+  * bp: never forward the "X-CM4all-DocRoot" header
   * lb: set the "X-CM4all-HTTPS" header
   * cgi, fcgi: set HTTPS=on if the "X-CM4all-HTTPS" header is set
 

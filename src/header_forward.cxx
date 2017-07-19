@@ -105,6 +105,12 @@ static const char *const exclude_request_headers[] = {
     "via",
     "x-forwarded-for",
     "host",
+
+    /* this header is used by apache-lhttpd to set the per-request
+       DocumentRoot, and should never be forwarded from the outside to
+       apache-lhttpd */
+    "x-cm4all-docroot",
+
     nullptr,
 };
 
