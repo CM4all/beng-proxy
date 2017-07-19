@@ -586,7 +586,7 @@ HttpClient::TryWriteBuckets()
     case BucketResult::DEPLETED:
         assert(request.istream.IsDefined());
         request.istream.ClearAndClose();
-        socket.ScheduleReadTimeout(true, &http_client_timeout);
+        socket.ScheduleReadNoTimeout(true);
         break;
 
     case BucketResult::DESTROYED:
@@ -1124,7 +1124,7 @@ http_client_socket_broken(void *ctx)
     if (client->request.istream.IsDefined())
         client->request.istream.ClearAndClose();
 
-    client->socket.ScheduleReadTimeout(true, &http_client_timeout);
+    client->socket.ScheduleReadNoTimeout(true);
 
     return WRITE_BROKEN;
 }
@@ -1280,7 +1280,7 @@ HttpClient::HttpClient(struct pool &_caller_pool, struct pool &_pool,
      peer_name(_peer_name),
      stopwatch(stopwatch_new(&_pool, peer_name, uri)),
      socket(event_loop, fd, fd_type, lease,
-            &http_client_timeout, &http_client_timeout,
+            nullptr, &http_client_timeout,
             filter, filter_ctx,
             http_client_socket_handler, this),
      request(handler),
