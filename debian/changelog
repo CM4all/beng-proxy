@@ -2,7 +2,7 @@ cm4all-beng-proxy (12.0.36) unstable; urgency=low
 
   * translation: add packet HTTPS_ONLY
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Thu, 20 Jul 2017 13:26:49 -0000
 
 cm4all-beng-proxy (12.0.35) unstable; urgency=low
 
