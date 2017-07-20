@@ -30,6 +30,7 @@
 #include "puri_edit.hxx"
 #include "puri_escape.hxx"
 #include "uri/uri_verify.hxx"
+#include "RedirectHttps.hxx"
 #include "strmap.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream_hold.hxx"
@@ -665,6 +666,27 @@ Request::OnTranslateResponseAfterAuth(const TranslateResponse &response)
 void
 Request::OnTranslateResponse2(const TranslateResponse &response)
 {
+    if (response.https_only != 0) {
+        const char *https = request.headers.Get("x-cm4all-https");
+        if (https == nullptr || strcmp(https, "on") != 0) {
+            /* not encrypted: redirect to https:// */
+
+            const char *host = request.headers.Get("host");
+            if (host == nullptr) {
+                response_dispatch_message(*this, HTTP_STATUS_BAD_REQUEST,
+                                          "No Host header");
+                return;
+            }
+
+            response_dispatch_redirect(*this, HTTP_STATUS_MOVED_PERMANENTLY,
+                                       MakeHttpsRedirect(pool, host,
+                                                         response.https_only,
+                                                         request.uri),
+                                       "This page requires \"https\"");
+            return;
+        }
+    }
+
     if (CheckHandleReadFile(response))
         return;
 

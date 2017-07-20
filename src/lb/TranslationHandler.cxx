@@ -114,6 +114,7 @@ LbTranslationHandler::Pick(struct pool &pool, const HttpServerRequest &request,
             TranslateResponse response;
             response.Clear();
             response.status = item->status;
+            response.https_only = item->https_only;
             response.redirect = item->redirect.empty() ? nullptr : item->redirect.c_str();
             response.message = item->message.empty() ? nullptr : item->message.c_str();
             response.pool = item->pool.empty() ? nullptr : item->pool.c_str();

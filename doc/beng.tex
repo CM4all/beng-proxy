@@ -1144,6 +1144,14 @@ by \verb|BASE|, \verb|EASY_BASE| and \verb|REDIRECT|.  It makes sense
 to combine it with \verb|REDIRECT_QUERY_STRING|. \\
 
 \hline
+\label{httpsonly}
+\verb|HTTPS_ONLY| & Allow this request to be handled only on encrypted
+connections (HTTPS with SSL/TLS).  If the connection is encrypted,
+then this is a no-op.  If it is not encrypted, the server generates a
+permanent redirect to \texttt{https://}.  The payload may contain a 16
+bit integer specifying the port number (zero means default port). \\
+
+\hline
 
 \verb|BOUNCE| & Redirects the browser with a \texttt{303 See Other}
 status to this URI, and appends the current absolute URI
@@ -2639,6 +2647,10 @@ error response. \\
 redirect response (\texttt{303 See Other} with the specified
 \texttt{Location} header value).  Can be combined with \verb|STATUS|
 to select a different status code. \\
+
+\hline
+
+\verb|HTTPS_ONLY| & See page \pageref{httpsonly}. \\
 
 \hline
 

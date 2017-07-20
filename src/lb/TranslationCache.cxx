@@ -123,7 +123,8 @@ private:
 };
 
 LbTranslationCache::Item::Item(const TranslateResponse &response)
-    :status(response.status)
+    :status(response.status),
+     https_only(response.https_only)
 {
     if (response.redirect != nullptr)
         redirect = response.redirect;

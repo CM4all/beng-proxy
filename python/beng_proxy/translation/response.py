@@ -43,6 +43,10 @@ class Response:
         assert status >= 200 and status < 600
         return self.packet(TRANSLATE_STATUS, struct.pack('H', status))
 
+    def https_only(self, port=0):
+        """Append a HTTPS_ONLY packet."""
+        return self.packet(TRANSLATE_HTTPS_ONLY, struct.pack('H', port))
+
     def redirect(self, url):
         """Append a REDIRECT packet."""
         return self.packet(TRANSLATE_REDIRECT, url)

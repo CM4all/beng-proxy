@@ -11,6 +11,7 @@
 #include "translation/Handler.hxx"
 #include "translation/Response.hxx"
 #include "pool.hxx"
+#include "RedirectHttps.hxx"
 
 /*
  * TranslateHandler
@@ -38,7 +39,21 @@ lb_http_translate_response(TranslateResponse &response, void *ctx)
     auto &c = r.connection;
     auto &request = r.request;
 
-    if (response.status != http_status_t(0) || response.redirect != nullptr ||
+    if (response.https_only != 0 && !c.IsEncrypted()) {
+        const char *host = request.headers.Get("host");
+        if (host == nullptr) {
+            http_server_send_message(&request, HTTP_STATUS_BAD_REQUEST,
+                                     "No Host header");
+            return;
+        }
+
+        http_server_send_redirect(&request, HTTP_STATUS_MOVED_PERMANENTLY,
+                                  MakeHttpsRedirect(request.pool, host,
+                                                    response.https_only,
+                                                    request.uri),
+                                  "This page requires \"https\"");
+    } else if (response.status != http_status_t(0) ||
+               response.redirect != nullptr ||
         response.message != nullptr) {
         request.CheckCloseUnusedBody();
 

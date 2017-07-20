@@ -390,6 +390,16 @@ test('t_header_forward', executable('t_header_forward',
     system_dep,
   ]))
 
+test('TestRedirectHttps', executable('TestRedirectHttps',
+  'TestRedirectHttps.cxx',
+  '../src/RedirectHttps.cxx',
+  include_directories: inc,
+  dependencies: [
+    gtest,
+    putil_dep,
+    net_dep,
+  ]))
+
 test('t_stock', executable('t_stock',
   't_stock.cxx',
   '../src/PInstance.cxx',
