@@ -75,6 +75,10 @@ struct LbHttpConnection final
     void Destroy();
     void CloseAndDestroy();
 
+    bool IsEncrypted() const {
+        return ssl_filter != nullptr;
+    }
+
     void SendError(HttpServerRequest &request, std::exception_ptr ep);
     void LogSendError(HttpServerRequest &request, std::exception_ptr ep);
 

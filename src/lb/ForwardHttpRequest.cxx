@@ -365,7 +365,7 @@ LbRequest::OnStockItemReady(StockItem &item)
     lb_forward_request_headers(request.pool, headers,
                                request.local_host_and_port,
                                request.remote_host,
-                               connection.ssl_filter != nullptr,
+                               connection.IsEncrypted(),
                                peer_subject, peer_issuer_subject,
                                cluster_config.mangle_via);
 
