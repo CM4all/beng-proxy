@@ -718,7 +718,7 @@ FcgiClient::_GetAvailable(bool partial)
             return analysis.total_stdout;
     }
 
-    return partial && !stderr ? (off_t)content_length : -1;
+    return partial && !response.stderr ? (off_t)content_length : -1;
 }
 
 void
