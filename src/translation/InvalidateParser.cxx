@@ -84,9 +84,9 @@ ParseTranslationInvalidateRequest(struct pool &pool,
         if (length < payload_length)
             throw std::runtime_error("Truncated payload");
 
-        char *payload = payload_length > 0
+        const char *payload = payload_length > 0
             ? p_strndup(&pool, (const char *)data, payload_length)
-            : NULL;
+            : "";
         if (command == TranslationCommand::SITE)
             request.site = payload;
         else {
