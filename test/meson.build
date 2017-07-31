@@ -914,7 +914,10 @@ test('t_growing_buffer', executable('t_growing_buffer',
   't_growing_buffer.cxx',
   '../src/istream_gb.cxx',
   include_directories: inc,
-  dependencies: t_istream_filter_deps))
+  dependencies: [
+    gtest,
+    t_istream_filter_deps,
+  ]))
 
 executable('RunNameCache',
   'RunNameCache.cxx',
