@@ -259,6 +259,7 @@ system = static_library('system',
   'src/system/urandom.cxx',
   include_directories: inc,
   dependencies: [
+    libcap,
     util_dep,
     io_dep,
   ])
@@ -948,7 +949,6 @@ executable('cm4all-beng-proxy',
   include_directories: inc,
   dependencies: [
     threads,
-    libcap,
     boost,
     libnfs,
     libsystemd,
@@ -1062,7 +1062,6 @@ executable('cm4all-beng-lb',
   include_directories: inc,
   dependencies: [
     threads,
-    libcap,
     boost,
     libsystemd,
     libdbus,
