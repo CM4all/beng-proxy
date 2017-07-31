@@ -366,7 +366,7 @@ test('t_regex', executable('t_regex',
   '../src/regex.cxx',
   include_directories: inc,
   dependencies: [
-    cppunit,
+    gtest,
     libpcre,
     putil_dep,
   ]))
