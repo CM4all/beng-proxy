@@ -5,6 +5,7 @@
  */
 
 #include "capabilities.hxx"
+#include "system/CapabilityState.hxx"
 
 #include <sys/prctl.h>
 #include <string.h>
@@ -38,22 +39,8 @@ capabilities_post_setuid(const cap_value_t *keep_list, unsigned n)
 
     /* now drop all capabilities but the ones we want */
 
-    cap_t caps = cap_init();
-
-    if (cap_set_flag(caps, CAP_EFFECTIVE, n, keep_list, CAP_SET) < 0) {
-        fprintf(stderr, "cap_set_flag() failed: %s\n", strerror(errno));
-        exit(EXIT_FAILURE);
-    }
-
-    if (cap_set_flag(caps, CAP_PERMITTED, n, keep_list, CAP_SET) < 0) {
-        fprintf(stderr, "cap_set_flag() failed: %s\n", strerror(errno));
-        exit(EXIT_FAILURE);
-    }
-
-    if (cap_set_proc(caps) < 0) {
-        fprintf(stderr, "cap_set_proc() failed: %s\n", strerror(errno));
-        exit(EXIT_FAILURE);
-    }
-
-    cap_free(caps);
+    CapabilityState state = CapabilityState::Empty();
+    state.SetFlag(CAP_EFFECTIVE, {keep_list, n}, CAP_SET);
+    state.SetFlag(CAP_PERMITTED, {keep_list, n}, CAP_SET);
+    state.Install();
 }
