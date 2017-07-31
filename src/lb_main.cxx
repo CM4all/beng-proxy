@@ -172,7 +172,7 @@ try {
 
     instance.pipe_stock = pipe_stock_new(instance.event_loop);
 
-    failure_init();
+    const ScopeFailureInit failure;
     bulldog_init(cmdline.bulldog_path);
 
     /* launch the access logger */
@@ -212,7 +212,6 @@ try {
     /* cleanup */
 
     bulldog_deinit();
-    failure_deinit();
 
     deinit_all_listeners(&instance);
     deinit_all_controls(&instance);

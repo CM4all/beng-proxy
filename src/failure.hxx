@@ -67,4 +67,17 @@ gcc_pure
 enum failure_status
 failure_get_status(SocketAddress address);
 
+struct ScopeFailureInit {
+    ScopeFailureInit() {
+        failure_init();
+    }
+
+    ~ScopeFailureInit() {
+        failure_deinit();
+    }
+
+    ScopeFailureInit(const ScopeFailureInit &) = delete;
+    ScopeFailureInit &operator=(const ScopeFailureInit &) = delete;
+};
+
 #endif

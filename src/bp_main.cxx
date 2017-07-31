@@ -367,7 +367,7 @@ try {
     } else
         instance.filter_resource_loader = instance.direct_resource_loader;
 
-    failure_init();
+    const ScopeFailureInit failure;
     bulldog_init(instance.config.bulldog_path);
 
     global_translate_cache = instance.translate_cache;
@@ -410,7 +410,6 @@ try {
     /* cleanup */
 
     bulldog_deinit();
-    failure_deinit();
 
     delete instance.spawn;
 

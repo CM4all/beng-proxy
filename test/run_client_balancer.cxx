@@ -73,7 +73,7 @@ try {
     LinearPool pool(ctx.root_pool, "test", 8192);
     AllocatorPtr alloc(pool);
 
-    failure_init();
+    const ScopeFailureInit failure;
 
     AddressList address_list;
 
@@ -98,8 +98,6 @@ try {
     assert(ctx.result != Context::NONE);
 
     /* cleanup */
-
-    failure_deinit();
 
     switch (ctx.result) {
     case Context::NONE:
