@@ -8,47 +8,47 @@
 #include "pool.hxx"
 
 static bool
-apply_translation_packet(TranslateRequest *request,
+apply_translation_packet(TranslateRequest &request,
                          enum TranslationCommand command,
                          const char *payload, size_t payload_length)
 {
     switch (command) {
     case TranslationCommand::URI:
-        request->uri = payload;
+        request.uri = payload;
         break;
 
     case TranslationCommand::SESSION:
-        request->session = { payload, payload_length };
+        request.session = { payload, payload_length };
         break;
 
         /* XXX
     case TranslationCommand::LOCAL_ADDRESS:
-        request->local_address = payload;
+        request.local_address = payload;
         break;
         */
 
     case TranslationCommand::REMOTE_HOST:
-        request->remote_host = payload;
+        request.remote_host = payload;
         break;
 
     case TranslationCommand::HOST:
-        request->host = payload;
+        request.host = payload;
         break;
 
     case TranslationCommand::LANGUAGE:
-        request->accept_language = payload;
+        request.accept_language = payload;
         break;
 
     case TranslationCommand::USER_AGENT:
-        request->user_agent = payload;
+        request.user_agent = payload;
         break;
 
     case TranslationCommand::UA_CLASS:
-        request->ua_class = payload;
+        request.ua_class = payload;
         break;
 
     case TranslationCommand::QUERY_STRING:
-        request->query_string = payload;
+        request.query_string = payload;
         break;
 
     default:
@@ -60,7 +60,7 @@ apply_translation_packet(TranslateRequest *request,
 }
 
 unsigned
-decode_translation_packets(struct pool *pool, TranslateRequest *request,
+decode_translation_packets(struct pool &pool, TranslateRequest &request,
                            TranslationCommand *cmds, unsigned max_cmds,
                            const void *data, size_t length,
                            const char **site_r)
@@ -89,7 +89,7 @@ decode_translation_packets(struct pool *pool, TranslateRequest *request,
             return 0;
 
         char *payload = payload_length > 0
-            ? p_strndup(pool, (const char *)data, payload_length)
+            ? p_strndup(&pool, (const char *)data, payload_length)
             : NULL;
         if (command == TranslationCommand::SITE)
             *site_r = payload;

@@ -13,7 +13,7 @@ struct pool;
 struct TranslateRequest;
 
 unsigned
-decode_translation_packets(struct pool *pool, TranslateRequest *request,
+decode_translation_packets(struct pool &pool, TranslateRequest &request,
                            TranslationCommand *cmds, unsigned max_cmds,
                            const void *data, size_t length,
                            const char **site_r);
