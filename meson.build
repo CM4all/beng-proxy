@@ -654,6 +654,7 @@ translation = static_library('translation',
   'src/translation/Transformation.cxx',
   'libcommon/src/translation/Response.cxx',
   'src/translation/Vary.cxx',
+  'src/translation/InvalidateParser.cxx',
   include_directories: inc,
   dependencies: [
     libhttp, libdaemon,
