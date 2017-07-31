@@ -5,20 +5,31 @@
 #ifndef TRANSLATION_INVALIDATE_PARSER_HXX
 #define TRANSLATION_INVALIDATE_PARSER_HXX
 
+#include "Request.hxx"
 #include "translation/Protocol.hxx"
+#include "util/TrivialArray.hxx"
 
 #include <stddef.h>
 
 struct pool;
-struct TranslateRequest;
+
+struct TranslationInvalidateRequest : TranslateRequest {
+    const char *site;
+
+    TrivialArray<TranslationCommand, 32> commands;
+
+    void Clear() {
+        TranslateRequest::Clear();
+        site = nullptr;
+        commands.clear();
+    }
+};
 
 /**
  * Throws on error.
  */
-unsigned
-decode_translation_packets(struct pool &pool, TranslateRequest &request,
-                           TranslationCommand *cmds, unsigned max_cmds,
-                           const void *data, size_t length,
-                           const char **site_r);
+TranslationInvalidateRequest
+ParseTranslationInvalidateRequest(struct pool &pool,
+                                  const void *data, size_t length);
 
 #endif

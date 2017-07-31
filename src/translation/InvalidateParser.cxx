@@ -58,15 +58,12 @@ apply_translation_packet(TranslateRequest &request,
     }
 }
 
-unsigned
-decode_translation_packets(struct pool &pool, TranslateRequest &request,
-                           TranslationCommand *cmds, unsigned max_cmds,
-                           const void *data, size_t length,
-                           const char **site_r)
+TranslationInvalidateRequest
+ParseTranslationInvalidateRequest(struct pool &pool,
+                                  const void *data, size_t length)
 {
-    *site_r = NULL;
-
-    unsigned num_cmds = 0;
+    TranslationInvalidateRequest request;
+    request.Clear();
 
     if (length % 4 != 0)
         /* must be padded */
@@ -91,14 +88,13 @@ decode_translation_packets(struct pool &pool, TranslateRequest &request,
             ? p_strndup(&pool, (const char *)data, payload_length)
             : NULL;
         if (command == TranslationCommand::SITE)
-            *site_r = payload;
+            request.site = payload;
         else {
             apply_translation_packet(request, command, payload,
                                      payload_length);
-            if (num_cmds >= max_cmds)
-                throw std::runtime_error("Too many commands");
 
-            cmds[num_cmds++] = command;
+            if (!request.commands.checked_append(command))
+                throw std::runtime_error("Too many commands");
         }
 
         payload_length = ((payload_length + 3) | 3) - 3; /* apply padding */
@@ -107,5 +103,5 @@ decode_translation_packets(struct pool &pool, TranslateRequest &request,
         length -= payload_length;
     }
 
-    return num_cmds;
+    return request;
 }

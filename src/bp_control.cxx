@@ -40,17 +40,11 @@ control_tcache_invalidate(BpInstance *instance,
 
     const AutoRewindPool auto_rewind(*tpool);
 
-    TranslateRequest request;
-    request.Clear();
-
-    const char *site;
-    TranslationCommand cmds[32];
-    unsigned num_cmds;
+    TranslationInvalidateRequest request;
 
     try {
-        num_cmds = decode_translation_packets(*tpool, request,
-                                              cmds, ARRAY_SIZE(cmds),
-                                              payload, payload_length, &site);
+        request = ParseTranslationInvalidateRequest(*tpool,
+                                                    payload, payload_length);
     } catch (...) {
         daemon_log(2, "malformed TCACHE_INVALIDATE control packet: %s\n",
                    GetFullMessage(std::current_exception()).c_str());
@@ -58,8 +52,9 @@ control_tcache_invalidate(BpInstance *instance,
     }
 
     translate_cache_invalidate(*instance->translate_cache, request,
-                               ConstBuffer<TranslationCommand>(cmds, num_cmds),
-                               site);
+                               ConstBuffer<TranslationCommand>(request.commands.raw(),
+                                                               request.commands.size()),
+                               request.site);
 }
 
 static void
