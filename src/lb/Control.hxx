@@ -33,6 +33,9 @@ public:
     void Disable();
 
 private:
+    void InvalidateTranslationCache(const void *payload,
+                                    size_t payload_length);
+
     void EnableNode(const char *payload, size_t length);
     void FadeNode(const char *payload, size_t length);
 

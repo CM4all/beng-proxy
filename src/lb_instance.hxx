@@ -98,6 +98,10 @@ struct LbInstance final : PInstance {
     void ConnectCertCaches();
     void DisconnectCertCaches();
 
+    void FlushTranslationCaches() {
+        goto_map.FlushCaches();
+    }
+
     unsigned FlushSSLSessionCache(long tm);
 
     void ShutdownCallback();

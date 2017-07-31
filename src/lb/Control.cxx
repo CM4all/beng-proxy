@@ -22,6 +22,17 @@ LbControl::LbControl(LbInstance &_instance)
     :logger("control"), instance(_instance) {}
 
 inline void
+LbControl::InvalidateTranslationCache(const void *payload,
+                                      size_t payload_length)
+{
+    // TODO: evaluate payload and erase only matching items
+    (void)payload;
+    (void)payload_length;
+
+    instance.FlushTranslationCaches();
+}
+
+inline void
 LbControl::EnableNode(const char *payload, size_t length)
 {
     const char *colon = (const char *)memchr(payload, ':', length);
@@ -213,7 +224,12 @@ LbControl::OnControlPacket(ControlServer &control_server,
 
     switch (command) {
     case CONTROL_NOP:
+        break;
+
     case CONTROL_TCACHE_INVALIDATE:
+        InvalidateTranslationCache(payload, payload_length);
+        break;
+
     case CONTROL_FADE_CHILDREN:
         break;
 
