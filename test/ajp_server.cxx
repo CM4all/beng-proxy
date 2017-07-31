@@ -163,7 +163,7 @@ read_ajp_request_body_chunk(struct ajp_request *r)
 }
 
 void
-read_ajp_end_request_body_chunk(struct ajp_request *r)
+read_ajp_end_request_body_chunk(gcc_unused struct ajp_request *r)
 {
     assert(r->length > 0);
     assert(r->received == r->length);
