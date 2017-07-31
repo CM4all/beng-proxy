@@ -609,7 +609,7 @@ test('t_pool', executable('t_pool',
   't_pool.cxx',
   include_directories: inc,
   dependencies: [
-    cppunit,
+    gtest,
     pool_dep,
   ]))
 
