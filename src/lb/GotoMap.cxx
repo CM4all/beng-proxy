@@ -16,6 +16,13 @@ LbGotoMap::FlushCaches()
         i.second.FlushCache();
 }
 
+void
+LbGotoMap::InvalidateTranslationCaches(const TranslateRequest &request)
+{
+    for (auto &i : translation_handlers)
+        i.second.InvalidateCache(request);
+}
+
 LbGoto
 LbGotoMap::GetInstance(const char *name)
 {

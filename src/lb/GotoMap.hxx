@@ -15,6 +15,7 @@
 
 struct LbGoto;
 struct LbGotoConfig;
+struct TranslateRequest;
 
 class LbGotoMap final {
     const LbConfig &root_config;
@@ -43,6 +44,7 @@ public:
     }
 
     void FlushCaches();
+    void InvalidateTranslationCaches(const TranslateRequest &request);
 
     template<typename F>
     void ForEachCluster(F &&f) {

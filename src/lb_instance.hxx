@@ -102,6 +102,10 @@ struct LbInstance final : PInstance {
         goto_map.FlushCaches();
     }
 
+    void InvalidateTranslationCaches(const TranslateRequest &request) {
+        goto_map.InvalidateTranslationCaches(request);
+    }
+
     unsigned FlushSSLSessionCache(long tm);
 
     void ShutdownCallback();

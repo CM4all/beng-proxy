@@ -44,6 +44,13 @@ LbTranslationHandler::FlushCache()
     cache.reset();
 }
 
+void
+LbTranslationHandler::InvalidateCache(const TranslateRequest &request)
+{
+    if (cache)
+        cache->Invalidate(request);
+}
+
 static void
 Fill(TranslateRequest &t, const char *name,
      const char *listener_tag,

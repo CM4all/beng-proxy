@@ -12,6 +12,7 @@
 #include "failure.hxx"
 #include "tpool.hxx"
 #include "pool.hxx"
+#include "translation/InvalidateParser.hxx"
 #include "net/ToString.hxx"
 #include "util/Exception.hxx"
 
@@ -25,11 +26,26 @@ inline void
 LbControl::InvalidateTranslationCache(const void *payload,
                                       size_t payload_length)
 {
-    // TODO: evaluate payload and erase only matching items
-    (void)payload;
-    (void)payload_length;
+    if (payload_length == 0) {
+        /* flush the translation cache if the payload is empty */
+        instance.FlushTranslationCaches();
+        return;
+    }
 
-    instance.FlushTranslationCaches();
+    const AutoRewindPool auto_rewind(*tpool);
+
+    TranslationInvalidateRequest request;
+
+    try {
+        request = ParseTranslationInvalidateRequest(*tpool,
+                                                    payload, payload_length);
+    } catch (...) {
+        logger(2, "malformed TCACHE_INVALIDATE control packet: ",
+               GetFullMessage(std::current_exception()));
+        return;
+    }
+
+    instance.InvalidateTranslationCaches(request);
 }
 
 inline void
