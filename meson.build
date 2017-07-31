@@ -87,7 +87,6 @@ libjsoncpp = dependency('jsoncpp')
 libavahi_client = dependency('avahi-client')
 libnfs = dependency('libnfs')
 zlib = dependency('zlib')
-cppunit = dependency('cppunit')
 
 if compiler.has_header('valgrind/memcheck.h')
   add_global_arguments('-DHAVE_VALGRIND_MEMCHECK_H', language: 'cpp')

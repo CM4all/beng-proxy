@@ -381,7 +381,6 @@ test('t_header_forward', executable('t_header_forward',
   dependencies: [
     gtest,
     threads,
-    cppunit,
     libpcre,
     libdaemon, libhttp,
     putil_dep,
