@@ -1,5 +1,5 @@
 #include "header_forward.hxx"
-#include "RootPool.hxx"
+#include "TestPool.hxx"
 #include "strmap.hxx"
 #include "product.h"
 
@@ -45,7 +45,7 @@ TEST(HeaderForwardTest, RequestHeaders)
     settings.modes[HEADER_GROUP_TRANSFORMATION] = HEADER_FORWARD_NO;
     settings.modes[HEADER_GROUP_LINK] = HEADER_FORWARD_NO;
 
-    RootPool pool;
+    TestPool pool;
 
     StringMap headers(pool);
     headers.Add("from", "foo");
@@ -323,7 +323,7 @@ TEST(HeaderForwardTest, ResponseHeaders)
     settings.modes[HEADER_GROUP_TRANSFORMATION] = HEADER_FORWARD_NO;
     settings.modes[HEADER_GROUP_LINK] = HEADER_FORWARD_YES;
 
-    RootPool pool;
+    TestPool pool;
 
     StringMap headers(pool);
     headers.Add("server", "apache");

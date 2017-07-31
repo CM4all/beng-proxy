@@ -1,5 +1,5 @@
 #include "RedirectHttps.hxx"
-#include "RootPool.hxx"
+#include "TestPool.hxx"
 
 #include <gtest/gtest.h>
 
@@ -7,7 +7,7 @@
 
 TEST(TestRedirectHttps, Basic)
 {
-    RootPool pool;
+    TestPool pool;
 
     ASSERT_STREQ(MakeHttpsRedirect(pool, "localhost", 0, "/foo"),
                  "https://localhost/foo");
@@ -24,7 +24,7 @@ TEST(TestRedirectHttps, Basic)
 
 TEST(TestRedirectHttps, IPv6)
 {
-    RootPool pool;
+    TestPool pool;
 
     ASSERT_STREQ(MakeHttpsRedirect(pool, "::", 0, "/foo"),
                  "https://::/foo");

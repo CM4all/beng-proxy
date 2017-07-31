@@ -1,5 +1,5 @@
 #include "expansible_buffer.hxx"
-#include "RootPool.hxx"
+#include "TestPool.hxx"
 #include "util/ConstBuffer.hxx"
 
 #include "util/Compiler.h"
@@ -10,7 +10,7 @@
 int
 main(gcc_unused int argc, gcc_unused char **argv)
 {
-    RootPool pool;
+    TestPool pool;
 
     ExpansibleBuffer eb(pool, 4, 1024);
     assert(eb.IsEmpty());

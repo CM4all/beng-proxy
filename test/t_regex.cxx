@@ -1,6 +1,6 @@
 #include "regex.hxx"
 #include "pexpand.hxx"
-#include "RootPool.hxx"
+#include "TestPool.hxx"
 #include "AllocatorPtr.hxx"
 
 #include "util/Compiler.h"
@@ -75,7 +75,7 @@ public:
         auto match_info = r.MatchCapture("/foo/bar/a/b/c.html");
         CPPUNIT_ASSERT(match_info.IsDefined());
 
-        RootPool pool;
+        TestPool pool;
         AllocatorPtr alloc(pool);
 
         auto e = expand_string(alloc, "\\1-\\2-\\3-\\\\", match_info);
@@ -112,7 +112,7 @@ public:
         auto match_info = r.MatchCapture("%xxx");
         CPPUNIT_ASSERT(match_info.IsDefined());
 
-        RootPool pool;
+        TestPool pool;
         AllocatorPtr alloc(pool);
 
         auto e = expand_string(alloc, "-\\1-", match_info);
@@ -135,7 +135,7 @@ public:
         auto match_info = r.MatchCapture("abc");
         CPPUNIT_ASSERT(match_info.IsDefined());
 
-        RootPool pool;
+        TestPool pool;
         AllocatorPtr alloc(pool);
 
         auto e = expand_string(alloc, "\\1-\\2-\\3", match_info);
@@ -158,7 +158,7 @@ public:
         auto match_info = r.MatchCapture("abc");
         CPPUNIT_ASSERT(match_info.IsDefined());
 
-        RootPool pool;
+        TestPool pool;
         AllocatorPtr alloc(pool);
 
         auto e = expand_string(alloc, "\\1-\\2-\\3", match_info);

@@ -1,6 +1,6 @@
 #include "uri/uri_relative.hxx"
 #include "puri_relative.hxx"
-#include "RootPool.hxx"
+#include "TestPool.hxx"
 #include "AllocatorPtr.hxx"
 #include "util/StringView.hxx"
 
@@ -12,7 +12,7 @@
 int
 main(gcc_unused int argc, gcc_unused char **argv)
 {
-    RootPool pool;
+    TestPool pool;
     AllocatorPtr alloc(pool);
 
     assert(strcmp(uri_compress(alloc, "/foo/bar"), "/foo/bar") == 0);

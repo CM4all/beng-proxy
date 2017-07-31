@@ -1,5 +1,5 @@
 #include "http_address.hxx"
-#include "RootPool.hxx"
+#include "TestPool.hxx"
 #include "AllocatorPtr.hxx"
 
 #include <gtest/gtest.h>
@@ -9,7 +9,7 @@
 
 TEST(HttpAddressTest, Unix)
 {
-    RootPool root_pool;
+    TestPool root_pool;
     AllocatorPtr alloc(root_pool);
 
     auto *a = http_address_parse(alloc, "unix:/var/run/foo");
@@ -20,7 +20,7 @@ TEST(HttpAddressTest, Unix)
 
 TEST(HttpAddressTest, Apply)
 {
-    RootPool root_pool;
+    TestPool root_pool;
     AllocatorPtr alloc(root_pool);
 
     auto *a = http_address_parse(alloc, "http://localhost/foo");

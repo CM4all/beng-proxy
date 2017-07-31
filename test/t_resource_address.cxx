@@ -2,8 +2,7 @@
 #include "ResourceAddress.hxx"
 #include "file_address.hxx"
 #include "cgi_address.hxx"
-#include "pool.hxx"
-#include "RootPool.hxx"
+#include "TestPool.hxx"
 
 #include <gtest/gtest.h>
 
@@ -12,7 +11,7 @@
 
 TEST(ResourceAddressTest, AutoBase)
 {
-    RootPool pool;
+    TestPool pool;
 
     static const auto cgi0 =
         MakeCgiAddress("/usr/lib/cgi-bin/foo.pl", nullptr, "/");
@@ -42,7 +41,7 @@ TEST(ResourceAddressTest, AutoBase)
 
 TEST(ResourceAddressTest, BaseNoPathInfo)
 {
-    RootPool pool;
+    TestPool pool;
 
     static const auto cgi0 = MakeCgiAddress("/usr/lib/cgi-bin/foo.pl");
     static constexpr ResourceAddress ra0(ResourceAddress::Type::CGI, cgi0);
@@ -63,7 +62,7 @@ TEST(ResourceAddressTest, BaseNoPathInfo)
 
 TEST(ResourceAddressTest, CgiApply)
 {
-    RootPool pool;
+    TestPool pool;
 
     static const auto cgi0 =
         MakeCgiAddress("/usr/lib/cgi-bin/foo.pl", nullptr, "/foo/");
@@ -100,7 +99,7 @@ TEST(ResourceAddressTest, Basic)
                        "/bar/baz");
     static constexpr ResourceAddress ra3(ResourceAddress::Type::CGI, cgi3);
 
-    RootPool pool;
+    TestPool pool;
 
     auto a = ra1.SaveBase(*pool, "bar.html");
     ASSERT_TRUE(a.IsDefined());

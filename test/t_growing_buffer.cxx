@@ -1,4 +1,4 @@
-#include "RootPool.hxx"
+#include "TestPool.hxx"
 #include "GrowingBuffer.hxx"
 #include "direct.hxx"
 #include "istream_gb.hxx"
@@ -144,41 +144,34 @@ Equals(WritableBuffer<void> a, const char *b)
 TEST(GrowingBufferTest, Normal)
 {
     const ScopeFbPoolInit fb_pool_init;
-    RootPool root_pool;
+    TestPool pool;
 
-    Istream *istream;
-    auto *pool = pool_new_linear(root_pool, "test", 8192);
-    istream = create_test(pool);
-
-    run_istream(pool, istream);
+    auto *istream = create_test(pool);
+    run_istream(&pool.Steal(), istream);
 }
 
 /** empty input */
 TEST(GrowingBufferTest, Empty)
 {
     const ScopeFbPoolInit fb_pool_init;
-    RootPool root_pool;
+    TestPool pool;
 
-    Istream *istream;
-    auto *pool = pool_new_linear(root_pool, "test", 8192);
-    istream = create_empty(pool);
-
-    run_istream(pool, istream);
+    auto *istream = create_empty(pool);
+    run_istream(&pool.Steal(), istream);
 }
 
 /** first buffer is too small, empty */
 TEST(GrowingBufferTest, FirstEmpty)
 {
     const ScopeFbPoolInit fb_pool_init;
-    RootPool root_pool;
-    auto *pool = pool_new_linear(root_pool, "test", 8192);
+    TestPool pool;
 
     GrowingBuffer buffer;
 
     buffer.Write("0123456789abcdefg");
 
     ASSERT_EQ(buffer.GetSize(), 17);
-    ASSERT_TRUE(Equals(buffer.Dup(*pool), "0123456789abcdefg"));
+    ASSERT_TRUE(Equals(buffer.Dup(pool), "0123456789abcdefg"));
 
     GrowingBufferReader reader(std::move(buffer));
     auto x = reader.Read();
@@ -186,18 +179,13 @@ TEST(GrowingBufferTest, FirstEmpty)
     ASSERT_EQ(x.size, 17);
 
     reader.Consume(x.size);
-
-    pool_trash(pool);
-    pool_unref(pool);
-    pool_commit();
 }
 
 /** test growing_buffer_reader_skip() */
 TEST(GrowingBufferTest, Skip)
 {
     const ScopeFbPoolInit fb_pool_init;
-    RootPool root_pool;
-    auto *pool = pool_new_linear(root_pool, "test", 8192);
+    TestPool pool;
     GrowingBuffer buffer;
 
     buffer.Write("0123");
@@ -206,7 +194,7 @@ TEST(GrowingBufferTest, Skip)
     buffer.Write("cdef");
 
     ASSERT_EQ(buffer.GetSize(), 16);
-    ASSERT_TRUE(Equals(buffer.Dup(*pool), "0123456789abcdef"));
+    ASSERT_TRUE(Equals(buffer.Dup(pool), "0123456789abcdef"));
 
     constexpr size_t buffer_size = 16384 - 2 * sizeof(void*) - 2 * sizeof(size_t);
 
@@ -243,19 +231,14 @@ TEST(GrowingBufferTest, Skip)
 
     x = reader.Read();
     ASSERT_TRUE(x.IsNull());
-
-    pool_trash(pool);
-    pool_unref(pool);
-    pool_commit();
 }
 
 /** test reading the head while appending to the tail */
 TEST(GrowingBufferTest, ConcurrentRW)
 {
     const ScopeFbPoolInit fb_pool_init;
-    RootPool root_pool;
+    TestPool pool;
 
-    auto *pool = pool_new_linear(root_pool, "test", 8192);
     GrowingBuffer buffer;
 
     buffer.Write("0123");
@@ -263,7 +246,7 @@ TEST(GrowingBufferTest, ConcurrentRW)
     buffer.Write("89ab");
 
     ASSERT_EQ(buffer.GetSize(), 12);
-    ASSERT_TRUE(Equals(buffer.Dup(*pool), "0123456789ab"));
+    ASSERT_TRUE(Equals(buffer.Dup(pool), "0123456789ab"));
 
     buffer.Skip(12);
     ASSERT_TRUE(buffer.IsEmpty());
@@ -273,38 +256,29 @@ TEST(GrowingBufferTest, ConcurrentRW)
 
     ASSERT_FALSE(buffer.IsEmpty());
     ASSERT_EQ(buffer.GetSize(),4);
-    ASSERT_TRUE(Equals(buffer.Dup(*pool), "cdef"));
+    ASSERT_TRUE(Equals(buffer.Dup(pool), "cdef"));
 
     auto x = buffer.Read();
     ASSERT_FALSE(x.IsNull());
     ASSERT_EQ(x.size, 4);
-
-    pool_trash(pool);
-    pool_unref(pool);
-    pool_commit();
 }
 
 /** abort without handler */
 TEST(GrowingBufferTest, AbortWithoutHandler)
 {
     const ScopeFbPoolInit fb_pool_init;
-    RootPool root_pool;
-    auto *pool = pool_new_linear(root_pool, "test", 8192);
+    TestPool pool;
 
     auto *istream = create_test(pool);
     istream->CloseUnused();
-
-    pool_trash(pool);
-    pool_unref(pool);
-    pool_commit();
 }
 
 /** abort with handler */
 TEST(GrowingBufferTest, AbortWithHandler)
 {
     const ScopeFbPoolInit fb_pool_init;
-    RootPool root_pool;
-    Context ctx(*pool_new_linear(root_pool, "test", 8192));
+    TestPool pool;
+    Context ctx(pool.Steal());
 
     Istream *istream = create_test(ctx.pool);
     istream->SetHandler(ctx);
@@ -313,16 +287,14 @@ TEST(GrowingBufferTest, AbortWithHandler)
     pool_unref(ctx.pool);
 
     ASSERT_FALSE(ctx.abort);
-
-    pool_commit();
 }
 
 /** abort in handler */
 TEST(GrowingBufferTest, AbortInHandler)
 {
     const ScopeFbPoolInit fb_pool_init;
-    RootPool root_pool;
-    Context ctx(*pool_new_linear(root_pool, "test", 8192));
+    TestPool pool;
+    Context ctx(pool.Steal());
 
     ctx.abort_istream.Set(*create_test(ctx.pool), ctx);
 
@@ -332,6 +304,4 @@ TEST(GrowingBufferTest, AbortInHandler)
     ASSERT_FALSE(ctx.abort_istream.IsDefined());
     ASSERT_FALSE(ctx.abort);
     ASSERT_TRUE(ctx.closed);
-
-    pool_commit();
 }

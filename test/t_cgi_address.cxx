@@ -1,11 +1,11 @@
 #include "cgi_address.hxx"
-#include "RootPool.hxx"
+#include "TestPool.hxx"
 
 #include <gtest/gtest.h>
 
 TEST(CgiAddressTest, Uri)
 {
-    RootPool pool;
+    TestPool pool;
 
     CgiAddress a("/usr/bin/cgi");
     ASSERT_EQ(false, a.IsExpandable());
@@ -49,7 +49,7 @@ TEST(CgiAddressTest, Uri)
 
 TEST(CgiAddressTest, Apply)
 {
-    RootPool pool;
+    TestPool pool;
 
     CgiAddress a("/usr/bin/cgi");
     a.script_name = "/test.pl";
