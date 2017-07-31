@@ -5,7 +5,6 @@
  */
 
 #include "failure.hxx"
-#include "pool.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/AllocatedSocketAddress.hxx"
 #include "util/djbhash.h"
@@ -15,7 +14,6 @@
 #include <boost/intrusive/unordered_set.hpp>
 
 #include <assert.h>
-#include <time.h>
 
 struct Failure
     : boost::intrusive::unordered_set_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {

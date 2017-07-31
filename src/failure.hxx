@@ -11,8 +11,6 @@
 
 #include <chrono>
 
-#include <stddef.h>
-
 class SocketAddress;
 
 enum failure_status {
