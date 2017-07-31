@@ -635,7 +635,7 @@ test('t_slice', executable('t_slice',
   't_slice.cxx',
   include_directories: inc,
   dependencies: [
-    cppunit,
+    gtest,
     memory_dep,
   ]))
 
