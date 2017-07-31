@@ -68,7 +68,7 @@ public:
     /**
      * Generates a key for storing into the cache.
      */
-    const char *FullKey() {
+    const char *FullKey() const {
         /* 3 is the last index, with both bits set */
         return MakeKey(3);
     }
@@ -96,7 +96,7 @@ private:
         return i;
     }
 
-    const char *MakeKey(unsigned i) {
+    const char *MakeKey(unsigned i) const {
         assert(i < 4);
 
         char *result = buffer.get(), *p = result;
