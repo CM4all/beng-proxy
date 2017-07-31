@@ -1,6 +1,7 @@
 cm4all-beng-proxy (12.0.39) unstable; urgency=low
 
   * spawn: run the PID namespace init process as root
+  * spawn: forbid fanotify_*, nfsservctl, syslog
 
  --   
 
