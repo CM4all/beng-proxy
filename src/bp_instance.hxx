@@ -188,6 +188,8 @@ private:
     bool AllocatorCompressCallback();
 
     void SaveSesssions();
+
+    void FreeStocksAndCaches();
 };
 
 #endif

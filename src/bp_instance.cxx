@@ -7,18 +7,24 @@
 #include "bp_instance.hxx"
 #include "fb_pool.hxx"
 #include "control_server.hxx"
+#include "balancer.hxx"
+#include "tcp_balancer.hxx"
+#include "pipe_stock.hxx"
 #include "DirectResourceLoader.hxx"
 #include "CachedResourceLoader.hxx"
 #include "FilterResourceLoader.hxx"
 #include "http_cache.hxx"
 #include "fcache.hxx"
+#include "translation/Stock.hxx"
 #include "translation/Cache.hxx"
 #include "lhttp_stock.hxx"
 #include "fcgi/Stock.hxx"
 #include "stock/MapStock.hxx"
 #include "session_save.hxx"
 #include "event/Duration.hxx"
+#include "nfs/Stock.hxx"
 #include "nfs/Cache.hxx"
+#include "memcached/memcached_stock.hxx"
 #include "access_log/Glue.hxx"
 
 #include <sys/signal.h>
@@ -44,6 +50,61 @@ BpInstance::~BpInstance()
 
     delete (CachedResourceLoader *)cached_resource_loader;
     delete (DirectResourceLoader *)direct_resource_loader;
+}
+
+void
+BpInstance::FreeStocksAndCaches()
+{
+    if (translate_cache != nullptr)
+        translate_cache_close(translate_cache);
+
+    if (translate_stock != nullptr)
+        tstock_free(translate_stock);
+
+    if (http_cache != nullptr) {
+        http_cache_close(http_cache);
+        http_cache = nullptr;
+    }
+
+    if (filter_cache != nullptr) {
+        filter_cache_close(filter_cache);
+        filter_cache = nullptr;
+    }
+
+    if (lhttp_stock != nullptr) {
+        lhttp_stock_free(lhttp_stock);
+        lhttp_stock = nullptr;
+    }
+
+    if (fcgi_stock != nullptr) {
+        fcgi_stock_free(fcgi_stock);
+        fcgi_stock = nullptr;
+    }
+
+    delete was_stock;
+    was_stock = nullptr;
+
+    if (memcached_stock != nullptr)
+        memcached_stock_free(memcached_stock);
+
+    if (tcp_balancer != nullptr)
+        tcp_balancer_free(tcp_balancer);
+
+    delete tcp_stock;
+
+    if (balancer != nullptr)
+        balancer_free(balancer);
+
+    delete delegate_stock;
+
+    if (nfs_cache != nullptr)
+        nfs_cache_free(nfs_cache);
+
+    if (nfs_stock != nullptr)
+        nfs_stock_free(nfs_stock);
+
+    if (pipe_stock != nullptr)
+        pipe_stock_free(pipe_stock);
 }
 
 void

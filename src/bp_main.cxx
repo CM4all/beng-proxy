@@ -129,56 +129,7 @@ BpInstance::ShutdownCallback()
     session_save_deinit();
     session_manager_deinit();
 
-    if (translate_cache != nullptr)
-        translate_cache_close(translate_cache);
-
-    if (translate_stock != nullptr)
-        tstock_free(translate_stock);
-
-    if (http_cache != nullptr) {
-        http_cache_close(http_cache);
-        http_cache = nullptr;
-    }
-
-    if (filter_cache != nullptr) {
-        filter_cache_close(filter_cache);
-        filter_cache = nullptr;
-    }
-
-    if (lhttp_stock != nullptr) {
-        lhttp_stock_free(lhttp_stock);
-        lhttp_stock = nullptr;
-    }
-
-    if (fcgi_stock != nullptr) {
-        fcgi_stock_free(fcgi_stock);
-        fcgi_stock = nullptr;
-    }
-
-    delete was_stock;
-    was_stock = nullptr;
-
-    if (memcached_stock != nullptr)
-        memcached_stock_free(memcached_stock);
-
-    if (tcp_balancer != nullptr)
-        tcp_balancer_free(tcp_balancer);
-
-    delete tcp_stock;
-
-    if (balancer != nullptr)
-        balancer_free(balancer);
-
-    delete delegate_stock;
-
-    if (nfs_cache != nullptr)
-        nfs_cache_free(nfs_cache);
-
-    if (nfs_stock != nullptr)
-        nfs_stock_free(nfs_stock);
-
-    if (pipe_stock != nullptr)
-        pipe_stock_free(pipe_stock);
+    FreeStocksAndCaches();
 
     local_control_handler_deinit(this);
     global_control_handler_deinit(this);
