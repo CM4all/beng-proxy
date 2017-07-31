@@ -55,11 +55,15 @@ BpInstance::~BpInstance()
 void
 BpInstance::FreeStocksAndCaches()
 {
-    if (translate_cache != nullptr)
+    if (translate_cache != nullptr) {
         translate_cache_close(translate_cache);
+        translate_cache = nullptr;
+    }
 
-    if (translate_stock != nullptr)
+    if (translate_stock != nullptr) {
         tstock_free(translate_stock);
+        translate_stock = nullptr;
+    }
 
     if (http_cache != nullptr) {
         http_cache_close(http_cache);
@@ -84,27 +88,41 @@ BpInstance::FreeStocksAndCaches()
     delete was_stock;
     was_stock = nullptr;
 
-    if (memcached_stock != nullptr)
+    if (memcached_stock != nullptr) {
         memcached_stock_free(memcached_stock);
+        memcached_stock = nullptr;
+    }
 
-    if (tcp_balancer != nullptr)
+    if (tcp_balancer != nullptr) {
         tcp_balancer_free(tcp_balancer);
+        tcp_balancer = nullptr;
+    }
 
     delete tcp_stock;
+    tcp_stock = nullptr;
 
-    if (balancer != nullptr)
+    if (balancer != nullptr) {
         balancer_free(balancer);
+        balancer = nullptr;
+    }
 
     delete delegate_stock;
+    delegate_stock = nullptr;
 
-    if (nfs_cache != nullptr)
+    if (nfs_cache != nullptr) {
         nfs_cache_free(nfs_cache);
+        nfs_cache = nullptr;
+    }
 
-    if (nfs_stock != nullptr)
+    if (nfs_stock != nullptr) {
         nfs_stock_free(nfs_stock);
+        nfs_stock = nullptr;
+    }
 
-    if (pipe_stock != nullptr)
+    if (pipe_stock != nullptr) {
         pipe_stock_free(pipe_stock);
+        pipe_stock = nullptr;
+    }
 }
 
 void
