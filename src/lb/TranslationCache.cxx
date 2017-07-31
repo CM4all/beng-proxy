@@ -72,7 +72,8 @@ public:
      * Generates a key for storing into the cache.
      */
     const char *FullKey() const {
-        return MakeKey(HOST|LISTENER_TAG);
+        return MakeKey((!host.IsNull() * HOST) |
+                       (!listener_tag.IsNull() * LISTENER_TAG));
     }
 
 private:
