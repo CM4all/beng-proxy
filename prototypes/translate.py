@@ -137,7 +137,6 @@ class Translation(Protocol):
         log.msg("pool '%s' tag=%s host=%s" % (name, repr(listener_tag), repr(host)))
 
         response = Response(protocol_version=1)
-        response.max_age(0)
 
         if host == '404':
             response.status(404)
