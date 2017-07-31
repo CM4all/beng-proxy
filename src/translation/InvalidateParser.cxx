@@ -18,8 +18,16 @@ apply_translation_packet(TranslateRequest &request,
         request.uri = payload;
         break;
 
+    case TranslationCommand::PARAM:
+        request.param = payload;
+        break;
+
     case TranslationCommand::SESSION:
         request.session = { payload, payload_length };
+        break;
+
+    case TranslationCommand::LISTENER_TAG:
+        request.listener_tag = payload;
         break;
 
         /* XXX
@@ -50,6 +58,18 @@ apply_translation_packet(TranslateRequest &request,
 
     case TranslationCommand::QUERY_STRING:
         request.query_string = payload;
+        break;
+
+    case TranslationCommand::INTERNAL_REDIRECT:
+        request.internal_redirect = { payload, payload_length };
+        break;
+
+    case TranslationCommand::ENOTDIR_:
+        request.enotdir = { payload, payload_length };
+        break;
+
+    case TranslationCommand::USER:
+        request.user = payload;
         break;
 
     default:
