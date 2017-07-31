@@ -449,7 +449,7 @@ test('t_balancer', executable('t_balancer',
   '../src/bulldog.cxx',
   include_directories: inc,
   dependencies: [
-    cppunit,
+    gtest,
     libdaemon,
     declare_dependency(link_with: eutil),
     pool_dep,
