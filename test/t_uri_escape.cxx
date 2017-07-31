@@ -1,12 +1,8 @@
 #include "uri/uri_escape.hxx"
 #include "util/StringView.hxx"
-
 #include "util/Compiler.h"
 
-#include <cppunit/CompilerOutputter.h>
-#include <cppunit/extensions/TestFactoryRegistry.h>
-#include <cppunit/ui/text/TestRunner.h>
-#include <cppunit/extensions/HelperMacros.h>
+#include <gtest/gtest.h>
 
 #include <string.h>
 #include <stdlib.h>
@@ -27,56 +23,32 @@ static constexpr struct UriEscapeData {
     { "foo%2525bar", "foo%25bar" },
 };
 
-class UriEscapeTest : public CppUnit::TestFixture {
-    CPPUNIT_TEST_SUITE(UriEscapeTest);
-    CPPUNIT_TEST(TestUriEscape);
-    CPPUNIT_TEST(TestUriUnescape);
-    CPPUNIT_TEST_SUITE_END();
-
-public:
-    void TestUriEscape() {
-        for (auto i : uri_escape_data) {
-            if (i.unescaped == nullptr)
-                continue;
-
-            char buffer[256];
-            size_t length = uri_escape(buffer, i.unescaped);
-            CPPUNIT_ASSERT_EQUAL(length, strlen(i.escaped));
-            CPPUNIT_ASSERT(memcmp(buffer, i.escaped, length) == 0);
-        }
-    }
-
-    void TestUriUnescape() {
-        for (auto i : uri_escape_data) {
-            char buffer[256];
-            strcpy(buffer, i.escaped);
-
-            auto result = uri_unescape(buffer, i.escaped);
-            if (i.unescaped == nullptr) {
-                CPPUNIT_ASSERT_EQUAL(result, (char *)nullptr);
-            } else {
-                size_t length = result - buffer;
-                CPPUNIT_ASSERT_EQUAL(length, strlen(i.unescaped));
-                CPPUNIT_ASSERT(memcmp(buffer, i.unescaped, length) == 0);
-            }
-        }
-    }
-};
-
-CPPUNIT_TEST_SUITE_REGISTRATION(UriEscapeTest);
-
-int
-main(gcc_unused int argc, gcc_unused char **argv)
+TEST(UriEscapeTest, Escape)
 {
-    CppUnit::Test *suite =
-        CppUnit::TestFactoryRegistry::getRegistry().makeTest();
+    for (auto i : uri_escape_data) {
+        if (i.unescaped == nullptr)
+            continue;
 
-    CppUnit::TextUi::TestRunner runner;
-    runner.addTest(suite);
+        char buffer[256];
+        size_t length = uri_escape(buffer, i.unescaped);
+        ASSERT_EQ(length, strlen(i.escaped));
+        ASSERT_EQ(memcmp(buffer, i.escaped, length), 0);
+    }
+}
 
-    runner.setOutputter(new CppUnit::CompilerOutputter(&runner.result(),
-                                                       std::cerr));
-    bool success = runner.run();
+TEST(UriEscapeTest, Unescape)
+{
+    for (auto i : uri_escape_data) {
+        char buffer[256];
+        strcpy(buffer, i.escaped);
 
-    return success ? EXIT_SUCCESS : EXIT_FAILURE;
+        auto result = uri_unescape(buffer, i.escaped);
+        if (i.unescaped == nullptr) {
+            ASSERT_EQ(result, (char *)nullptr);
+        } else {
+            size_t length = result - buffer;
+            ASSERT_EQ(length, strlen(i.unescaped));
+            ASSERT_EQ(memcmp(buffer, i.unescaped, length), 0);
+        }
+    }
 }

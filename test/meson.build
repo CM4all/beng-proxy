@@ -719,19 +719,12 @@ test('t_widget_http', executable('t_widget_http',
     time_dep,
   ]))
 
-test('t_uri_escape', executable('t_uri_escape',
+test('t_uri', executable('t_uri',
   't_uri_escape.cxx',
-  include_directories: inc,
-  dependencies: [
-    cppunit,
-    util_dep,
-  ]))
-
-test('t_uri_extract', executable('t_uri_extract',
   't_uri_extract.cxx',
   include_directories: inc,
   dependencies: [
-    cppunit,
+    gtest,
     util_dep,
   ]))
 

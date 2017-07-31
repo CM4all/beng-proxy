@@ -1,12 +1,8 @@
 #include "uri/uri_extract.hxx"
 #include "util/StringView.hxx"
-
 #include "util/Compiler.h"
 
-#include <cppunit/CompilerOutputter.h>
-#include <cppunit/extensions/TestFactoryRegistry.h>
-#include <cppunit/ui/text/TestRunner.h>
-#include <cppunit/extensions/HelperMacros.h>
+#include <gtest/gtest.h>
 
 #include <string.h>
 #include <stdlib.h>
@@ -30,64 +26,40 @@ static constexpr struct UriTests {
     { "bar?a=b", nullptr, "bar?a=b", "a=b" },
 };
 
-class UriExtractTest : public CppUnit::TestFixture {
-    CPPUNIT_TEST_SUITE(UriExtractTest);
-    CPPUNIT_TEST(TestUriHostAndPort);
-    CPPUNIT_TEST(TestUriPath);
-    CPPUNIT_TEST(TestUriQueryString);
-    CPPUNIT_TEST_SUITE_END();
-
-public:
-    void TestUriHostAndPort() {
-        for (auto i : uri_tests) {
-            auto result = uri_host_and_port(i.uri);
-            if (i.host_and_port == nullptr) {
-                CPPUNIT_ASSERT_EQUAL(i.host_and_port, result.data);
-                CPPUNIT_ASSERT_EQUAL(result.size, size_t(0));
-            } else {
-                CPPUNIT_ASSERT(result.data != nullptr);
-                CPPUNIT_ASSERT_EQUAL(result.size, strlen(i.host_and_port));
-                CPPUNIT_ASSERT_EQUAL(memcmp(i.host_and_port, result.data,
-                                            result.size), 0);
-            }
-        }
-    }
-
-    void TestUriPath() {
-        for (auto i : uri_tests) {
-            auto result = uri_path(i.uri);
-            if (i.path == nullptr)
-                CPPUNIT_ASSERT_EQUAL(i.path, result);
-            else
-                CPPUNIT_ASSERT(strcmp(i.path, result) == 0);
-        }
-    }
-
-    void TestUriQueryString() {
-        for (auto i : uri_tests) {
-            auto result = uri_query_string(i.uri);
-            if (i.query_string == nullptr)
-                CPPUNIT_ASSERT_EQUAL(i.query_string, result);
-            else
-                CPPUNIT_ASSERT(strcmp(i.query_string, result) == 0);
-        }
-    }
-};
-
-CPPUNIT_TEST_SUITE_REGISTRATION(UriExtractTest);
-
-int
-main(gcc_unused int argc, gcc_unused char **argv)
+TEST(UriExtractTest, HostAndPort)
 {
-    CppUnit::Test *suite =
-        CppUnit::TestFactoryRegistry::getRegistry().makeTest();
+    for (auto i : uri_tests) {
+        auto result = uri_host_and_port(i.uri);
+        if (i.host_and_port == nullptr) {
+            ASSERT_EQ(i.host_and_port, result.data);
+            ASSERT_EQ(result.size, size_t(0));
+        } else {
+            ASSERT_NE(result.data, nullptr);
+            ASSERT_EQ(result.size, strlen(i.host_and_port));
+            ASSERT_EQ(memcmp(i.host_and_port, result.data,
+                                        result.size), 0);
+        }
+    }
+}
 
-    CppUnit::TextUi::TestRunner runner;
-    runner.addTest(suite);
+TEST(UriExtractTest, Path)
+{
+    for (auto i : uri_tests) {
+        auto result = uri_path(i.uri);
+        if (i.path == nullptr)
+            ASSERT_EQ(i.path, result);
+        else
+            ASSERT_EQ(strcmp(i.path, result), 0);
+    }
+}
 
-    runner.setOutputter(new CppUnit::CompilerOutputter(&runner.result(),
-                                                       std::cerr));
-    bool success = runner.run();
-
-    return success ? EXIT_SUCCESS : EXIT_FAILURE;
+TEST(UriExtractTest, QueryString)
+{
+    for (auto i : uri_tests) {
+        auto result = uri_query_string(i.uri);
+        if (i.query_string == nullptr)
+            ASSERT_EQ(i.query_string, result);
+        else
+            ASSERT_EQ(strcmp(i.query_string, result), 0);
+    }
 }
