@@ -38,13 +38,7 @@ capabilities_post_setuid(const cap_value_t *keep_list, unsigned n)
 
     /* now drop all capabilities but the ones we want */
 
-    cap_t caps = cap_get_proc();
-    if (caps == NULL) {
-        fprintf(stderr, "cap_get_proc() failed: %s\n", strerror(errno));
-        exit(EXIT_FAILURE);
-    }
-
-    cap_clear(caps);
+    cap_t caps = cap_init();
 
     if (cap_set_flag(caps, CAP_EFFECTIVE, n, keep_list, CAP_SET) < 0) {
         fprintf(stderr, "cap_set_flag() failed: %s\n", strerror(errno));
