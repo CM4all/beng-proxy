@@ -1,4 +1,4 @@
-#include "PoolTest.hxx"
+#include "TestPool.hxx"
 #include "rubber.hxx"
 #include "sink_rubber.hxx"
 #include "pool.hxx"
@@ -14,10 +14,7 @@
 
 #include "util/Compiler.h"
 
-#include <cppunit/CompilerOutputter.h>
-#include <cppunit/extensions/TestFactoryRegistry.h>
-#include <cppunit/ui/text/TestRunner.h>
-#include <cppunit/extensions/HelperMacros.h>
+#include <gtest/gtest.h>
 
 #include <assert.h>
 #include <stdint.h>
@@ -85,189 +82,191 @@ Data::RubberError(std::exception_ptr ep)
     error = ep;
 }
 
-class SinkRubberTest : public PoolTest {
-    CPPUNIT_TEST_SUITE(SinkRubberTest);
-    CPPUNIT_TEST(TestEmpty);
-    CPPUNIT_TEST(TestString);
-    CPPUNIT_TEST(TestString2);
-    CPPUNIT_TEST(TestTooLarge1);
-    CPPUNIT_TEST(TestTooLarge2);
-    CPPUNIT_TEST(TestError);
-    CPPUNIT_TEST(TestOOM);
-    CPPUNIT_TEST(TestAbort);
-    CPPUNIT_TEST_SUITE_END();
-
-    Rubber *r;
+class ScopeRubber {
+    Rubber *const r;
 
 public:
-    virtual void setUp() {
-        PoolTest::setUp();
+    ScopeRubber()
+        :r(rubber_new(4 * 1024 * 1024)) {}
 
-        size_t total = 4 * 1024 * 1024;
-        r = rubber_new(total);
-    }
+    ScopeRubber(const ScopeRubber &) = delete;
 
-    virtual void tearDown() {
+    ~ScopeRubber() {
         rubber_free(r);
-
-        PoolTest::tearDown();
     }
 
-    void TestEmpty() {
-        Data data(r);
-
-        Istream *input = istream_null_new(GetPool());
-        sink_rubber_new(*GetPool(), *input, *r, 1024,
-                        data, data.cancel_ptr);
-
-        CPPUNIT_ASSERT_EQUAL(Data::DONE, data.result);
-        CPPUNIT_ASSERT_EQUAL(0u, data.rubber_id);
-        CPPUNIT_ASSERT_EQUAL(size_t(0), data.size);
+    operator Rubber *() {
+        return r;
     }
 
-    void TestEmpty2() {
-        Data data(r);
-
-        Istream *input = istream_byte_new(*GetPool(),
-                                          *istream_null_new(GetPool()));
-        sink_rubber_new(*GetPool(), *input, *r, 1024,
-                        data, data.cancel_ptr);
-
-        CPPUNIT_ASSERT_EQUAL(Data::NONE, data.result);
-        input->Read();
-
-        CPPUNIT_ASSERT_EQUAL(Data::DONE, data.result);
-        CPPUNIT_ASSERT_EQUAL(0u, data.rubber_id);
-        CPPUNIT_ASSERT_EQUAL(size_t(0), data.size);
-    }
-
-    void TestString() {
-        Data data(r);
-
-        Istream *input = istream_string_new(GetPool(), "foo");
-        sink_rubber_new(*GetPool(), *input, *r, 1024,
-                        data, data.cancel_ptr);
-
-        CPPUNIT_ASSERT_EQUAL(Data::NONE, data.result);
-        input->Read();
-
-        CPPUNIT_ASSERT_EQUAL(Data::DONE, data.result);
-        CPPUNIT_ASSERT(data.rubber_id > 0);
-        CPPUNIT_ASSERT_EQUAL(size_t(3), data.size);
-        CPPUNIT_ASSERT_EQUAL(size_t(32), rubber_size_of(r, data.rubber_id));
-        CPPUNIT_ASSERT_EQUAL(0, memcmp("foo",
-                                       rubber_read(r, data.rubber_id), 3));
-    }
-
-    void TestString2() {
-        Data data(r);
-
-        Istream *input = istream_four_new(GetPool(),
-                                          *istream_string_new(GetPool(),
-                                                              "foobar"));
-        sink_rubber_new(*GetPool(), *input, *r, 1024,
-                        data, data.cancel_ptr);
-
-        CPPUNIT_ASSERT_EQUAL(Data::NONE, data.result);
-
-        input->Read();
-        if (Data::NONE == data.result)
-            input->Read();
-
-        CPPUNIT_ASSERT_EQUAL(Data::DONE, data.result);
-        CPPUNIT_ASSERT(data.rubber_id > 0);
-        CPPUNIT_ASSERT_EQUAL(size_t(6), data.size);
-        CPPUNIT_ASSERT_EQUAL(size_t(32), rubber_size_of(r, data.rubber_id));
-        CPPUNIT_ASSERT_EQUAL(0, memcmp("foobar",
-                                       rubber_read(r, data.rubber_id), 6));
-    }
-
-    void TestTooLarge1() {
-        Data data(r);
-
-        Istream *input = istream_string_new(GetPool(), "foobar");
-        sink_rubber_new(*GetPool(), *input, *r, 5,
-                        data, data.cancel_ptr);
-        CPPUNIT_ASSERT_EQUAL(Data::TOO_LARGE, data.result);
-    }
-
-    void TestTooLarge2() {
-        Data data(r);
-
-        Istream *input = istream_four_new(GetPool(),
-                                          *istream_string_new(GetPool(),
-                                                             "foobar"));
-        sink_rubber_new(*GetPool(), *input, *r, 5,
-                        data, data.cancel_ptr);
-
-        CPPUNIT_ASSERT_EQUAL(Data::NONE, data.result);
-
-        input->Read();
-        if (Data::NONE == data.result)
-            input->Read();
-
-        CPPUNIT_ASSERT_EQUAL(Data::TOO_LARGE, data.result);
-    }
-
-    void TestError() {
-        Data data(r);
-
-        Istream *input = istream_fail_new(GetPool(),
-                                          std::make_exception_ptr(std::runtime_error("error")));
-        sink_rubber_new(*GetPool(), *input, *r, 1024,
-                        data, data.cancel_ptr);
-
-        CPPUNIT_ASSERT_EQUAL(Data::NONE, data.result);
-        input->Read();
-
-        CPPUNIT_ASSERT_EQUAL(Data::ERROR, data.result);
-        CPPUNIT_ASSERT(data.error != NULL);
-    }
-
-    void TestOOM() {
-        Data data(r);
-
-        Istream *input = istream_delayed_new(GetPool());
-        istream_delayed_cancellable_ptr(*input) = nullptr;
-
-        sink_rubber_new(*GetPool(), *input, *r, 8 * 1024 * 1024,
-                        data, data.cancel_ptr);
-        CPPUNIT_ASSERT_EQUAL(Data::OOM, data.result);
-    }
-
-    void TestAbort() {
-        Data data(r);
-
-        Istream *delayed = istream_delayed_new(GetPool());
-        istream_delayed_cancellable_ptr(*delayed) = nullptr;
-
-        Istream *input = istream_cat_new(*GetPool(),
-                                         istream_string_new(GetPool(), "foo"),
-                                         delayed);
-        sink_rubber_new(*GetPool(), *input, *r, 4,
-                        data, data.cancel_ptr);
-        CPPUNIT_ASSERT_EQUAL(Data::NONE, data.result);
-        input->Read();
-        CPPUNIT_ASSERT_EQUAL(Data::NONE, data.result);
-
-        data.cancel_ptr.Cancel();
+    operator Rubber &() {
+        return *r;
     }
 };
 
-CPPUNIT_TEST_SUITE_REGISTRATION(SinkRubberTest);
-
-int
-main(gcc_unused int argc, gcc_unused char **argv)
+TEST(SinkRubberTest, Empty)
 {
-    CppUnit::Test *suite =
-        CppUnit::TestFactoryRegistry::getRegistry().makeTest();
+    TestPool pool;
+    ScopeRubber r;
+    Data data(r);
 
-    CppUnit::TextUi::TestRunner runner;
-    runner.addTest(suite);
+    Istream *input = istream_null_new(pool);
+    sink_rubber_new(pool, *input, *r, 1024,
+                    data, data.cancel_ptr);
 
-    runner.setOutputter(new CppUnit::CompilerOutputter(&runner.result(),
-                                                       std::cerr));
-    bool success = runner.run();
+    ASSERT_EQ(Data::DONE, data.result);
+    ASSERT_EQ(0u, data.rubber_id);
+    ASSERT_EQ(size_t(0), data.size);
+}
 
-    return success ? EXIT_SUCCESS : EXIT_FAILURE;
+TEST(SinkRubberTest, Empty2)
+{
+    TestPool pool;
+    ScopeRubber r;
+    Data data(r);
+
+    Istream *input = istream_byte_new(pool,
+                                      *istream_null_new(pool));
+    sink_rubber_new(pool, *input, r, 1024,
+                    data, data.cancel_ptr);
+
+    ASSERT_EQ(Data::NONE, data.result);
+    input->Read();
+
+    ASSERT_EQ(Data::DONE, data.result);
+    ASSERT_EQ(0u, data.rubber_id);
+    ASSERT_EQ(size_t(0), data.size);
+}
+
+TEST(SinkRubberTest, String)
+{
+    TestPool pool;
+    ScopeRubber r;
+    Data data(r);
+
+    Istream *input = istream_string_new(pool, "foo");
+    sink_rubber_new(pool, *input, r, 1024,
+                    data, data.cancel_ptr);
+
+    ASSERT_EQ(Data::NONE, data.result);
+    input->Read();
+
+    ASSERT_EQ(Data::DONE, data.result);
+    ASSERT_GT(data.rubber_id, 0);
+    ASSERT_EQ(size_t(3), data.size);
+    ASSERT_EQ(size_t(32), rubber_size_of(r, data.rubber_id));
+    ASSERT_EQ(0, memcmp("foo",
+                                   rubber_read(r, data.rubber_id), 3));
+}
+
+TEST(SinkRubberTest, String2)
+{
+    TestPool pool;
+    ScopeRubber r;
+    Data data(r);
+
+    Istream *input = istream_four_new(pool,
+                                      *istream_string_new(pool,
+                                                          "foobar"));
+    sink_rubber_new(pool, *input, r, 1024,
+                    data, data.cancel_ptr);
+
+    ASSERT_EQ(Data::NONE, data.result);
+
+    input->Read();
+    if (Data::NONE == data.result)
+        input->Read();
+
+    ASSERT_EQ(Data::DONE, data.result);
+    ASSERT_GT(data.rubber_id, 0);
+    ASSERT_EQ(size_t(6), data.size);
+    ASSERT_EQ(size_t(32), rubber_size_of(r, data.rubber_id));
+    ASSERT_EQ(0, memcmp("foobar",
+                                   rubber_read(r, data.rubber_id), 6));
+}
+
+TEST(SinkRubberTest, TooLarge1)
+{
+    TestPool pool;
+    ScopeRubber r;
+    Data data(r);
+
+    Istream *input = istream_string_new(pool, "foobar");
+    sink_rubber_new(pool, *input, r, 5,
+                    data, data.cancel_ptr);
+    ASSERT_EQ(Data::TOO_LARGE, data.result);
+}
+
+TEST(SinkRubberTest, TooLarge2)
+{
+    TestPool pool;
+    ScopeRubber r;
+    Data data(r);
+
+    Istream *input = istream_four_new(pool,
+                                      *istream_string_new(pool,
+                                                          "foobar"));
+    sink_rubber_new(pool, *input, r, 5,
+                    data, data.cancel_ptr);
+
+    ASSERT_EQ(Data::NONE, data.result);
+
+    input->Read();
+    if (Data::NONE == data.result)
+        input->Read();
+
+    ASSERT_EQ(Data::TOO_LARGE, data.result);
+}
+
+TEST(SinkRubberTest, Error)
+{
+    TestPool pool;
+    ScopeRubber r;
+    Data data(r);
+
+    Istream *input = istream_fail_new(pool,
+                                      std::make_exception_ptr(std::runtime_error("error")));
+    sink_rubber_new(pool, *input, r, 1024,
+                    data, data.cancel_ptr);
+
+    ASSERT_EQ(Data::NONE, data.result);
+    input->Read();
+
+    ASSERT_EQ(Data::ERROR, data.result);
+    ASSERT_NE(data.error, nullptr);
+}
+
+TEST(SinkRubberTest, OOM)
+{
+    TestPool pool;
+    ScopeRubber r;
+    Data data(r);
+
+    Istream *input = istream_delayed_new(pool);
+    istream_delayed_cancellable_ptr(*input) = nullptr;
+
+    sink_rubber_new(pool, *input, r, 8 * 1024 * 1024,
+                    data, data.cancel_ptr);
+    ASSERT_EQ(Data::OOM, data.result);
+}
+
+TEST(SinkRubberTest, Abort)
+{
+    TestPool pool;
+    ScopeRubber r;
+    Data data(r);
+
+    Istream *delayed = istream_delayed_new(pool);
+    istream_delayed_cancellable_ptr(*delayed) = nullptr;
+
+    Istream *input = istream_cat_new(pool,
+                                     istream_string_new(pool, "foo"),
+                                     delayed);
+    sink_rubber_new(pool, *input, r, 4,
+                    data, data.cancel_ptr);
+    ASSERT_EQ(Data::NONE, data.result);
+    input->Read();
+    ASSERT_EQ(Data::NONE, data.result);
+
+    data.cancel_ptr.Cancel();
 }

@@ -626,7 +626,7 @@ test('t_sink_rubber', executable('t_sink_rubber',
   '../src/sink_rubber.cxx',
   include_directories: inc,
   dependencies: [
-    cppunit,
+    gtest,
     libhttp,
     declare_dependency(link_with: istream),
   ]))
