@@ -50,6 +50,8 @@ BpInstance::~BpInstance()
 
     delete (CachedResourceLoader *)cached_resource_loader;
     delete (DirectResourceLoader *)direct_resource_loader;
+
+    FreeStocksAndCaches();
 }
 
 void
