@@ -617,7 +617,7 @@ test('t_rubber', executable('t_rubber',
   't_rubber.cxx',
   include_directories: inc,
   dependencies: [
-    cppunit,
+    gtest,
     memory_dep,
   ]))
 
