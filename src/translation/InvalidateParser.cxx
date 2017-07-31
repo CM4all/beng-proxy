@@ -5,9 +5,10 @@
 #include "InvalidateParser.hxx"
 #include "Request.hxx"
 #include "util/ByteOrder.hxx"
+#include "util/RuntimeError.hxx"
 #include "pool.hxx"
 
-static bool
+static void
 apply_translation_packet(TranslateRequest &request,
                          enum TranslationCommand command,
                          const char *payload, size_t payload_length)
@@ -53,10 +54,8 @@ apply_translation_packet(TranslateRequest &request,
 
     default:
         /* unsupported */
-        return false;
+        throw FormatRuntimeError("Unsupported packet: %u", unsigned(command));
     }
-
-    return true;
 }
 
 unsigned
@@ -71,12 +70,12 @@ decode_translation_packets(struct pool &pool, TranslateRequest &request,
 
     if (length % 4 != 0)
         /* must be padded */
-        return 0;
+        throw std::runtime_error("Not padded");
 
     while (length > 0) {
         const auto *header = (const TranslationHeader *)data;
         if (length < sizeof(*header))
-            return 0;
+            throw std::runtime_error("Partial header");
 
         size_t payload_length = FromBE16(header->length);
         const auto command =
@@ -86,21 +85,21 @@ decode_translation_packets(struct pool &pool, TranslateRequest &request,
         length -= sizeof(*header);
 
         if (length < payload_length)
-            return 0;
+            throw std::runtime_error("Truncated payload");
 
         char *payload = payload_length > 0
             ? p_strndup(&pool, (const char *)data, payload_length)
             : NULL;
         if (command == TranslationCommand::SITE)
             *site_r = payload;
-        else if (apply_translation_packet(request, command, payload,
-                                          payload_length)) {
+        else {
+            apply_translation_packet(request, command, payload,
+                                     payload_length);
             if (num_cmds >= max_cmds)
-                return 0;
+                throw std::runtime_error("Too many commands");
 
             cmds[num_cmds++] = command;
-        } else
-            return 0;
+        }
 
         payload_length = ((payload_length + 3) | 3) - 3; /* apply padding */
 

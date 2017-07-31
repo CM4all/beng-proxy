@@ -12,6 +12,9 @@
 struct pool;
 struct TranslateRequest;
 
+/**
+ * Throws on error.
+ */
 unsigned
 decode_translation_packets(struct pool &pool, TranslateRequest &request,
                            TranslationCommand *cmds, unsigned max_cmds,

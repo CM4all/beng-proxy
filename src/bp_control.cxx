@@ -45,11 +45,15 @@ control_tcache_invalidate(BpInstance *instance,
 
     const char *site;
     TranslationCommand cmds[32];
-    unsigned num_cmds =
-        decode_translation_packets(*tpool, request, cmds, ARRAY_SIZE(cmds),
-                                   payload, payload_length, &site);
-    if (num_cmds == 0 && site == NULL) {
-        daemon_log(2, "malformed TCACHE_INVALIDATE control packet\n");
+    unsigned num_cmds;
+
+    try {
+        num_cmds = decode_translation_packets(*tpool, request,
+                                              cmds, ARRAY_SIZE(cmds),
+                                              payload, payload_length, &site);
+    } catch (...) {
+        daemon_log(2, "malformed TCACHE_INVALIDATE control packet: %s\n",
+                   GetFullMessage(std::current_exception()).c_str());
         return;
     }
 
