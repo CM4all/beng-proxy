@@ -587,17 +587,10 @@ test('t_cookie_server', executable('t_cookie_server',
 
 test('t_shm', executable('t_shm',
   't_shm.cxx',
-  include_directories: inc,
-  dependencies: [
-    gtest,
-    threads,
-    declare_dependency(link_with: shm),
-  ]))
-
-test('t_dpool', executable('t_dpool',
   't_dpool.cxx',
   include_directories: inc,
   dependencies: [
+    gtest,
     threads,
     declare_dependency(link_with: shm),
   ]))
