@@ -37,6 +37,9 @@ CalculateKeyIteratorBufferSize(StringView host, StringView listener_tag)
  * A helper class which generates key permutations for lookup.
  */
 class LbTranslationCacheKeyIterator {
+    static constexpr unsigned HOST = 0x1;
+    static constexpr unsigned LISTENER_TAG = 0x2;
+
     const StringView host, listener_tag;
 
     std::unique_ptr<char[]> buffer;
@@ -69,17 +72,16 @@ public:
      * Generates a key for storing into the cache.
      */
     const char *FullKey() const {
-        /* 3 is the last index, with both bits set */
-        return MakeKey(3);
+        return MakeKey(HOST|LISTENER_TAG);
     }
 
 private:
     static constexpr bool HasHost(unsigned i) {
-        return i & 0x1;
+        return i & HOST;
     }
 
     static constexpr bool HasListenerTag(unsigned i) {
-        return i & 0x2;
+        return i & LISTENER_TAG;
     }
 
     bool IsInactive(int i) const {
