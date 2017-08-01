@@ -88,7 +88,7 @@ private:
     void EventCallback(unsigned events);
 
     /* virtual methods from LoggerDomainFactory */
-    std::string MakeLoggerDomain() const noexcept {
+    std::string MakeLoggerDomain() const noexcept override {
         return GetStockName();
     }
 
