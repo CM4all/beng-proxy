@@ -11,6 +11,7 @@
 #include "util/ConstBuffer.hxx"
 #include "util/CharUtil.hxx"
 #include "util/ByteOrder.hxx"
+#include "util/StringView.hxx"
 
 #include <assert.h>
 #include <stdint.h>
@@ -33,25 +34,18 @@ fcgi_serialize_length(GrowingBuffer &gb, size_t length)
 }
 
 static size_t
-fcgi_serialize_pair(GrowingBuffer &gb, const char *name,
-                    const char *value)
+fcgi_serialize_pair(GrowingBuffer &gb, StringView name,
+                    StringView value)
 {
-    size_t size, name_length, value_length;
+    assert(!name.IsNull());
 
-    assert(name != nullptr);
+    size_t size = fcgi_serialize_length(gb, name.size) +
+        fcgi_serialize_length(gb, value.size);
 
-    if (value == nullptr)
-        value = "";
+    gb.Write(name.data, name.size);
+    gb.Write(value.data, value.size);
 
-    name_length = strlen(name);
-    value_length = strlen(value);
-    size = fcgi_serialize_length(gb, name_length) +
-        fcgi_serialize_length(gb, value_length);
-
-    gb.Write(name, name_length);
-    gb.Write(value, value_length);
-
-    return size + name_length + value_length;
+    return size + name.size + value.size;
 }
 
 static size_t
