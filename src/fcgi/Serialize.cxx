@@ -39,8 +39,8 @@ fcgi_serialize_pair(GrowingBuffer &gb, StringView name,
 {
     assert(!name.IsNull());
 
-    size_t size = fcgi_serialize_length(gb, name.size) +
-        fcgi_serialize_length(gb, value.size);
+    size_t size = fcgi_serialize_length(gb, name.size);
+    size += fcgi_serialize_length(gb, value.size);
 
     gb.Write(name.data, name.size);
     gb.Write(value.data, value.size);
