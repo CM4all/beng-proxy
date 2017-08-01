@@ -29,7 +29,7 @@ struct Balancer;
 struct TcpBalancer;
 struct LbConfig;
 struct LbCertDatabaseConfig;
-struct LbControl;
+class LbControl;
 class LbListener;
 class CertCache;
 

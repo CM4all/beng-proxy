@@ -11,7 +11,7 @@
 struct LbGoto;
 struct LbLuaHandlerConfig;
 struct HttpServerRequest;
-struct HttpResponseHandler;
+class HttpResponseHandler;
 class LuaInitHook;
 
 class LbLuaHandler final {
