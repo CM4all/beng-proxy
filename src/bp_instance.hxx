@@ -39,7 +39,7 @@ class ControlServer;
 struct LocalControl;
 class SpawnServerClient;
 class TranslateStock;
-struct LhttpStock;
+class LhttpStock;
 struct FcgiStock;
 struct NfsStock;
 struct NfsCache;

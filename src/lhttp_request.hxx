@@ -12,7 +12,7 @@
 struct pool;
 class EventLoop;
 class Istream;
-struct LhttpStock;
+class LhttpStock;
 struct LhttpAddress;
 class HttpResponseHandler;
 class CancellablePointer;

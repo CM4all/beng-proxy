@@ -12,7 +12,7 @@
 #include "util/Compiler.h"
 
 struct pool;
-struct LhttpStock;
+class LhttpStock;
 struct StockItem;
 struct LhttpAddress;
 class SocketDescriptor;
