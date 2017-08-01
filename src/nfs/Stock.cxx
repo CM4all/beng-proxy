@@ -41,7 +41,7 @@ struct NfsStockRequest final
     void Cancel() override;
 };
 
-struct NfsStockConnection
+struct NfsStockConnection final
     : NfsClientHandler,
       boost::intrusive::set_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
 
@@ -86,7 +86,7 @@ struct NfsStockConnection
     };
 };
 
-struct NfsStock {
+struct NfsStock final {
     EventLoop &event_loop;
     struct pool &pool;
 
