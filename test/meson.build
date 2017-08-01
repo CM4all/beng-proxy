@@ -740,6 +740,7 @@ test('t_processor', executable('t_processor',
   't_processor.cxx',
   include_directories: inc,
   dependencies: [
+    gtest,
     threads,
     libhttp,
     processor_dep,

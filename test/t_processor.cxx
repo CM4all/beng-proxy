@@ -14,6 +14,8 @@
 #include "util/Cancellable.hxx"
 #include "util/PrintException.hxx"
 
+#include <gtest/gtest.h>
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -94,19 +96,15 @@ public:
  *
  */
 
-static void
-test_proxy_abort()
+TEST(Processor, Abort)
 {
     PInstance instance;
-
-    bool success;
 
     auto *pool = pool_new_libc(instance.root_pool, "test");
 
     struct parsed_uri parsed_uri;
     const char *uri = "/beng.html";
-    success = parsed_uri.Parse(uri);
-    assert(success);
+    ASSERT_TRUE(parsed_uri.Parse(uri));
 
     Widget widget(*pool, &root_widget_class);
 
@@ -137,11 +135,4 @@ test_proxy_abort()
     cancel_ptr.Cancel();
 
     pool_commit();
-}
-
-int main(int argc, char **argv) {
-    (void)argc;
-    (void)argv;
-
-    test_proxy_abort();
 }
