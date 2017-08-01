@@ -18,7 +18,7 @@ FillIssuerCommonName(Pg::Connection &c)
                                              "SELECT id::int8, certificate_der FROM server_certificate "
                                              "WHERE NOT deleted AND issuer_common_name IS NULL"));
     for (unsigned row = 0, n_rows = result.GetRowCount(); row < n_rows; ++row) {
-        const int64_t id = FromBE64(*(const int64_t *)result.GetValue(row, 0));
+        const int64_t id = FromBE64(*(const int64_t *)(const void *)result.GetValue(row, 0));
 
         UniqueX509 cert;
         try {
