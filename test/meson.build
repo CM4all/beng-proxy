@@ -423,6 +423,7 @@ test('t_expansible_buffer', executable('t_expansible_buffer',
   't_expansible_buffer.cxx',
   include_directories: inc,
   dependencies: [
+    gtest,
     putil_dep,
   ]))
 
