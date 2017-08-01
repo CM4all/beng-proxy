@@ -18,6 +18,26 @@
 #include <string.h>
 #include <stdarg.h>
 
+FcgiRecordSerializer::FcgiRecordSerializer(GrowingBuffer &_buffer,
+                                           uint8_t type,
+                                           uint16_t request_id_be) noexcept
+    :buffer(_buffer),
+     header((struct fcgi_record_header *)buffer.Write(sizeof(*header)))
+{
+    header->version = FCGI_VERSION_1;
+    header->type = type;
+    header->request_id = request_id_be;
+    header->padding_length = 0;
+    header->reserved = 0;
+}
+
+void
+FcgiRecordSerializer::Commit(size_t content_length) noexcept
+{
+    assert(content_length < (1 << 16));
+    header->content_length = ToBE16(content_length);
+}
+
 static size_t
 fcgi_serialize_length(GrowingBuffer &gb, size_t length)
 {
@@ -79,13 +99,7 @@ fcgi_serialize_params(GrowingBuffer &gb, uint16_t request_id, ...)
 {
     size_t content_length = 0;
 
-    struct fcgi_record_header *header = (struct fcgi_record_header *)
-        gb.Write(sizeof(*header));
-    header->version = FCGI_VERSION_1;
-    header->type = FCGI_PARAMS;
-    header->request_id = request_id;
-    header->padding_length = 0;
-    header->reserved = 0;
+    FcgiRecordSerializer s(gb, FCGI_PARAMS, request_id);
 
     va_list ap;
     va_start(ap, request_id);
@@ -98,7 +112,7 @@ fcgi_serialize_params(GrowingBuffer &gb, uint16_t request_id, ...)
 
     va_end(ap);
 
-    header->content_length = ToBE16(content_length);
+    s.Commit(content_length);
 }
 
 void
@@ -107,32 +121,20 @@ fcgi_serialize_vparams(GrowingBuffer &gb, uint16_t request_id,
 {
     assert(!params.IsEmpty());
 
-    struct fcgi_record_header *header = (struct fcgi_record_header *)
-        gb.Write(sizeof(*header));
-    header->version = FCGI_VERSION_1;
-    header->type = FCGI_PARAMS;
-    header->request_id = request_id;
-    header->padding_length = 0;
-    header->reserved = 0;
+    FcgiRecordSerializer s(gb, FCGI_PARAMS, request_id);
 
     size_t content_length = 0;
     for (auto i : params)
         content_length += fcgi_serialize_pair1(gb, i);
 
-    header->content_length = ToBE16(content_length);
+    s.Commit(content_length);
 }
 
 void
 fcgi_serialize_headers(GrowingBuffer &gb, uint16_t request_id,
                        const StringMap &headers)
 {
-    struct fcgi_record_header *header = (struct fcgi_record_header *)
-        gb.Write(sizeof(*header));
-    header->version = FCGI_VERSION_1;
-    header->type = FCGI_PARAMS;
-    header->request_id = request_id;
-    header->padding_length = 0;
-    header->reserved = 0;
+    FcgiRecordSerializer s(gb, FCGI_PARAMS, request_id);
 
     size_t content_length = 0;
     char buffer[512] = "HTTP_";
@@ -159,5 +161,5 @@ fcgi_serialize_headers(GrowingBuffer &gb, uint16_t request_id,
         content_length += fcgi_serialize_pair(gb, buffer, pair.value);
     }
 
-    header->content_length = ToBE16(content_length);
+    s.Commit(content_length);
 }
