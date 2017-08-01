@@ -9,7 +9,7 @@
 #include "strmap.hxx"
 
 static constexpr std::chrono::hours HOUR(1);
-static constexpr std::chrono::hours DAY(24);
+static constexpr std::chrono::hours DAY = 24 * HOUR;
 static constexpr auto WEEK = 7 * DAY;
 
 /**
