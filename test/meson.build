@@ -587,6 +587,7 @@ test('t_session', executable('t_session',
   '../src/random.cxx',
   include_directories: inc,
   dependencies: [
+    gtest,
     threads,
     session_dep,
   ]))
