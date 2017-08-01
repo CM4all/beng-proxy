@@ -179,7 +179,7 @@ http_cache_choice_buffer_done(void *data0, size_t length, void *ctx)
     uint32_t magic;
     const char *uri = nullptr;
     bool unclean = false;
-    struct uset uset;
+    class uset uset;
     unsigned hash;
 
     ConstBuffer<void> data(data0, length);
@@ -584,7 +584,7 @@ struct HttpCacheChoiceCleanup {
     const std::chrono::system_clock::time_point now =
         std::chrono::system_clock::now();
 
-    struct uset uset;
+    class uset uset;
 
     const http_cache_choice_cleanup_t callback;
     void *const callback_ctx;
