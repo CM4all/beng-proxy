@@ -419,13 +419,6 @@ test('t_resource_address', executable('t_resource_address',
     declare_dependency(link_with: raddress),
   ]))
 
-test('t_uri_relative', executable('t_uri_relative',
-  't_uri_relative.cxx',
-  include_directories: inc,
-  dependencies: [
-    putil_dep,
-  ]))
-
 test('t_expansible_buffer', executable('t_expansible_buffer',
   't_expansible_buffer.cxx',
   include_directories: inc,
@@ -714,11 +707,13 @@ test('t_widget_http', executable('t_widget_http',
 test('t_uri', executable('t_uri',
   't_uri_escape.cxx',
   't_uri_extract.cxx',
+  't_uri_relative.cxx',
   't_uri_verify.cxx',
   include_directories: inc,
   dependencies: [
     gtest,
     util_dep,
+    putil_dep,
   ]))
 
 test('t_escape', executable('t_escape',
