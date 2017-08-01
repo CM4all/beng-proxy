@@ -640,7 +640,7 @@ AjpClient::OnData(const void *data, size_t length)
     if (likely(nbytes == WRITE_BLOCKING || nbytes == WRITE_DESTROYED))
         return 0;
 
-    AbortResponse(std::make_exception_ptr(FormatErrno("write error on AJP client connection")));
+    AbortResponse(std::make_exception_ptr(MakeErrno("write error on AJP client connection")));
     return 0;
 }
 
