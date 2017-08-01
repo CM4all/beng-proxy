@@ -93,17 +93,24 @@ if compiler.has_header('valgrind/memcheck.h')
   add_global_arguments('-DHAVE_VALGRIND_MEMCHECK_H', language: 'c')
 endif
 
-gtest = declare_dependency(
-  dependencies: [dependency('gtest', main: true)],
-  compile_args: [
-    '-Wno-undef',
+gtest_compile_args = [
+  '-Wno-undef',
+]
+
+if compiler.get_id() == 'gcc'
+  gtest_compile_args += [
     '-Wno-suggest-attribute=format',
     '-Wno-suggest-attribute=noreturn',
     '-Wno-missing-declarations',
 
     # needed on Jessie for gtest's IsNullLiteralHelper
     '-Wno-conversion-null',
-  ],
+  ]
+endif
+
+gtest = declare_dependency(
+  dependencies: [dependency('gtest', main: true)],
+  compile_args: gtest_compile_args,
 )
 
 libdaemon = dependency('libcm4all-daemon', version: '>= 0.4.1')
