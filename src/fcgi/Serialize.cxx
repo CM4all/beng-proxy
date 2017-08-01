@@ -68,12 +68,12 @@ fcgi_serialize_pair(GrowingBuffer &gb, StringView name,
     return size + name.size + value.size;
 }
 
-static size_t
-fcgi_serialize_pair1(GrowingBuffer &gb, const char *name_and_value)
+static void
+fcgi_serialize_pair1(FcgiParamsSerializer &s, const char *name_and_value)
 {
     assert(name_and_value != nullptr);
 
-    size_t size, name_length, value_length;
+    size_t name_length, value_length;
     const char *value = strchr(name_and_value, '=');
     if (value != nullptr) {
         name_length = value - name_and_value;
@@ -85,21 +85,25 @@ fcgi_serialize_pair1(GrowingBuffer &gb, const char *name_and_value)
         value_length = 0;
     }
 
-    size = fcgi_serialize_length(gb, name_length) +
-        fcgi_serialize_length(gb, value_length);
+    s({name_and_value, name_length}, {value, value_length});
+}
 
-    gb.Write(name_and_value, name_length);
-    gb.Write(value, value_length);
+FcgiParamsSerializer::FcgiParamsSerializer(GrowingBuffer &_buffer,
+                                           uint16_t request_id_be) noexcept
+    :record(_buffer, FCGI_PARAMS, request_id_be) {}
 
-    return size + name_length + value_length;
+FcgiParamsSerializer &
+FcgiParamsSerializer::operator()(StringView name,
+                                 StringView value) noexcept
+{
+    content_length += fcgi_serialize_pair(record.GetBuffer(), name, value);
+    return *this;
 }
 
 void
 fcgi_serialize_params(GrowingBuffer &gb, uint16_t request_id, ...)
 {
-    size_t content_length = 0;
-
-    FcgiRecordSerializer s(gb, FCGI_PARAMS, request_id);
+    FcgiParamsSerializer s(gb, request_id);
 
     va_list ap;
     va_start(ap, request_id);
@@ -107,12 +111,12 @@ fcgi_serialize_params(GrowingBuffer &gb, uint16_t request_id, ...)
     const char *name, *value;
     while ((name = va_arg(ap, const char *)) != nullptr) {
         value = va_arg(ap, const char *);
-        content_length += fcgi_serialize_pair(gb, name, value);
+        s(name, value);
     }
 
     va_end(ap);
 
-    s.Commit(content_length);
+    s.Commit();
 }
 
 void
@@ -121,22 +125,20 @@ fcgi_serialize_vparams(GrowingBuffer &gb, uint16_t request_id,
 {
     assert(!params.IsEmpty());
 
-    FcgiRecordSerializer s(gb, FCGI_PARAMS, request_id);
+    FcgiParamsSerializer s(gb, request_id);
 
-    size_t content_length = 0;
     for (auto i : params)
-        content_length += fcgi_serialize_pair1(gb, i);
+        fcgi_serialize_pair1(s, i);
 
-    s.Commit(content_length);
+    s.Commit();
 }
 
 void
 fcgi_serialize_headers(GrowingBuffer &gb, uint16_t request_id,
                        const StringMap &headers)
 {
-    FcgiRecordSerializer s(gb, FCGI_PARAMS, request_id);
+    FcgiParamsSerializer s(gb, request_id);
 
-    size_t content_length = 0;
     char buffer[512] = "HTTP_";
 
     for (const auto &pair : headers) {
@@ -156,10 +158,8 @@ fcgi_serialize_headers(GrowingBuffer &gb, uint16_t request_id,
                 buffer[5 + i] = '_';
         }
 
-        buffer[5 + i] = 0;
-
-        content_length += fcgi_serialize_pair(gb, buffer, pair.value);
+        s({buffer, 5 + i}, pair.value);
     }
 
-    s.Commit(content_length);
+    s.Commit();
 }

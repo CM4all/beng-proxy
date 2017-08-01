@@ -12,6 +12,7 @@
 
 class GrowingBuffer;
 class StringMap;
+struct StringView;
 template<typename T> struct ConstBuffer;
 
 class FcgiRecordSerializer {
@@ -27,6 +28,23 @@ public:
     }
 
     void Commit(size_t content_length) noexcept;
+};
+
+class FcgiParamsSerializer {
+    FcgiRecordSerializer record;
+
+    size_t content_length = 0;
+
+public:
+    FcgiParamsSerializer(GrowingBuffer &_buffer,
+                         uint16_t request_id_be) noexcept;
+
+    FcgiParamsSerializer &operator()(StringView name,
+                                     StringView value) noexcept;
+
+    void Commit() noexcept {
+        record.Commit(content_length);
+    }
 };
 
 /**
