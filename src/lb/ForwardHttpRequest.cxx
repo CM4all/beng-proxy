@@ -36,7 +36,7 @@
 #include "istream/UnusedHoldPtr.hxx"
 #include "util/Cancellable.hxx"
 #include "util/LeakDetector.hxx"
-#include "util/djbhash.h"
+#include "util/FNVHash.hxx"
 
 class LbRequest final
     : LeakDetector, Cancellable, StockGetHandler, Lease, HttpResponseHandler {
@@ -191,7 +191,7 @@ LbRequest::GetHostHash() const
     if (host == nullptr)
         return 0;
 
-    return djb_hash_string(host);
+    return FNV1aHash32(host);
 }
 
 inline sticky_hash_t
@@ -201,7 +201,7 @@ LbRequest::GetXHostHash() const
     if (host == nullptr)
         return 0;
 
-    return djb_hash_string(host);
+    return FNV1aHash32(host);
 }
 
 /**

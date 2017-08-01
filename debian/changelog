@@ -6,6 +6,7 @@ cm4all-beng-proxy (12.0.39) unstable; urgency=low
   * spawn: forbid fanotify_*, nfsservctl, syslog
   * lb/translation: fix false cache misses
   * lb/control: TCACHE_INVALIDATE flushes all translation caches
+  * lb/cluster: improve consistent hashing distribution
   * control: support more commands in TCACHE_INVALIDATE payload
   * translation: fix the FORBID_MULTICAST setting
   * translation: add packet FORBID_BIND
