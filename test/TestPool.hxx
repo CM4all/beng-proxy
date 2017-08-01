@@ -3,6 +3,8 @@
 
 #include "pool.hxx"
 
+#include <assert.h>
+
 class TestPool {
     struct pool *const root_pool, *the_pool;
 
