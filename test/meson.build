@@ -419,13 +419,6 @@ test('t_resource_address', executable('t_resource_address',
     declare_dependency(link_with: raddress),
   ]))
 
-test('t_uri_verify', executable('t_uri_verify',
-  't_uri_verify.cxx',
-  include_directories: inc,
-  dependencies: [
-    util_dep,
-  ]))
-
 test('t_uri_relative', executable('t_uri_relative',
   't_uri_relative.cxx',
   include_directories: inc,
@@ -721,6 +714,7 @@ test('t_widget_http', executable('t_widget_http',
 test('t_uri', executable('t_uri',
   't_uri_escape.cxx',
   't_uri_extract.cxx',
+  't_uri_verify.cxx',
   include_directories: inc,
   dependencies: [
     gtest,

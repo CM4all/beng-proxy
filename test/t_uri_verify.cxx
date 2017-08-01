@@ -1,39 +1,31 @@
 #include "uri/uri_verify.hxx"
-
 #include "util/Compiler.h"
 
-#include <assert.h>
+#include <gtest/gtest.h>
 
-static void
-test_uri_path_verify_paranoid(void)
+TEST(UriVerifyTest, Paranoid)
 {
-    assert(uri_path_verify_paranoid(""));
-    assert(uri_path_verify_paranoid("/"));
-    assert(uri_path_verify_paranoid(" "));
-    assert(!uri_path_verify_paranoid("."));
-    assert(!uri_path_verify_paranoid("./"));
-    assert(!uri_path_verify_paranoid("./foo"));
-    assert(!uri_path_verify_paranoid(".."));
-    assert(!uri_path_verify_paranoid("../"));
-    assert(!uri_path_verify_paranoid("../foo"));
-    assert(!uri_path_verify_paranoid(".%2e/foo"));
-    assert(uri_path_verify_paranoid("foo/bar"));
-    assert(!uri_path_verify_paranoid("foo%2fbar"));
-    assert(uri_path_verify_paranoid("/foo/bar?A%2fB%00C%"));
-    assert(!uri_path_verify_paranoid("foo/./bar"));
-    assert(uri_path_verify_paranoid("foo//bar"));
-    assert(!uri_path_verify_paranoid("foo/%2ebar"));
-    assert(!uri_path_verify_paranoid("foo/.%2e/bar"));
-    assert(!uri_path_verify_paranoid("foo/.%2e"));
-    assert(!uri_path_verify_paranoid("foo/bar/.."));
-    assert(!uri_path_verify_paranoid("foo/bar/../bar"));
-    assert(!uri_path_verify_paranoid("f%00"));
-    assert(uri_path_verify_paranoid("f%20"));
-    assert(uri_path_verify_paranoid("index%2ehtml"));
-}
-
-int
-main(gcc_unused int argc, gcc_unused char **argv)
-{
-    test_uri_path_verify_paranoid();
+    ASSERT_TRUE(uri_path_verify_paranoid(""));
+    ASSERT_TRUE(uri_path_verify_paranoid("/"));
+    ASSERT_TRUE(uri_path_verify_paranoid(" "));
+    ASSERT_FALSE(uri_path_verify_paranoid("."));
+    ASSERT_FALSE(uri_path_verify_paranoid("./"));
+    ASSERT_FALSE(uri_path_verify_paranoid("./foo"));
+    ASSERT_FALSE(uri_path_verify_paranoid(".."));
+    ASSERT_FALSE(uri_path_verify_paranoid("../"));
+    ASSERT_FALSE(uri_path_verify_paranoid("../foo"));
+    ASSERT_FALSE(uri_path_verify_paranoid(".%2e/foo"));
+    ASSERT_TRUE(uri_path_verify_paranoid("foo/bar"));
+    ASSERT_FALSE(uri_path_verify_paranoid("foo%2fbar"));
+    ASSERT_TRUE(uri_path_verify_paranoid("/foo/bar?A%2fB%00C%"));
+    ASSERT_FALSE(uri_path_verify_paranoid("foo/./bar"));
+    ASSERT_TRUE(uri_path_verify_paranoid("foo//bar"));
+    ASSERT_FALSE(uri_path_verify_paranoid("foo/%2ebar"));
+    ASSERT_FALSE(uri_path_verify_paranoid("foo/.%2e/bar"));
+    ASSERT_FALSE(uri_path_verify_paranoid("foo/.%2e"));
+    ASSERT_FALSE(uri_path_verify_paranoid("foo/bar/.."));
+    ASSERT_FALSE(uri_path_verify_paranoid("foo/bar/../bar"));
+    ASSERT_FALSE(uri_path_verify_paranoid("f%00"));
+    ASSERT_TRUE(uri_path_verify_paranoid("f%20"));
+    ASSERT_TRUE(uri_path_verify_paranoid("index%2ehtml"));
 }
