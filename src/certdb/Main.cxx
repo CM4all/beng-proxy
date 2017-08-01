@@ -817,6 +817,7 @@ HandleDumpKey(ConstBuffer<const char *> args)
     DumpKey(args[0]);
 }
 
+gcc_noreturn
 static void
 HandleMonitor(ConstBuffer<const char *> args)
 {
