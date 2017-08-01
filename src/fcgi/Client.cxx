@@ -1089,21 +1089,19 @@ fcgi_client_request(struct pool *pool, EventLoop &event_loop,
     buffer.Write(&header, sizeof(header));
     buffer.Write(&begin_request, sizeof(begin_request));
 
-    fcgi_serialize_params(buffer, header.request_id,
-                          "REQUEST_METHOD", http_method_to_string(method),
-                          "REQUEST_URI", uri,
-                          "SCRIPT_FILENAME", script_filename,
-                          "SCRIPT_NAME", script_name,
-                          "PATH_INFO", path_info,
-                          "QUERY_STRING", query_string,
-                          "DOCUMENT_ROOT", document_root,
-                          "SERVER_SOFTWARE", PRODUCT_TOKEN,
-                          nullptr);
+    FcgiParamsSerializer ps(buffer, header.request_id);
+
+    ps("REQUEST_METHOD", http_method_to_string(method))
+        ("REQUEST_URI", uri)
+        ("SCRIPT_FILENAME", script_filename)
+        ("SCRIPT_NAME", script_name)
+        ("PATH_INFO", path_info)
+        ("QUERY_STRING", query_string)
+        ("DOCUMENT_ROOT", document_root)
+        ("SERVER_SOFTWARE", PRODUCT_TOKEN);
 
     if (remote_addr != nullptr)
-        fcgi_serialize_params(buffer, header.request_id,
-                              "REMOTE_ADDR", remote_addr,
-                              nullptr);
+        ps("REMOTE_ADDR", remote_addr);
 
     off_t available = body != nullptr
         ? body->GetAvailable(false)
@@ -1115,30 +1113,36 @@ fcgi_client_request(struct pool *pool, EventLoop &event_loop,
 
         const char *content_type = headers.Get("content-type");
 
-        fcgi_serialize_params(buffer, header.request_id,
-                              "HTTP_CONTENT_LENGTH", value,
-                              /* PHP wants the parameter without
-                                 "HTTP_" */
-                              "CONTENT_LENGTH", value,
-                              /* same for the "Content-Type" request
-                                 header */
-                              content_type != nullptr ? "CONTENT_TYPE" : nullptr,
-                              content_type,
-                              nullptr);
+        ps("HTTP_CONTENT_LENGTH", value)
+            /* PHP wants the parameter without
+               "HTTP_" */
+            ("CONTENT_LENGTH", value);
+
+        /* same for the "Content-Type" request
+           header */
+        if (content_type != nullptr)
+            ps("CONTENT_TYPE", content_type);
     }
 
     if (!headers.IsEmpty()) {
-        fcgi_serialize_headers(buffer, header.request_id, headers);
+        ps.Headers(headers);
 
         const char *https = headers.Get("x-cm4all-https");
         if (https != nullptr && strcmp(https, "on") == 0)
-            fcgi_serialize_params(buffer, header.request_id,
-                                  "HTTPS", "on",
-                                  nullptr);
+            ps("HTTPS", "on");
     }
 
-    if (!params.IsEmpty())
-        fcgi_serialize_vparams(buffer, header.request_id, params);
+    for (const StringView param : params) {
+        const char *separator = param.Find('=');
+        if (separator == nullptr)
+            continue;
+
+        StringView name(param.data, separator);
+        StringView value(separator + 1, param.end());
+        ps(name, value);
+    }
+
+    ps.Commit();
 
     header.type = FCGI_PARAMS;
     header.content_length = ToBE16(0);
