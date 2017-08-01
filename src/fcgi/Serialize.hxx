@@ -42,6 +42,8 @@ public:
     FcgiParamsSerializer &operator()(StringView name,
                                      StringView value) noexcept;
 
+    void Headers(const StringMap &headers) noexcept;
+
     void Commit() noexcept {
         record.Commit(content_length);
     }
