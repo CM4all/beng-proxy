@@ -16,7 +16,6 @@
 #include <assert.h>
 #include <stdint.h>
 #include <string.h>
-#include <stdarg.h>
 
 FcgiRecordSerializer::FcgiRecordSerializer(GrowingBuffer &_buffer,
                                            uint8_t type,
@@ -68,26 +67,6 @@ fcgi_serialize_pair(GrowingBuffer &gb, StringView name,
     return size + name.size + value.size;
 }
 
-static void
-fcgi_serialize_pair1(FcgiParamsSerializer &s, const char *name_and_value)
-{
-    assert(name_and_value != nullptr);
-
-    size_t name_length, value_length;
-    const char *value = strchr(name_and_value, '=');
-    if (value != nullptr) {
-        name_length = value - name_and_value;
-        ++value;
-        value_length = strlen(value);
-    } else {
-        name_length = strlen(name_and_value);
-        value = "";
-        value_length = 0;
-    }
-
-    s({name_and_value, name_length}, {value, value_length});
-}
-
 FcgiParamsSerializer::FcgiParamsSerializer(GrowingBuffer &_buffer,
                                            uint16_t request_id_be) noexcept
     :record(_buffer, FCGI_PARAMS, request_id_be) {}
@@ -124,46 +103,4 @@ FcgiParamsSerializer::Headers(const StringMap &headers) noexcept
 
         (*this)({buffer, 5 + i}, pair.value);
     }
-}
-
-void
-fcgi_serialize_params(GrowingBuffer &gb, uint16_t request_id, ...)
-{
-    FcgiParamsSerializer s(gb, request_id);
-
-    va_list ap;
-    va_start(ap, request_id);
-
-    const char *name, *value;
-    while ((name = va_arg(ap, const char *)) != nullptr) {
-        value = va_arg(ap, const char *);
-        s(name, value);
-    }
-
-    va_end(ap);
-
-    s.Commit();
-}
-
-void
-fcgi_serialize_vparams(GrowingBuffer &gb, uint16_t request_id,
-                       ConstBuffer<const char *> params)
-{
-    assert(!params.IsEmpty());
-
-    FcgiParamsSerializer s(gb, request_id);
-
-    for (auto i : params)
-        fcgi_serialize_pair1(s, i);
-
-    s.Commit();
-}
-
-void
-fcgi_serialize_headers(GrowingBuffer &gb, uint16_t request_id,
-                       const StringMap &headers)
-{
-    FcgiParamsSerializer s(gb, request_id);
-    s.Headers(headers);
-    s.Commit();
 }

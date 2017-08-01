@@ -49,21 +49,4 @@ public:
     }
 };
 
-/**
- * @param request_id the FastCGI request id in network byte order
- */
-void
-fcgi_serialize_params(GrowingBuffer &gb, uint16_t request_id, ...);
-
-/**
- * @param request_id the FastCGI request id in network byte order
- */
-void
-fcgi_serialize_vparams(GrowingBuffer &gb, uint16_t request_id,
-                       ConstBuffer<const char *> params);
-
-void
-fcgi_serialize_headers(GrowingBuffer &gb, uint16_t request_id,
-                       const StringMap &headers);
-
 #endif
