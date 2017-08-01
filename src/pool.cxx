@@ -659,7 +659,7 @@ pool_dump_refs(const struct pool &pool)
     for (auto &ref : pool.refs)
         pool.logger.Format(0, " %s:%u %u", ref.file, ref.line, ref.count);
 
-    pool.logger.Format(0, "UNREF:");
+    pool.logger(0, "UNREF:");
     for (auto &ref : pool.unrefs)
         pool.logger.Format(0, " %s:%u %u", ref.file, ref.line, ref.count);
 #endif
