@@ -2241,6 +2241,9 @@ vulnerabilities in the kernel.
 group memberships.  This is useful because it disallows snooping on
 the host's multicast traffic.
 
+\verb|FORBID_BIND| makes \verb|bind()| and \verb|listen()| return
+\verb|EACCES|.
+
 \verb|STDERR_PATH| specifies an absolute path that will be created.
 The child's error messages will be appended there.  \verb|STDERR_NULL|
 redirects standard error to \texttt{/dev/null} instead.
