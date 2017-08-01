@@ -17,6 +17,8 @@
 #include "widget/Inline.hxx"
 #include "util/Cancellable.hxx"
 
+#include <gtest/gtest.h>
+
 const struct timeval inline_widget_timeout = {
     .tv_sec = 10,
     .tv_usec = 0,
@@ -133,15 +135,15 @@ assert_istream_equals(struct pool *pool, Istream *istream, const char *value)
     StringSinkCtx ctx;
     CancellablePointer cancel_ptr;
 
-    assert(istream != NULL);
-    assert(value != NULL);
+    ASSERT_NE(istream, nullptr);
+    ASSERT_NE(value, nullptr);
 
     NewStringSink(*pool, *istream, sink_gstring_callback, &ctx, cancel_ptr);
 
     while (!ctx.finished)
         istream->Read();
 
-    assert(strcmp(ctx.value.c_str(), value) == 0);
+    ASSERT_STREQ(ctx.value.c_str(), value);
 }
 
 static void
@@ -183,7 +185,7 @@ assert_rewrite_check4(EventLoop &event_loop,
                                  value2,
                                  mode, stateful, view, &html_escape_class);
     if (result == NULL)
-        assert(istream == NULL);
+        ASSERT_EQ(istream, nullptr);
     else
         assert_istream_equals(pool, istream, result);
 
@@ -228,12 +230,10 @@ assert_rewrite_check(EventLoop &event_loop,
  *
  */
 
-int main(gcc_unused int argc, gcc_unused char **argv)
+TEST(RewriteUriTest, Basic)
 {
     PInstance instance;
     auto &event_loop = instance.event_loop;
-
-    bool ret;
 
     auto *pool = pool_new_libc(instance.root_pool, "pool");
 
@@ -241,8 +241,7 @@ int main(gcc_unused int argc, gcc_unused char **argv)
 
     Widget container(Widget::RootTag(), *pool, "foobar");
 
-    ret = external_uri.Parse("/index.html;x=y?foo=bar");
-    assert(ret);
+    ASSERT_TRUE(external_uri.Parse("/index.html;x=y?foo=bar"));
 
     /* test all modes with a normal widget */
 

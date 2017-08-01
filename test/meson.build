@@ -643,6 +643,7 @@ test('t_rewrite_uri', executable('t_rewrite_uri',
   '../src/istream_escape.cxx',
   include_directories: inc,
   dependencies: [
+    gtest,
     libhttp, libdaemon,
     putil_dep,
     widget_dep,
