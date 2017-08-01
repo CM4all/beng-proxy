@@ -885,7 +885,15 @@ HandleMigrate(ConstBuffer<const char *> args)
     db.Migrate();
 }
 
-static constexpr struct Command {
+static
+#if GCC_OLDER_THAN(5,0)
+/* for some reason, GCC 4.9 complains "error: array must be
+   initialized with a brace-enclosed initializer" with "constexpr" */
+const
+#else
+constexpr
+#endif
+struct Command {
     const char *name, *usage;
     void (*function)(ConstBuffer<const char *> args);
     bool undocumented = false;
