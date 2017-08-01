@@ -46,8 +46,9 @@
 #include "istream/istream_string.hxx"
 #include "util/Cancellable.hxx"
 #include "util/PrintException.hxx"
-
 #include "util/Compiler.h"
+
+#include <gtest/gtest.h>
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -79,8 +80,8 @@ struct Request final : IstreamHandler {
 
     /* virtual methods from class IstreamHandler */
     size_t OnData(gcc_unused const void *data, size_t length) override {
-        assert(body_read + length <= strlen(response_body));
-        assert(memcmp(response_body + body_read, data, length) == 0);
+        EXPECT_LE(body_read + length, strlen(response_body));
+        EXPECT_EQ(memcmp(response_body + body_read, data, length), 0);
 
         body_read += length;
         return length;
@@ -91,7 +92,7 @@ struct Request final : IstreamHandler {
     }
 
     void OnError(std::exception_ptr) noexcept override {
-        assert(false);
+        FAIL();
     }
 };
 
@@ -189,9 +190,9 @@ MyResourceLoader::SendRequest(struct pool &pool,
     const auto *request = &requests[current_request];
     StringMap *expected_rh;
 
-    assert(!got_request);
-    assert(!got_response);
-    assert(method == request->method);
+    ASSERT_FALSE(got_request);
+    ASSERT_FALSE(got_response);
+    ASSERT_EQ(method, request->method);
 
     got_request = true;
 
@@ -201,8 +202,8 @@ MyResourceLoader::SendRequest(struct pool &pool,
     if (expected_rh != NULL) {
         for (const auto &i : headers) {
             const char *value = headers.Get(i.key);
-            assert(value != NULL);
-            assert(strcmp(value, i.value) == 0);
+            ASSERT_NE(value, nullptr);
+            ASSERT_STREQ(value, i.value);
         }
     }
 
@@ -243,14 +244,14 @@ Context::OnHttpResponse(http_status_t status, StringMap &&headers,
     Request *request = &requests[current_request];
     StringMap *expected_rh;
 
-    assert(status == request->status);
+    ASSERT_EQ(status, request->status);
 
     expected_rh = parse_response_headers(pool, *request);
     if (expected_rh != NULL) {
         for (const auto &i : *expected_rh) {
             const char *value = headers.Get(i.key);
-            assert(value != NULL);
-            assert(strcmp(value, i.value) == 0);
+            ASSERT_NE(value, nullptr);
+            ASSERT_STREQ(value, i.value);
         }
     }
 
@@ -264,12 +265,12 @@ Context::OnHttpResponse(http_status_t status, StringMap &&headers,
     got_response = true;
 }
 
-void gcc_noreturn
+void
 Context::OnHttpError(std::exception_ptr ep) noexcept
 {
     PrintException(ep);
 
-    assert(false);
+    FAIL();
 }
 
 static void
@@ -302,14 +303,12 @@ run_cache_test(struct pool *root_pool, unsigned num, bool cached)
                        context, cancel_ptr);
     pool_unref(pool);
 
-    assert(got_request);
-    assert(got_response);
+    ASSERT_TRUE(got_request);
+    ASSERT_TRUE(got_response);
 }
 
-int main(int argc, char **argv) {
-    (void)argc;
-    (void)argv;
-
+TEST(HttpCache, Basic)
+{
     const ScopeFbPoolInit fb_pool_init;
     PInstance instance;
 
@@ -338,7 +337,7 @@ int main(int argc, char **argv) {
 
     validated = false;
     run_cache_test(instance.root_pool, 2, false);
-    assert(!validated);
+    ASSERT_FALSE(validated);
 
     /* double check with a cacheable query string ("Expires" is
        set) */

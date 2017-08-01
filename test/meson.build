@@ -477,6 +477,7 @@ test('t_http_cache', executable('t_http_cache',
   '../src/sink_rubber.cxx',
   include_directories: inc,
   dependencies: [
+    gtest,
     putil_dep,
     http_cache_dep,
   ]))
