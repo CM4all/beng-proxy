@@ -2117,11 +2117,15 @@ Requires Linux 4.6 or newer.
 \subsubsection{Network Namespaces}
 
 The translation packet \verb|NETWORK_NAMESPACE| launches the process
-in a new network namespace.  Without further configuration (not
-implemented yet), this leaves the process without access to the
-network, because there is no network device in the new namespace.
+in a new network namespace.  Without further configuration, this
+leaves the process without access to the network, because there is no
+network device in the new namespace.
 
-Depends on user namespaces.  Requires Linux 2.6.29 or newer.
+The packet \verb|NETWORK_NAMESPACE_NAME| instead reassociates the
+process with an existing network namespace configured with
+\verb|ip netns|.
+
+Requires Linux 2.6.29 or newer.
 
 \subsubsection{Mount Namespaces}
 
