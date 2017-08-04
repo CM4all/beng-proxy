@@ -1,6 +1,7 @@
 cm4all-beng-proxy (12.0.40) unstable; urgency=low
 
   * spawn: attach to existing network namespace with NETWORK_NAMESPACE_NAME
+  * spawn: allow unshare(), mount(), umount(), pivot_root()
 
  --   
 
