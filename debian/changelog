@@ -3,7 +3,7 @@ cm4all-beng-proxy (12.0.41) unstable; urgency=low
   * spawn: fix NETWORK_NAMESPACE_NAME corruption
   * spawn: work around USER_NAMESPACE + NETWORK_NAMESPACE_NAME conflict
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Fri, 04 Aug 2017 16:15:09 -0000
 
 cm4all-beng-proxy (12.0.40) unstable; urgency=low
 
