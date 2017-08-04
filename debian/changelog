@@ -1,6 +1,6 @@
 cm4all-beng-proxy (12.0.41) unstable; urgency=low
 
-  * 
+  * spawn: fix NETWORK_NAMESPACE_NAME corruption
 
  --   
 
