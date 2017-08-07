@@ -79,17 +79,16 @@ GlueHttpClient::Request(EventLoop &event_loop,
     CurlEasy easy(uri);
 
     if (method == HTTP_METHOD_HEAD)
-        easy.SetOption(CURLOPT_NOBODY, 1l);
+        easy.SetNoBody();
     else if (method == HTTP_METHOD_POST)
-        easy.SetOption(CURLOPT_POST, 1l);
+        easy.SetPost();
 
     if (!body.IsNull()) {
-        easy.SetOption(CURLOPT_POSTFIELDS, (const char *)body.data);
-        easy.SetOption(CURLOPT_POSTFIELDSIZE, long(body.size));
+        easy.SetRequestBody(body.data, body.size);
         header_list.Append("Content-Type: application/json");
     }
 
-    easy.SetOption(CURLOPT_HTTPHEADER, header_list.Get());
+    easy.SetRequestHeaders(header_list.Get());
 
     GlueHttpResponseHandler handler;
     CurlRequest request(curl_global, std::move(easy), handler);
