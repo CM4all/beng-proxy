@@ -4,7 +4,7 @@ cm4all-beng-proxy (12.0.43) unstable; urgency=low
   * lb/control: allow TCACHE_INVALIDATE on SITE
   * systemd: no "-v" by default
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 15 Aug 2017 21:41:04 -0000
 
 cm4all-beng-proxy (12.0.42) unstable; urgency=low
 
