@@ -4,29 +4,26 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "lb_setup.hxx"
-#include "lb/Config.hxx"
 #include "lb_instance.hxx"
+#include "lb/Config.hxx"
 #include "lb/Listener.hxx"
 #include "lb/Control.hxx"
 #include "ssl/Cache.hxx"
 
 void
-init_all_listeners(LbInstance &instance)
+LbInstance::InitAllListeners()
 {
-    auto &listeners = instance.listeners;
-
-    for (const auto &config : instance.config.listeners) {
-        listeners.emplace_front(instance, config);
+    for (const auto &i : config.listeners) {
+        listeners.emplace_front(*this, i);
         auto &listener = listeners.front();
         listener.Setup();
     }
 }
 
 void
-deinit_all_listeners(LbInstance *instance)
+LbInstance::DeinitAllListeners()
 {
-    instance->listeners.clear();
+    listeners.clear();
 }
 
 unsigned
@@ -43,24 +40,24 @@ LbInstance::FlushSSLSessionCache(long tm)
 }
 
 void
-init_all_controls(LbInstance *instance)
+LbInstance::InitAllControls()
 {
-    for (const auto &config : instance->config.controls) {
-        instance->controls.emplace_front(*instance);
-        auto &control = instance->controls.front();
-        control.Open(config);
+    for (const auto &i : config.controls) {
+        controls.emplace_front(*this);
+        auto &control = controls.front();
+        control.Open(i);
     }
 }
 
 void
-deinit_all_controls(LbInstance *instance)
+LbInstance::DeinitAllControls()
 {
-    instance->controls.clear();
+    controls.clear();
 }
 
 void
-enable_all_controls(LbInstance *instance)
+LbInstance::EnableAllControls()
 {
-    for (auto &control : instance->controls)
+    for (auto &control : controls)
         control.Enable();
 }

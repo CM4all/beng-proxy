@@ -82,6 +82,13 @@ struct LbInstance final : PInstance {
      */
     void InitWorker();
 
+    void InitAllListeners();
+    void DeinitAllListeners();
+
+    void InitAllControls();
+    void EnableAllControls();
+    void DeinitAllControls();
+
     /**
      * Create monitors for all members of all active clusters (from
      * #LbGotoMap).

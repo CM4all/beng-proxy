@@ -8,7 +8,6 @@
 #include "lb_cmdline.hxx"
 #include "lb_instance.hxx"
 #include "lb_check.hxx"
-#include "lb_setup.hxx"
 #include "tcp_stock.hxx"
 #include "tcp_balancer.hxx"
 #include "stock/MapStock.hxx"
@@ -69,7 +68,7 @@ LbInstance::ShutdownCallback()
 
     compress_event.Cancel();
 
-    deinit_all_controls(this);
+    DeinitAllControls();
 
     goto_map.Clear();
 
@@ -81,7 +80,7 @@ LbInstance::ShutdownCallback()
     while (!http_connections.empty())
         http_connections.front().CloseAndDestroy();
 
-    deinit_all_listeners(this);
+    DeinitAllListeners();
 
     thread_pool_join();
 
@@ -161,8 +160,8 @@ try {
 
     init_signals(&instance);
 
-    init_all_controls(&instance);
-    init_all_listeners(instance);
+    instance.InitAllControls();
+    instance.InitAllListeners();
 
     instance.balancer = balancer_new(instance.event_loop);
     instance.tcp_stock = tcp_stock_new(instance.event_loop,
@@ -213,8 +212,8 @@ try {
 
     bulldog_deinit();
 
-    deinit_all_listeners(&instance);
-    deinit_all_controls(&instance);
+    instance.DeinitAllListeners();
+    instance.DeinitAllControls();
 
     thread_pool_deinit();
 } catch (const std::exception &e) {
