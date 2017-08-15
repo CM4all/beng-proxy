@@ -4,7 +4,7 @@
 
 #include "LuaHandler.hxx"
 #include "LuaGoto.hxx"
-#include "lb_config.hxx"
+#include "GotoConfig.hxx"
 #include "http_server/Request.hxx"
 #include "http_response.hxx"
 #include "pool.hxx"

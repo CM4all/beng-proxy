@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "lb_config.hxx"
+#include "Config.hxx"
 #include "AllocatorPtr.hxx"
 #include "access_log/ConfigParser.hxx"
 #include "avahi/Check.hxx"

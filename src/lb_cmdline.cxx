@@ -5,7 +5,7 @@
  */
 
 #include "lb_cmdline.hxx"
-#include "lb_config.hxx"
+#include "lb/Config.hxx"
 #include "stopwatch.hxx"
 #include "io/Logger.hxx"
 

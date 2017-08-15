@@ -19,7 +19,7 @@
 #include "ssl/Unique.hxx"
 #include "ssl/Error.hxx"
 #include "pg/CheckError.hxx"
-#include "lb_config.hxx"
+#include "lb/Config.hxx"
 #include "system/urandom.hxx"
 #include "system/Error.hxx"
 #include "io/StringFile.hxx"

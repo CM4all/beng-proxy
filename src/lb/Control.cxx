@@ -6,7 +6,7 @@
 
 #include "Control.hxx"
 #include "lb_instance.hxx"
-#include "lb_config.hxx"
+#include "Config.hxx"
 #include "lb_stats.hxx"
 #include "control_server.hxx"
 #include "failure.hxx"

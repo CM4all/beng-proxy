@@ -4,9 +4,8 @@
 
 #include "GotoMap.hxx"
 #include "Goto.hxx"
-#include "GotoConfig.hxx"
-#include "lb/LuaInitHook.hxx"
-#include "lb_config.hxx"
+#include "Config.hxx"
+#include "LuaInitHook.hxx"
 #include "avahi/Client.hxx"
 
 void
