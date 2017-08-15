@@ -93,10 +93,13 @@ class Translation(Protocol):
         response.packet(TRANSLATE_TOKEN, 'xyz')
         response.uid_gid(500, 100)
         if service != 'ftp':
-            response.packet(TRANSLATE_PIVOT_ROOT, '/srv/chroot/jessie')
-            response.packet(TRANSLATE_MOUNT_HOME, '/home')
-            response.packet(TRANSLATE_MOUNT_PROC)
-            response.packet(TRANSLATE_MOUNT_TMP_TMPFS)
+            if service == 'sftp':
+                response.packet(TRANSLATE_MOUNT_ROOT_TMPFS)
+            else:
+                response.packet(TRANSLATE_PIVOT_ROOT, '/srv/chroot/jessie')
+                response.packet(TRANSLATE_MOUNT_PROC)
+                response.packet(TRANSLATE_MOUNT_TMP_TMPFS)
+            response.packet(TRANSLATE_MOUNT_HOME, '/home/foo/bar/a')
             response.packet(TRANSLATE_UTS_NAMESPACE, 'host-' + user)
         return response
 

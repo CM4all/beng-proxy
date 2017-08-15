@@ -2139,6 +2139,10 @@ mounts will be removed from the namespace.  The new root must contain
 a top-level directory called \texttt{mnt}.  It will be mounted
 read-only and with option \texttt{nosuid}.
 
+\verb|MOUNT_ROOT_TMPFS| creates an empty read-only \texttt{tmpfs} as
+the filesystem root.  All required mountpoints will be created, but
+the filesystem will contain nothing else.
+
 \verb|MOUNT_PROC| mounts a new read-only instance of the \texttt{proc}
 filesystem.
 

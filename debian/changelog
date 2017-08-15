@@ -1,6 +1,7 @@
 cm4all-beng-proxy (12.0.42) unstable; urgency=low
 
   * spawn: fix bogus pivot_root() error message
+  * translation: add packet MOUNT_ROOT_TMPFS
 
  --   
 
