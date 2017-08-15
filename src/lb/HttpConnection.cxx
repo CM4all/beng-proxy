@@ -9,7 +9,7 @@
 #include "ForwardHttpRequest.hxx"
 #include "TranslationHandler.hxx"
 #include "lb_instance.hxx"
-#include "lb_cookie.hxx"
+#include "Cookie.hxx"
 #include "http_server/http_server.hxx"
 #include "http_server/Request.hxx"
 #include "http_server/Handler.hxx"

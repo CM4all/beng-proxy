@@ -8,7 +8,7 @@
 #include "ListenerConfig.hxx"
 #include "lb_instance.hxx"
 #include "lb_session.hxx"
-#include "lb_cookie.hxx"
+#include "Cookie.hxx"
 #include "lb_jvm_route.hxx"
 #include "lb_headers.hxx"
 #include "ssl/ssl_filter.hxx"

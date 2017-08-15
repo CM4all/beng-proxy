@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "lb_cookie.hxx"
+#include "Cookie.hxx"
 #include "strmap.hxx"
 #include "tpool.hxx"
 #include "cookie_server.hxx"

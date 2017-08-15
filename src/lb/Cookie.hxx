@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_LB_COOKIE_H
-#define BENG_PROXY_LB_COOKIE_H
+#ifndef BENG_PROXY_LB_COOKIE_HXX
+#define BENG_PROXY_LB_COOKIE_HXX
 
 #include "StickyHash.hxx"
 
