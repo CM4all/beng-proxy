@@ -5,7 +5,7 @@
 #include "TcpConnection.hxx"
 #include "ClusterConfig.hxx"
 #include "ListenerConfig.hxx"
-#include "lb_instance.hxx"
+#include "Instance.hxx"
 #include "client_balancer.hxx"
 #include "address_sticky.hxx"
 #include "ssl/ssl_filter.hxx"

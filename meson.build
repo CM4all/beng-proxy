@@ -1063,7 +1063,7 @@ executable('cm4all-beng-lb',
   'src/lb/PingMonitor.cxx',
   'src/lb/SynMonitor.cxx',
   'src/lb/ExpectMonitor.cxx',
-  'src/lb_instance.cxx',
+  'src/lb/Instance.cxx',
   'src/lb_main.cxx',
 
   # the following sources are only necessary for the translation client

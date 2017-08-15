@@ -4,7 +4,7 @@
 
 #include "HttpConnection.hxx"
 #include "GotoConfig.hxx"
-#include "lb_instance.hxx"
+#include "Instance.hxx"
 #include "Config.hxx"
 #include "http_server/http_server.hxx"
 #include "http_server/Request.hxx"

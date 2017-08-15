@@ -5,7 +5,7 @@
  */
 
 #include "Listener.hxx"
-#include "lb_instance.hxx"
+#include "Instance.hxx"
 #include "ListenerConfig.hxx"
 #include "HttpConnection.hxx"
 #include "TcpConnection.hxx"

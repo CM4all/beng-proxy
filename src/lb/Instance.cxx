@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "lb_instance.hxx"
+#include "Instance.hxx"
 #include "lb/Control.hxx"
 #include "lb/Config.hxx"
 #include "lb/Listener.hxx"

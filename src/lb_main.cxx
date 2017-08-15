@@ -6,7 +6,7 @@
 
 #include "direct.hxx"
 #include "lb_cmdline.hxx"
-#include "lb_instance.hxx"
+#include "lb/Instance.hxx"
 #include "lb_check.hxx"
 #include "tcp_stock.hxx"
 #include "tcp_balancer.hxx"

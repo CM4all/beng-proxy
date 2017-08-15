@@ -6,7 +6,7 @@
 #include "HttpConnection.hxx"
 #include "ClusterConfig.hxx"
 #include "ListenerConfig.hxx"
-#include "lb_instance.hxx"
+#include "Instance.hxx"
 #include "lb_session.hxx"
 #include "Cookie.hxx"
 #include "JvmRoute.hxx"

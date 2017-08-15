@@ -4,10 +4,10 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "lb_instance.hxx"
-#include "lb/Config.hxx"
-#include "lb/Listener.hxx"
-#include "lb/Control.hxx"
+#include "Instance.hxx"
+#include "Config.hxx"
+#include "Listener.hxx"
+#include "Control.hxx"
 #include "ssl/Cache.hxx"
 
 void

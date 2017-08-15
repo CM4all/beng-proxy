@@ -8,7 +8,7 @@
 #include "Goto.txx"
 #include "ForwardHttpRequest.hxx"
 #include "TranslationHandler.hxx"
-#include "lb_instance.hxx"
+#include "Instance.hxx"
 #include "Cookie.hxx"
 #include "http_server/http_server.hxx"
 #include "http_server/Request.hxx"

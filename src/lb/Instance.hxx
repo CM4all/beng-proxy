@@ -8,10 +8,10 @@
 #define BENG_PROXY_LB_INSTANCE_HXX
 
 #include "PInstance.hxx"
-#include "lb/GotoMap.hxx"
-#include "lb/MonitorMap.hxx"
-#include "lb/HttpConnection.hxx"
-#include "lb/TcpConnection.hxx"
+#include "GotoMap.hxx"
+#include "MonitorMap.hxx"
+#include "HttpConnection.hxx"
+#include "TcpConnection.hxx"
 #include "event/TimerEvent.hxx"
 #include "event/SignalEvent.hxx"
 #include "event/ShutdownListener.hxx"

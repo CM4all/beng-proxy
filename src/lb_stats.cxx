@@ -5,7 +5,7 @@
  */
 
 #include "lb_stats.hxx"
-#include "lb_instance.hxx"
+#include "lb/Instance.hxx"
 #include "stock/MapStock.hxx"
 #include "stock/Stats.hxx"
 #include "fb_pool.hxx"
