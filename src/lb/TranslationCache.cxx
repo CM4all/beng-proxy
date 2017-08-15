@@ -141,6 +141,9 @@ LbTranslationCache::Item::Item(const TranslateResponse &response)
 
     if (response.canonical_host != nullptr)
         canonical_host = response.canonical_host;
+
+    if (response.site != nullptr)
+        site = response.site;
 }
 
 void
@@ -177,6 +180,19 @@ MatchKey(const char *key, const TranslateRequest &request)
         KeyVaryMatch(separator + 1, request.listener_tag);
 }
 
+static bool
+MatchInvalidate(const std::string &item, const char *vary)
+{
+    return vary == nullptr || item == vary;
+}
+
+static bool
+MatchItem(const LbTranslationCache::Item &item,
+          const TranslationInvalidateRequest &request)
+{
+    return MatchInvalidate(item.site, request.site);
+}
+
 void
 LbTranslationCache::Invalidate(const TranslationInvalidateRequest &request)
 {
@@ -184,8 +200,8 @@ LbTranslationCache::Invalidate(const TranslationInvalidateRequest &request)
         (request.listener_tag != nullptr && !seen_vary.listener_tag))
         return;
 
-    cache.RemoveIf([&request](const std::string &key, const Item &){
-            return MatchKey(key.c_str(), request);
+    cache.RemoveIf([&request](const std::string &key, const Item &item){
+            return MatchKey(key.c_str(), request) && MatchItem(item, request);
         });
 }
 

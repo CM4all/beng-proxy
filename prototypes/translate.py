@@ -152,6 +152,7 @@ class Translation(Protocol):
             response.vary(TRANSLATE_HOST)
         else:
             response.packet(TRANSLATE_POOL, name + '_')
+            response.packet(TRANSLATE_SITE, host)
             response.vary(TRANSLATE_HOST)
 
         return response

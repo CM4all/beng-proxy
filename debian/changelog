@@ -1,6 +1,7 @@
 cm4all-beng-proxy (12.0.43) unstable; urgency=low
 
   * spawn: fix MOUNT_ROOT_TMPFS failure with USER_NAMESPACE
+  * lb/control: allow TCACHE_INVALIDATE on SITE
 
  --   
 

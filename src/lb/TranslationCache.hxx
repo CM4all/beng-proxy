@@ -23,7 +23,7 @@ public:
     struct Item {
         http_status_t status = http_status_t(0);
         uint16_t https_only = 0;
-        std::string redirect, message, pool, canonical_host;
+        std::string redirect, message, pool, canonical_host, site;
 
         explicit Item(const TranslateResponse &response);
     };
