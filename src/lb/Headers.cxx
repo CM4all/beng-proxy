@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "lb_headers.hxx"
+#include "Headers.hxx"
 #include "http_headers.hxx"
 #include "strmap.hxx"
 #include "pool.hxx"

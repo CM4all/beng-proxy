@@ -10,7 +10,7 @@
 #include "lb_session.hxx"
 #include "Cookie.hxx"
 #include "JvmRoute.hxx"
-#include "lb_headers.hxx"
+#include "Headers.hxx"
 #include "ssl/ssl_filter.hxx"
 #include "address_sticky.hxx"
 #include "http_server/http_server.hxx"
