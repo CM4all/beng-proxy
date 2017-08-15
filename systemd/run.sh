@@ -18,7 +18,7 @@ DOCUMENT_ROOT=/var/www
 TRANSLATION_SOCKET=""
 UA_CLASSES=
 SESSION_SAVE_PATH=
-OPTIONS="-vv"
+OPTIONS=""
 
 test -f /etc/default/cm4all-beng-proxy && source /etc/default/cm4all-beng-proxy
 

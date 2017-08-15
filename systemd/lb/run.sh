@@ -8,7 +8,7 @@ DAEMON_USER=cm4all-beng-lb
 LOGGER_USER=cm4all-logger
 ACCESS_LOGGER="null"
 CONFIG_FILE="/etc/cm4all/beng/lb.conf"
-OPTIONS="-vv"
+OPTIONS=""
 
 test -f /etc/default/cm4all-beng-lb && source /etc/default/cm4all-beng-lb
 
