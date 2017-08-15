@@ -17,7 +17,7 @@ LbGotoMap::FlushCaches()
 }
 
 void
-LbGotoMap::InvalidateTranslationCaches(const TranslateRequest &request)
+LbGotoMap::InvalidateTranslationCaches(const TranslationInvalidateRequest &request)
 {
     for (auto &i : translation_handlers)
         i.second.InvalidateCache(request);

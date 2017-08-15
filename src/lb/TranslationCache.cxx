@@ -4,7 +4,7 @@
 
 #include "TranslationCache.hxx"
 #include "http_server/Request.hxx"
-#include "translation/Request.hxx"
+#include "translation/InvalidateParser.hxx"
 #include "translation/Response.hxx"
 #include "translation/Protocol.hxx"
 #include "util/StringView.hxx"
@@ -178,7 +178,7 @@ MatchKey(const char *key, const TranslateRequest &request)
 }
 
 void
-LbTranslationCache::Invalidate(const TranslateRequest &request)
+LbTranslationCache::Invalidate(const TranslationInvalidateRequest &request)
 {
     if ((request.host != nullptr && !seen_vary.host) ||
         (request.listener_tag != nullptr && !seen_vary.listener_tag))

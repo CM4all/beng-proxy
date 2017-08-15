@@ -102,7 +102,7 @@ struct LbInstance final : PInstance {
         goto_map.FlushCaches();
     }
 
-    void InvalidateTranslationCaches(const TranslateRequest &request) {
+    void InvalidateTranslationCaches(const TranslationInvalidateRequest &request) {
         goto_map.InvalidateTranslationCaches(request);
     }
 

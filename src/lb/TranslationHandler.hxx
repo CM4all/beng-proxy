@@ -14,7 +14,7 @@
 struct LbTranslationHandlerConfig;
 class LbGotoMap;
 struct HttpServerRequest;
-struct TranslateRequest;
+struct TranslationInvalidateRequest;
 struct TranslateHandler;
 struct TranslateResponse;
 class TranslateStock;
@@ -37,7 +37,7 @@ public:
     ~LbTranslationHandler();
 
     void FlushCache();
-    void InvalidateCache(const TranslateRequest &request);
+    void InvalidateCache(const TranslationInvalidateRequest &request);
 
     const LbGoto *FindDestination(const char *destination_name) const {
         auto i = destinations.find(destination_name);

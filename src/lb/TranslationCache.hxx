@@ -13,7 +13,7 @@
 #include <string>
 
 struct HttpServerRequest;
-struct TranslateRequest;
+struct TranslationInvalidateRequest;
 struct TranslateResponse;
 
 class LbTranslationCache final {
@@ -63,7 +63,7 @@ public:
         :logger("tcache") {}
 
     void Clear();
-    void Invalidate(const TranslateRequest &request);
+    void Invalidate(const TranslationInvalidateRequest &request);
 
     const Item *Get(const HttpServerRequest &request,
                     const char *listener_tag);

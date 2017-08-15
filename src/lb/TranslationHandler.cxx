@@ -45,7 +45,7 @@ LbTranslationHandler::FlushCache()
 }
 
 void
-LbTranslationHandler::InvalidateCache(const TranslateRequest &request)
+LbTranslationHandler::InvalidateCache(const TranslationInvalidateRequest &request)
 {
     if (cache)
         cache->Invalidate(request);
