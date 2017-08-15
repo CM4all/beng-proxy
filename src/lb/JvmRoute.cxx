@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "lb_jvm_route.hxx"
-#include "lb/ClusterConfig.hxx"
+#include "JvmRoute.hxx"
+#include "ClusterConfig.hxx"
 #include "strmap.hxx"
 #include "tpool.hxx"
 #include "cookie_server.hxx"

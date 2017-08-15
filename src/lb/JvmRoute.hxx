@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_LB_JVM_ROUTE_H
-#define BENG_PROXY_LB_JVM_ROUTE_H
+#ifndef BENG_PROXY_LB_JVM_ROUTE_HXX
+#define BENG_PROXY_LB_JVM_ROUTE_HXX
 
 #include "StickyHash.hxx"
 

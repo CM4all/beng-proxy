@@ -9,7 +9,7 @@
 #include "lb_instance.hxx"
 #include "lb_session.hxx"
 #include "Cookie.hxx"
-#include "lb_jvm_route.hxx"
+#include "JvmRoute.hxx"
 #include "lb_headers.hxx"
 #include "ssl/ssl_filter.hxx"
 #include "address_sticky.hxx"
