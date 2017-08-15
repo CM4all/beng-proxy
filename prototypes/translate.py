@@ -99,7 +99,7 @@ class Translation(Protocol):
                 response.packet(TRANSLATE_PIVOT_ROOT, '/srv/chroot/jessie')
                 response.packet(TRANSLATE_MOUNT_PROC)
                 response.packet(TRANSLATE_MOUNT_TMP_TMPFS)
-            response.packet(TRANSLATE_MOUNT_HOME, '/home/foo/bar/a')
+            response.packet(TRANSLATE_MOUNT_HOME, '/home')
             response.packet(TRANSLATE_UTS_NAMESPACE, 'host-' + user)
         return response
 
