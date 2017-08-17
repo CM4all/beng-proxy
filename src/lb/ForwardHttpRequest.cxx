@@ -125,6 +125,8 @@ private:
     sticky_hash_t GetXHostHash() const;
     sticky_hash_t MakeCookieHash();
 
+    SocketAddress MakeBindAddress() const;
+
     /* virtual methods from class Cancellable */
     void Cancel() override {
         assert(!response_sent);
@@ -428,27 +430,33 @@ LbRequest::ReleaseLease(bool _reuse)
  *
  */
 
-inline void
-LbRequest::Start()
+inline SocketAddress
+LbRequest::MakeBindAddress() const
 {
-    SocketAddress bind_address = SocketAddress::Null();
-    const bool transparent_source = cluster_config.transparent_source;
-    if (transparent_source) {
-        bind_address = request.remote_address;
+    if (cluster_config.transparent_source) {
+        SocketAddress bind_address = request.remote_address;
 
         /* reset the port to 0 to allow the kernel to choose one */
         if (bind_address.GetFamily() == AF_INET) {
             auto &address = *NewFromPool<IPv4Address>(request.pool,
                                                       IPv4Address(bind_address));
             address.SetPort(0);
-            bind_address = address;
+            return address;
         } else if (bind_address.GetFamily() == AF_INET6) {
             auto &address = *NewFromPool<IPv6Address>(request.pool,
                                                       IPv6Address(bind_address));
             address.SetPort(0);
-            bind_address = address;
+            return address;
         }
     }
+
+    return SocketAddress::Null();
+}
+
+inline void
+LbRequest::Start()
+{
+    const auto bind_address = MakeBindAddress();
 
     if (cluster_config.HasZeroConf()) {
         const auto member = cluster.Pick(GetStickyHash());
@@ -467,7 +475,7 @@ LbRequest::Start()
 
         tcp_stock_get(*connection.instance.tcp_stock, request.pool,
                       member.first,
-                      transparent_source, bind_address,
+                      cluster_config.transparent_source, bind_address,
                       member.second,
                       20,
                       *this, cancel_ptr);
@@ -476,7 +484,7 @@ LbRequest::Start()
     }
 
     tcp_balancer_get(balancer, request.pool,
-                     transparent_source,
+                     cluster_config.transparent_source,
                      bind_address,
                      GetStickyHash(),
                      cluster_config.address_list,
