@@ -65,6 +65,12 @@ class LbRequest final
 
     StockItem *stock_item;
 
+    /**
+     * The number of remaining connection attempts.  We give up when
+     * we get an error and this attribute is already zero.
+     */
+    unsigned retries;
+
     unsigned new_cookie = 0;
 
     bool response_sent = false, reuse;
@@ -86,11 +92,26 @@ public:
          request(_request),
          body(request.pool, request.body) {
         _cancel_ptr = *this;
+
+        if (cluster_config.HasZeroConf())
+            retries = CalculateRetries(cluster.GetZeroconfCount());
     }
 
     void Start();
 
 private:
+    /* code copied from generic_balancer.hxx */
+    static unsigned CalculateRetries(size_t size) {
+        if (size <= 1)
+            return 0;
+        else if (size == 2)
+            return 1;
+        else if (size == 3)
+            return 2;
+        else
+            return 3;
+    }
+
     void Destroy() {
         assert(lease_state == LeaseState::NONE);
 
@@ -393,10 +414,17 @@ LbRequest::OnStockItemError(std::exception_ptr ep)
 
     connection.logger(2, "Connect error: ", ep);
 
-    if (cluster_config.HasZeroConf())
+    if (cluster_config.HasZeroConf()) {
         /* without the tcp_balancer, we have to roll our own failure
-           updates */
+           updates and retries */
         failure_add(current_address);
+
+        if (retries-- > 0) {
+            /* try the next Zeroconf member */
+            Start();
+            return;
+        }
+    }
 
     body.Clear();
 
