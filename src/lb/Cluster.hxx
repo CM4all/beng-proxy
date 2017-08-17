@@ -82,7 +82,13 @@ public:
         return config;
     }
 
-    size_t GetZeroconfCount() const {
+    gcc_pure
+    size_t GetZeroconfCount() {
+        if (dirty) {
+            dirty = false;
+            FillActive();
+        }
+
         return active_members.size();
     }
 
