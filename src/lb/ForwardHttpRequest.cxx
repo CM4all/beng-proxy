@@ -448,9 +448,10 @@ LbRequest::MakeBindAddress() const
             address.SetPort(0);
             return address;
         }
-    }
 
-    return SocketAddress::Null();
+        return bind_address;
+    } else
+        return SocketAddress::Null();
 }
 
 inline void
