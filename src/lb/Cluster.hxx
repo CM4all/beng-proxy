@@ -82,6 +82,10 @@ public:
         return config;
     }
 
+    size_t GetZeroconfCount() const {
+        return active_members.size();
+    }
+
     std::pair<const char *, SocketAddress> Pick(sticky_hash_t sticky_hash);
 
 private:
