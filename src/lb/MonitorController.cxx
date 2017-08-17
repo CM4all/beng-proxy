@@ -69,7 +69,7 @@ LbMonitorController::Error(std::exception_ptr e)
     cancel_ptr = nullptr;
     timeout_event.Cancel();
 
-    logger(state ? 2 : 4, "error", e);
+    logger(state ? 2 : 4, "error: ", e);
 
     state = false;
     failure_set(address, FAILURE_MONITOR, std::chrono::seconds::zero());
