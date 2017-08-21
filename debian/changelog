@@ -1,6 +1,6 @@
 cm4all-beng-proxy (12.2) unstable; urgency=low
 
-  * 
+  * debian/control: move from "non-free" to "main"
 
  --   
 

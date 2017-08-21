@@ -1,5 +1,5 @@
 Source: cm4all-beng-proxy
-Section: non-free/web
+Section: web
 Priority: extra
 Maintainer: Max Kellermann <mk@cm4all.com>
 Build-Depends: debhelper (>= 9), dh-python, dh-systemd,
@@ -55,7 +55,7 @@ Description: HTTP proxy server
  processor.
 
 Package: cm4all-beng-proxy-dbg
-Section: non-free/devel
+Section: devel
 Architecture: any
 Depends: cm4all-beng-proxy (= ${binary:Version})
 Description: HTTP proxy server, debug symbols
@@ -77,7 +77,7 @@ Description: HTTP proxy server, optimized build
  debugging options are disabled.
 
 Package: cm4all-beng-proxy-optimized-dbg
-Section: non-free/devel
+Section: devel
 Architecture: any
 Depends: cm4all-beng-proxy-optimized (= ${binary:Version})
 Conflicts: cm4all-beng-proxy-dbg
@@ -132,7 +132,7 @@ Description: JavaScript library for cm4all-beng-proxy
 
 Package: libcm4all-beng-proxy2-dev
 Architecture: all
-Section: non-free/libdevel
+Section: libdevel
 Depends: libc6-dev,
  pkg-config (>= 0.9.0)
 Description: Development files for cm4all-beng-proxy
@@ -144,7 +144,7 @@ Description: Development files for cm4all-beng-proxy
 
 Package: python-cm4all-beng-proxy
 Architecture: all
-Section: non-free/python
+Section: python
 Provides: ${python:Provides}
 Depends: ${python:Depends}, python-twisted-core, python-twisted-names
 Recommends: cm4all-beng-proxy
@@ -166,7 +166,7 @@ Description: Tools for beng-proxy
 
 Package: cm4all-beng-proxy-doc
 Architecture: all
-Section: non-free/doc
+Section: doc
 Description: Documentation for cm4all-beng-proxy
  BENG proxy is an HTTP proxy server which includes a HTML template
  processor.
@@ -183,7 +183,7 @@ Description: HTTP load balancer
  BENG lb is a HTTP proxy server and load balancer.
 
 Package: cm4all-beng-lb-dbg
-Section: non-free/devel
+Section: devel
 Architecture: any
 Depends: cm4all-beng-lb (= ${binary:Version})
 Description: HTTP load balancer, debug symbols
