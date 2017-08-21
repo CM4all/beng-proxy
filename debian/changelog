@@ -1,5 +1,6 @@
 cm4all-beng-proxy (12.2) unstable; urgency=low
 
+  * spawn: use the "systemd" controller
   * debian/control: move from "non-free" to "main"
 
  --   
