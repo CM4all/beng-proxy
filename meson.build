@@ -393,6 +393,7 @@ avahi_dep = declare_dependency(link_with: avahi)
 pg = static_library('pg',
   'libcommon/src/pg/Serial.cxx',
   'libcommon/src/pg/Array.cxx',
+  'libcommon/src/pg/Interval.cxx',
   'libcommon/src/pg/Connection.cxx',
   'libcommon/src/pg/AsyncConnection.cxx',
   'libcommon/src/pg/Result.cxx',
