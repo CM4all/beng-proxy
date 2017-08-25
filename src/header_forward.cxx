@@ -40,14 +40,13 @@
 #include "cookie_server.hxx"
 #include "pool.hxx"
 #include "product.h"
+#include "http/HeaderName.hxx"
 #include "util/CharUtil.hxx"
 #include "util/StringCompare.hxx"
 
 #ifndef NDEBUG
 #include <daemon/log.h>
 #endif
-
-#include <http/header.h>
 
 #include <string.h>
 

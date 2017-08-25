@@ -238,6 +238,7 @@ executable('request_translation',
     declare_dependency(link_with: translation),
     widget_dep,
     stock_dep,
+    http_dep,
   ])
 
 executable('run_subst',
