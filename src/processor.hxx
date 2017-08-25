@@ -34,10 +34,6 @@
 #define PROCESSOR_HXX
 
 #include "util/Compiler.h"
-#include <http/method.h>
-#include <http/status.h>
-
-#include <stdbool.h>
 
 /** options for processor_new() */
 enum processor_options {

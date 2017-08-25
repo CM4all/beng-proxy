@@ -63,7 +63,6 @@
 #include "istream/istream_string.hxx"
 #include "istream/istream_tee.hxx"
 #include "pool.hxx"
-#include "util/Cast.hxx"
 #include "util/CharUtil.hxx"
 #include "util/Macros.hxx"
 #include "util/StringView.hxx"
