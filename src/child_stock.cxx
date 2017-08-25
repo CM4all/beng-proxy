@@ -33,9 +33,7 @@
 #include "child_stock.hxx"
 #include "child_socket.hxx"
 #include "spawn/ExitListener.hxx"
-#include "stock/MapStock.hxx"
 #include "stock/Stock.hxx"
-#include "stock/Class.hxx"
 #include "stock/Item.hxx"
 #include "spawn/Interface.hxx"
 #include "spawn/Prepared.hxx"
@@ -80,26 +78,6 @@ struct ChildStockItem final : StockItem, ExitListener {
 
     /* virtual methods from class ExitListener */
     void OnChildProcessExit(int status) override;
-};
-
-class ChildStock final : StockClass {
-    StockMap map;
-
-    SpawnService &spawn_service;
-    const ChildStockClass &cls;
-
-public:
-    ChildStock(EventLoop &event_loop, SpawnService &_spawn_service,
-               const ChildStockClass &_cls,
-               unsigned _limit, unsigned _max_idle);
-
-    StockMap &GetMap() {
-        return map;
-    }
-
-    /* virtual methods from class StockClass */
-    void Create(CreateStockItem c, void *info, struct pool &caller_pool,
-                CancellablePointer &cancel_ptr) override;
 };
 
 void
@@ -161,25 +139,9 @@ ChildStock::ChildStock(EventLoop &event_loop, SpawnService &_spawn_service,
                        const ChildStockClass &_cls,
                        unsigned _limit, unsigned _max_idle)
     :map(event_loop, *this, _limit, _max_idle),
-     spawn_service(_spawn_service), cls(_cls) {}
-
-StockMap *
-child_stock_new(unsigned limit, unsigned max_idle,
-                EventLoop &event_loop, SpawnService &spawn_service,
-                const ChildStockClass *cls)
+     spawn_service(_spawn_service), cls(_cls)
 {
-    assert(cls != nullptr);
-    assert(cls->prepare != nullptr);
-
-    auto *s = new ChildStock(event_loop, spawn_service, *cls, limit, max_idle);
-    return &s->GetMap();
-}
-
-void
-child_stock_free(StockMap *_stock)
-{
-    auto *stock = (ChildStock *)&_stock->GetClass();
-    delete stock;
+    assert(cls.prepare != nullptr);
 }
 
 UniqueSocketDescriptor

@@ -37,14 +37,14 @@
 #ifndef BENG_PROXY_CHILD_STOCK_HXX
 #define BENG_PROXY_CHILD_STOCK_HXX
 
+#include "stock/Class.hxx"
+#include "stock/MapStock.hxx"
 #include "io/FdType.hxx"
 
 #include "util/Compiler.h"
 
 #include <sys/socket.h>
 
-class StockMap;
-struct StockItem;
 struct PreparedChildProcess;
 class UniqueSocketDescriptor;
 class EventLoop;
@@ -60,13 +60,25 @@ struct ChildStockClass {
                     PreparedChildProcess &p);
 };
 
-StockMap *
-child_stock_new(unsigned limit, unsigned max_idle,
-                EventLoop &event_loop, SpawnService &spawn_service,
-                const ChildStockClass *cls);
+class ChildStock final : StockClass {
+    StockMap map;
 
-void
-child_stock_free(StockMap *stock);
+    SpawnService &spawn_service;
+    const ChildStockClass &cls;
+
+public:
+    ChildStock(EventLoop &event_loop, SpawnService &_spawn_service,
+               const ChildStockClass &_cls,
+               unsigned _limit, unsigned _max_idle);
+
+    StockMap &GetStockMap() {
+        return map;
+    }
+
+    /* virtual methods from class StockClass */
+    void Create(CreateStockItem c, void *info, struct pool &caller_pool,
+                CancellablePointer &cancel_ptr) override;
+};
 
 /**
  * Connect a socket to the given child process.  The socket must be

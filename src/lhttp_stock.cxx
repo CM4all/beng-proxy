@@ -53,7 +53,7 @@
 
 class LhttpStock final : StockClass {
     StockMap hstock;
-    StockMap *const child_stock;
+    ChildStock child_stock;
     MultiStock *const mchild_stock;
 
 public:
@@ -66,12 +66,11 @@ public:
         hstock.FadeAll();
 
         delete mchild_stock;
-        child_stock_free(child_stock);
     }
 
     void FadeAll() {
         hstock.FadeAll();
-        child_stock->FadeAll();
+        child_stock.GetStockMap().FadeAll();
     }
 
     StockMap &GetConnectionStock() {
@@ -258,10 +257,10 @@ inline
 LhttpStock::LhttpStock(unsigned limit, unsigned max_idle,
                        EventLoop &event_loop, SpawnService &spawn_service)
     :hstock(event_loop, *this, limit, max_idle),
-     child_stock(child_stock_new(limit, max_idle,
-                                 event_loop, spawn_service,
-                                 &lhttp_child_stock_class)),
-     mchild_stock(new MultiStock(*child_stock)) {}
+     child_stock(event_loop, spawn_service,
+                 lhttp_child_stock_class,
+                 limit, max_idle),
+     mchild_stock(new MultiStock(child_stock.GetStockMap())) {}
 
 LhttpStock *
 lhttp_stock_new(unsigned limit, unsigned max_idle,

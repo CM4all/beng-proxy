@@ -68,7 +68,7 @@
 
 struct FcgiStock final : StockClass {
     StockMap hstock;
-    StockMap *child_stock;
+    ChildStock child_stock;
 
     FcgiStock(unsigned limit, unsigned max_idle,
               EventLoop &event_loop, SpawnService &spawn_service);
@@ -78,8 +78,6 @@ struct FcgiStock final : StockClass {
            calls ClearIdle(), so this method is the best match for
            what we want to do (though a kludge) */
         hstock.FadeAll();
-
-        child_stock_free(child_stock);
     }
 
     EventLoop &GetEventLoop() {
@@ -88,7 +86,7 @@ struct FcgiStock final : StockClass {
 
     void FadeAll() {
         hstock.FadeAll();
-        child_stock->FadeAll();
+        child_stock.GetStockMap().FadeAll();
     }
 
     /* virtual methods from class StockClass */
@@ -257,7 +255,7 @@ FcgiStock::Create(CreateStockItem c, void *info,
     const char *key = c.GetStockName();
 
     try {
-        connection->child = child_stock->GetNow(caller_pool, key, params);
+        connection->child = child_stock.GetStockMap().GetNow(caller_pool, key, params);
     } catch (...) {
         delete connection;
         std::throw_with_nested(FcgiClientError(StringFormat<256>("Failed to start FastCGI server '%s'",
@@ -340,9 +338,9 @@ inline
 FcgiStock::FcgiStock(unsigned limit, unsigned max_idle,
                      EventLoop &event_loop, SpawnService &spawn_service)
     :hstock(event_loop, *this, limit, max_idle),
-     child_stock(child_stock_new(limit, max_idle,
-                                 event_loop, spawn_service,
-                                 &fcgi_child_stock_class)) {}
+     child_stock(event_loop, spawn_service,
+                 fcgi_child_stock_class,
+                 limit, max_idle) {}
 
 FcgiStock *
 fcgi_stock_new(unsigned limit, unsigned max_idle,
