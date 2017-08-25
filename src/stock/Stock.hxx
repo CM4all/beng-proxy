@@ -40,7 +40,7 @@
 #include "event/Duration.hxx"
 #include "io/Logger.hxx"
 #include "util/Cancellable.hxx"
-
+#include "util/DeleteDisposer.hxx"
 #include "util/Compiler.h"
 
 #include <string>
@@ -196,6 +196,22 @@ public:
      */
     void FadeAll();
 
+    /**
+     * Destroy all matching idle items and don't reuse any of the
+     * matching busy items.
+     */
+    template<typename P>
+    void FadeIf(P &&predicate) {
+        for (auto &i : busy)
+            if (predicate(i))
+                i.fade = true;
+
+        ClearIdleIf(std::forward<P>(predicate));
+
+        ScheduleCheckEmpty();
+        // TODO: restart the "num_create" list?
+    }
+
 private:
     /**
      * Check if the stock has become empty, and invoke the handler.
@@ -208,6 +224,15 @@ private:
     }
 
     void ClearIdle();
+
+    template<typename P>
+    void ClearIdleIf(P &&predicate) {
+        idle.remove_and_dispose_if(std::forward<P>(predicate),
+                                   DeleteDisposer());
+
+        if (idle.size() <= max_idle)
+            UnscheduleCleanup();
+    }
 
     bool GetIdle(StockGetHandler &handler);
     void GetCreate(struct pool &caller_pool, void *info,

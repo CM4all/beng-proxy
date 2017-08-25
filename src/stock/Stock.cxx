@@ -35,7 +35,6 @@
 #include "GetHandler.hxx"
 #include "pool.hxx"
 #include "util/Cancellable.hxx"
-#include "util/DeleteDisposer.hxx"
 
 #include <assert.h>
 

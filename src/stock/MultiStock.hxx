@@ -109,6 +109,12 @@ class MultiStock {
             reuse = false;
         }
 
+        template<typename P>
+        void FadeIf(P &&predicate) {
+            if (predicate(item))
+                Fade();
+        }
+
     private:
         Lease &AddLease() {
             Lease *lease = new Lease(*this);
@@ -170,6 +176,15 @@ public:
     void FadeAll() {
         for (auto &i : items)
             i.Fade();
+    }
+
+    /**
+     * @see Stock::FadeIf()
+     */
+    template<typename P>
+    void FadeIf(P &&predicate) {
+        for (auto &i : items)
+            i.FadeIf(predicate);
     }
 
     /**

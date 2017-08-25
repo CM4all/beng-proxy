@@ -144,6 +144,15 @@ public:
     }
 
     /**
+     * @see Stock::FadeIf()
+     */
+    template<typename P>
+    void FadeIf(P &&predicate) {
+        for (auto &i : map)
+            i.stock.FadeIf(predicate);
+    }
+
+    /**
      * Obtain statistics.
      */
     void AddStats(StockStats &data) const {
