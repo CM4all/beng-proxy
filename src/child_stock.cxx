@@ -83,16 +83,21 @@ struct ChildStockItem final : StockItem, ExitListener {
 };
 
 class ChildStock {
+    StockMap map;
+
     SpawnService &spawn_service;
     const ChildStockClass &cls;
 
 public:
-    explicit ChildStock(SpawnService &_spawn_service,
-                        const ChildStockClass &_cls)
-        :spawn_service(_spawn_service), cls(_cls) {}
+    ChildStock(EventLoop &event_loop, SpawnService &_spawn_service,
+               const ChildStockClass &_cls,
+               unsigned _limit, unsigned _max_idle);
+
+    StockMap &GetMap() {
+        return map;
+    }
 
     void Create(CreateStockItem c, void *info);
-
 };
 
 void
@@ -166,6 +171,12 @@ static constexpr StockClass child_stock_class = {
  *
  */
 
+ChildStock::ChildStock(EventLoop &event_loop, SpawnService &_spawn_service,
+                       const ChildStockClass &_cls,
+                       unsigned _limit, unsigned _max_idle)
+    :map(event_loop, child_stock_class, this, _limit, _max_idle),
+     spawn_service(_spawn_service), cls(_cls) {}
+
 StockMap *
 child_stock_new(unsigned limit, unsigned max_idle,
                 EventLoop &event_loop, SpawnService &spawn_service,
@@ -174,15 +185,14 @@ child_stock_new(unsigned limit, unsigned max_idle,
     assert(cls != nullptr);
     assert(cls->prepare != nullptr);
 
-    auto *s = new ChildStock(spawn_service, *cls);
-    return new StockMap(event_loop, child_stock_class, s, limit, max_idle);
+    auto *s = new ChildStock(event_loop, spawn_service, *cls, limit, max_idle);
+    return &s->GetMap();
 }
 
 void
 child_stock_free(StockMap *stock)
 {
     auto *s = (ChildStock *)stock->GetClassContext();
-    delete stock;
     delete s;
 }
 
