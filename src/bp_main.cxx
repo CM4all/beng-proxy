@@ -313,8 +313,8 @@ try {
     }
 
     instance.balancer = balancer_new(instance.event_loop);
-    instance.tcp_stock = tcp_stock_new(instance.event_loop,
-                                       instance.config.tcp_stock_limit);
+    instance.tcp_stock = new TcpStock(instance.event_loop,
+                                      instance.config.tcp_stock_limit);
     instance.tcp_balancer = tcp_balancer_new(*instance.tcp_stock,
                                              *instance.balancer);
 

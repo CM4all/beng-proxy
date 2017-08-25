@@ -56,6 +56,7 @@ class AccessLogGlue;
 class Stock;
 class ResourceLoader;
 class StockMap;
+class TcpStock;
 struct Balancer;
 struct TcpBalancer;
 struct MemachedStock;
@@ -133,7 +134,7 @@ struct BpInstance final : PInstance, ControlHandler {
     TranslateStock *translate_stock = nullptr;
     struct tcache *translate_cache = nullptr;
     Balancer *balancer = nullptr;
-    StockMap *tcp_stock = nullptr;
+    TcpStock *tcp_stock = nullptr;
     TcpBalancer *tcp_balancer = nullptr;
     MemachedStock *memcached_stock = nullptr;
 

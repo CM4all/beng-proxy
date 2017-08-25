@@ -36,7 +36,6 @@
 #include "lb_check.hxx"
 #include "tcp_stock.hxx"
 #include "tcp_balancer.hxx"
-#include "stock/MapStock.hxx"
 #include "failure.hxx"
 #include "bulldog.hxx"
 #include "balancer.hxx"
@@ -117,8 +116,7 @@ LbInstance::ShutdownCallback()
     if (tcp_balancer != nullptr)
         tcp_balancer_free(tcp_balancer);
 
-    if (tcp_stock != nullptr)
-        tcp_stock_free(tcp_stock);
+    delete tcp_stock;
 
     if (balancer != nullptr)
         balancer_free(balancer);
@@ -191,8 +189,8 @@ try {
     instance.InitAllListeners();
 
     instance.balancer = balancer_new(instance.event_loop);
-    instance.tcp_stock = tcp_stock_new(instance.event_loop,
-                                       cmdline.tcp_stock_limit);
+    instance.tcp_stock = new TcpStock(instance.event_loop,
+                                      cmdline.tcp_stock_limit);
     instance.tcp_balancer = tcp_balancer_new(*instance.tcp_stock,
                                              *instance.balancer);
 

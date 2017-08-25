@@ -31,9 +31,7 @@
  */
 
 #include "tcp_stock.hxx"
-#include "stock/MapStock.hxx"
 #include "stock/Stock.hxx"
-#include "stock/Class.hxx"
 #include "stock/Item.hxx"
 #include "address_list.hxx"
 #include "pool.hxx"
@@ -192,23 +190,6 @@ TcpStockConnection::OnSocketConnectError(std::exception_ptr ep)
  *
  */
 
-class TcpStock final : StockClass {
-    StockMap stock;
-
-public:
-    explicit TcpStock(EventLoop &event_loop, unsigned limit)
-        :stock(event_loop, *this, limit, 16) {}
-
-    StockMap &GetStock() {
-        return stock;
-    }
-
-private:
-    /* virtual methods from class StockClass */
-    void Create(CreateStockItem c, void *info, struct pool &caller_pool,
-                CancellablePointer &cancel_ptr) override;
-};
-
 void
 TcpStock::Create(CreateStockItem c,
                  void *info,
@@ -246,22 +227,8 @@ TcpStockConnection::~TcpStockConnection()
  *
  */
 
-StockMap *
-tcp_stock_new(EventLoop &event_loop, unsigned limit)
-{
-    auto *stock = new TcpStock(event_loop, limit);
-    return &stock->GetStock();
-}
-
 void
-tcp_stock_free(StockMap *_stock)
-{
-    auto *stock = (TcpStock *)&_stock->GetClass();
-    delete stock;
-}
-
-void
-tcp_stock_get(StockMap &tcp_stock, struct pool &pool, const char *name,
+TcpStock::Get(struct pool &pool, const char *name,
               bool ip_transparent,
               SocketAddress bind_address,
               SocketAddress address,
@@ -289,7 +256,7 @@ tcp_stock_get(StockMap &tcp_stock, struct pool &pool, const char *name,
             name = p_strdup(&pool, buffer);
     }
 
-    tcp_stock.Get(pool, name, request, handler, cancel_ptr);
+    stock.Get(pool, name, request, handler, cancel_ptr);
 }
 
 SocketDescriptor

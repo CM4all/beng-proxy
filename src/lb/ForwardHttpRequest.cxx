@@ -530,12 +530,13 @@ LbRequest::Start()
 
         current_address = member.second;
 
-        tcp_stock_get(*connection.instance.tcp_stock, request.pool,
-                      member.first,
-                      cluster_config.transparent_source, bind_address,
-                      member.second,
-                      20,
-                      *this, cancel_ptr);
+        connection.instance.tcp_stock->Get(request.pool,
+                                           member.first,
+                                           cluster_config.transparent_source,
+                                           bind_address,
+                                           member.second,
+                                           20,
+                                           *this, cancel_ptr);
 
         return;
     }

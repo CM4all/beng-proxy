@@ -36,11 +36,11 @@
 #include "stock/GetHandler.hxx"
 
 struct TcpBalancer {
-    StockMap &tcp_stock;
+    TcpStock &tcp_stock;
 
     Balancer &balancer;
 
-    TcpBalancer(StockMap &_tcp_stock,
+    TcpBalancer(TcpStock &_tcp_stock,
                 Balancer &_balancer)
         :tcp_stock(_tcp_stock), balancer(_balancer) {}
 };
@@ -78,14 +78,14 @@ inline void
 TcpBalancerRequest::Send(struct pool &pool, SocketAddress address,
                          CancellablePointer &cancel_ptr)
 {
-    tcp_stock_get(tcp_balancer.tcp_stock, pool,
-                  nullptr,
-                  ip_transparent,
-                  bind_address,
-                  address,
-                  timeout,
-                  *this,
-                  cancel_ptr);
+    tcp_balancer.tcp_stock.Get(pool,
+                               nullptr,
+                               ip_transparent,
+                               bind_address,
+                               address,
+                               timeout,
+                               *this,
+                               cancel_ptr);
 }
 
 /*
@@ -116,7 +116,7 @@ TcpBalancerRequest::OnStockItemError(std::exception_ptr ep)
  */
 
 TcpBalancer *
-tcp_balancer_new(StockMap &tcp_stock, Balancer &balancer)
+tcp_balancer_new(TcpStock &tcp_stock, Balancer &balancer)
 {
     return new TcpBalancer(tcp_stock, balancer);
 }

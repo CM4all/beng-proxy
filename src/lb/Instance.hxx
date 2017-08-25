@@ -50,7 +50,7 @@
 
 class AccessLogGlue;
 class Stock;
-class StockMap;
+class TcpStock;
 struct Balancer;
 struct TcpBalancer;
 struct LbConfig;
@@ -94,7 +94,7 @@ struct LbInstance final : PInstance {
 
     /* stock */
     Balancer *balancer;
-    StockMap *tcp_stock;
+    TcpStock *tcp_stock;
     TcpBalancer *tcp_balancer;
 
     Stock *pipe_stock;

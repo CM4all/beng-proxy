@@ -131,10 +131,8 @@ BpInstance::FreeStocksAndCaches()
         tcp_balancer = nullptr;
     }
 
-    if (tcp_stock != nullptr) {
-        tcp_stock_free(tcp_stock);
-        tcp_stock = nullptr;
-    }
+    delete tcp_stock;
+    tcp_stock = nullptr;
 
     if (balancer != nullptr) {
         balancer_free(balancer);

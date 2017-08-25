@@ -32,7 +32,7 @@
 
 #include "lb_stats.hxx"
 #include "lb/Instance.hxx"
-#include "stock/MapStock.hxx"
+#include "tcp_stock.hxx"
 #include "stock/Stats.hxx"
 #include "fb_pool.hxx"
 #include "SlicePool.hxx"

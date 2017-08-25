@@ -94,8 +94,8 @@ try {
     const auto address_info = Resolve(argv[1], 11211, &hints);
     const AddressList address_list(ShallowCopy(), address_info);
 
-    auto *tcp_stock = tcp_stock_new(instance.event_loop, 0);
-    TcpBalancer *tcp_balancer = tcp_balancer_new(*tcp_stock,
+    TcpStock tcp_stock(instance.event_loop, 0);
+    TcpBalancer *tcp_balancer = tcp_balancer_new(tcp_stock,
                                                  *balancer_new(instance.event_loop));
     auto *stock = memcached_stock_new(instance.event_loop, *tcp_balancer,
                                       address_list);
@@ -113,7 +113,6 @@ try {
     instance.event_loop.Dispatch();
 
     tcp_balancer_free(tcp_balancer);
-    delete tcp_stock;
 
     /* cleanup */
 

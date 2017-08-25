@@ -37,43 +37,54 @@
 #ifndef BENG_PROXY_TCP_STOCK_HXX
 #define BENG_PROXY_TCP_STOCK_HXX
 
+#include "stock/Class.hxx"
+#include "stock/MapStock.hxx"
 #include "util/Compiler.h"
 
 struct pool;
 struct balancer;
-class StockMap;
-struct StockItem;
 class SocketDescriptor;
-class StockGetHandler;
 class CancellablePointer;
 class SocketAddress;
 class EventLoop;
 
 /**
- * Creates a new TCP connection stock.
+ * A TCP connection stock.
  *
- * @param limit the maximum number of connections per host
  * @return the new TCP connections stock (this function cannot fail)
  */
-StockMap *
-tcp_stock_new(EventLoop &event_loop, unsigned limit);
+class TcpStock final : StockClass {
+    StockMap stock;
 
-void
-tcp_stock_free(StockMap *stock);
+public:
+    /**
+     * @param limit the maximum number of connections per host
+     */
+    TcpStock(EventLoop &event_loop, unsigned limit)
+        :stock(event_loop, *this, limit, 16) {}
 
-/**
- * @param name the MapStock name; it is auto-generated from the
- * #address if nullptr is passed here
- * @param timeout the connect timeout in seconds
- */
-void
-tcp_stock_get(StockMap &tcp_stock, struct pool &pool, const char *name,
-              bool ip_transparent,
-              SocketAddress bind_address,
-              SocketAddress address,
-              unsigned timeout,
-              StockGetHandler &handler,
-              CancellablePointer &cancel_ptr);
+    void AddStats(StockStats &data) const {
+        stock.AddStats(data);
+    }
+
+    /**
+     * @param name the MapStock name; it is auto-generated from the
+     * #address if nullptr is passed here
+     * @param timeout the connect timeout in seconds
+     */
+    void Get(struct pool &pool, const char *name,
+             bool ip_transparent,
+             SocketAddress bind_address,
+             SocketAddress address,
+             unsigned timeout,
+             StockGetHandler &handler,
+             CancellablePointer &cancel_ptr);
+
+private:
+    /* virtual methods from class StockClass */
+    void Create(CreateStockItem c, void *info, struct pool &caller_pool,
+                CancellablePointer &cancel_ptr) override;
+};
 
 gcc_pure
 SocketDescriptor

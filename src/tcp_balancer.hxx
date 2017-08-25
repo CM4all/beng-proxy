@@ -44,7 +44,7 @@
 struct pool;
 struct Balancer;
 struct AddressList;
-class StockMap;
+class TcpStock;
 class StockGetHandler;
 struct StockItem;
 class CancellablePointer;
@@ -60,7 +60,7 @@ struct TcpBalancer;
  * @return the new TCP connections stock (this function cannot fail)
  */
 TcpBalancer *
-tcp_balancer_new(StockMap &tcp_stock, Balancer &balancer);
+tcp_balancer_new(TcpStock &tcp_stock, Balancer &balancer);
 
 void
 tcp_balancer_free(TcpBalancer *tcp_balancer);
