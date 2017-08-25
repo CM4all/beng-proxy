@@ -34,9 +34,8 @@
 #define BENG_LB_TRANSLATION_CACHE_HXX
 
 #include "io/Logger.hxx"
+#include "http/Status.h"
 #include "util/Cache.hxx"
-
-#include <http/status.h>
 
 #include <string>
 

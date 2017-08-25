@@ -33,8 +33,8 @@
 #ifndef BENG_PROXY_HTTP_CACHE_HEAP_HXX
 #define BENG_PROXY_HTTP_CACHE_HEAP_HXX
 
+#include "http/Status.h"
 #include "util/Compiler.h"
-#include <http/status.h>
 
 #include <stddef.h>
 

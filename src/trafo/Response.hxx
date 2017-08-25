@@ -34,10 +34,9 @@
 #define TRAFO_RESPONSE_HXX
 
 #include "translation/Protocol.hxx"
+#include "http/Status.h"
 #include "util/ConstBuffer.hxx"
 #include "util/WritableBuffer.hxx"
-
-#include <http/status.h>
 
 #include <stdint.h>
 #include <stddef.h>

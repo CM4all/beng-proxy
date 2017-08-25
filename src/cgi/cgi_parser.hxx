@@ -35,8 +35,7 @@
 
 #include "strmap.hxx"
 #include "Completion.hxx"
-
-#include <http/status.h>
+#include "http/Status.h"
 
 #include <assert.h>
 #include <stddef.h>

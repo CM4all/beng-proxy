@@ -33,7 +33,7 @@
 #ifndef BENG_LB_SIMPLE_HTTP_RESPONSE_HXX
 #define BENG_LB_SIMPLE_HTTP_RESPONSE_HXX
 
-#include <http/status.h>
+#include "http/Status.h"
 
 #include <string>
 

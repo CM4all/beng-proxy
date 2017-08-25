@@ -35,8 +35,7 @@
 
 #include "StickyHash.hxx"
 #include "http/Method.h"
-
-#include <http/status.h>
+#include "http/Status.h"
 
 struct pool;
 class Istream;

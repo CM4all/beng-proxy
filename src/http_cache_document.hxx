@@ -35,9 +35,8 @@
 
 #include "http_cache_info.hxx"
 #include "strmap.hxx"
-
+#include "http/Status.h"
 #include "util/Compiler.h"
-#include <http/status.h>
 
 struct HttpCacheDocument {
     HttpCacheResponseInfo info;

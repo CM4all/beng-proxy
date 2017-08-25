@@ -33,7 +33,7 @@
 #ifndef BENG_PROXY_ERRDOC_HXX
 #define BENG_PROXY_ERRDOC_HXX
 
-#include <http/status.h>
+#include "http/Status.h"
 
 struct Request;
 class Istream;

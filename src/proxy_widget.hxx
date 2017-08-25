@@ -37,7 +37,7 @@
 #ifndef BENG_PROXY_PROXY_WIDGET_HXX
 #define BENG_PROXY_PROXY_WIDGET_HXX
 
-#include <http/status.h>
+#include "http/Status.h"
 
 class Istream;
 struct Request;

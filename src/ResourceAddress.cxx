@@ -44,8 +44,6 @@
 #include "HttpMessageResponse.hxx"
 #include "util/StringView.hxx"
 
-#include <http/status.h>
-
 ResourceAddress::ResourceAddress(AllocatorPtr alloc,
                                  const ResourceAddress &src)
 {

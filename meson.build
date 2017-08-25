@@ -169,6 +169,7 @@ io_dep = declare_dependency(link_with: io)
 
 http = static_library('http',
   'libcommon/src/http/Method.c',
+  'libcommon/src/http/Status.c',
   'libcommon/src/http/List.cxx',
   'libcommon/src/http/Date.cxx',
   'libcommon/src/http/Range.cxx',
@@ -1139,7 +1140,7 @@ executable('cm4all-beng-proxy-log-cat',
   'src/access_log/Cat.cxx',
   include_directories: inc,
   dependencies: [
-    libhttp,
+    http_dep,
   ])
 
 executable('cm4all-beng-proxy-log-json',
@@ -1148,8 +1149,8 @@ executable('cm4all-beng-proxy-log-json',
   include_directories: inc,
   dependencies: [
     net_dep,
+    http_dep,
     libjsoncpp,
-    libhttp,
   ])
 
 executable('cm4all-beng-proxy-log-lua',
@@ -1159,9 +1160,9 @@ executable('cm4all-beng-proxy-log-lua',
   dependencies: [
     lua_dep,
     net_dep,
+    http_dep,
     util_dep,
     liblua,
-    libhttp,
   ])
 
 executable('cm4all-beng-proxy-log-traffic',
@@ -1169,7 +1170,7 @@ executable('cm4all-beng-proxy-log-traffic',
   'src/access_log/Traffic.cxx',
   include_directories: inc,
   dependencies: [
-    libhttp,
+    http_dep,
   ])
 
 executable('cm4all-beng-proxy-log-split',
@@ -1177,16 +1178,16 @@ executable('cm4all-beng-proxy-log-split',
   'src/access_log/Split.cxx',
   include_directories: inc,
   dependencies: [
-    libhttp,
     system_dep,
+    http_dep,
   ])
 
 executable('cm4all-beng-proxy-log-forward',
   'src/access_log/Forward.cxx',
   include_directories: inc,
   dependencies: [
-    libhttp,
     net_dep,
+    http_dep,
   ])
 
 executable('cm4all-beng-proxy-log-exec',

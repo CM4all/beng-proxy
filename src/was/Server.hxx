@@ -34,8 +34,7 @@
 #define BENG_PROXY_WAS_SERVER_HXX
 
 #include "http/Method.h"
-
-#include <http/status.h>
+#include "http/Status.h"
 
 struct pool;
 class EventLoop;

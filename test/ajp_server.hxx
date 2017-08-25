@@ -31,8 +31,7 @@
  */
 
 #include "ajp/ajp_protocol.hxx"
-
-#include <http/status.h>
+#include "http/Status.h"
 
 #include <stddef.h>
 

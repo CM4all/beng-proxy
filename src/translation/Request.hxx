@@ -40,7 +40,7 @@
 #include "util/ConstBuffer.hxx"
 
 #if TRANSLATION_ENABLE_HTTP
-#include <http/status.h>
+#include "http/Status.h"
 #endif
 
 #include <stddef.h>

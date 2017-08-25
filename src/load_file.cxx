@@ -35,10 +35,9 @@
 #include "pool.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "system/Error.hxx"
+#include "http/Status.h"
 #include "util/ConstBuffer.hxx"
 #include "util/StringFormat.hxx"
-
-#include <http/status.h>
 
 ConstBuffer<void>
 LoadFile(struct pool &pool, const char *path, off_t max_size)

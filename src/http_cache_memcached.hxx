@@ -37,9 +37,9 @@
 #ifndef BENG_PROXY_HTTP_CACHE_MEMCACHED_HXX
 #define BENG_PROXY_HTTP_CACHE_MEMCACHED_HXX
 
-#include <exception>
+#include "http/Status.h"
 
-#include <http/status.h>
+#include <exception>
 
 struct pool;
 class StringMap;

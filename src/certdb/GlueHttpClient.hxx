@@ -35,8 +35,7 @@
 
 #include "curl/Global.hxx"
 #include "http/Method.h"
-
-#include <http/status.h>
+#include "http/Status.h"
 
 #include <string>
 #include <map>

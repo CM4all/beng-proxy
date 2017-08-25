@@ -33,7 +33,7 @@
 #ifndef BENG_PROXY_HTTP_MESSAGE_RESPONSE_HXX
 #define BENG_PROXY_HTTP_MESSAGE_RESPONSE_HXX
 
-#include <http/status.h>
+#include "http/Status.h"
 
 #include <stdexcept>
 

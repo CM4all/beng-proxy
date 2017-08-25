@@ -33,7 +33,7 @@
 #ifndef MESSAGE_HTTP_RESPONSE_HXX
 #define MESSAGE_HTTP_RESPONSE_HXX
 
-#include <http/status.h>
+#include "http/Status.h"
 
 /**
  * Describes a very simple HTTP response with a text/plain body.

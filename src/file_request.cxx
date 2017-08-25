@@ -38,8 +38,7 @@
 #include "istream/istream_file.hxx"
 #include "pool.hxx"
 #include "system/Error.hxx"
-
-#include <http/status.h>
+#include "http/Status.h"
 
 #include <assert.h>
 #include <sys/stat.h>

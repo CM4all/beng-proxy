@@ -33,7 +33,7 @@
 #ifndef BENG_PIPE_FILTER_HXX
 #define BENG_PIPE_FILTER_HXX
 
-#include <http/status.h>
+#include "http/Status.h"
 
 struct pool;
 class Istream;

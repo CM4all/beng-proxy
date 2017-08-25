@@ -39,8 +39,7 @@
 
 #include "Config.hxx"
 #include "http/Method.h"
-
-#include <http/status.h>
+#include "http/Status.h"
 
 #include <chrono>
 #include <string>

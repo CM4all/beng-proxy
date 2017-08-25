@@ -34,8 +34,7 @@
 #define __BENG_HTTP_SERVER_H
 
 #include "io/FdType.hxx"
-
-#include <http/status.h>
+#include "http/Status.h"
 
 struct pool;
 class EventLoop;
