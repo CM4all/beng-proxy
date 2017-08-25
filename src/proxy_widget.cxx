@@ -51,9 +51,8 @@
 #include "istream/istream_pipe.hxx"
 #include "translation/Vary.hxx"
 #include "pool.hxx"
+#include "io/Logger.hxx"
 #include "util/Cast.hxx"
-
-#include <daemon/log.h>
 
 struct ProxyWidget final : WidgetLookupHandler, HttpResponseHandler, Cancellable {
     Request &request;
@@ -168,8 +167,8 @@ widget_view_allowed(Widget &widget, const WidgetView &view)
 
     /* views with an address must not be selected by the client */
     if (!view.inherited) {
-        daemon_log(2, "view '%s' of widget class '%s' is forbidden because it has an address\n",
-                   view.name, widget.class_name);
+        LogConcat(2, widget.GetLogName(),
+                  "view '", view.name, "' is forbidden because it has an address");
         return false;
     }
 
@@ -247,8 +246,8 @@ void
 ProxyWidget::ResolverCallback()
 {
     if (widget->cls == nullptr) {
-        daemon_log(2, "lookup of widget class for '%s' failed\n",
-                   widget->GetLogName());
+        LogConcat(2, widget->GetLogName(),
+                  "lookup of widget class failed");
 
         widget->Cancel();
         response_dispatch_message(request, HTTP_STATUS_INTERNAL_SERVER_ERROR,
@@ -283,8 +282,8 @@ ProxyWidget::WidgetNotFound()
 {
     assert(ref != nullptr);
 
-    daemon_log(2, "widget '%s' not found in %s [%s]\n",
-               ref->id, widget->GetLogName(), request.request.uri);
+    LogConcat(2, widget->GetLogName(),
+              "widget '", ref->id, "' not found [", request.request.uri, "]");
 
     widget->Cancel();
     response_dispatch_message(request, HTTP_STATUS_NOT_FOUND,
