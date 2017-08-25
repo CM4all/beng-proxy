@@ -119,12 +119,12 @@ private:
     }
 
     /* virtual methods from class StockItem */
-    bool Borrow(gcc_unused void *ctx) override {
+    bool Borrow() override {
         event.Delete();
         return true;
     }
 
-    bool Release(gcc_unused void *ctx) override {
+    bool Release() override {
         event.Add(EventDuration<300>::value);
         return true;
     }

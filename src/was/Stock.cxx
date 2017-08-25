@@ -165,7 +165,7 @@ private:
 
 public:
     /* virtual methods from class StockItem */
-    bool Borrow(gcc_unused void *ctx) override {
+    bool Borrow() override {
         if (stopping)
             /* we havn't yet recovered from #WAS_COMMAND_STOP - give
                up this child process */
@@ -176,7 +176,7 @@ public:
         return true;
     }
 
-    bool Release(gcc_unused void *ctx) override {
+    bool Release() override {
         event.Add(was_idle_timeout);
         unclean = stopping;
         return true;

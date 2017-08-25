@@ -270,7 +270,7 @@ Stock::GetIdle(StockGetHandler &get_handler)
         if (idle.size() == max_idle)
             UnscheduleCleanup();
 
-        if (item.Borrow(class_ctx)) {
+        if (item.Borrow()) {
 #ifndef NDEBUG
             item.is_idle = false;
 #endif
@@ -427,7 +427,7 @@ Stock::Put(StockItem &item, bool destroy)
 
     busy.erase(busy.iterator_to(item));
 
-    if (destroy || item.fade || !item.Release(class_ctx)) {
+    if (destroy || item.fade || !item.Release()) {
         delete &item;
         ScheduleCheckEmpty();
     } else {

@@ -114,7 +114,7 @@ struct StockItem
      *
      * @return false when this item is defunct and shall be destroyed
      */
-    virtual bool Borrow(void *ctx) = 0;
+    virtual bool Borrow() = 0;
 
     /**
      * Return this borrowed item into the "idle" list.
@@ -122,7 +122,7 @@ struct StockItem
      * @return false when this item is defunct and shall not be reused
      * again; it will be destroyed by the caller
      */
-    virtual bool Release(void *ctx) = 0;
+    virtual bool Release() = 0;
 
     /**
      * Announce that the creation of this item has finished

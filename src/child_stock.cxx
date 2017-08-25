@@ -63,14 +63,14 @@ struct ChildStockItem final : StockItem, ExitListener {
     ~ChildStockItem() override;
 
     /* virtual methods from class StockItem */
-    bool Borrow(gcc_unused void *ctx) override {
+    bool Borrow() override {
         assert(!busy);
         busy = true;
 
         return true;
     }
 
-    bool Release(gcc_unused void *ctx) override {
+    bool Release() override {
         assert(busy);
         busy = false;
 

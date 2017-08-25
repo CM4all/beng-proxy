@@ -59,12 +59,12 @@ struct MyStockItem final : StockItem {
     }
 
     /* virtual methods from class StockItem */
-    bool Borrow(gcc_unused void *ctx) override {
+    bool Borrow() override {
         ++num_borrow;
         return true;
     }
 
-    bool Release(gcc_unused void *ctx) override {
+    bool Release() override {
         ++num_release;
         return true;
     }

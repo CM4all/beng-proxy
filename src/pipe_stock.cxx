@@ -49,8 +49,8 @@ struct PipeStockItem final : StockItem {
     }
 
     /* virtual methods from class StockItem */
-    bool Borrow(gcc_unused void *ctx) override;
-    bool Release(gcc_unused void *ctx) override;
+    bool Borrow() override;
+    bool Release() override;
 };
 
 /*
@@ -78,7 +78,7 @@ pipe_stock_create(gcc_unused void *ctx,
 }
 
 bool
-PipeStockItem::Borrow(gcc_unused void *ctx)
+PipeStockItem::Borrow()
 {
     assert(fds[0].IsValid());
     assert(fds[1].IsValid());
@@ -87,7 +87,7 @@ PipeStockItem::Borrow(gcc_unused void *ctx)
 }
 
 bool
-PipeStockItem::Release(gcc_unused void *ctx)
+PipeStockItem::Release()
 {
     assert(fds[0].IsValid());
     assert(fds[1].IsValid());
