@@ -98,6 +98,7 @@ class MultiStock {
             }
 
             Item(const Item &) = delete;
+            Item &operator=(const Item &) = delete;
 
             ~Item();
 
@@ -139,12 +140,8 @@ class MultiStock {
             :stock(_stock) {
         }
 
-        Domain(Domain &&other)
-            :stock(other.stock) {
-            assert(other.items.empty());
-        }
-
         Domain(const Domain &) = delete;
+        Domain &operator=(const Domain &) = delete;
 
         ~Domain() {
             assert(items.empty());
@@ -188,6 +185,7 @@ public:
         :hstock(_hstock) {}
 
     MultiStock(const MultiStock &) = delete;
+    MultiStock &operator=(const MultiStock &) = delete;
 
     /**
      * Obtains an item from the mstock without going through the callback.
