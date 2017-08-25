@@ -62,10 +62,10 @@ public:
 
     ~LhttpStock() {
         /* call FadeAll() release all idle connections before calling
-           mstock_free() to avoid assertion failure */
+           deleting mchild_stock to avoid assertion failure */
         hstock.FadeAll();
 
-        mstock_free(mchild_stock);
+        delete mchild_stock;
         child_stock_free(child_stock);
     }
 
@@ -136,10 +136,9 @@ LhttpConnection::Connect(MultiStock &child_stock, struct pool &caller_pool,
                          unsigned concurrency)
 {
     try {
-        child = mstock_get_now(child_stock,
-                               caller_pool,
-                               key, info, concurrency,
-                               lease_ref);
+        child = child_stock.GetNow(caller_pool,
+                                   key, info, concurrency,
+                                   lease_ref);
     } catch (...) {
         delete this;
         std::throw_with_nested(FormatRuntimeError("Failed to launch LHTTP server '%s'",
@@ -266,7 +265,7 @@ LhttpStock::LhttpStock(unsigned limit, unsigned max_idle,
      child_stock(child_stock_new(limit, max_idle,
                                  event_loop, spawn_service,
                                  &lhttp_child_stock_class)),
-     mchild_stock(mstock_new(*child_stock)) {}
+     mchild_stock(new MultiStock(*child_stock)) {}
 
 LhttpStock *
 lhttp_stock_new(unsigned limit, unsigned max_idle,
