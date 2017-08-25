@@ -54,7 +54,7 @@
 class LhttpStock final : StockClass {
     StockMap hstock;
     ChildStock child_stock;
-    MultiStock *const mchild_stock;
+    MultiStock mchild_stock;
 
 public:
     LhttpStock(unsigned limit, unsigned max_idle,
@@ -64,8 +64,6 @@ public:
         /* call FadeAll() release all idle connections before calling
            deleting mchild_stock to avoid assertion failure */
         hstock.FadeAll();
-
-        delete mchild_stock;
     }
 
     void FadeAll() {
@@ -232,7 +230,7 @@ LhttpStock::Create(CreateStockItem c, void *info,
 
     auto *connection = new LhttpConnection(c);
 
-    connection->Connect(*mchild_stock, caller_pool,
+    connection->Connect(mchild_stock, caller_pool,
                         c.GetStockName(), info, address->concurrency);
 }
 
@@ -260,7 +258,7 @@ LhttpStock::LhttpStock(unsigned limit, unsigned max_idle,
      child_stock(event_loop, spawn_service,
                  lhttp_child_stock_class,
                  limit, max_idle),
-     mchild_stock(new MultiStock(child_stock.GetStockMap())) {}
+     mchild_stock(child_stock.GetStockMap()) {}
 
 LhttpStock *
 lhttp_stock_new(unsigned limit, unsigned max_idle,
