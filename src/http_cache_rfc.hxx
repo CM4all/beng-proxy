@@ -38,8 +38,9 @@
 #ifndef BENG_PROXY_HTTP_CACHE_RFC_HXX
 #define BENG_PROXY_HTTP_CACHE_RFC_HXX
 
+#include "http/Method.h"
 #include "util/Compiler.h"
-#include <http/method.h>
+
 #include <http/status.h>
 
 #include <sys/types.h> /* for off_t */

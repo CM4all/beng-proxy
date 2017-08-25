@@ -168,6 +168,7 @@ io = static_library('io',
 io_dep = declare_dependency(link_with: io)
 
 http = static_library('http',
+  'libcommon/src/http/Method.c',
   'libcommon/src/http/List.cxx',
   'libcommon/src/http/Date.cxx',
   'libcommon/src/http/Range.cxx',

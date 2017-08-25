@@ -31,8 +31,8 @@
  */
 
 #include "fcgi/Protocol.hxx"
+#include "http/Method.h"
 
-#include <http/method.h>
 #include <http/status.h>
 
 #include <sys/types.h>

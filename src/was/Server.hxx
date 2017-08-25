@@ -33,7 +33,8 @@
 #ifndef BENG_PROXY_WAS_SERVER_HXX
 #define BENG_PROXY_WAS_SERVER_HXX
 
-#include <http/method.h>
+#include "http/Method.h"
+
 #include <http/status.h>
 
 struct pool;

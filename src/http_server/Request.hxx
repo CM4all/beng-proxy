@@ -39,8 +39,7 @@
 
 #include "strmap.hxx"
 #include "net/SocketAddress.hxx"
-
-#include <http/method.h>
+#include "http/Method.h"
 
 struct pool;
 struct StringView;

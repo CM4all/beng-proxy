@@ -38,8 +38,8 @@
 #define BENG_PROXY_LOG_GLUE_HXX
 
 #include "Config.hxx"
+#include "http/Method.h"
 
-#include <http/method.h>
 #include <http/status.h>
 
 #include <chrono>

@@ -33,7 +33,8 @@
 #ifndef ACCESS_LOG_DATAGRAM_HXX
 #define ACCESS_LOG_DATAGRAM_HXX
 
-#include <http/method.h>
+#include "http/Method.h"
+
 #include <http/status.h>
 
 #include <chrono>

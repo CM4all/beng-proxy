@@ -33,7 +33,7 @@
 #ifndef BENG_PROXY_WAS_CLIENT_HXX
 #define BENG_PROXY_WAS_CLIENT_HXX
 
-#include <http/method.h>
+#include "http/Method.h"
 
 struct pool;
 struct Stopwatch;

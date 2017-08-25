@@ -33,10 +33,9 @@
 #ifndef BENG_PROXY_WIDGET_HXX
 #define BENG_PROXY_WIDGET_HXX
 
+#include "http/Method.h"
 #include "util/StringView.hxx"
-
 #include "util/Compiler.h"
-#include <http/method.h>
 
 #include <boost/intrusive/slist.hpp>
 

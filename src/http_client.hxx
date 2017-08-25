@@ -38,8 +38,7 @@
 #define BENG_PROXY_HTTP_CLIENT_HXX
 
 #include "io/FdType.hxx"
-
-#include <http/method.h>
+#include "http/Method.h"
 
 #include <stdexcept>
 

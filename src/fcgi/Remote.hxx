@@ -33,7 +33,7 @@
 #ifndef BENG_PROXY_FCGI_REMOTE_HXX
 #define BENG_PROXY_FCGI_REMOTE_HXX
 
-#include <http/method.h>
+#include "http/Method.h"
 
 struct pool;
 class EventLoop;

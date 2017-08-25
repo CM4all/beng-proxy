@@ -38,8 +38,7 @@
 #define BENG_PROXY_AJP_CLIENT_HXX
 
 #include "io/FdType.hxx"
-
-#include <http/method.h>
+#include "http/Method.h"
 
 struct pool;
 class EventLoop;

@@ -37,8 +37,8 @@
 #ifndef AJP_PROTOCOL_HXX
 #define AJP_PROTOCOL_HXX
 
+#include "http/Method.h"
 #include "util/Compiler.h"
-#include <http/method.h>
 
 #include <stdint.h>
 

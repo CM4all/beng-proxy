@@ -34,8 +34,7 @@
 #define BENG_PROXY_PROCESSOR_ENV_H
 
 #include "session_id.hxx"
-
-#include <http/method.h>
+#include "http/Method.h"
 
 class EventLoop;
 class ResourceLoader;

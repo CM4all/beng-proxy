@@ -38,8 +38,7 @@
 #define BENG_PROXY_AJP_REQUEST_HXX
 
 #include "StickyHash.hxx"
-
-#include <http/method.h>
+#include "http/Method.h"
 
 struct pool;
 class EventLoop;

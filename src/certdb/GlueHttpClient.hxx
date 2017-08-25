@@ -34,8 +34,8 @@
 #define BENG_PROXY_GLUE_HTTP_CLIENT_HXX
 
 #include "curl/Global.hxx"
+#include "http/Method.h"
 
-#include <http/method.h>
 #include <http/status.h>
 
 #include <string>

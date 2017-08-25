@@ -41,10 +41,9 @@
 #include "event/TimerEvent.hxx"
 #include "event/DeferEvent.hxx"
 #include "istream/Pointer.hxx"
+#include "http/Method.h"
 #include "util/Cancellable.hxx"
 #include "util/Exception.hxx"
-
-#include <http/method.h>
 
 struct HttpServerConnection final : IstreamHandler {
     enum class BucketResult {

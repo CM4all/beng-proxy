@@ -60,8 +60,8 @@
 #include "http_client.hxx"
 #endif
 
+#include "http/Method.h"
 #include "util/Compiler.h"
-#include <http/method.h>
 
 #include <stdexcept>
 

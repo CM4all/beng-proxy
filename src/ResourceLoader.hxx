@@ -34,8 +34,8 @@
 #define BENG_PROXY_RESOURCE_LOADER_HXX
 
 #include "StickyHash.hxx"
+#include "http/Method.h"
 
-#include <http/method.h>
 #include <http/status.h>
 
 struct pool;

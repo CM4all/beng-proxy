@@ -34,9 +34,8 @@
 #define BENG_PROXY_HTTP_CACHE_H
 
 #include "StickyHash.hxx"
-
+#include "http/Method.h"
 #include "util/Compiler.h"
-#include <http/method.h>
 
 #include <stddef.h>
 

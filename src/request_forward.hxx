@@ -38,8 +38,7 @@
 #define BENG_PROXY_REQUEST_FORWARD_HXX
 
 #include "strmap.hxx"
-
-#include <http/method.h>
+#include "http/Method.h"
 
 class StringMap;
 struct header_forward_settings;

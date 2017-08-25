@@ -33,7 +33,7 @@
 #ifndef BENG_PROXY_CGI_GLUE_HXX
 #define BENG_PROXY_CGI_GLUE_HXX
 
-#include <http/method.h>
+#include "http/Method.h"
 
 struct pool;
 struct CgiAddress;
