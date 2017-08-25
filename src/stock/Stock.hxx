@@ -69,8 +69,7 @@ public:
  * A #Stock instance holds a number of idle objects.
  */
 class Stock {
-    const StockClass &cls;
-    void *const class_ctx;
+    StockClass &cls;
 
     const std::string name;
 
@@ -152,8 +151,8 @@ public:
      * client connections - it is used for logging, and as a key by
      * the #MapStock class
      */
-    gcc_nonnull(5)
-    Stock(EventLoop &event_loop, const StockClass &cls, void *class_ctx,
+    gcc_nonnull(4)
+    Stock(EventLoop &event_loop, StockClass &cls,
           const char *name, unsigned limit, unsigned max_idle,
           StockHandler *handler=nullptr);
 
@@ -164,6 +163,10 @@ public:
 
     EventLoop &GetEventLoop() {
         return retry_event.GetEventLoop();
+    }
+
+    StockClass &GetClass() {
+        return cls;
     }
 
     const char *GetName() const {

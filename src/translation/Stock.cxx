@@ -119,24 +119,7 @@ public:
     }
 };
 
-static void
-tstock_create(gcc_unused void *ctx,
-              CreateStockItem c,
-              void *info,
-              gcc_unused struct pool &caller_pool,
-              gcc_unused CancellablePointer &cancel_ptr)
-{
-    const auto &address = *(const AllocatedSocketAddress *)info;
-
-    auto *connection = new TranslateConnection(c);
-    connection->CreateAndConnectAndFinish(address);
-}
-
-static constexpr StockClass tstock_class = {
-    .create = tstock_create,
-};
-
-class TranslateStock {
+class TranslateStock final : StockClass {
     Stock stock;
 
     AllocatedSocketAddress address;
@@ -144,7 +127,7 @@ class TranslateStock {
 public:
     TranslateStock(EventLoop &event_loop, SocketAddress _address,
                    unsigned limit)
-        :stock(event_loop, tstock_class, nullptr, "translation", limit, 8),
+        :stock(event_loop, *this, "translation", limit, 8),
          address(_address) {
     }
 
@@ -154,11 +137,19 @@ public:
 
     void Get(struct pool &pool, StockGetHandler &handler,
              CancellablePointer &cancel_ptr) {
-        stock.Get(pool, &address, handler, cancel_ptr);
+        stock.Get(pool, nullptr, handler, cancel_ptr);
     }
 
     void Put(StockItem &item, bool destroy) {
         stock.Put(item, destroy);
+    }
+
+private:
+    /* virtual methods from class StockClass */
+    void Create(CreateStockItem c, void *, struct pool &,
+                CancellablePointer &) override {
+        auto *connection = new TranslateConnection(c);
+        connection->CreateAndConnectAndFinish(address);
     }
 };
 

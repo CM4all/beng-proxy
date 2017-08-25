@@ -51,7 +51,7 @@
 #include <unistd.h>
 #include <string.h>
 
-class LhttpStock {
+class LhttpStock final : StockClass {
     StockMap hstock;
     StockMap *const child_stock;
     MultiStock *const mchild_stock;
@@ -78,9 +78,10 @@ public:
         return hstock;
     }
 
-    MultiStock &GetChildStock() {
-        return *mchild_stock;
-    }
+private:
+    /* virtual methods from class StockClass */
+    void Create(CreateStockItem c, void *info, struct pool &caller_pool,
+                CancellablePointer &cancel_ptr) override;
 };
 
 class LhttpConnection final : LoggerDomainFactory, StockItem {
@@ -220,12 +221,11 @@ static const ChildStockClass lhttp_child_stock_class = {
  *
  */
 
-static void
-lhttp_stock_create(void *ctx, CreateStockItem c, void *info,
+void
+LhttpStock::Create(CreateStockItem c, void *info,
                    struct pool &caller_pool,
                    gcc_unused CancellablePointer &cancel_ptr)
 {
-    auto lhttp_stock = (LhttpStock *)ctx;
     const auto *address = (const LhttpAddress *)info;
 
     assert(address != nullptr);
@@ -233,7 +233,7 @@ lhttp_stock_create(void *ctx, CreateStockItem c, void *info,
 
     auto *connection = new LhttpConnection(c);
 
-    connection->Connect(lhttp_stock->GetChildStock(), caller_pool,
+    connection->Connect(*mchild_stock, caller_pool,
                         c.GetStockName(), info, address->concurrency);
 }
 
@@ -248,10 +248,6 @@ LhttpConnection::~LhttpConnection()
         lease_ref.Release(true);
 }
 
-static constexpr StockClass lhttp_stock_class = {
-    .create = lhttp_stock_create,
-};
-
 
 /*
  * interface
@@ -261,7 +257,7 @@ static constexpr StockClass lhttp_stock_class = {
 inline
 LhttpStock::LhttpStock(unsigned limit, unsigned max_idle,
                        EventLoop &event_loop, SpawnService &spawn_service)
-    :hstock(event_loop, lhttp_stock_class, this, limit, max_idle),
+    :hstock(event_loop, *this, limit, max_idle),
      child_stock(child_stock_new(limit, max_idle,
                                  event_loop, spawn_service,
                                  &lhttp_child_stock_class)),

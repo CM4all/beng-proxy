@@ -117,7 +117,8 @@ LbInstance::ShutdownCallback()
     if (tcp_balancer != nullptr)
         tcp_balancer_free(tcp_balancer);
 
-    delete tcp_stock;
+    if (tcp_stock != nullptr)
+        tcp_stock_free(tcp_stock);
 
     if (balancer != nullptr)
         balancer_free(balancer);

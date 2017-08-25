@@ -212,10 +212,10 @@ Stock::ClearEventCallback()
  *
  */
 
-Stock::Stock(EventLoop &event_loop, const StockClass &_cls, void *_class_ctx,
+Stock::Stock(EventLoop &event_loop, StockClass &_cls,
              const char *_name, unsigned _limit, unsigned _max_idle,
              StockHandler *_handler)
-    :cls(_cls), class_ctx(_class_ctx),
+    :cls(_cls),
      name(_name),
      limit(_limit), max_idle(_max_idle),
      handler(_handler),
@@ -225,7 +225,6 @@ Stock::Stock(EventLoop &event_loop, const StockClass &_cls, void *_class_ctx,
      cleanup_event(event_loop, BIND_THIS_METHOD(CleanupEventCallback)),
      clear_event(event_loop, BIND_THIS_METHOD(ClearEventCallback))
 {
-    assert(cls.create != nullptr);
     assert(max_idle > 0);
 
     ScheduleClear();
@@ -296,7 +295,7 @@ Stock::GetCreate(struct pool &caller_pool, void *info,
     ++num_create;
 
     try {
-        cls.create(class_ctx, {*this, get_handler},
+        cls.Create({*this, get_handler},
                    info, caller_pool, cancel_ptr);
     } catch (...) {
         ItemCreateError(get_handler, std::current_exception());

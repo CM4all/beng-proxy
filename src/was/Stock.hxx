@@ -55,6 +55,9 @@ StockMap *
 was_stock_new(unsigned limit, unsigned max_idle,
               EventLoop &event_loop, SpawnService &spawn_service);
 
+void
+was_stock_free(StockMap *stock);
+
 /**
  * @param args command-line arguments
  */

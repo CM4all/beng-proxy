@@ -45,6 +45,9 @@
 #include "translation/Cache.hxx"
 #include "lhttp_stock.hxx"
 #include "fcgi/Stock.hxx"
+#include "was/Stock.hxx"
+#include "delegate/Stock.hxx"
+#include "tcp_stock.hxx"
 #include "stock/MapStock.hxx"
 #include "session_save.hxx"
 #include "event/Duration.hxx"
@@ -113,8 +116,10 @@ BpInstance::FreeStocksAndCaches()
         fcgi_stock = nullptr;
     }
 
-    delete was_stock;
-    was_stock = nullptr;
+    if (was_stock != nullptr) {
+        was_stock_free(was_stock);
+        was_stock = nullptr;
+    }
 
     if (memcached_stock != nullptr) {
         memcached_stock_free(memcached_stock);
@@ -126,16 +131,20 @@ BpInstance::FreeStocksAndCaches()
         tcp_balancer = nullptr;
     }
 
-    delete tcp_stock;
-    tcp_stock = nullptr;
+    if (tcp_stock != nullptr) {
+        tcp_stock_free(tcp_stock);
+        tcp_stock = nullptr;
+    }
 
     if (balancer != nullptr) {
         balancer_free(balancer);
         balancer = nullptr;
     }
 
-    delete delegate_stock;
-    delegate_stock = nullptr;
+    if (delegate_stock != nullptr) {
+        delegate_stock_free(delegate_stock);
+        delegate_stock = nullptr;
+    }
 
     if (nfs_cache != nullptr) {
         nfs_cache_free(nfs_cache);

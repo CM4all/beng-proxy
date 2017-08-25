@@ -53,14 +53,30 @@ struct PipeStockItem final : StockItem {
     bool Release() override;
 };
 
+class PipeStock final : StockClass {
+    Stock stock;
+
+public:
+    explicit PipeStock(EventLoop &event_loop)
+        :stock(event_loop, *this, "pipe", 0, 64) {}
+
+    Stock &GetStock() {
+        return stock;
+    }
+
+private:
+    /* virtual methods from class StockClass */
+    void Create(CreateStockItem c, void *info, struct pool &caller_pool,
+                CancellablePointer &cancel_ptr) override;
+};
+
 /*
  * stock class
  *
  */
 
-static void
-pipe_stock_create(gcc_unused void *ctx,
-                  CreateStockItem c,
+void
+PipeStock::Create(CreateStockItem c,
                   gcc_unused void *info,
                   gcc_unused struct pool &caller_pool,
                   gcc_unused CancellablePointer &cancel_ptr)
@@ -95,11 +111,6 @@ PipeStockItem::Release()
     return true;
 }
 
-static constexpr StockClass pipe_stock_class = {
-    .create = pipe_stock_create,
-};
-
-
 /*
  * interface
  *
@@ -108,12 +119,14 @@ static constexpr StockClass pipe_stock_class = {
 Stock *
 pipe_stock_new(EventLoop &event_loop)
 {
-    return new Stock(event_loop, pipe_stock_class, nullptr, "pipe", 0, 64);
+    auto *stock = new PipeStock(event_loop);
+    return &stock->GetStock();
 }
 
 void
-pipe_stock_free(Stock *stock)
+pipe_stock_free(Stock *_stock)
 {
+    auto *stock = (PipeStock *)&_stock->GetClass();
     delete stock;
 }
 

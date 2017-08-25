@@ -375,14 +375,32 @@ WasChild::EventCallback(unsigned events)
  *
  */
 
-static void
-was_stock_create(gcc_unused void *ctx,
-                 CreateStockItem c,
+class WasStock final : StockClass {
+    SpawnService &spawn_service;
+    StockMap stock;
+
+public:
+    explicit WasStock(EventLoop &event_loop, SpawnService &_spawn_service,
+                      unsigned limit, unsigned max_idle)
+        :spawn_service(_spawn_service),
+         stock(event_loop, *this, limit, max_idle) {}
+
+    StockMap &GetStock() {
+        return stock;
+    }
+
+private:
+    /* virtual methods from class StockClass */
+    void Create(CreateStockItem c, void *info, struct pool &caller_pool,
+                CancellablePointer &cancel_ptr) override;
+};
+
+void
+WasStock::Create(CreateStockItem c,
                  void *info,
                  gcc_unused struct pool &caller_pool,
                  gcc_unused CancellablePointer &cancel_ptr)
 {
-    auto &spawn_service = *(SpawnService *)ctx;
     WasChildParams *params = (WasChildParams *)info;
 
     auto *child = new WasChild(c, spawn_service);
@@ -409,11 +427,6 @@ WasChild::~WasChild()
         event.Delete();
 }
 
-static constexpr StockClass was_stock_class = {
-    .create = was_stock_create,
-};
-
-
 /*
  * interface
  *
@@ -423,8 +436,15 @@ StockMap *
 was_stock_new(unsigned limit, unsigned max_idle,
               EventLoop &event_loop, SpawnService &spawn_service)
 {
-    return new StockMap(event_loop, was_stock_class, &spawn_service,
-                        limit, max_idle);
+    auto *stock = new WasStock(event_loop, spawn_service, limit, max_idle);
+    return &stock->GetStock();
+}
+
+void
+was_stock_free(StockMap *_stock)
+{
+    auto *stock = (WasStock *)&_stock->GetClass();
+    delete stock;
 }
 
 void

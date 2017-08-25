@@ -60,7 +60,7 @@ public:
         :defer_stop(event_loop, BIND_THIS_METHOD(Stop)) {}
 
     void Stop() {
-        delete delegate_stock;
+        delegate_stock_free(delegate_stock);
     }
 
     void OnDelegateSuccess(int fd) override {

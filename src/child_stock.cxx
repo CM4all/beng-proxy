@@ -82,7 +82,7 @@ struct ChildStockItem final : StockItem, ExitListener {
     void OnChildProcessExit(int status) override;
 };
 
-class ChildStock {
+class ChildStock final : StockClass {
     StockMap map;
 
     SpawnService &spawn_service;
@@ -97,7 +97,9 @@ public:
         return map;
     }
 
-    void Create(CreateStockItem c, void *info);
+    /* virtual methods from class StockClass */
+    void Create(CreateStockItem c, void *info, struct pool &caller_pool,
+                CancellablePointer &cancel_ptr) override;
 };
 
 void
@@ -114,8 +116,9 @@ ChildStockItem::OnChildProcessExit(gcc_unused int status)
  *
  */
 
-inline void
-ChildStock::Create(CreateStockItem c, void *info)
+void
+ChildStock::Create(CreateStockItem c, void *info,
+                   struct pool &, CancellablePointer &)
 {
     auto *item = new ChildStockItem(c, spawn_service);
 
@@ -140,18 +143,6 @@ ChildStock::Create(CreateStockItem c, void *info)
     item->InvokeCreateSuccess();
 }
 
-static void
-child_stock_create(void *stock_ctx,
-                   CreateStockItem c,
-                   void *info,
-                   gcc_unused struct pool &caller_pool,
-                   gcc_unused CancellablePointer &cancel_ptr)
-{
-    auto &stock = *(ChildStock *)stock_ctx;
-
-    stock.Create(c, info);
-}
-
 ChildStockItem::~ChildStockItem()
 {
     if (pid >= 0)
@@ -161,11 +152,6 @@ ChildStockItem::~ChildStockItem()
         socket.Unlink();
 }
 
-static constexpr StockClass child_stock_class = {
-    .create = child_stock_create,
-};
-
-
 /*
  * interface
  *
@@ -174,7 +160,7 @@ static constexpr StockClass child_stock_class = {
 ChildStock::ChildStock(EventLoop &event_loop, SpawnService &_spawn_service,
                        const ChildStockClass &_cls,
                        unsigned _limit, unsigned _max_idle)
-    :map(event_loop, child_stock_class, this, _limit, _max_idle),
+    :map(event_loop, *this, _limit, _max_idle),
      spawn_service(_spawn_service), cls(_cls) {}
 
 StockMap *
@@ -190,10 +176,10 @@ child_stock_new(unsigned limit, unsigned max_idle,
 }
 
 void
-child_stock_free(StockMap *stock)
+child_stock_free(StockMap *_stock)
 {
-    auto *s = (ChildStock *)stock->GetClassContext();
-    delete s;
+    auto *stock = (ChildStock *)&_stock->GetClass();
+    delete stock;
 }
 
 UniqueSocketDescriptor

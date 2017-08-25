@@ -192,9 +192,25 @@ TcpStockConnection::OnSocketConnectError(std::exception_ptr ep)
  *
  */
 
-static void
-tcp_stock_create(gcc_unused void *ctx,
-                 CreateStockItem c,
+class TcpStock final : StockClass {
+    StockMap stock;
+
+public:
+    explicit TcpStock(EventLoop &event_loop, unsigned limit)
+        :stock(event_loop, *this, limit, 16) {}
+
+    StockMap &GetStock() {
+        return stock;
+    }
+
+private:
+    /* virtual methods from class StockClass */
+    void Create(CreateStockItem c, void *info, struct pool &caller_pool,
+                CancellablePointer &cancel_ptr) override;
+};
+
+void
+TcpStock::Create(CreateStockItem c,
                  void *info,
                  struct pool &caller_pool,
                  CancellablePointer &cancel_ptr)
@@ -225,11 +241,6 @@ TcpStockConnection::~TcpStockConnection()
     }
 }
 
-static constexpr StockClass tcp_stock_class = {
-    .create = tcp_stock_create,
-};
-
-
 /*
  * interface
  *
@@ -238,8 +249,15 @@ static constexpr StockClass tcp_stock_class = {
 StockMap *
 tcp_stock_new(EventLoop &event_loop, unsigned limit)
 {
-    return new StockMap(event_loop, tcp_stock_class, nullptr,
-                        limit, 16);
+    auto *stock = new TcpStock(event_loop, limit);
+    return &stock->GetStock();
+}
+
+void
+tcp_stock_free(StockMap *_stock)
+{
+    auto *stock = (TcpStock *)&_stock->GetClass();
+    delete stock;
 }
 
 void

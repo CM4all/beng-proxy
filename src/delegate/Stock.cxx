@@ -109,6 +109,25 @@ private:
     void SocketEventCallback(unsigned events);
 };
 
+class DelegateStock final : StockClass {
+    SpawnService &spawn_service;
+    StockMap stock;
+
+public:
+    explicit DelegateStock(EventLoop &event_loop, SpawnService &_spawn_service)
+        :spawn_service(_spawn_service),
+         stock(event_loop, *this, 0, 16) {}
+
+    StockMap &GetStock() {
+        return stock;
+    }
+
+private:
+    /* virtual methods from class StockClass */
+    void Create(CreateStockItem c, void *info, struct pool &caller_pool,
+                CancellablePointer &cancel_ptr) override;
+};
+
 /*
  * libevent callback
  *
@@ -137,14 +156,12 @@ DelegateProcess::SocketEventCallback(unsigned events)
  *
  */
 
-static void
-delegate_stock_create(void *ctx,
-                      CreateStockItem c,
+void
+DelegateStock::Create(CreateStockItem c,
                       void *_info,
                       gcc_unused struct pool &caller_pool,
                       gcc_unused CancellablePointer &cancel_ptr)
 {
-    auto &spawn_service = *(SpawnService *)ctx;
     auto &info = *(DelegateArgs *)_info;
 
     PreparedChildProcess p;
@@ -166,11 +183,6 @@ delegate_stock_create(void *ctx,
     process->InvokeCreateSuccess();
 }
 
-static constexpr StockClass delegate_stock_class = {
-    .create = delegate_stock_create,
-};
-
-
 /*
  * interface
  *
@@ -179,8 +191,15 @@ static constexpr StockClass delegate_stock_class = {
 StockMap *
 delegate_stock_new(EventLoop &event_loop, SpawnService &spawn_service)
 {
-    return new StockMap(event_loop, delegate_stock_class, &spawn_service,
-                        0, 16);
+    auto *stock = new DelegateStock(event_loop, spawn_service);
+    return &stock->GetStock();
+}
+
+void
+delegate_stock_free(StockMap *_stock)
+{
+    auto *stock = (DelegateStock *)&_stock->GetClass();
+    delete stock;
 }
 
 StockItem *

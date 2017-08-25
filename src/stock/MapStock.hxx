@@ -99,8 +99,7 @@ class StockMap final : StockHandler {
 
     EventLoop &event_loop;
 
-    const StockClass &cls;
-    void *const class_ctx;
+    StockClass &cls;
 
     /**
      * The maximum number of items in each stock.
@@ -118,9 +117,9 @@ class StockMap final : StockHandler {
     Map::bucket_type buckets[N_BUCKETS];
 
 public:
-    StockMap(EventLoop &_event_loop, const StockClass &_cls, void *_class_ctx,
+    StockMap(EventLoop &_event_loop, StockClass &_cls,
              unsigned _limit, unsigned _max_idle)
-        :event_loop(_event_loop), cls(_cls), class_ctx(_class_ctx),
+        :event_loop(_event_loop), cls(_cls),
          limit(_limit), max_idle(_max_idle),
          map(Map::bucket_traits(buckets, N_BUCKETS)) {}
 
@@ -130,8 +129,8 @@ public:
         return event_loop;
     }
 
-    void *GetClassContext() {
-        return class_ctx;
+    StockClass &GetClass() {
+        return cls;
     }
 
     void Erase(Item &item);

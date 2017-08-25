@@ -58,6 +58,9 @@ class EventLoop;
 StockMap *
 tcp_stock_new(EventLoop &event_loop, unsigned limit);
 
+void
+tcp_stock_free(StockMap *stock);
+
 /**
  * @param name the MapStock name; it is auto-generated from the
  * #address if nullptr is passed here

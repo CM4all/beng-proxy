@@ -75,11 +75,18 @@ struct MyStockItem final : StockItem {
  *
  */
 
-static void
-my_stock_create(gcc_unused void *ctx, CreateStockItem c,
-                void *info,
-                gcc_unused struct pool &caller_pool,
-                gcc_unused CancellablePointer &cancel_ptr)
+class MyStockClass final : public StockClass {
+public:
+    /* virtual methods from class StockClass */
+    void Create(CreateStockItem c, void *info, struct pool &caller_pool,
+                CancellablePointer &cancel_ptr) override;
+};
+
+void
+MyStockClass::Create(CreateStockItem c,
+                     void *info,
+                     gcc_unused struct pool &caller_pool,
+                     gcc_unused CancellablePointer &cancel_ptr)
 {
     auto *item = new MyStockItem(c);
 
@@ -94,10 +101,6 @@ my_stock_create(gcc_unused void *ctx, CreateStockItem c,
         item->InvokeCreateSuccess();
     }
 }
-
-static constexpr StockClass my_stock_class = {
-    .create = my_stock_create,
-};
 
 class MyStockGetHandler final : public StockGetHandler {
 public:
@@ -125,7 +128,8 @@ int main(gcc_unused int argc, gcc_unused char **argv)
 
     PInstance instance;
 
-    stock = new Stock(instance.event_loop, my_stock_class, nullptr, "test", 3, 8);
+    MyStockClass cls;
+    stock = new Stock(instance.event_loop, cls, "test", 3, 8);
 
     MyStockGetHandler handler;
 

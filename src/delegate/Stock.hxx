@@ -44,6 +44,9 @@ struct StockItem;
 StockMap *
 delegate_stock_new(EventLoop &event_loop, SpawnService &spawn_service);
 
+void
+delegate_stock_free(StockMap *stock);
+
 /**
  * Throws exception on error.
  */

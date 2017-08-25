@@ -66,7 +66,7 @@
 #include <sched.h>
 #endif
 
-struct FcgiStock {
+struct FcgiStock final : StockClass {
     StockMap hstock;
     StockMap *child_stock;
 
@@ -90,6 +90,10 @@ struct FcgiStock {
         hstock.FadeAll();
         child_stock->FadeAll();
     }
+
+    /* virtual methods from class StockClass */
+    void Create(CreateStockItem c, void *info, struct pool &caller_pool,
+                CancellablePointer &cancel_ptr) override;
 };
 
 struct FcgiChildParams {
@@ -228,18 +232,17 @@ static const ChildStockClass fcgi_child_stock_class = {
  *
  */
 
-static void
-fcgi_stock_create(void *ctx, CreateStockItem c, void *info,
+void
+FcgiStock::Create(CreateStockItem c, void *info,
                   struct pool &caller_pool,
                   gcc_unused CancellablePointer &cancel_ptr)
 {
-    FcgiStock *fcgi_stock = (FcgiStock *)ctx;
     FcgiChildParams *params = (FcgiChildParams *)info;
 
     assert(params != nullptr);
     assert(params->executable_path != nullptr);
 
-    auto *connection = new FcgiConnection(fcgi_stock->GetEventLoop(), c);
+    auto *connection = new FcgiConnection(GetEventLoop(), c);
 
     const ChildOptions &options = params->options;
     if (options.jail != nullptr && options.jail->enabled) {
@@ -254,8 +257,7 @@ fcgi_stock_create(void *ctx, CreateStockItem c, void *info,
     const char *key = c.GetStockName();
 
     try {
-        connection->child = fcgi_stock->child_stock->GetNow(caller_pool,
-                                                            key, params);
+        connection->child = child_stock->GetNow(caller_pool, key, params);
     } catch (...) {
         delete connection;
         std::throw_with_nested(FcgiClientError(StringFormat<256>("Failed to start FastCGI server '%s'",
@@ -328,10 +330,6 @@ FcgiConnection::~FcgiConnection()
         child->Put(kill);
 }
 
-static constexpr StockClass fcgi_stock_class = {
-    .create = fcgi_stock_create,
-};
-
 
 /*
  * interface
@@ -341,7 +339,7 @@ static constexpr StockClass fcgi_stock_class = {
 inline
 FcgiStock::FcgiStock(unsigned limit, unsigned max_idle,
                      EventLoop &event_loop, SpawnService &spawn_service)
-    :hstock(event_loop, fcgi_stock_class, this, limit, max_idle),
+    :hstock(event_loop, *this, limit, max_idle),
      child_stock(child_stock_new(limit, max_idle,
                                  event_loop, spawn_service,
                                  &fcgi_child_stock_class)) {}

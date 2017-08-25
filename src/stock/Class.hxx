@@ -36,14 +36,15 @@
 class CancellablePointer;
 struct CreateStockItem;
 
-struct StockClass {
+class StockClass {
+public:
     /**
      * May throw exception instead of calling InvokeCreateError().
      */
-    void (*create)(void *ctx, CreateStockItem c,
-                   void *info,
-                   struct pool &caller_pool,
-                   CancellablePointer &cancel_ptr);
+    virtual void Create(CreateStockItem c,
+                        void *info,
+                        struct pool &caller_pool,
+                        CancellablePointer &cancel_ptr) = 0;
 };
 
 #endif
