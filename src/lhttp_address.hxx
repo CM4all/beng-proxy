@@ -2,7 +2,7 @@
  * Copyright 2007-2017 Content Management AG
  * All rights reserved.
  *
- * author: Max Kellermann <mk.com>
+ * author: Max Kellermann <mk@cm4all.com>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
