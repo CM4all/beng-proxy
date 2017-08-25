@@ -33,6 +33,7 @@
 #ifndef BENG_PROXY_WIDGET_HXX
 #define BENG_PROXY_WIDGET_HXX
 
+#include "io/Logger.hxx"
 #include "http/Method.h"
 #include "util/StringView.hxx"
 #include "util/Compiler.h"
@@ -258,7 +259,14 @@ private:
         const ResourceAddress *stateless_address = nullptr;
     } lazy;
 
+    struct LoggerDomain {
+        gcc_pure
+        StringView GetDomain() const;
+    };
+
 public:
+    BasicLogger<LoggerDomain> logger;
+
     Widget(struct pool &_pool, const WidgetClass *_cls);
 
     struct RootTag {};

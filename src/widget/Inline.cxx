@@ -58,8 +58,6 @@
 #include "util/StringFormat.hxx"
 #include "util/Exception.hxx"
 
-#include <daemon/log.h>
-
 #include <assert.h>
 
 const struct timeval inline_widget_timeout = {
@@ -158,8 +156,7 @@ widget_response_format(struct pool &pool, const Widget &widget,
                                                charset2));
         }
 
-        daemon_log(6, "widget '%s': charset conversion '%s' -> utf-8\n",
-                   widget.GetLogName(), charset2);
+        widget.logger(6, "charset conversion '", charset2, "' -> utf-8");
         body = ic;
     }
 
@@ -168,8 +165,7 @@ widget_response_format(struct pool &pool, const Widget &widget,
         strncmp(content_type + 5, "xml", 3) != 0) {
         /* convert text to HTML */
 
-        daemon_log(6, "widget '%s': converting text to HTML\n",
-                   widget.GetLogName());
+        widget.logger(6, "converting text to HTML");
 
         body = istream_html_escape_new(pool, *body);
         body = istream_cat_new(pool,

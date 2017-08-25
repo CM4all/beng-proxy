@@ -67,9 +67,6 @@
 #include "util/Macros.hxx"
 #include "util/StringView.hxx"
 #include "util/Cancellable.hxx"
-#include "util/Exception.hxx"
-
-#include <daemon/log.h>
 
 #include <assert.h>
 #include <string.h>
@@ -1132,7 +1129,7 @@ XmlProcessor::OnXmlAttributeFinished(const XmlParserAttribute &attr)
 
         if (attr.name.EqualsLiteral("name")) {
             if (attr.value.IsEmpty()) {
-                daemon_log(2, "empty view name\n");
+                container.logger(2, "empty view name");
                 return;
             }
 
@@ -1194,8 +1191,7 @@ widget_catch_callback(std::exception_ptr ep, void *ctx)
 {
     auto *widget = (Widget *)ctx;
 
-    daemon_log(3, "error from widget '%s': %s\n",
-               widget->GetLogName(), GetFullMessage(ep).c_str());
+    widget->logger(3, ep);
     return {};
 }
 
@@ -1260,7 +1256,7 @@ XmlProcessor::OpenWidgetElement(Widget &child_widget)
     assert(child_widget.parent == &container);
 
     if (child_widget.class_name == nullptr) {
-        daemon_log(5, "widget without a class\n");
+        container.logger(5, "widget without a class");
         return nullptr;
     }
 
@@ -1268,15 +1264,14 @@ XmlProcessor::OpenWidgetElement(Widget &child_widget)
     const bool self_container =
         (options & PROCESSOR_SELF_CONTAINER) != 0;
     if (!widget_init_approval(&child_widget, self_container)) {
-        daemon_log(5, "widget '%s' is not allowed to embed widget '%s'\n",
-                   container.GetLogName(),
-                   child_widget.GetLogName());
+        container.logger(5, "widget is not allowed to embed widget '",
+                         child_widget.GetLogName(), "'");
         return nullptr;
     }
 
     if (widget_check_recursion(child_widget.parent)) {
-        daemon_log(5, "maximum widget depth exceeded for widget '%s'\n",
-                   child_widget.GetLogName());
+        container.logger(5, "maximum widget depth exceeded for widget '",
+                         child_widget.GetLogName(), "'");
         return nullptr;
     }
 
@@ -1381,7 +1376,7 @@ XmlProcessor::OnXmlTagFinished(const XmlParserTag &xml_tag)
 
         const auto name = widget.param.name.ReadStringView();
         if (!header_name_valid(name.data, name.size)) {
-            daemon_log(3, "invalid widget HTTP header name\n");
+            container.logger(3, "invalid widget HTTP header name");
             return;
         }
 

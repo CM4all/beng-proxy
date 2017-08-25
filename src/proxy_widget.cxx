@@ -167,8 +167,8 @@ widget_view_allowed(Widget &widget, const WidgetView &view)
 
     /* views with an address must not be selected by the client */
     if (!view.inherited) {
-        LogConcat(2, widget.GetLogName(),
-                  "view '", view.name, "' is forbidden because it has an address");
+        widget.logger(2,  "view '", view.name,
+                      "' is forbidden because it has an address");
         return false;
     }
 
@@ -246,8 +246,7 @@ void
 ProxyWidget::ResolverCallback()
 {
     if (widget->cls == nullptr) {
-        LogConcat(2, widget->GetLogName(),
-                  "lookup of widget class failed");
+        widget->logger(2, "lookup of widget class failed");
 
         widget->Cancel();
         response_dispatch_message(request, HTTP_STATUS_INTERNAL_SERVER_ERROR,
@@ -282,8 +281,8 @@ ProxyWidget::WidgetNotFound()
 {
     assert(ref != nullptr);
 
-    LogConcat(2, widget->GetLogName(),
-              "widget '", ref->id, "' not found [", request.request.uri, "]");
+    widget->logger(2, "widget '", ref->id, "' not found [",
+                   request.request.uri, "]");
 
     widget->Cancel();
     response_dispatch_message(request, HTTP_STATUS_NOT_FOUND,

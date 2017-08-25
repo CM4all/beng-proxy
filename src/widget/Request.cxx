@@ -60,8 +60,6 @@
 #include "util/Cancellable.hxx"
 #include "util/StringFormat.hxx"
 
-#include <daemon/log.h>
-
 #include <assert.h>
 #include <string.h>
 
@@ -552,11 +550,10 @@ WidgetRequest::OnHttpResponse(http_status_t status, StringMap &&headers,
                               Istream *body)
 {
     if (widget.cls->dump_headers) {
-        daemon_log(4, "response headers from widget '%s'\n",
-                   widget.GetLogName());
+        widget.logger(4, "response headers from widget");
 
         for (const auto &i : headers)
-            daemon_log(4, "  %s: %s\n", i.key, i.value);
+            widget.logger(4, "  ", i.key, ": ", i.value);
     }
 
     if (host_and_port != nullptr) {
@@ -570,8 +567,7 @@ WidgetRequest::OnHttpResponse(http_status_t status, StringMap &&headers,
         if (r.first == r.second)
             r = headers.EqualRange("set-cookie");
         if (r.first != r.second)
-            daemon_log(4, "ignoring Set-Cookie from widget '%s': no host\n",
-                       widget.GetLogName());
+            widget.logger(4, "ignoring Set-Cookie from widget: no host");
 #endif
     }
 
@@ -650,11 +646,10 @@ WidgetRequest::SendRequest()
                                       request_body != nullptr);
 
     if (widget.cls->dump_headers) {
-        daemon_log(4, "request headers for widget '%s'\n",
-                   widget.GetLogName());
+        widget.logger(4, "request headers for widget");
 
         for (const auto &i : headers)
-            daemon_log(4, "  %s: %s\n", i.key, i.value);
+            widget.logger(4, "  ", i.key, ": ", i.value);
     }
 
     env.resource_loader->SendRequest(pool, env.session_id.GetClusterHash(),

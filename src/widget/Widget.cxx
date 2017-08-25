@@ -37,6 +37,7 @@
 #include "pool.hxx"
 #include "istream/istream.hxx"
 #include "util/HexFormat.h"
+#include "util/Cast.hxx"
 
 #include <string.h>
 #include <assert.h>
@@ -158,6 +159,13 @@ Widget::GetLogName() const
     }
 
     return lazy.log_name = p_strcat(&pool, class_name, "#", id_path, nullptr);
+}
+
+StringView
+Widget::LoggerDomain::GetDomain() const
+{
+    const auto &widget = ContainerCast(*this, (LoggerDomain Widget::*)&Widget::logger);
+    return widget.GetLogName();
 }
 
 bool

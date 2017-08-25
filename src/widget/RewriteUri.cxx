@@ -53,8 +53,6 @@
 #include "util/StringView.hxx"
 #include "util/Cancellable.hxx"
 
-#include <daemon/log.h>
-
 enum uri_mode
 parse_uri_mode(const StringView s)
 {
@@ -248,15 +246,11 @@ do_rewrite_widget_uri(struct pool &pool, struct processor_env &env,
                                          frame, view);
     if (uri == nullptr) {
         if (widget.id == nullptr)
-            daemon_log(4, "Cannot rewrite URI for widget '%s': no id\n",
-                       widget.GetLogName());
+            widget.logger(4, "Cannot rewrite URI: no widget id");
         else if (widget.GetIdPath() == nullptr)
-            daemon_log(4, "Cannot rewrite URI for widget '%s': broken id chain\n",
-                       widget.GetLogName());
+            widget.logger(4, "Cannot rewrite URI: broken widget id chain");
         else
-            daemon_log(4, "Base mismatch in widget '%s': %.*s\n",
-                       widget.GetLogName(),
-                       int(value.size), value.data);
+            widget.logger(4, "Base mismatch: ", value);
         return nullptr;
     }
 

@@ -57,6 +57,12 @@ Widget::GetLogName() const
     return "dummy";
 }
 
+StringView
+Widget::LoggerDomain::GetDomain() const
+{
+    return "dummy";
+}
+
 Istream *
 istream_iconv_new(gcc_unused struct pool *pool, Istream &input,
                   gcc_unused const char *tocode,
