@@ -108,7 +108,7 @@ struct FcgiChildParams {
     const char *GetStockKey(struct pool &pool) const;
 };
 
-struct FcgiConnection final : HeapStockItem {
+struct FcgiConnection final : StockItem {
     std::string jail_home_directory;
 
     JailConfig jail_config;
@@ -134,7 +134,7 @@ struct FcgiConnection final : HeapStockItem {
     bool aborted = false;
 
     explicit FcgiConnection(EventLoop &event_loop, CreateStockItem c)
-        :HeapStockItem(c),
+        :StockItem(c),
          event(event_loop, BIND_THIS_METHOD(OnSocketEvent)) {}
 
     ~FcgiConnection() override;

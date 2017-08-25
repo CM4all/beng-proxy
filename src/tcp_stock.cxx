@@ -80,7 +80,7 @@ public:
 };
 
 struct TcpStockConnection final
-    : HeapStockItem, ConnectSocketHandler, Cancellable {
+    : StockItem, ConnectSocketHandler, Cancellable {
 
     BasicLogger<StockLoggerDomain> logger;
 
@@ -97,7 +97,7 @@ struct TcpStockConnection final
 
     TcpStockConnection(CreateStockItem c, SocketAddress _address,
                        CancellablePointer &_cancel_ptr)
-        :HeapStockItem(c),
+        :StockItem(c),
          logger(c.stock),
          address(_address),
          event(c.stock.GetEventLoop(), BIND_THIS_METHOD(EventCallback)) {

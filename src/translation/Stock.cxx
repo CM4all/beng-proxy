@@ -51,14 +51,14 @@
 #include <string.h>
 #include <errno.h>
 
-class TranslateConnection final : public HeapStockItem {
+class TranslateConnection final : public StockItem {
     UniqueSocketDescriptor s;
 
     SocketEvent event;
 
 public:
     explicit TranslateConnection(CreateStockItem c)
-        :HeapStockItem(c),
+        :StockItem(c),
          event(c.stock.GetEventLoop(), BIND_THIS_METHOD(EventCallback)) {}
 
     ~TranslateConnection() override {

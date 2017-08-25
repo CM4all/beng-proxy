@@ -83,7 +83,7 @@ public:
     }
 };
 
-class LhttpConnection final : LoggerDomainFactory, HeapStockItem {
+class LhttpConnection final : LoggerDomainFactory, StockItem {
     LazyDomainLogger logger;
 
     StockItem *child = nullptr;
@@ -95,7 +95,7 @@ class LhttpConnection final : LoggerDomainFactory, HeapStockItem {
 
 public:
     explicit LhttpConnection(CreateStockItem c)
-        :HeapStockItem(c),
+        :StockItem(c),
          logger(*this),
          event(c.stock.GetEventLoop(), BIND_THIS_METHOD(EventCallback)) {}
 

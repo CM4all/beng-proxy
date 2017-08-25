@@ -47,7 +47,7 @@
 #include <assert.h>
 #include <unistd.h>
 
-struct ChildStockItem final : HeapStockItem, ExitListener {
+struct ChildStockItem final : StockItem, ExitListener {
     SpawnService &spawn_service;
 
     ChildSocket socket;
@@ -57,7 +57,7 @@ struct ChildStockItem final : HeapStockItem, ExitListener {
 
     ChildStockItem(CreateStockItem c,
                    SpawnService &_spawn_service)
-        :HeapStockItem(c),
+        :StockItem(c),
          spawn_service(_spawn_service) {}
 
     ~ChildStockItem() override;

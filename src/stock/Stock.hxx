@@ -200,8 +200,6 @@ private:
     void CheckEmpty();
     void ScheduleCheckEmpty();
 
-    void DestroyItem(StockItem &item);
-
     void ScheduleClear() {
         clear_event.Add(EventDuration<60>::value);
     }

@@ -90,9 +90,3 @@ StockItem::InvokeIdleDisconnect()
 {
     stock.ItemIdleDisconnect(*this);
 }
-
-void
-HeapStockItem::Destroy(gcc_unused void *ctx)
-{
-    delete this;
-}

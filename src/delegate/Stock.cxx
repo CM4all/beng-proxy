@@ -73,14 +73,14 @@ struct DelegateArgs {
     }
 };
 
-class DelegateProcess final : public HeapStockItem {
+class DelegateProcess final : public StockItem {
     UniqueSocketDescriptor fd;
 
     SocketEvent event;
 
 public:
     explicit DelegateProcess(CreateStockItem c, UniqueSocketDescriptor &&_fd)
-        :HeapStockItem(c), fd(std::move(_fd)),
+        :StockItem(c), fd(std::move(_fd)),
          event(c.stock.GetEventLoop(), fd.Get(), SocketEvent::READ,
                BIND_THIS_METHOD(SocketEventCallback)) {
     }

@@ -35,7 +35,7 @@
 #include "GetHandler.hxx"
 #include "pool.hxx"
 #include "util/Cancellable.hxx"
-#include "util/Cast.hxx"
+#include "util/DeleteDisposer.hxx"
 
 #include <assert.h>
 
@@ -102,9 +102,7 @@ Stock::CleanupEventCallback()
     /* destroy one third of the idle items */
 
     for (unsigned i = (idle.size() - max_idle + 2) / 3; i > 0; --i)
-        idle.pop_front_and_dispose([this](StockItem *item){
-                DestroyItem(*item);
-            });
+        idle.pop_front_and_dispose(DeleteDisposer());
 
     /* schedule next cleanup */
 
@@ -192,9 +190,7 @@ Stock::ClearIdle()
     if (idle.size() > max_idle)
         UnscheduleCleanup();
 
-    idle.clear_and_dispose([this](StockItem *item){
-            DestroyItem(*item);
-        });
+    idle.clear_and_dispose(DeleteDisposer());
 }
 
 void
@@ -250,12 +246,6 @@ Stock::~Stock()
     ClearIdle();
 }
 
-void
-Stock::DestroyItem(StockItem &item)
-{
-    item.Destroy(class_ctx);
-}
-
 bool
 Stock::GetIdle(StockGetHandler &get_handler)
 {
@@ -291,7 +281,7 @@ Stock::GetIdle(StockGetHandler &get_handler)
             return true;
         }
 
-        DestroyItem(item);
+        delete &item;
     }
 
     ScheduleCheckEmpty();
@@ -393,14 +383,14 @@ void
 Stock::ItemCreateError(StockItem &item, std::exception_ptr ep)
 {
     ItemCreateError(item.handler, ep);
-    item.Destroy(class_ctx);
+    delete &item;
 }
 
 void
 Stock::ItemCreateAborted(StockItem &item)
 {
     ItemCreateAborted();
-    item.Destroy(class_ctx);
+    delete &item;
 }
 
 void
@@ -438,7 +428,7 @@ Stock::Put(StockItem &item, bool destroy)
     busy.erase(busy.iterator_to(item));
 
     if (destroy || item.fade || !item.Release(class_ctx)) {
-        DestroyItem(item);
+        delete &item;
         ScheduleCheckEmpty();
     } else {
 #ifndef NDEBUG
@@ -466,6 +456,6 @@ Stock::ItemIdleDisconnect(StockItem &item)
     if (idle.size() == max_idle)
         UnscheduleCleanup();
 
-    DestroyItem(item);
+    delete &item;
     ScheduleCheckEmpty();
 }

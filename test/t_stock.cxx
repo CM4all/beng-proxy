@@ -48,11 +48,11 @@ static bool next_fail;
 static bool got_item;
 static StockItem *last_item;
 
-struct MyStockItem final : HeapStockItem {
+struct MyStockItem final : StockItem {
     void *info;
 
     explicit MyStockItem(CreateStockItem c)
-        :HeapStockItem(c) {}
+        :StockItem(c) {}
 
     ~MyStockItem() override {
         ++num_destroy;

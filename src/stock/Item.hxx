@@ -125,13 +125,6 @@ struct StockItem
     virtual bool Release(void *ctx) = 0;
 
     /**
-     * Ask the item to destroy itself after it has been returned and
-     * removed from all lists.  The item may be good or bad at this
-     * point.
-     */
-    virtual void Destroy(void *ctx) = 0;
-
-    /**
      * Announce that the creation of this item has finished
      * successfully, and it is ready to be used.
      */
@@ -153,12 +146,6 @@ struct StockItem
      * it was idle.
      */
     void InvokeIdleDisconnect();
-};
-
-struct HeapStockItem : StockItem {
-    explicit HeapStockItem(CreateStockItem c):StockItem(c) {}
-
-    void Destroy(void *ctx) override;
 };
 
 #endif

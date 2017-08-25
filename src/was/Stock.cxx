@@ -80,7 +80,7 @@ struct WasChildParams {
     const char *GetStockKey(struct pool &pool) const;
 };
 
-class WasChild final : public HeapStockItem, ExitListener {
+class WasChild final : public StockItem, ExitListener {
     SpawnService &spawn_service;
 
     WasProcess process;
@@ -99,7 +99,7 @@ class WasChild final : public HeapStockItem, ExitListener {
 
 public:
     explicit WasChild(CreateStockItem c, SpawnService &_spawn_service)
-        :HeapStockItem(c), spawn_service(_spawn_service),
+        :StockItem(c), spawn_service(_spawn_service),
          event(c.stock.GetEventLoop(), BIND_THIS_METHOD(EventCallback)) {
         /* mark this object as "unused" so the destructor doesn't
            attempt to kill the process */

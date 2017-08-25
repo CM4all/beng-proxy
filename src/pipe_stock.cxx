@@ -41,11 +41,11 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-struct PipeStockItem final : HeapStockItem {
+struct PipeStockItem final : StockItem {
     UniqueFileDescriptor fds[2];
 
     explicit PipeStockItem(CreateStockItem c)
-        :HeapStockItem(c) {
+        :StockItem(c) {
     }
 
     /* virtual methods from class StockItem */
