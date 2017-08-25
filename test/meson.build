@@ -7,7 +7,7 @@ executable('TrafoExample',
   'TrafoExample.cxx',
   include_directories: inc,
   dependencies: [
-    libhttp, libdaemon,
+    libdaemon,
     declare_dependency(link_with: event),
     declare_dependency(link_with: net),
     system_dep,
@@ -50,7 +50,6 @@ executable('run_parser_cdata',
   '../src/PInstance.cxx',
   include_directories: inc,
   dependencies: [
-    libhttp,
     processor_dep,
   ])
 
@@ -59,7 +58,6 @@ executable('run_css_parser',
   '../src/PInstance.cxx',
   include_directories: inc,
   dependencies: [
-    libhttp,
     processor_dep,
   ])
 
@@ -73,7 +71,6 @@ executable('run_client',
   include_directories: inc,
   dependencies: [
     threads,
-    libhttp,
     declare_dependency(link_with: ssl),
     declare_dependency(link_with: ajp_client),
     declare_dependency(link_with: was_client),
@@ -89,7 +86,6 @@ executable('run_delegate',
   '../src/PInstance.cxx',
   include_directories: inc,
   dependencies: [
-    libhttp,
     declare_dependency(link_with: delegate_client),
     declare_dependency(link_with: spawn),
   ])
@@ -101,7 +97,6 @@ executable('run_http_cache',
   '../src/istream_unlock.cxx',
   include_directories: inc,
   dependencies: [
-    libhttp,
     declare_dependency(link_with: http_cache),
   ])
 
@@ -114,7 +109,7 @@ executable('run_http_server',
   '../src/duplex.cxx',
   include_directories: inc,
   dependencies: [
-    libhttp, libdaemon,
+    libdaemon,
     declare_dependency(link_with: http_server),
     system_dep,
   ])
@@ -126,7 +121,6 @@ executable('run_memcached_client',
   '../src/pipe_stock.cxx',
   include_directories: inc,
   dependencies: [
-    libhttp,
     declare_dependency(link_with: memcached_client),
     stock_dep,
     declare_dependency(link_with: net),
@@ -140,7 +134,6 @@ executable('dump_memcached_choice',
   '../src/serialize.cxx',
   include_directories: inc,
   dependencies: [
-    libhttp,
     declare_dependency(link_with: memcached_client),
     declare_dependency(link_with: net),
     declare_dependency(link_with: io),
@@ -159,7 +152,7 @@ executable('cleanup_memcached_choice',
   '../src/failure.cxx',
   include_directories: inc,
   dependencies: [
-    libhttp, libdaemon,
+    libdaemon,
     declare_dependency(link_with: memcached_client),
     declare_dependency(link_with: net),
     declare_dependency(link_with: io),
@@ -194,7 +187,7 @@ executable('run_was',
   '../src/direct.cxx',
   include_directories: inc,
   dependencies: [
-    libhttp, libdaemon,
+    libdaemon,
     declare_dependency(link_with: net),
     declare_dependency(link_with: was_client),
     stopwatch_dep,
@@ -206,7 +199,7 @@ executable('was_mirror',
   '../src/direct.cxx',
   include_directories: inc,
   dependencies: [
-    libhttp, libdaemon,
+    libdaemon,
     declare_dependency(link_with: was_server),
   ])
 
@@ -234,7 +227,6 @@ executable('request_translation',
   '../src/direct.cxx',
   include_directories: inc,
   dependencies: [
-    libhttp,
     declare_dependency(link_with: translation),
     widget_dep,
     stock_dep,
@@ -246,7 +238,6 @@ executable('run_subst',
   '../src/PInstance.cxx',
   include_directories: inc,
   dependencies: [
-    libhttp,
     declare_dependency(link_with: istream),
   ])
 
@@ -255,7 +246,6 @@ executable('run_cookie_client',
   include_directories: inc,
   dependencies: [
     threads,
-    libhttp,
     declare_dependency(link_with: cookie),
   ])
 
@@ -264,7 +254,6 @@ executable('run_cookie_server',
   include_directories: inc,
   dependencies: [
     threads,
-    libhttp,
     declare_dependency(link_with: cookie),
   ])
 
@@ -304,7 +293,6 @@ executable('run_processor',
   include_directories: inc,
   dependencies: [
     threads,
-    libhttp,
     processor_dep,
     widget_dep,
     session_dep,
@@ -334,7 +322,6 @@ executable('run_nfs_client',
   '../src/nfs/Istream.cxx',
   include_directories: inc,
   dependencies: [
-    libhttp,
     declare_dependency(link_with: nfs_client),
     declare_dependency(link_with: istream),
     stock_dep,
@@ -357,7 +344,6 @@ test('t_tcache', executable('t_tcache',
   '../src/widget/View.cxx',
   include_directories: inc,
   dependencies: [
-    libhttp,
     declare_dependency(link_with: translation),
   ]))
 
@@ -383,7 +369,7 @@ test('t_header_forward', executable('t_header_forward',
     gtest,
     threads,
     libpcre,
-    libdaemon, libhttp,
+    libdaemon,
     putil_dep,
     http_dep,
     declare_dependency(link_with: cookie),
@@ -405,7 +391,6 @@ test('t_stock', executable('t_stock',
   '../src/PInstance.cxx',
   include_directories: inc,
   dependencies: [
-    libhttp,
     stock_dep,
   ]))
 
@@ -416,7 +401,6 @@ test('t_resource_address', executable('t_resource_address',
   include_directories: inc,
   dependencies: [
     gtest,
-    libhttp,
     declare_dependency(link_with: raddress),
   ]))
 
@@ -451,7 +435,7 @@ test('t_cgi', executable('t_cgi',
   '../src/http_response.cxx',
   include_directories: inc,
   dependencies: [
-    libhttp, libdaemon,
+    libdaemon,
     declare_dependency(link_with: cgi),
     system_dep,
     declare_dependency(link_with: raddress),
@@ -473,7 +457,6 @@ test('t_http_client', executable('t_http_client',
   '../src/istream_gb.cxx',
   include_directories: inc,
   dependencies: [
-    libhttp,
     declare_dependency(link_with: http_client),
     system_dep,
   ]),
@@ -488,7 +471,6 @@ test('t_http_server', executable('t_http_server',
   '../src/istream_gb.cxx',
   include_directories: inc,
   dependencies: [
-    libhttp,
     declare_dependency(link_with: http_server),
     system_dep,
   ]))
@@ -501,7 +483,6 @@ test('t_fcgi_client', executable('t_fcgi_client',
   '../src/istream_gb.cxx',
   include_directories: inc,
   dependencies: [
-    libhttp,
     declare_dependency(link_with: fcgi_client),
   ]),
 )
@@ -512,7 +493,6 @@ test('t_was_client', executable('t_was_client',
   '../src/direct.cxx',
   include_directories: inc,
   dependencies: [
-    libhttp,
     declare_dependency(link_with: was_client),
     declare_dependency(link_with: was_server),
   ]),
@@ -527,7 +507,6 @@ test('t_ajp_client', executable('t_ajp_client',
   '../src/istream_gb.cxx',
   include_directories: inc,
   dependencies: [
-    libhttp,
     declare_dependency(link_with: ajp_client),
   ]),
 )
@@ -538,7 +517,6 @@ test('t_memcached_client', executable('t_memcached_client',
   '../src/direct.cxx',
   include_directories: inc,
   dependencies: [
-    libhttp,
     declare_dependency(link_with: memcached_client),
   ]),
 )
@@ -551,7 +529,6 @@ test('t_http_cache', executable('t_http_cache',
   '../src/sink_rubber.cxx',
   include_directories: inc,
   dependencies: [
-    libhttp,
     putil_dep,
     declare_dependency(link_with: http_cache),
   ]))
@@ -615,7 +592,6 @@ test('t_sink_rubber', executable('t_sink_rubber',
   include_directories: inc,
   dependencies: [
     gtest,
-    libhttp,
     declare_dependency(link_with: istream),
   ]))
 
@@ -645,7 +621,7 @@ test('t_rewrite_uri', executable('t_rewrite_uri',
   include_directories: inc,
   dependencies: [
     gtest,
-    libhttp, libdaemon,
+    libdaemon,
     putil_dep,
     widget_dep,
     declare_dependency(link_with: istream),
@@ -657,7 +633,7 @@ test('t_widget_registry', executable('t_widget_registry',
   '../src/widget/Registry.cxx',
   include_directories: inc,
   dependencies: [
-    libhttp, libdaemon,
+    libdaemon,
     widget_dep,
   ]))
 
@@ -666,7 +642,7 @@ test('t_widget_resolver', executable('t_widget_resolver',
   '../src/widget/Resolver.cxx',
   include_directories: inc,
   dependencies: [
-    libhttp, libdaemon,
+    libdaemon,
     widget_dep,
   ]))
 
@@ -679,7 +655,7 @@ test('t_wembed', executable('t_wembed',
   '../src/bp_global.cxx',
   include_directories: inc,
   dependencies: [
-    libhttp, libdaemon,
+    libdaemon,
     widget_dep,
     declare_dependency(link_with: istream),
     declare_dependency(link_with: http_util),
@@ -699,13 +675,14 @@ test('t_widget_http', executable('t_widget_http',
   include_directories: inc,
   dependencies: [
     threads,
-    libdaemon, libhttp,
+    libdaemon,
     widget_dep,
     declare_dependency(link_with: istream),
     declare_dependency(link_with: http_util),
     session_dep,
     processor_dep,
     time_dep,
+    http_dep,
   ]))
 
 test('t_uri', executable('t_uri',
@@ -743,7 +720,6 @@ test('t_processor', executable('t_processor',
   dependencies: [
     gtest,
     threads,
-    libhttp,
     processor_dep,
     widget_dep,
     session_dep,
@@ -755,7 +731,6 @@ t_istream_filter = static_library('t_istream_filter',
   '../src/pipe_stock.cxx',
   include_directories: inc,
   dependencies: [
-    libhttp,
     declare_dependency(link_with: eutil),
     declare_dependency(link_with: istream),
   ])
@@ -873,7 +848,7 @@ test('t_istream_processor', executable('t_istream_processor',
   '../src/istream_html_escape.cxx',
   include_directories: inc,
   dependencies: [
-    libhttp, libdaemon,
+    libdaemon,
     threads,
     processor_dep,
     widget_dep,

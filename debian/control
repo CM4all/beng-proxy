@@ -24,7 +24,6 @@ Build-Depends: debhelper (>= 9), dh-python, dh-systemd,
  libavahi-client-dev,
  libcm4all-daemon-dev (>= 0.4.2),
  libcm4all-was-protocol-dev (>= 1.0),
- libcm4all-http-dev (>= 1.2.5),
  texlive, texlive-luatex, texlive-latex-extra,
  python (>= 2.7.3), valgrind,
 Standards-Version: 3.9.1
