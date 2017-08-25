@@ -86,7 +86,7 @@ MultiStock::GetNow(struct pool &caller_pool, const char *uri, void *info,
                    unsigned max_leases,
                    struct lease_ref &lease_ref)
 {
-    auto di = domains.insert(std::make_pair(uri, Domain(*this))).first;
+    auto di = domains.emplace(uri, *this).first;
     return di->second.GetNow(di, caller_pool, uri, info, max_leases,
                              lease_ref);
 }
