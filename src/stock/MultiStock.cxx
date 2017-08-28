@@ -71,6 +71,7 @@ MultiStock::Item::DeleteLease(Lease *lease, bool _reuse)
     assert(!leases.empty());
     leases.erase_and_dispose(leases.iterator_to(*lease),
                              DeleteDisposer());
+    ++remaining_leases;
 
     if (leases.empty())
         delete this;

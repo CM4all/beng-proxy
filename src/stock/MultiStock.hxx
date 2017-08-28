@@ -79,15 +79,15 @@ class MultiStock {
         StockItem &item;
 
         boost::intrusive::list<Lease, Lease::SiblingsListMemberHook,
-                               boost::intrusive::constant_time_size<true>> leases;
+                               boost::intrusive::constant_time_size<false>> leases;
 
-        const unsigned max_leases;
+        unsigned remaining_leases;
 
         bool reuse = true;
 
     public:
         Item(unsigned _max_leases, StockItem &_item)
-            :item(_item), max_leases(_max_leases) {}
+            :item(_item), remaining_leases(_max_leases) {}
 
         Item(const Item &) = delete;
         Item &operator=(const Item &) = delete;
@@ -98,7 +98,7 @@ class MultiStock {
         const char *GetKey() const;
 
         bool IsFull() const {
-            return leases.size() >= max_leases;
+            return remaining_leases == 0;
         }
 
         bool CanUse() const {
@@ -109,6 +109,7 @@ class MultiStock {
         Lease &AddLease() {
             Lease *lease = new Lease(*this);
             leases.push_front(*lease);
+            --remaining_leases;
             return *lease;
         }
 
