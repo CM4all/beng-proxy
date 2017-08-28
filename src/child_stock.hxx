@@ -41,8 +41,6 @@
 #include "stock/MapStock.hxx"
 #include "io/FdType.hxx"
 
-#include <sys/socket.h>
-
 struct PreparedChildProcess;
 class UniqueSocketDescriptor;
 class EventLoop;
