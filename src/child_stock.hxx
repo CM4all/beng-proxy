@@ -48,6 +48,15 @@ class SpawnService;
 
 class ChildStockClass {
 public:
+    /**
+     * Determine the socket type for the given child process.  The
+     * default is SOCK_STREAM.  This method may also be used to add
+     * the SOCK_NONBLOCK flag.  SOCK_CLOEXEC should not be used; it is
+     * added automatically.
+     *
+     * @param info an opaque pointer describing the process to be
+     * spawned
+     */
     virtual int GetChildSocketType(void *info) const noexcept;
 
     /**
@@ -57,6 +66,12 @@ public:
                               PreparedChildProcess &p) = 0;
 };
 
+/**
+ * A stock which spawns and manages reusable child processes
+ * (e.g. FastCGI servers).  It is based on #StockMap.  The meaning of
+ * the "info" pointer and key strings are defined by the given
+ * #ChildStockClass.
+ */
 class ChildStock final : StockClass {
     StockMap map;
 
