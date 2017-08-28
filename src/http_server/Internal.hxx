@@ -328,14 +328,10 @@ struct HttpServerConnection final : IstreamHandler {
 };
 
 /**
- * The timeout of an idle connection (READ_START).
+ * The timeout of an idle connection (READ_START) up until request
+ * headers are received.
  */
 extern const struct timeval http_server_idle_timeout;
-
-/**
- * The total timeout of a client sending request headers.
- */
-extern const struct timeval http_server_header_timeout;
 
 /**
  * The timeout for reading more request data (READ_BODY).

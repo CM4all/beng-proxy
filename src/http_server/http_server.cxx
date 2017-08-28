@@ -55,11 +55,6 @@ const struct timeval http_server_idle_timeout = {
     .tv_usec = 0,
 };
 
-const struct timeval http_server_header_timeout = {
-    .tv_sec = 20,
-    .tv_usec = 0,
-};
-
 const struct timeval http_server_read_timeout = {
     .tv_sec = 30,
     .tv_usec = 0,
