@@ -48,6 +48,8 @@
 #include <was/protocol.h>
 #include <daemon/log.h>
 
+#include <string>
+
 #include <assert.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -83,6 +85,8 @@ struct WasChildParams {
 class WasChild final : public StockItem, ExitListener {
     SpawnService &spawn_service;
 
+    const std::string tag;
+
     WasProcess process;
     SocketEvent event;
 
@@ -98,8 +102,10 @@ class WasChild final : public StockItem, ExitListener {
     uint64_t input_received;
 
 public:
-    explicit WasChild(CreateStockItem c, SpawnService &_spawn_service)
+    explicit WasChild(CreateStockItem c, SpawnService &_spawn_service,
+                      const char *_tag)
         :StockItem(c), spawn_service(_spawn_service),
+         tag(_tag != nullptr ? _tag : ""),
          event(c.stock.GetEventLoop(), BIND_THIS_METHOD(EventCallback)) {
         /* mark this object as "unused" so the destructor doesn't
            attempt to kill the process */
@@ -107,6 +113,10 @@ public:
     }
 
     ~WasChild() override;
+
+    bool IsTag(const char *other_tag) const {
+        return tag == other_tag;
+    }
 
     void Launch(const WasChildParams &params) {
         process = was_launch(spawn_service,
@@ -389,6 +399,13 @@ public:
         return stock;
     }
 
+    void FadeTag(const char *tag) {
+        stock.FadeIf([tag](const StockItem &item){
+                const auto &child = (const WasChild &)item;
+                return child.IsTag(tag);
+            });
+    }
+
 private:
     /* virtual methods from class StockClass */
     void Create(CreateStockItem c, void *info, struct pool &caller_pool,
@@ -403,7 +420,7 @@ WasStock::Create(CreateStockItem c,
 {
     WasChildParams *params = (WasChildParams *)info;
 
-    auto *child = new WasChild(c, spawn_service);
+    auto *child = new WasChild(c, spawn_service, params->options.tag);
 
     assert(params != nullptr);
     assert(params->executable_path != nullptr);
@@ -445,6 +462,13 @@ was_stock_free(StockMap *_stock)
 {
     auto *stock = (WasStock *)&_stock->GetClass();
     delete stock;
+}
+
+void
+was_stock_fade_tag(StockMap &_stock, const char *tag)
+{
+    auto &stock = (WasStock &)_stock.GetClass();
+    stock.FadeTag(tag);
 }
 
 void

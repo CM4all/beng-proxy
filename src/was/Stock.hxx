@@ -58,6 +58,9 @@ was_stock_new(unsigned limit, unsigned max_idle,
 void
 was_stock_free(StockMap *stock);
 
+void
+was_stock_fade_tag(StockMap &s, const char *tag);
+
 /**
  * @param args command-line arguments
  */
