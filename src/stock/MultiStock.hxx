@@ -81,18 +81,18 @@ class MultiStock {
             }
         };
 
-        const unsigned max_leases;
-
         StockItem &item;
 
         boost::intrusive::list<Lease, Lease::SiblingsListMemberHook,
                                boost::intrusive::constant_time_size<true>> leases;
 
+        const unsigned max_leases;
+
         bool reuse = true;
 
     public:
         Item(unsigned _max_leases, StockItem &_item)
-            :max_leases(_max_leases), item(_item) {}
+            :item(_item), max_leases(_max_leases) {}
 
         Item(const Item &) = delete;
         Item &operator=(const Item &) = delete;
