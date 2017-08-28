@@ -148,16 +148,16 @@ ChildStock::ChildStock(EventLoop &event_loop, SpawnService &_spawn_service,
 }
 
 UniqueSocketDescriptor
-child_stock_item_connect(StockItem *_item)
+child_stock_item_connect(StockItem &_item)
 {
-    auto *item = (ChildStockItem *)_item;
+    auto &item = (ChildStockItem &)_item;
 
     try {
-        return item->socket.Connect();
+        return item.socket.Connect();
     } catch (...) {
         /* if the connection fails, abandon the child process, don't
            try again - it will never work! */
-        item->fade = true;
+        item.fade = true;
         throw;
     }
 }

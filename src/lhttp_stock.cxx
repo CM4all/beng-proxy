@@ -144,7 +144,7 @@ LhttpConnection::Connect(MultiStock &child_stock, struct pool &caller_pool,
     }
 
     try {
-        fd = child_stock_item_connect(child);
+        fd = child_stock_item_connect(*child);
     } catch (...) {
         delete this;
         std::throw_with_nested(FormatRuntimeError("Failed to connect to LHTTP server '%s'",

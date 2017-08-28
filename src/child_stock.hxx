@@ -41,8 +41,6 @@
 #include "stock/MapStock.hxx"
 #include "io/FdType.hxx"
 
-#include "util/Compiler.h"
-
 #include <sys/socket.h>
 
 struct PreparedChildProcess;
@@ -91,11 +89,10 @@ private:
  * @return a socket descriptor
  */
 UniqueSocketDescriptor
-child_stock_item_connect(StockItem *item);
+child_stock_item_connect(StockItem &item);
 
-gcc_pure
-static inline FdType
-child_stock_item_get_type(gcc_unused const StockItem *item)
+static constexpr inline FdType
+child_stock_item_get_type(const StockItem &)
 {
     return FdType::FD_SOCKET;
 }

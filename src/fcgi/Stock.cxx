@@ -262,7 +262,7 @@ FcgiStock::Create(CreateStockItem c, void *info,
     }
 
     try {
-        connection->fd = child_stock_item_connect(connection->child);
+        connection->fd = child_stock_item_connect(*connection->child);
     } catch (...) {
         connection->kill = true;
         delete connection;
