@@ -269,7 +269,7 @@ HttpServerConnection::HeadersFinished()
 
     request.read_state = Request::BODY;
 
-    /* for the response body, the filtered_socket class tracks
+    /* for the request body, the FilteredSocket class tracks
        inactivity timeout */
     socket.ScheduleReadTimeout(false, read_timeout);
 
