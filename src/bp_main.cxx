@@ -81,10 +81,9 @@
 #include "net/SocketAddress.hxx"
 #include "net/StaticSocketAddress.hxx"
 #include "net/ServerSocket.hxx"
+#include "io/Logger.hxx"
 #include "util/Macros.hxx"
 #include "util/PrintException.hxx"
-
-#include <daemon/log.h>
 
 #include <systemd/sd-daemon.h>
 
@@ -166,8 +165,8 @@ BpInstance::ShutdownCallback()
 void
 BpInstance::ReloadEventCallback(int)
 {
-    daemon_log(3, "caught SIGHUP, flushing all caches (pid=%d)\n",
-               (int)getpid());
+    LogConcat(3, "main", "caught SIGHUP, flushing all caches (pid=",
+              (int)getpid(), ")");
 
     translate_cache_flush(*translate_cache);
     http_cache_flush(*http_cache);
