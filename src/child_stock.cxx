@@ -158,6 +158,15 @@ ChildStock::ChildStock(EventLoop &event_loop, SpawnService &_spawn_service,
 {
 }
 
+void
+ChildStock::FadeTag(const char *tag)
+{
+    map.FadeIf([tag](const StockItem &_item) {
+            const auto &item = (const ChildStockItem &)_item;
+            return item.tag == tag;
+        });
+}
+
 UniqueSocketDescriptor
 child_stock_item_connect(StockItem &_item)
 {

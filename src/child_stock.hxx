@@ -89,6 +89,11 @@ public:
         return map;
     }
 
+    /**
+     * "Fade" all child processes with the given tag.
+     */
+    void FadeTag(const char *tag);
+
 private:
     /* virtual methods from class StockClass */
     void Create(CreateStockItem c, void *info, struct pool &caller_pool,
