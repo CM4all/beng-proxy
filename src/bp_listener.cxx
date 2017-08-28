@@ -34,9 +34,8 @@
 #include "bp_instance.hxx"
 #include "bp_connection.hxx"
 #include "net/SocketAddress.hxx"
+#include "io/Logger.hxx"
 #include "util/Exception.hxx"
-
-#include <daemon/log.h>
 
 BPListener::BPListener(BpInstance &_instance, const char *_tag)
     :ServerSocket(_instance.event_loop), instance(_instance), tag(_tag)
@@ -52,5 +51,5 @@ BPListener::OnAccept(UniqueSocketDescriptor &&_fd, SocketAddress address)
 void
 BPListener::OnAcceptError(std::exception_ptr ep)
 {
-    daemon_log(2, "%s\n", GetFullMessage(ep).c_str());
+    LogConcat(2, "listener", ep);
 }
