@@ -35,7 +35,9 @@
 
 #include "lease.hxx"
 #include "util/DeleteDisposer.hxx"
+#include "util/Compiler.h"
 
+#include <boost/intrusive/set.hpp>
 #include <boost/intrusive/list.hpp>
 
 #include <map>
@@ -55,132 +57,103 @@ struct StockStats;
  * #StockItem.
  */
 class MultiStock {
-    class Domain;
-    typedef std::map<std::string, Domain> DomainMap;
+    class Item
+        : public boost::intrusive::set_base_hook<boost::intrusive::link_mode<boost::intrusive::auto_unlink>> {
 
-    class Domain {
-        class Item
-            : public boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
+        struct Lease final : ::Lease {
+            static constexpr auto link_mode = boost::intrusive::normal_link;
+            typedef boost::intrusive::link_mode<link_mode> LinkMode;
+            typedef boost::intrusive::list_member_hook<LinkMode> SiblingsListHook;
 
-            struct Lease final : ::Lease {
-                static constexpr auto link_mode = boost::intrusive::normal_link;
-                typedef boost::intrusive::link_mode<link_mode> LinkMode;
-                typedef boost::intrusive::list_member_hook<LinkMode> SiblingsListHook;
+            SiblingsListHook siblings;
 
-                SiblingsListHook siblings;
+            typedef boost::intrusive::member_hook<Lease,
+                                                  Lease::SiblingsListHook,
+                                                  &Lease::siblings> SiblingsListMemberHook;
 
-                typedef boost::intrusive::member_hook<Lease,
-                                                      Lease::SiblingsListHook,
-                                                      &Lease::siblings> SiblingsListMemberHook;
+            Item &item;
 
-                Item &item;
+            Lease(Item &_item):item(_item) {}
 
-                Lease(Item &_item):item(_item) {}
-
-                /* virtual methods from class Lease */
-                void ReleaseLease(bool _reuse) override {
-                    item.DeleteLease(this, _reuse);
-                }
-            };
-
-            const DomainMap::iterator domain;
-
-            const unsigned max_leases;
-
-            StockItem &item;
-
-            boost::intrusive::list<Lease, Lease::SiblingsListMemberHook,
-                                   boost::intrusive::constant_time_size<true>> leases;
-
-            bool reuse;
-
-        public:
-            Item(DomainMap::iterator _domain, unsigned _max_leases,
-                 StockItem &_item)
-                :domain(_domain), max_leases(_max_leases), item(_item),
-                 reuse(true) {
+            /* virtual methods from class Lease */
+            void ReleaseLease(bool _reuse) override {
+                item.DeleteLease(this, _reuse);
             }
-
-            Item(const Item &) = delete;
-            Item &operator=(const Item &) = delete;
-
-            ~Item();
-
-            bool IsFull() const {
-                return leases.size() >= max_leases;
-            }
-
-            bool CanUse() const {
-                return reuse && !IsFull();
-            }
-
-        private:
-            Lease &AddLease() {
-                Lease *lease = new Lease(*this);
-                leases.push_front(*lease);
-                return *lease;
-            }
-
-        public:
-            void AddLease(StockGetHandler &handler,
-                          struct lease_ref &lease_ref);
-
-            StockItem *AddLease(struct lease_ref &lease_ref) {
-                lease_ref.Set(AddLease());
-                return &item;
-            }
-
-            void DeleteLease(Lease *lease, bool _reuse);
         };
 
-        MultiStock &stock;
+        const unsigned max_leases;
 
-        typedef boost::intrusive::list<Item,
-                                       boost::intrusive::constant_time_size<false>> ItemList;
-        ItemList items;
+        StockItem &item;
+
+        boost::intrusive::list<Lease, Lease::SiblingsListMemberHook,
+                               boost::intrusive::constant_time_size<true>> leases;
+
+        bool reuse = true;
 
     public:
-        Domain(MultiStock &_stock)
-            :stock(_stock) {
+        Item(unsigned _max_leases, StockItem &_item)
+            :max_leases(_max_leases), item(_item) {}
+
+        Item(const Item &) = delete;
+        Item &operator=(const Item &) = delete;
+
+        ~Item();
+
+        gcc_pure
+        const char *GetKey() const;
+
+        bool IsFull() const {
+            return leases.size() >= max_leases;
         }
 
-        Domain(const Domain &) = delete;
-        Domain &operator=(const Domain &) = delete;
-
-        ~Domain() {
-            assert(items.empty());
+        bool CanUse() const {
+            return reuse && !IsFull();
         }
 
-        Item *FindUsableItem() {
-            for (auto &i : items)
-                if (i.CanUse())
-                    return &i;
-
-            return nullptr;
+    private:
+        Lease &AddLease() {
+            Lease *lease = new Lease(*this);
+            leases.push_front(*lease);
+            return *lease;
         }
 
-        Item &AddItem(DomainMap::iterator di,
-                      unsigned max_leases,
-                      StockItem &si) {
-            assert(&di->second == this);
+    public:
+        void AddLease(StockGetHandler &handler,
+                      struct lease_ref &lease_ref);
 
-            Item *item = new Item(di, max_leases, si);
-            items.push_front(*item);
-            return *item;
+        StockItem *AddLease(struct lease_ref &lease_ref) {
+            lease_ref.Set(AddLease());
+            return &item;
         }
 
-        StockItem *GetNow(DomainMap::iterator di,
-                          struct pool &caller_pool,
-                          const char *uri, void *info,
-                          unsigned max_leases,
-                          struct lease_ref &lease_ref);
+        void DeleteLease(Lease *lease, bool _reuse);
 
-        void DeleteItem(Item &i) {
-            items.erase_and_dispose(items.iterator_to(i), DeleteDisposer());
-        }
+        class Compare {
+            gcc_pure
+            bool Less(const char *a, const char *b) const;
+
+        public:
+            gcc_pure
+            bool operator()(const char *a, const Item &b) const {
+                return Less(a, b.GetKey());
+            }
+
+            gcc_pure
+            bool operator()(const Item &a, const char *b) const {
+                return Less(a.GetKey(), b);
+            }
+
+            gcc_pure
+            bool operator()(const Item &a, const Item &b) const {
+                return Less(a.GetKey(), b.GetKey());
+            }
+        };
     };
 
-    DomainMap domains;
+    typedef boost::intrusive::multiset<Item,
+                                       boost::intrusive::compare<Item::Compare>,
+                                       boost::intrusive::constant_time_size<false>> ItemMap;
+    ItemMap items;
 
     StockMap &hstock;
 
@@ -203,6 +176,10 @@ public:
     StockItem *GetNow(struct pool &caller_pool, const char *uri, void *info,
                       unsigned max_leases,
                       struct lease_ref &lease_ref);
+
+private:
+    Item &MakeItem(struct pool &caller_pool, const char *uri, void *info,
+                   unsigned max_leases);
 };
 
 #endif

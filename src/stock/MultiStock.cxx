@@ -35,16 +35,28 @@
 #include "GetHandler.hxx"
 #include "Item.hxx"
 
-MultiStock::Domain::Item::~Item()
+bool
+MultiStock::Item::Compare::Less(const char *a, const char *b) const
+{
+    return strcmp(a, b) < 0;
+}
+
+MultiStock::Item::~Item()
 {
     assert(leases.empty());
 
     item.Put(!reuse);
 }
 
+const char *
+MultiStock::Item::GetKey() const
+{
+    return item.GetStockName();
+}
+
 void
-MultiStock::Domain::Item::AddLease(StockGetHandler &handler,
-                                   struct lease_ref &lease_ref)
+MultiStock::Item::AddLease(StockGetHandler &handler,
+                           struct lease_ref &lease_ref)
 {
     lease_ref.Set(AddLease());
 
@@ -52,7 +64,7 @@ MultiStock::Domain::Item::AddLease(StockGetHandler &handler,
 }
 
 void
-MultiStock::Domain::Item::DeleteLease(Lease *lease, bool _reuse)
+MultiStock::Item::DeleteLease(Lease *lease, bool _reuse)
 {
     reuse &= _reuse;
 
@@ -61,24 +73,24 @@ MultiStock::Domain::Item::DeleteLease(Lease *lease, bool _reuse)
                              DeleteDisposer());
 
     if (leases.empty())
-        domain->second.DeleteItem(*this);
+        delete this;
 }
 
-StockItem *
-MultiStock::Domain::GetNow(DomainMap::iterator di,
-                           struct pool &caller_pool,
-                           const char *uri, void *info,
-                           unsigned max_leases,
-                           struct lease_ref &lease_ref)
+MultiStock::Item &
+MultiStock::MakeItem(struct pool &caller_pool, const char *uri, void *info,
+                     unsigned max_leases)
 {
-    auto i = FindUsableItem();
-    if (i == nullptr) {
-        auto *item = stock.hstock.GetNow(caller_pool, uri, info);
-        i = new Item(di, max_leases, *item);
-        items.push_front(*i);
-    }
+    auto i = items.lower_bound(uri, items.key_comp());
+    for (; i != items.end() && !items.key_comp()(uri, *i); ++i)
+        if (i->CanUse())
+            return *i;
 
-    return i->AddLease(lease_ref);
+    auto *stock_item = hstock.GetNow(caller_pool, uri, info);
+    assert(stock_item != nullptr);
+
+    auto *item = new Item(max_leases, *stock_item);
+    items.insert(i, *item);
+    return *item;
 }
 
 StockItem *
@@ -86,7 +98,5 @@ MultiStock::GetNow(struct pool &caller_pool, const char *uri, void *info,
                    unsigned max_leases,
                    struct lease_ref &lease_ref)
 {
-    auto di = domains.emplace(uri, *this).first;
-    return di->second.GetNow(di, caller_pool, uri, info, max_leases,
-                             lease_ref);
+    return MakeItem(caller_pool, uri, info, max_leases).AddLease(lease_ref);
 }
