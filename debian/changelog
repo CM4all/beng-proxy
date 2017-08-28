@@ -1,6 +1,6 @@
 cm4all-beng-proxy (13.0.1) unstable; urgency=low
 
-  * 
+  * lhttp: FADE_CHILDEN prevents reusing existing busy processes
 
  --   
 

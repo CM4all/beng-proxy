@@ -105,6 +105,10 @@ class MultiStock {
             return reuse && !IsFull();
         }
 
+        void Fade() {
+            reuse = false;
+        }
+
     private:
         Lease &AddLease() {
             Lease *lease = new Lease(*this);
@@ -159,6 +163,14 @@ public:
 
     MultiStock(const MultiStock &) = delete;
     MultiStock &operator=(const MultiStock &) = delete;
+
+    /**
+     * @see Stock::FadeAll()
+     */
+    void FadeAll() {
+        for (auto &i : items)
+            i.Fade();
+    }
 
     /**
      * Obtains an item from the stock without going through the

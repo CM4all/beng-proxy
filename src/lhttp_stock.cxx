@@ -69,6 +69,7 @@ public:
     void FadeAll() {
         hstock.FadeAll();
         child_stock.GetStockMap().FadeAll();
+        mchild_stock.FadeAll();
     }
 
     StockMap &GetConnectionStock() {
