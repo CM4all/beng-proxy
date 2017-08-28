@@ -42,7 +42,6 @@
 #include "util/StringView.hxx"
 #include "util/StaticArray.hxx"
 #include "util/RuntimeError.hxx"
-#include "util/Exception.hxx"
 
 #include <assert.h>
 #include <unistd.h>
@@ -95,7 +94,6 @@ http_server_request_new(HttpServerConnection *connection,
                                           connection->local_address,
                                           connection->remote_address,
                                           connection->local_host_and_port,
-                                          connection->remote_host_and_port,
                                           connection->remote_host,
                                           method, uri);
 }
@@ -352,7 +350,6 @@ HttpServerConnection::HttpServerConnection(struct pool &_pool,
      local_address(DupAddress(*pool, _local_address)),
      remote_address(DupAddress(*pool, _remote_address)),
      local_host_and_port(address_to_string(*pool, _local_address)),
-     remote_host_and_port(address_to_string(*pool, _remote_address)),
      remote_host(address_to_host_string(*pool, _remote_address)),
      date_header(_date_header)
 {
@@ -493,10 +490,6 @@ HttpServerConnection::Error(std::exception_ptr e)
         CloseRequest();
 
     if (handler != nullptr) {
-        e = NestException(e,
-                          FormatRuntimeError("error on HTTP connection from '%s'",
-                                             remote_host_and_port));
-
         auto *_handler = handler;
         handler = nullptr;
         _handler->HttpConnectionError(e);

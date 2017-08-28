@@ -93,7 +93,7 @@ struct HttpServerConnection final : IstreamHandler {
     const SocketAddress local_address, remote_address;
 
     const char *const local_host_and_port;
-    const char *const remote_host_and_port, *const remote_host;
+    const char *const remote_host;
 
     /* request */
     struct Request {

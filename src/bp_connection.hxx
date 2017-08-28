@@ -60,6 +60,11 @@ struct BpConnection final
 
     const char *const listener_tag;
 
+    /**
+     * The address (host and port) of the client.
+     */
+    const char *const remote_host_and_port;
+
     HttpServerConnection *http;
 
     /**
@@ -77,7 +82,8 @@ struct BpConnection final
     std::chrono::steady_clock::time_point request_start_time;
 
     BpConnection(BpInstance &_instance, struct pool &_pool,
-                 const char *_listener_tag);
+                 const char *_listener_tag,
+                 SocketAddress remote_address);
     ~BpConnection();
 
     struct Disposer {

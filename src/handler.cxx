@@ -442,9 +442,9 @@ fill_translate_request_local_address(TranslateRequest &t,
 
 static void
 fill_translate_request_remote_host(TranslateRequest &t,
-                                   const HttpServerRequest &r)
+                                   const char *remote_host_and_port)
 {
-    t.remote_host = r.remote_host_and_port;
+    t.remote_host = remote_host_and_port;
 }
 
 static void
@@ -564,7 +564,7 @@ repeat_translation(Request &request, const TranslateResponse &response)
 
         if (response.Wants(TranslationCommand::REMOTE_HOST))
             fill_translate_request_remote_host(request.translate.request,
-                                               request.request);
+                                               request.connection.remote_host_and_port);
 
         if (response.Wants(TranslationCommand::USER_AGENT))
             fill_translate_request_user_agent(request.translate.request,
@@ -830,7 +830,8 @@ fill_translate_request(TranslateRequest &t,
                        const HttpServerRequest &request,
                        const struct parsed_uri &uri,
                        StringMap *args,
-                       const char *listener_tag)
+                       const char *listener_tag,
+                       const char *remote_host_and_port)
 {
     /* these two were set by ParseArgs() */
     const auto session = t.session;
@@ -850,7 +851,7 @@ fill_translate_request(TranslateRequest &t,
         /* old translation server: send all packets that have become
            optional */
         fill_translate_request_local_address(t, request);
-        fill_translate_request_remote_host(t, request);
+        fill_translate_request_remote_host(t, remote_host_and_port);
         fill_translate_request_user_agent(t, request.headers);
         fill_translate_request_ua_class(t, request.headers);
         fill_translate_request_language(t, request.headers);
@@ -878,7 +879,8 @@ ask_translation_server(Request &request2)
 
     fill_translate_request(request2.translate.request, request2.request,
                            request2.uri, request2.args,
-                           request2.connection.listener_tag);
+                           request2.connection.listener_tag,
+                           request2.connection.remote_host_and_port);
     request2.SubmitTranslateRequest();
 }
 

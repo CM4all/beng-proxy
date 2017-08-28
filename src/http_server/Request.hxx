@@ -59,11 +59,6 @@ struct HttpServerRequest {
     const char *const local_host_and_port;
 
     /**
-     * The address (host and port) of the client.
-     */
-    const char *const remote_host_and_port;
-
-    /**
      * The address of the client, without the port number.
      */
     const char *const remote_host;
@@ -83,7 +78,6 @@ struct HttpServerRequest {
                       SocketAddress _local_address,
                       SocketAddress _remote_address,
                       const char *_local_host_and_port,
-                      const char *_remote_host_and_port,
                       const char *_remote_host,
                       http_method_t _method,
                       StringView _uri);

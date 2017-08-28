@@ -40,6 +40,7 @@
 #include "handler.hxx"
 #include "access_log/Glue.hxx"
 #include "drop.hxx"
+#include "address_string.hxx"
 #include "SocketProtocolError.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
@@ -53,11 +54,13 @@
 #include <unistd.h>
 
 BpConnection::BpConnection(BpInstance &_instance, struct pool &_pool,
-                           const char *_listener_tag)
+                           const char *_listener_tag,
+                           SocketAddress remote_address)
     :instance(_instance),
      pool(_pool),
      config(_instance.config),
-     listener_tag(_listener_tag)
+     listener_tag(_listener_tag),
+     remote_host_and_port(address_to_string(pool, remote_address))
 {
 }
 
@@ -154,7 +157,7 @@ BpConnection::HttpConnectionError(std::exception_ptr e)
 {
     http = nullptr;
 
-    LogConcat(HttpServerLogLevel(e), "connection", e);
+    LogConcat(HttpServerLogLevel(e), remote_host_and_port, e);
 
     close_connection(this);
 }
@@ -197,7 +200,7 @@ new_connection(BpInstance &instance,
     pool_set_major(pool);
 
     auto *connection = NewFromPool<BpConnection>(*pool, instance, *pool,
-                                                 listener_tag);
+                                                 listener_tag, address);
     instance.connections.push_front(*connection);
 
     connection->http =
