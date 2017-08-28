@@ -37,6 +37,7 @@
 #include "http_server.hxx"
 #include "http_body.hxx"
 #include "filtered_socket.hxx"
+#include "SocketProtocolError.hxx"
 #include "net/SocketAddress.hxx"
 #include "event/TimerEvent.hxx"
 #include "event/DeferEvent.hxx"
@@ -317,7 +318,7 @@ struct HttpServerConnection final : IstreamHandler {
     }
 
     void ProtocolError(const char *msg) {
-        Error(std::make_exception_ptr(HttpServerProtocolError(msg)));
+        Error(std::make_exception_ptr(SocketProtocolError(msg)));
     }
 
     /* virtual methods from class IstreamHandler */
