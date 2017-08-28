@@ -50,6 +50,10 @@ class StockGetHandler;
 struct StockItem;
 struct StockStats;
 
+/**
+ * A #StockMap wrapper which allows multiple clients to use one
+ * #StockItem.
+ */
 class MultiStock {
     class Domain;
     typedef std::map<std::string, Domain> DomainMap;
@@ -188,9 +192,9 @@ public:
     MultiStock &operator=(const MultiStock &) = delete;
 
     /**
-     * Obtains an item from the mstock without going through the callback.
-     * This requires a stock class which finishes the create() method
-     * immediately.
+     * Obtains an item from the stock without going through the
+     * callback.  This requires a stock class which finishes the
+     * StockClass::Create() method immediately.
      *
      * Throws exception on error.
      *
