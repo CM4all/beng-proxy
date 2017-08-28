@@ -279,8 +279,8 @@ lhttp_stock_get(LhttpStock *lhttp_stock, struct pool *pool,
                 const LhttpAddress *address)
 {
     const auto *const jail = address->options.jail;
-    if (jail != nullptr && jail->enabled && jail->home_directory == nullptr)
-        throw std::runtime_error("No home directory for jailed LHTTP");
+    if (jail != nullptr)
+        jail->Check();
 
     union {
         const LhttpAddress *in;
