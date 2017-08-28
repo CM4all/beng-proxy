@@ -44,8 +44,7 @@
 #include "spawn/ChildOptions.hxx"
 #include "AllocatorPtr.hxx"
 #include "pool.hxx"
-
-#include <daemon/log.h>
+#include "io/Logger.hxx"
 
 #include <assert.h>
 #include <unistd.h>
@@ -74,13 +73,17 @@ struct DelegateArgs {
 };
 
 class DelegateProcess final : public StockItem {
+    const LLogger logger;
+
     UniqueSocketDescriptor fd;
 
     SocketEvent event;
 
 public:
     explicit DelegateProcess(CreateStockItem c, UniqueSocketDescriptor &&_fd)
-        :StockItem(c), fd(std::move(_fd)),
+        :StockItem(c),
+         logger(c.GetStockName()),
+         fd(std::move(_fd)),
          event(c.stock.GetEventLoop(), fd.Get(), SocketEvent::READ,
                BIND_THIS_METHOD(SocketEventCallback)) {
     }
@@ -142,10 +145,9 @@ DelegateProcess::SocketEventCallback(unsigned events)
         char buffer;
         ssize_t nbytes = recv(fd.Get(), &buffer, sizeof(buffer), MSG_DONTWAIT);
         if (nbytes < 0)
-            daemon_log(2, "error on idle delegate process: %s\n",
-                       strerror(errno));
+            logger(2, "error on idle delegate process: ", strerror(errno));
         else if (nbytes > 0)
-            daemon_log(2, "unexpected data from idle delegate process\n");
+            logger(2, "unexpected data from idle delegate process");
     }
 
     InvokeIdleDisconnect();

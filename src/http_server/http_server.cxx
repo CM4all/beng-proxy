@@ -44,9 +44,6 @@
 #include "util/RuntimeError.hxx"
 #include "util/Exception.hxx"
 
-#include "util/Compiler.h"
-#include <daemon/log.h>
-
 #include <assert.h>
 #include <unistd.h>
 
@@ -309,8 +306,7 @@ http_server_socket_timeout(void *ctx)
 {
     auto *connection = (HttpServerConnection *)ctx;
 
-    daemon_log(4, "timeout on HTTP connection from '%s'\n",
-               connection->remote_host_and_port);
+    connection->logger(4, "timeout on HTTP connection");
     connection->Cancel();
     return false;
 }
@@ -348,11 +344,10 @@ static constexpr BufferedSocketHandler http_server_socket_handler = {
 inline void
 HttpServerConnection::IdleTimeoutCallback()
 {
-    daemon_log(4, "%s timeout on HTTP connection from '%s'\n",
-               request.read_state == Request::START
-               ? "idle"
-               : (request.read_state == Request::HEADERS ? "header" : "read"),
-               remote_host_and_port);
+    logger(4, request.read_state == Request::START
+           ? "idle"
+           : (request.read_state == Request::HEADERS ? "header" : "read"),
+           " timeout on HTTP connection");
     Cancel();
 }
 
@@ -375,6 +370,7 @@ HttpServerConnection::HttpServerConnection(struct pool &_pool,
      local_host_and_port(address_to_string(*pool, _local_address)),
      remote_host_and_port(address_to_string(*pool, _remote_address)),
      remote_host(address_to_host_string(*pool, _remote_address)),
+     logger(remote_host_and_port),
      date_header(_date_header)
 {
     pool_ref(pool);

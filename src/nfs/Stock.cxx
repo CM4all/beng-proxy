@@ -34,10 +34,8 @@
 #include "Client.hxx"
 #include "Handler.hxx"
 #include "pool.hxx"
+#include "io/Logger.hxx"
 #include "util/Cancellable.hxx"
-#include "util/Exception.hxx"
-
-#include <daemon/log.h>
 
 #include <boost/intrusive/list.hpp>
 #include <boost/intrusive/set.hpp>
@@ -177,8 +175,7 @@ NfsStockConnection::OnNfsClientClosed(std::exception_ptr ep)
     assert(requests.empty());
     assert(!stock.connections.empty());
 
-    daemon_log(1, "Connection to %s closed: %s\n",
-               key, GetFullMessage(ep).c_str());
+    LogConcat(1, key, "NFS connection closed: ", ep);
 
     stock.Remove(*this);
     DeleteUnrefTrashPool(pool, this);

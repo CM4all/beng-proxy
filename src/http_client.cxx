@@ -55,6 +55,7 @@
 #include "fs_lease.hxx"
 #include "pool.hxx"
 #include "system/Error.hxx"
+#include "io/Logger.hxx"
 #include "util/Cancellable.hxx"
 #include "util/Cast.hxx"
 #include "util/CharUtil.hxx"
@@ -65,8 +66,6 @@
 #include "util/RuntimeError.hxx"
 #include "util/Exception.hxx"
 #include "util/Compiler.h"
-
-#include <daemon/log.h>
 
 #include <assert.h>
 #include <limits.h>
@@ -781,7 +780,7 @@ http_client_response_finished(HttpClient *client)
     stopwatch_event(client->stopwatch, "end");
 
     if (!client->socket.IsEmpty()) {
-        daemon_log(2, "excess data after HTTP response\n");
+        LogConcat(2, client->peer_name, "excess data after HTTP response");
         client->keep_alive = false;
     }
 

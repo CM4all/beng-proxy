@@ -45,7 +45,7 @@
 #include "util/StringCompare.hxx"
 
 #ifndef NDEBUG
-#include <daemon/log.h>
+#include "io/Logger.hxx"
 #endif
 
 #include <string.h>
@@ -484,17 +484,18 @@ forward_request_headers(struct pool &pool, const StringMap &src,
     const char *p;
 
 #ifndef NDEBUG
-    if (session != nullptr && daemon_log_config.verbose >= 10) {
+    if (session != nullptr && CheckLogLevel(10)) {
         struct session_id_string s;
-        daemon_log(10, "forward_request_headers remote_host='%s' "
-                   "host='%s' uri='%s' session=%s user='%s' cookie='%s'\n",
-                   remote_host, host_and_port, uri,
-                   session->parent.id.Format(s),
-                   session->user.c_str(),
-                   host_and_port != nullptr && uri != nullptr
-                   ? cookie_jar_http_header_value(session->cookies,
-                                                  host_and_port, uri, pool)
-                   : nullptr);
+        LogFormat(10, "forward_request_headers",
+                  "remote_host='%s' "
+                  "host='%s' uri='%s' session=%s user='%s' cookie='%s'",
+                  remote_host, host_and_port, uri,
+                  session->parent.id.Format(s),
+                  session->user.c_str(),
+                  host_and_port != nullptr && uri != nullptr
+                  ? cookie_jar_http_header_value(session->cookies,
+                                                 host_and_port, uri, pool)
+                  : nullptr);
     }
 #endif
 

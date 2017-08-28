@@ -42,9 +42,7 @@
 #include "http_response.hxx"
 #include "istream/istream.hxx"
 #include "istream/UnusedHoldPtr.hxx"
-#include "util/Exception.hxx"
-
-#include <daemon/log.h>
+#include "io/Logger.hxx"
 
 struct ErrorResponseLoader final : HttpResponseHandler, Cancellable {
     CancellablePointer cancel_ptr;
@@ -110,8 +108,7 @@ ErrorResponseLoader::OnHttpResponse(http_status_t _status, StringMap &&_headers,
 void
 ErrorResponseLoader::OnHttpError(std::exception_ptr ep)
 {
-    daemon_log(2, "error on error document of %s: %s\n",
-               request2->request.uri, GetFullMessage(ep).c_str());
+    LogConcat(2, request2->request.uri, "error on error document: ", ep);
 
     errdoc_resubmit(*this);
 
@@ -150,8 +147,8 @@ errdoc_translate_error(std::exception_ptr ep, void *ctx)
 {
     auto &er = *(ErrorResponseLoader *)ctx;
 
-    daemon_log(2, "error document translation error: %s\n",
-               GetFullMessage(ep).c_str());
+    LogConcat(2, er.request2->request.uri,
+              "error document translation error: ", ep);
 
     errdoc_resubmit(er);
     er.Destroy();

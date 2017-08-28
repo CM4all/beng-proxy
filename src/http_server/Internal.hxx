@@ -42,6 +42,7 @@
 #include "event/DeferEvent.hxx"
 #include "istream/Pointer.hxx"
 #include "http/Method.h"
+#include "io/Logger.hxx"
 #include "util/Cancellable.hxx"
 #include "util/Exception.hxx"
 
@@ -93,6 +94,8 @@ struct HttpServerConnection final : IstreamHandler {
 
     const char *const local_host_and_port;
     const char *const remote_host_and_port, *const remote_host;
+
+    const LLogger logger;
 
     /* request */
     struct Request {

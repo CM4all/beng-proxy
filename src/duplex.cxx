@@ -36,12 +36,10 @@
 #include "net/UniqueSocketDescriptor.hxx"
 #include "net/Buffered.hxx"
 #include "io/Buffered.hxx"
+#include "io/Logger.hxx"
 #include "pool.hxx"
 #include "fb_pool.hxx"
 #include "SliceFifoBuffer.hxx"
-
-#include "util/Compiler.h"
-#include <daemon/log.h>
 
 #include <sys/socket.h>
 #include <assert.h>
@@ -185,7 +183,7 @@ Duplex::ReadEventCallback()
 {
     ssize_t nbytes = read_to_buffer(read_fd, from_read, INT_MAX);
     if (nbytes == -1) {
-        daemon_log(1, "failed to read: %s\n", strerror(errno));
+        LogConcat(1, "Duplex", "failed to read: ", strerror(errno));
         Destroy();
         return;
     }
@@ -225,7 +223,7 @@ Duplex::SocketReadEventCallback(unsigned)
 {
     ssize_t nbytes = ReceiveToBuffer(sock_fd, to_write);
     if (nbytes == -1) {
-        daemon_log(1, "failed to read: %s\n", strerror(errno));
+        LogConcat(1, "Duplex", "failed to read: ", strerror(errno));
         Destroy();
         return;
     }

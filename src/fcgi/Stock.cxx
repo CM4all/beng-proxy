@@ -47,12 +47,11 @@
 #include "event/Duration.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "io/UniqueFileDescriptor.hxx"
+#include "io/Logger.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/RuntimeError.hxx"
 #include "util/Exception.hxx"
 #include "util/StringFormat.hxx"
-
-#include <daemon/log.h>
 
 #include <string>
 
@@ -118,6 +117,8 @@ struct FcgiChildParams {
 };
 
 struct FcgiConnection final : StockItem {
+    const LLogger logger;
+
     std::string jail_home_directory;
 
     JailConfig jail_config;
@@ -143,7 +144,7 @@ struct FcgiConnection final : StockItem {
     bool aborted = false;
 
     explicit FcgiConnection(EventLoop &event_loop, CreateStockItem c)
-        :StockItem(c),
+        :StockItem(c), logger(GetStockName()),
          event(event_loop, BIND_THIS_METHOD(OnSocketEvent)) {}
 
     ~FcgiConnection() override;
@@ -194,11 +195,9 @@ FcgiConnection::OnSocketEvent(unsigned events)
         char buffer;
         ssize_t nbytes = fd.Read(&buffer, sizeof(buffer));
         if (nbytes < 0)
-            daemon_log(2, "error on idle FastCGI connection '%s': %s\n",
-                       GetStockName(), strerror(errno));
+            logger(2, "error on idle FastCGI connection: ", strerror(errno));
         else if (nbytes > 0)
-            daemon_log(2, "unexpected data from idle FastCGI connection '%s'\n",
-                       GetStockName());
+            logger(2, "unexpected data from idle FastCGI connection");
     }
 
     InvokeIdleDisconnect();
@@ -302,15 +301,13 @@ FcgiConnection::Borrow()
     char buffer;
     ssize_t nbytes = fd.Read(&buffer, sizeof(buffer));
     if (nbytes > 0) {
-        daemon_log(2, "unexpected data from idle FastCGI connection '%s'\n",
-                   GetStockName());
+        logger(2, "unexpected data from idle FastCGI connection");
         return false;
     } else if (nbytes == 0) {
         /* connection closed (not worth a log message) */
         return false;
     } else if (errno != EAGAIN) {
-        daemon_log(2, "error on idle FastCGI connection '%s': %s\n",
-                   GetStockName(), strerror(errno));
+        logger(2, "error on idle FastCGI connection: ", strerror(errno));
         return false;
     }
 

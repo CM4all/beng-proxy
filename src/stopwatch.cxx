@@ -35,10 +35,9 @@
 #include "net/SocketDescriptor.hxx"
 #include "net/StaticSocketAddress.hxx"
 #include "net/ToString.hxx"
+#include "io/Logger.hxx"
 #include "util/StaticArray.hxx"
 #include "util/WritableBuffer.hxx"
-
-#include <daemon/log.h>
 
 #include <chrono>
 
@@ -102,7 +101,7 @@ stopwatch_enable()
 bool
 stopwatch_is_enabled()
 {
-    return stopwatch_enabled && daemon_log_config.verbose >= STOPWATCH_VERBOSE;
+    return stopwatch_enabled && CheckLogLevel(STOPWATCH_VERBOSE);
 }
 
 Stopwatch *
@@ -203,10 +202,12 @@ stopwatch_dump(const Stopwatch *stopwatch)
         /* nothing was recorded (except for the initial event) */
         return;
 
+    char domain[128];
+    snprintf(domain, sizeof(domain), "stopwatch %s", stopwatch->name);
+
     char message[1024];
 
     WritableBuffer<char> b(message, sizeof(message));
-    AppendFormat(b, "stopwatch[%s]:", stopwatch->name);
 
     for (const auto &i : stopwatch->events)
         AppendFormat(b, " %s=%ldms",
@@ -220,5 +221,5 @@ stopwatch_dump(const Stopwatch *stopwatch)
                  timeval_diff_ms(&self.ru_stime,
                                  &stopwatch->self.ru_stime));
 
-    daemon_log(STOPWATCH_VERBOSE, "%s\n", message);
+    LogConcat(STOPWATCH_VERBOSE, domain, message);
 }

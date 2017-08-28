@@ -37,10 +37,9 @@
 #include "random.hxx"
 #include "crash.hxx"
 #include "event/TimerEvent.hxx"
+#include "io/Logger.hxx"
 #include "util/StaticArray.hxx"
 #include "util/RefCount.hxx"
-
-#include <daemon/log.h>
 
 #include <boost/interprocess/sync/interprocess_sharable_mutex.hpp>
 #include <boost/interprocess/sync/sharable_lock.hpp>
@@ -491,8 +490,8 @@ SessionContainer::Purge()
     if (purge_sessions.empty())
         return false;
 
-    daemon_log(3, "purging %u sessions (score=%u)\n",
-               (unsigned)purge_sessions.size(), highest_score);
+    LogConcat(3, "SessionManager", "purging ", (unsigned)purge_sessions.size(),
+              " sessions (score=", highest_score, ")");
 
     for (auto session : purge_sessions) {
         session->mutex.lock();

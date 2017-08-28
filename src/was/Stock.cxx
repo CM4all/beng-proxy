@@ -41,12 +41,12 @@
 #include "spawn/Interface.hxx"
 #include "pool.hxx"
 #include "event/SocketEvent.hxx"
+#include "io/Logger.hxx"
 #include "util/Cancellable.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/Cast.hxx"
 
 #include <was/protocol.h>
-#include <daemon/log.h>
 
 #include <string>
 
@@ -83,6 +83,8 @@ struct WasChildParams {
 };
 
 class WasChild final : public StockItem, ExitListener {
+    const LLogger logger;
+
     SpawnService &spawn_service;
 
     const std::string tag;
@@ -104,7 +106,7 @@ class WasChild final : public StockItem, ExitListener {
 public:
     explicit WasChild(CreateStockItem c, SpawnService &_spawn_service,
                       const char *_tag)
-        :StockItem(c), spawn_service(_spawn_service),
+        :StockItem(c), logger(GetStockName()), spawn_service(_spawn_service),
          tag(_tag != nullptr ? _tag : ""),
          event(c.stock.GetEventLoop(), BIND_THIS_METHOD(EventCallback)) {
         /* mark this object as "unused" so the destructor doesn't
@@ -231,11 +233,9 @@ WasChild::ReceiveControl(void *p, size_t size)
     }
 
     if (nbytes < 0)
-        daemon_log(2, "error on idle WAS control connection '%s': %s\n",
-                   GetStockName(), strerror(errno));
+        logger(2, "error on idle WAS control connection: ", strerror(errno));
     else if (nbytes > 0)
-        daemon_log(2, "unexpected data from idle WAS control connection '%s'\n",
-                   GetStockName());
+        logger(2, "unexpected data from idle WAS control connection");
     return ReceiveResult::ERROR;
 }
 
@@ -318,8 +318,8 @@ WasChild::RecoverStop()
         case WAS_COMMAND_PATH_INFO:
         case WAS_COMMAND_QUERY_STRING:
         case WAS_COMMAND_PARAMETER:
-            daemon_log(2, "unexpected data from idle WAS control connection '%s'\n",
-                       GetStockName());
+            logger(2, "unexpected data from idle WAS control connection '",
+                      GetStockName(), "'");
             InvokeIdleDisconnect();
             return;
 
@@ -370,11 +370,10 @@ WasChild::EventCallback(unsigned events)
         ssize_t nbytes = recv(process.control.Get(), &buffer, sizeof(buffer),
                               MSG_DONTWAIT);
         if (nbytes < 0)
-            daemon_log(2, "error on idle WAS control connection '%s': %s\n",
-                       GetStockName(), strerror(errno));
+            logger(2, "error on idle WAS control connection: ",
+                   strerror(errno));
         else if (nbytes > 0)
-            daemon_log(2, "unexpected data from idle WAS control connection '%s'\n",
-                       GetStockName());
+            logger(2, "unexpected data from idle WAS control connection");
     }
 
     InvokeIdleDisconnect();

@@ -39,10 +39,9 @@
 #include "http_headers.hxx"
 #include "istream/istream.hxx"
 #include "AllocatorPtr.hxx"
+#include "io/Logger.hxx"
 #include "util/Background.hxx"
 #include "util/Exception.hxx"
-
-#include <daemon/log.h>
 
 class ExternalSessionRefresh final
     : public LinkedBackgroundJob, HttpResponseHandler {
@@ -74,15 +73,14 @@ public:
             body->CloseUnused();
 
         if (status < 200 || status >= 300)
-            daemon_log(3, "Status %d from external session manager '%s'\n",
-                       (int)status, address.path);
+            LogConcat(3, "ExternalSessionManager", "Status ", int(status),
+                      " from manager '", address.path, "'");
 
         Remove();
     }
 
     void OnHttpError(std::exception_ptr ep) override {
-        daemon_log(2, "Failed to refresh external session: %s\n",
-                   GetFullMessage(ep).c_str());
+        LogConcat(2, "ExternalSessionManager", "Failed to refresh external session: ", ep);
 
         Remove();
     }
@@ -101,8 +99,8 @@ RefreshExternalSession(BpInstance &instance, Session &session)
         /* not yet */
         return;
 
-    daemon_log(5, "refresh external_session_manager '%s'\n",
-               session.external_manager->path);
+    LogConcat(5, "ExternalSessionManager", "refresh '",
+              session.external_manager->path, "'");
 
     session.next_external_keepalive = now + session.external_keepalive;
 

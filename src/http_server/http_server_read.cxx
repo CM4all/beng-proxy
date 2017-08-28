@@ -42,8 +42,6 @@
 #include "util/StringUtil.hxx"
 #include "util/StringView.hxx"
 
-#include <daemon/log.h>
-
 #include <limits.h>
 #include <string.h>
 #include <stdlib.h>
@@ -314,7 +312,7 @@ HttpServerConnection::FeedHeaders(const void *_data, size_t length)
            request.read_state == Request::HEADERS);
 
     if (request.bytes_received >= 64 * 1024) {
-        daemon_log(2, "http_server: too many request headers\n");
+        logger(2, "too many request headers");
         http_server_connection_close(this);
         return BufferedResult::CLOSED;
     }

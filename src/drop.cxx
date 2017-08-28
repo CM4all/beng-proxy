@@ -34,9 +34,8 @@
 #include "bp_connection.hxx"
 #include "bp_instance.hxx"
 #include "http_server/http_server.hxx"
+#include "io/Logger.hxx"
 #include "util/Macros.hxx"
-
-#include <daemon/log.h>
 
 #include <limits>
 
@@ -75,8 +74,8 @@ drop_some_connections(BpInstance *instance)
 
     /* now close the connections we have selected */
 
-    daemon_log(2, "dropping %u out of %zu connections\n",
-               num_connections, instance->connections.size());
+    LogConcat(2, "drop", "dropping ", num_connections, " out of ",
+              (unsigned)instance->connections.size(), "connections");
 
     for (unsigned i = 0; i < num_connections; ++i)
         close_connection(connections[i]);

@@ -37,9 +37,7 @@
 #include "session_manager.hxx"
 #include "session.hxx"
 #include "shm/dpool.hxx"
-
-#include "util/Compiler.h"
-#include <daemon/log.h>
+#include "io/Logger.hxx"
 
 #include <assert.h>
 #include <string.h>
@@ -109,15 +107,16 @@ session_manager_load(FILE *file)
         ++num_added;
     }
 
-    daemon_log(4, "loaded %u sessions, discarded %u expired sessions\n",
-               num_added, num_expired);
+    LogConcat(4, "SessionManager",
+              "loaded ", num_added, " sessions, discarded ",
+              num_expired, " expired sessions");
     return true;
 }
 
 void
 session_save()
 {
-    daemon_log(5, "saving sessions to %s\n", session_save_path);
+    LogConcat(5, "SessionManager", "saving sessions to ", session_save_path);
 
     size_t length = strlen(session_save_path);
     char path[length + 5];
@@ -125,18 +124,18 @@ session_save()
     memcpy(path + length, ".tmp", 5);
 
     if (unlink(path) < 0 && errno != ENOENT) {
-        daemon_log(2, "Failed to delete %s: %s\n", path, strerror(errno));
+        LogConcat(2, "SessionManager", "Failed to delete ", path, ": ", strerror(errno));
         return;
     }
 
     FILE *file = fopen(path, "wb");
     if (file == nullptr) {
-        daemon_log(2, "Failed to create %s: %s\n", path, strerror(errno));
+        LogConcat(2, "SessionManager", "Failed to create ", path, ": ", strerror(errno));
         return;
     }
 
     if (!session_manager_save(file)) {
-        daemon_log(2, "Failed to save sessions\n");
+        LogConcat(2, "SessionManager", "Failed to save sessions");
         fclose(file);
         unlink(path);
         return;
@@ -145,8 +144,9 @@ session_save()
     fclose(file);
 
     if (rename(path, session_save_path) < 0) {
-        daemon_log(2, "Failed to rename %s to %s: %s\n",
-                   path, session_save_path, strerror(errno));
+        LogConcat(2, "SessionManager",
+                  "Failed to rename ", path, " to ", session_save_path,
+                  ": ", strerror(errno));
         unlink(path);
    }
 }
