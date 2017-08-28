@@ -66,6 +66,8 @@ public:
         mchild_stock.FadeAll();
     }
 
+    void FadeTag(const char *tag);
+
     StockMap &GetConnectionStock() {
         return hstock;
     }
@@ -107,6 +109,13 @@ public:
     SocketDescriptor GetSocket() const {
         assert(fd.IsDefined());
         return fd;
+    }
+
+    gcc_pure
+    const char *GetTag() const {
+        assert(child != nullptr);
+
+        return child_stock_item_get_tag(*child);
     }
 
 private:
@@ -264,6 +273,25 @@ LhttpStock::LhttpStock(unsigned limit, unsigned max_idle,
      mchild_stock(child_stock.GetStockMap()),
      hstock(event_loop, *this, limit, max_idle) {}
 
+void
+LhttpStock::FadeTag(const char *tag)
+{
+    assert(tag != nullptr);
+
+    hstock.FadeIf([tag](const StockItem &item){
+            const auto &connection = (const LhttpConnection &)item;
+            const char *tag2 = connection.GetTag();
+            return tag2 != nullptr && strcmp(tag, tag2) == 0;
+        });
+
+    mchild_stock.FadeIf([tag](const StockItem &item){
+            const char *tag2 = child_stock_item_get_tag(item);
+            return tag2 != nullptr && strcmp(tag, tag2) == 0;
+        });
+
+    child_stock.FadeTag(tag);
+}
+
 LhttpStock *
 lhttp_stock_new(unsigned limit, unsigned max_idle,
                 EventLoop &event_loop, SpawnService &spawn_service)
@@ -281,6 +309,12 @@ void
 lhttp_stock_fade_all(LhttpStock &ls)
 {
     ls.FadeAll();
+}
+
+void
+lhttp_stock_fade_tag(LhttpStock &ls, const char *tag)
+{
+    ls.FadeTag(tag);
 }
 
 StockItem *

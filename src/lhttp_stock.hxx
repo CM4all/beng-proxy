@@ -58,6 +58,9 @@ lhttp_stock_free(LhttpStock *lhttp_stock);
 void
 lhttp_stock_fade_all(LhttpStock &ls);
 
+void
+lhttp_stock_fade_tag(LhttpStock &ls, const char *tag);
+
 /**
  * Throws exception on error.
  */
