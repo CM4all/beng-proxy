@@ -108,7 +108,7 @@ stopwatch_is_enabled()
 Stopwatch *
 stopwatch_new(struct pool *pool, const char *name, const char *suffix)
 {
-    if (!stopwatch_enabled || daemon_log_config.verbose < STOPWATCH_VERBOSE)
+    if (!stopwatch_is_enabled())
         return nullptr;
 
     if (suffix == nullptr)
@@ -128,7 +128,7 @@ stopwatch_new(struct pool *pool, SocketAddress address, const char *suffix)
 {
     char buffer[1024];
 
-    if (!stopwatch_enabled || daemon_log_config.verbose < STOPWATCH_VERBOSE)
+    if (!stopwatch_is_enabled())
         return nullptr;
 
     const char *name = ToString(buffer, sizeof(buffer), address)
@@ -141,7 +141,7 @@ stopwatch_new(struct pool *pool, SocketAddress address, const char *suffix)
 Stopwatch *
 stopwatch_new(struct pool *pool, SocketDescriptor fd, const char *suffix)
 {
-    if (!stopwatch_enabled || daemon_log_config.verbose < STOPWATCH_VERBOSE)
+    if (!stopwatch_is_enabled())
         return nullptr;
 
     const auto address = fd.GetPeerAddress();
@@ -153,7 +153,7 @@ stopwatch_new(struct pool *pool, SocketDescriptor fd, const char *suffix)
 void
 stopwatch_event(Stopwatch *stopwatch, const char *name)
 {
-    if (!stopwatch_enabled || daemon_log_config.verbose < STOPWATCH_VERBOSE)
+    if (!stopwatch_is_enabled())
         return;
 
     assert(stopwatch != nullptr);
@@ -193,7 +193,7 @@ stopwatch_dump(const Stopwatch *stopwatch)
 {
     struct rusage self;
 
-    if (!stopwatch_enabled || daemon_log_config.verbose < STOPWATCH_VERBOSE)
+    if (!stopwatch_is_enabled())
         return;
 
     assert(stopwatch != nullptr);
