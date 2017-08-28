@@ -89,6 +89,8 @@ struct FcgiStock final : StockClass, ChildStockClass {
         child_stock.GetStockMap().FadeAll();
     }
 
+    void FadeTag(const char *tag);
+
     /* virtual methods from class StockClass */
     void Create(CreateStockItem c, void *info, struct pool &caller_pool,
                 CancellablePointer &cancel_ptr) override;
@@ -145,6 +147,13 @@ struct FcgiConnection final : StockItem {
          event(event_loop, BIND_THIS_METHOD(OnSocketEvent)) {}
 
     ~FcgiConnection() override;
+
+    gcc_pure
+    const char *GetTag() const {
+        assert(child != nullptr);
+
+        return child_stock_item_get_tag(*child);
+    }
 
     /* virtual methods from class StockItem */
     bool Borrow() override;
@@ -350,6 +359,20 @@ FcgiStock::FcgiStock(unsigned limit, unsigned max_idle,
                  *this,
                  limit, max_idle) {}
 
+void
+FcgiStock::FadeTag(const char *tag)
+{
+    assert(tag != nullptr);
+
+    hstock.FadeIf([tag](const StockItem &item){
+            const auto &connection = (const FcgiConnection &)item;
+            const char *tag2 = connection.GetTag();
+            return tag2 != nullptr && strcmp(tag, tag2) == 0;
+        });
+
+    child_stock.FadeTag(tag);
+}
+
 FcgiStock *
 fcgi_stock_new(unsigned limit, unsigned max_idle,
                EventLoop &event_loop, SpawnService &spawn_service)
@@ -367,6 +390,12 @@ void
 fcgi_stock_fade_all(FcgiStock &fs)
 {
     fs.FadeAll();
+}
+
+void
+fcgi_stock_fade_tag(FcgiStock &fs, const char *tag)
+{
+    fs.FadeTag(tag);
 }
 
 StockItem *

@@ -56,6 +56,9 @@ fcgi_stock_free(FcgiStock *fcgi_stock);
 void
 fcgi_stock_fade_all(FcgiStock &fs);
 
+void
+fcgi_stock_fade_tag(FcgiStock &fs, const char *tag);
+
 /**
  * Throws exception on error.
  *
