@@ -37,12 +37,12 @@
 #include "http_server.hxx"
 #include "http_body.hxx"
 #include "filtered_socket.hxx"
+#include "SocketProtocolError.hxx"
 #include "net/SocketAddress.hxx"
 #include "event/TimerEvent.hxx"
 #include "event/DeferEvent.hxx"
 #include "istream/Pointer.hxx"
 #include "http/Method.h"
-#include "io/Logger.hxx"
 #include "util/Cancellable.hxx"
 #include "util/Exception.hxx"
 
@@ -94,8 +94,6 @@ struct HttpServerConnection final : IstreamHandler {
 
     const char *const local_host_and_port;
     const char *const remote_host_and_port, *const remote_host;
-
-    const LLogger logger;
 
     /* request */
     struct Request {
@@ -320,7 +318,7 @@ struct HttpServerConnection final : IstreamHandler {
     }
 
     void ProtocolError(const char *msg) {
-        Error(std::make_exception_ptr(HttpServerProtocolError(msg)));
+        Error(std::make_exception_ptr(SocketProtocolError(msg)));
     }
 
     /* virtual methods from class IstreamHandler */
@@ -331,14 +329,10 @@ struct HttpServerConnection final : IstreamHandler {
 };
 
 /**
- * The timeout of an idle connection (READ_START).
+ * The timeout of an idle connection (READ_START) up until request
+ * headers are received.
  */
 extern const struct timeval http_server_idle_timeout;
-
-/**
- * The total timeout of a client sending request headers.
- */
-extern const struct timeval http_server_header_timeout;
 
 /**
  * The timeout for reading more request data (READ_BODY).

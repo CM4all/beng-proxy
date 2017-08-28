@@ -269,7 +269,7 @@ HttpServerConnection::HeadersFinished()
 
     request.read_state = Request::BODY;
 
-    /* for the response body, the filtered_socket class tracks
+    /* for the request body, the FilteredSocket class tracks
        inactivity timeout */
     socket.ScheduleReadTimeout(false, read_timeout);
 
@@ -312,8 +312,7 @@ HttpServerConnection::FeedHeaders(const void *_data, size_t length)
            request.read_state == Request::HEADERS);
 
     if (request.bytes_received >= 64 * 1024) {
-        logger(2, "too many request headers");
-        http_server_connection_close(this);
+        ProtocolError("too many request headers");
         return BufferedResult::CLOSED;
     }
 

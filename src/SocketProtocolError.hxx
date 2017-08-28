@@ -35,9 +35,6 @@
 
 #include <stdexcept>
 
-/**
- * Wrapper for a socket file descriptor with input buffer management.
- */
 class SocketProtocolError : public std::runtime_error {
 public:
     SocketProtocolError(const char *msg):std::runtime_error(msg) {}

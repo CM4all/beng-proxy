@@ -52,11 +52,6 @@ const struct timeval http_server_idle_timeout = {
     .tv_usec = 0,
 };
 
-const struct timeval http_server_header_timeout = {
-    .tv_sec = 20,
-    .tv_usec = 0,
-};
-
 const struct timeval http_server_read_timeout = {
     .tv_sec = 30,
     .tv_usec = 0,
@@ -302,16 +297,6 @@ http_server_socket_drained(void *ctx)
 }
 
 static bool
-http_server_socket_timeout(void *ctx)
-{
-    auto *connection = (HttpServerConnection *)ctx;
-
-    connection->logger(4, "timeout on HTTP connection");
-    connection->Cancel();
-    return false;
-}
-
-static bool
 http_server_socket_closed(void *ctx)
 {
     auto *connection = (HttpServerConnection *)ctx;
@@ -336,7 +321,7 @@ static constexpr BufferedSocketHandler http_server_socket_handler = {
     .end = nullptr,
     .write = http_server_socket_write,
     .drained = http_server_socket_drained,
-    .timeout = http_server_socket_timeout,
+    .timeout = nullptr,
     .broken = nullptr,
     .error = http_server_socket_error,
 };
@@ -344,10 +329,9 @@ static constexpr BufferedSocketHandler http_server_socket_handler = {
 inline void
 HttpServerConnection::IdleTimeoutCallback()
 {
-    logger(4, request.read_state == Request::START
-           ? "idle"
-           : (request.read_state == Request::HEADERS ? "header" : "read"),
-           " timeout on HTTP connection");
+    assert(request.read_state == Request::START ||
+           request.read_state == Request::HEADERS);
+
     Cancel();
 }
 
@@ -370,7 +354,6 @@ HttpServerConnection::HttpServerConnection(struct pool &_pool,
      local_host_and_port(address_to_string(*pool, _local_address)),
      remote_host_and_port(address_to_string(*pool, _remote_address)),
      remote_host(address_to_host_string(*pool, _remote_address)),
-     logger(remote_host_and_port),
      date_header(_date_header)
 {
     pool_ref(pool);
