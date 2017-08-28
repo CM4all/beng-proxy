@@ -52,19 +52,13 @@
 #include <string.h>
 
 class LhttpStock final : StockClass, ChildStockClass {
-    StockMap hstock;
     ChildStock child_stock;
     MultiStock mchild_stock;
+    StockMap hstock;
 
 public:
     LhttpStock(unsigned limit, unsigned max_idle,
                EventLoop &event_loop, SpawnService &spawn_service);
-
-    ~LhttpStock() {
-        /* call FadeAll() release all idle connections before calling
-           deleting mchild_stock to avoid assertion failure */
-        hstock.FadeAll();
-    }
 
     void FadeAll() {
         hstock.FadeAll();
@@ -255,11 +249,11 @@ LhttpConnection::~LhttpConnection()
 inline
 LhttpStock::LhttpStock(unsigned limit, unsigned max_idle,
                        EventLoop &event_loop, SpawnService &spawn_service)
-    :hstock(event_loop, *this, limit, max_idle),
-     child_stock(event_loop, spawn_service,
+    :child_stock(event_loop, spawn_service,
                  *this,
                  limit, max_idle),
-     mchild_stock(child_stock.GetStockMap()) {}
+     mchild_stock(child_stock.GetStockMap()),
+     hstock(event_loop, *this, limit, max_idle) {}
 
 LhttpStock *
 lhttp_stock_new(unsigned limit, unsigned max_idle,
