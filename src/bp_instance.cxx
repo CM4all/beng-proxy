@@ -214,6 +214,23 @@ BpInstance::FadeChildren()
 }
 
 void
+BpInstance::FadeTaggedChildren(const char *tag)
+{
+    assert(tag != nullptr);
+
+    if (lhttp_stock != nullptr)
+        lhttp_stock_fade_tag(*lhttp_stock, tag);
+
+    if (fcgi_stock != nullptr)
+        fcgi_stock_fade_tag(*fcgi_stock, tag);
+
+    if (was_stock != nullptr)
+        was_stock_fade_tag(*was_stock, tag);
+
+    // TODO: delegate_stock
+}
+
+void
 BpInstance::SaveSesssions()
 {
     session_save();

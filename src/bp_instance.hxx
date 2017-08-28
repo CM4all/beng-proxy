@@ -190,6 +190,7 @@ struct BpInstance final : PInstance, ControlHandler {
      * Handler for #CONTROL_FADE_CHILDREN
      */
     void FadeChildren();
+    void FadeTaggedChildren(const char *tag);
 
     void ShutdownCallback();
 

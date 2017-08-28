@@ -147,7 +147,13 @@ handle_control_packet(BpInstance *instance, ControlServer *server,
         break;
 
     case CONTROL_FADE_CHILDREN:
-        if (is_privileged)
+        if (payload_length > 0)
+            /* tagged fade is allowed for any unprivileged client */
+            instance->FadeTaggedChildren(std::string((const char *)payload,
+                                                     payload_length).c_str());
+        else if (is_privileged)
+            /* unconditional fade is only allowed for privileged
+               clients */
             instance->FadeChildren();
         break;
     }

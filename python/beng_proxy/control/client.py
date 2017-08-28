@@ -112,5 +112,5 @@ class Client:
 
         self.send(CONTROL_VERBOSE, struct.pack('B', verbose))
 
-    def send_fade_children(self):
-        self.send(CONTROL_FADE_CHILDREN)
+    def send_fade_children(self, tag=None):
+        self.send(CONTROL_FADE_CHILDREN, tag)
