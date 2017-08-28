@@ -70,9 +70,9 @@ class ChildStock final : StockClass {
 public:
     ChildStock(EventLoop &event_loop, SpawnService &_spawn_service,
                ChildStockClass &_cls,
-               unsigned _limit, unsigned _max_idle);
+               unsigned _limit, unsigned _max_idle) noexcept;
 
-    StockMap &GetStockMap() {
+    StockMap &GetStockMap() noexcept {
         return map;
     }
 

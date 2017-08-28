@@ -60,7 +60,7 @@ struct ChildStockItem final : StockItem, ExitListener {
     bool busy = true;
 
     ChildStockItem(CreateStockItem c,
-                   SpawnService &_spawn_service)
+                   SpawnService &_spawn_service) noexcept
         :StockItem(c),
          spawn_service(_spawn_service) {}
 
@@ -141,7 +141,7 @@ ChildStockItem::~ChildStockItem()
 
 ChildStock::ChildStock(EventLoop &event_loop, SpawnService &_spawn_service,
                        ChildStockClass &_cls,
-                       unsigned _limit, unsigned _max_idle)
+                       unsigned _limit, unsigned _max_idle) noexcept
     :map(event_loop, *this, _limit, _max_idle),
      spawn_service(_spawn_service), cls(_cls)
 {
