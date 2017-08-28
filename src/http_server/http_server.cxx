@@ -343,11 +343,9 @@ static constexpr BufferedSocketHandler http_server_socket_handler = {
 inline void
 HttpServerConnection::IdleTimeoutCallback()
 {
-    daemon_log(4, "%s timeout on HTTP connection from '%s'\n",
-               request.read_state == Request::START
-               ? "idle"
-               : (request.read_state == Request::HEADERS ? "header" : "read"),
-               remote_host_and_port);
+    assert(request.read_state == Request::START ||
+           request.read_state == Request::HEADERS);
+
     Cancel();
 }
 
