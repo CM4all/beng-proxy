@@ -51,7 +51,7 @@
 #include <unistd.h>
 #include <string.h>
 
-class LhttpStock final : StockClass {
+class LhttpStock final : StockClass, ChildStockClass {
     StockMap hstock;
     ChildStock child_stock;
     MultiStock mchild_stock;
@@ -79,6 +79,11 @@ private:
     /* virtual methods from class StockClass */
     void Create(CreateStockItem c, void *info, struct pool &caller_pool,
                 CancellablePointer &cancel_ptr) override;
+
+    /* virtual methods from class ChildStockClass */
+    int GetChildSocketType(void *info) const noexcept override;
+    void PrepareChild(void *info, UniqueSocketDescriptor &&fd,
+                      PreparedChildProcess &p) override;
 };
 
 class LhttpConnection final : LoggerDomainFactory, StockItem {
@@ -186,8 +191,8 @@ LhttpConnection::EventCallback(unsigned events)
  *
  */
 
-static int
-lhttp_child_stock_socket_type(void *info)
+int
+LhttpStock::GetChildSocketType(void *info) const noexcept
 {
     const auto &address = *(const LhttpAddress *)info;
 
@@ -198,20 +203,15 @@ lhttp_child_stock_socket_type(void *info)
     return type;
 }
 
-static void
-lhttp_child_stock_prepare(void *info, UniqueSocketDescriptor &&fd,
-                          PreparedChildProcess &p)
+void
+LhttpStock::PrepareChild(void *info, UniqueSocketDescriptor &&fd,
+                         PreparedChildProcess &p)
 {
     const auto &address = *(const LhttpAddress *)info;
 
     p.SetStdin(std::move(fd));
     address.CopyTo(p);
 }
-
-static const ChildStockClass lhttp_child_stock_class = {
-    .socket_type = lhttp_child_stock_socket_type,
-    .prepare = lhttp_child_stock_prepare,
-};
 
 /*
  * stock class
@@ -256,7 +256,7 @@ LhttpStock::LhttpStock(unsigned limit, unsigned max_idle,
                        EventLoop &event_loop, SpawnService &spawn_service)
     :hstock(event_loop, *this, limit, max_idle),
      child_stock(event_loop, spawn_service,
-                 lhttp_child_stock_class,
+                 *this,
                  limit, max_idle),
      mchild_stock(child_stock.GetStockMap()) {}
 

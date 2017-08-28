@@ -66,7 +66,7 @@
 #include <sched.h>
 #endif
 
-struct FcgiStock final : StockClass {
+struct FcgiStock final : StockClass, ChildStockClass {
     StockMap hstock;
     ChildStock child_stock;
 
@@ -92,6 +92,10 @@ struct FcgiStock final : StockClass {
     /* virtual methods from class StockClass */
     void Create(CreateStockItem c, void *info, struct pool &caller_pool,
                 CancellablePointer &cancel_ptr) override;
+
+    /* virtual methods from class ChildStockClass */
+    void PrepareChild(void *info, UniqueSocketDescriptor &&fd,
+                      PreparedChildProcess &p) override;
 };
 
 struct FcgiChildParams {
@@ -195,9 +199,9 @@ FcgiConnection::OnSocketEvent(unsigned events)
  *
  */
 
-static void
-fcgi_child_stock_prepare(void *info, UniqueSocketDescriptor &&fd,
-                         PreparedChildProcess &p)
+void
+FcgiStock::PrepareChild(void *info, UniqueSocketDescriptor &&fd,
+                        PreparedChildProcess &p)
 {
     const auto &params = *(const FcgiChildParams *)info;
     const ChildOptions &options = params.options;
@@ -219,11 +223,6 @@ fcgi_child_stock_prepare(void *info, UniqueSocketDescriptor &&fd,
 
     options.CopyTo(p, true, nullptr);
 }
-
-static const ChildStockClass fcgi_child_stock_class = {
-    .socket_type = nullptr,
-    .prepare = fcgi_child_stock_prepare,
-};
 
 /*
  * stock class
@@ -339,7 +338,7 @@ FcgiStock::FcgiStock(unsigned limit, unsigned max_idle,
                      EventLoop &event_loop, SpawnService &spawn_service)
     :hstock(event_loop, *this, limit, max_idle),
      child_stock(event_loop, spawn_service,
-                 fcgi_child_stock_class,
+                 *this,
                  limit, max_idle) {}
 
 FcgiStock *

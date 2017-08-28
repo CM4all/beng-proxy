@@ -50,25 +50,26 @@ class UniqueSocketDescriptor;
 class EventLoop;
 class SpawnService;
 
-struct ChildStockClass {
-    int (*socket_type)(void *info);
+class ChildStockClass {
+public:
+    virtual int GetChildSocketType(void *info) const noexcept;
 
     /**
      * Throws std::runtime_error on error.
      */
-    void (*prepare)(void *info, UniqueSocketDescriptor &&fd,
-                    PreparedChildProcess &p);
+    virtual void PrepareChild(void *info, UniqueSocketDescriptor &&fd,
+                              PreparedChildProcess &p) = 0;
 };
 
 class ChildStock final : StockClass {
     StockMap map;
 
     SpawnService &spawn_service;
-    const ChildStockClass &cls;
+    ChildStockClass &cls;
 
 public:
     ChildStock(EventLoop &event_loop, SpawnService &_spawn_service,
-               const ChildStockClass &_cls,
+               ChildStockClass &_cls,
                unsigned _limit, unsigned _max_idle);
 
     StockMap &GetStockMap() {

@@ -45,6 +45,12 @@
 #include <assert.h>
 #include <unistd.h>
 
+int
+ChildStockClass::GetChildSocketType(void *) const noexcept
+{
+    return SOCK_STREAM;
+}
+
 struct ChildStockItem final : StockItem, ExitListener {
     SpawnService &spawn_service;
 
@@ -101,14 +107,12 @@ ChildStock::Create(CreateStockItem c, void *info,
     auto *item = new ChildStockItem(c, spawn_service);
 
     try {
-        int socket_type = cls.socket_type != nullptr
-            ? cls.socket_type(info)
-            : SOCK_STREAM;
+        int socket_type = cls.GetChildSocketType(info);
 
         auto fd = item->socket.Create(socket_type);
 
         PreparedChildProcess p;
-        cls.prepare(info, std::move(fd), p);
+        cls.PrepareChild(info, std::move(fd), p);
 
         item->pid = spawn_service.SpawnChildProcess(item->GetStockName(),
                                                     std::move(p),
@@ -136,12 +140,11 @@ ChildStockItem::~ChildStockItem()
  */
 
 ChildStock::ChildStock(EventLoop &event_loop, SpawnService &_spawn_service,
-                       const ChildStockClass &_cls,
+                       ChildStockClass &_cls,
                        unsigned _limit, unsigned _max_idle)
     :map(event_loop, *this, _limit, _max_idle),
      spawn_service(_spawn_service), cls(_cls)
 {
-    assert(cls.prepare != nullptr);
 }
 
 UniqueSocketDescriptor
