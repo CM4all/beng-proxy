@@ -39,9 +39,8 @@
 #include "translation/Response.hxx"
 #include "translation/Transformation.hxx"
 #include "AllocatorPtr.hxx"
+#include "io/Logger.hxx"
 #include "util/Exception.hxx"
-
-#include <daemon/log.h>
 
 static void
 widget_registry_lookup(struct pool &pool,
@@ -108,7 +107,7 @@ widget_translate_error(std::exception_ptr ep, void *ctx)
 {
     const auto lookup = (WidgetRegistryLookup *)ctx;
 
-    daemon_log(2, "widget registry error: %s\n", GetFullMessage(ep).c_str());
+    LogConcat(2, "WidgetRegistry", ep);
 
     lookup->callback(nullptr);
 }
