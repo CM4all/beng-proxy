@@ -34,6 +34,7 @@
 #define BENG_PROXY_CONNECTION_HXX
 
 #include "http_server/Handler.hxx"
+#include "io/Logger.hxx"
 
 #include <boost/intrusive/list.hpp>
 
@@ -64,6 +65,8 @@ struct BpConnection final
      * The address (host and port) of the client.
      */
     const char *const remote_host_and_port;
+
+    const LLogger logger;
 
     HttpServerConnection *http;
 

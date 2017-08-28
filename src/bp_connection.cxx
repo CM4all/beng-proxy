@@ -46,7 +46,6 @@
 #include "net/SocketAddress.hxx"
 #include "net/StaticSocketAddress.hxx"
 #include "system/Error.hxx"
-#include "io/Logger.hxx"
 #include "util/Exception.hxx"
 #include "pool.hxx"
 
@@ -60,7 +59,8 @@ BpConnection::BpConnection(BpInstance &_instance, struct pool &_pool,
      pool(_pool),
      config(_instance.config),
      listener_tag(_listener_tag),
-     remote_host_and_port(address_to_string(pool, remote_address))
+     remote_host_and_port(address_to_string(pool, remote_address)),
+     logger(remote_host_and_port)
 {
 }
 
@@ -157,7 +157,7 @@ BpConnection::HttpConnectionError(std::exception_ptr e)
 {
     http = nullptr;
 
-    LogConcat(HttpServerLogLevel(e), remote_host_and_port, e);
+    logger(HttpServerLogLevel(e), e);
 
     close_connection(this);
 }
