@@ -40,11 +40,6 @@
 #include <boost/intrusive/set.hpp>
 #include <boost/intrusive/list.hpp>
 
-#include <map>
-#include <string>
-
-#include <assert.h>
-
 struct pool;
 struct lease_ref;
 class StockMap;
