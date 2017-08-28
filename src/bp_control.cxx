@@ -45,11 +45,10 @@
 #include "net/UdpDistribute.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/IPv4Address.hxx"
+#include "io/Logger.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/Exception.hxx"
 #include "util/Macros.hxx"
-
-#include <daemon/log.h>
 
 #include <assert.h>
 #include <string.h>
@@ -72,8 +71,9 @@ control_tcache_invalidate(BpInstance *instance,
         request = ParseTranslationInvalidateRequest(*tpool,
                                                     payload, payload_length);
     } catch (...) {
-        daemon_log(2, "malformed TCACHE_INVALIDATE control packet: %s\n",
-                   GetFullMessage(std::current_exception()).c_str());
+        LogConcat(2, "control",
+                  "malformed TCACHE_INVALIDATE control packet: ",
+                  std::current_exception());
         return;
     }
 
@@ -100,8 +100,8 @@ query_stats(BpInstance *instance, ControlServer *server,
     try {
         server->Reply(address,
                       CONTROL_STATS, &stats, sizeof(stats));
-    } catch (const std::runtime_error &e) {
-        daemon_log(3, "%s\n", e.what());
+    } catch (...) {
+        LogConcat(3, "control", std::current_exception());
     }
 }
 
@@ -111,8 +111,8 @@ handle_control_packet(BpInstance *instance, ControlServer *server,
                       const void *payload, size_t payload_length,
                       SocketAddress address)
 {
-    daemon_log(5, "control command=%d payload_length=%zu\n",
-               command, payload_length);
+    LogConcat(5, "control", "command=", int(command),
+              " payload_length=", unsigned(payload_length));
 
     /* only local clients are allowed to use most commands */
     const bool is_privileged = address.GetFamily() == AF_LOCAL;
@@ -143,7 +143,7 @@ handle_control_packet(BpInstance *instance, ControlServer *server,
 
     case CONTROL_VERBOSE:
         if (is_privileged && payload_length == 1)
-            daemon_log_config.verbose = *(const uint8_t *)payload;
+            SetLogLevel(*(const uint8_t *)payload);
         break;
 
     case CONTROL_FADE_CHILDREN:
@@ -173,7 +173,7 @@ BpInstance::OnControlPacket(ControlServer &_control_server,
 void
 BpInstance::OnControlError(std::exception_ptr ep)
 {
-    daemon_log(2, "%s\n", GetFullMessage(ep).c_str());
+    LogConcat(2, "control", ep);
 }
 
 void
