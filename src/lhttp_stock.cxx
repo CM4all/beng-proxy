@@ -77,6 +77,7 @@ private:
 
     /* virtual methods from class ChildStockClass */
     int GetChildSocketType(void *info) const noexcept override;
+    const char *GetChildTag(void *info) const noexcept override;
     void PrepareChild(void *info, UniqueSocketDescriptor &&fd,
                       PreparedChildProcess &p) override;
 };
@@ -196,6 +197,14 @@ LhttpStock::GetChildSocketType(void *info) const noexcept
         type |= SOCK_NONBLOCK;
 
     return type;
+}
+
+const char *
+LhttpStock::GetChildTag(void *info) const noexcept
+{
+    const auto &address = *(const LhttpAddress *)info;
+
+    return address.options.tag;
 }
 
 void

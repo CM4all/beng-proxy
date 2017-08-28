@@ -59,6 +59,8 @@ public:
      */
     virtual int GetChildSocketType(void *info) const noexcept;
 
+    virtual const char *GetChildTag(void *info) const noexcept;
+
     /**
      * Throws std::runtime_error on error.
      */
@@ -109,5 +111,8 @@ child_stock_item_get_type(const StockItem &)
 {
     return FdType::FD_SOCKET;
 }
+
+const char *
+child_stock_item_get_tag(const StockItem &item);
 
 #endif

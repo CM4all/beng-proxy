@@ -51,8 +51,16 @@ ChildStockClass::GetChildSocketType(void *) const noexcept
     return SOCK_STREAM;
 }
 
+const char *
+ChildStockClass::GetChildTag(void *) const noexcept
+{
+    return nullptr;
+}
+
 struct ChildStockItem final : StockItem, ExitListener {
     SpawnService &spawn_service;
+
+    const std::string tag;
 
     ChildSocket socket;
     int pid = -1;
@@ -60,9 +68,11 @@ struct ChildStockItem final : StockItem, ExitListener {
     bool busy = true;
 
     ChildStockItem(CreateStockItem c,
-                   SpawnService &_spawn_service) noexcept
+                   SpawnService &_spawn_service,
+                   const char *_tag) noexcept
         :StockItem(c),
-         spawn_service(_spawn_service) {}
+         spawn_service(_spawn_service),
+         tag(_tag != nullptr ? _tag : "") {}
 
     ~ChildStockItem() override;
 
@@ -104,7 +114,8 @@ void
 ChildStock::Create(CreateStockItem c, void *info,
                    struct pool &, CancellablePointer &)
 {
-    auto *item = new ChildStockItem(c, spawn_service);
+    auto *item = new ChildStockItem(c, spawn_service,
+                                    cls.GetChildTag(info));
 
     try {
         int socket_type = cls.GetChildSocketType(info);
@@ -160,4 +171,12 @@ child_stock_item_connect(StockItem &_item)
         item.fade = true;
         throw;
     }
+}
+
+const char *
+child_stock_item_get_tag(const StockItem &_item)
+{
+    const auto &item = (const ChildStockItem &)_item;
+
+    return item.tag.empty() ? nullptr : item.tag.c_str();
 }

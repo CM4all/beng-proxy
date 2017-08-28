@@ -94,6 +94,7 @@ struct FcgiStock final : StockClass, ChildStockClass {
                 CancellablePointer &cancel_ptr) override;
 
     /* virtual methods from class ChildStockClass */
+    const char *GetChildTag(void *info) const noexcept override;
     void PrepareChild(void *info, UniqueSocketDescriptor &&fd,
                       PreparedChildProcess &p) override;
 };
@@ -198,6 +199,14 @@ FcgiConnection::OnSocketEvent(unsigned events)
  * child_stock class
  *
  */
+
+const char *
+FcgiStock::GetChildTag(void *info) const noexcept
+{
+    const auto &params = *(const FcgiChildParams *)info;
+
+    return params.options.tag;
+}
 
 void
 FcgiStock::PrepareChild(void *info, UniqueSocketDescriptor &&fd,
