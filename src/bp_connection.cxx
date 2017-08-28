@@ -45,10 +45,9 @@
 #include "net/SocketAddress.hxx"
 #include "net/StaticSocketAddress.hxx"
 #include "system/Error.hxx"
+#include "io/Logger.hxx"
 #include "util/Exception.hxx"
 #include "pool.hxx"
-
-#include <daemon/log.h>
 
 #include <assert.h>
 #include <unistd.h>
@@ -155,7 +154,7 @@ BpConnection::HttpConnectionError(std::exception_ptr e)
 {
     http = nullptr;
 
-    daemon_log(HttpServerLogLevel(e), "%s\n", GetFullMessage(e).c_str());
+    LogConcat(HttpServerLogLevel(e), "connection", e);
 
     close_connection(this);
 }
@@ -184,8 +183,9 @@ new_connection(BpInstance &instance,
         unsigned num_dropped = drop_some_connections(&instance);
 
         if (num_dropped == 0) {
-            daemon_log(1, "too many connections (%zu), dropping\n",
-                       instance.connections.size());
+            LogConcat(1, "connection", "too many connections (",
+                      unsigned(instance.connections.size()),
+                      ", dropping");
             return;
         }
     }
