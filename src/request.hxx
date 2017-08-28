@@ -43,6 +43,7 @@
 #include "session.hxx"
 #include "widget/View.hxx"
 #include "http_response.hxx"
+#include "io/Logger.hxx"
 #include "util/Cancellable.hxx"
 
 #include <exception>
@@ -65,6 +66,8 @@ struct Request final : HttpResponseHandler, DelegateHandler,
 
     BpInstance &instance;
     BpConnection &connection;
+
+    const LLogger logger;
 
     HttpServerRequest &request;
     struct parsed_uri uri;

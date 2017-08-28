@@ -72,8 +72,6 @@
 #include "http_address.hxx"
 #include "relocate_uri.hxx"
 
-#include <daemon/log.h>
-
 static const char *
 request_absolute_uri(const HttpServerRequest &request,
                      const char *scheme, const char *host, const char *uri)
@@ -220,7 +218,8 @@ response_invoke_processor(Request &request2,
         focus_ref = nullptr;
 
         if (request.body != nullptr) {
-            daemon_log(4, "discarding non-framed request body\n");
+            const auto &logger = request2.logger;
+            logger(4, "discarding non-framed request body");
             istream_free_unused(&request2.body);
         }
     }
@@ -234,8 +233,9 @@ response_invoke_processor(Request &request2,
 
     if (request2.translate.response->untrusted != nullptr &&
         proxy_ref == nullptr) {
-        daemon_log(2, "refusing to render template on untrusted domain '%s'\n",
-                   request2.translate.response->untrusted);
+        const auto &logger = request2.logger;
+        logger(2, "refusing to render template on untrusted domain '",
+               request2.translate.response->untrusted, "'");
         body->CloseUnused();
         response_dispatch_message(request2, HTTP_STATUS_FORBIDDEN,
                                   "Forbidden");
@@ -352,8 +352,9 @@ response_invoke_css_processor(Request &request2,
                                        p_strdup(request2.pool, request2.uri.base));
 
     if (request2.translate.response->untrusted != nullptr) {
-        daemon_log(2, "refusing to render template on untrusted domain '%s'\n",
-                   request2.translate.response->untrusted);
+        const auto &logger = request2.logger;
+        logger(2, "refusing to render template on untrusted domain '",
+               request2.translate.response->untrusted, "'");
         body->CloseUnused();
         response_dispatch_message(request2, HTTP_STATUS_FORBIDDEN,
                                   "Forbidden");
@@ -426,8 +427,9 @@ response_invoke_text_processor(Request &request2,
                                        p_strdup(request2.pool, request2.uri.base));
 
     if (request2.translate.response->untrusted != nullptr) {
-        daemon_log(2, "refusing to render template on untrusted domain '%s'\n",
-                   request2.translate.response->untrusted);
+        const auto &logger = request2.logger;
+        logger(2, "refusing to render template on untrusted domain '",
+               request2.translate.response->untrusted, "'");
         body->CloseUnused();
         response_dispatch_message(request2, HTTP_STATUS_FORBIDDEN,
                                   "Forbidden");
@@ -845,7 +847,7 @@ Request::OnHttpResponse(http_status_t status, StringMap &&headers,
                     if (_body != nullptr)
                         _body->CloseUnused();
 
-                    daemon_log(4, "No such view: %s\n", view_name);
+                    logger(4, "No such view: ", view_name);
                     response_dispatch_message(*this, HTTP_STATUS_NOT_FOUND,
                                               "No such view");
                     return;

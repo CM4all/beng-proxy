@@ -43,8 +43,6 @@
 #include "util/HexFormat.h"
 #include "util/djbhash.h"
 
-#include <daemon/log.h>
-
 inline const StringMap *
 Request::GetCookies()
 {
@@ -198,7 +196,7 @@ Request::MakeSession()
 
     auto *session = session_new();
     if (session == nullptr) {
-        daemon_log(1, "Failed to allocate a session\n");
+        logger(1, "Failed to allocate a session");
         return nullptr;
     }
 

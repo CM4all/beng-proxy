@@ -31,6 +31,7 @@
  */
 
 #include "request.hxx"
+#include "bp_connection.hxx"
 #include "http_server/Request.hxx"
 #include "args.hxx"
 #include "strmap.hxx"
@@ -41,6 +42,7 @@ Request::Request(BpInstance &_instance, BpConnection &_connection,
     :pool(_request.pool),
      instance(_instance),
      connection(_connection),
+     logger(connection.logger),
      request(_request)
 {
     session_id.Clear();

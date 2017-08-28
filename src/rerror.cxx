@@ -53,8 +53,6 @@
 #include "system/Error.hxx"
 #include "util/Exception.hxx"
 
-#include <daemon/log.h>
-
 #include <nfsc/libnfs-raw-nfs.h>
 
 static MessageHttpResponse
@@ -163,7 +161,8 @@ void
 response_dispatch_log(Request &request, http_status_t status,
                       const char *msg, const char *log_msg)
 {
-    daemon_log(2, "error on '%s': %s\n", request.request.uri, log_msg);
+    const auto &logger = request.logger;
+    logger(2, "error on '", request.request.uri, "': ", log_msg);
 
     if (request.instance.config.verbose_response)
         msg = p_strdup(&request.pool, log_msg);
@@ -182,12 +181,12 @@ response_dispatch_log(Request &request, http_status_t status,
 void
 response_dispatch_log(Request &request, std::exception_ptr ep)
 {
-    auto log_msg = GetFullMessage(ep);
-    daemon_log(2, "error on '%s': %s\n", request.request.uri, log_msg.c_str());
+    const auto &logger = request.logger;
+    logger(2, "error on '", request.request.uri, "': ", ep);
 
     auto response = ToResponse(request.pool, ep);
     if (request.instance.config.verbose_response)
-        response.message = p_strdup(&request.pool, log_msg.c_str());
+        response.message = p_strdup(&request.pool, GetFullMessage(ep).c_str());
 
     response_dispatch_message(request, response.status, response.message);
 }

@@ -37,8 +37,6 @@
 #include "cgi_address.hxx"
 #include "lhttp_address.hxx"
 
-#include <daemon/log.h>
-
 #include <assert.h>
 #include <sys/stat.h>
 #include <errno.h>
@@ -57,6 +55,8 @@ check_file_not_found(Request &request,
 {
     assert(!response.file_not_found.IsNull());
 
+    const auto &logger = request.logger;
+
     if (response.test_path != nullptr) {
         if (!is_enoent(response.test_path))
             return true;
@@ -66,7 +66,7 @@ check_file_not_found(Request &request,
         case ResourceAddress::Type::HTTP:
         case ResourceAddress::Type::PIPE:
         case ResourceAddress::Type::NFS:
-            daemon_log(2, "resource address not compatible with TRANSLATE_FILE_NOT_FOUND\n");
+            logger(2, "resource address not compatible with TRANSLATE_FILE_NOT_FOUND");
             response_dispatch_message(request, HTTP_STATUS_BAD_GATEWAY,
                                       "Internal Server Error");
             return false;
@@ -96,7 +96,7 @@ check_file_not_found(Request &request,
     }
 
     if (++request.translate.n_file_not_found > 20) {
-        daemon_log(2, "got too many consecutive FILE_NOT_FOUND packets\n");
+        logger(2, "got too many consecutive FILE_NOT_FOUND packets");
         response_dispatch_message(request,
                                   HTTP_STATUS_BAD_GATEWAY,
                                   "Internal server error");
