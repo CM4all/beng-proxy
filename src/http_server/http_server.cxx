@@ -44,9 +44,6 @@
 #include "util/RuntimeError.hxx"
 #include "util/Exception.hxx"
 
-#include "util/Compiler.h"
-#include <daemon/log.h>
-
 #include <assert.h>
 #include <unistd.h>
 
@@ -300,17 +297,6 @@ http_server_socket_drained(void *ctx)
 }
 
 static bool
-http_server_socket_timeout(void *ctx)
-{
-    auto *connection = (HttpServerConnection *)ctx;
-
-    daemon_log(4, "timeout on HTTP connection from '%s'\n",
-               connection->remote_host_and_port);
-    connection->Cancel();
-    return false;
-}
-
-static bool
 http_server_socket_closed(void *ctx)
 {
     auto *connection = (HttpServerConnection *)ctx;
@@ -335,7 +321,7 @@ static constexpr BufferedSocketHandler http_server_socket_handler = {
     .end = nullptr,
     .write = http_server_socket_write,
     .drained = http_server_socket_drained,
-    .timeout = http_server_socket_timeout,
+    .timeout = nullptr,
     .broken = nullptr,
     .error = http_server_socket_error,
 };
