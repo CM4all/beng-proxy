@@ -50,6 +50,7 @@
 #include "istream/istream_tee.hxx"
 #include "AllocatorPtr.hxx"
 #include "event/TimerEvent.hxx"
+#include "io/Logger.hxx"
 #include "util/Background.hxx"
 #include "util/Cast.hxx"
 #include "util/Cancellable.hxx"
@@ -251,7 +252,7 @@ http_cache_memcached_put_callback(std::exception_ptr ep, void *ctx)
     LinkedBackgroundJob *job = (LinkedBackgroundJob *)ctx;
 
     if (ep)
-        cache_log(2, "http-cache: put failed: %s\n", GetFullMessage(ep).c_str());
+        LogConcat(2, "HttpCache", "put failed: ", ep);
 
     job->Remove();
 }
@@ -260,7 +261,7 @@ static void
 http_cache_put(HttpCacheRequest &request,
                unsigned rubber_id, size_t size)
 {
-    cache_log(4, "http_cache: put %s\n", request.key);
+    LogConcat(4, "HttpCache", "put ", request.key);
 
     if (request.cache.heap.IsDefined())
         request.cache.heap.Put(request.key,
@@ -345,7 +346,7 @@ HttpCacheRequest::RubberDone(unsigned rubber_id, size_t size)
 void
 HttpCacheRequest::RubberOutOfMemory()
 {
-    cache_log(4, "http_cache: nocache oom %s\n", key);
+    LogConcat(4, "HttpCache", "nocache oom ", key);
 
     RubberStoreFinished();
 }
@@ -353,7 +354,7 @@ HttpCacheRequest::RubberOutOfMemory()
 void
 HttpCacheRequest::RubberTooLarge()
 {
-    cache_log(4, "http_cache: nocache too large %s\n", key);
+    LogConcat(4, "HttpCache", "nocache too large ", key);
 
     RubberStoreFinished();
 }
@@ -361,8 +362,7 @@ HttpCacheRequest::RubberTooLarge()
 void
 HttpCacheRequest::RubberError(std::exception_ptr ep)
 {
-    cache_log(4, "http_cache: body_abort %s: %s\n",
-              key, GetFullMessage(ep).c_str());
+    LogConcat(4, "HttpCache", "body_abort ", key, ": ", ep);
 
     RubberStoreFinished();
 }
@@ -383,7 +383,7 @@ HttpCacheRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
     if (document != nullptr && status == HTTP_STATUS_NOT_MODIFIED) {
         assert(body == nullptr);
 
-        cache_log(5, "http_cache: not_modified %s\n", key);
+        LogConcat(5, "HttpCache", "not_modified ", key);
         http_cache_serve(*this);
         pool_unref_denotify(&caller_pool,
                             &caller_pool_notify);
@@ -396,8 +396,8 @@ HttpCacheRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
 
     if (document != nullptr &&
         http_cache_prefer_cached(*document, _headers)) {
-        cache_log(4, "http_cache: matching etag '%s' for %s, using cache entry\n",
-                  document->info.etag, key);
+        LogConcat(4, "HttpCache", "matching etag '", document->info.etag,
+                  "' for ", key, ", using cache entry");
 
         if (body != nullptr)
             body->CloseUnused();
@@ -427,7 +427,7 @@ HttpCacheRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
     if (!http_cache_response_evaluate(request_info, info,
                                       status, _headers, available)) {
         /* don't cache response */
-        cache_log(4, "http_cache: nocache %s\n", key);
+        LogConcat(4, "HttpCache", "nocache ", key);
 
         handler.InvokeResponse(status, std::move(_headers), body);
         pool_unref_denotify(&caller_pool,
@@ -654,12 +654,11 @@ http_cache_flush_callback(bool success, std::exception_ptr ep, void *ctx)
     flush->Remove();
 
     if (success)
-        cache_log(5, "http_cache_memcached: flushed\n");
+        LogConcat(5, "HttpCacheMemcached", "flushed");
     else if (ep)
-        cache_log(5, "http_cache_memcached: flush has failed: %s\n",
-                  GetFullMessage(ep).c_str());
+        LogConcat(5, "HttpCacheMemcached", "flush has failed: ", ep);
     else
-        cache_log(5, "http_cache_memcached: flush has failed\n");
+        LogConcat(5, "HttpCacheMemcached", "flush has failed");
 }
 
 void
@@ -717,7 +716,7 @@ http_cache_miss(HttpCache &cache, struct pool &caller_pool,
                                       handler,
                                       info, cancel_ptr);
 
-    cache_log(4, "http_cache: miss %s\n", request->key);
+    LogConcat(4, "HttpCache", "miss ", request->key);
 
     cache.resource_loader.SendRequest(*pool, session_sticky,
                                       method, address,
@@ -740,7 +739,7 @@ http_cache_heap_serve(HttpCacheHeap &cache,
                       const char *key gcc_unused,
                       HttpResponseHandler &handler)
 {
-    cache_log(4, "http_cache: serve %s\n", key);
+    LogConcat(4, "HttpCache", "serve ", key);
 
     Istream *response_body = cache.OpenStream(pool, document);
 
@@ -758,7 +757,7 @@ http_cache_heap_serve(HttpCacheHeap &cache,
 static void
 http_cache_memcached_serve(HttpCacheRequest &request)
 {
-    cache_log(4, "http_cache: serve %s\n", request.key);
+    LogConcat(4, "HttpCache", "serve ", request.key);
 
     request.handler.InvokeResponse(request.document->status,
                                    StringMap(ShallowCopy(), request.caller_pool,
@@ -796,7 +795,7 @@ http_cache_test(HttpCacheRequest &request,
     HttpCache &cache = request.cache;
     HttpCacheDocument &document = *request.document;
 
-    cache_log(4, "http_cache: test %s\n", request.key);
+    LogConcat(4, "HttpCache", "test ", request.key);
 
     if (document.info.last_modified != nullptr)
         headers.Set("if-modified-since", document.info.last_modified);
@@ -953,7 +952,7 @@ http_cache_memcached_miss(HttpCacheRequest &request)
         return;
     }
 
-    cache_log(4, "http_cache: miss %s\n", request.key);
+    LogConcat(4, "HttpCache", "miss ", request.key);
 
     request.document = nullptr;
 
@@ -974,14 +973,14 @@ http_cache_memcached_get_callback(HttpCacheDocument *document,
 
     if (document == nullptr) {
         if (ep)
-            cache_log(2, "http_cache: get failed: %s\n", GetFullMessage(ep).c_str());
+            LogConcat(2, "HttpCache", "get failed: ", ep);
 
         http_cache_memcached_miss(request);
         return;
     }
 
     if (http_cache_may_serve(request.request_info, *document)) {
-        cache_log(4, "http_cache: serve %s\n", request.key);
+        LogConcat(4, "HttpCache", "serve ", request.key);
 
         request.handler.InvokeResponse(document->status,
                                        StringMap(ShallowCopy(), request.caller_pool,
@@ -1085,7 +1084,7 @@ http_cache_request(HttpCache &cache,
         if (http_cache_request_invalidate(method))
             http_cache_remove_url(cache, key, headers);
 
-        cache_log(4, "http_cache: ignore %s\n", key);
+        LogConcat(4, "HttpCache", "ignore ", key);
 
         cache.resource_loader.SendRequest(pool, session_sticky,
                                           method, address,

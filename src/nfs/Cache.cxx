@@ -47,8 +47,8 @@
 #include "AllocatorStats.hxx"
 #include "cache.hxx"
 #include "event/TimerEvent.hxx"
+#include "io/Logger.hxx"
 #include "util/Cancellable.hxx"
-#include "util/Exception.hxx"
 
 #include <boost/intrusive/list.hpp>
 
@@ -57,13 +57,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
-
-#ifdef CACHE_LOG
-#include <daemon/log.h>
-#define cache_log(...) daemon_log(__VA_ARGS__)
-#else
-#define cache_log(...) do {} while (0)
-#endif
 
 static constexpr struct timeval nfs_cache_compress_interval = { 600, 0 };
 
@@ -104,7 +97,7 @@ struct NfsCacheStore final
     void OnTimeout() {
         /* reading the response has taken too long already; don't store
            this resource */
-        cache_log(4, "nfs_cache: timeout %s\n", key);
+        LogConcat(4, "NfsCache", "timeout ", key);
         Abort();
     }
 
@@ -259,7 +252,7 @@ NfsCacheStore::Abort()
 void
 NfsCacheStore::Put(unsigned rubber_id)
 {
-    cache_log(4, "nfs_cache: put %s\n", key);
+    LogConcat(4, "NfsCache", "put ", key);
 
     struct pool *item_pool = pool_new_libc(&cache.pool, "nfs_cache_item");
     const auto item = NewFromPool<NfsCacheItem>(*item_pool, *item_pool, *this,
@@ -291,7 +284,7 @@ NfsCacheStore::RubberOutOfMemory()
 {
     cancel_ptr = nullptr;
 
-    cache_log(4, "nfs_cache: nocache oom %s\n", key);
+    LogConcat(4, "NfsCache", "nocache oom ", key);
     Release();
 }
 
@@ -300,7 +293,7 @@ NfsCacheStore::RubberTooLarge()
 {
     cancel_ptr = nullptr;
 
-    cache_log(4, "nfs_cache: nocache too large %s\n", key);
+    LogConcat(4, "NfsCache", "nocache too large ", key);
     Release();
 }
 
@@ -309,8 +302,7 @@ NfsCacheStore::RubberError(std::exception_ptr ep)
 {
     cancel_ptr = nullptr;
 
-    cache_log(4, "nfs_cache: body_abort %s: %s\n",
-              key, GetFullMessage(ep).c_str());
+    LogConcat(4, "NfsCache", "body_abort ", key, ": ", ep);
 
     Release();
 }
@@ -420,7 +412,7 @@ nfs_cache_request(struct pool &pool, NfsCache &cache,
     const char *key = nfs_cache_key(pool, server, _export, path);
     const auto item = (NfsCacheItem *)cache.cache.Get(key);
     if (item != nullptr) {
-        cache_log(4, "nfs_cache: hit %s\n", key);
+        LogConcat(4, "NfsCache", "hit ", key);
 
         NfsCacheHandle handle2 = {
             .cache = cache,
@@ -434,7 +426,7 @@ nfs_cache_request(struct pool &pool, NfsCache &cache,
         return;
     }
 
-    cache_log(4, "nfs_cache: miss %s\n", key);
+    LogConcat(4, "NfsCache", "miss ", key);
 
     auto r = NewFromPool<NfsCacheRequest>(pool, pool, cache,
                                           key, path,
@@ -472,7 +464,7 @@ nfs_cache_file_open(struct pool &pool, NfsCache &cache,
     if (st.st_size > cacheable_size_limit || start != 0 ||
         end != (uint64_t)st.st_size) {
         /* don't cache */
-        cache_log(4, "nfs_cache: nocache %s\n", key);
+        LogConcat(4, "NfsCache", "nocache ", key);
         return body;
     }
 
@@ -515,7 +507,7 @@ nfs_cache_handle_open(struct pool &pool, NfsCacheHandle &handle,
 
     if (handle.item != nullptr) {
         /* cache hit: serve cached file */
-        cache_log(5, "nfs_cache: serve %s\n", handle.key);
+        LogConcat(5, "NfsCache", "serve ", handle.key);
         return nfs_cache_item_open(pool, *handle.item,
                                    start, end);
     } else {

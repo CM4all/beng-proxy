@@ -37,13 +37,6 @@
 
 #include <sys/types.h>
 
-#ifdef CACHE_LOG
-#include <daemon/log.h>
-#define cache_log(...) daemon_log(__VA_ARGS__)
-#else
-#define cache_log(...) do {} while (0)
-#endif
-
 static const off_t cacheable_size_limit = 512 * 1024;
 
 #endif

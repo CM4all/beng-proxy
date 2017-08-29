@@ -40,6 +40,7 @@
 #include "cgi_address.hxx"
 #include "lhttp_address.hxx"
 #include "pool.hxx"
+#include "io/Logger.hxx"
 #include "http/Date.hxx"
 #include "util/StringView.hxx"
 
@@ -255,7 +256,7 @@ http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
         info.expires = parse_translate_time(headers.Get("expires"), offset);
         if (info.expires != std::chrono::system_clock::from_time_t(-1) &&
             info.expires < now)
-            cache_log(4, "invalid 'expires' header\n");
+            LogConcat(4, "HttpCache", "invalid 'expires' header");
     }
 
     if (request_info.has_query_string &&

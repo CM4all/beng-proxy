@@ -50,6 +50,7 @@
 #include "SlicePool.hxx"
 #include "AllocatorStats.hxx"
 #include "load_file.hxx"
+#include "io/Logger.hxx"
 #include "util/djbhash.h"
 #include "util/RuntimeError.hxx"
 #include "util/StringView.hxx"
@@ -408,13 +409,6 @@ struct TranslateCacheRequest {
 
     TranslateCacheRequest(TranslateCacheRequest &) = delete;
 };
-
-#ifdef CACHE_LOG
-#include <daemon/log.h>
-#define cache_log(...) daemon_log(__VA_ARGS__)
-#else
-#define cache_log(...) do {} while (0)
-#endif
 
 inline TranslateCachePerHost &
 tcache::MakePerHost(const char *host)
@@ -1152,7 +1146,7 @@ translate_cache_invalidate(struct tcache &tcache,
         : (vary.Contains(TranslationCommand::HOST)
            ? tcache.InvalidateHost(request, vary)
            : tcache.cache->RemoveAllMatch(tcache_invalidate_match, &data));
-    cache_log(4, "translate_cache: invalidated %u cache items\n", removed);
+    LogConcat(4, "TranslationCache", "invalidated ", removed, " cache items");
 }
 
 /**
@@ -1237,7 +1231,7 @@ tcache_store(TranslateCacheRequest &tcr, const TranslateResponse &response)
     if (key == nullptr)
         key = p_strdup(pool, tcr.key);
 
-    cache_log(4, "translate_cache: store %s\n", key);
+    LogConcat(4, "TranslationCache", "store ", key);
 
     if (response.regex != nullptr) {
         try {
@@ -1288,7 +1282,7 @@ tcache_handler_response(TranslateResponse &response, void *ctx)
     RegexPointer regex;
 
     if (!tcr.cacheable) {
-        cache_log(4, "translate_cache: ignore %s\n", tcr.key);
+        LogConcat(4, "TranslationCache", "ignore ", tcr.key);
     } else if (tcache_response_evaluate(response)) {
         try {
             auto item = tcache_store(tcr, response);
@@ -1298,7 +1292,7 @@ tcache_handler_response(TranslateResponse &response, void *ctx)
             return;
         }
     } else {
-        cache_log(4, "translate_cache: nocache %s\n", tcr.key);
+        LogConcat(4, "TranslationCache", "nocache ", tcr.key);
     }
 
     if (tcr.request.uri != nullptr && response.IsExpandable()) {
@@ -1341,7 +1335,7 @@ tcache_handler_error(std::exception_ptr ep, void *ctx)
 {
     TranslateCacheRequest &tcr = *(TranslateCacheRequest *)ctx;
 
-    cache_log(4, "translate_cache: error %s\n", tcr.key);
+    LogConcat(4, "TranslationCache", "error ", tcr.key);
 
     tcr.handler->error(ep, tcr.handler_ctx);
 }
@@ -1360,7 +1354,7 @@ tcache_hit(struct pool &pool,
 {
     auto response = NewFromPool<TranslateResponse>(pool);
 
-    cache_log(4, "translate_cache: hit %s\n", key);
+    LogConcat(4, "TranslationCache", "hit ", key);
 
     try {
         response->CacheLoad(pool, item.response, uri);
@@ -1395,7 +1389,7 @@ tcache_miss(struct pool &pool, struct tcache &tcache,
                                                   handler, ctx);
 
     if (cacheable)
-        cache_log(4, "translate_cache: miss %s\n", key);
+        LogConcat(4, "TranslationCache", "miss ", key);
 
     tstock_translate(tcache.stock, pool,
                      request, tcache_handler, tcr, cancel_ptr);
@@ -1409,38 +1403,42 @@ tcache_validate_mtime(const TranslateResponse &response,
     if (response.validate_mtime.path == nullptr)
         return true;
 
-    cache_log(6, "translate_cache: [%s] validate_mtime %llu %s\n",
-              key, (unsigned long long)response.validate_mtime.mtime,
-              response.validate_mtime.path);
+    LogConcat(6, "TranslationCache", "[", key,
+              "] validate_mtime ", response.validate_mtime.mtime,
+              " ", response.validate_mtime.path);
 
     struct stat st;
     if (lstat(response.validate_mtime.path, &st) < 0) {
         if (errno == ENOENT && response.validate_mtime.mtime == 0) {
             /* the special value 0 matches when the file does not
                exist */
-            cache_log(6, "translate_cache: [%s] validate_mtime enoent %s\n",
-                      key, response.validate_mtime.path);
+            LogConcat(6, "TranslationCache", "[", key,
+                      "] validate_mtime enoent ",
+                      response.validate_mtime.path);
             return true;
         }
 
-        cache_log(3, "translate_cache: [%s] failed to stat '%s': %s\n",
-                  key, response.validate_mtime.path, strerror(errno));
+        LogConcat(3, "TranslationCache", "[", key,
+                  "] failed to stat '", response.validate_mtime.path,
+                  "': ", strerror(errno));
         return false;
     }
 
     if (!S_ISREG(st.st_mode)) {
-        cache_log(3, "translate_cache: [%s] not a regular file: %s\n",
-                  key, response.validate_mtime.path);
+        LogConcat(3, "TranslationCache", "[", key,
+                  "] not a regular file: ", response.validate_mtime.path);
         return false;
     }
 
     if (st.st_mtime == (time_t)response.validate_mtime.mtime) {
-        cache_log(6, "translate_cache: [%s] validate_mtime unmodified %s\n",
-                  key, response.validate_mtime.path);
+        LogConcat(6, "TranslationCache", "[", key,
+                  "] validate_mtime unmodified ",
+                  response.validate_mtime.path);
         return true;
     } else {
-        cache_log(5, "translate_cache: [%s] validate_mtime modified %s\n",
-                  key, response.validate_mtime.path);
+        LogConcat(5, "TranslationCache", "[", key,
+                  "] validate_mtime modified ",
+                  response.validate_mtime.path);
         return false;
     }
 }

@@ -47,10 +47,10 @@
 #include "istream/istream.hxx"
 #include "istream/sink_header.hxx"
 #include "pool.hxx"
+#include "io/Logger.hxx"
 #include "util/Background.hxx"
 #include "util/ByteOrder.hxx"
 #include "util/ConstBuffer.hxx"
-#include "util/Exception.hxx"
 
 #include "util/Compiler.h"
 
@@ -241,7 +241,7 @@ background_callback(std::exception_ptr ep, void *ctx)
     LinkedBackgroundJob *job = (LinkedBackgroundJob *)ctx;
 
     if (ep)
-        cache_log(2, "http-cache: memcached failed: %s\n", GetFullMessage(ep).c_str());
+        LogConcat(2, "HttpCache", "memcached failed: ", ep);
 
     job->Remove();
 }
@@ -524,7 +524,7 @@ mcd_background_error(std::exception_ptr ep, void *ctx)
 {
     LinkedBackgroundJob *job = (LinkedBackgroundJob *)ctx;
 
-    cache_log(2, "http-cache: put failed: %s\n", GetFullMessage(ep).c_str());
+    LogConcat(2, "HttpCache", "put failed: ", ep);
 
     job->Remove();
 }
@@ -600,7 +600,7 @@ mcd_delete_filter_callback(const HttpCacheChoiceInfo *info,
             return true;
     } else {
         if (ep)
-            cache_log(2, "http-cache: memcached failed: %s\n", GetFullMessage(ep).c_str());
+            LogConcat(2, "HttpCache", "memcached failed: ", ep);
 
         data->background->Remove(data->job);
         return false;

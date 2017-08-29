@@ -51,6 +51,7 @@
 #include "AllocatorStats.hxx"
 #include "pool.hxx"
 #include "event/TimerEvent.hxx"
+#include "io/Logger.hxx"
 #include "http/List.hxx"
 #include "http/Date.hxx"
 #include "util/Cancellable.hxx"
@@ -64,13 +65,6 @@
 #include <stdio.h>
 #include <errno.h>
 #include <unistd.h>
-
-#ifdef CACHE_LOG
-#include <daemon/log.h>
-#define cache_log(...) daemon_log(__VA_ARGS__)
-#else
-#define cache_log(...) do {} while (0)
-#endif
 
 static constexpr off_t cacheable_size_limit = 512 * 1024;
 
@@ -294,7 +288,7 @@ filter_cache_put(FilterCacheRequest *request,
 {
     assert(request != nullptr);
 
-    cache_log(4, "filter_cache: put %s\n", request->info.key);
+    LogConcat(4, "FilterCache", "put ", request->info.key);
 
     std::chrono::system_clock::time_point expires;
     if (request->info.expires == std::chrono::system_clock::from_time_t(-1))
@@ -362,7 +356,7 @@ filter_cache_response_evaluate(FilterCacheInfo &info,
         info.expires = parse_translate_time(headers.Get("expires"), offset);
         if (info.expires != std::chrono::system_clock::from_time_t(-1) &&
             info.expires < now)
-            cache_log(2, "invalid 'expires' header\n");
+            LogConcat(2, "FilterCache", "invalid 'expires' header");
     }
 
     /*
@@ -377,7 +371,7 @@ FilterCacheRequest::OnTimeout()
 {
     /* reading the response has taken too long already; don't store
        this resource */
-    cache_log(4, "filter_cache: timeout %s\n", info.key);
+    LogConcat(4, "FilterCache", "timeout ", info.key);
     filter_cache_request_abort(this);
 }
 
@@ -403,7 +397,7 @@ FilterCacheRequest::RubberOutOfMemory()
 {
     response.cancel_ptr = nullptr;
 
-    cache_log(4, "filter_cache: nocache oom %s\n", info.key);
+    LogConcat(4, "FilterCache", "nocache oom ", info.key);
     filter_cache_request_release(this);
 }
 
@@ -412,7 +406,7 @@ FilterCacheRequest::RubberTooLarge()
 {
     response.cancel_ptr = nullptr;
 
-    cache_log(4, "filter_cache: nocache too large %s\n", info.key);
+    LogConcat(4, "FilterCache", "nocache too large %s\n", info.key);
     filter_cache_request_release(this);
 }
 
@@ -421,9 +415,7 @@ FilterCacheRequest::RubberError(std::exception_ptr ep)
 {
     response.cancel_ptr = nullptr;
 
-    cache_log(4, "filter_cache: body_abort %s: %s\n",
-              info.key, GetFullMessage(ep).c_str());
-
+    LogConcat(4, "FilterCache", "body_abort ", info.key, ": ", ep);
     filter_cache_request_release(this);
 }
 
@@ -443,7 +435,7 @@ FilterCacheRequest::OnHttpResponse(http_status_t status, StringMap &&headers,
     if (!filter_cache_response_evaluate(info,
                                         status, headers, available)) {
         /* don't cache response */
-        cache_log(4, "filter_cache: nocache %s\n", info.key);
+        LogConcat(4, "FilterCache", "nocache ", info.key);
 
         handler.InvokeResponse(status, std::move(headers), body);
         pool_unref(&_caller_pool);
@@ -598,7 +590,7 @@ filter_cache_miss(FilterCache &cache, struct pool &caller_pool,
     auto request = NewFromPool<FilterCacheRequest>(*pool, *pool, caller_pool,
                                                    cache, _handler, info);
 
-    cache_log(4, "filter_cache: miss %s\n", info.key);
+    LogConcat(4, "FilterCache", "miss ", info.key);
 
     pool_ref(&caller_pool);
     cache.resource_loader.SendRequest(*pool, 0,
@@ -618,7 +610,7 @@ filter_cache_serve(FilterCache &cache, FilterCacheItem &item,
     if (body != nullptr)
         body->CloseUnused();
 
-    cache_log(4, "filter_cache: serve %s\n", item.info.key);
+    LogConcat(4, "FilterCache", "serve ", item.info.key);
 
     /* XXX hold reference on item */
 

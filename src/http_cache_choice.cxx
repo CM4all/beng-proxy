@@ -46,6 +46,7 @@
 #include "istream/istream_memory.hxx"
 #include "pool.hxx"
 #include "ssl/Hash.hxx"
+#include "io/Logger.hxx"
 #include "util/djbhash.h"
 #include "util/ConstBuffer.hxx"
 #include "util/WritableBuffer.hxx"
@@ -384,7 +385,7 @@ http_cache_choice_prepend_response(enum memcached_response_status status,
     case MEMCACHED_STATUS_ITEM_NOT_STORED:
         /* could not prepend: try to add a new record */
 
-        cache_log(5, "add '%s'\n", choice->key);
+        LogConcat(5, "HttpCacheMemcached", "add '", choice->key, "'");
 
         choice->extras.flags = 0;
         choice->extras.expiration = ToBE32(600); /* XXX */
@@ -433,7 +434,7 @@ http_cache_choice_commit(HttpCacheChoice &choice,
     choice.callback_ctx = callback_ctx;
     choice.cancel_ptr = &cancel_ptr;
 
-    cache_log(5, "prepend '%s'\n", choice.key);
+    LogConcat(5, "HttpCacheMemcached", "prepend '", choice.key, "'");
 
     Istream *value = istream_memory_new(choice.pool,
                                         choice.data.data,
