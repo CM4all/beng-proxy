@@ -128,35 +128,33 @@ session_drop_widgets(RealmSession &session, const char *uri,
     }
 }
 
-static Istream *
-AutoDeflate(Request &request2, HttpHeaders &response_headers,
-            Istream *response_body)
+inline Istream *
+Request::AutoDeflate(HttpHeaders &response_headers, Istream *response_body)
 {
-    if (request2.compressed) {
+    if (compressed) {
         /* already compressed */
     } else if (response_body != nullptr &&
-               request2.translate.response->auto_deflate &&
-        http_client_accepts_encoding(request2.request.headers, "deflate") &&
+               translate.response->auto_deflate &&
+        http_client_accepts_encoding(request.headers, "deflate") &&
         response_headers.Get("content-encoding") == nullptr) {
         auto available = response_body->GetAvailable(false);
         if (available < 0 || available >= 512) {
-            request2.compressed = true;
+            compressed = true;
             response_headers.Write("content-encoding", "deflate");
-            response_body = istream_deflate_new(request2.pool,
+            response_body = istream_deflate_new(pool,
                                                 *response_body,
-                                                request2.instance.event_loop);
+                                                instance.event_loop);
         }
     } else if (response_body != nullptr &&
-               request2.translate.response->auto_gzip &&
-        http_client_accepts_encoding(request2.request.headers, "gzip") &&
+               translate.response->auto_gzip &&
+        http_client_accepts_encoding(request.headers, "gzip") &&
         response_headers.Get("content-encoding") == nullptr) {
         auto available = response_body->GetAvailable(false);
         if (available < 0 || available >= 512) {
-            request2.compressed = true;
+            compressed = true;
             response_headers.Write("content-encoding", "gzip");
-            response_body = istream_deflate_new(request2.pool,
-                                                *response_body,
-                                                request2.instance.event_loop,
+            response_body = istream_deflate_new(pool, *response_body,
+                                                instance.event_loop,
                                                 true);
         }
     }
@@ -169,47 +167,42 @@ AutoDeflate(Request &request2, HttpHeaders &response_headers,
  *
  */
 
-static void
-response_invoke_processor(Request &request2,
-                          http_status_t status,
-                          StringMap &response_headers,
-                          Istream *body,
-                          const Transformation &transformation)
+inline void
+Request::InvokeXmlProcessor(http_status_t status,
+                            StringMap &response_headers,
+                            Istream *response_body,
+                            const Transformation &transformation)
 {
-    const auto &request = request2.request;
     const char *uri;
 
-    assert(!request2.response_sent);
-    assert(body == nullptr || !body->HasHandler());
+    assert(!response_sent);
+    assert(response_body == nullptr || !response_body->HasHandler());
 
-    if (body == nullptr) {
-        request2.DispatchResponse(HTTP_STATUS_BAD_GATEWAY,
-                                  "Empty template cannot be processed");
+    if (response_body == nullptr) {
+        DispatchResponse(HTTP_STATUS_BAD_GATEWAY,
+                         "Empty template cannot be processed");
         return;
     }
 
     if (!processable(response_headers)) {
-        body->CloseUnused();
-        request2.DispatchResponse(HTTP_STATUS_BAD_GATEWAY,
-                                  "Invalid template content type");
+        response_body->CloseUnused();
+        DispatchResponse(HTTP_STATUS_BAD_GATEWAY,
+                         "Invalid template content type");
         return;
     }
 
-    auto *widget = NewFromPool<Widget>(request2.pool,
+    auto *widget = NewFromPool<Widget>(pool,
                                        Widget::RootTag(),
-                                       request2.pool,
-                                       request2.translate.response->uri != nullptr
-                                       ? request2.translate.response->uri
-                                       : p_strdup(request2.pool,
-                                                  request2.dissected_uri.base));
+                                       pool,
+                                       translate.response->uri != nullptr
+                                       ? translate.response->uri
+                                       : p_strdup(pool, dissected_uri.base));
 
     const struct widget_ref *focus_ref =
-        widget_ref_parse(&request2.pool,
-                         strmap_remove_checked(request2.args, "focus"));
+        widget_ref_parse(&pool, strmap_remove_checked(args, "focus"));
 
     const struct widget_ref *proxy_ref =
-        widget_ref_parse(&request2.pool,
-                         strmap_get_checked(request2.args, "frame"));
+        widget_ref_parse(&pool, strmap_get_checked(args, "frame"));
 
     if (focus_ref != nullptr && proxy_ref != nullptr &&
         !widget_ref_includes(proxy_ref, focus_ref)) {
@@ -218,10 +211,9 @@ response_invoke_processor(Request &request2,
 
         focus_ref = nullptr;
 
-        if (request2.request_body != nullptr) {
-            const auto &logger = request2.logger;
+        if (request_body != nullptr) {
             logger(4, "discarding non-framed request body");
-            istream_free_unused(&request2.request_body);
+            istream_free_unused(&request_body);
         }
     }
 
@@ -230,33 +222,30 @@ response_invoke_processor(Request &request2,
     if (proxy_ref != nullptr)
         /* disable all following transformations, because we're doing
            a direct proxy request to a widget */
-        request2.CancelTransformations();
+        CancelTransformations();
 
-    if (request2.translate.response->untrusted != nullptr &&
-        proxy_ref == nullptr) {
-        const auto &logger = request2.logger;
+    if (translate.response->untrusted != nullptr && proxy_ref == nullptr) {
         logger(2, "refusing to render template on untrusted domain '",
-               request2.translate.response->untrusted, "'");
-        body->CloseUnused();
-        request2.DispatchResponse(HTTP_STATUS_FORBIDDEN, "Forbidden");
+               translate.response->untrusted, "'");
+        response_body->CloseUnused();
+        DispatchResponse(HTTP_STATUS_FORBIDDEN, "Forbidden");
         return;
     }
 
-    if (request2.request_body != nullptr &&
+    if (request_body != nullptr &&
         widget->from_request.focus_ref != nullptr)
-        widget->for_focused.body = std::exchange(request2.request_body,
-                                                 nullptr);
+        widget->for_focused.body = std::exchange(request_body, nullptr);
 
-    uri = request2.translate.response->uri != nullptr
-        ? request2.translate.response->uri
+    uri = translate.response->uri != nullptr
+        ? translate.response->uri
         : request.uri;
 
-    if (request2.translate.response->uri != nullptr)
-        request2.dissected_uri.base = request2.translate.response->uri;
+    if (translate.response->uri != nullptr)
+        dissected_uri.base = translate.response->uri;
 
     /* make sure we have a session */
     {
-        auto session = request2.MakeRealmSession();
+        auto session = MakeRealmSession();
         if (session) {
             if (widget->from_request.focus_ref == nullptr)
                 /* drop the widget session and all descendants if there is
@@ -266,50 +255,49 @@ response_invoke_processor(Request &request2,
     }
 
     http_method_t method = request.method;
-    if (http_method_is_empty(method) && request2.HasTransformations())
+    if (http_method_is_empty(method) && HasTransformations())
         /* the following transformation may need the processed
            document to generate its headers, so we should not pass
            HEAD to the processor */
         method = HTTP_METHOD_GET;
 
-    request2.env = processor_env(&request2.pool,
-                                 request2.instance.event_loop,
-                                 *request2.instance.cached_resource_loader,
-                                 *request2.instance.filter_resource_loader,
-                                 request2.connection.site_name,
-                                 request2.translate.response->untrusted,
-                                 request.local_host_and_port, request.remote_host,
-                                 uri,
-                                 request_absolute_uri(request,
-                                                      request2.translate.response->scheme,
-                                                      request2.translate.response->host,
-                                                      uri),
-                                 &request2.dissected_uri,
-                                 request2.args,
-                                 request2.session_cookie,
-                                 request2.session_id, request2.realm,
-                                 method, &request.headers);
+    env = processor_env(&pool, instance.event_loop,
+                        *instance.cached_resource_loader,
+                        *instance.filter_resource_loader,
+                        connection.site_name,
+                        translate.response->untrusted,
+                        request.local_host_and_port, request.remote_host,
+                        uri,
+                        request_absolute_uri(request,
+                                             translate.response->scheme,
+                                             translate.response->host,
+                                             uri),
+                        &dissected_uri,
+                        args,
+                        session_cookie,
+                        session_id, realm,
+                        method, &request.headers);
 
     if (proxy_ref != nullptr) {
         /* the client requests a widget in proxy mode */
 
-        proxy_widget(request2, *body,
+        proxy_widget(*this, *response_body,
                      *widget, proxy_ref, transformation.u.processor.options);
     } else {
         /* the client requests the whole template */
-        body = processor_process(request2.pool, *body,
-                                 *widget, request2.env,
-                                 transformation.u.processor.options);
-        assert(body != nullptr);
+        response_body = processor_process(pool, *response_body,
+                                          *widget, env,
+                                          transformation.u.processor.options);
+        assert(response_body != nullptr);
 
-        if (request2.instance.config.dump_widget_tree)
-            body = widget_dump_tree_after_istream(request2.pool, *body,
-                                                  *widget);
+        if (instance.config.dump_widget_tree)
+            response_body = widget_dump_tree_after_istream(pool,
+                                                           *response_body,
+                                                           *widget);
 
-        request2.InvokeResponse(status,
-                                processor_header_forward(request2.pool,
-                                                         response_headers),
-                                body);
+        InvokeResponse(status,
+                       processor_header_forward(pool, response_headers),
+                       response_body);
     }
 }
 
@@ -321,154 +309,144 @@ css_processable(const StringMap &headers)
         strncmp(content_type, "text/css", 8) == 0;
 }
 
-static void
-response_invoke_css_processor(Request &request2,
-                              http_status_t status,
-                              StringMap &response_headers,
-                              Istream *body,
-                              const Transformation &transformation)
+inline void
+Request::InvokeCssProcessor(http_status_t status,
+                            StringMap &response_headers,
+                            Istream *response_body,
+                            const Transformation &transformation)
 {
-    const auto &request = request2.request;
+    assert(!response_sent);
+    assert(response_body == nullptr || !response_body->HasHandler());
 
-    assert(!request2.response_sent);
-    assert(body == nullptr || !body->HasHandler());
-
-    if (body == nullptr) {
-        request2.DispatchResponse(HTTP_STATUS_BAD_GATEWAY,
-                                  "Empty template cannot be processed");
+    if (response_body == nullptr) {
+        DispatchResponse(HTTP_STATUS_BAD_GATEWAY,
+                         "Empty template cannot be processed");
         return;
     }
 
     if (!css_processable(response_headers)) {
-        body->CloseUnused();
-        request2.DispatchResponse(HTTP_STATUS_BAD_GATEWAY,
-                                  "Invalid template content type");
+        response_body->CloseUnused();
+        DispatchResponse(HTTP_STATUS_BAD_GATEWAY,
+                         "Invalid template content type");
         return;
     }
 
-    auto *widget = NewFromPool<Widget>(request2.pool,
+    auto *widget = NewFromPool<Widget>(pool,
                                        Widget::RootTag(),
-                                       request2.pool,
-                                       p_strdup(request2.pool,
-                                                request2.dissected_uri.base));
+                                       pool,
+                                       p_strdup(pool, dissected_uri.base));
 
-    if (request2.translate.response->untrusted != nullptr) {
-        const auto &logger = request2.logger;
+    if (translate.response->untrusted != nullptr) {
         logger(2, "refusing to render template on untrusted domain '",
-               request2.translate.response->untrusted, "'");
-        body->CloseUnused();
-        request2.DispatchResponse(HTTP_STATUS_FORBIDDEN, "Forbidden");
+               translate.response->untrusted, "'");
+        response_body->CloseUnused();
+        DispatchResponse(HTTP_STATUS_FORBIDDEN, "Forbidden");
         return;
     }
 
-    const char *uri = request2.translate.response->uri != nullptr
-        ? request2.translate.response->uri
+    const char *uri = translate.response->uri != nullptr
+        ? translate.response->uri
         : request.uri;
 
-    if (request2.translate.response->uri != nullptr)
-        request2.dissected_uri.base = request2.translate.response->uri;
+    if (translate.response->uri != nullptr)
+        dissected_uri.base = translate.response->uri;
 
-    request2.env = processor_env(&request2.pool,
-                                 request2.instance.event_loop,
-                                 *request2.instance.cached_resource_loader,
-                                 *request2.instance.filter_resource_loader,
-                                 request2.translate.response->site,
-                                 request2.translate.response->untrusted,
-                                 request.local_host_and_port, request.remote_host,
-                                 uri,
-                                 request_absolute_uri(request,
-                                                      request2.translate.response->scheme,
-                                                      request2.translate.response->host,
-                                                      uri),
-                                 &request2.dissected_uri,
-                                 request2.args,
-                                 request2.session_cookie,
-                                 request2.session_id, request2.realm,
-                                 HTTP_METHOD_GET, &request.headers);
+    env = processor_env(&pool,
+                        instance.event_loop,
+                        *instance.cached_resource_loader,
+                        *instance.filter_resource_loader,
+                        translate.response->site,
+                        translate.response->untrusted,
+                        request.local_host_and_port, request.remote_host,
+                        uri,
+                        request_absolute_uri(request,
+                                             translate.response->scheme,
+                                             translate.response->host,
+                                             uri),
+                        &dissected_uri,
+                        args,
+                        session_cookie,
+                        session_id, realm,
+                        HTTP_METHOD_GET, &request.headers);
 
-    body = css_processor(request2.pool, *body,
-                         *widget, request2.env,
-                         transformation.u.css_processor.options);
-    assert(body != nullptr);
+    response_body = css_processor(pool, *response_body,
+                                  *widget, env,
+                                  transformation.u.css_processor.options);
+    assert(response_body != nullptr);
 
-    request2.InvokeResponse(status,
-                            processor_header_forward(request2.pool,
-                                                     response_headers),
-                            body);
+    InvokeResponse(status,
+                   processor_header_forward(pool,
+                                            response_headers),
+                   response_body);
 }
 
-static void
-response_invoke_text_processor(Request &request2,
-                               http_status_t status,
-                               StringMap &response_headers,
-                               Istream *body)
+inline void
+Request::InvokeTextProcessor(http_status_t status,
+                             StringMap &response_headers,
+                             Istream *response_body)
 {
-    const auto &request = request2.request;
+    assert(!response_sent);
+    assert(response_body == nullptr || !response_body->HasHandler());
 
-    assert(!request2.response_sent);
-    assert(body == nullptr || !body->HasHandler());
-
-    if (body == nullptr) {
-        request2.DispatchResponse(HTTP_STATUS_BAD_GATEWAY,
-                                  "Empty template cannot be processed");
+    if (response_body == nullptr) {
+        DispatchResponse(HTTP_STATUS_BAD_GATEWAY,
+                         "Empty template cannot be processed");
         return;
     }
 
     if (!text_processor_allowed(response_headers)) {
-        body->CloseUnused();
-        request2.DispatchResponse(HTTP_STATUS_BAD_GATEWAY,
-                                  "Invalid template content type");
+        response_body->CloseUnused();
+        DispatchResponse(HTTP_STATUS_BAD_GATEWAY,
+                         "Invalid template content type");
         return;
     }
 
-    auto *widget = NewFromPool<Widget>(request2.pool,
+    auto *widget = NewFromPool<Widget>(pool,
                                        Widget::RootTag(),
-                                       request2.pool,
-                                       p_strdup(request2.pool,
-                                                request2.dissected_uri.base));
+                                       pool,
+                                       p_strdup(pool,
+                                                dissected_uri.base));
 
-    if (request2.translate.response->untrusted != nullptr) {
-        const auto &logger = request2.logger;
+    if (translate.response->untrusted != nullptr) {
         logger(2, "refusing to render template on untrusted domain '",
-               request2.translate.response->untrusted, "'");
-        body->CloseUnused();
-        request2.DispatchResponse(HTTP_STATUS_FORBIDDEN, "Forbidden");
+               translate.response->untrusted, "'");
+        response_body->CloseUnused();
+        DispatchResponse(HTTP_STATUS_FORBIDDEN, "Forbidden");
         return;
     }
 
-    const char *uri = request2.translate.response->uri != nullptr
-        ? request2.translate.response->uri
+    const char *uri = translate.response->uri != nullptr
+        ? translate.response->uri
         : request.uri;
 
-    if (request2.translate.response->uri != nullptr)
-        request2.dissected_uri.base = request2.translate.response->uri;
+    if (translate.response->uri != nullptr)
+        dissected_uri.base = translate.response->uri;
 
-    request2.env = processor_env(&request2.pool,
-                                 request2.instance.event_loop,
-                                 *request2.instance.cached_resource_loader,
-                                 *request2.instance.filter_resource_loader,
-                                 request2.translate.response->site,
-                                 request2.translate.response->untrusted,
-                                 request.local_host_and_port, request.remote_host,
-                                 uri,
-                                 request_absolute_uri(request,
-                                                      request2.translate.response->scheme,
-                                                      request2.translate.response->host,
-                                                      uri),
-                                 &request2.dissected_uri,
-                                 request2.args,
-                                 request2.session_cookie,
-                                 request2.session_id, request2.realm,
-                                 HTTP_METHOD_GET, &request.headers);
+    env = processor_env(&pool,
+                        instance.event_loop,
+                        *instance.cached_resource_loader,
+                        *instance.filter_resource_loader,
+                        translate.response->site,
+                        translate.response->untrusted,
+                        request.local_host_and_port, request.remote_host,
+                        uri,
+                        request_absolute_uri(request,
+                                             translate.response->scheme,
+                                             translate.response->host,
+                                             uri),
+                        &dissected_uri,
+                        args,
+                        session_cookie,
+                        session_id, realm,
+                        HTTP_METHOD_GET, &request.headers);
 
-    body = text_processor(request2.pool, *body,
-                          *widget, request2.env);
-    assert(body != nullptr);
+    response_body = text_processor(pool, *response_body,
+                                   *widget, env);
+    assert(response_body != nullptr);
 
-    request2.InvokeResponse(status,
-                            processor_header_forward(request2.pool,
-                                                     response_headers),
-                            body);
+    InvokeResponse(status,
+                   processor_header_forward(pool, response_headers),
+                   response_body);
 }
 
 /**
@@ -509,35 +487,32 @@ more_response_headers(const Request &request2, HttpHeaders &headers)
     translation_response_headers(headers, *request2.translate.response);
 }
 
-/**
- * Generate the Set-Cookie response header for the given request.
- */
-static void
-response_generate_set_cookie(Request &request2, GrowingBuffer &headers)
+inline void
+Request::GenerateSetCookie(GrowingBuffer &headers)
 {
-    assert(!request2.stateless);
-    assert(request2.session_cookie != nullptr);
+    assert(!stateless);
+    assert(session_cookie != nullptr);
 
-    if (request2.send_session_cookie) {
+    if (send_session_cookie) {
         header_write_begin(headers, "set-cookie");
-        headers.Write(request2.session_cookie);
+        headers.Write(session_cookie);
         headers.Write("=", 1);
-        headers.Write(request2.session_id.Format(request2.session_id_string));
+        headers.Write(session_id.Format(session_id_string));
         headers.Write("; HttpOnly; Path=");
 
-        const char *cookie_path = request2.translate.response->cookie_path;
+        const char *cookie_path = translate.response->cookie_path;
         if (cookie_path == nullptr)
             cookie_path = "/";
 
         headers.Write(cookie_path);
         headers.Write("; Version=1");
 
-        if (request2.translate.response->secure_cookie)
+        if (translate.response->secure_cookie)
             headers.Write("; Secure");
 
-        if (request2.translate.response->cookie_domain != nullptr) {
+        if (translate.response->cookie_domain != nullptr) {
             headers.Write("; Domain=\"");
-            headers.Write(request2.translate.response->cookie_domain);
+            headers.Write(translate.response->cookie_domain);
             headers.Write("\"");
         }
 
@@ -551,26 +526,26 @@ response_generate_set_cookie(Request &request2, GrowingBuffer &headers)
            details */
         header_write(headers, "p3p", "CP=\"CAO PSA OUR\"");
 
-        auto session = request2.MakeSession();
+        auto session = MakeSession();
         if (session)
             session->cookie_sent = true;
-    } else if (request2.translate.response->discard_session &&
-               !request2.session_id.IsDefined()) {
+    } else if (translate.response->discard_session &&
+               !session_id.IsDefined()) {
         /* delete the cookie for the discarded session */
         header_write_begin(headers, "set-cookie");
-        headers.Write(request2.session_cookie);
+        headers.Write(session_cookie);
         headers.Write("=; HttpOnly; Path=");
 
-        const char *cookie_path = request2.translate.response->cookie_path;
+        const char *cookie_path = translate.response->cookie_path;
         if (cookie_path == nullptr)
             cookie_path = "/";
 
         headers.Write(cookie_path);
         headers.Write("; Version=1; Max-Age=0");
 
-        if (request2.translate.response->cookie_domain != nullptr) {
+        if (translate.response->cookie_domain != nullptr) {
             headers.Write("; Domain=\"");
-            headers.Write(request2.translate.response->cookie_domain);
+            headers.Write(translate.response->cookie_domain);
             headers.Write("\"");
         }
 
@@ -586,39 +561,35 @@ response_generate_set_cookie(Request &request2, GrowingBuffer &headers)
  *
  */
 
-static void
-response_dispatch_direct(Request &request2,
-                         http_status_t status, HttpHeaders &&headers,
-                         Istream *body)
+inline void
+Request::DispatchResponseDirect(http_status_t status, HttpHeaders &&headers,
+                                Istream *body)
 {
-    assert(!request2.response_sent);
+    assert(!response_sent);
     assert(body == nullptr || !body->HasHandler());
 
-    struct pool &pool = request2.pool;
-
     if (http_status_is_success(status) &&
-        request2.translate.response->www_authenticate != nullptr)
+        translate.response->www_authenticate != nullptr)
         /* default to "401 Unauthorized" */
         status = HTTP_STATUS_UNAUTHORIZED;
 
-    more_response_headers(request2, headers);
+    more_response_headers(*this, headers);
 
-    request2.DiscardRequestBody();
+    DiscardRequestBody();
 
-    if (!request2.stateless)
-        response_generate_set_cookie(request2, headers.GetBuffer());
+    if (!stateless)
+        GenerateSetCookie(headers.GetBuffer());
 
 #ifdef SPLICE
     if (body != nullptr)
-        body = istream_pipe_new(&pool, *body,
-                                request2.instance.pipe_stock);
+        body = istream_pipe_new(&pool, *body, instance.pipe_stock);
 #endif
 
 #ifndef NDEBUG
-    request2.response_sent = true;
+    response_sent = true;
 #endif
 
-    http_server_response(&request2.request, status,
+    http_server_response(&request, status,
                          std::move(headers),
                          body);
 }
@@ -655,41 +626,38 @@ response_apply_filter(Request &request2,
                       request2, request2.cancel_ptr);
 }
 
-static void
-response_apply_transformation(Request &request2,
-                              http_status_t status, StringMap &&headers,
-                              Istream *body,
-                              const Transformation &transformation)
+void
+Request::ApplyTransformation(http_status_t status, StringMap &&headers,
+                             Istream *response_body,
+                             const Transformation &transformation)
 {
-    request2.transformed = true;
+    transformed = true;
 
     switch (transformation.type) {
     case Transformation::Type::FILTER:
-        response_apply_filter(request2, status, std::move(headers), body,
+        response_apply_filter(*this, status, std::move(headers), response_body,
                               transformation.u.filter.address,
                               transformation.u.filter.reveal_user);
         break;
 
     case Transformation::Type::PROCESS:
         /* processor responses cannot be cached */
-        request2.resource_tag = nullptr;
+        resource_tag = nullptr;
 
-        response_invoke_processor(request2, status, headers, body,
-                                  transformation);
+        InvokeXmlProcessor(status, headers, response_body, transformation);
         break;
 
     case Transformation::Type::PROCESS_CSS:
         /* processor responses cannot be cached */
-        request2.resource_tag = nullptr;
+        resource_tag = nullptr;
 
-        response_invoke_css_processor(request2, status, headers, body,
-                                      transformation);
+        InvokeCssProcessor(status, headers, response_body, transformation);
 
     case Transformation::Type::PROCESS_TEXT:
         /* processor responses cannot be cached */
-        request2.resource_tag = nullptr;
+        resource_tag = nullptr;
 
-        response_invoke_text_processor(request2, status, headers, body);
+        InvokeTextProcessor(status, headers, response_body);
     }
 }
 
@@ -727,14 +695,11 @@ Request::DispatchResponse(http_status_t status, HttpHeaders &&headers,
     const Transformation *transformation = PopTransformation();
     if (transformation != nullptr &&
         filter_enabled(*translate.response, status)) {
-        response_apply_transformation(*this, status,
-                                      std::move(headers).ToMap(),
-                                      response_body,
-                                      *transformation);
+        ApplyTransformation(status, std::move(headers).ToMap(), response_body,
+                            *transformation);
     } else {
-        response_body = AutoDeflate(*this, headers, response_body);
-        response_dispatch_direct(*this, status, std::move(headers),
-                                 response_body);
+        response_body = AutoDeflate(headers, response_body);
+        DispatchResponseDirect(status, std::move(headers), response_body);
     }
 }
 
@@ -856,8 +821,8 @@ Request::OnHttpResponse(http_status_t status, StringMap &&headers,
 
         const Transformation *transformation = PopTransformation();
         if (transformation != nullptr) {
-            response_apply_transformation(*this, status, std::move(headers),
-                                          _body, *transformation);
+            ApplyTransformation(status, std::move(headers), _body,
+                                *transformation);
             return;
         }
     }

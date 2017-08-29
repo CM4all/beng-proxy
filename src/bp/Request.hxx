@@ -51,6 +51,7 @@
 class Istream;
 class HttpHeaders;
 class StringMap;
+class GrowingBuffer;
 struct BpInstance;
 struct BpConnection;
 struct HttpServerRequest;
@@ -384,6 +385,9 @@ public:
     const char *GetCookieHost() const;
     void CollectCookies(const StringMap &headers);
 
+    void DispatchResponseDirect(http_status_t status, HttpHeaders &&headers,
+                                Istream *body);
+
     void DispatchResponse(http_status_t status, HttpHeaders &&headers,
                           Istream *body);
 
@@ -400,6 +404,34 @@ public:
     void DispatchRedirect(http_status_t status, const char *location,
                           const char *msg);
 
+private:
+    Istream *AutoDeflate(HttpHeaders &response_headers,
+                         Istream *response_body);
+
+    void InvokeXmlProcessor(http_status_t status,
+                            StringMap &response_headers,
+                            Istream *response_body,
+                            const Transformation &transformation);
+
+    void InvokeCssProcessor(http_status_t status,
+                            StringMap &response_headers,
+                            Istream *response_body,
+                            const Transformation &transformation);
+
+    void InvokeTextProcessor(http_status_t status,
+                             StringMap &response_headers,
+                             Istream *response_body);
+
+    void ApplyTransformation(http_status_t status, StringMap &&headers,
+                             Istream *response_body,
+                             const Transformation &transformation);
+
+    /**
+     * Generate the Set-Cookie response header for the given request.
+     */
+    void GenerateSetCookie(GrowingBuffer &headers);
+
+public:
     void LogDispatchError(http_status_t status, const char *log_msg);
 
     void LogDispatchError(http_status_t status, const char *msg,
