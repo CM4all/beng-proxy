@@ -109,8 +109,8 @@ check_file_enotdir(Request &request,
 
     const char *path = get_file_path(response);
     if (path == nullptr) {
-        response_dispatch_log(request, HTTP_STATUS_BAD_GATEWAY,
-                              "Resource address not compatible with ENOTDIR");
+        request.LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
+                                 "Resource address not compatible with ENOTDIR");
         return false;
     }
 

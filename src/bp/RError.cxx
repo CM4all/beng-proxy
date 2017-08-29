@@ -158,49 +158,43 @@ ToResponse(struct pool &pool, std::exception_ptr ep)
 }
 
 void
-response_dispatch_log(Request &request, http_status_t status,
-                      const char *msg, const char *log_msg)
+Request::LogDispatchError(http_status_t status,
+                          const char *msg, const char *log_msg)
 {
-    const auto &logger = request.logger;
-    logger(2, "error on '", request.request.uri, "': ", log_msg);
+    logger(2, "error on '", request.uri, "': ", log_msg);
 
-    if (request.instance.config.verbose_response)
-        msg = p_strdup(&request.pool, log_msg);
+    if (instance.config.verbose_response)
+        msg = p_strdup(&pool, log_msg);
 
-    response_dispatch_message(request, status, msg);
+    response_dispatch_message(*this, status, msg);
 }
 
 void
-response_dispatch_log(Request &request, http_status_t status,
-                      const char *log_msg)
+Request::LogDispatchError(http_status_t status, const char *log_msg)
 {
-    response_dispatch_log(request, status,
-                          http_status_to_string(status), log_msg);
+    LogDispatchError(status, http_status_to_string(status), log_msg);
 }
 
 void
-response_dispatch_log(Request &request, std::exception_ptr ep)
+Request::LogDispatchError(std::exception_ptr ep)
 {
-    const auto &logger = request.logger;
-    logger(2, "error on '", request.request.uri, "': ", ep);
+    logger(2, "error on '", request.uri, "': ", ep);
 
-    auto response = ToResponse(request.pool, ep);
-    if (request.instance.config.verbose_response)
-        response.message = p_strdup(&request.pool, GetFullMessage(ep).c_str());
+    auto response = ToResponse(pool, ep);
+    if (instance.config.verbose_response)
+        response.message = p_strdup(&pool, GetFullMessage(ep).c_str());
 
-    response_dispatch_message(request, response.status, response.message);
+    response_dispatch_message(*this, response.status, response.message);
 }
 
 void
-response_dispatch_log(Request &request,
-                      http_status_t status, const char *msg,
-                      std::exception_ptr ep)
+Request::LogDispatchError(http_status_t status, const char *msg,
+                          std::exception_ptr ep)
 {
-    const auto &logger = request.logger;
-    logger(2, "error on '", request.request.uri, "': ", ep);
+    logger(2, "error on '", request.uri, "': ", ep);
 
-    if (request.instance.config.verbose_response)
-        msg = p_strdup(&request.pool, GetFullMessage(ep).c_str());
+    if (instance.config.verbose_response)
+        msg = p_strdup(&pool, GetFullMessage(ep).c_str());
 
-    response_dispatch_message(request, status, msg);
+    response_dispatch_message(*this, status, msg);
 }

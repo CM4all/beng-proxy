@@ -201,8 +201,8 @@ handle_translated_request2(Request &request,
         response_dispatch_message(request, HTTP_STATUS_UNAUTHORIZED,
                                   "Unauthorized");
     } else {
-        response_dispatch_log(request, HTTP_STATUS_BAD_GATEWAY,
-                              "Empty response from translation server");
+        request.LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
+                                 "Empty response from translation server");
     }
 }
 
@@ -322,8 +322,8 @@ Request::CheckHandleProbePathSuffixes(const TranslateResponse &response)
         return false;
 
     if (++translate.n_probe_path_suffixes > 2) {
-        response_dispatch_log(*this, HTTP_STATUS_BAD_GATEWAY,
-                              "Too many consecutive PROBE_PATH_SUFFIXES packets");
+        LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
+                         "Too many consecutive PROBE_PATH_SUFFIXES packets");
         return true;
     }
 
@@ -358,9 +358,8 @@ handler_suffix_registry_error(std::exception_ptr ep, void *ctx)
 {
     auto &request = *(Request *)ctx;
 
-    response_dispatch_log(request, HTTP_STATUS_BAD_GATEWAY,
-                          "Translation server failed",
-                          ep);
+    request.LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
+                             "Translation server failed", ep);
 }
 
 static constexpr SuffixRegistryHandler handler_suffix_registry_handler = {
@@ -511,8 +510,8 @@ repeat_translation(Request &request, const TranslateResponse &response)
         /* repeat request with CHECK set */
 
         if (++request.translate.n_checks > 4) {
-            response_dispatch_log(request, HTTP_STATUS_BAD_GATEWAY,
-                                  "Too many consecutive CHECK packets");
+            request.LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
+                                     "Too many consecutive CHECK packets");
             return;
         }
 
@@ -526,8 +525,8 @@ repeat_translation(Request &request, const TranslateResponse &response)
         assert(response.want_full_uri.IsNull());
 
         if (++request.translate.n_internal_redirects > 4) {
-            response_dispatch_log(request, HTTP_STATUS_BAD_GATEWAY,
-                                  "Too many consecutive INTERNAL_REDIRECT packets");
+            request.LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
+                                     "Too many consecutive INTERNAL_REDIRECT packets");
             return;
         }
 
@@ -546,8 +545,8 @@ repeat_translation(Request &request, const TranslateResponse &response)
 
         if (response.Wants(TranslationCommand::LISTENER_TAG)) {
             if (response.protocol_version >= 2) {
-                response_dispatch_log(request, HTTP_STATUS_BAD_GATEWAY,
-                                      "Translation protocol 2 doesn't allow WANT/LISTENER_TAG");
+                request.LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
+                                         "Translation protocol 2 doesn't allow WANT/LISTENER_TAG");
                 return;
             }
 
@@ -693,8 +692,8 @@ Request::OnTranslateResponseAfterAuth(const TranslateResponse &response)
 
     if (response.previous) {
         if (translate.previous == nullptr) {
-            response_dispatch_log(*this, HTTP_STATUS_BAD_GATEWAY,
-                                  "No previous translation response");
+            LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
+                             "No previous translation response");
             return;
         }
 
@@ -740,8 +739,8 @@ Request::CheckHandleReadFile(const TranslateResponse &response)
         return false;
 
     if (++translate.n_read_file > 2) {
-        response_dispatch_log(*this, HTTP_STATUS_BAD_GATEWAY,
-                              "Too many consecutive READ_FILE packets");
+        LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
+                         "Too many consecutive READ_FILE packets");
         return true;
     }
 
@@ -776,9 +775,8 @@ handler_translate_error(std::exception_ptr ep, void *ctx)
 
     install_error_response(request);
 
-    response_dispatch_log(request, HTTP_STATUS_BAD_GATEWAY,
-                          "Translation server failed",
-                          ep);
+    request.LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
+                             "Translation server failed", ep);
 }
 
 static constexpr TranslateHandler handler_translate_handler = {

@@ -125,7 +125,7 @@ Request::OnNfsCacheResponse(NfsCacheHandle &handle, const struct stat &st)
 void
 Request::OnNfsCacheError(std::exception_ptr ep)
 {
-    response_dispatch_log(*this, ep);
+    LogDispatchError(ep);
 }
 
 /*

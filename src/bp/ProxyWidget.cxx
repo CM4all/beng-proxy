@@ -147,7 +147,7 @@ ProxyWidget::OnHttpError(std::exception_ptr ep)
     if (widget->for_focused.body != nullptr)
         istream_free_unused(&widget->for_focused.body);
 
-    response_dispatch_log(request, ep);
+    request.LogDispatchError(ep);
 }
 
 /**
@@ -293,7 +293,7 @@ void
 ProxyWidget::WidgetLookupError(std::exception_ptr ep)
 {
     widget->Cancel();
-    response_dispatch_log(request, ep);
+    request.LogDispatchError(ep);
 }
 
 /*

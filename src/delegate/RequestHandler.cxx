@@ -94,7 +94,7 @@ Request::OnDelegateSuccess(int fd)
 void
 Request::OnDelegateError(std::exception_ptr ep)
 {
-    response_dispatch_log(*this, ep);
+    LogDispatchError(ep);
 }
 
 /*

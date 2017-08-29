@@ -237,7 +237,7 @@ file_callback(Request &request2, const FileAddress &address)
                                      request2.pool,
                                      path, st);
     } catch (...) {
-        response_dispatch_log(request2, std::current_exception());
+        request2.LogDispatchError(std::current_exception());
         return;
     }
 

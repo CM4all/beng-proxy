@@ -899,5 +899,5 @@ Request::OnHttpError(std::exception_ptr ep)
 {
     assert(!response_sent);
 
-    response_dispatch_log(*this, ep);
+    LogDispatchError(ep);
 }
