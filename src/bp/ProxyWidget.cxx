@@ -244,11 +244,15 @@ void
 ProxyWidget::ResolverCallback()
 {
     if (widget->cls == nullptr) {
-        widget->logger(2, "lookup of widget class failed");
-
         widget->Cancel();
-        request.DispatchResponse(HTTP_STATUS_INTERNAL_SERVER_ERROR,
-                                 "No such widget type");
+
+        char log_msg[256];
+        snprintf(log_msg, sizeof(log_msg), "Failed to look up class for widget '%s'",
+                 widget->GetLogName());
+
+        request.LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
+                                 "No such widget type",
+                                 log_msg);
         return;
     }
 
@@ -279,11 +283,13 @@ ProxyWidget::WidgetNotFound()
 {
     assert(ref != nullptr);
 
-    widget->logger(2, "widget '", ref->id, "' not found [",
-                   request.request.uri, "]");
-
     widget->Cancel();
-    request.DispatchResponse(HTTP_STATUS_NOT_FOUND, "No such widget");
+
+    char log_msg[256];
+    snprintf(log_msg, sizeof(log_msg), "Widget '%s' not found in %s",
+             ref->id, widget->GetLogName());
+
+    request.LogDispatchError(HTTP_STATUS_NOT_FOUND, "No such widget", log_msg);
 }
 
 void
