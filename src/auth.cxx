@@ -45,8 +45,6 @@
 #include "load_file.hxx"
 #include "util/Exception.hxx"
 
-#include <daemon/log.h>
-
 static void
 auth_translate_response(TranslateResponse &response, void *ctx)
 {

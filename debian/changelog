@@ -1,5 +1,6 @@
 cm4all-beng-proxy (13.0.1) unstable; urgency=low
 
+  * remove libdaemon dependency
   * lhttp: FADE_CHILDEN prevents reusing existing busy processes
   * bp: allow CONTROL_FADE_CHILDREN with tag as payload
 

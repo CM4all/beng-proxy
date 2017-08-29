@@ -7,7 +7,6 @@ executable('TrafoExample',
   'TrafoExample.cxx',
   include_directories: inc,
   dependencies: [
-    libdaemon,
     declare_dependency(link_with: event),
     declare_dependency(link_with: net),
     system_dep,
@@ -17,7 +16,6 @@ executable('dump_udp',
   'dump_udp.cxx',
   include_directories: inc,
   dependencies: [
-    libdaemon,
     declare_dependency(link_with: net),
   ])
 
@@ -25,7 +23,6 @@ executable('dump_control',
   'dump_control.cxx',
   include_directories: inc,
   dependencies: [
-    libdaemon,
     declare_dependency(link_with: control_server),
   ])
 
@@ -109,7 +106,6 @@ executable('run_http_server',
   '../src/duplex.cxx',
   include_directories: inc,
   dependencies: [
-    libdaemon,
     declare_dependency(link_with: http_server),
     system_dep,
   ])
@@ -152,7 +148,6 @@ executable('cleanup_memcached_choice',
   '../src/failure.cxx',
   include_directories: inc,
   dependencies: [
-    libdaemon,
     declare_dependency(link_with: memcached_client),
     declare_dependency(link_with: net),
     declare_dependency(link_with: io),
@@ -187,7 +182,6 @@ executable('run_was',
   '../src/direct.cxx',
   include_directories: inc,
   dependencies: [
-    libdaemon,
     declare_dependency(link_with: net),
     declare_dependency(link_with: was_client),
     stopwatch_dep,
@@ -199,7 +193,6 @@ executable('was_mirror',
   '../src/direct.cxx',
   include_directories: inc,
   dependencies: [
-    libdaemon,
     declare_dependency(link_with: was_server),
   ])
 
@@ -307,7 +300,6 @@ executable('run_client_balancer',
   '../src/bulldog.cxx',
   include_directories: inc,
   dependencies: [
-    libdaemon,
     declare_dependency(link_with: net),
     stopwatch_dep,
     declare_dependency(link_with: eutil),
@@ -369,7 +361,6 @@ test('t_header_forward', executable('t_header_forward',
     gtest,
     threads,
     libpcre,
-    libdaemon,
     putil_dep,
     http_dep,
     declare_dependency(link_with: cookie),
@@ -421,7 +412,6 @@ test('t_balancer', executable('t_balancer',
   include_directories: inc,
   dependencies: [
     gtest,
-    libdaemon,
     declare_dependency(link_with: eutil),
     pool_dep,
     declare_dependency(link_with: net),
@@ -435,7 +425,6 @@ test('t_cgi', executable('t_cgi',
   '../src/http_response.cxx',
   include_directories: inc,
   dependencies: [
-    libdaemon,
     declare_dependency(link_with: cgi),
     system_dep,
     declare_dependency(link_with: raddress),
@@ -621,7 +610,6 @@ test('t_rewrite_uri', executable('t_rewrite_uri',
   include_directories: inc,
   dependencies: [
     gtest,
-    libdaemon,
     putil_dep,
     widget_dep,
     declare_dependency(link_with: istream),
@@ -633,7 +621,6 @@ test('t_widget_registry', executable('t_widget_registry',
   '../src/widget/Registry.cxx',
   include_directories: inc,
   dependencies: [
-    libdaemon,
     widget_dep,
   ]))
 
@@ -642,7 +629,6 @@ test('t_widget_resolver', executable('t_widget_resolver',
   '../src/widget/Resolver.cxx',
   include_directories: inc,
   dependencies: [
-    libdaemon,
     widget_dep,
   ]))
 
@@ -655,7 +641,6 @@ test('t_wembed', executable('t_wembed',
   '../src/bp_global.cxx',
   include_directories: inc,
   dependencies: [
-    libdaemon,
     widget_dep,
     declare_dependency(link_with: istream),
     declare_dependency(link_with: http_util),
@@ -675,7 +660,6 @@ test('t_widget_http', executable('t_widget_http',
   include_directories: inc,
   dependencies: [
     threads,
-    libdaemon,
     widget_dep,
     declare_dependency(link_with: istream),
     declare_dependency(link_with: http_util),
@@ -848,7 +832,6 @@ test('t_istream_processor', executable('t_istream_processor',
   '../src/istream_html_escape.cxx',
   include_directories: inc,
   dependencies: [
-    libdaemon,
     threads,
     processor_dep,
     widget_dep,

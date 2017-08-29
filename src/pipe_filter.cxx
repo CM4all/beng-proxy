@@ -45,8 +45,6 @@
 #include "util/HexFormat.h"
 #include "util/djbhash.h"
 
-#include <daemon/log.h>
-
 #include <sys/wait.h>
 #include <unistd.h>
 #include <stdio.h>

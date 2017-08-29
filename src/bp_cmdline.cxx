@@ -41,8 +41,6 @@
 #include "util/StringView.hxx"
 #include "util/IterableSplitString.hxx"
 
-#include <daemon/log.h>
-
 #include <systemd/sd-daemon.h>
 
 #include <stdio.h>
@@ -319,6 +317,7 @@ ParseCommandLine(BpCmdLine &cmdline, BpConfig &config, int argc, char **argv)
     struct addrinfo hints;
     const char *user_name = NULL;
     const char *spawn_user = nullptr;
+    unsigned verbose = 1;
 
     while (1) {
 #ifdef __GLIBC__
@@ -344,11 +343,11 @@ ParseCommandLine(BpCmdLine &cmdline, BpConfig &config, int argc, char **argv)
             exit(0);
 
         case 'v':
-            ++daemon_log_config.verbose;
+            ++verbose;
             break;
 
         case 'q':
-            daemon_log_config.verbose = 0;
+            verbose = 0;
             break;
 
         case 'A':
@@ -482,7 +481,7 @@ ParseCommandLine(BpCmdLine &cmdline, BpConfig &config, int argc, char **argv)
         }
     }
 
-    SetLogLevel(daemon_log_config.verbose);
+    SetLogLevel(verbose);
 
     /* check non-option arguments */
 

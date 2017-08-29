@@ -46,8 +46,6 @@
 #include "istream/istream_tee.hxx"
 #include "pool.hxx"
 
-#include <daemon/log.h>
-
 #include <assert.h>
 #include <string.h>
 

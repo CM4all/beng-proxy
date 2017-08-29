@@ -34,8 +34,7 @@
 #include "direct.hxx"
 #include "PInstance.hxx"
 #include "fb_pool.hxx"
-
-#include <daemon/log.h>
+#include "io/Logger.hxx"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -59,7 +58,7 @@ int main(int argc, char **argv) {
     (void)argc;
     (void)argv;
 
-    daemon_log_config.verbose = 5;
+    SetLogLevel(5);
 
     int in_fd = 0, out_fd = 1, control_fd = 3;
 

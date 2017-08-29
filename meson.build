@@ -113,7 +113,6 @@ gtest = declare_dependency(
   compile_args: gtest_compile_args,
 )
 
-libdaemon = dependency('libcm4all-daemon', version: '>= 0.4.1')
 libwas = dependency('libcm4all-was-protocol', version: '>= 1.0')
 
 inc = include_directories('src', 'include', 'libcommon/src')
@@ -311,7 +310,6 @@ if stopwatch
     'src/stopwatch.cxx',
     include_directories: inc,
     dependencies: [
-      libdaemon,
       pool_dep,
       net_dep,
     ])
@@ -566,7 +564,7 @@ was_client = static_library('was_client',
   'src/was/Glue.cxx',
   include_directories: inc,
   dependencies: [
-    libdaemon, libwas,
+    libwas,
     declare_dependency(link_with: spawn),
     declare_dependency(link_with: raddress),
     declare_dependency(link_with: was_common),
@@ -614,7 +612,6 @@ thread_pool = static_library('thread_queue',
   'src/thread_pool.cxx',
   include_directories: inc,
   dependencies: [
-    libdaemon,
     declare_dependency(link_with: event),
     declare_dependency(link_with: eutil),
   ])
@@ -668,7 +665,6 @@ translation = static_library('translation',
   'src/translation/InvalidateParser.cxx',
   include_directories: inc,
   dependencies: [
-    libdaemon,
     declare_dependency(link_with: event),
     putil_dep,
     declare_dependency(link_with: eutil),
@@ -692,7 +688,6 @@ http_client = static_library('http_client',
   'src/http_client.cxx',
   include_directories: inc,
   dependencies: [
-    libdaemon,
     declare_dependency(link_with: socket),
     putil_dep,
     declare_dependency(link_with: http_util),
@@ -709,7 +704,6 @@ http_server = static_library('http_server',
   'src/http_server/http_server_response.cxx',
   include_directories: inc,
   dependencies: [
-    libdaemon,
     declare_dependency(link_with: event),
     declare_dependency(link_with: istream),
     declare_dependency(link_with: http_util),
@@ -729,7 +723,6 @@ http_cache = static_library('http_cache',
   'src/http_cache_rfc.cxx',
   include_directories: inc,
   dependencies: [
-    libdaemon,
     declare_dependency(link_with: eutil),
     declare_dependency(link_with: http_util),
     declare_dependency(link_with: istream),
@@ -758,7 +751,6 @@ fcgi_client = static_library('fcgi_client',
   'src/fcgi/istream_fcgi.cxx',
   include_directories: inc,
   dependencies: [
-    libdaemon,
     declare_dependency(link_with: socket),
     putil_dep,
     declare_dependency(link_with: istream),
@@ -773,7 +765,6 @@ nfs_client = static_library('nfs_client',
   'src/nfs/Glue.cxx',
   include_directories: inc,
   dependencies: [
-    libdaemon,
     libnfs,
     declare_dependency(link_with: event),
   ])
@@ -785,7 +776,6 @@ delegate_client = static_library('delegate_client',
   'src/delegate/Stock.cxx',
   include_directories: inc,
   dependencies: [
-    libdaemon,
     declare_dependency(link_with: socket),
     putil_dep,
     stock_dep,
@@ -803,7 +793,6 @@ session = static_library('session',
   'src/daddress_list.cxx',
   include_directories: inc,
   dependencies: [
-    libdaemon,
     declare_dependency(link_with: shm),
     util_dep,
     declare_dependency(link_with: event),
@@ -845,7 +834,6 @@ processor = static_library('processor',
   'src/esession.cxx',
   include_directories: inc,
   dependencies: [
-    libdaemon,
     declare_dependency(link_with: istream),
     putil_dep,
   ])
@@ -963,7 +951,6 @@ executable('cm4all-beng-proxy',
     libnfs,
     libsystemd,
     libdbus,
-    libdaemon,
     util_dep,
     declare_dependency(link_with: avahi),
     pool_dep,

@@ -35,8 +35,6 @@
 #include "direct.hxx"
 #include "util/Exception.hxx"
 
-#include <daemon/log.h>
-
 #include <sys/socket.h>
 #include <errno.h>
 #include <string.h>

@@ -69,8 +69,6 @@
 #include "util/CharUtil.hxx"
 #include "util/Exception.hxx"
 
-#include <daemon/log.h>
-
 #include <assert.h>
 #include <sys/stat.h>
 

@@ -37,9 +37,8 @@
 #include "net/AllocatedSocketAddress.hxx"
 #include "net/Parser.hxx"
 #include "event/Loop.hxx"
+#include "io/Logger.hxx"
 #include "util/PrintException.hxx"
-
-#include <daemon/log.h>
 
 #include <stdio.h>
 
@@ -58,7 +57,7 @@ public:
 
 int main(int argc, char **argv)
 try {
-    daemon_log_config.verbose = 5;
+    SetLogLevel(5);
 
     if (argc > 3) {
         fprintf(stderr, "usage: dump-udp [LISTEN:PORT [MCAST_GROUP]]\n");

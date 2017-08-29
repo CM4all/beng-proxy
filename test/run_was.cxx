@@ -46,12 +46,11 @@
 #include "spawn/ChildOptions.hxx"
 #include "spawn/Registry.hxx"
 #include "spawn/Local.hxx"
+#include "io/Logger.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/Cancellable.hxx"
 #include "util/PrintException.hxx"
 #include "util/StaticArray.hxx"
-
-#include <daemon/log.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -157,7 +156,7 @@ request_body(EventLoop &event_loop, struct pool &pool)
 int
 main(int argc, char **argv)
 try {
-    daemon_log_config.verbose = 5;
+    SetLogLevel(5);
 
     StaticArray<const char *, 64> params;
 

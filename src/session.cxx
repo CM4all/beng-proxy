@@ -37,8 +37,6 @@
 #include "shm/dbuffer.hxx"
 #include "crash.hxx"
 
-#include <daemon/log.h>
-
 #include <assert.h>
 #include <stdlib.h>
 #include <errno.h>
