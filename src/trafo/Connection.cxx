@@ -35,8 +35,7 @@
 #include "Handler.hxx"
 #include "Response.hxx"
 #include "translation/Protocol.hxx"
-
-#include <daemon/log.h>
+#include "io/Logger.hxx"
 
 #include <unistd.h>
 #include <errno.h>
@@ -86,7 +85,7 @@ TrafoConnection::TryRead()
         if (errno == EAGAIN)
             return;
 
-        daemon_log(2, "Failed to read from client: %s\n", strerror(errno));
+        LogConcat(2, "trafo", "Failed to read from client: ", strerror(errno));
     }
 
     listener.RemoveConnection(*this);
@@ -121,7 +120,7 @@ TrafoConnection::OnPacket(TranslationCommand cmd, const void *payload, size_t le
 
     if (cmd == TranslationCommand::BEGIN) {
         if (state != State::INIT) {
-            daemon_log(2, "Misplaced INIT\n");
+            LogConcat(2, "trafo", "Misplaced INIT");
             listener.RemoveConnection(*this);
             return;
         }
@@ -130,7 +129,7 @@ TrafoConnection::OnPacket(TranslationCommand cmd, const void *payload, size_t le
     }
 
     if (state != State::REQUEST) {
-        daemon_log(2, "INIT expected\n");
+        LogConcat(2, "trafo", "INIT expected");
         listener.RemoveConnection(*this);
         return;
     }
@@ -158,7 +157,7 @@ TrafoConnection::TryWrite()
             return;
         }
 
-        daemon_log(2, "Failed to write to client: %s\n", strerror(errno));
+        LogConcat(2, "trafo", "Failed to write to client: ", strerror(errno));
         listener.RemoveConnection(*this);
         return;
     }

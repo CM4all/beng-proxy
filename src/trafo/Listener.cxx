@@ -32,9 +32,7 @@
 
 #include "Listener.hxx"
 #include "net/SocketAddress.hxx"
-#include "util/Exception.hxx"
-
-#include <daemon/log.h>
+#include "io/Logger.hxx"
 
 void
 TrafoListener::RemoveConnection(TrafoConnection &connection)
@@ -52,5 +50,5 @@ TrafoListener::OnAccept(UniqueSocketDescriptor &&new_fd,
 void
 TrafoListener::OnAcceptError(std::exception_ptr ep)
 {
-    daemon_log(2, "%s\n", GetFullMessage(ep).c_str());
+    LogConcat(2, "trafo", ep);
 }

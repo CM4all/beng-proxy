@@ -32,9 +32,8 @@
 
 #include "AllocatedRequest.hxx"
 #include "translation/Protocol.hxx"
-
+#include "io/Logger.hxx"
 #include "util/Compiler.h"
-#include <daemon/log.h>
 
 #include <assert.h>
 
@@ -96,7 +95,7 @@ AllocatedTrafoRequest::Parse(TranslationCommand cmd,
         break;
 
     default:
-        daemon_log(4, "unknown translation packet: %u\n", unsigned(cmd));
+        LogConcat(4, "trafo", "unknown translation packet: ", unsigned(cmd));
         break;
     }
 }
