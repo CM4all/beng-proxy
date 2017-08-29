@@ -4,7 +4,7 @@ cm4all-beng-proxy (12.3) unstable; urgency=low
   * logger: fix off-by-one bug in log level check
   * http_server: fix crash bug
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 29 Aug 2017 09:44:27 -0000
 
 cm4all-beng-proxy (12.2) unstable; urgency=low
 
