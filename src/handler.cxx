@@ -67,7 +67,6 @@
 #include "ua_classification.hxx"
 #include "util/Cast.hxx"
 #include "util/CharUtil.hxx"
-#include "util/Exception.hxx"
 
 #include <assert.h>
 #include <sys/stat.h>
@@ -361,7 +360,7 @@ handler_suffix_registry_error(std::exception_ptr ep, void *ctx)
 
     response_dispatch_log(request, HTTP_STATUS_BAD_GATEWAY,
                           "Translation server failed",
-                          GetFullMessage(ep).c_str());
+                          ep);
 }
 
 static constexpr SuffixRegistryHandler handler_suffix_registry_handler = {
@@ -779,7 +778,7 @@ handler_translate_error(std::exception_ptr ep, void *ctx)
 
     response_dispatch_log(request, HTTP_STATUS_BAD_GATEWAY,
                           "Translation server failed",
-                          GetFullMessage(ep).c_str());
+                          ep);
 }
 
 static constexpr TranslateHandler handler_translate_handler = {

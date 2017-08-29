@@ -190,3 +190,17 @@ response_dispatch_log(Request &request, std::exception_ptr ep)
 
     response_dispatch_message(request, response.status, response.message);
 }
+
+void
+response_dispatch_log(Request &request,
+                      http_status_t status, const char *msg,
+                      std::exception_ptr ep)
+{
+    const auto &logger = request.logger;
+    logger(2, "error on '", request.request.uri, "': ", ep);
+
+    if (request.instance.config.verbose_response)
+        msg = p_strdup(&request.pool, GetFullMessage(ep).c_str());
+
+    response_dispatch_message(request, status, msg);
+}
