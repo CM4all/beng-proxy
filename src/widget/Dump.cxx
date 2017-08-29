@@ -34,12 +34,12 @@
 #include "Widget.hxx"
 #include "istream/istream_notify.hxx"
 
-#include <daemon/log.h>
+#include <stdio.h>
 
 static void dump_widget_tree(unsigned indent, const Widget *widget)
 {
-    daemon_log(4, "%*swidget id='%s' class='%s'\n", indent, "",
-               widget->id, widget->class_name);
+    fprintf(stderr, "%*swidget id='%s' class='%s'\n", indent, "",
+            widget->id, widget->class_name);
 
     for (auto &child : widget->children)
         dump_widget_tree(indent + 2, &child);
