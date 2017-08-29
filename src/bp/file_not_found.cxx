@@ -55,8 +55,6 @@ check_file_not_found(Request &request,
 {
     assert(!response.file_not_found.IsNull());
 
-    const auto &logger = request.logger;
-
     if (response.test_path != nullptr) {
         if (!is_enoent(response.test_path))
             return true;
@@ -66,9 +64,8 @@ check_file_not_found(Request &request,
         case ResourceAddress::Type::HTTP:
         case ResourceAddress::Type::PIPE:
         case ResourceAddress::Type::NFS:
-            logger(2, "resource address not compatible with TRANSLATE_FILE_NOT_FOUND");
-            response_dispatch_message(request, HTTP_STATUS_BAD_GATEWAY,
-                                      "Internal Server Error");
+            request.LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
+                                     "Resource address not compatible with TRANSLATE_FILE_NOT_FOUND");
             return false;
 
         case ResourceAddress::Type::CGI:
@@ -96,10 +93,8 @@ check_file_not_found(Request &request,
     }
 
     if (++request.translate.n_file_not_found > 20) {
-        logger(2, "got too many consecutive FILE_NOT_FOUND packets");
-        response_dispatch_message(request,
-                                  HTTP_STATUS_BAD_GATEWAY,
-                                  "Internal server error");
+        request.LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
+                                 "got too many consecutive FILE_NOT_FOUND packets");
         return false;
     }
 
