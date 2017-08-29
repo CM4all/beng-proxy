@@ -43,8 +43,7 @@
 #include "net/AllocatedSocketAddress.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "event/SocketEvent.hxx"
-
-#include <daemon/log.h>
+#include "io/Logger.hxx"
 
 #include <stdexcept>
 
@@ -98,10 +97,12 @@ private:
         char buffer;
         ssize_t nbytes = recv(s.Get(), &buffer, sizeof(buffer), MSG_DONTWAIT);
         if (nbytes < 0)
-            daemon_log(2, "error on idle translation server connection: %s\n",
-                       strerror(errno));
+            LogConcat(2, "translation",
+                      "error on idle translation server connection: ",
+                      strerror(errno));
         else if (nbytes > 0)
-            daemon_log(2, "unexpected data in idle translation server connection\n");
+            LogConcat(2, "translation",
+                      "unexpected data in idle translation server connection");
 
         InvokeIdleDisconnect();
     }
