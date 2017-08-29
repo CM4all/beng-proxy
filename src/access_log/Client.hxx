@@ -41,6 +41,7 @@
 
 #include <string.h>
 
+struct StringView;
 struct AccessLogDatagram;
 
 /**
@@ -92,6 +93,7 @@ public:
     }
 
     void AppendString(enum beng_log_attribute attribute, const char *value);
+    void AppendString(enum beng_log_attribute attribute, StringView value);
 
     bool Commit();
 

@@ -45,6 +45,21 @@ LogClient::AppendString(enum beng_log_attribute attribute, const char *value)
     AppendAttribute(attribute, value, strlen(value) + 1);
 }
 
+void
+LogClient::AppendString(enum beng_log_attribute attribute, StringView value)
+{
+    // TODO: is this the best way to deal with NULL bytes?
+    const char *end = value.Find('\0');
+    if (end != nullptr)
+        value.size = end - value.data;
+
+    AppendAttribute(attribute, value.data, value.size);
+
+    if (position < sizeof(buffer))
+        buffer[position] = 0;
+    ++position;
+}
+
 bool
 LogClient::Commit()
 {
@@ -100,6 +115,9 @@ LogClient::Send(const AccessLogDatagram &d)
 
     if (d.user_agent != nullptr)
         AppendString(LOG_USER_AGENT, d.user_agent);
+
+    if (!d.message.IsNull())
+        AppendString(LOG_MESSAGE, d.message);
 
     if (d.valid_http_status)
         AppendU16(LOG_HTTP_STATUS, d.http_status);

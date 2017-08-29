@@ -35,6 +35,7 @@
 
 #include "http/Method.h"
 #include "http/Status.h"
+#include "util/StringView.hxx"
 
 #include <chrono>
 
@@ -48,6 +49,8 @@ struct AccessLogDatagram {
     http_method_t http_method;
 
     const char *http_uri, *http_referer, *user_agent;
+
+    StringView message;
 
     http_status_t http_status;
 
@@ -75,6 +78,7 @@ struct AccessLogDatagram {
          remote_host(_remote_host), host(_host), site(_site),
          http_method(_method),
          http_uri(_uri), http_referer(_referer), user_agent(_user_agent),
+         message(nullptr),
          http_status(_status),
          length(_length),
          traffic_received(_traffic_received), traffic_sent(_traffic_sent),
@@ -83,6 +87,15 @@ struct AccessLogDatagram {
          valid_http_method(true), valid_http_status(true),
          valid_length(_length >= 0), valid_traffic(true),
          valid_duration(true) {}
+
+    explicit AccessLogDatagram(const char *_message)
+        :remote_host(nullptr), host(nullptr), site(nullptr),
+         http_uri(nullptr), http_referer(nullptr), user_agent(nullptr),
+         message(_message),
+         valid_timestamp(false),
+         valid_http_method(false), valid_http_status(false),
+         valid_length(false), valid_traffic(false),
+         valid_duration(false) {}
 };
 
 #endif

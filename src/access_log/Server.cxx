@@ -95,6 +95,15 @@ read_string(const char **value_r, const void *p, const uint8_t *end)
     return q > (const char *)end ? nullptr : q;
 }
 
+static const void *
+ReadStringView(StringView &value_r, const void *p, const uint8_t *end)
+{
+    const char *value;
+    p = read_string(&value, p, end);
+    value_r = value;
+    return p;
+}
+
 static bool
 log_server_apply_attributes(AccessLogDatagram *datagram, const void *p,
                             const uint8_t *end)
@@ -158,6 +167,10 @@ log_server_apply_attributes(AccessLogDatagram *datagram, const void *p,
 
         case LOG_USER_AGENT:
             p = read_string(&datagram->user_agent, p, end);
+            break;
+
+        case LOG_MESSAGE:
+            p = ReadStringView(datagram->message, p, end);
             break;
 
         case LOG_HTTP_STATUS:

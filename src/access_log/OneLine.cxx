@@ -68,6 +68,25 @@ EscapeString(const char *value, char *const buffer, size_t buffer_size)
     return buffer;
 }
 
+static const char *
+EscapeString(StringView value, char *const buffer, size_t buffer_size)
+{
+    char *p = buffer, *const buffer_limit = buffer + buffer_size - 4;
+
+    for (char ch : value) {
+        if (p >= buffer_limit)
+            break;
+
+        if (IsHarmlessChar(ch))
+            *p++ = ch;
+        else
+            p += sprintf(p, "\\x%02X", (unsigned char)ch);
+    }
+
+    *p = 0;
+    return buffer;
+}
+
 static void
 LogOneLineHttp(FileDescriptor fd, const AccessLogDatagram &d)
 {
@@ -117,9 +136,33 @@ LogOneLineHttp(FileDescriptor fd, const AccessLogDatagram &d)
             duration);
 }
 
+static void
+LogOneLineMessage(FileDescriptor fd, const AccessLogDatagram &d)
+{
+    char stamp_buffer[32];
+    const char *stamp = "-";
+    if (d.valid_timestamp) {
+        time_t t = d.timestamp / 1000000;
+        strftime(stamp_buffer, sizeof(stamp_buffer),
+                 "%d/%b/%Y:%H:%M:%S %z", gmtime(&t));
+        stamp = stamp_buffer;
+    }
+
+    char escaped_message[4096];
+
+    dprintf(fd.Get(),
+            "%s [%s] %s\n",
+            OptionalString(d.site),
+            stamp,
+            EscapeString(d.message, escaped_message,
+                         sizeof(escaped_message)));
+}
+
 void
 LogOneLine(FileDescriptor fd, const AccessLogDatagram &d)
 {
     if (d.http_uri != nullptr && d.valid_http_status)
         LogOneLineHttp(fd, d);
+    else if (!d.message.IsNull())
+        LogOneLineMessage(fd, d);
 }

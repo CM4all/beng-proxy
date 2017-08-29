@@ -122,6 +122,9 @@ try {
     if (d.user_agent != nullptr)
         Lua::SetTable(L, -3, "user_agent", d.user_agent);
 
+    if (!d.message.IsNull())
+        Lua::SetTable(L, -3, "message", d.message);
+
     if (d.valid_http_status)
         Lua::SetTable(L, -3, "http_status", int(d.http_status));
 

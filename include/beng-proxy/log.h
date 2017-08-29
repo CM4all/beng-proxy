@@ -104,6 +104,13 @@ enum beng_log_attribute {
      * The "Host" request header.
      */
     LOG_HOST,
+
+    /**
+     * An opaque one-line message (without a trailing newline
+     * character).  This is used for error logging, not for HTTP
+     * access logging.
+     */
+    LOG_MESSAGE,
 };
 
 /**
