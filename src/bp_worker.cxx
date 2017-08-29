@@ -40,10 +40,9 @@
 #include "event/Duration.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "net/ServerSocket.hxx"
+#include "io/Logger.hxx"
 #include "util/DeleteDisposer.hxx"
 #include "util/PrintException.hxx"
-
-#include <daemon/log.h>
 
 #include <sys/wait.h>
 #include <unistd.h>
@@ -56,7 +55,7 @@ BpInstance::RespawnWorkerCallback()
     if (should_exit || workers.size() >= config.num_workers)
         return;
 
-    daemon_log(2, "respawning child\n");
+    LogConcat(2, "worker", "respawning worker");
 
     try {
         pid_t pid = SpawnWorker();
@@ -90,7 +89,7 @@ BpWorker::OnChildProcessExit(int status)
            still using it, and spawn new workers with fresh shared
            memory. */
 
-        daemon_log(1, "abandoning shared memory, preparing to kill and respawn all workers\n");
+        LogConcat(1, "worker", "abandoning shared memory, preparing to kill and respawn all workers");
 
         session_manager_abandon();
 
@@ -132,7 +131,7 @@ BpInstance::SpawnWorker()
 
     pid_t pid = fork();
     if (pid < 0) {
-        daemon_log(1, "fork() failed: %s\n", strerror(errno));
+        LogConcat(1, "worker", "fork() failed: ", strerror(errno));
 
         close(spawn_fd);
 
@@ -190,7 +189,7 @@ BpInstance::KillAllWorkers()
 {
     for (auto &worker : workers) {
         if (kill(worker.pid, SIGTERM) < 0)
-            daemon_log(1, "failed to kill worker %d: %s\n",
-                       (int)worker.pid, strerror(errno));
+            LogConcat(1, "worker", "failed to kill worker ",
+                      (int)worker.pid, ": ", strerror(errno));
     }
 }
