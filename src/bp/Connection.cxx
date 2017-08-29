@@ -30,14 +30,14 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "bp_connection.hxx"
+#include "Connection.hxx"
+#include "Handler.hxx"
 #include "bp_instance.hxx"
 #include "strmap.hxx"
 #include "http_server/http_server.hxx"
 #include "http_server/Request.hxx"
 #include "http_server/Handler.hxx"
 #include "http_server/Error.hxx"
-#include "handler.hxx"
 #include "access_log/Glue.hxx"
 #include "drop.hxx"
 #include "address_string.hxx"

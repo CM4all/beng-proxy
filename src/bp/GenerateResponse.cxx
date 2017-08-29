@@ -30,55 +30,26 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "drop.hxx"
-#include "bp_connection.hxx"
-#include "bp_instance.hxx"
-#include "http_server/http_server.hxx"
-#include "io/Logger.hxx"
-#include "util/Macros.hxx"
-
-#include <limits>
+#include "GenerateResponse.hxx"
+#include "Request.hxx"
+#include "http_headers.hxx"
+#include "header_writer.hxx"
+#include "GrowingBuffer.hxx"
+#include "istream/istream_string.hxx"
 
 #include <assert.h>
 
-unsigned
-drop_some_connections(BpInstance *instance)
+void
+method_not_allowed(Request &request2, const char *allow)
 {
-    BpConnection *connections[32];
-    unsigned num_connections = 0;
-    http_server_score min_score = std::numeric_limits<http_server_score>::max();
+    assert(allow != nullptr);
 
-    assert(instance != NULL);
+    HttpHeaders headers(request2.pool);
+    headers.Write("content-type", "text/plain");
+    headers.Write("allow", allow);
 
-    /* collect a list of the lowest-score connections */
-
-    for (auto &c : instance->connections) {
-        enum http_server_score score = http_server_connection_score(c.http);
-
-        if (score < min_score) {
-            /* found a new minimum - clear the old list */
-
-            num_connections = 0;
-            min_score = score;
-        }
-
-        if (score == min_score &&
-            num_connections < ARRAY_SIZE(connections)) {
-            connections[num_connections++] = &c;
-
-            if (score == HTTP_SERVER_NEW &&
-                num_connections >= ARRAY_SIZE(connections))
-                break;
-        }
-    }
-
-    /* now close the connections we have selected */
-
-    LogConcat(2, "drop", "dropping ", num_connections, " out of ",
-              (unsigned)instance->connections.size(), "connections");
-
-    for (unsigned i = 0; i < num_connections; ++i)
-        close_connection(connections[i]);
-
-    return num_connections;
+    response_dispatch(request2, HTTP_STATUS_METHOD_NOT_ALLOWED,
+                      std::move(headers),
+                      istream_string_new(&request2.pool,
+                                         "This method is not allowed."));
 }

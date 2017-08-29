@@ -30,10 +30,10 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "bp_worker.hxx"
-#include "http_server/http_server.hxx"
+#include "Worker.hxx"
+#include "Connection.hxx"
 #include "bp_instance.hxx"
-#include "bp_connection.hxx"
+#include "http_server/http_server.hxx"
 #include "session_manager.hxx"
 #include "bp_control.hxx"
 #include "spawn/Client.hxx"

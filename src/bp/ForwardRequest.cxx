@@ -30,8 +30,8 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "request_forward.hxx"
-#include "request.hxx"
+#include "ForwardRequest.hxx"
+#include "Request.hxx"
 #include "http_server/Request.hxx"
 #include "header_forward.hxx"
 

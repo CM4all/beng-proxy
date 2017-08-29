@@ -30,26 +30,53 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "generate_response.hxx"
-#include "request.hxx"
-#include "http_headers.hxx"
-#include "header_writer.hxx"
-#include "GrowingBuffer.hxx"
-#include "istream/istream_string.hxx"
+#include "Request.hxx"
+#include "Connection.hxx"
+#include "http_server/Request.hxx"
+#include "args.hxx"
+#include "strmap.hxx"
+#include "istream/istream.hxx"
 
-#include <assert.h>
+Request::Request(BpInstance &_instance, BpConnection &_connection,
+                 HttpServerRequest &_request)
+    :pool(_request.pool),
+     instance(_instance),
+     connection(_connection),
+     logger(connection.logger),
+     request(_request)
+{
+    session_id.Clear();
+}
+
+bool
+Request::IsProcessorEnabled() const
+{
+    return translate.response->views->HasProcessor();
+}
 
 void
-method_not_allowed(Request &request2, const char *allow)
+Request::DiscardRequestBody()
 {
-    assert(allow != nullptr);
+    if (body != nullptr) {
+        Istream *old_body = body;
+        body = nullptr;
+        old_body->CloseUnused();
+    }
+}
 
-    HttpHeaders headers(request2.pool);
-    headers.Write("content-type", "text/plain");
-    headers.Write("allow", allow);
+void
+Request::ParseArgs()
+{
+    assert(args == nullptr);
 
-    response_dispatch(request2, HTTP_STATUS_METHOD_NOT_ALLOWED,
-                      std::move(headers),
-                      istream_string_new(&request2.pool,
-                                         "This method is not allowed."));
+    if (uri.args.IsEmpty()) {
+        args = nullptr;
+        translate.request.param = nullptr;
+        translate.request.session = nullptr;
+        return;
+    }
+
+    args = args_parse(&pool, uri.args.data, uri.args.size);
+    translate.request.param = args->Remove("translate");
+    translate.request.session = nullptr;
 }

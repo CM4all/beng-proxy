@@ -30,8 +30,8 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "request.hxx"
-#include "bp_connection.hxx"
+#include "Request.hxx"
+#include "Connection.hxx"
 #include "bp_instance.hxx"
 #include "session.hxx"
 #include "session_manager.hxx"

@@ -31,7 +31,7 @@
  */
 
 #include "file_directory_index.hxx"
-#include "request.hxx"
+#include "Request.hxx"
 #include "translation/Response.hxx"
 #include "file_address.hxx"
 

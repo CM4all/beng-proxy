@@ -30,19 +30,19 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "handler.hxx"
+#include "Handler.hxx"
+#include "Connection.hxx"
 #include "bp_config.hxx"
-#include "bp_connection.hxx"
 #include "bp_instance.hxx"
 #include "load_file.hxx"
 #include "file_not_found.hxx"
 #include "file_enotdir.hxx"
 #include "file_directory_index.hxx"
-#include "file_handler.hxx"
+#include "FileHandler.hxx"
 #include "file_address.hxx"
 #include "nfs/Address.hxx"
 #include "nfs/RequestHandler.hxx"
-#include "request.hxx"
+#include "Request.hxx"
 #include "args.hxx"
 #include "session.hxx"
 #include "session_external.hxx"

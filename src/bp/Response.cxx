@@ -34,7 +34,10 @@
  * Utilities for transforming the HTTP response being sent.
  */
 
-#include "request.hxx"
+#include "Request.hxx"
+#include "Connection.hxx"
+#include "ProxyWidget.hxx"
+#include "bp_instance.hxx"
 #include "http_server/http_server.hxx"
 #include "http_server/Request.hxx"
 #include "http_headers.hxx"
@@ -47,15 +50,12 @@
 #include "widget/Ref.hxx"
 #include "widget/Class.hxx"
 #include "widget/Dump.hxx"
-#include "proxy_widget.hxx"
 #include "session.hxx"
 #include "GrowingBuffer.hxx"
 #include "ResourceLoader.hxx"
 #include "resource_tag.hxx"
 #include "hostname.hxx"
 #include "errdoc.hxx"
-#include "bp_connection.hxx"
-#include "bp_instance.hxx"
 #include "strmap.hxx"
 #include "pheaders.hxx"
 #include "processor.hxx"

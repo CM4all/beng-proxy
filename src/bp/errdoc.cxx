@@ -31,7 +31,7 @@
  */
 
 #include "errdoc.hxx"
-#include "request.hxx"
+#include "Request.hxx"
 #include "bp_instance.hxx"
 #include "http_server/Request.hxx"
 #include "http_headers.hxx"

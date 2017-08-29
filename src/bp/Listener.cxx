@@ -30,53 +30,26 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "request.hxx"
-#include "bp_connection.hxx"
-#include "http_server/Request.hxx"
-#include "args.hxx"
-#include "strmap.hxx"
-#include "istream/istream.hxx"
+#include "Listener.hxx"
+#include "Connection.hxx"
+#include "bp_instance.hxx"
+#include "net/SocketAddress.hxx"
+#include "io/Logger.hxx"
+#include "util/Exception.hxx"
 
-Request::Request(BpInstance &_instance, BpConnection &_connection,
-                 HttpServerRequest &_request)
-    :pool(_request.pool),
-     instance(_instance),
-     connection(_connection),
-     logger(connection.logger),
-     request(_request)
+BPListener::BPListener(BpInstance &_instance, const char *_tag)
+    :ServerSocket(_instance.event_loop), instance(_instance), tag(_tag)
 {
-    session_id.Clear();
-}
-
-bool
-Request::IsProcessorEnabled() const
-{
-    return translate.response->views->HasProcessor();
 }
 
 void
-Request::DiscardRequestBody()
+BPListener::OnAccept(UniqueSocketDescriptor &&_fd, SocketAddress address)
 {
-    if (body != nullptr) {
-        Istream *old_body = body;
-        body = nullptr;
-        old_body->CloseUnused();
-    }
+    new_connection(instance, std::move(_fd), address, tag);
 }
 
 void
-Request::ParseArgs()
+BPListener::OnAcceptError(std::exception_ptr ep)
 {
-    assert(args == nullptr);
-
-    if (uri.args.IsEmpty()) {
-        args = nullptr;
-        translate.request.param = nullptr;
-        translate.request.session = nullptr;
-        return;
-    }
-
-    args = args_parse(&pool, uri.args.data, uri.args.size);
-    translate.request.param = args->Remove("translate");
-    translate.request.session = nullptr;
+    LogConcat(2, "listener", ep);
 }

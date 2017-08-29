@@ -34,8 +34,8 @@
  * #TRANSLATE_AUTH implementation.
  */
 
-#include "request.hxx"
-#include "bp_connection.hxx"
+#include "Request.hxx"
+#include "Connection.hxx"
 #include "bp_instance.hxx"
 #include "http_server/Request.hxx"
 #include "pool.hxx"

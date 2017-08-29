@@ -30,7 +30,8 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "proxy_widget.hxx"
+#include "ProxyWidget.hxx"
+#include "Request.hxx"
 #include "widget/Widget.hxx"
 #include "widget/Ref.hxx"
 #include "widget/Class.hxx"
@@ -38,7 +39,6 @@
 #include "widget/LookupHandler.hxx"
 #include "widget/Resolver.hxx"
 #include "widget/Frame.hxx"
-#include "request.hxx"
 #include "header_writer.hxx"
 #include "header_forward.hxx"
 #include "http_server/Request.hxx"

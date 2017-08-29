@@ -30,15 +30,15 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "handler.hxx"
+#include "bp/Handler.hxx"
 #include "Address.hxx"
 #include "Glue.hxx"
-#include "file_handler.hxx"
-#include "file_headers.hxx"
-#include "file_address.hxx"
-#include "generate_response.hxx"
+#include "bp/FileHeaders.hxx"
+#include "bp/FileHandler.hxx"
+#include "bp/GenerateResponse.hxx"
+#include "bp/Request.hxx"
 #include "bp_instance.hxx"
-#include "request.hxx"
+#include "file_address.hxx"
 #include "http_server/Request.hxx"
 #include "http_response.hxx"
 #include "istream/istream_file.hxx"

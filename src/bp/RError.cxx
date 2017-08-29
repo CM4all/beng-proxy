@@ -34,7 +34,7 @@
  * Convert C++ exception to a HTTP response.
  */
 
-#include "request.hxx"
+#include "Request.hxx"
 #include "bp_instance.hxx"
 #include "http_client.hxx"
 #include "nfs/Error.hxx"

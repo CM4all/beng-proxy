@@ -30,12 +30,12 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "file_handler.hxx"
-#include "file_headers.hxx"
+#include "FileHandler.hxx"
+#include "FileHeaders.hxx"
 #include "file_address.hxx"
-#include "request.hxx"
+#include "Request.hxx"
 #include "bp_instance.hxx"
-#include "generate_response.hxx"
+#include "GenerateResponse.hxx"
 #include "header_writer.hxx"
 #include "http/Date.hxx"
 #include "http_util.hxx"

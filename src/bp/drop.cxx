@@ -30,42 +30,55 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "request.hxx"
-#include "strmap.hxx"
-#include "cookie_client.hxx"
+#include "drop.hxx"
+#include "Connection.hxx"
+#include "bp_instance.hxx"
+#include "http_server/http_server.hxx"
+#include "io/Logger.hxx"
+#include "util/Macros.hxx"
 
-const char *
-Request::GetCookieHost() const
+#include <limits>
+
+#include <assert.h>
+
+unsigned
+drop_some_connections(BpInstance *instance)
 {
-    if (translate.response->cookie_host != nullptr)
-        return translate.response->cookie_host;
+    BpConnection *connections[32];
+    unsigned num_connections = 0;
+    http_server_score min_score = std::numeric_limits<http_server_score>::max();
 
-    return translate.address.GetHostAndPort();
-}
+    assert(instance != NULL);
 
-void
-Request::CollectCookies(const StringMap &headers)
-{
-    auto r = headers.EqualRange("set-cookie2");
-    if (r.first == r.second) {
-        r = headers.EqualRange("set-cookie");
-        if (r.first == r.second)
-            return;
+    /* collect a list of the lowest-score connections */
+
+    for (auto &c : instance->connections) {
+        enum http_server_score score = http_server_connection_score(c.http);
+
+        if (score < min_score) {
+            /* found a new minimum - clear the old list */
+
+            num_connections = 0;
+            min_score = score;
+        }
+
+        if (score == min_score &&
+            num_connections < ARRAY_SIZE(connections)) {
+            connections[num_connections++] = &c;
+
+            if (score == HTTP_SERVER_NEW &&
+                num_connections >= ARRAY_SIZE(connections))
+                break;
+        }
     }
 
-    const char *host_and_port = GetCookieHost();
-    if (host_and_port == nullptr)
-        return;
+    /* now close the connections we have selected */
 
-    const char *path = GetCookieURI();
-    if (path == nullptr)
-        return;
+    LogConcat(2, "drop", "dropping ", num_connections, " out of ",
+              (unsigned)instance->connections.size(), "connections");
 
-    auto session = MakeRealmSession();
-    if (!session)
-        return;
+    for (unsigned i = 0; i < num_connections; ++i)
+        close_connection(connections[i]);
 
-    for (auto i = r.first; i != r.second; ++i)
-        cookie_jar_set_cookie2(session->cookies, i->value,
-                               host_and_port, path);
+    return num_connections;
 }

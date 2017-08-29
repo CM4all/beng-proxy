@@ -30,26 +30,42 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "bp_listener.hxx"
-#include "bp_instance.hxx"
-#include "bp_connection.hxx"
-#include "net/SocketAddress.hxx"
-#include "io/Logger.hxx"
-#include "util/Exception.hxx"
+#include "Request.hxx"
+#include "strmap.hxx"
+#include "cookie_client.hxx"
 
-BPListener::BPListener(BpInstance &_instance, const char *_tag)
-    :ServerSocket(_instance.event_loop), instance(_instance), tag(_tag)
+const char *
+Request::GetCookieHost() const
 {
+    if (translate.response->cookie_host != nullptr)
+        return translate.response->cookie_host;
+
+    return translate.address.GetHostAndPort();
 }
 
 void
-BPListener::OnAccept(UniqueSocketDescriptor &&_fd, SocketAddress address)
+Request::CollectCookies(const StringMap &headers)
 {
-    new_connection(instance, std::move(_fd), address, tag);
-}
+    auto r = headers.EqualRange("set-cookie2");
+    if (r.first == r.second) {
+        r = headers.EqualRange("set-cookie");
+        if (r.first == r.second)
+            return;
+    }
 
-void
-BPListener::OnAcceptError(std::exception_ptr ep)
-{
-    LogConcat(2, "listener", ep);
+    const char *host_and_port = GetCookieHost();
+    if (host_and_port == nullptr)
+        return;
+
+    const char *path = GetCookieURI();
+    if (path == nullptr)
+        return;
+
+    auto session = MakeRealmSession();
+    if (!session)
+        return;
+
+    for (auto i = r.first; i != r.second; ++i)
+        cookie_jar_set_cookie2(session->cookies, i->value,
+                               host_and_port, path);
 }

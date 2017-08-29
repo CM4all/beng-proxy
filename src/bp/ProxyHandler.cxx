@@ -34,11 +34,11 @@
  * Serve HTTP requests from another HTTP/AJP server.
  */
 
-#include "handler.hxx"
-#include "bp_connection.hxx"
+#include "Handler.hxx"
+#include "Connection.hxx"
 #include "bp_instance.hxx"
-#include "request.hxx"
-#include "request_forward.hxx"
+#include "Request.hxx"
+#include "ForwardRequest.hxx"
 #include "ResourceLoader.hxx"
 #include "http_server/Request.hxx"
 #include "http_response.hxx"

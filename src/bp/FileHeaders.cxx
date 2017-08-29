@@ -30,11 +30,11 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "file_headers.hxx"
+#include "FileHeaders.hxx"
+#include "Request.hxx"
 #include "static_headers.hxx"
 #include "GrowingBuffer.hxx"
 #include "header_writer.hxx"
-#include "request.hxx"
 #include "http_server/Request.hxx"
 #include "http_headers.hxx"
 #include "translation/Vary.hxx"
