@@ -384,6 +384,22 @@ public:
     const char *GetCookieHost() const;
     void CollectCookies(const StringMap &headers);
 
+    void DispatchResponse(http_status_t status, HttpHeaders &&headers,
+                          Istream *body);
+
+    void DispatchResponse(http_status_t status, HttpHeaders &&headers,
+                          std::nullptr_t n) {
+        DispatchResponse(status, std::move(headers), (Istream *)n);
+    }
+
+    void DispatchResponse(http_status_t status, const char *msg);
+
+    void DispatchResponse(http_status_t status, HttpHeaders &&headers,
+                          const char *msg);
+
+    void DispatchRedirect(http_status_t status, const char *location,
+                          const char *msg);
+
     void LogDispatchError(http_status_t status, const char *log_msg);
 
     void LogDispatchError(http_status_t status, const char *msg,
@@ -416,22 +432,5 @@ public:
                             const struct stat &st) override;
     void OnNfsCacheError(std::exception_ptr ep) override;
 };
-
-void
-response_dispatch(Request &request,
-                  http_status_t status, HttpHeaders &&headers,
-                  Istream *body);
-
-void
-response_dispatch_message(Request &request, http_status_t status,
-                          const char *msg);
-
-void
-response_dispatch_message2(Request &request, http_status_t status,
-                           HttpHeaders &&headers, const char *msg);
-
-void
-response_dispatch_redirect(Request &request, http_status_t status,
-                           const char *location, const char *msg);
 
 #endif

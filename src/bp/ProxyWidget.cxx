@@ -138,7 +138,7 @@ ProxyWidget::OnHttpResponse(http_status_t status, StringMap &&_headers,
        for the template, not for this widget */
     request.CancelTransformations();
 
-    response_dispatch(request, status, std::move(headers2), body);
+    request.DispatchResponse(status, std::move(headers2), body);
 }
 
 void
@@ -190,8 +190,7 @@ ProxyWidget::Continue()
 
     if (!widget->HasDefaultView()) {
         widget->Cancel();
-        response_dispatch_message(request, HTTP_STATUS_NOT_FOUND,
-                                  "No such view");
+        request.DispatchResponse(HTTP_STATUS_NOT_FOUND, "No such view");
         return;
     }
 
@@ -210,15 +209,14 @@ ProxyWidget::Continue()
                 widget_class_view_lookup(widget->cls, env->view_name);
             if (view == nullptr || view->name == nullptr) {
                 widget->Cancel();
-                response_dispatch_message(request, HTTP_STATUS_NOT_FOUND,
-                                          "No such view");
+                request.DispatchResponse(HTTP_STATUS_NOT_FOUND,
+                                         "No such view");
                 return;
             }
 
             if (!widget_view_allowed(*widget, *view)) {
                 widget->Cancel();
-                response_dispatch_message(request, HTTP_STATUS_FORBIDDEN,
-                                          "Forbidden");
+                request.DispatchResponse(HTTP_STATUS_FORBIDDEN, "Forbidden");
                 return;
             }
 
@@ -249,8 +247,8 @@ ProxyWidget::ResolverCallback()
         widget->logger(2, "lookup of widget class failed");
 
         widget->Cancel();
-        response_dispatch_message(request, HTTP_STATUS_INTERNAL_SERVER_ERROR,
-                                  "No such widget type");
+        request.DispatchResponse(HTTP_STATUS_INTERNAL_SERVER_ERROR,
+                                 "No such widget type");
         return;
     }
 
@@ -285,8 +283,7 @@ ProxyWidget::WidgetNotFound()
                    request.request.uri, "]");
 
     widget->Cancel();
-    response_dispatch_message(request, HTTP_STATUS_NOT_FOUND,
-                              "No such widget");
+    request.DispatchResponse(HTTP_STATUS_NOT_FOUND, "No such widget");
 }
 
 void

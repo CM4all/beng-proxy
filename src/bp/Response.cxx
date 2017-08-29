@@ -183,14 +183,14 @@ response_invoke_processor(Request &request2,
     assert(body == nullptr || !body->HasHandler());
 
     if (body == nullptr) {
-        response_dispatch_message(request2, HTTP_STATUS_BAD_GATEWAY,
+        request2.DispatchResponse(HTTP_STATUS_BAD_GATEWAY,
                                   "Empty template cannot be processed");
         return;
     }
 
     if (!processable(response_headers)) {
         body->CloseUnused();
-        response_dispatch_message(request2, HTTP_STATUS_BAD_GATEWAY,
+        request2.DispatchResponse(HTTP_STATUS_BAD_GATEWAY,
                                   "Invalid template content type");
         return;
     }
@@ -237,8 +237,7 @@ response_invoke_processor(Request &request2,
         logger(2, "refusing to render template on untrusted domain '",
                request2.translate.response->untrusted, "'");
         body->CloseUnused();
-        response_dispatch_message(request2, HTTP_STATUS_FORBIDDEN,
-                                  "Forbidden");
+        request2.DispatchResponse(HTTP_STATUS_FORBIDDEN, "Forbidden");
         return;
     }
 
@@ -334,14 +333,14 @@ response_invoke_css_processor(Request &request2,
     assert(body == nullptr || !body->HasHandler());
 
     if (body == nullptr) {
-        response_dispatch_message(request2, HTTP_STATUS_BAD_GATEWAY,
+        request2.DispatchResponse(HTTP_STATUS_BAD_GATEWAY,
                                   "Empty template cannot be processed");
         return;
     }
 
     if (!css_processable(response_headers)) {
         body->CloseUnused();
-        response_dispatch_message(request2, HTTP_STATUS_BAD_GATEWAY,
+        request2.DispatchResponse(HTTP_STATUS_BAD_GATEWAY,
                                   "Invalid template content type");
         return;
     }
@@ -356,8 +355,7 @@ response_invoke_css_processor(Request &request2,
         logger(2, "refusing to render template on untrusted domain '",
                request2.translate.response->untrusted, "'");
         body->CloseUnused();
-        response_dispatch_message(request2, HTTP_STATUS_FORBIDDEN,
-                                  "Forbidden");
+        request2.DispatchResponse(HTTP_STATUS_FORBIDDEN, "Forbidden");
         return;
     }
 
@@ -409,14 +407,14 @@ response_invoke_text_processor(Request &request2,
     assert(body == nullptr || !body->HasHandler());
 
     if (body == nullptr) {
-        response_dispatch_message(request2, HTTP_STATUS_BAD_GATEWAY,
+        request2.DispatchResponse(HTTP_STATUS_BAD_GATEWAY,
                                   "Empty template cannot be processed");
         return;
     }
 
     if (!text_processor_allowed(response_headers)) {
         body->CloseUnused();
-        response_dispatch_message(request2, HTTP_STATUS_BAD_GATEWAY,
+        request2.DispatchResponse(HTTP_STATUS_BAD_GATEWAY,
                                   "Invalid template content type");
         return;
     }
@@ -431,8 +429,7 @@ response_invoke_text_processor(Request &request2,
         logger(2, "refusing to render template on untrusted domain '",
                request2.translate.response->untrusted, "'");
         body->CloseUnused();
-        response_dispatch_message(request2, HTTP_STATUS_FORBIDDEN,
-                                  "Forbidden");
+        request2.DispatchResponse(HTTP_STATUS_FORBIDDEN, "Forbidden");
         return;
     }
 
@@ -702,66 +699,64 @@ filter_enabled(const TranslateResponse &tr,
 }
 
 void
-response_dispatch(Request &request2,
-                  http_status_t status, HttpHeaders &&headers,
-                  Istream *body)
+Request::DispatchResponse(http_status_t status, HttpHeaders &&headers,
+                          Istream *response_body)
 {
-    assert(!request2.response_sent);
-    assert(body == nullptr || !body->HasHandler());
+    assert(!response_sent);
+    assert(response_body == nullptr || !response_body->HasHandler());
 
-    if (http_status_is_error(status) && !request2.transformed &&
-        !request2.translate.response->error_document.IsNull()) {
-        request2.transformed = true;
+    if (http_status_is_error(status) && !transformed &&
+        !translate.response->error_document.IsNull()) {
+        transformed = true;
 
         /* for sure, the errdoc library doesn't use the request body;
            discard it as early as possible */
-        request2.DiscardRequestBody();
+        DiscardRequestBody();
 
-        errdoc_dispatch_response(request2, status,
-                                 request2.translate.response->error_document,
-                                 std::move(headers), body);
+        errdoc_dispatch_response(*this, status,
+                                 translate.response->error_document,
+                                 std::move(headers), response_body);
         return;
     }
 
     /* if HTTP status code is not successful: don't apply
        transformation on the error document */
-    const Transformation *transformation = request2.PopTransformation();
+    const Transformation *transformation = PopTransformation();
     if (transformation != nullptr &&
-        filter_enabled(*request2.translate.response, status)) {
-        response_apply_transformation(request2, status,
+        filter_enabled(*translate.response, status)) {
+        response_apply_transformation(*this, status,
                                       std::move(headers).ToMap(),
-                                      body,
+                                      response_body,
                                       *transformation);
     } else {
-        body = AutoDeflate(request2, headers, body);
-        response_dispatch_direct(request2, status, std::move(headers), body);
+        response_body = AutoDeflate(*this, headers, response_body);
+        response_dispatch_direct(*this, status, std::move(headers),
+                                 response_body);
     }
 }
 
 void
-response_dispatch_message2(Request &request2, http_status_t status,
-                           HttpHeaders &&headers, const char *msg)
+Request::DispatchResponse(http_status_t status,
+                          HttpHeaders &&headers, const char *msg)
 {
     assert(http_status_is_valid(status));
     assert(msg != nullptr);
 
     headers.Write("content-type", "text/plain");
 
-    response_dispatch(request2, status, std::move(headers),
-                      istream_string_new(&request2.pool, msg));
+    DispatchResponse(status, std::move(headers),
+                     istream_string_new(&pool, msg));
 }
 
 void
-response_dispatch_message(Request &request2, http_status_t status,
-                          const char *msg)
+Request::DispatchResponse(http_status_t status, const char *msg)
 {
-    response_dispatch_message2(request2, status, HttpHeaders(request2.pool),
-                               msg);
+    DispatchResponse(status, HttpHeaders(pool), msg);
 }
 
 void
-response_dispatch_redirect(Request &request2, http_status_t status,
-                           const char *location, const char *msg)
+Request::DispatchRedirect(http_status_t status,
+                          const char *location, const char *msg)
 {
     assert(status >= 300 && status < 400);
     assert(location != nullptr);
@@ -769,10 +764,10 @@ response_dispatch_redirect(Request &request2, http_status_t status,
     if (msg == nullptr)
         msg = "redirection";
 
-    HttpHeaders headers(request2.pool);
+    HttpHeaders headers(pool);
     headers.Write("location", location);
 
-    response_dispatch_message2(request2, status, std::move(headers), msg);
+    DispatchResponse(status, std::move(headers), msg);
 }
 
 /**
@@ -848,8 +843,7 @@ Request::OnHttpResponse(http_status_t status, StringMap &&headers,
                         _body->CloseUnused();
 
                     logger(4, "No such view: ", view_name);
-                    response_dispatch_message(*this, HTTP_STATUS_NOT_FOUND,
-                                              "No such view");
+                    DispatchResponse(HTTP_STATUS_NOT_FOUND, "No such view");
                     return;
                 }
 
@@ -889,9 +883,7 @@ Request::OnHttpResponse(http_status_t status, StringMap &&headers,
            (RFC 2616 14.13) */
         headers2.MoveToBuffer("content-length");
 
-    response_dispatch(*this,
-                      status, std::move(headers2),
-                      _body);
+    DispatchResponse(status, std::move(headers2), _body);
 }
 
 void

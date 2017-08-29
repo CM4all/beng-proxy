@@ -101,8 +101,8 @@ file_evaluate_request(Request &request2,
 
                 write_translation_vary_header(headers2, *tr);
 
-                response_dispatch(request2, HTTP_STATUS_NOT_MODIFIED,
-                                  std::move(headers), nullptr);
+                request2.DispatchResponse(HTTP_STATUS_NOT_MODIFIED,
+                                          std::move(headers), nullptr);
                 return false;
             }
         }
@@ -112,8 +112,8 @@ file_evaluate_request(Request &request2,
             const auto t = http_date_parse(p);
             if (t != std::chrono::system_clock::from_time_t(-1) &&
                 std::chrono::system_clock::from_time_t(st.st_mtime) > t) {
-                response_dispatch(request2, HTTP_STATUS_PRECONDITION_FAILED,
-                                  HttpHeaders(request2.pool), nullptr);
+                request2.DispatchResponse(HTTP_STATUS_PRECONDITION_FAILED,
+                                          HttpHeaders(request2.pool), nullptr);
                 return false;
             }
         }
@@ -125,16 +125,16 @@ file_evaluate_request(Request &request2,
             static_etag(buffer, st);
 
             if (!http_list_contains(p, buffer)) {
-                response_dispatch(request2, HTTP_STATUS_PRECONDITION_FAILED,
-                                  HttpHeaders(request2.pool), nullptr);
+                request2.DispatchResponse(HTTP_STATUS_PRECONDITION_FAILED,
+                                          HttpHeaders(request2.pool), nullptr);
                 return false;
             }
         }
 
         p = request_headers.Get("if-none-match");
         if (p != nullptr && strcmp(p, "*") == 0) {
-            response_dispatch(request2, HTTP_STATUS_PRECONDITION_FAILED,
-                              HttpHeaders(request2.pool), nullptr);
+            request2.DispatchResponse(HTTP_STATUS_PRECONDITION_FAILED,
+                                      HttpHeaders(request2.pool), nullptr);
             return false;
         }
 
@@ -142,8 +142,8 @@ file_evaluate_request(Request &request2,
             static_etag(buffer, st);
 
             if (http_list_contains(p, buffer)) {
-                response_dispatch(request2, HTTP_STATUS_PRECONDITION_FAILED,
-                                  HttpHeaders(request2.pool), nullptr);
+                request2.DispatchResponse(HTTP_STATUS_PRECONDITION_FAILED,
+                                          HttpHeaders(request2.pool), nullptr);
                 return false;
             }
         }

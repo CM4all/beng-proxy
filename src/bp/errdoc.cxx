@@ -77,8 +77,8 @@ struct ErrorResponseLoader final : HttpResponseHandler, Cancellable {
 static void
 errdoc_resubmit(ErrorResponseLoader &er)
 {
-    response_dispatch(*er.request2, er.status, std::move(er.headers),
-                      er.body.Steal());
+    er.request2->DispatchResponse(er.status, std::move(er.headers),
+                                  er.body.Steal());
 }
 
 /*

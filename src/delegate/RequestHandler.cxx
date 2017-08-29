@@ -61,16 +61,15 @@ Request::OnDelegateSuccess(int fd)
     if (fstat(fd, &st) < 0) {
         close(fd);
 
-        response_dispatch_message(*this, HTTP_STATUS_INTERNAL_SERVER_ERROR,
-                                  "Internal server error");
+        DispatchResponse(HTTP_STATUS_INTERNAL_SERVER_ERROR,
+                         "Internal server error");
         return;
     }
 
     if (!S_ISREG(st.st_mode)) {
         close(fd);
 
-        response_dispatch_message(*this, HTTP_STATUS_NOT_FOUND,
-                                  "Not a regular file");
+        DispatchResponse(HTTP_STATUS_NOT_FOUND, "Not a regular file");
         return;
     }
 

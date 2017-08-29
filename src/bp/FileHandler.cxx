@@ -112,7 +112,7 @@ file_dispatch(Request &request2, const struct stat &st,
 
     /* finished, dispatch this response */
 
-    response_dispatch(request2, status, std::move(headers), body);
+    request2.DispatchResponse(status, std::move(headers), body);
 }
 
 static bool
@@ -167,7 +167,7 @@ file_dispatch_compressed(Request &request2, const struct stat &st,
     request2.compressed = true;
 
     http_status_t status = tr.status == 0 ? HTTP_STATUS_OK : tr.status;
-    response_dispatch(request2, status, std::move(headers), compressed_body);
+    request2.DispatchResponse(status, std::move(headers), compressed_body);
     return true;
 }
 
@@ -245,14 +245,14 @@ file_callback(Request &request2, const FileAddress &address)
 
     if (S_ISCHR(st.st_mode)) {
         /* allow character devices, but skip range etc. */
-        response_dispatch(request2, HTTP_STATUS_OK, HttpHeaders(request2.pool),
-                          body);
+        request2.DispatchResponse(HTTP_STATUS_OK, HttpHeaders(request2.pool),
+                                  body);
         return;
     }
 
     if (!S_ISREG(st.st_mode)) {
         body->CloseUnused();
-        response_dispatch_message(request2, HTTP_STATUS_INTERNAL_SERVER_ERROR,
+        request2.DispatchResponse(HTTP_STATUS_INTERNAL_SERVER_ERROR,
                                   "Not a regular file");
         return;
     }

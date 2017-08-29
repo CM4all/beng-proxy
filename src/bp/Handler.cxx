@@ -198,8 +198,7 @@ handle_translated_request2(Request &request,
     } else if (request.CheckHandleRedirectBounceStatus(response)) {
         /* done */
     } else if (response.www_authenticate != nullptr) {
-        response_dispatch_message(request, HTTP_STATUS_UNAUTHORIZED,
-                                  "Unauthorized");
+        request.DispatchResponse(HTTP_STATUS_UNAUTHORIZED, "Unauthorized");
     } else {
         request.LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
                                  "Empty response from translation server");
@@ -229,8 +228,7 @@ Request::CheckHandleRedirect(const TranslateResponse &response)
         redirect_uri = uri_append_query_string_n(&pool, redirect_uri,
                                                  uri.query);
 
-    response_dispatch_redirect(*this, status, redirect_uri,
-                               response.message);
+    DispatchRedirect(status, redirect_uri, response.message);
     return true;
 }
 
@@ -240,10 +238,9 @@ Request::CheckHandleBounce(const TranslateResponse &response)
     if (response.bounce == nullptr)
         return false;
 
-    response_dispatch_redirect(*this, HTTP_STATUS_SEE_OTHER,
-                               bounce_uri(pool, *this,
-                                          response),
-                               nullptr);
+    DispatchRedirect(HTTP_STATUS_SEE_OTHER,
+                     bounce_uri(pool, *this, response),
+                     nullptr);
     return true;
 }
 
@@ -253,7 +250,7 @@ Request::CheckHandleStatus(const TranslateResponse &response)
     if (response.status == (http_status_t)0)
         return false;
 
-    response_dispatch(*this, response.status, HttpHeaders(pool), nullptr);
+    DispatchResponse(response.status, HttpHeaders(pool), nullptr);
     return true;
 }
 
@@ -267,7 +264,7 @@ Request::CheckHandleMessage(const TranslateResponse &response)
         ? response.status
         : HTTP_STATUS_OK;
 
-    response_dispatch_message(*this, status, response.message);
+    DispatchResponse(status, response.message);
     return true;
 }
 
@@ -630,16 +627,15 @@ Request::OnTranslateResponse(const TranslateResponse &response)
 
             const char *host = request.headers.Get("host");
             if (host == nullptr) {
-                response_dispatch_message(*this, HTTP_STATUS_BAD_REQUEST,
-                                          "No Host header");
+                DispatchResponse(HTTP_STATUS_BAD_REQUEST, "No Host header");
                 return;
             }
 
-            response_dispatch_redirect(*this, HTTP_STATUS_MOVED_PERMANENTLY,
-                                       MakeHttpsRedirect(pool, host,
-                                                         response.https_only,
-                                                         request.uri),
-                                       "This page requires \"https\"");
+            DispatchRedirect(HTTP_STATUS_MOVED_PERMANENTLY,
+                             MakeHttpsRedirect(pool, host,
+                                               response.https_only,
+                                               request.uri),
+                             "This page requires \"https\"");
             return;
         }
     }
@@ -801,7 +797,7 @@ request_uri_parse(Request &request2, parsed_uri &dest)
 
     if (!uri_path_verify_quick(request.uri) ||
         !dest.Parse(request.uri)) {
-        /* response_dispatch() assumes that we have a translation
+        /* DispatchRedirect() assumes that we have a translation
            response, and will dereference it - at this point, the
            translation server hasn't been queried yet, so we just
            insert an empty response here */
@@ -812,8 +808,7 @@ request_uri_parse(Request &request2, parsed_uri &dest)
            session-related attributes have not been initialized yet */
         request2.stateless = true;
 
-        response_dispatch_message(request2, HTTP_STATUS_BAD_REQUEST,
-                                  "Malformed URI");
+        request2.DispatchResponse(HTTP_STATUS_BAD_REQUEST, "Malformed URI");
         return false;
     }
 

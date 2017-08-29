@@ -119,7 +119,7 @@ Request::OnNfsCacheResponse(NfsCacheHandle &handle, const struct stat &st)
                                               file_request.range.skip,
                                               file_request.range.size);
 
-    response_dispatch(*this, status, std::move(headers), response_body);
+    DispatchResponse(status, std::move(headers), response_body);
 }
 
 void

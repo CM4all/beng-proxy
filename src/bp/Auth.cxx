@@ -65,8 +65,7 @@ auth_translate_response(TranslateResponse &response, void *ctx)
            REDIRECT/BOUNCE/STATUS, but we still don't have a user -
            this should not happen; bail out, don't dare to accept the
            client */
-        response_dispatch_message(request, HTTP_STATUS_FORBIDDEN,
-                                  "Forbidden");
+        request.DispatchResponse(HTTP_STATUS_FORBIDDEN, "Forbidden");
         return;
     }
 

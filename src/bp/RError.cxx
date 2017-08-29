@@ -166,7 +166,7 @@ Request::LogDispatchError(http_status_t status,
     if (instance.config.verbose_response)
         msg = p_strdup(&pool, log_msg);
 
-    response_dispatch_message(*this, status, msg);
+    DispatchResponse(status, msg);
 }
 
 void
@@ -184,7 +184,7 @@ Request::LogDispatchError(std::exception_ptr ep)
     if (instance.config.verbose_response)
         response.message = p_strdup(&pool, GetFullMessage(ep).c_str());
 
-    response_dispatch_message(*this, response.status, response.message);
+    DispatchResponse(response.status, response.message);
 }
 
 void
@@ -196,5 +196,5 @@ Request::LogDispatchError(http_status_t status, const char *msg,
     if (instance.config.verbose_response)
         msg = p_strdup(&pool, GetFullMessage(ep).c_str());
 
-    response_dispatch_message(*this, status, msg);
+    DispatchResponse(status, msg);
 }
