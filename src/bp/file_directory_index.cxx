@@ -67,7 +67,8 @@ check_directory_index(Request &request,
         case ResourceAddress::Type::WAS:
         case ResourceAddress::Type::NFS:
             request.LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
-                                     "Resource address not compatible with DIRECTORY_INDEX");
+                                     "Resource address not compatible with DIRECTORY_INDEX",
+                                     1);
             return false;
 
         case ResourceAddress::Type::LOCAL:
@@ -82,7 +83,8 @@ check_directory_index(Request &request,
 
     if (++request.translate.n_directory_index > 4) {
         request.LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
-                                 "Got too many consecutive DIRECTORY_INDEX packets");
+                                 "Got too many consecutive DIRECTORY_INDEX packets",
+                                 1);
         return false;
     }
 

@@ -1,6 +1,6 @@
 cm4all-beng-proxy (13.0.2) unstable; urgency=low
 
-  * 
+  * log translation server failures even without --verbose
 
  --   
 

@@ -65,7 +65,8 @@ check_file_not_found(Request &request,
         case ResourceAddress::Type::PIPE:
         case ResourceAddress::Type::NFS:
             request.LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
-                                     "Resource address not compatible with TRANSLATE_FILE_NOT_FOUND");
+                                     "Resource address not compatible with TRANSLATE_FILE_NOT_FOUND",
+                                     1);
             return false;
 
         case ResourceAddress::Type::CGI:
@@ -94,7 +95,8 @@ check_file_not_found(Request &request,
 
     if (++request.translate.n_file_not_found > 20) {
         request.LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
-                                 "got too many consecutive FILE_NOT_FOUND packets");
+                                 "got too many consecutive FILE_NOT_FOUND packets",
+                                 1);
         return false;
     }
 

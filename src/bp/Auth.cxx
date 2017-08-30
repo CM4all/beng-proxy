@@ -80,7 +80,7 @@ auth_translate_error(std::exception_ptr ep, void *ctx)
     auto &request = *(Request *)ctx;
 
     request.LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
-                             "Translation server failed", ep);
+                             "Translation server failed", ep, 1);
 }
 
 static constexpr TranslateHandler auth_translate_handler = {
