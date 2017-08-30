@@ -79,7 +79,7 @@ suffix_translate_error(std::exception_ptr ep, void *ctx)
     lookup.handler.error(ep, lookup.handler_ctx);
 }
 
-static const TranslateHandler suffix_translate_handler = {
+static constexpr TranslateHandler suffix_translate_handler = {
     .response = suffix_translate_response,
     .error = suffix_translate_error,
 };

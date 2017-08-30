@@ -160,7 +160,7 @@ my_translate_error(std::exception_ptr ep, gcc_unused void *ctx)
     PrintException(ep);
 }
 
-static const TranslateHandler my_translate_handler = {
+static constexpr TranslateHandler my_translate_handler = {
     .response = my_translate_response,
     .error = my_translate_error,
 };

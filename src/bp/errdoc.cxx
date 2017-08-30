@@ -154,7 +154,7 @@ errdoc_translate_error(std::exception_ptr ep, void *ctx)
     er.Destroy();
 }
 
-static const TranslateHandler errdoc_translate_handler = {
+static constexpr TranslateHandler errdoc_translate_handler = {
     .response = errdoc_translate_response,
     .error = errdoc_translate_error,
 };

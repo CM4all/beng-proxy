@@ -1340,7 +1340,7 @@ tcache_handler_error(std::exception_ptr ep, void *ctx)
     tcr.handler->error(ep, tcr.handler_ctx);
 }
 
-static const TranslateHandler tcache_handler = {
+static constexpr TranslateHandler tcache_handler = {
     .response = tcache_handler_response,
     .error = tcache_handler_error,
 };

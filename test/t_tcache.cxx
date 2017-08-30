@@ -289,7 +289,7 @@ my_translate_error(gcc_unused std::exception_ptr ep, gcc_unused void *ctx)
     assert(expected_response == nullptr);
 }
 
-static const TranslateHandler my_translate_handler = {
+static constexpr TranslateHandler my_translate_handler = {
     .response = my_translate_response,
     .error = my_translate_error,
 };

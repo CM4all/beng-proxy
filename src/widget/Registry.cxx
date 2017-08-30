@@ -112,7 +112,7 @@ widget_translate_error(std::exception_ptr ep, void *ctx)
     lookup->callback(nullptr);
 }
 
-static const TranslateHandler widget_translate_handler = {
+static constexpr TranslateHandler widget_translate_handler = {
     .response = widget_translate_response,
     .error = widget_translate_error,
 };
