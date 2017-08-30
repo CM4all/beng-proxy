@@ -200,7 +200,8 @@ response_invoke_processor(Request &request2,
                                        request2.pool,
                                        request2.translate.response->uri != nullptr
                                        ? request2.translate.response->uri
-                                       : p_strdup(request2.pool, request2.uri.base));
+                                       : p_strdup(request2.pool,
+                                                  request2.dissected_uri.base));
 
     const struct widget_ref *focus_ref =
         widget_ref_parse(&request2.pool,
@@ -251,7 +252,7 @@ response_invoke_processor(Request &request2,
         : request.uri;
 
     if (request2.translate.response->uri != nullptr)
-        request2.uri.base = request2.translate.response->uri;
+        request2.dissected_uri.base = request2.translate.response->uri;
 
     /* make sure we have a session */
     {
@@ -283,7 +284,7 @@ response_invoke_processor(Request &request2,
                                                       request2.translate.response->scheme,
                                                       request2.translate.response->host,
                                                       uri),
-                                 &request2.uri,
+                                 &request2.dissected_uri,
                                  request2.args,
                                  request2.session_cookie,
                                  request2.session_id, request2.realm,
@@ -348,7 +349,8 @@ response_invoke_css_processor(Request &request2,
     auto *widget = NewFromPool<Widget>(request2.pool,
                                        Widget::RootTag(),
                                        request2.pool,
-                                       p_strdup(request2.pool, request2.uri.base));
+                                       p_strdup(request2.pool,
+                                                request2.dissected_uri.base));
 
     if (request2.translate.response->untrusted != nullptr) {
         const auto &logger = request2.logger;
@@ -364,7 +366,7 @@ response_invoke_css_processor(Request &request2,
         : request.uri;
 
     if (request2.translate.response->uri != nullptr)
-        request2.uri.base = request2.translate.response->uri;
+        request2.dissected_uri.base = request2.translate.response->uri;
 
     request2.env = processor_env(&request2.pool,
                                  request2.instance.event_loop,
@@ -378,7 +380,7 @@ response_invoke_css_processor(Request &request2,
                                                       request2.translate.response->scheme,
                                                       request2.translate.response->host,
                                                       uri),
-                                 &request2.uri,
+                                 &request2.dissected_uri,
                                  request2.args,
                                  request2.session_cookie,
                                  request2.session_id, request2.realm,
@@ -422,7 +424,8 @@ response_invoke_text_processor(Request &request2,
     auto *widget = NewFromPool<Widget>(request2.pool,
                                        Widget::RootTag(),
                                        request2.pool,
-                                       p_strdup(request2.pool, request2.uri.base));
+                                       p_strdup(request2.pool,
+                                                request2.dissected_uri.base));
 
     if (request2.translate.response->untrusted != nullptr) {
         const auto &logger = request2.logger;
@@ -438,7 +441,7 @@ response_invoke_text_processor(Request &request2,
         : request.uri;
 
     if (request2.translate.response->uri != nullptr)
-        request2.uri.base = request2.translate.response->uri;
+        request2.dissected_uri.base = request2.translate.response->uri;
 
     request2.env = processor_env(&request2.pool,
                                  request2.instance.event_loop,
@@ -452,7 +455,7 @@ response_invoke_text_processor(Request &request2,
                                                       request2.translate.response->scheme,
                                                       request2.translate.response->host,
                                                       uri),
-                                 &request2.uri,
+                                 &request2.dissected_uri,
                                  request2.args,
                                  request2.session_cookie,
                                  request2.session_id, request2.realm,
@@ -801,7 +804,7 @@ RelocateCallback(const char *const uri, void *ctx)
                                       address.host_and_port,
                                       internal_path,
                                       external_scheme, external_host,
-                                      request.uri.base, tr.base);
+                                      request.dissected_uri.base, tr.base);
     if (new_uri == nullptr)
         return uri;
 

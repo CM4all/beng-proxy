@@ -70,7 +70,7 @@ struct Request final : HttpResponseHandler, DelegateHandler,
     const LLogger logger;
 
     HttpServerRequest &request;
-    DissectedUri uri;
+    DissectedUri dissected_uri;
 
     StringMap *args = nullptr;
 

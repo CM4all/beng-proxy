@@ -66,14 +66,14 @@ Request::ParseArgs()
 {
     assert(args == nullptr);
 
-    if (uri.args.IsEmpty()) {
+    if (dissected_uri.args.IsEmpty()) {
         args = nullptr;
         translate.request.param = nullptr;
         translate.request.session = nullptr;
         return;
     }
 
-    args = args_parse(&pool, uri.args.data, uri.args.size);
+    args = args_parse(&pool, dissected_uri.args.data, dissected_uri.args.size);
     translate.request.param = args->Remove("translate");
     translate.request.session = nullptr;
 }

@@ -88,10 +88,10 @@ bounce_uri(struct pool &pool, const Request &request,
 
     const char *uri_path = response.uri != nullptr
         ? p_strncat(&pool, response.uri, strlen(response.uri),
-                    ";", request.uri.args.IsNull() ? (size_t)0 : 1,
-                    request.uri.args.data, request.uri.args.size,
-                    "?", request.uri.query.IsNull() ? (size_t)0 : 1,
-                    request.uri.query.data, request.uri.query.size,
+                    ";", request.dissected_uri.args.IsNull() ? (size_t)0 : 1,
+                    request.dissected_uri.args.data, request.dissected_uri.args.size,
+                    "?", request.dissected_uri.query.IsNull() ? (size_t)0 : 1,
+                    request.dissected_uri.query.data, request.dissected_uri.query.size,
                     nullptr)
         : request.request.uri;
 
@@ -217,16 +217,16 @@ Request::CheckHandleRedirect(const TranslateResponse &response)
 
     const char *redirect_uri = response.redirect;
 
-    if (response.redirect_full_uri && !uri.args.IsNull())
+    if (response.redirect_full_uri && !dissected_uri.args.IsNull())
         redirect_uri = p_strncat(&pool, redirect_uri, strlen(redirect_uri),
                                  ";", size_t(1),
-                                 uri.args.data, uri.args.size,
-                                 uri.path_info.data, uri.path_info.size,
+                                 dissected_uri.args.data, dissected_uri.args.size,
+                                 dissected_uri.path_info.data, dissected_uri.path_info.size,
                                  nullptr);
 
-    if (response.redirect_query_string && !uri.query.IsNull())
+    if (response.redirect_query_string && !dissected_uri.query.IsNull())
         redirect_uri = uri_append_query_string_n(&pool, redirect_uri,
-                                                 uri.query);
+                                                 dissected_uri.query);
 
     DispatchRedirect(status, redirect_uri, response.message);
     return true;
@@ -579,12 +579,12 @@ repeat_translation(Request &request, const TranslateResponse &response)
         if (response.Wants(TranslationCommand::QUERY_STRING))
             fill_translate_request_query_string(request.translate.request,
                                                 request.pool,
-                                                request.uri);
+                                                request.dissected_uri);
 
         if (response.Wants(TranslationCommand::QUERY_STRING))
             fill_translate_request_query_string(request.translate.request,
                                                 request.pool,
-                                                request.uri);
+                                                request.dissected_uri);
 
         if (response.Wants(TranslationCommand::USER) ||
             request.translate.want_user) {
@@ -607,9 +607,9 @@ repeat_translation(Request &request, const TranslateResponse &response)
 
         /* undo the uri_parse() call (but leave the query_string) */
 
-        request.uri.base = request.translate.request.uri;
-        request.uri.args = nullptr;
-        request.uri.path_info = nullptr;
+        request.dissected_uri.base = request.translate.request.uri;
+        request.dissected_uri.args = nullptr;
+        request.dissected_uri.path_info = nullptr;
     }
 
     /* resend the modified request */
@@ -868,7 +868,7 @@ ask_translation_server(Request &request2)
     request2.translate.enotdir_path_info = nullptr;
 
     fill_translate_request(request2.translate.request, request2.request,
-                           request2.uri, request2.args,
+                           request2.dissected_uri, request2.args,
                            request2.connection.listener_tag,
                            request2.connection.remote_host_and_port);
     request2.SubmitTranslateRequest();
@@ -877,7 +877,7 @@ ask_translation_server(Request &request2)
 static void
 serve_document_root_file(Request &request2, const BpConfig &config)
 {
-    auto *uri = &request2.uri;
+    auto *uri = &request2.dissected_uri;
 
     auto tr = NewFromPool<TranslateResponse>(request2.pool);
     tr->Clear();
@@ -952,11 +952,11 @@ handle_http_request(BpConnection &connection,
 
     cancel_ptr = *request2;
 
-    if (!request_uri_parse(*request2, request2->uri))
+    if (!request_uri_parse(*request2, request2->dissected_uri))
         return;
 
-    assert(!request2->uri.base.IsEmpty());
-    assert(request2->uri.base.front() == '/');
+    assert(!request2->dissected_uri.base.IsEmpty());
+    assert(request2->dissected_uri.base.front() == '/');
 
     request2->ParseArgs();
     request2->DetermineSession();

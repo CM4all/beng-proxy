@@ -78,12 +78,12 @@ static const char *
 ForwardURI(const Request &r)
 {
     const TranslateResponse &t = *r.translate.response;
-    if (t.transparent || r.uri.args.IsNull())
+    if (t.transparent || r.dissected_uri.args.IsNull())
         /* transparent or no args: return the full URI as-is */
         return r.request.uri;
     else
         /* remove the "args" part */
-        return ForwardURI(r.pool, r.uri);
+        return ForwardURI(r.pool, r.dissected_uri);
 }
 
 void
@@ -99,11 +99,11 @@ proxy_handler(Request &request2)
            address.IsCgiAlike());
 
     if (request2.translate.response->transparent &&
-        (!request2.uri.args.IsNull() ||
-         !request2.uri.path_info.IsEmpty()))
+        (!request2.dissected_uri.args.IsNull() ||
+         !request2.dissected_uri.path_info.IsEmpty()))
         address = address.WithArgs(pool,
-                                   request2.uri.args,
-                                   request2.uri.path_info);
+                                   request2.dissected_uri.args,
+                                   request2.dissected_uri.path_info);
 
     if (!request2.processor_focus)
         /* forward query string */
