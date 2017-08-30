@@ -946,7 +946,7 @@ handle_http_request(BpConnection &connection,
                                           connection.instance,
                                           connection, request);
 
-    request2->body = request.HasBody()
+    request2->request_body = request.HasBody()
         ? istream_hold_new(request.pool, *request.body)
         : nullptr;
 

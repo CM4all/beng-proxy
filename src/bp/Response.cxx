@@ -217,10 +217,10 @@ response_invoke_processor(Request &request2,
 
         focus_ref = nullptr;
 
-        if (request.body != nullptr) {
+        if (request2.request_body != nullptr) {
             const auto &logger = request2.logger;
             logger(4, "discarding non-framed request body");
-            istream_free_unused(&request2.body);
+            istream_free_unused(&request2.request_body);
         }
     }
 
@@ -241,10 +241,10 @@ response_invoke_processor(Request &request2,
         return;
     }
 
-    if (request2.body != nullptr && widget->from_request.focus_ref != nullptr) {
-        widget->for_focused.body = request2.body;
-        request2.body = nullptr;
-    }
+    if (request2.request_body != nullptr &&
+        widget->from_request.focus_ref != nullptr)
+        widget->for_focused.body = std::exchange(request2.request_body,
+                                                 nullptr);
 
     uri = request2.translate.response->uri != nullptr
         ? request2.translate.response->uri

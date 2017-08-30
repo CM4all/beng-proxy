@@ -57,8 +57,8 @@ Request::IsProcessorEnabled() const
 void
 Request::DiscardRequestBody()
 {
-    if (body != nullptr)
-        std::exchange(body, nullptr)->CloseUnused();
+    if (request_body != nullptr)
+        std::exchange(request_body, nullptr)->CloseUnused();
 }
 
 void

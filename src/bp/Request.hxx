@@ -223,7 +223,7 @@ struct Request final : HttpResponseHandler, DelegateHandler,
      * A pointer to the request body, or nullptr if there is none.  Once
      * the request body has been "used", this pointer gets cleared.
      */
-    Istream *body;
+    Istream *request_body;
 
     /**
      * Shall the Set-Cookie2 header received from the next server be
