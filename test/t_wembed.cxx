@@ -31,12 +31,12 @@
  */
 
 #include "widget/Inline.hxx"
-#include "uri/uri_parser.hxx"
 #include "widget/Widget.hxx"
 #include "widget/Request.hxx"
 #include "widget/Resolver.hxx"
 #include "processor.hxx"
 #include "penv.hxx"
+#include "uri/Dissect.hxx"
 #include "http_response.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream_iconv.hxx"
@@ -137,7 +137,7 @@ test_abort_resolver()
     PInstance instance;
     const char *uri;
     bool ret;
-    struct parsed_uri parsed_uri;
+    DissectedUri dissected_uri;
     struct processor_env env;
     env.event_loop = &instance.event_loop;
     Istream *istream;
@@ -145,7 +145,7 @@ test_abort_resolver()
     auto *pool = pool_new_linear(instance.root_pool, "test", 4096);
 
     uri = "/beng.html";
-    ret = parsed_uri.Parse(uri);
+    ret = dissected_uri.Parse(uri);
     if (!ret) {
         fprintf(stderr, "uri_parse() failed\n");
         exit(2);

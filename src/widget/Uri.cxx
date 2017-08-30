@@ -32,7 +32,7 @@
 
 #include "Widget.hxx"
 #include "Class.hxx"
-#include "uri/uri_parser.hxx"
+#include "uri/Dissect.hxx"
 #include "puri_edit.hxx"
 #include "puri_relative.hxx"
 #include "args.hxx"
@@ -284,7 +284,7 @@ compare_widget_path(const Widget *widget, const char *other)
 
 const char *
 Widget::ExternalUri(struct pool &_pool,
-                    const struct parsed_uri *external_uri,
+                    const DissectedUri *external_uri,
                     StringMap *args,
                     bool stateful,
                     StringView relative_uri,

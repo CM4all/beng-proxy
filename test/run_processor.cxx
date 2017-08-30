@@ -36,7 +36,7 @@
 #include "fb_pool.hxx"
 #include "processor.hxx"
 #include "penv.hxx"
-#include "uri/uri_parser.hxx"
+#include "uri/Dissect.hxx"
 #include "widget/Inline.hxx"
 #include "widget/Widget.hxx"
 #include "widget/Class.hxx"
@@ -99,7 +99,7 @@ main(int argc, char **argv)
 try {
     const char *uri;
     bool ret;
-    struct parsed_uri parsed_uri;
+    DissectedUri dissected_uri;
 
     (void)argc;
     (void)argv;
@@ -108,7 +108,7 @@ try {
     PInstance instance;
 
     uri = "/beng.html";
-    ret = parsed_uri.Parse(uri);
+    ret = dissected_uri.Parse(uri);
     if (!ret) {
         fprintf(stderr, "uri_parse() failed\n");
         exit(2);
@@ -127,7 +127,7 @@ try {
                              "localhost:8080",
                              "/beng.html",
                              "http://localhost:8080/beng.html",
-                             &parsed_uri,
+                             &dissected_uri,
                              nullptr,
                              nullptr,
                              session_id, "foo",

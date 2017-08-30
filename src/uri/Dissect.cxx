@@ -30,47 +30,57 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Dissect an URI into its parts.
- */
+#include "Dissect.hxx"
+#include "uri_verify.hxx"
 
-#ifndef BENG_PROXY_URI_PARSER_HXX
-#define BENG_PROXY_URI_PARSER_HXX
+#include <string.h>
 
-#include "util/StringView.hxx"
+bool
+DissectedUri::Parse(const char *src)
+{
+    const char *qmark = strchr(src, '?');
 
-/**
- * A splitted URI.
- */
-struct parsed_uri {
-    /**
-     * The "base" URI that points to the real resource, without
-     * dynamic arguments.
-     */
-    StringView base;
+    const char *semicolon;
+    if (qmark == nullptr)
+        semicolon = strchr(src, ';');
+    else
+        semicolon = (const char *)memchr(src, ';', qmark - src);
 
-    /**
-     * The beng-proxy arguments, which were introduced by a semicolon
-     * (without the semicolon).
-     */
-    StringView args;
+    base.data = src;
+    if (semicolon != nullptr)
+        base.size = semicolon - src;
+    else if (qmark != nullptr)
+        base.size = qmark - src;
+    else
+        base.size = strlen(src);
 
-    /**
-     * The URI portion after the arguments, including the leading
-     * slash.
-     */
-    StringView path_info;
+    if (!uri_path_verify(base))
+        return false;
 
-    /**
-     * The query string (without the question mark).
-     */
-    StringView query;
+    if (semicolon == nullptr) {
+        args = nullptr;
+        path_info = nullptr;
+    } else {
+        /* XXX second semicolon for stuff being forwared? */
+        args.data = semicolon + 1;
+        if (qmark == nullptr)
+            args.size = strlen(args.data);
+        else
+            args.size = qmark - args.data;
 
-    /**
-     * Split the URI into its parts.  The result contains pointers
-     * into the original string.
-     */
-    bool Parse(const char *src);
-};
+        const char *slash = args.Find('/');
+        if (slash != nullptr) {
+            path_info.data = slash;
+            path_info.size = args.end() - slash;
+            args.size = slash - args.data;
+        } else
+            path_info = nullptr;
+    }
 
-#endif
+    if (qmark == nullptr)
+        query = nullptr;
+    else
+        query = { qmark + 1, strlen(qmark + 1) };
+
+    return true;
+}

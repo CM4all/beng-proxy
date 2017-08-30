@@ -34,7 +34,7 @@
 #include "processor.hxx"
 #include "penv.hxx"
 #include "PInstance.hxx"
-#include "uri/uri_parser.hxx"
+#include "uri/Dissect.hxx"
 #include "widget/Inline.hxx"
 #include "widget/Widget.hxx"
 #include "widget/Class.hxx"
@@ -134,9 +134,9 @@ TEST(Processor, Abort)
 
     auto *pool = pool_new_libc(instance.root_pool, "test");
 
-    struct parsed_uri parsed_uri;
+    DissectedUri dissected_uri;
     const char *uri = "/beng.html";
-    ASSERT_TRUE(parsed_uri.Parse(uri));
+    ASSERT_TRUE(dissected_uri.Parse(uri));
 
     Widget widget(*pool, &root_widget_class);
 
@@ -151,7 +151,7 @@ TEST(Processor, Abort)
                              "localhost:8080",
                              "/beng.html",
                              "http://localhost:8080/beng.html",
-                             &parsed_uri,
+                             &dissected_uri,
                              nullptr,
                              "bp_session", session_id, "foo",
                              HTTP_METHOD_GET, nullptr);

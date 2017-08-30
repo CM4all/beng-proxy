@@ -36,7 +36,6 @@
 #include "Ref.hxx"
 #include "session.hxx"
 #include "penv.hxx"
-#include "uri/uri_parser.hxx"
 #include "puri_relative.hxx"
 #include "AllocatorPtr.hxx"
 #include "shm/dpool.hxx"

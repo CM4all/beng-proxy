@@ -56,7 +56,7 @@
  */
 gcc_pure
 static const char *
-ForwardURI(struct pool &pool, const parsed_uri &uri)
+ForwardURI(struct pool &pool, const DissectedUri &uri)
 {
     if (uri.query.IsEmpty())
         return p_strdup(pool, uri.base);

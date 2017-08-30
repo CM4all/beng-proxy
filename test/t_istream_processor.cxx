@@ -37,7 +37,7 @@
 #include "widget/Class.hxx"
 #include "processor.hxx"
 #include "penv.hxx"
-#include "uri/uri_parser.hxx"
+#include "uri/Dissect.hxx"
 #include "session_manager.hxx"
 #include "widget/Inline.hxx"
 #include "widget/Registry.hxx"
@@ -87,13 +87,13 @@ create_test(EventLoop &event_loop, struct pool *pool, Istream *input)
 {
     bool ret;
     const char *uri;
-    static struct parsed_uri parsed_uri;
+    static DissectedUri dissected_uri;
 
     /* HACK, processor.c will ignore c:widget otherwise */
     global_translate_cache = (struct tcache *)(size_t)1;
 
     uri = "/beng.html";
-    ret = parsed_uri.Parse(uri);
+    ret = dissected_uri.Parse(uri);
     if (!ret)
         abort();
 
@@ -112,7 +112,7 @@ create_test(EventLoop &event_loop, struct pool *pool, Istream *input)
                         "localhost:8080",
                         "/beng.html",
                         "http://localhost:8080/beng.html",
-                        &parsed_uri,
+                        &dissected_uri,
                         nullptr,
                         "bp_session", session->id, "foo",
                         HTTP_METHOD_GET, nullptr);

@@ -47,7 +47,7 @@ class Istream;
 class StringMap;
 struct StringView;
 struct processor_env;
-struct parsed_uri;
+struct DissectedUri;
 struct RealmSession;
 struct WidgetSession;
 struct WidgetView;
@@ -432,7 +432,7 @@ public:
 
     gcc_pure
     const char *ExternalUri(struct pool &_pool,
-                            const struct parsed_uri *external_uri,
+                            const DissectedUri *external_uri,
                             StringMap *args,
                             bool stateful,
                             StringView relative_uri,

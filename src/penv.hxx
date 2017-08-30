@@ -36,6 +36,7 @@
 #include "session_id.hxx"
 #include "http/Method.h"
 
+struct DissectedUri;
 class EventLoop;
 class ResourceLoader;
 class StringMap;
@@ -66,7 +67,7 @@ struct processor_env {
     const char *absolute_uri;
 
     /** the URI which was requested by the beng-proxy client */
-    const struct parsed_uri *external_uri;
+    const DissectedUri *external_uri;
 
     /** semicolon-arguments in the external URI */
     StringMap *args;
@@ -108,7 +109,7 @@ struct processor_env {
                   const char *remote_host,
                   const char *request_uri,
                   const char *absolute_uri,
-                  const struct parsed_uri *uri,
+                  const DissectedUri *uri,
                   StringMap *args,
                   const char *session_cookie,
                   SessionId session_id,

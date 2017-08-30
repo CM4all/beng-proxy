@@ -38,7 +38,7 @@
 #include "widget/Widget.hxx"
 #include "widget/Class.hxx"
 #include "widget/Resolver.hxx"
-#include "uri/uri_parser.hxx"
+#include "uri/Dissect.hxx"
 #include "PInstance.hxx"
 #include "escape_pool.hxx"
 #include "escape_html.hxx"
@@ -145,7 +145,7 @@ ResolveWidget(gcc_unused struct pool &pool,
  *
  */
 
-static struct parsed_uri external_uri;
+static DissectedUri external_uri;
 
 struct StringSinkCtx {
     std::string value;

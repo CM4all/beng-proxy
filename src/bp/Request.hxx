@@ -33,7 +33,7 @@
 #ifndef BENG_PROXY_REQUEST_HXX
 #define BENG_PROXY_REQUEST_HXX
 
-#include "uri/uri_parser.hxx"
+#include "uri/Dissect.hxx"
 #include "translation/Request.hxx"
 #include "translation/Response.hxx"
 #include "translation/Transformation.hxx"
@@ -70,7 +70,7 @@ struct Request final : HttpResponseHandler, DelegateHandler,
     const LLogger logger;
 
     HttpServerRequest &request;
-    struct parsed_uri uri;
+    DissectedUri uri;
 
     StringMap *args = nullptr;
 

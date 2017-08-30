@@ -481,7 +481,7 @@ fill_translate_request_args(TranslateRequest &t,
 static void
 fill_translate_request_query_string(TranslateRequest &t,
                                     struct pool &pool,
-                                    const parsed_uri &uri)
+                                    const DissectedUri &uri)
 {
     t.query_string = uri.query.IsEmpty()
         ? nullptr
@@ -791,7 +791,7 @@ Request::SubmitTranslateRequest()
 }
 
 static bool
-request_uri_parse(Request &request2, parsed_uri &dest)
+request_uri_parse(Request &request2, DissectedUri &dest)
 {
     const auto &request = request2.request;
 
@@ -818,7 +818,7 @@ request_uri_parse(Request &request2, parsed_uri &dest)
 static void
 fill_translate_request(TranslateRequest &t,
                        const HttpServerRequest &request,
-                       const struct parsed_uri &uri,
+                       const DissectedUri &uri,
                        StringMap *args,
                        const char *listener_tag,
                        const char *remote_host_and_port)
