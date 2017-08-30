@@ -159,9 +159,10 @@ ToResponse(struct pool &pool, std::exception_ptr ep)
 
 void
 Request::LogDispatchError(http_status_t status,
-                          const char *msg, const char *log_msg)
+                          const char *msg, const char *log_msg,
+                          unsigned log_level)
 {
-    logger(2, "error on '", request.uri, "': ", log_msg);
+    logger(log_level, "error on '", request.uri, "': ", log_msg);
 
     if (instance.config.verbose_response)
         msg = p_strdup(&pool, log_msg);
@@ -170,9 +171,11 @@ Request::LogDispatchError(http_status_t status,
 }
 
 void
-Request::LogDispatchError(http_status_t status, const char *log_msg)
+Request::LogDispatchError(http_status_t status, const char *log_msg,
+                          unsigned log_level)
 {
-    LogDispatchError(status, http_status_to_string(status), log_msg);
+    LogDispatchError(status, http_status_to_string(status),
+                     log_msg, log_level);
 }
 
 void
@@ -189,9 +192,9 @@ Request::LogDispatchError(std::exception_ptr ep)
 
 void
 Request::LogDispatchError(http_status_t status, const char *msg,
-                          std::exception_ptr ep)
+                          std::exception_ptr ep, unsigned log_level)
 {
-    logger(2, "error on '", request.uri, "': ", ep);
+    logger(log_level, "error on '", request.uri, "': ", ep);
 
     if (instance.config.verbose_response)
         msg = p_strdup(&pool, GetFullMessage(ep).c_str());

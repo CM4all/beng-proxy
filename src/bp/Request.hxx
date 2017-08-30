@@ -432,15 +432,16 @@ private:
     void GenerateSetCookie(GrowingBuffer &headers);
 
 public:
-    void LogDispatchError(http_status_t status, const char *log_msg);
+    void LogDispatchError(http_status_t status, const char *log_msg,
+                          unsigned log_level=2);
 
     void LogDispatchError(http_status_t status, const char *msg,
-                          const char *log_msg);
+                          const char *log_msg, unsigned log_level=2);
 
     void LogDispatchError(std::exception_ptr ep);
 
     void LogDispatchError(http_status_t status, const char *msg,
-                          std::exception_ptr ep);
+                          std::exception_ptr ep, unsigned log_level=2);
 
     /* virtual methods from class Cancellable */
     void Cancel() override {
