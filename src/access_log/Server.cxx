@@ -43,7 +43,7 @@
 #include <errno.h>
 
 AccessLogServer::AccessLogServer()
-    :AccessLogServer(STDIN_FILENO) {}
+    :AccessLogServer(SocketDescriptor(STDIN_FILENO)) {}
 
 static const void *
 read_uint8(uint8_t *value_r, const void *p, const uint8_t *end)
@@ -229,7 +229,7 @@ AccessLogServer::Fill()
         msg.msg_controllen = 0;
     }
 
-    int n = recvmmsg(fd, &msgs.front(), msgs.size(),
+    int n = recvmmsg(fd.Get(), &msgs.front(), msgs.size(),
                      MSG_WAITFORONE|MSG_CMSG_CLOEXEC, nullptr);
     if (n <= 0)
         return false;

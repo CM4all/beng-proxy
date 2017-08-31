@@ -34,6 +34,7 @@
 #define BENG_PROXY_LOG_SERVER_H
 
 #include "Datagram.hxx"
+#include "net/SocketDescriptor.hxx"
 #include "net/StaticSocketAddress.hxx"
 
 #include <array>
@@ -50,7 +51,7 @@ struct ReceivedAccessLogDatagram : AccessLogDatagram {
  * A simple server for the logging protocol.
  */
 class AccessLogServer {
-    const int fd;
+    const SocketDescriptor fd;
 
     ReceivedAccessLogDatagram datagram;
 
@@ -61,7 +62,7 @@ class AccessLogServer {
     size_t n_payloads = 0, current_payload = 0;
 
 public:
-    explicit AccessLogServer(int _fd):fd(_fd) {}
+    explicit AccessLogServer(SocketDescriptor _fd):fd(_fd) {}
 
     /**
      * Construct an instance with the default socket (STDIN_FILENO).
