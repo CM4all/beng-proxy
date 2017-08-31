@@ -43,6 +43,6 @@ int main(int argc, char **argv)
     (void)argc;
     (void)argv;
 
-    AccessLogServer(0).Run(LogOneLine);
+    AccessLogServer().Run(LogOneLine);
     return 0;
 }

@@ -164,7 +164,7 @@ int main(int argc, char **argv)
 
     std::cout << "[" << std::endl;
 
-    AccessLogServer(0).Run(std::bind(Dump, std::ref(*writer),
+    AccessLogServer().Run(std::bind(Dump, std::ref(*writer),
                                      std::placeholders::_1));
 
     std::cout << "]" << std::endl;

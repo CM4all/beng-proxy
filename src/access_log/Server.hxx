@@ -63,6 +63,11 @@ class AccessLogServer {
 public:
     explicit AccessLogServer(int _fd):fd(_fd) {}
 
+    /**
+     * Construct an instance with the default socket (STDIN_FILENO).
+     */
+    AccessLogServer();
+
     AccessLogServer(const AccessLogServer &) = delete;
     AccessLogServer &operator=(const AccessLogServer &) = delete;
 

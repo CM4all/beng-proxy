@@ -158,8 +158,8 @@ try {
 
     LuaAccessLogger logger(state.get(), path, function_name);
 
-    AccessLogServer(0).Run(std::bind(&LuaAccessLogger::Handle, &logger,
-                                     std::placeholders::_1));
+    AccessLogServer().Run(std::bind(&LuaAccessLogger::Handle, &logger,
+                                    std::placeholders::_1));
     return EXIT_SUCCESS;
 } catch (...) {
     PrintException(std::current_exception());

@@ -42,6 +42,9 @@
 #include <stdlib.h>
 #include <errno.h>
 
+AccessLogServer::AccessLogServer()
+    :AccessLogServer(STDIN_FILENO) {}
+
 static const void *
 read_uint8(uint8_t *value_r, const void *p, const uint8_t *end)
 {

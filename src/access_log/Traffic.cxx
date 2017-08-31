@@ -52,6 +52,6 @@ int main(int argc, char **argv)
     (void)argc;
     (void)argv;
 
-    AccessLogServer(0).Run(dump);
+    AccessLogServer().Run(dump);
     return 0;
 }
