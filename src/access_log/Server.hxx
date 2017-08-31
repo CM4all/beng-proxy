@@ -63,8 +63,6 @@ class AccessLogServer {
 public:
     explicit AccessLogServer(int _fd):fd(_fd) {}
 
-    ~AccessLogServer();
-
     const ReceivedAccessLogDatagram *Receive();
 
     template<typename F>
