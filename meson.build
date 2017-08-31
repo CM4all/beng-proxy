@@ -1156,6 +1156,7 @@ executable('cm4all-beng-proxy-log-traffic',
 
 executable('cm4all-beng-proxy-log-split',
   'src/access_log/Server.cxx',
+  'src/access_log/OneLine.cxx',
   'src/access_log/Split.cxx',
   include_directories: inc,
   dependencies: [
