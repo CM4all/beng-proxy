@@ -287,7 +287,7 @@ int main(int argc, char **argv) {
 
     instance.connection = http_server_connection_new(instance.root_pool,
                                                      instance.event_loop,
-                                                     SocketDescriptor::FromFileDescriptor(FileDescriptor(sockfd)),
+                                                     SocketDescriptor(sockfd),
                                                      FdType::FD_SOCKET,
                                                      nullptr, nullptr,
                                                      nullptr, nullptr,
