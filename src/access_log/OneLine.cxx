@@ -38,7 +38,7 @@
 #include <time.h>
 
 static const char *
-optional_string(const char *p)
+OptionalString(const char *p)
 {
     if (p == nullptr)
         return "-";
@@ -47,18 +47,18 @@ optional_string(const char *p)
 }
 
 static bool
-harmless_char(signed char ch)
+IsHarmlessChar(signed char ch)
 {
     return ch >= 0x20 && ch != '"' && ch != '\\';
 }
 
 static const char *
-escape_string(const char *value, char *const buffer, size_t buffer_size)
+EscapeString(const char *value, char *const buffer, size_t buffer_size)
 {
     char *p = buffer, *const buffer_limit = buffer + buffer_size - 4;
     char ch;
     while (p < buffer_limit && (ch = *value++) != 0) {
-        if (harmless_char(ch))
+        if (IsHarmlessChar(ch))
             *p++ = ch;
         else
             p += sprintf(p, "\\x%02X", (unsigned char)ch);
@@ -105,15 +105,15 @@ LogOneLineHttp(FileDescriptor fd, const AccessLogDatagram &d)
 
     dprintf(fd.Get(),
             "%s %s - - [%s] \"%s %s HTTP/1.1\" %u %s \"%s\" \"%s\" %s\n",
-            optional_string(d.site),
-            optional_string(d.remote_host),
+            OptionalString(d.site),
+            OptionalString(d.remote_host),
             stamp, method,
-            escape_string(d.http_uri, escaped_uri, sizeof(escaped_uri)),
+            EscapeString(d.http_uri, escaped_uri, sizeof(escaped_uri)),
             d.http_status, length,
-            escape_string(optional_string(d.http_referer),
-                          escaped_referer, sizeof(escaped_referer)),
-            escape_string(optional_string(d.user_agent),
-                          escaped_ua, sizeof(escaped_ua)),
+            EscapeString(OptionalString(d.http_referer),
+                         escaped_referer, sizeof(escaped_referer)),
+            EscapeString(OptionalString(d.user_agent),
+                         escaped_ua, sizeof(escaped_ua)),
             duration);
 }
 
