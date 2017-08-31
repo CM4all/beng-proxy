@@ -32,6 +32,7 @@
 
 #include "OneLine.hxx"
 #include "Datagram.hxx"
+#include "io/FileDescriptor.hxx"
 
 #include <stdio.h>
 #include <time.h>
@@ -68,7 +69,7 @@ escape_string(const char *value, char *const buffer, size_t buffer_size)
 }
 
 static void
-LogOneLineHttp(const AccessLogDatagram &d)
+LogOneLineHttp(FileDescriptor fd, const AccessLogDatagram &d)
 {
     const char *method = d.valid_http_method &&
         http_method_is_valid(d.http_method)
@@ -102,22 +103,23 @@ LogOneLineHttp(const AccessLogDatagram &d)
 
     char escaped_uri[4096], escaped_referer[2048], escaped_ua[1024];
 
-    printf("%s %s - - [%s] \"%s %s HTTP/1.1\" %u %s \"%s\" \"%s\" %s\n",
-           optional_string(d.site),
-           optional_string(d.remote_host),
-           stamp, method,
-           escape_string(d.http_uri, escaped_uri, sizeof(escaped_uri)),
-           d.http_status, length,
-           escape_string(optional_string(d.http_referer),
-                         escaped_referer, sizeof(escaped_referer)),
-           escape_string(optional_string(d.user_agent),
-                         escaped_ua, sizeof(escaped_ua)),
-           duration);
+    dprintf(fd.Get(),
+            "%s %s - - [%s] \"%s %s HTTP/1.1\" %u %s \"%s\" \"%s\" %s\n",
+            optional_string(d.site),
+            optional_string(d.remote_host),
+            stamp, method,
+            escape_string(d.http_uri, escaped_uri, sizeof(escaped_uri)),
+            d.http_status, length,
+            escape_string(optional_string(d.http_referer),
+                          escaped_referer, sizeof(escaped_referer)),
+            escape_string(optional_string(d.user_agent),
+                          escaped_ua, sizeof(escaped_ua)),
+            duration);
 }
 
 void
-LogOneLine(const AccessLogDatagram &d)
+LogOneLine(FileDescriptor fd, const AccessLogDatagram &d)
 {
     if (d.http_uri != nullptr && d.valid_http_status)
-        LogOneLineHttp(d);
+        LogOneLineHttp(fd, d);
 }

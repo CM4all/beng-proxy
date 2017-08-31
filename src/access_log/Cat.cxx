@@ -37,12 +37,20 @@
 
 #include "Server.hxx"
 #include "OneLine.hxx"
+#include "io/FileDescriptor.hxx"
+
+#include <functional>
+
+#include <unistd.h>
 
 int main(int argc, char **argv)
 {
     (void)argc;
     (void)argv;
 
-    AccessLogServer().Run(LogOneLine);
+    const FileDescriptor fd(STDOUT_FILENO);
+
+    AccessLogServer().Run(std::bind(LogOneLine, fd,
+                                    std::placeholders::_1));
     return 0;
 }

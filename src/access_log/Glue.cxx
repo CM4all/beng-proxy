@@ -110,7 +110,7 @@ AccessLogGlue::Log(const AccessLogDatagram &d)
     if (client != nullptr)
         client->Send(d);
     else
-        LogOneLine(d);
+        LogOneLine(FileDescriptor(STDOUT_FILENO), d);
 }
 
 /**

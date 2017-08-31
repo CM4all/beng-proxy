@@ -34,12 +34,13 @@
 #define BENG_PROXY_LOG_ONE_LINE_HXX
 
 struct AccessLogDatagram;
+class FileDescriptor;
 
 /**
  * Print the #AccessLogDatagram in one line, similar to Apache's
  * "combined" log format.
  */
 void
-LogOneLine(const AccessLogDatagram &d);
+LogOneLine(FileDescriptor fd, const AccessLogDatagram &d);
 
 #endif
