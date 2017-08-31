@@ -182,39 +182,37 @@ make_parent_directory(const char *path)
     return make_parent_directory_recursive(buffer);
 }
 
-static int
+static FileDescriptor
 open_log_file(const char *path)
 {
-    static int cache_fd = -1;
+    static FileDescriptor cache_fd = FileDescriptor::Undefined();
     static char cache_path[PATH_MAX];
 
-    if (cache_fd >= 0) {
+    if (cache_fd.IsDefined()) {
         if (strcmp(path, cache_path) == 0)
             return cache_fd;
 
-        close(cache_fd);
-        cache_fd = -1;
+        cache_fd.Close();
     }
 
-    int fd = open(path, O_CREAT|O_APPEND|O_WRONLY|O_NOCTTY, 0666);
-    if (fd < 0 && errno == ENOENT) {
+    if (!cache_fd.Open(path, O_CREAT|O_APPEND|O_WRONLY, 0666) &&
+        errno == ENOENT) {
         if (!make_parent_directory(path))
-            return -1;
+            return cache_fd;
 
         /* try again */
-        fd = open(path, O_CREAT|O_APPEND|O_WRONLY|O_NOCTTY, 0666);
+        cache_fd.Open(path, O_CREAT|O_APPEND|O_WRONLY, 0666);
     }
 
-    if (fd < 0) {
+    if (!cache_fd.IsDefined()) {
         fprintf(stderr, "Failed to open %s: %s\n",
                 path, strerror(errno));
-        return -1;
+        return cache_fd;
     }
 
-    cache_fd = fd;
     strcpy(cache_path, path);
 
-    return fd;
+    return cache_fd;
 }
 
 static const char *
@@ -249,7 +247,7 @@ escape_string(const char *value, char *const buffer, size_t buffer_size)
 }
 
 static void
-dump_http(int fd, const AccessLogDatagram &d)
+dump_http(FileDescriptor fd, const AccessLogDatagram &d)
 {
     const char *method = d.valid_http_method &&
         http_method_is_valid(d.http_method)
@@ -288,11 +286,11 @@ dump_http(int fd, const AccessLogDatagram &d)
              escape_string(optional_string(d.user_agent),
                            escaped_ua, sizeof(escaped_ua)));
 
-    (void)write(fd, buffer, strlen(buffer));
+    fd.Write(buffer, strlen(buffer));
 }
 
 static void
-dump(int fd, const AccessLogDatagram &d)
+dump(FileDescriptor fd, const AccessLogDatagram &d)
 {
     if (d.http_uri != nullptr && d.valid_http_status)
         dump_http(fd, d);
@@ -305,8 +303,8 @@ Dump(const char *template_path, const AccessLogDatagram &d)
     if (path == nullptr)
         return false;
 
-    int fd = open_log_file(path);
-    if (fd >= 0)
+    auto fd = open_log_file(path);
+    if (fd.IsDefined())
         dump(fd, d);
 
     return true;
