@@ -63,6 +63,9 @@ class AccessLogServer {
 public:
     explicit AccessLogServer(int _fd):fd(_fd) {}
 
+    AccessLogServer(const AccessLogServer &) = delete;
+    AccessLogServer &operator=(const AccessLogServer &) = delete;
+
     const ReceivedAccessLogDatagram *Receive();
 
     template<typename F>
