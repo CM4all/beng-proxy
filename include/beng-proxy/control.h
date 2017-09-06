@@ -103,7 +103,8 @@ enum beng_control_command {
      * remaining ones will be killed as soon as their current work is
      * done.
      *
-     * No payload.
+     * If a payload is given, then this is a tag which fades only
+     * child processes with the given CHILD_TAG.
      */
     CONTROL_FADE_CHILDREN = 8,
 };
