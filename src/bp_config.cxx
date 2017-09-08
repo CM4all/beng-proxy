@@ -210,6 +210,8 @@ BpConfigParser::Control::Finish()
            compatibility) */
         config.multicast_group = parent.config.multicast_group;
 
+    config.Fixup();
+
     parent.config.control_listen.emplace_front(std::move(config));
 
     ConfigParser::Finish();
