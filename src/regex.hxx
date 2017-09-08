@@ -159,6 +159,6 @@ public:
  * @return the length (without the null terminator)
  */
 size_t
-ExpandStringLength(const char *src, MatchInfo match_info);
+ExpandStringLength(const char *src, const MatchInfo &match_info);
 
 #endif
