@@ -652,12 +652,14 @@ Request::ApplyTransformation(http_status_t status, StringMap &&headers,
         resource_tag = nullptr;
 
         InvokeCssProcessor(status, headers, response_body, transformation);
+        break;
 
     case Transformation::Type::PROCESS_TEXT:
         /* processor responses cannot be cached */
         resource_tag = nullptr;
 
         InvokeTextProcessor(status, headers, response_body);
+        break;
     }
 }
 
