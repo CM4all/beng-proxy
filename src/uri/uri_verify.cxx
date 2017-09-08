@@ -158,5 +158,5 @@ uri_path_verify_quick(const char *uri)
         if ((signed char)*uri <= 0x20)
             return false;
 
-    return uri;
+    return true;
 }
