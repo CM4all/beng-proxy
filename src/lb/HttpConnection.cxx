@@ -88,7 +88,6 @@ HttpServerLogLevel(std::exception_ptr e)
             if (se.code().category() == ErrnoCategory() &&
                 se.code().value() == ECONNRESET)
                 return 4;
-            return 4;
         }
 
         try {
