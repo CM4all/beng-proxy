@@ -219,6 +219,8 @@ LbConfigParser::Control::ParseLine(FileLineParser &line)
     } else if (strcmp(word, "multicast_group") == 0) {
         config.multicast_group = ParseSocketAddress(line.ExpectValueAndEnd(),
                                                     0, false);
+    } else if (strcmp(word, "interface") == 0) {
+        config.interface = line.ExpectValueAndEnd();
     } else
         throw LineParser::Error("Unknown option");
 }
