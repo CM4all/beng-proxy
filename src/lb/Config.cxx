@@ -231,6 +231,8 @@ LbConfigParser::Control::Finish()
     if (config.bind_address.IsNull())
         throw LineParser::Error("Bind address is missing");
 
+    config.Fixup();
+
     parent.config.controls.emplace_back(std::move(config));
 
     ConfigParser::Finish();

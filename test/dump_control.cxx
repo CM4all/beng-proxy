@@ -78,6 +78,8 @@ try {
     if (mcast_group != nullptr)
         config.multicast_group = ParseSocketAddress(mcast_group, 0, false);
 
+    config.Fixup();
+
     DumpControlHandler handler;
 
     ControlServer cs(event_loop, handler, config);
