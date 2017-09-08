@@ -72,7 +72,7 @@ UniqueRegex::Compile(const char *pattern, bool anchored, bool capture)
 }
 
 size_t
-ExpandStringLength(const char *src, MatchInfo match_info)
+ExpandStringLength(const char *src, const MatchInfo &match_info)
 {
     struct Result {
         size_t result = 0;
