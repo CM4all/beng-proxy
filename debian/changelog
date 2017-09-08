@@ -1,6 +1,6 @@
 cm4all-beng-proxy (12.6) unstable; urgency=low
 
-  * 
+  * control: add listener option "interface"
 
  --   
 
