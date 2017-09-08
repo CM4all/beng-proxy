@@ -1,6 +1,6 @@
 cm4all-beng-proxy (12.4) unstable; urgency=low
 
-  * 
+  * fix crash bug in CSS processor
 
  --   
 

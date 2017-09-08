@@ -682,12 +682,14 @@ response_apply_transformation(Request &request2,
 
         response_invoke_css_processor(request2, status, headers, body,
                                       transformation);
+        break;
 
     case Transformation::Type::PROCESS_TEXT:
         /* processor responses cannot be cached */
         request2.resource_tag = nullptr;
 
         response_invoke_text_processor(request2, status, headers, body);
+        break;
     }
 }
 
