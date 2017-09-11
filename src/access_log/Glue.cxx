@@ -170,6 +170,7 @@ GetRealRemoteHost(const char *xff, const std::set<std::string> &trust)
 
 void
 AccessLogGlue::Log(HttpServerRequest &request, const char *site,
+                   const char *host, const char *x_forwarded_for,
                    const char *referer, const char *user_agent,
                    http_status_t status, int64_t content_length,
                    uint64_t bytes_received, uint64_t bytes_sent,
@@ -183,25 +184,39 @@ AccessLogGlue::Log(HttpServerRequest &request, const char *site,
 
     if (remote_host != nullptr &&
         !config.trust_xff.empty() &&
-        config.trust_xff.find(remote_host) != config.trust_xff.end()) {
-        const char *xff = request.headers.Get("x-forwarded-for");
-        if (xff != nullptr) {
-            auto r = GetRealRemoteHost(xff, config.trust_xff);
-            if (!r.IsNull()) {
-                buffer.assign(r.data, r.size);
-                remote_host = buffer.c_str();
-            }
+        config.trust_xff.find(remote_host) != config.trust_xff.end() &&
+        x_forwarded_for != nullptr) {
+        auto r = GetRealRemoteHost(x_forwarded_for, config.trust_xff);
+        if (!r.IsNull()) {
+            buffer.assign(r.data, r.size);
+            remote_host = buffer.c_str();
         }
     }
 
     const AccessLogDatagram d(std::chrono::system_clock::now(),
                               request.method, request.uri,
                               remote_host,
-                              request.headers.Get("host"),
+                              host,
                               site,
                               referer, user_agent,
                               status, content_length,
                               bytes_received, bytes_sent,
                               duration);
     Log(d);
+}
+
+void
+AccessLogGlue::Log(HttpServerRequest &request, const char *site,
+                   const char *referer, const char *user_agent,
+                   http_status_t status, int64_t content_length,
+                   uint64_t bytes_received, uint64_t bytes_sent,
+                   std::chrono::steady_clock::duration duration)
+{
+    Log(request, site,
+        request.headers.Get("host"),
+        request.headers.Get("x-forwarded-for"),
+        referer, user_agent,
+        status, content_length,
+        bytes_received, bytes_sent,
+        duration);
 }
