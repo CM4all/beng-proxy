@@ -4,6 +4,9 @@ cm4all-beng-proxy (12.6) unstable; urgency=low
   * control: disable the "V6ONLY" flag on all IPv6 wildcard listeners
   * control: switch to IPv4 if joining IPv6 wildcard to IPv4 multicast group
   * lb: print the site name in access logs
+  * lb: fix request headers in access logger (affects
+    "ignore_localhost_200" and "User-Agent", "Referer", "Host",
+    "X-Forwarded-For")
 
  --   
 
