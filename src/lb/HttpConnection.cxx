@@ -213,9 +213,10 @@ SendResponse(HttpServerRequest &request,
  */
 
 inline void
-LbHttpConnection::PerRequest::Begin()
+LbHttpConnection::PerRequest::Begin(const HttpServerRequest &request)
 {
     start_time = std::chrono::steady_clock::now();
+    host = request.headers.Get("host");
     canonical_host = nullptr;
     site_name = nullptr;
 }
@@ -226,7 +227,7 @@ LbHttpConnection::HandleHttpRequest(HttpServerRequest &request,
 {
     ++instance.http_request_counter;
 
-    per_request.Begin();
+    per_request.Begin(request);
 
     if (!uri_path_verify_quick(request.uri)) {
         http_server_send_message(&request, HTTP_STATUS_BAD_REQUEST,

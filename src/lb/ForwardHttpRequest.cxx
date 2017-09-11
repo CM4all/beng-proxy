@@ -167,7 +167,9 @@ private:
             Destroy();
     }
 
-    const char *GetCanonicalHost() const;
+    const char *GetCanonicalHost() const {
+        return connection.per_request.GetCanonicalHost();
+    }
 
     sticky_hash_t GetStickyHash();
     sticky_hash_t GetHostHash() const;
@@ -225,14 +227,6 @@ send_fallback(HttpServerRequest &request,
 
     SendResponse(request, fallback);
     return true;
-}
-
-inline const char *
-LbRequest::GetCanonicalHost() const
-{
-    return connection.per_request.canonical_host != nullptr
-        ? connection.per_request.canonical_host
-        : request.headers.Get("host");
 }
 
 inline sticky_hash_t
