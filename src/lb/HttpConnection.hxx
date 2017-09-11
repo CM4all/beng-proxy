@@ -95,6 +95,14 @@ struct LbHttpConnection final
      */
     const char *canonical_host;
 
+    /**
+     * The name of the site being accessed by the current HTTP request
+     * (from #TRANSLATE_SITE).  This points to memory allocated by the
+     * request pool; it is a hack to allow the "log" callback to see
+     * this information.
+     */
+    const char *site_name;
+
     LbHttpConnection(struct pool &_pool, LbInstance &_instance,
                      const LbListenerConfig &_listener,
                      const LbGoto &_destination,

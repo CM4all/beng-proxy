@@ -68,6 +68,9 @@ lb_http_translate_response(TranslateResponse &response, void *ctx)
     auto &c = r.connection;
     auto &request = r.request;
 
+    if (response.site != nullptr)
+        r.connection.site_name = p_strdup(request.pool, response.site);
+
     if (response.https_only != 0 && !c.IsEncrypted()) {
         request.CheckCloseUnusedBody();
 

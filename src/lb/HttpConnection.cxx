@@ -220,6 +220,7 @@ LbHttpConnection::HandleHttpRequest(HttpServerRequest &request,
 
     request_start_time = std::chrono::steady_clock::now();
     canonical_host = nullptr;
+    site_name = nullptr;
 
     if (!uri_path_verify_quick(request.uri)) {
         request.CheckCloseUnusedBody();
@@ -271,7 +272,7 @@ LbHttpConnection::LogHttpRequest(HttpServerRequest &request,
                                  uint64_t bytes_received, uint64_t bytes_sent)
 {
     if (instance.access_log != nullptr)
-        instance.access_log->Log(request, nullptr,
+        instance.access_log->Log(request, site_name,
                                  request.headers.Get("referer"),
                                  request.headers.Get("user-agent"),
                                  status, length,
