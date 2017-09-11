@@ -95,6 +95,11 @@ struct LbHttpConnection final
         std::chrono::steady_clock::time_point start_time;
 
         /**
+         * The "Host" request header.
+         */
+        const char *host;
+
+        /**
          * The current request's canonical host name (from
          * #TRANSLATE_CANONICAL_HOST).
          */
@@ -107,7 +112,13 @@ struct LbHttpConnection final
          */
         const char *site_name;
 
-        void Begin();
+        void Begin(const HttpServerRequest &request);
+
+        constexpr const char *GetCanonicalHost() const {
+            return canonical_host != nullptr
+                ? canonical_host
+                : host;
+        }
 
         std::chrono::steady_clock::duration GetDuration() const {
             return std::chrono::steady_clock::now() - start_time;
