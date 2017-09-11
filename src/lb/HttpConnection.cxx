@@ -218,9 +218,7 @@ LbHttpConnection::HandleHttpRequest(HttpServerRequest &request,
 {
     ++instance.http_request_counter;
 
-    request_start_time = std::chrono::steady_clock::now();
-    canonical_host = nullptr;
-    site_name = nullptr;
+    per_request.Begin();
 
     if (!uri_path_verify_quick(request.uri)) {
         request.CheckCloseUnusedBody();
@@ -272,12 +270,12 @@ LbHttpConnection::LogHttpRequest(HttpServerRequest &request,
                                  uint64_t bytes_received, uint64_t bytes_sent)
 {
     if (instance.access_log != nullptr)
-        instance.access_log->Log(request, site_name,
+        instance.access_log->Log(request, per_request.site_name,
                                  request.headers.Get("referer"),
                                  request.headers.Get("user-agent"),
                                  status, length,
                                  bytes_received, bytes_sent,
-                                 std::chrono::steady_clock::now() - request_start_time);
+                                 per_request.GetDuration());
 }
 
 void

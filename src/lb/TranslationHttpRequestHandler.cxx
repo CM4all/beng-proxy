@@ -69,7 +69,8 @@ lb_http_translate_response(TranslateResponse &response, void *ctx)
     auto &request = r.request;
 
     if (response.site != nullptr)
-        r.connection.site_name = p_strdup(request.pool, response.site);
+        r.connection.per_request.site_name = p_strdup(request.pool,
+                                                      response.site);
 
     if (response.https_only != 0 && !c.IsEncrypted()) {
         request.CheckCloseUnusedBody();
@@ -113,7 +114,7 @@ lb_http_translate_response(TranslateResponse &response, void *ctx)
         }
 
         if (response.canonical_host != nullptr)
-            c.canonical_host = response.canonical_host;
+            c.per_request.canonical_host = response.canonical_host;
 
         c.HandleHttpRequest(*destination, request, r.cancel_ptr);
     } else {

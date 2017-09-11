@@ -82,26 +82,43 @@ struct LbHttpConnection final
     HttpServerConnection *http;
 
     /**
-     * The time stamp at the start of the request.  Used to calculate
-     * the request duration.
+     * Attributes which are specific to the current request.  They are
+     * only valid while a request is being handled (i.e. during the
+     * lifetime of the #HttpServerRequest instance).
      */
-    std::chrono::steady_clock::time_point request_start_time;
+    struct PerRequest {
+        /**
+         * The time stamp at the start of the request.  Used to calculate
+         * the request duration.
+         */
+        std::chrono::steady_clock::time_point start_time;
 
-    /**
-     * The current request's canonical host name (from
-     * #TRANSLATE_CANONICAL_HOST).  If set, then the string is
-     * allocated from the request pool, and is only valid for that one
-     * request.  It must be cleared each time a new request starts.
-     */
-    const char *canonical_host;
+        /**
+         * The current request's canonical host name (from
+         * #TRANSLATE_CANONICAL_HOST).  If set, then the string is
+         * allocated from the request pool, and is only valid for that one
+         * request.  It must be cleared each time a new request starts.
+         */
+        const char *canonical_host;
 
-    /**
-     * The name of the site being accessed by the current HTTP request
-     * (from #TRANSLATE_SITE).  This points to memory allocated by the
-     * request pool; it is a hack to allow the "log" callback to see
-     * this information.
-     */
-    const char *site_name;
+        /**
+         * The name of the site being accessed by the current HTTP request
+         * (from #TRANSLATE_SITE).  This points to memory allocated by the
+         * request pool; it is a hack to allow the "log" callback to see
+         * this information.
+         */
+        const char *site_name;
+
+        void Begin() {
+            start_time = std::chrono::steady_clock::now();
+            canonical_host = nullptr;
+            site_name = nullptr;
+        }
+
+        std::chrono::steady_clock::duration GetDuration() const {
+            return std::chrono::steady_clock::now() - start_time;
+        }
+    } per_request;
 
     LbHttpConnection(struct pool &_pool, LbInstance &_instance,
                      const LbListenerConfig &_listener,

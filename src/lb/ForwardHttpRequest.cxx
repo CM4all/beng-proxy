@@ -230,8 +230,8 @@ send_fallback(HttpServerRequest &request,
 inline const char *
 LbRequest::GetCanonicalHost() const
 {
-    return connection.canonical_host != nullptr
-        ? connection.canonical_host
+    return connection.per_request.canonical_host != nullptr
+        ? connection.per_request.canonical_host
         : request.headers.Get("host");
 }
 
