@@ -217,6 +217,9 @@ LbHttpConnection::PerRequest::Begin(const HttpServerRequest &request)
 {
     start_time = std::chrono::steady_clock::now();
     host = request.headers.Get("host");
+    x_forwarded_for = request.headers.Get("x-forwarded-for");
+    referer = request.headers.Get("referer");
+    user_agent = request.headers.Get("user-agent");
     canonical_host = nullptr;
     site_name = nullptr;
 }
@@ -278,8 +281,10 @@ LbHttpConnection::LogHttpRequest(HttpServerRequest &request,
 {
     if (instance.access_log != nullptr)
         instance.access_log->Log(request, per_request.site_name,
-                                 request.headers.Get("referer"),
-                                 request.headers.Get("user-agent"),
+                                 per_request.host,
+                                 per_request.x_forwarded_for,
+                                 per_request.referer,
+                                 per_request.user_agent,
                                  status, length,
                                  bytes_received, bytes_sent,
                                  per_request.GetDuration());

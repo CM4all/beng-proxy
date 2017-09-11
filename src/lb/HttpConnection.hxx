@@ -86,6 +86,11 @@ struct LbHttpConnection final
      * only valid while a request is being handled (i.e. during the
      * lifetime of the #HttpServerRequest instance).  Strings are
      * allocated from the request pool.
+     *
+     * The request header pointers are here because our
+     * http_client_request() call invalidates the original request
+     * header StringMap instance, but after that, the access logger
+     * needs these header values.
      */
     struct PerRequest {
         /**
@@ -98,6 +103,21 @@ struct LbHttpConnection final
          * The "Host" request header.
          */
         const char *host;
+
+        /**
+         * The "X-Forwarded-For" request header.
+         */
+        const char *x_forwarded_for;
+
+        /**
+         * The "Referer" [sic] request header.
+         */
+        const char *referer;
+
+        /**
+         * The "User-Agent" request header.
+         */
+        const char *user_agent;
 
         /**
          * The current request's canonical host name (from
