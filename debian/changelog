@@ -4,7 +4,7 @@ cm4all-beng-proxy (13.0.3) unstable; urgency=low
   * lb: print the site name in access logs
   * log: add attribute MESSAGE
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Mon, 11 Sep 2017 17:43:57 -0000
 
 cm4all-beng-proxy (13.0.2) unstable; urgency=low
 
