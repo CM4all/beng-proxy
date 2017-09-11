@@ -101,7 +101,7 @@ struct LbHttpConnection final
      * request pool; it is a hack to allow the "log" callback to see
      * this information.
      */
-    const char *site_name = nullptr;
+    const char *site_name;
 
     LbHttpConnection(struct pool &_pool, LbInstance &_instance,
                      const LbListenerConfig &_listener,
