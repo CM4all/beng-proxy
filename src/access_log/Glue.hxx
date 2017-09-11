@@ -78,6 +78,13 @@ public:
      * overhead such as chunk headers)
      */
     void Log(HttpServerRequest &request, const char *site,
+             const char *host, const char *x_forwarded_for,
+             const char *referer, const char *user_agent,
+             http_status_t status, int64_t length,
+             uint64_t bytes_received, uint64_t bytes_sent,
+             std::chrono::steady_clock::duration duration);
+
+    void Log(HttpServerRequest &request, const char *site,
              const char *referer, const char *user_agent,
              http_status_t status, int64_t length,
              uint64_t bytes_received, uint64_t bytes_sent,
