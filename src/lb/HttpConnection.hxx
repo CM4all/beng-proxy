@@ -107,11 +107,7 @@ struct LbHttpConnection final
          */
         const char *site_name;
 
-        void Begin() {
-            start_time = std::chrono::steady_clock::now();
-            canonical_host = nullptr;
-            site_name = nullptr;
-        }
+        void Begin();
 
         std::chrono::steady_clock::duration GetDuration() const {
             return std::chrono::steady_clock::now() - start_time;
