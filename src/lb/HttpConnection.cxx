@@ -212,6 +212,14 @@ SendResponse(HttpServerRequest &request,
  *
  */
 
+inline void
+LbHttpConnection::PerRequest::Begin()
+{
+    start_time = std::chrono::steady_clock::now();
+    canonical_host = nullptr;
+    site_name = nullptr;
+}
+
 void
 LbHttpConnection::HandleHttpRequest(HttpServerRequest &request,
                                     CancellablePointer &cancel_ptr)
