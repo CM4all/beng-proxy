@@ -84,7 +84,8 @@ struct LbHttpConnection final
     /**
      * Attributes which are specific to the current request.  They are
      * only valid while a request is being handled (i.e. during the
-     * lifetime of the #HttpServerRequest instance).
+     * lifetime of the #HttpServerRequest instance).  Strings are
+     * allocated from the request pool.
      */
     struct PerRequest {
         /**
@@ -95,17 +96,14 @@ struct LbHttpConnection final
 
         /**
          * The current request's canonical host name (from
-         * #TRANSLATE_CANONICAL_HOST).  If set, then the string is
-         * allocated from the request pool, and is only valid for that one
-         * request.  It must be cleared each time a new request starts.
+         * #TRANSLATE_CANONICAL_HOST).
          */
         const char *canonical_host;
 
         /**
-         * The name of the site being accessed by the current HTTP request
-         * (from #TRANSLATE_SITE).  This points to memory allocated by the
-         * request pool; it is a hack to allow the "log" callback to see
-         * this information.
+         * The name of the site being accessed by the current HTTP
+         * request (from #TRANSLATE_SITE).  It is a hack to allow the
+         * "log" callback to see this information.
          */
         const char *site_name;
 
