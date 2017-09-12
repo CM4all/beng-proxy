@@ -1117,6 +1117,7 @@ executable('cm4all-certdb',
 
 executable('cm4all-beng-proxy-log-cat',
   'src/access_log/Server.cxx',
+  'src/access_log/Parser.cxx',
   'src/access_log/OneLine.cxx',
   'src/access_log/Cat.cxx',
   include_directories: inc,
@@ -1126,6 +1127,7 @@ executable('cm4all-beng-proxy-log-cat',
 
 executable('cm4all-beng-proxy-log-json',
   'src/access_log/Server.cxx',
+  'src/access_log/Parser.cxx',
   'src/access_log/Json.cxx',
   include_directories: inc,
   dependencies: [
@@ -1136,6 +1138,7 @@ executable('cm4all-beng-proxy-log-json',
 
 executable('cm4all-beng-proxy-log-lua',
   'src/access_log/Server.cxx',
+  'src/access_log/Parser.cxx',
   'src/access_log/Lua.cxx',
   include_directories: inc,
   dependencies: [
@@ -1148,6 +1151,7 @@ executable('cm4all-beng-proxy-log-lua',
 
 executable('cm4all-beng-proxy-log-traffic',
   'src/access_log/Server.cxx',
+  'src/access_log/Parser.cxx',
   'src/access_log/Traffic.cxx',
   include_directories: inc,
   dependencies: [
@@ -1156,6 +1160,7 @@ executable('cm4all-beng-proxy-log-traffic',
 
 executable('cm4all-beng-proxy-log-split',
   'src/access_log/Server.cxx',
+  'src/access_log/Parser.cxx',
   'src/access_log/OneLine.cxx',
   'src/access_log/Split.cxx',
   include_directories: inc,
