@@ -3,7 +3,7 @@ cm4all-beng-proxy (12.4) unstable; urgency=low
   * lb/http: fix several memory leaks with POST requests
   * fix crash bug in CSS processor
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Wed, 13 Sep 2017 13:58:06 -0000
 
 cm4all-beng-proxy (12.3) unstable; urgency=low
 
