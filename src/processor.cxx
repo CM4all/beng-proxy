@@ -593,7 +593,7 @@ processor_processing_instruction(XmlProcessor *processor,
 {
     if (!processor->IsQuiet() &&
         processor->HasOptionRewriteUrl() &&
-        name.EqualsLiteral("cm4all-rewrite-uri")) {
+        name.Equals("cm4all-rewrite-uri")) {
         processor->InitUriRewrite(TAG_REWRITE_URI);
         return true;
     }
@@ -612,21 +612,21 @@ parser_element_start_in_widget(XmlProcessor *processor,
     if (name.StartsWith({"c:", 2}))
         name.skip_front(2);
 
-    if (name.EqualsLiteral("widget")) {
+    if (name.Equals("widget")) {
         if (type == XmlParserTagType::CLOSE)
             processor->tag = TAG_WIDGET;
-    } else if (name.EqualsLiteral("path-info")) {
+    } else if (name.Equals("path-info")) {
         processor->tag = TAG_WIDGET_PATH_INFO;
-    } else if (name.EqualsLiteral("param") ||
-               name.EqualsLiteral("parameter")) {
+    } else if (name.Equals("param") ||
+               name.Equals("parameter")) {
         processor->tag = TAG_WIDGET_PARAM;
         processor->widget.param.name.Clear();
         processor->widget.param.value.Clear();
-    } else if (name.EqualsLiteral("header")) {
+    } else if (name.Equals("header")) {
         processor->tag = TAG_WIDGET_HEADER;
         processor->widget.param.name.Clear();
         processor->widget.param.value.Clear();
-    } else if (name.EqualsLiteral("view")) {
+    } else if (name.Equals("view")) {
         processor->tag = TAG_WIDGET_VIEW;
     } else {
         processor->tag = TAG_IGNORE;
@@ -643,7 +643,7 @@ XmlProcessor::OnXmlTagStart(const XmlParserTag &xml_tag)
 
     StopCdataIstream();
 
-    if (tag == TAG_SCRIPT && !xml_tag.name.EqualsLiteralIgnoreCase("script"))
+    if (tag == TAG_SCRIPT && !xml_tag.name.EqualsIgnoreCase("script"))
         /* workaround for bugged scripts: ignore all closing tags
            except </SCRIPT> */
         return false;
@@ -657,7 +657,7 @@ XmlProcessor::OnXmlTagStart(const XmlParserTag &xml_tag)
     if (xml_tag.type == XmlParserTagType::PI)
         return processor_processing_instruction(this, xml_tag.name);
 
-    if (xml_tag.name.EqualsLiteral("c:widget")) {
+    if (xml_tag.name.Equals("c:widget")) {
         if ((options & PROCESSOR_CONTAINER) == 0 ||
             global_translate_cache == nullptr)
             return false;
@@ -674,40 +674,40 @@ XmlProcessor::OnXmlTagStart(const XmlParserTag &xml_tag)
         widget.widget->parent = &container;
 
         return true;
-    } else if (xml_tag.name.EqualsLiteralIgnoreCase("script")) {
+    } else if (xml_tag.name.EqualsIgnoreCase("script")) {
         InitUriRewrite(TAG_SCRIPT);
         return true;
     } else if (!IsQuiet() && HasOptionStyle() &&
-               xml_tag.name.EqualsLiteralIgnoreCase("style")) {
+               xml_tag.name.EqualsIgnoreCase("style")) {
         tag = TAG_STYLE;
         return true;
     } else if (!IsQuiet() && HasOptionRewriteUrl()) {
-        if (xml_tag.name.EqualsLiteralIgnoreCase("a")) {
+        if (xml_tag.name.EqualsIgnoreCase("a")) {
             InitUriRewrite(TAG_A);
             return true;
-        } else if (xml_tag.name.EqualsLiteralIgnoreCase("link")) {
+        } else if (xml_tag.name.EqualsIgnoreCase("link")) {
             /* this isn't actually an anchor, but we are only interested in
                the HREF attribute */
             InitUriRewrite(TAG_A);
             return true;
-        } else if (xml_tag.name.EqualsLiteralIgnoreCase("form")) {
+        } else if (xml_tag.name.EqualsIgnoreCase("form")) {
             InitUriRewrite(TAG_FORM);
             return true;
-        } else if (xml_tag.name.EqualsLiteralIgnoreCase("img")) {
+        } else if (xml_tag.name.EqualsIgnoreCase("img")) {
             InitUriRewrite(TAG_IMG);
             return true;
-        } else if (xml_tag.name.EqualsLiteralIgnoreCase("iframe") ||
-                   xml_tag.name.EqualsLiteralIgnoreCase("embed") ||
-                   xml_tag.name.EqualsLiteralIgnoreCase("video") ||
-                   xml_tag.name.EqualsLiteralIgnoreCase("audio")) {
+        } else if (xml_tag.name.EqualsIgnoreCase("iframe") ||
+                   xml_tag.name.EqualsIgnoreCase("embed") ||
+                   xml_tag.name.EqualsIgnoreCase("video") ||
+                   xml_tag.name.EqualsIgnoreCase("audio")) {
             /* this isn't actually an IMG, but we are only interested
                in the SRC attribute */
             InitUriRewrite(TAG_IMG);
             return true;
-        } else if (xml_tag.name.EqualsLiteralIgnoreCase("param")) {
+        } else if (xml_tag.name.EqualsIgnoreCase("param")) {
             InitUriRewrite(TAG_PARAM);
             return true;
-        } else if (xml_tag.name.EqualsLiteralIgnoreCase("meta")) {
+        } else if (xml_tag.name.EqualsIgnoreCase("meta")) {
             InitUriRewrite(TAG_META);
             return true;
         } else if (HasOptionPrefixAny()) {
@@ -828,22 +828,22 @@ static void
 parser_widget_attr_finished(Widget *widget,
                             StringView name, StringView value)
 {
-    if (name.EqualsLiteral("type")) {
+    if (name.Equals("type")) {
         widget->SetClassName(value);
-    } else if (name.EqualsLiteral("id")) {
+    } else if (name.Equals("id")) {
         if (!value.IsEmpty())
             widget->SetId(value);
-    } else if (name.EqualsLiteral("display")) {
-        if (value.EqualsLiteral("inline"))
+    } else if (name.Equals("display")) {
+        if (value.Equals("inline"))
             widget->display = Widget::Display::INLINE;
-        else if (value.EqualsLiteral("none"))
+        else if (value.Equals("none"))
             widget->display = Widget::Display::NONE;
         else
             widget->display = Widget::Display::NONE;
-    } else if (name.EqualsLiteral("session")) {
-        if (value.EqualsLiteral("resource"))
+    } else if (name.Equals("session")) {
+        if (value.Equals("resource"))
             widget->session_scope = Widget::SessionScope::RESOURCE;
-        else if (value.EqualsLiteral("site"))
+        else if (value.Equals("site"))
             widget->session_scope = Widget::SessionScope::SITE;
     }
 }
@@ -852,11 +852,11 @@ gcc_pure
 static enum uri_base
 parse_uri_base(StringView s)
 {
-    if (s.EqualsLiteral("widget"))
+    if (s.Equals("widget"))
         return URI_BASE_WIDGET;
-    else if (s.EqualsLiteral("child"))
+    else if (s.Equals("child"))
         return URI_BASE_CHILD;
-    else if (s.EqualsLiteral("parent"))
+    else if (s.Equals("parent"))
         return URI_BASE_PARENT;
     else
         return URI_BASE_TEMPLATE;
@@ -865,7 +865,7 @@ parse_uri_base(StringView s)
 inline bool
 XmlProcessor::LinkAttributeFinished(const XmlParserAttribute &attr)
 {
-    if (attr.name.EqualsLiteral("c:base")) {
+    if (attr.name.Equals("c:base")) {
         uri_rewrite.base = parse_uri_base(attr.value);
 
         if (tag != TAG_REWRITE_URI)
@@ -873,7 +873,7 @@ XmlProcessor::LinkAttributeFinished(const XmlParserAttribute &attr)
         return true;
     }
 
-    if (attr.name.EqualsLiteral("c:mode")) {
+    if (attr.name.Equals("c:mode")) {
         uri_rewrite.mode = parse_uri_mode(attr.value);
 
         if (tag != TAG_REWRITE_URI)
@@ -881,7 +881,7 @@ XmlProcessor::LinkAttributeFinished(const XmlParserAttribute &attr)
         return true;
     }
 
-    if (attr.name.EqualsLiteral("c:view") &&
+    if (attr.name.Equals("c:view") &&
         attr.value.size < sizeof(uri_rewrite.view)) {
         memcpy(uri_rewrite.view,
                attr.value.data, attr.value.size);
@@ -893,7 +893,7 @@ XmlProcessor::LinkAttributeFinished(const XmlParserAttribute &attr)
         return true;
     }
 
-    if (attr.name.EqualsLiteral("xmlns:c")) {
+    if (attr.name.Equals("xmlns:c")) {
         /* delete "xmlns:c" attributes */
         if (tag != TAG_REWRITE_URI)
             DeleteUriRewrite(attr.name_start, attr.end);
@@ -1054,8 +1054,8 @@ XmlProcessor::OnXmlAttributeFinished(const XmlParserAttribute &attr)
 
     if (!IsQuiet() &&
         tag == TAG_META &&
-        attr.name.EqualsLiteralIgnoreCase("http-equiv") &&
-        attr.value.EqualsLiteralIgnoreCase("refresh")) {
+        attr.name.EqualsIgnoreCase("http-equiv") &&
+        attr.value.EqualsIgnoreCase("refresh")) {
         /* morph TAG_META to TAG_META_REFRESH */
         tag = TAG_META_REFRESH;
         return;
@@ -1066,7 +1066,7 @@ XmlProcessor::OnXmlAttributeFinished(const XmlParserAttribute &attr)
            we cannot edit attributes followed by a URI attribute */
         !postponed_rewrite.pending &&
         is_html_tag(tag) &&
-        attr.name.EqualsLiteral("class")) {
+        attr.name.Equals("class")) {
         HandleClassAttribute(attr);
         return;
     }
@@ -1077,8 +1077,7 @@ XmlProcessor::OnXmlAttributeFinished(const XmlParserAttribute &attr)
            we cannot edit attributes followed by a URI attribute */
         !postponed_rewrite.pending &&
         is_html_tag(tag) &&
-        (attr.name.EqualsLiteral("id") ||
-         attr.name.EqualsLiteral("for"))) {
+        (attr.name.Equals("id") || attr.name.Equals("for"))) {
         HandleIdAttribute(attr);
         return;
     }
@@ -1088,7 +1087,7 @@ XmlProcessor::OnXmlAttributeFinished(const XmlParserAttribute &attr)
            we cannot edit attributes followed by a URI attribute */
         !postponed_rewrite.pending &&
         is_html_tag(tag) &&
-        attr.name.EqualsLiteral("style")) {
+        attr.name.Equals("style")) {
         HandleStyleAttribute(attr);
         return;
     }
@@ -1110,9 +1109,9 @@ XmlProcessor::OnXmlAttributeFinished(const XmlParserAttribute &attr)
     case TAG_WIDGET_HEADER:
         assert(widget.widget != nullptr);
 
-        if (attr.name.EqualsLiteral("name")) {
+        if (attr.name.Equals("name")) {
             widget.param.name.Set(attr.value);
-        } else if (attr.name.EqualsLiteral("value")) {
+        } else if (attr.name.Equals("value")) {
             widget.param.value.Set(attr.value);
         }
 
@@ -1121,7 +1120,7 @@ XmlProcessor::OnXmlAttributeFinished(const XmlParserAttribute &attr)
     case TAG_WIDGET_PATH_INFO:
         assert(widget.widget != nullptr);
 
-        if (attr.name.EqualsLiteral("value"))
+        if (attr.name.Equals("value"))
             widget.widget->from_template.path_info
                 = p_strdup(widget.pool, attr.value);
 
@@ -1130,7 +1129,7 @@ XmlProcessor::OnXmlAttributeFinished(const XmlParserAttribute &attr)
     case TAG_WIDGET_VIEW:
         assert(widget.widget != nullptr);
 
-        if (attr.name.EqualsLiteral("name")) {
+        if (attr.name.Equals("name")) {
             if (attr.value.IsEmpty()) {
                 daemon_log(2, "empty view name\n");
                 return;
@@ -1143,41 +1142,41 @@ XmlProcessor::OnXmlAttributeFinished(const XmlParserAttribute &attr)
         break;
 
     case TAG_IMG:
-        if (attr.name.EqualsLiteralIgnoreCase("src"))
+        if (attr.name.EqualsIgnoreCase("src"))
             PostponeUriRewrite(attr);
         break;
 
     case TAG_A:
-        if (attr.name.EqualsLiteralIgnoreCase("href")) {
+        if (attr.name.EqualsIgnoreCase("href")) {
             if (!attr.value.StartsWith({"#", 1}) &&
                 !attr.value.StartsWith({"javascript:", 11}))
                 PostponeUriRewrite(attr);
         } else if (IsQuiet() &&
                    HasOptionPrefixId() &&
-                   attr.name.EqualsLiteralIgnoreCase("name"))
+                   attr.name.EqualsIgnoreCase("name"))
             HandleIdAttribute(attr);
 
         break;
 
     case TAG_FORM:
-        if (attr.name.EqualsLiteralIgnoreCase("action"))
+        if (attr.name.EqualsIgnoreCase("action"))
             PostponeUriRewrite(attr);
         break;
 
     case TAG_SCRIPT:
         if (!IsQuiet() &&
             HasOptionRewriteUrl() &&
-            attr.name.EqualsLiteralIgnoreCase("src"))
+            attr.name.EqualsIgnoreCase("src"))
             PostponeUriRewrite(attr);
         break;
 
     case TAG_PARAM:
-        if (attr.name.EqualsLiteral("value"))
+        if (attr.name.Equals("value"))
             PostponeUriRewrite(attr);
         break;
 
     case TAG_META_REFRESH:
-        if (attr.name.EqualsLiteralIgnoreCase("content"))
+        if (attr.name.EqualsIgnoreCase("content"))
             PostponeRefreshRewrite(attr);
         break;
 

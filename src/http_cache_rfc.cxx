@@ -96,10 +96,10 @@ http_cache_request_evaluate(HttpCacheRequestInfo &info,
         StringView cc = p, s;
 
         while (!(s = next_item(cc)).IsNull()) {
-            if (s.EqualsLiteral("no-cache") || s.EqualsLiteral("no-store"))
+            if (s.Equals("no-cache") || s.Equals("no-store"))
                 return false;
 
-            if (s.EqualsLiteral("only-if-cached"))
+            if (s.Equals("only-if-cached"))
                 info.only_if_cached = true;
         }
     } else {
@@ -205,8 +205,7 @@ http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
 
         while (!(s = next_item(cc)).IsNull()) {
             if (s.StartsWith("private") ||
-                s.EqualsLiteral("no-cache") ||
-                s.EqualsLiteral("no-store"))
+                s.Equals("no-cache") || s.Equals("no-store"))
                 return false;
 
             if (s.StartsWith({"max-age=", 8})) {

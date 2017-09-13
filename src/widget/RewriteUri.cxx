@@ -58,13 +58,13 @@
 enum uri_mode
 parse_uri_mode(const StringView s)
 {
-    if (s.EqualsLiteral("direct"))
+    if (s.Equals("direct"))
         return URI_MODE_DIRECT;
-    else if (s.EqualsLiteral("focus"))
+    else if (s.Equals("focus"))
         return URI_MODE_FOCUS;
-    else if (s.EqualsLiteral("partial"))
+    else if (s.Equals("partial"))
         return URI_MODE_PARTIAL;
-    else if (s.EqualsLiteral("response"))
+    else if (s.Equals("response"))
         return URI_MODE_RESPONSE;
     else
         return URI_MODE_PARTIAL;
