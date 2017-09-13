@@ -312,7 +312,7 @@ ReplaceIstream::ReadFromBuffer(size_t max_length)
 
     auto src = buffer.Read();
     assert(!src.IsNull());
-    assert(!src.IsEmpty());
+    assert(!src.empty());
 
     if (src.size > max_length)
         src.size = max_length;

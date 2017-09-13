@@ -210,7 +210,7 @@ http_cache_choice_buffer_done(void *data0, size_t length, void *ctx)
 
     ConstBuffer<void> data(data0, length);
 
-    while (!data.IsEmpty()) {
+    while (!data.empty()) {
         magic = deserialize_uint32(data);
         if (magic != CHOICE_MAGIC)
             break;
@@ -483,7 +483,7 @@ http_cache_choice_filter_buffer_done(void *data0, size_t length, void *ctx)
     ConstBuffer<void> data(data0, length);
     char *dest = (char *)data0;
 
-    while (!data.IsEmpty()) {
+    while (!data.empty()) {
         const void *current = data.data;
 
         const uint32_t magic = deserialize_uint32(data);

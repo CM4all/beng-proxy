@@ -125,7 +125,7 @@ LastListItem(StringView list)
     const char *comma = (const char *)memrchr(list.data, ',', list.size);
     if (comma == nullptr) {
         list.Strip();
-        if (list.IsEmpty())
+        if (list.empty())
             return std::make_pair(nullptr, nullptr);
 
         return std::make_pair("", list);
@@ -154,7 +154,7 @@ GetRealRemoteHost(const char *xff, const std::set<std::string> &trust)
 
     while (true) {
         auto l = LastListItem(list);
-        if (l.second.IsEmpty())
+        if (l.second.empty())
             /* list finished; return the last good address (even if
                it's a trusted proxy) */
             return result;

@@ -93,7 +93,7 @@ fb_read(BIO *b, char *out, int outl)
 #endif
 
     auto r = fb.buffer.Read();
-    if (r.IsEmpty()) {
+    if (r.empty()) {
         BIO_set_retry_read(b);
         return -1;
     }
@@ -137,7 +137,7 @@ fb_write(BIO *b, const char *in, int inl)
 #endif
 
     auto w = fb.buffer.Write();
-    if (w.IsEmpty()) {
+    if (w.empty()) {
         BIO_set_retry_write(b);
         return -1;
     }

@@ -300,7 +300,7 @@ Request::ApplyTranslateSession(const TranslateResponse &response)
     auto session = GetRealmSession();
 
     if (!response.session.IsNull()) {
-        if (response.session.IsEmpty()) {
+        if (response.session.empty()) {
             /* clear translate session */
 
             if (session)

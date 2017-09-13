@@ -46,7 +46,7 @@ widget_ref_parse(struct pool *pool, const char *_p)
         return nullptr;
 
     for (auto id : IterableSplitString(_p, WIDGET_REF_SEPARATOR)) {
-        if (id.IsEmpty())
+        if (id.empty())
             continue;
 
         auto wr = NewFromPool<struct widget_ref>(*pool);

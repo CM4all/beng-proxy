@@ -50,7 +50,7 @@ static StringView
 next_item(StringView &s)
 {
     s.StripLeft();
-    if (s.IsEmpty())
+    if (s.empty())
         return nullptr;
 
     StringView result;

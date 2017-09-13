@@ -281,7 +281,7 @@ SubstIstream::FeedMismatch()
 {
     assert(state == STATE_NONE);
     assert(input.IsDefined());
-    assert(!mismatch.IsEmpty());
+    assert(!mismatch.empty());
 
     if (send_first) {
         const size_t nbytes = InvokeData(mismatch.data, 1);
@@ -290,7 +290,7 @@ SubstIstream::FeedMismatch()
 
         mismatch.skip_front(1);
 
-        if (mismatch.IsEmpty())
+        if (mismatch.empty())
             return false;
 
         send_first = false;
@@ -306,14 +306,14 @@ SubstIstream::FeedMismatch()
 
     mismatch.skip_front(nbytes);
 
-    return !mismatch.IsEmpty();
+    return !mismatch.empty();
 }
 
 bool
 SubstIstream::WriteMismatch()
 {
     assert(!input.IsDefined() || state == STATE_NONE);
-    assert(!mismatch.IsEmpty());
+    assert(!mismatch.empty());
 
     size_t nbytes = InvokeData(mismatch.data, mismatch.size);
     if (nbytes == 0)
@@ -323,7 +323,7 @@ SubstIstream::WriteMismatch()
 
     mismatch.skip_front(nbytes);
 
-    if (!mismatch.IsEmpty())
+    if (!mismatch.empty())
         return true;
 
     if (!input.IsDefined()) {
@@ -455,13 +455,13 @@ SubstIstream::Feed(const void *_data, size_t length)
                 /* mismatch. reset match indicator and find new one */
 
                 if (first != nullptr && (first > data ||
-                                         !mismatch.IsEmpty())) {
+                                         !mismatch.empty())) {
                     /* write the data chunk before the (mis-)match */
 
                     had_output = true;
 
                     size_t chunk_length = first - data;
-                    if (!mismatch.IsEmpty())
+                    if (!mismatch.empty())
                         ++chunk_length;
 
                     const size_t nbytes =
@@ -472,7 +472,7 @@ SubstIstream::Feed(const void *_data, size_t length)
                     /* when re-parsing a mismatch, "first" must not be
                        nullptr because we entered this function with
                        state=STATE_NONE */
-                    assert(mismatch.IsEmpty());
+                    assert(mismatch.empty());
                 }
 
                 /* move data pointer */
@@ -488,7 +488,7 @@ SubstIstream::Feed(const void *_data, size_t length)
 
                 state = STATE_NONE;
 
-                if (mismatch.IsEmpty()) {
+                if (mismatch.empty()) {
                     send_first = true;
 
                     node = subst_find_any_leaf(match);
@@ -555,7 +555,7 @@ SubstIstream::Feed(const void *_data, size_t length)
 inline size_t
 SubstIstream::OnData(const void *data, size_t length)
 {
-    if (!mismatch.IsEmpty() && FeedMismatch())
+    if (!mismatch.empty() && FeedMismatch())
         return 0;
 
     const ScopePoolRef ref(GetPool() TRACE_ARGS);
@@ -582,7 +582,7 @@ SubstIstream::OnEof()
         /* we're in the middle of a match, technically making this a
            mismatch because we reach end of file before end of
            match */
-        if (mismatch.IsEmpty()) {
+        if (mismatch.empty()) {
             const SubstNode *node = subst_find_any_leaf(match);
             assert(node != nullptr);
             assert(node->ch == 0);
@@ -625,7 +625,7 @@ SubstIstream::OnError(std::exception_ptr ep)
 void
 SubstIstream::_Read()
 {
-    if (!mismatch.IsEmpty()) {
+    if (!mismatch.empty()) {
         bool ret = input.IsDefined()
             ? FeedMismatch()
             : WriteMismatch();

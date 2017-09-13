@@ -113,7 +113,7 @@ void
 Widget::SetId(const StringView _id)
 {
     assert(parent != nullptr);
-    assert(!_id.IsEmpty());
+    assert(!_id.empty());
 
     id = p_strdup(pool, _id);
 

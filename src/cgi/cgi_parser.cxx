@@ -87,7 +87,7 @@ CGIParser::FeedHeaders(struct pool &pool, ForeignFifoBuffer<uint8_t> &buffer)
     assert(!AreHeadersFinished());
 
     auto r = buffer.Read();
-    if (r.IsEmpty())
+    if (r.empty())
         return Completion::MORE;
 
     const char *data = (const char *)r.data;

@@ -80,7 +80,7 @@ header_parse_buffer(struct pool &pool, StringMap &headers,
 
         if (gb != nullptr) {
             auto w = buffer.Write();
-            if (!w.IsEmpty()) {
+            if (!w.empty()) {
                 auto src = reader.Read();
                 if (!src.IsNull()) {
                     size_t nbytes = std::min(src.size, w.size);
@@ -95,7 +95,7 @@ header_parse_buffer(struct pool &pool, StringMap &headers,
         /* parse lines from the buffer */
 
         auto r = buffer.Read();
-        if (r.IsEmpty() && gb == nullptr)
+        if (r.empty() && gb == nullptr)
             break;
 
         const char *const src = (const char *)r.data;

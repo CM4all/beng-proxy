@@ -151,7 +151,7 @@ Session::ClearTranslate()
 {
     assert(crash_in_unsafe());
 
-    if (!translate.IsEmpty()) {
+    if (!translate.empty()) {
         d_free(pool, translate.data);
         translate = nullptr;
     }

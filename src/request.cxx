@@ -67,7 +67,7 @@ Request::ParseArgs()
 {
     assert(args == nullptr);
 
-    if (uri.args.IsEmpty()) {
+    if (uri.args.empty()) {
         args = nullptr;
         translate.request.param = nullptr;
         translate.request.session = nullptr;

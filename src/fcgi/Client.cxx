@@ -883,7 +883,7 @@ FcgiClient::_ConsumeBucketList(size_t nbytes)
 
         if (skip_length > 0) {
             const auto b = socket.ReadBuffer();
-            if (b.IsEmpty())
+            if (b.empty())
                 break;
 
             size_t consumed = std::min(b.size, skip_length);

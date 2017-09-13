@@ -131,7 +131,7 @@ BufferedSocket::InvokeData()
 
     while (true) {
         auto r = input.Read();
-        if (r.IsEmpty())
+        if (r.empty())
             return expect_more || local_expect_more
                 ? BufferedResult::MORE
                 : BufferedResult::OK;

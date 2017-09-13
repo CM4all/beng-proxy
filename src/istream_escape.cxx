@@ -82,7 +82,7 @@ public:
     void OnEof() override {
         ClearInput();
 
-        if (escaped.IsEmpty())
+        if (escaped.empty())
             DestroyEof();
     }
 
@@ -95,14 +95,14 @@ public:
 bool
 EscapeIstream::SendEscaped()
 {
-    assert(!escaped.IsEmpty());
+    assert(!escaped.empty());
 
     size_t nbytes = InvokeData(escaped.data, escaped.size);
     if (nbytes == 0)
         return false;
 
     escaped.skip_front(nbytes);
-    if (!escaped.IsEmpty())
+    if (!escaped.empty())
         return false;
 
     if (!HasInput()) {
@@ -123,7 +123,7 @@ EscapeIstream::OnData(const void *data0, size_t length)
 {
     const char *data = (const char *)data0;
 
-    if (!escaped.IsEmpty() && !SendEscaped())
+    if (!escaped.empty() && !SendEscaped())
         return 0;
 
     size_t total = 0;
@@ -186,7 +186,7 @@ EscapeIstream::OnData(const void *data0, size_t length)
 void
 EscapeIstream::_Read()
 {
-    if (!escaped.IsEmpty() && !SendEscaped())
+    if (!escaped.empty() && !SendEscaped())
         return;
 
     input.Read();

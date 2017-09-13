@@ -104,7 +104,7 @@ IconvIstream::Feed(const char *data, size_t length)
 
     do {
         auto w = buffer.Write();
-        if (w.IsEmpty()) {
+        if (w.empty()) {
             /* no space left in the buffer: attempt to flush it */
 
             size_t nbytes = SendFromBuffer(buffer);

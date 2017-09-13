@@ -660,7 +660,7 @@ tcache_request_key(struct pool &pool, const TranslateRequest &request)
                          request.directory_index,
                          request.file_not_found,
                          request.read_file,
-                         !request.want.IsEmpty())
+                         !request.want.empty())
         : request.widget_type;
 }
 
@@ -783,7 +783,7 @@ tcache_store_response(struct pool &pool, TranslateResponse &dest,
                          request.directory_index,
                          request.file_not_found,
                          request.read_file,
-                         !request.want.IsEmpty())
+                         !request.want.empty())
         /* no BASE, cache key unmodified */
         : nullptr;
 }
@@ -1280,7 +1280,7 @@ tcache_handler_response(TranslateResponse &response, void *ctx)
     TranslateCacheRequest &tcr = *(TranslateCacheRequest *)ctx;
     tcr.tcache->active = true;
 
-    if (!response.invalidate.IsEmpty())
+    if (!response.invalidate.empty())
         translate_cache_invalidate(*tcr.tcache, tcr.request,
                                    response.invalidate,
                                    nullptr);

@@ -91,13 +91,13 @@ parse_next_cookie(struct dpool &pool, StringView &input)
 {
     StringView name, value;
     cookie_next_name_value(*tpool, input, name, value, false);
-    if (name.IsEmpty())
+    if (name.empty())
         return nullptr;
 
     auto *cookie = NewFromPool<Cookie>(pool, pool, name, value);
 
     input.StripLeft();
-    while (!input.IsEmpty() && input.front() == ';') {
+    while (!input.empty() && input.front() == ';') {
         input.pop_front();
 
         http_next_name_value(*tpool, input, name, value);
@@ -177,7 +177,7 @@ try {
         if (!apply_next_cookie(jar, input, domain, path))
             break;
 
-        if (input.IsEmpty())
+        if (input.empty())
             return;
 
         if (input.front() != ',')

@@ -153,7 +153,7 @@ ssl_decrypt(SSL *ssl, ForeignFifoBuffer<uint8_t> &buffer)
 
     while (true) {
         auto w = buffer.Write();
-        if (w.IsEmpty())
+        if (w.empty())
             return SslDecryptResult::SUCCESS;
 
         int result = SSL_read(ssl, w.data, w.size);
@@ -177,7 +177,7 @@ static void
 ssl_encrypt(SSL *ssl, ForeignFifoBuffer<uint8_t> &buffer)
 {
     auto r = buffer.Read();
-    if (r.IsEmpty())
+    if (r.empty())
         return;
 
     int result = SSL_write(ssl, r.data, r.size);

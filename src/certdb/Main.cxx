@@ -526,7 +526,7 @@ Acme(ConstBuffer<const char *> args)
 {
     AcmeConfig config;
 
-    while (!args.IsEmpty() && args.front()[0] == '-') {
+    while (!args.empty() && args.front()[0] == '-') {
         const char *arg = args.front();
 
         if (strcmp(arg, "--staging") == 0) {
@@ -540,7 +540,7 @@ Acme(ConstBuffer<const char *> args)
         } else if (strcmp(arg, "--agreement") == 0) {
             args.shift();
 
-            if (args.IsEmpty())
+            if (args.empty())
                 throw std::runtime_error("Agreement URL missing");
 
             config.agreement_url = args.front();
@@ -549,7 +549,7 @@ Acme(ConstBuffer<const char *> args)
             break;
     }
 
-    if (args.IsEmpty())
+    if (args.empty())
         throw "acme commands:\n"
             "  new-reg EMAIL\n"
             "  new-authz HOST\n"
@@ -808,7 +808,7 @@ HandleFind(ConstBuffer<const char *> args)
 {
     bool headers = false;
 
-    while (!args.IsEmpty() && args.front()[0] == '-') {
+    while (!args.empty() && args.front()[0] == '-') {
         const char *arg = args.front();
 
         if (strcmp(arg, "--headers") == 0) {
@@ -968,10 +968,10 @@ main(int argc, char **argv)
 try {
     ConstBuffer<const char *> args(argv + 1, argc - 1);
 
-    if (!args.IsEmpty() && strcmp(args.front(), "--progress") == 0) {
+    if (!args.empty() && strcmp(args.front(), "--progress") == 0) {
         args.shift();
         root_progress = WorkshopProgress(0, 100);
-    } else if (!args.IsEmpty() &&
+    } else if (!args.empty() &&
                strncmp(args.front(), "--progress=", 11) == 0) {
         const char *range = args.front() + 11;
         args.shift();
@@ -989,7 +989,7 @@ try {
         root_progress = WorkshopProgress(min, max);
     }
 
-    if (args.IsEmpty()) {
+    if (args.empty()) {
         fprintf(stderr, "Usage: %s [OPTIONS] COMMAND ...\n"
                 "\n"
                 "Commands:\n", argv[0]);

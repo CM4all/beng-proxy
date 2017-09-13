@@ -49,10 +49,10 @@ Cookie::Cookie(struct dpool &pool, const Cookie &src)
 void
 Cookie::Free(struct dpool &pool)
 {
-    if (!name.IsEmpty())
+    if (!name.empty())
         d_free(pool, name.data);
 
-    if (!value.IsEmpty())
+    if (!value.empty())
         d_free(pool, value.data);
 
     if (domain != nullptr)

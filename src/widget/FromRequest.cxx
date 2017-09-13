@@ -72,7 +72,7 @@ Widget::CopyFromRequest(struct processor_env &env)
     assert(parent != nullptr);
     assert(lazy.address == nullptr);
     assert(from_request.path_info == nullptr);
-    assert(from_request.query_string.IsEmpty());
+    assert(from_request.query_string.empty());
     assert(from_request.focus_ref == nullptr);
     assert(from_request.method == HTTP_METHOD_GET);
     assert(from_request.body == nullptr);

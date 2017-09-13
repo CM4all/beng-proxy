@@ -52,7 +52,7 @@ uri_segment_verify(const char *src, const char *end)
 bool
 uri_path_verify(StringView uri)
 {
-    if (uri.IsEmpty() || uri.front() != '/')
+    if (uri.empty() || uri.front() != '/')
         /* path must begin with slash */
         return false;
 

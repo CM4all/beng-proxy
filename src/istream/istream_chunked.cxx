@@ -159,7 +159,7 @@ bool
 ChunkedIstream::SendBuffer()
 {
     auto r = ReadBuffer();
-    if (r.IsEmpty())
+    if (r.empty())
         return true;
 
     size_t nbytes = InvokeData(r.data, r.size);
@@ -306,7 +306,7 @@ void
 ChunkedIstream::_FillBucketList(IstreamBucketList &list)
 {
     auto b = ReadBuffer();
-    if (b.IsEmpty() && missing_from_current_chunk == 0) {
+    if (b.empty() && missing_from_current_chunk == 0) {
         off_t available = input.GetAvailable(true);
         if (available > 0) {
             StartChunk(available);
@@ -314,7 +314,7 @@ ChunkedIstream::_FillBucketList(IstreamBucketList &list)
         }
     }
 
-    if (!b.IsEmpty())
+    if (!b.empty())
         list.Push(b);
 
     if (missing_from_current_chunk > 0) {

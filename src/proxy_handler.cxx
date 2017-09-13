@@ -58,7 +58,7 @@ gcc_pure
 static const char *
 ForwardURI(struct pool &pool, const parsed_uri &uri)
 {
-    if (uri.query.IsEmpty())
+    if (uri.query.empty())
         return p_strdup(pool, uri.base);
     else
         return p_strncat(&pool,
@@ -100,7 +100,7 @@ proxy_handler(Request &request2)
 
     if (request2.translate.response->transparent &&
         (!request2.uri.args.IsNull() ||
-         !request2.uri.path_info.IsEmpty()))
+         !request2.uri.path_info.empty()))
         address = address.WithArgs(pool,
                                    request2.uri.args,
                                    request2.uri.path_info);

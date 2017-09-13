@@ -54,7 +54,7 @@ try {
 
     ws.path_info.Set(p, from_request.path_info);
 
-    if (from_request.query_string.IsEmpty())
+    if (from_request.query_string.empty())
         ws.query_string.Clear(p);
     else
         ws.query_string.Set(p, from_request.query_string);

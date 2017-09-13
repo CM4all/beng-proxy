@@ -101,7 +101,7 @@ my_sink_done(void *data0, size_t length, void *_ctx)
 
     ConstBuffer<void> data(data0, length);
 
-    while (!data.IsEmpty()) {
+    while (!data.empty()) {
         const AutoRewindPool auto_rewind(*tpool);
         HttpCacheDocument document(*tpool);
 

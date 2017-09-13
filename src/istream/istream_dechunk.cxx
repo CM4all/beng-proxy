@@ -216,7 +216,7 @@ DechunkIstream::CalculateRemainingDataSize(const char *src,
             return false;
         }
 
-        if (data.IsEmpty()) {
+        if (data.empty()) {
             if (p.HasEnded() && !seen_eof) {
                 seen_eof = true;
                 dechunk_handler.OnDechunkEndSeen();
@@ -269,7 +269,7 @@ DechunkIstream::Feed(const void *data0, size_t length)
 
         src = data.data;
 
-        if (!data.IsEmpty()) {
+        if (!data.empty()) {
             assert(!parser.HasEnded());
 
             size_t nbytes;

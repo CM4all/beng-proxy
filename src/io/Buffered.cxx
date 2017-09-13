@@ -43,7 +43,7 @@ read_to_buffer(int fd, ForeignFifoBuffer<uint8_t> &buffer, size_t length)
     assert(fd >= 0);
 
     auto w = buffer.Write();
-    if (w.IsEmpty())
+    if (w.empty())
         return -2;
 
     if (length > w.size)
@@ -60,7 +60,7 @@ ssize_t
 write_from_buffer(int fd, ForeignFifoBuffer<uint8_t> &buffer)
 {
     auto r = buffer.Read();
-    if (r.IsEmpty())
+    if (r.empty())
         return -2;
 
     ssize_t nbytes = write(fd, r.data, r.size);
