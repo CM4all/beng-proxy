@@ -82,7 +82,7 @@ struct AccessLogDatagram {
          http_status(_status),
          length(_length),
          traffic_received(_traffic_received), traffic_sent(_traffic_sent),
-         duration(std::chrono::duration_cast<std::chrono::microseconds>(_duration).count()),
+         duration(ExportDuration(_duration)),
          valid_timestamp(true),
          valid_http_method(true), valid_http_status(true),
          valid_length(_length >= 0), valid_traffic(true),
@@ -99,6 +99,10 @@ struct AccessLogDatagram {
 
     static constexpr uint64_t ExportTimestamp(std::chrono::system_clock::time_point t) noexcept {
         return std::chrono::duration_cast<std::chrono::microseconds>(t.time_since_epoch()).count();
+    }
+
+    static constexpr uint64_t ExportDuration(std::chrono::steady_clock::duration d) noexcept {
+        return std::chrono::duration_cast<std::chrono::microseconds>(d).count();
     }
 };
 
