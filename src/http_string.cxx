@@ -78,7 +78,7 @@ http_next_quoted_string(struct pool &pool, StringView &input,
 void
 http_next_value(struct pool &pool, StringView &input, StringView &value)
 {
-    if (!input.IsEmpty() && input.front() == '"')
+    if (!input.empty() && input.front() == '"')
         http_next_quoted_string(pool, input, value);
     else
         http_next_token(input, value);
@@ -89,11 +89,11 @@ http_next_name_value(struct pool &pool, StringView &input,
                      StringView &name, StringView &value)
 {
     http_next_token(input, name);
-    if (name.IsEmpty())
+    if (name.empty())
         return;
 
     input.StripLeft();
-    if (!input.IsEmpty() && input.front() == '=') {
+    if (!input.empty() && input.front() == '=') {
         input.pop_front();
         input.StripLeft();
 

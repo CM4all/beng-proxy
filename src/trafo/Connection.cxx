@@ -72,7 +72,7 @@ TrafoConnection::TryRead()
     assert(state == State::INIT || state == State::REQUEST);
 
     auto r = input.Write();
-    assert(!r.IsEmpty());
+    assert(!r.empty());
 
     ssize_t nbytes = recv(fd.Get(), r.data, r.size, MSG_DONTWAIT);
     if (gcc_likely(nbytes > 0)) {
@@ -165,7 +165,7 @@ TrafoConnection::TryWrite()
     output.data += nbytes;
     output.size -= nbytes;
 
-    if (output.IsEmpty()) {
+    if (output.empty()) {
         delete[] response;
         state = State::INIT;
         write_event.Delete();

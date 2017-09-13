@@ -48,7 +48,7 @@ DupBuffer(struct dpool &p, ConstBuffer<T> src)
     if (src.IsNull())
         return ConstBuffer<T>::Null();
 
-    if (src.IsEmpty())
+    if (src.empty())
         return ConstBuffer<T>::FromVoid({"", 0});
 
     ConstBuffer<void> src_v = src.ToVoid();

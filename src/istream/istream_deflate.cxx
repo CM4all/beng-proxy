@@ -123,7 +123,7 @@ public:
     WritableBuffer<void> BufferWrite() {
         buffer.AllocateIfNull(fb_pool_get());
         auto w = buffer.Write();
-        if (w.IsEmpty() && TryWrite() > 0)
+        if (w.empty() && TryWrite() > 0)
             w = buffer.Write();
 
         return w.ToVoid();
@@ -217,7 +217,7 @@ size_t
 DeflateIstream::TryWrite()
 {
     auto r = buffer.Read();
-    assert(!r.IsEmpty());
+    assert(!r.empty());
 
     size_t nbytes = InvokeData(r.data, r.size);
     if (nbytes == 0)
@@ -241,7 +241,7 @@ DeflateIstream::TryFlush()
     assert(!z_stream_end);
 
     auto w = BufferWrite();
-    if (w.IsEmpty())
+    if (w.empty())
         return;
 
     z.next_out = (Bytef *)w.data;
@@ -297,7 +297,7 @@ DeflateIstream::TryFinish()
     assert(!z_stream_end);
 
     auto w = BufferWrite();
-    if (w.IsEmpty())
+    if (w.empty())
         return;
 
     z.next_out = (Bytef *)w.data;

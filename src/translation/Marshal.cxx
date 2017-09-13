@@ -53,7 +53,7 @@ TranslationMarshaller::Write(TranslationCommand command,
 
     buffer.Write(&header, sizeof(header));
 
-    if (!payload.IsEmpty())
+    if (!payload.empty())
         buffer.Write(payload.data, payload.size);
 }
 

@@ -265,7 +265,7 @@ HttpAddress::LoadBase(AllocatorPtr alloc, const char *suffix) const
 const HttpAddress *
 HttpAddress::Apply(AllocatorPtr alloc, StringView relative) const
 {
-    if (relative.IsEmpty())
+    if (relative.empty())
         return this;
 
     if (uri_has_protocol(relative)) {

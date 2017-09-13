@@ -48,7 +48,7 @@ DupBuffer(pool &p, ConstBuffer<T> src)
     if (src.IsNull())
         return ConstBuffer<T>::Null();
 
-    if (src.IsEmpty())
+    if (src.empty())
         return ConstBuffer<T>::FromVoid({"", 0});
 
     ConstBuffer<void> src_v = src.ToVoid();
@@ -62,7 +62,7 @@ DupBuffer(pool &p, StringView src)
     if (src.IsNull())
         return nullptr;
 
-    if (src.IsEmpty())
+    if (src.empty())
         return "";
 
     return StringView((const char *)p_memdup(&p, src.data, src.size),

@@ -209,7 +209,7 @@ static void
 SplitForEach(const char *p, char separator, F &&f)
 {
     for (auto value : IterableSplitString(p, separator))
-        if (!value.IsEmpty())
+        if (!value.empty())
             f(std::string(value.data, value.size).c_str());
 }
 

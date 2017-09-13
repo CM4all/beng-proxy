@@ -54,7 +54,7 @@ gcc_pure
 static bool
 IsValidScheme(StringView p)
 {
-    if (p.IsEmpty() || !IsValidSchemeStart(p.front()))
+    if (p.empty() || !IsValidSchemeStart(p.front()))
         return false;
 
     for (size_t i = 1; i < p.size; ++i)

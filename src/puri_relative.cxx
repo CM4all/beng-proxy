@@ -148,7 +148,7 @@ uri_absolute(AllocatorPtr alloc, const char *base, StringView uri)
 {
     assert(base != nullptr);
 
-    if (uri.IsEmpty())
+    if (uri.empty())
         return base;
 
     if (uri_has_protocol(uri))

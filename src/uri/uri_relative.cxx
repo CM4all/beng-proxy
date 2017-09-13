@@ -38,7 +38,7 @@
 StringView
 uri_relative(StringView base, StringView uri)
 {
-    if (base.IsEmpty() || uri.IsEmpty())
+    if (base.empty() || uri.empty())
         return nullptr;
 
     if (uri.size >= base.size &&

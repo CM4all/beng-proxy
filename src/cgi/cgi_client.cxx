@@ -167,7 +167,7 @@ try {
     assert(!parser.AreHeadersFinished());
 
     auto w = buffer.Write();
-    assert(!w.IsEmpty());
+    assert(!w.empty());
 
     if (length > w.size)
         length = w.size;

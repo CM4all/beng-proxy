@@ -156,13 +156,13 @@ main(int argc, char **argv)
 try {
     ConstBuffer<const char *> args(argv + 1, argc - 1);
 
-    if (args.IsEmpty())
+    if (args.empty())
         throw Usage();
 
     const char *const path = args.shift();
-    const char *const function_name = !args.IsEmpty() ? args.shift() : "access_log";
+    const char *const function_name = !args.empty() ? args.shift() : "access_log";
 
-    if (!args.IsEmpty())
+    if (!args.empty())
         throw Usage();
 
     Lua::State state(luaL_newstate());

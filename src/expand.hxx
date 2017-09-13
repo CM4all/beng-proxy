@@ -72,7 +72,7 @@ ExpandString(Result &result, const char *src, MatchInfo &&match_info)
             if (c.IsNull())
                 throw std::runtime_error("Invalid regex capture");
 
-            if (!c.IsEmpty())
+            if (!c.empty())
                 result.AppendValue(c.data, c.size);
         } else {
             throw FormatRuntimeError("Invalid backslash escape (0x%02x)", ch);

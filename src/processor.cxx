@@ -808,7 +808,7 @@ XmlProcessor::TransformUriAttribute(const XmlParserAttribute &attr,
     if (istream == nullptr)
         return;
 
-    if (!fragment.IsEmpty()) {
+    if (!fragment.empty()) {
         /* escape and append the fragment to the new URI */
         Istream *s = istream_memory_new(&pool,
                                         p_strdup(pool, fragment),
@@ -828,7 +828,7 @@ parser_widget_attr_finished(Widget *widget,
     if (name.Equals("type")) {
         widget->SetClassName(value);
     } else if (name.Equals("id")) {
-        if (!value.IsEmpty())
+        if (!value.empty())
             widget->SetId(value);
     } else if (name.Equals("display")) {
         if (value.Equals("inline"))
@@ -1127,7 +1127,7 @@ XmlProcessor::OnXmlAttributeFinished(const XmlParserAttribute &attr)
         assert(widget.widget != nullptr);
 
         if (attr.name.Equals("name")) {
-            if (attr.value.IsEmpty()) {
+            if (attr.value.empty()) {
                 container.logger(2, "empty view name");
                 return;
             }

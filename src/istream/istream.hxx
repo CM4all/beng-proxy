@@ -140,7 +140,7 @@ protected:
     template<typename Buffer>
     size_t ConsumeFromBuffer(Buffer &buffer) {
         auto r = buffer.Read().ToVoid();
-        if (r.IsEmpty())
+        if (r.empty())
             return 0;
 
         size_t consumed = InvokeData(r.data, r.size);
@@ -155,7 +155,7 @@ protected:
     template<typename Buffer>
     size_t SendFromBuffer(Buffer &buffer) {
         auto r = buffer.Read().ToVoid();
-        if (r.IsEmpty())
+        if (r.empty())
             return 0;
 
         size_t consumed = InvokeData(r.data, r.size);

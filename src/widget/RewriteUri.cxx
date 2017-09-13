@@ -337,7 +337,7 @@ UriRewriter::ResolverCallback()
     }
 
     Istream *istream;
-    if (!value.IsEmpty()) {
+    if (!value.empty()) {
         istream = istream_memory_new(pool, value.data, value.size);
 
         if (escape_flag && escape != nullptr)

@@ -48,13 +48,13 @@ cookie_map_parse(struct pool &pool, const char *p)
     while (true) {
         StringView name, value;
         cookie_next_name_value(pool, input, name, value, true);
-        if (name.IsEmpty())
+        if (name.empty())
             break;
 
         cookies.Add(p_strdup(pool, name), p_strdup(pool, value));
 
         input.StripLeft();
-        if (input.IsEmpty() || input.front() != ';')
+        if (input.empty() || input.front() != ';')
             break;
 
         input.pop_front();
@@ -84,7 +84,7 @@ cookie_exclude(const char *p, const char *_exclude, struct pool *pool)
     while (true) {
         StringView name, value;
         cookie_next_name_value(*pool, input, name, value, true);
-        if (name.IsEmpty())
+        if (name.empty())
             break;
 
         const bool skip = name.Equals(exclude);
@@ -95,7 +95,7 @@ cookie_exclude(const char *p, const char *_exclude, struct pool *pool)
             empty = false;
 
         input.StripLeft();
-        if (input.IsEmpty() || input.front() != ';') {
+        if (input.empty() || input.front() != ';') {
             if (skip)
                 src = input.data;
             break;

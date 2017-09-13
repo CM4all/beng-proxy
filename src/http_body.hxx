@@ -143,7 +143,7 @@ public:
     template<typename Socket>
     void FillBucketList(const Socket &s, IstreamBucketList &list) {
         auto b = s.ReadBuffer();
-        if (b.IsEmpty()) {
+        if (b.empty()) {
             if (!IsEOF())
                 list.SetMore();
             return;
@@ -161,7 +161,7 @@ public:
     template<typename Socket>
     size_t ConsumeBucketList(Socket &s, size_t nbytes) {
         auto b = s.ReadBuffer();
-        if (b.IsEmpty())
+        if (b.empty())
             return 0;
 
         size_t max = GetMaxRead(b.size);

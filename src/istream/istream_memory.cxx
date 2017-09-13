@@ -62,7 +62,7 @@ public:
     }
 
     void _Read() override {
-        if (!data.IsEmpty()) {
+        if (!data.empty()) {
             auto nbytes = InvokeData(data.data, data.size);
             if (nbytes == 0)
                 return;
@@ -70,12 +70,12 @@ public:
             data.skip_front(nbytes);
         }
 
-        if (data.IsEmpty())
+        if (data.empty())
             DestroyEof();
     }
 
     void _FillBucketList(IstreamBucketList &list) override {
-        if (!data.IsEmpty())
+        if (!data.empty())
             list.Push(data.ToVoid());
     }
 

@@ -302,7 +302,7 @@ static const char *
 ProbePathSuffixes(const char *prefix, const ConstBuffer<const char *> suffixes)
 {
     assert(!suffixes.IsNull());
-    assert(!suffixes.IsEmpty());
+    assert(!suffixes.empty());
 
     for (const char *current_suffix : suffixes) {
         if (ProbeOnePathSuffix(prefix, current_suffix))
@@ -485,7 +485,7 @@ fill_translate_request_query_string(TranslateRequest &t,
                                     struct pool &pool,
                                     const DissectedUri &uri)
 {
-    t.query_string = uri.query.IsEmpty()
+    t.query_string = uri.query.empty()
         ? nullptr
         : p_strdup(pool, uri.query);
 }
@@ -669,7 +669,7 @@ Request::OnTranslateResponseAfterAuth(const TranslateResponse &response)
 {
     if (!response.check.IsNull() ||
         !response.internal_redirect.IsNull() ||
-        !response.want.IsEmpty() ||
+        !response.want.empty() ||
         /* after successful new authentication, repeat the translation
            if the translation server wishes to know the user */
         (translate.want_user && translate.user_modified) ||
@@ -960,7 +960,7 @@ handle_http_request(BpConnection &connection,
     if (!request_uri_parse(*request2, request2->dissected_uri))
         return;
 
-    assert(!request2->dissected_uri.base.IsEmpty());
+    assert(!request2->dissected_uri.base.empty());
     assert(request2->dissected_uri.base.front() == '/');
 
     request2->ParseArgs();

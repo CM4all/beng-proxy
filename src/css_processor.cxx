@@ -111,7 +111,7 @@ css_processor_parser_class_name(const CssParserValue *name, void *ctx)
 {
     CssProcessor *processor = (CssProcessor *)ctx;
 
-    assert(!name->value.IsEmpty());
+    assert(!name->value.empty());
 
     if (!css_processor_option_prefix_class(processor))
         return;
@@ -145,7 +145,7 @@ css_processor_parser_xml_id(const CssParserValue *name, void *ctx)
 {
     CssProcessor *processor = (CssProcessor *)ctx;
 
-    assert(!name->value.IsEmpty());
+    assert(!name->value.empty());
 
     if (!css_processor_option_prefix_id(processor))
         return;

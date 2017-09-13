@@ -173,7 +173,7 @@ LhttpAddress::LoadBase(AllocatorPtr alloc, const char *suffix) const
 const LhttpAddress *
 LhttpAddress::Apply(struct pool *pool, StringView relative) const
 {
-    if (relative.IsEmpty())
+    if (relative.empty())
         return this;
 
     if (uri_has_authority(relative))

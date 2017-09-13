@@ -116,7 +116,7 @@ ThreadSocketFilter::SubmitDecryptedInput()
             const std::lock_guard<std::mutex> lock(mutex);
 
             auto r = decrypted_input.Read();
-            if (r.IsEmpty())
+            if (r.empty())
                 return true;
 
             /* copy to stack, unlock */
@@ -294,7 +294,7 @@ ThreadSocketFilter::Done()
             /* flush the encrypted_output buffer, because it may
                contain a "TLS alert" */
             auto r = encrypted_output.Read();
-            if (!r.IsEmpty()) {
+            if (!r.empty()) {
                 /* don't care for the return value; the socket and
                    this object are going to be closed anyway */
                 socket->InternalDirectWrite(r.data, r.size);
@@ -460,7 +460,7 @@ thread_socket_filter_data(const void *data, size_t length, void *ctx)
         f->encrypted_input.AllocateIfNull(fb_pool_get());
 
         auto w = f->encrypted_input.Write();
-        if (w.IsEmpty())
+        if (w.empty())
             return BufferedResult::BLOCKING;
 
         result = BufferedResult::OK;
@@ -642,7 +642,7 @@ thread_socket_filter_internal_write(void *ctx)
     std::unique_lock<std::mutex> lock(f->mutex);
 
     auto r = f->encrypted_output.Read();
-    if (r.IsEmpty()) {
+    if (r.empty()) {
         lock.unlock();
         f->socket->InternalUnscheduleWrite();
         return true;

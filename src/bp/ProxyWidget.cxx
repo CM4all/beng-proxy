@@ -224,7 +224,7 @@ ProxyWidget::Continue()
         }
 
         if (widget->cls->direct_addressing &&
-            !request.dissected_uri.path_info.IsEmpty())
+            !request.dissected_uri.path_info.empty())
             /* apply new-style path_info to frame top widget (direct
                addressing) */
             widget->from_request.path_info =

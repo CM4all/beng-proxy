@@ -164,7 +164,7 @@ public:
      */
     bool SubmitBuffer() {
         auto r = buffer.Read();
-        if (!r.IsEmpty()) {
+        if (!r.empty()) {
             size_t nbytes = InvokeData(r.data, r.size);
             if (nbytes == 0)
                 return false;

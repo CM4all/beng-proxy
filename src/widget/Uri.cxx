@@ -65,7 +65,7 @@ Widget::GetBaseAddress(struct pool &_pool, bool stateful) const
     const char *uri = uri_delete_query_string(&_pool, src_path,
                                               from_template.query_string);
 
-    if (!from_request.query_string.IsEmpty())
+    if (!from_request.query_string.empty())
         uri = uri_delete_query_string(&_pool, src_path,
                                       from_request.query_string);
 
@@ -107,7 +107,7 @@ Widget::DetermineAddress(bool stateful) const
     assert(path_info != nullptr);
 
     const auto *original_address = widget_get_original_address(this);
-    if ((!stateful || from_request.query_string.IsEmpty()) &&
+    if ((!stateful || from_request.query_string.empty()) &&
         *path_info == 0 &&
         from_template.query_string == nullptr)
         return original_address;
@@ -180,7 +180,7 @@ Widget::DetermineAddress(bool stateful) const
                 ? uri_absolute(pool, cgi->path_info, path_info)
                 : path_info;
 
-        if (!stateful || from_request.query_string.IsEmpty())
+        if (!stateful || from_request.query_string.empty())
             cgi->query_string = from_template.query_string;
         else if (from_template.query_string == nullptr)
             cgi->query_string = p_strdup(pool, from_request.query_string);
@@ -209,7 +209,7 @@ Widget::AbsoluteUri(struct pool &_pool, bool stateful,
     if (relative_uri.StartsWith({"~/", 2})) {
         relative_uri.skip_front(2);
         stateful = false;
-    } else if (!relative_uri.IsEmpty() && relative_uri.front() == '/' &&
+    } else if (!relative_uri.empty() && relative_uri.front() == '/' &&
                cls != nullptr && cls->anchor_absolute) {
         relative_uri.skip_front(1);
         stateful = false;
@@ -225,7 +225,7 @@ Widget::AbsoluteUri(struct pool &_pool, bool stateful,
 
     const char *uri = uri_absolute(_pool, base, relative_uri);
     assert(uri != nullptr);
-    if (!relative_uri.IsEmpty() &&
+    if (!relative_uri.empty() &&
         from_template.query_string != nullptr)
         /* the relative_uri is non-empty, and uri_absolute() has
            removed the query string: re-add the configured query

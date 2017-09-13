@@ -76,7 +76,7 @@ DupStringView(struct dpool &pool, StringView src)
     if (src.IsNull())
         return nullptr;
 
-    if (src.IsEmpty())
+    if (src.empty())
         return "";
 
     const char *data = d_memdup(pool, src.data, src.size);
@@ -86,6 +86,6 @@ DupStringView(struct dpool &pool, StringView src)
 void
 FreeStringView(struct dpool &pool, StringView s)
 {
-    if (!s.IsEmpty())
+    if (!s.empty())
         d_free(pool, s.data);
 }
