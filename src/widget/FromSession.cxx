@@ -71,7 +71,7 @@ Widget::LoadFromSession(const WidgetSession &ws)
     from_request.path_info = ws.path_info;
 
     if (ws.query_string != nullptr)
-        from_request.query_string = ws.query_string;
+        from_request.query_string = ws.query_string.c_str();
 }
 
 void
