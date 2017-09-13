@@ -45,6 +45,7 @@
 #include "util/PrintException.hxx"
 #include "util/RuntimeError.hxx"
 #include "util/ScopeExit.hxx"
+#include "util/ConstBuffer.hxx"
 
 extern "C" {
 #include <lauxlib.h>
@@ -153,11 +154,16 @@ struct Usage {};
 int
 main(int argc, char **argv)
 try {
-    if (argc != 2 && argc != 3)
+    ConstBuffer<const char *> args(argv + 1, argc - 1);
+
+    if (args.IsEmpty())
         throw Usage();
 
-    const char *const path = argv[1];
-    const char *const function_name = argc >= 3 ? argv[2] : "access_log";
+    const char *const path = args.shift();
+    const char *const function_name = !args.IsEmpty() ? args.shift() : "access_log";
+
+    if (!args.IsEmpty())
+        throw Usage();
 
     Lua::State state(luaL_newstate());
     luaL_openlibs(state.get());
