@@ -97,6 +97,11 @@ struct AccessLogDatagram {
          valid_length(false), valid_traffic(false),
          valid_duration(false) {}
 
+    void SetTimestamp(std::chrono::system_clock::time_point t) noexcept {
+        timestamp = ExportTimestamp(t);
+        valid_timestamp = true;
+    }
+
     static constexpr uint64_t ExportTimestamp(std::chrono::system_clock::time_point t) noexcept {
         return std::chrono::duration_cast<std::chrono::microseconds>(t.time_since_epoch()).count();
     }
