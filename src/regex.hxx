@@ -72,7 +72,7 @@ public:
 
         int start = ovector[2 * i];
         if (start < 0)
-            return StringView::Empty();
+            return "";
 
         int end = ovector[2 * i + 1];
         assert(end >= start);

@@ -77,7 +77,7 @@ DupStringView(struct dpool &pool, StringView src)
         return nullptr;
 
     if (src.IsEmpty())
-        return StringView::Empty();
+        return "";
 
     const char *data = d_memdup(pool, src.data, src.size);
     return {data, src.size};
