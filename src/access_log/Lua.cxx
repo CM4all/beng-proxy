@@ -35,6 +35,7 @@
  */
 
 #include "Server.hxx"
+#include "Launch.hxx"
 #include "Datagram.hxx"
 #include "lua/State.hxx"
 #include "lua/Value.hxx"
@@ -42,6 +43,8 @@
 #include "lua/Error.hxx"
 #include "lua/Util.hxx"
 #include "net/ToString.hxx"
+#include "net/UniqueSocketDescriptor.hxx"
+#include "system/Error.hxx"
 #include "util/PrintException.hxx"
 #include "util/RuntimeError.hxx"
 #include "util/ScopeExit.hxx"
@@ -82,11 +85,13 @@ public:
          LookupFunction(L, function, path, function_name);
     }
 
-    void Handle(const ReceivedAccessLogDatagram &d);
+    void Handle(const ReceivedAccessLogDatagram &d,
+                SocketDescriptor filter_sink);
 };
 
 void
-LuaAccessLogger::Handle(const ReceivedAccessLogDatagram &d)
+LuaAccessLogger::Handle(const ReceivedAccessLogDatagram &d,
+                        SocketDescriptor filter_sink)
 try {
     function.Push();
 
@@ -140,8 +145,16 @@ try {
     if (d.valid_duration)
         Lua::SetTable(L, -3, "duration", d.duration / 1000000.);
 
-    if (lua_pcall(L, 1, 0, 0))
+    if (lua_pcall(L, 1, filter_sink.IsDefined(), 0))
         throw Lua::PopError(L);
+
+    if (filter_sink.IsDefined()) {
+        const bool result = lua_toboolean(L, -1);
+        lua_pop(L, 1);
+
+        if (result)
+            filter_sink.Write(d.raw.data, d.raw.size);
+    }
 } catch (...) {
     PrintException(std::current_exception());
 }
@@ -160,7 +173,21 @@ try {
         throw Usage();
 
     const char *const path = args.shift();
-    const char *const function_name = !args.empty() ? args.shift() : "access_log";
+    const char *const function_name = !args.empty() && args.front()[0] != '-'
+        ? args.shift()
+        : "access_log";
+
+    UniqueSocketDescriptor filter_sink;
+
+    if (!args.empty() && strcmp(args.front(), "--filter-exec") == 0) {
+        args.shift();
+
+        if (args.empty())
+            throw Usage();
+
+        filter_sink = LaunchLogger(args);
+        args = {};
+    }
 
     if (!args.empty())
         throw Usage();
@@ -171,10 +198,11 @@ try {
     LuaAccessLogger logger(state.get(), path, function_name);
 
     AccessLogServer().Run(std::bind(&LuaAccessLogger::Handle, &logger,
-                                    std::placeholders::_1));
+                                    std::placeholders::_1,
+                                    (SocketDescriptor)filter_sink));
     return EXIT_SUCCESS;
 } catch (Usage) {
-    fprintf(stderr, "Usage: %s FILE.lua [FUNCTION]\n", argv[0]);
+    fprintf(stderr, "Usage: %s FILE.lua [FUNCTION] [--filter-exec PROGRAM ARGS...]\n", argv[0]);
     return EXIT_FAILURE;
 } catch (...) {
     PrintException(std::current_exception());

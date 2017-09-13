@@ -2968,6 +2968,27 @@ seconds. \\
 \hline
 \end{longtabu*}
 
+The Lua logger can also be used to filter requests being forwarded to
+the next logger:
+
+\begin{verbatim}
+cm4all-beng-proxy-log-lua logger.lua filterfunc \
+    --filter-exec cm4all-beng-proxy-log-json
+\end{verbatim}
+
+This loads \texttt{logger.lua} and calls the function
+\texttt{filterfunc} for each request.  If the function returns
+\texttt{true}, then the request is forwarded to the
+\texttt{cm4all-beng-proxy-log-json} process.
+
+Example filter program:
+
+\begin{verbatim}
+function loggerfunc(r)
+   return r.http_uri == '/wp-login.php'
+end
+\end{verbatim}
+
 \subsubsection{\texttt{log-traffic}}
 
 Print site traffic to standard output.  Each line is in the form
