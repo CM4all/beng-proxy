@@ -142,8 +142,8 @@ widget_response_format(struct pool &pool, const Widget &widget,
     }
 
     const auto charset = http_header_param(content_type, "charset");
-    if (!charset.IsNull() && !charset.EqualsLiteralIgnoreCase("utf-8") &&
-        !charset.EqualsLiteralIgnoreCase("utf8")) {
+    if (!charset.IsNull() && !charset.EqualsIgnoreCase("utf-8") &&
+        !charset.EqualsIgnoreCase("utf8")) {
         /* beng-proxy expects all widgets to send their HTML code in
            utf-8; this widget however used a different charset.
            Automatically convert it with istream_iconv */

@@ -101,11 +101,11 @@ parse_next_cookie(struct dpool &pool, StringView &input)
         input.pop_front();
 
         http_next_name_value(*tpool, input, name, value);
-        if (name.EqualsLiteralIgnoreCase("domain"))
+        if (name.EqualsIgnoreCase("domain"))
             cookie->domain = d_strdup(pool, value);
-        else if (name.EqualsLiteralIgnoreCase("path"))
+        else if (name.EqualsIgnoreCase("path"))
             cookie->path = d_strdup(pool, value);
-        else if (name.EqualsLiteralIgnoreCase("max-age")) {
+        else if (name.EqualsIgnoreCase("max-age")) {
             unsigned long seconds;
             char *endptr;
 

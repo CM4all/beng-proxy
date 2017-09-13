@@ -83,15 +83,15 @@ html_unescape(StringView _p, char *q)
 
         entity.size = semicolon - entity.data;
 
-        if (entity.EqualsLiteral("amp"))
+        if (entity.Equals("amp"))
             *q++ = '&';
-        else if (entity.EqualsLiteral("quot"))
+        else if (entity.Equals("quot"))
             *q++ = '"';
-        else if (entity.EqualsLiteral("lt"))
+        else if (entity.Equals("lt"))
             *q++ = '<';
-        else if (entity.EqualsLiteral("gt"))
+        else if (entity.Equals("gt"))
             *q++ = '>';
-        else if (entity.EqualsLiteral("apos"))
+        else if (entity.Equals("apos"))
             *q++ = '\'';
 
         p = semicolon + 1;
