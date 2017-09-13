@@ -145,13 +145,16 @@ try {
     PrintException(std::current_exception());
 }
 
+/**
+ * An exception type which causes the usage text to be printed.
+ */
+struct Usage {};
+
 int
 main(int argc, char **argv)
 try {
-    if (argc != 2 && argc != 3) {
-        fprintf(stderr, "Usage: %s FILE.lua [FUNCTION]\n", argv[0]);
-        return EXIT_FAILURE;
-    }
+    if (argc != 2 && argc != 3)
+        throw Usage();
 
     const char *const path = argv[1];
     const char *const function_name = argc >= 3 ? argv[2] : "access_log";
@@ -164,6 +167,9 @@ try {
     AccessLogServer().Run(std::bind(&LuaAccessLogger::Handle, &logger,
                                     std::placeholders::_1));
     return EXIT_SUCCESS;
+} catch (Usage) {
+    fprintf(stderr, "Usage: %s FILE.lua [FUNCTION]\n", argv[0]);
+    return EXIT_FAILURE;
 } catch (...) {
     PrintException(std::current_exception());
     return EXIT_FAILURE;
