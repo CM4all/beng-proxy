@@ -88,7 +88,7 @@ struct AccessLogDatagram {
          valid_length(_length >= 0), valid_traffic(true),
          valid_duration(true) {}
 
-    explicit AccessLogDatagram(const char *_message)
+    explicit AccessLogDatagram(StringView _message)
         :remote_host(nullptr), host(nullptr), site(nullptr),
          http_uri(nullptr), http_referer(nullptr), user_agent(nullptr),
          message(_message),
