@@ -73,7 +73,7 @@ struct AccessLogDatagram {
                       const char *_referer, const char *_user_agent,
                       http_status_t _status, int64_t _length,
                       uint64_t _traffic_received, uint64_t _traffic_sent,
-                      std::chrono::steady_clock::duration _duration)
+                      std::chrono::steady_clock::duration _duration) noexcept
         :timestamp(ExportTimestamp(_timestamp)),
          remote_host(_remote_host), host(_host), site(_site),
          http_method(_method),
@@ -88,7 +88,7 @@ struct AccessLogDatagram {
          valid_length(_length >= 0), valid_traffic(true),
          valid_duration(true) {}
 
-    explicit AccessLogDatagram(StringView _message)
+    explicit AccessLogDatagram(StringView _message) noexcept
         :remote_host(nullptr), host(nullptr), site(nullptr),
          http_uri(nullptr), http_referer(nullptr), user_agent(nullptr),
          message(_message),
