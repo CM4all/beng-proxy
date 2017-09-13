@@ -223,6 +223,7 @@ LbHttpConnection::HandleHttpRequest(HttpServerRequest &request,
     canonical_host = nullptr;
 
     if (!uri_path_verify_quick(request.uri)) {
+        request.CheckCloseUnusedBody();
         http_server_send_message(&request, HTTP_STATUS_BAD_REQUEST,
                                  "Malformed request URI");
         return;
@@ -238,6 +239,7 @@ LbHttpConnection::HandleHttpRequest(const LbGoto &destination,
 {
     const auto &goto_ = destination.FindRequestLeaf(request);
     if (goto_.response != nullptr) {
+        request.CheckCloseUnusedBody();
         SendResponse(request, *goto_.response);
         return;
     }

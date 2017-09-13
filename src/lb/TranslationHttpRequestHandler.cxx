@@ -68,6 +68,8 @@ lb_http_translate_response(TranslateResponse &response, void *ctx)
     auto &request = r.request;
 
     if (response.https_only != 0 && !c.IsEncrypted()) {
+        request.CheckCloseUnusedBody();
+
         const char *host = request.headers.Get("host");
         if (host == nullptr) {
             http_server_send_message(&request, HTTP_STATUS_BAD_REQUEST,
