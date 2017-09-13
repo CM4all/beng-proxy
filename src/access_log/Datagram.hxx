@@ -74,7 +74,7 @@ struct AccessLogDatagram {
                       http_status_t _status, int64_t _length,
                       uint64_t _traffic_received, uint64_t _traffic_sent,
                       std::chrono::steady_clock::duration _duration)
-        :timestamp(std::chrono::duration_cast<std::chrono::microseconds>(_timestamp.time_since_epoch()).count()),
+        :timestamp(ExportTimestamp(_timestamp)),
          remote_host(_remote_host), host(_host), site(_site),
          http_method(_method),
          http_uri(_uri), http_referer(_referer), user_agent(_user_agent),
@@ -96,6 +96,10 @@ struct AccessLogDatagram {
          valid_http_method(false), valid_http_status(false),
          valid_length(false), valid_traffic(false),
          valid_duration(false) {}
+
+    static constexpr uint64_t ExportTimestamp(std::chrono::system_clock::time_point t) noexcept {
+        return std::chrono::duration_cast<std::chrono::microseconds>(t.time_since_epoch()).count();
+    }
 };
 
 #endif
