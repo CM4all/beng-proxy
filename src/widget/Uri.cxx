@@ -334,7 +334,7 @@ Widget::ExternalUri(struct pool &_pool,
         suffix = p;
         p = nullptr;
     } else
-        suffix.SetEmpty();
+        suffix = "";
 
     /* the URI is relative to the widget's base URI.  Convert the URI
        into an absolute URI to the template page on this server and

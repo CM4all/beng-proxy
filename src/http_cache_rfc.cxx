@@ -59,7 +59,7 @@ next_item(StringView &s)
     const char *comma = s.Find(',');
     if (comma == nullptr) {
         result = s;
-        s.SetEmpty();
+        s = "";
     } else {
         result = {s.data, comma};
         s.MoveFront(comma + 1);

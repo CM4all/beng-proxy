@@ -106,7 +106,7 @@ public:
             return nullptr;
 
         if (length == 0)
-            return StringView::Empty();
+            return "";
 
         char *s = (char *)d_malloc(pool, length);
         ReadBuffer(s, length);

@@ -63,7 +63,7 @@ DupBuffer(pool &p, StringView src)
         return nullptr;
 
     if (src.IsEmpty())
-        return StringView::Empty();
+        return "";
 
     return StringView((const char *)p_memdup(&p, src.data, src.size),
                       src.size);

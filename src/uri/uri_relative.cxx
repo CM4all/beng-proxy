@@ -51,7 +51,7 @@ uri_relative(StringView base, StringView uri)
     if (uri.size == base.size - 1 &&
         memcmp(uri.data, base.data, base.size) &&
         memchr(uri.data + 7, '/', uri.size - 7) == nullptr)
-        return StringView::Empty();
+        return "";
 
     return nullptr;
 }
