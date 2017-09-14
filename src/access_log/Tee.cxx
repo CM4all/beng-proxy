@@ -88,7 +88,7 @@ try {
 
     for (int i = 1; i < argc; ++i) {
         const char *program = argv[i];
-        auto process = log_launch(program, nullptr);
+        auto process = LaunchLogger(program, nullptr);
         Child &child = children[n_children++];
         child.fd = process.fd.Steal();
     }

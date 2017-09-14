@@ -46,19 +46,19 @@
 
 gcc_noreturn
 static void
-log_run(const char *program, UniqueSocketDescriptor &&fd)
+RunLogger(const char *command, UniqueSocketDescriptor &&fd)
 {
     fd.CheckDuplicate(FileDescriptor(STDIN_FILENO));
 
-    execl("/bin/sh", "sh", "-c", program, nullptr);
+    execl("/bin/sh", "sh", "-c", command, nullptr);
     fprintf(stderr, "failed to execute %s: %s\n",
-            program, strerror(errno));
+            command, strerror(errno));
     _exit(1);
 }
 
 LogProcess
-log_launch(const char *program,
-           const UidGid *user)
+LaunchLogger(const char *command,
+             const UidGid *user)
 {
     LogProcess p;
     UniqueSocketDescriptor server_fd;
@@ -80,7 +80,7 @@ log_launch(const char *program,
             if (user != nullptr)
                 user->Apply();
 
-            log_run(program, std::move(server_fd));
+            RunLogger(command, std::move(server_fd));
         } catch (...) {
             PrintException(std::current_exception());
             _exit(EXIT_FAILURE);

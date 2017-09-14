@@ -85,7 +85,7 @@ AccessLogGlue::Create(const AccessLogConfig &config,
 
     case AccessLogConfig::Type::EXECUTE:
         {
-            auto lp = log_launch(config.command.c_str(), user);
+            auto lp = LaunchLogger(config.command.c_str(), user);
             assert(lp.fd.IsDefined());
 
             return new AccessLogGlue(config, new LogClient(std::move(lp.fd)));

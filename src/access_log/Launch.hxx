@@ -49,7 +49,7 @@ struct LogProcess {
 };
 
 LogProcess
-log_launch(const char *program,
-           const UidGid *uid_gid);
+LaunchLogger(const char *command,
+             const UidGid *uid_gid);
 
 #endif
