@@ -96,15 +96,15 @@ LbInstance::ShutdownCallback()
 
     DeinitAllControls();
 
-    goto_map.Clear();
-
-    DisconnectCertCaches();
-
     while (!tcp_connections.empty())
         tcp_connections.front().Destroy();
 
     while (!http_connections.empty())
         http_connections.front().CloseAndDestroy();
+
+    goto_map.Clear();
+
+    DisconnectCertCaches();
 
     DeinitAllListeners();
 

@@ -1,6 +1,7 @@
 cm4all-beng-proxy (12.5) unstable; urgency=low
 
   * lb/http: fix another memory leak with POST requests
+  * lb: fix shutdown crash bug
 
  --   
 
