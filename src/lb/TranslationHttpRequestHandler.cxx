@@ -39,6 +39,7 @@
 #include "translation/Handler.hxx"
 #include "translation/Response.hxx"
 #include "pool.hxx"
+#include "abort_close.hxx"
 #include "RedirectHttps.hxx"
 
 /*
@@ -151,5 +152,6 @@ LbHttpConnection::AskTranslationServer(LbTranslationHandler &handler,
     handler.Pick(request.pool, request,
                  listener.tag.empty() ? nullptr : listener.tag.c_str(),
                  lb_http_translate_handler, r,
-                 cancel_ptr);
+                 async_optional_close_on_abort(request.pool, request.body,
+                                               cancel_ptr));
 }
