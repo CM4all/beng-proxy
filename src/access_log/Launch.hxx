@@ -42,6 +42,7 @@
 #include <sys/types.h>
 
 struct UidGid;
+template<typename T> struct ConstBuffer;
 
 struct LogProcess {
     pid_t pid;
@@ -51,5 +52,8 @@ struct LogProcess {
 LogProcess
 LaunchLogger(const char *command,
              const UidGid *uid_gid);
+
+UniqueSocketDescriptor
+LaunchLogger(ConstBuffer<const char *> args);
 
 #endif
