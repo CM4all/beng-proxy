@@ -68,8 +68,8 @@ log_launch(const char *program,
         throw MakeErrno("socketpair() failed");
 
     /* we need an unidirectional socket only */
-    shutdown(p.fd.Get(), SHUT_RD);
-    shutdown(server_fd.Get(), SHUT_WR);
+    p.fd.ShutdownRead();
+    server_fd.ShutdownWrite();
 
     p.pid = fork();
     if (p.pid < 0)

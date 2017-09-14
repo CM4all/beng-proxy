@@ -192,7 +192,7 @@ Connection::NewClose100(struct pool &, EventLoop &event_loop)
 
         static const char response[] = "HTTP/1.1 100 Continue\n\n";
         (void)server_socket.Write(response, sizeof(response) - 1);
-        shutdown(server_socket.Get(), SHUT_WR);
+        server_socket.ShutdownWrite();
 
         char buffer[64];
         while (server_socket.Read(buffer, sizeof(buffer)) > 0) {}
