@@ -36,6 +36,7 @@
 #include "Datagram.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "net/StaticSocketAddress.hxx"
+#include "util/ConstBuffer.hxx"
 
 #include <array>
 
@@ -45,6 +46,11 @@
  */
 struct ReceivedAccessLogDatagram : AccessLogDatagram {
     SocketAddress logger_client_address;
+
+    /**
+     * The raw datagram payload.
+     */
+    ConstBuffer<void> raw;
 };
 
 /**

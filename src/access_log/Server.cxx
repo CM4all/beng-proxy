@@ -106,6 +106,7 @@ AccessLogServer::Receive()
         memset(&datagram, 0, sizeof(datagram));
 
         datagram.logger_client_address = address;
+        datagram.raw = {buffer, nbytes};
 
         if (log_server_apply_datagram(&datagram, buffer, buffer + nbytes))
             return &datagram;
