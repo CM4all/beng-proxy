@@ -79,11 +79,15 @@ class LuaAccessLogger {
     Lua::Value function;
 
 public:
-    LuaAccessLogger(lua_State *L, const char *path, const char *function_name)
+    explicit LuaAccessLogger(lua_State *L)
         :function(L)
     {
-         Lua::RunFile(L, path);
-         LookupFunction(function, path, function_name);
+    }
+
+    void LoadFile(const char *path, const char *function_name) {
+        const auto L = function.GetState();
+        Lua::RunFile(L, path);
+        LookupFunction(function, path, function_name);
     }
 
     void Handle(const ReceivedAccessLogDatagram &d,
@@ -198,7 +202,8 @@ try {
     Lua::State state(luaL_newstate());
     luaL_openlibs(state.get());
 
-    LuaAccessLogger logger(state.get(), path, function_name);
+    LuaAccessLogger logger(state.get());
+    logger.LoadFile(path, function_name);
 
     AccessLogServer().Run(std::bind(&LuaAccessLogger::Handle, &logger,
                                     std::placeholders::_1,
