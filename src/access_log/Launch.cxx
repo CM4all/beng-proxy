@@ -46,14 +46,21 @@
 
 gcc_noreturn
 static void
-RunLogger(const char *command, SocketDescriptor fd)
+Exec(const char *command)
 {
-    fd.CheckDuplicate(FileDescriptor(STDIN_FILENO));
-
     execl("/bin/sh", "sh", "-c", command, nullptr);
     fprintf(stderr, "failed to execute %s: %s\n",
             command, strerror(errno));
     _exit(EXIT_FAILURE);
+
+}
+
+gcc_noreturn
+static void
+RunLogger(const char *command, SocketDescriptor fd)
+{
+    fd.CheckDuplicate(FileDescriptor(STDIN_FILENO));
+    Exec(command);
 }
 
 LogProcess
