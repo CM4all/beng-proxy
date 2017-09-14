@@ -2989,6 +2989,18 @@ function loggerfunc(r)
 end
 \end{verbatim}
 
+As a shortcut, a Lua code fragment can be passed on the command line:
+
+\begin{verbatim}
+cm4all-beng-proxy-log-lua \
+    --handler-code 'return _.http_uri == "/wp-login.php"' \
+    --filter-exec cm4all-beng-proxy-log-json
+\end{verbatim}
+
+The code fragment is called for each request.  The global variable
+\texttt{\_} (underscore) contains the request object.  The code
+fragment should contain a \texttt{return} statement.
+
 \subsubsection{\texttt{log-traffic}}
 
 Print site traffic to standard output.  Each line is in the form

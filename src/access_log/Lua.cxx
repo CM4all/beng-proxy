@@ -78,10 +78,26 @@ LookupFunction(Lua::Value &dest, const char *path, const char *name)
 class LuaAccessLogger {
     Lua::Value function;
 
+    /**
+     * Set the global variable "_"?  This is used for code fragments.
+     */
+    bool set_underscore = false;
+
 public:
     explicit LuaAccessLogger(lua_State *L)
         :function(L)
     {
+    }
+
+    void SetHandlerCode(const char *code) {
+        const auto L = function.GetState();
+        if (luaL_loadstring(L, code))
+            throw Lua::PopError(L);
+
+        AtScopeExit(L) { lua_pop(L, 1); };
+
+        function.Set(Lua::StackIndex(-2));
+        set_underscore = true;
     }
 
     void LoadFile(const char *path, const char *function_name) {
@@ -152,6 +168,16 @@ try {
     if (d.valid_duration)
         Lua::SetTable(L, -3, "duration", d.duration / 1000000.);
 
+    /* if the function is a Lua code fragment passed via
+       "--handler-code", then set the global variable "_" to the
+       request */
+    if (set_underscore)
+        Lua::SetGlobal(L, "_", Lua::StackIndex(-1));
+    AtScopeExit(this, L) {
+        if (set_underscore)
+            Lua::SetGlobal(L, "_", nullptr);
+    };
+
     if (lua_pcall(L, 1, filter_sink.IsDefined(), 0))
         throw Lua::PopError(L);
 
@@ -176,13 +202,32 @@ main(int argc, char **argv)
 try {
     ConstBuffer<const char *> args(argv + 1, argc - 1);
 
-    if (args.empty())
-        throw Usage();
+    const char *handler_code = nullptr;
+    const char *path = nullptr, *function_name = nullptr;
 
-    const char *const path = args.shift();
-    const char *const function_name = !args.empty() && args.front()[0] != '-'
-        ? args.shift()
-        : "access_log";
+    while (!args.empty() && args.front()[0] == '-') {
+        if (strcmp(args.front(), "--handler-code") == 0) {
+            args.shift();
+
+            if (args.empty())
+                throw Usage();
+
+            handler_code = args.shift();
+        } else if (strcmp(args.front(), "--filter-exec") == 0)
+            break;
+        else
+            throw Usage();
+    }
+
+    if (handler_code == nullptr) {
+        if (args.empty())
+            throw Usage();
+
+        path = args.shift();
+        function_name = !args.empty() && args.front()[0] != '-'
+            ? args.shift()
+            : "access_log";
+    }
 
     UniqueSocketDescriptor filter_sink;
 
@@ -203,14 +248,18 @@ try {
     luaL_openlibs(state.get());
 
     LuaAccessLogger logger(state.get());
-    logger.LoadFile(path, function_name);
+
+    if (handler_code != nullptr)
+        logger.SetHandlerCode(handler_code);
+    else
+        logger.LoadFile(path, function_name);
 
     AccessLogServer().Run(std::bind(&LuaAccessLogger::Handle, &logger,
                                     std::placeholders::_1,
                                     (SocketDescriptor)filter_sink));
     return EXIT_SUCCESS;
 } catch (Usage) {
-    fprintf(stderr, "Usage: %s FILE.lua [FUNCTION] [--filter-exec PROGRAM ARGS...]\n", argv[0]);
+    fprintf(stderr, "Usage: %s {--handler-code CODE | FILE.lua [FUNCTION]} [--filter-exec PROGRAM ARGS...]\n", argv[0]);
     return EXIT_FAILURE;
 } catch (...) {
     PrintException(std::current_exception());
