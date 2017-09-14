@@ -46,7 +46,7 @@
 
 gcc_noreturn
 static void
-RunLogger(const char *command, UniqueSocketDescriptor &&fd)
+RunLogger(const char *command, SocketDescriptor fd)
 {
     fd.CheckDuplicate(FileDescriptor(STDIN_FILENO));
 
@@ -80,7 +80,7 @@ LaunchLogger(const char *command,
             if (user != nullptr)
                 user->Apply();
 
-            RunLogger(command, std::move(server_fd));
+            RunLogger(command, server_fd);
         } catch (...) {
             PrintException(std::current_exception());
             _exit(EXIT_FAILURE);
