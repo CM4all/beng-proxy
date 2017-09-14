@@ -53,7 +53,7 @@ RunLogger(const char *command, UniqueSocketDescriptor &&fd)
     execl("/bin/sh", "sh", "-c", command, nullptr);
     fprintf(stderr, "failed to execute %s: %s\n",
             command, strerror(errno));
-    _exit(1);
+    _exit(EXIT_FAILURE);
 }
 
 LogProcess
