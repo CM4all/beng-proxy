@@ -6,7 +6,7 @@ cm4all-beng-proxy (13.0.5) unstable; urgency=low
   * lb: CONTROL_STATS returns translation cache size
   * log/lua: add a "filter" mode
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Thu, 14 Sep 2017 18:39:12 -0000
 
 cm4all-beng-proxy (13.0.4) unstable; urgency=low
 
