@@ -30,19 +30,46 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_LB_STATS_H
-#define BENG_LB_STATS_H
+#include "Instance.hxx"
+#include "tcp_stock.hxx"
+#include "stock/Stats.hxx"
+#include "fb_pool.hxx"
+#include "SlicePool.hxx"
+#include "AllocatorStats.hxx"
+#include "beng-proxy/control.h"
+#include "util/ByteOrder.hxx"
 
-#include <stdint.h>
+struct beng_control_stats
+LbInstance::GetStats() const noexcept
+{
+    struct beng_control_stats stats;
 
-struct LbInstance;
-struct beng_control_stats;
+    StockStats tcp_stock_stats = {
+        .busy = 0,
+        .idle = 0,
+    };
 
-/**
- * Collect statistics of a beng-lb process.
- */
-void
-lb_get_stats(const LbInstance *instance,
-             struct beng_control_stats *data);
+    tcp_stock->AddStats(tcp_stock_stats);
 
-#endif
+    stats.incoming_connections = ToBE32(http_connections.size()
+                                        + tcp_connections.size());
+    stats.outgoing_connections = ToBE32(tcp_stock_stats.busy
+                                        + tcp_stock_stats.idle
+                                        + tcp_connections.size());
+    stats.children = 0;
+    stats.sessions = 0;
+    stats.http_requests = ToBE64(http_request_counter);
+    stats.translation_cache_size = 0;
+    stats.http_cache_size = 0;
+    stats.filter_cache_size = 0;
+    stats.translation_cache_brutto_size = 0;
+    stats.http_cache_brutto_size = 0;
+    stats.filter_cache_brutto_size = 0;
+    stats.nfs_cache_size = stats.nfs_cache_brutto_size = 0;
+
+    const auto io_buffers_stats = slice_pool_get_stats(fb_pool_get());
+    stats.io_buffers_size = ToBE64(io_buffers_stats.netto_size);
+    stats.io_buffers_brutto_size = ToBE64(io_buffers_stats.brutto_size);
+
+    return stats;
+}

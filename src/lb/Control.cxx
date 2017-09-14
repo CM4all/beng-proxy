@@ -33,7 +33,6 @@
 #include "Control.hxx"
 #include "Instance.hxx"
 #include "Config.hxx"
-#include "lb_stats.hxx"
 #include "control_server.hxx"
 #include "failure.hxx"
 #include "tpool.hxx"
@@ -246,9 +245,7 @@ inline void
 LbControl::QueryStats(ControlServer &control_server,
                       SocketAddress address)
 try {
-    struct beng_control_stats stats;
-    lb_get_stats(&instance, &stats);
-
+    const auto stats = instance.GetStats();
     control_server.Reply(address,
                          CONTROL_STATS, &stats, sizeof(stats));
 } catch (...) {

@@ -115,6 +115,9 @@ struct LbInstance final : PInstance {
     void EnableAllControls();
     void DeinitAllControls();
 
+    gcc_pure
+    struct beng_control_stats GetStats() const noexcept;
+
     /**
      * Create monitors for all members of all active clusters (from
      * #LbGotoMap).
