@@ -74,6 +74,9 @@ public:
     void FlushCaches();
     void InvalidateTranslationCaches(const TranslationInvalidateRequest &request);
 
+    gcc_pure
+    size_t GetAllocatedTranslationCacheMemory() const noexcept;
+
     template<typename F>
     void ForEachCluster(F &&f) {
         for (auto &i : clusters)

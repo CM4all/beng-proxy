@@ -66,6 +66,12 @@ LbTranslationHandler::~LbTranslationHandler()
     tstock_free(stock);
 }
 
+size_t
+LbTranslationHandler::GetAllocatedCacheMemory() const noexcept
+{
+    return cache ? cache->GetAllocatedMemory() : 0;
+}
+
 void
 LbTranslationHandler::FlushCache()
 {

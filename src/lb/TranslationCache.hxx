@@ -53,6 +53,11 @@ public:
         std::string redirect, message, pool, canonical_host, site;
 
         explicit Item(const TranslateResponse &response);
+
+        size_t GetAllocatedMemory() const noexcept {
+            return sizeof(*this) + redirect.length() + message.length() +
+                pool.length() + canonical_host.length() + site.length();
+        }
     };
 
     struct Vary {
@@ -88,6 +93,9 @@ private:
 public:
     LbTranslationCache()
         :logger("tcache") {}
+
+    gcc_pure
+    size_t GetAllocatedMemory() const noexcept;
 
     void Clear();
     void Invalidate(const TranslationInvalidateRequest &request);

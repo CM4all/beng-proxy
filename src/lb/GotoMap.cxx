@@ -50,6 +50,15 @@ LbGotoMap::InvalidateTranslationCaches(const TranslationInvalidateRequest &reque
         i.second.InvalidateCache(request);
 }
 
+size_t
+LbGotoMap::GetAllocatedTranslationCacheMemory() const noexcept
+{
+    size_t result = 0;
+    for (const auto &i : translation_handlers)
+        result += i.second.GetAllocatedCacheMemory();
+    return result;
+}
+
 LbGoto
 LbGotoMap::GetInstance(const char *name)
 {

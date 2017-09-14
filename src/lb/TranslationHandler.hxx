@@ -35,6 +35,7 @@
 
 #include "Goto.hxx"
 #include "util/StringLess.hxx"
+#include "util/Compiler.h"
 
 #include <map>
 #include <memory>
@@ -63,6 +64,9 @@ public:
     LbTranslationHandler(EventLoop &event_loop, LbGotoMap &goto_map,
                          const LbTranslationHandlerConfig &_config);
     ~LbTranslationHandler();
+
+    gcc_pure
+    size_t GetAllocatedCacheMemory() const noexcept;
 
     void FlushCache();
     void InvalidateCache(const TranslationInvalidateRequest &request);

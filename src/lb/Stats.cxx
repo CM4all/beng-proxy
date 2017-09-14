@@ -59,10 +59,10 @@ LbInstance::GetStats() const noexcept
     stats.children = 0;
     stats.sessions = 0;
     stats.http_requests = ToBE64(http_request_counter);
-    stats.translation_cache_size = 0;
+    stats.translation_cache_size = ToBE64(goto_map.GetAllocatedTranslationCacheMemory());
     stats.http_cache_size = 0;
     stats.filter_cache_size = 0;
-    stats.translation_cache_brutto_size = 0;
+    stats.translation_cache_brutto_size = stats.translation_cache_size;
     stats.http_cache_brutto_size = 0;
     stats.filter_cache_brutto_size = 0;
     stats.nfs_cache_size = stats.nfs_cache_brutto_size = 0;
