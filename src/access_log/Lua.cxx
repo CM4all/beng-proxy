@@ -56,8 +56,10 @@ extern "C" {
 }
 
 static void
-LookupFunction(lua_State *L, Lua::Value &dest, const char *path, const char *name)
+LookupFunction(Lua::Value &dest, const char *path, const char *name)
 {
+    const auto L = dest.GetState();
+
     lua_getglobal(L, name);
     AtScopeExit(L) { lua_pop(L, 1); };
 
@@ -74,15 +76,14 @@ LookupFunction(lua_State *L, Lua::Value &dest, const char *path, const char *nam
 }
 
 class LuaAccessLogger {
-    lua_State *const L;
     Lua::Value function;
 
 public:
-    LuaAccessLogger(lua_State *_L, const char *path, const char *function_name)
-        :L(_L), function(L)
+    LuaAccessLogger(lua_State *L, const char *path, const char *function_name)
+        :function(L)
     {
          Lua::RunFile(L, path);
-         LookupFunction(L, function, path, function_name);
+         LookupFunction(function, path, function_name);
     }
 
     void Handle(const ReceivedAccessLogDatagram &d,
@@ -93,6 +94,8 @@ void
 LuaAccessLogger::Handle(const ReceivedAccessLogDatagram &d,
                         SocketDescriptor filter_sink)
 try {
+    const auto L = function.GetState();
+
     function.Push();
 
     lua_newtable(L);
