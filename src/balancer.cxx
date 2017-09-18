@@ -70,6 +70,8 @@ struct Balancer {
 
     explicit Balancer(EventLoop &event_loop)
         :cache(event_loop, 1021, 2048) {}
+
+    SocketAddress Get(const AddressList &list, unsigned session) noexcept;
 };
 
 static bool
@@ -188,9 +190,8 @@ balancer_free(Balancer *balancer)
     delete balancer;
 }
 
-SocketAddress
-balancer_get(Balancer &balancer, const AddressList &list,
-             sticky_hash_t sticky_hash)
+inline SocketAddress
+Balancer::Get(const AddressList &list, sticky_hash_t sticky_hash) noexcept
 {
     if (list.IsSingle())
         return list[0];
@@ -214,14 +215,21 @@ balancer_get(Balancer &balancer, const AddressList &list,
     }
 
     const char *key = list.GetKey();
-    auto *item = (Balancer::Item *)balancer.cache.Get(key);
+    auto *item = (Item *)cache.Get(key);
 
     if (item == nullptr) {
         /* create a new cache item */
-        item = new Balancer::Item(key);
-        balancer.cache.Put(item->key.c_str(), *item);
+        item = new Item(key);
+        cache.Put(item->key.c_str(), *item);
     }
 
     return item->NextAddressChecked(list,
                                     list.sticky_mode == StickyMode::NONE);
+}
+
+SocketAddress
+balancer_get(Balancer &balancer, const AddressList &list,
+             sticky_hash_t sticky_hash)
+{
+    return balancer.Get(list, sticky_hash);
 }
