@@ -142,11 +142,11 @@ Balancer::Item::NextAddressChecked(const AddressList &addresses,
 }
 
 static const SocketAddress &
-next_sticky_address_checked(const AddressList &al, unsigned session)
+next_sticky_address_checked(const AddressList &al, sticky_hash_t sticky_hash)
 {
     assert(al.GetSize() >= 2);
 
-    unsigned i = session % al.GetSize();
+    unsigned i = sticky_hash % al.GetSize();
     bool allow_fade = true;
 
     const SocketAddress &first = al[i];
@@ -190,7 +190,7 @@ balancer_free(Balancer *balancer)
 
 SocketAddress
 balancer_get(Balancer &balancer, const AddressList &list,
-             unsigned session)
+             sticky_hash_t sticky_hash)
 {
     if (list.IsSingle())
         return list[0];
@@ -208,8 +208,8 @@ balancer_get(Balancer &balancer, const AddressList &list,
     case StickyMode::SESSION_MODULO:
     case StickyMode::COOKIE:
     case StickyMode::JVM_ROUTE:
-        if (session != 0)
-            return next_sticky_address_checked(list, session);
+        if (sticky_hash != 0)
+            return next_sticky_address_checked(list, sticky_hash);
         break;
     }
 

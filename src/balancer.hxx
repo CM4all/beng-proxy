@@ -37,6 +37,8 @@
 #ifndef BENG_PROXY_BALANCER_HXX
 #define BENG_PROXY_BALANCER_HXX
 
+#include "StickyHash.hxx"
+
 struct Balancer;
 struct AddressList;
 class EventLoop;
@@ -58,7 +60,7 @@ balancer_free(Balancer *balancer);
  */
 SocketAddress
 balancer_get(Balancer &balancer, const AddressList &list,
-             unsigned session);
+             sticky_hash_t sticky_hash);
 
 void
 balancer_event_add(Balancer &balancer);
