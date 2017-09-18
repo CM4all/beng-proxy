@@ -209,6 +209,10 @@ public:
 
     ~FilterCache();
 
+    void Put(const FilterCacheInfo &info,
+             http_status_t status, const StringMap &headers,
+             unsigned rubber_id, size_t size);
+
 private:
     void OnCompressTimer() {
         rubber_compress(rubber);
@@ -282,32 +286,28 @@ filter_cache_request_evaluate(struct pool &pool,
                                                  address.GetId(pool), nullptr));
 }
 
-static void
-filter_cache_put(FilterCacheRequest *request,
+void
+FilterCache::Put(const FilterCacheInfo &info,
+                 http_status_t status, const StringMap &headers,
                  unsigned rubber_id, size_t size)
 {
-    assert(request != nullptr);
-
-    LogConcat(4, "FilterCache", "put ", request->info.key);
+    LogConcat(4, "FilterCache", "put ", info.key);
 
     std::chrono::system_clock::time_point expires;
-    if (request->info.expires == std::chrono::system_clock::from_time_t(-1))
+    if (info.expires == std::chrono::system_clock::from_time_t(-1))
         expires = std::chrono::system_clock::now() + fcache_default_expires;
     else
-        expires = request->info.expires;
+        expires = info.expires;
 
-    struct pool *pool = pool_new_slice(&request->cache.pool, "FilterCacheItem",
-                                       request->cache.slice_pool);
-    auto item = NewFromPool<FilterCacheItem>(*pool, *pool,
-                                             request->info,
-                                             request->response.status,
-                                             *request->response.headers,
-                                             size,
-                                             *request->cache.rubber,
-                                             rubber_id,
+    struct pool *item_pool = pool_new_slice(&pool, "FilterCacheItem",
+                                            slice_pool);
+    auto item = NewFromPool<FilterCacheItem>(*item_pool, *item_pool,
+                                             info,
+                                             status, headers, size,
+                                             *rubber, rubber_id,
                                              expires);
 
-    request->cache.cache.Put(item->info.key, *item);
+    cache.Put(info.key, *item);
 }
 
 static std::chrono::system_clock::time_point
@@ -387,7 +387,7 @@ FilterCacheRequest::RubberDone(unsigned rubber_id, size_t size)
 
     /* the request was successful, and all of the body data has been
        saved: add it to the cache */
-    filter_cache_put(this, rubber_id, size);
+    cache.Put(info, response.status, *response.headers, rubber_id, size);
 
     filter_cache_request_release(this);
 }
@@ -445,10 +445,7 @@ FilterCacheRequest::OnHttpResponse(http_status_t status, StringMap &&headers,
     if (body == nullptr) {
         response.cancel_ptr = nullptr;
 
-        response.status = status;
-        response.headers = &headers;
-
-        filter_cache_put(this, 0, 0);
+        cache.Put(info, status, headers, 0, 0);
     } else {
         pool_ref(&pool);
 
