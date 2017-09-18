@@ -182,7 +182,8 @@ struct FilterCacheRequest final : HttpResponseHandler, RubberSinkHandler {
 };
 
 class FilterCache {
-public:
+    friend struct FilterCacheRequest;
+
     struct pool &pool;
     Cache cache;
     Rubber *const rubber;
@@ -204,6 +205,7 @@ public:
                                                          &FilterCacheRequest::siblings>,
                            boost::intrusive::constant_time_size<false>> requests;
 
+public:
     FilterCache(struct pool &_pool, size_t max_size,
                 EventLoop &_event_loop, ResourceLoader &_resource_loader);
 
