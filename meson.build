@@ -144,6 +144,8 @@ util_dep = declare_dependency(link_with: util)
 
 time = static_library('time',
   'libcommon/src/time/gmtime.c',
+  'libcommon/src/time/Convert.cxx',
+  'libcommon/src/time/ISO8601.cxx',
   include_directories: inc,
   dependencies: [
   ])
@@ -394,6 +396,7 @@ pg = static_library('pg',
   'libcommon/src/pg/Serial.cxx',
   'libcommon/src/pg/Array.cxx',
   'libcommon/src/pg/Interval.cxx',
+  'libcommon/src/pg/Timestamp.cxx',
   'libcommon/src/pg/Connection.cxx',
   'libcommon/src/pg/AsyncConnection.cxx',
   'libcommon/src/pg/Result.cxx',
