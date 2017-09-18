@@ -209,14 +209,57 @@ public:
 
     ~FilterCache();
 
+    void ForkCow(bool inherit) {
+        rubber_fork_cow(rubber, inherit);
+        slice_pool_fork_cow(*slice_pool, inherit);
+    }
+
+    AllocatorStats GetStats() const noexcept {
+        return slice_pool_get_stats(*slice_pool)
+            + rubber_get_stats(*rubber);
+    }
+
+    void Flush() {
+        cache.Flush();
+        Compress();
+    }
+
+    void Get(struct pool &caller_pool,
+             const ResourceAddress &address,
+             const char *source_id,
+             http_status_t status, StringMap &&headers,
+             Istream *body,
+             HttpResponseHandler &handler,
+             CancellablePointer &cancel_ptr);
+
     void Put(const FilterCacheInfo &info,
              http_status_t status, const StringMap &headers,
              unsigned rubber_id, size_t size);
 
 private:
-    void OnCompressTimer() {
+    void Miss(struct pool &caller_pool,
+              FilterCacheInfo &&info,
+              const ResourceAddress &address,
+              http_status_t status, StringMap &&headers,
+              Istream *body, const char *body_etag,
+              HttpResponseHandler &_handler,
+              CancellablePointer &cancel_ptr);
+
+    void Serve(FilterCacheItem &item,
+               struct pool &caller_pool, Istream *body,
+               HttpResponseHandler &handler);
+
+    void Hit(FilterCacheItem &item,
+             struct pool &caller_pool, Istream *body,
+             HttpResponseHandler &handler);
+
+    void Compress() {
         rubber_compress(rubber);
         slice_pool_compress(slice_pool);
+    }
+
+    void OnCompressTimer() {
+        Compress();
         compress_timer.Add(fcache_compress_interval);
     }
 };
@@ -552,27 +595,23 @@ filter_cache_close(FilterCache *cache)
 void
 filter_cache_fork_cow(FilterCache &cache, bool inherit)
 {
-    rubber_fork_cow(cache.rubber, inherit);
-    slice_pool_fork_cow(*cache.slice_pool, inherit);
+    cache.ForkCow(inherit);
 }
 
 AllocatorStats
 filter_cache_get_stats(const FilterCache &cache)
 {
-    return slice_pool_get_stats(*cache.slice_pool)
-            + rubber_get_stats(*cache.rubber);
+    return cache.GetStats();
 }
 
 void
 filter_cache_flush(FilterCache &cache)
 {
-    cache.cache.Flush();
-    rubber_compress(cache.rubber);
-    slice_pool_compress(cache.slice_pool);
+    cache.Flush();
 }
 
-static void
-filter_cache_miss(FilterCache &cache, struct pool &caller_pool,
+void
+FilterCache::Miss(struct pool &caller_pool,
                   FilterCacheInfo &&info,
                   const ResourceAddress &address,
                   http_status_t status, StringMap &&headers,
@@ -582,26 +621,26 @@ filter_cache_miss(FilterCache &cache, struct pool &caller_pool,
 {
     /* the cache request may live longer than the caller pool, so
        allocate a new pool for it from cache->pool */
-    auto *pool = pool_new_linear(&cache.pool, "filter_cache_request", 8192);
+    auto *request_pool = pool_new_linear(&pool, "filter_cache_request", 8192);
 
-    auto request = NewFromPool<FilterCacheRequest>(*pool, *pool, caller_pool,
-                                                   cache, _handler, info);
+    auto request = NewFromPool<FilterCacheRequest>(*request_pool, *request_pool, caller_pool,
+                                                   *this, _handler, info);
 
     LogConcat(4, "FilterCache", "miss ", info.key);
 
     pool_ref(&caller_pool);
-    cache.resource_loader.SendRequest(*pool, 0,
-                                      HTTP_METHOD_POST, address,
-                                      status, std::move(headers),
-                                      body, body_etag,
-                                      *request,
-                                      async_unref_on_abort(caller_pool, cancel_ptr));
-    pool_unref(pool);
+    resource_loader.SendRequest(*request_pool, 0,
+                                HTTP_METHOD_POST, address,
+                                status, std::move(headers),
+                                body, body_etag,
+                                *request,
+                                async_unref_on_abort(caller_pool, cancel_ptr));
+    pool_unref(request_pool);
 }
 
-static void
-filter_cache_serve(FilterCache &cache, FilterCacheItem &item,
-                   struct pool &pool, Istream *body,
+void
+FilterCache::Serve(FilterCacheItem &item,
+                   struct pool &caller_pool, Istream *body,
                    HttpResponseHandler &handler)
 {
     if (body != nullptr)
@@ -614,24 +653,54 @@ filter_cache_serve(FilterCache &cache, FilterCacheItem &item,
     assert(item.rubber_id == 0 || ((CacheItem &)item).size >= item.size);
 
     Istream *response_body = item.rubber_id != 0
-        ? istream_rubber_new(pool, *cache.rubber, item.rubber_id,
+        ? istream_rubber_new(caller_pool, *rubber, item.rubber_id,
                              0, item.size, false)
-        : istream_null_new(&pool);
+        : istream_null_new(&caller_pool);
 
-    response_body = istream_unlock_new(pool, *response_body, item);
+    response_body = istream_unlock_new(caller_pool, *response_body, item);
 
     handler.InvokeResponse(item.status,
-                           StringMap(ShallowCopy(), pool, item.headers),
+                           StringMap(ShallowCopy(), caller_pool, item.headers),
                            response_body);
 }
 
-static void
-filter_cache_found(FilterCache &cache,
-                   FilterCacheItem &item,
-                   struct pool &pool, Istream *body,
-                   HttpResponseHandler &handler)
+void
+FilterCache::Hit(FilterCacheItem &item,
+                 struct pool &caller_pool, Istream *body,
+                 HttpResponseHandler &handler)
 {
-    filter_cache_serve(cache, item, pool, body, handler);
+    Serve(item, caller_pool, body, handler);
+}
+
+void
+FilterCache::Get(struct pool &caller_pool,
+                 const ResourceAddress &address,
+                 const char *source_id,
+                 http_status_t status, StringMap &&headers,
+                 Istream *body,
+                 HttpResponseHandler &handler,
+                 CancellablePointer &cancel_ptr)
+{
+    auto *info = filter_cache_request_evaluate(caller_pool, address,
+                                               source_id, headers);
+    if (info != nullptr) {
+        FilterCacheItem *item
+            = (FilterCacheItem *)cache.Get(info->key);
+
+        if (item == nullptr)
+            Miss(caller_pool, std::move(*info),
+                 address, status, std::move(headers),
+                 body, source_id,
+                 handler, cancel_ptr);
+        else
+            Hit(*item, caller_pool, body, handler);
+    } else {
+        resource_loader.SendRequest(caller_pool, 0,
+                                    HTTP_METHOD_POST, address,
+                                    status, std::move(headers),
+                                    body, source_id,
+                                    handler, cancel_ptr);
+    }
 }
 
 void
@@ -644,24 +713,6 @@ filter_cache_request(FilterCache &cache,
                      HttpResponseHandler &handler,
                      CancellablePointer &cancel_ptr)
 {
-    auto *info = filter_cache_request_evaluate(pool, address,
-                                               source_id, headers);
-    if (info != nullptr) {
-        FilterCacheItem *item
-            = (FilterCacheItem *)cache.cache.Get(info->key);
-
-        if (item == nullptr)
-            filter_cache_miss(cache, pool, std::move(*info),
-                              address, status, std::move(headers),
-                              body, source_id,
-                              handler, cancel_ptr);
-        else
-            filter_cache_found(cache, *item, pool, body, handler);
-    } else {
-        cache.resource_loader.SendRequest(pool, 0,
-                                          HTTP_METHOD_POST, address,
-                                          status, std::move(headers),
-                                          body, source_id,
-                                          handler, cancel_ptr);
-    }
+    cache.Get(pool, address, source_id, status, std::move(headers),
+              body, handler, cancel_ptr);
 }
