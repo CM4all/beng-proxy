@@ -42,6 +42,15 @@ struct TcpBalancer {
 
     explicit TcpBalancer(TcpStock &_tcp_stock)
         :tcp_stock(_tcp_stock) {}
+
+    void Get(struct pool &pool,
+             bool ip_transparent,
+             SocketAddress bind_address,
+             sticky_hash_t session_sticky,
+             const AddressList &address_list,
+             unsigned timeout,
+             StockGetHandler &handler,
+             CancellablePointer &cancel_ptr);
 };
 
 struct TcpBalancerRequest : public StockGetHandler {
@@ -127,6 +136,25 @@ tcp_balancer_free(TcpBalancer *tcp_balancer)
 }
 
 void
+TcpBalancer::Get(struct pool &pool,
+                 bool ip_transparent,
+                 SocketAddress bind_address,
+                 sticky_hash_t session_sticky,
+                 const AddressList &address_list,
+                 unsigned timeout,
+                 StockGetHandler &handler,
+                 CancellablePointer &cancel_ptr)
+{
+    BalancerRequest<TcpBalancerRequest>::Start(pool, balancer,
+                                               address_list, cancel_ptr,
+                                               session_sticky,
+                                               *this,
+                                               ip_transparent,
+                                               bind_address, timeout,
+                                               handler);
+}
+
+void
 tcp_balancer_get(TcpBalancer &tcp_balancer, struct pool &pool,
                  bool ip_transparent,
                  SocketAddress bind_address,
@@ -136,11 +164,11 @@ tcp_balancer_get(TcpBalancer &tcp_balancer, struct pool &pool,
                  StockGetHandler &handler,
                  CancellablePointer &cancel_ptr)
 {
-    BalancerRequest<TcpBalancerRequest>::Start(pool, tcp_balancer.balancer,
-                                               address_list, cancel_ptr,
-                                               session_sticky,
-                                               tcp_balancer,
-                                               ip_transparent,
-                                               bind_address, timeout,
-                                               handler);
+    return tcp_balancer.Get(pool, ip_transparent,
+                            bind_address,
+                            session_sticky,
+                            address_list,
+                            timeout,
+                            handler,
+                            cancel_ptr);
 }
