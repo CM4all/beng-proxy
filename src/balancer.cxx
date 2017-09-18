@@ -36,12 +36,10 @@
 #include "net/SocketAddress.hxx"
 #include "failure.hxx"
 #include "bulldog.hxx"
-#include "AllocatorPtr.hxx"
 
 #include <string>
 
 #include <assert.h>
-#include <time.h>
 
 struct Balancer {
     struct Item final : CacheItem {

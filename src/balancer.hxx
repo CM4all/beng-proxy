@@ -37,8 +37,6 @@
 #ifndef BENG_PROXY_BALANCER_HXX
 #define BENG_PROXY_BALANCER_HXX
 
-#include <sys/socket.h>
-
 struct Balancer;
 struct AddressList;
 class EventLoop;
