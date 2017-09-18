@@ -134,10 +134,7 @@ BpInstance::FreeStocksAndCaches()
     delete tcp_stock;
     tcp_stock = nullptr;
 
-    if (balancer != nullptr) {
-        balancer_free(balancer);
-        balancer = nullptr;
-    }
+    delete std::exchange(balancer, nullptr);
 
     if (delegate_stock != nullptr) {
         delegate_stock_free(delegate_stock);

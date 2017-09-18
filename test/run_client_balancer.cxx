@@ -52,7 +52,7 @@
 #include <string.h>
 
 struct Context final : PInstance, ConnectSocketHandler {
-    Balancer *const balancer;
+    Balancer balancer;
 
     enum {
         NONE, SUCCESS, TIMEOUT, ERROR,
@@ -62,7 +62,7 @@ struct Context final : PInstance, ConnectSocketHandler {
     std::exception_ptr error;
 
     Context()
-        :balancer(balancer_new(event_loop))
+        :balancer(event_loop)
     {
     }
 
@@ -70,18 +70,15 @@ struct Context final : PInstance, ConnectSocketHandler {
     void OnSocketConnectSuccess(UniqueSocketDescriptor &&new_fd) override {
         result = SUCCESS;
         fd = std::move(new_fd);
-        balancer_free(balancer);
     }
 
     void OnSocketConnectTimeout() override {
         result = TIMEOUT;
-        balancer_free(balancer);
     }
 
     void OnSocketConnectError(std::exception_ptr ep) override {
         result = ERROR;
         error = std::move(ep);
-        balancer_free(balancer);
     }
 };
 
@@ -120,7 +117,7 @@ try {
     /* connect */
 
     CancellablePointer cancel_ptr;
-    client_balancer_connect(ctx.event_loop, *pool, *ctx.balancer,
+    client_balancer_connect(ctx.event_loop, *pool, ctx.balancer,
                             false, SocketAddress::Null(),
                             0, &address_list, 30,
                             ctx, cancel_ptr);

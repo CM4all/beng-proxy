@@ -117,9 +117,7 @@ LbInstance::ShutdownCallback()
         tcp_balancer_free(tcp_balancer);
 
     delete tcp_stock;
-
-    if (balancer != nullptr)
-        balancer_free(balancer);
+    delete std::exchange(balancer, nullptr);
 
     if (pipe_stock != nullptr)
         pipe_stock_free(pipe_stock);
@@ -188,7 +186,7 @@ try {
     instance.InitAllControls();
     instance.InitAllListeners();
 
-    instance.balancer = balancer_new(instance.event_loop);
+    instance.balancer = new Balancer(instance.event_loop);
     instance.tcp_stock = new TcpStock(instance.event_loop,
                                       cmdline.tcp_stock_limit);
     instance.tcp_balancer = tcp_balancer_new(*instance.tcp_stock,

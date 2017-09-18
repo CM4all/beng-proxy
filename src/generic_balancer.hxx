@@ -108,7 +108,7 @@ struct BalancerRequest : R {
 
     void Next() {
         const SocketAddress address =
-            balancer_get(balancer, address_list, session_sticky);
+            balancer.Get(address_list, session_sticky);
 
         /* we need to copy this address because it may come from
            the balancer's cache, and the according cache item may

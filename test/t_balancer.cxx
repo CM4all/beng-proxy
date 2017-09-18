@@ -46,22 +46,18 @@
 #include <stdlib.h>
 
 class MyBalancer {
-    Balancer *balancer;
+    Balancer balancer;
 
 public:
     explicit MyBalancer(EventLoop &event_loop)
-        :balancer(balancer_new(event_loop)) {}
-
-    ~MyBalancer() {
-        balancer_free(balancer);
-    }
+        :balancer(event_loop) {}
 
     operator Balancer *() {
-        return balancer;
+        return &balancer;
     }
 
     SocketAddress Get(const AddressList &al, unsigned session=0) {
-        return balancer_get(*balancer, al, session);
+        return balancer.Get(al, session);
     }
 };
 

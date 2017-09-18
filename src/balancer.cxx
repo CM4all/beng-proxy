@@ -31,7 +31,6 @@
  */
 
 #include "balancer.hxx"
-#include "cache.hxx"
 #include "address_list.hxx"
 #include "net/SocketAddress.hxx"
 #include "failure.hxx"
@@ -40,40 +39,6 @@
 #include <string>
 
 #include <assert.h>
-
-class Balancer {
-    struct Item final : CacheItem {
-        const std::string key;
-
-        /** the index of the item that will be returned next */
-        unsigned next = 0;
-
-        explicit Item(const char *_key)
-            :CacheItem(std::chrono::minutes(30), 1),
-             key(_key) {}
-
-        const SocketAddress &NextAddress(const AddressList &addresses);
-        const SocketAddress &NextAddressChecked(const AddressList &addresses,
-                                                bool allow_fade);
-
-        /* virtual methods from class CacheItem */
-        void Destroy() override {
-            delete this;
-        }
-    };
-
-    /**
-     * This library uses the cache library to store remote host
-     * states in a lossy way.
-     */
-    Cache cache;
-
-public:
-    explicit Balancer(EventLoop &event_loop)
-        :cache(event_loop, 1021, 2048) {}
-
-    SocketAddress Get(const AddressList &list, unsigned session) noexcept;
-};
 
 static bool
 check_failure(const SocketAddress address, bool allow_fade)
@@ -174,24 +139,7 @@ next_sticky_address_checked(const AddressList &al, sticky_hash_t sticky_hash)
     return first;
 }
 
-/*
- * public API
- *
- */
-
-Balancer *
-balancer_new(EventLoop &event_loop)
-{
-    return new Balancer(event_loop);
-}
-
-void
-balancer_free(Balancer *balancer)
-{
-    delete balancer;
-}
-
-inline SocketAddress
+SocketAddress
 Balancer::Get(const AddressList &list, sticky_hash_t sticky_hash) noexcept
 {
     if (list.IsSingle())
@@ -226,11 +174,4 @@ Balancer::Get(const AddressList &list, sticky_hash_t sticky_hash) noexcept
 
     return item->NextAddressChecked(list,
                                     list.sticky_mode == StickyMode::NONE);
-}
-
-SocketAddress
-balancer_get(Balancer &balancer, const AddressList &list,
-             sticky_hash_t sticky_hash)
-{
-    return balancer.Get(list, sticky_hash);
 }

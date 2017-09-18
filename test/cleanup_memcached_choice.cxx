@@ -95,8 +95,8 @@ try {
     const AddressList address_list(ShallowCopy(), address_info);
 
     TcpStock tcp_stock(instance.event_loop, 0);
-    TcpBalancer *tcp_balancer = tcp_balancer_new(tcp_stock,
-                                                 *balancer_new(instance.event_loop));
+    Balancer balancer(instance.event_loop);
+    TcpBalancer *tcp_balancer = tcp_balancer_new(tcp_stock, balancer);
     auto *stock = memcached_stock_new(instance.event_loop, *tcp_balancer,
                                       address_list);
 
