@@ -49,9 +49,6 @@ class MyBalancer {
     Balancer balancer;
 
 public:
-    explicit MyBalancer(EventLoop &event_loop)
-        :balancer(event_loop) {}
-
     operator Balancer *() {
         return &balancer;
     }
@@ -170,7 +167,7 @@ TEST(BalancerTest, Basic)
     TestPool pool;
 
     EventLoop event_loop;
-    MyBalancer balancer(event_loop);
+    MyBalancer balancer;
 
     AddressListBuilder al(pool);
     al.Add("192.168.0.1");
@@ -216,7 +213,7 @@ TEST(BalancerTest, Failed)
 {
     const ScopeFailureInit failure;
     EventLoop event_loop;
-    MyBalancer balancer(event_loop);
+    MyBalancer balancer;
 
     TestPool pool;
     AddressListBuilder al(pool);
@@ -240,7 +237,7 @@ TEST(BalancerTest, StickyFailover)
 {
     const ScopeFailureInit failure;
     EventLoop event_loop;
-    MyBalancer balancer(event_loop);
+    MyBalancer balancer;
 
     TestPool pool;
     AddressListBuilder al(pool, StickyMode::FAILOVER);
@@ -331,7 +328,7 @@ TEST(BalancerTest, StickyCookie)
 {
     const ScopeFailureInit failure;
     EventLoop event_loop;
-    MyBalancer balancer(event_loop);
+    MyBalancer balancer;
 
     TestPool pool;
     AddressListBuilder al(pool, StickyMode::COOKIE);

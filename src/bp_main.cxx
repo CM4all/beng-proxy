@@ -311,7 +311,7 @@ try {
         PrintException(e);
     }
 
-    instance.balancer = new Balancer(instance.event_loop);
+    instance.balancer = new Balancer();
     instance.tcp_stock = new TcpStock(instance.event_loop,
                                       instance.config.tcp_stock_limit);
     instance.tcp_balancer = tcp_balancer_new(*instance.tcp_stock,

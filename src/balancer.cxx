@@ -163,14 +163,12 @@ Balancer::Get(const AddressList &list, sticky_hash_t sticky_hash) noexcept
         break;
     }
 
-    const char *key = list.GetKey();
-    auto *item = (Item *)cache.Get(key);
+    std::string key = list.GetKey();
+    auto *item = cache.Get(key);
 
-    if (item == nullptr) {
+    if (item == nullptr)
         /* create a new cache item */
-        item = new Item(key);
-        cache.Put(item->key.c_str(), *item);
-    }
+        item = &cache.Put(std::move(key), Item());
 
     return item->NextAddressChecked(list,
                                     list.sticky_mode == StickyMode::NONE);

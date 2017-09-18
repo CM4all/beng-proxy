@@ -38,43 +38,24 @@
 #define BENG_PROXY_BALANCER_HXX
 
 #include "StickyHash.hxx"
-#include "cache.hxx"
+#include "util/Cache.hxx"
 
 struct AddressList;
-class EventLoop;
 class SocketAddress;
 
 class Balancer {
-    struct Item final : CacheItem {
-        const std::string key;
-
+    struct Item final {
         /** the index of the item that will be returned next */
         unsigned next = 0;
-
-        explicit Item(const char *_key)
-            :CacheItem(std::chrono::minutes(30), 1),
-             key(_key) {}
 
         const SocketAddress &NextAddress(const AddressList &addresses);
         const SocketAddress &NextAddressChecked(const AddressList &addresses,
                                                 bool allow_fade);
-
-        /* virtual methods from class CacheItem */
-        void Destroy() override {
-            delete this;
-        }
     };
 
-    /**
-     * This library uses the cache library to store remote host
-     * states in a lossy way.
-     */
-    Cache cache;
+    Cache<std::string, Item, 2048, 1021> cache;
 
 public:
-    explicit Balancer(EventLoop &event_loop)
-        :cache(event_loop, 1021, 2048) {}
-
     /**
      * Gets the next socket address to connect to.  These are selected
      * in a round-robin fashion, which results in symmetric

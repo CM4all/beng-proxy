@@ -62,7 +62,6 @@ struct Context final : PInstance, ConnectSocketHandler {
     std::exception_ptr error;
 
     Context()
-        :balancer(event_loop)
     {
     }
 
