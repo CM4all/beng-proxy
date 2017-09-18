@@ -179,11 +179,8 @@ LbTranslationCache::GetAllocatedMemory() const noexcept
 {
     size_t result = 0;
 
-    // TODO: remove these kludges (const_cast and RemoveIf)
-    auto &c = const_cast<Cache &>(cache);
-    c.RemoveIf([&result](const std::string &key, const Item &item){
+    cache.ForEach([&result](const std::string &key, const Item &item){
             result += key.length() + item.GetAllocatedMemory();
-            return false;
         });
 
     return result;
