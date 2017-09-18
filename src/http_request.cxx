@@ -117,7 +117,7 @@ public:
     }
 
     void BeginConnect() {
-        tcp_balancer_get(tcp_balancer, pool,
+        tcp_balancer.Get(pool,
                          false, SocketAddress::Null(),
                          session_sticky,
                          address.addresses,

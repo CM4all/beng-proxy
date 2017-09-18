@@ -38,8 +38,7 @@
 #define BENG_PROXY_TCP_BALANCER_HXX
 
 #include "StickyHash.hxx"
-
-#include "util/Compiler.h"
+#include "balancer.hxx"
 
 struct pool;
 struct AddressList;
@@ -49,33 +48,33 @@ struct StockItem;
 class CancellablePointer;
 class SocketAddress;
 
-class TcpBalancer;
+class TcpBalancer {
+    friend struct TcpBalancerRequest;
 
-/**
- * Creates a new TCP connection stock.
- *
- * @param tcp_stock the underlying tcp_stock object
- * @return the new TCP connections stock (this function cannot fail)
- */
-TcpBalancer *
-tcp_balancer_new(TcpStock &tcp_stock);
+    TcpStock &tcp_stock;
 
-void
-tcp_balancer_free(TcpBalancer *tcp_balancer);
+    Balancer balancer;
 
-/**
- * @param session_sticky a portion of the session id that is used to
- * select the worker; 0 means disable stickiness
- * @param timeout the connect timeout for each attempt [seconds]
- */
-void
-tcp_balancer_get(TcpBalancer &tcp_balancer, struct pool &pool,
-                 bool ip_transparent,
-                 SocketAddress bind_address,
-                 sticky_hash_t session_sticky,
-                 const AddressList &address_list,
-                 unsigned timeout,
-                 StockGetHandler &handler,
-                 CancellablePointer &cancel_ptr);
+public:
+    /**
+     * @param tcp_stock the underlying #TcpStock object
+     */
+    explicit TcpBalancer(TcpStock &_tcp_stock)
+        :tcp_stock(_tcp_stock) {}
+
+    /**
+     * @param session_sticky a portion of the session id that is used to
+     * select the worker; 0 means disable stickiness
+     * @param timeout the connect timeout for each attempt [seconds]
+     */
+    void Get(struct pool &pool,
+             bool ip_transparent,
+             SocketAddress bind_address,
+             sticky_hash_t session_sticky,
+             const AddressList &address_list,
+             unsigned timeout,
+             StockGetHandler &handler,
+             CancellablePointer &cancel_ptr);
+};
 
 #endif

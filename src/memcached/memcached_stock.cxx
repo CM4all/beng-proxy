@@ -176,9 +176,9 @@ memcached_stock_invoke(struct pool &pool, MemachedStock &stock,
                                                       handler, handler_ctx,
                                                       cancel_ptr);
 
-    tcp_balancer_get(stock.tcp_balancer, pool,
-                     false, SocketAddress::Null(),
-                     0, stock.address,
-                     10,
-                     *request, cancel_ptr);
+    stock.tcp_balancer.Get(pool,
+                           false, SocketAddress::Null(),
+                           0, stock.address,
+                           10,
+                           *request, cancel_ptr);
 }

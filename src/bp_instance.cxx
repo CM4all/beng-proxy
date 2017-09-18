@@ -125,10 +125,7 @@ BpInstance::FreeStocksAndCaches()
         memcached_stock = nullptr;
     }
 
-    if (tcp_balancer != nullptr) {
-        tcp_balancer_free(tcp_balancer);
-        tcp_balancer = nullptr;
-    }
+    delete std::exchange(tcp_balancer, nullptr);
 
     delete tcp_stock;
     tcp_stock = nullptr;

@@ -535,13 +535,13 @@ LbRequest::Start()
         return;
     }
 
-    tcp_balancer_get(balancer, request.pool,
-                     cluster_config.transparent_source,
-                     bind_address,
-                     GetStickyHash(),
-                     cluster_config.address_list,
-                     20,
-                     *this, cancel_ptr);
+    balancer.Get(request.pool,
+                 cluster_config.transparent_source,
+                 bind_address,
+                 GetStickyHash(),
+                 cluster_config.address_list,
+                 20,
+                 *this, cancel_ptr);
 }
 
 void

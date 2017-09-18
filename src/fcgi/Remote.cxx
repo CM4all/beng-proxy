@@ -187,8 +187,8 @@ fcgi_remote_request(struct pool *pool, EventLoop &event_loop,
     } else
         request->body = nullptr;
 
-    tcp_balancer_get(*tcp_balancer, *pool,
-                     false, SocketAddress::Null(),
-                     0, *address_list, 20,
-                     *request, *cancel_ptr);
+    tcp_balancer->Get(*pool,
+                      false, SocketAddress::Null(),
+                      0, *address_list, 20,
+                      *request, *cancel_ptr);
 }

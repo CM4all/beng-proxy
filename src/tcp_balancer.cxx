@@ -35,27 +35,6 @@
 #include "generic_balancer.hxx"
 #include "stock/GetHandler.hxx"
 
-class TcpBalancer {
-    friend struct TcpBalancerRequest;
-
-    TcpStock &tcp_stock;
-
-    Balancer balancer;
-
-public:
-    explicit TcpBalancer(TcpStock &_tcp_stock)
-        :tcp_stock(_tcp_stock) {}
-
-    void Get(struct pool &pool,
-             bool ip_transparent,
-             SocketAddress bind_address,
-             sticky_hash_t session_sticky,
-             const AddressList &address_list,
-             unsigned timeout,
-             StockGetHandler &handler,
-             CancellablePointer &cancel_ptr);
-};
-
 struct TcpBalancerRequest : public StockGetHandler {
     TcpBalancer &tcp_balancer;
 
@@ -122,21 +101,9 @@ TcpBalancerRequest::OnStockItemError(std::exception_ptr ep)
 }
 
 /*
- * constructor
+ * public API
  *
  */
-
-TcpBalancer *
-tcp_balancer_new(TcpStock &tcp_stock)
-{
-    return new TcpBalancer(tcp_stock);
-}
-
-void
-tcp_balancer_free(TcpBalancer *tcp_balancer)
-{
-    delete tcp_balancer;
-}
 
 void
 TcpBalancer::Get(struct pool &pool,
@@ -155,23 +122,4 @@ TcpBalancer::Get(struct pool &pool,
                                                ip_transparent,
                                                bind_address, timeout,
                                                handler);
-}
-
-void
-tcp_balancer_get(TcpBalancer &tcp_balancer, struct pool &pool,
-                 bool ip_transparent,
-                 SocketAddress bind_address,
-                 sticky_hash_t session_sticky,
-                 const AddressList &address_list,
-                 unsigned timeout,
-                 StockGetHandler &handler,
-                 CancellablePointer &cancel_ptr)
-{
-    return tcp_balancer.Get(pool, ip_transparent,
-                            bind_address,
-                            session_sticky,
-                            address_list,
-                            timeout,
-                            handler,
-                            cancel_ptr);
 }

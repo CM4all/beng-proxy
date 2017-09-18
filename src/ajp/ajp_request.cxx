@@ -172,7 +172,7 @@ ajp_stock_request(struct pool &pool, EventLoop &event_loop,
     } else
         hr->body = nullptr;
 
-    tcp_balancer_get(tcp_balancer, pool,
+    tcp_balancer.Get(pool,
                      false, SocketAddress::Null(),
                      session_sticky,
                      uwa.addresses,
