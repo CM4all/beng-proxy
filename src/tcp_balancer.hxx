@@ -42,7 +42,6 @@
 #include "util/Compiler.h"
 
 struct pool;
-struct Balancer;
 struct AddressList;
 class TcpStock;
 class StockGetHandler;
@@ -56,11 +55,10 @@ struct TcpBalancer;
  * Creates a new TCP connection stock.
  *
  * @param tcp_stock the underlying tcp_stock object
- * @param balancer the load balancer object
  * @return the new TCP connections stock (this function cannot fail)
  */
 TcpBalancer *
-tcp_balancer_new(TcpStock &tcp_stock, Balancer &balancer);
+tcp_balancer_new(TcpStock &tcp_stock);
 
 void
 tcp_balancer_free(TcpBalancer *tcp_balancer);

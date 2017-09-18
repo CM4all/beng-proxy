@@ -33,7 +33,6 @@
 #include "bp_instance.hxx"
 #include "fb_pool.hxx"
 #include "control_server.hxx"
-#include "balancer.hxx"
 #include "tcp_balancer.hxx"
 #include "pipe_stock.hxx"
 #include "DirectResourceLoader.hxx"
@@ -133,8 +132,6 @@ BpInstance::FreeStocksAndCaches()
 
     delete tcp_stock;
     tcp_stock = nullptr;
-
-    delete std::exchange(balancer, nullptr);
 
     if (delegate_stock != nullptr) {
         delegate_stock_free(delegate_stock);

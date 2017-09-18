@@ -38,11 +38,10 @@
 struct TcpBalancer {
     TcpStock &tcp_stock;
 
-    Balancer &balancer;
+    Balancer balancer;
 
-    TcpBalancer(TcpStock &_tcp_stock,
-                Balancer &_balancer)
-        :tcp_stock(_tcp_stock), balancer(_balancer) {}
+    explicit TcpBalancer(TcpStock &_tcp_stock)
+        :tcp_stock(_tcp_stock) {}
 };
 
 struct TcpBalancerRequest : public StockGetHandler {
@@ -116,9 +115,9 @@ TcpBalancerRequest::OnStockItemError(std::exception_ptr ep)
  */
 
 TcpBalancer *
-tcp_balancer_new(TcpStock &tcp_stock, Balancer &balancer)
+tcp_balancer_new(TcpStock &tcp_stock)
 {
-    return new TcpBalancer(tcp_stock, balancer);
+    return new TcpBalancer(tcp_stock);
 }
 
 void

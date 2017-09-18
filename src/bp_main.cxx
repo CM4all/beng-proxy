@@ -57,7 +57,6 @@
 #include "stopwatch.hxx"
 #include "failure.hxx"
 #include "bulldog.hxx"
-#include "balancer.hxx"
 #include "pipe_stock.hxx"
 #include "nfs/Stock.hxx"
 #include "nfs/Cache.hxx"
@@ -311,11 +310,9 @@ try {
         PrintException(e);
     }
 
-    instance.balancer = new Balancer();
     instance.tcp_stock = new TcpStock(instance.event_loop,
                                       instance.config.tcp_stock_limit);
-    instance.tcp_balancer = tcp_balancer_new(*instance.tcp_stock,
-                                             *instance.balancer);
+    instance.tcp_balancer = tcp_balancer_new(*instance.tcp_stock);
 
     const AddressList memcached_server(ShallowCopy(),
                                        instance.config.memcached_server);

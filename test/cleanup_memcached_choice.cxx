@@ -33,7 +33,6 @@
 #include "PInstance.hxx"
 #include "tcp_stock.hxx"
 #include "tcp_balancer.hxx"
-#include "balancer.hxx"
 #include "stock/MapStock.hxx"
 #include "address_list.hxx"
 #include "memcached/memcached_stock.hxx"
@@ -95,8 +94,7 @@ try {
     const AddressList address_list(ShallowCopy(), address_info);
 
     TcpStock tcp_stock(instance.event_loop, 0);
-    Balancer balancer;
-    TcpBalancer *tcp_balancer = tcp_balancer_new(tcp_stock, balancer);
+    TcpBalancer *tcp_balancer = tcp_balancer_new(tcp_stock);
     auto *stock = memcached_stock_new(instance.event_loop, *tcp_balancer,
                                       address_list);
 
