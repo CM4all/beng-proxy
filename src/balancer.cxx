@@ -41,7 +41,7 @@
 
 #include <assert.h>
 
-struct Balancer {
+class Balancer {
     struct Item final : CacheItem {
         const std::string key;
 
@@ -68,6 +68,7 @@ struct Balancer {
      */
     Cache cache;
 
+public:
     explicit Balancer(EventLoop &event_loop)
         :cache(event_loop, 1021, 2048) {}
 
