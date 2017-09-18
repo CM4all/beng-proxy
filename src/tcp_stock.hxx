@@ -42,7 +42,6 @@
 #include "util/Compiler.h"
 
 struct pool;
-struct balancer;
 class SocketDescriptor;
 class CancellablePointer;
 class SocketAddress;
