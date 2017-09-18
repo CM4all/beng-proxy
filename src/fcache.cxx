@@ -469,8 +469,6 @@ FilterCacheRequest::OnHttpResponse(http_status_t status, StringMap &&headers,
         response.status = status;
         response.headers = strmap_dup(&pool, &headers);
 
-        pool_ref(&pool);
-
         cache.requests.push_front(*this);
 
         timeout_event.Add(fcache_request_timeout);
@@ -479,19 +477,14 @@ FilterCacheRequest::OnHttpResponse(http_status_t status, StringMap &&headers,
                         *cache.rubber, cacheable_size_limit,
                         *this,
                         response.cancel_ptr);
+
+        /* just in case our handler closes the body without looking at
+           it: defer an Istream::Read() call for the Rubber sink */
+        istream_tee_defer_read(*body);
     }
 
     handler.InvokeResponse(status, std::move(headers), body);
     pool_unref(&_caller_pool);
-
-    if (body != nullptr) {
-        if (response.cancel_ptr)
-            /* just in case our handler has closed the body without
-               looking at it: call istream_read() to start reading */
-            istream_tee_second(*body).Read();
-
-        pool_unref(&pool);
-    }
 }
 
 void
