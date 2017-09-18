@@ -49,7 +49,7 @@ struct StockItem;
 class CancellablePointer;
 class SocketAddress;
 
-struct TcpBalancer;
+class TcpBalancer;
 
 /**
  * Creates a new TCP connection stock.

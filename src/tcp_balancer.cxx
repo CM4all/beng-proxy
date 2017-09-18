@@ -35,11 +35,14 @@
 #include "generic_balancer.hxx"
 #include "stock/GetHandler.hxx"
 
-struct TcpBalancer {
+class TcpBalancer {
+    friend struct TcpBalancerRequest;
+
     TcpStock &tcp_stock;
 
     Balancer balancer;
 
+public:
     explicit TcpBalancer(TcpStock &_tcp_stock)
         :tcp_stock(_tcp_stock) {}
 
