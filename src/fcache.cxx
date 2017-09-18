@@ -516,7 +516,7 @@ FilterCacheRequest::OnHttpResponse(http_status_t status, StringMap &&headers,
     }
 
     handler.InvokeResponse(status, std::move(headers), body);
-    pool_unref(&caller_pool);
+    pool_unref(&_caller_pool);
 
     if (body != nullptr) {
         if (response.cancel_ptr)
