@@ -57,4 +57,10 @@ istream_tee_new(struct pool &pool, Istream &input, EventLoop &event_loop,
 Istream &
 istream_tee_second(Istream &istream);
 
+/**
+ * Schedule an Istream::Read() call.
+ */
+void
+istream_tee_defer_read(Istream &istream) noexcept;
+
 #endif

@@ -477,3 +477,10 @@ istream_tee_second(Istream &istream)
     auto &tee = TeeIstream::CastFromFirst(istream);
     return tee.second_output;
 }
+
+void
+istream_tee_defer_read(Istream &istream) noexcept
+{
+    auto &tee = TeeIstream::CastFromFirst(istream);
+    return tee.DeferRead();
+}

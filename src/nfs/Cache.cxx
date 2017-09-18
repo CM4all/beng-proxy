@@ -491,6 +491,10 @@ nfs_cache_file_open(struct pool &pool, NfsCache &cache,
                     *store,
                     store->cancel_ptr);
 
+    /* just in case our handler closes the body without looking at
+       it: defer an Istream::Read() call for the Rubber sink */
+    istream_tee_defer_read(*body);
+
     return body;
 }
 
