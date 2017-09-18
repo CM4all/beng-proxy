@@ -62,10 +62,4 @@ SocketAddress
 balancer_get(Balancer &balancer, const AddressList &list,
              sticky_hash_t sticky_hash);
 
-void
-balancer_event_add(Balancer &balancer);
-
-void
-balancer_event_del(Balancer &balancer);
-
 #endif

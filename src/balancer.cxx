@@ -225,15 +225,3 @@ balancer_get(Balancer &balancer, const AddressList &list,
     return item->NextAddressChecked(list,
                                     list.sticky_mode == StickyMode::NONE);
 }
-
-void
-balancer_event_add(Balancer &balancer)
-{
-    balancer.cache.EventAdd();
-}
-
-void
-balancer_event_del(Balancer &balancer)
-{
-    balancer.cache.EventDel();
-}
