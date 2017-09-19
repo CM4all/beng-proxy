@@ -40,7 +40,6 @@
 #include <boost/intrusive/set.hpp>
 #include <boost/intrusive/list.hpp>
 
-struct pool;
 struct lease_ref;
 class StockMap;
 class StockGetHandler;
@@ -196,12 +195,12 @@ public:
      *
      * @param max_leases the maximum number of leases per stock_item
      */
-    StockItem *GetNow(struct pool &caller_pool, const char *uri, void *info,
+    StockItem *GetNow(const char *uri, void *info,
                       unsigned max_leases,
                       struct lease_ref &lease_ref);
 
 private:
-    Item &MakeItem(struct pool &caller_pool, const char *uri, void *info,
+    Item &MakeItem(const char *uri, void *info,
                    unsigned max_leases);
 };
 

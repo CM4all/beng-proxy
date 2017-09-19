@@ -48,7 +48,6 @@
 
 #include <stddef.h>
 
-struct pool;
 class CancellablePointer;
 class Stock;
 class StockClass;
@@ -122,14 +121,13 @@ class Stock {
 
         Stock &stock;
 
-        struct pool &pool;
         void *const info;
 
         StockGetHandler &handler;
 
         CancellablePointer &cancel_ptr;
 
-        Waiting(Stock &_stock, struct pool &_pool, void *_info,
+        Waiting(Stock &_stock, void *_info,
                 StockGetHandler &_handler,
                 CancellablePointer &_cancel_ptr) noexcept;
 
@@ -236,12 +234,12 @@ private:
     }
 
     bool GetIdle(StockGetHandler &handler) noexcept;
-    void GetCreate(struct pool &caller_pool, void *info,
+    void GetCreate(void *info,
                    StockGetHandler &get_handler,
                    CancellablePointer &cancel_ptr) noexcept;
 
 public:
-    void Get(struct pool &caller_pool, void *info,
+    void Get(void *info,
              StockGetHandler &get_handler,
              CancellablePointer &cancel_ptr) noexcept;
 
@@ -252,7 +250,7 @@ public:
      *
      * Throws exception on error.
      */
-    StockItem *GetNow(struct pool &caller_pool, void *info);
+    StockItem *GetNow(void *info);
 
     void Put(StockItem &item, bool destroy) noexcept;
 

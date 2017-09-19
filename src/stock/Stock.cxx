@@ -33,16 +33,15 @@
 #include "Stock.hxx"
 #include "Class.hxx"
 #include "GetHandler.hxx"
-#include "pool/pool.hxx"
 #include "util/Cancellable.hxx"
 
 #include <assert.h>
 
 inline
-Stock::Waiting::Waiting(Stock &_stock, struct pool &_pool, void *_info,
+Stock::Waiting::Waiting(Stock &_stock, void *_info,
                         StockGetHandler &_handler,
                         CancellablePointer &_cancel_ptr) noexcept
-    :stock(_stock), pool(_pool), info(_info),
+    :stock(_stock), info(_info),
      handler(_handler),
      cancel_ptr(_cancel_ptr)
 {
@@ -158,7 +157,7 @@ Stock::RetryWaiting() noexcept
         auto &w = waiting.front();
         waiting.pop_front();
 
-        GetCreate(w.pool, w.info,
+        GetCreate(w.info,
                   w.handler,
                   w.cancel_ptr);
         w.Destroy();
@@ -286,7 +285,7 @@ Stock::GetIdle(StockGetHandler &get_handler) noexcept
 }
 
 void
-Stock::GetCreate(struct pool &caller_pool, void *info,
+Stock::GetCreate(void *info,
                  StockGetHandler &get_handler,
                  CancellablePointer &cancel_ptr) noexcept
 {
@@ -294,14 +293,14 @@ Stock::GetCreate(struct pool &caller_pool, void *info,
 
     try {
         cls.Create({*this, get_handler},
-                   info, caller_pool, cancel_ptr);
+                   info, cancel_ptr);
     } catch (...) {
         ItemCreateError(get_handler, std::current_exception());
     }
 }
 
 void
-Stock::Get(struct pool &caller_pool, void *info,
+Stock::Get(void *info,
            StockGetHandler &get_handler,
            CancellablePointer &cancel_ptr) noexcept
 {
@@ -312,17 +311,17 @@ Stock::Get(struct pool &caller_pool, void *info,
 
     if (limit > 0 && busy.size() + num_create >= limit) {
         /* item limit reached: wait for an item to return */
-        auto w = new Waiting(*this, caller_pool, info,
+        auto w = new Waiting(*this, info,
                              get_handler, cancel_ptr);
         waiting.push_front(*w);
         return;
     }
 
-    GetCreate(caller_pool, info, get_handler, cancel_ptr);
+    GetCreate(info, get_handler, cancel_ptr);
 }
 
 StockItem *
-Stock::GetNow(struct pool &caller_pool, void *info)
+Stock::GetNow(void *info)
 {
     struct NowRequest final : public StockGetHandler {
 #ifndef NDEBUG
@@ -355,7 +354,7 @@ Stock::GetNow(struct pool &caller_pool, void *info)
     /* cannot call this on a limited stock */
     assert(limit == 0);
 
-    Get(caller_pool, info, data, cancel_ptr);
+    Get(info, data, cancel_ptr);
     assert(data.created);
 
     if (data.error)

@@ -60,9 +60,9 @@ public:
         return stock.GetEventLoop();
     }
 
-    void Get(struct pool &pool, StockGetHandler &handler,
+    void Get(StockGetHandler &handler,
              CancellablePointer &cancel_ptr) noexcept {
-        stock.Get(pool, nullptr, handler, cancel_ptr);
+        stock.Get(nullptr, handler, cancel_ptr);
     }
 
     void Put(StockItem &item, bool destroy) noexcept {
@@ -77,6 +77,6 @@ public:
 
 private:
     /* virtual methods from class StockClass */
-    void Create(CreateStockItem c, void *, struct pool &,
+    void Create(CreateStockItem c, void *,
                 CancellablePointer &) override;
 };

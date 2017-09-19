@@ -43,7 +43,6 @@ public:
      */
     virtual void Create(CreateStockItem c,
                         void *info,
-                        struct pool &caller_pool,
                         CancellablePointer &cancel_ptr) = 0;
 };
 

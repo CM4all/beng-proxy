@@ -109,7 +109,7 @@ public:
 
 private:
     /* virtual methods from class StockClass */
-    void Create(CreateStockItem c, void *info, struct pool &caller_pool,
+    void Create(CreateStockItem c, void *info,
                 CancellablePointer &cancel_ptr) override;
 
     /* virtual methods from class ChildStockClass */
@@ -286,7 +286,6 @@ FcgiStock::PrepareChild(void *info, UniqueSocketDescriptor &&fd,
 
 void
 FcgiStock::Create(CreateStockItem c, void *info,
-                  struct pool &caller_pool,
                   gcc_unused CancellablePointer &cancel_ptr)
 {
     FcgiChildParams *params = (FcgiChildParams *)info;
@@ -309,7 +308,7 @@ FcgiStock::Create(CreateStockItem c, void *info,
     const char *key = c.GetStockName();
 
     try {
-        connection->child = child_stock.GetStockMap().GetNow(caller_pool, key, params);
+        connection->child = child_stock.GetStockMap().GetNow(key, params);
     } catch (...) {
         delete connection;
         std::throw_with_nested(FcgiClientError(StringFormat<256>("Failed to start FastCGI server '%s'",
@@ -464,7 +463,7 @@ FcgiStock::Get(const ChildOptions &options,
     auto params = NewFromPool<FcgiChildParams>(*tpool, executable_path,
                                                args, options);
 
-    return hstock.GetNow(*tpool, params->GetStockKey(*tpool), params);
+    return hstock.GetNow(params->GetStockKey(*tpool), params);
 }
 
 StockItem *

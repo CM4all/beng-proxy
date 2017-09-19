@@ -55,6 +55,8 @@
 #include <sys/socket.h>
 
 struct FilteredSocketStockRequest {
+    struct pool &caller_pool;
+
     const bool ip_transparent;
 
     const SocketAddress bind_address, address;
@@ -63,12 +65,14 @@ struct FilteredSocketStockRequest {
 
     SocketFilterFactory *const filter_factory;
 
-    FilteredSocketStockRequest(bool _ip_transparent,
+    FilteredSocketStockRequest(struct pool &_caller_pool,
+                               bool _ip_transparent,
                                SocketAddress _bind_address,
                                SocketAddress _address,
                                Event::Duration _timeout,
                                SocketFilterFactory *_filter_factory)
-        :ip_transparent(_ip_transparent),
+        :caller_pool(_caller_pool),
+         ip_transparent(_ip_transparent),
          bind_address(_bind_address), address(_address),
          timeout(_timeout),
          filter_factory(_filter_factory) {}
@@ -219,7 +223,6 @@ FilteredSocketStockConnection::OnSocketConnectError(std::exception_ptr ep) noexc
 
 void
 FilteredSocketStock::Create(CreateStockItem c, void *info,
-                            struct pool &caller_pool,
                             CancellablePointer &cancel_ptr)
 {
     const auto &request = *(const FilteredSocketStockRequest *)info;
@@ -234,7 +237,7 @@ FilteredSocketStock::Create(CreateStockItem c, void *info,
                                                          request.filter_factory,
                                                          cancel_ptr);
 
-    client_socket_new(c.stock.GetEventLoop(), caller_pool,
+    client_socket_new(c.stock.GetEventLoop(), request.caller_pool,
                       address_family, SOCK_STREAM, 0,
                       request.ip_transparent,
                       request.bind_address,
@@ -281,7 +284,7 @@ FilteredSocketStock::Get(struct pool &pool, const char *name,
     assert(!address.IsNull());
 
     auto request =
-        NewFromPool<FilteredSocketStockRequest>(pool, ip_transparent,
+        NewFromPool<FilteredSocketStockRequest>(pool, pool, ip_transparent,
                                                 bind_address, address,
                                                 timeout, filter_factory);
 
@@ -303,7 +306,7 @@ FilteredSocketStock::Get(struct pool &pool, const char *name,
         name = p_strcat(&pool, name, "|", filter_factory->GetFilterId(),
                         nullptr);
 
-    stock.Get(pool, name, request, handler, cancel_ptr);
+    stock.Get(name, request, handler, cancel_ptr);
 }
 
 FilteredSocket &

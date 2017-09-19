@@ -187,8 +187,7 @@ ChildStockItem::OnChildProcessExit(gcc_unused int status) noexcept
  */
 
 void
-ChildStock::Create(CreateStockItem c, void *info,
-                   struct pool &, CancellablePointer &)
+ChildStock::Create(CreateStockItem c, void *info, CancellablePointer &)
 {
     auto *item = new ChildStockItem(c, spawn_service,
                                     cls.GetChildTag(info));

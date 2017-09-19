@@ -296,7 +296,7 @@ stock = static_library('stock',
   include_directories: inc,
 )
 stock_dep = declare_dependency(link_with: stock,
-                               dependencies: [event_dep, pool_dep, io_dep])
+                               dependencies: [event_dep])
 
 shm = static_library('shm',
   'src/shm/dpool.cxx',

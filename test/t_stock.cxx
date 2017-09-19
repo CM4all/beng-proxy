@@ -35,7 +35,7 @@
 #include "stock/GetHandler.hxx"
 #include "stock/Item.hxx"
 #include "pool/pool.hxx"
-#include "PInstance.hxx"
+#include "event/Loop.hxx"
 #include "util/Cancellable.hxx"
 #include "util/PrintException.hxx"
 
@@ -78,14 +78,13 @@ struct MyStockItem final : StockItem {
 class MyStockClass final : public StockClass {
 public:
     /* virtual methods from class StockClass */
-    void Create(CreateStockItem c, void *info, struct pool &caller_pool,
+    void Create(CreateStockItem c, void *info,
                 CancellablePointer &cancel_ptr) override;
 };
 
 void
 MyStockClass::Create(CreateStockItem c,
                      void *info,
-                     gcc_unused struct pool &caller_pool,
                      gcc_unused CancellablePointer &cancel_ptr)
 {
     auto *item = new MyStockItem(c);
@@ -126,18 +125,16 @@ int main(gcc_unused int argc, gcc_unused char **argv)
     CancellablePointer cancel_ptr;
     StockItem *item, *second, *third;
 
-    PInstance instance;
+    EventLoop event_loop;
 
     MyStockClass cls;
-    stock = new Stock(instance.event_loop, cls, "test", 3, 8);
+    stock = new Stock(event_loop, cls, "test", 3, 8);
 
     MyStockGetHandler handler;
 
-    struct pool *pool = instance.root_pool;
-
     /* create first item */
 
-    stock->Get(*pool, nullptr, handler, cancel_ptr);
+    stock->Get(nullptr, handler, cancel_ptr);
     assert(got_item);
     assert(last_item != nullptr);
     assert(num_create == 1 && num_fail == 0);
@@ -147,7 +144,7 @@ int main(gcc_unused int argc, gcc_unused char **argv)
     /* release first item */
 
     stock->Put(*item, false);
-    instance.event_loop.LoopNonBlock();
+    event_loop.LoopNonBlock();
     assert(num_create == 1 && num_fail == 0);
     assert(num_borrow == 0 && num_release == 1 && num_destroy == 0);
 
@@ -155,7 +152,7 @@ int main(gcc_unused int argc, gcc_unused char **argv)
 
     got_item = false;
     last_item = nullptr;
-    stock->Get(*pool, nullptr, handler, cancel_ptr);
+    stock->Get(nullptr, handler, cancel_ptr);
     assert(got_item);
     assert(last_item == item);
     assert(num_create == 1 && num_fail == 0);
@@ -165,7 +162,7 @@ int main(gcc_unused int argc, gcc_unused char **argv)
 
     got_item = false;
     last_item = nullptr;
-    stock->Get(*pool, nullptr, handler, cancel_ptr);
+    stock->Get(nullptr, handler, cancel_ptr);
     assert(got_item);
     assert(last_item != nullptr);
     assert(last_item != item);
@@ -178,7 +175,7 @@ int main(gcc_unused int argc, gcc_unused char **argv)
     next_fail = true;
     got_item = false;
     last_item = nullptr;
-    stock->Get(*pool, nullptr, handler, cancel_ptr);
+    stock->Get(nullptr, handler, cancel_ptr);
     assert(got_item);
     assert(last_item == nullptr);
     assert(num_create == 2 && num_fail == 1);
@@ -189,7 +186,7 @@ int main(gcc_unused int argc, gcc_unused char **argv)
     next_fail = false;
     got_item = false;
     last_item = nullptr;
-    stock->Get(*pool, nullptr, handler, cancel_ptr);
+    stock->Get(nullptr, handler, cancel_ptr);
     assert(got_item);
     assert(last_item != nullptr);
     assert(num_create == 3 && num_fail == 1);
@@ -200,14 +197,14 @@ int main(gcc_unused int argc, gcc_unused char **argv)
 
     got_item = false;
     last_item = nullptr;
-    stock->Get(*pool, nullptr, handler, cancel_ptr);
+    stock->Get(nullptr, handler, cancel_ptr);
     assert(!got_item);
     assert(num_create == 3 && num_fail == 1);
     assert(num_borrow == 1 && num_release == 1 && num_destroy == 1);
 
     /* fifth item waiting */
 
-    stock->Get(*pool, nullptr, handler, cancel_ptr);
+    stock->Get(nullptr, handler, cancel_ptr);
     assert(!got_item);
     assert(num_create == 3 && num_fail == 1);
     assert(num_borrow == 1 && num_release == 1 && num_destroy == 1);
@@ -215,7 +212,7 @@ int main(gcc_unused int argc, gcc_unused char **argv)
     /* return third item */
 
     stock->Put(*third, false);
-    instance.event_loop.LoopNonBlock();
+    event_loop.LoopNonBlock();
     assert(num_create == 3 && num_fail == 1);
     assert(num_borrow == 2 && num_release == 2 && num_destroy == 1);
     assert(got_item);
@@ -226,7 +223,7 @@ int main(gcc_unused int argc, gcc_unused char **argv)
     got_item = false;
     last_item = nullptr;
     stock->Put(*second, true);
-    instance.event_loop.LoopNonBlock();
+    event_loop.LoopNonBlock();
     assert(num_create == 4 && num_fail == 1);
     assert(num_borrow == 2 && num_release == 2 && num_destroy == 2);
     assert(got_item);

@@ -59,7 +59,6 @@ struct PipeStockItem final : StockItem {
 void
 PipeStock::Create(CreateStockItem c,
                   gcc_unused void *info,
-                  gcc_unused struct pool &caller_pool,
                   gcc_unused CancellablePointer &cancel_ptr)
 {
     auto *item = new PipeStockItem(c);

@@ -40,7 +40,6 @@
 
 #include <exception>
 
-struct pool;
 class Stock;
 class StockGetHandler;
 

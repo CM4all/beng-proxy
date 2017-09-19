@@ -70,16 +70,16 @@ public:
     /**
      * Throws on error.
      */
-    void Create(struct pool &pool);
+    void Create();
 
     /**
      * Ensure that there is a pipe.
      *
      * Throws on error.
      */
-    void EnsureCreated(struct pool &pool) {
+    void EnsureCreated() {
         if (!IsDefined())
-            Create(pool);
+            Create();
     }
 
     void Release(bool reuse) noexcept;

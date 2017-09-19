@@ -144,7 +144,7 @@ public:
     }
 
     void Start() noexcept {
-        stock.Get(pool, *this, cancel_ptr);
+        stock.Get(*this, cancel_ptr);
     }
 
 private:
@@ -203,7 +203,7 @@ TranslationStock::Request::OnStockItemError(std::exception_ptr ep) noexcept
 }
 
 void
-TranslationStock::Create(CreateStockItem c, void *, struct pool &,
+TranslationStock::Create(CreateStockItem c, void *,
                          CancellablePointer &)
 {
     auto *connection = new Connection(c);

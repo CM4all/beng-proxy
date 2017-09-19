@@ -80,7 +80,7 @@ public:
 
 private:
     /* virtual methods from class StockClass */
-    void Create(CreateStockItem c, void *info, struct pool &caller_pool,
+    void Create(CreateStockItem c, void *info,
                 CancellablePointer &cancel_ptr) override;
 
     /* virtual methods from class ChildStockClass */
@@ -111,7 +111,7 @@ public:
 
     ~LhttpConnection() noexcept override;
 
-    void Connect(MultiStock &child_stock, struct pool &caller_pool,
+    void Connect(MultiStock &child_stock,
                  const char *key, void *info,
                  unsigned concurrency);
 
@@ -159,13 +159,12 @@ private:
 };
 
 void
-LhttpConnection::Connect(MultiStock &child_stock, struct pool &caller_pool,
+LhttpConnection::Connect(MultiStock &child_stock,
                          const char *key, void *info,
                          unsigned concurrency)
 {
     try {
-        child = child_stock.GetNow(caller_pool,
-                                   key, info, concurrency,
+        child = child_stock.GetNow(key, info, concurrency,
                                    lease_ref);
     } catch (...) {
         delete this;
@@ -257,7 +256,6 @@ LhttpStock::PrepareChild(void *info, UniqueSocketDescriptor &&fd,
 
 void
 LhttpStock::Create(CreateStockItem c, void *info,
-                   struct pool &caller_pool,
                    gcc_unused CancellablePointer &cancel_ptr)
 {
     const auto *address = (const LhttpAddress *)info;
@@ -267,7 +265,7 @@ LhttpStock::Create(CreateStockItem c, void *info,
 
     auto *connection = new LhttpConnection(c);
 
-    connection->Connect(mchild_stock, caller_pool,
+    connection->Connect(mchild_stock,
                         c.GetStockName(), info, address->concurrency);
 }
 
@@ -363,8 +361,7 @@ lhttp_stock_get(LhttpStock *lhttp_stock,
 
     const AutoRewindPool auto_rewind(*tpool);
 
-    return lhttp_stock->GetConnectionStock().GetNow(*tpool,
-                                                    lhttp_stock_key(tpool, address),
+    return lhttp_stock->GetConnectionStock().GetNow(lhttp_stock_key(tpool, address),
                                                     deconst.out);
 }
 

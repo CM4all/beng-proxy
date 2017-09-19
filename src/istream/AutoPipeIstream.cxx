@@ -195,7 +195,7 @@ AutoPipeIstream::OnDirect(FdType type, int fd, size_t max_length) noexcept
 
     if (!pipe.IsDefined()) {
         try {
-            pipe.Create(GetPool());
+            pipe.Create();
         } catch (...) {
             Abort(std::current_exception());
             return ISTREAM_RESULT_CLOSED;

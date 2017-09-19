@@ -129,7 +129,7 @@ public:
 
 private:
     /* virtual methods from class StockClass */
-    void Create(CreateStockItem c, void *info, struct pool &caller_pool,
+    void Create(CreateStockItem c, void *info,
                 CancellablePointer &cancel_ptr) override;
 };
 
@@ -165,7 +165,6 @@ DelegateProcess::OnIdleTimeout() noexcept
 void
 DelegateStock::Create(CreateStockItem c,
                       void *_info,
-                      gcc_unused struct pool &caller_pool,
                       gcc_unused CancellablePointer &cancel_ptr)
 {
     auto &info = *(DelegateArgs *)_info;
@@ -215,7 +214,7 @@ delegate_stock_get(StockMap *delegate_stock,
 {
     const AutoRewindPool auto_rewind(*tpool);
     DelegateArgs args(helper, options);
-    return delegate_stock->GetNow(*tpool, args.GetStockKey(*tpool), &args);
+    return delegate_stock->GetNow(args.GetStockKey(*tpool), &args);
 }
 
 SocketDescriptor

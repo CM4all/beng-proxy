@@ -384,7 +384,6 @@ test('TestRedirectHttps', executable('TestRedirectHttps',
 
 test('t_stock', executable('t_stock',
   't_stock.cxx',
-  '../src/PInstance.cxx',
   include_directories: inc,
   dependencies: [
     stock_dep,

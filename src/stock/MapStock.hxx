@@ -162,12 +162,11 @@ public:
 
     Stock &GetStock(const char *uri) noexcept;
 
-    void Get(struct pool &caller_pool,
-             const char *uri, void *info,
+    void Get(const char *uri, void *info,
              StockGetHandler &handler,
              CancellablePointer &cancel_ptr) noexcept {
         Stock &stock = GetStock(uri);
-        stock.Get(caller_pool, info, handler, cancel_ptr);
+        stock.Get(info, handler, cancel_ptr);
     }
 
     /**
@@ -177,9 +176,9 @@ public:
      *
      * Throws exception on error.
      */
-    StockItem *GetNow(struct pool &caller_pool, const char *uri, void *info) {
+    StockItem *GetNow(const char *uri, void *info) {
         Stock &stock = GetStock(uri);
-        return stock.GetNow(caller_pool, info);
+        return stock.GetNow(info);
     }
 
     /* virtual methods from class StockHandler */

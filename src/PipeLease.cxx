@@ -60,14 +60,14 @@ PipeLease::Release(bool reuse) noexcept
 }
 
 void
-PipeLease::Create(struct pool &pool)
+PipeLease::Create()
 {
     assert(!IsDefined());
 
     if (stock != nullptr) {
         assert(item == nullptr);
 
-        item = stock->GetNow(pool, nullptr);
+        item = stock->GetNow(nullptr);
 
         FileDescriptor fds[2];
         pipe_stock_item_get(item, fds);

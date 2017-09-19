@@ -447,14 +447,13 @@ public:
 
 private:
     /* virtual methods from class StockClass */
-    void Create(CreateStockItem c, void *info, struct pool &caller_pool,
+    void Create(CreateStockItem c, void *info,
                 CancellablePointer &cancel_ptr) override;
 };
 
 void
 WasStock::Create(CreateStockItem c,
                  void *info,
-                 gcc_unused struct pool &caller_pool,
                  gcc_unused CancellablePointer &cancel_ptr)
 {
     WasChildParams *params = (WasChildParams *)info;
@@ -524,7 +523,7 @@ was_stock_get(StockMap *hstock, struct pool *pool,
     auto params = NewFromPool<WasChildParams>(*pool, executable_path, args,
                                               options);
 
-    hstock->Get(*pool, params->GetStockKey(*tpool), params,
+    hstock->Get(params->GetStockKey(*tpool), params,
                 handler, cancel_ptr);
 }
 

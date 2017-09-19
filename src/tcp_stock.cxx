@@ -55,15 +55,19 @@
 #include <sys/socket.h>
 
 struct TcpStockRequest {
+    struct pool &caller_pool;
+
     const bool ip_transparent;
 
     const SocketAddress bind_address, address;
 
     const Event::Duration timeout;
 
-    TcpStockRequest(bool _ip_transparent, SocketAddress _bind_address,
+    TcpStockRequest(struct pool &_caller_pool,
+                    bool _ip_transparent, SocketAddress _bind_address,
                     SocketAddress _address, Event::Duration _timeout) noexcept
-        :ip_transparent(_ip_transparent), bind_address(_bind_address),
+        :caller_pool(_caller_pool),
+         ip_transparent(_ip_transparent), bind_address(_bind_address),
          address(_address), timeout(_timeout) {}
 };
 
@@ -193,7 +197,6 @@ TcpStockConnection::OnSocketConnectError(std::exception_ptr ep) noexcept
 void
 TcpStock::Create(CreateStockItem c,
                  void *info,
-                 struct pool &caller_pool,
                  CancellablePointer &cancel_ptr)
 {
     TcpStockRequest *request = (TcpStockRequest *)info;
@@ -202,7 +205,7 @@ TcpStock::Create(CreateStockItem c,
                                               request->address,
                                               cancel_ptr);
 
-    client_socket_new(c.stock.GetEventLoop(), caller_pool,
+    client_socket_new(c.stock.GetEventLoop(), request->caller_pool,
                       request->address.GetFamily(), SOCK_STREAM, 0,
                       request->ip_transparent,
                       request->bind_address,
@@ -238,7 +241,7 @@ TcpStock::Get(struct pool &pool, const char *name,
 {
     assert(!address.IsNull());
 
-    auto request = NewFromPool<TcpStockRequest>(pool, ip_transparent,
+    auto request = NewFromPool<TcpStockRequest>(pool, pool, ip_transparent,
                                                 bind_address, address,
                                                 timeout);
 
@@ -256,7 +259,7 @@ TcpStock::Get(struct pool &pool, const char *name,
             name = p_strdup(&pool, buffer);
     }
 
-    stock.Get(pool, name, request, handler, cancel_ptr);
+    stock.Get(name, request, handler, cancel_ptr);
 }
 
 SocketDescriptor

@@ -211,7 +211,7 @@ BufferedIstream::OnDirect(FdType, int fd, size_t max_length) noexcept
     if (!pipe.IsDefined()) {
         /* create the pipe */
         try {
-            pipe.Create(GetPool());
+            pipe.Create();
         } catch (...) {
             ClearAndCloseInput();
             InvokeError(std::current_exception());
