@@ -261,7 +261,6 @@ static constexpr size_t N_RUBBER_HOLE_THRESHOLDS =
     ARRAY_SIZE(RUBBER_HOLE_THRESHOLDS);
 
 class Rubber {
-public:
     /**
      * The maximum size of the memory map.  This is the value passed
      * to rubber_new() and will never be changed.
@@ -279,8 +278,11 @@ public:
      */
     RubberTable *const table;
 
+public:
     typedef boost::intrusive::list<RubberHole,
                                    boost::intrusive::constant_time_size<false>> HoleList;
+
+private:
     /**
      * A list of all holes in the buffer.  Each array element hosts
      * its own list with holes at the size of
@@ -297,6 +299,10 @@ public:
 
         table->Deinit();
         mmap_free(table, max_size);
+    }
+
+    void ForkCow(bool inherit) {
+        mmap_enable_fork(table, max_size, inherit);
     }
 
     size_t GetMaxSize() const {
@@ -883,7 +889,7 @@ rubber_free(Rubber *r)
 void
 rubber_fork_cow(Rubber *r, bool inherit)
 {
-    mmap_enable_fork(r->table, r->max_size, inherit);
+    r->ForkCow(inherit);
 }
 
 void
