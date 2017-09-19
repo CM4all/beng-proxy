@@ -53,7 +53,8 @@ Stock::Waiting::Waiting(Stock &_stock, struct pool &_pool, void *_info,
 inline void
 Stock::Waiting::Destroy()
 {
-    DeleteUnrefPool(pool, this);
+    pool_unref(&pool);
+    delete this;
 }
 
 void
@@ -313,9 +314,8 @@ Stock::Get(struct pool &caller_pool, void *info,
 
     if (limit > 0 && busy.size() + num_create >= limit) {
         /* item limit reached: wait for an item to return */
-        auto w = NewFromPool<Stock::Waiting>(caller_pool, *this,
-                                             caller_pool, info,
-                                             get_handler, cancel_ptr);
+        auto w = new Waiting(*this, caller_pool, info,
+                             get_handler, cancel_ptr);
         waiting.push_front(*w);
         return;
     }
