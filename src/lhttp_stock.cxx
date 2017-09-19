@@ -37,6 +37,7 @@
 #include "stock/MultiStock.hxx"
 #include "stock/Class.hxx"
 #include "stock/Item.hxx"
+#include "tpool.hxx"
 #include "lease.hxx"
 #include "child_stock.hxx"
 #include "spawn/JailParams.hxx"
@@ -318,7 +319,7 @@ lhttp_stock_fade_tag(LhttpStock &ls, const char *tag)
 }
 
 StockItem *
-lhttp_stock_get(LhttpStock *lhttp_stock, struct pool *pool,
+lhttp_stock_get(LhttpStock *lhttp_stock,
                 const LhttpAddress *address)
 {
     const auto *const jail = address->options.jail;
@@ -330,8 +331,10 @@ lhttp_stock_get(LhttpStock *lhttp_stock, struct pool *pool,
         void *out;
     } deconst = { .in = address };
 
-    return lhttp_stock->GetConnectionStock().GetNow(*pool,
-                                                    lhttp_stock_key(pool, address),
+    const AutoRewindPool auto_rewind(*tpool);
+
+    return lhttp_stock->GetConnectionStock().GetNow(*tpool,
+                                                    lhttp_stock_key(tpool, address),
                                                     deconst.out);
 }
 

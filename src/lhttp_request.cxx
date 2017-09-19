@@ -89,7 +89,7 @@ lhttp_request(struct pool &pool, EventLoop &event_loop,
     StockItem *stock_item;
 
     try {
-        stock_item = lhttp_stock_get(&lhttp_stock, &pool, &address);
+        stock_item = lhttp_stock_get(&lhttp_stock, &address);
     } catch (...) {
         /* need to hold this pool reference because it is guaranteed
            that the pool stays alive while the HttpResponseHandler

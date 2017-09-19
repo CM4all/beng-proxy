@@ -39,7 +39,7 @@
 #include "spawn/ChildOptions.hxx"
 #include "spawn/ExitListener.hxx"
 #include "spawn/Interface.hxx"
-#include "pool.hxx"
+#include "tpool.hxx"
 #include "event/SocketEvent.hxx"
 #include "io/Logger.hxx"
 #include "util/Cancellable.hxx"
@@ -478,10 +478,12 @@ was_stock_get(StockMap *hstock, struct pool *pool,
               StockGetHandler &handler,
               CancellablePointer &cancel_ptr)
 {
+    const AutoRewindPool auto_rewind(*tpool);
+
     auto params = NewFromPool<WasChildParams>(*pool, executable_path, args,
                                               options);
 
-    hstock->Get(*pool, params->GetStockKey(*pool), params,
+    hstock->Get(*pool, params->GetStockKey(*tpool), params,
                 handler, cancel_ptr);
 }
 

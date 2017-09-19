@@ -43,7 +43,7 @@
 #include "spawn/Prepared.hxx"
 #include "spawn/ChildOptions.hxx"
 #include "AllocatorPtr.hxx"
-#include "pool.hxx"
+#include "tpool.hxx"
 #include "io/Logger.hxx"
 
 #include <assert.h>
@@ -205,12 +205,13 @@ delegate_stock_free(StockMap *_stock)
 }
 
 StockItem *
-delegate_stock_get(StockMap *delegate_stock, struct pool *pool,
+delegate_stock_get(StockMap *delegate_stock,
                    const char *helper,
                    const ChildOptions &options)
 {
+    const AutoRewindPool auto_rewind(*tpool);
     DelegateArgs args(helper, options);
-    return delegate_stock->GetNow(*pool, args.GetStockKey(*pool), &args);
+    return delegate_stock->GetNow(*tpool, args.GetStockKey(*tpool), &args);
 }
 
 int

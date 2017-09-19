@@ -65,7 +65,7 @@ lhttp_stock_fade_tag(LhttpStock &ls, const char *tag);
  * Throws exception on error.
  */
 StockItem *
-lhttp_stock_get(LhttpStock *lhttp_stock, struct pool *pool,
+lhttp_stock_get(LhttpStock *lhttp_stock,
                 const LhttpAddress *address);
 
 /**

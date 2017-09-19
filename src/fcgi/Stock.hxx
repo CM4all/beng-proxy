@@ -33,7 +33,6 @@
 #ifndef BENG_PROXY_FCGI_STOCK_HXX
 #define BENG_PROXY_FCGI_STOCK_HXX
 
-struct pool;
 struct StockItem;
 struct FcgiStock;
 struct ChildOptions;
@@ -65,7 +64,7 @@ fcgi_stock_fade_tag(FcgiStock &fs, const char *tag);
  * @param args command-line arguments
  */
 StockItem *
-fcgi_stock_get(FcgiStock *fcgi_stock, struct pool *pool,
+fcgi_stock_get(FcgiStock *fcgi_stock,
                const ChildOptions &options,
                const char *executable_path,
                ConstBuffer<const char *> args);

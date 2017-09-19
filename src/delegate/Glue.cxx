@@ -61,7 +61,7 @@ delegate_stock_open(StockMap *stock, struct pool *pool,
     StockItem *item;
 
     try {
-        item = delegate_stock_get(stock, pool, helper, options);
+        item = delegate_stock_get(stock, helper, options);
     } catch (...) {
         handler.OnDelegateError(std::current_exception());
         return;

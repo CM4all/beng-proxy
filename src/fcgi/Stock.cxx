@@ -41,7 +41,7 @@
 #include "spawn/ChildOptions.hxx"
 #include "spawn/JailParams.hxx"
 #include "spawn/JailConfig.hxx"
-#include "pool.hxx"
+#include "tpool.hxx"
 #include "AllocatorPtr.hxx"
 #include "event/SocketEvent.hxx"
 #include "event/Duration.hxx"
@@ -396,16 +396,18 @@ fcgi_stock_fade_tag(FcgiStock &fs, const char *tag)
 }
 
 StockItem *
-fcgi_stock_get(FcgiStock *fcgi_stock, struct pool *pool,
+fcgi_stock_get(FcgiStock *fcgi_stock,
                const ChildOptions &options,
                const char *executable_path,
                ConstBuffer<const char *> args)
 {
-    auto params = NewFromPool<FcgiChildParams>(*pool, executable_path,
+    const AutoRewindPool auto_rewind(*tpool);
+
+    auto params = NewFromPool<FcgiChildParams>(*tpool, executable_path,
                                                args, options);
 
-    return fcgi_stock->hstock.GetNow(*pool,
-                                     params->GetStockKey(*pool), params);
+    return fcgi_stock->hstock.GetNow(*tpool,
+                                     params->GetStockKey(*tpool), params);
 }
 
 int

@@ -97,7 +97,7 @@ fcgi_request(struct pool *pool, EventLoop &event_loop,
 
     StockItem *stock_item;
     try {
-        stock_item = fcgi_stock_get(fcgi_stock, pool, options,
+        stock_item = fcgi_stock_get(fcgi_stock, options,
                                     action,
                                     args);
     } catch (...) {
