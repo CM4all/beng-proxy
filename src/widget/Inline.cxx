@@ -81,6 +81,18 @@ struct InlineWidget final : HttpResponseHandler {
          widget(_widget),
          delayed(istream_delayed_new(&pool)) {}
 
+    Istream *MakeResponse() noexcept {
+        return NewTimeoutIstream(pool, *delayed,
+                                 *env.event_loop,
+                                 inline_widget_timeout);
+    }
+
+    void Start() noexcept;
+
+    void Fail(std::exception_ptr ep) noexcept {
+        istream_delayed_set_abort(*delayed, ep);
+    }
+
     void SendRequest();
     void ResolverCallback();
 
@@ -89,12 +101,6 @@ struct InlineWidget final : HttpResponseHandler {
                         Istream *body) override;
     void OnHttpError(std::exception_ptr ep) override;
 };
-
-static void
-inline_widget_close(InlineWidget *iw, std::exception_ptr ep)
-{
-    istream_delayed_set_abort(*iw->delayed, ep);
-}
 
 /**
  * Ensure that a widget has the correct type for embedding it into a
@@ -196,7 +202,7 @@ InlineWidget::OnHttpResponse(http_status_t status, StringMap &&headers,
 
         WidgetError error(widget, WidgetErrorCode::UNSPECIFIED,
                           StringFormat<64>("response status %d", status));
-        inline_widget_close(this, std::make_exception_ptr(error));
+        Fail(std::make_exception_ptr(error));
         return;
     }
 
@@ -207,7 +213,7 @@ InlineWidget::OnHttpResponse(http_status_t status, StringMap &&headers,
             body = widget_response_format(pool, widget,
                                           headers, *body, plain_text);
         } catch (...) {
-            inline_widget_close(this, std::current_exception());
+            Fail(std::current_exception());
             return;
         }
     } else
@@ -222,7 +228,7 @@ InlineWidget::OnHttpResponse(http_status_t status, StringMap &&headers,
 void
 InlineWidget::OnHttpError(std::exception_ptr ep)
 {
-    inline_widget_close(this, ep);
+    Fail(ep);
 }
 
 /*
@@ -238,7 +244,7 @@ InlineWidget::SendRequest()
                           StringFormat<256>("not allowed to embed widget class '%s'",
                                             widget.class_name));
         widget.Cancel();
-        istream_delayed_set_abort(*delayed, std::make_exception_ptr(error));
+        Fail(std::make_exception_ptr(error));
         return;
     }
 
@@ -247,7 +253,7 @@ InlineWidget::SendRequest()
     } catch (const std::runtime_error &e) {
         WidgetError error(widget, WidgetErrorCode::FORBIDDEN, "Untrusted host");
         widget.Cancel();
-        istream_delayed_set_abort(*delayed, NestException(std::current_exception(), error));
+        Fail(NestException(std::current_exception(), error));
         return;
     }
 
@@ -256,7 +262,7 @@ InlineWidget::SendRequest()
                           StringFormat<256>("No such view: %s",
                                             widget.from_template.view_name));
         widget.Cancel();
-        istream_delayed_set_abort(*delayed, std::make_exception_ptr(error));
+        Fail(std::make_exception_ptr(error));
         return;
     }
 
@@ -288,8 +294,20 @@ InlineWidget::ResolverCallback()
         WidgetError error(widget, WidgetErrorCode::UNSPECIFIED,
                           "Failed to look up widget class");
         widget.Cancel();
-        inline_widget_close(this, std::make_exception_ptr(error));
+        Fail(std::make_exception_ptr(error));
     }
+}
+
+void
+InlineWidget::Start() noexcept
+{
+    if (widget.cls == nullptr)
+        ResolveWidget(pool, widget,
+                      *global_translate_cache,
+                      BIND_THIS_METHOD(ResolverCallback),
+                      istream_delayed_cancellable_ptr(*delayed));
+    else
+        SendRequest();
 }
 
 
@@ -320,18 +338,9 @@ embed_inline_widget(struct pool &pool, struct processor_env &env,
 
     auto iw = NewFromPool<InlineWidget>(pool, pool, env, plain_text, widget);
 
-    Istream *timeout = NewTimeoutIstream(pool, *iw->delayed,
-                                         *env.event_loop,
-                                         inline_widget_timeout);
-    Istream *hold = istream_hold_new(pool, *timeout);
+    Istream *hold = istream_hold_new(pool, *iw->MakeResponse());
 
-    if (widget.cls == nullptr)
-        ResolveWidget(pool, widget,
-                      *global_translate_cache,
-                      BIND_METHOD(*iw, &InlineWidget::ResolverCallback),
-                      istream_delayed_cancellable_ptr(*iw->delayed));
-    else
-        iw->SendRequest();
+    iw->Start();
 
     if (request_body != nullptr)
         istream_pause_resume(*request_body);
