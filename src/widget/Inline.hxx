@@ -42,7 +42,7 @@ class Istream;
 struct Widget;
 struct processor_env;
 
-extern const struct timeval inline_widget_timeout;
+extern const struct timeval inline_widget_body_timeout;
 
 /**
  * Utility function for the HTML processor which prepares a widget for

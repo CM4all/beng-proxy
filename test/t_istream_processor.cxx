@@ -52,7 +52,7 @@
 
 class EventLoop;
 
-const struct timeval inline_widget_timeout = {
+const struct timeval inline_widget_body_timeout = {
     .tv_sec = 10,
     .tv_usec = 0,
 };

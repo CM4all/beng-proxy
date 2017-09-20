@@ -62,7 +62,7 @@
 
 #include <assert.h>
 
-const struct timeval inline_widget_timeout = {
+const struct timeval inline_widget_body_timeout = {
     .tv_sec = 10,
     .tv_usec = 0,
 };
@@ -91,7 +91,7 @@ public:
     Istream *MakeResponse() noexcept {
         return NewTimeoutIstream(pool, *delayed,
                                  *env.event_loop,
-                                 inline_widget_timeout);
+                                 inline_widget_body_timeout);
     }
 
     void Start() noexcept;

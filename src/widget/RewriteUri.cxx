@@ -427,7 +427,7 @@ rewrite_widget_uri(struct pool &pool,
         rwu->delayed = istream_delayed_new(&pool);
         rwu->timeout = NewTimeoutIstream(pool, *rwu->delayed,
                                          *env.event_loop,
-                                         inline_widget_timeout);
+                                         inline_widget_body_timeout);
 
         ResolveWidget(pool,
                       widget,
