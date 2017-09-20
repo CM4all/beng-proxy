@@ -55,12 +55,18 @@
 #include "istream/TimeoutIstream.hxx"
 #include "session.hxx"
 #include "pool.hxx"
+#include "event/TimerEvent.hxx"
 #include "util/Cancellable.hxx"
 #include "util/StringCompare.hxx"
 #include "util/StringFormat.hxx"
 #include "util/Exception.hxx"
 
 #include <assert.h>
+
+const struct timeval inline_widget_header_timeout = {
+    .tv_sec = 5,
+    .tv_usec = 0,
+};
 
 const struct timeval inline_widget_body_timeout = {
     .tv_sec = 10,
@@ -73,6 +79,8 @@ class InlineWidget final : HttpResponseHandler, Cancellable {
     bool plain_text;
     Widget &widget;
 
+    TimerEvent header_timeout_event;
+
     Istream *delayed;
 
     CancellablePointer cancel_ptr;
@@ -84,6 +92,8 @@ public:
         :pool(_pool), env(_env),
          plain_text(_plain_text),
          widget(_widget),
+         header_timeout_event(*env.event_loop,
+                              BIND_THIS_METHOD(OnHeaderTimeout)),
          delayed(istream_delayed_new(&pool)) {
         istream_delayed_cancellable_ptr(*delayed) = *this;
     }
@@ -103,6 +113,11 @@ private:
 
     void SendRequest();
     void ResolverCallback();
+
+    void OnHeaderTimeout() {
+        Cancel();
+        Fail(std::make_exception_ptr(std::runtime_error("Header timeout")));
+    }
 
     /* virtual methods from class HttpResponseHandler */
     void OnHttpResponse(http_status_t status, StringMap &&headers,
@@ -204,6 +219,8 @@ void
 InlineWidget::OnHttpResponse(http_status_t status, StringMap &&headers,
                              Istream *body)
 {
+    header_timeout_event.Cancel();
+
     if (!http_status_is_success(status)) {
         /* the HTTP status code returned by the widget server is
            non-successful - don't embed this widget into the
@@ -239,12 +256,16 @@ InlineWidget::OnHttpResponse(http_status_t status, StringMap &&headers,
 void
 InlineWidget::OnHttpError(std::exception_ptr ep)
 {
+    header_timeout_event.Cancel();
+
     Fail(ep);
 }
 
 void
 InlineWidget::Cancel()
 {
+    header_timeout_event.Cancel();
+
     /* make sure that all widget resources are freed when the request
        is cancelled */
     widget.Cancel();
@@ -295,6 +316,7 @@ InlineWidget::SendRequest()
             widget.session_sync_pending = false;
     }
 
+    header_timeout_event.Add(inline_widget_header_timeout);
     widget_http_request(pool, widget, env,
                         *this, cancel_ptr);
 }

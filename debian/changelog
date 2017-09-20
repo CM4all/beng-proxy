@@ -1,6 +1,7 @@
 cm4all-beng-proxy (13.0.6) unstable; urgency=low
 
   * widget/inline: fix memory leak on canceled POST
+  * widget/inline: implement a response header timeout of 5s
 
  --   
 
