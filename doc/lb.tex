@@ -562,6 +562,12 @@ lines, each specifying a CA certificate chain file in PEM format.
 Each certificate loaded from the database will be accompanied with the
 chain, if a matching one was found.
 
+The \verb|connect| setting contains a PostgreSQL connect string.
+Optionally, you may specify a non-standard PostgreSQL schema with the
+\verb|schema| setting.  Note that you need to allow the configured
+PostgreSQL user to access the schema using \texttt{GRANT USAGE ON
+  SCHEMA TO username}.
+
 If at least one \verb|wrap_key| setting is present, all new private
 keys will be encrypted (``wrapped'') with the first AES256 key.  That
 way, private keys are not leaked to everybody with read acccess to the
