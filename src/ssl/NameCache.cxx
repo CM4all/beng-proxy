@@ -32,6 +32,7 @@
 
 #include "NameCache.hxx"
 #include "certdb/Config.hxx"
+#include "pg/CheckError.hxx"
 #include "event/Duration.hxx"
 
 #include <assert.h>
@@ -134,14 +135,37 @@ CertNameCache::RemoveAltNames(const std::string &common_name,
     }
 }
 
+static void
+Listen(const LLogger &logger, Pg::AsyncConnection &c, const char *name)
+{
+    std::string sql("LISTEN \"");
+
+    const auto &schema = c.GetSchemaName();
+    if (!schema.empty() && schema != "public") {
+        /* prefix the notify name unless we're in the default
+           schema */
+        sql += schema;
+        sql += ':';
+    }
+
+    sql += name;
+    sql += "\"";
+
+    try {
+        Pg::CheckError(c.Execute(sql.c_str()));
+    } catch (...) {
+        logger(1, "'LISTEN ", name, "' failed: ", std::current_exception());
+    }
+}
+
 void
 CertNameCache::OnConnect()
 {
     logger(5, "connected to certificate database");
 
     // TODO: make asynchronous
-    conn.Execute("LISTEN modified");
-    conn.Execute("LISTEN deleted");
+    Listen(logger, conn, "modified");
+    Listen(logger, conn, "deleted");
 
     ScheduleUpdate();
 }
