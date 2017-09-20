@@ -55,6 +55,7 @@
 #include "istream/TimeoutIstream.hxx"
 #include "session.hxx"
 #include "pool.hxx"
+#include "util/Cancellable.hxx"
 #include "util/StringCompare.hxx"
 #include "util/StringFormat.hxx"
 #include "util/Exception.hxx"
@@ -66,13 +67,15 @@ const struct timeval inline_widget_timeout = {
     .tv_usec = 0,
 };
 
-class InlineWidget final : HttpResponseHandler {
+class InlineWidget final : HttpResponseHandler, Cancellable {
     struct pool &pool;
     struct processor_env &env;
     bool plain_text;
     Widget &widget;
 
     Istream *delayed;
+
+    CancellablePointer cancel_ptr;
 
 public:
     InlineWidget(struct pool &_pool, struct processor_env &_env,
@@ -81,7 +84,9 @@ public:
         :pool(_pool), env(_env),
          plain_text(_plain_text),
          widget(_widget),
-         delayed(istream_delayed_new(&pool)) {}
+         delayed(istream_delayed_new(&pool)) {
+        istream_delayed_cancellable_ptr(*delayed) = *this;
+    }
 
     Istream *MakeResponse() noexcept {
         return NewTimeoutIstream(pool, *delayed,
@@ -103,6 +108,9 @@ private:
     void OnHttpResponse(http_status_t status, StringMap &&headers,
                         Istream *body) override;
     void OnHttpError(std::exception_ptr ep) override;
+
+    /* virtual methods from class Cancellable */
+    void Cancel() override;
 };
 
 /**
@@ -234,6 +242,12 @@ InlineWidget::OnHttpError(std::exception_ptr ep)
     Fail(ep);
 }
 
+void
+InlineWidget::Cancel()
+{
+    cancel_ptr.Cancel();
+}
+
 /*
  * internal
  *
@@ -278,8 +292,7 @@ InlineWidget::SendRequest()
     }
 
     widget_http_request(pool, widget, env,
-                        *this,
-                        istream_delayed_cancellable_ptr(*delayed));
+                        *this, cancel_ptr);
 }
 
 
@@ -307,8 +320,7 @@ InlineWidget::Start() noexcept
     if (widget.cls == nullptr)
         ResolveWidget(pool, widget,
                       *global_translate_cache,
-                      BIND_THIS_METHOD(ResolverCallback),
-                      istream_delayed_cancellable_ptr(*delayed));
+                      BIND_THIS_METHOD(ResolverCallback), cancel_ptr);
     else
         SendRequest();
 }
