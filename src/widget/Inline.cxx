@@ -249,6 +249,10 @@ InlineWidget::OnHttpError(std::exception_ptr ep)
 void
 InlineWidget::Cancel()
 {
+    /* make sure that all widget resources are freed when the request
+       is cancelled */
+    widget.Cancel();
+
     cancel_ptr.Cancel();
 }
 
