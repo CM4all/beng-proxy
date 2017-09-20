@@ -48,6 +48,14 @@ cm4all-beng-proxy (13.0.1) unstable; urgency=low
 
  -- Max Kellermann <mk@cm4all.com>  Tue, 29 Aug 2017 10:40:13 -0000
 
+cm4all-beng-proxy (12.5) unstable; urgency=low
+
+  * lb/http: fix another memory leak with POST requests
+  * lb: fix shutdown crash bug
+  * certdb: fix crash after PostgreSQL host lookup failure
+
+ -- Max Kellermann <mk@cm4all.com>  Wed, 20 Sep 2017 10:30:52 -0000
+
 cm4all-beng-proxy (12.4) unstable; urgency=low
 
   * lb/http: fix several memory leaks with POST requests
