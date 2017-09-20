@@ -65,7 +65,7 @@ const struct timeval inline_widget_timeout = {
     .tv_usec = 0,
 };
 
-struct InlineWidget final : HttpResponseHandler {
+class InlineWidget final : HttpResponseHandler {
     struct pool &pool;
     struct processor_env &env;
     bool plain_text;
@@ -73,6 +73,7 @@ struct InlineWidget final : HttpResponseHandler {
 
     Istream *delayed;
 
+public:
     InlineWidget(struct pool &_pool, struct processor_env &_env,
                  bool _plain_text,
                  Widget &_widget)
@@ -89,6 +90,7 @@ struct InlineWidget final : HttpResponseHandler {
 
     void Start() noexcept;
 
+private:
     void Fail(std::exception_ptr ep) noexcept {
         istream_delayed_set_abort(*delayed, ep);
     }
