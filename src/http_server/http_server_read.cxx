@@ -381,6 +381,8 @@ HttpServerConnection::Feed(const void *data, size_t length)
         if (score == HTTP_SERVER_NEW)
             score = HTTP_SERVER_FIRST;
 
+        [[fallthrough]]
+
     case Request::HEADERS:
         result = FeedHeaders(data, length);
         if ((result == BufferedResult::OK || result == BufferedResult::PARTIAL) &&
