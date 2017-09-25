@@ -36,7 +36,7 @@
 ConstBuffer<void>
 AllocatorPtr::Dup(ConstBuffer<void> src)
 {
-    if (src.IsNull())
+    if (src == nullptr)
         return nullptr;
 
     if (src.empty())
@@ -48,7 +48,7 @@ AllocatorPtr::Dup(ConstBuffer<void> src)
 StringView
 AllocatorPtr::Dup(StringView src)
 {
-    if (src.IsNull())
+    if (src == nullptr)
         return nullptr;
 
     if (src.empty())
@@ -60,7 +60,7 @@ AllocatorPtr::Dup(StringView src)
 const char *
 AllocatorPtr::DupZ(StringView src)
 {
-    if (src.IsNull())
+    if (src == nullptr)
         return nullptr;
 
     if (src.empty())

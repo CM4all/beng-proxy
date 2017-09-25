@@ -187,7 +187,7 @@ AccessLogGlue::Log(HttpServerRequest &request, const char *site,
         config.trust_xff.find(remote_host) != config.trust_xff.end() &&
         x_forwarded_for != nullptr) {
         auto r = GetRealRemoteHost(x_forwarded_for, config.trust_xff);
-        if (!r.IsNull()) {
+        if (r != nullptr) {
             buffer.assign(r.data, r.size);
             remote_host = buffer.c_str();
         }

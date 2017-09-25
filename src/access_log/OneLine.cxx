@@ -163,6 +163,6 @@ LogOneLine(FileDescriptor fd, const AccessLogDatagram &d)
 {
     if (d.http_uri != nullptr && d.valid_http_status)
         LogOneLineHttp(fd, d);
-    else if (!d.message.IsNull())
+    else if (d.message != nullptr)
         LogOneLineMessage(fd, d);
 }

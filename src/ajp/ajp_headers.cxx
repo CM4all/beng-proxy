@@ -90,7 +90,7 @@ deserialize_ajp_headers(struct pool &pool, StringMap &headers,
         const char *name, *value;
         char *lname;
 
-        if (input.IsNull())
+        if (input == nullptr)
             break;
 
         if (length >= AJP_HEADER_CODE_START) {
@@ -131,7 +131,7 @@ deserialize_ajp_response_headers(struct pool &pool, StringMap &headers,
         const char *name, *value;
         char *lname;
 
-        if (input.IsNull())
+        if (input == nullptr)
             break;
 
         if (length >= AJP_RESPONSE_HEADER_CODE_START) {

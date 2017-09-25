@@ -78,7 +78,7 @@ static const char *
 ForwardURI(const Request &r)
 {
     const TranslateResponse &t = *r.translate.response;
-    if (t.transparent || r.dissected_uri.args.IsNull())
+    if (t.transparent || r.dissected_uri.args == nullptr)
         /* transparent or no args: return the full URI as-is */
         return r.request.uri;
     else

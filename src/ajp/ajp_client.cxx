@@ -376,7 +376,7 @@ AjpClient::ConsumeSendHeaders(const uint8_t *data, size_t length)
     deserialize_ajp_response_headers(GetPool(), response.headers,
                                      packet, num_headers);
 
-    if (packet.IsNull()) {
+    if (packet == nullptr) {
         AbortResponseHeaders("malformed SEND_HEADERS packet from AJP server");
         return false;
     }

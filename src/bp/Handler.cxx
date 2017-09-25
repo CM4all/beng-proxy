@@ -88,9 +88,9 @@ bounce_uri(struct pool &pool, const Request &request,
 
     const char *uri_path = response.uri != nullptr
         ? p_strncat(&pool, response.uri, strlen(response.uri),
-                    ";", request.dissected_uri.args.IsNull() ? (size_t)0 : 1,
+                    ";", request.dissected_uri.args == nullptr ? (size_t)0 : 1,
                     request.dissected_uri.args.data, request.dissected_uri.args.size,
-                    "?", request.dissected_uri.query.IsNull() ? (size_t)0 : 1,
+                    "?", request.dissected_uri.query == nullptr ? (size_t)0 : 1,
                     request.dissected_uri.query.data, request.dissected_uri.query.size,
                     nullptr)
         : request.request.uri;
@@ -315,7 +315,7 @@ ProbePathSuffixes(const char *prefix, const ConstBuffer<const char *> suffixes)
 inline bool
 Request::CheckHandleProbePathSuffixes(const TranslateResponse &response)
 {
-    if (response.probe_path_suffixes.IsNull())
+    if (response.probe_path_suffixes == nullptr)
         return false;
 
     if (++translate.n_probe_path_suffixes > 2) {
@@ -522,7 +522,7 @@ repeat_translation(Request &request, const TranslateResponse &response)
     if (!response.internal_redirect.IsNull()) {
         /* repeat request with INTERNAL_REDIRECT set */
 
-        assert(response.want_full_uri.IsNull());
+        assert(response.want_full_uri == nullptr);
 
         if (++request.translate.n_internal_redirects > 4) {
             request.LogDispatchError(HTTP_STATUS_BAD_GATEWAY,

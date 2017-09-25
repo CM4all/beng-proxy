@@ -94,7 +94,7 @@ Request::HandleAuth(const TranslateResponse &response)
     assert(response.HasAuth());
 
     auto auth = response.auth;
-    if (auth.IsNull()) {
+    if (auth == nullptr) {
         /* load #TRANSLATE_AUTH_FILE */
         assert(response.auth_file != nullptr);
 

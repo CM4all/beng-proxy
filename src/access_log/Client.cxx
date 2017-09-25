@@ -116,7 +116,7 @@ LogClient::Send(const AccessLogDatagram &d)
     if (d.user_agent != nullptr)
         AppendString(LOG_USER_AGENT, d.user_agent);
 
-    if (!d.message.IsNull())
+    if (d.message != nullptr)
         AppendString(LOG_MESSAGE, d.message);
 
     if (d.valid_http_status)

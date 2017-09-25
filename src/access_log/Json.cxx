@@ -89,7 +89,7 @@ ToJson(const ReceivedAccessLogDatagram &d)
     if (d.user_agent != nullptr)
         root["user_agent"] = d.user_agent;
 
-    if (!d.message.IsNull())
+    if (d.message != nullptr)
         root["message"] = std::string(d.message.data, d.message.size);
 
     if (d.valid_http_status)
