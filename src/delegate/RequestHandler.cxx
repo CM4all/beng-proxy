@@ -37,7 +37,7 @@
 #include "bp/FileHandler.hxx"
 #include "bp/GenerateResponse.hxx"
 #include "bp/Request.hxx"
-#include "bp_instance.hxx"
+#include "bp/Instance.hxx"
 #include "file_address.hxx"
 #include "http_server/Request.hxx"
 #include "http_response.hxx"

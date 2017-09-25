@@ -36,7 +36,7 @@
 
 #include "Request.hxx"
 #include "Connection.hxx"
-#include "bp_instance.hxx"
+#include "Instance.hxx"
 #include "http_server/Request.hxx"
 #include "pool.hxx"
 #include "pbuffer.hxx"

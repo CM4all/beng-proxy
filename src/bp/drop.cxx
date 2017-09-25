@@ -32,7 +32,7 @@
 
 #include "drop.hxx"
 #include "Connection.hxx"
-#include "bp_instance.hxx"
+#include "Instance.hxx"
 #include "http_server/http_server.hxx"
 #include "io/Logger.hxx"
 #include "util/Macros.hxx"

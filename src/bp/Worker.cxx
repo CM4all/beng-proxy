@@ -33,7 +33,7 @@
 #include "Worker.hxx"
 #include "Connection.hxx"
 #include "Control.hxx"
-#include "bp_instance.hxx"
+#include "Instance.hxx"
 #include "http_server/http_server.hxx"
 #include "session_manager.hxx"
 #include "spawn/Client.hxx"

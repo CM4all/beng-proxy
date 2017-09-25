@@ -32,7 +32,7 @@
 
 #include "Request.hxx"
 #include "Connection.hxx"
-#include "bp_instance.hxx"
+#include "Instance.hxx"
 #include "session.hxx"
 #include "session_manager.hxx"
 #include "http_server/Request.hxx"

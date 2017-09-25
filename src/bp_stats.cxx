@@ -31,7 +31,7 @@
  */
 
 #include "bp_stats.hxx"
-#include "bp_instance.hxx"
+#include "bp/Instance.hxx"
 #include "tcp_stock.hxx"
 #include "stock/MapStock.hxx"
 #include "stock/Stats.hxx"

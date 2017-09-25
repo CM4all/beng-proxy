@@ -32,7 +32,7 @@
 
 #include "Connection.hxx"
 #include "Handler.hxx"
-#include "bp_instance.hxx"
+#include "Instance.hxx"
 #include "strmap.hxx"
 #include "http_server/http_server.hxx"
 #include "http_server/Request.hxx"

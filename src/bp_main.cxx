@@ -32,7 +32,7 @@
 
 #include "direct.hxx"
 #include "bp_cmdline.hxx"
-#include "bp_instance.hxx"
+#include "bp/Instance.hxx"
 #include "bp/Connection.hxx"
 #include "bp/Worker.hxx"
 #include "bp_global.hxx"

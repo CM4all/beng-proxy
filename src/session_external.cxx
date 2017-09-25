@@ -32,7 +32,7 @@
 
 #include "session_external.hxx"
 #include "session.hxx"
-#include "bp_instance.hxx"
+#include "bp/Instance.hxx"
 #include "http_address.hxx"
 #include "http_request.hxx"
 #include "http_response.hxx"

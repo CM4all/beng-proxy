@@ -32,7 +32,7 @@
 
 #include "errdoc.hxx"
 #include "Request.hxx"
-#include "bp_instance.hxx"
+#include "Instance.hxx"
 #include "http_server/Request.hxx"
 #include "http_headers.hxx"
 #include "http_response.hxx"

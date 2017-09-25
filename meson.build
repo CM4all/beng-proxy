@@ -946,7 +946,7 @@ executable('cm4all-beng-proxy',
   'src/access_log/OneLine.cxx',
   'src/access_log/ConfigParser.cxx',
   'src/PInstance.cxx',
-  'src/bp_instance.cxx',
+  'src/bp/Instance.cxx',
   'src/bp_main.cxx',
   include_directories: inc,
   dependencies: [

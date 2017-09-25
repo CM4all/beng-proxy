@@ -30,7 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "bp_instance.hxx"
+#include "Instance.hxx"
 #include "fb_pool.hxx"
 #include "control_server.hxx"
 #include "tcp_balancer.hxx"

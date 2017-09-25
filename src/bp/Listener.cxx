@@ -32,7 +32,7 @@
 
 #include "Listener.hxx"
 #include "Connection.hxx"
-#include "bp_instance.hxx"
+#include "Instance.hxx"
 #include "net/SocketAddress.hxx"
 #include "io/Logger.hxx"
 #include "util/Exception.hxx"

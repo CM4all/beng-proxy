@@ -39,7 +39,7 @@
 #include "bp/FileHeaders.hxx"
 #include "bp/Request.hxx"
 #include "bp/GenerateResponse.hxx"
-#include "bp_instance.hxx"
+#include "bp/Instance.hxx"
 #include "http_headers.hxx"
 #include "http_server/Request.hxx"
 #include "pool.hxx"

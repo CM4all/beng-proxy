@@ -36,7 +36,7 @@
 
 #include "Handler.hxx"
 #include "Connection.hxx"
-#include "bp_instance.hxx"
+#include "Instance.hxx"
 #include "Request.hxx"
 #include "ForwardRequest.hxx"
 #include "ResourceLoader.hxx"

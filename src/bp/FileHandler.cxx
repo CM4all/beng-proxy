@@ -34,7 +34,7 @@
 #include "FileHeaders.hxx"
 #include "file_address.hxx"
 #include "Request.hxx"
-#include "bp_instance.hxx"
+#include "Instance.hxx"
 #include "GenerateResponse.hxx"
 #include "header_writer.hxx"
 #include "http/Date.hxx"

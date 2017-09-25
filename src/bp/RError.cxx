@@ -35,7 +35,7 @@
  */
 
 #include "Request.hxx"
-#include "bp_instance.hxx"
+#include "Instance.hxx"
 #include "http_client.hxx"
 #include "nfs/Error.hxx"
 #include "ajp/Error.hxx"

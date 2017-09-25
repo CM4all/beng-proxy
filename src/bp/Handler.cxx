@@ -33,7 +33,7 @@
 #include "Handler.hxx"
 #include "Connection.hxx"
 #include "bp_config.hxx"
-#include "bp_instance.hxx"
+#include "Instance.hxx"
 #include "load_file.hxx"
 #include "file_not_found.hxx"
 #include "file_enotdir.hxx"

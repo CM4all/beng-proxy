@@ -31,11 +31,11 @@
  */
 
 #include "Control.hxx"
+#include "Instance.hxx"
 #include "bp_stats.hxx"
 #include "control_distribute.hxx"
 #include "control_server.hxx"
 #include "control_local.hxx"
-#include "bp_instance.hxx"
 #include "translation/Request.hxx"
 #include "translation/Cache.hxx"
 #include "translation/Protocol.hxx"
