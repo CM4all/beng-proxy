@@ -105,11 +105,11 @@ query_stats(BpInstance *instance, ControlServer *server,
     }
 }
 
-static void
-handle_control_packet(BpInstance *instance, ControlServer *server,
-                      enum beng_control_command command,
-                      const void *payload, size_t payload_length,
-                      SocketAddress address)
+void
+BpInstance::OnControlPacket(ControlServer &control_server,
+                            enum beng_control_command command,
+                            const void *payload, size_t payload_length,
+                            SocketAddress address)
 {
     LogConcat(5, "control", "command=", int(command),
               " payload_length=", unsigned(payload_length));
@@ -123,12 +123,12 @@ handle_control_packet(BpInstance *instance, ControlServer *server,
         break;
 
     case CONTROL_TCACHE_INVALIDATE:
-        control_tcache_invalidate(instance, payload, payload_length);
+        control_tcache_invalidate(this, payload, payload_length);
         break;
 
     case CONTROL_DUMP_POOLS:
         if (is_privileged)
-            pool_dump_tree(instance->root_pool);
+            pool_dump_tree(root_pool);
         break;
 
     case CONTROL_ENABLE_NODE:
@@ -138,7 +138,7 @@ handle_control_packet(BpInstance *instance, ControlServer *server,
         break;
 
     case CONTROL_STATS:
-        query_stats(instance, server, address);
+        query_stats(this, &control_server, address);
         break;
 
     case CONTROL_VERBOSE:
@@ -149,25 +149,14 @@ handle_control_packet(BpInstance *instance, ControlServer *server,
     case CONTROL_FADE_CHILDREN:
         if (payload_length > 0)
             /* tagged fade is allowed for any unprivileged client */
-            instance->FadeTaggedChildren(std::string((const char *)payload,
-                                                     payload_length).c_str());
+            FadeTaggedChildren(std::string((const char *)payload,
+                                           payload_length).c_str());
         else if (is_privileged)
             /* unconditional fade is only allowed for privileged
                clients */
-            instance->FadeChildren();
+            FadeChildren();
         break;
     }
-}
-
-void
-BpInstance::OnControlPacket(ControlServer &_control_server,
-                            enum beng_control_command command,
-                            const void *payload, size_t payload_length,
-                            SocketAddress address)
-{
-    handle_control_packet(this, &_control_server,
-                          command, payload, payload_length,
-                          address);
 }
 
 void
