@@ -63,7 +63,7 @@
 #include "DirectResourceLoader.hxx"
 #include "CachedResourceLoader.hxx"
 #include "FilterResourceLoader.hxx"
-#include "bp_control.hxx"
+#include "bp/Control.hxx"
 #include "access_log/Glue.hxx"
 #include "ua_classification.hxx"
 #include "ssl/ssl_init.hxx"

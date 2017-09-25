@@ -32,10 +32,10 @@
 
 #include "Worker.hxx"
 #include "Connection.hxx"
+#include "Control.hxx"
 #include "bp_instance.hxx"
 #include "http_server/http_server.hxx"
 #include "session_manager.hxx"
-#include "bp_control.hxx"
 #include "spawn/Client.hxx"
 #include "event/Duration.hxx"
 #include "net/UniqueSocketDescriptor.hxx"

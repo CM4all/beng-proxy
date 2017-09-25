@@ -30,7 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "bp_control.hxx"
+#include "Control.hxx"
 #include "bp_stats.hxx"
 #include "control_distribute.hxx"
 #include "control_server.hxx"
