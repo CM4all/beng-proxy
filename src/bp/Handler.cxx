@@ -357,7 +357,7 @@ handler_suffix_registry_error(std::exception_ptr ep, void *ctx)
     auto &request = *(Request *)ctx;
 
     request.LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
-                             "Translation server failed",
+                             "Configuration server failed",
                              ep, 1);
 }
 
@@ -777,7 +777,7 @@ handler_translate_error(std::exception_ptr ep, void *ctx)
     install_error_response(request);
 
     request.LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
-                             "Translation server failed", ep, 1);
+                             "Configuration server failed", ep, 1);
 }
 
 static constexpr TranslateHandler handler_translate_handler = {
