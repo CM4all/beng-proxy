@@ -149,6 +149,9 @@ private:
      */
     std::string NextNonce();
 
+    GlueHttpResponse FakeRequest(http_method_t method, const char *uri,
+                                 ConstBuffer<void> body);
+
     GlueHttpResponse Request(http_method_t method, const char *uri,
                              ConstBuffer<void> body);
 

@@ -33,8 +33,6 @@
 #include "AcmeClient.hxx"
 #include "AcmeConfig.hxx"
 #include "ssl/Base64.hxx"
-#include "ssl/Buffer.hxx"
-#include "ssl/Dummy.hxx"
 #include "ssl/Certificate.hxx"
 #include "ssl/Key.hxx"
 #include "uri/uri_extract.hxx"
@@ -285,53 +283,11 @@ GlueHttpResponse
 AcmeClient::Request(http_method_t method, const char *uri,
                     ConstBuffer<void> body)
 {
-    if (fake) {
-        if (strcmp(uri, "/acme/new-authz") == 0) {
-            std::multimap<std::string, std::string> response_headers = {
-                {"content-type", "application/json"},
-            };
-
-            return GlueHttpResponse(HTTP_STATUS_CREATED,
-                                    std::move(response_headers),
-                                    "{"
-                                    "  \"status\": \"pending\","
-                                    "  \"identifier\": {\"type\": \"dns\", \"value\": \"example.org\"},"
-                                    "  \"challenges\": ["
-                                    "    {"
-                                    "      \"type\": \"tls-sni-01\","
-                                    "      \"token\": \"example-token-tls-sni-01\","
-                                    "      \"uri\": \"http://xyz/example/tls-sni-01/uri\""
-                                    "    }"
-                                    "  ]"
-                                    "}");
-        } else if (strcmp(uri, "/example/tls-sni-01/uri") == 0) {
-            std::multimap<std::string, std::string> response_headers = {
-                {"content-type", "application/json"},
-            };
-
-            return GlueHttpResponse(HTTP_STATUS_ACCEPTED,
-                                    std::move(response_headers),
-                                    "{"
-                                    "  \"status\": \"valid\""
-                                    "}");
-        } else if (strcmp(uri, "/acme/new-cert") == 0) {
-            auto key = GenerateRsaKey();
-            auto cert = MakeSelfSignedDummyCert(*key, "example.com");
-
-            const SslBuffer cert_buffer(*cert);
-
-            auto response_body = ConstBuffer<char>::FromVoid(cert_buffer.get());
-            return GlueHttpResponse(HTTP_STATUS_CREATED, {},
-                                    std::string(response_body.data,
-                                                response_body.size));
-        } else
-            return GlueHttpResponse(HTTP_STATUS_NOT_FOUND, {},
-                                    "Not found");
-    }
-
-    auto response = glue_http_client.Request(event_loop,
-                                             method, (server + uri).c_str(),
-                                             body);
+    auto response = fake
+        ? FakeRequest(method, uri, body)
+        : glue_http_client.Request(event_loop,
+                                   method, (server + uri).c_str(),
+                                   body);
 
     auto new_nonce = response.headers.find("replay-nonce");
     if (new_nonce != response.headers.end())
