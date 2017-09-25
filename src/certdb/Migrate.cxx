@@ -81,8 +81,8 @@ CertDatabase::Migrate()
 
     if (!Pg::ColumnExists(conn, schema, "server_certificate",
                           "issuer_common_name"))
-        CheckError(conn.Execute("ALTER TABLE server_certificate "
-                                "ADD COLUMN issuer_common_name varchar(256) NULL"));
+        conn.ExecuteOrThrow("ALTER TABLE server_certificate "
+                            "ADD COLUMN issuer_common_name varchar(256) NULL");
 
     FillIssuerCommonName(conn);
 
@@ -90,12 +90,12 @@ CertDatabase::Migrate()
 
     if (!Pg::ColumnExists(conn, schema, "server_certificate",
                           "handle"))
-        CheckError(conn.Execute("ALTER TABLE server_certificate "
-                                "ADD COLUMN handle varchar(256) NULL"));
+        conn.ExecuteOrThrow("ALTER TABLE server_certificate "
+                            "ADD COLUMN handle varchar(256) NULL");
 
 
     if (!Pg::IndexExists(conn, schema, "server_certificate",
                          "server_certificate_handle"))
-        CheckError(conn.Execute("CREATE UNIQUE INDEX server_certificate_handle "
-                                "ON server_certificate(handle);"));
+        conn.ExecuteOrThrow("CREATE UNIQUE INDEX server_certificate_handle "
+                            "ON server_certificate(handle);");
 }
