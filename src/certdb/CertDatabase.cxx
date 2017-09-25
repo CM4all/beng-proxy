@@ -220,7 +220,7 @@ CertDatabase::LoadServerCertificate(const char *handle,
                                                      key_wrap_name));
     if (result.GetRowCount() > 0) {
         const char *id = result.GetValue(0, 0);
-        DeleteAltNames(id);
+        CheckError(DeleteAltNames(id));
         for (const auto &alt_name : alt_names)
             CheckError(InsertAltName(id, alt_name.c_str()));
         return false;
