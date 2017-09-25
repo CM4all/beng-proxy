@@ -690,8 +690,7 @@ Populate(const char *key_path, const char *suffix, unsigned n)
     if (n == 0) {
         Populate(db, key.get(), key_buffer.get(), suffix);
     } else {
-        if (!db.BeginSerializable())
-            throw "BEGIN failed";
+        db.BeginSerializable();
 
         for (unsigned i = 1; i <= n; ++i) {
             char buffer[256];
@@ -699,8 +698,7 @@ Populate(const char *key_path, const char *suffix, unsigned n)
             Populate(db, key.get(), key_buffer.get(), buffer);
         }
 
-        if (!db.Commit())
-            throw "COMMIT failed";
+        db.Commit();
     }
 
     db.NotifyModified();
