@@ -288,7 +288,9 @@ filter_cache_request_release(struct FilterCacheRequest *request)
 
     request->timeout_event.Cancel();
 
-    DeleteUnrefTrashPool(request->pool, request);
+    /* unref but don't trash the pool; it may still be in use by our
+       caller who may still be reading from the TeeIstream */
+    DeleteUnrefPool(request->pool, request);
 }
 
 /**

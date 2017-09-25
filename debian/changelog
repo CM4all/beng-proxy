@@ -1,6 +1,6 @@
 cm4all-beng-proxy (13.0.7) unstable; urgency=low
 
-  * 
+  * fcache: fix bogus memory leak test
 
  --   
 
