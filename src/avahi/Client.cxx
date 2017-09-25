@@ -154,6 +154,10 @@ MyAvahiClient::GroupCallback(AvahiEntryGroup *g, AvahiEntryGroupState state)
         break;
 
     case AVAHI_ENTRY_GROUP_COLLISION:
+        if (!visible_services)
+            /* meanwhile, HideServices() has been called */
+            return;
+
         /* pick a new name */
 
         {
@@ -189,6 +193,8 @@ MyAvahiClient::GroupCallback(AvahiEntryGroup *g,
 void
 MyAvahiClient::RegisterServices(AvahiClient *c)
 {
+    assert(visible_services);
+
     if (group == nullptr) {
         group = avahi_entry_group_new(c, GroupCallback, this);
         if (group == nullptr) {
@@ -228,7 +234,7 @@ MyAvahiClient::ClientCallback(AvahiClient *c, AvahiClientState state)
 
     switch (state) {
     case AVAHI_CLIENT_S_RUNNING:
-        if (!services.empty() && group == nullptr)
+        if (!services.empty() && group == nullptr && visible_services)
             RegisterServices(c);
 
         for (auto *l : listeners)
@@ -285,4 +291,32 @@ MyAvahiClient::OnReconnectTimer()
         reconnect_timer.Add(EventDuration<60, 0>::value);
         return;
     }
+}
+
+void
+MyAvahiClient::HideServices()
+{
+    if (!visible_services)
+        return;
+
+    visible_services = false;
+
+    if (group != nullptr) {
+        avahi_entry_group_free(group);
+        group = nullptr;
+    }
+}
+
+void
+MyAvahiClient::ShowServices()
+{
+    if (visible_services)
+        return;
+
+    visible_services = true;
+
+    if (services.empty() || client == nullptr || group != nullptr)
+        return;
+
+    RegisterServices(client);
 }

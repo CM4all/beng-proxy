@@ -303,6 +303,11 @@ LbControl::OnControlPacket(ControlServer &control_server,
         }
 
         break;
+
+    case CONTROL_DISABLE_ZEROCONF:
+    case CONTROL_ENABLE_ZEROCONF:
+        /* not applicable */
+        break;
     }
 }
 

@@ -154,6 +154,16 @@ BpInstance::OnControlPacket(ControlServer &control_server,
                clients */
             FadeChildren();
         break;
+
+    case CONTROL_DISABLE_ZEROCONF:
+        if (is_privileged)
+            avahi_client.HideServices();
+        break;
+
+    case CONTROL_ENABLE_ZEROCONF:
+        if (is_privileged)
+            avahi_client.ShowServices();
+        break;
     }
 }
 

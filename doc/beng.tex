@@ -2758,6 +2758,17 @@ given, then this is a tag which fades only child processes with the
 given \verb|CHILD_TAG|. \\
 
 \hline
+
+\verb|DISABLE_ZEROCONF| & Hide all registered Zeroconf services.  To
+reveal them again, use \verb|ENABLE_ZEROCONF|.  This is a privileged
+operation (only allowed through local socket by user root). \\
+
+\hline
+
+\verb|ENABLE_ZEROCONF| & Re-publish all registered Zeroconf services
+to undo the effect of \verb|DISABLE_ZEROCONF|. \\
+
+\hline
 \end{longtabu*}
 
 Only \verb|TCACHE_INVALIDATE|, \verb|STATS| and \verb|NODE_STATUS| are

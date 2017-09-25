@@ -107,6 +107,16 @@ enum beng_control_command {
      * child processes with the given CHILD_TAG.
      */
     CONTROL_FADE_CHILDREN = 8,
+
+    /**
+     * Unregister all Zeroconf services.
+     */
+    CONTROL_DISABLE_ZEROCONF = 9,
+
+    /**
+     * Re-register all Zeroconf services.
+     */
+    CONTROL_ENABLE_ZEROCONF = 10,
 };
 
 struct beng_control_stats {

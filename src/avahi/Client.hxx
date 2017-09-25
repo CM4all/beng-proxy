@@ -75,6 +75,12 @@ class MyAvahiClient final {
 
     std::forward_list<AvahiConnectionListener *> listeners;
 
+    /**
+     * Shall the published services be visible?  This is controlled by
+     * HideServices() and ShowServices().
+     */
+    bool visible_services = false;
+
 public:
     MyAvahiClient(EventLoop &event_loop, const char *_name);
     ~MyAvahiClient();
@@ -102,6 +108,17 @@ public:
                     const char *type, uint16_t port);
     void AddService(const char *type, const char *interface,
                     SocketAddress address);
+
+    /**
+     * Temporarily hide all registered services.  You can undo this
+     * with ShowServices().
+     */
+    void HideServices();
+
+    /**
+     * Undo HideServices().
+     */
+    void ShowServices();
 
 private:
     void GroupCallback(AvahiEntryGroup *g, AvahiEntryGroupState state);
