@@ -32,7 +32,6 @@
 
 #include "Control.hxx"
 #include "Instance.hxx"
-#include "bp_stats.hxx"
 #include "control_distribute.hxx"
 #include "control_server.hxx"
 #include "control_local.hxx"
@@ -94,8 +93,7 @@ query_stats(BpInstance *instance, ControlServer *server,
            exited already) */
         return;
 
-    struct beng_control_stats stats;
-    bp_get_stats(instance, &stats);
+    const struct beng_control_stats stats = instance->GetStats();
 
     try {
         server->Reply(address,

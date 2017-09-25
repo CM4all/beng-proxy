@@ -200,6 +200,9 @@ struct BpInstance final : PInstance, ControlHandler {
     void EnableListeners();
     void DisableListeners();
 
+    gcc_pure
+    struct beng_control_stats GetStats() const noexcept;
+
     /* virtual methods from class ControlHandler */
     void OnControlPacket(ControlServer &control_server,
                          enum beng_control_command command,
