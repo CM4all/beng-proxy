@@ -3,7 +3,7 @@ cm4all-beng-proxy (13.0.8) unstable; urgency=low
   * certdb: check for database commit errors
   * certdb: repeat after PostgreSQL serialization failure
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 26 Sep 2017 19:59:53 -0000
 
 cm4all-beng-proxy (13.0.7) unstable; urgency=low
 
