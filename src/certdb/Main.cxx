@@ -350,7 +350,8 @@ MakeCertRequest(EVP_PKEY &key, const char *common_name,
                                     -1, -1, 0))
         throw SslError("X509_NAME_add_entry_by_NID() failed");
 
-    AddDnsAltNames(*req, alt_hosts);
+    if (!alt_hosts.empty())
+        AddDnsAltNames(*req, alt_hosts);
 
     X509_REQ_set_pubkey(req.get(), &key);
 
