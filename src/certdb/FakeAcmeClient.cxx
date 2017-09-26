@@ -34,11 +34,12 @@
 #include "ssl/Buffer.hxx"
 #include "ssl/Dummy.hxx"
 #include "ssl/Key.hxx"
+#include "util/Exception.hxx"
 
 GlueHttpResponse
 AcmeClient::FakeRequest(http_method_t method, const char *uri,
                         ConstBuffer<void> body)
-{
+try {
     (void)method;
     (void)body;
 
@@ -83,4 +84,7 @@ AcmeClient::FakeRequest(http_method_t method, const char *uri,
     } else
         return GlueHttpResponse(HTTP_STATUS_NOT_FOUND, {},
                                 "Not found");
+} catch (...) {
+    return GlueHttpResponse(HTTP_STATUS_INTERNAL_SERVER_ERROR, {},
+                            GetFullMessage(std::current_exception()));
 }
