@@ -34,6 +34,7 @@
 #define CERT_DATABASE_HXX
 
 #include "pg/Connection.hxx"
+#include "pg/Transaction.hxx"
 #include "ssl/Unique.hxx"
 
 #include <string>
@@ -92,6 +93,11 @@ public:
     template<typename F>
     void DoSerializable(F &&f) {
         conn.DoSerializable(std::forward<F>(f));
+    }
+
+    template<typename F>
+    void DoSerializableRepeat(unsigned retries, F &&f) {
+        Pg::DoSerializableRepeat(conn, retries, std::forward<F>(f));
     }
 
     void Migrate();

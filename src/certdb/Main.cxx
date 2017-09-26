@@ -104,7 +104,7 @@ LoadCertificate(const char *handle,
     bool inserted;
     unsigned deleted;
 
-    db.DoSerializable([&](){
+    db.DoSerializableRepeat(8, [&](){
             inserted = db.LoadServerCertificate(handle,
                                                 *cert, *key, wrap_key.first,
                                                 wrap_key.second);
@@ -424,7 +424,7 @@ AcmeNewCert(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
     WrapKeyHelper wrap_key_helper;
     const auto wrap_key = wrap_key_helper.SetEncryptKey(*db_config);
 
-    db.DoSerializable([&](){
+    db.DoSerializableRepeat(8, [&](){
             db.LoadServerCertificate(handle, *cert, cert_key,
                                      wrap_key.first, wrap_key.second);
             db.DeleteAcmeInvalidAlt(*cert);
@@ -695,7 +695,7 @@ Populate(const char *key_path, const char *suffix, unsigned n)
     if (n == 0) {
         Populate(db, key.get(), key_buffer.get(), suffix);
     } else {
-        db.DoSerializable([&](){
+        db.DoSerializableRepeat(2, [&](){
                 for (unsigned i = 1; i <= n; ++i) {
                     char buffer[256];
                     snprintf(buffer, sizeof(buffer), "%u%s", i, suffix);
