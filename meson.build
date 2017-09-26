@@ -401,6 +401,7 @@ pg = static_library('pg',
   'libcommon/src/pg/Connection.cxx',
   'libcommon/src/pg/AsyncConnection.cxx',
   'libcommon/src/pg/Result.cxx',
+  'libcommon/src/pg/Error.cxx',
   'libcommon/src/pg/Reflection.cxx',
   include_directories: inc,
   dependencies: [
