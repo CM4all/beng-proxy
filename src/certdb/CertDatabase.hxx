@@ -89,12 +89,9 @@ public:
         return result.GetOnlyStringChecked();
     }
 
-    void BeginSerializable() {
-        conn.BeginSerializable();
-    }
-
-    void Commit() {
-        conn.Commit();
+    template<typename F>
+    void DoSerializable(F &&f) {
+        conn.DoSerializable(std::forward<F>(f));
     }
 
     void Migrate();

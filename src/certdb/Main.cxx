@@ -101,12 +101,15 @@ LoadCertificate(const char *handle,
 
     CertDatabase db(*db_config);
 
-    db.BeginSerializable();
-    bool inserted = db.LoadServerCertificate(handle,
-                                             *cert, *key, wrap_key.first,
-                                             wrap_key.second);
-    unsigned deleted = db.DeleteAcmeInvalidAlt(*cert);
-    db.Commit();
+    bool inserted;
+    unsigned deleted;
+
+    db.DoSerializable([&](){
+            inserted = db.LoadServerCertificate(handle,
+                                                *cert, *key, wrap_key.first,
+                                                wrap_key.second);
+            deleted = db.DeleteAcmeInvalidAlt(*cert);
+        });
 
     printf("%s: %s\n", inserted ? "insert" : "update", common_name.c_str());
     if (deleted > 0)
@@ -421,11 +424,11 @@ AcmeNewCert(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
     WrapKeyHelper wrap_key_helper;
     const auto wrap_key = wrap_key_helper.SetEncryptKey(*db_config);
 
-    db.BeginSerializable();
-    db.LoadServerCertificate(handle, *cert, cert_key,
-                             wrap_key.first, wrap_key.second);
-    db.DeleteAcmeInvalidAlt(*cert);
-    db.Commit();
+    db.DoSerializable([&](){
+            db.LoadServerCertificate(handle, *cert, cert_key,
+                                     wrap_key.first, wrap_key.second);
+            db.DeleteAcmeInvalidAlt(*cert);
+        });
 
     db.NotifyModified();
 }
@@ -692,15 +695,13 @@ Populate(const char *key_path, const char *suffix, unsigned n)
     if (n == 0) {
         Populate(db, key.get(), key_buffer.get(), suffix);
     } else {
-        db.BeginSerializable();
-
-        for (unsigned i = 1; i <= n; ++i) {
-            char buffer[256];
-            snprintf(buffer, sizeof(buffer), "%u%s", i, suffix);
-            Populate(db, key.get(), key_buffer.get(), buffer);
-        }
-
-        db.Commit();
+        db.DoSerializable([&](){
+                for (unsigned i = 1; i <= n; ++i) {
+                    char buffer[256];
+                    snprintf(buffer, sizeof(buffer), "%u%s", i, suffix);
+                    Populate(db, key.get(), key_buffer.get(), buffer);
+                }
+            });
     }
 
     db.NotifyModified();
