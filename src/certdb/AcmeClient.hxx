@@ -70,6 +70,10 @@ public:
     explicit AcmeClient(const AcmeConfig &config);
     ~AcmeClient();
 
+    bool IsFake() const {
+        return fake;
+    }
+
     struct Account {
         std::string location;
     };

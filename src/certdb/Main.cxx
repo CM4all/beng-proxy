@@ -400,7 +400,8 @@ AcmeNewAuthz(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
     /* wait until beng-lb's NameCache has been updated; 500ms is
        an arbitrary delay, somewhat bigger than NameCache's 200ms
        delay */
-    usleep(500000);
+    if (!client.IsFake())
+        usleep(500000);
 
     printf("Waiting for confirmation from ACME server\n");
     bool done = client.UpdateAuthz(key, response);
