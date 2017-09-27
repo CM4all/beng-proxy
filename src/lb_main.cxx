@@ -184,14 +184,14 @@ try {
     instance.InitAllControls();
     instance.InitAllListeners();
 
-    instance.balancer = new Balancer();
+    instance.balancer = new Balancer(instance.failure_manager);
     instance.tcp_stock = new TcpStock(instance.event_loop,
                                       cmdline.tcp_stock_limit);
-    instance.tcp_balancer = new TcpBalancer(*instance.tcp_stock);
+    instance.tcp_balancer = new TcpBalancer(*instance.tcp_stock,
+                                            instance.failure_manager);
 
     instance.pipe_stock = pipe_stock_new(instance.event_loop);
 
-    const ScopeFailureInit failure;
     bulldog_init(cmdline.bulldog_path);
 
     /* launch the access logger */

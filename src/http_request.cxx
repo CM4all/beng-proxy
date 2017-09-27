@@ -200,7 +200,8 @@ HttpRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
     assert(lease_state != LeaseState::NONE);
     assert(!response_sent);
 
-    failure_unset(tcp_stock_item_get_address(*stock_item), FAILURE_RESPONSE);
+    auto &fm = tcp_balancer.GetFailureManager();
+    fm.Unset(tcp_stock_item_get_address(*stock_item), FAILURE_RESPONSE);
 
     handler.InvokeResponse(status, std::move(_headers), _body);
     ResponseSent();
@@ -232,10 +233,12 @@ HttpRequest::OnHttpError(std::exception_ptr ep)
         --retries;
         BeginConnect();
     } else {
-        if (IsHttpClientServerFailure(ep))
-            failure_set(tcp_stock_item_get_address(*stock_item),
-                        FAILURE_RESPONSE,
-                        std::chrono::seconds(20));
+        if (IsHttpClientServerFailure(ep)) {
+            auto &fm = tcp_balancer.GetFailureManager();
+            fm.Set(tcp_stock_item_get_address(*stock_item),
+                   FAILURE_RESPONSE,
+                   std::chrono::seconds(20));
+        }
 
         Failed(ep);
     }

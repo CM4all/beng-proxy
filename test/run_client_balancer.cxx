@@ -52,6 +52,7 @@
 #include <string.h>
 
 struct Context final : PInstance, ConnectSocketHandler {
+    FailureManager failure_manager;
     Balancer balancer;
 
     enum {
@@ -62,6 +63,7 @@ struct Context final : PInstance, ConnectSocketHandler {
     std::exception_ptr error;
 
     Context()
+        :balancer(failure_manager)
     {
     }
 
@@ -100,8 +102,6 @@ try {
 
     LinearPool pool(ctx.root_pool, "test", 8192);
     AllocatorPtr alloc(pool);
-
-    const ScopeFailureInit failure;
 
     AddressList address_list;
 

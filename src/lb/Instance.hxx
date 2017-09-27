@@ -42,6 +42,7 @@
 #include "event/SignalEvent.hxx"
 #include "event/ShutdownListener.hxx"
 #include "avahi/Client.hxx"
+#include "net/FailureManager.hxx"
 #include "io/Logger.hxx"
 
 #include <forward_list>
@@ -93,6 +94,7 @@ struct LbInstance final : PInstance {
     SignalEvent sighup_event;
 
     /* stock */
+    FailureManager failure_manager;
     Balancer *balancer;
     TcpStock *tcp_stock;
     TcpBalancer *tcp_balancer;

@@ -41,6 +41,7 @@
 
 struct pool;
 class EventLoop;
+class FailureManager;
 class SocketAddress;
 struct LbMonitorConfig;
 struct LbMonitorClass;
@@ -48,6 +49,7 @@ class LbMonitorController;
 
 class LbMonitorController final : public LbMonitorHandler {
     EventLoop &event_loop;
+    FailureManager &failure_manager;
     struct pool &pool;
 
     const std::string name;
@@ -69,7 +71,9 @@ class LbMonitorController final : public LbMonitorHandler {
     bool fade = false;
 
 public:
-    LbMonitorController(EventLoop &_event_loop, struct pool &_pool, const char *_name,
+    LbMonitorController(EventLoop &_event_loop,
+                        FailureManager &_failure_manager,
+                        struct pool &_pool, const char *_name,
                         const LbMonitorConfig &_config,
                         SocketAddress _address,
                         const LbMonitorClass &_class);

@@ -32,113 +32,28 @@
 
 #include "FailureManager.hxx"
 #include "net/SocketAddress.hxx"
-#include "net/AllocatedSocketAddress.hxx"
 #include "util/djbhash.h"
 #include "util/DeleteDisposer.hxx"
-#include "util/Expiry.hxx"
-
-#include <boost/intrusive/unordered_set.hpp>
 
 #include <assert.h>
 
-struct Failure
-    : boost::intrusive::unordered_set_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
-
-    const AllocatedSocketAddress address;
-
-    Expiry expires;
-
-    Expiry fade_expires = Expiry::AlreadyExpired();
-
-    enum failure_status status;
-
-    Failure(SocketAddress _address, enum failure_status _status,
-            Expiry _expires) noexcept
-        :address(_address),
-         expires(_expires),
-         status(_status) {}
-
-    bool CanExpire() const noexcept {
-        return status != FAILURE_MONITOR;
-    }
-
-    gcc_pure
-    bool IsExpired() const noexcept {
-        return CanExpire() && expires.IsExpired();
-    }
-
-    gcc_pure
-    bool IsFade() const noexcept {
-        return !fade_expires.IsExpired();
-    }
-
-    enum failure_status GetStatus() const noexcept {
-        if (!IsExpired())
-            return status;
-        else if (IsFade())
-            return FAILURE_FADE;
-        else
-            return FAILURE_OK;
-    }
-
-    bool OverrideStatus(Expiry now, enum failure_status new_status,
-                        std::chrono::seconds duration) noexcept;
-
-    struct Hash {
-        gcc_pure
-        size_t operator()(const SocketAddress a) const noexcept {
-            assert(!a.IsNull());
-
-            return djb_hash(a.GetAddress(), a.GetSize());
-        }
-
-        gcc_pure
-        size_t operator()(const Failure &f) const noexcept {
-            return djb_hash(f.address.GetAddress(), f.address.GetSize());
-        }
-    };
-
-    struct Equal {
-        gcc_pure
-        bool operator()(const SocketAddress a,
-                        const SocketAddress b) const noexcept {
-            return a == b;
-        }
-
-        gcc_pure
-        bool operator()(const SocketAddress a,
-                        const Failure &b) const noexcept {
-            return a == b.address;
-        }
-    };
-};
-
-typedef boost::intrusive::unordered_set<Failure,
-                                        boost::intrusive::hash<Failure::Hash>,
-                                        boost::intrusive::equal<Failure::Equal>,
-                                        boost::intrusive::constant_time_size<false>> FailureSet;
-
-static constexpr size_t N_FAILURE_BUCKETS = 97;
-
-static FailureSet::bucket_type failure_buckets[N_FAILURE_BUCKETS];
-
-static FailureSet failures(FailureSet::bucket_traits(failure_buckets,
-                                                     N_FAILURE_BUCKETS));
-
-void
-failure_init() noexcept
+inline size_t
+FailureManager::Failure::Hash::operator()(const SocketAddress a) const noexcept
 {
+    assert(!a.IsNull());
+
+    return djb_hash(a.GetAddress(), a.GetSize());
 }
 
-void
-failure_deinit() noexcept
+FailureManager::~FailureManager() noexcept
 {
     failures.clear_and_dispose(DeleteDisposer());
 }
 
 bool
-Failure::OverrideStatus(Expiry now, enum failure_status new_status,
-                        std::chrono::seconds duration) noexcept
+FailureManager::Failure::OverrideStatus(Expiry now,
+                                        enum failure_status new_status,
+                                        std::chrono::seconds duration) noexcept
 {
     if (IsExpired()) {
         /* expired: override in any case */
@@ -162,8 +77,8 @@ Failure::OverrideStatus(Expiry now, enum failure_status new_status,
 }
 
 void
-failure_set(SocketAddress address,
-            enum failure_status status, std::chrono::seconds duration) noexcept
+FailureManager::Set(SocketAddress address, enum failure_status status,
+                    std::chrono::seconds duration) noexcept
 {
     assert(!address.IsNull());
     assert(status > FAILURE_OK);
@@ -184,9 +99,9 @@ failure_set(SocketAddress address,
 }
 
 void
-failure_add(SocketAddress address) noexcept
+FailureManager::Add(SocketAddress address) noexcept
 {
-    failure_set(address, FAILURE_FAILED, std::chrono::seconds(20));
+    Set(address, FAILURE_FAILED, std::chrono::seconds(20));
 }
 
 static constexpr bool
@@ -196,8 +111,8 @@ match_status(enum failure_status current, enum failure_status match) noexcept
     return match == FAILURE_OK || current == match;
 }
 
-static void
-failure_unset2(Failure &failure, enum failure_status status) noexcept
+inline void
+FailureManager::Unset(Failure &failure, enum failure_status status) noexcept
 {
     if (status == FAILURE_FADE)
         failure.fade_expires = Expiry::AlreadyExpired();
@@ -218,17 +133,18 @@ failure_unset2(Failure &failure, enum failure_status status) noexcept
 }
 
 void
-failure_unset(SocketAddress address, enum failure_status status) noexcept
+FailureManager::Unset(SocketAddress address,
+                      enum failure_status status) noexcept
 {
     assert(!address.IsNull());
 
     auto i = failures.find(address, Failure::Hash(), Failure::Equal());
     if (i != failures.end())
-        failure_unset2(*i, status);
+        Unset(*i, status);
 }
 
 enum failure_status
-failure_get_status(SocketAddress address) noexcept
+FailureManager::Get(SocketAddress address) noexcept
 {
     assert(!address.IsNull());
 

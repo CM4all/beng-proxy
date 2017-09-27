@@ -45,6 +45,7 @@
 #include "system/SetupProcess.hxx"
 #include "net/AddressInfo.hxx"
 #include "net/Resolver.hxx"
+#include "net/FailureManager.hxx"
 #include "util/Cancellable.hxx"
 #include "util/PrintException.hxx"
 
@@ -93,8 +94,9 @@ try {
     const auto address_info = Resolve(argv[1], 11211, &hints);
     const AddressList address_list(ShallowCopy(), address_info);
 
+    FailureManager failure_manager;
     TcpStock tcp_stock(instance.event_loop, 0);
-    TcpBalancer tcp_balancer(tcp_stock);
+    TcpBalancer tcp_balancer(tcp_stock, failure_manager);
     auto *stock = memcached_stock_new(instance.event_loop, tcp_balancer,
                                       address_list);
 

@@ -312,7 +312,8 @@ try {
 
     instance.tcp_stock = new TcpStock(instance.event_loop,
                                       instance.config.tcp_stock_limit);
-    instance.tcp_balancer = new TcpBalancer(*instance.tcp_stock);
+    instance.tcp_balancer = new TcpBalancer(*instance.tcp_stock,
+                                            instance.failure_manager);
 
     const AddressList memcached_server(ShallowCopy(),
                                        instance.config.memcached_server);
@@ -389,7 +390,6 @@ try {
     } else
         instance.filter_resource_loader = instance.direct_resource_loader;
 
-    const ScopeFailureInit failure;
     bulldog_init(instance.config.bulldog_path);
 
     global_translate_cache = instance.translate_cache;

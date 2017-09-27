@@ -43,6 +43,7 @@ struct LbNodeConfig;
 struct LbMonitorConfig;
 class LbMonitorController;
 class EventLoop;
+class FailureManager;
 
 /**
  * Map of monitors.
@@ -70,7 +71,8 @@ public:
     void Enable();
 
     void Add(const LbNodeConfig &node, unsigned port,
-             const LbMonitorConfig &config, EventLoop &event_loop);
+             const LbMonitorConfig &config, EventLoop &event_loop,
+             FailureManager &failure_manager);
 
     void Clear();
 };

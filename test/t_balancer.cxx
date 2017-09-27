@@ -49,6 +49,9 @@ class MyBalancer {
     Balancer balancer;
 
 public:
+    explicit MyBalancer(FailureManager &failure_manager)
+        :balancer(failure_manager) {}
+
     operator Balancer *() {
         return &balancer;
     }
@@ -84,90 +87,89 @@ public:
 
 gcc_pure
 static enum failure_status
-FailureGet(const char *host_and_port)
+FailureGet(FailureManager &fm, const char *host_and_port)
 {
-    return failure_get_status(Resolve(host_and_port, 80, nullptr).front());
+    return fm.Get(Resolve(host_and_port, 80, nullptr).front());
 }
 
 static void
-FailureAdd(const char *host_and_port,
+FailureAdd(FailureManager &fm, const char *host_and_port,
            enum failure_status status=FAILURE_FAILED,
            std::chrono::seconds duration=std::chrono::hours(1))
 {
-    failure_set(Resolve(host_and_port, 80, nullptr).front(),
-                status, duration);
+    fm.Set(Resolve(host_and_port, 80, nullptr).front(),
+           status, duration);
 }
 
 static void
-FailureRemove(const char *host_and_port,
+FailureRemove(FailureManager &fm, const char *host_and_port,
               enum failure_status status=FAILURE_FAILED)
 {
-    failure_unset(Resolve(host_and_port, 80, nullptr).front(),
-                status);
+    fm.Unset(Resolve(host_and_port, 80, nullptr).front(), status);
 }
 
 TEST(BalancerTest, Failure)
 {
-    const ScopeFailureInit failure;
+    FailureManager fm;
 
-    ASSERT_EQ(FailureGet("192.168.0.1"), FAILURE_OK);
-    ASSERT_EQ(FailureGet("192.168.0.2"), FAILURE_OK);
+    ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FAILURE_OK);
+    ASSERT_EQ(FailureGet(fm, "192.168.0.2"), FAILURE_OK);
 
-    FailureAdd("192.168.0.1");
-    ASSERT_EQ(FailureGet("192.168.0.1"), FAILURE_FAILED);
-    ASSERT_EQ(FailureGet("192.168.0.2"), FAILURE_OK);
+    FailureAdd(fm, "192.168.0.1");
+    ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FAILURE_FAILED);
+    ASSERT_EQ(FailureGet(fm, "192.168.0.2"), FAILURE_OK);
 
-    FailureRemove("192.168.0.1");
-    ASSERT_EQ(FailureGet("192.168.0.1"), FAILURE_OK);
-    ASSERT_EQ(FailureGet("192.168.0.2"), FAILURE_OK);
+    FailureRemove(fm, "192.168.0.1");
+    ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FAILURE_OK);
+    ASSERT_EQ(FailureGet(fm, "192.168.0.2"), FAILURE_OK);
 
     /* remove status mismatch */
 
-    FailureAdd("192.168.0.1", FAILURE_RESPONSE);
-    ASSERT_EQ(FailureGet("192.168.0.1"), FAILURE_RESPONSE);
-    FailureRemove("192.168.0.1", FAILURE_FAILED);
-    ASSERT_EQ(FailureGet("192.168.0.1"), FAILURE_RESPONSE);
-    FailureRemove("192.168.0.1", FAILURE_RESPONSE);
-    ASSERT_EQ(FailureGet("192.168.0.1"), FAILURE_OK);
+    FailureAdd(fm, "192.168.0.1", FAILURE_RESPONSE);
+    ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FAILURE_RESPONSE);
+    FailureRemove(fm, "192.168.0.1", FAILURE_FAILED);
+    ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FAILURE_RESPONSE);
+    FailureRemove(fm, "192.168.0.1", FAILURE_RESPONSE);
+    ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FAILURE_OK);
 
     /* "fade", then "failed", remove "failed", and the old "fade"
        should remain */
 
-    FailureAdd("192.168.0.1", FAILURE_FADE);
-    ASSERT_EQ(FailureGet("192.168.0.1"), FAILURE_FADE);
-    FailureRemove("192.168.0.1");
-    ASSERT_EQ(FailureGet("192.168.0.1"), FAILURE_FADE);
-    FailureAdd("192.168.0.1");
-    ASSERT_EQ(FailureGet("192.168.0.1"), FAILURE_FAILED);
-    FailureRemove("192.168.0.1");
-    ASSERT_EQ(FailureGet("192.168.0.1"), FAILURE_FADE);
-    FailureRemove("192.168.0.1", FAILURE_OK);
-    ASSERT_EQ(FailureGet("192.168.0.1"), FAILURE_OK);
+    FailureAdd(fm, "192.168.0.1", FAILURE_FADE);
+    ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FAILURE_FADE);
+    FailureRemove(fm, "192.168.0.1");
+    ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FAILURE_FADE);
+    FailureAdd(fm, "192.168.0.1");
+    ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FAILURE_FAILED);
+    FailureRemove(fm, "192.168.0.1");
+    ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FAILURE_FADE);
+    FailureRemove(fm, "192.168.0.1", FAILURE_OK);
+    ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FAILURE_OK);
 
     /* first "fail", then "fade"; see if removing the "fade"
        before" failed" will not bring it back */
 
-    FailureAdd("192.168.0.1", FAILURE_FAILED);
-    ASSERT_EQ(FailureGet("192.168.0.1"), FAILURE_FAILED);
-    FailureAdd("192.168.0.1", FAILURE_FADE);
-    ASSERT_EQ(FailureGet("192.168.0.1"), FAILURE_FAILED);
-    FailureRemove("192.168.0.1", FAILURE_FAILED);
-    ASSERT_EQ(FailureGet("192.168.0.1"), FAILURE_FADE);
-    FailureAdd("192.168.0.1", FAILURE_FAILED);
-    ASSERT_EQ(FailureGet("192.168.0.1"), FAILURE_FAILED);
-    FailureRemove("192.168.0.1", FAILURE_FADE);
-    ASSERT_EQ(FailureGet("192.168.0.1"), FAILURE_FAILED);
-    FailureRemove("192.168.0.1", FAILURE_FAILED);
-    ASSERT_EQ(FailureGet("192.168.0.1"), FAILURE_OK);
+    FailureAdd(fm, "192.168.0.1", FAILURE_FAILED);
+    ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FAILURE_FAILED);
+    FailureAdd(fm, "192.168.0.1", FAILURE_FADE);
+    ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FAILURE_FAILED);
+    FailureRemove(fm, "192.168.0.1", FAILURE_FAILED);
+    ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FAILURE_FADE);
+    FailureAdd(fm, "192.168.0.1", FAILURE_FAILED);
+    ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FAILURE_FAILED);
+    FailureRemove(fm, "192.168.0.1", FAILURE_FADE);
+    ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FAILURE_FAILED);
+    FailureRemove(fm, "192.168.0.1", FAILURE_FAILED);
+    ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FAILURE_OK);
 }
 
 TEST(BalancerTest, Basic)
 {
-    const ScopeFailureInit failure;
+    FailureManager fm;
     TestPool pool;
 
     EventLoop event_loop;
-    MyBalancer balancer;
+    MyBalancer balancer(fm);
 
     AddressListBuilder al(pool);
     al.Add("192.168.0.1");
@@ -211,9 +213,9 @@ TEST(BalancerTest, Basic)
 
 TEST(BalancerTest, Failed)
 {
-    const ScopeFailureInit failure;
+    FailureManager fm;
     EventLoop event_loop;
-    MyBalancer balancer;
+    MyBalancer balancer(fm);
 
     TestPool pool;
     AddressListBuilder al(pool);
@@ -221,7 +223,7 @@ TEST(BalancerTest, Failed)
     al.Add("192.168.0.2");
     al.Add("192.168.0.3");
 
-    FailureAdd("192.168.0.2");
+    FailureAdd(fm, "192.168.0.2");
 
     SocketAddress result = balancer.Get(al);
     ASSERT_EQ(al.Find(result), 0);
@@ -235,9 +237,9 @@ TEST(BalancerTest, Failed)
 
 TEST(BalancerTest, StickyFailover)
 {
-    const ScopeFailureInit failure;
+    FailureManager fm;
     EventLoop event_loop;
-    MyBalancer balancer;
+    MyBalancer balancer(fm);
 
     TestPool pool;
     AddressListBuilder al(pool, StickyMode::FAILOVER);
@@ -261,7 +263,7 @@ TEST(BalancerTest, StickyFailover)
 
     /* .. even if the second node fails */
 
-    FailureAdd("192.168.0.2");
+    FailureAdd(fm, "192.168.0.2");
 
     result = balancer.Get(al);
     ASSERT_NE(result, nullptr);
@@ -277,7 +279,7 @@ TEST(BalancerTest, StickyFailover)
 
     /* use third node when both first and second fail */
 
-    FailureAdd("192.168.0.1");
+    FailureAdd(fm, "192.168.0.1");
 
     result = balancer.Get(al);
     ASSERT_NE(result, nullptr);
@@ -293,7 +295,7 @@ TEST(BalancerTest, StickyFailover)
 
     /* use second node when first node fails */
 
-    FailureRemove("192.168.0.2");
+    FailureRemove(fm, "192.168.0.2");
 
     result = balancer.Get(al);
     ASSERT_NE(result, nullptr);
@@ -309,7 +311,7 @@ TEST(BalancerTest, StickyFailover)
 
     /* back to first node as soon as it recovers */
 
-    FailureRemove("192.168.0.1");
+    FailureRemove(fm, "192.168.0.1");
 
     result = balancer.Get(al);
     ASSERT_NE(result, nullptr);
@@ -326,9 +328,9 @@ TEST(BalancerTest, StickyFailover)
 
 TEST(BalancerTest, StickyCookie)
 {
-    const ScopeFailureInit failure;
+    FailureManager fm;
     EventLoop event_loop;
-    MyBalancer balancer;
+    MyBalancer balancer(fm);
 
     TestPool pool;
     AddressListBuilder al(pool, StickyMode::COOKIE);
@@ -394,7 +396,7 @@ TEST(BalancerTest, StickyCookie)
 
     /* failed */
 
-    FailureAdd("192.168.0.2");
+    FailureAdd(fm, "192.168.0.2");
 
     result = balancer.Get(al);
     ASSERT_NE(result, nullptr);
@@ -410,7 +412,7 @@ TEST(BalancerTest, StickyCookie)
 
     /* fade */
 
-    FailureAdd("192.168.0.1", FAILURE_FADE);
+    FailureAdd(fm, "192.168.0.1", FAILURE_FADE);
 
     result = balancer.Get(al);
     ASSERT_NE(result, nullptr);

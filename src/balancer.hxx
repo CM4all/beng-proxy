@@ -42,6 +42,7 @@
 
 struct AddressList;
 class SocketAddress;
+class FailureManager;
 
 class Balancer {
     struct Item final {
@@ -49,13 +50,23 @@ class Balancer {
         unsigned next = 0;
 
         const SocketAddress &NextAddress(const AddressList &addresses);
-        const SocketAddress &NextAddressChecked(const AddressList &addresses,
+        const SocketAddress &NextAddressChecked(FailureManager &failure_manager,
+                                                const AddressList &addresses,
                                                 bool allow_fade);
     };
+
+    FailureManager &failure_manager;
 
     Cache<std::string, Item, 2048, 1021> cache;
 
 public:
+    explicit Balancer(FailureManager &_failure_manager)
+        :failure_manager(_failure_manager) {}
+
+    FailureManager &GetFailureManager() {
+        return failure_manager;
+    }
+
     /**
      * Gets the next socket address to connect to.  These are selected
      * in a round-robin fashion, which results in symmetric

@@ -107,7 +107,7 @@ LbControl::EnableNode(const char *payload, size_t length)
     ToString(buffer, sizeof(buffer), with_port);
     logger(4, "enabling node ", node_name, " (", buffer, ")");
 
-    failure_unset(with_port, FAILURE_OK);
+    instance.failure_manager.Unset(with_port, FAILURE_OK);
 }
 
 inline void
@@ -145,8 +145,8 @@ LbControl::FadeNode(const char *payload, size_t length)
     logger(4, "fading node ", node_name, " (", buffer, ")");
 
     /* set status "FADE" for 3 hours */
-    failure_set(with_port, FAILURE_FADE,
-                std::chrono::hours(3));
+    instance.failure_manager.Set(with_port, FAILURE_FADE,
+                                 std::chrono::hours(3));
 }
 
 gcc_const
@@ -232,7 +232,7 @@ try {
     char buffer[64];
     ToString(buffer, sizeof(buffer), with_port);
 
-    enum failure_status status = failure_get_status(with_port);
+    enum failure_status status = instance.failure_manager.Get(with_port);
     const char *s = failure_status_to_string(status);
 
     node_status_response(&control_server, address,

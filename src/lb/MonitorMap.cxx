@@ -86,7 +86,8 @@ LbMonitorMap::Enable()
 
 void
 LbMonitorMap::Add(const LbNodeConfig &node, unsigned port,
-                  const LbMonitorConfig &config, EventLoop &event_loop)
+                  const LbMonitorConfig &config, EventLoop &event_loop,
+                  FailureManager &failure_manager)
 {
     const LbMonitorClass *class_ = nullptr;
     switch (config.type) {
@@ -121,7 +122,8 @@ LbMonitorMap::Add(const LbNodeConfig &node, unsigned port,
         if (port > 0)
             address.SetPort(port);
 
-        r.first->second = std::make_unique<LbMonitorController>(event_loop, *_pool, key.ToString(*_pool), config,
+        r.first->second = std::make_unique<LbMonitorController>(event_loop, failure_manager,
+                                                                *_pool, key.ToString(*_pool), config,
                                                                 SocketAddress(address,
                                                                               node.address.GetSize()),
                                                                 *class_);

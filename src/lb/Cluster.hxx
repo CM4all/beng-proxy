@@ -49,12 +49,14 @@ struct LbConfig;
 struct LbGotoIfConfig;
 struct LbListenerConfig;
 struct LbClusterConfig;
+class FailureManager;
 class MyAvahiClient;
 class StickyCache;
 class AvahiServiceExplorer;
 
 class LbCluster final : AvahiServiceExplorerListener {
     const LbClusterConfig &config;
+    FailureManager &failure_manager;
 
     const Logger logger;
 
@@ -102,7 +104,7 @@ class LbCluster final : AvahiServiceExplorerListener {
     unsigned last_pick = 0;
 
 public:
-    LbCluster(const LbClusterConfig &_config,
+    LbCluster(const LbClusterConfig &_config, FailureManager &_failure_manager,
               MyAvahiClient &avahi_client);
     ~LbCluster();
 

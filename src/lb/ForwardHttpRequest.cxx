@@ -125,6 +125,10 @@ public:
             retries = CalculateRetries(cluster.GetZeroconfCount());
     }
 
+    FailureManager &GetFailureManager() {
+        return balancer.GetFailureManager();
+    }
+
     void Start();
 
 private:
@@ -255,7 +259,7 @@ LbRequest::GetXHostHash() const
  * failure.
  */
 static unsigned
-generate_cookie(const AddressList *list)
+generate_cookie(FailureManager &failure_manager, const AddressList *list)
 {
     assert(list->GetSize() >= 2);
 
@@ -265,7 +269,7 @@ generate_cookie(const AddressList *list)
     do {
         assert(i >= 1 && i <= list->GetSize());
         const SocketAddress address = list->addresses[i % list->GetSize()];
-        if (failure_get_status(address) == FAILURE_OK &&
+        if (failure_manager.Get(address) == FAILURE_OK &&
             bulldog_check(address) && !bulldog_is_fading(address))
             return i;
 
@@ -281,7 +285,8 @@ LbRequest::MakeCookieHash()
 {
     unsigned hash = lb_cookie_get(request.headers);
     if (hash == 0)
-        new_cookie = hash = generate_cookie(&cluster_config.address_list);
+        new_cookie = hash = generate_cookie(GetFailureManager(),
+                                            &cluster_config.address_list);
 
     return hash;
 }
@@ -339,7 +344,8 @@ LbRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
     assert(lease_state != LeaseState::NONE);
     assert(!response_sent);
 
-    failure_unset(tcp_stock_item_get_address(*stock_item), FAILURE_RESPONSE);
+    GetFailureManager().Unset(tcp_stock_item_get_address(*stock_item),
+                              FAILURE_RESPONSE);
 
     HttpHeaders headers(std::move(_headers));
 
@@ -370,7 +376,7 @@ LbRequest::OnHttpError(std::exception_ptr ep)
     assert(!response_sent);
 
     if (IsHttpClientServerFailure(ep))
-        failure_add(tcp_stock_item_get_address(*stock_item));
+        GetFailureManager().Add(tcp_stock_item_get_address(*stock_item));
 
     connection.logger(2, ep);
 
@@ -394,7 +400,7 @@ LbRequest::OnStockItemReady(StockItem &item)
     if (cluster_config.HasZeroConf())
         /* without the tcp_balancer, we have to roll our own failure
            updates */
-        failure_unset(current_address, FAILURE_FAILED);
+        GetFailureManager().Unset(current_address, FAILURE_FAILED);
 
     stock_item = &item;
     lease_state = LeaseState::BUSY;
@@ -439,7 +445,7 @@ LbRequest::OnStockItemError(std::exception_ptr ep)
     if (cluster_config.HasZeroConf()) {
         /* without the tcp_balancer, we have to roll our own failure
            updates and retries */
-        failure_add(current_address);
+        GetFailureManager().Add(current_address);
 
         if (retries-- > 0) {
             /* try the next Zeroconf member */

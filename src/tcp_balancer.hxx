@@ -59,8 +59,12 @@ public:
     /**
      * @param tcp_stock the underlying #TcpStock object
      */
-    explicit TcpBalancer(TcpStock &_tcp_stock)
-        :tcp_stock(_tcp_stock) {}
+    TcpBalancer(TcpStock &_tcp_stock, FailureManager &failure_manager)
+        :tcp_stock(_tcp_stock), balancer(failure_manager) {}
+
+    FailureManager &GetFailureManager() {
+        return balancer.GetFailureManager();
+    }
 
     /**
      * @param session_sticky a portion of the session id that is used to

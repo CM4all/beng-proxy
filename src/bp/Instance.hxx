@@ -45,6 +45,7 @@
 #include "spawn/Registry.hxx"
 #include "control_handler.hxx"
 #include "avahi/Client.hxx"
+#include "net/FailureManager.hxx"
 #include "util/Background.hxx"
 
 #include <boost/intrusive/list.hpp>
@@ -130,6 +131,7 @@ struct BpInstance final : PInstance, ControlHandler {
     MyAvahiClient avahi_client;
 
     /* stock */
+    FailureManager failure_manager;
     TranslateStock *translate_stock = nullptr;
     struct tcache *translate_cache = nullptr;
     TcpStock *tcp_stock = nullptr;

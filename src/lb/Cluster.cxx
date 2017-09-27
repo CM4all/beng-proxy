@@ -66,8 +66,9 @@ LbCluster::Member::GetLogName(const char *key) const noexcept
 }
 
 LbCluster::LbCluster(const LbClusterConfig &_config,
+                     FailureManager &_failure_manager,
                      MyAvahiClient &avahi_client)
-    :config(_config),
+    :config(_config), failure_manager(_failure_manager),
      logger("cluster " + config.name)
 {
     if (config.HasZeroConf())
@@ -108,7 +109,7 @@ LbCluster::PickNextGoodZeroconf()
     while (true) {
         const auto &m = PickNextZeroconf();
         if (--remaining == 0 ||
-            failure_get_status(m.second.GetAddress()) == FAILURE_OK)
+            failure_manager.Get(m.second.GetAddress()) == FAILURE_OK)
             return m;
     }
 }
@@ -139,7 +140,7 @@ LbCluster::Pick(sticky_hash_t sticky_hash)
             auto i = members.find(*cached);
             if (i != members.end() &&
                 // TODO: allow FAILURE_FADE here?
-                failure_get_status(i->second.GetAddress()) == FAILURE_OK)
+                failure_manager.Get(i->second.GetAddress()) == FAILURE_OK)
                 /* the node is active, we can use it */
                 return std::make_pair(i->second.GetLogName(i->first.c_str()),
                                       i->second.GetAddress());
@@ -160,7 +161,7 @@ LbCluster::Pick(sticky_hash_t sticky_hash)
         unsigned retries = active_members.size();
         while (true) {
             if (--retries == 0 ||
-                failure_get_status(i->second.GetAddress()) == FAILURE_OK)
+                failure_manager.Get(i->second.GetAddress()) == FAILURE_OK)
                 return std::make_pair(i->second.GetLogName(i->first.c_str()),
                                       i->second.GetAddress());
 
@@ -267,7 +268,7 @@ LbCluster::OnAvahiRemoveObject(const std::string &key)
 
     /* purge this entry from the "failure" map, because it
        will never be used again anyway */
-    failure_unset(i->second.GetAddress(), FAILURE_OK);
+    failure_manager.Unset(i->second.GetAddress(), FAILURE_OK);
 
     members.erase(i);
     dirty = true;

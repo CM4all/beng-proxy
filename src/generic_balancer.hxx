@@ -121,11 +121,11 @@ struct BalancerRequest : R {
     }
 
     void Success() {
-        failure_unset(current_address, FAILURE_FAILED);
+        balancer.GetFailureManager().Unset(current_address, FAILURE_FAILED);
     }
 
     bool Failure() {
-        failure_add(current_address);
+        balancer.GetFailureManager().Add(current_address);
 
         if (retries-- > 0){
             /* try again, next address */

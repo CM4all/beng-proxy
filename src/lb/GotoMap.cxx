@@ -87,7 +87,8 @@ LbGotoMap::GetInstance(const LbClusterConfig &config)
 {
     return clusters.emplace(std::piecewise_construct,
                             std::forward_as_tuple(&config),
-                            std::forward_as_tuple(config, avahi_client))
+                            std::forward_as_tuple(config, failure_manager,
+                                                  avahi_client))
         .first->second;
 }
 
