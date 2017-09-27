@@ -95,7 +95,7 @@ void
 ClientBalancerRequest::OnSocketConnectSuccess(UniqueSocketDescriptor &&fd)
 {
     auto &base = BalancerRequest<ClientBalancerRequest>::Cast(*this);
-    base.Success();
+    base.ConnectSuccess();
 
     handler.OnSocketConnectSuccess(std::move(fd));
 }
@@ -104,7 +104,7 @@ void
 ClientBalancerRequest::OnSocketConnectTimeout()
 {
     auto &base = BalancerRequest<ClientBalancerRequest>::Cast(*this);
-    if (!base.Failure())
+    if (!base.ConnectFailure())
         handler.OnSocketConnectTimeout();
 }
 
@@ -112,7 +112,7 @@ void
 ClientBalancerRequest::OnSocketConnectError(std::exception_ptr ep)
 {
     auto &base = BalancerRequest<ClientBalancerRequest>::Cast(*this);
-    if (!base.Failure())
+    if (!base.ConnectFailure())
         handler.OnSocketConnectError(ep);
 }
 

@@ -87,7 +87,7 @@ void
 TcpBalancerRequest::OnStockItemReady(StockItem &item)
 {
     auto &base = BalancerRequest<TcpBalancerRequest>::Cast(*this);
-    base.Success();
+    base.ConnectSuccess();
 
     handler.OnStockItemReady(item);
 }
@@ -96,7 +96,7 @@ void
 TcpBalancerRequest::OnStockItemError(std::exception_ptr ep)
 {
     auto &base = BalancerRequest<TcpBalancerRequest>::Cast(*this);
-    if (!base.Failure())
+    if (!base.ConnectFailure())
         handler.OnStockItemError(ep);
 }
 

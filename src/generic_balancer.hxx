@@ -120,11 +120,11 @@ struct BalancerRequest : R {
         R::Send(pool, current_address, cancel_ptr);
     }
 
-    void Success() {
+    void ConnectSuccess() {
         balancer.GetFailureManager().Unset(current_address, FAILURE_FAILED);
     }
 
-    bool Failure() {
+    bool ConnectFailure() {
         balancer.GetFailureManager().Add(current_address);
 
         if (retries-- > 0){
