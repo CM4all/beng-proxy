@@ -33,7 +33,7 @@
 #include "balancer.hxx"
 #include "address_list.hxx"
 #include "net/SocketAddress.hxx"
-#include "failure.hxx"
+#include "net/FailureManager.hxx"
 #include "bulldog.hxx"
 
 #include <string>

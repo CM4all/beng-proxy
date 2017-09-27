@@ -41,12 +41,12 @@
 #include "stock/GetHandler.hxx"
 #include "stock/Item.hxx"
 #include "lease.hxx"
-#include "failure.hxx"
 #include "istream/istream.hxx"
 #include "istream/UnusedHoldPtr.hxx"
 #include "filtered_socket.hxx"
 #include "pool.hxx"
 #include "net/SocketAddress.hxx"
+#include "net/FailureManager.hxx"
 #include "util/Cancellable.hxx"
 #include "util/Exception.hxx"
 

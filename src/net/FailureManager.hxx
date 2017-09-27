@@ -34,8 +34,8 @@
  * Remember which servers (socket addresses) failed recently.
  */
 
-#ifndef BENG_PROXY_FAILURE_HXX
-#define BENG_PROXY_FAILURE_HXX
+#ifndef FAILURE_MANAGER_HXX
+#define FAILURE_MANAGER_HXX
 
 #include "util/Compiler.h"
 

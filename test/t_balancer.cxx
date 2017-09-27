@@ -31,13 +31,13 @@
  */
 
 #include "TestPool.hxx"
-#include "failure.hxx"
 #include "balancer.hxx"
 #include "AllocatorPtr.hxx"
 #include "address_list.hxx"
 #include "event/Loop.hxx"
 #include "net/Resolver.hxx"
 #include "net/AddressInfo.hxx"
+#include "net/FailureManager.hxx"
 #include "util/Compiler.h"
 
 #include <gtest/gtest.h>

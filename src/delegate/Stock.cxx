@@ -34,7 +34,6 @@
 #include "stock/MapStock.hxx"
 #include "stock/Class.hxx"
 #include "stock/Item.hxx"
-#include "failure.hxx"
 #include "system/Error.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "event/SocketEvent.hxx"

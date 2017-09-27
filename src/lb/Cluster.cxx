@@ -34,7 +34,7 @@
 #include "ClusterConfig.hxx"
 #include "avahi/Explorer.hxx"
 #include "StickyCache.hxx"
-#include "failure.hxx"
+#include "net/FailureManager.hxx"
 #include "net/ToString.hxx"
 #include "util/HashRing.hxx"
 #include "util/ConstBuffer.hxx"

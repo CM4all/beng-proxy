@@ -33,7 +33,7 @@
 #include "MonitorController.hxx"
 #include "MonitorConfig.hxx"
 #include "pool.hxx"
-#include "failure.hxx"
+#include "net/FailureManager.hxx"
 
 void
 LbMonitorController::Success()

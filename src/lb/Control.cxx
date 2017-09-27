@@ -34,11 +34,11 @@
 #include "Instance.hxx"
 #include "Config.hxx"
 #include "control_server.hxx"
-#include "failure.hxx"
 #include "tpool.hxx"
 #include "pool.hxx"
 #include "translation/InvalidateParser.hxx"
 #include "net/ToString.hxx"
+#include "net/FailureManager.hxx"
 #include "util/Exception.hxx"
 
 #include <string.h>

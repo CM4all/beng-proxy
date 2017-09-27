@@ -30,7 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "failure.hxx"
+#include "FailureManager.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/AllocatedSocketAddress.hxx"
 #include "util/djbhash.h"
