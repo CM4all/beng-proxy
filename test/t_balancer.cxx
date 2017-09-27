@@ -125,11 +125,11 @@ TEST(BalancerTest, Failure)
 
     /* remove status mismatch */
 
-    FailureAdd(fm, "192.168.0.1", FAILURE_RESPONSE);
-    ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FAILURE_RESPONSE);
+    FailureAdd(fm, "192.168.0.1", FAILURE_PROTOCOL);
+    ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FAILURE_PROTOCOL);
     FailureRemove(fm, "192.168.0.1", FAILURE_CONNECT);
-    ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FAILURE_RESPONSE);
-    FailureRemove(fm, "192.168.0.1", FAILURE_RESPONSE);
+    ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FAILURE_PROTOCOL);
+    FailureRemove(fm, "192.168.0.1", FAILURE_PROTOCOL);
     ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FAILURE_OK);
 
     /* "fade", then "failed", remove "failed", and the old "fade"

@@ -53,9 +53,9 @@ enum failure_status {
     FAILURE_FADE,
 
     /**
-     * The response received from the server indicates a server error.
+     * A server-side protocol-level failure.
      */
-    FAILURE_RESPONSE,
+    FAILURE_PROTOCOL,
 
     /**
      * Failed to connect to the host.

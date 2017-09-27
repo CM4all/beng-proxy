@@ -201,7 +201,7 @@ HttpRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
     assert(!response_sent);
 
     auto &fm = tcp_balancer.GetFailureManager();
-    fm.Unset(tcp_stock_item_get_address(*stock_item), FAILURE_RESPONSE);
+    fm.Unset(tcp_stock_item_get_address(*stock_item), FAILURE_PROTOCOL);
 
     handler.InvokeResponse(status, std::move(_headers), _body);
     ResponseSent();
@@ -236,7 +236,7 @@ HttpRequest::OnHttpError(std::exception_ptr ep)
         if (IsHttpClientServerFailure(ep)) {
             auto &fm = tcp_balancer.GetFailureManager();
             fm.Set(tcp_stock_item_get_address(*stock_item),
-                   FAILURE_RESPONSE,
+                   FAILURE_PROTOCOL,
                    std::chrono::seconds(20));
         }
 

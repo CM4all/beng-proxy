@@ -345,7 +345,7 @@ LbRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
     assert(!response_sent);
 
     GetFailureManager().Unset(tcp_stock_item_get_address(*stock_item),
-                              FAILURE_RESPONSE);
+                              FAILURE_PROTOCOL);
 
     HttpHeaders headers(std::move(_headers));
 
@@ -377,7 +377,7 @@ LbRequest::OnHttpError(std::exception_ptr ep)
 
     if (IsHttpClientServerFailure(ep))
         GetFailureManager().Set(tcp_stock_item_get_address(*stock_item),
-                                FAILURE_RESPONSE,
+                                FAILURE_PROTOCOL,
                                 std::chrono::seconds(20));
 
     connection.logger(2, ep);
