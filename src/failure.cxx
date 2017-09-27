@@ -53,26 +53,26 @@ struct Failure
     enum failure_status status;
 
     Failure(SocketAddress _address, enum failure_status _status,
-            Expiry _expires)
+            Expiry _expires) noexcept
         :address(_address),
          expires(_expires),
          status(_status) {}
 
-    bool CanExpire() const {
+    bool CanExpire() const noexcept {
         return status != FAILURE_MONITOR;
     }
 
     gcc_pure
-    bool IsExpired() const {
+    bool IsExpired() const noexcept {
         return CanExpire() && expires.IsExpired();
     }
 
     gcc_pure
-    bool IsFade() const {
+    bool IsFade() const noexcept {
         return !fade_expires.IsExpired();
     }
 
-    enum failure_status GetStatus() const {
+    enum failure_status GetStatus() const noexcept {
         if (!IsExpired())
             return status;
         else if (IsFade())
@@ -82,30 +82,32 @@ struct Failure
     }
 
     bool OverrideStatus(Expiry now, enum failure_status new_status,
-                        std::chrono::seconds duration);
+                        std::chrono::seconds duration) noexcept;
 
     struct Hash {
         gcc_pure
-        size_t operator()(const SocketAddress a) const {
+        size_t operator()(const SocketAddress a) const noexcept {
             assert(!a.IsNull());
 
             return djb_hash(a.GetAddress(), a.GetSize());
         }
 
         gcc_pure
-        size_t operator()(const Failure &f) const {
+        size_t operator()(const Failure &f) const noexcept {
             return djb_hash(f.address.GetAddress(), f.address.GetSize());
         }
     };
 
     struct Equal {
         gcc_pure
-        bool operator()(const SocketAddress a, const SocketAddress b) const {
+        bool operator()(const SocketAddress a,
+                        const SocketAddress b) const noexcept {
             return a == b;
         }
 
         gcc_pure
-        bool operator()(const SocketAddress a, const Failure &b) const {
+        bool operator()(const SocketAddress a,
+                        const Failure &b) const noexcept {
             return a == b.address;
         }
     };
@@ -124,19 +126,19 @@ static FailureSet failures(FailureSet::bucket_traits(failure_buckets,
                                                      N_FAILURE_BUCKETS));
 
 void
-failure_init()
+failure_init() noexcept
 {
 }
 
 void
-failure_deinit()
+failure_deinit() noexcept
 {
     failures.clear_and_dispose(DeleteDisposer());
 }
 
 bool
 Failure::OverrideStatus(Expiry now, enum failure_status new_status,
-                        std::chrono::seconds duration)
+                        std::chrono::seconds duration) noexcept
 {
     if (IsExpired()) {
         /* expired: override in any case */
@@ -161,7 +163,7 @@ Failure::OverrideStatus(Expiry now, enum failure_status new_status,
 
 void
 failure_set(SocketAddress address,
-            enum failure_status status, std::chrono::seconds duration)
+            enum failure_status status, std::chrono::seconds duration) noexcept
 {
     assert(!address.IsNull());
     assert(status > FAILURE_OK);
@@ -182,20 +184,20 @@ failure_set(SocketAddress address,
 }
 
 void
-failure_add(SocketAddress address)
+failure_add(SocketAddress address) noexcept
 {
     failure_set(address, FAILURE_FAILED, std::chrono::seconds(20));
 }
 
-static bool
-match_status(enum failure_status current, enum failure_status match)
+static constexpr bool
+match_status(enum failure_status current, enum failure_status match) noexcept
 {
     /* FAILURE_OK is a catch-all magic value */
     return match == FAILURE_OK || current == match;
 }
 
 static void
-failure_unset2(Failure &failure, enum failure_status status)
+failure_unset2(Failure &failure, enum failure_status status) noexcept
 {
     if (status == FAILURE_FADE)
         failure.fade_expires = Expiry::AlreadyExpired();
@@ -216,7 +218,7 @@ failure_unset2(Failure &failure, enum failure_status status)
 }
 
 void
-failure_unset(SocketAddress address, enum failure_status status)
+failure_unset(SocketAddress address, enum failure_status status) noexcept
 {
     assert(!address.IsNull());
 
@@ -226,7 +228,7 @@ failure_unset(SocketAddress address, enum failure_status status)
 }
 
 enum failure_status
-failure_get_status(SocketAddress address)
+failure_get_status(SocketAddress address) noexcept
 {
     assert(!address.IsNull());
 

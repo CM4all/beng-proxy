@@ -72,17 +72,17 @@ enum failure_status {
 };
 
 void
-failure_init();
+failure_init() noexcept;
 
 void
-failure_deinit();
+failure_deinit() noexcept;
 
 void
 failure_set(SocketAddress address,
-            enum failure_status status, std::chrono::seconds duration);
+            enum failure_status status, std::chrono::seconds duration) noexcept;
 
 void
-failure_add(SocketAddress address);
+failure_add(SocketAddress address) noexcept;
 
 /**
  * Unset a failure status.
@@ -91,18 +91,18 @@ failure_add(SocketAddress address);
  * status that matches everything
  */
 void
-failure_unset(SocketAddress address, enum failure_status status);
+failure_unset(SocketAddress address, enum failure_status status) noexcept;
 
 gcc_pure
 enum failure_status
-failure_get_status(SocketAddress address);
+failure_get_status(SocketAddress address) noexcept;
 
 struct ScopeFailureInit {
-    ScopeFailureInit() {
+    ScopeFailureInit() noexcept {
         failure_init();
     }
 
-    ~ScopeFailureInit() {
+    ~ScopeFailureInit() noexcept {
         failure_deinit();
     }
 
