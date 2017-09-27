@@ -101,7 +101,7 @@ FailureManager::Set(SocketAddress address, enum failure_status status,
 void
 FailureManager::Add(SocketAddress address) noexcept
 {
-    Set(address, FAILURE_FAILED, std::chrono::seconds(20));
+    Set(address, FAILURE_CONNECT, std::chrono::seconds(20));
 }
 
 static constexpr bool

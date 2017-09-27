@@ -58,9 +58,9 @@ enum failure_status {
     FAILURE_RESPONSE,
 
     /**
-     * Host has failed.
+     * Failed to connect to the host.
      */
-    FAILURE_FAILED,
+    FAILURE_CONNECT,
 
     /**
      * The failure was submitted by a "monitor", and will not expire

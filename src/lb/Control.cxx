@@ -161,7 +161,7 @@ failure_status_to_string(enum failure_status status)
         return "fade";
 
     case FAILURE_RESPONSE:
-    case FAILURE_FAILED:
+    case FAILURE_CONNECT:
     case FAILURE_MONITOR:
         break;
     }

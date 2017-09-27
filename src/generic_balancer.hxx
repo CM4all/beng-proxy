@@ -121,7 +121,7 @@ struct BalancerRequest : R {
     }
 
     void ConnectSuccess() {
-        balancer.GetFailureManager().Unset(current_address, FAILURE_FAILED);
+        balancer.GetFailureManager().Unset(current_address, FAILURE_CONNECT);
     }
 
     bool ConnectFailure() {

@@ -402,7 +402,7 @@ LbRequest::OnStockItemReady(StockItem &item)
     if (cluster_config.HasZeroConf())
         /* without the tcp_balancer, we have to roll our own failure
            updates */
-        GetFailureManager().Unset(current_address, FAILURE_FAILED);
+        GetFailureManager().Unset(current_address, FAILURE_CONNECT);
 
     stock_item = &item;
     lease_state = LeaseState::BUSY;
