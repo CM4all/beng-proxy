@@ -370,7 +370,9 @@ LbRequest::OnHttpError(std::exception_ptr ep)
     assert(!response_sent);
 
     if (IsHttpClientServerFailure(ep))
-        failure_add(tcp_stock_item_get_address(*stock_item));
+        failure_set(tcp_stock_item_get_address(*stock_item),
+                    FAILURE_RESPONSE,
+                    std::chrono::seconds(20));
 
     connection.logger(2, ep);
 
