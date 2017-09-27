@@ -98,12 +98,6 @@ FailureManager::Set(SocketAddress address, enum failure_status status,
     }
 }
 
-void
-FailureManager::Add(SocketAddress address) noexcept
-{
-    Set(address, FAILURE_CONNECT, std::chrono::seconds(20));
-}
-
 static constexpr bool
 match_status(enum failure_status current, enum failure_status match) noexcept
 {

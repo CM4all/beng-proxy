@@ -166,8 +166,6 @@ public:
     void Set(SocketAddress address, enum failure_status status,
              std::chrono::seconds duration) noexcept;
 
-    void Add(SocketAddress address) noexcept;
-
     /**
      * Unset a failure status.
      *

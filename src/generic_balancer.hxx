@@ -125,7 +125,8 @@ struct BalancerRequest : R {
     }
 
     bool ConnectFailure() {
-        balancer.GetFailureManager().Add(current_address);
+        balancer.GetFailureManager().Set(current_address, FAILURE_CONNECT,
+                                         std::chrono::seconds(20));
 
         if (retries-- > 0){
             /* try again, next address */

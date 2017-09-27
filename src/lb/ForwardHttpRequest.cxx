@@ -447,7 +447,8 @@ LbRequest::OnStockItemError(std::exception_ptr ep)
     if (cluster_config.HasZeroConf()) {
         /* without the tcp_balancer, we have to roll our own failure
            updates and retries */
-        GetFailureManager().Add(current_address);
+        GetFailureManager().Set(current_address, FAILURE_CONNECT,
+                                std::chrono::seconds(20));
 
         if (retries-- > 0) {
             /* try the next Zeroconf member */
