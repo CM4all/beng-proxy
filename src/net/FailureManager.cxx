@@ -72,20 +72,13 @@ FailureManager::Set(SocketAddress address, enum failure_status status,
     }
 }
 
-static constexpr bool
-match_status(enum failure_status current, enum failure_status match) noexcept
-{
-    /* FAILURE_OK is a catch-all magic value */
-    return match == FAILURE_OK || current == match;
-}
-
 inline void
 FailureManager::Unset(Failure &failure, enum failure_status status) noexcept
 {
     if (status == FAILURE_FADE)
         failure.fade_expires = Expiry::AlreadyExpired();
 
-    if (!match_status(failure.status, status) && !failure.IsExpired())
+    if (!MatchFailureStatus(failure.status, status) && !failure.IsExpired())
         /* don't update if the current status is more serious than the
            one to be removed */
         return;

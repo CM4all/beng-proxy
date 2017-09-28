@@ -59,3 +59,11 @@ enum failure_status {
      */
     FAILURE_MONITOR,
 };
+
+inline constexpr bool
+MatchFailureStatus(enum failure_status current,
+                   enum failure_status match) noexcept
+{
+    /* FAILURE_OK is a catch-all magic value */
+    return match == FAILURE_OK || current == match;
+}
