@@ -99,6 +99,11 @@ public:
     bool Set(Expiry now, enum failure_status new_status,
              std::chrono::seconds duration) noexcept;
 
+    bool Set(enum failure_status new_status,
+             std::chrono::seconds duration) noexcept {
+        return Set(Expiry::Now(), new_status, duration);
+    }
+
     void Unset(enum failure_status unset_status) noexcept;
 };
 
