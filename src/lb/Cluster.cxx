@@ -38,7 +38,6 @@
 #include "net/ToString.hxx"
 #include "util/HashRing.hxx"
 #include "util/ConstBuffer.hxx"
-#include "util/DeleteDisposer.hxx"
 
 #include <sodium/crypto_generichash.h>
 
@@ -87,7 +86,7 @@ LbCluster::~LbCluster()
     delete sticky_cache;
     delete sticky_ring;
 
-    members.clear_and_dispose(DeleteDisposer());
+    members.clear_and_dispose(Member::UnrefDisposer());
 }
 
 LbCluster::MemberMap::reference
@@ -112,7 +111,7 @@ LbCluster::PickNextGoodZeroconf()
     while (true) {
         auto &m = PickNextZeroconf();
         if (--remaining == 0 ||
-            failure_manager.Get(m.GetAddress()) == FAILURE_OK)
+            m.GetFailureInfo().GetStatus() == FAILURE_OK)
             return m;
     }
 }
@@ -143,7 +142,7 @@ LbCluster::Pick(sticky_hash_t sticky_hash)
             auto i = members.find(*cached, members.key_comp());
             if (i != members.end() &&
                 // TODO: allow FAILURE_FADE here?
-                failure_manager.Get(i->GetAddress()) == FAILURE_OK)
+                i->GetFailureInfo().GetStatus() == FAILURE_OK)
                 /* the node is active, we can use it */
                 return &*i;
 
@@ -163,7 +162,7 @@ LbCluster::Pick(sticky_hash_t sticky_hash)
         unsigned retries = active_members.size();
         while (true) {
             if (--retries == 0 ||
-                failure_manager.Get(i->GetAddress()) == FAILURE_OK)
+                i->GetFailureInfo().GetStatus() == FAILURE_OK)
                 return &*i;
 
             /* the node is known-bad; pick the next one in the ring */
@@ -252,7 +251,7 @@ LbCluster::OnAvahiNewObject(const std::string &key, SocketAddress address)
     MemberMap::insert_commit_data hint;
     auto result = members.insert_check(key, members.key_comp(), hint);
     if (result.second) {
-        auto *member = new Member(key, address);
+        auto *member = new Member(key, address, failure_manager.Make(address));
         members.insert_commit(*member, hint);
     } else {
         /* update existing member */
@@ -269,9 +268,8 @@ LbCluster::OnAvahiRemoveObject(const std::string &key)
     if (i == members.end())
         return;
 
-    /* purge this entry from the "failure" map, because it
+    /* TODO: purge entry from the "failure" map, because it
        will never be used again anyway */
-    failure_manager.Unset(i->GetAddress(), FAILURE_OK);
 
     members.erase_and_dispose(i, Member::UnrefDisposer());
     dirty = true;

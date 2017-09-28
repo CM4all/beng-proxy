@@ -36,6 +36,7 @@
 #include "StickyHash.hxx"
 #include "avahi/ExplorerListener.hxx"
 #include "net/AllocatedSocketAddress.hxx"
+#include "net/FailureRef.hxx"
 #include "io/Logger.hxx"
 #include "util/LeakDetector.hxx"
 
@@ -75,13 +76,16 @@ class LbCluster final : AvahiServiceExplorerListener {
 
         AllocatedSocketAddress address;
 
+        FailureRef failure;
+
         mutable std::string log_name;
 
         unsigned refs = 1;
 
     public:
-        Member(const std::string &_key, SocketAddress _address)
-            :key(_key), address(_address) {}
+        Member(const std::string &_key, SocketAddress _address,
+               ReferencedFailureInfo &_failure)
+            :key(_key), address(_address), failure(_failure) {}
 
         Member(const Member &) = delete;
         Member &operator=(const Member &) = delete;
@@ -105,6 +109,10 @@ class LbCluster final : AvahiServiceExplorerListener {
 
         void SetAddress(SocketAddress _address) {
             address = _address;
+        }
+
+        FailureInfo &GetFailureInfo() {
+            return *failure;
         }
 
         /**

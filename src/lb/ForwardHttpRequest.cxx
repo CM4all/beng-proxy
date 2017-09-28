@@ -402,8 +402,7 @@ LbRequest::OnStockItemReady(StockItem &item)
     if (cluster_config.HasZeroConf())
         /* without the tcp_balancer, we have to roll our own failure
            updates */
-        GetFailureManager().Unset(current_member->GetAddress(),
-                                  FAILURE_CONNECT);
+        current_member->GetFailureInfo().Unset(FAILURE_CONNECT);
 
     stock_item = &item;
     lease_state = LeaseState::BUSY;
@@ -448,8 +447,8 @@ LbRequest::OnStockItemError(std::exception_ptr ep)
     if (cluster_config.HasZeroConf()) {
         /* without the tcp_balancer, we have to roll our own failure
            updates and retries */
-        GetFailureManager().Set(current_member->GetAddress(), FAILURE_CONNECT,
-                                std::chrono::seconds(20));
+        current_member->GetFailureInfo().Set(FAILURE_CONNECT,
+                                             std::chrono::seconds(20));
 
         if (retries-- > 0) {
             /* try the next Zeroconf member */
