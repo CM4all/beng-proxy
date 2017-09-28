@@ -95,7 +95,7 @@ class LbCluster final : AvahiServiceExplorerListener {
     typedef std::map<std::string, Member> MemberMap;
     MemberMap members;
 
-    std::vector<const MemberMap::value_type *> active_members;
+    std::vector<MemberMap::const_pointer> active_members;
 
     bool dirty = false;
 
@@ -129,14 +129,14 @@ private:
      * Pick the next active Zeroconf member in a round-robin way.
      * Does not update the #StickyCache.
      */
-    const MemberMap::value_type &PickNextZeroconf();
+    MemberMap::const_reference PickNextZeroconf();
 
     /**
      * Like PickNextZeroconf(), but skips members which are bad
      * according to failure_get_status().  If all are bad, a random
      * (bad) one is returned.
      */
-    const MemberMap::value_type &PickNextGoodZeroconf();
+    MemberMap::const_reference PickNextGoodZeroconf();
 
     /* virtual methods from class AvahiServiceExplorerListener */
     void OnAvahiNewObject(const std::string &key,

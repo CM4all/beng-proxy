@@ -41,7 +41,7 @@
 
 #include <sodium/crypto_generichash.h>
 
-class LbCluster::StickyRing final : public HashRing<const MemberMap::value_type *,
+class LbCluster::StickyRing final : public HashRing<MemberMap::const_pointer,
                                                     sticky_hash_t,
                                                     4096, 8> {};
 
@@ -87,7 +87,7 @@ LbCluster::~LbCluster()
     delete sticky_ring;
 }
 
-const LbCluster::MemberMap::value_type &
+LbCluster::MemberMap::const_reference
 LbCluster::PickNextZeroconf()
 {
     assert(!active_members.empty());
@@ -99,7 +99,7 @@ LbCluster::PickNextZeroconf()
     return *active_members[last_pick];
 }
 
-const LbCluster::MemberMap::value_type &
+LbCluster::MemberMap::const_reference
 LbCluster::PickNextGoodZeroconf()
 {
     assert(!active_members.empty());
@@ -223,7 +223,7 @@ LbCluster::FillActive()
          */
         struct MemberHasher {
             gcc_pure
-            sticky_hash_t operator()(const MemberMap::value_type *member,
+            sticky_hash_t operator()(MemberMap::const_pointer member,
                                      size_t replica) const {
                 /* use libsodium's "generichash" (BLAKE2b) which is
                    secure enough for class HashRing */
