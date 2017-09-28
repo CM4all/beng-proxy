@@ -33,10 +33,9 @@
 #ifndef FAILURE_MANAGER_HXX
 #define FAILURE_MANAGER_HXX
 
-#include "FailureStatus.hxx"
+#include "FailureInfo.hxx"
 #include "net/AllocatedSocketAddress.hxx"
 #include "util/Compiler.h"
-#include "util/Expiry.hxx"
 
 #include <boost/intrusive/unordered_set.hpp>
 
@@ -48,47 +47,24 @@
 class FailureManager {
 
     struct Failure
-        : boost::intrusive::unordered_set_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
+        : boost::intrusive::unordered_set_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>,
+          FailureInfo {
 
         const AllocatedSocketAddress address;
 
-        Expiry expires;
-
-        Expiry fade_expires = Expiry::AlreadyExpired();
-
-        enum failure_status status;
-
         Failure(SocketAddress _address, enum failure_status _status,
                 Expiry _expires) noexcept
-            :address(_address),
-             expires(_expires),
-             status(_status) {}
-
-        bool CanExpire() const noexcept {
-            return status != FAILURE_MONITOR;
-        }
+            :FailureInfo(_status, _expires), address(_address) {}
 
         gcc_pure
         bool IsExpired() const noexcept {
-            return CanExpire() && expires.IsExpired();
+            return FailureInfo::IsExpired(Expiry::Now());
         }
 
         gcc_pure
         bool IsFade() const noexcept {
-            return !fade_expires.IsExpired();
+            return FailureInfo::IsFade(Expiry::Now());
         }
-
-        enum failure_status GetStatus() const noexcept {
-            if (!IsExpired())
-                return status;
-            else if (IsFade())
-                return FAILURE_FADE;
-            else
-                return FAILURE_OK;
-        }
-
-        bool OverrideStatus(Expiry now, enum failure_status new_status,
-                            std::chrono::seconds duration) noexcept;
 
         struct Hash {
             gcc_pure

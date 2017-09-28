@@ -50,32 +50,6 @@ FailureManager::~FailureManager() noexcept
     failures.clear_and_dispose(DeleteDisposer());
 }
 
-bool
-FailureManager::Failure::OverrideStatus(Expiry now,
-                                        enum failure_status new_status,
-                                        std::chrono::seconds duration) noexcept
-{
-    if (IsExpired()) {
-        /* expired: override in any case */
-    } else if (new_status == status) {
-        /* same status: update expiry */
-    } else if (new_status == FAILURE_FADE) {
-        /* store "fade" expiry in special attribute, until the other
-           failure status expires */
-        fade_expires.Touch(now, duration);
-        return true;
-    } else if (status == FAILURE_FADE) {
-        /* copy the "fade" expiry to the special attribute, and
-           overwrite the FAILURE_FADE status */
-        fade_expires = expires;
-    } else if (new_status < status)
-        return false;
-
-    expires.Touch(now, duration);
-    status = new_status;
-    return true;
-}
-
 void
 FailureManager::Set(SocketAddress address, enum failure_status status,
                     std::chrono::seconds duration) noexcept
