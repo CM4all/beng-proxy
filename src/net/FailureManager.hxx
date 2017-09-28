@@ -113,7 +113,7 @@ public:
     void Unset(SocketAddress address, enum failure_status status) noexcept;
 
     gcc_pure
-    enum failure_status Get(SocketAddress address) noexcept;
+    enum failure_status Get(SocketAddress address) const noexcept;
 
 private:
     void Unset(Failure &failure, enum failure_status status) noexcept;

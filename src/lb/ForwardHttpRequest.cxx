@@ -259,7 +259,7 @@ LbRequest::GetXHostHash() const
  * failure.
  */
 static unsigned
-generate_cookie(FailureManager &failure_manager, const AddressList *list)
+generate_cookie(const FailureManager &failure_manager, const AddressList *list)
 {
     assert(list->GetSize() >= 2);
 

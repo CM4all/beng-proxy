@@ -94,7 +94,7 @@ FailureManager::Unset(SocketAddress address,
 }
 
 enum failure_status
-FailureManager::Get(SocketAddress address) noexcept
+FailureManager::Get(SocketAddress address) const noexcept
 {
     assert(!address.IsNull());
 
