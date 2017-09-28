@@ -50,11 +50,11 @@ LbMonitorController::Success()
 
     state = true;
 
-    failure_manager.Unset(address, FAILURE_MONITOR);
+    failure->Unset(FAILURE_MONITOR);
 
     if (fade) {
         fade = false;
-        failure_manager.Unset(address, FAILURE_FADE);
+        failure->Unset(FAILURE_FADE);
     }
 
     interval_event.Add(interval);
@@ -72,7 +72,7 @@ LbMonitorController::Fade()
         logger(6, "still fade");
 
     fade = true;
-    failure_manager.Set(address, FAILURE_FADE, std::chrono::minutes(5));
+    failure->Set(FAILURE_FADE, std::chrono::minutes(5));
 
     interval_event.Add(interval);
 }
@@ -86,7 +86,7 @@ LbMonitorController::Timeout()
     logger(state ? 3 : 6, "timeout");
 
     state = false;
-    failure_manager.Set(address, FAILURE_MONITOR, std::chrono::seconds::zero());
+    failure->Set(FAILURE_MONITOR, std::chrono::seconds::zero());
 
     interval_event.Add(interval);
 }
@@ -100,7 +100,7 @@ LbMonitorController::Error(std::exception_ptr e)
     logger(state ? 2 : 4, "error: ", e);
 
     state = false;
-    failure_manager.Set(address, FAILURE_MONITOR, std::chrono::seconds::zero());
+    failure->Set(FAILURE_MONITOR, std::chrono::seconds::zero());
 
     interval_event.Add(interval);
 }
@@ -130,18 +130,19 @@ LbMonitorController::TimeoutCallback()
     cancel_ptr.CancelAndClear();
 
     state = false;
-    failure_manager.Set(address, FAILURE_MONITOR, std::chrono::seconds::zero());
+    failure->Set(FAILURE_MONITOR, std::chrono::seconds::zero());
 
     interval_event.Add(interval);
 }
 
 LbMonitorController::LbMonitorController(EventLoop &_event_loop,
-                                         FailureManager &_failure_manager,
+                                         FailureManager &failure_manager,
                                          struct pool &_pool, const char *_name,
                                          const LbMonitorConfig &_config,
                                          SocketAddress _address,
                                          const LbMonitorClass &_class)
-    :event_loop(_event_loop), failure_manager(_failure_manager),
+    :event_loop(_event_loop),
+     failure(failure_manager.Make(_address)),
      pool(_pool), name(_name), config(_config),
      address(_address),
      class_(_class),
