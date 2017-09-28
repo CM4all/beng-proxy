@@ -35,6 +35,7 @@
 
 #include "FailureStatus.hxx"
 #include "util/Expiry.hxx"
+#include "util/Compiler.h"
 
 struct FailureInfo {
     Expiry expires;
@@ -55,8 +56,18 @@ struct FailureInfo {
         return CanExpire() && expires.IsExpired(now);
     }
 
+    gcc_pure
+    bool IsExpired() const noexcept {
+        return FailureInfo::IsExpired(Expiry::Now());
+    }
+
     constexpr bool IsFade(Expiry now) const noexcept {
         return !fade_expires.IsExpired(now);
+    }
+
+    gcc_pure
+    bool IsFade() const noexcept {
+        return FailureInfo::IsFade(Expiry::Now());
     }
 
     constexpr enum failure_status GetStatus(Expiry now) const noexcept {

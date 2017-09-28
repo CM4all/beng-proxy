@@ -56,16 +56,6 @@ class FailureManager {
                 Expiry _expires) noexcept
             :FailureInfo(_status, _expires), address(_address) {}
 
-        gcc_pure
-        bool IsExpired() const noexcept {
-            return FailureInfo::IsExpired(Expiry::Now());
-        }
-
-        gcc_pure
-        bool IsFade() const noexcept {
-            return FailureInfo::IsFade(Expiry::Now());
-        }
-
         struct Hash {
             gcc_pure
             size_t operator()(const SocketAddress a) const noexcept;
