@@ -519,8 +519,8 @@ LbRequest::Start()
     const auto bind_address = MakeBindAddress();
 
     if (cluster_config.HasZeroConf()) {
-        const auto member = cluster.Pick(GetStickyHash());
-        if (member.first == nullptr) {
+        const auto *member = cluster.Pick(GetStickyHash());
+        if (member == nullptr) {
             const ScopePoolRef ref(request.pool TRACE_ARGS);
             http_server_send_message(&request,
                                      HTTP_STATUS_INTERNAL_SERVER_ERROR,
@@ -529,15 +529,13 @@ LbRequest::Start()
             return;
         }
 
-        assert(member.second.IsDefined());
-
-        current_address = member.second;
+        current_address = member->GetAddress();
 
         connection.instance.tcp_stock->Get(request.pool,
-                                           member.first,
+                                           member->GetLogName(),
                                            cluster_config.transparent_source,
                                            bind_address,
-                                           member.second,
+                                           member->GetAddress(),
                                            20,
                                            *this, cancel_ptr);
 

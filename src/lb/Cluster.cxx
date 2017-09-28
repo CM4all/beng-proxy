@@ -114,7 +114,7 @@ LbCluster::PickNextGoodZeroconf()
     }
 }
 
-std::pair<const char *, SocketAddress>
+const LbCluster::Member *
 LbCluster::Pick(sticky_hash_t sticky_hash)
 {
     if (dirty) {
@@ -123,7 +123,7 @@ LbCluster::Pick(sticky_hash_t sticky_hash)
     }
 
     if (active_members.empty())
-        return std::make_pair(nullptr, nullptr);
+        return nullptr;
 
     if (sticky_hash != 0 && config.sticky_cache) {
         /* look up the sticky_hash in the StickyCache */
@@ -142,8 +142,7 @@ LbCluster::Pick(sticky_hash_t sticky_hash)
                 // TODO: allow FAILURE_FADE here?
                 failure_manager.Get(i->second.GetAddress()) == FAILURE_OK)
                 /* the node is active, we can use it */
-                return std::make_pair(i->second.GetLogName(),
-                                      i->second.GetAddress());
+                return &i->second;
 
             sticky_cache->Remove(sticky_hash);
         }
@@ -162,8 +161,7 @@ LbCluster::Pick(sticky_hash_t sticky_hash)
         while (true) {
             if (--retries == 0 ||
                 failure_manager.Get(i->second.GetAddress()) == FAILURE_OK)
-                return std::make_pair(i->second.GetLogName(),
-                                      i->second.GetAddress());
+                return &i->second;
 
             /* the node is known-bad; pick the next one in the ring */
             const auto next = sticky_ring->FindNext(sticky_hash);
@@ -177,7 +175,7 @@ LbCluster::Pick(sticky_hash_t sticky_hash)
     if (sticky_hash != 0)
         sticky_cache->Put(sticky_hash, i.first);
 
-    return std::make_pair(i.second.GetLogName(), i.second.GetAddress());
+    return &i.second;
 }
 
 static void

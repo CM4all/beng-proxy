@@ -122,7 +122,7 @@ public:
         return active_members.size();
     }
 
-    std::pair<const char *, SocketAddress> Pick(sticky_hash_t sticky_hash);
+    const Member *Pick(sticky_hash_t sticky_hash);
 
 private:
     void FillActive();

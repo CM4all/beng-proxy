@@ -454,14 +454,14 @@ LbTcpConnection::ConnectOutbound()
     const auto &cluster_config = cluster.GetConfig();
 
     if (cluster_config.HasZeroConf()) {
-        const auto member = cluster.Pick(session_sticky);
-        if (member.first == nullptr) {
+        const auto *member = cluster.Pick(session_sticky);
+        if (member == nullptr) {
             DestroyInbound();
             OnTcpError("Zeroconf error", "Zeroconf cluster is empty");
             return;
         }
 
-        const auto address = member.second;
+        const auto address = member->GetAddress();
         assert(address.IsDefined());
 
         client_socket_new(inbound.GetEventLoop(), pool,
