@@ -37,13 +37,14 @@
 #include "util/Expiry.hxx"
 #include "util/Compiler.h"
 
-struct FailureInfo {
+class FailureInfo {
     Expiry expires;
 
     Expiry fade_expires = Expiry::AlreadyExpired();
 
     enum failure_status status;
 
+public:
     constexpr FailureInfo(enum failure_status _status,
                           Expiry _expires) noexcept
         :expires(_expires), status(_status) {}
