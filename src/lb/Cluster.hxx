@@ -38,8 +38,6 @@
 #include "net/AllocatedSocketAddress.hxx"
 #include "io/Logger.hxx"
 
-#include <avahi-client/lookup.h>
-
 #include <map>
 #include <vector>
 #include <string>
