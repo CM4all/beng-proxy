@@ -66,13 +66,15 @@ class LbCluster final : AvahiServiceExplorerListener {
     StickyCache *sticky_cache = nullptr;
 
     class Member {
+        const std::string key;
+
         AllocatedSocketAddress address;
 
         mutable std::string log_name;
 
     public:
-        explicit Member(SocketAddress _address)
-            :address(_address) {}
+        Member(const std::string &_key, SocketAddress _address)
+            :key(_key), address(_address) {}
 
         Member(const Member &) = delete;
         Member &operator=(const Member &) = delete;
@@ -89,7 +91,7 @@ class LbCluster final : AvahiServiceExplorerListener {
          * Obtain a name identifying this object for logging.
          */
         gcc_pure
-        const char *GetLogName(const char *key) const noexcept;
+        const char *GetLogName() const noexcept;
     };
 
     typedef std::map<std::string, Member> MemberMap;

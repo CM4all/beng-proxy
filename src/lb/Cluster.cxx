@@ -46,11 +46,11 @@ class LbCluster::StickyRing final : public HashRing<MemberMap::const_pointer,
                                                     4096, 8> {};
 
 const char *
-LbCluster::Member::GetLogName(const char *key) const noexcept
+LbCluster::Member::GetLogName() const noexcept
 {
     if (log_name.empty()) {
         if (address.IsNull())
-            return key;
+            return key.c_str();
 
         log_name = key;
 
@@ -142,7 +142,7 @@ LbCluster::Pick(sticky_hash_t sticky_hash)
                 // TODO: allow FAILURE_FADE here?
                 failure_manager.Get(i->second.GetAddress()) == FAILURE_OK)
                 /* the node is active, we can use it */
-                return std::make_pair(i->second.GetLogName(i->first.c_str()),
+                return std::make_pair(i->second.GetLogName(),
                                       i->second.GetAddress());
 
             sticky_cache->Remove(sticky_hash);
@@ -162,7 +162,7 @@ LbCluster::Pick(sticky_hash_t sticky_hash)
         while (true) {
             if (--retries == 0 ||
                 failure_manager.Get(i->second.GetAddress()) == FAILURE_OK)
-                return std::make_pair(i->second.GetLogName(i->first.c_str()),
+                return std::make_pair(i->second.GetLogName(),
                                       i->second.GetAddress());
 
             /* the node is known-bad; pick the next one in the ring */
@@ -177,8 +177,7 @@ LbCluster::Pick(sticky_hash_t sticky_hash)
     if (sticky_hash != 0)
         sticky_cache->Put(sticky_hash, i.first);
 
-    return std::make_pair(i.second.GetLogName(i.first.c_str()),
-                          i.second.GetAddress());
+    return std::make_pair(i.second.GetLogName(), i.second.GetAddress());
 }
 
 static void
@@ -251,7 +250,7 @@ LbCluster::OnAvahiNewObject(const std::string &key, SocketAddress address)
 {
     auto i = members.emplace(std::piecewise_construct,
                              std::forward_as_tuple(key),
-                             std::forward_as_tuple(address));
+                             std::forward_as_tuple(key, address));
     if (!i.second)
         /* update existing member */
         i.first->second.SetAddress(address);
