@@ -147,16 +147,15 @@ class FailureManager {
                                             boost::intrusive::equal<Failure::Equal>,
                                             boost::intrusive::constant_time_size<false>> FailureSet;
 
-    static constexpr size_t N_FAILURE_BUCKETS = 97;
+    static constexpr size_t N_BUCKETS = 97;
 
-    FailureSet::bucket_type failure_buckets[N_FAILURE_BUCKETS];
+    FailureSet::bucket_type buckets[N_BUCKETS];
 
     FailureSet failures;
 
 public:
     FailureManager() noexcept
-        :failures(FailureSet::bucket_traits(failure_buckets,
-                                            N_FAILURE_BUCKETS)) {}
+        :failures(FailureSet::bucket_traits(buckets, N_BUCKETS)) {}
 
     ~FailureManager() noexcept;
 
