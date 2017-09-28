@@ -33,8 +33,9 @@
 #ifndef FAILURE_MANAGER_HXX
 #define FAILURE_MANAGER_HXX
 
-#include "FailureInfo.hxx"
+#include "FailureRef.hxx"
 #include "net/AllocatedSocketAddress.hxx"
+#include "util/LeakDetector.hxx"
 #include "util/Compiler.h"
 
 #include <boost/intrusive/unordered_set.hpp>
@@ -46,15 +47,17 @@
  */
 class FailureManager {
 
-    struct Failure
-        : boost::intrusive::unordered_set_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>,
-          FailureInfo {
+    class Failure final
+        : public boost::intrusive::unordered_set_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>,
+          LeakDetector,
+          public ReferencedFailureInfo {
 
         const AllocatedSocketAddress address;
 
+    public:
         Failure(SocketAddress _address, enum failure_status _status,
                 Expiry _expires) noexcept
-            :FailureInfo(_status, _expires), address(_address) {}
+            :ReferencedFailureInfo(_status, _expires), address(_address) {}
 
         struct Hash {
             gcc_pure
@@ -79,6 +82,11 @@ class FailureManager {
                 return a == b.address;
             }
         };
+
+    protected:
+        void Destroy() override {
+            delete this;
+        }
     };
 
     typedef boost::intrusive::unordered_set<Failure,
@@ -100,6 +108,12 @@ public:
 
     FailureManager(const FailureManager &) = delete;
     FailureManager &operator=(const FailureManager &) = delete;
+
+    /**
+     * Looks up a #FailureInfo instance or creates a new one.  The
+     * return value should be passed to the #FailureRef constructor.
+     */
+    ReferencedFailureInfo &Make(SocketAddress address) noexcept;
 
     void Set(SocketAddress address, enum failure_status status,
              std::chrono::seconds duration) noexcept;

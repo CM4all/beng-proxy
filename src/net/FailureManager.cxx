@@ -33,7 +33,6 @@
 #include "FailureManager.hxx"
 #include "net/SocketAddress.hxx"
 #include "util/djbhash.h"
-#include "util/DeleteDisposer.hxx"
 
 #include <assert.h>
 
@@ -47,7 +46,25 @@ FailureManager::Failure::Hash::operator()(const SocketAddress a) const noexcept
 
 FailureManager::~FailureManager() noexcept
 {
-    failures.clear_and_dispose(DeleteDisposer());
+    failures.clear_and_dispose(Failure::UnrefDisposer());
+}
+
+ReferencedFailureInfo &
+FailureManager::Make(SocketAddress address) noexcept
+{
+    assert(!address.IsNull());
+
+    FailureSet::insert_commit_data hint;
+    auto result = failures.insert_check(address, Failure::Hash(),
+                                        Failure::Equal(), hint);
+    if (result.second) {
+        Failure *failure = new Failure(address, FAILURE_OK,
+                                       Expiry::AlreadyExpired());
+        failures.insert_commit(*failure, hint);
+        return *failure;
+    } else {
+        return *result.first;
+    }
 }
 
 void
@@ -79,7 +96,7 @@ FailureManager::Unset(Failure &failure, enum failure_status status) noexcept
 
     if (failure.IsNull())
         failures.erase_and_dispose(failures.iterator_to(failure),
-                                   DeleteDisposer());
+                                   Failure::UnrefDisposer());
 }
 
 void

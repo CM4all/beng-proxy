@@ -277,6 +277,7 @@ system_dep = declare_dependency(link_with: system)
 net = static_library('net',
   'src/net/FailureManager.cxx',
   'src/net/FailureInfo.cxx',
+  'src/net/FailureRef.cxx',
   'src/net/Ping.cxx',
   'src/net/PConnectSocket.cxx',
   'libcommon/src/net/ConnectSocket.cxx',
