@@ -85,11 +85,11 @@ class LbRequest final
     CancellablePointer cancel_ptr;
 
     /**
-     * The address we're currently connecting to (waiting for
+     * The cluster member we're currently connecting to (waiting for
      * #StockGetHandler to be called).  Only used for Zeroconf to be
      * able to call failure_set().
      */
-    SocketAddress current_address;
+    LbCluster::MemberPtr current_member;
 
     StockItem *stock_item;
 
@@ -402,7 +402,8 @@ LbRequest::OnStockItemReady(StockItem &item)
     if (cluster_config.HasZeroConf())
         /* without the tcp_balancer, we have to roll our own failure
            updates */
-        GetFailureManager().Unset(current_address, FAILURE_CONNECT);
+        GetFailureManager().Unset(current_member->GetAddress(),
+                                  FAILURE_CONNECT);
 
     stock_item = &item;
     lease_state = LeaseState::BUSY;
@@ -447,7 +448,7 @@ LbRequest::OnStockItemError(std::exception_ptr ep)
     if (cluster_config.HasZeroConf()) {
         /* without the tcp_balancer, we have to roll our own failure
            updates and retries */
-        GetFailureManager().Set(current_address, FAILURE_CONNECT,
+        GetFailureManager().Set(current_member->GetAddress(), FAILURE_CONNECT,
                                 std::chrono::seconds(20));
 
         if (retries-- > 0) {
@@ -519,7 +520,7 @@ LbRequest::Start()
     const auto bind_address = MakeBindAddress();
 
     if (cluster_config.HasZeroConf()) {
-        const auto *member = cluster.Pick(GetStickyHash());
+        auto *member = cluster.Pick(GetStickyHash());
         if (member == nullptr) {
             const ScopePoolRef ref(request.pool TRACE_ARGS);
             http_server_send_message(&request,
@@ -529,7 +530,7 @@ LbRequest::Start()
             return;
         }
 
-        current_address = member->GetAddress();
+        current_member = *member;
 
         connection.instance.tcp_stock->Get(request.pool,
                                            member->GetLogName(),

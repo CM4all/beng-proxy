@@ -37,6 +37,7 @@
 #include "avahi/ExplorerListener.hxx"
 #include "net/AllocatedSocketAddress.hxx"
 #include "io/Logger.hxx"
+#include "util/LeakDetector.hxx"
 
 #include <boost/intrusive/set.hpp>
 
@@ -67,7 +68,8 @@ class LbCluster final : AvahiServiceExplorerListener {
     StickyCache *sticky_cache = nullptr;
 
     class Member
-        : public boost::intrusive::set_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
+        : LeakDetector,
+          public boost::intrusive::set_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
 
         const std::string key;
 
@@ -75,12 +77,23 @@ class LbCluster final : AvahiServiceExplorerListener {
 
         mutable std::string log_name;
 
+        unsigned refs = 1;
+
     public:
         Member(const std::string &_key, SocketAddress _address)
             :key(_key), address(_address) {}
 
         Member(const Member &) = delete;
         Member &operator=(const Member &) = delete;
+
+        void Ref() noexcept {
+            ++refs;
+        }
+
+        void Unref() noexcept {
+            if (--refs == 0)
+                delete this;
+        }
 
         const std::string &GetKey() const {
             return key;
@@ -113,14 +126,86 @@ class LbCluster final : AvahiServiceExplorerListener {
                 return a < b.key;
             }
         };
+
+        struct UnrefDisposer {
+            void operator()(Member *member) const noexcept {
+                member->Unref();
+            }
+        };
     };
 
+public:
+    /**
+     * A (counted) reference to a #Member.  It keeps the #Member valid
+     * even if it gets removed because the Zeroconf entry disappears.
+     */
+    class MemberPtr {
+        Member *value = nullptr;
+
+    public:
+        MemberPtr() = default;
+
+        MemberPtr(Member *_value) noexcept
+            :value(_value) {
+            if (value != nullptr)
+                value->Ref();
+        }
+
+        MemberPtr(Member &_value) noexcept
+            :value(&_value) {
+            value->Ref();
+        }
+
+        MemberPtr(const MemberPtr &src) noexcept
+            :MemberPtr(src.value) {}
+
+        MemberPtr(MemberPtr &&src) noexcept
+            :value(std::exchange(src.value, nullptr)) {}
+
+        ~MemberPtr() {
+            if (value != nullptr)
+                value->Unref();
+        }
+
+        MemberPtr &operator=(const MemberPtr &src) noexcept {
+            if (value != src.value) {
+                if (value != nullptr)
+                    value->Unref();
+
+                value = src.value;
+
+                if (value != nullptr)
+                    value->Ref();
+            }
+
+            return *this;
+        }
+
+        MemberPtr &operator=(MemberPtr &&src) noexcept {
+            std::swap(value, src.value);
+            return *this;
+        }
+
+        Member *operator->() {
+            return value;
+        }
+
+        Member &operator*() {
+            return *value;
+        }
+
+        operator bool() const {
+            return value != nullptr;
+        }
+    };
+
+private:
     typedef boost::intrusive::set<Member,
                                   boost::intrusive::compare<Member::Compare>,
                                   boost::intrusive::constant_time_size<false>> MemberMap;
     MemberMap members;
 
-    std::vector<MemberMap::const_pointer> active_members;
+    std::vector<MemberMap::pointer> active_members;
 
     bool dirty = false;
 
@@ -145,7 +230,7 @@ public:
         return active_members.size();
     }
 
-    const Member *Pick(sticky_hash_t sticky_hash);
+    Member *Pick(sticky_hash_t sticky_hash);
 
 private:
     void FillActive();
@@ -154,14 +239,14 @@ private:
      * Pick the next active Zeroconf member in a round-robin way.
      * Does not update the #StickyCache.
      */
-    MemberMap::const_reference PickNextZeroconf();
+    MemberMap::reference PickNextZeroconf();
 
     /**
      * Like PickNextZeroconf(), but skips members which are bad
      * according to failure_get_status().  If all are bad, a random
      * (bad) one is returned.
      */
-    MemberMap::const_reference PickNextGoodZeroconf();
+    MemberMap::reference PickNextGoodZeroconf();
 
     /* virtual methods from class AvahiServiceExplorerListener */
     void OnAvahiNewObject(const std::string &key,

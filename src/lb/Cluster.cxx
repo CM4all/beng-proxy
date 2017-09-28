@@ -42,7 +42,7 @@
 
 #include <sodium/crypto_generichash.h>
 
-class LbCluster::StickyRing final : public HashRing<MemberMap::const_pointer,
+class LbCluster::StickyRing final : public HashRing<MemberMap::pointer,
                                                     sticky_hash_t,
                                                     4096, 8> {};
 
@@ -90,7 +90,7 @@ LbCluster::~LbCluster()
     members.clear_and_dispose(DeleteDisposer());
 }
 
-LbCluster::MemberMap::const_reference
+LbCluster::MemberMap::reference
 LbCluster::PickNextZeroconf()
 {
     assert(!active_members.empty());
@@ -102,7 +102,7 @@ LbCluster::PickNextZeroconf()
     return *active_members[last_pick];
 }
 
-LbCluster::MemberMap::const_reference
+LbCluster::MemberMap::reference
 LbCluster::PickNextGoodZeroconf()
 {
     assert(!active_members.empty());
@@ -110,14 +110,14 @@ LbCluster::PickNextGoodZeroconf()
     unsigned remaining = active_members.size();
 
     while (true) {
-        const auto &m = PickNextZeroconf();
+        auto &m = PickNextZeroconf();
         if (--remaining == 0 ||
             failure_manager.Get(m.GetAddress()) == FAILURE_OK)
             return m;
     }
 }
 
-const LbCluster::Member *
+LbCluster::Member *
 LbCluster::Pick(sticky_hash_t sticky_hash)
 {
     if (dirty) {
@@ -173,7 +173,7 @@ LbCluster::Pick(sticky_hash_t sticky_hash)
         }
     }
 
-    const auto &i = PickNextGoodZeroconf();
+    auto &i = PickNextGoodZeroconf();
 
     if (sticky_hash != 0)
         sticky_cache->Put(sticky_hash, i.GetKey());
@@ -209,7 +209,7 @@ LbCluster::FillActive()
     active_members.clear();
     active_members.reserve(members.size());
 
-    for (const auto &i : members)
+    for (auto &i : members)
         active_members.push_back(&i);
 
     if (!config.sticky_cache) {
@@ -273,6 +273,6 @@ LbCluster::OnAvahiRemoveObject(const std::string &key)
        will never be used again anyway */
     failure_manager.Unset(i->GetAddress(), FAILURE_OK);
 
-    members.erase_and_dispose(i, DeleteDisposer());
+    members.erase_and_dispose(i, Member::UnrefDisposer());
     dirty = true;
 }
