@@ -38,7 +38,8 @@
 #include "net/AllocatedSocketAddress.hxx"
 #include "io/Logger.hxx"
 
-#include <map>
+#include <boost/intrusive/set.hpp>
+
 #include <vector>
 #include <string>
 #include <memory>
@@ -65,7 +66,9 @@ class LbCluster final : AvahiServiceExplorerListener {
 
     StickyCache *sticky_cache = nullptr;
 
-    class Member {
+    class Member
+        : public boost::intrusive::set_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
+
         const std::string key;
 
         AllocatedSocketAddress address;
@@ -78,6 +81,10 @@ class LbCluster final : AvahiServiceExplorerListener {
 
         Member(const Member &) = delete;
         Member &operator=(const Member &) = delete;
+
+        const std::string &GetKey() const {
+            return key;
+        }
 
         SocketAddress GetAddress() const {
             return address;
@@ -92,9 +99,25 @@ class LbCluster final : AvahiServiceExplorerListener {
          */
         gcc_pure
         const char *GetLogName() const noexcept;
+
+        struct Compare {
+            bool operator()(const Member &a, const Member &b) const {
+                return a.key < b.key;
+            }
+
+            bool operator()(const Member &a, const std::string &b) const {
+                return a.key < b;
+            }
+
+            bool operator()(const std::string &a, const Member &b) const {
+                return a < b.key;
+            }
+        };
     };
 
-    typedef std::map<std::string, Member> MemberMap;
+    typedef boost::intrusive::set<Member,
+                                  boost::intrusive::compare<Member::Compare>,
+                                  boost::intrusive::constant_time_size<false>> MemberMap;
     MemberMap members;
 
     std::vector<MemberMap::const_pointer> active_members;

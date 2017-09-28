@@ -38,6 +38,7 @@
 #include "net/ToString.hxx"
 #include "util/HashRing.hxx"
 #include "util/ConstBuffer.hxx"
+#include "util/DeleteDisposer.hxx"
 
 #include <sodium/crypto_generichash.h>
 
@@ -52,7 +53,7 @@ LbCluster::Member::GetLogName() const noexcept
         if (address.IsNull())
             return key.c_str();
 
-        log_name = key;
+        log_name = key.c_str();
 
         char buffer[512];
         if (ToString(buffer, sizeof(buffer), address)) {
@@ -85,6 +86,8 @@ LbCluster::~LbCluster()
 {
     delete sticky_cache;
     delete sticky_ring;
+
+    members.clear_and_dispose(DeleteDisposer());
 }
 
 LbCluster::MemberMap::const_reference
@@ -109,7 +112,7 @@ LbCluster::PickNextGoodZeroconf()
     while (true) {
         const auto &m = PickNextZeroconf();
         if (--remaining == 0 ||
-            failure_manager.Get(m.second.GetAddress()) == FAILURE_OK)
+            failure_manager.Get(m.GetAddress()) == FAILURE_OK)
             return m;
     }
 }
@@ -137,12 +140,12 @@ LbCluster::Pick(sticky_hash_t sticky_hash)
         const auto *cached = sticky_cache->Get(sticky_hash);
         if (cached != nullptr) {
             /* cache hit */
-            auto i = members.find(*cached);
+            auto i = members.find(*cached, members.key_comp());
             if (i != members.end() &&
                 // TODO: allow FAILURE_FADE here?
-                failure_manager.Get(i->second.GetAddress()) == FAILURE_OK)
+                failure_manager.Get(i->GetAddress()) == FAILURE_OK)
                 /* the node is active, we can use it */
-                return &i->second;
+                return &*i;
 
             sticky_cache->Remove(sticky_hash);
         }
@@ -160,8 +163,8 @@ LbCluster::Pick(sticky_hash_t sticky_hash)
         unsigned retries = active_members.size();
         while (true) {
             if (--retries == 0 ||
-                failure_manager.Get(i->second.GetAddress()) == FAILURE_OK)
-                return &i->second;
+                failure_manager.Get(i->GetAddress()) == FAILURE_OK)
+                return &*i;
 
             /* the node is known-bad; pick the next one in the ring */
             const auto next = sticky_ring->FindNext(sticky_hash);
@@ -173,9 +176,9 @@ LbCluster::Pick(sticky_hash_t sticky_hash)
     const auto &i = PickNextGoodZeroconf();
 
     if (sticky_hash != 0)
-        sticky_cache->Put(sticky_hash, i.first);
+        sticky_cache->Put(sticky_hash, i.GetKey());
 
-    return &i.second;
+    return &i;
 }
 
 static void
@@ -231,7 +234,7 @@ LbCluster::FillActive()
 
                 crypto_generichash_state state;
                 crypto_generichash_init(&state, nullptr, 0, sizeof(u.hash));
-                UpdateHash(state, member->second.GetAddress());
+                UpdateHash(state, member->GetAddress());
                 UpdateHashT(state, replica);
                 crypto_generichash_final(&state, u.hash, sizeof(u.hash));
 
@@ -246,12 +249,15 @@ LbCluster::FillActive()
 void
 LbCluster::OnAvahiNewObject(const std::string &key, SocketAddress address)
 {
-    auto i = members.emplace(std::piecewise_construct,
-                             std::forward_as_tuple(key),
-                             std::forward_as_tuple(key, address));
-    if (!i.second)
+    MemberMap::insert_commit_data hint;
+    auto result = members.insert_check(key, members.key_comp(), hint);
+    if (result.second) {
+        auto *member = new Member(key, address);
+        members.insert_commit(*member, hint);
+    } else {
         /* update existing member */
-        i.first->second.SetAddress(address);
+        result.first->SetAddress(address);
+    }
 
     dirty = true;
 }
@@ -259,14 +265,14 @@ LbCluster::OnAvahiNewObject(const std::string &key, SocketAddress address)
 void
 LbCluster::OnAvahiRemoveObject(const std::string &key)
 {
-    auto i = members.find(key);
+    auto i = members.find(key, members.key_comp());
     if (i == members.end())
         return;
 
     /* purge this entry from the "failure" map, because it
        will never be used again anyway */
-    failure_manager.Unset(i->second.GetAddress(), FAILURE_OK);
+    failure_manager.Unset(i->GetAddress(), FAILURE_OK);
 
-    members.erase(i);
+    members.erase_and_dispose(i, DeleteDisposer());
     dirty = true;
 }
