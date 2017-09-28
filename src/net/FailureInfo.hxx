@@ -48,6 +48,11 @@ struct FailureInfo {
                           Expiry _expires) noexcept
         :expires(_expires), status(_status) {}
 
+    constexpr bool IsNull() const noexcept {
+        return expires == Expiry::AlreadyExpired() &&
+            fade_expires == Expiry::AlreadyExpired();
+    }
+
     constexpr bool CanExpire() const noexcept {
         return status != FAILURE_MONITOR;
     }
@@ -85,6 +90,8 @@ struct FailureInfo {
 
     bool OverrideStatus(Expiry now, enum failure_status new_status,
                         std::chrono::seconds duration) noexcept;
+
+    void Unset(enum failure_status unset_status) noexcept;
 };
 
 #endif

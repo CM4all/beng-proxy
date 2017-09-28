@@ -75,22 +75,11 @@ FailureManager::Set(SocketAddress address, enum failure_status status,
 inline void
 FailureManager::Unset(Failure &failure, enum failure_status status) noexcept
 {
-    if (status == FAILURE_FADE)
-        failure.fade_expires = Expiry::AlreadyExpired();
+    failure.Unset(status);
 
-    if (!MatchFailureStatus(failure.status, status) && !failure.IsExpired())
-        /* don't update if the current status is more serious than the
-           one to be removed */
-        return;
-
-    if (status != FAILURE_OK && failure.IsFade()) {
-        failure.status = FAILURE_FADE;
-        failure.expires = failure.fade_expires;
-        failure.fade_expires = Expiry::AlreadyExpired();
-    } else {
+    if (failure.IsNull())
         failures.erase_and_dispose(failures.iterator_to(failure),
                                    DeleteDisposer());
-    }
 }
 
 void

@@ -57,3 +57,24 @@ FailureInfo::OverrideStatus(Expiry now,
     status = new_status;
     return true;
 }
+
+void
+FailureInfo::Unset(enum failure_status unset_status) noexcept
+{
+    if (unset_status == FAILURE_FADE)
+        fade_expires = Expiry::AlreadyExpired();
+
+    if (!MatchFailureStatus(status, unset_status) && !IsExpired())
+        /* don't update if the current status is more serious than the
+           one to be removed */
+        return;
+
+    if (unset_status != FAILURE_OK && IsFade()) {
+        status = FAILURE_FADE;
+        expires = fade_expires;
+        fade_expires = Expiry::AlreadyExpired();
+    } else {
+        status = FAILURE_OK;
+        expires = fade_expires = Expiry::AlreadyExpired();
+    }
+}
