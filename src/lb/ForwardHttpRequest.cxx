@@ -259,21 +259,21 @@ LbRequest::GetXHostHash() const
  * failure.
  */
 static unsigned
-generate_cookie(const FailureManager &failure_manager, const AddressList *list)
+GenerateCookie(const FailureManager &failure_manager, const AddressList &list)
 {
-    assert(list->GetSize() >= 2);
+    assert(list.GetSize() >= 2);
 
-    const unsigned first = lb_cookie_generate(list->GetSize());
+    const unsigned first = lb_cookie_generate(list.GetSize());
 
     unsigned i = first;
     do {
-        assert(i >= 1 && i <= list->GetSize());
-        const SocketAddress address = list->addresses[i % list->GetSize()];
+        assert(i >= 1 && i <= list.GetSize());
+        const SocketAddress address = list.addresses[i % list.GetSize()];
         if (failure_manager.Get(address) == FAILURE_OK &&
             bulldog_check(address) && !bulldog_is_fading(address))
             return i;
 
-        i = lb_cookie_next(list->GetSize(), i);
+        i = lb_cookie_next(list.GetSize(), i);
     } while (i != first);
 
     /* all nodes have failed */
@@ -285,8 +285,8 @@ LbRequest::MakeCookieHash()
 {
     unsigned hash = lb_cookie_get(request.headers);
     if (hash == 0)
-        new_cookie = hash = generate_cookie(GetFailureManager(),
-                                            &cluster_config.address_list);
+        new_cookie = hash = GenerateCookie(GetFailureManager(),
+                                           cluster_config.address_list);
 
     return hash;
 }
