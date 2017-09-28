@@ -33,6 +33,7 @@
 #ifndef FAILURE_MANAGER_HXX
 #define FAILURE_MANAGER_HXX
 
+#include "FailureStatus.hxx"
 #include "net/AllocatedSocketAddress.hxx"
 #include "util/Compiler.h"
 #include "util/Expiry.hxx"
@@ -40,34 +41,6 @@
 #include <boost/intrusive/unordered_set.hpp>
 
 #include <chrono>
-
-enum failure_status {
-    /**
-     * No failure, host is ok.
-     */
-    FAILURE_OK,
-
-    /**
-     * Host is being faded out (graceful shutdown).  No new sessions.
-     */
-    FAILURE_FADE,
-
-    /**
-     * A server-side protocol-level failure.
-     */
-    FAILURE_PROTOCOL,
-
-    /**
-     * Failed to connect to the host.
-     */
-    FAILURE_CONNECT,
-
-    /**
-     * The failure was submitted by a "monitor", and will not expire
-     * until the monitor detects recovery.
-     */
-    FAILURE_MONITOR,
-};
 
 /*
  * Remember which servers (socket addresses) failed recently.
