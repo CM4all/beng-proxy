@@ -68,7 +68,7 @@ FailureManager::Set(SocketAddress address, enum failure_status status,
         failures.insert_commit(*failure, hint);
     } else {
         Failure &failure = *result.first;
-        failure.OverrideStatus(now, status, duration);
+        failure.Set(now, status, duration);
     }
 }
 

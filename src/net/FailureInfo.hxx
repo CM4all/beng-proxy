@@ -89,8 +89,15 @@ public:
         return GetStatus(Expiry::Now());
     }
 
-    bool OverrideStatus(Expiry now, enum failure_status new_status,
-                        std::chrono::seconds duration) noexcept;
+    /**
+     * Set the specified failure status, but only if it is not less
+     * severe than the current status.
+     *
+     * @return false if the new status is less severe, and nothing has
+     * changed
+     */
+    bool Set(Expiry now, enum failure_status new_status,
+             std::chrono::seconds duration) noexcept;
 
     void Unset(enum failure_status unset_status) noexcept;
 };

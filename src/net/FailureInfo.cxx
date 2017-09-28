@@ -33,9 +33,9 @@
 #include "FailureInfo.hxx"
 
 bool
-FailureInfo::OverrideStatus(Expiry now,
-                            enum failure_status new_status,
-                            std::chrono::seconds duration) noexcept
+FailureInfo::Set(Expiry now,
+                 enum failure_status new_status,
+                 std::chrono::seconds duration) noexcept
 {
     if (IsExpired(now)) {
         /* expired: override in any case */
