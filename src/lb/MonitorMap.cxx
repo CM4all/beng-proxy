@@ -83,7 +83,7 @@ void
 LbMonitorMap::Enable()
 {
     for (auto &i : map)
-        i.second->Enable();
+        i.second.Enable();
 }
 
 void
@@ -113,17 +113,15 @@ LbMonitorMap::Add(const char *node_name, SocketAddress address,
 
     const AutoRewindPool auto_rewind(*tpool);
 
-    const Key key{config.name.c_str(), node_name, address.GetPort()};
-    auto r = map.insert(std::make_pair(key, nullptr));
-    if (r.second) {
-        /* doesn't exist yet: create it */
-        struct pool *_pool = pool_new_linear(pool, "monitor", 1024);
+    struct pool *_pool = pool_new_linear(pool, "monitor", 1024);
 
-        r.first->second = std::make_unique<LbMonitorController>(event_loop, failure_manager,
-                                                                *_pool, key.ToString(*_pool), config,
-                                                                address, *class_);
-        pool_unref(_pool);
-    }
+    const Key key{config.name.c_str(), node_name, address.GetPort()};
+    map.emplace(std::piecewise_construct,
+                std::forward_as_tuple(key),
+                std::forward_as_tuple(event_loop, failure_manager,
+                                      *_pool, key.ToString(*_pool),
+                                      config, address, *class_));
+    pool_unref(_pool);
 }
 
 void

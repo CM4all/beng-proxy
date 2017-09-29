@@ -33,15 +33,14 @@
 #ifndef BENG_PROXY_LB_HMONITOR_HXX
 #define BENG_PROXY_LB_HMONITOR_HXX
 
+#include "MonitorController.hxx"
 #include "util/Compiler.h"
 
 #include <map>
-#include <memory>
 
 struct pool;
 struct LbNodeConfig;
 struct LbMonitorConfig;
-class LbMonitorController;
 class EventLoop;
 class FailureManager;
 class SocketAddress;
@@ -66,7 +65,7 @@ class LbMonitorMap {
     EventLoop &event_loop;
     FailureManager &failure_manager;
 
-    std::map<Key, std::unique_ptr<LbMonitorController>> map;
+    std::map<Key, LbMonitorController> map;
 
 public:
     LbMonitorMap(struct pool &_pool, EventLoop &_event_loop,
