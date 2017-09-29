@@ -48,7 +48,7 @@ LbInstance::LbInstance(const LbConfig &_config)
     :config(_config),
      avahi_client(event_loop, "beng-lb"),
      goto_map(config, failure_manager, avahi_client),
-     monitors(root_pool),
+     monitors(root_pool, event_loop, failure_manager),
      compress_event(event_loop, BIND_THIS_METHOD(OnCompressTimer)),
      shutdown_listener(event_loop, BIND_THIS_METHOD(ShutdownCallback)),
      sighup_event(event_loop, SIGHUP, BIND_THIS_METHOD(ReloadEventCallback))
@@ -86,8 +86,7 @@ LbInstance::CreateMonitors()
                 return;
 
             for (const auto &member : cluster.members)
-                monitors.Add(*member.node, member.port, *cluster.monitor,
-                             event_loop, failure_manager);
+                monitors.Add(*member.node, member.port, *cluster.monitor);
         });
 }
 

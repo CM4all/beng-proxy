@@ -62,17 +62,20 @@ class LbMonitorMap {
 
     struct pool *const pool;
 
+    EventLoop &event_loop;
+    FailureManager &failure_manager;
+
     std::map<Key, std::unique_ptr<LbMonitorController>> map;
 
 public:
-    LbMonitorMap(struct pool &_pool);
+    LbMonitorMap(struct pool &_pool, EventLoop &_event_loop,
+                 FailureManager &_failure_manager);
     ~LbMonitorMap();
 
     void Enable();
 
     void Add(const LbNodeConfig &node, unsigned port,
-             const LbMonitorConfig &config, EventLoop &event_loop,
-             FailureManager &failure_manager);
+             const LbMonitorConfig &config);
 
     void Clear();
 };

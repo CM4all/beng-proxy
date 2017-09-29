@@ -65,8 +65,10 @@ LbMonitorMap::Key::ToString(struct pool &_pool) const
     return p_sprintf(&_pool, "%s:[%s]:%u", monitor_name, node_name, port);
 }
 
-LbMonitorMap::LbMonitorMap(struct pool &_pool)
-    :pool(pool_new_linear(&_pool, "LbMonitorMap", 4096))
+LbMonitorMap::LbMonitorMap(struct pool &_pool, EventLoop &_event_loop,
+                           FailureManager &_failure_manager)
+    :pool(pool_new_linear(&_pool, "LbMonitorMap", 4096)),
+     event_loop(_event_loop), failure_manager(_failure_manager)
 {
 }
 
@@ -86,8 +88,7 @@ LbMonitorMap::Enable()
 
 void
 LbMonitorMap::Add(const LbNodeConfig &node, unsigned port,
-                  const LbMonitorConfig &config, EventLoop &event_loop,
-                  FailureManager &failure_manager)
+                  const LbMonitorConfig &config)
 {
     const LbMonitorClass *class_ = nullptr;
     switch (config.type) {
