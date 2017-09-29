@@ -38,7 +38,6 @@
 #include "MonitorConfig.hxx"
 #include "ClusterConfig.hxx"
 #include "pool.hxx"
-#include "tpool.hxx"
 #include "net/SocketAddress.hxx"
 
 #include <map>
@@ -110,8 +109,6 @@ LbMonitorMap::Add(const char *node_name, SocketAddress address,
     }
 
     assert(class_ != NULL);
-
-    const AutoRewindPool auto_rewind(*tpool);
 
     struct pool *_pool = pool_new_libc(pool, "monitor");
 
