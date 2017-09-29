@@ -87,7 +87,7 @@ LbMonitorMap::Enable()
 }
 
 void
-LbMonitorMap::Add(const LbNodeConfig &node, unsigned port,
+LbMonitorMap::Add(const char *node_name, SocketAddress address,
                   const LbMonitorConfig &config)
 {
     const LbMonitorClass *class_ = nullptr;
@@ -113,23 +113,28 @@ LbMonitorMap::Add(const LbNodeConfig &node, unsigned port,
 
     const AutoRewindPool auto_rewind(*tpool);
 
-    const Key key{config.name.c_str(), node.name.c_str(), port};
+    const Key key{config.name.c_str(), node_name, address.GetPort()};
     auto r = map.insert(std::make_pair(key, nullptr));
     if (r.second) {
         /* doesn't exist yet: create it */
         struct pool *_pool = pool_new_linear(pool, "monitor", 1024);
 
-        AllocatedSocketAddress address = node.address;
-        if (port > 0)
-            address.SetPort(port);
-
         r.first->second = std::make_unique<LbMonitorController>(event_loop, failure_manager,
                                                                 *_pool, key.ToString(*_pool), config,
-                                                                SocketAddress(address,
-                                                                              node.address.GetSize()),
-                                                                *class_);
+                                                                address, *class_);
         pool_unref(_pool);
     }
+}
+
+void
+LbMonitorMap::Add(const LbNodeConfig &node, unsigned port,
+                  const LbMonitorConfig &config)
+{
+    AllocatedSocketAddress address = node.address;
+    if (port > 0)
+        address.SetPort(port);
+
+    Add(node.name.c_str(), address, config);
 }
 
 void

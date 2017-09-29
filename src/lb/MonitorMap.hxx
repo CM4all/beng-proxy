@@ -44,6 +44,7 @@ struct LbMonitorConfig;
 class LbMonitorController;
 class EventLoop;
 class FailureManager;
+class SocketAddress;
 
 /**
  * Map of monitors.
@@ -73,6 +74,9 @@ public:
     ~LbMonitorMap();
 
     void Enable();
+
+    void Add(const char *node_name, SocketAddress address,
+             const LbMonitorConfig &config);
 
     void Add(const LbNodeConfig &node, unsigned port,
              const LbMonitorConfig &config);
