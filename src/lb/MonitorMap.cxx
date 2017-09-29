@@ -113,7 +113,7 @@ LbMonitorMap::Add(const char *node_name, SocketAddress address,
 
     const AutoRewindPool auto_rewind(*tpool);
 
-    struct pool *_pool = pool_new_linear(pool, "monitor", 1024);
+    struct pool *_pool = pool_new_libc(pool, "monitor");
 
     const Key key{config.name.c_str(), node_name, address.GetPort()};
     map.emplace(std::piecewise_construct,
