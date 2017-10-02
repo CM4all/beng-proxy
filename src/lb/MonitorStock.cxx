@@ -41,21 +41,22 @@
 #include "net/ToString.hxx"
 
 gcc_const
-static const LbMonitorClass *
+static const LbMonitorClass &
 LookupMonitorClass(LbMonitorConfig::Type type)
 {
     switch (type) {
     case LbMonitorConfig::Type::NONE:
-        return nullptr;
+        assert(false);
+        gcc_unreachable();
 
     case LbMonitorConfig::Type::PING:
-        return &ping_monitor_class;
+        return ping_monitor_class;
 
     case LbMonitorConfig::Type::CONNECT:
-        return &syn_monitor_class;
+        return syn_monitor_class;
 
     case LbMonitorConfig::Type::TCP_EXPECT:
-        return &expect_monitor_class;
+        return expect_monitor_class;
     }
 
     gcc_unreachable();
@@ -85,15 +86,11 @@ LbMonitorStock::~LbMonitorStock()
 void
 LbMonitorStock::Add(const char *node_name, SocketAddress address)
 {
-    if (class_ == nullptr)
-        /* nothing to do */
-        return;
-
     map.emplace(std::piecewise_construct,
                 std::forward_as_tuple(ToString(address)),
                 std::forward_as_tuple(event_loop, failure_manager,
                                       node_name,
-                                      config, address, *class_));
+                                      config, address, class_));
 }
 
 void
