@@ -30,7 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "MonitorMap.hxx"
+#include "MonitorStock.hxx"
 #include "MonitorController.hxx"
 #include "PingMonitor.hxx"
 #include "SynMonitor.hxx"
@@ -43,7 +43,7 @@
 #include <string.h>
 
 inline bool
-LbMonitorMap::Key::operator<(const Key &other) const
+LbMonitorStock::Key::operator<(const Key &other) const
 {
     auto r = strcmp(node_name, other.node_name);
     if (r != 0)
@@ -53,25 +53,25 @@ LbMonitorMap::Key::operator<(const Key &other) const
 }
 
 std::string
-LbMonitorMap::Key::ToString(const char *monitor_name) const
+LbMonitorStock::Key::ToString(const char *monitor_name) const
 {
     return StringFormat<1024>("%s:[%s]:%u", monitor_name, node_name, port).c_str();
 }
 
-LbMonitorMap::LbMonitorMap(EventLoop &_event_loop,
-                           FailureManager &_failure_manager,
-                           const LbMonitorConfig &_config)
+LbMonitorStock::LbMonitorStock(EventLoop &_event_loop,
+                               FailureManager &_failure_manager,
+                               const LbMonitorConfig &_config)
     :event_loop(_event_loop), failure_manager(_failure_manager),
      config(_config)
 {
 }
 
-LbMonitorMap::~LbMonitorMap()
+LbMonitorStock::~LbMonitorStock()
 {
 }
 
 void
-LbMonitorMap::Add(const char *node_name, SocketAddress address)
+LbMonitorStock::Add(const char *node_name, SocketAddress address)
 {
     const LbMonitorClass *class_ = nullptr;
     switch (config.type) {
@@ -103,7 +103,7 @@ LbMonitorMap::Add(const char *node_name, SocketAddress address)
 }
 
 void
-LbMonitorMap::Add(const LbNodeConfig &node, unsigned port)
+LbMonitorStock::Add(const LbNodeConfig &node, unsigned port)
 {
     AllocatedSocketAddress address = node.address;
     if (port > 0)

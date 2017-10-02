@@ -35,7 +35,7 @@
 
 #include "PInstance.hxx"
 #include "GotoMap.hxx"
-#include "MonitorMap.hxx"
+#include "MonitorStock.hxx"
 #include "HttpConnection.hxx"
 #include "TcpConnection.hxx"
 #include "event/TimerEvent.hxx"
@@ -77,7 +77,7 @@ struct LbInstance final : PInstance {
 
     std::map<std::string, CertCache> cert_dbs;
 
-    std::map<std::string, LbMonitorMap> monitors;
+    std::map<std::string, LbMonitorStock> monitors;
 
     TimerEvent compress_event;
 
@@ -121,7 +121,7 @@ struct LbInstance final : PInstance {
     struct beng_control_stats GetStats() const noexcept;
 
     gcc_pure
-    LbMonitorMap &MakeMonitor(const LbMonitorConfig &monitor_config);
+    LbMonitorStock &MakeMonitor(const LbMonitorConfig &monitor_config);
 
     /**
      * Create monitors for all members of all active clusters (from

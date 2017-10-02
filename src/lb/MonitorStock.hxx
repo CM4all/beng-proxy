@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_LB_HMONITOR_HXX
-#define BENG_PROXY_LB_HMONITOR_HXX
+#pragma once
 
 #include "MonitorController.hxx"
 #include "util/Compiler.h"
@@ -47,9 +46,10 @@ class FailureManager;
 class SocketAddress;
 
 /**
- * Map of monitors.
+ * A manager for LbMonitorController instances created with one
+ * #LbMonitorConfig for different nodes.
  */
-class LbMonitorMap {
+class LbMonitorStock {
     struct Key {
         const char *node_name;
         unsigned port;
@@ -67,14 +67,12 @@ class LbMonitorMap {
     std::map<Key, LbMonitorController> map;
 
 public:
-    LbMonitorMap(EventLoop &_event_loop,
-                 FailureManager &_failure_manager,
-                 const LbMonitorConfig &_config);
-    ~LbMonitorMap();
+    LbMonitorStock(EventLoop &_event_loop,
+                   FailureManager &_failure_manager,
+                   const LbMonitorConfig &_config);
+    ~LbMonitorStock();
 
     void Add(const char *node_name, SocketAddress address);
 
     void Add(const LbNodeConfig &node, unsigned port);
 };
-
-#endif

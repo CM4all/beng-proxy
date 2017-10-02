@@ -32,7 +32,7 @@
 
 #include "Cluster.hxx"
 #include "ClusterConfig.hxx"
-#include "MonitorMap.hxx"
+#include "MonitorStock.hxx"
 #include "avahi/Explorer.hxx"
 #include "StickyCache.hxx"
 #include "net/FailureManager.hxx"
@@ -91,10 +91,10 @@ LbCluster::~LbCluster()
 }
 
 void
-LbCluster::CreateMonitors(LbMonitorMap &monitor_map)
+LbCluster::CreateMonitors(LbMonitorStock &monitor_stock)
 {
     for (const auto &member : config.members)
-        monitor_map.Add(*member.node, member.port);
+        monitor_stock.Add(*member.node, member.port);
 }
 
 LbCluster::MemberMap::reference

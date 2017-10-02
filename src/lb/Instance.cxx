@@ -73,7 +73,7 @@ LbInstance::InitWorker()
     ConnectCertCaches();
 }
 
-LbMonitorMap &
+LbMonitorStock &
 LbInstance::MakeMonitor(const LbMonitorConfig &monitor_config)
 {
     return monitors

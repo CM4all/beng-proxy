@@ -50,7 +50,7 @@ struct LbConfig;
 struct LbGotoIfConfig;
 struct LbListenerConfig;
 struct LbClusterConfig;
-class LbMonitorMap;
+class LbMonitorStock;
 class FailureManager;
 class MyAvahiClient;
 class StickyCache;
@@ -232,7 +232,7 @@ public:
     /**
      * Create monitors for "static" members.
      */
-    void CreateMonitors(LbMonitorMap &monitor_map);
+    void CreateMonitors(LbMonitorStock &monitor_stock);
 
     gcc_pure
     size_t GetZeroconfCount() {
