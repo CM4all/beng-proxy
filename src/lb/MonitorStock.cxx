@@ -40,6 +40,8 @@
 #include "net/SocketAddress.hxx"
 #include "util/StringFormat.hxx"
 
+#include <string>
+
 #include <string.h>
 
 inline bool
@@ -52,8 +54,8 @@ LbMonitorStock::Key::operator<(const Key &other) const
     return port < other.port;
 }
 
-std::string
-LbMonitorStock::Key::ToString(const char *monitor_name) const
+static std::string
+MakeName(const char *monitor_name, const char *node_name, unsigned port)
 {
     return StringFormat<1024>("%s:[%s]:%u", monitor_name, node_name, port).c_str();
 }
@@ -98,7 +100,8 @@ LbMonitorStock::Add(const char *node_name, SocketAddress address)
     map.emplace(std::piecewise_construct,
                 std::forward_as_tuple(key),
                 std::forward_as_tuple(event_loop, failure_manager,
-                                      key.ToString(config.name.c_str()),
+                                      MakeName(config.name.c_str(), node_name,
+                                               address.GetPort()),
                                       config, address, *class_));
 }
 

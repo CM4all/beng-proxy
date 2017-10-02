@@ -36,7 +36,6 @@
 #include "util/Compiler.h"
 
 #include <map>
-#include <string>
 
 struct pool;
 struct LbNodeConfig;
@@ -56,8 +55,6 @@ class LbMonitorStock {
 
         gcc_pure
         bool operator<(const Key &other) const;
-
-        std::string ToString(const char *monitor_name) const;
     };
 
     EventLoop &event_loop;
