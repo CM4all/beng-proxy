@@ -223,31 +223,36 @@ ping_available(void)
     return true;
 }
 
-void
-ping(EventLoop &event_loop, struct pool &pool, SocketAddress address,
-     PingClientHandler &handler,
-     CancellablePointer &cancel_ptr)
+static UniqueSocketDescriptor
+CreateIcmp()
 {
     UniqueSocketDescriptor fd;
-    if (!fd.CreateNonBlock(AF_INET, SOCK_DGRAM, IPPROTO_ICMP)) {
-        handler.PingError(std::make_exception_ptr(MakeErrno("Failed to create ping socket")));
-        return;
-    }
+    if (!fd.CreateNonBlock(AF_INET, SOCK_DGRAM, IPPROTO_ICMP))
+        throw MakeErrno("Failed to create ICMP socket");
 
-    const IPv4Address bind_address(0);
+    return fd;
+}
+
+static uint16_t
+MakeIdent(SocketDescriptor fd)
+{
+    if (!fd.Bind(IPv4Address(0)))
+        throw MakeErrno("Failed to bind ICMP socket");
 
     struct sockaddr_in sin;
     sin.sin_family = AF_INET;
     sin.sin_addr.s_addr = 0;
     socklen_t sin_length = sizeof(sin);
-    if (!fd.Bind(bind_address) ||
-        getsockname(fd.Get(), (struct sockaddr *)&sin, &sin_length) < 0) {
-        handler.PingError(std::make_exception_ptr(MakeErrno()));
-        return;
-    }
 
-    uint16_t ident = sin.sin_port;
+    if (getsockname(fd.Get(), (struct sockaddr *)&sin, &sin_length) < 0)
+        throw MakeErrno("Failed to inspect ICMP socket");
 
+    return sin.sin_port;
+}
+
+static void
+SendPing(SocketDescriptor fd, SocketAddress address, uint16_t ident)
+{
     struct {
         struct icmphdr header;
         char data[8];
@@ -277,8 +282,24 @@ ping(EventLoop &event_loop, struct pool &pool, SocketAddress address,
     };
 
     ssize_t nbytes = sendmsg(fd.Get(), &m, 0);
-    if (nbytes < 0) {
-        handler.PingError(std::make_exception_ptr(MakeErrno()));
+    if (nbytes < 0)
+        throw MakeErrno("Failed to send ICMP_ECHO datagram");
+}
+
+void
+ping(EventLoop &event_loop, struct pool &pool, SocketAddress address,
+     PingClientHandler &handler,
+     CancellablePointer &cancel_ptr)
+{
+    UniqueSocketDescriptor fd;
+    uint16_t ident;
+
+    try {
+        fd = CreateIcmp();
+        ident = MakeIdent(fd);
+        SendPing(fd, address, ident);
+    } catch (...) {
+        handler.PingError(std::current_exception());
         return;
     }
 
