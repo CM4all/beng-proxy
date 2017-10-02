@@ -56,6 +56,9 @@ public:
 
     ~LbMonitorManager();
 
+    LbMonitorManager(const LbMonitorManager &) = delete;
+    LbMonitorManager &operator=(const LbMonitorManager &) = delete;
+
     void clear();
 
     gcc_pure

@@ -61,6 +61,9 @@ public:
                    const LbMonitorConfig &_config);
     ~LbMonitorStock();
 
+    LbMonitorStock(const LbMonitorStock &) = delete;
+    LbMonitorStock &operator=(const LbMonitorStock &) = delete;
+
     void Add(const char *node_name, SocketAddress address);
 
     void Add(const LbNodeConfig &node, unsigned port);

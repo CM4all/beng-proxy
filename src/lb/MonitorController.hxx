@@ -78,6 +78,9 @@ public:
 
     ~LbMonitorController();
 
+    LbMonitorController(const LbMonitorController &) = delete;
+    LbMonitorController &operator=(const LbMonitorController &) = delete;
+
 private:
     void IntervalCallback();
     void TimeoutCallback();
