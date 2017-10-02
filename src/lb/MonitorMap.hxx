@@ -51,35 +51,32 @@ class SocketAddress;
  */
 class LbMonitorMap {
     struct Key {
-        const char *monitor_name;
         const char *node_name;
         unsigned port;
 
         gcc_pure
         bool operator<(const Key &other) const;
 
-        std::string ToString() const;
+        std::string ToString(const char *monitor_name) const;
     };
 
     EventLoop &event_loop;
     FailureManager &failure_manager;
+    const LbMonitorConfig &config;
 
     std::map<Key, LbMonitorController> map;
 
 public:
     LbMonitorMap(EventLoop &_event_loop,
-                 FailureManager &_failure_manager);
+                 FailureManager &_failure_manager,
+                 const LbMonitorConfig &_config);
     ~LbMonitorMap();
 
     void Enable();
 
-    void Add(const char *node_name, SocketAddress address,
-             const LbMonitorConfig &config);
+    void Add(const char *node_name, SocketAddress address);
 
-    void Add(const LbNodeConfig &node, unsigned port,
-             const LbMonitorConfig &config);
-
-    void Clear();
+    void Add(const LbNodeConfig &node, unsigned port);
 };
 
 #endif

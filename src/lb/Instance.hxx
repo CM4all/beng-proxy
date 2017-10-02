@@ -77,7 +77,7 @@ struct LbInstance final : PInstance {
 
     std::map<std::string, CertCache> cert_dbs;
 
-    LbMonitorMap monitors;
+    std::map<std::string, LbMonitorMap> monitors;
 
     TimerEvent compress_event;
 
@@ -119,6 +119,9 @@ struct LbInstance final : PInstance {
 
     gcc_pure
     struct beng_control_stats GetStats() const noexcept;
+
+    gcc_pure
+    LbMonitorMap &MakeMonitor(const LbMonitorConfig &monitor_config);
 
     /**
      * Create monitors for all members of all active clusters (from

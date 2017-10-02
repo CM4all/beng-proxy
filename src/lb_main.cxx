@@ -109,7 +109,7 @@ LbInstance::ShutdownCallback()
 
     thread_pool_join();
 
-    monitors.Clear();
+    monitors.clear();
 
     pool_commit();
 

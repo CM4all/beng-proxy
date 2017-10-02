@@ -40,18 +40,12 @@
 #include "net/SocketAddress.hxx"
 #include "util/StringFormat.hxx"
 
-#include <map>
-
 #include <string.h>
 
 inline bool
 LbMonitorMap::Key::operator<(const Key &other) const
 {
-    auto r = strcmp(monitor_name, other.monitor_name);
-    if (r != 0)
-        return r < 0;
-
-    r = strcmp(node_name, other.node_name);
+    auto r = strcmp(node_name, other.node_name);
     if (r != 0)
         return r < 0;
 
@@ -59,20 +53,21 @@ LbMonitorMap::Key::operator<(const Key &other) const
 }
 
 std::string
-LbMonitorMap::Key::ToString() const
+LbMonitorMap::Key::ToString(const char *monitor_name) const
 {
     return StringFormat<1024>("%s:[%s]:%u", monitor_name, node_name, port).c_str();
 }
 
 LbMonitorMap::LbMonitorMap(EventLoop &_event_loop,
-                           FailureManager &_failure_manager)
-    :event_loop(_event_loop), failure_manager(_failure_manager)
+                           FailureManager &_failure_manager,
+                           const LbMonitorConfig &_config)
+    :event_loop(_event_loop), failure_manager(_failure_manager),
+     config(_config)
 {
 }
 
 LbMonitorMap::~LbMonitorMap()
 {
-    Clear();
 }
 
 void
@@ -83,8 +78,7 @@ LbMonitorMap::Enable()
 }
 
 void
-LbMonitorMap::Add(const char *node_name, SocketAddress address,
-                  const LbMonitorConfig &config)
+LbMonitorMap::Add(const char *node_name, SocketAddress address)
 {
     const LbMonitorClass *class_ = nullptr;
     switch (config.type) {
@@ -107,27 +101,20 @@ LbMonitorMap::Add(const char *node_name, SocketAddress address,
 
     assert(class_ != NULL);
 
-    const Key key{config.name.c_str(), node_name, address.GetPort()};
+    const Key key{node_name, address.GetPort()};
     map.emplace(std::piecewise_construct,
                 std::forward_as_tuple(key),
                 std::forward_as_tuple(event_loop, failure_manager,
-                                      key.ToString(),
+                                      key.ToString(config.name.c_str()),
                                       config, address, *class_));
 }
 
 void
-LbMonitorMap::Add(const LbNodeConfig &node, unsigned port,
-                  const LbMonitorConfig &config)
+LbMonitorMap::Add(const LbNodeConfig &node, unsigned port)
 {
     AllocatedSocketAddress address = node.address;
     if (port > 0)
         address.SetPort(port);
 
-    Add(node.name.c_str(), address, config);
-}
-
-void
-LbMonitorMap::Clear()
-{
-    map.clear();
+    Add(node.name.c_str(), address);
 }
