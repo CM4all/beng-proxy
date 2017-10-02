@@ -48,6 +48,7 @@ LbInstance::LbInstance(const LbConfig &_config)
     :config(_config),
      avahi_client(event_loop, "beng-lb"),
      goto_map(config, failure_manager, avahi_client),
+     monitors(event_loop, failure_manager),
      compress_event(event_loop, BIND_THIS_METHOD(OnCompressTimer)),
      shutdown_listener(event_loop, BIND_THIS_METHOD(ShutdownCallback)),
      sighup_event(event_loop, SIGHUP, BIND_THIS_METHOD(ReloadEventCallback))
@@ -73,18 +74,6 @@ LbInstance::InitWorker()
     ConnectCertCaches();
 }
 
-LbMonitorStock &
-LbInstance::MakeMonitor(const LbMonitorConfig &monitor_config)
-{
-    return monitors
-        .emplace(std::piecewise_construct,
-                 std::forward_as_tuple(monitor_config.name),
-                 std::forward_as_tuple(event_loop,
-                                       failure_manager,
-                                       monitor_config))
-        .first->second;
-}
-
 void
 LbInstance::CreateMonitors()
 {
@@ -93,7 +82,7 @@ LbInstance::CreateMonitors()
             if (cluster.monitor == nullptr)
                 return;
 
-            _cluster.CreateMonitors(MakeMonitor(*cluster.monitor));
+            _cluster.CreateMonitors(monitors[*cluster.monitor]);
         });
 }
 
