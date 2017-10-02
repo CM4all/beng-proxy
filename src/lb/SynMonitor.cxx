@@ -33,33 +33,59 @@
 #include "SynMonitor.hxx"
 #include "Monitor.hxx"
 #include "MonitorConfig.hxx"
-#include "pool.hxx"
-#include "net/PConnectSocket.hxx"
+#include "event/Duration.hxx"
+#include "net/ConnectSocket.hxx"
 #include "net/SocketAddress.hxx"
 #include "util/Cancellable.hxx"
 
 #include <unistd.h>
 #include <sys/socket.h>
 
-class LbSynMonitor final : public ConnectSocketHandler {
+class LbSynMonitor final : ConnectSocketHandler, Cancellable {
+    ConnectSocket connect;
+
     LbMonitorHandler &handler;
 
 public:
-    explicit LbSynMonitor(LbMonitorHandler &_handler):handler(_handler) {}
+    LbSynMonitor(EventLoop &event_loop,
+                 LbMonitorHandler &_handler)
+        :connect(event_loop, *this),
+         handler(_handler) {}
+
+    void Start(const LbMonitorConfig &config, SocketAddress address,
+               CancellablePointer &cancel_ptr) {
+        cancel_ptr = *this;
+
+        const unsigned timeout = config.timeout > 0
+            ? config.timeout
+            : 30;
+
+        connect.Connect(address,
+                        ToEventDuration(std::chrono::seconds(timeout)));
+    }
+
+private:
+    /* virtual methods from class Cancellable */
+    void Cancel() override {
+        delete this;
+    }
 
     /* virtual methods from class ConnectSocketHandler */
     void OnSocketConnectSuccess(UniqueSocketDescriptor &&) override {
         /* ignore the socket, we don't need it */
 
         handler.Success();
+        delete this;
     }
 
     void OnSocketConnectTimeout() override {
         handler.Timeout();
+        delete this;
     }
 
     void OnSocketConnectError(std::exception_ptr ep) override {
         handler.Error(ep);
+        delete this;
     }
 };
 
@@ -69,24 +95,14 @@ public:
  */
 
 static void
-syn_monitor_run(EventLoop &event_loop, struct pool &pool,
+syn_monitor_run(EventLoop &event_loop, struct pool &,
                 const LbMonitorConfig &config,
                 SocketAddress address,
                 LbMonitorHandler &handler,
                 CancellablePointer &cancel_ptr)
 {
-    const unsigned timeout = config.timeout > 0
-        ? config.timeout
-        : 30;
-
-    auto *syn = NewFromPool<LbSynMonitor>(pool, handler);
-    client_socket_new(event_loop, pool, address.GetFamily(), SOCK_STREAM, 0,
-                      false,
-                      SocketAddress::Null(),
-                      address,
-                      timeout,
-                      *syn,
-                      cancel_ptr);
+    auto *syn = new LbSynMonitor(event_loop, handler);
+    syn->Start(config, address, cancel_ptr);
 }
 
 const LbMonitorClass syn_monitor_class = {

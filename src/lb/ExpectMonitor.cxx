@@ -35,7 +35,7 @@
 #include "MonitorConfig.hxx"
 #include "pool.hxx"
 #include "system/Error.hxx"
-#include "net/PConnectSocket.hxx"
+#include "net/ConnectSocket.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
 #include "event/SocketEvent.hxx"
@@ -49,8 +49,9 @@
 #include <errno.h>
 
 struct ExpectMonitor final : ConnectSocketHandler, Cancellable {
-    struct pool &pool;
     const LbMonitorConfig &config;
+
+    ConnectSocket connect;
 
     int fd;
 
@@ -64,19 +65,29 @@ struct ExpectMonitor final : ConnectSocketHandler, Cancellable {
 
     LbMonitorHandler &handler;
 
-    CancellablePointer &cancel_ptr;
-
     ExpectMonitor(EventLoop &event_loop,
-                  struct pool &_pool, const LbMonitorConfig &_config,
-                  LbMonitorHandler &_handler,
-                  CancellablePointer &_cancel_ptr)
-        :pool(_pool), config(_config),
-         event(event_loop, BIND_THIS_METHOD(EventCallback)),
+                  const LbMonitorConfig &_config,
+                  LbMonitorHandler &_handler)
+        :config(_config),
+         connect(event_loop, *this),
+         event(event_loop, -1, 0, BIND_THIS_METHOD(EventCallback)),
          delay_event(event_loop, BIND_THIS_METHOD(DelayCallback)),
-         handler(_handler),
-         cancel_ptr(_cancel_ptr) {}
+         handler(_handler) {}
 
     ExpectMonitor(const ExpectMonitor &other) = delete;
+
+    void Start(SocketAddress address, CancellablePointer &cancel_ptr) {
+        cancel_ptr = *this;
+
+        const unsigned timeout = config.connect_timeout > 0
+            ? config.connect_timeout
+            : (config.timeout > 0
+               ? config.timeout
+               : 30);
+
+        connect.Connect(address,
+                        ToEventDuration(std::chrono::seconds(timeout)));
+    }
 
     /* virtual methods from class Cancellable */
     void Cancel() override;
@@ -117,7 +128,6 @@ ExpectMonitor::Cancel()
     event.Delete();
     delay_event.Cancel();
     close(fd);
-    pool_unref(&pool);
     delete this;
 }
 
@@ -138,7 +148,6 @@ ExpectMonitor::EventCallback(unsigned events)
         return;
     }
 
-    pool_unref(&pool);
     delete this;
 }
 
@@ -168,7 +177,6 @@ ExpectMonitor::DelayCallback()
         handler.Error(std::make_exception_ptr(std::runtime_error("Expectation failed")));
     }
 
-    pool_unref(&pool);
     delete this;
 }
 
@@ -198,10 +206,6 @@ ExpectMonitor::OnSocketConnectSuccess(UniqueSocketDescriptor &&new_fd)
     fd = new_fd.Steal();
     event.Set(fd, SocketEvent::READ);
     event.Add(expect_timeout);
-
-    cancel_ptr = *this;
-
-    pool_ref(&pool);
 }
 
 /*
@@ -210,28 +214,16 @@ ExpectMonitor::OnSocketConnectSuccess(UniqueSocketDescriptor &&new_fd)
  */
 
 static void
-expect_monitor_run(EventLoop &event_loop, struct pool &pool,
+expect_monitor_run(EventLoop &event_loop, struct pool &,
                    const LbMonitorConfig &config,
                    SocketAddress address,
                    LbMonitorHandler &handler,
                    CancellablePointer &cancel_ptr)
 {
-    ExpectMonitor *expect = new ExpectMonitor(event_loop, pool, config,
-                                              handler,
-                                              cancel_ptr);
+    ExpectMonitor *expect = new ExpectMonitor(event_loop, config,
+                                              handler);
 
-    const unsigned connect_timeout = config.connect_timeout > 0
-        ? config.connect_timeout
-        : (config.timeout > 0
-           ? config.timeout
-           : 30);
-
-    client_socket_new(event_loop, pool, address.GetFamily(), SOCK_STREAM, 0,
-                      false,
-                      SocketAddress::Null(),
-                      address,
-                      connect_timeout,
-                      *expect, cancel_ptr);
+    expect->Start(address, cancel_ptr);
 }
 
 const LbMonitorClass expect_monitor_class = {
