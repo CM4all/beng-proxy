@@ -52,7 +52,7 @@ class ExpectMonitor final : ConnectSocketHandler, Cancellable {
 
     ConnectSocket connect;
 
-    int fd = -1;
+    SocketDescriptor fd = SocketDescriptor::Undefined();
 
     SocketEvent event;
 
@@ -126,10 +126,10 @@ check_expectation(char *received, size_t received_length,
 void
 ExpectMonitor::Cancel()
 {
-    if (fd >= 0) {
+    if (fd.IsDefined()) {
         event.Delete();
         delay_event.Cancel();
-        close(fd);
+        fd.Close();
     }
 
     delete this;
@@ -144,7 +144,7 @@ inline void
 ExpectMonitor::EventCallback(unsigned events)
 {
     if (events & SocketEvent::TIMEOUT) {
-        close(fd);
+        fd.Close();
         handler.Timeout();
     } else {
         /* wait 10ms before we start reading */
@@ -160,24 +160,24 @@ ExpectMonitor::DelayCallback()
 {
     char buffer[1024];
 
-    ssize_t nbytes = recv(fd, buffer, sizeof(buffer),
+    ssize_t nbytes = recv(fd.Get(), buffer, sizeof(buffer),
                           MSG_DONTWAIT);
     if (nbytes < 0) {
         auto e = MakeErrno("Failed to receive");
-        close(fd);
+        fd.Close();
         handler.Error(std::make_exception_ptr(e));
     } else if (!config.fade_expect.empty() &&
                check_expectation(buffer, nbytes,
                                  config.fade_expect.c_str())) {
-        close(fd);
+        fd.Close();
         handler.Fade();
     } else if (config.expect.empty() ||
                check_expectation(buffer, nbytes,
                                  config.expect.c_str())) {
-        close(fd);
+        fd.Close();
         handler.Success();
     } else {
-        close(fd);
+        fd.Close();
         handler.Error(std::make_exception_ptr(std::runtime_error("Expectation failed")));
     }
 
@@ -208,8 +208,8 @@ ExpectMonitor::OnSocketConnectSuccess(UniqueSocketDescriptor &&new_fd)
         0,
     };
 
-    fd = new_fd.Steal();
-    event.Set(fd, SocketEvent::READ);
+    fd = new_fd.Release();
+    event.Set(fd.Get(), SocketEvent::READ);
     event.Add(expect_timeout);
 }
 
