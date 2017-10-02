@@ -31,14 +31,10 @@
  */
 
 #include "Ping.hxx"
-#include "pool.hxx"
 #include "system/Error.hxx"
 #include "net/IPv4Address.hxx"
 #include "net/SocketAddress.hxx"
-#include "net/UniqueSocketDescriptor.hxx"
-#include "event/SocketEvent.hxx"
 #include "event/Duration.hxx"
-#include "util/Cancellable.hxx"
 
 #include <sys/socket.h>
 #include <errno.h>
@@ -47,45 +43,23 @@
 #include <netinet/ip_icmp.h>
 #include <unistd.h>
 
-class PingClient final : Cancellable {
-    struct pool &pool;
+PingClient::PingClient(EventLoop &event_loop, struct pool &_pool,
+                       UniqueSocketDescriptor &&_fd, uint16_t _ident,
+                       PingClientHandler &_handler,
+                       CancellablePointer &cancel_ptr)
+    :pool(_pool), fd(std::move(_fd)), ident(_ident),
+     event(event_loop, fd.Get(), SocketEvent::READ,
+           BIND_THIS_METHOD(EventCallback)),
+     handler(_handler)
+{
+    cancel_ptr = *this;
+}
 
-    UniqueSocketDescriptor fd;
-
-    const uint16_t ident;
-
-    SocketEvent event;
-
-    PingClientHandler &handler;
-
-public:
-    PingClient(EventLoop &event_loop, struct pool &_pool,
-               UniqueSocketDescriptor &&_fd, uint16_t _ident,
-               PingClientHandler &_handler,
-               CancellablePointer &cancel_ptr)
-        :pool(_pool), fd(std::move(_fd)), ident(_ident),
-         event(event_loop, fd.Get(), SocketEvent::READ,
-               BIND_THIS_METHOD(EventCallback)),
-         handler(_handler) {
-        cancel_ptr = *this;
-    }
-
-    void Destroy() {
-        DeleteUnrefPool(pool, this);
-    }
-
-    void ScheduleRead() {
-        event.Add(EventDuration<10>::value);
-    }
-
-private:
-    void EventCallback(unsigned events);
-
-    void Read();
-
-    /* virtual methods from class Cancellable */
-    void Cancel() override;
-};
+inline void
+PingClient::ScheduleRead()
+{
+    event.Add(EventDuration<10>::value);
+}
 
 static u_short
 in_cksum(const u_short *addr, register int len, u_short csum)
