@@ -36,8 +36,8 @@
 #include "util/Compiler.h"
 
 #include <map>
+#include <string>
 
-struct pool;
 struct LbNodeConfig;
 struct LbMonitorConfig;
 class EventLoop;
@@ -49,19 +49,11 @@ class SocketAddress;
  * #LbMonitorConfig for different nodes.
  */
 class LbMonitorStock {
-    struct Key {
-        const char *node_name;
-        unsigned port;
-
-        gcc_pure
-        bool operator<(const Key &other) const;
-    };
-
     EventLoop &event_loop;
     FailureManager &failure_manager;
     const LbMonitorConfig &config;
 
-    std::map<Key, LbMonitorController> map;
+    std::map<std::string, LbMonitorController> map;
 
 public:
     LbMonitorStock(EventLoop &_event_loop,

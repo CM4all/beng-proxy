@@ -38,20 +38,16 @@
 #include "MonitorConfig.hxx"
 #include "ClusterConfig.hxx"
 #include "net/SocketAddress.hxx"
+#include "net/ToString.hxx"
 #include "util/StringFormat.hxx"
 
-#include <string>
-
-#include <string.h>
-
-inline bool
-LbMonitorStock::Key::operator<(const Key &other) const
+static std::string
+ToString(SocketAddress address)
 {
-    auto r = strcmp(node_name, other.node_name);
-    if (r != 0)
-        return r < 0;
-
-    return port < other.port;
+    char buffer[4096];
+    return ToString(buffer, sizeof(buffer), address)
+        ? buffer
+        : "unknown";
 }
 
 static std::string
@@ -96,9 +92,8 @@ LbMonitorStock::Add(const char *node_name, SocketAddress address)
 
     assert(class_ != NULL);
 
-    const Key key{node_name, address.GetPort()};
     map.emplace(std::piecewise_construct,
-                std::forward_as_tuple(key),
+                std::forward_as_tuple(ToString(address)),
                 std::forward_as_tuple(event_loop, failure_manager,
                                       MakeName(config.name.c_str(), node_name,
                                                address.GetPort()),
