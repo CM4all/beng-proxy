@@ -51,7 +51,6 @@ class LbMonitorController final : public LbMonitorHandler {
     EventLoop &event_loop;
     FailureRef failure;
 
-    const std::string name;
     const LbMonitorConfig &config;
     const AllocatedSocketAddress address;
     const LbMonitorClass &class_;
