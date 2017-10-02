@@ -40,6 +40,8 @@
 #include "net/SocketAddress.hxx"
 #include "net/ToString.hxx"
 
+#include <assert.h>
+
 gcc_const
 static const LbMonitorClass &
 LookupMonitorClass(LbMonitorConfig::Type type)
@@ -102,4 +104,13 @@ LbMonitorStock::Add(const LbNodeConfig &node, unsigned port)
         address.SetPort(port);
 
     return Add(node.name.c_str(), address);
+}
+
+void
+LbMonitorStock::Remove(LbMonitorController &m) noexcept
+{
+    auto i = map.find(ToString(m.GetAddress()));
+    assert(i != map.end());
+    assert(&i->second == &m);
+    map.erase(i);
 }

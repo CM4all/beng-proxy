@@ -67,4 +67,6 @@ public:
     LbMonitorController &Add(const char *node_name, SocketAddress address);
 
     LbMonitorController &Add(const LbNodeConfig &node, unsigned port);
+
+    void Remove(LbMonitorController &m) noexcept;
 };

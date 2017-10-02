@@ -81,6 +81,10 @@ public:
     LbMonitorController(const LbMonitorController &) = delete;
     LbMonitorController &operator=(const LbMonitorController &) = delete;
 
+    const SocketAddress GetAddress() const {
+        return address;
+    }
+
 private:
     void IntervalCallback();
     void TimeoutCallback();
