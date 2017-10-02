@@ -111,6 +111,12 @@ enum beng_log_attribute {
      * access logging.
      */
     LOG_MESSAGE,
+
+    /**
+     * The (string) address of the host which this request has been
+     * forwarded to.
+     */
+    LOG_FORWARDED_TO,
 };
 
 /**

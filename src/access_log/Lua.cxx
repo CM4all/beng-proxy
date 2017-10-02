@@ -139,6 +139,9 @@ try {
     if (d.site != nullptr)
         Lua::SetTable(L, -3, "site", d.site);
 
+    if (d.forwarded_to != nullptr)
+        Lua::SetTable(L, -3, "forwarded_to", d.forwarded_to);
+
     if (d.valid_http_method)
         Lua::SetTable(L, -3, "http_method", http_method_to_string(d.http_method));
 

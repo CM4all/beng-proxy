@@ -76,6 +76,9 @@ ToJson(const ReceivedAccessLogDatagram &d)
     if (d.site != nullptr)
         root["site"] = d.site;
 
+    if (d.forwarded_to != nullptr)
+        root["forwarded_to"] = d.forwarded_to;
+
     if (d.valid_http_method &&
         http_method_is_valid(d.http_method))
         root["method"] = http_method_to_string(d.http_method);

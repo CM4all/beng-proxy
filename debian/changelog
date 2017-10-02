@@ -2,6 +2,7 @@ cm4all-beng-proxy (13.0.9) unstable; urgency=low
 
   * lb: support monitors in Zeroconf clusters
   * lb/monitor/expect: fix memory leak
+  * log: add attribute "FORWARDED_TO"
 
  --   
 

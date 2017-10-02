@@ -130,6 +130,10 @@ log_server_apply_attributes(AccessLogDatagram *datagram, const void *p,
             p = read_string(&datagram->remote_host, p, end);
             break;
 
+        case LOG_FORWARDED_TO:
+            p = read_string(&datagram->forwarded_to, p, end);
+            break;
+
         case LOG_HOST:
             p = read_string(&datagram->host, p, end);
             break;

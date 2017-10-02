@@ -104,6 +104,9 @@ LogClient::Send(const AccessLogDatagram &d)
     if (d.site != nullptr)
         AppendString(LOG_SITE, d.site);
 
+    if (d.forwarded_to != nullptr)
+        AppendString(LOG_FORWARDED_TO, d.forwarded_to);
+
     if (d.valid_http_method)
         AppendU8(LOG_HTTP_METHOD, d.http_method);
 

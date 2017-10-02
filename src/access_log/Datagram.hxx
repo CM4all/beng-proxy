@@ -46,6 +46,8 @@ struct AccessLogDatagram {
 
     const char *remote_host, *host, *site;
 
+    const char *forwarded_to;
+
     http_method_t http_method;
 
     const char *http_uri, *http_referer, *user_agent;
@@ -76,6 +78,7 @@ struct AccessLogDatagram {
                       std::chrono::steady_clock::duration _duration) noexcept
         :timestamp(ExportTimestamp(_timestamp)),
          remote_host(_remote_host), host(_host), site(_site),
+         forwarded_to(nullptr),
          http_method(_method),
          http_uri(_uri), http_referer(_referer), user_agent(_user_agent),
          message(nullptr),
@@ -90,6 +93,7 @@ struct AccessLogDatagram {
 
     explicit AccessLogDatagram(StringView _message) noexcept
         :remote_host(nullptr), host(nullptr), site(nullptr),
+         forwarded_to(nullptr),
          http_uri(nullptr), http_referer(nullptr), user_agent(nullptr),
          message(_message),
          valid_timestamp(false),
