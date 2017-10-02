@@ -68,6 +68,8 @@ class LbMonitorController final : public LbMonitorHandler {
     bool state = true;
     bool fade = false;
 
+    unsigned ref = 0;
+
 public:
     LbMonitorController(EventLoop &_event_loop,
                         FailureManager &_failure_manager,
@@ -80,6 +82,18 @@ public:
 
     LbMonitorController(const LbMonitorController &) = delete;
     LbMonitorController &operator=(const LbMonitorController &) = delete;
+
+    void Ref() noexcept {
+        ++ref;
+    }
+
+    /**
+     * @return true if the reference counter has dropped to 0 (and the
+     * object can be deleted)
+     */
+    bool Unref() noexcept {
+        return --ref == 0;
+    }
 
     const SocketAddress GetAddress() const {
         return address;
