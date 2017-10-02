@@ -32,6 +32,7 @@
 
 #include "HttpConnection.hxx"
 #include "GotoConfig.hxx"
+#include "TranslationHandler.hxx"
 #include "Instance.hxx"
 #include "Config.hxx"
 #include "http_server/http_server.hxx"

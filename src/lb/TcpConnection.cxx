@@ -31,6 +31,7 @@
  */
 
 #include "TcpConnection.hxx"
+#include "Cluster.hxx"
 #include "ClusterConfig.hxx"
 #include "ListenerConfig.hxx"
 #include "Instance.hxx"

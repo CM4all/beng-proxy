@@ -31,6 +31,7 @@
  */
 
 #include "TranslationCache.hxx"
+#include "TranslationHandler.hxx"
 #include "http_server/Request.hxx"
 #include "translation/InvalidateParser.hxx"
 #include "translation/Response.hxx"

@@ -32,10 +32,33 @@
 
 #include "GotoMap.hxx"
 #include "Goto.hxx"
+#include "Cluster.hxx"
+#include "Branch.hxx"
+#include "TranslationHandler.hxx"
+#include "LuaHandler.hxx"
 #include "Config.hxx"
 #include "LuaInitHook.hxx"
 #include "MonitorManager.hxx"
 #include "avahi/Client.hxx"
+
+LbGotoMap::LbGotoMap(const LbConfig &_config,
+                     FailureManager &_failure_manager,
+                     LbMonitorManager &_monitors,
+                     MyAvahiClient &_avahi_client)
+    :root_config(_config), failure_manager(_failure_manager),
+     monitors(_monitors),
+     avahi_client(_avahi_client),
+     lua_init_hook(this) {}
+
+LbGotoMap::~LbGotoMap() noexcept
+{
+}
+
+void
+LbGotoMap::Clear()
+{
+    translation_handlers.clear();
+}
 
 void
 LbGotoMap::FlushCaches()

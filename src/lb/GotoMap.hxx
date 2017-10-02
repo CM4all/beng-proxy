@@ -33,17 +33,25 @@
 #ifndef BENG_LB_GOTO_MAP_HXX
 #define BENG_LB_GOTO_MAP_HXX
 
-#include "Cluster.hxx"
-#include "Branch.hxx"
-#include "TranslationHandler.hxx"
-#include "LuaHandler.hxx"
 #include "LuaInitHook.hxx"
+#include "util/Compiler.h"
 
 #include <map>
 
+struct LbConfig;
 struct LbGoto;
 struct LbGotoConfig;
+struct LbClusterConfig;
+struct LbBranchConfig;
+struct LbTranslationHandlerConfig;
+struct LbLuaHandlerConfig;
 struct TranslationInvalidateRequest;
+class FailureManager;
+class MyAvahiClient;
+class LbCluster;
+class LbBranch;
+class LbTranslationHandler;
+class LbLuaHandler;
 class LbMonitorManager;
 
 class LbGotoMap final {
@@ -65,18 +73,14 @@ public:
     LbGotoMap(const LbConfig &_config,
               FailureManager &_failure_manager,
               LbMonitorManager &_monitors,
-              MyAvahiClient &_avahi_client)
-        :root_config(_config), failure_manager(_failure_manager),
-         monitors(_monitors),
-         avahi_client(_avahi_client),
-         lua_init_hook(this) {}
+              MyAvahiClient &_avahi_client);
+
+    ~LbGotoMap() noexcept;
 
     LbGotoMap(const LbGotoMap &) = delete;
     LbGotoMap &operator=(const LbGotoMap &) = delete;
 
-    void Clear() {
-        translation_handlers.clear();
-    }
+    void Clear();
 
     void FlushCaches();
     void InvalidateTranslationCaches(const TranslationInvalidateRequest &request);
