@@ -2966,6 +2966,12 @@ includes all extra data such as headers. \\
 seconds. \\
 
 \hline
+
+\verb|message| & An opaque one-line message (without a trailing
+newline character).  This is used for error logging, not for HTTP
+access logging. \\
+
+\hline
 \end{longtabu*}
 
 The Lua logger can also be used to filter requests being forwarded to
