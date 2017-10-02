@@ -48,7 +48,7 @@
 #include <string.h>
 #include <errno.h>
 
-struct ExpectMonitor final : ConnectSocketHandler, Cancellable {
+class ExpectMonitor final : ConnectSocketHandler, Cancellable {
     const LbMonitorConfig &config;
 
     ConnectSocket connect;
@@ -65,6 +65,7 @@ struct ExpectMonitor final : ConnectSocketHandler, Cancellable {
 
     LbMonitorHandler &handler;
 
+public:
     ExpectMonitor(EventLoop &event_loop,
                   const LbMonitorConfig &_config,
                   LbMonitorHandler &_handler)
@@ -89,6 +90,7 @@ struct ExpectMonitor final : ConnectSocketHandler, Cancellable {
                         ToEventDuration(std::chrono::seconds(timeout)));
     }
 
+private:
     /* virtual methods from class Cancellable */
     void Cancel() override;
 
