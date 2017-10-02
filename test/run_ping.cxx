@@ -35,14 +35,12 @@
 #include "net/Ping.hxx"
 #include "net/AllocatedSocketAddress.hxx"
 #include "net/Parser.hxx"
-#include "util/Cancellable.hxx"
 #include "util/PrintException.hxx"
 
 #include <stdio.h>
 #include <stdlib.h>
 
 static bool success;
-static CancellablePointer my_cancel_ptr;
 
 class MyPingClientHandler final : public PingClientHandler {
 public:
@@ -73,9 +71,8 @@ try {
     const auto address = ParseSocketAddress(argv[1], 0, false);
 
     MyPingClientHandler handler;
-    ping(instance.event_loop, *pool, address,
-         handler,
-         my_cancel_ptr);
+    PingClient client(instance.event_loop, handler);
+    client.Start(address);
 
     instance.event_loop.Dispatch();
 

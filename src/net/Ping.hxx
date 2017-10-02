@@ -35,9 +35,7 @@
 
 #include "event/SocketEvent.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
-#include "util/Cancellable.hxx"
 #include "util/Compiler.h"
-#include "pool.hxx"
 
 #include <exception>
 
@@ -48,41 +46,37 @@ public:
     virtual void PingError(std::exception_ptr ep) = 0;
 };
 
-struct pool;
-class EventLoop;
-class SocketAddress;
-class CancellablePointer;
-
-class PingClient final : Cancellable {
-    struct pool &pool;
-
+/**
+ * Sends a "ping" (ICMP echo-request) to the server, and waits for the
+ * reply.
+ */
+class PingClient final {
     UniqueSocketDescriptor fd;
 
-    const uint16_t ident;
+    uint16_t ident;
 
     SocketEvent event;
 
     PingClientHandler &handler;
 
 public:
-    PingClient(EventLoop &event_loop, struct pool &_pool,
-               UniqueSocketDescriptor &&_fd, uint16_t _ident,
-               PingClientHandler &_handler,
-               CancellablePointer &cancel_ptr);
+    PingClient(EventLoop &event_loop,
+               PingClientHandler &_handler);
 
-    void Destroy() {
-        DeleteUnrefPool(pool, this);
+    void Start(SocketAddress address);
+
+    void Cancel() {
+        if (fd.IsDefined()) {
+            event.Delete();
+            fd.Close();
+        }
     }
 
-    void ScheduleRead();
-
 private:
+    void ScheduleRead();
     void EventCallback(unsigned events);
 
     void Read();
-
-    /* virtual methods from class Cancellable */
-    void Cancel() override;
 };
 
 /**
@@ -91,14 +85,5 @@ private:
 gcc_const
 bool
 ping_available();
-
-/**
- * Sends a "ping" (ICMP echo-request) to the server, and waits for the
- * reply.
- */
-void
-ping(EventLoop &event_loop, struct pool &pool, SocketAddress address,
-     PingClientHandler &handler,
-     CancellablePointer &cancel_ptr);
 
 #endif

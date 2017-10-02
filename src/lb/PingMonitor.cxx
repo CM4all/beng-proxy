@@ -37,36 +37,53 @@
 #include "net/SocketAddress.hxx"
 #include "util/Cancellable.hxx"
 
-class LbPingClientHandler final : public PingClientHandler {
+class LbPingMonitor final : PingClientHandler, Cancellable {
+    PingClient ping;
+
     LbMonitorHandler &handler;
 
 public:
-    explicit LbPingClientHandler(LbMonitorHandler &_handler)
-        :handler(_handler) {}
+    explicit LbPingMonitor(EventLoop &event_loop,
+                           LbMonitorHandler &_handler)
+        :ping(event_loop, *this), handler(_handler) {}
 
+    void Start(SocketAddress address, CancellablePointer &cancel_ptr) {
+        cancel_ptr = *this;
+        ping.Start(address);
+    }
+
+private:
+    /* virtual methods from class Cancellable */
+    void Cancel() override {
+        delete this;
+    }
+
+    /* virtual methods from class PingClientHandler */
     void PingResponse() override {
         handler.Success();
+        delete this;
     }
 
     void PingTimeout() override {
         handler.Timeout();
+        delete this;
     }
 
     void PingError(std::exception_ptr ep) override {
         handler.Error(ep);
+        delete this;
     }
 };
 
 static void
-ping_monitor_run(EventLoop &event_loop, struct pool &pool,
+ping_monitor_run(EventLoop &event_loop, struct pool &,
                  gcc_unused const LbMonitorConfig &config,
                  SocketAddress address,
                  LbMonitorHandler &handler,
                  CancellablePointer &cancel_ptr)
 {
-    ping(event_loop, pool, address,
-         *NewFromPool<LbPingClientHandler>(pool, handler),
-         cancel_ptr);
+    auto *ping = new LbPingMonitor(event_loop, handler);
+    ping->Start(address, cancel_ptr);
 }
 
 const LbMonitorClass ping_monitor_class = {

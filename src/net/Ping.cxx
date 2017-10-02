@@ -43,16 +43,10 @@
 #include <netinet/ip_icmp.h>
 #include <unistd.h>
 
-PingClient::PingClient(EventLoop &event_loop, struct pool &_pool,
-                       UniqueSocketDescriptor &&_fd, uint16_t _ident,
-                       PingClientHandler &_handler,
-                       CancellablePointer &cancel_ptr)
-    :pool(_pool), fd(std::move(_fd)), ident(_ident),
-     event(event_loop, fd.Get(), SocketEvent::READ,
-           BIND_THIS_METHOD(EventCallback)),
+PingClient::PingClient(EventLoop &event_loop, PingClientHandler &_handler)
+    :event(event_loop, -1, 0, BIND_THIS_METHOD(EventCallback)),
      handler(_handler)
 {
-    cancel_ptr = *this;
 }
 
 inline void
@@ -136,7 +130,6 @@ PingClient::Read()
         if (parse_reply(&msg, cc, ident)) {
             fd.Close();
             handler.PingResponse();
-            Destroy();
         } else
             ScheduleRead();
     } else if (errno == EAGAIN || errno == EINTR) {
@@ -145,7 +138,6 @@ PingClient::Read()
         const int e = errno;
         fd.Close();
         handler.PingError(std::make_exception_ptr(MakeErrno(e)));
-        Destroy();
     }
 }
 
@@ -165,22 +157,8 @@ PingClient::EventCallback(unsigned events)
     } else {
         fd.Close();
         handler.PingTimeout();
-        Destroy();
     }
 }
-
-/*
- * async operation
- *
- */
-
-void
-PingClient::Cancel()
-{
-    event.Delete();
-    Destroy();
-}
-
 
 /*
  * constructor
@@ -261,13 +239,8 @@ SendPing(SocketDescriptor fd, SocketAddress address, uint16_t ident)
 }
 
 void
-ping(EventLoop &event_loop, struct pool &pool, SocketAddress address,
-     PingClientHandler &handler,
-     CancellablePointer &cancel_ptr)
+PingClient::Start(SocketAddress address)
 {
-    UniqueSocketDescriptor fd;
-    uint16_t ident;
-
     try {
         fd = CreateIcmp();
         ident = MakeIdent(fd);
@@ -277,9 +250,5 @@ ping(EventLoop &event_loop, struct pool &pool, SocketAddress address,
         return;
     }
 
-    pool_ref(&pool);
-    auto p = NewFromPool<PingClient>(pool, event_loop, pool,
-                                     std::move(fd), ident,
-                                     handler, cancel_ptr);
-    p->ScheduleRead();
+    ScheduleRead();
 }
