@@ -33,6 +33,7 @@
 #pragma once
 
 #include "MonitorStock.hxx"
+#include "util/Compiler.h"
 
 #include <map>
 

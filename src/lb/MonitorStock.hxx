@@ -32,14 +32,13 @@
 
 #pragma once
 
-#include "MonitorController.hxx"
-#include "util/Compiler.h"
-
 #include <map>
 #include <string>
 
 struct LbNodeConfig;
 struct LbMonitorConfig;
+struct LbMonitorClass;
+class LbMonitorController;
 class EventLoop;
 class FailureManager;
 class SocketAddress;
