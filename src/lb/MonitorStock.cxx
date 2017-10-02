@@ -32,6 +32,7 @@
 
 #include "MonitorStock.hxx"
 #include "MonitorController.hxx"
+#include "MonitorRef.hxx"
 #include "PingMonitor.hxx"
 #include "SynMonitor.hxx"
 #include "ExpectMonitor.hxx"
@@ -83,20 +84,24 @@ LbMonitorStock::LbMonitorStock(EventLoop &_event_loop,
 
 LbMonitorStock::~LbMonitorStock()
 {
+    /* at this point, all LbMonitorController references
+       (LbMonitorRef) must be freed */
+    assert(map.empty());
 }
 
-LbMonitorController &
+LbMonitorRef
 LbMonitorStock::Add(const char *node_name, SocketAddress address)
 {
-    return map.emplace(std::piecewise_construct,
+    auto &m = map.emplace(std::piecewise_construct,
                        std::forward_as_tuple(ToString(address)),
                        std::forward_as_tuple(event_loop, failure_manager,
                                              node_name,
                                              config, address, class_))
         .first->second;
+    return {*this, m};
 }
 
-LbMonitorController &
+LbMonitorRef
 LbMonitorStock::Add(const LbNodeConfig &node, unsigned port)
 {
     AllocatedSocketAddress address = node.address;

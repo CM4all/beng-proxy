@@ -32,6 +32,7 @@
 
 #include "MonitorRef.hxx"
 #include "MonitorStock.hxx"
+#include "MonitorController.hxx"
 
 #include <assert.h>
 

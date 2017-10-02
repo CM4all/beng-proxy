@@ -42,6 +42,7 @@
 
 #include <boost/intrusive/set.hpp>
 
+#include <forward_list>
 #include <vector>
 #include <string>
 #include <memory>
@@ -51,6 +52,7 @@ struct LbGotoIfConfig;
 struct LbListenerConfig;
 struct LbClusterConfig;
 class LbMonitorStock;
+class LbMonitorRef;
 class FailureManager;
 class MyAvahiClient;
 class StickyCache;
@@ -68,6 +70,12 @@ class LbCluster final : AvahiServiceExplorerListener {
     StickyRing *sticky_ring = nullptr;
 
     StickyCache *sticky_cache = nullptr;
+
+    /**
+     * A list of #LbMonitorRef instances, one for each static member
+     * (i.e. not Zeroconf).
+     */
+    std::forward_list<LbMonitorRef> static_member_monitors;
 
     class Member
         : LeakDetector,

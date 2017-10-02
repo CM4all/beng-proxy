@@ -33,6 +33,7 @@
 #include "Cluster.hxx"
 #include "ClusterConfig.hxx"
 #include "MonitorStock.hxx"
+#include "MonitorRef.hxx"
 #include "avahi/Explorer.hxx"
 #include "StickyCache.hxx"
 #include "net/FailureManager.hxx"
@@ -85,7 +86,8 @@ LbCluster::LbCluster(const LbClusterConfig &_config,
     if (monitors != nullptr)
         /* create monitors for "static" members */
         for (const auto &member : config.members)
-            monitors->Add(*member.node, member.port);
+            static_member_monitors.emplace_front(monitors->Add(*member.node,
+                                                               member.port));
 }
 
 LbCluster::~LbCluster()

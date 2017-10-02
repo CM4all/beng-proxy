@@ -38,6 +38,7 @@
 struct LbNodeConfig;
 struct LbMonitorConfig;
 struct LbMonitorClass;
+struct LbMonitorRef;
 class LbMonitorController;
 class EventLoop;
 class FailureManager;
@@ -64,9 +65,9 @@ public:
     LbMonitorStock(const LbMonitorStock &) = delete;
     LbMonitorStock &operator=(const LbMonitorStock &) = delete;
 
-    LbMonitorController &Add(const char *node_name, SocketAddress address);
+    LbMonitorRef Add(const char *node_name, SocketAddress address);
 
-    LbMonitorController &Add(const LbNodeConfig &node, unsigned port);
+    LbMonitorRef Add(const LbNodeConfig &node, unsigned port);
 
     void Remove(LbMonitorController &m) noexcept;
 };

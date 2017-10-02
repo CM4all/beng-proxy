@@ -58,6 +58,7 @@ void
 LbGotoMap::Clear()
 {
     translation_handlers.clear();
+    clusters.clear();
 }
 
 void
