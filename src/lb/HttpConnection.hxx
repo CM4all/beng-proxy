@@ -132,6 +132,11 @@ struct LbHttpConnection final
          */
         const char *site_name;
 
+        /**
+         * @see LOG_FORWARDED_TO
+         */
+        const char *forwarded_to;
+
         void Begin(const HttpServerRequest &request);
 
         constexpr const char *GetCanonicalHost() const {

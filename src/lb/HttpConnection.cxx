@@ -222,6 +222,7 @@ LbHttpConnection::PerRequest::Begin(const HttpServerRequest &request)
     user_agent = request.headers.Get("user-agent");
     canonical_host = nullptr;
     site_name = nullptr;
+    forwarded_to = nullptr;
 }
 
 void
@@ -283,7 +284,7 @@ LbHttpConnection::LogHttpRequest(HttpServerRequest &request,
 {
     if (instance.access_log != nullptr)
         instance.access_log->Log(request, per_request.site_name,
-                                 nullptr,
+                                 per_request.forwarded_to,
                                  per_request.host,
                                  per_request.x_forwarded_for,
                                  per_request.referer,

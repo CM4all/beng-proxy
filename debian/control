@@ -177,6 +177,7 @@ Depends: ${shlibs:Depends}, adduser,
  systemd-sysv
 Suggests: cm4all-certdb, avahi-daemon
 Provides: httpd
+Breaks: cm4all-beng-proxy-logging (<< 13.0.9)
 Description: HTTP load balancer
  BENG lb is a HTTP proxy server and load balancer.
 

@@ -42,6 +42,7 @@
 #include "Headers.hxx"
 #include "ssl/ssl_filter.hxx"
 #include "address_sticky.hxx"
+#include "address_string.hxx"
 #include "http_server/http_server.hxx"
 #include "http_server/Request.hxx"
 #include "http_server/Handler.hxx"
@@ -162,6 +163,13 @@ private:
         if (lease_state == LeaseState::PENDING)
             DoRelease();
         return lease_state == LeaseState::NONE;
+    }
+
+    void SetForwardedTo() {
+        // TODO: optimize this operation
+        connection.per_request.forwarded_to =
+            address_to_string(request.pool,
+                              tcp_stock_item_get_address(*stock_item));
     }
 
     void ResponseSent() {
@@ -348,6 +356,8 @@ LbRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
     GetFailureManager().Unset(tcp_stock_item_get_address(*stock_item),
                               FAILURE_PROTOCOL);
 
+    SetForwardedTo();
+
     HttpHeaders headers(std::move(_headers));
 
     if (request.method == HTTP_METHOD_HEAD)
@@ -380,6 +390,8 @@ LbRequest::OnHttpError(std::exception_ptr ep)
         GetFailureManager().Set(tcp_stock_item_get_address(*stock_item),
                                 FAILURE_PROTOCOL,
                                 std::chrono::seconds(20));
+
+    SetForwardedTo();
 
     connection.logger(2, ep);
 
