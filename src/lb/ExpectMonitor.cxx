@@ -70,7 +70,7 @@ public:
                   LbMonitorHandler &_handler)
         :config(_config),
          connect(event_loop, *this),
-         event(event_loop, -1, 0, BIND_THIS_METHOD(EventCallback)),
+         event(event_loop, BIND_THIS_METHOD(EventCallback)),
          delay_event(event_loop, BIND_THIS_METHOD(DelayCallback)),
          handler(_handler) {}
 
@@ -126,9 +126,12 @@ check_expectation(char *received, size_t received_length,
 void
 ExpectMonitor::Cancel()
 {
-    event.Delete();
-    delay_event.Cancel();
-    close(fd);
+    if (fd >= 0) {
+        event.Delete();
+        delay_event.Cancel();
+        close(fd);
+    }
+
     delete this;
 }
 
