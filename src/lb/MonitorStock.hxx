@@ -52,6 +52,7 @@ class LbMonitorStock {
     EventLoop &event_loop;
     FailureManager &failure_manager;
     const LbMonitorConfig &config;
+    const LbMonitorClass *const class_;
 
     std::map<std::string, LbMonitorController> map;
 

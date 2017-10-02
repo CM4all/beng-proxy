@@ -40,6 +40,27 @@
 #include "net/SocketAddress.hxx"
 #include "net/ToString.hxx"
 
+gcc_const
+static const LbMonitorClass *
+LookupMonitorClass(LbMonitorConfig::Type type)
+{
+    switch (type) {
+    case LbMonitorConfig::Type::NONE:
+        return nullptr;
+
+    case LbMonitorConfig::Type::PING:
+        return &ping_monitor_class;
+
+    case LbMonitorConfig::Type::CONNECT:
+        return &syn_monitor_class;
+
+    case LbMonitorConfig::Type::TCP_EXPECT:
+        return &expect_monitor_class;
+    }
+
+    gcc_unreachable();
+}
+
 static std::string
 ToString(SocketAddress address)
 {
@@ -53,7 +74,7 @@ LbMonitorStock::LbMonitorStock(EventLoop &_event_loop,
                                FailureManager &_failure_manager,
                                const LbMonitorConfig &_config)
     :event_loop(_event_loop), failure_manager(_failure_manager),
-     config(_config)
+     config(_config), class_(LookupMonitorClass(config.type))
 {
 }
 
@@ -64,26 +85,9 @@ LbMonitorStock::~LbMonitorStock()
 void
 LbMonitorStock::Add(const char *node_name, SocketAddress address)
 {
-    const LbMonitorClass *class_ = nullptr;
-    switch (config.type) {
-    case LbMonitorConfig::Type::NONE:
+    if (class_ == nullptr)
         /* nothing to do */
         return;
-
-    case LbMonitorConfig::Type::PING:
-        class_ = &ping_monitor_class;
-        break;
-
-    case LbMonitorConfig::Type::CONNECT:
-        class_ = &syn_monitor_class;
-        break;
-
-    case LbMonitorConfig::Type::TCP_EXPECT:
-        class_ = &expect_monitor_class;
-        break;
-    }
-
-    assert(class_ != NULL);
 
     map.emplace(std::piecewise_construct,
                 std::forward_as_tuple(ToString(address)),
