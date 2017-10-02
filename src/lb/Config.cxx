@@ -649,6 +649,11 @@ LbConfigParser::Cluster::ParseLine(FileLineParser &line)
 void
 LbConfigParser::Cluster::Finish()
 {
+    if (config.monitor != nullptr && !config.monitor->IsDefined())
+        /* if the monitor is disabled, it's pointless to keep a
+           pointer to it */
+        config.monitor = nullptr;
+
     if (!config.zeroconf_domain.empty() &&
         config.zeroconf_service.empty())
         throw LineParser::Error("zeroconf_service missing");
