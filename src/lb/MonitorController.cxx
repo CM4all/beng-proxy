@@ -115,9 +115,7 @@ LbMonitorController::IntervalCallback()
     if (config.timeout > 0)
         timeout_event.Add(timeout);
 
-    struct pool *run_pool = pool_new_linear(&pool, "monitor_run", 8192);
-    class_.run(event_loop, *run_pool, config, address, *this, cancel_ptr);
-    pool_unref(run_pool);
+    class_.run(event_loop, config, address, *this, cancel_ptr);
 }
 
 inline void

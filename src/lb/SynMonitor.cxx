@@ -95,7 +95,7 @@ private:
  */
 
 static void
-syn_monitor_run(EventLoop &event_loop, struct pool &,
+syn_monitor_run(EventLoop &event_loop,
                 const LbMonitorConfig &config,
                 SocketAddress address,
                 LbMonitorHandler &handler,

@@ -32,7 +32,6 @@
 
 #include "PingMonitor.hxx"
 #include "Monitor.hxx"
-#include "pool.hxx"
 #include "net/Ping.hxx"
 #include "net/SocketAddress.hxx"
 #include "util/Cancellable.hxx"
@@ -76,7 +75,7 @@ private:
 };
 
 static void
-ping_monitor_run(EventLoop &event_loop, struct pool &,
+ping_monitor_run(EventLoop &event_loop,
                  gcc_unused const LbMonitorConfig &config,
                  SocketAddress address,
                  LbMonitorHandler &handler,

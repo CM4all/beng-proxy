@@ -33,7 +33,6 @@
 #include "ExpectMonitor.hxx"
 #include "Monitor.hxx"
 #include "MonitorConfig.hxx"
-#include "pool.hxx"
 #include "system/Error.hxx"
 #include "net/ConnectSocket.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
@@ -216,7 +215,7 @@ ExpectMonitor::OnSocketConnectSuccess(UniqueSocketDescriptor &&new_fd)
  */
 
 static void
-expect_monitor_run(EventLoop &event_loop, struct pool &,
+expect_monitor_run(EventLoop &event_loop,
                    const LbMonitorConfig &config,
                    SocketAddress address,
                    LbMonitorHandler &handler,

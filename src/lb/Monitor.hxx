@@ -39,7 +39,6 @@
 
 #include <exception>
 
-struct pool;
 class EventLoop;
 class SocketAddress;
 class CancellablePointer;
@@ -55,7 +54,7 @@ public:
 
 struct LbMonitorClass {
     void (*run)(EventLoop &event_loop,
-                struct pool &pool, const LbMonitorConfig &config,
+                const LbMonitorConfig &config,
                 SocketAddress address,
                 LbMonitorHandler &handler,
                 CancellablePointer &cancel_ptr);
