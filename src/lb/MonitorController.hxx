@@ -71,7 +71,7 @@ class LbMonitorController final : public LbMonitorHandler {
 public:
     LbMonitorController(EventLoop &_event_loop,
                         FailureManager &_failure_manager,
-                        std::string &&_name,
+                        const char *node_name,
                         const LbMonitorConfig &_config,
                         SocketAddress _address,
                         const LbMonitorClass &_class);

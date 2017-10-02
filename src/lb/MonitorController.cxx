@@ -33,6 +33,7 @@
 #include "MonitorController.hxx"
 #include "MonitorConfig.hxx"
 #include "net/FailureManager.hxx"
+#include "util/StringFormat.hxx"
 
 void
 LbMonitorController::Success()
@@ -132,9 +133,17 @@ LbMonitorController::TimeoutCallback()
     interval_event.Add(interval);
 }
 
+static std::string
+MakeLoggerDomain(const char *monitor_name, const char *node_name,
+                 unsigned port)
+{
+    return StringFormat<1024>("monitor %s:[%s]:%u",
+                              monitor_name, node_name, port).c_str();
+}
+
 LbMonitorController::LbMonitorController(EventLoop &_event_loop,
                                          FailureManager &failure_manager,
-                                         std::string &&name,
+                                         const char *node_name,
                                          const LbMonitorConfig &_config,
                                          SocketAddress _address,
                                          const LbMonitorClass &_class)
@@ -143,7 +152,8 @@ LbMonitorController::LbMonitorController(EventLoop &_event_loop,
      config(_config),
      address(_address),
      class_(_class),
-     logger("monitor " + name),
+     logger(MakeLoggerDomain(config.name.c_str(), node_name,
+                             address.GetPort())),
      interval{time_t(config.interval), 0},
      interval_event(event_loop, BIND_THIS_METHOD(IntervalCallback)),
      timeout{time_t(config.timeout), 0},

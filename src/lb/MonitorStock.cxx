@@ -39,7 +39,6 @@
 #include "ClusterConfig.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/ToString.hxx"
-#include "util/StringFormat.hxx"
 
 static std::string
 ToString(SocketAddress address)
@@ -48,12 +47,6 @@ ToString(SocketAddress address)
     return ToString(buffer, sizeof(buffer), address)
         ? buffer
         : "unknown";
-}
-
-static std::string
-MakeName(const char *monitor_name, const char *node_name, unsigned port)
-{
-    return StringFormat<1024>("%s:[%s]:%u", monitor_name, node_name, port).c_str();
 }
 
 LbMonitorStock::LbMonitorStock(EventLoop &_event_loop,
@@ -95,8 +88,7 @@ LbMonitorStock::Add(const char *node_name, SocketAddress address)
     map.emplace(std::piecewise_construct,
                 std::forward_as_tuple(ToString(address)),
                 std::forward_as_tuple(event_loop, failure_manager,
-                                      MakeName(config.name.c_str(), node_name,
-                                               address.GetPort()),
+                                      node_name,
                                       config, address, *class_));
 }
 
