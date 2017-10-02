@@ -32,7 +32,6 @@
 
 #include "MonitorController.hxx"
 #include "MonitorConfig.hxx"
-#include "pool.hxx"
 #include "net/FailureManager.hxx"
 
 void
@@ -135,14 +134,13 @@ LbMonitorController::TimeoutCallback()
 
 LbMonitorController::LbMonitorController(EventLoop &_event_loop,
                                          FailureManager &failure_manager,
-                                         struct pool &_pool,
                                          std::string &&_name,
                                          const LbMonitorConfig &_config,
                                          SocketAddress _address,
                                          const LbMonitorClass &_class)
     :event_loop(_event_loop),
      failure(failure_manager.Make(_address)),
-     pool(_pool), name(std::move(_name)), config(_config),
+     name(std::move(_name)), config(_config),
      address(_address),
      class_(_class),
      logger("monitor " + name),
@@ -151,7 +149,6 @@ LbMonitorController::LbMonitorController(EventLoop &_event_loop,
      timeout{time_t(config.timeout), 0},
      timeout_event(event_loop, BIND_THIS_METHOD(TimeoutCallback))
 {
-    pool_ref(&pool);
 }
 
 LbMonitorController::~LbMonitorController()
@@ -161,6 +158,4 @@ LbMonitorController::~LbMonitorController()
 
     if (cancel_ptr)
         cancel_ptr.Cancel();
-
-    pool_unref(&pool);
 }

@@ -40,7 +40,6 @@
 #include "net/FailureRef.hxx"
 #include "util/Cancellable.hxx"
 
-struct pool;
 class EventLoop;
 class FailureManager;
 class SocketAddress;
@@ -51,7 +50,6 @@ class LbMonitorController;
 class LbMonitorController final : public LbMonitorHandler {
     EventLoop &event_loop;
     FailureRef failure;
-    struct pool &pool;
 
     const std::string name;
     const LbMonitorConfig &config;
@@ -74,7 +72,7 @@ class LbMonitorController final : public LbMonitorHandler {
 public:
     LbMonitorController(EventLoop &_event_loop,
                         FailureManager &_failure_manager,
-                        struct pool &_pool, std::string &&_name,
+                        std::string &&_name,
                         const LbMonitorConfig &_config,
                         SocketAddress _address,
                         const LbMonitorClass &_class);

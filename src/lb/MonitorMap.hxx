@@ -61,15 +61,13 @@ class LbMonitorMap {
         std::string ToString() const;
     };
 
-    struct pool *const pool;
-
     EventLoop &event_loop;
     FailureManager &failure_manager;
 
     std::map<Key, LbMonitorController> map;
 
 public:
-    LbMonitorMap(struct pool &_pool, EventLoop &_event_loop,
+    LbMonitorMap(EventLoop &_event_loop,
                  FailureManager &_failure_manager);
     ~LbMonitorMap();
 

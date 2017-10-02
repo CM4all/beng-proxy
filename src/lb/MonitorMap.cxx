@@ -37,7 +37,6 @@
 #include "ExpectMonitor.hxx"
 #include "MonitorConfig.hxx"
 #include "ClusterConfig.hxx"
-#include "pool.hxx"
 #include "net/SocketAddress.hxx"
 #include "util/StringFormat.hxx"
 
@@ -65,18 +64,15 @@ LbMonitorMap::Key::ToString() const
     return StringFormat<1024>("%s:[%s]:%u", monitor_name, node_name, port).c_str();
 }
 
-LbMonitorMap::LbMonitorMap(struct pool &_pool, EventLoop &_event_loop,
+LbMonitorMap::LbMonitorMap(EventLoop &_event_loop,
                            FailureManager &_failure_manager)
-    :pool(pool_new_linear(&_pool, "LbMonitorMap", 4096)),
-     event_loop(_event_loop), failure_manager(_failure_manager)
+    :event_loop(_event_loop), failure_manager(_failure_manager)
 {
 }
 
 LbMonitorMap::~LbMonitorMap()
 {
     Clear();
-
-    pool_unref(pool);
 }
 
 void
@@ -111,15 +107,12 @@ LbMonitorMap::Add(const char *node_name, SocketAddress address,
 
     assert(class_ != NULL);
 
-    struct pool *_pool = pool_new_libc(pool, "monitor");
-
     const Key key{config.name.c_str(), node_name, address.GetPort()};
     map.emplace(std::piecewise_construct,
                 std::forward_as_tuple(key),
                 std::forward_as_tuple(event_loop, failure_manager,
-                                      *_pool, key.ToString(),
+                                      key.ToString(),
                                       config, address, *class_));
-    pool_unref(_pool);
 }
 
 void
