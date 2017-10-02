@@ -32,12 +32,12 @@
 
 #pragma once
 
-#include "MonitorStock.hxx"
 #include "util/Compiler.h"
 
 #include <map>
 
 struct LbMonitorConfig;
+class LbMonitorStock;
 class EventLoop;
 class FailureManager;
 
@@ -52,12 +52,11 @@ class LbMonitorManager {
 
 public:
     LbMonitorManager(EventLoop &_event_loop,
-                     FailureManager &_failure_manager)
-        :event_loop(_event_loop), failure_manager(_failure_manager) {}
+                     FailureManager &_failure_manager);
 
-    void clear() {
-        monitors.clear();
-    }
+    ~LbMonitorManager();
+
+    void clear();
 
     gcc_pure
     LbMonitorStock &operator[](const LbMonitorConfig &monitor_config);

@@ -31,7 +31,24 @@
  */
 
 #include "MonitorManager.hxx"
+#include "MonitorStock.hxx"
 #include "MonitorConfig.hxx"
+
+LbMonitorManager::LbMonitorManager(EventLoop &_event_loop,
+                                   FailureManager &_failure_manager)
+    :event_loop(_event_loop), failure_manager(_failure_manager)
+{
+}
+
+LbMonitorManager::~LbMonitorManager()
+{
+}
+
+void
+LbMonitorManager::clear()
+{
+    monitors.clear();
+}
 
 LbMonitorStock &
 LbMonitorManager::operator[](const LbMonitorConfig &monitor_config)
