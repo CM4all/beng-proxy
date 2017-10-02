@@ -72,8 +72,6 @@ public:
                  const LbMonitorConfig &_config);
     ~LbMonitorMap();
 
-    void Enable();
-
     void Add(const char *node_name, SocketAddress address);
 
     void Add(const LbNodeConfig &node, unsigned port);

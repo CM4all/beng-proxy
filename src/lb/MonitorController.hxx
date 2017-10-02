@@ -79,11 +79,6 @@ public:
 
     ~LbMonitorController();
 
-    void Enable() {
-        static constexpr struct timeval immediately = { 0, 0 };
-        interval_event.Add(immediately);
-    }
-
 private:
     void IntervalCallback();
     void TimeoutCallback();

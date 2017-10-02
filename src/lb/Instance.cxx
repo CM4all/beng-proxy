@@ -70,10 +70,6 @@ LbInstance::InitWorker()
 
     CreateMonitors();
 
-    /* run monitors only in the worker process */
-    for (auto &i : monitors)
-        i.second.Enable();
-
     ConnectCertCaches();
 }
 

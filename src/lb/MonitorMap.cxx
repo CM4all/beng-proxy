@@ -71,13 +71,6 @@ LbMonitorMap::~LbMonitorMap()
 }
 
 void
-LbMonitorMap::Enable()
-{
-    for (auto &i : map)
-        i.second.Enable();
-}
-
-void
 LbMonitorMap::Add(const char *node_name, SocketAddress address)
 {
     const LbMonitorClass *class_ = nullptr;

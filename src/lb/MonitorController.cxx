@@ -149,6 +149,8 @@ LbMonitorController::LbMonitorController(EventLoop &_event_loop,
      timeout{time_t(config.timeout), 0},
      timeout_event(event_loop, BIND_THIS_METHOD(TimeoutCallback))
 {
+    static constexpr struct timeval immediately = { 0, 0 };
+    interval_event.Add(immediately);
 }
 
 LbMonitorController::~LbMonitorController()
