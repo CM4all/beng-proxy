@@ -61,6 +61,7 @@ class AvahiServiceExplorer;
 class LbCluster final : AvahiServiceExplorerListener {
     const LbClusterConfig &config;
     FailureManager &failure_manager;
+    LbMonitorStock *const monitors;
 
     const Logger logger;
 
@@ -87,14 +88,17 @@ class LbCluster final : AvahiServiceExplorerListener {
 
         FailureRef failure;
 
+        std::unique_ptr<LbMonitorRef> monitor;
+
         mutable std::string log_name;
 
         unsigned refs = 1;
 
     public:
         Member(const std::string &_key, SocketAddress _address,
-               ReferencedFailureInfo &_failure)
-            :key(_key), address(_address), failure(_failure) {}
+               ReferencedFailureInfo &_failure,
+               LbMonitorStock *monitors);
+        ~Member();
 
         Member(const Member &) = delete;
         Member &operator=(const Member &) = delete;
@@ -230,7 +234,7 @@ private:
 
 public:
     LbCluster(const LbClusterConfig &_config, FailureManager &_failure_manager,
-              LbMonitorStock *monitors,
+              LbMonitorStock *_monitors,
               MyAvahiClient &avahi_client);
     ~LbCluster();
 

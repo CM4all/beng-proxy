@@ -47,6 +47,21 @@ class LbCluster::StickyRing final : public HashRing<MemberMap::pointer,
                                                     sticky_hash_t,
                                                     4096, 8> {};
 
+LbCluster::Member::Member(const std::string &_key, SocketAddress _address,
+                          ReferencedFailureInfo &_failure,
+                          LbMonitorStock *monitors)
+    :key(_key), address(_address), failure(_failure),
+     monitor(monitors != nullptr
+             ? std::make_unique<LbMonitorRef>(monitors->Add(key.c_str(),
+                                                            _address))
+             : std::unique_ptr<LbMonitorRef>())
+{
+}
+
+LbCluster::Member::~Member()
+{
+}
+
 const char *
 LbCluster::Member::GetLogName() const noexcept
 {
@@ -69,9 +84,9 @@ LbCluster::Member::GetLogName() const noexcept
 
 LbCluster::LbCluster(const LbClusterConfig &_config,
                      FailureManager &_failure_manager,
-                     LbMonitorStock *monitors,
+                     LbMonitorStock *_monitors,
                      MyAvahiClient &avahi_client)
-    :config(_config), failure_manager(_failure_manager),
+    :config(_config), failure_manager(_failure_manager), monitors(_monitors),
      logger("cluster " + config.name)
 {
     if (config.HasZeroConf())
@@ -260,7 +275,8 @@ LbCluster::OnAvahiNewObject(const std::string &key, SocketAddress address)
     MemberMap::insert_commit_data hint;
     auto result = members.insert_check(key, members.key_comp(), hint);
     if (result.second) {
-        auto *member = new Member(key, address, failure_manager.Make(address));
+        auto *member = new Member(key, address, failure_manager.Make(address),
+                                  monitors);
         members.insert_commit(*member, hint);
     } else {
         /* update existing member */
