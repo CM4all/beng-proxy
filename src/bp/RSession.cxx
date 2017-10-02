@@ -329,10 +329,10 @@ Request::ApplyTranslateSession(const TranslateResponse &response)
             if (session)
                 session->SetSite(response.session_site);
 
-            connection.site_name = response.session_site;
+            connection.per_request.site_name = response.session_site;
         }
     } else if (session && session->site != nullptr)
-        connection.site_name = p_strdup(&pool, session->site);
+        connection.per_request.site_name = p_strdup(&pool, session->site);
 
     if (response.user != nullptr) {
         if (*response.user == 0) {

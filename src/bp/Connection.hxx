@@ -71,18 +71,31 @@ struct BpConnection final
     HttpServerConnection *http;
 
     /**
-     * The name of the site being accessed by the current HTTP
-     * request.  This points to memory allocated by the request pool;
-     * it is a hack to allow the "log" callback to see this
-     * information.
+     * Attributes which are specific to the current request.  They are
+     * only valid while a request is being handled (i.e. during the
+     * lifetime of the #HttpServerRequest instance).  Strings are
+     * allocated from the request pool.
      */
-    const char *site_name = nullptr;
+    struct PerRequest {
+        /**
+         * The time stamp at the start of the request.  Used to calculate
+         * the request duration.
+         */
+        std::chrono::steady_clock::time_point start_time;
 
-    /**
-     * The time stamp at the start of the request.  Used to calculate
-     * the request duration.
-     */
-    std::chrono::steady_clock::time_point request_start_time;
+        /**
+         * The name of the site being accessed by the current HTTP
+         * request (from #TRANSLATE_SITE).  It is a hack to allow the
+         * "log" callback to see this information.
+         */
+        const char *site_name;
+
+        void Begin();
+
+        std::chrono::steady_clock::duration GetDuration() const {
+            return std::chrono::steady_clock::now() - start_time;
+        }
+    } per_request;
 
     BpConnection(BpInstance &_instance, struct pool &_pool,
                  const char *_listener_tag,

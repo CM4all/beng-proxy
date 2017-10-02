@@ -124,14 +124,20 @@ HttpServerLogLevel(std::exception_ptr e)
  *
  */
 
+inline void
+BpConnection::PerRequest::Begin()
+{
+    start_time = std::chrono::steady_clock::now();
+    site_name = nullptr;
+}
+
 void
 BpConnection::HandleHttpRequest(HttpServerRequest &request,
                                 CancellablePointer &cancel_ptr)
 {
     ++instance.http_request_counter;
 
-    site_name = nullptr;
-    request_start_time = std::chrono::steady_clock::now();
+    per_request.Begin();
 
     handle_http_request(*this, request, cancel_ptr);
 }
@@ -142,15 +148,13 @@ BpConnection::LogHttpRequest(HttpServerRequest &request,
                              uint64_t bytes_received, uint64_t bytes_sent)
 {
     if (instance.access_log != nullptr)
-        instance.access_log->Log(request, site_name,
+        instance.access_log->Log(request, per_request.site_name,
                                  nullptr,
                                  request.headers.Get("referer"),
                                  request.headers.Get("user-agent"),
                                  status, length,
                                  bytes_received, bytes_sent,
-                                 std::chrono::steady_clock::now() - request_start_time);
-
-    site_name = nullptr;
+                                 per_request.GetDuration());
 }
 
 void

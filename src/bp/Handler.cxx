@@ -169,7 +169,7 @@ handle_translated_request2(Request &request,
     }
 
     if (response.site != nullptr)
-        request.connection.site_name = response.site;
+        request.connection.per_request.site_name = response.site;
 
     {
         auto session = apply_translate_response_session(request, response);
