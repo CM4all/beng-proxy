@@ -83,22 +83,23 @@ LbMonitorStock::~LbMonitorStock()
 {
 }
 
-void
+LbMonitorController &
 LbMonitorStock::Add(const char *node_name, SocketAddress address)
 {
-    map.emplace(std::piecewise_construct,
-                std::forward_as_tuple(ToString(address)),
-                std::forward_as_tuple(event_loop, failure_manager,
-                                      node_name,
-                                      config, address, class_));
+    return map.emplace(std::piecewise_construct,
+                       std::forward_as_tuple(ToString(address)),
+                       std::forward_as_tuple(event_loop, failure_manager,
+                                             node_name,
+                                             config, address, class_))
+        .first->second;
 }
 
-void
+LbMonitorController &
 LbMonitorStock::Add(const LbNodeConfig &node, unsigned port)
 {
     AllocatedSocketAddress address = node.address;
     if (port > 0)
         address.SetPort(port);
 
-    Add(node.name.c_str(), address);
+    return Add(node.name.c_str(), address);
 }
