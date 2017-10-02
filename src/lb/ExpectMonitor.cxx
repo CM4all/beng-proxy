@@ -52,7 +52,7 @@ class ExpectMonitor final : ConnectSocketHandler, Cancellable {
 
     ConnectSocket connect;
 
-    int fd;
+    int fd = -1;
 
     SocketEvent event;
 
