@@ -170,6 +170,7 @@ GetRealRemoteHost(const char *xff, const std::set<std::string> &trust)
 
 void
 AccessLogGlue::Log(HttpServerRequest &request, const char *site,
+                   const char *forwarded_to,
                    const char *host, const char *x_forwarded_for,
                    const char *referer, const char *user_agent,
                    http_status_t status, int64_t content_length,
@@ -193,26 +194,29 @@ AccessLogGlue::Log(HttpServerRequest &request, const char *site,
         }
     }
 
-    const AccessLogDatagram d(std::chrono::system_clock::now(),
-                              request.method, request.uri,
-                              remote_host,
-                              host,
-                              site,
-                              referer, user_agent,
-                              status, content_length,
-                              bytes_received, bytes_sent,
-                              duration);
+    AccessLogDatagram d(std::chrono::system_clock::now(),
+                        request.method, request.uri,
+                        remote_host,
+                        host,
+                        site,
+                        referer, user_agent,
+                        status, content_length,
+                        bytes_received, bytes_sent,
+                        duration);
+    d.forwarded_to = forwarded_to;
+
     Log(d);
 }
 
 void
 AccessLogGlue::Log(HttpServerRequest &request, const char *site,
+                   const char *forwarded_to,
                    const char *referer, const char *user_agent,
                    http_status_t status, int64_t content_length,
                    uint64_t bytes_received, uint64_t bytes_sent,
                    std::chrono::steady_clock::duration duration)
 {
-    Log(request, site,
+    Log(request, site, forwarded_to,
         request.headers.Get("host"),
         request.headers.Get("x-forwarded-for"),
         referer, user_agent,

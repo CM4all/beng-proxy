@@ -143,6 +143,7 @@ BpConnection::LogHttpRequest(HttpServerRequest &request,
 {
     if (instance.access_log != nullptr)
         instance.access_log->Log(request, site_name,
+                                 nullptr,
                                  request.headers.Get("referer"),
                                  request.headers.Get("user-agent"),
                                  status, length,

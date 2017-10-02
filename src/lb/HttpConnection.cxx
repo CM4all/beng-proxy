@@ -283,6 +283,7 @@ LbHttpConnection::LogHttpRequest(HttpServerRequest &request,
 {
     if (instance.access_log != nullptr)
         instance.access_log->Log(request, per_request.site_name,
+                                 nullptr,
                                  per_request.host,
                                  per_request.x_forwarded_for,
                                  per_request.referer,
