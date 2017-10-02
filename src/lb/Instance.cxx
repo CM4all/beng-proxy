@@ -92,14 +92,12 @@ LbInstance::MakeMonitor(const LbMonitorConfig &monitor_config)
 void
 LbInstance::CreateMonitors()
 {
-    goto_map.ForEachCluster([this](const LbCluster &_cluster){
+    goto_map.ForEachCluster([this](LbCluster &_cluster){
             const auto &cluster = _cluster.GetConfig();
             if (cluster.monitor == nullptr)
                 return;
 
-            auto &monitor = MakeMonitor(*cluster.monitor);
-            for (const auto &member : cluster.members)
-                monitor.Add(*member.node, member.port);
+            _cluster.CreateMonitors(MakeMonitor(*cluster.monitor));
         });
 }
 

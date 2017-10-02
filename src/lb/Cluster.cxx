@@ -32,6 +32,7 @@
 
 #include "Cluster.hxx"
 #include "ClusterConfig.hxx"
+#include "MonitorMap.hxx"
 #include "avahi/Explorer.hxx"
 #include "StickyCache.hxx"
 #include "net/FailureManager.hxx"
@@ -87,6 +88,13 @@ LbCluster::~LbCluster()
     delete sticky_ring;
 
     members.clear_and_dispose(Member::UnrefDisposer());
+}
+
+void
+LbCluster::CreateMonitors(LbMonitorMap &monitor_map)
+{
+    for (const auto &member : config.members)
+        monitor_map.Add(*member.node, member.port);
 }
 
 LbCluster::MemberMap::reference

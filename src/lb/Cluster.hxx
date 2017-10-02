@@ -50,6 +50,7 @@ struct LbConfig;
 struct LbGotoIfConfig;
 struct LbListenerConfig;
 struct LbClusterConfig;
+class LbMonitorMap;
 class FailureManager;
 class MyAvahiClient;
 class StickyCache;
@@ -227,6 +228,11 @@ public:
     const LbClusterConfig &GetConfig() const {
         return config;
     }
+
+    /**
+     * Create monitors for "static" members.
+     */
+    void CreateMonitors(LbMonitorMap &monitor_map);
 
     gcc_pure
     size_t GetZeroconfCount() {
