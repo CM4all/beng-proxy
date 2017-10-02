@@ -9,6 +9,7 @@ cm4all-beng-proxy (12.6) unstable; urgency=low
   * lb: fix request headers in access logger (affects
     "ignore_localhost_200" and "User-Agent", "Referer", "Host",
     "X-Forwarded-For")
+  * lb/monitor/expect: fix memory leak
   * certdb: fix notifications in non-default PostgreSQL schema
 
  --   

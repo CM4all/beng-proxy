@@ -186,6 +186,7 @@ ExpectMonitor::OnSocketConnectSuccess(UniqueSocketDescriptor &&new_fd)
                               MSG_DONTWAIT);
         if (nbytes < 0) {
             handler.Error(std::make_exception_ptr(MakeErrno("Failed to send")));
+            delete this;
             return;
         }
     }
