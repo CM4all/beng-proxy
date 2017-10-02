@@ -137,13 +137,14 @@ LbMonitorController::TimeoutCallback()
 
 LbMonitorController::LbMonitorController(EventLoop &_event_loop,
                                          FailureManager &failure_manager,
-                                         struct pool &_pool, const char *_name,
+                                         struct pool &_pool,
+                                         std::string &&_name,
                                          const LbMonitorConfig &_config,
                                          SocketAddress _address,
                                          const LbMonitorClass &_class)
     :event_loop(_event_loop),
      failure(failure_manager.Make(_address)),
-     pool(_pool), name(_name), config(_config),
+     pool(_pool), name(std::move(_name)), config(_config),
      address(_address),
      class_(_class),
      logger("monitor " + name),
