@@ -83,6 +83,10 @@ struct LbMonitorConfig {
 
     explicit LbMonitorConfig(const char *_name)
         :name(_name) {}
+
+    bool IsDefined() const {
+        return type != Type::NONE;
+    }
 };
 
 #endif
