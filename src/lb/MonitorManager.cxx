@@ -38,7 +38,7 @@ LbMonitorManager::operator[](const LbMonitorConfig &monitor_config)
 {
     return monitors
         .emplace(std::piecewise_construct,
-                 std::forward_as_tuple(monitor_config.name),
+                 std::forward_as_tuple(&monitor_config),
                  std::forward_as_tuple(event_loop,
                                        failure_manager,
                                        monitor_config))

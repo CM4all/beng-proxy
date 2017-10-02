@@ -35,7 +35,6 @@
 #include "MonitorStock.hxx"
 
 #include <map>
-#include <string>
 
 struct LbMonitorConfig;
 class EventLoop;
@@ -48,7 +47,7 @@ class LbMonitorManager {
     EventLoop &event_loop;
     FailureManager &failure_manager;
 
-    std::map<std::string, LbMonitorStock> monitors;
+    std::map<const LbMonitorConfig *, LbMonitorStock> monitors;
 
 public:
     LbMonitorManager(EventLoop &_event_loop,
