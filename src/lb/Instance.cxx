@@ -46,9 +46,9 @@ static constexpr auto &COMPRESS_INTERVAL = EventDuration<600>::value;
 
 LbInstance::LbInstance(const LbConfig &_config)
     :config(_config),
+     monitors(event_loop, failure_manager),
      avahi_client(event_loop, "beng-lb"),
      goto_map(config, failure_manager, avahi_client),
-     monitors(event_loop, failure_manager),
      compress_event(event_loop, BIND_THIS_METHOD(OnCompressTimer)),
      shutdown_listener(event_loop, BIND_THIS_METHOD(ShutdownCallback)),
      sighup_event(event_loop, SIGHUP, BIND_THIS_METHOD(ReloadEventCallback))

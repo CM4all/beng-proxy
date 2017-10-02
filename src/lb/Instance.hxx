@@ -69,6 +69,8 @@ struct LbInstance final : PInstance {
 
     std::forward_list<LbControl> controls;
 
+    LbMonitorManager monitors;
+
     MyAvahiClient avahi_client;
 
     LbGotoMap goto_map;
@@ -76,8 +78,6 @@ struct LbInstance final : PInstance {
     std::forward_list<LbListener> listeners;
 
     std::map<std::string, CertCache> cert_dbs;
-
-    LbMonitorManager monitors;
 
     TimerEvent compress_event;
 
