@@ -52,7 +52,7 @@ struct ExpectMonitor final : ConnectSocketHandler, Cancellable {
     struct pool &pool;
     const LbMonitorConfig &config;
 
-    int fd;
+    int fd = -1;
 
     SocketEvent event;
 
