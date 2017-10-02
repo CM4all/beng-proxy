@@ -33,7 +33,7 @@
 #ifndef BENG_PROXY_LB_MONITOR_CONTROLLER_HXX
 #define BENG_PROXY_LB_MONITOR_CONTROLLER_HXX
 
-#include "Monitor.hxx"
+#include "MonitorHandler.hxx"
 #include "io/Logger.hxx"
 #include "event/TimerEvent.hxx"
 #include "net/AllocatedSocketAddress.hxx"

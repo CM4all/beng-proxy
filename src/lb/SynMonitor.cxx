@@ -31,7 +31,8 @@
  */
 
 #include "SynMonitor.hxx"
-#include "Monitor.hxx"
+#include "MonitorHandler.hxx"
+#include "MonitorClass.hxx"
 #include "MonitorConfig.hxx"
 #include "event/Duration.hxx"
 #include "net/ConnectSocket.hxx"

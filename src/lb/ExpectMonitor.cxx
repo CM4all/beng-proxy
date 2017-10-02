@@ -31,7 +31,8 @@
  */
 
 #include "ExpectMonitor.hxx"
-#include "Monitor.hxx"
+#include "MonitorHandler.hxx"
+#include "MonitorClass.hxx"
 #include "MonitorConfig.hxx"
 #include "system/Error.hxx"
 #include "net/ConnectSocket.hxx"

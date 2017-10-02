@@ -31,7 +31,8 @@
  */
 
 #include "PingMonitor.hxx"
-#include "Monitor.hxx"
+#include "MonitorHandler.hxx"
+#include "MonitorClass.hxx"
 #include "net/Ping.hxx"
 #include "net/SocketAddress.hxx"
 #include "util/Cancellable.hxx"

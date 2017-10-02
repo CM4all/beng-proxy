@@ -32,6 +32,7 @@
 
 #include "MonitorController.hxx"
 #include "MonitorConfig.hxx"
+#include "MonitorClass.hxx"
 #include "net/FailureManager.hxx"
 #include "util/StringFormat.hxx"
 

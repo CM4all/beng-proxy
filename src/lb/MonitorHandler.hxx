@@ -30,19 +30,9 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Generic monitor class.
- */
-
-#ifndef BENG_PROXY_LB_MONITOR_HXX
-#define BENG_PROXY_LB_MONITOR_HXX
+#pragma once
 
 #include <exception>
-
-class EventLoop;
-class SocketAddress;
-class CancellablePointer;
-struct LbMonitorConfig;
 
 class LbMonitorHandler {
 public:
@@ -51,13 +41,3 @@ public:
     virtual void Timeout() = 0;
     virtual void Error(std::exception_ptr e) = 0;
 };
-
-struct LbMonitorClass {
-    void (*run)(EventLoop &event_loop,
-                const LbMonitorConfig &config,
-                SocketAddress address,
-                LbMonitorHandler &handler,
-                CancellablePointer &cancel_ptr);
-};
-
-#endif
