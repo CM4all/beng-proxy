@@ -121,12 +121,6 @@ struct LbInstance final : PInstance {
     struct beng_control_stats GetStats() const noexcept;
 
     /**
-     * Create monitors for all members of all active clusters (from
-     * #LbGotoMap).
-     */
-    void CreateMonitors();
-
-    /**
      * Compress memory allocators, try to return unused memory areas
      * to the kernel.
      */

@@ -44,10 +44,12 @@
 struct LbGoto;
 struct LbGotoConfig;
 struct TranslationInvalidateRequest;
+class LbMonitorManager;
 
 class LbGotoMap final {
     const LbConfig &root_config;
     FailureManager &failure_manager;
+    LbMonitorManager &monitors;
     MyAvahiClient &avahi_client;
 
     LbLuaInitHook lua_init_hook;
@@ -62,8 +64,10 @@ class LbGotoMap final {
 public:
     LbGotoMap(const LbConfig &_config,
               FailureManager &_failure_manager,
+              LbMonitorManager &_monitors,
               MyAvahiClient &_avahi_client)
         :root_config(_config), failure_manager(_failure_manager),
+         monitors(_monitors),
          avahi_client(_avahi_client),
          lua_init_hook(this) {}
 

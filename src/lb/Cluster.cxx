@@ -68,6 +68,7 @@ LbCluster::Member::GetLogName() const noexcept
 
 LbCluster::LbCluster(const LbClusterConfig &_config,
                      FailureManager &_failure_manager,
+                     LbMonitorStock *monitors,
                      MyAvahiClient &avahi_client)
     :config(_config), failure_manager(_failure_manager),
      logger("cluster " + config.name)
@@ -80,6 +81,11 @@ LbCluster::LbCluster(const LbClusterConfig &_config,
                                                 config.zeroconf_domain.empty()
                                                 ? nullptr
                                                 : config.zeroconf_domain.c_str()));
+
+    if (monitors != nullptr)
+        /* create monitors for "static" members */
+        for (const auto &member : config.members)
+            monitors->Add(*member.node, member.port);
 }
 
 LbCluster::~LbCluster()
@@ -88,13 +94,6 @@ LbCluster::~LbCluster()
     delete sticky_ring;
 
     members.clear_and_dispose(Member::UnrefDisposer());
-}
-
-void
-LbCluster::CreateMonitors(LbMonitorStock &monitor_stock)
-{
-    for (const auto &member : config.members)
-        monitor_stock.Add(*member.node, member.port);
 }
 
 LbCluster::MemberMap::reference

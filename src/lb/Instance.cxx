@@ -48,7 +48,7 @@ LbInstance::LbInstance(const LbConfig &_config)
     :config(_config),
      monitors(event_loop, failure_manager),
      avahi_client(event_loop, "beng-lb"),
-     goto_map(config, failure_manager, avahi_client),
+     goto_map(config, failure_manager, monitors, avahi_client),
      compress_event(event_loop, BIND_THIS_METHOD(OnCompressTimer)),
      shutdown_listener(event_loop, BIND_THIS_METHOD(ShutdownCallback)),
      sighup_event(event_loop, SIGHUP, BIND_THIS_METHOD(ReloadEventCallback))
@@ -69,21 +69,7 @@ LbInstance::InitWorker()
     for (auto &listener : listeners)
         listener.Scan(goto_map);
 
-    CreateMonitors();
-
     ConnectCertCaches();
-}
-
-void
-LbInstance::CreateMonitors()
-{
-    goto_map.ForEachCluster([this](LbCluster &_cluster){
-            const auto &cluster = _cluster.GetConfig();
-            if (cluster.monitor == nullptr)
-                return;
-
-            _cluster.CreateMonitors(monitors[*cluster.monitor]);
-        });
 }
 
 void

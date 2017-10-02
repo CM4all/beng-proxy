@@ -222,17 +222,13 @@ private:
 
 public:
     LbCluster(const LbClusterConfig &_config, FailureManager &_failure_manager,
+              LbMonitorStock *monitors,
               MyAvahiClient &avahi_client);
     ~LbCluster();
 
     const LbClusterConfig &GetConfig() const {
         return config;
     }
-
-    /**
-     * Create monitors for "static" members.
-     */
-    void CreateMonitors(LbMonitorStock &monitor_stock);
 
     gcc_pure
     size_t GetZeroconfCount() {

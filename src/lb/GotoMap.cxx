@@ -34,6 +34,7 @@
 #include "Goto.hxx"
 #include "Config.hxx"
 #include "LuaInitHook.hxx"
+#include "MonitorManager.hxx"
 #include "avahi/Client.hxx"
 
 void
@@ -85,9 +86,14 @@ LbGotoMap::GetInstance(const LbGotoConfig &config)
 LbCluster &
 LbGotoMap::GetInstance(const LbClusterConfig &config)
 {
+    auto *monitor_stock = config.monitor != nullptr
+        ? &monitors[*config.monitor]
+        : nullptr;
+
     return clusters.emplace(std::piecewise_construct,
                             std::forward_as_tuple(&config),
                             std::forward_as_tuple(config, failure_manager,
+                                                  monitor_stock,
                                                   avahi_client))
         .first->second;
 }
