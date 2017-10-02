@@ -39,6 +39,7 @@
 #include "ClusterConfig.hxx"
 #include "pool.hxx"
 #include "net/SocketAddress.hxx"
+#include "util/StringFormat.hxx"
 
 #include <map>
 
@@ -58,10 +59,10 @@ LbMonitorMap::Key::operator<(const Key &other) const
     return port < other.port;
 }
 
-char *
-LbMonitorMap::Key::ToString(struct pool &_pool) const
+std::string
+LbMonitorMap::Key::ToString() const
 {
-    return p_sprintf(&_pool, "%s:[%s]:%u", monitor_name, node_name, port);
+    return StringFormat<1024>("%s:[%s]:%u", monitor_name, node_name, port).c_str();
 }
 
 LbMonitorMap::LbMonitorMap(struct pool &_pool, EventLoop &_event_loop,
@@ -116,7 +117,7 @@ LbMonitorMap::Add(const char *node_name, SocketAddress address,
     map.emplace(std::piecewise_construct,
                 std::forward_as_tuple(key),
                 std::forward_as_tuple(event_loop, failure_manager,
-                                      *_pool, key.ToString(*_pool),
+                                      *_pool, key.ToString(),
                                       config, address, *class_));
     pool_unref(_pool);
 }

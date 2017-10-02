@@ -37,6 +37,7 @@
 #include "util/Compiler.h"
 
 #include <map>
+#include <string>
 
 struct pool;
 struct LbNodeConfig;
@@ -57,7 +58,7 @@ class LbMonitorMap {
         gcc_pure
         bool operator<(const Key &other) const;
 
-        char *ToString(struct pool &pool) const;
+        std::string ToString() const;
     };
 
     struct pool *const pool;
