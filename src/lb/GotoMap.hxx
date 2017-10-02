@@ -84,12 +84,6 @@ public:
     gcc_pure
     size_t GetAllocatedTranslationCacheMemory() const noexcept;
 
-    template<typename F>
-    void ForEachCluster(F &&f) {
-        for (auto &i : clusters)
-            f(i.second);
-    }
-
     LbGoto GetInstance(const char *name);
     LbGoto GetInstance(const LbGotoConfig &config);
 
