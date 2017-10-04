@@ -31,11 +31,13 @@
  */
 
 #include "AcmeClient.hxx"
+#include "AcmeError.hxx"
 #include "AcmeConfig.hxx"
 #include "ssl/Base64.hxx"
 #include "ssl/Certificate.hxx"
 #include "ssl/Key.hxx"
 #include "uri/uri_extract.hxx"
+#include "util/Exception.hxx"
 
 #include <json/json.h>
 
@@ -85,12 +87,8 @@ CheckThrowError(const Json::Value &root, const char *msg)
     if (error.isNull())
         return;
 
-    std::string what(msg);
-    what += ": [";
-    what += error["type"].asString();
-    what += "] ";
-    what += error["detail"].asString();
-    throw std::runtime_error(std::move(what));
+    std::rethrow_exception(NestException(std::make_exception_ptr(AcmeError(error)),
+                                         std::runtime_error(msg)));
 }
 
 /**
@@ -101,17 +99,13 @@ gcc_noreturn
 static void
 ThrowError(GlueHttpResponse &&response, const char *msg)
 {
-    std::string what(msg);
-
     if (IsJson(response)) {
         const auto root = ParseJson(std::move(response.body));
-        what += ": [";
-        what += root["type"].asString();
-        what += "] ";
-        what += root["detail"].asString();
+        std::rethrow_exception(NestException(std::make_exception_ptr(AcmeError(root)),
+                                             std::runtime_error(msg)));
     }
 
-    throw std::runtime_error(std::move(what));
+    throw std::runtime_error(msg);
 }
 
 /**
