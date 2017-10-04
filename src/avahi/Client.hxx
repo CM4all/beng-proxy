@@ -88,7 +88,7 @@ public:
 
     void Close();
 
-    void Enable();
+    void Activate();
 
     void AddListener(AvahiConnectionListener &listener) {
         listeners.push_front(&listener);

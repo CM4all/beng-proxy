@@ -75,7 +75,7 @@ MyAvahiClient::~MyAvahiClient()
 }
 
 void
-MyAvahiClient::Enable()
+MyAvahiClient::Activate()
 {
     assert(client == nullptr);
 
@@ -91,7 +91,7 @@ MyAvahiClient::AddService(AvahiIfIndex interface, AvahiProtocol protocol,
 
     services.emplace_front(interface, protocol, type, port);
 
-    Enable();
+    Activate();
 }
 
 void

@@ -174,7 +174,7 @@ AvahiServiceExplorer::AvahiServiceExplorer(MyAvahiClient &_avahi_client,
      query_domain(_domain == nullptr ? "" : _domain)
 {
     avahi_client.AddListener(*this);
-    avahi_client.Enable();
+    avahi_client.Activate();
 }
 
 AvahiServiceExplorer::~AvahiServiceExplorer()
