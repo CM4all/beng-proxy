@@ -380,6 +380,35 @@ MakeCertRequest(EVP_PKEY &key, X509 &src)
     return req;
 }
 
+/**
+ * Generate a tls-sni-01 challenge certificate, load it into the
+ * database and send a PostgreSQL notify.  After returning, it is not
+ * guaranteed that all servers have already updated their certificate
+ * cache.
+ *
+ * @param key the ACME account key
+ * @param handle the certificate handle
+ * @param host the certificate host
+ * @param cert_key a key for the new challenge certificate
+ * @param authz_response the "new-authz" response from the ACME server
+ * (i.e. the challenge)
+ */
+static void
+LoadAcmeNewAuthzChallenge(EVP_PKEY &key, CertDatabase &db,
+                          const char *handle, const char *host,
+                          EVP_PKEY &cert_key,
+                          const AcmeClient::AuthzTlsSni01 &authz_response)
+{
+    const auto cert = MakeTlsSni01Cert(key, cert_key, host, authz_response);
+
+    WrapKeyHelper wrap_key_helper;
+    const auto wrap_key = wrap_key_helper.SetEncryptKey(*db_config);
+
+    db.LoadServerCertificate(handle, *cert, cert_key,
+                             wrap_key.first, wrap_key.second);
+    db.NotifyModified();
+}
+
 static void
 AcmeNewAuthz(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
              const char *handle, const char *host)
@@ -387,14 +416,8 @@ AcmeNewAuthz(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
     const auto response = client.NewAuthz(key, host);
 
     const auto cert_key = GenerateRsaKey();
-    const auto cert = MakeTlsSni01Cert(key, *cert_key, host, response);
 
-    WrapKeyHelper wrap_key_helper;
-    const auto wrap_key = wrap_key_helper.SetEncryptKey(*db_config);
-
-    db.LoadServerCertificate(handle, *cert, *cert_key,
-                             wrap_key.first, wrap_key.second);
-    db.NotifyModified();
+    LoadAcmeNewAuthzChallenge(key, db, handle, host, *cert_key, response);
 
     printf("Loaded challenge certificate into database\n");
 
