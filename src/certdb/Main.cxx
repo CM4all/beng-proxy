@@ -322,8 +322,6 @@ static UniqueX509
 MakeTlsSni01Cert(EVP_PKEY &account_key, EVP_PKEY &key, const char *host,
                  const AcmeClient::AuthzTlsSni01 &authz)
 {
-    (void)authz;
-
     const auto alt_host = authz.MakeDnsName(account_key);
     std::string alt_name = "DNS:" + alt_host;
 
