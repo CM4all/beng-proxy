@@ -62,6 +62,7 @@
 
 #include <json/json.h>
 
+#include <thread>
 #include <stdexcept>
 #include <set>
 
@@ -423,12 +424,12 @@ HandleAcmeNewAuthz(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
        an arbitrary delay, somewhat bigger than NameCache's 200ms
        delay */
     if (!client.IsFake())
-        usleep(500000);
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
     printf("Waiting for confirmation from ACME server\n");
     bool done = client.UpdateAuthz(key, authz_response);
     while (!done) {
-        usleep(100000);
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
         done = client.CheckAuthz(authz_response);
     }
 }
