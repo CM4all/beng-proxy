@@ -495,10 +495,7 @@ AcmeNewCert(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
             const char *handle,
             const char *host, ConstBuffer<const char *> alt_hosts)
 {
-    const auto cert_key = FindKeyByName(db, host);
-    if (!cert_key)
-        throw "Challenge certificate not found in database";
-
+    const auto cert_key = GenerateRsaKey();
     const auto req = MakeCertRequest(*cert_key, host, alt_hosts);
     AcmeNewCert(key, db, client, handle, *cert_key, *req);
 }
