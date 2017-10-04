@@ -31,6 +31,7 @@
  */
 
 #include "AcmeError.hxx"
+#include "util/Exception.hxx"
 
 #include <json/json.h>
 
@@ -38,4 +39,21 @@ AcmeError::AcmeError(const Json::Value &error)
     :std::runtime_error(error["detail"].asString()),
      type(error["type"].asString())
 {
+}
+
+bool
+IsAcmeErrorType(std::exception_ptr ep, const char *type) noexcept
+{
+    try {
+        FindRetrowNested<AcmeError>(ep);
+        return false;
+    } catch (const AcmeError &acme_error) {
+        return acme_error.GetType() == type;
+    }
+}
+
+bool
+IsAcmeUnauthorizedError(std::exception_ptr ep) noexcept
+{
+    return IsAcmeErrorType(ep, "urn:acme:error:unauthorized");
 }

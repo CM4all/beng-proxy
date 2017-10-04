@@ -32,6 +32,8 @@
 
 #pragma once
 
+#include "util/Compiler.h"
+
 #include <stdexcept>
 #include <string>
 
@@ -47,3 +49,11 @@ public:
         return type;
     }
 };
+
+gcc_pure
+bool
+IsAcmeErrorType(std::exception_ptr ep, const char *type) noexcept;
+
+gcc_pure
+bool
+IsAcmeUnauthorizedError(std::exception_ptr ep) noexcept;
