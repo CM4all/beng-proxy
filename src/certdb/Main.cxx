@@ -32,6 +32,7 @@
 
 #include "Progress.hxx"
 #include "AcmeUtil.hxx"
+#include "AcmeError.hxx"
 #include "AcmeClient.hxx"
 #include "AcmeConfig.hxx"
 #include "Config.hxx"
@@ -57,7 +58,6 @@
 #include "io/StringFile.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/PrintException.hxx"
-
 #include "util/Compiler.h"
 
 #include <json/json.h>
@@ -437,15 +437,38 @@ static void
 AcmeNewAuthz(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
              const char *handle, const char *host)
 {
-    const auto response = client.NewAuthz(key, host);
+    auto response = client.NewAuthz(key, host);
     const auto cert_key = GenerateRsaKey();
 
     /* 500ms is an arbitrary delay, somewhat bigger than NameCache's
        200ms delay */
     std::chrono::steady_clock::duration delay = std::chrono::milliseconds(500);
 
-    HandleAcmeNewAuthz(key, db, client, handle, host, *cert_key,
-                       response, delay);
+    unsigned unauthorized_retries = 3;
+
+    while (true) {
+        response = client.NewAuthz(key, host);
+
+        try {
+            HandleAcmeNewAuthz(key, db, client, handle, host, *cert_key,
+                               response, delay);
+            break;
+        } catch (...) {
+            if (IsAcmeUnauthorizedError(std::current_exception()) &&
+                unauthorized_retries-- > 0) {
+                /* just in case this was caused by a timing problem
+                   (the beng-lb instance had not updated its cache
+                   yet), retry with a larger delay */
+
+                PrintException(std::current_exception());
+                fprintf(stderr, "Retrying new-authz.\n");
+                delay *= 2;
+                continue;
+            }
+
+            throw;
+        }
+    }
 }
 
 static void
