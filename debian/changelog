@@ -4,6 +4,8 @@ cm4all-beng-proxy (13.0.9) unstable; urgency=low
   * lb/monitor/expect: fix memory leak
   * certdb: retry ACME "new-authz" after "unauthorized"
   * certdb: generate a new private key for each "new-cert"
+  * certdb: fix collisions with ACME challenge certificates
+  * certdb: allow altNames longer than 64 characters with ACME
   * log: add attribute "FORWARDED_TO"
   * control: add packets "DISABLE_ZEROCONF", "ENABLE_ZEROCONF"
 

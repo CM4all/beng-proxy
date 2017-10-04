@@ -121,11 +121,6 @@ public:
                                const char *key_wrap_name,
                                AES_KEY *wrap_key);
 
-    /**
-     * Delete *.acme.invalid for alt_names of the given certificate.
-     */
-    unsigned DeleteAcmeInvalidAlt(X509 &cert);
-
     UniqueX509 GetServerCertificateByHandle(const char *handle);
 
     /**
@@ -222,19 +217,6 @@ public:
     }
 
 private:
-    template<typename T>
-    Pg::Result DeleteAcmeInvalidByNames(const T &names) {
-        return conn.ExecuteParams(true,
-                                  "UPDATE server_certificate SET "
-                                  "modified=CURRENT_TIMESTAMP, deleted=TRUE "
-                                  "WHERE NOT deleted AND common_name = ANY($1)"
-                                  " AND EXISTS("
-                                  "SELECT id FROM server_certificate_alt_name"
-                                  " WHERE server_certificate_id=server_certificate.id"
-                                  " AND name LIKE '%.acme.invalid')",
-                                  names);
-    }
-
     Pg::Result FindServerCertificateByHandle(const char *handle) {
         return conn.ExecuteParams(true,
                                   "SELECT certificate_der "

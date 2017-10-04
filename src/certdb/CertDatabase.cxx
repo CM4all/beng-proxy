@@ -237,12 +237,6 @@ CertDatabase::LoadServerCertificate(const char *handle,
     }
 }
 
-unsigned
-CertDatabase::DeleteAcmeInvalidAlt(X509 &cert)
-{
-    return CheckError(DeleteAcmeInvalidByNames(GetSubjectAltNames(cert))).GetAffectedRows();
-}
-
 UniqueX509
 CertDatabase::GetServerCertificateByHandle(const char *handle)
 {

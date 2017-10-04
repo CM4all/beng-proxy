@@ -103,18 +103,14 @@ LoadCertificate(const char *handle,
     CertDatabase db(*db_config);
 
     bool inserted;
-    unsigned deleted;
 
     db.DoSerializableRepeat(8, [&](){
             inserted = db.LoadServerCertificate(handle,
                                                 *cert, *key, wrap_key.first,
                                                 wrap_key.second);
-            deleted = db.DeleteAcmeInvalidAlt(*cert);
         });
 
     printf("%s: %s\n", inserted ? "insert" : "update", common_name.c_str());
-    if (deleted > 0)
-        printf("%s: deleted %u *.acme.invalid\n", common_name.c_str(), deleted);
     db.NotifyModified();
 }
 
@@ -319,14 +315,26 @@ CopyDnsAltNames(X509_REQ &req, X509 &src)
     AddAltNames(req, gn);
 }
 
+static std::string
+MakeHandleFromAcmeSni01(const std::string &acme)
+{
+    auto i = acme.find('.');
+    if (i != 32)
+        i = std::min<size_t>(32, acme.length());
+
+    return "acme.invalid:" + acme.substr(0, i);
+}
+
 static UniqueX509
-MakeTlsSni01Cert(EVP_PKEY &account_key, EVP_PKEY &key, const char *host,
+MakeTlsSni01Cert(EVP_PKEY &account_key, EVP_PKEY &key,
                  const AcmeClient::AuthzTlsSni01 &authz)
 {
     const auto alt_host = authz.MakeDnsName(account_key);
     std::string alt_name = "DNS:" + alt_host;
 
-    auto cert = MakeSelfIssuedDummyCert(host);
+    const std::string common_name = MakeHandleFromAcmeSni01(alt_host);
+
+    auto cert = MakeSelfIssuedDummyCert(common_name.c_str());
 
     AddExt(*cert, NID_subject_alt_name, alt_name.c_str());
 
@@ -388,36 +396,39 @@ MakeCertRequest(EVP_PKEY &key, X509 &src)
  * cache.
  *
  * @param key the ACME account key
- * @param handle the certificate handle
- * @param host the certificate host
  * @param cert_key a key for the new challenge certificate
  * @param authz_response the "new-authz" response from the ACME server
  * (i.e. the challenge)
+ * @return the handle
  */
-static void
+static AllocatedString<>
 LoadAcmeNewAuthzChallenge(EVP_PKEY &key, CertDatabase &db,
-                          const char *handle, const char *host,
                           EVP_PKEY &cert_key,
                           const AcmeClient::AuthzTlsSni01 &authz_response)
 {
-    const auto cert = MakeTlsSni01Cert(key, cert_key, host, authz_response);
+    const auto cert = MakeTlsSni01Cert(key, cert_key, authz_response);
+    auto handle = GetCommonName(*cert);
+    assert(!handle.IsNull());
 
     WrapKeyHelper wrap_key_helper;
     const auto wrap_key = wrap_key_helper.SetEncryptKey(*db_config);
 
-    db.LoadServerCertificate(handle, *cert, cert_key,
+    db.LoadServerCertificate(handle.c_str(), *cert, cert_key,
                              wrap_key.first, wrap_key.second);
     db.NotifyModified();
+
+    return handle;
 }
 
 static void
 HandleAcmeNewAuthz(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
-                   const char *handle, const char *host,
                    EVP_PKEY &cert_key,
                    const AcmeClient::AuthzTlsSni01 &authz_response,
                    std::chrono::steady_clock::duration delay)
 {
-    LoadAcmeNewAuthzChallenge(key, db, handle, host, cert_key, authz_response);
+    const auto handle =
+        LoadAcmeNewAuthzChallenge(key, db, cert_key, authz_response);
+    assert(!handle.IsNull());
 
     printf("Loaded challenge certificate into database\n");
 
@@ -431,11 +442,17 @@ HandleAcmeNewAuthz(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
         done = client.CheckAuthz(authz_response);
     }
+
+    /* delete the challenge record */
+
+    db.DeleteServerCertificateByHandle(handle.c_str());
+
+    // TODO: delete orphaned challenge records
 }
 
 static void
 AcmeNewAuthz(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
-             const char *handle, const char *host)
+             const char *host)
 {
     auto response = client.NewAuthz(key, host);
     const auto cert_key = GenerateRsaKey();
@@ -450,7 +467,7 @@ AcmeNewAuthz(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
         response = client.NewAuthz(key, host);
 
         try {
-            HandleAcmeNewAuthz(key, db, client, handle, host, *cert_key,
+            HandleAcmeNewAuthz(key, db, client, *cert_key,
                                response, delay);
             break;
         } catch (...) {
@@ -484,7 +501,6 @@ AcmeNewCert(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
     db.DoSerializableRepeat(8, [&](){
             db.LoadServerCertificate(handle, *cert, cert_key,
                                      wrap_key.first, wrap_key.second);
-            db.DeleteAcmeInvalidAlt(*cert);
         });
 
     db.NotifyModified();
@@ -517,11 +533,11 @@ AcmeNewAuthzCert(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
 {
     StepProgress progress(_progress, 1 + alt_hosts.size + 1);
 
-    AcmeNewAuthz(key, db, client, handle, host);
+    AcmeNewAuthz(key, db, client, host);
     progress();
 
     for (const auto *alt_host : alt_hosts) {
-        AcmeNewAuthz(key, db, client, nullptr, alt_host);
+        AcmeNewAuthz(key, db, client, alt_host);
         progress();
     }
 
@@ -566,12 +582,8 @@ AcmeRenewCert(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
     StepProgress progress(_progress, names.size() + 1);
 
     for (const auto &i : names) {
-        const char *current_handle = strcmp(cn.c_str(), i.c_str()) == 0
-            ? handle
-            : nullptr;
-
         printf("new-authz '%s'\n", i.c_str());
-        AcmeNewAuthz(key, db, client, current_handle, i.c_str());
+        AcmeNewAuthz(key, db, client, i.c_str());
         progress();
     }
 
@@ -643,7 +655,6 @@ Acme(ConstBuffer<const char *> args)
         if (args.size != 1)
             throw Usage("acme new-authz HOST");
 
-        const char *handle = nullptr;
         const char *host = args[0];
 
         const ScopeSslGlobalInit ssl_init;
@@ -655,7 +666,7 @@ Acme(ConstBuffer<const char *> args)
         CertDatabase db(*db_config);
         AcmeClient client(config);
 
-        AcmeNewAuthz(*key, db, client, handle, host);
+        AcmeNewAuthz(*key, db, client, host);
         printf("OK\n");
     } else if (strcmp(cmd, "new-cert") == 0) {
         if (args.size < 2)
