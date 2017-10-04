@@ -414,17 +414,16 @@ static void
 HandleAcmeNewAuthz(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
                    const char *handle, const char *host,
                    EVP_PKEY &cert_key,
-                   const AcmeClient::AuthzTlsSni01 &authz_response)
+                   const AcmeClient::AuthzTlsSni01 &authz_response,
+                   std::chrono::steady_clock::duration delay)
 {
     LoadAcmeNewAuthzChallenge(key, db, handle, host, cert_key, authz_response);
 
     printf("Loaded challenge certificate into database\n");
 
-    /* wait until beng-lb's NameCache has been updated; 500ms is
-       an arbitrary delay, somewhat bigger than NameCache's 200ms
-       delay */
+    /* wait until beng-lb's NameCache has been updated */
     if (!client.IsFake())
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        std::this_thread::sleep_for(delay);
 
     printf("Waiting for confirmation from ACME server\n");
     bool done = client.UpdateAuthz(key, authz_response);
@@ -441,7 +440,12 @@ AcmeNewAuthz(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
     const auto response = client.NewAuthz(key, host);
     const auto cert_key = GenerateRsaKey();
 
-    HandleAcmeNewAuthz(key, db, client, handle, host, *cert_key, response);
+    /* 500ms is an arbitrary delay, somewhat bigger than NameCache's
+       200ms delay */
+    std::chrono::steady_clock::duration delay = std::chrono::milliseconds(500);
+
+    HandleAcmeNewAuthz(key, db, client, handle, host, *cert_key,
+                       response, delay);
 }
 
 static void
