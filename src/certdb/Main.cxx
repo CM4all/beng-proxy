@@ -410,14 +410,12 @@ LoadAcmeNewAuthzChallenge(EVP_PKEY &key, CertDatabase &db,
 }
 
 static void
-AcmeNewAuthz(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
-             const char *handle, const char *host)
+HandleAcmeNewAuthz(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
+                   const char *handle, const char *host,
+                   EVP_PKEY &cert_key,
+                   const AcmeClient::AuthzTlsSni01 &authz_response)
 {
-    const auto response = client.NewAuthz(key, host);
-
-    const auto cert_key = GenerateRsaKey();
-
-    LoadAcmeNewAuthzChallenge(key, db, handle, host, *cert_key, response);
+    LoadAcmeNewAuthzChallenge(key, db, handle, host, cert_key, authz_response);
 
     printf("Loaded challenge certificate into database\n");
 
@@ -428,11 +426,21 @@ AcmeNewAuthz(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
         usleep(500000);
 
     printf("Waiting for confirmation from ACME server\n");
-    bool done = client.UpdateAuthz(key, response);
+    bool done = client.UpdateAuthz(key, authz_response);
     while (!done) {
         usleep(100000);
-        done = client.CheckAuthz(response);
+        done = client.CheckAuthz(authz_response);
     }
+}
+
+static void
+AcmeNewAuthz(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
+             const char *handle, const char *host)
+{
+    const auto response = client.NewAuthz(key, host);
+    const auto cert_key = GenerateRsaKey();
+
+    HandleAcmeNewAuthz(key, db, client, handle, host, *cert_key, response);
 }
 
 static void
