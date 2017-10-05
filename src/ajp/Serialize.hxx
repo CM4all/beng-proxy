@@ -53,5 +53,8 @@ serialize_ajp_integer(GrowingBuffer &gb, int i);
 void
 serialize_ajp_bool(GrowingBuffer &gb, bool b);
 
+/**
+ * Throws DeserializeError on error.
+ */
 const char *
 deserialize_ajp_string(ConstBuffer<void> &input);

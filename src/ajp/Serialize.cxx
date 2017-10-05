@@ -102,10 +102,8 @@ deserialize_ajp_string(ConstBuffer<void> &input)
 
     const char *value = (const char *)input.data;
 
-    if (input.size <= length || value[length] != 0) {
-        input = nullptr;
-        return nullptr;
-    }
+    if (input.size <= length || value[length] != 0)
+        throw DeserializeError();
 
     SkipFront(input, length + 1);
     return value;

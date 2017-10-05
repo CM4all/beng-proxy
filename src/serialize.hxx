@@ -44,6 +44,12 @@ class GrowingBuffer;
 class StringMap;
 template<typename T> struct ConstBuffer;
 
+/**
+ * Exception which is thrown by the deserialize functions below, for
+ * example if the buffer is too small.
+ */
+class DeserializeError {};
+
 void
 serialize_uint16(GrowingBuffer &gb, uint16_t value);
 
@@ -80,7 +86,7 @@ deserialize_string(ConstBuffer<void> &input);
 const char *
 deserialize_string_null(ConstBuffer<void> &input);
 
-bool
+void
 deserialize_strmap(ConstBuffer<void> &input, StringMap &dest);
 
 StringMap *

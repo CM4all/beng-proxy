@@ -49,10 +49,16 @@ template<typename T> struct ConstBuffer;
 unsigned
 serialize_ajp_headers(GrowingBuffer &gb, const StringMap &headers);
 
+/**
+ * Throws DeserializeError on error.
+ */
 void
 deserialize_ajp_headers(struct pool &pool, StringMap &headers,
                         ConstBuffer<void> &input, unsigned num_headers);
 
+/**
+ * Throws DeserializeError on error.
+ */
 void
 deserialize_ajp_response_headers(struct pool &pool, StringMap &headers,
                                  ConstBuffer<void> &input, unsigned num_headers);

@@ -181,6 +181,9 @@ http_cache_memcached_flush(struct pool &pool, MemachedStock &stock,
                            cancel_ptr);
 }
 
+/**
+ * Throws DeserializeError on error.
+ */
 static HttpCacheDocument *
 mcd_deserialize_document(struct pool &pool, ConstBuffer<void> &header,
                          const StringMap *request_headers)
@@ -190,17 +193,13 @@ mcd_deserialize_document(struct pool &pool, ConstBuffer<void> &header,
     document->info.expires =
         std::chrono::system_clock::from_time_t(deserialize_uint64(header));
 
-    if (!deserialize_strmap(header, document->vary))
-        return nullptr;
+    deserialize_strmap(header, document->vary);
 
     document->status = (http_status_t)deserialize_uint16(header);
-    if (header.IsNull() || !http_status_is_valid(document->status))
-        return nullptr;
+    if (!http_status_is_valid(document->status))
+        throw DeserializeError();
 
-    if (!deserialize_strmap(header, document->response_headers))
-        return nullptr;
-
-    assert(!header.IsNull());
+    deserialize_strmap(header, document->response_headers);
 
     document->info.last_modified =
         document->response_headers.Get("last-modified");
@@ -289,11 +288,24 @@ http_cache_memcached_header_done(void *header_ptr, size_t length,
 
     ConstBuffer<void> header(header_ptr, length);
 
-    auto type = (http_cache_memcached_type)deserialize_uint32(header);
+    http_cache_memcached_type type;
+    try {
+        type = (http_cache_memcached_type)deserialize_uint32(header);
+    } catch (DeserializeError) {
+        tail.CloseUnused();
+        request.callback.get(nullptr, nullptr, nullptr, request.callback_ctx);
+        return;
+    }
+
     switch (type) {
     case TYPE_DOCUMENT:
-        document = mcd_deserialize_document(*request.pool, header,
-                                            request.request_headers);
+        try {
+            document = mcd_deserialize_document(*request.pool, header,
+                                                request.request_headers);
+        } catch (DeserializeError) {
+            document = nullptr;
+        }
+
         if (document == nullptr) {
             if (request.in_choice)
                 break;

@@ -211,43 +211,41 @@ http_cache_choice_buffer_done(void *data0, size_t length, void *ctx)
 
     ConstBuffer<void> data(data0, length);
 
-    while (!data.empty()) {
-        magic = deserialize_uint32(data);
-        if (magic != CHOICE_MAGIC)
-            break;
+    try {
+        while (!data.empty()) {
+            magic = deserialize_uint32(data);
+            if (magic != CHOICE_MAGIC)
+                break;
 
-        const auto expires = std::chrono::system_clock::from_time_t(deserialize_uint64(data));
+            const auto expires = std::chrono::system_clock::from_time_t(deserialize_uint64(data));
 
-        const AutoRewindPool auto_rewind(*tpool);
+            const AutoRewindPool auto_rewind(*tpool);
 
-        const StringMap *const vary = deserialize_strmap(data, *tpool);
+            const StringMap *const vary = deserialize_strmap(data, *tpool);
 
-        if (data.IsNull()) {
-            /* deserialization failure */
-            unclean = true;
-            break;
-        }
+            hash = mcd_vary_hash(vary);
+            if (hash != 0) {
+                if (uset.ContainsOrInsert(hash))
+                    /* duplicate: mark the record as
+                       "unclean", queue the garbage collector */
+                    unclean = true;
+            }
 
-        hash = mcd_vary_hash(vary);
-        if (hash != 0) {
-            if (uset.ContainsOrInsert(hash))
-                /* duplicate: mark the record as
-                   "unclean", queue the garbage collector */
+            if (expires != std::chrono::system_clock::from_time_t(-1) &&
+                expires < now)
                 unclean = true;
+            else if (uri == nullptr &&
+                     http_cache_vary_fits(vary, choice->request_headers))
+                uri = http_cache_choice_vary_key(*choice->pool, choice->uri, vary);
+
+            if (uri != nullptr && unclean)
+                /* we have already found something, and we think that this
+                   record is unclean - no point in parsing more, abort
+                   here */
+                break;
         }
-
-        if (expires != std::chrono::system_clock::from_time_t(-1) &&
-            expires < now)
-            unclean = true;
-        else if (uri == nullptr &&
-                 http_cache_vary_fits(vary, choice->request_headers))
-            uri = http_cache_choice_vary_key(*choice->pool, choice->uri, vary);
-
-        if (uri != nullptr && unclean)
-            /* we have already found something, and we think that this
-               record is unclean - no point in parsing more, abort
-               here */
-            break;
+    } catch (DeserializeError) {
+        unclean = true;
     }
 
     choice->callback.get(uri, unclean, nullptr, choice->callback_ctx);
@@ -484,27 +482,27 @@ http_cache_choice_filter_buffer_done(void *data0, size_t length, void *ctx)
     ConstBuffer<void> data(data0, length);
     char *dest = (char *)data0;
 
-    while (!data.empty()) {
-        const void *current = data.data;
+    try {
+        while (!data.empty()) {
+            const void *current = data.data;
 
-        const uint32_t magic = deserialize_uint32(data);
-        if (magic != CHOICE_MAGIC)
-            break;
+            const uint32_t magic = deserialize_uint32(data);
+            if (magic != CHOICE_MAGIC)
+                break;
 
-        HttpCacheChoiceInfo info;
-        info.expires = std::chrono::system_clock::from_time_t(deserialize_uint64(data));
+            HttpCacheChoiceInfo info;
+            info.expires = std::chrono::system_clock::from_time_t(deserialize_uint64(data));
 
-        const AutoRewindPool auto_rewind(*tpool);
-        info.vary = deserialize_strmap(data, *tpool);
+            const AutoRewindPool auto_rewind(*tpool);
+            info.vary = deserialize_strmap(data, *tpool);
 
-        if (data.IsNull())
-            /* deserialization failure */
-            break;
-
-        if (choice->callback.filter(&info, nullptr, choice->callback_ctx)) {
-            memmove(dest, current, (const uint8_t *)data.data + data.size - (const uint8_t *)current);
-            dest += (const uint8_t *)data.data - (const uint8_t *)current;
+            if (choice->callback.filter(&info, nullptr, choice->callback_ctx)) {
+                memmove(dest, current, (const uint8_t *)data.data + data.size - (const uint8_t *)current);
+                dest += (const uint8_t *)data.data - (const uint8_t *)current;
+            }
         }
+    } catch (DeserializeError) {
+        /* deserialization failure */
     }
 
     if (dest - length == data0)

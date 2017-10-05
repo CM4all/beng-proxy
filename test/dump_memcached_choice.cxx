@@ -101,24 +101,24 @@ my_sink_done(void *data0, size_t length, void *_ctx)
 
     ConstBuffer<void> data(data0, length);
 
-    while (!data.empty()) {
-        const AutoRewindPool auto_rewind(*tpool);
-        HttpCacheDocument document(*tpool);
+    try {
+        while (!data.empty()) {
+            const AutoRewindPool auto_rewind(*tpool);
+            HttpCacheDocument document(*tpool);
 
-        /*magic = */deserialize_uint32(data);
-        /*
-        if (magic != CHOICE_MAGIC)
-            break;
-        */
+            /*magic = */deserialize_uint32(data);
+            /*
+              if (magic != CHOICE_MAGIC)
+              break;
+            */
 
-        document.info.expires = std::chrono::system_clock::from_time_t(deserialize_uint64(data));
-        deserialize_strmap(data, document.vary);
+            document.info.expires = std::chrono::system_clock::from_time_t(deserialize_uint64(data));
+            deserialize_strmap(data, document.vary);
 
-        if (data.IsNull())
-            /* deserialization failure */
-            return;
-
-        dump_choice(&document);
+            dump_choice(&document);
+        }
+    } catch (DeserializeError) {
+        return;
     }
 
     ctx.success = true;

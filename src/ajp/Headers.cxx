@@ -90,9 +90,6 @@ deserialize_ajp_headers(struct pool &pool, StringMap &headers,
         const char *name, *value;
         char *lname;
 
-        if (input == nullptr)
-            break;
-
         if (length >= AJP_HEADER_CODE_START) {
             name = ajp_decode_header_name((enum ajp_header_code)length);
             if (name == nullptr) {
@@ -104,7 +101,7 @@ deserialize_ajp_headers(struct pool &pool, StringMap &headers,
             const char *data = (const char *)input.data;
             if (length >= input.size || data[length] != 0)
                 /* buffer overflow */
-                break;
+                throw DeserializeError();
 
             name = data;
             SkipFront(input, length + 1);
@@ -130,9 +127,6 @@ deserialize_ajp_response_headers(struct pool &pool, StringMap &headers,
         unsigned length = deserialize_uint16(input);
         const char *name, *value;
         char *lname;
-
-        if (input == nullptr)
-            break;
 
         if (length >= AJP_RESPONSE_HEADER_CODE_START) {
             name = ajp_decode_response_header_name((enum ajp_response_header_code)length);

@@ -124,10 +124,8 @@ deserialize_uint16(ConstBuffer<void> &input)
 {
     uint16_t value;
 
-    if (input.size < sizeof(value)) {
-        input = nullptr;
-        return 0;
-    }
+    if (input.size < sizeof(value))
+        throw DeserializeError();
 
     value = FromBE16(*(const uint16_t *)input.data);
     SkipFront(input, sizeof(value));
@@ -140,10 +138,8 @@ deserialize_uint32(ConstBuffer<void> &input)
 {
     uint32_t value;
 
-    if (input.size < sizeof(value)) {
-        input = nullptr;
-        return 0;
-    }
+    if (input.size < sizeof(value))
+        throw DeserializeError();
 
     value = FromBE32(*(const uint32_t *)input.data);
     SkipFront(input, sizeof(value));
@@ -156,10 +152,8 @@ deserialize_uint64(ConstBuffer<void> &input)
 {
     uint64_t value;
 
-    if (input.size < sizeof(value)) {
-        input = nullptr;
-        return 0;
-    }
+    if (input.size < sizeof(value))
+        throw DeserializeError();
 
     value = FromBE64(*(const uint64_t *)input.data);
     SkipFront(input, sizeof(value));
@@ -171,10 +165,8 @@ const char *
 deserialize_string(ConstBuffer<void> &input)
 {
     const char *end = (const char *)memchr(input.data, 0, input.size);
-    if (end == nullptr) {
-        input = nullptr;
-        return nullptr;
-    }
+    if (end == nullptr)
+        throw DeserializeError();
 
     const char *value = (const char *)input.data;
 
@@ -186,25 +178,20 @@ const char *
 deserialize_string_null(ConstBuffer<void> &input)
 {
     const char *value = deserialize_string(input);
-    if (value != nullptr && *value == 0)
+    if (*value == 0)
         value = nullptr;
     return value;
 }
 
-bool
+void
 deserialize_strmap(ConstBuffer<void> &input, StringMap &dest)
 {
     while (true) {
         const char *key = deserialize_string(input);
-        if (key == nullptr)
-            return false;
-
         if (*key == 0)
-            return true;
+            break;
 
         const char *value = deserialize_string(input);
-        if (value == nullptr)
-            return false;
 
         dest.Add(key, value);
     }
@@ -216,20 +203,15 @@ deserialize_strmap(ConstBuffer<void> &input, struct pool &pool)
     const char *key, *value;
 
     key = deserialize_string(input);
-    if (key == nullptr || *key == 0)
+    if (*key == 0)
         return nullptr;
 
     auto *map = strmap_new(&pool);
 
     do {
         value = deserialize_string(input);
-        if (value == nullptr)
-            return nullptr;
-
         map->Add(key, value);
         key = deserialize_string(input);
-        if (key == nullptr)
-            return nullptr;
     } while (*key != 0);
 
     return map;

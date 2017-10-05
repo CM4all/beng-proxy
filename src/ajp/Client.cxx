@@ -44,7 +44,7 @@
 #include "istream/Pointer.hxx"
 #include "istream/istream_cat.hxx"
 #include "istream/istream_memory.hxx"
-#include "serialize.hxx"
+#include "../serialize.hxx"
 #include "please.hxx"
 #include "uri/uri_verify.hxx"
 #include "direct.hxx"
@@ -369,14 +369,16 @@ AjpClient::ConsumeSendHeaders(const uint8_t *data, size_t length)
     }
 
     ConstBuffer<void> packet(data, length);
-    http_status_t status = (http_status_t)deserialize_uint16(packet);
-    deserialize_ajp_string(packet);
-    num_headers = deserialize_uint16(packet);
+    http_status_t status;
 
-    deserialize_ajp_response_headers(GetPool(), response.headers,
-                                     packet, num_headers);
+    try {
+        status = (http_status_t)deserialize_uint16(packet);
+        deserialize_ajp_string(packet);
+        num_headers = deserialize_uint16(packet);
 
-    if (packet == nullptr) {
+        deserialize_ajp_response_headers(GetPool(), response.headers,
+                                         packet, num_headers);
+    } catch (DeserializeError) {
         AbortResponseHeaders("malformed SEND_HEADERS packet from AJP server");
         return false;
     }
