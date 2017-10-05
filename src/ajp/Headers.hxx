@@ -31,30 +31,28 @@
  */
 
 /*
- * Serialize and deserialize AJP packets.
+ * Serialize AJP request headers, deserialize response headers.
  */
 
-#ifndef BENG_PROXY_AJP_SERIALIZE_HXX
-#define BENG_PROXY_AJP_SERIALIZE_HXX
+#pragma once
 
-#include <stddef.h>
-
+struct pool;
 class GrowingBuffer;
+class StringMap;
 template<typename T> struct ConstBuffer;
 
-void
-serialize_ajp_string_n(GrowingBuffer &gb, const char *s, size_t length);
+/**
+ * Serialize the specified headers to the buffer, but ignore "Content-Length".
+ *
+ * @return the number of headers which were written
+ */
+unsigned
+serialize_ajp_headers(GrowingBuffer &gb, const StringMap &headers);
 
 void
-serialize_ajp_string(GrowingBuffer &gb, const char *s);
+deserialize_ajp_headers(struct pool &pool, StringMap &headers,
+                        ConstBuffer<void> &input, unsigned num_headers);
 
 void
-serialize_ajp_integer(GrowingBuffer &gb, int i);
-
-void
-serialize_ajp_bool(GrowingBuffer &gb, bool b);
-
-const char *
-deserialize_ajp_string(ConstBuffer<void> &input);
-
-#endif
+deserialize_ajp_response_headers(struct pool &pool, StringMap &headers,
+                                 ConstBuffer<void> &input, unsigned num_headers);

@@ -646,12 +646,12 @@ memcached_client = static_library('memcached_client',
   ])
 
 ajp_client = static_library('ajp_client',
-  'src/ajp/ajp_client.cxx',
-  'src/ajp/ajp_headers.cxx',
-  'src/ajp/ajp_protocol.cxx',
-  'src/ajp/ajp_request.cxx',
-  'src/ajp/ajp_serialize.cxx',
+  'src/ajp/Client.cxx',
+  'src/ajp/Headers.cxx',
+  'src/ajp/Protocol.cxx',
+  'src/ajp/Serialize.cxx',
   'src/ajp/istream_ajp_body.cxx',
+  'src/ajp/Glue.cxx',
   include_directories: inc,
   dependencies: [
     declare_dependency(link_with: istream),

@@ -34,8 +34,7 @@
  * AJPv13 client implementation.
  */
 
-#ifndef BENG_PROXY_AJP_CLIENT_HXX
-#define BENG_PROXY_AJP_CLIENT_HXX
+#pragma once
 
 #include "io/FdType.hxx"
 #include "http/Method.h"
@@ -82,5 +81,3 @@ ajp_client_request(struct pool &pool, EventLoop &event_loop,
                    Istream *body,
                    HttpResponseHandler &handler,
                    CancellablePointer &cancel_ptr);
-
-#endif

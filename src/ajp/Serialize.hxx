@@ -31,39 +31,27 @@
  */
 
 /*
- * High level AJP client.
+ * Serialize and deserialize AJP packets.
  */
 
-#ifndef BENG_PROXY_AJP_REQUEST_HXX
-#define BENG_PROXY_AJP_REQUEST_HXX
+#pragma once
 
-#include "StickyHash.hxx"
-#include "http/Method.h"
+#include <stddef.h>
 
-struct pool;
-class EventLoop;
-class Istream;
-struct TcpBalancer;
-struct HttpAddress;
-class StringMap;
-class HttpResponseHandler;
-class CancellablePointer;
+class GrowingBuffer;
+template<typename T> struct ConstBuffer;
 
-/**
- * @param session_sticky a portion of the session id that is used to
- * select the worker; 0 means disable stickiness
- */
 void
-ajp_stock_request(struct pool &pool, EventLoop &event_loop,
-                  TcpBalancer &tcp_balancer,
-                  sticky_hash_t session_sticky,
-                  const char *protocol, const char *remote_addr,
-                  const char *remote_host, const char *server_name,
-                  unsigned server_port, bool is_ssl,
-                  http_method_t method,
-                  const HttpAddress &uwa,
-                  StringMap &&headers, Istream *body,
-                  HttpResponseHandler &handler,
-                  CancellablePointer &cancel_ptr);
+serialize_ajp_string_n(GrowingBuffer &gb, const char *s, size_t length);
 
-#endif
+void
+serialize_ajp_string(GrowingBuffer &gb, const char *s);
+
+void
+serialize_ajp_integer(GrowingBuffer &gb, int i);
+
+void
+serialize_ajp_bool(GrowingBuffer &gb, bool b);
+
+const char *
+deserialize_ajp_string(ConstBuffer<void> &input);

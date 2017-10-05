@@ -30,10 +30,10 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "ajp_headers.hxx"
-#include "ajp_protocol.hxx"
-#include "ajp_serialize.hxx"
-#include "serialize.hxx"
+#include "Headers.hxx"
+#include "Protocol.hxx"
+#include "Serialize.hxx"
+#include "../serialize.hxx"
 #include "strmap.hxx"
 #include "pool.hxx"
 #include "util/ConstBuffer.hxx"

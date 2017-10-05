@@ -31,8 +31,8 @@
  */
 
 #include "istream_ajp_body.hxx"
+#include "Protocol.hxx"
 #include "istream/ForwardIstream.hxx"
-#include "ajp_protocol.hxx"
 #include "direct.hxx"
 #include "util/ByteOrder.hxx"
 

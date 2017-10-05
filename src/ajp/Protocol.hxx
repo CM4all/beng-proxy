@@ -34,8 +34,7 @@
  * Internal definitions and utilities for the AJPv13 protocol.
  */
 
-#ifndef AJP_PROTOCOL_HXX
-#define AJP_PROTOCOL_HXX
+#pragma once
 
 #include "http/Method.h"
 #include "util/Compiler.h"
@@ -144,5 +143,3 @@ ajp_encode_response_header_name(const char *name);
 gcc_pure
 const char *
 ajp_decode_response_header_name(enum ajp_response_header_code code);
-
-#endif

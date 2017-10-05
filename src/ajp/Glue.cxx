@@ -30,13 +30,13 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "ajp_request.hxx"
+#include "Glue.hxx"
+#include "Client.hxx"
 #include "http_response.hxx"
 #include "http_address.hxx"
 #include "header_writer.hxx"
 #include "stock/GetHandler.hxx"
 #include "stock/Item.hxx"
-#include "ajp_client.hxx"
 #include "strmap.hxx"
 #include "lease.hxx"
 #include "tcp_stock.hxx"

@@ -37,7 +37,7 @@
 #include "tio.hxx"
 #include "t_client.hxx"
 #include "ajp_server.hxx"
-#include "ajp/ajp_client.hxx"
+#include "ajp/Client.hxx"
 #include "http_response.hxx"
 #include "system/SetupProcess.hxx"
 #include "io/FileDescriptor.hxx"

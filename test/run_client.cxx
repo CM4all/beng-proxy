@@ -30,7 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "ajp/ajp_client.hxx"
+#include "ajp/Client.hxx"
 #include "strmap.hxx"
 #include "http_client.hxx"
 #include "http_headers.hxx"

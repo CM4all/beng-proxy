@@ -30,7 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "ajp/ajp_protocol.hxx"
+#include "ajp/Protocol.hxx"
 #include "http/Status.h"
 
 #include <stddef.h>

@@ -45,7 +45,7 @@
 #include "fcgi/Request.hxx"
 #include "fcgi/Remote.hxx"
 #include "was/Glue.hxx"
-#include "ajp/ajp_request.hxx"
+#include "ajp/Glue.hxx"
 #include "nfs/Address.hxx"
 #include "nfs/Glue.hxx"
 #include "header_writer.hxx"

@@ -31,31 +31,36 @@
  */
 
 /*
- * Serialize AJP request headers, deserialize response headers.
+ * High level AJP client.
  */
 
-#ifndef BENG_PROXY_AJP_HEADERS_HXX
-#define BENG_PROXY_AJP_HEADERS_HXX
+#pragma once
+
+#include "StickyHash.hxx"
+#include "http/Method.h"
 
 struct pool;
-class GrowingBuffer;
+class EventLoop;
+class Istream;
+struct TcpBalancer;
+struct HttpAddress;
 class StringMap;
-template<typename T> struct ConstBuffer;
+class HttpResponseHandler;
+class CancellablePointer;
 
 /**
- * Serialize the specified headers to the buffer, but ignore "Content-Length".
- *
- * @return the number of headers which were written
+ * @param session_sticky a portion of the session id that is used to
+ * select the worker; 0 means disable stickiness
  */
-unsigned
-serialize_ajp_headers(GrowingBuffer &gb, const StringMap &headers);
-
 void
-deserialize_ajp_headers(struct pool &pool, StringMap &headers,
-                        ConstBuffer<void> &input, unsigned num_headers);
-
-void
-deserialize_ajp_response_headers(struct pool &pool, StringMap &headers,
-                                 ConstBuffer<void> &input, unsigned num_headers);
-
-#endif
+ajp_stock_request(struct pool &pool, EventLoop &event_loop,
+                  TcpBalancer &tcp_balancer,
+                  sticky_hash_t session_sticky,
+                  const char *protocol, const char *remote_addr,
+                  const char *remote_host, const char *server_name,
+                  unsigned server_port, bool is_ssl,
+                  http_method_t method,
+                  const HttpAddress &uwa,
+                  StringMap &&headers, Istream *body,
+                  HttpResponseHandler &handler,
+                  CancellablePointer &cancel_ptr);
