@@ -220,10 +220,10 @@ http_cache_choice_buffer_done(void *data0, size_t length, void *ctx)
             const auto expires = std::chrono::system_clock::from_time_t(deserialize_uint64(data));
 
             const AutoRewindPool auto_rewind(*tpool);
+            StringMap vary(*tpool);
+            deserialize_strmap(data, vary);
 
-            const StringMap *const vary = deserialize_strmap(data, *tpool);
-
-            hash = mcd_vary_hash(vary);
+            hash = mcd_vary_hash(&vary);
             if (hash != 0) {
                 if (uset.ContainsOrInsert(hash))
                     /* duplicate: mark the record as
@@ -236,7 +236,8 @@ http_cache_choice_buffer_done(void *data0, size_t length, void *ctx)
                 unclean = true;
             else if (uri == nullptr &&
                      http_cache_vary_fits(vary, choice->request_headers))
-                uri = http_cache_choice_vary_key(*choice->pool, choice->uri, vary);
+                uri = http_cache_choice_vary_key(*choice->pool, choice->uri,
+                                                 &vary);
 
             if (uri != nullptr && unclean)
                 /* we have already found something, and we think that this
