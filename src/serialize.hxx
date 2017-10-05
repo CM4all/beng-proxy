@@ -89,7 +89,4 @@ deserialize_string_null(ConstBuffer<void> &input);
 void
 deserialize_strmap(ConstBuffer<void> &input, StringMap &dest);
 
-StringMap *
-deserialize_strmap(ConstBuffer<void> &input, struct pool &pool);
-
 #endif

@@ -191,23 +191,3 @@ deserialize_strmap(ConstBuffer<void> &input, StringMap &dest)
         dest.Add(key, value);
     }
 }
-
-StringMap *
-deserialize_strmap(ConstBuffer<void> &input, struct pool &pool)
-{
-    const char *key, *value;
-
-    key = deserialize_string(input);
-    if (*key == 0)
-        return nullptr;
-
-    auto *map = strmap_new(&pool);
-
-    do {
-        value = deserialize_string(input);
-        map->Add(key, value);
-        key = deserialize_string(input);
-    } while (*key != 0);
-
-    return map;
-}
