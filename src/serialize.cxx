@@ -119,46 +119,41 @@ SkipFront(ConstBuffer<void> &input, size_t n)
     input.size -= n;
 }
 
+template<typename T>
+static void
+DeserializeT(ConstBuffer<void> &input, T &dest)
+{
+    static_assert(std::is_trivial<T>::value, "type is not trivial");
+
+    if (gcc_unlikely(input.size < sizeof(dest)))
+        throw DeserializeError();
+
+    memcpy(&dest, input.data, sizeof(dest));
+    SkipFront(input, sizeof(dest));
+}
+
 uint16_t
 deserialize_uint16(ConstBuffer<void> &input)
 {
     uint16_t value;
-
-    if (input.size < sizeof(value))
-        throw DeserializeError();
-
-    value = FromBE16(*(const uint16_t *)input.data);
-    SkipFront(input, sizeof(value));
-
-    return value;
+    DeserializeT(input, value);
+    return FromBE16(*(const uint16_t *)input.data);
 }
 
 uint32_t
 deserialize_uint32(ConstBuffer<void> &input)
 {
     uint32_t value;
-
-    if (input.size < sizeof(value))
-        throw DeserializeError();
-
-    value = FromBE32(*(const uint32_t *)input.data);
-    SkipFront(input, sizeof(value));
-
-    return value;
+    DeserializeT(input, value);
+    return FromBE32(*(const uint32_t *)input.data);
 }
 
 uint64_t
 deserialize_uint64(ConstBuffer<void> &input)
 {
     uint64_t value;
-
-    if (input.size < sizeof(value))
-        throw DeserializeError();
-
-    value = FromBE64(*(const uint64_t *)input.data);
-    SkipFront(input, sizeof(value));
-
-    return value;
+    DeserializeT(input, value);
+    return FromBE64(*(const uint64_t *)input.data);
 }
 
 const char *
