@@ -37,6 +37,7 @@
 #ifndef BENG_PROXY_HTTP_CACHE_CHOICE_HXX
 #define BENG_PROXY_HTTP_CACHE_CHOICE_HXX
 
+#include "strmap.hxx"
 #include "util/Compiler.h"
 
 #include <chrono>
@@ -51,7 +52,10 @@ class CancellablePointer;
 
 struct HttpCacheChoiceInfo {
     std::chrono::system_clock::time_point expires;
-    const StringMap *vary;
+    StringMap vary;
+
+    explicit HttpCacheChoiceInfo(struct pool &p)
+        :vary(p) {}
 
     gcc_pure
     bool VaryFits(const StringMap *headers) const;

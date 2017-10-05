@@ -490,11 +490,10 @@ http_cache_choice_filter_buffer_done(void *data0, size_t length, void *ctx)
             if (magic != CHOICE_MAGIC)
                 break;
 
-            HttpCacheChoiceInfo info;
-            info.expires = std::chrono::system_clock::from_time_t(deserialize_uint64(data));
-
             const AutoRewindPool auto_rewind(*tpool);
-            info.vary = deserialize_strmap(data, *tpool);
+            HttpCacheChoiceInfo info(*tpool);
+            info.expires = std::chrono::system_clock::from_time_t(deserialize_uint64(data));
+            deserialize_strmap(data, info.vary);
 
             if (choice->callback.filter(&info, nullptr, choice->callback_ctx)) {
                 memmove(dest, current, (const uint8_t *)data.data + data.size - (const uint8_t *)current);
@@ -627,7 +626,7 @@ http_cache_choice_cleanup_filter_callback(const HttpCacheChoiceInfo *info,
     auto &cleanup = *(HttpCacheChoiceCleanup *)ctx;
 
     if (info != nullptr) {
-        unsigned hash = mcd_vary_hash(info->vary);
+        unsigned hash = mcd_vary_hash(&info->vary);
         bool duplicate = cleanup.uset.ContainsOrInsert(hash);
         return (info->expires == std::chrono::system_clock::from_time_t(-1) ||
                 info->expires >= cleanup.now) &&

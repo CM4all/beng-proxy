@@ -606,7 +606,7 @@ mcd_delete_filter_callback(const HttpCacheChoiceInfo *info,
         if (info->VaryFits(data->headers)) {
             mcd_background_delete(*data->stock, data->background_pool,
                                   *data->background, data->uri,
-                                  info->vary);
+                                  &info->vary);
             return false;
         } else
             return true;
