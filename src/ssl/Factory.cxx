@@ -305,8 +305,6 @@ ssl_factory_new_server(const SslConfig &config,
 
     std::unique_ptr<SslFactory> factory(new SslFactory(std::move(sni)));
 
-    assert(!config.cert_key.empty());
-
     load_certs_keys(*factory, config);
 
     if (factory->cert_key.size() > 1 || factory->sni)
