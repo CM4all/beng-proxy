@@ -826,6 +826,14 @@ test_data_blocking2(Context<Connection> &c)
     /* the socket is released by now, but the body isn't finished
        yet */
 #ifndef NO_EARLY_RELEASE_SOCKET
+    if (!c.released) {
+        /* just in case we experienced a partial read and the socket
+           wasn't released yet: try again after some delay, to give
+           the server process another chance to send the final byte */
+        usleep(1000);
+        c.event_loop.LoopOnceNonBlock();
+    }
+
     assert(c.released);
 #endif
     assert(c.content_length == nullptr);
