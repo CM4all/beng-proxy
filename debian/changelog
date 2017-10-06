@@ -1,6 +1,7 @@
 cm4all-beng-proxy (13.0.9) unstable; urgency=low
 
   * lb: support monitors in Zeroconf clusters
+  * lb/config: require certificate even if ssl_cert_db is used
   * lb/monitor/expect: fix memory leak
   * certdb: retry ACME "new-authz" after "unauthorized"
   * certdb: generate a new private key for each "new-cert"

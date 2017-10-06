@@ -1122,9 +1122,8 @@ LbConfigParser::Listener::Finish()
     if (config.bind_address.IsNull())
         throw LineParser::Error("Listener has no destination");
 
-    if (config.ssl &&
-        !config.ssl_config.IsValid(config.cert_db != nullptr))
-        throw LineParser::Error("Incomplete SSL configuration");
+    if (config.ssl && config.ssl_config.cert_key.empty())
+        throw LineParser::Error("No SSL certificates ");
 
     parent.config.listeners.emplace_back(std::move(config));
 

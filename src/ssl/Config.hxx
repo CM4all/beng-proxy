@@ -62,10 +62,6 @@ struct SslConfig {
     std::string ca_cert_file;
 
     SslVerify verify = SslVerify::NO;
-
-    bool IsValid(bool have_cert_db) const {
-        return !cert_key.empty() || have_cert_db;
-    }
 };
 
 #endif
