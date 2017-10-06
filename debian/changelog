@@ -10,7 +10,7 @@ cm4all-beng-proxy (13.0.9) unstable; urgency=low
   * log: add attribute "FORWARDED_TO"
   * control: add packets "DISABLE_ZEROCONF", "ENABLE_ZEROCONF"
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Fri, 06 Oct 2017 11:20:15 -0000
 
 cm4all-beng-proxy (13.0.8) unstable; urgency=low
 
