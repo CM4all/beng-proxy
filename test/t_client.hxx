@@ -804,11 +804,13 @@ test_data_blocking2(Context<Connection> &c)
     StringMap request_headers(*c.pool);
     request_headers.Add("connection", "close");
 
+    constexpr size_t body_size = 256;
+
     c.response_body_byte = true;
     c.connection = Connection::NewMirror(*c.pool, c.event_loop);
     c.connection->Request(c.pool, c,
                           HTTP_METHOD_GET, "/foo", std::move(request_headers),
-                          istream_head_new(c.pool, *istream_zero_new(c.pool), 256, true),
+                          istream_head_new(c.pool, *istream_zero_new(c.pool), body_size, true),
 #ifdef HAVE_EXPECT_100
                           false,
 #endif
@@ -837,11 +839,11 @@ test_data_blocking2(Context<Connection> &c)
     assert(c.released);
 #endif
     assert(c.content_length == nullptr);
-    assert(c.available == 256);
+    assert(c.available == body_size);
     assert(c.body.IsDefined());
     assert(!c.body_eof);
     assert(!c.body_abort);
-    assert(c.consumed_body_data < 256);
+    assert(c.consumed_body_data < (off_t)body_size);
     assert(c.body_error == nullptr);
 
     /* receive the rest of the response body from the buffer */
@@ -850,7 +852,7 @@ test_data_blocking2(Context<Connection> &c)
     assert(c.released);
     assert(c.body_eof);
     assert(!c.body_abort);
-    assert(c.consumed_body_data == 256);
+    assert(c.consumed_body_data == body_size);
     assert(!c.request_error);
     assert(c.body_error == nullptr);
 }
