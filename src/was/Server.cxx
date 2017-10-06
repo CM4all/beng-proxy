@@ -62,8 +62,8 @@ class WasServer final : WasControlHandler, WasOutputHandler, WasInputHandler {
 
     WasServerHandler &handler;
 
-    struct {
-        struct pool *pool = nullptr;
+    struct Request {
+        struct pool *pool;
 
         http_method_t method;
 
@@ -80,7 +80,28 @@ class WasServer final : WasControlHandler, WasOutputHandler, WasInputHandler {
 
         bool released = false;
 
-        bool pending = false;
+        enum class State : uint8_t {
+            /**
+             * No request is being processed currently.
+             */
+            NONE,
+
+            /**
+             * Receiving headers.
+             */
+            HEADERS,
+
+            /**
+             * Receiving headers.
+             */
+            PENDING,
+
+            /**
+             * Request metadata already submitted to
+             * WasServerHandler::OnWasRequest().
+             */
+            SUBMITTED,
+        } state = State::NONE;
     } request;
 
     struct {
@@ -145,9 +166,8 @@ private:
                             ConstBuffer<void> payload) override;
 
     bool OnWasControlDrained() override {
-        if (request.pending) {
-            auto *headers = request.headers;
-            request.headers = nullptr;
+        if (request.state == Request::State::PENDING) {
+            request.state = Request::State::SUBMITTED;
 
             Istream *body = nullptr;
             if (request.released) {
@@ -159,7 +179,7 @@ private:
                 body = &was_input_enable(*request.body);
 
             handler.OnWasRequest(*request.pool, request.method,
-                                 request.uri, std::move(*headers),
+                                 request.uri, std::move(*request.headers),
                                  body);
             /* XXX check if connection has been closed */
         }
@@ -192,11 +212,12 @@ WasServer::ReleaseError(std::exception_ptr ep)
     if (control.IsDefined())
         control.ReleaseSocket();
 
-    if (request.pool != nullptr) {
+    if (request.state != Request::State::NONE) {
         if (request.body != nullptr)
             was_input_free_p(&request.body, ep);
 
-        if (request.headers == nullptr && response.body != nullptr)
+        if (request.state == Request::State::SUBMITTED &&
+            response.body != nullptr)
             was_output_free_p(&response.body);
 
         pool_unref(request.pool);
@@ -211,11 +232,12 @@ WasServer::ReleaseUnused()
     if (control.IsDefined())
         control.ReleaseSocket();
 
-    if (request.pool != nullptr) {
+    if (request.state != Request::State::NONE) {
         if (request.body != nullptr)
             was_input_free_unused_p(&request.body);
 
-        if (request.headers == nullptr && response.body != nullptr)
+        if (request.state == Request::State::SUBMITTED &&
+            response.body != nullptr)
             was_output_free_p(&response.body);
 
         pool_unref(request.pool);
@@ -283,7 +305,7 @@ WasServer::WasInputClose(gcc_unused uint64_t received)
     /* this happens when the request handler isn't interested in the
        request body */
 
-    assert(request.headers == nullptr);
+    assert(request.state == Request::State::SUBMITTED);
     assert(request.body != nullptr);
 
     request.body = nullptr;
@@ -307,7 +329,7 @@ WasServer::WasInputRelease()
 void
 WasServer::WasInputEof()
 {
-    assert(request.headers == nullptr);
+    assert(request.state == Request::State::SUBMITTED);
     assert(request.body != nullptr);
     assert(request.released);
 
@@ -319,7 +341,7 @@ WasServer::WasInputEof()
 void
 WasServer::WasInputError()
 {
-    assert(request.headers == nullptr);
+    assert(request.state == Request::State::SUBMITTED);
     assert(request.body != nullptr);
 
     request.body = nullptr;
@@ -343,7 +365,7 @@ WasServer::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload)
         break;
 
     case WAS_COMMAND_REQUEST:
-        if (request.pool != nullptr) {
+        if (request.state != Request::State::NONE) {
             AbortError("misplaced REQUEST packet");
             return false;
         }
@@ -353,6 +375,7 @@ WasServer::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload)
         request.uri = nullptr;
         request.headers = strmap_new(request.pool);
         request.body = nullptr;
+        request.state = Request::State::HEADERS;
         response.body = nullptr;
         break;
 
@@ -379,7 +402,8 @@ WasServer::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload)
         break;
 
     case WAS_COMMAND_URI:
-        if (request.pool == nullptr || request.uri != nullptr) {
+        if (request.state != Request::State::HEADERS ||
+            request.uri != nullptr) {
             AbortError("misplaced URI packet");
             return false;
         }
@@ -395,7 +419,7 @@ WasServer::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload)
         break;
 
     case WAS_COMMAND_HEADER:
-        if (request.pool == nullptr || request.headers == nullptr) {
+        if (request.state != Request::State::HEADERS) {
             AbortError("misplaced HEADER packet");
             return false;
         }
@@ -419,32 +443,31 @@ WasServer::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload)
         return false;
 
     case WAS_COMMAND_NO_DATA:
-        if (request.pool == nullptr || request.uri == nullptr ||
-            request.headers == nullptr) {
+        if (request.state != Request::State::HEADERS ||
+            request.uri == nullptr) {
             AbortError("misplaced NO_DATA packet");
             return false;
         }
 
         request.body = nullptr;
-        request.pending = true;
+        request.state = Request::State::PENDING;
         break;
 
     case WAS_COMMAND_DATA:
-        if (request.pool == nullptr || request.uri == nullptr ||
-            request.headers == nullptr) {
+        if (request.state != Request::State::HEADERS ||
+            request.uri == nullptr) {
             AbortError("misplaced DATA packet");
             return false;
         }
 
         request.body = was_input_new(*request.pool, control.GetEventLoop(),
                                      input_fd, *this);
-        request.pending = true;
+        request.state = Request::State::PENDING;
         break;
 
     case WAS_COMMAND_LENGTH:
-        if (request.pool == nullptr ||
-            request.body == nullptr ||
-            (request.headers != nullptr && !request.pending)) {
+        if (request.state < Request::State::PENDING ||
+            request.body == nullptr) {
             AbortError("misplaced LENGTH packet");
             return false;
         }
@@ -510,8 +533,7 @@ inline void
 WasServer::SendResponse(http_status_t status,
                         StringMap &&headers, Istream *body)
 {
-    assert(request.pool != nullptr);
-    assert(request.headers == nullptr);
+    assert(request.state == Request::State::SUBMITTED);
     assert(response.body == nullptr);
     assert(http_status_is_valid(status));
     assert(!http_status_is_empty(status) || body == nullptr);
