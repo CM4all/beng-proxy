@@ -52,7 +52,7 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-struct WasServer final : WasControlHandler, WasOutputHandler, WasInputHandler {
+class WasServer final : WasControlHandler, WasOutputHandler, WasInputHandler {
     struct pool &pool;
 
     const int control_fd, input_fd;
@@ -89,6 +89,7 @@ struct WasServer final : WasControlHandler, WasOutputHandler, WasInputHandler {
         WasOutput *body;
     } response;
 
+public:
     WasServer(struct pool &_pool, EventLoop &event_loop,
               int _control_fd, int _input_fd, FileDescriptor _output_fd,
               WasServerHandler &_handler)
@@ -97,9 +98,14 @@ struct WasServer final : WasControlHandler, WasOutputHandler, WasInputHandler {
          control(event_loop, control_fd, *this),
          handler(_handler) {}
 
+    void Free() {
+        ReleaseError("shutting down WAS connection");
+    }
+
     void SendResponse(http_status_t status,
                       StringMap &&headers, Istream *body);
 
+private:
     void CloseFiles() {
         close(control_fd);
         close(input_fd);
@@ -497,7 +503,7 @@ was_server_new(struct pool &pool, EventLoop &event_loop,
 void
 was_server_free(WasServer *server)
 {
-    server->ReleaseError("shutting down WAS connection");
+    server->Free();
 }
 
 inline void
