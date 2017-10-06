@@ -31,7 +31,7 @@
  */
 
 #include "Basic.hxx"
-#include "ssl_config.hxx"
+#include "Config.hxx"
 #include "ssl/Error.hxx"
 #include "ssl/Ctx.hxx"
 #include "ssl/Unique.hxx"

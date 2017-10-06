@@ -30,7 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "ssl_init.hxx"
+#include "Init.hxx"
 #include "FifoBufferBio.hxx"
 
 #include "util/Compiler.h"

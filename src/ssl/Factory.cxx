@@ -30,8 +30,8 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "ssl_factory.hxx"
-#include "ssl_config.hxx"
+#include "Factory.hxx"
+#include "Config.hxx"
 #include "SessionCache.hxx"
 #include "SniCallback.hxx"
 #include "ssl/Error.hxx"

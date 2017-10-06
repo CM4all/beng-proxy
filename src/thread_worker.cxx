@@ -33,7 +33,7 @@
 #include "thread_worker.hxx"
 #include "thread_queue.hxx"
 #include "thread_job.hxx"
-#include "ssl/ssl_init.hxx"
+#include "ssl/Init.hxx"
 #include "system/Error.hxx"
 #include "util/ScopeExit.hxx"
 

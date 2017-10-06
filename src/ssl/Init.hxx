@@ -30,32 +30,32 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Glue code for using the ssl_filter in a client connection.
- */
-
-#ifndef BENG_PROXY_SSL_CLIENT_HXX
-#define BENG_PROXY_SSL_CLIENT_HXX
-
-struct pool;
-struct SocketFilter;
-class EventLoop;
-
-void
-ssl_client_init();
-
-void
-ssl_client_deinit();
-
-const SocketFilter &
-ssl_client_get_filter();
+#pragma once
 
 /**
- *
- * Throws std::runtime_error on error.
+ * OpenSSL global initialization.
  */
-void *
-ssl_client_create(EventLoop &event_loop,
-                  const char *hostname);
+void
+ssl_global_init();
 
-#endif
+void
+ssl_global_deinit();
+
+/**
+ * Free thread-local state.  Call this before exiting a thread.
+ */
+void
+ssl_thread_deinit();
+
+struct ScopeSslGlobalInit {
+    ScopeSslGlobalInit() {
+        ssl_global_init();
+    }
+
+    ~ScopeSslGlobalInit() {
+        ssl_global_deinit();
+    }
+
+    ScopeSslGlobalInit(const ScopeSslGlobalInit &) = delete;
+    ScopeSslGlobalInit &operator=(const ScopeSslGlobalInit &) = delete;
+};

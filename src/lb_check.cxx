@@ -34,7 +34,7 @@
 #include "lb/Config.hxx"
 #include "lb/LuaHandler.hxx"
 #include "lb/LuaInitHook.hxx"
-#include "ssl/ssl_factory.hxx"
+#include "ssl/Factory.hxx"
 #include "ssl/SniCallback.hxx"
 #include "ssl/Cache.hxx"
 

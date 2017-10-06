@@ -54,7 +54,7 @@
 #include "delegate/HttpRequest.hxx"
 #include "strmap.hxx"
 #include "istream/istream.hxx"
-#include "ssl/ssl_client.hxx"
+#include "ssl/Client.hxx"
 #include "pool.hxx"
 #include "AllocatorPtr.hxx"
 #include "system/Error.hxx"

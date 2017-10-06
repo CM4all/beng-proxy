@@ -30,35 +30,29 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_SSL_INIT_H
-#define BENG_PROXY_SSL_INIT_H
+#pragma once
+
+#include "ssl/Unique.hxx"
+
+struct pool;
+struct SslConfig;
+struct SslFactory;
+class SslSniCallback;
+
+SslFactory *
+ssl_factory_new_server(const SslConfig &config,
+                       std::unique_ptr<SslSniCallback> &&sni);
+
+void
+ssl_factory_free(SslFactory *factory);
+
+UniqueSSL
+ssl_factory_make(SslFactory &factory);
 
 /**
- * OpenSSL global initialization.
+ * Flush expired sessions from the session cache.
+ *
+ * @return the number of expired sessions
  */
-void
-ssl_global_init();
-
-void
-ssl_global_deinit();
-
-/**
- * Free thread-local state.  Call this before exiting a thread.
- */
-void
-ssl_thread_deinit();
-
-struct ScopeSslGlobalInit {
-    ScopeSslGlobalInit() {
-        ssl_global_init();
-    }
-
-    ~ScopeSslGlobalInit() {
-        ssl_global_deinit();
-    }
-
-    ScopeSslGlobalInit(const ScopeSslGlobalInit &) = delete;
-    ScopeSslGlobalInit &operator=(const ScopeSslGlobalInit &) = delete;
-};
-
-#endif
+unsigned
+ssl_factory_flush(SslFactory &factory, long tm);

@@ -30,32 +30,56 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_SSL_FACTORY_H
-#define BENG_PROXY_SSL_FACTORY_H
+#include "Client.hxx"
+#include "Config.hxx"
+#include "Filter.hxx"
+#include "ssl/Basic.hxx"
+#include "ssl/Ctx.hxx"
+#include "ssl/Error.hxx"
+#include "io/Logger.hxx"
+#include "thread_socket_filter.hxx"
+#include "thread_pool.hxx"
+#include "util/ScopeExit.hxx"
 
-#include "ssl/Unique.hxx"
-
-struct pool;
-struct SslConfig;
-struct SslFactory;
-class SslSniCallback;
-
-SslFactory *
-ssl_factory_new_server(const SslConfig &config,
-                       std::unique_ptr<SslSniCallback> &&sni);
+static SslCtx ssl_client_ctx;
 
 void
-ssl_factory_free(SslFactory *factory);
+ssl_client_init()
+{
+    try {
+        ssl_client_ctx = CreateBasicSslCtx(false);
+    } catch (const SslError &e) {
+        LogConcat(1, "ssl_client", "ssl_factory_new() failed: ", e.what());
+    }
+}
 
-UniqueSSL
-ssl_factory_make(SslFactory &factory);
+void
+ssl_client_deinit()
+{
+    ssl_client_ctx.reset();
+}
 
-/**
- * Flush expired sessions from the session cache.
- *
- * @return the number of expired sessions
- */
-unsigned
-ssl_factory_flush(SslFactory &factory, long tm);
+const SocketFilter &
+ssl_client_get_filter()
+{
+    return thread_socket_filter;;
+}
 
-#endif
+void *
+ssl_client_create(EventLoop &event_loop,
+                  const char *hostname)
+{
+    UniqueSSL ssl(SSL_new(ssl_client_ctx.get()));
+    if (!ssl)
+        throw SslError("SSL_new() failed");
+
+    SSL_set_connect_state(ssl.get());
+
+    (void)hostname; // TODO: use this parameter
+
+    auto f = ssl_filter_new(std::move(ssl));
+
+    auto &queue = thread_pool_get_queue(event_loop);
+    return new ThreadSocketFilter(event_loop, queue,
+                                  &ssl_filter_get_handler(*f));
+}

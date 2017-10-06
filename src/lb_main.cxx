@@ -41,7 +41,7 @@
 #include "pipe_stock.hxx"
 #include "access_log/Glue.hxx"
 #include "lb/Config.hxx"
-#include "ssl/ssl_init.hxx"
+#include "ssl/Init.hxx"
 #include "pool.hxx"
 #include "thread_pool.hxx"
 #include "fb_pool.hxx"

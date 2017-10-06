@@ -51,7 +51,7 @@
 #include "thread_socket_filter.hxx"
 #include "thread_pool.hxx"
 #include "uri/uri_verify.hxx"
-#include "ssl/ssl_filter.hxx"
+#include "ssl/Filter.hxx"
 #include "net/StaticSocketAddress.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "system/Error.hxx"

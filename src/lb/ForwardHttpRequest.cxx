@@ -40,7 +40,7 @@
 #include "Cookie.hxx"
 #include "JvmRoute.hxx"
 #include "Headers.hxx"
-#include "ssl/ssl_filter.hxx"
+#include "ssl/Filter.hxx"
 #include "address_sticky.hxx"
 #include "address_string.hxx"
 #include "http_server/http_server.hxx"

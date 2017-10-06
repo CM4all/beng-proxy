@@ -37,7 +37,7 @@
 #include "Instance.hxx"
 #include "client_balancer.hxx"
 #include "address_sticky.hxx"
-#include "ssl/ssl_filter.hxx"
+#include "ssl/Filter.hxx"
 #include "pool.hxx"
 #include "thread_socket_filter.hxx"
 #include "thread_pool.hxx"

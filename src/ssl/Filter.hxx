@@ -30,56 +30,41 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "ssl_client.hxx"
-#include "ssl_config.hxx"
-#include "ssl_filter.hxx"
-#include "ssl/Basic.hxx"
-#include "ssl/Ctx.hxx"
-#include "ssl/Error.hxx"
-#include "io/Logger.hxx"
-#include "thread_socket_filter.hxx"
-#include "thread_pool.hxx"
-#include "util/ScopeExit.hxx"
+#pragma once
 
-static SslCtx ssl_client_ctx;
+#include "ssl/Unique.hxx"
 
-void
-ssl_client_init()
-{
-    try {
-        ssl_client_ctx = CreateBasicSslCtx(false);
-    } catch (const SslError &e) {
-        LogConcat(1, "ssl_client", "ssl_factory_new() failed: ", e.what());
-    }
-}
+#include "util/Compiler.h"
 
-void
-ssl_client_deinit()
-{
-    ssl_client_ctx.reset();
-}
+struct SslFactory;
+struct SslFilter;
+class ThreadSocketFilterHandler;
 
-const SocketFilter &
-ssl_client_get_filter()
-{
-    return thread_socket_filter;;
-}
+/**
+ * Create a new SSL filter.
+ */
+SslFilter *
+ssl_filter_new(UniqueSSL &&ssl);
 
-void *
-ssl_client_create(EventLoop &event_loop,
-                  const char *hostname)
-{
-    UniqueSSL ssl(SSL_new(ssl_client_ctx.get()));
-    if (!ssl)
-        throw SslError("SSL_new() failed");
+/**
+ * Create a new SSL filter.
+ *
+ * Throws std::runtime_error on error.
+ *
+ * @param encrypted_fd the encrypted side of the filter
+ * @param plain_fd the plain-text side of the filter (socketpair
+ * to local service)
+ */
+SslFilter *
+ssl_filter_new(SslFactory &factory);
 
-    SSL_set_connect_state(ssl.get());
+ThreadSocketFilterHandler &
+ssl_filter_get_handler(SslFilter &ssl);
 
-    (void)hostname; // TODO: use this parameter
+gcc_pure
+const char *
+ssl_filter_get_peer_subject(SslFilter *ssl);
 
-    auto f = ssl_filter_new(std::move(ssl));
-
-    auto &queue = thread_pool_get_queue(event_loop);
-    return new ThreadSocketFilter(event_loop, queue,
-                                  &ssl_filter_get_handler(*f));
-}
+gcc_pure
+const char *
+ssl_filter_get_peer_issuer_subject(SslFilter *ssl);

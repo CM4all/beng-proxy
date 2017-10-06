@@ -39,7 +39,7 @@
 #include "CertDatabase.hxx"
 #include "WrapKey.hxx"
 #include "Wildcard.hxx"
-#include "ssl/ssl_init.hxx"
+#include "ssl/Init.hxx"
 #include "ssl/Buffer.hxx"
 #include "ssl/Dummy.hxx"
 #include "ssl/Edit.hxx"

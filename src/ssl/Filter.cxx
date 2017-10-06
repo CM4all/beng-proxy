@@ -30,9 +30,9 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "ssl_filter.hxx"
-#include "ssl_factory.hxx"
-#include "ssl_config.hxx"
+#include "Filter.hxx"
+#include "Factory.hxx"
+#include "Config.hxx"
 #include "ssl/Unique.hxx"
 #include "ssl/Name.hxx"
 #include "ssl/Error.hxx"

@@ -34,7 +34,7 @@
 #define BENG_LB_LISTENER_CONFIG_HXX
 
 #include "GotoConfig.hxx"
-#include "ssl/ssl_config.hxx"
+#include "ssl/Config.hxx"
 #include "net/ListenerConfig.hxx"
 
 #include <string>

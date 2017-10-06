@@ -30,44 +30,29 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_SSL_FILTER_H
-#define BENG_PROXY_SSL_FILTER_H
-
-#include "ssl/Unique.hxx"
-
-#include "util/Compiler.h"
-
-struct SslFactory;
-struct SslFilter;
-class ThreadSocketFilterHandler;
-
-/**
- * Create a new SSL filter.
+/*
+ * Glue code for using the ssl_filter in a client connection.
  */
-SslFilter *
-ssl_filter_new(UniqueSSL &&ssl);
+
+#pragma once
+
+struct pool;
+struct SocketFilter;
+class EventLoop;
+
+void
+ssl_client_init();
+
+void
+ssl_client_deinit();
+
+const SocketFilter &
+ssl_client_get_filter();
 
 /**
- * Create a new SSL filter.
  *
  * Throws std::runtime_error on error.
- *
- * @param encrypted_fd the encrypted side of the filter
- * @param plain_fd the plain-text side of the filter (socketpair
- * to local service)
  */
-SslFilter *
-ssl_filter_new(SslFactory &factory);
-
-ThreadSocketFilterHandler &
-ssl_filter_get_handler(SslFilter &ssl);
-
-gcc_pure
-const char *
-ssl_filter_get_peer_subject(SslFilter *ssl);
-
-gcc_pure
-const char *
-ssl_filter_get_peer_issuer_subject(SslFilter *ssl);
-
-#endif
+void *
+ssl_client_create(EventLoop &event_loop,
+                  const char *hostname);
