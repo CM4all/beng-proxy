@@ -31,6 +31,7 @@
  */
 
 #include "Config.hxx"
+#include "Check.hxx"
 #include "AllocatorPtr.hxx"
 #include "access_log/ConfigParser.hxx"
 #include "avahi/Check.hxx"
@@ -181,6 +182,20 @@ class LbConfigParser final : public NestedConfigParser {
         void Finish() override;
     };
 
+    class GlobalHttpCheck final : public ConfigParser {
+        LbConfigParser &parent;
+        LbHttpCheckConfig config;
+
+    public:
+        explicit GlobalHttpCheck(LbConfigParser &_parent)
+            :parent(_parent) {}
+
+    protected:
+        /* virtual methods from class ConfigParser */
+        void ParseLine(FileLineParser &line) override;
+        void Finish() override;
+    };
+
 public:
     explicit LbConfigParser(LbConfig &_config)
         :config(_config) {}
@@ -204,6 +219,7 @@ private:
     void CreateLuaHandler(FileLineParser &line);
     void CreateTranslationHandler(FileLineParser &line);
     void CreateListener(FileLineParser &line);
+    void CreateGlobalHttpCheck(FileLineParser &line);
 };
 
 void
@@ -242,6 +258,17 @@ LbConfigParser::CreateControl(FileLineParser &line)
 {
     line.ExpectSymbolAndEol('{');
     SetChild(std::make_unique<Control>(*this));
+}
+
+inline void
+LbConfigParser::CreateGlobalHttpCheck(FileLineParser &line)
+{
+    line.ExpectSymbolAndEol('{');
+
+    if (config.global_http_check)
+        throw LineParser::Error("'global_http_check' already configured");
+
+    SetChild(std::make_unique<GlobalHttpCheck>(*this));
 }
 
 void
@@ -1104,6 +1131,64 @@ LbConfigParser::Listener::Finish()
     ConfigParser::Finish();
 }
 
+void
+LbConfigParser::GlobalHttpCheck::ParseLine(FileLineParser &line)
+{
+    const char *word = line.ExpectWord();
+
+    if (strcmp(word, "uri") == 0) {
+        if (!config.uri.empty())
+            throw LineParser::Error("'uri' already specified");
+
+        const char *value = line.ExpectValueAndEnd();
+        if (*value != '/')
+            throw LineParser::Error("'uri' must be an absolute URI path");
+
+        config.uri = value;
+    } else if (strcmp(word, "host") == 0) {
+        if (!config.host.empty())
+            throw LineParser::Error("'host' already specified");
+
+        const char *value = line.ExpectValueAndEnd();
+        if (*value == 0)
+            throw LineParser::Error("'host' must not be empty");
+
+        config.host = value;
+    } else if (strcmp(word, "file_exists") == 0) {
+        if (!config.file_exists.empty())
+            throw LineParser::Error("'file_exists' already specified");
+
+        const char *value = line.ExpectValueAndEnd();
+        if (*value != '/')
+            throw LineParser::Error("'file_exists' must be an absolute path");
+
+        config.file_exists = value;
+    } else if (strcmp(word, "success_message") == 0) {
+        if (!config.success_message.empty())
+            throw LineParser::Error("'success_message' already specified");
+
+        config.success_message = line.ExpectValueAndEnd();
+    } else
+        throw LineParser::Error("Unknown option");
+}
+
+void
+LbConfigParser::GlobalHttpCheck::Finish()
+{
+    if (config.uri.empty())
+        throw LineParser::Error("Missing 'uri'");
+
+    if (config.host.empty())
+        throw LineParser::Error("Missing 'host'");
+
+    if (config.file_exists.empty())
+        throw LineParser::Error("Missing 'file_exists'");
+
+    parent.config.global_http_check = std::make_unique<LbHttpCheckConfig>(std::move(config));
+
+    ConfigParser::Finish();
+}
+
 inline void
 LbConfigParser::CreateListener(FileLineParser &line)
 {
@@ -1136,6 +1221,8 @@ LbConfigParser::ParseLine2(FileLineParser &line)
         CreateCertDatabase(line);
     else if (strcmp(word, "control") == 0)
         CreateControl(line);
+    else if (strcmp(word, "global_http_check") == 0)
+        CreateGlobalHttpCheck(line);
     else if (strcmp(word, "access_logger") == 0) {
         if (line.SkipSymbol('{')) {
             line.ExpectEnd();

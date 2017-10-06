@@ -626,6 +626,26 @@ The option ``interval'' configures how often the monitor is executed
 The option ``timeout'' specifies how long \emph{beng-lb} waits for a
 response (in seconds).
 
+\subsection{Check}
+
+The section \verb|global_http_check| can be used to intercept a
+certain host/URI combination for monitors of load balancers in front
+of \emph{beng-lb}:
+
+\begin{verbatim*}
+global_http_check {
+  uri "/aLiVeChEcK.sErViCe"
+  host "localhost"
+  file_exists "/run/cm4all/beng-lb.alive"
+  success_message "webisonline"
+}
+\end{verbatim*}
+
+All requests on all HTTP listeners matching the given URI and Host
+request header will divert into a special handler which checks the
+existence of the given file.  If it exists, then the configured
+message is emitted.  If not, then an error is emitted.
+
 \subsubsection{Ping}
 
 The ``ping'' monitor periodically sends echo-request ICMP packets to

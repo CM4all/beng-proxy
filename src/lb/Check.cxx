@@ -30,13 +30,16 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "Config.hxx"
 #include "Check.hxx"
 
-LbConfig::LbConfig()
-{
-}
+#include <assert.h>
+#include <sys/stat.h>
 
-LbConfig::~LbConfig()
+bool
+LbHttpCheckConfig::Check() const noexcept
 {
+    assert(!file_exists.empty());
+
+    struct stat st;
+    return stat(file_exists.c_str(), &st) == 0;
 }

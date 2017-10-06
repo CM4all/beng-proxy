@@ -31,6 +31,8 @@
  */
 
 #include "HttpConnection.hxx"
+#include "Config.hxx"
+#include "Check.hxx"
 #include "ClusterConfig.hxx"
 #include "ListenerConfig.hxx"
 #include "Goto.txx"
@@ -237,6 +239,18 @@ LbHttpConnection::HandleHttpRequest(HttpServerRequest &request,
         request.CheckCloseUnusedBody();
         http_server_send_message(&request, HTTP_STATUS_BAD_REQUEST,
                                  "Malformed request URI");
+        return;
+    }
+
+    if (instance.config.global_http_check &&
+        instance.config.global_http_check->Match(request.uri, per_request.host)) {
+        if (instance.config.global_http_check->Check())
+            http_server_send_message(&request, HTTP_STATUS_OK,
+                                     instance.config.global_http_check->success_message.c_str());
+        else
+            http_server_simple_response(request, HTTP_STATUS_NOT_FOUND,
+                                        nullptr, nullptr);
+
         return;
     }
 

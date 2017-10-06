@@ -30,13 +30,25 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "Config.hxx"
-#include "Check.hxx"
+#pragma once
 
-LbConfig::LbConfig()
-{
-}
+#include "util/Compiler.h"
 
-LbConfig::~LbConfig()
-{
-}
+#include <string>
+
+struct LbHttpCheckConfig {
+    std::string host;
+    std::string uri;
+    std::string file_exists;
+    std::string success_message;
+
+    gcc_pure
+    bool Match(const char *request_uri,
+               const char *request_host) const noexcept {
+        return request_host != nullptr &&
+            request_host == host && request_uri == uri;
+    }
+
+    gcc_pure
+    bool Check() const noexcept;
+};

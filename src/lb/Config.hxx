@@ -45,6 +45,9 @@
 #include <map>
 #include <list>
 #include <string>
+#include <memory>
+
+struct LbHttpCheckConfig;
 
 struct LbControlConfig : UdpListenerConfig {
     LbControlConfig() {
@@ -81,6 +84,8 @@ struct LbConfig {
     std::map<std::string, LbTranslationHandlerConfig> translation_handlers;
 
     std::list<LbListenerConfig> listeners;
+
+    std::unique_ptr<LbHttpCheckConfig> global_http_check;
 
     LbConfig();
     ~LbConfig();
