@@ -97,6 +97,9 @@ struct WasServer final : WasControlHandler, WasOutputHandler, WasInputHandler {
          control(event_loop, control_fd, *this),
          handler(_handler) {}
 
+    void SendResponse(http_status_t status,
+                      StringMap &&headers, Istream *body);
+
     void CloseFiles() {
         close(control_fd);
         close(input_fd);
@@ -497,27 +500,27 @@ was_server_free(WasServer *server)
     server->ReleaseError("shutting down WAS connection");
 }
 
-void
-was_server_response(WasServer &server, http_status_t status,
-                    StringMap &&headers, Istream *body)
+inline void
+WasServer::SendResponse(http_status_t status,
+                        StringMap &&headers, Istream *body)
 {
-    assert(server.request.pool != nullptr);
-    assert(server.request.headers == nullptr);
-    assert(server.response.body == nullptr);
+    assert(request.pool != nullptr);
+    assert(request.headers == nullptr);
+    assert(response.body == nullptr);
     assert(http_status_is_valid(status));
     assert(!http_status_is_empty(status) || body == nullptr);
 
-    server.control.BulkOn();
+    control.BulkOn();
 
-    if (!server.control.Send(WAS_COMMAND_STATUS, &status, sizeof(status)))
+    if (!control.Send(WAS_COMMAND_STATUS, &status, sizeof(status)))
         return;
 
-    if (body != nullptr && http_method_is_empty(server.request.method)) {
-        if (server.request.method == HTTP_METHOD_HEAD) {
+    if (body != nullptr && http_method_is_empty(request.method)) {
+        if (request.method == HTTP_METHOD_HEAD) {
             off_t available = body->GetAvailable(false);
             if (available >= 0)
                 headers.Set("content-length",
-                            p_sprintf(server.request.pool, "%lu",
+                            p_sprintf(request.pool, "%lu",
                                       (unsigned long)available));
         }
 
@@ -525,20 +528,27 @@ was_server_response(WasServer &server, http_status_t status,
         body = nullptr;
     }
 
-    server.control.SendStrmap(WAS_COMMAND_HEADER, headers);
+    control.SendStrmap(WAS_COMMAND_HEADER, headers);
 
     if (body != nullptr) {
-        server.response.body = was_output_new(*server.request.pool,
-                                              server.control.GetEventLoop(),
-                                              server.output_fd, *body,
-                                              server);
-        if (!server.control.SendEmpty(WAS_COMMAND_DATA) ||
-            !was_output_check_length(*server.response.body))
+        response.body = was_output_new(*request.pool,
+                                       control.GetEventLoop(),
+                                       output_fd, *body,
+                                       *this);
+        if (!control.SendEmpty(WAS_COMMAND_DATA) ||
+            !was_output_check_length(*response.body))
             return;
     } else {
-        if (!server.control.SendEmpty(WAS_COMMAND_NO_DATA))
+        if (!control.SendEmpty(WAS_COMMAND_NO_DATA))
             return;
     }
 
-    server.control.BulkOff();
+    control.BulkOff();
+}
+
+void
+was_server_response(WasServer &server, http_status_t status,
+                    StringMap &&headers, Istream *body)
+{
+    server.SendResponse(status, std::move(headers), body);
 }
