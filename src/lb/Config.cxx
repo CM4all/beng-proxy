@@ -31,3 +31,11 @@
  */
 
 #include "Config.hxx"
+
+LbConfig::LbConfig()
+{
+}
+
+LbConfig::~LbConfig()
+{
+}

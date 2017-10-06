@@ -82,6 +82,9 @@ struct LbConfig {
 
     std::list<LbListenerConfig> listeners;
 
+    LbConfig();
+    ~LbConfig();
+
     template<typename T>
     gcc_pure
     const LbMonitorConfig *FindMonitor(T &&t) const {
