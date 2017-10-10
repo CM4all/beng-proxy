@@ -1153,6 +1153,12 @@ LbConfigParser::GlobalHttpCheck::ParseLine(FileLineParser &line)
             throw LineParser::Error("'host' must not be empty");
 
         config.host = value;
+    } else if (strcmp(word, "client") == 0) {
+        const char *value = line.ExpectValueAndEnd();
+        if (*value == 0)
+            throw LineParser::Error("'client' must not be empty");
+
+        config.client_addresses.emplace_front(value);
     } else if (strcmp(word, "file_exists") == 0) {
         if (!config.file_exists.empty())
             throw LineParser::Error("'file_exists' already specified");

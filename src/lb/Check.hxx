@@ -32,15 +32,30 @@
 
 #pragma once
 
+#include "net/MaskedSocketAddress.hxx"
 #include "util/Compiler.h"
 
 #include <string>
+#include <forward_list>
 
 struct LbHttpCheckConfig {
     std::string host;
     std::string uri;
     std::string file_exists;
     std::string success_message;
+
+    std::forward_list<MaskedSocketAddress> client_addresses;
+
+    gcc_pure
+    bool MatchClientAddress(SocketAddress address) const noexcept {
+        if (client_addresses.empty())
+            return true;
+
+        return std::any_of(client_addresses.begin(), client_addresses.end(),
+                           [=](const MaskedSocketAddress &i){
+                               return i.Matches(address);
+                           });
+    }
 
     gcc_pure
     bool Match(const char *request_uri,

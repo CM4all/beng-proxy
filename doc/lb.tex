@@ -636,6 +636,8 @@ of \emph{beng-lb}:
 global_http_check {
   uri "/aLiVeChEcK.sErViCe"
   host "localhost"
+  client "192.168.1.0/24"
+  client "2003:abcd::/32"
   file_exists "/run/cm4all/beng-lb.alive"
   success_message "webisonline"
 }
@@ -645,6 +647,10 @@ All requests on all HTTP listeners matching the given URI and Host
 request header will divert into a special handler which checks the
 existence of the given file.  If it exists, then the configured
 message is emitted.  If not, then an error is emitted.
+
+The \verb|client| setting is optional.  If at least one is given, then
+only the specified client addresses / networks are diverted to this
+handler.
 
 \subsubsection{Ping}
 

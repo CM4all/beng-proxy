@@ -1,6 +1,7 @@
 cm4all-beng-proxy (13.0.10) unstable; urgency=low
 
   * avahi: make services visible initially (13.0.9 regression)
+  * lb: add client address filter for global_http_check
 
  --   
 
