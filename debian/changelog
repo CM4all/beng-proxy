@@ -4,7 +4,7 @@ cm4all-beng-proxy (13.0.10) unstable; urgency=low
   * lb: add client address filter for global_http_check
   * python/control/client: add methods send_{en,dis}able_zeroconf()
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 10 Oct 2017 21:51:40 -0000
 
 cm4all-beng-proxy (13.0.9) unstable; urgency=low
 
