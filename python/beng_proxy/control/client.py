@@ -114,3 +114,9 @@ class Client:
 
     def send_fade_children(self, tag=None):
         self.send(CONTROL_FADE_CHILDREN, tag)
+
+    def send_enable_zeroconf(self, tag=None):
+        self.send(CONTROL_ENABLE_ZEROCONF)
+
+    def send_disable_zeroconf(self, tag=None):
+        self.send(CONTROL_DISABLE_ZEROCONF)
