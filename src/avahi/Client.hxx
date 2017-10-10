@@ -79,7 +79,7 @@ class MyAvahiClient final {
      * Shall the published services be visible?  This is controlled by
      * HideServices() and ShowServices().
      */
-    bool visible_services = false;
+    bool visible_services = true;
 
 public:
     MyAvahiClient(EventLoop &event_loop, const char *_name);
