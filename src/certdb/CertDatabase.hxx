@@ -100,6 +100,16 @@ public:
         Pg::DoSerializableRepeat(conn, retries, std::forward<F>(f));
     }
 
+    template<typename F>
+    void DoRepeatableRead(F &&f) {
+        conn.DoRepeatableRead(std::forward<F>(f));
+    }
+
+    template<typename F>
+    void DoRepeatableReadRepeat(unsigned retries, F &&f) {
+        Pg::DoRepeatableReadRepeat(conn, retries, std::forward<F>(f));
+    }
+
     void Migrate();
 
     Pg::Serial GetIdByHandle(const char *handle);
