@@ -74,7 +74,7 @@ public:
         return -1;
     }
 
-    void _Close() override;
+    void _Close() noexcept override;
 
     /* virtual methods from class IstreamHandler */
     size_t OnData(const void *data, size_t length) override;
@@ -193,7 +193,7 @@ EscapeIstream::_Read()
 }
 
 void
-EscapeIstream::_Close()
+EscapeIstream::_Close() noexcept
 {
     if (HasInput())
         ClearAndCloseInput();

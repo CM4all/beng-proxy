@@ -119,7 +119,7 @@ protected:
     void InvokeEof();
     void InvokeError(std::exception_ptr ep);
 
-    void Destroy() {
+    void Destroy() noexcept {
         this->~Istream();
         /* no need to free memory from the pool */
     }
@@ -437,7 +437,7 @@ public:
      * Close the stream and free resources.  This must not be called
      * after the handler's eof() / abort() callbacks were invoked.
      */
-    void Close() {
+    void Close() noexcept {
 #ifndef NDEBUG
         assert(!destroyed);
         assert(!closing);
@@ -453,7 +453,7 @@ public:
      * Close an istream which was never used, i.e. it does not have a
      * handler yet.
      */
-    void CloseUnused() {
+    void CloseUnused() noexcept {
         assert(!HasHandler());
 
         Close();
@@ -477,7 +477,7 @@ protected:
         return -1;
     }
 
-    virtual void _Close() {
+    virtual void _Close() noexcept {
         Destroy();
     }
 };

@@ -84,7 +84,7 @@ public:
     }
 
     int _AsFd() override;
-    void _Close() override;
+    void _Close() noexcept override;
 
     /* handler */
     size_t OnData(const void *data, size_t length) override;
@@ -93,7 +93,7 @@ public:
     void OnError(std::exception_ptr ep) override;
 
 private:
-    void CloseInternal();
+    void CloseInternal() noexcept;
     void Abort(std::exception_ptr ep);
     ssize_t Consume();
 
@@ -104,7 +104,7 @@ private:
 };
 
 void
-PipeIstream::CloseInternal()
+PipeIstream::CloseInternal() noexcept
 {
     if (stock != nullptr) {
         if (stock_item != nullptr)
@@ -349,7 +349,7 @@ PipeIstream::_AsFd()
 }
 
 void
-PipeIstream::_Close()
+PipeIstream::_Close() noexcept
 {
     CloseInternal();
 

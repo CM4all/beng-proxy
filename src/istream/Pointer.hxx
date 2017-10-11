@@ -72,17 +72,17 @@ public:
         return stream != nullptr;
     }
 
-    void Clear() {
+    void Clear() noexcept {
         stream = nullptr;
     }
 
-    void Close() {
+    void Close() noexcept {
         assert(IsDefined());
 
         stream->Close();
     }
 
-    void ClearAndClose() {
+    void ClearAndClose() noexcept {
         assert(IsDefined());
 
         auto *old = stream;
@@ -90,7 +90,7 @@ public:
         old->Close();
     }
 
-    Istream *Steal() {
+    Istream *Steal() noexcept {
         Istream *result = stream;
         stream = nullptr;
         return result;

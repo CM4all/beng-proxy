@@ -102,7 +102,7 @@ struct CatIstream final : public Istream {
         }
 
         struct Disposer {
-            void operator()(Input *input) {
+            void operator()(Input *input) noexcept {
                 input->input.Close();
             }
         };
@@ -132,7 +132,7 @@ struct CatIstream final : public Istream {
         return inputs.empty();
     }
 
-    void CloseAllInputs() {
+    void CloseAllInputs() noexcept {
         inputs.clear_and_dispose(Input::Disposer());
     }
 
@@ -179,7 +179,7 @@ struct CatIstream final : public Istream {
     void _FillBucketList(IstreamBucketList &list) override;
     size_t _ConsumeBucketList(size_t nbytes) override;
     int _AsFd() override;
-    void _Close() override;
+    void _Close() noexcept override;
 };
 
 /*
@@ -296,7 +296,7 @@ CatIstream::_AsFd()
 }
 
 void
-CatIstream::_Close()
+CatIstream::_Close() noexcept
 {
     CloseAllInputs();
     Destroy();

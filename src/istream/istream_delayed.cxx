@@ -86,7 +86,7 @@ public:
             : -1;
     }
 
-    void _Close() override {
+    void _Close() noexcept override {
         if (HasInput())
             ForwardIstream::_Close();
         else {

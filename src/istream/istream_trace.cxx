@@ -79,7 +79,7 @@ public:
         return fd;
     }
 
-    void _Close() override {
+    void _Close() noexcept override {
         fprintf(stderr, "%p close()\n", (const void *)this);
 
         ForwardIstream::_Close();

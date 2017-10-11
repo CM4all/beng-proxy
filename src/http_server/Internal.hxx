@@ -66,7 +66,7 @@ struct HttpServerConnection final : IstreamHandler {
 
         off_t _GetAvailable(bool partial) override;
         void _Read() override;
-        void _Close() override;
+        void _Close() noexcept override;
     };
 
     struct pool *const pool;

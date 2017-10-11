@@ -112,7 +112,7 @@ struct CGIClient final : Istream, IstreamHandler, Cancellable {
     /* virtual methods from class Istream */
     off_t _GetAvailable(bool partial) override;
     void _Read() override;
-    void _Close() override;
+    void _Close() noexcept override;
 
     /* virtual methods from class IstreamHandler */
     size_t OnData(const void *data, size_t length) override;
@@ -441,7 +441,7 @@ CGIClient::_Read()
 }
 
 void
-CGIClient::_Close()
+CGIClient::_Close() noexcept
 {
     buffer.Free(fb_pool_get());
 

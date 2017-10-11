@@ -133,12 +133,12 @@ struct MemcachedClient final : Istream, IstreamHandler, Cancellable {
     /**
      * Release the socket held by this object.
      */
-    void ReleaseSocket(bool reuse) {
+    void ReleaseSocket(bool reuse) noexcept {
         socket.Abandon();
         p_lease_release(lease_ref, reuse, GetPool());
     }
 
-    void DestroySocket(bool reuse) {
+    void DestroySocket(bool reuse) noexcept {
         if (socket.IsConnected())
             ReleaseSocket(reuse);
         socket.Destroy();
@@ -148,7 +148,7 @@ struct MemcachedClient final : Istream, IstreamHandler, Cancellable {
      * Release resources held by this object: the event object, the
      * socket lease, and the pool reference.
      */
-    void Release(bool reuse) {
+    void Release(bool reuse) noexcept {
         if (socket.IsValid())
             DestroySocket(reuse);
 
@@ -176,7 +176,7 @@ struct MemcachedClient final : Istream, IstreamHandler, Cancellable {
 
     off_t _GetAvailable(bool partial) override;
     void _Read() override;
-    void _Close() override;
+    void _Close() noexcept override;
 
     /* virtual methods from class IstreamHandler */
     size_t OnData(const void *data, size_t length) override;
@@ -276,7 +276,7 @@ MemcachedClient::_Read()
 }
 
 void
-MemcachedClient::_Close()
+MemcachedClient::_Close() noexcept
 {
     assert(response.read_state == ReadState::VALUE);
     assert(!request.istream.IsDefined());

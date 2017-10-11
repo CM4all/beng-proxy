@@ -81,7 +81,7 @@ public:
         return -1;
     }
 
-    void _Close() override;
+    void _Close() noexcept override;
 
     /* virtual methods from class IstreamHandler */
 
@@ -221,7 +221,7 @@ FcgiIstream::_Read()
 }
 
 void
-FcgiIstream::_Close()
+FcgiIstream::_Close() noexcept
 {
     if (HasInput())
         input.ClearAndClose();

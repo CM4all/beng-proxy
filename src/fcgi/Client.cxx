@@ -247,7 +247,7 @@ struct FcgiClient final : Cancellable, Istream, IstreamHandler, WithInstanceList
     void _Read() override;
     void _FillBucketList(IstreamBucketList &list) override;
     size_t _ConsumeBucketList(size_t nbytes) override;
-    void _Close() override;
+    void _Close() noexcept override;
 
     /* virtual methods from class IstreamHandler */
     size_t OnData(const void *data, size_t length) override;
@@ -313,7 +313,7 @@ FcgiClient::AbortResponse(std::exception_ptr ep)
 }
 
 void
-FcgiClient::_Close()
+FcgiClient::_Close() noexcept
 {
     assert(response.read_state == Response::READ_BODY);
 

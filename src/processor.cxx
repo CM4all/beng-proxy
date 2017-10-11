@@ -133,7 +133,7 @@ struct XmlProcessor final : XmlParserHandler, Cancellable {
 
         /* virtual methods from class Istream */
         void _Read() override;
-        void _Close() override;
+        void _Close() noexcept override;
     };
 
     struct pool &pool, &caller_pool;
@@ -565,7 +565,7 @@ XmlProcessor::CdataIstream::_Read()
 }
 
 void
-XmlProcessor::CdataIstream::_Close()
+XmlProcessor::CdataIstream::_Close() noexcept
 {
     assert(processor.tag == TAG_STYLE_PROCESS);
 

@@ -156,13 +156,13 @@ struct AjpClient final : Istream, IstreamHandler, Cancellable {
     /**
      * Release the AJP connection socket.
      */
-    void ReleaseSocket(bool reuse);
+    void ReleaseSocket(bool reuse) noexcept;
 
     /**
      * Release resources held by this object: the event object, the
      * socket lease, the request body and the pool reference.
      */
-    void Release(bool reuse);
+    void Release(bool reuse) noexcept;
 
     void AbortResponseHeaders(std::exception_ptr ep);
     void AbortResponseBody(std::exception_ptr ep);
@@ -215,7 +215,7 @@ struct AjpClient final : Istream, IstreamHandler, Cancellable {
     /* virtual methods from class Istream */
     off_t _GetAvailable(bool partial) override;
     void _Read() override;
-    void _Close() override;
+    void _Close() noexcept override;
 
     /* virtual methods from class IstreamHandler */
     size_t OnData(const void *data, size_t length) override;
@@ -234,7 +234,7 @@ static const struct ajp_header empty_body_chunk = {
 };
 
 void
-AjpClient::ReleaseSocket(bool reuse)
+AjpClient::ReleaseSocket(bool reuse) noexcept
 {
     assert(socket.IsConnected());
     assert(response.read_state == Response::READ_BODY ||
@@ -245,7 +245,7 @@ AjpClient::ReleaseSocket(bool reuse)
 }
 
 void
-AjpClient::Release(bool reuse)
+AjpClient::Release(bool reuse) noexcept
 {
     assert(socket.IsValid());
     assert(response.read_state == Response::READ_END);
@@ -344,7 +344,7 @@ AjpClient::_Read()
 }
 
 void
-AjpClient::_Close()
+AjpClient::_Close() noexcept
 {
     assert(response.read_state == AjpClient::Response::READ_BODY);
 

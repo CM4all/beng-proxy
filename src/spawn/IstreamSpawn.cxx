@@ -114,7 +114,7 @@ struct SpawnIstream final : Istream, IstreamHandler, ExitListener {
 
     void _Read() override;
     // TODO: implement int AsFd() override;
-    void _Close() override;
+    void _Close() noexcept override;
 
     /* virtual methods from class IstreamHandler */
     size_t OnData(const void *data, size_t length) override;
@@ -350,7 +350,7 @@ SpawnIstream::_Read()
 }
 
 void
-SpawnIstream::_Close()
+SpawnIstream::_Close() noexcept
 {
     FreeBuffer();
 

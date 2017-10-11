@@ -74,7 +74,7 @@ public:
     }
 
     void _Read() override;
-    void _Close() override;
+    void _Close() noexcept override;
 
     /* handler */
 
@@ -234,7 +234,7 @@ IconvIstream::_Read()
 }
 
 void
-IconvIstream::_Close()
+IconvIstream::_Close() noexcept
 {
     if (input.IsDefined())
         input.Close();

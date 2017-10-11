@@ -83,7 +83,7 @@ public:
     }
 
     void _Read() override;
-    void _Close() override;
+    void _Close() noexcept override;
 
     /* virtual methods from class IstreamHandler */
 
@@ -242,7 +242,7 @@ CatchIstream::_Read()
 }
 
 void
-CatchIstream::_Close()
+CatchIstream::_Close() noexcept
 {
     if (HasInput())
         input.Close();

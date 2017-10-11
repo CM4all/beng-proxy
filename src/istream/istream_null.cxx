@@ -60,7 +60,7 @@ public:
         return fd;
     }
 
-    void _Close() override {
+    void _Close() noexcept override {
         Destroy();
     }
 };

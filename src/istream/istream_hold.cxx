@@ -84,7 +84,7 @@ public:
             : -1;
     }
 
-    void _Close() override {
+    void _Close() noexcept override {
         if (input_eof)
             Destroy();
         else if (input_error) {

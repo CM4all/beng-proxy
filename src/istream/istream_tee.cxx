@@ -68,7 +68,7 @@ struct TeeIstream final : IstreamHandler {
 
         explicit FirstOutput(struct pool &p, bool _weak):Output(p, _weak) {}
 
-        TeeIstream &GetParent() {
+        TeeIstream &GetParent() noexcept {
             return ContainerCast(*this, &TeeIstream::first_output);
         }
 
@@ -140,7 +140,7 @@ struct TeeIstream final : IstreamHandler {
             return consumed;
         }
 
-        void _Close() override;
+        void _Close() noexcept override;
     };
 
     struct SecondOutput : Output {
@@ -176,7 +176,7 @@ struct TeeIstream final : IstreamHandler {
             tee.ReadInput();
         }
 
-        void _Close() override;
+        void _Close() noexcept override;
     };
 
     FirstOutput first_output;
@@ -385,7 +385,7 @@ TeeIstream::OnError(std::exception_ptr ep)
  */
 
 void
-TeeIstream::FirstOutput::_Close()
+TeeIstream::FirstOutput::_Close() noexcept
 {
     TeeIstream &tee = GetParent();
 
@@ -424,7 +424,7 @@ TeeIstream::FirstOutput::_Close()
  */
 
 void
-TeeIstream::SecondOutput::_Close()
+TeeIstream::SecondOutput::_Close() noexcept
 {
     TeeIstream &tee = GetParent();
 

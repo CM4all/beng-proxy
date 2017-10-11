@@ -112,7 +112,7 @@ public:
         return consumed;
     }
 
-    void _Close() override {
+    void _Close() noexcept override {
         if (auto_remove)
             rubber_remove(&rubber, id);
 

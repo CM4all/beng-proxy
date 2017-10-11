@@ -112,7 +112,7 @@ public:
     /* virtual methods from class Istream */
 
     void _Read() override;
-    void _Close() override;
+    void _Close() noexcept override;
 
     /* istream handler */
 
@@ -674,7 +674,7 @@ SubstIstream::_Read()
 }
 
 void
-SubstIstream::_Close()
+SubstIstream::_Close() noexcept
 {
     state = STATE_CLOSED;
 

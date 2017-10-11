@@ -109,7 +109,7 @@ struct HttpClient final : IstreamHandler, Cancellable {
         explicit ResponseBodyReader(struct pool &_pool)
             :HttpBodyReader(_pool) {}
 
-        HttpClient &GetClient() {
+        HttpClient &GetClient() noexcept {
             return ContainerCast(*this, &HttpClient::response_body_reader);
         }
 
@@ -135,7 +135,7 @@ struct HttpClient final : IstreamHandler, Cancellable {
             return GetClient().AsFD();
         }
 
-        void _Close() override {
+        void _Close() noexcept override {
             GetClient().Close();
         }
     };

@@ -86,7 +86,7 @@ public:
 
     bool InitZlib();
 
-    void DeinitZlib() {
+    void DeinitZlib() noexcept {
         if (z_initialized) {
             z_initialized = false;
             deflateEnd(&z);
@@ -150,7 +150,7 @@ public:
             TryFinish();
     }
 
-    void _Close() override {
+    void _Close() noexcept override {
         DeinitZlib();
 
         if (HasInput())

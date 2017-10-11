@@ -170,7 +170,7 @@ struct ReplaceIstream final : FacadeIstream {
 
     off_t _GetAvailable(bool partial) override;
     void _Read() override;
-    void _Close() override;
+    void _Close() noexcept override;
 };
 
 /**
@@ -550,7 +550,7 @@ ReplaceIstream::_Read()
 }
 
 void
-ReplaceIstream::_Close()
+ReplaceIstream::_Close() noexcept
 {
     DestroyReplace();
 

@@ -87,7 +87,7 @@ struct FileIstream final : public Istream {
         retry_event.Cancel();
     }
 
-    void CloseHandle() {
+    void CloseHandle() noexcept {
         if (fd < 0)
             return;
 
@@ -151,7 +151,7 @@ struct FileIstream final : public Istream {
     }
 
     int _AsFd() override;
-    void _Close() override {
+    void _Close() noexcept override {
         CloseHandle();
         Destroy();
     }

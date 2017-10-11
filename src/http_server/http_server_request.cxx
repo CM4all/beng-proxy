@@ -108,7 +108,7 @@ HttpServerConnection::RequestBodyReader::_Read()
 }
 
 void
-HttpServerConnection::RequestBodyReader::_Close()
+HttpServerConnection::RequestBodyReader::_Close() noexcept
 {
     if (connection.request.read_state == Request::END)
         return;

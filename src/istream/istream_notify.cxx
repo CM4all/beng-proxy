@@ -47,7 +47,7 @@ public:
 
     /* virtual methods from class Istream */
 
-    void _Close() override {
+    void _Close() noexcept override {
         handler.close(handler_ctx);
         ForwardIstream::_Close();
     }

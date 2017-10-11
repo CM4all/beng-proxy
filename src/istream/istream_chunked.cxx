@@ -65,7 +65,7 @@ public:
     void _Read() override;
     void _FillBucketList(IstreamBucketList &list) override;
     size_t _ConsumeBucketList(size_t nbytes) override;
-    void _Close() override;
+    void _Close() noexcept override;
 
     /* virtual methods from class IstreamHandler */
     size_t OnData(const void *data, size_t length) override;
@@ -371,7 +371,7 @@ ChunkedIstream::_ConsumeBucketList(size_t nbytes)
 }
 
 void
-ChunkedIstream::_Close()
+ChunkedIstream::_Close() noexcept
 {
     if (input.IsDefined())
         input.ClearAndClose();

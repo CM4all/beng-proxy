@@ -131,7 +131,7 @@ public:
 
     off_t _GetAvailable(bool partial) override;
     void _Read() override;
-    void _Close() override;
+    void _Close() noexcept override;
 
 protected:
     /* virtual methods from class IstreamHandler */
@@ -447,7 +447,7 @@ DechunkIstream::_Read()
 }
 
 void
-DechunkIstream::_Close()
+DechunkIstream::_Close() noexcept
 {
     assert(!eof);
     assert(!closed);

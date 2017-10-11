@@ -73,7 +73,7 @@ public:
         return fd;
     }
 
-    void _Close() override {
+    void _Close() noexcept override {
         input.Close();
         Istream::_Close();
     }

@@ -217,7 +217,7 @@ public:
             TryRead();
     }
 
-    void _Close() override {
+    void _Close() noexcept override {
         buffer.FreeIfDefined(fb_pool_get());
         event.Delete();
 

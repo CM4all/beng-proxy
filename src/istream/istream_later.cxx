@@ -62,7 +62,7 @@ public:
         return -1;
     }
 
-    void _Close() override {
+    void _Close() noexcept override {
         defer_event.Cancel();
 
         /* input can only be nullptr during the eof callback delay */
