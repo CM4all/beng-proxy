@@ -48,8 +48,8 @@ public:
     int _AsFd() override;
 
     /* virtual methods from class IstreamHandler */
-    void OnEof() override;
-    void OnError(std::exception_ptr ep) override;
+    void OnEof() noexcept override;
+    void OnError(std::exception_ptr ep) noexcept override;
 };
 
 
@@ -59,7 +59,7 @@ public:
  */
 
 void
-StopwatchIstream::OnEof()
+StopwatchIstream::OnEof() noexcept
 {
     stopwatch_event(&stopwatch, "end");
     stopwatch_dump(&stopwatch);
@@ -68,7 +68,7 @@ StopwatchIstream::OnEof()
 }
 
 void
-StopwatchIstream::OnError(std::exception_ptr ep)
+StopwatchIstream::OnError(std::exception_ptr ep) noexcept
 {
     stopwatch_event(&stopwatch, "abort");
     stopwatch_dump(&stopwatch);

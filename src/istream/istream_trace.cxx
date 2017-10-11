@@ -106,13 +106,13 @@ public:
         return nbytes;
     }
 
-    void OnEof() override {
+    void OnEof() noexcept override {
         fprintf(stderr, "%p eof()\n", (const void *)this);
 
         ForwardIstream::OnEof();
     }
 
-    void OnError(std::exception_ptr ep) override {
+    void OnError(std::exception_ptr ep) noexcept override {
         fprintf(stderr, "%p abort('%s')\n", (const void *)this,
                 GetFullMessage(ep).c_str());
 

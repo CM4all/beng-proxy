@@ -72,8 +72,8 @@ private:
     /* virtual methods from class IstreamHandler */
     size_t OnData(const void *data, size_t length) override;
     ssize_t OnDirect(FdType type, int fd, size_t max_length) override;
-    void OnEof() override;
-    void OnError(std::exception_ptr ep) override;
+    void OnEof() noexcept override;
+    void OnError(std::exception_ptr ep) noexcept override;
 };
 
 static ssize_t
@@ -173,8 +173,8 @@ RubberSink::OnDirect(FdType type, int fd, size_t max_length)
     return nbytes;
 }
 
-inline void
-RubberSink::OnEof()
+void
+RubberSink::OnEof() noexcept
 {
     assert(input.IsDefined());
     input.Clear();
@@ -182,8 +182,8 @@ RubberSink::OnEof()
     InvokeEof();
 }
 
-inline void
-RubberSink::OnError(std::exception_ptr ep)
+void
+RubberSink::OnError(std::exception_ptr ep) noexcept
 {
     assert(input.IsDefined());
     input.Clear();

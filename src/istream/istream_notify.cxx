@@ -54,12 +54,12 @@ public:
 
     /* virtual methods from class IstreamHandler */
 
-    void OnEof() override {
+    void OnEof() noexcept override {
         handler.eof(handler_ctx);
         ForwardIstream::OnEof();
     }
 
-    void OnError(std::exception_ptr ep) override {
+    void OnError(std::exception_ptr ep) noexcept override {
         handler.abort(handler_ctx);
         ForwardIstream::OnError(ep);
     }

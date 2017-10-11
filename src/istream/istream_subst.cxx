@@ -123,8 +123,8 @@ public:
         gcc_unreachable();
     }
 
-    void OnEof() override;
-    void OnError(std::exception_ptr ep) override;
+    void OnEof() noexcept override;
+    void OnError(std::exception_ptr ep) noexcept override;
 };
 
 /*
@@ -562,8 +562,8 @@ SubstIstream::OnData(const void *data, size_t length)
     return Feed(data, length);
 }
 
-inline void
-SubstIstream::OnEof()
+void
+SubstIstream::OnEof() noexcept
 {
     assert(input.IsDefined());
 
@@ -606,8 +606,8 @@ SubstIstream::OnEof()
     }
 }
 
-inline void
-SubstIstream::OnError(std::exception_ptr ep)
+void
+SubstIstream::OnError(std::exception_ptr ep) noexcept
 {
     assert(input.IsDefined());
 

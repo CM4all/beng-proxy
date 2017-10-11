@@ -89,7 +89,7 @@ public:
 
     size_t OnData(const void *data, size_t length) override;
     ssize_t OnDirect(FdType type, int fd, size_t max_length) override;
-    void OnError(std::exception_ptr ep) override;
+    void OnError(std::exception_ptr ep) noexcept override;
 };
 
 static constexpr char space[] =
@@ -191,7 +191,7 @@ CatchIstream::OnDirect(FdType type, int fd, size_t max_length)
 }
 
 void
-CatchIstream::OnError(std::exception_ptr ep)
+CatchIstream::OnError(std::exception_ptr ep) noexcept
 {
     ep = callback(ep, callback_ctx);
     if (ep) {

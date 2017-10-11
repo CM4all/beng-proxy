@@ -69,8 +69,8 @@ struct BufferSink final : IstreamSink, Cancellable {
     /* virtual methods from class IstreamHandler */
     size_t OnData(const void *data, size_t length) override;
     ssize_t OnDirect(FdType type, int fd, size_t max_length) override;
-    void OnEof() override;
-    void OnError(std::exception_ptr ep) override;
+    void OnEof() noexcept override;
+    void OnError(std::exception_ptr ep) noexcept override;
 };
 
 /*
@@ -106,16 +106,16 @@ BufferSink::OnDirect(FdType type, int fd, size_t max_length)
     return nbytes;
 }
 
-inline void
-BufferSink::OnEof()
+void
+BufferSink::OnEof() noexcept
 {
     assert(position == size);
 
     handler->done(buffer, size, handler_ctx);
 }
 
-inline void
-BufferSink::OnError(std::exception_ptr ep)
+void
+BufferSink::OnError(std::exception_ptr ep) noexcept
 {
     handler->error(ep, handler_ctx);
 }

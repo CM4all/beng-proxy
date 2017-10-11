@@ -164,19 +164,19 @@ struct AjpClient final : Istream, IstreamHandler, Cancellable {
      */
     void Release(bool reuse) noexcept;
 
-    void AbortResponseHeaders(std::exception_ptr ep);
-    void AbortResponseBody(std::exception_ptr ep);
-    void AbortResponse(std::exception_ptr ep);
+    void AbortResponseHeaders(std::exception_ptr ep) noexcept;
+    void AbortResponseBody(std::exception_ptr ep) noexcept;
+    void AbortResponse(std::exception_ptr ep) noexcept;
 
-    void AbortResponseHeaders(const char *msg) {
+    void AbortResponseHeaders(const char *msg) noexcept {
         AbortResponseHeaders(std::make_exception_ptr(AjpClientError(msg)));
     }
 
-    void AbortResponseBody(const char *msg) {
+    void AbortResponseBody(const char *msg) noexcept {
         AbortResponseBody(std::make_exception_ptr(AjpClientError(msg)));
     }
 
-    void AbortResponse(const char *msg) {
+    void AbortResponse(const char *msg) noexcept {
         AbortResponse(std::make_exception_ptr(AjpClientError(msg)));
     }
 
@@ -220,8 +220,8 @@ struct AjpClient final : Istream, IstreamHandler, Cancellable {
     /* virtual methods from class IstreamHandler */
     size_t OnData(const void *data, size_t length) override;
     ssize_t OnDirect(FdType type, int fd, size_t max_length) override;
-    void OnEof() override;
-    void OnError(std::exception_ptr ep) override;
+    void OnEof() noexcept override;
+    void OnError(std::exception_ptr ep) noexcept override;
 };
 
 static const struct timeval ajp_client_timeout = {
@@ -262,7 +262,7 @@ AjpClient::Release(bool reuse) noexcept
 }
 
 void
-AjpClient::AbortResponseHeaders(std::exception_ptr ep)
+AjpClient::AbortResponseHeaders(std::exception_ptr ep) noexcept
 {
     assert(response.read_state == Response::READ_BEGIN ||
            response.read_state == Response::READ_NO_BODY);
@@ -276,7 +276,7 @@ AjpClient::AbortResponseHeaders(std::exception_ptr ep)
 }
 
 void
-AjpClient::AbortResponseBody(std::exception_ptr ep)
+AjpClient::AbortResponseBody(std::exception_ptr ep) noexcept
 {
     assert(response.read_state == Response::READ_BODY);
 
@@ -289,7 +289,7 @@ AjpClient::AbortResponseBody(std::exception_ptr ep)
 }
 
 void
-AjpClient::AbortResponse(std::exception_ptr ep)
+AjpClient::AbortResponse(std::exception_ptr ep) noexcept
 {
     assert(response.read_state != Response::READ_END);
 
@@ -695,8 +695,8 @@ AjpClient::OnDirect(FdType type, int fd, size_t max_length)
     return nbytes;
 }
 
-inline void
-AjpClient::OnEof()
+void
+AjpClient::OnEof() noexcept
 {
     assert(request.istream.IsDefined());
     request.istream.Clear();
@@ -705,8 +705,8 @@ AjpClient::OnEof()
     socket.Read(true);
 }
 
-inline void
-AjpClient::OnError(std::exception_ptr ep)
+void
+AjpClient::OnError(std::exception_ptr ep) noexcept
 {
     assert(request.istream.IsDefined());
     request.istream.Clear();

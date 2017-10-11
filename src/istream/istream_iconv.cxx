@@ -79,8 +79,8 @@ public:
     /* handler */
 
     size_t OnData(const void *data, size_t length) override;
-    void OnEof() override;
-    void OnError(std::exception_ptr ep) override;
+    void OnEof() noexcept override;
+    void OnError(std::exception_ptr ep) noexcept override;
 
 private:
     size_t Feed(const char *data, size_t length);
@@ -199,7 +199,7 @@ IconvIstream::OnData(const void *data, size_t length)
 }
 
 void
-IconvIstream::OnEof()
+IconvIstream::OnEof() noexcept
 {
     assert(input.IsDefined());
     input.Clear();
@@ -209,7 +209,7 @@ IconvIstream::OnEof()
 }
 
 void
-IconvIstream::OnError(std::exception_ptr ep)
+IconvIstream::OnError(std::exception_ptr ep) noexcept
 {
     assert(input.IsDefined());
 

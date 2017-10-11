@@ -102,7 +102,7 @@ public:
     /**
      * End of file encountered.
      */
-    virtual void OnEof() = 0;
+    virtual void OnEof() noexcept = 0;
 
     /**
      * The istream has ended unexpectedly, e.g. an I/O error.
@@ -112,7 +112,7 @@ public:
      *
      * @param error an exception describing the error condition
      */
-    virtual void OnError(std::exception_ptr error) = 0;
+    virtual void OnError(std::exception_ptr error) noexcept = 0;
 };
 
 #endif

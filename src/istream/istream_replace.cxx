@@ -82,8 +82,8 @@ struct ReplaceIstream final : FacadeIstream {
 
         /* virtual methods from class IstreamHandler */
         size_t OnData(const void *data, size_t length) override;
-        void OnEof() override;
-        void OnError(std::exception_ptr ep) override;
+        void OnEof() noexcept override;
+        void OnError(std::exception_ptr ep) noexcept override;
     };
 
     bool finished = false, read_locked = false;
@@ -163,8 +163,8 @@ struct ReplaceIstream final : FacadeIstream {
 
     /* virtual methods from class IstreamHandler */
     size_t OnData(const void *data, size_t length) override;
-    void OnEof() override;
-    void OnError(std::exception_ptr ep) override;
+    void OnEof() noexcept override;
+    void OnError(std::exception_ptr ep) noexcept override;
 
     /* virtual methods from class Istream */
 
@@ -236,8 +236,8 @@ ReplaceIstream::Substitution::OnData(const void *data, size_t length)
         return 0;
 }
 
-inline void
-ReplaceIstream::Substitution::OnEof()
+void
+ReplaceIstream::Substitution::OnEof() noexcept
 {
     input.Clear();
 
@@ -245,8 +245,8 @@ ReplaceIstream::Substitution::OnEof()
         replace.ToNextSubstitution(this);
 }
 
-inline void
-ReplaceIstream::Substitution::OnError(std::exception_ptr ep)
+void
+ReplaceIstream::Substitution::OnError(std::exception_ptr ep) noexcept
 {
     ClearInput();
 
@@ -457,8 +457,8 @@ ReplaceIstream::OnData(const void *data, size_t length)
     return length;
 }
 
-inline void
-ReplaceIstream::OnEof()
+void
+ReplaceIstream::OnEof() noexcept
 {
     input.Clear();
 
@@ -466,8 +466,8 @@ ReplaceIstream::OnEof()
         ReadCheckEmpty();
 }
 
-inline void
-ReplaceIstream::OnError(std::exception_ptr ep)
+void
+ReplaceIstream::OnError(std::exception_ptr ep) noexcept
 {
     DestroyReplace();
     input.Clear();

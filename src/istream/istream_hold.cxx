@@ -108,7 +108,7 @@ public:
             : ssize_t(ISTREAM_RESULT_BLOCKING);
     }
 
-    void OnEof() override {
+    void OnEof() noexcept override {
         assert(!input_eof);
         assert(!input_error);
 
@@ -119,7 +119,7 @@ public:
             input_eof = true;
     }
 
-    void OnError(std::exception_ptr ep) override {
+    void OnError(std::exception_ptr ep) noexcept override {
         assert(!input_eof);
         assert(!input_error);
 

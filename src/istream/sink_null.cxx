@@ -44,10 +44,10 @@ public:
         return length;
     }
 
-    void OnEof() override {
+    void OnEof() noexcept override {
     }
 
-    void OnError(std::exception_ptr) override {
+    void OnError(std::exception_ptr) noexcept override {
     }
 };
 

@@ -117,8 +117,8 @@ struct CGIClient final : Istream, IstreamHandler, Cancellable {
     /* virtual methods from class IstreamHandler */
     size_t OnData(const void *data, size_t length) override;
     ssize_t OnDirect(FdType type, int fd, size_t max_length) override;
-    void OnEof() override;
-    void OnError(std::exception_ptr ep) override;
+    void OnEof() noexcept override;
+    void OnError(std::exception_ptr ep) noexcept override;
 };
 
 inline bool
@@ -338,8 +338,8 @@ CGIClient::OnDirect(FdType type, int fd, size_t max_length)
     return nbytes;
 }
 
-inline void
-CGIClient::OnEof()
+void
+CGIClient::OnEof() noexcept
 {
     input.Clear();
 
@@ -369,8 +369,8 @@ CGIClient::OnEof()
     }
 }
 
-inline void
-CGIClient::OnError(std::exception_ptr ep)
+void
+CGIClient::OnError(std::exception_ptr ep) noexcept
 {
     stopwatch_event(stopwatch, "abort");
     stopwatch_dump(stopwatch);

@@ -54,11 +54,11 @@ struct StdioSink final : IstreamHandler {
 
     size_t OnData(const void *data, size_t length) override;
 
-    void OnEof() override {
+    void OnEof() noexcept override {
         input.Clear();
     }
 
-    void OnError(std::exception_ptr ep) override {
+    void OnError(std::exception_ptr ep) noexcept override {
         input.Clear();
 
         PrintException(ep);

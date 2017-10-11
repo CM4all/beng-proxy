@@ -55,8 +55,8 @@ struct Context final : IstreamHandler {
 
     /* virtual methods from class IstreamHandler */
     size_t OnData(const void *data, size_t length) override;
-    void OnEof() override;
-    void OnError(std::exception_ptr ep) override;
+    void OnEof() noexcept override;
+    void OnError(std::exception_ptr ep) noexcept override;
 };
 
 /*
@@ -80,7 +80,7 @@ Context::OnData(gcc_unused const void *data, size_t length)
 }
 
 void
-Context::OnEof()
+Context::OnEof() noexcept
 {
     eof = true;
 
@@ -88,7 +88,7 @@ Context::OnEof()
 }
 
 void
-Context::OnError(std::exception_ptr)
+Context::OnError(std::exception_ptr) noexcept
 {
     abort = true;
 

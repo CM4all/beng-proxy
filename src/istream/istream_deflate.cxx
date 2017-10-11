@@ -161,8 +161,8 @@ public:
 
     /* virtual methods from class IstreamHandler */
     size_t OnData(const void *data, size_t length) override;
-    void OnEof() override;
-    void OnError(std::exception_ptr ep) override;
+    void OnEof() noexcept override;
+    void OnError(std::exception_ptr ep) noexcept override;
 
 private:
     int GetWindowBits() const {
@@ -390,7 +390,7 @@ DeflateIstream::OnData(const void *data, size_t length)
 }
 
 void
-DeflateIstream::OnEof()
+DeflateIstream::OnEof() noexcept
 {
     ClearInput();
     defer.Cancel();
@@ -402,7 +402,7 @@ DeflateIstream::OnEof()
 }
 
 void
-DeflateIstream::OnError(std::exception_ptr ep)
+DeflateIstream::OnError(std::exception_ptr ep) noexcept
 {
     ClearInput();
 

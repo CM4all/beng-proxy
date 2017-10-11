@@ -115,7 +115,7 @@ Istream::InvokeDirect(FdType type, int fd, size_t max_length)
 }
 
 inline void
-Istream::InvokeEof()
+Istream::InvokeEof() noexcept
 {
     assert(!destroyed);
     assert(!eof);
@@ -133,7 +133,7 @@ Istream::InvokeEof()
 }
 
 inline void
-Istream::InvokeError(std::exception_ptr ep)
+Istream::InvokeError(std::exception_ptr ep) noexcept
 {
     assert(!destroyed);
     assert(!eof);

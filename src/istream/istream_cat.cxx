@@ -87,14 +87,14 @@ struct CatIstream final : public Istream {
             return cat.OnInputDirect(*this, type, fd, max_length);
         }
 
-        void OnEof() override {
+        void OnEof() noexcept override {
             assert(input.IsDefined());
             ClearInput();
 
             cat.OnInputEof(*this);
         }
 
-        void OnError(std::exception_ptr ep) override {
+        void OnError(std::exception_ptr ep) noexcept override {
             assert(input.IsDefined());
             ClearInput();
 

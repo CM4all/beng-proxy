@@ -95,7 +95,7 @@ HttpServerConnection::OnDirect(FdType type, int fd, size_t max_length)
 }
 
 void
-HttpServerConnection::OnEof()
+HttpServerConnection::OnEof() noexcept
 {
     assert(request.read_state != Request::START &&
            request.read_state != Request::HEADERS);
@@ -109,7 +109,7 @@ HttpServerConnection::OnEof()
 }
 
 void
-HttpServerConnection::OnError(std::exception_ptr ep)
+HttpServerConnection::OnError(std::exception_ptr ep) noexcept
 {
     assert(response.istream.IsDefined());
 

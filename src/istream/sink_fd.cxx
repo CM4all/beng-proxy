@@ -107,8 +107,8 @@ struct SinkFd final : IstreamSink {
     /* virtual methods from class IstreamHandler */
     size_t OnData(const void *data, size_t length) override;
     ssize_t OnDirect(FdType type, int fd, size_t max_length) override;
-    void OnEof() override;
-    void OnError(std::exception_ptr ep) override;
+    void OnEof() noexcept override;
+    void OnError(std::exception_ptr ep) noexcept override;
 };
 
 /*
@@ -165,8 +165,8 @@ SinkFd::OnDirect(FdType type, int _fd, size_t max_length)
     return nbytes;
 }
 
-inline void
-SinkFd::OnEof()
+void
+SinkFd::OnEof() noexcept
 {
     got_data = true;
 
@@ -179,8 +179,8 @@ SinkFd::OnEof()
     handler->input_eof(handler_ctx);
 }
 
-inline void
-SinkFd::OnError(std::exception_ptr ep)
+void
+SinkFd::OnError(std::exception_ptr ep) noexcept
 {
     got_data = true;
 

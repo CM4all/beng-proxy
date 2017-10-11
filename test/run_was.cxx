@@ -75,11 +75,11 @@ struct Context final
 
     size_t OnData(const void *data, size_t length) override;
 
-    void OnEof() override {
+    void OnEof() noexcept override {
         body.Clear();
     }
 
-    void OnError(std::exception_ptr ep) override {
+    void OnError(std::exception_ptr ep) noexcept override {
         PrintException(ep);
 
         body.Clear();

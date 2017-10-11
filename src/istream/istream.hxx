@@ -116,20 +116,20 @@ protected:
 
     size_t InvokeData(const void *data, size_t length);
     ssize_t InvokeDirect(FdType type, int fd, size_t max_length);
-    void InvokeEof();
-    void InvokeError(std::exception_ptr ep);
+    void InvokeEof() noexcept;
+    void InvokeError(std::exception_ptr ep) noexcept;
 
     void Destroy() noexcept {
         this->~Istream();
         /* no need to free memory from the pool */
     }
 
-    void DestroyEof() {
+    void DestroyEof() noexcept {
         InvokeEof();
         Destroy();
     }
 
-    void DestroyError(std::exception_ptr ep) {
+    void DestroyError(std::exception_ptr ep) noexcept {
         InvokeError(ep);
         Destroy();
     }

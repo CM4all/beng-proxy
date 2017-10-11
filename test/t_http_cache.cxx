@@ -86,11 +86,11 @@ struct Request final : IstreamHandler {
         return length;
     }
 
-    void OnEof() override {
+    void OnEof() noexcept override {
         eof = true;
     }
 
-    void OnError(std::exception_ptr) override {
+    void OnError(std::exception_ptr) noexcept override {
         assert(false);
     }
 };

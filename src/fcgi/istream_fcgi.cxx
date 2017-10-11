@@ -90,9 +90,9 @@ public:
         return Feed((const char *)data, length);
     }
 
-    void OnEof() override;
+    void OnEof() noexcept override;
 
-    void OnError(std::exception_ptr ep) override {
+    void OnError(std::exception_ptr ep) noexcept override {
         ClearInput();
         DestroyError(ep);
     }
@@ -174,7 +174,7 @@ FcgiIstream::Feed(const char *data, size_t length)
  */
 
 void
-FcgiIstream::OnEof()
+FcgiIstream::OnEof() noexcept
 {
     assert(HasInput());
     assert(missing_from_current_record == 0);

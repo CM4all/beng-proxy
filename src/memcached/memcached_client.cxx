@@ -180,8 +180,8 @@ struct MemcachedClient final : Istream, IstreamHandler, Cancellable {
 
     /* virtual methods from class IstreamHandler */
     size_t OnData(const void *data, size_t length) override;
-    void OnEof() override;
-    void OnError(std::exception_ptr ep) override;
+    void OnEof() noexcept override;
+    void OnError(std::exception_ptr ep) noexcept override;
 };
 
 static const struct timeval memcached_client_timeout = {
@@ -646,8 +646,8 @@ MemcachedClient::OnData(const void *data, size_t length)
     return (size_t)nbytes;
 }
 
-inline void
-MemcachedClient::OnEof()
+void
+MemcachedClient::OnEof() noexcept
 {
     assert(request.istream.IsDefined());
     assert(response.read_state == ReadState::HEADER ||
@@ -660,8 +660,8 @@ MemcachedClient::OnEof()
     socket.Read(true);
 }
 
-inline void
-MemcachedClient::OnError(std::exception_ptr ep)
+void
+MemcachedClient::OnError(std::exception_ptr ep) noexcept
 {
     assert(request.istream.IsDefined());
     assert(response.read_state == ReadState::HEADER ||

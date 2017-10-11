@@ -136,8 +136,8 @@ public:
 protected:
     /* virtual methods from class IstreamHandler */
     size_t OnData(const void *data, size_t length) override;
-    void OnEof() override;
-    void OnError(std::exception_ptr ep) override;
+    void OnEof() noexcept override;
+    void OnError(std::exception_ptr ep) noexcept override;
 };
 
 void
@@ -379,7 +379,7 @@ DechunkIstream::OnData(const void *data, size_t length)
 }
 
 void
-DechunkIstream::OnEof()
+DechunkIstream::OnEof() noexcept
 {
     input.Clear();
 
@@ -394,7 +394,7 @@ DechunkIstream::OnEof()
 }
 
 void
-DechunkIstream::OnError(std::exception_ptr ep)
+DechunkIstream::OnError(std::exception_ptr ep) noexcept
 {
     input.Clear();
 

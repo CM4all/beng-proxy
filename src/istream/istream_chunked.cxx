@@ -69,8 +69,8 @@ public:
 
     /* virtual methods from class IstreamHandler */
     size_t OnData(const void *data, size_t length) override;
-    void OnEof() override;
-    void OnError(std::exception_ptr ep) override;
+    void OnEof() noexcept override;
+    void OnError(std::exception_ptr ep) noexcept override;
 
 private:
     bool IsBufferEmpty() const {
@@ -248,7 +248,7 @@ ChunkedIstream::OnData(const void *data, size_t length)
 }
 
 void
-ChunkedIstream::OnEof()
+ChunkedIstream::OnEof() noexcept
 {
     assert(input.IsDefined());
     assert(missing_from_current_chunk == 0);
@@ -266,7 +266,7 @@ ChunkedIstream::OnEof()
 }
 
 void
-ChunkedIstream::OnError(std::exception_ptr ep)
+ChunkedIstream::OnError(std::exception_ptr ep) noexcept
 {
     assert(input.IsDefined());
 

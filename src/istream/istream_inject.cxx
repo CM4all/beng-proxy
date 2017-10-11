@@ -66,11 +66,11 @@ public:
 
     /* virtual methods from class IstreamHandler */
 
-    void OnEof() override {
+    void OnEof() noexcept override {
         ClearInput();
     }
 
-    void OnError(std::exception_ptr) override {
+    void OnError(std::exception_ptr) noexcept override {
         ClearInput();
     }
 };

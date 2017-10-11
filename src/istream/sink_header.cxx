@@ -98,8 +98,8 @@ public:
 
     size_t OnData(const void *data, size_t length) override;
     ssize_t OnDirect(FdType type, int fd, size_t max_length) override;
-    void OnEof() override;
-    void OnError(std::exception_ptr ep) override;
+    void OnEof() noexcept override;
+    void OnError(std::exception_ptr ep) noexcept override;
 };
 
 size_t
@@ -254,8 +254,8 @@ HeaderSink::OnDirect(FdType type, int fd, size_t max_length)
     return ForwardIstream::OnDirect(type, fd, max_length);
 }
 
-inline void
-HeaderSink::OnEof()
+void
+HeaderSink::OnEof() noexcept
 {
     switch (state) {
     case SIZE:
@@ -275,8 +275,8 @@ HeaderSink::OnEof()
     }
 }
 
-inline void
-HeaderSink::OnError(std::exception_ptr ep)
+void
+HeaderSink::OnError(std::exception_ptr ep) noexcept
 {
     switch (state) {
     case SIZE:

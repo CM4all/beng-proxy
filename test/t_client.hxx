@@ -254,8 +254,8 @@ struct Context final
 
     /* virtual methods from class IstreamHandler */
     size_t OnData(const void *data, size_t length) override;
-    void OnEof() override;
-    void OnError(std::exception_ptr ep) override;
+    void OnEof() noexcept override;
+    void OnError(std::exception_ptr ep) noexcept override;
 
     /* virtual methods from class Lease */
     void ReleaseLease(gcc_unused bool reuse) override {
@@ -314,7 +314,7 @@ Context<Connection>::OnData(gcc_unused const void *data, size_t length)
 
 template<class Connection>
 void
-Context<Connection>::OnEof()
+Context<Connection>::OnEof() noexcept
 {
     body.Clear();
     body_eof = true;
@@ -326,7 +326,7 @@ Context<Connection>::OnEof()
 
 template<class Connection>
 void
-Context<Connection>::OnError(std::exception_ptr ep)
+Context<Connection>::OnError(std::exception_ptr ep) noexcept
 {
     body.Clear();
     body_abort = true;

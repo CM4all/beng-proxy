@@ -89,8 +89,8 @@ public:
     /* handler */
     size_t OnData(const void *data, size_t length) override;
     ssize_t OnDirect(FdType type, int fd, size_t max_length) override;
-    void OnEof() override;
-    void OnError(std::exception_ptr ep) override;
+    void OnEof() noexcept override;
+    void OnError(std::exception_ptr ep) noexcept override;
 
 private:
     void CloseInternal() noexcept;
@@ -266,7 +266,7 @@ PipeIstream::OnDirect(FdType type, int fd, size_t max_length)
 }
 
 inline void
-PipeIstream::OnEof()
+PipeIstream::OnEof() noexcept
 {
     input.Clear();
 
@@ -280,7 +280,7 @@ PipeIstream::OnEof()
 }
 
 inline void
-PipeIstream::OnError(std::exception_ptr ep)
+PipeIstream::OnError(std::exception_ptr ep) noexcept
 {
     CloseInternal();
     input.Clear();

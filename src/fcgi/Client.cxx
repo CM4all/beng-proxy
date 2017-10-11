@@ -164,19 +164,19 @@ struct FcgiClient final : Cancellable, Istream, IstreamHandler, WithInstanceList
      * Abort receiving the response status/headers from the FastCGI
      * server, and notify the HTTP response handler.
      */
-    void AbortResponseHeaders(std::exception_ptr ep);
+    void AbortResponseHeaders(std::exception_ptr ep) noexcept;
 
     /**
      * Abort receiving the response body from the FastCGI server, and
      * notify the response body istream handler.
      */
-    void AbortResponseBody(std::exception_ptr ep);
+    void AbortResponseBody(std::exception_ptr ep) noexcept;
 
     /**
      * Abort receiving the response from the FastCGI server.  This is
      * a wrapper for AbortResponseHeaders() or AbortResponseBody().
      */
-    void AbortResponse(std::exception_ptr ep);
+    void AbortResponse(std::exception_ptr ep) noexcept;
 
     /**
      * Return type for AnalyseBuffer().
@@ -252,8 +252,8 @@ struct FcgiClient final : Cancellable, Istream, IstreamHandler, WithInstanceList
     /* virtual methods from class IstreamHandler */
     size_t OnData(const void *data, size_t length) override;
     ssize_t OnDirect(FdType type, int fd, size_t max_length) override;
-    void OnEof() override;
-    void OnError(std::exception_ptr ep) override;
+    void OnEof() noexcept override;
+    void OnError(std::exception_ptr ep) noexcept override;
 };
 
 static constexpr struct timeval fcgi_client_timeout = {
@@ -270,7 +270,7 @@ inline FcgiClient::~FcgiClient()
 }
 
 void
-FcgiClient::AbortResponseHeaders(std::exception_ptr ep)
+FcgiClient::AbortResponseHeaders(std::exception_ptr ep) noexcept
 {
     assert(response.read_state == Response::READ_HEADERS ||
            response.read_state == Response::READ_NO_BODY);
@@ -286,7 +286,7 @@ FcgiClient::AbortResponseHeaders(std::exception_ptr ep)
 }
 
 void
-FcgiClient::AbortResponseBody(std::exception_ptr ep)
+FcgiClient::AbortResponseBody(std::exception_ptr ep) noexcept
 {
     assert(response.read_state == Response::READ_BODY);
 
@@ -300,7 +300,7 @@ FcgiClient::AbortResponseBody(std::exception_ptr ep)
 }
 
 void
-FcgiClient::AbortResponse(std::exception_ptr ep)
+FcgiClient::AbortResponse(std::exception_ptr ep) noexcept
 {
     assert(response.read_state == Response::READ_HEADERS ||
            response.read_state == Response::READ_NO_BODY ||
@@ -698,8 +698,8 @@ FcgiClient::OnDirect(FdType type, int fd, size_t max_length)
     return nbytes;
 }
 
-inline void
-FcgiClient::OnEof()
+void
+FcgiClient::OnEof() noexcept
 {
     assert(request.input.IsDefined());
 
@@ -709,7 +709,7 @@ FcgiClient::OnEof()
 }
 
 void
-FcgiClient::OnError(std::exception_ptr ep)
+FcgiClient::OnError(std::exception_ptr ep) noexcept
 {
     assert(request.input.IsDefined());
 

@@ -88,11 +88,11 @@ public:
         return InvokeDirect(type, fd, max_length);
     }
 
-    void OnEof() override {
+    void OnEof() noexcept override {
         DestroyEof();
     }
 
-    void OnError(std::exception_ptr ep) override {
+    void OnError(std::exception_ptr ep) noexcept override {
         DestroyError(ep);
     }
 };

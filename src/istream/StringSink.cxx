@@ -71,12 +71,12 @@ struct StringSink final : IstreamSink, Cancellable {
         return length;
     }
 
-    void OnEof() override {
+    void OnEof() noexcept override {
         callback(std::move(value), nullptr, callback_ctx);
         Destroy();
     }
 
-    void OnError(std::exception_ptr ep) override {
+    void OnError(std::exception_ptr ep) noexcept override {
         callback(std::move(value), ep, callback_ctx);
         Destroy();
     }

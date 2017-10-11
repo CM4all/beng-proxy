@@ -94,8 +94,8 @@ public:
     /* virtual methods from class IstreamHandler */
     size_t OnData(const void *data, size_t length) override;
     ssize_t OnDirect(FdType type, int fd, size_t max_length) override;
-    void OnEof() override;
-    void OnError(std::exception_ptr ep) override;
+    void OnEof() noexcept override;
+    void OnError(std::exception_ptr ep) noexcept override;
 };
 
 bool
@@ -185,8 +185,8 @@ WasOutput::OnDirect(gcc_unused FdType type, int source_fd, size_t max_length)
     return nbytes;
 }
 
-inline void
-WasOutput::OnEof()
+void
+WasOutput::OnEof() noexcept
 {
     assert(input.IsDefined());
 
@@ -199,8 +199,8 @@ WasOutput::OnEof()
     handler.WasOutputEof();
 }
 
-inline void
-WasOutput::OnError(std::exception_ptr ep)
+void
+WasOutput::OnError(std::exception_ptr ep) noexcept
 {
     assert(input.IsDefined());
 

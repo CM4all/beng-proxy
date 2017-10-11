@@ -56,11 +56,11 @@ struct StatsIstreamHandler : IstreamHandler {
         return length;
     }
 
-    void OnEof() override {
+    void OnEof() noexcept override {
         eof = true;
     }
 
-    void OnError(std::exception_ptr ep) override {
+    void OnError(std::exception_ptr ep) noexcept override {
         error = ep;
     }
 };

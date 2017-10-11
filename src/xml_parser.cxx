@@ -154,7 +154,7 @@ public:
         return Feed((const char *)data, length);
     }
 
-    void OnEof() override {
+    void OnEof() noexcept override {
         assert(input.IsDefined());
 
         input.Clear();
@@ -162,7 +162,7 @@ public:
         pool_unref(pool);
     }
 
-    void OnError(std::exception_ptr ep) override {
+    void OnError(std::exception_ptr ep) noexcept override {
         assert(input.IsDefined());
 
         input.Clear();

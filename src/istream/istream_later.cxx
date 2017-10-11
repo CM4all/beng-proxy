@@ -74,22 +74,22 @@ public:
 
     /* virtual methods from class IstreamHandler */
 
-    void OnEof() override {
+    void OnEof() noexcept override {
         ClearInput();
         Schedule();
     }
 
-    void OnError(std::exception_ptr ep) override {
+    void OnError(std::exception_ptr ep) noexcept override {
         defer_event.Cancel();
         ForwardIstream::OnError(ep);
     }
 
 private:
-    void Schedule() {
+    void Schedule() noexcept {
         defer_event.Schedule();
     }
 
-    void OnDeferred() {
+    void OnDeferred() noexcept {
         if (!HasInput())
             DestroyEof();
         else
