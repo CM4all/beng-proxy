@@ -34,6 +34,11 @@
 
 struct AccessLogDatagram;
 
-bool
+class AccessLogProtocolError {};
+
+/**
+ * Throws #AccessLogProtocolError on error.
+ */
+void
 log_server_apply_datagram(AccessLogDatagram *datagram, const void *p,
                           const void *end);

@@ -108,8 +108,11 @@ AccessLogServer::Receive()
         datagram.logger_client_address = address;
         datagram.raw = {buffer, nbytes};
 
-        if (log_server_apply_datagram(&datagram, buffer, buffer + nbytes))
+        try {
+            log_server_apply_datagram(&datagram, buffer, buffer + nbytes);
             return &datagram;
+        } catch (AccessLogProtocolError) {
+        }
     }
 }
 

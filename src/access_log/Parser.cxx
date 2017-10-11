@@ -97,7 +97,7 @@ ReadStringView(StringView &value_r, const void *p, const uint8_t *end)
     return p;
 }
 
-static bool
+static void
 log_server_apply_attributes(AccessLogDatagram *datagram, const void *p,
                             const uint8_t *end)
 {
@@ -109,7 +109,7 @@ log_server_apply_attributes(AccessLogDatagram *datagram, const void *p,
     while (true) {
         auto attr_p = (const uint8_t *)p;
         if (attr_p >= end)
-            return true;
+            return;
 
         auto attr = (enum beng_log_attribute)*attr_p++;
         p = attr_p;
@@ -145,11 +145,11 @@ log_server_apply_attributes(AccessLogDatagram *datagram, const void *p,
         case LOG_HTTP_METHOD:
             p = read_uint8(&u8, p, end);
             if (p == nullptr)
-                return false;
+                throw AccessLogProtocolError();
 
             datagram->http_method = http_method_t(u8);
             if (!http_method_is_valid(datagram->http_method))
-                return false;
+                throw AccessLogProtocolError();
 
             datagram->valid_http_method = true;
             break;
@@ -173,11 +173,11 @@ log_server_apply_attributes(AccessLogDatagram *datagram, const void *p,
         case LOG_HTTP_STATUS:
             p = read_uint16(&u16, p, end);
             if (p == nullptr)
-                return false;
+                throw AccessLogProtocolError();
 
             datagram->http_status = http_status_t(u16);
             if (!http_status_is_valid(datagram->http_status))
-                return false;
+                throw AccessLogProtocolError();
 
             datagram->valid_http_status = true;
             break;
@@ -201,18 +201,18 @@ log_server_apply_attributes(AccessLogDatagram *datagram, const void *p,
         }
 
         if (p == nullptr)
-            return false;
+            throw AccessLogProtocolError();
     }
 }
 
-bool
+void
 log_server_apply_datagram(AccessLogDatagram *datagram, const void *p,
                           const void *end)
 {
     auto magic = (const uint32_t *)p;
     if (*magic != log_magic)
-        return false;
+        throw AccessLogProtocolError();
 
-    return log_server_apply_attributes(datagram, magic + 1,
-                                       (const uint8_t *)end);
+    log_server_apply_attributes(datagram, magic + 1,
+                                (const uint8_t *)end);
 }
