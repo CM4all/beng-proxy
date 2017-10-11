@@ -43,7 +43,7 @@
 #include "tcp_balancer.hxx"
 #include "abort_close.hxx"
 #include "istream/istream.hxx"
-#include "istream/istream_hold.hxx"
+#include "istream/UnusedHoldPtr.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
 #include "pool.hxx"
@@ -70,7 +70,7 @@ struct AjpRequest final : Cancellable, StockGetHandler, Lease {
     const http_method_t method;
     const char *const uri;
     StringMap headers;
-    Istream *body;
+    UnusedHoldIstreamPtr body;
 
     HttpResponseHandler &handler;
     CancellablePointer &cancel_ptr;
@@ -81,6 +81,7 @@ struct AjpRequest final : Cancellable, StockGetHandler, Lease {
                unsigned _server_port, bool _is_ssl,
                http_method_t _method, const char *_uri,
                StringMap &&_headers,
+               Istream *_body,
                HttpResponseHandler &_handler,
                CancellablePointer &_cancel_ptr)
         :pool(_pool), event_loop(_event_loop),
@@ -89,7 +90,7 @@ struct AjpRequest final : Cancellable, StockGetHandler, Lease {
          server_name(_server_name), server_port(_server_port),
          is_ssl(_is_ssl),
          method(_method), uri(_uri),
-         headers(std::move(_headers)),
+         headers(std::move(_headers)), body(pool, _body),
          handler(_handler),
          cancel_ptr(_cancel_ptr) {
     }
@@ -107,9 +108,7 @@ struct AjpRequest final : Cancellable, StockGetHandler, Lease {
 private:
     /* virtual methods from class Cancellable */
     void Cancel() override {
-        if (body != nullptr)
-            body->Close();
-
+        body.Clear();
         cancel_ptr.Cancel();
     }
 
@@ -141,17 +140,15 @@ AjpRequest::OnStockItemReady(StockItem &item)
                        protocol, remote_addr,
                        remote_host, server_name,
                        server_port, is_ssl,
-                       method, uri, headers, body,
+                       method, uri, headers, body.Steal(),
                        handler, cancel_ptr);
 }
 
 void
 AjpRequest::OnStockItemError(std::exception_ptr ep)
 {
+    body.Clear();
     handler.InvokeError(ep);
-
-    if (body != nullptr)
-        body->CloseUnused();
 }
 
 /*
@@ -181,13 +178,8 @@ ajp_stock_request(struct pool &pool, EventLoop &event_loop,
                                       remote_addr, remote_host,
                                       server_name, server_port,
                                       is_ssl, method, uwa.path,
-                                      std::move(headers),
+                                      std::move(headers), body,
                                       handler, _cancel_ptr);
-
-    if (body != nullptr) {
-        hr->body = istream_hold_new(pool, *body);
-    } else
-        hr->body = nullptr;
 
     hr->BeginConnect(tcp_balancer, session_sticky, uwa);
 }
