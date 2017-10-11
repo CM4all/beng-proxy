@@ -97,18 +97,20 @@ ReadStringView(StringView &value_r, const void *p, const uint8_t *end)
     return p;
 }
 
-static void
-log_server_apply_attributes(AccessLogDatagram &datagram, const void *p,
-                            const uint8_t *end)
+static AccessLogDatagram
+log_server_apply_attributes(const void *p, const uint8_t *end)
 {
     assert(p != nullptr);
     assert(end != nullptr);
     assert((const char *)p < (const char *)end);
 
+    AccessLogDatagram datagram;
+    memset(&datagram, 0, sizeof(datagram));
+
     while (true) {
         auto attr_p = (const uint8_t *)p;
         if (attr_p >= end)
-            return;
+            return datagram;
 
         auto attr = (enum beng_log_attribute)*attr_p++;
         p = attr_p;
@@ -204,14 +206,12 @@ log_server_apply_attributes(AccessLogDatagram &datagram, const void *p,
     }
 }
 
-void
-log_server_apply_datagram(AccessLogDatagram &datagram, const void *p,
-                          const void *end)
+AccessLogDatagram
+log_server_apply_datagram(const void *p, const void *end)
 {
     auto magic = (const uint32_t *)p;
     if (*magic != log_magic)
         throw AccessLogProtocolError();
 
-    log_server_apply_attributes(datagram, magic + 1,
-                                (const uint8_t *)end);
+    return log_server_apply_attributes(magic + 1, (const uint8_t *)end);
 }

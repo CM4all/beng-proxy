@@ -103,13 +103,12 @@ AccessLogServer::Receive()
            the buffer */
         buffer[nbytes] = 0;
 
-        memset(&datagram, 0, sizeof(datagram));
-
         datagram.logger_client_address = address;
         datagram.raw = {buffer, nbytes};
 
         try {
-            log_server_apply_datagram(datagram, buffer, buffer + nbytes);
+            AccessLogDatagram &base = datagram;
+            base = log_server_apply_datagram(buffer, buffer + nbytes);
             return &datagram;
         } catch (AccessLogProtocolError) {
         }
