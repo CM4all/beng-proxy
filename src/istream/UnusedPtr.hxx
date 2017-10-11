@@ -51,9 +51,8 @@ public:
     explicit UnusedIstreamPtr(Istream *_stream)
         :stream(_stream) {}
 
-    UnusedIstreamPtr(UnusedIstreamPtr &&src):stream(src.stream) {
-        src.stream = nullptr;
-    }
+    UnusedIstreamPtr(UnusedIstreamPtr &&src)
+        :stream(std::exchange(src.stream, nullptr)) {}
 
     ~UnusedIstreamPtr() {
         if (stream != nullptr)
