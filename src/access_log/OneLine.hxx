@@ -33,14 +33,14 @@
 #ifndef BENG_PROXY_LOG_ONE_LINE_HXX
 #define BENG_PROXY_LOG_ONE_LINE_HXX
 
-struct AccessLogDatagram;
+namespace Net { namespace Log { struct Datagram; }}
 class FileDescriptor;
 
 /**
- * Print the #AccessLogDatagram in one line, similar to Apache's
+ * Print the #Net::Log::Datagram in one line, similar to Apache's
  * "combined" log format.
  */
 void
-LogOneLine(FileDescriptor fd, const AccessLogDatagram &d);
+LogOneLine(FileDescriptor fd, const Net::Log::Datagram &d);
 
 #endif

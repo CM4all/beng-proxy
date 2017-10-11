@@ -36,7 +36,6 @@
  */
 
 #include "Server.hxx"
-#include "Datagram.hxx"
 #include "OneLine.hxx"
 #include "util/ConstBuffer.hxx"
 
@@ -67,7 +66,7 @@ split_time_t(time_t t)
 }
 
 static const char *
-expand_timestamp(const char *fmt, const AccessLogDatagram &d)
+expand_timestamp(const char *fmt, const Net::Log::Datagram &d)
 {
     if (!d.valid_timestamp)
         return nullptr;
@@ -79,7 +78,7 @@ expand_timestamp(const char *fmt, const AccessLogDatagram &d)
 }
 
 static const char *
-expand(const char *name, size_t length, const AccessLogDatagram &d)
+expand(const char *name, size_t length, const Net::Log::Datagram &d)
 {
     if (string_equals(name, length, "site"))
         return d.site;
@@ -100,7 +99,7 @@ expand(const char *name, size_t length, const AccessLogDatagram &d)
 }
 
 static const char *
-generate_path(const char *template_, const AccessLogDatagram &d)
+generate_path(const char *template_, const Net::Log::Datagram &d)
 {
     static char buffer[8192];
     char *dest = buffer;
@@ -217,7 +216,7 @@ open_log_file(const char *path)
 }
 
 static bool
-Dump(const char *template_path, const AccessLogDatagram &d)
+Dump(const char *template_path, const Net::Log::Datagram &d)
 {
     const char *path = generate_path(template_path, d);
     if (path == nullptr)
@@ -245,7 +244,7 @@ int main(int argc, char **argv)
 
     ConstBuffer<const char *> templates(&argv[argi], argc - argi);
 
-    AccessLogServer().Run([templates](const AccessLogDatagram &d){
+    AccessLogServer().Run([templates](const Net::Log::Datagram &d){
             for (const char *t : templates)
                 if (Dump(t, d))
                     break;

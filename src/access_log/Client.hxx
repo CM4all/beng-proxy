@@ -33,16 +33,16 @@
 #ifndef BENG_PROXY_LOG_CLIENT_HXX
 #define BENG_PROXY_LOG_CLIENT_HXX
 
+#include "net/log/Protocol.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "io/Logger.hxx"
 #include "util/ByteOrder.hxx"
 
-#include <beng-proxy/log.h>
-
+#include <stdint.h>
 #include <string.h>
 
 struct StringView;
-struct AccessLogDatagram;
+namespace Net { namespace Log { struct Datagram; }}
 
 /**
  * A client for the logging protocol.
@@ -61,7 +61,7 @@ public:
 
     void Begin() {
         position = 0;
-        Append(&log_magic, sizeof(log_magic));
+        Append(&Net::Log::MAGIC, sizeof(Net::Log::MAGIC));
     }
 
     void Append(const void *p, size_t size) {
@@ -71,33 +71,33 @@ public:
         position += size;
     }
 
-    void AppendAttribute(enum beng_log_attribute attribute,
+    void AppendAttribute(Net::Log::Attribute attribute,
                          const void *value, size_t size) {
         const uint8_t attribute8 = (uint8_t)attribute;
         Append(&attribute8, sizeof(attribute8));
         Append(value, size);
     }
 
-    void AppendU8(enum beng_log_attribute attribute, uint8_t value) {
+    void AppendU8(Net::Log::Attribute attribute, uint8_t value) {
         AppendAttribute(attribute, &value, sizeof(value));
     }
 
-    void AppendU16(enum beng_log_attribute attribute, uint16_t value) {
+    void AppendU16(Net::Log::Attribute attribute, uint16_t value) {
         const uint16_t value2 = ToBE16(value);
         AppendAttribute(attribute, &value2, sizeof(value2));
     }
 
-    void AppendU64(enum beng_log_attribute attribute, uint64_t value) {
+    void AppendU64(Net::Log::Attribute attribute, uint64_t value) {
         const uint64_t value2 = ToBE64(value);
         AppendAttribute(attribute, &value2, sizeof(value2));
     }
 
-    void AppendString(enum beng_log_attribute attribute, const char *value);
-    void AppendString(enum beng_log_attribute attribute, StringView value);
+    void AppendString(Net::Log::Attribute attribute, const char *value);
+    void AppendString(Net::Log::Attribute attribute, StringView value);
 
     bool Commit();
 
-    bool Send(const AccessLogDatagram &d);
+    bool Send(const Net::Log::Datagram &d);
 };
 
 #endif

@@ -31,14 +31,16 @@
  */
 
 #include "Client.hxx"
-#include "Datagram.hxx"
+#include "net/log/Datagram.hxx"
 
 #include <assert.h>
 #include <sys/socket.h>
 #include <errno.h>
 
+using namespace Net::Log;
+
 void
-LogClient::AppendString(enum beng_log_attribute attribute, const char *value)
+LogClient::AppendString(Attribute attribute, const char *value)
 {
     assert(value != nullptr);
 
@@ -46,7 +48,7 @@ LogClient::AppendString(enum beng_log_attribute attribute, const char *value)
 }
 
 void
-LogClient::AppendString(enum beng_log_attribute attribute, StringView value)
+LogClient::AppendString(Attribute attribute, StringView value)
 {
     // TODO: is this the best way to deal with NULL bytes?
     const char *end = value.Find('\0');
@@ -88,45 +90,45 @@ LogClient::Commit()
 }
 
 bool
-LogClient::Send(const AccessLogDatagram &d)
+LogClient::Send(const Datagram &d)
 {
     Begin();
 
     if (d.valid_timestamp)
-        AppendU64(LOG_TIMESTAMP, d.timestamp);
+        AppendU64(Attribute::TIMESTAMP, d.timestamp);
 
     if (d.remote_host != nullptr)
-        AppendString(LOG_REMOTE_HOST, d.remote_host);
+        AppendString(Attribute::REMOTE_HOST, d.remote_host);
 
     if (d.host != nullptr)
-        AppendString(LOG_HOST, d.host);
+        AppendString(Attribute::HOST, d.host);
 
     if (d.site != nullptr)
-        AppendString(LOG_SITE, d.site);
+        AppendString(Attribute::SITE, d.site);
 
     if (d.forwarded_to != nullptr)
-        AppendString(LOG_FORWARDED_TO, d.forwarded_to);
+        AppendString(Attribute::FORWARDED_TO, d.forwarded_to);
 
     if (d.valid_http_method)
-        AppendU8(LOG_HTTP_METHOD, d.http_method);
+        AppendU8(Attribute::HTTP_METHOD, d.http_method);
 
     if (d.http_uri != nullptr)
-        AppendString(LOG_HTTP_URI, d.http_uri);
+        AppendString(Attribute::HTTP_URI, d.http_uri);
 
     if (d.http_referer != nullptr)
-        AppendString(LOG_HTTP_REFERER, d.http_referer);
+        AppendString(Attribute::HTTP_REFERER, d.http_referer);
 
     if (d.user_agent != nullptr)
-        AppendString(LOG_USER_AGENT, d.user_agent);
+        AppendString(Attribute::USER_AGENT, d.user_agent);
 
     if (d.message != nullptr)
-        AppendString(LOG_MESSAGE, d.message);
+        AppendString(Attribute::MESSAGE, d.message);
 
     if (d.valid_http_status)
-        AppendU16(LOG_HTTP_STATUS, d.http_status);
+        AppendU16(Attribute::HTTP_STATUS, d.http_status);
 
     if (d.valid_length)
-        AppendU64(LOG_LENGTH, d.length);
+        AppendU64(Attribute::LENGTH, d.length);
 
     if (d.valid_traffic) {
         struct {
@@ -136,11 +138,11 @@ LogClient::Send(const AccessLogDatagram &d)
             .sent = ToBE64(d.traffic_sent),
         };
 
-        AppendAttribute(LOG_TRAFFIC, &traffic, sizeof(traffic));
+        AppendAttribute(Attribute::TRAFFIC, &traffic, sizeof(traffic));
     }
 
     if (d.valid_duration)
-        AppendU64(LOG_DURATION, d.duration);
+        AppendU64(Attribute::DURATION, d.duration);
 
     return Commit();
 }

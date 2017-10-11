@@ -31,7 +31,7 @@
  */
 
 #include "Server.hxx"
-#include "Parser.hxx"
+#include "net/log/Parser.hxx"
 
 #include <sys/socket.h>
 #include <stdlib.h>
@@ -107,10 +107,10 @@ AccessLogServer::Receive()
         datagram.raw = {buffer, nbytes};
 
         try {
-            AccessLogDatagram &base = datagram;
-            base = log_server_apply_datagram(buffer, buffer + nbytes);
+            Net::Log::Datagram &base = datagram;
+            base = Net::Log::ParseDatagram(buffer, buffer + nbytes);
             return &datagram;
-        } catch (AccessLogProtocolError) {
+        } catch (Net::Log::ProtocolError) {
         }
     }
 }

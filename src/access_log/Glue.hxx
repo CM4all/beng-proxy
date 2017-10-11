@@ -48,7 +48,7 @@
 
 struct UidGid;
 struct AccessLogConfig;
-struct AccessLogDatagram;
+namespace Net { namespace Log { struct Datagram; }}
 struct HttpServerRequest;
 class LogClient;
 
@@ -65,7 +65,7 @@ public:
     static AccessLogGlue *Create(const AccessLogConfig &config,
                                  const UidGid *user);
 
-    void Log(const AccessLogDatagram &d);
+    void Log(const Net::Log::Datagram &d);
 
     /**
      * @param length the number of response body (payload) bytes sent

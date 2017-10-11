@@ -35,12 +35,12 @@
  */
 
 #include "Server.hxx"
-#include "Datagram.hxx"
+#include "net/log/Datagram.hxx"
 
 #include <stdio.h>
 
 static void
-dump(const AccessLogDatagram &d)
+dump(const Net::Log::Datagram &d)
 {
     if (d.site != nullptr && d.valid_traffic)
         printf("%s %llu\n", d.site,

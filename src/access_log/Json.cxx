@@ -35,7 +35,6 @@
  */
 
 #include "Server.hxx"
-#include "Datagram.hxx"
 #include "net/ToString.hxx"
 #include "util/StringFormat.hxx"
 

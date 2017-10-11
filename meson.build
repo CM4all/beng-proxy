@@ -302,6 +302,7 @@ net = static_library('net',
   'libcommon/src/net/UniqueSocketDescriptor.cxx',
   'libcommon/src/net/Buffered.cxx',
   'libcommon/src/net/UdpListenerConfig.cxx',
+  'libcommon/src/net/log/Parser.cxx',
   include_directories: inc,
   dependencies: [
     declare_dependency(link_with: event),
@@ -1133,17 +1134,16 @@ executable('cm4all-certdb',
 
 executable('cm4all-beng-proxy-log-cat',
   'src/access_log/Server.cxx',
-  'src/access_log/Parser.cxx',
   'src/access_log/OneLine.cxx',
   'src/access_log/Cat.cxx',
   include_directories: inc,
   dependencies: [
+    net_dep,
     http_dep,
   ])
 
 executable('cm4all-beng-proxy-log-json',
   'src/access_log/Server.cxx',
-  'src/access_log/Parser.cxx',
   'src/access_log/Json.cxx',
   include_directories: inc,
   dependencies: [
@@ -1154,7 +1154,6 @@ executable('cm4all-beng-proxy-log-json',
 
 executable('cm4all-beng-proxy-log-lua',
   'src/access_log/Server.cxx',
-  'src/access_log/Parser.cxx',
   'src/access_log/Lua.cxx',
   'src/access_log/Launch.cxx',
   include_directories: inc,
@@ -1169,21 +1168,21 @@ executable('cm4all-beng-proxy-log-lua',
 
 executable('cm4all-beng-proxy-log-traffic',
   'src/access_log/Server.cxx',
-  'src/access_log/Parser.cxx',
   'src/access_log/Traffic.cxx',
   include_directories: inc,
   dependencies: [
+    net_dep,
     http_dep,
   ])
 
 executable('cm4all-beng-proxy-log-split',
   'src/access_log/Server.cxx',
-  'src/access_log/Parser.cxx',
   'src/access_log/OneLine.cxx',
   'src/access_log/Split.cxx',
   include_directories: inc,
   dependencies: [
     system_dep,
+    net_dep,
     http_dep,
   ])
 

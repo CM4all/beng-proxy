@@ -33,7 +33,7 @@
 #include "Glue.hxx"
 #include "Launch.hxx"
 #include "Client.hxx"
-#include "Datagram.hxx"
+#include "net/log/Datagram.hxx"
 #include "OneLine.hxx"
 #include "http_server/Request.hxx"
 #include "net/ToString.hxx"
@@ -97,7 +97,7 @@ AccessLogGlue::Create(const AccessLogConfig &config,
 }
 
 void
-AccessLogGlue::Log(const AccessLogDatagram &d)
+AccessLogGlue::Log(const Net::Log::Datagram &d)
 {
     if (!config.ignore_localhost_200.empty() &&
         d.http_uri != nullptr &&
@@ -194,15 +194,15 @@ AccessLogGlue::Log(HttpServerRequest &request, const char *site,
         }
     }
 
-    AccessLogDatagram d(std::chrono::system_clock::now(),
-                        request.method, request.uri,
-                        remote_host,
-                        host,
-                        site,
-                        referer, user_agent,
-                        status, content_length,
-                        bytes_received, bytes_sent,
-                        duration);
+    Net::Log::Datagram d(std::chrono::system_clock::now(),
+                         request.method, request.uri,
+                         remote_host,
+                         host,
+                         site,
+                         referer, user_agent,
+                         status, content_length,
+                         bytes_received, bytes_sent,
+                         duration);
     d.forwarded_to = forwarded_to;
 
     Log(d);

@@ -31,7 +31,7 @@
  */
 
 #include "OneLine.hxx"
-#include "Datagram.hxx"
+#include "net/log/Datagram.hxx"
 #include "io/FileDescriptor.hxx"
 
 #include <stdio.h>
@@ -88,7 +88,7 @@ EscapeString(StringView value, char *const buffer, size_t buffer_size)
 }
 
 static void
-LogOneLineHttp(FileDescriptor fd, const AccessLogDatagram &d)
+LogOneLineHttp(FileDescriptor fd, const Net::Log::Datagram &d)
 {
     const char *method = d.valid_http_method &&
         http_method_is_valid(d.http_method)
@@ -137,7 +137,7 @@ LogOneLineHttp(FileDescriptor fd, const AccessLogDatagram &d)
 }
 
 static void
-LogOneLineMessage(FileDescriptor fd, const AccessLogDatagram &d)
+LogOneLineMessage(FileDescriptor fd, const Net::Log::Datagram &d)
 {
     char stamp_buffer[32];
     const char *stamp = "-";
@@ -159,7 +159,7 @@ LogOneLineMessage(FileDescriptor fd, const AccessLogDatagram &d)
 }
 
 void
-LogOneLine(FileDescriptor fd, const AccessLogDatagram &d)
+LogOneLine(FileDescriptor fd, const Net::Log::Datagram &d)
 {
     if (d.http_uri != nullptr && d.valid_http_status)
         LogOneLineHttp(fd, d);

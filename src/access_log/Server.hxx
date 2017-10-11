@@ -33,7 +33,7 @@
 #ifndef BENG_PROXY_LOG_SERVER_H
 #define BENG_PROXY_LOG_SERVER_H
 
-#include "Datagram.hxx"
+#include "net/log/Datagram.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "net/StaticSocketAddress.hxx"
 #include "util/ConstBuffer.hxx"
@@ -41,10 +41,10 @@
 #include <array>
 
 /**
- * An extension of #AccessLogDatagram which contains information on
+ * An extension of #Net::Log::Datagram which contains information on
  * the receipt.
  */
-struct ReceivedAccessLogDatagram : AccessLogDatagram {
+struct ReceivedAccessLogDatagram : Net::Log::Datagram {
     SocketAddress logger_client_address;
 
     /**

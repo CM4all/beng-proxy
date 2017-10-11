@@ -36,7 +36,6 @@
 
 #include "Server.hxx"
 #include "Launch.hxx"
-#include "Datagram.hxx"
 #include "lua/State.hxx"
 #include "lua/Value.hxx"
 #include "lua/RunFile.hxx"
