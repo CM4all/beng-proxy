@@ -54,7 +54,7 @@
 #include <string.h>
 #include <sys/socket.h>
 
-struct AjpRequest final : Cancellable, StockGetHandler, Lease {
+class AjpRequest final : Cancellable, StockGetHandler, Lease {
     struct pool &pool;
     EventLoop &event_loop;
 
@@ -75,6 +75,7 @@ struct AjpRequest final : Cancellable, StockGetHandler, Lease {
     HttpResponseHandler &handler;
     CancellablePointer &cancel_ptr;
 
+public:
     AjpRequest(struct pool &_pool, EventLoop &_event_loop,
                const char *_protocol, const char *_remote_addr,
                const char *_remote_host, const char *_server_name,
