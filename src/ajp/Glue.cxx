@@ -54,7 +54,7 @@
 #include <string.h>
 #include <sys/socket.h>
 
-struct AjpRequest final : StockGetHandler, Lease {
+struct AjpRequest final : Cancellable, StockGetHandler, Lease {
     struct pool &pool;
     EventLoop &event_loop;
 
@@ -95,17 +95,24 @@ struct AjpRequest final : StockGetHandler, Lease {
     }
 
     void BeginConnect(TcpBalancer &tcp_balancer, sticky_hash_t session_sticky,
-                      const HttpAddress &address,
-                      CancellablePointer &_cancel_ptr) {
+                      const HttpAddress &address) {
         tcp_balancer.Get(pool,
                          false, SocketAddress::Null(),
                          session_sticky,
                          address.addresses,
                          20,
-                         *this, _cancel_ptr);
+                         *this, cancel_ptr);
     }
 
 private:
+    /* virtual methods from class Cancellable */
+    void Cancel() override {
+        if (body != nullptr)
+            body->Close();
+
+        cancel_ptr.Cancel();
+    }
+
     /* virtual methods from class StockGetHandler */
     void OnStockItemReady(StockItem &item) override;
     void OnStockItemError(std::exception_ptr ep) override;
@@ -177,12 +184,10 @@ ajp_stock_request(struct pool &pool, EventLoop &event_loop,
                                       std::move(headers),
                                       handler, _cancel_ptr);
 
-    auto *cancel_ptr = &_cancel_ptr;
     if (body != nullptr) {
         hr->body = istream_hold_new(pool, *body);
-        cancel_ptr = &async_close_on_abort(pool, *hr->body, *cancel_ptr);
     } else
         hr->body = nullptr;
 
-    hr->BeginConnect(tcp_balancer, session_sticky, uwa, *cancel_ptr);
+    hr->BeginConnect(tcp_balancer, session_sticky, uwa);
 }
