@@ -105,7 +105,6 @@ log_server_apply_attributes(const void *p, const uint8_t *end)
     assert((const char *)p < (const char *)end);
 
     AccessLogDatagram datagram;
-    memset(&datagram, 0, sizeof(datagram));
 
     while (true) {
         auto attr_p = (const uint8_t *)p;

@@ -44,15 +44,16 @@
 struct AccessLogDatagram {
     uint64_t timestamp;
 
-    const char *remote_host, *host, *site;
+    const char *remote_host = nullptr, *host = nullptr, *site = nullptr;
 
-    const char *forwarded_to;
+    const char *forwarded_to = nullptr;
 
     http_method_t http_method;
 
-    const char *http_uri, *http_referer, *user_agent;
+    const char *http_uri = nullptr, *http_referer = nullptr;
+    const char *user_agent = nullptr;
 
-    StringView message;
+    StringView message = nullptr;
 
     http_status_t http_status;
 
@@ -62,9 +63,10 @@ struct AccessLogDatagram {
 
     uint64_t duration;
 
-    bool valid_timestamp, valid_http_method, valid_http_status;
-    bool valid_length, valid_traffic;
-    bool valid_duration;
+    bool valid_timestamp = false;
+    bool valid_http_method = false, valid_http_status = false;
+    bool valid_length = false, valid_traffic = false;
+    bool valid_duration = false;
 
     AccessLogDatagram() = default;
 
@@ -78,10 +80,8 @@ struct AccessLogDatagram {
                       std::chrono::steady_clock::duration _duration) noexcept
         :timestamp(ExportTimestamp(_timestamp)),
          remote_host(_remote_host), host(_host), site(_site),
-         forwarded_to(nullptr),
          http_method(_method),
          http_uri(_uri), http_referer(_referer), user_agent(_user_agent),
-         message(nullptr),
          http_status(_status),
          length(_length),
          traffic_received(_traffic_received), traffic_sent(_traffic_sent),
@@ -92,14 +92,7 @@ struct AccessLogDatagram {
          valid_duration(true) {}
 
     explicit AccessLogDatagram(StringView _message) noexcept
-        :remote_host(nullptr), host(nullptr), site(nullptr),
-         forwarded_to(nullptr),
-         http_uri(nullptr), http_referer(nullptr), user_agent(nullptr),
-         message(_message),
-         valid_timestamp(false),
-         valid_http_method(false), valid_http_status(false),
-         valid_length(false), valid_traffic(false),
-         valid_duration(false) {}
+        :message(_message) {}
 
     void SetTimestamp(std::chrono::system_clock::time_point t) noexcept {
         timestamp = ExportTimestamp(t);
