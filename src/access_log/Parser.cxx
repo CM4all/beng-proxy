@@ -98,10 +98,9 @@ ReadStringView(StringView &value_r, const void *p, const uint8_t *end)
 }
 
 static void
-log_server_apply_attributes(AccessLogDatagram *datagram, const void *p,
+log_server_apply_attributes(AccessLogDatagram &datagram, const void *p,
                             const uint8_t *end)
 {
-    assert(datagram != nullptr);
     assert(p != nullptr);
     assert(end != nullptr);
     assert((const char *)p < (const char *)end);
@@ -122,24 +121,24 @@ log_server_apply_attributes(AccessLogDatagram *datagram, const void *p,
             break;
 
         case LOG_TIMESTAMP:
-            p = read_uint64(&datagram->timestamp, p, end);
-            datagram->valid_timestamp = true;
+            p = read_uint64(&datagram.timestamp, p, end);
+            datagram.valid_timestamp = true;
             break;
 
         case LOG_REMOTE_HOST:
-            p = read_string(&datagram->remote_host, p, end);
+            p = read_string(&datagram.remote_host, p, end);
             break;
 
         case LOG_FORWARDED_TO:
-            p = read_string(&datagram->forwarded_to, p, end);
+            p = read_string(&datagram.forwarded_to, p, end);
             break;
 
         case LOG_HOST:
-            p = read_string(&datagram->host, p, end);
+            p = read_string(&datagram.host, p, end);
             break;
 
         case LOG_SITE:
-            p = read_string(&datagram->site, p, end);
+            p = read_string(&datagram.site, p, end);
             break;
 
         case LOG_HTTP_METHOD:
@@ -147,27 +146,27 @@ log_server_apply_attributes(AccessLogDatagram *datagram, const void *p,
             if (p == nullptr)
                 throw AccessLogProtocolError();
 
-            datagram->http_method = http_method_t(u8);
-            if (!http_method_is_valid(datagram->http_method))
+            datagram.http_method = http_method_t(u8);
+            if (!http_method_is_valid(datagram.http_method))
                 throw AccessLogProtocolError();
 
-            datagram->valid_http_method = true;
+            datagram.valid_http_method = true;
             break;
 
         case LOG_HTTP_URI:
-            p = read_string(&datagram->http_uri, p, end);
+            p = read_string(&datagram.http_uri, p, end);
             break;
 
         case LOG_HTTP_REFERER:
-            p = read_string(&datagram->http_referer, p, end);
+            p = read_string(&datagram.http_referer, p, end);
             break;
 
         case LOG_USER_AGENT:
-            p = read_string(&datagram->user_agent, p, end);
+            p = read_string(&datagram.user_agent, p, end);
             break;
 
         case LOG_MESSAGE:
-            p = ReadStringView(datagram->message, p, end);
+            p = ReadStringView(datagram.message, p, end);
             break;
 
         case LOG_HTTP_STATUS:
@@ -175,28 +174,28 @@ log_server_apply_attributes(AccessLogDatagram *datagram, const void *p,
             if (p == nullptr)
                 throw AccessLogProtocolError();
 
-            datagram->http_status = http_status_t(u16);
-            if (!http_status_is_valid(datagram->http_status))
+            datagram.http_status = http_status_t(u16);
+            if (!http_status_is_valid(datagram.http_status))
                 throw AccessLogProtocolError();
 
-            datagram->valid_http_status = true;
+            datagram.valid_http_status = true;
             break;
 
         case LOG_LENGTH:
-            p = read_uint64(&datagram->length, p, end);
-            datagram->valid_length = true;
+            p = read_uint64(&datagram.length, p, end);
+            datagram.valid_length = true;
             break;
 
         case LOG_TRAFFIC:
-            p = read_uint64(&datagram->traffic_received, p, end);
+            p = read_uint64(&datagram.traffic_received, p, end);
             if (p != nullptr)
-                p = read_uint64(&datagram->traffic_sent, p, end);
-            datagram->valid_traffic = true;
+                p = read_uint64(&datagram.traffic_sent, p, end);
+            datagram.valid_traffic = true;
             break;
 
         case LOG_DURATION:
-            p = read_uint64(&datagram->duration, p, end);
-            datagram->valid_duration = true;
+            p = read_uint64(&datagram.duration, p, end);
+            datagram.valid_duration = true;
             break;
         }
 
@@ -206,7 +205,7 @@ log_server_apply_attributes(AccessLogDatagram *datagram, const void *p,
 }
 
 void
-log_server_apply_datagram(AccessLogDatagram *datagram, const void *p,
+log_server_apply_datagram(AccessLogDatagram &datagram, const void *p,
                           const void *end)
 {
     auto magic = (const uint32_t *)p;

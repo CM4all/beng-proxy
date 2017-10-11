@@ -109,7 +109,7 @@ AccessLogServer::Receive()
         datagram.raw = {buffer, nbytes};
 
         try {
-            log_server_apply_datagram(&datagram, buffer, buffer + nbytes);
+            log_server_apply_datagram(datagram, buffer, buffer + nbytes);
             return &datagram;
         } catch (AccessLogProtocolError) {
         }
