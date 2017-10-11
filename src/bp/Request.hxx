@@ -34,6 +34,7 @@
 #define BENG_PROXY_REQUEST_HXX
 
 #include "uri/Dissect.hxx"
+#include "istream/UnusedHoldPtr.hxx"
 #include "translation/Request.hxx"
 #include "translation/Response.hxx"
 #include "translation/Transformation.hxx"
@@ -224,7 +225,7 @@ struct Request final : HttpResponseHandler, DelegateHandler,
      * A pointer to the request body, or nullptr if there is none.  Once
      * the request body has been "used", this pointer gets cleared.
      */
-    Istream *request_body;
+    UnusedHoldIstreamPtr request_body;
 
     /**
      * Shall the Set-Cookie2 header received from the next server be
@@ -354,7 +355,9 @@ struct Request final : HttpResponseHandler, DelegateHandler,
      * Discard the request body if it was not used yet.  Call this
      * before sending the response to the HTTP server library.
      */
-    void DiscardRequestBody();
+    void DiscardRequestBody() {
+        request_body.Clear();
+    }
 
 private:
     const StringMap *GetCookies();

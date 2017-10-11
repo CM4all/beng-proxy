@@ -43,7 +43,7 @@ request_forward(Request &request2,
 {
     const auto &request = request2.request;
 
-    assert(!request.HasBody() || request2.request_body != nullptr);
+    assert(!request.HasBody() || request2.request_body);
 
     http_method_t method;
     Istream *body;
@@ -60,7 +60,7 @@ request_forward(Request &request2,
         /* forward body (if any) to the real server */
 
         method = request.method;
-        body = std::exchange(request2.request_body, nullptr);
+        body = request2.request_body.Steal();
     }
 
     /* generate request headers */

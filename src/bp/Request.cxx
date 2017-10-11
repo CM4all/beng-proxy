@@ -35,7 +35,6 @@
 #include "http_server/Request.hxx"
 #include "args.hxx"
 #include "strmap.hxx"
-#include "istream/istream.hxx"
 
 Request::Request(BpInstance &_instance, BpConnection &_connection,
                  HttpServerRequest &_request)
@@ -52,13 +51,6 @@ bool
 Request::IsProcessorEnabled() const
 {
     return translate.response->views->HasProcessor();
-}
-
-void
-Request::DiscardRequestBody()
-{
-    if (request_body != nullptr)
-        std::exchange(request_body, nullptr)->CloseUnused();
 }
 
 void

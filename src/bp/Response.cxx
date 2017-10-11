@@ -211,9 +211,9 @@ Request::InvokeXmlProcessor(http_status_t status,
 
         focus_ref = nullptr;
 
-        if (request_body != nullptr) {
+        if (request_body) {
             logger(4, "discarding non-framed request body");
-            istream_free_unused(&request_body);
+            request_body.Clear();
         }
     }
 
@@ -232,9 +232,9 @@ Request::InvokeXmlProcessor(http_status_t status,
         return;
     }
 
-    if (request_body != nullptr &&
+    if (request_body &&
         widget->from_request.focus_ref != nullptr)
-        widget->for_focused.body = std::exchange(request_body, nullptr);
+        widget->for_focused.body = request_body.Steal();
 
     uri = translate.response->uri != nullptr
         ? translate.response->uri
