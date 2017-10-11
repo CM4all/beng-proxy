@@ -54,7 +54,7 @@
 #include <string.h>
 #include <sys/socket.h>
 
-class AjpRequest final : Cancellable, StockGetHandler, Lease {
+class AjpRequest final : Cancellable, StockGetHandler, Lease, LeakDetector {
     struct pool &pool;
     EventLoop &event_loop;
 
@@ -107,10 +107,15 @@ public:
     }
 
 private:
+    void Destroy() {
+        DeleteFromPool(pool, this);
+    }
+
     /* virtual methods from class Cancellable */
     void Cancel() override {
         body.Clear();
         cancel_ptr.Cancel();
+        Destroy();
     }
 
     /* virtual methods from class StockGetHandler */
@@ -120,6 +125,7 @@ private:
     /* virtual methods from class Lease */
     void ReleaseLease(bool reuse) override {
         stock_item->Put(!reuse);
+        Destroy();
     }
 };
 
@@ -150,6 +156,7 @@ AjpRequest::OnStockItemError(std::exception_ptr ep)
 {
     body.Clear();
     handler.InvokeError(ep);
+    Destroy();
 }
 
 /*
