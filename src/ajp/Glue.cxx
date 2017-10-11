@@ -54,7 +54,7 @@
 #include <string.h>
 #include <sys/socket.h>
 
-struct AjpRequest final : public StockGetHandler, Lease {
+struct AjpRequest final : StockGetHandler, Lease {
     struct pool &pool;
     EventLoop &event_loop;
 
@@ -94,6 +94,18 @@ struct AjpRequest final : public StockGetHandler, Lease {
          cancel_ptr(_cancel_ptr) {
     }
 
+    void BeginConnect(TcpBalancer &tcp_balancer, sticky_hash_t session_sticky,
+                      const HttpAddress &address,
+                      CancellablePointer &_cancel_ptr) {
+        tcp_balancer.Get(pool,
+                         false, SocketAddress::Null(),
+                         session_sticky,
+                         address.addresses,
+                         20,
+                         *this, _cancel_ptr);
+    }
+
+private:
     /* virtual methods from class StockGetHandler */
     void OnStockItemReady(StockItem &item) override;
     void OnStockItemError(std::exception_ptr ep) override;
@@ -172,10 +184,5 @@ ajp_stock_request(struct pool &pool, EventLoop &event_loop,
     } else
         hr->body = nullptr;
 
-    tcp_balancer.Get(pool,
-                     false, SocketAddress::Null(),
-                     session_sticky,
-                     uwa.addresses,
-                     20,
-                     *hr, *cancel_ptr);
+    hr->BeginConnect(tcp_balancer, session_sticky, uwa, *cancel_ptr);
 }
