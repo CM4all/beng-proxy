@@ -179,13 +179,6 @@ struct FcgiClient final : Cancellable, Istream, IstreamHandler, WithInstanceList
     void AbortResponse(std::exception_ptr ep);
 
     /**
-     * Close the response body.  This is a request from the istream
-     * client, and we must not call it back according to the istream API
-     * definition.
-     */
-    void CloseResponseBody();
-
-    /**
      * Return type for AnalyseBuffer().
      */
     struct BufferAnalysis {
