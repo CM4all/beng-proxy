@@ -65,6 +65,10 @@ public:
         return *this;
     }
 
+    operator bool() const {
+        return stream != nullptr;
+    }
+
     Istream *Steal() {
         return std::exchange(stream, nullptr);
     }
