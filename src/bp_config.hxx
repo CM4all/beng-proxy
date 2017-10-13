@@ -34,7 +34,7 @@
 #define BENG_PROXY_CONFIG_HXX
 
 #include "access_log/Config.hxx"
-#include "net/ListenerConfig.hxx"
+#include "net/SocketConfig.hxx"
 #include "net/UdpListenerConfig.hxx"
 #include "net/AddressInfo.hxx"
 #include "util/StaticArray.hxx"
@@ -55,15 +55,21 @@ struct BpConfig {
 
     StaticArray<unsigned, MAX_PORTS> ports;
 
-    struct Listener : ListenerConfig {
+    struct Listener : SocketConfig {
         std::string tag;
 
         std::string zeroconf_service;
 
-        Listener() = default;
+        Listener() {
+            listen = 64;
+            tcp_defer_accept = 10;
+        }
 
         Listener(SocketAddress _address, const std::string &_tag)
-            :ListenerConfig(_address), tag(_tag) {}
+            :SocketConfig(_address), tag(_tag) {
+            listen = 64;
+            tcp_defer_accept = 10;
+        }
     };
 
     std::forward_list<Listener> listen;

@@ -194,11 +194,11 @@ BpInstance::AddListener(const BpConfig::Listener &c)
     listeners.emplace_front(*this, c.tag.empty() ? nullptr : c.tag.c_str());
     auto &listener = listeners.front();
 
-    const char *const interface = c.GetInterface();
+    const char *const interface = c.interface.empty()
+        ? nullptr
+        : c.interface.c_str();
 
-    listener.Listen(c.bind_address, c.reuse_port, c.free_bind, interface);
-
-    listener.SetTcpDeferAccept(10);
+    listener.Listen(c.Create(SOCK_STREAM));
 
     if (!c.zeroconf_service.empty()) {
         /* ask the kernel for the effective address via getsockname(),
