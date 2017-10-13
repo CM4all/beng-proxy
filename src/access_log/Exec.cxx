@@ -38,7 +38,7 @@
 
 #include "system/Error.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
-#include "net/UdpListenerConfig.hxx"
+#include "net/SocketConfig.hxx"
 #include "net/Parser.hxx"
 #include "net/AllocatedSocketAddress.hxx"
 #include "util/PrintException.hxx"
@@ -52,7 +52,7 @@ int main(int argc, char **argv)
 try {
     int i = 1;
 
-    UdpListenerConfig config;
+    SocketConfig config;
 
     if (i + 2 <= argc && strcmp(argv[i], "--multicast-group") == 0) {
         ++i;
@@ -66,7 +66,7 @@ try {
 
     config.bind_address = ParseSocketAddress(argv[i++], 5479, true);
 
-    auto fd = config.Create();
+    auto fd = config.Create(SOCK_DGRAM);
 
     fd.SetBlocking();
     fd.CheckDuplicate(FileDescriptor(STDIN_FILENO));
