@@ -45,7 +45,7 @@ class UniqueSocketDescriptor;
 class Error;
 class UdpListener;
 class EventLoop;
-struct UdpListenerConfig;
+struct SocketConfig;
 
 /**
  * Server side part of the "control" protocol.
@@ -57,7 +57,7 @@ class ControlServer final : UdpHandler {
 
 public:
     ControlServer(EventLoop &event_loop, ControlHandler &_handler,
-                  const UdpListenerConfig &config);
+                  const SocketConfig &config);
 
     void Enable() {
         udp.Enable();

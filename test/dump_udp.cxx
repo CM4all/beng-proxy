@@ -32,7 +32,7 @@
 
 #include "system/SetupProcess.hxx"
 #include "net/UdpListener.hxx"
-#include "net/UdpListenerConfig.hxx"
+#include "net/SocketConfig.hxx"
 #include "net/UdpHandler.hxx"
 #include "net/AllocatedSocketAddress.hxx"
 #include "net/Parser.hxx"
@@ -74,13 +74,13 @@ try {
 
     DumpUdpHandler handler;
 
-    UdpListenerConfig config;
+    SocketConfig config;
     config.bind_address = ParseSocketAddress(listen_host, 1234, true);
 
     if (mcast_group != nullptr)
         config.multicast_group = ParseSocketAddress(mcast_group, 0, false);
 
-    UdpListener udp(event_loop, config.Create(), handler);
+    UdpListener udp(event_loop, config.Create(SOCK_DGRAM), handler);
 
     event_loop.Dispatch();
 

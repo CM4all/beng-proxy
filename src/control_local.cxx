@@ -32,7 +32,7 @@
 
 #include "control_local.hxx"
 #include "control_server.hxx"
-#include "net/UdpListenerConfig.hxx"
+#include "net/SocketConfig.hxx"
 
 #include <memory>
 #include <utility>
@@ -131,7 +131,7 @@ control_local_open(LocalControl *cl, EventLoop &event_loop)
     sa.sun_path[0] = '\0';
     sprintf(sa.sun_path + 1, "%s%d", cl->prefix, (int)getpid());
 
-    UdpListenerConfig config;
+    SocketConfig config;
     config.bind_address = SocketAddress((const struct sockaddr *)&sa,
                                         SUN_LEN(&sa) + 1 + strlen(sa.sun_path + 1)),
     config.pass_cred = true;
