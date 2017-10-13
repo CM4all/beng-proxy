@@ -31,7 +31,7 @@
  */
 
 #include "control_server.hxx"
-#include "net/UdpListenerConfig.hxx"
+#include "net/SocketConfig.hxx"
 #include "net/SocketAddress.hxx"
 #include "util/ByteOrder.hxx"
 #include "util/RuntimeError.hxx"
@@ -43,9 +43,9 @@
 #include <alloca.h>
 
 ControlServer::ControlServer(EventLoop &event_loop, ControlHandler &_handler,
-                             const UdpListenerConfig &config)
+                             const SocketConfig &config)
     :handler(_handler),
-     udp(event_loop, config.Create(), *this)
+     udp(event_loop, config.Create(SOCK_DGRAM), *this)
 {
 }
 

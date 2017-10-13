@@ -39,7 +39,7 @@
 #include "lb/MonitorConfig.hxx"
 #include "access_log/Config.hxx"
 #include "net/AllocatedSocketAddress.hxx"
-#include "net/UdpListenerConfig.hxx"
+#include "net/SocketConfig.hxx"
 #include "certdb/Config.hxx"
 
 #include <map>
@@ -49,7 +49,7 @@
 
 struct LbHttpCheckConfig;
 
-struct LbControlConfig : UdpListenerConfig {
+struct LbControlConfig : SocketConfig {
     LbControlConfig() {
         pass_cred = true;
     }

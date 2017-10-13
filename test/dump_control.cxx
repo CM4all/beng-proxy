@@ -31,7 +31,7 @@
  */
 
 #include "control_server.hxx"
-#include "net/UdpListenerConfig.hxx"
+#include "net/SocketConfig.hxx"
 #include "net/Parser.hxx"
 #include "event/Loop.hxx"
 #include "system/SetupProcess.hxx"
@@ -71,7 +71,7 @@ try {
 
     EventLoop event_loop;
 
-    UdpListenerConfig config;
+    SocketConfig config;
     config.bind_address = ParseSocketAddress(listen_host, 1234, true);
 
     if (mcast_group != nullptr)
