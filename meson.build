@@ -299,7 +299,6 @@ net = static_library('net',
   'libcommon/src/net/UniqueSocketDescriptor.cxx',
   'libcommon/src/net/SocketConfig.cxx',
   'libcommon/src/net/Buffered.cxx',
-  'libcommon/src/net/UdpListenerConfig.cxx',
   include_directories: inc,
   dependencies: [
     declare_dependency(link_with: event),
