@@ -35,13 +35,13 @@
 
 #include "GotoConfig.hxx"
 #include "ssl/Config.hxx"
-#include "net/ListenerConfig.hxx"
+#include "net/SocketConfig.hxx"
 
 #include <string>
 
 struct LbCertDatabaseConfig;
 
-struct LbListenerConfig : ListenerConfig {
+struct LbListenerConfig : SocketConfig {
     std::string name;
 
     LbGotoConfig destination;
@@ -57,7 +57,9 @@ struct LbListenerConfig : ListenerConfig {
     const LbCertDatabaseConfig *cert_db = nullptr;
 
     explicit LbListenerConfig(const char *_name)
-        :name(_name) {}
+        :name(_name) {
+        listen = 64;
+    }
 
     gcc_pure
     bool HasZeroConf() const {

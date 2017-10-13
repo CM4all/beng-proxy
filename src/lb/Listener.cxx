@@ -99,14 +99,7 @@ LbListener::Setup()
                                              std::move(sni_callback));
     }
 
-    Listen(config.bind_address,
-           config.reuse_port,
-           config.free_bind,
-           config.GetInterface());
-
-    if (config.destination.GetProtocol() == LbProtocol::HTTP ||
-        config.ssl)
-        SetTcpDeferAccept(10);
+    Listen(config.Create(SOCK_STREAM));
 }
 
 void

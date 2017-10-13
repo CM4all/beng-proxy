@@ -1125,6 +1125,10 @@ LbConfigParser::Listener::Finish()
     if (config.ssl && config.ssl_config.cert_key.empty())
         throw LineParser::Error("No SSL certificates ");
 
+    if (config.destination.GetProtocol() == LbProtocol::HTTP ||
+        config.ssl)
+        config.tcp_defer_accept = 10;
+
     parent.config.listeners.emplace_back(std::move(config));
 
     ConfigParser::Finish();
