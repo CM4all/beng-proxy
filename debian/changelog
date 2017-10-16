@@ -1,5 +1,6 @@
 cm4all-beng-proxy (12.6) unstable; urgency=low
 
+  * spawn: wait & try again after "Unit cm4all-beng-spawn.scope already exists"
   * widget/inline: fix memory leak on canceled POST
   * control: add listener option "interface"
   * control: disable the "V6ONLY" flag on all IPv6 wildcard listeners
