@@ -47,9 +47,8 @@
 CertDatabase::CertDatabase(const CertDatabaseConfig &_config)
     :config(_config), conn(config.connect.c_str())
 {
-    if (!config.schema.empty() && !conn.SetSchema(config.schema.c_str()))
-        throw std::runtime_error("Failed to set schema '" + config.schema + ": " +
-                                 conn.GetErrorMessage());
+    if (!config.schema.empty())
+        conn.SetSchema(config.schema.c_str());
 }
 
 bool

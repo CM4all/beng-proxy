@@ -89,12 +89,12 @@ public:
         return result.GetOnlyStringChecked();
     }
 
-    bool BeginSerializable() {
-        return conn.BeginSerializable();
+    void BeginSerializable() {
+        conn.BeginSerializable();
     }
 
-    bool Commit() {
-        return conn.Commit();
+    void Commit() {
+        conn.Commit();
     }
 
     void Migrate();
