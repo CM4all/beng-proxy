@@ -55,6 +55,7 @@
 #include "istream/TimeoutIstream.hxx"
 #include "session.hxx"
 #include "pool.hxx"
+#include "util/StringCompare.hxx"
 #include "util/StringFormat.hxx"
 #include "util/Exception.hxx"
 
@@ -125,7 +126,7 @@ widget_response_format(struct pool &pool, const Widget &widget,
 
     if (plain_text) {
         if (content_type == nullptr ||
-            memcmp(content_type, "text/plain", 10) != 0) {
+            !StringStartsWith(content_type, "text/plain")) {
             body->CloseUnused();
             throw WidgetError(widget, WidgetErrorCode::UNSUPPORTED_ENCODING,
                               "widget sent non-text/plain response");
@@ -135,9 +136,9 @@ widget_response_format(struct pool &pool, const Widget &widget,
     }
 
     if (content_type == nullptr ||
-        (strncmp(content_type, "text/", 5) != 0 &&
-         strncmp(content_type, "application/xml", 15) != 0 &&
-         strncmp(content_type, "application/xhtml+xml", 21) != 0)) {
+        (!StringStartsWith(content_type, "text/") &&
+         !StringStartsWith(content_type, "application/xml") &&
+         !StringStartsWith(content_type, "application/xhtml+xml"))) {
         body->CloseUnused();
         throw WidgetError(widget, WidgetErrorCode::UNSUPPORTED_ENCODING,
                           "widget sent non-text response");
@@ -163,9 +164,9 @@ widget_response_format(struct pool &pool, const Widget &widget,
         body = ic;
     }
 
-    if (strncmp(content_type, "text/", 5) == 0 &&
-        strncmp(content_type + 5, "html", 4) != 0 &&
-        strncmp(content_type + 5, "xml", 3) != 0) {
+    if (StringStartsWith(content_type, "text/") &&
+        !StringStartsWith(content_type + 5, "html") &&
+        !StringStartsWith(content_type + 5, "xml")) {
         /* convert text to HTML */
 
         daemon_log(6, "widget '%s': converting text to HTML\n",
