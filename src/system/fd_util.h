@@ -52,13 +52,6 @@ extern "C" {
 int
 fd_set_cloexec(int fd, bool enable);
 
-/**
- * Wrapper for socket(), which sets the CLOEXEC and the NONBLOCK flag
- * (atomically if supported by the OS).
- */
-int
-socket_cloexec_nonblock(int domain, int type, int protocol);
-
 #ifndef WIN32
 
 struct msghdr;

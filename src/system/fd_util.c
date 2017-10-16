@@ -81,49 +81,6 @@ fd_set_cloexec(int fd, bool enable)
 #endif
 }
 
-/**
- * Enables non-blocking mode for the specified file descriptor.  On
- * WIN32, this function only works for sockets.
- */
-static int
-fd_set_nonblock(int fd)
-{
-#ifdef WIN32
-	u_long val = 1;
-	return ioctlsocket(fd, FIONBIO, &val);
-#else
-	int flags;
-
-	assert(fd >= 0);
-
-	flags = fcntl(fd, F_GETFL);
-	if (flags < 0)
-		return flags;
-
-	return fcntl(fd, F_SETFL, flags | O_NONBLOCK);
-#endif
-}
-
-int
-socket_cloexec_nonblock(int domain, int type, int protocol)
-{
-	int fd;
-
-#if defined(SOCK_CLOEXEC) && defined(SOCK_NONBLOCK)
-	fd = socket(domain, type | SOCK_CLOEXEC | SOCK_NONBLOCK, protocol);
-	if (fd >= 0 || errno != EINVAL)
-		return fd;
-#endif
-
-	fd = socket(domain, type, protocol);
-	if (fd >= 0) {
-		fd_set_cloexec(fd, true);
-		fd_set_nonblock(fd);
-	}
-
-	return fd;
-}
-
 #ifndef WIN32
 
 ssize_t
