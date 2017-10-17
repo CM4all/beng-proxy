@@ -1,6 +1,7 @@
 cm4all-beng-proxy (12.6) unstable; urgency=low
 
   * fix assertion failure when sending large HTTP headers
+  * http_server: disallow request headers larger than 8 kB
   * spawn: wait & try again after "Unit cm4all-beng-spawn.scope already exists"
   * widget/inline: fix memory leak on canceled POST
   * control: add listener option "interface"
