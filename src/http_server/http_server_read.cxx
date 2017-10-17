@@ -41,6 +41,7 @@
 #include "http/List.hxx"
 #include "util/StringUtil.hxx"
 #include "util/StringView.hxx"
+#include "util/StringFormat.hxx"
 
 #include <limits.h>
 #include <string.h>
@@ -284,6 +285,12 @@ HttpServerConnection::HandleLine(const char *line, size_t length)
 {
     assert(request.read_state == Request::START ||
            request.read_state == Request::HEADERS);
+
+    if (length >= 8192) {
+        ProtocolError(StringFormat<64>("Request header is too large (%zu)",
+                                       length));
+        return false;
+    }
 
     if (unlikely(request.read_state == Request::START)) {
         assert(request.request == nullptr);
