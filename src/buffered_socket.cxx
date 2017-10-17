@@ -595,10 +595,11 @@ BufferedSocket::Write(const void *data, size_t length)
     ssize_t nbytes = base.Write(data, length);
 
     if (gcc_unlikely(nbytes < 0)) {
-        if (gcc_likely(errno == EAGAIN)) {
+        const int e = errno;
+        if (gcc_likely(e == EAGAIN)) {
             ScheduleWrite();
             return WRITE_BLOCKING;
-        } else if ((errno == EPIPE || errno == ECONNRESET)) {
+        } else if (e == EPIPE || e == ECONNRESET) {
             enum write_result r = handler->broken != nullptr
                 ? handler->broken(handler_ctx)
                 : WRITE_ERRNO;
@@ -619,10 +620,11 @@ BufferedSocket::WriteV(const struct iovec *v, size_t n)
     ssize_t nbytes = base.WriteV(v, n);
 
     if (gcc_unlikely(nbytes < 0)) {
-        if (gcc_likely(errno == EAGAIN)) {
+        const int e = errno;
+        if (gcc_likely(e == EAGAIN)) {
             ScheduleWrite();
             return WRITE_BLOCKING;
-        } else if ((errno == EPIPE || errno == ECONNRESET)) {
+        } else if (e == EPIPE || e == ECONNRESET) {
             enum write_result r = handler->broken != nullptr
                 ? handler->broken(handler_ctx)
                 : WRITE_ERRNO;
@@ -643,7 +645,8 @@ BufferedSocket::WriteFrom(int other_fd, FdType other_fd_type,
 {
     ssize_t nbytes = base.WriteFrom(other_fd, other_fd_type, length);
     if (gcc_unlikely(nbytes < 0)) {
-        if (gcc_likely(errno == EAGAIN)) {
+        const int e = errno;
+        if (gcc_likely(e == EAGAIN)) {
             if (!IsReadyForWriting()) {
                 ScheduleWrite();
                 return WRITE_BLOCKING;
