@@ -14,7 +14,7 @@ cm4all-beng-proxy (12.6) unstable; urgency=low
   * lb/monitor/expect: fix memory leak
   * certdb: fix notifications in non-default PostgreSQL schema
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 17 Oct 2017 10:58:40 -0000
 
 cm4all-beng-proxy (12.5) unstable; urgency=low
 
