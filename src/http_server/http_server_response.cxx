@@ -92,6 +92,8 @@ HttpServerConnection::OnDirect(FdType type, int fd, size_t max_length)
         return ISTREAM_RESULT_BLOCKING;
     } else if (nbytes == WRITE_DESTROYED)
         return ISTREAM_RESULT_CLOSED;
+    else if (gcc_likely(nbytes < 0) && errno == EAGAIN)
+        socket.UnscheduleWrite();
 
     return nbytes;
 }
