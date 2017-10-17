@@ -682,9 +682,6 @@ thread_socket_filter_internal_write(void *ctx)
             gcc_unreachable();
 
         case WRITE_ERRNO:
-            if (errno == EAGAIN)
-                return true;
-
             f->socket->InvokeError(std::make_exception_ptr(MakeErrno("write error")));
             return false;
 
