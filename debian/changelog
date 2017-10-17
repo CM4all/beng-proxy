@@ -3,7 +3,7 @@ cm4all-beng-proxy (13.0.8.1) unstable; urgency=low
   * fix assertion failure when sending large HTTP headers
   * http_server: disallow request headers larger than 8 kB
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 17 Oct 2017 09:49:47 -0000
 
 cm4all-beng-proxy (13.0.8) unstable; urgency=low
 
