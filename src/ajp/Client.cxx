@@ -660,12 +660,12 @@ AjpClient::OnData(const void *data, size_t length)
     request.got_data = true;
 
     ssize_t nbytes = socket.Write(data, length);
-    if (likely(nbytes >= 0)) {
+    if (gcc_likely(nbytes >= 0)) {
         ScheduleWrite();
         return (size_t)nbytes;
     }
 
-    if (likely(nbytes == WRITE_BLOCKING || nbytes == WRITE_DESTROYED))
+    if (gcc_likely(nbytes == WRITE_BLOCKING || nbytes == WRITE_DESTROYED))
         return 0;
 
     AbortResponse(std::make_exception_ptr(MakeErrno("write error on AJP client connection")));
@@ -681,7 +681,7 @@ AjpClient::OnDirect(FdType type, int fd, size_t max_length)
     request.got_data = true;
 
     ssize_t nbytes = socket.WriteFrom(fd, type, max_length);
-    if (likely(nbytes > 0))
+    if (gcc_likely(nbytes > 0))
         ScheduleWrite();
     else if (nbytes == WRITE_BLOCKING)
         return ISTREAM_RESULT_BLOCKING;

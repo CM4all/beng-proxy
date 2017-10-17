@@ -144,7 +144,7 @@ SinkFd::OnDirect(FdType type, int _fd, size_t max_length)
     got_data = true;
 
     ssize_t nbytes = SpliceTo(_fd, type, fd.Get(), fd_type, max_length);
-    if (unlikely(nbytes < 0 && errno == EAGAIN)) {
+    if (gcc_unlikely(nbytes < 0 && errno == EAGAIN)) {
         if (!fd.IsReadyForWriting()) {
             ScheduleWrite();
             return ISTREAM_RESULT_BLOCKING;
@@ -156,7 +156,7 @@ SinkFd::OnDirect(FdType type, int _fd, size_t max_length)
         nbytes = SpliceTo(_fd, type, fd.Get(), fd_type, max_length);
     }
 
-    if (likely(nbytes > 0) && (got_event || type == FdType::FD_FILE))
+    if (gcc_likely(nbytes > 0) && (got_event || type == FdType::FD_FILE))
         /* regular files don't have support for SocketEvent::READ, and
            thus the sink is responsible for triggering the next
            splice */

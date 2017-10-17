@@ -248,7 +248,7 @@ static void * gcc_malloc
 xmalloc(size_t size)
 {
     void *p = malloc(size);
-    if (unlikely(p == nullptr)) {
+    if (gcc_unlikely(p == nullptr)) {
         fputs("Out of memory\n", stderr);
         abort();
     }
@@ -721,7 +721,7 @@ pool_unref_impl(struct pool *pool TRACE_ARGS_DECL)
     pool_increment_ref(pool, pool->unrefs TRACE_ARGS_FWD);
 #endif
 
-    if (unlikely(pool->ref == 0)) {
+    if (gcc_unlikely(pool->ref == 0)) {
         struct pool *parent = pool->parent;
 #ifdef NDEBUG
         struct pool *reparent_to = nullptr;
@@ -1145,7 +1145,7 @@ p_malloc_linear(struct pool *pool, const size_t original_size
     size_t size = align_size(original_size);
     size += LINEAR_PREFIX;
 
-    if (unlikely(size > pool->area_size)) {
+    if (gcc_unlikely(size > pool->area_size)) {
         /* this allocation is larger than the standard area size;
            obtain a new area just for this allocation, and keep on
            using the last area */
@@ -1168,7 +1168,7 @@ p_malloc_linear(struct pool *pool, const size_t original_size
             area = pool_new_linear_area(area->prev, size);
             pool->current_area.linear->prev = area;
         }
-    } else if (unlikely(area == nullptr || area->used + size > area->size)) {
+    } else if (gcc_unlikely(area == nullptr || area->used + size > area->size)) {
         if (area != nullptr) {
             logger.Format(5, "growing linear pool '%s'", pool->name);
 #ifdef DEBUG_POOL_GROW
@@ -1212,7 +1212,7 @@ internal_malloc(struct pool *pool, size_t size TRACE_ARGS_DECL)
 
     pool->netto_size += size;
 
-    if (likely(pool->type == POOL_LINEAR))
+    if (gcc_likely(pool->type == POOL_LINEAR))
         return p_malloc_linear(pool, size TRACE_ARGS_FWD);
 
     assert(pool->type == POOL_LIBC);

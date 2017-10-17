@@ -684,7 +684,7 @@ FcgiClient::OnDirect(FdType type, int fd, size_t max_length)
     request.got_data = true;
 
     ssize_t nbytes = socket.WriteFrom(fd, type, max_length);
-    if (likely(nbytes > 0))
+    if (gcc_likely(nbytes > 0))
         socket.ScheduleWrite();
     else if (nbytes == WRITE_BLOCKING)
         return ISTREAM_RESULT_BLOCKING;

@@ -49,13 +49,13 @@ header_parse_line(struct pool &pool, StringMap &headers,
                   StringView line)
 {
     const char *colon = line.Find(':');
-    if (unlikely(colon == nullptr || colon == line.data))
+    if (gcc_unlikely(colon == nullptr || colon == line.data))
         return;
 
     const char *key_end = colon;
 
     ++colon;
-    if (likely(colon < line.end() && *colon == ' '))
+    if (gcc_likely(colon < line.end() && *colon == ' '))
         ++colon;
     colon = StripLeft(colon, line.end());
 

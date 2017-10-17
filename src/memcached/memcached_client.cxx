@@ -509,7 +509,7 @@ MemcachedClient::TryReadDirect(int fd, FdType type)
     assert(response.remaining > 0);
 
     ssize_t nbytes = InvokeDirect(type, fd, response.remaining);
-    if (likely(nbytes > 0)) {
+    if (gcc_likely(nbytes > 0)) {
         response.remaining -= nbytes;
 
         if (response.remaining == 0) {
@@ -518,7 +518,7 @@ MemcachedClient::TryReadDirect(int fd, FdType type)
             return DirectResult::CLOSED;
         } else
             return DirectResult::OK;
-    } else if (unlikely(nbytes == ISTREAM_RESULT_EOF)) {
+    } else if (gcc_unlikely(nbytes == ISTREAM_RESULT_EOF)) {
         return DirectResult::END;
     } else if (nbytes == ISTREAM_RESULT_BLOCKING) {
         return DirectResult::BLOCKING;

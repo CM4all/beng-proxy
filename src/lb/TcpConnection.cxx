@@ -106,13 +106,16 @@ inbound_buffered_socket_data(const void *buffer, size_t size, void *ctx)
     }
 
     switch ((enum write_result)nbytes) {
+        int save_errno;
+
     case WRITE_SOURCE_EOF:
         assert(false);
         gcc_unreachable();
 
     case WRITE_ERRNO:
+        save_errno = errno;
         tcp->DestroyBoth();
-        tcp->OnTcpErrno("Send failed", errno);
+        tcp->OnTcpErrno("Send failed", save_errno);
         return BufferedResult::CLOSED;
 
     case WRITE_BLOCKING:

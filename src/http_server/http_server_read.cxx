@@ -55,7 +55,7 @@ HttpServerConnection::ParseRequestLine(const char *line, size_t length)
     assert(request.request == nullptr);
     assert(!response.pending_drained);
 
-    if (unlikely(length < 5)) {
+    if (gcc_unlikely(length < 5)) {
         ProtocolError("malformed request line");
         return false;
     }
@@ -65,23 +65,23 @@ HttpServerConnection::ParseRequestLine(const char *line, size_t length)
     http_method_t method = HTTP_METHOD_NULL;
     switch (line[0]) {
     case 'D':
-        if (likely(line[1] == 'E' && line[2] == 'L' && line[3] == 'E' &&
-                   line[4] == 'T' && line[5] == 'E' && line[6] == ' ')) {
+        if (gcc_likely(line[1] == 'E' && line[2] == 'L' && line[3] == 'E' &&
+                       line[4] == 'T' && line[5] == 'E' && line[6] == ' ')) {
             method = HTTP_METHOD_DELETE;
             line += 7;
         }
         break;
 
     case 'G':
-        if (likely(line[1] == 'E' && line[2] == 'T' && line[3] == ' ')) {
+        if (gcc_likely(line[1] == 'E' && line[2] == 'T' && line[3] == ' ')) {
             method = HTTP_METHOD_GET;
             line += 4;
         }
         break;
 
     case 'P':
-        if (likely(line[1] == 'O' && line[2] == 'S' && line[3] == 'T' &&
-                   line[4] == ' ')) {
+        if (gcc_likely(line[1] == 'O' && line[2] == 'S' && line[3] == 'T' &&
+                       line[4] == ' ')) {
             method = HTTP_METHOD_POST;
             line += 5;
         } else if (line[1] == 'U' && line[2] == 'T' && line[3] == ' ') {
@@ -101,8 +101,8 @@ HttpServerConnection::ParseRequestLine(const char *line, size_t length)
         break;
 
     case 'H':
-        if (likely(line[1] == 'E' && line[2] == 'A' && line[3] == 'D' &&
-                   line[4] == ' ')) {
+        if (gcc_likely(line[1] == 'E' && line[2] == 'A' && line[3] == 'D' &&
+                       line[4] == ' ')) {
             method = HTTP_METHOD_HEAD;
             line += 5;
         }
@@ -162,8 +162,8 @@ HttpServerConnection::ParseRequestLine(const char *line, size_t length)
     }
 
     const char *space = (const char *)memchr(line, ' ', eol - line);
-    if (unlikely(space == nullptr || space + 6 > line + length ||
-                 memcmp(space + 1, "HTTP/", 5) != 0)) {
+    if (gcc_unlikely(space == nullptr || space + 6 > line + length ||
+                     memcmp(space + 1, "HTTP/", 5) != 0)) {
         /* refuse HTTP 0.9 requests */
         static const char msg[] =
             "This server requires HTTP 1.1.";
@@ -243,7 +243,7 @@ HttpServerConnection::HeadersFinished()
             char *endptr;
 
             content_length = strtoul(value, &endptr, 10);
-            if (unlikely(*endptr != 0 || content_length < 0)) {
+            if (gcc_unlikely(*endptr != 0 || content_length < 0)) {
                 ProtocolError("invalid Content-Length header in HTTP request");
                 return false;
             }
@@ -285,11 +285,11 @@ HttpServerConnection::HandleLine(const char *line, size_t length)
     assert(request.read_state == Request::START ||
            request.read_state == Request::HEADERS);
 
-    if (unlikely(request.read_state == Request::START)) {
+    if (gcc_unlikely(request.read_state == Request::START)) {
         assert(request.request == nullptr);
 
         return ParseRequestLine(line, length);
-    } else if (likely(length > 0)) {
+    } else if (gcc_likely(length > 0)) {
         assert(request.read_state == Request::HEADERS);
         assert(request.request != nullptr);
 

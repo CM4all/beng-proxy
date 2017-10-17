@@ -293,7 +293,9 @@ test_two_abort(struct pool *pool)
  *
  */
 
-int main(int argc __attr_unused, char **argv __attr_unused) {
+int
+main(int, char **)
+{
     /* run test suite */
 
     test_normal(RootPool());

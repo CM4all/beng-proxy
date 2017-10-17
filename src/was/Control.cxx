@@ -213,7 +213,7 @@ WasControl::ReadEventCallback(unsigned events)
         return;
     }
 
-    if (unlikely(events & SocketEvent::TIMEOUT)) {
+    if (gcc_unlikely(events & SocketEvent::TIMEOUT)) {
         InvokeError("control receive timeout");
         return;
     }
@@ -227,7 +227,7 @@ WasControl::WriteEventCallback(unsigned events)
     assert(fd >= 0);
     assert(!output_buffer.IsEmpty());
 
-    if (unlikely(events & SocketEvent::TIMEOUT)) {
+    if (gcc_unlikely(events & SocketEvent::TIMEOUT)) {
         InvokeError("control send timeout");
         return;
     }
