@@ -53,7 +53,7 @@ HttpServerConnection::OnData(const void *data, size_t length)
 
     ssize_t nbytes = socket.Write(data, length);
 
-    if (likely(nbytes >= 0)) {
+    if (gcc_likely(nbytes >= 0)) {
         response.bytes_sent += nbytes;
         response.length += (off_t)nbytes;
         ScheduleWrite();
@@ -83,7 +83,7 @@ HttpServerConnection::OnDirect(FdType type, int fd, size_t max_length)
         return 0;
 
     ssize_t nbytes = socket.WriteFrom(fd, type, max_length);
-    if (likely(nbytes > 0)) {
+    if (gcc_likely(nbytes > 0)) {
         response.bytes_sent += nbytes;
         response.length += (off_t)nbytes;
         ScheduleWrite();

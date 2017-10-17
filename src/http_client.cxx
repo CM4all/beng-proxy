@@ -642,8 +642,8 @@ HttpClient::ParseStatusLine(const char *line, size_t length)
     length = line + length - space - 1;
     line = space + 1;
 
-    if (unlikely(length < 3 || !IsDigitASCII(line[0]) ||
-                 !IsDigitASCII(line[1]) || !IsDigitASCII(line[2]))) {
+    if (gcc_unlikely(length < 3 || !IsDigitASCII(line[0]) ||
+                     !IsDigitASCII(line[1]) || !IsDigitASCII(line[2]))) {
         stopwatch_event(stopwatch, "malformed");
 
         AbortResponseHeaders(HttpClientErrorCode::GARBAGE,
@@ -712,7 +712,7 @@ HttpClient::HeadersFinished()
         strcasecmp(transfer_encoding, "chunked") != 0) {
         /* not chunked */
 
-        if (unlikely(content_length_string == nullptr)) {
+        if (gcc_unlikely(content_length_string == nullptr)) {
             if (keep_alive) {
                 stopwatch_event(stopwatch, "malformed");
 
@@ -725,8 +725,8 @@ HttpClient::HeadersFinished()
             char *endptr;
             content_length = (off_t)strtoull(content_length_string,
                                              &endptr, 10);
-            if (unlikely(endptr == content_length_string || *endptr != 0 ||
-                         content_length < 0)) {
+            if (gcc_unlikely(endptr == content_length_string || *endptr != 0 ||
+                             content_length < 0)) {
                 stopwatch_event(stopwatch, "malformed");
 
                 AbortResponseHeaders(HttpClientErrorCode::UNSPECIFIED,
@@ -1191,7 +1191,7 @@ HttpClient::OnData(const void *data, size_t length)
     request.got_data = true;
 
     ssize_t nbytes = socket.Write(data, length);
-    if (likely(nbytes >= 0)) {
+    if (gcc_likely(nbytes >= 0)) {
         ScheduleWrite();
         return (size_t)nbytes;
     }
@@ -1218,13 +1218,13 @@ HttpClient::OnDirect(FdType type, int fd, size_t max_length)
     request.got_data = true;
 
     ssize_t nbytes = socket.WriteFrom(fd, type, max_length);
-    if (likely(nbytes > 0))
+    if (gcc_likely(nbytes > 0))
         ScheduleWrite();
     else if (nbytes == WRITE_BLOCKING)
         return ISTREAM_RESULT_BLOCKING;
     else if (nbytes == WRITE_DESTROYED || nbytes == WRITE_BROKEN)
         return ISTREAM_RESULT_CLOSED;
-    else if (likely(nbytes < 0)) {
+    else if (gcc_likely(nbytes < 0)) {
         if (gcc_likely(errno == EAGAIN)) {
             request.got_data = false;
             socket.UnscheduleWrite();

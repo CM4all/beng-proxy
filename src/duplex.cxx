@@ -230,7 +230,7 @@ Duplex::SocketReadEventCallback(unsigned)
         return;
     }
 
-    if (likely(nbytes > 0)) {
+    if (gcc_likely(nbytes > 0)) {
         write_event.Add();
         if (!to_write.IsFull())
             socket_read_event.Add();

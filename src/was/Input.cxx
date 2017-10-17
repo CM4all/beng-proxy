@@ -347,7 +347,7 @@ WasInput::EventCallback(unsigned events)
 {
     assert(fd >= 0);
 
-    if (unlikely(events & SocketEvent::TIMEOUT)) {
+    if (gcc_unlikely(events & SocketEvent::TIMEOUT)) {
         AbortError("data receive timeout");
         return;
     }

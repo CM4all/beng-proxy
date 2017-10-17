@@ -123,7 +123,7 @@ WasOutput::WriteEventCallback(unsigned events)
     assert(fd.IsDefined());
     assert(input.IsDefined());
 
-    if (unlikely(events & SocketEvent::TIMEOUT)) {
+    if (gcc_unlikely(events & SocketEvent::TIMEOUT)) {
         AbortError(std::make_exception_ptr(WasError("send timeout")));
         return;
     }
@@ -145,7 +145,7 @@ WasOutput::OnData(const void *p, size_t length)
     assert(input.IsDefined());
 
     ssize_t nbytes = fd.Write(p, length);
-    if (likely(nbytes > 0)) {
+    if (gcc_likely(nbytes > 0)) {
         sent += nbytes;
         ScheduleWrite();
     } else if (nbytes < 0) {
@@ -167,7 +167,7 @@ WasOutput::OnDirect(gcc_unused FdType type, int source_fd, size_t max_length)
     assert(fd.IsDefined());
 
     ssize_t nbytes = SpliceToPipe(source_fd, fd.Get(), max_length);
-    if (likely(nbytes > 0)) {
+    if (gcc_likely(nbytes > 0)) {
         sent += nbytes;
         ScheduleWrite();
     } else if (nbytes < 0 && errno == EAGAIN) {

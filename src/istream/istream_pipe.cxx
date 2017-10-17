@@ -136,12 +136,12 @@ PipeIstream::Consume()
     assert(stock_item != nullptr || stock == nullptr);
 
     ssize_t nbytes = InvokeDirect(FdType::FD_PIPE, fds[0].Get(), piped);
-    if (unlikely(nbytes == ISTREAM_RESULT_BLOCKING ||
-                 nbytes == ISTREAM_RESULT_CLOSED))
+    if (gcc_unlikely(nbytes == ISTREAM_RESULT_BLOCKING ||
+                     nbytes == ISTREAM_RESULT_CLOSED))
         /* handler blocks (-2) or pipe was closed (-3) */
         return nbytes;
 
-    if (unlikely(nbytes == ISTREAM_RESULT_ERRNO && errno != EAGAIN)) {
+    if (gcc_unlikely(nbytes == ISTREAM_RESULT_ERRNO && errno != EAGAIN)) {
         Abort(std::make_exception_ptr(MakeErrno("read from pipe failed")));
         return ISTREAM_RESULT_CLOSED;
     }
@@ -295,7 +295,7 @@ PipeIstream::OnError(std::exception_ptr ep)
 off_t
 PipeIstream::_GetAvailable(bool partial)
 {
-    if (likely(input.IsDefined())) {
+    if (gcc_likely(input.IsDefined())) {
         off_t available = input.GetAvailable(partial);
         if (piped > 0) {
             if (available != -1)
