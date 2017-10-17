@@ -998,7 +998,8 @@ fcgi_client_socket_error(std::exception_ptr ep, void *ctx)
 {
     FcgiClient *client = (FcgiClient *)ctx;
 
-    client->AbortResponse(ep);
+    client->AbortResponse(NestException(ep,
+                                        FcgiClientError("FastCGI socket error")));
 }
 
 static constexpr BufferedSocketHandler fcgi_client_socket_handler = {

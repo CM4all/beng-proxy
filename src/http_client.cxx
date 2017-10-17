@@ -1160,7 +1160,9 @@ http_client_socket_error(std::exception_ptr ep, void *ctx)
     HttpClient *client = (HttpClient *)ctx;
 
     stopwatch_event(client->stopwatch, "error");
-    client->AbortResponse(ep);
+    client->AbortResponse(NestException(ep,
+                                        HttpClientError(HttpClientErrorCode::IO,
+                                                        "HTTP client socket error")));
 }
 
 static constexpr BufferedSocketHandler http_client_socket_handler = {

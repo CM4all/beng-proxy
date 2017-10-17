@@ -70,6 +70,17 @@ header_write(GrowingBuffer &buffer, const char *key, const char *value)
     key_length = strlen(key);
     value_length = strlen(value);
 
+    if (gcc_unlikely(key_length + value_length >= 1024)) {
+        /* because GrowingBuffer::Write(size_t) can only deal with
+           small sizes, use this slightly slower code path for large
+           headers */
+        buffer.Write(key, key_length);
+        buffer.Write(": ", 2);
+        buffer.Write(value, value_length);
+        buffer.Write("\r\n", 2);
+        return;
+    }
+
     char *dest = (char *)buffer.Write(key_length + 2 + value_length + 2);
 
     memcpy(dest, key, key_length);
