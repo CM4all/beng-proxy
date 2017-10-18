@@ -31,9 +31,9 @@
  */
 
 #include "system/SetupProcess.hxx"
-#include "net/UdpListener.hxx"
+#include "event/net/UdpListener.hxx"
+#include "event/net/UdpHandler.hxx"
 #include "net/SocketConfig.hxx"
-#include "net/UdpHandler.hxx"
 #include "net/AllocatedSocketAddress.hxx"
 #include "net/Parser.hxx"
 #include "event/Loop.hxx"

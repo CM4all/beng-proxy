@@ -33,7 +33,7 @@
 #ifndef BENG_PROXY_LISTENER_HXX
 #define BENG_PROXY_LISTENER_HXX
 
-#include "net/ServerSocket.hxx"
+#include "event/net/ServerSocket.hxx"
 
 struct BpInstance;
 

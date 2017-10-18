@@ -33,7 +33,7 @@
 #ifndef BENG_PROXY_CONNECT_SOCKET_HXX
 #define BENG_PROXY_CONNECT_SOCKET_HXX
 
-#include "net/ConnectSocket.hxx"
+#include "event/net/ConnectSocket.hxx"
 
 struct pool;
 class EventLoop;

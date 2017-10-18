@@ -7,8 +7,7 @@ executable('TrafoExample',
   'TrafoExample.cxx',
   include_directories: inc,
   dependencies: [
-    event_dep,
-    net_dep,
+    event_net_dep,
     system_dep,
   ])
 
@@ -16,7 +15,7 @@ executable('dump_udp',
   'dump_udp.cxx',
   include_directories: inc,
   dependencies: [
-    net_dep,
+    event_net_dep,
   ])
 
 executable('dump_control',
@@ -24,6 +23,7 @@ executable('dump_control',
   include_directories: inc,
   dependencies: [
     declare_dependency(link_with: control_server),
+    system_dep,
   ])
 
 executable('send_control',
@@ -72,7 +72,7 @@ executable('run_client',
     declare_dependency(link_with: ajp_client),
     declare_dependency(link_with: was_client),
     declare_dependency(link_with: http_client),
-    net_dep,
+    event_net_dep,
     stock_dep,
     socket_dep,
     declare_dependency(link_with: thread_pool),
@@ -148,7 +148,7 @@ executable('cleanup_memcached_choice',
   include_directories: inc,
   dependencies: [
     declare_dependency(link_with: memcached_client),
-    net_dep,
+    event_net_dep,
     io_dep,
     putil_dep,
     declare_dependency(link_with: raddress),
@@ -171,7 +171,7 @@ executable('run_ping',
   include_directories: inc,
   dependencies: [
     pool_dep,
-    net_dep,
+    event_net_dep,
   ])
 
 executable('run_was',
@@ -298,7 +298,7 @@ executable('run_client_balancer',
   '../src/bulldog.cxx',
   include_directories: inc,
   dependencies: [
-    net_dep,
+    event_net_dep,
     stopwatch_dep,
     eutil_dep,
     declare_dependency(link_with: raddress),

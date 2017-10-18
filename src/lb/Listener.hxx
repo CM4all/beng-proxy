@@ -35,7 +35,7 @@
 
 #include "Goto.hxx"
 #include "io/Logger.hxx"
-#include "net/ServerSocket.hxx"
+#include "event/net/ServerSocket.hxx"
 
 struct SslFactory;
 struct LbListenerConfig;

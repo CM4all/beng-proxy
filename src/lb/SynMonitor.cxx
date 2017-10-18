@@ -35,7 +35,7 @@
 #include "MonitorClass.hxx"
 #include "MonitorConfig.hxx"
 #include "event/Duration.hxx"
-#include "net/ConnectSocket.hxx"
+#include "event/net/ConnectSocket.hxx"
 #include "net/SocketAddress.hxx"
 #include "util/Cancellable.hxx"
 

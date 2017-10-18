@@ -280,12 +280,6 @@ net = static_library('net',
   'src/net/FailureManager.cxx',
   'src/net/FailureInfo.cxx',
   'src/net/FailureRef.cxx',
-  'src/net/Ping.cxx',
-  'src/net/PConnectSocket.cxx',
-  'libcommon/src/net/ConnectSocket.cxx',
-  'libcommon/src/net/ServerSocket.cxx',
-  'src/net/UdpDistribute.cxx',
-  'libcommon/src/net/UdpListener.cxx',
   'libcommon/src/net/SocketAddress.cxx',
   'libcommon/src/net/StaticSocketAddress.cxx',
   'libcommon/src/net/AllocatedSocketAddress.cxx',
@@ -307,11 +301,26 @@ net = static_library('net',
   'libcommon/src/net/log/Parser.cxx',
   include_directories: inc,
   dependencies: [
-    event_dep,
     system_dep,
     io_dep,
   ])
 net_dep = declare_dependency(link_with: net)
+
+event_net = static_library('event_net',
+  'libcommon/src/event/net/ConnectSocket.cxx',
+  'libcommon/src/event/net/ServerSocket.cxx',
+  'libcommon/src/event/net/UdpListener.cxx',
+  'src/net/PConnectSocket.cxx',
+  'src/net/Ping.cxx',
+  'src/net/UdpDistribute.cxx',
+  include_directories: inc,
+  dependencies: [
+    libevent,
+    event_dep,
+    net_dep,
+    util_dep,
+  ])
+event_net_dep = declare_dependency(link_with: event_net)
 
 if stopwatch
   stopwatch = static_library('stopwatch',
@@ -862,7 +871,7 @@ control_server = static_library('control_server',
   'src/control_distribute.cxx',
   include_directories: inc,
   dependencies: [
-    net_dep,
+    event_net_dep,
   ])
 
 executable('cm4all-beng-proxy',

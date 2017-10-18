@@ -35,8 +35,8 @@
 
 #include "beng-proxy/control.h"
 #include "control_handler.hxx"
-#include "net/UdpHandler.hxx"
-#include "net/UdpListener.hxx"
+#include "event/net/UdpHandler.hxx"
+#include "event/net/UdpListener.hxx"
 
 #include <stddef.h>
 

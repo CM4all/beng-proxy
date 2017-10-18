@@ -31,7 +31,6 @@
  */
 
 #include "PConnectSocket.hxx"
-#include "net/ConnectSocket.hxx"
 #include "net/SocketAddress.hxx"
 #include "system/fd_util.h"
 #include "stopwatch.hxx"

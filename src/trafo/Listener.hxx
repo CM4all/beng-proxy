@@ -34,7 +34,7 @@
 #define TRAFO_LISTENER_HXX
 
 #include "Connection.hxx"
-#include "net/ServerSocket.hxx"
+#include "event/net/ServerSocket.hxx"
 
 #include <list>
 

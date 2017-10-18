@@ -31,7 +31,7 @@
  */
 
 #include "client_balancer.hxx"
-#include "net/ConnectSocket.hxx"
+#include "event/net/ConnectSocket.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/FailureManager.hxx"

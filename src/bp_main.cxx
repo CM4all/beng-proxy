@@ -78,7 +78,6 @@
 #include "address_list.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/StaticSocketAddress.hxx"
-#include "net/ServerSocket.hxx"
 #include "net/FailureManager.hxx"
 #include "io/Logger.hxx"
 #include "util/Macros.hxx"
