@@ -248,6 +248,7 @@ event = static_library('event',
     libevent,
     util_dep,
   ])
+event_dep = declare_dependency(link_with: event)
 
 # Utility library using libevent
 eutil = static_library('eutil',
@@ -255,8 +256,9 @@ eutil = static_library('eutil',
   'src/cache.cxx',
   include_directories: inc,
   dependencies: [
-    declare_dependency(link_with: event),
+    event_dep,
   ])
+eutil_dep = declare_dependency(link_with: eutil)
 
 system = static_library('system',
   'src/system/SetupProcess.cxx',
@@ -305,9 +307,9 @@ net = static_library('net',
   'libcommon/src/net/log/Parser.cxx',
   include_directories: inc,
   dependencies: [
-    declare_dependency(link_with: event),
+    event_dep,
     system_dep,
-    declare_dependency(link_with: io),
+    io_dep,
   ])
 net_dep = declare_dependency(link_with: net)
 
@@ -333,7 +335,7 @@ stock = static_library('stock',
   'src/stock/Lease.cxx',
   include_directories: inc,
   dependencies: [
-    declare_dependency(link_with: event),
+    event_dep,
     pool_dep,
     io_dep,
   ])
@@ -349,6 +351,7 @@ shm = static_library('shm',
     threads,
     io_dep,
   ])
+shm_dep = declare_dependency(link_with: shm)
 
 ssl = static_library('ssl',
   'src/certdb/CertDatabase.cxx',
@@ -381,7 +384,7 @@ ssl = static_library('ssl',
     libssl,
     io_dep,
     util_dep,
-    declare_dependency(link_with: event),
+    event_dep,
   ])
 ssl_dep = declare_dependency(link_with: ssl)
 
@@ -394,7 +397,7 @@ avahi = static_library('avahi',
   dependencies: [
     libavahi_client,
     util_dep,
-    declare_dependency(link_with: event),
+    event_dep,
   ])
 avahi_dep = declare_dependency(link_with: avahi)
 
@@ -423,7 +426,7 @@ curl = static_library('curl',
   dependencies: [
     libcurl,
     util_dep,
-    declare_dependency(link_with: event),
+    event_dep,
   ])
 
 odbus = static_library('odbus',
@@ -476,10 +479,10 @@ istream = static_library('istream',
   include_directories: inc,
   dependencies: [
     zlib,
-    declare_dependency(link_with: event),
+    event_dep,
     pool_dep,
     system_dep,
-    declare_dependency(link_with: io),
+    io_dep,
   ])
 
 expand = static_library('expand',
@@ -528,7 +531,7 @@ spawn = static_library('spawn',
     libsystemd,
     system_dep,
     adata_dep,
-    declare_dependency(link_with: io),
+    io_dep,
     declare_dependency(link_with: odbus),
     declare_dependency(link_with: expand),
   ])
@@ -548,7 +551,7 @@ raddress = static_library('raddress',
   dependencies: [
     libpcre,
     net_dep,
-    declare_dependency(link_with: spawn),
+    spawn_dep,
     putil_dep,
     adata_dep,
     declare_dependency(link_with: expand),
@@ -562,10 +565,10 @@ was_common = static_library('was_common',
   dependencies: [
     libwas,
     declare_dependency(link_with: istream),
-    declare_dependency(link_with: event),
+    event_dep,
     net_dep,
     putil_dep,
-    declare_dependency(link_with: io),
+    io_dep,
     http_dep,
   ])
 
@@ -577,7 +580,7 @@ was_client = static_library('was_client',
   include_directories: inc,
   dependencies: [
     libwas,
-    declare_dependency(link_with: spawn),
+    spawn_dep,
     declare_dependency(link_with: raddress),
     declare_dependency(link_with: was_common),
     stopwatch_dep,
@@ -612,7 +615,7 @@ cookie = static_library('cookie',
   'src/cookie_string.cxx',
   include_directories: inc,
   dependencies: [
-    declare_dependency(link_with: shm),
+    shm_dep,
     declare_dependency(link_with: http_util),
     util_dep,
     putil_dep,
@@ -624,8 +627,8 @@ thread_pool = static_library('thread_queue',
   'src/thread_pool.cxx',
   include_directories: inc,
   dependencies: [
-    declare_dependency(link_with: event),
-    declare_dependency(link_with: eutil),
+    event_dep,
+    eutil_dep,
   ])
 
 socket = static_library('socket',
@@ -637,6 +640,7 @@ socket = static_library('socket',
   dependencies: [
     net_dep,
   ])
+socket_dep = declare_dependency(link_with: socket)
 
 memcached_client = static_library('memcached_client',
   'src/memcached/memcached_client.cxx',
@@ -645,7 +649,7 @@ memcached_client = static_library('memcached_client',
   include_directories: inc,
   dependencies: [
     declare_dependency(link_with: istream),
-    declare_dependency(link_with: socket),
+    socket_dep,
   ])
 
 ajp_client = static_library('ajp_client',
@@ -659,7 +663,7 @@ ajp_client = static_library('ajp_client',
   dependencies: [
     declare_dependency(link_with: istream),
     stopwatch_dep,
-    declare_dependency(link_with: socket),
+    socket_dep,
     putil_dep,
     http_dep,
   ])
@@ -677,13 +681,13 @@ translation = static_library('translation',
   'src/translation/InvalidateParser.cxx',
   include_directories: inc,
   dependencies: [
-    declare_dependency(link_with: event),
+    event_dep,
     putil_dep,
-    declare_dependency(link_with: eutil),
+    eutil_dep,
     declare_dependency(link_with: raddress),
-    declare_dependency(link_with: spawn),
-    declare_dependency(link_with: socket),
-    declare_dependency(link_with: net),
+    spawn_dep,
+    socket_dep,
+    net_dep,
     stopwatch_dep,
   ])
 translation_dep = declare_dependency(link_with: translation)
@@ -693,14 +697,14 @@ http_common = static_library('http_common',
   include_directories: inc,
   dependencies: [
     declare_dependency(link_with: istream),
-    declare_dependency(link_with: io),
+    io_dep,
   ])
 
 http_client = static_library('http_client',
   'src/http_client.cxx',
   include_directories: inc,
   dependencies: [
-    declare_dependency(link_with: socket),
+    socket_dep,
     putil_dep,
     declare_dependency(link_with: http_util),
     declare_dependency(link_with: http_common),
@@ -716,12 +720,12 @@ http_server = static_library('http_server',
   'src/http_server/http_server_response.cxx',
   include_directories: inc,
   dependencies: [
-    declare_dependency(link_with: event),
+    event_dep,
     declare_dependency(link_with: istream),
     declare_dependency(link_with: http_util),
     declare_dependency(link_with: http_common),
     putil_dep,
-    declare_dependency(link_with: socket),
+    socket_dep,
   ])
 
 http_cache = static_library('http_cache',
@@ -735,7 +739,7 @@ http_cache = static_library('http_cache',
   'src/http_cache_rfc.cxx',
   include_directories: inc,
   dependencies: [
-    declare_dependency(link_with: eutil),
+    eutil_dep,
     declare_dependency(link_with: http_util),
     declare_dependency(link_with: istream),
     declare_dependency(link_with: raddress),
@@ -748,7 +752,7 @@ cgi = static_library('cgi',
   'src/cgi/cgi_launch.cxx',
   include_directories: inc,
   dependencies: [
-    declare_dependency(link_with: event),
+    event_dep,
     stopwatch_dep,
     declare_dependency(link_with: istream),
     declare_dependency(link_with: http_util),
@@ -763,7 +767,7 @@ fcgi_client = static_library('fcgi_client',
   'src/fcgi/istream_fcgi.cxx',
   include_directories: inc,
   dependencies: [
-    declare_dependency(link_with: socket),
+    socket_dep,
     putil_dep,
     declare_dependency(link_with: istream),
     declare_dependency(link_with: http_util),
@@ -778,7 +782,7 @@ nfs_client = static_library('nfs_client',
   include_directories: inc,
   dependencies: [
     libnfs,
-    declare_dependency(link_with: event),
+    event_dep,
   ])
 
 delegate_client = static_library('delegate_client',
@@ -788,7 +792,7 @@ delegate_client = static_library('delegate_client',
   'src/delegate/Stock.cxx',
   include_directories: inc,
   dependencies: [
-    declare_dependency(link_with: socket),
+    socket_dep,
     putil_dep,
     stock_dep,
   ])
@@ -805,9 +809,9 @@ session = static_library('session',
   'src/daddress_list.cxx',
   include_directories: inc,
   dependencies: [
-    declare_dependency(link_with: shm),
+    shm_dep,
     util_dep,
-    declare_dependency(link_with: event),
+    event_dep,
     declare_dependency(link_with: cookie),
     declare_dependency(link_with: raddress),
   ])
@@ -858,7 +862,7 @@ control_server = static_library('control_server',
   'src/control_distribute.cxx',
   include_directories: inc,
   dependencies: [
-    declare_dependency(link_with: net),
+    net_dep,
   ])
 
 executable('cm4all-beng-proxy',
@@ -965,19 +969,19 @@ executable('cm4all-beng-proxy',
     util_dep,
     declare_dependency(link_with: avahi),
     pool_dep,
-    declare_dependency(link_with: io),
-    declare_dependency(link_with: event),
-    declare_dependency(link_with: net),
+    io_dep,
+    event_dep,
+    net_dep,
     declare_dependency(link_with: raddress),
-    declare_dependency(link_with: spawn),
+    spawn_dep,
     declare_dependency(link_with: http_server),
     declare_dependency(link_with: http_client),
     declare_dependency(link_with: http_cache),
-    declare_dependency(link_with: ssl),
+    ssl_dep,
     putil_dep,
-    declare_dependency(link_with: eutil),
+    eutil_dep,
     stock_dep,
-    declare_dependency(link_with: shm),
+    shm_dep,
     declare_dependency(link_with: translation),
     declare_dependency(link_with: was_client),
     declare_dependency(link_with: ajp_client),
@@ -1083,18 +1087,18 @@ executable('cm4all-beng-lb',
     util_dep,
     declare_dependency(link_with: avahi),
     pool_dep,
-    declare_dependency(link_with: io),
-    declare_dependency(link_with: event),
-    declare_dependency(link_with: net),
-    declare_dependency(link_with: ssl),
-    declare_dependency(link_with: pg),
+    io_dep,
+    event_dep,
+    net_dep,
+    ssl_dep,
+    pg_dep,
     declare_dependency(link_with: http_server),
     declare_dependency(link_with: http_client),
     putil_dep,
-    declare_dependency(link_with: eutil),
+    eutil_dep,
     stock_dep,
     translation_dep,
-    declare_dependency(link_with: spawn),
+    spawn_dep,
     declare_dependency(link_with: expand),
     stopwatch_dep,
     declare_dependency(link_with: cookie),
@@ -1125,10 +1129,10 @@ executable('cm4all-certdb',
     libpcre,
     util_dep,
     avahi_dep,
-    declare_dependency(link_with: ssl),
-    declare_dependency(link_with: pg),
+    ssl_dep,
+    pg_dep,
     declare_dependency(link_with: curl),
-    declare_dependency(link_with: net),
+    net_dep,
     http_dep,
 ])
 

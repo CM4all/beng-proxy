@@ -7,8 +7,8 @@ executable('TrafoExample',
   'TrafoExample.cxx',
   include_directories: inc,
   dependencies: [
-    declare_dependency(link_with: event),
-    declare_dependency(link_with: net),
+    event_dep,
+    net_dep,
     system_dep,
   ])
 
@@ -16,7 +16,7 @@ executable('dump_udp',
   'dump_udp.cxx',
   include_directories: inc,
   dependencies: [
-    declare_dependency(link_with: net),
+    net_dep,
   ])
 
 executable('dump_control',
@@ -31,7 +31,7 @@ executable('send_control',
   include_directories: inc,
   dependencies: [
     declare_dependency(link_with: control_server),
-    declare_dependency(link_with: net),
+    net_dep,
   ])
 
 executable('run_ua_parser',
@@ -68,13 +68,13 @@ executable('run_client',
   include_directories: inc,
   dependencies: [
     threads,
-    declare_dependency(link_with: ssl),
+    ssl_dep,
     declare_dependency(link_with: ajp_client),
     declare_dependency(link_with: was_client),
     declare_dependency(link_with: http_client),
-    declare_dependency(link_with: net),
+    net_dep,
     stock_dep,
-    declare_dependency(link_with: socket),
+    socket_dep,
     declare_dependency(link_with: thread_pool),
   ])
 
@@ -84,7 +84,7 @@ executable('run_delegate',
   include_directories: inc,
   dependencies: [
     declare_dependency(link_with: delegate_client),
-    declare_dependency(link_with: spawn),
+    spawn_dep,
   ])
 
 executable('run_http_cache',
@@ -119,8 +119,8 @@ executable('run_memcached_client',
   dependencies: [
     declare_dependency(link_with: memcached_client),
     stock_dep,
-    declare_dependency(link_with: net),
-    declare_dependency(link_with: io),
+    net_dep,
+    io_dep,
   ])
 
 executable('dump_memcached_choice',
@@ -131,8 +131,8 @@ executable('dump_memcached_choice',
   include_directories: inc,
   dependencies: [
     declare_dependency(link_with: memcached_client),
-    declare_dependency(link_with: net),
-    declare_dependency(link_with: io),
+    net_dep,
+    io_dep,
     putil_dep,
   ])
 
@@ -148,15 +148,15 @@ executable('cleanup_memcached_choice',
   include_directories: inc,
   dependencies: [
     declare_dependency(link_with: memcached_client),
-    declare_dependency(link_with: net),
-    declare_dependency(link_with: io),
+    net_dep,
+    io_dep,
     putil_dep,
     declare_dependency(link_with: raddress),
     stock_dep,
-    declare_dependency(link_with: eutil),
+    eutil_dep,
     stopwatch_dep,
     declare_dependency(link_with: http_cache),
-    declare_dependency(link_with: ssl),
+    ssl_dep,
   ])
 
 executable('fake_memcached_server',
@@ -171,7 +171,7 @@ executable('run_ping',
   include_directories: inc,
   dependencies: [
     pool_dep,
-    declare_dependency(link_with: net),
+    net_dep,
   ])
 
 executable('run_was',
@@ -181,7 +181,7 @@ executable('run_was',
   '../src/direct.cxx',
   include_directories: inc,
   dependencies: [
-    declare_dependency(link_with: net),
+    net_dep,
     declare_dependency(link_with: was_client),
     stopwatch_dep,
   ])
@@ -298,9 +298,9 @@ executable('run_client_balancer',
   '../src/bulldog.cxx',
   include_directories: inc,
   dependencies: [
-    declare_dependency(link_with: net),
+    net_dep,
     stopwatch_dep,
-    declare_dependency(link_with: eutil),
+    eutil_dep,
     declare_dependency(link_with: raddress),
   ])
 
@@ -323,7 +323,7 @@ test('t_cache', executable('t_cache',
   '../src/PInstance.cxx',
   include_directories: inc,
   dependencies: [
-    declare_dependency(link_with: eutil),
+    eutil_dep,
     pool_dep,
   ]))
 
@@ -409,9 +409,9 @@ test('t_balancer', executable('t_balancer',
   include_directories: inc,
   dependencies: [
     gtest,
-    declare_dependency(link_with: eutil),
+    eutil_dep,
     pool_dep,
-    declare_dependency(link_with: net),
+    net_dep,
   ]))
 
 test('t_cgi', executable('t_cgi',
@@ -542,7 +542,7 @@ test('t_shm', executable('t_shm',
   dependencies: [
     gtest,
     threads,
-    declare_dependency(link_with: shm),
+    shm_dep,
   ]))
 
 test('t_session', executable('t_session',
@@ -712,7 +712,7 @@ t_istream_filter = static_library('t_istream_filter',
   '../src/pipe_stock.cxx',
   include_directories: inc,
   dependencies: [
-    declare_dependency(link_with: eutil),
+    eutil_dep,
     declare_dependency(link_with: istream),
   ])
 
