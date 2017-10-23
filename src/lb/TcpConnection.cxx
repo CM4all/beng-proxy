@@ -90,16 +90,16 @@ inbound_buffered_socket_data(const void *buffer, size_t size, void *ctx)
         /* outbound is not yet connected */
         return BufferedResult::BLOCKING;
 
-    if (!tcp->outbound.IsValid()) {
+    if (!tcp->outbound.socket.IsValid()) {
         tcp->DestroyBoth();
         tcp->OnTcpError("Send error", "Broken socket");
         return BufferedResult::CLOSED;
     }
 
-    ssize_t nbytes = tcp->outbound.Write(buffer, size);
+    ssize_t nbytes = tcp->outbound.socket.Write(buffer, size);
     if (nbytes > 0) {
-        tcp->outbound.ScheduleWrite();
-        tcp->inbound.Consumed(nbytes);
+        tcp->outbound.socket.ScheduleWrite();
+        tcp->inbound.socket.Consumed(nbytes);
         return (size_t)nbytes == size
             ? BufferedResult::OK
             : BufferedResult::PARTIAL;
@@ -151,11 +151,11 @@ inbound_buffered_socket_write(void *ctx)
 
     tcp->got_outbound_data = false;
 
-    if (!tcp->outbound.Read(false))
+    if (!tcp->outbound.socket.Read(false))
         return false;
 
     if (!tcp->got_outbound_data)
-        tcp->inbound.UnscheduleWrite();
+        tcp->inbound.socket.UnscheduleWrite();
     return true;
 }
 
@@ -164,7 +164,7 @@ inbound_buffered_socket_drained(void *ctx)
 {
     auto *tcp = (LbTcpConnection *)ctx;
 
-    if (!tcp->outbound.IsValid()) {
+    if (!tcp->outbound.socket.IsValid()) {
         /* now that inbound's output buffers are drained, we can
            finally close the connection (postponed from
            outbound_buffered_socket_end()) */
@@ -220,10 +220,10 @@ outbound_buffered_socket_data(const void *buffer, size_t size, void *ctx)
 
     tcp->got_outbound_data = true;
 
-    ssize_t nbytes = tcp->inbound.Write(buffer, size);
+    ssize_t nbytes = tcp->inbound.socket.Write(buffer, size);
     if (nbytes > 0) {
-        tcp->inbound.ScheduleWrite();
-        tcp->outbound.Consumed(nbytes);
+        tcp->inbound.socket.ScheduleWrite();
+        tcp->outbound.socket.Consumed(nbytes);
         return (size_t)nbytes == size
             ? BufferedResult::OK
             : BufferedResult::PARTIAL;
@@ -263,7 +263,7 @@ outbound_buffered_socket_closed(void *ctx)
 {
     auto *tcp = (LbTcpConnection *)ctx;
 
-    tcp->outbound.Close();
+    tcp->outbound.socket.Close();
     return true;
 }
 
@@ -272,11 +272,11 @@ outbound_buffered_socket_end(void *ctx)
 {
     auto *tcp = (LbTcpConnection *)ctx;
 
-    tcp->outbound.Destroy();
+    tcp->outbound.socket.Destroy();
 
-    tcp->inbound.UnscheduleWrite();
+    tcp->inbound.socket.UnscheduleWrite();
 
-    if (tcp->inbound.IsDrained()) {
+    if (tcp->inbound.socket.IsDrained()) {
         /* all output buffers to "inbound" are drained; close the
            connection, because there's nothing left to do */
         tcp->DestroyBoth();
@@ -295,11 +295,11 @@ outbound_buffered_socket_write(void *ctx)
 
     tcp->got_inbound_data = false;
 
-    if (!tcp->inbound.Read(false))
+    if (!tcp->inbound.socket.Read(false))
         return false;
 
     if (!tcp->got_inbound_data)
-        tcp->outbound.UnscheduleWrite();
+        tcp->outbound.socket.UnscheduleWrite();
     return true;
 }
 
@@ -345,40 +345,40 @@ LbTcpConnection::MakeLoggerDomain() const noexcept
 }
 
 void
-LbTcpConnection::DestroyInbound()
+LbTcpConnection::Inbound::Destroy()
 {
-    if (inbound.IsConnected())
-        inbound.Close();
+    if (socket.IsConnected())
+        socket.Close();
 
-    inbound.Destroy();
+    socket.Destroy();
 }
 
 void
-LbTcpConnection::DestroyOutbound()
+LbTcpConnection::Outbound::Destroy()
 {
-    if (outbound.IsConnected())
-        outbound.Close();
+    if (socket.IsConnected())
+        socket.Close();
 
-    outbound.Destroy();
+    socket.Destroy();
 }
 
 void
 LbTcpConnection::DestroyBoth()
 {
-    if (inbound.IsValid())
-        DestroyInbound();
+    if (inbound.socket.IsValid())
+        inbound.Destroy();
 
     if (cancel_connect)
         cancel_connect.Cancel();
-    else if (outbound.IsValid())
-        DestroyOutbound();
+    else if (outbound.socket.IsValid())
+        outbound.Destroy();
 }
 
 void
 LbTcpConnection::OnHandshake()
 {
     assert(!cancel_connect);
-    assert(!outbound.IsValid());
+    assert(!outbound.socket.IsValid());
 
     ConnectOutbound();
 }
@@ -420,9 +420,9 @@ LbTcpConnection::OnSocketConnectSuccess(UniqueSocketDescriptor &&fd)
 {
     cancel_connect = nullptr;
 
-    outbound.Init(fd.Release(), FdType::FD_TCP,
-                  nullptr, &write_timeout,
-                  outbound_buffered_socket_handler, this);
+    outbound.socket.Init(fd.Release(), FdType::FD_TCP,
+                         nullptr, &write_timeout,
+                         outbound_buffered_socket_handler, this);
 
     /* TODO
     outbound.direct = pipe_stock != nullptr &&
@@ -430,8 +430,8 @@ LbTcpConnection::OnSocketConnectSuccess(UniqueSocketDescriptor &&fd)
         (istream_direct_mask_to(inbound.base.base.fd_type) & FdType::FD_PIPE) != 0;
     */
 
-    if (inbound.Read(false))
-        outbound.Read(false);
+    if (inbound.socket.Read(false))
+        outbound.socket.Read(false);
 }
 
 void
@@ -439,7 +439,7 @@ LbTcpConnection::OnSocketConnectTimeout()
 {
     cancel_connect = nullptr;
 
-    DestroyInbound();
+    inbound.Destroy();
     OnTcpError("Connect error", "Timeout");
 }
 
@@ -448,7 +448,7 @@ LbTcpConnection::OnSocketConnectError(std::exception_ptr ep)
 {
     cancel_connect = nullptr;
 
-    DestroyInbound();
+    inbound.Destroy();
     OnTcpError("Connect error", ep);
 }
 
@@ -460,7 +460,7 @@ LbTcpConnection::ConnectOutbound()
     if (cluster_config.HasZeroConf()) {
         const auto *member = cluster.Pick(session_sticky);
         if (member == nullptr) {
-            DestroyInbound();
+            inbound.Destroy();
             OnTcpError("Zeroconf error", "Zeroconf cluster is empty");
             return;
         }
@@ -468,7 +468,7 @@ LbTcpConnection::ConnectOutbound()
         const auto address = member->GetAddress();
         assert(address.IsDefined());
 
-        client_socket_new(inbound.GetEventLoop(), pool,
+        client_socket_new(GetEventLoop(), pool,
                           address.GetFamily(), SOCK_STREAM, 0,
                           cluster_config.transparent_source, bind_address,
                           address,
@@ -478,7 +478,7 @@ LbTcpConnection::ConnectOutbound()
         return;
     }
 
-    client_balancer_connect(inbound.GetEventLoop(), pool, *instance.balancer,
+    client_balancer_connect(GetEventLoop(), pool, *instance.balancer,
                             cluster_config.transparent_source,
                             bind_address,
                             session_sticky,
@@ -493,6 +493,23 @@ LbTcpConnection::ConnectOutbound()
  *
  */
 
+LbTcpConnection::Inbound::Inbound(EventLoop &event_loop,
+                                  UniqueSocketDescriptor &&fd, FdType fd_type,
+                                  const SocketFilter *filter, void *filter_ctx)
+    :socket(event_loop)
+{
+    socket.Init(fd.Release(), fd_type,
+                nullptr, &write_timeout,
+                filter, filter_ctx,
+                inbound_buffered_socket_handler, &LbTcpConnection::FromInbound(*this));
+    /* TODO
+    socket.base.direct = pipe_stock != nullptr &&
+       (ISTREAM_TO_PIPE & fd_type) != 0 &&
+       (ISTREAM_TO_TCP & FdType::FD_PIPE) != 0;
+    */
+
+}
+
 LbTcpConnection::LbTcpConnection(struct pool &_pool, LbInstance &_instance,
                                  const LbListenerConfig &_listener,
                                  LbCluster &_cluster,
@@ -504,20 +521,11 @@ LbTcpConnection::LbTcpConnection(struct pool &_pool, LbInstance &_instance,
      session_sticky(lb_tcp_sticky(cluster.GetConfig().sticky_mode,
                                   _client_address)),
      logger(*this),
-     inbound(instance.event_loop), outbound(instance.event_loop)
+     inbound(instance.event_loop, std::move(fd), fd_type, filter, filter_ctx),
+     outbound(instance.event_loop)
 {
     if (client_address == nullptr)
         client_address = "unknown";
-
-    inbound.Init(fd.Release(), fd_type,
-                 nullptr, &write_timeout,
-                 filter, filter_ctx,
-                 inbound_buffered_socket_handler, this);
-    /* TODO
-       inbound.base.direct = pipe_stock != nullptr &&
-       (ISTREAM_TO_PIPE & fd_type) != 0 &&
-       (ISTREAM_TO_TCP & FdType::FD_PIPE) != 0;
-    */
 
     if (cluster.GetConfig().transparent_source) {
         bind_address = _client_address;

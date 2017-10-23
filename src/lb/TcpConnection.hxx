@@ -40,6 +40,7 @@
 #include "net/PConnectSocket.hxx"
 #include "io/FdType.hxx"
 #include "util/Cancellable.hxx"
+#include "util/Cast.hxx"
 
 #include <boost/intrusive/list.hpp>
 
@@ -80,8 +81,37 @@ class LbTcpConnection final
     const LazyDomainLogger logger;
 
 public:
-    FilteredSocket inbound;
-    BufferedSocket outbound;
+    struct Inbound {
+        FilteredSocket socket;
+
+        Inbound(EventLoop &event_loop,
+                UniqueSocketDescriptor &&fd, FdType fd_type,
+                const SocketFilter *filter, void *filter_ctx);
+
+        void Destroy();
+
+        void ScheduleHandshakeCallback(BoundMethod<void()> callback) {
+            socket.ScheduleReadNoTimeout(false);
+            socket.SetHandshakeCallback(callback);
+        }
+    } inbound;
+
+    static constexpr LbTcpConnection &FromInbound(Inbound &i) {
+        return ContainerCast(i, &LbTcpConnection::inbound);
+    }
+
+    struct Outbound {
+        BufferedSocket socket;
+
+        explicit Outbound(EventLoop &event_loop)
+            :socket(event_loop) {}
+
+        void Destroy();
+    } outbound;
+
+    static constexpr LbTcpConnection &FromOutbound(Outbound &o) {
+        return ContainerCast(o, &LbTcpConnection::outbound);
+    }
 
     StaticSocketAddress bind_address;
     CancellablePointer cancel_connect;
@@ -104,6 +134,10 @@ public:
                                 UniqueSocketDescriptor &&fd,
                                 SocketAddress address);
 
+    EventLoop &GetEventLoop() {
+        return inbound.socket.GetEventLoop();
+    }
+
     void Destroy();
 
 protected:
@@ -112,15 +146,12 @@ protected:
 
 private:
     void ScheduleHandshakeCallback() {
-        inbound.ScheduleReadNoTimeout(false);
-        inbound.SetHandshakeCallback(BIND_THIS_METHOD(OnHandshake));
+        inbound.ScheduleHandshakeCallback(BIND_THIS_METHOD(OnHandshake));
     }
 
     void ConnectOutbound();
 
 public:
-    void DestroyInbound();
-    void DestroyOutbound();
     void DestroyBoth();
 
     void OnHandshake();
