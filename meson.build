@@ -242,7 +242,6 @@ event = static_library('event',
   'libcommon/src/event/CleanupTimer.cxx',
   'libcommon/src/event/DeferEvent.cxx',
   'libcommon/src/event/SignalEvent.cxx',
-  'libcommon/src/event/SocketWrapper.cxx',
   include_directories: inc,
   dependencies: [
     libevent,
@@ -310,6 +309,7 @@ event_net = static_library('event_net',
   'libcommon/src/event/net/ConnectSocket.cxx',
   'libcommon/src/event/net/ServerSocket.cxx',
   'libcommon/src/event/net/UdpListener.cxx',
+  'libcommon/src/event/net/SocketWrapper.cxx',
   'src/net/PConnectSocket.cxx',
   'src/net/Ping.cxx',
   'src/net/UdpDistribute.cxx',
@@ -647,7 +647,7 @@ socket = static_library('socket',
   'src/thread_socket_filter.cxx',
   include_directories: inc,
   dependencies: [
-    net_dep,
+    event_net_dep,
   ])
 socket_dep = declare_dependency(link_with: socket)
 
@@ -729,7 +729,6 @@ http_server = static_library('http_server',
   'src/http_server/http_server_response.cxx',
   include_directories: inc,
   dependencies: [
-    event_dep,
     declare_dependency(link_with: istream),
     declare_dependency(link_with: http_util),
     declare_dependency(link_with: http_common),
