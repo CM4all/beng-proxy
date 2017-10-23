@@ -82,24 +82,24 @@ lb_tcp_sticky(StickyMode sticky_mode,
 static BufferedResult
 inbound_buffered_socket_data(const void *buffer, size_t size, void *ctx)
 {
-    auto *tcp = (LbTcpConnection *)ctx;
+    auto &tcp = *(LbTcpConnection *)ctx;
 
-    tcp->got_inbound_data = true;
+    tcp.got_inbound_data = true;
 
-    if (tcp->cancel_connect)
+    if (tcp.cancel_connect)
         /* outbound is not yet connected */
         return BufferedResult::BLOCKING;
 
-    if (!tcp->outbound.socket.IsValid()) {
-        tcp->DestroyBoth();
-        tcp->OnTcpError("Send error", "Broken socket");
+    if (!tcp.outbound.socket.IsValid()) {
+        tcp.DestroyBoth();
+        tcp.OnTcpError("Send error", "Broken socket");
         return BufferedResult::CLOSED;
     }
 
-    ssize_t nbytes = tcp->outbound.socket.Write(buffer, size);
+    ssize_t nbytes = tcp.outbound.socket.Write(buffer, size);
     if (nbytes > 0) {
-        tcp->outbound.socket.ScheduleWrite();
-        tcp->inbound.socket.Consumed(nbytes);
+        tcp.outbound.socket.ScheduleWrite();
+        tcp.inbound.socket.Consumed(nbytes);
         return (size_t)nbytes == size
             ? BufferedResult::OK
             : BufferedResult::PARTIAL;
@@ -114,8 +114,8 @@ inbound_buffered_socket_data(const void *buffer, size_t size, void *ctx)
 
     case WRITE_ERRNO:
         save_errno = errno;
-        tcp->DestroyBoth();
-        tcp->OnTcpErrno("Send failed", save_errno);
+        tcp.DestroyBoth();
+        tcp.OnTcpErrno("Send failed", save_errno);
         return BufferedResult::CLOSED;
 
     case WRITE_BLOCKING:
@@ -125,8 +125,8 @@ inbound_buffered_socket_data(const void *buffer, size_t size, void *ctx)
         return BufferedResult::CLOSED;
 
     case WRITE_BROKEN:
-        tcp->DestroyBoth();
-        tcp->OnTcpEnd();
+        tcp.DestroyBoth();
+        tcp.OnTcpEnd();
         return BufferedResult::CLOSED;
     }
 
@@ -137,39 +137,39 @@ inbound_buffered_socket_data(const void *buffer, size_t size, void *ctx)
 static bool
 inbound_buffered_socket_closed(void *ctx)
 {
-    auto *tcp = (LbTcpConnection *)ctx;
+    auto &tcp = *(LbTcpConnection *)ctx;
 
-    tcp->DestroyBoth();
-    tcp->OnTcpEnd();
+    tcp.DestroyBoth();
+    tcp.OnTcpEnd();
     return false;
 }
 
 static bool
 inbound_buffered_socket_write(void *ctx)
 {
-    auto *tcp = (LbTcpConnection *)ctx;
+    auto &tcp = *(LbTcpConnection *)ctx;
 
-    tcp->got_outbound_data = false;
+    tcp.got_outbound_data = false;
 
-    if (!tcp->outbound.socket.Read(false))
+    if (!tcp.outbound.socket.Read(false))
         return false;
 
-    if (!tcp->got_outbound_data)
-        tcp->inbound.socket.UnscheduleWrite();
+    if (!tcp.got_outbound_data)
+        tcp.inbound.socket.UnscheduleWrite();
     return true;
 }
 
 static bool
 inbound_buffered_socket_drained(void *ctx)
 {
-    auto *tcp = (LbTcpConnection *)ctx;
+    auto &tcp = *(LbTcpConnection *)ctx;
 
-    if (!tcp->outbound.socket.IsValid()) {
+    if (!tcp.outbound.socket.IsValid()) {
         /* now that inbound's output buffers are drained, we can
            finally close the connection (postponed from
            outbound_buffered_socket_end()) */
-        tcp->DestroyBoth();
-        tcp->OnTcpEnd();
+        tcp.DestroyBoth();
+        tcp.OnTcpEnd();
         return false;
     }
 
@@ -179,20 +179,20 @@ inbound_buffered_socket_drained(void *ctx)
 static enum write_result
 inbound_buffered_socket_broken(void *ctx)
 {
-    auto *tcp = (LbTcpConnection *)ctx;
+    auto &tcp = *(LbTcpConnection *)ctx;
 
-    tcp->DestroyBoth();
-    tcp->OnTcpEnd();
+    tcp.DestroyBoth();
+    tcp.OnTcpEnd();
     return WRITE_DESTROYED;
 }
 
 static void
 inbound_buffered_socket_error(std::exception_ptr ep, void *ctx)
 {
-    auto *tcp = (LbTcpConnection *)ctx;
+    auto &tcp = *(LbTcpConnection *)ctx;
 
-    tcp->DestroyBoth();
-    tcp->OnTcpError("Error", ep);
+    tcp.DestroyBoth();
+    tcp.OnTcpError("Error", ep);
 }
 
 static constexpr BufferedSocketHandler inbound_buffered_socket_handler = {
@@ -216,14 +216,14 @@ static constexpr BufferedSocketHandler inbound_buffered_socket_handler = {
 static BufferedResult
 outbound_buffered_socket_data(const void *buffer, size_t size, void *ctx)
 {
-    auto *tcp = (LbTcpConnection *)ctx;
+    auto &tcp = *(LbTcpConnection *)ctx;
 
-    tcp->got_outbound_data = true;
+    tcp.got_outbound_data = true;
 
-    ssize_t nbytes = tcp->inbound.socket.Write(buffer, size);
+    ssize_t nbytes = tcp.inbound.socket.Write(buffer, size);
     if (nbytes > 0) {
-        tcp->inbound.socket.ScheduleWrite();
-        tcp->outbound.socket.Consumed(nbytes);
+        tcp.inbound.socket.ScheduleWrite();
+        tcp.outbound.socket.Consumed(nbytes);
         return (size_t)nbytes == size
             ? BufferedResult::OK
             : BufferedResult::PARTIAL;
@@ -238,8 +238,8 @@ outbound_buffered_socket_data(const void *buffer, size_t size, void *ctx)
 
     case WRITE_ERRNO:
         save_errno = errno;
-        tcp->DestroyBoth();
-        tcp->OnTcpErrno("Send failed", save_errno);
+        tcp.DestroyBoth();
+        tcp.OnTcpErrno("Send failed", save_errno);
         return BufferedResult::CLOSED;
 
     case WRITE_BLOCKING:
@@ -249,8 +249,8 @@ outbound_buffered_socket_data(const void *buffer, size_t size, void *ctx)
         return BufferedResult::CLOSED;
 
     case WRITE_BROKEN:
-        tcp->DestroyBoth();
-        tcp->OnTcpEnd();
+        tcp.DestroyBoth();
+        tcp.OnTcpEnd();
         return BufferedResult::CLOSED;
     }
 
@@ -261,26 +261,26 @@ outbound_buffered_socket_data(const void *buffer, size_t size, void *ctx)
 static bool
 outbound_buffered_socket_closed(void *ctx)
 {
-    auto *tcp = (LbTcpConnection *)ctx;
+    auto &tcp = *(LbTcpConnection *)ctx;
 
-    tcp->outbound.socket.Close();
+    tcp.outbound.socket.Close();
     return true;
 }
 
 static void
 outbound_buffered_socket_end(void *ctx)
 {
-    auto *tcp = (LbTcpConnection *)ctx;
+    auto &tcp = *(LbTcpConnection *)ctx;
 
-    tcp->outbound.socket.Destroy();
+    tcp.outbound.socket.Destroy();
 
-    tcp->inbound.socket.UnscheduleWrite();
+    tcp.inbound.socket.UnscheduleWrite();
 
-    if (tcp->inbound.socket.IsDrained()) {
+    if (tcp.inbound.socket.IsDrained()) {
         /* all output buffers to "inbound" are drained; close the
            connection, because there's nothing left to do */
-        tcp->DestroyBoth();
-        tcp->OnTcpEnd();
+        tcp.DestroyBoth();
+        tcp.OnTcpEnd();
 
         /* nothing will be done if the buffers are not yet drained;
            we're waiting for inbound_buffered_socket_drained() to be
@@ -291,35 +291,35 @@ outbound_buffered_socket_end(void *ctx)
 static bool
 outbound_buffered_socket_write(void *ctx)
 {
-    auto *tcp = (LbTcpConnection *)ctx;
+    auto &tcp = *(LbTcpConnection *)ctx;
 
-    tcp->got_inbound_data = false;
+    tcp.got_inbound_data = false;
 
-    if (!tcp->inbound.socket.Read(false))
+    if (!tcp.inbound.socket.Read(false))
         return false;
 
-    if (!tcp->got_inbound_data)
-        tcp->outbound.socket.UnscheduleWrite();
+    if (!tcp.got_inbound_data)
+        tcp.outbound.socket.UnscheduleWrite();
     return true;
 }
 
 static enum write_result
 outbound_buffered_socket_broken(void *ctx)
 {
-    auto *tcp = (LbTcpConnection *)ctx;
+    auto &tcp = *(LbTcpConnection *)ctx;
 
-    tcp->DestroyBoth();
-    tcp->OnTcpEnd();
+    tcp.DestroyBoth();
+    tcp.OnTcpEnd();
     return WRITE_DESTROYED;
 }
 
 static void
 outbound_buffered_socket_error(std::exception_ptr ep, void *ctx)
 {
-    auto *tcp = (LbTcpConnection *)ctx;
+    auto &tcp = *(LbTcpConnection *)ctx;
 
-    tcp->DestroyBoth();
-    tcp->OnTcpError("Error", ep);
+    tcp.DestroyBoth();
+    tcp.OnTcpError("Error", ep);
 }
 
 static constexpr BufferedSocketHandler outbound_buffered_socket_handler = {
