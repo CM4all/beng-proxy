@@ -86,6 +86,7 @@ struct TranslateClient final : Cancellable {
     void Fail(std::exception_ptr ep);
 
     BufferedResult Feed(const uint8_t *data, size_t length);
+    bool TryWrite();
 
     /* virtual methods from class Cancellable */
     void Cancel() override {
@@ -181,32 +182,32 @@ try {
  *
  */
 
-static bool
-translate_try_write(TranslateClient *client)
+bool
+TranslateClient::TryWrite()
 {
-    auto src = client->request.Read();
+    auto src = request.Read();
     assert(!src.IsNull());
 
-    ssize_t nbytes = client->socket.Write(src.data, src.size);
+    ssize_t nbytes = socket.Write(src.data, src.size);
     if (gcc_unlikely(nbytes < 0)) {
         if (gcc_likely(nbytes == WRITE_BLOCKING))
             return true;
 
-        client->Fail(std::make_exception_ptr(MakeErrno("write error to translation server")));
+        Fail(std::make_exception_ptr(MakeErrno("write error to translation server")));
         return false;
     }
 
-    client->request.Consume(nbytes);
-    if (client->request.IsEOF()) {
+    request.Consume(nbytes);
+    if (request.IsEOF()) {
         /* the buffer is empty, i.e. the request has been sent */
 
-        stopwatch_event(client->stopwatch, "request");
+        stopwatch_event(stopwatch, "request");
 
-        client->socket.UnscheduleWrite();
-        return client->socket.Read(true);
+        socket.UnscheduleWrite();
+        return socket.Read(true);
     }
 
-    client->socket.ScheduleWrite();
+    socket.ScheduleWrite();
     return true;
 }
 
@@ -238,7 +239,7 @@ translate_client_socket_write(void *ctx)
 {
     TranslateClient *client = (TranslateClient *)ctx;
 
-    return translate_try_write(client);
+    return client->TryWrite();
 }
 
 static void
@@ -315,7 +316,7 @@ try {
                                                 handler, ctx, cancel_ptr);
 
     pool_ref(&client->pool);
-    translate_try_write(client);
+    client->TryWrite();
 } catch (...) {
     lease.ReleaseLease(true);
 
