@@ -237,92 +237,67 @@ HttpServerConnection::TryWrite()
  *
  */
 
-static BufferedResult
-http_server_socket_data(const void *data, size_t length, void *ctx)
+BufferedResult
+HttpServerConnection::OnBufferedData(const void *data, size_t length)
 {
-    auto *connection = (HttpServerConnection *)ctx;
-
-    if (connection->response.pending_drained) {
+    if (response.pending_drained) {
         /* discard all incoming data while we're waiting for the
            (filtered) response to be drained */
-        connection->socket.Consumed(length);
+        socket.Consumed(length);
         return BufferedResult::OK;
     }
 
-    return connection->Feed(data, length);
+    return Feed(data, length);
 }
 
-static DirectResult
-http_server_socket_direct(int fd, FdType fd_type, void *ctx)
+DirectResult
+HttpServerConnection::OnBufferedDirect(int fd, FdType fd_type)
 {
-    auto *connection = (HttpServerConnection *)ctx;
+    assert(request.read_state != Request::END);
+    assert(!response.pending_drained);
 
-    assert(connection->request.read_state != HttpServerConnection::Request::END);
-    assert(!connection->response.pending_drained);
-
-    return connection->TryRequestBodyDirect(fd, fd_type);
+    return TryRequestBodyDirect(fd, fd_type);
 }
 
-static bool
-http_server_socket_write(void *ctx)
+bool
+HttpServerConnection::OnBufferedWrite()
 {
-    auto *connection = (HttpServerConnection *)ctx;
+    assert(!response.pending_drained);
 
-    assert(!connection->response.pending_drained);
+    response.want_write = false;
 
-    connection->response.want_write = false;
-
-    if (!connection->TryWrite())
+    if (!TryWrite())
         return false;
 
-    if (!connection->response.want_write)
-        connection->socket.UnscheduleWrite();
+    if (!response.want_write)
+        socket.UnscheduleWrite();
 
     return true;
 }
 
-static bool
-http_server_socket_drained(void *ctx)
+bool
+HttpServerConnection::OnBufferedDrained()
 {
-    auto *connection = (HttpServerConnection *)ctx;
-
-    if (connection->response.pending_drained) {
-        connection->Done();
+    if (response.pending_drained) {
+        Done();
         return false;
     }
 
     return true;
 }
 
-static bool
-http_server_socket_closed(void *ctx)
+bool
+HttpServerConnection::OnBufferedClosed()
 {
-    auto *connection = (HttpServerConnection *)ctx;
-
-    connection->Cancel();
+    Cancel();
     return false;
 }
 
-static void
-http_server_socket_error(std::exception_ptr ep, void *ctx)
+void
+HttpServerConnection::OnBufferedError(std::exception_ptr ep)
 {
-    auto *connection = (HttpServerConnection *)ctx;
-
-    connection->SocketError(ep);
+    SocketError(ep);
 }
-
-static constexpr BufferedSocketHandler http_server_socket_handler = {
-    .data = http_server_socket_data,
-    .direct = http_server_socket_direct,
-    .closed = http_server_socket_closed,
-    .remaining = nullptr,
-    .end = nullptr,
-    .write = http_server_socket_write,
-    .drained = http_server_socket_drained,
-    .timeout = nullptr,
-    .broken = nullptr,
-    .error = http_server_socket_error,
-};
 
 inline void
 HttpServerConnection::IdleTimeoutCallback()
@@ -358,7 +333,7 @@ HttpServerConnection::HttpServerConnection(struct pool &_pool,
     socket.Init(fd, fd_type,
                 nullptr, &http_server_write_timeout,
                 filter, filter_ctx,
-                http_server_socket_handler, this);
+                *this);
 
     idle_timeout.Add(http_server_idle_timeout);
 

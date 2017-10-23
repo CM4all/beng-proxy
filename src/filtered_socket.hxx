@@ -137,7 +137,7 @@ public:
 /**
  * A wrapper for #BufferedSocket that can filter input and output.
  */
-struct FilteredSocket {
+struct FilteredSocket final : private BufferedSocketHandler {
     BufferedSocket base;
 
 #ifndef NDEBUG
@@ -151,8 +151,7 @@ struct FilteredSocket {
     const SocketFilter *filter;
     void *filter_ctx;
 
-    const BufferedSocketHandler *handler;
-    void *handler_ctx;
+    BufferedSocketHandler *handler;
 
     /**
      * Is there still data in the filter's output?  Once this turns
@@ -172,11 +171,11 @@ struct FilteredSocket {
               const struct timeval *read_timeout,
               const struct timeval *write_timeout,
               const SocketFilter *filter, void *filter_ctx,
-              const BufferedSocketHandler &handler, void *handler_ctx);
+              BufferedSocketHandler &handler);
 
     void Reinit(const struct timeval *read_timeout,
                 const struct timeval *write_timeout,
-                const BufferedSocketHandler &handler, void *handler_ctx);
+                BufferedSocketHandler &handler);
 
     /**
      * Move the socket from another #BufferedSocket instance.  This
@@ -186,7 +185,7 @@ struct FilteredSocket {
     void Init(FilteredSocket &&src,
               const struct timeval *read_timeout,
               const struct timeval *write_timeout,
-              const BufferedSocketHandler &handler, void *handler_ctx);
+              BufferedSocketHandler &handler);
 
     bool HasFilter() const {
         return filter != nullptr;
@@ -501,20 +500,19 @@ struct FilteredSocket {
     BufferedResult InvokeData(const void *data, size_t size) {
         assert(filter != nullptr);
 
-        return handler->data(data, size, handler_ctx);
+        return handler->OnBufferedData(data, size);
     }
 
     bool InvokeClosed() {
         assert(filter != nullptr);
 
-        return handler->closed(handler_ctx);
+        return handler->OnBufferedClosed();
     }
 
     bool InvokeRemaining(size_t remaining) {
         assert(filter != nullptr);
 
-        return handler->remaining == nullptr ||
-            handler->remaining(remaining, handler_ctx);
+        return handler->OnBufferedRemaining(remaining);
     }
 
     void InvokeEnd() {
@@ -526,14 +524,13 @@ struct FilteredSocket {
         ended = true;
 #endif
 
-        if (handler->end != nullptr)
-            handler->end(handler_ctx);
+        handler->OnBufferedEnd();
     }
 
     bool InvokeWrite() {
         assert(filter != nullptr);
 
-        return handler->write(handler_ctx);
+        return handler->OnBufferedWrite();
     }
 
     bool InvokeTimeout();
@@ -541,8 +538,19 @@ struct FilteredSocket {
     void InvokeError(std::exception_ptr e) {
         assert(filter != nullptr);
 
-        handler->error(std::move(e), handler_ctx);
+        handler->OnBufferedError(std::move(e));
     }
+
+private:
+    /* virtual methods from class BufferedSocketHandler */
+    BufferedResult OnBufferedData(const void *buffer, size_t size) override;
+    bool OnBufferedClosed() override;
+    bool OnBufferedRemaining(size_t remaining) override;
+    bool OnBufferedEnd() override;
+    bool OnBufferedWrite() override;
+    bool OnBufferedTimeout() override;
+    enum write_result OnBufferedBroken() override;
+    void OnBufferedError(std::exception_ptr e) override;
 };
 
 #endif

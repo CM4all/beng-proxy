@@ -51,13 +51,12 @@ public:
                         const struct timeval *read_timeout,
                         const struct timeval *write_timeout,
                         const SocketFilter *filter, void *filter_ctx,
-                        const BufferedSocketHandler &handler,
-                        void *handler_ctx)
+                        BufferedSocketHandler &handler)
         :socket(event_loop)
     {
         socket.Init(fd, fd_type, read_timeout, write_timeout,
                     filter, filter_ctx,
-                    handler, handler_ctx);
+                    handler);
         lease_ref.Set(lease);
     }
 

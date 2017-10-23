@@ -67,7 +67,10 @@
 #include <stdio.h>
 #include <unistd.h>
 
-struct FcgiClient final : Cancellable, Istream, IstreamHandler, WithInstanceList<FcgiClient> {
+struct FcgiClient final
+    : BufferedSocketHandler, Cancellable, Istream, IstreamHandler,
+      WithInstanceList<FcgiClient> {
+
     BufferedSocket socket;
 
     struct lease_ref lease_ref;
@@ -237,6 +240,14 @@ struct FcgiClient final : Cancellable, Istream, IstreamHandler, WithInstanceList
      * Consume data from the input buffer.
      */
     BufferedResult ConsumeInput(const uint8_t *data, size_t length);
+
+    /* virtual methods from class BufferedSocketHandler */
+    BufferedResult OnBufferedData(const void *buffer, size_t size) override;
+    bool OnBufferedClosed() override;
+    bool OnBufferedRemaining(size_t remaining) override;
+    bool OnBufferedWrite() override;
+    bool OnBufferedTimeout() override;
+    void OnBufferedError(std::exception_ptr e) override;
 
     /* virtual methods from class Cancellable */
     void Cancel() override;
@@ -921,99 +932,72 @@ FcgiClient::_ConsumeBucketList(size_t nbytes)
  *
  */
 
-static BufferedResult
-fcgi_client_socket_data(const void *buffer, size_t size, void *ctx)
+BufferedResult
+FcgiClient::OnBufferedData(const void *buffer, size_t size)
 {
-    FcgiClient *client = (FcgiClient *)ctx;
-
-    if (client->socket.IsConnected()) {
+    if (socket.IsConnected()) {
         /* check if the #FCGI_END_REQUEST packet can be found in the
            following data chunk */
-        const auto analysis = client->AnalyseBuffer(buffer, size);
+        const auto analysis = AnalyseBuffer(buffer, size);
         if (analysis.end_request_offset > 0)
             /* found it: we no longer need the socket, everything we
                need is already in the given buffer */
-            client->ReleaseSocket(analysis.end_request_offset == size);
+            ReleaseSocket(analysis.end_request_offset == size);
     }
 
-    const ScopePoolRef ref(client->GetPool() TRACE_ARGS);
-    return client->ConsumeInput((const uint8_t *)buffer, size);
+    const ScopePoolRef ref(GetPool() TRACE_ARGS);
+    return ConsumeInput((const uint8_t *)buffer, size);
 }
 
-static bool
-fcgi_client_socket_closed(void *ctx)
+bool
+FcgiClient::OnBufferedClosed()
 {
-    FcgiClient *client = (FcgiClient *)ctx;
-
     /* the rest of the response may already be in the input buffer */
-    client->ReleaseSocket(false);
+    ReleaseSocket(false);
     return true;
 }
 
-static bool
-fcgi_client_socket_remaining(gcc_unused size_t remaining, void *ctx)
+bool
+FcgiClient::OnBufferedRemaining(gcc_unused size_t remaining)
 {
-    gcc_unused
-    FcgiClient *client = (FcgiClient *)ctx;
-
     /* only READ_BODY could have blocked */
-    assert(client->response.read_state == FcgiClient::Response::READ_BODY);
+    assert(response.read_state == Response::READ_BODY);
 
     /* the rest of the response may already be in the input buffer */
     return true;
 }
 
-static bool
-fcgi_client_socket_write(void *ctx)
+bool
+FcgiClient::OnBufferedWrite()
 {
-    FcgiClient *client = (FcgiClient *)ctx;
+    const ScopePoolRef ref(GetPool() TRACE_ARGS);
 
-    const ScopePoolRef ref(client->GetPool() TRACE_ARGS);
+    request.got_data = false;
+    request.input.Read();
 
-    client->request.got_data = false;
-    client->request.input.Read();
-
-    const bool result = client->socket.IsValid();
-    if (result && client->request.input.IsDefined()) {
-        if (client->request.got_data)
-            client->socket.ScheduleWrite();
+    const bool result = socket.IsValid();
+    if (result && request.input.IsDefined()) {
+        if (request.got_data)
+            socket.ScheduleWrite();
         else
-            client->socket.UnscheduleWrite();
+            socket.UnscheduleWrite();
     }
 
     return result;
 }
 
-static bool
-fcgi_client_socket_timeout(void *ctx)
+bool
+FcgiClient::OnBufferedTimeout()
 {
-    FcgiClient *client = (FcgiClient *)ctx;
-
-    client->AbortResponse(std::make_exception_ptr(FcgiClientError("timeout")));
+    AbortResponse(std::make_exception_ptr(FcgiClientError("timeout")));
     return false;
 }
 
-static void
-fcgi_client_socket_error(std::exception_ptr ep, void *ctx)
+void
+FcgiClient::OnBufferedError(std::exception_ptr ep)
 {
-    FcgiClient *client = (FcgiClient *)ctx;
-
-    client->AbortResponse(NestException(ep,
-                                        FcgiClientError("FastCGI socket error")));
+    AbortResponse(NestException(ep, FcgiClientError("FastCGI socket error")));
 }
-
-static constexpr BufferedSocketHandler fcgi_client_socket_handler = {
-    .data = fcgi_client_socket_data,
-    .direct = nullptr,
-    .closed = fcgi_client_socket_closed,
-    .remaining = fcgi_client_socket_remaining,
-    .end = nullptr,
-    .write = fcgi_client_socket_write,
-    .drained = nullptr,
-    .timeout = fcgi_client_socket_timeout,
-    .broken = nullptr,
-    .error = fcgi_client_socket_error,
-};
 
 /*
  * async operation
@@ -1058,7 +1042,7 @@ FcgiClient::FcgiClient(struct pool &_pool, EventLoop &event_loop,
 {
     socket.Init(fd, fd_type,
                 &fcgi_client_timeout, &fcgi_client_timeout,
-                fcgi_client_socket_handler, this);
+                *this);
 
     p_lease_ref_set(lease_ref, lease, GetPool(), "fcgi_client_lease");
 

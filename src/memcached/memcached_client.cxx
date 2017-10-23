@@ -47,7 +47,9 @@
 #include <sys/socket.h>
 #include <string.h>
 
-struct MemcachedClient final : Istream, IstreamHandler, Cancellable {
+struct MemcachedClient final
+    : BufferedSocketHandler, Istream, IstreamHandler, Cancellable {
+
     enum class ReadState {
         HEADER,
         EXTRAS,
@@ -168,6 +170,14 @@ struct MemcachedClient final : Istream, IstreamHandler, Cancellable {
     BufferedResult Feed(const void *data, size_t length);
 
     DirectResult TryReadDirect(int fd, FdType type);
+
+    /* virtual methods from class BufferedSocketHandler */
+    BufferedResult OnBufferedData(const void *buffer, size_t size) override;
+    DirectResult OnBufferedDirect(int fd, FdType fd_type) override;
+    bool OnBufferedClosed() override;
+    bool OnBufferedRemaining(size_t remaining) override;
+    bool OnBufferedWrite() override;
+    void OnBufferedError(std::exception_ptr e) override;
 
     /* virtual methods from class Cancellable */
     void Cancel() override;
@@ -536,87 +546,61 @@ MemcachedClient::TryReadDirect(int fd, FdType type)
  *
  */
 
-/**
- * The libevent callback for sending the request to the socket.
- */
-static bool
-memcached_client_socket_write(void *ctx)
+bool
+MemcachedClient::OnBufferedWrite()
 {
-    auto *client = (MemcachedClient *)ctx;
-    assert(client->response.read_state != MemcachedClient::ReadState::END);
+    assert(response.read_state != ReadState::END);
 
-    const ScopePoolRef ref(client->GetPool() TRACE_ARGS);
+    const ScopePoolRef ref(GetPool() TRACE_ARGS);
 
-    client->request.istream.Read();
+    request.istream.Read();
 
-    return client->socket.IsValid() && client->socket.IsConnected();
+    return socket.IsValid() && socket.IsConnected();
 }
 
-static BufferedResult
-memcached_client_socket_data(const void *buffer, size_t size, void *ctx)
+BufferedResult
+MemcachedClient::OnBufferedData(const void *buffer, size_t size)
 {
-    auto *client = (MemcachedClient *)ctx;
-    assert(client->response.read_state != MemcachedClient::ReadState::END);
+    assert(response.read_state != ReadState::END);
 
-    const ScopePoolRef ref(client->GetPool() TRACE_ARGS);
-    return client->Feed(buffer, size);
+    const ScopePoolRef ref(GetPool() TRACE_ARGS);
+    return Feed(buffer, size);
 }
 
-static DirectResult
-memcached_client_socket_direct(int fd, FdType type, void *ctx)
+DirectResult
+MemcachedClient::OnBufferedDirect(int fd, FdType type)
 {
-    auto *client = (MemcachedClient *)ctx;
-    assert(client->response.read_state == MemcachedClient::ReadState::VALUE);
-    assert(client->response.remaining > 0);
-    assert(client->CheckDirect());
+    assert(response.read_state == ReadState::VALUE);
+    assert(response.remaining > 0);
+    assert(CheckDirect());
 
-    return client->TryReadDirect(fd, type);
+    return TryReadDirect(fd, type);
 }
 
-static bool
-memcached_client_socket_closed(void *ctx)
+bool
+MemcachedClient::OnBufferedClosed()
 {
-    auto *client = (MemcachedClient *)ctx;
-
     /* the rest of the response may already be in the input buffer */
-    client->ReleaseSocket(false);
+    ReleaseSocket(false);
     return true;
 }
 
-static bool
-memcached_client_socket_remaining(gcc_unused size_t remaining, void *ctx)
+bool
+MemcachedClient::OnBufferedRemaining(gcc_unused size_t remaining)
 {
-    gcc_unused
-    auto *client = (MemcachedClient *)ctx;
-
     /* only READ_VALUE could have blocked */
-    assert(client->response.read_state == MemcachedClient::ReadState::VALUE);
+    assert(response.read_state == ReadState::VALUE);
 
     /* the rest of the response may already be in the input buffer */
     return true;
 }
 
-static void
-memcached_client_socket_error(std::exception_ptr ep, void *ctx)
+void
+MemcachedClient::OnBufferedError(std::exception_ptr ep)
 {
-    auto *client = (MemcachedClient *)ctx;
-
-    client->AbortResponse(NestException(ep,
-                                        MemcachedClientError("memcached connection failed")));
+    AbortResponse(NestException(ep,
+                                MemcachedClientError("memcached connection failed")));
 }
-
-static constexpr BufferedSocketHandler memcached_client_socket_handler = {
-    .data = memcached_client_socket_data,
-    .direct = memcached_client_socket_direct,
-    .closed = memcached_client_socket_closed,
-    .remaining = memcached_client_socket_remaining,
-    .end = nullptr,
-    .write = memcached_client_socket_write,
-    .drained = nullptr,
-    .timeout = nullptr,
-    .broken = nullptr,
-    .error = memcached_client_socket_error,
-};
 
 /*
  * istream handler for the request
@@ -713,7 +697,7 @@ MemcachedClient::MemcachedClient(struct pool &_pool, EventLoop &event_loop,
 {
     socket.Init(fd, fd_type,
                 nullptr, &memcached_client_timeout,
-                memcached_client_socket_handler, this);
+                *this);
 
     p_lease_ref_set(lease_ref, lease, GetPool(), "memcached_client_lease");
 

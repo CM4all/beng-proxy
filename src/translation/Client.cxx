@@ -51,7 +51,7 @@
 
 static const uint8_t PROTOCOL_VERSION = 3;
 
-struct TranslateClient final : Cancellable {
+struct TranslateClient final : BufferedSocketHandler, Cancellable {
     struct pool &pool;
 
     Stopwatch *const stopwatch;
@@ -87,6 +87,25 @@ struct TranslateClient final : Cancellable {
 
     BufferedResult Feed(const uint8_t *data, size_t length);
     bool TryWrite();
+
+    /* virtual methods from class BufferedSocketHandler */
+    BufferedResult OnBufferedData(const void *buffer, size_t size) override {
+        return Feed((const uint8_t *)buffer, size);
+    }
+
+    bool OnBufferedClosed() override {
+        ReleaseSocket(false);
+        return true;
+    }
+
+    bool OnBufferedWrite() override {
+        return TryWrite();
+    }
+
+    void OnBufferedError(std::exception_ptr ep) override {
+        Fail(NestException(ep,
+                           std::runtime_error("Translation server connection failed")));
+    }
 
     /* virtual methods from class Cancellable */
     void Cancel() override {
@@ -211,59 +230,6 @@ TranslateClient::TryWrite()
     return true;
 }
 
-
-/*
- * buffered_socket handler
- *
- */
-
-static BufferedResult
-translate_client_socket_data(const void *buffer, size_t size, void *ctx)
-{
-    TranslateClient *client = (TranslateClient *)ctx;
-
-    return client->Feed((const uint8_t *)buffer, size);
-}
-
-static bool
-translate_client_socket_closed(void *ctx)
-{
-    TranslateClient *client = (TranslateClient *)ctx;
-
-    client->ReleaseSocket(false);
-    return true;
-}
-
-static bool
-translate_client_socket_write(void *ctx)
-{
-    TranslateClient *client = (TranslateClient *)ctx;
-
-    return client->TryWrite();
-}
-
-static void
-translate_client_socket_error(std::exception_ptr ep, void *ctx)
-{
-    TranslateClient *client = (TranslateClient *)ctx;
-
-    client->Fail(NestException(ep,
-                               std::runtime_error("Translation server connection failed")));
-}
-
-static constexpr BufferedSocketHandler translate_client_socket_handler = {
-    .data = translate_client_socket_data,
-    .direct = nullptr,
-    .closed = translate_client_socket_closed,
-    .remaining = nullptr,
-    .end = nullptr,
-    .write = translate_client_socket_write,
-    .drained = nullptr,
-    .timeout = nullptr,
-    .broken = nullptr,
-    .error = translate_client_socket_error,
-};
-
 /*
  * constructor
  *
@@ -286,7 +252,7 @@ TranslateClient::TranslateClient(struct pool &p, EventLoop &event_loop,
     socket.Init(fd, FdType::FD_SOCKET,
                 &translate_read_timeout,
                 &translate_write_timeout,
-                translate_client_socket_handler, this);
+                *this);
     p_lease_ref_set(lease_ref, lease, p, "translate_lease");
 
     cancel_ptr = *this;

@@ -46,7 +46,7 @@
 #include "util/Cancellable.hxx"
 #include "util/Exception.hxx"
 
-struct HttpServerConnection final : IstreamHandler {
+struct HttpServerConnection final : BufferedSocketHandler, IstreamHandler {
     enum class BucketResult {
         MORE,
         BLOCKING,
@@ -320,6 +320,14 @@ struct HttpServerConnection final : IstreamHandler {
     void ProtocolError(const char *msg) {
         Error(std::make_exception_ptr(SocketProtocolError(msg)));
     }
+
+    /* virtual methods from class BufferedSocketHandler */
+    BufferedResult OnBufferedData(const void *buffer, size_t size) override;
+    DirectResult OnBufferedDirect(int fd, FdType fd_type) override;
+    bool OnBufferedClosed() override;
+    bool OnBufferedWrite() override;
+    bool OnBufferedDrained() override;
+    void OnBufferedError(std::exception_ptr e) override;
 
     /* virtual methods from class IstreamHandler */
     size_t OnData(const void *data, size_t length) override;

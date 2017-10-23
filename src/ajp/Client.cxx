@@ -66,7 +66,9 @@
 #include <errno.h>
 #include <limits.h>
 
-struct AjpClient final : Istream, IstreamHandler, Cancellable {
+struct AjpClient final
+    : BufferedSocketHandler, Istream, IstreamHandler, Cancellable {
+
     /* I/O */
     BufferedSocket socket;
     struct lease_ref lease_ref;
@@ -208,6 +210,13 @@ struct AjpClient final : Istream, IstreamHandler, Cancellable {
      * Handle the remaining data in the input buffer.
      */
     BufferedResult Feed(const uint8_t *data, const size_t length);
+
+    /* virtual methods from class BufferedSocketHandler */
+    BufferedResult OnBufferedData(const void *buffer, size_t size) override;
+    bool OnBufferedClosed() override;
+    bool OnBufferedRemaining(size_t remaining) override;
+    bool OnBufferedWrite() override;
+    void OnBufferedError(std::exception_ptr e) override;
 
     /* virtual methods from class Cancellable */
     void Cancel() override;
@@ -725,81 +734,55 @@ AjpClient::OnError(std::exception_ptr ep) noexcept
  *
  */
 
-static BufferedResult
-ajp_client_socket_data(const void *buffer, size_t size, void *ctx)
+BufferedResult
+AjpClient::OnBufferedData(const void *buffer, size_t size)
 {
-    AjpClient *client = (AjpClient *)ctx;
-
-    const ScopePoolRef ref(client->GetPool() TRACE_ARGS);
-    return client->Feed((const uint8_t *)buffer, size);
+    const ScopePoolRef ref(GetPool() TRACE_ARGS);
+    return Feed((const uint8_t *)buffer, size);
 }
 
-static bool
-ajp_client_socket_closed(void *ctx)
+bool
+AjpClient::OnBufferedClosed()
 {
-    AjpClient *client = (AjpClient *)ctx;
-
     /* the rest of the response may already be in the input buffer */
-    client->ReleaseSocket(false);
+    ReleaseSocket(false);
     return true;
 }
 
-static bool
-ajp_client_socket_remaining(gcc_unused size_t remaining, void *ctx)
+bool
+AjpClient::OnBufferedRemaining(gcc_unused size_t remaining)
 {
-    gcc_unused
-    AjpClient *client = (AjpClient *)ctx;
-
     /* only READ_BODY could have blocked */
-    assert(client->response.read_state == AjpClient::Response::READ_BODY);
+    assert(response.read_state == Response::READ_BODY);
 
     /* the rest of the response may already be in the input buffer */
     return true;
 }
 
-static bool
-ajp_client_socket_write(void *ctx)
+bool
+AjpClient::OnBufferedWrite()
 {
-    AjpClient *client = (AjpClient *)ctx;
+    const ScopePoolRef ref(GetPool() TRACE_ARGS);
 
-    const ScopePoolRef ref(client->GetPool() TRACE_ARGS);
+    request.got_data = false;
+    request.istream.Read();
 
-    client->request.got_data = false;
-    client->request.istream.Read();
-
-    const bool result = client->socket.IsValid() &&
-        client->socket.IsConnected();
-    if (result && client->request.istream.IsDefined()) {
-        if (client->request.got_data)
-            client->ScheduleWrite();
+    const bool result = socket.IsValid() && socket.IsConnected();
+    if (result && request.istream.IsDefined()) {
+        if (request.got_data)
+            ScheduleWrite();
         else
-            client->socket.UnscheduleWrite();
+            socket.UnscheduleWrite();
     }
 
     return result;
 }
 
-static void
-ajp_client_socket_error(std::exception_ptr ep, void *ctx)
+void
+AjpClient::OnBufferedError(std::exception_ptr ep)
 {
-    AjpClient *client = (AjpClient *)ctx;
-
-    client->AbortResponse(NestException(ep,
-                                        AjpClientError("AJP connection failed")));
+    AbortResponse(NestException(ep, AjpClientError("AJP connection failed")));
 }
-
-static constexpr BufferedSocketHandler ajp_client_socket_handler = {
-    .data = ajp_client_socket_data,
-    .direct = nullptr,
-    .closed = ajp_client_socket_closed,
-    .remaining = ajp_client_socket_remaining,
-    .end = nullptr,
-    .write = ajp_client_socket_write,
-    .drained = nullptr,
-    .timeout = nullptr,
-    .broken = nullptr,
-    .error = ajp_client_socket_error,
-};
 
 void
 AjpClient::Cancel()
@@ -827,7 +810,7 @@ AjpClient::AjpClient(struct pool &p, EventLoop &event_loop,
 {
     socket.Init(fd, fd_type,
                 &ajp_client_timeout, &ajp_client_timeout,
-                ajp_client_socket_handler, this);
+                *this);
 
     p_lease_ref_set(lease_ref, lease,
                     p, "ajp_client_lease");

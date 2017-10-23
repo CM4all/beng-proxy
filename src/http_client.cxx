@@ -97,7 +97,7 @@ static constexpr struct timeval http_client_timeout = {
     .tv_usec = 0,
 };
 
-struct HttpClient final : IstreamHandler, Cancellable {
+struct HttpClient final : BufferedSocketHandler, IstreamHandler, Cancellable {
     enum class BucketResult {
         MORE,
         BLOCKING,
@@ -352,6 +352,15 @@ struct HttpClient final : IstreamHandler, Cancellable {
     BufferedResult Feed(const void *data, size_t length);
 
     DirectResult TryResponseDirect(int fd, FdType fd_type);
+
+    /* virtual methods from class BufferedSocketHandler */
+    BufferedResult OnBufferedData(const void *buffer, size_t size) override;
+    DirectResult OnBufferedDirect(int fd, FdType fd_type) override;
+    bool OnBufferedClosed() override;
+    bool OnBufferedRemaining(size_t remaining) override;
+    bool OnBufferedWrite() override;
+    enum write_result OnBufferedBroken() override;
+    void OnBufferedError(std::exception_ptr e) override;
 
     /* virtual methods from class Cancellable */
     void Cancel() override;
@@ -1048,67 +1057,57 @@ HttpClient::Feed(const void *data, size_t length)
  *
  */
 
-static BufferedResult
-http_client_socket_data(const void *buffer, size_t size, void *ctx)
+BufferedResult
+HttpClient::OnBufferedData(const void *buffer, size_t size)
 {
-    HttpClient *client = (HttpClient *)ctx;
-
-    return client->Feed(buffer, size);
+    return Feed(buffer, size);
 }
 
-static DirectResult
-http_client_socket_direct(int fd, FdType fd_type, void *ctx)
+DirectResult
+HttpClient::OnBufferedDirect(int fd, FdType fd_type)
 {
-    HttpClient *client = (HttpClient *)ctx;
-
-    return client->TryResponseDirect(fd, fd_type);
+    return TryResponseDirect(fd, fd_type);
 
 }
 
-static bool
-http_client_socket_closed(void *ctx)
+bool
+HttpClient::OnBufferedClosed()
 {
-    HttpClient *client = (HttpClient *)ctx;
+    stopwatch_event(stopwatch, "end");
 
-    stopwatch_event(client->stopwatch, "end");
-
-    if (client->request.istream.IsDefined())
-        client->request.istream.ClearAndClose();
+    if (request.istream.IsDefined())
+        request.istream.ClearAndClose();
 
     /* can't reuse the socket, it was closed by the peer */
-    client->ReleaseSocket(false);
+    ReleaseSocket(false);
 
     return true;
 }
 
-static bool
-http_client_socket_remaining(size_t remaining, void *ctx)
+bool
+HttpClient::OnBufferedRemaining(size_t remaining)
 {
-    HttpClient *client = (HttpClient *)ctx;
-
-    if (client->response.state < HttpClient::Response::State::BODY)
+    if (response.state < Response::State::BODY)
         /* this information comes too early, we can't use it */
         return true;
 
-    if (client->response_body_reader.SocketEOF(remaining)) {
+    if (response_body_reader.SocketEOF(remaining)) {
         /* there's data left in the buffer: continue serving the
            buffer */
         return true;
     } else {
         /* finished: close the HTTP client */
-        client->Release(false);
+        Release(false);
         return false;
     }
 }
 
-static bool
-http_client_socket_write(void *ctx)
+bool
+HttpClient::OnBufferedWrite()
 {
-    HttpClient *client = (HttpClient *)ctx;
+    request.got_data = false;
 
-    client->request.got_data = false;
-
-    switch (client->TryWriteBuckets()) {
+    switch (TryWriteBuckets()) {
     case HttpClient::BucketResult::MORE:
         break;
 
@@ -1120,64 +1119,46 @@ http_client_socket_write(void *ctx)
         return false;
     }
 
-    const ScopePoolRef ref(client->GetPool() TRACE_ARGS);
+    const ScopePoolRef ref(GetPool() TRACE_ARGS);
 
-    client->request.istream.Read();
+    request.istream.Read();
 
-    const bool result = client->IsValid() && client->IsConnected();
-    if (result && client->request.istream.IsDefined()) {
-        if (client->request.got_data)
-            client->ScheduleWrite();
+    const bool result = IsValid() && IsConnected();
+    if (result && request.istream.IsDefined()) {
+        if (request.got_data)
+            ScheduleWrite();
         else
-            client->socket.UnscheduleWrite();
+            socket.UnscheduleWrite();
     }
 
     return result;
 }
 
-static enum write_result
-http_client_socket_broken(void *ctx)
+enum write_result
+HttpClient::OnBufferedBroken()
 {
-    HttpClient *client = (HttpClient *)ctx;
-
     /* the server has closed the connection, probably because he's not
        interested in our request body - that's ok; now we wait for his
        response */
 
-    client->keep_alive = false;
+    keep_alive = false;
 
-    if (client->request.istream.IsDefined())
-        client->request.istream.ClearAndClose();
+    if (request.istream.IsDefined())
+        request.istream.ClearAndClose();
 
-    client->socket.ScheduleReadNoTimeout(true);
+    socket.ScheduleReadNoTimeout(true);
 
     return WRITE_BROKEN;
 }
 
-static void
-http_client_socket_error(std::exception_ptr ep, void *ctx)
+void
+HttpClient::OnBufferedError(std::exception_ptr ep)
 {
-    HttpClient *client = (HttpClient *)ctx;
-
-    stopwatch_event(client->stopwatch, "error");
-    client->AbortResponse(NestException(ep,
-                                        HttpClientError(HttpClientErrorCode::IO,
-                                                        "HTTP client socket error")));
+    stopwatch_event(stopwatch, "error");
+    AbortResponse(NestException(ep,
+                                HttpClientError(HttpClientErrorCode::IO,
+                                                "HTTP client socket error")));
 }
-
-static constexpr BufferedSocketHandler http_client_socket_handler = {
-    .data = http_client_socket_data,
-    .direct = http_client_socket_direct,
-    .closed = http_client_socket_closed,
-    .remaining = http_client_socket_remaining,
-    .end = nullptr,
-    .write = http_client_socket_write,
-    .drained = nullptr,
-    .timeout = nullptr,
-    .broken = http_client_socket_broken,
-    .error = http_client_socket_error,
-};
-
 
 /*
  * istream handler for the request
@@ -1309,7 +1290,7 @@ HttpClient::HttpClient(struct pool &_caller_pool, struct pool &_pool,
      socket(event_loop, fd, fd_type, lease,
             nullptr, &http_client_timeout,
             filter, filter_ctx,
-            http_client_socket_handler, this),
+            *this),
      request(handler),
      response(_caller_pool),
      response_body_reader(_pool)

@@ -43,85 +43,55 @@
  *
  */
 
-static BufferedResult
-filtered_socket_bs_data(const void *buffer, size_t size, void *ctx)
+BufferedResult
+FilteredSocket::OnBufferedData(const void *buffer, size_t size)
 {
-    FilteredSocket *s = (FilteredSocket *)ctx;
-
-    return s->filter->data(buffer, size, s->filter_ctx);
+    return filter->data(buffer, size, filter_ctx);
 }
 
-static bool
-filtered_socket_bs_closed(void *ctx)
+bool
+FilteredSocket::OnBufferedClosed()
 {
-    FilteredSocket *s = (FilteredSocket *)ctx;
-
-    return s->InvokeClosed();
+    return InvokeClosed();
 }
 
-static bool
-filtered_socket_bs_remaining(size_t remaining, void *ctx)
+bool
+FilteredSocket::OnBufferedRemaining(size_t remaining)
 {
-    FilteredSocket *s = (FilteredSocket *)ctx;
-
-    return s->filter->remaining(remaining, s->filter_ctx);
+    return filter->remaining(remaining, filter_ctx);
 }
 
-static bool
-filtered_socket_bs_write(void *ctx)
+bool
+FilteredSocket::OnBufferedWrite()
 {
-    FilteredSocket *s = (FilteredSocket *)ctx;
-
-    return s->filter->internal_write(s->filter_ctx);
+    return filter->internal_write(filter_ctx);
 }
 
-static void
-filtered_socket_bs_end(void *ctx)
+bool
+FilteredSocket::OnBufferedEnd()
 {
-    FilteredSocket *s = (FilteredSocket *)ctx;
-
-    s->filter->end(s->filter_ctx);
+    filter->end(filter_ctx);
+    return true;
 }
 
-static bool
-filtered_socket_bs_timeout(void *ctx)
+bool
+FilteredSocket::OnBufferedTimeout()
 {
-    FilteredSocket *s = (FilteredSocket *)ctx;
-
     // TODO: let handler intercept this call
-    return s->InvokeTimeout();
+    return InvokeTimeout();
 }
 
-static enum write_result
-filtered_socket_bs_broken(void *ctx)
+enum write_result
+FilteredSocket::OnBufferedBroken()
 {
-    FilteredSocket *s = (FilteredSocket *)ctx;
-
-    return s->handler->broken != nullptr
-        ? s->handler->broken(s->handler_ctx)
-        : WRITE_ERRNO;
+    return handler->OnBufferedBroken();
 }
 
-static void
-filtered_socket_bs_error(std::exception_ptr ep, void *ctx)
+void
+FilteredSocket::OnBufferedError(std::exception_ptr ep)
 {
-    FilteredSocket *s = (FilteredSocket *)ctx;
-
-    s->handler->error(ep, s->handler_ctx);
+    handler->OnBufferedError(ep);
 }
-
-static constexpr BufferedSocketHandler filtered_socket_bs_handler = {
-    .data = filtered_socket_bs_data,
-    .direct = nullptr,
-    .closed = filtered_socket_bs_closed,
-    .remaining = filtered_socket_bs_remaining,
-    .end = filtered_socket_bs_end,
-    .write = filtered_socket_bs_write,
-    .drained = nullptr,
-    .timeout = filtered_socket_bs_timeout,
-    .broken = filtered_socket_bs_broken,
-    .error = filtered_socket_bs_error,
-};
 
 /*
  * constructor
@@ -133,10 +103,9 @@ FilteredSocket::Init(SocketDescriptor fd, FdType fd_type,
                      const struct timeval *read_timeout,
                      const struct timeval *write_timeout,
                      const SocketFilter *_filter, void *_filter_ctx,
-                     const BufferedSocketHandler &__handler,
-                     void *_handler_ctx)
+                     BufferedSocketHandler &__handler)
 {
-    const BufferedSocketHandler *_handler = &__handler;
+    BufferedSocketHandler *_handler = &__handler;
 
     filter = _filter;
     filter_ctx = _filter_ctx;
@@ -155,15 +124,13 @@ FilteredSocket::Init(SocketDescriptor fd, FdType fd_type,
         assert(filter->close != nullptr);
 
         handler = _handler;
-        handler_ctx = _handler_ctx;
 
-        _handler = &filtered_socket_bs_handler;
-        _handler_ctx = this;
+        _handler = this;
     }
 
     base.Init(fd, fd_type,
               read_timeout, write_timeout,
-              *_handler, _handler_ctx);
+              *_handler);
 
 #ifndef NDEBUG
     ended = false;
@@ -178,31 +145,27 @@ FilteredSocket::Init(SocketDescriptor fd, FdType fd_type,
 void
 FilteredSocket::Reinit(const struct timeval *read_timeout,
                        const struct timeval *write_timeout,
-                       const BufferedSocketHandler &__handler,
-                       void *_handler_ctx)
+                       BufferedSocketHandler &__handler)
 {
-    const BufferedSocketHandler *_handler = &__handler;
+    BufferedSocketHandler *_handler = &__handler;
 
     if (filter != nullptr) {
         handler = _handler;
-        handler_ctx = _handler_ctx;
 
-        _handler = &filtered_socket_bs_handler;
-        _handler_ctx = this;
+        _handler = this;
     }
 
     base.Reinit(read_timeout, write_timeout,
-                *_handler, _handler_ctx);
+                *_handler);
 }
 
 void
 FilteredSocket::Init(FilteredSocket &&src,
                      const struct timeval *read_timeout,
                      const struct timeval *write_timeout,
-                     const BufferedSocketHandler &__handler,
-                     void *_handler_ctx)
+                     BufferedSocketHandler &__handler)
 {
-    const BufferedSocketHandler *_handler = &__handler;
+    BufferedSocketHandler *_handler = &__handler;
 
     /* steal the filter */
     filter = src.filter;
@@ -223,15 +186,12 @@ FilteredSocket::Init(FilteredSocket &&src,
         assert(filter->close != nullptr);
 
         handler = _handler;
-        handler_ctx = _handler_ctx;
-
-        _handler = &filtered_socket_bs_handler;
-        _handler_ctx = this;
+        _handler = this;
     }
 
     base.Init(std::move(src.base),
               read_timeout, write_timeout,
-              *_handler, _handler_ctx);
+              *_handler);
 
 #ifndef NDEBUG
     ended = false;
@@ -319,21 +279,15 @@ FilteredSocket::InternalDrained()
     assert(filter != nullptr);
     assert(IsConnected());
 
-    if (drained || handler->drained == nullptr)
+    if (drained)
         return true;
 
     drained = true;
-    return handler->drained(handler_ctx);
+    return handler->OnBufferedDrained();
 }
 
 bool
 FilteredSocket::InvokeTimeout()
 {
-    if (handler->timeout != nullptr)
-        return handler->timeout(handler_ctx);
-    else {
-        handler->error(std::make_exception_ptr(std::runtime_error("Timeout")),
-                       handler_ctx);
-        return false;
-    }
+    return handler->OnBufferedTimeout();
 }

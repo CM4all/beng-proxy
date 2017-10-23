@@ -81,7 +81,7 @@ class LbTcpConnection final
     const LazyDomainLogger logger;
 
 public:
-    struct Inbound {
+    struct Inbound final : BufferedSocketHandler {
         FilteredSocket socket;
 
         Inbound(EventLoop &event_loop,
@@ -94,19 +94,39 @@ public:
             socket.ScheduleReadNoTimeout(false);
             socket.SetHandshakeCallback(callback);
         }
+
+    private:
+        /* virtual methods from class BufferedSocketHandler */
+        BufferedResult OnBufferedData(const void *buffer, size_t size) override;
+        // TODO: DirectResult OnBufferedDirect(int fd, FdType fd_type) override;
+        bool OnBufferedClosed() override;
+        bool OnBufferedWrite() override;
+        bool OnBufferedDrained() override;
+        enum write_result OnBufferedBroken() override;
+        void OnBufferedError(std::exception_ptr e) override;
     } inbound;
 
     static constexpr LbTcpConnection &FromInbound(Inbound &i) {
         return ContainerCast(i, &LbTcpConnection::inbound);
     }
 
-    struct Outbound {
+    struct Outbound final : BufferedSocketHandler {
         BufferedSocket socket;
 
         explicit Outbound(EventLoop &event_loop)
             :socket(event_loop) {}
 
         void Destroy();
+
+    private:
+        /* virtual methods from class BufferedSocketHandler */
+        BufferedResult OnBufferedData(const void *buffer, size_t size) override;
+        // TODO: DirectResult OnBufferedDirect(int fd, FdType fd_type) override;
+        bool OnBufferedClosed() override;
+        bool OnBufferedEnd() override;
+        bool OnBufferedWrite() override;
+        enum write_result OnBufferedBroken() override;
+        void OnBufferedError(std::exception_ptr e) override;
     } outbound;
 
     static constexpr LbTcpConnection &FromOutbound(Outbound &o) {
