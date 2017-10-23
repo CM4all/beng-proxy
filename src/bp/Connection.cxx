@@ -41,7 +41,7 @@
 #include "access_log/Glue.hxx"
 #include "drop.hxx"
 #include "address_string.hxx"
-#include "SocketProtocolError.hxx"
+#include "net/SocketProtocolError.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/StaticSocketAddress.hxx"

@@ -31,8 +31,8 @@
  */
 
 #include "buffered_socket.hxx"
-#include "SocketProtocolError.hxx"
 #include "system/Error.hxx"
+#include "net/SocketProtocolError.hxx"
 #include "util/ConstBuffer.hxx"
 
 #include <utility>

@@ -37,7 +37,7 @@
 #include "http_server.hxx"
 #include "http_body.hxx"
 #include "filtered_socket.hxx"
-#include "SocketProtocolError.hxx"
+#include "net/SocketProtocolError.hxx"
 #include "net/SocketAddress.hxx"
 #include "event/TimerEvent.hxx"
 #include "event/DeferEvent.hxx"
