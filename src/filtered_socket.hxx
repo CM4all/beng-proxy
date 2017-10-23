@@ -33,7 +33,7 @@
 #ifndef BENG_PROXY_FILTERED_SOCKET_HXX
 #define BENG_PROXY_FILTERED_SOCKET_HXX
 
-#include "buffered_socket.hxx"
+#include "event/net/BufferedSocket.hxx"
 #include "util/BindMethod.hxx"
 
 #include <pthread.h>

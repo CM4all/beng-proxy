@@ -32,7 +32,6 @@
 
 #include "http_body.hxx"
 #include "istream/istream_dechunk.hxx"
-#include "buffered_socket.hxx"
 
 #include <limits.h>
 

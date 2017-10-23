@@ -35,7 +35,7 @@
 #include "translation/Parser.hxx"
 #include "translation/Request.hxx"
 #include "translation/Handler.hxx"
-#include "buffered_socket.hxx"
+#include "event/net/BufferedSocket.hxx"
 #include "please.hxx"
 #include "stopwatch.hxx"
 #include "pool.hxx"
