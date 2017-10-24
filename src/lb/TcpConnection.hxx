@@ -99,11 +99,11 @@ public:
         /* virtual methods from class BufferedSocketHandler */
         BufferedResult OnBufferedData(const void *buffer, size_t size) override;
         // TODO: DirectResult OnBufferedDirect(int fd, FdType fd_type) override;
-        bool OnBufferedClosed() override;
+        bool OnBufferedClosed() noexcept override;
         bool OnBufferedWrite() override;
-        bool OnBufferedDrained() override;
-        enum write_result OnBufferedBroken() override;
-        void OnBufferedError(std::exception_ptr e) override;
+        bool OnBufferedDrained() noexcept override;
+        enum write_result OnBufferedBroken() noexcept override;
+        void OnBufferedError(std::exception_ptr e) noexcept override;
     } inbound;
 
     static constexpr LbTcpConnection &FromInbound(Inbound &i) {
@@ -122,11 +122,11 @@ public:
         /* virtual methods from class BufferedSocketHandler */
         BufferedResult OnBufferedData(const void *buffer, size_t size) override;
         // TODO: DirectResult OnBufferedDirect(int fd, FdType fd_type) override;
-        bool OnBufferedClosed() override;
-        bool OnBufferedEnd() override;
+        bool OnBufferedClosed() noexcept override;
+        bool OnBufferedEnd() noexcept override;
         bool OnBufferedWrite() override;
-        enum write_result OnBufferedBroken() override;
-        void OnBufferedError(std::exception_ptr e) override;
+        enum write_result OnBufferedBroken() noexcept override;
+        void OnBufferedError(std::exception_ptr e) noexcept override;
     } outbound;
 
     static constexpr LbTcpConnection &FromOutbound(Outbound &o) {

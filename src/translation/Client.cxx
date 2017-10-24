@@ -93,7 +93,7 @@ struct TranslateClient final : BufferedSocketHandler, Cancellable {
         return Feed((const uint8_t *)buffer, size);
     }
 
-    bool OnBufferedClosed() override {
+    bool OnBufferedClosed() noexcept override {
         ReleaseSocket(false);
         return true;
     }
@@ -102,7 +102,7 @@ struct TranslateClient final : BufferedSocketHandler, Cancellable {
         return TryWrite();
     }
 
-    void OnBufferedError(std::exception_ptr ep) override {
+    void OnBufferedError(std::exception_ptr ep) noexcept override {
         Fail(NestException(ep,
                            std::runtime_error("Translation server connection failed")));
     }

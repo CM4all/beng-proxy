@@ -356,11 +356,11 @@ struct HttpClient final : BufferedSocketHandler, IstreamHandler, Cancellable {
     /* virtual methods from class BufferedSocketHandler */
     BufferedResult OnBufferedData(const void *buffer, size_t size) override;
     DirectResult OnBufferedDirect(int fd, FdType fd_type) override;
-    bool OnBufferedClosed() override;
-    bool OnBufferedRemaining(size_t remaining) override;
+    bool OnBufferedClosed() noexcept override;
+    bool OnBufferedRemaining(size_t remaining) noexcept override;
     bool OnBufferedWrite() override;
-    enum write_result OnBufferedBroken() override;
-    void OnBufferedError(std::exception_ptr e) override;
+    enum write_result OnBufferedBroken() noexcept override;
+    void OnBufferedError(std::exception_ptr e) noexcept override;
 
     /* virtual methods from class Cancellable */
     void Cancel() override;
@@ -1071,7 +1071,7 @@ HttpClient::OnBufferedDirect(int fd, FdType fd_type)
 }
 
 bool
-HttpClient::OnBufferedClosed()
+HttpClient::OnBufferedClosed() noexcept
 {
     stopwatch_event(stopwatch, "end");
 
@@ -1085,7 +1085,7 @@ HttpClient::OnBufferedClosed()
 }
 
 bool
-HttpClient::OnBufferedRemaining(size_t remaining)
+HttpClient::OnBufferedRemaining(size_t remaining) noexcept
 {
     if (response.state < Response::State::BODY)
         /* this information comes too early, we can't use it */
@@ -1135,7 +1135,7 @@ HttpClient::OnBufferedWrite()
 }
 
 enum write_result
-HttpClient::OnBufferedBroken()
+HttpClient::OnBufferedBroken() noexcept
 {
     /* the server has closed the connection, probably because he's not
        interested in our request body - that's ok; now we wait for his
@@ -1152,7 +1152,7 @@ HttpClient::OnBufferedBroken()
 }
 
 void
-HttpClient::OnBufferedError(std::exception_ptr ep)
+HttpClient::OnBufferedError(std::exception_ptr ep) noexcept
 {
     stopwatch_event(stopwatch, "error");
     AbortResponse(NestException(ep,

@@ -135,7 +135,7 @@ LbTcpConnection::Inbound::OnBufferedData(const void *buffer, size_t size)
 }
 
 bool
-LbTcpConnection::Inbound::OnBufferedClosed()
+LbTcpConnection::Inbound::OnBufferedClosed() noexcept
 {
     auto &tcp = LbTcpConnection::FromInbound(*this);
 
@@ -160,7 +160,7 @@ LbTcpConnection::Inbound::OnBufferedWrite()
 }
 
 bool
-LbTcpConnection::Inbound::OnBufferedDrained()
+LbTcpConnection::Inbound::OnBufferedDrained() noexcept
 {
     auto &tcp = LbTcpConnection::FromInbound(*this);
 
@@ -177,7 +177,7 @@ LbTcpConnection::Inbound::OnBufferedDrained()
 }
 
 enum write_result
-LbTcpConnection::Inbound::OnBufferedBroken()
+LbTcpConnection::Inbound::OnBufferedBroken() noexcept
 {
     auto &tcp = LbTcpConnection::FromInbound(*this);
 
@@ -187,7 +187,7 @@ LbTcpConnection::Inbound::OnBufferedBroken()
 }
 
 void
-LbTcpConnection::Inbound::OnBufferedError(std::exception_ptr ep)
+LbTcpConnection::Inbound::OnBufferedError(std::exception_ptr ep) noexcept
 {
     auto &tcp = LbTcpConnection::FromInbound(*this);
 
@@ -246,14 +246,14 @@ LbTcpConnection::Outbound::OnBufferedData(const void *buffer, size_t size)
 }
 
 bool
-LbTcpConnection::Outbound::OnBufferedClosed()
+LbTcpConnection::Outbound::OnBufferedClosed() noexcept
 {
     socket.Close();
     return true;
 }
 
 bool
-LbTcpConnection::Outbound::OnBufferedEnd()
+LbTcpConnection::Outbound::OnBufferedEnd() noexcept
 {
     auto &tcp = LbTcpConnection::FromOutbound(*this);
 
@@ -291,7 +291,7 @@ LbTcpConnection::Outbound::OnBufferedWrite()
 }
 
 enum write_result
-LbTcpConnection::Outbound::OnBufferedBroken()
+LbTcpConnection::Outbound::OnBufferedBroken() noexcept
 {
     auto &tcp = LbTcpConnection::FromOutbound(*this);
 
@@ -301,7 +301,7 @@ LbTcpConnection::Outbound::OnBufferedBroken()
 }
 
 void
-LbTcpConnection::Outbound::OnBufferedError(std::exception_ptr ep)
+LbTcpConnection::Outbound::OnBufferedError(std::exception_ptr ep) noexcept
 {
     auto &tcp = LbTcpConnection::FromOutbound(*this);
 

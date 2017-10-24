@@ -324,10 +324,10 @@ struct HttpServerConnection final : BufferedSocketHandler, IstreamHandler {
     /* virtual methods from class BufferedSocketHandler */
     BufferedResult OnBufferedData(const void *buffer, size_t size) override;
     DirectResult OnBufferedDirect(int fd, FdType fd_type) override;
-    bool OnBufferedClosed() override;
+    bool OnBufferedClosed() noexcept override;
     bool OnBufferedWrite() override;
-    bool OnBufferedDrained() override;
-    void OnBufferedError(std::exception_ptr e) override;
+    bool OnBufferedDrained() noexcept override;
+    void OnBufferedError(std::exception_ptr e) noexcept override;
 
     /* virtual methods from class IstreamHandler */
     size_t OnData(const void *data, size_t length) override;

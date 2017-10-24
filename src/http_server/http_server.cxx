@@ -276,7 +276,7 @@ HttpServerConnection::OnBufferedWrite()
 }
 
 bool
-HttpServerConnection::OnBufferedDrained()
+HttpServerConnection::OnBufferedDrained() noexcept
 {
     if (response.pending_drained) {
         Done();
@@ -287,14 +287,14 @@ HttpServerConnection::OnBufferedDrained()
 }
 
 bool
-HttpServerConnection::OnBufferedClosed()
+HttpServerConnection::OnBufferedClosed() noexcept
 {
     Cancel();
     return false;
 }
 
 void
-HttpServerConnection::OnBufferedError(std::exception_ptr ep)
+HttpServerConnection::OnBufferedError(std::exception_ptr ep) noexcept
 {
     SocketError(ep);
 }

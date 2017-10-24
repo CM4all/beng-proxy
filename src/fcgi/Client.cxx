@@ -243,11 +243,11 @@ struct FcgiClient final
 
     /* virtual methods from class BufferedSocketHandler */
     BufferedResult OnBufferedData(const void *buffer, size_t size) override;
-    bool OnBufferedClosed() override;
-    bool OnBufferedRemaining(size_t remaining) override;
+    bool OnBufferedClosed() noexcept override;
+    bool OnBufferedRemaining(size_t remaining) noexcept override;
     bool OnBufferedWrite() override;
-    bool OnBufferedTimeout() override;
-    void OnBufferedError(std::exception_ptr e) override;
+    bool OnBufferedTimeout() noexcept override;
+    void OnBufferedError(std::exception_ptr e) noexcept override;
 
     /* virtual methods from class Cancellable */
     void Cancel() override;
@@ -950,7 +950,7 @@ FcgiClient::OnBufferedData(const void *buffer, size_t size)
 }
 
 bool
-FcgiClient::OnBufferedClosed()
+FcgiClient::OnBufferedClosed() noexcept
 {
     /* the rest of the response may already be in the input buffer */
     ReleaseSocket(false);
@@ -958,7 +958,7 @@ FcgiClient::OnBufferedClosed()
 }
 
 bool
-FcgiClient::OnBufferedRemaining(gcc_unused size_t remaining)
+FcgiClient::OnBufferedRemaining(gcc_unused size_t remaining) noexcept
 {
     /* only READ_BODY could have blocked */
     assert(response.read_state == Response::READ_BODY);
@@ -987,14 +987,14 @@ FcgiClient::OnBufferedWrite()
 }
 
 bool
-FcgiClient::OnBufferedTimeout()
+FcgiClient::OnBufferedTimeout() noexcept
 {
     AbortResponse(std::make_exception_ptr(FcgiClientError("timeout")));
     return false;
 }
 
 void
-FcgiClient::OnBufferedError(std::exception_ptr ep)
+FcgiClient::OnBufferedError(std::exception_ptr ep) noexcept
 {
     AbortResponse(NestException(ep, FcgiClientError("FastCGI socket error")));
 }

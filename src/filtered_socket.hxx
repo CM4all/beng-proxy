@@ -554,13 +554,13 @@ struct FilteredSocket final : private BufferedSocketHandler {
 private:
     /* virtual methods from class BufferedSocketHandler */
     BufferedResult OnBufferedData(const void *buffer, size_t size) override;
-    bool OnBufferedClosed() override;
-    bool OnBufferedRemaining(size_t remaining) override;
-    bool OnBufferedEnd() override;
+    bool OnBufferedClosed() noexcept override;
+    bool OnBufferedRemaining(size_t remaining) noexcept override;
+    bool OnBufferedEnd() noexcept override;
     bool OnBufferedWrite() override;
-    bool OnBufferedTimeout() override;
-    enum write_result OnBufferedBroken() override;
-    void OnBufferedError(std::exception_ptr e) override;
+    bool OnBufferedTimeout() noexcept override;
+    enum write_result OnBufferedBroken() noexcept override;
+    void OnBufferedError(std::exception_ptr e) noexcept override;
 };
 
 #endif

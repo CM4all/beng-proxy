@@ -174,10 +174,10 @@ struct MemcachedClient final
     /* virtual methods from class BufferedSocketHandler */
     BufferedResult OnBufferedData(const void *buffer, size_t size) override;
     DirectResult OnBufferedDirect(int fd, FdType fd_type) override;
-    bool OnBufferedClosed() override;
-    bool OnBufferedRemaining(size_t remaining) override;
+    bool OnBufferedClosed() noexcept override;
+    bool OnBufferedRemaining(size_t remaining) noexcept override;
     bool OnBufferedWrite() override;
-    void OnBufferedError(std::exception_ptr e) override;
+    void OnBufferedError(std::exception_ptr e) noexcept override;
 
     /* virtual methods from class Cancellable */
     void Cancel() override;
@@ -578,7 +578,7 @@ MemcachedClient::OnBufferedDirect(int fd, FdType type)
 }
 
 bool
-MemcachedClient::OnBufferedClosed()
+MemcachedClient::OnBufferedClosed() noexcept
 {
     /* the rest of the response may already be in the input buffer */
     ReleaseSocket(false);
@@ -586,7 +586,7 @@ MemcachedClient::OnBufferedClosed()
 }
 
 bool
-MemcachedClient::OnBufferedRemaining(gcc_unused size_t remaining)
+MemcachedClient::OnBufferedRemaining(gcc_unused size_t remaining) noexcept
 {
     /* only READ_VALUE could have blocked */
     assert(response.read_state == ReadState::VALUE);
@@ -596,7 +596,7 @@ MemcachedClient::OnBufferedRemaining(gcc_unused size_t remaining)
 }
 
 void
-MemcachedClient::OnBufferedError(std::exception_ptr ep)
+MemcachedClient::OnBufferedError(std::exception_ptr ep) noexcept
 {
     AbortResponse(NestException(ep,
                                 MemcachedClientError("memcached connection failed")));

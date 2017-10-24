@@ -213,10 +213,10 @@ struct AjpClient final
 
     /* virtual methods from class BufferedSocketHandler */
     BufferedResult OnBufferedData(const void *buffer, size_t size) override;
-    bool OnBufferedClosed() override;
-    bool OnBufferedRemaining(size_t remaining) override;
+    bool OnBufferedClosed() noexcept override;
+    bool OnBufferedRemaining(size_t remaining) noexcept override;
     bool OnBufferedWrite() override;
-    void OnBufferedError(std::exception_ptr e) override;
+    void OnBufferedError(std::exception_ptr e) noexcept override;
 
     /* virtual methods from class Cancellable */
     void Cancel() override;
@@ -742,7 +742,7 @@ AjpClient::OnBufferedData(const void *buffer, size_t size)
 }
 
 bool
-AjpClient::OnBufferedClosed()
+AjpClient::OnBufferedClosed() noexcept
 {
     /* the rest of the response may already be in the input buffer */
     ReleaseSocket(false);
@@ -750,7 +750,7 @@ AjpClient::OnBufferedClosed()
 }
 
 bool
-AjpClient::OnBufferedRemaining(gcc_unused size_t remaining)
+AjpClient::OnBufferedRemaining(gcc_unused size_t remaining) noexcept
 {
     /* only READ_BODY could have blocked */
     assert(response.read_state == Response::READ_BODY);
@@ -779,7 +779,7 @@ AjpClient::OnBufferedWrite()
 }
 
 void
-AjpClient::OnBufferedError(std::exception_ptr ep)
+AjpClient::OnBufferedError(std::exception_ptr ep) noexcept
 {
     AbortResponse(NestException(ep, AjpClientError("AJP connection failed")));
 }

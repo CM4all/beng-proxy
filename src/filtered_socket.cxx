@@ -50,13 +50,13 @@ FilteredSocket::OnBufferedData(const void *buffer, size_t size)
 }
 
 bool
-FilteredSocket::OnBufferedClosed()
+FilteredSocket::OnBufferedClosed() noexcept
 {
     return InvokeClosed();
 }
 
 bool
-FilteredSocket::OnBufferedRemaining(size_t remaining)
+FilteredSocket::OnBufferedRemaining(size_t remaining) noexcept
 {
     return filter->remaining(remaining, filter_ctx);
 }
@@ -68,27 +68,27 @@ FilteredSocket::OnBufferedWrite()
 }
 
 bool
-FilteredSocket::OnBufferedEnd()
+FilteredSocket::OnBufferedEnd() noexcept
 {
     filter->end(filter_ctx);
     return true;
 }
 
 bool
-FilteredSocket::OnBufferedTimeout()
+FilteredSocket::OnBufferedTimeout() noexcept
 {
     // TODO: let handler intercept this call
     return InvokeTimeout();
 }
 
 enum write_result
-FilteredSocket::OnBufferedBroken()
+FilteredSocket::OnBufferedBroken() noexcept
 {
     return handler->OnBufferedBroken();
 }
 
 void
-FilteredSocket::OnBufferedError(std::exception_ptr ep)
+FilteredSocket::OnBufferedError(std::exception_ptr ep) noexcept
 {
     handler->OnBufferedError(ep);
 }
