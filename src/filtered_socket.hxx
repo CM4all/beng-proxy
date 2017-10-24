@@ -500,7 +500,12 @@ struct FilteredSocket final : private BufferedSocketHandler {
     BufferedResult InvokeData(const void *data, size_t size) {
         assert(filter != nullptr);
 
-        return handler->OnBufferedData(data, size);
+        try {
+            return handler->OnBufferedData(data, size);
+        } catch (...) {
+            handler->OnBufferedError(std::current_exception());
+            return BufferedResult::CLOSED;
+        }
     }
 
     bool InvokeClosed() {
@@ -530,7 +535,12 @@ struct FilteredSocket final : private BufferedSocketHandler {
     bool InvokeWrite() {
         assert(filter != nullptr);
 
-        return handler->OnBufferedWrite();
+        try {
+            return handler->OnBufferedWrite();
+        } catch (...) {
+            handler->OnBufferedError(std::current_exception());
+            return false;
+        }
     }
 
     bool InvokeTimeout();
