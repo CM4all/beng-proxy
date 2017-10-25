@@ -34,7 +34,7 @@
 #include "Launch.hxx"
 #include "Client.hxx"
 #include "net/log/Datagram.hxx"
-#include "OneLine.hxx"
+#include "net/log/OneLine.hxx"
 #include "http_server/Request.hxx"
 #include "net/ToString.hxx"
 #include "system/Error.hxx"

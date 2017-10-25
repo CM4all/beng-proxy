@@ -36,7 +36,7 @@
  */
 
 #include "Server.hxx"
-#include "OneLine.hxx"
+#include "net/log/OneLine.hxx"
 #include "io/FileDescriptor.hxx"
 
 #include <functional>
