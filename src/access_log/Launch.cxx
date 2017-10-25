@@ -103,7 +103,7 @@ gcc_noreturn
 static void
 Exec(ConstBuffer<const char *> _args)
 {
-    std::array<const char *, MAX_ARGS> args;
+    std::array<const char *, MAX_ARGS + 1> args;
     assert(_args.size < args.size());
     *std::copy_n(_args.data, _args.size, args.begin()) = nullptr;
 
