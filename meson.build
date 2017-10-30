@@ -218,7 +218,8 @@ memory = static_library('memory',
   include_directories: inc,
   dependencies: [
   ])
-memory_dep = declare_dependency(link_with: memory)
+memory_dep = declare_dependency(link_with: memory,
+                               dependencies: [system_dep])
 
 pool = static_library('pool',
   'src/AllocatorPtr.cxx',

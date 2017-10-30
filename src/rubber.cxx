@@ -31,6 +31,7 @@
  */
 
 #include "rubber.hxx"
+#include "system/LargeAllocation.hxx"
 #include "system/mmap.h"
 #include "AllocatorStats.hxx"
 #include "util/Macros.hxx"
@@ -258,6 +259,8 @@ class Rubber {
      */
     size_t netto_size;
 
+    LargeAllocation allocation;
+
     /**
      * The table managing the allocations in the memory map.  At the
      * same time, this is the pointer to the memory map.
@@ -289,7 +292,7 @@ class Rubber {
     std::array<HoleList, N_RUBBER_HOLE_THRESHOLDS> holes;
 
 public:
-    Rubber(size_t _max_size, RubberTable *_table) noexcept;
+    explicit Rubber(size_t _max_size) noexcept;
 
     ~Rubber() noexcept {
         assert(table->IsEmpty());
@@ -863,8 +866,10 @@ Rubber::AddHoleAfter(unsigned reference_id, size_t offset, size_t size) noexcept
  *
  */
 
-Rubber::Rubber(size_t _max_size, RubberTable *_table) noexcept
-    :max_size(_max_size), netto_size(0), table(_table) {
+Rubber::Rubber(size_t _max_size) noexcept
+    :max_size(/*TODO: mmap_huge_page_size() +*/ _max_size), netto_size(0),
+     allocation(mmap_huge_page_size() + _max_size),
+     table((RubberTable *)allocation.get()) {
     static_assert(RUBBER_ALIGN >= sizeof(Hole), "Alignment too large");
 
     const size_t table_size = table->Init(max_size / 1024);
@@ -875,13 +880,9 @@ Rubber::Rubber(size_t _max_size, RubberTable *_table) noexcept
 Rubber *
 rubber_new(size_t size)
 {
-    size = mmap_huge_page_size() + align_page_size(size);
+    size = mmap_huge_page_size() + align_page_size(size);// XXX
 
-    void *p = mmap_alloc_anonymous(size);
-    if (p == (void *)-1)
-        throw std::bad_alloc();
-
-    return new Rubber(size, (RubberTable *)p);
+    return new Rubber(size);
 }
 
 void
