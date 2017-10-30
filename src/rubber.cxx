@@ -457,6 +457,7 @@ private:
 };
 
 static const size_t RUBBER_ALIGN = 0x20;
+static_assert(RUBBER_ALIGN >= sizeof(RubberHole), "Alignment too large");
 
 gcc_const
 static inline size_t
@@ -873,8 +874,6 @@ Rubber::Rubber(size_t _max_size, RubberTable *_table) noexcept
 Rubber *
 rubber_new(size_t size)
 {
-    assert(RUBBER_ALIGN >= sizeof(RubberHole));
-
     size = mmap_huge_page_size() + align_page_size(size);
 
     void *p = mmap_alloc_anonymous(size);
