@@ -226,20 +226,6 @@ struct RubberTable {
     size_t Shrink(unsigned id, size_t new_size) noexcept;
 };
 
-struct RubberHole final
-    : boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
-
-    /**
-     * The size of this hole (including the size of this struct).
-     */
-    size_t size;
-
-    /**
-     * The allocated objects before and after this hole.
-     */
-    unsigned previous_id, next_id;
-};
-
 /**
  * The threshold for each hole list.  The goal is to reduce the cost
  * of searching a hole that fits.
@@ -278,7 +264,21 @@ class Rubber {
      */
     RubberTable *const table;
 
-    typedef boost::intrusive::list<RubberHole,
+    struct Hole final
+        : boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
+
+        /**
+         * The size of this hole (including the size of this struct).
+         */
+        size_t size;
+
+        /**
+         * The allocated objects before and after this hole.
+         */
+        unsigned previous_id, next_id;
+    };
+
+    typedef boost::intrusive::list<Hole,
                                    boost::intrusive::constant_time_size<false>> HoleList;
 
     /**
@@ -362,7 +362,7 @@ private:
         return (const uint8_t *)p - (const uint8_t *)table;
     }
 
-    size_t OffsetOf(const RubberHole &hole) const noexcept {
+    size_t OffsetOf(const Hole &hole) const noexcept {
         return OffsetOf(&hole);
     }
 
@@ -374,12 +374,12 @@ private:
 #endif
 
     gcc_pure
-    static RubberHole *FindHole(HoleList &holes, size_t size) noexcept;
+    static Hole *FindHole(HoleList &holes, size_t size) noexcept;
 
     gcc_pure
-    RubberHole *FindHole(size_t size) noexcept;
+    Hole *FindHole(size_t size) noexcept;
 
-    void AddToHoleList(RubberHole &hole) noexcept;
+    void AddToHoleList(Hole &hole) noexcept;
 
     void AddHole(size_t offset, size_t size,
                  unsigned previous_id, unsigned next_id) noexcept;
@@ -388,12 +388,12 @@ private:
 
     /**
      * Replace the hole with the specified object.  If there is unused
-     * space after the object, create a new #RubberHole instance
+     * space after the object, create a new #Hole instance
      * there.
      */
-    void UseHole(RubberHole &hole, unsigned id, size_t size) noexcept;
+    void UseHole(Hole &hole, unsigned id, size_t size) noexcept;
 
-    unsigned AddInHole(RubberHole &hole, size_t size) noexcept;
+    unsigned AddInHole(Hole &hole, size_t size) noexcept;
 
     /**
      * Try to find a hole between two objects, and insert a new object
@@ -412,11 +412,11 @@ private:
      */
     bool MoveLast(size_t max_object_size) noexcept;
 
-    RubberHole *FindHoleBetween(RubberObject &a, RubberObject &b) noexcept {
+    Hole *FindHoleBetween(RubberObject &a, RubberObject &b) noexcept {
         assert(a.offset < b.offset);
 
         return a.GetEndOffset() < b.offset
-            ? (RubberHole *)WriteAt(a.GetEndOffset())
+            ? (Hole *)WriteAt(a.GetEndOffset())
             : nullptr;
     }
 
@@ -429,8 +429,8 @@ private:
 
     /**
      * The given object shall disappear at its current offset.  This
-     * method will replace it with a #RubberHole instance, or will
-     * grow/merge existing #RubberHole instances surrounding it.
+     * method will replace it with a #Hole instance, or will
+     * grow/merge existing #Hole instances surrounding it.
      *
      * This method will not remove the #RubberObject from the table /
      * linked list, nor will it update the netto size.  It assumes
@@ -447,17 +447,16 @@ private:
         return holes[rubber_hole_threshold_lookup(size)];
     }
 
-    HoleList &GetHoleList(RubberHole &hole) noexcept {
+    HoleList &GetHoleList(Hole &hole) noexcept {
         return GetHoleList(hole.size);
     }
 
-    void RemoveHole(RubberHole &hole) noexcept {
+    void RemoveHole(Hole &hole) noexcept {
         GetHoleList(hole).erase(HoleList::s_iterator_to(hole));
     }
 };
 
 static const size_t RUBBER_ALIGN = 0x20;
-static_assert(RUBBER_ALIGN >= sizeof(RubberHole), "Alignment too large");
 
 gcc_const
 static inline size_t
@@ -734,13 +733,13 @@ Rubber::GetTotalHoleSize() const noexcept
 
 #endif
 
-inline RubberHole *
+inline Rubber::Hole *
 Rubber::FindHole(Rubber::HoleList &holes, size_t size) noexcept
 {
     assert(size >= RUBBER_ALIGN);
 
     /* the current best candidate */
-    RubberHole *best = nullptr;
+    Hole *best = nullptr;
 
     /* this counter limits the number of iterations to find a better
        candidate */
@@ -765,12 +764,12 @@ Rubber::FindHole(Rubber::HoleList &holes, size_t size) noexcept
     return best;
 }
 
-RubberHole *
+Rubber::Hole *
 Rubber::FindHole(size_t size) noexcept
 {
     unsigned bucket = rubber_hole_threshold_lookup(size);
 
-    RubberHole *h = FindHole(holes[bucket], size);
+    auto *h = FindHole(holes[bucket], size);
     if (h == nullptr) {
         while (bucket > 0) {
             --bucket;
@@ -786,7 +785,7 @@ Rubber::FindHole(size_t size) noexcept
 }
 
 void
-Rubber::AddToHoleList(RubberHole &hole) noexcept
+Rubber::AddToHoleList(Hole &hole) noexcept
 {
     holes[rubber_hole_threshold_lookup(hole.size)].push_front(hole);
 }
@@ -795,7 +794,7 @@ void
 Rubber::AddHole(size_t offset, size_t size,
                 unsigned previous_id, unsigned next_id) noexcept
 {
-    RubberHole *hole = (RubberHole *)WriteAt(offset);
+    auto *hole = (Hole *)WriteAt(offset);
     hole->size = size;
     hole->previous_id = previous_id;
     hole->next_id = next_id;
@@ -822,7 +821,7 @@ Rubber::AddHoleAfter(unsigned reference_id, size_t offset, size_t size) noexcept
 
     if (offset > reference_end) {
         /* follows an existing hole: grow the existing one */
-        auto &hole = *(RubberHole *)WriteAt(reference_end);
+        auto &hole = *(Hole *)WriteAt(reference_end);
         assert(reference_end + hole.size == offset);
         assert(hole.previous_id == reference_id);
 
@@ -833,7 +832,7 @@ Rubber::AddHoleAfter(unsigned reference_id, size_t offset, size_t size) noexcept
 
         if (reference_end + hole.size < next.offset) {
             /* there's another hole to merge with */
-            auto &next_hole = *(RubberHole *)
+            auto &next_hole = *(Hole *)
                 WriteAt(reference_end + hole.size);
             assert(reference_end + hole.size + next_hole.size == next.offset);
             assert(next_hole.next_id == next_id);
@@ -846,7 +845,7 @@ Rubber::AddHoleAfter(unsigned reference_id, size_t offset, size_t size) noexcept
     } else if (offset + size < next.offset) {
         /* precedes an existing hole: merge the new hole and the
            existing one */
-        auto &next_hole = *(RubberHole *)WriteAt(offset + size);
+        auto &next_hole = *(Hole *)WriteAt(offset + size);
         assert(offset + size + next_hole.size == next.offset);
         assert(next_hole.next_id == next_id);
 
@@ -866,6 +865,8 @@ Rubber::AddHoleAfter(unsigned reference_id, size_t offset, size_t size) noexcept
 
 Rubber::Rubber(size_t _max_size, RubberTable *_table) noexcept
     :max_size(_max_size), netto_size(0), table(_table) {
+    static_assert(RUBBER_ALIGN >= sizeof(Hole), "Alignment too large");
+
     const size_t table_size = table->Init(max_size / 1024);
     mmap_enable_huge_pages(WriteAt(table_size),
                            align_page_size_down(max_size - table_size));
@@ -896,7 +897,7 @@ rubber_fork_cow(Rubber *r, bool inherit) noexcept
 }
 
 void
-Rubber::UseHole(RubberHole &hole, unsigned id, size_t size) noexcept
+Rubber::UseHole(Hole &hole, unsigned id, size_t size) noexcept
 {
     const unsigned previous_id = hole.previous_id;
     const unsigned next_id = hole.next_id;
@@ -909,7 +910,7 @@ Rubber::UseHole(RubberHole &hole, unsigned id, size_t size) noexcept
         /* shrink the hole */
 
         void *p = (uint8_t *)&hole + size;
-        auto &new_hole = *(RubberHole *)p;
+        auto &new_hole = *(Hole *)p;
 
         new_hole.size = hole.size - size;
         new_hole.previous_id = id;
@@ -920,7 +921,7 @@ Rubber::UseHole(RubberHole &hole, unsigned id, size_t size) noexcept
 }
 
 inline unsigned
-Rubber::AddInHole(RubberHole &hole, size_t size) noexcept
+Rubber::AddInHole(Hole &hole, size_t size) noexcept
 {
     unsigned id = table->AddId();
     if (id == 0)
@@ -939,7 +940,7 @@ Rubber::AddInHole(RubberHole &hole, size_t size) noexcept
 unsigned
 Rubber::AddInHole(size_t size) noexcept
 {
-    RubberHole *hole = FindHole(size);
+    auto *hole = FindHole(size);
     return hole != nullptr
         /* found a hole */
         ? AddInHole(*hole, size)
