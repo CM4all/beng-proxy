@@ -46,6 +46,9 @@ struct AllocatorStats;
  */
 class Rubber;
 
+/**
+ * Throws std::bad_alloc on error.
+ */
 Rubber *
 rubber_new(size_t size);
 

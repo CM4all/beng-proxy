@@ -557,11 +557,6 @@ HttpCache::HttpCache(struct pool &_pool, size_t max_size,
             rubber_size = max_memcached_rubber;
 
         rubber = rubber_new(rubber_size);
-        if (rubber == nullptr) {
-            fprintf(stderr, "Failed to allocate HTTP cache: %s\n",
-                    strerror(errno));
-            exit(2);
-        }
 
         compress_timer.Add(http_cache_compress_interval);
     }

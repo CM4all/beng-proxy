@@ -877,7 +877,7 @@ rubber_new(size_t size)
 
     void *p = mmap_alloc_anonymous(size);
     if (p == (void *)-1)
-        return nullptr;
+        throw std::bad_alloc();
 
     return new Rubber(size, (RubberTable *)p);
 }

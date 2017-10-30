@@ -352,19 +352,6 @@ NfsCacheRequest::OnNfsStockError(std::exception_ptr ep)
  *
  */
 
-static Rubber &
-NewRubberOrAbort(size_t max_size)
-{
-    auto r = rubber_new(max_size);
-    if (r == nullptr) {
-        fprintf(stderr, "Failed to allocate HTTP cache: %s\n",
-                strerror(errno));
-        exit(2);
-    }
-
-    return *r;
-}
-
 inline
 NfsCache::NfsCache(struct pool &_pool, size_t max_size,
                    NfsStock &_stock, EventLoop &_event_loop)
@@ -372,7 +359,7 @@ NfsCache::NfsCache(struct pool &_pool, size_t max_size,
      event_loop(_event_loop),
      cache(event_loop, 65521, max_size * 7 / 8),
      compress_timer(event_loop, BIND_THIS_METHOD(OnCompressTimer)),
-     rubber(NewRubberOrAbort(max_size)) {
+     rubber(*rubber_new(max_size)) {
     compress_timer.Add(nfs_cache_compress_interval);
 }
 
