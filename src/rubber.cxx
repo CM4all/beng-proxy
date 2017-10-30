@@ -69,7 +69,7 @@ struct RubberObject {
     bool allocated;
 #endif
 
-    void Init(size_t _offset, size_t _size) {
+    void Init(size_t _offset, size_t _size) noexcept {
         offset = _offset;
         size = _size;
 #ifndef NDEBUG
@@ -77,13 +77,13 @@ struct RubberObject {
 #endif
     }
 
-    void InitHead(size_t _size) {
+    void InitHead(size_t _size) noexcept {
         next = previous = 0;
         offset = 0;
         size = _size;
     }
 
-    constexpr size_t GetEndOffset() const {
+    constexpr size_t GetEndOffset() const noexcept {
         return offset + size;
     }
 };
@@ -116,14 +116,14 @@ struct RubberTable {
      */
     RubberObject entries[1];
 
-    size_t Init(unsigned _max_entries);
-    void Deinit();
+    size_t Init(unsigned _max_entries) noexcept;
+    void Deinit() noexcept;
 
-    bool IsEmpty() const {
+    bool IsEmpty() const noexcept {
         return entries[0].next == 0;
     }
 
-    unsigned IdOf(const RubberObject &o) const {
+    unsigned IdOf(const RubberObject &o) const noexcept {
         assert(&o >= entries);
         assert(&o < &entries[max_entries]);
 
@@ -135,7 +135,7 @@ struct RubberTable {
      * given number of entries.
      */
     gcc_const
-    static size_t RequiredSize(unsigned n) {
+    static size_t RequiredSize(unsigned n) noexcept {
         assert(n > 0);
 
         const RubberTable *dummy = nullptr;
@@ -147,7 +147,7 @@ struct RubberTable {
      * struct for the given size [in bytes].
      */
     gcc_const
-    static unsigned Capacity(size_t size) {
+    static unsigned Capacity(size_t size) noexcept {
         const RubberTable *dummy = nullptr;
         assert(size >= sizeof(*dummy));
 
@@ -159,39 +159,39 @@ struct RubberTable {
      * this is the offset of the first allocation.
      */
     gcc_pure
-    size_t GetSize() const {
+    size_t GetSize() const noexcept {
         assert(entries[0].offset == 0);
 
         return entries[0].size;
     }
 
     gcc_pure
-    size_t GetBruttoSize() const {
+    size_t GetBruttoSize() const noexcept {
         return GetTail().GetEndOffset() - GetSize();
     }
 
-    RubberObject *GetHead() {
+    RubberObject *GetHead() noexcept {
         return &entries[0];
     }
 
-    RubberObject *GetNext(RubberObject *o) {
+    RubberObject *GetNext(RubberObject *o) noexcept {
         return o->next != 0
             ? &entries[o->next]
             : nullptr;
     }
 
     gcc_const
-    RubberObject &GetTail() {
+    RubberObject &GetTail() noexcept {
         return entries[entries[0].previous];
     }
 
     gcc_const
-    const RubberObject &GetTail() const {
+    const RubberObject &GetTail() const noexcept {
         return entries[entries[0].previous];
     }
 
     gcc_pure
-    size_t GetTailOffset() const {
+    size_t GetTailOffset() const noexcept {
         const auto &tail = GetTail();
         assert(tail.next == 0);
 
@@ -201,29 +201,29 @@ struct RubberTable {
     /**
      * Allocate a new object id.  The caller must initialise the object.
      */
-    unsigned AddId();
+    unsigned AddId() noexcept;
 
     /**
      * Insert an already-initialized object into the linked list.
      */
-    void Link(unsigned id, unsigned previous_id, unsigned next_id);
+    void Link(unsigned id, unsigned previous_id, unsigned next_id) noexcept;
 
-    unsigned Add(size_t offset, size_t size);
+    unsigned Add(size_t offset, size_t size) noexcept;
 
     /**
      * Remove the object from the linked list.
      */
-    void Unlink(unsigned id);
+    void Unlink(unsigned id) noexcept;
 
-    size_t Remove(unsigned id);
-
-    gcc_pure
-    size_t GetSizeOf(unsigned id) const;
+    size_t Remove(unsigned id) noexcept;
 
     gcc_pure
-    size_t GetOffsetOf(unsigned id) const;
+    size_t GetSizeOf(unsigned id) const noexcept;
 
-    size_t Shrink(unsigned id, size_t new_size);
+    gcc_pure
+    size_t GetOffsetOf(unsigned id) const noexcept;
+
+    size_t Shrink(unsigned id, size_t new_size) noexcept;
 };
 
 struct RubberHole final
@@ -250,7 +250,7 @@ static constexpr size_t RUBBER_HOLE_THRESHOLDS[] = {
 
 gcc_pure
 static unsigned
-rubber_hole_threshold_lookup(size_t size)
+rubber_hole_threshold_lookup(size_t size) noexcept
 {
     for (unsigned i = 0;; ++i)
         if (size >= RUBBER_HOLE_THRESHOLDS[i])
@@ -289,9 +289,9 @@ class Rubber {
     std::array<HoleList, N_RUBBER_HOLE_THRESHOLDS> holes;
 
 public:
-    Rubber(size_t _max_size, RubberTable *_table);
+    Rubber(size_t _max_size, RubberTable *_table) noexcept;
 
-    ~Rubber() {
+    ~Rubber() noexcept {
         assert(table->IsEmpty());
         assert(netto_size == 0);
 
@@ -299,62 +299,62 @@ public:
         mmap_free(table, max_size);
     }
 
-    void ForkCow(bool inherit) {
+    void ForkCow(bool inherit) noexcept {
         mmap_enable_fork(table, max_size, inherit);
     }
 
-    size_t GetMaxSize() const {
+    size_t GetMaxSize() const noexcept {
         return max_size - table->GetSize();
     }
 
-    size_t GetNettoSize() const {
+    size_t GetNettoSize() const noexcept {
         return netto_size;
     }
 
-    size_t GetBruttoSize() const {
+    size_t GetBruttoSize() const noexcept {
         return table->GetBruttoSize();
     }
 
     gcc_pure
-    size_t GetSizeOf(unsigned id) const {
+    size_t GetSizeOf(unsigned id) const noexcept {
         assert(id > 0);
 
         return table->GetSizeOf(id);
     }
 
     gcc_pure
-    void *WriteAt(size_t offset) {
+    void *WriteAt(size_t offset) noexcept {
         assert(offset <= max_size);
 
         return (uint8_t *)table + offset;
     }
 
     gcc_pure
-    const void *ReadAt(size_t offset) const {
+    const void *ReadAt(size_t offset) const noexcept {
         assert(offset <= max_size);
 
         return (const uint8_t *)table + offset;
     }
 
     gcc_pure
-    void *Write(unsigned id) {
+    void *Write(unsigned id) noexcept {
         const size_t offset = table->GetOffsetOf(id);
         assert(offset < max_size);
         return WriteAt(offset);
     }
 
     gcc_pure
-    const void *Read(unsigned id) const {
+    const void *Read(unsigned id) const noexcept {
         const size_t offset = table->GetOffsetOf(id);
         assert(offset < max_size);
         return ReadAt(offset);
     }
 
-    size_t OffsetOf(const void *p) const {
+    size_t OffsetOf(const void *p) const noexcept {
         return (const uint8_t *)p - (const uint8_t *)table;
     }
 
-    size_t OffsetOf(const RubberHole &hole) const {
+    size_t OffsetOf(const RubberHole &hole) const noexcept {
         return OffsetOf(&hole);
     }
 
@@ -362,29 +362,30 @@ public:
     static size_t GetTotalHoleSize(const HoleList &holes) noexcept;
 
 #ifndef NDEBUG
-    size_t GetTotalHoleSize() const;
+    size_t GetTotalHoleSize() const noexcept;
 #endif
 
     gcc_pure
     static RubberHole *FindHole(HoleList &holes, size_t size) noexcept;
 
     gcc_pure
-    RubberHole *FindHole(size_t size);
+    RubberHole *FindHole(size_t size) noexcept;
 
-    void AddToHoleList(RubberHole &hole);
+    void AddToHoleList(RubberHole &hole) noexcept;
 
     void AddHole(size_t offset, size_t size,
-                 unsigned previous_id, unsigned next_id);
-    void AddHoleAfter(unsigned reference_id, size_t offset, size_t size);
+                 unsigned previous_id, unsigned next_id) noexcept;
+    void AddHoleAfter(unsigned reference_id,
+                      size_t offset, size_t size) noexcept;
 
     /**
      * Replace the hole with the specified object.  If there is unused
      * space after the object, create a new #RubberHole instance
      * there.
      */
-    void UseHole(RubberHole &hole, unsigned id, size_t size);
+    void UseHole(RubberHole &hole, unsigned id, size_t size) noexcept;
 
-    unsigned AddInHole(RubberHole &hole, size_t size);
+    unsigned AddInHole(RubberHole &hole, size_t size) noexcept;
 
     /**
      * Try to find a hole between two objects, and insert a new object
@@ -392,7 +393,7 @@ public:
      *
      * @return the object id, or 0 on error
      */
-    unsigned AddInHole(size_t size);
+    unsigned AddInHole(size_t size) noexcept;
 
     /**
      * Attempt to move the last allocation into a hole.  This is some kind
@@ -401,9 +402,9 @@ public:
      *
      * @param max_size move it only if it's not larger than this size
      */
-    bool MoveLast(size_t max_object_size);
+    bool MoveLast(size_t max_object_size) noexcept;
 
-    RubberHole *FindHoleBetween(RubberObject &a, RubberObject &b) {
+    RubberHole *FindHoleBetween(RubberObject &a, RubberObject &b) noexcept {
         assert(a.offset < b.offset);
 
         return a.GetEndOffset() < b.offset
@@ -416,7 +417,7 @@ public:
      * is used to remove holes at the end of the mmap when the last
      * object got removed.
      */
-    void DiscardHoleBetween(RubberObject &a, RubberObject &b);
+    void DiscardHoleBetween(RubberObject &a, RubberObject &b) noexcept;
 
     /**
      * The given object shall disappear at its current offset.  This
@@ -430,26 +431,26 @@ public:
      * #RubberObject.
      */
     void ReplaceWithHole(RubberObject &o,
-                         unsigned previous_id, unsigned next_id);
+                         unsigned previous_id, unsigned next_id) noexcept;
 
-    unsigned Add(size_t size);
-    void Remove(unsigned id);
+    unsigned Add(size_t size) noexcept;
+    void Remove(unsigned id) noexcept;
 
-    void Shrink(unsigned id, size_t new_size);
+    void Shrink(unsigned id, size_t new_size) noexcept;
 
-    void MoveData(RubberObject &o, size_t new_offset);
-    void Compress();
+    void MoveData(RubberObject &o, size_t new_offset) noexcept;
+    void Compress() noexcept;
 
 private:
-    HoleList &GetHoleList(size_t size) {
+    HoleList &GetHoleList(size_t size) noexcept {
         return holes[rubber_hole_threshold_lookup(size)];
     }
 
-    HoleList &GetHoleList(RubberHole &hole) {
+    HoleList &GetHoleList(RubberHole &hole) noexcept {
         return GetHoleList(hole.size);
     }
 
-    void RemoveHole(RubberHole &hole) {
+    void RemoveHole(RubberHole &hole) noexcept {
         GetHoleList(hole).erase(HoleList::s_iterator_to(hole));
     }
 };
@@ -458,28 +459,28 @@ static const size_t RUBBER_ALIGN = 0x20;
 
 gcc_const
 static inline size_t
-align_page_size(size_t size)
+align_page_size(size_t size) noexcept
 {
     return ((size - 1) | (mmap_huge_page_size() - 1)) + 1;
 }
 
 gcc_const
 static inline size_t
-align_page_size_down(size_t size)
+align_page_size_down(size_t size) noexcept
 {
     return size & ~(mmap_huge_page_size() - 1);
 }
 
 gcc_const
 static inline void *
-align_page_size_ptr(void *p)
+align_page_size_ptr(void *p) noexcept
 {
     return (void *)(long)align_page_size((size_t)p);
 }
 
 gcc_const
 static inline size_t
-align_size(size_t size)
+align_size(size_t size) noexcept
 {
     return ((size - 1) | (RUBBER_ALIGN - 1)) + 1;
 }
@@ -490,7 +491,7 @@ align_size(size_t size)
  */
 
 size_t
-RubberTable::Init(unsigned _max_entries)
+RubberTable::Init(unsigned _max_entries) noexcept
 {
     assert(_max_entries > 1);
 
@@ -518,7 +519,7 @@ RubberTable::Init(unsigned _max_entries)
 }
 
 void
-RubberTable::Deinit()
+RubberTable::Deinit() noexcept
 {
     assert(IsEmpty());
     assert(entries[0].next == 0);
@@ -530,7 +531,7 @@ RubberTable::Deinit()
  * Allocate a new object id.  The caller must initialise the object.
  */
 unsigned
-RubberTable::AddId()
+RubberTable::AddId() noexcept
 {
     if (free_head == 0) {
         if (initialized_tail >= max_entries)
@@ -552,7 +553,7 @@ RubberTable::AddId()
 }
 
 void
-RubberTable::Link(unsigned id, unsigned previous_id, unsigned next_id)
+RubberTable::Link(unsigned id, unsigned previous_id, unsigned next_id) noexcept
 {
     assert(id > 0);
     assert(id != previous_id);
@@ -579,7 +580,7 @@ RubberTable::Link(unsigned id, unsigned previous_id, unsigned next_id)
 }
 
 unsigned
-RubberTable::Add(size_t offset, size_t size)
+RubberTable::Add(size_t offset, size_t size) noexcept
 {
     unsigned id = AddId();
     if (id == 0)
@@ -598,7 +599,7 @@ RubberTable::Add(size_t offset, size_t size)
 }
 
 size_t
-RubberTable::GetSizeOf(unsigned id) const
+RubberTable::GetSizeOf(unsigned id) const noexcept
 {
     assert(entries[0].offset == 0);
     assert(entries[0].size >= sizeof(*this));
@@ -613,7 +614,7 @@ RubberTable::GetSizeOf(unsigned id) const
  * @return the amount of memory that was freed
  */
 size_t
-RubberTable::Shrink(unsigned id, size_t new_size)
+RubberTable::Shrink(unsigned id, size_t new_size) noexcept
 {
     assert(entries[0].offset == 0);
     assert(entries[0].size >= sizeof(*this));
@@ -629,7 +630,7 @@ RubberTable::Shrink(unsigned id, size_t new_size)
 }
 
 void
-RubberTable::Unlink(unsigned id)
+RubberTable::Unlink(unsigned id) noexcept
 {
     assert(id > 0);
     assert(id < max_entries);
@@ -655,7 +656,7 @@ RubberTable::Unlink(unsigned id)
  * @return the size of the allocation
  */
 size_t
-RubberTable::Remove(unsigned id)
+RubberTable::Remove(unsigned id) noexcept
 {
     assert(GetSize() >= sizeof(*this));
     assert(id > 0);
@@ -679,7 +680,7 @@ RubberTable::Remove(unsigned id)
 }
 
 size_t
-RubberTable::GetOffsetOf(unsigned id) const
+RubberTable::GetOffsetOf(unsigned id) const noexcept
 {
     assert(GetSize() >= sizeof(*this));
     assert(id > 0);
@@ -719,7 +720,7 @@ Rubber::GetTotalHoleSize(const HoleList &holes) noexcept
 
 gcc_pure
 size_t
-Rubber::GetTotalHoleSize() const
+Rubber::GetTotalHoleSize() const noexcept
 {
     size_t result = 0;
 
@@ -763,7 +764,7 @@ Rubber::FindHole(Rubber::HoleList &holes, size_t size) noexcept
 }
 
 RubberHole *
-Rubber::FindHole(size_t size)
+Rubber::FindHole(size_t size) noexcept
 {
     unsigned bucket = rubber_hole_threshold_lookup(size);
 
@@ -783,14 +784,14 @@ Rubber::FindHole(size_t size)
 }
 
 void
-Rubber::AddToHoleList(RubberHole &hole)
+Rubber::AddToHoleList(RubberHole &hole) noexcept
 {
     holes[rubber_hole_threshold_lookup(hole.size)].push_front(hole);
 }
 
 void
 Rubber::AddHole(size_t offset, size_t size,
-                unsigned previous_id, unsigned next_id)
+                unsigned previous_id, unsigned next_id) noexcept
 {
     RubberHole *hole = (RubberHole *)WriteAt(offset);
     hole->size = size;
@@ -801,7 +802,7 @@ Rubber::AddHole(size_t offset, size_t size,
 }
 
 void
-Rubber::AddHoleAfter(unsigned reference_id, size_t offset, size_t size)
+Rubber::AddHoleAfter(unsigned reference_id, size_t offset, size_t size) noexcept
 {
     const auto &o = table->entries[reference_id];
     assert(o.allocated);
@@ -861,7 +862,7 @@ Rubber::AddHoleAfter(unsigned reference_id, size_t offset, size_t size)
  *
  */
 
-Rubber::Rubber(size_t _max_size, RubberTable *_table)
+Rubber::Rubber(size_t _max_size, RubberTable *_table) noexcept
     :max_size(_max_size), netto_size(0), table(_table) {
     const size_t table_size = table->Init(max_size / 1024);
     mmap_enable_huge_pages(WriteAt(table_size),
@@ -883,19 +884,19 @@ rubber_new(size_t size)
 }
 
 void
-rubber_free(Rubber *r)
+rubber_free(Rubber *r) noexcept
 {
     delete r;
 }
 
 void
-rubber_fork_cow(Rubber *r, bool inherit)
+rubber_fork_cow(Rubber *r, bool inherit) noexcept
 {
     r->ForkCow(inherit);
 }
 
 void
-Rubber::UseHole(RubberHole &hole, unsigned id, size_t size)
+Rubber::UseHole(RubberHole &hole, unsigned id, size_t size) noexcept
 {
     const unsigned previous_id = hole.previous_id;
     const unsigned next_id = hole.next_id;
@@ -919,7 +920,7 @@ Rubber::UseHole(RubberHole &hole, unsigned id, size_t size)
 }
 
 inline unsigned
-Rubber::AddInHole(RubberHole &hole, size_t size)
+Rubber::AddInHole(RubberHole &hole, size_t size) noexcept
 {
     unsigned id = table->AddId();
     if (id == 0)
@@ -936,7 +937,7 @@ Rubber::AddInHole(RubberHole &hole, size_t size)
 }
 
 unsigned
-Rubber::AddInHole(size_t size)
+Rubber::AddInHole(size_t size) noexcept
 {
     RubberHole *hole = FindHole(size);
     return hole != nullptr
@@ -947,7 +948,7 @@ Rubber::AddInHole(size_t size)
 }
 
 inline bool
-Rubber::MoveLast(size_t max_object_size)
+Rubber::MoveLast(size_t max_object_size) noexcept
 {
     const auto id = table->entries[0].previous;
     const auto t = table;
@@ -995,7 +996,7 @@ Rubber::MoveLast(size_t max_object_size)
 }
 
 unsigned
-Rubber::Add(size_t size)
+Rubber::Add(size_t size) noexcept
 {
     assert(netto_size + GetTotalHoleSize() == GetBruttoSize());
     assert(size > 0);
@@ -1040,7 +1041,7 @@ Rubber::Add(size_t size)
 }
 
 unsigned
-rubber_add(Rubber *r, size_t size)
+rubber_add(Rubber *r, size_t size) noexcept
 {
     assert(r != nullptr);
 
@@ -1048,7 +1049,7 @@ rubber_add(Rubber *r, size_t size)
 }
 
 size_t
-rubber_size_of(const Rubber *r, unsigned id)
+rubber_size_of(const Rubber *r, unsigned id) noexcept
 {
     assert(r != nullptr);
 
@@ -1056,7 +1057,7 @@ rubber_size_of(const Rubber *r, unsigned id)
 }
 
 void *
-rubber_write(Rubber *r, unsigned id)
+rubber_write(Rubber *r, unsigned id) noexcept
 {
     assert(r != nullptr);
 
@@ -1064,7 +1065,7 @@ rubber_write(Rubber *r, unsigned id)
 }
 
 const void *
-rubber_read(const Rubber *r, unsigned id)
+rubber_read(const Rubber *r, unsigned id) noexcept
 {
     assert(r != nullptr);
 
@@ -1072,7 +1073,7 @@ rubber_read(const Rubber *r, unsigned id)
 }
 
 inline void
-Rubber::Shrink(unsigned id, size_t new_size)
+Rubber::Shrink(unsigned id, size_t new_size) noexcept
 {
     assert(netto_size + GetTotalHoleSize() == GetBruttoSize());
     assert(new_size > 0);
@@ -1099,7 +1100,7 @@ Rubber::Shrink(unsigned id, size_t new_size)
 }
 
 void
-rubber_shrink(Rubber *r, unsigned id, size_t new_size)
+rubber_shrink(Rubber *r, unsigned id, size_t new_size) noexcept
 {
     assert(r != nullptr);
 
@@ -1107,7 +1108,7 @@ rubber_shrink(Rubber *r, unsigned id, size_t new_size)
 }
 
 inline void
-Rubber::DiscardHoleBetween(RubberObject &a, RubberObject &b)
+Rubber::DiscardHoleBetween(RubberObject &a, RubberObject &b) noexcept
 {
     assert(a.GetEndOffset() <= b.offset);
 
@@ -1122,7 +1123,7 @@ Rubber::DiscardHoleBetween(RubberObject &a, RubberObject &b)
 
 inline void
 Rubber::ReplaceWithHole(RubberObject &o,
-                        unsigned previous_id, unsigned next_id)
+                        unsigned previous_id, unsigned next_id) noexcept
 {
     if (next_id == 0) {
         /* this is the last allocation */
@@ -1133,7 +1134,7 @@ Rubber::ReplaceWithHole(RubberObject &o,
 }
 
 inline void
-Rubber::Remove(unsigned id)
+Rubber::Remove(unsigned id) noexcept
 {
     assert(id > 0);
 
@@ -1152,31 +1153,31 @@ Rubber::Remove(unsigned id)
 }
 
 void
-rubber_remove(Rubber *r, unsigned id)
+rubber_remove(Rubber *r, unsigned id) noexcept
 {
     return r->Remove(id);
 }
 
 size_t
-rubber_get_max_size(const Rubber *r)
+rubber_get_max_size(const Rubber *r) noexcept
 {
     return r->GetMaxSize();
 }
 
 size_t
-rubber_get_brutto_size(const Rubber *r)
+rubber_get_brutto_size(const Rubber *r) noexcept
 {
     return r->GetBruttoSize();
 }
 
 size_t
-rubber_get_netto_size(const Rubber *r)
+rubber_get_netto_size(const Rubber *r) noexcept
 {
     return r->GetNettoSize();
 }
 
 inline void
-Rubber::MoveData(RubberObject &o, size_t new_offset)
+Rubber::MoveData(RubberObject &o, size_t new_offset) noexcept
 {
     assert(new_offset <= o.offset);
     assert(o.size > 0);
@@ -1189,7 +1190,7 @@ Rubber::MoveData(RubberObject &o, size_t new_offset)
 }
 
 AllocatorStats
-rubber_get_stats(const Rubber &r)
+rubber_get_stats(const Rubber &r) noexcept
 {
     AllocatorStats stats;
     stats.brutto_size = r.GetBruttoSize();
@@ -1198,7 +1199,7 @@ rubber_get_stats(const Rubber &r)
 }
 
 void
-Rubber::Compress()
+Rubber::Compress() noexcept
 {
     assert(GetBruttoSize() >= netto_size);
     assert(netto_size + GetTotalHoleSize() == GetBruttoSize());
@@ -1236,7 +1237,7 @@ Rubber::Compress()
 }
 
 void
-rubber_compress(Rubber *r)
+rubber_compress(Rubber *r) noexcept
 {
     assert(r != nullptr);
 

@@ -53,14 +53,14 @@ Rubber *
 rubber_new(size_t size);
 
 void
-rubber_free(Rubber *r);
+rubber_free(Rubber *r) noexcept;
 
 /**
  * Controls whether forked child processes inherit the allocator.
  * This is enabled by default.
  */
 void
-rubber_fork_cow(Rubber *r, bool inherit);
+rubber_fork_cow(Rubber *r, bool inherit) noexcept;
 
 /**
  * Add a new object with the specified size.  Use rubber_write() to
@@ -70,7 +70,7 @@ rubber_fork_cow(Rubber *r, bool inherit);
  * @return the object id, or 0 on error
  */
 unsigned
-rubber_add(Rubber *r, size_t size);
+rubber_add(Rubber *r, size_t size) noexcept;
 
 /**
  * Returns the size of an allocation.  Due to padding, the returned
@@ -79,21 +79,21 @@ rubber_add(Rubber *r, size_t size);
  */
 gcc_pure
 size_t
-rubber_size_of(const Rubber *r, unsigned id);
+rubber_size_of(const Rubber *r, unsigned id) noexcept;
 
 /**
  * Return a writable pointer to the object.
  */
 gcc_pure
 void *
-rubber_write(Rubber *r, unsigned id);
+rubber_write(Rubber *r, unsigned id) noexcept;
 
 /**
  * Return a read-only pointer to the object.
  */
 gcc_pure
 const void *
-rubber_read(const Rubber *r, unsigned id);
+rubber_read(const Rubber *r, unsigned id) noexcept;
 
 /**
  * Shrink an object.  The new size must be smaller (or equal) to the
@@ -103,24 +103,24 @@ rubber_read(const Rubber *r, unsigned id);
  * @param new_size the new size, must be positive
  */
 void
-rubber_shrink(Rubber *r, unsigned id, size_t new_size);
+rubber_shrink(Rubber *r, unsigned id, size_t new_size) noexcept;
 
 void
-rubber_remove(Rubber *r, unsigned id);
+rubber_remove(Rubber *r, unsigned id) noexcept;
 
 /**
  * Returns the maximum total size of all allocations.
  */
 gcc_pure
 size_t
-rubber_get_max_size(const Rubber *r);
+rubber_get_max_size(const Rubber *r) noexcept;
 
 /**
  * Returns the total size of all allocations.
  */
 gcc_pure
 size_t
-rubber_get_netto_size(const Rubber *r);
+rubber_get_netto_size(const Rubber *r) noexcept;
 
 /**
  * Returns the memory consumed by this object, not including the
@@ -128,7 +128,7 @@ rubber_get_netto_size(const Rubber *r);
  */
 gcc_pure
 size_t
-rubber_get_brutto_size(const Rubber *r);
+rubber_get_brutto_size(const Rubber *r) noexcept;
 
 /**
  * Returns the memory consumed by this object, not including the
@@ -136,9 +136,9 @@ rubber_get_brutto_size(const Rubber *r);
  */
 gcc_pure
 AllocatorStats
-rubber_get_stats(const Rubber &r);
+rubber_get_stats(const Rubber &r) noexcept;
 
 void
-rubber_compress(Rubber *rr);
+rubber_compress(Rubber *rr) noexcept;
 
 #endif
