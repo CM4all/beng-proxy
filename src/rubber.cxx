@@ -315,25 +315,18 @@ public:
         return table->GetBruttoSize();
     }
 
+    void Compress() noexcept;
+
+    unsigned Add(size_t size) noexcept;
+    void Remove(unsigned id) noexcept;
+
+    void Shrink(unsigned id, size_t new_size) noexcept;
+
     gcc_pure
     size_t GetSizeOf(unsigned id) const noexcept {
         assert(id > 0);
 
         return table->GetSizeOf(id);
-    }
-
-    gcc_pure
-    void *WriteAt(size_t offset) noexcept {
-        assert(offset <= max_size);
-
-        return (uint8_t *)table + offset;
-    }
-
-    gcc_pure
-    const void *ReadAt(size_t offset) const noexcept {
-        assert(offset <= max_size);
-
-        return (const uint8_t *)table + offset;
     }
 
     gcc_pure
@@ -348,6 +341,21 @@ public:
         const size_t offset = table->GetOffsetOf(id);
         assert(offset < max_size);
         return ReadAt(offset);
+    }
+
+private:
+    gcc_pure
+    void *WriteAt(size_t offset) noexcept {
+        assert(offset <= max_size);
+
+        return (uint8_t *)table + offset;
+    }
+
+    gcc_pure
+    const void *ReadAt(size_t offset) const noexcept {
+        assert(offset <= max_size);
+
+        return (const uint8_t *)table + offset;
     }
 
     size_t OffsetOf(const void *p) const noexcept {
@@ -433,15 +441,8 @@ public:
     void ReplaceWithHole(RubberObject &o,
                          unsigned previous_id, unsigned next_id) noexcept;
 
-    unsigned Add(size_t size) noexcept;
-    void Remove(unsigned id) noexcept;
-
-    void Shrink(unsigned id, size_t new_size) noexcept;
-
     void MoveData(RubberObject &o, size_t new_offset) noexcept;
-    void Compress() noexcept;
 
-private:
     HoleList &GetHoleList(size_t size) noexcept {
         return holes[rubber_hole_threshold_lookup(size)];
     }
