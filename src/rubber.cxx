@@ -278,11 +278,9 @@ class Rubber {
      */
     RubberTable *const table;
 
-public:
     typedef boost::intrusive::list<RubberHole,
                                    boost::intrusive::constant_time_size<false>> HoleList;
 
-private:
     /**
      * A list of all holes in the buffer.  Each array element hosts
      * its own list with holes at the size of
@@ -360,9 +358,15 @@ public:
         return OffsetOf(&hole);
     }
 
+    gcc_pure
+    static size_t GetTotalHoleSize(const HoleList &holes) noexcept;
+
 #ifndef NDEBUG
     size_t GetTotalHoleSize() const;
 #endif
+
+    gcc_pure
+    static RubberHole *FindHole(HoleList &holes, size_t size) noexcept;
 
     gcc_pure
     RubberHole *FindHole(size_t size);
@@ -699,9 +703,8 @@ RubberTable::GetOffsetOf(unsigned id) const
 
 #ifndef NDEBUG
 
-gcc_pure
-static size_t
-rubber_total_hole_list_size(const Rubber::HoleList &holes)
+inline size_t
+Rubber::GetTotalHoleSize(const HoleList &holes) noexcept
 {
     size_t result = 0;
 
@@ -721,16 +724,15 @@ Rubber::GetTotalHoleSize() const
     size_t result = 0;
 
     for (const auto &i : holes)
-        result += rubber_total_hole_list_size(i);
+        result += GetTotalHoleSize(i);
 
     return result;
 }
 
 #endif
 
-gcc_pure
-static RubberHole *
-rubber_find_hole2(Rubber::HoleList &holes, size_t size)
+inline RubberHole *
+Rubber::FindHole(Rubber::HoleList &holes, size_t size) noexcept
 {
     assert(size >= RUBBER_ALIGN);
 
@@ -765,7 +767,7 @@ Rubber::FindHole(size_t size)
 {
     unsigned bucket = rubber_hole_threshold_lookup(size);
 
-    RubberHole *h = rubber_find_hole2(holes[bucket], size);
+    RubberHole *h = FindHole(holes[bucket], size);
     if (h == nullptr) {
         while (bucket > 0) {
             --bucket;
