@@ -77,7 +77,7 @@ public:
     void _Read() override {
         assert(position <= end);
 
-        const uint8_t *data = (const uint8_t *)rubber_read(&rubber, id);
+        const uint8_t *data = (const uint8_t *)rubber.Read(id);
         const size_t remaining = end - position;
 
         if (remaining > 0) {
@@ -90,14 +90,14 @@ public:
 
         if (position == end) {
             if (auto_remove)
-                rubber_remove(&rubber, id);
+                rubber.Remove(id);
 
             DestroyEof();
         }
     }
 
     void _FillBucketList(IstreamBucketList &list) override {
-        const uint8_t *data = (const uint8_t *)rubber_read(&rubber, id);
+        const uint8_t *data = (const uint8_t *)rubber.Read(id);
         const size_t remaining = end - position;
 
         if (remaining > 0)
@@ -114,7 +114,7 @@ public:
 
     void _Close() noexcept override {
         if (auto_remove)
-            rubber_remove(&rubber, id);
+            rubber.Remove(id);
 
         Istream::_Close();
     }
