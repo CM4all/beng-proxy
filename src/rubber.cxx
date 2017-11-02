@@ -228,26 +228,6 @@ struct RubberTable {
     size_t Shrink(unsigned id, size_t new_size) noexcept;
 };
 
-/**
- * The threshold for each hole list.  The goal is to reduce the cost
- * of searching a hole that fits.
- */
-static constexpr size_t RUBBER_HOLE_THRESHOLDS[] = {
-    1024 * 1024, 64 * 1024, 32 * 1024, 16 * 1024, 8192, 4096, 2048, 1024, 64, 0
-};
-
-gcc_pure
-static unsigned
-rubber_hole_threshold_lookup(size_t size) noexcept
-{
-    for (unsigned i = 0;; ++i)
-        if (size >= RUBBER_HOLE_THRESHOLDS[i])
-            return i;
-}
-
-static constexpr size_t N_RUBBER_HOLE_THRESHOLDS =
-    ARRAY_SIZE(RUBBER_HOLE_THRESHOLDS);
-
 class Rubber {
     /**
      * The maximum size of the memory map.  This is the value passed
@@ -267,6 +247,23 @@ class Rubber {
      * same time, this is the pointer to the memory map.
      */
     RubberTable *const table;
+
+    /**
+     * The threshold for each hole list.  The goal is to reduce the cost
+     * of searching a hole that fits.
+     */
+    static constexpr size_t HOLE_THRESHOLDS[] = {
+        1024 * 1024, 64 * 1024, 32 * 1024, 16 * 1024, 8192, 4096, 2048, 1024, 64, 0
+    };
+
+    gcc_const
+    static unsigned LookupHoleThreshold(size_t size) noexcept {
+        for (unsigned i = 0;; ++i)
+            if (size >= HOLE_THRESHOLDS[i])
+                return i;
+    }
+
+    static constexpr size_t N_HOLE_THRESHOLDS = ARRAY_SIZE(HOLE_THRESHOLDS);
 
     struct Hole final
         : boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
@@ -288,9 +285,9 @@ class Rubber {
     /**
      * A list of all holes in the buffer.  Each array element hosts
      * its own list with holes at the size of
-     * RUBBER_HOLE_THRESHOLDS[i] or bigger.
+     * HOLE_THRESHOLDS[i] or bigger.
      */
-    std::array<HoleList, N_RUBBER_HOLE_THRESHOLDS> holes;
+    std::array<HoleList, N_HOLE_THRESHOLDS> holes;
 
 public:
     explicit Rubber(size_t _max_size) noexcept;
@@ -448,7 +445,7 @@ private:
     void MoveData(RubberObject &o, size_t new_offset) noexcept;
 
     HoleList &GetHoleList(size_t size) noexcept {
-        return holes[rubber_hole_threshold_lookup(size)];
+        return holes[LookupHoleThreshold(size)];
     }
 
     HoleList &GetHoleList(Hole &hole) noexcept {
@@ -506,6 +503,8 @@ RubberTable::Init(unsigned _max_entries) noexcept
     entries[0].allocated = true;
 #endif
 }
+
+constexpr size_t Rubber::HOLE_THRESHOLDS[];
 
 void
 RubberTable::Deinit() noexcept
@@ -755,7 +754,7 @@ Rubber::FindHole(Rubber::HoleList &holes, size_t size) noexcept
 Rubber::Hole *
 Rubber::FindHole(size_t size) noexcept
 {
-    unsigned bucket = rubber_hole_threshold_lookup(size);
+    unsigned bucket = LookupHoleThreshold(size);
 
     auto *h = FindHole(holes[bucket], size);
     if (h == nullptr) {
@@ -775,7 +774,7 @@ Rubber::FindHole(size_t size) noexcept
 void
 Rubber::AddToHoleList(Hole &hole) noexcept
 {
-    holes[rubber_hole_threshold_lookup(hole.size)].push_front(hole);
+    holes[LookupHoleThreshold(hole.size)].push_front(hole);
 }
 
 void
