@@ -167,6 +167,22 @@ io = static_library('io',
   ])
 io_dep = declare_dependency(link_with: io)
 
+system = static_library('system',
+  'src/system/SetupProcess.cxx',
+  'src/system/fd_util.c',
+  'libcommon/src/system/BindMount.cxx',
+  'libcommon/src/system/CapabilityState.cxx',
+  'libcommon/src/system/ProcessName.cxx',
+  'src/system/Isolate.cxx',
+  'src/system/urandom.cxx',
+  include_directories: inc,
+  dependencies: [
+    libcap,
+    util_dep,
+    io_dep,
+  ])
+system_dep = declare_dependency(link_with: system)
+
 http = static_library('http',
   'libcommon/src/http/Method.c',
   'libcommon/src/http/Status.c',
@@ -258,22 +274,6 @@ eutil = static_library('eutil',
     event_dep,
   ])
 eutil_dep = declare_dependency(link_with: eutil)
-
-system = static_library('system',
-  'src/system/SetupProcess.cxx',
-  'src/system/fd_util.c',
-  'libcommon/src/system/BindMount.cxx',
-  'libcommon/src/system/CapabilityState.cxx',
-  'libcommon/src/system/ProcessName.cxx',
-  'src/system/Isolate.cxx',
-  'src/system/urandom.cxx',
-  include_directories: inc,
-  dependencies: [
-    libcap,
-    util_dep,
-    io_dep,
-  ])
-system_dep = declare_dependency(link_with: system)
 
 net = static_library('net',
   'src/net/FailureManager.cxx',
