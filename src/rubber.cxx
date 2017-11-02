@@ -118,7 +118,7 @@ struct RubberTable {
      */
     RubberObject entries[1];
 
-    size_t Init(unsigned _max_entries) noexcept;
+    void Init(unsigned _max_entries) noexcept;
     void Deinit() noexcept;
 
     bool IsEmpty() const noexcept {
@@ -481,7 +481,7 @@ align_size(size_t size) noexcept
  *
  */
 
-size_t
+void
 RubberTable::Init(unsigned _max_entries) noexcept
 {
     assert(_max_entries > 1);
@@ -505,8 +505,6 @@ RubberTable::Init(unsigned _max_entries) noexcept
 #ifndef NDEBUG
     entries[0].allocated = true;
 #endif
-
-    return table_size;
 }
 
 void
@@ -859,7 +857,8 @@ Rubber::Rubber(size_t _max_size) noexcept
      table((RubberTable *)allocation.get()) {
     static_assert(RUBBER_ALIGN >= sizeof(Hole), "Alignment too large");
 
-    const size_t table_size = table->Init(max_size / 1024);
+    table->Init(max_size / 1024);
+    const size_t table_size = table->GetSize();
     mmap_enable_huge_pages(WriteAt(table_size),
                            AlignHugePageDown(max_size - table_size));
 }
