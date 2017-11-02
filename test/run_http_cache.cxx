@@ -45,7 +45,7 @@
 #include <stdlib.h>
 
 static void
-put_random(HttpCacheHeap *cache, Rubber *rubber)
+put_random(HttpCacheHeap *cache, Rubber &rubber)
 {
     const AutoRewindPool auto_rewind(*tpool);
 
@@ -64,7 +64,7 @@ put_random(HttpCacheHeap *cache, Rubber *rubber)
     size_t length = random() % (random() % (random() % (64 * 1024) + 1) + 1);
     unsigned rubber_id = 0;
     if (length > 0) {
-        rubber_id = rubber_add(rubber, length);
+        rubber_id = rubber.Add(length);
         if (rubber_id == 0) {
             fprintf(stderr, "rubber_add(%zu) failed\n", length);
             return;
@@ -87,7 +87,7 @@ put_random(HttpCacheHeap *cache, Rubber *rubber)
 
     cache->Put(uri, info, *request_headers,
                HTTP_STATUS_OK, *response_headers,
-               *rubber, rubber_id, length);
+               rubber, rubber_id, length);
 }
 
 /*
@@ -100,9 +100,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
 {
     static const size_t max_size = 256 * 1024 * 1024;
 
-    Rubber *rubber = rubber_new(max_size);
-    if (rubber == NULL)
-        return EXIT_FAILURE;
+    Rubber rubber(max_size);
 
     PInstance instance;
 
@@ -114,7 +112,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
     for (unsigned i = 0; i < 32 * 1024; ++i)
         put_random(&cache, rubber);
 
-    const auto stats = cache.GetStats(*rubber);
+    const auto stats = cache.GetStats(rubber);
     printf("netto=%zu brutto=%zu ratio=%f\n",
            stats.netto_size, stats.brutto_size,
            (double)stats.netto_size / stats.brutto_size);
@@ -122,8 +120,6 @@ main(gcc_unused int argc, gcc_unused char **argv)
     cache.Deinit();
 
     pool_unref(pool2);
-
-    rubber_free(rubber);
 
     return EXIT_SUCCESS;
 }
