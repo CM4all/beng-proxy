@@ -130,6 +130,9 @@ public:
     gcc_pure
     size_t GetBruttoSize() const noexcept;
 
+    gcc_pure
+    AllocatorStats GetStats() const noexcept;
+
     void Compress() noexcept;
 
     unsigned Add(size_t size) noexcept;

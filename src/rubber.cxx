@@ -1001,12 +1001,18 @@ Rubber::MoveData(RubberObject &o, size_t new_offset) noexcept
 }
 
 AllocatorStats
-rubber_get_stats(const Rubber &r) noexcept
+Rubber::GetStats() const noexcept
 {
     AllocatorStats stats;
-    stats.brutto_size = r.GetBruttoSize();
-    stats.netto_size = r.GetNettoSize();
+    stats.brutto_size = GetBruttoSize();
+    stats.netto_size = GetNettoSize();
     return stats;
+}
+
+AllocatorStats
+rubber_get_stats(const Rubber &r) noexcept
+{
+    return r.GetStats();
 }
 
 void
