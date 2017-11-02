@@ -642,24 +642,6 @@ Rubber::ForkCow(bool inherit) noexcept
     mmap_enable_fork(table, max_size, inherit);
 }
 
-Rubber *
-rubber_new(size_t size)
-{
-    return new Rubber(size);
-}
-
-void
-rubber_free(Rubber *r) noexcept
-{
-    delete r;
-}
-
-void
-rubber_fork_cow(Rubber *r, bool inherit) noexcept
-{
-    r->ForkCow(inherit);
-}
-
 void
 Rubber::UseHole(Hole &hole, unsigned id, size_t size) noexcept
 {
@@ -805,28 +787,12 @@ Rubber::Add(size_t size) noexcept
     return id;
 }
 
-unsigned
-rubber_add(Rubber *r, size_t size) noexcept
-{
-    assert(r != nullptr);
-
-    return r->Add(size);
-}
-
 size_t
 Rubber::GetSizeOf(unsigned id) const noexcept
 {
     assert(id > 0);
 
     return table->GetSizeOf(id);
-}
-
-size_t
-rubber_size_of(const Rubber *r, unsigned id) noexcept
-{
-    assert(r != nullptr);
-
-    return r->GetSizeOf(id);
 }
 
 void *
@@ -837,14 +803,6 @@ Rubber::Write(unsigned id) noexcept
     return WriteAt(offset);
 }
 
-void *
-rubber_write(Rubber *r, unsigned id) noexcept
-{
-    assert(r != nullptr);
-
-    return r->Write(id);
-}
-
 const void *
 Rubber::Read(unsigned id) const noexcept
 {
@@ -853,15 +811,7 @@ Rubber::Read(unsigned id) const noexcept
     return ReadAt(offset);
 }
 
-const void *
-rubber_read(const Rubber *r, unsigned id) noexcept
-{
-    assert(r != nullptr);
-
-    return r->Read(id);
-}
-
-inline void
+void
 Rubber::Shrink(unsigned id, size_t new_size) noexcept
 {
     assert(netto_size + GetTotalHoleSize() == GetBruttoSize());
@@ -886,14 +836,6 @@ Rubber::Shrink(unsigned id, size_t new_size) noexcept
         AddHoleAfter(id, hole_offset, hole_size);
 
     assert(netto_size + GetTotalHoleSize() == GetBruttoSize());
-}
-
-void
-rubber_shrink(Rubber *r, unsigned id, size_t new_size) noexcept
-{
-    assert(r != nullptr);
-
-    return r->Shrink(id, new_size);
 }
 
 inline void
@@ -932,7 +874,7 @@ Rubber::ReplaceWithHole(RubberObject &o,
         AddHoleAfter(previous_id, o.offset, o.size);
 }
 
-inline void
+void
 Rubber::Remove(unsigned id) noexcept
 {
     assert(id > 0);
@@ -951,12 +893,6 @@ Rubber::Remove(unsigned id) noexcept
     ReplaceWithHole(o, previous_id, next_id);
 }
 
-void
-rubber_remove(Rubber *r, unsigned id) noexcept
-{
-    return r->Remove(id);
-}
-
 size_t
 Rubber::GetMaxSize() const noexcept
 {
@@ -964,27 +900,9 @@ Rubber::GetMaxSize() const noexcept
 }
 
 size_t
-rubber_get_max_size(const Rubber *r) noexcept
-{
-    return r->GetMaxSize();
-}
-
-size_t
 Rubber::GetBruttoSize() const noexcept
 {
     return table->GetBruttoSize();
-}
-
-size_t
-rubber_get_brutto_size(const Rubber *r) noexcept
-{
-    return r->GetBruttoSize();
-}
-
-size_t
-rubber_get_netto_size(const Rubber *r) noexcept
-{
-    return r->GetNettoSize();
 }
 
 inline void
@@ -1007,12 +925,6 @@ Rubber::GetStats() const noexcept
     stats.brutto_size = GetBruttoSize();
     stats.netto_size = GetNettoSize();
     return stats;
-}
-
-AllocatorStats
-rubber_get_stats(const Rubber &r) noexcept
-{
-    return r.GetStats();
 }
 
 void
@@ -1051,12 +963,4 @@ Rubber::Compress() noexcept
     const size_t allocated = AlignHugePageUp(offset);
     if (allocated < max_size)
         mmap_discard_pages(WriteAt(allocated), max_size - allocated);
-}
-
-void
-rubber_compress(Rubber *r) noexcept
-{
-    assert(r != nullptr);
-
-    r->Compress();
 }

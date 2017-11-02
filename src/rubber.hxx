@@ -114,19 +114,36 @@ class Rubber {
     std::array<HoleList, N_HOLE_THRESHOLDS> holes;
 
 public:
+    /**
+     * Throws std::bad_alloc on error.
+     */
     explicit Rubber(size_t _max_size) noexcept;
 
     ~Rubber() noexcept;
 
+    /**
+     * Controls whether forked child processes inherit the allocator.
+     * This is enabled by default.
+     */
     void ForkCow(bool inherit) noexcept;
 
+    /**
+     * Returns the maximum total size of all allocations.
+     */
     gcc_pure
     size_t GetMaxSize() const noexcept;
 
+    /**
+     * Returns the total size of all allocations.
+     */
     size_t GetNettoSize() const noexcept {
         return netto_size;
     }
 
+    /**
+     * Returns the memory consumed by this object, not including the
+     * allocation table.
+     */
     gcc_pure
     size_t GetBruttoSize() const noexcept;
 
@@ -135,17 +152,43 @@ public:
 
     void Compress() noexcept;
 
+    /**
+     * Add a new object with the specified size.  Use Write() to
+     * actually copy data to the object.
+     *
+     * @param size the size, must be positive
+     * @return the object id, or 0 on error
+     */
     unsigned Add(size_t size) noexcept;
     void Remove(unsigned id) noexcept;
 
+    /**
+     * Shrink an object.  The new size must be smaller (or equal) to
+     * the current size.  This is done in-place, possibly leaving a
+     * gap that can only be used again after Compress() has been
+     * called.
+     *
+     * @param new_size the new size, must be positive
+     */
     void Shrink(unsigned id, size_t new_size) noexcept;
 
+    /**
+     * Returns the size of an allocation.  Due to padding, the
+     * returned value may be a bit bigger than the size that was
+     * passed to Add().
+     */
     gcc_pure
     size_t GetSizeOf(unsigned id) const noexcept;
 
+    /**
+     * Return a writable pointer to the object.
+     */
     gcc_pure
     void *Write(unsigned id) noexcept;
 
+    /**
+     * Return a read-only pointer to the object.
+     */
     gcc_pure
     const void *Read(unsigned id) const noexcept;
 
@@ -256,100 +299,5 @@ private:
         GetHoleList(hole).erase(HoleList::s_iterator_to(hole));
     }
 };
-
-/**
- * Throws std::bad_alloc on error.
- */
-Rubber *
-rubber_new(size_t size);
-
-void
-rubber_free(Rubber *r) noexcept;
-
-/**
- * Controls whether forked child processes inherit the allocator.
- * This is enabled by default.
- */
-void
-rubber_fork_cow(Rubber *r, bool inherit) noexcept;
-
-/**
- * Add a new object with the specified size.  Use rubber_write() to
- * actually copy data to the object.
- *
- * @param size the size, must be positive
- * @return the object id, or 0 on error
- */
-unsigned
-rubber_add(Rubber *r, size_t size) noexcept;
-
-/**
- * Returns the size of an allocation.  Due to padding, the returned
- * value may be a bit bigger than the size that was passed to
- * rubber_add().
- */
-gcc_pure
-size_t
-rubber_size_of(const Rubber *r, unsigned id) noexcept;
-
-/**
- * Return a writable pointer to the object.
- */
-gcc_pure
-void *
-rubber_write(Rubber *r, unsigned id) noexcept;
-
-/**
- * Return a read-only pointer to the object.
- */
-gcc_pure
-const void *
-rubber_read(const Rubber *r, unsigned id) noexcept;
-
-/**
- * Shrink an object.  The new size must be smaller (or equal) to the
- * current size.  This is done in-place, possibly leaving a gap that
- * can only be used again after rubber_compress() has been called.
- *
- * @param new_size the new size, must be positive
- */
-void
-rubber_shrink(Rubber *r, unsigned id, size_t new_size) noexcept;
-
-void
-rubber_remove(Rubber *r, unsigned id) noexcept;
-
-/**
- * Returns the maximum total size of all allocations.
- */
-gcc_pure
-size_t
-rubber_get_max_size(const Rubber *r) noexcept;
-
-/**
- * Returns the total size of all allocations.
- */
-gcc_pure
-size_t
-rubber_get_netto_size(const Rubber *r) noexcept;
-
-/**
- * Returns the memory consumed by this object, not including the
- * allocation table.
- */
-gcc_pure
-size_t
-rubber_get_brutto_size(const Rubber *r) noexcept;
-
-/**
- * Returns the memory consumed by this object, not including the
- * allocation table.
- */
-gcc_pure
-AllocatorStats
-rubber_get_stats(const Rubber &r) noexcept;
-
-void
-rubber_compress(Rubber *rr) noexcept;
 
 #endif
