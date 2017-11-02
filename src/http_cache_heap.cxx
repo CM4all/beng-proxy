@@ -85,7 +85,7 @@ struct HttpCacheItem final : HttpCacheDocument, CacheItem {
     /* virtual methods from class CacheItem */
     void Destroy() override {
         if (rubber_id != 0)
-            rubber_remove(rubber, rubber_id);
+            rubber->Remove(rubber_id);
 
         pool_unref(pool);
     }
@@ -215,5 +215,5 @@ HttpCacheHeap::Deinit()
 AllocatorStats
 HttpCacheHeap::GetStats(const Rubber &rubber) const
 {
-    return slice_pool_get_stats(*slice_pool) + rubber_get_stats(rubber);
+    return slice_pool_get_stats(*slice_pool) + rubber.GetStats();
 }

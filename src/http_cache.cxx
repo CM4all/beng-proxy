@@ -215,7 +215,7 @@ public:
 
 private:
     void OnCompressTimer() {
-        rubber_compress(rubber);
+        rubber->Compress();
         if (heap.IsDefined())
             heap.Compress();
         compress_timer.Add(http_cache_compress_interval);
@@ -556,7 +556,7 @@ HttpCache::HttpCache(struct pool &_pool, size_t max_size,
         if (memcached_stock != nullptr && rubber_size > max_memcached_rubber)
             rubber_size = max_memcached_rubber;
 
-        rubber = rubber_new(rubber_size);
+        rubber = new Rubber(rubber_size);
 
         compress_timer.Add(http_cache_compress_interval);
     }
@@ -608,8 +608,7 @@ HttpCache::~HttpCache()
 
     compress_timer.Cancel();
 
-    if (rubber != nullptr)
-        rubber_free(rubber);
+    delete rubber;
 
     pool_unref(&pool);
 }
@@ -625,7 +624,7 @@ http_cache_fork_cow(HttpCache &cache, bool inherit)
 {
     if (cache.heap.IsDefined() ||
         cache.memcached_stock != nullptr)
-        rubber_fork_cow(cache.rubber, inherit);
+        cache.rubber->ForkCow(inherit);
 
     if (cache.heap.IsDefined())
         cache.heap.ForkCow(inherit);
@@ -671,7 +670,7 @@ http_cache_flush(HttpCache &cache)
     }
 
     if (cache.rubber != nullptr)
-        rubber_compress(cache.rubber);
+        cache.rubber->Compress();
 }
 
 /**
