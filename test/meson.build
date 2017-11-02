@@ -22,7 +22,7 @@ executable('dump_control',
   'dump_control.cxx',
   include_directories: inc,
   dependencies: [
-    declare_dependency(link_with: control_server),
+    control_server_dep,
     system_dep,
   ])
 
@@ -30,7 +30,7 @@ executable('send_control',
   'send_control.cxx',
   include_directories: inc,
   dependencies: [
-    declare_dependency(link_with: control_server),
+    control_server_dep,
     net_dep,
   ])
 
@@ -39,7 +39,7 @@ executable('run_ua_parser',
   '../src/ua_classification.cxx',
   include_directories: inc,
   dependencies: [
-    declare_dependency(link_with: expand),
+    expand_dep,
   ])
 
 executable('run_parser_cdata',
@@ -71,7 +71,7 @@ executable('run_client',
     ssl_dep,
     declare_dependency(link_with: ajp_client),
     declare_dependency(link_with: was_client),
-    declare_dependency(link_with: http_client),
+    http_client_dep,
     event_net_dep,
     stock_dep,
     socket_dep,
@@ -94,7 +94,7 @@ executable('run_http_cache',
   '../src/istream_unlock.cxx',
   include_directories: inc,
   dependencies: [
-    declare_dependency(link_with: http_cache),
+    http_cache_dep,
   ])
 
 executable('run_http_server',
@@ -106,7 +106,7 @@ executable('run_http_server',
   '../src/duplex.cxx',
   include_directories: inc,
   dependencies: [
-    declare_dependency(link_with: http_server),
+    http_server_dep,
     system_dep,
   ])
 
@@ -151,11 +151,11 @@ executable('cleanup_memcached_choice',
     event_net_dep,
     io_dep,
     putil_dep,
-    declare_dependency(link_with: raddress),
+    raddress_dep,
     stock_dep,
     eutil_dep,
     stopwatch_dep,
-    declare_dependency(link_with: http_cache),
+    http_cache_dep,
     ssl_dep,
   ])
 
@@ -219,7 +219,7 @@ executable('request_translation',
   '../src/direct.cxx',
   include_directories: inc,
   dependencies: [
-    declare_dependency(link_with: translation),
+    translation_dep,
     widget_dep,
     stock_dep,
     http_dep,
@@ -230,7 +230,7 @@ executable('run_subst',
   '../src/PInstance.cxx',
   include_directories: inc,
   dependencies: [
-    declare_dependency(link_with: istream),
+    istream_dep,
   ])
 
 executable('run_cookie_client',
@@ -238,7 +238,7 @@ executable('run_cookie_client',
   include_directories: inc,
   dependencies: [
     threads,
-    declare_dependency(link_with: cookie),
+    cookie_dep,
   ])
 
 executable('run_cookie_server',
@@ -246,7 +246,7 @@ executable('run_cookie_server',
   include_directories: inc,
   dependencies: [
     threads,
-    declare_dependency(link_with: cookie),
+    cookie_dep,
   ])
 
 executable('run_header_parser',
@@ -301,7 +301,7 @@ executable('run_client_balancer',
     event_net_dep,
     stopwatch_dep,
     eutil_dep,
-    declare_dependency(link_with: raddress),
+    raddress_dep,
   ])
 
 executable('run_nfs_client',
@@ -313,7 +313,7 @@ executable('run_nfs_client',
   include_directories: inc,
   dependencies: [
     declare_dependency(link_with: nfs_client),
-    declare_dependency(link_with: istream),
+    istream_dep,
     stock_dep,
     io_dep,
   ])
@@ -334,7 +334,7 @@ test('t_tcache', executable('t_tcache',
   '../src/widget/View.cxx',
   include_directories: inc,
   dependencies: [
-    declare_dependency(link_with: translation),
+    translation_dep,
   ]))
 
 test('t_regex', executable('t_regex',
@@ -361,7 +361,7 @@ test('t_header_forward', executable('t_header_forward',
     libpcre,
     putil_dep,
     http_dep,
-    declare_dependency(link_with: cookie),
+    cookie_dep,
     system_dep,
   ]))
 
@@ -390,7 +390,7 @@ test('t_resource_address', executable('t_resource_address',
   include_directories: inc,
   dependencies: [
     gtest,
-    declare_dependency(link_with: raddress),
+    raddress_dep,
   ]))
 
 test('t_expansible_buffer', executable('t_expansible_buffer',
@@ -424,7 +424,7 @@ test('t_cgi', executable('t_cgi',
   dependencies: [
     declare_dependency(link_with: cgi),
     system_dep,
-    declare_dependency(link_with: raddress),
+    raddress_dep,
   ]),
   env: ['srcdir=' + meson.source_root()],
 )
@@ -433,7 +433,7 @@ test('t_http_util', executable('t_http_util',
   't_http_util.cxx',
   include_directories: inc,
   dependencies: [
-    declare_dependency(link_with: http_util),
+    http_util_dep,
   ]))
 
 test('t_http_client', executable('t_http_client',
@@ -443,7 +443,7 @@ test('t_http_client', executable('t_http_client',
   '../src/istream_gb.cxx',
   include_directories: inc,
   dependencies: [
-    declare_dependency(link_with: http_client),
+    http_client_dep,
     system_dep,
   ]),
   env: ['srcdir=' + meson.source_root()],
@@ -457,7 +457,7 @@ test('t_http_server', executable('t_http_server',
   '../src/istream_gb.cxx',
   include_directories: inc,
   dependencies: [
-    declare_dependency(link_with: http_server),
+    http_server_dep,
     system_dep,
   ]))
 
@@ -516,7 +516,7 @@ test('t_http_cache', executable('t_http_cache',
   include_directories: inc,
   dependencies: [
     putil_dep,
-    declare_dependency(link_with: http_cache),
+    http_cache_dep,
   ]))
 
 test('t_cookie_client', executable('t_cookie_client',
@@ -524,7 +524,7 @@ test('t_cookie_client', executable('t_cookie_client',
   include_directories: inc,
   dependencies: [
     threads,
-    declare_dependency(link_with: cookie),
+    cookie_dep,
   ]))
 
 test('t_cookie_server', executable('t_cookie_server',
@@ -532,7 +532,7 @@ test('t_cookie_server', executable('t_cookie_server',
   include_directories: inc,
   dependencies: [
     threads,
-    declare_dependency(link_with: cookie),
+    cookie_dep,
   ]))
 
 test('t_shm', executable('t_shm',
@@ -578,7 +578,7 @@ test('t_sink_rubber', executable('t_sink_rubber',
   include_directories: inc,
   dependencies: [
     gtest,
-    declare_dependency(link_with: istream),
+    istream_dep,
   ]))
 
 test('t_slice', executable('t_slice',
@@ -609,7 +609,7 @@ test('t_rewrite_uri', executable('t_rewrite_uri',
     gtest,
     putil_dep,
     widget_dep,
-    declare_dependency(link_with: istream),
+    istream_dep,
   ]))
 
 test('t_widget_registry', executable('t_widget_registry',
@@ -639,8 +639,8 @@ test('t_wembed', executable('t_wembed',
   include_directories: inc,
   dependencies: [
     widget_dep,
-    declare_dependency(link_with: istream),
-    declare_dependency(link_with: http_util),
+    istream_dep,
+    http_util_dep,
   ]))
 
 test('t_widget_http', executable('t_widget_http',
@@ -658,8 +658,8 @@ test('t_widget_http', executable('t_widget_http',
   dependencies: [
     threads,
     widget_dep,
-    declare_dependency(link_with: istream),
-    declare_dependency(link_with: http_util),
+    istream_dep,
+    http_util_dep,
     session_dep,
     processor_dep,
     time_dep,
@@ -713,11 +713,11 @@ t_istream_filter = static_library('t_istream_filter',
   include_directories: inc,
   dependencies: [
     eutil_dep,
-    declare_dependency(link_with: istream),
+    istream_dep,
   ])
 
 t_istream_filter_deps = [
-  declare_dependency(link_with: istream),
+  istream_dep,
   declare_dependency(link_with: t_istream_filter),
 ]
 
