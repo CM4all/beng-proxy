@@ -854,8 +854,8 @@ Rubber::AddHoleAfter(unsigned reference_id, size_t offset, size_t size) noexcept
  */
 
 Rubber::Rubber(size_t _max_size) noexcept
-    :max_size(/*TODO: HUGE_PAGE_SIZE +*/ _max_size), netto_size(0),
-     allocation(HUGE_PAGE_SIZE + _max_size),
+    :max_size(HUGE_PAGE_SIZE + AlignHugePageUp(_max_size)), netto_size(0),
+     allocation(max_size),
      table((RubberTable *)allocation.get()) {
     static_assert(RUBBER_ALIGN >= sizeof(Hole), "Alignment too large");
 
@@ -867,8 +867,6 @@ Rubber::Rubber(size_t _max_size) noexcept
 Rubber *
 rubber_new(size_t size)
 {
-    size = HUGE_PAGE_SIZE + AlignHugePageUp(size);// XXX
-
     return new Rubber(size);
 }
 
