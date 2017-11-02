@@ -126,7 +126,7 @@ struct FilterCacheItem final : CacheItem {
     /* virtual methods from class CacheItem */
     void Destroy() override {
         if (rubber_id != 0)
-            rubber_remove(&rubber, rubber_id);
+            rubber.Remove(rubber_id);
 
         DeleteUnrefTrashPool(pool, this);
     }
@@ -186,7 +186,7 @@ class FilterCache {
 
     struct pool &pool;
     Cache cache;
-    Rubber *const rubber;
+    Rubber rubber;
     SlicePool *const slice_pool;
 
     TimerEvent compress_timer;
@@ -212,13 +212,13 @@ public:
     ~FilterCache();
 
     void ForkCow(bool inherit) {
-        rubber_fork_cow(rubber, inherit);
+        rubber.ForkCow(inherit);
         slice_pool_fork_cow(*slice_pool, inherit);
     }
 
     AllocatorStats GetStats() const noexcept {
         return slice_pool_get_stats(*slice_pool)
-            + rubber_get_stats(*rubber);
+            + rubber.GetStats();
     }
 
     void Flush() {
@@ -256,7 +256,7 @@ private:
              HttpResponseHandler &handler);
 
     void Compress() {
-        rubber_compress(rubber);
+        rubber.Compress();
         slice_pool_compress(slice_pool);
     }
 
@@ -344,7 +344,7 @@ FilterCache::Put(const FilterCacheInfo &info,
     auto item = NewFromPool<FilterCacheItem>(*item_pool, *item_pool,
                                              info,
                                              status, headers, size,
-                                             *rubber, rubber_id,
+                                             rubber, rubber_id,
                                              expires);
 
     cache.Put(info.key, *item);
@@ -503,7 +503,7 @@ FilterCacheRequest::OnHttpResponse(http_status_t status, StringMap &&headers,
         timeout_event.Add(fcache_request_timeout);
 
         sink_rubber_new(pool, istream_tee_second(*body),
-                        *cache.rubber, cacheable_size_limit,
+                        cache.rubber, cacheable_size_limit,
                         *this,
                         response.cancel_ptr);
 
@@ -539,16 +539,11 @@ FilterCache::FilterCache(struct pool &_pool, size_t max_size,
         chances that a hole can be found for a new allocation, to
         reduce the pressure that rubber_compress() creates */
      cache(_event_loop, 65521, max_size * 7 / 8),
-     rubber(rubber_new(max_size)),
+     rubber(max_size),
      slice_pool(slice_pool_new(1024, 65536)),
      compress_timer(_event_loop, BIND_THIS_METHOD(OnCompressTimer)),
      event_loop(_event_loop),
      resource_loader(_resource_loader) {
-    if (rubber == nullptr) {
-        fprintf(stderr, "Failed to allocate filter cache\n");
-        _exit(2);
-    }
-
     compress_timer.Add(fcache_compress_interval);
 }
 
@@ -571,7 +566,6 @@ inline FilterCache::~FilterCache()
 
     cache.Flush();
     slice_pool_free(slice_pool);
-    rubber_free(rubber);
 
     pool_unref(&pool);
 }
@@ -643,7 +637,7 @@ FilterCache::Serve(FilterCacheItem &item,
     assert(item.rubber_id == 0 || ((CacheItem &)item).size >= item.size);
 
     Istream *response_body = item.rubber_id != 0
-        ? istream_rubber_new(caller_pool, *rubber, item.rubber_id,
+        ? istream_rubber_new(caller_pool, rubber, item.rubber_id,
                              0, item.size, false)
         : istream_null_new(&caller_pool);
 
