@@ -118,7 +118,7 @@ struct NfsCache {
 
     TimerEvent compress_timer;
 
-    Rubber &rubber;
+    Rubber rubber;
 
     /**
      * A list of requests that are currently saving their contents to
@@ -132,13 +132,12 @@ struct NfsCache {
 
     ~NfsCache() {
         compress_timer.Cancel();
-        rubber_free(&rubber);
         pool_unref(&pool);
     }
 
 private:
     void OnCompressTimer() {
-        rubber_compress(&rubber);
+        rubber.Compress();
         compress_timer.Add(nfs_cache_compress_interval);
     }
 };
@@ -205,7 +204,7 @@ struct NfsCacheItem final : CacheItem {
     /* virtual methods from class CacheItem */
     void Destroy() override {
         if (rubber_id != 0)
-            rubber_remove(&rubber, rubber_id);
+            rubber.Remove(rubber_id);
 
         pool_unref(&pool);
     }
@@ -359,7 +358,7 @@ NfsCache::NfsCache(struct pool &_pool, size_t max_size,
      event_loop(_event_loop),
      cache(event_loop, 65521, max_size * 7 / 8),
      compress_timer(event_loop, BIND_THIS_METHOD(OnCompressTimer)),
-     rubber(*rubber_new(max_size)) {
+     rubber(max_size) {
     compress_timer.Add(nfs_cache_compress_interval);
 }
 
@@ -381,13 +380,13 @@ nfs_cache_free(NfsCache *cache)
 AllocatorStats
 nfs_cache_get_stats(const NfsCache &cache)
 {
-    return pool_children_stats(cache.pool) + rubber_get_stats(cache.rubber);
+    return pool_children_stats(cache.pool) + cache.rubber.GetStats();
 }
 
 void
 nfs_cache_fork_cow(NfsCache &cache, bool inherit)
 {
-    rubber_fork_cow(&cache.rubber, inherit);
+    cache.rubber.ForkCow(inherit);
 }
 
 void
