@@ -58,7 +58,7 @@ struct Data final : RubberSinkHandler {
         NONE, DONE, OOM, TOO_LARGE, ERROR
     } result;
 
-    Rubber *r;
+    Rubber &r;
 
     unsigned rubber_id;
     size_t size;
@@ -66,10 +66,10 @@ struct Data final : RubberSinkHandler {
 
     CancellablePointer cancel_ptr;
 
-    Data(Rubber *_r):result(NONE), r(_r), rubber_id(0) {}
+    explicit Data(Rubber &_r):result(NONE), r(_r), rubber_id(0) {}
     ~Data() {
         if (rubber_id > 0)
-            rubber_remove(r, rubber_id);
+            r.Remove(rubber_id);
     }
 
     /* virtual methods from class RubberSinkHandler */
@@ -114,36 +114,14 @@ Data::RubberError(std::exception_ptr ep)
     error = ep;
 }
 
-class ScopeRubber {
-    Rubber *const r;
-
-public:
-    ScopeRubber()
-        :r(rubber_new(4 * 1024 * 1024)) {}
-
-    ScopeRubber(const ScopeRubber &) = delete;
-
-    ~ScopeRubber() {
-        rubber_free(r);
-    }
-
-    operator Rubber *() {
-        return r;
-    }
-
-    operator Rubber &() {
-        return *r;
-    }
-};
-
 TEST(SinkRubberTest, Empty)
 {
     TestPool pool;
-    ScopeRubber r;
+    Rubber r(4 * 1024 * 1024);
     Data data(r);
 
     Istream *input = istream_null_new(pool);
-    sink_rubber_new(pool, *input, *r, 1024,
+    sink_rubber_new(pool, *input, r, 1024,
                     data, data.cancel_ptr);
 
     ASSERT_EQ(Data::DONE, data.result);
@@ -154,7 +132,7 @@ TEST(SinkRubberTest, Empty)
 TEST(SinkRubberTest, Empty2)
 {
     TestPool pool;
-    ScopeRubber r;
+    Rubber r(4 * 1024 * 1024);
     Data data(r);
 
     Istream *input = istream_byte_new(pool,
@@ -173,7 +151,7 @@ TEST(SinkRubberTest, Empty2)
 TEST(SinkRubberTest, String)
 {
     TestPool pool;
-    ScopeRubber r;
+    Rubber r(4 * 1024 * 1024);
     Data data(r);
 
     Istream *input = istream_string_new(pool, "foo");
@@ -186,15 +164,14 @@ TEST(SinkRubberTest, String)
     ASSERT_EQ(Data::DONE, data.result);
     ASSERT_GT(data.rubber_id, 0);
     ASSERT_EQ(size_t(3), data.size);
-    ASSERT_EQ(size_t(32), rubber_size_of(r, data.rubber_id));
-    ASSERT_EQ(0, memcmp("foo",
-                                   rubber_read(r, data.rubber_id), 3));
+    ASSERT_EQ(size_t(32), r.GetSizeOf(data.rubber_id));
+    ASSERT_EQ(0, memcmp("foo", r.Read(data.rubber_id), 3));
 }
 
 TEST(SinkRubberTest, String2)
 {
     TestPool pool;
-    ScopeRubber r;
+    Rubber r(4 * 1024 * 1024);
     Data data(r);
 
     Istream *input = istream_four_new(pool,
@@ -212,15 +189,14 @@ TEST(SinkRubberTest, String2)
     ASSERT_EQ(Data::DONE, data.result);
     ASSERT_GT(data.rubber_id, 0);
     ASSERT_EQ(size_t(6), data.size);
-    ASSERT_EQ(size_t(32), rubber_size_of(r, data.rubber_id));
-    ASSERT_EQ(0, memcmp("foobar",
-                                   rubber_read(r, data.rubber_id), 6));
+    ASSERT_EQ(size_t(32), r.GetSizeOf(data.rubber_id));
+    ASSERT_EQ(0, memcmp("foobar", r.Read(data.rubber_id), 6));
 }
 
 TEST(SinkRubberTest, TooLarge1)
 {
     TestPool pool;
-    ScopeRubber r;
+    Rubber r(4 * 1024 * 1024);
     Data data(r);
 
     Istream *input = istream_string_new(pool, "foobar");
@@ -232,7 +208,7 @@ TEST(SinkRubberTest, TooLarge1)
 TEST(SinkRubberTest, TooLarge2)
 {
     TestPool pool;
-    ScopeRubber r;
+    Rubber r(4 * 1024 * 1024);
     Data data(r);
 
     Istream *input = istream_four_new(pool,
@@ -253,7 +229,7 @@ TEST(SinkRubberTest, TooLarge2)
 TEST(SinkRubberTest, Error)
 {
     TestPool pool;
-    ScopeRubber r;
+    Rubber r(4 * 1024 * 1024);
     Data data(r);
 
     Istream *input = istream_fail_new(pool,
@@ -271,7 +247,7 @@ TEST(SinkRubberTest, Error)
 TEST(SinkRubberTest, OOM)
 {
     TestPool pool;
-    ScopeRubber r;
+    Rubber r(4 * 1024 * 1024);
     Data data(r);
 
     Istream *input = istream_delayed_new(pool);
@@ -285,7 +261,7 @@ TEST(SinkRubberTest, OOM)
 TEST(SinkRubberTest, Abort)
 {
     TestPool pool;
-    ScopeRubber r;
+    Rubber r(4 * 1024 * 1024);
     Data data(r);
 
     Istream *delayed = istream_delayed_new(pool);
