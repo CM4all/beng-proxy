@@ -31,7 +31,6 @@ executable('send_control',
   include_directories: inc,
   dependencies: [
     control_server_dep,
-    net_dep,
   ])
 
 executable('run_ua_parser',
@@ -208,7 +207,6 @@ executable('format_http_date',
   'format_http_date.cxx',
   include_directories: inc,
   dependencies: [
-    util_dep,
     time_dep,
     http_dep,
   ])
