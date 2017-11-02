@@ -57,22 +57,6 @@ mmap_page_size(void)
     return 4096;
 }
 
-gcc_const
-static inline size_t
-mmap_huge_page_size(void)
-{
-#ifdef VALGRIND
-    if (RUNNING_ON_VALGRIND)
-        return 0x20;
-#endif
-
-#ifdef __linux
-    return 512 * mmap_page_size();
-#else
-    return mmap_page_size();
-#endif
-}
-
 static inline void *
 mmap_alloc_anonymous(size_t size)
 {

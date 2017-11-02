@@ -32,6 +32,7 @@
 
 #include "rubber.hxx"
 #include "system/LargeAllocation.hxx"
+#include "system/HugePage.hxx"
 #include "system/mmap.h"
 #include "AllocatorStats.hxx"
 #include "util/Macros.hxx"
@@ -462,24 +463,10 @@ private:
 static const size_t RUBBER_ALIGN = 0x20;
 
 gcc_const
-static inline size_t
-align_page_size(size_t size) noexcept
-{
-    return ((size - 1) | (mmap_huge_page_size() - 1)) + 1;
-}
-
-gcc_const
-static inline size_t
-align_page_size_down(size_t size) noexcept
-{
-    return size & ~(mmap_huge_page_size() - 1);
-}
-
-gcc_const
 static inline void *
 align_page_size_ptr(void *p) noexcept
 {
-    return (void *)(long)align_page_size((size_t)p);
+    return (void *)(long)AlignHugePageUp((size_t)p);
 }
 
 gcc_const
@@ -867,20 +854,20 @@ Rubber::AddHoleAfter(unsigned reference_id, size_t offset, size_t size) noexcept
  */
 
 Rubber::Rubber(size_t _max_size) noexcept
-    :max_size(/*TODO: mmap_huge_page_size() +*/ _max_size), netto_size(0),
-     allocation(mmap_huge_page_size() + _max_size),
+    :max_size(/*TODO: HUGE_PAGE_SIZE +*/ _max_size), netto_size(0),
+     allocation(HUGE_PAGE_SIZE + _max_size),
      table((RubberTable *)allocation.get()) {
     static_assert(RUBBER_ALIGN >= sizeof(Hole), "Alignment too large");
 
     const size_t table_size = table->Init(max_size / 1024);
     mmap_enable_huge_pages(WriteAt(table_size),
-                           align_page_size_down(max_size - table_size));
+                           AlignHugePageDown(max_size - table_size));
 }
 
 Rubber *
 rubber_new(size_t size)
 {
-    size = mmap_huge_page_size() + align_page_size(size);// XXX
+    size = HUGE_PAGE_SIZE + AlignHugePageUp(size);// XXX
 
     return new Rubber(size);
 }
@@ -1233,7 +1220,7 @@ Rubber::Compress() noexcept
 
     /* tell the kernel that we won't need the data after our last
        allocation */
-    const size_t allocated = align_page_size(offset);
+    const size_t allocated = AlignHugePageUp(offset);
     if (allocated < max_size)
         mmap_discard_pages(WriteAt(allocated), max_size - allocated);
 }
