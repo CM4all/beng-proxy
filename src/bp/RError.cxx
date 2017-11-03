@@ -80,6 +80,11 @@ ToResponse(struct pool &pool, std::exception_ptr ep)
             case ENOTDIR:
                 return {HTTP_STATUS_NOT_FOUND,
                         "The requested file does not exist."};
+
+            case EACCES:
+            case EPERM:
+                return {HTTP_STATUS_FORBIDDEN,
+                        "Access to the requested file denied."};
             }
         }
     }
