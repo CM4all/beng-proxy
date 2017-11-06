@@ -327,7 +327,7 @@ if stopwatch
   stopwatch_dep = declare_dependency(link_with: stopwatch,
                                     dependencies: [net_dep])
 else
-  stopwatch_dep = []
+  stopwatch_dep = declare_dependency()
 endif
 
 stock = static_library('stock',
