@@ -242,7 +242,7 @@ struct HttpServerConnection final : BufferedSocketHandler, IstreamHandler {
      * Attempt a "direct" transfer of the request body.  Caller must
      * hold an additional pool reference.
      */
-    DirectResult TryRequestBodyDirect(int fd, FdType fd_type);
+    DirectResult TryRequestBodyDirect(SocketDescriptor fd, FdType fd_type);
 
     /**
      * @return false if the connection has been closed
@@ -323,7 +323,7 @@ struct HttpServerConnection final : BufferedSocketHandler, IstreamHandler {
 
     /* virtual methods from class BufferedSocketHandler */
     BufferedResult OnBufferedData(const void *buffer, size_t size) override;
-    DirectResult OnBufferedDirect(int fd, FdType fd_type) override;
+    DirectResult OnBufferedDirect(SocketDescriptor fd, FdType fd_type) override;
     bool OnBufferedClosed() noexcept override;
     bool OnBufferedWrite() override;
     bool OnBufferedDrained() noexcept override;

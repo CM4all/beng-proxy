@@ -434,8 +434,7 @@ HttpServerConnection::Feed(const void *data, size_t length)
 }
 
 DirectResult
-HttpServerConnection::TryRequestBodyDirect(int fd,
-                                             FdType fd_type)
+HttpServerConnection::TryRequestBodyDirect(SocketDescriptor fd, FdType fd_type)
 {
     assert(IsValid());
     assert(request.read_state == Request::BODY);

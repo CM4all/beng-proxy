@@ -251,7 +251,7 @@ HttpServerConnection::OnBufferedData(const void *data, size_t length)
 }
 
 DirectResult
-HttpServerConnection::OnBufferedDirect(int fd, FdType fd_type)
+HttpServerConnection::OnBufferedDirect(SocketDescriptor fd, FdType fd_type)
 {
     assert(request.read_state != Request::END);
     assert(!response.pending_drained);

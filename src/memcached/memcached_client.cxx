@@ -169,11 +169,11 @@ struct MemcachedClient final
     BufferedResult FeedValue(const void *data, size_t length);
     BufferedResult Feed(const void *data, size_t length);
 
-    DirectResult TryReadDirect(int fd, FdType type);
+    DirectResult TryReadDirect(SocketDescriptor fd, FdType type);
 
     /* virtual methods from class BufferedSocketHandler */
     BufferedResult OnBufferedData(const void *buffer, size_t size) override;
-    DirectResult OnBufferedDirect(int fd, FdType fd_type) override;
+    DirectResult OnBufferedDirect(SocketDescriptor fd, FdType fd_type) override;
     bool OnBufferedClosed() noexcept override;
     bool OnBufferedRemaining(size_t remaining) noexcept override;
     bool OnBufferedWrite() override;
@@ -513,12 +513,12 @@ MemcachedClient::Feed(const void *data, size_t length)
 }
 
 DirectResult
-MemcachedClient::TryReadDirect(int fd, FdType type)
+MemcachedClient::TryReadDirect(SocketDescriptor fd, FdType type)
 {
     assert(response.read_state == ReadState::VALUE);
     assert(response.remaining > 0);
 
-    ssize_t nbytes = InvokeDirect(type, fd, response.remaining);
+    ssize_t nbytes = InvokeDirect(type, fd.Get(), response.remaining);
     if (gcc_likely(nbytes > 0)) {
         response.remaining -= nbytes;
 
@@ -568,7 +568,7 @@ MemcachedClient::OnBufferedData(const void *buffer, size_t size)
 }
 
 DirectResult
-MemcachedClient::OnBufferedDirect(int fd, FdType type)
+MemcachedClient::OnBufferedDirect(SocketDescriptor fd, FdType type)
 {
     assert(response.read_state == ReadState::VALUE);
     assert(response.remaining > 0);

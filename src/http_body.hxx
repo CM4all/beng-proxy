@@ -44,6 +44,7 @@
 
 struct pool;
 class EventLoop;
+class SocketDescriptor;
 
 /**
  * Utilities for reading a HTTP body, either request or response.
@@ -180,7 +181,7 @@ public:
 
     using Istream::CheckDirect;
 
-    ssize_t TryDirect(int fd, FdType fd_type);
+    ssize_t TryDirect(SocketDescriptor fd, FdType fd_type);
 
     /**
      * Determines whether the socket can be released now.  This is true if

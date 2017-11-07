@@ -351,11 +351,11 @@ struct HttpClient final : BufferedSocketHandler, IstreamHandler, Cancellable {
 
     BufferedResult Feed(const void *data, size_t length);
 
-    DirectResult TryResponseDirect(int fd, FdType fd_type);
+    DirectResult TryResponseDirect(SocketDescriptor fd, FdType fd_type);
 
     /* virtual methods from class BufferedSocketHandler */
     BufferedResult OnBufferedData(const void *buffer, size_t size) override;
-    DirectResult OnBufferedDirect(int fd, FdType fd_type) override;
+    DirectResult OnBufferedDirect(SocketDescriptor fd, FdType fd_type) override;
     bool OnBufferedClosed() noexcept override;
     bool OnBufferedRemaining(size_t remaining) noexcept override;
     bool OnBufferedWrite() override;
@@ -988,7 +988,7 @@ HttpClient::FeedHeaders(const void *data, size_t length)
 }
 
 inline DirectResult
-HttpClient::TryResponseDirect(int fd, FdType fd_type)
+HttpClient::TryResponseDirect(SocketDescriptor fd, FdType fd_type)
 {
     assert(IsConnected());
     assert(response.state == Response::State::BODY);
@@ -1064,7 +1064,7 @@ HttpClient::OnBufferedData(const void *buffer, size_t size)
 }
 
 DirectResult
-HttpClient::OnBufferedDirect(int fd, FdType fd_type)
+HttpClient::OnBufferedDirect(SocketDescriptor fd, FdType fd_type)
 {
     return TryResponseDirect(fd, fd_type);
 

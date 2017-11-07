@@ -98,7 +98,7 @@ public:
     private:
         /* virtual methods from class BufferedSocketHandler */
         BufferedResult OnBufferedData(const void *buffer, size_t size) override;
-        // TODO: DirectResult OnBufferedDirect(int fd, FdType fd_type) override;
+        // TODO: DirectResult OnBufferedDirect(SocketDescriptor fd, FdType fd_type) override;
         bool OnBufferedClosed() noexcept override;
         bool OnBufferedWrite() override;
         bool OnBufferedDrained() noexcept override;
@@ -121,7 +121,7 @@ public:
     private:
         /* virtual methods from class BufferedSocketHandler */
         BufferedResult OnBufferedData(const void *buffer, size_t size) override;
-        // TODO: DirectResult OnBufferedDirect(int fd, FdType fd_type) override;
+        // TODO: DirectResult OnBufferedDirect(SocketDescriptor fd, FdType fd_type) override;
         bool OnBufferedClosed() noexcept override;
         bool OnBufferedEnd() noexcept override;
         bool OnBufferedWrite() override;

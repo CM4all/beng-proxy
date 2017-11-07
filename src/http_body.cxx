@@ -32,6 +32,7 @@
 
 #include "http_body.hxx"
 #include "istream/istream_dechunk.hxx"
+#include "net/SocketDescriptor.hxx"
 
 #include <limits.h>
 
@@ -74,12 +75,12 @@ HttpBodyReader::FeedBody(const void *data, size_t length)
 }
 
 ssize_t
-HttpBodyReader::TryDirect(int fd, FdType fd_type)
+HttpBodyReader::TryDirect(SocketDescriptor fd, FdType fd_type)
 {
-    assert(fd >= 0);
+    assert(fd.IsDefined());
     assert(CheckDirect(fd_type));
 
-    ssize_t nbytes = InvokeDirect(fd_type, fd, GetMaxRead(INT_MAX));
+    ssize_t nbytes = InvokeDirect(fd_type, fd.Get(), GetMaxRead(INT_MAX));
     if (nbytes > 0)
         Consumed((size_t)nbytes);
 
