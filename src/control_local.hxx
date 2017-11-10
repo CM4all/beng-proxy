@@ -33,20 +33,39 @@
 #ifndef BENG_PROXY_CONTROL_LOCAL_HXX
 #define BENG_PROXY_CONTROL_LOCAL_HXX
 
-class LocalControl;
-class ControlHandler;
+#include "control_handler.hxx"
+
+#include <memory>
+
 class EventLoop;
 
 /**
  * Control server on an implicitly configured local socket.
  */
-LocalControl *
-control_local_new(const char *prefix, ControlHandler &handler);
+class LocalControl final : ControlHandler {
+    const char *const prefix;
 
-void
-control_local_free(LocalControl *cl);
+    ControlHandler &handler;
 
-void
-control_local_open(LocalControl *cl, EventLoop &event_loop);
+    std::unique_ptr<ControlServer> server;
+
+public:
+    LocalControl(const char *_prefix, ControlHandler &_handler)
+        :prefix(_prefix), handler(_handler) {}
+
+    void Open(EventLoop &event_loop);
+
+    /* virtual methods from class ControlHandler */
+    bool OnControlRaw(const void *data, size_t length,
+                      SocketAddress address,
+                      int uid) override;
+
+    void OnControlPacket(ControlServer &control_server,
+                         enum beng_control_command command,
+                         const void *payload, size_t payload_length,
+                         SocketAddress address) override;
+
+    void OnControlError(std::exception_ptr ep) noexcept override;
+};
 
 #endif

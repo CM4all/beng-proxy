@@ -245,18 +245,17 @@ void
 local_control_handler_init(BpInstance *instance)
 {
     instance->local_control_server =
-        control_local_new("beng_control:pid=", *instance);
+        new LocalControl("beng_control:pid=", *instance);
 }
 
 void
 local_control_handler_deinit(BpInstance *instance)
 {
-    control_local_free(instance->local_control_server);
+    delete instance->local_control_server;
 }
 
 void
 local_control_handler_open(BpInstance *instance)
 {
-    control_local_open(instance->local_control_server,
-                       instance->event_loop);
+    instance->local_control_server->Open(instance->event_loop);
 }
