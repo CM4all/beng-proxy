@@ -37,7 +37,6 @@ struct LocalControl;
 class ControlServer;
 class ControlHandler;
 class EventLoop;
-class Error;
 
 /**
  * Control server on an implicitly configured local socket.

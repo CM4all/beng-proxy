@@ -48,7 +48,6 @@ struct HttpAddress;
 struct CgiAddress;
 struct NfsAddress;
 class MatchInfo;
-class Error;
 class AllocatorPtr;
 
 /**

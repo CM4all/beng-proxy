@@ -39,7 +39,6 @@
 
 class AllocatorPtr;
 class MatchInfo;
-class Error;
 
 /**
  * Throws std::runtime_error on error.

@@ -42,7 +42,6 @@
 
 class SocketAddress;
 class UniqueSocketDescriptor;
-class Error;
 class UdpListener;
 class EventLoop;
 struct SocketConfig;
