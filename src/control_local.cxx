@@ -53,6 +53,8 @@ struct LocalControl final : ControlHandler {
     LocalControl(const char *_prefix, ControlHandler &_handler)
         :prefix(_prefix), handler(_handler) {}
 
+    void Open(EventLoop &event_loop);
+
     /* virtual methods from class ControlHandler */
     bool OnControlRaw(const void *data, size_t length,
                       SocketAddress address,
@@ -118,19 +120,25 @@ control_local_free(LocalControl *cl)
 }
 
 void
-control_local_open(LocalControl *cl, EventLoop &event_loop)
+LocalControl::Open(EventLoop &event_loop)
 {
-    cl->server.reset();
+    server.reset();
 
     struct sockaddr_un sa;
     sa.sun_family = AF_UNIX;
     sa.sun_path[0] = '\0';
-    sprintf(sa.sun_path + 1, "%s%d", cl->prefix, (int)getpid());
+    sprintf(sa.sun_path + 1, "%s%d", prefix, (int)getpid());
 
     SocketConfig config;
     config.bind_address = SocketAddress((const struct sockaddr *)&sa,
                                         SUN_LEN(&sa) + 1 + strlen(sa.sun_path + 1)),
     config.pass_cred = true;
 
-    cl->server = std::make_unique<ControlServer>(event_loop, *cl, config);
+    server = std::make_unique<ControlServer>(event_loop, *this, config);
+}
+
+void
+control_local_open(LocalControl *cl, EventLoop &event_loop)
+{
+    cl->Open(event_loop);
 }
