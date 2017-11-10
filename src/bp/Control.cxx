@@ -228,12 +228,13 @@ global_control_handler_set_fd(BpInstance *instance,
 
     instance->control_distribute->Clear();
 
-    /* erase all but one */
-    instance->control_servers.erase_after(instance->control_servers.begin(),
-                                          instance->control_servers.end());
+    /* erase all */
+    instance->control_servers.clear();
 
-    /* replace the one */
-    instance->control_servers.front().SetFd(std::move(fd));
+    /* create new one with the given socket */
+    instance->control_servers.emplace_front(instance->event_loop,
+                                            std::move(fd),
+                                            *instance->control_distribute);
 }
 
 /*
