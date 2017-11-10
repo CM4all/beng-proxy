@@ -44,14 +44,14 @@
 #include <unistd.h>
 
 struct LocalControl final : ControlHandler {
-    const char *prefix;
+    const char *const prefix;
 
     ControlHandler &handler;
 
     std::unique_ptr<ControlServer> server;
 
-    explicit LocalControl(ControlHandler &_handler)
-        :handler(_handler) {}
+    LocalControl(const char *_prefix, ControlHandler &_handler)
+        :prefix(_prefix), handler(_handler) {}
 
     /* virtual methods from class ControlHandler */
     bool OnControlRaw(const void *data, size_t length,
@@ -108,11 +108,7 @@ LocalControl::OnControlError(std::exception_ptr ep) noexcept
 LocalControl *
 control_local_new(const char *prefix, ControlHandler &handler)
 {
-    auto cl = new LocalControl(handler);
-    cl->prefix = prefix;
-    cl->server = nullptr;
-
-    return cl;
+    return new LocalControl(prefix, handler);
 }
 
 void
