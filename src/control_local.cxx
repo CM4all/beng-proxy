@@ -134,12 +134,3 @@ control_local_open(LocalControl *cl, EventLoop &event_loop)
 
     cl->server = std::make_unique<ControlServer>(event_loop, *cl, config);
 }
-
-ControlServer *
-control_local_get(LocalControl *cl)
-{
-    assert(cl != nullptr);
-    assert(cl->server != nullptr);
-
-    return cl->server.get();
-}
