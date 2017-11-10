@@ -45,9 +45,10 @@
 class DumpUdpHandler final : public UdpHandler {
 public:
     /* virtual methods from class UdpHandler */
-    void OnUdpDatagram(gcc_unused const void *data, size_t length,
+    bool OnUdpDatagram(gcc_unused const void *data, size_t length,
                        gcc_unused SocketAddress address, int uid) override {
         printf("packet: %zu uid=%d\n", length, uid);
+        return true;
     }
 
     void OnUdpError(std::exception_ptr ep) noexcept override {

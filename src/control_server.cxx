@@ -111,15 +111,16 @@ control_server_decode(ControlServer &control_server,
     }
 }
 
-void
+bool
 ControlServer::OnUdpDatagram(const void *data, size_t length,
                              SocketAddress address, int uid)
 {
     if (!handler.OnControlRaw(data, length, address, uid))
         /* discard datagram if raw() returns false */
-        return;
+        return true;
 
     control_server_decode(*this, data, length, address, handler);
+    return true;
 }
 
 void
