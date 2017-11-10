@@ -43,13 +43,14 @@
 #include <stdio.h>
 #include <unistd.h>
 
-struct LocalControl final : ControlHandler {
+class LocalControl final : ControlHandler {
     const char *const prefix;
 
     ControlHandler &handler;
 
     std::unique_ptr<ControlServer> server;
 
+public:
     LocalControl(const char *_prefix, ControlHandler &_handler)
         :prefix(_prefix), handler(_handler) {}
 
@@ -134,7 +135,7 @@ LocalControl::Open(EventLoop &event_loop)
                                         SUN_LEN(&sa) + 1 + strlen(sa.sun_path + 1)),
     config.pass_cred = true;
 
-    server = std::make_unique<ControlServer>(event_loop, *this, config);
+    server.reset(new ControlServer(event_loop, *this, config));
 }
 
 void

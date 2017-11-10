@@ -63,7 +63,7 @@ struct MemachedStock;
 class SpawnService;
 class ControlDistribute;
 class ControlServer;
-struct LocalControl;
+class LocalControl;
 class SpawnServerClient;
 class TranslateStock;
 class LhttpStock;

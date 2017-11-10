@@ -33,7 +33,7 @@
 #ifndef BENG_PROXY_CONTROL_LOCAL_HXX
 #define BENG_PROXY_CONTROL_LOCAL_HXX
 
-struct LocalControl;
+class LocalControl;
 class ControlHandler;
 class EventLoop;
 
