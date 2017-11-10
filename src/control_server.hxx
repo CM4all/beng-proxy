@@ -56,6 +56,9 @@ class ControlServer final : UdpHandler {
     UdpListener udp;
 
 public:
+    ControlServer(EventLoop &event_loop, UniqueSocketDescriptor s,
+                  ControlHandler &_handler);
+
     ControlServer(EventLoop &event_loop, ControlHandler &_handler,
                   const SocketConfig &config);
 

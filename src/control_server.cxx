@@ -42,10 +42,15 @@
 #include <string.h>
 #include <alloca.h>
 
+ControlServer::ControlServer(EventLoop &event_loop, UniqueSocketDescriptor s,
+                             ControlHandler &_handler)
+    :handler(_handler), udp(event_loop, std::move(s), *this)
+{
+}
+
 ControlServer::ControlServer(EventLoop &event_loop, ControlHandler &_handler,
                              const SocketConfig &config)
-    :handler(_handler),
-     udp(event_loop, config.Create(SOCK_DGRAM), *this)
+    :ControlServer(event_loop, config.Create(SOCK_DGRAM), _handler)
 {
 }
 
