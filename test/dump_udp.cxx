@@ -50,7 +50,7 @@ public:
         printf("packet: %zu uid=%d\n", length, uid);
     }
 
-    void OnUdpError(std::exception_ptr ep) override {
+    void OnUdpError(std::exception_ptr ep) noexcept override {
         PrintException(ep);
     }
 };

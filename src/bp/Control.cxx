@@ -168,7 +168,7 @@ BpInstance::OnControlPacket(ControlServer &control_server,
 }
 
 void
-BpInstance::OnControlError(std::exception_ptr ep)
+BpInstance::OnControlError(std::exception_ptr ep) noexcept
 {
     LogConcat(2, "control", ep);
 }

@@ -86,7 +86,7 @@ private:
     /* virtual methods from class UdpHandler */
     void OnUdpDatagram(const void *data, size_t length,
                        SocketAddress address, int uid) override;
-    void OnUdpError(std::exception_ptr ep) override;
+    void OnUdpError(std::exception_ptr ep) noexcept override;
 };
 
 #endif

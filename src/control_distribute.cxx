@@ -62,7 +62,7 @@ ControlDistribute::OnControlPacket(ControlServer &control_server,
 }
 
 void
-ControlDistribute::OnControlError(std::exception_ptr ep)
+ControlDistribute::OnControlError(std::exception_ptr ep) noexcept
 {
     return next_handler.OnControlError(ep);
 }

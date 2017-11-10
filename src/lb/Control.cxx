@@ -312,7 +312,7 @@ LbControl::OnControlPacket(ControlServer &control_server,
 }
 
 void
-LbControl::OnControlError(std::exception_ptr ep)
+LbControl::OnControlError(std::exception_ptr ep) noexcept
 {
     logger(2, ep);
 }

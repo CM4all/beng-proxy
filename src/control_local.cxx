@@ -63,7 +63,7 @@ struct LocalControl final : ControlHandler {
                          const void *payload, size_t payload_length,
                          SocketAddress address) override;
 
-    void OnControlError(std::exception_ptr ep) override;
+    void OnControlError(std::exception_ptr ep) noexcept override;
 };
 
 /*
@@ -95,7 +95,7 @@ LocalControl::OnControlPacket(ControlServer &control_server,
 }
 
 void
-LocalControl::OnControlError(std::exception_ptr ep)
+LocalControl::OnControlError(std::exception_ptr ep) noexcept
 {
     handler.OnControlError(ep);
 }

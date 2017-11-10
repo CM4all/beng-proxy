@@ -123,7 +123,7 @@ ControlServer::OnUdpDatagram(const void *data, size_t length,
 }
 
 void
-ControlServer::OnUdpError(std::exception_ptr ep)
+ControlServer::OnUdpError(std::exception_ptr ep) noexcept
 {
     handler.OnControlError(ep);
 }

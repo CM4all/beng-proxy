@@ -211,7 +211,7 @@ struct BpInstance final : PInstance, ControlHandler {
                          const void *payload, size_t payload_length,
                          SocketAddress address) override;
 
-    void OnControlError(std::exception_ptr ep) override;
+    void OnControlError(std::exception_ptr ep) noexcept override;
 
 private:
     void RespawnWorkerCallback();
