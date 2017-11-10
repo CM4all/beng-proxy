@@ -71,14 +71,6 @@ public:
     }
 
     /**
-     * Replaces the socket.  The old one is closed, and the new one is
-     * now owned by this object.
-     */
-    void SetFd(UniqueSocketDescriptor &&fd) {
-        udp.SetFd(std::move(fd));
-    }
-
-    /**
      * Throws std::runtime_error on error.
      */
     void Reply(SocketAddress address,
