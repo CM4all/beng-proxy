@@ -61,7 +61,7 @@ public:
 
     void Begin() {
         position = 0;
-        Append(&Net::Log::MAGIC, sizeof(Net::Log::MAGIC));
+        Append(&Net::Log::MAGIC_V1, sizeof(Net::Log::MAGIC_V1));
     }
 
     void Append(const void *p, size_t size) {
