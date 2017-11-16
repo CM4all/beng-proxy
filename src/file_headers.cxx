@@ -103,6 +103,21 @@ ReadETag(int fd, char *buffer, size_t size) noexcept
     return true;
 }
 
+gcc_pure
+static bool
+CheckETagList(const char *list, const struct stat &st) noexcept
+{
+    assert(list != nullptr);
+
+    if (strcmp(list, "*") == 0)
+        return true;
+
+    // TODO: check user.ETag first
+    char buffer[64];
+    static_etag(buffer, st);
+    return http_list_contains(list, buffer);
+}
+
 static void
 MakeETag(GrowingBuffer &headers, int fd, const struct stat &st)
 {
@@ -185,29 +200,15 @@ file_evaluate_request(Request &request2,
 
     if (!request2.IsTransformationEnabled()) {
         const char *p = request_headers.Get("if-match");
-        if (p != nullptr && strcmp(p, "*") != 0) {
-            char buffer[64];
-            static_etag(buffer, st);
-
-            if (!http_list_contains(p, buffer)) {
-                response_dispatch(request2, HTTP_STATUS_PRECONDITION_FAILED,
-                                  HttpHeaders(request2.pool), nullptr);
-                return false;
-            }
-        }
-
-        p = request_headers.Get("if-none-match");
-        if (p != nullptr && strcmp(p, "*") == 0) {
+        if (p != nullptr && !CheckETagList(p, st)) {
             response_dispatch(request2, HTTP_STATUS_PRECONDITION_FAILED,
                               HttpHeaders(request2.pool), nullptr);
             return false;
         }
 
+        p = request_headers.Get("if-none-match");
         if (p != nullptr) {
-            char buffer[64];
-            static_etag(buffer, st);
-
-            if (http_list_contains(p, buffer)) {
+            if (CheckETagList(p, st)) {
                 response_dispatch(request2, HTTP_STATUS_PRECONDITION_FAILED,
                                   HttpHeaders(request2.pool), nullptr);
                 return false;
