@@ -4,7 +4,7 @@ cm4all-beng-proxy (12.7) unstable; urgency=low
   * file: emit cache headers in "304" responses (v11 regression)
   * file: failed If-None-Match emits "304" response, not "412"
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Thu, 16 Nov 2017 12:19:44 -0000
 
 cm4all-beng-proxy (12.6) unstable; urgency=low
 
