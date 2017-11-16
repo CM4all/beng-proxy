@@ -85,7 +85,7 @@ generate_expires(GrowingBuffer &headers,
                  http_date_format(std::chrono::system_clock::now() + max_age));
 }
 
-void
+static void
 file_cache_headers(GrowingBuffer &headers,
                    int fd, const struct stat &st,
                    std::chrono::seconds max_age)
