@@ -213,7 +213,7 @@ file_evaluate_request(Request &request2,
             if (t != std::chrono::system_clock::from_time_t(-1) &&
                 std::chrono::system_clock::from_time_t(st.st_mtime) <= t) {
                 HttpHeaders headers(request2.pool);
-                GrowingBuffer headers2 = headers.MakeBuffer();
+                auto &headers2 = headers.GetBuffer();
 
                 file_cache_headers(headers2, fd, st, tr.expires_relative);
 
