@@ -1,6 +1,7 @@
 cm4all-beng-proxy (12.8) unstable; urgency=low
 
   * file: emit "Last-Modified" header in "304" responses
+  * file: improved support for the user.ETag xattr
 
  --   
 

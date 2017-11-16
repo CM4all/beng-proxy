@@ -87,16 +87,15 @@ generate_expires(GrowingBuffer &headers,
 
 gcc_pure
 static bool
-CheckETagList(const char *list, const struct stat &st) noexcept
+CheckETagList(const char *list, int fd, const struct stat &st) noexcept
 {
     assert(list != nullptr);
 
     if (strcmp(list, "*") == 0)
         return true;
 
-    // TODO: check user.ETag first
-    char buffer[64];
-    static_etag(buffer, st);
+    char buffer[256];
+    GetAnyETag(buffer, sizeof(buffer), fd, st);
     return http_list_contains(list, buffer);
 }
 
@@ -130,7 +129,7 @@ file_cache_headers(GrowingBuffer &headers,
  * Verifies the If-Range request header (RFC 2616 14.27).
  */
 static bool
-check_if_range(const char *if_range, const struct stat &st)
+check_if_range(const char *if_range, int fd, const struct stat &st) noexcept
 {
     if (if_range == nullptr)
         return true;
@@ -139,8 +138,8 @@ check_if_range(const char *if_range, const struct stat &st)
     if (t != std::chrono::system_clock::from_time_t(-1))
         return std::chrono::system_clock::from_time_t(st.st_mtime) == t;
 
-    char etag[64];
-    static_etag(etag, st);
+    char etag[256];
+    GetAnyETag(etag, sizeof(etag), fd, st);
     return strcmp(if_range, etag) == 0;
 }
 
@@ -177,13 +176,13 @@ file_evaluate_request(Request &request2,
         const char *p = request_headers.Get("range");
 
         if (p != nullptr &&
-            check_if_range(request_headers.Get("if-range"), st))
+            check_if_range(request_headers.Get("if-range"), fd, st))
             file_request.range.ParseRangeHeader(p);
     }
 
     if (!request2.IsTransformationEnabled()) {
         const char *p = request_headers.Get("if-match");
-        if (p != nullptr && !CheckETagList(p, st)) {
+        if (p != nullptr && !CheckETagList(p, fd, st)) {
             response_dispatch(request2, HTTP_STATUS_PRECONDITION_FAILED,
                               HttpHeaders(request2.pool), nullptr);
             return false;
@@ -191,7 +190,7 @@ file_evaluate_request(Request &request2,
 
         p = request_headers.Get("if-none-match");
         if (p != nullptr) {
-            if (CheckETagList(p, st)) {
+            if (CheckETagList(p, fd, st)) {
                 DispatchNotModified(request2, tr, fd, st);
                 return false;
             }

@@ -60,7 +60,7 @@ ReadETag(int fd, char *buffer, size_t size) noexcept
     return true;
 }
 
-void
+static void
 static_etag(char *p, const struct stat &st)
 {
     *p++ = '"';
@@ -125,7 +125,7 @@ static_response_headers(struct pool &pool,
     headers.Add("last-modified",
                 p_strdup(&pool, http_date_format(std::chrono::system_clock::from_time_t(st.st_mtime))));
 
-    static_etag(buffer, st);
+    GetAnyETag(buffer, sizeof(buffer), fd, st);
     headers.Add("etag", p_strdup(&pool, buffer));
 
     return headers;

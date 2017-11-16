@@ -46,9 +46,6 @@ struct stat;
 struct file_request;
 
 void
-static_etag(char *p, const struct stat &st);
-
-void
 GetAnyETag(char *buffer, size_t size,
            int fd, const struct stat &st) noexcept;
 
