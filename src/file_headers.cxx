@@ -84,6 +84,38 @@ file_evaluate_request(Request &request2,
             file_request.range.ParseRangeHeader(p);
     }
 
+    if (!request2.IsTransformationEnabled()) {
+        const char *p = request_headers.Get("if-match");
+        if (p != nullptr && strcmp(p, "*") != 0) {
+            char buffer[64];
+            static_etag(buffer, st);
+
+            if (!http_list_contains(p, buffer)) {
+                response_dispatch(request2, HTTP_STATUS_PRECONDITION_FAILED,
+                                  HttpHeaders(request2.pool), nullptr);
+                return false;
+            }
+        }
+
+        p = request_headers.Get("if-none-match");
+        if (p != nullptr && strcmp(p, "*") == 0) {
+            response_dispatch(request2, HTTP_STATUS_PRECONDITION_FAILED,
+                              HttpHeaders(request2.pool), nullptr);
+            return false;
+        }
+
+        if (p != nullptr) {
+            char buffer[64];
+            static_etag(buffer, st);
+
+            if (http_list_contains(p, buffer)) {
+                response_dispatch(request2, HTTP_STATUS_PRECONDITION_FAILED,
+                                  HttpHeaders(request2.pool), nullptr);
+                return false;
+            }
+        }
+    }
+
     if (!request2.IsProcessorEnabled()) {
         const char *p = request_headers.Get("if-modified-since");
         if (p != nullptr) {
@@ -110,38 +142,6 @@ file_evaluate_request(Request &request2,
             const auto t = http_date_parse(p);
             if (t != std::chrono::system_clock::from_time_t(-1) &&
                 std::chrono::system_clock::from_time_t(st.st_mtime) > t) {
-                response_dispatch(request2, HTTP_STATUS_PRECONDITION_FAILED,
-                                  HttpHeaders(request2.pool), nullptr);
-                return false;
-            }
-        }
-    }
-
-    if (!request2.IsTransformationEnabled()) {
-        const char *p = request_headers.Get("if-match");
-        if (p != nullptr && strcmp(p, "*") != 0) {
-            char buffer[64];
-            static_etag(buffer, st);
-
-            if (!http_list_contains(p, buffer)) {
-                response_dispatch(request2, HTTP_STATUS_PRECONDITION_FAILED,
-                                  HttpHeaders(request2.pool), nullptr);
-                return false;
-            }
-        }
-
-        p = request_headers.Get("if-none-match");
-        if (p != nullptr && strcmp(p, "*") == 0) {
-            response_dispatch(request2, HTTP_STATUS_PRECONDITION_FAILED,
-                              HttpHeaders(request2.pool), nullptr);
-            return false;
-        }
-
-        if (p != nullptr) {
-            char buffer[64];
-            static_etag(buffer, st);
-
-            if (http_list_contains(p, buffer)) {
                 response_dispatch(request2, HTTP_STATUS_PRECONDITION_FAILED,
                                   HttpHeaders(request2.pool), nullptr);
                 return false;
