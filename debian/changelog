@@ -1,6 +1,7 @@
 cm4all-beng-proxy (12.7) unstable; urgency=low
 
   * file: ignore If-Modified-Since after successful If-None-Match
+  * nfs: emit cache headers in "304" responses
 
  --   
 

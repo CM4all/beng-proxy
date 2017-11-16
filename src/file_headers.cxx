@@ -108,7 +108,7 @@ MakeETag(GrowingBuffer &headers, int fd, const struct stat &st)
 {
     char buffer[512];
 
-    if (!ReadETag(fd, buffer, sizeof(buffer)))
+    if (fd < 0 || !ReadETag(fd, buffer, sizeof(buffer)))
         static_etag(buffer, st);
 
     header_write(headers, "etag", buffer);
@@ -119,11 +119,9 @@ file_cache_headers(GrowingBuffer &headers,
                    int fd, const struct stat &st,
                    std::chrono::seconds max_age)
 {
-    assert(fd >= 0);
-
     MakeETag(headers, fd, st);
 
-    if (max_age == std::chrono::seconds::zero())
+    if (max_age == std::chrono::seconds::zero() && fd >= 0)
         max_age = read_xattr_max_age(fd);
 
     if (max_age > std::chrono::seconds::zero())
@@ -217,9 +215,7 @@ file_evaluate_request(Request &request2,
                 HttpHeaders headers(request2.pool);
                 GrowingBuffer headers2 = headers.MakeBuffer();
 
-                if (fd >= 0)
-                    file_cache_headers(headers2, fd, st,
-                                       tr.expires_relative);
+                file_cache_headers(headers2, fd, st, tr.expires_relative);
 
                 write_translation_vary_header(headers2, tr);
 
