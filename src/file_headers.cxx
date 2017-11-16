@@ -209,8 +209,7 @@ file_evaluate_request(Request &request2,
         p = request_headers.Get("if-none-match");
         if (p != nullptr) {
             if (CheckETagList(p, st)) {
-                response_dispatch(request2, HTTP_STATUS_PRECONDITION_FAILED,
-                                  HttpHeaders(request2.pool), nullptr);
+                DispatchNotModified(request2, tr, fd, st);
                 return false;
             }
 
