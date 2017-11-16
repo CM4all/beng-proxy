@@ -257,16 +257,8 @@ file_response_headers(GrowingBuffer &headers,
                       std::chrono::seconds expires_relative,
                       bool processor_enabled, bool processor_first)
 {
-    if (!processor_first && fd >= 0)
+    if (!processor_first)
         file_cache_headers(headers, fd, st, expires_relative);
-    else {
-        char etag[64];
-        static_etag(etag, st);
-        header_write(headers, "etag", etag);
-
-        if (expires_relative > std::chrono::seconds::zero())
-            generate_expires(headers, expires_relative);
-    }
 
     if (override_content_type != nullptr) {
         /* content type override from the translation server */
