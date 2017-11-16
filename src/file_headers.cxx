@@ -73,9 +73,9 @@ file_evaluate_request(Request &request2,
 {
     const auto &request = request2.request;
     const auto &request_headers = request.headers;
-    const TranslateResponse *tr = request2.translate.response;
+    const auto &tr = *request2.translate.response;
 
-    if (tr->status == 0 && request.method == HTTP_METHOD_GET &&
+    if (tr.status == 0 && request.method == HTTP_METHOD_GET &&
         !request2.IsTransformationEnabled()) {
         const char *p = request_headers.Get("range");
 
@@ -95,9 +95,9 @@ file_evaluate_request(Request &request2,
 
                 if (fd >= 0)
                     file_cache_headers(headers2, fd, st,
-                                       tr->expires_relative);
+                                       tr.expires_relative);
 
-                write_translation_vary_header(headers2, *tr);
+                write_translation_vary_header(headers2, tr);
 
                 response_dispatch(request2, HTTP_STATUS_NOT_MODIFIED,
                                   std::move(headers), nullptr);
