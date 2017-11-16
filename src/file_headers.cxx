@@ -85,6 +85,24 @@ generate_expires(GrowingBuffer &headers,
                  http_date_format(std::chrono::system_clock::now() + max_age));
 }
 
+static bool
+ReadETag(int fd, char *buffer, size_t size) noexcept
+{
+    assert(fd >= 0);
+    assert(size > 4);
+
+    const auto nbytes = fgetxattr(fd, "user.ETag", buffer + 1, size - 3);
+    if (nbytes <= 0)
+        return false;
+
+    assert((size_t)nbytes < size);
+
+    buffer[0] = '"';
+    buffer[nbytes + 1] = '"';
+    buffer[nbytes + 2] = 0;
+    return true;
+}
+
 static void
 file_cache_headers(GrowingBuffer &headers,
                    int fd, const struct stat &st,
@@ -94,16 +112,9 @@ file_cache_headers(GrowingBuffer &headers,
 
     char buffer[64];
 
-    ssize_t nbytes;
     char etag[512];
 
-    nbytes = fgetxattr(fd, "user.ETag",
-                       etag + 1, sizeof(etag) - 3);
-    if (nbytes > 0) {
-        assert((size_t)nbytes < sizeof(etag));
-        etag[0] = '"';
-        etag[nbytes + 1] = '"';
-        etag[nbytes + 2] = 0;
+    if (ReadETag(fd, etag, sizeof(etag))) {
         header_write(headers, "etag", etag);
     } else {
         static_etag(buffer, st);
