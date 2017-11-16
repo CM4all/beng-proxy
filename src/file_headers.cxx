@@ -134,6 +134,9 @@ file_cache_headers(GrowingBuffer &headers,
                    int fd, const struct stat &st,
                    std::chrono::seconds max_age)
 {
+    header_write(headers, "last-modified",
+                 http_date_format(std::chrono::system_clock::from_time_t(st.st_mtime)));
+
     MakeETag(headers, fd, st);
 
     if (max_age == std::chrono::seconds::zero() && fd >= 0)
@@ -255,7 +258,7 @@ file_response_headers(GrowingBuffer &headers,
                       const char *override_content_type,
                       int fd, const struct stat &st,
                       std::chrono::seconds expires_relative,
-                      bool processor_enabled, bool processor_first)
+                      bool processor_first)
 {
     if (!processor_first)
         file_cache_headers(headers, fd, st, expires_relative);
@@ -271,10 +274,4 @@ file_response_headers(GrowingBuffer &headers,
             header_write(headers, "content-type", "application/octet-stream");
         }
     }
-
-#ifndef NO_LAST_MODIFIED_HEADER
-    if (!processor_enabled)
-        header_write(headers, "last-modified",
-                     http_date_format(std::chrono::system_clock::from_time_t(st.st_mtime)));
-#endif
 }

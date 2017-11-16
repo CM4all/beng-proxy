@@ -63,6 +63,6 @@ file_response_headers(GrowingBuffer &headers,
                       const char *override_content_type,
                       int fd, const struct stat &st,
                       std::chrono::seconds expires_relative,
-                      bool processor_enabled, bool processor_first);
+                      bool processor_first);
 
 #endif
