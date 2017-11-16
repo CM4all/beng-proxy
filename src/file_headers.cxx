@@ -48,6 +48,75 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 
+gcc_pure
+static std::chrono::seconds
+read_xattr_max_age(int fd)
+{
+    assert(fd >= 0);
+
+    char buffer[32];
+    ssize_t nbytes = fgetxattr(fd, "user.MaxAge",
+                               buffer, sizeof(buffer) - 1);
+    if (nbytes <= 0)
+        return std::chrono::seconds::zero();
+
+    buffer[nbytes] = 0;
+
+    char *endptr;
+    unsigned long max_age = strtoul(buffer, &endptr, 10);
+    if (*endptr != 0)
+        return std::chrono::seconds::zero();
+
+    return std::chrono::seconds(max_age);
+}
+
+static void
+generate_expires(GrowingBuffer &headers,
+                 std::chrono::system_clock::duration max_age)
+{
+    constexpr std::chrono::system_clock::duration max_max_age =
+        std::chrono::hours(365 * 24);
+    if (max_age > max_max_age)
+        /* limit max_age to approximately one year */
+        max_age = max_max_age;
+
+    /* generate an "Expires" response header */
+    header_write(headers, "expires",
+                 http_date_format(std::chrono::system_clock::now() + max_age));
+}
+
+void
+file_cache_headers(GrowingBuffer &headers,
+                   int fd, const struct stat &st,
+                   std::chrono::seconds max_age)
+{
+    assert(fd >= 0);
+
+    char buffer[64];
+
+    ssize_t nbytes;
+    char etag[512];
+
+    nbytes = fgetxattr(fd, "user.ETag",
+                       etag + 1, sizeof(etag) - 3);
+    if (nbytes > 0) {
+        assert((size_t)nbytes < sizeof(etag));
+        etag[0] = '"';
+        etag[nbytes + 1] = '"';
+        etag[nbytes + 2] = 0;
+        header_write(headers, "etag", etag);
+    } else {
+        static_etag(buffer, st);
+        header_write(headers, "etag", buffer);
+    }
+
+    if (max_age == std::chrono::seconds::zero())
+        max_age = read_xattr_max_age(fd);
+
+    if (max_age > std::chrono::seconds::zero())
+        generate_expires(headers, max_age);
+}
+
 /**
  * Verifies the If-Range request header (RFC 2616 14.27).
  */
@@ -160,75 +229,6 @@ file_evaluate_request(Request &request2,
     }
 
     return true;
-}
-
-gcc_pure
-static std::chrono::seconds
-read_xattr_max_age(int fd)
-{
-    assert(fd >= 0);
-
-    char buffer[32];
-    ssize_t nbytes = fgetxattr(fd, "user.MaxAge",
-                               buffer, sizeof(buffer) - 1);
-    if (nbytes <= 0)
-        return std::chrono::seconds::zero();
-
-    buffer[nbytes] = 0;
-
-    char *endptr;
-    unsigned long max_age = strtoul(buffer, &endptr, 10);
-    if (*endptr != 0)
-        return std::chrono::seconds::zero();
-
-    return std::chrono::seconds(max_age);
-}
-
-static void
-generate_expires(GrowingBuffer &headers,
-                 std::chrono::system_clock::duration max_age)
-{
-    constexpr std::chrono::system_clock::duration max_max_age =
-        std::chrono::hours(365 * 24);
-    if (max_age > max_max_age)
-        /* limit max_age to approximately one year */
-        max_age = max_max_age;
-
-    /* generate an "Expires" response header */
-    header_write(headers, "expires",
-                 http_date_format(std::chrono::system_clock::now() + max_age));
-}
-
-void
-file_cache_headers(GrowingBuffer &headers,
-                   int fd, const struct stat &st,
-                   std::chrono::seconds max_age)
-{
-    assert(fd >= 0);
-
-    char buffer[64];
-
-    ssize_t nbytes;
-    char etag[512];
-
-    nbytes = fgetxattr(fd, "user.ETag",
-                       etag + 1, sizeof(etag) - 3);
-    if (nbytes > 0) {
-        assert((size_t)nbytes < sizeof(etag));
-        etag[0] = '"';
-        etag[nbytes + 1] = '"';
-        etag[nbytes + 2] = 0;
-        header_write(headers, "etag", etag);
-    } else {
-        static_etag(buffer, st);
-        header_write(headers, "etag", buffer);
-    }
-
-    if (max_age == std::chrono::seconds::zero())
-        max_age = read_xattr_max_age(fd);
-
-    if (max_age > std::chrono::seconds::zero())
-        generate_expires(headers, max_age);
 }
 
 void
