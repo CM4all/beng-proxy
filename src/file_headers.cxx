@@ -104,22 +104,24 @@ ReadETag(int fd, char *buffer, size_t size) noexcept
 }
 
 static void
+MakeETag(GrowingBuffer &headers, int fd, const struct stat &st)
+{
+    char buffer[512];
+
+    if (!ReadETag(fd, buffer, sizeof(buffer)))
+        static_etag(buffer, st);
+
+    header_write(headers, "etag", buffer);
+}
+
+static void
 file_cache_headers(GrowingBuffer &headers,
                    int fd, const struct stat &st,
                    std::chrono::seconds max_age)
 {
     assert(fd >= 0);
 
-    char buffer[64];
-
-    char etag[512];
-
-    if (ReadETag(fd, etag, sizeof(etag))) {
-        header_write(headers, "etag", etag);
-    } else {
-        static_etag(buffer, st);
-        header_write(headers, "etag", buffer);
-    }
+    MakeETag(headers, fd, st);
 
     if (max_age == std::chrono::seconds::zero())
         max_age = read_xattr_max_age(fd);
