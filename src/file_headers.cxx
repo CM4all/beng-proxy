@@ -74,12 +74,10 @@ file_evaluate_request(Request &request2,
     const auto &request = request2.request;
     const auto &request_headers = request.headers;
     const TranslateResponse *tr = request2.translate.response;
-    const char *p;
-    char buffer[64];
 
     if (tr->status == 0 && request.method == HTTP_METHOD_GET &&
         !request2.IsTransformationEnabled()) {
-        p = request_headers.Get("range");
+        const char *p = request_headers.Get("range");
 
         if (p != nullptr &&
             check_if_range(request_headers.Get("if-range"), st))
@@ -87,7 +85,7 @@ file_evaluate_request(Request &request2,
     }
 
     if (!request2.IsProcessorEnabled()) {
-        p = request_headers.Get("if-modified-since");
+        const char *p = request_headers.Get("if-modified-since");
         if (p != nullptr) {
             const auto t = http_date_parse(p);
             if (t != std::chrono::system_clock::from_time_t(-1) &&
@@ -120,8 +118,9 @@ file_evaluate_request(Request &request2,
     }
 
     if (!request2.IsTransformationEnabled()) {
-        p = request_headers.Get("if-match");
+        const char *p = request_headers.Get("if-match");
         if (p != nullptr && strcmp(p, "*") != 0) {
+            char buffer[64];
             static_etag(buffer, st);
 
             if (!http_list_contains(p, buffer)) {
@@ -139,6 +138,7 @@ file_evaluate_request(Request &request2,
         }
 
         if (p != nullptr) {
+            char buffer[64];
             static_etag(buffer, st);
 
             if (http_list_contains(p, buffer)) {
