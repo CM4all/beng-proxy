@@ -146,6 +146,24 @@ check_if_range(const char *if_range, const struct stat &st)
     return strcmp(if_range, etag) == 0;
 }
 
+/**
+ * Generate a "304 Not Modified" response.
+ */
+static void
+DispatchNotModified(Request &request2, const TranslateResponse &tr,
+                    int fd, const struct stat &st)
+{
+    HttpHeaders headers(request2.pool);
+    auto &headers2 = headers.GetBuffer();
+
+    file_cache_headers(headers2, fd, st, tr.expires_relative);
+
+    write_translation_vary_header(headers2, tr);
+
+    response_dispatch(request2, HTTP_STATUS_NOT_MODIFIED,
+                      std::move(headers), nullptr);
+}
+
 bool
 file_evaluate_request(Request &request2,
                       int fd, const struct stat &st,
@@ -212,15 +230,7 @@ file_evaluate_request(Request &request2,
             const auto t = http_date_parse(p);
             if (t != std::chrono::system_clock::from_time_t(-1) &&
                 std::chrono::system_clock::from_time_t(st.st_mtime) <= t) {
-                HttpHeaders headers(request2.pool);
-                auto &headers2 = headers.GetBuffer();
-
-                file_cache_headers(headers2, fd, st, tr.expires_relative);
-
-                write_translation_vary_header(headers2, tr);
-
-                response_dispatch(request2, HTTP_STATUS_NOT_MODIFIED,
-                                  std::move(headers), nullptr);
+                DispatchNotModified(request2, tr, fd, st);
                 return false;
             }
         }
