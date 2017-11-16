@@ -85,24 +85,6 @@ generate_expires(GrowingBuffer &headers,
                  http_date_format(std::chrono::system_clock::now() + max_age));
 }
 
-static bool
-ReadETag(int fd, char *buffer, size_t size) noexcept
-{
-    assert(fd >= 0);
-    assert(size > 4);
-
-    const auto nbytes = fgetxattr(fd, "user.ETag", buffer + 1, size - 3);
-    if (nbytes <= 0)
-        return false;
-
-    assert((size_t)nbytes < size);
-
-    buffer[0] = '"';
-    buffer[nbytes + 1] = '"';
-    buffer[nbytes + 2] = 0;
-    return true;
-}
-
 gcc_pure
 static bool
 CheckETagList(const char *list, const struct stat &st) noexcept
@@ -122,9 +104,7 @@ static void
 MakeETag(GrowingBuffer &headers, int fd, const struct stat &st)
 {
     char buffer[512];
-
-    if (fd < 0 || !ReadETag(fd, buffer, sizeof(buffer)))
-        static_etag(buffer, st);
+    GetAnyETag(buffer, sizeof(buffer), fd, st);
 
     header_write(headers, "etag", buffer);
 }

@@ -48,6 +48,10 @@ struct file_request;
 void
 static_etag(char *p, const struct stat &st);
 
+void
+GetAnyETag(char *buffer, size_t size,
+           int fd, const struct stat &st) noexcept;
+
 bool
 load_xattr_content_type(char *buffer, size_t size, int fd);
 
