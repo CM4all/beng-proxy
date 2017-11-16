@@ -74,6 +74,7 @@ file_evaluate_request(Request &request2,
     const auto &request = request2.request;
     const auto &request_headers = request.headers;
     const auto &tr = *request2.translate.response;
+    bool ignore_if_modified_since = false;
 
     if (tr.status == 0 && request.method == HTTP_METHOD_GET &&
         !request2.IsTransformationEnabled()) {
@@ -113,11 +114,20 @@ file_evaluate_request(Request &request2,
                                   HttpHeaders(request2.pool), nullptr);
                 return false;
             }
+
+            /* RFC 2616 14.26: "If none of the entity tags match, then
+               the server MAY perform the requested method as if the
+               If-None-Match header field did not exist, but MUST also
+               ignore any If-Modified-Since header field(s) in the
+               request." */
+            ignore_if_modified_since = true;
         }
     }
 
     if (!request2.IsProcessorEnabled()) {
-        const char *p = request_headers.Get("if-modified-since");
+        const char *p = ignore_if_modified_since
+            ? nullptr
+            : request_headers.Get("if-modified-since");
         if (p != nullptr) {
             const auto t = http_date_parse(p);
             if (t != std::chrono::system_clock::from_time_t(-1) &&
