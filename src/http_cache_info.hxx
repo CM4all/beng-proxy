@@ -47,6 +47,9 @@ struct HttpCacheRequestInfo {
     /** does the request URI have a query string?  This information is
         important for RFC 2616 13.9 */
     bool has_query_string;
+
+    const char *if_match, *if_none_match;
+    const char *if_modified_since, *if_unmodified_since;
 };
 
 struct HttpCacheResponseInfo {

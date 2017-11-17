@@ -44,6 +44,7 @@
 #include "rubber.hxx"
 #include "sink_rubber.hxx"
 #include "AllocatorStats.hxx"
+#include "http/Date.hxx"
 #include "istream_rubber.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream_hold.hxx"
@@ -744,6 +745,95 @@ http_cache_miss(HttpCache &cache, struct pool &caller_pool,
     pool_unref(pool);
 }
 
+gcc_pure
+static bool
+CheckETagList(const char *list, const StringMap &response_headers) noexcept
+{
+    assert(list != nullptr);
+
+    if (strcmp(list, "*") == 0)
+        return true;
+
+    const char *etag = response_headers.Get("etag");
+    return etag != nullptr && http_list_contains(list, etag);
+}
+
+static void
+DispatchNotModified(struct pool &pool, const HttpCacheDocument &document,
+                    HttpResponseHandler &handler)
+{
+    handler.InvokeResponse(HTTP_STATUS_NOT_MODIFIED,
+                           StringMap(pool, document.response_headers),
+                           nullptr);
+}
+
+static bool
+CheckCacheRequest(struct pool &pool, const HttpCacheRequestInfo &info,
+                  const HttpCacheDocument &document,
+                  HttpResponseHandler &handler)
+{
+    bool ignore_if_modified_since = false;
+
+    if (info.if_match != nullptr &&
+        !CheckETagList(info.if_match, document.response_headers)) {
+        handler.InvokeResponse(HTTP_STATUS_PRECONDITION_FAILED,
+                               StringMap(pool), nullptr);
+        return false;
+    }
+
+    if (info.if_none_match != nullptr) {
+        if (CheckETagList(info.if_none_match, document.response_headers)) {
+            DispatchNotModified(pool, document, handler);
+            return false;
+        }
+
+        /* RFC 2616 14.26: "If none of the entity tags match, then the
+           server MAY perform the requested method as if the
+           If-None-Match header field did not exist, but MUST also
+           ignore any If-Modified-Since header field(s) in the
+           request." */
+        ignore_if_modified_since = true;
+    }
+
+    if (info.if_modified_since && !ignore_if_modified_since) {
+        const char *last_modified = document.response_headers.Get("last-modified");
+        if (last_modified != nullptr) {
+            if (strcmp(info.if_modified_since, last_modified) == 0) {
+                /* common fast path: client sends the previous
+                   Last-Modified header string as-is */
+                DispatchNotModified(pool, document, handler);
+                return false;
+            }
+
+            const auto ims = http_date_parse(info.if_modified_since);
+            const auto lm = http_date_parse(last_modified);
+            if (ims != std::chrono::system_clock::from_time_t(-1) &&
+                lm != std::chrono::system_clock::from_time_t(-1) &&
+                lm <= ims) {
+                DispatchNotModified(pool, document, handler);
+                return false;
+            }
+        }
+    }
+
+    if (info.if_unmodified_since) {
+        const char *last_modified = document.response_headers.Get("last-modified");
+        if (last_modified != nullptr) {
+            const auto iums = http_date_parse(info.if_unmodified_since);
+            const auto lm = http_date_parse(last_modified);
+            if (iums != std::chrono::system_clock::from_time_t(-1) &&
+                lm != std::chrono::system_clock::from_time_t(-1) &&
+                lm > iums) {
+                handler.InvokeResponse(HTTP_STATUS_PRECONDITION_FAILED,
+                                       StringMap(pool), nullptr);
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+
 /**
  * Send the cached document to the caller (heap version).
  *
@@ -790,6 +880,10 @@ http_cache_memcached_serve(HttpCacheRequest &request)
 static void
 http_cache_serve(HttpCacheRequest &request)
 {
+    if (!CheckCacheRequest(request.pool, request.request_info,
+                           *request.document, request.handler))
+        return;
+
     if (request.cache.heap.IsDefined())
         http_cache_heap_serve(request.cache.heap, *request.document,
                               request.pool, request.key,
@@ -892,6 +986,9 @@ http_cache_found(HttpCache &cache,
                  HttpResponseHandler &handler,
                  CancellablePointer &cancel_ptr)
 {
+    if (!CheckCacheRequest(pool, info, document, handler))
+        return;
+
     if (http_cache_may_serve(info, document))
         http_cache_heap_serve(cache.heap, document, pool,
                               http_cache_key(pool, address),

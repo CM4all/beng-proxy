@@ -91,6 +91,11 @@ http_cache_request_evaluate(HttpCacheRequestInfo &info,
     info.is_remote = address.type == ResourceAddress::Type::HTTP;
     info.has_query_string = address.HasQueryString();
 
+    info.if_match = headers.Get("if-match");
+    info.if_none_match = headers.Get("if-none-match");
+    info.if_modified_since = headers.Get("if-modified-since");
+    info.if_unmodified_since = headers.Get("if-unmodified-since");
+
     return true;
 }
 
