@@ -42,7 +42,25 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-void
+static bool
+ReadETag(int fd, char *buffer, size_t size) noexcept
+{
+    assert(fd >= 0);
+    assert(size > 4);
+
+    const auto nbytes = fgetxattr(fd, "user.ETag", buffer + 1, size - 3);
+    if (nbytes <= 0)
+        return false;
+
+    assert((size_t)nbytes < size);
+
+    buffer[0] = '"';
+    buffer[nbytes + 1] = '"';
+    buffer[nbytes + 2] = 0;
+    return true;
+}
+
+static void
 static_etag(char *p, const struct stat &st)
 {
     *p++ = '"';
@@ -59,6 +77,14 @@ static_etag(char *p, const struct stat &st)
 
     *p++ = '"';
     *p = 0;
+}
+
+void
+GetAnyETag(char *buffer, size_t size,
+           int fd, const struct stat &st) noexcept
+{
+    if (fd < 0 || !ReadETag(fd, buffer, size))
+        static_etag(buffer, st);
 }
 
 bool
@@ -99,7 +125,7 @@ static_response_headers(struct pool &pool,
     headers.Add("last-modified",
                 p_strdup(&pool, http_date_format(std::chrono::system_clock::from_time_t(st.st_mtime))));
 
-    static_etag(buffer, st);
+    GetAnyETag(buffer, sizeof(buffer), fd, st);
     headers.Add("etag", p_strdup(&pool, buffer));
 
     return headers;

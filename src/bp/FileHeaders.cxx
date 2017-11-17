@@ -48,110 +48,6 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 
-/**
- * Verifies the If-Range request header (RFC 2616 14.27).
- */
-static bool
-check_if_range(const char *if_range, const struct stat &st)
-{
-    if (if_range == nullptr)
-        return true;
-
-    const auto t = http_date_parse(if_range);
-    if (t != std::chrono::system_clock::from_time_t(-1))
-        return std::chrono::system_clock::from_time_t(st.st_mtime) == t;
-
-    char etag[64];
-    static_etag(etag, st);
-    return strcmp(if_range, etag) == 0;
-}
-
-bool
-file_evaluate_request(Request &request2,
-                      int fd, const struct stat &st,
-                      struct file_request &file_request)
-{
-    const auto &request = request2.request;
-    const auto &request_headers = request.headers;
-    const TranslateResponse *tr = request2.translate.response;
-    const char *p;
-    char buffer[64];
-
-    if (tr->status == 0 && request.method == HTTP_METHOD_GET &&
-        !request2.IsTransformationEnabled()) {
-        p = request_headers.Get("range");
-
-        if (p != nullptr &&
-            check_if_range(request_headers.Get("if-range"), st))
-            file_request.range.ParseRangeHeader(p);
-    }
-
-    if (!request2.IsProcessorEnabled()) {
-        p = request_headers.Get("if-modified-since");
-        if (p != nullptr) {
-            const auto t = http_date_parse(p);
-            if (t != std::chrono::system_clock::from_time_t(-1) &&
-                std::chrono::system_clock::from_time_t(st.st_mtime) <= t) {
-                HttpHeaders headers(request2.pool);
-                GrowingBuffer headers2 = headers.MakeBuffer();
-
-                if (fd >= 0)
-                    file_cache_headers(headers2, fd, st,
-                                       tr->expires_relative);
-
-                write_translation_vary_header(headers2, *tr);
-
-                request2.DispatchResponse(HTTP_STATUS_NOT_MODIFIED,
-                                          std::move(headers), nullptr);
-                return false;
-            }
-        }
-
-        p = request_headers.Get("if-unmodified-since");
-        if (p != nullptr) {
-            const auto t = http_date_parse(p);
-            if (t != std::chrono::system_clock::from_time_t(-1) &&
-                std::chrono::system_clock::from_time_t(st.st_mtime) > t) {
-                request2.DispatchResponse(HTTP_STATUS_PRECONDITION_FAILED,
-                                          HttpHeaders(request2.pool), nullptr);
-                return false;
-            }
-        }
-    }
-
-    if (!request2.IsTransformationEnabled()) {
-        p = request_headers.Get("if-match");
-        if (p != nullptr && strcmp(p, "*") != 0) {
-            static_etag(buffer, st);
-
-            if (!http_list_contains(p, buffer)) {
-                request2.DispatchResponse(HTTP_STATUS_PRECONDITION_FAILED,
-                                          HttpHeaders(request2.pool), nullptr);
-                return false;
-            }
-        }
-
-        p = request_headers.Get("if-none-match");
-        if (p != nullptr && strcmp(p, "*") == 0) {
-            request2.DispatchResponse(HTTP_STATUS_PRECONDITION_FAILED,
-                                      HttpHeaders(request2.pool), nullptr);
-            return false;
-        }
-
-        if (p != nullptr) {
-            static_etag(buffer, st);
-
-            if (http_list_contains(p, buffer)) {
-                request2.DispatchResponse(HTTP_STATUS_PRECONDITION_FAILED,
-                                          HttpHeaders(request2.pool), nullptr);
-                return false;
-            }
-        }
-    }
-
-    return true;
-}
-
 gcc_pure
 static std::chrono::seconds
 read_xattr_max_age(int fd)
@@ -189,36 +85,151 @@ generate_expires(GrowingBuffer &headers,
                  http_date_format(std::chrono::system_clock::now() + max_age));
 }
 
-void
+gcc_pure
+static bool
+CheckETagList(const char *list, int fd, const struct stat &st) noexcept
+{
+    assert(list != nullptr);
+
+    if (strcmp(list, "*") == 0)
+        return true;
+
+    char buffer[256];
+    GetAnyETag(buffer, sizeof(buffer), fd, st);
+    return http_list_contains(list, buffer);
+}
+
+static void
+MakeETag(GrowingBuffer &headers, int fd, const struct stat &st)
+{
+    char buffer[512];
+    GetAnyETag(buffer, sizeof(buffer), fd, st);
+
+    header_write(headers, "etag", buffer);
+}
+
+static void
 file_cache_headers(GrowingBuffer &headers,
                    int fd, const struct stat &st,
                    std::chrono::seconds max_age)
 {
-    assert(fd >= 0);
+    header_write(headers, "last-modified",
+                 http_date_format(std::chrono::system_clock::from_time_t(st.st_mtime)));
 
-    char buffer[64];
+    MakeETag(headers, fd, st);
 
-    ssize_t nbytes;
-    char etag[512];
-
-    nbytes = fgetxattr(fd, "user.ETag",
-                       etag + 1, sizeof(etag) - 3);
-    if (nbytes > 0) {
-        assert((size_t)nbytes < sizeof(etag));
-        etag[0] = '"';
-        etag[nbytes + 1] = '"';
-        etag[nbytes + 2] = 0;
-        header_write(headers, "etag", etag);
-    } else {
-        static_etag(buffer, st);
-        header_write(headers, "etag", buffer);
-    }
-
-    if (max_age == std::chrono::seconds::zero())
+    if (max_age == std::chrono::seconds::zero() && fd >= 0)
         max_age = read_xattr_max_age(fd);
 
     if (max_age > std::chrono::seconds::zero())
         generate_expires(headers, max_age);
+}
+
+/**
+ * Verifies the If-Range request header (RFC 2616 14.27).
+ */
+static bool
+check_if_range(const char *if_range, int fd, const struct stat &st) noexcept
+{
+    if (if_range == nullptr)
+        return true;
+
+    const auto t = http_date_parse(if_range);
+    if (t != std::chrono::system_clock::from_time_t(-1))
+        return std::chrono::system_clock::from_time_t(st.st_mtime) == t;
+
+    char etag[256];
+    GetAnyETag(etag, sizeof(etag), fd, st);
+    return strcmp(if_range, etag) == 0;
+}
+
+/**
+ * Generate a "304 Not Modified" response.
+ */
+static void
+DispatchNotModified(Request &request2, const TranslateResponse &tr,
+                    int fd, const struct stat &st)
+{
+    HttpHeaders headers(request2.pool);
+    auto &headers2 = headers.GetBuffer();
+
+    file_cache_headers(headers2, fd, st, tr.expires_relative);
+
+    write_translation_vary_header(headers2, tr);
+
+    request2.DispatchResponse(HTTP_STATUS_NOT_MODIFIED,
+                              std::move(headers), nullptr);
+}
+
+bool
+file_evaluate_request(Request &request2,
+                      int fd, const struct stat &st,
+                      struct file_request &file_request)
+{
+    const auto &request = request2.request;
+    const auto &request_headers = request.headers;
+    const auto &tr = *request2.translate.response;
+    bool ignore_if_modified_since = false;
+
+    if (tr.status == 0 && request.method == HTTP_METHOD_GET &&
+        !request2.IsTransformationEnabled()) {
+        const char *p = request_headers.Get("range");
+
+        if (p != nullptr &&
+            check_if_range(request_headers.Get("if-range"), fd, st))
+            file_request.range.ParseRangeHeader(p);
+    }
+
+    if (!request2.IsTransformationEnabled()) {
+        const char *p = request_headers.Get("if-match");
+        if (p != nullptr && !CheckETagList(p, fd, st)) {
+            request2.DispatchResponse(HTTP_STATUS_PRECONDITION_FAILED,
+                                      HttpHeaders(request2.pool), nullptr);
+            return false;
+        }
+
+        p = request_headers.Get("if-none-match");
+        if (p != nullptr) {
+            if (CheckETagList(p, fd, st)) {
+                DispatchNotModified(request2, tr, fd, st);
+                return false;
+            }
+
+            /* RFC 2616 14.26: "If none of the entity tags match, then
+               the server MAY perform the requested method as if the
+               If-None-Match header field did not exist, but MUST also
+               ignore any If-Modified-Since header field(s) in the
+               request." */
+            ignore_if_modified_since = true;
+        }
+    }
+
+    if (!request2.IsProcessorEnabled()) {
+        const char *p = ignore_if_modified_since
+            ? nullptr
+            : request_headers.Get("if-modified-since");
+        if (p != nullptr) {
+            const auto t = http_date_parse(p);
+            if (t != std::chrono::system_clock::from_time_t(-1) &&
+                std::chrono::system_clock::from_time_t(st.st_mtime) <= t) {
+                DispatchNotModified(request2, tr, fd, st);
+                return false;
+            }
+        }
+
+        p = request_headers.Get("if-unmodified-since");
+        if (p != nullptr) {
+            const auto t = http_date_parse(p);
+            if (t != std::chrono::system_clock::from_time_t(-1) &&
+                std::chrono::system_clock::from_time_t(st.st_mtime) > t) {
+                request2.DispatchResponse(HTTP_STATUS_PRECONDITION_FAILED,
+                                          HttpHeaders(request2.pool), nullptr);
+                return false;
+            }
+        }
+    }
+
+    return true;
 }
 
 void
@@ -226,18 +237,10 @@ file_response_headers(GrowingBuffer &headers,
                       const char *override_content_type,
                       int fd, const struct stat &st,
                       std::chrono::seconds expires_relative,
-                      bool processor_enabled, bool processor_first)
+                      bool processor_first)
 {
-    if (!processor_first && fd >= 0)
+    if (!processor_first)
         file_cache_headers(headers, fd, st, expires_relative);
-    else {
-        char etag[64];
-        static_etag(etag, st);
-        header_write(headers, "etag", etag);
-
-        if (expires_relative > std::chrono::seconds::zero())
-            generate_expires(headers, expires_relative);
-    }
 
     if (override_content_type != nullptr) {
         /* content type override from the translation server */
@@ -250,10 +253,4 @@ file_response_headers(GrowingBuffer &headers,
             header_write(headers, "content-type", "application/octet-stream");
         }
     }
-
-#ifndef NO_LAST_MODIFIED_HEADER
-    if (!processor_enabled)
-        header_write(headers, "last-modified",
-                     http_date_format(std::chrono::system_clock::from_time_t(st.st_mtime)));
-#endif
 }

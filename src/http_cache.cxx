@@ -222,6 +222,14 @@ private:
     }
 };
 
+static void
+UpdateHeader(StringMap &dest, const StringMap &src, const char *name)
+{
+    const char *value = src.Get(name);
+    if (value != nullptr)
+        dest.SecureSet(name, p_strdup(dest.GetPool(), value));
+}
+
 static const char *
 http_cache_key(struct pool &pool, const ResourceAddress &address)
 {
@@ -382,6 +390,23 @@ HttpCacheRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
 
     if (document != nullptr && status == HTTP_STATUS_NOT_MODIFIED) {
         assert(body == nullptr);
+
+        if (cache.heap.IsDefined() &&
+            http_cache_response_evaluate(request_info, info,
+                                         HTTP_STATUS_OK, _headers, -1) &&
+            info.expires >= std::chrono::system_clock::now()) {
+            /* copy the new "Expires" (or "max-age") value from the
+               "304 Not Modified" response */
+            document->info.expires = info.expires;
+
+            /* TODO: this leaks pool memory each time we update
+               headers; how to fix this? */
+            UpdateHeader(document->response_headers, _headers, "expires");
+            UpdateHeader(document->response_headers, _headers, "cache-control");
+
+            /* TODO: do we want the same feature for memcached, or is
+               memcached obsolete? */
+        }
 
         LogConcat(5, "HttpCache", "not_modified ", key);
         http_cache_serve(*this);

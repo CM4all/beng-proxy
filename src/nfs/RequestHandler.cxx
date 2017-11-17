@@ -74,7 +74,6 @@ Request::OnNfsCacheResponse(NfsCacheHandle &handle, const struct stat &st)
                           override_content_type,
                           -1, st,
                           tr->expires_relative,
-                          IsProcessorEnabled(),
                           IsProcessorFirst());
     write_translation_vary_header(headers2, *tr);
 
