@@ -184,6 +184,51 @@ strmap_get_non_empty(const StringMap &map, const char *key)
     return value;
 }
 
+/**
+ * Parse the "Date" response header.
+ *
+ * @return time_t(-1) if there is no "Date" header or if it could not
+ * be parsed
+ */
+gcc_pure
+static std::chrono::system_clock::time_point
+GetServerDate(const StringMap &response_headers) noexcept
+{
+    const char *p = response_headers.Get("date");
+    if (p == nullptr)
+        /* server does not provide its system time */
+        return std::chrono::system_clock::from_time_t(-1);
+
+    return http_date_parse(p);
+
+}
+
+/**
+ * Determine the difference between this host's real-time clock and
+ * the server's clock.  This is used to adjust the "Expires" time
+ * stamp.
+ *
+ * @return the difference or min() if the server did not send a valid
+ * "Date" header
+ */
+gcc_pure
+static std::chrono::system_clock::duration
+GetServerDateOffset(const HttpCacheRequestInfo &request_info,
+                    std::chrono::system_clock::time_point now,
+                    const StringMap &response_headers) noexcept
+{
+    std::chrono::system_clock::duration offset;
+    if (!request_info.is_remote)
+        /* server is local (e.g. FastCGI); we don't need an offset */
+        return std::chrono::system_clock::duration::zero();
+
+    const auto server_date = GetServerDate(response_headers);
+    if (server_date == std::chrono::system_clock::from_time_t(-1))
+        return std::chrono::system_clock::duration::min();
+
+    return now - server_date;
+}
+
 bool
 http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
                              HttpCacheResponseInfo &info,
@@ -230,22 +275,11 @@ http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
 
     const auto now = std::chrono::system_clock::now();
 
-    std::chrono::system_clock::duration offset;
-    if (request_info.is_remote) {
-        p = headers.Get("date");
-        if (p == nullptr)
-            /* we cannot determine whether to cache a resource if the
-               server does not provide its system time */
-            return false;
-
-        auto date = http_date_parse(p);
-        if (date == std::chrono::system_clock::from_time_t(-1))
-            return false;
-
-        offset = now - date;
-    } else
-        offset = std::chrono::system_clock::duration::zero();
-
+    const auto offset = GetServerDateOffset(request_info, now, headers);
+    if (offset == std::chrono::system_clock::duration::min())
+        /* we cannot determine whether to cache a resource if the
+           server does not provide its system time */
+        return false;
 
     if (info.expires == std::chrono::system_clock::from_time_t(-1)) {
         /* RFC 2616 14.9.3: "If a response includes both an Expires
