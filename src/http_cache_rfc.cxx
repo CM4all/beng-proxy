@@ -43,31 +43,10 @@
 #include "io/Logger.hxx"
 #include "http/Date.hxx"
 #include "util/StringView.hxx"
+#include "util/IterableSplitString.hxx"
 
 #include <assert.h>
 #include <stdlib.h>
-
-static StringView
-next_item(StringView &s)
-{
-    s.StripLeft();
-    if (s.empty())
-        return nullptr;
-
-    StringView result;
-
-    const char *comma = s.Find(',');
-    if (comma == nullptr) {
-        result = s;
-        s = "";
-    } else {
-        result = {s.data, comma};
-        s.MoveFront(comma + 1);
-    }
-
-    result.StripRight();
-    return result;
-}
 
 /* check whether the request could produce a cacheable response */
 bool
@@ -94,9 +73,9 @@ http_cache_request_evaluate(HttpCacheRequestInfo &info,
 
     p = headers.Get("cache-control");
     if (p != nullptr) {
-        StringView cc = p, s;
+        for (auto s : IterableSplitString(p, ',')) {
+            s.Strip();
 
-        while (!(s = next_item(cc)).IsNull()) {
             if (s.Equals("no-cache") || s.Equals("no-store"))
                 return false;
 
@@ -247,9 +226,9 @@ http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
     info.expires = std::chrono::system_clock::from_time_t(-1);
     p = headers.Get("cache-control");
     if (p != nullptr) {
-        StringView cc = p, s;
+        for (auto s : IterableSplitString(p, ',')) {
+            s.Strip();
 
-        while (!(s = next_item(cc)).IsNull()) {
             if (s.StartsWith("private") ||
                 s.Equals("no-cache") || s.Equals("no-store"))
                 return false;
