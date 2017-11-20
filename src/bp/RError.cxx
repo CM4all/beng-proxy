@@ -185,11 +185,12 @@ Request::LogDispatchError(http_status_t status, const char *log_msg,
 void
 Request::LogDispatchError(std::exception_ptr ep)
 {
-    logger(2, "error on '", request.uri, "': ", ep);
-
     auto response = ToResponse(pool, ep);
     if (instance.config.verbose_response)
         response.message = p_strdup(&pool, GetFullMessage(ep).c_str());
+
+    logger(response.status == HTTP_STATUS_INTERNAL_SERVER_ERROR ? 1 : 2,
+           "error on '", request.uri, "': ", ep);
 
     DispatchResponse(response.status, response.message);
 }
