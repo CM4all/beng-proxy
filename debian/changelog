@@ -5,7 +5,7 @@ cm4all-beng-proxy (13.0.12) unstable; urgency=low
   * spawn: raise the command-line argument limit
   * log internal server errors even without --verbose
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 21 Nov 2017 11:58:58 -0000
 
 cm4all-beng-proxy (13.0.11) unstable; urgency=low
 
