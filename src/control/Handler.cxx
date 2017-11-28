@@ -30,42 +30,14 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_CONTROL_LOCAL_HXX
-#define BENG_PROXY_CONTROL_LOCAL_HXX
+#include "Handler.hxx"
+#include "net/SocketAddress.hxx"
 
-#include "control_handler.hxx"
-
-#include <memory>
-
-class EventLoop;
-
-/**
- * Control server on an implicitly configured local socket.
- */
-class LocalControl final : ControlHandler {
-    const char *const prefix;
-
-    ControlHandler &handler;
-
-    std::unique_ptr<ControlServer> server;
-
-public:
-    LocalControl(const char *_prefix, ControlHandler &_handler)
-        :prefix(_prefix), handler(_handler) {}
-
-    void Open(EventLoop &event_loop);
-
-    /* virtual methods from class ControlHandler */
-    bool OnControlRaw(const void *data, size_t length,
-                      SocketAddress address,
-                      int uid) override;
-
-    void OnControlPacket(ControlServer &control_server,
-                         enum beng_control_command command,
-                         const void *payload, size_t payload_length,
-                         SocketAddress address) override;
-
-    void OnControlError(std::exception_ptr ep) noexcept override;
-};
-
-#endif
+bool
+ControlHandler::OnControlRaw(gcc_unused const void *data,
+                             gcc_unused size_t length,
+                             gcc_unused SocketAddress address,
+                             gcc_unused int uid)
+{
+    return true;
+}

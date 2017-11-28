@@ -30,8 +30,8 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "control_local.hxx"
-#include "control_server.hxx"
+#include "Local.hxx"
+#include "Server.hxx"
 #include "net/SocketConfig.hxx"
 
 #include <sys/socket.h>

@@ -30,7 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "control_server.hxx"
+#include "Server.hxx"
 #include "net/SocketConfig.hxx"
 #include "net/SocketAddress.hxx"
 #include "util/ByteOrder.hxx"

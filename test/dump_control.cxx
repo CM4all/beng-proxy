@@ -30,7 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "control_server.hxx"
+#include "control/Server.hxx"
 #include "net/SocketConfig.hxx"
 #include "net/Parser.hxx"
 #include "event/Loop.hxx"

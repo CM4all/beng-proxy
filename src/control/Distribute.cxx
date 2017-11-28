@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "control_distribute.hxx"
-#include "control_handler.hxx"
+#include "Distribute.hxx"
 #include "net/SocketAddress.hxx"
 
 ControlDistribute::ControlDistribute(EventLoop &event_loop,

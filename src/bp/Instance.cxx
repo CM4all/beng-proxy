@@ -32,7 +32,7 @@
 
 #include "Instance.hxx"
 #include "fb_pool.hxx"
-#include "control_server.hxx"
+#include "control/Server.hxx"
 #include "tcp_balancer.hxx"
 #include "pipe_stock.hxx"
 #include "DirectResourceLoader.hxx"

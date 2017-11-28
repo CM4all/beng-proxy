@@ -32,9 +32,9 @@
 
 #include "Control.hxx"
 #include "Instance.hxx"
-#include "control_distribute.hxx"
-#include "control_server.hxx"
-#include "control_local.hxx"
+#include "control/Distribute.hxx"
+#include "control/Server.hxx"
+#include "control/Local.hxx"
 #include "translation/Request.hxx"
 #include "translation/Cache.hxx"
 #include "translation/Protocol.hxx"

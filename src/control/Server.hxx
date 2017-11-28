@@ -34,7 +34,7 @@
 #define BENG_PROXY_CONTROL_SERVER_H
 
 #include "beng-proxy/control.h"
-#include "control_handler.hxx"
+#include "Handler.hxx"
 #include "event/net/UdpHandler.hxx"
 #include "event/net/UdpListener.hxx"
 

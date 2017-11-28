@@ -33,7 +33,7 @@
 #ifndef BENG_PROXY_LB_CONTROL_H
 #define BENG_PROXY_LB_CONTROL_H
 
-#include "control_handler.hxx"
+#include "control/Handler.hxx"
 #include "io/Logger.hxx"
 
 #include <memory>

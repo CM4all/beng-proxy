@@ -831,10 +831,10 @@ processor_dep = declare_dependency(link_with: processor,
                                    dependencies: [istream_dep, putil_dep])
 
 control_server = static_library('control_server',
-  'src/control_server.cxx',
-  'src/control_handler.cxx',
-  'src/control_local.cxx',
-  'src/control_distribute.cxx',
+  'src/control/Server.cxx',
+  'src/control/Handler.cxx',
+  'src/control/Local.cxx',
+  'src/control/Distribute.cxx',
   include_directories: inc,
   dependencies: [
     event_net_dep,

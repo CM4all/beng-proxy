@@ -43,7 +43,7 @@
 #include "event/ShutdownListener.hxx"
 #include "event/TimerEvent.hxx"
 #include "spawn/Registry.hxx"
-#include "control_handler.hxx"
+#include "control/Handler.hxx"
 #include "avahi/Client.hxx"
 #include "net/FailureManager.hxx"
 #include "util/Background.hxx"

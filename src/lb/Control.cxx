@@ -33,7 +33,7 @@
 #include "Control.hxx"
 #include "Instance.hxx"
 #include "Config.hxx"
-#include "control_server.hxx"
+#include "control/Server.hxx"
 #include "tpool.hxx"
 #include "pool.hxx"
 #include "translation/InvalidateParser.hxx"

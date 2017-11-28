@@ -30,14 +30,52 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "control_handler.hxx"
-#include "net/SocketAddress.hxx"
+/*
+ * control_handler wrapper which publishes raw packets to
+ * #UdpDistribute.
+ */
 
-bool
-ControlHandler::OnControlRaw(gcc_unused const void *data,
-                             gcc_unused size_t length,
-                             gcc_unused SocketAddress address,
-                             gcc_unused int uid)
-{
-    return true;
-}
+#ifndef BENG_PROXY_CONTROL_DISTRIBUTE_HXX
+#define BENG_PROXY_CONTROL_DISTRIBUTE_HXX
+
+#include "Handler.hxx"
+#include "net/UdpDistribute.hxx"
+
+#include <stddef.h>
+
+class ControlServer;
+class EventLoop;
+class SocketAddress;
+
+class ControlDistribute final : public ControlHandler {
+    UdpDistribute distribute;
+
+    ControlHandler &next_handler;
+
+public:
+    ControlDistribute(EventLoop &event_loop, ControlHandler &_next_handler);
+
+    UniqueSocketDescriptor Add() {
+        return distribute.Add();
+    }
+
+    void Clear() {
+        distribute.Clear();
+    }
+
+    static const struct control_handler handler;
+
+private:
+    /* virtual methods from class ControlHandler */
+    bool OnControlRaw(const void *data, size_t length,
+                      SocketAddress address, int uid) override;
+
+    void OnControlPacket(ControlServer &control_server,
+                         enum beng_control_command command,
+                         const void *payload, size_t payload_length,
+                         SocketAddress address) override;
+
+    void OnControlError(std::exception_ptr ep) noexcept override;
+};
+
+#endif
