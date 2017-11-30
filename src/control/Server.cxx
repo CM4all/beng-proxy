@@ -44,7 +44,7 @@
 
 ControlServer::ControlServer(EventLoop &event_loop, UniqueSocketDescriptor s,
                              ControlHandler &_handler)
-    :handler(_handler), udp(event_loop, std::move(s), *this)
+    :handler(_handler), socket(event_loop, std::move(s), *this)
 {
 }
 
@@ -149,5 +149,5 @@ ControlServer::Reply(SocketAddress address,
     header->command = ToBE16(command);
     memcpy(header + 1, payload, payload_length);
 
-    udp.Reply(address, header, sizeof(*header) + payload_length);
+    socket.Reply(address, header, sizeof(*header) + payload_length);
 }

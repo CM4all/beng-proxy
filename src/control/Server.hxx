@@ -52,7 +52,7 @@ struct SocketConfig;
 class ControlServer final : UdpHandler {
     ControlHandler &handler;
 
-    UdpListener udp;
+    UdpListener socket;
 
 public:
     ControlServer(EventLoop &event_loop, UniqueSocketDescriptor s,
@@ -62,11 +62,11 @@ public:
                   const SocketConfig &config);
 
     void Enable() {
-        udp.Enable();
+        socket.Enable();
     }
 
     void Disable() {
-        udp.Disable();
+        socket.Disable();
     }
 
     /**
