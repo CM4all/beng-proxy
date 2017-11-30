@@ -32,6 +32,7 @@
 
 #include "Distribute.hxx"
 #include "net/SocketAddress.hxx"
+#include "util/ConstBuffer.hxx"
 
 ControlDistribute::ControlDistribute(EventLoop &event_loop,
                                      ControlHandler &_next_handler)
@@ -41,23 +42,23 @@ ControlDistribute::ControlDistribute(EventLoop &event_loop,
 }
 
 bool
-ControlDistribute::OnControlRaw(const void *data, size_t length,
+ControlDistribute::OnControlRaw(ConstBuffer<void> payload,
                                 SocketAddress address, int uid)
 {
     /* forward the packet to all worker processes */
-    distribute.Packet(data, length);
+    distribute.Packet(payload.data, payload.size);
 
-    return next_handler.OnControlRaw(data, length, address, uid);
+    return next_handler.OnControlRaw(payload, address, uid);
 }
 
 void
 ControlDistribute::OnControlPacket(ControlServer &control_server,
                                    enum beng_control_command command,
-                                   const void *payload, size_t payload_length,
+                                   ConstBuffer<void> payload,
                                    SocketAddress address)
 {
     return next_handler.OnControlPacket(control_server, command,
-                                        payload, payload_length, address);
+                                        payload, address);
 }
 
 void

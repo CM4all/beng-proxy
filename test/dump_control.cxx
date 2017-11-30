@@ -45,9 +45,9 @@ class DumpControlHandler final : public ControlHandler {
 public:
     void OnControlPacket(gcc_unused ControlServer &control_server,
                          enum beng_control_command command,
-                         gcc_unused const void *payload, size_t payload_length,
+                         ConstBuffer<void> payload,
                          gcc_unused SocketAddress address) override {
-        printf("packet command=%u length=%zu\n", command, payload_length);
+        printf("packet command=%u length=%zu\n", command, payload.size);
     }
 
     void OnControlError(std::exception_ptr ep) noexcept override {

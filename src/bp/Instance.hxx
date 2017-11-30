@@ -208,7 +208,7 @@ struct BpInstance final : PInstance, ControlHandler {
     /* virtual methods from class ControlHandler */
     void OnControlPacket(ControlServer &control_server,
                          enum beng_control_command command,
-                         const void *payload, size_t payload_length,
+                         ConstBuffer<void> payload,
                          SocketAddress address) override;
 
     void OnControlError(std::exception_ptr ep) noexcept override;

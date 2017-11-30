@@ -39,6 +39,7 @@
 
 #include <stddef.h>
 
+template<typename T> struct ConstBuffer;
 class SocketAddress;
 class ControlServer;
 
@@ -47,13 +48,13 @@ public:
     /**
      * @return false if the datagram shall be discarded
      */
-    virtual bool OnControlRaw(const void *data, size_t length,
+    virtual bool OnControlRaw(ConstBuffer<void> payload,
                               SocketAddress address,
                               int uid);
 
     virtual void OnControlPacket(ControlServer &control_server,
                                  enum beng_control_command command,
-                                 const void *payload, size_t payload_length,
+                                 ConstBuffer<void> payload,
                                  SocketAddress address) = 0;
 
     virtual void OnControlError(std::exception_ptr ep) noexcept = 0;

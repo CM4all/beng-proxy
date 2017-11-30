@@ -53,10 +53,9 @@
 #include <string.h>
 
 static void
-control_tcache_invalidate(BpInstance *instance,
-                          const void *payload, size_t payload_length)
+control_tcache_invalidate(BpInstance *instance, ConstBuffer<void> payload)
 {
-    if (payload_length == 0) {
+    if (payload.empty()) {
         /* flush the translation cache if the payload is empty */
         translate_cache_flush(*instance->translate_cache);
         return;
@@ -68,7 +67,7 @@ control_tcache_invalidate(BpInstance *instance,
 
     try {
         request = ParseTranslationInvalidateRequest(*tpool,
-                                                    payload, payload_length);
+                                                    payload.data, payload.size);
     } catch (...) {
         LogConcat(2, "control",
                   "malformed TCACHE_INVALIDATE control packet: ",
@@ -106,11 +105,11 @@ query_stats(BpInstance *instance, ControlServer *server,
 void
 BpInstance::OnControlPacket(ControlServer &control_server,
                             enum beng_control_command command,
-                            const void *payload, size_t payload_length,
+                            ConstBuffer<void> payload,
                             SocketAddress address)
 {
     LogConcat(5, "control", "command=", int(command),
-              " payload_length=", unsigned(payload_length));
+              " payload_length=", unsigned(payload.size));
 
     /* only local clients are allowed to use most commands */
     const bool is_privileged = address.GetFamily() == AF_LOCAL;
@@ -121,7 +120,7 @@ BpInstance::OnControlPacket(ControlServer &control_server,
         break;
 
     case CONTROL_TCACHE_INVALIDATE:
-        control_tcache_invalidate(this, payload, payload_length);
+        control_tcache_invalidate(this, payload);
         break;
 
     case CONTROL_DUMP_POOLS:
@@ -140,15 +139,15 @@ BpInstance::OnControlPacket(ControlServer &control_server,
         break;
 
     case CONTROL_VERBOSE:
-        if (is_privileged && payload_length == 1)
-            SetLogLevel(*(const uint8_t *)payload);
+        if (is_privileged && payload.size == 1)
+            SetLogLevel(*(const uint8_t *)payload.data);
         break;
 
     case CONTROL_FADE_CHILDREN:
-        if (payload_length > 0)
+        if (!payload.empty())
             /* tagged fade is allowed for any unprivileged client */
-            FadeTaggedChildren(std::string((const char *)payload,
-                                           payload_length).c_str());
+            FadeTaggedChildren(std::string((const char *)payload.data,
+                                           payload.size).c_str());
         else if (is_privileged)
             /* unconditional fade is only allowed for privileged
                clients */

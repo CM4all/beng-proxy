@@ -33,13 +33,14 @@
 #include "Local.hxx"
 #include "Server.hxx"
 #include "net/SocketConfig.hxx"
+#include "util/ConstBuffer.hxx"
 
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <stdio.h>
 
 bool
-LocalControl::OnControlRaw(const void *data, size_t length,
+LocalControl::OnControlRaw(ConstBuffer<void> payload,
                            SocketAddress address,
                            int uid)
 {
@@ -48,17 +49,17 @@ LocalControl::OnControlRaw(const void *data, size_t length,
            commands to the implicit control channel */
         return false;
 
-    return handler.OnControlRaw(data, length, address, uid);
+    return handler.OnControlRaw(payload, address, uid);
 }
 
 void
 LocalControl::OnControlPacket(ControlServer &control_server,
                               enum beng_control_command command,
-                              const void *payload, size_t payload_length,
+                              ConstBuffer<void> payload,
                               SocketAddress address)
 {
     handler.OnControlPacket(control_server, command,
-                            payload, payload_length, address);
+                            payload, address);
 }
 
 void

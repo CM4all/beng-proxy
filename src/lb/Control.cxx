@@ -172,15 +172,15 @@ failure_status_to_string(enum failure_status status)
 static void
 node_status_response(ControlServer *server,
                      SocketAddress address,
-                     const char *payload, size_t length, const char *status)
+                     StringView payload, const char *status)
 {
     size_t status_length = strlen(status);
 
-    size_t response_length = length + 1 + status_length;
+    size_t response_length = payload.size + 1 + status_length;
     char *response = PoolAlloc<char>(*tpool, response_length);
-    memcpy(response, payload, length);
-    response[length] = 0;
-    memcpy(response + length + 1, status, status_length);
+    memcpy(response, payload.data, payload.size);
+    response[payload.size] = 0;
+    memcpy(response + payload.size + 1, status, status_length);
 
     server->Reply(address,
                   CONTROL_NODE_STATUS, response, response_length);
@@ -188,7 +188,7 @@ node_status_response(ControlServer *server,
 
 inline void
 LbControl::QueryNodeStatus(ControlServer &control_server,
-                           const char *payload, size_t length,
+                           StringView payload,
                            SocketAddress address)
 try {
     if (address.GetSize() == 0) {
@@ -196,25 +196,25 @@ try {
         return;
     }
 
-    const char *colon = (const char *)memchr(payload, ':', length);
-    if (colon == nullptr || colon == payload || colon == payload + length - 1) {
+    const char *colon = payload.Find(':');
+    if (colon == nullptr || colon == payload.data || colon == payload.data + payload.size - 1) {
         logger(3, "malformed NODE_STATUS control packet: no port");
         node_status_response(&control_server, address,
-                             payload, length, "malformed");
+                             payload, "malformed");
         return;
     }
 
     const AutoRewindPool auto_rewind(*tpool);
 
-    char *node_name = p_strndup(tpool, payload, length);
-    char *port_string = node_name + (colon - payload);
+    char *node_name = p_strdup(*tpool, payload);
+    char *port_string = node_name + (colon - payload.data);
     *port_string++ = 0;
 
     const auto *node = instance.config.FindNode(node_name);
     if (node == nullptr) {
         logger(3, "unknown node in NODE_STATUS control packet");
         node_status_response(&control_server, address,
-                             payload, length, "unknown");
+                             payload, "unknown");
         return;
     }
 
@@ -223,7 +223,7 @@ try {
     if (port == 0 || *endptr != 0) {
         logger(3, "malformed NODE_STATUS control packet: port is not a number");
         node_status_response(&control_server, address,
-                             payload, length, "malformed");
+                             payload, "malformed");
         return;
     }
 
@@ -236,7 +236,7 @@ try {
     const char *s = failure_status_to_string(status);
 
     node_status_response(&control_server, address,
-                         payload, length, s);
+                         payload, s);
 } catch (...) {
     logger(3, std::current_exception());
 }
@@ -255,7 +255,7 @@ try {
 void
 LbControl::OnControlPacket(ControlServer &control_server,
                            enum beng_control_command command,
-                           const void *payload, size_t payload_length,
+                           ConstBuffer<void> payload,
                            SocketAddress address)
 {
     /* only local clients are allowed to use most commands */
@@ -266,7 +266,7 @@ LbControl::OnControlPacket(ControlServer &control_server,
         break;
 
     case CONTROL_TCACHE_INVALIDATE:
-        InvalidateTranslationCache(payload, payload_length);
+        InvalidateTranslationCache(payload.data, payload.size);
         break;
 
     case CONTROL_FADE_CHILDREN:
@@ -274,17 +274,17 @@ LbControl::OnControlPacket(ControlServer &control_server,
 
     case CONTROL_ENABLE_NODE:
         if (is_privileged)
-            EnableNode((const char *)payload, payload_length);
+            EnableNode((const char *)payload.data, payload.size);
         break;
 
     case CONTROL_FADE_NODE:
         if (is_privileged)
-            FadeNode((const char *)payload, payload_length);
+            FadeNode((const char *)payload.data, payload.size);
         break;
 
     case CONTROL_NODE_STATUS:
         QueryNodeStatus(control_server,
-                        (const char *)payload, payload_length,
+                        StringView(payload),
                         address);
         break;
 
@@ -298,8 +298,8 @@ LbControl::OnControlPacket(ControlServer &control_server,
         break;
 
     case CONTROL_VERBOSE:
-        if (is_privileged && payload_length == 1) {
-            SetLogLevel(*(const uint8_t *)payload);
+        if (is_privileged && payload.size == 1) {
+            SetLogLevel(*(const uint8_t *)payload.data);
         }
 
         break;

@@ -34,6 +34,7 @@
 #include "net/SocketConfig.hxx"
 #include "net/SocketAddress.hxx"
 #include "util/ByteOrder.hxx"
+#include "util/ConstBuffer.hxx"
 #include "util/RuntimeError.hxx"
 
 #include <stdexcept>
@@ -105,8 +106,7 @@ control_server_decode(ControlServer &control_server,
         /* this command is ok, pass it to the callback */
 
         handler.OnControlPacket(control_server, command,
-                                payload_length > 0 ? payload : nullptr,
-                                payload_length,
+                                {payload_length > 0 ? payload : nullptr, payload_length},
                                 address);
 
         payload_length = ((payload_length + 3) | 3) - 3; /* apply padding */
@@ -120,7 +120,7 @@ bool
 ControlServer::OnUdpDatagram(const void *data, size_t length,
                              SocketAddress address, int uid)
 {
-    if (!handler.OnControlRaw(data, length, address, uid))
+    if (!handler.OnControlRaw({data, length}, address, uid))
         /* discard datagram if raw() returns false */
         return true;
 

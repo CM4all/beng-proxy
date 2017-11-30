@@ -38,6 +38,7 @@
 
 #include <memory>
 
+struct StringView;
 struct LbInstance;
 struct LbControlConfig;
 class ControlServer;
@@ -66,7 +67,7 @@ private:
     void FadeNode(const char *payload, size_t length);
 
     void QueryNodeStatus(ControlServer &control_server,
-                         const char *payload, size_t length,
+                         StringView payload,
                          SocketAddress address);
 
     void QueryStats(ControlServer &control_server, SocketAddress address);
@@ -74,7 +75,7 @@ private:
     /* virtual methods from class ControlHandler */
     void OnControlPacket(ControlServer &control_server,
                          enum beng_control_command command,
-                         const void *payload, size_t payload_length,
+                         ConstBuffer<void> payload,
                          SocketAddress address) override;
 
     void OnControlError(std::exception_ptr ep) noexcept override;
