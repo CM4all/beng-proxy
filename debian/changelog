@@ -1,8 +1,8 @@
-cm4all-beng-proxy (13.0.13) unstable; urgency=low
+cm4all-beng-proxy (13.1) unstable; urgency=low
 
-  * 
+  * feature freeze
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Thu, 30 Nov 2017 12:05:07 -0000
 
 cm4all-beng-proxy (13.0.12) unstable; urgency=low
 
