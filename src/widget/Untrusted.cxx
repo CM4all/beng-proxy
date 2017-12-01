@@ -82,7 +82,7 @@ widget_check_untrusted_site_suffix(const char *untrusted_site_suffix,
                                  site_name, untrusted_site_suffix);
 
     size_t site_name_length = strlen(site_name);
-    if (strncmp(host, site_name, site_name_length) != 0 ||
+    if (strncasecmp(host, site_name, site_name_length) != 0 ||
         host[site_name_length] != '.' ||
         strcmp(host + site_name_length + 1, untrusted_site_suffix) != 0)
         throw FormatRuntimeError("Untrusted widget (required host '%s.%s') not allowed on '%s'",
@@ -104,7 +104,7 @@ widget_check_untrusted_raw_site_suffix(const char *untrusted_raw_site_suffix,
                                  site_name, untrusted_raw_site_suffix);
 
     size_t site_name_length = strlen(site_name);
-    if (strncmp(host, site_name, site_name_length) != 0 ||
+    if (strncasecmp(host, site_name, site_name_length) != 0 ||
         strcmp(host + site_name_length, untrusted_raw_site_suffix) != 0)
         throw FormatRuntimeError("Untrusted widget (required host '%s%s') not allowed on '%s'",
                                  site_name, untrusted_raw_site_suffix, host);
