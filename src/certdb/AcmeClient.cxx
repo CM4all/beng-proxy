@@ -337,9 +337,9 @@ AcmeClient::NewReg(EVP_PKEY &key, const char *email)
     payload += agreement_url;
     payload += "\"}";
 
-    auto response = SignedRequest(key,
-                                  HTTP_METHOD_POST, "/acme/new-reg",
-                                  payload.c_str());
+    auto response = SignedRequestRetry(key,
+                                       HTTP_METHOD_POST, "/acme/new-reg",
+                                       payload.c_str());
     CheckThrowStatusError(std::move(response), HTTP_STATUS_CREATED,
                           "Failed to register account");
 
@@ -374,9 +374,9 @@ AcmeClient::NewAuthz(EVP_PKEY &key, const char *host)
     payload += host;
     payload += "\" } }";
 
-    auto response = SignedRequest(key,
-                                  HTTP_METHOD_POST, "/acme/new-authz",
-                                  payload.c_str());
+    auto response = SignedRequestRetry(key,
+                                       HTTP_METHOD_POST, "/acme/new-authz",
+                                       payload.c_str());
     CheckThrowStatusError(std::move(response), HTTP_STATUS_CREATED,
                           "Failed to create authz");
 
@@ -414,9 +414,9 @@ AcmeClient::UpdateAuthz(EVP_PKEY &key, const AuthzTlsSni01 &authz)
     payload += UrlSafeBase64SHA256(MakeJwk(key)).c_str();
     payload += "\" }";
 
-    auto response = SignedRequest(key,
-                                  HTTP_METHOD_POST, uri,
-                                  payload.c_str());
+    auto response = SignedRequestRetry(key,
+                                       HTTP_METHOD_POST, uri,
+                                       payload.c_str());
     CheckThrowStatusError(std::move(response), HTTP_STATUS_ACCEPTED,
                           "Failed to update authz");
 
@@ -450,9 +450,9 @@ AcmeClient::NewCert(EVP_PKEY &key, X509_REQ &req)
     payload += UrlSafeBase64(req).c_str();
     payload += "\" }";
 
-    auto response = SignedRequest(key,
-                                  HTTP_METHOD_POST, "/acme/new-cert",
-                                  payload.c_str());
+    auto response = SignedRequestRetry(key,
+                                       HTTP_METHOD_POST, "/acme/new-cert",
+                                       payload.c_str());
     CheckThrowStatusError(std::move(response), HTTP_STATUS_CREATED,
                           "Failed to create certificate");
 

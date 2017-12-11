@@ -169,6 +169,19 @@ private:
         return SignedRequest(key, method, uri,
                              ConstBuffer<void>(payload, strlen(payload)));
     }
+
+    template<typename P>
+    GlueHttpResponse SignedRequestRetry(EVP_PKEY &key,
+                                        http_method_t method, const char *uri,
+                                        P payload) {
+        constexpr unsigned max_attempts = 3;
+        for (unsigned remaining_attempts = max_attempts;;) {
+            auto response = SignedRequest(key, method, uri, payload);
+            if (!http_status_is_server_error(response.status) ||
+                --remaining_attempts == 0)
+                return response;
+        }
+    }
 };
 
 #endif
