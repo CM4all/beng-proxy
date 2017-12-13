@@ -36,5 +36,5 @@
 void
 UnusedIstreamPtr::Close(Istream &i)
 {
-    i.Close();
+    i.CloseUnused();
 }
