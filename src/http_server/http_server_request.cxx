@@ -128,9 +128,6 @@ HttpServerConnection::RequestBodyReader::_Close() noexcept
     connection.request.body_state = Request::BodyState::CLOSED;
 #endif
 
-    if (connection.request.request != nullptr)
-        connection.request.request->body = nullptr;
-
     if (connection.request.expect_100_continue)
         /* the request body was optional, and we did not send the "100
            Continue" response (yet): pretend there never was a request

@@ -952,7 +952,7 @@ handle_http_request(BpConnection &connection,
                                           connection, request);
 
     request2->request_body = UnusedHoldIstreamPtr(request.pool,
-                                                  request.body);
+                                                  std::move(request.body));
 
     cancel_ptr = *request2;
 

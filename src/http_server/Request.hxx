@@ -40,6 +40,7 @@
 #include "strmap.hxx"
 #include "net/SocketAddress.hxx"
 #include "http/Method.h"
+#include "istream/UnusedPtr.hxx"
 
 struct pool;
 struct StringView;
@@ -72,7 +73,7 @@ struct HttpServerRequest {
      * The request body.  The handler is responsible for closing this
      * istream.
      */
-    Istream *body;
+    UnusedIstreamPtr body;
 
     HttpServerRequest(struct pool &_pool, HttpServerConnection &_connection,
                       SocketAddress _local_address,
@@ -86,14 +87,16 @@ struct HttpServerRequest {
     HttpServerRequest &operator=(const HttpServerRequest &) = delete;
 
     bool HasBody() const {
-        return body != nullptr;
+        return body;
     }
 
     /**
      * Close the still-unused request body.  This is a no-op if there
      * is no request body.
      */
-    void CheckCloseUnusedBody();
+    void CheckCloseUnusedBody() {
+        body.Clear();
+    }
 };
 
 #endif

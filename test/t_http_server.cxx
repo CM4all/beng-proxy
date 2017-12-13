@@ -37,7 +37,7 @@
 #include "direct.hxx"
 #include "PInstance.hxx"
 #include "pool.hxx"
-#include "istream/istream.hxx"
+#include "istream/UnusedPtr.hxx"
 #include "istream/istream_catch.hxx"
 #include "fb_pool.hxx"
 #include "net/SocketDescriptor.hxx"
@@ -81,7 +81,7 @@ struct Instance final : HttpServerConnectionHandler {
     void HttpConnectionClosed() override;
 };
 
-static std::exception_ptr 
+static std::exception_ptr
 catch_callback(std::exception_ptr ep, gcc_unused void *ctx)
 {
     PrintException(ep);
@@ -93,7 +93,8 @@ Instance::HandleHttpRequest(HttpServerRequest &request,
                             gcc_unused CancellablePointer &cancel_ptr)
 {
     http_server_response(&request, HTTP_STATUS_OK, HttpHeaders(request.pool),
-                         istream_catch_new(&request.pool, *request.body,
+                         istream_catch_new(&request.pool,
+                                           *request.body.Steal(),
                                            catch_callback, nullptr));
 
     CloseConnection();

@@ -69,7 +69,7 @@ struct LbHttpRequest final : private Cancellable, private LeakDetector {
                   CancellablePointer &_cancel_ptr)
         :pool(_request.pool), connection(_connection), handler(_handler),
          request(_request),
-         request_body(request.pool, std::exchange(request.body, nullptr)),
+         request_body(request.pool, std::move(request.body)),
          caller_cancel_ptr(_cancel_ptr) {
         caller_cancel_ptr = *this;
     }
@@ -141,7 +141,7 @@ lb_http_translate_response(TranslateResponse &response, void *ctx)
         if (response.canonical_host != nullptr)
             c.per_request.canonical_host = response.canonical_host;
 
-        request.body = r.request_body.Steal();
+        request.body = std::move(r.request_body);
 
         c.HandleHttpRequest(*destination, request, r.caller_cancel_ptr);
         r.Destroy();

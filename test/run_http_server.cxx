@@ -44,6 +44,7 @@
 #include "istream/istream_memory.hxx"
 #include "istream/istream_zero.hxx"
 #include "istream/istream.hxx"
+#include "istream/UnusedHoldPtr.hxx"
 #include "PInstance.hxx"
 #include "pool.hxx"
 #include "event/TimerEvent.hxx"
@@ -78,7 +79,7 @@ struct Instance final : PInstance, HttpServerConnectionHandler, Cancellable {
 
     HttpServerConnection *connection;
 
-    Istream *request_body;
+    UnusedHoldIstreamPtr request_body;
 
     TimerEvent timer;
 
@@ -92,9 +93,7 @@ struct Instance final : PInstance, HttpServerConnectionHandler, Cancellable {
 
     /* virtual methods from class Cancellable */
     void Cancel() override {
-        if (request_body != nullptr)
-            request_body->CloseUnused();
-
+        request_body.Clear();
         timer.Cancel();
     }
 
@@ -137,19 +136,20 @@ Instance::HandleHttpRequest(HttpServerRequest &request,
         static char data[0x100];
 
     case Instance::Mode::MODE_NULL:
-        if (request.body != nullptr)
-            sink_null_new(request.pool, *request.body);
+        if (request.body)
+            sink_null_new(request.pool, *request.body.Steal());
 
         http_server_response(&request, HTTP_STATUS_NO_CONTENT,
                              HttpHeaders(request.pool), nullptr);
         break;
 
     case Instance::Mode::MIRROR:
+        body = request.body.Steal();
         http_server_response(&request,
-                             request.body == nullptr
+                             body == nullptr
                              ? HTTP_STATUS_NO_CONTENT : HTTP_STATUS_OK,
                              HttpHeaders(request.pool),
-                             request.body);
+                             body);
         break;
 
     case Instance::Mode::CLOSE:
@@ -159,8 +159,8 @@ Instance::HandleHttpRequest(HttpServerRequest &request,
         /* fall through */
 
     case Instance::Mode::DUMMY:
-        if (request.body != nullptr)
-            sink_null_new(request.pool, *request.body);
+        if (request.body)
+            sink_null_new(request.pool, *request.body.Steal());
 
         body = istream_head_new(&request.pool,
                                 *istream_zero_new(&request.pool),
@@ -172,16 +172,16 @@ Instance::HandleHttpRequest(HttpServerRequest &request,
         break;
 
     case Instance::Mode::FIXED:
-        if (request.body != nullptr)
-            sink_null_new(request.pool, *request.body);
+        if (request.body)
+            sink_null_new(request.pool, *request.body.Steal());
 
         http_server_response(&request, HTTP_STATUS_OK, HttpHeaders(request.pool),
                              istream_memory_new(&request.pool, data, sizeof(data)));
         break;
 
     case Instance::Mode::HUGE_:
-        if (request.body != nullptr)
-            sink_null_new(request.pool, *request.body);
+        if (request.body)
+            sink_null_new(request.pool, *request.body.Steal());
 
         http_server_response(&request, HTTP_STATUS_OK,
                              HttpHeaders(request.pool),
@@ -191,9 +191,8 @@ Instance::HandleHttpRequest(HttpServerRequest &request,
         break;
 
     case Instance::Mode::HOLD:
-        request_body = request.body != nullptr
-            ? istream_hold_new(request.pool, *request.body)
-            : nullptr;
+        request_body = UnusedHoldIstreamPtr(request.pool,
+                                            std::move(request.body));
 
         body = istream_delayed_new(&request.pool);
         istream_delayed_cancellable_ptr(*body) = *this;

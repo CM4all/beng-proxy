@@ -122,7 +122,7 @@ public:
          cluster_config(cluster.GetConfig()),
          balancer(_balancer),
          request(_request),
-         body(pool, request.body) {
+         body(pool, std::move(request.body)) {
         _cancel_ptr = *this;
 
         if (cluster_config.HasZeroConf())

@@ -238,7 +238,6 @@ HttpServerConnection::HeadersFinished()
         } else if (value == nullptr) {
             /* no body at all */
 
-            r.body = nullptr;
             request.read_state = Request::END;
 #ifndef NDEBUG
             request.body_state = Request::BodyState::NONE;
@@ -257,7 +256,7 @@ HttpServerConnection::HeadersFinished()
             if (content_length == 0) {
                 /* empty body */
 
-                r.body = istream_null_new(&r.pool);
+                r.body = UnusedIstreamPtr(istream_null_new(&r.pool));
                 request.read_state = Request::END;
 #ifndef NDEBUG
                 request.body_state = Request::BodyState::EMPTY;
@@ -273,8 +272,8 @@ HttpServerConnection::HeadersFinished()
 
     request_body_reader = NewFromPool<RequestBodyReader>(r.pool, r.pool,
                                                          *this);
-    r.body = &request_body_reader->Init(GetEventLoop(), content_length,
-                                        chunked);
+    r.body = UnusedIstreamPtr(&request_body_reader->Init(GetEventLoop(), content_length,
+                                                         chunked));
 
     request.read_state = Request::BODY;
 #ifndef NDEBUG
