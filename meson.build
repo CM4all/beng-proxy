@@ -1113,7 +1113,6 @@ executable('cm4all-beng-proxy-log-json',
   dependencies: [
     net_dep,
     http_dep,
-    libjsoncpp,
   ])
 
 executable('cm4all-beng-proxy-log-lua',

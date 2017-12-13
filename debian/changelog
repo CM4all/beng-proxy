@@ -1,6 +1,7 @@
 cm4all-beng-proxy (14.0.1) unstable; urgency=low
 
   * certdb: retry ACME requests after status 5xx (server error)
+  * log-json: generate JSONL (JSON Lines)
 
  --   
 
