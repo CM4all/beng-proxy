@@ -40,7 +40,6 @@
 #include "translation/Handler.hxx"
 #include "translation/Response.hxx"
 #include "pool.hxx"
-#include "abort_close.hxx"
 #include "RedirectHttps.hxx"
 
 /*
@@ -48,18 +47,27 @@
  *
  */
 
-struct LbHttpRequest {
+struct LbHttpRequest final : private Cancellable {
     LbHttpConnection &connection;
     LbTranslationHandler &handler;
     HttpServerRequest &request;
-    CancellablePointer &cancel_ptr;
+    CancellablePointer &caller_cancel_ptr;
+    CancellablePointer translate_cancel_ptr;
 
     LbHttpRequest(LbHttpConnection &_connection,
                   LbTranslationHandler &_handler,
                   HttpServerRequest &_request,
                   CancellablePointer &_cancel_ptr)
         :connection(_connection), handler(_handler),
-         request(_request), cancel_ptr(_cancel_ptr) {}
+         request(_request), caller_cancel_ptr(_cancel_ptr) {
+        caller_cancel_ptr = *this;
+    }
+
+private:
+    /* virtual methods from class Cancellable */
+    void Cancel() override {
+        translate_cancel_ptr.Cancel();
+    }
 };
 
 static void
@@ -70,8 +78,7 @@ lb_http_translate_response(TranslateResponse &response, void *ctx)
     auto &request = r.request;
 
     if (response.site != nullptr)
-        r.connection.per_request.site_name = p_strdup(request.pool,
-                                                      response.site);
+        c.per_request.site_name = p_strdup(request.pool, response.site);
 
     if (response.https_only != 0 && !c.IsEncrypted()) {
         request.CheckCloseUnusedBody();
@@ -117,7 +124,7 @@ lb_http_translate_response(TranslateResponse &response, void *ctx)
         if (response.canonical_host != nullptr)
             c.per_request.canonical_host = response.canonical_host;
 
-        c.HandleHttpRequest(*destination, request, r.cancel_ptr);
+        c.HandleHttpRequest(*destination, request, r.caller_cancel_ptr);
     } else {
         request.CheckCloseUnusedBody();
 
@@ -157,6 +164,5 @@ LbHttpConnection::AskTranslationServer(LbTranslationHandler &handler,
     handler.Pick(request.pool, request,
                  listener.tag.empty() ? nullptr : listener.tag.c_str(),
                  lb_http_translate_handler, r,
-                 async_optional_close_on_abort(request.pool, request.body,
-                                               cancel_ptr));
+                 r->translate_cancel_ptr);
 }
