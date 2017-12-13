@@ -189,6 +189,8 @@ HttpServerConnection::ParseRequestLine(const char *line, size_t length)
 inline bool
 HttpServerConnection::HeadersFinished()
 {
+    assert(request.body_state == Request::BodyState::START);
+
     auto &r = *request.request;
 
     /* disable the idle+headers timeout; the request body timeout will
@@ -238,6 +240,9 @@ HttpServerConnection::HeadersFinished()
 
             r.body = nullptr;
             request.read_state = Request::END;
+#ifndef NDEBUG
+            request.body_state = Request::BodyState::NONE;
+#endif
 
             return true;
         } else {
@@ -254,6 +259,9 @@ HttpServerConnection::HeadersFinished()
 
                 r.body = istream_null_new(&r.pool);
                 request.read_state = Request::END;
+#ifndef NDEBUG
+                request.body_state = Request::BodyState::EMPTY;
+#endif
 
                 return true;
             }
@@ -269,6 +277,9 @@ HttpServerConnection::HeadersFinished()
                                         chunked);
 
     request.read_state = Request::BODY;
+#ifndef NDEBUG
+    request.body_state = Request::BodyState::READING;
+#endif
 
     /* for the request body, the FilteredSocket class tracks
        inactivity timeout */
@@ -467,6 +478,9 @@ HttpServerConnection::TryRequestBodyDirect(SocketDescriptor fd, FdType fd_type)
 
     if (request_body_reader->IsEOF()) {
         request.read_state = Request::END;
+#ifndef NDEBUG
+        request.body_state = Request::BodyState::CLOSED;
+#endif
         request_body_reader->DestroyEof();
         return IsValid()
             ? DirectResult::OK

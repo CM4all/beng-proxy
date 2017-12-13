@@ -38,7 +38,7 @@ BufferedResult
 HttpServerConnection::FeedRequestBody(const void *data, size_t length)
 {
     assert(request.read_state == Request::BODY);
-    assert(request.request->body != nullptr);
+    assert(request.body_state == Request::BodyState::READING);
     assert(!response.pending_drained);
 
     const ScopePoolRef ref(*pool TRACE_ARGS);
@@ -55,6 +55,9 @@ HttpServerConnection::FeedRequestBody(const void *data, size_t length)
 
     if (request.read_state == Request::BODY && request_body_reader->IsEOF()) {
         request.read_state = Request::END;
+#ifndef NDEBUG
+        request.body_state = Request::BodyState::CLOSED;
+#endif
 
         /* re-enable the event, to detect client disconnect while
            we're processing the request */
@@ -75,6 +78,7 @@ HttpServerConnection::RequestBodyReader::_GetAvailable(bool partial)
 {
     assert(connection.IsValid());
     assert(connection.request.read_state == Request::BODY);
+    assert(connection.request.body_state == Request::BodyState::READING);
     assert(!connection.response.pending_drained);
 
     return HttpBodyReader::GetAvailable(connection.socket, partial);
@@ -85,9 +89,7 @@ HttpServerConnection::RequestBodyReader::_Read()
 {
     assert(connection.IsValid());
     assert(connection.request.read_state == Request::BODY);
-    assert(connection.request_body_reader->HasHandler());
-    assert(connection.request.request->body != nullptr);
-    assert(connection.request.request->body->HasHandler());
+    assert(connection.request.body_state == Request::BodyState::READING);
     assert(!connection.response.pending_drained);
 
     if (!connection.MaybeSend100Continue())
@@ -107,6 +109,7 @@ HttpServerConnection::RequestBodyReader::_Close() noexcept
         return;
 
     assert(connection.request.read_state == Request::BODY);
+    assert(connection.request.body_state == Request::BodyState::READING);
     assert(!connection.request_body_reader->IsEOF());
     assert(!connection.response.pending_drained);
 
@@ -121,6 +124,9 @@ HttpServerConnection::RequestBodyReader::_Close() noexcept
     }
 
     connection.request.read_state = Request::END;
+#ifndef NDEBUG
+    connection.request.body_state = Request::BodyState::CLOSED;
+#endif
 
     if (connection.request.request != nullptr)
         connection.request.request->body = nullptr;

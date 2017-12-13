@@ -104,9 +104,7 @@ HttpServerConnection::SubmitResponse(http_status_t status,
     assert(score != HTTP_SERVER_NEW);
     assert(socket.IsConnected());
     assert(request.read_state == Request::END ||
-           request.request->body == nullptr ||
-           request.request->body == body ||
-           request.request->body->HasHandler());
+           request.body_state == Request::BodyState::READING);
 
     if (http_status_is_success(status)) {
         if (score == HTTP_SERVER_FIRST)

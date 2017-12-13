@@ -142,6 +142,9 @@ HttpServerConnection::ResponseIstreamFinished()
        DechunkIstream has announced this in a derred event */
     if (request.read_state == Request::BODY && request_body_reader->IsEOF()) {
         request.read_state = Request::END;
+#ifndef NDEBUG
+        request.body_state = Request::BodyState::CLOSED;
+#endif
         request_body_reader->DestroyEof();
         if (!IsValid())
             return false;
@@ -155,6 +158,9 @@ HttpServerConnection::ResponseIstreamFinished()
            the rest of the body to /dev/null */
         keep_alive = false;
         request.read_state = Request::END;
+#ifndef NDEBUG
+        request.body_state = Request::BodyState::CLOSED;
+#endif
 
         request_body_reader->DestroyError(std::make_exception_ptr(std::runtime_error("request body discarded")));
         if (!IsValid())
@@ -167,6 +173,9 @@ HttpServerConnection::ResponseIstreamFinished()
     response.bytes_sent = 0;
 
     request.read_state = Request::START;
+#ifndef NDEBUG
+    request.body_state = Request::BodyState::START;
+#endif
 
     if (keep_alive) {
         /* handle pipelined request (if any), or set up events for

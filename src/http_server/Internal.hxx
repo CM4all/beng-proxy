@@ -112,6 +112,16 @@ struct HttpServerConnection final : BufferedSocketHandler, IstreamHandler {
             END
         } read_state = START;
 
+#ifndef NDEBUG
+        enum class BodyState {
+            START,
+            NONE,
+            EMPTY,
+            READING,
+            CLOSED,
+        } body_state = BodyState::START;
+#endif
+
         /**
          * This flag is true if we are currently calling the HTTP
          * request handler.  During this period,
