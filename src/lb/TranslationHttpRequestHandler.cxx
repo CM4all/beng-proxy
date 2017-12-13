@@ -41,6 +41,7 @@
 #include "translation/Response.hxx"
 #include "pool.hxx"
 #include "RedirectHttps.hxx"
+#include "istream/UnusedHoldPtr.hxx"
 #include "util/LeakDetector.hxx"
 
 /*
@@ -53,6 +54,12 @@ struct LbHttpRequest final : private Cancellable, private LeakDetector {
     LbHttpConnection &connection;
     LbTranslationHandler &handler;
     HttpServerRequest &request;
+
+    /**
+     * This object temporarily holds the request body
+     */
+    UnusedHoldIstreamPtr request_body;
+
     CancellablePointer &caller_cancel_ptr;
     CancellablePointer translate_cancel_ptr;
 
@@ -61,7 +68,9 @@ struct LbHttpRequest final : private Cancellable, private LeakDetector {
                   HttpServerRequest &_request,
                   CancellablePointer &_cancel_ptr)
         :pool(_request.pool), connection(_connection), handler(_handler),
-         request(_request), caller_cancel_ptr(_cancel_ptr) {
+         request(_request),
+         request_body(request.pool, std::exchange(request.body, nullptr)),
+         caller_cancel_ptr(_cancel_ptr) {
         caller_cancel_ptr = *this;
     }
 
@@ -89,7 +98,6 @@ lb_http_translate_response(TranslateResponse &response, void *ctx)
         c.per_request.site_name = p_strdup(request.pool, response.site);
 
     if (response.https_only != 0 && !c.IsEncrypted()) {
-        request.CheckCloseUnusedBody();
         r.Destroy();
 
         const char *host = c.per_request.host;
@@ -107,7 +115,6 @@ lb_http_translate_response(TranslateResponse &response, void *ctx)
     } else if (response.status != http_status_t(0) ||
                response.redirect != nullptr ||
                response.message != nullptr) {
-        request.CheckCloseUnusedBody();
         r.Destroy();
 
         auto status = response.status;
@@ -124,7 +131,6 @@ lb_http_translate_response(TranslateResponse &response, void *ctx)
     } else if (response.pool != nullptr) {
         auto *destination = r.handler.FindDestination(response.pool);
         if (destination == nullptr) {
-            request.CheckCloseUnusedBody();
             r.Destroy();
 
             c.LogSendError(request,
@@ -135,10 +141,11 @@ lb_http_translate_response(TranslateResponse &response, void *ctx)
         if (response.canonical_host != nullptr)
             c.per_request.canonical_host = response.canonical_host;
 
+        request.body = r.request_body.Steal();
+
         c.HandleHttpRequest(*destination, request, r.caller_cancel_ptr);
         r.Destroy();
     } else {
-        request.CheckCloseUnusedBody();
         r.Destroy();
 
         c.LogSendError(request,
@@ -154,7 +161,6 @@ lb_http_translate_error(std::exception_ptr ep, void *ctx)
     auto &connection = r.connection;
 
     r.Destroy();
-    request.CheckCloseUnusedBody();
 
     connection.LogSendError(request, ep);
 }
