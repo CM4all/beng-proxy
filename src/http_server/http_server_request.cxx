@@ -41,13 +41,6 @@ HttpServerConnection::FeedRequestBody(const void *data, size_t length)
     assert(request.request->body != nullptr);
     assert(!response.pending_drained);
 
-    /* checking request.request->body and not request_body_reader,
-       because the dechunker might be attached to the
-       http_body_reader */
-    if (!request.request->body->HasHandler())
-        /* the handler is not yet connected */
-        return BufferedResult::BLOCKING;
-
     const ScopePoolRef ref(*pool TRACE_ARGS);
 
     size_t nbytes = request_body_reader->FeedBody(data, length);
