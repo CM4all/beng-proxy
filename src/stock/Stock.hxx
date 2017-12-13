@@ -50,7 +50,7 @@
 struct pool;
 class CancellablePointer;
 class Stock;
-struct StockClass;
+class StockClass;
 struct CreateStockItem;
 class StockGetHandler;
 
