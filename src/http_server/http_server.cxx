@@ -393,9 +393,7 @@ HttpServerConnection::CloseRequest()
     if (response.status != http_status_t(0))
         Log();
 
-    auto &request_pool = request.request->pool;
-    pool_trash(&request_pool);
-    pool_unref(&request_pool);
+    DeleteUnrefTrashPool(request.request->pool, request.request);
     request.request = nullptr;
 
     if ((request.read_state == Request::BODY ||
