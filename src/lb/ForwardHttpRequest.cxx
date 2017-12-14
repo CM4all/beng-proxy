@@ -71,6 +71,8 @@
 class LbRequest final
     : LeakDetector, Cancellable, StockGetHandler, Lease, HttpResponseHandler {
 
+    struct pool &pool;
+
     LbHttpConnection &connection;
     LbCluster &cluster;
     const LbClusterConfig &cluster_config;
@@ -116,11 +118,11 @@ public:
               TcpBalancer &_balancer,
               HttpServerRequest &_request,
               CancellablePointer &_cancel_ptr)
-        :connection(_connection), cluster(_cluster),
+        :pool(_request.pool), connection(_connection), cluster(_cluster),
          cluster_config(cluster.GetConfig()),
          balancer(_balancer),
          request(_request),
-         body(request.pool, request.body) {
+         body(pool, request.body) {
         _cancel_ptr = *this;
 
         if (cluster_config.HasZeroConf())
@@ -149,7 +151,7 @@ private:
     void Destroy() {
         assert(lease_state == LeaseState::NONE);
 
-        DeleteFromPool(request.pool, this);
+        DeleteFromPool(pool, this);
     }
 
     void DoRelease() {
@@ -168,7 +170,7 @@ private:
     void SetForwardedTo() {
         // TODO: optimize this operation
         connection.per_request.forwarded_to =
-            address_to_string(request.pool,
+            address_to_string(pool,
                               tcp_stock_item_get_address(*stock_item));
     }
 
@@ -198,7 +200,7 @@ private:
         /* this pool reference is necessary because
            cancel_ptr.Cancel() may release the only remaining
            reference on the pool */
-        const ScopePoolRef ref(request.pool TRACE_ARGS);
+        const ScopePoolRef ref(pool TRACE_ARGS);
 
         body.Clear();
         cancel_ptr.Cancel();
@@ -428,14 +430,14 @@ LbRequest::OnStockItemReady(StockItem &item)
         : nullptr;
 
     auto &headers = request.headers;
-    lb_forward_request_headers(request.pool, headers,
+    lb_forward_request_headers(pool, headers,
                                request.local_host_and_port,
                                request.remote_host,
                                connection.IsEncrypted(),
                                peer_subject, peer_issuer_subject,
                                cluster_config.mangle_via);
 
-    http_client_request(request.pool,
+    http_client_request(pool,
                         connection.instance.event_loop,
                         tcp_stock_item_get(item),
                         tcp_stock_item_get_domain(item) == AF_LOCAL
@@ -510,12 +512,12 @@ LbRequest::MakeBindAddress() const
 
         /* reset the port to 0 to allow the kernel to choose one */
         if (bind_address.GetFamily() == AF_INET) {
-            auto &address = *NewFromPool<IPv4Address>(request.pool,
+            auto &address = *NewFromPool<IPv4Address>(pool,
                                                       IPv4Address(bind_address));
             address.SetPort(0);
             return address;
         } else if (bind_address.GetFamily() == AF_INET6) {
-            auto &address = *NewFromPool<IPv6Address>(request.pool,
+            auto &address = *NewFromPool<IPv6Address>(pool,
                                                       IPv6Address(bind_address));
             address.SetPort(0);
             return address;
@@ -534,7 +536,7 @@ LbRequest::Start()
     if (cluster_config.HasZeroConf()) {
         auto *member = cluster.Pick(GetStickyHash());
         if (member == nullptr) {
-            const ScopePoolRef ref(request.pool TRACE_ARGS);
+            const ScopePoolRef ref(pool TRACE_ARGS);
             http_server_send_message(&request,
                                      HTTP_STATUS_INTERNAL_SERVER_ERROR,
                                      "Zeroconf cluster is empty");
@@ -544,7 +546,7 @@ LbRequest::Start()
 
         current_member = *member;
 
-        connection.instance.tcp_stock->Get(request.pool,
+        connection.instance.tcp_stock->Get(pool,
                                            member->GetLogName(),
                                            cluster_config.transparent_source,
                                            bind_address,
@@ -555,7 +557,7 @@ LbRequest::Start()
         return;
     }
 
-    balancer.Get(request.pool,
+    balancer.Get(pool,
                  cluster_config.transparent_source,
                  bind_address,
                  GetStickyHash(),
