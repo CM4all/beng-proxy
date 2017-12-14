@@ -171,7 +171,7 @@ CertNameCache::OnConnect()
 }
 
 void
-CertNameCache::OnDisconnect()
+CertNameCache::OnDisconnect() noexcept
 {
     logger(4, "disconnected from certificate database");
 
