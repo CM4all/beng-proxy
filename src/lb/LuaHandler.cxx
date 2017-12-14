@@ -140,7 +140,7 @@ SendMessage(lua_State *L)
     return 0;
 }
 
-static constexpr struct luaL_reg request_methods [] = {
+static constexpr struct luaL_Reg request_methods [] = {
     {"get_header", GetHeader},
     {"send_message", SendMessage},
     {nullptr, nullptr}
