@@ -41,13 +41,15 @@
 #include "translation/Response.hxx"
 #include "pool.hxx"
 #include "RedirectHttps.hxx"
+#include "util/LeakDetector.hxx"
 
 /*
  * TranslateHandler
  *
  */
 
-struct LbHttpRequest final : private Cancellable {
+struct LbHttpRequest final : private Cancellable, private LeakDetector {
+    struct pool &pool;
     LbHttpConnection &connection;
     LbTranslationHandler &handler;
     HttpServerRequest &request;
@@ -58,15 +60,21 @@ struct LbHttpRequest final : private Cancellable {
                   LbTranslationHandler &_handler,
                   HttpServerRequest &_request,
                   CancellablePointer &_cancel_ptr)
-        :connection(_connection), handler(_handler),
+        :pool(_request.pool), connection(_connection), handler(_handler),
          request(_request), caller_cancel_ptr(_cancel_ptr) {
         caller_cancel_ptr = *this;
+    }
+
+    void Destroy() {
+        DeleteFromPool(pool,  this);
     }
 
 private:
     /* virtual methods from class Cancellable */
     void Cancel() override {
-        translate_cancel_ptr.Cancel();
+        CancellablePointer cancel_ptr(std::move(translate_cancel_ptr));
+        Destroy();
+        cancel_ptr.Cancel();
     }
 };
 
@@ -82,6 +90,7 @@ lb_http_translate_response(TranslateResponse &response, void *ctx)
 
     if (response.https_only != 0 && !c.IsEncrypted()) {
         request.CheckCloseUnusedBody();
+        r.Destroy();
 
         const char *host = c.per_request.host;
         if (host == nullptr) {
@@ -97,8 +106,9 @@ lb_http_translate_response(TranslateResponse &response, void *ctx)
                                   "This page requires \"https\"");
     } else if (response.status != http_status_t(0) ||
                response.redirect != nullptr ||
-        response.message != nullptr) {
+               response.message != nullptr) {
         request.CheckCloseUnusedBody();
+        r.Destroy();
 
         auto status = response.status;
         if (status == http_status_t(0))
@@ -115,6 +125,7 @@ lb_http_translate_response(TranslateResponse &response, void *ctx)
         auto *destination = r.handler.FindDestination(response.pool);
         if (destination == nullptr) {
             request.CheckCloseUnusedBody();
+            r.Destroy();
 
             c.LogSendError(request,
                            std::make_exception_ptr(std::runtime_error("No such pool")));
@@ -125,8 +136,10 @@ lb_http_translate_response(TranslateResponse &response, void *ctx)
             c.per_request.canonical_host = response.canonical_host;
 
         c.HandleHttpRequest(*destination, request, r.caller_cancel_ptr);
+        r.Destroy();
     } else {
         request.CheckCloseUnusedBody();
+        r.Destroy();
 
         c.LogSendError(request,
                        std::make_exception_ptr(std::runtime_error("Invalid translation server response")));
@@ -137,10 +150,13 @@ static void
 lb_http_translate_error(std::exception_ptr ep, void *ctx)
 {
     auto &r = *(LbHttpRequest *)ctx;
+    auto &request = r.request;
+    auto &connection = r.connection;
 
-    r.request.CheckCloseUnusedBody();
+    r.Destroy();
+    request.CheckCloseUnusedBody();
 
-    r.connection.LogSendError(r.request, ep);
+    connection.LogSendError(request, ep);
 }
 
 static constexpr TranslateHandler lb_http_translate_handler = {
