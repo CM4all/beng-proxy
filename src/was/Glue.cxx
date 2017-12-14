@@ -40,7 +40,6 @@
 #include "stock/GetHandler.hxx"
 #include "stock/Stock.hxx"
 #include "stock/Item.hxx"
-#include "abort_close.hxx"
 #include "spawn/ChildOptions.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream_hold.hxx"
@@ -56,7 +55,7 @@
 #include <string.h>
 #include <unistd.h>
 
-class WasRequest final : public StockGetHandler, WasLease {
+class WasRequest final : public StockGetHandler, Cancellable, WasLease {
     struct pool &pool;
 
     Stopwatch *const stopwatch;
@@ -69,20 +68,23 @@ class WasRequest final : public StockGetHandler, WasLease {
     const char *path_info;
     const char *query_string;
     StringMap &headers;
-    Istream *body = nullptr;
+    Istream *body;
 
     ConstBuffer<const char *> parameters;
 
     HttpResponseHandler &handler;
-    CancellablePointer &cancel_ptr;
+    CancellablePointer &caller_cancel_ptr;
 
 public:
+    CancellablePointer stock_cancel_ptr;
+
     WasRequest(struct pool &_pool,
                Stopwatch *_stopwatch,
                http_method_t _method, const char *_uri,
                const char *_script_name, const char *_path_info,
                const char *_query_string,
                StringMap &_headers,
+               Istream *_body,
                ConstBuffer<const char *> _parameters,
                HttpResponseHandler &_handler,
                CancellablePointer &_cancel_ptr)
@@ -91,20 +93,11 @@ public:
          method(_method),
          uri(_uri), script_name(_script_name),
          path_info(_path_info), query_string(_query_string),
-         headers(_headers), parameters(_parameters),
-         handler(_handler), cancel_ptr(_cancel_ptr) {
-    }
-
-    CancellablePointer *SetBody(Istream *_body,
-                                CancellablePointer *_cancel_ptr) {
-        assert(body == nullptr);
-
-        if (_body != nullptr) {
-            body = istream_hold_new(pool, *_body);
-            _cancel_ptr = &async_close_on_abort(pool, *body, *_cancel_ptr);
-        }
-
-        return _cancel_ptr;
+         headers(_headers),
+         body(_body != nullptr ? istream_hold_new(pool, *_body) : nullptr),
+         parameters(_parameters),
+         handler(_handler), caller_cancel_ptr(_cancel_ptr) {
+        caller_cancel_ptr = *this;
     }
 
     /* virtual methods from class StockGetHandler */
@@ -112,6 +105,14 @@ public:
     void OnStockItemError(std::exception_ptr ep) override;
 
 private:
+    /* virtual methods from class Cancellable */
+    void Cancel() override {
+        stock_cancel_ptr.Cancel();
+
+        if (body != nullptr)
+            body->CloseUnused();
+    }
+
     /* virtual methods from class WasLease */
     void ReleaseWas(bool reuse) override {
         stock_item->Put(!reuse);
@@ -144,7 +145,7 @@ WasRequest::OnStockItemReady(StockItem &item)
                        query_string,
                        headers, body,
                        parameters,
-                       handler, cancel_ptr);
+                       handler, caller_cancel_ptr);
 }
 
 void
@@ -223,11 +224,11 @@ was_request(struct pool &pool, StockMap &was_stock,
                                                              parameters),
                                            method, uri, script_name,
                                            path_info, query_string,
-                                           headers, parameters,
+                                           headers, body, parameters,
                                            handler, cancel_ptr);
 
     was_stock_get(&was_stock, &pool,
                   options,
                   action, args,
-                  *request, *request->SetBody(body, &cancel_ptr));
+                  *request, request->stock_cancel_ptr);
 }
