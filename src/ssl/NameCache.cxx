@@ -95,7 +95,7 @@ CertNameCache::OnUpdateTimer()
 }
 
 void
-CertNameCache::ScheduleUpdate()
+CertNameCache::ScheduleUpdate() noexcept
 {
     if (!update_timer.IsPending())
         update_timer.Add(EventDuration<0, 200000>::value);
@@ -187,7 +187,7 @@ CertNameCache::OnNotify(const char *name)
 }
 
 void
-CertNameCache::OnError(std::exception_ptr e)
+CertNameCache::OnError(std::exception_ptr e) noexcept
 {
     logger(1, e);
 }
@@ -254,7 +254,7 @@ CertNameCache::OnResultEnd()
 }
 
 void
-CertNameCache::OnResultError()
+CertNameCache::OnResultError() noexcept
 {
     ScheduleUpdate();
 }
