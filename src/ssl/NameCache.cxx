@@ -187,9 +187,9 @@ CertNameCache::OnNotify(const char *name)
 }
 
 void
-CertNameCache::OnError(const char *prefix, const char *error)
+CertNameCache::OnError(std::exception_ptr e)
 {
-    logger(1, prefix, ": ", error);
+    logger(1, e);
 }
 
 void
