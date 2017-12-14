@@ -59,6 +59,41 @@ struct FcgiRequest final : Lease, Cancellable {
         :pool(_pool), stock_item(&_stock_item) {
     }
 
+    void Start(EventLoop &event_loop, const char *path,
+               http_method_t method, const char *uri,
+               const char *script_name, const char *path_info,
+               const char *query_string,
+               const char *document_root,
+               const char *remote_addr,
+               const StringMap &headers, Istream *body,
+               ConstBuffer<const char *> params,
+               int stderr_fd,
+               HttpResponseHandler &handler,
+               CancellablePointer &caller_cancel_ptr) {
+        caller_cancel_ptr = *this;
+
+        const char *script_filename = fcgi_stock_translate_path(*stock_item, path,
+                                                                pool);
+        document_root = fcgi_stock_translate_path(*stock_item, document_root,
+                                                  pool);
+
+        fcgi_client_request(&pool, event_loop,
+                            fcgi_stock_item_get(*stock_item),
+                            fcgi_stock_item_get_domain(*stock_item) == AF_LOCAL
+                            ? FdType::FD_SOCKET : FdType::FD_TCP,
+                            *this,
+                            method, uri,
+                            script_filename,
+                            script_name, path_info,
+                            query_string,
+                            document_root,
+                            remote_addr,
+                            headers, body,
+                            params,
+                            stderr_fd,
+                            handler, cancel_ptr);
+    }
+
     /* virtual methods from class Cancellable */
     void Cancel() override {
         if (stock_item != nullptr)
@@ -113,26 +148,10 @@ fcgi_request(struct pool *pool, EventLoop &event_loop,
 
     auto request = NewFromPool<FcgiRequest>(*pool, *pool, *stock_item);
 
-    cancel_ptr = *request;
 
-    const char *script_filename = fcgi_stock_translate_path(*stock_item, path,
-                                                            request->pool);
-    document_root = fcgi_stock_translate_path(*stock_item, document_root,
-                                              request->pool);
-
-    fcgi_client_request(&request->pool, event_loop,
-                        fcgi_stock_item_get(*stock_item),
-                        fcgi_stock_item_get_domain(*stock_item) == AF_LOCAL
-                        ? FdType::FD_SOCKET : FdType::FD_TCP,
-                        *request,
-                        method, uri,
-                        script_filename,
-                        script_name, path_info,
-                        query_string,
-                        document_root,
-                        remote_addr,
-                        headers, body,
-                        params,
-                        stderr_fd,
-                        handler, request->cancel_ptr);
+    request->Start(event_loop, path, method, uri,
+                   script_name, path_info,
+                   query_string, document_root, remote_addr,
+                   headers, body, params, stderr_fd, handler,
+                   cancel_ptr);
 }
