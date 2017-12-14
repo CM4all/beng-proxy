@@ -201,7 +201,6 @@ GetServerDateOffset(const HttpCacheRequestInfo &request_info,
                     std::chrono::system_clock::time_point now,
                     const StringMap &response_headers) noexcept
 {
-    std::chrono::system_clock::duration offset;
     if (!request_info.is_remote)
         /* server is local (e.g. FastCGI); we don't need an offset */
         return std::chrono::system_clock::duration::zero();
