@@ -42,7 +42,7 @@
 #include "stock/Item.hxx"
 #include "spawn/ChildOptions.hxx"
 #include "istream/istream.hxx"
-#include "istream/istream_hold.hxx"
+#include "istream/UnusedHoldPtr.hxx"
 #include "pool.hxx"
 #include "stopwatch.hxx"
 #include "util/Cancellable.hxx"
@@ -68,7 +68,7 @@ class WasRequest final : StockGetHandler, Cancellable, WasLease {
     const char *path_info;
     const char *query_string;
     StringMap &headers;
-    Istream *body;
+    UnusedHoldIstreamPtr body;
 
     ConstBuffer<const char *> parameters;
 
@@ -93,7 +93,7 @@ public:
          uri(_uri), script_name(_script_name),
          path_info(_path_info), query_string(_query_string),
          headers(_headers),
-         body(_body != nullptr ? istream_hold_new(pool, *_body) : nullptr),
+         body(pool, _body),
          parameters(_parameters),
          handler(_handler), caller_cancel_ptr(_cancel_ptr) {
         caller_cancel_ptr = *this;
@@ -119,9 +119,7 @@ private:
     /* virtual methods from class Cancellable */
     void Cancel() override {
         stock_cancel_ptr.Cancel();
-
-        if (body != nullptr)
-            body->CloseUnused();
+        body.Clear();
     }
 
     /* virtual methods from class WasLease */
@@ -156,7 +154,7 @@ WasRequest::OnStockItemReady(StockItem &item)
                        method, uri,
                        script_name, path_info,
                        query_string,
-                       headers, body,
+                       headers, body.Steal(),
                        parameters,
                        handler, caller_cancel_ptr);
 }
@@ -164,8 +162,7 @@ WasRequest::OnStockItemReady(StockItem &item)
 void
 WasRequest::OnStockItemError(std::exception_ptr ep)
 {
-    if (body != nullptr)
-        body->CloseUnused();
+    body.Clear();
 
     handler.InvokeError(ep);
 
