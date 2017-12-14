@@ -47,7 +47,6 @@ static constexpr std::chrono::seconds SESSION_TTL_NEW(120);
 static WidgetSession::Set
 widget_session_map_dup(struct dpool &pool, const WidgetSession::Set &src,
                        RealmSession *session)
-    throw(std::bad_alloc)
 {
     assert(crash_in_unsafe());
 
@@ -63,13 +62,11 @@ widget_session_map_dup(struct dpool &pool, const WidgetSession::Set &src,
 }
 
 WidgetSession::WidgetSession(RealmSession &_session,  const char *_id)
-    throw(std::bad_alloc)
     :session(_session),
      id(session.parent.pool, _id) {}
 
 WidgetSession::WidgetSession(struct dpool &pool, const WidgetSession &src,
                              RealmSession &_session)
-    throw(std::bad_alloc)
     :session(_session),
      id(pool, src.id),
      children(widget_session_map_dup(pool, src.children, &session)),
@@ -79,7 +76,6 @@ WidgetSession::WidgetSession(struct dpool &pool, const WidgetSession &src,
 }
 
 RealmSession::RealmSession(Session &_parent, const char *_realm)
-    throw(std::bad_alloc)
     :parent(_parent),
      realm(parent.pool, _realm),
      cookies(parent.pool)
@@ -87,7 +83,6 @@ RealmSession::RealmSession(Session &_parent, const char *_realm)
 }
 
 RealmSession::RealmSession(Session &_parent, const RealmSession &src)
-    throw(std::bad_alloc)
     :parent(_parent),
      realm(parent.pool, src.realm),
      site(parent.pool, src.site),
@@ -106,7 +101,6 @@ Session::Session(struct dpool &_pool, SessionId _id)
 }
 
 Session::Session(struct dpool &_pool, const Session &src)
-    throw(std::bad_alloc)
     :pool(_pool),
      id(src.id),
      expires(src.expires),
@@ -271,7 +265,6 @@ Session::SetExternalManager(const HttpAddress &address,
 static WidgetSession *
 hashmap_r_get_widget_session(RealmSession &session, WidgetSession::Set &set,
                              const char *id, bool create)
-    throw(std::bad_alloc)
 {
     assert(crash_in_unsafe());
     assert(id != nullptr);

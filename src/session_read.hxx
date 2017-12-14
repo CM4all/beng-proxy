@@ -37,8 +37,6 @@
 #ifndef BENG_PROXY_SESSION_READ_HXX
 #define BENG_PROXY_SESSION_READ_HXX
 
-#include <new>
-
 #include <stdint.h>
 #include <stdio.h>
 
@@ -52,10 +50,11 @@ bool
 session_read_file_header(FILE *file);
 
 /**
+ * Throws std::bad_alloc on error.
+ *
  * @param old read #MAGIC_SESSION_OLD format (i.e. pre v10.21)
  */
 Session *
-session_read(FILE *file, struct dpool &pool)
-    throw(std::bad_alloc);
+session_read(FILE *file, struct dpool &pool);
 
 #endif

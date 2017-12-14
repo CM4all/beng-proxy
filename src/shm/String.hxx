@@ -58,11 +58,17 @@ public:
 
     constexpr DString(std::nullptr_t) {}
 
-    DString(struct dpool &pool, StringView src) throw(std::bad_alloc) {
+    /**
+     * Throws std::bad_alloc on error.
+     */
+    DString(struct dpool &pool, StringView src) {
         Set(pool, src);
     }
 
-    DString(struct dpool &pool, const DString &src) throw(std::bad_alloc)
+    /**
+     * Throws std::bad_alloc on error.
+     */
+    DString(struct dpool &pool, const DString &src)
         :DString(pool, src.value) {}
 
     static DString Donate(char *_value) {
@@ -96,7 +102,7 @@ public:
      * Assign a new value.  Throws std::bad_alloc if memory allocation
      * fails.
      */
-    void Set(struct dpool &pool, StringView _value) throw(std::bad_alloc);
+    void Set(struct dpool &pool, StringView _value);
 
     /**
      * Assign a new value.  Returns false if memory allocation fails.

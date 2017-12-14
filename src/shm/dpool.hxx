@@ -67,11 +67,12 @@ dpool_is_fragmented(const struct dpool &pool);
 /**
  * Allocate memory from the pool.
  *
+ * Throws std::bad_alloc on error.
+ *
  * @return a pointer to the start, or NULL if allocation failed.
  */
 void *
-d_malloc(struct dpool &pool, size_t size)
-    throw(std::bad_alloc);
+d_malloc(struct dpool &pool, size_t size);
 
 /**
  * Frees the memory previously allocated by d_malloc().
@@ -111,10 +112,11 @@ d_strndup(struct dpool &pool, const char *src, size_t length);
  * Duplicate data in the given #StringView.  If src.IsNull(), then
  * nullptr is returned; if src.IsEmpty(), then an empty string literal
  * is returned.
+ *
+ * Throws std::bad_alloc on error.
  */
 StringView
-DupStringView(struct dpool &pool, StringView src)
-    throw(std::bad_alloc);
+DupStringView(struct dpool &pool, StringView src);
 
 /**
  * Free the data allocated by the given #StringView.  It is a no-op if

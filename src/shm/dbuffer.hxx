@@ -40,10 +40,12 @@
 #include "dpool.hxx"
 #include "util/ConstBuffer.hxx"
 
+/**
+ * Throws std::bad_alloc on error.
+ */
 template<typename T>
 static inline ConstBuffer<T>
 DupBuffer(struct dpool &p, ConstBuffer<T> src)
-    throw(std::bad_alloc)
 {
     if (src.IsNull())
         return ConstBuffer<T>::Null();

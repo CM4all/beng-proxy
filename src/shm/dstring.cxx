@@ -71,7 +71,6 @@ d_strndup(struct dpool &pool, const char *src, size_t length)
 
 StringView
 DupStringView(struct dpool &pool, StringView src)
-    throw(std::bad_alloc)
 {
     if (src.IsNull())
         return nullptr;

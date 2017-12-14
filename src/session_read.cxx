@@ -159,12 +159,10 @@ try {
 
 static void
 ReadWidgetSessions(FileReader &file, RealmSession &session,
-                   WidgetSession::Set &widgets)
-    throw(std::bad_alloc, SessionDeserializerError);
+                   WidgetSession::Set &widgets);
 
 static void
 DoReadWidgetSession(FileReader &file, RealmSession &session, WidgetSession &ws)
-    throw(std::bad_alloc, SessionDeserializerError)
 {
     struct dpool &pool = session.parent.pool;
 
@@ -176,7 +174,6 @@ DoReadWidgetSession(FileReader &file, RealmSession &session, WidgetSession &ws)
 
 static WidgetSession *
 ReadWidgetSession(FileReader &file, RealmSession &session)
-    throw(std::bad_alloc, SessionDeserializerError)
 {
     const char *id = file.ReadString(session.parent.pool);
     auto *ws = NewFromPool<WidgetSession>(session.parent.pool, session, id);
@@ -187,7 +184,6 @@ ReadWidgetSession(FileReader &file, RealmSession &session)
 static void
 ReadWidgetSessions(FileReader &file, RealmSession &session,
                    WidgetSession::Set &widgets)
-    throw(std::bad_alloc, SessionDeserializerError)
 {
     while (true) {
         uint32_t magic = file.Read32();
@@ -203,7 +199,6 @@ ReadWidgetSessions(FileReader &file, RealmSession &session,
 
 static void
 DoReadCookie(FileReader &file, struct dpool &pool, Cookie &cookie)
-    throw(std::bad_alloc, SessionDeserializerError)
 {
     cookie.name = file.ReadStringView(pool);
     cookie.value = file.ReadStringView(pool);
@@ -215,7 +210,6 @@ DoReadCookie(FileReader &file, struct dpool &pool, Cookie &cookie)
 
 static Cookie *
 ReadCookie(FileReader &file, struct dpool &pool)
-    throw(std::bad_alloc, SessionDeserializerError)
 {
     auto *cookie = NewFromPool<Cookie>(pool, pool, nullptr, nullptr);
     DoReadCookie(file, pool, *cookie);
@@ -224,7 +218,6 @@ ReadCookie(FileReader &file, struct dpool &pool)
 
 static void
 ReadCookieJar(FileReader &file, struct dpool &pool, CookieJar &jar)
-    throw(std::bad_alloc, SessionDeserializerError)
 {
     while (true) {
         uint32_t magic = file.Read32();
@@ -240,7 +233,6 @@ ReadCookieJar(FileReader &file, struct dpool &pool, CookieJar &jar)
 
 static void
 DoReadRealmSession(FileReader &file, struct dpool &pool, RealmSession &session)
-    throw(std::bad_alloc)
 {
     session.site = file.ReadString(pool);
     session.user = file.ReadString(pool);
@@ -252,7 +244,6 @@ DoReadRealmSession(FileReader &file, struct dpool &pool, RealmSession &session)
 
 static void
 DoReadSession(FileReader &file, struct dpool &pool, Session &session)
-    throw(std::bad_alloc)
 {
     file.Read(session.expires);
     file.ReadT(session.counter);
@@ -280,7 +271,6 @@ DoReadSession(FileReader &file, struct dpool &pool, Session &session)
 
 Session *
 session_read(FILE *_file, struct dpool &pool)
-    throw(std::bad_alloc)
 try {
     FileReader file(_file);
     const auto id = file.ReadT<SessionId>();
