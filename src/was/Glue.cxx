@@ -67,7 +67,7 @@ class WasRequest final : StockGetHandler, Cancellable, WasLease {
     const char *script_name;
     const char *path_info;
     const char *query_string;
-    StringMap &headers;
+    const StringMap &headers;
     UnusedHoldIstreamPtr body;
 
     ConstBuffer<const char *> parameters;
@@ -82,7 +82,7 @@ public:
                http_method_t _method, const char *_uri,
                const char *_script_name, const char *_path_info,
                const char *_query_string,
-               StringMap &_headers,
+               const StringMap &_headers,
                Istream *_body,
                ConstBuffer<const char *> _parameters,
                HttpResponseHandler &_handler,
@@ -222,7 +222,7 @@ was_request(struct pool &pool, StockMap &was_stock,
             http_method_t method, const char *uri,
             const char *script_name, const char *path_info,
             const char *query_string,
-            StringMap &headers, Istream *body,
+            const StringMap &headers, Istream *body,
             ConstBuffer<const char *> parameters,
             HttpResponseHandler &handler,
             CancellablePointer &cancel_ptr)

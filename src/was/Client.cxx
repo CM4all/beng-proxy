@@ -754,7 +754,7 @@ SendRequest(WasControl &control,
             http_method_t method, const char *uri,
             const char *script_name, const char *path_info,
             const char *query_string,
-            StringMap &headers, WasOutput *request_body,
+            const StringMap &headers, WasOutput *request_body,
             ConstBuffer<const char *> params)
 {
     const uint32_t method32 = (uint32_t)method;
@@ -785,7 +785,7 @@ was_client_request(struct pool &caller_pool, EventLoop &event_loop,
                    http_method_t method, const char *uri,
                    const char *script_name, const char *path_info,
                    const char *query_string,
-                   StringMap &headers, Istream *body,
+                   const StringMap &headers, Istream *body,
                    ConstBuffer<const char *> params,
                    HttpResponseHandler &handler,
                    CancellablePointer &cancel_ptr)
