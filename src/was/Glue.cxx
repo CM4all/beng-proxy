@@ -99,6 +99,10 @@ public:
         caller_cancel_ptr = *this;
     }
 
+    void Destroy() {
+        DeleteFromPool(pool, this);
+    }
+
     void Start(StockMap &was_stock, const ChildOptions &options,
                const char *action, ConstBuffer<const char *> args) {
         was_stock_get(&was_stock, &pool,
@@ -123,11 +127,13 @@ private:
     /* virtual methods from class WasLease */
     void ReleaseWas(bool reuse) override {
         stock_item->Put(!reuse);
+        Destroy();
     }
 
     void ReleaseWasStop(uint64_t input_received) override {
         was_stock_item_stop(*stock_item, input_received);
         stock_item->Put(false);
+        Destroy();
     }
 };
 
@@ -162,6 +168,8 @@ WasRequest::OnStockItemError(std::exception_ptr ep)
         body->CloseUnused();
 
     handler.InvokeError(ep);
+
+    Destroy();
 }
 
 /*
