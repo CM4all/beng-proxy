@@ -46,7 +46,7 @@ class EventLoop;
 class Istream;
 struct memcached_client_handler;
 struct MemachedStock;
-struct TcpBalancer;
+class TcpBalancer;
 struct AddressList;
 class CancellablePointer;
 

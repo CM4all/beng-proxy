@@ -36,7 +36,7 @@
 #include "StickyHash.hxx"
 
 struct pool;
-struct Balancer;
+class Balancer;
 struct AddressList;
 class EventLoop;
 class ConnectSocketHandler;

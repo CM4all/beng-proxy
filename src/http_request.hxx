@@ -39,7 +39,7 @@
 struct pool;
 class EventLoop;
 class Istream;
-struct TcpBalancer;
+class TcpBalancer;
 struct SocketFilter;
 class SocketFilterFactory;
 struct HttpAddress;

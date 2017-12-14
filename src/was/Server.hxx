@@ -42,7 +42,7 @@ class Istream;
 struct lease;
 class StringMap;
 class HttpResponseHandler;
-struct WasServer;
+class WasServer;
 
 class WasServerHandler {
 public:
