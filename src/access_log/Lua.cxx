@@ -49,6 +49,8 @@
 #include "util/ScopeExit.hxx"
 #include "util/ConstBuffer.hxx"
 
+#include <functional>
+
 extern "C" {
 #include <lauxlib.h>
 #include <lualib.h>
