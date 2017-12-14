@@ -37,6 +37,7 @@
 #include "Input.hxx"
 #include "http_response.hxx"
 #include "direct.hxx"
+#include "istream/UnusedPtr.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream_null.hxx"
 #include "strmap.hxx"
@@ -561,7 +562,7 @@ WasServer::SendResponse(http_status_t status,
     if (body != nullptr) {
         response.body = was_output_new(*request.pool,
                                        control.GetEventLoop(),
-                                       output_fd, *body,
+                                       output_fd, UnusedIstreamPtr(body),
                                        *this);
         if (!control.SendEmpty(WAS_COMMAND_DATA) ||
             !was_output_check_length(*response.body))

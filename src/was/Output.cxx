@@ -38,6 +38,7 @@
 #include "io/FileDescriptor.hxx"
 #include "system/Error.hxx"
 #include "istream/Pointer.hxx"
+#include "istream/UnusedPtr.hxx"
 #include "pool.hxx"
 
 #include <was/protocol.h>
@@ -64,13 +65,14 @@ public:
 
     bool known_length = false;
 
-    WasOutput(EventLoop &event_loop, FileDescriptor _fd, Istream &_input,
+    WasOutput(EventLoop &event_loop, FileDescriptor _fd,
+              UnusedIstreamPtr _input,
               WasOutputHandler &_handler)
         :fd(_fd),
          event(event_loop, fd.Get(), SocketEvent::WRITE,
                BIND_THIS_METHOD(WriteEventCallback)),
          handler(_handler),
-         input(_input, *this, ISTREAM_TO_PIPE) {
+         input(std::move(_input), *this, ISTREAM_TO_PIPE) {
         ScheduleWrite();
     }
 
@@ -217,12 +219,13 @@ WasOutput::OnError(std::exception_ptr ep) noexcept
 
 WasOutput *
 was_output_new(struct pool &pool, EventLoop &event_loop,
-               FileDescriptor fd, Istream &input,
+               FileDescriptor fd, UnusedIstreamPtr input,
                WasOutputHandler &handler)
 {
     assert(fd.IsDefined());
 
-    return NewFromPool<WasOutput>(pool, event_loop, fd, input, handler);
+    return NewFromPool<WasOutput>(pool, event_loop, fd,
+                                  std::move(input), handler);
 }
 
 uint64_t

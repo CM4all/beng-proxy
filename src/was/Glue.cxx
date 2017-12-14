@@ -154,7 +154,7 @@ WasRequest::OnStockItemReady(StockItem &item)
                        method, uri,
                        script_name, path_info,
                        query_string,
-                       headers, body.Steal(),
+                       headers, std::move(body),
                        parameters,
                        handler, caller_cancel_ptr);
 }

@@ -37,8 +37,8 @@
 #include "http_response.hxx"
 #include "direct.hxx"
 #include "strmap.hxx"
-#include "istream/istream.hxx"
 #include "istream/Pointer.hxx"
+#include "istream/UnusedPtr.hxx"
 #include "istream/istream_file.hxx"
 #include "fb_pool.hxx"
 #include "PInstance.hxx"
@@ -206,7 +206,8 @@ try {
                        nullptr,
                        nullptr, nullptr,
                        *strmap_new(context.root_pool),
-                       request_body(context.event_loop, context.root_pool),
+                       UnusedIstreamPtr(request_body(context.event_loop,
+                                                     context.root_pool)),
                        { (const char *const*)params.raw(), params.size() },
                        context, context.cancel_ptr);
 

@@ -39,6 +39,7 @@
 #include "http_response.hxx"
 #include "direct.hxx"
 #include "istream/istream_null.hxx"
+#include "istream/UnusedPtr.hxx"
 #include "strmap.hxx"
 #include "pool.hxx"
 #include "stopwatch.hxx"
@@ -133,7 +134,7 @@ struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler, C
               Stopwatch *_stopwatch,
               int control_fd, int input_fd, FileDescriptor output_fd,
               WasLease &_lease,
-              http_method_t method, Istream *body,
+              http_method_t method, UnusedIstreamPtr body,
               HttpResponseHandler &_handler,
               CancellablePointer &cancel_ptr);
 
@@ -728,7 +729,7 @@ WasClient::WasClient(struct pool &_pool, struct pool &_caller_pool,
                      Stopwatch *_stopwatch,
                      int control_fd, int input_fd, FileDescriptor output_fd,
                      WasLease &_lease,
-                     http_method_t method, Istream *body,
+                     http_method_t method, UnusedIstreamPtr body,
                      HttpResponseHandler &_handler,
                      CancellablePointer &cancel_ptr)
     :pool(_pool), caller_pool(_caller_pool),
@@ -736,8 +737,9 @@ WasClient::WasClient(struct pool &_pool, struct pool &_caller_pool,
      lease(_lease),
      control(event_loop, control_fd, *this),
      handler(_handler),
-     request(body != nullptr
-             ? was_output_new(pool, event_loop, output_fd, *body, *this)
+     request(body
+             ? was_output_new(pool, event_loop, output_fd,
+                              std::move(body), *this)
              : nullptr),
      response(_caller_pool,
               http_method_is_empty(method)
@@ -785,7 +787,7 @@ was_client_request(struct pool &caller_pool, EventLoop &event_loop,
                    http_method_t method, const char *uri,
                    const char *script_name, const char *path_info,
                    const char *query_string,
-                   const StringMap &headers, Istream *body,
+                   const StringMap &headers, UnusedIstreamPtr body,
                    ConstBuffer<const char *> params,
                    HttpResponseHandler &handler,
                    CancellablePointer &cancel_ptr)
@@ -798,7 +800,7 @@ was_client_request(struct pool &caller_pool, EventLoop &event_loop,
                                          event_loop, stopwatch,
                                          control_fd, input_fd,
                                          FileDescriptor(output_fd),
-                                         lease, method, body,
+                                         lease, method, std::move(body),
                                          handler, cancel_ptr);
 
     client->control.BulkOn();

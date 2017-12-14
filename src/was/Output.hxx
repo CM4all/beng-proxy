@@ -40,7 +40,7 @@
 struct pool;
 class EventLoop;
 class FileDescriptor;
-class Istream;
+class UnusedIstreamPtr;
 class WasOutput;
 
 class WasOutputHandler {
@@ -74,7 +74,7 @@ public:
  */
 WasOutput *
 was_output_new(struct pool &pool, EventLoop &event_loop,
-               FileDescriptor fd, Istream &input,
+               FileDescriptor fd, UnusedIstreamPtr input,
                WasOutputHandler &handler);
 
 /**

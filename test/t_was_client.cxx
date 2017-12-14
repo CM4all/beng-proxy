@@ -45,7 +45,7 @@
 #include "net/SocketDescriptor.hxx"
 #include "lease.hxx"
 #include "direct.hxx"
-#include "istream/istream.hxx"
+#include "istream/UnusedPtr.hxx"
 #include "strmap.hxx"
 #include "fb_pool.hxx"
 #include "util/ConstBuffer.hxx"
@@ -185,7 +185,7 @@ public:
                            control_fd.Get(), input_fd.Get(), output_fd.Get(),
                            *this,
                            method, uri, uri, nullptr, nullptr,
-                           headers, body, nullptr,
+                           headers, UnusedIstreamPtr(body), nullptr,
                            handler, cancel_ptr);
     }
 
