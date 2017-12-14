@@ -55,7 +55,7 @@
 #include <string.h>
 #include <unistd.h>
 
-class WasRequest final : public StockGetHandler, Cancellable, WasLease {
+class WasRequest final : StockGetHandler, Cancellable, WasLease {
     struct pool &pool;
 
     Stopwatch *const stopwatch;
@@ -74,10 +74,9 @@ class WasRequest final : public StockGetHandler, Cancellable, WasLease {
 
     HttpResponseHandler &handler;
     CancellablePointer &caller_cancel_ptr;
-
-public:
     CancellablePointer stock_cancel_ptr;
 
+public:
     WasRequest(struct pool &_pool,
                Stopwatch *_stopwatch,
                http_method_t _method, const char *_uri,
@@ -100,11 +99,19 @@ public:
         caller_cancel_ptr = *this;
     }
 
+    void Start(StockMap &was_stock, const ChildOptions &options,
+               const char *action, ConstBuffer<const char *> args) {
+        was_stock_get(&was_stock, &pool,
+                      options,
+                      action, args,
+                      *this, stock_cancel_ptr);
+    }
+
+private:
     /* virtual methods from class StockGetHandler */
     void OnStockItemReady(StockItem &item) override;
     void OnStockItemError(std::exception_ptr ep) override;
 
-private:
     /* virtual methods from class Cancellable */
     void Cancel() override {
         stock_cancel_ptr.Cancel();
@@ -226,9 +233,5 @@ was_request(struct pool &pool, StockMap &was_stock,
                                            path_info, query_string,
                                            headers, body, parameters,
                                            handler, cancel_ptr);
-
-    was_stock_get(&was_stock, &pool,
-                  options,
-                  action, args,
-                  *request, request->stock_cancel_ptr);
+    request->Start(was_stock, options, action, args);
 }
