@@ -48,13 +48,14 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-struct FcgiRequest final : Lease, Cancellable {
+class FcgiRequest final : Lease, Cancellable {
     struct pool &pool;
 
     StockItem *stock_item;
 
     CancellablePointer cancel_ptr;
 
+public:
     FcgiRequest(struct pool &_pool, StockItem &_stock_item)
         :pool(_pool), stock_item(&_stock_item) {
     }
@@ -94,6 +95,7 @@ struct FcgiRequest final : Lease, Cancellable {
                             handler, cancel_ptr);
     }
 
+private:
     /* virtual methods from class Cancellable */
     void Cancel() override {
         if (stock_item != nullptr)
