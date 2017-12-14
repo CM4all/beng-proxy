@@ -57,7 +57,6 @@ add_global_arguments(common_flags,
 if debug
   debug_flags = ['-DPOISON', '-DTRACE']
   debug_flags += ['-DDEBUG_POOL_REF']
-  debug_flags += ['-DVALGRIND']
 else
   debug_flags = []
 endif
@@ -65,6 +64,15 @@ endif
 stopwatch = debug
 if stopwatch
   debug_flags += ['-DENABLE_STOPWATCH']
+endif
+
+if compiler.has_header('valgrind/memcheck.h')
+  add_global_arguments('-DHAVE_VALGRIND_MEMCHECK_H', language: 'cpp')
+  add_global_arguments('-DHAVE_VALGRIND_MEMCHECK_H', language: 'c')
+
+  if debug
+    debug_flags += ['-DVALGRIND']
+  endif
 endif
 
 add_global_arguments(debug_flags, language: 'c')
@@ -87,11 +95,6 @@ libjsoncpp = dependency('jsoncpp')
 libavahi_client = dependency('avahi-client')
 libnfs = dependency('libnfs')
 zlib = dependency('zlib')
-
-if compiler.has_header('valgrind/memcheck.h')
-  add_global_arguments('-DHAVE_VALGRIND_MEMCHECK_H', language: 'cpp')
-  add_global_arguments('-DHAVE_VALGRIND_MEMCHECK_H', language: 'c')
-endif
 
 gtest_compile_args = [
   '-Wno-undef',
