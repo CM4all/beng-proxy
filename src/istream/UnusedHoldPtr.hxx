@@ -50,6 +50,9 @@ public:
                           ? istream_hold_new(p, *_stream)
                           : nullptr) {}
 
+    UnusedHoldIstreamPtr(struct pool &p, UnusedIstreamPtr &&src) noexcept
+        :UnusedHoldIstreamPtr(p, src.Steal()) {}
+
     UnusedHoldIstreamPtr(UnusedHoldIstreamPtr &&src) = default;
 
     UnusedHoldIstreamPtr &operator=(UnusedHoldIstreamPtr &&src) = default;
