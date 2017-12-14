@@ -52,7 +52,7 @@ struct LhttpRequest final : Lease {
         :stock_item(_stock_item) {}
 
     /* virtual methods from class Lease */
-    void ReleaseLease(bool reuse) override {
+    void ReleaseLease(bool reuse) noexcept override {
         stock_item.Put(!reuse);
     }
 };

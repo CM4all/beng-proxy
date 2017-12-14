@@ -107,7 +107,7 @@ struct FcgiRemoteRequest final : StockGetHandler, Lease {
     void OnStockItemError(std::exception_ptr ep) override;
 
     /* virtual methods from class Lease */
-    void ReleaseLease(bool reuse) override {
+    void ReleaseLease(bool reuse) noexcept override {
         stock_item->Put(!reuse);
     }
 };

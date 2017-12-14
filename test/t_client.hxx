@@ -258,7 +258,7 @@ struct Context final
     void OnError(std::exception_ptr ep) noexcept override;
 
     /* virtual methods from class Lease */
-    void ReleaseLease(gcc_unused bool reuse) override {
+    void ReleaseLease(gcc_unused bool reuse) noexcept override {
         assert(connection != nullptr);
 
         delete connection;

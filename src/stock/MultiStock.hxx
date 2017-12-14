@@ -71,7 +71,7 @@ class MultiStock {
             Lease(Item &_item):item(_item) {}
 
             /* virtual methods from class Lease */
-            void ReleaseLease(bool _reuse) override {
+            void ReleaseLease(bool _reuse) noexcept override {
                 item.DeleteLease(this, _reuse);
             }
         };

@@ -110,7 +110,7 @@ struct Context final : PInstance, Lease, IstreamHandler {
     void OnError(std::exception_ptr ep) noexcept override;
 
     /* virtual methods from class Lease */
-    void ReleaseLease(bool _reuse) override {
+    void ReleaseLease(bool _reuse) noexcept override {
         fd.Close();
         released = true;
         reuse = _reuse;

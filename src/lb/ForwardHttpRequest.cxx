@@ -214,7 +214,7 @@ private:
     void OnStockItemError(std::exception_ptr ep) override;
 
     /* virtual methods from class Lease */
-    void ReleaseLease(bool reuse) override;
+    void ReleaseLease(bool reuse) noexcept override;
 
     /* virtual methods from class HttpResponseHandler */
     void OnHttpResponse(http_status_t status, StringMap &&headers,
@@ -486,7 +486,7 @@ LbRequest::OnStockItemError(std::exception_ptr ep)
  */
 
 void
-LbRequest::ReleaseLease(bool _reuse)
+LbRequest::ReleaseLease(bool _reuse) noexcept
 {
     assert(lease_state == LeaseState::BUSY);
 

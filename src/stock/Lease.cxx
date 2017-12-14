@@ -34,7 +34,7 @@
 #include "Item.hxx"
 
 void
-StockItemLease::ReleaseLease(bool reuse)
+StockItemLease::ReleaseLease(bool reuse) noexcept
 {
     item.Put(!reuse);
 }

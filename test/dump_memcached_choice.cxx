@@ -65,7 +65,7 @@ struct Context final : PInstance, Lease {
     CancellablePointer cancel_ptr;
 
     /* virtual methods from class Lease */
-    void ReleaseLease(bool _reuse) override {
+    void ReleaseLease(bool _reuse) noexcept override {
         assert(!idle);
         assert(s.IsDefined());
 

@@ -45,7 +45,7 @@ struct DelegateGlue final : Lease {
     explicit DelegateGlue(StockItem &_item):item(_item) {}
 
     /* virtual methods from class Lease */
-    void ReleaseLease(bool reuse) override {
+    void ReleaseLease(bool reuse) noexcept override {
         item.Put(!reuse);
     }
 };

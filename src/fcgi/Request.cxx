@@ -105,7 +105,7 @@ private:
     }
 
     /* virtual methods from class Lease */
-    void ReleaseLease(bool reuse) override {
+    void ReleaseLease(bool reuse) noexcept override {
         stock_item->Put(!reuse);
         stock_item = nullptr;
     }

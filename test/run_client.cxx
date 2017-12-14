@@ -143,7 +143,7 @@ struct Context final
     void OnSocketConnectError(std::exception_ptr ep) override;
 
     /* virtual methods from class Lease */
-    void ReleaseLease(bool _reuse) override {
+    void ReleaseLease(bool _reuse) noexcept override {
         assert(!idle);
         assert(fd.IsDefined());
 

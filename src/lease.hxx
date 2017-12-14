@@ -37,7 +37,7 @@
 
 class Lease {
 public:
-    virtual void ReleaseLease(bool reuse) = 0;
+    virtual void ReleaseLease(bool reuse) noexcept = 0;
 };
 
 struct lease_ref {
@@ -47,7 +47,7 @@ struct lease_ref {
     bool released;
 #endif
 
-    void Set(Lease &_lease) {
+    void Set(Lease &_lease) noexcept {
         lease = &_lease;
 
 #ifndef NDEBUG
@@ -55,7 +55,7 @@ struct lease_ref {
 #endif
     }
 
-    void Release(bool reuse) {
+    void Release(bool reuse) noexcept {
         assert(lease != nullptr);
         assert(!released);
 

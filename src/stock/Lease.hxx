@@ -51,7 +51,7 @@ public:
     }
 
     /* virtual methods from class Lease */
-    void ReleaseLease(bool reuse) override;
+    void ReleaseLease(bool reuse) noexcept override;
 };
 
 #endif
