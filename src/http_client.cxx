@@ -155,7 +155,7 @@ struct HttpClient final : BufferedSocketHandler, IstreamHandler, Cancellable {
          * An "istream_optional" which blocks sending the request body
          * until the server has confirmed "100 Continue".
          */
-        Istream *body;
+        Istream *body = nullptr;
 
         IstreamPointer istream;
         char content_length_buffer[32];
@@ -1319,7 +1319,6 @@ HttpClient::HttpClient(struct pool &_caller_pool, struct pool &_pool,
            upgrade */
         headers.Write("connection", "upgrade");
         headers.MoveToBuffer("upgrade");
-        request.body = nullptr;
     } else if (body != nullptr) {
         off_t content_length = body->GetAvailable(false);
         if (content_length == (off_t)-1) {
@@ -1344,11 +1343,10 @@ HttpClient::HttpClient(struct pool &_caller_pool, struct pool &_pool,
                that he's really interested */
             header_write(headers2, "expect", "100-continue");
             body = request.body = istream_optional_new(GetPool(), *body);
-        } else
+        } else {
             /* short request body: send it immediately */
-            request.body = nullptr;
-    } else
-        request.body = nullptr;
+        }
+    }
 
     GrowingBuffer headers3 = headers.ToBuffer();
     headers3.Write("\r\n", 2);
