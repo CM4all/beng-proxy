@@ -46,6 +46,8 @@
 #include "util/RuntimeError.hxx"
 #include "util/ScopeExit.hxx"
 
+#include <functional>
+
 extern "C" {
 #include <lauxlib.h>
 #include <lualib.h>
