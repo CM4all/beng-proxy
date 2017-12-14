@@ -388,7 +388,7 @@ HttpServerConnection::Feed(const void *data, size_t length)
         if (score == HTTP_SERVER_NEW)
             score = HTTP_SERVER_FIRST;
 
-        [[fallthrough]]
+        [[fallthrough]];
 
     case Request::HEADERS:
         result = FeedHeaders(data, length);
