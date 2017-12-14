@@ -277,7 +277,7 @@ HttpRequest::OnStockItemReady(StockItem &item)
                         item.GetStockName(),
                         filter, filter_ctx,
                         method, address.path, std::move(headers),
-                        body.Steal(), true,
+                        std::move(body), true,
                         *this, cancel_ptr);
 }
 

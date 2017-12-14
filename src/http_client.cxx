@@ -41,6 +41,7 @@
 #include "istream_gb.hxx"
 #include "istream/Bucket.hxx"
 #include "istream/Pointer.hxx"
+#include "istream/UnusedPtr.hxx"
 #include "istream/istream_cat.hxx"
 #include "istream/istream_optional.hxx"
 #include "istream/istream_chunked.hxx"
@@ -222,7 +223,7 @@ struct HttpClient final : BufferedSocketHandler, IstreamHandler, Cancellable {
                const SocketFilter *filter, void *filter_ctx,
                http_method_t method, const char *uri,
                HttpHeaders &&headers,
-               Istream *body, bool expect_100,
+               UnusedIstreamPtr body, bool expect_100,
                HttpResponseHandler &handler,
                CancellablePointer &cancel_ptr);
 
@@ -1281,7 +1282,7 @@ HttpClient::HttpClient(struct pool &_caller_pool, struct pool &_pool,
                        const SocketFilter *filter, void *filter_ctx,
                        http_method_t method, const char *uri,
                        HttpHeaders &&headers,
-                       Istream *body, bool expect_100,
+                       UnusedIstreamPtr _body, bool expect_100,
                        HttpResponseHandler &handler,
                        CancellablePointer &cancel_ptr)
     :caller_pool(_caller_pool),
@@ -1313,13 +1314,15 @@ HttpClient::HttpClient(struct pool &_caller_pool, struct pool &_pool,
 
     GrowingBuffer &headers2 = headers.GetBuffer();
 
-    const bool upgrade = body != nullptr && http_is_upgrade(headers);
+    const bool upgrade = _body && http_is_upgrade(headers);
+    Istream *body = nullptr;
     if (upgrade) {
         /* forward hop-by-hop headers requesting the protocol
            upgrade */
         headers.Write("connection", "upgrade");
         headers.MoveToBuffer("upgrade");
-    } else if (body != nullptr) {
+    } else if (_body) {
+        body = _body.Steal();
         off_t content_length = body->GetAvailable(false);
         if (content_length == (off_t)-1) {
             header_write(headers2, "transfer-encoding", "chunked");
@@ -1384,7 +1387,7 @@ http_client_request(struct pool &caller_pool, EventLoop &event_loop,
                     const SocketFilter *filter, void *filter_ctx,
                     http_method_t method, const char *uri,
                     HttpHeaders &&headers,
-                    Istream *body, bool expect_100,
+                    UnusedIstreamPtr body, bool expect_100,
                     HttpResponseHandler &handler,
                     CancellablePointer &cancel_ptr)
 {
@@ -1398,8 +1401,7 @@ http_client_request(struct pool &caller_pool, EventLoop &event_loop,
         const ScopePoolRef ref(caller_pool TRACE_ARGS);
 
         lease.ReleaseLease(true);
-        if (body != nullptr)
-            body->CloseUnused();
+        body.Clear();
 
         if (filter != nullptr)
             filter->close(filter_ctx);
@@ -1418,7 +1420,7 @@ http_client_request(struct pool &caller_pool, EventLoop &event_loop,
                             peer_name,
                             filter, filter_ctx,
                             method, uri,
-                            std::move(headers), body, expect_100,
+                            std::move(headers), std::move(body), expect_100,
                             handler, cancel_ptr);
     pool_unref(pool); // response_body_reader holds the reference
 }

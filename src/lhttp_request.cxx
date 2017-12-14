@@ -38,7 +38,7 @@
 #include "http_headers.hxx"
 #include "stock/Item.hxx"
 #include "lease.hxx"
-#include "istream/istream.hxx"
+#include "istream/UnusedPtr.hxx"
 #include "header_writer.hxx"
 #include "pool.hxx"
 #include "net/SocketDescriptor.hxx"
@@ -67,7 +67,7 @@ lhttp_request(struct pool &pool, EventLoop &event_loop,
               LhttpStock &lhttp_stock,
               const LhttpAddress &address,
               http_method_t method, HttpHeaders &&headers,
-              Istream *body,
+              UnusedIstreamPtr body,
               HttpResponseHandler &handler,
               CancellablePointer &cancel_ptr)
 {
@@ -79,8 +79,7 @@ lhttp_request(struct pool &pool, EventLoop &event_loop,
            runs, even if all other pool references are removed */
         const ScopePoolRef ref(pool TRACE_ARGS);
 
-        if (body != nullptr)
-            body->CloseUnused();
+        body.Clear();
 
         handler.InvokeError(std::current_exception());
         return;
@@ -96,8 +95,7 @@ lhttp_request(struct pool &pool, EventLoop &event_loop,
            runs, even if all other pool references are removed */
         const ScopePoolRef ref(pool TRACE_ARGS);
 
-        if (body != nullptr)
-            body->CloseUnused();
+        body.Clear();
 
         handler.InvokeError(std::current_exception());
         return;
@@ -114,6 +112,7 @@ lhttp_request(struct pool &pool, EventLoop &event_loop,
                         *request,
                         stock_item->GetStockName(),
                         nullptr, nullptr,
-                        method, address.uri, std::move(headers), body, true,
+                        method, address.uri, std::move(headers),
+                        std::move(body), true,
                         handler, cancel_ptr);
 }

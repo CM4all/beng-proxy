@@ -44,6 +44,7 @@
 #include "net/SocketDescriptor.hxx"
 #include "direct.hxx"
 #include "fb_pool.hxx"
+#include "istream/UnusedPtr.hxx"
 
 #include <sys/wait.h>
 
@@ -72,7 +73,7 @@ struct Connection {
                             "localhost",
                             nullptr, nullptr,
                             method, uri, HttpHeaders(std::move(headers)),
-                            body, expect_100,
+                            UnusedIstreamPtr(body), expect_100,
                             handler, cancel_ptr);
     }
 

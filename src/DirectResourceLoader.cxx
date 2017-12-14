@@ -54,6 +54,7 @@
 #include "delegate/HttpRequest.hxx"
 #include "strmap.hxx"
 #include "istream/istream.hxx"
+#include "istream/UnusedPtr.hxx"
 #include "ssl/Client.hxx"
 #include "pool.hxx"
 #include "AllocatorPtr.hxx"
@@ -321,7 +322,8 @@ DirectResourceLoader::SendRequest(struct pool &pool,
     case ResourceAddress::Type::LHTTP:
         lhttp_request(pool, event_loop, *lhttp_stock,
                       address.GetLhttp(),
-                      method, HttpHeaders(std::move(headers)), body,
+                      method, HttpHeaders(std::move(headers)),
+                      UnusedIstreamPtr(body),
                       handler, cancel_ptr);
         return;
     }

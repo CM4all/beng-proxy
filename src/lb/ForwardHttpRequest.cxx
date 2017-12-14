@@ -447,7 +447,7 @@ LbRequest::OnStockItemReady(StockItem &item)
                         NULL, NULL,
                         request.method, request.uri,
                         HttpHeaders(std::move(headers)),
-                        body.Steal(), true,
+                        std::move(body), true,
                         *this, cancel_ptr);
 }
 

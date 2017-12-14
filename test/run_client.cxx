@@ -41,6 +41,7 @@
 #include "istream/istream_pipe.hxx"
 #include "istream/istream.hxx"
 #include "istream/sink_fd.hxx"
+#include "istream/UnusedPtr.hxx"
 #include "direct.hxx"
 #include "PInstance.hxx"
 #include "fb_pool.hxx"
@@ -124,7 +125,7 @@ struct Context final
     CancellablePointer cancel_ptr;
 
     http_method_t method;
-    Istream *request_body;
+    UnusedIstreamPtr request_body;
 
     UniqueSocketDescriptor fd;
     bool idle, reuse, aborted, got_response = false;
@@ -277,7 +278,7 @@ try {
                            *this,
                            "http", "127.0.0.1", "localhost",
                            "localhost", 80, false,
-                           method, url.uri, headers, request_body,
+                           method, url.uri, headers, request_body.Steal(),
                            *this,
                            cancel_ptr);
         break;
@@ -290,7 +291,7 @@ try {
                             nullptr, nullptr,
                             method, url.uri,
                             HttpHeaders(std::move(headers)),
-                            request_body, false,
+                            std::move(request_body), false,
                             *this,
                             cancel_ptr);
         break;
@@ -307,7 +308,7 @@ try {
                             filter, filter_ctx,
                             method, url.uri,
                             HttpHeaders(std::move(headers)),
-                            request_body, false,
+                            std::move(request_body), false,
                             *this,
                             cancel_ptr);
         break;
@@ -317,9 +318,7 @@ try {
     PrintException(e);
 
     aborted = true;
-
-    if (request_body != nullptr)
-        request_body->CloseUnused();
+    request_body.Clear();
 
     shutdown_listener.Disable();
  }
@@ -330,9 +329,7 @@ Context::OnSocketConnectError(std::exception_ptr ep)
     PrintException(ep);
 
     aborted = true;
-
-    if (request_body != nullptr)
-        request_body->CloseUnused();
+    request_body.Clear();
 
     shutdown_listener.Disable();
 }
@@ -392,11 +389,10 @@ try {
 
         ctx.method = HTTP_METHOD_POST;
 
-        ctx.request_body = istream_file_new(ctx.event_loop, *pool,
-                                            argv[2], st.st_size);
+        ctx.request_body = UnusedIstreamPtr(istream_file_new(ctx.event_loop, *pool,
+                                                             argv[2], st.st_size));
     } else {
         ctx.method = HTTP_METHOD_GET;
-        ctx.request_body = nullptr;
     }
 
     /* connect */

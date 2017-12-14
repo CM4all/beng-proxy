@@ -37,7 +37,7 @@
 
 struct pool;
 class EventLoop;
-class Istream;
+class UnusedIstreamPtr;
 class LhttpStock;
 struct LhttpAddress;
 class HttpResponseHandler;
@@ -52,7 +52,7 @@ lhttp_request(struct pool &pool, EventLoop &event_loop,
               LhttpStock &lhttp_stock,
               const LhttpAddress &address,
               http_method_t method,
-              HttpHeaders &&headers, Istream *body,
+              HttpHeaders &&headers, UnusedIstreamPtr body,
               HttpResponseHandler &handler,
               CancellablePointer &cancel_ptr);
 

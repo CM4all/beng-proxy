@@ -44,7 +44,7 @@
 
 struct pool;
 class EventLoop;
-class Istream;
+class UnusedIstreamPtr;
 class SocketDescriptor;
 class Lease;
 struct SocketFilter;
@@ -131,7 +131,7 @@ http_client_request(struct pool &pool, EventLoop &event_loop,
                     const SocketFilter *filter, void *filter_ctx,
                     http_method_t method, const char *uri,
                     HttpHeaders &&headers,
-                    Istream *body, bool expect_100,
+                    UnusedIstreamPtr body, bool expect_100,
                     HttpResponseHandler &handler,
                     CancellablePointer &cancel_ptr);
 
