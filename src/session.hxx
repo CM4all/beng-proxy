@@ -95,12 +95,16 @@ struct WidgetSession
     /** last query string */
     DString query_string;
 
-    WidgetSession(RealmSession &_session, const char *_id)
-        throw(std::bad_alloc);
+    /**
+     * Throws std::bad_alloc on error.
+     */
+    WidgetSession(RealmSession &_session, const char *_id);
 
+    /**
+     * Throws std::bad_alloc on error.
+     */
     WidgetSession(struct dpool &pool, const WidgetSession &src,
-                  RealmSession &_session)
-        throw(std::bad_alloc);
+                  RealmSession &_session);
 
     void Destroy(struct dpool &pool);
 
@@ -161,11 +165,15 @@ struct RealmSession
     /** all cookies received by widget servers */
     CookieJar cookies;
 
-    RealmSession(Session &_parent, const char *realm)
-        throw(std::bad_alloc);
+    /**
+     * Throws std::bad_alloc on error.
+     */
+    RealmSession(Session &_parent, const char *realm);
 
-    RealmSession(Session &_parent, const RealmSession &src)
-        throw(std::bad_alloc);
+    /**
+     * Throws std::bad_alloc on error.
+     */
+    RealmSession(Session &_parent, const RealmSession &src);
 
     void ClearSite();
     bool SetSite(const char *_site);
@@ -239,8 +247,10 @@ struct Session {
 
     Session(struct dpool &_pool, SessionId _id);
 
-    Session(struct dpool &_pool, const Session &src)
-        throw(std::bad_alloc);
+    /**
+     * Throws std::bad_alloc on error.
+     */
+    Session(struct dpool &_pool, const Session &src);
 
     void Destroy();
 

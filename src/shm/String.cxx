@@ -43,7 +43,7 @@ DString::Clear(struct dpool &pool) noexcept
 }
 
 void
-DString::Set(struct dpool &pool, StringView new_value) throw(std::bad_alloc)
+DString::Set(struct dpool &pool, StringView new_value)
 {
     if (value != nullptr && !new_value.IsNull() && new_value.Equals(value))
         /* same value as before: no-op */

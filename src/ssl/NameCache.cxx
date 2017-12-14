@@ -95,7 +95,7 @@ CertNameCache::OnUpdateTimer()
 }
 
 void
-CertNameCache::ScheduleUpdate()
+CertNameCache::ScheduleUpdate() noexcept
 {
     if (!update_timer.IsPending())
         update_timer.Add(EventDuration<0, 200000>::value);
@@ -171,7 +171,7 @@ CertNameCache::OnConnect()
 }
 
 void
-CertNameCache::OnDisconnect()
+CertNameCache::OnDisconnect() noexcept
 {
     logger(4, "disconnected from certificate database");
 
@@ -187,9 +187,9 @@ CertNameCache::OnNotify(const char *name)
 }
 
 void
-CertNameCache::OnError(const char *prefix, const char *error)
+CertNameCache::OnError(std::exception_ptr e) noexcept
 {
-    logger(1, prefix, ": ", error);
+    logger(1, e);
 }
 
 void
@@ -254,7 +254,7 @@ CertNameCache::OnResultEnd()
 }
 
 void
-CertNameCache::OnResultError()
+CertNameCache::OnResultError() noexcept
 {
     ScheduleUpdate();
 }

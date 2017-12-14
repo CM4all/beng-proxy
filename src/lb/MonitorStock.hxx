@@ -38,7 +38,7 @@
 struct LbNodeConfig;
 struct LbMonitorConfig;
 struct LbMonitorClass;
-struct LbMonitorRef;
+class LbMonitorRef;
 class LbMonitorController;
 class EventLoop;
 class FailureManager;

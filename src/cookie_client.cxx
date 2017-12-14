@@ -87,7 +87,6 @@ cookie_list_delete_match(struct dpool &dpool, L &list,
 
 static Cookie *
 parse_next_cookie(struct dpool &pool, StringView &input)
-    throw(std::bad_alloc)
 {
     StringView name, value;
     cookie_next_name_value(*tpool, input, name, value, false);
@@ -127,7 +126,6 @@ parse_next_cookie(struct dpool &pool, StringView &input)
 static bool
 apply_next_cookie(CookieJar &jar, StringView &input,
                   const char *domain, const char *path)
-    throw(std::bad_alloc)
 {
     assert(domain != nullptr);
 

@@ -122,7 +122,7 @@ public:
 private:
     void OnUpdateTimer();
 
-    void ScheduleUpdate();
+    void ScheduleUpdate() noexcept;
 
     void UnscheduleUpdate() {
         update_timer.Cancel();
@@ -135,14 +135,14 @@ private:
 
     /* virtual methods from Pg::AsyncConnectionHandler */
     void OnConnect() override;
-    void OnDisconnect() override;
+    void OnDisconnect() noexcept override;
     void OnNotify(const char *name) override;
-    void OnError(const char *prefix, const char *error) override;
+    void OnError(std::exception_ptr e) noexcept override;
 
     /* virtual methods from Pg::AsyncResultHandler */
     void OnResult(Pg::Result &&result) override;
     void OnResultEnd() override;
-    void OnResultError() override;
+    void OnResultError() noexcept override;
 };
 
 #endif

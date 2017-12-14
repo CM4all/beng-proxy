@@ -59,7 +59,7 @@ struct dpool {
     explicit dpool(struct shm &_shm);
     ~dpool();
 
-    void *Allocate(size_t size) throw(std::bad_alloc);
+    void *Allocate(size_t size);
     void Free(const void *p);
 
 private:
@@ -108,7 +108,7 @@ dpool_is_fragmented(const struct dpool &pool)
 }
 
 inline void *
-dpool::Allocate(size_t size) throw(std::bad_alloc)
+dpool::Allocate(size_t size)
 {
     assert(shm != nullptr);
 
@@ -144,7 +144,6 @@ dpool::Allocate(size_t size) throw(std::bad_alloc)
 
 void *
 d_malloc(struct dpool &pool, size_t size)
-    throw(std::bad_alloc)
 {
     return pool.Allocate(size);
 }

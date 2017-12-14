@@ -58,7 +58,7 @@ class Stock;
 class ResourceLoader;
 class StockMap;
 class TcpStock;
-struct TcpBalancer;
+class TcpBalancer;
 struct MemachedStock;
 class SpawnService;
 class ControlDistribute;

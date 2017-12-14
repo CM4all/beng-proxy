@@ -42,7 +42,7 @@
 struct pool;
 class EventLoop;
 class Istream;
-struct TcpBalancer;
+class TcpBalancer;
 struct HttpAddress;
 class StringMap;
 class HttpResponseHandler;

@@ -41,7 +41,7 @@ class StockMap;
 class LhttpStock;
 struct FcgiStock;
 struct NfsCache;
-struct TcpBalancer;
+class TcpBalancer;
 
 /**
  * A #ResourceLoader implementation which integrates all client-side

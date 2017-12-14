@@ -38,7 +38,7 @@
 struct pool;
 class EventLoop;
 class Istream;
-struct TcpBalancer;
+class TcpBalancer;
 struct AddressList;
 class StringMap;
 class HttpResponseHandler;

@@ -95,14 +95,14 @@ Balancer::Item::NextAddress(const AddressList &addresses)
 }
 
 const SocketAddress &
-Balancer::Item::NextAddressChecked(FailureManager &failure_manager,
+Balancer::Item::NextAddressChecked(FailureManager &_failure_manager,
                                    const AddressList &addresses,
                                    bool allow_fade)
 {
     const auto &first = NextAddress(addresses);
     const SocketAddress *ret = &first;
     do {
-        if (CheckAddress(failure_manager, *ret, allow_fade))
+        if (CheckAddress(_failure_manager, *ret, allow_fade))
             return *ret;
 
         ret = &NextAddress(addresses);

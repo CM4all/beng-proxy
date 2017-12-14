@@ -52,8 +52,8 @@
 class AccessLogGlue;
 class Stock;
 class TcpStock;
-struct Balancer;
-struct TcpBalancer;
+class Balancer;
+class TcpBalancer;
 struct LbConfig;
 struct LbCertDatabaseConfig;
 class LbControl;

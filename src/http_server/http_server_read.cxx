@@ -399,7 +399,9 @@ HttpServerConnection::Feed(const void *data, size_t length)
         if (score == HTTP_SERVER_NEW)
             score = HTTP_SERVER_FIRST;
 
-        [[fallthrough]]
+#if !GCC_OLDER_THAN(7,0)
+        [[fallthrough]];
+#endif
 
     case Request::HEADERS:
         result = FeedHeaders(data, length);
