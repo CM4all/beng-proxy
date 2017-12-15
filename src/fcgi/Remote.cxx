@@ -54,7 +54,7 @@
 #include <string.h>
 #include <unistd.h>
 
-struct FcgiRemoteRequest final : StockGetHandler, Lease {
+class FcgiRemoteRequest final : StockGetHandler, Lease {
     struct pool &pool;
     EventLoop &event_loop;
 
@@ -69,15 +69,19 @@ struct FcgiRemoteRequest final : StockGetHandler, Lease {
     const char *const document_root;
     const char *const remote_addr;
     const StringMap headers;
+
+public:
     Istream *body;
 
+private:
     const ConstBuffer<const char *> params;
 
     const int stderr_fd;
 
     HttpResponseHandler &handler;
-    CancellablePointer &cancel_ptr;
+    CancellablePointer &caller_cancel_ptr;
 
+public:
     FcgiRemoteRequest(struct pool &_pool, EventLoop &_event_loop,
                       http_method_t _method, const char *_uri,
                       const char *_script_filename,
@@ -99,9 +103,19 @@ struct FcgiRemoteRequest final : StockGetHandler, Lease {
          headers(std::move(_headers)),
          params(_params),
          stderr_fd(_stderr_fd),
-         handler(_handler), cancel_ptr(_cancel_ptr) {
+         handler(_handler), caller_cancel_ptr(_cancel_ptr) {
     }
 
+    void Start(TcpBalancer &tcp_balancer,
+               const AddressList &address_list,
+               CancellablePointer &cancel_ptr) noexcept {
+        tcp_balancer.Get(pool,
+                         false, SocketAddress::Null(),
+                         0, address_list, 20,
+                         *this, cancel_ptr);
+    }
+
+private:
     /* virtual methods from class StockGetHandler */
     void OnStockItemReady(StockItem &item) override;
     void OnStockItemError(std::exception_ptr ep) override;
@@ -137,7 +151,7 @@ FcgiRemoteRequest::OnStockItemReady(StockItem &item)
                         params,
                         stderr_fd,
                         handler,
-                        cancel_ptr);
+                        caller_cancel_ptr);
 }
 
 void
@@ -187,8 +201,5 @@ fcgi_remote_request(struct pool *pool, EventLoop &event_loop,
     } else
         request->body = nullptr;
 
-    tcp_balancer->Get(*pool,
-                      false, SocketAddress::Null(),
-                      0, *address_list, 20,
-                      *request, *cancel_ptr);
+    request->Start(*tcp_balancer, *address_list, *cancel_ptr);
 }
