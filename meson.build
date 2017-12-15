@@ -440,6 +440,7 @@ odbus = static_library('odbus',
   ])
 
 istream = static_library('istream',
+  'src/istream/Pointer.cxx',
   'src/istream/UnusedPtr.cxx',
   'src/istream/TimeoutIstream.cxx',
   'src/istream/istream_pause.cxx',

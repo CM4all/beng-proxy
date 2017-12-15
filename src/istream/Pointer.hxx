@@ -39,6 +39,8 @@
 #include <cstddef>
 #include <cassert>
 
+class UnusedIstreamPtr;
+
 class IstreamPointer {
     Istream *stream;
 
@@ -60,6 +62,10 @@ public:
         if (stream != nullptr)
             stream->SetHandler(handler, direct);
     }
+
+    IstreamPointer(UnusedIstreamPtr src,
+                   IstreamHandler &handler,
+                   FdTypeMask direct=0) noexcept;
 
     IstreamPointer(IstreamPointer &&other)
         :stream(std::exchange(other.stream, nullptr)) {}
