@@ -35,6 +35,7 @@
 
 #include "istream.hxx"
 
+#include <utility>
 #include <cstddef>
 #include <cassert>
 
@@ -61,9 +62,7 @@ public:
     }
 
     IstreamPointer(IstreamPointer &&other)
-        :stream(other.stream) {
-        other.stream = nullptr;
-    }
+        :stream(std::exchange(other.stream, nullptr)) {}
 
     IstreamPointer(const IstreamPointer &) = delete;
     IstreamPointer &operator=(const IstreamPointer &) = delete;
