@@ -34,7 +34,7 @@
 #define ISTREAM_INVOKE_HXX
 
 inline size_t
-Istream::InvokeData(const void *data, size_t length)
+Istream::InvokeData(const void *data, size_t length) noexcept
 {
     assert(!destroyed);
     assert(handler != nullptr);
@@ -75,7 +75,7 @@ Istream::InvokeData(const void *data, size_t length)
 }
 
 inline ssize_t
-Istream::InvokeDirect(FdType type, int fd, size_t max_length)
+Istream::InvokeDirect(FdType type, int fd, size_t max_length) noexcept
 {
     assert(!destroyed);
     assert(handler != nullptr);

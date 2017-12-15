@@ -33,7 +33,7 @@
 #include "istream.hxx"
 #include "Bucket.hxx"
 
-Istream::~Istream()
+Istream::~Istream() noexcept
 {
 #ifndef NDEBUG
     assert(!destroyed);

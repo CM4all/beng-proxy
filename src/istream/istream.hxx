@@ -75,13 +75,13 @@ class Istream : PoolHolder, LeakDetector {
 #endif
 
 protected:
-    explicit Istream(struct pool &_pool)
+    explicit Istream(struct pool &_pool) noexcept
         :PoolHolder(_pool) {}
 
     Istream(const Istream &) = delete;
     Istream &operator=(const Istream &) = delete;
 
-    virtual ~Istream();
+    virtual ~Istream() noexcept;
 
     using PoolHolder::GetPool;
 
@@ -114,8 +114,8 @@ protected:
 #endif
     }
 
-    size_t InvokeData(const void *data, size_t length);
-    ssize_t InvokeDirect(FdType type, int fd, size_t max_length);
+    size_t InvokeData(const void *data, size_t length) noexcept;
+    ssize_t InvokeDirect(FdType type, int fd, size_t max_length) noexcept;
     void InvokeEof() noexcept;
     void InvokeError(std::exception_ptr ep) noexcept;
 
@@ -138,7 +138,7 @@ protected:
      * @return the number of bytes still in the buffer
      */
     template<typename Buffer>
-    size_t ConsumeFromBuffer(Buffer &buffer) {
+    size_t ConsumeFromBuffer(Buffer &buffer) noexcept {
         auto r = buffer.Read().ToVoid();
         if (r.empty())
             return 0;
@@ -153,7 +153,7 @@ protected:
      * @return the number of bytes consumed
      */
     template<typename Buffer>
-    size_t SendFromBuffer(Buffer &buffer) {
+    size_t SendFromBuffer(Buffer &buffer) noexcept {
         auto r = buffer.Read().ToVoid();
         if (r.empty())
             return 0;
@@ -165,21 +165,21 @@ protected:
     }
 
 public:
-    bool HasHandler() const {
+    bool HasHandler() const noexcept {
         assert(!destroyed);
 
         return handler != nullptr;
     }
 
     void SetHandler(IstreamHandler &_handler,
-                    FdTypeMask _handler_direct=0) {
+                    FdTypeMask _handler_direct=0) noexcept {
         assert(!destroyed);
 
         handler = &_handler;
         handler_direct = _handler_direct;
     }
 
-    void SetDirect(FdTypeMask _handler_direct) {
+    void SetDirect(FdTypeMask _handler_direct) noexcept {
         assert(!destroyed);
 
         handler_direct = _handler_direct;
@@ -195,7 +195,7 @@ public:
      * not know
      */
     gcc_pure
-    off_t GetAvailable(bool partial) {
+    off_t GetAvailable(bool partial) noexcept {
 #ifndef NDEBUG
         assert(!destroyed);
         assert(!closing);
@@ -241,7 +241,7 @@ public:
      *
      * @return the number of bytes skipped or -1 if skipping is not supported
      */
-    off_t Skip(off_t length) {
+    off_t Skip(off_t length) noexcept {
 #ifndef NDEBUG
         assert(!destroyed);
         assert(!closing);
@@ -292,7 +292,7 @@ public:
      * for calling back (and calling this function) is handed back to
      * the istream handler.
      */
-    void Read() {
+    void Read() noexcept  {
 #ifndef NDEBUG
         assert(!destroyed);
         assert(!closing);
@@ -383,7 +383,7 @@ public:
      * @return the number of bytes really consumed by this instance
      * (the rest will be consumed by its siblings)
      */
-    size_t ConsumeBucketList(size_t nbytes) {
+    size_t ConsumeBucketList(size_t nbytes) noexcept {
 #ifndef NDEBUG
         assert(!destroyed);
         assert(!closing);
@@ -408,7 +408,7 @@ public:
      * Returns -1 if this is not possible (the stream object is still
      * usable).
      */
-    int AsFd() {
+    int AsFd() noexcept {
 #ifndef NDEBUG
         assert(!destroyed);
         assert(!closing);
@@ -493,7 +493,7 @@ NewIstream(struct pool &pool, Args&&... args)
 }
 
 static inline void
-istream_free(Istream **istream_r)
+istream_free(Istream **istream_r) noexcept
 {
     auto *istream = *istream_r;
     *istream_r = nullptr;
@@ -505,7 +505,7 @@ istream_free(Istream **istream_r)
  * handler yet.
  */
 static inline void
-istream_free_unused(Istream **istream_r)
+istream_free_unused(Istream **istream_r) noexcept
 {
     assert(istream_r != nullptr);
     assert(*istream_r != nullptr);
