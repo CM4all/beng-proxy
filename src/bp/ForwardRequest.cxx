@@ -39,14 +39,14 @@ ForwardRequest
 request_forward(Request &request2,
                 const struct header_forward_settings &header_forward,
                 const char *host_and_port, const char *uri,
-                bool exclude_host)
+                bool exclude_host) noexcept
 {
     const auto &request = request2.request;
 
     assert(!request.HasBody() || request2.request_body);
 
     http_method_t method;
-    Istream *body;
+    UnusedIstreamPtr body;
 
     /* send a request body? */
 
@@ -55,12 +55,11 @@ request_forward(Request &request2,
            convert this request to a GET */
 
         method = HTTP_METHOD_GET;
-        body = nullptr;
     } else {
         /* forward body (if any) to the real server */
 
         method = request.method;
-        body = request2.request_body.Steal();
+        body = std::move(request2.request_body);
     }
 
     /* generate request headers */
@@ -70,7 +69,7 @@ request_forward(Request &request2,
                                                   request.local_host_and_port,
                                                   request.remote_host,
                                                   exclude_host,
-                                                  body != nullptr,
+                                                  body,
                                                   !request2.IsProcessorEnabled(),
                                                   !request2.IsTransformationEnabled(),
                                                   !request2.IsTransformationEnabled(),
@@ -78,5 +77,5 @@ request_forward(Request &request2,
                                                   request2.session_cookie,
                                                   request2.GetRealmSession().get(),
                                                   host_and_port, uri),
-                          body);
+                          std::move(body));
 }

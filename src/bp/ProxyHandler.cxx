@@ -125,9 +125,9 @@ proxy_handler(Request &request2)
                                    address.IsAnyHttp());
 
 #ifdef SPLICE
-    if (forward.body != nullptr)
-        forward.body = istream_pipe_new(&pool, *forward.body,
-                                        request2.instance.pipe_stock);
+    if (forward.body)
+        forward.body = UnusedIstreamPtr(istream_pipe_new(&pool, *forward.body.Steal(),
+                                                         request2.instance.pipe_stock));
 #endif
 
     for (const auto &i : tr.request_headers)
@@ -139,6 +139,8 @@ proxy_handler(Request &request2)
         ->SendRequest(pool,
                       request2.session_id.GetClusterHash(),
                       forward.method, address, HTTP_STATUS_OK,
-                      std::move(forward.headers), forward.body, nullptr,
+                      std::move(forward.headers),
+                      forward.body.Steal(),
+                      nullptr,
                       request2, request2.cancel_ptr);
 }

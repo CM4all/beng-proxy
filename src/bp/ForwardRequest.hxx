@@ -39,6 +39,7 @@
 
 #include "strmap.hxx"
 #include "http/Method.h"
+#include "istream/UnusedPtr.hxx"
 
 class StringMap;
 struct header_forward_settings;
@@ -50,17 +51,18 @@ struct ForwardRequest {
 
     StringMap headers;
 
-    Istream *body;
+    UnusedIstreamPtr body;
 
     ForwardRequest(http_method_t _method, StringMap &&_headers,
-                   Istream *_body)
-        :method(_method), headers(std::move(_headers)), body(_body) {}
+                   UnusedIstreamPtr _body) noexcept
+        :method(_method), headers(std::move(_headers)),
+         body(std::move(_body)) {}
 };
 
 ForwardRequest
 request_forward(Request &src,
                 const struct header_forward_settings &header_forward,
                 const char *host_and_port, const char *uri,
-                bool exclude_host);
+                bool exclude_host) noexcept;
 
 #endif
