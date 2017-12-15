@@ -6,6 +6,7 @@ project('CM4all beng-proxy', ['c', 'cpp'], version: '14.0.1',
 )
 
 compiler = meson.get_compiler('cpp')
+c_compiler = meson.get_compiler('c')
 
 pkg_mod = import('pkgconfig')
 pkg_mod.generate(version: meson.project_version(),
@@ -38,21 +39,69 @@ common_flags = [
   '-Wundef',
 ]
 
-add_global_arguments(common_flags,
-  '-Wmissing-prototypes', '-Wstrict-prototypes',
-  '-Wbad-function-cast',
-  '-Waggregate-return',
-  '-Wnested-externs',
-  '-pedantic',
-  language: 'c')
+test_common_flags = [
+  '-fvisibility=hidden',
+]
 
-add_global_arguments(common_flags,
+if not debug
+  test_common_flags += [
+    '-ffunction-sections',
+    '-fdata-sections',
+  ]
+endif
+
+test_cxxflags = test_common_flags + [
   '-fno-threadsafe-statics',
   '-fmerge-all-constants',
   '-Wno-variadic-macros',
   '-Wno-missing-field-initializers',
   '-Wno-non-virtual-dtor',
-  language: 'cpp')
+
+  # work around bogus GCC7 warning "mangled name for ... will change
+  # in C++17 because the exception specification is part of a function
+  # type"
+  '-Wno-noexcept-type',
+]
+
+test_cflags = test_common_flags + [
+  '-Wmissing-prototypes', '-Wstrict-prototypes',
+  '-Wbad-function-cast',
+  '-Waggregate-return',
+  '-Wnested-externs',
+  '-pedantic',
+]
+
+test_ldflags = [
+]
+
+if not debug
+  test_ldflags += [
+    '-Wl,--gc-sections',
+    '-Wl,--icf=all',
+  ]
+endif
+
+add_global_arguments(common_flags, language: 'c')
+add_global_arguments(common_flags, language: 'cpp')
+
+foreach f: test_cxxflags
+  if compiler.has_argument(f)
+    add_global_arguments(f, language: 'cpp')
+  endif
+endforeach
+
+foreach f: test_cflags
+  if c_compiler.has_argument(f)
+    add_global_arguments(f, language: 'c')
+  endif
+endforeach
+
+foreach f: test_ldflags
+  if c_compiler.has_argument(f)
+    add_global_link_arguments(f, language: 'c')
+    add_global_link_arguments(f, language: 'cpp')
+  endif
+endforeach
 
 if debug
   debug_flags = ['-DPOISON', '-DTRACE']

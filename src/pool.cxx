@@ -938,7 +938,7 @@ pool_trash(struct pool *pool)
 }
 
 void
-pool_commit(void)
+pool_commit() noexcept
 {
     if (trash.empty())
         return;
