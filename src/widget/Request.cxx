@@ -183,7 +183,7 @@ struct WidgetRequest final : HttpResponseHandler, Cancellable {
     void SendRequest();
 
     /* virtual methods from class Cancellable */
-    void Cancel() override {
+    void Cancel() noexcept override {
         widget.Cancel();
         cancel_ptr.Cancel();
     }

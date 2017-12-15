@@ -64,7 +64,7 @@ struct BufferSink final : IstreamSink, Cancellable {
     }
 
     /* virtual methods from class Cancellable */
-    void Cancel() override;
+    void Cancel() noexcept override;
 
     /* virtual methods from class IstreamHandler */
     size_t OnData(const void *data, size_t length) override;
@@ -127,7 +127,7 @@ BufferSink::OnError(std::exception_ptr ep) noexcept
  */
 
 void
-BufferSink::Cancel()
+BufferSink::Cancel() noexcept
 {
     const ScopePoolRef ref(*pool TRACE_ARGS);
     input.Close();

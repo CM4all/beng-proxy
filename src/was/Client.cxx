@@ -303,7 +303,7 @@ struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler, C
     bool SubmitPendingResponse();
 
     /* virtual methods from class Cancellable */
-    void Cancel() override {
+    void Cancel() noexcept override {
         /* Cancellable::Cancel() can only be used before the
            response was delivered to our callback */
         assert(!response.WasSubmitted());

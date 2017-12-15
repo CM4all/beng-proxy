@@ -108,7 +108,7 @@ struct TranslateClient final : BufferedSocketHandler, Cancellable {
     }
 
     /* virtual methods from class Cancellable */
-    void Cancel() override {
+    void Cancel() noexcept override {
         stopwatch_event(stopwatch, "cancel");
         Release(false);
     }

@@ -92,7 +92,7 @@ public:
 
 private:
     /* virtual methods from class Cancellable */
-    void Cancel() override;
+    void Cancel() noexcept override;
 
     /* virtual methods from class ConnectSocketHandler */
     void OnSocketConnectSuccess(UniqueSocketDescriptor &&fd) override;
@@ -125,7 +125,7 @@ check_expectation(char *received, size_t received_length,
  */
 
 void
-ExpectMonitor::Cancel()
+ExpectMonitor::Cancel() noexcept
 {
     if (fd.IsDefined()) {
         event.Delete();

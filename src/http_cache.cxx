@@ -162,7 +162,7 @@ public:
     void AbortRubberStore();
 
     /* virtual methods from class Cancellable */
-    void Cancel() override;
+    void Cancel() noexcept override;
 
     /* virtual methods from class HttpResponseHandler */
     void OnHttpResponse(http_status_t status, StringMap &&headers,
@@ -519,7 +519,7 @@ HttpCacheRequest::OnHttpError(std::exception_ptr ep)
  */
 
 void
-HttpCacheRequest::Cancel()
+HttpCacheRequest::Cancel() noexcept
 {
     if (document != nullptr && cache.heap.IsDefined())
         http_cache_unlock(cache, document);

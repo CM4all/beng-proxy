@@ -66,7 +66,7 @@ struct ErrorResponseLoader final : HttpResponseHandler, Cancellable {
     }
 
     /* virtual methods from class Cancellable */
-    void Cancel() override;
+    void Cancel() noexcept override;
 
     /* virtual methods from class HttpResponseHandler */
     void OnHttpResponse(http_status_t status, StringMap &&headers,
@@ -176,7 +176,7 @@ fill_translate_request(TranslateRequest *t,
  */
 
 void
-ErrorResponseLoader::Cancel()
+ErrorResponseLoader::Cancel() noexcept
 {
     body.Clear();
 

@@ -91,7 +91,7 @@ struct Instance final : PInstance, HttpServerConnectionHandler, Cancellable {
     void OnTimer();
 
     /* virtual methods from class Cancellable */
-    void Cancel() override {
+    void Cancel() noexcept override {
         if (request_body != nullptr)
             request_body->CloseUnused();
 

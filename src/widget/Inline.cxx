@@ -125,7 +125,7 @@ private:
     void OnHttpError(std::exception_ptr ep) override;
 
     /* virtual methods from class Cancellable */
-    void Cancel() override;
+    void Cancel() noexcept override;
 };
 
 /**
@@ -262,7 +262,7 @@ InlineWidget::OnHttpError(std::exception_ptr ep)
 }
 
 void
-InlineWidget::Cancel()
+InlineWidget::Cancel() noexcept
 {
     header_timeout_event.Cancel();
 

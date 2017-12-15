@@ -250,7 +250,7 @@ struct FcgiClient final
     void OnBufferedError(std::exception_ptr e) noexcept override;
 
     /* virtual methods from class Cancellable */
-    void Cancel() override;
+    void Cancel() noexcept override;
 
     /* virtual methods from class Istream */
 
@@ -1005,7 +1005,7 @@ FcgiClient::OnBufferedError(std::exception_ptr ep) noexcept
  */
 
 void
-FcgiClient::Cancel()
+FcgiClient::Cancel() noexcept
 {
     /* Cancellable::Cancel() can only be used before the
        response was delivered to our callback */

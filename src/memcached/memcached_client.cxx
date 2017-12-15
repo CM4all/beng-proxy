@@ -180,7 +180,7 @@ struct MemcachedClient final
     void OnBufferedError(std::exception_ptr e) noexcept override;
 
     /* virtual methods from class Cancellable */
-    void Cancel() override;
+    void Cancel() noexcept override;
 
     /* virtual methods from class Istream */
 
@@ -662,7 +662,7 @@ MemcachedClient::OnError(std::exception_ptr ep) noexcept
  */
 
 void
-MemcachedClient::Cancel()
+MemcachedClient::Cancel() noexcept
 {
     IstreamPointer request_istream = std::move(request.istream);
 

@@ -302,7 +302,7 @@ struct XmlProcessor final : XmlParserHandler, Cancellable {
     void StopCdataIstream();
 
     /* virtual methods from class Cancellable */
-    void Cancel() override;
+    void Cancel() noexcept override;
 
     /* virtual methods from class XmlParserHandler */
     bool OnXmlTagStart(const XmlParserTag &tag) override;
@@ -332,7 +332,7 @@ processable(const StringMap &headers)
  */
 
 void
-XmlProcessor::Cancel()
+XmlProcessor::Cancel() noexcept
 {
     if (container.for_focused.body != nullptr)
         /* the request body was not yet submitted to the focused

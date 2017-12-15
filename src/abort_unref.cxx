@@ -53,7 +53,7 @@ struct UnrefOnAbort final : Cancellable {
     }
 
     /* virtual methods from class Cancellable */
-    void Cancel() override {
+    void Cancel() noexcept override {
         cancel_ptr.Cancel();
         pool_unref_fwd(&pool);
     }

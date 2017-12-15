@@ -165,7 +165,7 @@ public:
     void ReadCallback(int status, struct nfs_context *nfs, void *data);
 
     /* virtual methods from class Cancellable */
-    void Cancel() override;
+    void Cancel() noexcept override;
 };
 
 /**
@@ -485,7 +485,7 @@ public:
     void FstatAsync(struct nfsfh *nfsfh, nfs_cb cb, void *private_data);
 
     /* virtual methods from class Cancellable */
-    void Cancel() override;
+    void Cancel() noexcept override;
 };
 
 static const struct timeval nfs_client_mount_timeout = {
@@ -778,7 +778,7 @@ NfsFile::ReadAsync(uint64_t offset, uint64_t count,
  */
 
 void
-NfsFileHandle::Cancel()
+NfsFileHandle::Cancel() noexcept
 {
     pool_unref(&caller_pool);
 
@@ -792,7 +792,7 @@ NfsFileHandle::Cancel()
  */
 
 void
-NfsClient::Cancel()
+NfsClient::Cancel() noexcept
 {
     assert(context != nullptr);
     assert(!mount_finished);

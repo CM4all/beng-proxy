@@ -58,7 +58,7 @@ struct StringSink final : IstreamSink, Cancellable {
     }
 
     /* virtual methods from class Cancellable */
-    void Cancel() override {
+    void Cancel() noexcept override {
         const ScopePoolRef ref(pool TRACE_ARGS);
         input.Close();
         Destroy();

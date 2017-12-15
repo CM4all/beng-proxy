@@ -363,7 +363,7 @@ struct HttpClient final : BufferedSocketHandler, IstreamHandler, Cancellable {
     void OnBufferedError(std::exception_ptr e) noexcept override;
 
     /* virtual methods from class Cancellable */
-    void Cancel() override;
+    void Cancel() noexcept override;
 
     /* virtual methods from class IstreamHandler */
     size_t OnData(const void *data, size_t length) override;
@@ -1252,7 +1252,7 @@ HttpClient::OnError(std::exception_ptr ep) noexcept
  */
 
 inline void
-HttpClient::Cancel()
+HttpClient::Cancel() noexcept
 {
     stopwatch_event(stopwatch, "abort");
 
