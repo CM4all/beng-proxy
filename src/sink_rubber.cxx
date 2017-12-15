@@ -67,7 +67,7 @@ private:
     void InvokeEof();
 
     /* virtual methods from class Cancellable */
-    void Cancel() override;
+    void Cancel() noexcept override;
 
     /* virtual methods from class IstreamHandler */
     size_t OnData(const void *data, size_t length) override;
@@ -198,7 +198,7 @@ RubberSink::OnError(std::exception_ptr ep) noexcept
  */
 
 void
-RubberSink::Cancel()
+RubberSink::Cancel() noexcept
 {
     rubber.Remove(rubber_id);
 

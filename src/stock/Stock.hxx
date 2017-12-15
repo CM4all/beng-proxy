@@ -135,7 +135,7 @@ class Stock {
         void Destroy();
 
         /* virtual methods from class Cancellable */
-        void Cancel() override;
+        void Cancel() noexcept override;
     };
 
     typedef boost::intrusive::list<Waiting,

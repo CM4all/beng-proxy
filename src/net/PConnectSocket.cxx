@@ -90,7 +90,7 @@ private:
     void EventCallback(unsigned events);
 
     /* virtual methods from class Cancellable */
-    void Cancel() override;
+    void Cancel() noexcept override;
 
     /* virtual methods from class ConnectSocketHandler */
     void OnSocketConnectSuccess(UniqueSocketDescriptor &&fd) override;
@@ -105,7 +105,7 @@ private:
  */
 
 void
-PConnectSocket::Cancel()
+PConnectSocket::Cancel() noexcept
 {
     assert(connect.IsPending());
 

@@ -52,7 +52,7 @@ public:
     bool aborted = false;
 
     /* virtual methods from class Cancellable */
-    void Cancel() override {
+    void Cancel() noexcept override {
         aborted = true;
     }
 };

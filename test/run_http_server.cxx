@@ -92,7 +92,7 @@ struct Instance final : PInstance, HttpServerConnectionHandler, Cancellable {
     void OnTimer();
 
     /* virtual methods from class Cancellable */
-    void Cancel() override {
+    void Cancel() noexcept override {
         request_body.Clear();
         timer.Cancel();
     }

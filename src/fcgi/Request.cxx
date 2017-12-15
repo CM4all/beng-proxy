@@ -97,7 +97,7 @@ public:
 
 private:
     /* virtual methods from class Cancellable */
-    void Cancel() override {
+    void Cancel() noexcept override {
         if (stock_item != nullptr)
             fcgi_stock_aborted(*stock_item);
 

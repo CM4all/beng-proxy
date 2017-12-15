@@ -107,7 +107,7 @@ struct CGIClient final : Istream, IstreamHandler, Cancellable {
     size_t FeedBody(const char *data, size_t length);
 
     /* virtual methods from class Cancellable */
-    void Cancel() override;
+    void Cancel() noexcept override;
 
     /* virtual methods from class Istream */
     off_t _GetAvailable(bool partial) override;
@@ -457,7 +457,7 @@ CGIClient::_Close() noexcept
  */
 
 void
-CGIClient::Cancel()
+CGIClient::Cancel() noexcept
 {
     assert(input.IsDefined());
 

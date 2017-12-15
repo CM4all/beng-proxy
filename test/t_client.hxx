@@ -250,7 +250,7 @@ struct Context final
     }
 
     /* virtual methods from class Cancellable */
-    void Cancel() override;
+    void Cancel() noexcept override;
 
     /* virtual methods from class IstreamHandler */
     size_t OnData(const void *data, size_t length) override;
@@ -274,7 +274,7 @@ struct Context final
 
 template<class Connection>
 void
-Context<Connection>::Cancel()
+Context<Connection>::Cancel() noexcept
 {
     assert(request_body != nullptr);
     assert(!aborted_request_body);

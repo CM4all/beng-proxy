@@ -89,7 +89,7 @@ public:
     }
 
     /* virtual methods from class Cancellable */
-    void Cancel() override {
+    void Cancel() noexcept override {
         input.Close();
         Destroy();
     }

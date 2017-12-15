@@ -109,7 +109,7 @@ struct TcpStockConnection final
     void EventCallback(unsigned events);
 
     /* virtual methods from class Cancellable */
-    void Cancel() override {
+    void Cancel() noexcept override {
         assert(cancel_ptr);
 
         cancel_ptr.CancelAndClear();

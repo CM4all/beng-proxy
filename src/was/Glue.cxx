@@ -117,7 +117,7 @@ private:
     void OnStockItemError(std::exception_ptr ep) override;
 
     /* virtual methods from class Cancellable */
-    void Cancel() override {
+    void Cancel() noexcept override {
         stock_cancel_ptr.Cancel();
         body.Clear();
     }

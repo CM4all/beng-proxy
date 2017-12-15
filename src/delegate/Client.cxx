@@ -105,7 +105,7 @@ private:
     }
 
     /* virtual methods from class Cancellable */
-    void Cancel() override {
+    void Cancel() noexcept override {
         event.Delete();
         ReleaseSocket(false);
         Destroy();

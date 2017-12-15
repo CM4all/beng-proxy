@@ -66,7 +66,7 @@ struct WidgetResolverListener final
     void Finish();
 
     /* virtual methods from class Cancellable */
-    void Cancel() override;
+    void Cancel() noexcept override;
 };
 
 struct WidgetResolver {
@@ -134,7 +134,7 @@ WidgetResolver::Abort()
  */
 
 void
-WidgetResolverListener::Cancel()
+WidgetResolverListener::Cancel() noexcept
 {
     assert(!finished);
     assert(!aborted);

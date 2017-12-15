@@ -79,7 +79,7 @@ struct ProxyWidget final : WidgetLookupHandler, HttpResponseHandler, Cancellable
     void ResolverCallback();
 
     /* virtual methods from class Cancellable */
-    void Cancel() override;
+    void Cancel() noexcept override;
 
     /* virtual methods from class WidgetLookupHandler */
     void WidgetFound(Widget &widget) override;
@@ -306,7 +306,7 @@ ProxyWidget::WidgetLookupError(std::exception_ptr ep)
  */
 
 void
-ProxyWidget::Cancel()
+ProxyWidget::Cancel() noexcept
 {
     /* make sure that all widget resources are freed when the request
        is cancelled */

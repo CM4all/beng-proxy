@@ -62,7 +62,7 @@ struct NfsStockRequest final
     }
 
     /* virtual methods from class Cancellable */
-    void Cancel() override;
+    void Cancel() noexcept override;
 };
 
 struct NfsStockConnection final
@@ -187,7 +187,7 @@ NfsStockConnection::OnNfsClientClosed(std::exception_ptr ep)
  */
 
 void
-NfsStockRequest::Cancel()
+NfsStockRequest::Cancel() noexcept
 {
     connection.Remove(*this);
     DeleteUnrefPool(pool, this);

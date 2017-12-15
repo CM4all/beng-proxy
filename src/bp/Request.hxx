@@ -447,7 +447,7 @@ public:
                           std::exception_ptr ep, unsigned log_level=2);
 
     /* virtual methods from class Cancellable */
-    void Cancel() override {
+    void Cancel() noexcept override {
         DiscardRequestBody();
 
         /* forward the abort to the http_server library */

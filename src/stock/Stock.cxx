@@ -117,8 +117,8 @@ Stock::CleanupEventCallback()
  *
  */
 
-inline void
-Stock::Waiting::Cancel()
+void
+Stock::Waiting::Cancel() noexcept
 {
     auto &list = stock.waiting;
     const auto i = list.iterator_to(*this);

@@ -47,7 +47,7 @@ struct CloseOnAbort final : Cancellable {
     }
 
     /* virtual methods from class Cancellable */
-    void Cancel() override {
+    void Cancel() noexcept override {
         cancel_ptr.Cancel();
         istream.CloseUnused();
     }

@@ -219,7 +219,7 @@ struct AjpClient final
     void OnBufferedError(std::exception_ptr e) noexcept override;
 
     /* virtual methods from class Cancellable */
-    void Cancel() override;
+    void Cancel() noexcept override;
 
     /* virtual methods from class Istream */
     off_t _GetAvailable(bool partial) override;
@@ -785,7 +785,7 @@ AjpClient::OnBufferedError(std::exception_ptr ep) noexcept
 }
 
 void
-AjpClient::Cancel()
+AjpClient::Cancel() noexcept
 {
     /* Cancellable::Cancel() can only be used before the
        response was delivered to our callback */
