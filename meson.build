@@ -39,7 +39,18 @@ common_flags = [
   '-Wundef',
 ]
 
-test_cxxflags = [
+test_common_flags = [
+  '-fvisibility=hidden',
+]
+
+if not debug
+  test_common_flags += [
+    '-ffunction-sections',
+    '-fdata-sections',
+  ]
+endif
+
+test_cxxflags = test_common_flags + [
   '-fno-threadsafe-statics',
   '-fmerge-all-constants',
   '-Wno-variadic-macros',
@@ -52,12 +63,17 @@ test_cxxflags = [
   '-Wno-noexcept-type',
 ]
 
-test_cflags = [
+test_cflags = test_common_flags + [
   '-Wmissing-prototypes', '-Wstrict-prototypes',
   '-Wbad-function-cast',
   '-Waggregate-return',
   '-Wnested-externs',
   '-pedantic',
+]
+
+test_ldflags = [
+  '-Wl,--gc-sections',
+  '-Wl,--icf=all',
 ]
 
 add_global_arguments(common_flags, language: 'c')
@@ -72,6 +88,13 @@ endforeach
 foreach f: test_cflags
   if c_compiler.has_argument(f)
     add_global_arguments(f, language: 'c')
+  endif
+endforeach
+
+foreach f: test_ldflags
+  if c_compiler.has_argument(f)
+    add_global_link_arguments(f, language: 'c')
+    add_global_link_arguments(f, language: 'cpp')
   endif
 endforeach
 
