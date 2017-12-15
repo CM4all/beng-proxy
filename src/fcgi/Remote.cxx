@@ -54,7 +54,7 @@
 #include <string.h>
 #include <unistd.h>
 
-class FcgiRemoteRequest final : StockGetHandler, Lease {
+class FcgiRemoteRequest final : StockGetHandler, Cancellable, Lease {
     struct pool &pool;
     EventLoop &event_loop;
 
@@ -80,6 +80,7 @@ private:
 
     HttpResponseHandler &handler;
     CancellablePointer &caller_cancel_ptr;
+    CancellablePointer connect_cancel_ptr;
 
 public:
     FcgiRemoteRequest(struct pool &_pool, EventLoop &_event_loop,
@@ -104,21 +105,29 @@ public:
          params(_params),
          stderr_fd(_stderr_fd),
          handler(_handler), caller_cancel_ptr(_cancel_ptr) {
+        caller_cancel_ptr = *this;
     }
 
     void Start(TcpBalancer &tcp_balancer,
-               const AddressList &address_list,
-               CancellablePointer &cancel_ptr) noexcept {
+               const AddressList &address_list) noexcept {
         tcp_balancer.Get(pool,
                          false, SocketAddress::Null(),
                          0, address_list, 20,
-                         *this, cancel_ptr);
+                         *this, connect_cancel_ptr);
     }
 
 private:
     /* virtual methods from class StockGetHandler */
     void OnStockItemReady(StockItem &item) override;
     void OnStockItemError(std::exception_ptr ep) override;
+
+    /* virtual methods from class Cancellable */
+    void Cancel() noexcept override {
+        connect_cancel_ptr.Cancel();
+
+        if (body != nullptr)
+            body->CloseUnused();
+    }
 
     /* virtual methods from class Lease */
     void ReleaseLease(bool reuse) noexcept override {
@@ -197,9 +206,8 @@ fcgi_remote_request(struct pool *pool, EventLoop &event_loop,
 
     if (body != nullptr) {
         request->body = istream_hold_new(*pool, *body);
-        cancel_ptr = &async_close_on_abort(*pool, *request->body, *cancel_ptr);
     } else
         request->body = nullptr;
 
-    request->Start(*tcp_balancer, *address_list, *cancel_ptr);
+    request->Start(*tcp_balancer, *address_list);
 }
