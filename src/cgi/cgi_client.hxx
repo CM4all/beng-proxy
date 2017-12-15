@@ -37,7 +37,7 @@
 
 struct pool;
 struct Stopwatch;
-class Istream;
+class UnusedIstreamPtr;
 class HttpResponseHandler;
 class CancellablePointer;
 
@@ -48,7 +48,7 @@ class CancellablePointer;
  */
 void
 cgi_client_new(struct pool &pool, Stopwatch *stopwatch,
-               Istream &input,
+               UnusedIstreamPtr input,
                HttpResponseHandler &handler,
                CancellablePointer &cancel_ptr);
 

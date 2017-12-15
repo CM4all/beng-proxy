@@ -34,6 +34,7 @@
 #include "Error.hxx"
 #include "cgi_parser.hxx"
 #include "pool.hxx"
+#include "istream/UnusedPtr.hxx"
 #include "istream/Pointer.hxx"
 #include "istream/istream_null.hxx"
 #include "header_parser.hxx"
@@ -71,7 +72,7 @@ class CGIClient final : Istream, IstreamHandler, Cancellable {
 
 public:
     CGIClient(struct pool &_pool, Stopwatch *_stopwatch,
-              Istream &_input,
+              UnusedIstreamPtr _input,
               HttpResponseHandler &_handler,
               CancellablePointer &cancel_ptr);
 
@@ -475,12 +476,12 @@ CGIClient::Cancel() noexcept
 
 inline
 CGIClient::CGIClient(struct pool &_pool, Stopwatch *_stopwatch,
-                     Istream &_input,
+                     UnusedIstreamPtr _input,
                      HttpResponseHandler &_handler,
                      CancellablePointer &cancel_ptr)
     :Istream(_pool),
      stopwatch(_stopwatch),
-     input(_input, *this),
+     input(std::move(_input), *this),
      buffer(fb_pool_get()),
      parser(_pool),
      handler(_handler)
@@ -492,10 +493,10 @@ CGIClient::CGIClient(struct pool &_pool, Stopwatch *_stopwatch,
 
 void
 cgi_client_new(struct pool &pool, Stopwatch *stopwatch,
-               Istream &input,
+               UnusedIstreamPtr input,
                HttpResponseHandler &handler,
                CancellablePointer &cancel_ptr)
 {
-    NewFromPool<CGIClient>(pool, pool, stopwatch, input,
+    NewFromPool<CGIClient>(pool, pool, stopwatch, std::move(input),
                            handler, cancel_ptr);
 }

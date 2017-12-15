@@ -71,5 +71,5 @@ cgi_new(SpawnService &spawn_service, EventLoop &event_loop,
 
     stopwatch_event(stopwatch, "fork");
 
-    cgi_client_new(*pool, stopwatch, *input.Steal(), handler, cancel_ptr);
+    cgi_client_new(*pool, stopwatch, std::move(input), handler, cancel_ptr);
 }
