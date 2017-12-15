@@ -36,7 +36,7 @@
 #include "http/Method.h"
 
 struct pool;
-class Istream;
+class UnusedIstreamPtr;
 struct was_stock;
 class StockMap;
 class StringMap;
@@ -60,7 +60,7 @@ was_request(struct pool &pool, StockMap &was_stock,
             http_method_t method, const char *uri,
             const char *script_name, const char *path_info,
             const char *query_string,
-            const StringMap &headers, Istream *body,
+            const StringMap &headers, UnusedIstreamPtr body,
             ConstBuffer<const char *> params,
             HttpResponseHandler &handler,
             CancellablePointer &cancel_ptr);

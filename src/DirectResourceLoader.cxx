@@ -273,7 +273,7 @@ DirectResourceLoader::SendRequest(struct pool &pool,
                     cgi->script_name,
                     cgi->path_info,
                     cgi->query_string,
-                    headers, body.Steal(),
+                    headers, std::move(body),
                     cgi->params.ToArray(pool),
                     handler, cancel_ptr);
         return;

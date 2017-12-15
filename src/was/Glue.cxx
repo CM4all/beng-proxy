@@ -83,7 +83,7 @@ public:
                const char *_script_name, const char *_path_info,
                const char *_query_string,
                const StringMap &_headers,
-               Istream *_body,
+               UnusedIstreamPtr _body,
                ConstBuffer<const char *> _parameters,
                HttpResponseHandler &_handler,
                CancellablePointer &_cancel_ptr)
@@ -93,7 +93,7 @@ public:
          uri(_uri), script_name(_script_name),
          path_info(_path_info), query_string(_query_string),
          headers(_headers),
-         body(pool, _body),
+         body(pool, std::move(_body)),
          parameters(_parameters),
          handler(_handler), caller_cancel_ptr(_cancel_ptr) {
         caller_cancel_ptr = *this;
@@ -222,7 +222,7 @@ was_request(struct pool &pool, StockMap &was_stock,
             http_method_t method, const char *uri,
             const char *script_name, const char *path_info,
             const char *query_string,
-            const StringMap &headers, Istream *body,
+            const StringMap &headers, UnusedIstreamPtr body,
             ConstBuffer<const char *> parameters,
             HttpResponseHandler &handler,
             CancellablePointer &cancel_ptr)
@@ -236,7 +236,8 @@ was_request(struct pool &pool, StockMap &was_stock,
                                                              parameters),
                                            method, uri, script_name,
                                            path_info, query_string,
-                                           headers, body, parameters,
+                                           headers, std::move(body),
+                                           parameters,
                                            handler, cancel_ptr);
     request->Start(was_stock, options, action, args);
 }
