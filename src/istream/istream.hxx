@@ -492,26 +492,4 @@ NewIstream(struct pool &pool, Args&&... args)
                           std::forward<Args>(args)...);
 }
 
-static inline void
-istream_free(Istream **istream_r) noexcept
-{
-    auto *istream = *istream_r;
-    *istream_r = nullptr;
-    istream->Close();
-}
-
-/**
- * Free an istream which was never used, i.e. it does not have a
- * handler yet.
- */
-static inline void
-istream_free_unused(Istream **istream_r) noexcept
-{
-    assert(istream_r != nullptr);
-    assert(*istream_r != nullptr);
-    assert(!(*istream_r)->HasHandler());
-
-    istream_free(istream_r);
-}
-
 #endif
