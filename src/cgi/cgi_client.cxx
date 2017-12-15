@@ -49,7 +49,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-struct CGIClient final : Istream, IstreamHandler, Cancellable {
+class CGIClient final : Istream, IstreamHandler, Cancellable {
     Stopwatch *const stopwatch;
 
     IstreamPointer input;
@@ -69,6 +69,7 @@ struct CGIClient final : Istream, IstreamHandler, Cancellable {
 
     HttpResponseHandler &handler;
 
+public:
     CGIClient(struct pool &_pool, Stopwatch *_stopwatch,
               Istream &_input,
               HttpResponseHandler &_handler,
