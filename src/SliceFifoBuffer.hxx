@@ -44,36 +44,36 @@ class SliceFifoBuffer : public ForeignFifoBuffer<uint8_t> {
     SliceArea *area;
 
 public:
-    SliceFifoBuffer():ForeignFifoBuffer<uint8_t>(nullptr) {}
+    SliceFifoBuffer() noexcept:ForeignFifoBuffer<uint8_t>(nullptr) {}
 
-    explicit SliceFifoBuffer(SlicePool &pool)
+    explicit SliceFifoBuffer(SlicePool &pool) noexcept
         :ForeignFifoBuffer<uint8_t>(nullptr) {
         Allocate(pool);
     }
 
-    void Swap(SliceFifoBuffer &other) {
+    void Swap(SliceFifoBuffer &other) noexcept {
         ForeignFifoBuffer<uint8_t>::Swap(other);
         std::swap(area, other.area);
     }
 
-    void Allocate(SlicePool &pool);
-    void Free(SlicePool &pool);
+    void Allocate(SlicePool &pool) noexcept;
+    void Free(SlicePool &pool) noexcept;
 
-    bool IsDefinedAndFull() const {
+    bool IsDefinedAndFull() const noexcept {
         return IsDefined() && IsFull();
     }
 
-    void AllocateIfNull(SlicePool &pool) {
+    void AllocateIfNull(SlicePool &pool) noexcept {
         if (IsNull())
             Allocate(pool);
     }
 
-    void FreeIfDefined(SlicePool &pool) {
+    void FreeIfDefined(SlicePool &pool) noexcept {
         if (IsDefined())
             Free(pool);
     }
 
-    void FreeIfEmpty(SlicePool &pool) {
+    void FreeIfEmpty(SlicePool &pool) noexcept {
         if (IsEmpty())
             FreeIfDefined(pool);
     }
@@ -82,7 +82,7 @@ public:
      * If this buffer is empty, free the buffer and reallocate a new
      * one.  This is useful to work around #SliceArea fragmentation.
      */
-    void CycleIfEmpty(SlicePool &pool) {
+    void CycleIfEmpty(SlicePool &pool) noexcept {
         if (IsDefined() && IsEmpty()) {
             Free(pool);
             Allocate(pool);
@@ -95,7 +95,7 @@ public:
      * is taken that neither buffer suddenly becomes nulled
      * afterwards, because some callers may not be prepared for this.
      */
-    void MoveFrom(SliceFifoBuffer &src) {
+    void MoveFrom(SliceFifoBuffer &src) noexcept {
         if (IsEmpty() && !IsNull() && !src.IsNull())
             /* optimized special case: swap buffer pointers instead of
                copying data */
@@ -108,7 +108,7 @@ public:
      * Like MoveFrom(), but allow the destination to be nulled.  This
      * is useful when #src can be freed, but this object cannot.
      */
-    void MoveFromAllowNull(SliceFifoBuffer &src) {
+    void MoveFromAllowNull(SliceFifoBuffer &src) noexcept {
         if (IsEmpty() && (!src.IsEmpty() || !IsNull()))
             /* optimized special case: swap buffer pointers instead of
                copying data */
@@ -121,7 +121,7 @@ public:
      * Like MoveFrom(), but allow the source to be nulled.  This is
      * useful when this object can be freed, but #src cannot.
      */
-    void MoveFromAllowSrcNull(SliceFifoBuffer &src) {
+    void MoveFromAllowSrcNull(SliceFifoBuffer &src) noexcept {
         if (IsEmpty() && (!src.IsEmpty() || IsNull()))
             /* optimized special case: swap buffer pointers instead of
                copying data */
@@ -134,7 +134,7 @@ public:
      * Swaps the two buffers if #src is nulled.  This is useful when
      * #src can be freed, but this object cannot.
      */
-    void SwapIfNull(SliceFifoBuffer &src) {
+    void SwapIfNull(SliceFifoBuffer &src) noexcept {
         if (src.IsNull() && IsEmpty() && !IsNull())
             Swap(src);
     }

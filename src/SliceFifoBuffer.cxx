@@ -34,7 +34,7 @@
 #include "SlicePool.hxx"
 
 void
-SliceFifoBuffer::Allocate(SlicePool &pool)
+SliceFifoBuffer::Allocate(SlicePool &pool) noexcept
 {
     assert(IsNull());
 
@@ -44,7 +44,7 @@ SliceFifoBuffer::Allocate(SlicePool &pool)
 }
 
 void
-SliceFifoBuffer::Free(SlicePool &pool)
+SliceFifoBuffer::Free(SlicePool &pool) noexcept
 {
     assert(IsDefined());
 
