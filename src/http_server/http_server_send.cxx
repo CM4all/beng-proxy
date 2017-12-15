@@ -132,14 +132,16 @@ HttpServerConnection::SubmitResponse(http_status_t status,
     /* how will we transfer the body?  determine length and
        transfer-encoding */
 
+    const off_t content_length = _body ? _body.GetAvailable(false) : 0;
+    if (http_method_is_empty(request.request->method))
+        _body.Clear();
+
     auto *body = _body.Steal();
-    const off_t content_length = body == nullptr
-        ? 0 : body->GetAvailable(false);
     if (content_length == (off_t)-1) {
         /* the response length is unknown yet */
         assert(!http_status_is_empty(status));
 
-        if (!http_method_is_empty(request.request->method) && keep_alive) {
+        if (body != nullptr && keep_alive) {
             /* keep-alive is enabled, which means that we have to
                enable chunking */
             headers.Write("transfer-encoding", "chunked");
@@ -152,14 +154,11 @@ HttpServerConnection::SubmitResponse(http_status_t status,
         }
     } else if (http_status_is_empty(status)) {
         assert(content_length == 0);
-    } else if (body != nullptr || !http_method_is_empty(request.request->method)) {
+    } else if (body != nullptr) {
         /* fixed body size */
         format_uint64(response.content_length_buffer, content_length);
         headers.Write("content-length", response.content_length_buffer);
     }
-
-    if (http_method_is_empty(request.request->method) && body != nullptr)
-        istream_free_unused(&body);
 
     const bool upgrade = body != nullptr && http_is_upgrade(status, headers);
     if (upgrade) {
