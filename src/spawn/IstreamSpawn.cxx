@@ -79,8 +79,8 @@ struct SpawnIstream final : Istream, IstreamHandler, ExitListener {
 
     SpawnIstream(SpawnService &_spawn_service, EventLoop &event_loop,
                  struct pool &p,
-                 UnusedIstreamPtr _input, UniqueFileDescriptor &&_input_fd,
-                 UniqueFileDescriptor &&_output_fd,
+                 UnusedIstreamPtr _input, UniqueFileDescriptor _input_fd,
+                 UniqueFileDescriptor _output_fd,
                  pid_t _pid);
 
     bool CheckDirect() const {
@@ -384,8 +384,8 @@ inline
 SpawnIstream::SpawnIstream(SpawnService &_spawn_service, EventLoop &event_loop,
                            struct pool &p,
                            UnusedIstreamPtr _input,
-                           UniqueFileDescriptor &&_input_fd,
-                           UniqueFileDescriptor &&_output_fd,
+                           UniqueFileDescriptor _input_fd,
+                           UniqueFileDescriptor _output_fd,
                            pid_t _pid)
     :Istream(p),
      logger("spawn"),
