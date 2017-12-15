@@ -132,7 +132,8 @@ HttpServerConnection::SubmitResponse(http_status_t status,
     /* how will we transfer the body?  determine length and
        transfer-encoding */
 
-    const off_t content_length = _body ? _body.GetAvailable(false) : 0;
+    const bool got_body = _body;
+    const off_t content_length = got_body ? _body.GetAvailable(false) : 0;
     if (http_method_is_empty(request.request->method))
         _body.Clear();
 
@@ -154,7 +155,7 @@ HttpServerConnection::SubmitResponse(http_status_t status,
         }
     } else if (http_status_is_empty(status)) {
         assert(content_length == 0);
-    } else if (body != nullptr) {
+    } else if (got_body) {
         /* fixed body size */
         format_uint64(response.content_length_buffer, content_length);
         headers.Write("content-length", response.content_length_buffer);
