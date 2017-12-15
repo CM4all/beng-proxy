@@ -38,7 +38,7 @@
 
 struct pool;
 class EventLoop;
-class Istream;
+class UnusedIstreamPtr;
 class TcpBalancer;
 struct SocketFilter;
 class SocketFilterFactory;
@@ -60,7 +60,7 @@ http_request(struct pool &pool, EventLoop &event_loop,
              const SocketFilter *filter, SocketFilterFactory *filter_factory,
              http_method_t method,
              const HttpAddress &address,
-             HttpHeaders &&headers, Istream *body,
+             HttpHeaders &&headers, UnusedIstreamPtr body,
              HttpResponseHandler &handler,
              CancellablePointer &cancel_ptr);
 

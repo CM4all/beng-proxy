@@ -96,16 +96,16 @@ public:
                 http_method_t _method,
                 const HttpAddress &_address,
                 HttpHeaders &&_headers,
-                Istream *_body,
+                UnusedIstreamPtr _body,
                 HttpResponseHandler &_handler,
                 CancellablePointer &_cancel_ptr)
         :pool(_pool), event_loop(_event_loop), tcp_balancer(_tcp_balancer),
          session_sticky(_session_sticky),
          filter(_filter), filter_factory(_filter_factory),
          method(_method), address(_address),
-         headers(std::move(_headers)), body(pool, _body),
+         headers(std::move(_headers)), body(pool, std::move(_body)),
          /* can only retry if there is no request body */
-         retries(_body == nullptr ? 2 : 0),
+         retries(body ? 0 : 2),
          handler(_handler)
     {
         _cancel_ptr = *this;
@@ -322,17 +322,17 @@ http_request(struct pool &pool, EventLoop &event_loop,
              http_method_t method,
              const HttpAddress &uwa,
              HttpHeaders &&headers,
-             Istream *body,
+             UnusedIstreamPtr body,
              HttpResponseHandler &handler,
              CancellablePointer &_cancel_ptr)
 {
     assert(uwa.host_and_port != nullptr);
     assert(uwa.path != nullptr);
-    assert(body == nullptr || !body->HasHandler());
 
     auto hr = NewFromPool<HttpRequest>(pool, pool, event_loop, tcp_balancer,
                                        session_sticky, filter, filter_factory,
-                                       method, uwa, std::move(headers), body,
+                                       method, uwa,
+                                       std::move(headers), std::move(body),
                                        handler, _cancel_ptr);
 
     hr->BeginConnect();

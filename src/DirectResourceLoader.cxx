@@ -295,7 +295,7 @@ DirectResourceLoader::SendRequest(struct pool &pool,
             http_request(pool, event_loop, *tcp_balancer, session_sticky,
                          filter, filter_factory,
                          method, address.GetHttp(),
-                         HttpHeaders(std::move(headers)), body.Steal(),
+                         HttpHeaders(std::move(headers)), std::move(body),
                          handler, cancel_ptr);
             break;
 
