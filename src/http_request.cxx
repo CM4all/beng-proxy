@@ -105,7 +105,7 @@ public:
          method(_method), address(_address),
          headers(std::move(_headers)), body(pool, _body),
          /* can only retry if there is no request body */
-         retries(_body != nullptr ? 2 : 0),
+         retries(_body == nullptr ? 2 : 0),
          handler(_handler)
     {
         _cancel_ptr = *this;

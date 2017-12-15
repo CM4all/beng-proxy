@@ -1,6 +1,7 @@
 cm4all-beng-proxy (12.9) unstable; urgency=low
 
   * was: fix crash after malformed HEAD response
+  * http_client: fix retry after error
   * lb/lua: allow building with LuaJIT 2.1
 
  --   
