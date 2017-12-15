@@ -147,7 +147,7 @@ HeadIstream::_Skip(off_t length)
     if (length >= rest)
         length = rest;
 
-    off_t nbytes = ForwardIstream::Skip(length);
+    off_t nbytes = ForwardIstream::_Skip(length);
     assert(nbytes <= length);
 
     if (nbytes > 0)
