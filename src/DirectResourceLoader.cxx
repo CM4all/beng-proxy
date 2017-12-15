@@ -141,7 +141,7 @@ DirectResourceLoader::SendRequest(struct pool &pool,
                                   http_method_t method,
                                   const ResourceAddress &address,
                                   http_status_t status, StringMap &&headers,
-                                  Istream *body,
+                                  UnusedIstreamPtr body,
                                   gcc_unused const char *body_etag,
                                   HttpResponseHandler &handler,
                                   CancellablePointer &cancel_ptr)
@@ -160,9 +160,8 @@ DirectResourceLoader::SendRequest(struct pool &pool,
         break;
 
     case ResourceAddress::Type::LOCAL:
-        if (body != nullptr)
-            /* static files cannot receive a request body, close it */
-            body->CloseUnused();
+        /* static files cannot receive a request body, close it */
+        body.Clear();
 
         file = &address.GetFile();
         if (file->delegate != nullptr) {
@@ -187,9 +186,8 @@ DirectResourceLoader::SendRequest(struct pool &pool,
         return;
 
     case ResourceAddress::Type::NFS:
-        if (body != nullptr)
-            /* NFS files cannot receive a request body, close it */
-            body->CloseUnused();
+        /* NFS files cannot receive a request body, close it */
+        body.Clear();
 
         nfs = &address.GetNfs();
 
@@ -204,7 +202,7 @@ DirectResourceLoader::SendRequest(struct pool &pool,
         pipe_filter(spawn_service, event_loop, &pool,
                     cgi->path, cgi->args.ToArray(pool),
                     cgi->options,
-                    status, std::move(headers), body,
+                    status, std::move(headers), body.Steal(),
                     handler);
         return;
 
@@ -212,7 +210,7 @@ DirectResourceLoader::SendRequest(struct pool &pool,
         cgi_new(spawn_service, event_loop, &pool,
                 method, &address.GetCgi(),
                 extract_remote_ip(&pool, &headers),
-                headers, body,
+                headers, body.Steal(),
                 handler, cancel_ptr);
         return;
 
@@ -224,8 +222,7 @@ DirectResourceLoader::SendRequest(struct pool &pool,
             if (stderr_fd < 0) {
                 int code = errno;
 
-                if (body != nullptr)
-                    body->CloseUnused();
+                body.Clear();
 
                 handler.InvokeError(std::make_exception_ptr(FormatErrno(code, "Failed to open '%s'",
                                                                         cgi->options.stderr_path)));
@@ -246,7 +243,7 @@ DirectResourceLoader::SendRequest(struct pool &pool,
                          cgi->query_string,
                          cgi->document_root,
                          extract_remote_ip(&pool, &headers),
-                         headers, UnusedIstreamPtr(body),
+                         headers, std::move(body),
                          cgi->params.ToArray(pool),
                          stderr_fd,
                          handler, cancel_ptr);
@@ -260,7 +257,7 @@ DirectResourceLoader::SendRequest(struct pool &pool,
                                 cgi->query_string,
                                 cgi->document_root,
                                 extract_remote_ip(&pool, &headers),
-                                std::move(headers), UnusedIstreamPtr(body),
+                                std::move(headers), std::move(body),
                                 cgi->params.ToArray(pool),
                                 stderr_fd,
                                 handler, cancel_ptr);
@@ -276,7 +273,7 @@ DirectResourceLoader::SendRequest(struct pool &pool,
                     cgi->script_name,
                     cgi->path_info,
                     cgi->query_string,
-                    headers, body,
+                    headers, body.Steal(),
                     cgi->params.ToArray(pool),
                     handler, cancel_ptr);
         return;
@@ -298,7 +295,7 @@ DirectResourceLoader::SendRequest(struct pool &pool,
             http_request(pool, event_loop, *tcp_balancer, session_sticky,
                          filter, filter_factory,
                          method, address.GetHttp(),
-                         HttpHeaders(std::move(headers)), body,
+                         HttpHeaders(std::move(headers)), body.Steal(),
                          handler, cancel_ptr);
             break;
 
@@ -312,7 +309,7 @@ DirectResourceLoader::SendRequest(struct pool &pool,
                               server_name, server_port,
                               false,
                               method, address.GetHttp(),
-                              std::move(headers), body,
+                              std::move(headers), body.Steal(),
                               handler, cancel_ptr);
             break;
         }
@@ -323,15 +320,14 @@ DirectResourceLoader::SendRequest(struct pool &pool,
         lhttp_request(pool, event_loop, *lhttp_stock,
                       address.GetLhttp(),
                       method, HttpHeaders(std::move(headers)),
-                      UnusedIstreamPtr(body),
+                      std::move(body),
                       handler, cancel_ptr);
         return;
     }
 
     /* the resource could not be located, abort the request */
 
-    if (body != nullptr)
-        body->CloseUnused();
+    body.Clear();
 
     handler.InvokeError(std::make_exception_ptr(std::runtime_error("Could not locate resource")));
 }

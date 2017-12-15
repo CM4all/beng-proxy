@@ -40,7 +40,7 @@
 #include <stddef.h>
 
 struct pool;
-class Istream;
+class UnusedIstreamPtr;
 struct MemachedStock;
 class EventLoop;
 class ResourceLoader;
@@ -81,7 +81,7 @@ http_cache_request(HttpCache &cache,
                    struct pool &pool, sticky_hash_t session_sticky,
                    http_method_t method,
                    const ResourceAddress &address,
-                   StringMap &&headers, Istream *body,
+                   StringMap &&headers, UnusedIstreamPtr body,
                    HttpResponseHandler &handler,
                    CancellablePointer &cancel_ptr);
 

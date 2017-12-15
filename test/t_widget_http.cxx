@@ -47,6 +47,7 @@
 #include "penv.hxx"
 #include "translation/Transformation.hxx"
 #include "crash.hxx"
+#include "istream/UnusedPtr.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream_null.hxx"
 #include "istream/istream_pipe.hxx"
@@ -163,7 +164,7 @@ public:
                      http_method_t method,
                      const ResourceAddress &address,
                      http_status_t status, StringMap &&headers,
-                     Istream *body, const char *body_etag,
+                     UnusedIstreamPtr body, const char *body_etag,
                      HttpResponseHandler &handler,
                      CancellablePointer &cancel_ptr) override;
 };
@@ -175,7 +176,8 @@ MyResourceLoader::SendRequest(struct pool &pool,
                               gcc_unused const ResourceAddress &address,
                               gcc_unused http_status_t status,
                               StringMap &&headers,
-                              Istream *body, gcc_unused const char *body_etag,
+                              UnusedIstreamPtr body,
+                              gcc_unused const char *body_etag,
                               HttpResponseHandler &handler,
                               gcc_unused CancellablePointer &cancel_ptr)
 {
@@ -185,12 +187,11 @@ MyResourceLoader::SendRequest(struct pool &pool,
 
     assert(!got_request);
     assert(method == HTTP_METHOD_GET);
-    assert(body == nullptr);
+    assert(!body);
 
     got_request = true;
 
-    if (body != nullptr)
-        body->CloseUnused();
+    body.Clear();
 
     switch (test_id) {
     case 0:

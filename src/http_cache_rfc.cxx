@@ -54,9 +54,9 @@ http_cache_request_evaluate(HttpCacheRequestInfo &info,
                             http_method_t method,
                             const ResourceAddress &address,
                             const StringMap &headers,
-                            Istream *body)
+                            bool has_request_body)
 {
-    if (method != HTTP_METHOD_GET || body != nullptr)
+    if (method != HTTP_METHOD_GET || has_request_body)
         /* RFC 2616 13.11 "Write-Through Mandatory" */
         return false;
 

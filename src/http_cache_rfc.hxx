@@ -56,7 +56,7 @@ http_cache_request_evaluate(HttpCacheRequestInfo &info,
                             http_method_t method,
                             const ResourceAddress &address,
                             const StringMap &headers,
-                            Istream *body);
+                            bool has_request_body);
 
 gcc_pure
 bool

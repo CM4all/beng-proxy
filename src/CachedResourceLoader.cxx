@@ -32,6 +32,7 @@
 
 #include "CachedResourceLoader.hxx"
 #include "http_cache.hxx"
+#include "istream/UnusedPtr.hxx"
 
 #include <utility>
 
@@ -42,13 +43,13 @@ CachedResourceLoader::SendRequest(struct pool &pool,
                                   const ResourceAddress &address,
                                   gcc_unused http_status_t status,
                                   StringMap &&headers,
-                                  Istream *body,
+                                  UnusedIstreamPtr body,
                                   gcc_unused const char *body_etag,
                                   HttpResponseHandler &handler,
                                   CancellablePointer &cancel_ptr)
 {
     http_cache_request(cache, pool, session_sticky,
                        method, address,
-                       std::move(headers), body,
+                       std::move(headers), std::move(body),
                        handler, cancel_ptr);
 }

@@ -31,7 +31,7 @@
  */
 
 #include "FailingResourceLoader.hxx"
-#include "istream/istream.hxx"
+#include "istream/UnusedPtr.hxx"
 #include "http_response.hxx"
 
 #include <stdexcept>
@@ -43,12 +43,11 @@ FailingResourceLoader::SendRequest(struct pool &,
                                    const ResourceAddress &,
                                    http_status_t,
                                    StringMap &&,
-                                   Istream *body, const char *,
+                                   UnusedIstreamPtr body, const char *,
                                    HttpResponseHandler &handler,
                                    CancellablePointer &)
 {
-    if (body != nullptr)
-        body->CloseUnused();
+    body.Clear();
 
     handler.InvokeError(std::make_exception_ptr(std::runtime_error("unimplemented")));
 }

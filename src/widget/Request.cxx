@@ -51,6 +51,7 @@
 #include "resource_tag.hxx"
 #include "uri/uri_extract.hxx"
 #include "strmap.hxx"
+#include "istream/UnusedPtr.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream_pipe.hxx"
 #include "pool.hxx"
@@ -409,7 +410,7 @@ WidgetRequest::FilterResponse(http_status_t status,
         ->SendRequest(pool, env.session_id.GetClusterHash(),
 
                       HTTP_METHOD_POST, filter, status,
-                      std::move(headers), body, source_tag,
+                      std::move(headers), UnusedIstreamPtr(body), source_tag,
                       *this,
                       cancel_ptr);
 }
@@ -638,12 +639,12 @@ WidgetRequest::SendRequest()
 
     resource_tag = address->GetId(pool);
 
-    Istream *request_body = widget.from_request.body;
+    UnusedIstreamPtr request_body(widget.from_request.body);
     widget.from_request.body = nullptr;
 
     auto headers = MakeRequestHeaders(*a_view, *t_view,
                                       address->IsAnyHttp(),
-                                      request_body != nullptr);
+                                      request_body);
 
     if (widget.cls->dump_headers) {
         widget.logger(4, "request headers for widget");
@@ -656,7 +657,7 @@ WidgetRequest::SendRequest()
                                      widget.from_request.method,
                                      *address, HTTP_STATUS_OK,
                                      std::move(headers),
-                                     request_body, nullptr,
+                                     std::move(request_body), nullptr,
                                      *this, cancel_ptr);
 }
 

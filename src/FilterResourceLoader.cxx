@@ -32,6 +32,7 @@
 
 #include "FilterResourceLoader.hxx"
 #include "fcache.hxx"
+#include "istream/UnusedPtr.hxx"
 
 #include <utility>
 
@@ -42,7 +43,7 @@ FilterResourceLoader::SendRequest(struct pool &pool,
                                   const ResourceAddress &address,
                                   http_status_t status,
                                   StringMap &&headers,
-                                  Istream *body,
+                                  UnusedIstreamPtr body,
                                   gcc_unused const char *body_etag,
                                   HttpResponseHandler &handler,
                                   CancellablePointer &cancel_ptr)
@@ -51,6 +52,6 @@ FilterResourceLoader::SendRequest(struct pool &pool,
 
     filter_cache_request(cache, pool,
                          address, body_etag,
-                         status, std::move(headers), body,
+                         status, std::move(headers), std::move(body),
                          handler, cancel_ptr);
 }

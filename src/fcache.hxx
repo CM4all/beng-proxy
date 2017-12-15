@@ -37,7 +37,7 @@
 #include "util/Compiler.h"
 
 struct pool;
-class Istream;
+class UnusedIstreamPtr;
 class EventLoop;
 class ResourceLoader;
 struct ResourceAddress;
@@ -80,7 +80,7 @@ filter_cache_request(FilterCache &cache,
                      const ResourceAddress &address,
                      const char *source_id,
                      http_status_t status, StringMap &&headers,
-                     Istream *body,
+                     UnusedIstreamPtr body,
                      HttpResponseHandler &handler,
                      CancellablePointer &cancel_ptr);
 

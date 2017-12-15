@@ -40,6 +40,7 @@
 #include "tpool.hxx"
 #include "ResourceAddress.hxx"
 #include "ResourceLoader.hxx"
+#include "istream/UnusedPtr.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream_null.hxx"
 #include "istream/istream_tee.hxx"
@@ -230,7 +231,7 @@ public:
              const ResourceAddress &address,
              const char *source_id,
              http_status_t status, StringMap &&headers,
-             Istream *body,
+             UnusedIstreamPtr body,
              HttpResponseHandler &handler,
              CancellablePointer &cancel_ptr);
 
@@ -243,16 +244,16 @@ private:
               FilterCacheInfo &&info,
               const ResourceAddress &address,
               http_status_t status, StringMap &&headers,
-              Istream *body, const char *body_etag,
+              UnusedIstreamPtr body, const char *body_etag,
               HttpResponseHandler &_handler,
               CancellablePointer &cancel_ptr);
 
     void Serve(FilterCacheItem &item,
-               struct pool &caller_pool, Istream *body,
+               struct pool &caller_pool,
                HttpResponseHandler &handler);
 
     void Hit(FilterCacheItem &item,
-             struct pool &caller_pool, Istream *body,
+             struct pool &caller_pool,
              HttpResponseHandler &handler);
 
     void Compress() {
@@ -599,7 +600,7 @@ FilterCache::Miss(struct pool &caller_pool,
                   FilterCacheInfo &&info,
                   const ResourceAddress &address,
                   http_status_t status, StringMap &&headers,
-                  Istream *body, const char *body_etag,
+                  UnusedIstreamPtr body, const char *body_etag,
                   HttpResponseHandler &_handler,
                   CancellablePointer &cancel_ptr)
 {
@@ -616,7 +617,7 @@ FilterCache::Miss(struct pool &caller_pool,
     resource_loader.SendRequest(*request_pool, 0,
                                 HTTP_METHOD_POST, address,
                                 status, std::move(headers),
-                                body, body_etag,
+                                std::move(body), body_etag,
                                 *request,
                                 async_unref_on_abort(caller_pool, cancel_ptr));
     pool_unref(request_pool);
@@ -624,12 +625,9 @@ FilterCache::Miss(struct pool &caller_pool,
 
 void
 FilterCache::Serve(FilterCacheItem &item,
-                   struct pool &caller_pool, Istream *body,
+                   struct pool &caller_pool,
                    HttpResponseHandler &handler)
 {
-    if (body != nullptr)
-        body->CloseUnused();
-
     LogConcat(4, "FilterCache", "serve ", item.info.key);
 
     /* XXX hold reference on item */
@@ -650,10 +648,10 @@ FilterCache::Serve(FilterCacheItem &item,
 
 void
 FilterCache::Hit(FilterCacheItem &item,
-                 struct pool &caller_pool, Istream *body,
+                 struct pool &caller_pool,
                  HttpResponseHandler &handler)
 {
-    Serve(item, caller_pool, body, handler);
+    Serve(item, caller_pool, handler);
 }
 
 void
@@ -661,7 +659,7 @@ FilterCache::Get(struct pool &caller_pool,
                  const ResourceAddress &address,
                  const char *source_id,
                  http_status_t status, StringMap &&headers,
-                 Istream *body,
+                 UnusedIstreamPtr body,
                  HttpResponseHandler &handler,
                  CancellablePointer &cancel_ptr)
 {
@@ -674,15 +672,17 @@ FilterCache::Get(struct pool &caller_pool,
         if (item == nullptr)
             Miss(caller_pool, std::move(*info),
                  address, status, std::move(headers),
-                 body, source_id,
+                 std::move(body), source_id,
                  handler, cancel_ptr);
-        else
-            Hit(*item, caller_pool, body, handler);
+        else {
+            body.Clear();
+            Hit(*item, caller_pool, handler);
+        }
     } else {
         resource_loader.SendRequest(caller_pool, 0,
                                     HTTP_METHOD_POST, address,
                                     status, std::move(headers),
-                                    body, source_id,
+                                    std::move(body), source_id,
                                     handler, cancel_ptr);
     }
 }
@@ -693,10 +693,10 @@ filter_cache_request(FilterCache &cache,
                      const ResourceAddress &address,
                      const char *source_id,
                      http_status_t status, StringMap &&headers,
-                     Istream *body,
+                     UnusedIstreamPtr body,
                      HttpResponseHandler &handler,
                      CancellablePointer &cancel_ptr)
 {
     cache.Get(pool, address, source_id, status, std::move(headers),
-              body, handler, cancel_ptr);
+              std::move(body), handler, cancel_ptr);
 }

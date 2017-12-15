@@ -46,6 +46,7 @@
 #include "AllocatorStats.hxx"
 #include "http/Date.hxx"
 #include "istream_rubber.hxx"
+#include "istream/UnusedPtr.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream_hold.hxx"
 #include "istream/istream_tee.hxx"
@@ -1159,7 +1160,7 @@ http_cache_request(HttpCache &cache,
                    struct pool &pool, sticky_hash_t session_sticky,
                    http_method_t method,
                    const ResourceAddress &address,
-                   StringMap &&headers, Istream *body,
+                   StringMap &&headers, UnusedIstreamPtr body,
                    HttpResponseHandler &handler,
                    CancellablePointer &cancel_ptr)
 {
@@ -1177,14 +1178,14 @@ http_cache_request(HttpCache &cache,
         cache.resource_loader.SendRequest(pool, session_sticky,
                                           method, address,
                                           HTTP_STATUS_OK, std::move(headers),
-                                          body, nullptr,
+                                          std::move(body), nullptr,
                                           handler, cancel_ptr);
         return;
     }
 
     HttpCacheRequestInfo info;
     if (http_cache_request_evaluate(info, method, address, headers, body)) {
-        assert(body == nullptr);
+        assert(!body);
 
         if (cache.heap.IsDefined())
             http_cache_heap_use(cache, pool, session_sticky,
@@ -1203,7 +1204,7 @@ http_cache_request(HttpCache &cache,
         cache.resource_loader.SendRequest(pool, session_sticky,
                                           method, address,
                                           HTTP_STATUS_OK, std::move(headers),
-                                          body, nullptr,
+                                          std::move(body), nullptr,
                                           handler, cancel_ptr);
     }
 }

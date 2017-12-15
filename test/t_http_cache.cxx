@@ -42,6 +42,7 @@
 #include "http_response.hxx"
 #include "PInstance.hxx"
 #include "fb_pool.hxx"
+#include "istream/UnusedPtr.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream_string.hxx"
 #include "util/Cancellable.hxx"
@@ -223,7 +224,7 @@ public:
                      http_method_t method,
                      const ResourceAddress &address,
                      http_status_t status, StringMap &&headers,
-                     Istream *body, const char *body_etag,
+                     UnusedIstreamPtr body, const char *body_etag,
                      HttpResponseHandler &handler,
                      CancellablePointer &cancel_ptr) override;
 };
@@ -235,7 +236,8 @@ MyResourceLoader::SendRequest(struct pool &pool,
                               gcc_unused const ResourceAddress &address,
                               gcc_unused http_status_t status,
                               StringMap &&headers,
-                              Istream *body, gcc_unused const char *body_etag,
+                              UnusedIstreamPtr body,
+                              gcc_unused const char *body_etag,
                               HttpResponseHandler &handler,
                               gcc_unused CancellablePointer &cancel_ptr)
 {
@@ -260,8 +262,7 @@ MyResourceLoader::SendRequest(struct pool &pool,
         }
     }
 
-    if (body != NULL)
-        body->CloseUnused();
+    body.Clear();
 
     StringMap response_headers(pool);
     if (request->response_headers != NULL) {
@@ -335,7 +336,6 @@ run_cache_test(struct pool *root_pool, unsigned num, bool cached)
     const auto uwa = MakeHttpAddress(request->uri).Host("foo");
     const ResourceAddress address(uwa);
 
-    Istream *body;
     CancellablePointer cancel_ptr;
 
     current_request = num;
@@ -348,14 +348,12 @@ run_cache_test(struct pool *root_pool, unsigned num, bool cached)
         header_parse_buffer(*pool, headers, std::move(gb));
     }
 
-    body = NULL;
-
     got_request = cached;
     got_response = false;
 
     Context context(*pool);
     http_cache_request(*cache, *pool, 0, request->method, address,
-                       std::move(headers), body,
+                       std::move(headers), nullptr,
                        context, cancel_ptr);
     pool_unref(pool);
 
