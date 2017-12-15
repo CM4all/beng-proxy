@@ -72,9 +72,14 @@ test_cflags = test_common_flags + [
 ]
 
 test_ldflags = [
-  '-Wl,--gc-sections',
-  '-Wl,--icf=all',
 ]
+
+if not debug
+  test_ldflags += [
+    '-Wl,--gc-sections',
+    '-Wl,--icf=all',
+  ]
+endif
 
 add_global_arguments(common_flags, language: 'c')
 add_global_arguments(common_flags, language: 'cpp')
