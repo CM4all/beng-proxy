@@ -454,12 +454,6 @@ p_free(struct pool *pool, const void *ptr);
 
 gcc_malloc
 void *
-p_calloc_impl(struct pool *pool, size_t size TRACE_ARGS_DECL);
-
-#define p_calloc(pool, size) p_calloc_impl(pool, size TRACE_ARGS)
-
-gcc_malloc
-void *
 p_memdup_impl(struct pool *pool, const void *src, size_t length TRACE_ARGS_DECL);
 
 #define p_memdup(pool, src, length) p_memdup_impl(pool, src, length TRACE_ARGS)

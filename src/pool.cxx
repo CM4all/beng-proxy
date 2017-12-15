@@ -1269,34 +1269,6 @@ p_free(struct pool *pool, const void *cptr)
         PoisonInaccessible(ptr, ALIGN_SIZE);
 }
 
-static inline void
-clear_memory(void *p, size_t size)
-{
-#ifdef __clang__
-#pragma GCC diagnostic ignored "-Wlanguage-extension-token"
-#endif
-#if defined(__GNUC__) && defined(__x86_64__)
-    size_t n = (size + 7) / 8;
-    size_t gcc_unused dummy0, dummy1;
-    asm volatile("cld\n\t"
-                 "rep stosq\n\t"
-                 : "=&c"(dummy0), "=&D"(dummy1)
-                 : "a"(0), "0"(n), "1"(p)
-                   /* : "memory"   memory barrier not required here */
-                 );
-#else
-    memset(p, 0, size);
-#endif
-}
-
-void *
-p_calloc_impl(struct pool *pool, size_t size TRACE_ARGS_DECL)
-{
-    void *p = internal_malloc(pool, size TRACE_ARGS_FWD);
-    clear_memory(p, size);
-    return p;
-}
-
 #ifndef NDEBUG
 
 void
