@@ -44,6 +44,7 @@
 class UnusedHoldIstreamPtr : public UnusedIstreamPtr {
 public:
     UnusedHoldIstreamPtr() = default;
+    UnusedHoldIstreamPtr(std::nullptr_t) noexcept {}
 
     explicit UnusedHoldIstreamPtr(struct pool &p, Istream *_stream)
         :UnusedIstreamPtr(_stream != nullptr

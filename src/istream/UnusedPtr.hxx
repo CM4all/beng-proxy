@@ -51,6 +51,7 @@ class UnusedIstreamPtr {
 
 public:
     UnusedIstreamPtr() = default;
+    UnusedIstreamPtr(std::nullptr_t) noexcept {}
 
     explicit UnusedIstreamPtr(Istream *_stream)
         :stream(_stream) {}
