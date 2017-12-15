@@ -38,6 +38,7 @@
 struct pool;
 class EventLoop;
 class Istream;
+class UnusedIstreamPtr;
 class SpawnService;
 struct CgiAddress;
 class StringMap;
@@ -51,7 +52,7 @@ Istream *
 cgi_launch(EventLoop &event_loop, struct pool *pool, http_method_t method,
            const CgiAddress *address,
            const char *remote_addr,
-           const StringMap &headers, Istream *body,
+           const StringMap &headers, UnusedIstreamPtr body,
            SpawnService &spawn_service);
 
 #endif

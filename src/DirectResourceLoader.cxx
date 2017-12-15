@@ -202,7 +202,7 @@ DirectResourceLoader::SendRequest(struct pool &pool,
         pipe_filter(spawn_service, event_loop, &pool,
                     cgi->path, cgi->args.ToArray(pool),
                     cgi->options,
-                    status, std::move(headers), body.Steal(),
+                    status, std::move(headers), std::move(body),
                     handler);
         return;
 
@@ -210,7 +210,7 @@ DirectResourceLoader::SendRequest(struct pool &pool,
         cgi_new(spawn_service, event_loop, &pool,
                 method, &address.GetCgi(),
                 extract_remote_ip(&pool, &headers),
-                headers, body.Steal(),
+                headers, std::move(body),
                 handler, cancel_ptr);
         return;
 

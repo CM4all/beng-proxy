@@ -40,6 +40,7 @@ struct PreparedChildProcess;
 class SpawnService;
 class EventLoop;
 class Istream;
+class UnusedIstreamPtr;
 
 /**
  * Wrapper for the fork() system call.  Forks a sub process, returns
@@ -58,7 +59,7 @@ class Istream;
  */
 int
 SpawnChildProcess(EventLoop &event_loop, struct pool *pool, const char *name,
-                  Istream *input, Istream **output_r,
+                  UnusedIstreamPtr input, Istream **output_r,
                   PreparedChildProcess &&prepared,
                   SpawnService &spawn_service);
 

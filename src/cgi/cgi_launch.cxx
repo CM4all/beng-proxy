@@ -33,6 +33,7 @@
 #include "cgi_launch.hxx"
 #include "cgi_address.hxx"
 #include "istream/istream.hxx"
+#include "istream/UnusedPtr.hxx"
 #include "strmap.hxx"
 #include "product.h"
 #include "spawn/IstreamSpawn.hxx"
@@ -179,17 +180,17 @@ cgi_launch(EventLoop &event_loop, struct pool *pool,
            http_method_t method,
            const CgiAddress *address,
            const char *remote_addr,
-           const StringMap &headers, Istream *body,
+           const StringMap &headers, UnusedIstreamPtr body,
            SpawnService &spawn_service)
 {
     PreparedChildProcess p;
     PrepareCgi(*pool, p, method,
                *address, remote_addr, headers,
-               body != nullptr ? body->GetAvailable(false) : -1);
+               body ? body.GetAvailable(false) : -1);
 
     Istream *input;
     SpawnChildProcess(event_loop, pool,
-                      cgi_address_name(address), body, &input,
+                      cgi_address_name(address), std::move(body), &input,
                       std::move(p),
                       spawn_service);
     return input;

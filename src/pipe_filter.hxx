@@ -36,7 +36,7 @@
 #include "http/Status.h"
 
 struct pool;
-class Istream;
+class UnusedIstreamPtr;
 class EventLoop;
 class SpawnService;
 class StringMap;
@@ -55,7 +55,7 @@ pipe_filter(SpawnService &spawn_service, EventLoop &event_loop,
             struct pool *pool, const char *path,
             ConstBuffer<const char *> args,
             const ChildOptions &options,
-            http_status_t status, StringMap &&headers, Istream *body,
+            http_status_t status, StringMap &&headers, UnusedIstreamPtr body,
             HttpResponseHandler &_handler);
 
 #endif

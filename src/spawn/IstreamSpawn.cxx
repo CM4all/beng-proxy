@@ -35,6 +35,7 @@
 #include "spawn/Prepared.hxx"
 #include "spawn/ExitListener.hxx"
 #include "system/fd_util.h"
+#include "istream/UnusedPtr.hxx"
 #include "istream/istream.hxx"
 #include "istream/Pointer.hxx"
 #include "io/Splice.hxx"
@@ -78,7 +79,7 @@ struct SpawnIstream final : Istream, IstreamHandler, ExitListener {
 
     SpawnIstream(SpawnService &_spawn_service, EventLoop &event_loop,
                  struct pool &p,
-                 Istream *_input, UniqueFileDescriptor &&_input_fd,
+                 UnusedIstreamPtr _input, UniqueFileDescriptor &&_input_fd,
                  UniqueFileDescriptor &&_output_fd,
                  pid_t _pid);
 
@@ -382,7 +383,8 @@ SpawnIstream::OnChildProcessExit(gcc_unused int status)
 inline
 SpawnIstream::SpawnIstream(SpawnService &_spawn_service, EventLoop &event_loop,
                            struct pool &p,
-                           Istream *_input, UniqueFileDescriptor &&_input_fd,
+                           UnusedIstreamPtr _input,
+                           UniqueFileDescriptor &&_input_fd,
                            UniqueFileDescriptor &&_output_fd,
                            pid_t _pid)
     :Istream(p),
@@ -391,12 +393,12 @@ SpawnIstream::SpawnIstream(SpawnService &_spawn_service, EventLoop &event_loop,
      output_fd(std::move(_output_fd)),
      output_event(event_loop, output_fd.Get(), SocketEvent::READ,
                   BIND_THIS_METHOD(OutputEventCallback)),
-     input(_input, *this, ISTREAM_TO_PIPE),
+     input(_input.Steal(), *this, ISTREAM_TO_PIPE),
      input_fd(std::move(_input_fd)),
      input_event(event_loop, BIND_THIS_METHOD(InputEventCallback)),
      pid(_pid)
 {
-    if (_input != nullptr) {
+    if (input.IsDefined()) {
         input_event.Set(input_fd.Get(), SocketEvent::WRITE);
         input_event.Add();
     }
@@ -406,26 +408,21 @@ SpawnIstream::SpawnIstream(SpawnService &_spawn_service, EventLoop &event_loop,
 
 int
 SpawnChildProcess(EventLoop &event_loop, struct pool *pool, const char *name,
-                  Istream *input, Istream **output_r,
+                  UnusedIstreamPtr input, Istream **output_r,
                   PreparedChildProcess &&prepared,
                   SpawnService &spawn_service)
 {
-    if (input != nullptr) {
-        int fd = input->AsFd();
-        if (fd >= 0) {
+    if (input) {
+        int fd = input.AsFd();
+        if (fd >= 0)
             prepared.SetStdin(fd);
-            input = nullptr;
-        }
     }
 
     UniqueFileDescriptor stdin_pipe;
-    if (input != nullptr) {
+    if (input) {
         UniqueFileDescriptor stdin_r;
-        if (!UniqueFileDescriptor::CreatePipe(stdin_r, stdin_pipe)) {
-            int e = errno;
-            input->CloseUnused();
-            throw MakeErrno(e, "pipe() failed");
-        }
+        if (!UniqueFileDescriptor::CreatePipe(stdin_r, stdin_pipe))
+            throw MakeErrno("pipe() failed");
 
         prepared.SetStdin(std::move(stdin_r));
 
@@ -433,37 +430,24 @@ SpawnChildProcess(EventLoop &event_loop, struct pool *pool, const char *name,
     }
 
     UniqueFileDescriptor stdout_pipe, stdout_w;
-    if (!UniqueFileDescriptor::CreatePipe(stdout_pipe, stdout_w)) {
-        int e = errno;
-
-        if (input != nullptr)
-            input->CloseUnused();
-
-        throw MakeErrno(e, "pipe() failed");
-    }
+    if (!UniqueFileDescriptor::CreatePipe(stdout_pipe, stdout_w))
+        throw MakeErrno("pipe() failed");
 
     prepared.SetStdout(std::move(stdout_w));
 
     stdout_pipe.SetNonBlocking();
 
-    try {
-        const int pid = spawn_service.SpawnChildProcess(name, std::move(prepared),
-                                                        nullptr);
-        auto f = NewFromPool<SpawnIstream>(*pool, spawn_service, event_loop,
-                                           *pool,
-                                           input, std::move(stdin_pipe),
-                                           std::move(stdout_pipe),
-                                           pid);
+    const int pid = spawn_service.SpawnChildProcess(name, std::move(prepared),
+                                                    nullptr);
+    auto f = NewFromPool<SpawnIstream>(*pool, spawn_service, event_loop,
+                                       *pool,
+                                       std::move(input), std::move(stdin_pipe),
+                                       std::move(stdout_pipe),
+                                       pid);
 
-        /* XXX CLOEXEC */
+    /* XXX CLOEXEC */
 
-        *output_r = f;
+    *output_r = f;
 
-        return pid;
-    } catch (...) {
-        if (input != nullptr)
-            input->CloseUnused();
-
-        throw;
-    }
+    return pid;
 }

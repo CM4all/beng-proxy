@@ -36,7 +36,7 @@
 #include "istream_stopwatch.hxx"
 #include "strmap.hxx"
 #include "pool.hxx"
-#include "istream/istream.hxx"
+#include "istream/UnusedPtr.hxx"
 #include "spawn/ChildOptions.hxx"
 #include "spawn/IstreamSpawn.hxx"
 #include "spawn/Prepared.hxx"
@@ -99,7 +99,7 @@ pipe_filter(SpawnService &spawn_service, EventLoop &event_loop,
             struct pool *pool, const char *path,
             ConstBuffer<const char *> args,
             const ChildOptions &options,
-            http_status_t status, StringMap &&headers, Istream *body,
+            http_status_t status, StringMap &&headers, UnusedIstreamPtr body,
             HttpResponseHandler &handler)
 {
     /* need to hold this pool reference because it is guaranteed that
@@ -109,7 +109,7 @@ pipe_filter(SpawnService &spawn_service, EventLoop &event_loop,
 
     const char *etag;
 
-    if (body == nullptr) {
+    if (!body) {
         /* if the resource does not have a body (which is different
            from Content-Length:0), don't filter it */
         handler.InvokeResponse(status, std::move(headers), nullptr);
@@ -129,7 +129,7 @@ pipe_filter(SpawnService &spawn_service, EventLoop &event_loop,
 
     try {
         options.CopyTo(p, true, nullptr);
-        SpawnChildProcess(event_loop, pool, path, body, &response,
+        SpawnChildProcess(event_loop, pool, path, std::move(body), &response,
                           std::move(p),
                           spawn_service);
     } catch (...) {

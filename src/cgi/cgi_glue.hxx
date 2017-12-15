@@ -38,7 +38,7 @@
 struct pool;
 struct CgiAddress;
 class EventLoop;
-class Istream;
+class UnusedIstreamPtr;
 class SpawnService;
 class StringMap;
 class HttpResponseHandler;
@@ -52,7 +52,7 @@ cgi_new(SpawnService &spawn_service, EventLoop &event_loop,
         struct pool *pool, http_method_t method,
         const CgiAddress *address,
         const char *remote_addr,
-        const StringMap &headers, Istream *body,
+        const StringMap &headers, UnusedIstreamPtr body,
         HttpResponseHandler &_handler,
         CancellablePointer &cancel_ptr);
 

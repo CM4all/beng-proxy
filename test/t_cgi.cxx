@@ -39,6 +39,7 @@
 #include "strmap.hxx"
 #include "istream/istream_file.hxx"
 #include "istream/Pointer.hxx"
+#include "istream/UnusedPtr.hxx"
 #include "istream/istream.hxx"
 #include "PInstance.hxx"
 #include "fb_pool.hxx"
@@ -387,8 +388,8 @@ test_post(struct pool *pool, Context *c)
     cgi_new(c->spawn_service, c->event_loop,
             pool, HTTP_METHOD_POST, &address,
             nullptr, StringMap(*pool),
-            istream_file_new(c->event_loop, *pool,
-                             "build.ninja", 8192),
+            UnusedIstreamPtr(istream_file_new(c->event_loop, *pool,
+                                              "build.ninja", 8192)),
             *c, c->cancel_ptr);
 
     pool_unref(pool);
