@@ -351,7 +351,7 @@ pool_trash(gcc_unused struct pool *pool)
 }
 
 static inline void
-pool_commit()
+pool_commit() noexcept
 {
 }
 
@@ -389,7 +389,7 @@ void
 pool_trash(struct pool *pool);
 
 void
-pool_commit();
+pool_commit() noexcept;
 
 bool
 pool_contains(const struct pool &pool, const void *ptr, size_t size);
