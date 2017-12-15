@@ -6,6 +6,7 @@ project('CM4all beng-proxy', ['c', 'cpp'], version: '13.3',
 )
 
 compiler = meson.get_compiler('cpp')
+c_compiler = meson.get_compiler('c')
 
 pkg_mod = import('pkgconfig')
 pkg_mod.generate(version: meson.project_version(),
@@ -38,21 +39,36 @@ common_flags = [
   '-Wundef',
 ]
 
-add_global_arguments(common_flags,
-  '-Wmissing-prototypes', '-Wstrict-prototypes',
-  '-Wbad-function-cast',
-  '-Waggregate-return',
-  '-Wnested-externs',
-  '-pedantic',
-  language: 'c')
-
-add_global_arguments(common_flags,
+test_cxxflags = [
   '-fno-threadsafe-statics',
   '-fmerge-all-constants',
   '-Wno-variadic-macros',
   '-Wno-missing-field-initializers',
   '-Wno-non-virtual-dtor',
-  language: 'cpp')
+]
+
+test_cflags = [
+  '-Wmissing-prototypes', '-Wstrict-prototypes',
+  '-Wbad-function-cast',
+  '-Waggregate-return',
+  '-Wnested-externs',
+  '-pedantic',
+]
+
+add_global_arguments(common_flags, language: 'c')
+add_global_arguments(common_flags, language: 'cpp')
+
+foreach f: test_cxxflags
+  if compiler.has_argument(f)
+    add_global_arguments(f, language: 'cpp')
+  endif
+endforeach
+
+foreach f: test_cflags
+  if c_compiler.has_argument(f)
+    add_global_arguments(f, language: 'c')
+  endif
+endforeach
 
 if debug
   debug_flags = ['-DPOISON', '-DTRACE']
