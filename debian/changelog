@@ -1,6 +1,6 @@
 cm4all-beng-proxy (13.3) unstable; urgency=low
 
-  * 
+  * http_client: fix retry after error
 
  --   
 
