@@ -43,6 +43,7 @@
 struct pool;
 class StringMap;
 class Istream;
+class UnusedIstreamPtr;
 
 /**
  * Definition of the HTTP response handler.
@@ -62,6 +63,9 @@ public:
 
         OnHttpResponse(status, std::move(headers), body);
     }
+
+    void InvokeResponse(http_status_t status, StringMap &&headers,
+                        UnusedIstreamPtr body);
 
     /**
      * Sends a plain-text message.

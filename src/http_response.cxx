@@ -33,6 +33,14 @@
 #include "http_response.hxx"
 #include "strmap.hxx"
 #include "istream/istream_string.hxx"
+#include "istream/UnusedPtr.hxx"
+
+void
+HttpResponseHandler::InvokeResponse(http_status_t status, StringMap &&headers,
+                                    UnusedIstreamPtr body)
+{
+    InvokeResponse(status, std::move(headers), body.Steal());
+}
 
 void
 HttpResponseHandler::InvokeResponse(struct pool &pool,
