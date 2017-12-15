@@ -38,7 +38,7 @@
 #include "http_response.hxx"
 #include "istream_fcgi.hxx"
 #include "istream_gb.hxx"
-#include "istream/istream.hxx"
+#include "istream/UnusedPtr.hxx"
 #include "istream/Pointer.hxx"
 #include "istream/istream_cat.hxx"
 #include "istream/Bucket.hxx"
@@ -1058,7 +1058,7 @@ fcgi_client_request(struct pool *pool, EventLoop &event_loop,
                     const char *query_string,
                     const char *document_root,
                     const char *remote_addr,
-                    const StringMap &headers, Istream *body,
+                    const StringMap &headers, UnusedIstreamPtr body,
                     ConstBuffer<const char *> params,
                     int stderr_fd,
                     HttpResponseHandler &handler,
@@ -1107,8 +1107,8 @@ fcgi_client_request(struct pool *pool, EventLoop &event_loop,
     if (remote_addr != nullptr)
         ps("REMOTE_ADDR", remote_addr);
 
-    off_t available = body != nullptr
-        ? body->GetAvailable(false)
+    off_t available = body
+        ? body.GetAvailable(false)
         : -1;
     if (available >= 0) {
         char value[64];
@@ -1154,11 +1154,11 @@ fcgi_client_request(struct pool *pool, EventLoop &event_loop,
 
     Istream *request;
 
-    if (body != nullptr)
+    if (body)
         /* format the request body */
         request = istream_cat_new(*pool,
                                   istream_gb_new(*pool, std::move(buffer)),
-                                  istream_fcgi_new(*pool, *body,
+                                  istream_fcgi_new(*pool, *body.Steal(),
                                                    header.request_id));
     else {
         /* no request body - append an empty STDIN packet */

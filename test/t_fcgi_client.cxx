@@ -45,7 +45,7 @@
 #include "io/FileDescriptor.hxx"
 #include "lease.hxx"
 #include "direct.hxx"
-#include "istream/istream.hxx"
+#include "istream/UnusedPtr.hxx"
 #include "strmap.hxx"
 #include "fb_pool.hxx"
 #include "net/SocketDescriptor.hxx"
@@ -272,7 +272,7 @@ struct Connection {
                             lease,
                             method, uri, uri, nullptr, nullptr, nullptr,
                             nullptr, "192.168.1.100",
-                            headers, body,
+                            headers, UnusedIstreamPtr(body),
                             nullptr,
                             -1,
                             handler, cancel_ptr);

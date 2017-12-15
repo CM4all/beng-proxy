@@ -37,7 +37,7 @@
 #include "lease.hxx"
 #include "tcp_stock.hxx"
 #include "stock/Item.hxx"
-#include "istream/istream.hxx"
+#include "istream/UnusedPtr.hxx"
 #include "pool.hxx"
 #include "AllocatorPtr.hxx"
 #include "net/SocketDescriptor.hxx"
@@ -66,7 +66,7 @@ public:
                const char *query_string,
                const char *document_root,
                const char *remote_addr,
-               const StringMap &headers, Istream *body,
+               const StringMap &headers, UnusedIstreamPtr body,
                ConstBuffer<const char *> params,
                int stderr_fd,
                HttpResponseHandler &handler,
@@ -89,7 +89,7 @@ public:
                             query_string,
                             document_root,
                             remote_addr,
-                            headers, body,
+                            headers, std::move(body),
                             params,
                             stderr_fd,
                             handler, cancel_ptr);
@@ -123,7 +123,7 @@ fcgi_request(struct pool *pool, EventLoop &event_loop,
              const char *query_string,
              const char *document_root,
              const char *remote_addr,
-             const StringMap &headers, Istream *body,
+             const StringMap &headers, UnusedIstreamPtr body,
              ConstBuffer<const char *> params,
              int stderr_fd,
              HttpResponseHandler &handler,
@@ -138,8 +138,7 @@ fcgi_request(struct pool *pool, EventLoop &event_loop,
                                     action,
                                     args);
     } catch (...) {
-        if (body != nullptr)
-            body->CloseUnused();
+        body.Clear();
 
         if (stderr_fd >= 0)
             close(stderr_fd);
@@ -154,6 +153,6 @@ fcgi_request(struct pool *pool, EventLoop &event_loop,
     request->Start(event_loop, path, method, uri,
                    script_name, path_info,
                    query_string, document_root, remote_addr,
-                   headers, body, params, stderr_fd, handler,
+                   headers, std::move(body), params, stderr_fd, handler,
                    cancel_ptr);
 }

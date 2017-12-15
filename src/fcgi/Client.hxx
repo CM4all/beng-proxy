@@ -38,7 +38,7 @@
 
 struct pool;
 class EventLoop;
-class Istream;
+class UnusedIstreamPtr;
 class Lease;
 class SocketDescriptor;
 class StringMap;
@@ -78,7 +78,7 @@ fcgi_client_request(struct pool *pool, EventLoop &event_loop,
                     const char *query_string,
                     const char *document_root,
                     const char *remote_addr,
-                    const StringMap &headers, Istream *body,
+                    const StringMap &headers, UnusedIstreamPtr body,
                     ConstBuffer<const char *> params,
                     int stderr_fd,
                     HttpResponseHandler &handler,
