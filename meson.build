@@ -45,6 +45,11 @@ test_cxxflags = [
   '-Wno-variadic-macros',
   '-Wno-missing-field-initializers',
   '-Wno-non-virtual-dtor',
+
+  # work around bogus GCC7 warning "mangled name for ... will change
+  # in C++17 because the exception specification is part of a function
+  # type"
+  '-Wno-noexcept-type',
 ]
 
 test_cflags = [
