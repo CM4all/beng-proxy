@@ -125,13 +125,13 @@ pipe_filter(SpawnService &spawn_service, EventLoop &event_loop,
     for (auto i : args)
         p.Append(i);
 
-    Istream *response;
+    UnusedIstreamPtr response;
 
     try {
         options.CopyTo(p, true, nullptr);
-        SpawnChildProcess(event_loop, pool, path, std::move(body), &response,
-                          std::move(p),
-                          spawn_service);
+        response = SpawnChildProcess(event_loop, pool, path, std::move(body),
+                                     std::move(p),
+                                     spawn_service);
     } catch (...) {
         handler.InvokeError(std::current_exception());
         return;
@@ -153,7 +153,8 @@ pipe_filter(SpawnService &spawn_service, EventLoop &event_loop,
         headers.Set("etag", etag);
     }
 
-    response = istream_stopwatch_new(*pool, *response, stopwatch);
+    response = UnusedIstreamPtr(istream_stopwatch_new(*pool, *response.Steal(),
+                                                      stopwatch));
 
-    handler.InvokeResponse(status, std::move(headers), response);
+    handler.InvokeResponse(status, std::move(headers), std::move(response));
 }

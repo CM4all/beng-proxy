@@ -52,7 +52,7 @@ cgi_new(SpawnService &spawn_service, EventLoop &event_loop,
 
     AbortFlag abort_flag(cancel_ptr);
 
-    Istream *input;
+    UnusedIstreamPtr input;
 
     try {
         input = cgi_launch(event_loop, pool, method, address,
@@ -71,5 +71,5 @@ cgi_new(SpawnService &spawn_service, EventLoop &event_loop,
 
     stopwatch_event(stopwatch, "fork");
 
-    cgi_client_new(*pool, stopwatch, *input, handler, cancel_ptr);
+    cgi_client_new(*pool, stopwatch, *input.Steal(), handler, cancel_ptr);
 }

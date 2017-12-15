@@ -406,9 +406,9 @@ SpawnIstream::SpawnIstream(SpawnService &_spawn_service, EventLoop &event_loop,
     spawn_service.SetExitListener(pid, this);
 }
 
-int
+UnusedIstreamPtr
 SpawnChildProcess(EventLoop &event_loop, struct pool *pool, const char *name,
-                  UnusedIstreamPtr input, Istream **output_r,
+                  UnusedIstreamPtr input,
                   PreparedChildProcess &&prepared,
                   SpawnService &spawn_service)
 {
@@ -447,7 +447,5 @@ SpawnChildProcess(EventLoop &event_loop, struct pool *pool, const char *name,
 
     /* XXX CLOEXEC */
 
-    *output_r = f;
-
-    return pid;
+    return UnusedIstreamPtr(f);
 }

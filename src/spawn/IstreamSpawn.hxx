@@ -39,7 +39,6 @@ struct pool;
 struct PreparedChildProcess;
 class SpawnService;
 class EventLoop;
-class Istream;
 class UnusedIstreamPtr;
 
 /**
@@ -55,11 +54,11 @@ class UnusedIstreamPtr;
  * @param input a stream which will be passed as standard input to the
  * new process; will be consumed or closed by this function in any
  * case
- * @return the child pid
+ * @return the output stream
  */
-int
+UnusedIstreamPtr
 SpawnChildProcess(EventLoop &event_loop, struct pool *pool, const char *name,
-                  UnusedIstreamPtr input, Istream **output_r,
+                  UnusedIstreamPtr input,
                   PreparedChildProcess &&prepared,
                   SpawnService &spawn_service);
 

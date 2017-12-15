@@ -37,7 +37,6 @@
 
 struct pool;
 class EventLoop;
-class Istream;
 class UnusedIstreamPtr;
 class SpawnService;
 struct CgiAddress;
@@ -48,7 +47,7 @@ class StringMap;
  *
  * Throws std::runtime_error on error.
  */
-Istream *
+UnusedIstreamPtr
 cgi_launch(EventLoop &event_loop, struct pool *pool, http_method_t method,
            const CgiAddress *address,
            const char *remote_addr,

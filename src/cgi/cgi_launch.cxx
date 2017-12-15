@@ -175,7 +175,7 @@ PrepareCgi(struct pool &pool, PreparedChildProcess &p,
     address.options.CopyTo(p, false, nullptr);
 }
 
-Istream *
+UnusedIstreamPtr
 cgi_launch(EventLoop &event_loop, struct pool *pool,
            http_method_t method,
            const CgiAddress *address,
@@ -188,10 +188,8 @@ cgi_launch(EventLoop &event_loop, struct pool *pool,
                *address, remote_addr, headers,
                body ? body.GetAvailable(false) : -1);
 
-    Istream *input;
-    SpawnChildProcess(event_loop, pool,
-                      cgi_address_name(address), std::move(body), &input,
-                      std::move(p),
-                      spawn_service);
-    return input;
+    return SpawnChildProcess(event_loop, pool,
+                             cgi_address_name(address), std::move(body),
+                             std::move(p),
+                             spawn_service);
 }
