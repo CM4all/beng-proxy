@@ -33,7 +33,11 @@
 #ifndef BENG_PROXY_UNUSED_ISTREAM_PTR_HXX
 #define BENG_PROXY_UNUSED_ISTREAM_PTR_HXX
 
+#include "util/Compiler.h"
+
 #include <utility>
+
+#include <sys/types.h>
 
 class Istream;
 
@@ -78,6 +82,9 @@ public:
         if (s != nullptr)
             Close(*s);
     }
+
+    gcc_pure
+    off_t GetAvailable(bool partial) const noexcept;
 
 private:
     static void Close(Istream &i);
