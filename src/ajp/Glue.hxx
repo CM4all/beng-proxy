@@ -41,7 +41,7 @@
 
 struct pool;
 class EventLoop;
-class Istream;
+class UnusedIstreamPtr;
 class TcpBalancer;
 struct HttpAddress;
 class StringMap;
@@ -61,6 +61,6 @@ ajp_stock_request(struct pool &pool, EventLoop &event_loop,
                   unsigned server_port, bool is_ssl,
                   http_method_t method,
                   const HttpAddress &uwa,
-                  StringMap &&headers, Istream *body,
+                  StringMap &&headers, UnusedIstreamPtr body,
                   HttpResponseHandler &handler,
                   CancellablePointer &cancel_ptr);

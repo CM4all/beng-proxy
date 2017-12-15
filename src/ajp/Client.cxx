@@ -39,7 +39,7 @@
 #include "GrowingBuffer.hxx"
 #include "istream_ajp_body.hxx"
 #include "istream_gb.hxx"
-#include "istream/istream.hxx"
+#include "istream/UnusedPtr.hxx"
 #include "istream/Pointer.hxx"
 #include "istream/istream_cat.hxx"
 #include "istream/istream_memory.hxx"
@@ -824,7 +824,7 @@ ajp_client_request(struct pool &pool, EventLoop &event_loop,
                    unsigned server_port, bool is_ssl,
                    http_method_t method, const char *uri,
                    StringMap &headers,
-                   Istream *body,
+                   UnusedIstreamPtr body,
                    HttpResponseHandler &handler,
                    CancellablePointer &cancel_ptr)
 {
@@ -838,8 +838,7 @@ ajp_client_request(struct pool &pool, EventLoop &event_loop,
         const ScopePoolRef ref(pool TRACE_ARGS);
 
         lease.ReleaseLease(true);
-        if (body != nullptr)
-            body->CloseUnused();
+        body.Clear();
 
         handler.InvokeError(std::make_exception_ptr(AjpClientError(StringFormat<256>("malformed request URI '%s'", uri))));
         return;
@@ -851,8 +850,7 @@ ajp_client_request(struct pool &pool, EventLoop &event_loop,
         const ScopePoolRef ref(pool TRACE_ARGS);
 
         lease.ReleaseLease(true);
-        if (body != nullptr)
-            body->CloseUnused();
+        body.Clear();
 
         handler.InvokeError(std::make_exception_ptr(AjpClientError("unknown request method")));
         return;
@@ -860,21 +858,21 @@ ajp_client_request(struct pool &pool, EventLoop &event_loop,
 
     off_t available = -1;
     size_t requested;
-    if (body != nullptr) {
-        available = body->GetAvailable(false);
+    if (body) {
+        available = body.GetAvailable(false);
         if (available == -1) {
             /* AJPv13 does not support chunked request bodies */
             const ScopePoolRef ref(pool TRACE_ARGS);
 
             lease.ReleaseLease(true);
-            body->CloseUnused();
+            body.Clear();
 
             handler.InvokeError(std::make_exception_ptr(AjpClientError("AJPv13 does not support chunked request bodies")));
             return;
         }
 
         if (available == 0)
-            istream_free_unused(&body);
+            body.Clear();
         else
             requested = 1024;
     }
@@ -946,8 +944,8 @@ ajp_client_request(struct pool &pool, EventLoop &event_loop,
     header->length = ToBE16(gb.GetSize() - sizeof(*header));
 
     Istream *request = istream_gb_new(pool, std::move(gb));
-    if (body != nullptr) {
-        client->request.ajp_body = istream_ajp_body_new(pool, *body);
+    if (body) {
+        client->request.ajp_body = istream_ajp_body_new(pool, *body.Steal());
         istream_ajp_body_request(*client->request.ajp_body, requested);
         request = istream_cat_new(pool, request, client->request.ajp_body,
                                   istream_memory_new(&pool, &empty_body_chunk,

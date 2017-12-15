@@ -41,7 +41,7 @@
 
 struct pool;
 class EventLoop;
-class Istream;
+class UnusedIstreamPtr;
 class SocketDescriptor;
 class Lease;
 class HttpResponseHandler;
@@ -78,6 +78,6 @@ ajp_client_request(struct pool &pool, EventLoop &event_loop,
                    unsigned server_port, bool is_ssl,
                    http_method_t method, const char *uri,
                    StringMap &headers,
-                   Istream *body,
+                   UnusedIstreamPtr body,
                    HttpResponseHandler &handler,
                    CancellablePointer &cancel_ptr);

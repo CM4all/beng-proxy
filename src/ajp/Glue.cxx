@@ -42,13 +42,12 @@
 #include "tcp_stock.hxx"
 #include "tcp_balancer.hxx"
 #include "abort_close.hxx"
-#include "istream/istream.hxx"
 #include "istream/UnusedHoldPtr.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
 #include "pool.hxx"
 #include "util/Cancellable.hxx"
-
+#include "util/LeakDetector.hxx"
 #include "util/Compiler.h"
 
 #include <string.h>
@@ -82,7 +81,7 @@ public:
                unsigned _server_port, bool _is_ssl,
                http_method_t _method, const char *_uri,
                StringMap &&_headers,
-               Istream *_body,
+               UnusedIstreamPtr _body,
                HttpResponseHandler &_handler,
                CancellablePointer &_cancel_ptr)
         :pool(_pool), event_loop(_event_loop),
@@ -91,7 +90,7 @@ public:
          server_name(_server_name), server_port(_server_port),
          is_ssl(_is_ssl),
          method(_method), uri(_uri),
-         headers(std::move(_headers)), body(pool, _body),
+         headers(std::move(_headers)), body(pool, std::move(_body)),
          handler(_handler),
          cancel_ptr(_cancel_ptr) {
     }
@@ -147,7 +146,7 @@ AjpRequest::OnStockItemReady(StockItem &item)
                        protocol, remote_addr,
                        remote_host, server_name,
                        server_port, is_ssl,
-                       method, uri, headers, body.Steal(),
+                       method, uri, headers, std::move(body),
                        handler, cancel_ptr);
 }
 
@@ -174,19 +173,18 @@ ajp_stock_request(struct pool &pool, EventLoop &event_loop,
                   http_method_t method,
                   const HttpAddress &uwa,
                   StringMap &&headers,
-                  Istream *body,
+                  UnusedIstreamPtr body,
                   HttpResponseHandler &handler,
                   CancellablePointer &_cancel_ptr)
 {
     assert(uwa.path != nullptr);
-    assert(body == nullptr || !body->HasHandler());
 
     auto hr = NewFromPool<AjpRequest>(pool, pool, event_loop,
                                       protocol,
                                       remote_addr, remote_host,
                                       server_name, server_port,
                                       is_ssl, method, uwa.path,
-                                      std::move(headers), body,
+                                      std::move(headers), std::move(body),
                                       handler, _cancel_ptr);
 
     hr->BeginConnect(tcp_balancer, session_sticky, uwa);

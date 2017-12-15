@@ -44,9 +44,9 @@
 #include "header_writer.hxx"
 #include "lease.hxx"
 #include "direct.hxx"
-#include "istream/istream.hxx"
 #include "strmap.hxx"
 #include "fb_pool.hxx"
+#include "istream/UnusedPtr.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "util/ByteOrder.hxx"
 
@@ -202,7 +202,7 @@ struct Connection {
         ajp_client_request(*pool, event_loop, fd, FdType::FD_SOCKET,
                            lease,
                            "http", "192.168.1.100", "remote", "server", 80, false,
-                           method, uri, headers, body,
+                           method, uri, headers, UnusedIstreamPtr(body),
                            handler, cancel_ptr);
     }
 

@@ -278,7 +278,7 @@ try {
                            *this,
                            "http", "127.0.0.1", "localhost",
                            "localhost", 80, false,
-                           method, url.uri, headers, request_body.Steal(),
+                           method, url.uri, headers, std::move(request_body),
                            *this,
                            cancel_ptr);
         break;
