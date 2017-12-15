@@ -42,8 +42,7 @@
 #include "address_list.hxx"
 #include "pool.hxx"
 #include "strmap.hxx"
-#include "istream/istream.hxx"
-#include "istream/istream_hold.hxx"
+#include "istream/UnusedHoldPtr.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
 #include "util/ConstBuffer.hxx"
@@ -70,10 +69,8 @@ class FcgiRemoteRequest final : StockGetHandler, Cancellable, Lease {
     const char *const remote_addr;
     const StringMap headers;
 
-public:
-    Istream *body;
+    UnusedHoldIstreamPtr body;
 
-private:
     const ConstBuffer<const char *> params;
 
     const int stderr_fd;
@@ -91,6 +88,7 @@ public:
                       const char *_document_root,
                       const char *_remote_addr,
                       StringMap &&_headers,
+                      Istream *_body,
                       ConstBuffer<const char *> _params,
                       int _stderr_fd,
                       HttpResponseHandler &_handler,
@@ -102,6 +100,7 @@ public:
          document_root(_document_root),
          remote_addr(_remote_addr),
          headers(std::move(_headers)),
+         body(pool, _body),
          params(_params),
          stderr_fd(_stderr_fd),
          handler(_handler), caller_cancel_ptr(_cancel_ptr) {
@@ -124,9 +123,7 @@ private:
     /* virtual methods from class Cancellable */
     void Cancel() noexcept override {
         connect_cancel_ptr.Cancel();
-
-        if (body != nullptr)
-            body->CloseUnused();
+        body.Clear();
     }
 
     /* virtual methods from class Lease */
@@ -156,7 +153,7 @@ FcgiRemoteRequest::OnStockItemReady(StockItem &item)
                         query_string,
                         document_root,
                         remote_addr,
-                        headers, body,
+                        headers, body.Steal(),
                         params,
                         stderr_fd,
                         handler,
@@ -200,14 +197,11 @@ fcgi_remote_request(struct pool *pool, EventLoop &event_loop,
                                                   script_name, path_info,
                                                   query_string, document_root,
                                                   remote_addr,
-                                                  std::move(headers), params,
+                                                  std::move(headers),
+                                                  body,
+                                                  params,
                                                   stderr_fd,
                                                   handler, *cancel_ptr);
-
-    if (body != nullptr) {
-        request->body = istream_hold_new(*pool, *body);
-    } else
-        request->body = nullptr;
 
     request->Start(*tcp_balancer, *address_list);
 }
