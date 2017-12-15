@@ -378,7 +378,8 @@ LbRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
         headers.Write("set-cookie", buffer);
     }
 
-    http_server_response(&request, status, std::move(headers), response_body);
+    http_server_response(&request, status, std::move(headers),
+                         UnusedIstreamPtr(response_body));
     ResponseSent();
 }
 

@@ -74,7 +74,8 @@ LbLuaResponseHandler::OnHttpResponse(http_status_t status,
            (RFC 2616 14.13) */
         headers.MoveToBuffer("content-length");
 
-    http_server_response(&request, status, std::move(headers), response_body);
+    http_server_response(&request, status, std::move(headers),
+                         UnusedIstreamPtr(response_body));
 }
 
 void

@@ -591,7 +591,7 @@ Request::DispatchResponseDirect(http_status_t status, HttpHeaders &&headers,
 
     http_server_response(&request, status,
                          std::move(headers),
-                         body);
+                         UnusedIstreamPtr(body));
 }
 
 static void

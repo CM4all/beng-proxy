@@ -38,7 +38,7 @@
 
 struct pool;
 class EventLoop;
-class Istream;
+class UnusedIstreamPtr;
 struct SocketFilter;
 class SocketDescriptor;
 class SocketAddress;
@@ -103,7 +103,7 @@ void
 http_server_response(const HttpServerRequest *request,
                      http_status_t status,
                      HttpHeaders &&headers,
-                     Istream *body);
+                     UnusedIstreamPtr body);
 
 /**
  * Generate a "simple" response with an optional plain-text body and

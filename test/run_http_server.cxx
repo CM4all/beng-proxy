@@ -132,6 +132,7 @@ Instance::HandleHttpRequest(HttpServerRequest &request,
                             gcc_unused CancellablePointer &cancel_ptr)
 {
     switch (mode) {
+        http_status_t status;
         Istream *body;
         static char data[0x100];
 
@@ -144,12 +145,12 @@ Instance::HandleHttpRequest(HttpServerRequest &request,
         break;
 
     case Instance::Mode::MIRROR:
-        body = request.body.Steal();
-        http_server_response(&request,
-                             body == nullptr
-                             ? HTTP_STATUS_NO_CONTENT : HTTP_STATUS_OK,
+        status = request.body
+            ? HTTP_STATUS_OK
+            : HTTP_STATUS_NO_CONTENT;
+        http_server_response(&request, status,
                              HttpHeaders(request.pool),
-                             body);
+                             std::move(request.body));
         break;
 
     case Instance::Mode::CLOSE:
@@ -168,7 +169,8 @@ Instance::HandleHttpRequest(HttpServerRequest &request,
         body = istream_byte_new(request.pool, *body);
 
         http_server_response(&request, HTTP_STATUS_OK,
-                             HttpHeaders(request.pool), body);
+                             HttpHeaders(request.pool),
+                             UnusedIstreamPtr(body));
         break;
 
     case Instance::Mode::FIXED:
@@ -176,7 +178,8 @@ Instance::HandleHttpRequest(HttpServerRequest &request,
             sink_null_new(request.pool, *request.body.Steal());
 
         http_server_response(&request, HTTP_STATUS_OK, HttpHeaders(request.pool),
-                             istream_memory_new(&request.pool, data, sizeof(data)));
+                             UnusedIstreamPtr(istream_memory_new(&request.pool,
+                                                                 data, sizeof(data))));
         break;
 
     case Instance::Mode::HUGE_:
@@ -185,9 +188,9 @@ Instance::HandleHttpRequest(HttpServerRequest &request,
 
         http_server_response(&request, HTTP_STATUS_OK,
                              HttpHeaders(request.pool),
-                             istream_head_new(&request.pool,
-                                              *istream_zero_new(&request.pool),
-                                              512 * 1024, true));
+                             UnusedIstreamPtr(istream_head_new(&request.pool,
+                                                               *istream_zero_new(&request.pool),
+                                                               512 * 1024, true)));
         break;
 
     case Instance::Mode::HOLD:
@@ -198,7 +201,8 @@ Instance::HandleHttpRequest(HttpServerRequest &request,
         istream_delayed_cancellable_ptr(*body) = *this;
 
         http_server_response(&request, HTTP_STATUS_OK,
-                             HttpHeaders(request.pool), body);
+                             HttpHeaders(request.pool),
+                             UnusedIstreamPtr(body));
 
         static constexpr struct timeval t{0,0};
         timer.Add(t);

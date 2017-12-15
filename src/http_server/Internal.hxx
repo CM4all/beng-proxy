@@ -271,7 +271,7 @@ struct HttpServerConnection final : BufferedSocketHandler, IstreamHandler {
 
     void SubmitResponse(http_status_t status,
                         HttpHeaders &&headers,
-                        Istream *body);
+                        UnusedIstreamPtr body);
 
     void ScheduleWrite() {
         response.want_write = true;
