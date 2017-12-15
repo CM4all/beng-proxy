@@ -144,8 +144,7 @@ ProxyWidget::OnHttpResponse(http_status_t status, StringMap &&_headers,
 void
 ProxyWidget::OnHttpError(std::exception_ptr ep)
 {
-    if (widget->for_focused.body != nullptr)
-        istream_free_unused(&widget->for_focused.body);
+    widget->for_focused.body.Clear();
 
     request.LogDispatchError(ep);
 }

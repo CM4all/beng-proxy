@@ -334,10 +334,9 @@ processable(const StringMap &headers)
 void
 XmlProcessor::Cancel() noexcept
 {
-    if (container.for_focused.body != nullptr)
-        /* the request body was not yet submitted to the focused
-           widget; dispose it now */
-        istream_free_unused(&container.for_focused.body);
+    /* the request body was not yet submitted to the focused widget;
+       dispose it now */
+    container.for_focused.body.Clear();
 
     pool_unref(&container.pool);
     pool_unref(&caller_pool);
@@ -1457,10 +1456,9 @@ XmlProcessor::OnXmlEof(gcc_unused off_t length)
 
     StopCdataIstream();
 
-    if (container.for_focused.body != nullptr)
-        /* the request body could not be submitted to the focused
-           widget, because we didn't find it; dispose it now */
-        istream_free_unused(&container.for_focused.body);
+    /* the request body could not be submitted to the focused widget,
+       because we didn't find it; dispose it now */
+    container.for_focused.body.Clear();
 
     if (replace != nullptr)
         istream_replace_finish(*replace);
@@ -1486,10 +1484,9 @@ XmlProcessor::OnXmlError(std::exception_ptr ep)
 
     StopCdataIstream();
 
-    if (container.for_focused.body != nullptr)
-        /* the request body could not be submitted to the focused
-           widget, because we didn't find it; dispose it now */
-        istream_free_unused(&container.for_focused.body);
+    /* the request body could not be submitted to the focused widget,
+       because we didn't find it; dispose it now */
+    container.for_focused.body.Clear();
 
     if (lookup_id != nullptr) {
         handler->WidgetLookupError(ep);

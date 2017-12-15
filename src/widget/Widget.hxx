@@ -33,6 +33,7 @@
 #ifndef BENG_PROXY_WIDGET_HXX
 #define BENG_PROXY_WIDGET_HXX
 
+#include "istream/UnusedPtr.hxx"
 #include "io/Logger.hxx"
 #include "http/Method.h"
 #include "util/StringView.hxx"
@@ -43,7 +44,6 @@
 #include <stdint.h>
 
 struct pool;
-class Istream;
 class StringMap;
 struct StringView;
 struct processor_env;
@@ -198,7 +198,7 @@ struct Widget final
         StringView query_string = nullptr;
 
         /** the request body (from processor_env.body) */
-        Istream *body = nullptr;
+        UnusedIstreamPtr body;
 
         /**
          * The view requested by the client.  If no view was
@@ -237,7 +237,7 @@ struct Widget final
          * The request body.  This must be closed if it failed to be
          * submitted to the focused widget.
          */
-        Istream *body = nullptr;
+        UnusedIstreamPtr body;
     } for_focused;
 
 private:
@@ -454,7 +454,7 @@ public:
 
     gcc_pure
     bool ShouldSyncSession() const {
-        if (from_request.body != nullptr)
+        if (from_request.body)
             /* do not save to session when this is a POST request */
             return false;
 

@@ -639,8 +639,7 @@ WidgetRequest::SendRequest()
 
     resource_tag = address->GetId(pool);
 
-    UnusedIstreamPtr request_body(widget.from_request.body);
-    widget.from_request.body = nullptr;
+    UnusedIstreamPtr request_body(std::move(widget.from_request.body));
 
     auto headers = MakeRequestHeaders(*a_view, *t_view,
                                       address->IsAnyHttp(),

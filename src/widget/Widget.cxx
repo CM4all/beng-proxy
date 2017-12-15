@@ -35,7 +35,6 @@
 #include "View.hxx"
 #include "Ref.hxx"
 #include "pool.hxx"
-#include "istream/istream.hxx"
 #include "util/HexFormat.h"
 #include "util/Cast.hxx"
 
@@ -230,13 +229,10 @@ widget_check_recursion(const Widget *widget)
 void
 Widget::Cancel()
 {
-    if (from_request.body != nullptr)
-        /* we are not going to consume the request body, so abort
-           it */
-        istream_free_unused(&from_request.body);
+    /* we are not going to consume the request body, so abort it */
+    from_request.body.Clear();
 
-    if (for_focused.body != nullptr)
-        /* the request body was not forwarded to the focused widget,
-           so discard it */
-        istream_free_unused(&for_focused.body);
+    /* the request body was not forwarded to the focused widget,
+       so discard it */
+    for_focused.body.Clear();
 }

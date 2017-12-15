@@ -234,7 +234,7 @@ Request::InvokeXmlProcessor(http_status_t status,
 
     if (request_body &&
         widget->from_request.focus_ref != nullptr)
-        widget->for_focused.body = request_body.Steal();
+        widget->for_focused.body = std::move(request_body);
 
     uri = translate.response->uri != nullptr
         ? translate.response->uri

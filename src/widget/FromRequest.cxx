@@ -75,7 +75,7 @@ Widget::CopyFromRequest(struct processor_env &env)
     assert(from_request.query_string.empty());
     assert(from_request.focus_ref == nullptr);
     assert(from_request.method == HTTP_METHOD_GET);
-    assert(from_request.body == nullptr);
+    assert(!from_request.body);
 
     if (id == nullptr)
         return;
@@ -96,8 +96,7 @@ Widget::CopyFromRequest(struct processor_env &env)
         from_request.query_string = env.external_uri->query;
 
         from_request.method = env.method;
-        from_request.body = parent->for_focused.body;
-        parent->for_focused.body = nullptr;
+        from_request.body = std::move(parent->for_focused.body);
     } else if (DescendantHasFocus()) {
         /* we are the parent (or grant-parent) of the focused widget.
            store the relative focus_ref. */
@@ -105,8 +104,7 @@ Widget::CopyFromRequest(struct processor_env &env)
         from_request.focus_ref = parent->from_request.focus_ref->next;
         parent->from_request.focus_ref = nullptr;
 
-        for_focused = parent->for_focused;
-        parent->for_focused.body = nullptr;
+        for_focused = std::move(parent->for_focused);
     }
 }
 
