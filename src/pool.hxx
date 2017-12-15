@@ -85,20 +85,21 @@ struct pool_mark_state {
 struct StringView;
 
 void
-pool_recycler_clear();
+pool_recycler_clear() noexcept;
 
 gcc_malloc
 struct pool *
-pool_new_libc(struct pool *parent, const char *name);
+pool_new_libc(struct pool *parent, const char *name) noexcept;
 
 gcc_malloc
 struct pool *
-pool_new_linear(struct pool *parent, const char *name, size_t initial_size);
+pool_new_linear(struct pool *parent, const char *name,
+                size_t initial_size) noexcept;
 
 gcc_malloc
 struct pool *
 pool_new_slice(struct pool *parent, const char *name,
-               struct SlicePool *slice_pool);
+               struct SlicePool *slice_pool) noexcept;
 
 #ifdef NDEBUG
 
@@ -107,18 +108,18 @@ pool_new_slice(struct pool *parent, const char *name,
 #else
 
 void
-pool_set_major(struct pool *pool);
+pool_set_major(struct pool *pool) noexcept;
 
 #endif
 
 void
-pool_ref_impl(struct pool *pool TRACE_ARGS_DECL);
+pool_ref_impl(struct pool *pool TRACE_ARGS_DECL) noexcept;
 
 #define pool_ref(pool) pool_ref_impl(pool TRACE_ARGS)
 #define pool_ref_fwd(pool) pool_ref_impl(pool TRACE_ARGS_FWD)
 
 unsigned
-pool_unref_impl(struct pool *pool TRACE_ARGS_DECL);
+pool_unref_impl(struct pool *pool TRACE_ARGS_DECL) noexcept;
 
 #define pool_unref(pool) pool_unref_impl(pool TRACE_ARGS)
 #define pool_unref_fwd(pool) pool_unref_impl(pool TRACE_ARGS_FWD)
@@ -127,25 +128,26 @@ class LinearPool {
     struct pool &p;
 
 public:
-    LinearPool(struct pool &parent, const char *name, size_t initial_size)
+    LinearPool(struct pool &parent, const char *name,
+               size_t initial_size) noexcept
         :p(*pool_new_linear(&parent, name, initial_size)) {}
 
-    ~LinearPool() {
+    ~LinearPool() noexcept {
         gcc_unused auto ref = pool_unref(&p);
 #ifndef NDEBUG
         assert(ref == 0);
 #endif
     }
 
-    struct pool &get() {
+    struct pool &get() noexcept {
         return p;
     }
 
-    operator struct pool &() {
+    operator struct pool &() noexcept {
         return p;
     }
 
-    operator struct pool *() {
+    operator struct pool *() noexcept {
         return &p;
     }
 };
@@ -155,14 +157,14 @@ public:
  */
 gcc_pure
 size_t
-pool_netto_size(const struct pool *pool);
+pool_netto_size(const struct pool *pool) noexcept;
 
 /**
  * Returns the total amount of memory allocated by this pool.
  */
 gcc_pure
 size_t
-pool_brutto_size(const struct pool *pool);
+pool_brutto_size(const struct pool *pool) noexcept;
 
 /**
  * Returns the total size of this pool and all of its descendants
@@ -170,28 +172,28 @@ pool_brutto_size(const struct pool *pool);
  */
 gcc_pure
 size_t
-pool_recursive_netto_size(const struct pool *pool);
+pool_recursive_netto_size(const struct pool *pool) noexcept;
 
 gcc_pure
 size_t
-pool_recursive_brutto_size(const struct pool *pool);
+pool_recursive_brutto_size(const struct pool *pool) noexcept;
 
 /**
  * Returns the total size of all descendants of this pool (recursively).
  */
 gcc_pure
 size_t
-pool_children_netto_size(const struct pool *pool);
+pool_children_netto_size(const struct pool *pool) noexcept;
 
 gcc_pure
 size_t
-pool_children_brutto_size(const struct pool *pool);
+pool_children_brutto_size(const struct pool *pool) noexcept;
 
 AllocatorStats
-pool_children_stats(const struct pool &pool);
+pool_children_stats(const struct pool &pool) noexcept;
 
 void
-pool_dump_tree(const struct pool &pool);
+pool_dump_tree(const struct pool &pool) noexcept;
 
 #ifndef NDEBUG
 #include <boost/intrusive/list.hpp>
@@ -215,10 +217,10 @@ struct pool_notify_state final
 };
 
 void
-pool_notify(struct pool *pool, struct pool_notify_state *notify);
+pool_notify(struct pool *pool, struct pool_notify_state *notify) noexcept;
 
 bool
-pool_denotify(struct pool_notify_state *notify);
+pool_denotify(struct pool_notify_state *notify) noexcept;
 
 /**
  * Hands over control from an existing #pool_notify to a new one.  The
@@ -226,25 +228,25 @@ pool_denotify(struct pool_notify_state *notify);
  */
 void
 pool_notify_move(struct pool *pool, struct pool_notify_state *src,
-                 struct pool_notify_state *dest);
+                 struct pool_notify_state *dest) noexcept;
 
 class PoolNotify {
     struct pool_notify_state state;
 
 public:
-    explicit PoolNotify(struct pool &pool) {
+    explicit PoolNotify(struct pool &pool) noexcept {
         pool_notify(&pool, &state);
     }
 
     PoolNotify(const PoolNotify &) = delete;
 
 #ifndef NDEBUG
-    ~PoolNotify() {
+    ~PoolNotify() noexcept {
         assert(!state.registered);
     }
 #endif
 
-    bool Denotify() {
+    bool Denotify() noexcept {
         return pool_denotify(&state);
     }
 };
@@ -263,7 +265,7 @@ class ScopePoolRef {
 #endif
 
 public:
-    explicit ScopePoolRef(struct pool &_pool TRACE_ARGS_DECL_)
+    explicit ScopePoolRef(struct pool &_pool TRACE_ARGS_DECL_) noexcept
         :pool(_pool)
 #ifndef NDEBUG
         , notify(_pool)
@@ -275,18 +277,18 @@ public:
 
     ScopePoolRef(const ScopePoolRef &) = delete;
 
-    ~ScopePoolRef() {
+    ~ScopePoolRef() noexcept {
 #ifndef NDEBUG
         notify.Denotify();
 #endif
         pool_unref_fwd(&pool);
     }
 
-    operator struct pool &() {
+    operator struct pool &() noexcept {
         return pool;
     }
 
-    operator struct pool *() {
+    operator struct pool *() noexcept {
         return &pool;
     }
 };
@@ -298,7 +300,7 @@ class PoolHolder {
 protected:
     struct pool &pool;
 
-    explicit PoolHolder(struct pool &_pool)
+    explicit PoolHolder(struct pool &_pool) noexcept
         :pool(_pool)
     {
         pool_ref(&_pool);
@@ -307,11 +309,11 @@ protected:
     PoolHolder(const PoolHolder &) = delete;
     PoolHolder &operator=(const PoolHolder &) = delete;
 
-    ~PoolHolder() {
+    ~PoolHolder() noexcept {
         pool_unref(&pool);
     }
 
-    struct pool &GetPool() {
+    struct pool &GetPool() noexcept {
         return pool;
     }
 };
@@ -319,11 +321,12 @@ protected:
 #ifndef NDEBUG
 
 void
-pool_ref_notify_impl(struct pool *pool, struct pool_notify_state *notify TRACE_ARGS_DECL);
+pool_ref_notify_impl(struct pool *pool, struct pool_notify_state *notify
+                     TRACE_ARGS_DECL) noexcept;
 
 void
 pool_unref_denotify_impl(struct pool *pool, struct pool_notify_state *notify
-                         TRACE_ARGS_DECL);
+                         TRACE_ARGS_DECL) noexcept;
 
 /**
  * Do a "checked" pool reference.
@@ -346,7 +349,7 @@ pool_unref_denotify_impl(struct pool *pool, struct pool_notify_state *notify
 #ifdef NDEBUG
 
 static inline void
-pool_trash(gcc_unused struct pool *pool)
+pool_trash(gcc_unused struct pool *pool) noexcept
 {
 }
 
@@ -357,28 +360,30 @@ pool_commit() noexcept
 
 static inline void
 pool_attach(gcc_unused struct pool *pool, gcc_unused const void *p,
-            gcc_unused const char *name)
+            gcc_unused const char *name) noexcept
 {
 }
 
 static inline void
 pool_attach_checked(gcc_unused struct pool *pool, gcc_unused const void *p,
-                    gcc_unused const char *name)
+                    gcc_unused const char *name) noexcept
 {
 }
 
 static inline void
-pool_detach(gcc_unused struct pool *pool, gcc_unused const void *p)
+pool_detach(gcc_unused struct pool *pool, gcc_unused const void *p) noexcept
 {
 }
 
 static inline void
-pool_detach_checked(gcc_unused struct pool *pool, gcc_unused const void *p)
+pool_detach_checked(gcc_unused struct pool *pool,
+                    gcc_unused const void *p) noexcept
 {
 }
 
 static inline const char *
-pool_attachment_name(gcc_unused struct pool *pool, gcc_unused const void *p)
+pool_attachment_name(gcc_unused struct pool *pool,
+                     gcc_unused const void *p) noexcept
 {
     return NULL;
 }
@@ -386,13 +391,13 @@ pool_attachment_name(gcc_unused struct pool *pool, gcc_unused const void *p)
 #else
 
 void
-pool_trash(struct pool *pool);
+pool_trash(struct pool *pool) noexcept;
 
 void
 pool_commit() noexcept;
 
 bool
-pool_contains(const struct pool &pool, const void *ptr, size_t size);
+pool_contains(const struct pool &pool, const void *ptr, size_t size) noexcept;
 
 /**
  * Attach an opaque object to the pool.  It must be detached before
@@ -400,114 +405,119 @@ pool_contains(const struct pool &pool, const void *ptr, size_t size);
  * whether all external objects have been destroyed.
  */
 void
-pool_attach(struct pool *pool, const void *p, const char *name);
+pool_attach(struct pool *pool, const void *p, const char *name) noexcept;
 
 /**
  * Same as pool_attach(), but checks if the object is already
  * registered.
  */
 void
-pool_attach_checked(struct pool *pool, const void *p, const char *name);
+pool_attach_checked(struct pool *pool, const void *p,
+                    const char *name) noexcept;
 
 void
-pool_detach(struct pool *pool, const void *p);
+pool_detach(struct pool *pool, const void *p) noexcept;
 
 void
-pool_detach_checked(struct pool *pool, const void *p);
+pool_detach_checked(struct pool *pool, const void *p) noexcept;
 
 const char *
-pool_attachment_name(struct pool *pool, const void *p);
+pool_attachment_name(struct pool *pool, const void *p) noexcept;
 
 #endif
 
 void
-pool_mark(struct pool *pool, struct pool_mark_state *mark);
+pool_mark(struct pool *pool, struct pool_mark_state *mark) noexcept;
 
 void
-pool_rewind(struct pool *pool, const struct pool_mark_state *mark);
+pool_rewind(struct pool *pool, const struct pool_mark_state *mark) noexcept;
 
 class AutoRewindPool {
     struct pool &pool;
     pool_mark_state mark;
 
 public:
-    AutoRewindPool(struct pool &_pool):pool(_pool) {
+    AutoRewindPool(struct pool &_pool) noexcept:pool(_pool) {
         pool_mark(&pool, &mark);
     }
 
     AutoRewindPool(const AutoRewindPool &) = delete;
 
-    ~AutoRewindPool() {
+    ~AutoRewindPool() noexcept {
         pool_rewind(&pool, &mark);
     }
 };
 
 gcc_malloc
 void *
-p_malloc_impl(struct pool *pool, size_t size TRACE_ARGS_DECL);
+p_malloc_impl(struct pool *pool, size_t size TRACE_ARGS_DECL) noexcept;
 
 #define p_malloc(pool, size) p_malloc_impl(pool, size TRACE_ARGS)
 #define p_malloc_fwd(pool, size) p_malloc_impl(pool, size TRACE_ARGS_FWD)
 
 void
-p_free(struct pool *pool, const void *ptr);
+p_free(struct pool *pool, const void *ptr) noexcept;
 
 gcc_malloc
 void *
-p_memdup_impl(struct pool *pool, const void *src, size_t length TRACE_ARGS_DECL);
+p_memdup_impl(struct pool *pool, const void *src, size_t length
+              TRACE_ARGS_DECL) noexcept;
 
 #define p_memdup(pool, src, length) p_memdup_impl(pool, src, length TRACE_ARGS)
 #define p_memdup_fwd(pool, src, length) p_memdup_impl(pool, src, length TRACE_ARGS_FWD)
 
 gcc_malloc
 char *
-p_strdup_impl(struct pool *pool, const char *src TRACE_ARGS_DECL);
+p_strdup_impl(struct pool *pool, const char *src TRACE_ARGS_DECL) noexcept;
 
 #define p_strdup(pool, src) p_strdup_impl(pool, src TRACE_ARGS)
 #define p_strdup_fwd(pool, src) p_strdup_impl(pool, src TRACE_ARGS_FWD)
 
 static inline const char *
-p_strdup_checked(struct pool *pool, const char *s)
+p_strdup_checked(struct pool *pool, const char *s) noexcept
 {
     return s == NULL ? NULL : p_strdup(pool, s);
 }
 
 gcc_malloc
 char *
-p_strdup_lower_impl(struct pool *pool, const char *src TRACE_ARGS_DECL);
+p_strdup_lower_impl(struct pool *pool, const char *src
+                    TRACE_ARGS_DECL) noexcept;
 
 #define p_strdup_lower(pool, src) p_strdup_lower_impl(pool, src TRACE_ARGS)
 #define p_strdup_lower_fwd(pool, src) p_strdup_lower_impl(pool, src TRACE_ARGS_FWD)
 
 gcc_malloc
 char *
-p_strndup_impl(struct pool *pool, const char *src, size_t length TRACE_ARGS_DECL);
+p_strndup_impl(struct pool *pool, const char *src, size_t length
+               TRACE_ARGS_DECL) noexcept;
 
 #define p_strndup(pool, src, length) p_strndup_impl(pool, src, length TRACE_ARGS)
 #define p_strndup_fwd(pool, src, length) p_strndup_impl(pool, src, length TRACE_ARGS_FWD)
 
 gcc_malloc
 char *
-p_strndup_lower_impl(struct pool *pool, const char *src, size_t length TRACE_ARGS_DECL);
+p_strndup_lower_impl(struct pool *pool, const char *src, size_t length
+                     TRACE_ARGS_DECL) noexcept;
 
 #define p_strndup_lower(pool, src, length) p_strndup_lower_impl(pool, src, length TRACE_ARGS)
 #define p_strndup_lower_fwd(pool, src, length) p_strndup_lower_impl(pool, src, length TRACE_ARGS_FWD)
 
 gcc_malloc gcc_printf(2, 3)
 char *
-p_sprintf(struct pool *pool, const char *fmt, ...);
+p_sprintf(struct pool *pool, const char *fmt, ...) noexcept;
 
 gcc_malloc
 char *
-p_strcat(struct pool *pool, const char *s, ...);
+p_strcat(struct pool *pool, const char *s, ...) noexcept;
 
 gcc_malloc
 char *
-p_strncat(struct pool *pool, const char *s, size_t length, ...);
+p_strncat(struct pool *pool, const char *s, size_t length, ...) noexcept;
 
 template<typename T>
 T *
-PoolAlloc(pool &p)
+PoolAlloc(pool &p) noexcept
 {
 #if CLANG_OR_GCC_VERSION(5,0)
     static_assert(std::is_trivially_default_constructible<T>::value,
@@ -522,7 +532,7 @@ PoolAlloc(pool &p)
 
 template<typename T>
 T *
-PoolAlloc(pool &p, size_t n)
+PoolAlloc(pool &p, size_t n) noexcept
 {
 #if CLANG_OR_GCC_VERSION(5,0)
     static_assert(std::is_trivially_default_constructible<T>::value,
@@ -537,7 +547,7 @@ PoolAlloc(pool &p, size_t n)
 
 template<>
 inline void *
-PoolAlloc<void>(pool &p, size_t n)
+PoolAlloc<void>(pool &p, size_t n) noexcept
 {
     return p_malloc(&p, n);
 }
@@ -552,7 +562,7 @@ NewFromPool(pool &p, Args&&... args)
 
 template<typename T>
 void
-DeleteFromPool(struct pool &pool, T *t)
+DeleteFromPool(struct pool &pool, T *t) noexcept
 {
     t->~T();
     p_free(&pool, t);
@@ -566,17 +576,17 @@ class PoolDisposer {
     struct pool &p;
 
 public:
-    explicit PoolDisposer(struct pool &_p):p(_p) {}
+    explicit PoolDisposer(struct pool &_p) noexcept:p(_p) {}
 
     template<typename T>
-    void operator()(T *t) {
+    void operator()(T *t) noexcept {
         DeleteFromPool(p, t);
     }
 };
 
 template<typename T>
 void
-DeleteUnrefPool(struct pool &pool, T *t)
+DeleteUnrefPool(struct pool &pool, T *t) noexcept
 {
     DeleteFromPool(pool, t);
     pool_unref(&pool);
@@ -584,7 +594,7 @@ DeleteUnrefPool(struct pool &pool, T *t)
 
 template<typename T>
 void
-DeleteUnrefTrashPool(struct pool &pool, T *t)
+DeleteUnrefTrashPool(struct pool &pool, T *t) noexcept
 {
     pool_trash(&pool);
     DeleteUnrefPool(pool, t);
@@ -594,17 +604,18 @@ class PoolAllocator {
     struct pool &pool;
 
 public:
-    explicit constexpr PoolAllocator(struct pool &_pool):pool(_pool) {}
+    explicit constexpr PoolAllocator(struct pool &_pool) noexcept
+        :pool(_pool) {}
 
-    void *Allocate(size_t size) {
+    void *Allocate(size_t size) noexcept {
         return p_malloc(&pool, size);
     }
 
-    char *DupString(const char *p) {
+    char *DupString(const char *p) noexcept {
         return p_strdup(&pool, p);
     }
 
-    void Free(void *p) {
+    void Free(void *p) noexcept {
         p_free(&pool, p);
     }
 
@@ -614,17 +625,18 @@ public:
     }
 
     template<typename T>
-    void Delete(T *t) {
+    void Delete(T *t) noexcept {
         DeleteFromPool(pool, t);
     }
 };
 
 gcc_malloc
 char *
-p_strdup_impl(struct pool &pool, StringView src TRACE_ARGS_DECL);
+p_strdup_impl(struct pool &pool, StringView src TRACE_ARGS_DECL) noexcept;
 
 gcc_malloc
 char *
-p_strdup_lower_impl(struct pool &pool, StringView src TRACE_ARGS_DECL);
+p_strdup_lower_impl(struct pool &pool, StringView src
+                    TRACE_ARGS_DECL) noexcept;
 
 #endif

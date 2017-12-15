@@ -114,7 +114,7 @@ struct libc_pool_chunk {
     unsigned char data[sizeof(size_t)];
 
     struct Disposer {
-        void operator()(struct libc_pool_chunk *chunk) {
+        void operator()(struct libc_pool_chunk *chunk) noexcept {
 #ifdef POISON
             static constexpr size_t LIBC_POOL_CHUNK_HEADER =
                 offsetof(struct libc_pool_chunk, data);
@@ -192,7 +192,7 @@ struct pool final
         struct linear_pool_area *linear;
         struct pool *recycler;
 
-        CurrentArea():libc() {}
+        CurrentArea() noexcept:libc() {}
         ~CurrentArea() {}
     } current_area;
 
@@ -220,7 +220,7 @@ struct pool final
      */
     size_t netto_size = 0;
 
-    explicit pool(const char *_name)
+    explicit pool(const char *_name) noexcept
         :logger(*this), name(_name) {
     }
 
@@ -245,7 +245,7 @@ static struct {
 } recycler;
 
 static void * gcc_malloc
-xmalloc(size_t size)
+xmalloc(size_t size) noexcept
 {
     void *p = malloc(size);
     if (gcc_unlikely(p == nullptr)) {
@@ -255,15 +255,15 @@ xmalloc(size_t size)
     return p;
 }
 
-static inline size_t gcc_const
-align_size(size_t size)
+static inline constexpr size_t
+align_size(size_t size) noexcept
 {
     return ((size - 1) | ALIGN_MASK) + 1;
 }
 
 #ifndef NDEBUG
 static struct allocation_info *
-get_linear_allocation_info(void *p)
+get_linear_allocation_info(void *p) noexcept
 {
     void *q = (char *)p - sizeof(struct allocation_info);
     return (struct allocation_info *)q;
@@ -271,7 +271,7 @@ get_linear_allocation_info(void *p)
 #endif
 
 void
-pool_recycler_clear(void)
+pool_recycler_clear(void) noexcept
 {
     recycler.pools.Clear();
 
@@ -289,7 +289,7 @@ pool_recycler_clear(void)
  * caller is responsible for freeing it
  */
 static bool
-pool_recycler_put_linear(struct linear_pool_area *area)
+pool_recycler_put_linear(struct linear_pool_area *area) noexcept
 {
     assert(area != nullptr);
     assert(area->size > 0);
@@ -307,7 +307,7 @@ pool_recycler_put_linear(struct linear_pool_area *area)
 }
 
 static struct linear_pool_area *
-pool_recycler_get_linear(size_t size)
+pool_recycler_get_linear(size_t size) noexcept
 {
     assert(size > 0);
 
@@ -327,7 +327,7 @@ pool_recycler_get_linear(size_t size)
 }
 
 static void
-pool_free_linear_area(struct linear_pool_area *area)
+pool_free_linear_area(struct linear_pool_area *area) noexcept
 {
     assert(area->slice_area == nullptr);
 
@@ -337,7 +337,7 @@ pool_free_linear_area(struct linear_pool_area *area)
 
 static bool
 pool_dispose_slice_area(SlicePool *slice_pool,
-                        struct linear_pool_area *area)
+                        struct linear_pool_area *area) noexcept
 {
     if (area->slice_area == nullptr)
         return false;
@@ -349,7 +349,8 @@ pool_dispose_slice_area(SlicePool *slice_pool,
 }
 
 static void
-pool_dispose_linear_area(struct pool *pool, struct linear_pool_area *area)
+pool_dispose_linear_area(struct pool *pool,
+                         struct linear_pool_area *area) noexcept
 {
     if (/* recycle only if the area's size is exactly as big as
            planned, and was not superseded by a larger allocation;
@@ -362,7 +363,7 @@ pool_dispose_linear_area(struct pool *pool, struct linear_pool_area *area)
 }
 
 static inline void
-pool_add_child(struct pool *pool, struct pool *child)
+pool_add_child(struct pool *pool, struct pool *child) noexcept
 {
     assert(child->parent == nullptr);
 
@@ -372,7 +373,7 @@ pool_add_child(struct pool *pool, struct pool *child)
 }
 
 static inline void
-pool_remove_child(struct pool *pool, struct pool *child)
+pool_remove_child(struct pool *pool, struct pool *child) noexcept
 {
     assert(child->parent == pool);
 
@@ -381,7 +382,7 @@ pool_remove_child(struct pool *pool, struct pool *child)
 }
 
 static struct pool *gcc_malloc
-pool_new(struct pool *parent, const char *name)
+pool_new(struct pool *parent, const char *name) noexcept
 {
     auto *pool = recycler.pools.Get(name);
 
@@ -400,7 +401,7 @@ pool_new(struct pool *parent, const char *name)
 }
 
 struct pool *
-pool_new_libc(struct pool *parent, const char *name)
+pool_new_libc(struct pool *parent, const char *name) noexcept
 {
     struct pool *pool = pool_new(parent, name);
     pool->type = POOL_LIBC;
@@ -410,7 +411,7 @@ pool_new_libc(struct pool *parent, const char *name)
 gcc_malloc
 static struct linear_pool_area *
 pool_new_slice_area(SlicePool *slice_pool,
-                    struct linear_pool_area *prev)
+                    struct linear_pool_area *prev) noexcept
 {
     auto allocation = slice_alloc(slice_pool);
 
@@ -428,7 +429,7 @@ pool_new_slice_area(SlicePool *slice_pool,
 }
 
 static struct linear_pool_area * gcc_malloc
-pool_new_linear_area(struct linear_pool_area *prev, size_t size)
+pool_new_linear_area(struct linear_pool_area *prev, size_t size) noexcept
 {
     struct linear_pool_area *area = (struct linear_pool_area *)
         xmalloc(LINEAR_POOL_AREA_HEADER + size);
@@ -446,7 +447,7 @@ pool_new_linear_area(struct linear_pool_area *prev, size_t size)
 }
 
 static inline struct linear_pool_area *
-pool_get_linear_area(struct linear_pool_area *prev, size_t size)
+pool_get_linear_area(struct linear_pool_area *prev, size_t size) noexcept
 {
     struct linear_pool_area *area = pool_recycler_get_linear(size);
     if (area == nullptr) {
@@ -459,7 +460,8 @@ pool_get_linear_area(struct linear_pool_area *prev, size_t size)
 }
 
 struct pool *
-pool_new_linear(struct pool *parent, const char *name, size_t initial_size)
+pool_new_linear(struct pool *parent, const char *name,
+                size_t initial_size) noexcept
 {
 #ifdef POOL_LIBC_ONLY
     (void)initial_size;
@@ -489,7 +491,7 @@ pool_new_linear(struct pool *parent, const char *name, size_t initial_size)
 
 struct pool *
 pool_new_slice(struct pool *parent, const char *name,
-               SlicePool *slice_pool)
+               SlicePool *slice_pool) noexcept
 {
     assert(parent != nullptr);
     assert(slice_pool_get_slice_size(slice_pool) > LINEAR_POOL_AREA_HEADER);
@@ -523,7 +525,7 @@ pool_new_slice(struct pool *parent, const char *name,
 #ifndef POOL_LIBC_ONLY
 
 static bool
-pool_linear_is_empty(const struct pool *pool)
+pool_linear_is_empty(const struct pool *pool) noexcept
 {
     assert(pool->type == POOL_LINEAR);
 
@@ -534,7 +536,7 @@ pool_linear_is_empty(const struct pool *pool)
 #endif
 
 void
-pool_set_major(struct pool *pool)
+pool_set_major(struct pool *pool) noexcept
 {
     assert(!pool->trashed);
     assert(pool->children.empty());
@@ -546,11 +548,11 @@ pool_set_major(struct pool *pool)
 
 #ifdef DUMP_POOL_ALLOC_ALL
 static void
-pool_dump_allocations(const struct pool &pool);
+pool_dump_allocations(const struct pool &pool) noexcept;
 #endif
 
 static void
-pool_check_attachments(const struct pool &pool)
+pool_check_attachments(const struct pool &pool) noexcept
 {
 #ifdef NDEBUG
     (void)pool;
@@ -570,7 +572,7 @@ pool_check_attachments(const struct pool &pool)
 
 static void
 pool_destroy(struct pool *pool, gcc_unused struct pool *parent,
-             struct pool *reparent_to TRACE_ARGS_DECL)
+             struct pool *reparent_to TRACE_ARGS_DECL) noexcept
 {
     assert(pool->ref == 0);
     assert(pool->parent == nullptr);
@@ -653,7 +655,7 @@ pool_destroy(struct pool *pool, gcc_unused struct pool *parent,
 #ifdef DEBUG_POOL_REF
 static void
 pool_increment_ref(gcc_unused struct pool *pool,
-                   std::forward_list<PoolRef> &list TRACE_ARGS_DECL)
+                   std::forward_list<PoolRef> &list TRACE_ARGS_DECL) noexcept
 {
 #ifdef TRACE
     for (auto &ref : list) {
@@ -676,7 +678,7 @@ pool_increment_ref(gcc_unused struct pool *pool,
 
 #ifdef DEBUG_POOL_REF
 static void
-pool_dump_refs(const struct pool &pool)
+pool_dump_refs(const struct pool &pool) noexcept
 {
     pool.logger.Format(0, "pool[%p](%u) REF:",
                        (const void *)&pool, pool.ref);
@@ -693,7 +695,7 @@ pool_dump_refs(const struct pool &pool)
 #endif
 
 void
-pool_ref_impl(struct pool *pool TRACE_ARGS_DECL)
+pool_ref_impl(struct pool *pool TRACE_ARGS_DECL) noexcept
 {
     assert(pool->ref > 0);
     ++pool->ref;
@@ -708,7 +710,7 @@ pool_ref_impl(struct pool *pool TRACE_ARGS_DECL)
 }
 
 unsigned
-pool_unref_impl(struct pool *pool TRACE_ARGS_DECL)
+pool_unref_impl(struct pool *pool TRACE_ARGS_DECL) noexcept
 {
     assert(pool->ref > 0);
     --pool->ref;
@@ -741,13 +743,13 @@ pool_unref_impl(struct pool *pool TRACE_ARGS_DECL)
 }
 
 size_t
-pool_netto_size(const struct pool *pool)
+pool_netto_size(const struct pool *pool) noexcept
 {
     return pool->netto_size;
 }
 
 static size_t
-pool_linear_brutto_size(const struct pool *pool)
+pool_linear_brutto_size(const struct pool *pool) noexcept
 {
     size_t size = 0;
 
@@ -759,7 +761,7 @@ pool_linear_brutto_size(const struct pool *pool)
 }
 
 size_t
-pool_brutto_size(const struct pool *pool)
+pool_brutto_size(const struct pool *pool) noexcept
 {
     switch (pool->type) {
     case POOL_LIBC:
@@ -774,19 +776,19 @@ pool_brutto_size(const struct pool *pool)
 }
 
 size_t
-pool_recursive_netto_size(const struct pool *pool)
+pool_recursive_netto_size(const struct pool *pool) noexcept
 {
     return pool_netto_size(pool) + pool_children_netto_size(pool);
 }
 
 size_t
-pool_recursive_brutto_size(const struct pool *pool)
+pool_recursive_brutto_size(const struct pool *pool) noexcept
 {
     return pool_brutto_size(pool) + pool_children_brutto_size(pool);
 }
 
 size_t
-pool_children_netto_size(const struct pool *pool)
+pool_children_netto_size(const struct pool *pool) noexcept
 {
     size_t size = 0;
 
@@ -797,7 +799,7 @@ pool_children_netto_size(const struct pool *pool)
 }
 
 size_t
-pool_children_brutto_size(const struct pool *pool)
+pool_children_brutto_size(const struct pool *pool) noexcept
 {
     size_t size = 0;
 
@@ -808,7 +810,7 @@ pool_children_brutto_size(const struct pool *pool)
 }
 
 AllocatorStats
-pool_children_stats(const struct pool &pool)
+pool_children_stats(const struct pool &pool) noexcept
 {
     AllocatorStats stats;
     stats.netto_size = pool_children_netto_size(&pool);
@@ -817,7 +819,7 @@ pool_children_stats(const struct pool &pool)
 }
 
 static const char *
-pool_type_string(enum pool_type type)
+pool_type_string(enum pool_type type) noexcept
 {
     switch (type) {
     case POOL_LIBC:
@@ -832,7 +834,7 @@ pool_type_string(enum pool_type type)
 }
 
 static void
-pool_dump_node(int indent, const struct pool &pool)
+pool_dump_node(int indent, const struct pool &pool) noexcept
 {
     pool.logger.Format(2, "%*spool '%s' type=%s ref=%u size=%zu p=%p",
                        indent, "",
@@ -846,7 +848,7 @@ pool_dump_node(int indent, const struct pool &pool)
 }
 
 void
-pool_dump_tree(const struct pool &pool)
+pool_dump_tree(const struct pool &pool) noexcept
 {
     pool_dump_node(0, pool);
 }
@@ -854,7 +856,7 @@ pool_dump_tree(const struct pool &pool)
 #ifndef NDEBUG
 
 void
-pool_notify(struct pool *pool, struct pool_notify_state *notify)
+pool_notify(struct pool *pool, struct pool_notify_state *notify) noexcept
 {
     pool->notify.push_back(*notify);
     notify->pool = pool;
@@ -864,7 +866,7 @@ pool_notify(struct pool *pool, struct pool_notify_state *notify)
 }
 
 bool
-pool_denotify(struct pool_notify_state *notify)
+pool_denotify(struct pool_notify_state *notify) noexcept
 {
     assert(notify->registered);
     notify->registered = false;
@@ -879,7 +881,7 @@ pool_denotify(struct pool_notify_state *notify)
 
 void
 pool_notify_move(struct pool *pool, struct pool_notify_state *src,
-                 struct pool_notify_state *dest)
+                 struct pool_notify_state *dest) noexcept
 {
     assert(src->pool == pool);
 
@@ -893,7 +895,8 @@ pool_notify_move(struct pool *pool, struct pool_notify_state *src,
 }
 
 void
-pool_ref_notify_impl(struct pool *pool, struct pool_notify_state *notify TRACE_ARGS_DECL)
+pool_ref_notify_impl(struct pool *pool, struct pool_notify_state *notify
+                     TRACE_ARGS_DECL) noexcept
 {
     pool_notify(pool, notify);
     pool_ref_impl(pool TRACE_ARGS_FWD);
@@ -906,7 +909,7 @@ pool_ref_notify_impl(struct pool *pool, struct pool_notify_state *notify TRACE_A
 
 void
 pool_unref_denotify_impl(struct pool *pool, struct pool_notify_state *notify
-                         TRACE_ARGS_DECL)
+                         TRACE_ARGS_DECL) noexcept
 {
     assert(notify->pool == pool);
     assert(!notify->destroyed);
@@ -925,7 +928,7 @@ pool_unref_denotify_impl(struct pool *pool, struct pool_notify_state *notify
 }
 
 void
-pool_trash(struct pool *pool)
+pool_trash(struct pool *pool) noexcept
 {
     if (pool->trashed)
         return;
@@ -958,7 +961,7 @@ pool_commit() noexcept
 
 static bool
 linear_pool_area_contains(const struct linear_pool_area *area,
-                          const void *ptr, size_t size)
+                          const void *ptr, size_t size) noexcept
 {
     return size <= area->used &&
         ptr >= (const void*)area->data &&
@@ -966,7 +969,7 @@ linear_pool_area_contains(const struct linear_pool_area *area,
 }
 
 bool
-pool_contains(const struct pool &pool, const void *ptr, size_t size)
+pool_contains(const struct pool &pool, const void *ptr, size_t size) noexcept
 {
     assert(ptr != nullptr);
     assert(size > 0);
@@ -985,7 +988,7 @@ pool_contains(const struct pool &pool, const void *ptr, size_t size)
 #endif
 
 void
-pool_mark(struct pool *pool, struct pool_mark_state *mark)
+pool_mark(struct pool *pool, struct pool_mark_state *mark) noexcept
 {
 #ifndef POOL_LIBC_ONLY
 
@@ -1012,7 +1015,8 @@ pool_mark(struct pool *pool, struct pool_mark_state *mark)
 
 #ifndef POOL_LIBC_ONLY
 static void
-pool_remove_allocations(struct pool *pool, const unsigned char *p, size_t length)
+pool_remove_allocations(struct pool *pool,
+                        const unsigned char *p, size_t length) noexcept
 {
 #ifndef NDEBUG
     pool->allocations.remove_if([p, length](const struct allocation_info &info){
@@ -1028,7 +1032,7 @@ pool_remove_allocations(struct pool *pool, const unsigned char *p, size_t length
 #endif
 
 void
-pool_rewind(struct pool *pool, const struct pool_mark_state *mark)
+pool_rewind(struct pool *pool, const struct pool_mark_state *mark) noexcept
 {
 #ifndef POOL_LIBC_ONLY
 
@@ -1098,7 +1102,7 @@ pool_rewind(struct pool *pool, const struct pool_mark_state *mark)
 }
 
 static void *
-p_malloc_libc(struct pool *pool, size_t size TRACE_ARGS_DECL)
+p_malloc_libc(struct pool *pool, size_t size TRACE_ARGS_DECL) noexcept
 {
     const size_t aligned_size = align_size(size);
     struct libc_pool_chunk *chunk = (struct libc_pool_chunk *)
@@ -1124,7 +1128,7 @@ p_malloc_libc(struct pool *pool, size_t size TRACE_ARGS_DECL)
 
 #ifdef DUMP_POOL_ALLOC
 static void
-pool_dump_allocations(const struct pool &pool)
+pool_dump_allocations(const struct pool &pool) noexcept
 {
     size_t sum = 0;
     for (const auto &info : pool.allocations) {
@@ -1137,7 +1141,7 @@ pool_dump_allocations(const struct pool &pool)
 
 static void *
 p_malloc_linear(struct pool *pool, const size_t original_size
-                TRACE_ARGS_DECL)
+                TRACE_ARGS_DECL) noexcept
 {
     auto &logger = pool->logger;
     struct linear_pool_area *area = pool->current_area.linear;
@@ -1206,7 +1210,7 @@ p_malloc_linear(struct pool *pool, const size_t original_size
 }
 
 static void *
-internal_malloc(struct pool *pool, size_t size TRACE_ARGS_DECL)
+internal_malloc(struct pool *pool, size_t size TRACE_ARGS_DECL) noexcept
 {
     assert(pool != nullptr);
 
@@ -1220,7 +1224,7 @@ internal_malloc(struct pool *pool, size_t size TRACE_ARGS_DECL)
 }
 
 void *
-p_malloc_impl(struct pool *pool, size_t size TRACE_ARGS_DECL)
+p_malloc_impl(struct pool *pool, size_t size TRACE_ARGS_DECL) noexcept
 {
     return internal_malloc(pool, size TRACE_ARGS_FWD);
 }
@@ -1240,7 +1244,7 @@ p_free_libc(struct pool *pool, void *ptr)
 }
 
 void
-p_free(struct pool *pool, const void *cptr)
+p_free(struct pool *pool, const void *cptr) noexcept
 {
     /* deconst hack - we know what we're doing![tm] */
     union {
@@ -1272,7 +1276,7 @@ p_free(struct pool *pool, const void *cptr)
 #ifndef NDEBUG
 
 void
-pool_attach(struct pool *pool, const void *p, const char *name)
+pool_attach(struct pool *pool, const void *p, const char *name) noexcept
 {
     assert(pool != nullptr);
     assert(p != nullptr);
@@ -1287,7 +1291,7 @@ pool_attach(struct pool *pool, const void *p, const char *name)
 }
 
 static struct attachment *
-find_attachment(struct pool *pool, const void *p)
+find_attachment(struct pool *pool, const void *p) noexcept
 {
     for (auto &attachment : pool->attachments)
         if (attachment.value == p)
@@ -1297,7 +1301,8 @@ find_attachment(struct pool *pool, const void *p)
 }
 
 void
-pool_attach_checked(struct pool *pool, const void *p, const char *name)
+pool_attach_checked(struct pool *pool, const void *p,
+                    const char *name) noexcept
 {
     assert(pool != nullptr);
     assert(p != nullptr);
@@ -1310,7 +1315,7 @@ pool_attach_checked(struct pool *pool, const void *p, const char *name)
 }
 
 void
-pool_detach(struct pool *pool, const void *p)
+pool_detach(struct pool *pool, const void *p) noexcept
 {
     struct attachment *attachment = find_attachment(pool, p);
     assert(attachment != nullptr);
@@ -1320,7 +1325,7 @@ pool_detach(struct pool *pool, const void *p)
 }
 
 void
-pool_detach_checked(struct pool *pool, const void *p)
+pool_detach_checked(struct pool *pool, const void *p) noexcept
 {
     struct attachment *attachment = find_attachment(pool, p);
     if (attachment == nullptr)
@@ -1331,7 +1336,7 @@ pool_detach_checked(struct pool *pool, const void *p)
 }
 
 const char *
-pool_attachment_name(struct pool *pool, const void *p)
+pool_attachment_name(struct pool *pool, const void *p) noexcept
 {
     struct attachment *attachment = find_attachment(pool, p);
     return attachment != nullptr
