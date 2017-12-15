@@ -43,6 +43,18 @@ UnusedIstreamPtr::GetAvailable(bool partial) const noexcept
     return stream->GetAvailable(partial);
 }
 
+int
+UnusedIstreamPtr::AsFd() noexcept
+{
+    assert(stream != nullptr);
+
+    int fd = stream->AsFd();
+    if (fd >= 0)
+        stream = nullptr;
+
+    return fd;
+}
+
 void
 UnusedIstreamPtr::Close(Istream &i)
 {
