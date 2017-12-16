@@ -168,20 +168,20 @@ subst_next_non_leaf_node(SubstNode *node, SubstNode *root)
 inline const char *
 SubstIstream::FindFirstChar(const char *data, size_t length)
 {
-    SubstNode *node = root;
+    SubstNode *n = root;
     const char *min = nullptr;
 
-    while (node != nullptr) {
-        assert(node->ch != 0);
+    while (n != nullptr) {
+        assert(n->ch != 0);
 
-        auto *p = (const char *)memchr(data, node->ch, length);
+        auto *p = (const char *)memchr(data, n->ch, length);
         if (p != nullptr && (min == nullptr || p < min)) {
-            assert(node->equals != nullptr);
-            match = node->equals;
+            assert(n->equals != nullptr);
+            match = n->equals;
             min = p;
         }
 
-        node = subst_next_non_leaf_node(node, root);
+        n = subst_next_non_leaf_node(n, root);
     }
 
     return min;
@@ -374,7 +374,7 @@ SubstIstream::Feed(const void *_data, size_t length)
 
     const char *const data0 = (const char *)_data, *data = data0, *p = data0,
         *const end = p + length, *first = nullptr;
-    const SubstNode *node;
+    const SubstNode *n;
 
     had_input = true;
 
@@ -411,19 +411,19 @@ SubstIstream::Feed(const void *_data, size_t length)
             /* now see if the rest matches; note that max_compare may be
                0, but that isn't a problem */
 
-            node = subst_find_char(match, *p);
-            if (node != nullptr) {
+            n = subst_find_char(match, *p);
+            if (n != nullptr) {
                 /* next character matches */
 
                 ++a_match;
                 ++p;
-                match = node;
+                match = n;
 
-                node = subst_find_leaf(node);
-                if (node != nullptr) {
+                n = subst_find_leaf(n);
+                if (n != nullptr) {
                     /* full match */
 
-                    match = node;
+                    match = n;
 
                     if (first != nullptr && first > data) {
                         /* write the data chunk before the match */
@@ -444,7 +444,7 @@ SubstIstream::Feed(const void *_data, size_t length)
 
                     /* switch state */
 
-                    if (node->leaf.b_length > 0) {
+                    if (n->leaf.b_length > 0) {
                         state = STATE_INSERT;
                         b_sent = 0;
                     } else {
@@ -491,10 +491,10 @@ SubstIstream::Feed(const void *_data, size_t length)
                 if (mismatch.empty()) {
                     send_first = true;
 
-                    node = subst_find_any_leaf(match);
-                    assert(node != nullptr);
-                    assert(node->ch == 0);
-                    mismatch = {node->leaf.a, a_match};
+                    n = subst_find_any_leaf(match);
+                    assert(n != nullptr);
+                    assert(n->ch == 0);
+                    mismatch = {n->leaf.a, a_match};
 
                     if (FeedMismatch())
                         return state == STATE_CLOSED ? 0 : data - data0;
@@ -583,11 +583,11 @@ SubstIstream::OnEof() noexcept
            mismatch because we reach end of file before end of
            match */
         if (mismatch.empty()) {
-            const SubstNode *node = subst_find_any_leaf(match);
-            assert(node != nullptr);
-            assert(node->ch == 0);
+            const SubstNode *n = subst_find_any_leaf(match);
+            assert(n != nullptr);
+            assert(n->ch == 0);
 
-            mismatch = {node->leaf.a, a_match};
+            mismatch = {n->leaf.a, a_match};
             WriteMismatch();
             return;
         }
