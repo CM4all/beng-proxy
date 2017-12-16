@@ -185,7 +185,7 @@ try {
         input.StripLeft();
     }
 
-} catch (std::bad_alloc) {
+} catch (const std::bad_alloc &) {
     /* XXX log error */
 }
 

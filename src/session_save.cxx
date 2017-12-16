@@ -90,7 +90,7 @@ session_manager_load(FILE *file)
                 dpool_destroy(pool);
                 return false;
             }
-        } catch (std::bad_alloc) {
+        } catch (const std::bad_alloc &) {
             dpool_destroy(pool);
             return false;
         }
