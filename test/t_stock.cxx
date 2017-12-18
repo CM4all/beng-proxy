@@ -59,12 +59,12 @@ struct MyStockItem final : StockItem {
     }
 
     /* virtual methods from class StockItem */
-    bool Borrow() override {
+    bool Borrow() noexcept override {
         ++num_borrow;
         return true;
     }
 
-    bool Release() override {
+    bool Release() noexcept override {
         ++num_release;
         return true;
     }

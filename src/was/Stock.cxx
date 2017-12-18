@@ -177,7 +177,7 @@ private:
 
 public:
     /* virtual methods from class StockItem */
-    bool Borrow() override {
+    bool Borrow() noexcept override {
         if (stopping)
             /* we havn't yet recovered from #WAS_COMMAND_STOP - give
                up this child process */
@@ -188,7 +188,7 @@ public:
         return true;
     }
 
-    bool Release() override {
+    bool Release() noexcept override {
         event.Add(was_idle_timeout);
         unclean = stopping;
         return true;

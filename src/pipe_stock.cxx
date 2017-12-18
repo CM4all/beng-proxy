@@ -49,8 +49,8 @@ struct PipeStockItem final : StockItem {
     }
 
     /* virtual methods from class StockItem */
-    bool Borrow() override;
-    bool Release() override;
+    bool Borrow() noexcept override;
+    bool Release() noexcept override;
 };
 
 class PipeStock final : StockClass {
@@ -94,7 +94,7 @@ PipeStock::Create(CreateStockItem c,
 }
 
 bool
-PipeStockItem::Borrow()
+PipeStockItem::Borrow() noexcept
 {
     assert(fds[0].IsValid());
     assert(fds[1].IsValid());
@@ -103,7 +103,7 @@ PipeStockItem::Borrow()
 }
 
 bool
-PipeStockItem::Release()
+PipeStockItem::Release() noexcept
 {
     assert(fds[0].IsValid());
     assert(fds[1].IsValid());

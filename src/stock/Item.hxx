@@ -51,18 +51,18 @@ struct CreateStockItem {
      * Wrapper for Stock::GetName()
      */
     gcc_pure
-    const char *GetStockName() const;
+    const char *GetStockName() const noexcept;
 
     /**
      * Announce that the creation of this item has failed.
      */
-    void InvokeCreateError(std::exception_ptr ep);
+    void InvokeCreateError(std::exception_ptr ep) noexcept;
 
     /**
      * Announce that the creation of this item has been aborted by the
      * caller.
      */
-    void InvokeCreateAborted();
+    void InvokeCreateAborted() noexcept;
 };
 
 struct StockItem
@@ -89,32 +89,32 @@ struct StockItem
     bool is_idle = false;
 #endif
 
-    explicit StockItem(CreateStockItem c)
+    explicit StockItem(CreateStockItem c) noexcept
         :stock(c.stock), handler(c.handler) {}
 
     StockItem(const StockItem &) = delete;
     StockItem &operator=(const StockItem &) = delete;
 
-    virtual ~StockItem();
+    virtual ~StockItem() noexcept;
 
     /**
      * Wrapper for Stock::GetName()
      */
     gcc_pure
-    const char *GetStockName() const;
+    const char *GetStockName() const noexcept;
 
     /**
      * Return a busy item to the stock.  This is a wrapper for
      * Stock::Put().
      */
-    void Put(bool destroy);
+    void Put(bool destroy) noexcept;
 
     /**
      * Prepare this item to be borrowed by a client.
      *
      * @return false when this item is defunct and shall be destroyed
      */
-    virtual bool Borrow() = 0;
+    virtual bool Borrow() noexcept = 0;
 
     /**
      * Return this borrowed item into the "idle" list.
@@ -122,30 +122,30 @@ struct StockItem
      * @return false when this item is defunct and shall not be reused
      * again; it will be destroyed by the caller
      */
-    virtual bool Release() = 0;
+    virtual bool Release() noexcept = 0;
 
     /**
      * Announce that the creation of this item has finished
      * successfully, and it is ready to be used.
      */
-    void InvokeCreateSuccess();
+    void InvokeCreateSuccess() noexcept;
 
     /**
      * Announce that the creation of this item has failed.
      */
-    void InvokeCreateError(std::exception_ptr ep);
+    void InvokeCreateError(std::exception_ptr ep) noexcept;
 
     /**
      * Announce that the creation of this item has been aborted by the
      * caller.
      */
-    void InvokeCreateAborted();
+    void InvokeCreateAborted() noexcept;
 
     /**
      * Announce that the item has been disconnected by the peer while
      * it was idle.
      */
-    void InvokeIdleDisconnect();
+    void InvokeIdleDisconnect() noexcept;
 };
 
 #endif

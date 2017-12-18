@@ -157,8 +157,8 @@ struct FcgiConnection final : StockItem {
     }
 
     /* virtual methods from class StockItem */
-    bool Borrow() override;
-    bool Release() override;
+    bool Borrow() noexcept override;
+    bool Release() noexcept override;
 
 private:
     void OnSocketEvent(unsigned events);
@@ -293,7 +293,7 @@ FcgiStock::Create(CreateStockItem c, void *info,
 }
 
 bool
-FcgiConnection::Borrow()
+FcgiConnection::Borrow() noexcept
 {
     /* check the connection status before using it, just in case the
        FastCGI server has decided to close the connection before
@@ -317,7 +317,7 @@ FcgiConnection::Borrow()
 }
 
 bool
-FcgiConnection::Release()
+FcgiConnection::Release() noexcept
 {
     fresh = false;
     event.Add(EventDuration<300>::value);

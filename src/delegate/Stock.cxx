@@ -97,12 +97,12 @@ public:
     }
 
     /* virtual methods from class StockItem */
-    bool Borrow() override {
+    bool Borrow() noexcept override {
         event.Delete();
         return true;
     }
 
-    bool Release() override {
+    bool Release() noexcept override {
         event.Add(EventDuration<60>::value);
         return true;
     }

@@ -77,14 +77,14 @@ struct ChildStockItem final : StockItem, ExitListener {
     ~ChildStockItem() override;
 
     /* virtual methods from class StockItem */
-    bool Borrow() override {
+    bool Borrow() noexcept override {
         assert(!busy);
         busy = true;
 
         return true;
     }
 
-    bool Release() override {
+    bool Release() noexcept override {
         assert(busy);
         busy = false;
 

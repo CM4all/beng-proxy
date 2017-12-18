@@ -34,59 +34,59 @@
 #include "Stock.hxx"
 
 const char *
-CreateStockItem::GetStockName() const
+CreateStockItem::GetStockName() const noexcept
 {
     return stock.GetName();
 }
 
 void
-CreateStockItem::InvokeCreateError(std::exception_ptr ep)
+CreateStockItem::InvokeCreateError(std::exception_ptr ep) noexcept
 {
     stock.ItemCreateError(handler, ep);
 }
 
 void
-CreateStockItem::InvokeCreateAborted()
+CreateStockItem::InvokeCreateAborted() noexcept
 {
     stock.ItemCreateAborted();
 }
 
-StockItem::~StockItem()
+StockItem::~StockItem() noexcept
 {
 }
 
 const char *
-StockItem::GetStockName() const
+StockItem::GetStockName() const noexcept
 {
     return stock.GetName();
 }
 
 void
-StockItem::Put(bool destroy)
+StockItem::Put(bool destroy) noexcept
 {
     stock.Put(*this, destroy);
 }
 
 void
-StockItem::InvokeCreateSuccess()
+StockItem::InvokeCreateSuccess() noexcept
 {
     stock.ItemCreateSuccess(*this);
 }
 
 void
-StockItem::InvokeCreateError(std::exception_ptr ep)
+StockItem::InvokeCreateError(std::exception_ptr ep) noexcept
 {
     stock.ItemCreateError(*this, ep);
 }
 
 void
-StockItem::InvokeCreateAborted()
+StockItem::InvokeCreateAborted() noexcept
 {
     stock.ItemCreateAborted(*this);
 }
 
 void
-StockItem::InvokeIdleDisconnect()
+StockItem::InvokeIdleDisconnect() noexcept
 {
     stock.ItemIdleDisconnect(*this);
 }
