@@ -60,7 +60,7 @@ class CGIClient final : Istream, IstreamHandler, Cancellable {
 
     /**
      * This flag is true while cgi_parse_headers() is calling
-     * http_response_handler_ref::InvokeResponse().  In this case,
+     * HttpResponseHandler::InvokeResponse().  In this case,
      * istream_read(cgi->input) is already up in the stack, and must
      * not be called again.
      */
@@ -412,7 +412,7 @@ CGIClient::_GetAvailable(bool partial)
 
     if (in_response_callback)
         /* this condition catches the case in cgi_parse_headers():
-           http_response_handler_ref::InvokeResponse() might
+           HttpResponseHandler::InvokeResponse() might
            recursively call istream_read(input) */
         return (off_t)-1;
 
@@ -426,7 +426,7 @@ CGIClient::_Read()
         input.SetDirect(GetHandlerDirect());
 
         /* this condition catches the case in cgi_parse_headers():
-           http_response_handler_ref::InvokeResponse() might
+           HttpResponseHandler::InvokeResponse() might
            recursively call input.Read() */
         if (in_response_callback) {
             return;
