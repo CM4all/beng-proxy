@@ -35,11 +35,14 @@
 #include "widget/RewriteUri.hxx"
 #include "pool.hxx"
 #include "tpool.hxx"
+#include "istream/UnusedPtr.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream_memory.hxx"
 #include "istream/istream_replace.hxx"
 #include "util/Macros.hxx"
 #include "util/StringView.hxx"
+
+#include <assert.h>
 
 struct css_url {
     size_t start, end;
@@ -153,7 +156,8 @@ css_rewrite_block_uris(struct pool &pool,
         if (value == nullptr)
             continue;
 
-        istream_replace_add(*replace, url->start, url->end, value);
+        istream_replace_add(*replace, url->start, url->end,
+                            UnusedIstreamPtr(value));
         modified = true;
     }
 

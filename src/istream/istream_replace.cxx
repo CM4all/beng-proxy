@@ -33,6 +33,7 @@
 #include "istream_replace.hxx"
 #include "FacadeIstream.hxx"
 #include "Sink.hxx"
+#include "UnusedPtr.hxx"
 #include "GrowingBuffer.hxx"
 #include "util/ConstBuffer.hxx"
 #include "pool.hxx"
@@ -49,15 +50,8 @@ struct ReplaceIstream final : FacadeIstream {
         off_t end;
 
         Substitution(ReplaceIstream &_replace, off_t _start, off_t _end,
-                     std::nullptr_t)
-            :replace(_replace),
-             start(_start), end(_end)
-        {
-        }
-
-        Substitution(ReplaceIstream &_replace, off_t _start, off_t _end,
-                     Istream &_input)
-            :IstreamSink(_input),
+                     UnusedIstreamPtr _input)
+            :IstreamSink(std::move(_input)),
              replace(_replace),
              start(_start), end(_end)
         {
@@ -578,7 +572,7 @@ istream_replace_new(struct pool &pool, Istream &input)
 
 void
 istream_replace_add(Istream &istream, off_t start, off_t end,
-                    Istream *contents)
+                    UnusedIstreamPtr contents)
 {
     auto &replace = (ReplaceIstream &)istream;
 
@@ -588,16 +582,12 @@ istream_replace_add(Istream &istream, off_t start, off_t end,
     assert(start >= replace.settled_position);
     assert(start >= replace.last_substitution_end);
 
-    if (contents == nullptr && start == end)
+    if (!contents && start == end)
         return;
 
-    auto s = contents != nullptr
-        ? NewFromPool<ReplaceIstream::Substitution>(replace.GetPool(),
-                                                    replace, start, end,
-                                                    *contents)
-        : NewFromPool<ReplaceIstream::Substitution>(replace.GetPool(),
-                                                    replace, start, end,
-                                                    nullptr);
+    auto s = NewFromPool<ReplaceIstream::Substitution>(replace.GetPool(),
+                                                       replace, start, end,
+                                                       std::move(contents));
 
     replace.settled_position = end;
 

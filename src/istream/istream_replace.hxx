@@ -37,6 +37,7 @@
 
 struct pool;
 class Istream;
+class UnusedIstreamPtr;
 
 /**
  * Process CM4all commands in a HTML stream, e.g. embeddings.
@@ -46,7 +47,7 @@ istream_replace_new(struct pool &pool, Istream &input);
 
 void
 istream_replace_add(Istream &istream, off_t start, off_t end,
-                    Istream *contents);
+                    UnusedIstreamPtr contents);
 
 /**
  * Extend the end position of the latest replacement.

@@ -254,13 +254,13 @@ struct XmlProcessor final : XmlParserHandler, Cancellable {
         return (options & PROCESSOR_STYLE) != 0;
     }
 
-    void Replace(off_t start, off_t end, Istream *istream) {
-        istream_replace_add(*replace, start, end, istream);
+    void Replace(off_t start, off_t end, UnusedIstreamPtr istream) {
+        istream_replace_add(*replace, start, end, std::move(istream));
     }
 
     void ReplaceAttributeValue(const XmlParserAttribute &attr,
-                               Istream *value) {
-        Replace(attr.value_start, attr.value_end, value);
+                               UnusedIstreamPtr value) {
+        Replace(attr.value_start, attr.value_end, std::move(value));
     }
 
     void InitUriRewrite(enum tag _tag) {
@@ -293,8 +293,8 @@ struct XmlProcessor final : XmlParserHandler, Cancellable {
     void HandleIdAttribute(const XmlParserAttribute &attr);
     void HandleStyleAttribute(const XmlParserAttribute &attr);
 
-    Istream *EmbedWidget(Widget &child_widget);
-    Istream *OpenWidgetElement(Widget &child_widget);
+    UnusedIstreamPtr EmbedWidget(Widget &child_widget);
+    UnusedIstreamPtr OpenWidgetElement(Widget &child_widget);
     void WidgetElementFinished(const XmlParserTag &tag,
                                Widget &child_widget);
 
@@ -817,7 +817,7 @@ XmlProcessor::TransformUriAttribute(const XmlParserAttribute &attr,
         istream = istream_cat_new(pool, istream, s);
     }
 
-    ReplaceAttributeValue(attr, istream);
+    ReplaceAttributeValue(attr, UnusedIstreamPtr(istream));
 }
 
 static void
@@ -973,7 +973,7 @@ XmlProcessor::HandleClassAttribute(const XmlParserAttribute &attr)
 
     const size_t length = buffer.GetSize();
     void *q = buffer.Dup(pool);
-    ReplaceAttributeValue(attr, istream_memory_new(&pool, q, length));
+    ReplaceAttributeValue(attr, UnusedIstreamPtr(istream_memory_new(&pool, q, length)));
 }
 
 void
@@ -991,7 +991,7 @@ XmlProcessor::HandleIdAttribute(const XmlParserAttribute &attr)
             return;
 
         Replace(attr.value_start, attr.value_start + 3,
-                istream_string_new(&pool, prefix));
+                UnusedIstreamPtr(istream_string_new(&pool, prefix)));
     } else if (n == 2) {
         /* double underscore: add class name prefix */
 
@@ -1000,7 +1000,7 @@ XmlProcessor::HandleIdAttribute(const XmlParserAttribute &attr)
             return;
 
         Replace(attr.value_start, attr.value_start + 2,
-                istream_string_new(&pool, class_name));
+                UnusedIstreamPtr(istream_string_new(&pool, class_name)));
     }
 }
 
@@ -1014,7 +1014,7 @@ XmlProcessor::HandleStyleAttribute(const XmlParserAttribute &attr)
                                attr.value,
                                &html_escape_class);
     if (result != nullptr)
-        ReplaceAttributeValue(attr, result);
+        ReplaceAttributeValue(attr, UnusedIstreamPtr(result));
 }
 
 /**
@@ -1193,7 +1193,7 @@ widget_catch_callback(std::exception_ptr ep, void *ctx)
     return {};
 }
 
-inline Istream *
+inline UnusedIstreamPtr
 XmlProcessor::EmbedWidget(Widget &child_widget)
 {
     assert(child_widget.class_name != nullptr);
@@ -1217,7 +1217,7 @@ XmlProcessor::EmbedWidget(Widget &child_widget)
             istream = istream_catch_new(&pool, *istream,
                                         widget_catch_callback, &child_widget);
 
-        return istream;
+        return UnusedIstreamPtr(istream);
     } else if (child_widget.id != nullptr &&
                strcmp(lookup_id, child_widget.id) == 0) {
         auto &widget_pool = container.pool;
@@ -1248,7 +1248,7 @@ XmlProcessor::EmbedWidget(Widget &child_widget)
     }
 }
 
-inline Istream *
+inline UnusedIstreamPtr
 XmlProcessor::OpenWidgetElement(Widget &child_widget)
 {
     assert(child_widget.parent == &container);
@@ -1286,11 +1286,11 @@ inline void
 XmlProcessor::WidgetElementFinished(const XmlParserTag &widget_tag,
                                     Widget &child_widget)
 {
-    Istream *istream = OpenWidgetElement(child_widget);
-    assert(istream == nullptr || replace != nullptr);
+    auto istream = OpenWidgetElement(child_widget);
+    assert(!istream || replace != nullptr);
 
     if (replace != nullptr)
-        Replace(widget.start_offset, widget_tag.end, istream);
+        Replace(widget.start_offset, widget_tag.end, std::move(istream));
 }
 
 static bool
@@ -1423,7 +1423,7 @@ XmlProcessor::OnXmlTagFinished(const XmlParserTag &xml_tag)
             /* the end offset will be extended later with
                istream_replace_extend() */
             cdata_start = xml_tag.end;
-            Replace(xml_tag.end, xml_tag.end, istream.Steal());
+            Replace(xml_tag.end, xml_tag.end, std::move(istream));
         }
     }
 }

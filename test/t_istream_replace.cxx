@@ -32,7 +32,7 @@
 
 #include "istream/istream_replace.hxx"
 #include "istream/istream_string.hxx"
-#include "istream/istream.hxx"
+#include "istream/UnusedPtr.hxx"
 
 #define EXPECTED_RESULT "foo"
 
