@@ -41,7 +41,7 @@
 
 struct pool;
 class EventLoop;
-class Istream;
+class UnusedIstreamPtr;
 class WasInput;
 
 class WasInputHandler {
@@ -124,7 +124,7 @@ was_input_free_unused_p(WasInput **input_p)
     was_input_free_unused(input);
 }
 
-Istream &
+UnusedIstreamPtr
 was_input_enable(WasInput &input);
 
 /**

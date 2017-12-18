@@ -35,6 +35,7 @@
 #include "event/SocketEvent.hxx"
 #include "direct.hxx"
 #include "istream/istream.hxx"
+#include "istream/UnusedPtr.hxx"
 #include "pool.hxx"
 #include "fb_pool.hxx"
 #include "SliceFifoBuffer.hxx"
@@ -79,11 +80,11 @@ public:
 
     void Free(std::exception_ptr ep);
 
-    Istream &Enable() {
+    UnusedIstreamPtr Enable() {
         assert(!enabled);
         enabled = true;
         ScheduleRead();
-        return *this;
+        return UnusedIstreamPtr(this);
     }
 
     bool SetLength(uint64_t _length);
@@ -399,7 +400,7 @@ was_input_free_unused(WasInput *input)
     input->Destroy();
 }
 
-Istream &
+UnusedIstreamPtr
 was_input_enable(WasInput &input)
 {
     return input.Enable();

@@ -368,18 +368,18 @@ WasClient::SubmitPendingResponse()
     const ScopePoolRef ref(pool TRACE_ARGS);
     const ScopePoolRef caller_ref(caller_pool TRACE_ARGS);
 
-    Istream *body;
+    UnusedIstreamPtr body;
     if (response.released) {
         was_input_free_unused_p(&response.body);
-        body = istream_null_new(caller_pool).Steal();
+        body = istream_null_new(caller_pool);
 
         ReleaseControl();
         Destroy();
     } else
-        body = &was_input_enable(*response.body);
+        body = was_input_enable(*response.body);
 
     handler.InvokeResponse(response.status, std::move(response.headers),
-                           UnusedIstreamPtr(body));
+                           std::move(body));
     return control.IsDefined();
 }
 

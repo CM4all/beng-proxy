@@ -169,18 +169,18 @@ private:
         if (request.state == Request::State::PENDING) {
             request.state = Request::State::SUBMITTED;
 
-            Istream *body = nullptr;
+            UnusedIstreamPtr body;
             if (request.released) {
                 was_input_free_unused(request.body);
                 request.body = nullptr;
 
-                body = istream_null_new(*request.pool).Steal();
+                body = istream_null_new(*request.pool);
             } else if (request.body != nullptr)
-                body = &was_input_enable(*request.body);
+                body = was_input_enable(*request.body);
 
             handler.OnWasRequest(*request.pool, request.method,
                                  request.uri, std::move(*request.headers),
-                                 body);
+                                 body.Steal());
             /* XXX check if connection has been closed */
         }
 
