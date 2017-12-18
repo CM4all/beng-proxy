@@ -63,6 +63,6 @@ UnusedIstreamPtr
 widget_dump_tree_after_istream(struct pool &pool, UnusedIstreamPtr istream,
                                Widget &widget)
 {
-    return UnusedIstreamPtr(istream_notify_new(pool, *istream.Steal(),
-                                               widget_dump_handler, &widget));
+    return istream_notify_new(pool, std::move(istream),
+                              widget_dump_handler, &widget);
 }

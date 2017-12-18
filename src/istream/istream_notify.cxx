@@ -32,6 +32,7 @@
 
 #include "istream_notify.hxx"
 #include "ForwardIstream.hxx"
+#include "UnusedPtr.hxx"
 
 #include <assert.h>
 
@@ -40,9 +41,9 @@ class NotifyIstream final : public ForwardIstream {
     void *const handler_ctx;
 
 public:
-    NotifyIstream(struct pool &p, Istream &_input,
+    NotifyIstream(struct pool &p, UnusedIstreamPtr _input,
                   const struct istream_notify_handler &_handler, void *_ctx)
-        :ForwardIstream(p, _input),
+        :ForwardIstream(p, std::move(_input)),
          handler(_handler), handler_ctx(_ctx) {}
 
     /* virtual methods from class Istream */
@@ -70,13 +71,14 @@ public:
  *
  */
 
-Istream *
-istream_notify_new(struct pool &pool, Istream &input,
-                   const struct istream_notify_handler &handler, void *ctx)
+UnusedIstreamPtr
+istream_notify_new(struct pool &pool, UnusedIstreamPtr input,
+                   const struct istream_notify_handler &handler,
+                   void *ctx) noexcept
 {
     assert(handler.eof != nullptr);
     assert(handler.abort != nullptr);
     assert(handler.close != nullptr);
 
-    return NewIstream<NotifyIstream>(pool, input, handler, ctx);
+    return UnusedIstreamPtr(NewIstream<NotifyIstream>(pool, std::move(input), handler, ctx));
 }

@@ -34,7 +34,7 @@
 #define BENG_PROXY_ISTREAM_NOTIFY_HXX
 
 struct pool;
-class Istream;
+class UnusedIstreamPtr;
 
 struct istream_notify_handler {
     void (*eof)(void *ctx);
@@ -46,8 +46,8 @@ struct istream_notify_handler {
  * An Istream facade which invokes a callback when the Istream is
  * finished / closed.
  */
-Istream *
-istream_notify_new(struct pool &pool, Istream &input,
-                   const istream_notify_handler &handler, void *ctx);
+UnusedIstreamPtr
+istream_notify_new(struct pool &pool, UnusedIstreamPtr input,
+                   const istream_notify_handler &handler, void *ctx) noexcept;
 
 #endif
