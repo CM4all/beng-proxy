@@ -212,7 +212,7 @@ css_processor_parser_url(const CssParserValue *url, void *ctx)
     if (!css_processor_option_rewrite_url(processor))
         return;
 
-    Istream *istream =
+    auto istream =
         rewrite_widget_uri(processor->pool,
                            processor->env,
                            *global_translate_cache,
@@ -222,9 +222,9 @@ css_processor_parser_url(const CssParserValue *url, void *ctx)
                            processor->uri_rewrite.view[0] != 0
                            ? processor->uri_rewrite.view : nullptr,
                            &css_escape_class);
-    if (istream != nullptr)
+    if (istream)
         css_processor_replace_add(processor, url->start, url->end,
-                                  UnusedIstreamPtr(istream));
+                                  std::move(istream));
 }
 
 static void
@@ -235,7 +235,7 @@ css_processor_parser_import(const CssParserValue *url, void *ctx)
     if (!css_processor_option_rewrite_url(processor))
         return;
 
-    Istream *istream =
+    auto istream =
         rewrite_widget_uri(processor->pool,
                            processor->env,
                            *global_translate_cache,
@@ -243,9 +243,9 @@ css_processor_parser_import(const CssParserValue *url, void *ctx)
                            url->value,
                            URI_MODE_PARTIAL, false, nullptr,
                            &css_escape_class);
-    if (istream != nullptr)
+    if (istream)
         css_processor_replace_add(processor, url->start, url->end,
-                                  UnusedIstreamPtr(istream));
+                                  std::move(istream));
 }
 
 static void

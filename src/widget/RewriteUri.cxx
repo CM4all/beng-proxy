@@ -357,7 +357,7 @@ UriRewriter::ResolverCallback()
  *
  */
 
-Istream *
+UnusedIstreamPtr
 rewrite_widget_uri(struct pool &pool,
                    struct processor_env &env,
                    struct tcache &translate_cache,
@@ -376,7 +376,7 @@ rewrite_widget_uri(struct pool &pool,
                                                       widget);
         if (escape != nullptr)
             istream = istream_escape_new(pool, *istream, *escape);
-        return istream;
+        return UnusedIstreamPtr(istream);
     }
 
     const char *uri;
@@ -410,7 +410,7 @@ rewrite_widget_uri(struct pool &pool,
         if (escape != nullptr)
             istream = istream_escape_new(pool, *istream, *escape);
 
-        return istream;
+        return UnusedIstreamPtr(istream);
     } else {
         auto rwu = NewFromPool<UriRewriter>(pool);
 
@@ -434,6 +434,6 @@ rewrite_widget_uri(struct pool &pool,
                       translate_cache,
                       BIND_METHOD(*rwu, &UriRewriter::ResolverCallback),
                       istream_delayed_cancellable_ptr(*rwu->delayed));
-        return rwu->timeout;
+        return UnusedIstreamPtr(rwu->timeout);
     }
 }

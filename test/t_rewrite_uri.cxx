@@ -162,13 +162,16 @@ sink_gstring_callback(std::string &&value, std::exception_ptr, void *_ctx)
 }
 
 static void
-assert_istream_equals(struct pool *pool, Istream *istream, const char *value)
+assert_istream_equals(struct pool *pool, UnusedIstreamPtr _istream,
+                      const char *value)
 {
     StringSinkCtx ctx;
     CancellablePointer cancel_ptr;
 
-    ASSERT_NE(istream, nullptr);
+    ASSERT_TRUE(_istream);
     ASSERT_NE(value, nullptr);
+
+    Istream *istream = _istream.Steal();
 
     NewStringSink(*pool, *istream, sink_gstring_callback, &ctx, cancel_ptr);
 
@@ -187,7 +190,6 @@ assert_rewrite_check4(EventLoop &event_loop,
                       const char *result)
 {
     struct pool *pool = pool_new_libc(widget_pool, "rewrite");
-    Istream *istream;
 
     StringView value2 = value;
     if (!value2.IsNull())
@@ -212,14 +214,14 @@ assert_rewrite_check4(EventLoop &event_loop,
                              HTTP_METHOD_GET,
                              nullptr);
 
-    istream = rewrite_widget_uri(*pool, env, *(struct tcache *)0x1,
-                                 *widget,
-                                 value2,
-                                 mode, stateful, view, &html_escape_class);
+    auto istream = rewrite_widget_uri(*pool, env, *(struct tcache *)0x1,
+                                      *widget,
+                                      value2,
+                                      mode, stateful, view, &html_escape_class);
     if (result == NULL)
-        ASSERT_EQ(istream, nullptr);
+        ASSERT_FALSE(istream);
     else
-        assert_istream_equals(pool, istream, result);
+        assert_istream_equals(pool, std::move(istream), result);
 
     pool_unref(pool);
 }

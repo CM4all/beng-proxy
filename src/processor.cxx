@@ -797,14 +797,14 @@ XmlProcessor::TransformUriAttribute(const XmlParserAttribute &attr,
     } else
         fragment = nullptr;
 
-    Istream *istream =
+    auto istream =
         rewrite_widget_uri(pool, env,
                            *global_translate_cache,
                            *target_widget,
                            value, mode, target_widget == &container,
                            view,
                            &html_escape_class);
-    if (istream == nullptr)
+    if (!istream)
         return;
 
     if (!fragment.empty()) {
@@ -814,10 +814,10 @@ XmlProcessor::TransformUriAttribute(const XmlParserAttribute &attr,
                                         fragment.size);
         s = istream_html_escape_new(pool, *s);
 
-        istream = istream_cat_new(pool, istream, s);
+        istream = UnusedIstreamPtr(istream_cat_new(pool, istream.Steal(), s));
     }
 
-    ReplaceAttributeValue(attr, UnusedIstreamPtr(istream));
+    ReplaceAttributeValue(attr, std::move(istream));
 }
 
 static void

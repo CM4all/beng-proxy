@@ -80,7 +80,7 @@ parse_uri_mode(gcc_unused StringView s)
     return URI_MODE_DIRECT;
 }
 
-Istream *
+UnusedIstreamPtr
 rewrite_widget_uri(gcc_unused struct pool &pool,
                    gcc_unused struct processor_env &env,
                    gcc_unused struct tcache &translate_cache,

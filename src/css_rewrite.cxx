@@ -147,17 +147,16 @@ css_rewrite_block_uris(struct pool &pool,
     for (unsigned i = 0; i < rewrite.n_urls; ++i) {
         const struct css_url *url = &rewrite.urls[i];
 
-        Istream *value =
+        auto value =
             rewrite_widget_uri(pool, env, translate_cache,
                                widget,
                                {block.data + url->start, url->end - url->start},
                                URI_MODE_PARTIAL, false, nullptr,
                                escape);
-        if (value == nullptr)
+        if (!value)
             continue;
 
-        istream_replace_add(*replace, url->start, url->end,
-                            UnusedIstreamPtr(value));
+        istream_replace_add(*replace, url->start, url->end, std::move(value));
         modified = true;
     }
 
