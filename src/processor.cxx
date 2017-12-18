@@ -1216,8 +1216,8 @@ XmlProcessor::EmbedWidget(Widget &child_widget)
         auto istream = embed_inline_widget(pool, env, false,
                                            child_widget);
         if (istream)
-            istream = UnusedIstreamPtr(istream_catch_new(&pool, *istream.Steal(),
-                                                         widget_catch_callback, &child_widget));
+            istream = istream_catch_new(&pool, std::move(istream),
+                                        widget_catch_callback, &child_widget);
 
         return istream;
     } else if (child_widget.id != nullptr &&

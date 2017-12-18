@@ -32,6 +32,7 @@
 
 #include "istream_catch.hxx"
 #include "ForwardIstream.hxx"
+#include "UnusedPtr.hxx"
 
 #include <memory>
 
@@ -54,9 +55,9 @@ class CatchIstream final : public ForwardIstream {
     void *const callback_ctx;
 
 public:
-    CatchIstream(struct pool &_pool, Istream &_input,
+    CatchIstream(struct pool &_pool, UnusedIstreamPtr _input,
                  std::exception_ptr (*_callback)(std::exception_ptr ep, void *ctx), void *ctx)
-        :ForwardIstream(_pool, _input),
+        :ForwardIstream(_pool, std::move(_input)),
          callback(_callback), callback_ctx(ctx) {}
 
     void SendSpace();
@@ -256,11 +257,12 @@ CatchIstream::_Close() noexcept
  *
  */
 
-Istream *
-istream_catch_new(struct pool *pool, Istream &input,
+UnusedIstreamPtr
+istream_catch_new(struct pool *pool, UnusedIstreamPtr input,
                   std::exception_ptr (*callback)(std::exception_ptr ep, void *ctx), void *ctx)
 {
     assert(callback != nullptr);
 
-    return NewIstream<CatchIstream>(*pool, input, callback, ctx);
+    return UnusedIstreamPtr(NewIstream<CatchIstream>(*pool, std::move(input),
+                                                     callback, ctx));
 }

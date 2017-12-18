@@ -36,14 +36,14 @@
 #include <exception>
 
 struct pool;
-class Istream;
+class UnusedIstreamPtr;
 
 /**
  * This istream filter catches fatal errors and attempts to ignore
  * them.
  */
-Istream *
-istream_catch_new(struct pool *pool, Istream &input,
+UnusedIstreamPtr
+istream_catch_new(struct pool *pool, UnusedIstreamPtr input,
                   std::exception_ptr (*callback)(std::exception_ptr ep, void *ctx), void *ctx);
 
 #endif

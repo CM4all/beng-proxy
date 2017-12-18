@@ -93,9 +93,9 @@ Instance::HandleHttpRequest(HttpServerRequest &request,
                             gcc_unused CancellablePointer &cancel_ptr)
 {
     http_server_response(&request, HTTP_STATUS_OK, HttpHeaders(request.pool),
-                         UnusedIstreamPtr(istream_catch_new(&request.pool,
-                                                            *request.body.Steal(),
-                                                            catch_callback, nullptr)));
+                         istream_catch_new(&request.pool,
+                                           std::move(request.body),
+                                           catch_callback, nullptr));
 
     CloseConnection();
 }

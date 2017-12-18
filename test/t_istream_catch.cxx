@@ -32,7 +32,7 @@
 
 #include "istream/istream_catch.hxx"
 #include "istream/istream_string.hxx"
-#include "istream/istream.hxx"
+#include "istream/UnusedPtr.hxx"
 #include "util/Exception.hxx"
 
 #include <stdio.h>
@@ -49,7 +49,7 @@ create_input(struct pool *pool)
     return istream_string_new(pool, EXPECTED_RESULT);
 }
 
-static std::exception_ptr 
+static std::exception_ptr
 catch_callback(std::exception_ptr ep, gcc_unused void *ctx)
 {
     fprintf(stderr, "caught: %s\n", GetFullMessage(ep).c_str());
@@ -59,7 +59,8 @@ catch_callback(std::exception_ptr ep, gcc_unused void *ctx)
 static Istream *
 create_test(EventLoop &, struct pool *pool, Istream *input)
 {
-    return istream_catch_new(pool, *input, catch_callback, nullptr);
+    return istream_catch_new(pool, UnusedIstreamPtr(input),
+                             catch_callback, nullptr).Steal();
 }
 
 #define NO_AVAILABLE_CALL
