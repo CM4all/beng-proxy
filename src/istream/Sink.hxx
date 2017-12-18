@@ -54,9 +54,9 @@ protected:
         return input.IsDefined();
     }
 
-    void SetInput(Istream &_input,
-                  FdTypeMask direct=0) {
-        input.Set(_input, *this, direct);
+    template<typename I>
+    void SetInput(I &&_input, FdTypeMask direct=0) {
+        input.Set(std::forward<I>(_input), *this, direct);
     }
 
     void ClearInput() {
