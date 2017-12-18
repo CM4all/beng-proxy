@@ -105,14 +105,14 @@ MyStockClass::Create(CreateStockItem c,
 class MyStockGetHandler final : public StockGetHandler {
 public:
     /* virtual methods from class StockGetHandler */
-    void OnStockItemReady(StockItem &item) override {
+    void OnStockItemReady(StockItem &item) noexcept override {
         assert(!got_item);
 
         got_item = true;
         last_item = &item;
     }
 
-    void OnStockItemError(std::exception_ptr ep) override {
+    void OnStockItemError(std::exception_ptr ep) noexcept override {
         PrintException(ep);
 
         got_item = true;

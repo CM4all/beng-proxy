@@ -178,8 +178,8 @@ public:
          cancel_ptr(_cancel_ptr) {}
 
     /* virtual methods from class StockGetHandler */
-    void OnStockItemReady(StockItem &item) override;
-    void OnStockItemError(std::exception_ptr ep) override;
+    void OnStockItemReady(StockItem &item) noexcept override;
+    void OnStockItemError(std::exception_ptr ep) noexcept override;
 
     /* virtual methods from class Lease */
     void ReleaseLease(bool reuse) noexcept override {
@@ -194,7 +194,7 @@ public:
  */
 
 void
-TranslateStockRequest::OnStockItemReady(StockItem &_item)
+TranslateStockRequest::OnStockItemReady(StockItem &_item) noexcept
 {
     item = &(TranslateConnection &)_item;
     translate(pool, stock.GetEventLoop(), item->GetSocket(),
@@ -204,7 +204,7 @@ TranslateStockRequest::OnStockItemReady(StockItem &_item)
 }
 
 void
-TranslateStockRequest::OnStockItemError(std::exception_ptr ep)
+TranslateStockRequest::OnStockItemError(std::exception_ptr ep) noexcept
 {
     handler.error(ep, handler_ctx);
 }

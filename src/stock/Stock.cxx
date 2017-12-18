@@ -334,7 +334,7 @@ Stock::GetNow(struct pool &caller_pool, void *info)
         std::exception_ptr error;
 
         /* virtual methods from class StockGetHandler */
-        void OnStockItemReady(StockItem &_item) override {
+        void OnStockItemReady(StockItem &_item) noexcept override {
 #ifndef NDEBUG
             created = true;
 #endif
@@ -342,7 +342,7 @@ Stock::GetNow(struct pool &caller_pool, void *info)
             item = &_item;
         }
 
-        void OnStockItemError(std::exception_ptr ep) override {
+        void OnStockItemError(std::exception_ptr ep) noexcept override {
 #ifndef NDEBUG
             created = true;
 #endif

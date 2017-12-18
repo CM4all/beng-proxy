@@ -39,8 +39,8 @@ struct StockItem;
 
 class StockGetHandler {
 public:
-    virtual void OnStockItemReady(StockItem &item) = 0;
-    virtual void OnStockItemError(std::exception_ptr ep) = 0;
+    virtual void OnStockItemReady(StockItem &item) noexcept = 0;
+    virtual void OnStockItemError(std::exception_ptr ep) noexcept = 0;
 };
 
 #endif

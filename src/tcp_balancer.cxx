@@ -49,7 +49,7 @@ struct TcpBalancerRequest : public StockGetHandler {
                        bool _ip_transparent,
                        SocketAddress _bind_address,
                        unsigned _timeout,
-                       StockGetHandler &_handler)
+                       StockGetHandler &_handler) noexcept
         :tcp_balancer(_tcp_balancer),
          ip_transparent(_ip_transparent),
          bind_address(_bind_address),
@@ -57,16 +57,16 @@ struct TcpBalancerRequest : public StockGetHandler {
          handler(_handler) {}
 
     void Send(struct pool &pool, SocketAddress address,
-              CancellablePointer &cancel_ptr);
+              CancellablePointer &cancel_ptr) noexcept;
 
     /* virtual methods from class StockGetHandler */
-    void OnStockItemReady(StockItem &item) override;
-    void OnStockItemError(std::exception_ptr ep) override;
+    void OnStockItemReady(StockItem &item) noexcept override;
+    void OnStockItemError(std::exception_ptr ep) noexcept override;
 };
 
 inline void
 TcpBalancerRequest::Send(struct pool &pool, SocketAddress address,
-                         CancellablePointer &cancel_ptr)
+                         CancellablePointer &cancel_ptr) noexcept
 {
     tcp_balancer.tcp_stock.Get(pool,
                                nullptr,
@@ -84,7 +84,7 @@ TcpBalancerRequest::Send(struct pool &pool, SocketAddress address,
  */
 
 void
-TcpBalancerRequest::OnStockItemReady(StockItem &item)
+TcpBalancerRequest::OnStockItemReady(StockItem &item) noexcept
 {
     auto &base = BalancerRequest<TcpBalancerRequest>::Cast(*this);
     base.ConnectSuccess();
@@ -93,7 +93,7 @@ TcpBalancerRequest::OnStockItemReady(StockItem &item)
 }
 
 void
-TcpBalancerRequest::OnStockItemError(std::exception_ptr ep)
+TcpBalancerRequest::OnStockItemError(std::exception_ptr ep) noexcept
 {
     auto &base = BalancerRequest<TcpBalancerRequest>::Cast(*this);
     if (!base.ConnectFailure())

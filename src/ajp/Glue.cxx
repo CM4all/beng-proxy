@@ -118,8 +118,8 @@ private:
     }
 
     /* virtual methods from class StockGetHandler */
-    void OnStockItemReady(StockItem &item) override;
-    void OnStockItemError(std::exception_ptr ep) override;
+    void OnStockItemReady(StockItem &item) noexcept override;
+    void OnStockItemError(std::exception_ptr ep) noexcept override;
 
     /* virtual methods from class Lease */
     void ReleaseLease(bool reuse) noexcept override {
@@ -134,7 +134,7 @@ private:
  */
 
 void
-AjpRequest::OnStockItemReady(StockItem &item)
+AjpRequest::OnStockItemReady(StockItem &item) noexcept
 {
     stock_item = &item;
 
@@ -151,7 +151,7 @@ AjpRequest::OnStockItemReady(StockItem &item)
 }
 
 void
-AjpRequest::OnStockItemError(std::exception_ptr ep)
+AjpRequest::OnStockItemError(std::exception_ptr ep) noexcept
 {
     body.Clear();
     handler.InvokeError(ep);

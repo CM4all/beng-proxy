@@ -113,8 +113,8 @@ public:
 
 private:
     /* virtual methods from class StockGetHandler */
-    void OnStockItemReady(StockItem &item) override;
-    void OnStockItemError(std::exception_ptr ep) override;
+    void OnStockItemReady(StockItem &item) noexcept override;
+    void OnStockItemError(std::exception_ptr ep) noexcept override;
 
     /* virtual methods from class Cancellable */
     void Cancel() noexcept override {
@@ -141,7 +141,7 @@ private:
  */
 
 void
-WasRequest::OnStockItemReady(StockItem &item)
+WasRequest::OnStockItemReady(StockItem &item) noexcept
 {
     stock_item = &item;
 
@@ -160,7 +160,7 @@ WasRequest::OnStockItemReady(StockItem &item)
 }
 
 void
-WasRequest::OnStockItemError(std::exception_ptr ep)
+WasRequest::OnStockItemError(std::exception_ptr ep) noexcept
 {
     body.Clear();
 

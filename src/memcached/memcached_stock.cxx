@@ -113,8 +113,8 @@ struct MemcachedStockRequest final : public StockGetHandler, Lease {
          cancel_ptr(_cancel_ptr) {}
 
     /* virtual methods from class StockGetHandler */
-    void OnStockItemReady(StockItem &item) override;
-    void OnStockItemError(std::exception_ptr ep) override;
+    void OnStockItemReady(StockItem &item) noexcept override;
+    void OnStockItemError(std::exception_ptr ep) noexcept override;
 
     /* virtual methods from class Lease */
     void ReleaseLease(bool reuse) noexcept override {
@@ -128,7 +128,7 @@ struct MemcachedStockRequest final : public StockGetHandler, Lease {
  */
 
 void
-MemcachedStockRequest::OnStockItemReady(StockItem &_item)
+MemcachedStockRequest::OnStockItemReady(StockItem &_item) noexcept
 {
     item = &_item;
 
@@ -146,7 +146,7 @@ MemcachedStockRequest::OnStockItemReady(StockItem &_item)
 }
 
 void
-MemcachedStockRequest::OnStockItemError(std::exception_ptr ep)
+MemcachedStockRequest::OnStockItemError(std::exception_ptr ep) noexcept
 {
     handler.error(ep, handler_ctx);
 

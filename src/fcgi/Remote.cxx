@@ -117,8 +117,8 @@ public:
 
 private:
     /* virtual methods from class StockGetHandler */
-    void OnStockItemReady(StockItem &item) override;
-    void OnStockItemError(std::exception_ptr ep) override;
+    void OnStockItemReady(StockItem &item) noexcept override;
+    void OnStockItemError(std::exception_ptr ep) noexcept override;
 
     /* virtual methods from class Cancellable */
     void Cancel() noexcept override {
@@ -138,7 +138,7 @@ private:
  */
 
 void
-FcgiRemoteRequest::OnStockItemReady(StockItem &item)
+FcgiRemoteRequest::OnStockItemReady(StockItem &item) noexcept
 {
     stock_item = &item;
 
@@ -161,7 +161,7 @@ FcgiRemoteRequest::OnStockItemReady(StockItem &item)
 }
 
 void
-FcgiRemoteRequest::OnStockItemError(std::exception_ptr ep)
+FcgiRemoteRequest::OnStockItemError(std::exception_ptr ep) noexcept
 {
     if (stderr_fd >= 0)
         close(stderr_fd);
