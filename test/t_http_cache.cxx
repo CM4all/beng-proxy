@@ -166,7 +166,7 @@ http_cache_memcached_put(gcc_unused struct pool &pool,
                          gcc_unused const StringMap &request_headers,
                          gcc_unused http_status_t status,
                          gcc_unused const StringMap *response_headers,
-                         gcc_unused Istream *value,
+                         gcc_unused UnusedIstreamPtr value,
                          gcc_unused http_cache_memcached_put_t put,
                          gcc_unused void *callback_ctx,
                          gcc_unused CancellablePointer &cancel_ptr)

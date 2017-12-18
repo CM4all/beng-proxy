@@ -46,6 +46,7 @@
 #include "istream/istream_memory.hxx"
 #include "istream/istream.hxx"
 #include "istream/sink_header.hxx"
+#include "istream/UnusedPtr.hxx"
 #include "pool.hxx"
 #include "io/Logger.hxx"
 #include "util/Background.hxx"
@@ -319,7 +320,7 @@ http_cache_memcached_header_done(void *header_ptr, size_t length,
             return;
         }
 
-        request.callback.get(document, &tail, nullptr, request.callback_ctx);
+        request.callback.get(document, UnusedIstreamPtr(&tail), nullptr, request.callback_ctx);
         return;
     }
 
@@ -455,7 +456,7 @@ http_cache_memcached_put(struct pool &pool, MemachedStock &stock,
                          const StringMap &request_headers,
                          http_status_t status,
                          const StringMap *response_headers,
-                         Istream *value,
+                         UnusedIstreamPtr value,
                          http_cache_memcached_put_t callback, void *callback_ctx,
                          CancellablePointer &cancel_ptr)
 {
@@ -491,11 +492,11 @@ http_cache_memcached_put(struct pool &pool, MemachedStock &stock,
     request->header_size = ToBE32(gb.GetSize());
 
     /* append response body */
-    value = istream_cat_new(pool,
-                            istream_memory_new(&pool, &request->header_size,
-                                               sizeof(request->header_size)),
-                            istream_gb_new(pool, std::move(gb)),
-                            value);
+    value = UnusedIstreamPtr(istream_cat_new(pool,
+                                             istream_memory_new(&pool, &request->header_size,
+                                                                sizeof(request->header_size)),
+                                             istream_gb_new(pool, std::move(gb)),
+                                             value.Steal()));
 
     request->extras.set.flags = 0;
     request->extras.set.expiration =
@@ -510,7 +511,7 @@ http_cache_memcached_put(struct pool &pool, MemachedStock &stock,
                            MEMCACHED_OPCODE_SET,
                            &request->extras.set, sizeof(request->extras.set),
                            key, strlen(key),
-                           value,
+                           value.Steal(),
                            http_cache_memcached_put_handler, request,
                            cancel_ptr);
 }

@@ -296,7 +296,7 @@ http_cache_put(HttpCacheRequest &request,
                                  request.info,
                                  request.headers,
                                  request.response.status, request.response.headers,
-                                 value.Steal(),
+                                 std::move(value),
                                  http_cache_memcached_put_callback, job,
                                  request.cache.background.Add2(*job));
     }
@@ -1080,7 +1080,7 @@ http_cache_memcached_miss(HttpCacheRequest &request)
  */
 static void
 http_cache_memcached_get_callback(HttpCacheDocument *document,
-                                  Istream *body, std::exception_ptr ep,
+                                  UnusedIstreamPtr body, std::exception_ptr ep,
                                   void *ctx)
 {
     HttpCacheRequest &request = *(HttpCacheRequest *)ctx;
@@ -1099,12 +1099,12 @@ http_cache_memcached_get_callback(HttpCacheDocument *document,
         request.handler.InvokeResponse(document->status,
                                        StringMap(ShallowCopy(), request.caller_pool,
                                                  document->response_headers),
-                                       UnusedIstreamPtr(body));
+                                       std::move(body));
         pool_unref_denotify(&request.caller_pool,
                             &request.caller_pool_notify);
     } else {
         request.document = document;
-        request.document_body = istream_hold_new(request.pool, *body);
+        request.document_body = istream_hold_new(request.pool, *body.Steal());
 
         http_cache_test(request, request.method, request.address,
                         StringMap(ShallowCopy(),

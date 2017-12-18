@@ -43,7 +43,7 @@
 
 struct pool;
 class StringMap;
-class Istream;
+class UnusedIstreamPtr;
 struct MemachedStock;
 class BackgroundManager;
 class CancellablePointer;
@@ -54,7 +54,7 @@ typedef void (*http_cache_memcached_flush_t)(bool success,
                                              std::exception_ptr ep, void *ctx);
 
 typedef void (*http_cache_memcached_get_t)(HttpCacheDocument *document,
-                                           Istream *body,
+                                           UnusedIstreamPtr body,
                                            std::exception_ptr ep, void *ctx);
 
 typedef void (*http_cache_memcached_put_t)(std::exception_ptr ep, void *ctx);
@@ -83,7 +83,7 @@ http_cache_memcached_put(struct pool &pool, MemachedStock &stock,
                          const StringMap &request_headers,
                          http_status_t status,
                          const StringMap *response_headers,
-                         Istream *value,
+                         UnusedIstreamPtr value,
                          http_cache_memcached_put_t put, void *callback_ctx,
                          CancellablePointer &cancel_ptr);
 
