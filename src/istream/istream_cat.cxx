@@ -42,7 +42,7 @@
 #include <assert.h>
 #include <stdarg.h>
 
-struct CatIstream final : public Istream {
+class CatIstream final : public Istream {
     struct Input final
         : IstreamSink,
           boost::intrusive::slist_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
@@ -114,8 +114,10 @@ struct CatIstream final : public Istream {
                                     boost::intrusive::constant_time_size<false>> InputList;
     InputList inputs;
 
+public:
     CatIstream(struct pool &p, ConstBuffer<Istream *> _inputs);
 
+private:
     Input &GetCurrent() {
         return inputs.front();
     }
@@ -171,6 +173,7 @@ struct CatIstream final : public Istream {
         DestroyError(ep);
     }
 
+public:
     /* virtual methods from class Istream */
 
     off_t _GetAvailable(bool partial) override;
