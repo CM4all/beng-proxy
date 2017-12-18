@@ -59,11 +59,6 @@ protected:
         input.Set(_input, *this, direct);
     }
 
-    void ReplaceInput(Istream &_input,
-                      FdTypeMask direct=0) {
-        input.Replace(_input, *this, direct);
-    }
-
     void ClearInput() {
         input.Clear();
     }
