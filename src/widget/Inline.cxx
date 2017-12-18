@@ -120,7 +120,7 @@ private:
 
     /* virtual methods from class HttpResponseHandler */
     void OnHttpResponse(http_status_t status, StringMap &&headers,
-                        Istream *body) noexcept override;
+                        UnusedIstreamPtr body) noexcept override;
     void OnHttpError(std::exception_ptr ep) noexcept override;
 
     /* virtual methods from class Cancellable */
@@ -134,31 +134,25 @@ private:
  *
  * Throws exception on error.
  */
-static Istream *
+static UnusedIstreamPtr
 widget_response_format(struct pool &pool, const Widget &widget,
-                       const StringMap &headers, Istream &_body,
+                       const StringMap &headers, UnusedIstreamPtr body,
                        bool plain_text)
 {
-    auto *body = &_body;
-
-    assert(body != nullptr);
+    assert(body);
 
     const char *p = headers.Get("content-encoding");
-    if (p != nullptr && strcmp(p, "identity") != 0) {
-        body->CloseUnused();
+    if (p != nullptr && strcmp(p, "identity") != 0)
         throw WidgetError(widget, WidgetErrorCode::UNSUPPORTED_ENCODING,
                           "widget sent non-identity response, cannot embed");
-    }
 
     const char *content_type = headers.Get("content-type");
 
     if (plain_text) {
         if (content_type == nullptr ||
-            !StringStartsWith(content_type, "text/plain")) {
-            body->CloseUnused();
+            !StringStartsWith(content_type, "text/plain"))
             throw WidgetError(widget, WidgetErrorCode::UNSUPPORTED_ENCODING,
                               "widget sent non-text/plain response");
-        }
 
         return body;
     }
@@ -166,11 +160,9 @@ widget_response_format(struct pool &pool, const Widget &widget,
     if (content_type == nullptr ||
         (!StringStartsWith(content_type, "text/") &&
          !StringStartsWith(content_type, "application/xml") &&
-         !StringStartsWith(content_type, "application/xhtml+xml"))) {
-        body->CloseUnused();
+         !StringStartsWith(content_type, "application/xhtml+xml")))
         throw WidgetError(widget, WidgetErrorCode::UNSUPPORTED_ENCODING,
                           "widget sent non-text response");
-    }
 
     const auto charset = http_header_param(content_type, "charset");
     if (!charset.IsNull() && !charset.EqualsIgnoreCase("utf-8") &&
@@ -179,16 +171,14 @@ widget_response_format(struct pool &pool, const Widget &widget,
            utf-8; this widget however used a different charset.
            Automatically convert it with istream_iconv */
         const char *charset2 = p_strdup(pool, charset);
-        Istream *ic = istream_iconv_new(&pool, *body, "utf-8", charset2);
-        if (ic == nullptr) {
-            body->CloseUnused();
+        Istream *ic = istream_iconv_new(&pool, *body.Steal(), "utf-8", charset2);
+        if (ic == nullptr)
             throw WidgetError(widget, WidgetErrorCode::UNSUPPORTED_ENCODING,
                               StringFormat<64>("widget sent unknown charset '%s'",
                                                charset2));
-        }
 
         widget.logger(6, "charset conversion '", charset2, "' -> utf-8");
-        body = ic;
+        body = UnusedIstreamPtr(ic);
     }
 
     if (StringStartsWith(content_type, "text/") &&
@@ -198,12 +188,13 @@ widget_response_format(struct pool &pool, const Widget &widget,
 
         widget.logger(6, "converting text to HTML");
 
-        body = istream_html_escape_new(pool, *body);
-        body = istream_cat_new(pool,
-                               istream_string_new(&pool,
-                                                  "<pre class=\"beng_text_widget\">"),
-                               body,
-                               istream_string_new(&pool, "</pre>"));
+        auto *i = istream_html_escape_new(pool, *body.Steal());
+        i = istream_cat_new(pool,
+                            istream_string_new(&pool,
+                                               "<pre class=\"beng_text_widget\">"),
+                            i,
+                            istream_string_new(&pool, "</pre>"));
+        body = UnusedIstreamPtr(i);
     }
 
     return body;
@@ -216,7 +207,7 @@ widget_response_format(struct pool &pool, const Widget &widget,
 
 void
 InlineWidget::OnHttpResponse(http_status_t status, StringMap &&headers,
-                             Istream *body) noexcept
+                             UnusedIstreamPtr body) noexcept
 {
     header_timeout_event.Cancel();
 
@@ -224,8 +215,7 @@ InlineWidget::OnHttpResponse(http_status_t status, StringMap &&headers,
         /* the HTTP status code returned by the widget server is
            non-successful - don't embed this widget into the
            template */
-        if (body != nullptr)
-            body->CloseUnused();
+        body.Clear();
 
         WidgetError error(widget, WidgetErrorCode::UNSPECIFIED,
                           StringFormat<64>("response status %d", status));
@@ -233,20 +223,21 @@ InlineWidget::OnHttpResponse(http_status_t status, StringMap &&headers,
         return;
     }
 
-    if (body != nullptr) {
+    if (body) {
         /* check if the content-type is correct for embedding into
            a template, and convert if possible */
         try {
             body = widget_response_format(pool, widget,
-                                          headers, *body, plain_text);
+                                          headers, std::move(body),
+                                          plain_text);
         } catch (...) {
             Fail(std::current_exception());
             return;
         }
     } else
-        body = istream_null_new(&pool);
+        body = UnusedIstreamPtr(istream_null_new(&pool));
 
-    istream_delayed_set(*delayed, *body);
+    istream_delayed_set(*delayed, *body.Steal());
 
     if (delayed->HasHandler())
         delayed->Read();

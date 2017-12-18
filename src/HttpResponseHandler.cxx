@@ -36,13 +36,6 @@
 #include "istream/UnusedPtr.hxx"
 
 void
-HttpResponseHandler::InvokeResponse(http_status_t status, StringMap &&headers,
-                                    UnusedIstreamPtr body) noexcept
-{
-    InvokeResponse(status, std::move(headers), body.Steal());
-}
-
-void
 HttpResponseHandler::InvokeResponse(struct pool &pool,
                                     http_status_t status,
                                     const char *msg) noexcept
@@ -53,5 +46,5 @@ HttpResponseHandler::InvokeResponse(struct pool &pool,
     StringMap headers(pool);
     headers.Add("content-type", "text/plain; charset=utf-8");
     InvokeResponse(status, std::move(headers),
-                   istream_string_new(&pool, msg));
+                   UnusedIstreamPtr(istream_string_new(&pool, msg)));
 }

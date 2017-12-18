@@ -41,7 +41,6 @@
 
 struct pool;
 class StringMap;
-class Istream;
 class UnusedIstreamPtr;
 
 /**
@@ -50,21 +49,19 @@ class UnusedIstreamPtr;
 class HttpResponseHandler {
 protected:
     virtual void OnHttpResponse(http_status_t status, StringMap &&headers,
-                                Istream *body) noexcept = 0;
+                                UnusedIstreamPtr body) noexcept = 0;
 
     virtual void OnHttpError(std::exception_ptr ep) noexcept = 0;
 
 public:
+    template<typename B>
     void InvokeResponse(http_status_t status, StringMap &&headers,
-                        Istream *body) noexcept {
+                        B &&body) noexcept {
         assert(http_status_is_valid(status));
-        assert(!http_status_is_empty(status) || body == nullptr);
+        assert(!http_status_is_empty(status) || !body);
 
-        OnHttpResponse(status, std::move(headers), body);
+        OnHttpResponse(status, std::move(headers), std::forward<B>(body));
     }
-
-    void InvokeResponse(http_status_t status, StringMap &&headers,
-                        UnusedIstreamPtr body) noexcept;
 
     /**
      * Sends a plain-text message.

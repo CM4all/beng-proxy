@@ -789,12 +789,9 @@ RelocateCallback(const char *const uri, void *ctx)
 
 void
 Request::OnHttpResponse(http_status_t status, StringMap &&headers,
-                        Istream *_body) noexcept
+                        UnusedIstreamPtr body) noexcept
 {
     assert(!response_sent);
-    assert(_body == nullptr || !_body->HasHandler());
-
-    UnusedIstreamPtr body(_body);
 
     if (collect_cookies) {
         collect_cookies = false;

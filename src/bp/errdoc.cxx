@@ -69,7 +69,7 @@ struct ErrorResponseLoader final : HttpResponseHandler, Cancellable {
 
     /* virtual methods from class HttpResponseHandler */
     void OnHttpResponse(http_status_t status, StringMap &&headers,
-                        Istream *body) noexcept override;
+                        UnusedIstreamPtr body) noexcept override;
     void OnHttpError(std::exception_ptr ep) noexcept override;
 };
 
@@ -87,16 +87,16 @@ errdoc_resubmit(ErrorResponseLoader &er)
 
 void
 ErrorResponseLoader::OnHttpResponse(http_status_t _status, StringMap &&_headers,
-                                    Istream *_body) noexcept
+                                    UnusedIstreamPtr _body) noexcept
 {
     if (http_status_is_success(_status)) {
         /* close the original (error) response body */
-        body.Clear();
+        _body.Clear();
 
-        request2->InvokeResponse(status, std::move(_headers), _body);
+        request2->InvokeResponse(status, std::move(_headers), std::move(_body));
     } else {
         /* close the original (error) response body */
-        body.Clear();
+        _body.Clear();
 
         errdoc_resubmit(*this);
     }

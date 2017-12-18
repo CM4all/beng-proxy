@@ -492,7 +492,8 @@ FcgiClient::SubmitResponse()
     }
 
     response.in_handler = true;
-    handler.InvokeResponse(status, std::move(response.headers), this);
+    handler.InvokeResponse(status, std::move(response.headers),
+                           UnusedIstreamPtr(this));
     response.in_handler = false;
 
     return socket.IsValid();
@@ -514,7 +515,7 @@ FcgiClient::HandleEnd()
 
     if (response.read_state == FcgiClient::Response::READ_NO_BODY) {
         handler.InvokeResponse(response.status, std::move(response.headers),
-                               nullptr);
+                               UnusedIstreamPtr());
         Destroy();
     } else if (response.available > 0) {
         AbortResponseBody(std::make_exception_ptr(FcgiClientError("premature end of body "

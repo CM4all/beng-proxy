@@ -34,7 +34,7 @@
 #include "static_headers.hxx"
 #include "HttpResponseHandler.hxx"
 #include "strmap.hxx"
-#include "istream/istream.hxx"
+#include "istream/UnusedPtr.hxx"
 #include "istream/istream_file.hxx"
 #include "pool.hxx"
 #include "system/Error.hxx"
@@ -83,5 +83,5 @@ static_file_get(EventLoop &event_loop, struct pool &pool,
                            static_response_headers(pool,
                                                    istream_file_fd(*body), st,
                                                    content_type),
-                           body);
+                           UnusedIstreamPtr(body));
 }

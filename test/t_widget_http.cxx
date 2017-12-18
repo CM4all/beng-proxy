@@ -182,7 +182,6 @@ MyResourceLoader::SendRequest(struct pool &pool,
                               gcc_unused CancellablePointer &cancel_ptr)
 {
     StringMap response_headers(pool);
-    Istream *response_body = istream_null_new(&pool);
     const char *p;
 
     assert(!got_request);
@@ -231,27 +230,26 @@ MyResourceLoader::SendRequest(struct pool &pool,
         break;
     }
 
+    UnusedIstreamPtr response_body(istream_null_new(&pool));
     handler.InvokeResponse(HTTP_STATUS_OK,
                            std::move(response_headers),
-                           response_body);
+                           std::move(response_body));
 }
 
 struct Context final : HttpResponseHandler {
     /* virtual methods from class HttpResponseHandler */
     void OnHttpResponse(http_status_t status, StringMap &&headers,
-                        Istream *body) noexcept override;
+                        UnusedIstreamPtr body) noexcept override;
     void OnHttpError(std::exception_ptr ep) noexcept override;
 };
 
 void
 Context::OnHttpResponse(http_status_t status, gcc_unused StringMap &&headers,
-                        Istream *body) noexcept
+                        UnusedIstreamPtr body) noexcept
 {
     assert(!got_response);
     assert(status == 200);
-    assert(body != nullptr);
-
-    body->CloseUnused();
+    assert(body);
 
     got_response = true;
 }

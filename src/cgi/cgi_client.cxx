@@ -138,7 +138,7 @@ CGIClient::ReturnResponse()
 
         buffer.Free(fb_pool_get());
         input.ClearAndClose();
-        handler.InvokeResponse(status, std::move(headers), nullptr);
+        handler.InvokeResponse(status, std::move(headers), UnusedIstreamPtr());
         Destroy();
         return false;
     } else if (parser.IsEOF()) {
@@ -150,14 +150,15 @@ CGIClient::ReturnResponse()
         buffer.Free(fb_pool_get());
         input.ClearAndClose();
         handler.InvokeResponse(status, std::move(headers),
-                               istream_null_new(&GetPool()));
+                               UnusedIstreamPtr(istream_null_new(&GetPool())));
         Destroy();
         return false;
     } else {
         stopwatch_event(stopwatch, "headers");
 
         in_response_callback = true;
-        handler.InvokeResponse(status, std::move(headers), this);
+        handler.InvokeResponse(status, std::move(headers),
+                               UnusedIstreamPtr(this));
         in_response_callback = false;
         return input.IsDefined();
     }

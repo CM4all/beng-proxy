@@ -88,7 +88,7 @@ struct ProxyWidget final : WidgetLookupHandler, HttpResponseHandler, Cancellable
 
     /* virtual methods from class HttpResponseHandler */
     void OnHttpResponse(http_status_t status, StringMap &&headers,
-                        Istream *body) noexcept override;
+                        UnusedIstreamPtr body) noexcept override;
     void OnHttpError(std::exception_ptr ep) noexcept override;
 };
 
@@ -99,11 +99,9 @@ struct ProxyWidget final : WidgetLookupHandler, HttpResponseHandler, Cancellable
 
 void
 ProxyWidget::OnHttpResponse(http_status_t status, StringMap &&_headers,
-                            Istream *_body) noexcept
+                            UnusedIstreamPtr body) noexcept
 {
     assert(widget->cls != nullptr);
-
-    UnusedIstreamPtr body(_body);
 
     /* XXX shall the address view or the transformation view be used
        to control response header forwarding? */

@@ -36,6 +36,7 @@
 #include "static_headers.hxx"
 #include "strmap.hxx"
 #include "pool.hxx"
+#include "istream/UnusedPtr.hxx"
 
 #include <sys/stat.h>
 
@@ -73,7 +74,8 @@ NfsRequest::OnNfsCacheResponse(NfsCacheHandle &handle, const struct stat &st)
     Istream *body = nfs_cache_handle_open(pool, handle, 0, st.st_size);
 
     // TODO: handle revalidation etc.
-    handler.InvokeResponse(HTTP_STATUS_OK, std::move(headers), body);
+    handler.InvokeResponse(HTTP_STATUS_OK, std::move(headers),
+                           UnusedIstreamPtr(body));
 }
 
 /*

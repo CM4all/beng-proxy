@@ -184,7 +184,7 @@ private:
 
     /* virtual methods from class HttpResponseHandler */
     void OnHttpResponse(http_status_t status, StringMap &&headers,
-                        Istream *body) noexcept override;
+                        UnusedIstreamPtr body) noexcept override;
     void OnHttpError(std::exception_ptr ep) noexcept override;
 };
 
@@ -195,7 +195,7 @@ private:
 
 void
 HttpRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
-                            Istream *_body) noexcept
+                            UnusedIstreamPtr _body) noexcept
 {
     assert(lease_state != LeaseState::NONE);
     assert(!response_sent);
@@ -203,7 +203,7 @@ HttpRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
     auto &fm = tcp_balancer.GetFailureManager();
     fm.Unset(tcp_stock_item_get_address(*stock_item), FAILURE_PROTOCOL);
 
-    handler.InvokeResponse(status, std::move(_headers), _body);
+    handler.InvokeResponse(status, std::move(_headers), std::move(_body));
     ResponseSent();
 }
 

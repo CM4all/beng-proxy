@@ -243,7 +243,6 @@ MyResourceLoader::SendRequest(struct pool &pool,
 {
     const auto *request = &requests[current_request];
     StringMap *expected_rh;
-    Istream *response_body;
 
     assert(!got_request);
     assert(!got_response);
@@ -272,14 +271,13 @@ MyResourceLoader::SendRequest(struct pool &pool,
         header_parse_buffer(pool, response_headers, std::move(gb));
     }
 
+    UnusedIstreamPtr response_body;
     if (request->response_body != NULL)
-        response_body = istream_string_new(&pool, request->response_body);
-    else
-        response_body = NULL;
+        response_body = UnusedIstreamPtr(istream_string_new(&pool, request->response_body));
 
     handler.InvokeResponse(request->status,
                            std::move(response_headers),
-                           response_body);
+                           std::move(response_body));
 }
 
 struct Context final : HttpResponseHandler {
@@ -289,13 +287,13 @@ struct Context final : HttpResponseHandler {
 
     /* virtual methods from class HttpResponseHandler */
     void OnHttpResponse(http_status_t status, StringMap &&headers,
-                        Istream *body) noexcept override;
+                        UnusedIstreamPtr body) noexcept override;
     void OnHttpError(std::exception_ptr ep) noexcept override;
 };
 
 void
 Context::OnHttpResponse(http_status_t status, StringMap &&headers,
-                        Istream *body) noexcept
+                        UnusedIstreamPtr body) noexcept
 {
     Request *request = &requests[current_request];
     StringMap *expected_rh;
@@ -311,10 +309,11 @@ Context::OnHttpResponse(http_status_t status, StringMap &&headers,
         }
     }
 
-    if (body != NULL) {
+    if (body) {
         request->body_read = 0;
-        body->SetHandler(*request);
-        body->Read();
+        auto *b = body.Steal();
+        b->SetHandler(*request);
+        b->Read();
     }
 
     got_response = true;

@@ -88,7 +88,7 @@ struct Context final : PInstance, HttpResponseHandler, IstreamHandler {
 
     /* virtual methods from class HttpResponseHandler */
     void OnHttpResponse(http_status_t status, StringMap &&headers,
-                        Istream *body) noexcept override;
+                        UnusedIstreamPtr body) noexcept override;
     void OnHttpError(std::exception_ptr ep) noexcept override;
 
     /* virtual methods from class IstreamHandler */
@@ -171,17 +171,17 @@ Context::OnError(std::exception_ptr) noexcept
 
 void
 Context::OnHttpResponse(http_status_t _status, gcc_unused StringMap &&headers,
-                        Istream *_body) noexcept
+                        UnusedIstreamPtr _body) noexcept
 {
-    assert(!no_content || _body == nullptr);
+    assert(!no_content || !_body);
 
     status = _status;
 
     if (close_response_body_early) {
-        _body->CloseUnused();
-    } else if (_body != nullptr) {
-        body.Set(*_body, *this, my_handler_direct);
-        body_available = _body->GetAvailable(false);
+        _body.Clear();
+    } else if (_body) {
+        body.Set(std::move(_body), *this, my_handler_direct);
+        body_available = body.GetAvailable(false);
     }
 
     if (close_response_body_late) {
@@ -190,7 +190,7 @@ Context::OnHttpResponse(http_status_t _status, gcc_unused StringMap &&headers,
     }
 
     if (body_read) {
-        assert(_body != nullptr);
+        assert(body.IsDefined());
         body.Read();
     }
 }

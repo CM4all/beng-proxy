@@ -36,7 +36,7 @@
 #include "static_headers.hxx"
 #include "HttpResponseHandler.hxx"
 #include "strmap.hxx"
-#include "istream/istream.hxx"
+#include "istream/UnusedPtr.hxx"
 #include "istream/istream_file.hxx"
 #include "pool.hxx"
 #include "system/Error.hxx"
@@ -101,7 +101,7 @@ DelegateHttpRequest::OnDelegateSuccess(int fd)
                                         st.st_size);
     handler.InvokeResponse(HTTP_STATUS_OK,
                            static_response_headers(pool, fd, st, content_type),
-                           body);
+                           UnusedIstreamPtr(body));
 }
 
 void

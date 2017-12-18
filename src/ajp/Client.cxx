@@ -421,7 +421,8 @@ AjpClient::ConsumeSendHeaders(const uint8_t *data, size_t length)
     response.junk_length = 0;
 
     response.in_handler = true;
-    request.handler.InvokeResponse(status, std::move(response.headers), this);
+    request.handler.InvokeResponse(status, std::move(response.headers),
+                                   UnusedIstreamPtr(this));
     response.in_handler = false;
 
     return socket.IsValid();
@@ -463,7 +464,7 @@ AjpClient::ConsumePacket(enum ajp_code code,
 
             request.handler.InvokeResponse(response.status,
                                            std::move(response.headers),
-                                           nullptr);
+                                           UnusedIstreamPtr());
         } else
             Release(true);
 

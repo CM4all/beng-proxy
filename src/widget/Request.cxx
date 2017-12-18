@@ -131,7 +131,7 @@ struct WidgetRequest final : HttpResponseHandler, Cancellable {
                                  const WidgetView &t_view,
                                  bool exclude_host, bool with_body);
 
-    bool HandleRedirect(const char *location, Istream *body);
+    bool HandleRedirect(const char *location, UnusedIstreamPtr &body);
 
     void DispatchError(std::exception_ptr ep);
 
@@ -191,7 +191,7 @@ struct WidgetRequest final : HttpResponseHandler, Cancellable {
 
     /* virtual methods from class HttpResponseHandler */
     void OnHttpResponse(http_status_t status, StringMap &&headers,
-                        Istream *body) noexcept override;
+                        UnusedIstreamPtr body) noexcept override;
     void OnHttpError(std::exception_ptr ep) noexcept override;
 };
 
@@ -246,7 +246,7 @@ WidgetRequest::MakeRequestHeaders(const WidgetView &a_view,
 }
 
 bool
-WidgetRequest::HandleRedirect(const char *location, Istream *body)
+WidgetRequest::HandleRedirect(const char *location, UnusedIstreamPtr &body)
 {
     if (num_redirects >= 8)
         return false;
@@ -270,8 +270,7 @@ WidgetRequest::HandleRedirect(const char *location, Istream *body)
     if (!address.IsDefined())
         return false;
 
-    if (body != nullptr)
-        body->CloseUnused();
+    body.Clear();
 
     const WidgetView *t_view = widget.GetTransformationView();
     assert(t_view != nullptr);
@@ -542,7 +541,7 @@ WidgetRequest::UpdateView(StringMap &headers)
 
 void
 WidgetRequest::OnHttpResponse(http_status_t status, StringMap &&headers,
-                              Istream *body) noexcept
+                              UnusedIstreamPtr body) noexcept
 {
     if (widget.cls->dump_headers) {
         widget.logger(4, "response headers from widget");
@@ -578,8 +577,7 @@ WidgetRequest::OnHttpResponse(http_status_t status, StringMap &&headers,
     try {
         UpdateView(headers);
     } catch (...) {
-        if (body != nullptr)
-            body->CloseUnused();
+        body.Clear();
 
         DispatchError(std::current_exception());
         return;
@@ -595,7 +593,7 @@ WidgetRequest::OnHttpResponse(http_status_t status, StringMap &&headers,
             widget.SaveToSession(*session);
     }
 
-    DispatchResponse(status, std::move(headers), UnusedIstreamPtr(body));
+    DispatchResponse(status, std::move(headers), std::move(body));
 }
 
 void

@@ -156,7 +156,7 @@ struct Context final
 
     /* virtual methods from class HttpResponseHandler */
     void OnHttpResponse(http_status_t status, StringMap &&headers,
-                        Istream *body) noexcept override;
+                        UnusedIstreamPtr body) noexcept override;
     void OnHttpError(std::exception_ptr ep) noexcept override;
 };
 
@@ -230,18 +230,19 @@ static constexpr SinkFdHandler my_sink_fd_handler = {
 
 void
 Context::OnHttpResponse(http_status_t _status, gcc_unused StringMap &&headers,
-                        Istream *_body) noexcept
+                        UnusedIstreamPtr _body) noexcept
 {
     got_response = true;
     status = _status;
 
-    if (_body != nullptr) {
-        _body = istream_pipe_new(pool, UnusedIstreamPtr(_body), nullptr).Steal();
-        body = sink_fd_new(event_loop, *pool, *_body,
+    if (_body) {
+        _body = istream_pipe_new(pool, std::move(_body), nullptr);
+        auto *b = _body.Steal();
+        body = sink_fd_new(event_loop, *pool, *b,
                            FileDescriptor(STDOUT_FILENO),
                            guess_fd_type(STDOUT_FILENO),
                            my_sink_fd_handler, this);
-        _body->Read();
+        b->Read();
     } else {
         body_eof = true;
         shutdown_listener.Disable();

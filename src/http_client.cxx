@@ -966,7 +966,7 @@ HttpClient::FeedHeaders(const void *data, size_t length)
     response.in_handler = true;
     request.handler.InvokeResponse(response.status,
                                    std::move(response.headers),
-                                   body);
+                                   UnusedIstreamPtr(body));
     response.in_handler = false;
 
     if (!IsValid())

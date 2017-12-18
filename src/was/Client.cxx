@@ -378,7 +378,8 @@ WasClient::SubmitPendingResponse()
     } else
         body = &was_input_enable(*response.body);
 
-    handler.InvokeResponse(response.status, std::move(response.headers), body);
+    handler.InvokeResponse(response.status, std::move(response.headers),
+                           UnusedIstreamPtr(body));
     return control.IsDefined();
 }
 
@@ -487,7 +488,7 @@ WasClient::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload)
         ReleaseControl();
 
         handler.InvokeResponse(response.status, std::move(response.headers),
-                               nullptr);
+                               UnusedIstreamPtr());
 
         Destroy();
         return false;

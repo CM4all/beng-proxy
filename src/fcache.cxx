@@ -172,7 +172,7 @@ struct FilterCacheRequest final : HttpResponseHandler, RubberSinkHandler {
 
     /* virtual methods from class HttpResponseHandler */
     void OnHttpResponse(http_status_t status, StringMap &&headers,
-                        Istream *body) noexcept override;
+                        UnusedIstreamPtr body) noexcept override;
     void OnHttpError(std::exception_ptr ep) noexcept override;
 
     /* virtual methods from class RubberSinkHandler */
@@ -467,23 +467,23 @@ FilterCacheRequest::RubberError(std::exception_ptr ep)
 
 void
 FilterCacheRequest::OnHttpResponse(http_status_t status, StringMap &&headers,
-                                   Istream *body) noexcept
+                                   UnusedIstreamPtr body) noexcept
 {
     auto &_caller_pool = caller_pool;
 
-    off_t available = body == nullptr ? 0 : body->GetAvailable(true);
+    off_t available = body ? body.GetAvailable(true) : 0;
 
     if (!filter_cache_response_evaluate(info,
                                         status, headers, available)) {
         /* don't cache response */
         LogConcat(4, "FilterCache", "nocache ", info.key);
 
-        handler.InvokeResponse(status, std::move(headers), body);
+        handler.InvokeResponse(status, std::move(headers), std::move(body));
         pool_unref(&_caller_pool);
         return;
     }
 
-    if (body == nullptr) {
+    if (!body) {
         response.cancel_ptr = nullptr;
 
         cache.Put(info, status, headers, 0, 0);
@@ -492,9 +492,9 @@ FilterCacheRequest::OnHttpResponse(http_status_t status, StringMap &&headers,
 
         /* tee the body: one goes to our client, and one goes into the
            cache */
-        body = istream_tee_new(pool, *body,
-                               cache.event_loop,
-                               false, false);
+        auto *tee = istream_tee_new(pool, *body.Steal(),
+                                    cache.event_loop,
+                                    false, false);
 
         response.status = status;
         response.headers = strmap_dup(&pool, &headers);
@@ -503,17 +503,19 @@ FilterCacheRequest::OnHttpResponse(http_status_t status, StringMap &&headers,
 
         timeout_event.Add(fcache_request_timeout);
 
-        sink_rubber_new(pool, istream_tee_second(*body),
+        sink_rubber_new(pool, istream_tee_second(*tee),
                         cache.rubber, cacheable_size_limit,
                         *this,
                         response.cancel_ptr);
 
         /* just in case our handler closes the body without looking at
            it: defer an Istream::Read() call for the Rubber sink */
-        istream_tee_defer_read(*body);
+        istream_tee_defer_read(*tee);
+
+        body = UnusedIstreamPtr(tee);
     }
 
-    handler.InvokeResponse(status, std::move(headers), body);
+    handler.InvokeResponse(status, std::move(headers), std::move(body));
     pool_unref(&_caller_pool);
 }
 
@@ -643,7 +645,7 @@ FilterCache::Serve(FilterCacheItem &item,
 
     handler.InvokeResponse(item.status,
                            StringMap(ShallowCopy(), caller_pool, item.headers),
-                           response_body);
+                           UnusedIstreamPtr(response_body));
 }
 
 void

@@ -112,7 +112,7 @@ pipe_filter(SpawnService &spawn_service, EventLoop &event_loop,
     if (!body) {
         /* if the resource does not have a body (which is different
            from Content-Length:0), don't filter it */
-        handler.InvokeResponse(status, std::move(headers), nullptr);
+        handler.InvokeResponse(status, std::move(headers), UnusedIstreamPtr());
         return;
     }
 

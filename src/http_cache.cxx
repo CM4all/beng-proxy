@@ -167,7 +167,7 @@ public:
 
     /* virtual methods from class HttpResponseHandler */
     void OnHttpResponse(http_status_t status, StringMap &&headers,
-                        Istream *body) noexcept override;
+                        UnusedIstreamPtr body) noexcept override;
     void OnHttpError(std::exception_ptr ep) noexcept override;
 
     /* virtual methods from class RubberSinkHandler */
@@ -384,14 +384,14 @@ HttpCacheRequest::RubberError(std::exception_ptr ep)
 
 void
 HttpCacheRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
-                                 Istream *body) noexcept
+                                 UnusedIstreamPtr body) noexcept
 {
     HttpCacheDocument *locked_document = cache.heap.IsDefined()
         ? document
         : nullptr;
 
     if (document != nullptr && status == HTTP_STATUS_NOT_MODIFIED) {
-        assert(body == nullptr);
+        assert(!body);
 
         if (cache.heap.IsDefined() &&
             http_cache_response_evaluate(request_info, info,
@@ -426,8 +426,7 @@ HttpCacheRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
         LogConcat(4, "HttpCache", "matching etag '", document->info.etag,
                   "' for ", key, ", using cache entry");
 
-        if (body != nullptr)
-            body->CloseUnused();
+        body.Clear();
 
         http_cache_serve(*this);
         pool_unref_denotify(&caller_pool, &caller_pool_notify);
@@ -447,8 +446,8 @@ HttpCacheRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
         /* free the cached document istream (memcached) */
         document_body->CloseUnused();
 
-    const off_t available = body != nullptr
-        ? body->GetAvailable(true)
+    const off_t available = body
+        ? body.GetAvailable(true)
         : 0;
 
     if (!http_cache_response_evaluate(request_info, info,
@@ -456,7 +455,7 @@ HttpCacheRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
         /* don't cache response */
         LogConcat(4, "HttpCache", "nocache ", key);
 
-        handler.InvokeResponse(status, std::move(_headers), body);
+        handler.InvokeResponse(status, std::move(_headers), std::move(body));
         pool_unref_denotify(&caller_pool,
                             &caller_pool_notify);
         return;
@@ -465,7 +464,7 @@ HttpCacheRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
     response.status = status;
     response.headers = strmap_dup(&pool, &_headers);
 
-    if (body == nullptr) {
+    if (!body) {
         http_cache_put(*this, 0, 0);
     } else {
         /* this->info was allocated from the caller pool; duplicate
@@ -476,23 +475,25 @@ HttpCacheRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
 
         /* tee the body: one goes to our client, and one goes into the
            cache */
-        body = istream_tee_new(pool, *body,
-                               cache.event_loop,
-                               false, false);
+        auto *tee = istream_tee_new(pool, *body.Steal(),
+                                    cache.event_loop,
+                                    false, false);
 
         cache.requests.push_front(*this);
 
-        sink_rubber_new(pool, istream_tee_second(*body),
+        sink_rubber_new(pool, istream_tee_second(*tee),
                         *cache.rubber, cacheable_size_limit,
                         *this,
                         cancel_ptr);
 
         /* just in case our handler closes the body without looking at
            it: defer an Istream::Read() call for the Rubber sink */
-        istream_tee_defer_read(*body);
+        istream_tee_defer_read(*tee);
+
+        body = UnusedIstreamPtr(tee);
     }
 
-    handler.InvokeResponse(status, std::move(_headers), body);
+    handler.InvokeResponse(status, std::move(_headers), std::move(body));
     pool_unref_denotify(&caller_pool, &caller_pool_notify);
 }
 
@@ -717,7 +718,7 @@ http_cache_miss(HttpCache &cache, struct pool &caller_pool,
 {
     if (info.only_if_cached) {
         handler.InvokeResponse(HTTP_STATUS_GATEWAY_TIMEOUT,
-                               StringMap(caller_pool), nullptr);
+                               StringMap(caller_pool), UnusedIstreamPtr());
         return;
     }
 
@@ -765,7 +766,7 @@ DispatchNotModified(struct pool &pool, const HttpCacheDocument &document,
 {
     handler.InvokeResponse(HTTP_STATUS_NOT_MODIFIED,
                            StringMap(pool, document.response_headers),
-                           nullptr);
+                           UnusedIstreamPtr());
 }
 
 static bool
@@ -778,7 +779,7 @@ CheckCacheRequest(struct pool &pool, const HttpCacheRequestInfo &info,
     if (info.if_match != nullptr &&
         !CheckETagList(info.if_match, document.response_headers)) {
         handler.InvokeResponse(HTTP_STATUS_PRECONDITION_FAILED,
-                               StringMap(pool), nullptr);
+                               StringMap(pool), UnusedIstreamPtr());
         return false;
     }
 
@@ -826,7 +827,7 @@ CheckCacheRequest(struct pool &pool, const HttpCacheRequestInfo &info,
                 lm != std::chrono::system_clock::from_time_t(-1) &&
                 lm > iums) {
                 handler.InvokeResponse(HTTP_STATUS_PRECONDITION_FAILED,
-                                       StringMap(pool), nullptr);
+                                       StringMap(pool), UnusedIstreamPtr());
                 return false;
             }
         }
@@ -854,7 +855,7 @@ http_cache_heap_serve(HttpCacheHeap &cache,
     handler.InvokeResponse(document.status,
                            StringMap(ShallowCopy(), pool,
                                      document.response_headers),
-                           response_body);
+                           UnusedIstreamPtr(response_body));
 }
 
 /**
@@ -870,7 +871,7 @@ http_cache_memcached_serve(HttpCacheRequest &request)
     request.handler.InvokeResponse(request.document->status,
                                    StringMap(ShallowCopy(), request.caller_pool,
                                              request.document->response_headers),
-                                   request.document_body);
+                                   UnusedIstreamPtr(request.document_body));
 }
 
 /**
@@ -1060,7 +1061,7 @@ http_cache_memcached_miss(HttpCacheRequest &request)
     if (request.request_info.only_if_cached) {
         request.handler.InvokeResponse(HTTP_STATUS_GATEWAY_TIMEOUT,
                                        StringMap(request.pool),
-                                       nullptr);
+                                       UnusedIstreamPtr());
 
         pool_unref_denotify(&request.caller_pool,
                             &request.caller_pool_notify);
@@ -1100,7 +1101,7 @@ http_cache_memcached_get_callback(HttpCacheDocument *document,
         request.handler.InvokeResponse(document->status,
                                        StringMap(ShallowCopy(), request.caller_pool,
                                                  document->response_headers),
-                                       body);
+                                       UnusedIstreamPtr(body));
         pool_unref_denotify(&request.caller_pool,
                             &request.caller_pool_notify);
     } else {

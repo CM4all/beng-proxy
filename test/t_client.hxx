@@ -34,6 +34,7 @@
 #include "lease.hxx"
 #include "istream/istream.hxx"
 #include "istream/Pointer.hxx"
+#include "istream/UnusedPtr.hxx"
 #include "istream/istream_block.hxx"
 #include "istream/istream_byte.hxx"
 #include "istream/istream_cat.hxx"
@@ -268,7 +269,7 @@ struct Context final
 
     /* virtual methods from class HttpResponseHandler */
     void OnHttpResponse(http_status_t status, StringMap &&headers,
-                        Istream *body) noexcept override;
+                        UnusedIstreamPtr body) noexcept override;
     void OnHttpError(std::exception_ptr ep) noexcept override;
 };
 
@@ -344,14 +345,14 @@ template<class Connection>
 void
 Context<Connection>::OnHttpResponse(http_status_t _status,
                                     StringMap &&headers,
-                                    Istream *_body) noexcept
+                                    UnusedIstreamPtr _body) noexcept
 {
     status = _status;
     const char *_content_length = headers.Get("content-length");
     if (_content_length != nullptr)
         content_length = strdup(_content_length);
-    available = _body != nullptr
-        ? _body->GetAvailable(false)
+    available = _body
+        ? _body.GetAvailable(false)
         : -2;
 
     if (close_request_body_early && !aborted_request_body) {
@@ -359,14 +360,14 @@ Context<Connection>::OnHttpResponse(http_status_t _status,
     }
 
     if (response_body_byte) {
-        assert(_body != nullptr);
-        _body = istream_byte_new(*pool, *_body);
+        assert(_body);
+        _body = UnusedIstreamPtr(istream_byte_new(*pool, *_body.Steal()));
     }
 
     if (close_response_body_early)
-        _body->CloseUnused();
-    else if (_body != nullptr)
-        body.Set(*_body, *this);
+        _body.Clear();
+    else if (_body)
+        body.Set(std::move(_body), *this);
 
 #ifdef USE_BUCKETS
     if (use_buckets) {

@@ -69,9 +69,8 @@ public:
     /* virtual methods from class HttpResponseHandler */
     void OnHttpResponse(http_status_t status,
                         gcc_unused StringMap &&headers,
-                        Istream *body) noexcept override {
-        if (body != nullptr)
-            body->CloseUnused();
+                        UnusedIstreamPtr body) noexcept override {
+        body.Clear();
 
         if (status < 200 || status >= 300)
             LogConcat(3, "ExternalSessionManager", "Status ", int(status),
