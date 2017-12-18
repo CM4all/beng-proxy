@@ -41,7 +41,7 @@ IstreamPointer::IstreamPointer(UnusedIstreamPtr src,
 void
 IstreamPointer::Set(UnusedIstreamPtr _stream,
                     IstreamHandler &handler,
-                    FdTypeMask direct)
+                    FdTypeMask direct) noexcept
 {
         assert(!IsDefined());
         assert(_stream);

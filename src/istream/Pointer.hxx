@@ -46,18 +46,18 @@ class IstreamPointer {
 
 public:
     IstreamPointer() = default;
-    explicit IstreamPointer(std::nullptr_t):stream(nullptr) {}
+    explicit IstreamPointer(std::nullptr_t) noexcept:stream(nullptr) {}
 
     IstreamPointer(Istream &_stream,
                    IstreamHandler &handler,
-                   FdTypeMask direct=0)
+                   FdTypeMask direct=0) noexcept
         :stream(&_stream) {
         stream->SetHandler(handler, direct);
     }
 
     explicit IstreamPointer(Istream *_stream,
                             IstreamHandler &handler,
-                            FdTypeMask direct=0)
+                            FdTypeMask direct=0) noexcept
         :stream(_stream) {
         if (stream != nullptr)
             stream->SetHandler(handler, direct);
@@ -67,13 +67,13 @@ public:
                    IstreamHandler &handler,
                    FdTypeMask direct=0) noexcept;
 
-    IstreamPointer(IstreamPointer &&other)
+    IstreamPointer(IstreamPointer &&other) noexcept
         :stream(std::exchange(other.stream, nullptr)) {}
 
     IstreamPointer(const IstreamPointer &) = delete;
     IstreamPointer &operator=(const IstreamPointer &) = delete;
 
-    bool IsDefined() const {
+    bool IsDefined() const noexcept {
         return stream != nullptr;
     }
 
@@ -103,11 +103,11 @@ public:
 
     void Set(UnusedIstreamPtr _stream,
              IstreamHandler &handler,
-             FdTypeMask direct=0);
+             FdTypeMask direct=0) noexcept;
 
     void Set(Istream &_stream,
              IstreamHandler &handler,
-             FdTypeMask direct=0) {
+             FdTypeMask direct=0) noexcept {
         assert(!IsDefined());
 
         stream = &_stream;
@@ -116,24 +116,24 @@ public:
 
     void Replace(Istream &_stream,
                  IstreamHandler &handler,
-                 FdTypeMask direct=0) {
+                 FdTypeMask direct=0) noexcept {
         Close();
 
         stream = &_stream;
         stream->SetHandler(handler, direct);
     }
 
-    void SetDirect(FdTypeMask direct) {
+    void SetDirect(FdTypeMask direct) noexcept {
         assert(IsDefined());
 
         stream->SetDirect(direct);
     }
 
-    void SetDirect(const Istream &src) {
+    void SetDirect(const Istream &src) noexcept {
         SetDirect(src.GetHandlerDirect());
     }
 
-    void Read() {
+    void Read() noexcept {
         assert(IsDefined());
 
         stream->Read();
@@ -152,13 +152,13 @@ public:
     }
 
     gcc_pure
-    off_t GetAvailable(bool partial) const {
+    off_t GetAvailable(bool partial) const noexcept {
         assert(IsDefined());
 
         return stream->GetAvailable(partial);
     }
 
-    off_t Skip(off_t length) {
+    off_t Skip(off_t length) noexcept {
         assert(IsDefined());
 
         return stream->Skip(length);

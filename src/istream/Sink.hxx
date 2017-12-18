@@ -43,27 +43,27 @@ class IstreamSink : protected IstreamHandler {
 protected:
     IstreamPointer input;
 
-    IstreamSink()
+    IstreamSink() noexcept
         :input(nullptr) {}
 
     template<typename I>
-    explicit IstreamSink(I &&_input, FdTypeMask direct=0)
+    explicit IstreamSink(I &&_input, FdTypeMask direct=0) noexcept
         :input(std::forward<I>(_input), *this, direct) {}
 
-    bool HasInput() const {
+    bool HasInput() const noexcept {
         return input.IsDefined();
     }
 
     template<typename I>
-    void SetInput(I &&_input, FdTypeMask direct=0) {
+    void SetInput(I &&_input, FdTypeMask direct=0) noexcept  {
         input.Set(std::forward<I>(_input), *this, direct);
     }
 
-    void ClearInput() {
+    void ClearInput() noexcept {
         input.Clear();
     }
 
-    void ClearAndCloseInput() {
+    void ClearAndCloseInput() noexcept {
         input.ClearAndClose();
     }
 };
