@@ -50,26 +50,26 @@ class StockMap final : StockHandler {
         Stock stock;
 
         template<typename... Args>
-        explicit Item(Args&&... args):stock(std::forward<Args>(args)...) {}
+        explicit Item(Args&&... args) noexcept:stock(std::forward<Args>(args)...) {}
 
-        static Item &Cast(Stock &s) {
+        static constexpr Item &Cast(Stock &s) noexcept {
             return ContainerCast(s, &Item::stock);
         }
 
-        const char *GetKey() const {
+        const char *GetKey() const noexcept {
             return stock.GetName();
         }
 
         gcc_pure
-        static size_t KeyHasher(const char *key);
+        static size_t KeyHasher(const char *key) noexcept;
 
         gcc_pure
-        static size_t ValueHasher(const Item &value) {
+        static size_t ValueHasher(const Item &value) noexcept {
             return KeyHasher(value.GetKey());
         }
 
         gcc_pure
-        static bool KeyValueEqual(const char *a, const Item &b) {
+        static bool KeyValueEqual(const char *a, const Item &b) noexcept {
             assert(a != nullptr);
 
             return strcmp(a, b.GetKey()) == 0;
@@ -77,14 +77,14 @@ class StockMap final : StockHandler {
 
         struct Hash {
             gcc_pure
-            size_t operator()(const Item &value) const {
+            size_t operator()(const Item &value) const noexcept {
                 return ValueHasher(value);
             }
         };
 
         struct Equal {
             gcc_pure
-            bool operator()(const Item &a, const Item &b) const {
+            bool operator()(const Item &a, const Item &b) const noexcept {
                 return KeyValueEqual(a.GetKey(), b);
             }
         };
@@ -118,27 +118,27 @@ class StockMap final : StockHandler {
 
 public:
     StockMap(EventLoop &_event_loop, StockClass &_cls,
-             unsigned _limit, unsigned _max_idle)
+             unsigned _limit, unsigned _max_idle) noexcept
         :event_loop(_event_loop), cls(_cls),
          limit(_limit), max_idle(_max_idle),
          map(Map::bucket_traits(buckets, N_BUCKETS)) {}
 
-    ~StockMap();
+    ~StockMap() noexcept;
 
-    EventLoop &GetEventLoop() {
+    EventLoop &GetEventLoop() noexcept {
         return event_loop;
     }
 
-    StockClass &GetClass() {
+    StockClass &GetClass() noexcept {
         return cls;
     }
 
-    void Erase(Item &item);
+    void Erase(Item &item) noexcept;
 
     /**
      * @see Stock::FadeAll()
      */
-    void FadeAll() {
+    void FadeAll() noexcept {
         for (auto &i : map)
             i.stock.FadeAll();
     }
@@ -147,7 +147,7 @@ public:
      * @see Stock::FadeIf()
      */
     template<typename P>
-    void FadeIf(P &&predicate) {
+    void FadeIf(P &&predicate) noexcept {
         for (auto &i : map)
             i.stock.FadeIf(predicate);
     }
@@ -155,17 +155,17 @@ public:
     /**
      * Obtain statistics.
      */
-    void AddStats(StockStats &data) const {
+    void AddStats(StockStats &data) const noexcept {
         for (const auto &i : map)
             i.stock.AddStats(data);
     }
 
-    Stock &GetStock(const char *uri);
+    Stock &GetStock(const char *uri) noexcept;
 
     void Get(struct pool &caller_pool,
              const char *uri, void *info,
              StockGetHandler &handler,
-             CancellablePointer &cancel_ptr) {
+             CancellablePointer &cancel_ptr) noexcept {
         Stock &stock = GetStock(uri);
         stock.Get(caller_pool, info, handler, cancel_ptr);
     }
@@ -183,7 +183,7 @@ public:
     }
 
     /* virtual methods from class StockHandler */
-    void OnStockEmpty(Stock &stock) override;
+    void OnStockEmpty(Stock &stock) noexcept override;
 };
 
 #endif

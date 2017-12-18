@@ -37,27 +37,27 @@
 #include <assert.h>
 
 inline size_t
-StockMap::Item::KeyHasher(const char *key)
+StockMap::Item::KeyHasher(const char *key) noexcept
 {
     assert(key != nullptr);
 
     return djb_hash_string(key);
 }
 
-StockMap::~StockMap()
+StockMap::~StockMap() noexcept
 {
     map.clear_and_dispose(DeleteDisposer());
 }
 
 void
-StockMap::Erase(Item &item)
+StockMap::Erase(Item &item) noexcept
 {
     auto i = map.iterator_to(item);
     map.erase_and_dispose(i, DeleteDisposer());
 }
 
 void
-StockMap::OnStockEmpty(Stock &stock)
+StockMap::OnStockEmpty(Stock &stock) noexcept
 {
     auto &item = Item::Cast(stock);
 
@@ -68,7 +68,7 @@ StockMap::OnStockEmpty(Stock &stock)
 }
 
 Stock &
-StockMap::GetStock(const char *uri)
+StockMap::GetStock(const char *uri) noexcept
 {
     Map::insert_commit_data hint;
     auto i = map.insert_check(uri, Item::KeyHasher, Item::KeyValueEqual, hint);
