@@ -32,15 +32,16 @@
 
 #include "istream_stopwatch.hxx"
 #include "istream/ForwardIstream.hxx"
+#include "istream/UnusedPtr.hxx"
 #include "stopwatch.hxx"
 
 class StopwatchIstream final : public ForwardIstream {
     Stopwatch &stopwatch;
 
 public:
-    StopwatchIstream(struct pool &p, Istream &_input,
+    StopwatchIstream(struct pool &p, UnusedIstreamPtr _input,
                      Stopwatch &_stopwatch)
-        :ForwardIstream(p, _input),
+        :ForwardIstream(p, std::move(_input)),
          stopwatch(_stopwatch) {}
 
     /* virtual methods from class Istream */
@@ -99,12 +100,12 @@ StopwatchIstream::_AsFd()
  *
  */
 
-Istream *
-istream_stopwatch_new(struct pool &pool, Istream &input,
+UnusedIstreamPtr
+istream_stopwatch_new(struct pool &pool, UnusedIstreamPtr input,
                       Stopwatch *_stopwatch)
 {
     if (_stopwatch == nullptr)
-        return &input;
+        return input;
 
-    return NewIstream<StopwatchIstream>(pool, input, *_stopwatch);
+    return UnusedIstreamPtr(NewIstream<StopwatchIstream>(pool, std::move(input), *_stopwatch));
 }

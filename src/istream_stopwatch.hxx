@@ -34,7 +34,7 @@
 #define BENG_PROXY_ISTREAM_STOPWATCH_HXX
 
 struct pool;
-class Istream;
+class UnusedIstreamPtr;
 struct Stopwatch;
 
 #ifdef ENABLE_STOPWATCH
@@ -42,20 +42,20 @@ struct Stopwatch;
 /**
  * This istream filter emits a stopwatch event and dump on eof/abort.
  */
-Istream *
-istream_stopwatch_new(struct pool &pool, Istream &input,
+UnusedIstreamPtr
+istream_stopwatch_new(struct pool &pool, UnusedIstreamPtr input,
                       Stopwatch *_stopwatch);
 
 #else /* !ENABLE_STOPWATCH */
 
-static inline Istream *
-istream_stopwatch_new(struct pool &pool, Istream &input,
+static inline UnusedIstreamPtr &&
+istream_stopwatch_new(struct pool &pool, UnusedIstreamPtr &&input,
                       Stopwatch *_stopwatch)
 {
     (void)pool;
     (void)_stopwatch;
 
-    return &input;
+    return std::move(input);
 }
 
 #endif /* !ENABLE_STOPWATCH */

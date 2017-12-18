@@ -153,8 +153,7 @@ pipe_filter(SpawnService &spawn_service, EventLoop &event_loop,
         headers.Set("etag", etag);
     }
 
-    response = UnusedIstreamPtr(istream_stopwatch_new(*pool, *response.Steal(),
-                                                      stopwatch));
+    response = istream_stopwatch_new(*pool, std::move(response), stopwatch);
 
     handler.InvokeResponse(status, std::move(headers), std::move(response));
 }
