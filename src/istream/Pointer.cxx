@@ -37,3 +37,15 @@ IstreamPointer::IstreamPointer(UnusedIstreamPtr src,
                                IstreamHandler &handler,
                                FdTypeMask direct) noexcept
     :IstreamPointer(src.Steal(), handler, direct) {}
+
+void
+IstreamPointer::Set(UnusedIstreamPtr _stream,
+                    IstreamHandler &handler,
+                    FdTypeMask direct)
+{
+        assert(!IsDefined());
+        assert(_stream);
+
+        stream = _stream.Steal();
+        stream->SetHandler(handler, direct);
+}

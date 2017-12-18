@@ -101,6 +101,10 @@ public:
         return result;
     }
 
+    void Set(UnusedIstreamPtr _stream,
+             IstreamHandler &handler,
+             FdTypeMask direct=0);
+
     void Set(Istream &_stream,
              IstreamHandler &handler,
              FdTypeMask direct=0) {
