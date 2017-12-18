@@ -56,6 +56,11 @@ public:
         :Istream(p), rubber(_rubber), id(_id), auto_remove(_auto_remove),
          position(start), end(_end) {}
 
+    ~RubberIstream() noexcept override {
+        if (auto_remove)
+            rubber.Remove(id);
+    }
+
     /* virtual methods from class Istream */
 
     off_t _GetAvailable(gcc_unused bool partial) override {
@@ -88,12 +93,8 @@ public:
             position += nbytes;
         }
 
-        if (position == end) {
-            if (auto_remove)
-                rubber.Remove(id);
-
+        if (position == end)
             DestroyEof();
-        }
     }
 
     void _FillBucketList(IstreamBucketList &list) override {
@@ -110,13 +111,6 @@ public:
         position += consumed;
         Consumed(consumed);
         return consumed;
-    }
-
-    void _Close() noexcept override {
-        if (auto_remove)
-            rubber.Remove(id);
-
-        Istream::_Close();
     }
 };
 
