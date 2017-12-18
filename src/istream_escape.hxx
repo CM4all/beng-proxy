@@ -34,14 +34,14 @@
 #define BENG_PROXY_ISTREAM_ESCAPE_HXX
 
 struct pool;
-class Istream;
+class UnusedIstreamPtr;
 struct escape_class;
 
 /**
  * An istream filter that escapes the data.
  */
-Istream *
-istream_escape_new(struct pool &pool, Istream &input,
+UnusedIstreamPtr
+istream_escape_new(struct pool &pool, UnusedIstreamPtr input,
                    const struct escape_class &cls);
 
 #endif

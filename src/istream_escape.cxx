@@ -32,6 +32,7 @@
 
 #include "istream_escape.hxx"
 #include "istream/FacadeIstream.hxx"
+#include "istream/UnusedPtr.hxx"
 #include "escape_class.hxx"
 #include "util/ConstBuffer.hxx"
 
@@ -44,9 +45,9 @@ class EscapeIstream final : public FacadeIstream {
     ConstBuffer<char> escaped;
 
 public:
-    EscapeIstream(struct pool &_pool, Istream &_input,
+    EscapeIstream(struct pool &_pool, UnusedIstreamPtr _input,
                   const struct escape_class &_cls)
-        :FacadeIstream(_pool, _input),
+        :FacadeIstream(_pool, std::move(_input)),
          cls(_cls) {
         escaped.size = 0;
     }
@@ -206,12 +207,12 @@ EscapeIstream::_Close() noexcept
  *
  */
 
-Istream *
-istream_escape_new(struct pool &pool, Istream &input,
+UnusedIstreamPtr
+istream_escape_new(struct pool &pool, UnusedIstreamPtr input,
                    const struct escape_class &cls)
 {
     assert(cls.escape_find != nullptr);
     assert(cls.escape_char != nullptr);
 
-    return NewIstream<EscapeIstream>(pool, input, cls);
+    return UnusedIstreamPtr(NewIstream<EscapeIstream>(pool, std::move(input), cls));
 }

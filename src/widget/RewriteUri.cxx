@@ -336,16 +336,16 @@ UriRewriter::ResolverCallback()
         }
     }
 
-    Istream *istream;
+    UnusedIstreamPtr istream;
     if (!value.empty()) {
-        istream = istream_memory_new(pool, value.data, value.size);
+        istream = UnusedIstreamPtr(istream_memory_new(pool, value.data, value.size));
 
         if (escape_flag && escape != nullptr)
-            istream = istream_escape_new(*pool, *istream, *escape);
+            istream = istream_escape_new(*pool, std::move(istream), *escape);
     } else
-        istream = istream_null_new(pool);
+        istream = UnusedIstreamPtr(istream_null_new(pool));
 
-    istream_delayed_set(*delayed, UnusedIstreamPtr(istream));
+    istream_delayed_set(*delayed, std::move(istream));
     if (timeout->HasHandler())
         timeout->Read();
 }
@@ -371,11 +371,11 @@ rewrite_widget_uri(struct pool &pool,
         return nullptr;
 
     if (mode == URI_MODE_RESPONSE) {
-        Istream *istream = embed_inline_widget(pool, env, true,
-                                                      widget);
+        UnusedIstreamPtr istream(embed_inline_widget(pool, env, true,
+                                                     widget));
         if (escape != nullptr)
-            istream = istream_escape_new(pool, *istream, *escape);
-        return UnusedIstreamPtr(istream);
+            istream = istream_escape_new(pool, std::move(istream), *escape);
+        return istream;
     }
 
     const char *uri;
@@ -405,11 +405,11 @@ rewrite_widget_uri(struct pool &pool,
         if (uri == nullptr)
             return nullptr;
 
-        Istream *istream = istream_string_new(&pool, uri);
+        UnusedIstreamPtr istream(istream_string_new(&pool, uri));
         if (escape != nullptr)
-            istream = istream_escape_new(pool, *istream, *escape);
+            istream = istream_escape_new(pool, std::move(istream), *escape);
 
-        return UnusedIstreamPtr(istream);
+        return istream;
     } else {
         auto rwu = NewFromPool<UriRewriter>(pool);
 

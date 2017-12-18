@@ -810,12 +810,13 @@ XmlProcessor::TransformUriAttribute(const XmlParserAttribute &attr,
 
     if (!fragment.empty()) {
         /* escape and append the fragment to the new URI */
-        Istream *s = istream_memory_new(&pool,
-                                        p_strdup(pool, fragment),
-                                        fragment.size);
-        s = istream_html_escape_new(pool, *s);
+        UnusedIstreamPtr s(istream_memory_new(&pool,
+                                              p_strdup(pool, fragment),
+                                              fragment.size));
+        s = istream_html_escape_new(pool, std::move(s));
 
-        istream = UnusedIstreamPtr(istream_cat_new(pool, istream.Steal(), s));
+        istream = UnusedIstreamPtr(istream_cat_new(pool, istream.Steal(),
+                                                   s.Steal()));
     }
 
     ReplaceAttributeValue(attr, std::move(istream));

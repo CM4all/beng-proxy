@@ -32,7 +32,7 @@
 
 #include "istream_html_escape.hxx"
 #include "istream/istream_string.hxx"
-#include "istream/istream.hxx"
+#include "istream/UnusedPtr.hxx"
 
 #define EXPECTED_RESULT "test&lt;foo&amp;bar&gt;test&quot;test&apos;"
 
@@ -47,7 +47,7 @@ create_input(struct pool *pool)
 static Istream *
 create_test(EventLoop &, struct pool *pool, Istream *input)
 {
-    return istream_html_escape_new(*pool, *input);
+    return istream_html_escape_new(*pool, UnusedIstreamPtr(input)).Steal();
 }
 
 #include "t_istream_filter.hxx"
