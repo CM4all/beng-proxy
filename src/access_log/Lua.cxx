@@ -51,6 +51,8 @@
 
 #include <functional>
 
+#include <functional>
+
 extern "C" {
 #include <lauxlib.h>
 #include <lualib.h>
