@@ -475,7 +475,7 @@ HttpCacheRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
 
         /* tee the body: one goes to our client, and one goes into the
            cache */
-        auto *tee = istream_tee_new(pool, *body.Steal(),
+        auto *tee = istream_tee_new(pool, std::move(body),
                                     cache.event_loop,
                                     false, false);
 

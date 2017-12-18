@@ -375,9 +375,10 @@ processor_process(struct pool &caller_pool, UnusedIstreamPtr input,
     processor->lookup_id = nullptr;
 
     /* the text processor will expand entities */
-    auto text_processed = text_processor(processor->pool, std::move(input), widget, env);
-
-    Istream *tee = istream_tee_new(processor->pool, *text_processed.Steal(),
+    Istream *tee = istream_tee_new(processor->pool,
+                                   text_processor(processor->pool,
+                                                  std::move(input),
+                                                  widget, env),
                                    *env.event_loop,
                                    true, true);
     Istream *istream = &istream_tee_second(*tee);

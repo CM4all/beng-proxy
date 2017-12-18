@@ -31,6 +31,7 @@
  */
 
 #include "istream_tee.hxx"
+#include "UnusedPtr.hxx"
 #include "Pointer.hxx"
 #include "Bucket.hxx"
 #include "pool.hxx"
@@ -196,11 +197,11 @@ struct TeeIstream final : IstreamHandler {
      */
     size_t skip = 0;
 
-    TeeIstream(struct pool &p, Istream &_input, EventLoop &event_loop,
+    TeeIstream(struct pool &p, UnusedIstreamPtr _input, EventLoop &event_loop,
                bool first_weak, bool second_weak)
         :first_output(p, first_weak),
          second_output(p, second_weak),
-         input(_input, *this),
+         input(std::move(_input), *this),
          defer_event(event_loop, BIND_THIS_METHOD(ReadInput))
     {
     }
@@ -463,10 +464,12 @@ TeeIstream::SecondOutput::_Close() noexcept
  */
 
 Istream *
-istream_tee_new(struct pool &pool, Istream &input, EventLoop &event_loop,
+istream_tee_new(struct pool &pool, UnusedIstreamPtr input,
+                EventLoop &event_loop,
                 bool first_weak, bool second_weak)
 {
-    auto tee = NewFromPool<TeeIstream>(pool, pool, input, event_loop,
+    auto tee = NewFromPool<TeeIstream>(pool, pool, std::move(input),
+                                       event_loop,
                                        first_weak, second_weak);
     return &tee->first_output;
 }

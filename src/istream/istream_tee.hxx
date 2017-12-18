@@ -34,6 +34,7 @@
 #define BENG_PROXY_ISTREAM_TEE_HXX
 
 struct pool;
+class UnusedIstreamPtr;
 class Istream;
 class EventLoop;
 
@@ -51,7 +52,8 @@ class EventLoop;
  * second output remains
  */
 Istream *
-istream_tee_new(struct pool &pool, Istream &input, EventLoop &event_loop,
+istream_tee_new(struct pool &pool, UnusedIstreamPtr input,
+                EventLoop &event_loop,
                 bool first_weak, bool second_weak);
 
 Istream &

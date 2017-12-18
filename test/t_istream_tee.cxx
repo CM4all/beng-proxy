@@ -31,6 +31,7 @@
  */
 
 #include "PInstance.hxx"
+#include "istream/UnusedPtr.hxx"
 #include "istream/istream_tee.hxx"
 #include "istream/istream_delayed.hxx"
 #include "istream/istream_string.hxx"
@@ -100,7 +101,8 @@ test_block1(EventLoop &event_loop)
     auto pool = pool_new_libc(nullptr, "test");
 
     Istream *delayed = istream_delayed_new(pool);
-    Istream *tee = istream_tee_new(*pool, *delayed, event_loop, false, false);
+    Istream *tee = istream_tee_new(*pool, UnusedIstreamPtr(delayed),
+                                   event_loop, false, false);
     Istream *second = &istream_tee_second(*tee);
 
     tee->SetHandler(ctx);
@@ -142,7 +144,7 @@ test_close_data(EventLoop &event_loop, struct pool *pool)
 
     pool = pool_new_libc(nullptr, "test");
     Istream *tee =
-        istream_tee_new(*pool, *istream_string_new(pool, "foo"),
+        istream_tee_new(*pool, UnusedIstreamPtr(istream_string_new(pool, "foo")),
                         event_loop, false, false);
 
     sink_close_new(*pool, *tee);
@@ -176,7 +178,8 @@ test_close_skipped(EventLoop &event_loop, struct pool *pool)
 
     pool = pool_new_libc(nullptr, "test");
     Istream *input = istream_string_new(pool, "foo");
-    Istream *tee = istream_tee_new(*pool, *input, event_loop, false, false);
+    Istream *tee = istream_tee_new(*pool, UnusedIstreamPtr(input),
+                                   event_loop, false, false);
     NewStringSink(*pool, *tee, buffer_callback, &ctx, cancel_ptr);
 
     Istream *second = &istream_tee_second(*tee);
@@ -199,8 +202,8 @@ test_error(EventLoop &event_loop, struct pool *pool,
 {
     pool = pool_new_libc(nullptr, "test");
     Istream *tee =
-        istream_tee_new(*pool, *istream_fail_new(pool,
-                                                 std::make_exception_ptr(std::runtime_error("error"))),
+        istream_tee_new(*pool, UnusedIstreamPtr(istream_fail_new(pool,
+                                                                 std::make_exception_ptr(std::runtime_error("error")))),
                         event_loop,
                         false, false);
     pool_unref(pool);
@@ -245,8 +248,8 @@ test_bucket_error(EventLoop &event_loop, struct pool *pool,
 {
     pool = pool_new_libc(nullptr, "test");
     Istream *tee =
-        istream_tee_new(*pool, *istream_fail_new(pool,
-                                                 std::make_exception_ptr(std::runtime_error("error"))),
+        istream_tee_new(*pool, UnusedIstreamPtr(istream_fail_new(pool,
+                                                                 std::make_exception_ptr(std::runtime_error("error")))),
                         event_loop,
                         false, false);
     pool_unref(pool);

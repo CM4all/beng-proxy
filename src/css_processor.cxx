@@ -307,7 +307,7 @@ css_processor(struct pool &caller_pool, UnusedIstreamPtr input,
 {
     struct pool *pool = pool_new_linear(&caller_pool, "css_processor", 32768);
 
-    Istream *tee = istream_tee_new(*pool, *input.Steal(),
+    Istream *tee = istream_tee_new(*pool, std::move(input),
                                    *env.event_loop,
                                    true, true);
 

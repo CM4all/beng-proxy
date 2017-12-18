@@ -41,7 +41,7 @@
 #include "sink_rubber.hxx"
 #include "istream_unlock.hxx"
 #include "istream_rubber.hxx"
-#include "istream/istream.hxx"
+#include "istream/UnusedPtr.hxx"
 #include "istream/istream_null.hxx"
 #include "istream/istream_tee.hxx"
 #include "AllocatorStats.hxx"
@@ -464,7 +464,7 @@ nfs_cache_file_open(struct pool &pool, NfsCache &cache,
 
     /* tee the body: one goes to our client, and one goes into the
        cache */
-    body = istream_tee_new(*pool2, *body,
+    body = istream_tee_new(*pool2, UnusedIstreamPtr(body),
                            cache.event_loop,
                            false, true);
 
