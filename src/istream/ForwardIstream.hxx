@@ -40,9 +40,10 @@
 
 class ForwardIstream : public FacadeIstream {
 protected:
-    ForwardIstream(struct pool &_pool, Istream &_input,
+    template<typename I>
+    ForwardIstream(struct pool &_pool, I &&_input,
                    FdTypeMask direct=0)
-        :FacadeIstream(_pool, _input, direct) {}
+        :FacadeIstream(_pool, std::forward<I>(_input), direct) {}
 
     explicit ForwardIstream(struct pool &_pool)
         :FacadeIstream(_pool) {}

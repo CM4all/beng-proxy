@@ -38,9 +38,10 @@
 
 class FacadeIstream : public Istream, protected IstreamSink {
 protected:
-    FacadeIstream(struct pool &_pool, Istream &_input,
+    template<typename I>
+    FacadeIstream(struct pool &_pool, I &&_input,
                   FdTypeMask direct=0)
-        :Istream(_pool), IstreamSink(_input, direct) {}
+        :Istream(_pool), IstreamSink(std::forward<I>(_input), direct) {}
 
     explicit FacadeIstream(struct pool &_pool)
         :Istream(_pool) {}

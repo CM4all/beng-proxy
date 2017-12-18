@@ -42,8 +42,9 @@
 struct StdioSink final : IstreamHandler {
     IstreamPointer input;
 
-    explicit StdioSink(Istream &_input)
-        :input(_input, *this) {}
+    template<typename I>
+    explicit StdioSink(I &&_input)
+        :input(std::forward<I>(_input), *this) {}
 
     void LoopRead() {
         while (input.IsDefined())

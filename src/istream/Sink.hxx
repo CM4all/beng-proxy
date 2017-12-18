@@ -46,8 +46,9 @@ protected:
     IstreamSink()
         :input(nullptr) {}
 
-    IstreamSink(Istream &_input, FdTypeMask direct=0)
-        :input(_input, *this, direct) {}
+    template<typename I>
+    explicit IstreamSink(I &&_input, FdTypeMask direct=0)
+        :input(std::forward<I>(_input), *this, direct) {}
 
     bool HasInput() const {
         return input.IsDefined();
