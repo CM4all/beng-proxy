@@ -53,7 +53,7 @@
 
 struct tcache *global_translate_cache;
 
-Istream *
+UnusedIstreamPtr
 embed_inline_widget(struct pool &pool,
                     gcc_unused struct processor_env &env,
                     gcc_unused bool plain_text,
@@ -63,7 +63,7 @@ embed_inline_widget(struct pool &pool,
     if (s == nullptr)
         s = "widget";
 
-    return istream_string_new(&pool, s);
+    return UnusedIstreamPtr(istream_string_new(&pool, s));
 }
 
 WidgetSession *

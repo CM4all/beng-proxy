@@ -347,7 +347,7 @@ InlineWidget::Start() noexcept
  *
  */
 
-Istream *
+UnusedIstreamPtr
 embed_inline_widget(struct pool &pool, struct processor_env &env,
                     bool plain_text,
                     Widget &widget)
@@ -376,5 +376,5 @@ embed_inline_widget(struct pool &pool, struct processor_env &env,
     if (request_body != nullptr)
         istream_pause_resume(*request_body);
 
-    return hold;
+    return UnusedIstreamPtr(hold);
 }

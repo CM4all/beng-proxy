@@ -38,7 +38,7 @@
 #define BENG_PROXY_INLINE_WIDGET_HXX
 
 struct pool;
-class Istream;
+class UnusedIstreamPtr;
 struct Widget;
 struct processor_env;
 
@@ -53,7 +53,7 @@ extern const struct timeval inline_widget_body_timeout;
  *
  * @param plain_text expect text/plain?
  */
-Istream *
+UnusedIstreamPtr
 embed_inline_widget(struct pool &pool, struct processor_env &env,
                     bool plain_text,
                     Widget &widget);

@@ -93,12 +93,12 @@ Widget::LoadFromSession(gcc_unused RealmSession &session)
 {
 }
 
-Istream *
+UnusedIstreamPtr
 embed_inline_widget(struct pool &pool, gcc_unused struct processor_env &env,
                     gcc_unused bool plain_text,
                     Widget &widget)
 {
-    return istream_string_new(&pool, widget.class_name);
+    return UnusedIstreamPtr(istream_string_new(&pool, widget.class_name));
 }
 
 /*

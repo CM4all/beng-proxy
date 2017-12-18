@@ -140,7 +140,6 @@ test_abort_resolver()
     DissectedUri dissected_uri;
     struct processor_env env;
     env.event_loop = &instance.event_loop;
-    Istream *istream;
 
     auto *pool = pool_new_linear(instance.root_pool, "test", 4096);
 
@@ -153,10 +152,8 @@ test_abort_resolver()
 
     Widget widget(*pool, nullptr);
 
-    istream = embed_inline_widget(*pool, env, false, widget);
+    auto istream = embed_inline_widget(*pool, env, false, widget);
     pool_unref(pool);
-
-    istream->CloseUnused();
 }
 
 int main(int argc, char **argv) {

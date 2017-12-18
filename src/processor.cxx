@@ -1213,13 +1213,13 @@ XmlProcessor::EmbedWidget(Widget &child_widget)
             return nullptr;
         }
 
-        Istream *istream = embed_inline_widget(pool, env, false,
-                                               child_widget);
-        if (istream != nullptr)
-            istream = istream_catch_new(&pool, *istream,
-                                        widget_catch_callback, &child_widget);
+        auto istream = embed_inline_widget(pool, env, false,
+                                           child_widget);
+        if (istream)
+            istream = UnusedIstreamPtr(istream_catch_new(&pool, *istream.Steal(),
+                                                         widget_catch_callback, &child_widget));
 
-        return UnusedIstreamPtr(istream);
+        return istream;
     } else if (child_widget.id != nullptr &&
                strcmp(lookup_id, child_widget.id) == 0) {
         auto &widget_pool = container.pool;
