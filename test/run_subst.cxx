@@ -31,6 +31,7 @@
  */
 
 #include "StdioSink.hxx"
+#include "istream/UnusedPtr.hxx"
 #include "istream/istream_subst.hxx"
 #include "istream/istream_file.hxx"
 #include "fb_pool.hxx"
@@ -51,8 +52,8 @@ try {
     auto *pool = pool_new_linear(instance.root_pool, "test", 8192);
 
     istream = istream_subst_new(pool,
-                                *istream_file_new(instance.event_loop, *pool,
-                                                  "/dev/stdin", (off_t)-1));
+                                UnusedIstreamPtr(istream_file_new(instance.event_loop, *pool,
+                                                                  "/dev/stdin", (off_t)-1)));
 
     for (i = 1; i <= argc - 2; i += 2) {
         istream_subst_add(*istream, argv[i], argv[i + 1]);

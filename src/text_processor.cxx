@@ -101,7 +101,7 @@ UnusedIstreamPtr
 text_processor(struct pool &pool, UnusedIstreamPtr input,
                const Widget &widget, const struct processor_env &env)
 {
-    auto *subst = istream_subst_new(&pool, *input.Steal());
+    auto *subst = istream_subst_new(&pool, std::move(input));
     processor_subst_beng_widget(*subst, widget, env);
     return UnusedIstreamPtr(subst);
 }

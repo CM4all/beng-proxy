@@ -33,6 +33,7 @@
 #include "istream/istream_subst.hxx"
 #include "istream/istream_string.hxx"
 #include "istream/istream.hxx"
+#include "istream/UnusedPtr.hxx"
 
 #define EXPECTED_RESULT "bar fo fo bar bla! fo"
 
@@ -47,7 +48,7 @@ create_input(struct pool *pool)
 static Istream *
 create_test(EventLoop &, struct pool *pool, Istream *input)
 {
-    Istream *istream = istream_subst_new(pool, *input);
+    Istream *istream = istream_subst_new(pool, UnusedIstreamPtr(input));
     istream_subst_add(*istream, "foo", "bar");
     istream_subst_add(*istream, "blablablubb", "!");
     return istream;

@@ -37,12 +37,13 @@
 
 struct pool;
 class Istream;
+class UnusedIstreamPtr;
 
 /**
  * This istream filter substitutes a word with another string.
  */
 Istream *
-istream_subst_new(struct pool *pool, Istream &input);
+istream_subst_new(struct pool *pool, UnusedIstreamPtr input);
 
 bool
 istream_subst_add_n(Istream &istream, const char *a,

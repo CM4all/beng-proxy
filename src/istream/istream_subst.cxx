@@ -32,8 +32,8 @@
 
 #include "istream_subst.hxx"
 #include "FacadeIstream.hxx"
+#include "UnusedPtr.hxx"
 #include "pool.hxx"
-#include "util/Cast.hxx"
 #include "util/StringView.hxx"
 
 #include <assert.h>
@@ -77,8 +77,8 @@ class SubstIstream final : public FacadeIstream {
     size_t a_match, b_sent;
 
  public:
-    SubstIstream(struct pool &p, Istream &_input)
-        :FacadeIstream(p, _input) {}
+    SubstIstream(struct pool &p, UnusedIstreamPtr _input)
+        :FacadeIstream(p, std::move(_input)) {}
 
     bool Add(const char *a0, const char *b, size_t b_length);
 
@@ -690,9 +690,9 @@ SubstIstream::_Close() noexcept
  */
 
 Istream *
-istream_subst_new(struct pool *pool, Istream &input)
+istream_subst_new(struct pool *pool, UnusedIstreamPtr input)
 {
-    return NewIstream<SubstIstream>(*pool, input);
+    return NewIstream<SubstIstream>(*pool, std::move(input));
 }
 
 inline bool
