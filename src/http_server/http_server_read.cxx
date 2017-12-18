@@ -256,7 +256,7 @@ HttpServerConnection::HeadersFinished()
             if (content_length == 0) {
                 /* empty body */
 
-                r.body = UnusedIstreamPtr(istream_null_new(&r.pool));
+                r.body = istream_null_new(r.pool);
                 request.read_state = Request::END;
 #ifndef NDEBUG
                 request.body_state = Request::BodyState::EMPTY;

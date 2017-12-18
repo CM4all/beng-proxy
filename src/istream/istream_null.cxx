@@ -32,6 +32,7 @@
 
 #include "istream_null.hxx"
 #include "istream.hxx"
+#include "UnusedPtr.hxx"
 
 #include <unistd.h>
 
@@ -65,8 +66,8 @@ public:
     }
 };
 
-Istream *
-istream_null_new(struct pool *pool)
+UnusedIstreamPtr
+istream_null_new(struct pool &pool)
 {
-    return NewIstream<NullIstream>(*pool);
+    return UnusedIstreamPtr(NewIstream<NullIstream>(pool));
 }

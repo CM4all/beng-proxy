@@ -371,7 +371,7 @@ WasClient::SubmitPendingResponse()
     Istream *body;
     if (response.released) {
         was_input_free_unused_p(&response.body);
-        body = istream_null_new(&caller_pool);
+        body = istream_null_new(caller_pool).Steal();
 
         ReleaseControl();
         Destroy();

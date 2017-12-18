@@ -639,7 +639,7 @@ FilterCache::Serve(FilterCacheItem &item,
     Istream *response_body = item.rubber_id != 0
         ? istream_rubber_new(caller_pool, rubber, item.rubber_id,
                              0, item.size, false)
-        : istream_null_new(&caller_pool);
+        : istream_null_new(caller_pool).Steal();
 
     response_body = istream_unlock_new(caller_pool, *response_body, item);
 

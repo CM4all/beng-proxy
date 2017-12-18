@@ -961,7 +961,7 @@ HttpClient::FeedHeaders(const void *data, size_t length)
 
     auto *body = response.body;
     if (body == nullptr && !response.no_body)
-        body = istream_null_new(&caller_pool);
+        body = istream_null_new(caller_pool).Steal();
 
     response.in_handler = true;
     request.handler.InvokeResponse(response.status,

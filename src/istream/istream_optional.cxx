@@ -32,6 +32,7 @@
 
 #include "istream_optional.hxx"
 #include "ForwardIstream.hxx"
+#include "UnusedPtr.hxx"
 #include "istream_null.hxx"
 
 #include <assert.h>
@@ -53,7 +54,7 @@ public:
         resumed = true;
 
         /* replace the input with a "null" istream */
-        ReplaceInputDirect(*istream_null_new(&GetPool()));
+        ReplaceInputDirect(istream_null_new(GetPool()));
     }
 
     /* virtual methods from class Istream */

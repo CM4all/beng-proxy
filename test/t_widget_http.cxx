@@ -230,10 +230,9 @@ MyResourceLoader::SendRequest(struct pool &pool,
         break;
     }
 
-    UnusedIstreamPtr response_body(istream_null_new(&pool));
     handler.InvokeResponse(HTTP_STATUS_OK,
                            std::move(response_headers),
-                           std::move(response_body));
+                           istream_null_new(pool));
 }
 
 struct Context final : HttpResponseHandler {

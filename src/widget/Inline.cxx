@@ -235,7 +235,7 @@ InlineWidget::OnHttpResponse(http_status_t status, StringMap &&headers,
             return;
         }
     } else
-        body = UnusedIstreamPtr(istream_null_new(&pool));
+        body = istream_null_new(pool);
 
     istream_delayed_set(*delayed, std::move(body));
 

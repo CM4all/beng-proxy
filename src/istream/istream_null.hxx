@@ -34,12 +34,12 @@
 #define BENG_PROXY_ISTREAM_NULL_HXX
 
 struct pool;
-class Istream;
+class UnusedIstreamPtr;
 
 /**
  * #Istream implementation which reads nothing.
  */
-Istream *
-istream_null_new(struct pool *pool);
+UnusedIstreamPtr
+istream_null_new(struct pool &pool);
 
 #endif

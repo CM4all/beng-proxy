@@ -42,6 +42,7 @@
 #include "istream/istream_null.hxx"
 #include "istream/istream_string.hxx"
 #include "istream/istream.hxx"
+#include "istream/UnusedPtr.hxx"
 #include "util/Cancellable.hxx"
 
 #include "util/Compiler.h"
@@ -120,7 +121,7 @@ TEST(SinkRubberTest, Empty)
     Rubber r(4 * 1024 * 1024);
     Data data(r);
 
-    Istream *input = istream_null_new(pool);
+    Istream *input = istream_null_new(pool).Steal();
     sink_rubber_new(pool, *input, r, 1024,
                     data, data.cancel_ptr);
 
@@ -136,7 +137,7 @@ TEST(SinkRubberTest, Empty2)
     Data data(r);
 
     Istream *input = istream_byte_new(pool,
-                                      *istream_null_new(pool));
+                                      *istream_null_new(pool).Steal());
     sink_rubber_new(pool, *input, r, 1024,
                     data, data.cancel_ptr);
 

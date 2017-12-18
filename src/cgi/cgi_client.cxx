@@ -150,7 +150,7 @@ CGIClient::ReturnResponse()
         buffer.Free(fb_pool_get());
         input.ClearAndClose();
         handler.InvokeResponse(status, std::move(headers),
-                               UnusedIstreamPtr(istream_null_new(&GetPool())));
+                               istream_null_new(GetPool()));
         Destroy();
         return false;
     } else {

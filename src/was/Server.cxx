@@ -174,7 +174,7 @@ private:
                 was_input_free_unused(request.body);
                 request.body = nullptr;
 
-                body = istream_null_new(request.pool);
+                body = istream_null_new(*request.pool).Steal();
             } else if (request.body != nullptr)
                 body = &was_input_enable(*request.body);
 

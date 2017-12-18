@@ -1396,7 +1396,7 @@ test_post_empty(Context<Connection> &c)
     c.connection = Connection::NewMirror(*c.pool, c.event_loop);
     c.connection->Request(c.pool, c,
                           HTTP_METHOD_POST, "/foo", StringMap(*c.pool),
-                          istream_null_new(c.pool),
+                          istream_null_new(*c.pool).Steal(),
 #ifdef HAVE_EXPECT_100
                           false,
 #endif

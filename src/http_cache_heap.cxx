@@ -36,7 +36,7 @@
 #include "http_cache_age.hxx"
 #include "cache.hxx"
 #include "AllocatorStats.hxx"
-#include "istream/istream.hxx"
+#include "istream/UnusedPtr.hxx"
 #include "istream/istream_null.hxx"
 #include "istream_unlock.hxx"
 #include "istream_rubber.hxx"
@@ -184,7 +184,7 @@ HttpCacheHeap::OpenStream(struct pool &_pool, HttpCacheDocument &document)
 
     if (item.rubber_id == 0)
         /* don't lock the item */
-        return istream_null_new(&_pool);
+        return istream_null_new(_pool).Steal();
 
     Istream *istream = item.OpenStream(_pool);
     return istream_unlock_new(_pool, *istream, item);

@@ -343,7 +343,7 @@ UriRewriter::ResolverCallback()
         if (escape_flag && escape != nullptr)
             istream = istream_escape_new(*pool, std::move(istream), *escape);
     } else
-        istream = UnusedIstreamPtr(istream_null_new(pool));
+        istream = istream_null_new(*pool);
 
     istream_delayed_set(*delayed, std::move(istream));
     if (timeout->HasHandler())

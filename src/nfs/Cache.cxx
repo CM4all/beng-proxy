@@ -493,7 +493,7 @@ nfs_cache_handle_open(struct pool &pool, NfsCacheHandle &handle,
     assert(end <= (uint64_t)handle.stat.st_size);
 
     if (start == end)
-        return istream_null_new(&pool);
+        return istream_null_new(pool).Steal();
 
     if (handle.item != nullptr) {
         /* cache hit: serve cached file */
