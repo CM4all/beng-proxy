@@ -32,7 +32,8 @@
 
 #include "istream/istream_delayed.hxx"
 #include "istream/istream_string.hxx"
-#include "istream/istream.hxx"
+#include "istream/UnusedPtr.hxx"
+#include "pool.hxx"
 #include "util/Cancellable.hxx"
 
 #include <stdio.h>
@@ -62,7 +63,7 @@ create_test(EventLoop &, struct pool *pool, Istream *input)
     Istream *istream = istream_delayed_new(pool);
     istream_delayed_cancellable_ptr(*istream) = *test;
 
-    istream_delayed_set(*istream, *input);
+    istream_delayed_set(*istream, UnusedIstreamPtr(input));
     return istream;
 }
 

@@ -345,8 +345,7 @@ UriRewriter::ResolverCallback()
     } else
         istream = istream_null_new(pool);
 
-    istream_delayed_set(*delayed,
-                        *istream);
+    istream_delayed_set(*delayed, UnusedIstreamPtr(istream));
     if (timeout->HasHandler())
         timeout->Read();
 }

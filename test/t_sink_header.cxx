@@ -35,6 +35,7 @@
 #include "istream/istream_delayed.hxx"
 #include "istream/istream_hold.hxx"
 #include "istream/istream_memory.hxx"
+#include "istream/UnusedPtr.hxx"
 #include "util/Cancellable.hxx"
 
 #include <string.h>
@@ -60,7 +61,7 @@ my_sink_header_done(gcc_unused void *header, gcc_unused size_t length,
     assert(header != NULL);
     assert(memcmp(header, "foobar", 6) == 0);
 
-    istream_delayed_set(*delayed, tail);
+    istream_delayed_set(*delayed, UnusedIstreamPtr(&tail));
     if (delayed->HasHandler())
         delayed->Read();
 }

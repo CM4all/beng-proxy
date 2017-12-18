@@ -398,7 +398,7 @@ Context<Connection>::OnHttpResponse(http_status_t _status,
 
     if (delayed != nullptr) {
         std::runtime_error error("delayed_fail");
-        istream_delayed_set(*delayed, *istream_fail_new(pool, std::make_exception_ptr(error)));
+        istream_delayed_set(*delayed, UnusedIstreamPtr(istream_fail_new(pool, std::make_exception_ptr(error))));
         delayed->Read();
     }
 

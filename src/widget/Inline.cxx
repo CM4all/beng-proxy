@@ -237,7 +237,7 @@ InlineWidget::OnHttpResponse(http_status_t status, StringMap &&headers,
     } else
         body = UnusedIstreamPtr(istream_null_new(&pool));
 
-    istream_delayed_set(*delayed, *body.Steal());
+    istream_delayed_set(*delayed, std::move(body));
 
     if (delayed->HasHandler())
         delayed->Read();

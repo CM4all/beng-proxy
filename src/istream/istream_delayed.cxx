@@ -32,6 +32,7 @@
 
 #include "istream_delayed.hxx"
 #include "ForwardIstream.hxx"
+#include "UnusedPtr.hxx"
 #include "util/Cancellable.hxx"
 
 #include <assert.h>
@@ -49,10 +50,10 @@ public:
         return cancel_ptr;
     }
 
-    void Set(Istream &_input) {
+    void Set(UnusedIstreamPtr _input) {
         assert(!HasInput());
 
-        SetInput(_input, GetHandlerDirect());
+        SetInput(std::move(_input), GetHandlerDirect());
     }
 
     void SetEof() {
@@ -113,11 +114,11 @@ istream_delayed_cancellable_ptr(Istream &i_delayed)
 }
 
 void
-istream_delayed_set(Istream &i_delayed, Istream &input)
+istream_delayed_set(Istream &i_delayed, UnusedIstreamPtr input)
 {
     auto &delayed = (DelayedIstream &)i_delayed;
 
-    delayed.Set(input);
+    delayed.Set(std::move(input));
 }
 
 void

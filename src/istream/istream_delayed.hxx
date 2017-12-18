@@ -37,6 +37,7 @@
 
 struct pool;
 class Istream;
+class UnusedIstreamPtr;
 class CancellablePointer;
 
 /**
@@ -49,7 +50,7 @@ CancellablePointer &
 istream_delayed_cancellable_ptr(Istream &i_delayed);
 
 void
-istream_delayed_set(Istream &istream_delayed, Istream &input);
+istream_delayed_set(Istream &istream_delayed, UnusedIstreamPtr input);
 
 void
 istream_delayed_set_eof(Istream &istream_delayed);

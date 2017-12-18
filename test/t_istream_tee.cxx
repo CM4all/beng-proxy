@@ -117,7 +117,7 @@ test_block1(EventLoop &event_loop)
     assert(ctx.value.empty());
 
     /* feed data into input */
-    istream_delayed_set(*delayed, *istream_string_new(pool, "foo"));
+    istream_delayed_set(*delayed, UnusedIstreamPtr(istream_string_new(pool, "foo")));
     assert(ctx.value.empty());
 
     /* the first output (block_istream_handler) blocks */
