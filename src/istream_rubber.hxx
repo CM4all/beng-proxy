@@ -36,7 +36,7 @@
 #include <stddef.h>
 
 struct pool;
-class Istream;
+class UnusedIstreamPtr;
 class Rubber;
 
 /**
@@ -45,7 +45,7 @@ class Rubber;
  * @param auto_remove shall the allocation be removed when this
  * istream is closed?
  */
-Istream *
+UnusedIstreamPtr
 istream_rubber_new(struct pool &pool, Rubber &rubber,
                    unsigned id, size_t start, size_t end,
                    bool auto_remove);

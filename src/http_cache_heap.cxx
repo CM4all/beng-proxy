@@ -78,7 +78,7 @@ struct HttpCacheItem final : HttpCacheDocument, CacheItem {
     HttpCacheItem(const HttpCacheItem &) = delete;
     HttpCacheItem &operator=(const HttpCacheItem &) = delete;
 
-    Istream *OpenStream(struct pool &_pool) {
+    UnusedIstreamPtr OpenStream(struct pool &_pool) {
         return istream_rubber_new(_pool, *rubber, rubber_id, 0, size, false);
     }
 
@@ -186,8 +186,8 @@ HttpCacheHeap::OpenStream(struct pool &_pool, HttpCacheDocument &document)
         /* don't lock the item */
         return istream_null_new(_pool).Steal();
 
-    Istream *istream = item.OpenStream(_pool);
-    return istream_unlock_new(_pool, *istream, item);
+    auto istream = item.OpenStream(_pool);
+    return istream_unlock_new(_pool, *istream.Steal(), item);
 }
 
 /*

@@ -33,6 +33,7 @@
 #include "istream_rubber.hxx"
 #include "istream/istream.hxx"
 #include "istream/Bucket.hxx"
+#include "istream/UnusedPtr.hxx"
 #include "rubber.hxx"
 #include "util/ConstBuffer.hxx"
 
@@ -114,7 +115,7 @@ public:
     }
 };
 
-Istream *
+UnusedIstreamPtr
 istream_rubber_new(struct pool &pool, Rubber &rubber,
                    unsigned id, size_t start, size_t end,
                    bool auto_remove)
@@ -122,6 +123,6 @@ istream_rubber_new(struct pool &pool, Rubber &rubber,
     assert(id > 0);
     assert(start <= end);
 
-    return NewIstream<RubberIstream>(pool, rubber, id,
-                                     start, end, auto_remove);
+    return UnusedIstreamPtr(NewIstream<RubberIstream>(pool, rubber, id,
+                                                      start, end, auto_remove));
 }

@@ -636,16 +636,16 @@ FilterCache::Serve(FilterCacheItem &item,
 
     assert(item.rubber_id == 0 || ((CacheItem &)item).size >= item.size);
 
-    Istream *response_body = item.rubber_id != 0
+    auto response_body = item.rubber_id != 0
         ? istream_rubber_new(caller_pool, rubber, item.rubber_id,
                              0, item.size, false)
-        : istream_null_new(caller_pool).Steal();
+        : istream_null_new(caller_pool);
 
-    response_body = istream_unlock_new(caller_pool, *response_body, item);
+    response_body = UnusedIstreamPtr(istream_unlock_new(caller_pool, *response_body.Steal(), item));
 
     handler.InvokeResponse(item.status,
                            StringMap(ShallowCopy(), caller_pool, item.headers),
-                           UnusedIstreamPtr(response_body));
+                           std::move(response_body));
 }
 
 void

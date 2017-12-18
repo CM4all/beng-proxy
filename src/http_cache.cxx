@@ -283,10 +283,10 @@ http_cache_put(HttpCacheRequest &request,
         auto job = NewFromPool<LinkedBackgroundJob>(request.pool,
                                                     request.cache.background);
 
-        Istream *value = rubber_id != 0
-            ? istream_rubber_new(request.pool, *request.cache.rubber,
-                                 rubber_id, 0, size, true)
-            : nullptr;
+        UnusedIstreamPtr value;
+        if (rubber_id)
+            value = istream_rubber_new(request.pool, *request.cache.rubber,
+                                       rubber_id, 0, size, true);
 
         http_cache_memcached_put(request.pool,
                                  *request.cache.memcached_stock,
@@ -296,7 +296,7 @@ http_cache_put(HttpCacheRequest &request,
                                  request.info,
                                  request.headers,
                                  request.response.status, request.response.headers,
-                                 value,
+                                 value.Steal(),
                                  http_cache_memcached_put_callback, job,
                                  request.cache.background.Add2(*job));
     }
