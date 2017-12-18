@@ -393,7 +393,7 @@ SpawnIstream::SpawnIstream(SpawnService &_spawn_service, EventLoop &event_loop,
      output_fd(std::move(_output_fd)),
      output_event(event_loop, output_fd.Get(), SocketEvent::READ,
                   BIND_THIS_METHOD(OutputEventCallback)),
-     input(_input.Steal(), *this, ISTREAM_TO_PIPE),
+     input(std::move(_input), *this, ISTREAM_TO_PIPE),
      input_fd(std::move(_input_fd)),
      input_event(event_loop, BIND_THIS_METHOD(InputEventCallback)),
      pid(_pid)
