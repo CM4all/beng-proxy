@@ -87,16 +87,16 @@ struct StringView;
 void
 pool_recycler_clear() noexcept;
 
-gcc_malloc
+gcc_malloc gcc_returns_nonnull
 struct pool *
 pool_new_libc(struct pool *parent, const char *name) noexcept;
 
-gcc_malloc
+gcc_malloc gcc_returns_nonnull
 struct pool *
 pool_new_linear(struct pool *parent, const char *name,
                 size_t initial_size) noexcept;
 
-gcc_malloc
+gcc_malloc gcc_returns_nonnull
 struct pool *
 pool_new_slice(struct pool *parent, const char *name,
                struct SlicePool *slice_pool) noexcept;
@@ -448,7 +448,7 @@ public:
     }
 };
 
-gcc_malloc
+gcc_malloc gcc_returns_nonnull
 void *
 p_malloc_impl(struct pool *pool, size_t size TRACE_ARGS_DECL) noexcept;
 
@@ -458,7 +458,7 @@ p_malloc_impl(struct pool *pool, size_t size TRACE_ARGS_DECL) noexcept;
 void
 p_free(struct pool *pool, const void *ptr) noexcept;
 
-gcc_malloc
+gcc_malloc gcc_returns_nonnull
 void *
 p_memdup_impl(struct pool *pool, const void *src, size_t length
               TRACE_ARGS_DECL) noexcept;
@@ -466,7 +466,7 @@ p_memdup_impl(struct pool *pool, const void *src, size_t length
 #define p_memdup(pool, src, length) p_memdup_impl(pool, src, length TRACE_ARGS)
 #define p_memdup_fwd(pool, src, length) p_memdup_impl(pool, src, length TRACE_ARGS_FWD)
 
-gcc_malloc
+gcc_malloc gcc_returns_nonnull
 char *
 p_strdup_impl(struct pool *pool, const char *src TRACE_ARGS_DECL) noexcept;
 
@@ -479,7 +479,7 @@ p_strdup_checked(struct pool *pool, const char *s) noexcept
     return s == NULL ? NULL : p_strdup(pool, s);
 }
 
-gcc_malloc
+gcc_malloc gcc_returns_nonnull
 char *
 p_strdup_lower_impl(struct pool *pool, const char *src
                     TRACE_ARGS_DECL) noexcept;
@@ -487,7 +487,7 @@ p_strdup_lower_impl(struct pool *pool, const char *src
 #define p_strdup_lower(pool, src) p_strdup_lower_impl(pool, src TRACE_ARGS)
 #define p_strdup_lower_fwd(pool, src) p_strdup_lower_impl(pool, src TRACE_ARGS_FWD)
 
-gcc_malloc
+gcc_malloc gcc_returns_nonnull
 char *
 p_strndup_impl(struct pool *pool, const char *src, size_t length
                TRACE_ARGS_DECL) noexcept;
@@ -495,7 +495,7 @@ p_strndup_impl(struct pool *pool, const char *src, size_t length
 #define p_strndup(pool, src, length) p_strndup_impl(pool, src, length TRACE_ARGS)
 #define p_strndup_fwd(pool, src, length) p_strndup_impl(pool, src, length TRACE_ARGS_FWD)
 
-gcc_malloc
+gcc_malloc gcc_returns_nonnull
 char *
 p_strndup_lower_impl(struct pool *pool, const char *src, size_t length
                      TRACE_ARGS_DECL) noexcept;
@@ -503,19 +503,20 @@ p_strndup_lower_impl(struct pool *pool, const char *src, size_t length
 #define p_strndup_lower(pool, src, length) p_strndup_lower_impl(pool, src, length TRACE_ARGS)
 #define p_strndup_lower_fwd(pool, src, length) p_strndup_lower_impl(pool, src, length TRACE_ARGS_FWD)
 
-gcc_malloc gcc_printf(2, 3)
+gcc_malloc gcc_returns_nonnull gcc_printf(2, 3)
 char *
 p_sprintf(struct pool *pool, const char *fmt, ...) noexcept;
 
-gcc_malloc
+gcc_malloc gcc_returns_nonnull
 char *
 p_strcat(struct pool *pool, const char *s, ...) noexcept;
 
-gcc_malloc
+gcc_malloc gcc_returns_nonnull
 char *
 p_strncat(struct pool *pool, const char *s, size_t length, ...) noexcept;
 
 template<typename T>
+gcc_malloc gcc_returns_nonnull
 T *
 PoolAlloc(pool &p) noexcept
 {
@@ -531,6 +532,7 @@ PoolAlloc(pool &p) noexcept
 }
 
 template<typename T>
+gcc_malloc gcc_returns_nonnull
 T *
 PoolAlloc(pool &p, size_t n) noexcept
 {
@@ -546,6 +548,7 @@ PoolAlloc(pool &p, size_t n) noexcept
 }
 
 template<>
+gcc_malloc gcc_returns_nonnull
 inline void *
 PoolAlloc<void>(pool &p, size_t n) noexcept
 {
@@ -553,6 +556,7 @@ PoolAlloc<void>(pool &p, size_t n) noexcept
 }
 
 template<typename T, typename... Args>
+gcc_malloc gcc_returns_nonnull
 T *
 NewFromPool(pool &p, Args&&... args)
 {
@@ -630,11 +634,11 @@ public:
     }
 };
 
-gcc_malloc
+gcc_malloc gcc_returns_nonnull
 char *
 p_strdup_impl(struct pool &pool, StringView src TRACE_ARGS_DECL) noexcept;
 
-gcc_malloc
+gcc_malloc gcc_returns_nonnull
 char *
 p_strdup_lower_impl(struct pool &pool, StringView src
                     TRACE_ARGS_DECL) noexcept;
