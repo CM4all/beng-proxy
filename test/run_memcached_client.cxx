@@ -32,6 +32,7 @@
 
 #include "memcached/memcached_client.hxx"
 #include "lease.hxx"
+#include "istream/UnusedPtr.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream_pipe.hxx"
 #include "istream/istream_string.hxx"
@@ -167,7 +168,7 @@ my_mcd_response(enum memcached_response_status status,
     c->status = status;
 
     if (value != NULL) {
-        value = istream_pipe_new(c->pool, *value, nullptr);
+        value = istream_pipe_new(c->pool, UnusedIstreamPtr(value), nullptr).Steal();
         c->value = sink_fd_new(c->event_loop, *c->pool, *value,
                                FileDescriptor(STDOUT_FILENO),
                                guess_fd_type(STDOUT_FILENO),

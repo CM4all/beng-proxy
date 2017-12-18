@@ -33,6 +33,7 @@
 #ifdef __linux
 
 #include "istream_pipe.hxx"
+#include "UnusedPtr.hxx"
 #include "ForwardIstream.hxx"
 #include "io/FileDescriptor.hxx"
 #include "direct.hxx"
@@ -53,9 +54,9 @@ class PipeIstream final : public ForwardIstream {
     size_t piped = 0;
 
 public:
-    PipeIstream(struct pool &p, Istream &_input,
+    PipeIstream(struct pool &p, UnusedIstreamPtr _input,
                 Stock *_pipe_stock)
-        :ForwardIstream(p, _input),
+        :ForwardIstream(p, std::move(_input)),
          stock(_pipe_stock) {}
 
     /* virtual methods from class Istream */
@@ -364,11 +365,12 @@ PipeIstream::_Close() noexcept
  *
  */
 
-Istream *
-istream_pipe_new(struct pool *pool, Istream &input,
+UnusedIstreamPtr
+istream_pipe_new(struct pool *pool, UnusedIstreamPtr input,
                  Stock *pipe_stock)
 {
-    return NewIstream<PipeIstream>(*pool, input, pipe_stock);
+    return UnusedIstreamPtr(NewIstream<PipeIstream>(*pool, std::move(input),
+                                                    pipe_stock));
 }
 
 #endif

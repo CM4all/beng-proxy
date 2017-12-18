@@ -34,15 +34,15 @@
 #define BENG_PROXY_ISTREAM_PIPE_HXX
 
 struct pool;
-class Istream;
+class UnusedIstreamPtr;
 class Stock;
 
 #ifdef __linux
 /**
  * Convert any file descriptor to a pipe by splicing.
  */
-Istream *
-istream_pipe_new(struct pool *pool, Istream &input, Stock *pipe_stock);
+UnusedIstreamPtr
+istream_pipe_new(struct pool *pool, UnusedIstreamPtr input, Stock *pipe_stock);
 #endif
 
 #endif

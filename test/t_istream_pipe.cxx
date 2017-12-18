@@ -30,7 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "istream/istream.hxx"
+#include "istream/UnusedPtr.hxx"
 #include "istream/istream_pipe.hxx"
 #include "istream/istream_string.hxx"
 
@@ -47,7 +47,7 @@ create_input(struct pool *pool)
 static Istream *
 create_test(EventLoop &, struct pool *pool, Istream *input)
 {
-    return istream_pipe_new(pool, *input, nullptr);
+    return istream_pipe_new(pool, UnusedIstreamPtr(input), nullptr).Steal();
 }
 
 #include "t_istream_filter.hxx"

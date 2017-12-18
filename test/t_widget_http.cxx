@@ -149,11 +149,11 @@ struct tcache *global_translate_cache;
 class Stock;
 Stock *global_pipe_stock;
 
-Istream *
-istream_pipe_new(gcc_unused struct pool *pool, Istream &input,
+UnusedIstreamPtr
+istream_pipe_new(gcc_unused struct pool *pool, UnusedIstreamPtr input,
                  gcc_unused Stock *pipe_stock)
 {
-    return &input;
+    return input;
 }
 
 class MyResourceLoader final : public ResourceLoader {

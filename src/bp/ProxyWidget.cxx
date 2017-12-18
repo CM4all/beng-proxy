@@ -99,9 +99,11 @@ struct ProxyWidget final : WidgetLookupHandler, HttpResponseHandler, Cancellable
 
 void
 ProxyWidget::OnHttpResponse(http_status_t status, StringMap &&_headers,
-                            Istream *body) noexcept
+                            Istream *_body) noexcept
 {
     assert(widget->cls != nullptr);
+
+    UnusedIstreamPtr body(_body);
 
     /* XXX shall the address view or the transformation view be used
        to control response header forwarding? */
@@ -130,16 +132,16 @@ ProxyWidget::OnHttpResponse(http_status_t status, StringMap &&_headers,
         headers2.MoveToBuffer("content-length");
 
 #ifdef SPLICE
-    if (body != nullptr)
-        body = istream_pipe_new(&request.pool, *body, global_pipe_stock);
+    if (body)
+        body = istream_pipe_new(&request.pool, std::move(body),
+                                global_pipe_stock);
 #endif
 
     /* disable the following transformations, because they are meant
        for the template, not for this widget */
     request.CancelTransformations();
 
-    request.DispatchResponse(status, std::move(headers2),
-                             UnusedIstreamPtr(body));
+    request.DispatchResponse(status, std::move(headers2), std::move(body));
 }
 
 void

@@ -397,7 +397,7 @@ WidgetRequest::FilterResponse(http_status_t status,
 
 #ifdef SPLICE
     if (body)
-        body = UnusedIstreamPtr(istream_pipe_new(&pool, *body.Steal(), global_pipe_stock));
+        body = istream_pipe_new(&pool, std::move(body), global_pipe_stock);
 #endif
 
     env.filter_resource_loader

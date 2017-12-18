@@ -236,7 +236,7 @@ Context::OnHttpResponse(http_status_t _status, gcc_unused StringMap &&headers,
     status = _status;
 
     if (_body != nullptr) {
-        _body = istream_pipe_new(pool, *_body, nullptr);
+        _body = istream_pipe_new(pool, UnusedIstreamPtr(_body), nullptr).Steal();
         body = sink_fd_new(event_loop, *pool, *_body,
                            FileDescriptor(STDOUT_FILENO),
                            guess_fd_type(STDOUT_FILENO),

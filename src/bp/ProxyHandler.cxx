@@ -125,8 +125,8 @@ proxy_handler(Request &request2)
 
 #ifdef SPLICE
     if (forward.body)
-        forward.body = UnusedIstreamPtr(istream_pipe_new(&pool, *forward.body.Steal(),
-                                                         request2.instance.pipe_stock));
+        forward.body = istream_pipe_new(&pool, std::move(forward.body),
+                                        request2.instance.pipe_stock);
 #endif
 
     for (const auto &i : tr.request_headers)

@@ -33,6 +33,7 @@
 #include "nfs/Handler.hxx"
 #include "nfs/Client.hxx"
 #include "nfs/Istream.hxx"
+#include "istream/UnusedPtr.hxx"
 #include "istream/istream_pipe.hxx"
 #include "istream/istream.hxx"
 #include "istream/sink_fd.hxx"
@@ -159,7 +160,7 @@ Context::OnNfsOpen(NfsFileHandle *handle, const struct stat *st)
     assert(connected);
 
     auto *_body = istream_nfs_new(*pool, *handle, 0, st->st_size);
-    _body = istream_pipe_new(pool, *_body, nullptr);
+    _body = istream_pipe_new(pool, UnusedIstreamPtr(_body), nullptr).Steal();
     body = sink_fd_new(event_loop, *pool, *_body,
                        FileDescriptor(STDOUT_FILENO),
                        guess_fd_type(STDOUT_FILENO),

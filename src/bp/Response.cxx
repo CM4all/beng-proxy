@@ -579,8 +579,7 @@ Request::DispatchResponseDirect(http_status_t status, HttpHeaders &&headers,
 
 #ifdef SPLICE
     if (body)
-        body = UnusedIstreamPtr(istream_pipe_new(&pool, *body.Steal(),
-                                                 instance.pipe_stock));
+        body = istream_pipe_new(&pool, std::move(body), instance.pipe_stock);
 #endif
 
 #ifndef NDEBUG
@@ -613,8 +612,8 @@ response_apply_filter(Request &request2,
 
 #ifdef SPLICE
     if (body)
-        body = UnusedIstreamPtr(istream_pipe_new(&request2.pool, *body.Steal(),
-                                                 request2.instance.pipe_stock));
+        body = istream_pipe_new(&request2.pool, std::move(body),
+                                request2.instance.pipe_stock);
 #endif
 
     request2.instance.filter_resource_loader
