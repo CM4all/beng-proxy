@@ -32,6 +32,7 @@
 
 #include "istream_unlock.hxx"
 #include "istream/ForwardIstream.hxx"
+#include "istream/UnusedPtr.hxx"
 #include "cache.hxx"
 
 #include <assert.h>
@@ -40,9 +41,9 @@ class UnlockIstream final : public ForwardIstream {
     CacheItem &item;
 
 public:
-    UnlockIstream(struct pool &p, Istream &_input,
+    UnlockIstream(struct pool &p, UnusedIstreamPtr _input,
                   CacheItem &_item)
-        :ForwardIstream(p, _input),
+        :ForwardIstream(p, std::move(_input)),
          item(_item) {
         item.Lock();
     }
@@ -67,8 +68,8 @@ public:
     }
 };
 
-Istream *
-istream_unlock_new(struct pool &pool, Istream &input, CacheItem &item)
+UnusedIstreamPtr
+istream_unlock_new(struct pool &pool, UnusedIstreamPtr input, CacheItem &item)
 {
-    return NewIstream<UnlockIstream>(pool, input, item);
+    return UnusedIstreamPtr(NewIstream<UnlockIstream>(pool, std::move(input), item));
 }

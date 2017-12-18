@@ -431,10 +431,11 @@ nfs_cache_item_open(struct pool &pool,
 
     assert(item.rubber_id != 0);
 
-    auto istream =
-        istream_rubber_new(pool, item.rubber, item.rubber_id,
-                           start, end, false);
-    return UnusedIstreamPtr(istream_unlock_new(pool, *istream.Steal(), item));
+    return istream_unlock_new(pool,
+                              istream_rubber_new(pool,
+                                                 item.rubber, item.rubber_id,
+                                                 start, end, false),
+                              item);
 }
 
 static UnusedIstreamPtr

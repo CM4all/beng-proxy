@@ -34,14 +34,14 @@
 #define BENG_PROXY_ISTREAM_UNLOCK_HXX
 
 struct pool;
-class Istream;
+class UnusedIstreamPtr;
 struct CacheItem;
 
 /**
  * An istream facade which unlocks a cache item after it has been
  * closed.
  */
-Istream *
-istream_unlock_new(struct pool &pool, Istream &input, CacheItem &item);
+UnusedIstreamPtr
+istream_unlock_new(struct pool &pool, UnusedIstreamPtr input, CacheItem &item);
 
 #endif

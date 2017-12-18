@@ -641,7 +641,7 @@ FilterCache::Serve(FilterCacheItem &item,
                              0, item.size, false)
         : istream_null_new(caller_pool);
 
-    response_body = UnusedIstreamPtr(istream_unlock_new(caller_pool, *response_body.Steal(), item));
+    response_body = istream_unlock_new(caller_pool, std::move(response_body), item);
 
     handler.InvokeResponse(item.status,
                            StringMap(ShallowCopy(), caller_pool, item.headers),

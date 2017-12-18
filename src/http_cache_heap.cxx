@@ -186,8 +186,7 @@ HttpCacheHeap::OpenStream(struct pool &_pool, HttpCacheDocument &document)
         /* don't lock the item */
         return istream_null_new(_pool).Steal();
 
-    auto istream = item.OpenStream(_pool);
-    return istream_unlock_new(_pool, *istream.Steal(), item);
+    return istream_unlock_new(_pool, item.OpenStream(_pool), item).Steal();
 }
 
 /*
