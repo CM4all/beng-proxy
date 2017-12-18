@@ -63,12 +63,12 @@ Widget::LoggerDomain::GetDomain() const
     return "dummy";
 }
 
-Istream *
-istream_iconv_new(gcc_unused struct pool *pool, Istream &input,
+UnusedIstreamPtr
+istream_iconv_new(gcc_unused struct pool &pool, UnusedIstreamPtr input,
                   gcc_unused const char *tocode,
-                  gcc_unused const char *fromcode)
+                  gcc_unused const char *fromcode) noexcept
 {
-    return &input;
+    return input;
 }
 
 void

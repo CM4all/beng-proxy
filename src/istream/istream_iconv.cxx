@@ -32,6 +32,7 @@
 
 #include "istream_iconv.hxx"
 #include "FacadeIstream.hxx"
+#include "UnusedPtr.hxx"
 #include "fb_pool.hxx"
 #include "SliceFifoBuffer.hxx"
 
@@ -47,9 +48,9 @@ class IconvIstream final : public FacadeIstream {
     SliceFifoBuffer buffer;
 
 public:
-    IconvIstream(struct pool &p, Istream &_input,
+    IconvIstream(struct pool &p, UnusedIstreamPtr _input,
                  iconv_t _iconv)
-        :FacadeIstream(p, _input),
+        :FacadeIstream(p, std::move(_input)),
          iconv(_iconv)
     {
     }
@@ -246,13 +247,13 @@ IconvIstream::_Close() noexcept
  *
  */
 
-Istream *
-istream_iconv_new(struct pool *pool, Istream &input,
-                  const char *tocode, const char *fromcode)
+UnusedIstreamPtr
+istream_iconv_new(struct pool &pool, UnusedIstreamPtr input,
+                  const char *tocode, const char *fromcode) noexcept
 {
     const iconv_t iconv = iconv_open(tocode, fromcode);
     if (iconv == (iconv_t)-1)
         return nullptr;
 
-    return NewIstream<IconvIstream>(*pool, input, iconv);
+    return UnusedIstreamPtr(NewIstream<IconvIstream>(pool, std::move(input), iconv));
 }

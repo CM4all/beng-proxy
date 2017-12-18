@@ -171,14 +171,14 @@ widget_response_format(struct pool &pool, const Widget &widget,
            utf-8; this widget however used a different charset.
            Automatically convert it with istream_iconv */
         const char *charset2 = p_strdup(pool, charset);
-        Istream *ic = istream_iconv_new(&pool, *body.Steal(), "utf-8", charset2);
-        if (ic == nullptr)
+        auto ic = istream_iconv_new(pool, std::move(body), "utf-8", charset2);
+        if (!ic)
             throw WidgetError(widget, WidgetErrorCode::UNSUPPORTED_ENCODING,
                               StringFormat<64>("widget sent unknown charset '%s'",
                                                charset2));
 
         widget.logger(6, "charset conversion '", charset2, "' -> utf-8");
-        body = UnusedIstreamPtr(ic);
+        body = std::move(ic);
     }
 
     if (StringStartsWith(content_type, "text/") &&

@@ -34,10 +34,10 @@
 #define BENG_PROXY_ISTREAM_ICONV_HXX
 
 struct pool;
-class Istream;
+class UnusedIstreamPtr;
 
-Istream *
-istream_iconv_new(struct pool *pool, Istream &input,
-                  const char *tocode, const char *fromcode);
+UnusedIstreamPtr
+istream_iconv_new(struct pool &pool, UnusedIstreamPtr input,
+                  const char *tocode, const char *fromcode) noexcept;
 
 #endif
