@@ -48,7 +48,7 @@ struct StringView;
  * Compresses an URI (eliminates all "/./" and "/../"), and returns
  * the result.  May return NULL if there are too many "/../".
  */
-gcc_pure gcc_malloc
+gcc_pure
 const char *
 uri_compress(AllocatorPtr alloc, const char *uri);
 
@@ -57,7 +57,7 @@ uri_compress(AllocatorPtr alloc, const char *uri);
  * resulting absolute URI.  Will never return NULL, as there is no
  * error checking.
  */
-gcc_pure gcc_malloc
+gcc_pure
 const char *
 uri_absolute(AllocatorPtr alloc, const char *base, StringView uri);
 

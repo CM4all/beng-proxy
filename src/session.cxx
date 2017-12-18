@@ -190,7 +190,7 @@ Session::SetTranslate(ConstBuffer<void> _translate)
     try {
         translate = DupBuffer(pool, _translate);
         return true;
-    } catch (std::bad_alloc) {
+    } catch (const std::bad_alloc &) {
         return false;
     }
 }
@@ -257,7 +257,7 @@ Session::SetExternalManager(const HttpAddress &address,
         next_external_keepalive = std::chrono::steady_clock::now() + keepalive;
 
         return true;
-    } catch (std::bad_alloc) {
+    } catch (const std::bad_alloc &) {
         return false;
     }
 }
@@ -288,7 +288,7 @@ try {
     assert(widget_id != nullptr);
 
     return hashmap_r_get_widget_session(*this, widgets, widget_id, create);
-} catch (std::bad_alloc) {
+} catch (const std::bad_alloc &) {
     return nullptr;
 }
 
@@ -299,7 +299,7 @@ try {
     assert(child_id != nullptr);
 
     return hashmap_r_get_widget_session(session, children, child_id, create);
-} catch (std::bad_alloc) {
+} catch (const std::bad_alloc &) {
     return nullptr;
 }
 
@@ -351,6 +351,6 @@ try {
     auto realm = NewFromPool<RealmSession>(pool, *this, realm_name);
     realms.insert_commit(*realm, commit_data);
     return realm;
-} catch (std::bad_alloc) {
+} catch (const std::bad_alloc &) {
     return nullptr;
 }

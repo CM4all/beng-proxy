@@ -48,7 +48,7 @@ struct widget_ref {
 static constexpr char WIDGET_REF_SEPARATOR = ':';
 #define WIDGET_REF_SEPARATOR_S ":"
 
-gcc_pure gcc_malloc
+gcc_pure
 const struct widget_ref *
 widget_ref_parse(struct pool *pool, const char *p);
 

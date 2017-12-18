@@ -69,7 +69,7 @@ TEST(ShmTest, Dpool)
     try {
         c = d_malloc(*pool, 512);
         ASSERT_EQ(c, nullptr);
-    } catch (std::bad_alloc) {
+    } catch (const std::bad_alloc &) {
     }
 
     d = d_malloc(*pool, 220);
@@ -83,7 +83,7 @@ TEST(ShmTest, Dpool)
     try {
         c = d_malloc(*pool, 270);
         ASSERT_EQ(c, nullptr);
-    } catch (std::bad_alloc) {
+    } catch (const std::bad_alloc &) {
     }
 
     /* no free SHM page */

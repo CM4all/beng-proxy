@@ -57,7 +57,7 @@ try {
         ws.query_string.Clear(p);
     else
         ws.query_string.Set(p, from_request.query_string);
-} catch (std::bad_alloc) {
+} catch (const std::bad_alloc &) {
 }
 
 void

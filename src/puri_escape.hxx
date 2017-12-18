@@ -42,7 +42,7 @@
 class AllocatorPtr;
 struct StringView;
 
-gcc_pure gcc_malloc
+gcc_pure
 const char *
 uri_escape_dup(AllocatorPtr alloc, StringView src,
                char escape_char='%');

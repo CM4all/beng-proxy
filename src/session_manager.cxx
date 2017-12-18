@@ -547,7 +547,7 @@ session_new_unsafe()
 
     try {
         session = NewFromPool<Session>(*pool, *pool, GenerateSessionId());
-    } catch (std::bad_alloc) {
+    } catch (const std::bad_alloc &) {
         dpool_destroy(pool);
         return nullptr;
     }
@@ -590,7 +590,7 @@ SessionContainer::Defragment(Session &src, struct shm &shm)
     Session *dest;
     try {
         dest = NewFromPool<Session>(*pool, *pool, src);
-    } catch (std::bad_alloc) {
+    } catch (const std::bad_alloc &) {
         dpool_destroy(pool);
         return;
     }

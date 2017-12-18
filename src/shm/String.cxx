@@ -64,7 +64,7 @@ DString::SetNoExcept(struct dpool &pool, StringView new_value) noexcept
     try {
         Set(pool, new_value);
         return true;
-    } catch (std::bad_alloc) {
+    } catch (const std::bad_alloc &) {
         return false;
     }
 }

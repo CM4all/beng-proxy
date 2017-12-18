@@ -501,7 +501,7 @@ WasClient::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload)
 
         if (response.body == nullptr) {
             stopwatch_event(stopwatch, "control_error");
-            AbortResponseBody(std::make_exception_ptr(WasProtocolError("no response body allowed")));
+            AbortResponseHeaders(std::make_exception_ptr(WasProtocolError("no response body allowed")));
             return false;
         }
 
