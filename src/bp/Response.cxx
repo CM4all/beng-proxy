@@ -687,7 +687,8 @@ Request::DispatchResponse(http_status_t status, HttpHeaders &&headers,
 
         errdoc_dispatch_response(*this, status,
                                  translate.response->error_document,
-                                 std::move(headers), response_body);
+                                 std::move(headers),
+                                 UnusedIstreamPtr(response_body));
         return;
     }
 

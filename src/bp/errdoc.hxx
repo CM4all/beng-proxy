@@ -36,7 +36,7 @@
 #include "http/Status.h"
 
 struct Request;
-class Istream;
+class UnusedIstreamPtr;
 class HttpHeaders;
 template<typename T> struct ConstBuffer;
 
@@ -51,6 +51,6 @@ template<typename T> struct ConstBuffer;
 void
 errdoc_dispatch_response(Request &request2, http_status_t status,
                          ConstBuffer<void> error_document,
-                         HttpHeaders &&headers, Istream *body);
+                         HttpHeaders &&headers, UnusedIstreamPtr body);
 
 #endif

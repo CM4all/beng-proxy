@@ -55,10 +55,10 @@ struct ErrorResponseLoader final : HttpResponseHandler, Cancellable {
     TranslateRequest translate_request;
 
     ErrorResponseLoader(Request &_request, http_status_t _status,
-                        HttpHeaders &&_headers, Istream *_body)
+                        HttpHeaders &&_headers, UnusedIstreamPtr _body)
         :request2(&_request), status(_status),
          headers(std::move(_headers)),
-         body(_request.pool, _body) {}
+         body(_request.pool, std::move(_body)) {}
 
     void Destroy() {
         DeleteFromPool(request2->pool, this);
@@ -192,7 +192,7 @@ ErrorResponseLoader::Cancel() noexcept
 void
 errdoc_dispatch_response(Request &request2, http_status_t status,
                          ConstBuffer<void> error_document,
-                         HttpHeaders &&headers, Istream *body)
+                         HttpHeaders &&headers, UnusedIstreamPtr body)
 {
     assert(!error_document.IsNull());
 
@@ -202,7 +202,7 @@ errdoc_dispatch_response(Request &request2, http_status_t status,
 
     auto *er = NewFromPool<ErrorResponseLoader>(request2.pool, request2,
                                                 status, std::move(headers),
-                                                body);
+                                                std::move(body));
 
     request2.cancel_ptr = *er;
 
