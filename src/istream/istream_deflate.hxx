@@ -34,14 +34,14 @@
 #define BENG_PROXY_ISTREAM_DEFLATE_HXX
 
 struct pool;
-class Istream;
+class UnusedIstreamPtr;
 class EventLoop;
 
 /**
  * @param gzip use the gzip format instead of the zlib format?
  */
-Istream *
-istream_deflate_new(struct pool &pool, Istream &input, EventLoop &event_loop,
-                    bool gzip=false);
+UnusedIstreamPtr
+istream_deflate_new(struct pool &pool, UnusedIstreamPtr input,
+                    EventLoop &event_loop, bool gzip=false) noexcept;
 
 #endif

@@ -141,9 +141,8 @@ Request::AutoDeflate(HttpHeaders &response_headers,
         if (available < 0 || available >= 512) {
             compressed = true;
             response_headers.Write("content-encoding", "deflate");
-            response_body = UnusedIstreamPtr(istream_deflate_new(pool,
-                                                                 *response_body.Steal(),
-                                                                 instance.event_loop));
+            response_body = istream_deflate_new(pool, std::move(response_body),
+                                                instance.event_loop);
         }
     } else if (response_body &&
                translate.response->auto_gzip &&
@@ -153,10 +152,8 @@ Request::AutoDeflate(HttpHeaders &response_headers,
         if (available < 0 || available >= 512) {
             compressed = true;
             response_headers.Write("content-encoding", "gzip");
-            response_body = UnusedIstreamPtr(istream_deflate_new(pool,
-                                                                 *response_body.Steal(),
-                                                                 instance.event_loop,
-                                                                 true));
+            response_body = istream_deflate_new(pool, std::move(response_body),
+                                                instance.event_loop, true);
         }
     }
 

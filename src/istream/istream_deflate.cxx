@@ -31,6 +31,7 @@
  */
 
 #include "istream_deflate.hxx"
+#include "UnusedPtr.hxx"
 #include "FacadeIstream.hxx"
 #include "pool.hxx"
 #include "fb_pool.hxx"
@@ -70,9 +71,9 @@ class DeflateIstream final : public FacadeIstream {
     DeferEvent defer;
 
 public:
-    DeflateIstream(struct pool &_pool, Istream &_input, EventLoop &event_loop,
-                   bool _gzip)
-        :FacadeIstream(_pool, _input),
+    DeflateIstream(struct pool &_pool, UnusedIstreamPtr _input,
+                   EventLoop &event_loop, bool _gzip)
+        :FacadeIstream(_pool, std::move(_input)),
          gzip(_gzip),
          reading(false),
          defer(event_loop, BIND_THIS_METHOD(OnDeferred))
@@ -416,9 +417,9 @@ DeflateIstream::OnError(std::exception_ptr ep) noexcept
  *
  */
 
-Istream *
-istream_deflate_new(struct pool &pool, Istream &input, EventLoop &event_loop,
-                    bool gzip)
+UnusedIstreamPtr
+istream_deflate_new(struct pool &pool, UnusedIstreamPtr input,
+                    EventLoop &event_loop, bool gzip) noexcept
 {
-    return NewIstream<DeflateIstream>(pool, input, event_loop, gzip);
+    return UnusedIstreamPtr(NewIstream<DeflateIstream>(pool, std::move(input), event_loop, gzip));
 }

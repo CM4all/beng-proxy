@@ -32,7 +32,7 @@
 
 #include "istream/istream_deflate.hxx"
 #include "istream/istream_string.hxx"
-#include "istream/istream.hxx"
+#include "istream/UnusedPtr.hxx"
 
 class EventLoop;
 
@@ -45,7 +45,7 @@ create_input(struct pool *pool)
 static Istream *
 create_test(EventLoop &event_loop, struct pool *pool, Istream *input)
 {
-    return istream_deflate_new(*pool, *input, event_loop);
+    return istream_deflate_new(*pool, UnusedIstreamPtr(input), event_loop).Steal();
 }
 
 #include "t_istream_filter.hxx"
