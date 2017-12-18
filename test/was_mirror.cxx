@@ -31,6 +31,7 @@
  */
 
 #include "was/Server.hxx"
+#include "istream/UnusedPtr.hxx"
 #include "direct.hxx"
 #include "PInstance.hxx"
 #include "fb_pool.hxx"
@@ -45,13 +46,14 @@ struct Instance final : PInstance, WasServerHandler {
     void OnWasRequest(gcc_unused struct pool &pool,
                       gcc_unused http_method_t method,
                       gcc_unused const char *uri, StringMap &&headers,
-                      Istream *body) override {
+                      UnusedIstreamPtr body) noexcept override {
+        const bool has_body = body;
         was_server_response(*server,
-                            body != nullptr ? HTTP_STATUS_OK : HTTP_STATUS_NO_CONTENT,
-                            std::move(headers), body);
+                            has_body ? HTTP_STATUS_OK : HTTP_STATUS_NO_CONTENT,
+                            std::move(headers), std::move(body));
     }
 
-    void OnWasClosed() override {}
+    void OnWasClosed() noexcept override {}
 };
 
 int main(int argc, char **argv) {

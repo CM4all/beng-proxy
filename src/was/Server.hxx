@@ -38,7 +38,7 @@
 
 struct pool;
 class EventLoop;
-class Istream;
+class UnusedIstreamPtr;
 struct lease;
 class StringMap;
 class HttpResponseHandler;
@@ -48,9 +48,9 @@ class WasServerHandler {
 public:
     virtual void OnWasRequest(struct pool &pool, http_method_t method,
                               const char *uri, StringMap &&headers,
-                              Istream *body) = 0;
+                              UnusedIstreamPtr body) noexcept = 0;
 
-    virtual void OnWasClosed() = 0;
+    virtual void OnWasClosed() noexcept = 0;
 };
 
 /**
@@ -74,6 +74,6 @@ was_server_free(WasServer *server);
 
 void
 was_server_response(WasServer &server, http_status_t status,
-                    StringMap &&headers, Istream *body);
+                    StringMap &&headers, UnusedIstreamPtr body) noexcept;
 
 #endif

@@ -124,7 +124,7 @@ public:
     }
 
     void SendResponse(http_status_t status,
-                      StringMap &&headers, Istream *body);
+                      StringMap &&headers, UnusedIstreamPtr body) noexcept;
 
 private:
     void CloseFiles() {
@@ -180,7 +180,7 @@ private:
 
             handler.OnWasRequest(*request.pool, request.method,
                                  request.uri, std::move(*request.headers),
-                                 body.Steal());
+                                 std::move(body));
             /* XXX check if connection has been closed */
         }
 
@@ -531,37 +531,36 @@ was_server_free(WasServer *server)
 
 inline void
 WasServer::SendResponse(http_status_t status,
-                        StringMap &&headers, Istream *body)
+                        StringMap &&headers, UnusedIstreamPtr body) noexcept
 {
     assert(request.state == Request::State::SUBMITTED);
     assert(response.body == nullptr);
     assert(http_status_is_valid(status));
-    assert(!http_status_is_empty(status) || body == nullptr);
+    assert(!http_status_is_empty(status) || !body);
 
     control.BulkOn();
 
     if (!control.Send(WAS_COMMAND_STATUS, &status, sizeof(status)))
         return;
 
-    if (body != nullptr && http_method_is_empty(request.method)) {
+    if (body && http_method_is_empty(request.method)) {
         if (request.method == HTTP_METHOD_HEAD) {
-            off_t available = body->GetAvailable(false);
+            off_t available = body.GetAvailable(false);
             if (available >= 0)
                 headers.Set("content-length",
                             p_sprintf(request.pool, "%lu",
                                       (unsigned long)available));
         }
 
-        body->CloseUnused();
-        body = nullptr;
+        body.Clear();
     }
 
     control.SendStrmap(WAS_COMMAND_HEADER, headers);
 
-    if (body != nullptr) {
+    if (body) {
         response.body = was_output_new(*request.pool,
                                        control.GetEventLoop(),
-                                       output_fd, UnusedIstreamPtr(body),
+                                       output_fd, std::move(body),
                                        *this);
         if (!control.SendEmpty(WAS_COMMAND_DATA) ||
             !was_output_check_length(*response.body))
@@ -576,7 +575,7 @@ WasServer::SendResponse(http_status_t status,
 
 void
 was_server_response(WasServer &server, http_status_t status,
-                    StringMap &&headers, Istream *body)
+                    StringMap &&headers, UnusedIstreamPtr body) noexcept
 {
-    server.SendResponse(status, std::move(headers), body);
+    server.SendResponse(status, std::move(headers), std::move(body));
 }

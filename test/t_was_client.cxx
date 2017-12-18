@@ -58,10 +58,9 @@ static void
 RunNull(WasServer &server, struct pool &pool,
         gcc_unused http_method_t method,
         gcc_unused const char *uri, gcc_unused StringMap &&headers,
-        Istream *body)
+        UnusedIstreamPtr body)
 {
-    if (body != nullptr)
-        body->Close();
+    body.Clear();
 
     was_server_response(server, HTTP_STATUS_NO_CONTENT,
                         StringMap(pool), nullptr);
@@ -71,52 +70,50 @@ static void
 RunHello(WasServer &server, struct pool &pool,
          gcc_unused http_method_t method,
          gcc_unused const char *uri, gcc_unused StringMap &&headers,
-         Istream *body)
+         UnusedIstreamPtr body)
 {
-    if (body != nullptr)
-        body->Close();
+    body.Clear();
 
     was_server_response(server, HTTP_STATUS_OK, StringMap(pool),
-                        istream_string_new(&pool, "hello"));
+                        UnusedIstreamPtr(istream_string_new(&pool, "hello")));
 }
 
 static void
 RunHuge(WasServer &server, struct pool &pool,
          gcc_unused http_method_t method,
          gcc_unused const char *uri, gcc_unused StringMap &&headers,
-         Istream *body)
+         UnusedIstreamPtr body)
 {
-    if (body != nullptr)
-        body->Close();
+    body.Clear();
 
     was_server_response(server, HTTP_STATUS_OK, StringMap(pool),
-                        istream_head_new(&pool,
-                                         *istream_zero_new(&pool),
-                                         524288, true));
+                        UnusedIstreamPtr(istream_head_new(&pool,
+                                                          *istream_zero_new(&pool),
+                                                          524288, true)));
 }
 
 static void
 RunHold(WasServer &server, struct pool &pool,
         gcc_unused http_method_t method,
         gcc_unused const char *uri, gcc_unused StringMap &&headers,
-        Istream *body)
+        UnusedIstreamPtr body)
 {
-    if (body != nullptr)
-        body->Close();
+    body.Clear();
 
     was_server_response(server, HTTP_STATUS_OK, StringMap(pool),
-                        istream_block_new(pool));
+                        UnusedIstreamPtr(istream_block_new(pool)));
 }
 
 static void
 RunMirror(WasServer &server, gcc_unused struct pool &pool,
           gcc_unused http_method_t method,
           gcc_unused const char *uri, StringMap &&headers,
-          Istream *body)
+          UnusedIstreamPtr body)
 {
+    const bool has_body = body;
     was_server_response(server,
-                        body != nullptr ? HTTP_STATUS_OK : HTTP_STATUS_NO_CONTENT,
-                        std::move(headers), body);
+                        has_body ? HTTP_STATUS_OK : HTTP_STATUS_NO_CONTENT,
+                        std::move(headers), std::move(body));
 }
 
 class WasConnection final : WasServerHandler, WasLease {
@@ -132,7 +129,7 @@ class WasConnection final : WasServerHandler, WasLease {
     typedef std::function<void(WasServer &server, struct pool &pool,
                                http_method_t method,
                                const char *uri, StringMap &&headers,
-                               Istream *body)> Callback;
+                               UnusedIstreamPtr body)> Callback;
 
     const Callback callback;
 
@@ -192,11 +189,12 @@ public:
 
     void OnWasRequest(struct pool &pool, http_method_t method,
                       const char *uri, StringMap &&headers,
-                      Istream *body) override {
-        callback(*server, pool, method, uri, std::move(headers), body);
+                      UnusedIstreamPtr body) noexcept override {
+        callback(*server, pool, method, uri,
+                 std::move(headers), std::move(body));
     }
 
-    void OnWasClosed() override {
+    void OnWasClosed() noexcept override {
         server = nullptr;
     }
 
