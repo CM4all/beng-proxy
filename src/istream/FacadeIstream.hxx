@@ -50,10 +50,11 @@ protected:
         input.SetDirect(GetHandlerDirect());
     }
 
-    void ReplaceInputDirect(Istream &_input) noexcept {
+    template<typename I>
+    void ReplaceInputDirect(I &&_input) noexcept {
         assert(input.IsDefined());
 
-        input.Replace(_input, *this, GetHandlerDirect());
+        input.Replace(std::forward<I>(_input), *this, GetHandlerDirect());
     }
 };
 

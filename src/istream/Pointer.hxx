@@ -114,13 +114,13 @@ public:
         stream->SetHandler(handler, direct);
     }
 
-    void Replace(Istream &_stream,
+    template<typename I>
+    void Replace(I &&_stream,
                  IstreamHandler &handler,
                  FdTypeMask direct=0) noexcept {
         Close();
 
-        stream = &_stream;
-        stream->SetHandler(handler, direct);
+        Set(std::forward<I>(_stream), handler, direct);
     }
 
     void SetDirect(FdTypeMask direct) noexcept {
