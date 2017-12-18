@@ -46,7 +46,7 @@ public:
     UnusedHoldIstreamPtr() = default;
     UnusedHoldIstreamPtr(std::nullptr_t) noexcept {}
 
-    explicit UnusedHoldIstreamPtr(struct pool &p, Istream *_stream)
+    explicit UnusedHoldIstreamPtr(struct pool &p, Istream *_stream) noexcept
         :UnusedIstreamPtr(_stream != nullptr
                           ? istream_hold_new(p, *_stream)
                           : nullptr) {}

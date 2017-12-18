@@ -53,32 +53,32 @@ public:
     UnusedIstreamPtr() = default;
     UnusedIstreamPtr(std::nullptr_t) noexcept {}
 
-    explicit UnusedIstreamPtr(Istream *_stream)
+    explicit UnusedIstreamPtr(Istream *_stream) noexcept
         :stream(_stream) {}
 
-    UnusedIstreamPtr(UnusedIstreamPtr &&src)
+    UnusedIstreamPtr(UnusedIstreamPtr &&src) noexcept
         :stream(std::exchange(src.stream, nullptr)) {}
 
-    ~UnusedIstreamPtr() {
+    ~UnusedIstreamPtr() noexcept {
         if (stream != nullptr)
             Close(*stream);
     }
 
-    UnusedIstreamPtr &operator=(UnusedIstreamPtr &&src) {
+    UnusedIstreamPtr &operator=(UnusedIstreamPtr &&src) noexcept {
         using std::swap;
         swap(stream, src.stream);
         return *this;
     }
 
-    operator bool() const {
+    operator bool() const noexcept {
         return stream != nullptr;
     }
 
-    Istream *Steal() {
+    Istream *Steal() noexcept {
         return std::exchange(stream, nullptr);
     }
 
-    void Clear() {
+    void Clear() noexcept {
         auto *s = Steal();
         if (s != nullptr)
             Close(*s);
@@ -94,7 +94,7 @@ public:
     int AsFd() noexcept;
 
 private:
-    static void Close(Istream &i);
+    static void Close(Istream &i) noexcept;
 };
 
 #endif

@@ -56,7 +56,7 @@ UnusedIstreamPtr::AsFd() noexcept
 }
 
 void
-UnusedIstreamPtr::Close(Istream &i)
+UnusedIstreamPtr::Close(Istream &i) noexcept
 {
     i.CloseUnused();
 }
