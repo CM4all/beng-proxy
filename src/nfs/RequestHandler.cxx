@@ -110,16 +110,14 @@ Request::OnNfsCacheResponse(NfsCacheHandle &handle, const struct stat &st)
         break;
     }
 
-    Istream *response_body;
-    if (no_body)
-        response_body = nullptr;
-    else
+    UnusedIstreamPtr response_body;
+    if (!no_body)
         response_body = nfs_cache_handle_open(pool, handle,
                                               file_request.range.skip,
                                               file_request.range.size);
 
     DispatchResponse(status, std::move(headers),
-                     UnusedIstreamPtr(response_body));
+                     std::move(response_body));
 }
 
 void

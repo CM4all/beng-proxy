@@ -71,11 +71,9 @@ NfsRequest::OnNfsCacheResponse(NfsCacheHandle &handle, const struct stat &st)
                                            content_type);
     headers.Add("cache-control", "max-age=60");
 
-    Istream *body = nfs_cache_handle_open(pool, handle, 0, st.st_size);
-
     // TODO: handle revalidation etc.
     handler.InvokeResponse(HTTP_STATUS_OK, std::move(headers),
-                           UnusedIstreamPtr(body));
+                           nfs_cache_handle_open(pool, handle, 0, st.st_size));
 }
 
 /*

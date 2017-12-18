@@ -34,6 +34,7 @@
 #include "Client.hxx"
 #include "Handler.hxx"
 #include "istream/istream.hxx"
+#include "istream/UnusedPtr.hxx"
 #include "pool.hxx"
 #include "util/Cast.hxx"
 #include "util/ForeignFifoBuffer.hxx"
@@ -279,11 +280,11 @@ NfsIstream::_Skip(off_t _length)
  *
  */
 
-Istream *
+UnusedIstreamPtr
 istream_nfs_new(struct pool &pool, NfsFileHandle &handle,
                 uint64_t start, uint64_t end)
 {
     assert(start <= end);
 
-    return NewIstream<NfsIstream>(pool, handle, start, end);
+    return UnusedIstreamPtr(NewIstream<NfsIstream>(pool, handle, start, end));
 }

@@ -41,7 +41,7 @@
 #include <stdint.h>
 
 struct pool;
-class Istream;
+class UnusedIstreamPtr;
 class EventLoop;
 struct NfsCache;
 struct NfsStock;
@@ -81,7 +81,7 @@ nfs_cache_request(struct pool &pool, NfsCache &cache,
                   NfsCacheHandler &handler,
                   CancellablePointer &cancel_ptr);
 
-Istream *
+UnusedIstreamPtr
 nfs_cache_handle_open(struct pool &pool, NfsCacheHandle &handle,
                       uint64_t start, uint64_t end);
 

@@ -421,7 +421,7 @@ nfs_cache_request(struct pool &pool, NfsCache &cache,
                   *r, cancel_ptr);
 }
 
-static Istream *
+static UnusedIstreamPtr
 nfs_cache_item_open(struct pool &pool,
                     NfsCacheItem &item,
                     uint64_t start, uint64_t end)
@@ -434,10 +434,10 @@ nfs_cache_item_open(struct pool &pool,
     Istream *istream =
         istream_rubber_new(pool, item.rubber, item.rubber_id,
                            start, end, false);
-    return istream_unlock_new(pool, *istream, item);
+    return UnusedIstreamPtr(istream_unlock_new(pool, *istream, item));
 }
 
-static Istream *
+static UnusedIstreamPtr
 nfs_cache_file_open(struct pool &pool, NfsCache &cache,
                     const char *key,
                     NfsFileHandle &file, const struct stat &st,
@@ -446,7 +446,7 @@ nfs_cache_file_open(struct pool &pool, NfsCache &cache,
     assert(start <= end);
     assert(end <= (uint64_t)st.st_size);
 
-    Istream *body = istream_nfs_new(pool, file, start, end);
+    auto body = istream_nfs_new(pool, file, start, end);
     if (st.st_size > cacheable_size_limit || start != 0 ||
         end != (uint64_t)st.st_size) {
         /* don't cache */
@@ -464,27 +464,27 @@ nfs_cache_file_open(struct pool &pool, NfsCache &cache,
 
     /* tee the body: one goes to our client, and one goes into the
        cache */
-    body = istream_tee_new(*pool2, UnusedIstreamPtr(body),
-                           cache.event_loop,
-                           false, true);
+    auto *tee = istream_tee_new(*pool2, std::move(body),
+                                cache.event_loop,
+                                false, true);
 
     cache.requests.push_back(*store);
 
     store->timeout_event.Add(nfs_cache_timeout);
 
-    sink_rubber_new(*pool2, istream_tee_second(*body),
+    sink_rubber_new(*pool2, istream_tee_second(*tee),
                     cache.rubber, cacheable_size_limit,
                     *store,
                     store->cancel_ptr);
 
     /* just in case our handler closes the body without looking at
        it: defer an Istream::Read() call for the Rubber sink */
-    istream_tee_defer_read(*body);
+    istream_tee_defer_read(*tee);
 
-    return body;
+    return UnusedIstreamPtr(tee);
 }
 
-Istream *
+UnusedIstreamPtr
 nfs_cache_handle_open(struct pool &pool, NfsCacheHandle &handle,
                       uint64_t start, uint64_t end)
 {
@@ -493,7 +493,7 @@ nfs_cache_handle_open(struct pool &pool, NfsCacheHandle &handle,
     assert(end <= (uint64_t)handle.stat.st_size);
 
     if (start == end)
-        return istream_null_new(pool).Steal();
+        return istream_null_new(pool);
 
     if (handle.item != nullptr) {
         /* cache hit: serve cached file */

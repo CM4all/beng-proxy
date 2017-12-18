@@ -36,13 +36,13 @@
 #include <stdint.h>
 
 struct pool;
-class Istream;
+class UnusedIstreamPtr;
 class NfsFileHandle;
 
 /*
  * #Istream implementation which reads a file from a NFS server.
  */
-Istream *
+UnusedIstreamPtr
 istream_nfs_new(struct pool &pool, NfsFileHandle &handle,
                 uint64_t start, uint64_t end);
 
