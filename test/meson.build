@@ -68,13 +68,13 @@ executable('run_client',
   dependencies: [
     threads,
     ssl_dep,
-    declare_dependency(link_with: ajp_client),
-    declare_dependency(link_with: was_client),
+    ajp_client_dep,
+    was_client_dep,
     http_client_dep,
     event_net_dep,
     stock_dep,
     socket_dep,
-    declare_dependency(link_with: thread_pool),
+    thread_pool_dep,
   ])
 
 executable('run_delegate',
@@ -82,7 +82,7 @@ executable('run_delegate',
   '../src/PInstance.cxx',
   include_directories: inc,
   dependencies: [
-    declare_dependency(link_with: delegate_client),
+    delegate_client_dep,
     spawn_dep,
   ])
 
@@ -116,7 +116,7 @@ executable('run_memcached_client',
   '../src/pipe_stock.cxx',
   include_directories: inc,
   dependencies: [
-    declare_dependency(link_with: memcached_client),
+    memcached_client_dep,
     stock_dep,
     net_dep,
     io_dep,
@@ -129,7 +129,7 @@ executable('dump_memcached_choice',
   '../src/serialize.cxx',
   include_directories: inc,
   dependencies: [
-    declare_dependency(link_with: memcached_client),
+    memcached_client_dep,
     net_dep,
     io_dep,
     putil_dep,
@@ -146,7 +146,7 @@ executable('cleanup_memcached_choice',
   '../src/bulldog.cxx',
   include_directories: inc,
   dependencies: [
-    declare_dependency(link_with: memcached_client),
+    memcached_client_dep,
     event_net_dep,
     io_dep,
     putil_dep,
@@ -181,7 +181,7 @@ executable('run_was',
   include_directories: inc,
   dependencies: [
     net_dep,
-    declare_dependency(link_with: was_client),
+    was_client_dep,
     stopwatch_dep,
   ])
 
@@ -310,7 +310,7 @@ executable('run_nfs_client',
   '../src/nfs/Istream.cxx',
   include_directories: inc,
   dependencies: [
-    declare_dependency(link_with: nfs_client),
+    nfs_client_dep,
     istream_dep,
     stock_dep,
     io_dep,
@@ -420,7 +420,7 @@ test('t_cgi', executable('t_cgi',
   '../src/HttpResponseHandler.cxx',
   include_directories: inc,
   dependencies: [
-    declare_dependency(link_with: cgi),
+    cgi_dep,
     system_dep,
     raddress_dep,
   ]),
@@ -467,7 +467,7 @@ test('t_fcgi_client', executable('t_fcgi_client',
   '../src/istream_gb.cxx',
   include_directories: inc,
   dependencies: [
-    declare_dependency(link_with: fcgi_client),
+    fcgi_client_dep,
   ]),
 )
 
@@ -477,7 +477,7 @@ test('t_was_client', executable('t_was_client',
   '../src/direct.cxx',
   include_directories: inc,
   dependencies: [
-    declare_dependency(link_with: was_client),
+    was_client_dep,
     declare_dependency(link_with: was_server),
   ]),
 )
@@ -491,7 +491,7 @@ test('t_ajp_client', executable('t_ajp_client',
   '../src/istream_gb.cxx',
   include_directories: inc,
   dependencies: [
-    declare_dependency(link_with: ajp_client),
+    ajp_client_dep,
   ]),
 )
 
@@ -501,7 +501,7 @@ test('t_memcached_client', executable('t_memcached_client',
   '../src/direct.cxx',
   include_directories: inc,
   dependencies: [
-    declare_dependency(link_with: memcached_client),
+    memcached_client_dep,
   ]),
 )
 
