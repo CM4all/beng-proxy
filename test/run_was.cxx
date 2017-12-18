@@ -34,7 +34,7 @@
 #include "was/Launch.hxx"
 #include "was/Lease.hxx"
 #include "lease.hxx"
-#include "http_response.hxx"
+#include "HttpResponseHandler.hxx"
 #include "direct.hxx"
 #include "strmap.hxx"
 #include "istream/Pointer.hxx"

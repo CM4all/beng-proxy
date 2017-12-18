@@ -34,7 +34,7 @@
 #include "Stock.hxx"
 #include "Launch.hxx"
 #include "Client.hxx"
-#include "http_response.hxx"
+#include "HttpResponseHandler.hxx"
 #include "Lease.hxx"
 #include "tcp_stock.hxx"
 #include "stock/GetHandler.hxx"

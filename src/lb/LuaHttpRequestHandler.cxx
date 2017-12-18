@@ -33,10 +33,11 @@
 #include "HttpConnection.hxx"
 #include "LuaHandler.hxx"
 #include "ListenerConfig.hxx"
+#include "HttpResponseHandler.hxx"
 #include "http_server/http_server.hxx"
 #include "http_server/Request.hxx"
-#include "http_response.hxx"
 #include "http_headers.hxx"
+#include "HttpResponseHandler.hxx"
 
 class LbLuaResponseHandler final : public HttpResponseHandler {
     LbHttpConnection &connection;

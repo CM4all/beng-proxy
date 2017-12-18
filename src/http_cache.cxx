@@ -36,7 +36,7 @@
 #include "http_cache_heap.hxx"
 #include "http_cache_memcached.hxx"
 #include "strmap.hxx"
-#include "http_response.hxx"
+#include "HttpResponseHandler.hxx"
 #include "ResourceLoader.hxx"
 #include "ResourceAddress.hxx"
 #include "http_util.hxx"

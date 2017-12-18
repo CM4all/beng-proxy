@@ -39,7 +39,6 @@
 #include "was/Client.hxx"
 #include "was/Server.hxx"
 #include "was/Lease.hxx"
-#include "http_response.hxx"
 #include "system/SetupProcess.hxx"
 #include "io/FileDescriptor.hxx"
 #include "net/SocketDescriptor.hxx"

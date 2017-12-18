@@ -40,7 +40,6 @@
 #include "t_client.hxx"
 #include "tio.hxx"
 #include "fcgi/Client.hxx"
-#include "http_response.hxx"
 #include "system/SetupProcess.hxx"
 #include "io/FileDescriptor.hxx"
 #include "lease.hxx"

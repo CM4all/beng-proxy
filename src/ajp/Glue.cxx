@@ -32,7 +32,7 @@
 
 #include "Glue.hxx"
 #include "Client.hxx"
-#include "http_response.hxx"
+#include "HttpResponseHandler.hxx"
 #include "http_address.hxx"
 #include "header_writer.hxx"
 #include "stock/GetHandler.hxx"

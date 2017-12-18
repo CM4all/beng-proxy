@@ -43,7 +43,7 @@
 #include "penv.hxx"
 #include "session.hxx"
 #include "widget/View.hxx"
-#include "http_response.hxx"
+#include "HttpResponseHandler.hxx"
 #include "io/Logger.hxx"
 #include "util/Cancellable.hxx"
 

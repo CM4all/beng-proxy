@@ -36,7 +36,7 @@
 #include "cgi_launch.hxx"
 #include "abort_flag.hxx"
 #include "stopwatch.hxx"
-#include "http_response.hxx"
+#include "HttpResponseHandler.hxx"
 #include "istream/UnusedPtr.hxx"
 
 void

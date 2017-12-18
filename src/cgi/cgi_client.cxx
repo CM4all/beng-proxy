@@ -40,7 +40,7 @@
 #include "header_parser.hxx"
 #include "stopwatch.hxx"
 #include "strmap.hxx"
-#include "http_response.hxx"
+#include "HttpResponseHandler.hxx"
 #include "fb_pool.hxx"
 #include "SliceFifoBuffer.hxx"
 #include "util/Cast.hxx"

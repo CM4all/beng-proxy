@@ -30,28 +30,51 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "http_response.hxx"
-#include "strmap.hxx"
-#include "istream/istream_string.hxx"
-#include "istream/UnusedPtr.hxx"
+#pragma once
 
-void
-HttpResponseHandler::InvokeResponse(http_status_t status, StringMap &&headers,
-                                    UnusedIstreamPtr body) noexcept
-{
-    InvokeResponse(status, std::move(headers), body.Steal());
-}
+#include "http/Status.h"
 
-void
-HttpResponseHandler::InvokeResponse(struct pool &pool,
-                                    http_status_t status,
-                                    const char *msg) noexcept
-{
-    assert(http_status_is_valid(status));
-    assert(msg != nullptr);
+#include <utility>
+#include <exception>
 
-    StringMap headers(pool);
-    headers.Add("content-type", "text/plain; charset=utf-8");
-    InvokeResponse(status, std::move(headers),
-                   istream_string_new(&pool, msg));
-}
+#include <assert.h>
+
+struct pool;
+class StringMap;
+class Istream;
+class UnusedIstreamPtr;
+
+/**
+ * Definition of the HTTP response handler.
+ */
+class HttpResponseHandler {
+protected:
+    virtual void OnHttpResponse(http_status_t status, StringMap &&headers,
+                                Istream *body) noexcept = 0;
+
+    virtual void OnHttpError(std::exception_ptr ep) noexcept = 0;
+
+public:
+    void InvokeResponse(http_status_t status, StringMap &&headers,
+                        Istream *body) noexcept {
+        assert(http_status_is_valid(status));
+        assert(!http_status_is_empty(status) || body == nullptr);
+
+        OnHttpResponse(status, std::move(headers), body);
+    }
+
+    void InvokeResponse(http_status_t status, StringMap &&headers,
+                        UnusedIstreamPtr body) noexcept;
+
+    /**
+     * Sends a plain-text message.
+     */
+    void InvokeResponse(struct pool &pool,
+                        http_status_t status, const char *msg) noexcept;
+
+    void InvokeError(std::exception_ptr ep) noexcept {
+        assert(ep);
+
+        OnHttpError(ep);
+    }
+};

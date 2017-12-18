@@ -32,7 +32,7 @@
 
 #include "Glue.hxx"
 #include "Cache.hxx"
-#include "http_response.hxx"
+#include "HttpResponseHandler.hxx"
 #include "static_headers.hxx"
 #include "strmap.hxx"
 #include "pool.hxx"

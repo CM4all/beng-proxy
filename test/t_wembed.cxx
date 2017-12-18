@@ -37,7 +37,7 @@
 #include "processor.hxx"
 #include "penv.hxx"
 #include "uri/Dissect.hxx"
-#include "http_response.hxx"
+#include "HttpResponseHandler.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream_iconv.hxx"
 #include "pool.hxx"

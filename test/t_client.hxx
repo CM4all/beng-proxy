@@ -30,7 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "http_response.hxx"
+#include "HttpResponseHandler.hxx"
 #include "lease.hxx"
 #include "istream/istream.hxx"
 #include "istream/Pointer.hxx"

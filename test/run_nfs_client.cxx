@@ -41,7 +41,7 @@
 #include "io/FileDescriptor.hxx"
 #include "PInstance.hxx"
 #include "pool.hxx"
-#include "http_response.hxx"
+#include "HttpResponseHandler.hxx"
 #include "direct.hxx"
 #include "util/Cancellable.hxx"
 #include "util/PrintException.hxx"

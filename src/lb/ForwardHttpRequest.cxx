@@ -49,7 +49,7 @@
 #include "http_client.hxx"
 #include "tcp_stock.hxx"
 #include "tcp_balancer.hxx"
-#include "http_response.hxx"
+#include "HttpResponseHandler.hxx"
 #include "http_headers.hxx"
 #include "stock/GetHandler.hxx"
 #include "stock/Item.hxx"

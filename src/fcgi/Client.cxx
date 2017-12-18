@@ -35,7 +35,7 @@
 #include "Protocol.hxx"
 #include "Serialize.hxx"
 #include "GrowingBuffer.hxx"
-#include "http_response.hxx"
+#include "HttpResponseHandler.hxx"
 #include "istream_fcgi.hxx"
 #include "istream_gb.hxx"
 #include "istream/UnusedPtr.hxx"

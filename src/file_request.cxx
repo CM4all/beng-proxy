@@ -32,7 +32,7 @@
 
 #include "file_request.hxx"
 #include "static_headers.hxx"
-#include "http_response.hxx"
+#include "HttpResponseHandler.hxx"
 #include "strmap.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream_file.hxx"

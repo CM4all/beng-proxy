@@ -33,7 +33,7 @@
 #include "tconstruct.hxx"
 #include "cgi/cgi_glue.hxx"
 #include "cgi_address.hxx"
-#include "http_response.hxx"
+#include "HttpResponseHandler.hxx"
 #include "direct.hxx"
 #include "crash.hxx"
 #include "strmap.hxx"

@@ -34,7 +34,7 @@
 #include "strmap.hxx"
 #include "http_client.hxx"
 #include "http_headers.hxx"
-#include "http_response.hxx"
+#include "HttpResponseHandler.hxx"
 #include "lease.hxx"
 #include "direct.hxx"
 #include "istream/istream_file.hxx"

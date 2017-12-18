@@ -35,7 +35,7 @@
 #include "Serialize.hxx"
 #include "Protocol.hxx"
 #include "Error.hxx"
-#include "http_response.hxx"
+#include "HttpResponseHandler.hxx"
 #include "GrowingBuffer.hxx"
 #include "istream_ajp_body.hxx"
 #include "istream_gb.hxx"

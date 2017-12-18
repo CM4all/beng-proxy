@@ -39,7 +39,7 @@
 #include "Resolver.hxx"
 #include "LookupHandler.hxx"
 #include "penv.hxx"
-#include "http_response.hxx"
+#include "HttpResponseHandler.hxx"
 #include "istream/istream.hxx"
 #include "session.hxx"
 #include "util/Exception.hxx"

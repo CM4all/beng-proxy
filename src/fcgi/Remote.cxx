@@ -32,7 +32,7 @@
 
 #include "Remote.hxx"
 #include "Client.hxx"
-#include "http_response.hxx"
+#include "HttpResponseHandler.hxx"
 #include "lease.hxx"
 #include "tcp_stock.hxx"
 #include "tcp_balancer.hxx"

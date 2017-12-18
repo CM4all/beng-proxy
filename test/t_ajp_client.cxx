@@ -38,7 +38,6 @@
 #include "t_client.hxx"
 #include "ajp_server.hxx"
 #include "ajp/Client.hxx"
-#include "http_response.hxx"
 #include "system/SetupProcess.hxx"
 #include "io/FileDescriptor.hxx"
 #include "header_writer.hxx"

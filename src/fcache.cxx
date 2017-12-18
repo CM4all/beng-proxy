@@ -35,7 +35,7 @@
 #include "http_request.hxx"
 #include "header_writer.hxx"
 #include "strmap.hxx"
-#include "http_response.hxx"
+#include "HttpResponseHandler.hxx"
 #include "abort_unref.hxx"
 #include "tpool.hxx"
 #include "ResourceAddress.hxx"

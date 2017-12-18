@@ -44,7 +44,7 @@
 #include "fcgi/Error.hxx"
 #include "was/Error.hxx"
 #include "widget/Error.hxx"
-#include "http_response.hxx"
+#include "HttpResponseHandler.hxx"
 #include "http_server/http_server.hxx"
 #include "http_server/Request.hxx"
 #include "http/MessageHttpResponse.hxx"

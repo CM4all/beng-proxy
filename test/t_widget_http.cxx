@@ -40,7 +40,7 @@
 #include "header_parser.hxx"
 #include "PInstance.hxx"
 #include "ResourceLoader.hxx"
-#include "http_response.hxx"
+#include "HttpResponseHandler.hxx"
 #include "processor.hxx"
 #include "css_processor.hxx"
 #include "text_processor.hxx"

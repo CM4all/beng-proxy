@@ -35,7 +35,7 @@
 #include "Class.hxx"
 #include "Error.hxx"
 #include "LookupHandler.hxx"
-#include "http_response.hxx"
+#include "HttpResponseHandler.hxx"
 #include "pheaders.hxx"
 #include "processor.hxx"
 #include "css_processor.hxx"

@@ -40,7 +40,7 @@
 #include "bp/Instance.hxx"
 #include "file_address.hxx"
 #include "http_server/Request.hxx"
-#include "http_response.hxx"
+#include "HttpResponseHandler.hxx"
 #include "istream/istream_file.hxx"
 
 #include <assert.h>

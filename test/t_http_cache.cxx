@@ -39,7 +39,7 @@
 #include "GrowingBuffer.hxx"
 #include "header_parser.hxx"
 #include "strmap.hxx"
-#include "http_response.hxx"
+#include "HttpResponseHandler.hxx"
 #include "PInstance.hxx"
 #include "fb_pool.hxx"
 #include "istream/UnusedPtr.hxx"

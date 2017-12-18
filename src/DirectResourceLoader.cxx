@@ -32,9 +32,9 @@
 
 #include "DirectResourceLoader.hxx"
 #include "ResourceAddress.hxx"
+#include "HttpResponseHandler.hxx"
 #include "filtered_socket.hxx"
 #include "http_request.hxx"
-#include "http_response.hxx"
 #include "file_request.hxx"
 #include "file_address.hxx"
 #include "lhttp_request.hxx"

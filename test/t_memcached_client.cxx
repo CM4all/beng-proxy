@@ -31,7 +31,7 @@
  */
 
 #include "memcached/memcached_client.hxx"
-#include "http_response.hxx"
+#include "HttpResponseHandler.hxx"
 #include "system/SetupProcess.hxx"
 #include "io/FileDescriptor.hxx"
 #include "header_writer.hxx"
