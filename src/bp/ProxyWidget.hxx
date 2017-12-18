@@ -39,14 +39,14 @@
 
 #include "http/Status.h"
 
-class Istream;
+class UnusedIstreamPtr;
 struct Request;
 struct Widget;
 struct widget_ref;
 
 void
 proxy_widget(Request &request2,
-             Istream &body,
+             UnusedIstreamPtr body,
              Widget &widget, const struct widget_ref *proxy_ref,
              unsigned options);
 

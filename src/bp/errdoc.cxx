@@ -77,7 +77,7 @@ static void
 errdoc_resubmit(ErrorResponseLoader &er)
 {
     er.request2->DispatchResponse(er.status, std::move(er.headers),
-                                  er.body.Steal());
+                                  std::move(er.body));
 }
 
 /*

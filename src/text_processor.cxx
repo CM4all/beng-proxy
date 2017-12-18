@@ -32,11 +32,12 @@
 
 #include "text_processor.hxx"
 #include "strmap.hxx"
-#include "istream/istream.hxx"
+#include "istream/UnusedPtr.hxx"
 #include "istream/istream_subst.hxx"
 #include "widget/Widget.hxx"
 #include "widget/Class.hxx"
 #include "penv.hxx"
+#include "pool.hxx"
 
 #include <assert.h>
 
@@ -96,11 +97,11 @@ processor_subst_beng_widget(Istream &istream,
     istream_subst_add(istream, "&c:session;", env.args->Get("session"));
 }
 
-Istream *
-text_processor(struct pool &pool, Istream &input,
+UnusedIstreamPtr
+text_processor(struct pool &pool, UnusedIstreamPtr input,
                const Widget &widget, const struct processor_env &env)
 {
-    auto *subst = istream_subst_new(&pool, input);
+    auto *subst = istream_subst_new(&pool, *input.Steal());
     processor_subst_beng_widget(*subst, widget, env);
-    return subst;
+    return UnusedIstreamPtr(subst);
 }

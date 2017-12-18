@@ -88,18 +88,18 @@ processable(gcc_unused const StringMap &headers)
     return false;
 }
 
-Istream *
-processor_process(gcc_unused struct pool &pool, Istream &istream,
+UnusedIstreamPtr
+processor_process(gcc_unused struct pool &pool, UnusedIstreamPtr istream,
                   gcc_unused Widget &widget,
                   gcc_unused struct processor_env &env,
                   gcc_unused unsigned options)
 {
-    return &istream;
+    return istream;
 }
 
 void
 processor_lookup_widget(gcc_unused struct pool &pool,
-                        gcc_unused Istream &istream,
+                        gcc_unused UnusedIstreamPtr istream,
                         gcc_unused Widget &widget,
                         gcc_unused const char *id,
                         gcc_unused struct processor_env &env,
@@ -110,13 +110,13 @@ processor_lookup_widget(gcc_unused struct pool &pool,
     handler.WidgetNotFound();
 }
 
-Istream *
-css_processor(gcc_unused struct pool &pool, Istream &stream,
+UnusedIstreamPtr
+css_processor(gcc_unused struct pool &pool, UnusedIstreamPtr stream,
               gcc_unused Widget &widget,
               gcc_unused struct processor_env &env,
               gcc_unused unsigned options)
 {
-    return &stream;
+    return stream;
 }
 
 bool
@@ -125,12 +125,12 @@ text_processor_allowed(gcc_unused const StringMap &headers)
     return false;
 }
 
-Istream *
-text_processor(gcc_unused struct pool &pool, Istream &stream,
+UnusedIstreamPtr
+text_processor(gcc_unused struct pool &pool, UnusedIstreamPtr stream,
                gcc_unused const Widget &widget,
                gcc_unused const struct processor_env &env)
 {
-    return &stream;
+    return stream;
 }
 
 bool

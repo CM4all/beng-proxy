@@ -133,14 +133,14 @@ try {
                              session_id, "foo",
                              HTTP_METHOD_GET, nullptr);
 
-    Istream *result =
+    auto result =
         processor_process(instance.root_pool,
-                          *istream_file_new(instance.event_loop,
-                                            instance.root_pool,
-                                            "/dev/stdin", (off_t)-1),
+                          UnusedIstreamPtr(istream_file_new(instance.event_loop,
+                                                            instance.root_pool,
+                                                            "/dev/stdin", (off_t)-1)),
                           widget, env, PROCESSOR_CONTAINER);
 
-    StdioSink sink(*result);
+    StdioSink sink(std::move(result));
     sink.LoopRead();
 } catch (...) {
     PrintException(std::current_exception());

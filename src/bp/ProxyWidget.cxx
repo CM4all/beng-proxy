@@ -138,7 +138,8 @@ ProxyWidget::OnHttpResponse(http_status_t status, StringMap &&_headers,
        for the template, not for this widget */
     request.CancelTransformations();
 
-    request.DispatchResponse(status, std::move(headers2), body);
+    request.DispatchResponse(status, std::move(headers2),
+                             UnusedIstreamPtr(body));
 }
 
 void
@@ -321,19 +322,20 @@ ProxyWidget::Cancel() noexcept
 
 void
 proxy_widget(Request &request2,
-             Istream &body,
+             UnusedIstreamPtr body,
              Widget &widget, const struct widget_ref *proxy_ref,
              unsigned options)
 {
     assert(!widget.from_request.frame);
     assert(proxy_ref != nullptr);
+    assert(body);
 
     auto proxy = NewFromPool<ProxyWidget>(request2.pool, request2,
                                           widget, proxy_ref);
 
     request2.cancel_ptr = *proxy;
 
-    processor_lookup_widget(request2.pool, body,
+    processor_lookup_widget(request2.pool, std::move(body),
                             widget, proxy_ref->id,
                             request2.env, options,
                             *proxy, proxy->cancel_ptr);

@@ -146,25 +146,25 @@ struct WidgetRequest final : HttpResponseHandler, Cancellable {
      * transformation in the chain.
      */
     void DispatchResponse(http_status_t status, StringMap &&headers,
-                          Istream *body);
+                          UnusedIstreamPtr body);
 
     /**
      * The widget response is going to be embedded into a template; check
      * its content type and run the processor (if applicable).
      */
     void ProcessResponse(http_status_t status,
-                         StringMap &headers, Istream *body,
+                         StringMap &headers, UnusedIstreamPtr body,
                          unsigned options);
 
     void CssProcessResponse(http_status_t status,
-                            StringMap &headers, Istream *body,
+                            StringMap &headers, UnusedIstreamPtr body,
                             unsigned options);
 
     void TextProcessResponse(http_status_t status,
-                             StringMap &headers, Istream *body);
+                             StringMap &headers, UnusedIstreamPtr body);
 
     void FilterResponse(http_status_t status,
-                        StringMap &&headers, Istream *body,
+                        StringMap &&headers, UnusedIstreamPtr body,
                         const ResourceAddress &filter, bool reveal_user);
 
     /**
@@ -172,7 +172,7 @@ struct WidgetRequest final : HttpResponseHandler, Cancellable {
      * to our #HttpResponseHandler implementation.
      */
     void TransformResponse(http_status_t status,
-                           StringMap &&headers, Istream *body,
+                           StringMap &&headers, UnusedIstreamPtr body,
                            const Transformation &t);
 
     /**
@@ -299,10 +299,10 @@ WidgetRequest::DispatchError(std::exception_ptr ep)
 
 void
 WidgetRequest::ProcessResponse(http_status_t status,
-                               StringMap &headers, Istream *body,
+                               StringMap &headers, UnusedIstreamPtr body,
                                unsigned options)
 {
-    if (body == nullptr) {
+    if (!body) {
         /* this should not happen, but we're ignoring this formal
            mistake and pretend everything's alright */
         DispatchResponse(status, processor_header_forward(pool, headers),
@@ -311,25 +311,21 @@ WidgetRequest::ProcessResponse(http_status_t status,
     }
 
     if (!processable(headers)) {
-        body->CloseUnused();
-
+        body.Clear();
         DispatchError(WidgetErrorCode::WRONG_TYPE, "Got non-HTML response");
         return;
     }
 
     if (lookup_id != nullptr)
-        processor_lookup_widget(pool, *body,
+        processor_lookup_widget(pool, std::move(body),
                                 widget, lookup_id,
                                 env, options,
                                 *lookup_handler,
                                 cancel_ptr);
-    else {
-        body = processor_process(pool, *body,
-                                 widget, env, options);
-
+    else
         DispatchResponse(status, processor_header_forward(pool, headers),
-                         body);
-    }
+                         processor_process(pool, std::move(body),
+                                           widget, env, options));
 }
 
 static bool
@@ -342,10 +338,10 @@ css_processable(const StringMap &headers)
 
 void
 WidgetRequest::CssProcessResponse(http_status_t status,
-                                  StringMap &headers, Istream *body,
+                                  StringMap &headers, UnusedIstreamPtr body,
                                   unsigned options)
 {
-    if (body == nullptr) {
+    if (!body) {
         /* this should not happen, but we're ignoring this formal
            mistake and pretend everything's alright */
         DispatchResponse(status, processor_header_forward(pool, headers),
@@ -354,21 +350,20 @@ WidgetRequest::CssProcessResponse(http_status_t status,
     }
 
     if (!css_processable(headers)) {
-        body->CloseUnused();
-
+        body.Clear();
         DispatchError(WidgetErrorCode::WRONG_TYPE, "Got non-CSS response");
         return;
     }
 
-    body = css_processor(pool, *body, widget, env, options);
-    DispatchResponse(status, processor_header_forward(pool, headers), body);
+    DispatchResponse(status, processor_header_forward(pool, headers),
+                     css_processor(pool, std::move(body), widget, env, options));
 }
 
 void
 WidgetRequest::TextProcessResponse(http_status_t status,
-                                   StringMap &headers, Istream *body)
+                                   StringMap &headers, UnusedIstreamPtr body)
 {
-    if (body == nullptr) {
+    if (!body) {
         /* this should not happen, but we're ignoring this formal
            mistake and pretend everything's alright */
         DispatchResponse(status, processor_header_forward(pool, headers),
@@ -377,19 +372,18 @@ WidgetRequest::TextProcessResponse(http_status_t status,
     }
 
     if (!text_processor_allowed(headers)) {
-        body->CloseUnused();
-
+        body.Clear();
         DispatchError(WidgetErrorCode::WRONG_TYPE, "Got non-text response");
         return;
     }
 
-    body = text_processor(pool, *body, widget, env);
-    DispatchResponse(status, processor_header_forward(pool, headers), body);
+    DispatchResponse(status, processor_header_forward(pool, headers),
+                     text_processor(pool, std::move(body), widget, env));
 }
 
 void
 WidgetRequest::FilterResponse(http_status_t status,
-                              StringMap &&headers, Istream *body,
+                              StringMap &&headers, UnusedIstreamPtr body,
                               const ResourceAddress &filter, bool reveal_user)
 {
     const char *source_tag = resource_tag_append_etag(&pool, resource_tag,
@@ -402,31 +396,29 @@ WidgetRequest::FilterResponse(http_status_t status,
         forward_reveal_user(headers, GetSessionIfStateful().get());
 
 #ifdef SPLICE
-    if (body != nullptr)
-        body = istream_pipe_new(&pool, *body, global_pipe_stock);
+    if (body)
+        body = UnusedIstreamPtr(istream_pipe_new(&pool, *body.Steal(), global_pipe_stock));
 #endif
 
     env.filter_resource_loader
         ->SendRequest(pool, env.session_id.GetClusterHash(),
 
                       HTTP_METHOD_POST, filter, status,
-                      std::move(headers), UnusedIstreamPtr(body), source_tag,
+                      std::move(headers), std::move(body), source_tag,
                       *this,
                       cancel_ptr);
 }
 
 void
 WidgetRequest::TransformResponse(http_status_t status,
-                                 StringMap &&headers, Istream *body,
+                                 StringMap &&headers, UnusedIstreamPtr body,
                                  const Transformation &t)
 {
     assert(transformation == t.next);
 
     const char *p = headers.Get("content-encoding");
     if (p != nullptr && strcmp(p, "identity") != 0) {
-        if (body != nullptr)
-            body->CloseUnused();
-
+        body.Clear();
         DispatchError(WidgetErrorCode::UNSUPPORTED_ENCODING,
                       "Got non-identity response, cannot transform");
         return;
@@ -437,25 +429,27 @@ WidgetRequest::TransformResponse(http_status_t status,
         /* processor responses cannot be cached */
         resource_tag = nullptr;
 
-        ProcessResponse(status, headers, body, t.u.processor.options);
+        ProcessResponse(status, headers, std::move(body),
+                        t.u.processor.options);
         break;
 
     case Transformation::Type::PROCESS_CSS:
         /* processor responses cannot be cached */
         resource_tag = nullptr;
 
-        CssProcessResponse(status, headers, body, t.u.css_processor.options);
+        CssProcessResponse(status, headers, std::move(body),
+                           t.u.css_processor.options);
         break;
 
     case Transformation::Type::PROCESS_TEXT:
         /* processor responses cannot be cached */
         resource_tag = nullptr;
 
-        TextProcessResponse(status, headers, body);
+        TextProcessResponse(status, headers, std::move(body));
         break;
 
     case Transformation::Type::FILTER:
-        FilterResponse(status, std::move(headers), body,
+        FilterResponse(status, std::move(headers), std::move(body),
                        t.u.filter.address, t.u.filter.reveal_user);
         break;
     }
@@ -474,7 +468,7 @@ widget_transformation_enabled(const Widget *widget,
 
 void
 WidgetRequest::DispatchResponse(http_status_t status, StringMap &&headers,
-                                Istream *body)
+                                UnusedIstreamPtr body)
 {
     const Transformation *t = transformation;
 
@@ -483,10 +477,9 @@ WidgetRequest::DispatchResponse(http_status_t status, StringMap &&headers,
 
         transformation = t->next;
 
-        TransformResponse(status, std::move(headers), body, *t);
+        TransformResponse(status, std::move(headers), std::move(body), *t);
     } else if (lookup_id != nullptr) {
-        if (body != nullptr)
-            body->CloseUnused();
+        body.Clear();
 
         WidgetError error(WidgetErrorCode::NOT_A_CONTAINER,
                           "Cannot process container widget response");
@@ -495,7 +488,8 @@ WidgetRequest::DispatchResponse(http_status_t status, StringMap &&headers,
         /* no transformation left */
 
         /* finally pass the response to our handler */
-        http_handler->InvokeResponse(status, std::move(headers), body);
+        http_handler->InvokeResponse(status, std::move(headers),
+                                     std::move(body));
     }
 }
 
@@ -601,7 +595,7 @@ WidgetRequest::OnHttpResponse(http_status_t status, StringMap &&headers,
             widget.SaveToSession(*session);
     }
 
-    DispatchResponse(status, std::move(headers), body);
+    DispatchResponse(status, std::move(headers), UnusedIstreamPtr(body));
 }
 
 void

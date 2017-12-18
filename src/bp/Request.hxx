@@ -389,14 +389,14 @@ public:
     void CollectCookies(const StringMap &headers);
 
     void DispatchResponseDirect(http_status_t status, HttpHeaders &&headers,
-                                Istream *body);
+                                UnusedIstreamPtr body);
 
     void DispatchResponse(http_status_t status, HttpHeaders &&headers,
-                          Istream *body);
+                          UnusedIstreamPtr body);
 
     void DispatchResponse(http_status_t status, HttpHeaders &&headers,
-                          std::nullptr_t n) {
-        DispatchResponse(status, std::move(headers), (Istream *)n);
+                          std::nullptr_t) {
+        DispatchResponse(status, std::move(headers), UnusedIstreamPtr());
     }
 
     void DispatchResponse(http_status_t status, const char *msg);
@@ -408,25 +408,25 @@ public:
                           const char *msg);
 
 private:
-    Istream *AutoDeflate(HttpHeaders &response_headers,
-                         Istream *response_body);
+    UnusedIstreamPtr AutoDeflate(HttpHeaders &response_headers,
+                                 UnusedIstreamPtr response_body);
 
     void InvokeXmlProcessor(http_status_t status,
                             StringMap &response_headers,
-                            Istream *response_body,
+                            UnusedIstreamPtr response_body,
                             const Transformation &transformation);
 
     void InvokeCssProcessor(http_status_t status,
                             StringMap &response_headers,
-                            Istream *response_body,
+                            UnusedIstreamPtr response_body,
                             const Transformation &transformation);
 
     void InvokeTextProcessor(http_status_t status,
                              StringMap &response_headers,
-                             Istream *response_body);
+                             UnusedIstreamPtr response_body);
 
     void ApplyTransformation(http_status_t status, StringMap &&headers,
-                             Istream *response_body,
+                             UnusedIstreamPtr response_body,
                              const Transformation &transformation);
 
     /**

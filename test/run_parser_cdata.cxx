@@ -31,10 +31,11 @@
  */
 
 #include "xml_parser.hxx"
-#include "istream/istream.hxx"
+#include "istream/UnusedPtr.hxx"
 #include "istream/istream_file.hxx"
 #include "PInstance.hxx"
 #include "fb_pool.hxx"
+#include "pool.hxx"
 #include "util/Exception.hxx"
 #include "util/PrintException.hxx"
 
@@ -88,7 +89,7 @@ try {
                                "/dev/stdin", (off_t)-1);
 
     MyXmlParserHandler handler;
-    auto *parser = parser_new(*pool, *istream, handler);
+    auto *parser = parser_new(*pool, UnusedIstreamPtr(istream), handler);
 
     while (!should_exit)
         parser_read(parser);

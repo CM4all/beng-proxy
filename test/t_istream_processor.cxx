@@ -118,7 +118,7 @@ create_test(EventLoop &event_loop, struct pool *pool, Istream *input)
                         HTTP_METHOD_GET, nullptr);
     session_put(session);
 
-    return processor_process(*pool, *input, *widget, env, PROCESSOR_CONTAINER);
+    return processor_process(*pool, UnusedIstreamPtr(input), *widget, env, PROCESSOR_CONTAINER).Steal();
 }
 
 static void

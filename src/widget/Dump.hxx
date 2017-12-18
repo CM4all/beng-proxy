@@ -34,14 +34,14 @@
 #define BENG_PROXY_WIDGET_DUMP_HXX
 
 struct pool;
-class Istream;
+class UnusedIstreamPtr;
 struct Widget;
 
 /**
  * Dump the widget tree to the log file after the istream is done.
  */
-Istream *
-widget_dump_tree_after_istream(struct pool &pool, Istream &istream,
+UnusedIstreamPtr
+widget_dump_tree_after_istream(struct pool &pool, UnusedIstreamPtr istream,
                                Widget &widget);
 
 #endif

@@ -351,7 +351,7 @@ XmlProcessor::Cancel() noexcept
  */
 
 static void
-processor_parser_init(XmlProcessor &processor, Istream &input);
+processor_parser_init(XmlProcessor &processor, UnusedIstreamPtr input);
 
 static XmlProcessor *
 processor_new(struct pool &caller_pool,
@@ -365,8 +365,8 @@ processor_new(struct pool &caller_pool,
                                      env, options);
 }
 
-Istream *
-processor_process(struct pool &caller_pool, Istream &input,
+UnusedIstreamPtr
+processor_process(struct pool &caller_pool, UnusedIstreamPtr input,
                   Widget &widget,
                   struct processor_env &env,
                   unsigned options)
@@ -375,15 +375,15 @@ processor_process(struct pool &caller_pool, Istream &input,
     processor->lookup_id = nullptr;
 
     /* the text processor will expand entities */
-    auto *istream = text_processor(processor->pool, input, widget, env);
+    auto text_processed = text_processor(processor->pool, std::move(input), widget, env);
 
-    Istream *tee = istream_tee_new(processor->pool, *istream,
+    Istream *tee = istream_tee_new(processor->pool, *text_processed.Steal(),
                                    *env.event_loop,
                                    true, true);
-    istream = &istream_tee_second(*tee);
+    Istream *istream = &istream_tee_second(*tee);
     processor->replace = istream_replace_new(processor->pool, *tee);
 
-    processor_parser_init(*processor, *istream);
+    processor_parser_init(*processor, UnusedIstreamPtr(istream));
     pool_unref(&processor->pool);
 
     if (processor->HasOptionRewriteUrl()) {
@@ -398,12 +398,12 @@ processor_process(struct pool &caller_pool, Istream &input,
     }
 
     //XXX headers = processor_header_forward(pool, headers);
-    return processor->replace;
+    return UnusedIstreamPtr(processor->replace);
 }
 
 void
 processor_lookup_widget(struct pool &caller_pool,
-                        Istream &istream,
+                        UnusedIstreamPtr istream,
                         Widget &widget, const char *id,
                         struct processor_env &env,
                         unsigned options,
@@ -425,7 +425,7 @@ processor_lookup_widget(struct pool &caller_pool,
 
     processor->replace = nullptr;
 
-    processor_parser_init(*processor, istream);
+    processor_parser_init(*processor, std::move(istream));
 
     processor->handler = &handler;
 
@@ -1415,15 +1415,15 @@ XmlProcessor::OnXmlTagFinished(const XmlParserTag &xml_tag)
             if (options & PROCESSOR_PREFIX_XML_ID)
                 css_options |= CSS_PROCESSOR_PREFIX_ID;
 
-            Istream *istream =
-                css_processor(pool, *StartCdataIstream(),
+            auto istream =
+                css_processor(pool, UnusedIstreamPtr(StartCdataIstream()),
                               container, env,
                               css_options);
 
             /* the end offset will be extended later with
                istream_replace_extend() */
             cdata_start = xml_tag.end;
-            Replace(xml_tag.end, xml_tag.end, istream);
+            Replace(xml_tag.end, xml_tag.end, istream.Steal());
         }
     }
 }
@@ -1497,8 +1497,8 @@ XmlProcessor::OnXmlError(std::exception_ptr ep)
 }
 
 static void
-processor_parser_init(XmlProcessor &processor, Istream &input)
+processor_parser_init(XmlProcessor &processor, UnusedIstreamPtr input)
 {
-    processor.parser = parser_new(processor.pool, input,
+    processor.parser = parser_new(processor.pool, std::move(input),
                                   processor);
 }

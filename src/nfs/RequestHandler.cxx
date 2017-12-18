@@ -118,7 +118,8 @@ Request::OnNfsCacheResponse(NfsCacheHandle &handle, const struct stat &st)
                                               file_request.range.skip,
                                               file_request.range.size);
 
-    DispatchResponse(status, std::move(headers), response_body);
+    DispatchResponse(status, std::move(headers),
+                     UnusedIstreamPtr(response_body));
 }
 
 void

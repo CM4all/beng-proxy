@@ -111,7 +111,8 @@ file_dispatch(Request &request2, const struct stat &st,
 
     /* finished, dispatch this response */
 
-    request2.DispatchResponse(status, std::move(headers), body);
+    request2.DispatchResponse(status, std::move(headers),
+                              UnusedIstreamPtr(body));
 }
 
 static bool
@@ -125,19 +126,17 @@ file_dispatch_compressed(Request &request2, const struct stat &st,
     /* open compressed file */
 
     struct stat st2;
-    Istream *compressed_body;
+    UnusedIstreamPtr compressed_body;
 
     try {
-        compressed_body = istream_file_stat_new(request2.instance.event_loop, request2.pool,
-                                                path, st2);
+        compressed_body = UnusedIstreamPtr(istream_file_stat_new(request2.instance.event_loop, request2.pool,
+                                                                 path, st2));
     } catch (...) {
         return false;
     }
 
-    if (!S_ISREG(st2.st_mode)) {
-        compressed_body->CloseUnused();
+    if (!S_ISREG(st2.st_mode))
         return false;
-    }
 
     /* response headers with information from uncompressed file */
 
@@ -165,7 +164,8 @@ file_dispatch_compressed(Request &request2, const struct stat &st,
     request2.compressed = true;
 
     http_status_t status = tr.status == 0 ? HTTP_STATUS_OK : tr.status;
-    request2.DispatchResponse(status, std::move(headers), compressed_body);
+    request2.DispatchResponse(status, std::move(headers),
+                              std::move(compressed_body));
     return true;
 }
 
@@ -244,7 +244,7 @@ file_callback(Request &request2, const FileAddress &address)
     if (S_ISCHR(st.st_mode)) {
         /* allow character devices, but skip range etc. */
         request2.DispatchResponse(HTTP_STATUS_OK, HttpHeaders(request2.pool),
-                                  body);
+                                  UnusedIstreamPtr(body));
         return;
     }
 

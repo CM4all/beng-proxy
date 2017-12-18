@@ -127,34 +127,36 @@ session_drop_widgets(RealmSession &session, const char *uri,
     }
 }
 
-inline Istream *
-Request::AutoDeflate(HttpHeaders &response_headers, Istream *response_body)
+inline UnusedIstreamPtr
+Request::AutoDeflate(HttpHeaders &response_headers,
+                     UnusedIstreamPtr response_body)
 {
     if (compressed) {
         /* already compressed */
-    } else if (response_body != nullptr &&
+    } else if (response_body &&
                translate.response->auto_deflate &&
         http_client_accepts_encoding(request.headers, "deflate") &&
         response_headers.Get("content-encoding") == nullptr) {
-        auto available = response_body->GetAvailable(false);
+        auto available = response_body.GetAvailable(false);
         if (available < 0 || available >= 512) {
             compressed = true;
             response_headers.Write("content-encoding", "deflate");
-            response_body = istream_deflate_new(pool,
-                                                *response_body,
-                                                instance.event_loop);
+            response_body = UnusedIstreamPtr(istream_deflate_new(pool,
+                                                                 *response_body.Steal(),
+                                                                 instance.event_loop));
         }
-    } else if (response_body != nullptr &&
+    } else if (response_body &&
                translate.response->auto_gzip &&
         http_client_accepts_encoding(request.headers, "gzip") &&
         response_headers.Get("content-encoding") == nullptr) {
-        auto available = response_body->GetAvailable(false);
+        auto available = response_body.GetAvailable(false);
         if (available < 0 || available >= 512) {
             compressed = true;
             response_headers.Write("content-encoding", "gzip");
-            response_body = istream_deflate_new(pool, *response_body,
-                                                instance.event_loop,
-                                                true);
+            response_body = UnusedIstreamPtr(istream_deflate_new(pool,
+                                                                 *response_body.Steal(),
+                                                                 instance.event_loop,
+                                                                 true));
         }
     }
 
@@ -169,22 +171,21 @@ Request::AutoDeflate(HttpHeaders &response_headers, Istream *response_body)
 inline void
 Request::InvokeXmlProcessor(http_status_t status,
                             StringMap &response_headers,
-                            Istream *response_body,
+                            UnusedIstreamPtr response_body,
                             const Transformation &transformation)
 {
     const char *uri;
 
     assert(!response_sent);
-    assert(response_body == nullptr || !response_body->HasHandler());
 
-    if (response_body == nullptr) {
+    if (!response_body) {
         DispatchResponse(HTTP_STATUS_BAD_GATEWAY,
                          "Empty template cannot be processed");
         return;
     }
 
     if (!processable(response_headers)) {
-        response_body->CloseUnused();
+        response_body.Clear();
         DispatchResponse(HTTP_STATUS_BAD_GATEWAY,
                          "Invalid template content type");
         return;
@@ -226,7 +227,7 @@ Request::InvokeXmlProcessor(http_status_t status,
     if (translate.response->untrusted != nullptr && proxy_ref == nullptr) {
         logger(2, "refusing to render template on untrusted domain '",
                translate.response->untrusted, "'");
-        response_body->CloseUnused();
+        response_body.Clear();
         DispatchResponse(HTTP_STATUS_FORBIDDEN, "Forbidden");
         return;
     }
@@ -280,23 +281,23 @@ Request::InvokeXmlProcessor(http_status_t status,
     if (proxy_ref != nullptr) {
         /* the client requests a widget in proxy mode */
 
-        proxy_widget(*this, *response_body,
+        proxy_widget(*this, std::move(response_body),
                      *widget, proxy_ref, transformation.u.processor.options);
     } else {
         /* the client requests the whole template */
-        response_body = processor_process(pool, *response_body,
+        response_body = processor_process(pool, std::move(response_body),
                                           *widget, env,
                                           transformation.u.processor.options);
-        assert(response_body != nullptr);
+        assert(response_body);
 
         if (instance.config.dump_widget_tree)
             response_body = widget_dump_tree_after_istream(pool,
-                                                           *response_body,
+                                                           std::move(response_body),
                                                            *widget);
 
         InvokeResponse(status,
                        processor_header_forward(pool, response_headers),
-                       response_body);
+                       std::move(response_body));
     }
 }
 
@@ -311,20 +312,19 @@ css_processable(const StringMap &headers)
 inline void
 Request::InvokeCssProcessor(http_status_t status,
                             StringMap &response_headers,
-                            Istream *response_body,
+                            UnusedIstreamPtr response_body,
                             const Transformation &transformation)
 {
     assert(!response_sent);
-    assert(response_body == nullptr || !response_body->HasHandler());
 
-    if (response_body == nullptr) {
+    if (!response_body) {
         DispatchResponse(HTTP_STATUS_BAD_GATEWAY,
                          "Empty template cannot be processed");
         return;
     }
 
     if (!css_processable(response_headers)) {
-        response_body->CloseUnused();
+        response_body.Clear();
         DispatchResponse(HTTP_STATUS_BAD_GATEWAY,
                          "Invalid template content type");
         return;
@@ -338,7 +338,7 @@ Request::InvokeCssProcessor(http_status_t status,
     if (translate.response->untrusted != nullptr) {
         logger(2, "refusing to render template on untrusted domain '",
                translate.response->untrusted, "'");
-        response_body->CloseUnused();
+        response_body.Clear();
         DispatchResponse(HTTP_STATUS_FORBIDDEN, "Forbidden");
         return;
     }
@@ -368,33 +368,32 @@ Request::InvokeCssProcessor(http_status_t status,
                         session_id, realm,
                         HTTP_METHOD_GET, &request.headers);
 
-    response_body = css_processor(pool, *response_body,
+    response_body = css_processor(pool, std::move(response_body),
                                   *widget, env,
                                   transformation.u.css_processor.options);
-    assert(response_body != nullptr);
+    assert(response_body);
 
     InvokeResponse(status,
                    processor_header_forward(pool,
                                             response_headers),
-                   response_body);
+                   std::move(response_body));
 }
 
 inline void
 Request::InvokeTextProcessor(http_status_t status,
                              StringMap &response_headers,
-                             Istream *response_body)
+                             UnusedIstreamPtr response_body)
 {
     assert(!response_sent);
-    assert(response_body == nullptr || !response_body->HasHandler());
 
-    if (response_body == nullptr) {
+    if (!response_body) {
         DispatchResponse(HTTP_STATUS_BAD_GATEWAY,
                          "Empty template cannot be processed");
         return;
     }
 
     if (!text_processor_allowed(response_headers)) {
-        response_body->CloseUnused();
+        response_body.Clear();
         DispatchResponse(HTTP_STATUS_BAD_GATEWAY,
                          "Invalid template content type");
         return;
@@ -409,7 +408,7 @@ Request::InvokeTextProcessor(http_status_t status,
     if (translate.response->untrusted != nullptr) {
         logger(2, "refusing to render template on untrusted domain '",
                translate.response->untrusted, "'");
-        response_body->CloseUnused();
+        response_body.Clear();
         DispatchResponse(HTTP_STATUS_FORBIDDEN, "Forbidden");
         return;
     }
@@ -439,13 +438,13 @@ Request::InvokeTextProcessor(http_status_t status,
                         session_id, realm,
                         HTTP_METHOD_GET, &request.headers);
 
-    response_body = text_processor(pool, *response_body,
+    response_body = text_processor(pool, std::move(response_body),
                                    *widget, env);
-    assert(response_body != nullptr);
+    assert(response_body);
 
     InvokeResponse(status,
                    processor_header_forward(pool, response_headers),
-                   response_body);
+                   std::move(response_body));
 }
 
 /**
@@ -562,10 +561,9 @@ Request::GenerateSetCookie(GrowingBuffer &headers)
 
 inline void
 Request::DispatchResponseDirect(http_status_t status, HttpHeaders &&headers,
-                                Istream *body)
+                                UnusedIstreamPtr body)
 {
     assert(!response_sent);
-    assert(body == nullptr || !body->HasHandler());
 
     if (http_status_is_success(status) &&
         translate.response->www_authenticate != nullptr)
@@ -580,8 +578,9 @@ Request::DispatchResponseDirect(http_status_t status, HttpHeaders &&headers,
         GenerateSetCookie(headers.GetBuffer());
 
 #ifdef SPLICE
-    if (body != nullptr)
-        body = istream_pipe_new(&pool, *body, instance.pipe_stock);
+    if (body)
+        body = UnusedIstreamPtr(istream_pipe_new(&pool, *body.Steal(),
+                                                 instance.pipe_stock));
 #endif
 
 #ifndef NDEBUG
@@ -590,13 +589,13 @@ Request::DispatchResponseDirect(http_status_t status, HttpHeaders &&headers,
 
     http_server_response(&request, status,
                          std::move(headers),
-                         UnusedIstreamPtr(body));
+                         std::move(body));
 }
 
 static void
 response_apply_filter(Request &request2,
                       http_status_t status, StringMap &&headers2,
-                      Istream *body,
+                      UnusedIstreamPtr body,
                       const ResourceAddress &filter, bool reveal_user)
 {
     const char *source_tag;
@@ -613,28 +612,29 @@ response_apply_filter(Request &request2,
                             request2.GetRealmSession().get());
 
 #ifdef SPLICE
-    if (body != nullptr)
-        body = istream_pipe_new(&request2.pool, *body,
-                                request2.instance.pipe_stock);
+    if (body)
+        body = UnusedIstreamPtr(istream_pipe_new(&request2.pool, *body.Steal(),
+                                                 request2.instance.pipe_stock));
 #endif
 
     request2.instance.filter_resource_loader
         ->SendRequest(request2.pool, request2.session_id.GetClusterHash(),
                       HTTP_METHOD_POST, filter, status, std::move(headers2),
-                      UnusedIstreamPtr(body), source_tag,
+                      std::move(body), source_tag,
                       request2, request2.cancel_ptr);
 }
 
 void
 Request::ApplyTransformation(http_status_t status, StringMap &&headers,
-                             Istream *response_body,
+                             UnusedIstreamPtr response_body,
                              const Transformation &transformation)
 {
     transformed = true;
 
     switch (transformation.type) {
     case Transformation::Type::FILTER:
-        response_apply_filter(*this, status, std::move(headers), response_body,
+        response_apply_filter(*this, status, std::move(headers),
+                              std::move(response_body),
                               transformation.u.filter.address,
                               transformation.u.filter.reveal_user);
         break;
@@ -643,21 +643,23 @@ Request::ApplyTransformation(http_status_t status, StringMap &&headers,
         /* processor responses cannot be cached */
         resource_tag = nullptr;
 
-        InvokeXmlProcessor(status, headers, response_body, transformation);
+        InvokeXmlProcessor(status, headers, std::move(response_body),
+                           transformation);
         break;
 
     case Transformation::Type::PROCESS_CSS:
         /* processor responses cannot be cached */
         resource_tag = nullptr;
 
-        InvokeCssProcessor(status, headers, response_body, transformation);
+        InvokeCssProcessor(status, headers, std::move(response_body),
+                           transformation);
         break;
 
     case Transformation::Type::PROCESS_TEXT:
         /* processor responses cannot be cached */
         resource_tag = nullptr;
 
-        InvokeTextProcessor(status, headers, response_body);
+        InvokeTextProcessor(status, headers, std::move(response_body));
         break;
     }
 }
@@ -672,10 +674,9 @@ filter_enabled(const TranslateResponse &tr,
 
 void
 Request::DispatchResponse(http_status_t status, HttpHeaders &&headers,
-                          Istream *response_body)
+                          UnusedIstreamPtr response_body)
 {
     assert(!response_sent);
-    assert(response_body == nullptr || !response_body->HasHandler());
 
     if (http_status_is_error(status) && !transformed &&
         !translate.response->error_document.IsNull()) {
@@ -688,7 +689,7 @@ Request::DispatchResponse(http_status_t status, HttpHeaders &&headers,
         errdoc_dispatch_response(*this, status,
                                  translate.response->error_document,
                                  std::move(headers),
-                                 UnusedIstreamPtr(response_body));
+                                 std::move(response_body));
         return;
     }
 
@@ -697,11 +698,13 @@ Request::DispatchResponse(http_status_t status, HttpHeaders &&headers,
     const Transformation *transformation = PopTransformation();
     if (transformation != nullptr &&
         filter_enabled(*translate.response, status)) {
-        ApplyTransformation(status, std::move(headers).ToMap(), response_body,
+        ApplyTransformation(status, std::move(headers).ToMap(),
+                            std::move(response_body),
                             *transformation);
     } else {
-        response_body = AutoDeflate(headers, response_body);
-        DispatchResponseDirect(status, std::move(headers), response_body);
+        response_body = AutoDeflate(headers, std::move(response_body));
+        DispatchResponseDirect(status, std::move(headers),
+                               std::move(response_body));
     }
 }
 
@@ -715,7 +718,7 @@ Request::DispatchResponse(http_status_t status,
     headers.Write("content-type", "text/plain");
 
     DispatchResponse(status, std::move(headers),
-                     istream_string_new(&pool, msg));
+                     UnusedIstreamPtr(istream_string_new(&pool, msg)));
 }
 
 void
@@ -792,6 +795,8 @@ Request::OnHttpResponse(http_status_t status, StringMap &&headers,
     assert(!response_sent);
     assert(_body == nullptr || !_body->HasHandler());
 
+    UnusedIstreamPtr body(_body);
+
     if (collect_cookies) {
         collect_cookies = false;
         CollectCookies(headers);
@@ -809,8 +814,7 @@ Request::OnHttpResponse(http_status_t status, StringMap &&headers,
                     /* the view specified in the response header does not
                        exist, bail out */
 
-                    if (_body != nullptr)
-                        _body->CloseUnused();
+                    body.Clear();
 
                     logger(4, "No such view: ", view_name);
                     DispatchResponse(HTTP_STATUS_NOT_FOUND, "No such view");
@@ -823,7 +827,7 @@ Request::OnHttpResponse(http_status_t status, StringMap &&headers,
 
         const Transformation *transformation = PopTransformation();
         if (transformation != nullptr) {
-            ApplyTransformation(status, std::move(headers), _body,
+            ApplyTransformation(status, std::move(headers), std::move(body),
                                 *transformation);
             return;
         }
@@ -853,7 +857,7 @@ Request::OnHttpResponse(http_status_t status, StringMap &&headers,
            (RFC 2616 14.13) */
         headers2.MoveToBuffer("content-length");
 
-    DispatchResponse(status, std::move(headers2), _body);
+    DispatchResponse(status, std::move(headers2), std::move(body));
 }
 
 void

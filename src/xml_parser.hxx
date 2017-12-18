@@ -40,7 +40,7 @@
 #include <sys/types.h>
 
 struct pool;
-class Istream;
+class UnusedIstreamPtr;
 
 enum class XmlParserTagType {
     OPEN,
@@ -83,7 +83,7 @@ public:
 class XmlParser;
 
 XmlParser *
-parser_new(struct pool &pool, Istream &input,
+parser_new(struct pool &pool, UnusedIstreamPtr input,
            XmlParserHandler &handler);
 
 /**

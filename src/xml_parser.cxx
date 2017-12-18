@@ -35,6 +35,7 @@
 #include "html_chars.hxx"
 #include "expansible_buffer.hxx"
 #include "istream/Sink.hxx"
+#include "istream/UnusedPtr.hxx"
 #include "util/CharUtil.hxx"
 #include "util/Poison.hxx"
 
@@ -119,9 +120,9 @@ public:
 
     XmlParserHandler &handler;
 
-    XmlParser(struct pool &_pool, Istream &_input,
+    XmlParser(struct pool &_pool, UnusedIstreamPtr _input,
               XmlParserHandler &_handler)
-        :IstreamSink(_input), pool(&_pool),
+        :IstreamSink(std::move(_input)), pool(&_pool),
          attr_value(*pool, 512, 8192),
          handler(_handler) {
         pool_ref(pool);
@@ -669,10 +670,10 @@ XmlParser::Feed(const char *start, size_t length)
  */
 
 XmlParser *
-parser_new(struct pool &pool, Istream &input,
+parser_new(struct pool &pool, UnusedIstreamPtr input,
            XmlParserHandler &handler)
 {
-    return NewFromPool<XmlParser>(pool, pool, input, handler);
+    return NewFromPool<XmlParser>(pool, pool, std::move(input), handler);
 }
 
 void

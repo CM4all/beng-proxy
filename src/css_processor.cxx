@@ -297,15 +297,15 @@ CssProcessor::CssProcessor(struct pool &_pool, struct pool &_caller_pool,
      parser(css_parser_new(pool, tee, false,
                            css_processor_parser_handler, this)) {}
 
-Istream *
-css_processor(struct pool &caller_pool, Istream &input,
+UnusedIstreamPtr
+css_processor(struct pool &caller_pool, UnusedIstreamPtr input,
               Widget &widget,
               struct processor_env &env,
               unsigned options)
 {
     struct pool *pool = pool_new_linear(&caller_pool, "css_processor", 32768);
 
-    Istream *tee = istream_tee_new(*pool, input,
+    Istream *tee = istream_tee_new(*pool, *input.Steal(),
                                    *env.event_loop,
                                    true, true);
 
@@ -314,5 +314,5 @@ css_processor(struct pool &caller_pool, Istream &input,
                                                options);
     pool_unref(pool);
 
-    return &processor->replace;
+    return UnusedIstreamPtr(&processor->replace);
 }

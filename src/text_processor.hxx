@@ -36,7 +36,7 @@
 #include "util/Compiler.h"
 
 struct pool;
-class Istream;
+class UnusedIstreamPtr;
 class StringMap;
 struct Widget;
 struct processor_env;
@@ -54,8 +54,8 @@ text_processor_allowed(const StringMap &headers);
  *
  * @param widget the widget that represents the template
  */
-Istream *
-text_processor(struct pool &pool, Istream &istream,
+UnusedIstreamPtr
+text_processor(struct pool &pool, UnusedIstreamPtr istream,
                const Widget &widget, const struct processor_env &env);
 
 #endif

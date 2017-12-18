@@ -158,7 +158,7 @@ TEST(Processor, Abort)
 
     CancellablePointer cancel_ptr;
     MyWidgetLookupHandler handler;
-    processor_lookup_widget(*pool, *istream_block_new(*pool),
+    processor_lookup_widget(*pool, UnusedIstreamPtr(istream_block_new(*pool)),
                             widget, "foo", env, PROCESSOR_CONTAINER,
                             handler, cancel_ptr);
 
