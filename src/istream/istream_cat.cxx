@@ -37,10 +37,7 @@
 
 #include <boost/intrusive/slist.hpp>
 
-#include <iterator>
-
 #include <assert.h>
-#include <stdarg.h>
 
 class CatIstream final : public Istream {
     struct Input final
