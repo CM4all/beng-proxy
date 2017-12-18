@@ -850,12 +850,10 @@ http_cache_heap_serve(HttpCacheHeap &cache,
 {
     LogConcat(4, "HttpCache", "serve ", key);
 
-    Istream *response_body = cache.OpenStream(pool, document);
-
     handler.InvokeResponse(document.status,
                            StringMap(ShallowCopy(), pool,
                                      document.response_headers),
-                           UnusedIstreamPtr(response_body));
+                           cache.OpenStream(pool, document));
 }
 
 /**

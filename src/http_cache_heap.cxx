@@ -177,16 +177,16 @@ HttpCacheHeap::Unlock(HttpCacheDocument &document)
     item.Unlock();
 }
 
-Istream *
+UnusedIstreamPtr
 HttpCacheHeap::OpenStream(struct pool &_pool, HttpCacheDocument &document)
 {
     auto &item = (HttpCacheItem &)document;
 
     if (item.rubber_id == 0)
         /* don't lock the item */
-        return istream_null_new(_pool).Steal();
+        return istream_null_new(_pool);
 
-    return istream_unlock_new(_pool, item.OpenStream(_pool), item).Steal();
+    return istream_unlock_new(_pool, item.OpenStream(_pool), item);
 }
 
 /*

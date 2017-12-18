@@ -39,7 +39,7 @@
 #include <stddef.h>
 
 struct pool;
-class Istream;
+class UnusedIstreamPtr;
 class Rubber;
 class EventLoop;
 class Cache;
@@ -94,7 +94,8 @@ public:
     static void Lock(HttpCacheDocument &document);
     void Unlock(HttpCacheDocument &document);
 
-    Istream *OpenStream(struct pool &_pool, HttpCacheDocument &document);
+    UnusedIstreamPtr OpenStream(struct pool &_pool,
+                                HttpCacheDocument &document);
 };
 
 #endif
