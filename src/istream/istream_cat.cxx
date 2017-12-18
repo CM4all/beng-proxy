@@ -49,18 +49,18 @@ class CatIstream final : public Istream {
 
         CatIstream &cat;
 
-        Input(CatIstream &_cat, Istream &_istream)
+        Input(CatIstream &_cat, Istream &_istream) noexcept
             :IstreamSink(_istream), cat(_cat) {}
 
-        off_t GetAvailable(bool partial) const {
+        off_t GetAvailable(bool partial) const noexcept {
             return input.GetAvailable(partial);
         }
 
-        off_t Skip(off_t length) {
+        off_t Skip(off_t length) noexcept {
             return input.Skip(length);
         }
 
-        void Read(FdTypeMask direct) {
+        void Read(FdTypeMask direct) noexcept {
             input.SetDirect(direct);
             input.Read();
         }
@@ -115,22 +115,22 @@ class CatIstream final : public Istream {
     InputList inputs;
 
 public:
-    CatIstream(struct pool &p, ConstBuffer<Istream *> _inputs);
+    CatIstream(struct pool &p, ConstBuffer<Istream *> _inputs) noexcept;
 
 private:
-    Input &GetCurrent() {
+    Input &GetCurrent() noexcept {
         return inputs.front();
     }
 
-    const Input &GetCurrent() const {
+    const Input &GetCurrent() const noexcept {
         return inputs.front();
     }
 
-    bool IsCurrent(const Input &input) const {
+    bool IsCurrent(const Input &input) const noexcept {
         return &GetCurrent() == &input;
     }
 
-    bool IsEOF() const {
+    bool IsEOF() const noexcept {
         return inputs.empty();
     }
 
@@ -310,7 +310,7 @@ CatIstream::_Close() noexcept
  *
  */
 
-inline CatIstream::CatIstream(struct pool &p, ConstBuffer<Istream *> _inputs)
+inline CatIstream::CatIstream(struct pool &p, ConstBuffer<Istream *> _inputs) noexcept
     :Istream(p)
 {
     auto i = inputs.before_begin();
