@@ -99,8 +99,8 @@ struct Context final
 
     /* virtual methods from class HttpResponseHandler */
     void OnHttpResponse(http_status_t status, StringMap &&headers,
-                        Istream *body) override;
-    void OnHttpError(std::exception_ptr ep) override;
+                        Istream *body) noexcept override;
+    void OnHttpError(std::exception_ptr ep) noexcept override;
 };
 
 /*
@@ -129,14 +129,14 @@ Context::OnData(const void *data, size_t length)
 void
 Context::OnHttpResponse(gcc_unused http_status_t status,
                         gcc_unused StringMap &&headers,
-                        Istream *_body)
+                        Istream *_body) noexcept
 {
     if (_body != nullptr)
         body.Set(*_body, *this);
 }
 
 void
-Context::OnHttpError(std::exception_ptr ep)
+Context::OnHttpError(std::exception_ptr ep) noexcept
 {
     PrintException(ep);
 

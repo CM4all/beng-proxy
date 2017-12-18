@@ -184,8 +184,8 @@ private:
 
     /* virtual methods from class HttpResponseHandler */
     void OnHttpResponse(http_status_t status, StringMap &&headers,
-                        Istream *body) override;
-    void OnHttpError(std::exception_ptr ep) override;
+                        Istream *body) noexcept override;
+    void OnHttpError(std::exception_ptr ep) noexcept override;
 };
 
 /*
@@ -195,7 +195,7 @@ private:
 
 void
 HttpRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
-                            Istream *_body)
+                            Istream *_body) noexcept
 {
     assert(lease_state != LeaseState::NONE);
     assert(!response_sent);
@@ -208,7 +208,8 @@ HttpRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
 }
 
 static bool
-HasHttpClientErrorCode(std::exception_ptr ep, HttpClientErrorCode code)
+HasHttpClientErrorCode(std::exception_ptr ep,
+                       HttpClientErrorCode code) noexcept
 {
     try {
         FindRetrowNested<HttpClientError>(ep);
@@ -219,7 +220,7 @@ HasHttpClientErrorCode(std::exception_ptr ep, HttpClientErrorCode code)
 }
 
 void
-HttpRequest::OnHttpError(std::exception_ptr ep)
+HttpRequest::OnHttpError(std::exception_ptr ep) noexcept
 {
     assert(lease_state != LeaseState::NONE);
     assert(!response_sent);

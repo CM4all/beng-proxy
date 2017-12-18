@@ -69,7 +69,7 @@ public:
     /* virtual methods from class HttpResponseHandler */
     void OnHttpResponse(http_status_t status,
                         gcc_unused StringMap &&headers,
-                        Istream *body) override {
+                        Istream *body) noexcept override {
         if (body != nullptr)
             body->CloseUnused();
 
@@ -80,7 +80,7 @@ public:
         Remove();
     }
 
-    void OnHttpError(std::exception_ptr ep) override {
+    void OnHttpError(std::exception_ptr ep) noexcept override {
         LogConcat(2, "ExternalSessionManager", "Failed to refresh external session: ", ep);
 
         Remove();

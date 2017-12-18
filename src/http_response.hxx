@@ -51,13 +51,13 @@ class UnusedIstreamPtr;
 class HttpResponseHandler {
 protected:
     virtual void OnHttpResponse(http_status_t status, StringMap &&headers,
-                                Istream *body) = 0;
+                                Istream *body) noexcept = 0;
 
-    virtual void OnHttpError(std::exception_ptr ep) = 0;
+    virtual void OnHttpError(std::exception_ptr ep) noexcept = 0;
 
 public:
     void InvokeResponse(http_status_t status, StringMap &&headers,
-                        Istream *body) {
+                        Istream *body) noexcept {
         assert(http_status_is_valid(status));
         assert(!http_status_is_empty(status) || body == nullptr);
 
@@ -65,15 +65,15 @@ public:
     }
 
     void InvokeResponse(http_status_t status, StringMap &&headers,
-                        UnusedIstreamPtr body);
+                        UnusedIstreamPtr body) noexcept;
 
     /**
      * Sends a plain-text message.
      */
     void InvokeResponse(struct pool &pool,
-                        http_status_t status, const char *msg);
+                        http_status_t status, const char *msg) noexcept;
 
-    void InvokeError(std::exception_ptr ep) {
+    void InvokeError(std::exception_ptr ep) noexcept {
         assert(ep);
 
         OnHttpError(ep);

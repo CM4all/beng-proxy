@@ -121,8 +121,8 @@ private:
 
     /* virtual methods from class HttpResponseHandler */
     void OnHttpResponse(http_status_t status, StringMap &&headers,
-                        Istream *body) override;
-    void OnHttpError(std::exception_ptr ep) override;
+                        Istream *body) noexcept override;
+    void OnHttpError(std::exception_ptr ep) noexcept override;
 
     /* virtual methods from class Cancellable */
     void Cancel() noexcept override;
@@ -217,7 +217,7 @@ widget_response_format(struct pool &pool, const Widget &widget,
 
 void
 InlineWidget::OnHttpResponse(http_status_t status, StringMap &&headers,
-                             Istream *body)
+                             Istream *body) noexcept
 {
     header_timeout_event.Cancel();
 
@@ -254,7 +254,7 @@ InlineWidget::OnHttpResponse(http_status_t status, StringMap &&headers,
 }
 
 void
-InlineWidget::OnHttpError(std::exception_ptr ep)
+InlineWidget::OnHttpError(std::exception_ptr ep) noexcept
 {
     header_timeout_event.Cancel();
 

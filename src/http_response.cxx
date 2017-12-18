@@ -37,7 +37,7 @@
 
 void
 HttpResponseHandler::InvokeResponse(http_status_t status, StringMap &&headers,
-                                    UnusedIstreamPtr body)
+                                    UnusedIstreamPtr body) noexcept
 {
     InvokeResponse(status, std::move(headers), body.Steal());
 }
@@ -45,7 +45,7 @@ HttpResponseHandler::InvokeResponse(http_status_t status, StringMap &&headers,
 void
 HttpResponseHandler::InvokeResponse(struct pool &pool,
                                     http_status_t status,
-                                    const char *msg)
+                                    const char *msg) noexcept
 {
     assert(http_status_is_valid(status));
     assert(msg != nullptr);

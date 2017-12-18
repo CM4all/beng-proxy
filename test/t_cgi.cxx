@@ -88,8 +88,8 @@ struct Context final : PInstance, HttpResponseHandler, IstreamHandler {
 
     /* virtual methods from class HttpResponseHandler */
     void OnHttpResponse(http_status_t status, StringMap &&headers,
-                        Istream *body) override;
-    void OnHttpError(std::exception_ptr ep) override;
+                        Istream *body) noexcept override;
+    void OnHttpError(std::exception_ptr ep) noexcept override;
 
     /* virtual methods from class IstreamHandler */
     size_t OnData(const void *data, size_t length) override;
@@ -171,7 +171,7 @@ Context::OnError(std::exception_ptr) noexcept
 
 void
 Context::OnHttpResponse(http_status_t _status, gcc_unused StringMap &&headers,
-                        Istream *_body)
+                        Istream *_body) noexcept
 {
     assert(!no_content || _body == nullptr);
 
@@ -196,7 +196,7 @@ Context::OnHttpResponse(http_status_t _status, gcc_unused StringMap &&headers,
 }
 
 void
-Context::OnHttpError(std::exception_ptr ep)
+Context::OnHttpError(std::exception_ptr ep) noexcept
 {
     PrintException(ep);
 

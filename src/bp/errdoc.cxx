@@ -70,8 +70,8 @@ struct ErrorResponseLoader final : HttpResponseHandler, Cancellable {
 
     /* virtual methods from class HttpResponseHandler */
     void OnHttpResponse(http_status_t status, StringMap &&headers,
-                        Istream *body) override;
-    void OnHttpError(std::exception_ptr ep) override;
+                        Istream *body) noexcept override;
+    void OnHttpError(std::exception_ptr ep) noexcept override;
 };
 
 static void
@@ -88,7 +88,7 @@ errdoc_resubmit(ErrorResponseLoader &er)
 
 void
 ErrorResponseLoader::OnHttpResponse(http_status_t _status, StringMap &&_headers,
-                                    Istream *_body)
+                                    Istream *_body) noexcept
 {
     if (http_status_is_success(_status)) {
         /* close the original (error) response body */
@@ -106,7 +106,7 @@ ErrorResponseLoader::OnHttpResponse(http_status_t _status, StringMap &&_headers,
 }
 
 void
-ErrorResponseLoader::OnHttpError(std::exception_ptr ep)
+ErrorResponseLoader::OnHttpError(std::exception_ptr ep) noexcept
 {
     LogConcat(2, request2->request.uri, "error on error document: ", ep);
 

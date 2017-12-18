@@ -172,8 +172,8 @@ struct FilterCacheRequest final : HttpResponseHandler, RubberSinkHandler {
 
     /* virtual methods from class HttpResponseHandler */
     void OnHttpResponse(http_status_t status, StringMap &&headers,
-                        Istream *body) override;
-    void OnHttpError(std::exception_ptr ep) override;
+                        Istream *body) noexcept override;
+    void OnHttpError(std::exception_ptr ep) noexcept override;
 
     /* virtual methods from class RubberSinkHandler */
     void RubberDone(unsigned rubber_id, size_t size) override;
@@ -467,7 +467,7 @@ FilterCacheRequest::RubberError(std::exception_ptr ep)
 
 void
 FilterCacheRequest::OnHttpResponse(http_status_t status, StringMap &&headers,
-                                   Istream *body)
+                                   Istream *body) noexcept
 {
     auto &_caller_pool = caller_pool;
 
@@ -518,7 +518,7 @@ FilterCacheRequest::OnHttpResponse(http_status_t status, StringMap &&headers,
 }
 
 void
-FilterCacheRequest::OnHttpError(std::exception_ptr ep)
+FilterCacheRequest::OnHttpError(std::exception_ptr ep) noexcept
 {
     ep = NestException(ep, FormatRuntimeError("fcache %s", info.key));
 

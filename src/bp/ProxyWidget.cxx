@@ -88,8 +88,8 @@ struct ProxyWidget final : WidgetLookupHandler, HttpResponseHandler, Cancellable
 
     /* virtual methods from class HttpResponseHandler */
     void OnHttpResponse(http_status_t status, StringMap &&headers,
-                        Istream *body) override;
-    void OnHttpError(std::exception_ptr ep) override;
+                        Istream *body) noexcept override;
+    void OnHttpError(std::exception_ptr ep) noexcept override;
 };
 
 /*
@@ -99,7 +99,7 @@ struct ProxyWidget final : WidgetLookupHandler, HttpResponseHandler, Cancellable
 
 void
 ProxyWidget::OnHttpResponse(http_status_t status, StringMap &&_headers,
-                            Istream *body)
+                            Istream *body) noexcept
 {
     assert(widget->cls != nullptr);
 
@@ -142,7 +142,7 @@ ProxyWidget::OnHttpResponse(http_status_t status, StringMap &&_headers,
 }
 
 void
-ProxyWidget::OnHttpError(std::exception_ptr ep)
+ProxyWidget::OnHttpError(std::exception_ptr ep) noexcept
 {
     widget->for_focused.body.Clear();
 

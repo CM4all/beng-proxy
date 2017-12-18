@@ -218,8 +218,8 @@ private:
 
     /* virtual methods from class HttpResponseHandler */
     void OnHttpResponse(http_status_t status, StringMap &&headers,
-                        Istream *body) override;
-    void OnHttpError(std::exception_ptr ep) override;
+                        Istream *body) noexcept override;
+    void OnHttpError(std::exception_ptr ep) noexcept override;
 };
 
 static void
@@ -350,7 +350,7 @@ LbRequest::GetStickyHash()
 
 void
 LbRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
-                          Istream *response_body)
+                          Istream *response_body) noexcept
 {
     assert(lease_state != LeaseState::NONE);
     assert(!response_sent);
@@ -384,7 +384,7 @@ LbRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
 }
 
 void
-LbRequest::OnHttpError(std::exception_ptr ep)
+LbRequest::OnHttpError(std::exception_ptr ep) noexcept
 {
     assert(lease_state != LeaseState::NONE);
     assert(!response_sent);

@@ -268,8 +268,8 @@ struct Context final
 
     /* virtual methods from class HttpResponseHandler */
     void OnHttpResponse(http_status_t status, StringMap &&headers,
-                        Istream *body) override;
-    void OnHttpError(std::exception_ptr ep) override;
+                        Istream *body) noexcept override;
+    void OnHttpError(std::exception_ptr ep) noexcept override;
 };
 
 template<class Connection>
@@ -344,7 +344,7 @@ template<class Connection>
 void
 Context<Connection>::OnHttpResponse(http_status_t _status,
                                     StringMap &&headers,
-                                    Istream *_body)
+                                    Istream *_body) noexcept
 {
     status = _status;
     const char *_content_length = headers.Get("content-length");
@@ -406,7 +406,7 @@ Context<Connection>::OnHttpResponse(http_status_t _status,
 
 template<class Connection>
 void
-Context<Connection>::OnHttpError(std::exception_ptr ep)
+Context<Connection>::OnHttpError(std::exception_ptr ep) noexcept
 {
     assert(!request_error);
     request_error = ep;

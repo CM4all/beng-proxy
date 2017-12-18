@@ -289,13 +289,13 @@ struct Context final : HttpResponseHandler {
 
     /* virtual methods from class HttpResponseHandler */
     void OnHttpResponse(http_status_t status, StringMap &&headers,
-                        Istream *body) override;
-    void OnHttpError(std::exception_ptr ep) override;
+                        Istream *body) noexcept override;
+    void OnHttpError(std::exception_ptr ep) noexcept override;
 };
 
 void
 Context::OnHttpResponse(http_status_t status, StringMap &&headers,
-                        Istream *body)
+                        Istream *body) noexcept
 {
     Request *request = &requests[current_request];
     StringMap *expected_rh;
@@ -321,7 +321,7 @@ Context::OnHttpResponse(http_status_t status, StringMap &&headers,
 }
 
 void gcc_noreturn
-Context::OnHttpError(std::exception_ptr ep)
+Context::OnHttpError(std::exception_ptr ep) noexcept
 {
     PrintException(ep);
 

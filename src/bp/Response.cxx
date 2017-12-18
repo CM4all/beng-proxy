@@ -787,7 +787,7 @@ RelocateCallback(const char *const uri, void *ctx)
 
 void
 Request::OnHttpResponse(http_status_t status, StringMap &&headers,
-                        Istream *_body)
+                        Istream *_body) noexcept
 {
     assert(!response_sent);
     assert(_body == nullptr || !_body->HasHandler());
@@ -857,7 +857,7 @@ Request::OnHttpResponse(http_status_t status, StringMap &&headers,
 }
 
 void
-Request::OnHttpError(std::exception_ptr ep)
+Request::OnHttpError(std::exception_ptr ep) noexcept
 {
     assert(!response_sent);
 

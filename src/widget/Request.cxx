@@ -191,8 +191,8 @@ struct WidgetRequest final : HttpResponseHandler, Cancellable {
 
     /* virtual methods from class HttpResponseHandler */
     void OnHttpResponse(http_status_t status, StringMap &&headers,
-                        Istream *body) override;
-    void OnHttpError(std::exception_ptr ep) override;
+                        Istream *body) noexcept override;
+    void OnHttpError(std::exception_ptr ep) noexcept override;
 };
 
 static const char *
@@ -548,7 +548,7 @@ WidgetRequest::UpdateView(StringMap &headers)
 
 void
 WidgetRequest::OnHttpResponse(http_status_t status, StringMap &&headers,
-                              Istream *body)
+                              Istream *body) noexcept
 {
     if (widget.cls->dump_headers) {
         widget.logger(4, "response headers from widget");
@@ -605,7 +605,7 @@ WidgetRequest::OnHttpResponse(http_status_t status, StringMap &&headers,
 }
 
 void
-WidgetRequest::OnHttpError(std::exception_ptr ep)
+WidgetRequest::OnHttpError(std::exception_ptr ep) noexcept
 {
     DispatchError(ep);
 }

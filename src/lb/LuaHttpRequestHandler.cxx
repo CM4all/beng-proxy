@@ -56,14 +56,14 @@ public:
 
     /* virtual methods from class HttpResponseHandler */
     void OnHttpResponse(http_status_t status, StringMap &&headers,
-                        Istream *body) override;
-    void OnHttpError(std::exception_ptr ep) override;
+                        Istream *body) noexcept override;
+    void OnHttpError(std::exception_ptr ep) noexcept override;
 };
 
 void
 LbLuaResponseHandler::OnHttpResponse(http_status_t status,
                                      StringMap &&_headers,
-                                     Istream *response_body)
+                                     Istream *response_body) noexcept
 {
     finished = true;
 
@@ -79,7 +79,7 @@ LbLuaResponseHandler::OnHttpResponse(http_status_t status,
 }
 
 void
-LbLuaResponseHandler::OnHttpError(std::exception_ptr ep)
+LbLuaResponseHandler::OnHttpError(std::exception_ptr ep) noexcept
 {
     finished = true;
 

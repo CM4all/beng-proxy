@@ -167,8 +167,8 @@ public:
 
     /* virtual methods from class HttpResponseHandler */
     void OnHttpResponse(http_status_t status, StringMap &&headers,
-                        Istream *body) override;
-    void OnHttpError(std::exception_ptr ep) override;
+                        Istream *body) noexcept override;
+    void OnHttpError(std::exception_ptr ep) noexcept override;
 
     /* virtual methods from class RubberSinkHandler */
     void RubberDone(unsigned rubber_id, size_t size) override;
@@ -384,7 +384,7 @@ HttpCacheRequest::RubberError(std::exception_ptr ep)
 
 void
 HttpCacheRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
-                                 Istream *body)
+                                 Istream *body) noexcept
 {
     HttpCacheDocument *locked_document = cache.heap.IsDefined()
         ? document
@@ -497,7 +497,7 @@ HttpCacheRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
 }
 
 void
-HttpCacheRequest::OnHttpError(std::exception_ptr ep)
+HttpCacheRequest::OnHttpError(std::exception_ptr ep) noexcept
 {
     ep = NestException(ep, FormatRuntimeError("http_cache %s", key));
 
