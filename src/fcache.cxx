@@ -347,7 +347,7 @@ FilterCache::Put(const FilterCacheInfo &info,
                                              rubber, rubber_id,
                                              expires);
 
-    cache.Put(info.key, *item);
+    cache.Put(item->info.key, *item);
 }
 
 static std::chrono::system_clock::time_point
