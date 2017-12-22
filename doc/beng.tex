@@ -150,7 +150,7 @@ Known attributes:
 
 \begin{longtabu*}{|l|X|}\hline
 
-\verb|bind| & An adddress to bind to.  May be the wildcard ``*'' or an
+\verb|bind| & An address to bind to.  May be the wildcard ``*'' or an
 IPv4/IPv6 address followed by a port.  If you omit the port number, it
 will default to 80.  Specifying port 0 will auto-select a free port
 (which makes sense only if you publish the listener with Zeroconf).
@@ -197,7 +197,7 @@ Known attributes:
 
 \begin{longtabu*}{|l|X|}\hline
 
-\verb|bind| & An adddress to bind to.  May be the wildcard ``*'' or an
+\verb|bind| & An address to bind to.  May be the wildcard ``*'' or an
 IPv4/IPv6 address followed by a port.  IPv6 addresses should be
 enclosed in square brackets to disambiguate the port separator.  Local
 sockets start with a slash ``/'', and abstract sockets start with an
@@ -275,24 +275,24 @@ incrementally kill excess processes. \\
 
 \hline
 
-\verb|http_cache_size| & The maxmimum amount of memory used by the
+\verb|http_cache_size| & The maximum amount of memory used by the
 HTTP cache.  Set to 0 to disable the HTTP cache.  This option cannot
 be used together with \texttt{--memcached-server}. \\
 
 \hline
 
-\verb|filter_cache_size| & The maxmimum amount of memory used by
+\verb|filter_cache_size| & The maximum amount of memory used by
 the filter cache.  Set to 0 to disable the filter cache. \\
 
 \hline
 
-\verb|translate_cache_size| & The maxmimum number of cached
+\verb|translate_cache_size| & The maximum number of cached
 translation server responses.  Set to 0 to disable the translate
 cache. \\
 
 \hline
 
-\verb|translate_stock_limit| & The maxmimum number of concurrent
+\verb|translate_stock_limit| & The maximum number of concurrent
 connections to the translation server.  Set to 0 to disable the limit.
 The default is 64. \\
 
@@ -930,7 +930,7 @@ If no \verb|PROBE_SUFFIX| follows, then no file was found.  \\
 \hline
 
 \verb|FILE_NOT_FOUND| & The specified file does not exist.  The
-translation server is asked to provide an alterate translation.  This
+translation server is asked to provide an alternate translation.  This
 is an echo of the \verb|FILE_NOT_FOUND| from the previous translation
 response. \\
 
@@ -946,7 +946,7 @@ file has been found. \\
 \hline
 
 \verb|DIRECTORY_INDEX| & The specified file is a directory.  The
-translation server is asked to provide an alterate translation.  This
+translation server is asked to provide an alternate translation.  This
 is an echo of the \verb|DIRECTORY_INDEX| from the previous translation
 response. \\
 
