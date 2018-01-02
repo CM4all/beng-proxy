@@ -136,6 +136,7 @@ libevent = dependency('libevent', version: '>= 2.0.19')
 libcurl = dependency('libcurl', version: '>= 7.38')
 libsystemd = dependency('libsystemd')
 libdbus = dependency('dbus-1')
+libcares = dependency('libcares')
 libpcre = dependency('libpcre')
 libsodium = dependency('libsodium')
 libssl = dependency('openssl')
@@ -373,6 +374,24 @@ event_net_dep = declare_dependency(
     memory_dep,
     event_dep,
     net_dep,
+  ],
+)
+
+event_net_cares = static_library('event_net_cares',
+  'libcommon/src/event/net/cares/Error.cxx',
+  'libcommon/src/event/net/cares/Init.cxx',
+  'libcommon/src/event/net/cares/Channel.cxx',
+  include_directories: inc,
+  dependencies: [
+    libcares,
+    libevent,
+  ])
+event_net_cares_dep = declare_dependency(
+  link_with: event_net_cares,
+  dependencies: [
+    event_dep,
+    net_dep,
+    util_dep,
   ],
 )
 
