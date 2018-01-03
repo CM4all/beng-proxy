@@ -5,6 +5,12 @@ cm4all-beng-proxy (14.0.1) unstable; urgency=low
 
  --   
 
+cm4all-beng-proxy (13.4) unstable; urgency=low
+
+  * fcache: fix use-after-free crash bug
+
+ -- Max Kellermann <mk@cm4all.com>  Wed, 03 Jan 2018 09:31:05 -0000
+
 cm4all-beng-proxy (13.3) unstable; urgency=low
 
   * merge release 12.9
