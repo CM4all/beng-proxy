@@ -194,6 +194,10 @@ private:
                               HttpServerRequest &request,
                               CancellablePointer &cancel_ptr);
 
+    void ResolveConnect(const char *host,
+                        HttpServerRequest &request,
+                        CancellablePointer &cancel_ptr);
+
 protected:
     /* virtual methods from class LoggerDomainFactory */
     std::string MakeLoggerDomain() const noexcept override;

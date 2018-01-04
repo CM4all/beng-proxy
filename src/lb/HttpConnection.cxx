@@ -280,6 +280,11 @@ LbHttpConnection::HandleHttpRequest(const LbGoto &destination,
         return;
     }
 
+    if (goto_.resolve_connect != nullptr) {
+        ResolveConnect(goto_.resolve_connect, request, cancel_ptr);
+        return;
+    }
+
     assert(goto_.cluster != nullptr);
     ForwardHttpRequest(*goto_.cluster, request, cancel_ptr);
 }

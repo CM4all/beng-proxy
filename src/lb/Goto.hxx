@@ -48,6 +48,12 @@ struct LbGoto {
     LbTranslationHandler *translation = nullptr;
     const LbSimpleHttpResponse *response = nullptr;
 
+    /**
+     * Resolve this host name and connect to the resulting
+     * address.
+     */
+    const char *resolve_connect = nullptr;
+
     LbGoto() = default;
     LbGoto(LbCluster &_cluster):cluster(&_cluster) {}
     LbGoto(LbBranch &_branch):branch(&_branch) {}
@@ -58,7 +64,7 @@ struct LbGoto {
     bool IsDefined() const {
         return cluster != nullptr || branch != nullptr ||
             lua != nullptr || translation != nullptr ||
-            response != nullptr;
+            response != nullptr || resolve_connect != nullptr;
     }
 
     template<typename R>
