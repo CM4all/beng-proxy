@@ -353,6 +353,17 @@ The \verb|pools| table contains all configured \verb|pool|,
 code can direct the HTTP request into a \verb|branch| or into another
 Lua script.  Be careful to avoid loops!
 
+During development, it may be convenient to forward HTTP requests to
+dynamic workers (\textbf{never} use this feature on a production
+server, because it may cause severe performance problems):
+
+\begin{verbatim*}
+foo = pools['foo']
+function handle_request(r)
+   return r:resolve_connect('server.name:8080')
+end
+\end{verbatim*}
+
 Caution: while a Lua script runs, the whole \emph{beng-lb} process is
 blocked.  It is very easy to make \emph{beng-lb} unusable with a Lua
 script.  Each Lua invocation adds big amounts of overhead.  This

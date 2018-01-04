@@ -33,6 +33,7 @@
 #include "LuaHandler.hxx"
 #include "LuaGoto.hxx"
 #include "GotoConfig.hxx"
+#include "Goto.hxx"
 #include "http_server/Request.hxx"
 #include "HttpResponseHandler.hxx"
 #include "pool.hxx"
@@ -140,9 +141,26 @@ SendMessage(lua_State *L)
     return 0;
 }
 
+static int
+ResolveConnect(lua_State *L)
+{
+    if (lua_gettop(L) != 2)
+        return luaL_error(L, "Invalid parameters");
+
+    CastLuaRequestData(L, 1);
+
+    if (!lua_isstring(L, 2))
+        return luaL_argerror(L, 2, "String expected");
+
+    lua_newtable(L);
+    Lua::SetField(L, -2, "resolve_connect", Lua::StackIndex(2));
+    return 1;
+}
+
 static constexpr struct luaL_Reg request_methods [] = {
     {"get_header", GetHeader},
     {"send_message", SendMessage},
+    {"resolve_connect", ResolveConnect},
     {nullptr, nullptr}
 };
 
@@ -244,8 +262,22 @@ LbLuaHandler::HandleRequest(HttpServerRequest &request,
         return nullptr;
 
     const auto *g = CheckLuaGoto(L, -1);
-    if (g == nullptr)
-        throw std::runtime_error("Wrong return type from Lua handler");
+    if (g != nullptr)
+        return g;
 
-    return g;
+    if (lua_istable(L, -1)) {
+        lua_getfield(L, -1, "resolve_connect");
+        const char *resolve_connect = lua_tostring(L, -1);
+        if (resolve_connect != nullptr) {
+            /* allocate a LbGoto instance from the request pool */
+            auto *rg = NewFromPool<LbGoto>(request.pool);
+            rg->resolve_connect = p_strdup(request.pool, resolve_connect);
+            lua_pop(L, 1);
+            return rg;
+        }
+
+        lua_pop(L, 1);
+    }
+
+    throw std::runtime_error("Wrong return type from Lua handler");
 }
