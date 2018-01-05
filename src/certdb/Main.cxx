@@ -1034,25 +1034,30 @@ main(int argc, char **argv)
 try {
     ConstBuffer<const char *> args(argv + 1, argc - 1);
 
-    if (!args.empty() && strcmp(args.front(), "--progress") == 0) {
-        args.shift();
-        root_progress = WorkshopProgress(0, 100);
-    } else if (!args.empty() &&
-               strncmp(args.front(), "--progress=", 11) == 0) {
-        const char *range = args.front() + 11;
-        args.shift();
+    while (!args.empty() && *args.front() == '-') {
+        if (strcmp(args.front(), "--progress") == 0) {
+            args.shift();
+            root_progress = WorkshopProgress(0, 100);
+        } else if (strncmp(args.front(), "--progress=", 11) == 0) {
+            const char *range = args.front() + 11;
+            args.shift();
 
-        char *endptr;
-        unsigned min = strtoul(range, &endptr, 10);
-        if (endptr == range || *endptr != '-' || min > 100)
-            throw "Failed to parse progress range";
+            char *endptr;
+            unsigned min = strtoul(range, &endptr, 10);
+            if (endptr == range || *endptr != '-' || min > 100)
+                throw "Failed to parse progress range";
 
-        range = endptr + 1;
-        unsigned max = strtoul(range, &endptr, 10);
-        if (endptr == range || *endptr != 0 || max < min || max > 100)
-            throw "Failed to parse progress range";
+            range = endptr + 1;
+            unsigned max = strtoul(range, &endptr, 10);
+            if (endptr == range || *endptr != 0 || max < min || max > 100)
+                throw "Failed to parse progress range";
 
-        root_progress = WorkshopProgress(min, max);
+            root_progress = WorkshopProgress(min, max);
+        } else {
+            fprintf(stderr, "Unknown option: %s\n\n", args.front());
+            /* clear the list to trigger printing the usage */
+            args.size = 0;
+        }
     }
 
     if (args.empty()) {
