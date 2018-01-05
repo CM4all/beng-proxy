@@ -1053,6 +1053,9 @@ try {
                 throw "Failed to parse progress range";
 
             root_progress = WorkshopProgress(min, max);
+        } else if (strcmp(args.front(), "--workshop-control") == 0) {
+            args.shift();
+            root_progress.UseControlChannel();
         } else {
             fprintf(stderr, "Unknown option: %s\n\n", args.front());
             /* clear the list to trigger printing the usage */
@@ -1077,7 +1080,8 @@ try {
 
         fprintf(stderr, "\n"
                 "Global options:\n"
-                "  --progress[=MIN,MAX]  print Workshop job progress\n");
+                "  --progress[=MIN,MAX]  print Workshop job progress\n"
+                "  --workshop-control    use the Workshop contrl channel for progress\n");
 
         return EXIT_FAILURE;
     }

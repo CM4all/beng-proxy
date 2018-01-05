@@ -41,5 +41,8 @@ WorkshopProgress::operator()(int _value) noexcept
         return;
 
     const unsigned value = Scale(Clamp(_value));
-    printf("%u\n", value);
+    if (use_control_channel)
+        dprintf(3, "progress %u", value);
+    else
+        printf("%u\n", value);
 }

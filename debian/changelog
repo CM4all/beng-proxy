@@ -2,6 +2,7 @@ cm4all-beng-proxy (14.0.1) unstable; urgency=low
 
   * lb: forward HTTP from Lua to dynamic server (development feature)
   * certdb: retry ACME requests after status 5xx (server error)
+  * certdb: support the Workshop control channel
   * log-json: generate JSONL (JSON Lines)
 
  --   

@@ -43,6 +43,8 @@
 class WorkshopProgress {
     unsigned min = 0, max = 0;
 
+    bool use_control_channel = false;
+
 public:
     WorkshopProgress() = default;
 
@@ -51,7 +53,15 @@ public:
 
     constexpr WorkshopProgress(WorkshopProgress parent,
                                unsigned _min, unsigned _max)
-        :min(parent.Scale(_min)), max(parent.Scale(_max)) {}
+        :min(parent.Scale(_min)), max(parent.Scale(_max)),
+         use_control_channel(parent.use_control_channel) {}
+
+    /**
+     * Send progress to the Workshop control channel on fd=3.
+     */
+    void UseControlChannel() {
+        use_control_channel = true;
+    }
 
     bool IsEnabled() const {
         return min < max;
