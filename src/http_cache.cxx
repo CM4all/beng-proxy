@@ -481,7 +481,7 @@ HttpCacheRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
 
         cache.requests.push_front(*this);
 
-        sink_rubber_new(pool, istream_tee_second(*tee),
+        sink_rubber_new(pool, UnusedIstreamPtr(&istream_tee_second(*tee)),
                         *cache.rubber, cacheable_size_limit,
                         *this,
                         cancel_ptr);

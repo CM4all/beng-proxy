@@ -473,7 +473,7 @@ nfs_cache_file_open(struct pool &pool, NfsCache &cache,
 
     store->timeout_event.Add(nfs_cache_timeout);
 
-    sink_rubber_new(*pool2, istream_tee_second(*tee),
+    sink_rubber_new(*pool2, UnusedIstreamPtr(&istream_tee_second(*tee)),
                     cache.rubber, cacheable_size_limit,
                     *store,
                     store->cancel_ptr);

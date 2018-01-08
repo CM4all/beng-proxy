@@ -32,6 +32,7 @@
 
 #include "sink_rubber.hxx"
 #include "istream/Sink.hxx"
+#include "istream/UnusedPtr.hxx"
 #include "rubber.hxx"
 #include "pool.hxx"
 #include "util/Cancellable.hxx"
@@ -52,11 +53,12 @@ class RubberSink final : IstreamSink, Cancellable {
     RubberSinkHandler &handler;
 
 public:
+    template<typename I>
     RubberSink(Rubber &_rubber, unsigned _rubber_id, size_t _max_size,
                RubberSinkHandler &_handler,
-               Istream &_input,
+               I &&_input,
                CancellablePointer &cancel_ptr)
-        :IstreamSink(_input, FD_ANY),
+        :IstreamSink(std::forward<I>(_input), FD_ANY),
          rubber(_rubber), rubber_id(_rubber_id), max_size(_max_size),
          handler(_handler) {
         cancel_ptr = *this;
@@ -212,14 +214,14 @@ RubberSink::Cancel() noexcept
  */
 
 void
-sink_rubber_new(struct pool &pool, Istream &input,
+sink_rubber_new(struct pool &pool, UnusedIstreamPtr input,
                 Rubber &rubber, size_t max_size,
                 RubberSinkHandler &handler,
                 CancellablePointer &cancel_ptr)
 {
     const off_t available = input.GetAvailable(true);
     if (available > (off_t)max_size) {
-        input.CloseUnused();
+        input.Clear();
         handler.RubberTooLarge();
         return;
     }
@@ -228,7 +230,7 @@ sink_rubber_new(struct pool &pool, Istream &input,
     assert(size == -1 || size >= available);
     assert(size <= (off_t)max_size);
     if (size == 0) {
-        input.CloseUnused();
+        input.Clear();
         handler.RubberDone(0, 0);
         return;
     }
@@ -239,12 +241,12 @@ sink_rubber_new(struct pool &pool, Istream &input,
 
     unsigned rubber_id = rubber.Add(allocate);
     if (rubber_id == 0) {
-        input.CloseUnused();
+        input.Clear();
         handler.RubberOutOfMemory();
         return;
     }
 
     NewFromPool<RubberSink>(pool, rubber, rubber_id, allocate,
                             handler,
-                            input, cancel_ptr);
+                            std::move(input), cancel_ptr);
 }
