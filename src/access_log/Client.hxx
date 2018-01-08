@@ -61,7 +61,9 @@ public:
 
     void Begin() {
         position = 0;
-        Append(&Net::Log::MAGIC_V1, sizeof(Net::Log::MAGIC_V1));
+
+        static constexpr uint32_t magic = ToBE32(Net::Log::MAGIC_V2);
+        Append(&magic, sizeof(magic));
     }
 
     void Append(const void *p, size_t size) {

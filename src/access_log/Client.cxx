@@ -32,6 +32,7 @@
 
 #include "Client.hxx"
 #include "net/log/Datagram.hxx"
+#include "net/log/Crc.hxx"
 
 #include <assert.h>
 #include <sys/socket.h>
@@ -68,9 +69,20 @@ LogClient::Commit()
     assert(fd.IsDefined());
     assert(position > 0);
 
-    if (position > sizeof(buffer))
+    if (position + sizeof(Net::Log::Crc::value_type) > sizeof(buffer))
         /* datagram is too large */
         return false;
+
+    {
+        Net::Log::Crc crc;
+        crc.reset();
+        crc.process_bytes(buffer + sizeof(Net::Log::MAGIC_V2),
+                          position - sizeof(Net::Log::MAGIC_V2));
+
+        const uint32_t crc_be = ToBE32(crc.checksum());
+        memcpy(buffer + position, &crc_be, sizeof(crc_be));
+        position += sizeof(crc_be);
+    }
 
     ssize_t nbytes = send(fd.Get(), buffer, position,
                           MSG_DONTWAIT|MSG_NOSIGNAL);
