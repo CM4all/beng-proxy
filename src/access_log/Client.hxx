@@ -87,6 +87,11 @@ public:
         AppendAttribute(attribute, &value2, sizeof(value2));
     }
 
+    void AppendU32(Net::Log::Attribute attribute, uint32_t value) {
+        const uint32_t value2 = ToBE32(value);
+        AppendAttribute(attribute, &value2, sizeof(value2));
+    }
+
     void AppendU64(Net::Log::Attribute attribute, uint64_t value) {
         const uint64_t value2 = ToBE64(value);
         AppendAttribute(attribute, &value2, sizeof(value2));
