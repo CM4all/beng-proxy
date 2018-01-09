@@ -492,14 +492,14 @@ FilterCacheRequest::OnHttpResponse(http_status_t status, StringMap &&headers,
 
         /* tee the body: one goes to our client, and one goes into the
            cache */
-        auto *tee = istream_tee_new(pool, std::move(body),
-                                    cache.event_loop,
-                                    false, false,
-                                    /* just in case our handler closes
-                                       the body without looking at it:
-                                       defer an Istream::Read() call
-                                       for the Rubber sink */
-                                    true);
+        auto tee = istream_tee_new(pool, std::move(body),
+                                   cache.event_loop,
+                                   false, false,
+                                   /* just in case our handler closes
+                                      the body without looking at it:
+                                      defer an Istream::Read() call
+                                      for the Rubber sink */
+                                   true);
 
         response.status = status;
         response.headers = strmap_dup(&pool, &headers);
@@ -508,12 +508,12 @@ FilterCacheRequest::OnHttpResponse(http_status_t status, StringMap &&headers,
 
         timeout_event.Add(fcache_request_timeout);
 
-        sink_rubber_new(pool, UnusedIstreamPtr(&istream_tee_second(*tee)),
+        sink_rubber_new(pool, std::move(tee.second),
                         cache.rubber, cacheable_size_limit,
                         *this,
                         response.cancel_ptr);
 
-        body = UnusedIstreamPtr(tee);
+        body = std::move(tee.first);
     }
 
     handler.InvokeResponse(status, std::move(headers), std::move(body));

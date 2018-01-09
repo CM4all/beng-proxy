@@ -101,11 +101,11 @@ test_block1(EventLoop &event_loop)
     auto pool = pool_new_libc(nullptr, "test");
 
     Istream *delayed = istream_delayed_new(pool);
-    Istream *tee = istream_tee_new(*pool, UnusedIstreamPtr(delayed),
-                                   event_loop, false, false);
-    Istream *second = &istream_tee_second(*tee);
+    auto tee = istream_tee_new(*pool, UnusedIstreamPtr(delayed),
+                               event_loop, false, false);
+    auto *first = tee.first.Steal(), *second = tee.second.Steal();
 
-    tee->SetHandler(ctx);
+    first->SetHandler(ctx);
 
     NewStringSink(*pool, *second, buffer_callback, (Context *)&ctx, cancel_ptr);
     assert(ctx.value.empty());
@@ -127,7 +127,7 @@ test_block1(EventLoop &event_loop)
     /* close the blocking output, this should release the "tee"
        object and restart reading (into the second output) */
     assert(ctx.error == nullptr && !ctx.eof);
-    tee->Close();
+    first->Close();
     event_loop.LoopOnceNonBlock();
 
     assert(ctx.error == nullptr && !ctx.eof);
@@ -143,12 +143,12 @@ test_close_data(EventLoop &event_loop, struct pool *pool)
     CancellablePointer cancel_ptr;
 
     pool = pool_new_libc(nullptr, "test");
-    Istream *tee =
+    auto tee =
         istream_tee_new(*pool, UnusedIstreamPtr(istream_string_new(pool, "foo")),
                         event_loop, false, false);
 
-    sink_close_new(*pool, *tee);
-    Istream *second = &istream_tee_second(*tee);
+    sink_close_new(*pool, *tee.first.Steal());
+    Istream *second = tee.second.Steal();
 
     NewStringSink(*pool, *second, buffer_callback, &ctx, cancel_ptr);
     assert(ctx.value.empty());
@@ -178,12 +178,11 @@ test_close_skipped(EventLoop &event_loop, struct pool *pool)
 
     pool = pool_new_libc(nullptr, "test");
     Istream *input = istream_string_new(pool, "foo");
-    Istream *tee = istream_tee_new(*pool, UnusedIstreamPtr(input),
-                                   event_loop, false, false);
-    NewStringSink(*pool, *tee, buffer_callback, &ctx, cancel_ptr);
+    auto tee = istream_tee_new(*pool, UnusedIstreamPtr(input),
+                               event_loop, false, false);
+    NewStringSink(*pool, *tee.first.Steal(), buffer_callback, &ctx, cancel_ptr);
 
-    Istream *second = &istream_tee_second(*tee);
-    sink_close_new(*pool, *second);
+    sink_close_new(*pool, *tee.second.Steal());
     pool_unref(pool);
 
     assert(ctx.value.empty());
@@ -201,28 +200,29 @@ test_error(EventLoop &event_loop, struct pool *pool,
            bool read_first)
 {
     pool = pool_new_libc(nullptr, "test");
-    Istream *tee =
+    auto tee =
         istream_tee_new(*pool, UnusedIstreamPtr(istream_fail_new(pool,
                                                                  std::make_exception_ptr(std::runtime_error("error")))),
                         event_loop,
                         false, false);
     pool_unref(pool);
 
+    auto *first_istream = tee.first.Steal();
     StatsIstreamHandler first;
     if (close_first)
-        tee->Close();
+        first_istream->Close();
     else
-        tee->SetHandler(first);
+        first_istream->SetHandler(first);
 
     StatsIstreamHandler second;
-    auto &tee2 = istream_tee_second(*tee);
+    auto &tee2 = *tee.second.Steal();
     if (close_second)
         tee2.Close();
     else
         tee2.SetHandler(second);
 
     if (read_first)
-        tee->Read();
+        first_istream->Read();
     else
         tee2.Read();
 
@@ -247,18 +247,19 @@ test_bucket_error(EventLoop &event_loop, struct pool *pool,
                   bool close_second_late)
 {
     pool = pool_new_libc(nullptr, "test");
-    Istream *tee =
+    auto tee =
         istream_tee_new(*pool, UnusedIstreamPtr(istream_fail_new(pool,
                                                                  std::make_exception_ptr(std::runtime_error("error")))),
                         event_loop,
                         false, false);
     pool_unref(pool);
 
+    auto *first_istream = tee.first.Steal();
     StatsIstreamHandler first;
-    tee->SetHandler(first);
+    first_istream->SetHandler(first);
 
     StatsIstreamHandler second;
-    auto &tee2 = istream_tee_second(*tee);
+    auto &tee2 = *tee.second.Steal();
     if (close_second_early)
         tee2.Close();
     else
@@ -267,7 +268,7 @@ test_bucket_error(EventLoop &event_loop, struct pool *pool,
     IstreamBucketList list;
 
     try {
-        tee->FillBucketList(list);
+        first_istream->FillBucketList(list);
         assert(false);
     } catch (...) {
         assert(strcmp(GetFullMessage(std::current_exception()).c_str(),

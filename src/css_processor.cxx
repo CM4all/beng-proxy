@@ -69,7 +69,8 @@ struct CssProcessor {
 
     UriRewrite uri_rewrite;
 
-    CssProcessor(struct pool &_pool, struct pool &_caller_pool, Istream &tee,
+    CssProcessor(struct pool &_pool, struct pool &_caller_pool,
+                 std::pair<UnusedIstreamPtr, UnusedIstreamPtr> &&tee,
                  Widget &_container,
                  struct processor_env &_env,
                  unsigned _options);
@@ -288,15 +289,15 @@ static constexpr CssParserHandler css_processor_parser_handler = {
 
 inline
 CssProcessor::CssProcessor(struct pool &_pool, struct pool &_caller_pool,
-                           Istream &tee,
+                           std::pair<UnusedIstreamPtr, UnusedIstreamPtr> &&tee,
                            Widget &_container,
                            struct processor_env &_env,
                            unsigned _options)
     :pool(_pool), caller_pool(_caller_pool),
      container(_container), env(_env),
      options(_options),
-     replace(*istream_replace_new(pool, istream_tee_second(tee))),
-     parser(css_parser_new(pool, tee, false,
+     replace(*istream_replace_new(pool, *tee.second.Steal())),
+     parser(css_parser_new(pool, *tee.first.Steal(), false,
                            css_processor_parser_handler, this)) {}
 
 UnusedIstreamPtr
@@ -307,11 +308,12 @@ css_processor(struct pool &caller_pool, UnusedIstreamPtr input,
 {
     struct pool *pool = pool_new_linear(&caller_pool, "css_processor", 32768);
 
-    Istream *tee = istream_tee_new(*pool, std::move(input),
-                                   *env.event_loop,
-                                   true, true);
+    auto tee = istream_tee_new(*pool, std::move(input),
+                               *env.event_loop,
+                               true, true);
 
-    auto processor = NewFromPool<CssProcessor>(*pool, *pool, caller_pool, *tee,
+    auto processor = NewFromPool<CssProcessor>(*pool, *pool, caller_pool,
+                                               std::move(tee),
                                                widget, env,
                                                options);
     pool_unref(pool);

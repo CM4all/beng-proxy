@@ -33,6 +33,8 @@
 #ifndef BENG_PROXY_ISTREAM_TEE_HXX
 #define BENG_PROXY_ISTREAM_TEE_HXX
 
+#include <utility>
+
 struct pool;
 class UnusedIstreamPtr;
 class Istream;
@@ -52,13 +54,10 @@ class EventLoop;
  * second output remains
  * @param defer_read schedule a deferred Istream::Read() call
  */
-Istream *
+std::pair<UnusedIstreamPtr, UnusedIstreamPtr>
 istream_tee_new(struct pool &pool, UnusedIstreamPtr input,
                 EventLoop &event_loop,
                 bool first_weak, bool second_weak,
                 bool defer_read=false);
-
-Istream &
-istream_tee_second(Istream &istream);
 
 #endif

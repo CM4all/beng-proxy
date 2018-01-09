@@ -465,25 +465,25 @@ nfs_cache_file_open(struct pool &pool, NfsCache &cache,
 
     /* tee the body: one goes to our client, and one goes into the
        cache */
-    auto *tee = istream_tee_new(*pool2, std::move(body),
-                                cache.event_loop,
-                                false, true,
-                                /* just in case our handler closes the
-                                   body without looking at it: defer
-                                   an Istream::Read() call for the
-                                   Rubber sink */
-                                true);
+    auto tee = istream_tee_new(*pool2, std::move(body),
+                               cache.event_loop,
+                               false, true,
+                               /* just in case our handler closes the
+                                  body without looking at it: defer
+                                  an Istream::Read() call for the
+                                  Rubber sink */
+                               true);
 
     cache.requests.push_back(*store);
 
     store->timeout_event.Add(nfs_cache_timeout);
 
-    sink_rubber_new(*pool2, UnusedIstreamPtr(&istream_tee_second(*tee)),
+    sink_rubber_new(*pool2, std::move(tee.second),
                     cache.rubber, cacheable_size_limit,
                     *store,
                     store->cancel_ptr);
 
-    return UnusedIstreamPtr(tee);
+    return std::move(tee.first);
 }
 
 UnusedIstreamPtr

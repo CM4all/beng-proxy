@@ -465,7 +465,7 @@ TeeIstream::SecondOutput::_Close() noexcept
  *
  */
 
-Istream *
+std::pair<UnusedIstreamPtr, UnusedIstreamPtr>
 istream_tee_new(struct pool &pool, UnusedIstreamPtr input,
                 EventLoop &event_loop,
                 bool first_weak, bool second_weak,
@@ -475,12 +475,6 @@ istream_tee_new(struct pool &pool, UnusedIstreamPtr input,
                                        event_loop,
                                        first_weak, second_weak,
                                        defer_read);
-    return &tee->first_output;
-}
-
-Istream &
-istream_tee_second(Istream &istream)
-{
-    auto &tee = TeeIstream::CastFromFirst(istream);
-    return tee.second_output;
+    return std::make_pair(UnusedIstreamPtr(&tee->first_output),
+                          UnusedIstreamPtr(&tee->second_output));
 }

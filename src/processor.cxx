@@ -375,16 +375,16 @@ processor_process(struct pool &caller_pool, UnusedIstreamPtr input,
     processor->lookup_id = nullptr;
 
     /* the text processor will expand entities */
-    Istream *tee = istream_tee_new(processor->pool,
-                                   text_processor(processor->pool,
-                                                  std::move(input),
-                                                  widget, env),
-                                   *env.event_loop,
-                                   true, true);
-    Istream *istream = &istream_tee_second(*tee);
-    processor->replace = istream_replace_new(processor->pool, *tee);
+    auto tee = istream_tee_new(processor->pool,
+                               text_processor(processor->pool,
+                                              std::move(input),
+                                              widget, env),
+                               *env.event_loop,
+                               true, true);
+    processor->replace = istream_replace_new(processor->pool,
+                                             *tee.first.Steal());
 
-    processor_parser_init(*processor, UnusedIstreamPtr(istream));
+    processor_parser_init(*processor, std::move(tee.second));
     pool_unref(&processor->pool);
 
     if (processor->HasOptionRewriteUrl()) {
