@@ -198,12 +198,14 @@ struct TeeIstream final : IstreamHandler {
     size_t skip = 0;
 
     TeeIstream(struct pool &p, UnusedIstreamPtr _input, EventLoop &event_loop,
-               bool first_weak, bool second_weak)
+               bool first_weak, bool second_weak, bool defer_read)
         :first_output(p, first_weak),
          second_output(p, second_weak),
          input(std::move(_input), *this),
          defer_event(event_loop, BIND_THIS_METHOD(ReadInput))
     {
+        if (defer_read)
+            DeferRead();
     }
 
     static TeeIstream &CastFromFirst(Istream &first) {
@@ -466,11 +468,13 @@ TeeIstream::SecondOutput::_Close() noexcept
 Istream *
 istream_tee_new(struct pool &pool, UnusedIstreamPtr input,
                 EventLoop &event_loop,
-                bool first_weak, bool second_weak)
+                bool first_weak, bool second_weak,
+                bool defer_read)
 {
     auto tee = NewFromPool<TeeIstream>(pool, pool, std::move(input),
                                        event_loop,
-                                       first_weak, second_weak);
+                                       first_weak, second_weak,
+                                       defer_read);
     return &tee->first_output;
 }
 
@@ -479,11 +483,4 @@ istream_tee_second(Istream &istream)
 {
     auto &tee = TeeIstream::CastFromFirst(istream);
     return tee.second_output;
-}
-
-void
-istream_tee_defer_read(Istream &istream) noexcept
-{
-    auto &tee = TeeIstream::CastFromFirst(istream);
-    return tee.DeferRead();
 }

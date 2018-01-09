@@ -50,19 +50,15 @@ class EventLoop;
  * first output remains
  * @param second_weak if true, closes the whole object if only the
  * second output remains
+ * @param defer_read schedule a deferred Istream::Read() call
  */
 Istream *
 istream_tee_new(struct pool &pool, UnusedIstreamPtr input,
                 EventLoop &event_loop,
-                bool first_weak, bool second_weak);
+                bool first_weak, bool second_weak,
+                bool defer_read=false);
 
 Istream &
 istream_tee_second(Istream &istream);
-
-/**
- * Schedule an Istream::Read() call.
- */
-void
-istream_tee_defer_read(Istream &istream) noexcept;
 
 #endif

@@ -467,7 +467,12 @@ nfs_cache_file_open(struct pool &pool, NfsCache &cache,
        cache */
     auto *tee = istream_tee_new(*pool2, std::move(body),
                                 cache.event_loop,
-                                false, true);
+                                false, true,
+                                /* just in case our handler closes the
+                                   body without looking at it: defer
+                                   an Istream::Read() call for the
+                                   Rubber sink */
+                                true);
 
     cache.requests.push_back(*store);
 
@@ -477,10 +482,6 @@ nfs_cache_file_open(struct pool &pool, NfsCache &cache,
                     cache.rubber, cacheable_size_limit,
                     *store,
                     store->cancel_ptr);
-
-    /* just in case our handler closes the body without looking at
-       it: defer an Istream::Read() call for the Rubber sink */
-    istream_tee_defer_read(*tee);
 
     return UnusedIstreamPtr(tee);
 }
