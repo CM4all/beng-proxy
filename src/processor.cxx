@@ -315,13 +315,13 @@ private:
     void Cancel() noexcept override;
 
     /* virtual methods from class XmlParserHandler */
-    bool OnXmlTagStart(const XmlParserTag &tag) override;
-    void OnXmlTagFinished(const XmlParserTag &tag) override;
-    void OnXmlAttributeFinished(const XmlParserAttribute &attr) override;
+    bool OnXmlTagStart(const XmlParserTag &tag) noexcept override;
+    void OnXmlTagFinished(const XmlParserTag &tag) noexcept override;
+    void OnXmlAttributeFinished(const XmlParserAttribute &attr) noexcept override;
     size_t OnXmlCdata(const char *p, size_t length, bool escaped,
-                      off_t start) override;
-    void OnXmlEof(off_t length) override;
-    void OnXmlError(std::exception_ptr ep) override;
+                      off_t start) noexcept override;
+    void OnXmlEof(off_t length) noexcept override;
+    void OnXmlError(std::exception_ptr ep) noexcept override;
 
     /**
      * Is this a tag which can have a link attribute?
@@ -654,7 +654,7 @@ XmlProcessor::OnStartElementInWidget(XmlParserTagType type,
 }
 
 bool
-XmlProcessor::OnXmlTagStart(const XmlParserTag &xml_tag)
+XmlProcessor::OnXmlTagStart(const XmlParserTag &xml_tag) noexcept
 {
     had_input = true;
 
@@ -1039,7 +1039,7 @@ XmlProcessor::HandleStyleAttribute(const XmlParserAttribute &attr) noexcept
 }
 
 void
-XmlProcessor::OnXmlAttributeFinished(const XmlParserAttribute &attr)
+XmlProcessor::OnXmlAttributeFinished(const XmlParserAttribute &attr) noexcept
 {
     had_input = true;
 
@@ -1321,7 +1321,7 @@ expansible_buffer_append_uri_escaped(ExpansibleBuffer &buffer,
 }
 
 void
-XmlProcessor::OnXmlTagFinished(const XmlParserTag &xml_tag)
+XmlProcessor::OnXmlTagFinished(const XmlParserTag &xml_tag) noexcept
 {
     had_input = true;
 
@@ -1431,7 +1431,7 @@ XmlProcessor::OnXmlTagFinished(const XmlParserTag &xml_tag)
 
 size_t
 XmlProcessor::OnXmlCdata(const char *p gcc_unused, size_t length,
-                         gcc_unused bool escaped, off_t start)
+                         gcc_unused bool escaped, off_t start) noexcept
 {
     had_input = true;
 
@@ -1447,7 +1447,7 @@ XmlProcessor::OnXmlCdata(const char *p gcc_unused, size_t length,
 }
 
 void
-XmlProcessor::OnXmlEof(gcc_unused off_t length)
+XmlProcessor::OnXmlEof(gcc_unused off_t length) noexcept
 {
     auto &widget_pool = container.pool;
 
@@ -1475,7 +1475,7 @@ XmlProcessor::OnXmlEof(gcc_unused off_t length)
 }
 
 void
-XmlProcessor::OnXmlError(std::exception_ptr ep)
+XmlProcessor::OnXmlError(std::exception_ptr ep) noexcept
 {
     auto &widget_pool = container.pool;
 

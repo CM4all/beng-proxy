@@ -48,24 +48,24 @@ static bool should_exit;
 class MyXmlParserHandler final : public XmlParserHandler {
 public:
     /* virtual methods from class XmlParserHandler */
-    bool OnXmlTagStart(gcc_unused const XmlParserTag &tag) override {
+    bool OnXmlTagStart(gcc_unused const XmlParserTag &tag) noexcept override {
         return false;
     }
 
-    void OnXmlTagFinished(gcc_unused const XmlParserTag &tag) override {}
-    void OnXmlAttributeFinished(gcc_unused const XmlParserAttribute &attr) override {}
+    void OnXmlTagFinished(gcc_unused const XmlParserTag &tag) noexcept override {}
+    void OnXmlAttributeFinished(gcc_unused const XmlParserAttribute &attr) noexcept override {}
 
     size_t OnXmlCdata(const char *p, size_t length, gcc_unused bool escaped,
-                      gcc_unused off_t start) override {
+                      gcc_unused off_t start) noexcept override {
         (void)write(1, p, length);
         return length;
     }
 
-    void OnXmlEof(gcc_unused off_t length) override {
+    void OnXmlEof(gcc_unused off_t length) noexcept override {
         should_exit = true;
     }
 
-    void OnXmlError(std::exception_ptr ep) override {
+    void OnXmlError(std::exception_ptr ep) noexcept override {
         fprintf(stderr, "ABORT: %s\n", GetFullMessage(ep).c_str());
         exit(2);
     }

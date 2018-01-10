@@ -121,24 +121,24 @@ public:
     XmlParserHandler &handler;
 
     XmlParser(struct pool &_pool, UnusedIstreamPtr _input,
-              XmlParserHandler &_handler)
+              XmlParserHandler &_handler) noexcept
         :IstreamSink(std::move(_input)), pool(&_pool),
          attr_value(*pool, 512, 8192),
          handler(_handler) {
         pool_ref(pool);
     }
 
-    bool IsDefined() const {
+    bool IsDefined() const noexcept {
         return input.IsDefined();
     }
 
-    void Read() {
+    void Read() noexcept {
         input.Read();
     }
 
     using IstreamSink::ClearAndCloseInput;
 
-    void InvokeAttributeFinished() {
+    void InvokeAttributeFinished() noexcept {
         attr.name = {attr_name, attr_name_length};
         attr.value = attr_value.ReadStringView();
 
@@ -146,7 +146,7 @@ public:
         PoisonUndefinedT(attr);
     }
 
-    size_t Feed(const char *start, size_t length);
+    size_t Feed(const char *start, size_t length) noexcept;
 
     /* virtual methods from class IstreamHandler */
 
@@ -173,7 +173,7 @@ public:
 };
 
 inline size_t
-XmlParser::Feed(const char *start, size_t length)
+XmlParser::Feed(const char *start, size_t length) noexcept
 {
     const char *buffer = start, *end = start + length, *p;
     size_t nbytes;
@@ -671,13 +671,13 @@ XmlParser::Feed(const char *start, size_t length)
 
 XmlParser *
 parser_new(struct pool &pool, UnusedIstreamPtr input,
-           XmlParserHandler &handler)
+           XmlParserHandler &handler) noexcept
 {
     return NewFromPool<XmlParser>(pool, pool, std::move(input), handler);
 }
 
 void
-parser_close(XmlParser *parser)
+parser_close(XmlParser *parser) noexcept
 {
     assert(parser != nullptr);
     assert(parser->IsDefined());
@@ -687,7 +687,7 @@ parser_close(XmlParser *parser)
 }
 
 void
-parser_read(XmlParser *parser)
+parser_read(XmlParser *parser) noexcept
 {
     assert(parser != nullptr);
     assert(parser->IsDefined());
@@ -696,7 +696,7 @@ parser_read(XmlParser *parser)
 }
 
 void
-parser_script(XmlParser *parser)
+parser_script(XmlParser *parser) noexcept
 {
     assert(parser != nullptr);
     assert(parser->state == XmlParser::State::NONE ||

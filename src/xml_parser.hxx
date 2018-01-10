@@ -70,33 +70,33 @@ public:
      * @return true if attributes should be parsed, false otherwise
      * (saves CPU cycles; OnXmlTagFinished() is not called)
      */
-    virtual bool OnXmlTagStart(const XmlParserTag &tag) = 0;
+    virtual bool OnXmlTagStart(const XmlParserTag &tag) noexcept = 0;
 
-    virtual void OnXmlTagFinished(const XmlParserTag &tag) = 0;
-    virtual void OnXmlAttributeFinished(const XmlParserAttribute &attr) = 0;
+    virtual void OnXmlTagFinished(const XmlParserTag &tag) noexcept = 0;
+    virtual void OnXmlAttributeFinished(const XmlParserAttribute &attr) noexcept = 0;
     virtual size_t OnXmlCdata(const char *p, size_t length, bool escaped,
-                              off_t start) = 0;
-    virtual void OnXmlEof(off_t length) = 0;
-    virtual void OnXmlError(std::exception_ptr ep) = 0;
+                              off_t start) noexcept = 0;
+    virtual void OnXmlEof(off_t length) noexcept = 0;
+    virtual void OnXmlError(std::exception_ptr ep) noexcept = 0;
 };
 
 class XmlParser;
 
 XmlParser *
 parser_new(struct pool &pool, UnusedIstreamPtr input,
-           XmlParserHandler &handler);
+           XmlParserHandler &handler) noexcept;
 
 /**
  * Close the parser object.  This function will not invoke
  * XmlParserHandler::OnXmlEof() and XmlParserHandler::OnXmlError().
  */
 void
-parser_close(XmlParser *parser);
+parser_close(XmlParser *parser) noexcept;
 
 void
-parser_read(XmlParser *parser);
+parser_read(XmlParser *parser) noexcept;
 
 void
-parser_script(XmlParser *parser);
+parser_script(XmlParser *parser) noexcept;
 
 #endif
