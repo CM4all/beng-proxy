@@ -31,7 +31,6 @@
  */
 
 #include "penv.hxx"
-#include "strmap.hxx"
 
 processor_env::processor_env(struct pool *_pool,
                              EventLoop &_event_loop,
@@ -56,7 +55,7 @@ processor_env::processor_env(struct pool *_pool,
     site_name(_site_name), untrusted_host(_untrusted_host),
     local_host(_local_host), remote_host(_remote_host),
     uri(_request_uri), absolute_uri(_absolute_uri), external_uri(_uri),
-    args(_args != nullptr ? _args : strmap_new(pool)),
+     args(_args),
     request_headers(_request_headers),
     session_cookie(_session_cookie),
      session_id(_session_id), realm(_realm) {}
