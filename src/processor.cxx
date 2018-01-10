@@ -230,6 +230,10 @@ struct XmlProcessor final : XmlParserHandler, Cancellable {
         pool_ref(&container.pool);
     }
 
+    void InitParser(UnusedIstreamPtr input) noexcept {
+        parser = parser_new(pool, std::move(input), *this);
+    }
+
     bool IsQuiet() const {
         return replace == nullptr;
     }
@@ -238,6 +242,7 @@ struct XmlProcessor final : XmlParserHandler, Cancellable {
         return (options & PROCESSOR_REWRITE_URL) != 0;
     }
 
+private:
     bool HasOptionPrefixClass() const {
         return (options & PROCESSOR_PREFIX_CSS_CLASS) != 0;
     }
@@ -254,7 +259,6 @@ struct XmlProcessor final : XmlParserHandler, Cancellable {
         return (options & PROCESSOR_STYLE) != 0;
     }
 
-private:
     void Replace(off_t start, off_t end, UnusedIstreamPtr istream) {
         istream_replace_add(*replace, start, end, std::move(istream));
     }
@@ -264,7 +268,6 @@ private:
         Replace(attr.value_start, attr.value_end, std::move(value));
     }
 
-public:
     void InitUriRewrite(enum tag _tag) {
         assert(!postponed_rewrite.pending);
 
@@ -272,7 +275,6 @@ public:
         uri_rewrite = default_uri_rewrite;
     }
 
-private:
     void PostponeUriRewrite(off_t start, off_t end,
                             const void *value, size_t length);
 
@@ -295,6 +297,10 @@ private:
     void HandleClassAttribute(const XmlParserAttribute &attr);
     void HandleIdAttribute(const XmlParserAttribute &attr);
     void HandleStyleAttribute(const XmlParserAttribute &attr);
+
+    bool OnProcessingInstruction(StringView name) noexcept;
+    bool OnStartElementInWidget(XmlParserTagType type,
+                                StringView name) noexcept;
 
     UnusedIstreamPtr EmbedWidget(Widget &child_widget);
     UnusedIstreamPtr OpenWidgetElement(Widget &child_widget);
@@ -353,9 +359,6 @@ XmlProcessor::Cancel() noexcept
  *
  */
 
-static void
-processor_parser_init(XmlProcessor &processor, UnusedIstreamPtr input);
-
 static XmlProcessor *
 processor_new(struct pool &caller_pool,
               Widget &widget,
@@ -386,8 +389,7 @@ processor_process(struct pool &caller_pool, UnusedIstreamPtr input,
                                true, true);
     processor->replace = istream_replace_new(processor->pool,
                                              *tee.first.Steal());
-
-    processor_parser_init(*processor, std::move(tee.second));
+    processor->InitParser(std::move(tee.second));
     pool_unref(&processor->pool);
 
     if (processor->HasOptionRewriteUrl()) {
@@ -429,7 +431,7 @@ processor_lookup_widget(struct pool &caller_pool,
 
     processor->replace = nullptr;
 
-    processor_parser_init(*processor, std::move(istream));
+    processor->InitParser(std::move(istream));
 
     processor->handler = &handler;
 
@@ -587,49 +589,46 @@ XmlProcessor::StartCdataIstream()
  *
  */
 
-static bool
-processor_processing_instruction(XmlProcessor *processor,
-                                 StringView name)
+bool
+XmlProcessor::OnProcessingInstruction(StringView name) noexcept
 {
-    if (!processor->IsQuiet() &&
-        processor->HasOptionRewriteUrl() &&
+    if (!IsQuiet() && HasOptionRewriteUrl() &&
         name.Equals("cm4all-rewrite-uri")) {
-        processor->InitUriRewrite(TAG_REWRITE_URI);
+        InitUriRewrite(TAG_REWRITE_URI);
         return true;
     }
 
     return false;
 }
 
-static bool
-parser_element_start_in_widget(XmlProcessor *processor,
-                               XmlParserTagType type,
-                               StringView name)
+inline bool
+XmlProcessor::OnStartElementInWidget(XmlParserTagType type,
+                                     StringView name) noexcept
 {
     if (type == XmlParserTagType::PI)
-        return processor_processing_instruction(processor, name);
+        return OnProcessingInstruction(name);
 
     if (name.StartsWith({"c:", 2}))
         name.skip_front(2);
 
     if (name.Equals("widget")) {
         if (type == XmlParserTagType::CLOSE)
-            processor->tag = TAG_WIDGET;
+            tag = TAG_WIDGET;
     } else if (name.Equals("path-info")) {
-        processor->tag = TAG_WIDGET_PATH_INFO;
+        tag = TAG_WIDGET_PATH_INFO;
     } else if (name.Equals("param") ||
                name.Equals("parameter")) {
-        processor->tag = TAG_WIDGET_PARAM;
-        processor->widget.param.name.Clear();
-        processor->widget.param.value.Clear();
+        tag = TAG_WIDGET_PARAM;
+        widget.param.name.Clear();
+        widget.param.value.Clear();
     } else if (name.Equals("header")) {
-        processor->tag = TAG_WIDGET_HEADER;
-        processor->widget.param.name.Clear();
-        processor->widget.param.value.Clear();
+        tag = TAG_WIDGET_HEADER;
+        widget.param.name.Clear();
+        widget.param.value.Clear();
     } else if (name.Equals("view")) {
-        processor->tag = TAG_WIDGET_VIEW;
+        tag = TAG_WIDGET_VIEW;
     } else {
-        processor->tag = TAG_IGNORE;
+        tag = TAG_IGNORE;
         return false;
     }
 
@@ -651,11 +650,10 @@ XmlProcessor::OnXmlTagStart(const XmlParserTag &xml_tag)
     tag = TAG_IGNORE;
 
     if (widget.widget != nullptr)
-        return parser_element_start_in_widget(this, xml_tag.type,
-                                              xml_tag.name);
+        return OnStartElementInWidget(xml_tag.type, xml_tag.name);
 
     if (xml_tag.type == XmlParserTagType::PI)
-        return processor_processing_instruction(this, xml_tag.name);
+        return OnProcessingInstruction(xml_tag.name);
 
     if (xml_tag.name.Equals("c:widget")) {
         if ((options & PROCESSOR_CONTAINER) == 0 ||
@@ -1499,11 +1497,4 @@ XmlProcessor::OnXmlError(std::exception_ptr ep)
     }
 
     pool_unref(&widget_pool);
-}
-
-static void
-processor_parser_init(XmlProcessor &processor, UnusedIstreamPtr input)
-{
-    processor.parser = parser_new(processor.pool, std::move(input),
-                                  processor);
 }
