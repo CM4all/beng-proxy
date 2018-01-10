@@ -280,9 +280,9 @@ do_rewrite_widget_uri(struct pool &pool, struct processor_env &env,
  */
 
 struct UriRewriter {
-    struct pool *pool;
-    struct processor_env *env;
-    Widget *widget;
+    struct pool &pool;
+    struct processor_env &env;
+    Widget &widget;
 
     /** the value passed to rewrite_widget_uri() */
     StringView value;
@@ -293,7 +293,7 @@ struct UriRewriter {
 
     const struct escape_class *escape;
 
-    Istream *delayed, *timeout;
+    Istream *const delayed, *const timeout;
 
     UriRewriter(struct pool &_pool,
                 struct processor_env &_env,
@@ -302,16 +302,16 @@ struct UriRewriter {
                 enum uri_mode _mode, bool _stateful,
                 const char *_view,
                 const struct escape_class *_escape) noexcept
-        :pool(&_pool), env(&_env), widget(&_widget),
-         value(DupBuffer(*pool, _value)),
+        :pool(_pool), env(_env), widget(_widget),
+         value(DupBuffer(pool, _value)),
          mode(_mode), stateful(_stateful),
          view(_view != nullptr
-              ? (*view != 0 ? p_strdup(pool, view) : "")
+              ? (*view != 0 ? p_strdup(&pool, view) : "")
               : nullptr),
          escape(_escape),
-         delayed(istream_delayed_new(pool)),
-         timeout(NewTimeoutIstream(*pool, *delayed,
-                                   *env->event_loop,
+         delayed(istream_delayed_new(&pool)),
+         timeout(NewTimeoutIstream(pool, *delayed,
+                                   *env.event_loop,
                                    inline_widget_body_timeout)) {}
 
     void ResolverCallback();
@@ -321,15 +321,15 @@ void
 UriRewriter::ResolverCallback()
 {
     bool escape_flag = false;
-    if (widget->cls != nullptr && widget->HasDefaultView()) {
+    if (widget.cls != nullptr && widget.HasDefaultView()) {
         const char *uri;
 
-        if (widget->session_sync_pending) {
-            RealmSessionLease session(env->session_id, env->realm);
+        if (widget.session_sync_pending) {
+            RealmSessionLease session(env.session_id, env.realm);
             if (session)
-                widget->LoadFromSession(*session);
+                widget.LoadFromSession(*session);
             else
-                widget->session_sync_pending = false;
+                widget.session_sync_pending = false;
         }
 
         struct pool_mark_state mark;
@@ -341,8 +341,7 @@ UriRewriter::ResolverCallback()
             value.data = unescaped;
         }
 
-        uri = do_rewrite_widget_uri(*pool, *env,
-                                    *widget,
+        uri = do_rewrite_widget_uri(pool, env, widget,
                                     value, mode, stateful,
                                     view);
 
@@ -357,12 +356,12 @@ UriRewriter::ResolverCallback()
 
     UnusedIstreamPtr istream;
     if (!value.empty()) {
-        istream = UnusedIstreamPtr(istream_memory_new(pool, value.data, value.size));
+        istream = UnusedIstreamPtr(istream_memory_new(&pool, value.data, value.size));
 
         if (escape_flag && escape != nullptr)
-            istream = istream_escape_new(*pool, std::move(istream), *escape);
+            istream = istream_escape_new(pool, std::move(istream), *escape);
     } else
-        istream = istream_null_new(*pool);
+        istream = istream_null_new(pool);
 
     istream_delayed_set(*delayed, std::move(istream));
     if (timeout->HasHandler())
