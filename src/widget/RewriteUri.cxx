@@ -295,6 +295,25 @@ struct UriRewriter {
 
     Istream *delayed, *timeout;
 
+    UriRewriter(struct pool &_pool,
+                struct processor_env &_env,
+                Widget &_widget,
+                StringView _value,
+                enum uri_mode _mode, bool _stateful,
+                const char *_view,
+                const struct escape_class *_escape) noexcept
+        :pool(&_pool), env(&_env), widget(&_widget),
+         value(DupBuffer(*pool, _value)),
+         mode(_mode), stateful(_stateful),
+         view(_view != nullptr
+              ? (*view != 0 ? p_strdup(pool, view) : "")
+              : nullptr),
+         escape(_escape),
+         delayed(istream_delayed_new(pool)),
+         timeout(NewTimeoutIstream(*pool, *delayed,
+                                   *env->event_loop,
+                                   inline_widget_body_timeout)) {}
+
     void ResolverCallback();
 };
 
@@ -411,22 +430,9 @@ rewrite_widget_uri(struct pool &pool,
 
         return istream;
     } else {
-        auto rwu = NewFromPool<UriRewriter>(pool);
-
-        rwu->pool = &pool;
-        rwu->env = &env;
-        rwu->widget = &widget;
-        rwu->value = DupBuffer(pool, value);
-        rwu->mode = mode;
-        rwu->stateful = stateful;
-        rwu->view = view != NULL
-            ? (*view != 0 ? p_strdup(&pool, view) : "")
-            : NULL;
-        rwu->escape = escape;
-        rwu->delayed = istream_delayed_new(&pool);
-        rwu->timeout = NewTimeoutIstream(pool, *rwu->delayed,
-                                         *env.event_loop,
-                                         inline_widget_body_timeout);
+        auto rwu = NewFromPool<UriRewriter>(pool, pool, env, widget,
+                                            value, mode, stateful,
+                                            view, escape);
 
         ResolveWidget(pool,
                       widget,
