@@ -1,0 +1,72 @@
+<p>
+    c:base=default
+    <meta property="og:url" content="meta_property.html/test">Default</meta>
+    <meta property="og:url" c:mode="direct" content="meta_property.html/test">mode=direct</meta>
+    <meta property="og:url" c:mode="focus" content="meta_property.html/test">mode=focus</meta>
+    <meta property="og:url" c:mode="partial" content="meta_property.html/test">mode=partial</meta>
+</p>
+
+<p>
+    tilde
+    <meta property="og:url" c:base="widget" content="~/meta_property.html/test">Default</meta>
+    <meta property="og:url" c:base="widget" c:mode="direct" content="~/meta_property.html/test">mode=direct</meta>
+    <meta property="og:url" c:base="widget" c:mode="focus" content="~/meta_property.html/test">mode=focus</meta>
+    <meta property="og:url" c:base="widget" c:mode="partial" content="~/meta_property.html/test">mode=partial</meta>
+</p>
+
+<p>
+    at (c:local=&c:local;)
+    <meta property="og:url" c:base="widget" content="@/foo">Default</meta>
+    <meta property="og:url" c:base="widget" c:mode="direct" content="@/foo">mode=direct</meta>
+    <meta property="og:url" c:base="widget" c:mode="focus" content="@/foo">mode=focus</meta>
+    <meta property="og:url" c:base="widget" c:mode="partial" content="@/foo">mode=partial</meta>
+</p>
+
+<p>
+    view
+    <meta property="og:url" c:base="widget" c:view="foo" content="~/meta_property.html/test">Default</meta>
+    <meta property="og:url" c:base="widget" c:view="foo" c:mode="direct" content="~/meta_property.html/test">mode=direct</meta>
+    <meta property="og:url" c:base="widget" c:view="foo" c:mode="focus" content="~/meta_property.html/test">mode=focus</meta>
+    <meta property="og:url" c:base="widget" c:view="foo" c:mode="partial" content="~/meta_property.html/test">mode=partial</meta>
+</p>
+
+<p>
+    c:base=template
+    <meta property="og:url" c:base="template" content="meta_property.html/test">Default</meta>
+    <meta property="og:url" c:base="template" c:mode="direct" content="meta_property.html/test">mode=direct</meta>
+    <meta property="og:url" c:base="template" c:mode="focus" content="meta_property.html/test">mode=focus</meta>
+    <meta property="og:url" c:base="template" c:mode="partial" content="meta_property.html/test">mode=partial</meta>
+</p>
+
+<p>
+    c:base=widget
+    <meta property="og:url" c:base="widget" content="meta_property.html/test">Default</meta>
+    <meta property="og:url" c:base="widget" c:mode="direct" content="meta_property.html/test">mode=direct</meta>
+    <meta property="og:url" c:base="widget" c:mode="focus" content="meta_property.html/test">mode=focus</meta>
+    <meta property="og:url" c:base="widget" c:mode="partial" content="meta_property.html/test">mode=partial</meta>
+</p>
+
+<p>
+    c:base=parent
+    <meta property="og:url" c:base="parent" content="nested_meta_property.html/test">Default</meta>
+    <meta property="og:url" c:base="parent" c:mode="direct" content="nested_meta_property.html/test">mode=direct</meta>
+    <meta property="og:url" c:base="parent" c:mode="focus" content="nested_meta_property.html/test">mode=focus</meta>
+    <meta property="og:url" c:base="parent" c:mode="partial" content="nested_meta_property.html/test">mode=partial</meta>
+</p>
+
+<p>
+    c:base=widget (swapped order)
+    <meta property="og:url" content="meta_property.html/test" c:base="widget">Default</meta>
+    <meta property="og:url" content="meta_property.html/test" c:base="widget" c:mode="direct">mode=direct</meta>
+    <meta property="og:url" content="meta_property.html/test" c:base="widget" c:mode="focus">mode=focus</meta>
+    <meta property="og:url" content="meta_property.html/test" c:base="widget" c:mode="partial">mode=partial</meta>
+</p>
+
+<?cm4all-rewrite-uri c:base="widget"?>
+<p>
+    c:base=widget (via processing instruction)
+    <meta property="og:url" content="meta_property.html/test">Default</meta>
+    <meta property="og:url" c:mode="direct" content="meta_property.html/test">mode=direct</meta>
+    <meta property="og:url" c:mode="focus" content="meta_property.html/test">mode=focus</meta>
+    <meta property="og:url" c:mode="partial" content="meta_property.html/test">mode=partial</meta>
+</p>
