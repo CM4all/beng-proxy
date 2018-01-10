@@ -48,20 +48,20 @@ struct Widget;
 struct StringView;
 struct escape_class;
 
-enum uri_mode {
-    URI_MODE_DIRECT,
-    URI_MODE_FOCUS,
-    URI_MODE_PARTIAL,
+enum class RewriteUriMode {
+    DIRECT,
+    FOCUS,
+    PARTIAL,
 
     /**
      * Embed the widget's HTTP response instead of generating an URI
      * to the widget server.
      */
-    URI_MODE_RESPONSE,
+    RESPONSE,
 };
 
 gcc_pure
-enum uri_mode
+RewriteUriMode
 parse_uri_mode(StringView s) noexcept;
 
 /**
@@ -77,7 +77,7 @@ rewrite_widget_uri(struct pool &pool,
                    struct tcache &translate_cache,
                    Widget &widget,
                    StringView value,
-                   enum uri_mode mode, bool stateful,
+                   RewriteUriMode mode, bool stateful,
                    const char *view,
                    const struct escape_class *escape) noexcept;
 

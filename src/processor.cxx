@@ -80,7 +80,7 @@ enum uri_base {
 
 struct uri_rewrite {
     enum uri_base base;
-    enum uri_mode mode;
+    RewriteUriMode mode;
 
     char view[64];
 };
@@ -297,7 +297,7 @@ private:
     void DeleteUriRewrite(off_t start, off_t end) noexcept;
 
     void TransformUriAttribute(const XmlParserAttribute &attr,
-                               enum uri_base base, enum uri_mode mode,
+                               enum uri_base base, RewriteUriMode mode,
                                const char *view) noexcept;
 
     bool LinkAttributeFinished(const XmlParserAttribute &attr) noexcept;
@@ -419,12 +419,12 @@ processor_process(struct pool &caller_pool, UnusedIstreamPtr input,
 
     if (processor->HasOptionRewriteUrl()) {
         processor->default_uri_rewrite.base = URI_BASE_TEMPLATE;
-        processor->default_uri_rewrite.mode = URI_MODE_PARTIAL;
+        processor->default_uri_rewrite.mode = RewriteUriMode::PARTIAL;
         processor->default_uri_rewrite.view[0] = 0;
 
         if (options & PROCESSOR_FOCUS_WIDGET) {
             processor->default_uri_rewrite.base = URI_BASE_WIDGET;
-            processor->default_uri_rewrite.mode = URI_MODE_FOCUS;
+            processor->default_uri_rewrite.mode = RewriteUriMode::FOCUS;
         }
     }
 
@@ -767,7 +767,7 @@ SplitString(StringView in, char separator,
 inline void
 XmlProcessor::TransformUriAttribute(const XmlParserAttribute &attr,
                                     enum uri_base base,
-                                    enum uri_mode mode,
+                                    RewriteUriMode mode,
                                     const char *view) noexcept
 {
     StringView value = attr.value;

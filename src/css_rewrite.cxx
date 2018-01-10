@@ -151,7 +151,7 @@ css_rewrite_block_uris(struct pool &pool,
             rewrite_widget_uri(pool, env, translate_cache,
                                widget,
                                {block.data + url->start, url->end - url->start},
-                               URI_MODE_PARTIAL, false, nullptr,
+                               RewriteUriMode::PARTIAL, false, nullptr,
                                escape);
         if (!value)
             continue;

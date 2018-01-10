@@ -53,19 +53,19 @@
 #include "util/StringView.hxx"
 #include "util/Cancellable.hxx"
 
-enum uri_mode
+RewriteUriMode
 parse_uri_mode(const StringView s) noexcept
 {
     if (s.Equals("direct"))
-        return URI_MODE_DIRECT;
+        return RewriteUriMode::DIRECT;
     else if (s.Equals("focus"))
-        return URI_MODE_FOCUS;
+        return RewriteUriMode::FOCUS;
     else if (s.Equals("partial"))
-        return URI_MODE_PARTIAL;
+        return RewriteUriMode::PARTIAL;
     else if (s.Equals("response"))
-        return URI_MODE_RESPONSE;
+        return RewriteUriMode::RESPONSE;
     else
-        return URI_MODE_PARTIAL;
+        return RewriteUriMode::PARTIAL;
 }
 
 /*
@@ -203,7 +203,7 @@ static const char *
 do_rewrite_widget_uri(struct pool &pool, struct processor_env &env,
                       Widget &widget,
                       StringView value,
-                      enum uri_mode mode, bool stateful,
+                      RewriteUriMode mode, bool stateful,
                       const char *view) noexcept
 {
     if (widget.cls->local_uri != nullptr &&
@@ -217,7 +217,7 @@ do_rewrite_widget_uri(struct pool &pool, struct processor_env &env,
     const char *frame = nullptr;
 
     switch (mode) {
-    case URI_MODE_DIRECT:
+    case RewriteUriMode::DIRECT:
         assert(widget.GetAddressView() != nullptr);
         if (!widget.GetAddressView()->address.IsHttp())
             /* the browser can only contact HTTP widgets directly */
@@ -225,11 +225,11 @@ do_rewrite_widget_uri(struct pool &pool, struct processor_env &env,
 
         return widget.AbsoluteUri(pool, stateful, value);
 
-    case URI_MODE_FOCUS:
+    case RewriteUriMode::FOCUS:
         frame = strmap_get_checked(env.args, "frame");
         break;
 
-    case URI_MODE_PARTIAL:
+    case RewriteUriMode::PARTIAL:
         frame = widget.GetIdPath();
 
         if (frame == nullptr)
@@ -237,7 +237,7 @@ do_rewrite_widget_uri(struct pool &pool, struct processor_env &env,
             return nullptr;
         break;
 
-    case URI_MODE_RESPONSE:
+    case RewriteUriMode::RESPONSE:
         assert(false);
         gcc_unreachable();
     }
@@ -289,7 +289,7 @@ class UriRewriter {
     /** the value passed to rewrite_widget_uri() */
     StringView value;
 
-    const enum uri_mode mode;
+    const RewriteUriMode mode;
     const bool stateful;
     const char *const view;
 
@@ -302,7 +302,7 @@ public:
                 struct processor_env &_env,
                 Widget &_widget,
                 StringView _value,
-                enum uri_mode _mode, bool _stateful,
+                RewriteUriMode _mode, bool _stateful,
                 const char *_view,
                 const struct escape_class *_escape) noexcept
         :pool(_pool), env(_env), widget(_widget),
@@ -394,7 +394,7 @@ rewrite_widget_uri(struct pool &pool,
                    struct tcache &translate_cache,
                    Widget &widget,
                    StringView value,
-                   enum uri_mode mode, bool stateful,
+                   RewriteUriMode mode, bool stateful,
                    const char *view,
                    const struct escape_class *escape) noexcept
 {
@@ -402,7 +402,7 @@ rewrite_widget_uri(struct pool &pool,
         /* can't rewrite if the specified URI is absolute */
         return nullptr;
 
-    if (mode == URI_MODE_RESPONSE) {
+    if (mode == RewriteUriMode::RESPONSE) {
         UnusedIstreamPtr istream(embed_inline_widget(pool, env, true,
                                                      widget));
         if (escape != nullptr)
