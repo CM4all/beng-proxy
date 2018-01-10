@@ -92,9 +92,11 @@ processor_subst_beng_widget(Istream &istream,
     istream_subst_add(istream, "&c:prefix;", widget.GetPrefix());
     istream_subst_add(istream, "&c:uri;", env.absolute_uri);
     istream_subst_add(istream, "&c:base;", base_uri(env.pool, env.uri));
-    istream_subst_add(istream, "&c:frame;", env.args->Get("frame"));
+    istream_subst_add(istream, "&c:frame;",
+                      strmap_get_checked(env.args, "frame"));
     istream_subst_add(istream, "&c:view;", widget.GetEffectiveView()->name);
-    istream_subst_add(istream, "&c:session;", env.args->Get("session"));
+    istream_subst_add(istream, "&c:session;",
+                      strmap_get_checked(env.args, "session"));
 }
 
 UnusedIstreamPtr
