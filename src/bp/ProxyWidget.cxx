@@ -58,6 +58,11 @@ struct ProxyWidget final : WidgetLookupHandler, HttpResponseHandler, Cancellable
     Request &request;
 
     /**
+     * The view name of the top widget.
+     */
+    const char *const view_name;
+
+    /**
      * The widget currently being processed.
      */
     Widget *widget;
@@ -71,7 +76,9 @@ struct ProxyWidget final : WidgetLookupHandler, HttpResponseHandler, Cancellable
 
     ProxyWidget(Request &_request, Widget &_widget,
                 const struct widget_ref *_ref)
-        :request(_request), widget(&_widget), ref(_ref) {
+        :request(_request),
+         view_name(request.args->Remove("view")),
+         widget(&_widget), ref(_ref) {
     }
 
     void Continue();
@@ -200,13 +207,11 @@ ProxyWidget::Continue()
                             &request.env,
                             *this, cancel_ptr);
     } else {
-        const struct processor_env *env = &request.env;
-
-        if (env->view_name != nullptr) {
+        if (view_name != nullptr) {
             /* the client can select the view; he can never explicitly
                select the default view */
             const WidgetView *view =
-                widget_class_view_lookup(widget->cls, env->view_name);
+                widget_class_view_lookup(widget->cls, view_name);
             if (view == nullptr || view->name == nullptr) {
                 widget->Cancel();
                 request.DispatchResponse(HTTP_STATUS_NOT_FOUND,

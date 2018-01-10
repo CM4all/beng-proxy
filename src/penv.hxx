@@ -71,11 +71,6 @@ struct processor_env {
     /** semicolon-arguments in the external URI */
     StringMap *args;
 
-    /**
-     * The view name of the top widget.
-     */
-    const char *view_name;
-
     const StringMap *request_headers;
 
     /**

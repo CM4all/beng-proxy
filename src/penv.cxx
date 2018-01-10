@@ -57,7 +57,6 @@ processor_env::processor_env(struct pool *_pool,
     local_host(_local_host), remote_host(_remote_host),
     uri(_request_uri), absolute_uri(_absolute_uri), external_uri(_uri),
     args(_args != nullptr ? _args : strmap_new(pool)),
-    view_name(args->Remove("view")),
     request_headers(_request_headers),
     session_cookie(_session_cookie),
      session_id(_session_id), realm(_realm) {}
