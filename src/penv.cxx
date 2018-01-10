@@ -32,8 +32,7 @@
 
 #include "penv.hxx"
 
-processor_env::processor_env(struct pool *_pool,
-                             EventLoop &_event_loop,
+processor_env::processor_env(EventLoop &_event_loop,
                              ResourceLoader &_resource_loader,
                              ResourceLoader &_filter_resource_loader,
                              const char *_site_name,
@@ -48,8 +47,7 @@ processor_env::processor_env(struct pool *_pool,
                              SessionId _session_id,
                              const char *_realm,
                              const StringMap *_request_headers)
-    :pool(_pool),
-     event_loop(&_event_loop),
+    :event_loop(&_event_loop),
      resource_loader(&_resource_loader),
      filter_resource_loader(&_filter_resource_loader),
     site_name(_site_name), untrusted_host(_untrusted_host),

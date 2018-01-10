@@ -203,7 +203,7 @@ assert_rewrite_check4(EventLoop &event_loop,
     session_id.Clear();
 
     FailingResourceLoader resource_loader;
-    struct processor_env env(widget_pool, event_loop,
+    struct processor_env env(event_loop,
                              resource_loader, resource_loader,
                              site_name, nullptr,
                              nullptr, nullptr,

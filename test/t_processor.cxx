@@ -144,7 +144,7 @@ TEST(Processor, Abort)
     session_id.Generate();
 
     FailingResourceLoader resource_loader;
-    struct processor_env env(pool, instance.event_loop,
+    struct processor_env env(instance.event_loop,
                              resource_loader, resource_loader,
                              nullptr, nullptr,
                              "localhost:8080",

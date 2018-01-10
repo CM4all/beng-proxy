@@ -80,7 +80,7 @@ base_uri(struct pool *pool, const char *absolute_uri)
 }
 
 static void
-processor_subst_beng_widget(Istream &istream,
+processor_subst_beng_widget(struct pool &pool, Istream &istream,
                             const Widget &widget,
                             const struct processor_env &env)
 {
@@ -91,7 +91,7 @@ processor_subst_beng_widget(Istream &istream,
     istream_subst_add(istream, "&c:path;", widget.GetIdPath());
     istream_subst_add(istream, "&c:prefix;", widget.GetPrefix());
     istream_subst_add(istream, "&c:uri;", env.absolute_uri);
-    istream_subst_add(istream, "&c:base;", base_uri(env.pool, env.uri));
+    istream_subst_add(istream, "&c:base;", base_uri(&pool, env.uri));
     istream_subst_add(istream, "&c:frame;",
                       strmap_get_checked(env.args, "frame"));
     istream_subst_add(istream, "&c:view;", widget.GetEffectiveView()->name);
@@ -104,6 +104,6 @@ text_processor(struct pool &pool, UnusedIstreamPtr input,
                const Widget &widget, const struct processor_env &env)
 {
     auto *subst = istream_subst_new(&pool, std::move(input));
-    processor_subst_beng_widget(*subst, widget, env);
+    processor_subst_beng_widget(pool, *subst, widget, env);
     return UnusedIstreamPtr(subst);
 }

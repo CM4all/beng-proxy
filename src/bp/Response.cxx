@@ -261,7 +261,7 @@ Request::InvokeXmlProcessor(http_status_t status,
     widget->for_focused.method = method;
     widget->for_focused.path_info = args->Remove("path");
 
-    env = processor_env(&pool, instance.event_loop,
+    env = processor_env(instance.event_loop,
                         *instance.cached_resource_loader,
                         *instance.filter_resource_loader,
                         connection.per_request.site_name,
@@ -350,8 +350,7 @@ Request::InvokeCssProcessor(http_status_t status,
     if (translate.response->uri != nullptr)
         dissected_uri.base = translate.response->uri;
 
-    env = processor_env(&pool,
-                        instance.event_loop,
+    env = processor_env(instance.event_loop,
                         *instance.cached_resource_loader,
                         *instance.filter_resource_loader,
                         translate.response->site,
@@ -420,8 +419,7 @@ Request::InvokeTextProcessor(http_status_t status,
     if (translate.response->uri != nullptr)
         dissected_uri.base = translate.response->uri;
 
-    env = processor_env(&pool,
-                        instance.event_loop,
+    env = processor_env(instance.event_loop,
                         *instance.cached_resource_loader,
                         *instance.filter_resource_loader,
                         translate.response->site,

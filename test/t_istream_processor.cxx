@@ -106,7 +106,7 @@ create_test(EventLoop &event_loop, struct pool *pool, Istream *input)
 
     static struct processor_env env;
     FailingResourceLoader resource_loader;
-    env = processor_env(pool, event_loop, resource_loader, resource_loader,
+    env = processor_env(event_loop, resource_loader, resource_loader,
                         nullptr, nullptr,
                         "localhost:8080",
                         "localhost:8080",

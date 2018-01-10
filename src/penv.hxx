@@ -43,8 +43,6 @@ class SessionLease;
 class RealmSessionLease;
 
 struct processor_env {
-    struct pool *pool;
-
     EventLoop *event_loop;
 
     ResourceLoader *resource_loader;
@@ -83,8 +81,7 @@ struct processor_env {
 
     processor_env() = default;
 
-    processor_env(struct pool *pool,
-                  EventLoop &_event_loop,
+    processor_env(EventLoop &_event_loop,
                   ResourceLoader &_resource_loader,
                   ResourceLoader &_filter_resource_loader,
                   const char *site_name,

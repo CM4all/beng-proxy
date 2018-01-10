@@ -120,7 +120,7 @@ try {
     session_id.Generate();
 
     FailingResourceLoader resource_loader;
-    struct processor_env env(instance.root_pool, instance.event_loop,
+    struct processor_env env(instance.event_loop,
                              resource_loader, resource_loader,
                              nullptr, nullptr,
                              "localhost:8080",

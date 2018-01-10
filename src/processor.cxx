@@ -209,9 +209,9 @@ struct XmlProcessor final : XmlParserHandler, Cancellable {
 
         ExpansibleBuffer params;
 
-        CurrentWidget(struct pool &processor_pool,
-                      struct processor_env &_env) noexcept
-            :pool(*_env.pool), param(processor_pool),
+        CurrentWidget(struct pool &widget_pool,
+                      struct pool &processor_pool) noexcept
+            :pool(widget_pool), param(processor_pool),
              params(processor_pool, 1024, 8192) {}
     } widget;
 
@@ -233,7 +233,7 @@ struct XmlProcessor final : XmlParserHandler, Cancellable {
          env(_env), options(_options),
          buffer(pool, 128, 2048),
          postponed_rewrite(pool),
-         widget(pool, env) {
+         widget(_widget.pool, pool) {
         pool_ref(&container.pool);
     }
 
