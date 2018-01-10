@@ -1022,8 +1022,8 @@ XmlProcessor::HandleStyleAttribute(const XmlParserAttribute &attr)
 /**
  * Is this a tag which can have a link attribute?
  */
-static bool
-is_link_tag(enum tag tag)
+static constexpr bool
+is_link_tag(enum tag tag) noexcept
 {
     return tag == TAG_A || tag == TAG_FORM ||
          tag == TAG_IMG || tag == TAG_SCRIPT ||
@@ -1034,8 +1034,8 @@ is_link_tag(enum tag tag)
 /**
  * Is this a HTML tag? (i.e. not a proprietary beng-proxy tag)
  */
-static bool
-is_html_tag(enum tag tag)
+static constexpr bool
+is_html_tag(enum tag tag) noexcept
 {
     return tag == TAG_OTHER || (is_link_tag(tag) && tag != TAG_REWRITE_URI);
 }
