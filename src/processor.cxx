@@ -182,7 +182,7 @@ struct XmlProcessor final : XmlParserHandler, Cancellable {
             off_t start, end;
         } delete_[4];
 
-        PostponedRewrite(struct pool &_pool)
+        PostponedRewrite(struct pool &_pool) noexcept
             :value(_pool, 1024, 8192) {}
     } postponed_rewrite;
 
@@ -203,7 +203,8 @@ struct XmlProcessor final : XmlParserHandler, Cancellable {
 
         ExpansibleBuffer params;
 
-        CurrentWidget(struct pool &processor_pool, struct processor_env &_env)
+        CurrentWidget(struct pool &processor_pool,
+                      struct processor_env &_env) noexcept
             :pool(*_env.pool), param(processor_pool),
              params(processor_pool, 1024, 8192) {}
     } widget;
@@ -220,7 +221,7 @@ struct XmlProcessor final : XmlParserHandler, Cancellable {
 
     XmlProcessor(struct pool &_pool, struct pool &_caller_pool,
                  Widget &_widget, struct processor_env &_env,
-                 unsigned _options)
+                 unsigned _options) noexcept
         :pool(_pool), caller_pool(_caller_pool),
          container(_widget),
          env(_env), options(_options),
@@ -234,41 +235,41 @@ struct XmlProcessor final : XmlParserHandler, Cancellable {
         parser = parser_new(pool, std::move(input), *this);
     }
 
-    bool IsQuiet() const {
+    bool IsQuiet() const noexcept {
         return replace == nullptr;
     }
 
-    bool HasOptionRewriteUrl() const {
+    bool HasOptionRewriteUrl() const noexcept {
         return (options & PROCESSOR_REWRITE_URL) != 0;
     }
 
 private:
-    bool HasOptionPrefixClass() const {
+    bool HasOptionPrefixClass() const noexcept {
         return (options & PROCESSOR_PREFIX_CSS_CLASS) != 0;
     }
 
-    bool HasOptionPrefixId() const {
+    bool HasOptionPrefixId() const noexcept {
         return (options & PROCESSOR_PREFIX_XML_ID) != 0;
     }
 
-    bool HasOptionPrefixAny() const {
+    bool HasOptionPrefixAny() const noexcept {
         return (options & (PROCESSOR_PREFIX_CSS_CLASS|PROCESSOR_PREFIX_XML_ID)) != 0;
     }
 
-    bool HasOptionStyle() const {
+    bool HasOptionStyle() const noexcept {
         return (options & PROCESSOR_STYLE) != 0;
     }
 
-    void Replace(off_t start, off_t end, UnusedIstreamPtr istream) {
+    void Replace(off_t start, off_t end, UnusedIstreamPtr istream) noexcept {
         istream_replace_add(*replace, start, end, std::move(istream));
     }
 
     void ReplaceAttributeValue(const XmlParserAttribute &attr,
-                               UnusedIstreamPtr value) {
+                               UnusedIstreamPtr value) noexcept {
         Replace(attr.value_start, attr.value_end, std::move(value));
     }
 
-    void InitUriRewrite(Tag _tag) {
+    void InitUriRewrite(Tag _tag) noexcept {
         assert(!postponed_rewrite.pending);
 
         tag = _tag;
@@ -276,39 +277,39 @@ private:
     }
 
     void PostponeUriRewrite(off_t start, off_t end,
-                            const void *value, size_t length);
+                            const void *value, size_t length) noexcept;
 
-    void PostponeUriRewrite(const XmlParserAttribute &attr) {
+    void PostponeUriRewrite(const XmlParserAttribute &attr) noexcept {
         PostponeUriRewrite(attr.value_start, attr.value_end,
                            attr.value.data, attr.value.size);
     }
 
-    void PostponeRefreshRewrite(const XmlParserAttribute &attr);
+    void PostponeRefreshRewrite(const XmlParserAttribute &attr) noexcept;
 
-    void CommitUriRewrite();
+    void CommitUriRewrite() noexcept;
 
-    void DeleteUriRewrite(off_t start, off_t end);
+    void DeleteUriRewrite(off_t start, off_t end) noexcept;
 
     void TransformUriAttribute(const XmlParserAttribute &attr,
                                enum uri_base base, enum uri_mode mode,
-                               const char *view);
+                               const char *view) noexcept;
 
-    bool LinkAttributeFinished(const XmlParserAttribute &attr);
-    void HandleClassAttribute(const XmlParserAttribute &attr);
-    void HandleIdAttribute(const XmlParserAttribute &attr);
-    void HandleStyleAttribute(const XmlParserAttribute &attr);
+    bool LinkAttributeFinished(const XmlParserAttribute &attr) noexcept;
+    void HandleClassAttribute(const XmlParserAttribute &attr) noexcept;
+    void HandleIdAttribute(const XmlParserAttribute &attr) noexcept;
+    void HandleStyleAttribute(const XmlParserAttribute &attr) noexcept;
 
     bool OnProcessingInstruction(StringView name) noexcept;
     bool OnStartElementInWidget(XmlParserTagType type,
                                 StringView name) noexcept;
 
-    UnusedIstreamPtr EmbedWidget(Widget &child_widget);
-    UnusedIstreamPtr OpenWidgetElement(Widget &child_widget);
+    UnusedIstreamPtr EmbedWidget(Widget &child_widget) noexcept;
+    UnusedIstreamPtr OpenWidgetElement(Widget &child_widget) noexcept;
     void WidgetElementFinished(const XmlParserTag &tag,
-                               Widget &child_widget);
+                               Widget &child_widget) noexcept;
 
-    Istream *StartCdataIstream();
-    void StopCdataIstream();
+    Istream *StartCdataIstream() noexcept;
+    void StopCdataIstream() noexcept;
 
     /* virtual methods from class Cancellable */
     void Cancel() noexcept override;
@@ -380,7 +381,7 @@ static XmlProcessor *
 processor_new(struct pool &caller_pool,
               Widget &widget,
               struct processor_env &env,
-              unsigned options)
+              unsigned options) noexcept
 {
     struct pool *pool = pool_new_linear(&caller_pool, "processor", 32768);
 
@@ -467,7 +468,7 @@ processor_lookup_widget(struct pool &caller_pool,
 
 void
 XmlProcessor::PostponeUriRewrite(off_t start, off_t end,
-                                 const void *value, size_t length)
+                                 const void *value, size_t length) noexcept
 {
     assert(start <= end);
 
@@ -490,7 +491,7 @@ XmlProcessor::PostponeUriRewrite(off_t start, off_t end,
 }
 
 void
-XmlProcessor::DeleteUriRewrite(off_t start, off_t end)
+XmlProcessor::DeleteUriRewrite(off_t start, off_t end) noexcept
 {
     if (!postponed_rewrite.pending) {
         /* no URI attribute found yet: delete immediately */
@@ -515,7 +516,7 @@ XmlProcessor::DeleteUriRewrite(off_t start, off_t end)
 }
 
 inline void
-XmlProcessor::PostponeRefreshRewrite(const XmlParserAttribute &attr)
+XmlProcessor::PostponeRefreshRewrite(const XmlParserAttribute &attr) noexcept
 {
     const auto end = attr.value.end();
     const char *p = attr.value.Find(';');
@@ -534,7 +535,7 @@ XmlProcessor::PostponeRefreshRewrite(const XmlParserAttribute &attr)
 }
 
 inline void
-XmlProcessor::CommitUriRewrite()
+XmlProcessor::CommitUriRewrite() noexcept
 {
     XmlParserAttribute uri_attribute;
     uri_attribute.value_start = postponed_rewrite.uri_start;
@@ -569,7 +570,7 @@ XmlProcessor::CommitUriRewrite()
  */
 
 void
-XmlProcessor::StopCdataIstream()
+XmlProcessor::StopCdataIstream() noexcept
 {
     if (tag != Tag::STYLE_PROCESS)
         return;
@@ -596,7 +597,7 @@ XmlProcessor::CdataIstream::_Close() noexcept
 }
 
 inline Istream *
-XmlProcessor::StartCdataIstream()
+XmlProcessor::StartCdataIstream() noexcept
 {
     return cdata_istream = NewFromPool<CdataIstream>(pool, *this);
 }
@@ -743,7 +744,7 @@ XmlProcessor::OnXmlTagStart(const XmlParserTag &xml_tag)
 
 static void
 SplitString(StringView in, char separator,
-            StringView &before, StringView &after)
+            StringView &before, StringView &after) noexcept
 {
     const char *x = in.Find(separator);
 
@@ -760,7 +761,7 @@ inline void
 XmlProcessor::TransformUriAttribute(const XmlParserAttribute &attr,
                                     enum uri_base base,
                                     enum uri_mode mode,
-                                    const char *view)
+                                    const char *view) noexcept
 {
     StringView value = attr.value;
     if (value.StartsWith({"mailto:", 7}))
@@ -842,7 +843,7 @@ XmlProcessor::TransformUriAttribute(const XmlParserAttribute &attr,
 
 static void
 parser_widget_attr_finished(Widget *widget,
-                            StringView name, StringView value)
+                            StringView name, StringView value) noexcept
 {
     if (name.Equals("type")) {
         widget->SetClassName(value);
@@ -866,7 +867,7 @@ parser_widget_attr_finished(Widget *widget,
 
 gcc_pure
 static enum uri_base
-parse_uri_base(StringView s)
+parse_uri_base(StringView s) noexcept
 {
     if (s.Equals("widget"))
         return URI_BASE_WIDGET;
@@ -879,7 +880,7 @@ parse_uri_base(StringView s)
 }
 
 inline bool
-XmlProcessor::LinkAttributeFinished(const XmlParserAttribute &attr)
+XmlProcessor::LinkAttributeFinished(const XmlParserAttribute &attr) noexcept
 {
     if (attr.name.Equals("c:base")) {
         uri_rewrite.base = parse_uri_base(attr.value);
@@ -920,7 +921,7 @@ XmlProcessor::LinkAttributeFinished(const XmlParserAttribute &attr)
 }
 
 static const char *
-find_underscore(const char *p, const char *end)
+find_underscore(const char *p, const char *end) noexcept
 {
     assert(p != nullptr);
     assert(end != nullptr);
@@ -944,7 +945,7 @@ find_underscore(const char *p, const char *end)
 }
 
 inline void
-XmlProcessor::HandleClassAttribute(const XmlParserAttribute &attr)
+XmlProcessor::HandleClassAttribute(const XmlParserAttribute &attr) noexcept
 {
     auto p = attr.value.begin();
     const auto end = attr.value.end();
@@ -997,7 +998,7 @@ XmlProcessor::HandleClassAttribute(const XmlParserAttribute &attr)
 }
 
 void
-XmlProcessor::HandleIdAttribute(const XmlParserAttribute &attr)
+XmlProcessor::HandleIdAttribute(const XmlParserAttribute &attr) noexcept
 {
     auto p = attr.value.begin();
     const auto end = attr.value.end();
@@ -1025,7 +1026,7 @@ XmlProcessor::HandleIdAttribute(const XmlParserAttribute &attr)
 }
 
 void
-XmlProcessor::HandleStyleAttribute(const XmlParserAttribute &attr)
+XmlProcessor::HandleStyleAttribute(const XmlParserAttribute &attr) noexcept
 {
     Istream *result =
         css_rewrite_block_uris(pool, env,
@@ -1184,7 +1185,7 @@ XmlProcessor::OnXmlAttributeFinished(const XmlParserAttribute &attr)
 }
 
 static std::exception_ptr
-widget_catch_callback(std::exception_ptr ep, void *ctx)
+widget_catch_callback(std::exception_ptr ep, void *ctx) noexcept
 {
     auto *widget = (Widget *)ctx;
 
@@ -1193,7 +1194,7 @@ widget_catch_callback(std::exception_ptr ep, void *ctx)
 }
 
 inline UnusedIstreamPtr
-XmlProcessor::EmbedWidget(Widget &child_widget)
+XmlProcessor::EmbedWidget(Widget &child_widget) noexcept
 {
     assert(child_widget.class_name != nullptr);
 
@@ -1248,7 +1249,7 @@ XmlProcessor::EmbedWidget(Widget &child_widget)
 }
 
 inline UnusedIstreamPtr
-XmlProcessor::OpenWidgetElement(Widget &child_widget)
+XmlProcessor::OpenWidgetElement(Widget &child_widget) noexcept
 {
     assert(child_widget.parent == &container);
 
@@ -1283,7 +1284,7 @@ XmlProcessor::OpenWidgetElement(Widget &child_widget)
 
 inline void
 XmlProcessor::WidgetElementFinished(const XmlParserTag &widget_tag,
-                                    Widget &child_widget)
+                                    Widget &child_widget) noexcept
 {
     auto istream = OpenWidgetElement(child_widget);
     assert(!istream || replace != nullptr);
@@ -1292,8 +1293,9 @@ XmlProcessor::WidgetElementFinished(const XmlParserTag &widget_tag,
         Replace(widget.start_offset, widget_tag.end, std::move(istream));
 }
 
+gcc_pure
 static bool
-header_name_valid(const char *name, size_t length)
+header_name_valid(const char *name, size_t length) noexcept
 {
     /* name must start with "X-" */
     if (length < 3 ||
@@ -1311,7 +1313,7 @@ header_name_valid(const char *name, size_t length)
 
 static void
 expansible_buffer_append_uri_escaped(ExpansibleBuffer &buffer,
-                                     StringView value)
+                                     StringView value) noexcept
 {
     char *escaped = (char *)p_malloc(tpool, value.size * 3);
     size_t length = uri_escape(escaped, StringView(value.data, value.size));
