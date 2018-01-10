@@ -115,7 +115,7 @@ create_test(EventLoop &event_loop, struct pool *pool, Istream *input)
                         &dissected_uri,
                         nullptr,
                         "bp_session", session->id, "foo",
-                        HTTP_METHOD_GET, nullptr);
+                        nullptr);
     session_put(session);
 
     return processor_process(*pool, UnusedIstreamPtr(input), *widget, env, PROCESSOR_CONTAINER).Steal();

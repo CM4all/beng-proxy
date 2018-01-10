@@ -131,7 +131,7 @@ try {
                              nullptr,
                              nullptr,
                              session_id, "foo",
-                             HTTP_METHOD_GET, nullptr);
+                             nullptr);
 
     auto result =
         processor_process(instance.root_pool,

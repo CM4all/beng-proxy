@@ -154,7 +154,7 @@ TEST(Processor, Abort)
                              &dissected_uri,
                              nullptr,
                              "bp_session", session_id, "foo",
-                             HTTP_METHOD_GET, nullptr);
+                             nullptr);
 
     CancellablePointer cancel_ptr;
     MyWidgetLookupHandler handler;

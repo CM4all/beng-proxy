@@ -258,6 +258,9 @@ Request::InvokeXmlProcessor(http_status_t status,
            HEAD to the processor */
         method = HTTP_METHOD_GET;
 
+    widget->for_focused.method = method;
+    widget->for_focused.path_info = args->Remove("path");
+
     env = processor_env(&pool, instance.event_loop,
                         *instance.cached_resource_loader,
                         *instance.filter_resource_loader,
@@ -273,7 +276,7 @@ Request::InvokeXmlProcessor(http_status_t status,
                         args,
                         session_cookie,
                         session_id, realm,
-                        method, &request.headers);
+                        &request.headers);
 
     if (proxy_ref != nullptr) {
         /* the client requests a widget in proxy mode */
@@ -363,7 +366,7 @@ Request::InvokeCssProcessor(http_status_t status,
                         args,
                         session_cookie,
                         session_id, realm,
-                        HTTP_METHOD_GET, &request.headers);
+                        &request.headers);
 
     response_body = css_processor(pool, std::move(response_body),
                                   *widget, env,
@@ -433,7 +436,7 @@ Request::InvokeTextProcessor(http_status_t status,
                         args,
                         session_cookie,
                         session_id, realm,
-                        HTTP_METHOD_GET, &request.headers);
+                        &request.headers);
 
     response_body = text_processor(pool, std::move(response_body),
                                    *widget, env);

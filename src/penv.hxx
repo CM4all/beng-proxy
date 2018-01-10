@@ -34,7 +34,6 @@
 #define BENG_PROXY_PROCESSOR_ENV_H
 
 #include "session_id.hxx"
-#include "http/Method.h"
 
 struct DissectedUri;
 class EventLoop;
@@ -73,19 +72,9 @@ struct processor_env {
     StringMap *args;
 
     /**
-     * The new path_info for the focused widget.
-     */
-    const char *path_info;
-
-    /**
      * The view name of the top widget.
      */
     const char *view_name;
-
-    /**
-     * The HTTP method of the original request.
-     */
-    http_method_t method;
 
     const StringMap *request_headers;
 
@@ -114,7 +103,6 @@ struct processor_env {
                   const char *session_cookie,
                   SessionId session_id,
                   const char *realm,
-                  http_method_t method,
                   const StringMap *request_headers);
 
     SessionLease GetSession() const;

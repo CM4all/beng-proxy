@@ -84,7 +84,7 @@ Widget::CopyFromRequest(struct processor_env &env)
 
     if (HasFocus()) {
         /* we're in focus.  forward query string and request body. */
-        from_request.path_info = env.path_info;
+        from_request.path_info = parent->for_focused.path_info;
         if (from_request.path_info != nullptr) {
             from_request.path_info =
                 uri_compress(*env.pool, from_request.path_info);
@@ -95,7 +95,7 @@ Widget::CopyFromRequest(struct processor_env &env)
 
         from_request.query_string = env.external_uri->query;
 
-        from_request.method = env.method;
+        from_request.method = parent->for_focused.method;
         from_request.body = std::move(parent->for_focused.body);
     } else if (DescendantHasFocus()) {
         /* we are the parent (or grant-parent) of the focused widget.

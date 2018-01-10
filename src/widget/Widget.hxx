@@ -190,7 +190,9 @@ struct Widget final
          */
         const struct widget_ref *focus_ref = nullptr;
 
-        /** the path_info provided by the browser (from processor_env.args) */
+        /**
+         * The new path_info for the focused widget.
+         */
         const char *path_info = nullptr;
 
         /** the query string provided by the browser (from
@@ -234,10 +236,20 @@ struct Widget final
      */
     struct {
         /**
+         * The new path_info for the focused widget.
+         */
+        const char *path_info = nullptr;
+
+        /**
          * The request body.  This must be closed if it failed to be
          * submitted to the focused widget.
          */
         UnusedIstreamPtr body;
+
+        /**
+         * The HTTP method to be invoked on the focused widget.
+         */
+        http_method_t method = HTTP_METHOD_GET;
     } for_focused;
 
 private:

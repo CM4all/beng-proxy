@@ -211,7 +211,6 @@ assert_rewrite_check4(EventLoop &event_loop,
                              &external_uri,
                              nullptr,
                              nullptr, session_id, "foo",
-                             HTTP_METHOD_GET,
                              nullptr);
 
     auto istream = rewrite_widget_uri(*pool, env, *(struct tcache *)0x1,
