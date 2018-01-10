@@ -254,6 +254,7 @@ struct XmlProcessor final : XmlParserHandler, Cancellable {
         return (options & PROCESSOR_STYLE) != 0;
     }
 
+private:
     void Replace(off_t start, off_t end, UnusedIstreamPtr istream) {
         istream_replace_add(*replace, start, end, std::move(istream));
     }
@@ -263,6 +264,7 @@ struct XmlProcessor final : XmlParserHandler, Cancellable {
         Replace(attr.value_start, attr.value_end, std::move(value));
     }
 
+public:
     void InitUriRewrite(enum tag _tag) {
         assert(!postponed_rewrite.pending);
 
@@ -270,6 +272,7 @@ struct XmlProcessor final : XmlParserHandler, Cancellable {
         uri_rewrite = default_uri_rewrite;
     }
 
+private:
     void PostponeUriRewrite(off_t start, off_t end,
                             const void *value, size_t length);
 
