@@ -62,7 +62,7 @@ struct CssProcessor {
     bool had_input;
 
     struct UriRewrite {
-        enum uri_mode mode;
+        RewriteUriMode mode;
 
         char view[64];
     };
@@ -179,7 +179,7 @@ css_processor_parser_block(void *ctx)
 {
     CssProcessor *processor = (CssProcessor *)ctx;
 
-    processor->uri_rewrite.mode = URI_MODE_PARTIAL;
+    processor->uri_rewrite.mode = RewriteUriMode::PARTIAL;
     processor->uri_rewrite.view[0] = 0;
 }
 
@@ -240,7 +240,7 @@ css_processor_parser_import(const CssParserValue *url, void *ctx)
                            *global_translate_cache,
                            processor->container,
                            url->value,
-                           URI_MODE_PARTIAL, false, nullptr,
+                           RewriteUriMode::PARTIAL, false, nullptr,
                            &css_escape_class);
     if (istream != nullptr)
         css_processor_replace_add(processor, url->start, url->end, istream);

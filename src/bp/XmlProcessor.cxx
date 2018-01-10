@@ -80,7 +80,7 @@ enum uri_base {
 
 struct uri_rewrite {
     enum uri_base base;
-    enum uri_mode mode;
+    RewriteUriMode mode;
 
     char view[64];
 };
@@ -285,8 +285,8 @@ struct XmlProcessor final : XmlParserHandler, Cancellable {
     void DeleteUriRewrite(off_t start, off_t end);
 
     void TransformUriAttribute(const XmlParserAttribute &attr,
-                               enum uri_base base, enum uri_mode mode,
-                               const char *view);
+                               enum uri_base base, RewriteUriMode mode,
+                               const char *view) noexcept;
 
     bool LinkAttributeFinished(const XmlParserAttribute &attr);
     void HandleClassAttribute(const XmlParserAttribute &attr);
@@ -389,12 +389,12 @@ processor_process(struct pool &caller_pool, Istream &input,
 
     if (processor->HasOptionRewriteUrl()) {
         processor->default_uri_rewrite.base = URI_BASE_TEMPLATE;
-        processor->default_uri_rewrite.mode = URI_MODE_PARTIAL;
+        processor->default_uri_rewrite.mode = RewriteUriMode::PARTIAL;
         processor->default_uri_rewrite.view[0] = 0;
 
         if (options & PROCESSOR_FOCUS_WIDGET) {
             processor->default_uri_rewrite.base = URI_BASE_WIDGET;
-            processor->default_uri_rewrite.mode = URI_MODE_FOCUS;
+            processor->default_uri_rewrite.mode = RewriteUriMode::FOCUS;
         }
     }
 
@@ -741,8 +741,8 @@ SplitString(StringView in, char separator,
 inline void
 XmlProcessor::TransformUriAttribute(const XmlParserAttribute &attr,
                                     enum uri_base base,
-                                    enum uri_mode mode,
-                                    const char *view)
+                                    RewriteUriMode mode,
+                                    const char *view) noexcept
 {
     StringView value = attr.value;
     if (value.StartsWith({"mailto:", 7}))

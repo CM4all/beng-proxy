@@ -74,10 +74,10 @@ widget_get_session(gcc_unused Widget *widget,
     return nullptr;
 }
 
-enum uri_mode
+RewriteUriMode
 parse_uri_mode(gcc_unused StringView s) noexcept
 {
-    return URI_MODE_DIRECT;
+    return RewriteUriMode::DIRECT;
 }
 
 Istream *
@@ -86,7 +86,7 @@ rewrite_widget_uri(gcc_unused struct pool &pool,
                    gcc_unused struct tcache &translate_cache,
                    gcc_unused Widget &widget,
                    gcc_unused StringView value,
-                   gcc_unused enum uri_mode mode,
+                   gcc_unused RewriteUriMode mode,
                    gcc_unused bool stateful,
                    gcc_unused const char *view,
                    gcc_unused const struct escape_class *escape) noexcept
