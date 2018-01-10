@@ -1043,49 +1043,48 @@ XmlProcessor::OnXmlAttributeFinished(const XmlParserAttribute &attr) noexcept
 {
     had_input = true;
 
-    if (!IsQuiet() &&
-        IsLink(tag) &&
-        LinkAttributeFinished(attr))
-        return;
+    if (!IsQuiet()) {
+        if (IsLink(tag) &&
+            LinkAttributeFinished(attr))
+            return;
 
-    if (!IsQuiet() &&
-        tag == Tag::META &&
-        attr.name.EqualsIgnoreCase("http-equiv") &&
-        attr.value.EqualsIgnoreCase("refresh")) {
-        /* morph Tag::META to Tag::META_REFRESH */
-        tag = Tag::META_REFRESH;
-        return;
-    }
+        if (tag == Tag::META &&
+            attr.name.EqualsIgnoreCase("http-equiv") &&
+            attr.value.EqualsIgnoreCase("refresh")) {
+            /* morph Tag::META to Tag::META_REFRESH */
+            tag = Tag::META_REFRESH;
+            return;
+        }
 
-    if (!IsQuiet() && HasOptionPrefixClass() &&
-        /* due to a limitation in the processor and istream_replace,
-           we cannot edit attributes followed by a URI attribute */
-        !postponed_rewrite.pending &&
-        IsHtml(tag) &&
-        attr.name.Equals("class")) {
-        HandleClassAttribute(attr);
-        return;
-    }
+        if (HasOptionPrefixClass() &&
+            /* due to a limitation in the processor and istream_replace,
+               we cannot edit attributes followed by a URI attribute */
+            !postponed_rewrite.pending &&
+            IsHtml(tag) &&
+            attr.name.Equals("class")) {
+            HandleClassAttribute(attr);
+            return;
+        }
 
-    if (!IsQuiet() &&
-        HasOptionPrefixId() &&
-        /* due to a limitation in the processor and istream_replace,
-           we cannot edit attributes followed by a URI attribute */
-        !postponed_rewrite.pending &&
-        IsHtml(tag) &&
-        (attr.name.Equals("id") || attr.name.Equals("for"))) {
-        HandleIdAttribute(attr);
-        return;
-    }
+        if (HasOptionPrefixId() &&
+            /* due to a limitation in the processor and istream_replace,
+               we cannot edit attributes followed by a URI attribute */
+            !postponed_rewrite.pending &&
+            IsHtml(tag) &&
+            (attr.name.Equals("id") || attr.name.Equals("for"))) {
+            HandleIdAttribute(attr);
+            return;
+        }
 
-    if (!IsQuiet() && HasOptionStyle() && HasOptionRewriteUrl() &&
-        /* due to a limitation in the processor and istream_replace,
-           we cannot edit attributes followed by a URI attribute */
-        !postponed_rewrite.pending &&
-        IsHtml(tag) &&
-        attr.name.Equals("style")) {
-        HandleStyleAttribute(attr);
-        return;
+        if (HasOptionStyle() && HasOptionRewriteUrl() &&
+            /* due to a limitation in the processor and istream_replace,
+               we cannot edit attributes followed by a URI attribute */
+            !postponed_rewrite.pending &&
+            IsHtml(tag) &&
+            attr.name.Equals("style")) {
+            HandleStyleAttribute(attr);
+            return;
+        }
     }
 
     switch (tag) {
