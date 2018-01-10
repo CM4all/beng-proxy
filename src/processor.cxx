@@ -136,6 +136,12 @@ struct XmlProcessor final : XmlParserHandler, Cancellable {
         META_REFRESH,
 
         /**
+         * A "meta" element whose "content" attribute contains a URL
+         * to be rewritten, e.g. <meta property="og:image" content="...">
+         */
+        META_URI_CONTENT,
+
+        /**
          * The "style" element.  This value later morphs into
          * #STYLE_PROCESS if #PROCESSOR_STYLE is enabled.
          */
@@ -330,6 +336,7 @@ private:
         return tag == Tag::A || tag == Tag::FORM ||
             tag == Tag::IMG || tag == Tag::SCRIPT ||
             tag == Tag::META || tag == Tag::META_REFRESH ||
+            tag == Tag::META_URI_CONTENT ||
             tag == Tag::PARAM || tag == Tag::REWRITE_URI;
     }
 
@@ -1038,6 +1045,28 @@ XmlProcessor::HandleStyleAttribute(const XmlParserAttribute &attr) noexcept
         ReplaceAttributeValue(attr, UnusedIstreamPtr(result));
 }
 
+gcc_pure
+static bool
+IsMetaPropertyWithLink(StringView property) noexcept
+{
+    return property.StartsWith("og:") &&
+        (property.EndsWith(":url") ||
+         property.Equals("og:image") ||
+         property.Equals("og:audio") ||
+         property.Equals("og:video"));
+}
+
+/**
+ * Does this attribute indicate that the "meta" element contains an
+ * URI in the "content" attribute?
+ */
+gcc_pure
+static bool
+IsMetaWithUriContent(StringView name, StringView value) noexcept
+{
+    return name.EqualsIgnoreCase("property") && IsMetaPropertyWithLink(value);
+}
+
 void
 XmlProcessor::OnXmlAttributeFinished(const XmlParserAttribute &attr) noexcept
 {
@@ -1053,6 +1082,12 @@ XmlProcessor::OnXmlAttributeFinished(const XmlParserAttribute &attr) noexcept
             attr.value.EqualsIgnoreCase("refresh")) {
             /* morph Tag::META to Tag::META_REFRESH */
             tag = Tag::META_REFRESH;
+            return;
+        }
+
+        if (tag == Tag::META && IsMetaWithUriContent(attr.name, attr.value)) {
+            /* morph Tag::META to Tag::META_URI_CONTENT */
+            tag = Tag::META_URI_CONTENT;
             return;
         }
 
@@ -1173,6 +1208,11 @@ XmlProcessor::OnXmlAttributeFinished(const XmlParserAttribute &attr) noexcept
     case Tag::META_REFRESH:
         if (attr.name.EqualsIgnoreCase("content"))
             PostponeRefreshRewrite(attr);
+        break;
+
+    case Tag::META_URI_CONTENT:
+        if (attr.name.EqualsIgnoreCase("content"))
+            PostponeUriRewrite(attr);
         break;
 
     case Tag::REWRITE_URI:
