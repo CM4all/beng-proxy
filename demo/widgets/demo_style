@@ -1,4 +1,4 @@
-server "http://cfatest01.intern.cm-ag/widgets/style.html"
+server "http://dory.intern.cm-ag/max/widgets/style.html"
 process
 process_style
 prefix_css_class

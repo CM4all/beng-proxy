@@ -1,2 +1,2 @@
-server "http://cfatest01.intern.cm-ag/widgets/refresh.html"
+server "http://dory.intern.cm-ag/max/widgets/refresh.html"
 process
