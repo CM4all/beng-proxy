@@ -314,6 +314,16 @@ struct UriRewriter {
                                    *env.event_loop,
                                    inline_widget_body_timeout)) {}
 
+    UnusedIstreamPtr Start(struct tcache &translate_cache) noexcept {
+        ResolveWidget(pool,
+                      widget,
+                      translate_cache,
+                      BIND_THIS_METHOD(ResolverCallback),
+                      istream_delayed_cancellable_ptr(*delayed));
+
+        return UnusedIstreamPtr(timeout);
+    }
+
     void ResolverCallback();
 };
 
@@ -433,11 +443,6 @@ rewrite_widget_uri(struct pool &pool,
                                             value, mode, stateful,
                                             view, escape);
 
-        ResolveWidget(pool,
-                      widget,
-                      translate_cache,
-                      BIND_METHOD(*rwu, &UriRewriter::ResolverCallback),
-                      istream_delayed_cancellable_ptr(*rwu->delayed));
-        return UnusedIstreamPtr(rwu->timeout);
+        return rwu->Start(translate_cache);
     }
 }
