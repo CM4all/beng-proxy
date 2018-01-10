@@ -279,7 +279,7 @@ do_rewrite_widget_uri(struct pool &pool, struct processor_env &env,
  *
  */
 
-struct UriRewriter {
+class UriRewriter {
     struct pool &pool;
     struct processor_env &env;
     Widget &widget;
@@ -295,6 +295,7 @@ struct UriRewriter {
 
     Istream *const delayed, *const timeout;
 
+public:
     UriRewriter(struct pool &_pool,
                 struct processor_env &_env,
                 Widget &_widget,
@@ -324,6 +325,7 @@ struct UriRewriter {
         return UnusedIstreamPtr(timeout);
     }
 
+private:
     void ResolverCallback();
 };
 
