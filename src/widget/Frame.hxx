@@ -50,8 +50,8 @@ class CancellablePointer;
  * host, session management).
  */
 void
-frame_top_widget(struct pool *pool, Widget *widget,
-                 struct processor_env *env,
+frame_top_widget(struct pool &pool, Widget &widget,
+                 struct processor_env &env,
                  HttpResponseHandler &_handler,
                  CancellablePointer &cancel_ptr);
 
@@ -61,8 +61,8 @@ frame_top_widget(struct pool *pool, Widget *widget,
  * host, session management).
  */
 void
-frame_parent_widget(struct pool *pool, Widget *widget, const char *id,
-                    struct processor_env *env,
+frame_parent_widget(struct pool &pool, Widget &widget, const char *id,
+                    struct processor_env &env,
                     WidgetLookupHandler &handler,
                     CancellablePointer &cancel_ptr);
 

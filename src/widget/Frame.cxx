@@ -48,81 +48,77 @@
 #include <assert.h>
 
 void
-frame_top_widget(struct pool *pool, Widget *widget,
-                 struct processor_env *env,
+frame_top_widget(struct pool &pool, Widget &widget,
+                 struct processor_env &env,
                  HttpResponseHandler &handler,
                  CancellablePointer &cancel_ptr)
 {
-    assert(widget != nullptr);
-    assert(widget->cls != nullptr);
-    assert(widget->HasDefaultView());
-    assert(widget->from_request.frame);
-    assert(env != nullptr);
+    assert(widget.cls != nullptr);
+    assert(widget.HasDefaultView());
+    assert(widget.from_request.frame);
 
-    if (!widget_check_approval(widget)) {
-        WidgetError error(*widget->parent, WidgetErrorCode::FORBIDDEN,
+    if (!widget_check_approval(&widget)) {
+        WidgetError error(*widget.parent, WidgetErrorCode::FORBIDDEN,
                           StringFormat<256>("widget '%s' is not allowed to embed widget '%s'",
-                                            widget->parent->GetLogName(),
-                                            widget->GetLogName()));
-        widget->Cancel();
+                                            widget.parent->GetLogName(),
+                                            widget.GetLogName()));
+        widget.Cancel();
         handler.InvokeError(std::make_exception_ptr(error));
         return;
     }
 
     try {
-        widget->CheckHost(env->untrusted_host, env->site_name);
+        widget.CheckHost(env.untrusted_host, env.site_name);
     } catch (...) {
-        WidgetError error(*widget, WidgetErrorCode::FORBIDDEN,
+        WidgetError error(widget, WidgetErrorCode::FORBIDDEN,
                           "Untrusted host");
-        widget->Cancel();
+        widget.Cancel();
         handler.InvokeError(NestException(std::current_exception(), error));
         return;
     }
 
-    if (widget->session_sync_pending) {
-        auto session = env->GetRealmSession();
+    if (widget.session_sync_pending) {
+        auto session = env.GetRealmSession();
         if (session)
-            widget->LoadFromSession(*session);
+            widget.LoadFromSession(*session);
         else
-            widget->session_sync_pending = false;
+            widget.session_sync_pending = false;
     }
 
-    widget_http_request(*pool, *widget, *env,
+    widget_http_request(pool, widget, env,
                         handler, cancel_ptr);
 }
 
 void
-frame_parent_widget(struct pool *pool, Widget *widget, const char *id,
-                    struct processor_env *env,
+frame_parent_widget(struct pool &pool, Widget &widget, const char *id,
+                    struct processor_env &env,
                     WidgetLookupHandler &handler,
                     CancellablePointer &cancel_ptr)
 {
-    assert(widget != nullptr);
-    assert(widget->cls != nullptr);
-    assert(widget->HasDefaultView());
-    assert(!widget->from_request.frame);
+    assert(widget.cls != nullptr);
+    assert(widget.HasDefaultView());
+    assert(!widget.from_request.frame);
     assert(id != nullptr);
-    assert(env != nullptr);
 
     try {
-        if (!widget->IsContainer()) {
+        if (!widget.IsContainer()) {
             /* this widget cannot possibly be the parent of a framed
                widget if it is not a container */
 
-            widget->Cancel();
+            widget.Cancel();
 
             throw WidgetError(WidgetErrorCode::NOT_A_CONTAINER,
                               "frame within non-container requested");
         }
 
-        if (!widget_check_approval(widget)) {
+        if (!widget_check_approval(&widget)) {
             char msg[256];
             snprintf(msg, sizeof(msg),
                      "widget '%s' is not allowed to embed widget '%s'",
-                     widget->parent->GetLogName(),
-                     widget->GetLogName());
+                     widget.parent->GetLogName(),
+                     widget.GetLogName());
 
-            widget->Cancel();
+            widget.Cancel();
 
             throw WidgetError(WidgetErrorCode::FORBIDDEN, msg);
         }
@@ -131,14 +127,14 @@ frame_parent_widget(struct pool *pool, Widget *widget, const char *id,
         return;
     }
 
-    if (widget->session_sync_pending) {
-        auto session = env->GetRealmSession();
+    if (widget.session_sync_pending) {
+        auto session = env.GetRealmSession();
         if (session)
-            widget->LoadFromSession(*session);
+            widget.LoadFromSession(*session);
         else
-            widget->session_sync_pending = false;
+            widget.session_sync_pending = false;
     }
 
-    widget_http_lookup(*pool, *widget, id, *env,
+    widget_http_lookup(pool, widget, id, env,
                        handler, cancel_ptr);
 }

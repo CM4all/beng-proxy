@@ -202,9 +202,9 @@ ProxyWidget::Continue()
     }
 
     if (ref != nullptr) {
-        frame_parent_widget(&request.pool, widget,
+        frame_parent_widget(request.pool, *widget,
                             ref->id,
-                            &request.env,
+                            request.env,
                             *this, cancel_ptr);
     } else {
         if (view_name != nullptr) {
@@ -239,8 +239,8 @@ ProxyWidget::Continue()
 
         widget->from_request.frame = true;
 
-        frame_top_widget(&request.pool, widget,
-                         &request.env,
+        frame_top_widget(request.pool, *widget,
+                         request.env,
                          *this,
                          cancel_ptr);
     }
