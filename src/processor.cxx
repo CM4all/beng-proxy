@@ -85,43 +85,6 @@ struct uri_rewrite {
     char view[64];
 };
 
-enum tag {
-    TAG_NONE,
-    TAG_IGNORE,
-    TAG_OTHER,
-    TAG_WIDGET,
-    TAG_WIDGET_PATH_INFO,
-    TAG_WIDGET_PARAM,
-    TAG_WIDGET_HEADER,
-    TAG_WIDGET_VIEW,
-    TAG_A,
-    TAG_FORM,
-    TAG_IMG,
-    TAG_SCRIPT,
-    TAG_PARAM,
-    TAG_REWRITE_URI,
-
-    /**
-     * The "meta" element.  This may morph into #TAG_META_REFRESH when
-     * an http-equiv="refresh" attribute is found.
-     */
-    TAG_META,
-
-    TAG_META_REFRESH,
-
-    /**
-     * The "style" element.  This value later morphs into
-     * #TAG_STYLE_PROCESS if #PROCESSOR_STYLE is enabled.
-     */
-    TAG_STYLE,
-
-    /**
-     * Only used when #PROCESSOR_STYLE is enabled.  If active, then
-     * CDATA is being fed into the CSS processor.
-     */
-    TAG_STYLE_PROCESS,
-};
-
 struct XmlProcessor final : XmlParserHandler, Cancellable {
     class CdataIstream final : public Istream {
         friend struct XmlProcessor;
@@ -148,7 +111,44 @@ struct XmlProcessor final : XmlParserHandler, Cancellable {
     XmlParser *parser;
     bool had_input;
 
-    enum tag tag = TAG_NONE;
+    enum class Tag {
+        NONE,
+        IGNORE,
+        OTHER,
+        WIDGET,
+        WIDGET_PATH_INFO,
+        WIDGET_PARAM,
+        WIDGET_HEADER,
+        WIDGET_VIEW,
+        A,
+        FORM,
+        IMG,
+        SCRIPT,
+        PARAM,
+        REWRITE_URI,
+
+        /**
+         * The "meta" element.  This may morph into #META_REFRESH when
+         * an http-equiv="refresh" attribute is found.
+         */
+        META,
+
+        META_REFRESH,
+
+        /**
+         * The "style" element.  This value later morphs into
+         * #STYLE_PROCESS if #PROCESSOR_STYLE is enabled.
+         */
+        STYLE,
+
+        /**
+         * Only used when #PROCESSOR_STYLE is enabled.  If active, then
+         * CDATA is being fed into the CSS processor.
+         */
+        STYLE_PROCESS,
+    };
+
+    Tag tag = Tag::NONE;
 
     struct uri_rewrite uri_rewrite;
 
@@ -268,7 +268,7 @@ private:
         Replace(attr.value_start, attr.value_end, std::move(value));
     }
 
-    void InitUriRewrite(enum tag _tag) {
+    void InitUriRewrite(Tag _tag) {
         assert(!postponed_rewrite.pending);
 
         tag = _tag;
@@ -321,6 +321,23 @@ private:
                       off_t start) override;
     void OnXmlEof(off_t length) override;
     void OnXmlError(std::exception_ptr ep) override;
+
+    /**
+     * Is this a tag which can have a link attribute?
+     */
+    static constexpr bool IsLink(Tag tag) noexcept {
+        return tag == Tag::A || tag == Tag::FORM ||
+            tag == Tag::IMG || tag == Tag::SCRIPT ||
+            tag == Tag::META || tag == Tag::META_REFRESH ||
+            tag == Tag::PARAM || tag == Tag::REWRITE_URI;
+    }
+
+    /**
+     * Is this a HTML tag? (i.e. not a proprietary beng-proxy tag)
+     */
+    static constexpr bool IsHtml(Tag tag) noexcept {
+        return tag == Tag::OTHER || (IsLink(tag) && tag != Tag::REWRITE_URI);
+    }
 };
 
 bool
@@ -554,17 +571,17 @@ XmlProcessor::CommitUriRewrite()
 void
 XmlProcessor::StopCdataIstream()
 {
-    if (tag != TAG_STYLE_PROCESS)
+    if (tag != Tag::STYLE_PROCESS)
         return;
 
     cdata_istream->DestroyEof();
-    tag = TAG_STYLE;
+    tag = Tag::STYLE;
 }
 
 void
 XmlProcessor::CdataIstream::_Read()
 {
-    assert(processor.tag == TAG_STYLE_PROCESS);
+    assert(processor.tag == Tag::STYLE_PROCESS);
 
     parser_read(processor.parser);
 }
@@ -572,9 +589,9 @@ XmlProcessor::CdataIstream::_Read()
 void
 XmlProcessor::CdataIstream::_Close() noexcept
 {
-    assert(processor.tag == TAG_STYLE_PROCESS);
+    assert(processor.tag == Tag::STYLE_PROCESS);
 
-    processor.tag = TAG_STYLE;
+    processor.tag = Tag::STYLE;
     Destroy();
 }
 
@@ -594,7 +611,7 @@ XmlProcessor::OnProcessingInstruction(StringView name) noexcept
 {
     if (!IsQuiet() && HasOptionRewriteUrl() &&
         name.Equals("cm4all-rewrite-uri")) {
-        InitUriRewrite(TAG_REWRITE_URI);
+        InitUriRewrite(Tag::REWRITE_URI);
         return true;
     }
 
@@ -613,22 +630,22 @@ XmlProcessor::OnStartElementInWidget(XmlParserTagType type,
 
     if (name.Equals("widget")) {
         if (type == XmlParserTagType::CLOSE)
-            tag = TAG_WIDGET;
+            tag = Tag::WIDGET;
     } else if (name.Equals("path-info")) {
-        tag = TAG_WIDGET_PATH_INFO;
+        tag = Tag::WIDGET_PATH_INFO;
     } else if (name.Equals("param") ||
                name.Equals("parameter")) {
-        tag = TAG_WIDGET_PARAM;
+        tag = Tag::WIDGET_PARAM;
         widget.param.name.Clear();
         widget.param.value.Clear();
     } else if (name.Equals("header")) {
-        tag = TAG_WIDGET_HEADER;
+        tag = Tag::WIDGET_HEADER;
         widget.param.name.Clear();
         widget.param.value.Clear();
     } else if (name.Equals("view")) {
-        tag = TAG_WIDGET_VIEW;
+        tag = Tag::WIDGET_VIEW;
     } else {
-        tag = TAG_IGNORE;
+        tag = Tag::IGNORE;
         return false;
     }
 
@@ -642,12 +659,12 @@ XmlProcessor::OnXmlTagStart(const XmlParserTag &xml_tag)
 
     StopCdataIstream();
 
-    if (tag == TAG_SCRIPT && !xml_tag.name.EqualsIgnoreCase("script"))
+    if (tag == Tag::SCRIPT && !xml_tag.name.EqualsIgnoreCase("script"))
         /* workaround for bugged scripts: ignore all closing tags
            except </SCRIPT> */
         return false;
 
-    tag = TAG_IGNORE;
+    tag = Tag::IGNORE;
 
     if (widget.widget != nullptr)
         return OnStartElementInWidget(xml_tag.type, xml_tag.name);
@@ -665,7 +682,7 @@ XmlProcessor::OnXmlTagStart(const XmlParserTag &xml_tag)
             return false;
         }
 
-        tag = TAG_WIDGET;
+        tag = Tag::WIDGET;
         widget.widget = NewFromPool<Widget>(widget.pool, widget.pool, nullptr);
         widget.params.Clear();
 
@@ -673,26 +690,26 @@ XmlProcessor::OnXmlTagStart(const XmlParserTag &xml_tag)
 
         return true;
     } else if (xml_tag.name.EqualsIgnoreCase("script")) {
-        InitUriRewrite(TAG_SCRIPT);
+        InitUriRewrite(Tag::SCRIPT);
         return true;
     } else if (!IsQuiet() && HasOptionStyle() &&
                xml_tag.name.EqualsIgnoreCase("style")) {
-        tag = TAG_STYLE;
+        tag = Tag::STYLE;
         return true;
     } else if (!IsQuiet() && HasOptionRewriteUrl()) {
         if (xml_tag.name.EqualsIgnoreCase("a")) {
-            InitUriRewrite(TAG_A);
+            InitUriRewrite(Tag::A);
             return true;
         } else if (xml_tag.name.EqualsIgnoreCase("link")) {
             /* this isn't actually an anchor, but we are only interested in
                the HREF attribute */
-            InitUriRewrite(TAG_A);
+            InitUriRewrite(Tag::A);
             return true;
         } else if (xml_tag.name.EqualsIgnoreCase("form")) {
-            InitUriRewrite(TAG_FORM);
+            InitUriRewrite(Tag::FORM);
             return true;
         } else if (xml_tag.name.EqualsIgnoreCase("img")) {
-            InitUriRewrite(TAG_IMG);
+            InitUriRewrite(Tag::IMG);
             return true;
         } else if (xml_tag.name.EqualsIgnoreCase("iframe") ||
                    xml_tag.name.EqualsIgnoreCase("embed") ||
@@ -700,26 +717,26 @@ XmlProcessor::OnXmlTagStart(const XmlParserTag &xml_tag)
                    xml_tag.name.EqualsIgnoreCase("audio")) {
             /* this isn't actually an IMG, but we are only interested
                in the SRC attribute */
-            InitUriRewrite(TAG_IMG);
+            InitUriRewrite(Tag::IMG);
             return true;
         } else if (xml_tag.name.EqualsIgnoreCase("param")) {
-            InitUriRewrite(TAG_PARAM);
+            InitUriRewrite(Tag::PARAM);
             return true;
         } else if (xml_tag.name.EqualsIgnoreCase("meta")) {
-            InitUriRewrite(TAG_META);
+            InitUriRewrite(Tag::META);
             return true;
         } else if (HasOptionPrefixAny()) {
-            tag = TAG_OTHER;
+            tag = Tag::OTHER;
             return true;
         } else {
-            tag = TAG_IGNORE;
+            tag = Tag::IGNORE;
             return false;
         }
     } else if (HasOptionPrefixAny()) {
-        tag = TAG_OTHER;
+        tag = Tag::OTHER;
         return true;
     } else {
-        tag = TAG_IGNORE;
+        tag = Tag::IGNORE;
         return false;
     }
 }
@@ -867,7 +884,7 @@ XmlProcessor::LinkAttributeFinished(const XmlParserAttribute &attr)
     if (attr.name.Equals("c:base")) {
         uri_rewrite.base = parse_uri_base(attr.value);
 
-        if (tag != TAG_REWRITE_URI)
+        if (tag != Tag::REWRITE_URI)
             DeleteUriRewrite(attr.name_start, attr.end);
         return true;
     }
@@ -875,7 +892,7 @@ XmlProcessor::LinkAttributeFinished(const XmlParserAttribute &attr)
     if (attr.name.Equals("c:mode")) {
         uri_rewrite.mode = parse_uri_mode(attr.value);
 
-        if (tag != TAG_REWRITE_URI)
+        if (tag != Tag::REWRITE_URI)
             DeleteUriRewrite(attr.name_start, attr.end);
         return true;
     }
@@ -886,7 +903,7 @@ XmlProcessor::LinkAttributeFinished(const XmlParserAttribute &attr)
                attr.value.data, attr.value.size);
         uri_rewrite.view[attr.value.size] = 0;
 
-        if (tag != TAG_REWRITE_URI)
+        if (tag != Tag::REWRITE_URI)
             DeleteUriRewrite(attr.name_start, attr.end);
 
         return true;
@@ -894,7 +911,7 @@ XmlProcessor::LinkAttributeFinished(const XmlParserAttribute &attr)
 
     if (attr.name.Equals("xmlns:c")) {
         /* delete "xmlns:c" attributes */
-        if (tag != TAG_REWRITE_URI)
+        if (tag != Tag::REWRITE_URI)
             DeleteUriRewrite(attr.name_start, attr.end);
         return true;
     }
@@ -1020,43 +1037,22 @@ XmlProcessor::HandleStyleAttribute(const XmlParserAttribute &attr)
         ReplaceAttributeValue(attr, UnusedIstreamPtr(result));
 }
 
-/**
- * Is this a tag which can have a link attribute?
- */
-static constexpr bool
-is_link_tag(enum tag tag) noexcept
-{
-    return tag == TAG_A || tag == TAG_FORM ||
-         tag == TAG_IMG || tag == TAG_SCRIPT ||
-        tag == TAG_META || tag == TAG_META_REFRESH ||
-        tag == TAG_PARAM || tag == TAG_REWRITE_URI;
-}
-
-/**
- * Is this a HTML tag? (i.e. not a proprietary beng-proxy tag)
- */
-static constexpr bool
-is_html_tag(enum tag tag) noexcept
-{
-    return tag == TAG_OTHER || (is_link_tag(tag) && tag != TAG_REWRITE_URI);
-}
-
 void
 XmlProcessor::OnXmlAttributeFinished(const XmlParserAttribute &attr)
 {
     had_input = true;
 
     if (!IsQuiet() &&
-        is_link_tag(tag) &&
+        IsLink(tag) &&
         LinkAttributeFinished(attr))
         return;
 
     if (!IsQuiet() &&
-        tag == TAG_META &&
+        tag == Tag::META &&
         attr.name.EqualsIgnoreCase("http-equiv") &&
         attr.value.EqualsIgnoreCase("refresh")) {
-        /* morph TAG_META to TAG_META_REFRESH */
-        tag = TAG_META_REFRESH;
+        /* morph Tag::META to Tag::META_REFRESH */
+        tag = Tag::META_REFRESH;
         return;
     }
 
@@ -1064,7 +1060,7 @@ XmlProcessor::OnXmlAttributeFinished(const XmlParserAttribute &attr)
         /* due to a limitation in the processor and istream_replace,
            we cannot edit attributes followed by a URI attribute */
         !postponed_rewrite.pending &&
-        is_html_tag(tag) &&
+        IsHtml(tag) &&
         attr.name.Equals("class")) {
         HandleClassAttribute(attr);
         return;
@@ -1075,7 +1071,7 @@ XmlProcessor::OnXmlAttributeFinished(const XmlParserAttribute &attr)
         /* due to a limitation in the processor and istream_replace,
            we cannot edit attributes followed by a URI attribute */
         !postponed_rewrite.pending &&
-        is_html_tag(tag) &&
+        IsHtml(tag) &&
         (attr.name.Equals("id") || attr.name.Equals("for"))) {
         HandleIdAttribute(attr);
         return;
@@ -1085,27 +1081,27 @@ XmlProcessor::OnXmlAttributeFinished(const XmlParserAttribute &attr)
         /* due to a limitation in the processor and istream_replace,
            we cannot edit attributes followed by a URI attribute */
         !postponed_rewrite.pending &&
-        is_html_tag(tag) &&
+        IsHtml(tag) &&
         attr.name.Equals("style")) {
         HandleStyleAttribute(attr);
         return;
     }
 
     switch (tag) {
-    case TAG_NONE:
-    case TAG_IGNORE:
-    case TAG_OTHER:
+    case Tag::NONE:
+    case Tag::IGNORE:
+    case Tag::OTHER:
         break;
 
-    case TAG_WIDGET:
+    case Tag::WIDGET:
         assert(widget.widget != nullptr);
 
         parser_widget_attr_finished(widget.widget,
                                     attr.name, attr.value);
         break;
 
-    case TAG_WIDGET_PARAM:
-    case TAG_WIDGET_HEADER:
+    case Tag::WIDGET_PARAM:
+    case Tag::WIDGET_HEADER:
         assert(widget.widget != nullptr);
 
         if (attr.name.Equals("name")) {
@@ -1116,7 +1112,7 @@ XmlProcessor::OnXmlAttributeFinished(const XmlParserAttribute &attr)
 
         break;
 
-    case TAG_WIDGET_PATH_INFO:
+    case Tag::WIDGET_PATH_INFO:
         assert(widget.widget != nullptr);
 
         if (attr.name.Equals("value"))
@@ -1125,7 +1121,7 @@ XmlProcessor::OnXmlAttributeFinished(const XmlParserAttribute &attr)
 
         break;
 
-    case TAG_WIDGET_VIEW:
+    case Tag::WIDGET_VIEW:
         assert(widget.widget != nullptr);
 
         if (attr.name.Equals("name")) {
@@ -1140,12 +1136,12 @@ XmlProcessor::OnXmlAttributeFinished(const XmlParserAttribute &attr)
 
         break;
 
-    case TAG_IMG:
+    case Tag::IMG:
         if (attr.name.EqualsIgnoreCase("src"))
             PostponeUriRewrite(attr);
         break;
 
-    case TAG_A:
+    case Tag::A:
         if (attr.name.EqualsIgnoreCase("href")) {
             if (!attr.value.StartsWith({"#", 1}) &&
                 !attr.value.StartsWith({"javascript:", 11}))
@@ -1157,32 +1153,32 @@ XmlProcessor::OnXmlAttributeFinished(const XmlParserAttribute &attr)
 
         break;
 
-    case TAG_FORM:
+    case Tag::FORM:
         if (attr.name.EqualsIgnoreCase("action"))
             PostponeUriRewrite(attr);
         break;
 
-    case TAG_SCRIPT:
+    case Tag::SCRIPT:
         if (!IsQuiet() &&
             HasOptionRewriteUrl() &&
             attr.name.EqualsIgnoreCase("src"))
             PostponeUriRewrite(attr);
         break;
 
-    case TAG_PARAM:
+    case Tag::PARAM:
         if (attr.name.Equals("value"))
             PostponeUriRewrite(attr);
         break;
 
-    case TAG_META_REFRESH:
+    case Tag::META_REFRESH:
         if (attr.name.EqualsIgnoreCase("content"))
             PostponeRefreshRewrite(attr);
         break;
 
-    case TAG_REWRITE_URI:
-    case TAG_STYLE:
-    case TAG_STYLE_PROCESS:
-    case TAG_META:
+    case Tag::REWRITE_URI:
+    case Tag::STYLE:
+    case Tag::STYLE_PROCESS:
+    case Tag::META:
         break;
     }
 }
@@ -1330,7 +1326,7 @@ XmlProcessor::OnXmlTagFinished(const XmlParserTag &xml_tag)
     if (postponed_rewrite.pending)
         CommitUriRewrite();
 
-    if (tag == TAG_WIDGET) {
+    if (tag == Tag::WIDGET) {
         if (xml_tag.type == XmlParserTagType::OPEN || xml_tag.type == XmlParserTagType::SHORT)
             widget.start_offset = xml_tag.start;
         else if (widget.widget == nullptr)
@@ -1345,7 +1341,7 @@ XmlProcessor::OnXmlTagFinished(const XmlParserTag &xml_tag)
         widget.widget = nullptr;
 
         WidgetElementFinished(xml_tag, child_widget);
-    } else if (tag == TAG_WIDGET_PARAM) {
+    } else if (tag == Tag::WIDGET_PARAM) {
         assert(widget.widget != nullptr);
 
         if (widget.param.name.IsEmpty())
@@ -1369,7 +1365,7 @@ XmlProcessor::OnXmlTagFinished(const XmlParserTag &xml_tag)
         widget.params.Write("=", 1);
 
         expansible_buffer_append_uri_escaped(widget.params, value);
-    } else if (tag == TAG_WIDGET_HEADER) {
+    } else if (tag == Tag::WIDGET_HEADER) {
         assert(widget.widget != nullptr);
 
         if (xml_tag.type == XmlParserTagType::CLOSE)
@@ -1393,22 +1389,22 @@ XmlProcessor::OnXmlTagFinished(const XmlParserTag &xml_tag)
 
         widget.widget->from_template.headers->Add(widget.param.name.StringDup(widget.pool),
                                                   value);
-    } else if (tag == TAG_SCRIPT) {
+    } else if (tag == Tag::SCRIPT) {
         if (xml_tag.type == XmlParserTagType::OPEN)
             parser_script(parser);
         else
-            tag = TAG_NONE;
-    } else if (tag == TAG_REWRITE_URI) {
+            tag = Tag::NONE;
+    } else if (tag == Tag::REWRITE_URI) {
         /* the settings of this tag become the new default */
         default_uri_rewrite = uri_rewrite;
 
         Replace(xml_tag.start, xml_tag.end, nullptr);
-    } else if (tag == TAG_STYLE) {
+    } else if (tag == Tag::STYLE) {
         if (xml_tag.type == XmlParserTagType::OPEN && !IsQuiet() && HasOptionStyle()) {
             /* create a CSS processor for the contents of this style
                element */
 
-            tag = TAG_STYLE_PROCESS;
+            tag = Tag::STYLE_PROCESS;
 
             unsigned css_options = 0;
             if (options & PROCESSOR_REWRITE_URL)
@@ -1437,7 +1433,7 @@ XmlProcessor::OnXmlCdata(const char *p gcc_unused, size_t length,
 {
     had_input = true;
 
-    if (tag == TAG_STYLE_PROCESS) {
+    if (tag == Tag::STYLE_PROCESS) {
         /* XXX unescape? */
         length = cdata_istream->InvokeData(p, length);
         if (length > 0)
