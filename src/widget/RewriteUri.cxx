@@ -287,11 +287,11 @@ class UriRewriter {
     /** the value passed to rewrite_widget_uri() */
     StringView value;
 
-    enum uri_mode mode;
-    bool stateful;
-    const char *view;
+    const enum uri_mode mode;
+    const bool stateful;
+    const char *const view;
 
-    const struct escape_class *escape;
+    const struct escape_class *const escape;
 
     Istream *const delayed, *const timeout;
 
