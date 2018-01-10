@@ -62,7 +62,7 @@ enum uri_mode {
 
 gcc_pure
 enum uri_mode
-parse_uri_mode(StringView s);
+parse_uri_mode(StringView s) noexcept;
 
 /**
  * @param untrusted_host the value of the UNTRUSTED translation
@@ -80,6 +80,6 @@ rewrite_widget_uri(struct pool &pool,
                    StringView value,
                    enum uri_mode mode, bool stateful,
                    const char *view,
-                   const struct escape_class *escape);
+                   const struct escape_class *escape) noexcept;
 
 #endif

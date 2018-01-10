@@ -83,7 +83,7 @@ widget_get_session(gcc_unused Widget *widget,
 }
 
 enum uri_mode
-parse_uri_mode(gcc_unused StringView s)
+parse_uri_mode(gcc_unused StringView s) noexcept
 {
     return URI_MODE_DIRECT;
 }
@@ -97,7 +97,7 @@ rewrite_widget_uri(gcc_unused struct pool &pool,
                    gcc_unused enum uri_mode mode,
                    gcc_unused bool stateful,
                    gcc_unused const char *view,
-                   gcc_unused const struct escape_class *escape)
+                   gcc_unused const struct escape_class *escape) noexcept
 {
     return nullptr;
 }

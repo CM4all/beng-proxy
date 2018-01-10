@@ -54,7 +54,7 @@
 #include "util/Cancellable.hxx"
 
 enum uri_mode
-parse_uri_mode(const StringView s)
+parse_uri_mode(const StringView s) noexcept
 {
     if (s.Equals("direct"))
         return URI_MODE_DIRECT;
@@ -74,7 +74,8 @@ parse_uri_mode(const StringView s)
  */
 
 static const char *
-uri_replace_hostname(struct pool &pool, const char *uri, const char *hostname)
+uri_replace_hostname(struct pool &pool, const char *uri,
+                     const char *hostname) noexcept
 {
     assert(hostname != nullptr);
 
@@ -98,7 +99,8 @@ uri_replace_hostname(struct pool &pool, const char *uri, const char *hostname)
 
 static const char *
 uri_add_prefix(struct pool &pool, const char *uri, const char *absolute_uri,
-               const char *untrusted_host, const char *untrusted_prefix)
+               const char *untrusted_host,
+               const char *untrusted_prefix) noexcept
 {
     assert(untrusted_prefix != nullptr);
 
@@ -139,7 +141,7 @@ uri_add_prefix(struct pool &pool, const char *uri, const char *absolute_uri,
 static const char *
 uri_add_site_suffix(struct pool &pool, const char *uri, const char *site_name,
                     const char *untrusted_host,
-                    const char *untrusted_site_suffix)
+                    const char *untrusted_site_suffix) noexcept
 {
     assert(untrusted_site_suffix != nullptr);
 
@@ -168,7 +170,7 @@ uri_add_site_suffix(struct pool &pool, const char *uri, const char *site_name,
 static const char *
 uri_add_raw_site_suffix(struct pool &pool, const char *uri, const char *site_name,
                         const char *untrusted_host,
-                        const char *untrusted_raw_site_suffix)
+                        const char *untrusted_raw_site_suffix) noexcept
 {
     assert(untrusted_raw_site_suffix != nullptr);
 
@@ -202,7 +204,7 @@ do_rewrite_widget_uri(struct pool &pool, struct processor_env &env,
                       Widget &widget,
                       StringView value,
                       enum uri_mode mode, bool stateful,
-                      const char *view)
+                      const char *view) noexcept
 {
     if (widget.cls->local_uri != nullptr &&
         value.size >= 2 && value[0] == '@' && value[1] == '/')
@@ -295,11 +297,11 @@ struct UriRewriter {
 
     Istream *delayed, *timeout;
 
-    void ResolverCallback();
+    void ResolverCallback() noexcept;
 };
 
 void
-UriRewriter::ResolverCallback()
+UriRewriter::ResolverCallback() noexcept
 {
     bool escape_flag = false;
     if (widget->cls != nullptr && widget->HasDefaultView()) {
@@ -365,7 +367,7 @@ rewrite_widget_uri(struct pool &pool,
                    StringView value,
                    enum uri_mode mode, bool stateful,
                    const char *view,
-                   const struct escape_class *escape)
+                   const struct escape_class *escape) noexcept
 {
     if (uri_has_authority(value))
         /* can't rewrite if the specified URI is absolute */
