@@ -445,7 +445,7 @@ public:
     gcc_pure
     const char *ExternalUri(struct pool &_pool,
                             const DissectedUri *external_uri,
-                            StringMap *args,
+                            const StringMap *args,
                             bool stateful,
                             StringView relative_uri,
                             const char *frame, const char *view) const;

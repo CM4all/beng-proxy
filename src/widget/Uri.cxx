@@ -285,7 +285,7 @@ compare_widget_path(const Widget *widget, const char *other)
 const char *
 Widget::ExternalUri(struct pool &_pool,
                     const DissectedUri *external_uri,
-                    StringMap *args,
+                    const StringMap *args,
                     bool stateful,
                     StringView relative_uri,
                     const char *frame, const char *view) const

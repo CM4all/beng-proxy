@@ -69,7 +69,7 @@ struct processor_env {
     const DissectedUri *external_uri;
 
     /** semicolon-arguments in the external URI */
-    StringMap *args;
+    const StringMap *args;
 
     const StringMap *request_headers;
 
@@ -94,7 +94,7 @@ struct processor_env {
                   const char *request_uri,
                   const char *absolute_uri,
                   const DissectedUri *uri,
-                  StringMap *args,
+                  const StringMap *args,
                   const char *session_cookie,
                   SessionId session_id,
                   const char *realm,
