@@ -364,7 +364,7 @@ FindInArray(const Json::Value &v, const char *key, const char *value)
     return Json::Value::null;
 }
 
-AcmeClient::AuthzTlsSni01
+AcmeClient::AuthzChallenge
 AcmeClient::NewAuthz(EVP_PKEY &key, const char *host)
 {
     std::string payload("{\"resource\": \"new-authz\", "
@@ -400,11 +400,11 @@ AcmeClient::NewAuthz(EVP_PKEY &key, const char *host)
 }
 
 bool
-AcmeClient::UpdateAuthz(EVP_PKEY &key, const AuthzTlsSni01 &authz)
+AcmeClient::UpdateAuthz(EVP_PKEY &key, const AuthzChallenge &authz)
 {
     const char *uri = uri_path(authz.uri.c_str());
     if (uri == nullptr)
-        throw std::runtime_error("Malformed URI in AuthzTlsSni01");
+        throw std::runtime_error("Malformed URI in AuthzChallenge");
 
     std::string payload("{ \"resource\": \"challenge\", "
                         "\"type\": \"tls-sni-01\", "
@@ -426,11 +426,11 @@ AcmeClient::UpdateAuthz(EVP_PKEY &key, const AuthzTlsSni01 &authz)
 }
 
 bool
-AcmeClient::CheckAuthz(const AuthzTlsSni01 &authz)
+AcmeClient::CheckAuthz(const AuthzChallenge &authz)
 {
     const char *uri = uri_path(authz.uri.c_str());
     if (uri == nullptr)
-        throw std::runtime_error("Malformed URI in AuthzTlsSni01");
+        throw std::runtime_error("Malformed URI in AuthzChallenge");
 
     auto response = Request(HTTP_METHOD_GET, uri,
                             nullptr);
@@ -468,7 +468,7 @@ Hex(char *dest, ConstBuffer<uint8_t> src)
 }
 
 std::string
-AcmeClient::AuthzTlsSni01::MakeDnsName(EVP_PKEY &key) const
+AcmeClient::AuthzChallenge::MakeDnsName(EVP_PKEY &key) const
 {
     const auto thumbprint_b64 = UrlSafeBase64SHA256(MakeJwk(key));
 

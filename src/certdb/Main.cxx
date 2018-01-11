@@ -327,7 +327,7 @@ MakeHandleFromAcmeSni01(const std::string &acme)
 
 static UniqueX509
 MakeTlsSni01Cert(EVP_PKEY &account_key, EVP_PKEY &key,
-                 const AcmeClient::AuthzTlsSni01 &authz)
+                 const AcmeClient::AuthzChallenge &authz)
 {
     const auto alt_host = authz.MakeDnsName(account_key);
     std::string alt_name = "DNS:" + alt_host;
@@ -404,7 +404,7 @@ MakeCertRequest(EVP_PKEY &key, X509 &src)
 static AllocatedString<>
 LoadAcmeNewAuthzChallenge(EVP_PKEY &key, CertDatabase &db,
                           EVP_PKEY &cert_key,
-                          const AcmeClient::AuthzTlsSni01 &authz_response)
+                          const AcmeClient::AuthzChallenge &authz_response)
 {
     const auto cert = MakeTlsSni01Cert(key, cert_key, authz_response);
     auto handle = GetCommonName(*cert);
@@ -423,7 +423,7 @@ LoadAcmeNewAuthzChallenge(EVP_PKEY &key, CertDatabase &db,
 static void
 HandleAcmeNewAuthz(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
                    EVP_PKEY &cert_key,
-                   const AcmeClient::AuthzTlsSni01 &authz_response,
+                   const AcmeClient::AuthzChallenge &authz_response,
                    std::chrono::steady_clock::duration delay)
 {
     const auto handle =

@@ -86,13 +86,13 @@ public:
      */
     Account NewReg(EVP_PKEY &key, const char *email);
 
-    struct AuthzTlsSni01 {
+    struct AuthzChallenge {
         std::string token;
         std::string uri;
 
         /**
-         * Generate a DNS name for the temporary certificate, to be
-         * used as subjectAltName.
+         * Generate a tls-sni-01 DNS name for the temporary
+         * certificate, to be used as subjectAltName.
          */
         std::string MakeDnsName(EVP_PKEY &key) const;
     };
@@ -101,13 +101,13 @@ public:
      * Create a new "authz" object, to prepare for a new certificate.
      *
      * After this method succeeds, configure the web server with a new
-     * temporary certificate using AuthzTlsSni01::MakeDnsName(), and
+     * temporary certificate using AuthzChallenge::MakeDnsName(), and
      * then call UpdateAuthz().
      *
      * @param key the account key
      * @param host the host name ("common name") for the new certificate
      */
-    AuthzTlsSni01 NewAuthz(EVP_PKEY &key, const char *host);
+    AuthzChallenge NewAuthz(EVP_PKEY &key, const char *host);
 
     /**
      * Update the "authz" object.  Call this method after NewAuthz().
@@ -120,7 +120,7 @@ public:
      * @return true if the authz object is done, and NewCert() can be
      * called
      */
-    bool UpdateAuthz(EVP_PKEY &key, const AuthzTlsSni01 &authz);
+    bool UpdateAuthz(EVP_PKEY &key, const AuthzChallenge &authz);
 
     /**
      * Check whether the "authz" object is done.  Call this method
@@ -131,7 +131,7 @@ public:
      * @return true if the authz object is done, and NewCert() can be
      * called
      */
-    bool CheckAuthz(const AuthzTlsSni01 &authz);
+    bool CheckAuthz(const AuthzChallenge &authz);
 
     /**
      * Ask the server to produce a signed certificate.
