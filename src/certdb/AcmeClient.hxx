@@ -87,6 +87,7 @@ public:
     Account NewReg(EVP_PKEY &key, const char *email);
 
     struct AuthzChallenge {
+        std::string type;
         std::string token;
         std::string uri;
 
@@ -106,8 +107,10 @@ public:
      *
      * @param key the account key
      * @param host the host name ("common name") for the new certificate
+     * @param challenge_type the desired challenge type
      */
-    AuthzChallenge NewAuthz(EVP_PKEY &key, const char *host);
+    AuthzChallenge NewAuthz(EVP_PKEY &key, const char *host,
+                            const char *challenge_type);
 
     /**
      * Update the "authz" object.  Call this method after NewAuthz().

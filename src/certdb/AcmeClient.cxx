@@ -38,6 +38,7 @@
 #include "ssl/Key.hxx"
 #include "uri/uri_extract.hxx"
 #include "util/Exception.hxx"
+#include "util/RuntimeError.hxx"
 
 #include <json/json.h>
 
@@ -365,7 +366,8 @@ FindInArray(const Json::Value &v, const char *key, const char *value)
 }
 
 AcmeClient::AuthzChallenge
-AcmeClient::NewAuthz(EVP_PKEY &key, const char *host)
+AcmeClient::NewAuthz(EVP_PKEY &key, const char *host,
+                     const char *challenge_type)
 {
     std::string payload("{\"resource\": \"new-authz\", "
                         "\"identifier\": { "
@@ -383,20 +385,20 @@ AcmeClient::NewAuthz(EVP_PKEY &key, const char *host)
     const auto root = ParseJson(std::move(response));
     CheckThrowError(root, "Failed to create authz");
 
-    const auto &tls_sni_01 = FindInArray(root["challenges"],
-                                         "type", "tls-sni-01");
-    if (tls_sni_01.isNull())
-        throw std::runtime_error("No tls-sni-01 challenge");
+    const auto &challenge = FindInArray(root["challenges"],
+                                        "type", challenge_type);
+    if (challenge.isNull())
+        throw FormatRuntimeError("No %s challenge", challenge_type);
 
-    const auto &token = tls_sni_01["token"];
+    const auto &token = challenge["token"];
     if (!token.isString())
-        throw std::runtime_error("No tls-sni-01 token");
+        throw FormatRuntimeError("No %s token", challenge_type);
 
-    const auto &uri = tls_sni_01["uri"];
+    const auto &uri = challenge["uri"];
     if (!uri.isString())
-        throw std::runtime_error("No tls-sni-01 uri");
+        throw FormatRuntimeError("No %s uri", challenge_type);
 
-    return {token.asString(), uri.asString()};
+    return {challenge_type, token.asString(), uri.asString()};
 }
 
 bool
@@ -407,8 +409,9 @@ AcmeClient::UpdateAuthz(EVP_PKEY &key, const AuthzChallenge &authz)
         throw std::runtime_error("Malformed URI in AuthzChallenge");
 
     std::string payload("{ \"resource\": \"challenge\", "
-                        "\"type\": \"tls-sni-01\", "
-                        "\"keyAuthorization\": \"");
+                        "\"type\": \"");
+    payload += authz.type;
+    payload += "\", \"keyAuthorization\": \"";
     payload += authz.token;
     payload += '.';
     payload += UrlSafeBase64SHA256(MakeJwk(key)).c_str();
