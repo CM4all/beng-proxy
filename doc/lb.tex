@@ -865,4 +865,18 @@ request, and ask the ACME server to sign the new certificate.
 After the program finishes, the new certificate should be usable
 immediately.
 
+\subsubsection{Using \texttt{http-01} instead of \texttt{tls-sni-01}}
+
+The option \texttt{--challenge-directory} enables \texttt{http-01}
+instead of \texttt{tls-sni-01}.  The parameter is a directory where
+ACME challenge files are stored, to be mapped to
+\texttt{/.well-known/acme-challenge/} on all domains to be
+authenticated.  Example:
+
+\begin{verbatim*}
+cm4all-certdb acme --staging \
+  --challenge-directory /var/www/example/.well-known/acme-challenge \
+  new-authz www.example.com
+\end{verbatim*}
+
 \end{document}
