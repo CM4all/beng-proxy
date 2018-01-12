@@ -840,14 +840,15 @@ cm4all-certdb acme --staging new-reg foo@example.com
 To obtain a signed certificate, type:
 
 \begin{verbatim*}
-cm4all-certdb acme --staging new-authz-cert www.example.com
+cm4all-certdb acme --staging new-authz-cert example www.example.com
 \end{verbatim*}
 
-To update all names in an existing certificate, use the option
-\texttt{--all}:
+To update all names in an existing certificate, use the command
+\texttt{renew-cert} and specify only the handle (``\texttt{example}''
+here):
 
 \begin{verbatim*}
-cm4all-certdb acme --staging --all new-authz-cert www.example.com
+cm4all-certdb acme --staging renew-cert example
 \end{verbatim*}
 
 This requires that \emph{beng-lb} runs on the same machine and can be
