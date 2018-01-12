@@ -32,10 +32,18 @@
 
 #pragma once
 
-#include "ssl/Unique.hxx"
+#include <openssl/ossl_typ.h>
 
-struct AcmeChallenge;
+#include <string>
 
-UniqueX509
-MakeTlsSni01Cert(EVP_PKEY &account_key, EVP_PKEY &key,
-                 const AcmeChallenge &authz);
+struct AcmeChallenge {
+    std::string type;
+    std::string token;
+    std::string uri;
+
+    /**
+     * Generate a tls-sni-01 DNS name for the temporary
+     * certificate, to be used as subjectAltName.
+     */
+    std::string MakeDnsName(EVP_PKEY &key) const;
+};

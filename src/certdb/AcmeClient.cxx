@@ -31,6 +31,7 @@
  */
 
 #include "AcmeClient.hxx"
+#include "AcmeChallenge.hxx"
 #include "AcmeError.hxx"
 #include "AcmeConfig.hxx"
 #include "JWS.hxx"
@@ -342,7 +343,7 @@ FindInArray(const Json::Value &v, const char *key, const char *value)
     return Json::Value::null;
 }
 
-AcmeClient::AuthzChallenge
+AcmeChallenge
 AcmeClient::NewAuthz(EVP_PKEY &key, const char *host,
                      const char *challenge_type)
 {
@@ -379,11 +380,11 @@ AcmeClient::NewAuthz(EVP_PKEY &key, const char *host,
 }
 
 bool
-AcmeClient::UpdateAuthz(EVP_PKEY &key, const AuthzChallenge &authz)
+AcmeClient::UpdateAuthz(EVP_PKEY &key, const AcmeChallenge &authz)
 {
     const char *uri = uri_path(authz.uri.c_str());
     if (uri == nullptr)
-        throw std::runtime_error("Malformed URI in AuthzChallenge");
+        throw std::runtime_error("Malformed URI in AcmeChallenge");
 
     std::string payload("{ \"resource\": \"challenge\", "
                         "\"type\": \"");
@@ -406,11 +407,11 @@ AcmeClient::UpdateAuthz(EVP_PKEY &key, const AuthzChallenge &authz)
 }
 
 bool
-AcmeClient::CheckAuthz(const AuthzChallenge &authz)
+AcmeClient::CheckAuthz(const AcmeChallenge &authz)
 {
     const char *uri = uri_path(authz.uri.c_str());
     if (uri == nullptr)
-        throw std::runtime_error("Malformed URI in AuthzChallenge");
+        throw std::runtime_error("Malformed URI in AcmeChallenge");
 
     auto response = Request(HTTP_METHOD_GET, uri,
                             nullptr);
@@ -437,33 +438,4 @@ AcmeClient::NewCert(EVP_PKEY &key, X509_REQ &req)
                           "Failed to create certificate");
 
     return DecodeDerCertificate({response.body.data(), response.body.length()});
-}
-
-static char *
-Hex(char *dest, ConstBuffer<uint8_t> src)
-{
-    for (auto b : src)
-        dest += sprintf(dest, "%02x", b);
-    return dest;
-}
-
-std::string
-AcmeClient::AuthzChallenge::MakeDnsName(EVP_PKEY &key) const
-{
-    const auto thumbprint_b64 = UrlSafeBase64SHA256(MakeJwk(key));
-
-    std::string key_authz = token;
-    key_authz += '.';
-    key_authz += thumbprint_b64.c_str();
-
-    unsigned char md[SHA256_DIGEST_LENGTH];
-    SHA256((const unsigned char *)key_authz.data(), key_authz.length(), md);
-
-    char result[SHA256_DIGEST_LENGTH * 2 + 32], *p = result;
-    p = Hex(p, {md, SHA256_DIGEST_LENGTH / 2});
-    *p++ = '.';
-    p = Hex(p, {md + SHA256_DIGEST_LENGTH / 2, SHA256_DIGEST_LENGTH / 2});
-    strcpy(p, ".acme.invalid");
-
-    return result;
 }

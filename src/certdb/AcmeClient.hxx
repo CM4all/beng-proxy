@@ -43,6 +43,7 @@
 #include <string.h>
 
 struct AcmeConfig;
+struct AcmeChallenge;
 
 /**
  * Implementation of a ACME client, i.e. the protocol of the "Let's
@@ -86,31 +87,19 @@ public:
      */
     Account NewReg(EVP_PKEY &key, const char *email);
 
-    struct AuthzChallenge {
-        std::string type;
-        std::string token;
-        std::string uri;
-
-        /**
-         * Generate a tls-sni-01 DNS name for the temporary
-         * certificate, to be used as subjectAltName.
-         */
-        std::string MakeDnsName(EVP_PKEY &key) const;
-    };
-
     /**
      * Create a new "authz" object, to prepare for a new certificate.
      *
      * After this method succeeds, configure the web server with a new
-     * temporary certificate using AuthzChallenge::MakeDnsName(), and
+     * temporary certificate using AcmeChallenge::MakeDnsName(), and
      * then call UpdateAuthz().
      *
      * @param key the account key
      * @param host the host name ("common name") for the new certificate
      * @param challenge_type the desired challenge type
      */
-    AuthzChallenge NewAuthz(EVP_PKEY &key, const char *host,
-                            const char *challenge_type);
+    AcmeChallenge NewAuthz(EVP_PKEY &key, const char *host,
+                           const char *challenge_type);
 
     /**
      * Update the "authz" object.  Call this method after NewAuthz().
@@ -123,7 +112,7 @@ public:
      * @return true if the authz object is done, and NewCert() can be
      * called
      */
-    bool UpdateAuthz(EVP_PKEY &key, const AuthzChallenge &authz);
+    bool UpdateAuthz(EVP_PKEY &key, const AcmeChallenge &authz);
 
     /**
      * Check whether the "authz" object is done.  Call this method
@@ -134,7 +123,7 @@ public:
      * @return true if the authz object is done, and NewCert() can be
      * called
      */
-    bool CheckAuthz(const AuthzChallenge &authz);
+    bool CheckAuthz(const AcmeChallenge &authz);
 
     /**
      * Ask the server to produce a signed certificate.

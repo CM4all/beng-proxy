@@ -34,6 +34,7 @@
 #include "AcmeUtil.hxx"
 #include "AcmeError.hxx"
 #include "AcmeClient.hxx"
+#include "AcmeChallenge.hxx"
 #include "AcmeSni.hxx"
 #include "AcmeConfig.hxx"
 #include "Config.hxx"
@@ -375,7 +376,7 @@ MakeCertRequest(EVP_PKEY &key, X509 &src)
 static AllocatedString<>
 LoadAcmeNewAuthzChallenge(EVP_PKEY &key, CertDatabase &db,
                           EVP_PKEY &cert_key,
-                          const AcmeClient::AuthzChallenge &challenge)
+                          const AcmeChallenge &challenge)
 {
     const auto cert = MakeTlsSni01Cert(key, cert_key, challenge);
     auto handle = GetCommonName(*cert);
@@ -394,7 +395,7 @@ LoadAcmeNewAuthzChallenge(EVP_PKEY &key, CertDatabase &db,
 static void
 HandleAcmeNewAuthz(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
                    EVP_PKEY &cert_key,
-                   const AcmeClient::AuthzChallenge &challenge,
+                   const AcmeChallenge &challenge,
                    std::chrono::steady_clock::duration delay)
 {
     const auto handle =

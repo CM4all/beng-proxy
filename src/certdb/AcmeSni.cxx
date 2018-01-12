@@ -31,9 +31,44 @@
  */
 
 #include "AcmeSni.hxx"
+#include "AcmeChallenge.hxx"
+#include "JWS.hxx"
 #include "ssl/Dummy.hxx"
 #include "ssl/Error.hxx"
 #include "ssl/Edit.hxx"
+#include "ssl/Base64.hxx"
+#include "util/ConstBuffer.hxx"
+
+#include <string.h>
+
+static char *
+Hex(char *dest, ConstBuffer<uint8_t> src)
+{
+    for (auto b : src)
+        dest += sprintf(dest, "%02x", b);
+    return dest;
+}
+
+std::string
+AcmeChallenge::MakeDnsName(EVP_PKEY &key) const
+{
+    const auto thumbprint_b64 = UrlSafeBase64SHA256(MakeJwk(key));
+
+    std::string key_authz = token;
+    key_authz += '.';
+    key_authz += thumbprint_b64.c_str();
+
+    unsigned char md[SHA256_DIGEST_LENGTH];
+    SHA256((const unsigned char *)key_authz.data(), key_authz.length(), md);
+
+    char result[SHA256_DIGEST_LENGTH * 2 + 32], *p = result;
+    p = Hex(p, {md, SHA256_DIGEST_LENGTH / 2});
+    *p++ = '.';
+    p = Hex(p, {md + SHA256_DIGEST_LENGTH / 2, SHA256_DIGEST_LENGTH / 2});
+    strcpy(p, ".acme.invalid");
+
+    return result;
+}
 
 static std::string
 MakeHandleFromAcmeSni01(const std::string &acme)
@@ -47,7 +82,7 @@ MakeHandleFromAcmeSni01(const std::string &acme)
 
 UniqueX509
 MakeTlsSni01Cert(EVP_PKEY &account_key, EVP_PKEY &key,
-                 const AcmeClient::AuthzChallenge &authz)
+                 const AcmeChallenge &authz)
 {
     const auto alt_host = authz.MakeDnsName(account_key);
     std::string alt_name = "DNS:" + alt_host;
