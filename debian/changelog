@@ -3,6 +3,7 @@ cm4all-beng-proxy (14.0.2) unstable; urgency=low
   * access_log: support protocol version 2 (with CRC)
   * processor: rewrite URIs in META/property="og:{image,url}"
   * certdb: eliminate duplicate authz request
+  * certdb: add ACME option "--debug"
 
  --   
 

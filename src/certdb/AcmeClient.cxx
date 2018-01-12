@@ -147,6 +147,8 @@ AcmeClient::AcmeClient(const AcmeConfig &config)
      agreement_url(config.agreement_url),
      fake(config.fake)
 {
+    if (config.debug)
+        glue_http_client.EnableVerbose();
 }
 
 AcmeClient::~AcmeClient()

@@ -103,6 +103,7 @@ GlueHttpClient::Request(EventLoop &event_loop,
     CurlSlist header_list;
 
     CurlEasy easy(uri);
+    easy.SetOption(CURLOPT_VERBOSE, long(verbose));
 
     if (method == HTTP_METHOD_HEAD)
         easy.SetNoBody();
