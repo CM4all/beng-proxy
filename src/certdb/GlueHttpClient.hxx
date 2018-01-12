@@ -59,12 +59,18 @@ struct GlueHttpResponse {
 class GlueHttpClient {
     CurlGlobal curl_global;
 
+    bool verbose = false;
+
 public:
     explicit GlueHttpClient(EventLoop &event_loop);
     ~GlueHttpClient();
 
     GlueHttpClient(const GlueHttpClient &) = delete;
     GlueHttpClient &operator=(const GlueHttpClient &) = delete;
+
+    void EnableVerbose() noexcept {
+        verbose = true;
+    }
 
     GlueHttpResponse Request(EventLoop &event_loop,
                              http_method_t method, const char *uri,

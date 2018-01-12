@@ -602,6 +602,9 @@ Acme(ConstBuffer<const char *> args)
         if (strcmp(arg, "--staging") == 0) {
             args.shift();
             config.staging = true;
+        } else if (strcmp(arg, "--debug") == 0) {
+            args.shift();
+            config.debug = true;
         } else if (strcmp(arg, "--fake") == 0) {
             /* undocumented debugging option: no HTTP requests, fake
                ACME responses */
@@ -629,6 +632,7 @@ Acme(ConstBuffer<const char *> args)
             "\n"
             "options:\n"
             "  --staging     use the Let's Encrypt staging server\n"
+            "  --debug       enable debug mode\n"
             "  --agreement URL\n"
             "                use a custom ACME agreement URL\n";
 

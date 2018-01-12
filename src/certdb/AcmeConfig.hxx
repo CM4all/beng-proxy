@@ -36,6 +36,8 @@
 struct AcmeConfig {
     std::string agreement_url = "https://letsencrypt.org/documents/LE-SA-v1.2-November-15-2017.pdf";
 
+    bool debug = false;
+
     bool staging = false;
 
     bool fake = false;
