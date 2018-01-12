@@ -374,9 +374,9 @@ MakeCertRequest(EVP_PKEY &key, X509 &src)
  * @return the handle
  */
 static AllocatedString<>
-LoadAcmeNewAuthzChallenge(EVP_PKEY &key, CertDatabase &db,
-                          EVP_PKEY &cert_key,
-                          const AcmeChallenge &challenge)
+LoadAcmeNewAuthzTlsSni01Challenge(EVP_PKEY &key, CertDatabase &db,
+                                  EVP_PKEY &cert_key,
+                                  const AcmeChallenge &challenge)
 {
     const auto cert = MakeTlsSni01Cert(key, cert_key, challenge);
     auto handle = GetCommonName(*cert);
@@ -393,13 +393,13 @@ LoadAcmeNewAuthzChallenge(EVP_PKEY &key, CertDatabase &db,
 }
 
 static void
-HandleAcmeNewAuthz(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
-                   EVP_PKEY &cert_key,
-                   const AcmeChallenge &challenge,
-                   std::chrono::steady_clock::duration delay)
+HandleAcmeNewAuthzTlsSni01(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
+                           EVP_PKEY &cert_key,
+                           const AcmeChallenge &challenge,
+                           std::chrono::steady_clock::duration delay)
 {
     const auto handle =
-        LoadAcmeNewAuthzChallenge(key, db, cert_key, challenge);
+        LoadAcmeNewAuthzTlsSni01Challenge(key, db, cert_key, challenge);
     assert(!handle.IsNull());
 
     printf("Loaded challenge certificate into database\n");
@@ -423,8 +423,8 @@ HandleAcmeNewAuthz(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
 }
 
 static void
-AcmeNewAuthz(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
-             const char *host)
+AcmeNewAuthzTlsSni01(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
+                     const char *host)
 {
     const char *challenge_type = "tls-sni-01";
 
@@ -440,8 +440,8 @@ AcmeNewAuthz(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
         auto response = client.NewAuthz(key, host, challenge_type);
 
         try {
-            HandleAcmeNewAuthz(key, db, client, *cert_key,
-                               response, delay);
+            HandleAcmeNewAuthzTlsSni01(key, db, client, *cert_key,
+                                       response, delay);
             break;
         } catch (...) {
             if (IsAcmeUnauthorizedError(std::current_exception()) &&
@@ -499,18 +499,18 @@ AcmeNewCertAll(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
 }
 
 static void
-AcmeNewAuthzCert(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
-                 WorkshopProgress _progress,
-                 const char *handle,
-                 const char *host, ConstBuffer<const char *> alt_hosts)
+AcmeNewAuthzCertTlsSni01(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
+                         WorkshopProgress _progress,
+                         const char *handle,
+                         const char *host, ConstBuffer<const char *> alt_hosts)
 {
     StepProgress progress(_progress, 1 + alt_hosts.size + 1);
 
-    AcmeNewAuthz(key, db, client, host);
+    AcmeNewAuthzTlsSni01(key, db, client, host);
     progress();
 
     for (const auto *alt_host : alt_hosts) {
-        AcmeNewAuthz(key, db, client, alt_host);
+        AcmeNewAuthzTlsSni01(key, db, client, alt_host);
         progress();
     }
 
@@ -556,7 +556,7 @@ AcmeRenewCert(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
 
     for (const auto &i : names) {
         printf("new-authz '%s'\n", i.c_str());
-        AcmeNewAuthz(key, db, client, i.c_str());
+        AcmeNewAuthzTlsSni01(key, db, client, i.c_str());
         progress();
     }
 
@@ -643,7 +643,7 @@ Acme(ConstBuffer<const char *> args)
         CertDatabase db(*db_config);
         AcmeClient client(config);
 
-        AcmeNewAuthz(*key, db, client, host);
+        AcmeNewAuthzTlsSni01(*key, db, client, host);
         printf("OK\n");
     } else if (strcmp(cmd, "new-cert") == 0) {
         if (args.size < 2)
@@ -680,8 +680,8 @@ Acme(ConstBuffer<const char *> args)
         CertDatabase db(*db_config);
         AcmeClient client(config);
 
-        AcmeNewAuthzCert(*key, db, client, root_progress,
-                         handle, host, args);
+        AcmeNewAuthzCertTlsSni01(*key, db, client, root_progress,
+                                 handle, host, args);
 
         printf("OK\n");
     } else if (strcmp(cmd, "renew-cert") == 0) {
