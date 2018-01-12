@@ -34,6 +34,7 @@
 #include "AcmeUtil.hxx"
 #include "AcmeError.hxx"
 #include "AcmeClient.hxx"
+#include "AcmeSni.hxx"
 #include "AcmeConfig.hxx"
 #include "Config.hxx"
 #include "CertDatabase.hxx"
@@ -313,36 +314,6 @@ CopyDnsAltNames(X509_REQ &req, X509 &src)
         return;
 
     AddAltNames(req, gn);
-}
-
-static std::string
-MakeHandleFromAcmeSni01(const std::string &acme)
-{
-    auto i = acme.find('.');
-    if (i != 32)
-        i = std::min<size_t>(32, acme.length());
-
-    return "acme.invalid:" + acme.substr(0, i);
-}
-
-static UniqueX509
-MakeTlsSni01Cert(EVP_PKEY &account_key, EVP_PKEY &key,
-                 const AcmeClient::AuthzChallenge &authz)
-{
-    const auto alt_host = authz.MakeDnsName(account_key);
-    std::string alt_name = "DNS:" + alt_host;
-
-    const std::string common_name = MakeHandleFromAcmeSni01(alt_host);
-
-    auto cert = MakeSelfIssuedDummyCert(common_name.c_str());
-
-    AddExt(*cert, NID_subject_alt_name, alt_name.c_str());
-
-    X509_set_pubkey(cert.get(), &key);
-    if (!X509_sign(cert.get(), &key, EVP_sha1()))
-        throw SslError("X509_sign() failed");
-
-    return cert;
 }
 
 static UniqueX509_REQ
