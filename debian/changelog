@@ -4,6 +4,7 @@ cm4all-beng-proxy (14.0.2) unstable; urgency=low
   * processor: rewrite URIs in META/property="og:{image,url}"
   * certdb: eliminate duplicate authz request
   * certdb: add ACME option "--debug"
+  * certdb: implement ACME "http-01", option "--challenge-directory"
 
  --   
 

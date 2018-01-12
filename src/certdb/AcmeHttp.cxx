@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2018 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,26 +30,46 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef ACME_CONFIG_HXX
-#define ACME_CONFIG_HXX
+#include "AcmeHttp.hxx"
+#include "AcmeChallenge.hxx"
+#include "JWS.hxx"
+#include "ssl/Base64.hxx"
+#include "io/FileWriter.hxx"
+#include "util/ConstBuffer.hxx"
 
-struct AcmeConfig {
-    std::string agreement_url = "https://letsencrypt.org/documents/LE-SA-v1.1.1-August-1-2016.pdf";
+#include <sys/stat.h>
 
-    /**
-     * Specifies the directory mapped to
-     * "http://example.com/.well-known/acme-challenge/".
-     *
-     * If this is non-empty, then "http-01" is used instead of
-     * "tls-sni-01".
-     */
-    std::string challenge_directory;
+std::string
+MakeHttp01(const AcmeChallenge &challenge, EVP_PKEY &account_key)
+{
+    return challenge.token + "." +
+        UrlSafeBase64SHA256(MakeJwk(account_key)).c_str();
+}
 
-    bool debug = false;
+static void
+CreateFile(const char *path, ConstBuffer<void> contents)
+{
+    FileWriter file(path);
 
-    bool staging = false;
+    /* force the file to be world-readable so our web server can
+       deliver it to the ACME server's HTTP client */
+    fchmod(file.GetFileDescriptor().Get(), 0644);
 
-    bool fake = false;
-};
+    file.Write(contents.data, contents.size);
+    file.Commit();
+}
 
-#endif
+static void
+CreateFile(const char *path, const std::string &contents)
+{
+    CreateFile(path, ConstBuffer<void>(contents.data(), contents.length()));
+}
+
+std::string
+MakeHttp01File(const char *directory, const AcmeChallenge &challenge,
+               EVP_PKEY &account_key)
+{
+    std::string path = std::string(directory) + "/" + challenge.token;
+    CreateFile(path.c_str(), MakeHttp01(challenge, account_key));
+    return path;
+}

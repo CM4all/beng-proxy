@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2018 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,26 +30,23 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef ACME_CONFIG_HXX
-#define ACME_CONFIG_HXX
+#pragma once
 
-struct AcmeConfig {
-    std::string agreement_url = "https://letsencrypt.org/documents/LE-SA-v1.1.1-August-1-2016.pdf";
+#include "openssl/ossl_typ.h"
 
-    /**
-     * Specifies the directory mapped to
-     * "http://example.com/.well-known/acme-challenge/".
-     *
-     * If this is non-empty, then "http-01" is used instead of
-     * "tls-sni-01".
-     */
-    std::string challenge_directory;
+#include <string>
 
-    bool debug = false;
+struct AcmeChallenge;
 
-    bool staging = false;
+/**
+ * @return file contents
+ */
+std::string
+MakeHttp01(const AcmeChallenge &challenge, EVP_PKEY &account_key);
 
-    bool fake = false;
-};
-
-#endif
+/**
+ * @return the file path
+ */
+std::string
+MakeHttp01File(const char *directory, const AcmeChallenge &challenge,
+               EVP_PKEY &account_key);

@@ -36,6 +36,7 @@
 #include "AcmeClient.hxx"
 #include "AcmeChallenge.hxx"
 #include "AcmeSni.hxx"
+#include "AcmeHttp.hxx"
 #include "AcmeConfig.hxx"
 #include "Config.hxx"
 #include "CertDatabase.hxx"
@@ -60,6 +61,7 @@
 #include "io/StringFile.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/PrintException.hxx"
+#include "util/ScopeExit.hxx"
 #include "util/Compiler.h"
 
 #include <json/json.h>
@@ -462,6 +464,37 @@ AcmeNewAuthzTlsSni01(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
 }
 
 static void
+AcmeNewAuthzHttp01(const AcmeConfig &config,
+                   EVP_PKEY &account_key, AcmeClient &client,
+                   const char *host)
+{
+    const char *challenge_type = "http-01";
+
+    const auto challenge = client.NewAuthz(account_key, host, challenge_type);
+    const auto file_path = MakeHttp01File(config.challenge_directory.c_str(),
+                                          challenge, account_key);
+    AtScopeExit(&file_path) { unlink(file_path.c_str()); };
+
+    bool done = client.UpdateAuthz(account_key, challenge);
+    while (!done) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        done = client.CheckAuthz(challenge);
+    }
+}
+
+static void
+AcmeNewAuthz(const AcmeConfig &config,
+             EVP_PKEY &account_key, CertDatabase &db,
+             AcmeClient &client,
+             const char *host)
+{
+        if (config.challenge_directory.empty())
+            AcmeNewAuthzTlsSni01(account_key, db, client, host);
+        else
+            AcmeNewAuthzHttp01(config, account_key, client, host);
+}
+
+static void
 AcmeNewCert(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
             const char *handle,
             EVP_PKEY &cert_key, X509_REQ &req)
@@ -499,18 +532,19 @@ AcmeNewCertAll(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
 }
 
 static void
-AcmeNewAuthzCertTlsSni01(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
-                         WorkshopProgress _progress,
-                         const char *handle,
-                         const char *host, ConstBuffer<const char *> alt_hosts)
+AcmeNewAuthzCert(const AcmeConfig &config, EVP_PKEY &key,
+                 CertDatabase &db, AcmeClient &client,
+                 WorkshopProgress _progress,
+                 const char *handle,
+                 const char *host, ConstBuffer<const char *> alt_hosts)
 {
     StepProgress progress(_progress, 1 + alt_hosts.size + 1);
 
-    AcmeNewAuthzTlsSni01(key, db, client, host);
+    AcmeNewAuthz(config, key, db, client, host);
     progress();
 
     for (const auto *alt_host : alt_hosts) {
-        AcmeNewAuthzTlsSni01(key, db, client, alt_host);
+        AcmeNewAuthz(config, key, db, client, alt_host);
         progress();
     }
 
@@ -536,7 +570,8 @@ AllNames(X509 &cert)
 }
 
 static void
-AcmeRenewCert(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
+AcmeRenewCert(const AcmeConfig &config, EVP_PKEY &key,
+              CertDatabase &db, AcmeClient &client,
               WorkshopProgress _progress,
               const char *handle)
 {
@@ -556,7 +591,7 @@ AcmeRenewCert(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
 
     for (const auto &i : names) {
         printf("new-authz '%s'\n", i.c_str());
-        AcmeNewAuthzTlsSni01(key, db, client, i.c_str());
+        AcmeNewAuthz(config, key, db, client, i.c_str());
         progress();
     }
 
@@ -584,6 +619,14 @@ Acme(ConstBuffer<const char *> args)
                ACME responses */
             args.shift();
             config.fake = true;
+        } else if (strcmp(arg, "--challenge-directory") == 0) {
+            args.shift();
+
+            if (args.empty())
+                throw std::runtime_error("Agreement URL missing");
+
+            config.challenge_directory = args.front();
+            args.shift();
         } else if (strcmp(arg, "--agreement") == 0) {
             args.shift();
 
@@ -607,6 +650,8 @@ Acme(ConstBuffer<const char *> args)
             "options:\n"
             "  --staging     use the Let's Encrypt staging server\n"
             "  --debug       enable debug mode\n"
+            "  --challenge-directory PATH\n"
+            "                use http-01 with this challenge directory\n"
             "  --agreement URL\n"
             "                use a custom ACME agreement URL\n";
 
@@ -643,7 +688,7 @@ Acme(ConstBuffer<const char *> args)
         CertDatabase db(*db_config);
         AcmeClient client(config);
 
-        AcmeNewAuthzTlsSni01(*key, db, client, host);
+        AcmeNewAuthz(config, *key, db, client, host);
         printf("OK\n");
     } else if (strcmp(cmd, "new-cert") == 0) {
         if (args.size < 2)
@@ -680,8 +725,8 @@ Acme(ConstBuffer<const char *> args)
         CertDatabase db(*db_config);
         AcmeClient client(config);
 
-        AcmeNewAuthzCertTlsSni01(*key, db, client, root_progress,
-                                 handle, host, args);
+        AcmeNewAuthzCert(config, *key, db, client, root_progress,
+                         handle, host, args);
 
         printf("OK\n");
     } else if (strcmp(cmd, "renew-cert") == 0) {
@@ -699,7 +744,7 @@ Acme(ConstBuffer<const char *> args)
         CertDatabase db(*db_config);
         AcmeClient client(config);
 
-        AcmeRenewCert(*key, db, client, root_progress, handle);
+        AcmeRenewCert(config, *key, db, client, root_progress, handle);
 
         printf("OK\n");
     } else
