@@ -456,7 +456,6 @@ AcmeNewAuthz(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
 {
     const char *challenge_type = "tls-sni-01";
 
-    auto response = client.NewAuthz(key, host, challenge_type);
     const auto cert_key = GenerateRsaKey();
 
     /* 500ms is an arbitrary delay, somewhat bigger than NameCache's
@@ -466,7 +465,7 @@ AcmeNewAuthz(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
     unsigned unauthorized_retries = 3;
 
     while (true) {
-        response = client.NewAuthz(key, host, challenge_type);
+        auto response = client.NewAuthz(key, host, challenge_type);
 
         try {
             HandleAcmeNewAuthz(key, db, client, *cert_key,
