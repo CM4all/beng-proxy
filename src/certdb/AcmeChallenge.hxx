@@ -40,10 +40,4 @@ struct AcmeChallenge {
     std::string type;
     std::string token;
     std::string uri;
-
-    /**
-     * Generate a tls-sni-01 DNS name for the temporary
-     * certificate, to be used as subjectAltName.
-     */
-    std::string MakeDnsName(EVP_PKEY &key) const;
 };

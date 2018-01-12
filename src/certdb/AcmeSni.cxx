@@ -49,12 +49,16 @@ Hex(char *dest, ConstBuffer<uint8_t> src)
     return dest;
 }
 
-std::string
-AcmeChallenge::MakeDnsName(EVP_PKEY &key) const
+/**
+ * Generate a tls-sni-01 DNS name for the temporary certificate, to be
+ * used as subjectAltName.
+ */
+static std::string
+MakeDnsName(const AcmeChallenge &challenge, EVP_PKEY &key)
 {
     const auto thumbprint_b64 = UrlSafeBase64SHA256(MakeJwk(key));
 
-    std::string key_authz = token;
+    std::string key_authz = challenge.token;
     key_authz += '.';
     key_authz += thumbprint_b64.c_str();
 
@@ -84,7 +88,7 @@ UniqueX509
 MakeTlsSni01Cert(EVP_PKEY &account_key, EVP_PKEY &key,
                  const AcmeChallenge &authz)
 {
-    const auto alt_host = authz.MakeDnsName(account_key);
+    const auto alt_host = MakeDnsName(authz, account_key);
     std::string alt_name = "DNS:" + alt_host;
 
     const std::string common_name = MakeHandleFromAcmeSni01(alt_host);
