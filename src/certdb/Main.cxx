@@ -623,7 +623,7 @@ Acme(ConstBuffer<const char *> args)
             args.shift();
 
             if (args.empty())
-                throw std::runtime_error("Agreement URL missing");
+                throw std::runtime_error("Directory missing");
 
             config.challenge_directory = args.front();
             args.shift();
