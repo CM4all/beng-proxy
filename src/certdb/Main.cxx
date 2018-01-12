@@ -397,16 +397,16 @@ MakeCertRequest(EVP_PKEY &key, X509 &src)
  *
  * @param key the ACME account key
  * @param cert_key a key for the new challenge certificate
- * @param authz_response the "new-authz" response from the ACME server
+ * @param challenge the "new-authz" response from the ACME server
  * (i.e. the challenge)
  * @return the handle
  */
 static AllocatedString<>
 LoadAcmeNewAuthzChallenge(EVP_PKEY &key, CertDatabase &db,
                           EVP_PKEY &cert_key,
-                          const AcmeClient::AuthzChallenge &authz_response)
+                          const AcmeClient::AuthzChallenge &challenge)
 {
-    const auto cert = MakeTlsSni01Cert(key, cert_key, authz_response);
+    const auto cert = MakeTlsSni01Cert(key, cert_key, challenge);
     auto handle = GetCommonName(*cert);
     assert(!handle.IsNull());
 
@@ -423,11 +423,11 @@ LoadAcmeNewAuthzChallenge(EVP_PKEY &key, CertDatabase &db,
 static void
 HandleAcmeNewAuthz(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
                    EVP_PKEY &cert_key,
-                   const AcmeClient::AuthzChallenge &authz_response,
+                   const AcmeClient::AuthzChallenge &challenge,
                    std::chrono::steady_clock::duration delay)
 {
     const auto handle =
-        LoadAcmeNewAuthzChallenge(key, db, cert_key, authz_response);
+        LoadAcmeNewAuthzChallenge(key, db, cert_key, challenge);
     assert(!handle.IsNull());
 
     printf("Loaded challenge certificate into database\n");
@@ -437,10 +437,10 @@ HandleAcmeNewAuthz(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
         std::this_thread::sleep_for(delay);
 
     printf("Waiting for confirmation from ACME server\n");
-    bool done = client.UpdateAuthz(key, authz_response);
+    bool done = client.UpdateAuthz(key, challenge);
     while (!done) {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        done = client.CheckAuthz(authz_response);
+        done = client.CheckAuthz(challenge);
     }
 
     /* delete the challenge record */
