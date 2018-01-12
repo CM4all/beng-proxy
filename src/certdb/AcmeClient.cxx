@@ -33,6 +33,7 @@
 #include "AcmeClient.hxx"
 #include "AcmeError.hxx"
 #include "AcmeConfig.hxx"
+#include "JWS.hxx"
 #include "ssl/Base64.hxx"
 #include "ssl/Certificate.hxx"
 #include "ssl/Key.hxx"
@@ -178,30 +179,6 @@ AcmeClient::NextNonce()
     std::string result;
     std::swap(result, next_nonce);
     return result;
-}
-
-static std::string
-MakeJwk(EVP_PKEY &key)
-{
-    if (EVP_PKEY_base_id(&key) != EVP_PKEY_RSA)
-        throw std::runtime_error("RSA key expected");
-
-    const BIGNUM *n, *e;
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L
-    RSA_get0_key(EVP_PKEY_get0_RSA(&key), &n, &e, nullptr);
-#else
-    n = key.pkey.rsa->n;
-    e = key.pkey.rsa->e;
-#endif
-
-    const auto exponent = UrlSafeBase64(*e);
-    const auto modulus = UrlSafeBase64(*n);
-    std::string jwk("{\"e\":\"");
-    jwk += exponent.c_str();
-    jwk += "\",\"kty\":\"RSA\",\"n\":\"";
-    jwk += modulus.c_str();
-    jwk += "\"}";
-    return jwk;
 }
 
 static std::string
