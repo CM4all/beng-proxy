@@ -38,11 +38,11 @@
 #include <stddef.h>
 
 struct pool;
-class Istream;
+class UnusedIstreamPtr;
 class CancellablePointer;
 
 struct sink_header_handler {
-    void (*done)(void *header, size_t length, Istream &tail, void *ctx);
+    void (*done)(void *header, size_t length, UnusedIstreamPtr tail, void *ctx);
     void (*error)(std::exception_ptr ep, void *ctx);
 };
 
@@ -52,7 +52,7 @@ struct sink_header_handler {
  * stream.
  */
 void
-sink_header_new(struct pool &pool, Istream &input,
+sink_header_new(struct pool &pool, UnusedIstreamPtr input,
                 const struct sink_header_handler &handler, void *ctx,
                 CancellablePointer &cancel_ptr);
 

@@ -32,8 +32,8 @@
 
 #include "sink_header.hxx"
 #include "ForwardIstream.hxx"
+#include "UnusedPtr.hxx"
 #include "util/Cancellable.hxx"
-#include "util/Cast.hxx"
 #include "util/ByteOrder.hxx"
 
 #include <stdexcept>
@@ -62,10 +62,10 @@ class HeaderSink final : public ForwardIstream, Cancellable {
     void *handler_ctx;
 
 public:
-    HeaderSink(struct pool &_pool, Istream &_input,
+    HeaderSink(struct pool &_pool, UnusedIstreamPtr _input,
                const struct sink_header_handler &_handler, void *_ctx,
                CancellablePointer &cancel_ptr)
-        :ForwardIstream(_pool, _input),
+        :ForwardIstream(_pool, std::move(_input)),
          handler(&_handler), handler_ctx(_ctx) {
         cancel_ptr = *this;
     }
@@ -114,7 +114,7 @@ HeaderSink::InvokeCallback(size_t consumed)
 
     state = CALLBACK;
     handler->done(buffer, size,
-                  *this,
+                  UnusedIstreamPtr(this),
                   handler_ctx);
 
     if (input.IsDefined()) {
@@ -324,13 +324,13 @@ HeaderSink::_GetAvailable(bool partial)
  */
 
 void
-sink_header_new(struct pool &pool, Istream &input,
+sink_header_new(struct pool &pool, UnusedIstreamPtr input,
                 const struct sink_header_handler &handler, void *ctx,
                 CancellablePointer &cancel_ptr)
 {
     assert(handler.done != nullptr);
     assert(handler.error != nullptr);
 
-    NewIstream<HeaderSink>(pool, input, handler, ctx, cancel_ptr);
+    NewIstream<HeaderSink>(pool, std::move(input), handler, ctx, cancel_ptr);
 
 }

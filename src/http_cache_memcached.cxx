@@ -281,7 +281,7 @@ mcd_choice_get_callback(const char *key, bool unclean,
 
 static void
 http_cache_memcached_header_done(void *header_ptr, size_t length,
-                                 Istream &tail, void *ctx)
+                                 UnusedIstreamPtr tail, void *ctx)
 {
     auto &request = *(HttpCacheMemcachedRequest *)ctx;
     HttpCacheDocument *document;
@@ -292,7 +292,7 @@ http_cache_memcached_header_done(void *header_ptr, size_t length,
     try {
         type = (http_cache_memcached_type)deserialize_uint32(header);
     } catch (DeserializeError) {
-        tail.CloseUnused();
+        tail.Clear();
         request.callback.get(nullptr, nullptr, nullptr, request.callback_ctx);
         return;
     }
@@ -310,7 +310,7 @@ http_cache_memcached_header_done(void *header_ptr, size_t length,
             if (request.in_choice)
                 break;
 
-            tail.CloseUnused();
+            tail.Clear();
 
             http_cache_choice_get(*request.pool, *request.stock,
                                   request.uri, request.request_headers,
@@ -319,11 +319,12 @@ http_cache_memcached_header_done(void *header_ptr, size_t length,
             return;
         }
 
-        request.callback.get(document, UnusedIstreamPtr(&tail), nullptr, request.callback_ctx);
+        request.callback.get(document, std::move(tail), nullptr,
+                             request.callback_ctx);
         return;
     }
 
-    tail.CloseUnused();
+    tail.Clear();
     request.callback.get(nullptr, nullptr, nullptr, request.callback_ctx);
 }
 
@@ -365,7 +366,7 @@ http_cache_memcached_get_response(enum memcached_response_status status,
         return;
     }
 
-    sink_header_new(*request.pool, *value.Steal(),
+    sink_header_new(*request.pool, std::move(value),
                     http_cache_memcached_header_handler, &request,
                     *request.cancel_ptr);
 }
