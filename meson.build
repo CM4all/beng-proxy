@@ -993,7 +993,6 @@ control_server_dep = declare_dependency(
 executable('cm4all-beng-proxy',
   'src/delegate/RequestHandler.cxx',
   'src/capabilities.cxx',
-  'src/abort_close.cxx',
   'src/abort_unref.cxx',
   'src/address_string.cxx',
   'src/balancer.cxx',
@@ -1116,7 +1115,6 @@ executable('cm4all-beng-proxy',
   ])
 
 executable('cm4all-beng-lb',
-  'src/abort_close.cxx',
   'src/capabilities.cxx',
   'src/tcp_stock.cxx',
   'src/tcp_balancer.cxx',

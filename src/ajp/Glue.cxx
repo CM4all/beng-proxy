@@ -41,7 +41,6 @@
 #include "lease.hxx"
 #include "tcp_stock.hxx"
 #include "tcp_balancer.hxx"
-#include "abort_close.hxx"
 #include "istream/UnusedHoldPtr.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"

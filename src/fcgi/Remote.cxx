@@ -38,7 +38,6 @@
 #include "tcp_balancer.hxx"
 #include "stock/GetHandler.hxx"
 #include "stock/Item.hxx"
-#include "abort_close.hxx"
 #include "address_list.hxx"
 #include "pool.hxx"
 #include "strmap.hxx"
