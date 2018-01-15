@@ -49,7 +49,7 @@ create_test(EventLoop &, struct pool *pool, Istream *input)
 {
     Istream *istream =
         istream_string_new(*pool, "abcdefghijklmnopqrstuvwxyz").Steal();
-    istream = istream_replace_new(*pool, *istream);
+    istream = istream_replace_new(*pool, UnusedIstreamPtr(istream));
     istream_replace_add(*istream, 3, 3, UnusedIstreamPtr(input));
     istream_replace_extend(*istream, 3, 4);
     istream_replace_extend(*istream, 3, 5);

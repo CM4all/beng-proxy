@@ -295,7 +295,7 @@ CssProcessor::CssProcessor(struct pool &_pool, struct pool &_caller_pool,
     :pool(_pool), caller_pool(_caller_pool),
      container(_container), env(_env),
      options(_options),
-     replace(*istream_replace_new(pool, *tee.second.Steal())),
+     replace(*istream_replace_new(pool, std::move(tee.second))),
      parser(css_parser_new(pool, *tee.first.Steal(), false,
                            css_processor_parser_handler, this)) {}
 

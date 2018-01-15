@@ -99,7 +99,10 @@ struct ReplaceIstream final : FacadeIstream {
     off_t last_substitution_end = 0;
 #endif
 
-    ReplaceIstream(struct pool &p, Istream &_input);
+    ReplaceIstream(struct pool &p, UnusedIstreamPtr _input)
+        :FacadeIstream(p, std::move(_input))
+    {
+    }
 
     using FacadeIstream::GetPool;
     using FacadeIstream::HasInput;
@@ -559,15 +562,10 @@ ReplaceIstream::_Close() noexcept
  *
  */
 
-inline ReplaceIstream::ReplaceIstream(struct pool &p, Istream &_input)
-    :FacadeIstream(p, _input)
-{
-}
-
 Istream *
-istream_replace_new(struct pool &pool, Istream &input)
+istream_replace_new(struct pool &pool, UnusedIstreamPtr input)
 {
-    return NewIstream<ReplaceIstream>(pool, input);
+    return NewIstream<ReplaceIstream>(pool, std::move(input));
 }
 
 void

@@ -43,7 +43,7 @@ class UnusedIstreamPtr;
  * Process CM4all commands in a HTML stream, e.g. embeddings.
  */
 Istream *
-istream_replace_new(struct pool &pool, Istream &input);
+istream_replace_new(struct pool &pool, UnusedIstreamPtr input);
 
 void
 istream_replace_add(Istream &istream, off_t start, off_t end,

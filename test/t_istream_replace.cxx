@@ -47,7 +47,7 @@ create_input(struct pool *pool)
 static Istream *
 create_test(EventLoop &, struct pool *pool, Istream *input)
 {
-    Istream *istream = istream_replace_new(*pool, *input);
+    Istream *istream = istream_replace_new(*pool, UnusedIstreamPtr(input));
     istream_replace_add(*istream, 0, 0, nullptr);
     istream_replace_add(*istream, 3, 3, nullptr);
     istream_replace_finish(*istream);

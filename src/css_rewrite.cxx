@@ -141,7 +141,7 @@ css_rewrite_block_uris(struct pool &pool,
 
     auto input =
         istream_memory_new(pool, p_strdup(pool, block), block.size);
-    Istream *replace = istream_replace_new(pool, *input.Steal());
+    Istream *replace = istream_replace_new(pool, std::move(input));
 
     bool modified = false;
     for (unsigned i = 0; i < rewrite.n_urls; ++i) {

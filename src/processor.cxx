@@ -413,7 +413,7 @@ processor_process(struct pool &caller_pool, UnusedIstreamPtr input,
                                *env.event_loop,
                                true, true);
     processor->replace = istream_replace_new(processor->pool,
-                                             *tee.first.Steal());
+                                             std::move(tee.first));
     processor->InitParser(std::move(tee.second));
     pool_unref(&processor->pool);
 
