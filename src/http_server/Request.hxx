@@ -89,14 +89,6 @@ struct HttpServerRequest {
     bool HasBody() const {
         return body;
     }
-
-    /**
-     * Close the still-unused request body.  This is a no-op if there
-     * is no request body.
-     */
-    void CheckCloseUnusedBody() {
-        body.Clear();
-    }
 };
 
 #endif

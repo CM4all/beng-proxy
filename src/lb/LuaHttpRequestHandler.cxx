@@ -109,7 +109,7 @@ LbHttpConnection::InvokeLua(LbLuaHandler &handler,
         return;
 
     if (g == nullptr) {
-        request.CheckCloseUnusedBody();
+        request.body.Clear();
         http_server_send_message(&request, HTTP_STATUS_BAD_GATEWAY,
                                  "No response from Lua handler");
         return;
