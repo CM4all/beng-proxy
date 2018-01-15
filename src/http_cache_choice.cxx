@@ -282,7 +282,7 @@ http_cache_choice_get_response(enum memcached_response_status status,
         return;
     }
 
-    sink_buffer_new(*choice->pool, *value.Steal(),
+    sink_buffer_new(*choice->pool, std::move(value),
                     http_cache_choice_buffer_handler, choice,
                     *choice->cancel_ptr);
 }
@@ -562,7 +562,7 @@ http_cache_choice_filter_get_response(enum memcached_response_status status,
         return;
     }
 
-    sink_buffer_new(*choice->pool, *value.Steal(),
+    sink_buffer_new(*choice->pool, std::move(value),
                     http_cache_choice_filter_buffer_handler, choice,
                     *choice->cancel_ptr);
 }

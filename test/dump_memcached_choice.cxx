@@ -156,7 +156,7 @@ my_mcd_response(enum memcached_response_status status,
         return;
     }
 
-    sink_buffer_new(*c->pool, *value.Steal(),
+    sink_buffer_new(*c->pool, std::move(value),
                     my_sink_handler, c,
                     c->cancel_ptr);
 }

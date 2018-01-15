@@ -32,6 +32,7 @@
 
 #include "sink_buffer.hxx"
 #include "istream.hxx"
+#include "UnusedPtr.hxx"
 #include "Sink.hxx"
 #include "pool.hxx"
 #include "util/Cancellable.hxx"
@@ -53,10 +54,10 @@ struct BufferSink final : IstreamSink, Cancellable {
     const struct sink_buffer_handler *const handler;
     void *handler_ctx;
 
-    BufferSink(struct pool &_pool, Istream &_input, size_t available,
+    BufferSink(struct pool &_pool, UnusedIstreamPtr _input, size_t available,
                const struct sink_buffer_handler &_handler, void *ctx,
                CancellablePointer &cancel_ptr)
-        :IstreamSink(_input, FD_ANY), pool(&_pool),
+        :IstreamSink(std::move(_input), FD_ANY), pool(&_pool),
          buffer((unsigned char *)p_malloc(pool, available)),
          size(available),
          handler(&_handler), handler_ctx(ctx) {
@@ -140,19 +141,18 @@ BufferSink::Cancel() noexcept
  */
 
 void
-sink_buffer_new(struct pool &pool, Istream &input,
+sink_buffer_new(struct pool &pool, UnusedIstreamPtr input,
                 const struct sink_buffer_handler &handler, void *ctx,
                 CancellablePointer &cancel_ptr)
 {
     static char empty_buffer[1];
 
-    assert(!input.HasHandler());
     assert(handler.done != nullptr);
     assert(handler.error != nullptr);
 
     off_t available = input.GetAvailable(false);
     if (available == -1 || available >= 0x10000000) {
-        input.CloseUnused();
+        input.Clear();
 
         handler.error(std::make_exception_ptr(std::runtime_error(available < 0
                                                                  ? "unknown stream length"
@@ -162,11 +162,11 @@ sink_buffer_new(struct pool &pool, Istream &input,
     }
 
     if (available == 0) {
-        input.CloseUnused();
+        input.Clear();
         handler.done(empty_buffer, 0, ctx);
         return;
     }
 
-    NewFromPool<BufferSink>(pool, pool, input, available,
+    NewFromPool<BufferSink>(pool, pool, std::move(input), available,
                             handler, ctx, cancel_ptr);
 }

@@ -38,7 +38,7 @@
 #include <stddef.h>
 
 struct pool;
-class Istream;
+class UnusedIstreamPtr;
 class CancellablePointer;
 
 struct sink_buffer_handler {
@@ -47,7 +47,7 @@ struct sink_buffer_handler {
 };
 
 void
-sink_buffer_new(struct pool &pool, Istream &input,
+sink_buffer_new(struct pool &pool, UnusedIstreamPtr input,
                 const struct sink_buffer_handler &handler, void *ctx,
                 CancellablePointer &cancel_ptr);
 
