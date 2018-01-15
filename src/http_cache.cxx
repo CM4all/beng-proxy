@@ -47,8 +47,7 @@
 #include "http/Date.hxx"
 #include "istream_rubber.hxx"
 #include "istream/UnusedPtr.hxx"
-#include "istream/istream.hxx"
-#include "istream/istream_hold.hxx"
+#include "istream/UnusedHoldPtr.hxx"
 #include "istream/istream_tee.hxx"
 #include "AllocatorPtr.hxx"
 #include "event/TimerEvent.hxx"
@@ -124,7 +123,7 @@ public:
      * used for the heap backend: it creates the #istream on demand
      * with http_cache_heap_istream().
      */
-    Istream *document_body;
+    UnusedHoldIstreamPtr document_body;
 
     /**
      * This struct holds response information while this module
@@ -442,9 +441,9 @@ HttpCacheRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
 
     if (document != nullptr &&
         !cache.heap.IsDefined() &&
-        document_body != nullptr)
+        document_body)
         /* free the cached document istream (memcached) */
-        document_body->CloseUnused();
+        document_body.Clear();
 
     const off_t available = body
         ? body.GetAvailable(true)
@@ -508,9 +507,9 @@ HttpCacheRequest::OnHttpError(std::exception_ptr ep) noexcept
 
     if (document != nullptr &&
         !cache.heap.IsDefined() &&
-        document_body != nullptr)
+        document_body)
         /* free the cached document istream (memcached) */
-        document_body->CloseUnused();
+        document_body.Clear();
 
     handler.InvokeError(ep);
     pool_unref_denotify(&caller_pool, &caller_pool_notify);
@@ -529,9 +528,9 @@ HttpCacheRequest::Cancel() noexcept
 
     if (document != nullptr &&
         !cache.heap.IsDefined() &&
-        document_body != nullptr)
+        document_body)
         /* free the cached document istream (memcached) */
-        document_body->CloseUnused();
+        document_body.Clear();
 
     pool_unref_denotify(&caller_pool, &caller_pool_notify);
 
@@ -870,7 +869,7 @@ http_cache_memcached_serve(HttpCacheRequest &request)
     request.handler.InvokeResponse(request.document->status,
                                    StringMap(ShallowCopy(), request.caller_pool,
                                              request.document->response_headers),
-                                   UnusedIstreamPtr(request.document_body));
+                                   std::move(request.document_body));
 }
 
 /**
@@ -1105,7 +1104,8 @@ http_cache_memcached_get_callback(HttpCacheDocument *document,
                             &request.caller_pool_notify);
     } else {
         request.document = document;
-        request.document_body = istream_hold_new(request.pool, *body.Steal());
+        request.document_body = UnusedHoldIstreamPtr(request.pool,
+                                                     std::move(body));
 
         http_cache_test(request, request.method, request.address,
                         StringMap(ShallowCopy(),
