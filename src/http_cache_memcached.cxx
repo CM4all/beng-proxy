@@ -139,12 +139,11 @@ http_cache_memcached_flush_response(enum memcached_response_status status,
                                     gcc_unused size_t extras_length,
                                     gcc_unused const void *key,
                                     gcc_unused size_t key_length,
-                                    Istream *value, void *ctx)
+                                    UnusedIstreamPtr value, void *ctx)
 {
     auto request = (HttpCacheMemcachedRequest *)ctx;
 
-    if (value != nullptr)
-        value->CloseUnused();
+    value.Clear();
 
     request->callback.flush(status == MEMCACHED_STATUS_NO_ERROR,
                             nullptr, request->callback_ctx);
@@ -220,7 +219,7 @@ static void
 http_cache_memcached_get_response(enum memcached_response_status status,
                                   const void *extras, size_t extras_length,
                                   const void *key, size_t key_length,
-                                  Istream *value, void *ctx);
+                                  UnusedIstreamPtr value, void *ctx);
 
 static void
 http_cache_memcached_get_error(std::exception_ptr ep, void *ctx)
@@ -347,14 +346,12 @@ http_cache_memcached_get_response(enum memcached_response_status status,
                                   gcc_unused size_t extras_length,
                                   gcc_unused const void *key,
                                   gcc_unused size_t key_length,
-                                  Istream *value, void *ctx)
+                                  UnusedIstreamPtr value, void *ctx)
 {
     auto &request = *(HttpCacheMemcachedRequest *)ctx;
 
     if (status == MEMCACHED_STATUS_KEY_NOT_FOUND && !request.in_choice) {
-        if (value != nullptr)
-            value->CloseUnused();
-
+        value.Clear();
         http_cache_choice_get(*request.pool, *request.stock,
                               request.uri, request.request_headers,
                               mcd_choice_get_callback, &request,
@@ -362,15 +359,13 @@ http_cache_memcached_get_response(enum memcached_response_status status,
         return;
     }
 
-    if (status != MEMCACHED_STATUS_NO_ERROR || value == nullptr) {
-        if (value != nullptr)
-            value->CloseUnused();
-
+    if (status != MEMCACHED_STATUS_NO_ERROR || !value) {
+        value.Clear();
         request.callback.get(nullptr, nullptr, nullptr, request.callback_ctx);
         return;
     }
 
-    sink_header_new(*request.pool, *value,
+    sink_header_new(*request.pool, *value.Steal(),
                     http_cache_memcached_header_handler, &request,
                     *request.cancel_ptr);
 }
@@ -416,12 +411,11 @@ http_cache_memcached_put_response(enum memcached_response_status status,
                                   gcc_unused size_t extras_length,
                                   gcc_unused const void *key,
                                   gcc_unused size_t key_length,
-                                  Istream *value, void *ctx)
+                                  UnusedIstreamPtr value, void *ctx)
 {
     auto &request = *(HttpCacheMemcachedRequest *)ctx;
 
-    if (value != nullptr)
-        value->CloseUnused();
+    value.Clear();
 
     if (status != MEMCACHED_STATUS_NO_ERROR || /* error */
         request.choice == nullptr) { /* or no choice entry needed */
@@ -511,7 +505,7 @@ http_cache_memcached_put(struct pool &pool, MemachedStock &stock,
                            MEMCACHED_OPCODE_SET,
                            &request->extras.set, sizeof(request->extras.set),
                            key, strlen(key),
-                           value.Steal(),
+                           std::move(value),
                            http_cache_memcached_put_handler, request,
                            cancel_ptr);
 }
@@ -522,12 +516,11 @@ mcd_background_response(gcc_unused enum memcached_response_status status,
                         gcc_unused size_t extras_length,
                         gcc_unused const void *key,
                         gcc_unused size_t key_length,
-                        Istream *value, void *ctx)
+                        UnusedIstreamPtr value, void *ctx)
 {
     LinkedBackgroundJob *job = (LinkedBackgroundJob *)ctx;
 
-    if (value != nullptr)
-        value->CloseUnused();
+    value.Clear();
 
     job->Remove();
 }

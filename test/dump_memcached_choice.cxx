@@ -39,7 +39,7 @@
 #include "tpool.hxx"
 #include "serialize.hxx"
 #include "istream/sink_buffer.hxx"
-#include "istream/istream.hxx"
+#include "istream/UnusedPtr.hxx"
 #include "direct.hxx"
 #include "pool.hxx"
 #include "fb_pool.hxx"
@@ -147,18 +147,16 @@ my_mcd_response(enum memcached_response_status status,
                 gcc_unused size_t extras_length,
                 gcc_unused const void *key,
                 gcc_unused size_t key_length,
-                Istream *value, void *ctx)
+                UnusedIstreamPtr value, void *ctx)
 {
     auto *c = (Context *)ctx;
 
-    if (status != MEMCACHED_STATUS_NO_ERROR || value == NULL) {
+    if (status != MEMCACHED_STATUS_NO_ERROR || !value) {
         fprintf(stderr, "status=%d\n", status);
-        if (value != NULL)
-            value->CloseUnused();
         return;
     }
 
-    sink_buffer_new(*c->pool, *value,
+    sink_buffer_new(*c->pool, *value.Steal(),
                     my_sink_handler, c,
                     c->cancel_ptr);
 }

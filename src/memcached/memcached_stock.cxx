@@ -39,7 +39,7 @@
 #include "address_list.hxx"
 #include "lease.hxx"
 #include "pool.hxx"
-#include "istream/istream.hxx"
+#include "istream/UnusedHoldPtr.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
 
@@ -89,7 +89,7 @@ struct MemcachedStockRequest final : public StockGetHandler, Lease {
     const void *const key;
     const size_t key_length;
 
-    Istream *const value;
+    UnusedHoldIstreamPtr value;
 
     const struct memcached_client_handler &handler;
     void *const handler_ctx;
@@ -100,7 +100,7 @@ struct MemcachedStockRequest final : public StockGetHandler, Lease {
                           enum memcached_opcode _opcode,
                           const void *_extras, size_t _extras_length,
                           const void *_key, size_t _key_length,
-                          Istream *_value,
+                          UnusedIstreamPtr _value,
                           const struct memcached_client_handler &_handler,
                           void *_handler_ctx,
                           CancellablePointer &_cancel_ptr)
@@ -108,7 +108,7 @@ struct MemcachedStockRequest final : public StockGetHandler, Lease {
          opcode(_opcode),
          extras(_extras), extras_length(_extras_length),
          key(_key), key_length(_key_length),
-         value(_value),
+         value(pool, std::move(_value)),
          handler(_handler), handler_ctx(_handler_ctx),
          cancel_ptr(_cancel_ptr) {}
 
@@ -140,7 +140,7 @@ MemcachedStockRequest::OnStockItemReady(StockItem &_item) noexcept
                             opcode,
                             extras, extras_length,
                             key, key_length,
-                            value,
+                            std::move(value),
                             &handler, handler_ctx,
                             cancel_ptr);
 }
@@ -150,8 +150,7 @@ MemcachedStockRequest::OnStockItemError(std::exception_ptr ep) noexcept
 {
     handler.error(ep, handler_ctx);
 
-    if (value != nullptr)
-        value->CloseUnused();
+    value.Clear();
 }
 
 void
@@ -159,7 +158,7 @@ memcached_stock_invoke(struct pool &pool, MemachedStock &stock,
                        enum memcached_opcode opcode,
                        const void *extras, size_t extras_length,
                        const void *key, size_t key_length,
-                       Istream *value,
+                       UnusedIstreamPtr value,
                        const struct memcached_client_handler &handler,
                        void *handler_ctx,
                        CancellablePointer &cancel_ptr)
@@ -172,7 +171,7 @@ memcached_stock_invoke(struct pool &pool, MemachedStock &stock,
                                                       opcode,
                                                       extras, extras_length,
                                                       key, key_length,
-                                                      value,
+                                                      std::move(value),
                                                       handler, handler_ctx,
                                                       cancel_ptr);
 

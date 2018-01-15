@@ -49,7 +49,7 @@ static constexpr size_t MEMCACHED_KEY_MAX = 0x7fff;
 
 struct pool;
 class EventLoop;
-class Istream;
+class UnusedIstreamPtr;
 class SocketDescriptor;
 class Lease;
 class HttpResponseHandler;
@@ -60,7 +60,7 @@ struct memcached_client_handler {
     void (*response)(enum memcached_response_status status,
                      const void *extras, size_t extras_length,
                      const void *key, size_t key_length,
-                     Istream *value, void *ctx);
+                     UnusedIstreamPtr value, void *ctx);
 
     void (*error)(std::exception_ptr ep, void *ctx);
 };
@@ -89,7 +89,7 @@ memcached_client_invoke(struct pool *pool, EventLoop &event_loop,
                         enum memcached_opcode opcode,
                         const void *extras, size_t extras_length,
                         const void *key, size_t key_length,
-                        Istream *value,
+                        UnusedIstreamPtr value,
                         const struct memcached_client_handler *handler,
                         void *handler_ctx,
                         CancellablePointer &cancel_ptr);

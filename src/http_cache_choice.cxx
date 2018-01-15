@@ -272,19 +272,17 @@ http_cache_choice_get_response(enum memcached_response_status status,
                                gcc_unused size_t extras_length,
                                gcc_unused const void *key,
                                gcc_unused size_t key_length,
-                               Istream *value, void *ctx)
+                               UnusedIstreamPtr value, void *ctx)
 {
     auto choice = (HttpCacheChoice *)ctx;
 
-    if (status != MEMCACHED_STATUS_NO_ERROR || value == nullptr) {
-        if (value != nullptr)
-            value->CloseUnused();
-
+    if (status != MEMCACHED_STATUS_NO_ERROR || !value) {
+        value.Clear();
         choice->callback.get(nullptr, false, nullptr, choice->callback_ctx);
         return;
     }
 
-    sink_buffer_new(*choice->pool, *value,
+    sink_buffer_new(*choice->pool, *value.Steal(),
                     http_cache_choice_buffer_handler, choice,
                     *choice->cancel_ptr);
 }
@@ -345,12 +343,11 @@ http_cache_choice_add_response(gcc_unused enum memcached_response_status status,
                                gcc_unused size_t extras_length,
                                gcc_unused const void *key,
                                gcc_unused size_t key_length,
-                               Istream *value, void *ctx)
+                               UnusedIstreamPtr value, void *ctx)
 {
     auto choice = (HttpCacheChoice *)ctx;
 
-    if (value != nullptr)
-        value->CloseUnused();
+    value.Clear();
 
     choice->callback.commit(nullptr, choice->callback_ctx);
 }
@@ -374,12 +371,11 @@ http_cache_choice_prepend_response(enum memcached_response_status status,
                                    gcc_unused size_t extras_length,
                                    gcc_unused const void *key,
                                    gcc_unused size_t key_length,
-                                   Istream *value, void *ctx)
+                                   UnusedIstreamPtr value, void *ctx)
 {
     auto choice = (HttpCacheChoice *)ctx;
 
-    if (value != nullptr)
-        value->CloseUnused();
+    value.Clear();
 
     switch (status) {
     case MEMCACHED_STATUS_ITEM_NOT_STORED:
@@ -391,12 +387,12 @@ http_cache_choice_prepend_response(enum memcached_response_status status,
         choice->extras.expiration = ToBE32(600); /* XXX */
 
         value = istream_memory_new(*choice->pool,
-                                   choice->data.data, choice->data.size).Steal();
+                                   choice->data.data, choice->data.size);
         memcached_stock_invoke(*choice->pool, *choice->stock,
                                MEMCACHED_OPCODE_ADD,
                                &choice->extras, sizeof(choice->extras),
                                choice->key, strlen(choice->key),
-                               value,
+                               std::move(value),
                                http_cache_choice_add_handler, choice,
                                *choice->cancel_ptr);
         break;
@@ -442,7 +438,7 @@ http_cache_choice_commit(HttpCacheChoice &choice,
     memcached_stock_invoke(*choice.pool, stock,
                            MEMCACHED_OPCODE_PREPEND,
                            nullptr, 0,
-                           choice.key, strlen(choice.key), value.Steal(),
+                           choice.key, strlen(choice.key), std::move(value),
                            http_cache_choice_prepend_handler, &choice,
                            cancel_ptr);
 }
@@ -453,12 +449,11 @@ http_cache_choice_filter_set_response(gcc_unused enum memcached_response_status 
                                       gcc_unused size_t extras_length,
                                       gcc_unused const void *key,
                                       gcc_unused size_t key_length,
-                                      gcc_unused Istream *value, void *ctx)
+                                      UnusedIstreamPtr value, void *ctx)
 {
     auto choice = (HttpCacheChoice *)ctx;
 
-    if (value != nullptr)
-        value->CloseUnused();
+    value.Clear();
 
     choice->callback.filter(nullptr, nullptr, choice->callback_ctx);
 }
@@ -531,7 +526,7 @@ http_cache_choice_filter_buffer_done(void *data0, size_t length, void *ctx)
                                &choice->extras, sizeof(choice->extras),
                                choice->key, strlen(choice->key),
                                istream_memory_new(*choice->pool, data0,
-                                                  dest - (char *)data0).Steal(),
+                                                  dest - (char *)data0),
                                http_cache_choice_filter_set_handler, choice,
                                *choice->cancel_ptr);
     }
@@ -556,19 +551,18 @@ http_cache_choice_filter_get_response(enum memcached_response_status status,
                                       gcc_unused size_t extras_length,
                                       gcc_unused const void *key,
                                       gcc_unused size_t key_length,
-                                      Istream *value, void *ctx)
+                                      UnusedIstreamPtr value, void *ctx)
 {
     auto choice = (HttpCacheChoice *)ctx;
 
-    if (status != MEMCACHED_STATUS_NO_ERROR || value == nullptr) {
-        if (value != nullptr)
-            value->CloseUnused();
+    if (status != MEMCACHED_STATUS_NO_ERROR || !value) {
+        value.Clear();
 
         choice->callback.filter(nullptr, nullptr, choice->callback_ctx);
         return;
     }
 
-    sink_buffer_new(*choice->pool, *value,
+    sink_buffer_new(*choice->pool, *value.Steal(),
                     http_cache_choice_filter_buffer_handler, choice,
                     *choice->cancel_ptr);
 }
@@ -660,12 +654,11 @@ http_cache_choice_delete_response(gcc_unused enum memcached_response_status stat
                                   gcc_unused size_t extras_length,
                                   gcc_unused const void *key,
                                   gcc_unused size_t key_length,
-                                  Istream *value, void *ctx)
+                                  UnusedIstreamPtr value, void *ctx)
 {
     auto choice = (HttpCacheChoice *)ctx;
 
-    if (value != nullptr)
-        value->CloseUnused();
+    value.Clear();
 
     choice->callback.delete_(nullptr, choice->callback_ctx);
 }

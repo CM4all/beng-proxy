@@ -43,7 +43,7 @@
 
 struct pool;
 class EventLoop;
-class Istream;
+class UnusedIstreamPtr;
 struct memcached_client_handler;
 struct MemachedStock;
 class TcpBalancer;
@@ -67,7 +67,7 @@ memcached_stock_invoke(struct pool &pool, MemachedStock &stock,
                        enum memcached_opcode opcode,
                        const void *extras, size_t extras_length,
                        const void *key, size_t key_length,
-                       Istream *value,
+                       UnusedIstreamPtr value,
                        const struct memcached_client_handler &handler,
                        void *handler_ctx,
                        CancellablePointer &cancel_ptr);

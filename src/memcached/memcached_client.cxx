@@ -35,6 +35,7 @@
 #include "Error.hxx"
 #include "please.hxx"
 #include "istream/Pointer.hxx"
+#include "istream/UnusedPtr.hxx"
 #include "pool.hxx"
 #include "system/Error.hxx"
 #include "event/net/BufferedSocket.hxx"
@@ -325,7 +326,7 @@ MemcachedClient::SubmitResponse()
                                   response.header.extras_length,
                                   response.key.buffer,
                                   FromBE16(response.header.key_length),
-                                  this, request.handler_ctx);
+                                  UnusedIstreamPtr(this), request.handler_ctx);
         response.in_handler = false;
 
         /* check if the callback has closed the value istream */
@@ -715,7 +716,7 @@ memcached_client_invoke(struct pool *pool, EventLoop &event_loop,
                         enum memcached_opcode opcode,
                         const void *extras, size_t extras_length,
                         const void *key, size_t key_length,
-                        Istream *value,
+                        UnusedIstreamPtr value,
                         const struct memcached_client_handler *handler,
                         void *handler_ctx,
                         CancellablePointer &cancel_ptr)
@@ -725,7 +726,7 @@ memcached_client_invoke(struct pool *pool, EventLoop &event_loop,
 
     Istream *request = memcached_request_packet(*pool, opcode,
                                                 extras, extras_length,
-                                                key, key_length, value,
+                                                key, key_length, value.Steal(),
                                                 0x1234 /* XXX? */);
     if (request == nullptr) {
         lease.ReleaseLease(true);

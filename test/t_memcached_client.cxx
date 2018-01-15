@@ -38,7 +38,7 @@
 #include "lease.hxx"
 #include "direct.hxx"
 #include "istream/Pointer.hxx"
-#include "istream/istream.hxx"
+#include "istream/UnusedPtr.hxx"
 #include "fb_pool.hxx"
 #include "pool.hxx"
 #include "PInstance.hxx"
@@ -227,7 +227,7 @@ my_mcd_response(enum memcached_response_status status,
                 gcc_unused size_t extras_length,
                 gcc_unused const void *key,
                 gcc_unused size_t key_length,
-                Istream *value, void *ctx)
+                UnusedIstreamPtr value, void *ctx)
 {
     auto *c = (Context *)ctx;
 
@@ -237,9 +237,9 @@ my_mcd_response(enum memcached_response_status status,
     c->status = status;
 
     if (c->close_value_early)
-        value->CloseUnused();
-    else if (value != NULL)
-        c->value.Set(*value, *c);
+        value.Clear();
+    else if (value)
+        c->value.Set(std::move(value), *c);
 
     if (c->close_value_late) {
         c->value_closed = true;
@@ -427,7 +427,7 @@ test_request_value(struct pool *pool, Context *c)
                             MEMCACHED_OPCODE_SET,
                             NULL, 0,
                             "foo", 3,
-                            value,
+                            UnusedIstreamPtr(value),
                             &my_mcd_handler, c,
                             request_value_cancel_ptr(*value));
     pool_unref(pool);
@@ -458,7 +458,7 @@ test_request_value_close(struct pool *pool, Context *c)
                             MEMCACHED_OPCODE_SET,
                             NULL, 0,
                             "foo", 3,
-                            value,
+                            UnusedIstreamPtr(value),
                             &my_mcd_handler, c,
                             request_value_cancel_ptr(*value));
     pool_unref(pool);
@@ -485,7 +485,7 @@ test_request_value_abort(struct pool *pool, Context *c)
                             MEMCACHED_OPCODE_SET,
                             NULL, 0,
                             "foo", 3,
-                            value,
+                            UnusedIstreamPtr(value),
                             &my_mcd_handler, c,
                             request_value_cancel_ptr(*value));
     pool_unref(pool);

@@ -33,7 +33,6 @@
 #include "memcached/memcached_client.hxx"
 #include "lease.hxx"
 #include "istream/UnusedPtr.hxx"
-#include "istream/istream.hxx"
 #include "istream/istream_pipe.hxx"
 #include "istream/istream_string.hxx"
 #include "istream/sink_fd.hxx"
@@ -41,6 +40,7 @@
 #include "PInstance.hxx"
 #include "event/ShutdownListener.hxx"
 #include "fb_pool.hxx"
+#include "pool.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "net/RConnectSocket.hxx"
 #include "system/SetupProcess.hxx"
@@ -159,7 +159,7 @@ my_mcd_response(enum memcached_response_status status,
                 gcc_unused size_t extras_length,
                 gcc_unused const void *key,
                 gcc_unused size_t key_length,
-                Istream *value, void *ctx)
+                UnusedIstreamPtr value, void *ctx)
 {
     auto *c = (Context *)ctx;
 
@@ -167,13 +167,12 @@ my_mcd_response(enum memcached_response_status status,
 
     c->status = status;
 
-    if (value != NULL) {
-        value = istream_pipe_new(c->pool, UnusedIstreamPtr(value), nullptr).Steal();
-        c->value = sink_fd_new(c->event_loop, *c->pool, *value,
+    if (value) {
+        value = istream_pipe_new(c->pool, std::move(value), nullptr);
+        c->value = sink_fd_new(c->event_loop, *c->pool, *value.Steal(),
                                FileDescriptor(STDOUT_FILENO),
                                guess_fd_type(STDOUT_FILENO),
                                my_sink_fd_handler, c);
-        value->Read();
     } else {
         c->value_eof = true;
         c->shutdown_listener.Disable();
@@ -264,7 +263,7 @@ int main(int argc, char **argv) {
                             opcode,
                             extras, extras_length,
                             key, key != NULL ? strlen(key) : 0,
-                            value != nullptr ? istream_string_new(*pool, value).Steal() : nullptr,
+                            value != nullptr ? istream_string_new(*pool, value) : nullptr,
                             &my_mcd_handler, &ctx,
                             ctx.cancel_ptr);
 
