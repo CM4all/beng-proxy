@@ -42,7 +42,7 @@ class EventLoop;
 static Istream *
 create_input(struct pool *pool)
 {
-    return istream_string_new(pool, "foo fo fo bar blablablablubb fo");
+    return istream_string_new(*pool, "foo fo fo bar blablablablubb fo").Steal();
 }
 
 static Istream *

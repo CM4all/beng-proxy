@@ -46,7 +46,7 @@ class EventLoop;
 static Istream *
 create_input(struct pool *pool)
 {
-    return istream_string_new(pool, EXPECTED_RESULT);
+    return istream_string_new(*pool, EXPECTED_RESULT).Steal();
 }
 
 static std::exception_ptr

@@ -123,8 +123,8 @@ HttpServerConnection::SubmitResponse(http_status_t status,
     auto &request_pool = request.request->pool;
 
     response.status = status;
-    Istream *status_stream
-        = istream_memory_new(&request_pool,
+    auto status_stream
+        = istream_memory_new(request_pool,
                              response.status_buffer,
                              format_status_line(response.status_buffer,
                                                 status));
@@ -172,14 +172,14 @@ HttpServerConnection::SubmitResponse(http_status_t status,
     headers3.Write("\r\n", 2);
     Istream *header_stream = istream_gb_new(request_pool, std::move(headers3));
 
-    response.length = - status_stream->GetAvailable(false)
+    response.length = - status_stream.GetAvailable(false)
         - header_stream->GetAvailable(false);
 
     /* make sure the access logger gets a negative value if there
        is no response body */
     response.length -= body == nullptr;
 
-    body = istream_cat_new(request_pool, status_stream,
+    body = istream_cat_new(request_pool, status_stream.Steal(),
                            header_stream, body);
 
     SetResponseIstream(*body);
@@ -219,14 +219,14 @@ http_server_simple_response(const HttpServerRequest &request,
     if (location != nullptr)
         headers.Write("location", location);
 
-    Istream *body = nullptr;
+    UnusedIstreamPtr body;
     if (msg != nullptr) {
         headers.Write("content-type", "text/plain");
-        body = istream_string_new(&request.pool, msg);
+        body = istream_string_new(request.pool, msg);
     }
 
     http_server_response(&request, status, std::move(headers),
-                         UnusedIstreamPtr(body));
+                         std::move(body));
 }
 
 void
@@ -242,8 +242,7 @@ http_server_send_message(const HttpServerRequest *request,
 #endif
 
     http_server_response(request, status, std::move(headers),
-                         UnusedIstreamPtr(istream_string_new(&request->pool,
-                                                             msg)));
+                         istream_string_new(request->pool, msg));
 }
 
 void
@@ -268,6 +267,5 @@ http_server_send_redirect(const HttpServerRequest *request,
 #endif
 
     http_server_response(request, status, std::move(headers),
-                         UnusedIstreamPtr(istream_string_new(&request->pool,
-                                                             msg)));
+                         istream_string_new(request->pool, msg));
 }

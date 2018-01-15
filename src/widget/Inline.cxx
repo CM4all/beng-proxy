@@ -190,10 +190,10 @@ widget_response_format(struct pool &pool, const Widget &widget,
 
         auto *i = istream_html_escape_new(pool, std::move(body)).Steal();
         i = istream_cat_new(pool,
-                            istream_string_new(&pool,
-                                               "<pre class=\"beng_text_widget\">"),
+                            istream_string_new(pool,
+                                               "<pre class=\"beng_text_widget\">").Steal(),
                             i,
-                            istream_string_new(&pool, "</pre>"));
+                            istream_string_new(pool, "</pre>").Steal());
         body = UnusedIstreamPtr(i);
     }
 

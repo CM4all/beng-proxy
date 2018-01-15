@@ -50,6 +50,6 @@ method_not_allowed(Request &request2, const char *allow)
 
     request2.DispatchResponse(HTTP_STATUS_METHOD_NOT_ALLOWED,
                               std::move(headers),
-                              UnusedIstreamPtr(istream_string_new(&request2.pool,
-                                                                  "This method is not allowed.")));
+                              istream_string_new(request2.pool,
+                                                 "This method is not allowed."));
 }

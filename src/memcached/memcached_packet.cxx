@@ -35,6 +35,7 @@
 #include "istream/istream_cat.hxx"
 #include "istream/istream_memory.hxx"
 #include "istream/istream_null.hxx"
+#include "istream/UnusedPtr.hxx"
 #include "pool.hxx"
 #include "util/ByteOrder.hxx"
 
@@ -65,15 +66,15 @@ memcached_request_packet(struct pool &pool, enum memcached_opcode opcode,
     header->message_id = message_id;
     memset(header->cas, 0, sizeof(header->cas));
 
-    Istream *header_stream =
-        istream_memory_new(&pool, header, sizeof(*header));
+    auto header_stream =
+        istream_memory_new(pool, header, sizeof(*header));
     Istream *extras_stream = extras_length > 0
-        ? istream_memory_new(&pool, extras, extras_length)
+        ? istream_memory_new(pool, extras, extras_length).Steal()
         : nullptr;
 
-    return istream_cat_new(pool, header_stream, extras_stream,
+    return istream_cat_new(pool, header_stream.Steal(), extras_stream,
                            key_length == 0
                            ? nullptr
-                           : istream_memory_new(&pool, key, key_length),
+                           : istream_memory_new(pool, key, key_length).Steal(),
                            value);
 }

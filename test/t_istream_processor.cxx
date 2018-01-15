@@ -73,13 +73,13 @@ embed_inline_widget(struct pool &pool, gcc_unused struct processor_env &env,
                     gcc_unused bool plain_text,
                     Widget &widget)
 {
-    return UnusedIstreamPtr(istream_string_new(&pool, p_strdup(&pool, widget.class_name)));
+    return istream_string_new(pool, p_strdup(&pool, widget.class_name));
 }
 
 static Istream *
 create_input(struct pool *pool)
 {
-    return istream_string_new(pool, "foo &c:url; <script><c:widget id=\"foo\" type=\"bar\"/></script> <c:widget id=\"foo\" type=\"bar\"/>");
+    return istream_string_new(*pool, "foo &c:url; <script><c:widget id=\"foo\" type=\"bar\"/></script> <c:widget id=\"foo\" type=\"bar\"/>").Steal();
 }
 
 static Istream *

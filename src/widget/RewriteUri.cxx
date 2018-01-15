@@ -370,7 +370,7 @@ UriRewriter::ResolverCallback() noexcept
 
     UnusedIstreamPtr istream;
     if (!value.empty()) {
-        istream = UnusedIstreamPtr(istream_memory_new(&pool, value.data, value.size));
+        istream = istream_memory_new(pool, value.data, value.size);
 
         if (escape_flag && escape != nullptr)
             istream = istream_escape_new(pool, std::move(istream), *escape);
@@ -437,7 +437,7 @@ rewrite_widget_uri(struct pool &pool,
         if (uri == nullptr)
             return nullptr;
 
-        UnusedIstreamPtr istream(istream_string_new(&pool, uri));
+        auto istream = istream_string_new(pool, uri);
         if (escape != nullptr)
             istream = istream_escape_new(pool, std::move(istream), *escape);
 

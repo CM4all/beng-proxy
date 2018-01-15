@@ -36,12 +36,13 @@
 #include <stddef.h>
 
 struct pool;
-class Istream;
+class UnusedIstreamPtr;
 
 /**
  * istream implementation which reads from a fixed memory buffer.
  */
-Istream *
-istream_memory_new(struct pool *pool, const void *data, size_t length);
+UnusedIstreamPtr
+istream_memory_new(struct pool &pool,
+                   const void *data, size_t length) noexcept;
 
 #endif

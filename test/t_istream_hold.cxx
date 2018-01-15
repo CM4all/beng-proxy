@@ -32,7 +32,7 @@
 
 #include "istream/istream_hold.hxx"
 #include "istream/istream_string.hxx"
-#include "istream/istream.hxx"
+#include "istream/UnusedPtr.hxx"
 
 #define EXPECTED_RESULT "foo"
 
@@ -41,7 +41,7 @@ class EventLoop;
 static Istream *
 create_input(struct pool *pool)
 {
-    return istream_string_new(pool, "foo");
+    return istream_string_new(*pool, "foo").Steal();
 }
 
 static Istream *

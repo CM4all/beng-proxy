@@ -75,7 +75,7 @@ RunHello(WasServer &server, struct pool &pool,
     body.Clear();
 
     was_server_response(server, HTTP_STATUS_OK, StringMap(pool),
-                        UnusedIstreamPtr(istream_string_new(&pool, "hello")));
+                        istream_string_new(pool, "hello"));
 }
 
 static void

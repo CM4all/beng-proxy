@@ -126,8 +126,8 @@ css_rewrite_block_uris(struct pool &pool,
         const AutoRewindPool auto_rewind(*tpool);
 
         rewrite.parser = css_parser_new(*tpool,
-                                        *istream_memory_new(tpool, block.data,
-                                                            block.size),
+                                        *istream_memory_new(*tpool, block.data,
+                                                            block.size).Steal(),
                                         true,
                                         css_rewrite_parser_handler, &rewrite);
         css_parser_read(rewrite.parser);
@@ -139,9 +139,9 @@ css_rewrite_block_uris(struct pool &pool,
         /* no URLs found, no rewriting necessary */
         return nullptr;
 
-    Istream *input =
-        istream_memory_new(&pool, p_strdup(pool, block), block.size);
-    Istream *replace = istream_replace_new(pool, *input);
+    auto input =
+        istream_memory_new(pool, p_strdup(pool, block), block.size);
+    Istream *replace = istream_replace_new(pool, *input.Steal());
 
     bool modified = false;
     for (unsigned i = 0; i < rewrite.n_urls; ++i) {

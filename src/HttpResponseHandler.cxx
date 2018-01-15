@@ -46,5 +46,5 @@ HttpResponseHandler::InvokeResponse(struct pool &pool,
     StringMap headers(pool);
     headers.Add("content-type", "text/plain; charset=utf-8");
     InvokeResponse(status, std::move(headers),
-                   UnusedIstreamPtr(istream_string_new(&pool, msg)));
+                   istream_string_new(pool, msg));
 }

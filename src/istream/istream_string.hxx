@@ -34,12 +34,12 @@
 #define BENG_PROXY_ISTREAM_STRING_HXX
 
 struct pool;
-class Istream;
+class UnusedIstreamPtr;
 
 /**
  * istream implementation which reads from a string.
  */
-Istream *
-istream_string_new(struct pool *pool, const char *s);
+UnusedIstreamPtr
+istream_string_new(struct pool &pool, const char *s) noexcept;
 
 #endif

@@ -44,6 +44,7 @@
 #include "istream/sink_buffer.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream_memory.hxx"
+#include "istream/UnusedPtr.hxx"
 #include "pool.hxx"
 #include "ssl/Hash.hxx"
 #include "io/Logger.hxx"
@@ -389,8 +390,8 @@ http_cache_choice_prepend_response(enum memcached_response_status status,
         choice->extras.flags = 0;
         choice->extras.expiration = ToBE32(600); /* XXX */
 
-        value = istream_memory_new(choice->pool,
-                                   choice->data.data, choice->data.size);
+        value = istream_memory_new(*choice->pool,
+                                   choice->data.data, choice->data.size).Steal();
         memcached_stock_invoke(*choice->pool, *choice->stock,
                                MEMCACHED_OPCODE_ADD,
                                &choice->extras, sizeof(choice->extras),
@@ -435,13 +436,13 @@ http_cache_choice_commit(HttpCacheChoice &choice,
 
     LogConcat(5, "HttpCacheMemcached", "prepend '", choice.key, "'");
 
-    Istream *value = istream_memory_new(choice.pool,
-                                        choice.data.data,
-                                        choice.data.size);
+    auto value = istream_memory_new(*choice.pool,
+                                    choice.data.data,
+                                    choice.data.size);
     memcached_stock_invoke(*choice.pool, stock,
                            MEMCACHED_OPCODE_PREPEND,
                            nullptr, 0,
-                           choice.key, strlen(choice.key), value,
+                           choice.key, strlen(choice.key), value.Steal(),
                            http_cache_choice_prepend_handler, &choice,
                            cancel_ptr);
 }
@@ -529,8 +530,8 @@ http_cache_choice_filter_buffer_done(void *data0, size_t length, void *ctx)
                                MEMCACHED_OPCODE_REPLACE,
                                &choice->extras, sizeof(choice->extras),
                                choice->key, strlen(choice->key),
-                               istream_memory_new(choice->pool, data0,
-                                                  dest - (char *)data0),
+                               istream_memory_new(*choice->pool, data0,
+                                                  dest - (char *)data0).Steal(),
                                http_cache_choice_filter_set_handler, choice,
                                *choice->cancel_ptr);
     }

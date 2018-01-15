@@ -34,7 +34,8 @@
 #include "istream/istream_byte.hxx"
 #include "istream/istream_four.hxx"
 #include "istream/istream_string.hxx"
-#include "istream/istream.hxx"
+#include "istream/UnusedPtr.hxx"
+#include "pool.hxx"
 
 #include <stdio.h>
 
@@ -48,7 +49,7 @@
 static Istream *
 create_input(struct pool *pool)
 {
-    return istream_string_new(pool, INPUT);
+    return istream_string_new(*pool, INPUT).Steal();
 }
 
 class MyDechunkHandler final : public DechunkHandler {

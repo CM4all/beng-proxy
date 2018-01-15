@@ -715,7 +715,7 @@ Request::DispatchResponse(http_status_t status,
     headers.Write("content-type", "text/plain");
 
     DispatchResponse(status, std::move(headers),
-                     UnusedIstreamPtr(istream_string_new(&pool, msg)));
+                     istream_string_new(pool, msg));
 }
 
 void

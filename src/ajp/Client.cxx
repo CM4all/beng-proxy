@@ -949,8 +949,8 @@ ajp_client_request(struct pool &pool, EventLoop &event_loop,
         client->request.ajp_body = istream_ajp_body_new(pool, *body.Steal());
         istream_ajp_body_request(*client->request.ajp_body, requested);
         request = istream_cat_new(pool, request, client->request.ajp_body,
-                                  istream_memory_new(&pool, &empty_body_chunk,
-                                                     sizeof(empty_body_chunk)));
+                                  istream_memory_new(pool, &empty_body_chunk,
+                                                     sizeof(empty_body_chunk)).Steal());
     } else {
         client->request.ajp_body = nullptr;
     }

@@ -154,7 +154,7 @@ TEST(SinkRubberTest, String)
     Rubber r(4 * 1024 * 1024);
     Data data(r);
 
-    Istream *input = istream_string_new(pool, "foo");
+    Istream *input = istream_string_new(pool, "foo").Steal();
     sink_rubber_new(pool, UnusedIstreamPtr(input), r, 1024,
                     data, data.cancel_ptr);
 
@@ -175,8 +175,8 @@ TEST(SinkRubberTest, String2)
     Data data(r);
 
     Istream *input = istream_four_new(pool,
-                                      *istream_string_new(pool,
-                                                          "foobar"));
+                                      *istream_string_new(*pool,
+                                                          "foobar").Steal());
     sink_rubber_new(pool, UnusedIstreamPtr(input), r, 1024,
                     data, data.cancel_ptr);
 
@@ -199,8 +199,7 @@ TEST(SinkRubberTest, TooLarge1)
     Rubber r(4 * 1024 * 1024);
     Data data(r);
 
-    Istream *input = istream_string_new(pool, "foobar");
-    sink_rubber_new(pool, UnusedIstreamPtr(input), r, 5,
+    sink_rubber_new(pool, istream_string_new(*pool, "foobar"), r, 5,
                     data, data.cancel_ptr);
     ASSERT_EQ(Data::TOO_LARGE, data.result);
 }
@@ -212,8 +211,8 @@ TEST(SinkRubberTest, TooLarge2)
     Data data(r);
 
     Istream *input = istream_four_new(pool,
-                                      *istream_string_new(pool,
-                                                          "foobar"));
+                                      *istream_string_new(*pool,
+                                                          "foobar").Steal());
     sink_rubber_new(pool, UnusedIstreamPtr(input), r, 5,
                     data, data.cancel_ptr);
 
@@ -268,7 +267,7 @@ TEST(SinkRubberTest, Abort)
     istream_delayed_cancellable_ptr(*delayed) = nullptr;
 
     Istream *input = istream_cat_new(pool,
-                                     istream_string_new(pool, "foo"),
+                                     istream_string_new(*pool, "foo").Steal(),
                                      delayed);
     sink_rubber_new(pool, UnusedIstreamPtr(input), r, 4,
                     data, data.cancel_ptr);

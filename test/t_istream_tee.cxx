@@ -137,7 +137,7 @@ test_block1(EventLoop &event_loop)
     assert(ctx.value.empty());
 
     /* feed data into input */
-    istream_delayed_set(*delayed, UnusedIstreamPtr(istream_string_new(pool, "foo")));
+    istream_delayed_set(*delayed, istream_string_new(*pool, "foo"));
     assert(ctx.value.empty());
 
     /* the first output (block_istream_handler) blocks */
@@ -164,7 +164,7 @@ test_close_data(EventLoop &event_loop, struct pool *pool)
 
     pool = pool_new_libc(nullptr, "test");
     auto tee =
-        istream_tee_new(*pool, UnusedIstreamPtr(istream_string_new(pool, "foo")),
+        istream_tee_new(*pool, istream_string_new(*pool, "foo"),
                         event_loop, false, false);
 
     sink_close_new(*pool, *tee.first.Steal());
@@ -197,7 +197,7 @@ test_close_skipped(EventLoop &event_loop, struct pool *pool)
     CancellablePointer cancel_ptr;
 
     pool = pool_new_libc(nullptr, "test");
-    Istream *input = istream_string_new(pool, "foo");
+    Istream *input = istream_string_new(*pool, "foo").Steal();
     auto tee = istream_tee_new(*pool, UnusedIstreamPtr(input),
                                event_loop, false, false);
     NewStringSink(*pool, *tee.first.Steal(), buffer_callback, &ctx, cancel_ptr);

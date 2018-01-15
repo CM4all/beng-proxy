@@ -273,7 +273,7 @@ MyResourceLoader::SendRequest(struct pool &pool,
 
     UnusedIstreamPtr response_body;
     if (request->response_body != NULL)
-        response_body = UnusedIstreamPtr(istream_string_new(&pool, request->response_body));
+        response_body = istream_string_new(pool, request->response_body);
 
     handler.InvokeResponse(request->status,
                            std::move(response_headers),

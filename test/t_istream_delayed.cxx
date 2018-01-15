@@ -52,7 +52,7 @@ struct DelayedTest final : Cancellable {
 static Istream *
 create_input(struct pool *pool)
 {
-    return istream_string_new(pool, "foo");
+    return istream_string_new(*pool, "foo").Steal();
 }
 
 static Istream *

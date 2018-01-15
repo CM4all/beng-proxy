@@ -264,7 +264,7 @@ int main(int argc, char **argv) {
                             opcode,
                             extras, extras_length,
                             key, key != NULL ? strlen(key) : 0,
-                            value != NULL ? istream_string_new(pool, value) : NULL,
+                            value != nullptr ? istream_string_new(*pool, value).Steal() : nullptr,
                             &my_mcd_handler, &ctx,
                             ctx.cancel_ptr);
 

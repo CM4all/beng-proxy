@@ -836,9 +836,9 @@ XmlProcessor::TransformUriAttribute(const XmlParserAttribute &attr,
 
     if (!fragment.empty()) {
         /* escape and append the fragment to the new URI */
-        UnusedIstreamPtr s(istream_memory_new(&pool,
-                                              p_strdup(pool, fragment),
-                                              fragment.size));
+        auto s = istream_memory_new(pool,
+                                    p_strdup(pool, fragment),
+                                    fragment.size);
         s = istream_html_escape_new(pool, std::move(s));
 
         istream = UnusedIstreamPtr(istream_cat_new(pool, istream.Steal(),
@@ -1001,7 +1001,7 @@ XmlProcessor::HandleClassAttribute(const XmlParserAttribute &attr) noexcept
 
     const size_t length = buffer.GetSize();
     void *q = buffer.Dup(pool);
-    ReplaceAttributeValue(attr, UnusedIstreamPtr(istream_memory_new(&pool, q, length)));
+    ReplaceAttributeValue(attr, istream_memory_new(pool, q, length));
 }
 
 void
@@ -1019,7 +1019,7 @@ XmlProcessor::HandleIdAttribute(const XmlParserAttribute &attr) noexcept
             return;
 
         Replace(attr.value_start, attr.value_start + 3,
-                UnusedIstreamPtr(istream_string_new(&pool, prefix)));
+                istream_string_new(pool, prefix));
     } else if (n == 2) {
         /* double underscore: add class name prefix */
 
@@ -1028,7 +1028,7 @@ XmlProcessor::HandleIdAttribute(const XmlParserAttribute &attr) noexcept
             return;
 
         Replace(attr.value_start, attr.value_start + 2,
-                UnusedIstreamPtr(istream_string_new(&pool, class_name)));
+                istream_string_new(pool, class_name));
     }
 }
 

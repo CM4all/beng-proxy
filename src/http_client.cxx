@@ -1308,7 +1308,7 @@ HttpClient::HttpClient(struct pool &_caller_pool, struct pool &_pool,
     const char *p = p_strcat(&GetPool(),
                              http_method_to_string(method), " ", uri,
                              " HTTP/1.1\r\n", nullptr);
-    Istream *request_line_stream = istream_string_new(&GetPool(), p);
+    auto request_line_stream = istream_string_new(GetPool(), p);
 
     /* headers */
 
@@ -1359,7 +1359,7 @@ HttpClient::HttpClient(struct pool &_caller_pool, struct pool &_pool,
     /* request istream */
 
     request.istream.Set(*istream_cat_new(GetPool(),
-                                         request_line_stream,
+                                         request_line_stream.Steal(),
                                          header_stream,
                                          body),
                         *this,

@@ -178,8 +178,8 @@ Instance::HandleHttpRequest(HttpServerRequest &request,
             sink_null_new(request.pool, *request.body.Steal());
 
         http_server_response(&request, HTTP_STATUS_OK, HttpHeaders(request.pool),
-                             UnusedIstreamPtr(istream_memory_new(&request.pool,
-                                                                 data, sizeof(data))));
+                             istream_memory_new(request.pool,
+                                                data, sizeof(data)));
         break;
 
     case Instance::Mode::HUGE_:

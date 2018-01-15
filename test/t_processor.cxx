@@ -71,7 +71,7 @@ embed_inline_widget(struct pool &pool,
     if (s == nullptr)
         s = "widget";
 
-    return UnusedIstreamPtr(istream_string_new(&pool, s));
+    return istream_string_new(pool, s);
 }
 
 WidgetSession *

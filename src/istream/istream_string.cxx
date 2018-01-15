@@ -32,11 +32,12 @@
 
 #include "istream_string.hxx"
 #include "istream_memory.hxx"
+#include "UnusedPtr.hxx"
 
 #include <string.h>
 
-Istream *
-istream_string_new(struct pool *pool, const char *s)
+UnusedIstreamPtr
+istream_string_new(struct pool &pool, const char *s) noexcept
 {
     return istream_memory_new(pool, s, strlen(s));
 }

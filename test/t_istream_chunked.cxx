@@ -33,6 +33,7 @@
 #include "istream/istream_chunked.hxx"
 #include "istream/istream_string.hxx"
 #include "istream/istream.hxx"
+#include "istream/UnusedPtr.hxx"
 #include "pool.hxx"
 
 class EventLoop;
@@ -40,7 +41,7 @@ class EventLoop;
 static Istream *
 create_input(struct pool *pool)
 {
-    return istream_string_new(pool, "foo_bar_0123456789abcdefghijklmnopqrstuvwxyz");
+    return istream_string_new(*pool, "foo_bar_0123456789abcdefghijklmnopqrstuvwxyz").Steal();
 }
 
 static Istream *

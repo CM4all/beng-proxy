@@ -455,7 +455,7 @@ test_body(Context<Connection> &c)
     c.connection = Connection::NewMirror(*c.pool, c.event_loop);
     c.connection->Request(c.pool, c,
                           HTTP_METHOD_GET, "/foo", StringMap(*c.pool),
-                          istream_string_new(c.pool, "foobar"),
+                          istream_string_new(*c.pool, "foobar").Steal(),
 #ifdef HAVE_EXPECT_100
                           false,
 #endif
@@ -491,7 +491,7 @@ test_read_body(Context<Connection> &c)
     c.connection = Connection::NewMirror(*c.pool, c.event_loop);
     c.connection->Request(c.pool, c,
                           HTTP_METHOD_GET, "/foo", StringMap(*c.pool),
-                          istream_string_new(c.pool, "foobar"),
+                          istream_string_new(*c.pool, "foobar").Steal(),
 #ifdef HAVE_EXPECT_100
                           false,
 #endif
@@ -554,7 +554,7 @@ test_close_response_body_early(Context<Connection> &c)
     c.connection = Connection::NewMirror(*c.pool, c.event_loop);
     c.connection->Request(c.pool, c,
                           HTTP_METHOD_GET, "/foo", StringMap(*c.pool),
-                          istream_string_new(c.pool, "foobar"),
+                          istream_string_new(*c.pool, "foobar").Steal(),
 #ifdef HAVE_EXPECT_100
                           false,
 #endif
@@ -584,7 +584,7 @@ test_close_response_body_late(Context<Connection> &c)
     c.connection = Connection::NewMirror(*c.pool, c.event_loop);
     c.connection->Request(c.pool, c,
                           HTTP_METHOD_GET, "/foo", StringMap(*c.pool),
-                          istream_string_new(c.pool, "foobar"),
+                          istream_string_new(*c.pool, "foobar").Steal(),
 #ifdef HAVE_EXPECT_100
                           false,
 #endif
@@ -614,7 +614,7 @@ test_close_response_body_data(Context<Connection> &c)
     c.connection = Connection::NewMirror(*c.pool, c.event_loop);
     c.connection->Request(c.pool, c,
                           HTTP_METHOD_GET, "/foo", StringMap(*c.pool),
-                          istream_string_new(c.pool, "foobar"),
+                          istream_string_new(*c.pool, "foobar").Steal(),
 #ifdef HAVE_EXPECT_100
                           false,
 #endif
@@ -897,7 +897,7 @@ test_head(Context<Connection> &c)
     c.connection = Connection::NewMirror(*c.pool, c.event_loop);
     c.connection->Request(c.pool, c,
                           HTTP_METHOD_HEAD, "/foo", StringMap(*c.pool),
-                          istream_string_new(c.pool, "foobar"),
+                          istream_string_new(*c.pool, "foobar").Steal(),
 #ifdef HAVE_EXPECT_100
                           false,
 #endif

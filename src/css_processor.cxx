@@ -126,8 +126,7 @@ css_processor_parser_class_name(const CssParserValue *name, void *ctx)
             return;
 
         css_processor_replace_add(processor, name->start, name->start + 3,
-                                  UnusedIstreamPtr(istream_string_new(&processor->pool,
-                                                                      prefix)));
+                                  istream_string_new(processor->pool, prefix));
     } else if (n == 2) {
         /* double underscore: add class name prefix */
 
@@ -136,8 +135,8 @@ css_processor_parser_class_name(const CssParserValue *name, void *ctx)
             return;
 
         css_processor_replace_add(processor, name->start, name->start + 2,
-                                  UnusedIstreamPtr(istream_string_new(&processor->pool,
-                                                                      class_name)));
+                                  istream_string_new(processor->pool,
+                                                     class_name));
     }
 }
 
@@ -160,8 +159,8 @@ css_processor_parser_xml_id(const CssParserValue *name, void *ctx)
             return;
 
         css_processor_replace_add(processor, name->start, name->start + 3,
-                                  UnusedIstreamPtr(istream_string_new(&processor->pool,
-                                                                      prefix)));
+                                  istream_string_new(processor->pool,
+                                                     prefix));
     } else if (n == 2) {
         /* double underscore: add class name prefix */
 
@@ -170,8 +169,8 @@ css_processor_parser_xml_id(const CssParserValue *name, void *ctx)
             return;
 
         css_processor_replace_add(processor, name->start, name->start + 1,
-                                  UnusedIstreamPtr(istream_string_new(&processor->pool,
-                                                                      class_name)));
+                                  istream_string_new(processor->pool,
+                                                     class_name));
     }
 }
 

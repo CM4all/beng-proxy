@@ -31,6 +31,7 @@
  */
 
 #include "istream/istream_string.hxx"
+#include "istream/UnusedPtr.hxx"
 #include "fcgi/istream_fcgi.hxx"
 
 class EventLoop;
@@ -38,7 +39,7 @@ class EventLoop;
 static Istream *
 create_input(struct pool *pool)
 {
-    return istream_string_new(pool, "foo");
+    return istream_string_new(*pool, "foo").Steal();
 }
 
 static Istream *

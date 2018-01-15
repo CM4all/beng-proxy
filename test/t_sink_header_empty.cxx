@@ -48,7 +48,7 @@ class EventLoop;
 static Istream *
 create_input(struct pool *pool)
 {
-    return istream_memory_new(pool, "\0\0\0\x06" "foobar", 10);
+    return istream_memory_new(*pool, "\0\0\0\x06" "foobar", 10).Steal();
 }
 
 static void
