@@ -32,6 +32,7 @@
 
 #include "istream_pause.hxx"
 #include "ForwardIstream.hxx"
+#include "UnusedPtr.hxx"
 
 class PauseIstream final : public ForwardIstream {
     SharedPoolPtr<PauseIstreamControl> control;
@@ -39,8 +40,8 @@ class PauseIstream final : public ForwardIstream {
     bool resumed = false;
 
 public:
-    PauseIstream(struct pool &p, Istream &_input)
-        :ForwardIstream(p, _input),
+    PauseIstream(struct pool &p, UnusedIstreamPtr _input)
+        :ForwardIstream(p, std::move(_input)),
          control(SharedPoolPtr<PauseIstreamControl>::Make(p, *this)) {}
 
     ~PauseIstream() noexcept {
@@ -78,9 +79,9 @@ PauseIstreamControl::Resume() noexcept
         pause->Resume();
 }
 
-std::pair<Istream *, SharedPoolPtr<PauseIstreamControl>>
-istream_pause_new(struct pool *pool, Istream &input)
+std::pair<UnusedIstreamPtr, SharedPoolPtr<PauseIstreamControl>>
+istream_pause_new(struct pool *pool, UnusedIstreamPtr input)
 {
-    auto *i = NewIstream<PauseIstream>(*pool, input);
-    return std::make_pair(i, i->GetControl());
+    auto *i = NewIstream<PauseIstream>(*pool, std::move(input));
+    return std::make_pair(UnusedIstreamPtr(i), i->GetControl());
 }

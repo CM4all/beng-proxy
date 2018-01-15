@@ -36,7 +36,7 @@
 #include "pool/SharedPtr.hxx"
 
 struct pool;
-class Istream;
+class UnusedIstreamPtr;
 class PauseIstream;
 
 class PauseIstreamControl {
@@ -49,11 +49,7 @@ public:
 
     void Resume() noexcept;
 };
-
-/**
- * #Istream facade that ignores read() calls until it is resumed.
- */
-std::pair<Istream *, SharedPoolPtr<PauseIstreamControl>>
-istream_pause_new(struct pool *pool, Istream &input);
+std::pair<UnusedIstreamPtr, SharedPoolPtr<PauseIstreamControl>>
+istream_pause_new(struct pool *pool, UnusedIstreamPtr input);
 
 #endif
