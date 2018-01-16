@@ -284,7 +284,7 @@ compare_widget_path(const Widget *widget, const char *other)
 
 const char *
 Widget::ExternalUri(struct pool &_pool,
-                    const DissectedUri *external_uri,
+                    StringView external_base_uri,
                     const StringMap *args,
                     bool stateful,
                     StringView relative_uri,
@@ -295,7 +295,7 @@ Widget::ExternalUri(struct pool &_pool,
 
     const char *path = GetIdPath();
     if (path == nullptr ||
-        external_uri == nullptr ||
+        external_base_uri.IsNull() ||
         cls == &root_widget_class)
         return nullptr;
 
@@ -346,8 +346,7 @@ Widget::ExternalUri(struct pool &_pool,
                           nullptr);
 
     new_uri = p_strncat(&_pool,
-                        external_uri->base.data,
-                        external_uri->base.size,
+                        external_base_uri.data, external_base_uri.size,
                         ";", (size_t)1,
                         args2, strlen(args2),
                         "&view=", (size_t)(view != nullptr ? 6 : 0),

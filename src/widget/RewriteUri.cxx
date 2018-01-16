@@ -36,6 +36,7 @@
 #include "Class.hxx"
 #include "Inline.hxx"
 #include "uri/uri_extract.hxx"
+#include "uri/Dissect.hxx"
 #include "penv.hxx"
 #include "pool/tpool.hxx"
 #include "escape_class.hxx"
@@ -242,7 +243,7 @@ do_rewrite_widget_uri(struct pool &pool, struct processor_env &env,
         gcc_unreachable();
     }
 
-    const char *uri = widget.ExternalUri(pool, env.external_uri, env.args,
+    const char *uri = widget.ExternalUri(pool, env.external_uri->base, env.args,
                                          stateful,
                                          value,
                                          frame, view);
