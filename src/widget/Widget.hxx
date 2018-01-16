@@ -33,7 +33,7 @@
 #ifndef BENG_PROXY_WIDGET_HXX
 #define BENG_PROXY_WIDGET_HXX
 
-#include "istream/UnusedPtr.hxx"
+#include "istream/UnusedHoldPtr.hxx"
 #include "io/Logger.hxx"
 #include "http/Method.h"
 #include "util/StringView.hxx"
@@ -200,7 +200,7 @@ struct Widget final
         StringView query_string = nullptr;
 
         /** the request body (from processor_env.body) */
-        UnusedIstreamPtr body;
+        UnusedHoldIstreamPtr body;
 
         /**
          * The view requested by the client.  If no view was
@@ -244,7 +244,7 @@ struct Widget final
          * The request body.  This must be closed if it failed to be
          * submitted to the focused widget.
          */
-        UnusedIstreamPtr body;
+        UnusedHoldIstreamPtr body;
 
         /**
          * The HTTP method to be invoked on the focused widget.

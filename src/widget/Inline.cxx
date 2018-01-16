@@ -364,9 +364,7 @@ embed_inline_widget(struct pool &pool, struct processor_env &env,
                                         std::move(widget.from_request.body));
         pause = std::move(_pause.second);
 
-        /* wrap it in istream_hold, because (most likely) the original
-           request body was an istream_hold, too */
-        widget.from_request.body = UnusedIstreamPtr(istream_hold_new(pool, *_pause.first.Steal()));
+        widget.from_request.body = UnusedHoldIstreamPtr(pool, std::move(_pause.first));
     }
 
     auto iw = NewFromPool<InlineWidget>(pool, pool, env, plain_text, widget);
