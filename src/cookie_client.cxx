@@ -35,8 +35,8 @@
 #include "cookie_string.hxx"
 #include "strmap.hxx"
 #include "http_string.hxx"
-#include "tpool.hxx"
-#include "pool.hxx"
+#include "pool/tpool.hxx"
+#include "pool/pool.hxx"
 #include "shm/dpool.hxx"
 #include "util/StringView.hxx"
 

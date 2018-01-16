@@ -33,7 +33,7 @@
 #include "istream/istream_delayed.hxx"
 #include "istream/istream_string.hxx"
 #include "istream/UnusedPtr.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "util/Cancellable.hxx"
 
 #include <stdio.h>

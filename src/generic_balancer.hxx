@@ -39,7 +39,7 @@
 
 #include "balancer.hxx"
 #include "address_list.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/FailureManager.hxx"
 

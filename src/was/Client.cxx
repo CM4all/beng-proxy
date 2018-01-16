@@ -41,7 +41,7 @@
 #include "istream/istream_null.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "strmap.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "stopwatch.hxx"
 #include "io/FileDescriptor.hxx"
 #include "util/Cast.hxx"

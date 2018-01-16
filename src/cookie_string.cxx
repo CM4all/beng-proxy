@@ -32,7 +32,7 @@
 
 #include "cookie_string.hxx"
 #include "http_string.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "util/StringView.hxx"
 
 gcc_always_inline

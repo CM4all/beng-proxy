@@ -34,7 +34,7 @@
 #include "net/SocketAddress.hxx"
 #include "system/fd_util.h"
 #include "stopwatch.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "system/Error.hxx"
 #include "util/Cancellable.hxx"
 

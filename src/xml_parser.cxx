@@ -31,7 +31,7 @@
  */
 
 #include "xml_parser.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "html_chars.hxx"
 #include "expansible_buffer.hxx"
 #include "istream/Sink.hxx"

@@ -31,7 +31,7 @@
  */
 
 #include "GrowingBuffer.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "istream/Bucket.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/WritableBuffer.hxx"

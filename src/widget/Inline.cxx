@@ -53,7 +53,7 @@
 #include "istream/istream_string.hxx"
 #include "istream/TimeoutIstream.hxx"
 #include "session.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "event/TimerEvent.hxx"
 #include "util/Cancellable.hxx"
 #include "util/StringCompare.hxx"

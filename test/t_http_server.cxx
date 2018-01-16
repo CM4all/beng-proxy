@@ -36,7 +36,7 @@
 #include "http_headers.hxx"
 #include "direct.hxx"
 #include "PInstance.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "istream/istream_catch.hxx"
 #include "fb_pool.hxx"

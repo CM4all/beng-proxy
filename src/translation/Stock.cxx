@@ -38,7 +38,7 @@
 #include "stock/Item.hxx"
 #include "stock/GetHandler.hxx"
 #include "lease.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "system/Error.hxx"
 #include "net/AllocatedSocketAddress.hxx"
 #include "net/UniqueSocketDescriptor.hxx"

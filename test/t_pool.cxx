@@ -30,8 +30,8 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "pool.hxx"
-#include "RootPool.hxx"
+#include "pool/pool.hxx"
+#include "pool/RootPool.hxx"
 #include "util/Compiler.h"
 
 #include <gtest/gtest.h>

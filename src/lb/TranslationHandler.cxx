@@ -39,7 +39,7 @@
 #include "translation/Response.hxx"
 #include "translation/Handler.hxx"
 #include "http_server/Request.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 
 static std::map<const char *, LbGoto, StringLess>
 ToInstance(LbGotoMap &goto_map, const LbTranslationHandlerConfig &config)

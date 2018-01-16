@@ -32,7 +32,7 @@
 
 #include "sink_fd.hxx"
 #include "Sink.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "direct.hxx"
 #include "io/Splice.hxx"
 #include "io/FileDescriptor.hxx"

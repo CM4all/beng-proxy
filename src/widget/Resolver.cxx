@@ -34,7 +34,7 @@
 #include "Registry.hxx"
 #include "Widget.hxx"
 #include "Class.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "util/Cancellable.hxx"
 
 #include <boost/intrusive/list.hpp>

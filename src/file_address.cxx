@@ -37,7 +37,7 @@
 #include "puri_base.hxx"
 #include "puri_escape.hxx"
 #include "pexpand.hxx"
-#include "pbuffer.hxx"
+#include "pool/pbuffer.hxx"
 #include "AllocatorPtr.hxx"
 
 #include <assert.h>

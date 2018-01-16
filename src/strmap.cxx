@@ -31,7 +31,7 @@
  */
 
 #include "strmap.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 
 #include <iterator>
 

@@ -33,7 +33,7 @@
 #ifndef PADDRESS_HXX
 #define PADDRESS_HXX
 
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "net/SocketAddress.hxx"
 
 /**

@@ -33,7 +33,7 @@
 #include "cookie_server.hxx"
 #include "cookie_string.hxx"
 #include "strmap.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "util/StringView.hxx"
 
 StringMap

@@ -31,8 +31,8 @@
  */
 
 #include "PInstance.hxx"
-#include "pool.hxx"
-#include "tpool.hxx"
+#include "pool/pool.hxx"
+#include "pool/tpool.hxx"
 #include "cache.hxx"
 #include "http_cache_heap.hxx"
 #include "http_cache_info.hxx"

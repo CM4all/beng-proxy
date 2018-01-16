@@ -34,7 +34,7 @@
 #include "Class.hxx"
 #include "View.hxx"
 #include "Ref.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "util/HexFormat.h"
 #include "util/Cast.hxx"
 

@@ -46,7 +46,7 @@
 #include "istream/istream.hxx"
 #include "istream/UnusedHoldPtr.hxx"
 #include "PInstance.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "event/TimerEvent.hxx"
 #include "event/ShutdownListener.hxx"
 #include "fb_pool.hxx"

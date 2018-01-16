@@ -33,7 +33,7 @@
 #include "Client.hxx"
 #include "Error.hxx"
 #include "Handler.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "system/Error.hxx"
 #include "system/fd_util.h"
 #include "event/SocketEvent.hxx"

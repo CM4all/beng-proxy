@@ -39,7 +39,7 @@
 #include "stock/GetHandler.hxx"
 #include "stock/Item.hxx"
 #include "address_list.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "strmap.hxx"
 #include "istream/UnusedHoldPtr.hxx"
 #include "net/SocketDescriptor.hxx"

@@ -31,7 +31,7 @@
  */
 
 #include "address_string.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/ToString.hxx"
 

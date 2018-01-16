@@ -33,7 +33,7 @@
 #ifndef TEST_POOL_HXX
 #define TEST_POOL_HXX
 
-#include "pool.hxx"
+#include "pool/pool.hxx"
 
 #include <assert.h>
 

@@ -39,7 +39,7 @@
 #include "ResourceAddress.hxx"
 #include "cgi_address.hxx"
 #include "lhttp_address.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "io/Logger.hxx"
 #include "http/Date.hxx"
 #include "util/StringView.hxx"

@@ -42,7 +42,7 @@
 #include "bp/Instance.hxx"
 #include "http_headers.hxx"
 #include "http_server/Request.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 
 #include <assert.h>
 #include <sys/stat.h>

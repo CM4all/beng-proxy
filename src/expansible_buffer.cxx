@@ -31,7 +31,7 @@
  */
 
 #include "expansible_buffer.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "util/StringView.hxx"
 #include "util/Poison.hxx"
 

@@ -31,7 +31,7 @@
  */
 
 #include "abort_unref.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "util/Cast.hxx"
 #include "util/Cancellable.hxx"
 

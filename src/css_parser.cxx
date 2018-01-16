@@ -32,7 +32,7 @@
 
 #include "css_parser.hxx"
 #include "css_syntax.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "istream/Sink.hxx"
 #include "util/StringUtil.hxx"
 #include "util/TrivialArray.hxx"

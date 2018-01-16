@@ -35,7 +35,7 @@
 #include "net/AddressInfo.hxx"
 #include "net/Resolver.hxx"
 #include "net/Parser.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "ua_classification.hxx"
 #include "io/Logger.hxx"
 #include "util/StringView.hxx"

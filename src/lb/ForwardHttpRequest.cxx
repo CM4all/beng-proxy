@@ -56,7 +56,7 @@
 #include "lease.hxx"
 #include "strmap.hxx"
 #include "bulldog.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "net/IPv4Address.hxx"
 #include "net/IPv6Address.hxx"
 #include "net/SocketAddress.hxx"

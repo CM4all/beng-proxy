@@ -33,7 +33,7 @@
 #include "istream_deflate.hxx"
 #include "UnusedPtr.hxx"
 #include "FacadeIstream.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "fb_pool.hxx"
 #include "SliceFifoBuffer.hxx"
 #include "event/DeferEvent.hxx"

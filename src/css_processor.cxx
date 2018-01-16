@@ -37,14 +37,14 @@
 #include "strmap.hxx"
 #include "widget/Widget.hxx"
 #include "widget/RewriteUri.hxx"
-#include "tpool.hxx"
+#include "pool/tpool.hxx"
 #include "bp_global.hxx"
 #include "escape_css.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream_replace.hxx"
 #include "istream/istream_string.hxx"
 #include "istream/istream_tee.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 
 #include <assert.h>
 #include <string.h>

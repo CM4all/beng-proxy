@@ -33,7 +33,7 @@
 #include "Stock.hxx"
 #include "Class.hxx"
 #include "GetHandler.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "util/Cancellable.hxx"
 
 #include <assert.h>

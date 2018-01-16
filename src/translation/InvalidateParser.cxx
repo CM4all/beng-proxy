@@ -34,7 +34,7 @@
 #include "Request.hxx"
 #include "util/ByteOrder.hxx"
 #include "util/RuntimeError.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 
 static void
 apply_translation_packet(TranslateRequest &request,

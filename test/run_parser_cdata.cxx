@@ -35,7 +35,7 @@
 #include "istream/istream_file.hxx"
 #include "PInstance.hxx"
 #include "fb_pool.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "util/Exception.hxx"
 #include "util/PrintException.hxx"
 

@@ -34,8 +34,8 @@
 #include "widget/Registry.hxx"
 #include "widget/Widget.hxx"
 #include "widget/Class.hxx"
-#include "pool.hxx"
-#include "RootPool.hxx"
+#include "pool/pool.hxx"
+#include "pool/RootPool.hxx"
 #include "util/Cancellable.hxx"
 #include "util/Cast.hxx"
 

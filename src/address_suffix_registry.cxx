@@ -35,7 +35,7 @@
 #include "ResourceAddress.hxx"
 #include "file_address.hxx"
 #include "nfs/Address.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/CharUtil.hxx"
 

@@ -47,7 +47,7 @@
 #include "net/StaticSocketAddress.hxx"
 #include "system/Error.hxx"
 #include "util/Exception.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 
 #include <assert.h>
 #include <unistd.h>

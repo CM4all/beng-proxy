@@ -34,7 +34,7 @@
 #include "filtered_socket.hxx"
 #include "fb_pool.hxx"
 #include "thread_queue.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "event/Duration.hxx"
 #include "system/Error.hxx"
 

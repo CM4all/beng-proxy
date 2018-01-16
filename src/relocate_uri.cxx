@@ -32,7 +32,7 @@
 
 #include "relocate_uri.hxx"
 #include "http_address.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "uri/uri_extract.hxx"
 #include "util/StringView.hxx"
 

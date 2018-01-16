@@ -31,7 +31,7 @@
  */
 
 #include "fcgi_server.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "strmap.hxx"
 #include "tio.hxx"
 #include "util/CharUtil.hxx"

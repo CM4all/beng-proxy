@@ -37,7 +37,7 @@
 #include "bp/Worker.hxx"
 #include "bp_global.hxx"
 #include "crash.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "fb_pool.hxx"
 #include "session_manager.hxx"
 #include "session_save.hxx"

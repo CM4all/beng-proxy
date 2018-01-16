@@ -34,7 +34,7 @@
 #include "Request.hxx"
 #include "Handler.hxx"
 #include "http_upgrade.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "strmap.hxx"
 #include "header_parser.hxx"
 #include "istream/istream_null.hxx"

@@ -31,7 +31,7 @@
  */
 
 #include "lhttp_address.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "AllocatorPtr.hxx"
 #include "uri/uri_base.hxx"
 #include "uri/uri_relative.hxx"

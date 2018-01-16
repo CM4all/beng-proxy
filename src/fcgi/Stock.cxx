@@ -41,7 +41,7 @@
 #include "spawn/ChildOptions.hxx"
 #include "spawn/JailParams.hxx"
 #include "spawn/JailConfig.hxx"
-#include "tpool.hxx"
+#include "pool/tpool.hxx"
 #include "AllocatorPtr.hxx"
 #include "event/SocketEvent.hxx"
 #include "event/Duration.hxx"

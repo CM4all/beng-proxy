@@ -33,7 +33,7 @@
 #ifndef BENG_PROXY_ALLOCATOR_PTR_HXX
 #define BENG_PROXY_ALLOCATOR_PTR_HXX
 
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "util/StringView.hxx"
 
 #include <string.h>

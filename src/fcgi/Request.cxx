@@ -38,7 +38,7 @@
 #include "tcp_stock.hxx"
 #include "stock/Item.hxx"
 #include "istream/UnusedPtr.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "AllocatorPtr.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "util/Cast.hxx"

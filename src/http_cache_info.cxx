@@ -31,7 +31,7 @@
  */
 
 #include "http_cache_info.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 
 HttpCacheResponseInfo::HttpCacheResponseInfo(struct pool &pool,
                                              const HttpCacheResponseInfo &src)

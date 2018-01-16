@@ -31,7 +31,7 @@
  */
 
 #include "stopwatch.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "net/StaticSocketAddress.hxx"
 #include "net/ToString.hxx"

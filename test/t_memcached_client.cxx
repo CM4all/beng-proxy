@@ -40,7 +40,7 @@
 #include "istream/Pointer.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "fb_pool.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "PInstance.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "util/Cast.hxx"

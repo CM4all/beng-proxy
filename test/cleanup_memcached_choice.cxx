@@ -39,7 +39,7 @@
 #include "http_cache_choice.hxx"
 #include "lease.hxx"
 #include "strmap.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "direct.hxx"
 #include "fb_pool.hxx"
 #include "system/SetupProcess.hxx"

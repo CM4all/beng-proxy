@@ -50,7 +50,7 @@
 #include "istream/istream.hxx"
 #include "istream/istream_pipe.hxx"
 #include "translation/Vary.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "io/Logger.hxx"
 #include "util/Cast.hxx"
 

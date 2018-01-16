@@ -37,7 +37,7 @@
 #include "cgi_address.hxx"
 #include "lhttp_address.hxx"
 #include "http_server/Request.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 
 #include <assert.h>
 #include <string.h>

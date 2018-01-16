@@ -31,7 +31,7 @@
  */
 
 #include "header_parser.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "strmap.hxx"
 #include "GrowingBuffer.hxx"
 #include "util/StringView.hxx"

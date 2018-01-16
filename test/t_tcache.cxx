@@ -45,7 +45,7 @@
 #include "cgi_address.hxx"
 #include "spawn/MountList.hxx"
 #include "spawn/NamespaceOptions.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "PInstance.hxx"
 #include "util/Cancellable.hxx"
 

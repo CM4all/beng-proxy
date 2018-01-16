@@ -56,7 +56,7 @@
 #include "istream/istream.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "ssl/Client.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "AllocatorPtr.hxx"
 #include "system/Error.hxx"
 #include "net/HostParser.hxx"

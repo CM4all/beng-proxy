@@ -33,7 +33,7 @@
 #include "cookie_server.hxx"
 #include "header_writer.hxx"
 #include "strmap.hxx"
-#include "RootPool.hxx"
+#include "pool/RootPool.hxx"
 
 #include <assert.h>
 #include <string.h>

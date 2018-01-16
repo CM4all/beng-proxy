@@ -35,7 +35,7 @@
 #include "Serialize.hxx"
 #include "../serialize.hxx"
 #include "strmap.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "util/ConstBuffer.hxx"
 
 #include <assert.h>

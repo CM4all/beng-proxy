@@ -32,9 +32,9 @@
 
 #include "lb_session.hxx"
 #include "strmap.hxx"
-#include "tpool.hxx"
+#include "pool/tpool.hxx"
 #include "cookie_server.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 
 #include <string.h>
 #include <stdlib.h>

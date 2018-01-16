@@ -35,7 +35,7 @@
 #include "Protocol.hxx"
 #include "please.hxx"
 #include "system/fd_util.h"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "event/SocketEvent.hxx"
 #include "system/Error.hxx"
 #include "util/Cancellable.hxx"

@@ -32,7 +32,7 @@
 
 #include "ajp_server.hxx"
 #include "tio.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "strmap.hxx"
 
 #include <string.h>

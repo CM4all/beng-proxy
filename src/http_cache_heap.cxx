@@ -42,7 +42,7 @@
 #include "istream_rubber.hxx"
 #include "rubber.hxx"
 #include "SlicePool.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "util/Cast.hxx"
 
 #include <time.h>

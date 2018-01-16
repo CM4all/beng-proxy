@@ -33,7 +33,7 @@
 #ifndef ISTREAM_HXX
 #define ISTREAM_HXX
 
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "Handler.hxx"
 #include "util/LeakDetector.hxx"
 

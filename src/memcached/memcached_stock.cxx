@@ -38,7 +38,7 @@
 #include "tcp_balancer.hxx"
 #include "address_list.hxx"
 #include "lease.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "istream/UnusedHoldPtr.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"

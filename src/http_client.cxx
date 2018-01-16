@@ -54,7 +54,7 @@
 #include "stopwatch.hxx"
 #include "strmap.hxx"
 #include "fs_lease.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "system/Error.hxx"
 #include "io/Logger.hxx"
 #include "util/Cancellable.hxx"

@@ -40,8 +40,8 @@
 #include "spawn/MountList.hxx"
 #include "spawn/NamespaceOptions.hxx"
 #include "AllocatorPtr.hxx"
-#include "pool.hxx"
-#include "tpool.hxx"
+#include "pool/pool.hxx"
+#include "pool/tpool.hxx"
 
 #include <string.h>
 

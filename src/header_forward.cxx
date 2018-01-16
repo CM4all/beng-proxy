@@ -38,7 +38,7 @@
 #include "session.hxx"
 #include "cookie_client.hxx"
 #include "cookie_server.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "product.h"
 #include "http/HeaderName.hxx"
 #include "util/CharUtil.hxx"

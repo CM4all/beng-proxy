@@ -35,7 +35,7 @@
 #include "Request.hxx"
 #include "strmap.hxx"
 #include "address_string.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "paddress.hxx"
 #include "istream/Bucket.hxx"
 #include "system/Error.hxx"

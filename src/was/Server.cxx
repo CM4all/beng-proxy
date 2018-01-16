@@ -40,7 +40,7 @@
 #include "istream/istream.hxx"
 #include "istream/istream_null.hxx"
 #include "strmap.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "io/FileDescriptor.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/StringFormat.hxx"

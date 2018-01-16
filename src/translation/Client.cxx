@@ -38,7 +38,7 @@
 #include "event/net/BufferedSocket.hxx"
 #include "please.hxx"
 #include "stopwatch.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "system/Error.hxx"
 #include "util/Cancellable.hxx"
 #include "util/Exception.hxx"

@@ -32,7 +32,7 @@
 
 #include "istream_trace.hxx"
 #include "ForwardIstream.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "util/Exception.hxx"
 
 #include <stdio.h>

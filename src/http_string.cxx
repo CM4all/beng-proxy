@@ -31,7 +31,7 @@
  */
 
 #include "http_string.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 
 void
 http_next_token(StringView &input, StringView &value)

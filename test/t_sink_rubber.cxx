@@ -33,7 +33,7 @@
 #include "TestPool.hxx"
 #include "rubber.hxx"
 #include "sink_rubber.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "istream/istream_byte.hxx"
 #include "istream/istream_cat.hxx"
 #include "istream/istream_delayed.hxx"

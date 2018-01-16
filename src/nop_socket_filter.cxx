@@ -32,7 +32,7 @@
 
 #include "nop_socket_filter.hxx"
 #include "filtered_socket.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 
 struct nop_socket_filter {
     FilteredSocket *socket;

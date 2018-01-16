@@ -49,7 +49,7 @@
 #include "http_server/Request.hxx"
 #include "http/MessageHttpResponse.hxx"
 #include "HttpMessageResponse.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "system/Error.hxx"
 #include "util/Exception.hxx"
 

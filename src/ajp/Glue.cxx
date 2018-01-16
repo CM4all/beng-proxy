@@ -44,7 +44,7 @@
 #include "istream/UnusedHoldPtr.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "util/Cancellable.hxx"
 #include "util/LeakDetector.hxx"
 #include "util/Compiler.h"

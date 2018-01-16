@@ -43,7 +43,7 @@
 #include "spawn/ChildOptions.hxx"
 #include "istream/istream.hxx"
 #include "istream/UnusedHoldPtr.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "stopwatch.hxx"
 #include "util/Cancellable.hxx"
 #include "util/ConstBuffer.hxx"

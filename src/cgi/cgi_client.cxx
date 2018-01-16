@@ -33,7 +33,7 @@
 #include "cgi_client.hxx"
 #include "Error.hxx"
 #include "cgi_parser.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "istream/Pointer.hxx"
 #include "istream/istream_null.hxx"

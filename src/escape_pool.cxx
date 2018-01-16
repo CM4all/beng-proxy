@@ -32,7 +32,7 @@
 
 #include "escape_pool.hxx"
 #include "escape_class.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 
 #include <assert.h>
 

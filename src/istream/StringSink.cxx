@@ -32,7 +32,7 @@
 
 #include "StringSink.hxx"
 #include "Sink.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "util/Cancellable.hxx"
 
 struct StringSink final : IstreamSink, Cancellable {

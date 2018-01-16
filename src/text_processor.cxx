@@ -37,7 +37,7 @@
 #include "widget/Widget.hxx"
 #include "widget/Class.hxx"
 #include "penv.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 
 #include <assert.h>
 

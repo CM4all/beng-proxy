@@ -57,7 +57,7 @@
 #include "util/DecimalFormat.h"
 #include "util/StringFormat.hxx"
 #include "util/Exception.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 
 #include <string.h>
 #include <stdlib.h>

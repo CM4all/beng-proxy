@@ -44,7 +44,7 @@
 #include "io/Logger.hxx"
 #include "direct.hxx"
 #include "event/SocketEvent.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "fb_pool.hxx"
 #include "SliceFifoBuffer.hxx"
 #include "system/Error.hxx"

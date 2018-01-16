@@ -36,7 +36,7 @@
 #include "istream/istream_memory.hxx"
 #include "istream/istream_null.hxx"
 #include "istream/UnusedPtr.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "util/ByteOrder.hxx"
 
 #include <string.h>

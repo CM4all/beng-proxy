@@ -37,7 +37,7 @@
 #include "translation/Transformation.hxx"
 #include "widget/View.hxx"
 #include "fb_pool.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "PInstance.hxx"
 #include "lhttp_address.hxx"
 #include "http_address.hxx"

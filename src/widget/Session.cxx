@@ -32,7 +32,7 @@
 
 #include "Widget.hxx"
 #include "session.hxx"
-#include "tpool.hxx"
+#include "pool/tpool.hxx"
 
 #include <assert.h>
 

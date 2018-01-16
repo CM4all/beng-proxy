@@ -41,7 +41,7 @@
 #include "system/SetupProcess.hxx"
 #include "io/FileDescriptor.hxx"
 #include "PInstance.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "HttpResponseHandler.hxx"
 #include "direct.hxx"
 #include "util/Cancellable.hxx"

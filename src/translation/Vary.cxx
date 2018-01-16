@@ -36,7 +36,7 @@
 #include "strmap.hxx"
 #include "GrowingBuffer.hxx"
 #include "header_writer.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 
 #include <assert.h>
 #include <string.h>

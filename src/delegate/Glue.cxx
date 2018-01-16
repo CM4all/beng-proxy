@@ -37,7 +37,7 @@
 #include "stock/Item.hxx"
 #include "stock/MapStock.hxx"
 #include "lease.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 
 struct DelegateGlue final : Lease {
     StockItem &item;

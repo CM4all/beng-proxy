@@ -34,7 +34,7 @@
 #include "stock/Class.hxx"
 #include "stock/GetHandler.hxx"
 #include "stock/Item.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "PInstance.hxx"
 #include "util/Cancellable.hxx"
 #include "util/PrintException.hxx"

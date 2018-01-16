@@ -38,7 +38,7 @@
 #include "spawn/Interface.hxx"
 #include "spawn/Prepared.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 
 #include <string>
 

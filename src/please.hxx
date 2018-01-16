@@ -39,7 +39,7 @@
 #define BENG_PROXY_PLEASE_H
 
 #include "lease.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 
 #include <assert.h>
 

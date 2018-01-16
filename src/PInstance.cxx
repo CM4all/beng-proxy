@@ -31,7 +31,7 @@
  */
 
 #include "PInstance.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 
 PInstance::PInstance()
 {

@@ -33,7 +33,7 @@
 #ifndef BENG_PROXY_P_INSTANCE_HXX
 #define BENG_PROXY_P_INSTANCE_HXX
 
-#include "RootPool.hxx"
+#include "pool/RootPool.hxx"
 #include "event/Loop.hxx"
 
 /**

@@ -42,7 +42,7 @@
 #include "spawn/Prepared.hxx"
 #include "spawn/ChildOptions.hxx"
 #include "AllocatorPtr.hxx"
-#include "tpool.hxx"
+#include "pool/tpool.hxx"
 #include "io/Logger.hxx"
 
 #include <assert.h>

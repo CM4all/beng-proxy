@@ -32,7 +32,7 @@
 
 #include "relocate_uri.hxx"
 #include "http_address.hxx"
-#include "RootPool.hxx"
+#include "pool/RootPool.hxx"
 #include "util/StringView.hxx"
 
 #include <stdio.h>

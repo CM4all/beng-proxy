@@ -34,7 +34,7 @@
 #include "stock/Stock.hxx"
 #include "stock/Item.hxx"
 #include "address_list.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "event/SocketEvent.hxx"
 #include "event/Duration.hxx"
 #include "net/PConnectSocket.hxx"

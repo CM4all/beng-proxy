@@ -34,7 +34,7 @@
 #include "istream.hxx"
 #include "UnusedPtr.hxx"
 #include "Sink.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "util/Cancellable.hxx"
 
 #include <stdexcept>

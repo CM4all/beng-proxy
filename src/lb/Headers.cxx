@@ -33,7 +33,7 @@
 #include "Headers.hxx"
 #include "http_headers.hxx"
 #include "strmap.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "http/HeaderName.hxx"
 
 #include <string.h>

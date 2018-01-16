@@ -40,7 +40,7 @@
 #include "PInstance.hxx"
 #include "event/ShutdownListener.hxx"
 #include "fb_pool.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "net/RConnectSocket.hxx"
 #include "system/SetupProcess.hxx"

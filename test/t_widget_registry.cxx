@@ -41,7 +41,7 @@
 #include "translation/Response.hxx"
 #include "translation/Transformation.hxx"
 #include "AllocatorPtr.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "PInstance.hxx"
 #include "util/Cancellable.hxx"
 

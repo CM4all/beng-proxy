@@ -31,7 +31,7 @@
  */
 
 #include "cache.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "PInstance.hxx"
 
 #include <assert.h>

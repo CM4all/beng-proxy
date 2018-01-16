@@ -31,7 +31,7 @@
  */
 
 #include "Ref.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "util/IterableSplitString.hxx"
 
 #include <assert.h>

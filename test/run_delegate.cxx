@@ -40,7 +40,7 @@
 #include "stock/MapStock.hxx"
 #include "event/DeferEvent.hxx"
 #include "PInstance.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "util/Cancellable.hxx"
 #include "util/PrintException.hxx"
 

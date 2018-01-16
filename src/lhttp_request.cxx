@@ -40,7 +40,7 @@
 #include "lease.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "header_writer.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "net/SocketDescriptor.hxx"
 
 #include <stdexcept>

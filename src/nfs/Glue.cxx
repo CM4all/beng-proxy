@@ -35,7 +35,7 @@
 #include "HttpResponseHandler.hxx"
 #include "static_headers.hxx"
 #include "strmap.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "istream/UnusedPtr.hxx"
 
 #include <sys/stat.h>

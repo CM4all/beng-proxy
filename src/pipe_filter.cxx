@@ -35,7 +35,7 @@
 #include "stopwatch.hxx"
 #include "istream_stopwatch.hxx"
 #include "strmap.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "spawn/ChildOptions.hxx"
 #include "spawn/IstreamSpawn.hxx"

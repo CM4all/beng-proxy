@@ -33,7 +33,7 @@
 #include "Stock.hxx"
 #include "Client.hxx"
 #include "Handler.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "io/Logger.hxx"
 #include "util/Cancellable.hxx"
 

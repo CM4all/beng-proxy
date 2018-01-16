@@ -35,7 +35,7 @@
  */
 
 #include "Request.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "istream/istream.hxx"
 #include "util/StringView.hxx"
 

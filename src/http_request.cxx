@@ -44,7 +44,7 @@
 #include "istream/istream.hxx"
 #include "istream/UnusedHoldPtr.hxx"
 #include "filtered_socket.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/FailureManager.hxx"
 #include "util/Cancellable.hxx"

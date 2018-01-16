@@ -33,9 +33,9 @@
 #include "JvmRoute.hxx"
 #include "ClusterConfig.hxx"
 #include "strmap.hxx"
-#include "tpool.hxx"
+#include "pool/tpool.hxx"
 #include "cookie_server.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 
 #include <assert.h>
 #include <string.h>

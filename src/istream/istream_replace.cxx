@@ -36,7 +36,7 @@
 #include "UnusedPtr.hxx"
 #include "GrowingBuffer.hxx"
 #include "util/ConstBuffer.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 
 #include <stdexcept>
 

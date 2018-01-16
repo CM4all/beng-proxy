@@ -37,7 +37,7 @@
 #include "stock/MultiStock.hxx"
 #include "stock/Class.hxx"
 #include "stock/Item.hxx"
-#include "tpool.hxx"
+#include "pool/tpool.hxx"
 #include "lease.hxx"
 #include "child_stock.hxx"
 #include "spawn/JailParams.hxx"

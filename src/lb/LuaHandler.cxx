@@ -36,7 +36,7 @@
 #include "Goto.hxx"
 #include "http_server/Request.hxx"
 #include "HttpResponseHandler.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "lua/RunFile.hxx"
 #include "lua/Util.hxx"
 #include "lua/Assert.hxx"

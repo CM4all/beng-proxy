@@ -33,7 +33,7 @@
 #include "istream_subst.hxx"
 #include "FacadeIstream.hxx"
 #include "UnusedPtr.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "util/StringView.hxx"
 
 #include <assert.h>

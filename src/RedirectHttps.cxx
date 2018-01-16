@@ -31,7 +31,7 @@
  */
 
 #include "RedirectHttps.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "net/HostParser.hxx"
 
 #include <stdio.h>

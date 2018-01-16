@@ -36,7 +36,7 @@
 #include "Handler.hxx"
 #include "Istream.hxx"
 #include "strmap.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "rubber.hxx"
 #include "sink_rubber.hxx"
 #include "istream_unlock.hxx"

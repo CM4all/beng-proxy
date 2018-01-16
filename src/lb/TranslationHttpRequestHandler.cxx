@@ -39,7 +39,7 @@
 #include "http_server/Request.hxx"
 #include "translation/Handler.hxx"
 #include "translation/Response.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "RedirectHttps.hxx"
 #include "istream/UnusedHoldPtr.hxx"
 #include "util/LeakDetector.hxx"

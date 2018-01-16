@@ -31,7 +31,7 @@
  */
 
 #include "puri_edit.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "util/StringView.hxx"
 
 #include <assert.h>

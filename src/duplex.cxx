@@ -37,7 +37,7 @@
 #include "net/Buffered.hxx"
 #include "io/Buffered.hxx"
 #include "io/Logger.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "fb_pool.hxx"
 #include "SliceFifoBuffer.hxx"
 

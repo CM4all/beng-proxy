@@ -32,7 +32,7 @@
 
 #include "static_headers.hxx"
 #include "strmap.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "http/Date.hxx"
 #include "util/HexFormat.h"
 

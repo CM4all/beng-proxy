@@ -35,7 +35,7 @@
 #include "istream/istream_four.hxx"
 #include "istream/istream_string.hxx"
 #include "istream/UnusedPtr.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 
 #include <stdio.h>
 

@@ -47,7 +47,7 @@
 #include "direct.hxx"
 #include "strmap.hxx"
 #include "product.h"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "system/Error.hxx"
 #include "event/net/BufferedSocket.hxx"
 #include "util/ByteOrder.hxx"

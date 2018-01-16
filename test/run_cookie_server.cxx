@@ -32,7 +32,7 @@
 
 #include "cookie_server.hxx"
 #include "strmap.hxx"
-#include "RootPool.hxx"
+#include "pool/RootPool.hxx"
 
 #include <stdio.h>
 #include <unistd.h>

@@ -30,7 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "RootPool.hxx"
+#include "pool/RootPool.hxx"
 #include "header_parser.hxx"
 #include "GrowingBuffer.hxx"
 #include "strmap.hxx"

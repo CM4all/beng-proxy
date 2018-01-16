@@ -33,7 +33,7 @@
 #include "istream/istream_dechunk.hxx"
 #include "istream/istream_string.hxx"
 #include "istream/UnusedPtr.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 
 #define EXPECTED_RESULT "foo"
 

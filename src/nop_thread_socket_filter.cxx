@@ -32,7 +32,7 @@
 
 #include "nop_thread_socket_filter.hxx"
 #include "thread_socket_filter.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 
 #include <string.h>
 

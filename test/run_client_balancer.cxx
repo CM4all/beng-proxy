@@ -36,7 +36,7 @@
 #include "net/SocketAddress.hxx"
 #include "net/FailureManager.hxx"
 #include "PInstance.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "AllocatorPtr.hxx"
 #include "balancer.hxx"
 #include "address_list.hxx"

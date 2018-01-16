@@ -31,7 +31,7 @@
  */
 
 #include "http_util.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "util/StringUtil.hxx"
 #include "util/StringView.hxx"
 

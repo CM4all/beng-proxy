@@ -38,7 +38,7 @@
 #include "http_server/Request.hxx"
 #include "cookie_server.hxx"
 #include "bot.h"
-#include "pbuffer.hxx"
+#include "pool/pbuffer.hxx"
 #include "strmap.hxx"
 #include "util/HexFormat.h"
 #include "util/djbhash.h"

@@ -39,7 +39,7 @@
 #include "system/Error.hxx"
 #include "istream/Pointer.hxx"
 #include "istream/UnusedPtr.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 
 #include <was/protocol.h>
 

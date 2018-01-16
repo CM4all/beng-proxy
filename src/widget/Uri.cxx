@@ -36,7 +36,7 @@
 #include "puri_edit.hxx"
 #include "puri_relative.hxx"
 #include "args.hxx"
-#include "tpool.hxx"
+#include "pool/tpool.hxx"
 #include "http_address.hxx"
 #include "lhttp_address.hxx"
 #include "cgi_address.hxx"

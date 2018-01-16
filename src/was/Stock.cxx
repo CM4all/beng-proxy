@@ -39,7 +39,7 @@
 #include "spawn/ChildOptions.hxx"
 #include "spawn/ExitListener.hxx"
 #include "spawn/Interface.hxx"
-#include "tpool.hxx"
+#include "pool/tpool.hxx"
 #include "event/SocketEvent.hxx"
 #include "io/Logger.hxx"
 #include "util/Cancellable.hxx"

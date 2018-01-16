@@ -32,7 +32,7 @@
 
 #include "load_file.hxx"
 #include "HttpMessageResponse.hxx"
-#include "pool.hxx"
+#include "pool/pool.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "system/Error.hxx"
 #include "http/Status.h"
