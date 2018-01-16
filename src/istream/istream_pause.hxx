@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2018 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -33,16 +33,27 @@
 #ifndef BENG_PROXY_ISTREAM_PAUSE_HXX
 #define BENG_PROXY_ISTREAM_PAUSE_HXX
 
+#include "pool/SharedPtr.hxx"
+
 struct pool;
 class Istream;
+class PauseIstream;
+
+class PauseIstreamControl {
+    friend class PauseIstream;
+
+    PauseIstream *pause;
+
+public:
+    explicit constexpr PauseIstreamControl(PauseIstream &_pause) noexcept:pause(&_pause) {}
+
+    void Resume() noexcept;
+};
 
 /**
  * #Istream facade that ignores read() calls until it is resumed.
  */
-Istream *
+std::pair<Istream *, SharedPoolPtr<PauseIstreamControl>>
 istream_pause_new(struct pool *pool, Istream &input);
-
-void
-istream_pause_resume(Istream &istream);
 
 #endif

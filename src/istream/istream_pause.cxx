@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2018 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -34,11 +34,22 @@
 #include "ForwardIstream.hxx"
 
 class PauseIstream final : public ForwardIstream {
+    SharedPoolPtr<PauseIstreamControl> control;
+
     bool resumed = false;
 
 public:
     PauseIstream(struct pool &p, Istream &_input)
-        :ForwardIstream(p, _input) {}
+        :ForwardIstream(p, _input),
+         control(SharedPoolPtr<PauseIstreamControl>::Make(p, *this)) {}
+
+    ~PauseIstream() noexcept {
+        control->pause = nullptr;
+    }
+
+    auto GetControl() {
+        return control;
+    }
 
     void Resume() {
         resumed = true;
@@ -60,15 +71,16 @@ public:
     }
 };
 
-Istream *
-istream_pause_new(struct pool *pool, Istream &input)
+void
+PauseIstreamControl::Resume() noexcept
 {
-    return NewIstream<PauseIstream>(*pool, input);
+    if (pause != nullptr)
+        pause->Resume();
 }
 
-void
-istream_pause_resume(Istream &istream)
+std::pair<Istream *, SharedPoolPtr<PauseIstreamControl>>
+istream_pause_new(struct pool *pool, Istream &input)
 {
-    auto &pause = (PauseIstream &)istream;
-    pause.Resume();
+    auto *i = NewIstream<PauseIstream>(*pool, input);
+    return std::make_pair(i, i->GetControl());
 }

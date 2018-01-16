@@ -352,7 +352,7 @@ embed_inline_widget(struct pool &pool, struct processor_env &env,
                     bool plain_text,
                     Widget &widget)
 {
-    Istream *request_body = nullptr;
+    SharedPoolPtr<PauseIstreamControl> pause;
     if (widget.from_request.body) {
         /* use a "paused" stream, to avoid a recursion bug: when
            somebody within this stack frame attempts to read from it,
@@ -360,11 +360,12 @@ embed_inline_widget(struct pool &pool, struct processor_env &env,
            gets cancelled, but the event cannot reach this stack
            frame; by preventing reads on the request body, this
            situation is avoided */
-        request_body = istream_pause_new(&pool, *widget.from_request.body.Steal());
+        auto _pause = istream_pause_new(&pool, *widget.from_request.body.Steal());
+        pause = std::move(_pause.second);
 
         /* wrap it in istream_hold, because (most likely) the original
            request body was an istream_hold, too */
-        widget.from_request.body = UnusedIstreamPtr(istream_hold_new(pool, *request_body));
+        widget.from_request.body = UnusedIstreamPtr(istream_hold_new(pool, *_pause.first));
     }
 
     auto iw = NewFromPool<InlineWidget>(pool, pool, env, plain_text, widget);
@@ -373,8 +374,8 @@ embed_inline_widget(struct pool &pool, struct processor_env &env,
 
     iw->Start();
 
-    if (request_body != nullptr)
-        istream_pause_resume(*request_body);
+    if (pause)
+        pause->Resume();
 
     return UnusedIstreamPtr(hold);
 }
