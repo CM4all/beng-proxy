@@ -1,6 +1,6 @@
 cm4all-beng-proxy (14.0.3) unstable; urgency=low
 
-  * 
+  * bp: fix nullptr dereference bug
 
  --   
 

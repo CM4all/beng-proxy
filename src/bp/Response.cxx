@@ -259,7 +259,7 @@ Request::InvokeXmlProcessor(http_status_t status,
         method = HTTP_METHOD_GET;
 
     widget->for_focused.method = method;
-    widget->for_focused.path_info = args->Remove("path");
+    widget->for_focused.path_info = strmap_remove_checked(args, "path");
 
     env = processor_env(instance.event_loop,
                         *instance.cached_resource_loader,
