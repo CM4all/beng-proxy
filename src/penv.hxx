@@ -34,8 +34,8 @@
 #define BENG_PROXY_PROCESSOR_ENV_H
 
 #include "session_id.hxx"
+#include "util/StringView.hxx"
 
-struct DissectedUri;
 class EventLoop;
 class ResourceLoader;
 class StringMap;
@@ -63,8 +63,8 @@ struct processor_env {
 
     const char *absolute_uri;
 
-    /** the URI which was requested by the beng-proxy client */
-    const DissectedUri *external_uri;
+    /** the base URI which was requested by the beng-proxy client */
+    StringView external_base_uri;
 
     /** semicolon-arguments in the external URI */
     const StringMap *args;
@@ -90,7 +90,7 @@ struct processor_env {
                   const char *remote_host,
                   const char *request_uri,
                   const char *absolute_uri,
-                  const DissectedUri *uri,
+                  StringView external_base_uri,
                   const StringMap *args,
                   const char *session_cookie,
                   SessionId session_id,

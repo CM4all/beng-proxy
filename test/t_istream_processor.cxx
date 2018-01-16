@@ -37,7 +37,6 @@
 #include "widget/Class.hxx"
 #include "processor.hxx"
 #include "penv.hxx"
-#include "uri/Dissect.hxx"
 #include "session_manager.hxx"
 #include "widget/Inline.hxx"
 #include "widget/Registry.hxx"
@@ -85,17 +84,8 @@ create_input(struct pool *pool)
 static Istream *
 create_test(EventLoop &event_loop, struct pool *pool, Istream *input)
 {
-    bool ret;
-    const char *uri;
-    static DissectedUri dissected_uri;
-
     /* HACK, processor.c will ignore c:widget otherwise */
     global_translate_cache = (struct tcache *)(size_t)1;
-
-    uri = "/beng.html";
-    ret = dissected_uri.Parse(uri);
-    if (!ret)
-        abort();
 
     auto *widget = NewFromPool<Widget>(*pool, *pool, &root_widget_class);
 
@@ -112,7 +102,7 @@ create_test(EventLoop &event_loop, struct pool *pool, Istream *input)
                         "localhost:8080",
                         "/beng.html",
                         "http://localhost:8080/beng.html",
-                        &dissected_uri,
+                        "/beng.html",
                         nullptr,
                         "bp_session", session->id, "foo",
                         nullptr);

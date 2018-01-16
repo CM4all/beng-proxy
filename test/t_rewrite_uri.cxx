@@ -38,7 +38,6 @@
 #include "widget/Widget.hxx"
 #include "widget/Class.hxx"
 #include "widget/Resolver.hxx"
-#include "uri/Dissect.hxx"
 #include "PInstance.hxx"
 #include "escape_pool.hxx"
 #include "escape_html.hxx"
@@ -145,8 +144,6 @@ ResolveWidget(gcc_unused struct pool &pool,
  *
  */
 
-static DissectedUri external_uri;
-
 struct StringSinkCtx {
     std::string value;
     bool finished = false;
@@ -208,7 +205,7 @@ assert_rewrite_check4(EventLoop &event_loop,
                              site_name, nullptr,
                              nullptr, nullptr,
                              nullptr, nullptr,
-                             &external_uri,
+                             "/index.html",
                              nullptr,
                              nullptr, session_id, "foo",
                              nullptr);
@@ -273,8 +270,6 @@ TEST(RewriteUriTest, Basic)
     /* set up input objects */
 
     Widget container(Widget::RootTag(), *pool, "foobar");
-
-    ASSERT_TRUE(external_uri.Parse("/index.html;x=y?foo=bar"));
 
     /* test all modes with a normal widget */
 

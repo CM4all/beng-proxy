@@ -34,7 +34,6 @@
 #include "processor.hxx"
 #include "penv.hxx"
 #include "PInstance.hxx"
-#include "uri/Dissect.hxx"
 #include "widget/Inline.hxx"
 #include "widget/Widget.hxx"
 #include "widget/Class.hxx"
@@ -134,10 +133,6 @@ TEST(Processor, Abort)
 
     auto *pool = pool_new_libc(instance.root_pool, "test");
 
-    DissectedUri dissected_uri;
-    const char *uri = "/beng.html";
-    ASSERT_TRUE(dissected_uri.Parse(uri));
-
     Widget widget(*pool, &root_widget_class);
 
     SessionId session_id;
@@ -151,7 +146,7 @@ TEST(Processor, Abort)
                              "localhost:8080",
                              "/beng.html",
                              "http://localhost:8080/beng.html",
-                             &dissected_uri,
+                             "/beng.html",
                              nullptr,
                              "bp_session", session_id, "foo",
                              nullptr);

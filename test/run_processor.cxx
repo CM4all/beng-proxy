@@ -36,7 +36,6 @@
 #include "fb_pool.hxx"
 #include "processor.hxx"
 #include "penv.hxx"
-#include "uri/Dissect.hxx"
 #include "widget/Inline.hxx"
 #include "widget/Widget.hxx"
 #include "widget/Class.hxx"
@@ -97,22 +96,11 @@ rewrite_widget_uri(gcc_unused struct pool &pool,
 int
 main(int argc, char **argv)
 try {
-    const char *uri;
-    bool ret;
-    DissectedUri dissected_uri;
-
     (void)argc;
     (void)argv;
 
     const ScopeFbPoolInit fb_pool_init;
     PInstance instance;
-
-    uri = "/beng.html";
-    ret = dissected_uri.Parse(uri);
-    if (!ret) {
-        fprintf(stderr, "uri_parse() failed\n");
-        exit(2);
-    }
 
     Widget widget(instance.root_pool, &root_widget_class);
 
@@ -127,7 +115,7 @@ try {
                              "localhost:8080",
                              "/beng.html",
                              "http://localhost:8080/beng.html",
-                             &dissected_uri,
+                             "/beng.html",
                              nullptr,
                              nullptr,
                              session_id, "foo",
