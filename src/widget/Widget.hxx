@@ -46,7 +46,6 @@
 struct pool;
 class StringMap;
 struct StringView;
-struct processor_env;
 struct DissectedUri;
 struct RealmSession;
 struct WidgetSession;
@@ -195,11 +194,10 @@ struct Widget final
          */
         const char *path_info = nullptr;
 
-        /** the query string provided by the browser (from
-            processor_env.external_uri.query_string) */
+        /** the query string provided by the browser */
         StringView query_string = nullptr;
 
-        /** the request body (from processor_env.body) */
+        /** the request body */
         UnusedHoldIstreamPtr body;
 
         /**
@@ -239,6 +237,11 @@ struct Widget final
          * The new path_info for the focused widget.
          */
         const char *path_info = nullptr;
+
+        /**
+         * The query string for the focused widget.
+         */
+        StringView query_string = nullptr;
 
         /**
          * The request body.  This must be closed if it failed to be
@@ -462,7 +465,7 @@ public:
      *
      * Throws #WidgetError on error.
      */
-    void CopyFromRequest(struct processor_env &env);
+    void CopyFromRequest();
 
     gcc_pure
     bool ShouldSyncSession() const {

@@ -1239,7 +1239,7 @@ XmlProcessor::EmbedWidget(Widget &child_widget) noexcept
 
     if (replace != nullptr) {
         try {
-            child_widget.CopyFromRequest(env);
+            child_widget.CopyFromRequest();
         } catch (...) {
             child_widget.Cancel();
             return nullptr;
@@ -1266,7 +1266,7 @@ XmlProcessor::EmbedWidget(Widget &child_widget) noexcept
         parser = nullptr;
 
         try {
-            child_widget.CopyFromRequest(env);
+            child_widget.CopyFromRequest();
         } catch (...) {
             child_widget.Cancel();
             handler2.WidgetLookupError(std::current_exception());

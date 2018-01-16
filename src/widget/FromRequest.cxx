@@ -67,7 +67,7 @@ Widget::DescendantHasFocus() const
 }
 
 void
-Widget::CopyFromRequest(struct processor_env &env)
+Widget::CopyFromRequest()
 {
     assert(parent != nullptr);
     assert(lazy.address == nullptr);
@@ -93,7 +93,7 @@ Widget::CopyFromRequest(struct processor_env &env)
                                   "path compression failed");
         }
 
-        from_request.query_string = env.external_uri->query;
+        from_request.query_string = parent->for_focused.query_string;
 
         from_request.method = parent->for_focused.method;
         from_request.body = std::move(parent->for_focused.body);
