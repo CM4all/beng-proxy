@@ -38,6 +38,7 @@
 #include "ssl/Key.hxx"
 #include "uri/uri_extract.hxx"
 #include "util/Exception.hxx"
+#include "util/RuntimeError.hxx"
 
 #include <json/json.h>
 
@@ -161,7 +162,8 @@ AcmeClient::RequestNonce()
                                              (server + "/directory").c_str(),
                                              nullptr);
     if (response.status != HTTP_STATUS_OK)
-        throw std::runtime_error("Unexpected response status");
+        throw FormatRuntimeError("Unexpected response status %d",
+                                 response.status);
     auto nonce = response.headers.find("replay-nonce");
     if (nonce == response.headers.end())
         throw std::runtime_error("No Replay-Nonce response header");
