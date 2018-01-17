@@ -176,17 +176,25 @@ ssl_decrypt(SSL *ssl, ForeignFifoBuffer<uint8_t> &buffer)
 static void
 ssl_encrypt(SSL *ssl, ForeignFifoBuffer<uint8_t> &buffer)
 {
-    auto r = buffer.Read();
-    if (r.empty())
-        return;
+    /* SSL_write() must be called repeatedly until there is no more
+       data; with SSL_MODE_ENABLE_PARTIAL_WRITE, SSL_write() finishes
+       only the current incomplete record, and additional data which
+       has been submitted more recently will only be considered in the
+       next SSL_write() call */
 
-    int result = SSL_write(ssl, r.data, r.size);
-    if (result <= 0) {
-        CheckThrowSslError(ssl, result);
-        return;
+    while (true) {
+        auto r = buffer.Read();
+        if (r.empty())
+            return;
+
+        int result = SSL_write(ssl, r.data, r.size);
+        if (result <= 0) {
+            CheckThrowSslError(ssl, result);
+            return;
+        }
+
+        buffer.Consume(result);
     }
-
-    buffer.Consume(result);
 }
 
 inline void
