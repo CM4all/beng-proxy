@@ -81,6 +81,10 @@ public:
          offset(start), remaining(end - start),
          buffer(nullptr) {}
 
+    ~NfsIstream() noexcept {
+        nfs_client_close_file(*handle);
+    }
+
 private:
     void ScheduleRead();
 
@@ -112,11 +116,6 @@ private:
             ScheduleReadOrEof();
     }
 
-    void _Close() noexcept override {
-        nfs_client_close_file(*handle);
-        Istream::_Close();
-    }
-
     /* virtual methods from class NfsClientReadFileHandler */
     void OnNfsRead(const void *data, size_t length) override;
     void OnNfsReadError(std::exception_ptr ep) override;
@@ -137,7 +136,6 @@ NfsIstream::ScheduleReadOrEof()
     } else {
         /* end of file */
 
-        nfs_client_close_file(*handle);
         DestroyEof();
     }
 }
@@ -186,7 +184,6 @@ NfsIstream::OnNfsRead(const void *data, size_t _length)
     assert(_length <= pending_read);
 
     if (_length < pending_read) {
-        nfs_client_close_file(*handle);
         DestroyError(std::make_exception_ptr(std::runtime_error("premature end of file")));
         return;
     }
@@ -206,7 +203,6 @@ NfsIstream::OnNfsReadError(std::exception_ptr ep)
 {
     assert(pending_read > 0);
 
-    nfs_client_close_file(*handle);
     DestroyError(ep);
 }
 
