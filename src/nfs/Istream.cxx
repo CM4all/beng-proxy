@@ -112,7 +112,7 @@ private:
             ScheduleReadOrEof();
     }
 
-    void Close() {
+    void _Close() noexcept override {
         nfs_client_close_file(*handle);
         Istream::_Close();
     }

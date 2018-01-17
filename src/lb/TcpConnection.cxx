@@ -507,9 +507,9 @@ LbTcpConnection::LbTcpConnection(struct pool &_pool, LbInstance &_instance,
     } else
         bind_address.Clear();
 
-    ScheduleHandshakeCallback();
-
     instance.tcp_connections.push_back(*this);
+
+    ScheduleHandshakeCallback();
 }
 
 LbTcpConnection::~LbTcpConnection()
