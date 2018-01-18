@@ -3,7 +3,7 @@ cm4all-beng-proxy (13.5) unstable; urgency=low
   * lb/tcp: fix crash with empty Zeroconf pool
   * nfs: fix memory leak
   * certdb: retry ACME nonce request after status 500
-  * ssl: fix stalled SSL write
+  * ssl: fix two transfer stall bugs
   * shrink I/O buffers back to 8 kB
 
  --   

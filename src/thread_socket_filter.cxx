@@ -518,7 +518,7 @@ thread_socket_filter_consumed(size_t nbytes, void *ctx)
     {
         const std::lock_guard<std::mutex> lock(f->mutex);
 
-        if (!f->encrypted_input.IsEmpty() || f->decrypted_input.IsFull())
+        if (f->decrypted_input.IsFull())
             /* just in case the filter has stalled because the
                decrypted_input buffer was full: try again */
             schedule = true;
