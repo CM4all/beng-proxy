@@ -27,8 +27,15 @@ cm4all-beng-proxy (13.5) unstable; urgency=low
 
   * lb/tcp: fix crash with empty Zeroconf pool
   * nfs: fix memory leak
+  * certdb: eliminate duplicate authz request
+  * certdb: retry ACME nonce request after status 500
+  * certdb: update the Let's Encrypt agreement URL to v1.2
+  * certdb: add ACME option "--debug"
+  * ssl: fix three transfer stall bugs
+  * shrink I/O buffers back to 8 kB
+  * access_log: support protocol version 2 (with CRC)
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Thu, 18 Jan 2018 17:59:13 -0000
 
 cm4all-beng-proxy (13.4) unstable; urgency=low
 

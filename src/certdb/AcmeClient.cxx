@@ -161,16 +161,28 @@ AcmeClient::RequestNonce()
     if (fake)
         return "foo";
 
-    auto response = glue_http_client.Request(event_loop,
-                                             HTTP_METHOD_HEAD,
-                                             (server + "/directory").c_str(),
-                                             nullptr);
-    if (response.status != HTTP_STATUS_OK)
-        throw std::runtime_error("Unexpected response status");
-    auto nonce = response.headers.find("replay-nonce");
-    if (nonce == response.headers.end())
-        throw std::runtime_error("No Replay-Nonce response header");
-    return nonce->second.c_str();
+    unsigned remaining_tries = 3;
+    while (true) {
+        auto response = glue_http_client.Request(event_loop,
+                                                 HTTP_METHOD_HEAD,
+                                                 (server + "/directory").c_str(),
+                                                 nullptr);
+        if (response.status != HTTP_STATUS_OK) {
+            if (http_status_is_server_error(response.status) &&
+                --remaining_tries > 0)
+                /* try again, just in case it's a temporary Let's
+                   Encrypt hiccup */
+                continue;
+
+            throw FormatRuntimeError("Unexpected response status %d",
+                                     response.status);
+        }
+
+        auto nonce = response.headers.find("replay-nonce");
+        if (nonce == response.headers.end())
+            throw std::runtime_error("No Replay-Nonce response header");
+        return nonce->second.c_str();
+    }
 }
 
 std::string

@@ -107,8 +107,8 @@ ThreadSocketFilter::SubmitDecryptedInput()
 {
     while (true) {
         /* this buffer is large enough to hold the contents of one
-           SliceFifoBuffer buffer (see SliceFifoBufferPool.cxx) */
-        uint8_t copy[16384];
+           SliceFifoBuffer buffer (see fb_pool.cxx) */
+        uint8_t copy[8192];
         size_t size;
         bool more;
 
@@ -518,7 +518,7 @@ thread_socket_filter_consumed(size_t nbytes, void *ctx)
     {
         const std::lock_guard<std::mutex> lock(f->mutex);
 
-        if (!f->encrypted_input.IsEmpty() || f->decrypted_input.IsFull())
+        if (f->decrypted_input.IsFull())
             /* just in case the filter has stalled because the
                decrypted_input buffer was full: try again */
             schedule = true;

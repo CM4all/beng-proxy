@@ -439,7 +439,7 @@ AcmeNewAuthzTlsSni01(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
     unsigned unauthorized_retries = 3;
 
     while (true) {
-        auto response = client.NewAuthz(key, host, challenge_type);
+        const auto response = client.NewAuthz(key, host, challenge_type);
 
         try {
             HandleAcmeNewAuthzTlsSni01(key, db, client, *cert_key,
