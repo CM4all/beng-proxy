@@ -34,7 +34,7 @@
 #define ACME_CONFIG_HXX
 
 struct AcmeConfig {
-    std::string agreement_url = "https://letsencrypt.org/documents/LE-SA-v1.1.1-August-1-2016.pdf";
+    std::string agreement_url = "https://letsencrypt.org/documents/LE-SA-v1.2-November-15-2017.pdf";
 
     bool staging = false;
 
