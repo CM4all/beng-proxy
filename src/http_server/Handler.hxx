@@ -44,6 +44,14 @@ class CancellablePointer;
 
 class HttpServerConnectionHandler {
 public:
+    /**
+     * Called after the empty line after the last header has been
+     * parsed.  Several attributes can be evaluated (method, uri,
+     * headers; but not the body).  This can be used to collect
+     * metadata for LogHttpRequest().
+     */
+    virtual void RequestHeadersFinished(const HttpServerRequest &) noexcept {};
+
     virtual void HandleHttpRequest(HttpServerRequest &request,
                                    CancellablePointer &cancel_ptr) = 0;
 

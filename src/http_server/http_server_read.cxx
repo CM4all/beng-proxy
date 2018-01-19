@@ -191,6 +191,8 @@ HttpServerConnection::HeadersFinished()
 {
     auto &r = *request.request;
 
+    handler->RequestHeadersFinished(r);
+
     /* disable the idle+headers timeout; the request body timeout will
        be tracked by filtered_socket (auto-refreshing) */
     idle_timeout.Cancel();
