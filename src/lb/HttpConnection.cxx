@@ -249,6 +249,8 @@ LbHttpConnection::HandleHttpRequest(HttpServerRequest &request,
     if (instance.config.global_http_check &&
         instance.config.global_http_check->Match(request.uri, per_request.host) &&
         instance.config.global_http_check->MatchClientAddress(request.remote_address)) {
+        request.CheckCloseUnusedBody();
+
         if (instance.config.global_http_check->Check())
             http_server_send_message(&request, HTTP_STATUS_OK,
                                      instance.config.global_http_check->success_message.c_str());
