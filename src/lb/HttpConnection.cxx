@@ -228,13 +228,17 @@ LbHttpConnection::PerRequest::Begin(const HttpServerRequest &request)
 }
 
 void
-LbHttpConnection::HandleHttpRequest(HttpServerRequest &request,
-                                    CancellablePointer &cancel_ptr)
+LbHttpConnection::RequestHeadersFinished(const HttpServerRequest &request) noexcept
 {
     ++instance.http_request_counter;
 
     per_request.Begin(request);
+}
 
+void
+LbHttpConnection::HandleHttpRequest(HttpServerRequest &request,
+                                    CancellablePointer &cancel_ptr)
+{
     if (!uri_path_verify_quick(request.uri)) {
         request.CheckCloseUnusedBody();
         http_server_send_message(&request, HTTP_STATUS_BAD_REQUEST,

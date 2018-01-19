@@ -132,13 +132,17 @@ BpConnection::PerRequest::Begin()
 }
 
 void
-BpConnection::HandleHttpRequest(HttpServerRequest &request,
-                                CancellablePointer &cancel_ptr)
+BpConnection::RequestHeadersFinished(const HttpServerRequest &) noexcept
 {
     ++instance.http_request_counter;
 
     per_request.Begin();
+}
 
+void
+BpConnection::HandleHttpRequest(HttpServerRequest &request,
+                                CancellablePointer &cancel_ptr)
+{
     handle_http_request(*this, request, cancel_ptr);
 }
 
