@@ -365,11 +365,12 @@ HttpServerConnection::SubmitRequest()
 
     const ScopePoolRef ref(*pool TRACE_ARGS);
 
-    if (request.expect_failed)
+    if (request.expect_failed) {
+        request.request->CheckCloseUnusedBody();
         http_server_send_message(request.request,
                                  HTTP_STATUS_EXPECTATION_FAILED,
                                  "Unrecognized expectation");
-    else {
+    } else {
         request.in_handler = true;
         handler->HandleHttpRequest(*request.request, request.cancel_ptr);
         request.in_handler = false;

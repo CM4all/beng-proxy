@@ -1,6 +1,6 @@
 cm4all-beng-proxy (13.6) unstable; urgency=low
 
-  * http_server: fix crash bug with "417 Expectation failed"
+  * http_server: fix two crash bugs with "417 Expectation failed"
 
  --   
 
