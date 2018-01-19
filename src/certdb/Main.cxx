@@ -320,19 +320,12 @@ CopyDnsAltNames(X509_REQ &req, X509 &src)
 }
 
 static UniqueX509_REQ
-MakeCertRequest(EVP_PKEY &key, const char *common_name,
+MakeCertRequest(EVP_PKEY &key,
                 ConstBuffer<const char *> alt_hosts)
 {
     UniqueX509_REQ req(X509_REQ_new());
     if (req == nullptr)
         throw "X509_REQ_new() failed";
-
-    auto *name = X509_REQ_get_subject_name(req.get());
-
-    if (!X509_NAME_add_entry_by_NID(name, NID_commonName, MBSTRING_ASC,
-                                    const_cast<unsigned char *>((const unsigned char *)common_name),
-                                    -1, -1, 0))
-        throw SslError("X509_NAME_add_entry_by_NID() failed");
 
     if (!alt_hosts.empty())
         AddDnsAltNames(*req, alt_hosts);
@@ -515,10 +508,10 @@ AcmeNewCert(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
 static void
 AcmeNewCert(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
             const char *handle,
-            const char *host, ConstBuffer<const char *> alt_hosts)
+            ConstBuffer<const char *> alt_hosts)
 {
     const auto cert_key = GenerateRsaKey();
-    const auto req = MakeCertRequest(*cert_key, host, alt_hosts);
+    const auto req = MakeCertRequest(*cert_key, alt_hosts);
     AcmeNewCert(key, db, client, handle, *cert_key, *req);
 }
 
@@ -536,19 +529,16 @@ AcmeNewAuthzCert(const AcmeConfig &config, EVP_PKEY &key,
                  CertDatabase &db, AcmeClient &client,
                  WorkshopProgress _progress,
                  const char *handle,
-                 const char *host, ConstBuffer<const char *> alt_hosts)
+                 ConstBuffer<const char *> alt_hosts)
 {
-    StepProgress progress(_progress, 1 + alt_hosts.size + 1);
+    StepProgress progress(_progress, alt_hosts.size + 1);
 
-    AcmeNewAuthz(config, key, db, client, host);
-    progress();
-
-    for (const auto *alt_host : alt_hosts) {
-        AcmeNewAuthz(config, key, db, client, alt_host);
+    for (const auto *host : alt_hosts) {
+        AcmeNewAuthz(config, key, db, client, host);
         progress();
     }
 
-    AcmeNewCert(key, db, client, handle, host, alt_hosts);
+    AcmeNewCert(key, db, client, handle, alt_hosts);
     progress();
 }
 
@@ -695,7 +685,6 @@ Acme(ConstBuffer<const char *> args)
             throw Usage("acme new-cert HANDLE HOST...");
 
         const char *handle = args.shift();
-        const char *host = args.shift();
 
         const ScopeSslGlobalInit ssl_init;
 
@@ -706,7 +695,7 @@ Acme(ConstBuffer<const char *> args)
         CertDatabase db(*db_config);
         AcmeClient client(config);
 
-        AcmeNewCert(*key, db, client, handle, host, args);
+        AcmeNewCert(*key, db, client, handle, args);
 
         printf("OK\n");
     } else if (strcmp(cmd, "new-authz-cert") == 0) {
@@ -714,7 +703,6 @@ Acme(ConstBuffer<const char *> args)
             throw Usage("acme new-authz-cert HANDLE HOST ...");
 
         const char *handle = args.shift();
-        const char *host = args.shift();
 
         const ScopeSslGlobalInit ssl_init;
 
@@ -726,7 +714,7 @@ Acme(ConstBuffer<const char *> args)
         AcmeClient client(config);
 
         AcmeNewAuthzCert(config, *key, db, client, root_progress,
-                         handle, host, args);
+                         handle, args);
 
         printf("OK\n");
     } else if (strcmp(cmd, "renew-cert") == 0) {
