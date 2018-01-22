@@ -91,7 +91,6 @@ LbTcpConnection::Inbound::OnBufferedData(const void *buffer, size_t size)
         return BufferedResult::BLOCKING;
 
     if (!tcp.outbound.socket.IsValid()) {
-        tcp.DestroyBoth();
         tcp.OnTcpError("Send error", "Broken socket");
         return BufferedResult::CLOSED;
     }
@@ -114,7 +113,6 @@ LbTcpConnection::Inbound::OnBufferedData(const void *buffer, size_t size)
 
     case WRITE_ERRNO:
         save_errno = errno;
-        tcp.DestroyBoth();
         tcp.OnTcpErrno("Send failed", save_errno);
         return BufferedResult::CLOSED;
 
@@ -125,7 +123,6 @@ LbTcpConnection::Inbound::OnBufferedData(const void *buffer, size_t size)
         return BufferedResult::CLOSED;
 
     case WRITE_BROKEN:
-        tcp.DestroyBoth();
         tcp.OnTcpEnd();
         return BufferedResult::CLOSED;
     }
@@ -139,7 +136,6 @@ LbTcpConnection::Inbound::OnBufferedClosed() noexcept
 {
     auto &tcp = LbTcpConnection::FromInbound(*this);
 
-    tcp.DestroyBoth();
     tcp.OnTcpEnd();
     return false;
 }
@@ -168,7 +164,6 @@ LbTcpConnection::Inbound::OnBufferedDrained() noexcept
         /* now that inbound's output buffers are drained, we can
            finally close the connection (postponed from
            outbound_buffered_socket_end()) */
-        tcp.DestroyBoth();
         tcp.OnTcpEnd();
         return false;
     }
@@ -181,7 +176,6 @@ LbTcpConnection::Inbound::OnBufferedBroken() noexcept
 {
     auto &tcp = LbTcpConnection::FromInbound(*this);
 
-    tcp.DestroyBoth();
     tcp.OnTcpEnd();
     return WRITE_DESTROYED;
 }
@@ -191,7 +185,6 @@ LbTcpConnection::Inbound::OnBufferedError(std::exception_ptr ep) noexcept
 {
     auto &tcp = LbTcpConnection::FromInbound(*this);
 
-    tcp.DestroyBoth();
     tcp.OnTcpError("Error", ep);
 }
 
@@ -225,7 +218,6 @@ LbTcpConnection::Outbound::OnBufferedData(const void *buffer, size_t size)
 
     case WRITE_ERRNO:
         save_errno = errno;
-        tcp.DestroyBoth();
         tcp.OnTcpErrno("Send failed", save_errno);
         return BufferedResult::CLOSED;
 
@@ -236,7 +228,6 @@ LbTcpConnection::Outbound::OnBufferedData(const void *buffer, size_t size)
         return BufferedResult::CLOSED;
 
     case WRITE_BROKEN:
-        tcp.DestroyBoth();
         tcp.OnTcpEnd();
         return BufferedResult::CLOSED;
     }
@@ -264,7 +255,6 @@ LbTcpConnection::Outbound::OnBufferedEnd() noexcept
     if (tcp.inbound.socket.IsDrained()) {
         /* all output buffers to "inbound" are drained; close the
            connection, because there's nothing left to do */
-        tcp.DestroyBoth();
         tcp.OnTcpEnd();
 
         /* nothing will be done if the buffers are not yet drained;
@@ -295,7 +285,6 @@ LbTcpConnection::Outbound::OnBufferedBroken() noexcept
 {
     auto &tcp = LbTcpConnection::FromOutbound(*this);
 
-    tcp.DestroyBoth();
     tcp.OnTcpEnd();
     return WRITE_DESTROYED;
 }
@@ -305,7 +294,6 @@ LbTcpConnection::Outbound::OnBufferedError(std::exception_ptr ep) noexcept
 {
     auto &tcp = LbTcpConnection::FromOutbound(*this);
 
-    tcp.DestroyBoth();
     tcp.OnTcpError("Error", ep);
 }
 
