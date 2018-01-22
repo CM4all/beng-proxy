@@ -45,7 +45,7 @@
 #include "istream_html_escape.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream_cat.hxx"
-#include "istream/istream_delayed.hxx"
+#include "istream/DelayedIstream.hxx"
 #include "istream/istream_hold.hxx"
 #include "istream/istream_iconv.hxx"
 #include "istream/istream_null.hxx"

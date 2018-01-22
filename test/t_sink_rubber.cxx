@@ -36,7 +36,7 @@
 #include "pool/pool.hxx"
 #include "istream/istream_byte.hxx"
 #include "istream/istream_cat.hxx"
-#include "istream/istream_delayed.hxx"
+#include "istream/DelayedIstream.hxx"
 #include "istream/istream_fail.hxx"
 #include "istream/istream_four.hxx"
 #include "istream/istream_null.hxx"

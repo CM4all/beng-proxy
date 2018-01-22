@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_ISTREAM_DELAYED_HXX
-#define BENG_PROXY_ISTREAM_DELAYED_HXX
+#pragma once
 
 #include <exception>
 
@@ -60,5 +59,3 @@ istream_delayed_set_eof(Istream &istream_delayed);
  */
 void
 istream_delayed_set_abort(Istream &istream_delayed, std::exception_ptr ep);
-
-#endif

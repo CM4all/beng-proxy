@@ -30,7 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "istream_delayed.hxx"
+#include "DelayedIstream.hxx"
 #include "ForwardIstream.hxx"
 #include "UnusedPtr.hxx"
 #include "util/Cancellable.hxx"

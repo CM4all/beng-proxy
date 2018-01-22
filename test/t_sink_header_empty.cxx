@@ -32,7 +32,7 @@
 
 #include "istream/sink_header.hxx"
 #include "istream/istream.hxx"
-#include "istream/istream_delayed.hxx"
+#include "istream/DelayedIstream.hxx"
 #include "istream/istream_hold.hxx"
 #include "istream/istream_memory.hxx"
 #include "istream/UnusedPtr.hxx"

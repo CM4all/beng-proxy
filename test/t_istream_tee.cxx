@@ -34,7 +34,7 @@
 #include "istream/UnusedPtr.hxx"
 #include "istream/Sink.hxx"
 #include "istream/istream_tee.hxx"
-#include "istream/istream_delayed.hxx"
+#include "istream/DelayedIstream.hxx"
 #include "istream/istream_string.hxx"
 #include "istream/istream_fail.hxx"
 #include "istream/istream.hxx"

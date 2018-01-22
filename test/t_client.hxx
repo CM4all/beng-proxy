@@ -38,7 +38,7 @@
 #include "istream/istream_block.hxx"
 #include "istream/istream_byte.hxx"
 #include "istream/istream_cat.hxx"
-#include "istream/istream_delayed.hxx"
+#include "istream/DelayedIstream.hxx"
 #include "istream/istream_fail.hxx"
 #include "istream/istream_head.hxx"
 #include "istream/istream_null.hxx"

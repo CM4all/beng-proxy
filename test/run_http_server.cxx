@@ -38,7 +38,7 @@
 #include "direct.hxx"
 #include "istream/sink_null.hxx"
 #include "istream/istream_byte.hxx"
-#include "istream/istream_delayed.hxx"
+#include "istream/DelayedIstream.hxx"
 #include "istream/istream_head.hxx"
 #include "istream/istream_hold.hxx"
 #include "istream/istream_memory.hxx"

@@ -41,7 +41,7 @@
 #include "escape_class.hxx"
 #include "istream_escape.hxx"
 #include "istream/TimeoutIstream.hxx"
-#include "istream/istream_delayed.hxx"
+#include "istream/DelayedIstream.hxx"
 #include "istream/istream_memory.hxx"
 #include "istream/istream_null.hxx"
 #include "istream/istream_string.hxx"
