@@ -35,7 +35,7 @@
 #include "UnusedPtr.hxx"
 
 class PauseIstream final : public ForwardIstream {
-    SharedPoolPtr<PauseIstreamControl> control;
+    const SharedPoolPtr<PauseIstreamControl> control;
 
     bool resumed = false;
 

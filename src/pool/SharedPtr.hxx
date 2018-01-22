@@ -114,11 +114,11 @@ public:
         return control != nullptr;
     }
 
-    T &operator*() noexcept {
+    T &operator*() const noexcept {
         return control->value;
     }
 
-    T *operator->() noexcept {
+    T *operator->() const noexcept {
         return &control->value;
     }
 
