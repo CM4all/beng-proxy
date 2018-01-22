@@ -107,6 +107,7 @@ struct BpConnection final
     };
 
     /* virtual methods from class HttpServerConnectionHandler */
+    void RequestHeadersFinished(const HttpServerRequest &request) noexcept override;
     void HandleHttpRequest(HttpServerRequest &request,
                            CancellablePointer &cancel_ptr) override;
 

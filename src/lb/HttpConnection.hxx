@@ -166,6 +166,7 @@ struct LbHttpConnection final
     void LogSendError(HttpServerRequest &request, std::exception_ptr ep);
 
     /* virtual methods from class HttpServerConnectionHandler */
+    void RequestHeadersFinished(const HttpServerRequest &request) noexcept override;
     void HandleHttpRequest(HttpServerRequest &request,
                            CancellablePointer &cancel_ptr) override;
 
