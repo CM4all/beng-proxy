@@ -330,9 +330,10 @@ LbTcpConnection::DestroyBoth()
     if (inbound.socket.IsValid())
         inbound.Destroy();
 
-    if (cancel_connect)
+    if (cancel_connect) {
         cancel_connect.Cancel();
-    else if (outbound.socket.IsValid())
+        cancel_connect = nullptr;
+    } else if (outbound.socket.IsValid())
         outbound.Destroy();
 }
 
