@@ -31,8 +31,8 @@
  */
 
 #include "css_parser.hxx"
-#include "istream/istream.hxx"
 #include "istream/istream_file.hxx"
+#include "istream/UnusedPtr.hxx"
 #include "PInstance.hxx"
 #include "fb_pool.hxx"
 #include "pool/pool.hxx"
@@ -141,7 +141,8 @@ try {
     Istream *istream = istream_file_new(instance.event_loop, *pool,
                                         "/dev/stdin", (off_t)-1);
     auto *parser =
-        css_parser_new(*pool, *istream, false, my_parser_handler, nullptr);
+        css_parser_new(*pool, UnusedIstreamPtr(istream), false,
+                       my_parser_handler, nullptr);
 
     while (!should_exit)
         css_parser_read(parser);

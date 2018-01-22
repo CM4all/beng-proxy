@@ -126,8 +126,8 @@ css_rewrite_block_uris(struct pool &pool,
         const AutoRewindPool auto_rewind(*tpool);
 
         rewrite.parser = css_parser_new(*tpool,
-                                        *istream_memory_new(*tpool, block.data,
-                                                            block.size).Steal(),
+                                        istream_memory_new(*tpool, block.data,
+                                                           block.size),
                                         true,
                                         css_rewrite_parser_handler, &rewrite);
         css_parser_read(rewrite.parser);

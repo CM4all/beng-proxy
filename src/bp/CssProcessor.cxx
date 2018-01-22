@@ -305,7 +305,7 @@ CssProcessor::CssProcessor(struct pool &_pool, struct pool &_caller_pool,
      container(_container), env(_env),
      options(_options),
      replace(std::move(_replace)),
-     parser(css_parser_new(pool, *input.Steal(), false,
+     parser(css_parser_new(pool, std::move(input), false,
                            css_processor_parser_handler, this)) {}
 
 UnusedIstreamPtr

@@ -34,6 +34,7 @@
 #include "css_syntax.hxx"
 #include "pool/pool.hxx"
 #include "istream/Sink.hxx"
+#include "istream/UnusedPtr.hxx"
 #include "util/StringUtil.hxx"
 #include "util/TrivialArray.hxx"
 
@@ -112,7 +113,7 @@ struct CssParser final : IstreamSink {
     off_t url_start;
     StringBuffer<1024> url_buffer;
 
-    CssParser(struct pool &pool, Istream &input, bool block,
+    CssParser(struct pool &pool, UnusedIstreamPtr input, bool block,
               const CssParserHandler &handler, void *handler_ctx);
 
     bool IsDefined() const {
@@ -565,10 +566,10 @@ CssParser::Feed(const char *start, size_t length)
  *
  */
 
-CssParser::CssParser(struct pool &_pool, Istream &_input, bool _block,
+CssParser::CssParser(struct pool &_pool, UnusedIstreamPtr _input, bool _block,
                      const CssParserHandler &_handler,
                      void *_handler_ctx)
-    :IstreamSink(_input), pool(&_pool), block(_block),
+    :IstreamSink(std::move(_input)), pool(&_pool), block(_block),
      position(0),
      handler(&_handler), handler_ctx(_handler_ctx),
      state(block ? State::BLOCK : State::NONE)
@@ -576,7 +577,7 @@ CssParser::CssParser(struct pool &_pool, Istream &_input, bool _block,
 }
 
 CssParser *
-css_parser_new(struct pool &pool, Istream &input, bool block,
+css_parser_new(struct pool &pool, UnusedIstreamPtr input, bool block,
                const CssParserHandler &handler, void *handler_ctx)
 {
     assert(handler.eof != nullptr);
@@ -584,7 +585,7 @@ css_parser_new(struct pool &pool, Istream &input, bool block,
 
     pool_ref(&pool);
 
-    return NewFromPool<CssParser>(pool, pool, input, block,
+    return NewFromPool<CssParser>(pool, pool, std::move(input), block,
                                   handler, handler_ctx);
 }
 
