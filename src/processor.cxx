@@ -1262,7 +1262,6 @@ XmlProcessor::EmbedWidget(Widget &child_widget) noexcept
         auto &handler2 = *handler;
 
         parser_close(parser);
-        parser = nullptr;
 
         try {
             child_widget.CopyFromRequest();
@@ -1491,8 +1490,6 @@ XmlProcessor::OnXmlEof(gcc_unused off_t length) noexcept
 
     assert(parser != nullptr);
 
-    parser = nullptr;
-
     StopCdataIstream();
 
     /* the request body could not be submitted to the focused widget,
@@ -1518,8 +1515,6 @@ XmlProcessor::OnXmlError(std::exception_ptr ep) noexcept
     auto &widget_pool = container.pool;
 
     assert(parser != nullptr);
-
-    parser = nullptr;
 
     StopCdataIstream();
 
