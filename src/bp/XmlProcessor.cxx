@@ -266,6 +266,16 @@ private:
         return (options & PROCESSOR_STYLE) != 0;
     }
 
+    void Destroy() noexcept {
+        DeleteFromPool(pool, this);
+    }
+
+    void Close() noexcept {
+        auto *parser2 = parser;
+        Destroy();
+        parser_close(parser2);
+    }
+
     void Replace(off_t start, off_t end, UnusedIstreamPtr istream) noexcept {
         istream_replace_add(*replace, start, end, std::move(istream));
     }
@@ -375,7 +385,7 @@ XmlProcessor::Cancel() noexcept
     pool_unref(&container.pool);
     pool_unref(&caller_pool);
 
-    parser_close(parser);
+    Close();
 }
 
 /*
@@ -1261,7 +1271,7 @@ XmlProcessor::EmbedWidget(Widget &child_widget) noexcept
         auto &widget_pool = container.pool;
         auto &handler2 = *handler;
 
-        parser_close(parser);
+        Close();
 
         try {
             child_widget.CopyFromRequest();
@@ -1503,6 +1513,8 @@ XmlProcessor::OnXmlEof(gcc_unused off_t length) noexcept
     }
 
     pool_unref(&widget_pool);
+
+    Destroy();
 }
 
 void
@@ -1524,4 +1536,6 @@ XmlProcessor::OnXmlError(std::exception_ptr ep) noexcept
     }
 
     pool_unref(&widget_pool);
+
+    Destroy();
 }

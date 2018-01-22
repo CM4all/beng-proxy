@@ -74,6 +74,10 @@ struct CssProcessor {
                  Widget &_container,
                  struct processor_env &_env,
                  unsigned _options);
+
+    void Destroy() noexcept {
+        DeleteFromPool(pool, this);
+    }
 };
 
 static inline bool
@@ -258,6 +262,8 @@ css_processor_parser_eof(void *ctx, off_t length gcc_unused)
     processor->parser = nullptr;
 
     istream_replace_finish(processor->replace);
+
+    processor->Destroy();
 }
 
 static void
@@ -268,6 +274,8 @@ css_processor_parser_error(std::exception_ptr, void *ctx)
     assert(processor->parser != nullptr);
 
     processor->parser = nullptr;
+
+    processor->Destroy();
 }
 
 static constexpr CssParserHandler css_processor_parser_handler = {
