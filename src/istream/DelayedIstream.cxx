@@ -33,6 +33,7 @@
 #include "DelayedIstream.hxx"
 #include "ForwardIstream.hxx"
 #include "UnusedPtr.hxx"
+#include "event/DeferEvent.hxx"
 #include "util/Cancellable.hxx"
 
 #include <assert.h>
@@ -41,9 +42,16 @@
 class DelayedIstream final : public ForwardIstream {
     CancellablePointer cancel_ptr;
 
+    DeferEvent defer_read;
+
 public:
-    explicit DelayedIstream(struct pool &p)
-        :ForwardIstream(p) {
+    explicit DelayedIstream(struct pool &p, EventLoop &event_loop) noexcept
+        :ForwardIstream(p),
+         defer_read(event_loop, BIND_THIS_METHOD(DeferredRead)) {
+    }
+
+    ~DelayedIstream() noexcept {
+        defer_read.Cancel();
     }
 
     CancellablePointer &GetCancellablePointer() {
@@ -54,6 +62,9 @@ public:
         assert(!HasInput());
 
         SetInput(std::move(_input), GetHandlerDirect());
+
+        if (HasHandler())
+            defer_read.Schedule();
     }
 
     void SetEof() {
@@ -68,6 +79,12 @@ public:
         DestroyError(ep);
     }
 
+private:
+    void DeferredRead() noexcept {
+        input.Read();
+    }
+
+public:
     /* virtual methods from class Istream */
 
     off_t _GetAvailable(bool partial) override {
@@ -100,9 +117,9 @@ public:
 };
 
 Istream *
-istream_delayed_new(struct pool *pool)
+istream_delayed_new(struct pool &pool, EventLoop &event_loop) noexcept
 {
-    return NewIstream<DelayedIstream>(*pool);
+    return NewIstream<DelayedIstream>(pool, event_loop);
 }
 
 CancellablePointer &

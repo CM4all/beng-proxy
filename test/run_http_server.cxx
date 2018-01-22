@@ -197,7 +197,7 @@ Instance::HandleHttpRequest(HttpServerRequest &request,
         request_body = UnusedHoldIstreamPtr(request.pool,
                                             std::move(request.body));
 
-        body = istream_delayed_new(&request.pool);
+        body = istream_delayed_new(request.pool, event_loop);
         istream_delayed_cancellable_ptr(*body) = *this;
 
         http_server_response(&request, HTTP_STATUS_OK,

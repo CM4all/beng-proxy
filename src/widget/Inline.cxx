@@ -93,7 +93,7 @@ public:
          widget(_widget),
          header_timeout_event(*env.event_loop,
                               BIND_THIS_METHOD(OnHeaderTimeout)),
-         delayed(istream_delayed_new(&pool)) {
+         delayed(istream_delayed_new(pool, *env.event_loop)) {
         istream_delayed_cancellable_ptr(*delayed) = *this;
     }
 
@@ -237,9 +237,6 @@ InlineWidget::OnHttpResponse(http_status_t status, StringMap &&headers,
         body = istream_null_new(pool);
 
     istream_delayed_set(*delayed, std::move(body));
-
-    if (delayed->HasHandler())
-        delayed->Read();
 }
 
 void

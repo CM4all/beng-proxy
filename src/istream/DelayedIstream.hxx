@@ -38,12 +38,13 @@ struct pool;
 class Istream;
 class UnusedIstreamPtr;
 class CancellablePointer;
+class EventLoop;
 
 /**
  * An istream facade which waits for its inner istream to appear.
  */
 Istream *
-istream_delayed_new(struct pool *pool);
+istream_delayed_new(struct pool &pool, EventLoop &event_loop) noexcept;
 
 CancellablePointer &
 istream_delayed_cancellable_ptr(Istream &i_delayed);

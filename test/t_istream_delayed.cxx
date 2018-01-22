@@ -56,11 +56,11 @@ create_input(struct pool *pool)
 }
 
 static Istream *
-create_test(EventLoop &, struct pool *pool, Istream *input)
+create_test(EventLoop &event_loop, struct pool *pool, Istream *input)
 {
     auto *test = NewFromPool<DelayedTest>(*pool);
 
-    Istream *istream = istream_delayed_new(pool);
+    Istream *istream = istream_delayed_new(*pool, event_loop);
     istream_delayed_cancellable_ptr(*istream) = *test;
 
     istream_delayed_set(*istream, UnusedIstreamPtr(input));

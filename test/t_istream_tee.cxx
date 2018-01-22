@@ -120,7 +120,7 @@ test_block1(EventLoop &event_loop)
 
     auto pool = pool_new_libc(nullptr, "test");
 
-    Istream *delayed = istream_delayed_new(pool);
+    Istream *delayed = istream_delayed_new(*pool, event_loop);
     auto tee = istream_tee_new(*pool, UnusedIstreamPtr(delayed),
                                event_loop, false, false);
     auto *second = tee.second.Steal();

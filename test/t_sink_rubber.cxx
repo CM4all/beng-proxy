@@ -33,6 +33,7 @@
 #include "TestPool.hxx"
 #include "rubber.hxx"
 #include "sink_rubber.hxx"
+#include "event/Loop.hxx"
 #include "pool/pool.hxx"
 #include "istream/istream_byte.hxx"
 #include "istream/istream_cat.hxx"
@@ -249,7 +250,8 @@ TEST(SinkRubberTest, OOM)
     Rubber r(4 * 1024 * 1024);
     Data data(r);
 
-    Istream *input = istream_delayed_new(pool);
+    EventLoop event_loop;
+    Istream *input = istream_delayed_new(pool, event_loop);
     istream_delayed_cancellable_ptr(*input) = nullptr;
 
     sink_rubber_new(pool, UnusedIstreamPtr(input), r, 8 * 1024 * 1024,
@@ -263,7 +265,8 @@ TEST(SinkRubberTest, Abort)
     Rubber r(4 * 1024 * 1024);
     Data data(r);
 
-    Istream *delayed = istream_delayed_new(pool);
+    EventLoop event_loop;
+    Istream *delayed = istream_delayed_new(pool, event_loop);
     istream_delayed_cancellable_ptr(*delayed) = nullptr;
 
     Istream *input = istream_cat_new(pool,

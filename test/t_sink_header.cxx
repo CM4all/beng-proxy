@@ -64,8 +64,6 @@ my_sink_header_done(gcc_unused void *header, gcc_unused size_t length,
     assert(memcmp(header, "foobar", 6) == 0);
 
     istream_delayed_set(*delayed, std::move(tail));
-    if (delayed->HasHandler())
-        delayed->Read();
 }
 
 static void
@@ -82,11 +80,11 @@ static const struct sink_header_handler my_sink_header_handler = {
 };
 
 static Istream *
-create_test(EventLoop &, struct pool *pool, Istream *input)
+create_test(EventLoop &event_loop, struct pool *pool, Istream *input)
 {
     Istream *delayed, *hold;
 
-    delayed = istream_delayed_new(pool);
+    delayed = istream_delayed_new(*pool, event_loop);
     hold = istream_hold_new(*pool, *delayed);
 
     sink_header_new(*pool, UnusedIstreamPtr(input),

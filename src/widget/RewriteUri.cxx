@@ -312,7 +312,7 @@ public:
               ? (*view != 0 ? p_strdup(&pool, view) : "")
               : nullptr),
          escape(_escape),
-         delayed(istream_delayed_new(&pool)),
+         delayed(istream_delayed_new(pool, *env.event_loop)),
          timeout(NewTimeoutIstream(pool, *delayed,
                                    *env.event_loop,
                                    inline_widget_body_timeout)) {}
@@ -378,8 +378,6 @@ UriRewriter::ResolverCallback() noexcept
         istream = istream_null_new(pool);
 
     istream_delayed_set(*delayed, std::move(istream));
-    if (timeout->HasHandler())
-        timeout->Read();
 }
 
 /*
