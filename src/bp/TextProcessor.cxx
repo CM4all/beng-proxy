@@ -30,7 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "text_processor.hxx"
+#include "TextProcessor.hxx"
 #include "strmap.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "istream/istream_subst.hxx"

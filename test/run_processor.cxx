@@ -34,7 +34,7 @@
 #include "FailingResourceLoader.hxx"
 #include "PInstance.hxx"
 #include "fb_pool.hxx"
-#include "processor.hxx"
+#include "bp/XmlProcessor.hxx"
 #include "penv.hxx"
 #include "widget/Inline.hxx"
 #include "widget/Widget.hxx"

@@ -30,32 +30,29 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_TEXT_PROCESSOR_HXX
-#define BENG_PROXY_TEXT_PROCESSOR_HXX
+#pragma once
 
-#include "util/Compiler.h"
+#include <stddef.h>
 
 struct pool;
-class UnusedIstreamPtr;
-class StringMap;
-struct Widget;
+class Istream;
 struct processor_env;
+struct StringView;
+struct parsed_uri;
+struct istream;
+struct escape_class;
+struct Widget;
+struct tcache;
 
 /**
- * Check if the resource described by the specified headers can be
- * processed by the text processor.
- */
-gcc_pure
-bool
-text_processor_allowed(const StringMap &headers);
-
-/**
- * Process the specified istream, and return the processed stream.
+ * Rewrite URLs in CSS.
  *
- * @param widget the widget that represents the template
+ * @return NULL if no rewrite is necessary
  */
-UnusedIstreamPtr
-text_processor(struct pool &pool, UnusedIstreamPtr istream,
-               const Widget &widget, const struct processor_env &env);
-
-#endif
+Istream *
+css_rewrite_block_uris(struct pool &pool,
+                       struct processor_env &env,
+                       struct tcache &translate_cache,
+                       Widget &widget,
+                       StringView block,
+                       const struct escape_class *escape);

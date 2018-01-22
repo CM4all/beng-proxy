@@ -34,7 +34,7 @@
 #include "widget/Widget.hxx"
 #include "widget/Request.hxx"
 #include "widget/Resolver.hxx"
-#include "processor.hxx"
+#include "bp/XmlProcessor.hxx"
 #include "penv.hxx"
 #include "uri/Dissect.hxx"
 #include "HttpResponseHandler.hxx"

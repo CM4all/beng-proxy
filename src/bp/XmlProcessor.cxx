@@ -30,10 +30,10 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "processor.hxx"
-#include "text_processor.hxx"
-#include "css_processor.hxx"
-#include "css_rewrite.hxx"
+#include "XmlProcessor.hxx"
+#include "TextProcessor.hxx"
+#include "CssProcessor.hxx"
+#include "CssRewrite.hxx"
 #include "penv.hxx"
 #include "xml_parser.hxx"
 #include "uri/uri_escape.hxx"

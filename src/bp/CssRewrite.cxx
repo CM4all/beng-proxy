@@ -30,7 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "css_rewrite.hxx"
+#include "CssRewrite.hxx"
 #include "css_parser.hxx"
 #include "widget/RewriteUri.hxx"
 #include "pool/pool.hxx"

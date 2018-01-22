@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_CSS_PROCESSOR_HXX
-#define BENG_PROXY_CSS_PROCESSOR_HXX
+#pragma once
 
 /** options for css_processor() */
 enum css_processor_options {
@@ -60,5 +59,3 @@ css_processor(struct pool &pool, UnusedIstreamPtr stream,
               Widget &widget,
               struct processor_env &env,
               unsigned options);
-
-#endif
