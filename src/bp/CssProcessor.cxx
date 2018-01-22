@@ -56,7 +56,7 @@ struct CssProcessor {
     struct processor_env &env;
     const unsigned options;
 
-    Istream &replace;
+    SharedPoolPtr<ReplaceIstreamControl> replace;
 
     CssParser *parser;
     bool had_input;
@@ -70,7 +70,8 @@ struct CssProcessor {
     UriRewrite uri_rewrite;
 
     CssProcessor(struct pool &_pool, struct pool &_caller_pool,
-                 std::pair<UnusedIstreamPtr, UnusedIstreamPtr> &&tee,
+                 UnusedIstreamPtr input,
+                 SharedPoolPtr<ReplaceIstreamControl> _replace,
                  Widget &_container,
                  struct processor_env &_env,
                  unsigned _options);
@@ -103,7 +104,7 @@ css_processor_replace_add(CssProcessor *processor,
                           off_t start, off_t end,
                           UnusedIstreamPtr istream)
 {
-    istream_replace_add(processor->replace, start, end, std::move(istream));
+    processor->replace->Add(start, end, std::move(istream));
 }
 
 /*
@@ -261,8 +262,7 @@ css_processor_parser_eof(void *ctx, off_t length gcc_unused)
 
     processor->parser = nullptr;
 
-    istream_replace_finish(processor->replace);
-
+    processor->replace->Finish();
     processor->Destroy();
 }
 
@@ -296,15 +296,16 @@ static constexpr CssParserHandler css_processor_parser_handler = {
 
 inline
 CssProcessor::CssProcessor(struct pool &_pool, struct pool &_caller_pool,
-                           std::pair<UnusedIstreamPtr, UnusedIstreamPtr> &&tee,
+                           UnusedIstreamPtr input,
+                           SharedPoolPtr<ReplaceIstreamControl> _replace,
                            Widget &_container,
                            struct processor_env &_env,
                            unsigned _options)
     :pool(_pool), caller_pool(_caller_pool),
      container(_container), env(_env),
      options(_options),
-     replace(*istream_replace_new(pool, std::move(tee.second))),
-     parser(css_parser_new(pool, *tee.first.Steal(), false,
+     replace(std::move(_replace)),
+     parser(css_parser_new(pool, *input.Steal(), false,
                            css_processor_parser_handler, this)) {}
 
 UnusedIstreamPtr
@@ -319,11 +320,14 @@ css_processor(struct pool &caller_pool, UnusedIstreamPtr input,
                                *env.event_loop,
                                true, true);
 
-    auto processor = NewFromPool<CssProcessor>(*pool, *pool, caller_pool,
-                                               std::move(tee),
-                                               widget, env,
-                                               options);
+    auto replace = istream_replace_new(*pool, std::move(tee.second));
+
+    NewFromPool<CssProcessor>(*pool, *pool, caller_pool,
+                              std::move(tee.first),
+                              std::move(replace.second),
+                              widget, env,
+                              options);
     pool_unref(pool);
 
-    return UnusedIstreamPtr(&processor->replace);
+    return std::move(replace.first);
 }

@@ -99,10 +99,24 @@ class ReplaceIstream final : public FacadeIstream {
     off_t last_substitution_end = 0;
 #endif
 
+    const SharedPoolPtr<ReplaceIstreamControl> control;
+
 public:
     ReplaceIstream(struct pool &p, UnusedIstreamPtr _input)
-        :FacadeIstream(p, std::move(_input))
+        :FacadeIstream(p, std::move(_input)),
+         control(SharedPoolPtr<ReplaceIstreamControl>::Make(p, *this))
     {
+    }
+
+    ~ReplaceIstream() noexcept {
+        assert(control);
+        assert(control->replace == this);
+
+        control->replace = nullptr;
+    }
+
+    auto GetControl() noexcept {
+        return control;
     }
 
     void Add(off_t start, off_t end, UnusedIstreamPtr contents) noexcept;
@@ -571,10 +585,11 @@ ReplaceIstream::_Close() noexcept
  *
  */
 
-Istream *
+std::pair<UnusedIstreamPtr, SharedPoolPtr<ReplaceIstreamControl>>
 istream_replace_new(struct pool &pool, UnusedIstreamPtr input)
 {
-    return NewIstream<ReplaceIstream>(pool, std::move(input));
+    auto *i = NewIstream<ReplaceIstream>(pool, std::move(input));
+    return std::make_pair(UnusedIstreamPtr(i), i->GetControl());
 }
 
 inline void
@@ -604,11 +619,11 @@ ReplaceIstream::Add(off_t start, off_t end,
 }
 
 void
-istream_replace_add(Istream &istream, off_t start, off_t end,
-                    UnusedIstreamPtr contents)
+ReplaceIstreamControl::Add(off_t start, off_t end,
+                           UnusedIstreamPtr contents) noexcept
 {
-    auto &replace = (ReplaceIstream &)istream;
-    replace.Add(start, end, std::move(contents));
+    if (replace != nullptr)
+        replace->Add(start, end, std::move(contents));
 }
 
 inline ReplaceIstream::Substitution *
@@ -644,10 +659,10 @@ ReplaceIstream::Extend(gcc_unused off_t start, off_t end) noexcept
 }
 
 void
-istream_replace_extend(Istream &istream, gcc_unused off_t start, off_t end)
+ReplaceIstreamControl::Extend(off_t start, off_t end) noexcept
 {
-    auto &replace = (ReplaceIstream &)istream;
-    replace.Extend(start, end);
+    if (replace != nullptr)
+        replace->Extend(start, end);
 }
 
 inline void
@@ -660,10 +675,10 @@ ReplaceIstream::Settle(off_t offset) noexcept
 }
 
 void
-istream_replace_settle(Istream &istream, off_t offset)
+ReplaceIstreamControl::Settle(off_t offset) noexcept
 {
-    auto &replace = (ReplaceIstream &)istream;
-    replace.Settle(offset);
+    if (replace != nullptr)
+        replace->Settle(offset);
 }
 
 inline void
@@ -678,8 +693,8 @@ ReplaceIstream::Finish() noexcept
 }
 
 void
-istream_replace_finish(Istream &istream)
+ReplaceIstreamControl::Finish() noexcept
 {
-    auto &replace = (ReplaceIstream &)istream;
-    replace.Finish();
+    if (replace != nullptr)
+        replace->Finish();
 }

@@ -106,7 +106,7 @@ struct XmlProcessor final : XmlParserHandler, Cancellable {
     struct processor_env &env;
     const unsigned options;
 
-    Istream *replace;
+    SharedPoolPtr<ReplaceIstreamControl> replace;
 
     XmlParser *parser;
     bool had_input;
@@ -242,7 +242,7 @@ struct XmlProcessor final : XmlParserHandler, Cancellable {
     }
 
     bool IsQuiet() const noexcept {
-        return replace == nullptr;
+        return !replace;
     }
 
     bool HasOptionRewriteUrl() const noexcept {
@@ -277,7 +277,7 @@ private:
     }
 
     void Replace(off_t start, off_t end, UnusedIstreamPtr istream) noexcept {
-        istream_replace_add(*replace, start, end, std::move(istream));
+        replace->Add(start, end, std::move(istream));
     }
 
     void ReplaceAttributeValue(const XmlParserAttribute &attr,
@@ -421,8 +421,10 @@ processor_process(struct pool &caller_pool, UnusedIstreamPtr input,
                                               widget, env),
                                *env.event_loop,
                                true, true);
-    processor->replace = istream_replace_new(processor->pool,
-                                             std::move(tee.first));
+
+    auto r = istream_replace_new(processor->pool, std::move(tee.first));
+
+    processor->replace = std::move(r.second);
     processor->InitParser(std::move(tee.second));
     pool_unref(&processor->pool);
 
@@ -438,7 +440,7 @@ processor_process(struct pool &caller_pool, UnusedIstreamPtr input,
     }
 
     //XXX headers = processor_header_forward(pool, headers);
-    return UnusedIstreamPtr(processor->replace);
+    return std::move(r.first);
 }
 
 void
@@ -462,8 +464,6 @@ processor_lookup_widget(struct pool &caller_pool,
     auto *processor = processor_new(caller_pool, widget, env, options);
 
     processor->lookup_id = id;
-
-    processor->replace = nullptr;
 
     processor->InitParser(std::move(istream));
 
@@ -1246,7 +1246,7 @@ XmlProcessor::EmbedWidget(Widget &child_widget) noexcept
 {
     assert(child_widget.class_name != nullptr);
 
-    if (replace != nullptr) {
+    if (replace) {
         try {
             child_widget.CopyFromRequest();
         } catch (...) {
@@ -1330,9 +1330,9 @@ XmlProcessor::WidgetElementFinished(const XmlParserTag &widget_tag,
                                     Widget &child_widget) noexcept
 {
     auto istream = OpenWidgetElement(child_widget);
-    assert(!istream || replace != nullptr);
+    assert(!istream || replace);
 
-    if (replace != nullptr)
+    if (replace)
         Replace(widget.start_offset, widget_tag.end, std::move(istream));
 }
 
@@ -1482,9 +1482,9 @@ XmlProcessor::OnXmlCdata(const char *p gcc_unused, size_t length,
         /* XXX unescape? */
         length = cdata_istream->InvokeData(p, length);
         if (length > 0)
-            istream_replace_extend(*replace, cdata_start, start + length);
-    } else if (replace != nullptr && widget.widget == nullptr)
-        istream_replace_settle(*replace, start + length);
+            replace->Extend(cdata_start, start + length);
+    } else if (replace && widget.widget == nullptr)
+        replace->Settle(start + length);
 
     return length;
 }
@@ -1502,8 +1502,8 @@ XmlProcessor::OnXmlEof(gcc_unused off_t length) noexcept
        because we didn't find it; dispose it now */
     container.for_focused.body.Clear();
 
-    if (replace != nullptr)
-        istream_replace_finish(*replace);
+    if (replace)
+        replace->Finish();
 
     if (lookup_id != nullptr) {
         /* widget was not found */

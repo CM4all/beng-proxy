@@ -49,12 +49,12 @@ create_test(EventLoop &, struct pool *pool, Istream *input)
 {
     Istream *istream =
         istream_string_new(*pool, "abcdefghijklmnopqrstuvwxyz").Steal();
-    istream = istream_replace_new(*pool, UnusedIstreamPtr(istream));
-    istream_replace_add(*istream, 3, 3, UnusedIstreamPtr(input));
-    istream_replace_extend(*istream, 3, 4);
-    istream_replace_extend(*istream, 3, 5);
-    istream_replace_finish(*istream);
-    return istream;
+    auto replace = istream_replace_new(*pool, UnusedIstreamPtr(istream));
+    replace.second->Add(3, 3, UnusedIstreamPtr(input));
+    replace.second->Extend(3, 4);
+    replace.second->Extend(3, 5);
+    replace.second->Finish();
+    return replace.first.Steal();
 }
 
 #include "t_istream_filter.hxx"
