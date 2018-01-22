@@ -34,13 +34,13 @@
 #define BENG_PROXY_ISTREAM_GB_HXX
 
 struct pool;
-class Istream;
+class UnusedIstreamPtr;
 class GrowingBuffer;
 
 /**
  * A wrapper that turns a #GrowingBuffer into an #Istream.
  */
-Istream *
+UnusedIstreamPtr
 istream_gb_new(struct pool &pool, GrowingBuffer &&gb);
 
 #endif

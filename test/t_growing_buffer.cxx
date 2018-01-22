@@ -36,6 +36,7 @@
 #include "istream_gb.hxx"
 #include "istream/istream.hxx"
 #include "istream/Pointer.hxx"
+#include "istream/UnusedPtr.hxx"
 #include "fb_pool.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/WritableBuffer.hxx"
@@ -150,14 +151,14 @@ create_test(struct pool *pool)
 {
     GrowingBuffer gb;
     gb.Write("foo");
-    return istream_gb_new(*pool, std::move(gb));
+    return istream_gb_new(*pool, std::move(gb)).Steal();
 }
 
 static Istream *
 create_empty(struct pool *pool)
 {
     GrowingBuffer gb;
-    return istream_gb_new(*pool, std::move(gb));
+    return istream_gb_new(*pool, std::move(gb)).Steal();
 }
 
 static bool

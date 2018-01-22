@@ -33,6 +33,7 @@
 #include "istream_gb.hxx"
 #include "istream/istream.hxx"
 #include "istream/Bucket.hxx"
+#include "istream/UnusedPtr.hxx"
 #include "GrowingBuffer.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/Cast.hxx"
@@ -98,8 +99,8 @@ public:
     }
 };
 
-Istream *
+UnusedIstreamPtr
 istream_gb_new(struct pool &pool, GrowingBuffer &&gb)
 {
-    return NewIstream<GrowingBufferIstream>(pool, std::move(gb));
+    return UnusedIstreamPtr(NewIstream<GrowingBufferIstream>(pool, std::move(gb)));
 }

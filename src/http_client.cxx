@@ -1354,13 +1354,13 @@ HttpClient::HttpClient(struct pool &_caller_pool, struct pool &_pool,
     GrowingBuffer headers3 = headers.ToBuffer();
     headers3.Write("\r\n", 2);
 
-    Istream *header_stream = istream_gb_new(GetPool(), std::move(headers3));
+    auto header_stream = istream_gb_new(GetPool(), std::move(headers3));
 
     /* request istream */
 
     request.istream.Set(*istream_cat_new(GetPool(),
                                          request_line_stream.Steal(),
-                                         header_stream,
+                                         header_stream.Steal(),
                                          body),
                         *this,
                         istream_direct_mask_to(socket.GetType()));

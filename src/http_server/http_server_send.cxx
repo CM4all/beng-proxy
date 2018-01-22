@@ -170,17 +170,17 @@ HttpServerConnection::SubmitResponse(http_status_t status,
 
     GrowingBuffer headers3 = headers.ToBuffer();
     headers3.Write("\r\n", 2);
-    Istream *header_stream = istream_gb_new(request_pool, std::move(headers3));
+    auto header_stream = istream_gb_new(request_pool, std::move(headers3));
 
     response.length = - status_stream.GetAvailable(false)
-        - header_stream->GetAvailable(false);
+        - header_stream.GetAvailable(false);
 
     /* make sure the access logger gets a negative value if there
        is no response body */
     response.length -= body == nullptr;
 
     body = istream_cat_new(request_pool, status_stream.Steal(),
-                           header_stream, body);
+                           header_stream.Steal(), body);
 
     SetResponseIstream(*body);
     TryWrite();

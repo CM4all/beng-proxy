@@ -490,7 +490,7 @@ http_cache_memcached_put(struct pool &pool, MemachedStock &stock,
     value = UnusedIstreamPtr(istream_cat_new(pool,
                                              istream_memory_new(pool, &request->header_size,
                                                                 sizeof(request->header_size)).Steal(),
-                                             istream_gb_new(pool, std::move(gb)),
+                                             istream_gb_new(pool, std::move(gb)).Steal(),
                                              value.Steal()));
 
     request->extras.set.flags = 0;
