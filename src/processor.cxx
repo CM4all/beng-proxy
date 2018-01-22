@@ -56,7 +56,7 @@
 #include "istream_html_escape.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream.hxx"
-#include "istream/istream_replace.hxx"
+#include "istream/ReplaceIstream.hxx"
 #include "istream/istream_cat.hxx"
 #include "istream/istream_catch.hxx"
 #include "istream/istream_memory.hxx"

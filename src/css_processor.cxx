@@ -41,7 +41,7 @@
 #include "bp_global.hxx"
 #include "escape_css.hxx"
 #include "istream/istream.hxx"
-#include "istream/istream_replace.hxx"
+#include "istream/ReplaceIstream.hxx"
 #include "istream/istream_string.hxx"
 #include "istream/istream_tee.hxx"
 #include "pool/pool.hxx"

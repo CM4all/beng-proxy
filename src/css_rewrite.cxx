@@ -38,7 +38,7 @@
 #include "istream/UnusedPtr.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream_memory.hxx"
-#include "istream/istream_replace.hxx"
+#include "istream/ReplaceIstream.hxx"
 #include "util/Macros.hxx"
 #include "util/StringView.hxx"
 
