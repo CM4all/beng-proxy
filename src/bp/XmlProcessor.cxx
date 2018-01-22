@@ -1265,15 +1265,11 @@ XmlProcessor::EmbedWidget(Widget &child_widget) noexcept
 
         try {
             child_widget.CopyFromRequest();
+            handler2.WidgetFound(child_widget);
         } catch (...) {
             child_widget.Cancel();
             handler2.WidgetLookupError(std::current_exception());
-            pool_unref(&widget_pool);
-            pool_unref(&caller_pool);
-            return nullptr;
         }
-
-        handler2.WidgetFound(child_widget);
 
         pool_unref(&caller_pool);
         pool_unref(&widget_pool);
