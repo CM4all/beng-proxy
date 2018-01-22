@@ -4,7 +4,7 @@ cm4all-beng-proxy (13.6) unstable; urgency=low
   * lb: fix crash bug when POSTing to global_http_check
   * lb/tcp: fix double free bug when outbound is not yet connected
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Mon, 22 Jan 2018 10:18:58 -0000
 
 cm4all-beng-proxy (13.5) unstable; urgency=low
 
