@@ -35,7 +35,7 @@
 
 struct timeval;
 struct pool;
-class Istream;
+class UnusedIstreamPtr;
 class EventLoop;
 
 /**
@@ -43,8 +43,8 @@ class EventLoop;
  * certain amount of time.  The timer starts on the first
  * Istream::Read() call.
  */
-Istream *
-NewTimeoutIstream(struct pool &pool, Istream &input,
+UnusedIstreamPtr
+NewTimeoutIstream(struct pool &pool, UnusedIstreamPtr input,
                   EventLoop &event_loop,
                   const struct timeval &timeout);
 

@@ -32,6 +32,7 @@
 
 #include "TimeoutIstream.hxx"
 #include "ForwardIstream.hxx"
+#include "UnusedPtr.hxx"
 #include "event/TimerEvent.hxx"
 
 #include <stdexcept>
@@ -42,10 +43,10 @@ class TimeoutIstream final : public ForwardIstream {
     const struct timeval *timeout;
 
 public:
-    explicit TimeoutIstream(struct pool &p, Istream &_input,
+    explicit TimeoutIstream(struct pool &p, UnusedIstreamPtr _input,
                             EventLoop &event_loop,
                             const struct timeval &_timeout)
-        :ForwardIstream(p, _input),
+        :ForwardIstream(p, std::move(_input)),
          timeout_event(event_loop, BIND_THIS_METHOD(OnTimeout)),
          timeout(&_timeout) {}
 
@@ -92,10 +93,11 @@ public:
     }
 };
 
-Istream *
-NewTimeoutIstream(struct pool &pool, Istream &input,
+UnusedIstreamPtr
+NewTimeoutIstream(struct pool &pool, UnusedIstreamPtr input,
                   EventLoop &event_loop,
                   const struct timeval &timeout)
 {
-    return NewIstream<TimeoutIstream>(pool, input, event_loop, timeout);
+    return UnusedIstreamPtr(NewIstream<TimeoutIstream>(pool, std::move(input),
+                                                       event_loop, timeout));
 }

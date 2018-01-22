@@ -295,7 +295,7 @@ class UriRewriter {
 
     const struct escape_class *const escape;
 
-    Istream *const delayed, *const timeout;
+    Istream *const delayed;
 
 public:
     UriRewriter(struct pool &_pool,
@@ -312,10 +312,7 @@ public:
               ? (*view != 0 ? p_strdup(&pool, view) : "")
               : nullptr),
          escape(_escape),
-         delayed(istream_delayed_new(pool, *env.event_loop)),
-         timeout(NewTimeoutIstream(pool, *delayed,
-                                   *env.event_loop,
-                                   inline_widget_body_timeout)) {}
+         delayed(istream_delayed_new(pool, *env.event_loop)) {}
 
     UnusedIstreamPtr Start(struct tcache &translate_cache) noexcept {
         ResolveWidget(pool,
@@ -324,7 +321,9 @@ public:
                       BIND_THIS_METHOD(ResolverCallback),
                       istream_delayed_cancellable_ptr(*delayed));
 
-        return UnusedIstreamPtr(timeout);
+        return NewTimeoutIstream(pool, UnusedIstreamPtr(delayed),
+                                 *env.event_loop,
+                                 inline_widget_body_timeout);
     }
 
 private:

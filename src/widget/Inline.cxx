@@ -97,8 +97,8 @@ public:
         istream_delayed_cancellable_ptr(*delayed) = *this;
     }
 
-    Istream *MakeResponse() noexcept {
-        return NewTimeoutIstream(pool, *delayed,
+    UnusedIstreamPtr MakeResponse() noexcept {
+        return NewTimeoutIstream(pool, UnusedIstreamPtr(delayed),
                                  *env.event_loop,
                                  inline_widget_body_timeout);
     }
@@ -365,7 +365,7 @@ embed_inline_widget(struct pool &pool, struct processor_env &env,
 
     auto iw = NewFromPool<InlineWidget>(pool, pool, env, plain_text, widget);
 
-    Istream *hold = istream_hold_new(pool, *iw->MakeResponse());
+    Istream *hold = istream_hold_new(pool, *iw->MakeResponse().Steal());
 
     iw->Start();
 
