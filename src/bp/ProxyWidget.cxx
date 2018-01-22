@@ -89,9 +89,9 @@ struct ProxyWidget final : WidgetLookupHandler, HttpResponseHandler, Cancellable
     void Cancel() noexcept override;
 
     /* virtual methods from class WidgetLookupHandler */
-    void WidgetFound(Widget &widget) override;
-    void WidgetNotFound() override;
-    void WidgetLookupError(std::exception_ptr ep) override;
+    void WidgetFound(Widget &widget) noexcept override;
+    void WidgetNotFound() noexcept override;
+    void WidgetLookupError(std::exception_ptr ep) noexcept override;
 
     /* virtual methods from class HttpResponseHandler */
     void OnHttpResponse(http_status_t status, StringMap &&headers,
@@ -266,7 +266,7 @@ ProxyWidget::ResolverCallback()
 }
 
 void
-ProxyWidget::WidgetFound(Widget &_widget)
+ProxyWidget::WidgetFound(Widget &_widget) noexcept
 {
     assert(ref != nullptr);
 
@@ -285,7 +285,7 @@ ProxyWidget::WidgetFound(Widget &_widget)
 }
 
 void
-ProxyWidget::WidgetNotFound()
+ProxyWidget::WidgetNotFound() noexcept
 {
     assert(ref != nullptr);
 
@@ -299,7 +299,7 @@ ProxyWidget::WidgetNotFound()
 }
 
 void
-ProxyWidget::WidgetLookupError(std::exception_ptr ep)
+ProxyWidget::WidgetLookupError(std::exception_ptr ep) noexcept
 {
     widget->Cancel();
     request.LogDispatchError(ep);

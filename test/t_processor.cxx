@@ -109,15 +109,15 @@ rewrite_widget_uri(gcc_unused struct pool &pool,
 class MyWidgetLookupHandler final : public WidgetLookupHandler {
 public:
     /* virtual methods from class WidgetLookupHandler */
-    void WidgetFound(gcc_unused Widget &widget) override {
+    void WidgetFound(gcc_unused Widget &widget) noexcept override {
         fprintf(stderr, "widget found\n");
     }
 
-    void WidgetNotFound() override {
+    void WidgetNotFound() noexcept override {
         fprintf(stderr, "widget not found\n");
     }
 
-    void WidgetLookupError(std::exception_ptr ep) override {
+    void WidgetLookupError(std::exception_ptr ep) noexcept override {
         PrintException(ep);
     }
 };
