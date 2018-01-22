@@ -36,14 +36,15 @@
 #include <stdint.h>
 
 struct pool;
-class Istream;
+class UnusedIstreamPtr;
 
 /**
  * Convert a stream into a stream of FCGI_STDIN packets.
  *
  * @param request_id the FastCGI request id in network byte order
  */
-Istream *
-istream_fcgi_new(struct pool &pool, Istream &input, uint16_t request_id);
+UnusedIstreamPtr
+istream_fcgi_new(struct pool &pool, UnusedIstreamPtr input,
+                 uint16_t request_id) noexcept;
 
 #endif

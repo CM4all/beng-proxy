@@ -1159,8 +1159,8 @@ fcgi_client_request(struct pool *pool, EventLoop &event_loop,
         /* format the request body */
         request = istream_cat_new(*pool,
                                   istream_gb_new(*pool, std::move(buffer)).Steal(),
-                                  istream_fcgi_new(*pool, *body.Steal(),
-                                                   header.request_id));
+                                  istream_fcgi_new(*pool, std::move(body),
+                                                   header.request_id).Steal());
     else {
         /* no request body - append an empty STDIN packet */
         header.type = FCGI_STDIN;

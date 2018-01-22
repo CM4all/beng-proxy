@@ -45,7 +45,7 @@ create_input(struct pool *pool)
 static Istream *
 create_test(EventLoop &, struct pool *pool, Istream *input)
 {
-    return istream_fcgi_new(*pool, *input, 1);
+    return istream_fcgi_new(*pool, UnusedIstreamPtr(input), 1).Steal();
 }
 
 #include "t_istream_filter.hxx"

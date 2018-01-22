@@ -33,6 +33,7 @@
 #include "istream_fcgi.hxx"
 #include "Protocol.hxx"
 #include "istream/FacadeIstream.hxx"
+#include "istream/UnusedPtr.hxx"
 #include "util/Cast.hxx"
 #include "util/ByteOrder.hxx"
 
@@ -46,9 +47,9 @@ class FcgiIstream final : public FacadeIstream {
     size_t header_sent = sizeof(header);
 
 public:
-    FcgiIstream(struct pool &_pool, Istream &_input,
+    FcgiIstream(struct pool &_pool, UnusedIstreamPtr _input,
                 uint16_t request_id)
-        :FacadeIstream(_pool, _input) {
+        :FacadeIstream(_pool, std::move(_input)) {
         header = (struct fcgi_record_header){
             .version = FCGI_VERSION_1,
             .type = FCGI_STDIN,
@@ -234,8 +235,10 @@ FcgiIstream::_Close() noexcept
  *
  */
 
-Istream *
-istream_fcgi_new(struct pool &pool, Istream &input, uint16_t request_id)
+UnusedIstreamPtr
+istream_fcgi_new(struct pool &pool, UnusedIstreamPtr input,
+                 uint16_t request_id) noexcept
 {
-    return NewIstream<FcgiIstream>(pool, input, request_id);
+    return UnusedIstreamPtr(NewIstream<FcgiIstream>(pool, std::move(input),
+                                                    request_id));
 }
