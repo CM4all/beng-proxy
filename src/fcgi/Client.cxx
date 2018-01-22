@@ -1153,7 +1153,7 @@ fcgi_client_request(struct pool *pool, EventLoop &event_loop,
     header.content_length = ToBE16(0);
     buffer.Write(&header, sizeof(header));
 
-    Istream *request;
+    UnusedIstreamPtr request;
 
     if (body)
         /* format the request body */
@@ -1167,10 +1167,10 @@ fcgi_client_request(struct pool *pool, EventLoop &event_loop,
         header.content_length = ToBE16(0);
         buffer.Write(&header, sizeof(header));
 
-        request = istream_gb_new(*pool, std::move(buffer)).Steal();
+        request = istream_gb_new(*pool, std::move(buffer));
     }
 
-    client->request.input.Set(*request, *client,
+    client->request.input.Set(std::move(request), *client,
                               istream_direct_mask_to(client->socket.GetType()));
 
     client->socket.ScheduleReadNoTimeout(true);

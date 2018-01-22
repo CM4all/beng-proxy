@@ -1358,10 +1358,10 @@ HttpClient::HttpClient(struct pool &_caller_pool, struct pool &_pool,
 
     /* request istream */
 
-    request.istream.Set(*istream_cat_new(GetPool(),
-                                         request_line_stream.Steal(),
-                                         header_stream.Steal(),
-                                         body),
+    request.istream.Set(istream_cat_new(GetPool(),
+                                        request_line_stream.Steal(),
+                                        header_stream.Steal(),
+                                        body),
                         *this,
                         istream_direct_mask_to(socket.GetType()));
 

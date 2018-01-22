@@ -126,9 +126,10 @@ HttpServerConnection::OnError(std::exception_ptr ep) noexcept
 }
 
 void
-HttpServerConnection::SetResponseIstream(Istream &r)
+HttpServerConnection::SetResponseIstream(UnusedIstreamPtr r)
 {
-    response.istream.Set(r, *this, istream_direct_mask_to(socket.GetType()));
+    response.istream.Set(std::move(r), *this,
+                         istream_direct_mask_to(socket.GetType()));
 }
 
 bool

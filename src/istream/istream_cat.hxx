@@ -35,15 +35,16 @@
 
 struct pool;
 class Istream;
+class UnusedIstreamPtr;
 
 /**
  * Concatenate several istreams.
  */
-Istream *
+UnusedIstreamPtr
 _istream_cat_new(struct pool &pool, Istream *const* inputs, unsigned n_inputs);
 
 template<typename... Args>
-Istream *
+auto
 istream_cat_new(struct pool &pool, Args&&... args)
 {
     Istream *const inputs[]{args...};

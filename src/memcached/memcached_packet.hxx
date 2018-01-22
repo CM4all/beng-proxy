@@ -42,7 +42,7 @@
 #include <stddef.h>
 
 struct pool;
-class Istream;
+class UnusedIstreamPtr;
 
 /**
  * Serialize a memcached request packet, and return it as an
@@ -57,11 +57,11 @@ class Istream;
  * @param value an optional request value
  * @param message_id the id of the message
  */
-Istream *
+UnusedIstreamPtr
 memcached_request_packet(struct pool &pool, enum memcached_opcode opcode,
                          const void *extras, size_t extras_length,
                          const void *key, size_t key_length,
-                         Istream *value,
+                         UnusedIstreamPtr value,
                          uint32_t message_id);
 
 #endif

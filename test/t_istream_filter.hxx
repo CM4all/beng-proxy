@@ -458,7 +458,7 @@ test_fail_1byte(Instance &instance)
                     istream_cat_new(*pool,
                                     istream_head_new(pool, *create_input(pool),
                                                      1, false),
-                                    istream_fail_new(pool, std::make_exception_ptr(error))));
+                                    istream_fail_new(pool, std::make_exception_ptr(error))).Steal());
     run_istream(instance, pool, istream, false);
 }
 
@@ -572,7 +572,7 @@ test_big_hold(Instance &instance)
 
     Istream *istream = create_input(pool);
     for (unsigned i = 0; i < 1024; ++i)
-        istream = istream_cat_new(*pool, istream, create_input(pool));
+        istream = istream_cat_new(*pool, istream, create_input(pool)).Steal();
 
     istream = create_test(instance.event_loop, pool, istream);
     Istream *hold = istream_hold_new(*pool, *istream);

@@ -188,13 +188,12 @@ widget_response_format(struct pool &pool, const Widget &widget,
 
         widget.logger(6, "converting text to HTML");
 
-        auto *i = istream_html_escape_new(pool, std::move(body)).Steal();
-        i = istream_cat_new(pool,
-                            istream_string_new(pool,
-                                               "<pre class=\"beng_text_widget\">").Steal(),
-                            i,
-                            istream_string_new(pool, "</pre>").Steal());
-        body = UnusedIstreamPtr(i);
+        auto i = istream_html_escape_new(pool, std::move(body));
+        body = istream_cat_new(pool,
+                               istream_string_new(pool,
+                                                  "<pre class=\"beng_text_widget\">").Steal(),
+                               i.Steal(),
+                               istream_string_new(pool, "</pre>").Steal());
     }
 
     return body;

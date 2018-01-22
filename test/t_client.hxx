@@ -698,7 +698,7 @@ static void
 test_close_request_body_fail(Context<Connection> &c)
 {
     Istream *delayed = istream_delayed_new(c.pool);
-    Istream *request_body =
+    auto request_body =
         istream_cat_new(*c.pool,
                         istream_head_new(c.pool, *istream_zero_new(c.pool),
                                          4096, false),
@@ -708,7 +708,7 @@ test_close_request_body_fail(Context<Connection> &c)
     c.connection = Connection::NewMirror(*c.pool, c.event_loop);
     c.connection->Request(c.pool, c,
                           HTTP_METHOD_GET, "/foo", StringMap(*c.pool),
-                          wrap_fake_request_body(c.pool, request_body),
+                          wrap_fake_request_body(c.pool, request_body.Steal()),
 #ifdef HAVE_EXPECT_100
                           false,
 #endif

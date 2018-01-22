@@ -31,7 +31,6 @@
  */
 
 #include "memcached_packet.hxx"
-#include "istream/istream.hxx"
 #include "istream/istream_cat.hxx"
 #include "istream/istream_memory.hxx"
 #include "istream/istream_null.hxx"
@@ -41,15 +40,15 @@
 
 #include <string.h>
 
-Istream *
+UnusedIstreamPtr
 memcached_request_packet(struct pool &pool, enum memcached_opcode opcode,
                          const void *extras, size_t extras_length,
                          const void *key, size_t key_length,
-                         Istream *value,
+                         UnusedIstreamPtr value,
                          uint32_t message_id)
 {
-    off_t value_length = value != nullptr
-        ? value->GetAvailable(false)
+    off_t value_length = value
+        ? value.GetAvailable(false)
         : 0;
     if (value_length == -1 || value_length >= 0x10000000)
         return nullptr;
@@ -76,5 +75,5 @@ memcached_request_packet(struct pool &pool, enum memcached_opcode opcode,
                            key_length == 0
                            ? nullptr
                            : istream_memory_new(pool, key, key_length).Steal(),
-                           value);
+                           value.Steal());
 }

@@ -33,6 +33,7 @@
 #include "istream_cat.hxx"
 #include "Sink.hxx"
 #include "Bucket.hxx"
+#include "UnusedPtr.hxx"
 #include "util/ConstBuffer.hxx"
 
 #include <boost/intrusive/slist.hpp>
@@ -321,9 +322,9 @@ inline CatIstream::CatIstream(struct pool &p, ConstBuffer<Istream *> _inputs) no
     }
 }
 
-Istream *
+UnusedIstreamPtr
 _istream_cat_new(struct pool &pool, Istream *const* inputs, unsigned n_inputs)
 {
-    return NewFromPool<CatIstream>(pool, pool,
-                                   ConstBuffer<Istream *>(inputs, n_inputs));
+    return UnusedIstreamPtr(NewFromPool<CatIstream>(pool, pool,
+                                                    ConstBuffer<Istream *>(inputs, n_inputs)));
 }

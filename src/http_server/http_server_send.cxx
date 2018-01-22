@@ -179,10 +179,8 @@ HttpServerConnection::SubmitResponse(http_status_t status,
        is no response body */
     response.length -= body == nullptr;
 
-    body = istream_cat_new(request_pool, status_stream.Steal(),
-                           header_stream.Steal(), body);
-
-    SetResponseIstream(*body);
+    SetResponseIstream(istream_cat_new(request_pool, status_stream.Steal(),
+                                       header_stream.Steal(), body));
     TryWrite();
 }
 

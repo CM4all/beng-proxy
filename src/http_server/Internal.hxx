@@ -259,7 +259,7 @@ struct HttpServerConnection final : BufferedSocketHandler, IstreamHandler {
      */
     bool MaybeSend100Continue();
 
-    void SetResponseIstream(Istream &r);
+    void SetResponseIstream(UnusedIstreamPtr r);
 
     /**
      * To be called after the response istream has seen end-of-file,

@@ -70,12 +70,12 @@ struct MemcachedClient final
 
         IstreamPointer istream;
 
-        Request(Istream &_istream,
+        Request(UnusedIstreamPtr _istream,
                 IstreamHandler &i_handler,
                 const struct memcached_client_handler &_handler,
                 void *_handler_ctx)
             :handler(&_handler), handler_ctx(_handler_ctx),
-             istream(_istream, i_handler) {}
+             istream(std::move(_istream), i_handler) {}
 
     } request;
 
@@ -111,7 +111,7 @@ struct MemcachedClient final
     MemcachedClient(struct pool &_pool, EventLoop &event_loop,
                     SocketDescriptor fd, FdType fd_type,
                     Lease &lease,
-                    Istream &_request,
+                    UnusedIstreamPtr _request,
                     const struct memcached_client_handler &_handler,
                     void *_handler_ctx,
                     CancellablePointer &cancel_ptr);
@@ -688,13 +688,13 @@ inline
 MemcachedClient::MemcachedClient(struct pool &_pool, EventLoop &event_loop,
                                  SocketDescriptor fd, FdType fd_type,
                                  Lease &lease,
-                                 Istream &_request,
+                                 UnusedIstreamPtr _request,
                                  const struct memcached_client_handler &_handler,
                                  void *_handler_ctx,
                                  CancellablePointer &cancel_ptr)
     :Istream(_pool),
      socket(event_loop),
-     request(_request, *this, _handler, _handler_ctx)
+     request(std::move(_request), *this, _handler, _handler_ctx)
 {
     socket.Init(fd, fd_type,
                 nullptr, &memcached_client_timeout,
@@ -724,11 +724,11 @@ memcached_client_invoke(struct pool *pool, EventLoop &event_loop,
     assert(extras_length <= MEMCACHED_EXTRAS_MAX);
     assert(key_length <= MEMCACHED_KEY_MAX);
 
-    Istream *request = memcached_request_packet(*pool, opcode,
-                                                extras, extras_length,
-                                                key, key_length, value.Steal(),
-                                                0x1234 /* XXX? */);
-    if (request == nullptr) {
+    auto request = memcached_request_packet(*pool, opcode,
+                                            extras, extras_length,
+                                            key, key_length, std::move(value),
+                                            0x1234 /* XXX? */);
+    if (!request) {
         lease.ReleaseLease(true);
 
         handler->error(std::make_exception_ptr(MemcachedClientError("failed to generate memcached request packet")),
@@ -738,6 +738,6 @@ memcached_client_invoke(struct pool *pool, EventLoop &event_loop,
 
     NewFromPool<MemcachedClient>(*pool, *pool, event_loop,
                                  fd, fd_type, lease,
-                                 *request,
+                                 std::move(request),
                                  *handler, handler_ctx, cancel_ptr);
 }
