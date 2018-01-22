@@ -42,7 +42,7 @@
 
 #include <assert.h>
 
-struct ReplaceIstream final : FacadeIstream {
+class ReplaceIstream final : public FacadeIstream {
     struct Substitution final : IstreamSink {
         Substitution *next = nullptr;
         ReplaceIstream &replace;
@@ -99,11 +99,18 @@ struct ReplaceIstream final : FacadeIstream {
     off_t last_substitution_end = 0;
 #endif
 
+public:
     ReplaceIstream(struct pool &p, UnusedIstreamPtr _input)
         :FacadeIstream(p, std::move(_input))
     {
     }
 
+    void Add(off_t start, off_t end, UnusedIstreamPtr contents) noexcept;
+    void Extend(off_t start, off_t end) noexcept;
+    void Settle(off_t offset) noexcept;
+    void Finish() noexcept;
+
+private:
     using FacadeIstream::GetPool;
     using FacadeIstream::HasInput;
 
@@ -158,13 +165,15 @@ struct ReplaceIstream final : FacadeIstream {
      */
     void ToNextSubstitution(ReplaceIstream::Substitution *s);
 
+    Substitution *GetLastSubstitution() noexcept;
+
     /* virtual methods from class IstreamHandler */
     size_t OnData(const void *data, size_t length) override;
     void OnEof() noexcept override;
     void OnError(std::exception_ptr ep) noexcept override;
 
+public:
     /* virtual methods from class Istream */
-
     off_t _GetAvailable(bool partial) override;
     void _Read() override;
     void _Close() noexcept override;
@@ -568,86 +577,109 @@ istream_replace_new(struct pool &pool, UnusedIstreamPtr input)
     return NewIstream<ReplaceIstream>(pool, std::move(input));
 }
 
+inline void
+ReplaceIstream::Add(off_t start, off_t end,
+                    UnusedIstreamPtr contents) noexcept
+{
+    assert(!finished);
+    assert(start >= 0);
+    assert(start <= end);
+    assert(start >= settled_position);
+    assert(start >= last_substitution_end);
+
+    if (!contents && start == end)
+        return;
+
+    auto s = NewFromPool<Substitution>(GetPool(), *this, start, end,
+                                       std::move(contents));
+
+    settled_position = end;
+
+#ifndef NDEBUG
+    last_substitution_end = end;
+#endif
+
+    *append_substitution_p = s;
+    append_substitution_p = &s->next;
+}
+
 void
 istream_replace_add(Istream &istream, off_t start, off_t end,
                     UnusedIstreamPtr contents)
 {
     auto &replace = (ReplaceIstream &)istream;
-
-    assert(!replace.finished);
-    assert(start >= 0);
-    assert(start <= end);
-    assert(start >= replace.settled_position);
-    assert(start >= replace.last_substitution_end);
-
-    if (!contents && start == end)
-        return;
-
-    auto s = NewFromPool<ReplaceIstream::Substitution>(replace.GetPool(),
-                                                       replace, start, end,
-                                                       std::move(contents));
-
-    replace.settled_position = end;
-
-#ifndef NDEBUG
-    replace.last_substitution_end = end;
-#endif
-
-    *replace.append_substitution_p = s;
-    replace.append_substitution_p = &s->next;
+    replace.Add(start, end, std::move(contents));
 }
 
-static ReplaceIstream::Substitution *
-replace_get_last_substitution(ReplaceIstream &replace)
+inline ReplaceIstream::Substitution *
+ReplaceIstream::GetLastSubstitution() noexcept
 {
-    auto *substitution = replace.first_substitution;
+    auto *substitution = first_substitution;
     assert(substitution != nullptr);
 
     while (substitution->next != nullptr)
         substitution = substitution->next;
 
-    assert(substitution->end <= replace.settled_position);
-    assert(substitution->end == replace.last_substitution_end);
+    assert(substitution->end <= settled_position);
+    assert(substitution->end == last_substitution_end);
     return substitution;
+}
+
+inline void
+ReplaceIstream::Extend(off_t start, off_t end) noexcept
+{
+    assert(!finished);
+
+    auto *substitution = GetLastSubstitution();
+    assert(substitution->start == start);
+    assert(substitution->end == settled_position);
+    assert(substitution->end == last_substitution_end);
+    assert(end >= substitution->end);
+
+    substitution->end = end;
+    settled_position = end;
+#ifndef NDEBUG
+    last_substitution_end = end;
+#endif
 }
 
 void
 istream_replace_extend(Istream &istream, gcc_unused off_t start, off_t end)
 {
     auto &replace = (ReplaceIstream &)istream;
-    assert(!replace.finished);
+    replace.Extend(start, end);
+}
 
-    auto *substitution = replace_get_last_substitution(replace);
-    assert(substitution->start == start);
-    assert(substitution->end == replace.settled_position);
-    assert(substitution->end == replace.last_substitution_end);
-    assert(end >= substitution->end);
+inline void
+ReplaceIstream::Settle(off_t offset) noexcept
+{
+    assert(!finished);
+    assert(offset >= settled_position);
 
-    substitution->end = end;
-    replace.settled_position = end;
-#ifndef NDEBUG
-    replace.last_substitution_end = end;
-#endif
+    settled_position = offset;
 }
 
 void
 istream_replace_settle(Istream &istream, off_t offset)
 {
     auto &replace = (ReplaceIstream &)istream;
-    assert(!replace.finished);
-    assert(offset >= replace.settled_position);
+    replace.Settle(offset);
+}
 
-    replace.settled_position = offset;
+inline void
+ReplaceIstream::Finish() noexcept
+{
+    assert(!finished);
+
+    finished = true;
+
+    if (!HasInput())
+        ReadCheckEmpty();
 }
 
 void
 istream_replace_finish(Istream &istream)
 {
     auto &replace = (ReplaceIstream &)istream;
-    assert(!replace.finished);
-
-    replace.finished = true;
-
-    if (!replace.HasInput())
-        replace.ReadCheckEmpty();
+    replace.Finish();
 }
