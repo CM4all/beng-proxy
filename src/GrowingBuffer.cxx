@@ -42,7 +42,7 @@
 #include <string.h>
 
 GrowingBuffer::Buffer &
-GrowingBuffer::BufferPtr::Allocate()
+GrowingBuffer::BufferPtr::Allocate() noexcept
 {
     assert(buffer == nullptr);
 
@@ -52,7 +52,7 @@ GrowingBuffer::BufferPtr::Allocate()
 }
 
 void
-GrowingBuffer::BufferPtr::Free()
+GrowingBuffer::BufferPtr::Free() noexcept
 {
     assert(buffer != nullptr);
 
@@ -62,7 +62,7 @@ GrowingBuffer::BufferPtr::Free()
 }
 
 void
-GrowingBuffer::BufferPtr::Pop()
+GrowingBuffer::BufferPtr::Pop() noexcept
 {
     assert(buffer != nullptr);
 
@@ -71,13 +71,13 @@ GrowingBuffer::BufferPtr::Pop()
 }
 
 WritableBuffer<void>
-GrowingBuffer::Buffer::Write()
+GrowingBuffer::Buffer::Write() noexcept
 {
     return {data + fill, size - fill};
 }
 
 size_t
-GrowingBuffer::Buffer::WriteSome(ConstBuffer<void> src)
+GrowingBuffer::Buffer::WriteSome(ConstBuffer<void> src) noexcept
 {
     auto dest = Write();
     size_t nbytes = std::min(dest.size, src.size);
@@ -87,7 +87,7 @@ GrowingBuffer::Buffer::WriteSome(ConstBuffer<void> src)
 }
 
 GrowingBuffer::Buffer &
-GrowingBuffer::AppendBuffer()
+GrowingBuffer::AppendBuffer() noexcept
 {
     tail = tail != nullptr
         ? &tail->next.Allocate()
@@ -96,9 +96,8 @@ GrowingBuffer::AppendBuffer()
     return *tail;
 }
 
-
 void *
-GrowingBuffer::Write(size_t length)
+GrowingBuffer::Write(size_t length) noexcept
 {
     /* this method is only allowed with "tiny" sizes which fit well
        into any buffer */
@@ -117,7 +116,7 @@ GrowingBuffer::Write(size_t length)
 }
 
 size_t
-GrowingBuffer::WriteSome(const void *p, size_t length)
+GrowingBuffer::WriteSome(const void *p, size_t length) noexcept
 {
     auto *buffer = tail;
     if (buffer == nullptr || buffer->IsFull())
@@ -127,7 +126,7 @@ GrowingBuffer::WriteSome(const void *p, size_t length)
 }
 
 void
-GrowingBuffer::Write(const void *p, size_t length)
+GrowingBuffer::Write(const void *p, size_t length) noexcept
 {
     while (length > 0) {
         size_t nbytes = WriteSome(p, length);
@@ -137,13 +136,13 @@ GrowingBuffer::Write(const void *p, size_t length)
 }
 
 void
-GrowingBuffer::Write(const char *p)
+GrowingBuffer::Write(const char *p) noexcept
 {
     Write(p, strlen(p));
 }
 
 void
-GrowingBuffer::AppendMoveFrom(GrowingBuffer &&src)
+GrowingBuffer::AppendMoveFrom(GrowingBuffer &&src) noexcept
 {
     if (src.IsEmpty())
         return;
@@ -154,7 +153,7 @@ GrowingBuffer::AppendMoveFrom(GrowingBuffer &&src)
 }
 
 size_t
-GrowingBuffer::GetSize() const
+GrowingBuffer::GetSize() const noexcept
 {
     size_t result = 0;
 
@@ -166,7 +165,7 @@ GrowingBuffer::GetSize() const
 }
 
 ConstBuffer<void>
-GrowingBuffer::Read() const
+GrowingBuffer::Read() const noexcept
 {
     if (!head)
         return nullptr;
@@ -177,7 +176,7 @@ GrowingBuffer::Read() const
 }
 
 void
-GrowingBuffer::Consume(size_t length)
+GrowingBuffer::Consume(size_t length) noexcept
 {
     if (length == 0)
         return;
@@ -198,7 +197,7 @@ GrowingBuffer::Consume(size_t length)
 }
 
 void
-GrowingBuffer::Skip(size_t length)
+GrowingBuffer::Skip(size_t length) noexcept
 {
     while (length > 0) {
         assert(head);
@@ -217,14 +216,14 @@ GrowingBuffer::Skip(size_t length)
     }
 }
 
-GrowingBufferReader::GrowingBufferReader(GrowingBuffer &&gb)
+GrowingBufferReader::GrowingBufferReader(GrowingBuffer &&gb) noexcept
     :buffer(std::move(gb.head))
 {
     assert(!buffer || buffer->fill > 0);
 }
 
 bool
-GrowingBufferReader::IsEOF() const
+GrowingBufferReader::IsEOF() const noexcept
 {
     assert(!buffer || position <= buffer->fill);
 
@@ -232,7 +231,7 @@ GrowingBufferReader::IsEOF() const
 }
 
 size_t
-GrowingBufferReader::Available() const
+GrowingBufferReader::Available() const noexcept
 {
     size_t result = 0;
 
@@ -244,7 +243,7 @@ GrowingBufferReader::Available() const
 }
 
 ConstBuffer<void>
-GrowingBufferReader::Read() const
+GrowingBufferReader::Read() const noexcept
 {
     if (!buffer)
         return nullptr;
@@ -255,7 +254,7 @@ GrowingBufferReader::Read() const
 }
 
 void
-GrowingBufferReader::Consume(size_t length)
+GrowingBufferReader::Consume(size_t length) noexcept
 {
     assert(buffer);
 
@@ -273,7 +272,7 @@ GrowingBufferReader::Consume(size_t length)
 }
 
 void
-GrowingBufferReader::Skip(size_t length)
+GrowingBufferReader::Skip(size_t length) noexcept
 {
     while (length > 0) {
         assert(buffer);
@@ -291,7 +290,7 @@ GrowingBufferReader::Skip(size_t length)
 }
 
 void
-GrowingBuffer::CopyTo(void *dest) const
+GrowingBuffer::CopyTo(void *dest) const noexcept
 {
     ForEachBuffer([&dest](ConstBuffer<void> b){
             dest = mempcpy(dest, b.data, b.size);
@@ -299,7 +298,7 @@ GrowingBuffer::CopyTo(void *dest) const
 }
 
 WritableBuffer<void>
-GrowingBuffer::Dup(struct pool &_pool) const
+GrowingBuffer::Dup(struct pool &_pool) const noexcept
 {
     size_t length = GetSize();
     if (length == 0)
@@ -312,7 +311,7 @@ GrowingBuffer::Dup(struct pool &_pool) const
 }
 
 void
-GrowingBufferReader::FillBucketList(IstreamBucketList &list) const
+GrowingBufferReader::FillBucketList(IstreamBucketList &list) const noexcept
 {
     ForEachBuffer([&list](ConstBuffer<void> b){
             list.Push(b);
@@ -320,7 +319,7 @@ GrowingBufferReader::FillBucketList(IstreamBucketList &list) const
 }
 
 size_t
-GrowingBufferReader::ConsumeBucketList(size_t nbytes)
+GrowingBufferReader::ConsumeBucketList(size_t nbytes) noexcept
 {
     size_t result = 0;
     while (nbytes > 0 && buffer) {
