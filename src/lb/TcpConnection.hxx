@@ -35,6 +35,7 @@
 
 #include "filtered_socket.hxx"
 #include "StickyHash.hxx"
+#include "event/DeferEvent.hxx"
 #include "io/Logger.hxx"
 #include "net/StaticSocketAddress.hxx"
 #include "net/PConnectSocket.hxx"
@@ -134,6 +135,14 @@ public:
     }
 
     StaticSocketAddress bind_address;
+
+    /**
+     * This class defers the connect to the outbound server, to move
+     * it out of the OnHandshake() stack frame, to avoid destroing the
+     * caller's object.
+     */
+    DeferEvent defer_connect;
+
     CancellablePointer cancel_connect;
 
     bool got_inbound_data, got_outbound_data;
@@ -174,7 +183,11 @@ private:
 public:
     void DestroyBoth();
 
-    void OnHandshake();
+    void OnHandshake() noexcept {
+        defer_connect.Schedule();
+    }
+
+    void OnDeferredHandshake() noexcept;
 
     void OnTcpEnd();
     void OnTcpError(const char *prefix, const char *error);

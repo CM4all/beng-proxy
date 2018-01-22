@@ -330,6 +330,8 @@ LbTcpConnection::DestroyBoth()
     if (inbound.socket.IsValid())
         inbound.Destroy();
 
+    defer_connect.Cancel();
+
     if (cancel_connect) {
         cancel_connect.Cancel();
         cancel_connect = nullptr;
@@ -337,8 +339,8 @@ LbTcpConnection::DestroyBoth()
         outbound.Destroy();
 }
 
-void
-LbTcpConnection::OnHandshake()
+inline void
+LbTcpConnection::OnDeferredHandshake() noexcept
 {
     assert(!cancel_connect);
     assert(!outbound.socket.IsValid());
@@ -485,7 +487,8 @@ LbTcpConnection::LbTcpConnection(struct pool &_pool, LbInstance &_instance,
                                   _client_address)),
      logger(*this),
      inbound(instance.event_loop, std::move(fd), fd_type, filter, filter_ctx),
-     outbound(instance.event_loop)
+     outbound(instance.event_loop),
+     defer_connect(instance.event_loop, BIND_THIS_METHOD(OnDeferredHandshake))
 {
     if (client_address == nullptr)
         client_address = "unknown";
