@@ -375,8 +375,7 @@ XmlProcessor::Cancel() noexcept
     pool_unref(&container.pool);
     pool_unref(&caller_pool);
 
-    if (parser != nullptr)
-        parser_close(parser);
+    parser_close(parser);
 }
 
 /*
