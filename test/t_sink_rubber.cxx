@@ -35,7 +35,7 @@
 #include "sink_rubber.hxx"
 #include "event/Loop.hxx"
 #include "pool/pool.hxx"
-#include "istream/istream_byte.hxx"
+#include "istream/ByteIstream.hxx"
 #include "istream/istream_cat.hxx"
 #include "istream/DelayedIstream.hxx"
 #include "istream/istream_fail.hxx"

@@ -34,7 +34,7 @@
 #include "fb_pool.hxx"
 #include "PInstance.hxx"
 #include "istream/istream.hxx"
-#include "istream/istream_byte.hxx"
+#include "istream/ByteIstream.hxx"
 #include "istream/istream_cat.hxx"
 #include "istream/istream_fail.hxx"
 #include "istream/istream_four.hxx"

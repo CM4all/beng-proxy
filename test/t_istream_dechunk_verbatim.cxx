@@ -31,7 +31,7 @@
  */
 
 #include "istream/istream_dechunk.hxx"
-#include "istream/istream_byte.hxx"
+#include "istream/ByteIstream.hxx"
 #include "istream/istream_four.hxx"
 #include "istream/istream_string.hxx"
 #include "istream/UnusedPtr.hxx"

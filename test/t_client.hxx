@@ -36,7 +36,7 @@
 #include "istream/Pointer.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "istream/istream_block.hxx"
-#include "istream/istream_byte.hxx"
+#include "istream/ByteIstream.hxx"
 #include "istream/istream_cat.hxx"
 #include "istream/DelayedIstream.hxx"
 #include "istream/istream_fail.hxx"

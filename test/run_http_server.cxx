@@ -37,7 +37,7 @@
 #include "duplex.hxx"
 #include "direct.hxx"
 #include "istream/sink_null.hxx"
-#include "istream/istream_byte.hxx"
+#include "istream/ByteIstream.hxx"
 #include "istream/DelayedIstream.hxx"
 #include "istream/istream_head.hxx"
 #include "istream/istream_hold.hxx"
