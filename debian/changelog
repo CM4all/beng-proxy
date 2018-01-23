@@ -1,6 +1,7 @@
 cm4all-beng-proxy (13.7) unstable; urgency=low
 
   * lb/tcp: fix use-after-free bug when outbound connect fails early
+  * spawn: fix resource limits problem with user namespaces
 
  --   
 
