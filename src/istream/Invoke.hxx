@@ -49,7 +49,7 @@ Istream::InvokeData(const void *data, size_t length) noexcept
 
 #ifndef NDEBUG
     struct pool_notify_state notify;
-    pool_notify(&pool, &notify);
+    pool_notify(pool, &notify);
     in_data = true;
 #endif
 
@@ -88,7 +88,7 @@ Istream::InvokeDirect(FdType type, int fd, size_t max_length) noexcept
 
 #ifndef NDEBUG
     struct pool_notify_state notify;
-    pool_notify(&pool, &notify);
+    pool_notify(pool, &notify);
     in_data = true;
 #endif
 

@@ -203,7 +203,7 @@ public:
         assert(!reading);
 
         struct pool_notify_state notify;
-        pool_notify(&pool, &notify);
+        pool_notify(pool, &notify);
         reading = true;
 #endif
 
@@ -249,7 +249,7 @@ public:
         assert(!reading);
 
         struct pool_notify_state notify;
-        pool_notify(&pool, &notify);
+        pool_notify(pool, &notify);
         reading = true;
 #endif
 
@@ -301,7 +301,7 @@ public:
         assert(!in_data);
 
         struct pool_notify_state notify;
-        pool_notify(&pool, &notify);
+        pool_notify(pool, &notify);
         reading = true;
 #endif
 
@@ -333,7 +333,7 @@ public:
         assert(!in_data);
 
         struct pool_notify_state notify;
-        pool_notify(&pool, &notify);
+        pool_notify(pool, &notify);
         reading = true;
 
         try {
@@ -417,7 +417,7 @@ public:
         assert(!in_data);
 
         struct pool_notify_state notify;
-        pool_notify(&pool, &notify);
+        pool_notify(pool, &notify);
         reading = true;
 #endif
 

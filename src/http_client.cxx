@@ -141,7 +141,7 @@ struct HttpClient final : BufferedSocketHandler, IstreamHandler, Cancellable {
         }
     };
 
-    struct pool &caller_pool;
+    const PoolPtr caller_pool;
 
     const char *const peer_name;
 
@@ -215,7 +215,7 @@ struct HttpClient final : BufferedSocketHandler, IstreamHandler, Cancellable {
     /* connection settings */
     bool keep_alive;
 
-    HttpClient(struct pool &_caller_pool, struct pool &_pool,
+    HttpClient(PoolPtr &&_caller_pool, struct pool &_pool,
                EventLoop &event_loop,
                SocketDescriptor fd, FdType fd_type,
                Lease &lease,
@@ -226,10 +226,6 @@ struct HttpClient final : BufferedSocketHandler, IstreamHandler, Cancellable {
                UnusedIstreamPtr body, bool expect_100,
                HttpResponseHandler &handler,
                CancellablePointer &cancel_ptr);
-
-    ~HttpClient() {
-        pool_unref(&caller_pool);
-    }
 
     struct pool &GetPool() {
         return response_body_reader.GetPool();
@@ -1274,7 +1270,7 @@ HttpClient::Cancel() noexcept
  */
 
 inline
-HttpClient::HttpClient(struct pool &_caller_pool, struct pool &_pool,
+HttpClient::HttpClient(PoolPtr &&_caller_pool, struct pool &_pool,
                        EventLoop &event_loop,
                        SocketDescriptor fd, FdType fd_type,
                        Lease &lease,
@@ -1285,7 +1281,7 @@ HttpClient::HttpClient(struct pool &_caller_pool, struct pool &_pool,
                        UnusedIstreamPtr _body, bool expect_100,
                        HttpResponseHandler &handler,
                        CancellablePointer &cancel_ptr)
-    :caller_pool(_caller_pool),
+    :caller_pool(std::move(_caller_pool)),
      peer_name(_peer_name),
      stopwatch(stopwatch_new(&_pool, peer_name, uri)),
      socket(event_loop, fd, fd_type, lease,
@@ -1293,13 +1289,11 @@ HttpClient::HttpClient(struct pool &_caller_pool, struct pool &_pool,
             filter, filter_ctx,
             *this),
      request(handler),
-     response(_caller_pool),
+     response(caller_pool),
      response_body_reader(_pool)
 {
     response.state = HttpClient::Response::State::STATUS;
     response.no_body = http_method_is_empty(method);
-
-    pool_ref(&caller_pool);
 
     cancel_ptr = *this;
 
@@ -1380,7 +1374,7 @@ HttpClient::HttpClient(struct pool &_caller_pool, struct pool &_pool,
 }
 
 void
-http_client_request(struct pool &caller_pool, EventLoop &event_loop,
+http_client_request(struct pool &_caller_pool, EventLoop &event_loop,
                     SocketDescriptor fd, FdType fd_type,
                     Lease &lease,
                     const char *peer_name,
@@ -1394,12 +1388,9 @@ http_client_request(struct pool &caller_pool, EventLoop &event_loop,
     assert(fd.IsDefined());
     assert(http_method_is_valid(method));
 
-    if (!uri_path_verify_quick(uri)) {
-        /* need to hold this pool reference because it is guaranteed
-           that the pool stays alive while the HttpResponseHandler
-           runs, even if all other pool references are removed */
-        const ScopePoolRef ref(caller_pool TRACE_ARGS);
+    PoolPtr caller_pool(_caller_pool);
 
+    if (!uri_path_verify_quick(uri)) {
         lease.ReleaseLease(true);
         body.Clear();
 
@@ -1412,9 +1403,9 @@ http_client_request(struct pool &caller_pool, EventLoop &event_loop,
     }
 
     struct pool *pool =
-        pool_new_linear(&caller_pool, "http_client_request", 4096);
+        pool_new_linear(caller_pool, "http_client_request", 4096);
 
-    NewFromPool<HttpClient>(*pool, caller_pool, *pool, event_loop,
+    NewFromPool<HttpClient>(*pool, std::move(caller_pool), *pool, event_loop,
                             fd, fd_type,
                             lease,
                             peer_name,

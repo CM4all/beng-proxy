@@ -145,7 +145,7 @@ struct AjpClient final
             :headers(pool) {}
     } response;
 
-    AjpClient(struct pool &p, EventLoop &event_loop,
+    AjpClient(PoolPtr &&_pool, EventLoop &event_loop,
               SocketDescriptor fd, FdType fd_type, Lease &lease,
               HttpResponseHandler &handler);
 
@@ -803,22 +803,22 @@ AjpClient::Cancel() noexcept
  */
 
 inline
-AjpClient::AjpClient(struct pool &p, EventLoop &event_loop,
+AjpClient::AjpClient(PoolPtr &&_pool, EventLoop &event_loop,
                      SocketDescriptor fd, FdType fd_type,
                      Lease &lease, HttpResponseHandler &_handler)
-    :Istream(p), socket(event_loop),
-     request(_handler), response(p)
+    :Istream(std::move(_pool)), socket(event_loop),
+     request(_handler), response(GetPool())
 {
     socket.Init(fd, fd_type,
                 &ajp_client_timeout, &ajp_client_timeout,
                 *this);
 
     p_lease_ref_set(lease_ref, lease,
-                    p, "ajp_client_lease");
+                    GetPool(), "ajp_client_lease");
 }
 
 void
-ajp_client_request(struct pool &pool, EventLoop &event_loop,
+ajp_client_request(struct pool &_pool, EventLoop &event_loop,
                    SocketDescriptor fd, FdType fd_type, Lease &lease,
                    const char *protocol, const char *remote_addr,
                    const char *remote_host, const char *server_name,
@@ -832,12 +832,9 @@ ajp_client_request(struct pool &pool, EventLoop &event_loop,
     assert(protocol != nullptr);
     assert(http_method_is_valid(method));
 
-    if (!uri_path_verify_quick(uri)) {
-        /* need to hold this pool reference because it is guaranteed
-           that the pool stays alive while the HttpResponseHandler
-           runs, even if all other pool references are removed */
-        const ScopePoolRef ref(pool TRACE_ARGS);
+    PoolPtr pool(_pool);
 
+    if (!uri_path_verify_quick(uri)) {
         lease.ReleaseLease(true);
         body.Clear();
 
@@ -848,7 +845,6 @@ ajp_client_request(struct pool &pool, EventLoop &event_loop,
     const enum ajp_method ajp_method = to_ajp_method(method);
     if (ajp_method == AJP_METHOD_NULL) {
         /* invalid or unknown method */
-        const ScopePoolRef ref(pool TRACE_ARGS);
 
         lease.ReleaseLease(true);
         body.Clear();
@@ -863,7 +859,6 @@ ajp_client_request(struct pool &pool, EventLoop &event_loop,
         available = body.GetAvailable(false);
         if (available == -1) {
             /* AJPv13 does not support chunked request bodies */
-            const ScopePoolRef ref(pool TRACE_ARGS);
 
             lease.ReleaseLease(true);
             body.Clear();
@@ -878,7 +873,7 @@ ajp_client_request(struct pool &pool, EventLoop &event_loop,
             requested = 1024;
     }
 
-    auto client = NewFromPool<AjpClient>(pool, pool, event_loop,
+    auto client = NewFromPool<AjpClient>(_pool, std::move(pool), event_loop,
                                          fd, fd_type,
                                          lease, handler);
 

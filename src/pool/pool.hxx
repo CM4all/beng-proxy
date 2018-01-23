@@ -294,27 +294,79 @@ public:
 };
 
 /**
+ * A reference-holding pointer to a "struct pool".
+ */
+class PoolPtr {
+    struct pool *value = nullptr;
+
+public:
+    PoolPtr() = default;
+
+    explicit PoolPtr(struct pool &_value) noexcept
+        :value(&_value) {
+        pool_ref(value);
+    }
+
+    PoolPtr(const PoolPtr &src) noexcept
+        :value(src.value) {
+        if (value != nullptr)
+            pool_ref(value);
+    }
+
+    PoolPtr(PoolPtr &&src) noexcept
+        :value(std::exchange(src.value, nullptr)) {}
+
+    ~PoolPtr() noexcept {
+        if (value != nullptr)
+            pool_unref(value);
+    }
+
+    PoolPtr &operator=(const PoolPtr &src) noexcept {
+        if (value != nullptr)
+            pool_unref(value);
+        value = src.value;
+        if (value != nullptr)
+            pool_ref(value);
+        return *this;
+    }
+
+    PoolPtr &operator=(PoolPtr &&src) noexcept {
+        using std::swap;
+        swap(value, src.value);
+        return *this;
+    }
+
+    operator bool() const noexcept {
+        return value;
+    }
+
+    operator struct pool &() const noexcept {
+        return *value;
+    }
+
+    operator struct pool *() const noexcept {
+        return value;
+    }
+};
+
+/**
  * Base class for classes which hold a reference to a #pool.
  */
 class PoolHolder {
 protected:
-    struct pool &pool;
+    const PoolPtr pool;
 
-    explicit PoolHolder(struct pool &_pool) noexcept
-        :pool(_pool)
+    template<typename P>
+    explicit PoolHolder(P &&_pool) noexcept
+        :pool(std::forward<P>(_pool))
     {
-        pool_ref(&_pool);
     }
 
     PoolHolder(const PoolHolder &) = delete;
     PoolHolder &operator=(const PoolHolder &) = delete;
 
-    ~PoolHolder() noexcept {
-        pool_unref(&pool);
-    }
-
     struct pool &GetPool() noexcept {
-        return pool;
+        return *pool;
     }
 };
 
