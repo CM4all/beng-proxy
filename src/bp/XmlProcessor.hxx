@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef PROCESSOR_HXX
-#define PROCESSOR_HXX
+#pragma once
 
 #include "util/Compiler.h"
 
@@ -102,5 +101,3 @@ processor_lookup_widget(struct pool &pool, Istream &istream,
                         unsigned options,
                         WidgetLookupHandler &handler,
                         CancellablePointer &cancel_ptr);
-
-#endif

@@ -31,7 +31,7 @@
  */
 
 #include "FailingResourceLoader.hxx"
-#include "processor.hxx"
+#include "bp/XmlProcessor.hxx"
 #include "penv.hxx"
 #include "PInstance.hxx"
 #include "uri/Dissect.hxx"

@@ -30,7 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "css_processor.hxx"
+#include "CssProcessor.hxx"
 #include "css_parser.hxx"
 #include "css_util.hxx"
 #include "penv.hxx"

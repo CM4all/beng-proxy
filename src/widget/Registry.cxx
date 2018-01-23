@@ -32,7 +32,7 @@
 
 #include "Registry.hxx"
 #include "Class.hxx"
-#include "processor.hxx"
+#include "bp/XmlProcessor.hxx"
 #include "translation/Cache.hxx"
 #include "translation/Handler.hxx"
 #include "translation/Request.hxx"

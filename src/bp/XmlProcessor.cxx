@@ -30,9 +30,9 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "processor.hxx"
+#include "XmlProcessor.hxx"
 #include "text_processor.hxx"
-#include "css_processor.hxx"
+#include "CssProcessor.hxx"
 #include "css_rewrite.hxx"
 #include "penv.hxx"
 #include "xml_parser.hxx"

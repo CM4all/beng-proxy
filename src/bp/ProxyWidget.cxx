@@ -45,7 +45,7 @@
 #include "http_util.hxx"
 #include "http_headers.hxx"
 #include "http_response.hxx"
-#include "processor.hxx"
+#include "XmlProcessor.hxx"
 #include "bp_global.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream_pipe.hxx"

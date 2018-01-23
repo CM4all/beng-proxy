@@ -35,7 +35,7 @@
 #include "istream/istream.hxx"
 #include "widget/Widget.hxx"
 #include "widget/Class.hxx"
-#include "processor.hxx"
+#include "bp/XmlProcessor.hxx"
 #include "penv.hxx"
 #include "uri/Dissect.hxx"
 #include "session_manager.hxx"

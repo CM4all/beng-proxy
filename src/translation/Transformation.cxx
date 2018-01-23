@@ -31,7 +31,7 @@
  */
 
 #include "Transformation.hxx"
-#include "processor.hxx"
+#include "bp/XmlProcessor.hxx"
 #include "AllocatorPtr.hxx"
 
 #include <string.h>
