@@ -312,12 +312,11 @@ XmlParser::Feed(const char *start, size_t length) noexcept
                     state = State::INSIDE;
                     ++buffer;
                     tag.end = position + (off_t)(buffer - start);
-                    handler.OnXmlTagFinished(tag);
-                    PoisonUndefinedT(tag);
 
-                    if (!input.IsDefined())
+                    if (!handler.OnXmlTagFinished(tag))
                         return 0;
 
+                    PoisonUndefinedT(tag);
                     break;
                 } else if (is_html_name_start_char(*buffer)) {
                     state = State::ATTR_NAME;
@@ -331,7 +330,9 @@ XmlParser::Feed(const char *start, size_t length) noexcept
 
                     tag.end = position + (off_t)(buffer - start);
                     state = State::INSIDE;
-                    handler.OnXmlTagFinished(tag);
+
+                    if (!handler.OnXmlTagFinished(tag))
+                        return 0;
 
                     state = State::NONE;
                     break;
@@ -467,11 +468,11 @@ XmlParser::Feed(const char *start, size_t length) noexcept
                     state = State::NONE;
                     ++buffer;
                     tag.end = position + (off_t)(buffer - start);
-                    handler.OnXmlTagFinished(tag);
-                    PoisonUndefinedT(tag);
 
-                    if (!input.IsDefined())
+                    if (!handler.OnXmlTagFinished(tag))
                         return 0;
+
+                    PoisonUndefinedT(tag);
 
                     break;
                 } else {
@@ -480,12 +481,12 @@ XmlParser::Feed(const char *start, size_t length) noexcept
 
                     tag.end = position + (off_t)(buffer - start);
                     state = State::INSIDE;
-                    handler.OnXmlTagFinished(tag);
+
+                    if (!handler.OnXmlTagFinished(tag))
+                        return 0;
+
                     PoisonUndefinedT(tag);
                     state = State::NONE;
-
-                    if (!input.IsDefined())
-                        return 0;
 
                     break;
                 }

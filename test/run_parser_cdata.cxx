@@ -52,7 +52,10 @@ public:
         return false;
     }
 
-    void OnXmlTagFinished(gcc_unused const XmlParserTag &tag) noexcept override {}
+    bool OnXmlTagFinished(const XmlParserTag &) noexcept override {
+        return true;
+    }
+
     void OnXmlAttributeFinished(gcc_unused const XmlParserAttribute &attr) noexcept override {}
 
     size_t OnXmlCdata(const char *p, size_t length, gcc_unused bool escaped,

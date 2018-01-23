@@ -72,7 +72,12 @@ public:
      */
     virtual bool OnXmlTagStart(const XmlParserTag &tag) noexcept = 0;
 
-    virtual void OnXmlTagFinished(const XmlParserTag &tag) noexcept = 0;
+    /**
+     * @return false if the #XmlParser has been closed inside the
+     * method
+     */
+    virtual bool OnXmlTagFinished(const XmlParserTag &tag) noexcept = 0;
+
     virtual void OnXmlAttributeFinished(const XmlParserAttribute &attr) noexcept = 0;
     virtual size_t OnXmlCdata(const char *p, size_t length, bool escaped,
                               off_t start) noexcept = 0;

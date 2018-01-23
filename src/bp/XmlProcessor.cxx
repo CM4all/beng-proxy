@@ -329,8 +329,8 @@ private:
     UnusedIstreamPtr EmbedWidget(Widget &child_widget) noexcept;
     UnusedIstreamPtr OpenWidgetElement(Widget &child_widget) noexcept;
     void FoundWidget(Widget &child_widget) noexcept;
-    void CheckWidgetLookup(Widget &child_widget) noexcept;
-    void WidgetElementFinished(const XmlParserTag &tag,
+    bool CheckWidgetLookup(Widget &child_widget) noexcept;
+    bool WidgetElementFinished(const XmlParserTag &tag,
                                Widget &child_widget) noexcept;
 
     Istream *StartCdataIstream() noexcept;
@@ -341,7 +341,7 @@ private:
 
     /* virtual methods from class XmlParserHandler */
     bool OnXmlTagStart(const XmlParserTag &tag) noexcept override;
-    void OnXmlTagFinished(const XmlParserTag &tag) noexcept override;
+    bool OnXmlTagFinished(const XmlParserTag &tag) noexcept override;
     void OnXmlAttributeFinished(const XmlParserAttribute &attr) noexcept override;
     size_t OnXmlCdata(const char *p, size_t length, bool escaped,
                       off_t start) noexcept override;
@@ -1341,26 +1341,30 @@ XmlProcessor::FoundWidget(Widget &child_widget) noexcept
     pool_unref(&widget_pool);
 }
 
-inline void
+inline bool
 XmlProcessor::CheckWidgetLookup(Widget &child_widget) noexcept
 {
     assert(child_widget.parent == &container);
     assert(!replace);
 
-    if (child_widget.id != nullptr && strcmp(lookup_id, child_widget.id) == 0)
+    if (child_widget.id != nullptr && strcmp(lookup_id, child_widget.id) == 0) {
         FoundWidget(child_widget);
-    else
+        return false;
+    } else {
         child_widget.Cancel();
+        return true;
+    }
 }
 
-inline void
+inline bool
 XmlProcessor::WidgetElementFinished(const XmlParserTag &widget_tag,
                                     Widget &child_widget) noexcept
 {
-    if (replace)
+    if (replace) {
         Replace(widget.start_offset, widget_tag.end, OpenWidgetElement(child_widget));
-    else
-        CheckWidgetLookup(child_widget);
+        return true;
+    } else
+        return CheckWidgetLookup(child_widget);
 }
 
 gcc_pure
@@ -1390,7 +1394,7 @@ expansible_buffer_append_uri_escaped(ExpansibleBuffer &buffer,
     buffer.Write(escaped, length);
 }
 
-void
+bool
 XmlProcessor::OnXmlTagFinished(const XmlParserTag &xml_tag) noexcept
 {
     had_input = true;
@@ -1402,22 +1406,22 @@ XmlProcessor::OnXmlTagFinished(const XmlParserTag &xml_tag) noexcept
         if (xml_tag.type == XmlParserTagType::OPEN || xml_tag.type == XmlParserTagType::SHORT)
             widget.start_offset = xml_tag.start;
         else if (widget.widget == nullptr)
-            return;
+            return true;
 
         assert(widget.widget != nullptr);
 
         if (xml_tag.type == XmlParserTagType::OPEN)
-            return;
+            return true;
 
         auto &child_widget = *widget.widget;
         widget.widget = nullptr;
 
-        WidgetElementFinished(xml_tag, child_widget);
+        return WidgetElementFinished(xml_tag, child_widget);
     } else if (tag == Tag::WIDGET_PARAM) {
         assert(widget.widget != nullptr);
 
         if (widget.param.name.IsEmpty())
-            return;
+            return true;
 
         const AutoRewindPool auto_rewind(*tpool);
 
@@ -1441,12 +1445,12 @@ XmlProcessor::OnXmlTagFinished(const XmlParserTag &xml_tag) noexcept
         assert(widget.widget != nullptr);
 
         if (xml_tag.type == XmlParserTagType::CLOSE)
-            return;
+            return true;
 
         const auto name = widget.param.name.ReadStringView();
         if (!header_name_valid(name.data, name.size)) {
             container.logger(3, "invalid widget HTTP header name");
-            return;
+            return true;
         }
 
         if (widget.widget->from_template.headers == nullptr)
@@ -1497,6 +1501,8 @@ XmlProcessor::OnXmlTagFinished(const XmlParserTag &xml_tag) noexcept
             Replace(xml_tag.end, xml_tag.end, std::move(istream));
         }
     }
+
+    return true;
 }
 
 size_t
