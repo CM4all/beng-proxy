@@ -1,6 +1,6 @@
 cm4all-beng-proxy (13.8) unstable; urgency=low
 
-  * 
+  * lb/http: fix use-after-free bug
 
  --   
 

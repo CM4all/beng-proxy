@@ -173,12 +173,22 @@ client_socket_new(EventLoop &event_loop, struct pool &pool,
 
     UniqueSocketDescriptor fd;
     if (!fd.CreateNonBlock(domain, type, protocol)) {
+        /* this pool reference is necessary because the handler may
+           release the only remaining reference on the pool too
+           early */
+        const ScopePoolRef ref(pool TRACE_ARGS);
+
         handler.OnSocketConnectError(std::make_exception_ptr(MakeErrno("Failed to create socket")));
         return;
     }
 
     if ((domain == PF_INET || domain == PF_INET6) && type == SOCK_STREAM &&
         !fd.SetNoDelay()) {
+        /* this pool reference is necessary because the handler may
+           release the only remaining reference on the pool too
+           early */
+        const ScopePoolRef ref(pool TRACE_ARGS);
+
         handler.OnSocketConnectError(std::make_exception_ptr(MakeErrno()));
         return;
     }
@@ -186,6 +196,11 @@ client_socket_new(EventLoop &event_loop, struct pool &pool,
     if (ip_transparent) {
         int on = 1;
         if (setsockopt(fd.Get(), SOL_IP, IP_TRANSPARENT, &on, sizeof on) < 0) {
+            /* this pool reference is necessary because the handler
+               may release the only remaining reference on the pool
+               too early */
+            const ScopePoolRef ref(pool TRACE_ARGS);
+
             handler.OnSocketConnectError(std::make_exception_ptr(MakeErrno("Failed to set IP_TRANSPARENT")));
             return;
         }
@@ -193,6 +208,11 @@ client_socket_new(EventLoop &event_loop, struct pool &pool,
 
     if (!bind_address.IsNull() && bind_address.IsDefined() &&
         !fd.Bind(bind_address)) {
+        /* this pool reference is necessary because the handler may
+           release the only remaining reference on the pool too
+           early */
+        const ScopePoolRef ref(pool TRACE_ARGS);
+
         handler.OnSocketConnectError(std::make_exception_ptr(MakeErrno()));
         return;
     }
@@ -207,6 +227,11 @@ client_socket_new(EventLoop &event_loop, struct pool &pool,
         stopwatch_dump(stopwatch);
 #endif
 
+        /* this pool reference is necessary because the handler may
+           release the only remaining reference on the pool too
+           early */
+        const ScopePoolRef ref(pool TRACE_ARGS);
+
         handler.OnSocketConnectSuccess(std::move(fd));
     } else if (errno == EINPROGRESS) {
         NewFromPool<PConnectSocket>(pool, event_loop, pool,
@@ -216,6 +241,11 @@ client_socket_new(EventLoop &event_loop, struct pool &pool,
 #endif
                                     handler, cancel_ptr);
     } else {
+        /* this pool reference is necessary because the handler may
+           release the only remaining reference on the pool too
+           early */
+        const ScopePoolRef ref(pool TRACE_ARGS);
+
         handler.OnSocketConnectError(std::make_exception_ptr(MakeErrno()));
     }
 }
