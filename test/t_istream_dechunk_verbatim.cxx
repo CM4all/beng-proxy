@@ -67,7 +67,7 @@ create_test(EventLoop &event_loop, struct pool *pool, Istream *input)
     input = istream_dechunk_new(*pool, *input, event_loop, *handler);
     istream_dechunk_check_verbatim(*input);
 #ifdef T_BYTE
-    input = istream_byte_new(*pool, *input);
+    input = istream_byte_new(*pool, UnusedIstreamPtr(input)).Steal();
 #endif
 #ifdef T_FOUR
     input = istream_four_new(pool, *input);

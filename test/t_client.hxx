@@ -361,7 +361,7 @@ Context<Connection>::OnHttpResponse(http_status_t _status,
 
     if (response_body_byte) {
         assert(_body);
-        _body = UnusedIstreamPtr(istream_byte_new(*pool, *_body.Steal()));
+        _body = istream_byte_new(*pool, std::move(_body));
     }
 
     if (close_response_body_early)

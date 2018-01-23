@@ -166,7 +166,7 @@ Instance::HandleHttpRequest(HttpServerRequest &request,
         body = istream_head_new(&request.pool,
                                 *istream_zero_new(&request.pool),
                                 256, false);
-        body = istream_byte_new(request.pool, *body);
+        body = istream_byte_new(request.pool, UnusedIstreamPtr(body)).Steal();
 
         http_server_response(&request, HTTP_STATUS_OK,
                              HttpHeaders(request.pool),

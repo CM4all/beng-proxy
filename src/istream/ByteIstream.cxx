@@ -32,11 +32,12 @@
 
 #include "ByteIstream.hxx"
 #include "ForwardIstream.hxx"
+#include "UnusedPtr.hxx"
 
 class ByteIstream final : public ForwardIstream {
 public:
-    ByteIstream(struct pool &p, Istream &_input)
-        :ForwardIstream(p, _input) {}
+    ByteIstream(struct pool &p, UnusedIstreamPtr _input)
+        :ForwardIstream(p, std::move(_input)) {}
 
     /* virtual methods from class Istream */
 
@@ -64,8 +65,8 @@ public:
     }
 };
 
-Istream *
-istream_byte_new(struct pool &pool, Istream &input)
+UnusedIstreamPtr
+istream_byte_new(struct pool &pool, UnusedIstreamPtr input)
 {
-    return NewIstream<ByteIstream>(pool, input);
+    return UnusedIstreamPtr(NewIstream<ByteIstream>(pool, std::move(input)));
 }

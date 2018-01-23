@@ -33,11 +33,11 @@
 #pragma once
 
 struct pool;
-class Istream;
+class UnusedIstreamPtr;
 
 /*
  * This istream filter passes one byte at a time.  This is useful for
  * testing and debugging istream handler implementations.
  */
-Istream *
-istream_byte_new(struct pool &pool, Istream &input);
+UnusedIstreamPtr
+istream_byte_new(struct pool &pool, UnusedIstreamPtr input);

@@ -380,7 +380,7 @@ test_byte(Instance &instance)
 
     auto *istream =
         create_test(instance.event_loop, pool,
-                    istream_byte_new(*pool, *create_input(pool)));
+                    istream_byte_new(*pool, UnusedIstreamPtr(create_input(pool))).Steal());
     run_istream(instance, pool, istream, true);
 }
 
@@ -392,7 +392,7 @@ test_block_byte(Instance &instance)
 
     Context ctx(instance,
                 *create_test(instance.event_loop, pool,
-                             istream_byte_new(*pool, *create_input(pool))));
+                             istream_byte_new(*pool, UnusedIstreamPtr(create_input(pool))).Steal()));
     ctx.block_byte = true;
 #ifdef EXPECTED_RESULT
     ctx.record = true;
@@ -515,7 +515,7 @@ test_abort_in_handler_half(Instance &instance)
     auto *abort_istream =
         istream_inject_new(*pool, *istream_four_new(pool, *create_input(pool)));
     auto *istream = create_test(instance.event_loop, pool,
-                                istream_byte_new(*pool, *abort_istream));
+                                istream_byte_new(*pool, UnusedIstreamPtr(abort_istream)).Steal());
     pool_unref(pool);
     pool_commit();
 

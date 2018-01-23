@@ -137,7 +137,7 @@ TEST(SinkRubberTest, Empty2)
     Data data(r);
 
     Istream *input = istream_byte_new(pool,
-                                      *istream_null_new(pool).Steal());
+                                      istream_null_new(pool)).Steal();
     sink_rubber_new(pool, UnusedIstreamPtr(input), r, 1024,
                     data, data.cancel_ptr);
 
