@@ -310,7 +310,7 @@ public:
          value(DupBuffer(pool, _value)),
          mode(_mode), stateful(_stateful),
          view(_view != nullptr
-              ? (*view != 0 ? p_strdup(&pool, view) : "")
+              ? (*_view != 0 ? p_strdup(&pool, _view) : "")
               : nullptr),
          escape(_escape),
          delayed(_delayed) {}
