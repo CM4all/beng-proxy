@@ -68,6 +68,7 @@
 #include "util/RuntimeError.hxx"
 #include "util/StringView.hxx"
 #include "util/Cancellable.hxx"
+#include "util/ScopeExit.hxx"
 
 #include <assert.h>
 #include <string.h>
@@ -327,6 +328,8 @@ private:
 
     UnusedIstreamPtr EmbedWidget(Widget &child_widget) noexcept;
     UnusedIstreamPtr OpenWidgetElement(Widget &child_widget) noexcept;
+    void FoundWidget(Widget &child_widget) noexcept;
+    void CheckWidgetLookup(Widget &child_widget) noexcept;
     void WidgetElementFinished(const XmlParserTag &tag,
                                Widget &child_widget) noexcept;
 
@@ -1276,49 +1279,25 @@ XmlProcessor::EmbedWidget(Widget &child_widget) noexcept
 {
     assert(child_widget.class_name != nullptr);
 
-    if (replace) {
-        try {
-            child_widget.CopyFromRequest();
-        } catch (...) {
-            child_widget.Cancel();
-            return nullptr;
-        }
-
-        if (child_widget.display == Widget::Display::NONE) {
-            child_widget.Cancel();
-            return nullptr;
-        }
-
-        auto istream = embed_inline_widget(pool, env, false,
-                                           child_widget);
-        if (istream)
-            istream = istream_catch_new(&pool, std::move(istream),
-                                        widget_catch_callback, &child_widget);
-
-        return istream;
-    } else if (child_widget.id != nullptr &&
-               strcmp(lookup_id, child_widget.id) == 0) {
-        auto &_caller_pool = caller_pool, &widget_pool = container.pool;
-        auto &handler2 = *handler;
-
-        Close();
-
-        try {
-            child_widget.CopyFromRequest();
-            handler2.WidgetFound(child_widget);
-        } catch (...) {
-            child_widget.Cancel();
-            handler2.WidgetLookupError(std::current_exception());
-        }
-
-        pool_unref(&_caller_pool);
-        pool_unref(&widget_pool);
-
-        return nullptr;
-    } else {
+    try {
+        child_widget.CopyFromRequest();
+    } catch (...) {
         child_widget.Cancel();
         return nullptr;
     }
+
+    if (child_widget.display == Widget::Display::NONE) {
+        child_widget.Cancel();
+        return nullptr;
+    }
+
+    auto istream = embed_inline_widget(pool, env, false,
+                                       child_widget);
+    if (istream)
+        istream = istream_catch_new(&pool, std::move(istream),
+                                    widget_catch_callback, &child_widget);
+
+    return istream;
 }
 
 inline UnusedIstreamPtr
@@ -1337,14 +1316,51 @@ XmlProcessor::OpenWidgetElement(Widget &child_widget) noexcept
 }
 
 inline void
+XmlProcessor::FoundWidget(Widget &child_widget) noexcept
+{
+    assert(child_widget.parent == &container);
+    assert(!replace);
+
+    auto &_caller_pool = caller_pool, &widget_pool = container.pool;
+    auto &handler2 = *handler;
+
+    try {
+        {
+            AtScopeExit(this) { Close(); };
+            PrepareEmbedWidget(child_widget);
+        }
+
+        child_widget.CopyFromRequest();
+        handler2.WidgetFound(child_widget);
+    } catch (...) {
+        child_widget.Cancel();
+        handler2.WidgetLookupError(std::current_exception());
+    }
+
+    pool_unref(&_caller_pool);
+    pool_unref(&widget_pool);
+}
+
+inline void
+XmlProcessor::CheckWidgetLookup(Widget &child_widget) noexcept
+{
+    assert(child_widget.parent == &container);
+    assert(!replace);
+
+    if (child_widget.id != nullptr && strcmp(lookup_id, child_widget.id) == 0)
+        FoundWidget(child_widget);
+    else
+        child_widget.Cancel();
+}
+
+inline void
 XmlProcessor::WidgetElementFinished(const XmlParserTag &widget_tag,
                                     Widget &child_widget) noexcept
 {
-    auto istream = OpenWidgetElement(child_widget);
-    assert(!istream || replace);
-
     if (replace)
-        Replace(widget.start_offset, widget_tag.end, std::move(istream));
+        Replace(widget.start_offset, widget_tag.end, OpenWidgetElement(child_widget));
+    else
+        CheckWidgetLookup(child_widget);
 }
 
 gcc_pure
