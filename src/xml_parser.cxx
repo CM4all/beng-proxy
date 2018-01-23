@@ -43,7 +43,6 @@
 #include <string.h>
 
 class XmlParser final : IstreamSink {
-public:
     struct pool *pool;
 
     off_t position = 0;
@@ -120,6 +119,7 @@ public:
 
     XmlParserHandler &handler;
 
+public:
     XmlParser(struct pool &_pool, UnusedIstreamPtr _input,
               XmlParserHandler &_handler) noexcept
         :IstreamSink(std::move(_input)), pool(&_pool),
@@ -128,18 +128,29 @@ public:
         pool_ref(pool);
     }
 
-    bool IsDefined() const noexcept {
-        return input.IsDefined();
+    void Close() noexcept {
+        assert(input.IsDefined());
+
+        ClearAndCloseInput();
+        pool_unref(pool);
     }
 
     bool Read() noexcept {
+        assert(input.IsDefined());
+
         const ScopePoolRef ref(*pool TRACE_ARGS);
         input.Read();
         return input.IsDefined();
     }
 
-    using IstreamSink::ClearAndCloseInput;
+    void Script() noexcept {
+        assert(state == State::NONE ||
+               state == State::INSIDE);
 
+        state = State::SCRIPT;
+    }
+
+private:
     void InvokeAttributeFinished() noexcept {
         attr.name = {attr_name, attr_name_length};
         attr.value = attr_value.ReadStringView();
@@ -662,17 +673,14 @@ void
 parser_close(XmlParser *parser) noexcept
 {
     assert(parser != nullptr);
-    assert(parser->IsDefined());
 
-    parser->ClearAndCloseInput();
-    pool_unref(parser->pool);
+    parser->Close();
 }
 
 bool
 parser_read(XmlParser *parser) noexcept
 {
     assert(parser != nullptr);
-    assert(parser->IsDefined());
 
     return parser->Read();
 }
@@ -681,8 +689,6 @@ void
 parser_script(XmlParser *parser) noexcept
 {
     assert(parser != nullptr);
-    assert(parser->state == XmlParser::State::NONE ||
-           parser->state == XmlParser::State::INSIDE);
 
-    parser->state = XmlParser::State::SCRIPT;
+    parser->Script();
 }
