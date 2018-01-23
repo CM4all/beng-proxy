@@ -132,8 +132,10 @@ public:
         return input.IsDefined();
     }
 
-    void Read() noexcept {
+    bool Read() noexcept {
+        const ScopePoolRef ref(*pool TRACE_ARGS);
         input.Read();
+        return input.IsDefined();
     }
 
     using IstreamSink::ClearAndCloseInput;
@@ -686,13 +688,13 @@ parser_close(XmlParser *parser) noexcept
     pool_unref(parser->pool);
 }
 
-void
+bool
 parser_read(XmlParser *parser) noexcept
 {
     assert(parser != nullptr);
     assert(parser->IsDefined());
 
-    parser->Read();
+    return parser->Read();
 }
 
 void

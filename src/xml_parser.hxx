@@ -93,7 +93,10 @@ parser_new(struct pool &pool, UnusedIstreamPtr input,
 void
 parser_close(XmlParser *parser) noexcept;
 
-void
+/**
+ * @return false if the #XmlParser has been closed
+ */
+bool
 parser_read(XmlParser *parser) noexcept;
 
 void

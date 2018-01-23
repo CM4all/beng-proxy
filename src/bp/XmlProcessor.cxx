@@ -474,12 +474,13 @@ processor_lookup_widget(struct pool &caller_pool,
     cancel_ptr = *processor;
     processor->cancel_ptr = &cancel_ptr;
 
+    auto &pool = processor->pool;
+
     do {
         processor->had_input = false;
-        parser_read(processor->parser);
-    } while (processor->had_input && processor->parser != nullptr);
+    } while (parser_read(processor->parser) && processor->had_input);
 
-    pool_unref(&processor->pool);
+    pool_unref(&pool);
 }
 
 void
