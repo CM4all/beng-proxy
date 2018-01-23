@@ -195,9 +195,6 @@ XmlParser::Feed(const char *start, size_t length) noexcept
                                             position + buffer - start);
                 assert(nbytes <= (size_t)(end - buffer));
 
-                if (!input.IsDefined())
-                    return 0;
-
                 nbytes += buffer - start;
                 position += (off_t)nbytes;
                 return nbytes;
@@ -207,9 +204,6 @@ XmlParser::Feed(const char *start, size_t length) noexcept
                 nbytes = handler.OnXmlCdata(buffer, p - buffer, true,
                                             position + buffer - start);
                 assert(nbytes <= (size_t)(p - buffer));
-
-                if (!input.IsDefined())
-                    return 0;
 
                 if (nbytes < (size_t)(p - buffer)) {
                     nbytes += buffer - start;
@@ -236,9 +230,6 @@ XmlParser::Feed(const char *start, size_t length) noexcept
                 nbytes = handler.OnXmlCdata("<", 1, true,
                                             position + buffer - start);
                 assert(nbytes <= (size_t)(end - buffer));
-
-                if (!input.IsDefined())
-                    return 0;
 
                 if (nbytes == 0) {
                     nbytes = buffer - start;
@@ -277,9 +268,6 @@ XmlParser::Feed(const char *start, size_t length) noexcept
                     tag.name = {tag_name, tag_name_length};
 
                     interesting = handler.OnXmlTagStart(tag);
-
-                    if (!input.IsDefined())
-                        return 0;
 
                     state = interesting ? State::ELEMENT_TAG : State::ELEMENT_BORING;
                     break;
@@ -551,9 +539,6 @@ XmlParser::Feed(const char *start, size_t length) noexcept
                                                     cdata_start);
                         assert(nbytes <= (size_t)(buffer - p));
 
-                        if (!input.IsDefined())
-                            return 0;
-
                         if (nbytes < (size_t)(buffer - p)) {
                             nbytes += p - start;
                             position += (off_t)nbytes;
@@ -576,9 +561,6 @@ XmlParser::Feed(const char *start, size_t length) noexcept
                         nbytes = handler.OnXmlCdata("]]", cdend_match, false,
                                                     position + buffer - start);
                         assert(nbytes <= cdend_match);
-
-                        if (!input.IsDefined())
-                            return 0;
 
                         cdend_match -= nbytes;
 
@@ -603,9 +585,6 @@ XmlParser::Feed(const char *start, size_t length) noexcept
                 nbytes = handler.OnXmlCdata(p, cdata_length, false,
                                             cdata_start);
                 assert(nbytes <= (size_t)(buffer - p));
-
-                if (!input.IsDefined())
-                    return 0;
 
                 if (nbytes < (size_t)(buffer - p)) {
                     nbytes += p - start;
