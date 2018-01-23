@@ -1267,7 +1267,7 @@ XmlProcessor::EmbedWidget(Widget &child_widget) noexcept
         return istream;
     } else if (child_widget.id != nullptr &&
                strcmp(lookup_id, child_widget.id) == 0) {
-        auto &widget_pool = container.pool;
+        auto &_caller_pool = caller_pool, &widget_pool = container.pool;
         auto &handler2 = *handler;
 
         Close();
@@ -1280,7 +1280,7 @@ XmlProcessor::EmbedWidget(Widget &child_widget) noexcept
             handler2.WidgetLookupError(std::current_exception());
         }
 
-        pool_unref(&caller_pool);
+        pool_unref(&_caller_pool);
         pool_unref(&widget_pool);
 
         return nullptr;
