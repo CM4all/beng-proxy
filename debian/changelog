@@ -3,7 +3,7 @@ cm4all-beng-proxy (14.0.4) unstable; urgency=low
   * merge release 13.8
   * certdb: create ACME CSRs without subject, only subjectAltName
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 23 Jan 2018 15:04:11 -0000
 
 cm4all-beng-proxy (14.0.3) unstable; urgency=low
 
