@@ -65,6 +65,7 @@
 #include "pool/pool.hxx"
 #include "util/CharUtil.hxx"
 #include "util/Macros.hxx"
+#include "util/RuntimeError.hxx"
 #include "util/StringView.hxx"
 #include "util/Cancellable.hxx"
 
@@ -318,6 +319,11 @@ private:
     bool OnProcessingInstruction(StringView name) noexcept;
     bool OnStartElementInWidget(XmlParserTagType type,
                                 StringView name) noexcept;
+
+    /**
+     * Throws an exception if the widget is not allowed here.
+     */
+    void PrepareEmbedWidget(Widget &child_widget);
 
     UnusedIstreamPtr EmbedWidget(Widget &child_widget) noexcept;
     UnusedIstreamPtr OpenWidgetElement(Widget &child_widget) noexcept;
@@ -1241,6 +1247,30 @@ widget_catch_callback(std::exception_ptr ep, void *ctx) noexcept
     return {};
 }
 
+inline void
+XmlProcessor::PrepareEmbedWidget(Widget &child_widget)
+{
+    if (child_widget.class_name == nullptr)
+        throw std::runtime_error("widget without a class");
+
+    /* enforce the SELF_CONTAINER flag */
+    const bool self_container =
+        (options & PROCESSOR_SELF_CONTAINER) != 0;
+    if (!widget_init_approval(&child_widget, self_container))
+        throw FormatRuntimeError("widget is not allowed to embed widget '%s'",
+                                 child_widget.GetLogName());
+
+    if (widget_check_recursion(child_widget.parent))
+        throw FormatRuntimeError("maximum widget depth exceeded for widget '%s'",
+                                 child_widget.GetLogName());
+
+    if (!widget.params.IsEmpty())
+        child_widget.from_template.query_string =
+            widget.params.StringDup(widget.pool);
+
+    container.children.push_front(child_widget);
+}
+
 inline UnusedIstreamPtr
 XmlProcessor::EmbedWidget(Widget &child_widget) noexcept
 {
@@ -1296,31 +1326,12 @@ XmlProcessor::OpenWidgetElement(Widget &child_widget) noexcept
 {
     assert(child_widget.parent == &container);
 
-    if (child_widget.class_name == nullptr) {
-        container.logger(5, "widget without a class");
+    try {
+        PrepareEmbedWidget(child_widget);
+    } catch (...) {
+        container.logger(5, std::current_exception());
         return nullptr;
     }
-
-    /* enforce the SELF_CONTAINER flag */
-    const bool self_container =
-        (options & PROCESSOR_SELF_CONTAINER) != 0;
-    if (!widget_init_approval(&child_widget, self_container)) {
-        container.logger(5, "widget is not allowed to embed widget '",
-                         child_widget.GetLogName(), "'");
-        return nullptr;
-    }
-
-    if (widget_check_recursion(child_widget.parent)) {
-        container.logger(5, "maximum widget depth exceeded for widget '",
-                         child_widget.GetLogName(), "'");
-        return nullptr;
-    }
-
-    if (!widget.params.IsEmpty())
-        child_widget.from_template.query_string =
-            widget.params.StringDup(widget.pool);
-
-    container.children.push_front(child_widget);
 
     return EmbedWidget(child_widget);
 }
