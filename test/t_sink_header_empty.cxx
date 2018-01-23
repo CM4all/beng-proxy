@@ -56,22 +56,21 @@ my_sink_header_done(gcc_unused void *header, gcc_unused size_t length,
                     UnusedIstreamPtr tail,
                     void *ctx)
 {
-    Istream *delayed = (Istream *)ctx;
+    auto &delayed = *(DelayedIstreamControl *)ctx;
 
     assert(length == 6);
     assert(header != NULL);
     assert(memcmp(header, "foobar", 6) == 0);
 
-    istream_delayed_set(*delayed, std::move(tail));
+    delayed.Set(std::move(tail));
 }
 
 static void
 my_sink_header_error(std::exception_ptr ep, void *ctx)
 {
-    Istream *delayed = (Istream *)ctx;
+    auto &delayed = *(DelayedIstreamControl *)ctx;
 
-    istream_delayed_cancellable_ptr(*delayed) = nullptr;
-    istream_delayed_set_abort(*delayed, ep);
+    delayed.SetError(ep);
 }
 
 static const struct sink_header_handler my_sink_header_handler = {
@@ -82,12 +81,12 @@ static const struct sink_header_handler my_sink_header_handler = {
 static Istream *
 create_test(EventLoop &event_loop, struct pool *pool, Istream *input)
 {
-    Istream *delayed = istream_delayed_new(*pool, event_loop);
-    Istream *hold = istream_hold_new(*pool, *delayed);
+    auto delayed = istream_delayed_new(*pool, event_loop);
+    Istream *hold = istream_hold_new(*pool, *delayed.first.Steal());
 
     sink_header_new(*pool, UnusedIstreamPtr(input),
-                    my_sink_header_handler, delayed,
-                    istream_delayed_cancellable_ptr(*delayed));
+                    my_sink_header_handler, &delayed.second,
+                    delayed.second.cancel_ptr);
 
     input->Read();
 

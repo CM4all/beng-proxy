@@ -60,11 +60,10 @@ create_test(EventLoop &event_loop, struct pool *pool, Istream *input)
 {
     auto *test = NewFromPool<DelayedTest>(*pool);
 
-    Istream *istream = istream_delayed_new(*pool, event_loop);
-    istream_delayed_cancellable_ptr(*istream) = *test;
-
-    istream_delayed_set(*istream, UnusedIstreamPtr(input));
-    return istream;
+    auto delayed = istream_delayed_new(*pool, event_loop);
+    delayed.second.cancel_ptr = *test;
+    delayed.second.Set(UnusedIstreamPtr(input));
+    return delayed.first.Steal();
 }
 
 #include "t_istream_filter.hxx"

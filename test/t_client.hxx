@@ -115,13 +115,13 @@ struct Context final
     char *content_length = nullptr;
     off_t available = 0;
 
-    Istream *delayed = nullptr;
+    DelayedIstreamControl *delayed = nullptr;
 
     IstreamPointer body;
     off_t body_data = 0, consumed_body_data = 0;
     bool body_eof = false, body_abort = false, body_closed = false;
 
-    Istream *request_body = nullptr;
+    DelayedIstreamControl *request_body = nullptr;
     bool aborted_request_body = false;
     bool close_request_body_early = false, close_request_body_eof = false;
     std::exception_ptr body_error;
@@ -321,7 +321,7 @@ Context<Connection>::OnEof() noexcept
     body_eof = true;
 
     if (close_request_body_eof && !aborted_request_body) {
-        istream_delayed_set_abort(*request_body, std::make_exception_ptr(std::runtime_error("close_request_body_eof")));
+        request_body->SetError(std::make_exception_ptr(std::runtime_error("close_request_body_eof")));
     }
 }
 
@@ -356,7 +356,7 @@ Context<Connection>::OnHttpResponse(http_status_t _status,
         : -2;
 
     if (close_request_body_early && !aborted_request_body) {
-        istream_delayed_set_abort(*request_body, std::make_exception_ptr(std::runtime_error("close_request_body_early")));
+        request_body->SetError(std::make_exception_ptr(std::runtime_error("close_request_body_early")));
     }
 
     if (response_body_byte) {
@@ -398,7 +398,7 @@ Context<Connection>::OnHttpResponse(http_status_t _status,
 
     if (delayed != nullptr) {
         std::runtime_error error("delayed_fail");
-        istream_delayed_set(*delayed, UnusedIstreamPtr(istream_fail_new(pool, std::make_exception_ptr(error))));
+        delayed->Set(UnusedIstreamPtr(istream_fail_new(pool, std::make_exception_ptr(error))));
     }
 
     fb_pool_compress();
@@ -653,10 +653,10 @@ template<class Connection>
 static Istream *
 make_delayed_request_body(Context<Connection> &c)
 {
-    Istream *i = c.request_body = istream_delayed_new(*c.pool, c.event_loop);
-    istream_delayed_cancellable_ptr(*i) = c;
-
-    return i;
+    auto delayed = istream_delayed_new(*c.pool, c.event_loop);
+    delayed.second.cancel_ptr = c;
+    c.request_body = &delayed.second;
+    return delayed.first.Steal();
 }
 
 template<class Connection>
@@ -675,7 +675,7 @@ test_close_request_body_early(Context<Connection> &c)
                           c, c.cancel_ptr);
 
     const std::runtime_error error("fail_request_body_early");
-    istream_delayed_set_abort(*request_body, std::make_exception_ptr(error));
+    c.request_body->SetError(std::make_exception_ptr(error));
 
     pool_unref(c.pool);
     pool_commit();
@@ -696,14 +696,14 @@ template<class Connection>
 static void
 test_close_request_body_fail(Context<Connection> &c)
 {
-    Istream *delayed = istream_delayed_new(*c.pool, c.event_loop);
+    auto delayed = istream_delayed_new(*c.pool, c.event_loop);
     auto request_body =
         istream_cat_new(*c.pool,
                         istream_head_new(c.pool, *istream_zero_new(c.pool),
                                          4096, false),
-                        delayed);
+                        delayed.first.Steal());
 
-    c.delayed = delayed;
+    c.delayed = &delayed.second;
     c.connection = Connection::NewMirror(*c.pool, c.event_loop);
     c.connection->Request(c.pool, c,
                           HTTP_METHOD_GET, "/foo", StringMap(*c.pool),
@@ -1197,14 +1197,14 @@ static void
 test_twice_100(Context<Connection> &c)
 {
     c.connection = Connection::NewTwice100(*c.pool, c.event_loop);
-    c.request_body = istream_delayed_new(*c.pool, c.event_loop);
-    istream_delayed_cancellable_ptr(*c.request_body) = nullptr;
+    auto delayed = istream_delayed_new(*c.pool, c.event_loop);
+    delayed.second.cancel_ptr = nullptr;
+    c.request_body = &delayed.second;
     c.connection->Request(c.pool, c,
                           HTTP_METHOD_GET, "/foo", StringMap(*c.pool),
-                          c.request_body,
+                          delayed.first.Steal(),
                           false,
                           c, c.cancel_ptr);
-    istream_delayed_cancellable_ptr(*c.request_body) = nullptr;
 
     pool_unref(c.pool);
     pool_commit();
@@ -1233,13 +1233,13 @@ template<class Connection>
 static void
 test_close_100(Context<Connection> &c)
 {
-    Istream *request_body = istream_delayed_new(*c.pool, c.event_loop);
-    istream_delayed_cancellable_ptr(*request_body) = nullptr;
+    auto request_body = istream_delayed_new(*c.pool, c.event_loop);
+    request_body.second.cancel_ptr = nullptr;
 
     c.connection = Connection::NewClose100(*c.pool, c.event_loop);
     c.connection->Request(c.pool, c,
                           HTTP_METHOD_POST, "/foo", StringMap(*c.pool),
-                          request_body, true,
+                          request_body.first.Steal(), true,
                           c, c.cancel_ptr);
 
     pool_unref(c.pool);

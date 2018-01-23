@@ -197,12 +197,14 @@ Instance::HandleHttpRequest(HttpServerRequest &request,
         request_body = UnusedHoldIstreamPtr(request.pool,
                                             std::move(request.body));
 
-        body = istream_delayed_new(request.pool, event_loop);
-        istream_delayed_cancellable_ptr(*body) = *this;
+        {
+            auto delayed = istream_delayed_new(request.pool, event_loop);
+            delayed.second.cancel_ptr = *this;
 
-        http_server_response(&request, HTTP_STATUS_OK,
-                             HttpHeaders(request.pool),
-                             UnusedIstreamPtr(body));
+            http_server_response(&request, HTTP_STATUS_OK,
+                                 HttpHeaders(request.pool),
+                                 std::move(delayed.first));
+        }
 
         static constexpr struct timeval t{0,0};
         timer.Add(t);

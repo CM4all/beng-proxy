@@ -34,13 +34,12 @@
 #include "ForwardIstream.hxx"
 #include "UnusedPtr.hxx"
 #include "event/DeferEvent.hxx"
-#include "util/Cancellable.hxx"
 
 #include <assert.h>
 #include <string.h>
 
-class DelayedIstream final : public ForwardIstream {
-    CancellablePointer cancel_ptr;
+class DelayedIstream final
+    : public ForwardIstream, public DelayedIstreamControl {
 
     DeferEvent defer_read;
 
@@ -52,10 +51,6 @@ public:
 
     ~DelayedIstream() noexcept {
         defer_read.Cancel();
-    }
-
-    CancellablePointer &GetCancellablePointer() {
-        return cancel_ptr;
     }
 
     void Set(UnusedIstreamPtr _input) {
@@ -116,40 +111,31 @@ public:
     }
 };
 
-Istream *
+void
+DelayedIstreamControl::Set(UnusedIstreamPtr _input) noexcept
+{
+    auto &d = *(DelayedIstream *)this;
+    d.Set(std::move(_input));
+}
+
+void
+DelayedIstreamControl::SetEof() noexcept
+{
+    auto &d = *(DelayedIstream *)this;
+    d.SetEof();
+}
+
+void
+DelayedIstreamControl::SetError(std::exception_ptr e) noexcept
+{
+    auto &d = *(DelayedIstream *)this;
+    d.SetError(std::move(e));
+}
+
+std::pair<UnusedIstreamPtr, DelayedIstreamControl &>
 istream_delayed_new(struct pool &pool, EventLoop &event_loop) noexcept
 {
-    return NewIstream<DelayedIstream>(pool, event_loop);
-}
-
-CancellablePointer &
-istream_delayed_cancellable_ptr(Istream &i_delayed)
-{
-    auto &delayed = (DelayedIstream &)i_delayed;
-
-    return delayed.GetCancellablePointer();
-}
-
-void
-istream_delayed_set(Istream &i_delayed, UnusedIstreamPtr input)
-{
-    auto &delayed = (DelayedIstream &)i_delayed;
-
-    delayed.Set(std::move(input));
-}
-
-void
-istream_delayed_set_eof(Istream &i_delayed)
-{
-    auto &delayed = (DelayedIstream &)i_delayed;
-
-    delayed.SetEof();
-}
-
-void
-istream_delayed_set_abort(Istream &i_delayed, std::exception_ptr ep)
-{
-    auto &delayed = (DelayedIstream &)i_delayed;
-
-    delayed.SetError(ep);
+    auto *i = NewIstream<DelayedIstream>(pool, event_loop);
+    DelayedIstreamControl &control = *i;
+    return {UnusedIstreamPtr(i), control};
 }

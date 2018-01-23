@@ -251,10 +251,10 @@ TEST(SinkRubberTest, OOM)
     Data data(r);
 
     EventLoop event_loop;
-    Istream *input = istream_delayed_new(pool, event_loop);
-    istream_delayed_cancellable_ptr(*input) = nullptr;
+    auto input = istream_delayed_new(pool, event_loop);
+    input.second.cancel_ptr = nullptr;
 
-    sink_rubber_new(pool, UnusedIstreamPtr(input), r, 8 * 1024 * 1024,
+    sink_rubber_new(pool, std::move(input.first), r, 8 * 1024 * 1024,
                     data, data.cancel_ptr);
     ASSERT_EQ(Data::OOM, data.result);
 }
@@ -266,12 +266,12 @@ TEST(SinkRubberTest, Abort)
     Data data(r);
 
     EventLoop event_loop;
-    Istream *delayed = istream_delayed_new(pool, event_loop);
-    istream_delayed_cancellable_ptr(*delayed) = nullptr;
+    auto delayed = istream_delayed_new(pool, event_loop);
+    delayed.second.cancel_ptr = nullptr;
 
     Istream *input = istream_cat_new(pool,
                                      istream_string_new(*pool, "foo").Steal(),
-                                     delayed).Steal();
+                                     delayed.first.Steal()).Steal();
     sink_rubber_new(pool, UnusedIstreamPtr(input), r, 4,
                     data, data.cancel_ptr);
     ASSERT_EQ(Data::NONE, data.result);

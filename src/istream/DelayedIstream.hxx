@@ -32,6 +32,8 @@
 
 #pragma once
 
+#include "util/Cancellable.hxx"
+
 #include <exception>
 
 struct pool;
@@ -40,23 +42,28 @@ class UnusedIstreamPtr;
 class CancellablePointer;
 class EventLoop;
 
+class DelayedIstreamControl {
+protected:
+    DelayedIstreamControl() = default;
+    ~DelayedIstreamControl() = default;
+
+    DelayedIstreamControl(const DelayedIstreamControl &) = delete;
+    DelayedIstreamControl &operator=(const DelayedIstreamControl &) = delete;
+
+public:
+    CancellablePointer cancel_ptr;
+
+    void Set(UnusedIstreamPtr input) noexcept;
+    void SetEof() noexcept;
+
+    /**
+     * Injects a failure, to be called instead of Set().
+     */
+void SetError(std::exception_ptr e) noexcept;
+};
+
 /**
  * An istream facade which waits for its inner istream to appear.
  */
-Istream *
+std::pair<UnusedIstreamPtr, DelayedIstreamControl &>
 istream_delayed_new(struct pool &pool, EventLoop &event_loop) noexcept;
-
-CancellablePointer &
-istream_delayed_cancellable_ptr(Istream &i_delayed);
-
-void
-istream_delayed_set(Istream &istream_delayed, UnusedIstreamPtr input);
-
-void
-istream_delayed_set_eof(Istream &istream_delayed);
-
-/**
- * Injects a failure, to be called instead of istream_delayed_set().
- */
-void
-istream_delayed_set_abort(Istream &istream_delayed, std::exception_ptr ep);

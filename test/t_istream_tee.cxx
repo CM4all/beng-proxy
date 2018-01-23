@@ -120,8 +120,8 @@ test_block1(EventLoop &event_loop)
 
     auto pool = pool_new_libc(nullptr, "test");
 
-    Istream *delayed = istream_delayed_new(*pool, event_loop);
-    auto tee = istream_tee_new(*pool, UnusedIstreamPtr(delayed),
+    auto delayed = istream_delayed_new(*pool, event_loop);
+    auto tee = istream_tee_new(*pool, std::move(delayed.first),
                                event_loop, false, false);
     auto *second = tee.second.Steal();
 
@@ -137,7 +137,7 @@ test_block1(EventLoop &event_loop)
     assert(ctx.value.empty());
 
     /* feed data into input */
-    istream_delayed_set(*delayed, istream_string_new(*pool, "foo"));
+    delayed.second.Set(istream_string_new(*pool, "foo"));
     assert(ctx.value.empty());
 
     /* the first output (block_istream_handler) blocks */

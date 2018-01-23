@@ -80,25 +80,26 @@ class InlineWidget final : HttpResponseHandler, Cancellable {
 
     TimerEvent header_timeout_event;
 
-    Istream *delayed;
+    DelayedIstreamControl &delayed;
 
     CancellablePointer cancel_ptr;
 
 public:
     InlineWidget(struct pool &_pool, struct processor_env &_env,
                  bool _plain_text,
-                 Widget &_widget)
+                 Widget &_widget,
+                 DelayedIstreamControl &_delayed)
         :pool(_pool), env(_env),
          plain_text(_plain_text),
          widget(_widget),
          header_timeout_event(*env.event_loop,
                               BIND_THIS_METHOD(OnHeaderTimeout)),
-         delayed(istream_delayed_new(pool, *env.event_loop)) {
-        istream_delayed_cancellable_ptr(*delayed) = *this;
+         delayed(_delayed) {
+        delayed.cancel_ptr = *this;
     }
 
-    UnusedIstreamPtr MakeResponse() noexcept {
-        return NewTimeoutIstream(pool, UnusedIstreamPtr(delayed),
+    UnusedIstreamPtr MakeResponse(UnusedIstreamPtr input) noexcept {
+        return NewTimeoutIstream(pool, std::move(input),
                                  *env.event_loop,
                                  inline_widget_body_timeout);
     }
@@ -107,7 +108,7 @@ public:
 
 private:
     void Fail(std::exception_ptr ep) noexcept {
-        istream_delayed_set_abort(*delayed, ep);
+        delayed.SetError(ep);
     }
 
     void SendRequest();
@@ -236,7 +237,7 @@ InlineWidget::OnHttpResponse(http_status_t status, StringMap &&headers,
     } else
         body = istream_null_new(pool);
 
-    istream_delayed_set(*delayed, std::move(body));
+    delayed.Set(std::move(body));
 }
 
 void
@@ -363,9 +364,12 @@ embed_inline_widget(struct pool &pool, struct processor_env &env,
         widget.from_request.body = UnusedHoldIstreamPtr(pool, std::move(_pause.first));
     }
 
-    auto iw = NewFromPool<InlineWidget>(pool, pool, env, plain_text, widget);
+    auto delayed = istream_delayed_new(pool, *env.event_loop);
 
-    Istream *hold = istream_hold_new(pool, *iw->MakeResponse().Steal());
+    auto iw = NewFromPool<InlineWidget>(pool, pool, env, plain_text, widget,
+                                        delayed.second);
+
+    Istream *hold = istream_hold_new(pool, *iw->MakeResponse(std::move(delayed.first)).Steal());
 
     iw->Start();
 

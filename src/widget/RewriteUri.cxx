@@ -295,7 +295,7 @@ class UriRewriter {
 
     const struct escape_class *const escape;
 
-    Istream *const delayed;
+    DelayedIstreamControl &delayed;
 
 public:
     UriRewriter(struct pool &_pool,
@@ -304,7 +304,8 @@ public:
                 StringView _value,
                 RewriteUriMode _mode, bool _stateful,
                 const char *_view,
-                const struct escape_class *_escape) noexcept
+                const struct escape_class *_escape,
+                DelayedIstreamControl &_delayed) noexcept
         :pool(_pool), env(_env), widget(_widget),
          value(DupBuffer(pool, _value)),
          mode(_mode), stateful(_stateful),
@@ -312,16 +313,17 @@ public:
               ? (*view != 0 ? p_strdup(&pool, view) : "")
               : nullptr),
          escape(_escape),
-         delayed(istream_delayed_new(pool, *env.event_loop)) {}
+         delayed(_delayed) {}
 
-    UnusedIstreamPtr Start(struct tcache &translate_cache) noexcept {
+    UnusedIstreamPtr Start(struct tcache &translate_cache,
+                           UnusedIstreamPtr input) noexcept {
         ResolveWidget(pool,
                       widget,
                       translate_cache,
                       BIND_THIS_METHOD(ResolverCallback),
-                      istream_delayed_cancellable_ptr(*delayed));
+                      delayed.cancel_ptr);
 
-        return NewTimeoutIstream(pool, UnusedIstreamPtr(delayed),
+        return NewTimeoutIstream(pool, std::move(input),
                                  *env.event_loop,
                                  inline_widget_body_timeout);
     }
@@ -376,7 +378,7 @@ UriRewriter::ResolverCallback() noexcept
     } else
         istream = istream_null_new(pool);
 
-    istream_delayed_set(*delayed, std::move(istream));
+    delayed.Set(std::move(istream));
 }
 
 /*
@@ -440,10 +442,12 @@ rewrite_widget_uri(struct pool &pool,
 
         return istream;
     } else {
+        auto delayed = istream_delayed_new(pool, *env.event_loop);
+
         auto rwu = NewFromPool<UriRewriter>(pool, pool, env, widget,
                                             value, mode, stateful,
-                                            view, escape);
+                                            view, escape, delayed.second);
 
-        return rwu->Start(translate_cache);
+        return rwu->Start(translate_cache, std::move(delayed.first));
     }
 }
