@@ -39,7 +39,7 @@
 #include "istream/ByteIstream.hxx"
 #include "istream/istream_cat.hxx"
 #include "istream/DelayedIstream.hxx"
-#include "istream/istream_fail.hxx"
+#include "istream/FailIstream.hxx"
 #include "istream/HeadIstream.hxx"
 #include "istream/istream_null.hxx"
 #include "istream/istream_string.hxx"

@@ -36,7 +36,7 @@
 #include "istream/istream_tee.hxx"
 #include "istream/DelayedIstream.hxx"
 #include "istream/istream_string.hxx"
-#include "istream/istream_fail.hxx"
+#include "istream/FailIstream.hxx"
 #include "istream/istream.hxx"
 #include "istream/sink_close.hxx"
 #include "istream/StringSink.hxx"
