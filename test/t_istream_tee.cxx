@@ -167,7 +167,7 @@ test_close_data(EventLoop &event_loop, struct pool *pool)
         istream_tee_new(*pool, istream_string_new(*pool, "foo"),
                         event_loop, false, false);
 
-    sink_close_new(*pool, *tee.first.Steal());
+    sink_close_new(*pool, std::move(tee.first));
 
     auto &sink = NewStringSink(*pool, std::move(tee.second),
                                buffer_callback, &ctx, cancel_ptr);
@@ -202,7 +202,7 @@ test_close_skipped(EventLoop &event_loop, struct pool *pool)
     auto &sink = NewStringSink(*pool, std::move(tee.first),
                                buffer_callback, &ctx, cancel_ptr);
 
-    sink_close_new(*pool, *tee.second.Steal());
+    sink_close_new(*pool, std::move(tee.second));
     pool_unref(pool);
 
     assert(ctx.value.empty());

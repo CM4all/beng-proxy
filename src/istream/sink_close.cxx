@@ -32,11 +32,12 @@
 
 #include "sink_close.hxx"
 #include "Sink.hxx"
+#include "UnusedPtr.hxx"
 
 class SinkClose final : IstreamSink {
 public:
-    explicit SinkClose(Istream &_input)
-        :IstreamSink(_input) {}
+    explicit SinkClose(UnusedIstreamPtr &&_input)
+        :IstreamSink(std::move(_input)) {}
 
     void Read() noexcept {
         input.Read();
@@ -69,9 +70,9 @@ public:
 };
 
 SinkClose &
-sink_close_new(struct pool &p, Istream &istream)
+sink_close_new(struct pool &p, UnusedIstreamPtr istream)
 {
-    return *NewFromPool<SinkClose>(p, istream);
+    return *NewFromPool<SinkClose>(p, std::move(istream));
 }
 
 void

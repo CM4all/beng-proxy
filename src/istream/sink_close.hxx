@@ -34,7 +34,7 @@
 #define BENG_PROXY_SINK_CLOSE_HXX
 
 struct pool;
-class Istream;
+class UnusedIstreamPtr;
 class SinkClose;
 
 /**
@@ -42,7 +42,7 @@ class SinkClose;
  * arrives.  This is used in the test cases.
  */
 SinkClose &
-sink_close_new(struct pool &p, Istream &istream);
+sink_close_new(struct pool &p, UnusedIstreamPtr istream);
 
 void
 sink_close_read(SinkClose &sink) noexcept;
