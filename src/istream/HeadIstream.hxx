@@ -35,13 +35,13 @@
 #include <stddef.h>
 
 struct pool;
-class Istream;
+class UnusedIstreamPtr;
 
 /**
  * This istream filter passes only the first N bytes.
  *
  * @param authoritative is the specified size authoritative?
  */
-Istream *
-istream_head_new(struct pool *pool, Istream &input,
-                 size_t size, bool authoritative);
+UnusedIstreamPtr
+istream_head_new(struct pool &pool, UnusedIstreamPtr input,
+                 size_t size, bool authoritative) noexcept;

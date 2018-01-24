@@ -644,7 +644,7 @@ wrap_fake_request_body(gcc_unused struct pool *pool, Istream *i)
 {
 #ifndef HAVE_CHUNKED_REQUEST_BODY
     if (i->GetAvailable(false) < 0)
-        i = istream_head_new(pool, *i, HEAD_SIZE, true);
+        i = istream_head_new(*pool, UnusedIstreamPtr(i), HEAD_SIZE, true).Steal();
 #endif
     return i;
 }
@@ -699,8 +699,8 @@ test_close_request_body_fail(Context<Connection> &c)
     auto delayed = istream_delayed_new(*c.pool, c.event_loop);
     auto request_body =
         istream_cat_new(*c.pool,
-                        istream_head_new(c.pool, *istream_zero_new(c.pool),
-                                         4096, false),
+                        istream_head_new(*c.pool, UnusedIstreamPtr(istream_zero_new(c.pool)),
+                                         4096, false).Steal(),
                         delayed.first.Steal());
 
     c.delayed = &delayed.second;
@@ -744,7 +744,8 @@ test_data_blocking(Context<Connection> &c)
 {
     fprintf(stderr, "TEST_DATA_BLOCKING\n");
     Istream *request_body =
-        istream_head_new(c.pool, *istream_zero_new(c.pool), 2*65536, false);
+        istream_head_new(*c.pool, UnusedIstreamPtr(istream_zero_new(c.pool)),
+                         2*65536, false).Steal();
 
     c.data_blocking = 5;
     c.connection = Connection::NewMirror(*c.pool, c.event_loop);
@@ -810,7 +811,8 @@ test_data_blocking2(Context<Connection> &c)
     c.connection = Connection::NewMirror(*c.pool, c.event_loop);
     c.connection->Request(c.pool, c,
                           HTTP_METHOD_GET, "/foo", std::move(request_headers),
-                          istream_head_new(c.pool, *istream_zero_new(c.pool), body_size, true),
+                          istream_head_new(*c.pool, UnusedIstreamPtr(istream_zero_new(c.pool)),
+                                           body_size, true).Steal(),
 #ifdef HAVE_EXPECT_100
                           false,
 #endif

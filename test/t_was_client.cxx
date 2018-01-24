@@ -87,9 +87,9 @@ RunHuge(WasServer &server, struct pool &pool,
     body.Clear();
 
     was_server_response(server, HTTP_STATUS_OK, StringMap(pool),
-                        UnusedIstreamPtr(istream_head_new(&pool,
-                                                          *istream_zero_new(&pool),
-                                                          524288, true)));
+                        istream_head_new(pool,
+                                         UnusedIstreamPtr(istream_zero_new(&pool)),
+                                         524288, true));
 }
 
 static void

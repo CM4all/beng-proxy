@@ -32,6 +32,7 @@
 
 #include "HeadIstream.hxx"
 #include "ForwardIstream.hxx"
+#include "UnusedPtr.hxx"
 
 #include <algorithm>
 
@@ -43,9 +44,9 @@ class HeadIstream final : public ForwardIstream {
     const bool authoritative;
 
 public:
-    HeadIstream(struct pool &p, Istream &_input,
+    HeadIstream(struct pool &p, UnusedIstreamPtr _input,
                 size_t size, bool _authoritative)
-        :ForwardIstream(p, _input),
+        :ForwardIstream(p, std::move(_input)),
          rest(size), authoritative(_authoritative) {}
 
     /* virtual methods from class Istream */
@@ -172,9 +173,10 @@ HeadIstream::_Read()
  *
  */
 
-Istream *
-istream_head_new(struct pool *pool, Istream &input,
-                 size_t size, bool authoritative)
+UnusedIstreamPtr
+istream_head_new(struct pool &pool, UnusedIstreamPtr input,
+                 size_t size, bool authoritative) noexcept
 {
-    return NewIstream<HeadIstream>(*pool, input, size, authoritative);
+    return UnusedIstreamPtr(NewIstream<HeadIstream>(pool, std::move(input),
+                                                    size, authoritative));
 }
