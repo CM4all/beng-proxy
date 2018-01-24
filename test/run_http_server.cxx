@@ -39,7 +39,7 @@
 #include "istream/sink_null.hxx"
 #include "istream/ByteIstream.hxx"
 #include "istream/DelayedIstream.hxx"
-#include "istream/istream_head.hxx"
+#include "istream/HeadIstream.hxx"
 #include "istream/istream_hold.hxx"
 #include "istream/istream_memory.hxx"
 #include "istream/istream_zero.hxx"
