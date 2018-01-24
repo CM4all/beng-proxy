@@ -32,13 +32,14 @@
 
 #include "FourIstream.hxx"
 #include "ForwardIstream.hxx"
+#include "UnusedPtr.hxx"
 
 #include <algorithm>
 
 class FourIstream final : public ForwardIstream {
 public:
-    FourIstream(struct pool &p, Istream &_input)
-        :ForwardIstream(p, _input) {}
+    FourIstream(struct pool &p, UnusedIstreamPtr _input)
+        :ForwardIstream(p, std::move(_input)) {}
 
     /* virtual methods from class Istream */
 
@@ -67,8 +68,8 @@ public:
     }
 };
 
-Istream *
-istream_four_new(struct pool *pool, Istream &input)
+UnusedIstreamPtr
+istream_four_new(struct pool *pool, UnusedIstreamPtr input) noexcept
 {
-    return NewIstream<FourIstream>(*pool, input);
+    return UnusedIstreamPtr(NewIstream<FourIstream>(*pool, std::move(input)));
 }

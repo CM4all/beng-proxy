@@ -70,7 +70,7 @@ create_test(EventLoop &event_loop, struct pool *pool, Istream *input)
     input = istream_byte_new(*pool, UnusedIstreamPtr(input)).Steal();
 #endif
 #ifdef T_FOUR
-    input = istream_four_new(pool, *input);
+    input = istream_four_new(pool, UnusedIstreamPtr(input)).Steal();
 #endif
     return input;
 }

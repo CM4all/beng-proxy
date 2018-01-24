@@ -513,7 +513,7 @@ test_abort_in_handler_half(Instance &instance)
     auto *pool = pool_new_linear(instance.root_pool, "test_abort_in_handler_half", 8192);
 
     auto *abort_istream =
-        istream_inject_new(*pool, *istream_four_new(pool, *create_input(pool)));
+        istream_inject_new(*pool, *istream_four_new(pool, UnusedIstreamPtr(create_input(pool))).Steal());
     auto *istream = create_test(instance.event_loop, pool,
                                 istream_byte_new(*pool, UnusedIstreamPtr(abort_istream)).Steal());
     pool_unref(pool);

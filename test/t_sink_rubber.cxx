@@ -176,8 +176,8 @@ TEST(SinkRubberTest, String2)
     Data data(r);
 
     Istream *input = istream_four_new(pool,
-                                      *istream_string_new(*pool,
-                                                          "foobar").Steal());
+                                      istream_string_new(*pool,
+                                                         "foobar")).Steal();
     sink_rubber_new(pool, UnusedIstreamPtr(input), r, 1024,
                     data, data.cancel_ptr);
 
@@ -212,8 +212,8 @@ TEST(SinkRubberTest, TooLarge2)
     Data data(r);
 
     Istream *input = istream_four_new(pool,
-                                      *istream_string_new(*pool,
-                                                          "foobar").Steal());
+                                      istream_string_new(*pool,
+                                                         "foobar")).Steal();
     sink_rubber_new(pool, UnusedIstreamPtr(input), r, 5,
                     data, data.cancel_ptr);
 
