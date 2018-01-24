@@ -557,8 +557,8 @@ test_later(Instance &instance)
 
     auto *istream =
         create_test(instance.event_loop, pool,
-                    istream_later_new(*pool, *create_input(pool),
-                                      instance.event_loop));
+                    istream_later_new(*pool, UnusedIstreamPtr(create_input(pool)),
+                                      instance.event_loop).Steal());
     run_istream(instance, pool, istream, true);
 }
 

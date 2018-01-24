@@ -32,14 +32,16 @@
 
 #include "istream_later.hxx"
 #include "ForwardIstream.hxx"
+#include "UnusedPtr.hxx"
 #include "event/DeferEvent.hxx"
 
 class LaterIstream final : public ForwardIstream {
     DeferEvent defer_event;
 
 public:
-    LaterIstream(struct pool &_pool, Istream &_input, EventLoop &event_loop)
-        :ForwardIstream(_pool, _input),
+    LaterIstream(struct pool &_pool, UnusedIstreamPtr &&_input,
+                 EventLoop &event_loop)
+        :ForwardIstream(_pool, std::move(_input)),
          defer_event(event_loop, BIND_THIS_METHOD(OnDeferred))
     {
     }
@@ -97,8 +99,9 @@ private:
     }
 };
 
-Istream *
-istream_later_new(struct pool &pool, Istream &input, EventLoop &event_loop)
+UnusedIstreamPtr
+istream_later_new(struct pool &pool, UnusedIstreamPtr input,
+                  EventLoop &event_loop) noexcept
 {
-    return NewIstream<LaterIstream>(pool, input, event_loop);
+    return UnusedIstreamPtr(NewIstream<LaterIstream>(pool, std::move(input), event_loop));
 }
