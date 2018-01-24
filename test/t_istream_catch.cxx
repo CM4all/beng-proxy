@@ -43,10 +43,10 @@
 
 class EventLoop;
 
-static Istream *
-create_input(struct pool *pool)
+static UnusedIstreamPtr
+create_input(struct pool &pool) noexcept
 {
-    return istream_string_new(*pool, EXPECTED_RESULT).Steal();
+    return istream_string_new(pool, EXPECTED_RESULT);
 }
 
 static std::exception_ptr
@@ -56,11 +56,11 @@ catch_callback(std::exception_ptr ep, gcc_unused void *ctx)
     return {};
 }
 
-static Istream *
-create_test(EventLoop &, struct pool *pool, Istream *input)
+static UnusedIstreamPtr
+create_test(EventLoop &, struct pool &pool, UnusedIstreamPtr input)
 {
-    return istream_catch_new(pool, UnusedIstreamPtr(input),
-                             catch_callback, nullptr).Steal();
+    return istream_catch_new(&pool, std::move(input),
+                             catch_callback, nullptr);
 }
 
 #define NO_AVAILABLE_CALL

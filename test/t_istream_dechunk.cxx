@@ -37,10 +37,10 @@
 
 #define EXPECTED_RESULT "foo"
 
-static Istream *
-create_input(struct pool *pool)
+static UnusedIstreamPtr
+create_input(struct pool &pool)
 {
-    return istream_string_new(*pool, "3\r\nfoo\r\n0\r\n\r\n ").Steal();
+    return istream_string_new(pool, "3\r\nfoo\r\n0\r\n\r\n ");
 }
 
 class MyDechunkHandler final : public DechunkHandler {
@@ -51,12 +51,12 @@ class MyDechunkHandler final : public DechunkHandler {
     }
 };
 
-static Istream *
-create_test(EventLoop &event_loop, struct pool *pool, Istream *input)
+static UnusedIstreamPtr
+create_test(EventLoop &event_loop, struct pool &pool, UnusedIstreamPtr input)
 {
-    auto *handler = NewFromPool<MyDechunkHandler>(*pool);
-    return istream_dechunk_new(*pool, UnusedIstreamPtr(input),
-                               event_loop, *handler).Steal();
+    auto *handler = NewFromPool<MyDechunkHandler>(pool);
+    return istream_dechunk_new(pool, std::move(input),
+                               event_loop, *handler);
 }
 
 #include "t_istream_filter.hxx"

@@ -38,23 +38,23 @@
 
 class EventLoop;
 
-static Istream *
-create_input(struct pool *pool)
+static UnusedIstreamPtr
+create_input(struct pool &pool) noexcept
 {
-    return istream_string_new(*pool, "foo").Steal();
+    return istream_string_new(pool, "foo");
 }
 
-static Istream *
-create_test(EventLoop &, struct pool *pool, Istream *input)
+static UnusedIstreamPtr
+create_test(EventLoop &, struct pool &pool, UnusedIstreamPtr input) noexcept
 {
-    Istream *istream =
-        istream_string_new(*pool, "abcdefghijklmnopqrstuvwxyz").Steal();
-    auto replace = istream_replace_new(*pool, UnusedIstreamPtr(istream));
-    replace.second->Add(3, 3, UnusedIstreamPtr(input));
+    auto istream =
+        istream_string_new(pool, "abcdefghijklmnopqrstuvwxyz");
+    auto replace = istream_replace_new(pool, std::move(istream));
+    replace.second->Add(3, 3, std::move(input));
     replace.second->Extend(3, 4);
     replace.second->Extend(3, 5);
     replace.second->Finish();
-    return replace.first.Steal();
+    return std::move(replace.first);
 }
 
 #include "t_istream_filter.hxx"

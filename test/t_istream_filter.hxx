@@ -102,10 +102,18 @@ struct Context final : IstreamHandler {
     InjectIstreamControl *defer_inject_istream = nullptr;
     std::exception_ptr defer_inject_error;
 
-    explicit Context(Instance &_instance, Istream &_input)
-        :instance(_instance), input(_input, *this),
+    template<typename I>
+    explicit Context(Instance &_instance, I &&_input)
+        :instance(_instance), input(std::forward<I>(_input), *this),
          defer_inject_event(instance.event_loop,
                             BIND_THIS_METHOD(DeferredInject)) {}
+
+    void Skip(off_t nbytes) noexcept {
+        assert(skipped == 0);
+        auto s = input.Skip(nbytes);
+        if (s > 0)
+            skipped += s;
+    }
 
     int ReadEvent() {
         input.Read();
@@ -292,13 +300,14 @@ run_istream_ctx(Context &ctx, struct pool *pool)
     pool_commit();
 }
 
+template<typename I>
 static void
 run_istream_block(Instance &instance, struct pool *pool,
-                  Istream *istream,
+                  I &&istream,
                   gcc_unused bool record,
                   int block_after)
 {
-    Context ctx(instance, *istream);
+    Context ctx(instance, std::forward<I>(istream));
     ctx.block_after = block_after;
 #ifdef EXPECTED_RESULT
     ctx.record = record;
@@ -307,11 +316,12 @@ run_istream_block(Instance &instance, struct pool *pool,
     run_istream_ctx(ctx, pool);
 }
 
+template<typename I>
 static void
 run_istream(Instance &instance, struct pool *pool,
-            Istream *istream, bool record)
+            I &&istream, bool record)
 {
-    run_istream_block(instance, pool, istream, record, -1);
+    run_istream_block(instance, pool, std::forward<I>(istream), record, -1);
 }
 
 
@@ -326,11 +336,10 @@ test_normal(Instance &instance)
 {
     auto *pool = pool_new_linear(instance.root_pool, "test_normal", 8192);
 
-    auto *istream = create_test(instance.event_loop, pool, create_input(pool));
-    assert(istream != nullptr);
-    assert(!istream->HasHandler());
+    auto istream = create_test(instance.event_loop, *pool, create_input(*pool));
+    assert(istream);
 
-    run_istream(instance, pool, istream, true);
+    run_istream(instance, pool, std::move(istream), true);
 }
 
 /** invoke Istream::Skip(1) */
@@ -339,18 +348,14 @@ test_skip(Instance &instance)
 {
     auto *pool = pool_new_linear(instance.root_pool, "test_skip", 8192);
 
-    auto *istream = create_test(instance.event_loop, pool, create_input(pool));
-    assert(istream != nullptr);
-    assert(!istream->HasHandler());
+    auto istream = create_test(instance.event_loop, *pool, create_input(*pool));
+    assert(istream);
 
-    off_t skipped = istream->Skip(1);
-
-    Context ctx(instance, *istream);
+    Context ctx(instance, std::move(istream));
 #ifdef EXPECTED_RESULT
     ctx.record = true;
 #endif
-    if (skipped > 0)
-        ctx.skipped = skipped;
+    ctx.Skip(1);
 
     run_istream_ctx(ctx, pool);
 }
@@ -360,15 +365,13 @@ static void
 test_block(Instance &instance)
 {
     for (int n = 0; n < 8; ++n) {
-        Istream *istream;
-
         auto *pool = pool_new_linear(instance.root_pool, "test_block", 8192);
 
-        istream = create_test(instance.event_loop, pool, create_input(pool));
-        assert(istream != nullptr);
-        assert(!istream->HasHandler());
+        auto istream = create_test(instance.event_loop, *pool,
+                                   create_input(*pool));
+        assert(istream);
 
-        run_istream_block(instance, pool, istream, true, n);
+        run_istream_block(instance, pool, std::move(istream), true, n);
     }
 }
 
@@ -378,10 +381,10 @@ test_byte(Instance &instance)
 {
     auto *pool = pool_new_linear(instance.root_pool, "test_byte", 8192);
 
-    auto *istream =
-        create_test(instance.event_loop, pool,
-                    istream_byte_new(*pool, UnusedIstreamPtr(create_input(pool))).Steal());
-    run_istream(instance, pool, istream, true);
+    auto istream =
+        create_test(instance.event_loop, *pool,
+                    istream_byte_new(*pool, create_input(*pool)));
+    run_istream(instance, pool, std::move(istream), true);
 }
 
 /** block and consume one byte at a time */
@@ -391,8 +394,8 @@ test_block_byte(Instance &instance)
     auto *pool = pool_new_linear(instance.root_pool, "test_byte", 8192);
 
     Context ctx(instance,
-                *create_test(instance.event_loop, pool,
-                             istream_byte_new(*pool, UnusedIstreamPtr(create_input(pool))).Steal()));
+                create_test(instance.event_loop, *pool,
+                            istream_byte_new(*pool, create_input(*pool))));
     ctx.block_byte = true;
 #ifdef EXPECTED_RESULT
     ctx.record = true;
@@ -407,10 +410,10 @@ test_block_inject(Instance &instance)
 {
     auto *pool = pool_new_linear(instance.root_pool, "test_block", 8192);
 
-    auto inject = istream_inject_new(*pool, UnusedIstreamPtr(create_input(pool)));
+    auto inject = istream_inject_new(*pool, UnusedIstreamPtr(create_input(*pool)));
 
     Context ctx(instance,
-                *create_test(instance.event_loop, pool, inject.first.Steal()));
+                create_test(instance.event_loop, *pool, std::move(inject.first)));
     ctx.block_inject = &inject.second;
     run_istream_ctx(ctx, pool);
 
@@ -422,8 +425,8 @@ static void
 test_half(Instance &instance)
 {
     Context ctx(instance,
-                *create_test(instance.event_loop, instance.root_pool,
-                             create_input(instance.root_pool)));
+                create_test(instance.event_loop, instance.root_pool,
+                            create_input(instance.root_pool)));
     ctx.half = true;
 #ifdef EXPECTED_RESULT
     ctx.record = true;
@@ -441,9 +444,9 @@ test_fail(Instance &instance)
     auto *pool = pool_new_linear(instance.root_pool, "test_fail", 8192);
 
     const std::runtime_error error("test_fail");
-    auto *istream = create_test(instance.event_loop, pool,
-                                istream_fail_new(*pool, std::make_exception_ptr(error)).Steal());
-    run_istream(instance, pool, istream, false);
+    auto istream = create_test(instance.event_loop, *pool,
+                               istream_fail_new(*pool, std::make_exception_ptr(error)));
+    run_istream(instance, pool, std::move(istream), false);
 }
 
 /** input fails after the first byte */
@@ -453,13 +456,13 @@ test_fail_1byte(Instance &instance)
     auto *pool = pool_new_linear(instance.root_pool, "test_fail_1byte", 8192);
 
     const std::runtime_error error("test_fail");
-    auto *istream =
-        create_test(instance.event_loop, pool,
+    auto istream =
+        create_test(instance.event_loop, *pool,
                     istream_cat_new(*pool,
-                                    istream_head_new(*pool, UnusedIstreamPtr(create_input(pool)),
+                                    istream_head_new(*pool, UnusedIstreamPtr(create_input(*pool)),
                                                      1, false),
-                                    istream_fail_new(*pool, std::make_exception_ptr(error))).Steal());
-    run_istream(instance, pool, istream, false);
+                                    istream_fail_new(*pool, std::make_exception_ptr(error))));
+    run_istream(instance, pool, std::move(istream), false);
 }
 
 /** abort without handler */
@@ -468,11 +471,11 @@ test_abort_without_handler(Instance &instance)
 {
     auto *pool = pool_new_linear(instance.root_pool, "test_abort_without_handler", 8192);
 
-    auto *istream = create_test(instance.event_loop, pool, create_input(pool));
+    auto istream = create_test(instance.event_loop, *pool, create_input(*pool));
     pool_unref(pool);
     pool_commit();
 
-    istream->CloseUnused();
+    istream.Clear();
 
     cleanup();
     pool_commit();
@@ -486,12 +489,12 @@ test_abort_in_handler(Instance &instance)
 {
     auto *pool = pool_new_linear(instance.root_pool, "test_abort_in_handler", 8192);
 
-    auto inject = istream_inject_new(*pool, UnusedIstreamPtr(create_input(pool)));
-    auto *istream = create_test(instance.event_loop, pool, inject.first.Steal());
+    auto inject = istream_inject_new(*pool, UnusedIstreamPtr(create_input(*pool)));
+    auto istream = create_test(instance.event_loop, *pool, std::move(inject.first));
     pool_unref(pool);
     pool_commit();
 
-    Context ctx(instance, *istream);
+    Context ctx(instance, std::move(istream));
     ctx.block_after = -1;
     ctx.abort_istream = &inject.second;
 
@@ -512,13 +515,13 @@ test_abort_in_handler_half(Instance &instance)
 {
     auto *pool = pool_new_linear(instance.root_pool, "test_abort_in_handler_half", 8192);
 
-    auto inject = istream_inject_new(*pool, istream_four_new(pool, UnusedIstreamPtr(create_input(pool))));
-    auto *istream = create_test(instance.event_loop, pool,
-                                istream_byte_new(*pool, std::move(inject.first)).Steal());
+    auto inject = istream_inject_new(*pool, istream_four_new(pool, UnusedIstreamPtr(create_input(*pool))));
+    auto istream = create_test(instance.event_loop, *pool,
+                               istream_byte_new(*pool, std::move(inject.first)));
     pool_unref(pool);
     pool_commit();
 
-    Context ctx(instance, *istream);
+    Context ctx(instance, std::move(istream));
     ctx.half = true;
     ctx.abort_after = 2;
     ctx.abort_istream = &inject.second;
@@ -543,8 +546,8 @@ test_abort_1byte(Instance &instance)
     auto *pool = pool_new_linear(instance.root_pool, "test_abort_1byte", 8192);
 
     auto *istream = istream_head_new(*pool,
-                                     UnusedIstreamPtr(create_test(instance.event_loop, pool,
-                                                                  create_input(pool))),
+                                     UnusedIstreamPtr(create_test(instance.event_loop, *pool,
+                                                                  create_input(*pool))),
                                      1, false).Steal();
     run_istream(instance, pool, istream, false);
 }
@@ -555,11 +558,11 @@ test_later(Instance &instance)
 {
     auto *pool = pool_new_linear(instance.root_pool, "test_later", 8192);
 
-    auto *istream =
-        create_test(instance.event_loop, pool,
-                    istream_later_new(*pool, UnusedIstreamPtr(create_input(pool)),
-                                      instance.event_loop).Steal());
-    run_istream(instance, pool, istream, true);
+    auto istream =
+        create_test(instance.event_loop, *pool,
+                    istream_later_new(*pool, create_input(*pool),
+                                      instance.event_loop));
+    run_istream(instance, pool, std::move(istream), true);
 }
 
 #ifdef EXPECTED_RESULT
@@ -569,15 +572,16 @@ test_big_hold(Instance &instance)
 {
     auto *pool = pool_new_linear(instance.root_pool, "test_big_hold", 8192);
 
-    Istream *istream = create_input(pool);
+    auto istream = create_input(*pool);
     for (unsigned i = 0; i < 1024; ++i)
-        istream = istream_cat_new(*pool, UnusedIstreamPtr(istream),
-                                  UnusedIstreamPtr(create_input(pool))).Steal();
+        istream = istream_cat_new(*pool, std::move(istream),
+                                  create_input(*pool));
 
-    istream = create_test(instance.event_loop, pool, istream);
-    Istream *hold = istream_hold_new(*pool, *istream);
+    istream = create_test(instance.event_loop, *pool, std::move(istream));
+    auto *inner = istream.Steal();
+    Istream *hold = istream_hold_new(*pool, *inner);
 
-    istream->Read();
+    inner->Read();
 
     hold->CloseUnused();
 

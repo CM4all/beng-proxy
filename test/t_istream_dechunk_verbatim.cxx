@@ -46,10 +46,10 @@
    its handler */
 #define INPUT EXPECTED_RESULT " "
 
-static Istream *
-create_input(struct pool *pool)
+static UnusedIstreamPtr
+create_input(struct pool &pool) noexcept
 {
-    return istream_string_new(*pool, INPUT).Steal();
+    return istream_string_new(pool, INPUT);
 }
 
 class MyDechunkHandler final : public DechunkHandler {
@@ -60,18 +60,20 @@ class MyDechunkHandler final : public DechunkHandler {
     }
 };
 
-static Istream *
-create_test(EventLoop &event_loop, struct pool *pool, Istream *input)
+static UnusedIstreamPtr
+create_test(EventLoop &event_loop, struct pool &pool,
+            UnusedIstreamPtr input) noexcept
 {
-    auto *handler = NewFromPool<MyDechunkHandler>(*pool);
-    input = istream_dechunk_new(*pool, UnusedIstreamPtr(input),
-                                event_loop, *handler).Steal();
-    istream_dechunk_check_verbatim(*input);
+    auto *handler = NewFromPool<MyDechunkHandler>(pool);
+    auto *dechunk = istream_dechunk_new(pool, std::move(input),
+                                       event_loop, *handler).Steal();
+    istream_dechunk_check_verbatim(*dechunk);
+    input = UnusedIstreamPtr(dechunk);
 #ifdef T_BYTE
-    input = istream_byte_new(*pool, UnusedIstreamPtr(input)).Steal();
+    input = istream_byte_new(pool, std::move(input));
 #endif
 #ifdef T_FOUR
-    input = istream_four_new(pool, UnusedIstreamPtr(input)).Steal();
+    input = istream_four_new(&pool, std::move(input));
 #endif
     return input;
 }

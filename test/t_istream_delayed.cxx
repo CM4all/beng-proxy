@@ -49,21 +49,22 @@ struct DelayedTest final : Cancellable {
     }
 };
 
-static Istream *
-create_input(struct pool *pool)
+static UnusedIstreamPtr
+create_input(struct pool &pool)
 {
-    return istream_string_new(*pool, "foo").Steal();
+    return istream_string_new(pool, "foo");
 }
 
-static Istream *
-create_test(EventLoop &event_loop, struct pool *pool, Istream *input)
+static UnusedIstreamPtr
+create_test(EventLoop &event_loop, struct pool &pool,
+            UnusedIstreamPtr input) noexcept
 {
-    auto *test = NewFromPool<DelayedTest>(*pool);
+    auto *test = NewFromPool<DelayedTest>(pool);
 
-    auto delayed = istream_delayed_new(*pool, event_loop);
+    auto delayed = istream_delayed_new(pool, event_loop);
     delayed.second.cancel_ptr = *test;
-    delayed.second.Set(UnusedIstreamPtr(input));
-    return delayed.first.Steal();
+    delayed.second.Set(std::move(input));
+    return std::move(delayed.first);
 }
 
 #include "t_istream_filter.hxx"

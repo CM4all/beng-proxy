@@ -36,7 +36,7 @@
 #include "istream/DelayedIstream.hxx"
 #include "istream/istream_hold.hxx"
 #include "istream/istream_memory.hxx"
-#include "istream/UnusedPtr.hxx"
+#include "istream/UnusedHoldPtr.hxx"
 #include "util/Cancellable.hxx"
 
 #include <assert.h>
@@ -46,10 +46,10 @@
 
 class EventLoop;
 
-static Istream *
-create_input(struct pool *pool)
+static UnusedIstreamPtr
+create_input(struct pool &pool)
 {
-    return istream_memory_new(*pool, "\0\0\0\x06" "foobarfoo", 13).Steal();
+    return istream_memory_new(pool, "\0\0\0\x06" "foobarfoo", 13);
 }
 
 static void
@@ -79,18 +79,18 @@ static const struct sink_header_handler my_sink_header_handler = {
     .error = my_sink_header_error,
 };
 
-static Istream *
-create_test(EventLoop &event_loop, struct pool *pool, Istream *input)
+static UnusedIstreamPtr
+create_test(EventLoop &event_loop, struct pool &pool, UnusedIstreamPtr input)
 {
-    auto delayed = istream_delayed_new(*pool, event_loop);
-    Istream *hold = istream_hold_new(*pool, *delayed.first.Steal());
+    auto delayed = istream_delayed_new(pool, event_loop);
+    UnusedHoldIstreamPtr hold(pool, std::move(delayed.first));
 
-    auto &sink = sink_header_new(*pool, UnusedIstreamPtr(input),
+    auto &sink = sink_header_new(pool, std::move(input),
                                  my_sink_header_handler, &delayed.second,
                                  delayed.second.cancel_ptr);
     sink_header_read(sink);
 
-    return hold;
+    return std::move(hold);
 }
 
 #define NO_BLOCKING

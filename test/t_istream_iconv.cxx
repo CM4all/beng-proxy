@@ -38,16 +38,16 @@
 
 class EventLoop;
 
-static Istream *
-create_input(struct pool *pool)
+static UnusedIstreamPtr
+create_input(struct pool &pool)
 {
-    return istream_string_new(*pool, "f\xfc\xfc").Steal();
+    return istream_string_new(pool, "f\xfc\xfc");
 }
 
-static Istream *
-create_test(EventLoop &, struct pool *pool, Istream *input)
+static UnusedIstreamPtr
+create_test(EventLoop &, struct pool &pool, UnusedIstreamPtr input)
 {
-    return istream_iconv_new(*pool, UnusedIstreamPtr(input), "utf-8", "iso-8859-1").Steal();
+    return istream_iconv_new(pool, std::move(input), "utf-8", "iso-8859-1");
 }
 
 #include "t_istream_filter.hxx"

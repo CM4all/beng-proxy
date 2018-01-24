@@ -36,16 +36,16 @@
 
 class EventLoop;
 
-static Istream *
-create_input(struct pool *pool)
+static UnusedIstreamPtr
+create_input(struct pool &pool)
 {
-    return istream_string_new(*pool, "foo").Steal();
+    return istream_string_new(pool, "foo");
 }
 
-static Istream *
-create_test(EventLoop &, struct pool *pool, Istream *input)
+static UnusedIstreamPtr
+create_test(EventLoop &, struct pool &pool, UnusedIstreamPtr input)
 {
-    return istream_fcgi_new(*pool, UnusedIstreamPtr(input), 1).Steal();
+    return istream_fcgi_new(pool, std::move(input), 1);
 }
 
 #include "t_istream_filter.hxx"

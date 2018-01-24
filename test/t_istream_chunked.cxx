@@ -38,16 +38,16 @@
 
 class EventLoop;
 
-static Istream *
-create_input(struct pool *pool)
+static UnusedIstreamPtr
+create_input(struct pool &pool)
 {
-    return istream_string_new(*pool, "foo_bar_0123456789abcdefghijklmnopqrstuvwxyz").Steal();
+    return istream_string_new(pool, "foo_bar_0123456789abcdefghijklmnopqrstuvwxyz");
 }
 
-static Istream *
-create_test(EventLoop &, struct pool *pool, Istream *input)
+static UnusedIstreamPtr
+create_test(EventLoop &, struct pool &pool, UnusedIstreamPtr input)
 {
-    return istream_chunked_new(*pool, UnusedIstreamPtr(input)).Steal();
+    return istream_chunked_new(pool, std::move(input));
 }
 
 #define CUSTOM_TEST
@@ -84,14 +84,14 @@ struct Custom final : Istream, IstreamHandler {
 };
 
 static void
-test_custom(EventLoop &, struct pool *pool)
+test_custom(EventLoop &, struct pool &_pool)
 {
-    pool = pool_new_linear(pool, "test", 8192);
-    auto *ctx = NewFromPool<Custom>(*pool, *pool);
+    auto &pool = *pool_new_linear(&_pool, "test", 8192);
+    auto *ctx = NewFromPool<Custom>(pool, pool);
 
-    auto *chunked = istream_chunked_new(*pool, UnusedIstreamPtr(ctx)).Steal();
+    auto *chunked = istream_chunked_new(pool, UnusedIstreamPtr(ctx)).Steal();
     chunked->SetHandler(*ctx);
-    pool_unref(pool);
+    pool_unref(&pool);
 
     chunked->Read();
     chunked->Close();

@@ -75,19 +75,19 @@ embed_inline_widget(struct pool &pool, gcc_unused struct processor_env &env,
     return istream_string_new(pool, p_strdup(&pool, widget.class_name));
 }
 
-static Istream *
-create_input(struct pool *pool)
+static UnusedIstreamPtr
+create_input(struct pool &pool)
 {
-    return istream_string_new(*pool, "foo &c:url; <script><c:widget id=\"foo\" type=\"bar\"/></script> <c:widget id=\"foo\" type=\"bar\"/>").Steal();
+    return istream_string_new(pool, "foo &c:url; <script><c:widget id=\"foo\" type=\"bar\"/></script> <c:widget id=\"foo\" type=\"bar\"/>");
 }
 
-static Istream *
-create_test(EventLoop &event_loop, struct pool *pool, Istream *input)
+static UnusedIstreamPtr
+create_test(EventLoop &event_loop, struct pool &pool, UnusedIstreamPtr input)
 {
     /* HACK, processor.c will ignore c:widget otherwise */
     global_translate_cache = (struct tcache *)(size_t)1;
 
-    auto *widget = NewFromPool<Widget>(*pool, *pool, &root_widget_class);
+    auto *widget = NewFromPool<Widget>(pool, pool, &root_widget_class);
 
     crash_global_init();
     session_manager_init(event_loop, std::chrono::minutes(30), 0, 0);
@@ -108,7 +108,7 @@ create_test(EventLoop &event_loop, struct pool *pool, Istream *input)
                         nullptr);
     session_put(session);
 
-    return processor_process(*pool, UnusedIstreamPtr(input), *widget, env, PROCESSOR_CONTAINER).Steal();
+    return processor_process(pool, std::move(input), *widget, env, PROCESSOR_CONTAINER);
 }
 
 static void
