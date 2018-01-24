@@ -40,7 +40,7 @@
 #include "istream/FourIstream.hxx"
 #include "istream/HeadIstream.hxx"
 #include "istream/istream_hold.hxx"
-#include "istream/istream_inject.hxx"
+#include "istream/InjectIstream.hxx"
 #include "istream/istream_later.hxx"
 #include "istream/Pointer.hxx"
 #include "event/DeferEvent.hxx"
