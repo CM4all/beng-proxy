@@ -398,7 +398,7 @@ Context<Connection>::OnHttpResponse(http_status_t _status,
 
     if (delayed != nullptr) {
         std::runtime_error error("delayed_fail");
-        delayed->Set(UnusedIstreamPtr(istream_fail_new(pool, std::make_exception_ptr(error))));
+        delayed->Set(istream_fail_new(*pool, std::make_exception_ptr(error)));
     }
 
     fb_pool_compress();
@@ -869,7 +869,7 @@ test_body_fail(Context<Connection> &c)
 
     c.connection->Request(c.pool, c,
                           HTTP_METHOD_GET, "/foo", StringMap(*c.pool),
-                          wrap_fake_request_body(c.pool, istream_fail_new(c.pool, std::make_exception_ptr(error))),
+                          wrap_fake_request_body(c.pool, istream_fail_new(*c.pool, std::make_exception_ptr(error)).Steal()),
 #ifdef HAVE_EXPECT_100
                           false,
 #endif

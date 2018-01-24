@@ -35,10 +35,10 @@
 #include <exception>
 
 struct pool;
-class Istream;
+class UnusedIstreamPtr;
 
 /**
  * istream implementation which produces a failure.
  */
-Istream *
-istream_fail_new(struct pool *pool, std::exception_ptr ep);
+UnusedIstreamPtr
+istream_fail_new(struct pool &pool, std::exception_ptr ep) noexcept;

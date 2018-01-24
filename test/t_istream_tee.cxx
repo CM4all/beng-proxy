@@ -221,8 +221,8 @@ test_error(EventLoop &event_loop, struct pool *pool,
 {
     pool = pool_new_libc(nullptr, "test");
     auto tee =
-        istream_tee_new(*pool, UnusedIstreamPtr(istream_fail_new(pool,
-                                                                 std::make_exception_ptr(std::runtime_error("error")))),
+        istream_tee_new(*pool, istream_fail_new(*pool,
+                                                std::make_exception_ptr(std::runtime_error("error"))),
                         event_loop,
                         false, false);
     pool_unref(pool);
@@ -266,8 +266,8 @@ test_bucket_error(EventLoop &event_loop, struct pool *pool,
 {
     pool = pool_new_libc(nullptr, "test");
     auto tee =
-        istream_tee_new(*pool, UnusedIstreamPtr(istream_fail_new(pool,
-                                                                 std::make_exception_ptr(std::runtime_error("error")))),
+        istream_tee_new(*pool, istream_fail_new(*pool,
+                                                std::make_exception_ptr(std::runtime_error("error"))),
                         event_loop,
                         false, false);
     pool_unref(pool);

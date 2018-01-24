@@ -233,7 +233,7 @@ TEST(SinkRubberTest, Error)
     Data data(r);
 
     Istream *input = istream_fail_new(pool,
-                                      std::make_exception_ptr(std::runtime_error("error")));
+                                      std::make_exception_ptr(std::runtime_error("error"))).Steal();
     sink_rubber_new(pool, UnusedIstreamPtr(input), r, 1024,
                     data, data.cancel_ptr);
 

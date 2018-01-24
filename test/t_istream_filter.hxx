@@ -442,7 +442,7 @@ test_fail(Instance &instance)
 
     const std::runtime_error error("test_fail");
     auto *istream = create_test(instance.event_loop, pool,
-                                istream_fail_new(pool, std::make_exception_ptr(error)));
+                                istream_fail_new(*pool, std::make_exception_ptr(error)).Steal());
     run_istream(instance, pool, istream, false);
 }
 
@@ -458,7 +458,7 @@ test_fail_1byte(Instance &instance)
                     istream_cat_new(*pool,
                                     istream_head_new(*pool, UnusedIstreamPtr(create_input(pool)),
                                                      1, false).Steal(),
-                                    istream_fail_new(pool, std::make_exception_ptr(error))).Steal());
+                                    istream_fail_new(*pool, std::make_exception_ptr(error)).Steal()).Steal());
     run_istream(instance, pool, istream, false);
 }
 
