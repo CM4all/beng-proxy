@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2018 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,45 +30,15 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "istream_four.hxx"
-#include "ForwardIstream.hxx"
+#pragma once
 
-#include <algorithm>
+struct pool;
+class Istream;
 
-class FourIstream final : public ForwardIstream {
-public:
-    FourIstream(struct pool &p, Istream &_input)
-        :ForwardIstream(p, _input) {}
-
-    /* virtual methods from class Istream */
-
-    off_t _GetAvailable(gcc_unused bool partial) override {
-        return -1;
-    }
-
-    off_t _Skip(gcc_unused off_t length) override {
-        return -1;
-    }
-
-    int _AsFd() override {
-        return -1;
-    }
-
-    /* virtual methods from class IstreamHandler */
-
-    size_t OnData(const void *data, size_t length) override {
-        return ForwardIstream::OnData(data,
-                                      std::min(length, size_t(4)));
-    }
-
-    ssize_t OnDirect(FdType type, int fd, size_t max_length) override {
-        return ForwardIstream::OnDirect(type, fd,
-                                        std::min(max_length, size_t(4)));
-    }
-};
-
+/**
+ * This istream filter passes no more than four bytes at a time.  This
+ * is useful for testing and debugging istream handler
+ * implementations.
+ */
 Istream *
-istream_four_new(struct pool *pool, Istream &input)
-{
-    return NewIstream<FourIstream>(*pool, input);
-}
+istream_four_new(struct pool *pool, Istream &input);

@@ -37,7 +37,7 @@
 #include "istream/ByteIstream.hxx"
 #include "istream/istream_cat.hxx"
 #include "istream/istream_fail.hxx"
-#include "istream/istream_four.hxx"
+#include "istream/FourIstream.hxx"
 #include "istream/istream_head.hxx"
 #include "istream/istream_hold.hxx"
 #include "istream/istream_inject.hxx"
