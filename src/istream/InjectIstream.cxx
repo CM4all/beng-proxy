@@ -32,11 +32,14 @@
 
 #include "InjectIstream.hxx"
 #include "ForwardIstream.hxx"
+#include "UnusedPtr.hxx"
 
-class InjectIstream final : public ForwardIstream {
+class InjectIstream final
+    : public ForwardIstream, public InjectIstreamControl {
+
 public:
-    InjectIstream(struct pool &p, Istream &_input)
-        :ForwardIstream(p, _input) {}
+    InjectIstream(struct pool &p, UnusedIstreamPtr &&_input)
+        :ForwardIstream(p, std::move(_input)) {}
 
     void InjectFault(std::exception_ptr ep) {
         if (HasInput())
@@ -75,20 +78,22 @@ public:
     }
 };
 
+void
+InjectIstreamControl::InjectFault(std::exception_ptr e) noexcept
+{
+    auto &d = *(InjectIstream *)this;
+    d.InjectFault(std::move(e));
+}
+
 /*
  * constructor
  *
  */
 
-Istream *
-istream_inject_new(struct pool &pool, Istream &input)
+std::pair<UnusedIstreamPtr, InjectIstreamControl &>
+istream_inject_new(struct pool &pool, UnusedIstreamPtr input) noexcept
 {
-    return NewIstream<InjectIstream>(pool, input);
-}
-
-void
-istream_inject_fault(Istream &i_inject, std::exception_ptr ep)
-{
-    auto &inject = (InjectIstream &)i_inject;
-    inject.InjectFault(ep);
+    auto *i = NewIstream<InjectIstream>(pool, std::move(input));
+    InjectIstreamControl &control = *i;
+    return {UnusedIstreamPtr(i), control};
 }

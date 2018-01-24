@@ -83,14 +83,14 @@ struct Context final : IstreamHandler {
     char buffer[sizeof(EXPECTED_RESULT) * 2];
     size_t buffer_length = 0;
 #endif
-    Istream *abort_istream = nullptr;
+    InjectIstreamControl *abort_istream = nullptr;
     int abort_after = 0;
 
     /**
      * An InjectIstream instance which will fail after the data
      * handler has blocked.
      */
-    Istream *block_inject = nullptr;
+    InjectIstreamControl *block_inject = nullptr;
 
     int block_after = -1;
 
@@ -99,7 +99,7 @@ struct Context final : IstreamHandler {
     size_t skipped = 0;
 
     DeferEvent defer_inject_event;
-    Istream *defer_inject_istream = nullptr;
+    InjectIstreamControl *defer_inject_istream = nullptr;
     std::exception_ptr defer_inject_error;
 
     explicit Context(Instance &_instance, Istream &_input)
@@ -125,12 +125,12 @@ struct Context final : IstreamHandler {
         instance.event_loop.LoopOnceNonBlock();
     }
 
-    void DeferInject(Istream &istream, std::exception_ptr ep) {
+    void DeferInject(InjectIstreamControl &inject, std::exception_ptr ep) {
         assert(ep);
         assert(defer_inject_istream == nullptr);
         assert(!defer_inject_error);
 
-        defer_inject_istream = &istream;
+        defer_inject_istream = &inject;
         defer_inject_error = ep;
         defer_inject_event.Schedule();
     }
@@ -142,8 +142,8 @@ struct Context final : IstreamHandler {
         auto &i = *defer_inject_istream;
         defer_inject_istream = nullptr;
 
-        istream_inject_fault(i, std::exchange(defer_inject_error,
-                                              std::exception_ptr()));
+        i.InjectFault(std::exchange(defer_inject_error,
+                                    std::exception_ptr()));
     }
 
     /* virtual methods from class IstreamHandler */
@@ -407,11 +407,11 @@ test_block_inject(Instance &instance)
 {
     auto *pool = pool_new_linear(instance.root_pool, "test_block", 8192);
 
-    auto *inject = istream_inject_new(*pool, *create_input(pool));
+    auto inject = istream_inject_new(*pool, UnusedIstreamPtr(create_input(pool)));
 
     Context ctx(instance,
-                *create_test(instance.event_loop, pool, inject));
-    ctx.block_inject = inject;
+                *create_test(instance.event_loop, pool, inject.first.Steal()));
+    ctx.block_inject = &inject.second;
     run_istream_ctx(ctx, pool);
 
     assert(ctx.eof);
@@ -486,14 +486,14 @@ test_abort_in_handler(Instance &instance)
 {
     auto *pool = pool_new_linear(instance.root_pool, "test_abort_in_handler", 8192);
 
-    auto *abort_istream = istream_inject_new(*pool, *create_input(pool));
-    auto *istream = create_test(instance.event_loop, pool, abort_istream);
+    auto inject = istream_inject_new(*pool, UnusedIstreamPtr(create_input(pool)));
+    auto *istream = create_test(instance.event_loop, pool, inject.first.Steal());
     pool_unref(pool);
     pool_commit();
 
     Context ctx(instance, *istream);
     ctx.block_after = -1;
-    ctx.abort_istream = abort_istream;
+    ctx.abort_istream = &inject.second;
 
     while (!ctx.eof) {
         ctx.ReadExpect();
@@ -512,17 +512,16 @@ test_abort_in_handler_half(Instance &instance)
 {
     auto *pool = pool_new_linear(instance.root_pool, "test_abort_in_handler_half", 8192);
 
-    auto *abort_istream =
-        istream_inject_new(*pool, *istream_four_new(pool, UnusedIstreamPtr(create_input(pool))).Steal());
+    auto inject = istream_inject_new(*pool, istream_four_new(pool, UnusedIstreamPtr(create_input(pool))));
     auto *istream = create_test(instance.event_loop, pool,
-                                istream_byte_new(*pool, UnusedIstreamPtr(abort_istream)).Steal());
+                                istream_byte_new(*pool, std::move(inject.first)).Steal());
     pool_unref(pool);
     pool_commit();
 
     Context ctx(instance, *istream);
     ctx.half = true;
     ctx.abort_after = 2;
-    ctx.abort_istream = abort_istream;
+    ctx.abort_istream = &inject.second;
 
     while (!ctx.eof) {
         ctx.ReadExpect();
