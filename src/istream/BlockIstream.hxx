@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2018 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,21 +30,13 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "istream_block.hxx"
-#include "istream.hxx"
+#pragma once
 
-class BlockIstream final : public Istream {
-public:
-    explicit BlockIstream(struct pool &p):Istream(p) {}
+struct pool;
+class Istream;
 
-    /* virtual methods from class Istream */
-
-    void _Read() override {
-    }
-};
-
+/**
+ * #Istream implementation which blocks indefinitely until closed.
+ */
 Istream *
-istream_block_new(struct pool &pool)
-{
-    return NewIstream<BlockIstream>(pool);
-}
+istream_block_new(struct pool &pool);

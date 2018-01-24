@@ -40,7 +40,7 @@
 #include "widget/LookupHandler.hxx"
 #include "widget/RewriteUri.hxx"
 #include "istream/istream.hxx"
-#include "istream/istream_block.hxx"
+#include "istream/BlockIstream.hxx"
 #include "istream/istream_string.hxx"
 #include "util/Cancellable.hxx"
 #include "util/PrintException.hxx"

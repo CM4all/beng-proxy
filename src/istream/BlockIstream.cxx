@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2018 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,16 +30,21 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_ISTREAM_BLOCK_HXX
-#define BENG_PROXY_ISTREAM_BLOCK_HXX
+#include "BlockIstream.hxx"
+#include "istream.hxx"
 
-struct pool;
-class Istream;
+class BlockIstream final : public Istream {
+public:
+    explicit BlockIstream(struct pool &p):Istream(p) {}
 
-/**
- * #Istream implementation which blocks indefinitely until closed.
- */
+    /* virtual methods from class Istream */
+
+    void _Read() override {
+    }
+};
+
 Istream *
-istream_block_new(struct pool &pool);
-
-#endif
+istream_block_new(struct pool &pool)
+{
+    return NewIstream<BlockIstream>(pool);
+}
