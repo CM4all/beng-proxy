@@ -38,6 +38,10 @@ public:
     explicit SinkClose(Istream &_input)
         :IstreamSink(_input) {}
 
+    void Read() noexcept {
+        input.Read();
+    }
+
     /* request istream handler */
     size_t OnData(gcc_unused const void *data, gcc_unused size_t length) {
         input.Close();
@@ -64,8 +68,14 @@ public:
     }
 };
 
-void
+SinkClose &
 sink_close_new(struct pool &p, Istream &istream)
 {
-    NewFromPool<SinkClose>(p, istream);
+    return *NewFromPool<SinkClose>(p, istream);
+}
+
+void
+sink_close_read(SinkClose &sink) noexcept
+{
+    sink.Read();
 }
