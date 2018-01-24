@@ -33,10 +33,10 @@
 #pragma once
 
 struct pool;
-class Istream;
+class UnusedIstreamPtr;
 
 /**
  * #Istream implementation which blocks indefinitely until closed.
  */
-Istream *
-istream_block_new(struct pool &pool);
+UnusedIstreamPtr
+istream_block_new(struct pool &pool) noexcept;

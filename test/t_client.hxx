@@ -1266,7 +1266,7 @@ template<class Connection>
 static void
 test_no_body_while_sending(Context<Connection> &c)
 {
-    Istream *request_body = istream_block_new(*c.pool);
+    Istream *request_body = istream_block_new(*c.pool).Steal();
 
     c.connection = Connection::NewNull(*c.pool, c.event_loop);
     c.connection->Request(c.pool, c,
@@ -1295,7 +1295,7 @@ template<class Connection>
 static void
 test_hold(Context<Connection> &c)
 {
-    Istream *request_body = istream_block_new(*c.pool);
+    Istream *request_body = istream_block_new(*c.pool).Steal();
 
     c.connection = Connection::NewHold(*c.pool, c.event_loop);
     c.connection->Request(c.pool, c,

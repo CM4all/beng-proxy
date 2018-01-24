@@ -32,6 +32,7 @@
 
 #include "BlockIstream.hxx"
 #include "istream.hxx"
+#include "UnusedPtr.hxx"
 
 class BlockIstream final : public Istream {
 public:
@@ -43,8 +44,8 @@ public:
     }
 };
 
-Istream *
-istream_block_new(struct pool &pool)
+UnusedIstreamPtr
+istream_block_new(struct pool &pool) noexcept
 {
-    return NewIstream<BlockIstream>(pool);
+    return UnusedIstreamPtr(NewIstream<BlockIstream>(pool));
 }

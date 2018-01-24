@@ -101,7 +101,7 @@ RunHold(WasServer &server, struct pool &pool,
     body.Clear();
 
     was_server_response(server, HTTP_STATUS_OK, StringMap(pool),
-                        UnusedIstreamPtr(istream_block_new(pool)));
+                        istream_block_new(pool));
 }
 
 static void
