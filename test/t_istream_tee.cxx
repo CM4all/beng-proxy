@@ -127,7 +127,8 @@ test_block1(EventLoop &event_loop)
 
     BlockContext ctx(std::move(tee.first));
 
-    NewStringSink(*pool, *second, buffer_callback, (Context *)&ctx, cancel_ptr);
+    NewStringSink(*pool, UnusedIstreamPtr(second),
+                  buffer_callback, (Context *)&ctx, cancel_ptr);
     assert(ctx.value.empty());
 
     pool_unref(pool);
@@ -170,7 +171,8 @@ test_close_data(EventLoop &event_loop, struct pool *pool)
     sink_close_new(*pool, *tee.first.Steal());
     Istream *second = tee.second.Steal();
 
-    NewStringSink(*pool, *second, buffer_callback, &ctx, cancel_ptr);
+    NewStringSink(*pool, UnusedIstreamPtr(second),
+                  buffer_callback, &ctx, cancel_ptr);
     assert(ctx.value.empty());
 
     pool_unref(pool);
@@ -200,7 +202,8 @@ test_close_skipped(EventLoop &event_loop, struct pool *pool)
     Istream *input = istream_string_new(*pool, "foo").Steal();
     auto tee = istream_tee_new(*pool, UnusedIstreamPtr(input),
                                event_loop, false, false);
-    NewStringSink(*pool, *tee.first.Steal(), buffer_callback, &ctx, cancel_ptr);
+    NewStringSink(*pool, std::move(tee.first),
+                  buffer_callback, &ctx, cancel_ptr);
 
     sink_close_new(*pool, *tee.second.Steal());
     pool_unref(pool);

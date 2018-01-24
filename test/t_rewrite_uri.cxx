@@ -170,7 +170,8 @@ assert_istream_equals(struct pool *pool, UnusedIstreamPtr _istream,
 
     Istream *istream = _istream.Steal();
 
-    NewStringSink(*pool, *istream, sink_gstring_callback, &ctx, cancel_ptr);
+    NewStringSink(*pool, UnusedIstreamPtr(istream),
+                  sink_gstring_callback, &ctx, cancel_ptr);
 
     while (!ctx.finished)
         istream->Read();

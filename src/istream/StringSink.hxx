@@ -37,11 +37,11 @@
 #include <string>
 
 struct pool;
-class Istream;
+class UnusedIstreamPtr;
 class CancellablePointer;
 
 void
-NewStringSink(struct pool &pool, Istream &input,
+NewStringSink(struct pool &pool, UnusedIstreamPtr input,
               void (*callback)(std::string &&value, std::exception_ptr error,
                                void *ctx),
               void *ctx, CancellablePointer &cancel_ptr);

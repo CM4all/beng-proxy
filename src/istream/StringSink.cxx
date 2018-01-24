@@ -32,6 +32,7 @@
 
 #include "StringSink.hxx"
 #include "Sink.hxx"
+#include "UnusedPtr.hxx"
 #include "pool/pool.hxx"
 #include "util/Cancellable.hxx"
 
@@ -44,12 +45,12 @@ class StringSink final : IstreamSink, Cancellable {
     void *callback_ctx;
 
 public:
-    StringSink(struct pool &_pool, Istream &_input,
+    StringSink(struct pool &_pool, UnusedIstreamPtr &&_input,
                 void (*_callback)(std::string &&value, std::exception_ptr error,
                                   void *ctx),
                 void *_ctx,
                 CancellablePointer &cancel_ptr)
-        :IstreamSink(_input, FD_ANY), pool(_pool),
+        :IstreamSink(std::move(_input), FD_ANY), pool(_pool),
          callback(_callback), callback_ctx(_ctx) {
         cancel_ptr = *this;
     }
@@ -90,11 +91,11 @@ private:
  */
 
 void
-NewStringSink(struct pool &pool, Istream &input,
+NewStringSink(struct pool &pool, UnusedIstreamPtr input,
               void (*callback)(std::string &&value, std::exception_ptr error,
                                void *ctx),
               void *ctx, CancellablePointer &cancel_ptr)
 {
-    NewFromPool<StringSink>(pool, pool, input,
+    NewFromPool<StringSink>(pool, pool, std::move(input),
                             callback, ctx, cancel_ptr);
 }
