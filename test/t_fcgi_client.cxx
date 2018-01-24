@@ -264,14 +264,14 @@ struct Connection {
     void Request(struct pool *pool,
                  Lease &lease,
                  http_method_t method, const char *uri,
-                 StringMap &&headers, Istream *body,
+                 StringMap &&headers, UnusedIstreamPtr body,
                  HttpResponseHandler &handler,
                  CancellablePointer &cancel_ptr) {
         fcgi_client_request(pool, event_loop, fd, FdType::FD_SOCKET,
                             lease,
                             method, uri, uri, nullptr, nullptr, nullptr,
                             nullptr, "192.168.1.100",
-                            headers, UnusedIstreamPtr(body),
+                            headers, std::move(body),
                             nullptr,
                             -1,
                             handler, cancel_ptr);

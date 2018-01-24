@@ -195,13 +195,13 @@ struct Connection {
                  Lease &lease,
                  http_method_t method, const char *uri,
                  StringMap &&headers,
-                 Istream *body,
+                 UnusedIstreamPtr body,
                  HttpResponseHandler &handler,
                  CancellablePointer &cancel_ptr) {
         ajp_client_request(*pool, event_loop, fd, FdType::FD_SOCKET,
                            lease,
                            "http", "192.168.1.100", "remote", "server", 80, false,
-                           method, uri, headers, UnusedIstreamPtr(body),
+                           method, uri, headers, std::move(body),
                            handler, cancel_ptr);
     }
 

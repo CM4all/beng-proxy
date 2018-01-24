@@ -173,7 +173,7 @@ public:
     void Request(struct pool *pool,
                  Lease &_lease,
                  http_method_t method, const char *uri,
-                 StringMap &&headers, Istream *body,
+                 StringMap &&headers, UnusedIstreamPtr body,
                  HttpResponseHandler &handler,
                  CancellablePointer &cancel_ptr) {
         lease = &_lease;
@@ -181,7 +181,7 @@ public:
                            control_fd.Get(), input_fd.Get(), output_fd.Get(),
                            *this,
                            method, uri, uri, nullptr, nullptr,
-                           headers, UnusedIstreamPtr(body), nullptr,
+                           headers, std::move(body), nullptr,
                            handler, cancel_ptr);
     }
 

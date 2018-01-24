@@ -64,7 +64,7 @@ struct Connection {
                  Lease &lease,
                  http_method_t method, const char *uri,
                  StringMap &&headers,
-                 Istream *body,
+                 UnusedIstreamPtr body,
                  bool expect_100,
                  HttpResponseHandler &handler,
                  CancellablePointer &cancel_ptr) {
@@ -73,7 +73,7 @@ struct Connection {
                             "localhost",
                             nullptr, nullptr,
                             method, uri, HttpHeaders(std::move(headers)),
-                            UnusedIstreamPtr(body), expect_100,
+                            std::move(body), expect_100,
                             handler, cancel_ptr);
     }
 
