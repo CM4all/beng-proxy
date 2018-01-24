@@ -34,7 +34,7 @@
 #include "Sink.hxx"
 #include "Bucket.hxx"
 #include "UnusedPtr.hxx"
-#include "util/ConstBuffer.hxx"
+#include "util/WritableBuffer.hxx"
 
 #include <boost/intrusive/slist.hpp>
 
@@ -47,8 +47,8 @@ class CatIstream final : public Istream {
 
         CatIstream &cat;
 
-        Input(CatIstream &_cat, Istream &_istream) noexcept
-            :IstreamSink(_istream), cat(_cat) {}
+        Input(CatIstream &_cat, UnusedIstreamPtr &&_istream) noexcept
+            :IstreamSink(std::move(_istream)), cat(_cat) {}
 
         off_t GetAvailable(bool partial) const noexcept {
             return input.GetAvailable(partial);
@@ -113,7 +113,7 @@ class CatIstream final : public Istream {
     InputList inputs;
 
 public:
-    CatIstream(struct pool &p, ConstBuffer<Istream *> _inputs) noexcept;
+    CatIstream(struct pool &p, WritableBuffer<UnusedIstreamPtr> _inputs) noexcept;
 
 private:
     Input &GetCurrent() noexcept {
@@ -308,23 +308,23 @@ CatIstream::_Close() noexcept
  *
  */
 
-inline CatIstream::CatIstream(struct pool &p, ConstBuffer<Istream *> _inputs) noexcept
+inline CatIstream::CatIstream(struct pool &p, WritableBuffer<UnusedIstreamPtr> _inputs) noexcept
     :Istream(p)
 {
     auto i = inputs.before_begin();
 
-    for (Istream *_input : _inputs) {
-        if (_input == nullptr)
+    for (UnusedIstreamPtr &_input : _inputs) {
+        if (!_input)
             continue;
 
-        auto *input = NewFromPool<Input>(p, *this, *_input);
+        auto *input = NewFromPool<Input>(p, *this, std::move(_input));
         i = inputs.insert_after(i, *input);
     }
 }
 
 UnusedIstreamPtr
-_istream_cat_new(struct pool &pool, Istream *const* inputs, unsigned n_inputs)
+_istream_cat_new(struct pool &pool, UnusedIstreamPtr *const inputs, unsigned n_inputs)
 {
     return UnusedIstreamPtr(NewFromPool<CatIstream>(pool, pool,
-                                                    ConstBuffer<Istream *>(inputs, n_inputs)));
+                                                    WritableBuffer<UnusedIstreamPtr>(inputs, n_inputs)));
 }

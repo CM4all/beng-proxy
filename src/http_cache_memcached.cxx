@@ -489,9 +489,9 @@ http_cache_memcached_put(struct pool &pool, MemachedStock &stock,
     /* append response body */
     value = istream_cat_new(pool,
                             istream_memory_new(pool, &request->header_size,
-                                               sizeof(request->header_size)).Steal(),
-                            istream_gb_new(pool, std::move(gb)).Steal(),
-                            value.Steal());
+                                               sizeof(request->header_size)),
+                            istream_gb_new(pool, std::move(gb)),
+                            std::move(value));
 
     request->extras.set.flags = 0;
     request->extras.set.expiration =

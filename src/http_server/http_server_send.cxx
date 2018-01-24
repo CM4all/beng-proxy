@@ -179,8 +179,9 @@ HttpServerConnection::SubmitResponse(http_status_t status,
        is no response body */
     response.length -= body == nullptr;
 
-    SetResponseIstream(istream_cat_new(request_pool, status_stream.Steal(),
-                                       header_stream.Steal(), body));
+    SetResponseIstream(istream_cat_new(request_pool, std::move(status_stream),
+                                       std::move(header_stream),
+                                       UnusedIstreamPtr(body)));
     TryWrite();
 }
 

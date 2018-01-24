@@ -1353,9 +1353,9 @@ HttpClient::HttpClient(PoolPtr &&_caller_pool, struct pool &_pool,
     /* request istream */
 
     request.istream.Set(istream_cat_new(GetPool(),
-                                        request_line_stream.Steal(),
-                                        header_stream.Steal(),
-                                        body),
+                                        std::move(request_line_stream),
+                                        std::move(header_stream),
+                                        UnusedIstreamPtr(body)),
                         *this,
                         istream_direct_mask_to(socket.GetType()));
 

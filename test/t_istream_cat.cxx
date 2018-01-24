@@ -48,7 +48,7 @@ create_input(struct pool *pool)
 static Istream *
 create_test(EventLoop &, struct pool *pool, Istream *input)
 {
-    return istream_cat_new(*pool, input).Steal();
+    return istream_cat_new(*pool, UnusedIstreamPtr(input)).Steal();
 }
 
 #include "t_istream_filter.hxx"

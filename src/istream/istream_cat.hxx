@@ -33,21 +33,22 @@
 #ifndef BENG_PROXY_ISTREAM_CAT_HXX
 #define BENG_PROXY_ISTREAM_CAT_HXX
 
+#include "UnusedPtr.hxx"
+
 struct pool;
 class Istream;
-class UnusedIstreamPtr;
 
 /**
  * Concatenate several istreams.
  */
 UnusedIstreamPtr
-_istream_cat_new(struct pool &pool, Istream *const* inputs, unsigned n_inputs);
+_istream_cat_new(struct pool &pool, UnusedIstreamPtr *const inputs, unsigned n_inputs);
 
 template<typename... Args>
 auto
 istream_cat_new(struct pool &pool, Args&&... args)
 {
-    Istream *const inputs[]{args...};
+    UnusedIstreamPtr inputs[]{std::forward<Args>(args)...};
     return _istream_cat_new(pool, inputs, sizeof...(args));
 }
 

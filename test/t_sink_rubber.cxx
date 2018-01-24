@@ -270,8 +270,8 @@ TEST(SinkRubberTest, Abort)
     delayed.second.cancel_ptr = nullptr;
 
     Istream *input = istream_cat_new(pool,
-                                     istream_string_new(*pool, "foo").Steal(),
-                                     delayed.first.Steal()).Steal();
+                                     istream_string_new(*pool, "foo"),
+                                     std::move(delayed.first)).Steal();
     sink_rubber_new(pool, UnusedIstreamPtr(input), r, 4,
                     data, data.cancel_ptr);
     ASSERT_EQ(Data::NONE, data.result);
