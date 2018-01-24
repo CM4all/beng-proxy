@@ -33,10 +33,10 @@
 #pragma once
 
 struct pool;
-class Istream;
+class UnusedIstreamPtr;
 
 /**
  * istream implementation which reads zero bytes.
  */
-Istream *
-istream_zero_new(struct pool *pool);
+UnusedIstreamPtr
+istream_zero_new(struct pool &pool) noexcept;

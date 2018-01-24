@@ -164,7 +164,7 @@ Instance::HandleHttpRequest(HttpServerRequest &request,
             sink_null_new(request.pool, *request.body.Steal());
 
         body = istream_head_new(request.pool,
-                                UnusedIstreamPtr(istream_zero_new(&request.pool)),
+                                istream_zero_new(request.pool),
                                 256, false).Steal();
         body = istream_byte_new(request.pool, UnusedIstreamPtr(body)).Steal();
 
@@ -189,7 +189,7 @@ Instance::HandleHttpRequest(HttpServerRequest &request,
         http_server_response(&request, HTTP_STATUS_OK,
                              HttpHeaders(request.pool),
                              istream_head_new(request.pool,
-                                              UnusedIstreamPtr(istream_zero_new(&request.pool)),
+                                              istream_zero_new(request.pool),
                                               512 * 1024, true));
         break;
 

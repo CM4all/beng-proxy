@@ -88,7 +88,7 @@ RunHuge(WasServer &server, struct pool &pool,
 
     was_server_response(server, HTTP_STATUS_OK, StringMap(pool),
                         istream_head_new(pool,
-                                         UnusedIstreamPtr(istream_zero_new(&pool)),
+                                         istream_zero_new(pool),
                                          524288, true));
 }
 
