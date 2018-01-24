@@ -42,7 +42,7 @@
 #include "istream/HeadIstream.hxx"
 #include "istream/istream_hold.hxx"
 #include "istream/istream_memory.hxx"
-#include "istream/istream_zero.hxx"
+#include "istream/ZeroIstream.hxx"
 #include "istream/istream.hxx"
 #include "istream/UnusedHoldPtr.hxx"
 #include "PInstance.hxx"

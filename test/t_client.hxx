@@ -43,7 +43,7 @@
 #include "istream/HeadIstream.hxx"
 #include "istream/istream_null.hxx"
 #include "istream/istream_string.hxx"
-#include "istream/istream_zero.hxx"
+#include "istream/ZeroIstream.hxx"
 #include "event/TimerEvent.hxx"
 #include "event/Duration.hxx"
 #include "PInstance.hxx"

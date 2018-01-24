@@ -30,7 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "istream_zero.hxx"
+#include "ZeroIstream.hxx"
 #include "istream.hxx"
 
 #include <limits.h>

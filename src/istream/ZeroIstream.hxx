@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2018 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_ISTREAM_ZERO_HXX
-#define BENG_PROXY_ISTREAM_ZERO_HXX
+#pragma once
 
 struct pool;
 class Istream;
@@ -41,5 +40,3 @@ class Istream;
  */
 Istream *
 istream_zero_new(struct pool *pool);
-
-#endif
