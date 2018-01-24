@@ -90,12 +90,12 @@ private:
  *
  */
 
-void
+StringSink &
 NewStringSink(struct pool &pool, UnusedIstreamPtr input,
               void (*callback)(std::string &&value, std::exception_ptr error,
                                void *ctx),
               void *ctx, CancellablePointer &cancel_ptr)
 {
-    NewFromPool<StringSink>(pool, pool, std::move(input),
-                            callback, ctx, cancel_ptr);
+    return *NewFromPool<StringSink>(pool, pool, std::move(input),
+                                    callback, ctx, cancel_ptr);
 }
