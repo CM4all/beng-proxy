@@ -168,13 +168,11 @@ assert_istream_equals(struct pool *pool, UnusedIstreamPtr _istream,
     ASSERT_TRUE(_istream);
     ASSERT_NE(value, nullptr);
 
-    Istream *istream = _istream.Steal();
-
-    NewStringSink(*pool, UnusedIstreamPtr(istream),
-                  sink_gstring_callback, &ctx, cancel_ptr);
+    auto &sink = NewStringSink(*pool, std::move(_istream),
+                               sink_gstring_callback, &ctx, cancel_ptr);
 
     while (!ctx.finished)
-        istream->Read();
+        ReadStringSink(sink);
 
     ASSERT_STREQ(ctx.value.c_str(), value);
 }

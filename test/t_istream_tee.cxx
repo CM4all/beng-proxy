@@ -123,18 +123,17 @@ test_block1(EventLoop &event_loop)
     auto delayed = istream_delayed_new(*pool, event_loop);
     auto tee = istream_tee_new(*pool, std::move(delayed.first),
                                event_loop, false, false);
-    auto *second = tee.second.Steal();
 
     BlockContext ctx(std::move(tee.first));
 
-    NewStringSink(*pool, UnusedIstreamPtr(second),
-                  buffer_callback, (Context *)&ctx, cancel_ptr);
+    auto &sink = NewStringSink(*pool, std::move(tee.second),
+                               buffer_callback, (Context *)&ctx, cancel_ptr);
     assert(ctx.value.empty());
 
     pool_unref(pool);
 
     /* the input (istream_delayed) blocks */
-    second->Read();
+    ReadStringSink(sink);
     assert(ctx.value.empty());
 
     /* feed data into input */
@@ -142,7 +141,7 @@ test_block1(EventLoop &event_loop)
     assert(ctx.value.empty());
 
     /* the first output (block_istream_handler) blocks */
-    second->Read();
+    ReadStringSink(sink);
     assert(ctx.value.empty());
 
     /* close the blocking output, this should release the "tee"
@@ -169,15 +168,14 @@ test_close_data(EventLoop &event_loop, struct pool *pool)
                         event_loop, false, false);
 
     sink_close_new(*pool, *tee.first.Steal());
-    Istream *second = tee.second.Steal();
 
-    NewStringSink(*pool, UnusedIstreamPtr(second),
-                  buffer_callback, &ctx, cancel_ptr);
+    auto &sink = NewStringSink(*pool, std::move(tee.second),
+                               buffer_callback, &ctx, cancel_ptr);
     assert(ctx.value.empty());
 
     pool_unref(pool);
 
-    second->Read();
+    ReadStringSink(sink);
 
     /* at this point, sink_close has closed itself, and istream_tee
        should have passed the data to the StringSink */
@@ -199,18 +197,17 @@ test_close_skipped(EventLoop &event_loop, struct pool *pool)
     CancellablePointer cancel_ptr;
 
     pool = pool_new_libc(nullptr, "test");
-    Istream *input = istream_string_new(*pool, "foo").Steal();
-    auto tee = istream_tee_new(*pool, UnusedIstreamPtr(input),
+    auto tee = istream_tee_new(*pool, istream_string_new(*pool, "foo"),
                                event_loop, false, false);
-    NewStringSink(*pool, std::move(tee.first),
-                  buffer_callback, &ctx, cancel_ptr);
+    auto &sink = NewStringSink(*pool, std::move(tee.first),
+                               buffer_callback, &ctx, cancel_ptr);
 
     sink_close_new(*pool, *tee.second.Steal());
     pool_unref(pool);
 
     assert(ctx.value.empty());
 
-    input->Read();
+    ReadStringSink(sink);
 
     assert(strcmp(ctx.value.c_str(), "foo") == 0);
 

@@ -39,11 +39,15 @@
 struct pool;
 class UnusedIstreamPtr;
 class CancellablePointer;
+class StringSink;
 
-void
+StringSink &
 NewStringSink(struct pool &pool, UnusedIstreamPtr input,
               void (*callback)(std::string &&value, std::exception_ptr error,
                                void *ctx),
               void *ctx, CancellablePointer &cancel_ptr);
+
+void
+ReadStringSink(StringSink &sink) noexcept;
 
 #endif

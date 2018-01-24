@@ -55,6 +55,10 @@ public:
         cancel_ptr = *this;
     }
 
+    void Read() noexcept {
+        input.Read();
+    }
+
 private:
     void Destroy() {
         this->~StringSink();
@@ -98,4 +102,10 @@ NewStringSink(struct pool &pool, UnusedIstreamPtr input,
 {
     return *NewFromPool<StringSink>(pool, pool, std::move(input),
                                     callback, ctx, cancel_ptr);
+}
+
+void
+ReadStringSink(StringSink &sink) noexcept
+{
+    sink.Read();
 }
