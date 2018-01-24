@@ -35,7 +35,7 @@
 #include "pool/pool.hxx"
 #include "util/Cancellable.hxx"
 
-struct StringSink final : IstreamSink, Cancellable {
+class StringSink final : IstreamSink, Cancellable {
     struct pool &pool;
 
     std::string value;
@@ -43,6 +43,7 @@ struct StringSink final : IstreamSink, Cancellable {
     void (*callback)(std::string &&value, std::exception_ptr error, void *ctx);
     void *callback_ctx;
 
+public:
     StringSink(struct pool &_pool, Istream &_input,
                 void (*_callback)(std::string &&value, std::exception_ptr error,
                                   void *ctx),
@@ -53,6 +54,7 @@ struct StringSink final : IstreamSink, Cancellable {
         cancel_ptr = *this;
     }
 
+private:
     void Destroy() {
         this->~StringSink();
     }
