@@ -98,7 +98,7 @@ format_status_line(char *p, http_status_t status)
 inline void
 HttpServerConnection::SubmitResponse(http_status_t status,
                                      HttpHeaders &&headers,
-                                     UnusedIstreamPtr _body)
+                                     UnusedIstreamPtr body)
 {
     assert(http_status_is_valid(status));
     assert(score != HTTP_SERVER_NEW);
@@ -132,17 +132,16 @@ HttpServerConnection::SubmitResponse(http_status_t status,
     /* how will we transfer the body?  determine length and
        transfer-encoding */
 
-    const bool got_body = _body;
-    const off_t content_length = got_body ? _body.GetAvailable(false) : 0;
+    const bool got_body = body;
+    const off_t content_length = got_body ? body.GetAvailable(false) : 0;
     if (http_method_is_empty(request.request->method))
-        _body.Clear();
+        body.Clear();
 
-    auto *body = _body.Steal();
     if (content_length == (off_t)-1) {
         /* the response length is unknown yet */
         assert(!http_status_is_empty(status));
 
-        if (body != nullptr && keep_alive) {
+        if (body && keep_alive) {
             /* keep-alive is enabled, which means that we have to
                enable chunking */
             headers.Write("transfer-encoding", "chunked");
@@ -150,10 +149,8 @@ HttpServerConnection::SubmitResponse(http_status_t status,
             /* optimized code path: if an istream_dechunked shall get
                chunked via istream_chunk, let's just skip both to
                reduce the amount of work and I/O we have to do */
-            UnusedIstreamPtr b(body);
-            if (!istream_dechunk_check_verbatim(b))
-                b = istream_chunked_new(request_pool, std::move(b));
-            body = b.Steal();
+            if (!istream_dechunk_check_verbatim(body))
+                body = istream_chunked_new(request_pool, std::move(body));
         }
     } else if (http_status_is_empty(status)) {
         assert(content_length == 0);
@@ -163,7 +160,7 @@ HttpServerConnection::SubmitResponse(http_status_t status,
         headers.Write("content-length", response.content_length_buffer);
     }
 
-    const bool upgrade = body != nullptr && http_is_upgrade(status, headers);
+    const bool upgrade = body && http_is_upgrade(status, headers);
     if (upgrade) {
         headers.Write("connection", "upgrade");
         headers.MoveToBuffer("upgrade");
@@ -179,11 +176,11 @@ HttpServerConnection::SubmitResponse(http_status_t status,
 
     /* make sure the access logger gets a negative value if there
        is no response body */
-    response.length -= body == nullptr;
+    response.length -= !body;
 
     SetResponseIstream(istream_cat_new(request_pool, std::move(status_stream),
                                        std::move(header_stream),
-                                       UnusedIstreamPtr(body)));
+                                       std::move(body)));
     TryWrite();
 }
 
