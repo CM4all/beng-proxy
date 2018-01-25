@@ -180,6 +180,7 @@ struct HttpClient final : BufferedSocketHandler, IstreamHandler, Cancellable {
             STATUS,
             HEADERS,
             BODY,
+            END,
         } state;
 
         /**
@@ -395,7 +396,6 @@ void
 HttpClient::AbortResponseBody(std::exception_ptr ep)
 {
     assert(response.state == Response::State::BODY);
-    assert(response.body != nullptr);
 
     if (request.istream.IsDefined())
         request.istream.Close();
@@ -691,7 +691,7 @@ HttpClient::HeadersFinished()
 
     if (response.no_body || response.status == HTTP_STATUS_CONTINUE) {
         response.body = nullptr;
-        response.state = Response::State::BODY;
+        response.state = Response::State::END;
         return true;
     }
 
@@ -741,7 +741,7 @@ HttpClient::HeadersFinished()
 
             if (content_length == 0) {
                 response.body = nullptr;
-                response.state = Response::State::BODY;
+                response.state = Response::State::END;
                 return true;
             }
         }
@@ -781,7 +781,7 @@ HttpClient::HandleLine(const char *line, size_t length)
 static void
 http_client_response_finished(HttpClient *client)
 {
-    assert(client->response.state == HttpClient::Response::State::BODY);
+    assert(client->response.state == HttpClient::Response::State::END);
 
     stopwatch_event(client->stopwatch, "end");
 
@@ -841,13 +841,7 @@ HttpClient::ResponseBodyEOF()
     assert(response.state == Response::State::BODY);
     assert(response_body_reader.IsEOF());
 
-    /* this pointer must be cleared before forwarding the EOF event to
-       our response body handler.  If we forget that, the handler
-       might close the request body, leading to an assertion failure
-       because http_client_request_stream_abort() calls
-       http_client_abort_response_body(), not knowing that the
-       response body is already finished  */
-    response.body = nullptr;
+    response.state = Response::State::END;
 
     response_body_reader.InvokeEof();
 
@@ -903,10 +897,11 @@ HttpClient::FeedHeaders(const void *data, size_t length)
 
     /* the headers are finished, we can now report the response to
        the handler */
-    assert(response.state == Response::State::BODY);
+    assert(response.state == Response::State::BODY ||
+           response.state == Response::State::END);
 
     if (response.status == HTTP_STATUS_CONTINUE) {
-        assert(response.body == nullptr);
+        assert(response.state == Response::State::END);
 
         if (!request.pending_body) {
 #ifndef NDEBUG
@@ -945,7 +940,7 @@ HttpClient::FeedHeaders(const void *data, size_t length)
         request.pending_body.reset();
     }
 
-    if ((response.body == nullptr ||
+    if ((response.state == Response::State::END ||
          response_body_reader.IsSocketDone(socket)) &&
         IsConnected())
         /* we don't need the socket anymore, we've got everything we
@@ -968,7 +963,7 @@ HttpClient::FeedHeaders(const void *data, size_t length)
     if (!IsValid())
         return BufferedResult::CLOSED;
 
-    if (response.body == nullptr) {
+    if (response.state == Response::State::END) {
         http_client_response_finished(this);
         return BufferedResult::CLOSED;
     }
@@ -1035,14 +1030,15 @@ HttpClient::Feed(const void *data, size_t length)
         return FeedHeaders(data, length);
 
     case Response::State::BODY:
-        assert(response.body != nullptr);
-
         if (IsConnected() && response_body_reader.IsSocketDone(socket))
             /* we don't need the socket anymore, we've got everything
                we need in the input buffer */
             ReleaseSocket(keep_alive);
 
         return FeedBody(data, length);
+
+    case Response::State::END:
+        break;
     }
 
     assert(false);
@@ -1230,17 +1226,27 @@ HttpClient::OnError(std::exception_ptr ep) noexcept
 {
     assert(response.state == Response::State::STATUS ||
            response.state == Response::State::HEADERS ||
-           response.state == Response::State::BODY);
+           response.state == Response::State::BODY ||
+           response.state == Response::State::END);
 
     stopwatch_event(stopwatch, "abort");
 
     assert(request.istream.IsDefined());
     request.istream.Clear();
 
-    if (response.state != HttpClient::Response::State::BODY)
+    switch (response.state) {
+    case Response::State::STATUS:
+    case Response::State::HEADERS:
         AbortResponseHeaders(ep);
-    else if (response.body != nullptr)
+        break;
+
+    case Response::State::BODY:
         AbortResponseBody(ep);
+        break;
+
+    case Response::State::END:
+        break;
+    }
 }
 
 /*
