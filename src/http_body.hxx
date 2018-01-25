@@ -103,7 +103,7 @@ public:
     using Istream::DestroyError;
 
     bool IsChunked() const {
-        return rest == REST_CHUNKED;
+        return rest == REST_CHUNKED || rest == REST_EOF_CHUNK;
     }
 
     /**
