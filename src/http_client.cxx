@@ -1339,7 +1339,7 @@ HttpClient::HttpClient(PoolPtr &&_caller_pool, struct pool &_pool,
             /* large request body: ask the server for confirmation
                that he's really interested */
             header_write(headers2, "expect", "100-continue");
-            body = request.pending_body = istream_optional_new(GetPool(), *body);
+            body = request.pending_body = istream_optional_new(GetPool(), UnusedIstreamPtr(body));
         } else {
             /* short request body: send it immediately */
         }

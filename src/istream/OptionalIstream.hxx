@@ -34,6 +34,7 @@
 
 struct pool;
 class Istream;
+class UnusedIstreamPtr;
 
 /**
  * An istream facade which holds an optional istream.  It blocks until
@@ -41,7 +42,7 @@ class Istream;
  * reported to the handler immediately.
  */
 Istream *
-istream_optional_new(struct pool &pool, Istream &input);
+istream_optional_new(struct pool &pool, UnusedIstreamPtr input) noexcept;
 
 /**
  * Allows the istream to resume, but does not trigger reading.

@@ -41,8 +41,8 @@ class OptionalIstream final : public ForwardIstream {
     bool resumed = false;
 
 public:
-    OptionalIstream(struct pool &p, Istream &_input)
-        :ForwardIstream(p, _input) {}
+    OptionalIstream(struct pool &p, UnusedIstreamPtr &&_input)
+        :ForwardIstream(p, std::move(_input)) {}
 
     void Resume() {
         resumed = true;
@@ -84,9 +84,9 @@ public:
 };
 
 Istream *
-istream_optional_new(struct pool &pool, Istream &input)
+istream_optional_new(struct pool &pool, UnusedIstreamPtr input) noexcept
 {
-    return NewIstream<OptionalIstream>(pool, input);
+    return NewIstream<OptionalIstream>(pool, std::move(input));
 }
 
 void
