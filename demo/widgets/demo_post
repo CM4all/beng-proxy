@@ -1,2 +1,4 @@
 cgi "/usr/share/cm4all/beng-proxy/demo/post.py"
+script_name "/post.py"
+path_info "/"
 process
