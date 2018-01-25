@@ -1,3 +1,0 @@
-server "http://cfatest01.intern.cm-ag/widgets/search.rb"
-stateful
-process
