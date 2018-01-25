@@ -153,10 +153,10 @@ struct HttpClient final : BufferedSocketHandler, IstreamHandler, Cancellable {
     /* request */
     struct Request {
         /**
-         * An "istream_optional" which blocks sending the request body
-         * until the server has confirmed "100 Continue".
+         * This #OptionalIstream blocks sending the request body until
+         * the server has confirmed "100 Continue".
          */
-        Istream *pending_body = nullptr;
+        SharedPoolPtr<OptionalIstreamControl> pending_body;
 
         IstreamPointer istream;
         char content_length_buffer[32];
@@ -908,7 +908,7 @@ HttpClient::FeedHeaders(const void *data, size_t length)
     if (response.status == HTTP_STATUS_CONTINUE) {
         assert(response.body == nullptr);
 
-        if (request.pending_body == nullptr) {
+        if (!request.pending_body) {
 #ifndef NDEBUG
             /* assertion workaround */
             response.state = Response::State::STATUS;
@@ -921,8 +921,8 @@ HttpClient::FeedHeaders(const void *data, size_t length)
         /* reset state, we're now expecting the real response */
         response.state = Response::State::STATUS;
 
-        istream_optional_resume(*request.pending_body);
-        request.pending_body = nullptr;
+        request.pending_body->Resume();
+        request.pending_body.reset();
 
         if (!IsConnected()) {
 #ifndef NDEBUG
@@ -938,11 +938,11 @@ HttpClient::FeedHeaders(const void *data, size_t length)
 
         /* try again */
         return BufferedResult::AGAIN_EXPECT;
-    } else if (request.pending_body != nullptr) {
+    } else if (request.pending_body) {
         /* the server begins sending a response - he's not interested
            in the request body, discard it now */
-        istream_optional_discard(*request.pending_body);
-        request.pending_body = nullptr;
+        request.pending_body->Discard();
+        request.pending_body.reset();
     }
 
     if ((response.body == nullptr ||
@@ -1339,7 +1339,11 @@ HttpClient::HttpClient(PoolPtr &&_caller_pool, struct pool &_pool,
             /* large request body: ask the server for confirmation
                that he's really interested */
             header_write(headers2, "expect", "100-continue");
-            body = request.pending_body = istream_optional_new(GetPool(), UnusedIstreamPtr(body));
+
+            auto optional = istream_optional_new(GetPool(),
+                                                 UnusedIstreamPtr(body));
+            body = optional.first.Steal();
+            request.pending_body = std::move(optional.second);
         } else {
             /* short request body: send it immediately */
         }

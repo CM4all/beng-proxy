@@ -38,17 +38,28 @@
 #include <assert.h>
 
 class OptionalIstream final : public ForwardIstream {
+    const SharedPoolPtr<OptionalIstreamControl> control;
+
     bool resumed = false;
 
 public:
-    OptionalIstream(struct pool &p, UnusedIstreamPtr &&_input)
-        :ForwardIstream(p, std::move(_input)) {}
+    OptionalIstream(struct pool &p, UnusedIstreamPtr &&_input) noexcept
+        :ForwardIstream(p, std::move(_input)),
+         control(SharedPoolPtr<OptionalIstreamControl>::Make(p, *this)) {}
 
-    void Resume() {
+    ~OptionalIstream() noexcept {
+        control->optional = nullptr;
+    }
+
+    auto GetControl() noexcept {
+        return control;
+    }
+
+    void Resume() noexcept {
         resumed = true;
     }
 
-    void Discard() {
+    void Discard() noexcept {
         assert(!resumed);
 
         resumed = true;
@@ -83,22 +94,23 @@ public:
     }
 };
 
-Istream *
+void
+OptionalIstreamControl::Resume() noexcept
+{
+    if (optional != nullptr)
+        optional->Resume();
+}
+
+void
+OptionalIstreamControl::Discard() noexcept
+{
+    if (optional != nullptr)
+        optional->Discard();
+}
+
+std::pair<UnusedIstreamPtr, SharedPoolPtr<OptionalIstreamControl>>
 istream_optional_new(struct pool &pool, UnusedIstreamPtr input) noexcept
 {
-    return NewIstream<OptionalIstream>(pool, std::move(input));
-}
-
-void
-istream_optional_resume(Istream &istream)
-{
-    auto &optional = (OptionalIstream &)istream;
-    optional.Resume();
-}
-
-void
-istream_optional_discard(Istream &istream)
-{
-    auto &optional = (OptionalIstream &)istream;
-    optional.Discard();
+    auto *i = NewIstream<OptionalIstream>(pool, std::move(input));
+    return std::make_pair(UnusedIstreamPtr(i), i->GetControl());
 }
