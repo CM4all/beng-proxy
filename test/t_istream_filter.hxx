@@ -46,6 +46,7 @@
 #include "event/DeferEvent.hxx"
 
 #include <stdexcept>
+#include <string>
 
 #include <stdio.h>
 #ifdef EXPECTED_RESULT
@@ -80,8 +81,7 @@ struct Context final : IstreamHandler {
     bool eof = false;
 #ifdef EXPECTED_RESULT
     bool record = false;
-    char buffer[sizeof(EXPECTED_RESULT) * 2];
-    size_t buffer_length = 0;
+    std::string buffer;
 #endif
     InjectIstreamControl *abort_istream = nullptr;
     int abort_after = 0;
@@ -208,16 +208,13 @@ Context::OnData(gcc_unused const void *data, size_t length)
 #pragma GCC diagnostic ignored "-Wstring-plus-int"
 #endif
 
-        assert(buffer_length + skipped + length < sizeof(buffer));
-        assert(memcmp((const char *)EXPECTED_RESULT + skipped + buffer_length, data, length) == 0);
+        assert(memcmp((const char *)EXPECTED_RESULT + skipped + buffer.size(), data, length) == 0);
 
 #ifdef __clang__
 #pragma GCC diagnostic pop
 #endif
 
-        if (buffer_length + length < sizeof(buffer))
-            memcpy(buffer + buffer_length, data, length);
-        buffer_length += length;
+        buffer.append((const char *)data, length);
     }
 #endif
 
@@ -290,9 +287,10 @@ run_istream_ctx(Context &ctx, struct pool *pool)
 
 #ifdef EXPECTED_RESULT
     if (ctx.record) {
-        assert(ctx.buffer_length + ctx.skipped == sizeof(EXPECTED_RESULT) - 1);
-        assert(memcmp(ctx.buffer, (const char *)EXPECTED_RESULT + ctx.skipped,
-                      ctx.buffer_length - ctx.skipped) == 0);
+        assert(ctx.buffer.size() + ctx.skipped == sizeof(EXPECTED_RESULT) - 1);
+        assert(memcmp(ctx.buffer.data(),
+                      (const char *)EXPECTED_RESULT + ctx.skipped,
+                      ctx.buffer.size()) == 0);
     }
 #endif
 
