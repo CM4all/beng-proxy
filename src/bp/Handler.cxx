@@ -59,7 +59,6 @@
 #include "RedirectHttps.hxx"
 #include "strmap.hxx"
 #include "istream/istream.hxx"
-#include "istream/istream_hold.hxx"
 #include "translation/Cache.hxx"
 #include "translation/Handler.hxx"
 #include "translation/Transformation.hxx"
