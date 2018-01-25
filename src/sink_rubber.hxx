@@ -40,6 +40,7 @@
 struct pool;
 class UnusedIstreamPtr;
 class Rubber;
+class RubberSink;
 class CancellablePointer;
 
 class RubberSinkHandler {
@@ -53,10 +54,13 @@ public:
 /**
  * An istream sink that copies data into a rubber allocation.
  */
-void
+RubberSink *
 sink_rubber_new(struct pool &pool, UnusedIstreamPtr input,
                 Rubber &rubber, size_t max_size,
                 RubberSinkHandler &handler,
                 CancellablePointer &cancel_ptr);
+
+void
+sink_rubber_read(RubberSink &sink) noexcept;
 
 #endif

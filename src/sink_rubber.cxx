@@ -64,6 +64,10 @@ public:
         cancel_ptr = *this;
     }
 
+    void Read() noexcept {
+        input.Read();
+    }
+
 private:
     void FailTooLarge();
     void InvokeEof();
@@ -213,7 +217,7 @@ RubberSink::Cancel() noexcept
  *
  */
 
-void
+RubberSink *
 sink_rubber_new(struct pool &pool, UnusedIstreamPtr input,
                 Rubber &rubber, size_t max_size,
                 RubberSinkHandler &handler,
@@ -223,7 +227,7 @@ sink_rubber_new(struct pool &pool, UnusedIstreamPtr input,
     if (available > (off_t)max_size) {
         input.Clear();
         handler.RubberTooLarge();
-        return;
+        return nullptr;
     }
 
     const off_t size = input.GetAvailable(false);
@@ -232,7 +236,7 @@ sink_rubber_new(struct pool &pool, UnusedIstreamPtr input,
     if (size == 0) {
         input.Clear();
         handler.RubberDone(0, 0);
-        return;
+        return nullptr;
     }
 
     const size_t allocate = size == -1
@@ -243,10 +247,16 @@ sink_rubber_new(struct pool &pool, UnusedIstreamPtr input,
     if (rubber_id == 0) {
         input.Clear();
         handler.RubberOutOfMemory();
-        return;
+        return nullptr;
     }
 
-    NewFromPool<RubberSink>(pool, rubber, rubber_id, allocate,
-                            handler,
-                            std::move(input), cancel_ptr);
+    return NewFromPool<RubberSink>(pool, rubber, rubber_id, allocate,
+                                   handler,
+                                   std::move(input), cancel_ptr);
+}
+
+void
+sink_rubber_read(RubberSink &sink) noexcept
+{
+    sink.Read();
 }

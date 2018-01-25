@@ -42,7 +42,6 @@
 #include "istream/FourIstream.hxx"
 #include "istream/istream_null.hxx"
 #include "istream/istream_string.hxx"
-#include "istream/istream.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "util/Cancellable.hxx"
 
@@ -136,13 +135,13 @@ TEST(SinkRubberTest, Empty2)
     Rubber r(4 * 1024 * 1024);
     Data data(r);
 
-    Istream *input = istream_byte_new(pool,
-                                      istream_null_new(pool)).Steal();
-    sink_rubber_new(pool, UnusedIstreamPtr(input), r, 1024,
-                    data, data.cancel_ptr);
+    auto input = istream_byte_new(pool, istream_null_new(pool));
+    auto *sink = sink_rubber_new(pool, std::move(input), r, 1024,
+                                 data, data.cancel_ptr);
+    ASSERT_NE(sink, nullptr);
 
     ASSERT_EQ(Data::NONE, data.result);
-    input->Read();
+    sink_rubber_read(*sink);
 
     ASSERT_EQ(Data::DONE, data.result);
     ASSERT_EQ(0u, data.rubber_id);
@@ -155,12 +154,13 @@ TEST(SinkRubberTest, String)
     Rubber r(4 * 1024 * 1024);
     Data data(r);
 
-    Istream *input = istream_string_new(pool, "foo").Steal();
-    sink_rubber_new(pool, UnusedIstreamPtr(input), r, 1024,
-                    data, data.cancel_ptr);
+    auto input = istream_string_new(pool, "foo");
+    auto *sink = sink_rubber_new(pool, std::move(input), r, 1024,
+                                 data, data.cancel_ptr);
+    ASSERT_NE(sink, nullptr);
 
     ASSERT_EQ(Data::NONE, data.result);
-    input->Read();
+    sink_rubber_read(*sink);
 
     ASSERT_EQ(Data::DONE, data.result);
     ASSERT_GT(data.rubber_id, 0);
@@ -175,17 +175,17 @@ TEST(SinkRubberTest, String2)
     Rubber r(4 * 1024 * 1024);
     Data data(r);
 
-    Istream *input = istream_four_new(pool,
-                                      istream_string_new(*pool,
-                                                         "foobar")).Steal();
-    sink_rubber_new(pool, UnusedIstreamPtr(input), r, 1024,
-                    data, data.cancel_ptr);
+    auto input = istream_four_new(pool,
+                                  istream_string_new(*pool, "foobar"));
+    auto *sink = sink_rubber_new(pool, std::move(input), r, 1024,
+                                 data, data.cancel_ptr);
+    ASSERT_NE(sink, nullptr);
 
     ASSERT_EQ(Data::NONE, data.result);
 
-    input->Read();
+    sink_rubber_read(*sink);
     if (Data::NONE == data.result)
-        input->Read();
+        sink_rubber_read(*sink);
 
     ASSERT_EQ(Data::DONE, data.result);
     ASSERT_GT(data.rubber_id, 0);
@@ -211,17 +211,16 @@ TEST(SinkRubberTest, TooLarge2)
     Rubber r(4 * 1024 * 1024);
     Data data(r);
 
-    Istream *input = istream_four_new(pool,
-                                      istream_string_new(*pool,
-                                                         "foobar")).Steal();
-    sink_rubber_new(pool, UnusedIstreamPtr(input), r, 5,
+    auto input = istream_four_new(pool,
+                                  istream_string_new(*pool, "foobar"));
+    auto *sink = sink_rubber_new(pool, std::move(input), r, 5,
                     data, data.cancel_ptr);
 
     ASSERT_EQ(Data::NONE, data.result);
 
-    input->Read();
+    sink_rubber_read(*sink);
     if (Data::NONE == data.result)
-        input->Read();
+        sink_rubber_read(*sink);
 
     ASSERT_EQ(Data::TOO_LARGE, data.result);
 }
@@ -232,13 +231,14 @@ TEST(SinkRubberTest, Error)
     Rubber r(4 * 1024 * 1024);
     Data data(r);
 
-    Istream *input = istream_fail_new(pool,
-                                      std::make_exception_ptr(std::runtime_error("error"))).Steal();
-    sink_rubber_new(pool, UnusedIstreamPtr(input), r, 1024,
-                    data, data.cancel_ptr);
+    auto input = istream_fail_new(pool,
+                                  std::make_exception_ptr(std::runtime_error("error")));
+    auto *sink = sink_rubber_new(pool, std::move(input), r, 1024,
+                                 data, data.cancel_ptr);
+    ASSERT_NE(sink, nullptr);
 
     ASSERT_EQ(Data::NONE, data.result);
-    input->Read();
+    sink_rubber_read(*sink);
 
     ASSERT_EQ(Data::ERROR, data.result);
     ASSERT_NE(data.error, nullptr);
@@ -269,13 +269,13 @@ TEST(SinkRubberTest, Abort)
     auto delayed = istream_delayed_new(pool, event_loop);
     delayed.second.cancel_ptr = nullptr;
 
-    Istream *input = istream_cat_new(pool,
-                                     istream_string_new(*pool, "foo"),
-                                     std::move(delayed.first)).Steal();
-    sink_rubber_new(pool, UnusedIstreamPtr(input), r, 4,
-                    data, data.cancel_ptr);
+    auto input = istream_cat_new(pool, istream_string_new(*pool, "foo"),
+                                 std::move(delayed.first));
+    auto *sink = sink_rubber_new(pool, std::move(input), r, 4,
+                                 data, data.cancel_ptr);
+    ASSERT_NE(sink, nullptr);
     ASSERT_EQ(Data::NONE, data.result);
-    input->Read();
+    sink_rubber_read(*sink);
     ASSERT_EQ(Data::NONE, data.result);
 
     data.cancel_ptr.Cancel();
