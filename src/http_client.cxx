@@ -505,7 +505,7 @@ HttpClient::AsFD()
     if (!IsConnected() || !socket.IsEmpty() || socket.HasFilter() ||
         keep_alive ||
         /* must not be chunked */
-        &response_body_reader != response.body)
+        response_body_reader.IsChunked())
         return -1;
 
     int fd = socket.AsFD();
