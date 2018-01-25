@@ -64,12 +64,14 @@ request_forward(Request &request2,
 
     /* generate request headers */
 
+    const bool has_body = body;
+
     return ForwardRequest(method,
                           forward_request_headers(request2.pool, request.headers,
                                                   request.local_host_and_port,
                                                   request.remote_host,
                                                   exclude_host,
-                                                  body,
+                                                  has_body,
                                                   !request2.IsProcessorEnabled(),
                                                   !request2.IsTransformationEnabled(),
                                                   !request2.IsTransformationEnabled(),

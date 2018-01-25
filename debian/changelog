@@ -1,6 +1,6 @@
 cm4all-beng-proxy (14.0.5) unstable; urgency=low
 
-  * 
+  * bp: fix forwarding headers for request body
 
  --   
 
