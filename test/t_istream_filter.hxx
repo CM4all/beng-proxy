@@ -39,10 +39,10 @@
 #include "istream/FailIstream.hxx"
 #include "istream/FourIstream.hxx"
 #include "istream/HeadIstream.hxx"
-#include "istream/istream_hold.hxx"
 #include "istream/InjectIstream.hxx"
 #include "istream/istream_later.hxx"
 #include "istream/Pointer.hxx"
+#include "istream/UnusedHoldPtr.hxx"
 #include "event/DeferEvent.hxx"
 
 #include <stdexcept>
@@ -579,11 +579,11 @@ test_big_hold(Instance &instance)
 
     istream = create_test(instance.event_loop, *pool, std::move(istream));
     auto *inner = istream.Steal();
-    Istream *hold = istream_hold_new(*pool, *inner);
+    UnusedHoldIstreamPtr hold(*pool, UnusedIstreamPtr(inner));
 
     inner->Read();
 
-    hold->CloseUnused();
+    hold.Clear();
 
     pool_unref(pool);
 }
