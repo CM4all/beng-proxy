@@ -1,2 +1,2 @@
-server "http://cfatest01.intern.cm-ag/widgets/post.py"
+cgi "/usr/share/cm4all/beng-proxy/demo/post.py"
 process
