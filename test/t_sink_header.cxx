@@ -85,11 +85,10 @@ create_test(EventLoop &event_loop, struct pool *pool, Istream *input)
     auto delayed = istream_delayed_new(*pool, event_loop);
     Istream *hold = istream_hold_new(*pool, *delayed.first.Steal());
 
-    sink_header_new(*pool, UnusedIstreamPtr(input),
-                    my_sink_header_handler, &delayed.second,
-                    delayed.second.cancel_ptr);
-
-    input->Read();
+    auto &sink = sink_header_new(*pool, UnusedIstreamPtr(input),
+                                 my_sink_header_handler, &delayed.second,
+                                 delayed.second.cancel_ptr);
+    sink_header_read(sink);
 
     return hold;
 }

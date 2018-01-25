@@ -70,6 +70,11 @@ public:
         cancel_ptr = *this;
     }
 
+    void Read() noexcept {
+        input.Read();
+    }
+
+private:
     size_t InvokeCallback(size_t consumed);
 
     size_t ConsumeSize(const void *data, size_t length);
@@ -323,14 +328,20 @@ HeaderSink::_GetAvailable(bool partial)
  *
  */
 
-void
+HeaderSink &
 sink_header_new(struct pool &pool, UnusedIstreamPtr input,
                 const struct sink_header_handler &handler, void *ctx,
-                CancellablePointer &cancel_ptr)
+                CancellablePointer &cancel_ptr) noexcept
 {
     assert(handler.done != nullptr);
     assert(handler.error != nullptr);
 
-    NewIstream<HeaderSink>(pool, std::move(input), handler, ctx, cancel_ptr);
+    return *NewIstream<HeaderSink>(pool, std::move(input),
+                                   handler, ctx, cancel_ptr);
+}
 
+void
+sink_header_read(HeaderSink &sink) noexcept
+{
+    sink.Read();
 }

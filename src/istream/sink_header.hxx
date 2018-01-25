@@ -40,6 +40,7 @@
 struct pool;
 class UnusedIstreamPtr;
 class CancellablePointer;
+class HeaderSink;
 
 struct sink_header_handler {
     void (*done)(void *header, size_t length, UnusedIstreamPtr tail, void *ctx);
@@ -51,9 +52,12 @@ struct sink_header_handler {
  * reads it into a buffer and invokes a callback with the tail of the
  * stream.
  */
-void
+HeaderSink &
 sink_header_new(struct pool &pool, UnusedIstreamPtr input,
                 const struct sink_header_handler &handler, void *ctx,
-                CancellablePointer &cancel_ptr);
+                CancellablePointer &cancel_ptr) noexcept;
+
+void
+sink_header_read(HeaderSink &sink) noexcept;
 
 #endif
