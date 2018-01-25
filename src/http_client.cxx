@@ -1278,7 +1278,7 @@ HttpClient::HttpClient(PoolPtr &&_caller_pool, struct pool &_pool,
                        const SocketFilter *filter, void *filter_ctx,
                        http_method_t method, const char *uri,
                        HttpHeaders &&headers,
-                       UnusedIstreamPtr _body, bool expect_100,
+                       UnusedIstreamPtr body, bool expect_100,
                        HttpResponseHandler &handler,
                        CancellablePointer &cancel_ptr)
     :caller_pool(std::move(_caller_pool)),
@@ -1308,26 +1308,22 @@ HttpClient::HttpClient(PoolPtr &&_caller_pool, struct pool &_pool,
 
     GrowingBuffer &headers2 = headers.GetBuffer();
 
-    const bool upgrade = _body && http_is_upgrade(headers);
-    Istream *body = nullptr;
+    const bool upgrade = body && http_is_upgrade(headers);
     if (upgrade) {
         /* forward hop-by-hop headers requesting the protocol
            upgrade */
         headers.Write("connection", "upgrade");
         headers.MoveToBuffer("upgrade");
-    } else if (_body) {
-        body = _body.Steal();
-        off_t content_length = body->GetAvailable(false);
+    } else if (body) {
+        off_t content_length = body.GetAvailable(false);
         if (content_length == (off_t)-1) {
             header_write(headers2, "transfer-encoding", "chunked");
 
             /* optimized code path: if an istream_dechunked shall get
                chunked via istream_chunk, let's just skip both to
                reduce the amount of work and I/O we have to do */
-            _body = UnusedIstreamPtr(body);
-            if (!istream_dechunk_check_verbatim(_body))
-                _body = istream_chunked_new(GetPool(), std::move(_body));
-            body = _body.Steal();
+            if (!istream_dechunk_check_verbatim(body))
+                body = istream_chunked_new(GetPool(), std::move(body));
         } else {
             snprintf(request.content_length_buffer,
                      sizeof(request.content_length_buffer),
@@ -1336,15 +1332,14 @@ HttpClient::HttpClient(PoolPtr &&_caller_pool, struct pool &_pool,
                          request.content_length_buffer);
         }
 
-        off_t available = expect_100 ? body->GetAvailable(true) : 0;
+        off_t available = expect_100 ? body.GetAvailable(true) : 0;
         if (available < 0 || available >= EXPECT_100_THRESHOLD) {
             /* large request body: ask the server for confirmation
                that he's really interested */
             header_write(headers2, "expect", "100-continue");
 
-            auto optional = istream_optional_new(GetPool(),
-                                                 UnusedIstreamPtr(body));
-            body = optional.first.Steal();
+            auto optional = istream_optional_new(GetPool(), std::move(body));
+            body = std::move(optional.first);
             request.pending_body = std::move(optional.second);
         } else {
             /* short request body: send it immediately */
@@ -1361,7 +1356,7 @@ HttpClient::HttpClient(PoolPtr &&_caller_pool, struct pool &_pool,
     request.istream.Set(istream_cat_new(GetPool(),
                                         std::move(request_line_stream),
                                         std::move(header_stream),
-                                        UnusedIstreamPtr(body)),
+                                        std::move(body)),
                         *this,
                         istream_direct_mask_to(socket.GetType()));
 
