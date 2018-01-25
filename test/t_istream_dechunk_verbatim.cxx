@@ -65,10 +65,9 @@ create_test(EventLoop &event_loop, struct pool &pool,
             UnusedIstreamPtr input) noexcept
 {
     auto *handler = NewFromPool<MyDechunkHandler>(pool);
-    auto *dechunk = istream_dechunk_new(pool, std::move(input),
-                                       event_loop, *handler).Steal();
-    istream_dechunk_check_verbatim(*dechunk);
-    input = UnusedIstreamPtr(dechunk);
+    input = istream_dechunk_new(pool, std::move(input),
+                                event_loop, *handler);
+    istream_dechunk_check_verbatim(input);
 #ifdef T_BYTE
     input = istream_byte_new(pool, std::move(input));
 #endif

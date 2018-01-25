@@ -1324,8 +1324,10 @@ HttpClient::HttpClient(PoolPtr &&_caller_pool, struct pool &_pool,
             /* optimized code path: if an istream_dechunked shall get
                chunked via istream_chunk, let's just skip both to
                reduce the amount of work and I/O we have to do */
-            if (!istream_dechunk_check_verbatim(*body))
-                body = istream_chunked_new(GetPool(), UnusedIstreamPtr(body)).Steal();
+            _body = UnusedIstreamPtr(body);
+            if (!istream_dechunk_check_verbatim(_body))
+                _body = istream_chunked_new(GetPool(), std::move(_body));
+            body = _body.Steal();
         } else {
             snprintf(request.content_length_buffer,
                      sizeof(request.content_length_buffer),

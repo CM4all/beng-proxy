@@ -150,8 +150,10 @@ HttpServerConnection::SubmitResponse(http_status_t status,
             /* optimized code path: if an istream_dechunked shall get
                chunked via istream_chunk, let's just skip both to
                reduce the amount of work and I/O we have to do */
-            if (!istream_dechunk_check_verbatim(*body))
-                body = istream_chunked_new(request_pool, UnusedIstreamPtr(body)).Steal();
+            UnusedIstreamPtr b(body);
+            if (!istream_dechunk_check_verbatim(b))
+                b = istream_chunked_new(request_pool, std::move(b));
+            body = b.Steal();
         }
     } else if (http_status_is_empty(status)) {
         assert(content_length == 0);

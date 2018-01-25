@@ -35,7 +35,6 @@
 
 struct pool;
 class EventLoop;
-class Istream;
 class UnusedIstreamPtr;
 
 class DechunkHandler {
@@ -80,6 +79,6 @@ istream_dechunk_new(struct pool &pool, UnusedIstreamPtr input,
  * need to output chunked data (e.g. proxying to another client).
  */
 bool
-istream_dechunk_check_verbatim(Istream &i);
+istream_dechunk_check_verbatim(UnusedIstreamPtr &i);
 
 #endif

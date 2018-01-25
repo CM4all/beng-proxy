@@ -98,10 +98,6 @@ public:
     {
     }
 
-    static DechunkIstream *CheckCast(Istream &i) {
-        return dynamic_cast<DechunkIstream *>(&i);
-    }
-
     void SetVerbatim() {
         verbatim = true;
         eof_verbatim = false;
@@ -477,9 +473,9 @@ istream_dechunk_new(struct pool &pool, UnusedIstreamPtr input,
 }
 
 bool
-istream_dechunk_check_verbatim(Istream &i)
+istream_dechunk_check_verbatim(UnusedIstreamPtr &i)
 {
-    auto *dechunk = DechunkIstream::CheckCast(i);
+    auto *dechunk = i.DynamicCast<DechunkIstream>();
     if (dechunk == nullptr)
         /* not a DechunkIstream instance */
         return false;
