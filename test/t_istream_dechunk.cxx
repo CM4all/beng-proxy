@@ -55,7 +55,8 @@ static Istream *
 create_test(EventLoop &event_loop, struct pool *pool, Istream *input)
 {
     auto *handler = NewFromPool<MyDechunkHandler>(*pool);
-    return istream_dechunk_new(*pool, *input, event_loop, *handler);
+    return istream_dechunk_new(*pool, UnusedIstreamPtr(input),
+                               event_loop, *handler).Steal();
 }
 
 #include "t_istream_filter.hxx"

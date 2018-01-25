@@ -36,6 +36,7 @@
 struct pool;
 class EventLoop;
 class Istream;
+class UnusedIstreamPtr;
 
 class DechunkHandler {
 public:
@@ -64,8 +65,8 @@ public:
  * data() callback, so the istream doesn't know yet how much is
  * consumed
  */
-Istream *
-istream_dechunk_new(struct pool &pool, Istream &input,
+UnusedIstreamPtr
+istream_dechunk_new(struct pool &pool, UnusedIstreamPtr input,
                     EventLoop &event_loop,
                     DechunkHandler &dechunk_handler);
 

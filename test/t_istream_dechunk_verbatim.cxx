@@ -64,7 +64,8 @@ static Istream *
 create_test(EventLoop &event_loop, struct pool *pool, Istream *input)
 {
     auto *handler = NewFromPool<MyDechunkHandler>(*pool);
-    input = istream_dechunk_new(*pool, *input, event_loop, *handler);
+    input = istream_dechunk_new(*pool, UnusedIstreamPtr(input),
+                                event_loop, *handler).Steal();
     istream_dechunk_check_verbatim(*input);
 #ifdef T_BYTE
     input = istream_byte_new(*pool, UnusedIstreamPtr(input)).Steal();

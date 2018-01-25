@@ -32,6 +32,7 @@
 
 #include "http_body.hxx"
 #include "istream/istream_dechunk.hxx"
+#include "istream/UnusedPtr.hxx"
 #include "net/SocketDescriptor.hxx"
 
 #include <limits.h>
@@ -158,7 +159,8 @@ HttpBodyReader::Init(EventLoop &event_loop, off_t content_length,
         rest = REST_CHUNKED;
         end_seen = false;
 
-        s = istream_dechunk_new(GetPool(), *s, event_loop, *this);
+        s = istream_dechunk_new(GetPool(), UnusedIstreamPtr(s),
+                                event_loop, *this).Steal();
     }
 
     return *s;

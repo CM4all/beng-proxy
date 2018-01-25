@@ -31,8 +31,9 @@
  */
 
 #include "istream_dechunk.hxx"
-#include "http/ChunkParser.hxx"
 #include "FacadeIstream.hxx"
+#include "UnusedPtr.hxx"
+#include "http/ChunkParser.hxx"
 #include "pool/pool.hxx"
 #include "event/DeferEvent.hxx"
 
@@ -88,10 +89,10 @@ class DechunkIstream final : public FacadeIstream {
     DechunkHandler &dechunk_handler;
 
 public:
-    DechunkIstream(struct pool &p, Istream &_input,
+    DechunkIstream(struct pool &p, UnusedIstreamPtr &&_input,
                    EventLoop &event_loop,
                    DechunkHandler &_dechunk_handler)
-        :FacadeIstream(p, _input),
+        :FacadeIstream(p, std::move(_input)),
          defer_eof_event(event_loop, BIND_THIS_METHOD(DeferredEof)),
          dechunk_handler(_dechunk_handler)
     {
@@ -465,12 +466,14 @@ DechunkIstream::_Close() noexcept
  *
  */
 
-Istream *
-istream_dechunk_new(struct pool &pool, Istream &input,
+UnusedIstreamPtr
+istream_dechunk_new(struct pool &pool, UnusedIstreamPtr input,
                     EventLoop &event_loop,
                     DechunkHandler &dechunk_handler)
 {
-    return NewIstream<DechunkIstream>(pool, input, event_loop, dechunk_handler);
+    return UnusedIstreamPtr(NewIstream<DechunkIstream>(pool, std::move(input),
+                                                       event_loop,
+                                                       dechunk_handler));
 }
 
 bool
