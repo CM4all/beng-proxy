@@ -46,7 +46,6 @@
 #include "istream/istream.hxx"
 #include "istream/istream_cat.hxx"
 #include "istream/DelayedIstream.hxx"
-#include "istream/istream_hold.hxx"
 #include "istream/istream_iconv.hxx"
 #include "istream/istream_null.hxx"
 #include "istream/istream_pause.hxx"
@@ -369,12 +368,12 @@ embed_inline_widget(struct pool &pool, struct processor_env &env,
     auto iw = NewFromPool<InlineWidget>(pool, pool, env, plain_text, widget,
                                         delayed.second);
 
-    Istream *hold = istream_hold_new(pool, *iw->MakeResponse(std::move(delayed.first)).Steal());
+    UnusedHoldIstreamPtr hold(pool, iw->MakeResponse(std::move(delayed.first)));
 
     iw->Start();
 
     if (pause)
         pause->Resume();
 
-    return UnusedIstreamPtr(hold);
+    return std::move(hold);
 }
