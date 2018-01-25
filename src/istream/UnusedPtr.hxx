@@ -78,6 +78,15 @@ public:
         return std::exchange(stream, nullptr);
     }
 
+    /**
+     * This is a kludge to allow checking and inspecting a specific
+     * #Istream implementation.  Use with care.
+     */
+    template<typename T>
+    T *DynamicCast() noexcept {
+        return dynamic_cast<T *>(stream);
+    }
+
     void Clear() noexcept {
         auto *s = Steal();
         if (s != nullptr)
