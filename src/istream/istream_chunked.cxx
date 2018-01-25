@@ -33,6 +33,7 @@
 #include "istream_chunked.hxx"
 #include "FacadeIstream.hxx"
 #include "Bucket.hxx"
+#include "UnusedPtr.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/Cast.hxx"
 #include "util/HexFormat.h"
@@ -57,8 +58,8 @@ class ChunkedIstream final : public FacadeIstream {
     size_t missing_from_current_chunk = 0;
 
 public:
-    ChunkedIstream(struct pool &p, Istream &_input)
-        :FacadeIstream(p, _input) {}
+    ChunkedIstream(struct pool &p, UnusedIstreamPtr &&_input)
+        :FacadeIstream(p, std::move(_input)) {}
 
     /* virtual methods from class Istream */
 
@@ -384,8 +385,8 @@ ChunkedIstream::_Close() noexcept
  *
  */
 
-Istream *
-istream_chunked_new(struct pool &pool, Istream &input)
+UnusedIstreamPtr
+istream_chunked_new(struct pool &pool, UnusedIstreamPtr input) noexcept
 {
-    return NewIstream<ChunkedIstream>(pool, input);
+    return UnusedIstreamPtr(NewIstream<ChunkedIstream>(pool, std::move(input)));
 }

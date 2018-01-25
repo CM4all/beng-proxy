@@ -47,7 +47,7 @@ create_input(struct pool *pool)
 static Istream *
 create_test(EventLoop &, struct pool *pool, Istream *input)
 {
-    return istream_chunked_new(*pool, *input);
+    return istream_chunked_new(*pool, UnusedIstreamPtr(input)).Steal();
 }
 
 #define CUSTOM_TEST
@@ -89,7 +89,7 @@ test_custom(EventLoop &, struct pool *pool)
     pool = pool_new_linear(pool, "test", 8192);
     auto *ctx = NewFromPool<Custom>(*pool, *pool);
 
-    auto *chunked = istream_chunked_new(*pool, *ctx);
+    auto *chunked = istream_chunked_new(*pool, UnusedIstreamPtr(ctx)).Steal();
     chunked->SetHandler(*ctx);
     pool_unref(pool);
 

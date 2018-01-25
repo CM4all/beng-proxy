@@ -34,12 +34,12 @@
 #define BENG_PROXY_ISTREAM_CHUNKED_HXX
 
 struct pool;
-class Istream;
+class UnusedIstreamPtr;
 
 /**
  * This istream filter adds HTTP chunking.
  */
-Istream *
-istream_chunked_new(struct pool &pool, Istream &input);
+UnusedIstreamPtr
+istream_chunked_new(struct pool &pool, UnusedIstreamPtr input) noexcept;
 
 #endif

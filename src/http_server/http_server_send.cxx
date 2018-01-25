@@ -151,7 +151,7 @@ HttpServerConnection::SubmitResponse(http_status_t status,
                chunked via istream_chunk, let's just skip both to
                reduce the amount of work and I/O we have to do */
             if (!istream_dechunk_check_verbatim(*body))
-                body = istream_chunked_new(request_pool, *body);
+                body = istream_chunked_new(request_pool, UnusedIstreamPtr(body)).Steal();
         }
     } else if (http_status_is_empty(status)) {
         assert(content_length == 0);
