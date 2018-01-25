@@ -34,6 +34,7 @@
 #include "fb_pool.hxx"
 #include "PInstance.hxx"
 #include "istream/istream.hxx"
+#include "istream/Sink.hxx"
 #include "istream/ByteIstream.hxx"
 #include "istream/istream_cat.hxx"
 #include "istream/FailIstream.hxx"
@@ -71,10 +72,10 @@ cleanup(void)
 struct Instance : PInstance {
 };
 
-struct Context final : IstreamHandler {
-    Instance &instance;
+struct Context final : IstreamSink {
+    using IstreamSink::input;
 
-    IstreamPointer input;
+    Instance &instance;
 
     bool half = false;
     bool got_data;
@@ -104,7 +105,7 @@ struct Context final : IstreamHandler {
 
     template<typename I>
     explicit Context(Instance &_instance, I &&_input)
-        :instance(_instance), input(std::forward<I>(_input), *this),
+        :IstreamSink(std::forward<I>(_input)), instance(_instance),
          defer_inject_event(instance.event_loop,
                             BIND_THIS_METHOD(DeferredInject)) {}
 
