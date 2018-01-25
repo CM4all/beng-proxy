@@ -34,12 +34,12 @@
 #define BENG_PROXY_SINK_NULL_HXX
 
 struct pool;
-class Istream;
+class UnusedIstreamPtr;
 
 /**
  * An istream handler which silently discards everything and ignores errors.
  */
 void
-sink_null_new(struct pool &p, Istream &istream);
+sink_null_new(struct pool &p, UnusedIstreamPtr istream);
 
 #endif

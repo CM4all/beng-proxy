@@ -138,7 +138,7 @@ Instance::HandleHttpRequest(HttpServerRequest &request,
 
     case Instance::Mode::MODE_NULL:
         if (request.body)
-            sink_null_new(request.pool, *request.body.Steal());
+            sink_null_new(request.pool, std::move(request.body));
 
         http_server_response(&request, HTTP_STATUS_NO_CONTENT,
                              HttpHeaders(request.pool), nullptr);
@@ -161,7 +161,7 @@ Instance::HandleHttpRequest(HttpServerRequest &request,
 
     case Instance::Mode::DUMMY:
         if (request.body)
-            sink_null_new(request.pool, *request.body.Steal());
+            sink_null_new(request.pool, std::move(request.body));
 
         body = istream_head_new(request.pool,
                                 istream_zero_new(request.pool),
@@ -175,7 +175,7 @@ Instance::HandleHttpRequest(HttpServerRequest &request,
 
     case Instance::Mode::FIXED:
         if (request.body)
-            sink_null_new(request.pool, *request.body.Steal());
+            sink_null_new(request.pool, std::move(request.body));
 
         http_server_response(&request, HTTP_STATUS_OK, HttpHeaders(request.pool),
                              istream_memory_new(request.pool,
@@ -184,7 +184,7 @@ Instance::HandleHttpRequest(HttpServerRequest &request,
 
     case Instance::Mode::HUGE_:
         if (request.body)
-            sink_null_new(request.pool, *request.body.Steal());
+            sink_null_new(request.pool, std::move(request.body));
 
         http_server_response(&request, HTTP_STATUS_OK,
                              HttpHeaders(request.pool),

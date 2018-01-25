@@ -32,11 +32,12 @@
 
 #include "sink_null.hxx"
 #include "Sink.hxx"
+#include "UnusedPtr.hxx"
 
 class SinkNull final : IstreamSink {
 public:
-    explicit SinkNull(Istream &_input)
-        :IstreamSink(_input) {}
+    explicit SinkNull(UnusedIstreamPtr &&_input)
+        :IstreamSink(std::move(_input)) {}
 
     /* virtual methods from class IstreamHandler */
 
@@ -52,7 +53,7 @@ public:
 };
 
 void
-sink_null_new(struct pool &p, Istream &istream)
+sink_null_new(struct pool &p, UnusedIstreamPtr istream)
 {
-    NewFromPool<SinkNull>(p, istream);
+    NewFromPool<SinkNull>(p, std::move(istream));
 }
