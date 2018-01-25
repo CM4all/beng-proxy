@@ -113,12 +113,12 @@ istream_read_expect(Context *ctx, IstreamPointer &istream)
 }
 
 static void
-run_istream_ctx(Context *ctx, struct pool *pool, Istream *_istream)
+run_istream_ctx(Context *ctx, struct pool *pool, UnusedIstreamPtr _istream)
 {
-    gcc_unused off_t a1 = _istream->GetAvailable(false);
-    gcc_unused off_t a2 = _istream->GetAvailable(true);
+    gcc_unused off_t a1 = _istream.GetAvailable(false);
+    gcc_unused off_t a2 = _istream.GetAvailable(true);
 
-    IstreamPointer istream(*_istream, *ctx);
+    IstreamPointer istream(std::move(_istream), *ctx);
 
 #ifndef NO_GOT_DATA_ASSERT
     while (!ctx->eof)
@@ -140,25 +140,25 @@ run_istream_ctx(Context *ctx, struct pool *pool, Istream *_istream)
 }
 
 static void
-run_istream(struct pool *pool, Istream *istream)
+run_istream(struct pool *pool, UnusedIstreamPtr istream)
 {
     Context ctx(*pool);
-    run_istream_ctx(&ctx, pool, istream);
+    run_istream_ctx(&ctx, pool, std::move(istream));
 }
 
-static Istream *
+static UnusedIstreamPtr
 create_test(struct pool *pool)
 {
     GrowingBuffer gb;
     gb.Write("foo");
-    return istream_gb_new(*pool, std::move(gb)).Steal();
+    return istream_gb_new(*pool, std::move(gb));
 }
 
-static Istream *
+static UnusedIstreamPtr
 create_empty(struct pool *pool)
 {
     GrowingBuffer gb;
-    return istream_gb_new(*pool, std::move(gb)).Steal();
+    return istream_gb_new(*pool, std::move(gb));
 }
 
 static bool
@@ -179,8 +179,7 @@ TEST(GrowingBufferTest, Normal)
     const ScopeFbPoolInit fb_pool_init;
     TestPool pool;
 
-    auto *istream = create_test(pool);
-    run_istream(&pool.Steal(), istream);
+    run_istream(&pool.Steal(), create_test(pool));
 }
 
 /** empty input */
@@ -189,8 +188,7 @@ TEST(GrowingBufferTest, Empty)
     const ScopeFbPoolInit fb_pool_init;
     TestPool pool;
 
-    auto *istream = create_empty(pool);
-    run_istream(&pool.Steal(), istream);
+    run_istream(&pool.Steal(), create_empty(pool));
 }
 
 /** first buffer is too small, empty */
@@ -302,8 +300,8 @@ TEST(GrowingBufferTest, AbortWithoutHandler)
     const ScopeFbPoolInit fb_pool_init;
     TestPool pool;
 
-    auto *istream = create_test(pool);
-    istream->CloseUnused();
+    auto istream = create_test(pool);
+    istream.Clear();
 }
 
 /** abort with handler */
@@ -313,7 +311,7 @@ TEST(GrowingBufferTest, AbortWithHandler)
     TestPool pool;
     Context ctx(pool.Steal());
 
-    Istream *istream = create_test(ctx.pool);
+    Istream *istream = create_test(ctx.pool).Steal();
     istream->SetHandler(ctx);
 
     istream->Close();
@@ -329,7 +327,7 @@ TEST(GrowingBufferTest, AbortInHandler)
     TestPool pool;
     Context ctx(pool.Steal());
 
-    ctx.abort_istream.Set(*create_test(ctx.pool), ctx);
+    ctx.abort_istream.Set(create_test(ctx.pool), ctx);
 
     while (!ctx.eof && !ctx.abort && !ctx.closed)
         istream_read_expect(&ctx, ctx.abort_istream);
