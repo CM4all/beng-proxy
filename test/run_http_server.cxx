@@ -133,7 +133,6 @@ Instance::HandleHttpRequest(HttpServerRequest &request,
 {
     switch (mode) {
         http_status_t status;
-        Istream *body;
         static char data[0x100];
 
     case Instance::Mode::MODE_NULL:
@@ -163,14 +162,17 @@ Instance::HandleHttpRequest(HttpServerRequest &request,
         if (request.body)
             sink_null_new(request.pool, std::move(request.body));
 
-        body = istream_head_new(request.pool,
-                                istream_zero_new(request.pool),
-                                256, false).Steal();
-        body = istream_byte_new(request.pool, UnusedIstreamPtr(body)).Steal();
+        {
+            auto body = istream_head_new(request.pool,
+                                         istream_zero_new(request.pool),
+                                         256, false);
+            body = istream_byte_new(request.pool, std::move(body));
 
-        http_server_response(&request, HTTP_STATUS_OK,
-                             HttpHeaders(request.pool),
-                             UnusedIstreamPtr(body));
+            http_server_response(&request, HTTP_STATUS_OK,
+                                 HttpHeaders(request.pool),
+                                 std::move(body));
+        }
+
         break;
 
     case Instance::Mode::FIXED:
