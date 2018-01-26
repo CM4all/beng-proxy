@@ -112,13 +112,13 @@ static constexpr CssParserHandler css_rewrite_parser_handler = {
  *
  */
 
-Istream *
+UnusedIstreamPtr
 css_rewrite_block_uris(struct pool &pool,
                        struct processor_env &env,
                        struct tcache &translate_cache,
                        Widget &widget,
                        const StringView block,
-                       const struct escape_class *escape)
+                       const struct escape_class *escape) noexcept
 {
     struct css_rewrite rewrite;
 
@@ -164,5 +164,5 @@ css_rewrite_block_uris(struct pool &pool,
         return nullptr;
 
     replace.second->Finish();
-    return replace.first.Steal();
+    return std::move(replace.first);
 }

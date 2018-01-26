@@ -32,14 +32,10 @@
 
 #pragma once
 
-#include <stddef.h>
-
 struct pool;
-class Istream;
+class UnusedIstreamPtr;
 struct processor_env;
 struct StringView;
-struct parsed_uri;
-struct istream;
 struct escape_class;
 struct Widget;
 struct tcache;
@@ -49,10 +45,10 @@ struct tcache;
  *
  * @return NULL if no rewrite is necessary
  */
-Istream *
+UnusedIstreamPtr
 css_rewrite_block_uris(struct pool &pool,
                        struct processor_env &env,
                        struct tcache &translate_cache,
                        Widget &widget,
                        StringView block,
-                       const struct escape_class *escape);
+                       const struct escape_class *escape) noexcept;

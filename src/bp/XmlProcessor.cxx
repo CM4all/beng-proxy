@@ -1053,14 +1053,14 @@ XmlProcessor::HandleIdAttribute(const XmlParserAttribute &attr) noexcept
 void
 XmlProcessor::HandleStyleAttribute(const XmlParserAttribute &attr) noexcept
 {
-    Istream *result =
+    auto result =
         css_rewrite_block_uris(pool, env,
                                *global_translate_cache,
                                container,
                                attr.value,
                                &html_escape_class);
-    if (result != nullptr)
-        ReplaceAttributeValue(attr, UnusedIstreamPtr(result));
+    if (result)
+        ReplaceAttributeValue(attr, std::move(result));
 }
 
 gcc_pure
