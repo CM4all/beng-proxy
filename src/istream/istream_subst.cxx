@@ -51,12 +51,35 @@ struct SubstNode {
     } leaf;
 };
 
+class SubstTree {
+    SubstNode *root = nullptr;
+
+public:
+    SubstTree() = default;
+
+    SubstTree(SubstTree &&src) noexcept
+        :root(std::exchange(src.root, nullptr)) {}
+
+    SubstTree &operator=(SubstTree &&src) noexcept {
+        using std::swap;
+        swap(root, src.root);
+        return *this;
+    }
+
+    bool Add(struct pool &pool, const char *a0, const char *b, size_t b_length) noexcept;
+
+    gcc_pure
+    std::pair<const SubstNode *, const char *> FindFirstChar(const char *data,
+                                                             size_t length) noexcept;
+};
+
 class SubstIstream final : public FacadeIstream {
     bool had_input, had_output;
 
     bool send_first;
 
-    SubstNode *root = nullptr;
+    SubstTree tree;
+
     const SubstNode *match;
     StringView mismatch = nullptr;
 
@@ -165,10 +188,11 @@ subst_next_non_leaf_node(SubstNode *node, SubstNode *root)
     }
 }
 
-inline const char *
-SubstIstream::FindFirstChar(const char *data, size_t length)
+inline std::pair<const SubstNode *, const char *>
+SubstTree::FindFirstChar(const char *data, size_t length) noexcept
 {
     SubstNode *n = root;
+    const SubstNode *match = nullptr;
     const char *min = nullptr;
 
     while (n != nullptr) {
@@ -184,7 +208,15 @@ SubstIstream::FindFirstChar(const char *data, size_t length)
         n = subst_next_non_leaf_node(n, root);
     }
 
-    return min;
+    return std::make_pair(match, min);
+}
+
+inline const char *
+SubstIstream::FindFirstChar(const char *data, size_t length)
+{
+    auto x = tree.FindFirstChar(data, length);
+    match = x.first;
+    return x.second;
 }
 
 /** find a character in the tree */
@@ -696,7 +728,7 @@ istream_subst_new(struct pool *pool, UnusedIstreamPtr input)
 }
 
 inline bool
-SubstIstream::Add(const char *a0, const char *b, size_t b_length)
+SubstTree::Add(struct pool &pool, const char *a0, const char *b, size_t b_length) noexcept
 {
     SubstNode *parent = nullptr;
     const char *a = a0;
@@ -711,8 +743,7 @@ SubstIstream::Add(const char *a0, const char *b, size_t b_length)
         if (p == nullptr) {
             /* create new tree node */
 
-            p = (SubstNode *)p_malloc(&GetPool(),
-                                      sizeof(*p) - sizeof(p->leaf));
+            p = (SubstNode *)p_malloc(&pool, sizeof(*p) - sizeof(p->leaf));
             p->parent = parent;
             p->left = nullptr;
             p->right = nullptr;
@@ -743,7 +774,7 @@ SubstIstream::Add(const char *a0, const char *b, size_t b_length)
     /* create new leaf node */
 
     SubstNode *p = (SubstNode *)
-        p_malloc(&GetPool(), sizeof(*p) + b_length - sizeof(p->leaf.b));
+        p_malloc(&pool, sizeof(*p) + b_length - sizeof(p->leaf.b));
     p->parent = parent;
     p->left = nullptr;
     p->right = nullptr;
@@ -756,6 +787,12 @@ SubstIstream::Add(const char *a0, const char *b, size_t b_length)
     *pp = p;
 
     return true;
+}
+
+inline bool
+SubstIstream::Add(const char *a0, const char *b, size_t b_length)
+{
+    return tree.Add(GetPool(), a0, b, b_length);
 }
 
 bool
