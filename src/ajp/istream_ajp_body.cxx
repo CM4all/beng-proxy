@@ -40,6 +40,8 @@
 #include <assert.h>
 
 class AjpBodyIstream final : public ForwardIstream {
+    const SharedPoolPtr<AjpBodyIstreamControl> control;
+
     size_t requested = 0, packet_remaining = 0;
 
     gcc_packed struct {
@@ -50,7 +52,16 @@ class AjpBodyIstream final : public ForwardIstream {
 
 public:
     AjpBodyIstream(struct pool &_pool, UnusedIstreamPtr &&_input)
-        :ForwardIstream(_pool, std::move(_input)) {}
+        :ForwardIstream(_pool, std::move(_input)),
+         control(SharedPoolPtr<AjpBodyIstreamControl>::Make(_pool, *this)) {}
+
+    ~AjpBodyIstream() noexcept {
+        control->body = nullptr;
+    }
+
+    auto GetControl() {
+        return control;
+    }
 
     void Request(size_t length) {
         /* we're not checking if this becomes larger than the request
@@ -59,6 +70,7 @@ public:
         requested += length;
     }
 
+private:
     void StartPacket(size_t length);
 
     /**
@@ -235,15 +247,16 @@ AjpBodyIstream::_Read()
  *
  */
 
-Istream *
+std::pair<UnusedIstreamPtr, SharedPoolPtr<AjpBodyIstreamControl>>
 istream_ajp_body_new(struct pool &pool, UnusedIstreamPtr input) noexcept
 {
-    return NewIstream<AjpBodyIstream>(pool, std::move(input));
+    auto *i = NewIstream<AjpBodyIstream>(pool, std::move(input));
+    return std::make_pair(UnusedIstreamPtr(i), i->GetControl());
 }
 
 void
-istream_ajp_body_request(Istream &istream, size_t length)
+AjpBodyIstreamControl::Request(size_t length) noexcept
 {
-    auto &ab = (AjpBodyIstream &)istream;
-    ab.Request(length);
+    if (body != nullptr)
+        body->Request(length);
 }

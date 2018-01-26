@@ -77,8 +77,7 @@ struct AjpClient final
     struct Request {
         IstreamPointer istream;
 
-        /** an istream_ajp_body */
-        Istream *ajp_body;
+        SharedPoolPtr<AjpBodyIstreamControl> ajp_body;
 
         /**
          * This flag is set when the request istream has submitted
@@ -478,16 +477,14 @@ AjpClient::ConsumePacket(enum ajp_code code,
             return false;
         }
 
-        if (!request.istream.IsDefined() ||
-            request.ajp_body == nullptr) {
+        if (!request.istream.IsDefined() || !request.ajp_body) {
             /* we always send empty_body_chunk to the AJP server, so
                we can safely ignore all other AJP_CODE_GET_BODY_CHUNK
                requests here */
             return true;
         }
 
-        istream_ajp_body_request(*request.ajp_body,
-                                 FromBE16(chunk->length));
+        request.ajp_body->Request(FromBE16(chunk->length));
         ScheduleWrite();
         return true;
 
@@ -941,14 +938,13 @@ ajp_client_request(struct pool &_pool, EventLoop &event_loop,
 
     auto request = istream_gb_new(pool, std::move(gb));
     if (body) {
-        client->request.ajp_body = istream_ajp_body_new(pool, std::move(body));
-        istream_ajp_body_request(*client->request.ajp_body, requested);
+        auto ajp_body = istream_ajp_body_new(pool, std::move(body));
+        ajp_body.second->Request(requested);
+        client->request.ajp_body = std::move(ajp_body.second);
         request = istream_cat_new(pool, std::move(request),
-                                  UnusedIstreamPtr(client->request.ajp_body),
+                                  std::move(ajp_body.first),
                                   istream_memory_new(pool, &empty_body_chunk,
                                                      sizeof(empty_body_chunk)));
-    } else {
-        client->request.ajp_body = nullptr;
     }
 
     client->request.istream.Set(std::move(request), *client,

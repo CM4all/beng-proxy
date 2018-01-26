@@ -33,19 +33,31 @@
 #ifndef BENG_PROXY_ISTREAM_AJP_BODY_HXX
 #define BENG_PROXY_ISTREAM_AJP_BODY_HXX
 
+#include "pool/SharedPtr.hxx"
+
 #include <stddef.h>
 
 struct pool;
 class Istream;
 class UnusedIstreamPtr;
+class AjpBodyIstream;
+
+class AjpBodyIstreamControl {
+    friend class AjpBodyIstream;
+
+    AjpBodyIstream *body;
+
+public:
+    explicit constexpr AjpBodyIstreamControl(AjpBodyIstream &_body) noexcept
+        :body(&_body) {}
+
+    void Request(size_t length) noexcept;
+};
 
 /**
  * This istream filter wraps data inside AJPv13 packets.
  */
-Istream *
+std::pair<UnusedIstreamPtr, SharedPoolPtr<AjpBodyIstreamControl>>
 istream_ajp_body_new(struct pool &pool, UnusedIstreamPtr input) noexcept;
-
-void
-istream_ajp_body_request(Istream &istream, size_t length);
 
 #endif
