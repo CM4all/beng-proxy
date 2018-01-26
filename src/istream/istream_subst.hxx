@@ -40,7 +40,6 @@
 #include <stddef.h>
 
 struct pool;
-class Istream;
 class UnusedIstreamPtr;
 struct SubstNode;
 
@@ -70,8 +69,8 @@ public:
 /**
  * This istream filter substitutes a word with another string.
  */
-Istream *
+UnusedIstreamPtr
 istream_subst_new(struct pool *pool, UnusedIstreamPtr input,
-                  SubstTree tree);
+                  SubstTree tree) noexcept;
 
 #endif

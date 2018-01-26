@@ -43,7 +43,6 @@
 int
 main(int argc, char **argv)
 try {
-    Istream *istream;
     int i;
 
     const ScopeFbPoolInit fb_pool_init;
@@ -57,17 +56,15 @@ try {
         tree.Add(*pool, argv[i], argv[i + 1]);
     }
 
-    istream = istream_subst_new(pool,
-                                UnusedIstreamPtr(istream_file_new(instance.event_loop, *pool,
-                                                                  "/dev/stdin", (off_t)-1)),
-                                std::move(tree));
-
     if (i < argc) {
         fprintf(stderr, "usage: %s [A1 B1 A2 B2 ...]\n", argv[0]);
         return 1;
     }
 
-    StdioSink sink(*istream);
+    StdioSink sink(istream_subst_new(pool,
+                                     UnusedIstreamPtr(istream_file_new(instance.event_loop, *pool,
+                                                                       "/dev/stdin", (off_t)-1)),
+                                     std::move(tree)).Steal());
 
     pool_unref(pool);
     pool_commit();

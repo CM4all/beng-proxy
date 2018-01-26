@@ -697,11 +697,12 @@ SubstIstream::_Close() noexcept
  *
  */
 
-Istream *
+UnusedIstreamPtr
 istream_subst_new(struct pool *pool, UnusedIstreamPtr input,
-                  SubstTree tree)
+                  SubstTree tree) noexcept
 {
-    return NewIstream<SubstIstream>(*pool, std::move(input), std::move(tree));
+    return UnusedIstreamPtr(NewIstream<SubstIstream>(*pool, std::move(input),
+                                                     std::move(tree)));
 }
 
 bool
