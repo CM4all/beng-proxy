@@ -79,31 +79,31 @@ base_uri(struct pool *pool, const char *absolute_uri)
     return p_strndup(pool, absolute_uri, p - absolute_uri);
 }
 
-static void
-processor_subst_beng_widget(struct pool &pool, Istream &istream,
+static SubstTree
+processor_subst_beng_widget(struct pool &pool,
                             const Widget &widget,
                             const struct processor_env &env)
 {
-    istream_subst_add(istream, "&c:type;", widget.class_name);
-    istream_subst_add(istream, "&c:class;", widget.GetQuotedClassName());
-    istream_subst_add(istream, "&c:local;", widget.cls->local_uri);
-    istream_subst_add(istream, "&c:id;", widget.id);
-    istream_subst_add(istream, "&c:path;", widget.GetIdPath());
-    istream_subst_add(istream, "&c:prefix;", widget.GetPrefix());
-    istream_subst_add(istream, "&c:uri;", env.absolute_uri);
-    istream_subst_add(istream, "&c:base;", base_uri(&pool, env.uri));
-    istream_subst_add(istream, "&c:frame;",
-                      strmap_get_checked(env.args, "frame"));
-    istream_subst_add(istream, "&c:view;", widget.GetEffectiveView()->name);
-    istream_subst_add(istream, "&c:session;",
-                      strmap_get_checked(env.args, "session"));
+    SubstTree subst;
+    subst.Add(pool, "&c:type;", widget.class_name);
+    subst.Add(pool, "&c:class;", widget.GetQuotedClassName());
+    subst.Add(pool, "&c:local;", widget.cls->local_uri);
+    subst.Add(pool, "&c:id;", widget.id);
+    subst.Add(pool, "&c:path;", widget.GetIdPath());
+    subst.Add(pool, "&c:prefix;", widget.GetPrefix());
+    subst.Add(pool, "&c:uri;", env.absolute_uri);
+    subst.Add(pool, "&c:base;", base_uri(&pool, env.uri));
+    subst.Add(pool, "&c:frame;", strmap_get_checked(env.args, "frame"));
+    subst.Add(pool, "&c:view;", widget.GetEffectiveView()->name);
+    subst.Add(pool, "&c:session;", strmap_get_checked(env.args, "session"));
+    return subst;
 }
 
 UnusedIstreamPtr
 text_processor(struct pool &pool, UnusedIstreamPtr input,
                const Widget &widget, const struct processor_env &env)
 {
-    auto *subst = istream_subst_new(&pool, std::move(input));
-    processor_subst_beng_widget(pool, *subst, widget, env);
+    auto *subst = istream_subst_new(&pool, std::move(input),
+                                    processor_subst_beng_widget(pool, widget, env));
     return UnusedIstreamPtr(subst);
 }

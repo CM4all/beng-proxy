@@ -48,10 +48,11 @@ create_input(struct pool &pool) noexcept
 static UnusedIstreamPtr
 create_test(EventLoop &, struct pool &pool, UnusedIstreamPtr input) noexcept
 {
-    Istream *istream = istream_subst_new(&pool, std::move(input));
-    istream_subst_add(*istream, "foo", "bar");
-    istream_subst_add(*istream, "blablablubb", "!");
-    return UnusedIstreamPtr(istream);
+    SubstTree tree;
+    tree.Add(pool, "foo", "bar");
+    tree.Add(pool, "blablablubb", "!");
+
+    return UnusedIstreamPtr(istream_subst_new(&pool, std::move(input), std::move(tree)));
 }
 
 #include "t_istream_filter.hxx"

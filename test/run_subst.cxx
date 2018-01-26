@@ -51,13 +51,16 @@ try {
 
     auto *pool = pool_new_linear(instance.root_pool, "test", 8192);
 
-    istream = istream_subst_new(pool,
-                                UnusedIstreamPtr(istream_file_new(instance.event_loop, *pool,
-                                                                  "/dev/stdin", (off_t)-1)));
+    SubstTree tree;
 
     for (i = 1; i <= argc - 2; i += 2) {
-        istream_subst_add(*istream, argv[i], argv[i + 1]);
+        tree.Add(*pool, argv[i], argv[i + 1]);
     }
+
+    istream = istream_subst_new(pool,
+                                UnusedIstreamPtr(istream_file_new(instance.event_loop, *pool,
+                                                                  "/dev/stdin", (off_t)-1)),
+                                std::move(tree));
 
     if (i < argc) {
         fprintf(stderr, "usage: %s [A1 B1 A2 B2 ...]\n", argv[0]);

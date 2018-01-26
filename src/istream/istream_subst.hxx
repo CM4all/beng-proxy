@@ -33,23 +33,45 @@
 #ifndef BENG_PROXY_ISTREAM_SUBST_HXX
 #define BENG_PROXY_ISTREAM_SUBST_HXX
 
+#include "util/Compiler.h"
+
+#include <algorithm>
+
 #include <stddef.h>
 
 struct pool;
 class Istream;
 class UnusedIstreamPtr;
+struct SubstNode;
+
+class SubstTree {
+    SubstNode *root = nullptr;
+
+public:
+    SubstTree() = default;
+
+    SubstTree(SubstTree &&src) noexcept
+        :root(std::exchange(src.root, nullptr)) {}
+
+    SubstTree &operator=(SubstTree &&src) noexcept {
+        using std::swap;
+        swap(root, src.root);
+        return *this;
+    }
+
+    bool Add(struct pool &pool, const char *a0, const char *b, size_t b_length) noexcept;
+    bool Add(struct pool &pool, const char *a0, const char *b) noexcept;
+
+    gcc_pure
+    std::pair<const SubstNode *, const char *> FindFirstChar(const char *data,
+                                                             size_t length) noexcept;
+};
 
 /**
  * This istream filter substitutes a word with another string.
  */
 Istream *
-istream_subst_new(struct pool *pool, UnusedIstreamPtr input);
-
-bool
-istream_subst_add_n(Istream &istream, const char *a,
-                    const char *b, size_t b_length);
-
-bool
-istream_subst_add(Istream &istream, const char *a, const char *b);
+istream_subst_new(struct pool *pool, UnusedIstreamPtr input,
+                  SubstTree tree);
 
 #endif

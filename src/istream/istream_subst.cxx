@@ -51,28 +51,6 @@ struct SubstNode {
     } leaf;
 };
 
-class SubstTree {
-    SubstNode *root = nullptr;
-
-public:
-    SubstTree() = default;
-
-    SubstTree(SubstTree &&src) noexcept
-        :root(std::exchange(src.root, nullptr)) {}
-
-    SubstTree &operator=(SubstTree &&src) noexcept {
-        using std::swap;
-        swap(root, src.root);
-        return *this;
-    }
-
-    bool Add(struct pool &pool, const char *a0, const char *b, size_t b_length) noexcept;
-
-    gcc_pure
-    std::pair<const SubstNode *, const char *> FindFirstChar(const char *data,
-                                                             size_t length) noexcept;
-};
-
 class SubstIstream final : public FacadeIstream {
     bool had_input, had_output;
 
@@ -100,10 +78,8 @@ class SubstIstream final : public FacadeIstream {
     size_t a_match, b_sent;
 
  public:
-    SubstIstream(struct pool &p, UnusedIstreamPtr _input)
-        :FacadeIstream(p, std::move(_input)) {}
-
-    bool Add(const char *a0, const char *b, size_t b_length);
+    SubstIstream(struct pool &p, UnusedIstreamPtr &&_input, SubstTree &&_tree)
+        :FacadeIstream(p, std::move(_input)), tree(std::move(_tree)) {}
 
 private:
     /** find the first occurence of a "first character" in the buffer */
@@ -722,12 +698,13 @@ SubstIstream::_Close() noexcept
  */
 
 Istream *
-istream_subst_new(struct pool *pool, UnusedIstreamPtr input)
+istream_subst_new(struct pool *pool, UnusedIstreamPtr input,
+                  SubstTree tree)
 {
-    return NewIstream<SubstIstream>(*pool, std::move(input));
+    return NewIstream<SubstIstream>(*pool, std::move(input), std::move(tree));
 }
 
-inline bool
+bool
 SubstTree::Add(struct pool &pool, const char *a0, const char *b, size_t b_length) noexcept
 {
     SubstNode *parent = nullptr;
@@ -789,15 +766,8 @@ SubstTree::Add(struct pool &pool, const char *a0, const char *b, size_t b_length
     return true;
 }
 
-inline bool
-SubstIstream::Add(const char *a0, const char *b, size_t b_length)
-{
-    return tree.Add(GetPool(), a0, b, b_length);
-}
-
 bool
-istream_subst_add(Istream &istream, const char *a, const char *b)
+SubstTree::Add(struct pool &pool, const char *a0, const char *b) noexcept
 {
-    auto &subst = (SubstIstream &)istream;
-    return subst.Add(a, b, b == nullptr ? 0 : strlen(b));
+    return Add(pool, a0, b, b == nullptr ? 0 : strlen(b));
 }
