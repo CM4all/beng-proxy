@@ -34,6 +34,7 @@
 #include "istream/istream_string.hxx"
 #include "istream/istream.hxx"
 #include "istream/UnusedPtr.hxx"
+#include "util/StringView.hxx"
 
 #define EXPECTED_RESULT "bar fo fo bar bla! fo"
 

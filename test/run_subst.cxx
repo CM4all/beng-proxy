@@ -37,7 +37,7 @@
 #include "fb_pool.hxx"
 #include "PInstance.hxx"
 #include "util/PrintException.hxx"
-
+#include "util/StringView.hxx"
 #include "util/Compiler.h"
 
 int

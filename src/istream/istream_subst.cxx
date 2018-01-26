@@ -706,14 +706,13 @@ istream_subst_new(struct pool *pool, UnusedIstreamPtr input,
 }
 
 bool
-SubstTree::Add(struct pool &pool, const char *a0, const char *b, size_t b_length) noexcept
+SubstTree::Add(struct pool &pool, const char *a0, StringView b) noexcept
 {
     SubstNode *parent = nullptr;
     const char *a = a0;
 
     assert(a0 != nullptr);
     assert(*a0 != 0);
-    assert(b_length == 0 || b != nullptr);
 
     auto **pp = &root;
     do {
@@ -752,23 +751,17 @@ SubstTree::Add(struct pool &pool, const char *a0, const char *b, size_t b_length
     /* create new leaf node */
 
     SubstNode *p = (SubstNode *)
-        p_malloc(&pool, sizeof(*p) + b_length - sizeof(p->leaf.b));
+        p_malloc(&pool, sizeof(*p) + b.size - sizeof(p->leaf.b));
     p->parent = parent;
     p->left = nullptr;
     p->right = nullptr;
     p->equals = nullptr;
     p->ch = 0;
     p->leaf.a = a0;
-    p->leaf.b_length = b_length;
-    memcpy(p->leaf.b, b, b_length);
+    p->leaf.b_length = b.size;
+    memcpy(p->leaf.b, b.data, b.size);
 
     *pp = p;
 
     return true;
-}
-
-bool
-SubstTree::Add(struct pool &pool, const char *a0, const char *b) noexcept
-{
-    return Add(pool, a0, b, b == nullptr ? 0 : strlen(b));
 }
