@@ -205,7 +205,12 @@ struct HttpClient final : BufferedSocketHandler, IstreamHandler, Cancellable {
 
         http_status_t status;
         StringMap headers;
-        Istream *body;
+
+        /**
+         * The response body pending to be submitted to the
+         * #HttpResponseHandler.
+         */
+        UnusedIstreamPtr body;
 
         explicit Response(struct pool &pool)
             :headers(pool) {}
@@ -690,7 +695,6 @@ HttpClient::HeadersFinished()
         response.no_body = true;
 
     if (response.no_body || response.status == HTTP_STATUS_CONTINUE) {
-        response.body = nullptr;
         response.state = Response::State::END;
         return true;
     }
@@ -740,7 +744,6 @@ HttpClient::HeadersFinished()
             }
 
             if (content_length == 0) {
-                response.body = nullptr;
                 response.state = Response::State::END;
                 return true;
             }
@@ -756,7 +759,7 @@ HttpClient::HeadersFinished()
 
     response.body = response_body_reader.Init(socket.GetEventLoop(),
                                               content_length,
-                                              chunked).Steal();
+                                              chunked);
 
     response.state = Response::State::BODY;
     socket.SetDirect(CheckDirect());
@@ -950,14 +953,13 @@ HttpClient::FeedHeaders(const void *data, size_t length)
     const ScopePoolRef ref(GetPool() TRACE_ARGS);
     const ScopePoolRef caller_ref(caller_pool TRACE_ARGS);
 
-    auto *body = response.body;
-    if (body == nullptr && !response.no_body)
-        body = istream_null_new(caller_pool).Steal();
+    if (!response.body && !response.no_body)
+        response.body = istream_null_new(caller_pool);
 
     response.in_handler = true;
     request.handler.InvokeResponse(response.status,
                                    std::move(response.headers),
-                                   UnusedIstreamPtr(body));
+                                   std::move(response.body));
     response.in_handler = false;
 
     if (!IsValid())
