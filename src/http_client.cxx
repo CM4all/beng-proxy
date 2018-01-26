@@ -754,9 +754,9 @@ HttpClient::HeadersFinished()
         chunked = true;
     }
 
-    response.body = &response_body_reader.Init(socket.GetEventLoop(),
-                                               content_length,
-                                               chunked);
+    response.body = response_body_reader.Init(socket.GetEventLoop(),
+                                              content_length,
+                                              chunked).Steal();
 
     response.state = Response::State::BODY;
     socket.SetDirect(CheckDirect());

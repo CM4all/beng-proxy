@@ -80,7 +80,8 @@ public:
     explicit HttpBodyReader(struct pool &_pool)
         :Istream(_pool) {}
 
-    Istream &Init(EventLoop &event_loop, off_t content_length, bool chunked);
+    UnusedIstreamPtr Init(EventLoop &event_loop, off_t content_length,
+                          bool chunked);
 
     using Istream::GetPool;
     using Istream::Destroy;

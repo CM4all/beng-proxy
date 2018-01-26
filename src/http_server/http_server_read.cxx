@@ -274,8 +274,8 @@ HttpServerConnection::HeadersFinished()
 
     request_body_reader = NewFromPool<RequestBodyReader>(r.pool, r.pool,
                                                          *this);
-    r.body = UnusedIstreamPtr(&request_body_reader->Init(GetEventLoop(), content_length,
-                                                         chunked));
+    r.body = request_body_reader->Init(GetEventLoop(), content_length,
+                                       chunked);
 
     request.read_state = Request::BODY;
 #ifndef NDEBUG

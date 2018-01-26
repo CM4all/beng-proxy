@@ -144,7 +144,7 @@ HttpBodyReader::OnDechunkEnd()
     return true;
 }
 
-Istream &
+UnusedIstreamPtr
 HttpBodyReader::Init(EventLoop &event_loop, off_t content_length,
                      bool _chunked)
 {
@@ -152,16 +152,16 @@ HttpBodyReader::Init(EventLoop &event_loop, off_t content_length,
 
     rest = content_length;
 
-    Istream *s = this;
+    UnusedIstreamPtr s(this);
     if (_chunked) {
         assert(rest == (off_t)REST_UNKNOWN);
 
         rest = REST_CHUNKED;
         end_seen = false;
 
-        s = istream_dechunk_new(GetPool(), UnusedIstreamPtr(s),
-                                event_loop, *this).Steal();
+        s = istream_dechunk_new(GetPool(), std::move(s),
+                                event_loop, *this);
     }
 
-    return *s;
+    return s;
 }
