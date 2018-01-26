@@ -32,6 +32,7 @@
 
 #include "istream_trace.hxx"
 #include "ForwardIstream.hxx"
+#include "UnusedPtr.hxx"
 #include "pool/pool.hxx"
 #include "util/Exception.hxx"
 
@@ -39,8 +40,8 @@
 
 class TraceIstream final : public ForwardIstream {
 public:
-    TraceIstream(struct pool &_pool, Istream &_input)
-        :ForwardIstream(_pool, _input) {
+    TraceIstream(struct pool &_pool, UnusedIstreamPtr &&_input)
+        :ForwardIstream(_pool, std::move(_input)) {
         fprintf(stderr, "%p new()\n", (const void *)this);
     }
 
@@ -150,8 +151,8 @@ TraceIstream::TraceData(const void *data0, size_t length)
  *
  */
 
-Istream *
-istream_trace_new(struct pool *pool, Istream &input)
+UnusedIstreamPtr
+istream_trace_new(struct pool &pool, UnusedIstreamPtr input) noexcept
 {
-    return NewIstream<TraceIstream>(*pool, input);
+    return UnusedIstreamPtr(NewIstream<TraceIstream>(pool, std::move(input)));
 }

@@ -34,12 +34,12 @@
 #define BENG_PROXY_ISTREAM_TRACE_HXX
 
 struct pool;
-class Istream;
+class UnusedIstreamPtr;
 
 /**
  * This istream filter prints debug information to stderr.
  */
-Istream *
-istream_trace_new(struct pool *pool, Istream &input);
+UnusedIstreamPtr
+istream_trace_new(struct pool &pool, UnusedIstreamPtr input) noexcept;
 
 #endif
