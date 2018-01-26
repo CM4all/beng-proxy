@@ -33,6 +33,7 @@
 #include "istream_ajp_body.hxx"
 #include "Protocol.hxx"
 #include "istream/ForwardIstream.hxx"
+#include "istream/UnusedPtr.hxx"
 #include "direct.hxx"
 #include "util/ByteOrder.hxx"
 
@@ -48,8 +49,8 @@ class AjpBodyIstream final : public ForwardIstream {
     size_t header_sent;
 
 public:
-    AjpBodyIstream(struct pool &_pool, Istream &_input)
-        :ForwardIstream(_pool, _input) {}
+    AjpBodyIstream(struct pool &_pool, UnusedIstreamPtr &&_input)
+        :ForwardIstream(_pool, std::move(_input)) {}
 
     void Request(size_t length) {
         /* we're not checking if this becomes larger than the request
@@ -235,9 +236,9 @@ AjpBodyIstream::_Read()
  */
 
 Istream *
-istream_ajp_body_new(struct pool &pool, Istream &input)
+istream_ajp_body_new(struct pool &pool, UnusedIstreamPtr input) noexcept
 {
-    return NewIstream<AjpBodyIstream>(pool, input);
+    return NewIstream<AjpBodyIstream>(pool, std::move(input));
 }
 
 void

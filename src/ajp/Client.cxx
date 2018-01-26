@@ -941,7 +941,7 @@ ajp_client_request(struct pool &_pool, EventLoop &event_loop,
 
     auto request = istream_gb_new(pool, std::move(gb));
     if (body) {
-        client->request.ajp_body = istream_ajp_body_new(pool, *body.Steal());
+        client->request.ajp_body = istream_ajp_body_new(pool, std::move(body));
         istream_ajp_body_request(*client->request.ajp_body, requested);
         request = istream_cat_new(pool, std::move(request),
                                   UnusedIstreamPtr(client->request.ajp_body),

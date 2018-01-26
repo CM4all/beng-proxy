@@ -37,12 +37,13 @@
 
 struct pool;
 class Istream;
+class UnusedIstreamPtr;
 
 /**
  * This istream filter wraps data inside AJPv13 packets.
  */
 Istream *
-istream_ajp_body_new(struct pool &pool, Istream &input);
+istream_ajp_body_new(struct pool &pool, UnusedIstreamPtr input) noexcept;
 
 void
 istream_ajp_body_request(Istream &istream, size_t length);
