@@ -168,8 +168,9 @@ my_mcd_response(enum memcached_response_status status,
     c->status = status;
 
     if (value) {
-        value = istream_pipe_new(c->pool, std::move(value), nullptr);
-        c->value = sink_fd_new(c->event_loop, *c->pool, *value.Steal(),
+        c->value = sink_fd_new(c->event_loop, *c->pool,
+                               istream_pipe_new(c->pool, std::move(value),
+                                                nullptr),
                                FileDescriptor(STDOUT_FILENO),
                                guess_fd_type(STDOUT_FILENO),
                                my_sink_fd_handler, c);

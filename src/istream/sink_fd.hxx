@@ -40,7 +40,7 @@
 struct pool;
 class EventLoop;
 class FileDescriptor;
-class Istream;
+class UnusedIstreamPtr;
 struct SinkFd;
 
 struct SinkFdHandler {
@@ -69,7 +69,7 @@ struct SinkFdHandler {
  * An #IstreamHandler which sends data to a file descriptor.
  */
 SinkFd *
-sink_fd_new(EventLoop &event_loop, struct pool &pool, Istream &istream,
+sink_fd_new(EventLoop &event_loop, struct pool &pool, UnusedIstreamPtr istream,
             FileDescriptor fd, FdType fd_type,
             const SinkFdHandler &handler, void *ctx);
 

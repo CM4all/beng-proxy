@@ -32,6 +32,7 @@
 
 #include "sink_fd.hxx"
 #include "Sink.hxx"
+#include "UnusedPtr.hxx"
 #include "pool/pool.hxx"
 #include "direct.hxx"
 #include "io/Splice.hxx"
@@ -70,10 +71,11 @@ struct SinkFd final : IstreamSink {
     bool valid = true;
 #endif
 
-    SinkFd(EventLoop &event_loop, struct pool &_pool, Istream &_istream,
+    SinkFd(EventLoop &event_loop, struct pool &_pool,
+           UnusedIstreamPtr &&_istream,
            FileDescriptor _fd, FdType _fd_type,
            const SinkFdHandler &_handler, void *_handler_ctx)
-        :IstreamSink(_istream, istream_direct_mask_to(_fd_type)),
+        :IstreamSink(std::move(_istream), istream_direct_mask_to(_fd_type)),
          pool(&_pool),
          fd(_fd), fd_type(_fd_type),
          handler(&_handler), handler_ctx(_handler_ctx),
@@ -221,7 +223,7 @@ SinkFd::EventCallback(unsigned)
  */
 
 SinkFd *
-sink_fd_new(EventLoop &event_loop, struct pool &pool, Istream &istream,
+sink_fd_new(EventLoop &event_loop, struct pool &pool, UnusedIstreamPtr istream,
             FileDescriptor fd, FdType fd_type,
             const SinkFdHandler &handler, void *ctx)
 {
@@ -230,7 +232,8 @@ sink_fd_new(EventLoop &event_loop, struct pool &pool, Istream &istream,
     assert(handler.input_error != nullptr);
     assert(handler.send_error != nullptr);
 
-    return NewFromPool<SinkFd>(pool, event_loop, pool, istream, fd, fd_type,
+    return NewFromPool<SinkFd>(pool, event_loop, pool, std::move(istream),
+                               fd, fd_type,
                                handler, ctx);
 }
 

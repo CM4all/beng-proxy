@@ -236,13 +236,12 @@ Context::OnHttpResponse(http_status_t _status, gcc_unused StringMap &&headers,
     status = _status;
 
     if (_body) {
-        _body = istream_pipe_new(pool, std::move(_body), nullptr);
-        auto *b = _body.Steal();
-        body = sink_fd_new(event_loop, *pool, *b,
+        body = sink_fd_new(event_loop, *pool,
+                           istream_pipe_new(pool, std::move(_body), nullptr),
                            FileDescriptor(STDOUT_FILENO),
                            guess_fd_type(STDOUT_FILENO),
                            my_sink_fd_handler, this);
-        b->Read();
+        sink_fd_read(body);
     } else {
         body_eof = true;
         shutdown_listener.Disable();

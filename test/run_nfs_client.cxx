@@ -159,16 +159,15 @@ Context::OnNfsOpen(NfsFileHandle *handle, const struct stat *st)
     assert(!failed);
     assert(connected);
 
-    auto _body = istream_pipe_new(pool,
-                                  istream_nfs_new(*pool, *handle,
-                                                  0, st->st_size),
-                                  nullptr);
-    auto *_body2 = _body.Steal();
-    body = sink_fd_new(event_loop, *pool, *_body2,
+    body = sink_fd_new(event_loop, *pool,
+                       istream_pipe_new(pool,
+                                        istream_nfs_new(*pool, *handle,
+                                                        0, st->st_size),
+                                        nullptr),
                        FileDescriptor(STDOUT_FILENO),
                        guess_fd_type(STDOUT_FILENO),
                        my_sink_fd_handler, this);
-    _body2->Read();
+    sink_fd_read(body);
 }
 
 void
