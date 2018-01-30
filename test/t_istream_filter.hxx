@@ -409,7 +409,7 @@ test_block_inject(Instance &instance)
 {
     auto *pool = pool_new_linear(instance.root_pool, "test_block", 8192);
 
-    auto inject = istream_inject_new(*pool, UnusedIstreamPtr(create_input(*pool)));
+    auto inject = istream_inject_new(*pool, create_input(*pool));
 
     Context ctx(instance,
                 create_test(instance.event_loop, *pool, std::move(inject.first)));
@@ -458,7 +458,7 @@ test_fail_1byte(Instance &instance)
     auto istream =
         create_test(instance.event_loop, *pool,
                     istream_cat_new(*pool,
-                                    istream_head_new(*pool, UnusedIstreamPtr(create_input(*pool)),
+                                    istream_head_new(*pool, create_input(*pool),
                                                      1, false),
                                     istream_fail_new(*pool, std::make_exception_ptr(error))));
     run_istream(instance, pool, std::move(istream), false);
@@ -488,7 +488,7 @@ test_abort_in_handler(Instance &instance)
 {
     auto *pool = pool_new_linear(instance.root_pool, "test_abort_in_handler", 8192);
 
-    auto inject = istream_inject_new(*pool, UnusedIstreamPtr(create_input(*pool)));
+    auto inject = istream_inject_new(*pool, create_input(*pool));
     auto istream = create_test(instance.event_loop, *pool, std::move(inject.first));
     pool_unref(pool);
     pool_commit();
@@ -514,7 +514,7 @@ test_abort_in_handler_half(Instance &instance)
 {
     auto *pool = pool_new_linear(instance.root_pool, "test_abort_in_handler_half", 8192);
 
-    auto inject = istream_inject_new(*pool, istream_four_new(pool, UnusedIstreamPtr(create_input(*pool))));
+    auto inject = istream_inject_new(*pool, istream_four_new(pool, create_input(*pool)));
     auto istream = create_test(instance.event_loop, *pool,
                                istream_byte_new(*pool, std::move(inject.first)));
     pool_unref(pool);
