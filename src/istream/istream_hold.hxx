@@ -35,6 +35,7 @@
 
 struct pool;
 class Istream;
+class UnusedIstreamPtr;
 
 /**
  * An istream facade which waits for the istream handler to appear.
@@ -47,6 +48,6 @@ class Istream;
  * from the client's request body.
  */
 Istream *
-istream_hold_new(struct pool &pool, Istream &input);
+istream_hold_new(struct pool &pool, UnusedIstreamPtr input);
 
 #endif

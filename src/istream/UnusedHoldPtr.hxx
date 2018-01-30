@@ -46,13 +46,10 @@ public:
     UnusedHoldIstreamPtr() = default;
     UnusedHoldIstreamPtr(std::nullptr_t) noexcept {}
 
-    explicit UnusedHoldIstreamPtr(struct pool &p, Istream *_stream) noexcept
-        :UnusedIstreamPtr(_stream != nullptr
-                          ? istream_hold_new(p, *_stream)
+    explicit UnusedHoldIstreamPtr(struct pool &p, UnusedIstreamPtr &&_stream) noexcept
+        :UnusedIstreamPtr(_stream
+                          ? istream_hold_new(p, std::move(_stream))
                           : nullptr) {}
-
-    UnusedHoldIstreamPtr(struct pool &p, UnusedIstreamPtr &&src) noexcept
-        :UnusedHoldIstreamPtr(p, src.Steal()) {}
 
     UnusedHoldIstreamPtr(UnusedHoldIstreamPtr &&src) = default;
 

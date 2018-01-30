@@ -32,6 +32,7 @@
 
 #include "istream_hold.hxx"
 #include "ForwardIstream.hxx"
+#include "UnusedPtr.hxx"
 
 #include <assert.h>
 
@@ -40,8 +41,8 @@ class HoldIstream final : public ForwardIstream {
     std::exception_ptr input_error;
 
 public:
-    HoldIstream(struct pool &p, Istream &_input)
-        :ForwardIstream(p, _input) {}
+    HoldIstream(struct pool &p, UnusedIstreamPtr &&_input)
+        :ForwardIstream(p, std::move(_input)) {}
 
 private:
     bool Check() {
@@ -133,7 +134,7 @@ public:
 };
 
 Istream *
-istream_hold_new(struct pool &pool, Istream &input)
+istream_hold_new(struct pool &pool, UnusedIstreamPtr input)
 {
-    return NewIstream<HoldIstream>(pool, input);
+    return NewIstream<HoldIstream>(pool, std::move(input));
 }

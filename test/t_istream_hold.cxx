@@ -47,7 +47,7 @@ create_input(struct pool &pool)
 static UnusedIstreamPtr
 create_test(EventLoop &, struct pool &pool, UnusedIstreamPtr input)
 {
-    return UnusedIstreamPtr(istream_hold_new(pool, *input.Steal()));
+    return UnusedIstreamPtr(istream_hold_new(pool, std::move(input)));
 }
 
 #include "t_istream_filter.hxx"
