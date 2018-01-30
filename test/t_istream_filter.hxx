@@ -544,11 +544,11 @@ test_abort_1byte(Instance &instance)
 {
     auto *pool = pool_new_linear(instance.root_pool, "test_abort_1byte", 8192);
 
-    auto *istream = istream_head_new(*pool,
-                                     UnusedIstreamPtr(create_test(instance.event_loop, *pool,
-                                                                  create_input(*pool))),
-                                     1, false).Steal();
-    run_istream(instance, pool, istream, false);
+    auto istream = istream_head_new(*pool,
+                                    create_test(instance.event_loop, *pool,
+                                                create_input(*pool)),
+                                    1, false);
+    run_istream(instance, pool, std::move(istream), false);
 }
 
 /** test with istream_later filter */
