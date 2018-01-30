@@ -36,7 +36,11 @@
 IstreamPointer::IstreamPointer(UnusedIstreamPtr src,
                                IstreamHandler &handler,
                                FdTypeMask direct) noexcept
-    :IstreamPointer(src.Steal(), handler, direct) {}
+    :stream(src.Steal())
+{
+    if (stream != nullptr)
+        stream->SetHandler(handler, direct);
+}
 
 void
 IstreamPointer::Set(UnusedIstreamPtr _stream,

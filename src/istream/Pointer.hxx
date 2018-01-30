@@ -48,21 +48,6 @@ public:
     IstreamPointer() = default;
     explicit IstreamPointer(std::nullptr_t) noexcept:stream(nullptr) {}
 
-    IstreamPointer(Istream &_stream,
-                   IstreamHandler &handler,
-                   FdTypeMask direct=0) noexcept
-        :stream(&_stream) {
-        stream->SetHandler(handler, direct);
-    }
-
-    explicit IstreamPointer(Istream *_stream,
-                            IstreamHandler &handler,
-                            FdTypeMask direct=0) noexcept
-        :stream(_stream) {
-        if (stream != nullptr)
-            stream->SetHandler(handler, direct);
-    }
-
     IstreamPointer(UnusedIstreamPtr src,
                    IstreamHandler &handler,
                    FdTypeMask direct=0) noexcept;
