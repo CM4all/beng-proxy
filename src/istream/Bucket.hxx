@@ -153,10 +153,8 @@ public:
             SetMore();
 
         for (const auto &bucket : src) {
-            if (bucket.GetType() != IstreamBucket::Type::BUFFER)
-                max_size = 0;
-
-            if (max_size == 0) {
+            if (max_size == 0 ||
+                bucket.GetType() != IstreamBucket::Type::BUFFER) {
                 SetMore();
                 break;
             }
