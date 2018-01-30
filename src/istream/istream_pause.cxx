@@ -58,14 +58,14 @@ public:
 
     /* virtual methods from class Istream */
 
-    void _Read() override {
+    void _Read() noexcept override {
         if (resumed)
             ForwardIstream::_Read();
         else
             CopyDirect();
     }
 
-    int _AsFd() override {
+    int _AsFd() noexcept override {
         return resumed
             ? ForwardIstream::_AsFd()
             : -1;

@@ -43,7 +43,7 @@ public:
 
     /* virtual methods from class Istream */
 
-    void _Read() override {
+    void _Read() noexcept override {
         assert(error);
         DestroyError(error);
     }

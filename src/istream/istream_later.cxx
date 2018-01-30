@@ -48,19 +48,19 @@ public:
 
     /* virtual methods from class Istream */
 
-    off_t _GetAvailable(gcc_unused bool partial) override {
+    off_t _GetAvailable(gcc_unused bool partial) noexcept override {
         return -1;
     }
 
-    off_t _Skip(gcc_unused off_t length) override {
+    off_t _Skip(gcc_unused off_t length) noexcept override {
         return -1;
     }
 
-    void _Read() override {
+    void _Read() noexcept override {
         Schedule();
     }
 
-    int _AsFd() override {
+    int _AsFd() noexcept override {
         return -1;
     }
 

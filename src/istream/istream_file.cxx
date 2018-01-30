@@ -142,15 +142,15 @@ struct FileIstream final : public Istream {
 
     /* virtual methods from class Istream */
 
-    off_t _GetAvailable(bool partial) override;
-    off_t _Skip(gcc_unused off_t length) override;
+    off_t _GetAvailable(bool partial) noexcept override;
+    off_t _Skip(gcc_unused off_t length) noexcept override;
 
-    void _Read() override {
+    void _Read() noexcept override {
         retry_event.Cancel();
         TryRead();
     }
 
-    int _AsFd() override;
+    int _AsFd() noexcept override;
     void _Close() noexcept override {
         CloseHandle();
         Destroy();
@@ -262,7 +262,7 @@ FileIstream::TryDirect()
  */
 
 off_t
-FileIstream::_GetAvailable(bool partial)
+FileIstream::_GetAvailable(bool partial) noexcept
 {
     off_t available;
     if (rest != (off_t)-1)
@@ -277,7 +277,7 @@ FileIstream::_GetAvailable(bool partial)
 }
 
 off_t
-FileIstream::_Skip(off_t length)
+FileIstream::_Skip(off_t length) noexcept
 {
     retry_event.Cancel();
 
@@ -317,7 +317,7 @@ FileIstream::_Skip(off_t length)
 }
 
 int
-FileIstream::_AsFd()
+FileIstream::_AsFd() noexcept
 {
     int result_fd = fd;
 

@@ -64,8 +64,8 @@ struct HttpServerConnection final : BufferedSocketHandler, IstreamHandler {
 
         /* virtual methods from class Istream */
 
-        off_t _GetAvailable(bool partial) override;
-        void _Read() override;
+        off_t _GetAvailable(bool partial) noexcept override;
+        void _Read() noexcept override;
         void _Close() noexcept override;
     };
 

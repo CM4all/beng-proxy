@@ -58,30 +58,30 @@ class ChunkedIstream final : public FacadeIstream {
     size_t missing_from_current_chunk = 0;
 
 public:
-    ChunkedIstream(struct pool &p, UnusedIstreamPtr &&_input)
+    ChunkedIstream(struct pool &p, UnusedIstreamPtr &&_input) noexcept
         :FacadeIstream(p, std::move(_input)) {}
 
     /* virtual methods from class Istream */
 
-    void _Read() override;
+    void _Read() noexcept override;
     void _FillBucketList(IstreamBucketList &list) override;
-    size_t _ConsumeBucketList(size_t nbytes) override;
+    size_t _ConsumeBucketList(size_t nbytes) noexcept override;
     void _Close() noexcept override;
 
     /* virtual methods from class IstreamHandler */
-    size_t OnData(const void *data, size_t length) override;
+    size_t OnData(const void *data, size_t length) noexcept override;
     void OnEof() noexcept override;
     void OnError(std::exception_ptr ep) noexcept override;
 
 private:
-    bool IsBufferEmpty() const {
+    bool IsBufferEmpty() const noexcept {
         assert(buffer_sent <= sizeof(buffer));
 
         return buffer_sent == sizeof(buffer);
     }
 
     /** set the buffer length and return a pointer to the first byte */
-    char *SetBuffer(size_t length) {
+    char *SetBuffer(size_t length) noexcept {
         assert(IsBufferEmpty());
         assert(length <= sizeof(buffer));
 
@@ -90,18 +90,18 @@ private:
     }
 
     /** append data to the buffer */
-    void AppendToBuffer(const void *data, size_t length);
+    void AppendToBuffer(const void *data, size_t length) noexcept;
 
-    void StartChunk(size_t length);
+    void StartChunk(size_t length) noexcept;
 
-    ConstBuffer<void> ReadBuffer() {
+    ConstBuffer<void> ReadBuffer() noexcept {
         return { buffer + buffer_sent, sizeof(buffer) - buffer_sent };
     }
 
     /**
      * Returns true if the buffer is consumed.
      */
-    bool SendBuffer();
+    bool SendBuffer() noexcept;
 
     /**
      * Wrapper for SendBuffer() that sets and clears the
@@ -110,13 +110,13 @@ private:
      *
      * @return true if the buffer is consumed.
      */
-    bool SendBuffer2();
+    bool SendBuffer2() noexcept;
 
-    size_t Feed(const char *data, size_t length);
+    size_t Feed(const char *data, size_t length) noexcept;
 };
 
 void
-ChunkedIstream::AppendToBuffer(const void *data, size_t length)
+ChunkedIstream::AppendToBuffer(const void *data, size_t length) noexcept
 {
     assert(data != nullptr);
     assert(length > 0);
@@ -138,7 +138,7 @@ ChunkedIstream::AppendToBuffer(const void *data, size_t length)
 }
 
 void
-ChunkedIstream::StartChunk(size_t length)
+ChunkedIstream::StartChunk(size_t length) noexcept
 {
     assert(length > 0);
     assert(IsBufferEmpty());
@@ -157,7 +157,7 @@ ChunkedIstream::StartChunk(size_t length)
 }
 
 bool
-ChunkedIstream::SendBuffer()
+ChunkedIstream::SendBuffer() noexcept
 {
     auto r = ReadBuffer();
     if (r.empty())
@@ -171,7 +171,7 @@ ChunkedIstream::SendBuffer()
 }
 
 bool
-ChunkedIstream::SendBuffer2()
+ChunkedIstream::SendBuffer2() noexcept
 {
     const ScopePoolRef ref(GetPool() TRACE_ARGS);
 
@@ -184,7 +184,7 @@ ChunkedIstream::SendBuffer2()
 }
 
 inline size_t
-ChunkedIstream::Feed(const char *data, size_t length)
+ChunkedIstream::Feed(const char *data, size_t length) noexcept
 {
     size_t total = 0, rest, nbytes;
 
@@ -237,7 +237,7 @@ ChunkedIstream::Feed(const char *data, size_t length)
  */
 
 size_t
-ChunkedIstream::OnData(const void *data, size_t length)
+ChunkedIstream::OnData(const void *data, size_t length) noexcept
 {
     if (writing_buffer)
         /* this is a recursive call from istream_chunked_read(): bail
@@ -281,7 +281,7 @@ ChunkedIstream::OnError(std::exception_ptr ep) noexcept
  */
 
 void
-ChunkedIstream::_Read()
+ChunkedIstream::_Read() noexcept
 {
     if (!SendBuffer2())
         return;
@@ -336,7 +336,7 @@ ChunkedIstream::_FillBucketList(IstreamBucketList &list)
 }
 
 size_t
-ChunkedIstream::_ConsumeBucketList(size_t nbytes)
+ChunkedIstream::_ConsumeBucketList(size_t nbytes) noexcept
 {
     size_t total = 0;
 

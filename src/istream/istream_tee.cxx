@@ -73,7 +73,7 @@ struct TeeIstream final : IstreamHandler {
             return ContainerCast(*this, &TeeIstream::first_output);
         }
 
-        off_t _GetAvailable(bool partial) override {
+        off_t _GetAvailable(bool partial) noexcept override {
             assert(enabled);
 
             TeeIstream &tee = GetParent();
@@ -87,9 +87,9 @@ struct TeeIstream final : IstreamHandler {
             return available;
         }
 
-        //off_t Skip(off_t length) override;
+        //off_t Skip(off_t length) noexcept override;
 
-        void _Read() override {
+        void _Read() noexcept override {
             TeeIstream &tee = GetParent();
 
             assert(enabled);
@@ -124,7 +124,7 @@ struct TeeIstream final : IstreamHandler {
             bucket_list_size = list.SpliceBuffersFrom(sub);
         }
 
-        size_t _ConsumeBucketList(size_t nbytes) override {
+        size_t _ConsumeBucketList(size_t nbytes) noexcept override {
             TeeIstream &tee = GetParent();
 
             assert(tee.skip == 0);
@@ -161,15 +161,15 @@ struct TeeIstream final : IstreamHandler {
             return ContainerCast(*this, &TeeIstream::second_output);
         }
 
-        off_t _GetAvailable(bool partial) override {
+        off_t _GetAvailable(bool partial) noexcept override {
             assert(enabled);
 
             return GetParent().input.GetAvailable(partial);
         }
 
-        //off_t Skip(off_t length) override;
+        //off_t Skip(off_t length) noexcept override;
 
-        void _Read() override {
+        void _Read() noexcept override {
             TeeIstream &tee = GetParent();
 
             assert(enabled);

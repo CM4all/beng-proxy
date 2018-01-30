@@ -64,11 +64,11 @@ public:
 
     /* virtual methods from class Istream */
 
-    off_t _GetAvailable(gcc_unused bool partial) override {
+    off_t _GetAvailable(gcc_unused bool partial) noexcept override {
         return end - position;
     }
 
-    off_t _Skip(off_t nbytes) override {
+    off_t _Skip(off_t nbytes) noexcept override {
         assert(position <= end);
 
         const size_t remaining = end - position;
@@ -80,7 +80,7 @@ public:
         return nbytes;
     }
 
-    void _Read() override {
+    void _Read() noexcept override {
         assert(position <= end);
 
         const uint8_t *data = (const uint8_t *)rubber.Read(id);
@@ -106,7 +106,7 @@ public:
             list.Push(ConstBuffer<void>(data + position, remaining));
     }
 
-    size_t _ConsumeBucketList(size_t nbytes) override {
+    size_t _ConsumeBucketList(size_t nbytes) noexcept override {
         const size_t remaining = end - position;
         size_t consumed = std::min(nbytes, remaining);
         position += consumed;

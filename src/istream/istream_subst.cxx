@@ -78,22 +78,22 @@ class SubstIstream final : public FacadeIstream {
     size_t a_match, b_sent;
 
  public:
-    SubstIstream(struct pool &p, UnusedIstreamPtr &&_input, SubstTree &&_tree)
+    SubstIstream(struct pool &p, UnusedIstreamPtr &&_input, SubstTree &&_tree) noexcept
         :FacadeIstream(p, std::move(_input)), tree(std::move(_tree)) {}
 
 private:
     /** find the first occurence of a "first character" in the buffer */
-    const char *FindFirstChar(const char *data, size_t length);
+    const char *FindFirstChar(const char *data, size_t length) noexcept;
 
     /**
      * Write data from "b".
      *
      * @return the number of bytes remaining
      */
-    size_t TryWriteB();
+    size_t TryWriteB() noexcept;
 
-    bool FeedMismatch();
-    bool WriteMismatch();
+    bool FeedMismatch() noexcept;
+    bool WriteMismatch() noexcept;
 
     /**
      * Forwards source data to the istream handler.
@@ -101,24 +101,25 @@ private:
      * @return (size_t)-1 when everything has been consumed, or the
      * correct return value for the data() callback.
      */
-    size_t ForwardSourceData(const char *start, const char *p, size_t length);
+    size_t ForwardSourceData(const char *start,
+                             const char *p, size_t length) noexcept;
     size_t ForwardSourceDataFinal(const char *start,
-                                  const char *end, const char *p);
+                                  const char *end, const char *p) noexcept;
 
-    size_t Feed(const void *data, size_t length);
+    size_t Feed(const void *data, size_t length) noexcept;
 
 public:
     /* virtual methods from class Istream */
 
-    void _Read() override;
+    void _Read() noexcept override;
     void _Close() noexcept override;
 
     /* istream handler */
 
-    size_t OnData(const void *data, size_t length) override;
+    size_t OnData(const void *data, size_t length) noexcept override;
 
     ssize_t OnDirect(gcc_unused FdType type, gcc_unused int fd,
-                     gcc_unused size_t max_length) override {
+                     gcc_unused size_t max_length) noexcept override {
         gcc_unreachable();
     }
 
@@ -188,7 +189,7 @@ SubstTree::FindFirstChar(const char *data, size_t length) noexcept
 }
 
 inline const char *
-SubstIstream::FindFirstChar(const char *data, size_t length)
+SubstIstream::FindFirstChar(const char *data, size_t length) noexcept
 {
     auto x = tree.FindFirstChar(data, length);
     match = x.first;
@@ -198,7 +199,7 @@ SubstIstream::FindFirstChar(const char *data, size_t length)
 /** find a character in the tree */
 gcc_pure
 static const SubstNode *
-subst_find_char(const SubstNode *node, char ch)
+subst_find_char(const SubstNode *node, char ch) noexcept
 {
     assert(node != nullptr);
 
@@ -224,7 +225,7 @@ subst_find_char(const SubstNode *node, char ch)
 /** find the leaf ending the current search word */
 gcc_pure
 static const SubstNode *
-subst_find_leaf(const SubstNode *node)
+subst_find_leaf(const SubstNode *node) noexcept
 {
     assert(node != nullptr);
 
@@ -246,7 +247,7 @@ subst_find_leaf(const SubstNode *node)
     stream */
 gcc_pure
 static const SubstNode *
-subst_find_any_leaf(const SubstNode *node)
+subst_find_any_leaf(const SubstNode *node) noexcept
 {
     while (true) {
         assert(node != nullptr);
@@ -259,7 +260,7 @@ subst_find_any_leaf(const SubstNode *node)
 }
 
 size_t
-SubstIstream::TryWriteB()
+SubstIstream::TryWriteB() noexcept
 {
     assert(state == STATE_INSERT);
     assert(a_match > 0);
@@ -285,7 +286,7 @@ SubstIstream::TryWriteB()
 }
 
 bool
-SubstIstream::FeedMismatch()
+SubstIstream::FeedMismatch() noexcept
 {
     assert(state == STATE_NONE);
     assert(input.IsDefined());
@@ -318,7 +319,7 @@ SubstIstream::FeedMismatch()
 }
 
 bool
-SubstIstream::WriteMismatch()
+SubstIstream::WriteMismatch() noexcept
 {
     assert(!input.IsDefined() || state == STATE_NONE);
     assert(!mismatch.empty());
@@ -344,7 +345,7 @@ SubstIstream::WriteMismatch()
 
 size_t
 SubstIstream::ForwardSourceData(const char *start,
-                                const char *p, size_t length)
+                                const char *p, size_t length) noexcept
 {
     size_t nbytes = InvokeData(p, length);
     if (nbytes == 0 && state == STATE_CLOSED)
@@ -364,7 +365,7 @@ SubstIstream::ForwardSourceData(const char *start,
 
 inline size_t
 SubstIstream::ForwardSourceDataFinal(const char *start,
-                                     const char *end, const char *p)
+                                     const char *end, const char *p) noexcept
 {
     size_t nbytes = InvokeData(p, end - p);
     if (nbytes > 0 || state != STATE_CLOSED) {
@@ -376,7 +377,7 @@ SubstIstream::ForwardSourceDataFinal(const char *start,
 }
 
 size_t
-SubstIstream::Feed(const void *_data, size_t length)
+SubstIstream::Feed(const void *_data, size_t length) noexcept
 {
     assert(input.IsDefined());
 
@@ -561,7 +562,7 @@ SubstIstream::Feed(const void *_data, size_t length)
  */
 
 inline size_t
-SubstIstream::OnData(const void *data, size_t length)
+SubstIstream::OnData(const void *data, size_t length) noexcept
 {
     if (!mismatch.empty() && FeedMismatch())
         return 0;
@@ -631,7 +632,7 @@ SubstIstream::OnError(std::exception_ptr ep) noexcept
  */
 
 void
-SubstIstream::_Read()
+SubstIstream::_Read() noexcept
 {
     if (!mismatch.empty()) {
         bool ret = input.IsDefined()

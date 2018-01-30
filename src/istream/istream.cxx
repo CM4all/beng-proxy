@@ -49,7 +49,7 @@ Istream::_FillBucketList(IstreamBucketList &list)
 
 gcc_noreturn
 size_t
-Istream::_ConsumeBucketList(gcc_unused size_t nbytes)
+Istream::_ConsumeBucketList(gcc_unused size_t nbytes) noexcept
 {
     assert(false);
     gcc_unreachable();

@@ -41,26 +41,26 @@ public:
 
     /* virtual methods from class Istream */
 
-    off_t _GetAvailable(gcc_unused bool partial) override {
+    off_t _GetAvailable(gcc_unused bool partial) noexcept override {
         return -1;
     }
 
-    off_t _Skip(gcc_unused off_t length) override {
+    off_t _Skip(gcc_unused off_t length) noexcept override {
         return -1;
     }
 
-    int _AsFd() override {
+    int _AsFd() noexcept override {
         return -1;
     }
 
     /* handler */
 
-    size_t OnData(const void *data, gcc_unused size_t length) override {
+    size_t OnData(const void *data, gcc_unused size_t length) noexcept override {
         return ForwardIstream::OnData(data, 1);
     }
 
     ssize_t OnDirect(FdType type, int fd,
-                     gcc_unused size_t max_length) override {
+                     gcc_unused size_t max_length) noexcept override {
         return ForwardIstream::OnDirect(type, fd, 1);
     }
 };

@@ -51,23 +51,23 @@ protected:
 public:
     /* virtual methods from class Istream */
 
-    off_t _GetAvailable(bool partial) override {
+    off_t _GetAvailable(bool partial) noexcept override {
         return input.GetAvailable(partial);
     }
 
-    off_t _Skip(off_t length) override {
+    off_t _Skip(off_t length) noexcept override {
         off_t nbytes = input.Skip(length);
         if (nbytes > 0)
             Consumed(nbytes);
         return nbytes;
     }
 
-    void _Read() override {
+    void _Read() noexcept override {
         CopyDirect();
         input.Read();
     }
 
-    int _AsFd() override {
+    int _AsFd() noexcept override {
         int fd = input.AsFd();
         if (fd >= 0)
             Destroy();

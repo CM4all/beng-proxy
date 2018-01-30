@@ -46,17 +46,17 @@ class EscapeIstream final : public FacadeIstream {
 
 public:
     EscapeIstream(struct pool &_pool, UnusedIstreamPtr _input,
-                  const struct escape_class &_cls)
+                  const struct escape_class &_cls) noexcept
         :FacadeIstream(_pool, std::move(_input)),
          cls(_cls) {
         escaped.size = 0;
     }
 
-    bool SendEscaped();
+    bool SendEscaped() noexcept;
 
     /* virtual methods from class Istream */
 
-    off_t _GetAvailable(bool partial) override {
+    off_t _GetAvailable(bool partial) noexcept override {
         if (!HasInput())
             return escaped.size;
 
@@ -65,20 +65,20 @@ public:
             : -1;
     }
 
-    off_t _Skip(gcc_unused off_t length) override {
+    off_t _Skip(gcc_unused off_t length) noexcept override {
         return -1;
     }
 
-    void _Read() override;
+    void _Read() noexcept override;
 
-    int _AsFd() override {
+    int _AsFd() noexcept override {
         return -1;
     }
 
     void _Close() noexcept override;
 
     /* virtual methods from class IstreamHandler */
-    size_t OnData(const void *data, size_t length) override;
+    size_t OnData(const void *data, size_t length) noexcept override;
 
     void OnEof() noexcept override {
         ClearInput();
@@ -94,7 +94,7 @@ public:
 };
 
 bool
-EscapeIstream::SendEscaped()
+EscapeIstream::SendEscaped() noexcept
 {
     assert(!escaped.empty());
 
@@ -120,7 +120,7 @@ EscapeIstream::SendEscaped()
  */
 
 size_t
-EscapeIstream::OnData(const void *data0, size_t length)
+EscapeIstream::OnData(const void *data0, size_t length) noexcept
 {
     const char *data = (const char *)data0;
 
@@ -185,7 +185,7 @@ EscapeIstream::OnData(const void *data0, size_t length)
  */
 
 void
-EscapeIstream::_Read()
+EscapeIstream::_Read() noexcept
 {
     if (!escaped.empty() && !SendEscaped())
         return;

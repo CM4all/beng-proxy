@@ -51,7 +51,7 @@ class AjpBodyIstream final : public ForwardIstream {
     size_t header_sent;
 
 public:
-    AjpBodyIstream(struct pool &_pool, UnusedIstreamPtr &&_input)
+    AjpBodyIstream(struct pool &_pool, UnusedIstreamPtr &&_input) noexcept
         :ForwardIstream(_pool, std::move(_input)),
          control(SharedPoolPtr<AjpBodyIstreamControl>::Make(_pool, *this)) {}
 
@@ -59,11 +59,11 @@ public:
         control->body = nullptr;
     }
 
-    auto GetControl() {
+    auto GetControl() noexcept {
         return control;
     }
 
-    void Request(size_t length) {
+    void Request(size_t length) noexcept {
         /* we're not checking if this becomes larger than the request
            body - although Tomcat should know better, it requests more
            and more */
@@ -71,43 +71,43 @@ public:
     }
 
 private:
-    void StartPacket(size_t length);
+    void StartPacket(size_t length) noexcept;
 
     /**
      * Returns true if the header is complete.
      */
-    bool WriteHeader();
+    bool WriteHeader() noexcept;
 
     /**
      * Returns true if the caller may write the packet body.
      */
-    bool MakePacket(size_t length);
+    bool MakePacket(size_t length) noexcept;
 
     /* virtual methods from class Istream */
 
-    off_t _GetAvailable(bool partial) override {
+    off_t _GetAvailable(bool partial) noexcept override {
         return partial
             ? ForwardIstream::_GetAvailable(partial)
             : -1;
     }
 
-    off_t _Skip(gcc_unused off_t length) override {
+    off_t _Skip(gcc_unused off_t length) noexcept override {
         return -1;
     }
 
-    void _Read() override;
+    void _Read() noexcept override;
 
-    int _AsFd() override {
+    int _AsFd() noexcept override {
         return -1;
     }
 
     /* virtual methods from class IstreamHandler */
-    size_t OnData(const void *data, size_t length) override;
-    ssize_t OnDirect(FdType type, int fd, size_t max_length) override;
+    size_t OnData(const void *data, size_t length) noexcept override;
+    ssize_t OnDirect(FdType type, int fd, size_t max_length) noexcept override;
 };
 
 void
-AjpBodyIstream::StartPacket(size_t length)
+AjpBodyIstream::StartPacket(size_t length) noexcept
 {
     assert(requested > 0);
     assert(length > 0);
@@ -131,7 +131,7 @@ AjpBodyIstream::StartPacket(size_t length)
 }
 
 bool
-AjpBodyIstream::WriteHeader()
+AjpBodyIstream::WriteHeader() noexcept
 {
     assert(packet_remaining > 0);
     assert(header_sent <= sizeof(header));
@@ -151,7 +151,7 @@ AjpBodyIstream::WriteHeader()
 }
 
 bool
-AjpBodyIstream::MakePacket(size_t length)
+AjpBodyIstream::MakePacket(size_t length) noexcept
 {
     if (packet_remaining == 0) {
         if (requested == 0)
@@ -169,7 +169,7 @@ AjpBodyIstream::MakePacket(size_t length)
  */
 
 size_t
-AjpBodyIstream::OnData(const void *data, size_t length)
+AjpBodyIstream::OnData(const void *data, size_t length) noexcept
 {
     if (!MakePacket(length))
         return 0;
@@ -185,7 +185,7 @@ AjpBodyIstream::OnData(const void *data, size_t length)
 }
 
 ssize_t
-AjpBodyIstream::OnDirect(FdType type, int fd, size_t max_length)
+AjpBodyIstream::OnDirect(FdType type, int fd, size_t max_length) noexcept
 {
     if (packet_remaining == 0) {
         if (requested == 0)
@@ -227,7 +227,7 @@ AjpBodyIstream::OnDirect(FdType type, int fd, size_t max_length)
  */
 
 void
-AjpBodyIstream::_Read()
+AjpBodyIstream::_Read() noexcept
 {
     if (packet_remaining > 0 && !WriteHeader())
         return;

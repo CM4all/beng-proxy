@@ -74,7 +74,7 @@ HttpServerConnection::FeedRequestBody(const void *data, size_t length)
 }
 
 off_t
-HttpServerConnection::RequestBodyReader::_GetAvailable(bool partial)
+HttpServerConnection::RequestBodyReader::_GetAvailable(bool partial) noexcept
 {
     assert(connection.IsValid());
     assert(connection.request.read_state == Request::BODY);
@@ -85,7 +85,7 @@ HttpServerConnection::RequestBodyReader::_GetAvailable(bool partial)
 }
 
 void
-HttpServerConnection::RequestBodyReader::_Read()
+HttpServerConnection::RequestBodyReader::_Read() noexcept
 {
     assert(connection.IsValid());
     assert(connection.request.read_state == Request::BODY);

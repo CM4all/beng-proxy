@@ -58,7 +58,7 @@ private:
 public:
     /* virtual methods from class Istream */
 
-    off_t _GetAvailable(bool partial) override {
+    off_t _GetAvailable(bool partial) noexcept override {
         if (gcc_unlikely(input_eof))
             return 0;
         else if (gcc_unlikely(input_error))
@@ -67,18 +67,18 @@ public:
         return ForwardIstream::_GetAvailable(partial);
     }
 
-    off_t _Skip(off_t length) override {
+    off_t _Skip(off_t length) noexcept override {
         return gcc_likely(!input_eof && !input_error)
             ? ForwardIstream::_Skip(length)
             : -1;
     }
 
-    void _Read() override {
+    void _Read() noexcept override {
         if (gcc_likely(Check()))
             ForwardIstream::_Read();
     }
 
-    int _AsFd() override {
+    int _AsFd() noexcept override {
         return Check()
             ? ForwardIstream::_AsFd()
             : -1;
@@ -98,11 +98,12 @@ public:
 
     /* virtual methods from class IstreamHandler */
 
-    size_t OnData(const void *data, size_t length) override {
+    size_t OnData(const void *data, size_t length) noexcept override {
         return HasHandler() ? ForwardIstream::OnData(data, length) : 0;
     }
 
-    ssize_t OnDirect(FdType type, int fd, size_t max_length) override {
+    ssize_t OnDirect(FdType type, int fd,
+                     size_t max_length) noexcept override {
         return HasHandler()
             ? ForwardIstream::OnDirect(type, fd, max_length)
             : ssize_t(ISTREAM_RESULT_BLOCKING);

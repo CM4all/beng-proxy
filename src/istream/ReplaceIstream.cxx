@@ -188,8 +188,8 @@ private:
 
 public:
     /* virtual methods from class Istream */
-    off_t _GetAvailable(bool partial) override;
-    void _Read() override;
+    off_t _GetAvailable(bool partial) noexcept override;
+    void _Read() noexcept override;
     void _Close() noexcept override;
 };
 
@@ -500,7 +500,7 @@ ReplaceIstream::OnError(std::exception_ptr ep) noexcept
  */
 
 off_t
-ReplaceIstream::_GetAvailable(bool partial)
+ReplaceIstream::_GetAvailable(bool partial) noexcept
 {
     off_t length, position2 = 0, l;
 
@@ -552,7 +552,7 @@ ReplaceIstream::_GetAvailable(bool partial)
 }
 
 void
-ReplaceIstream::_Read()
+ReplaceIstream::_Read() noexcept
 {
     const ScopePoolRef ref(GetPool() TRACE_ARGS);
 

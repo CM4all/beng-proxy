@@ -46,7 +46,7 @@ public:
 
     /* virtual methods from class Istream */
 
-    int _AsFd() override;
+    int _AsFd() noexcept override;
 
     /* virtual methods from class IstreamHandler */
     void OnEof() noexcept override;
@@ -83,7 +83,7 @@ StopwatchIstream::OnError(std::exception_ptr ep) noexcept
  */
 
 int
-StopwatchIstream::_AsFd()
+StopwatchIstream::_AsFd() noexcept
 {
     int fd = input.AsFd();
     if (fd >= 0) {

@@ -61,8 +61,8 @@ public:
 
     /* virtual methods from class Istream */
 
-    off_t _GetAvailable(bool partial) override;
-    void _Read() override;
+    off_t _GetAvailable(bool partial) noexcept override;
+    void _Read() noexcept override;
 
     void _FillBucketList(IstreamBucketList &list) override {
         if (piped > 0)
@@ -76,7 +76,7 @@ public:
         }
     }
 
-    size_t _ConsumeBucketList(size_t nbytes) override {
+    size_t _ConsumeBucketList(size_t nbytes) noexcept override {
         assert(piped == 0);
 
         auto consumed = input.ConsumeBucketList(nbytes);
@@ -84,19 +84,19 @@ public:
         return consumed;
     }
 
-    int _AsFd() override;
+    int _AsFd() noexcept override;
     void _Close() noexcept override;
 
     /* handler */
-    size_t OnData(const void *data, size_t length) override;
-    ssize_t OnDirect(FdType type, int fd, size_t max_length) override;
+    size_t OnData(const void *data, size_t length) noexcept override;
+    ssize_t OnDirect(FdType type, int fd, size_t max_length) noexcept override;
     void OnEof() noexcept override;
     void OnError(std::exception_ptr ep) noexcept override;
 
 private:
     void CloseInternal() noexcept;
-    void Abort(std::exception_ptr ep);
-    ssize_t Consume();
+    void Abort(std::exception_ptr ep) noexcept;
+    ssize_t Consume() noexcept;
 
     /**
      * Throws exception on error.
@@ -119,7 +119,7 @@ PipeIstream::CloseInternal() noexcept
 }
 
 void
-PipeIstream::Abort(std::exception_ptr ep)
+PipeIstream::Abort(std::exception_ptr ep) noexcept
 {
     CloseInternal();
 
@@ -130,7 +130,7 @@ PipeIstream::Abort(std::exception_ptr ep)
 }
 
 ssize_t
-PipeIstream::Consume()
+PipeIstream::Consume() noexcept
 {
     assert(fds[0].IsDefined());
     assert(piped > 0);
@@ -181,7 +181,7 @@ PipeIstream::Consume()
  */
 
 inline size_t
-PipeIstream::OnData(const void *data, size_t length)
+PipeIstream::OnData(const void *data, size_t length) noexcept
 {
     assert(HasHandler());
 
@@ -217,7 +217,7 @@ PipeIstream::Create()
 }
 
 inline ssize_t
-PipeIstream::OnDirect(FdType type, int fd, size_t max_length)
+PipeIstream::OnDirect(FdType type, int fd, size_t max_length) noexcept
 {
     assert(HasHandler());
     assert(CheckDirect(FdType::FD_PIPE));
@@ -294,7 +294,7 @@ PipeIstream::OnError(std::exception_ptr ep) noexcept
  */
 
 off_t
-PipeIstream::_GetAvailable(bool partial)
+PipeIstream::_GetAvailable(bool partial) noexcept
 {
     if (gcc_likely(input.IsDefined())) {
         off_t available = input.GetAvailable(partial);
@@ -314,7 +314,7 @@ PipeIstream::_GetAvailable(bool partial)
 }
 
 void
-PipeIstream::_Read()
+PipeIstream::_Read() noexcept
 {
     if (piped > 0 && (Consume() <= 0 || piped > 0))
         return;
@@ -334,7 +334,7 @@ PipeIstream::_Read()
 }
 
 int
-PipeIstream::_AsFd()
+PipeIstream::_AsFd() noexcept
 {
     if (piped > 0)
         /* need to flush the pipe buffer first */

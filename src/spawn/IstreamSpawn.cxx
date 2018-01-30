@@ -113,7 +113,7 @@ struct SpawnIstream final : Istream, IstreamHandler, ExitListener {
 
     /* virtual methods from class Istream */
 
-    void _Read() override;
+    void _Read() noexcept override;
     // TODO: implement int AsFd() override;
     void _Close() noexcept override;
 
@@ -344,7 +344,7 @@ SpawnIstream::ReadFromOutput()
  */
 
 void
-SpawnIstream::_Read()
+SpawnIstream::_Read() noexcept
 {
     if (buffer.IsEmpty() || SendFromBuffer())
         ReadFromOutput();

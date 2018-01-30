@@ -42,13 +42,13 @@ class UnlockIstream final : public ForwardIstream {
 
 public:
     UnlockIstream(struct pool &p, UnusedIstreamPtr _input,
-                  CacheItem &_item)
+                  CacheItem &_item) noexcept
         :ForwardIstream(p, std::move(_input)),
          item(_item) {
         item.Lock();
     }
 
-    virtual ~UnlockIstream() {
+    virtual ~UnlockIstream() noexcept {
         item.Unlock();
     }
 
@@ -61,7 +61,7 @@ public:
         }
     }
 
-    size_t _ConsumeBucketList(size_t nbytes) override {
+    size_t _ConsumeBucketList(size_t nbytes) noexcept override {
         auto consumed = input.ConsumeBucketList(nbytes);
         Consumed(consumed);
         return consumed;

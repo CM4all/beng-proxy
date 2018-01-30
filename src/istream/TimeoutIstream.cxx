@@ -63,7 +63,7 @@ private:
 public:
     /* virtual methods from class Istream */
 
-    void _Read() override {
+    void _Read() noexcept override {
         if (timeout != nullptr) {
             /* enable the timeout on the first Read() call (if one was
                specified) */

@@ -70,18 +70,18 @@ public:
 
     /* virtual methods from class Istream */
 
-    off_t _GetAvailable(bool partial) override {
+    off_t _GetAvailable(bool partial) noexcept override {
         /* can't respond to this until we're resumed, because the
            original input can be discarded */
         return resumed ? ForwardIstream::_GetAvailable(partial) : -1;
     }
 
-    void _Read() override {
+    void _Read() noexcept override {
         if (resumed)
             ForwardIstream::_Read();
     }
 
-    int _AsFd() override {
+    int _AsFd() noexcept override {
         return resumed
             ? ForwardIstream::_AsFd()
             : -1;
@@ -89,7 +89,7 @@ public:
 
     /* handler */
 
-    size_t OnData(const void *data, size_t length) override {
+    size_t OnData(const void *data, size_t length) noexcept override {
         return resumed ? InvokeData(data, length) : 0;
     }
 };

@@ -64,9 +64,9 @@ public:
 
     /* virtual methods from class Istream */
 
-    off_t _GetAvailable(bool partial) override;
+    off_t _GetAvailable(bool partial) noexcept override;
 
-    off_t _Skip(off_t length) override {
+    off_t _Skip(off_t length) noexcept override {
         off_t nbytes = ForwardIstream::_Skip(length);
         if (nbytes > 0) {
             if (nbytes < available)
@@ -83,7 +83,7 @@ public:
         return nbytes;
     }
 
-    void _Read() override;
+    void _Read() noexcept override;
     void _Close() noexcept override;
 
     /* virtual methods from class IstreamHandler */
@@ -221,7 +221,7 @@ CatchIstream::OnError(std::exception_ptr ep) noexcept
  */
 
 off_t
-CatchIstream::_GetAvailable(bool partial)
+CatchIstream::_GetAvailable(bool partial) noexcept
 {
     if (HasInput()) {
         off_t result = ForwardIstream::_GetAvailable(partial);
@@ -234,7 +234,7 @@ CatchIstream::_GetAvailable(bool partial)
 }
 
 void
-CatchIstream::_Read()
+CatchIstream::_Read() noexcept
 {
     if (HasInput())
         ForwardIstream::_Read();

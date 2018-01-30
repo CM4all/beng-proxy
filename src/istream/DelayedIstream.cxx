@@ -53,7 +53,7 @@ public:
         defer_read.Cancel();
     }
 
-    void Set(UnusedIstreamPtr _input) {
+    void Set(UnusedIstreamPtr _input) noexcept {
         assert(!HasInput());
 
         SetInput(std::move(_input), GetHandlerDirect());
@@ -62,13 +62,13 @@ public:
             defer_read.Schedule();
     }
 
-    void SetEof() {
+    void SetEof() noexcept {
         assert(!HasInput());
 
         DestroyEof();
     }
 
-    void SetError(std::exception_ptr ep) {
+    void SetError(std::exception_ptr ep) noexcept {
         assert(!HasInput());
 
         DestroyError(ep);
@@ -82,18 +82,18 @@ private:
 public:
     /* virtual methods from class Istream */
 
-    off_t _GetAvailable(bool partial) override {
+    off_t _GetAvailable(bool partial) noexcept override {
         return HasInput()
             ? ForwardIstream::_GetAvailable(partial)
             : -1;
     }
 
-    void _Read() override {
+    void _Read() noexcept override {
         if (HasInput())
             ForwardIstream::_Read();
     }
 
-    int _AsFd() override {
+    int _AsFd() noexcept override {
         return HasInput()
             ? ForwardIstream::_AsFd()
             : -1;

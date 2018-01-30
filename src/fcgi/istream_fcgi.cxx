@@ -48,7 +48,7 @@ class FcgiIstream final : public FacadeIstream {
 
 public:
     FcgiIstream(struct pool &_pool, UnusedIstreamPtr _input,
-                uint16_t request_id)
+                uint16_t request_id) noexcept
         :FacadeIstream(_pool, std::move(_input)) {
         header = (struct fcgi_record_header){
             .version = FCGI_VERSION_1,
@@ -60,25 +60,25 @@ public:
         };
     }
 
-    bool WriteHeader();
-    void StartRecord(size_t length);
-    size_t Feed(const char *data, size_t length);
+    bool WriteHeader() noexcept;
+    void StartRecord(size_t length) noexcept;
+    size_t Feed(const char *data, size_t length) noexcept;
 
     /* virtual methods from class Istream */
 
-    off_t _GetAvailable(bool partial) override {
+    off_t _GetAvailable(bool partial) noexcept override {
         return partial
             ? sizeof(header) - header_sent + input.GetAvailable(partial)
             : -1;
     }
 
-    off_t _Skip(gcc_unused off_t length) override {
+    off_t _Skip(gcc_unused off_t length) noexcept override {
         return -1;
     }
 
-    void _Read() override;
+    void _Read() noexcept override;
 
-    int _AsFd() override {
+    int _AsFd() noexcept override {
         return -1;
     }
 
@@ -86,7 +86,7 @@ public:
 
     /* virtual methods from class IstreamHandler */
 
-    size_t OnData(const void *data, size_t length) override {
+    size_t OnData(const void *data, size_t length) noexcept override {
         const ScopePoolRef ref(GetPool() TRACE_ARGS);
         return Feed((const char *)data, length);
     }
@@ -100,7 +100,7 @@ public:
 };
 
 bool
-FcgiIstream::WriteHeader()
+FcgiIstream::WriteHeader() noexcept
 {
     assert(header_sent <= sizeof(header));
 
@@ -117,7 +117,7 @@ FcgiIstream::WriteHeader()
 }
 
 void
-FcgiIstream::StartRecord(size_t length)
+FcgiIstream::StartRecord(size_t length) noexcept
 {
     assert(missing_from_current_record == 0);
     assert(header_sent == sizeof(header));
@@ -132,7 +132,7 @@ FcgiIstream::StartRecord(size_t length)
 }
 
 size_t
-FcgiIstream::Feed(const char *data, size_t length)
+FcgiIstream::Feed(const char *data, size_t length) noexcept
 {
     assert(HasInput());
 
@@ -199,7 +199,7 @@ FcgiIstream::OnEof() noexcept
  */
 
 void
-FcgiIstream::_Read()
+FcgiIstream::_Read() noexcept
 {
     if (!WriteHeader())
         return;

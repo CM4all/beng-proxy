@@ -43,15 +43,15 @@ public:
 
     /* virtual methods from class Istream */
 
-    off_t _GetAvailable(gcc_unused bool partial) override {
+    off_t _GetAvailable(gcc_unused bool partial) noexcept override {
         return 0;
     }
 
-    void _Read() override {
+    void _Read() noexcept override {
         DestroyEof();
     }
 
-    int _AsFd() override {
+    int _AsFd() noexcept override {
         /* fd0 is always linked with /dev/null */
         int fd = dup(0);
         if (fd < 0)

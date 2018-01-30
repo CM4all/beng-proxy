@@ -116,11 +116,11 @@ struct HttpClient final : BufferedSocketHandler, IstreamHandler, Cancellable {
 
         /* virtual methods from class Istream */
 
-        off_t _GetAvailable(bool partial) override {
+        off_t _GetAvailable(bool partial) noexcept override {
             return GetClient().GetAvailable(partial);
         }
 
-        void _Read() override {
+        void _Read() noexcept override {
             GetClient().Read();
         }
 
@@ -128,11 +128,11 @@ struct HttpClient final : BufferedSocketHandler, IstreamHandler, Cancellable {
             GetClient().FillBucketList(list);
         }
 
-        size_t _ConsumeBucketList(size_t nbytes) override {
+        size_t _ConsumeBucketList(size_t nbytes) noexcept override {
             return GetClient().ConsumeBucketList(nbytes);
         }
 
-        int _AsFd() override {
+        int _AsFd() noexcept override {
             return GetClient().AsFD();
         }
 

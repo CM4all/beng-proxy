@@ -91,54 +91,54 @@ class DechunkIstream final : public FacadeIstream {
 public:
     DechunkIstream(struct pool &p, UnusedIstreamPtr &&_input,
                    EventLoop &event_loop,
-                   DechunkHandler &_dechunk_handler)
+                   DechunkHandler &_dechunk_handler) noexcept
         :FacadeIstream(p, std::move(_input)),
          defer_eof_event(event_loop, BIND_THIS_METHOD(DeferredEof)),
          dechunk_handler(_dechunk_handler)
     {
     }
 
-    void SetVerbatim() {
+    void SetVerbatim() noexcept {
         verbatim = true;
         eof_verbatim = false;
         pending_verbatim = 0;
     }
 
 private:
-    void Abort(std::exception_ptr ep);
+    void Abort(std::exception_ptr ep) noexcept;
 
     gcc_pure
-    bool IsEofPending() const {
+    bool IsEofPending() const noexcept {
         return defer_eof_event.IsPending();
     }
 
-    void DeferredEof();
+    void DeferredEof() noexcept;
 
     /**
      * @return false if the input has been closed
      */
-    bool EofDetected();
+    bool EofDetected() noexcept;
 
-    bool CalculateRemainingDataSize(const char *src, const char *src_end);
+    bool CalculateRemainingDataSize(const char *src, const char *src_end) noexcept;
 
-    size_t Feed(const void *data, size_t length);
+    size_t Feed(const void *data, size_t length) noexcept;
 
 public:
     /* virtual methods from class Istream */
 
-    off_t _GetAvailable(bool partial) override;
-    void _Read() override;
+    off_t _GetAvailable(bool partial) noexcept override;
+    void _Read() noexcept override;
     void _Close() noexcept override;
 
 protected:
     /* virtual methods from class IstreamHandler */
-    size_t OnData(const void *data, size_t length) override;
+    size_t OnData(const void *data, size_t length) noexcept override;
     void OnEof() noexcept override;
     void OnError(std::exception_ptr ep) noexcept override;
 };
 
 void
-DechunkIstream::Abort(std::exception_ptr ep)
+DechunkIstream::Abort(std::exception_ptr ep) noexcept
 {
     assert(!parser.HasEnded());
     assert(input.IsDefined());
@@ -151,7 +151,7 @@ DechunkIstream::Abort(std::exception_ptr ep)
 }
 
 void
-DechunkIstream::DeferredEof()
+DechunkIstream::DeferredEof() noexcept
 {
     assert(parser.HasEnded());
     assert(!input.IsDefined());
@@ -163,7 +163,7 @@ DechunkIstream::DeferredEof()
 }
 
 bool
-DechunkIstream::EofDetected()
+DechunkIstream::EofDetected() noexcept
 {
     assert(input.IsDefined());
     assert(parser.HasEnded());
@@ -182,7 +182,7 @@ DechunkIstream::EofDetected()
 
 inline bool
 DechunkIstream::CalculateRemainingDataSize(const char *src,
-                                           const char *const src_end)
+                                           const char *const src_end) noexcept
 {
     assert(!IsEofPending());
     assert(!eof);
@@ -231,7 +231,7 @@ DechunkIstream::CalculateRemainingDataSize(const char *src,
 }
 
 size_t
-DechunkIstream::Feed(const void *data0, size_t length)
+DechunkIstream::Feed(const void *data0, size_t length) noexcept
 {
     assert(input.IsDefined());
     assert(!IsEofPending());
@@ -341,7 +341,7 @@ DechunkIstream::Feed(const void *data0, size_t length)
  */
 
 size_t
-DechunkIstream::OnData(const void *data, size_t length)
+DechunkIstream::OnData(const void *data, size_t length) noexcept
 {
     assert(!verbatim || length >= pending_verbatim);
 
@@ -408,7 +408,7 @@ DechunkIstream::OnError(std::exception_ptr ep) noexcept
  */
 
 off_t
-DechunkIstream::_GetAvailable(bool partial)
+DechunkIstream::_GetAvailable(bool partial) noexcept
 {
     if (IsEofPending())
         return 0;
@@ -427,7 +427,7 @@ DechunkIstream::_GetAvailable(bool partial)
 }
 
 void
-DechunkIstream::_Read()
+DechunkIstream::_Read() noexcept
 {
     if (IsEofPending())
         return;

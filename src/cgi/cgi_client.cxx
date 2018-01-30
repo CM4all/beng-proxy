@@ -112,8 +112,8 @@ public:
     void Cancel() noexcept override;
 
     /* virtual methods from class Istream */
-    off_t _GetAvailable(bool partial) override;
-    void _Read() override;
+    off_t _GetAvailable(bool partial) noexcept override;
+    void _Read() noexcept override;
     void _Close() noexcept override;
 
     /* virtual methods from class IstreamHandler */
@@ -403,7 +403,7 @@ CGIClient::OnError(std::exception_ptr ep) noexcept
  */
 
 off_t
-CGIClient::_GetAvailable(bool partial)
+CGIClient::_GetAvailable(bool partial) noexcept
 {
     if (parser.KnownLength())
         return parser.GetAvailable();
@@ -421,7 +421,7 @@ CGIClient::_GetAvailable(bool partial)
 }
 
 void
-CGIClient::_Read()
+CGIClient::_Read() noexcept
 {
     if (input.IsDefined()) {
         input.SetDirect(GetHandlerDirect());

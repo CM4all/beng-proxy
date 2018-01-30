@@ -51,11 +51,11 @@ public:
 
     /* virtual methods from class Istream */
 
-    off_t _GetAvailable(gcc_unused bool partial) override {
+    off_t _GetAvailable(gcc_unused bool partial) noexcept override {
         return reader.Available();
     }
 
-    off_t _Skip(off_t _nbytes) override {
+    off_t _Skip(off_t _nbytes) noexcept override {
         size_t nbytes = _nbytes > off_t(reader.Available())
             ? reader.Available()
             : size_t(_nbytes);
@@ -65,7 +65,7 @@ public:
         return nbytes;
     }
 
-    void _Read() override {
+    void _Read() noexcept override {
         /* this loop is required to cross the buffer borders */
         while (true) {
             auto src = reader.Read();
@@ -92,7 +92,7 @@ public:
         reader.FillBucketList(list);
     }
 
-    size_t _ConsumeBucketList(size_t nbytes) override {
+    size_t _ConsumeBucketList(size_t nbytes) noexcept override {
         size_t consumed = reader.ConsumeBucketList(nbytes);
         Consumed(consumed);
         return consumed;

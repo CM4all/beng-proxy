@@ -85,7 +85,7 @@ public:
         buffer.FreeIfDefined(fb_pool_get());
     }
 
-    bool InitZlib();
+    bool InitZlib() noexcept;
 
     void DeinitZlib() noexcept {
         if (z_initialized) {
@@ -94,7 +94,7 @@ public:
         }
     }
 
-    void Abort(std::exception_ptr ep) {
+    void Abort(std::exception_ptr ep) noexcept {
         DeinitZlib();
 
         if (HasInput())
@@ -103,7 +103,7 @@ public:
         DestroyError(ep);
     }
 
-    void Abort(int code, const char *msg) {
+    void Abort(int code, const char *msg) noexcept {
         Abort(std::make_exception_ptr(ZlibError(code, msg)));
     }
 
@@ -113,7 +113,7 @@ public:
      * @return the number of bytes which were handled, or 0 if the
      * stream was closed
      */
-    size_t TryWrite();
+    size_t TryWrite() noexcept;
 
     /**
      * Starts to write to the buffer.
@@ -121,7 +121,7 @@ public:
      * @return a pointer to the writable buffer, or nullptr if there is no
      * room (our istream handler blocks) or if the stream was closed
      */
-    WritableBuffer<void> BufferWrite() {
+    WritableBuffer<void> BufferWrite() noexcept {
         buffer.AllocateIfNull(fb_pool_get());
         auto w = buffer.Write();
         if (w.empty() && TryWrite() > 0)
@@ -130,19 +130,19 @@ public:
         return w.ToVoid();
     }
 
-    void TryFlush();
+    void TryFlush() noexcept;
 
     /**
      * Read from our input until we have submitted some bytes to our
      * istream handler.
      */
-    void ForceRead();
+    void ForceRead() noexcept;
 
-    void TryFinish();
+    void TryFinish() noexcept;
 
     /* virtual methods from class Istream */
 
-    void _Read() override {
+    void _Read() noexcept override {
         if (!buffer.IsEmpty())
             TryWrite();
         else if (HasInput())
@@ -161,24 +161,24 @@ public:
     }
 
     /* virtual methods from class IstreamHandler */
-    size_t OnData(const void *data, size_t length) override;
+    size_t OnData(const void *data, size_t length) noexcept override;
     void OnEof() noexcept override;
     void OnError(std::exception_ptr ep) noexcept override;
 
 private:
-    int GetWindowBits() const {
+    int GetWindowBits() const noexcept {
         return MAX_WBITS + gzip * 16;
     }
 
-    void OnDeferred() {
+    void OnDeferred() noexcept {
         assert(HasInput());
 
         ForceRead();
     }
 };
 
-static voidpf z_alloc
-(voidpf opaque, uInt items, uInt size)
+static voidpf
+z_alloc(voidpf opaque, uInt items, uInt size) noexcept
 {
     struct pool *pool = (struct pool *)opaque;
 
@@ -186,14 +186,14 @@ static voidpf z_alloc
 }
 
 static void
-z_free(voidpf opaque, voidpf address)
+z_free(voidpf opaque, voidpf address) noexcept
 {
     (void)opaque;
     (void)address;
 }
 
 bool
-DeflateIstream::InitZlib()
+DeflateIstream::InitZlib() noexcept
 {
     if (z_initialized)
         return true;
@@ -215,7 +215,7 @@ DeflateIstream::InitZlib()
 }
 
 size_t
-DeflateIstream::TryWrite()
+DeflateIstream::TryWrite() noexcept
 {
     auto r = buffer.Read();
     assert(!r.empty());
@@ -237,7 +237,7 @@ DeflateIstream::TryWrite()
 }
 
 inline void
-DeflateIstream::TryFlush()
+DeflateIstream::TryFlush() noexcept
 {
     assert(!z_stream_end);
 
@@ -263,9 +263,8 @@ DeflateIstream::TryFlush()
         TryWrite();
 }
 
-inline
-void
-DeflateIstream::ForceRead()
+inline void
+DeflateIstream::ForceRead() noexcept
 {
     assert(!reading);
 
@@ -293,7 +292,7 @@ DeflateIstream::ForceRead()
 }
 
 void
-DeflateIstream::TryFinish()
+DeflateIstream::TryFinish() noexcept
 {
     assert(!z_stream_end);
 
@@ -331,7 +330,7 @@ DeflateIstream::TryFinish()
  */
 
 size_t
-DeflateIstream::OnData(const void *data, size_t length)
+DeflateIstream::OnData(const void *data, size_t length) noexcept
 {
     assert(HasInput());
 

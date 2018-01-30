@@ -185,8 +185,8 @@ struct MemcachedClient final
 
     /* virtual methods from class Istream */
 
-    off_t _GetAvailable(bool partial) override;
-    void _Read() override;
+    off_t _GetAvailable(bool partial) noexcept override;
+    void _Read() noexcept override;
     void _Close() noexcept override;
 
     /* virtual methods from class IstreamHandler */
@@ -261,7 +261,7 @@ MemcachedClient::AbortResponse(std::exception_ptr ep)
  */
 
 off_t
-MemcachedClient::_GetAvailable(gcc_unused bool partial)
+MemcachedClient::_GetAvailable(gcc_unused bool partial) noexcept
 {
     assert(response.read_state == ReadState::VALUE);
     assert(!request.istream.IsDefined());
@@ -270,7 +270,7 @@ MemcachedClient::_GetAvailable(gcc_unused bool partial)
 }
 
 void
-MemcachedClient::_Read()
+MemcachedClient::_Read() noexcept
 {
     assert(response.read_state == ReadState::VALUE);
     assert(!request.istream.IsDefined());

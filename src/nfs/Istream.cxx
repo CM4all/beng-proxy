@@ -102,14 +102,14 @@ private:
 
     /* virtual methods from class Istream */
 
-    off_t _GetAvailable(gcc_unused bool partial) override {
+    off_t _GetAvailable(gcc_unused bool partial) noexcept override {
         return remaining + pending_read - discard_read +
             buffer.GetAvailable();
     }
 
-    off_t _Skip(off_t length) override;
+    off_t _Skip(off_t length) noexcept override;
 
-    void _Read() override {
+    void _Read() noexcept override {
         if (!buffer.IsEmpty())
             ReadFromBuffer();
         else
@@ -233,7 +233,7 @@ NfsIstream::ScheduleRead()
  */
 
 off_t
-NfsIstream::_Skip(off_t _length)
+NfsIstream::_Skip(off_t _length) noexcept
 {
     assert(discard_read <= pending_read);
 

@@ -460,20 +460,20 @@ public:
     }
 
 protected:
-    virtual off_t _GetAvailable(gcc_unused bool partial) {
+    virtual off_t _GetAvailable(gcc_unused bool partial) noexcept {
         return -1;
     }
 
-    virtual off_t _Skip(gcc_unused off_t length) {
+    virtual off_t _Skip(gcc_unused off_t length) noexcept {
         return -1;
     }
 
-    virtual void _Read() = 0;
+    virtual void _Read() noexcept = 0;
 
     virtual void _FillBucketList(IstreamBucketList &list);
-    virtual size_t _ConsumeBucketList(size_t nbytes);
+    virtual size_t _ConsumeBucketList(size_t nbytes) noexcept;
 
-    virtual int _AsFd() {
+    virtual int _AsFd() noexcept {
         return -1;
     }
 

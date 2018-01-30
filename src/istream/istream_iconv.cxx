@@ -49,55 +49,55 @@ class IconvIstream final : public FacadeIstream {
 
 public:
     IconvIstream(struct pool &p, UnusedIstreamPtr _input,
-                 iconv_t _iconv)
+                 iconv_t _iconv) noexcept
         :FacadeIstream(p, std::move(_input)),
          iconv(_iconv)
     {
     }
 
-    ~IconvIstream() {
+    ~IconvIstream() noexcept {
         buffer.FreeIfDefined(fb_pool_get());
         iconv_close(iconv);
         iconv = (iconv_t)-1;
     }
 
-    bool IsOpen() const {
+    bool IsOpen() const noexcept {
         return iconv != (iconv_t)-1;
     }
 
     /* virtual methods from class Istream */
 
-    off_t _GetAvailable(bool partial) override {
+    off_t _GetAvailable(bool partial) noexcept override {
         if (partial)
             return buffer.GetAvailable();
 
         return -1;
     }
 
-    void _Read() override;
+    void _Read() noexcept override;
     void _Close() noexcept override;
 
     /* handler */
 
-    size_t OnData(const void *data, size_t length) override;
+    size_t OnData(const void *data, size_t length) noexcept override;
     void OnEof() noexcept override;
     void OnError(std::exception_ptr ep) noexcept override;
 
 private:
-    size_t Feed(const char *data, size_t length);
+    size_t Feed(const char *data, size_t length) noexcept;
 };
 
 static inline size_t
 deconst_iconv(iconv_t cd,
               const char **inbuf, size_t *inbytesleft,
-              char **outbuf, size_t *outbytesleft)
+              char **outbuf, size_t *outbytesleft) noexcept
 {
     char **inbuf2 = const_cast<char **>(inbuf);
     return iconv(cd, inbuf2, inbytesleft, outbuf, outbytesleft);
 }
 
 size_t
-IconvIstream::Feed(const char *data, size_t length)
+IconvIstream::Feed(const char *data, size_t length) noexcept
 {
     buffer.AllocateIfNull(fb_pool_get());
 
@@ -191,7 +191,7 @@ IconvIstream::Feed(const char *data, size_t length)
  */
 
 size_t
-IconvIstream::OnData(const void *data, size_t length)
+IconvIstream::OnData(const void *data, size_t length) noexcept
 {
     assert(input.IsDefined());
 
@@ -223,7 +223,7 @@ IconvIstream::OnError(std::exception_ptr ep) noexcept
  */
 
 void
-IconvIstream::_Read()
+IconvIstream::_Read() noexcept
 {
     if (input.IsDefined())
         input.Read();

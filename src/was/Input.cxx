@@ -202,7 +202,7 @@ public:
 
     /* virtual methods from class Istream */
 
-    off_t _GetAvailable(bool partial) override {
+    off_t _GetAvailable(bool partial) noexcept override {
         if (known_length)
             return length - received + buffer.GetAvailable();
         else if (partial)
@@ -211,7 +211,7 @@ public:
             return -1;
     }
 
-    void _Read() override {
+    void _Read() noexcept override {
         event.Delete();
 
         if (SubmitBuffer())

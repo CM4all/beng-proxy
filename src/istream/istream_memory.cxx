@@ -51,18 +51,18 @@ public:
 
     /* virtual methods from class Istream */
 
-    off_t _GetAvailable(gcc_unused bool partial) override {
+    off_t _GetAvailable(gcc_unused bool partial) noexcept override {
         return data.size;
     }
 
-    off_t _Skip(off_t length) override {
+    off_t _Skip(off_t length) noexcept override {
         size_t nbytes = std::min(off_t(data.size), length);
         data.skip_front(nbytes);
         Consumed(nbytes);
         return nbytes;
     }
 
-    void _Read() override {
+    void _Read() noexcept override {
         if (!data.empty()) {
             auto nbytes = InvokeData(data.data, data.size);
             if (nbytes == 0)
@@ -75,12 +75,12 @@ public:
             DestroyEof();
     }
 
-    void _FillBucketList(IstreamBucketList &list) override {
+    void _FillBucketList(IstreamBucketList &list) noexcept override {
         if (!data.empty())
             list.Push(data.ToVoid());
     }
 
-    size_t _ConsumeBucketList(size_t nbytes) override {
+    size_t _ConsumeBucketList(size_t nbytes) noexcept override {
         if (nbytes > data.size)
             nbytes = data.size;
         data.skip_front(nbytes);

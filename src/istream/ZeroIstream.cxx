@@ -42,18 +42,18 @@ public:
 
     /* virtual methods from class Istream */
 
-    off_t _GetAvailable(bool partial) override {
+    off_t _GetAvailable(bool partial) noexcept override {
         return partial
             ? INT_MAX
             : -1;
     }
 
-    off_t _Skip(off_t length) override {
+    off_t _Skip(off_t length) noexcept override {
         Consumed(length);
         return length;
     }
 
-    void _Read() override {
+    void _Read() noexcept override {
         static char buffer[1024];
 
         InvokeData(buffer, sizeof(buffer));

@@ -60,11 +60,11 @@ struct Custom final : Istream, IstreamHandler {
 
     /* virtual methods from class Istream */
 
-    off_t _GetAvailable(gcc_unused bool partial) override {
+    off_t _GetAvailable(gcc_unused bool partial) noexcept override {
         return 1;
     }
 
-    void _Read() override {}
+    void _Read() noexcept override {}
 
     /* virtual methods from class IstreamHandler */
 

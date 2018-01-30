@@ -50,7 +50,7 @@ public:
 
     /* virtual methods from class Istream */
 
-    off_t _GetAvailable(bool partial) override {
+    off_t _GetAvailable(bool partial) noexcept override {
         /* never return the total length, because the caller may then
            make assumptions on when this stream ends */
         return partial && HasInput()
@@ -58,12 +58,12 @@ public:
             : -1;
     }
 
-    void _Read() override {
+    void _Read() noexcept override {
         if (HasInput())
             ForwardIstream::_Read();
     }
 
-    int _AsFd() override {
+    int _AsFd() noexcept override {
         return -1;
     }
 

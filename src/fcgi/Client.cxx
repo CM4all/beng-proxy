@@ -254,10 +254,10 @@ struct FcgiClient final
 
     /* virtual methods from class Istream */
 
-    off_t _GetAvailable(bool partial) override;
-    void _Read() override;
+    off_t _GetAvailable(bool partial) noexcept override;
+    void _Read() noexcept override;
     void _FillBucketList(IstreamBucketList &list) override;
-    size_t _ConsumeBucketList(size_t nbytes) override;
+    size_t _ConsumeBucketList(size_t nbytes) noexcept override;
     void _Close() noexcept override;
 
     /* virtual methods from class IstreamHandler */
@@ -737,7 +737,7 @@ FcgiClient::OnError(std::exception_ptr ep) noexcept
  */
 
 off_t
-FcgiClient::_GetAvailable(bool partial)
+FcgiClient::_GetAvailable(bool partial) noexcept
 {
     if (response.available >= 0)
         return response.available;
@@ -753,7 +753,7 @@ FcgiClient::_GetAvailable(bool partial)
 }
 
 void
-FcgiClient::_Read()
+FcgiClient::_Read() noexcept
 {
     if (response.in_handler)
         /* avoid recursion; the http_response_handler caller will
@@ -860,7 +860,7 @@ FcgiClient::_FillBucketList(IstreamBucketList &list)
 }
 
 size_t
-FcgiClient::_ConsumeBucketList(size_t nbytes)
+FcgiClient::_ConsumeBucketList(size_t nbytes) noexcept
 {
     assert(response.available != 0);
     assert(response.read_state == Response::READ_BODY);

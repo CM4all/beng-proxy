@@ -45,23 +45,23 @@ class HeadIstream final : public ForwardIstream {
 
 public:
     HeadIstream(struct pool &p, UnusedIstreamPtr _input,
-                size_t size, bool _authoritative)
+                size_t size, bool _authoritative) noexcept
         :ForwardIstream(p, std::move(_input)),
          rest(size), authoritative(_authoritative) {}
 
     /* virtual methods from class Istream */
 
-    off_t _GetAvailable(bool partial) override;
-    off_t _Skip(off_t length) override;
-    void _Read() override;
+    off_t _GetAvailable(bool partial) noexcept override;
+    off_t _Skip(off_t length) noexcept override;
+    void _Read() noexcept override;
 
-    int _AsFd() override {
+    int _AsFd() noexcept override {
         return -1;
     }
 
     /* virtual methods from class IstreamHandler */
-    size_t OnData(const void *data, size_t length) override;
-    ssize_t OnDirect(FdType type, int fd, size_t max_length) override;
+    size_t OnData(const void *data, size_t length) noexcept override;
+    ssize_t OnDirect(FdType type, int fd, size_t max_length) noexcept override;
 };
 
 /*
@@ -70,7 +70,7 @@ public:
  */
 
 size_t
-HeadIstream::OnData(const void *data, size_t length)
+HeadIstream::OnData(const void *data, size_t length) noexcept
 {
     if (rest == 0) {
         input.Close();
@@ -97,7 +97,7 @@ HeadIstream::OnData(const void *data, size_t length)
 }
 
 ssize_t
-HeadIstream::OnDirect(FdType type, int fd, size_t max_length)
+HeadIstream::OnDirect(FdType type, int fd, size_t max_length) noexcept
 {
     if (rest == 0) {
         input.Close();
@@ -129,7 +129,7 @@ HeadIstream::OnDirect(FdType type, int fd, size_t max_length)
  */
 
 off_t
-HeadIstream::_GetAvailable(bool partial)
+HeadIstream::_GetAvailable(bool partial) noexcept
 {
     if (authoritative) {
         assert(partial ||
@@ -143,7 +143,7 @@ HeadIstream::_GetAvailable(bool partial)
 }
 
 off_t
-HeadIstream::_Skip(off_t length)
+HeadIstream::_Skip(off_t length) noexcept
 {
     if (length >= rest)
         length = rest;
@@ -158,7 +158,7 @@ HeadIstream::_Skip(off_t length)
 }
 
 void
-HeadIstream::_Read()
+HeadIstream::_Read() noexcept
 {
     if (rest == 0) {
         input.Close();

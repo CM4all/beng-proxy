@@ -47,7 +47,7 @@ public:
 
     /* virtual methods from class Istream */
 
-    off_t _GetAvailable(bool partial) override {
+    off_t _GetAvailable(bool partial) noexcept override {
         fprintf(stderr, "%p available(%d)\n", (const void *)this, partial);
         auto available = ForwardIstream::_GetAvailable(partial);
         fprintf(stderr, "%p available(%d)=%ld\n", (const void *)this,
@@ -56,7 +56,7 @@ public:
         return available;
     }
 
-    off_t _Skip(off_t length) override {
+    off_t _Skip(off_t length) noexcept override {
         fprintf(stderr, "%p skip(0x%lu)\n", (const void *)this,
                 (unsigned long)length);
 
@@ -67,14 +67,14 @@ public:
         return result;
     }
 
-    void _Read() override {
+    void _Read() noexcept override {
         fprintf(stderr, "%p read(0x%x)\n", (const void *)this,
                 GetHandlerDirect());
 
         ForwardIstream::_Read();
     }
 
-    int _AsFd() override {
+    int _AsFd() noexcept override {
         auto fd = ForwardIstream::_AsFd();
         fprintf(stderr, "%p as_fd()=%d\n", (const void *)this, fd);
         return fd;

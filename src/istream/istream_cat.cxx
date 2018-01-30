@@ -67,21 +67,21 @@ class CatIstream final : public Istream {
             input.FillBucketList(list);
         }
 
-        size_t ConsumeBucketList(size_t nbytes) {
+        size_t ConsumeBucketList(size_t nbytes) noexcept {
             return input.ConsumeBucketList(nbytes);
         }
 
-        int AsFd() {
+        int AsFd() noexcept {
             return input.AsFd();
         }
 
         /* virtual methods from class IstreamHandler */
 
-        size_t OnData(const void *data, size_t length) override {
+        size_t OnData(const void *data, size_t length) noexcept override {
             return cat.OnInputData(*this, data, length);
         }
 
-        ssize_t OnDirect(FdType type, int fd, size_t max_length) override {
+        ssize_t OnDirect(FdType type, int fd, size_t max_length) noexcept override {
             return cat.OnInputDirect(*this, type, fd, max_length);
         }
 
@@ -136,20 +136,20 @@ private:
         inputs.clear_and_dispose(Input::Disposer());
     }
 
-    size_t OnInputData(Input &i, const void *data, size_t length) {
+    size_t OnInputData(Input &i, const void *data, size_t length) noexcept {
         return IsCurrent(i)
             ? InvokeData(data, length)
             : 0;
     }
 
     ssize_t OnInputDirect(gcc_unused Input &i, FdType type, int fd,
-                          size_t max_length) {
+                          size_t max_length) noexcept {
         assert(IsCurrent(i));
 
         return InvokeDirect(type, fd, max_length);
     }
 
-    void OnInputEof(Input &i) {
+    void OnInputEof(Input &i) noexcept {
         const bool current = IsCurrent(i);
         inputs.erase(inputs.iterator_to(i));
 
@@ -165,7 +165,7 @@ private:
         }
     }
 
-    void OnInputError(Input &i, std::exception_ptr ep) {
+    void OnInputError(Input &i, std::exception_ptr ep) noexcept {
         inputs.erase(inputs.iterator_to(i));
         CloseAllInputs();
         DestroyError(ep);
@@ -174,12 +174,12 @@ private:
 public:
     /* virtual methods from class Istream */
 
-    off_t _GetAvailable(bool partial) override;
-    off_t _Skip(gcc_unused off_t length) override;
-    void _Read() override;
+    off_t _GetAvailable(bool partial) noexcept override;
+    off_t _Skip(gcc_unused off_t length) noexcept override;
+    void _Read() noexcept override;
     void _FillBucketList(IstreamBucketList &list) override;
-    size_t _ConsumeBucketList(size_t nbytes) override;
-    int _AsFd() override;
+    size_t _ConsumeBucketList(size_t nbytes) noexcept override;
+    int _AsFd() noexcept override;
     void _Close() noexcept override;
 };
 
@@ -189,7 +189,7 @@ public:
  */
 
 off_t
-CatIstream::_GetAvailable(bool partial)
+CatIstream::_GetAvailable(bool partial) noexcept
 {
     off_t available = 0;
 
@@ -208,7 +208,7 @@ CatIstream::_GetAvailable(bool partial)
 }
 
 off_t
-CatIstream::_Skip(off_t length)
+CatIstream::_Skip(off_t length) noexcept
 {
     if (inputs.empty())
         return 0;
@@ -221,7 +221,7 @@ CatIstream::_Skip(off_t length)
 }
 
 void
-CatIstream::_Read()
+CatIstream::_Read() noexcept
 {
     if (IsEOF()) {
         DestroyEof();
@@ -262,7 +262,7 @@ CatIstream::_FillBucketList(IstreamBucketList &list)
 }
 
 size_t
-CatIstream::_ConsumeBucketList(size_t nbytes)
+CatIstream::_ConsumeBucketList(size_t nbytes) noexcept
 {
     size_t total = 0;
 
@@ -279,7 +279,7 @@ CatIstream::_ConsumeBucketList(size_t nbytes)
 }
 
 int
-CatIstream::_AsFd()
+CatIstream::_AsFd() noexcept
 {
     /* we can safely forward the as_fd() call to our input if it's the
        last one */

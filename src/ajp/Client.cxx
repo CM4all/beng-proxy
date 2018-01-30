@@ -221,8 +221,8 @@ struct AjpClient final
     void Cancel() noexcept override;
 
     /* virtual methods from class Istream */
-    off_t _GetAvailable(bool partial) override;
-    void _Read() override;
+    off_t _GetAvailable(bool partial) noexcept override;
+    void _Read() noexcept override;
     void _Close() noexcept override;
 
     /* virtual methods from class IstreamHandler */
@@ -324,7 +324,7 @@ AjpClient::AbortResponse(std::exception_ptr ep) noexcept
  */
 
 off_t
-AjpClient::_GetAvailable(bool partial)
+AjpClient::_GetAvailable(bool partial) noexcept
 {
     assert(response.read_state == AjpClient::Response::READ_BODY);
 
@@ -341,7 +341,7 @@ AjpClient::_GetAvailable(bool partial)
 }
 
 void
-AjpClient::_Read()
+AjpClient::_Read() noexcept
 {
     assert(response.read_state == AjpClient::Response::READ_BODY);
 

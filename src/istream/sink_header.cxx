@@ -82,9 +82,9 @@ private:
 
     /* virtual methods from class Istream */
 
-    off_t _GetAvailable(bool partial) override;
+    off_t _GetAvailable(bool partial) noexcept override;
 
-    void _Read() override {
+    void _Read() noexcept override {
         if (state == HeaderSink::CALLBACK)
             /* workaround: when invoking the callback from the data()
                handler, it would be illegal to call header->input again */
@@ -306,7 +306,7 @@ HeaderSink::OnError(std::exception_ptr ep) noexcept
  */
 
 off_t
-HeaderSink::_GetAvailable(bool partial)
+HeaderSink::_GetAvailable(bool partial) noexcept
 {
     off_t available = ForwardIstream::_GetAvailable(partial);
 
