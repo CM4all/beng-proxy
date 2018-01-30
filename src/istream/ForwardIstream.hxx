@@ -67,6 +67,12 @@ public:
         input.Read();
     }
 
+    size_t _ConsumeBucketList(size_t nbytes) noexcept override {
+        auto consumed = input.ConsumeBucketList(nbytes);
+        Consumed(consumed);
+        return consumed;
+    }
+
     int _AsFd() noexcept override {
         int fd = input.AsFd();
         if (fd >= 0)
