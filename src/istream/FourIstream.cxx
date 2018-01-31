@@ -54,7 +54,14 @@ public:
 
     void _FillBucketList(IstreamBucketList &list) override {
         IstreamBucketList tmp;
-        input.FillBucketList(tmp);
+
+        try {
+            input.FillBucketList(tmp);
+        } catch (...) {
+            Destroy();
+            throw;
+        }
+
         list.SpliceBuffersFrom(tmp, 1);
     }
 
