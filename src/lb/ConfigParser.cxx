@@ -521,6 +521,27 @@ validate_protocol_sticky(LbProtocol protocol, StickyMode sticky)
     return false;
 }
 
+gcc_const
+static bool
+ValidateZeroconfSticky(StickyMode sticky) noexcept
+{
+    switch (sticky) {
+    case StickyMode::NONE:
+    case StickyMode::FAILOVER:
+    case StickyMode::SOURCE_IP:
+    case StickyMode::HOST:
+    case StickyMode::XHOST:
+        return true;
+
+    case StickyMode::SESSION_MODULO:
+    case StickyMode::COOKIE:
+    case StickyMode::JVM_ROUTE:
+        return false;
+    }
+
+    gcc_unreachable();
+}
+
 gcc_pure
 static StickyMode
 ParseStickyMode(const char *s)
@@ -689,6 +710,10 @@ LbConfigParser::Cluster::Finish()
 
     if (!validate_protocol_sticky(config.protocol, config.sticky_mode))
         throw LineParser::Error("Sticky mode not available for this protocol");
+
+    if (config.HasZeroConf() &&
+        !ValidateZeroconfSticky(config.sticky_mode))
+        throw LineParser::Error("Sticky mode not compatible with Zeroconf");
 
     if (config.members.size() == 1)
         /* with only one member, a sticky setting doesn't make
