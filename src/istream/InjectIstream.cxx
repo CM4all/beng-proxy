@@ -33,6 +33,7 @@
 #include "InjectIstream.hxx"
 #include "ForwardIstream.hxx"
 #include "UnusedPtr.hxx"
+#include "Bucket.hxx"
 
 class InjectIstream final
     : public ForwardIstream, public InjectIstreamControl {
@@ -61,6 +62,18 @@ public:
     void _Read() noexcept override {
         if (HasInput())
             ForwardIstream::_Read();
+    }
+
+    void _FillBucketList(IstreamBucketList &list) override {
+        if (HasInput()) {
+            try {
+                input.FillBucketList(list);
+            } catch (...) {
+                Destroy();
+                throw;
+            }
+        } else
+            list.SetMore();
     }
 
     int _AsFd() noexcept override {
