@@ -79,6 +79,23 @@ public:
             ForwardIstream::_Read();
     }
 
+    void _FillBucketList(IstreamBucketList &list) override {
+        if (input_eof)
+            return;
+        else if (input_error) {
+            auto copy = input_error;
+            Destroy();
+            std::rethrow_exception(copy);
+        } else {
+            try {
+                input.FillBucketList(list);
+            } catch (...) {
+                Destroy();
+                throw;
+            }
+        }
+    }
+
     int _AsFd() noexcept override {
         return Check()
             ? ForwardIstream::_AsFd()
