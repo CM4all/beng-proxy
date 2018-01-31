@@ -33,6 +33,7 @@
 #include "HeadIstream.hxx"
 #include "ForwardIstream.hxx"
 #include "UnusedPtr.hxx"
+#include "Bucket.hxx"
 
 #include <algorithm>
 
@@ -54,6 +55,8 @@ public:
     off_t _GetAvailable(bool partial) noexcept override;
     off_t _Skip(off_t length) noexcept override;
     void _Read() noexcept override;
+
+    void _FillBucketList(IstreamBucketList &list) override;
 
     int _AsFd() noexcept override {
         return -1;
@@ -94,6 +97,29 @@ HeadIstream::OnData(const void *data, size_t length) noexcept
     }
 
     return nbytes;
+}
+
+void
+HeadIstream::_FillBucketList(IstreamBucketList &list)
+{
+    if (rest == 0)
+        return;
+
+    IstreamBucketList tmp1;
+
+    try {
+        input.FillBucketList(tmp1);
+    } catch (...) {
+        Destroy();
+        throw;
+    }
+
+    IstreamBucketList tmp2;
+    tmp2.SpliceBuffersFrom(tmp1, rest);
+    if ((off_t)tmp2.GetTotalBufferSize() >= rest)
+        tmp2.SetMore(false);
+
+    list.SpliceBuffersFrom(tmp2);
 }
 
 ssize_t
