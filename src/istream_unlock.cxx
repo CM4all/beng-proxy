@@ -60,12 +60,6 @@ public:
             throw;
         }
     }
-
-    size_t _ConsumeBucketList(size_t nbytes) noexcept override {
-        auto consumed = input.ConsumeBucketList(nbytes);
-        Consumed(consumed);
-        return consumed;
-    }
 };
 
 UnusedIstreamPtr

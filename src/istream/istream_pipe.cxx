@@ -76,14 +76,6 @@ public:
         }
     }
 
-    size_t _ConsumeBucketList(size_t nbytes) noexcept override {
-        assert(piped == 0);
-
-        auto consumed = input.ConsumeBucketList(nbytes);
-        Consumed(consumed);
-        return consumed;
-    }
-
     int _AsFd() noexcept override;
     void _Close() noexcept override;
 
