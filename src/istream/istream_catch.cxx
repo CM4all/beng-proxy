@@ -33,6 +33,7 @@
 #include "istream_catch.hxx"
 #include "ForwardIstream.hxx"
 #include "UnusedPtr.hxx"
+#include "Bucket.hxx"
 
 #include <memory>
 
@@ -84,6 +85,7 @@ public:
     }
 
     void _Read() noexcept override;
+    void _FillBucketList(IstreamBucketList &list) override;
     void _Close() noexcept override;
 
     /* virtual methods from class IstreamHandler */
@@ -240,6 +242,24 @@ CatchIstream::_Read() noexcept
         ForwardIstream::_Read();
     else
         SendSpace();
+}
+
+void
+CatchIstream::_FillBucketList(IstreamBucketList &list)
+{
+    try {
+        input.FillBucketList(list);
+    } catch (...) {
+        if (callback(std::current_exception(), callback_ctx))
+            throw;
+
+        /* the error has been handled by the callback, and he has
+           disposed it */
+        ClearInput();
+        list.SetMore();
+
+        // TODO: return space bucket here
+    }
 }
 
 void
