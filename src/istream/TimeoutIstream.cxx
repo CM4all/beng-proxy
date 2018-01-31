@@ -33,6 +33,7 @@
 #include "TimeoutIstream.hxx"
 #include "ForwardIstream.hxx"
 #include "UnusedPtr.hxx"
+#include "Bucket.hxx"
 #include "event/TimerEvent.hxx"
 
 #include <stdexcept>
@@ -72,6 +73,24 @@ public:
         }
 
         ForwardIstream::_Read();
+    }
+
+    void _FillBucketList(IstreamBucketList &list) override {
+        IstreamBucketList tmp;
+
+        try {
+            input.FillBucketList(tmp);
+        } catch (...) {
+            Destroy();
+            throw;
+        }
+
+        if (!tmp.IsEmpty())
+            /* disable the timeout as soon as the first data byte
+               arrives */
+            timeout_event.Cancel();
+
+        list.SpliceBuffersFrom(tmp);
     }
 
     /* virtual methods from class IstreamHandler */
