@@ -33,6 +33,7 @@
 #include "istream_trace.hxx"
 #include "ForwardIstream.hxx"
 #include "UnusedPtr.hxx"
+#include "Bucket.hxx"
 #include "pool/pool.hxx"
 #include "util/Exception.hxx"
 
@@ -72,6 +73,26 @@ public:
                 GetHandlerDirect());
 
         ForwardIstream::_Read();
+    }
+
+    void _FillBucketList(IstreamBucketList &list) override {
+        fprintf(stderr, "%p fill(0x%x)\n", (const void *)this,
+                GetHandlerDirect());
+
+        IstreamBucketList tmp;
+
+        try {
+            input.FillBucketList(tmp);
+        } catch (...) {
+            fprintf(stderr, "%p fill error '%s'\n", (const void *)this,
+                    GetFullMessage(std::current_exception()).c_str());
+            Destroy();
+            throw;
+        }
+
+        fprintf(stderr, "%p fill=%zu more=%d\n", (const void *)this,
+                tmp.GetTotalBufferSize(), tmp.HasMore());
+        list.SpliceBuffersFrom(tmp);
     }
 
     int _AsFd() noexcept override {
