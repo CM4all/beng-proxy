@@ -709,11 +709,11 @@ LbConfigParser::Cluster::Finish()
         throw LineParser::Error("Pool has no members");
 
     if (!validate_protocol_sticky(config.protocol, config.sticky_mode))
-        throw LineParser::Error("Sticky mode not available for this protocol");
+        throw LineParser::Error("The selected sticky mode not available for this protocol");
 
     if (config.HasZeroConf() &&
         !ValidateZeroconfSticky(config.sticky_mode))
-        throw LineParser::Error("Sticky mode not compatible with Zeroconf");
+        throw LineParser::Error("The selected sticky mode not compatible with Zeroconf");
 
     if (config.members.size() == 1)
         /* with only one member, a sticky setting doesn't make
