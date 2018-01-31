@@ -48,6 +48,16 @@ public:
 
     /* virtual methods from class Istream */
 
+    void _FillBucketList(IstreamBucketList &list) override {
+        try {
+            input.FillBucketList(list);
+        } catch (...) {
+            handler.abort(handler_ctx);
+            Destroy();
+            throw;
+        }
+    }
+
     void _Close() noexcept override {
         handler.close(handler_ctx);
         ForwardIstream::_Close();
