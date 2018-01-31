@@ -33,6 +33,7 @@
 #include "ByteIstream.hxx"
 #include "ForwardIstream.hxx"
 #include "UnusedPtr.hxx"
+#include "Bucket.hxx"
 
 class ByteIstream final : public ForwardIstream {
 public:
@@ -47,6 +48,12 @@ public:
 
     off_t _Skip(gcc_unused off_t length) noexcept override {
         return -1;
+    }
+
+    void _FillBucketList(IstreamBucketList &list) override {
+        IstreamBucketList tmp;
+        input.FillBucketList(tmp);
+        list.SpliceBuffersFrom(tmp, 1);
     }
 
     int _AsFd() noexcept override {
