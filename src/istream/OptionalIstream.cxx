@@ -33,6 +33,7 @@
 #include "OptionalIstream.hxx"
 #include "ForwardIstream.hxx"
 #include "UnusedPtr.hxx"
+#include "Bucket.hxx"
 #include "istream_null.hxx"
 
 #include <assert.h>
@@ -79,6 +80,18 @@ public:
     void _Read() noexcept override {
         if (resumed)
             ForwardIstream::_Read();
+    }
+
+    void _FillBucketList(IstreamBucketList &list) override {
+        if (resumed) {
+            try {
+                input.FillBucketList(list);
+            } catch (...) {
+                Destroy();
+                throw;
+            }
+        } else
+            list.SetMore();
     }
 
     int _AsFd() noexcept override {
