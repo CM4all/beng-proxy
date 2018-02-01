@@ -85,8 +85,8 @@ fcgi_server_mirror(struct pool *pool)
         ? HTTP_STATUS_NO_CONTENT
         : HTTP_STATUS_OK;
 
+    char buffer[32];
     if (request.length > 0) {
-        char buffer[32];
         sprintf(buffer, "%llu", (unsigned long long)request.length);
         request.headers->Add("content-length", buffer);
     }
