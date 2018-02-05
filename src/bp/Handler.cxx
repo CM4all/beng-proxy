@@ -32,7 +32,7 @@
 
 #include "Handler.hxx"
 #include "Connection.hxx"
-#include "bp_config.hxx"
+#include "Config.hxx"
 #include "Instance.hxx"
 #include "load_file.hxx"
 #include "file_not_found.hxx"

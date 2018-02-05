@@ -31,7 +31,7 @@
  */
 
 #include "bp_cmdline.hxx"
-#include "bp_config.hxx"
+#include "bp/Config.hxx"
 #include "net/AddressInfo.hxx"
 #include "net/Resolver.hxx"
 #include "net/Parser.hxx"
