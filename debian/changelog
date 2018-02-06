@@ -1,6 +1,7 @@
 cm4all-beng-proxy (14.0.7) unstable; urgency=low
 
   * merge release 13.9
+  * access_log: support record attribute "type"
 
  --   
 
