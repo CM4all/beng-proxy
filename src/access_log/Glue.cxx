@@ -61,8 +61,8 @@ CreateConnectDatagram(const SocketAddress address)
     if (!fd.Connect(address)) {
         const int e = errno;
         char buffer[256];
-        throw FormatErrno(e, "Failed to connect to %s",
-                          ToString(buffer, sizeof(buffer), address));
+        ToString(buffer, sizeof(buffer), address);
+        throw FormatErrno(e, "Failed to connect to %s", buffer);
     }
 
     return fd;
