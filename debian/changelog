@@ -3,6 +3,7 @@ cm4all-beng-proxy (13.9) unstable; urgency=low
   * spawn: fix kernel warning "oom_adj is deprecated, please use
     oom_score_adj instead"
   * lb/config: check whether sticky_mode is compatible with Zeroconf
+  * access_log: fix crash on connect failure
 
  --   
 
