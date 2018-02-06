@@ -5,7 +5,7 @@ cm4all-beng-proxy (13.9) unstable; urgency=low
   * lb/config: check whether sticky_mode is compatible with Zeroconf
   * access_log: fix crash on connect failure
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 06 Feb 2018 09:23:23 -0000
 
 cm4all-beng-proxy (13.8) unstable; urgency=low
 
