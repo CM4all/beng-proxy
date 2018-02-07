@@ -37,6 +37,7 @@
 #include "JsonWriter.hxx"
 #include "Server.hxx"
 #include "net/ToString.hxx"
+#include "net/log/String.hxx"
 
 #include <functional>
 
@@ -102,6 +103,9 @@ Dump(JsonWriter::Sink sink, const ReceivedAccessLogDatagram &d)
 
     if (d.valid_duration)
         o.AddMember("duration", d.duration * 1e-6);
+
+    if (d.type != Net::Log::Type::UNSPECIFIED)
+        o.AddMember("type", ToString(d.type));
 
     o.Flush();
 

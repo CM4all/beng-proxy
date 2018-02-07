@@ -1,7 +1,6 @@
 cm4all-beng-proxy (14.0.7) unstable; urgency=low
 
-  * merge release 13.9
-  * access_log: support record attribute "type"
+  * merge release 13.10
 
  --   
 
@@ -50,6 +49,12 @@ cm4all-beng-proxy (14.0.1) unstable; urgency=low
   * log-json: generate JSONL (JSON Lines)
 
  -- Max Kellermann <mk@cm4all.com>  Fri, 05 Jan 2018 11:47:08 -0000
+
+cm4all-beng-proxy (13.10) unstable; urgency=low
+
+  * access_log: support record attribute "type"
+
+ -- Max Kellermann <mk@cm4all.com>  Wed, 07 Feb 2018 08:27:48 -0000
 
 cm4all-beng-proxy (13.9) unstable; urgency=low
 
