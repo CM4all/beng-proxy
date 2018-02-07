@@ -43,6 +43,7 @@
 #include "lua/Util.hxx"
 #include "net/ToString.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
+#include "net/log/String.hxx"
 #include "system/Error.hxx"
 #include "util/PrintException.hxx"
 #include "util/RuntimeError.hxx"
@@ -113,6 +114,15 @@ public:
                 SocketDescriptor filter_sink);
 };
 
+gcc_const
+static const char *
+TypeToString(Net::Log::Type type) noexcept
+{
+    return type == Net::Log::Type::UNSPECIFIED
+        ? nullptr
+        : Net::Log::ToString(type);
+}
+
 void
 LuaAccessLogger::Handle(const ReceivedAccessLogDatagram &d,
                         SocketDescriptor filter_sink)
@@ -173,6 +183,9 @@ try {
 
     if (d.valid_duration)
         Lua::SetTable(L, -3, "duration", d.duration / 1000000.);
+
+    if (const char *type = TypeToString(d.type))
+        Lua::SetTable(L, -3, "type", type);
 
     /* if the function is a Lua code fragment passed via
        "--handler-code", then set the global variable "_" to the

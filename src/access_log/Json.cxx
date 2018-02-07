@@ -36,6 +36,7 @@
 
 #include "Server.hxx"
 #include "net/ToString.hxx"
+#include "net/log/String.hxx"
 #include "util/StringFormat.hxx"
 
 #include <json/json.h>
@@ -107,6 +108,9 @@ ToJson(const ReceivedAccessLogDatagram &d)
 
     if (d.valid_duration)
         root["duration"] = StringFormat<64>("%f", d.duration * 1e-6).c_str();
+
+    if (d.type != Net::Log::Type::UNSPECIFIED)
+        root["type"] = ToString(d.type);
 
     return root;
 }

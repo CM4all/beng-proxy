@@ -144,5 +144,8 @@ LogClient::Send(const Datagram &d)
     if (d.valid_duration)
         AppendU64(Attribute::DURATION, d.duration);
 
+    if (d.type != Net::Log::Type::UNSPECIFIED)
+        AppendU8(Attribute::TYPE, (uint8_t)d.type);
+
     return Commit();
 }
