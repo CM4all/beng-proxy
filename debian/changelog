@@ -2,7 +2,7 @@ cm4all-beng-proxy (13.10) unstable; urgency=low
 
   * access_log: support record attribute "type"
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Wed, 07 Feb 2018 08:27:48 -0000
 
 cm4all-beng-proxy (13.9) unstable; urgency=low
 
