@@ -55,6 +55,7 @@
 #include "util/ConstBuffer.hxx"
 #include "util/ByteOrder.hxx"
 #include "util/DecimalFormat.h"
+#include "util/DestructObserver.hxx"
 #include "util/StringFormat.hxx"
 #include "util/Exception.hxx"
 #include "pool/pool.hxx"
@@ -67,7 +68,8 @@
 #include <limits.h>
 
 struct AjpClient final
-    : BufferedSocketHandler, Istream, IstreamHandler, Cancellable {
+    : BufferedSocketHandler, Istream, IstreamHandler, Cancellable,
+      DestructAnchor {
 
     /* I/O */
     BufferedSocket socket;
@@ -255,7 +257,6 @@ AjpClient::ReleaseSocket(bool reuse) noexcept
 void
 AjpClient::Release(bool reuse) noexcept
 {
-    assert(socket.IsValid());
     assert(response.read_state == Response::READ_END);
 
     if (socket.IsConnected())
@@ -287,8 +288,6 @@ void
 AjpClient::AbortResponseBody(std::exception_ptr ep) noexcept
 {
     assert(response.read_state == Response::READ_BODY);
-
-    const ScopePoolRef ref(GetPool() TRACE_ARGS);
 
     response.read_state = Response::READ_END;
     InvokeError(ep);
@@ -419,12 +418,17 @@ AjpClient::ConsumeSendHeaders(const uint8_t *data, size_t length)
     response.chunk_length = 0;
     response.junk_length = 0;
 
+    const DestructObserver destructed(*this);
+    const ScopePoolRef ref(GetPool() TRACE_ARGS);
+
     response.in_handler = true;
     request.handler.InvokeResponse(status, std::move(response.headers),
                                    UnusedIstreamPtr(this));
-    response.in_handler = false;
+    if (destructed)
+        return false;
 
-    return socket.IsValid();
+    response.in_handler = false;
+    return true;
 }
 
 inline bool
@@ -461,6 +465,7 @@ AjpClient::ConsumePacket(enum ajp_code code,
             response.read_state = Response::READ_END;
             ReleaseSocket(socket.IsEmpty());
 
+            const ScopePoolRef ref(GetPool() TRACE_ARGS);
             request.handler.InvokeResponse(response.status,
                                            std::move(response.headers),
                                            UnusedIstreamPtr());
@@ -543,6 +548,7 @@ AjpClient::Feed(const uint8_t *data, const size_t length)
     assert(data != nullptr);
     assert(length > 0);
 
+    const DestructObserver destructed(*this);
     const uint8_t *const end = data + length;
 
     do {
@@ -553,9 +559,9 @@ AjpClient::Feed(const uint8_t *data, const size_t length)
                 const size_t remaining = end - data;
                 size_t nbytes = ConsumeBodyChunk(data, remaining);
                 if (nbytes == 0)
-                    return socket.IsValid()
-                        ? BufferedResult::BLOCKING
-                        : BufferedResult::CLOSED;
+                    return destructed
+                        ? BufferedResult::CLOSED
+                        : BufferedResult::BLOCKING;
 
                 data += nbytes;
                 socket.Consumed(nbytes);
@@ -736,7 +742,6 @@ AjpClient::OnError(std::exception_ptr ep) noexcept
 BufferedResult
 AjpClient::OnBufferedData(const void *buffer, size_t size)
 {
-    const ScopePoolRef ref(GetPool() TRACE_ARGS);
     return Feed((const uint8_t *)buffer, size);
 }
 
@@ -761,12 +766,12 @@ AjpClient::OnBufferedRemaining(gcc_unused size_t remaining) noexcept
 bool
 AjpClient::OnBufferedWrite()
 {
-    const ScopePoolRef ref(GetPool() TRACE_ARGS);
+    const DestructObserver destructed(*this);
 
     request.got_data = false;
     request.istream.Read();
 
-    const bool result = socket.IsValid() && socket.IsConnected();
+    const bool result = !destructed && socket.IsConnected();
     if (result && request.istream.IsDefined()) {
         if (request.got_data)
             ScheduleWrite();
