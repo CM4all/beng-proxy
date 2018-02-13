@@ -53,6 +53,7 @@
 #include "util/ByteOrder.hxx"
 #include "util/Cast.hxx"
 #include "util/ConstBuffer.hxx"
+#include "util/DestructObserver.hxx"
 #include "util/StringUtil.hxx"
 #include "util/ByteOrder.hxx"
 #include "util/StringView.hxx"
@@ -69,7 +70,7 @@
 
 struct FcgiClient final
     : BufferedSocketHandler, Cancellable, Istream, IstreamHandler,
-      WithInstanceList<FcgiClient> {
+      WithInstanceList<FcgiClient>, DestructAnchor {
 
     BufferedSocket socket;
 
@@ -491,12 +492,17 @@ FcgiClient::SubmitResponse()
             response.available = l;
     }
 
+    const DestructObserver destructed(*this);
+
     response.in_handler = true;
     handler.InvokeResponse(status, std::move(response.headers),
                            UnusedIstreamPtr(this));
+    if (destructed)
+        return false;
+
     response.in_handler = false;
 
-    return socket.IsValid();
+    return true;
 }
 
 inline void
@@ -567,6 +573,7 @@ FcgiClient::HandleHeader(const struct fcgi_record_header &header)
 inline BufferedResult
 FcgiClient::ConsumeInput(const uint8_t *data0, size_t length0)
 {
+    const DestructObserver destructed(*this);
     const uint8_t *data = data0, *const end = data0 + length0;
 
     do {
@@ -593,11 +600,10 @@ FcgiClient::ConsumeInput(const uint8_t *data0, size_t length0)
                     /* incomplete header line received, want more
                        data */
                     assert(response.read_state == FcgiClient::Response::READ_HEADERS);
-                    assert(socket.IsValid());
                     return BufferedResult::MORE;
                 }
 
-                if (!socket.IsValid())
+                if (destructed)
                     return BufferedResult::CLOSED;
 
                 /* the response body handler blocks, wait for it to
@@ -946,7 +952,6 @@ FcgiClient::OnBufferedData(const void *buffer, size_t size)
             ReleaseSocket(analysis.end_request_offset == size);
     }
 
-    const ScopePoolRef ref(GetPool() TRACE_ARGS);
     return ConsumeInput((const uint8_t *)buffer, size);
 }
 
@@ -971,12 +976,12 @@ FcgiClient::OnBufferedRemaining(gcc_unused size_t remaining) noexcept
 bool
 FcgiClient::OnBufferedWrite()
 {
-    const ScopePoolRef ref(GetPool() TRACE_ARGS);
+    const DestructObserver destructed(*this);
 
     request.got_data = false;
     request.input.Read();
 
-    const bool result = socket.IsValid();
+    const bool result = !destructed;
     if (result && request.input.IsDefined()) {
         if (request.got_data)
             socket.ScheduleWrite();
