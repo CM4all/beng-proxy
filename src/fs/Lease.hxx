@@ -40,7 +40,7 @@
  * After that, remaining data in the input buffer can still be read.
  */
 class FilteredSocketLease {
-    FilteredSocket socket;
+    FilteredSocket *const socket;
     struct lease_ref lease_ref;
 
 public:
@@ -52,34 +52,35 @@ public:
                         const struct timeval *write_timeout,
                         F &&filter,
                         BufferedSocketHandler &handler) noexcept
-        :socket(event_loop)
+        :socket(new FilteredSocket(event_loop))
     {
-        socket.Init(fd, fd_type, read_timeout, write_timeout,
-                    std::forward<F>(filter),
-                    handler);
+        socket->Init(fd, fd_type, read_timeout, write_timeout,
+                     std::forward<F>(filter),
+                     handler);
         lease_ref.Set(lease);
     }
 
     ~FilteredSocketLease() noexcept {
         assert(IsReleased());
 
-        socket.Destroy();
+        socket->Destroy();
+        delete socket;
     }
 
     EventLoop &GetEventLoop() noexcept {
-        return socket.GetEventLoop();
+        return socket->GetEventLoop();
     }
 
     gcc_pure
     bool IsConnected() const noexcept {
-        return socket.IsConnected();
+        return socket->IsConnected();
     }
 
     gcc_pure
     bool HasFilter() const noexcept {
         assert(!IsReleased());
 
-        return socket.HasFilter();
+        return socket->HasFilter();
     }
 
 #ifndef NDEBUG
@@ -87,12 +88,12 @@ public:
     bool HasEnded() const noexcept {
         assert(!IsReleased());
 
-        return socket.ended;
+        return socket->ended;
     }
 #endif
 
     void Release(bool reuse) noexcept {
-        socket.Abandon();
+        socket->Abandon();
         lease_ref.Release(reuse);
     }
 
@@ -106,83 +107,83 @@ public:
     FdType GetType() const noexcept {
         assert(!IsReleased());
 
-        return socket.GetType();
+        return socket->GetType();
     }
 
     void SetDirect(bool _direct) noexcept {
         assert(!IsReleased());
 
-        socket.SetDirect(_direct);
+        socket->SetDirect(_direct);
     }
 
     int AsFD() noexcept {
         assert(!IsReleased());
 
-        return socket.AsFD();
+        return socket->AsFD();
     }
 
     gcc_pure
     bool IsEmpty() const noexcept {
-        return socket.IsEmpty();
+        return socket->IsEmpty();
     }
 
     gcc_pure
     size_t GetAvailable() const noexcept {
-        return socket.GetAvailable();
+        return socket->GetAvailable();
     }
 
     WritableBuffer<void> ReadBuffer() const noexcept {
-        return socket.ReadBuffer();
+        return socket->ReadBuffer();
     }
 
     void Consumed(size_t nbytes) noexcept {
-        socket.Consumed(nbytes);
+        socket->Consumed(nbytes);
     }
 
     bool Read(bool expect_more) noexcept {
-        return socket.Read(expect_more);
+        return socket->Read(expect_more);
     }
 
     void ScheduleReadTimeout(bool expect_more,
                              const struct timeval *timeout) noexcept {
         assert(!IsReleased());
 
-        socket.ScheduleReadTimeout(expect_more, timeout);
+        socket->ScheduleReadTimeout(expect_more, timeout);
     }
 
     void ScheduleReadNoTimeout(bool expect_more) noexcept {
         assert(!IsReleased());
 
-        socket.ScheduleReadNoTimeout(expect_more);
+        socket->ScheduleReadNoTimeout(expect_more);
     }
 
     ssize_t Write(const void *data, size_t size) noexcept {
         assert(!IsReleased());
 
-        return socket.Write(data, size);
+        return socket->Write(data, size);
     }
 
     void ScheduleWrite() noexcept {
         assert(!IsReleased());
 
-        socket.ScheduleWrite();
+        socket->ScheduleWrite();
     }
 
     void UnscheduleWrite() noexcept {
         assert(!IsReleased());
 
-        socket.UnscheduleWrite();
+        socket->UnscheduleWrite();
     }
 
     ssize_t WriteV(const struct iovec *v, size_t n) noexcept {
         assert(!IsReleased());
 
-        return socket.WriteV(v, n);
+        return socket->WriteV(v, n);
     }
 
     ssize_t WriteFrom(int fd, FdType fd_type, size_t length) noexcept {
         assert(!IsReleased());
 
-        return socket.WriteFrom(fd, fd_type, length);
+        return socket->WriteFrom(fd, fd_type, length);
     }
 };
