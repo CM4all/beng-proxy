@@ -231,6 +231,7 @@ public:
     }
 
     PoolNotify(const PoolNotify &) = delete;
+    PoolNotify &operator=(const PoolNotify &) = delete;
 
 #ifndef NDEBUG
     ~PoolNotify() noexcept {
