@@ -45,7 +45,7 @@ public:
     PoolNotify(const PoolNotify &) = delete;
     PoolNotify &operator=(const PoolNotify &) = delete;
 
-    bool IsDestroyed() noexcept {
+    bool IsDestroyed() const noexcept {
         return !is_linked();
     }
 };
