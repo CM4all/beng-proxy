@@ -1915,9 +1915,9 @@ Group is one of:
   transformation (i.e. \texttt{X-CM4all-View})
 
 \item \texttt{LINK}: forward headers that contain links, such as
-  \texttt{Location} and \texttt{Referer}; if set to \verb|MANGLE|,
-  then \emph{beng-proxy} attempts to rewrite the \texttt{Location} URI
-  relative to itself
+  \texttt{Location}, \texttt{Content-Location} and \texttt{Referer};
+  if set to \verb|MANGLE|, then \emph{beng-proxy} attempts to rewrite
+  the \texttt{Location} URI relative to itself
 
 \item \texttt{OTHER}: other end-to-end headers not explicitly
   mentioned here

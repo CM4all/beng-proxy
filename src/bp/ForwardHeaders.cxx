@@ -327,7 +327,8 @@ gcc_pure
 static bool
 IsLinkResponseHeader(const char *name)
 {
-    return strcmp(name, "location") == 0;
+    return strcmp(name, "location") == 0 ||
+        strcmp(name, "content-location") == 0;
 }
 
 static void
@@ -354,10 +355,12 @@ forward_link_response_headers(StringMap &dest, const StringMap &src,
                               void *relocate_ctx,
                               enum beng_header_forward_mode mode)
 {
-    if (mode == HEADER_FORWARD_YES)
+    if (mode == HEADER_FORWARD_YES) {
         header_copy_one(src, dest, "location");
-    else if (mode == HEADER_FORWARD_MANGLE) {
+        header_copy_one(src, dest, "content-location");
+    } else if (mode == HEADER_FORWARD_MANGLE) {
         RelocateLinkHeader(dest, src, relocate, relocate_ctx, "location");
+        RelocateLinkHeader(dest, src, relocate, relocate_ctx, "content-location");
     }
 }
 
