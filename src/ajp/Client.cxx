@@ -459,11 +459,12 @@ AjpClient::ConsumePacket(enum ajp_code code,
             Release(true);
         } else if (response.read_state == Response::READ_NO_BODY) {
             response.read_state = Response::READ_END;
-            Release(socket.IsEmpty());
+            ReleaseSocket(socket.IsEmpty());
 
             request.handler.InvokeResponse(response.status,
                                            std::move(response.headers),
                                            UnusedIstreamPtr());
+            Release(false);
         } else
             Release(true);
 
