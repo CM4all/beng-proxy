@@ -331,6 +331,23 @@ IsLinkResponseHeader(const char *name)
 }
 
 static void
+RelocateLinkHeader(StringMap &dest, const StringMap &src,
+                   const char *(*relocate)(const char *uri, void *ctx),
+                   void *relocate_ctx,
+                   const char *name) noexcept
+{
+    const char *value = src.Get(name);
+    if (value == nullptr)
+        return;
+
+    const char *new_value = relocate != nullptr
+        ? relocate(value, relocate_ctx)
+        : value;
+    if (new_value != nullptr)
+        dest.Add(name, new_value);
+}
+
+static void
 forward_link_response_headers(StringMap &dest, const StringMap &src,
                               const char *(*relocate)(const char *uri,
                                                       void *ctx),
@@ -340,14 +357,7 @@ forward_link_response_headers(StringMap &dest, const StringMap &src,
     if (mode == HEADER_FORWARD_YES)
         header_copy_one(src, dest, "location");
     else if (mode == HEADER_FORWARD_MANGLE) {
-        const char *location = src.Get("location");
-        if (location != nullptr) {
-            const char *new_location = relocate != nullptr
-                ? relocate(location, relocate_ctx)
-                : location;
-            if (new_location != nullptr)
-                dest.Add("location", new_location);
-        }
+        RelocateLinkHeader(dest, src, relocate, relocate_ctx, "location");
     }
 }
 
