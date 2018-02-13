@@ -880,39 +880,6 @@ pool_denotify(struct pool_notify_state *notify) noexcept
 }
 
 void
-pool_ref_notify_impl(struct pool *pool, struct pool_notify_state *notify
-                     TRACE_ARGS_DECL) noexcept
-{
-    pool_notify(pool, notify);
-    pool_ref_impl(pool TRACE_ARGS_FWD);
-
-#ifdef TRACE
-    notify->file = nullptr;
-    notify->line = -1;
-#endif
-}
-
-void
-pool_unref_denotify_impl(struct pool *pool, struct pool_notify_state *notify
-                         TRACE_ARGS_DECL) noexcept
-{
-    assert(notify->pool == pool);
-    assert(!notify->destroyed);
-#ifdef TRACE
-    assert(notify->file == nullptr);
-    assert(notify->line == -1);
-#endif
-
-    pool_denotify(notify);
-    pool_unref_impl(pool TRACE_ARGS_FWD);
-
-#ifdef TRACE
-    notify->file = file;
-    notify->line = line;
-#endif
-}
-
-void
 pool_trash(struct pool *pool) noexcept
 {
     if (pool->trashed)
