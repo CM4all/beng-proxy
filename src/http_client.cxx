@@ -60,6 +60,7 @@
 #include "util/Cancellable.hxx"
 #include "util/Cast.hxx"
 #include "util/CharUtil.hxx"
+#include "util/DestructObserver.hxx"
 #include "util/StringUtil.hxx"
 #include "util/StringView.hxx"
 #include "util/StringFormat.hxx"
@@ -98,7 +99,7 @@ static constexpr struct timeval http_client_timeout = {
     .tv_usec = 0,
 };
 
-struct HttpClient final : BufferedSocketHandler, IstreamHandler, Cancellable {
+struct HttpClient final : BufferedSocketHandler, IstreamHandler, Cancellable, DestructAnchor {
     enum class BucketResult {
         MORE,
         BLOCKING,
@@ -851,10 +852,10 @@ HttpClient::FeedBody(const void *data, size_t length)
     size_t nbytes;
 
     {
-        const PoolNotify notify(GetPool());
+        const DestructObserver destructed(*this);
         nbytes = response_body_reader.FeedBody(data, length);
         if (nbytes == 0)
-            return notify.IsDestroyed()
+            return destructed
                 ? BufferedResult::CLOSED
                 : BufferedResult::BLOCKING;
     }
@@ -942,7 +943,7 @@ HttpClient::FeedHeaders(const void *data, size_t length)
            need in the input buffer */
         ReleaseSocket(keep_alive);
 
-    const PoolNotify notify(GetPool());
+    const DestructObserver destructed(*this);
     const ScopePoolRef caller_ref(caller_pool TRACE_ARGS);
 
     if (!response.body && !response.no_body)
@@ -952,7 +953,7 @@ HttpClient::FeedHeaders(const void *data, size_t length)
     request.handler.InvokeResponse(response.status,
                                    std::move(response.headers),
                                    std::move(response.body));
-    if (notify.IsDestroyed())
+    if (destructed)
         return BufferedResult::CLOSED;
 
     response.in_handler = false;
@@ -1106,11 +1107,11 @@ HttpClient::OnBufferedWrite()
         return false;
     }
 
-    const PoolNotify notify(GetPool());
+    const DestructObserver destructed(*this);
 
     request.istream.Read();
 
-    const bool result = !notify.IsDestroyed() && IsConnected();
+    const bool result = !destructed && IsConnected();
     if (result && request.istream.IsDefined()) {
         if (request.got_data)
             ScheduleWrite();
