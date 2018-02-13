@@ -81,10 +81,6 @@ public:
 
     struct pool &pool, &caller_pool;
 
-#ifndef NDEBUG
-    struct pool_notify_state caller_pool_notify;
-#endif
-
     sticky_hash_t session_sticky;
 
     /**
@@ -411,8 +407,7 @@ HttpCacheRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
 
         LogConcat(5, "HttpCache", "not_modified ", key);
         http_cache_serve(*this);
-        pool_unref_denotify(&caller_pool,
-                            &caller_pool_notify);
+        pool_unref(&caller_pool);
 
         if (locked_document != nullptr)
             http_cache_unlock(cache, locked_document);
@@ -428,7 +423,7 @@ HttpCacheRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
         body.Clear();
 
         http_cache_serve(*this);
-        pool_unref_denotify(&caller_pool, &caller_pool_notify);
+        pool_unref(&caller_pool);
 
         if (locked_document != nullptr)
             http_cache_unlock(cache, locked_document);
@@ -455,8 +450,7 @@ HttpCacheRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
         LogConcat(4, "HttpCache", "nocache ", key);
 
         handler.InvokeResponse(status, std::move(_headers), std::move(body));
-        pool_unref_denotify(&caller_pool,
-                            &caller_pool_notify);
+        pool_unref(&caller_pool);
         return;
     }
 
@@ -494,7 +488,7 @@ HttpCacheRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
     }
 
     handler.InvokeResponse(status, std::move(_headers), std::move(body));
-    pool_unref_denotify(&caller_pool, &caller_pool_notify);
+    pool_unref(&caller_pool);
 }
 
 void
@@ -512,7 +506,7 @@ HttpCacheRequest::OnHttpError(std::exception_ptr ep) noexcept
         document_body.Clear();
 
     handler.InvokeError(ep);
-    pool_unref_denotify(&caller_pool, &caller_pool_notify);
+    pool_unref(&caller_pool);
 }
 
 /*
@@ -532,7 +526,7 @@ HttpCacheRequest::Cancel() noexcept
         /* free the cached document istream (memcached) */
         document_body.Clear();
 
-    pool_unref_denotify(&caller_pool, &caller_pool_notify);
+    pool_unref(&caller_pool);
 
     cancel_ptr.Cancel();
 }
@@ -564,7 +558,7 @@ HttpCacheRequest::HttpCacheRequest(struct pool &_pool,
      handler(_handler),
      request_info(_request_info) {
     _cancel_ptr = *this;
-    pool_ref_notify(&caller_pool, &caller_pool_notify);
+    pool_ref(&caller_pool);
 }
 
 inline
@@ -1061,8 +1055,7 @@ http_cache_memcached_miss(HttpCacheRequest &request)
                                        StringMap(request.pool),
                                        UnusedIstreamPtr());
 
-        pool_unref_denotify(&request.caller_pool,
-                            &request.caller_pool_notify);
+        pool_unref(&request.caller_pool);
         return;
     }
 
@@ -1100,8 +1093,7 @@ http_cache_memcached_get_callback(HttpCacheDocument *document,
                                        StringMap(ShallowCopy(), request.caller_pool,
                                                  document->response_headers),
                                        std::move(body));
-        pool_unref_denotify(&request.caller_pool,
-                            &request.caller_pool_notify);
+        pool_unref(&request.caller_pool);
     } else {
         request.document = document;
         request.document_body = UnusedHoldIstreamPtr(request.pool,
