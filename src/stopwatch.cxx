@@ -64,10 +64,6 @@ struct StopwatchEvent {
 struct Stopwatch {
     struct pool *pool;
 
-#ifndef NDEBUG
-    struct pool_notify_state pool_notify;
-#endif
-
     const char *const name;
 
     StaticArray<StopwatchEvent, 16> events;
@@ -80,8 +76,6 @@ struct Stopwatch {
 
     Stopwatch(struct pool &_pool, const char *_name)
         :pool(&_pool), name(_name) {
-        ::pool_notify(pool, &pool_notify);
-
         events.append().Init(name);
 
         getrusage(RUSAGE_SELF, &self);
