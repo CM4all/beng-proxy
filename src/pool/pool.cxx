@@ -588,9 +588,7 @@ pool_destroy(struct pool *pool, gcc_unused struct pool *parent,
 
     pool_check_attachments(*pool);
 
-    pool->notify.clear_and_dispose([=](PoolNotify *notify){
-            notify->destroyed = true;
-        });
+    pool->notify.clear();
 
 #ifndef NDEBUG
     if (pool->trashed)

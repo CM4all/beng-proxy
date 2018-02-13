@@ -40,14 +40,12 @@ class PoolNotify
     : public boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::auto_unlink>> {
 
 public:
-    bool destroyed = false;
-
     explicit PoolNotify(struct pool &pool) noexcept;
 
     PoolNotify(const PoolNotify &) = delete;
     PoolNotify &operator=(const PoolNotify &) = delete;
 
     bool IsDestroyed() noexcept {
-        return destroyed;
+        return !is_linked();
     }
 };
