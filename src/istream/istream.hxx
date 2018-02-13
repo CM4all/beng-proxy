@@ -210,7 +210,7 @@ public:
 
 #ifndef NDEBUG
         assert(available >= -1);
-        assert(!notify.Denotify());
+        assert(!notify.IsDestroyed());
         assert(!destroyed);
         assert(reading);
 
@@ -255,7 +255,7 @@ public:
         assert(nbytes <= length);
 
 #ifndef NDEBUG
-        if (notify.Denotify() || destroyed)
+        if (notify.IsDestroyed() || destroyed)
             return nbytes;
 
         reading = false;
@@ -305,7 +305,7 @@ public:
         _Read();
 
 #ifndef NDEBUG
-        if (notify.Denotify() || destroyed)
+        if (notify.IsDestroyed() || destroyed)
             return;
 
         reading = false;
@@ -339,14 +339,14 @@ public:
 
 #ifndef NDEBUG
         } catch (...) {
-            if (!notify.Denotify()) {
+            if (!notify.IsDestroyed()) {
                 assert(destroyed);
             }
 
             throw;
         }
 
-        assert(!notify.Denotify());
+        assert(!notify.IsDestroyed());
         assert(!destroyed);
         assert(reading);
 
@@ -419,7 +419,7 @@ public:
         int fd = _AsFd();
 
 #ifndef NDEBUG
-        assert(!notify.Denotify() || fd < 0);
+        assert(!notify.IsDestroyed() || fd < 0);
 
         if (fd < 0)
             reading = false;

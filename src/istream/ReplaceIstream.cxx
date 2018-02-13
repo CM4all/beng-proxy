@@ -370,7 +370,7 @@ ReplaceIstream::ReadFromBufferLoop(off_t end)
         rest = ReadFromBuffer(max_length);
 
 #ifndef NDEBUG
-        if (notify.Denotify()) {
+        if (notify.IsDestroyed()) {
             assert(rest > 0);
             break;
         }

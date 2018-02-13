@@ -57,7 +57,7 @@ Istream::InvokeData(const void *data, size_t length) noexcept
     assert(nbytes == 0 || !eof);
 
 #ifndef NDEBUG
-    if (notify.Denotify() || destroyed) {
+    if (notify.IsDestroyed() || destroyed) {
         assert(nbytes == 0);
         return nbytes;
     }
@@ -96,7 +96,7 @@ Istream::InvokeDirect(FdType type, int fd, size_t max_length) noexcept
     assert(nbytes == ISTREAM_RESULT_CLOSED || !eof);
 
 #ifndef NDEBUG
-    if (notify.Denotify() || destroyed) {
+    if (notify.IsDestroyed() || destroyed) {
         assert(nbytes == ISTREAM_RESULT_CLOSED);
         return nbytes;
     }

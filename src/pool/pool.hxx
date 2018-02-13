@@ -233,8 +233,8 @@ public:
     PoolNotify(const PoolNotify &) = delete;
     PoolNotify &operator=(const PoolNotify &) = delete;
 
-    bool Denotify() noexcept {
-        return pool_denotify(&state);
+    bool IsDestroyed() noexcept {
+        return state.destroyed;
     }
 };
 
