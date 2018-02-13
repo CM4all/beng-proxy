@@ -70,11 +70,6 @@ public:
     }
 
     gcc_pure
-    bool IsValid() const noexcept {
-        return socket.IsValid();
-    }
-
-    gcc_pure
     bool IsConnected() const noexcept {
         return socket.IsConnected();
     }
