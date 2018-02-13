@@ -293,6 +293,7 @@ FcgiClient::AbortResponseHeaders(std::exception_ptr ep) noexcept
     if (request.input.IsDefined())
         request.input.ClearAndClose();
 
+    const ScopePoolRef ref(GetPool() TRACE_ARGS);
     handler.InvokeError(ep);
     Destroy();
 }
@@ -492,6 +493,7 @@ FcgiClient::SubmitResponse()
             response.available = l;
     }
 
+    const ScopePoolRef ref(GetPool() TRACE_ARGS);
     const DestructObserver destructed(*this);
 
     response.in_handler = true;
@@ -520,6 +522,7 @@ FcgiClient::HandleEnd()
         request.input.Close();
 
     if (response.read_state == FcgiClient::Response::READ_NO_BODY) {
+        const ScopePoolRef ref(GetPool() TRACE_ARGS);
         handler.InvokeResponse(response.status, std::move(response.headers),
                                UnusedIstreamPtr());
         Destroy();
