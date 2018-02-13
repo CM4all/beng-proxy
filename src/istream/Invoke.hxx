@@ -48,8 +48,7 @@ Istream::InvokeData(const void *data, size_t length) noexcept
            (off_t)length <= available_full);
 
 #ifndef NDEBUG
-    struct pool_notify_state notify;
-    pool_notify(pool, &notify);
+    PoolNotify notify(pool);
     in_data = true;
 #endif
 
@@ -58,7 +57,7 @@ Istream::InvokeData(const void *data, size_t length) noexcept
     assert(nbytes == 0 || !eof);
 
 #ifndef NDEBUG
-    if (pool_denotify(&notify) || destroyed) {
+    if (notify.Denotify() || destroyed) {
         assert(nbytes == 0);
         return nbytes;
     }
@@ -87,8 +86,7 @@ Istream::InvokeDirect(FdType type, int fd, size_t max_length) noexcept
     assert(!closing);
 
 #ifndef NDEBUG
-    struct pool_notify_state notify;
-    pool_notify(pool, &notify);
+    PoolNotify notify(pool);
     in_data = true;
 #endif
 
@@ -98,7 +96,7 @@ Istream::InvokeDirect(FdType type, int fd, size_t max_length) noexcept
     assert(nbytes == ISTREAM_RESULT_CLOSED || !eof);
 
 #ifndef NDEBUG
-    if (pool_denotify(&notify) || destroyed) {
+    if (notify.Denotify() || destroyed) {
         assert(nbytes == ISTREAM_RESULT_CLOSED);
         return nbytes;
     }
