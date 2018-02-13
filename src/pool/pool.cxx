@@ -31,6 +31,7 @@
  */
 
 #include "pool.hxx"
+#include "Notify.hxx"
 #include "SlicePool.hxx"
 #include "AllocatorStats.hxx"
 #include "io/Logger.hxx"

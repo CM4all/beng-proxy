@@ -33,6 +33,8 @@
 #ifndef ISTREAM_INVOKE_HXX
 #define ISTREAM_INVOKE_HXX
 
+#include "pool/Notify.hxx"
+
 inline size_t
 Istream::InvokeData(const void *data, size_t length) noexcept
 {

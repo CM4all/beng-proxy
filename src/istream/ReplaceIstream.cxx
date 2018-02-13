@@ -37,6 +37,7 @@
 #include "GrowingBuffer.hxx"
 #include "util/ConstBuffer.hxx"
 #include "pool/pool.hxx"
+#include "pool/Notify.hxx"
 
 #include <stdexcept>
 
