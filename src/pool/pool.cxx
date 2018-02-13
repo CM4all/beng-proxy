@@ -861,22 +861,16 @@ pool_notify(struct pool *pool, struct pool_notify_state *notify) noexcept
     pool->notify.push_back(*notify);
     notify->pool = pool;
     notify->name = pool->name;
-    notify->registered = true;
     notify->destroyed = 0;
 }
 
 bool
 pool_denotify(struct pool_notify_state *notify) noexcept
 {
-    assert(notify->registered);
-    notify->registered = false;
+    if (notify->is_linked())
+        notify->unlink();
 
-    if (notify->destroyed)
-        return true;
-
-    auto &list = notify->pool->notify;
-    list.erase(list.iterator_to(*notify));
-    return false;
+    return notify->destroyed;
 }
 
 void

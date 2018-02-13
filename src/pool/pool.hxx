@@ -199,13 +199,13 @@ pool_dump_tree(const struct pool &pool) noexcept;
 #include <boost/intrusive/list.hpp>
 
 struct pool_notify_state final
-    : public boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
+    : public boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::auto_unlink>> {
 
     struct pool *pool;
 
     const char *name;
 
-    bool destroyed, registered;
+    bool destroyed;
 
 #ifdef TRACE
     const char *file;
@@ -232,12 +232,6 @@ public:
 
     PoolNotify(const PoolNotify &) = delete;
     PoolNotify &operator=(const PoolNotify &) = delete;
-
-#ifndef NDEBUG
-    ~PoolNotify() noexcept {
-        assert(!state.registered);
-    }
-#endif
 
     bool Denotify() noexcept {
         return pool_denotify(&state);
