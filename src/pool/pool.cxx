@@ -169,7 +169,7 @@ struct pool final
     unsigned ref = 1;
 
 #ifndef NDEBUG
-    boost::intrusive::list<struct pool_notify_state,
+    boost::intrusive::list<PoolNotify,
                            boost::intrusive::constant_time_size<false>> notify;
 
     bool trashed = false;
@@ -588,7 +588,7 @@ pool_destroy(struct pool *pool, gcc_unused struct pool *parent,
     pool_check_attachments(*pool);
 
 #ifndef NDEBUG
-    pool->notify.clear_and_dispose([=](struct pool_notify_state *notify){
+    pool->notify.clear_and_dispose([=](PoolNotify *notify){
             notify->destroyed = true;
         });
 
@@ -850,11 +850,9 @@ pool_dump_tree(const struct pool &pool) noexcept
 
 #ifndef NDEBUG
 
-void
-pool_notify(struct pool *pool, struct pool_notify_state *notify) noexcept
+PoolNotify::PoolNotify(struct pool &pool) noexcept
 {
-    pool->notify.push_back(*notify);
-    notify->destroyed = 0;
+    pool.notify.push_back(*this);
 }
 
 void

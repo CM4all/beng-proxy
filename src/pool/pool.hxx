@@ -198,28 +198,19 @@ pool_dump_tree(const struct pool &pool) noexcept;
 #ifndef NDEBUG
 #include <boost/intrusive/list.hpp>
 
-struct pool_notify_state final
+class PoolNotify
     : public boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::auto_unlink>> {
 
-    bool destroyed;
-};
-
-void
-pool_notify(struct pool *pool, struct pool_notify_state *notify) noexcept;
-
-class PoolNotify {
-    struct pool_notify_state state;
-
 public:
-    explicit PoolNotify(struct pool &pool) noexcept {
-        pool_notify(&pool, &state);
-    }
+    bool destroyed = false;
+
+    explicit PoolNotify(struct pool &pool) noexcept;
 
     PoolNotify(const PoolNotify &) = delete;
     PoolNotify &operator=(const PoolNotify &) = delete;
 
     bool IsDestroyed() noexcept {
-        return state.destroyed;
+        return destroyed;
     }
 };
 
