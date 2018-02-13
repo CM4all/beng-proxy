@@ -45,7 +45,7 @@
 #include "cookie_client.hxx"
 #include "ResourceLoader.hxx"
 #include "header_writer.hxx"
-#include "header_forward.hxx"
+#include "bp/ForwardHeaders.hxx"
 #include "translation/Transformation.hxx"
 #include "bp_global.hxx"
 #include "resource_tag.hxx"

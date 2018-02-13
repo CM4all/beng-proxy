@@ -33,7 +33,7 @@
 #include "ForwardRequest.hxx"
 #include "Request.hxx"
 #include "http_server/Request.hxx"
-#include "header_forward.hxx"
+#include "ForwardHeaders.hxx"
 
 ForwardRequest
 request_forward(Request &request2,

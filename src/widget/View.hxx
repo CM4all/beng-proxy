@@ -34,7 +34,7 @@
 #define BENG_PROXY_WIDGET_VIEW_HXX
 
 #include "ResourceAddress.hxx"
-#include "header_forward.hxx"
+#include "bp/ForwardHeaders.hxx"
 
 #include "util/Compiler.h"
 

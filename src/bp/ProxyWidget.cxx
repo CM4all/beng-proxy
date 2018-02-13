@@ -40,7 +40,7 @@
 #include "widget/Resolver.hxx"
 #include "widget/Frame.hxx"
 #include "header_writer.hxx"
-#include "header_forward.hxx"
+#include "ForwardHeaders.hxx"
 #include "http_server/Request.hxx"
 #include "http_util.hxx"
 #include "http_headers.hxx"

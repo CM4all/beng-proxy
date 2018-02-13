@@ -44,7 +44,7 @@
 #include "http_util.hxx"
 #include "header_writer.hxx"
 #include "header_parser.hxx"
-#include "header_forward.hxx"
+#include "ForwardHeaders.hxx"
 #include "widget/Widget.hxx"
 #include "widget/Ref.hxx"
 #include "widget/Class.hxx"

@@ -30,7 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "header_forward.hxx"
+#include "bp/ForwardHeaders.hxx"
 #include "TestPool.hxx"
 #include "strmap.hxx"
 #include "product.h"

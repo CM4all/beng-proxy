@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2018 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,7 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "header_forward.hxx"
+#include "ForwardHeaders.hxx"
 #include "header_copy.hxx"
 #include "header_writer.hxx"
 #include "http_upgrade.hxx"

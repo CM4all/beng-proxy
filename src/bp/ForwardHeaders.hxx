@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2018 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -34,8 +34,7 @@
  * Which headers should be forwarded to/from remote HTTP servers?
  */
 
-#ifndef HEADER_FORWARD_HXX
-#define HEADER_FORWARD_HXX
+#pragma once
 
 #include "http/Status.h"
 
@@ -82,5 +81,3 @@ forward_response_headers(struct pool &pool, http_status_t status,
 void
 forward_reveal_user(StringMap &headers,
                     const RealmSession *session);
-
-#endif
