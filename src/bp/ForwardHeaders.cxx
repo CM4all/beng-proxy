@@ -189,7 +189,7 @@ static const char *const exclude_response_headers[] = {
 
 gcc_pure
 static bool
-string_in_array(const char *const array[], const char *value)
+string_in_array(const char *const array[], const char *value) noexcept
 {
     for (unsigned i = 0; array[i] != nullptr; ++i)
         if (strcmp(array[i], value) == 0)
@@ -200,7 +200,7 @@ string_in_array(const char *const array[], const char *value)
 
 static void
 forward_upgrade_request_headers(StringMap &dest, const StringMap &src,
-                                bool with_body)
+                                bool with_body) noexcept
 {
     if (with_body && http_is_upgrade(src))
         header_copy_list(src, dest, http_upgrade_request_headers);
@@ -208,7 +208,7 @@ forward_upgrade_request_headers(StringMap &dest, const StringMap &src,
 
 static void
 forward_upgrade_response_headers(StringMap &dest, http_status_t status,
-                                 const StringMap &src)
+                                 const StringMap &src) noexcept
 {
     if (http_is_upgrade(status, src))
         header_copy_list(src, dest, http_upgrade_response_headers);
@@ -219,7 +219,7 @@ forward_upgrade_response_headers(StringMap &dest, http_status_t status,
  */
 gcc_pure
 static bool
-is_old_ssl_header(const char *name)
+is_old_ssl_header(const char *name) noexcept
 {
     return string_in_array(old_ssl_request_headers, name);
 }
@@ -229,7 +229,7 @@ is_old_ssl_header(const char *name)
  */
 gcc_pure
 static bool
-is_new_ssl_header(const char *name)
+is_new_ssl_header(const char *name) noexcept
 {
     return string_in_array(ssl_request_headers, name);
 }
@@ -239,7 +239,7 @@ is_new_ssl_header(const char *name)
  */
 gcc_pure
 static bool
-is_ssl_header(const char *name)
+is_ssl_header(const char *name) noexcept
 {
     return is_old_ssl_header(name) || is_new_ssl_header(name);
 }
@@ -249,7 +249,7 @@ is_ssl_header(const char *name)
  */
 gcc_pure
 static bool
-is_secure_header(const char *name)
+is_secure_header(const char *name) noexcept
 {
     return StringStartsWith(name, "x-cm4all-beng-") &&
         !is_old_ssl_header(name);
@@ -257,7 +257,7 @@ is_secure_header(const char *name)
 
 gcc_pure
 static bool
-is_secure_or_ssl_header(const char *name)
+is_secure_or_ssl_header(const char *name) noexcept
 {
     return StringStartsWith(name, "x-cm4all-beng-") ||
         is_new_ssl_header(name);
@@ -268,14 +268,14 @@ is_secure_or_ssl_header(const char *name)
  */
 gcc_pure
 static bool
-is_transformation_header(const char *name)
+is_transformation_header(const char *name) noexcept
 {
     return StringStartsWith(name, "x-cm4all-view");
 }
 
 static void
 forward_basic_headers(StringMap &dest, const StringMap &src,
-                      bool with_body)
+                      bool with_body) noexcept
 {
     header_copy_list(src, dest, basic_request_headers);
     if (with_body)
@@ -283,7 +283,7 @@ forward_basic_headers(StringMap &dest, const StringMap &src,
 }
 
 static void
-forward_secure_headers(StringMap &dest, const StringMap &src)
+forward_secure_headers(StringMap &dest, const StringMap &src) noexcept
 {
     for (const auto &i : src)
         if (is_secure_header(i.key))
@@ -291,7 +291,7 @@ forward_secure_headers(StringMap &dest, const StringMap &src)
 }
 
 static void
-forward_ssl_headers(StringMap &dest, const StringMap &src)
+forward_ssl_headers(StringMap &dest, const StringMap &src) noexcept
 {
     for (const auto &i : src)
         if (is_ssl_header(i.key))
@@ -299,7 +299,7 @@ forward_ssl_headers(StringMap &dest, const StringMap &src)
 }
 
 static void
-forward_transformation_headers(StringMap &dest, const StringMap &src)
+forward_transformation_headers(StringMap &dest, const StringMap &src) noexcept
 {
     header_copy_one(src, dest, "x-cm4all-view");
 }
@@ -309,13 +309,13 @@ forward_transformation_headers(StringMap &dest, const StringMap &src)
  */
 gcc_pure
 static bool
-IsLinkRequestHeader(const char *name)
+IsLinkRequestHeader(const char *name) noexcept
 {
     return strcmp(name, "referer") == 0;
 }
 
 static void
-ForwardLinkRequestHeaders(StringMap &dest, const StringMap &src)
+ForwardLinkRequestHeaders(StringMap &dest, const StringMap &src) noexcept
 {
     header_copy_one(src, dest, "referer");
 }
@@ -325,7 +325,7 @@ ForwardLinkRequestHeaders(StringMap &dest, const StringMap &src)
  */
 gcc_pure
 static bool
-IsLinkResponseHeader(const char *name)
+IsLinkResponseHeader(const char *name) noexcept
 {
     return strcmp(name, "location") == 0 ||
         strcmp(name, "content-location") == 0;
@@ -353,7 +353,7 @@ forward_link_response_headers(StringMap &dest, const StringMap &src,
                               const char *(*relocate)(const char *uri,
                                                       void *ctx),
                               void *relocate_ctx,
-                              enum beng_header_forward_mode mode)
+                              enum beng_header_forward_mode mode) noexcept
 {
     if (mode == HEADER_FORWARD_YES) {
         header_copy_one(src, dest, "location");
@@ -366,7 +366,7 @@ forward_link_response_headers(StringMap &dest, const StringMap &src,
 
 static void
 forward_user_agent(StringMap &dest, const StringMap &src,
-                   bool mangle)
+                   bool mangle) noexcept
 {
     const char *p;
 
@@ -381,7 +381,7 @@ forward_user_agent(StringMap &dest, const StringMap &src,
 
 static void
 forward_via(struct pool &pool, StringMap &dest, const StringMap &src,
-            const char *local_host, bool mangle)
+            const char *local_host, bool mangle) noexcept
 {
     const char *p = src.Get("via");
     if (p == nullptr) {
@@ -397,7 +397,7 @@ forward_via(struct pool &pool, StringMap &dest, const StringMap &src,
 
 static void
 forward_xff(struct pool &pool, StringMap &dest, const StringMap &src,
-            const char *remote_host, bool mangle)
+            const char *remote_host, bool mangle) noexcept
 {
     const char *p;
 
@@ -418,14 +418,14 @@ static void
 forward_identity(struct pool &pool,
                  StringMap &dest, const StringMap &src,
                  const char *local_host, const char *remote_host,
-                 bool mangle)
+                 bool mangle) noexcept
 {
     forward_via(pool, dest, src, local_host, mangle);
     forward_xff(pool, dest, src, remote_host, mangle);
 }
 
 static void
-forward_other_headers(StringMap &dest, const StringMap &src)
+forward_other_headers(StringMap &dest, const StringMap &src) noexcept
 {
     for (const auto &i : src)
         if (!string_in_array(basic_request_headers, i.key) &&
@@ -448,7 +448,7 @@ forward_other_headers(StringMap &dest, const StringMap &src)
 static void
 header_copy_cookie_except(struct pool &pool,
                           StringMap &dest, const StringMap &src,
-                          const char *except)
+                          const char *except) noexcept
 {
     for (const auto &i : src) {
         if (strcmp(i.key, "cookie2") == 0)
@@ -463,7 +463,7 @@ header_copy_cookie_except(struct pool &pool,
 
 gcc_pure
 static bool
-compare_set_cookie_name(const char *set_cookie, const char *name)
+compare_set_cookie_name(const char *set_cookie, const char *name) noexcept
 {
     auto suffix = StringAfterPrefix(set_cookie, name);
     return suffix != nullptr && !IsAlphaNumericASCII(*suffix);
@@ -492,7 +492,7 @@ forward_request_headers(struct pool &pool, const StringMap &src,
                         const struct header_forward_settings &settings,
                         const char *session_cookie,
                         const RealmSession *session,
-                        const char *host_and_port, const char *uri)
+                        const char *host_and_port, const char *uri) noexcept
 {
     const char *p;
 
@@ -594,7 +594,7 @@ forward_request_headers(struct pool &pool, const StringMap &src,
 }
 
 static void
-forward_other_response_headers(StringMap &dest, const StringMap &src)
+forward_other_response_headers(StringMap &dest, const StringMap &src) noexcept
 {
     for (const auto &i : src)
         if (!string_in_array(basic_response_headers, i.key) &&
@@ -610,7 +610,7 @@ forward_other_response_headers(StringMap &dest, const StringMap &src)
 
 static void
 forward_server(StringMap &dest, const StringMap &src,
-               bool mangle)
+               bool mangle) noexcept
 {
     const char *p;
 
@@ -631,7 +631,7 @@ forward_response_headers(struct pool &pool, http_status_t status,
                          const char *session_cookie,
                          const char *(*relocate)(const char *uri, void *ctx),
                          void *relocate_ctx,
-                         const struct header_forward_settings &settings)
+                         const struct header_forward_settings &settings) noexcept
 {
     StringMap dest(pool);
 
@@ -677,7 +677,7 @@ forward_response_headers(struct pool &pool, http_status_t status,
 
 void
 forward_reveal_user(StringMap &headers,
-                    const RealmSession *session)
+                    const RealmSession *session) noexcept
 {
     headers.SecureSet("x-cm4all-beng-user",
                       session != nullptr && session->user != nullptr

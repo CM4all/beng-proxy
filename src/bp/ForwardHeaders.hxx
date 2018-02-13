@@ -64,7 +64,7 @@ forward_request_headers(struct pool &pool, const StringMap &src,
                         const struct header_forward_settings &settings,
                         const char *session_cookie,
                         const RealmSession *session,
-                        const char *host_and_port, const char *uri);
+                        const char *host_and_port, const char *uri) noexcept;
 
 StringMap
 forward_response_headers(struct pool &pool, http_status_t status,
@@ -73,11 +73,11 @@ forward_response_headers(struct pool &pool, http_status_t status,
                          const char *session_cookie,
                          const char *(*relocate)(const char *uri, void *ctx),
                          void *relocate_ctx,
-                         const struct header_forward_settings &settings);
+                         const struct header_forward_settings &settings) noexcept;
 
 /**
  * Generate a X-CM4all-BENG-User header (if available)_.
  */
 void
 forward_reveal_user(StringMap &headers,
-                    const RealmSession *session);
+                    const RealmSession *session) noexcept;
