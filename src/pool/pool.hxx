@@ -219,9 +219,6 @@ struct pool_notify_state final
 void
 pool_notify(struct pool *pool, struct pool_notify_state *notify) noexcept;
 
-bool
-pool_denotify(struct pool_notify_state *notify) noexcept;
-
 class PoolNotify {
     struct pool_notify_state state;
 

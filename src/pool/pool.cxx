@@ -864,15 +864,6 @@ pool_notify(struct pool *pool, struct pool_notify_state *notify) noexcept
     notify->destroyed = 0;
 }
 
-bool
-pool_denotify(struct pool_notify_state *notify) noexcept
-{
-    if (notify->is_linked())
-        notify->unlink();
-
-    return notify->destroyed;
-}
-
 void
 pool_trash(struct pool *pool) noexcept
 {
