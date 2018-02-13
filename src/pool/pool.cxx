@@ -169,10 +169,10 @@ struct pool final
     struct pool *parent = nullptr;
     unsigned ref = 1;
 
-#ifndef NDEBUG
     boost::intrusive::list<PoolNotify,
                            boost::intrusive::constant_time_size<false>> notify;
 
+#ifndef NDEBUG
     bool trashed = false;
 
     /** this is a major pool, i.e. pool commits are performed after
@@ -588,11 +588,11 @@ pool_destroy(struct pool *pool, gcc_unused struct pool *parent,
 
     pool_check_attachments(*pool);
 
-#ifndef NDEBUG
     pool->notify.clear_and_dispose([=](PoolNotify *notify){
             notify->destroyed = true;
         });
 
+#ifndef NDEBUG
     if (pool->trashed)
         trash.erase(trash.iterator_to(*pool));
 #else
@@ -849,12 +849,12 @@ pool_dump_tree(const struct pool &pool) noexcept
     pool_dump_node(0, pool);
 }
 
-#ifndef NDEBUG
-
 PoolNotify::PoolNotify(struct pool &pool) noexcept
 {
     pool.notify.push_back(*this);
 }
+
+#ifndef NDEBUG
 
 void
 pool_trash(struct pool *pool) noexcept
