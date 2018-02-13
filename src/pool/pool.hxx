@@ -247,9 +247,6 @@ public:
 
 class ScopePoolRef {
     struct pool &pool;
-#ifndef NDEBUG
-    PoolNotify notify;
-#endif
 
 #ifdef TRACE
     const char *const file;
@@ -259,9 +256,6 @@ class ScopePoolRef {
 public:
     explicit ScopePoolRef(struct pool &_pool TRACE_ARGS_DECL_) noexcept
         :pool(_pool)
-#ifndef NDEBUG
-        , notify(_pool)
-#endif
          TRACE_ARGS_INIT
     {
         pool_ref_fwd(&_pool);
@@ -270,9 +264,6 @@ public:
     ScopePoolRef(const ScopePoolRef &) = delete;
 
     ~ScopePoolRef() noexcept {
-#ifndef NDEBUG
-        notify.Denotify();
-#endif
         pool_unref_fwd(&pool);
     }
 
