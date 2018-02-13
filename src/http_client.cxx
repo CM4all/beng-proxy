@@ -238,14 +238,6 @@ struct HttpClient final : BufferedSocketHandler, IstreamHandler, Cancellable {
     }
 
     /**
-     * @return false if the #HttpClient has been destructed
-     */
-    gcc_pure
-    bool IsValid() const {
-        return socket.IsValid();
-    }
-
-    /**
      * @return false if the #HttpClient has released the socket
      */
     gcc_pure
@@ -859,12 +851,12 @@ HttpClient::FeedBody(const void *data, size_t length)
     size_t nbytes;
 
     {
-        const ScopePoolRef ref(GetPool() TRACE_ARGS);
+        const PoolNotify notify(GetPool());
         nbytes = response_body_reader.FeedBody(data, length);
         if (nbytes == 0)
-            return IsValid()
-                ? BufferedResult::BLOCKING
-                : BufferedResult::CLOSED;
+            return notify.IsDestroyed()
+                ? BufferedResult::CLOSED
+                : BufferedResult::BLOCKING;
     }
 
     socket.Consumed(nbytes);
@@ -950,7 +942,7 @@ HttpClient::FeedHeaders(const void *data, size_t length)
            need in the input buffer */
         ReleaseSocket(keep_alive);
 
-    const ScopePoolRef ref(GetPool() TRACE_ARGS);
+    const PoolNotify notify(GetPool());
     const ScopePoolRef caller_ref(caller_pool TRACE_ARGS);
 
     if (!response.body && !response.no_body)
@@ -960,10 +952,10 @@ HttpClient::FeedHeaders(const void *data, size_t length)
     request.handler.InvokeResponse(response.status,
                                    std::move(response.headers),
                                    std::move(response.body));
-    response.in_handler = false;
-
-    if (!IsValid())
+    if (notify.IsDestroyed())
         return BufferedResult::CLOSED;
+
+    response.in_handler = false;
 
     if (response.state == Response::State::END) {
         http_client_response_finished(this);
@@ -1114,11 +1106,11 @@ HttpClient::OnBufferedWrite()
         return false;
     }
 
-    const ScopePoolRef ref(GetPool() TRACE_ARGS);
+    const PoolNotify notify(GetPool());
 
     request.istream.Read();
 
-    const bool result = IsValid() && IsConnected();
+    const bool result = !notify.IsDestroyed() && IsConnected();
     if (result && request.istream.IsDefined()) {
         if (request.got_data)
             ScheduleWrite();
