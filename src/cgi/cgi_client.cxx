@@ -45,12 +45,13 @@
 #include "SliceFifoBuffer.hxx"
 #include "util/Cast.hxx"
 #include "util/Cancellable.hxx"
+#include "util/DestructObserver.hxx"
 #include "util/Exception.hxx"
 
 #include <string.h>
 #include <stdlib.h>
 
-class CGIClient final : Istream, IstreamHandler, Cancellable {
+class CGIClient final : Istream, IstreamHandler, Cancellable, DestructAnchor {
     Stopwatch *const stopwatch;
 
     IstreamPointer input;
@@ -126,6 +127,7 @@ public:
 inline bool
 CGIClient::ReturnResponse()
 {
+    const ScopePoolRef ref(GetPool() TRACE_ARGS);
     http_status_t status = parser.GetStatus();
     StringMap &headers = parser.GetHeaders();
 
@@ -156,11 +158,16 @@ CGIClient::ReturnResponse()
     } else {
         stopwatch_event(stopwatch, "headers");
 
+        const DestructObserver destructed(*this);
+
         in_response_callback = true;
         handler.InvokeResponse(status, std::move(headers),
                                UnusedIstreamPtr(this));
+        if (destructed)
+            return false;
+
         in_response_callback = false;
-        return input.IsDefined();
+        return true;
     }
 }
 
@@ -219,6 +226,7 @@ CGIClient::FeedHeadersLoop(const char *data, size_t length)
     assert(length > 0);
     assert(!parser.AreHeadersFinished());
 
+    const DestructObserver destructed(*this);
     size_t consumed = 0;
 
     do {
@@ -229,7 +237,7 @@ CGIClient::FeedHeadersLoop(const char *data, size_t length)
         consumed += nbytes;
     } while (consumed < length && !parser.AreHeadersFinished());
 
-    if (!input.IsDefined())
+    if (destructed)
         return 0;
 
     return consumed;
@@ -291,20 +299,19 @@ CGIClient::OnData(const void *data, size_t length)
     had_input = true;
 
     if (!parser.AreHeadersFinished()) {
-        const ScopePoolRef ref(GetPool() TRACE_ARGS);
-
         size_t nbytes = FeedHeadersCheck((const char *)data, length);
 
         if (nbytes > 0 && nbytes < length &&
             parser.AreHeadersFinished()) {
             /* the headers are finished; now begin sending the
                response body */
+            const DestructObserver destructed(*this);
             size_t nbytes2 = FeedBody((const char *)data + nbytes,
                                       length - nbytes);
             if (nbytes2 > 0)
                 /* more data was consumed */
                 nbytes += nbytes2;
-            else if (!input.IsDefined())
+            else if (destructed)
                 /* the connection was closed, must return 0 */
                 nbytes = 0;
         }
@@ -433,13 +440,13 @@ CGIClient::_Read() noexcept
             return;
         }
 
-        const ScopePoolRef ref(GetPool() TRACE_ARGS);
+        const DestructObserver destructed(*this);
 
         had_output = false;
         do {
             had_input = false;
             input.Read();
-        } while (input.IsDefined() && had_input && !had_output);
+        } while (!destructed && input.IsDefined() && had_input && !had_output);
     }
 }
 
