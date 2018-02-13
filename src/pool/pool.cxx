@@ -854,8 +854,6 @@ void
 pool_notify(struct pool *pool, struct pool_notify_state *notify) noexcept
 {
     pool->notify.push_back(*notify);
-    notify->pool = pool;
-    notify->name = pool->name;
     notify->destroyed = 0;
 }
 

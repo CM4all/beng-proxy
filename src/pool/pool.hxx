@@ -201,10 +201,6 @@ pool_dump_tree(const struct pool &pool) noexcept;
 struct pool_notify_state final
     : public boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::auto_unlink>> {
 
-    struct pool *pool;
-
-    const char *name;
-
     bool destroyed;
 };
 
