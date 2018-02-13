@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2018 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -34,6 +34,7 @@
 #include "TestPool.hxx"
 #include "strmap.hxx"
 #include "product.h"
+#include "util/StringCompare.hxx"
 
 #include <gtest/gtest.h>
 
@@ -341,6 +342,17 @@ TEST(HeaderForwardTest, RequestHeaders)
                  "x-cm4all-https=tls;");
 }
 
+static const char *
+RelocateCallback(const char *uri, void *ctx) noexcept
+{
+    auto &pool = *(struct pool *)ctx;
+    const char *suffix = StringAfterPrefix(uri, "http://localhost:8080/");
+    if (suffix != nullptr)
+        return p_strcat(&pool, "http://example.com/", suffix, nullptr);
+
+    return uri;
+}
+
 TEST(HeaderForwardTest, ResponseHeaders)
 {
     struct header_forward_settings settings;
@@ -418,6 +430,41 @@ TEST(HeaderForwardTest, ResponseHeaders)
                  "via=1.1 192.168.0.1, 1.1 192.168.0.2;");
 
     settings.modes[HEADER_GROUP_IDENTITY] = HEADER_FORWARD_NO;
+
+    /* response: mangle "Location" */
+
+    headers.Add("location", "http://localhost:8080/foo/bar");
+
+    settings.modes[HEADER_GROUP_LINK] = HEADER_FORWARD_NO;
+
+    auto out5b = forward_response_headers(*pool, HTTP_STATUS_OK, headers,
+                                          "192.168.0.2", nullptr,
+                                          RelocateCallback, (struct pool *)pool,
+                                          settings);
+    check_strmap(out5b, "content-type=image/jpeg;"
+                 "server=apache;");
+
+    settings.modes[HEADER_GROUP_LINK] = HEADER_FORWARD_YES;
+
+    out5b = forward_response_headers(*pool, HTTP_STATUS_OK, headers,
+                                     "192.168.0.2", nullptr,
+                                     RelocateCallback, (struct pool *)pool,
+                                     settings);
+    check_strmap(out5b, "content-type=image/jpeg;"
+                 "location=http://localhost:8080/foo/bar;"
+                 "server=apache;");
+
+    settings.modes[HEADER_GROUP_LINK] = HEADER_FORWARD_MANGLE;
+
+    out5b = forward_response_headers(*pool, HTTP_STATUS_OK, headers,
+                                     "192.168.0.2", nullptr,
+                                     RelocateCallback, (struct pool *)pool,
+                                     settings);
+    check_strmap(out5b, "content-type=image/jpeg;"
+                 "location=http://example.com/foo/bar;"
+                 "server=apache;");
+
+    settings.modes[HEADER_GROUP_LINK] = HEADER_FORWARD_NO;
 
     /* forward cookies */
 
