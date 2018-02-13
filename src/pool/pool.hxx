@@ -206,14 +206,6 @@ struct pool_notify_state final
     const char *name;
 
     bool destroyed;
-
-#ifdef TRACE
-    const char *file;
-    int line;
-
-    const char *destroyed_file;
-    int destroyed_line;
-#endif
 };
 
 void

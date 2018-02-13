@@ -572,7 +572,7 @@ pool_check_attachments(const struct pool &pool) noexcept
 
 static void
 pool_destroy(struct pool *pool, gcc_unused struct pool *parent,
-             struct pool *reparent_to TRACE_ARGS_DECL) noexcept
+             struct pool *reparent_to) noexcept
 {
     assert(pool->ref == 0);
     assert(pool->parent == nullptr);
@@ -590,11 +590,6 @@ pool_destroy(struct pool *pool, gcc_unused struct pool *parent,
 #ifndef NDEBUG
     pool->notify.clear_and_dispose([=](struct pool_notify_state *notify){
             notify->destroyed = true;
-
-#ifdef TRACE
-            notify->destroyed_file = file;
-            notify->destroyed_line = line;
-#endif
         });
 
     if (pool->trashed)
@@ -735,7 +730,7 @@ pool_unref_impl(struct pool *pool TRACE_ARGS_DECL) noexcept
 #ifdef DUMP_POOL_UNREF
         pool_dump_refs(*pool);
 #endif
-        pool_destroy(pool, parent, reparent_to TRACE_ARGS_FWD);
+        pool_destroy(pool, parent, reparent_to);
         return 0;
     }
 
