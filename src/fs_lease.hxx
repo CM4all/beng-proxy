@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2018 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_FILTERED_SOCKET_LEASE_HXX
-#define BENG_PROXY_FILTERED_SOCKET_LEASE_HXX
+#pragma once
 
 #include "filtered_socket.hxx"
 #include "lease.hxx"
@@ -51,7 +50,7 @@ public:
                         const struct timeval *read_timeout,
                         const struct timeval *write_timeout,
                         const SocketFilter *filter, void *filter_ctx,
-                        BufferedSocketHandler &handler)
+                        BufferedSocketHandler &handler) noexcept
         :socket(event_loop)
     {
         socket.Init(fd, fd_type, read_timeout, write_timeout,
@@ -60,28 +59,28 @@ public:
         lease_ref.Set(lease);
     }
 
-    ~FilteredSocketLease() {
+    ~FilteredSocketLease() noexcept {
         assert(IsReleased());
 
         socket.Destroy();
     }
 
-    EventLoop &GetEventLoop() {
+    EventLoop &GetEventLoop() noexcept {
         return socket.GetEventLoop();
     }
 
     gcc_pure
-    bool IsValid() const {
+    bool IsValid() const noexcept {
         return socket.IsValid();
     }
 
     gcc_pure
-    bool IsConnected() const {
+    bool IsConnected() const noexcept {
         return socket.IsConnected();
     }
 
     gcc_pure
-    bool HasFilter() const {
+    bool HasFilter() const noexcept {
         assert(!IsReleased());
 
         return socket.HasFilter();
@@ -89,106 +88,105 @@ public:
 
 #ifndef NDEBUG
     gcc_pure
-    bool HasEnded() const {
+    bool HasEnded() const noexcept {
         assert(!IsReleased());
 
         return socket.ended;
     }
 #endif
 
-    void Release(bool reuse) {
+    void Release(bool reuse) noexcept {
         socket.Abandon();
         lease_ref.Release(reuse);
     }
 
 #ifndef NDEBUG
-    bool IsReleased() const {
+    bool IsReleased() const noexcept {
         return lease_ref.released;
     }
 #endif
 
     gcc_pure
-    FdType GetType() const {
+    FdType GetType() const noexcept {
         assert(!IsReleased());
 
         return socket.GetType();
     }
 
-    void SetDirect(bool _direct) {
+    void SetDirect(bool _direct) noexcept {
         assert(!IsReleased());
 
         socket.SetDirect(_direct);
     }
 
-    int AsFD() {
+    int AsFD() noexcept {
         assert(!IsReleased());
 
         return socket.AsFD();
     }
 
     gcc_pure
-    bool IsEmpty() const {
+    bool IsEmpty() const noexcept {
         return socket.IsEmpty();
     }
 
     gcc_pure
-    size_t GetAvailable() const {
+    size_t GetAvailable() const noexcept {
         return socket.GetAvailable();
     }
 
-    WritableBuffer<void> ReadBuffer() const {
+    WritableBuffer<void> ReadBuffer() const noexcept {
         return socket.ReadBuffer();
     }
 
-    void Consumed(size_t nbytes) {
+    void Consumed(size_t nbytes) noexcept {
         socket.Consumed(nbytes);
     }
 
-    bool Read(bool expect_more) {
+    bool Read(bool expect_more) noexcept {
         return socket.Read(expect_more);
     }
 
-    void ScheduleReadTimeout(bool expect_more, const struct timeval *timeout) {
+    void ScheduleReadTimeout(bool expect_more,
+                             const struct timeval *timeout) noexcept {
         assert(!IsReleased());
 
         socket.ScheduleReadTimeout(expect_more, timeout);
     }
 
-    void ScheduleReadNoTimeout(bool expect_more) {
+    void ScheduleReadNoTimeout(bool expect_more) noexcept {
         assert(!IsReleased());
 
         socket.ScheduleReadNoTimeout(expect_more);
     }
 
-    ssize_t Write(const void *data, size_t size) {
+    ssize_t Write(const void *data, size_t size) noexcept {
         assert(!IsReleased());
 
         return socket.Write(data, size);
     }
 
-    void ScheduleWrite() {
+    void ScheduleWrite() noexcept {
         assert(!IsReleased());
 
         socket.ScheduleWrite();
     }
 
-    void UnscheduleWrite() {
+    void UnscheduleWrite() noexcept {
         assert(!IsReleased());
 
         socket.UnscheduleWrite();
     }
 
-    ssize_t WriteV(const struct iovec *v, size_t n) {
+    ssize_t WriteV(const struct iovec *v, size_t n) noexcept {
         assert(!IsReleased());
 
         return socket.WriteV(v, n);
     }
 
-    ssize_t WriteFrom(int fd, FdType fd_type, size_t length) {
+    ssize_t WriteFrom(int fd, FdType fd_type, size_t length) noexcept {
         assert(!IsReleased());
 
         return socket.WriteFrom(fd, fd_type, length);
     }
 };
-
-#endif
