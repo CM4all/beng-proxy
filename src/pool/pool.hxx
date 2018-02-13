@@ -222,14 +222,6 @@ pool_notify(struct pool *pool, struct pool_notify_state *notify) noexcept;
 bool
 pool_denotify(struct pool_notify_state *notify) noexcept;
 
-/**
- * Hands over control from an existing #pool_notify to a new one.  The
- * old one is unregistered.
- */
-void
-pool_notify_move(struct pool *pool, struct pool_notify_state *src,
-                 struct pool_notify_state *dest) noexcept;
-
 class PoolNotify {
     struct pool_notify_state state;
 

@@ -880,21 +880,6 @@ pool_denotify(struct pool_notify_state *notify) noexcept
 }
 
 void
-pool_notify_move(struct pool *pool, struct pool_notify_state *src,
-                 struct pool_notify_state *dest) noexcept
-{
-    assert(src->pool == pool);
-
-#ifdef TRACE
-    dest->file = src->file;
-    dest->line = src->line;
-#endif
-
-    assert(!pool_denotify(src));
-    pool_notify(pool, dest);
-}
-
-void
 pool_ref_notify_impl(struct pool *pool, struct pool_notify_state *notify
                      TRACE_ARGS_DECL) noexcept
 {
