@@ -202,8 +202,7 @@ public:
         assert(!eof);
         assert(!reading);
 
-        struct pool_notify_state notify;
-        pool_notify(pool, &notify);
+        PoolNotify notify(pool);
         reading = true;
 #endif
 
@@ -211,7 +210,7 @@ public:
 
 #ifndef NDEBUG
         assert(available >= -1);
-        assert(!pool_denotify(&notify));
+        assert(!notify.Denotify());
         assert(!destroyed);
         assert(reading);
 
@@ -248,8 +247,7 @@ public:
         assert(!eof);
         assert(!reading);
 
-        struct pool_notify_state notify;
-        pool_notify(pool, &notify);
+        PoolNotify notify(pool);
         reading = true;
 #endif
 
@@ -257,7 +255,7 @@ public:
         assert(nbytes <= length);
 
 #ifndef NDEBUG
-        if (pool_denotify(&notify) || destroyed)
+        if (notify.Denotify() || destroyed)
             return nbytes;
 
         reading = false;
@@ -300,15 +298,14 @@ public:
         assert(!reading);
         assert(!in_data);
 
-        struct pool_notify_state notify;
-        pool_notify(pool, &notify);
+        PoolNotify notify(pool);
         reading = true;
 #endif
 
         _Read();
 
 #ifndef NDEBUG
-        if (pool_denotify(&notify) || destroyed)
+        if (notify.Denotify() || destroyed)
             return;
 
         reading = false;
@@ -332,8 +329,7 @@ public:
         assert(!reading);
         assert(!in_data);
 
-        struct pool_notify_state notify;
-        pool_notify(pool, &notify);
+        PoolNotify notify(pool);
         reading = true;
 
         try {
@@ -343,14 +339,14 @@ public:
 
 #ifndef NDEBUG
         } catch (...) {
-            if (!pool_denotify(&notify)) {
+            if (!notify.Denotify()) {
                 assert(destroyed);
             }
 
             throw;
         }
 
-        assert(!pool_denotify(&notify));
+        assert(!notify.Denotify());
         assert(!destroyed);
         assert(reading);
 
@@ -416,15 +412,14 @@ public:
         assert(!reading);
         assert(!in_data);
 
-        struct pool_notify_state notify;
-        pool_notify(pool, &notify);
+        PoolNotify notify(pool);
         reading = true;
 #endif
 
         int fd = _AsFd();
 
 #ifndef NDEBUG
-        assert(!pool_denotify(&notify) || fd < 0);
+        assert(!notify.Denotify() || fd < 0);
 
         if (fd < 0)
             reading = false;
