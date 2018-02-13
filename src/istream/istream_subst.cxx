@@ -118,11 +118,6 @@ public:
 
     size_t OnData(const void *data, size_t length) noexcept override;
 
-    ssize_t OnDirect(gcc_unused FdType type, gcc_unused int fd,
-                     gcc_unused size_t max_length) noexcept override {
-        gcc_unreachable();
-    }
-
     void OnEof() noexcept override;
     void OnError(std::exception_ptr ep) noexcept override;
 };
