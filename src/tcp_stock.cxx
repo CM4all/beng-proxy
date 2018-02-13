@@ -33,6 +33,7 @@
 #include "tcp_stock.hxx"
 #include "stock/Stock.hxx"
 #include "stock/Item.hxx"
+#include "stock/LoggerDomain.hxx"
 #include "address_list.hxx"
 #include "pool/pool.hxx"
 #include "event/SocketEvent.hxx"
@@ -64,17 +65,6 @@ struct TcpStockRequest {
                     SocketAddress _address, unsigned _timeout)
         :ip_transparent(_ip_transparent), bind_address(_bind_address),
          address(_address), timeout(_timeout) {}
-};
-
-class StockLoggerDomain {
-    const Stock &stock;
-
-public:
-    explicit StockLoggerDomain(const Stock &_stock):stock(_stock) {}
-
-    StringView GetDomain() const {
-        return stock.GetName();
-    }
 };
 
 struct TcpStockConnection final
