@@ -116,6 +116,10 @@ struct CssParser final : IstreamSink {
     CssParser(struct pool &pool, UnusedIstreamPtr input, bool block,
               const CssParserHandler &handler, void *handler_ctx);
 
+    void Destroy() {
+        pool_unref(pool);
+    }
+
     bool IsDefined() const {
         return input.IsDefined();
     }
@@ -144,7 +148,7 @@ struct CssParser final : IstreamSink {
 
         input.Clear();
         handler->eof(handler_ctx, position);
-        pool_unref(pool);
+        Destroy();
     }
 
     void OnError(std::exception_ptr ep) noexcept override {
@@ -152,7 +156,7 @@ struct CssParser final : IstreamSink {
 
         input.Clear();
         handler->error(ep, handler_ctx);
-        pool_unref(pool);
+        Destroy();
     }
 };
 
@@ -596,7 +600,7 @@ css_parser_close(CssParser *parser)
     assert(parser->IsDefined());
 
     parser->Close();
-    pool_unref(parser->pool);
+    parser->Destroy();
 }
 
 void
