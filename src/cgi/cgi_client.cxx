@@ -127,7 +127,6 @@ public:
 inline bool
 CGIClient::ReturnResponse()
 {
-    const ScopePoolRef ref(GetPool() TRACE_ARGS);
     http_status_t status = parser.GetStatus();
     StringMap &headers = parser.GetHeaders();
 
@@ -159,6 +158,7 @@ CGIClient::ReturnResponse()
         stopwatch_event(stopwatch, "headers");
 
         const DestructObserver destructed(*this);
+        const ScopePoolRef ref(GetPool() TRACE_ARGS);
 
         in_response_callback = true;
         handler.InvokeResponse(status, std::move(headers),
