@@ -36,11 +36,12 @@
 #include "istream/UnusedPtr.hxx"
 #include "util/Cast.hxx"
 #include "util/ByteOrder.hxx"
+#include "util/DestructObserver.hxx"
 
 #include <assert.h>
 #include <string.h>
 
-class FcgiIstream final : public FacadeIstream {
+class FcgiIstream final : public FacadeIstream, DestructAnchor {
     size_t missing_from_current_record = 0;
 
     struct fcgi_record_header header;
@@ -87,7 +88,6 @@ public:
     /* virtual methods from class IstreamHandler */
 
     size_t OnData(const void *data, size_t length) noexcept override {
-        const ScopePoolRef ref(GetPool() TRACE_ARGS);
         return Feed((const char *)data, length);
     }
 
@@ -134,7 +134,7 @@ FcgiIstream::StartRecord(size_t length) noexcept
 size_t
 FcgiIstream::Feed(const char *data, size_t length) noexcept
 {
-    assert(HasInput());
+    const DestructObserver destructed(*this);
 
     size_t total = 0;
     while (true) {
@@ -149,7 +149,9 @@ FcgiIstream::Feed(const char *data, size_t length) noexcept
 
             size_t nbytes = InvokeData(data + total, rest);
             if (nbytes == 0)
-                return HasInput() ? total : 0;
+                return destructed ? 0 : total;
+
+            assert(!destructed);
 
             total += nbytes;
             missing_from_current_record -= nbytes;
