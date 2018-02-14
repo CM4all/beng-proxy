@@ -118,6 +118,7 @@ struct CssParser final : IstreamSink {
 
     void Destroy() {
         pool_unref(pool);
+        this->~CssParser();
     }
 
     bool IsDefined() const {
