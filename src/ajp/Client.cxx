@@ -276,8 +276,6 @@ AjpClient::AbortResponseHeaders(std::exception_ptr ep) noexcept
     assert(response.read_state == Response::READ_BEGIN ||
            response.read_state == Response::READ_NO_BODY);
 
-    const ScopePoolRef ref(GetPool() TRACE_ARGS);
-
     response.read_state = Response::READ_END;
     request.handler.InvokeError(ep);
 
@@ -465,7 +463,6 @@ AjpClient::ConsumePacket(enum ajp_code code,
             response.read_state = Response::READ_END;
             ReleaseSocket(socket.IsEmpty());
 
-            const ScopePoolRef ref(GetPool() TRACE_ARGS);
             request.handler.InvokeResponse(response.status,
                                            std::move(response.headers),
                                            UnusedIstreamPtr());
