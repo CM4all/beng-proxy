@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2018 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -35,10 +35,11 @@
 #include "pool/pool.hxx"
 #include "istream/Sink.hxx"
 #include "istream/UnusedPtr.hxx"
+#include "util/DestructObserver.hxx"
 #include "util/StringUtil.hxx"
 #include "util/TrivialArray.hxx"
 
-struct CssParser final : IstreamSink {
+struct CssParser final : IstreamSink, DestructAnchor {
     template<size_t max>
     class StringBuffer : public TrivialArray<char, max> {
     public:
@@ -121,10 +122,6 @@ struct CssParser final : IstreamSink {
         this->~CssParser();
     }
 
-    bool IsDefined() const {
-        return input.IsDefined();
-    }
-
     void Read() {
         input.Read();
     }
@@ -138,23 +135,16 @@ struct CssParser final : IstreamSink {
     /* virtual methods from class IstreamHandler */
 
     size_t OnData(const void *data, size_t length) override {
-        assert(input.IsDefined());
-
-        const ScopePoolRef ref(*pool TRACE_ARGS);
         return Feed((const char *)data, length);
     }
 
     void OnEof() noexcept override {
-        assert(input.IsDefined());
-
         input.Clear();
         handler->eof(handler_ctx, position);
         Destroy();
     }
 
     void OnError(std::exception_ptr ep) noexcept override {
-        assert(input.IsDefined());
-
         input.Clear();
         handler->error(ep, handler_ctx);
         Destroy();
@@ -174,7 +164,6 @@ at_url_start(const char *p, size_t length)
 size_t
 CssParser::Feed(const char *start, size_t length)
 {
-    assert(input.IsDefined());
     assert(start != nullptr);
     assert(length > 0);
 
@@ -490,8 +479,10 @@ CssParser::Feed(const char *start, size_t length)
                 url.start = url_start;
                 url.end = position + (off_t)(p - start);
                 url.value = url_buffer;
+
+                const DestructObserver destructed(*this);
                 handler->url(&url, handler_ctx);
-                if (!input.IsDefined())
+                if (destructed)
                     return 0;
             }
 
@@ -555,16 +546,16 @@ CssParser::Feed(const char *start, size_t length)
                 url.start = url_start;
                 url.end = position + (off_t)(p - start);
                 url.value = url_buffer;
+
+                const DestructObserver destructed(*this);
                 handler->import(&url, handler_ctx);
-                if (!input.IsDefined())
+                if (destructed)
                     return 0;
             }
 
             break;
         }
     }
-
-    assert(input.IsDefined());
 
     position += length;
     return length;
@@ -602,7 +593,6 @@ void
 css_parser_close(CssParser *parser)
 {
     assert(parser != nullptr);
-    assert(parser->IsDefined());
 
     parser->Close();
     parser->Destroy();
@@ -612,7 +602,6 @@ void
 css_parser_read(CssParser *parser)
 {
     assert(parser != nullptr);
-    assert(parser->IsDefined());
 
     parser->Read();
 }
