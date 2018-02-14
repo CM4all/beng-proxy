@@ -118,8 +118,7 @@ struct CssParser final : IstreamSink, DestructAnchor {
               const CssParserHandler &handler, void *handler_ctx);
 
     void Destroy() {
-        pool_unref(pool);
-        this->~CssParser();
+        DeleteUnrefPool(*pool, this);
     }
 
     void Read() {
