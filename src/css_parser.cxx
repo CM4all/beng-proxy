@@ -179,8 +179,6 @@ CssParser::Feed(const char *start, size_t length)
     assert(length > 0);
 
     const char *buffer = start, *end = start + length, *p;
-    size_t nbytes;
-    CssParserValue url;
 
     while (buffer < end) {
         switch (state) {
@@ -317,7 +315,7 @@ CssParser::Feed(const char *start, size_t length)
         case State::DISCARD_QUOTED:
             p = (const char *)memchr(buffer, quote, end - buffer);
             if (p == nullptr) {
-                nbytes = end - start;
+                size_t nbytes = end - start;
                 position += (off_t)nbytes;
                 return nbytes;
             }
@@ -473,26 +471,29 @@ CssParser::Feed(const char *start, size_t length)
         case State::URL:
             p = (const char *)memchr(buffer, quote, end - buffer);
             if (p == nullptr) {
-                nbytes = end - start;
+                size_t nbytes = end - start;
                 url_buffer.AppendTruncated({buffer, nbytes});
                 position += (off_t)nbytes;
                 return nbytes;
             }
 
-            /* found the end of the URL - copy the rest, and invoke
-               the handler method "url()" */
-            nbytes = p - buffer;
-            url_buffer.AppendTruncated({buffer, nbytes});
+            {
+                /* found the end of the URL - copy the rest, and
+                   invoke the handler method "url()" */
+                size_t nbytes = p - buffer;
+                url_buffer.AppendTruncated({buffer, nbytes});
 
-            buffer = p + 1;
-            state = State::BLOCK;
+                buffer = p + 1;
+                state = State::BLOCK;
 
-            url.start = url_start;
-            url.end = position + (off_t)(p - start);
-            url.value = url_buffer;
-            handler->url(&url, handler_ctx);
-            if (!input.IsDefined())
-                return 0;
+                CssParserValue url;
+                url.start = url_start;
+                url.end = position + (off_t)(p - start);
+                url.value = url_buffer;
+                handler->url(&url, handler_ctx);
+                if (!input.IsDefined())
+                    return 0;
+            }
 
             break;
 
@@ -535,26 +536,29 @@ CssParser::Feed(const char *start, size_t length)
         case State::IMPORT:
             p = (const char *)memchr(buffer, '"', end - buffer);
             if (p == nullptr) {
-                nbytes = end - start;
+                size_t nbytes = end - start;
                 url_buffer.AppendTruncated({buffer, nbytes});
                 position += (off_t)nbytes;
                 return nbytes;
             }
 
-            /* found the end of the URL - copy the rest, and invoke
-               the handler method "import()" */
-            nbytes = p - buffer;
-            url_buffer.AppendTruncated({buffer, nbytes});
+            {
+                /* found the end of the URL - copy the rest, and
+                   invoke the handler method "import()" */
+                size_t nbytes = p - buffer;
+                url_buffer.AppendTruncated({buffer, nbytes});
 
-            buffer = p + 1;
-            state = State::NONE;
+                buffer = p + 1;
+                state = State::NONE;
 
-            url.start = url_start;
-            url.end = position + (off_t)(p - start);
-            url.value = url_buffer;
-            handler->import(&url, handler_ctx);
-            if (!input.IsDefined())
-                return 0;
+                CssParserValue url;
+                url.start = url_start;
+                url.end = position + (off_t)(p - start);
+                url.value = url_buffer;
+                handler->import(&url, handler_ctx);
+                if (!input.IsDefined())
+                    return 0;
+            }
 
             break;
         }
