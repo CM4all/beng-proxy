@@ -43,6 +43,15 @@
 #include <string.h>
 #include <errno.h>
 
+inline
+ThreadSocketFilterInternal::~ThreadSocketFilterInternal() noexcept
+{
+    encrypted_input.FreeIfDefined(fb_pool_get());
+    decrypted_input.FreeIfDefined(fb_pool_get());
+    plain_output.FreeIfDefined(fb_pool_get());
+    encrypted_output.FreeIfDefined(fb_pool_get());
+}
+
 ThreadSocketFilter::ThreadSocketFilter(EventLoop &_event_loop,
                                        ThreadQueue &_queue,
                                        ThreadSocketFilterHandler *_handler) noexcept
@@ -61,11 +70,6 @@ ThreadSocketFilter::~ThreadSocketFilter() noexcept
 
     defer_event.Cancel();
     handshake_timeout_event.Cancel();
-
-    encrypted_input.FreeIfDefined(fb_pool_get());
-    decrypted_input.FreeIfDefined(fb_pool_get());
-    plain_output.FreeIfDefined(fb_pool_get());
-    encrypted_output.FreeIfDefined(fb_pool_get());
 }
 
 void
