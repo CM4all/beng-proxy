@@ -144,7 +144,7 @@ struct ThreadSocketFilterInternal : ThreadJob {
  * A module for #filtered_socket that moves the filter to a thread
  * pool (see #thread_job).
  */
-struct ThreadSocketFilter final : SocketFilter, ThreadSocketFilterInternal {
+class ThreadSocketFilter final : public SocketFilter, ThreadSocketFilterInternal {
     ThreadQueue &queue;
 
     FilteredSocket *socket;
@@ -216,6 +216,7 @@ struct ThreadSocketFilter final : SocketFilter, ThreadSocketFilterInternal {
      */
     std::exception_ptr error;
 
+public:
     ThreadSocketFilter(EventLoop &_event_loop,
                        ThreadQueue &queue,
                        ThreadSocketFilterHandler *handler) noexcept;
@@ -224,6 +225,7 @@ struct ThreadSocketFilter final : SocketFilter, ThreadSocketFilterInternal {
 
     ~ThreadSocketFilter() noexcept;
 
+private:
     /**
      * Schedule a Run() call in a worker thread.
      */
@@ -239,11 +241,6 @@ struct ThreadSocketFilter final : SocketFilter, ThreadSocketFilterInternal {
      */
     size_t LockWritePlainOutput(const void *data, size_t size) noexcept;
 
-    /* virtual methods from class ThreadJob */
-    void Run() noexcept final;
-    void Done() noexcept final;
-
-private:
     void ClosedPrematurely() noexcept;
 
     bool CheckRead(std::unique_lock<std::mutex> &lock) noexcept;
@@ -269,6 +266,10 @@ private:
      * directly.
      */
     void OnDeferred() noexcept;
+
+    /* virtual methods from class ThreadJob */
+    void Run() noexcept final;
+    void Done() noexcept final;
 
 public:
     /* virtual methods from SocketFilter */

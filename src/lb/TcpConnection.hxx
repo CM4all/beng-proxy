@@ -52,7 +52,6 @@
 struct pool;
 struct SslFactory;
 struct SslFilter;
-struct ThreadSocketFilter;
 class UniqueSocketDescriptor;
 class SocketAddress;
 struct LbListenerConfig;
