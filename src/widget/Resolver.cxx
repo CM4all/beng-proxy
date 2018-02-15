@@ -45,7 +45,7 @@ struct WidgetResolverListener final
     : public boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>,
       Cancellable {
 
-    struct pool &pool;
+    const PoolPtr pool;
 
     WidgetResolver &resolver;
 
@@ -55,16 +55,13 @@ struct WidgetResolverListener final
     bool finished = false, aborted = false;
 #endif
 
-    WidgetResolverListener(struct pool &_pool, WidgetResolver &_resolver,
+    template<typename P>
+    WidgetResolverListener(P &&_pool, WidgetResolver &_resolver,
                            WidgetResolverCallback _callback,
                            CancellablePointer &cancel_ptr)
-        :pool(_pool), resolver(_resolver),
+        :pool(std::forward<P>(_pool)), resolver(_resolver),
          callback(_callback) {
         cancel_ptr = *this;
-    }
-
-    ~WidgetResolverListener() noexcept {
-        pool_unref(&pool);
     }
 
     void Destroy() noexcept {
@@ -279,7 +276,6 @@ ResolveWidget(struct pool &pool,
 
     /* add a new listener to the resolver */
 
-    pool_ref(&pool);
     auto listener = NewFromPool<WidgetResolverListener>(pool, pool, *resolver,
                                                         callback,
                                                         cancel_ptr);
