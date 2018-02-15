@@ -33,6 +33,7 @@
 #pragma once
 
 #include "util/BindMethod.hxx"
+#include "util/WritableBuffer.hxx"
 
 #include <sys/types.h>
 #include <stddef.h>
@@ -63,6 +64,10 @@ public:
     virtual bool IsFull() const noexcept = 0;
 
     virtual size_t GetAvailable() const noexcept = 0;
+
+    virtual WritableBuffer<void> ReadBuffer() noexcept {
+        return nullptr;
+    }
 
     virtual void Consumed(size_t nbytes) noexcept = 0;
 

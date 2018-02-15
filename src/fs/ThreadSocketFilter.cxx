@@ -498,6 +498,15 @@ ThreadSocketFilter::GetAvailable() const noexcept
         unprotected_decrypted_input.GetAvailable();
 }
 
+WritableBuffer<void>
+ThreadSocketFilter::ReadBuffer() noexcept
+{
+    if (unprotected_decrypted_input.IsEmpty())
+        MoveDecryptedInputAndSchedule();
+
+    return unprotected_decrypted_input.Read().ToVoid();
+}
+
 void
 ThreadSocketFilter::Consumed(size_t nbytes) noexcept
 {

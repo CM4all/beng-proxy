@@ -211,8 +211,7 @@ WritableBuffer<void>
 FilteredSocket::ReadBuffer() const noexcept
 {
     return filter != nullptr
-        // TODO: read from filter output buffer?
-        ? nullptr
+        ? filter->ReadBuffer()
         : base.ReadBuffer();
 }
 

@@ -303,6 +303,7 @@ public:
     bool IsEmpty() const noexcept override;
     bool IsFull() const noexcept override;
     size_t GetAvailable() const noexcept override;
+    WritableBuffer<void> ReadBuffer() noexcept override;
     void Consumed(size_t nbytes) noexcept override;
     bool Read(bool expect_more) noexcept override;
     ssize_t Write(const void *data, size_t length) noexcept override;
