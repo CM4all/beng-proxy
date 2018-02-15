@@ -45,7 +45,7 @@
 
 ThreadSocketFilter::ThreadSocketFilter(EventLoop &_event_loop,
                                        ThreadQueue &_queue,
-                                       ThreadSocketFilterHandler *_handler)
+                                       ThreadSocketFilterHandler *_handler) noexcept
     :queue(_queue),
      handler(_handler),
      defer_event(_event_loop, BIND_THIS_METHOD(OnDeferred)),
@@ -55,7 +55,7 @@ ThreadSocketFilter::ThreadSocketFilter(EventLoop &_event_loop,
     handshake_timeout_event.Add(EventDuration<60>::value);
 }
 
-ThreadSocketFilter::~ThreadSocketFilter()
+ThreadSocketFilter::~ThreadSocketFilter() noexcept
 {
     delete handler;
 
@@ -69,13 +69,13 @@ ThreadSocketFilter::~ThreadSocketFilter()
 }
 
 void
-ThreadSocketFilter::ClosedPrematurely()
+ThreadSocketFilter::ClosedPrematurely() noexcept
 {
     socket->InvokeError(std::make_exception_ptr(std::runtime_error("Peer closed the socket prematurely")));
 }
 
 void
-ThreadSocketFilter::Schedule()
+ThreadSocketFilter::Schedule() noexcept
 {
     assert(!postponed_destroy);
 
@@ -103,7 +103,7 @@ ThreadSocketFilter::SetHandshakeCallback(BoundMethod<void()> callback) noexcept
  * @return false if the object has been destroyed
  */
 bool
-ThreadSocketFilter::SubmitDecryptedInput()
+ThreadSocketFilter::SubmitDecryptedInput() noexcept
 {
     while (true) {
         /* this buffer is large enough to hold the contents of one
@@ -158,7 +158,7 @@ ThreadSocketFilter::SubmitDecryptedInput()
 }
 
 inline bool
-ThreadSocketFilter::CheckRead(std::unique_lock<std::mutex> &lock)
+ThreadSocketFilter::CheckRead(std::unique_lock<std::mutex> &lock) noexcept
 {
     if (!want_read || encrypted_input.IsDefinedAndFull() ||
         !connected || read_scheduled)
@@ -173,7 +173,7 @@ ThreadSocketFilter::CheckRead(std::unique_lock<std::mutex> &lock)
 }
 
 inline bool
-ThreadSocketFilter::CheckWrite(std::unique_lock<std::mutex> &lock)
+ThreadSocketFilter::CheckWrite(std::unique_lock<std::mutex> &lock) noexcept
 {
     if (!want_write || plain_output.IsDefinedAndFull())
         return true;
@@ -190,7 +190,7 @@ ThreadSocketFilter::CheckWrite(std::unique_lock<std::mutex> &lock)
 }
 
 void
-ThreadSocketFilter::OnDeferred()
+ThreadSocketFilter::OnDeferred() noexcept
 {
     std::unique_lock<std::mutex> lock(mutex);
 
@@ -199,7 +199,7 @@ ThreadSocketFilter::OnDeferred()
 }
 
 void
-ThreadSocketFilter::HandshakeTimeoutCallback()
+ThreadSocketFilter::HandshakeTimeoutCallback() noexcept
 {
     bool _handshaking;
 
@@ -213,7 +213,7 @@ ThreadSocketFilter::HandshakeTimeoutCallback()
 }
 
 void
-ThreadSocketFilter::PreRun()
+ThreadSocketFilter::PreRun() noexcept
 {
     {
         const std::lock_guard<std::mutex> lock(mutex);
@@ -225,7 +225,7 @@ ThreadSocketFilter::PreRun()
 }
 
 void
-ThreadSocketFilter::PostRun()
+ThreadSocketFilter::PostRun() noexcept
 {
     handler->PostRun(*this);
 
@@ -517,7 +517,7 @@ ThreadSocketFilter::Read(bool _expect_more) noexcept
 }
 
 inline size_t
-ThreadSocketFilter::LockWritePlainOutput(const void *data, size_t size)
+ThreadSocketFilter::LockWritePlainOutput(const void *data, size_t size) noexcept
 {
     const std::lock_guard<std::mutex> lock(mutex);
 

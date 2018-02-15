@@ -80,9 +80,9 @@ struct SslFilter final : ThreadSocketFilterHandler {
     void Encrypt();
 
     /* virtual methods from class ThreadSocketFilterHandler */
-    void PreRun(ThreadSocketFilter &f) override;
+    void PreRun(ThreadSocketFilter &f) noexcept override;
     void Run(ThreadSocketFilter &f) override;
-    void PostRun(ThreadSocketFilter &f) override;
+    void PostRun(ThreadSocketFilter &f) noexcept override;
 };
 
 static std::runtime_error
@@ -209,7 +209,7 @@ SslFilter::Encrypt()
  */
 
 void
-SslFilter::PreRun(ThreadSocketFilter &f)
+SslFilter::PreRun(ThreadSocketFilter &f) noexcept
 {
     if (f.IsIdle()) {
         decrypted_input.AllocateIfNull(fb_pool_get());
@@ -319,7 +319,7 @@ SslFilter::Run(ThreadSocketFilter &f)
 }
 
 void
-SslFilter::PostRun(ThreadSocketFilter &f)
+SslFilter::PostRun(ThreadSocketFilter &f) noexcept
 {
     if (f.IsIdle()) {
         plain_output.FreeIfEmpty(fb_pool_get());

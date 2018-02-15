@@ -51,7 +51,7 @@ public:
     /**
      * Called in the main thread before Run() is scheduled.
      */
-    virtual void PreRun(ThreadSocketFilter &) {}
+    virtual void PreRun(ThreadSocketFilter &) noexcept {}
 
     /**
      * Do the work.  This is run in an unspecified worker thread.  The
@@ -66,7 +66,7 @@ public:
      * Called in the main thread after one or more run() calls have
      * finished successfully.
      */
-    virtual void PostRun(ThreadSocketFilter &) {}
+    virtual void PostRun(ThreadSocketFilter &) noexcept {}
 };
 
 /**
@@ -216,57 +216,57 @@ struct ThreadSocketFilter final : SocketFilter, ThreadJob {
 
     ThreadSocketFilter(EventLoop &_event_loop,
                        ThreadQueue &queue,
-                       ThreadSocketFilterHandler *handler);
+                       ThreadSocketFilterHandler *handler) noexcept;
 
     ThreadSocketFilter(const ThreadSocketFilter &) = delete;
 
-    ~ThreadSocketFilter();
+    ~ThreadSocketFilter() noexcept;
 
     /**
      * Schedule a Run() call in a worker thread.
      */
-    void Schedule();
+    void Schedule() noexcept;
 
     /**
      * @return false if the object has been destroyed
      */
-    bool SubmitDecryptedInput();
+    bool SubmitDecryptedInput() noexcept;
 
     /**
      * @return the number of bytes appended to #plain_output
      */
-    size_t LockWritePlainOutput(const void *data, size_t size);
+    size_t LockWritePlainOutput(const void *data, size_t size) noexcept;
 
     /* virtual methods from class ThreadJob */
     void Run() final;
     void Done() final;
 
 private:
-    void ClosedPrematurely();
+    void ClosedPrematurely() noexcept;
 
-    bool CheckRead(std::unique_lock<std::mutex> &lock);
-    bool CheckWrite(std::unique_lock<std::mutex> &lock);
+    bool CheckRead(std::unique_lock<std::mutex> &lock) noexcept;
+    bool CheckWrite(std::unique_lock<std::mutex> &lock) noexcept;
 
-    void HandshakeTimeoutCallback();
+    void HandshakeTimeoutCallback() noexcept;
 
     /**
      * Called in the main thread before scheduling a Run() call in a
      * worker thread.
      */
-    void PreRun();
+    void PreRun() noexcept;
 
     /**
      * Called in the main thread after one or more Run() calls have
      * finished successfully.
      */
-    void PostRun();
+    void PostRun() noexcept;
 
     /**
      * This event moves a call out of the current stack frame.  It is
      * used by ScheduleWrite() to avoid calling InvokeWrite()
      * directly.
      */
-    void OnDeferred();
+    void OnDeferred() noexcept;
 
 public:
     /* virtual methods from SocketFilter */
