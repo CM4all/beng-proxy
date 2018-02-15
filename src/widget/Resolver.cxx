@@ -63,6 +63,10 @@ struct WidgetResolverListener final
         cancel_ptr = *this;
     }
 
+    void Destroy() noexcept {
+        pool_unref(&pool);
+    }
+
     void Finish();
 
     /* virtual methods from class Cancellable */
@@ -86,6 +90,10 @@ struct WidgetResolver {
 
     explicit WidgetResolver(Widget &_widget)
         :widget(_widget) {}
+
+    void Destroy() noexcept {
+        pool_unref(&widget.pool);
+    }
 
     void Start(struct tcache &translate_cache) {
         /* use the widget pool because the listener pool may be
@@ -125,7 +133,7 @@ WidgetResolver::Abort()
 
     widget.resolver = nullptr;
     cancel_ptr.Cancel();
-    pool_unref(&widget.pool);
+    Destroy();
 }
 
 /*
@@ -149,7 +157,7 @@ WidgetResolverListener::Cancel() noexcept
 
     resolver.RemoveListener(*this);
 
-    pool_unref(&pool);
+    Destroy();
 }
 
 
@@ -169,7 +177,7 @@ WidgetResolverListener::Finish()
 #endif
 
     callback();
-    pool_unref(&pool);
+    Destroy();
 }
 
 void
@@ -208,7 +216,7 @@ WidgetResolver::RegistryCallback(const WidgetClass *cls)
     running = false;
 #endif
 
-    pool_unref(&widget.pool);
+    Destroy();
 }
 
 
