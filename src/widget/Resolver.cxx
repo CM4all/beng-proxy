@@ -63,8 +63,12 @@ struct WidgetResolverListener final
         cancel_ptr = *this;
     }
 
-    void Destroy() noexcept {
+    ~WidgetResolverListener() noexcept {
         pool_unref(&pool);
+    }
+
+    void Destroy() noexcept {
+        this->~WidgetResolverListener();
     }
 
     void Finish();
@@ -91,8 +95,12 @@ struct WidgetResolver {
     explicit WidgetResolver(Widget &_widget)
         :widget(_widget) {}
 
-    void Destroy() noexcept {
+    ~WidgetResolver() noexcept {
         pool_unref(&widget.pool);
+    }
+
+    void Destroy() noexcept {
+        this->~WidgetResolver();
     }
 
     void Start(struct tcache &translate_cache) {
