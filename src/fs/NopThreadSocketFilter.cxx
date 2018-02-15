@@ -38,11 +38,11 @@
 class NopThreadSocketFilter final : public ThreadSocketFilterHandler {
 public:
     /* virtual methods from class ThreadSocketFilterHandler */
-    void Run(ThreadSocketFilter &f) override;
+    void Run(ThreadSocketFilterInternal &f) override;
 };
 
 void
-NopThreadSocketFilter::Run(ThreadSocketFilter &f)
+NopThreadSocketFilter::Run(ThreadSocketFilterInternal &f)
 {
     const std::lock_guard<std::mutex> lock(f.mutex);
     f.handshaking = false;

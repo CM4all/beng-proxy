@@ -41,7 +41,7 @@
 #include <mutex>
 
 struct FilteredSocket;
-struct ThreadSocketFilter;
+struct ThreadSocketFilterInternal;
 class ThreadQueue;
 
 class ThreadSocketFilterHandler {
@@ -51,7 +51,7 @@ public:
     /**
      * Called in the main thread before Run() is scheduled.
      */
-    virtual void PreRun(ThreadSocketFilter &) noexcept {}
+    virtual void PreRun(ThreadSocketFilterInternal &) noexcept {}
 
     /**
      * Do the work.  This is run in an unspecified worker thread.  The
@@ -60,20 +60,91 @@ public:
      * This method may throw exceptions, which will be forwarded to
      * BufferedSocketHandler::error().
      */
-    virtual void Run(ThreadSocketFilter &f) = 0;
+    virtual void Run(ThreadSocketFilterInternal &f) = 0;
 
     /**
      * Called in the main thread after one or more run() calls have
      * finished successfully.
      */
-    virtual void PostRun(ThreadSocketFilter &) noexcept {}
+    virtual void PostRun(ThreadSocketFilterInternal &) noexcept {}
+};
+
+struct ThreadSocketFilterInternal : ThreadJob {
+    /**
+     * True when #ThreadSocketFilterHandler's internal output buffers
+     * are empty.  Set by #ThreadSocketFilterHandler::run() before
+     * returning.
+     *
+     * Protected by #mutex.
+     */
+    bool drained = true;
+
+    /**
+     * True when no more input can be decrypted by
+     * #ThreadSocketFilterHandler.  Will be set to true by
+     * #ThreadSocketFilterHandler.
+     *
+     * Protected by #mutex.
+     */
+    bool input_eof = false;
+
+    /**
+     * Schedule the job again?  This can be used to fix up things that
+     * can only be done in the main thread.
+     *
+     * Protected by #mutex.
+     */
+    bool again = false;
+
+    /**
+     * True during the initial handshake.  Will be set to false by the
+     * #ThreadSocketFilterHandler.  It is used to control the
+     * #handshake_timeout_event.
+     *
+     * Protected by #mutex.
+     *
+     * TODO: this is only a kludge for the stable branch.  Reimplement
+     * properly.
+     */
+    bool handshaking = true;
+
+    mutable std::mutex mutex;
+
+    /**
+     * A buffer of input data that was not yet handled by the filter.
+     * It will be passed to the filter, and after that, it will go to
+     * #decrypted_input.
+     *
+     * This gets fed from buffered_socket::input.  We need another
+     * buffer because buffered_socket is not thread-safe, while this
+     * buffer is protected by the #mutex.
+     */
+    SliceFifoBuffer encrypted_input;
+
+    /**
+     * A buffer of input data that was handled by the filter.  It will
+     * be passed to the handler.
+     */
+    SliceFifoBuffer decrypted_input;
+
+    /**
+     * A buffer of output data that was not yet handled by the filter.
+     * Once it was filtered, it will be written to #encrypted_output.
+     */
+    SliceFifoBuffer plain_output;
+
+    /**
+     * A buffer of output data that has been filtered already, and
+     * will be written to the socket.
+     */
+    SliceFifoBuffer encrypted_output;
 };
 
 /**
  * A module for #filtered_socket that moves the filter to a thread
  * pool (see #thread_job).
  */
-struct ThreadSocketFilter final : SocketFilter, ThreadJob {
+struct ThreadSocketFilter final : SocketFilter, ThreadSocketFilterInternal {
     ThreadQueue &queue;
 
     FilteredSocket *socket;
@@ -136,83 +207,14 @@ struct ThreadSocketFilter final : SocketFilter, ThreadJob {
      */
     bool want_write = false;
 
-    /**
-     * True when #ThreadSocketFilterHandler's internal output buffers
-     * are empty.  Set by #ThreadSocketFilterHandler::run() before
-     * returning.
-     *
-     * Protected by #mutex.
-     */
-    bool drained = true;
-
-    /**
-     * True when no more input can be decrypted by
-     * #ThreadSocketFilterHandler.  Will be set to true by
-     * #ThreadSocketFilterHandler.
-     *
-     * Protected by #mutex.
-     */
-    bool input_eof = false;
-
-    /**
-     * Schedule the job again?  This can be used to fix up things that
-     * can only be done in the main thread.
-     *
-     * Protected by #mutex.
-     */
-    bool again = false;
-
-    /**
-     * True during the initial handshake.  Will be set to false by the
-     * #ThreadSocketFilterHandler.  It is used to control the
-     * #handshake_timeout_event.
-     *
-     * Protected by #mutex.
-     *
-     * TODO: this is only a kludge for the stable branch.  Reimplement
-     * properly.
-     */
-    bool handshaking = true;
-
     struct timeval read_timeout_buffer;
     const struct timeval *read_timeout = nullptr;
-
-    mutable std::mutex mutex;
 
     /**
      * If this is set, an exception was caught inside the thread, and
      * shall be forwarded to the main thread.
      */
     std::exception_ptr error;
-
-    /**
-     * A buffer of input data that was not yet handled by the filter.
-     * It will be passed to the filter, and after that, it will go to
-     * #decrypted_input.
-     *
-     * This gets fed from buffered_socket::input.  We need another
-     * buffer because buffered_socket is not thread-safe, while this
-     * buffer is protected by the #mutex.
-     */
-    SliceFifoBuffer encrypted_input;
-
-    /**
-     * A buffer of input data that was handled by the filter.  It will
-     * be passed to the handler.
-     */
-    SliceFifoBuffer decrypted_input;
-
-    /**
-     * A buffer of output data that was not yet handled by the filter.
-     * Once it was filtered, it will be written to #encrypted_output.
-     */
-    SliceFifoBuffer plain_output;
-
-    /**
-     * A buffer of output data that has been filtered already, and
-     * will be written to the socket.
-     */
-    SliceFifoBuffer encrypted_output;
 
     ThreadSocketFilter(EventLoop &_event_loop,
                        ThreadQueue &queue,
