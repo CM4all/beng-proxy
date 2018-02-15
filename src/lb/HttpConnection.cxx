@@ -47,7 +47,7 @@
 #include "access_log/Glue.hxx"
 #include "pool/pool.hxx"
 #include "address_string.hxx"
-#include "thread_socket_filter.hxx"
+#include "fs/ThreadSocketFilter.hxx"
 #include "thread_pool.hxx"
 #include "uri/uri_verify.hxx"
 #include "ssl/Filter.hxx"

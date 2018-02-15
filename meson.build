@@ -735,10 +735,10 @@ thread_pool_dep = declare_dependency(
 )
 
 socket = static_library('socket',
-  'src/filtered_socket.cxx',
-  'src/nop_socket_filter.cxx',
-  'src/nop_thread_socket_filter.cxx',
-  'src/thread_socket_filter.cxx',
+  'src/fs/FilteredSocket.cxx',
+  'src/fs/NopSocketFilter.cxx',
+  'src/fs/NopThreadSocketFilter.cxx',
+  'src/fs/ThreadSocketFilter.cxx',
   include_directories: inc,
 )
 socket_dep = declare_dependency(link_with: socket,

@@ -33,7 +33,7 @@
 #ifndef BENG_PROXY_LB_CONNECTION_H
 #define BENG_PROXY_LB_CONNECTION_H
 
-#include "filtered_socket.hxx"
+#include "fs/FilteredSocket.hxx"
 #include "StickyHash.hxx"
 #include "event/DeferEvent.hxx"
 #include "io/Logger.hxx"

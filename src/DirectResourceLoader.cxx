@@ -33,7 +33,7 @@
 #include "DirectResourceLoader.hxx"
 #include "ResourceAddress.hxx"
 #include "HttpResponseHandler.hxx"
-#include "filtered_socket.hxx"
+#include "fs/FilteredSocket.hxx"
 #include "http_request.hxx"
 #include "file_request.hxx"
 #include "file_address.hxx"

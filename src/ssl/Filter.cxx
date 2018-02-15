@@ -37,7 +37,7 @@
 #include "ssl/Name.hxx"
 #include "ssl/Error.hxx"
 #include "FifoBufferBio.hxx"
-#include "thread_socket_filter.hxx"
+#include "fs/ThreadSocketFilter.hxx"
 #include "fb_pool.hxx"
 #include "SliceFifoBuffer.hxx"
 #include "util/AllocatedString.hxx"

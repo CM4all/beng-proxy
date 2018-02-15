@@ -32,7 +32,7 @@
 
 #pragma once
 
-#include "filtered_socket.hxx"
+#include "FilteredSocket.hxx"
 #include "lease.hxx"
 
 /**

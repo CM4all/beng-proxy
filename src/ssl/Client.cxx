@@ -37,7 +37,7 @@
 #include "ssl/Ctx.hxx"
 #include "ssl/Error.hxx"
 #include "io/Logger.hxx"
-#include "thread_socket_filter.hxx"
+#include "fs/ThreadSocketFilter.hxx"
 #include "thread_pool.hxx"
 #include "util/ScopeExit.hxx"
 

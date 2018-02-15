@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2018 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,8 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "nop_socket_filter.hxx"
-#include "filtered_socket.hxx"
+#include "NopSocketFilter.hxx"
+#include "FilteredSocket.hxx"
 #include "pool/pool.hxx"
 
 struct nop_socket_filter {

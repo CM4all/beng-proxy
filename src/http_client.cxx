@@ -53,7 +53,7 @@
 #include "direct.hxx"
 #include "stopwatch.hxx"
 #include "strmap.hxx"
-#include "fs_lease.hxx"
+#include "fs/Lease.hxx"
 #include "pool/pool.hxx"
 #include "system/Error.hxx"
 #include "io/Logger.hxx"

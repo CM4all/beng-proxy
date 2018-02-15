@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2018 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_FILTERED_SOCKET_HXX
-#define BENG_PROXY_FILTERED_SOCKET_HXX
+#pragma once
 
 #include "event/net/BufferedSocket.hxx"
 #include "util/BindMethod.hxx"
@@ -561,5 +560,3 @@ private:
     enum write_result OnBufferedBroken() noexcept override;
     void OnBufferedError(std::exception_ptr e) noexcept override;
 };
-
-#endif
