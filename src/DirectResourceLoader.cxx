@@ -34,6 +34,7 @@
 #include "ResourceAddress.hxx"
 #include "HttpResponseHandler.hxx"
 #include "fs/SocketFilter.hxx"
+#include "fs/Factory.hxx"
 #include "http_request.hxx"
 #include "file_request.hxx"
 #include "file_address.hxx"

@@ -43,6 +43,7 @@
 #include "lease.hxx"
 #include "istream/istream.hxx"
 #include "istream/UnusedHoldPtr.hxx"
+#include "fs/Factory.hxx"
 #include "fs/SocketFilter.hxx"
 #include "pool/pool.hxx"
 #include "net/SocketAddress.hxx"

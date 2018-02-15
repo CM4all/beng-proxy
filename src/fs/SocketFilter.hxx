@@ -125,11 +125,3 @@ struct SocketFilter {
 
     void (*close)(void *ctx);
 };
-
-class SocketFilterFactory {
-public:
-    /**
-     * Throws std::runtime_error on error.
-     */
-    virtual void *CreateFilter() = 0;
-};
