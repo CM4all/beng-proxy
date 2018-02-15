@@ -38,7 +38,7 @@
 #include "util/ScopeExit.hxx"
 
 static void *
-thread_worker_run(void *ctx)
+thread_worker_run(void *ctx) noexcept
 {
     /* reduce glibc's thread cancellation overhead */
     pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, nullptr);

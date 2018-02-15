@@ -242,7 +242,7 @@ ThreadSocketFilter::PostRun() noexcept
  */
 
 void
-ThreadSocketFilter::Run()
+ThreadSocketFilter::Run() noexcept
 {
     {
         const std::lock_guard<std::mutex> lock(mutex);
@@ -273,7 +273,7 @@ ThreadSocketFilter::Run()
 }
 
 void
-ThreadSocketFilter::Done()
+ThreadSocketFilter::Done() noexcept
 {
     if (postponed_destroy) {
         /* the object has been closed, and now that the thread has

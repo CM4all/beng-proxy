@@ -85,8 +85,8 @@ public:
         return state == State::INITIAL;
     }
 
-    virtual void Run() = 0;
-    virtual void Done() = 0;
+    virtual void Run() noexcept = 0;
+    virtual void Done() noexcept = 0;
 };
 
 #endif

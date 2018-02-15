@@ -238,8 +238,8 @@ struct ThreadSocketFilter final : SocketFilter, ThreadJob {
     size_t LockWritePlainOutput(const void *data, size_t size) noexcept;
 
     /* virtual methods from class ThreadJob */
-    void Run() final;
-    void Done() final;
+    void Run() noexcept final;
+    void Done() noexcept final;
 
 private:
     void ClosedPrematurely() noexcept;
