@@ -36,8 +36,11 @@
 
 #pragma once
 
+#include "fs/Ptr.hxx"
+
+#include <memory>
+
 struct pool;
-struct SocketFilter;
 class EventLoop;
 
 void
@@ -46,13 +49,10 @@ ssl_client_init();
 void
 ssl_client_deinit();
 
-const SocketFilter &
-ssl_client_get_filter();
-
 /**
  *
  * Throws std::runtime_error on error.
  */
-void *
+SocketFilterPtr
 ssl_client_create(EventLoop &event_loop,
                   const char *hostname);

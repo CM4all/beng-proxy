@@ -44,17 +44,18 @@ class FilteredSocketLease {
     struct lease_ref lease_ref;
 
 public:
+    template<typename F>
     FilteredSocketLease(EventLoop &event_loop,
                         SocketDescriptor fd, FdType fd_type,
                         Lease &lease,
                         const struct timeval *read_timeout,
                         const struct timeval *write_timeout,
-                        const SocketFilter *filter, void *filter_ctx,
+                        F &&filter,
                         BufferedSocketHandler &handler) noexcept
         :socket(event_loop)
     {
         socket.Init(fd, fd_type, read_timeout, write_timeout,
-                    filter, filter_ctx,
+                    std::forward<F>(filter),
                     handler);
         lease_ref.Set(lease);
     }

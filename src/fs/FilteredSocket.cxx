@@ -46,7 +46,7 @@
 BufferedResult
 FilteredSocket::OnBufferedData(const void *buffer, size_t size)
 {
-    return filter->data(buffer, size, filter_ctx);
+    return filter->OnData(buffer, size);
 }
 
 bool
@@ -58,19 +58,19 @@ FilteredSocket::OnBufferedClosed() noexcept
 bool
 FilteredSocket::OnBufferedRemaining(size_t remaining) noexcept
 {
-    return filter->remaining(remaining, filter_ctx);
+    return filter->OnRemaining(remaining);
 }
 
 bool
 FilteredSocket::OnBufferedWrite()
 {
-    return filter->internal_write(filter_ctx);
+    return filter->InternalWrite();
 }
 
 bool
 FilteredSocket::OnBufferedEnd() noexcept
 {
-    filter->end(filter_ctx);
+    filter->OnEnd();
     return true;
 }
 
@@ -102,27 +102,14 @@ void
 FilteredSocket::Init(SocketDescriptor fd, FdType fd_type,
                      const struct timeval *read_timeout,
                      const struct timeval *write_timeout,
-                     const SocketFilter *_filter, void *_filter_ctx,
+                     SocketFilterPtr _filter,
                      BufferedSocketHandler &__handler) noexcept
 {
     BufferedSocketHandler *_handler = &__handler;
 
-    filter = _filter;
-    filter_ctx = _filter_ctx;
+    filter = std::move(_filter);
 
     if (filter != nullptr) {
-        assert(filter->init != nullptr);
-        assert(filter->data != nullptr);
-        assert(filter->is_empty != nullptr);
-        assert(filter->is_full != nullptr);
-        assert(filter->available != nullptr);
-        assert(filter->consumed != nullptr);
-        assert(filter->read != nullptr);
-        assert(filter->write != nullptr);
-        assert(filter->internal_write != nullptr);
-        assert(filter->closed != nullptr);
-        assert(filter->close != nullptr);
-
         handler = _handler;
 
         _handler = this;
@@ -139,7 +126,7 @@ FilteredSocket::Init(SocketDescriptor fd, FdType fd_type,
     drained = true;
 
     if (filter != nullptr)
-        filter->init(*this, filter_ctx);
+        filter->Init(*this);
 }
 
 void
@@ -168,23 +155,9 @@ FilteredSocket::Init(FilteredSocket &&src,
     BufferedSocketHandler *_handler = &__handler;
 
     /* steal the filter */
-    filter = src.filter;
-    filter_ctx = src.filter_ctx;
-    src.filter = nullptr;
+    filter = std::move(src.filter);
 
     if (filter != nullptr) {
-        assert(filter->init != nullptr);
-        assert(filter->data != nullptr);
-        assert(filter->is_empty != nullptr);
-        assert(filter->is_full != nullptr);
-        assert(filter->available != nullptr);
-        assert(filter->consumed != nullptr);
-        assert(filter->read != nullptr);
-        assert(filter->write != nullptr);
-        assert(filter->internal_write != nullptr);
-        assert(filter->closed != nullptr);
-        assert(filter->close != nullptr);
-
         handler = _handler;
         _handler = this;
     }
@@ -200,17 +173,13 @@ FilteredSocket::Init(FilteredSocket &&src,
     drained = true;
 
     if (filter != nullptr)
-        filter->init(*this, filter_ctx);
+        filter->Init(*this);
 }
 
 void
 FilteredSocket::Destroy() noexcept
 {
-    if (filter != nullptr) {
-        filter->close(filter_ctx);
-        filter = nullptr;
-    }
-
+    filter.reset();
     base.Destroy();
 }
 
@@ -218,7 +187,7 @@ bool
 FilteredSocket::IsEmpty() const noexcept
 {
     return filter != nullptr
-        ? filter->is_empty(filter_ctx)
+        ? filter->IsEmpty()
         : base.IsEmpty();
 }
 
@@ -226,7 +195,7 @@ bool
 FilteredSocket::IsFull() const noexcept
 {
     return filter != nullptr
-        ? filter->is_full(filter_ctx)
+        ? filter->IsFull()
         : base.IsFull();
 }
 
@@ -234,7 +203,7 @@ size_t
 FilteredSocket::GetAvailable() const noexcept
 {
     return filter != nullptr
-        ? filter->available(filter_ctx)
+        ? filter->GetAvailable()
         : base.GetAvailable();
 }
 
@@ -251,7 +220,7 @@ void
 FilteredSocket::Consumed(size_t nbytes) noexcept
 {
     if (filter != nullptr)
-        filter->consumed(nbytes, filter_ctx);
+        filter->Consumed(nbytes);
     else
         base.Consumed(nbytes);
 }
@@ -260,7 +229,7 @@ bool
 FilteredSocket::Read(bool expect_more) noexcept
 {
     if (filter != nullptr)
-        return filter->read(expect_more, filter_ctx);
+        return filter->Read(expect_more);
     else
         return base.Read(expect_more);
 }
@@ -269,7 +238,7 @@ ssize_t
 FilteredSocket::Write(const void *data, size_t length) noexcept
 {
     return filter != nullptr
-        ? filter->write(data, length, filter_ctx)
+        ? filter->Write(data, length)
         : base.Write(data, length);
 }
 

@@ -311,8 +311,7 @@ inline
 HttpServerConnection::HttpServerConnection(struct pool &_pool,
                                            EventLoop &_loop,
                                            SocketDescriptor fd, FdType fd_type,
-                                           const SocketFilter *filter,
-                                           void *filter_ctx,
+                                           SocketFilterPtr &&filter,
                                            SocketAddress _local_address,
                                            SocketAddress _remote_address,
                                            bool _date_header,
@@ -331,7 +330,7 @@ HttpServerConnection::HttpServerConnection(struct pool &_pool,
 
     socket.Init(fd, fd_type,
                 nullptr, &http_server_write_timeout,
-                filter, filter_ctx,
+                std::move(filter),
                 *this);
 
     idle_timeout.Add(http_server_idle_timeout);
@@ -346,8 +345,7 @@ HttpServerConnection *
 http_server_connection_new(struct pool *pool,
                            EventLoop &loop,
                            SocketDescriptor fd, FdType fd_type,
-                           const SocketFilter *filter,
-                           void *filter_ctx,
+                           SocketFilterPtr filter,
                            SocketAddress local_address,
                            SocketAddress remote_address,
                            bool date_header,
@@ -356,7 +354,7 @@ http_server_connection_new(struct pool *pool,
     assert(fd.IsDefined());
 
     return NewFromPool<HttpServerConnection>(*pool, *pool, loop, fd, fd_type,
-                                             filter, filter_ctx,
+                                             std::move(filter),
                                              local_address, remote_address,
                                              date_header,
                                              handler);

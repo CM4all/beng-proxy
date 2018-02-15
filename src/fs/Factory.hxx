@@ -32,10 +32,12 @@
 
 #pragma once
 
+#include "Ptr.hxx"
+
 class SocketFilterFactory {
 public:
     /**
      * Throws std::runtime_error on error.
      */
-    virtual void *CreateFilter() = 0;
+    virtual SocketFilterPtr CreateFilter() = 0;
 };

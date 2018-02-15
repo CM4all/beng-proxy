@@ -111,7 +111,7 @@ lhttp_request(struct pool &pool, EventLoop &event_loop,
                         lhttp_stock_item_get_type(*stock_item),
                         *request,
                         stock_item->GetStockName(),
-                        nullptr, nullptr,
+                        nullptr,
                         method, address.uri, std::move(headers),
                         std::move(body), true,
                         handler, cancel_ptr);

@@ -132,7 +132,7 @@ test_catch(EventLoop &event_loop, struct pool *_pool)
     instance.connection =
         http_server_connection_new(instance.pool, event_loop,
                                    server_socket, FdType::FD_SOCKET,
-                                   nullptr, nullptr,
+                                   nullptr,
                                    nullptr, nullptr,
                                    true, instance);
     pool_unref(instance.pool);

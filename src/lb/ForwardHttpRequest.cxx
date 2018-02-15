@@ -445,7 +445,7 @@ LbRequest::OnStockItemReady(StockItem &item) noexcept
                         ? FdType::FD_SOCKET : FdType::FD_TCP,
                         *this,
                         item.GetStockName(),
-                        NULL, NULL,
+                        nullptr,
                         request.method, request.uri,
                         HttpHeaders(std::move(headers)),
                         std::move(body), true,

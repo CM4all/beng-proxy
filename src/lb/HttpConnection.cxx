@@ -122,16 +122,13 @@ NewLbHttpConnection(LbInstance &instance,
     auto fd_type = FdType::FD_TCP;
 
     SslFilter *ssl_filter = nullptr;
-    const SocketFilter *filter = nullptr;
-    void *filter_ctx = nullptr;
+    SocketFilterPtr filter;
 
     if (ssl_factory != nullptr) {
         ssl_filter = ssl_filter_new(*ssl_factory);
-        filter = &thread_socket_filter;
-        filter_ctx =
-            new ThreadSocketFilter(instance.event_loop,
-                                   thread_pool_get_queue(instance.event_loop),
-                                   &ssl_filter_get_handler(*ssl_filter));
+        filter.reset(new ThreadSocketFilter(instance.event_loop,
+                                            thread_pool_get_queue(instance.event_loop),
+                                            &ssl_filter_get_handler(*ssl_filter)));
     }
 
     struct pool *pool = pool_new_linear(instance.root_pool,
@@ -148,7 +145,7 @@ NewLbHttpConnection(LbInstance &instance,
 
     connection->http = http_server_connection_new(pool, instance.event_loop,
                                                   fd.Release(), fd_type,
-                                                  filter, filter_ctx,
+                                                  std::move(filter),
                                                   local_address.IsDefined()
                                                   ? (SocketAddress)local_address
                                                   : nullptr,

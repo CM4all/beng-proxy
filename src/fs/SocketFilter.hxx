@@ -40,88 +40,91 @@
 enum class BufferedResult;
 struct FilteredSocket;
 
-struct SocketFilter {
-    void (*init)(FilteredSocket &s, void *ctx);
+class SocketFilter {
+public:
+    virtual void Init(FilteredSocket &_socket) noexcept = 0;
 
     /**
      * @see FilteredSocket::SetHandshakeCallback()
      */
-    void (*set_handshake_callback)(BoundMethod<void()> callback, void *ctx);
+    virtual void SetHandshakeCallback(BoundMethod<void()> callback) noexcept {
+        callback();
+    }
 
     /**
      * Data has been read from the socket into the input buffer.  Call
-     * filtered_socket_internal_consumed() each time you consume data
+     * FilteredSocket::InternalConsumed() each time you consume data
      * from the given buffer.
      */
-    BufferedResult (*data)(const void *buffer, size_t size, void *ctx);
+    virtual BufferedResult OnData(const void *buffer, size_t size) noexcept = 0;
 
-    bool (*is_empty)(void *ctx);
+    virtual bool IsEmpty() const noexcept = 0;
 
-    bool (*is_full)(void *ctx);
+    virtual bool IsFull() const noexcept = 0;
 
-    size_t (*available)(void *ctx);
+    virtual size_t GetAvailable() const noexcept = 0;
 
-    void (*consumed)(size_t nbytes, void *ctx);
+    virtual void Consumed(size_t nbytes) noexcept = 0;
 
     /**
      * The client asks to read more data.  The filter shall call
      * filtered_socket_internal_data() again.
      */
-    bool (*read)(bool expect_more, void *ctx);
+    virtual bool Read(bool expect_more) noexcept = 0;
 
     /**
      * The client asks to write data to the socket.  The filter
      * processes it, and may then call
      * filtered_socket_internal_write().
      */
-    ssize_t (*write)(const void *data, size_t length, void *ctx);
+    virtual ssize_t Write(const void *data, size_t length) noexcept = 0;
 
     /**
      * The client is willing to read, but does not expect it yet.  The
      * filter processes the call, and may then call
-     * filtered_socket_internal_schedule_read().
+     * FilteredSocket::InternalScheduleRead().
      */
-    void (*schedule_read)(bool expect_more, const struct timeval *timeout,
-                          void *ctx);
+    virtual void ScheduleRead(bool expect_more,
+                              const struct timeval *timeout) noexcept = 0;
 
     /**
      * The client wants to be called back as soon as writing becomes
      * possible.  The filter processes the call, and may then call
-     * filtered_socket_internal_schedule_write().
+     * FilteredSocket::InternalScheduleWrite().
      */
-    void (*schedule_write)(void *ctx);
+    virtual void ScheduleWrite() noexcept = 0;
 
     /**
      * The client is not anymore interested in writing.  The filter
      * processes the call, and may then call
      * filtered_socket_internal_unschedule_write().
      */
-    void (*unschedule_write)(void *ctx);
+    virtual void UnscheduleWrite() noexcept = 0;
 
     /**
      * The underlying socket is ready for writing.  The filter may try
-     * calling filtered_socket_internal_write() again.
+     * calling FilteredSocket::InternalWrite() again.
      *
      * This method must not destroy the socket.  If an error occurs,
      * it shall return false.
      */
-    bool (*internal_write)(void *ctx);
+    virtual bool InternalWrite() noexcept = 0;
 
     /**
      * Called after the socket has been closed/abandoned (either by
      * the peer or locally).  The filter shall update its internal
      * state, but not do any invasive actions.
      */
-    void (*closed)(void *ctx);
+    virtual void OnClosed() noexcept {}
 
-    bool (*remaining)(size_t remaining, void *ctx);
+    virtual bool OnRemaining(size_t remaining) noexcept = 0;
 
     /**
      * The buffered_socket has run empty after the socket has been
      * closed.  The filter may call filtered_socket_invoke_end() as
      * soon as all its buffers have been consumed.
      */
-    void (*end)(void *ctx);
+    virtual void OnEnd() noexcept = 0;
 
-    void (*close)(void *ctx);
+    virtual void Close() noexcept = 0;
 };

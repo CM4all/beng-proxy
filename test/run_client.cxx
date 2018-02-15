@@ -288,7 +288,7 @@ try {
                             fd, FdType::FD_TCP,
                             *this,
                             "localhost",
-                            nullptr, nullptr,
+                            nullptr,
                             method, url.uri,
                             HttpHeaders(std::move(headers)),
                             std::move(request_body), false,
@@ -296,23 +296,19 @@ try {
                             cancel_ptr);
         break;
 
-    case parsed_url::HTTPS: {
-        void *filter_ctx = ssl_client_create(event_loop,
-                                             url.host.c_str());
-
-        auto filter = &ssl_client_get_filter();
+    case parsed_url::HTTPS:
         http_client_request(*pool, event_loop,
                             fd, FdType::FD_TCP,
                             *this,
                             "localhost",
-                            filter, filter_ctx,
+                            ssl_client_create(event_loop,
+                                              url.host.c_str()),
                             method, url.uri,
                             HttpHeaders(std::move(headers)),
                             std::move(request_body), false,
                             *this,
                             cancel_ptr);
         break;
-    }
     }
 } catch (const std::runtime_error &e) {
     PrintException(e);

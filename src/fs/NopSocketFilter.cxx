@@ -34,145 +34,86 @@
 #include "FilteredSocket.hxx"
 #include "pool/pool.hxx"
 
-struct nop_socket_filter {
-    FilteredSocket *socket;
-};
-
-/*
- * SocketFilter
- *
- */
-
-static void
-nop_socket_filter_init(FilteredSocket &s, void *ctx)
+BufferedResult
+NopSocketFilter::OnData(const void *data, size_t length) noexcept
 {
-    struct nop_socket_filter *f = (struct nop_socket_filter *)ctx;
-
-    f->socket = &s;
+    return socket->InvokeData(data, length);
 }
 
-static BufferedResult
-nop_socket_filter_data(const void *data, size_t length, void *ctx)
+bool
+NopSocketFilter::IsEmpty() const noexcept
 {
-    struct nop_socket_filter *f = (struct nop_socket_filter *)ctx;
-
-    return f->socket->InvokeData(data, length);
+    return socket->InternalIsEmpty();
 }
 
-static bool
-nop_socket_filter_is_empty(void *ctx)
+bool
+NopSocketFilter::IsFull() const noexcept
 {
-    struct nop_socket_filter *f = (struct nop_socket_filter *)ctx;
-
-    return f->socket->InternalIsEmpty();
+    return socket->InternalIsFull();
 }
 
-static bool
-nop_socket_filter_is_full(void *ctx)
+size_t
+NopSocketFilter::GetAvailable() const noexcept
 {
-    struct nop_socket_filter *f = (struct nop_socket_filter *)ctx;
-
-    return f->socket->InternalIsFull();
+    return socket->InternalGetAvailable();
 }
 
-static size_t
-nop_socket_filter_available(void *ctx)
+void
+NopSocketFilter::Consumed(size_t nbytes) noexcept
 {
-    struct nop_socket_filter *f = (struct nop_socket_filter *)ctx;
-
-    return f->socket->InternalGetAvailable();
+    socket->InternalConsumed(nbytes);
 }
 
-static void
-nop_socket_filter_consumed(size_t nbytes, void *ctx)
+bool
+NopSocketFilter::Read(bool expect_more) noexcept
 {
-    struct nop_socket_filter *f = (struct nop_socket_filter *)ctx;
-
-    f->socket->InternalConsumed(nbytes);
+    return socket->InternalRead(expect_more);
 }
 
-static bool
-nop_socket_filter_read(bool expect_more, void *ctx)
+ssize_t
+NopSocketFilter::Write(const void *data, size_t length) noexcept
 {
-    struct nop_socket_filter *f = (struct nop_socket_filter *)ctx;
-
-    return f->socket->InternalRead(expect_more);
+    return socket->InternalWrite(data, length);
 }
 
-static ssize_t
-nop_socket_filter_write(const void *data, size_t length, void *ctx)
+void
+NopSocketFilter::ScheduleRead(bool expect_more,
+                              const struct timeval *timeout) noexcept
 {
-    struct nop_socket_filter *f = (struct nop_socket_filter *)ctx;
-
-    return f->socket->InternalWrite(data, length);
+    socket->InternalScheduleRead(expect_more, timeout);
 }
 
-static bool
-nop_socket_filter_internal_write(void *ctx)
+void
+NopSocketFilter::ScheduleWrite() noexcept
 {
-    struct nop_socket_filter *f = (struct nop_socket_filter *)ctx;
-
-    return f->socket->InvokeWrite();
+    socket->InternalScheduleWrite();
 }
 
-static void
-nop_socket_filter_closed(void *ctx)
+void
+NopSocketFilter::UnscheduleWrite() noexcept
 {
-    struct nop_socket_filter *f = (struct nop_socket_filter *)ctx;
-    (void)f;
+    socket->InternalUnscheduleWrite();
 }
 
-static bool
-nop_socket_filter_remaining(size_t remaining, void *ctx)
+bool
+NopSocketFilter::InternalWrite() noexcept
 {
-    struct nop_socket_filter *f = (struct nop_socket_filter *)ctx;
-
-    return f->socket->InvokeRemaining(remaining);
+    return socket->InvokeWrite();
 }
 
-static void
-nop_socket_filter_end(void *ctx)
+bool
+NopSocketFilter::OnRemaining(size_t remaining) noexcept
 {
-    struct nop_socket_filter *f = (struct nop_socket_filter *)ctx;
-
-    f->socket->InvokeEnd();
+    return socket->InvokeRemaining(remaining);
 }
 
-static void
-nop_socket_filter_close(void *ctx)
+void
+NopSocketFilter::OnEnd() noexcept
 {
-    struct nop_socket_filter *f = (struct nop_socket_filter *)ctx;
-
-    (void)f;
+    socket->InvokeEnd();
 }
 
-const SocketFilter nop_socket_filter = {
-    .init = nop_socket_filter_init,
-    .set_handshake_callback = nullptr,
-    .data = nop_socket_filter_data,
-    .is_empty = nop_socket_filter_is_empty,
-    .is_full = nop_socket_filter_is_full,
-    .available = nop_socket_filter_available,
-    .consumed = nop_socket_filter_consumed,
-    .read = nop_socket_filter_read,
-    .write = nop_socket_filter_write,
-    .schedule_read = nullptr,
-    .schedule_write = nullptr,
-    .unschedule_write = nullptr,
-    .internal_write = nop_socket_filter_internal_write,
-    .closed = nop_socket_filter_closed,
-    .remaining = nop_socket_filter_remaining,
-    .end = nop_socket_filter_end,
-    .close = nop_socket_filter_close,
-};
-
-/*
- * constructor
- *
- */
-
-void *
-nop_socket_filter_new(struct pool &pool)
+void
+NopSocketFilter::Close() noexcept
 {
-    return NewFromPool<struct nop_socket_filter>(pool);
 }

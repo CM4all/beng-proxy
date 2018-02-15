@@ -216,7 +216,7 @@ new_connection(BpInstance &instance,
         http_server_connection_new(pool,
                                    instance.event_loop,
                                    fd.Release(), FdType::FD_TCP,
-                                   nullptr, nullptr,
+                                   nullptr,
                                    local_address.IsDefined()
                                    ? (SocketAddress)local_address
                                    : nullptr,

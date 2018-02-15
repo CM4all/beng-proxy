@@ -296,7 +296,7 @@ int main(int argc, char **argv) {
                                                      instance.event_loop,
                                                      SocketDescriptor(sockfd),
                                                      FdType::FD_SOCKET,
-                                                     nullptr, nullptr,
+                                                     nullptr,
                                                      nullptr, nullptr,
                                                      true, instance);
 

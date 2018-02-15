@@ -85,7 +85,7 @@ ThreadSocketFilter::Schedule()
 }
 
 void
-ThreadSocketFilter::SetHandshakeCallback(BoundMethod<void()> callback)
+ThreadSocketFilter::SetHandshakeCallback(BoundMethod<void()> callback) noexcept
 {
     assert(!handshake_callback);
     assert(callback);
@@ -429,37 +429,18 @@ ThreadSocketFilter::Done()
  *
  */
 
-static void
-thread_socket_filter_init_(FilteredSocket &s, void *ctx)
+BufferedResult
+ThreadSocketFilter::OnData(const void *data, size_t length) noexcept
 {
-    ThreadSocketFilter *f = (ThreadSocketFilter *)ctx;
-
-    f->socket = &s;
-}
-
-static void
-thread_socket_filter_set_handshake_callback(BoundMethod<void()> callback,
-                                            void *ctx)
-{
-    auto &f = *(ThreadSocketFilter *)ctx;
-
-    f.SetHandshakeCallback(callback);
-}
-
-static BufferedResult
-thread_socket_filter_data(const void *data, size_t length, void *ctx)
-{
-    ThreadSocketFilter *f = (ThreadSocketFilter *)ctx;
-
-    f->read_scheduled = false;
+    read_scheduled = false;
 
     BufferedResult result;
     {
-        const std::lock_guard<std::mutex> lock(f->mutex);
+        const std::lock_guard<std::mutex> lock(mutex);
 
-        f->encrypted_input.AllocateIfNull(fb_pool_get());
+        encrypted_input.AllocateIfNull(fb_pool_get());
 
-        auto w = f->encrypted_input.Write();
+        auto w = encrypted_input.Write();
         if (w.empty())
             return BufferedResult::BLOCKING;
 
@@ -470,78 +451,69 @@ thread_socket_filter_data(const void *data, size_t length, void *ctx)
         }
 
         memcpy(w.data, data, length);
-        f->encrypted_input.Append(length);
+        encrypted_input.Append(length);
     }
 
-    f->socket->InternalConsumed(length);
+    socket->InternalConsumed(length);
 
-    f->Schedule();
+    Schedule();
 
     return result;
 }
 
-static bool
-thread_socket_filter_is_empty(void *ctx)
+bool
+ThreadSocketFilter::IsEmpty() const noexcept
 {
-    ThreadSocketFilter *f = (ThreadSocketFilter *)ctx;
-
-    std::lock_guard<std::mutex> lock(f->mutex);
-    return f->decrypted_input.IsEmpty();
+    std::lock_guard<std::mutex> lock(mutex);
+    return decrypted_input.IsEmpty();
 }
 
-static bool
-thread_socket_filter_is_full(void *ctx)
+bool
+ThreadSocketFilter::IsFull() const noexcept
 {
-    ThreadSocketFilter *f = (ThreadSocketFilter *)ctx;
-
-    std::lock_guard<std::mutex> lock(f->mutex);
-    return f->decrypted_input.IsDefinedAndFull();
+    std::lock_guard<std::mutex> lock(mutex);
+    return decrypted_input.IsDefinedAndFull();
 }
 
-static size_t
-thread_socket_filter_available(void *ctx)
+size_t
+ThreadSocketFilter::GetAvailable() const noexcept
 {
-    ThreadSocketFilter *f = (ThreadSocketFilter *)ctx;
-
-    std::lock_guard<std::mutex> lock(f->mutex);
-    return f->decrypted_input.GetAvailable();
+    std::lock_guard<std::mutex> lock(mutex);
+    return decrypted_input.GetAvailable();
 }
 
-static void
-thread_socket_filter_consumed(size_t nbytes, void *ctx)
+void
+ThreadSocketFilter::Consumed(size_t nbytes) noexcept
 {
-    ThreadSocketFilter *f = (ThreadSocketFilter *)ctx;
-    assert(f->decrypted_input.IsDefined());
+    assert(decrypted_input.IsDefined());
 
     bool schedule = false;
 
     {
-        const std::lock_guard<std::mutex> lock(f->mutex);
+        const std::lock_guard<std::mutex> lock(mutex);
 
-        if (f->decrypted_input.IsFull())
+        if (decrypted_input.IsFull())
             /* just in case the filter has stalled because the
                decrypted_input buffer was full: try again */
             schedule = true;
 
-        f->decrypted_input.Consume(nbytes);
-        f->decrypted_input.FreeIfEmpty(fb_pool_get());
+        decrypted_input.Consume(nbytes);
+        decrypted_input.FreeIfEmpty(fb_pool_get());
     }
 
     if (schedule)
-        f->Schedule();
+        Schedule();
 }
 
-static bool
-thread_socket_filter_read(bool expect_more, void *ctx)
+bool
+ThreadSocketFilter::Read(bool _expect_more) noexcept
 {
-    ThreadSocketFilter *f = (ThreadSocketFilter *)ctx;
+    if (_expect_more)
+        expect_more = true;
 
-    if (expect_more)
-        f->expect_more = true;
-
-    return f->SubmitDecryptedInput() &&
-        (f->postponed_end ||
-         f->socket->InternalRead(false));
+    return SubmitDecryptedInput() &&
+        (postponed_end ||
+         socket->InternalRead(false));
 }
 
 inline size_t
@@ -559,92 +531,81 @@ ThreadSocketFilter::LockWritePlainOutput(const void *data, size_t size)
     return nbytes;
 }
 
-static ssize_t
-thread_socket_filter_write(const void *data, size_t length, void *ctx)
+ssize_t
+ThreadSocketFilter::Write(const void *data, size_t length) noexcept
 {
-    ThreadSocketFilter *f = (ThreadSocketFilter *)ctx;
-
     // TODO: is this check necessary?
     if (length == 0)
         return 0;
 
-    const size_t nbytes = f->LockWritePlainOutput(data, length);
+    const size_t nbytes = LockWritePlainOutput(data, length);
 
     if (nbytes < length)
         /* set the "want_write" flag but don't schedule an event to
            avoid a busy loop; as soon as the worker thread returns, we
            will retry to write according to this flag */
-        f->want_write = true;
+        want_write = true;
 
     if (nbytes == 0)
         return WRITE_BLOCKING;
 
-    f->socket->InternalUndrained();
-    f->Schedule();
+    socket->InternalUndrained();
+    Schedule();
 
     return nbytes;
 }
 
-static void
-thread_socket_filter_schedule_read(bool expect_more,
-                                   const struct timeval *timeout,
-                                   void *ctx)
+void
+ThreadSocketFilter::ScheduleRead(bool _expect_more,
+                                 const struct timeval *timeout) noexcept
 {
-    ThreadSocketFilter *f = (ThreadSocketFilter *)ctx;
+    if (_expect_more)
+        expect_more = true;
 
-    if (expect_more)
-        f->expect_more = true;
-
-    f->want_read = true;
-    f->read_scheduled = false;
+    want_read = true;
+    read_scheduled = false;
 
     if (timeout != nullptr) {
-        f->read_timeout_buffer = *timeout;
-        timeout = &f->read_timeout_buffer;
+        read_timeout_buffer = *timeout;
+        timeout = &read_timeout_buffer;
     }
 
-    f->read_timeout = timeout;
+    read_timeout = timeout;
 
-    f->defer_event.Schedule();
+    defer_event.Schedule();
 }
 
-static void
-thread_socket_filter_schedule_write(void *ctx)
+void
+ThreadSocketFilter::ScheduleWrite() noexcept
 {
-    ThreadSocketFilter *f = (ThreadSocketFilter *)ctx;
-
-    if (f->want_write)
+    if (want_write)
         return;
 
-    f->want_write = true;
-    f->defer_event.Schedule();
+    want_write = true;
+    defer_event.Schedule();
 }
 
-static void
-thread_socket_filter_unschedule_write(void *ctx)
+void
+ThreadSocketFilter::UnscheduleWrite() noexcept
 {
-    ThreadSocketFilter *f = (ThreadSocketFilter *)ctx;
-
-    if (!f->want_write)
+    if (!want_write)
         return;
 
-    f->want_write = false;
+    want_write = false;
 
-    if (!f->want_read)
-        f->defer_event.Cancel();
+    if (!want_read)
+        defer_event.Cancel();
 }
 
-static bool
-thread_socket_filter_internal_write(void *ctx)
+bool
+ThreadSocketFilter::InternalWrite() noexcept
 {
-    ThreadSocketFilter *f = (ThreadSocketFilter *)ctx;
+    std::unique_lock<std::mutex> lock(mutex);
 
-    std::unique_lock<std::mutex> lock(f->mutex);
-
-    auto r = f->encrypted_output.Read();
+    auto r = encrypted_output.Read();
     if (r.empty()) {
         lock.unlock();
-        f->socket->InternalUnscheduleWrite();
+        socket->InternalUnscheduleWrite();
         return true;
     }
 
@@ -653,25 +614,25 @@ thread_socket_filter_internal_write(void *ctx)
     memcpy(copy, r.data, r.size);
     lock.unlock();
 
-    ssize_t nbytes = f->socket->InternalWrite(copy, r.size);
+    ssize_t nbytes = socket->InternalWrite(copy, r.size);
     if (nbytes > 0) {
         lock.lock();
-        const bool add = f->encrypted_output.IsFull();
-        f->encrypted_output.Consume(nbytes);
-        f->encrypted_output.FreeIfEmpty(fb_pool_get());
-        const bool empty = f->encrypted_output.IsEmpty();
-        const bool drained = empty && f->drained && f->plain_output.IsEmpty();
+        const bool add = encrypted_output.IsFull();
+        encrypted_output.Consume(nbytes);
+        encrypted_output.FreeIfEmpty(fb_pool_get());
+        const bool empty = encrypted_output.IsEmpty();
+        const bool _drained = empty && drained && plain_output.IsEmpty();
         lock.unlock();
 
         if (add)
             /* the filter job may be stalled because the output buffer
                was full; try again, now that it's not full anymore */
-            f->Schedule();
+            Schedule();
 
         if (empty)
-            f->socket->InternalUnscheduleWrite();
+            socket->InternalUnscheduleWrite();
 
-        if (drained && !f->socket->InternalDrained())
+        if (_drained && !socket->InternalDrained())
             return false;
 
         return true;
@@ -682,7 +643,7 @@ thread_socket_filter_internal_write(void *ctx)
             gcc_unreachable();
 
         case WRITE_ERRNO:
-            f->socket->InvokeError(std::make_exception_ptr(MakeErrno("write error")));
+            socket->InvokeError(std::make_exception_ptr(MakeErrno("write error")));
             return false;
 
         case WRITE_BLOCKING:
@@ -700,68 +661,63 @@ thread_socket_filter_internal_write(void *ctx)
     }
 }
 
-static void
-thread_socket_filter_closed(void *ctx)
+void
+ThreadSocketFilter::OnClosed() noexcept
 {
-    ThreadSocketFilter *f = (ThreadSocketFilter *)ctx;
+    assert(connected);
+    assert(!postponed_remaining);
 
-    assert(f->connected);
-    assert(!f->postponed_remaining);
+    connected = false;
+    want_write = false;
 
-    f->connected = false;
-    f->want_write = false;
-
-    f->handshake_timeout_event.Cancel();
+    handshake_timeout_event.Cancel();
 }
 
-static bool
-thread_socket_filter_remaining(size_t remaining, void *ctx)
+bool
+ThreadSocketFilter::OnRemaining(size_t remaining) noexcept
 {
-    ThreadSocketFilter *f = (ThreadSocketFilter *)ctx;
-    assert(!f->connected);
-    assert(!f->want_write);
-    assert(!f->postponed_remaining);
+    assert(!connected);
+    assert(!want_write);
+    assert(!postponed_remaining);
 
     if (remaining == 0) {
-        std::unique_lock<std::mutex> lock(f->mutex);
+        std::unique_lock<std::mutex> lock(mutex);
 
-        if (!f->busy && !f->done_pending && f->encrypted_input.IsEmpty()) {
-            const size_t available = f->decrypted_input.GetAvailable();
+        if (!busy && !done_pending && encrypted_input.IsEmpty()) {
+            const size_t available = decrypted_input.GetAvailable();
             lock.unlock();
 
             /* forward the call */
-            return f->socket->InvokeRemaining(available);
+            return socket->InvokeRemaining(available);
         }
     }
 
     /* there's still encrypted input - postpone the remaining() call
        until we have decrypted everything */
 
-    f->postponed_remaining = true;
+    postponed_remaining = true;
     return true;
 }
 
-static void
-thread_socket_filter_end(void *ctx)
+void
+ThreadSocketFilter::OnEnd() noexcept
 {
-    ThreadSocketFilter *f = (ThreadSocketFilter *)ctx;
+    assert(!postponed_end);
 
-    assert(!f->postponed_end);
-
-    if (f->postponed_remaining) {
+    if (postponed_remaining) {
         /* see if we can commit the "remaining" call now */
-        std::unique_lock<std::mutex> lock(f->mutex);
+        std::unique_lock<std::mutex> lock(mutex);
 
-        if (!f->busy && !f->done_pending && f->encrypted_input.IsEmpty()) {
-            const size_t available = f->decrypted_input.GetAvailable();
+        if (!busy && !done_pending && encrypted_input.IsEmpty()) {
+            const size_t available = decrypted_input.GetAvailable();
             lock.unlock();
 
-            f->postponed_remaining = false;
-            if (!f->socket->InvokeRemaining(available))
+            postponed_remaining = false;
+            if (!socket->InvokeRemaining(available))
                 return;
         } else {
             /* postpone both "remaining" and "end" */
-            f->postponed_end = true;
+            postponed_end = true;
             return;
         }
     }
@@ -771,51 +727,29 @@ thread_socket_filter_end(void *ctx)
 
     bool empty;
     {
-        const std::lock_guard<std::mutex> lock(f->mutex);
-        assert(f->encrypted_input.IsEmpty());
-        empty = f->decrypted_input.IsEmpty();
+        const std::lock_guard<std::mutex> lock(mutex);
+        assert(encrypted_input.IsEmpty());
+        empty = decrypted_input.IsEmpty();
     }
 
     if (empty)
         /* already empty: forward the call now */
-        f->socket->InvokeEnd();
+        socket->InvokeEnd();
     else
         /* postpone */
-        f->postponed_end = true;
+        postponed_end = true;
 }
 
-static void
-thread_socket_filter_close(void *ctx)
+void
+ThreadSocketFilter::Close() noexcept
 {
-    auto *f = (ThreadSocketFilter *)ctx;
+    defer_event.Cancel();
 
-    f->defer_event.Cancel();
-
-    if (!thread_queue_cancel(f->queue, *f)) {
+    if (!thread_queue_cancel(queue, *this)) {
         /* postpone the destruction */
-        f->postponed_destroy = true;
+        postponed_destroy = true;
         return;
     }
 
-    delete f;
+    delete this;
 }
-
-const SocketFilter thread_socket_filter = {
-    .init = thread_socket_filter_init_,
-    .set_handshake_callback = thread_socket_filter_set_handshake_callback,
-    .data = thread_socket_filter_data,
-    .is_empty = thread_socket_filter_is_empty,
-    .is_full = thread_socket_filter_is_full,
-    .available = thread_socket_filter_available,
-    .consumed = thread_socket_filter_consumed,
-    .read = thread_socket_filter_read,
-    .write = thread_socket_filter_write,
-    .schedule_read = thread_socket_filter_schedule_read,
-    .schedule_write = thread_socket_filter_schedule_write,
-    .unschedule_write = thread_socket_filter_unschedule_write,
-    .internal_write = thread_socket_filter_internal_write,
-    .closed = thread_socket_filter_closed,
-    .remaining = thread_socket_filter_remaining,
-    .end = thread_socket_filter_end,
-    .close = thread_socket_filter_close,
-};

@@ -33,13 +33,13 @@
 #ifndef __BENG_HTTP_SERVER_H
 #define __BENG_HTTP_SERVER_H
 
+#include "fs/Ptr.hxx"
 #include "io/FdType.hxx"
 #include "http/Status.h"
 
 struct pool;
 class EventLoop;
 class UnusedIstreamPtr;
-struct SocketFilter;
 class SocketDescriptor;
 class SocketAddress;
 class HttpHeaders;
@@ -83,8 +83,7 @@ HttpServerConnection *
 http_server_connection_new(struct pool *pool,
                            EventLoop &loop,
                            SocketDescriptor fd, FdType fd_type,
-                           const SocketFilter *filter,
-                           void *filter_ctx,
+                           SocketFilterPtr filter,
                            SocketAddress local_address,
                            SocketAddress remote_address,
                            bool date_header,

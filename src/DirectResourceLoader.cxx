@@ -76,7 +76,7 @@ public:
                            const char *_host)
         :event_loop(_event_loop), host(_host) {}
 
-    void *CreateFilter() override {
+    SocketFilterPtr CreateFilter() override {
         return ssl_client_create(event_loop, host);
     }
 };
@@ -154,7 +154,6 @@ DirectResourceLoader::SendRequest(struct pool &pool,
         int stderr_fd;
         const char *server_name;
         unsigned server_port;
-        const SocketFilter *filter;
         SocketFilterFactory *filter_factory;
 
     case ResourceAddress::Type::NONE:
@@ -283,18 +282,16 @@ DirectResourceLoader::SendRequest(struct pool &pool,
         switch (address.GetHttp().protocol) {
         case HttpAddress::Protocol::HTTP:
             if (address.GetHttp().ssl) {
-                filter = &ssl_client_get_filter();
                 filter_factory = NewFromPool<SslSocketFilterFactory>(pool,
                                                                      event_loop,
                                                                      /* TODO: only host */
                                                                      address.GetHttp().host_and_port);
             } else {
-                filter = nullptr;
                 filter_factory = nullptr;
             }
 
             http_request(pool, event_loop, *tcp_balancer, session_sticky,
-                         filter, filter_factory,
+                         filter_factory,
                          method, address.GetHttp(),
                          HttpHeaders(std::move(headers)), std::move(body),
                          handler, cancel_ptr);

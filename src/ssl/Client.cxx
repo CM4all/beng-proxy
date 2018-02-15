@@ -59,13 +59,7 @@ ssl_client_deinit()
     ssl_client_ctx.reset();
 }
 
-const SocketFilter &
-ssl_client_get_filter()
-{
-    return thread_socket_filter;;
-}
-
-void *
+SocketFilterPtr
 ssl_client_create(EventLoop &event_loop,
                   const char *hostname)
 {
@@ -80,6 +74,6 @@ ssl_client_create(EventLoop &event_loop,
     auto f = ssl_filter_new(std::move(ssl));
 
     auto &queue = thread_pool_get_queue(event_loop);
-    return new ThreadSocketFilter(event_loop, queue,
-                                  &ssl_filter_get_handler(*f));
+    return SocketFilterPtr(new ThreadSocketFilter(event_loop, queue,
+                                                  &ssl_filter_get_handler(*f)));
 }

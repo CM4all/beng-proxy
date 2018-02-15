@@ -458,14 +458,15 @@ LbTcpConnection::ConnectOutbound()
  *
  */
 
+inline
 LbTcpConnection::Inbound::Inbound(EventLoop &event_loop,
                                   UniqueSocketDescriptor &&fd, FdType fd_type,
-                                  const SocketFilter *filter, void *filter_ctx)
+                                  SocketFilterPtr &&filter)
     :socket(event_loop)
 {
     socket.Init(fd.Release(), fd_type,
                 nullptr, &write_timeout,
-                filter, filter_ctx,
+                std::move(filter),
                 *this);
     /* TODO
     socket.base.direct = pipe_stock != nullptr &&
@@ -475,18 +476,19 @@ LbTcpConnection::Inbound::Inbound(EventLoop &event_loop,
 
 }
 
+inline
 LbTcpConnection::LbTcpConnection(struct pool &_pool, LbInstance &_instance,
                                  const LbListenerConfig &_listener,
                                  LbCluster &_cluster,
                                  UniqueSocketDescriptor &&fd, FdType fd_type,
-                                 const SocketFilter *filter, void *filter_ctx,
+                                 SocketFilterPtr &&filter,
                                  SocketAddress _client_address)
     :pool(_pool), instance(_instance), listener(_listener), cluster(_cluster),
      client_address(address_to_string(pool, _client_address)),
      session_sticky(lb_tcp_sticky(cluster.GetConfig().sticky_mode,
                                   _client_address)),
      logger(*this),
-     inbound(instance.event_loop, std::move(fd), fd_type, filter, filter_ctx),
+     inbound(instance.event_loop, std::move(fd), fd_type, std::move(filter)),
      outbound(instance.event_loop),
      defer_connect(instance.event_loop, BIND_THIS_METHOD(OnDeferredHandshake))
 {
@@ -523,17 +525,14 @@ LbTcpConnection::New(LbInstance &instance,
 
     auto fd_type = FdType::FD_TCP;
 
-    const SocketFilter *filter = nullptr;
-    void *filter_ctx = nullptr;
+    SocketFilterPtr filter;
 
     if (ssl_factory != nullptr) {
         auto *ssl_filter = ssl_filter_new(*ssl_factory);
 
-        filter = &thread_socket_filter;
-        filter_ctx =
-            new ThreadSocketFilter(instance.event_loop,
-                                   thread_pool_get_queue(instance.event_loop),
-                                   &ssl_filter_get_handler(*ssl_filter));
+        filter.reset(new ThreadSocketFilter(instance.event_loop,
+                                            thread_pool_get_queue(instance.event_loop),
+                                            &ssl_filter_get_handler(*ssl_filter)));
     }
 
     struct pool *pool = pool_new_linear(instance.root_pool,
@@ -544,7 +543,7 @@ LbTcpConnection::New(LbInstance &instance,
     return NewFromPool<LbTcpConnection>(*pool, *pool, instance,
                                         listener, cluster,
                                         std::move(fd), fd_type,
-                                        filter, filter_ctx,
+                                        std::move(filter),
                                         address);
 }
 

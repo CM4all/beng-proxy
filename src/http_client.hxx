@@ -37,6 +37,7 @@
 #ifndef BENG_PROXY_HTTP_CLIENT_HXX
 #define BENG_PROXY_HTTP_CLIENT_HXX
 
+#include "fs/Ptr.hxx"
 #include "io/FdType.hxx"
 #include "http/Method.h"
 
@@ -47,7 +48,6 @@ class EventLoop;
 class UnusedIstreamPtr;
 class SocketDescriptor;
 class Lease;
-struct SocketFilter;
 class HttpResponseHandler;
 class CancellablePointer;
 class HttpHeaders;
@@ -128,7 +128,7 @@ http_client_request(struct pool &pool, EventLoop &event_loop,
                     SocketDescriptor fd, FdType fd_type,
                     Lease &lease,
                     const char *peer_name,
-                    const SocketFilter *filter, void *filter_ctx,
+                    SocketFilterPtr filter,
                     http_method_t method, const char *uri,
                     HttpHeaders &&headers,
                     UnusedIstreamPtr body, bool expect_100,

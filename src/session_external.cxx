@@ -60,7 +60,7 @@ public:
                      const SessionId session_id) {
         http_request(pool, instance.event_loop, *instance.tcp_balancer,
                      session_id.GetClusterHash(),
-                     nullptr, nullptr,
+                     nullptr,
                      HTTP_METHOD_GET, address,
                      HttpHeaders(pool), nullptr,
                      *this, cancel_ptr);

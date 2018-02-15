@@ -66,7 +66,6 @@ class HttpRequest final
 
     const sticky_hash_t session_sticky;
 
-    const SocketFilter *const filter;
     SocketFilterFactory *const filter_factory;
 
     StockItem *stock_item;
@@ -93,7 +92,6 @@ public:
     HttpRequest(struct pool &_pool, EventLoop &_event_loop,
                 TcpBalancer &_tcp_balancer,
                 sticky_hash_t _session_sticky,
-                const SocketFilter *_filter,
                 SocketFilterFactory *_filter_factory,
                 http_method_t _method,
                 const HttpAddress &_address,
@@ -103,7 +101,7 @@ public:
                 CancellablePointer &_cancel_ptr)
         :pool(_pool), event_loop(_event_loop), tcp_balancer(_tcp_balancer),
          session_sticky(_session_sticky),
-         filter(_filter), filter_factory(_filter_factory),
+         filter_factory(_filter_factory),
          method(_method), address(_address),
          headers(std::move(_headers)), body(pool, std::move(_body)),
          /* can only retry if there is no request body */
@@ -261,10 +259,10 @@ HttpRequest::OnStockItemReady(StockItem &item) noexcept
     stock_item = &item;
     lease_state = LeaseState::BUSY;
 
-    void *filter_ctx = nullptr;
+    SocketFilterPtr filter;
     if (filter_factory != nullptr) {
         try {
-            filter_ctx = filter_factory->CreateFilter();
+            filter = filter_factory->CreateFilter();
         } catch (...) {
             item.Put(false);
             Failed(std::current_exception());
@@ -278,7 +276,7 @@ HttpRequest::OnStockItemReady(StockItem &item) noexcept
                         ? FdType::FD_SOCKET : FdType::FD_TCP,
                         *this,
                         item.GetStockName(),
-                        filter, filter_ctx,
+                        std::move(filter),
                         method, address.path, std::move(headers),
                         std::move(body), true,
                         *this, cancel_ptr);
@@ -321,7 +319,7 @@ void
 http_request(struct pool &pool, EventLoop &event_loop,
              TcpBalancer &tcp_balancer,
              sticky_hash_t session_sticky,
-             const SocketFilter *filter, SocketFilterFactory *filter_factory,
+             SocketFilterFactory *filter_factory,
              http_method_t method,
              const HttpAddress &uwa,
              HttpHeaders &&headers,
@@ -333,7 +331,7 @@ http_request(struct pool &pool, EventLoop &event_loop,
     assert(uwa.path != nullptr);
 
     auto hr = NewFromPool<HttpRequest>(pool, pool, event_loop, tcp_balancer,
-                                       session_sticky, filter, filter_factory,
+                                       session_sticky, filter_factory,
                                        method, uwa,
                                        std::move(headers), std::move(body),
                                        handler, _cancel_ptr);

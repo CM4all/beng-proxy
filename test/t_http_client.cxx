@@ -71,7 +71,7 @@ struct Connection {
         http_client_request(*pool, event_loop, fd, FdType::FD_SOCKET,
                             lease,
                             "localhost",
-                            nullptr, nullptr,
+                            nullptr,
                             method, uri, HttpHeaders(std::move(headers)),
                             std::move(body), expect_100,
                             handler, cancel_ptr);

@@ -33,6 +33,7 @@
 #pragma once
 
 #include "SocketFilter.hxx"
+#include "Ptr.hxx"
 #include "event/net/BufferedSocket.hxx"
 #include "util/BindMethod.hxx"
 
@@ -50,8 +51,7 @@ struct FilteredSocket final : private BufferedSocketHandler {
      * The actual filter.  If this is nullptr, then this object behaves
      * just like #BufferedSocket.
      */
-    const SocketFilter *filter;
-    void *filter_ctx;
+    SocketFilterPtr filter;
 
     BufferedSocketHandler *handler;
 
@@ -72,7 +72,7 @@ struct FilteredSocket final : private BufferedSocketHandler {
     void Init(SocketDescriptor fd, FdType fd_type,
               const struct timeval *read_timeout,
               const struct timeval *write_timeout,
-              const SocketFilter *filter, void *filter_ctx,
+              SocketFilterPtr filter,
               BufferedSocketHandler &handler) noexcept;
 
     void Reinit(const struct timeval *read_timeout,
@@ -108,8 +108,8 @@ struct FilteredSocket final : private BufferedSocketHandler {
      * synchronously by this method.
      */
     void SetHandshakeCallback(BoundMethod<void()> callback) noexcept {
-        if (filter != nullptr && filter->set_handshake_callback != nullptr)
-            filter->set_handshake_callback(callback, filter_ctx);
+        if (filter != nullptr)
+            filter->SetHandshakeCallback(callback);
         else
             callback();
     }
@@ -123,8 +123,8 @@ struct FilteredSocket final : private BufferedSocketHandler {
      * do the latter, call filtered_socket_destroy().
      */
     void Close() noexcept {
-        if (filter != nullptr && filter->closed != nullptr)
-            filter->closed(filter_ctx);
+        if (filter != nullptr)
+            filter->OnClosed();
 
 #ifndef NDEBUG
         /* work around bogus assertion failure */
@@ -141,8 +141,8 @@ struct FilteredSocket final : private BufferedSocketHandler {
      * scheduling it for reuse).
      */
     void Abandon() noexcept {
-        if (filter != nullptr && filter->closed != nullptr)
-            filter->closed(filter_ctx);
+        if (filter != nullptr)
+            filter->OnClosed();
 
 #ifndef NDEBUG
         /* work around bogus assertion failure */
@@ -279,8 +279,8 @@ struct FilteredSocket final : private BufferedSocketHandler {
 
     void ScheduleReadTimeout(bool expect_more,
                              const struct timeval *timeout) noexcept {
-        if (filter != nullptr && filter->schedule_read != nullptr)
-            filter->schedule_read(expect_more, timeout, filter_ctx);
+        if (filter != nullptr)
+            filter->ScheduleRead(expect_more, timeout);
         else
             base.ScheduleReadTimeout(expect_more, timeout);
     }
@@ -297,15 +297,15 @@ struct FilteredSocket final : private BufferedSocketHandler {
     }
 
     void ScheduleWrite() noexcept {
-        if (filter != nullptr && filter->schedule_write != nullptr)
-            filter->schedule_write(filter_ctx);
+        if (filter != nullptr)
+            filter->ScheduleWrite();
         else
             base.ScheduleWrite();
     }
 
     void UnscheduleWrite() noexcept {
-        if (filter != nullptr && filter->unschedule_write != nullptr)
-            filter->unschedule_write(filter_ctx);
+        if (filter != nullptr)
+            filter->UnscheduleWrite();
         else
             base.UnscheduleWrite();
     }

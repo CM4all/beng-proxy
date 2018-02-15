@@ -87,7 +87,7 @@ public:
 
         Inbound(EventLoop &event_loop,
                 UniqueSocketDescriptor &&fd, FdType fd_type,
-                const SocketFilter *filter, void *filter_ctx);
+                SocketFilterPtr &&filter);
 
         void Destroy();
 
@@ -151,7 +151,7 @@ public:
                     const LbListenerConfig &_listener,
                     LbCluster &_cluster,
                     UniqueSocketDescriptor &&fd, FdType fd_type,
-                    const SocketFilter *filter, void *filter_ctx,
+                    SocketFilterPtr &&filter,
                     SocketAddress _client_address);
 
     ~LbTcpConnection();

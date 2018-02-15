@@ -32,34 +32,13 @@
 
 #pragma once
 
-#include "SocketFilter.hxx"
+#include <memory>
 
-/**
- * A module for #FilteredSocket that does not filter anything.  It
- * passes data as-is.  It is meant for debugging.
- */
-class NopSocketFilter : public SocketFilter {
-    FilteredSocket *socket;
+class SocketFilter;
 
+class SocketFilterDisposer {
 public:
-    /* virtual methods from SocketFilter */
-    void Init(FilteredSocket &_socket) noexcept override {
-        socket = &_socket;
-    }
-
-    BufferedResult OnData(const void *buffer, size_t size) noexcept override;
-    bool IsEmpty() const noexcept override;
-    bool IsFull() const noexcept override;
-    size_t GetAvailable() const noexcept override;
-    void Consumed(size_t nbytes) noexcept override;
-    bool Read(bool expect_more) noexcept override;
-    ssize_t Write(const void *data, size_t length) noexcept override;
-    void ScheduleRead(bool expect_more,
-                      const struct timeval *timeout) noexcept override;
-    void ScheduleWrite() noexcept override;
-    void UnscheduleWrite() noexcept override;
-    bool InternalWrite() noexcept override;
-    bool OnRemaining(size_t remaining) noexcept override;
-    void OnEnd() noexcept override;
-    void Close() noexcept override;
+    void operator()(SocketFilter *f) const noexcept;
 };
+
+using SocketFilterPtr = std::unique_ptr<SocketFilter, SocketFilterDisposer>;

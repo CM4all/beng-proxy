@@ -40,7 +40,6 @@ struct pool;
 class EventLoop;
 class UnusedIstreamPtr;
 class TcpBalancer;
-struct SocketFilter;
 class SocketFilterFactory;
 struct HttpAddress;
 class HttpResponseHandler;
@@ -57,7 +56,7 @@ void
 http_request(struct pool &pool, EventLoop &event_loop,
              TcpBalancer &tcp_balancer,
              sticky_hash_t session_sticky,
-             const SocketFilter *filter, SocketFilterFactory *filter_factory,
+             SocketFilterFactory *filter_factory,
              http_method_t method,
              const HttpAddress &address,
              HttpHeaders &&headers, UnusedIstreamPtr body,
