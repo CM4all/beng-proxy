@@ -41,13 +41,13 @@ HttpServerConnection::FeedRequestBody(const void *data, size_t length)
     assert(request.body_state == Request::BodyState::READING);
     assert(!response.pending_drained);
 
-    const ScopePoolRef ref(*pool TRACE_ARGS);
+    const DestructObserver destructed(*this);
 
     size_t nbytes = request_body_reader->FeedBody(data, length);
     if (nbytes == 0) {
-        return socket.IsValid()
-            ? BufferedResult::BLOCKING
-            : BufferedResult::CLOSED;
+        return destructed
+            ? BufferedResult::CLOSED
+            : BufferedResult::BLOCKING;
     }
 
     request.bytes_received += nbytes;
@@ -64,7 +64,7 @@ HttpServerConnection::FeedRequestBody(const void *data, size_t length)
         socket.ScheduleReadNoTimeout(false);
 
         request_body_reader->DestroyEof();
-        if (!IsValid())
+        if (destructed)
             return BufferedResult::CLOSED;
     }
 

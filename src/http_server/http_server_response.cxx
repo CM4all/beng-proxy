@@ -146,8 +146,10 @@ HttpServerConnection::ResponseIstreamFinished()
 #ifndef NDEBUG
         request.body_state = Request::BodyState::CLOSED;
 #endif
+
+        const DestructObserver destructed(*this);
         request_body_reader->DestroyEof();
-        if (!IsValid())
+        if (destructed)
             return false;
     }
 
@@ -163,8 +165,9 @@ HttpServerConnection::ResponseIstreamFinished()
         request.body_state = Request::BodyState::CLOSED;
 #endif
 
+        const DestructObserver destructed(*this);
         request_body_reader->DestroyError(std::make_exception_ptr(std::runtime_error("request body discarded")));
-        if (!IsValid())
+        if (destructed)
             return false;
     }
 

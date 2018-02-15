@@ -374,19 +374,25 @@ HttpServerConnection::SubmitRequest()
         socket.ScheduleReadNoTimeout(false);
 
     const ScopePoolRef ref(*pool TRACE_ARGS);
+    const DestructObserver destructed(*this);
 
     if (request.expect_failed) {
         request.request->body.Clear();
         http_server_send_message(request.request,
                                  HTTP_STATUS_EXPECTATION_FAILED,
                                  "Unrecognized expectation");
+        if (destructed)
+            return false;
     } else {
         request.in_handler = true;
         handler->HandleHttpRequest(*request.request, request.cancel_ptr);
+        if (destructed)
+            return false;
+
         request.in_handler = false;
     }
 
-    return IsValid();
+    return true;
 }
 
 BufferedResult
@@ -485,10 +491,12 @@ HttpServerConnection::TryRequestBodyDirect(SocketDescriptor fd, FdType fd_type)
 #ifndef NDEBUG
         request.body_state = Request::BodyState::CLOSED;
 #endif
+
+        const DestructObserver destructed(*this);
         request_body_reader->DestroyEof();
-        return IsValid()
-            ? DirectResult::OK
-            : DirectResult::CLOSED;
+        return destructed
+            ? DirectResult::CLOSED
+            : DirectResult::OK;
     } else {
         return DirectResult::OK;
     }

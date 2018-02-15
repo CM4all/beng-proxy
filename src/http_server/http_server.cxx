@@ -226,10 +226,9 @@ HttpServerConnection::TryWrite()
         return false;
     }
 
-    const ScopePoolRef ref(*pool TRACE_ARGS);
+    const DestructObserver destructed(*this);
     response.istream.Read();
-
-    return IsValid();
+    return !destructed;
 }
 
 /*

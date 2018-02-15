@@ -44,9 +44,12 @@
 #include "istream/Pointer.hxx"
 #include "http/Method.h"
 #include "util/Cancellable.hxx"
+#include "util/DestructObserver.hxx"
 #include "util/Exception.hxx"
 
-struct HttpServerConnection final : BufferedSocketHandler, IstreamHandler {
+struct HttpServerConnection final
+    : BufferedSocketHandler, IstreamHandler, DestructAnchor {
+
     enum class BucketResult {
         MORE,
         BLOCKING,
