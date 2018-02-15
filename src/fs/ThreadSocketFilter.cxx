@@ -700,7 +700,8 @@ ThreadSocketFilter::OnRemaining(size_t remaining) noexcept
         std::unique_lock<std::mutex> lock(mutex);
 
         if (!busy && !done_pending && encrypted_input.IsEmpty()) {
-            const size_t available = decrypted_input.GetAvailable();
+            const size_t available = decrypted_input.GetAvailable() +
+                unprotected_decrypted_input.GetAvailable();
             lock.unlock();
 
             /* forward the call */
@@ -725,7 +726,8 @@ ThreadSocketFilter::OnEnd() noexcept
         std::unique_lock<std::mutex> lock(mutex);
 
         if (!busy && !done_pending && encrypted_input.IsEmpty()) {
-            const size_t available = decrypted_input.GetAvailable();
+            const size_t available = decrypted_input.GetAvailable() +
+                unprotected_decrypted_input.GetAvailable();
             lock.unlock();
 
             postponed_remaining = false;
@@ -745,7 +747,8 @@ ThreadSocketFilter::OnEnd() noexcept
     {
         const std::lock_guard<std::mutex> lock(mutex);
         assert(encrypted_input.IsEmpty());
-        empty = decrypted_input.IsEmpty();
+        empty = decrypted_input.IsEmpty() &&
+            unprotected_decrypted_input.IsEmpty();
     }
 
     if (empty)
