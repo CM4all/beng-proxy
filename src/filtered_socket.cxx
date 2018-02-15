@@ -103,7 +103,7 @@ FilteredSocket::Init(SocketDescriptor fd, FdType fd_type,
                      const struct timeval *read_timeout,
                      const struct timeval *write_timeout,
                      const SocketFilter *_filter, void *_filter_ctx,
-                     BufferedSocketHandler &__handler)
+                     BufferedSocketHandler &__handler) noexcept
 {
     BufferedSocketHandler *_handler = &__handler;
 
@@ -145,7 +145,7 @@ FilteredSocket::Init(SocketDescriptor fd, FdType fd_type,
 void
 FilteredSocket::Reinit(const struct timeval *read_timeout,
                        const struct timeval *write_timeout,
-                       BufferedSocketHandler &__handler)
+                       BufferedSocketHandler &__handler) noexcept
 {
     BufferedSocketHandler *_handler = &__handler;
 
@@ -163,7 +163,7 @@ void
 FilteredSocket::Init(FilteredSocket &&src,
                      const struct timeval *read_timeout,
                      const struct timeval *write_timeout,
-                     BufferedSocketHandler &__handler)
+                     BufferedSocketHandler &__handler) noexcept
 {
     BufferedSocketHandler *_handler = &__handler;
 
@@ -204,7 +204,7 @@ FilteredSocket::Init(FilteredSocket &&src,
 }
 
 void
-FilteredSocket::Destroy()
+FilteredSocket::Destroy() noexcept
 {
     if (filter != nullptr) {
         filter->close(filter_ctx);
@@ -215,7 +215,7 @@ FilteredSocket::Destroy()
 }
 
 bool
-FilteredSocket::IsEmpty() const
+FilteredSocket::IsEmpty() const noexcept
 {
     return filter != nullptr
         ? filter->is_empty(filter_ctx)
@@ -223,7 +223,7 @@ FilteredSocket::IsEmpty() const
 }
 
 bool
-FilteredSocket::IsFull() const
+FilteredSocket::IsFull() const noexcept
 {
     return filter != nullptr
         ? filter->is_full(filter_ctx)
@@ -231,7 +231,7 @@ FilteredSocket::IsFull() const
 }
 
 size_t
-FilteredSocket::GetAvailable() const
+FilteredSocket::GetAvailable() const noexcept
 {
     return filter != nullptr
         ? filter->available(filter_ctx)
@@ -239,7 +239,7 @@ FilteredSocket::GetAvailable() const
 }
 
 WritableBuffer<void>
-FilteredSocket::ReadBuffer() const
+FilteredSocket::ReadBuffer() const noexcept
 {
     return filter != nullptr
         // TODO: read from filter output buffer?
@@ -248,7 +248,7 @@ FilteredSocket::ReadBuffer() const
 }
 
 void
-FilteredSocket::Consumed(size_t nbytes)
+FilteredSocket::Consumed(size_t nbytes) noexcept
 {
     if (filter != nullptr)
         filter->consumed(nbytes, filter_ctx);
@@ -257,7 +257,7 @@ FilteredSocket::Consumed(size_t nbytes)
 }
 
 bool
-FilteredSocket::Read(bool expect_more)
+FilteredSocket::Read(bool expect_more) noexcept
 {
     if (filter != nullptr)
         return filter->read(expect_more, filter_ctx);
@@ -266,7 +266,7 @@ FilteredSocket::Read(bool expect_more)
 }
 
 ssize_t
-FilteredSocket::Write(const void *data, size_t length)
+FilteredSocket::Write(const void *data, size_t length) noexcept
 {
     return filter != nullptr
         ? filter->write(data, length, filter_ctx)
@@ -274,7 +274,7 @@ FilteredSocket::Write(const void *data, size_t length)
 }
 
 bool
-FilteredSocket::InternalDrained()
+FilteredSocket::InternalDrained() noexcept
 {
     assert(filter != nullptr);
     assert(IsConnected());
@@ -287,7 +287,7 @@ FilteredSocket::InternalDrained()
 }
 
 bool
-FilteredSocket::InvokeTimeout()
+FilteredSocket::InvokeTimeout() noexcept
 {
     return handler->OnBufferedTimeout();
 }

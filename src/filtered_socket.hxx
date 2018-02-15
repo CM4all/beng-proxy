@@ -160,10 +160,10 @@ struct FilteredSocket final : private BufferedSocketHandler {
      */
     bool drained;
 
-    explicit FilteredSocket(EventLoop &_event_loop)
+    explicit FilteredSocket(EventLoop &_event_loop) noexcept
         :base(_event_loop) {}
 
-    EventLoop &GetEventLoop() {
+    EventLoop &GetEventLoop() noexcept {
         return base.GetEventLoop();
     }
 
@@ -171,11 +171,11 @@ struct FilteredSocket final : private BufferedSocketHandler {
               const struct timeval *read_timeout,
               const struct timeval *write_timeout,
               const SocketFilter *filter, void *filter_ctx,
-              BufferedSocketHandler &handler);
+              BufferedSocketHandler &handler) noexcept;
 
     void Reinit(const struct timeval *read_timeout,
                 const struct timeval *write_timeout,
-                BufferedSocketHandler &handler);
+                BufferedSocketHandler &handler) noexcept;
 
     /**
      * Move the socket from another #BufferedSocket instance.  This
@@ -185,13 +185,13 @@ struct FilteredSocket final : private BufferedSocketHandler {
     void Init(FilteredSocket &&src,
               const struct timeval *read_timeout,
               const struct timeval *write_timeout,
-              BufferedSocketHandler &handler);
+              BufferedSocketHandler &handler) noexcept;
 
-    bool HasFilter() const {
+    bool HasFilter() const noexcept {
         return filter != nullptr;
     }
 
-    FdType GetType() const {
+    FdType GetType() const noexcept {
         return filter == nullptr
             ? base.GetType()
             /* can't do splice() with a filter */
@@ -205,14 +205,14 @@ struct FilteredSocket final : private BufferedSocketHandler {
      * the filter has no handshake), the callback will be invoked
      * synchronously by this method.
      */
-    void SetHandshakeCallback(BoundMethod<void()> callback) {
+    void SetHandshakeCallback(BoundMethod<void()> callback) noexcept {
         if (filter != nullptr && filter->set_handshake_callback != nullptr)
             filter->set_handshake_callback(callback, filter_ctx);
         else
             callback();
     }
 
-    void Shutdown() {
+    void Shutdown() noexcept {
         base.Shutdown();
     }
 
@@ -220,7 +220,7 @@ struct FilteredSocket final : private BufferedSocketHandler {
      * Close the physical socket, but do not destroy the input buffer.  To
      * do the latter, call filtered_socket_destroy().
      */
-    void Close() {
+    void Close() noexcept {
         if (filter != nullptr && filter->closed != nullptr)
             filter->closed(filter_ctx);
 
@@ -238,7 +238,7 @@ struct FilteredSocket final : private BufferedSocketHandler {
      * socket.  The caller is responsible for closing the socket (or
      * scheduling it for reuse).
      */
-    void Abandon() {
+    void Abandon() noexcept {
         if (filter != nullptr && filter->closed != nullptr)
             filter->closed(filter_ctx);
 
@@ -251,12 +251,12 @@ struct FilteredSocket final : private BufferedSocketHandler {
         base.Abandon();
     }
 
-    bool ClosedByPeer() {
+    bool ClosedByPeer() noexcept {
         return base.ClosedByPeer();
     }
 
 #ifndef NDEBUG
-    bool HasEnded() const {
+    bool HasEnded() const noexcept {
         return ended;
     }
 #endif
@@ -266,13 +266,13 @@ struct FilteredSocket final : private BufferedSocketHandler {
      * by calling either filtered_socket_close() or
      * filtered_socket_abandon().
      */
-    void Destroy();
+    void Destroy() noexcept;
 
     /**
      * Returns the socket descriptor and calls Abandon().  Returns -1
      * if the input buffer is not empty.
      */
-    int AsFD() {
+    int AsFD() noexcept {
         return filter != nullptr
             ? -1
             : base.AsFD();
@@ -283,7 +283,7 @@ struct FilteredSocket final : private BufferedSocketHandler {
      * whether the socket is connected, just whether it is known to be
      * closed.
      */
-    bool IsConnected() const {
+    bool IsConnected() const noexcept {
 #ifndef NDEBUG
         /* work around bogus assertion failure */
         if (filter != nullptr && base.HasEnded())
@@ -297,14 +297,14 @@ struct FilteredSocket final : private BufferedSocketHandler {
      * Is the object still usable?  The socket may be closed already, but
      * the input buffer may still have data.
      */
-    bool IsValid() const {
+    bool IsValid() const noexcept {
         return base.IsValid();
     }
 
     /**
      * Accessor for #drained.
      */
-    bool IsDrained() const {
+    bool IsDrained() const noexcept {
         assert(IsValid());
 
         return drained;
@@ -314,21 +314,21 @@ struct FilteredSocket final : private BufferedSocketHandler {
      * Is the input buffer empty?
      */
     gcc_pure
-    bool IsEmpty() const;
+    bool IsEmpty() const noexcept;
 
     /**
      * Is the input buffer full?
      */
     gcc_pure
-    bool IsFull() const;
+    bool IsFull() const noexcept;
 
     /**
      * Returns the number of bytes in the input buffer.
      */
     gcc_pure
-    size_t GetAvailable() const;
+    size_t GetAvailable() const noexcept;
 
-    WritableBuffer<void> ReadBuffer() const;
+    WritableBuffer<void> ReadBuffer() const noexcept;
 
     /**
      * Mark the specified number of bytes of the input buffer as
@@ -336,9 +336,9 @@ struct FilteredSocket final : private BufferedSocketHandler {
      * method does not invalidate the buffer passed to data().  It may
      * be called repeatedly.
      */
-    void Consumed(size_t nbytes);
+    void Consumed(size_t nbytes) noexcept;
 
-    void SetDirect(bool _direct) {
+    void SetDirect(bool _direct) noexcept {
         assert(!_direct || !HasFilter());
 
         base.SetDirect(_direct);
@@ -352,30 +352,31 @@ struct FilteredSocket final : private BufferedSocketHandler {
      * yet) an event gets scheduled and the function returns
      * immediately.
      */
-    bool Read(bool expect_more);
+    bool Read(bool expect_more) noexcept;
 
-    ssize_t Write(const void *data, size_t length);
+    ssize_t Write(const void *data, size_t length) noexcept;
 
-    ssize_t WriteV(const struct iovec *v, size_t n) {
+    ssize_t WriteV(const struct iovec *v, size_t n) noexcept {
         assert(filter == nullptr);
 
         return base.WriteV(v, n);
     }
 
-    ssize_t WriteFrom(int fd, FdType fd_type, size_t length) {
+    ssize_t WriteFrom(int fd, FdType fd_type, size_t length) noexcept {
         assert(filter == nullptr);
 
         return base.WriteFrom(fd, fd_type, length);
     }
 
     gcc_pure
-    bool IsReadyForWriting() const {
+    bool IsReadyForWriting() const noexcept {
         assert(filter == nullptr);
 
         return base.IsReadyForWriting();
     }
 
-    void ScheduleReadTimeout(bool expect_more, const struct timeval *timeout) {
+    void ScheduleReadTimeout(bool expect_more,
+                             const struct timeval *timeout) noexcept {
         if (filter != nullptr && filter->schedule_read != nullptr)
             filter->schedule_read(expect_more, timeout, filter_ctx);
         else
@@ -389,18 +390,18 @@ struct FilteredSocket final : private BufferedSocketHandler {
      * sending the request.  When you are finished sending the request,
      * you should call filtered_socket_read() to enable the read timeout.
      */
-    void ScheduleReadNoTimeout(bool expect_more) {
+    void ScheduleReadNoTimeout(bool expect_more) noexcept {
         ScheduleReadTimeout(expect_more, nullptr);
     }
 
-    void ScheduleWrite() {
+    void ScheduleWrite() noexcept {
         if (filter != nullptr && filter->schedule_write != nullptr)
             filter->schedule_write(filter_ctx);
         else
             base.ScheduleWrite();
     }
 
-    void UnscheduleWrite() {
+    void UnscheduleWrite() noexcept {
         if (filter != nullptr && filter->unschedule_write != nullptr)
             filter->unschedule_write(filter_ctx);
         else
@@ -408,34 +409,33 @@ struct FilteredSocket final : private BufferedSocketHandler {
     }
 
     gcc_pure
-    bool InternalIsEmpty() const {
+    bool InternalIsEmpty() const noexcept {
         assert(filter != nullptr);
 
         return base.IsEmpty();
     }
 
     gcc_pure
-    bool InternalIsFull() const {
+    bool InternalIsFull() const noexcept {
         assert(filter != nullptr);
 
         return base.IsFull();
     }
 
     gcc_pure
-    size_t InternalGetAvailable() const {
+    size_t InternalGetAvailable() const noexcept {
         assert(filter != nullptr);
 
         return base.GetAvailable();
     }
 
-    void InternalConsumed(size_t nbytes)
-    {
+    void InternalConsumed(size_t nbytes) noexcept {
         assert(filter != nullptr);
 
         base.Consumed(nbytes);
     }
 
-    bool InternalRead(bool expect_more) {
+    bool InternalRead(bool expect_more) noexcept {
         assert(filter != nullptr);
 
 #ifndef NDEBUG
@@ -448,13 +448,13 @@ struct FilteredSocket final : private BufferedSocketHandler {
         return base.Read(expect_more);
     }
 
-    ssize_t InternalDirectWrite(const void *data, size_t length) {
+    ssize_t InternalDirectWrite(const void *data, size_t length) noexcept {
         assert(filter != nullptr);
 
         return base.DirectWrite(data, length);
     }
 
-    ssize_t InternalWrite(const void *data, size_t length) {
+    ssize_t InternalWrite(const void *data, size_t length) noexcept {
         assert(filter != nullptr);
 
         return base.Write(data, length);
@@ -464,7 +464,7 @@ struct FilteredSocket final : private BufferedSocketHandler {
      * A #SocketFilter must call this function whenever it adds data to
      * its output buffer (only if it implements such a buffer).
      */
-    void InternalUndrained() {
+    void InternalUndrained() noexcept {
         assert(filter != nullptr);
         assert(IsConnected());
 
@@ -475,29 +475,28 @@ struct FilteredSocket final : private BufferedSocketHandler {
      * A #SocketFilter must call this function whenever its output buffer
      * drains (only if it implements such a buffer).
      */
-    bool InternalDrained();
-
+    bool InternalDrained() noexcept;
 
     void InternalScheduleRead(bool expect_more,
-                              const struct timeval *timeout) {
+                              const struct timeval *timeout) noexcept {
         assert(filter != nullptr);
 
         base.ScheduleReadTimeout(expect_more, timeout);
     }
 
-    void InternalScheduleWrite() {
+    void InternalScheduleWrite() noexcept {
         assert(filter != nullptr);
 
         base.ScheduleWrite();
     }
 
-    void InternalUnscheduleWrite() {
+    void InternalUnscheduleWrite() noexcept {
         assert(filter != nullptr);
 
         base.UnscheduleWrite();
     }
 
-    BufferedResult InvokeData(const void *data, size_t size) {
+    BufferedResult InvokeData(const void *data, size_t size) noexcept {
         assert(filter != nullptr);
 
         try {
@@ -508,19 +507,19 @@ struct FilteredSocket final : private BufferedSocketHandler {
         }
     }
 
-    bool InvokeClosed() {
+    bool InvokeClosed() noexcept {
         assert(filter != nullptr);
 
         return handler->OnBufferedClosed();
     }
 
-    bool InvokeRemaining(size_t remaining) {
+    bool InvokeRemaining(size_t remaining) noexcept {
         assert(filter != nullptr);
 
         return handler->OnBufferedRemaining(remaining);
     }
 
-    void InvokeEnd() {
+    void InvokeEnd() noexcept {
         assert(filter != nullptr);
         assert(!ended);
         assert(base.HasEnded());
@@ -532,7 +531,7 @@ struct FilteredSocket final : private BufferedSocketHandler {
         handler->OnBufferedEnd();
     }
 
-    bool InvokeWrite() {
+    bool InvokeWrite() noexcept {
         assert(filter != nullptr);
 
         try {
@@ -543,9 +542,9 @@ struct FilteredSocket final : private BufferedSocketHandler {
         }
     }
 
-    bool InvokeTimeout();
+    bool InvokeTimeout() noexcept;
 
-    void InvokeError(std::exception_ptr e) {
+    void InvokeError(std::exception_ptr e) noexcept {
         assert(filter != nullptr);
 
         handler->OnBufferedError(std::move(e));
