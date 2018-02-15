@@ -209,6 +209,13 @@ class ThreadSocketFilter final : public SocketFilter, ThreadSocketFilterInternal
      */
     bool want_write = false;
 
+    /**
+     * Data from ThreadSocketFilterInternal::decrypted_input gets
+     * moved here to be submitted.  This buffer is not protected by
+     * the mutex.
+     */
+    SliceFifoBuffer unprotected_decrypted_input;
+
     struct timeval read_timeout_buffer;
     const struct timeval *read_timeout = nullptr;
 
@@ -232,6 +239,18 @@ private:
      * Schedule a Run() call in a worker thread.
      */
     void Schedule() noexcept;
+
+    /**
+     * @return true if ThreadSocketFilterInternal::decrypted_input was
+     * full.
+     */
+    bool MoveDecryptedInput() noexcept;
+
+    /**
+     * Move data from ThreadSocketFilterInternal::decrypted_input to
+     * #unprotected_decrypted_input.
+     */
+    void MoveDecryptedInputAndSchedule() noexcept;
 
     /**
      * @return false if the object has been destroyed

@@ -70,6 +70,8 @@ ThreadSocketFilter::~ThreadSocketFilter() noexcept
 
     defer_event.Cancel();
     handshake_timeout_event.Cancel();
+
+    unprotected_decrypted_input.FreeIfDefined(fb_pool_get());
 }
 
 void
@@ -103,6 +105,27 @@ ThreadSocketFilter::SetHandshakeCallback(BoundMethod<void()> callback) noexcept
         callback();
 }
 
+inline bool
+ThreadSocketFilter::MoveDecryptedInput() noexcept
+{
+    assert(!unprotected_decrypted_input.IsDefinedAndFull());
+
+    const std::lock_guard<std::mutex> lock(mutex);
+    const bool was_full = decrypted_input.IsDefinedAndFull();
+    unprotected_decrypted_input.MoveFromAllowBothNull(decrypted_input);
+    unprotected_decrypted_input.FreeIfEmpty(fb_pool_get());
+    return was_full;
+}
+
+void
+ThreadSocketFilter::MoveDecryptedInputAndSchedule() noexcept
+{
+    if (MoveDecryptedInput())
+        /* just in case the filter has stalled because the
+           decrypted_input buffer was full: try again */
+        Schedule();
+}
+
 /**
  * @return false if the object has been destroyed
  */
@@ -110,34 +133,18 @@ bool
 ThreadSocketFilter::SubmitDecryptedInput() noexcept
 {
     while (true) {
-        /* this buffer is large enough to hold the contents of one
-           SliceFifoBuffer buffer (see fb_pool.cxx) */
-        uint8_t copy[8192];
-        size_t size;
-        bool more;
+        if (unprotected_decrypted_input.IsEmpty())
+            MoveDecryptedInputAndSchedule();
 
-        {
-            const std::lock_guard<std::mutex> lock(mutex);
-
-            auto r = decrypted_input.Read();
-            if (r.empty())
-                return true;
-
-            /* copy to stack, unlock */
-            size = std::min(r.size, sizeof(copy));
-            more = r.size > sizeof(copy);
-            memcpy(copy, r.data, size);
-        }
+        auto r = unprotected_decrypted_input.Read();
+        if (r.empty())
+            return true;
 
         want_read = false;
         read_timeout = nullptr;
 
-        switch (socket->InvokeData(copy, size)) {
+        switch (socket->InvokeData(r.data, r.size)) {
         case BufferedResult::OK:
-            if (more)
-                /* there's more data in decrypted_input which did not
-                   fit in the stack buffer; try again */
-                continue;
             return true;
 
         case BufferedResult::PARTIAL:
@@ -353,7 +360,8 @@ ThreadSocketFilter::Done() noexcept
                 lock.lock();
             }
 
-            const size_t available = decrypted_input.GetAvailable();
+            const size_t available = decrypted_input.GetAvailable() +
+                unprotected_decrypted_input.GetAvailable();
             lock.unlock();
 
             if (available == 0 && expect_more) {
@@ -369,7 +377,8 @@ ThreadSocketFilter::Done() noexcept
             lock.lock();
         }
 
-        if (decrypted_input.IsEmpty()) {
+        if (decrypted_input.IsEmpty() &&
+            unprotected_decrypted_input.IsEmpty()) {
             lock.unlock();
 
             if (expect_more) {
@@ -469,44 +478,38 @@ bool
 ThreadSocketFilter::IsEmpty() const noexcept
 {
     std::lock_guard<std::mutex> lock(mutex);
-    return decrypted_input.IsEmpty();
+    return decrypted_input.IsEmpty() &&
+        unprotected_decrypted_input.IsEmpty();
 }
 
 bool
 ThreadSocketFilter::IsFull() const noexcept
 {
     std::lock_guard<std::mutex> lock(mutex);
-    return decrypted_input.IsDefinedAndFull();
+    return decrypted_input.IsDefinedAndFull() &&
+        unprotected_decrypted_input.IsDefinedAndFull();
 }
 
 size_t
 ThreadSocketFilter::GetAvailable() const noexcept
 {
     std::lock_guard<std::mutex> lock(mutex);
-    return decrypted_input.GetAvailable();
+    return decrypted_input.GetAvailable() +
+        unprotected_decrypted_input.GetAvailable();
 }
 
 void
 ThreadSocketFilter::Consumed(size_t nbytes) noexcept
 {
-    assert(decrypted_input.IsDefined());
+    if (nbytes == 0)
+        return;
 
-    bool schedule = false;
+    assert(unprotected_decrypted_input.IsDefined());
 
-    {
-        const std::lock_guard<std::mutex> lock(mutex);
+    unprotected_decrypted_input.Consume(nbytes);
+    unprotected_decrypted_input.FreeIfEmpty(fb_pool_get());
 
-        if (decrypted_input.IsFull())
-            /* just in case the filter has stalled because the
-               decrypted_input buffer was full: try again */
-            schedule = true;
-
-        decrypted_input.Consume(nbytes);
-        decrypted_input.FreeIfEmpty(fb_pool_get());
-    }
-
-    if (schedule)
-        Schedule();
+    MoveDecryptedInputAndSchedule();
 }
 
 bool
