@@ -37,12 +37,13 @@
 #include "istream/Sink.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "util/CharUtil.hxx"
+#include "util/DestructObserver.hxx"
 #include "util/Poison.hxx"
 
 #include <assert.h>
 #include <string.h>
 
-class XmlParser final : IstreamSink {
+class XmlParser final : IstreamSink, DestructAnchor {
     struct pool *pool;
 
     off_t position = 0;
@@ -138,9 +139,9 @@ public:
     bool Read() noexcept {
         assert(input.IsDefined());
 
-        const ScopePoolRef ref(*pool TRACE_ARGS);
+        const DestructObserver destructed(*this);
         input.Read();
-        return input.IsDefined();
+        return !destructed;
     }
 
     void Script() noexcept {
@@ -164,7 +165,6 @@ private:
     /* virtual methods from class IstreamHandler */
 
     size_t OnData(const void *data, size_t length) override {
-        const ScopePoolRef ref(*pool TRACE_ARGS);
         return Feed((const char *)data, length);
     }
 
