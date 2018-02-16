@@ -31,13 +31,15 @@
  */
 
 #include "Lease.hxx"
+#include "fb_pool.hxx"
+#include "net/SocketProtocolError.hxx"
 
 FilteredSocketLease::~FilteredSocketLease() noexcept
 {
     assert(IsReleased());
 
-    socket->Destroy();
-    delete socket;
+    for (auto &i : input)
+        i.FreeIfDefined(fb_pool_get());
 }
 
 void
@@ -45,42 +47,149 @@ FilteredSocketLease::Release(bool reuse) noexcept
 {
     socket->Abandon();
     lease_ref.Release(reuse);
+
+    // TODO: move buffers instead of copying the data
+    size_t i = 0;
+    while (true) {
+        auto r = WritableBuffer<uint8_t>::FromVoid(socket->ReadBuffer());
+        if (r.empty())
+            break;
+
+        auto &dest = input[i];
+        if (!dest.IsDefined())
+            dest.Allocate(fb_pool_get());
+        else if (dest.IsFull()) {
+            ++i;
+            assert(i < input.size());
+            continue;
+        }
+
+        auto w = dest.Write();
+        size_t n = std::min(r.size, w.size);
+        assert(n > 0);
+        std::move(r.data, r.data + n, w.data);
+        socket->Consumed(n);
+        dest.Append(n);
+    }
+
+    socket->Destroy();
+    delete socket;
+    socket = nullptr;
 }
 
 bool
 FilteredSocketLease::IsEmpty() const noexcept
 {
-    return socket->IsEmpty();
+    if (IsReleased())
+        return input.front().IsEmpty();
+    else
+        return socket->IsEmpty();
 }
 
 size_t
 FilteredSocketLease::GetAvailable() const noexcept
 {
-    return socket->GetAvailable();
+    if (IsReleased()) {
+        size_t result = 0;
+        for (const auto &i : input)
+            result += i.GetAvailable();
+        return result;
+    } else
+        return socket->GetAvailable();
 }
 
 WritableBuffer<void>
 FilteredSocketLease::ReadBuffer() const noexcept
 {
-    return socket->ReadBuffer();
+    return IsReleased()
+        ? input.front().Read().ToVoid()
+        : socket->ReadBuffer();
 }
 
 void
 FilteredSocketLease::Consumed(size_t nbytes) noexcept
 {
-    socket->Consumed(nbytes);
+    if (IsReleased()) {
+        input.front().Consume(nbytes);
+        MoveInput();
+    } else
+        socket->Consumed(nbytes);
 }
 
 bool
 FilteredSocketLease::Read(bool expect_more) noexcept
 {
-    return socket->Read(expect_more);
+    if (IsReleased()) {
+        while (true) {
+            auto r = input.front().Read();
+            if (r.empty())
+                return true;
+
+            switch (handler.OnBufferedData()) {
+            case BufferedResult::OK:
+                if (IsEmpty() && !handler.OnBufferedEnd())
+                    return false;
+                break;
+
+            case BufferedResult::BLOCKING:
+                assert(!input.front().IsEmpty());
+                return true;
+
+            case BufferedResult::MORE:
+            case BufferedResult::AGAIN_OPTIONAL:
+            case BufferedResult::AGAIN_EXPECT:
+                break;
+
+            case BufferedResult::CLOSED:
+                return false;
+            }
+        }
+    } else
+        return socket->Read(expect_more);
+}
+
+void
+FilteredSocketLease::MoveInput() noexcept
+{
+    auto &dest = input.front();
+    for (size_t i = 1; !dest.IsFull() && i < input.size(); ++i) {
+        auto &src = input[i];
+        dest.MoveFromAllowBothNull(src);
+        src.FreeIfEmpty(fb_pool_get());
+    }
 }
 
 BufferedResult
 FilteredSocketLease::OnBufferedData()
 {
-    return handler.OnBufferedData();
+    while (true) {
+        const auto result = handler.OnBufferedData();
+        if (result == BufferedResult::CLOSED)
+            break;
+
+        if (!IsReleased())
+            return result;
+
+        /* since the BufferedSocket is gone already, we must handle
+           the AGAIN result codes here */
+
+        if (result == BufferedResult::AGAIN_OPTIONAL && !IsEmpty())
+            continue;
+        else if (result == BufferedResult::AGAIN_EXPECT) {
+            if (IsEmpty()) {
+                handler.OnBufferedError(std::make_exception_ptr(SocketClosedPrematurelyError()));
+                break;
+            }
+
+            continue;
+        } else
+            break;
+    }
+
+    /* if the socket has been released, we must always report CLOSED
+       to the released BufferedSocket instance, even if our handler
+       still wants to consume the remaining buffer */
+    return BufferedResult::CLOSED;
 }
 
 DirectResult
@@ -92,13 +201,25 @@ FilteredSocketLease::OnBufferedDirect(SocketDescriptor fd, FdType fd_type)
 bool
 FilteredSocketLease::OnBufferedClosed() noexcept
 {
-    return handler.OnBufferedClosed();
+    auto result = handler.OnBufferedClosed();
+    if (result && IsReleased()) {
+        result = false;
+
+        if (handler.OnBufferedRemaining(GetAvailable()) &&
+            IsEmpty())
+            handler.OnBufferedEnd();
+    }
+
+    return result;
 }
 
 bool
 FilteredSocketLease::OnBufferedRemaining(size_t remaining) noexcept
 {
-    return handler.OnBufferedRemaining(remaining);
+    auto result = handler.OnBufferedRemaining(remaining);
+    if (result && IsReleased())
+        result = false;
+    return result;
 }
 
 bool

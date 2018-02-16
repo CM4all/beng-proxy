@@ -44,10 +44,12 @@
  * method.
  */
 class FilteredSocketLease final : BufferedSocketHandler {
-    FilteredSocket *const socket;
+    FilteredSocket *socket;
     struct lease_ref lease_ref;
 
     BufferedSocketHandler &handler;
+
+    std::array<SliceFifoBuffer, 2> input;
 
 public:
     template<typename F>
@@ -75,7 +77,7 @@ public:
 
     gcc_pure
     bool IsConnected() const noexcept {
-        return socket->IsConnected();
+        return socket != nullptr && socket->IsConnected();
     }
 
     gcc_pure
@@ -96,11 +98,9 @@ public:
 
     void Release(bool reuse) noexcept;
 
-#ifndef NDEBUG
     bool IsReleased() const noexcept {
-        return lease_ref.released;
+        return socket == nullptr;
     }
-#endif
 
     gcc_pure
     FdType GetType() const noexcept {
@@ -173,6 +173,8 @@ public:
     }
 
 private:
+    void MoveInput() noexcept;
+
     /* virtual methods from class BufferedSocketHandler */
     BufferedResult OnBufferedData() override;
     DirectResult OnBufferedDirect(SocketDescriptor fd,
