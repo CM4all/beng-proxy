@@ -60,12 +60,7 @@ public:
         lease_ref.Set(lease);
     }
 
-    ~FilteredSocketLease() noexcept {
-        assert(IsReleased());
-
-        socket->Destroy();
-        delete socket;
-    }
+    ~FilteredSocketLease() noexcept;
 
     EventLoop &GetEventLoop() noexcept {
         return socket->GetEventLoop();
@@ -92,10 +87,7 @@ public:
     }
 #endif
 
-    void Release(bool reuse) noexcept {
-        socket->Abandon();
-        lease_ref.Release(reuse);
-    }
+    void Release(bool reuse) noexcept;
 
 #ifndef NDEBUG
     bool IsReleased() const noexcept {
@@ -123,26 +115,16 @@ public:
     }
 
     gcc_pure
-    bool IsEmpty() const noexcept {
-        return socket->IsEmpty();
-    }
+    bool IsEmpty() const noexcept;
 
     gcc_pure
-    size_t GetAvailable() const noexcept {
-        return socket->GetAvailable();
-    }
+    size_t GetAvailable() const noexcept;
 
-    WritableBuffer<void> ReadBuffer() const noexcept {
-        return socket->ReadBuffer();
-    }
+    WritableBuffer<void> ReadBuffer() const noexcept;
 
-    void Consumed(size_t nbytes) noexcept {
-        socket->Consumed(nbytes);
-    }
+    void Consumed(size_t nbytes) noexcept;
 
-    bool Read(bool expect_more) noexcept {
-        return socket->Read(expect_more);
-    }
+    bool Read(bool expect_more) noexcept;
 
     void ScheduleReadTimeout(bool expect_more,
                              const struct timeval *timeout) noexcept {

@@ -740,6 +740,7 @@ socket = static_library('socket',
   'src/fs/NopSocketFilter.cxx',
   'src/fs/NopThreadSocketFilter.cxx',
   'src/fs/ThreadSocketFilter.cxx',
+  'src/fs/Lease.cxx',
   include_directories: inc,
 )
 socket_dep = declare_dependency(link_with: socket,
