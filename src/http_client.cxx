@@ -234,6 +234,13 @@ struct HttpClient final : BufferedSocketHandler, IstreamHandler, Cancellable, De
                HttpResponseHandler &handler,
                CancellablePointer &cancel_ptr);
 
+    ~HttpClient() noexcept {
+        stopwatch_dump(stopwatch);
+
+        if (IsConnected())
+            ReleaseSocket(false);
+    }
+
     struct pool &GetPool() {
         return response_body_reader.GetPool();
     }
@@ -278,11 +285,6 @@ struct HttpClient final : BufferedSocketHandler, IstreamHandler, Cancellable, De
      * socket lease, and the pool reference.
      */
     void Release() {
-        stopwatch_dump(stopwatch);
-
-        if (IsConnected())
-            ReleaseSocket(false);
-
         /* this reference is necessary for our destructor, which
            destructs HttpBodyReader first */
         const ScopePoolRef ref(GetPool() TRACE_ARGS);
