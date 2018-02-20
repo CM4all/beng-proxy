@@ -76,3 +76,63 @@ FilteredSocketLease::Read(bool expect_more) noexcept
 {
     return socket->Read(expect_more);
 }
+
+BufferedResult
+FilteredSocketLease::OnBufferedData()
+{
+    return handler.OnBufferedData();
+}
+
+DirectResult
+FilteredSocketLease::OnBufferedDirect(SocketDescriptor fd, FdType fd_type)
+{
+    return handler.OnBufferedDirect(fd, fd_type);
+}
+
+bool
+FilteredSocketLease::OnBufferedClosed() noexcept
+{
+    return handler.OnBufferedClosed();
+}
+
+bool
+FilteredSocketLease::OnBufferedRemaining(size_t remaining) noexcept
+{
+    return handler.OnBufferedRemaining(remaining);
+}
+
+bool
+FilteredSocketLease::OnBufferedEnd() noexcept
+{
+    return handler.OnBufferedEnd();
+}
+
+bool
+FilteredSocketLease::OnBufferedWrite()
+{
+    return handler.OnBufferedWrite();
+}
+
+bool
+FilteredSocketLease::OnBufferedDrained() noexcept
+{
+    return handler.OnBufferedDrained();
+}
+
+bool
+FilteredSocketLease::OnBufferedTimeout() noexcept
+{
+    return handler.OnBufferedTimeout();
+}
+
+enum write_result
+FilteredSocketLease::OnBufferedBroken() noexcept
+{
+    return handler.OnBufferedBroken();
+}
+
+void
+FilteredSocketLease::OnBufferedError(std::exception_ptr e) noexcept
+{
+    return handler.OnBufferedError(e);
+}

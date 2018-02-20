@@ -38,10 +38,16 @@
 /**
  * Wrapper for a #FilteredSocket which may be released at some point.
  * After that, remaining data in the input buffer can still be read.
+ *
+ * This class acts a #BufferedSocketHandler proxy to filter result
+ * codes, when the socket has been released in the middle of a handler
+ * method.
  */
-class FilteredSocketLease {
+class FilteredSocketLease final : BufferedSocketHandler {
     FilteredSocket *const socket;
     struct lease_ref lease_ref;
+
+    BufferedSocketHandler &handler;
 
 public:
     template<typename F>
@@ -51,12 +57,13 @@ public:
                         const struct timeval *read_timeout,
                         const struct timeval *write_timeout,
                         F &&filter,
-                        BufferedSocketHandler &handler) noexcept
-        :socket(new FilteredSocket(event_loop))
+                        BufferedSocketHandler &_handler) noexcept
+        :socket(new FilteredSocket(event_loop)),
+         handler(_handler)
     {
         socket->Init(fd, fd_type, read_timeout, write_timeout,
                      std::forward<F>(filter),
-                     handler);
+                     *this);
         lease_ref.Set(lease);
     }
 
@@ -164,4 +171,18 @@ public:
 
         return socket->WriteFrom(fd, fd_type, length);
     }
+
+private:
+    /* virtual methods from class BufferedSocketHandler */
+    BufferedResult OnBufferedData() override;
+    DirectResult OnBufferedDirect(SocketDescriptor fd,
+                                  FdType fd_type) override;
+    bool OnBufferedClosed() noexcept override;
+    bool OnBufferedRemaining(size_t remaining) noexcept override;
+    bool OnBufferedEnd() noexcept override;
+    bool OnBufferedWrite() override;
+    bool OnBufferedDrained() noexcept override;
+    bool OnBufferedTimeout() noexcept override;
+    enum write_result OnBufferedBroken() noexcept override;
+    void OnBufferedError(std::exception_ptr e) noexcept override;
 };
