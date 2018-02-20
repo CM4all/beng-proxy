@@ -308,6 +308,8 @@ struct HttpClient final : BufferedSocketHandler, IstreamHandler, Cancellable, De
         AbortResponse(std::make_exception_ptr(HttpClientError(code, msg)));
     }
 
+    void ResponseFinished() noexcept;
+
     gcc_pure
     off_t GetAvailable(bool partial) const;
 
@@ -774,23 +776,22 @@ HttpClient::HandleLine(const char *line, size_t length)
         return HeadersFinished();
 }
 
-static void
-http_client_response_finished(HttpClient *client)
+void
+HttpClient::ResponseFinished() noexcept
 {
-    assert(client->response.state == HttpClient::Response::State::END);
+    assert(response.state == Response::State::END);
 
-    stopwatch_event(client->stopwatch, "end");
+    stopwatch_event(stopwatch, "end");
 
-    if (!client->socket.IsEmpty()) {
-        LogConcat(2, client->peer_name, "excess data after HTTP response");
-        client->keep_alive = false;
+    if (!socket.IsEmpty()) {
+        LogConcat(2, peer_name, "excess data after HTTP response");
+        keep_alive = false;
     }
 
-    if (client->request.istream.IsDefined())
-        client->request.istream.Close();
+    if (request.istream.IsDefined())
+        request.istream.Close();
 
-    client->Release(client->keep_alive &&
-                    !client->request.istream.IsDefined());
+    Release(keep_alive && !request.istream.IsDefined());
 }
 
 inline BufferedResult
@@ -841,7 +842,7 @@ HttpClient::ResponseBodyEOF()
 
     response_body_reader.InvokeEof();
 
-    http_client_response_finished(this);
+    ResponseFinished();
 }
 
 inline BufferedResult
@@ -959,7 +960,7 @@ HttpClient::FeedHeaders(const void *data, size_t length)
     response.in_handler = false;
 
     if (response.state == Response::State::END) {
-        http_client_response_finished(this);
+        ResponseFinished();
         return BufferedResult::CLOSED;
     }
 
