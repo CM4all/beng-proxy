@@ -790,8 +790,10 @@ HttpClient::ResponseFinished() noexcept
 
     if (request.istream.IsDefined())
         request.istream.Close();
+    else if (IsConnected())
+        ReleaseSocket(keep_alive);
 
-    Release(keep_alive && !request.istream.IsDefined());
+    Release(false);
 }
 
 inline BufferedResult
