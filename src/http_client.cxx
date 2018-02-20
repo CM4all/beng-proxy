@@ -280,11 +280,7 @@ struct HttpClient final : BufferedSocketHandler, IstreamHandler, Cancellable, De
         socket.Release(reuse);
     }
 
-    /**
-     * Release resources held by this object: the event object, the
-     * socket lease, and the pool reference.
-     */
-    void Release() {
+    void Destroy() {
         /* this reference is necessary for our destructor, which
            destructs HttpBodyReader first */
         const ScopePoolRef ref(GetPool() TRACE_ARGS);
@@ -388,7 +384,7 @@ HttpClient::AbortResponseHeaders(std::exception_ptr ep)
         request.istream.Close();
 
     request.handler.InvokeError(PrefixError(ep));
-    Release();
+    Destroy();
 }
 
 /**
@@ -411,7 +407,7 @@ HttpClient::AbortResponseBody(std::exception_ptr ep)
         response_body_reader.InvokeError(PrefixError(ep));
     }
 
-    Release();
+    Destroy();
 }
 
 /**
@@ -514,7 +510,7 @@ HttpClient::AsFD()
     if (fd < 0)
         return -1;
 
-    Release();
+    Destroy();
     return fd;
 }
 
@@ -528,7 +524,7 @@ HttpClient::Close()
     if (request.istream.IsDefined())
         request.istream.Close();
 
-    Release();
+    Destroy();
 }
 
 inline HttpClient::BucketResult
@@ -795,7 +791,7 @@ HttpClient::ResponseFinished() noexcept
     else if (IsConnected())
         ReleaseSocket(keep_alive);
 
-    Release();
+    Destroy();
 }
 
 inline BufferedResult
@@ -1009,7 +1005,7 @@ HttpClient::TryResponseDirect(SocketDescriptor fd, FdType fd_type)
             request.istream.Close();
 
         response_body_reader.SocketEOF(0);
-        Release();
+        Destroy();
         return DirectResult::CLOSED;
    }
 
@@ -1090,7 +1086,7 @@ HttpClient::OnBufferedRemaining(size_t remaining) noexcept
         return true;
     } else {
         /* finished: close the HTTP client */
-        Release();
+        Destroy();
         return false;
     }
 }
@@ -1267,7 +1263,7 @@ HttpClient::Cancel() noexcept
     if (request.istream.IsDefined())
         request.istream.Close();
 
-    Release();
+    Destroy();
 }
 
 /*
