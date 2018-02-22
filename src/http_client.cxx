@@ -874,7 +874,7 @@ HttpClient::FeedBody(const void *data, size_t length)
     }
 
     if (nbytes < length)
-        return BufferedResult::PARTIAL;
+        return BufferedResult::OK;
 
     if (response_body_reader.RequireMore())
         return BufferedResult::MORE;

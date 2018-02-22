@@ -147,7 +147,6 @@ ThreadSocketFilter::SubmitDecryptedInput() noexcept
         case BufferedResult::OK:
             return true;
 
-        case BufferedResult::PARTIAL:
         case BufferedResult::BLOCKING:
             return true;
 
@@ -447,7 +446,6 @@ ThreadSocketFilter::OnData(const void *data, size_t length) noexcept
 {
     read_scheduled = false;
 
-    BufferedResult result;
     {
         const std::lock_guard<std::mutex> lock(mutex);
 
@@ -457,10 +455,8 @@ ThreadSocketFilter::OnData(const void *data, size_t length) noexcept
         if (w.empty())
             return BufferedResult::BLOCKING;
 
-        result = BufferedResult::OK;
         if (length > w.size) {
             length = w.size;
-            result = BufferedResult::PARTIAL;
         }
 
         memcpy(w.data, data, length);
@@ -471,7 +467,7 @@ ThreadSocketFilter::OnData(const void *data, size_t length) noexcept
 
     Schedule();
 
-    return result;
+    return BufferedResult::OK;
 }
 
 bool

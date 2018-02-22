@@ -630,7 +630,7 @@ FcgiClient::ConsumeInput(const uint8_t *data0, size_t length0)
             if (content_length > 0)
                 return data < end && response.read_state != FcgiClient::Response::READ_HEADERS
                     /* some was consumed, try again later */
-                    ? BufferedResult::PARTIAL
+                    ? BufferedResult::OK
                     /* all input was consumed, want more */
                     : BufferedResult::MORE;
 

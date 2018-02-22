@@ -477,7 +477,7 @@ MemcachedClient::FeedValue(const void *data, size_t length)
     response.remaining -= nbytes;
     if (response.remaining > 0)
         return nbytes < length
-            ? BufferedResult::PARTIAL
+            ? BufferedResult::OK
             : BufferedResult::MORE;
 
     assert(!socket.IsConnected());

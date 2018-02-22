@@ -68,9 +68,7 @@ HttpServerConnection::FeedRequestBody(const void *data, size_t length)
             return BufferedResult::CLOSED;
     }
 
-    return nbytes == length
-        ? BufferedResult::OK
-        : BufferedResult::PARTIAL;
+    return BufferedResult::OK;
 }
 
 off_t

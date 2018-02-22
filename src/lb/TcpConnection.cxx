@@ -99,9 +99,7 @@ LbTcpConnection::Inbound::OnBufferedData(const void *buffer, size_t size)
     if (nbytes > 0) {
         tcp.outbound.socket.ScheduleWrite();
         socket.Consumed(nbytes);
-        return (size_t)nbytes == size
-            ? BufferedResult::OK
-            : BufferedResult::PARTIAL;
+        return BufferedResult::OK;
     }
 
     switch ((enum write_result)nbytes) {
@@ -204,9 +202,7 @@ LbTcpConnection::Outbound::OnBufferedData(const void *buffer, size_t size)
     if (nbytes > 0) {
         tcp.inbound.socket.ScheduleWrite();
         socket.Consumed(nbytes);
-        return (size_t)nbytes == size
-            ? BufferedResult::OK
-            : BufferedResult::PARTIAL;
+        return BufferedResult::OK;
     }
 
     switch ((enum write_result)nbytes) {

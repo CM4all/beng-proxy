@@ -362,7 +362,7 @@ HttpServerConnection::FeedHeaders(const void *_data, size_t length)
 
     return request.read_state == Request::HEADERS
         ? BufferedResult::MORE
-        : (consumed == length ? BufferedResult::OK : BufferedResult::PARTIAL);
+        : BufferedResult::OK;
 }
 
 inline bool
@@ -413,7 +413,7 @@ HttpServerConnection::Feed(const void *data, size_t length)
 
     case Request::HEADERS:
         result = FeedHeaders(data, length);
-        if ((result == BufferedResult::OK || result == BufferedResult::PARTIAL) &&
+        if (result == BufferedResult::OK &&
             (request.read_state == Request::BODY ||
              request.read_state == Request::END)) {
             if (request.read_state == Request::BODY)

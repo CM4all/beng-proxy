@@ -565,7 +565,7 @@ AjpClient::Feed(const uint8_t *data, const size_t length)
                 if (data == end || response.chunk_length > 0)
                     /* want more data */
                     return nbytes < remaining
-                        ? BufferedResult::PARTIAL
+                        ? BufferedResult::OK
                         : BufferedResult::MORE;
             }
 
