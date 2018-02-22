@@ -334,7 +334,7 @@ struct HttpServerConnection final
     }
 
     /* virtual methods from class BufferedSocketHandler */
-    BufferedResult OnBufferedData(const void *buffer, size_t size) override;
+    BufferedResult OnBufferedData() override;
     DirectResult OnBufferedDirect(SocketDescriptor fd, FdType fd_type) override;
     bool OnBufferedClosed() noexcept override;
     bool OnBufferedWrite() override;

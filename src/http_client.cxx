@@ -350,7 +350,7 @@ struct HttpClient final : BufferedSocketHandler, IstreamHandler, Cancellable, De
     DirectResult TryResponseDirect(SocketDescriptor fd, FdType fd_type);
 
     /* virtual methods from class BufferedSocketHandler */
-    BufferedResult OnBufferedData(const void *buffer, size_t size) override;
+    BufferedResult OnBufferedData() override;
     DirectResult OnBufferedDirect(SocketDescriptor fd, FdType fd_type) override;
     bool OnBufferedClosed() noexcept override;
     bool OnBufferedRemaining(size_t remaining) noexcept override;
@@ -1047,9 +1047,11 @@ HttpClient::Feed(const void *data, size_t length)
  */
 
 BufferedResult
-HttpClient::OnBufferedData(const void *buffer, size_t size)
+HttpClient::OnBufferedData()
 {
-    return Feed(buffer, size);
+    auto r = socket.ReadBuffer();
+    assert(!r.empty());
+    return Feed(r.data, r.size);
 }
 
 DirectResult

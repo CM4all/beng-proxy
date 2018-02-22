@@ -173,7 +173,7 @@ struct MemcachedClient final
     DirectResult TryReadDirect(SocketDescriptor fd, FdType type);
 
     /* virtual methods from class BufferedSocketHandler */
-    BufferedResult OnBufferedData(const void *buffer, size_t size) override;
+    BufferedResult OnBufferedData() override;
     DirectResult OnBufferedDirect(SocketDescriptor fd, FdType fd_type) override;
     bool OnBufferedClosed() noexcept override;
     bool OnBufferedRemaining(size_t remaining) noexcept override;
@@ -560,12 +560,15 @@ MemcachedClient::OnBufferedWrite()
 }
 
 BufferedResult
-MemcachedClient::OnBufferedData(const void *buffer, size_t size)
+MemcachedClient::OnBufferedData()
 {
     assert(response.read_state != ReadState::END);
 
+    const auto r = socket.ReadBuffer();
+    assert(!r.empty());
+
     const ScopePoolRef ref(GetPool() TRACE_ARGS);
-    return Feed(buffer, size);
+    return Feed(r.data, r.size);
 }
 
 DirectResult

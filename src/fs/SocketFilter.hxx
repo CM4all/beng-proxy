@@ -54,10 +54,11 @@ public:
 
     /**
      * Data has been read from the socket into the input buffer.  Call
-     * FilteredSocket::InternalConsumed() each time you consume data
-     * from the given buffer.
+     * FilteredSocket::InternalReadBuffer() and
+     * FilteredSocket::InternalConsumed() to process data from the
+     * buffer.
      */
-    virtual BufferedResult OnData(const void *buffer, size_t size) noexcept = 0;
+    virtual BufferedResult OnData() noexcept = 0;
 
     virtual bool IsEmpty() const noexcept = 0;
 

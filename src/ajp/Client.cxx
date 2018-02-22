@@ -213,7 +213,7 @@ struct AjpClient final
     BufferedResult Feed(const uint8_t *data, const size_t length);
 
     /* virtual methods from class BufferedSocketHandler */
-    BufferedResult OnBufferedData(const void *buffer, size_t size) override;
+    BufferedResult OnBufferedData() override;
     bool OnBufferedClosed() noexcept override;
     bool OnBufferedRemaining(size_t remaining) noexcept override;
     bool OnBufferedWrite() override;
@@ -737,9 +737,11 @@ AjpClient::OnError(std::exception_ptr ep) noexcept
  */
 
 BufferedResult
-AjpClient::OnBufferedData(const void *buffer, size_t size)
+AjpClient::OnBufferedData()
 {
-    return Feed((const uint8_t *)buffer, size);
+    const auto r = socket.ReadBuffer();
+    assert(!r.empty());
+    return Feed((const uint8_t *)r.data, r.size);
 }
 
 bool

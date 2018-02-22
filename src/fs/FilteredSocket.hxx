@@ -404,11 +404,11 @@ struct FilteredSocket final : private BufferedSocketHandler {
         base.UnscheduleWrite();
     }
 
-    BufferedResult InvokeData(const void *data, size_t size) noexcept {
+    BufferedResult InvokeData() noexcept {
         assert(filter != nullptr);
 
         try {
-            return handler->OnBufferedData(data, size);
+            return handler->OnBufferedData();
         } catch (...) {
             handler->OnBufferedError(std::current_exception());
             return BufferedResult::CLOSED;
@@ -460,7 +460,7 @@ struct FilteredSocket final : private BufferedSocketHandler {
 
 private:
     /* virtual methods from class BufferedSocketHandler */
-    BufferedResult OnBufferedData(const void *buffer, size_t size) override;
+    BufferedResult OnBufferedData() override;
     bool OnBufferedClosed() noexcept override;
     bool OnBufferedRemaining(size_t remaining) noexcept override;
     bool OnBufferedEnd() noexcept override;

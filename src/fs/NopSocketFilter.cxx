@@ -32,12 +32,11 @@
 
 #include "NopSocketFilter.hxx"
 #include "FilteredSocket.hxx"
-#include "pool/pool.hxx"
 
 BufferedResult
-NopSocketFilter::OnData(const void *data, size_t length) noexcept
+NopSocketFilter::OnData() noexcept
 {
-    return socket->InvokeData(data, length);
+    return socket->InvokeData();
 }
 
 bool

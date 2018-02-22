@@ -237,16 +237,19 @@ HttpServerConnection::TryWrite()
  */
 
 BufferedResult
-HttpServerConnection::OnBufferedData(const void *data, size_t length)
+HttpServerConnection::OnBufferedData()
 {
+    auto r = socket.ReadBuffer();
+    assert(!r.empty());
+
     if (response.pending_drained) {
         /* discard all incoming data while we're waiting for the
            (filtered) response to be drained */
-        socket.Consumed(length);
+        socket.Consumed(r.size);
         return BufferedResult::OK;
     }
 
-    return Feed(data, length);
+    return Feed(r.data, r.size);
 }
 
 DirectResult

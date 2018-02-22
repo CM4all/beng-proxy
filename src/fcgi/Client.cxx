@@ -243,7 +243,7 @@ struct FcgiClient final
     BufferedResult ConsumeInput(const uint8_t *data, size_t length);
 
     /* virtual methods from class BufferedSocketHandler */
-    BufferedResult OnBufferedData(const void *buffer, size_t size) override;
+    BufferedResult OnBufferedData() override;
     bool OnBufferedClosed() noexcept override;
     bool OnBufferedRemaining(size_t remaining) noexcept override;
     bool OnBufferedWrite() override;
@@ -941,19 +941,22 @@ FcgiClient::_ConsumeBucketList(size_t nbytes) noexcept
  */
 
 BufferedResult
-FcgiClient::OnBufferedData(const void *buffer, size_t size)
+FcgiClient::OnBufferedData()
 {
+    auto r = socket.ReadBuffer();
+    assert(!r.empty());
+
     if (socket.IsConnected()) {
         /* check if the #FCGI_END_REQUEST packet can be found in the
            following data chunk */
-        const auto analysis = AnalyseBuffer(buffer, size);
+        const auto analysis = AnalyseBuffer(r.data, r.size);
         if (analysis.end_request_offset > 0)
             /* found it: we no longer need the socket, everything we
                need is already in the given buffer */
-            ReleaseSocket(analysis.end_request_offset == size);
+            ReleaseSocket(analysis.end_request_offset == r.size);
     }
 
-    return ConsumeInput((const uint8_t *)buffer, size);
+    return ConsumeInput((const uint8_t *)r.data, r.size);
 }
 
 bool

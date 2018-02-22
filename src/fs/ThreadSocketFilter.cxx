@@ -136,14 +136,13 @@ ThreadSocketFilter::SubmitDecryptedInput() noexcept
         if (unprotected_decrypted_input.IsEmpty())
             MoveDecryptedInputAndSchedule();
 
-        auto r = unprotected_decrypted_input.Read();
-        if (r.empty())
+        if (unprotected_decrypted_input.IsEmpty())
             return true;
 
         want_read = false;
         read_timeout = nullptr;
 
-        switch (socket->InvokeData(r.data, r.size)) {
+        switch (socket->InvokeData()) {
         case BufferedResult::OK:
             return true;
 
@@ -442,9 +441,12 @@ ThreadSocketFilter::Done() noexcept
  */
 
 BufferedResult
-ThreadSocketFilter::OnData(const void *data, size_t length) noexcept
+ThreadSocketFilter::OnData() noexcept
 {
     read_scheduled = false;
+
+    auto r = socket->InternalReadBuffer();
+    assert(!r.empty());
 
     {
         const std::lock_guard<std::mutex> lock(mutex);
@@ -455,15 +457,14 @@ ThreadSocketFilter::OnData(const void *data, size_t length) noexcept
         if (w.empty())
             return BufferedResult::BLOCKING;
 
-        if (length > w.size) {
-            length = w.size;
-        }
+        if (r.size > w.size)
+            r.size = w.size;
 
-        memcpy(w.data, data, length);
-        encrypted_input.Append(length);
+        memcpy(w.data, r.data, r.size);
+        encrypted_input.Append(r.size);
     }
 
-    socket->InternalConsumed(length);
+    socket->InternalConsumed(r.size);
 
     Schedule();
 

@@ -80,7 +80,7 @@ lb_tcp_sticky(StickyMode sticky_mode,
  */
 
 BufferedResult
-LbTcpConnection::Inbound::OnBufferedData(const void *buffer, size_t size)
+LbTcpConnection::Inbound::OnBufferedData()
 {
     auto &tcp = LbTcpConnection::FromInbound(*this);
 
@@ -95,7 +95,10 @@ LbTcpConnection::Inbound::OnBufferedData(const void *buffer, size_t size)
         return BufferedResult::CLOSED;
     }
 
-    ssize_t nbytes = tcp.outbound.socket.Write(buffer, size);
+    auto r = socket.ReadBuffer();
+    assert(!r.empty());
+
+    ssize_t nbytes = tcp.outbound.socket.Write(r.data, r.size);
     if (nbytes > 0) {
         tcp.outbound.socket.ScheduleWrite();
         socket.Consumed(nbytes);
@@ -192,13 +195,16 @@ LbTcpConnection::Inbound::OnBufferedError(std::exception_ptr ep) noexcept
  */
 
 BufferedResult
-LbTcpConnection::Outbound::OnBufferedData(const void *buffer, size_t size)
+LbTcpConnection::Outbound::OnBufferedData()
 {
     auto &tcp = LbTcpConnection::FromOutbound(*this);
 
     tcp.got_outbound_data = true;
 
-    ssize_t nbytes = tcp.inbound.socket.Write(buffer, size);
+    auto r = socket.ReadBuffer();
+    assert(!r.empty());
+
+    ssize_t nbytes = tcp.inbound.socket.Write(r.data, r.size);
     if (nbytes > 0) {
         tcp.inbound.socket.ScheduleWrite();
         socket.Consumed(nbytes);

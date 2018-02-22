@@ -89,8 +89,10 @@ struct TranslateClient final : BufferedSocketHandler, Cancellable {
     bool TryWrite();
 
     /* virtual methods from class BufferedSocketHandler */
-    BufferedResult OnBufferedData(const void *buffer, size_t size) override {
-        return Feed((const uint8_t *)buffer, size);
+    BufferedResult OnBufferedData() override {
+        auto r = socket.ReadBuffer();
+        assert(!r.empty());
+        return Feed((const uint8_t *)r.data, r.size);
     }
 
     bool OnBufferedClosed() noexcept override {

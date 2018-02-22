@@ -299,7 +299,7 @@ public:
     }
 
     void SetHandshakeCallback(BoundMethod<void()> callback) noexcept override;
-    BufferedResult OnData(const void *buffer, size_t size) noexcept override;
+    BufferedResult OnData() noexcept override;
     bool IsEmpty() const noexcept override;
     bool IsFull() const noexcept override;
     size_t GetAvailable() const noexcept override;

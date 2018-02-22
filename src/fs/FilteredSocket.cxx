@@ -44,9 +44,9 @@
  */
 
 BufferedResult
-FilteredSocket::OnBufferedData(const void *buffer, size_t size)
+FilteredSocket::OnBufferedData()
 {
-    return filter->OnData(buffer, size);
+    return filter->OnData();
 }
 
 bool
