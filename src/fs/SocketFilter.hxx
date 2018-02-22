@@ -65,9 +65,7 @@ public:
 
     virtual size_t GetAvailable() const noexcept = 0;
 
-    virtual WritableBuffer<void> ReadBuffer() noexcept {
-        return nullptr;
-    }
+    virtual WritableBuffer<void> ReadBuffer() noexcept = 0;
 
     virtual void Consumed(size_t nbytes) noexcept = 0;
 

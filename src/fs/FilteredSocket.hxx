@@ -331,6 +331,12 @@ struct FilteredSocket final : private BufferedSocketHandler {
         return base.GetAvailable();
     }
 
+    WritableBuffer<void> InternalReadBuffer() const noexcept {
+        assert(filter != nullptr);
+
+        return base.ReadBuffer();
+    }
+
     void InternalConsumed(size_t nbytes) noexcept {
         assert(filter != nullptr);
 

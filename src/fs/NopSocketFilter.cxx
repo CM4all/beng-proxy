@@ -58,6 +58,12 @@ NopSocketFilter::GetAvailable() const noexcept
     return socket->InternalGetAvailable();
 }
 
+WritableBuffer<void>
+NopSocketFilter::ReadBuffer() noexcept
+{
+    return socket->InternalReadBuffer();
+}
+
 void
 NopSocketFilter::Consumed(size_t nbytes) noexcept
 {
