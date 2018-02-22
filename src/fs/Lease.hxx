@@ -128,14 +128,10 @@ public:
 
     void ScheduleReadTimeout(bool expect_more,
                              const struct timeval *timeout) noexcept {
-        assert(!IsReleased());
-
         socket->ScheduleReadTimeout(expect_more, timeout);
     }
 
     void ScheduleReadNoTimeout(bool expect_more) noexcept {
-        assert(!IsReleased());
-
         socket->ScheduleReadNoTimeout(expect_more);
     }
 
