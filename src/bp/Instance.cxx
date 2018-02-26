@@ -47,6 +47,8 @@
 #include "was/Stock.hxx"
 #include "delegate/Stock.hxx"
 #include "tcp_stock.hxx"
+#include "fs/Stock.hxx"
+#include "fs/Balancer.hxx"
 #include "stock/MapStock.hxx"
 #include "session_save.hxx"
 #include "event/Duration.hxx"
@@ -124,6 +126,9 @@ BpInstance::FreeStocksAndCaches()
         memcached_stock_free(memcached_stock);
         memcached_stock = nullptr;
     }
+
+    delete std::exchange(fs_balancer, nullptr);
+    delete std::exchange(fs_stock, nullptr);
 
     delete std::exchange(tcp_balancer, nullptr);
 

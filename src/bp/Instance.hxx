@@ -59,6 +59,8 @@ class ResourceLoader;
 class StockMap;
 class TcpStock;
 class TcpBalancer;
+class FilteredSocketStock;
+class FilteredSocketBalancer;
 struct MemachedStock;
 class SpawnService;
 class ControlDistribute;
@@ -136,6 +138,10 @@ struct BpInstance final : PInstance, ControlHandler {
     struct tcache *translate_cache = nullptr;
     TcpStock *tcp_stock = nullptr;
     TcpBalancer *tcp_balancer = nullptr;
+
+    FilteredSocketStock *fs_stock = nullptr;
+    FilteredSocketBalancer *fs_balancer = nullptr;
+
     MemachedStock *memcached_stock = nullptr;
 
     /* cache */

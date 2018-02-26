@@ -32,6 +32,7 @@
 
 #include "Instance.hxx"
 #include "tcp_stock.hxx"
+#include "fs/Stock.hxx"
 #include "stock/Stats.hxx"
 #include "fb_pool.hxx"
 #include "SlicePool.hxx"
@@ -50,6 +51,7 @@ LbInstance::GetStats() const noexcept
     };
 
     tcp_stock->AddStats(tcp_stock_stats);
+    fs_stock->AddStats(tcp_stock_stats);
 
     stats.incoming_connections = ToBE32(http_connections.size()
                                         + tcp_connections.size());

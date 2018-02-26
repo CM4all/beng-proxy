@@ -45,6 +45,8 @@
 #include "translation/Stock.hxx"
 #include "translation/Cache.hxx"
 #include "tcp_balancer.hxx"
+#include "fs/Stock.hxx"
+#include "fs/Balancer.hxx"
 #include "memcached/memcached_stock.hxx"
 #include "stock/MapStock.hxx"
 #include "http_cache.hxx"
@@ -313,6 +315,11 @@ try {
                                       instance.config.tcp_stock_limit);
     instance.tcp_balancer = new TcpBalancer(*instance.tcp_stock,
                                             instance.failure_manager);
+
+    instance.fs_stock = new FilteredSocketStock(instance.event_loop,
+                                                instance.config.tcp_stock_limit);
+    instance.fs_balancer = new FilteredSocketBalancer(*instance.fs_stock,
+                                                      instance.failure_manager);
 
     const AddressList memcached_server(ShallowCopy(),
                                        instance.config.memcached_server);

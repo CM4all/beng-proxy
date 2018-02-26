@@ -54,6 +54,8 @@ class Stock;
 class TcpStock;
 class Balancer;
 class TcpBalancer;
+class FilteredSocketStock;
+class FilteredSocketBalancer;
 struct LbConfig;
 struct LbCertDatabaseConfig;
 class LbControl;
@@ -98,6 +100,9 @@ struct LbInstance final : PInstance {
     Balancer *balancer;
     TcpStock *tcp_stock;
     TcpBalancer *tcp_balancer;
+
+    FilteredSocketStock *fs_stock = nullptr;
+    FilteredSocketBalancer *fs_balancer = nullptr;
 
     Stock *pipe_stock;
 

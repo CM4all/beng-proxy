@@ -32,6 +32,7 @@
 
 #include "Instance.hxx"
 #include "tcp_stock.hxx"
+#include "fs/Stock.hxx"
 #include "stock/MapStock.hxx"
 #include "stock/Stats.hxx"
 #include "fb_pool.hxx"
@@ -56,6 +57,7 @@ BpInstance::GetStats() const noexcept
     };
 
     tcp_stock->AddStats(tcp_stock_stats);
+    fs_stock->AddStats(tcp_stock_stats);
 
     const auto tcache_stats = translate_cache != nullptr
         ? translate_cache_get_stats(*translate_cache)

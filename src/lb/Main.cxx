@@ -37,6 +37,8 @@
 #include "lb_check.hxx"
 #include "tcp_stock.hxx"
 #include "tcp_balancer.hxx"
+#include "fs/Stock.hxx"
+#include "fs/Balancer.hxx"
 #include "bulldog.hxx"
 #include "balancer.hxx"
 #include "pipe_stock.hxx"
@@ -112,6 +114,9 @@ LbInstance::ShutdownCallback()
     monitors.clear();
 
     pool_commit();
+
+    delete std::exchange(fs_balancer, nullptr);
+    delete std::exchange(fs_stock, nullptr);
 
     delete std::exchange(tcp_balancer, nullptr);
     delete tcp_stock;
@@ -189,6 +194,11 @@ try {
                                       cmdline.tcp_stock_limit);
     instance.tcp_balancer = new TcpBalancer(*instance.tcp_stock,
                                             instance.failure_manager);
+
+    instance.fs_stock = new FilteredSocketStock(instance.event_loop,
+                                                cmdline.tcp_stock_limit);
+    instance.fs_balancer = new FilteredSocketBalancer(*instance.fs_stock,
+                                                      instance.failure_manager);
 
     instance.pipe_stock = pipe_stock_new(instance.event_loop);
 
