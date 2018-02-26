@@ -76,6 +76,10 @@ public:
                            const char *_host)
         :event_loop(_event_loop), host(_host) {}
 
+    const char *GetFilterId() const override {
+        return host;
+    }
+
     SocketFilterPtr CreateFilter() override {
         return ssl_client_create(event_loop, host);
     }
