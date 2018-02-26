@@ -79,16 +79,6 @@ struct FilteredSocket final : private BufferedSocketHandler {
                 const struct timeval *write_timeout,
                 BufferedSocketHandler &handler) noexcept;
 
-    /**
-     * Move the socket from another #BufferedSocket instance.  This
-     * disables scheduled events, moves the input buffer and the
-     * filter to this instance and installs a new handler.
-     */
-    void Init(FilteredSocket &&src,
-              const struct timeval *read_timeout,
-              const struct timeval *write_timeout,
-              BufferedSocketHandler &handler) noexcept;
-
     bool HasFilter() const noexcept {
         return filter != nullptr;
     }

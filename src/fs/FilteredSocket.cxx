@@ -147,36 +147,6 @@ FilteredSocket::Reinit(const struct timeval *read_timeout,
 }
 
 void
-FilteredSocket::Init(FilteredSocket &&src,
-                     const struct timeval *read_timeout,
-                     const struct timeval *write_timeout,
-                     BufferedSocketHandler &__handler) noexcept
-{
-    BufferedSocketHandler *_handler = &__handler;
-
-    /* steal the filter */
-    filter = std::move(src.filter);
-
-    if (filter != nullptr) {
-        handler = _handler;
-        _handler = this;
-    }
-
-    base.Init(std::move(src.base),
-              read_timeout, write_timeout,
-              *_handler);
-
-#ifndef NDEBUG
-    ended = false;
-#endif
-
-    drained = true;
-
-    if (filter != nullptr)
-        filter->Init(*this);
-}
-
-void
 FilteredSocket::Destroy() noexcept
 {
     filter.reset();
