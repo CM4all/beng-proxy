@@ -300,7 +300,8 @@ FilteredSocketStock::Get(struct pool &pool, const char *name,
     }
 
     if (filter_factory != nullptr)
-        name = p_strcat(&pool, "|", filter_factory->GetFilterId(), nullptr);
+        name = p_strcat(&pool, name, "|", filter_factory->GetFilterId(),
+                        nullptr);
 
     stock.Get(pool, name, request, handler, cancel_ptr);
 }
