@@ -42,6 +42,7 @@
 #include "system/SetupProcess.hxx"
 #include "io/FileDescriptor.hxx"
 #include "net/SocketDescriptor.hxx"
+#include "fs/FilteredSocket.hxx"
 #include "direct.hxx"
 #include "fb_pool.hxx"
 #include "istream/UnusedPtr.hxx"
@@ -51,10 +52,16 @@
 struct Connection {
     EventLoop &event_loop;
     const pid_t pid;
-    SocketDescriptor fd;
+    FilteredSocket socket;
 
-    Connection(EventLoop &_event_loop, pid_t _pid, SocketDescriptor _fd)
-        :event_loop(_event_loop), pid(_pid), fd(_fd) {}
+    Connection(EventLoop &_event_loop, pid_t _pid, SocketDescriptor fd)
+        :event_loop(_event_loop), pid(_pid), socket(_event_loop) {
+        socket.Init(fd, FdType::FD_SOCKET, nullptr, nullptr,
+                    nullptr,
+                    // TODO replace this dummy
+                    *(BufferedSocketHandler *)nullptr);
+    }
+
     static Connection *New(EventLoop &event_loop,
                            const char *path, const char *mode);
 
@@ -68,10 +75,8 @@ struct Connection {
                  bool expect_100,
                  HttpResponseHandler &handler,
                  CancellablePointer &cancel_ptr) {
-        http_client_request(*pool, event_loop, fd, FdType::FD_SOCKET,
-                            lease,
+        http_client_request(*pool, socket, lease,
                             "localhost",
-                            nullptr,
                             method, uri, HttpHeaders(std::move(headers)),
                             std::move(body), expect_100,
                             handler, cancel_ptr);
@@ -119,9 +124,9 @@ struct Connection {
 Connection::~Connection()
 {
     assert(pid >= 1);
-    assert(fd.IsDefined());
 
-    fd.Close();
+    socket.Close();
+    socket.Destroy();
 
     int status;
     if (waitpid(pid, &status, 0) < 0) {

@@ -36,6 +36,7 @@
 #include "http_client.hxx"
 #include "http_headers.hxx"
 #include "HttpResponseHandler.hxx"
+#include "fs/FilteredSocket.hxx"
 #include "stock/Item.hxx"
 #include "lease.hxx"
 #include "istream/UnusedPtr.hxx"
@@ -48,11 +49,23 @@
 struct LhttpRequest final : Lease {
     StockItem &stock_item;
 
-    explicit LhttpRequest(StockItem &_stock_item)
-        :stock_item(_stock_item) {}
+    FilteredSocket socket;
+
+    explicit LhttpRequest(EventLoop &event_loop, StockItem &_stock_item)
+        :stock_item(_stock_item), socket(event_loop) {
+        socket.Init(lhttp_stock_item_get_socket(stock_item),
+                    lhttp_stock_item_get_type(stock_item),
+                    nullptr, nullptr,
+                    nullptr,
+                    // TODO replace this dummy
+                    *(BufferedSocketHandler *)nullptr);
+    }
 
     /* virtual methods from class Lease */
     void ReleaseLease(bool reuse) noexcept override {
+        socket.Abandon();
+        socket.Destroy();
+
         stock_item.Put(!reuse);
     }
 };
@@ -101,17 +114,15 @@ lhttp_request(struct pool &pool, EventLoop &event_loop,
         return;
     }
 
-    auto request = NewFromPool<LhttpRequest>(pool, *stock_item);
+    auto request = NewFromPool<LhttpRequest>(pool, event_loop, *stock_item);
 
     if (address.host_and_port != nullptr)
         headers.Write("host", address.host_and_port);
 
-    http_client_request(pool, event_loop,
-                        lhttp_stock_item_get_socket(*stock_item),
-                        lhttp_stock_item_get_type(*stock_item),
+    http_client_request(pool,
+                        request->socket,
                         *request,
                         stock_item->GetStockName(),
-                        nullptr,
                         method, address.uri, std::move(headers),
                         std::move(body), true,
                         handler, cancel_ptr);

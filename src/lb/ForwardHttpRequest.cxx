@@ -47,8 +47,8 @@
 #include "http_server/Request.hxx"
 #include "http_server/Handler.hxx"
 #include "http_client.hxx"
-#include "tcp_stock.hxx"
-#include "tcp_balancer.hxx"
+#include "fs/Stock.hxx"
+#include "fs/Balancer.hxx"
 #include "HttpResponseHandler.hxx"
 #include "http_headers.hxx"
 #include "stock/GetHandler.hxx"
@@ -77,7 +77,7 @@ class LbRequest final
     LbCluster &cluster;
     const LbClusterConfig &cluster_config;
 
-    TcpBalancer &balancer;
+    FilteredSocketBalancer &balancer;
 
     HttpServerRequest &request;
 
@@ -115,7 +115,7 @@ class LbRequest final
 
 public:
     LbRequest(LbHttpConnection &_connection, LbCluster &_cluster,
-              TcpBalancer &_balancer,
+              FilteredSocketBalancer &_balancer,
               HttpServerRequest &_request,
               CancellablePointer &_cancel_ptr)
         :pool(_request.pool), connection(_connection), cluster(_cluster),
@@ -171,7 +171,7 @@ private:
         // TODO: optimize this operation
         connection.per_request.forwarded_to =
             address_to_string(pool,
-                              tcp_stock_item_get_address(*stock_item));
+                              fs_stock_item_get_address(*stock_item));
     }
 
     void ResponseSent() {
@@ -355,7 +355,7 @@ LbRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
     assert(lease_state != LeaseState::NONE);
     assert(!response_sent);
 
-    GetFailureManager().Unset(tcp_stock_item_get_address(*stock_item),
+    GetFailureManager().Unset(fs_stock_item_get_address(*stock_item),
                               FAILURE_PROTOCOL);
 
     SetForwardedTo();
@@ -390,7 +390,7 @@ LbRequest::OnHttpError(std::exception_ptr ep) noexcept
     assert(!response_sent);
 
     if (IsHttpClientServerFailure(ep))
-        GetFailureManager().Set(tcp_stock_item_get_address(*stock_item),
+        GetFailureManager().Set(fs_stock_item_get_address(*stock_item),
                                 FAILURE_PROTOCOL,
                                 std::chrono::seconds(20));
 
@@ -416,7 +416,7 @@ LbRequest::OnStockItemReady(StockItem &item) noexcept
     assert(!response_sent);
 
     if (cluster_config.HasZeroConf())
-        /* without the tcp_balancer, we have to roll our own failure
+        /* without the fs_balancer, we have to roll our own failure
            updates */
         current_member->GetFailureInfo().Unset(FAILURE_CONNECT);
 
@@ -439,13 +439,9 @@ LbRequest::OnStockItemReady(StockItem &item) noexcept
                                cluster_config.mangle_via);
 
     http_client_request(pool,
-                        connection.instance.event_loop,
-                        tcp_stock_item_get(item),
-                        tcp_stock_item_get_domain(item) == AF_LOCAL
-                        ? FdType::FD_SOCKET : FdType::FD_TCP,
+                        fs_stock_item_get(item),
                         *this,
                         item.GetStockName(),
-                        nullptr,
                         request.method, request.uri,
                         HttpHeaders(std::move(headers)),
                         std::move(body), true,
@@ -548,13 +544,14 @@ LbRequest::Start()
 
         current_member = *member;
 
-        connection.instance.tcp_stock->Get(pool,
-                                           member->GetLogName(),
-                                           cluster_config.transparent_source,
-                                           bind_address,
-                                           member->GetAddress(),
-                                           20,
-                                           *this, cancel_ptr);
+        connection.instance.fs_stock->Get(pool,
+                                          member->GetLogName(),
+                                          cluster_config.transparent_source,
+                                          bind_address,
+                                          member->GetAddress(),
+                                          20,
+                                          nullptr,
+                                          *this, cancel_ptr);
 
         return;
     }
@@ -565,6 +562,7 @@ LbRequest::Start()
                  GetStickyHash(),
                  cluster_config.address_list,
                  20,
+                 nullptr,
                  *this, cancel_ptr);
 }
 
@@ -577,7 +575,7 @@ ForwardHttpRequest(LbHttpConnection &connection,
     const auto request2 =
         NewFromPool<LbRequest>(request.pool,
                                connection, cluster,
-                               *connection.instance.tcp_balancer,
+                               *connection.instance.fs_balancer,
                                request, cancel_ptr);
     request2->Start();
 }

@@ -34,6 +34,16 @@
 #include "fb_pool.hxx"
 #include "net/SocketProtocolError.hxx"
 
+FilteredSocketLease::FilteredSocketLease(FilteredSocket &_socket, Lease &lease,
+                                         const struct timeval *read_timeout,
+                                         const struct timeval *write_timeout,
+                                         BufferedSocketHandler &_handler) noexcept
+    :socket(&_socket), handler(_handler)
+{
+    socket->Reinit(read_timeout, write_timeout, *this);
+    lease_ref.Set(lease);
+}
+
 FilteredSocketLease::~FilteredSocketLease() noexcept
 {
     assert(IsReleased());
@@ -45,9 +55,6 @@ FilteredSocketLease::~FilteredSocketLease() noexcept
 void
 FilteredSocketLease::Release(bool reuse) noexcept
 {
-    socket->Abandon();
-    lease_ref.Release(reuse);
-
     // TODO: move buffers instead of copying the data
     size_t i = 0;
     while (true) {
@@ -72,8 +79,7 @@ FilteredSocketLease::Release(bool reuse) noexcept
         dest.Append(n);
     }
 
-    socket->Destroy();
-    delete socket;
+    lease_ref.Release(reuse);
     socket = nullptr;
 }
 

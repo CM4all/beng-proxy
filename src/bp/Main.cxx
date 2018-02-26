@@ -368,6 +368,7 @@ try {
     instance.direct_resource_loader =
         new DirectResourceLoader(instance.event_loop,
                                  instance.tcp_balancer,
+                                 *instance.fs_balancer,
                                  *instance.spawn_service,
                                  instance.lhttp_stock,
                                  instance.fcgi_stock,

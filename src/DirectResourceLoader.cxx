@@ -294,7 +294,7 @@ DirectResourceLoader::SendRequest(struct pool &pool,
                 filter_factory = nullptr;
             }
 
-            http_request(pool, event_loop, *tcp_balancer, session_sticky,
+            http_request(pool, fs_balancer, session_sticky,
                          filter_factory,
                          method, address.GetHttp(),
                          HttpHeaders(std::move(headers)), std::move(body),

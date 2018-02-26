@@ -37,16 +37,13 @@
 #ifndef BENG_PROXY_HTTP_CLIENT_HXX
 #define BENG_PROXY_HTTP_CLIENT_HXX
 
-#include "fs/Ptr.hxx"
-#include "io/FdType.hxx"
 #include "http/Method.h"
 
 #include <stdexcept>
 
 struct pool;
-class EventLoop;
 class UnusedIstreamPtr;
-class SocketDescriptor;
+struct FilteredSocket;
 class Lease;
 class HttpResponseHandler;
 class CancellablePointer;
@@ -110,10 +107,8 @@ IsHttpClientServerFailure(std::exception_ptr ep);
  *
  * @param pool the memory pool; this client holds a reference until
  * the response callback has returned and the response body is closed
- * @param fd a socket to the HTTP server
- * @param fd_type the exact socket type
+ * @param socket a socket to the HTTP server
  * @param lease the lease for the socket
- * @param lease_ctx a context pointer for the lease
  * @param method the HTTP request method
  * @param uri the request URI path
  * @param headers the serialized request headers (optional)
@@ -124,11 +119,9 @@ IsHttpClientServerFailure(std::exception_ptr ep);
  * @param async_ref a handle which may be used to abort the operation
  */
 void
-http_client_request(struct pool &pool, EventLoop &event_loop,
-                    SocketDescriptor fd, FdType fd_type,
-                    Lease &lease,
+http_client_request(struct pool &pool,
+                    FilteredSocket &socket, Lease &lease,
                     const char *peer_name,
-                    SocketFilterPtr filter,
                     http_method_t method, const char *uri,
                     HttpHeaders &&headers,
                     UnusedIstreamPtr body, bool expect_100,

@@ -45,6 +45,7 @@
 #include "direct.hxx"
 #include "PInstance.hxx"
 #include "fb_pool.hxx"
+#include "fs/FilteredSocket.hxx"
 #include "ssl/Init.hxx"
 #include "ssl/Client.hxx"
 #include "system/SetupProcess.hxx"
@@ -128,6 +129,8 @@ struct Context final
     UnusedIstreamPtr request_body;
 
     UniqueSocketDescriptor fd;
+    FilteredSocket fs;
+
     bool idle, reuse, aborted, got_response = false;
     http_status_t status;
 
@@ -135,7 +138,8 @@ struct Context final
     bool body_eof, body_abort, body_closed;
 
     Context()
-        :shutdown_listener(event_loop, BIND_THIS_METHOD(ShutdownCallback)) {}
+        :shutdown_listener(event_loop, BIND_THIS_METHOD(ShutdownCallback)),
+         fs(event_loop) {}
 
     void ShutdownCallback();
 
@@ -146,12 +150,19 @@ struct Context final
     /* virtual methods from class Lease */
     void ReleaseLease(bool _reuse) noexcept override {
         assert(!idle);
-        assert(fd.IsDefined());
+        assert(url.protocol == parsed_url::HTTP ||
+               url.protocol == parsed_url::HTTPS ||
+               fd.IsDefined());
 
         idle = true;
         reuse = _reuse;
 
-        fd.Close();
+        if (url.protocol == parsed_url::HTTP ||
+            url.protocol == parsed_url::HTTPS) {
+            fs.Close();
+            fs.Destroy();
+        } else
+            fd.Close();
     }
 
     /* virtual methods from class HttpResponseHandler */
@@ -284,11 +295,14 @@ try {
         break;
 
     case parsed_url::HTTP:
-        http_client_request(*pool, event_loop,
-                            fd, FdType::FD_TCP,
+        fs.Init(fd.Release(), FdType::FD_TCP, nullptr, nullptr,
+                nullptr,
+                // TODO replace this dummy
+                *(BufferedSocketHandler *)nullptr);
+
+        http_client_request(*pool, fs,
                             *this,
                             "localhost",
-                            nullptr,
                             method, url.uri,
                             HttpHeaders(std::move(headers)),
                             std::move(request_body), false,
@@ -297,12 +311,15 @@ try {
         break;
 
     case parsed_url::HTTPS:
-        http_client_request(*pool, event_loop,
-                            fd, FdType::FD_TCP,
+        fs.Init(fd.Release(), FdType::FD_TCP, nullptr, nullptr,
+                ssl_client_create(event_loop,
+                                  url.host.c_str()),
+                // TODO replace this dummy
+                *(BufferedSocketHandler *)nullptr);
+
+        http_client_request(*pool, fs,
                             *this,
                             "localhost",
-                            ssl_client_create(event_loop,
-                                              url.host.c_str()),
                             method, url.uri,
                             HttpHeaders(std::move(headers)),
                             std::move(request_body), false,

@@ -42,7 +42,7 @@
 #include "http_headers.hxx"
 #include "ssl/Filter.hxx"
 #include "istream/UnusedHoldPtr.hxx"
-#include "tcp_stock.hxx"
+#include "fs/Stock.hxx"
 #include "stock/GetHandler.hxx"
 #include "stock/Item.hxx"
 #include "net/Resolver.hxx"
@@ -170,13 +170,9 @@ LbResolveConnectRequest::OnStockItemReady(StockItem &item) noexcept
                                false);
 
     http_client_request(pool,
-                        connection.instance.event_loop,
-                        tcp_stock_item_get(item),
-                        tcp_stock_item_get_domain(item) == AF_LOCAL
-                        ? FdType::FD_SOCKET : FdType::FD_TCP,
+                        fs_stock_item_get(item),
                         *this,
                         item.GetStockName(),
-                        nullptr,
                         request.method, request.uri,
                         HttpHeaders(std::move(headers)),
                         std::move(body), true,
@@ -244,9 +240,10 @@ LbResolveConnectRequest::OnHttpError(std::exception_ptr ep) noexcept
 inline void
 LbResolveConnectRequest::Start(const char *name, SocketAddress address)
 {
-    connection.instance.tcp_stock->Get(pool, name, false, nullptr,
-                                       address, 20,
-                                       *this, cancel_ptr);
+    connection.instance.fs_stock->Get(pool, name, false, nullptr,
+                                      address, 20,
+                                      nullptr,
+                                      *this, cancel_ptr);
 
 }
 

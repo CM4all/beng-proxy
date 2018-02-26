@@ -223,11 +223,8 @@ struct HttpClient final : BufferedSocketHandler, IstreamHandler, Cancellable, De
     bool keep_alive;
 
     HttpClient(PoolPtr &&_caller_pool, struct pool &_pool,
-               EventLoop &event_loop,
-               SocketDescriptor fd, FdType fd_type,
-               Lease &lease,
+               FilteredSocket &_socket, Lease &lease,
                const char *_peer_name,
-               SocketFilterPtr &&filter,
                http_method_t method, const char *uri,
                HttpHeaders &&headers,
                UnusedIstreamPtr body, bool expect_100,
@@ -1275,11 +1272,8 @@ HttpClient::Cancel() noexcept
 
 inline
 HttpClient::HttpClient(PoolPtr &&_caller_pool, struct pool &_pool,
-                       EventLoop &event_loop,
-                       SocketDescriptor fd, FdType fd_type,
-                       Lease &lease,
+                       FilteredSocket &_socket, Lease &lease,
                        const char *_peer_name,
-                       SocketFilterPtr &&filter,
                        http_method_t method, const char *uri,
                        HttpHeaders &&headers,
                        UnusedIstreamPtr body, bool expect_100,
@@ -1288,9 +1282,8 @@ HttpClient::HttpClient(PoolPtr &&_caller_pool, struct pool &_pool,
     :caller_pool(std::move(_caller_pool)),
      peer_name(_peer_name),
      stopwatch(stopwatch_new(&_pool, peer_name, uri)),
-     socket(event_loop, fd, fd_type, lease,
+     socket(_socket, lease,
             nullptr, &http_client_timeout,
-            std::move(filter),
             *this),
      request(handler),
      response(caller_pool),
@@ -1379,18 +1372,15 @@ HttpClient::HttpClient(PoolPtr &&_caller_pool, struct pool &_pool,
 }
 
 void
-http_client_request(struct pool &_caller_pool, EventLoop &event_loop,
-                    SocketDescriptor fd, FdType fd_type,
-                    Lease &lease,
+http_client_request(struct pool &_caller_pool,
+                    FilteredSocket &socket, Lease &lease,
                     const char *peer_name,
-                    SocketFilterPtr filter,
                     http_method_t method, const char *uri,
                     HttpHeaders &&headers,
                     UnusedIstreamPtr body, bool expect_100,
                     HttpResponseHandler &handler,
                     CancellablePointer &cancel_ptr)
 {
-    assert(fd.IsDefined());
     assert(http_method_is_valid(method));
 
     PoolPtr caller_pool(_caller_pool);
@@ -1407,11 +1397,10 @@ http_client_request(struct pool &_caller_pool, EventLoop &event_loop,
     struct pool *pool =
         pool_new_linear(caller_pool, "http_client_request", 4096);
 
-    NewFromPool<HttpClient>(*pool, std::move(caller_pool), *pool, event_loop,
-                            fd, fd_type,
+    NewFromPool<HttpClient>(*pool, std::move(caller_pool), *pool,
+                            socket,
                             lease,
                             peer_name,
-                            std::move(filter),
                             method, uri,
                             std::move(headers), std::move(body), expect_100,
                             handler, cancel_ptr);

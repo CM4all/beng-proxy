@@ -52,22 +52,10 @@ class FilteredSocketLease final : BufferedSocketHandler {
     std::array<SliceFifoBuffer, 2> input;
 
 public:
-    template<typename F>
-    FilteredSocketLease(EventLoop &event_loop,
-                        SocketDescriptor fd, FdType fd_type,
-                        Lease &lease,
+    FilteredSocketLease(FilteredSocket &_socket, Lease &lease,
                         const struct timeval *read_timeout,
                         const struct timeval *write_timeout,
-                        F &&filter,
-                        BufferedSocketHandler &_handler) noexcept
-        :socket(new FilteredSocket(event_loop)),
-         handler(_handler)
-    {
-        socket->Init(fd, fd_type, read_timeout, write_timeout,
-                     std::forward<F>(filter),
-                     *this);
-        lease_ref.Set(lease);
-    }
+                        BufferedSocketHandler &_handler) noexcept;
 
     ~FilteredSocketLease() noexcept;
 

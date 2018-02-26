@@ -36,13 +36,13 @@
 #include "http_address.hxx"
 #include "HttpResponseHandler.hxx"
 #include "header_writer.hxx"
-#include "tcp_stock.hxx"
-#include "tcp_balancer.hxx"
 #include "stock/GetHandler.hxx"
 #include "stock/Item.hxx"
 #include "lease.hxx"
 #include "istream/istream.hxx"
 #include "istream/UnusedHoldPtr.hxx"
+#include "fs/Stock.hxx"
+#include "fs/Balancer.hxx"
 #include "fs/Factory.hxx"
 #include "fs/SocketFilter.hxx"
 #include "pool/pool.hxx"
@@ -60,9 +60,8 @@ class HttpRequest final
     : Cancellable, StockGetHandler, Lease, HttpResponseHandler {
 
     struct pool &pool;
-    EventLoop &event_loop;
 
-    TcpBalancer &tcp_balancer;
+    FilteredSocketBalancer &fs_balancer;
 
     const sticky_hash_t session_sticky;
 
@@ -89,8 +88,8 @@ class HttpRequest final
     } lease_state = LeaseState::NONE;
 
 public:
-    HttpRequest(struct pool &_pool, EventLoop &_event_loop,
-                TcpBalancer &_tcp_balancer,
+    HttpRequest(struct pool &_pool,
+                FilteredSocketBalancer &_fs_balancer,
                 sticky_hash_t _session_sticky,
                 SocketFilterFactory *_filter_factory,
                 http_method_t _method,
@@ -99,7 +98,7 @@ public:
                 UnusedIstreamPtr _body,
                 HttpResponseHandler &_handler,
                 CancellablePointer &_cancel_ptr)
-        :pool(_pool), event_loop(_event_loop), tcp_balancer(_tcp_balancer),
+        :pool(_pool), fs_balancer(_fs_balancer),
          session_sticky(_session_sticky),
          filter_factory(_filter_factory),
          method(_method), address(_address),
@@ -117,12 +116,13 @@ public:
     }
 
     void BeginConnect() {
-        tcp_balancer.Get(pool,
-                         false, SocketAddress::Null(),
-                         session_sticky,
-                         address.addresses,
-                         30,
-                         *this, cancel_ptr);
+        fs_balancer.Get(pool,
+                        false, SocketAddress::Null(),
+                        session_sticky,
+                        address.addresses,
+                        30,
+                        filter_factory,
+                        *this, cancel_ptr);
     }
 
 private:
@@ -200,8 +200,8 @@ HttpRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
     assert(lease_state != LeaseState::NONE);
     assert(!response_sent);
 
-    auto &fm = tcp_balancer.GetFailureManager();
-    fm.Unset(tcp_stock_item_get_address(*stock_item), FAILURE_PROTOCOL);
+    auto &fm = fs_balancer.GetFailureManager();
+    fm.Unset(fs_stock_item_get_address(*stock_item), FAILURE_PROTOCOL);
 
     handler.InvokeResponse(status, std::move(_headers), std::move(_body));
     ResponseSent();
@@ -235,8 +235,8 @@ HttpRequest::OnHttpError(std::exception_ptr ep) noexcept
         BeginConnect();
     } else {
         if (IsHttpClientServerFailure(ep)) {
-            auto &fm = tcp_balancer.GetFailureManager();
-            fm.Set(tcp_stock_item_get_address(*stock_item),
+            auto &fm = fs_balancer.GetFailureManager();
+            fm.Set(fs_stock_item_get_address(*stock_item),
                    FAILURE_PROTOCOL,
                    std::chrono::seconds(20));
         }
@@ -259,24 +259,10 @@ HttpRequest::OnStockItemReady(StockItem &item) noexcept
     stock_item = &item;
     lease_state = LeaseState::BUSY;
 
-    SocketFilterPtr filter;
-    if (filter_factory != nullptr) {
-        try {
-            filter = filter_factory->CreateFilter();
-        } catch (...) {
-            item.Put(false);
-            Failed(std::current_exception());
-            return;
-        }
-    }
-
-    http_client_request(pool, event_loop,
-                        tcp_stock_item_get(item),
-                        tcp_stock_item_get_domain(item) == AF_LOCAL
-                        ? FdType::FD_SOCKET : FdType::FD_TCP,
+    http_client_request(pool,
+                        fs_stock_item_get(item),
                         *this,
                         item.GetStockName(),
-                        std::move(filter),
                         method, address.path, std::move(headers),
                         std::move(body), true,
                         *this, cancel_ptr);
@@ -316,8 +302,8 @@ HttpRequest::ReleaseLease(bool _reuse) noexcept
  */
 
 void
-http_request(struct pool &pool, EventLoop &event_loop,
-             TcpBalancer &tcp_balancer,
+http_request(struct pool &pool,
+             FilteredSocketBalancer &fs_balancer,
              sticky_hash_t session_sticky,
              SocketFilterFactory *filter_factory,
              http_method_t method,
@@ -330,8 +316,9 @@ http_request(struct pool &pool, EventLoop &event_loop,
     assert(uwa.host_and_port != nullptr);
     assert(uwa.path != nullptr);
 
-    auto hr = NewFromPool<HttpRequest>(pool, pool, event_loop, tcp_balancer,
-                                       session_sticky, filter_factory,
+    auto hr = NewFromPool<HttpRequest>(pool, pool, fs_balancer,
+                                       session_sticky,
+                                       filter_factory,
                                        method, uwa,
                                        std::move(headers), std::move(body),
                                        handler, _cancel_ptr);
