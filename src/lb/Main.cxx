@@ -31,8 +31,9 @@
  */
 
 #include "direct.hxx"
-#include "lb_cmdline.hxx"
-#include "lb/Instance.hxx"
+#include "CommandLine.hxx"
+#include "Instance.hxx"
+#include "Config.hxx"
 #include "lb_check.hxx"
 #include "tcp_stock.hxx"
 #include "tcp_balancer.hxx"
@@ -40,7 +41,6 @@
 #include "balancer.hxx"
 #include "pipe_stock.hxx"
 #include "access_log/Glue.hxx"
-#include "lb/Config.hxx"
 #include "ssl/Init.hxx"
 #include "pool/pool.hxx"
 #include "thread_pool.hxx"

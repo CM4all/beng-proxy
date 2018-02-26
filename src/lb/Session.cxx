@@ -30,42 +30,39 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef LB_CMDLINE_HXX
-#define LB_CMDLINE_HXX
+#include "Session.hxx"
+#include "strmap.hxx"
+#include "pool/tpool.hxx"
+#include "cookie_server.hxx"
+#include "pool/pool.hxx"
 
-#include "spawn/UidGid.hxx"
+#include <string.h>
+#include <stdlib.h>
 
-struct LbConfig;
+unsigned
+lb_session_get(const StringMap &request_headers, const char *cookie_name)
+{
+    const AutoRewindPool auto_rewind(*tpool);
 
-struct LbCmdLine {
-    UidGid user;
+    const char *cookie = request_headers.Get("cookie");
+    if (cookie == NULL)
+        return 0;
 
-    UidGid logger_user;
+    const auto jar = cookie_map_parse(*tpool, cookie);
 
-    /**
-     * The configuration file.
-     */
-    const char *config_path = "/etc/cm4all/beng/lb.conf";
+    const char *session = jar.Get(cookie_name);
+    if (session == NULL)
+        return 0;
 
-    /**
-     * The Bulldog data path.
-     */
-    const char *bulldog_path = nullptr;
+    size_t length = strlen(session);
+    if (length > 8)
+        /* only parse the upper 32 bits */
+        session += length - 8;
 
-    unsigned tcp_stock_limit = 256;
+    char *endptr;
+    unsigned long id = strtoul(session, &endptr, 16);
+    if (endptr == session || *endptr != 0)
+        return 0;
 
-    /**
-     * If true, then the environment (e.g. the configuration file) is
-     * checked, and the process exits.
-     */
-    bool check = false;
-};
-
-/**
- * Parse command line options.
- */
-void
-ParseCommandLine(LbCmdLine &cmdline, LbConfig &config,
-                 int argc, char **argv);
-
-#endif
+    return (unsigned)id;
+}

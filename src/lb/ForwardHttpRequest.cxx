@@ -36,7 +36,7 @@
 #include "ClusterConfig.hxx"
 #include "ListenerConfig.hxx"
 #include "Instance.hxx"
-#include "lb_session.hxx"
+#include "Session.hxx"
 #include "Cookie.hxx"
 #include "JvmRoute.hxx"
 #include "Headers.hxx"

@@ -30,8 +30,8 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "lb_cmdline.hxx"
-#include "lb/Config.hxx"
+#include "CommandLine.hxx"
+#include "Config.hxx"
 #include "stopwatch.hxx"
 #include "io/Logger.hxx"
 
