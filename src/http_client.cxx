@@ -268,12 +268,6 @@ struct HttpClient final : BufferedSocketHandler, IstreamHandler, Cancellable, De
      * Release the socket held by this object.
      */
     void ReleaseSocket(bool reuse) {
-        if (socket.HasFilter())
-            /* never reuse the socket if it was filtered */
-            /* TODO: move the filtering layer to the tcp_stock to
-               allow reusing connections */
-            reuse = false;
-
         socket.Release(reuse);
     }
 
