@@ -31,11 +31,11 @@
  */
 
 #include "direct.hxx"
-#include "bp_cmdline.hxx"
-#include "bp/Instance.hxx"
-#include "bp/Connection.hxx"
-#include "bp/Worker.hxx"
-#include "bp_global.hxx"
+#include "CommandLine.hxx"
+#include "Instance.hxx"
+#include "Connection.hxx"
+#include "Worker.hxx"
+#include "Global.hxx"
 #include "crash.hxx"
 #include "pool/pool.hxx"
 #include "fb_pool.hxx"

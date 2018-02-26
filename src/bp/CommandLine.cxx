@@ -30,8 +30,8 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "bp_cmdline.hxx"
-#include "bp/Config.hxx"
+#include "CommandLine.hxx"
+#include "Config.hxx"
 #include "net/AddressInfo.hxx"
 #include "net/Resolver.hxx"
 #include "net/Parser.hxx"

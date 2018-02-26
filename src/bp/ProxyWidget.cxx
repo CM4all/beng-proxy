@@ -32,6 +32,7 @@
 
 #include "ProxyWidget.hxx"
 #include "Request.hxx"
+#include "Global.hxx"
 #include "widget/Widget.hxx"
 #include "widget/Ref.hxx"
 #include "widget/Class.hxx"
@@ -46,7 +47,6 @@
 #include "http_headers.hxx"
 #include "HttpResponseHandler.hxx"
 #include "XmlProcessor.hxx"
-#include "bp_global.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream_pipe.hxx"
 #include "translation/Vary.hxx"

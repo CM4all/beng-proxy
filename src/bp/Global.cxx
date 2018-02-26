@@ -30,7 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "bp_global.hxx"
+#include "Global.hxx"
 
 struct tcache *global_translate_cache;
 

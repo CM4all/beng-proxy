@@ -34,7 +34,7 @@
 #define BENG_PROXY_INSTANCE_HXX
 
 #include "PInstance.hxx"
-#include "bp_cmdline.hxx"
+#include "CommandLine.hxx"
 #include "Config.hxx"
 #include "Listener.hxx"
 #include "Connection.hxx"

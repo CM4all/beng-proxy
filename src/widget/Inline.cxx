@@ -38,7 +38,7 @@
 #include "Resolver.hxx"
 #include "Approval.hxx"
 #include "penv.hxx"
-#include "bp_global.hxx"
+#include "bp/Global.hxx"
 #include "http_util.hxx"
 #include "HttpResponseHandler.hxx"
 #include "strmap.hxx"

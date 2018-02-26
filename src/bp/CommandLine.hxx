@@ -31,16 +31,28 @@
  */
 
 /*
- * Global variables which are not worth passing around.
+ * Parse command line options.
  */
 
-#ifndef __BENG_GLOBAL_H
-#define __BENG_GLOBAL_H
+#pragma once
 
-class Stock;
+#include "spawn/UidGid.hxx"
 
-extern struct tcache *global_translate_cache;
+struct BpConfig;
 
-extern Stock *global_pipe_stock;
-
+#ifdef NDEBUG
+static const bool debug_mode = false;
+#else
+extern bool debug_mode;
 #endif
+
+struct BpCmdLine {
+    UidGid user;
+
+    UidGid logger_user;
+
+    const char *config_file = "/etc/cm4all/beng/proxy/beng-proxy.conf";
+};
+
+void
+ParseCommandLine(BpCmdLine &cmdline, BpConfig &config, int argc, char **argv);

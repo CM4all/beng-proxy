@@ -40,7 +40,7 @@
 #include "session_manager.hxx"
 #include "widget/Inline.hxx"
 #include "widget/Registry.hxx"
-#include "bp_global.hxx"
+#include "bp/Global.hxx"
 #include "crash.hxx"
 #include "session.hxx"
 
