@@ -35,8 +35,6 @@
 #include "Instance.hxx"
 #include "Config.hxx"
 #include "lb_check.hxx"
-#include "tcp_stock.hxx"
-#include "tcp_balancer.hxx"
 #include "fs/Stock.hxx"
 #include "fs/Balancer.hxx"
 #include "bulldog.hxx"
@@ -118,8 +116,6 @@ LbInstance::ShutdownCallback()
     delete std::exchange(fs_balancer, nullptr);
     delete std::exchange(fs_stock, nullptr);
 
-    delete std::exchange(tcp_balancer, nullptr);
-    delete tcp_stock;
     delete std::exchange(balancer, nullptr);
 
     if (pipe_stock != nullptr)
@@ -190,10 +186,6 @@ try {
     instance.InitAllListeners();
 
     instance.balancer = new Balancer(instance.failure_manager);
-    instance.tcp_stock = new TcpStock(instance.event_loop,
-                                      cmdline.tcp_stock_limit);
-    instance.tcp_balancer = new TcpBalancer(*instance.tcp_stock,
-                                            instance.failure_manager);
 
     instance.fs_stock = new FilteredSocketStock(instance.event_loop,
                                                 cmdline.tcp_stock_limit);
