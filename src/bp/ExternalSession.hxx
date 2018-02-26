@@ -34,8 +34,7 @@
  * Hooks into external session managers.
  */
 
-#ifndef BENG_PROXY_SESSION_EXTERNAL_HXX
-#define BENG_PROXY_SESSION_EXTERNAL_HXX
+#pragma once
 
 struct BpInstance;
 struct Session;
@@ -47,5 +46,3 @@ struct Session;
  */
 void
 RefreshExternalSession(BpInstance &instance, Session &session);
-
-#endif

@@ -30,7 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "session_external.hxx"
+#include "ExternalSession.hxx"
 #include "session.hxx"
 #include "bp/Instance.hxx"
 #include "http_address.hxx"

@@ -45,7 +45,7 @@
 #include "Request.hxx"
 #include "args.hxx"
 #include "session.hxx"
-#include "session_external.hxx"
+#include "ExternalSession.hxx"
 #include "suffix_registry.hxx"
 #include "address_suffix_registry.hxx"
 #include "header_writer.hxx"
