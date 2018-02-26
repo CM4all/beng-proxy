@@ -132,18 +132,13 @@ FilteredSocket::Init(SocketDescriptor fd, FdType fd_type,
 void
 FilteredSocket::Reinit(const struct timeval *read_timeout,
                        const struct timeval *write_timeout,
-                       BufferedSocketHandler &__handler) noexcept
+                       BufferedSocketHandler &_handler) noexcept
 {
-    BufferedSocketHandler *_handler = &__handler;
-
     if (filter != nullptr) {
-        handler = _handler;
-
-        _handler = this;
-    }
-
-    base.Reinit(read_timeout, write_timeout,
-                *_handler);
+        handler = &_handler;
+        base.SetTimeouts(read_timeout, write_timeout);
+    } else
+        base.Reinit(read_timeout, write_timeout, _handler);
 }
 
 void
