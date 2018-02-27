@@ -48,6 +48,7 @@
 #include "fs/FilteredSocket.hxx"
 #include "ssl/Init.hxx"
 #include "ssl/Client.hxx"
+#include "ssl/Config.hxx"
 #include "system/SetupProcess.hxx"
 #include "io/FileDescriptor.hxx"
 #include "net/Resolver.hxx"
@@ -369,7 +370,7 @@ try {
     const ScopeFbPoolInit fb_pool_init;
 
     const ScopeSslGlobalInit ssl_init;
-    ssl_client_init();
+    ssl_client_init(SslClientConfig());
 
     /* connect socket */
 

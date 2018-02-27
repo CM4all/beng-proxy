@@ -179,6 +179,21 @@ Zeroconf service in the local Avahi daemon.  This can be used by
 
 \end{longtabu*}
 
+\subsection{\texttt{ssl\_client}}
+
+Configures the SSL/TLS client (for HTTPS).  Example:
+
+\begin{verbatim*}
+ssl_client {
+  cert "/etc/ssl/certs/ssl-cert-snakeoil.pem" "/etc/ssl/private/ssl-cert-snakeoil.key"
+}
+\end{verbatim*}
+
+The section contains a \verb|cert| line for each client certificate to
+be used for outgoing SSL/TLS connections.  Each time a server asks for
+a client certificate, \emph{beng-proxy} will look for a matching
+certificate for the requested certificate authority.
+
 \subsection{\texttt{control}}
 \label{config.control}
 

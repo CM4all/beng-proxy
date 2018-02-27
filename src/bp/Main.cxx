@@ -252,7 +252,7 @@ try {
     SetupProcess();
 
     const ScopeSslGlobalInit ssl_init;
-    ssl_client_init();
+    ssl_client_init(instance.config.ssl_client);
 
     direct_global_init();
 

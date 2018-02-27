@@ -86,6 +86,34 @@ private:
     void CreateControl(FileLineParser &line);
 };
 
+class SslClientConfigParser : public ConfigParser {
+    SslClientConfig config;
+
+public:
+    SslClientConfig &&GetConfig() noexcept {
+        return std::move(config);
+    }
+
+protected:
+    /* virtual methods from class ConfigParser */
+    void ParseLine(FileLineParser &line) override;
+};
+
+void
+SslClientConfigParser::ParseLine(FileLineParser &line)
+{
+    const char *word = line.ExpectWord();
+
+    if (strcmp(word, "cert") == 0) {
+        const char *cert_file = line.ExpectValue();
+        const char *key_file = line.ExpectValue();
+        line.ExpectEnd();
+
+        config.cert_key.emplace_back(cert_file, key_file);
+    } else
+        throw LineParser::Error("Unknown option");
+}
+
 void
 BpConfigParser::Listener::ParseLine(FileLineParser &line)
 {
@@ -202,6 +230,9 @@ BpConfigParser::ParseLine2(FileLineParser &line)
     } else if (strcmp(word, "spawn") == 0) {
         line.ExpectSymbolAndEol('{');
         SetChild(std::make_unique<SpawnConfigParser>(config.spawn));
+    } else if (strcmp(word, "ssl_client") == 0) {
+        line.ExpectSymbolAndEol('{');
+        SetChild(std::make_unique<SslClientConfigParser>());
     } else
         throw LineParser::Error("Unknown option");
 }
@@ -211,6 +242,8 @@ BpConfigParser::FinishChild(std::unique_ptr<ConfigParser> &&c)
 {
     if (auto *al = dynamic_cast<AccessLogConfigParser *>(c.get())) {
         config.access_log = al->GetConfig();
+    } else if (auto *sc = dynamic_cast<SslClientConfigParser *>(c.get())) {
+        config.ssl_client = sc->GetConfig();
     }
 }
 

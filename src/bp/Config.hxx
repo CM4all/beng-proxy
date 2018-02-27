@@ -33,6 +33,7 @@
 #pragma once
 
 #include "access_log/Config.hxx"
+#include "ssl/Config.hxx"
 #include "net/SocketConfig.hxx"
 #include "net/AddressInfo.hxx"
 #include "util/StaticArray.hxx"
@@ -145,6 +146,8 @@ struct BpConfig {
     bool stopwatch = false;
 
     SpawnConfig spawn;
+
+    SslClientConfig ssl_client;
 
     BpConfig() {
         translation_socket.SetLocal("@translation");

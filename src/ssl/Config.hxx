@@ -64,4 +64,8 @@ struct SslConfig {
     SslVerify verify = SslVerify::NO;
 };
 
+struct SslClientConfig {
+    std::vector<SslCertKeyConfig> cert_key;
+};
+
 #endif
