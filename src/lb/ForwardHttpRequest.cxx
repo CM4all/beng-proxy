@@ -62,6 +62,7 @@
 #include "net/SocketAddress.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "net/FailureManager.hxx"
+#include "net/FailureRef.hxx"
 #include "istream/istream.hxx"
 #include "istream/UnusedHoldPtr.hxx"
 #include "util/Cancellable.hxx"
@@ -96,6 +97,7 @@ class LbRequest final
     LbCluster::MemberPtr current_member;
 
     StockItem *stock_item;
+    FailurePtr failure;
 
     /**
      * The number of remaining connection attempts.  We give up when
@@ -355,8 +357,7 @@ LbRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
     assert(lease_state != LeaseState::NONE);
     assert(!response_sent);
 
-    GetFailureManager().Unset(fs_stock_item_get_address(*stock_item),
-                              FAILURE_PROTOCOL);
+    failure->Unset(FAILURE_PROTOCOL);
 
     SetForwardedTo();
 
@@ -390,9 +391,7 @@ LbRequest::OnHttpError(std::exception_ptr ep) noexcept
     assert(!response_sent);
 
     if (IsHttpClientServerFailure(ep))
-        GetFailureManager().Set(fs_stock_item_get_address(*stock_item),
-                                FAILURE_PROTOCOL,
-                                std::chrono::seconds(20));
+        failure->Set(FAILURE_PROTOCOL, std::chrono::seconds(20));
 
     SetForwardedTo();
 
@@ -422,6 +421,8 @@ LbRequest::OnStockItemReady(StockItem &item) noexcept
 
     stock_item = &item;
     lease_state = LeaseState::BUSY;
+
+    failure = GetFailureManager().Make(fs_stock_item_get_address(*stock_item));
 
     const char *peer_subject = connection.ssl_filter != nullptr
         ? ssl_filter_get_peer_subject(connection.ssl_filter)
