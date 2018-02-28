@@ -215,8 +215,9 @@ FilteredSocketLease::OnBufferedClosed() noexcept
         result = false;
 
         if (handler.OnBufferedRemaining(GetAvailable()) &&
-            IsEmpty())
-            handler.OnBufferedEnd();
+            IsEmpty() &&
+            !handler.OnBufferedEnd())
+            handler.OnBufferedError(std::make_exception_ptr(SocketClosedPrematurelyError()));
     }
 
     return result;
