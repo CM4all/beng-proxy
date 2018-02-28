@@ -68,7 +68,7 @@ class HttpRequest final
 
     SocketFilterFactory *const filter_factory;
 
-    StockItem *stock_item;
+    StockItem *stock_item = nullptr;
     FailurePtr failure;
 
     const http_method_t method;
@@ -81,13 +81,7 @@ class HttpRequest final
     HttpResponseHandler &handler;
     CancellablePointer cancel_ptr;
 
-    bool response_sent = false, reuse;
-
-    enum class LeaseState : uint8_t {
-        NONE,
-        BUSY,
-        PENDING,
-    } lease_state = LeaseState::NONE;
+    bool response_sent = false;
 
 public:
     HttpRequest(struct pool &_pool,
@@ -129,29 +123,16 @@ public:
 
 private:
     void Destroy() {
-        assert(lease_state == LeaseState::NONE);
+        assert(stock_item == nullptr);
 
         DeleteFromPool(pool, this);
-    }
-
-    void DoRelease() {
-        assert(lease_state == LeaseState::PENDING);
-
-        lease_state = LeaseState::NONE;
-        stock_item->Put(!reuse);
-    }
-
-    bool CheckRelease() {
-        if (lease_state == LeaseState::PENDING)
-            DoRelease();
-        return lease_state == LeaseState::NONE;
     }
 
     void ResponseSent() {
         assert(!response_sent);
         response_sent = true;
 
-        if (CheckRelease())
+        if (stock_item == nullptr)
             Destroy();
     }
 
@@ -173,7 +154,7 @@ private:
         body.Clear();
         cancel_ptr.Cancel();
 
-        CheckRelease();
+        assert(stock_item == nullptr);
         Destroy();
     }
 
@@ -199,7 +180,6 @@ void
 HttpRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
                             UnusedIstreamPtr _body) noexcept
 {
-    assert(lease_state != LeaseState::NONE);
     assert(!response_sent);
 
     failure->Unset(FAILURE_PROTOCOL);
@@ -223,7 +203,6 @@ HasHttpClientErrorCode(std::exception_ptr ep,
 void
 HttpRequest::OnHttpError(std::exception_ptr ep) noexcept
 {
-    assert(lease_state != LeaseState::NONE);
     assert(!response_sent);
 
     if (retries > 0 &&
@@ -252,11 +231,10 @@ HttpRequest::OnHttpError(std::exception_ptr ep) noexcept
 void
 HttpRequest::OnStockItemReady(StockItem &item) noexcept
 {
-    assert(lease_state == LeaseState::NONE);
+    assert(stock_item == nullptr);
     assert(!response_sent);
 
     stock_item = &item;
-    lease_state = LeaseState::BUSY;
 
     failure = fs_balancer.GetFailureManager()
         .Make(fs_stock_item_get_address(*stock_item));
@@ -273,7 +251,7 @@ HttpRequest::OnStockItemReady(StockItem &item) noexcept
 void
 HttpRequest::OnStockItemError(std::exception_ptr ep) noexcept
 {
-    assert(lease_state == LeaseState::NONE);
+    assert(stock_item == nullptr);
     assert(!response_sent);
 
     Failed(ep);
@@ -285,15 +263,14 @@ HttpRequest::OnStockItemError(std::exception_ptr ep) noexcept
  */
 
 void
-HttpRequest::ReleaseLease(bool _reuse) noexcept
+HttpRequest::ReleaseLease(bool reuse) noexcept
 {
-    assert(lease_state == LeaseState::BUSY);
+    assert(stock_item != nullptr);
 
-    lease_state = LeaseState::PENDING;
-    reuse = _reuse;
+    stock_item->Put(!reuse);
+    stock_item = nullptr;
 
     if (response_sent) {
-        DoRelease();
         Destroy();
     }
 }
