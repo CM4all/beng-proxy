@@ -88,3 +88,41 @@ public:
         return info;
     }
 };
+
+/**
+ * Like #FailureRef, but manages a dynamic pointer.
+ */
+class FailurePtr {
+    ReferencedFailureInfo *info = nullptr;
+
+public:
+    FailurePtr() = default;
+
+    ~FailurePtr() noexcept {
+        if (info != nullptr)
+            info->Unref();
+    }
+
+    FailurePtr(const FailurePtr &) = delete;
+    FailurePtr &operator=(const FailurePtr &) = delete;
+
+    operator bool() const {
+        return info != nullptr;
+    }
+
+    FailurePtr &operator=(ReferencedFailureInfo &new_info) noexcept {
+        if (info != nullptr)
+            info->Unref();
+        info = &new_info;
+        info->Ref();
+        return *this;
+    }
+
+    FailureInfo *operator->() {
+        return info;
+    }
+
+    FailureInfo &operator*() {
+        return *info;
+    }
+};
