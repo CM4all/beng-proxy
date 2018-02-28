@@ -51,13 +51,13 @@
 #include "net/FailureManager.hxx"
 #include "util/Cancellable.hxx"
 #include "util/Exception.hxx"
-
+#include "util/LeakDetector.hxx"
 #include "util/Compiler.h"
 
 #include <string.h>
 
 class HttpRequest final
-    : Cancellable, StockGetHandler, Lease, HttpResponseHandler {
+    : Cancellable, StockGetHandler, Lease, HttpResponseHandler, LeakDetector {
 
     struct pool &pool;
 
