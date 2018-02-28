@@ -55,6 +55,9 @@ FilteredSocketLease::~FilteredSocketLease() noexcept
 void
 FilteredSocketLease::Release(bool reuse) noexcept
 {
+    assert(!IsReleased());
+    assert(!lease_ref.released);
+
     // TODO: move buffers instead of copying the data
     size_t i = 0;
     while (true) {
