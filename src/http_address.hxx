@@ -56,6 +56,11 @@ struct HttpAddress {
     const bool ssl;
 
     /**
+     * The name of the SSL/TLS client certificate to be used.
+     */
+    const char *certificate = nullptr;
+
+    /**
      * The host part of the URI (including the port, if any).  nullptr if
      * this is HTTP over UNIX domain socket.
      */
@@ -83,6 +88,7 @@ struct HttpAddress {
 
     constexpr HttpAddress(ShallowCopy shallow_copy, const HttpAddress &src)
         :protocol(src.protocol), ssl(src.ssl),
+         certificate(src.certificate),
          host_and_port(src.host_and_port),
          path(src.path),
          expand_path(src.expand_path),
@@ -98,6 +104,7 @@ struct HttpAddress {
     constexpr HttpAddress(ShallowCopy shallow_copy, const HttpAddress &src,
                           const char *_path)
         :protocol(src.protocol), ssl(src.ssl),
+         certificate(src.certificate),
          host_and_port(src.host_and_port),
          path(_path),
          expand_path(nullptr),

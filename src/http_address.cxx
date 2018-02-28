@@ -68,6 +68,7 @@ HttpAddress::HttpAddress(ShallowCopy shallow_copy,
 
 HttpAddress::HttpAddress(AllocatorPtr alloc, const HttpAddress &src)
     :protocol(src.protocol), ssl(src.ssl),
+     certificate(alloc.CheckDup(src.certificate)),
      host_and_port(alloc.CheckDup(src.host_and_port)),
      path(alloc.Dup(src.path)),
      expand_path(alloc.CheckDup(src.expand_path)),
@@ -78,6 +79,7 @@ HttpAddress::HttpAddress(AllocatorPtr alloc, const HttpAddress &src)
 HttpAddress::HttpAddress(AllocatorPtr alloc, const HttpAddress &src,
                          const char *_path)
     :protocol(src.protocol), ssl(src.ssl),
+     certificate(alloc.CheckDup(src.certificate)),
      host_and_port(alloc.CheckDup(src.host_and_port)),
      path(alloc.Dup(_path)),
      expand_path(nullptr),
