@@ -194,6 +194,20 @@ be used for outgoing SSL/TLS connections.  Each time a server asks for
 a client certificate, \emph{beng-proxy} will look for a matching
 certificate for the requested certificate authority.
 
+Instead of letting \emph{beng-proxy} choose a matching certificate,
+the translation server can specify a certificate by its name.  To give
+a certificate a name, add a third parameter:
+
+\begin{verbatim*}
+ssl_client {
+  cert "/etc/ssl/certs/ssl-cert-snakeoil.pem" "/etc/ssl/private/ssl-cert-snakeoil.key" "thename"
+}
+\end{verbatim*}
+
+\label{certificate}
+Now the translation server can send the \verb|CERTIFICATE| packet with
+payload ``\texttt{thename}'' to select this certificate.
+
 \subsection{\texttt{control}}
 \label{config.control}
 
@@ -677,6 +691,9 @@ The translation server can change the header forwarding policy, see
 To enable SSL/TLS, specify a \texttt{https://} URL in the \verb|HTTP|
 packet.
 
+After that, the \verb|CERTIFICATE| packet can choose a client
+certificate (see \ref{certificate}).
+
 \subsection{AJP v1.3}
 \label{ajp}
 
@@ -1071,6 +1088,11 @@ this parameter is usually not used \\
 \verb|HTTP| & this URL parameter may be specified instead of
 \verb|PATH| to tell \emph{beng-proxy} to obtain the resource from a
 remote HTTP server (see \ref{http}) \\
+
+\hline
+
+\verb|CERTIFICATE| & Use the named client certificate for the outbound
+SSL connection (see \ref{certificate}). \\
 
 \hline
 
