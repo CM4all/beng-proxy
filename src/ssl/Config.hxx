@@ -64,8 +64,18 @@ struct SslConfig {
     SslVerify verify = SslVerify::NO;
 };
 
+struct NamedSslCertKeyConfig : SslCertKeyConfig {
+    std::string name;
+
+    template<typename N, typename C, typename K>
+    NamedSslCertKeyConfig(N &&_name, C &&_cert_file, K &&_key_file) noexcept
+        :SslCertKeyConfig(std::forward<C>(_cert_file),
+                          std::forward<K>(_key_file)),
+         name(std::forward<N>(_name)) {}
+};
+
 struct SslClientConfig {
-    std::vector<SslCertKeyConfig> cert_key;
+    std::vector<NamedSslCertKeyConfig> cert_key;
 };
 
 #endif

@@ -107,9 +107,14 @@ SslClientConfigParser::ParseLine(FileLineParser &line)
     if (strcmp(word, "cert") == 0) {
         const char *cert_file = line.ExpectValue();
         const char *key_file = line.ExpectValue();
+
+        std::string name;
+        if (!line.IsEnd())
+            name = line.ExpectValue();
+
         line.ExpectEnd();
 
-        config.cert_key.emplace_back(cert_file, key_file);
+        config.cert_key.emplace_back(std::move(name), cert_file, key_file);
     } else
         throw LineParser::Error("Unknown option");
 }

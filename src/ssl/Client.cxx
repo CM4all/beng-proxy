@@ -58,7 +58,7 @@ class SslClientCerts {
              X509NameCompare> by_issuer;
 
 public:
-    explicit SslClientCerts(const std::vector<SslCertKeyConfig> &config);
+    explicit SslClientCerts(const std::vector<NamedSslCertKeyConfig> &config);
 
     bool Find(X509_NAME &name, X509 **x509, EVP_PKEY **pkey) const noexcept;
 
@@ -89,7 +89,7 @@ LoadCertKey(const SslCertKeyConfig &config)
     return LoadCertKeyFile(config.cert_file.c_str(), config.key_file.c_str());
 }
 
-SslClientCerts::SslClientCerts(const std::vector<SslCertKeyConfig> &config)
+SslClientCerts::SslClientCerts(const std::vector<NamedSslCertKeyConfig> &config)
 {
     for (const auto &i : config) {
         try {
