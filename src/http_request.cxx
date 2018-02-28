@@ -49,6 +49,7 @@
 #include "net/SocketAddress.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "net/FailureManager.hxx"
+#include "net/FailureRef.hxx"
 #include "util/Cancellable.hxx"
 #include "util/Exception.hxx"
 #include "util/LeakDetector.hxx"
@@ -68,6 +69,7 @@ class HttpRequest final
     SocketFilterFactory *const filter_factory;
 
     StockItem *stock_item;
+    FailurePtr failure;
 
     const http_method_t method;
     const HttpAddress &address;
@@ -200,8 +202,7 @@ HttpRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
     assert(lease_state != LeaseState::NONE);
     assert(!response_sent);
 
-    auto &fm = fs_balancer.GetFailureManager();
-    fm.Unset(fs_stock_item_get_address(*stock_item), FAILURE_PROTOCOL);
+    failure->Unset(FAILURE_PROTOCOL);
 
     handler.InvokeResponse(status, std::move(_headers), std::move(_body));
     ResponseSent();
@@ -235,10 +236,8 @@ HttpRequest::OnHttpError(std::exception_ptr ep) noexcept
         BeginConnect();
     } else {
         if (IsHttpClientServerFailure(ep)) {
-            auto &fm = fs_balancer.GetFailureManager();
-            fm.Set(fs_stock_item_get_address(*stock_item),
-                   FAILURE_PROTOCOL,
-                   std::chrono::seconds(20));
+            failure->Set(FAILURE_PROTOCOL,
+                         std::chrono::seconds(20));
         }
 
         Failed(ep);
@@ -258,6 +257,9 @@ HttpRequest::OnStockItemReady(StockItem &item) noexcept
 
     stock_item = &item;
     lease_state = LeaseState::BUSY;
+
+    failure = fs_balancer.GetFailureManager()
+        .Make(fs_stock_item_get_address(*stock_item));
 
     http_client_request(pool,
                         fs_stock_item_get(item),
