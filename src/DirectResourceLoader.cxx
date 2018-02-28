@@ -70,18 +70,19 @@
 class SslSocketFilterFactory final : public SocketFilterFactory {
     EventLoop &event_loop;
     const char *const host;
+    const char *const certificate;
 
 public:
     SslSocketFilterFactory(EventLoop &_event_loop,
-                           const char *_host)
-        :event_loop(_event_loop), host(_host) {}
+                           const char *_host, const char *_certificate)
+        :event_loop(_event_loop), host(_host), certificate(_certificate) {}
 
     const char *GetFilterId() const override {
         return host;
     }
 
     SocketFilterPtr CreateFilter() override {
-        return ssl_client_create(event_loop, host);
+        return ssl_client_create(event_loop, host, certificate);
     }
 };
 
@@ -289,7 +290,8 @@ DirectResourceLoader::SendRequest(struct pool &pool,
                 filter_factory = NewFromPool<SslSocketFilterFactory>(pool,
                                                                      event_loop,
                                                                      /* TODO: only host */
-                                                                     address.GetHttp().host_and_port);
+                                                                     address.GetHttp().host_and_port,
+                                                                     address.GetHttp().certificate);
             } else {
                 filter_factory = nullptr;
             }

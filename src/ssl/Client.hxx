@@ -50,9 +50,11 @@ void
 ssl_client_deinit();
 
 /**
- *
  * Throws std::runtime_error on error.
+ *
+ * @param certificate the name of the client certificate to be used
  */
 SocketFilterPtr
 ssl_client_create(EventLoop &event_loop,
-                  const char *hostname);
+                  const char *hostname,
+                  const char *certificate);

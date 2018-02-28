@@ -57,11 +57,21 @@ class SslClientCerts {
              std::pair<UniqueX509, UniqueEVP_PKEY>,
              X509NameCompare> by_issuer;
 
+    std::map<std::string,
+             std::pair<UniqueX509, UniqueEVP_PKEY>> by_name;
+
 public:
     explicit SslClientCerts(const std::vector<NamedSslCertKeyConfig> &config);
 
     bool Find(X509_NAME &name, X509 **x509, EVP_PKEY **pkey) const noexcept;
 
+    gcc_pure
+    const auto *FindByConfiguredName(const char *name) const {
+        auto i = by_name.find(name);
+        return i != by_name.end()
+            ? &i->second
+            : nullptr;
+    }
 };
 
 static SslCtx ssl_client_ctx;
@@ -94,6 +104,15 @@ SslClientCerts::SslClientCerts(const std::vector<NamedSslCertKeyConfig> &config)
     for (const auto &i : config) {
         try {
             auto ck = LoadCertKey(i);
+            if (!i.name.empty()) {
+                auto j = by_name.emplace(std::piecewise_construct,
+                                         std::forward_as_tuple(i.name),
+                                         std::forward_as_tuple(UpRef(*ck.first), UpRef(*ck.second)));
+                if (!j.second)
+                    throw FormatRuntimeError("Duplicate certificate name '%s'",
+                                             i.name.c_str());
+            }
+
             X509_NAME *issuer = X509_get_issuer_name(ck.first.get());
             if (issuer != nullptr) {
                 UniqueX509_NAME issuer2(X509_NAME_dup(issuer));
@@ -154,7 +173,8 @@ ssl_client_deinit()
 
 SocketFilterPtr
 ssl_client_create(EventLoop &event_loop,
-                  const char *hostname)
+                  const char *hostname,
+                  const char *certificate)
 {
     UniqueSSL ssl(SSL_new(ssl_client_ctx.get()));
     if (!ssl)
@@ -165,6 +185,17 @@ ssl_client_create(EventLoop &event_loop,
     if (hostname != nullptr)
         /* why the fuck does OpenSSL want a non-const string? */
         SSL_set_tlsext_host_name(ssl.get(), const_cast<char *>(hostname));
+
+    if (certificate != nullptr) {
+        const auto *c = ssl_client_certs != nullptr
+            ? ssl_client_certs->FindByConfiguredName(certificate)
+            : nullptr;
+        if (c == nullptr)
+            throw std::runtime_error("Selected certificate not found in configuration");
+
+        SSL_use_PrivateKey(ssl.get(), c->second.get());
+        SSL_use_certificate(ssl.get(), c->first.get());
+    }
 
     auto f = ssl_filter_new(std::move(ssl));
 
