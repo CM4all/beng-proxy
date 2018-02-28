@@ -162,7 +162,9 @@ ssl_client_create(EventLoop &event_loop,
 
     SSL_set_connect_state(ssl.get());
 
-    (void)hostname; // TODO: use this parameter
+    if (hostname != nullptr)
+        /* why the fuck does OpenSSL want a non-const string? */
+        SSL_set_tlsext_host_name(ssl.get(), const_cast<char *>(hostname));
 
     auto f = ssl_filter_new(std::move(ssl));
 
