@@ -96,7 +96,7 @@ class LbRequest final
      */
     LbCluster::MemberPtr current_member;
 
-    StockItem *stock_item;
+    StockItem *stock_item = nullptr;
     FailurePtr failure;
 
     /**
@@ -107,13 +107,7 @@ class LbRequest final
 
     unsigned new_cookie = 0;
 
-    bool response_sent = false, reuse;
-
-    enum class LeaseState : uint8_t {
-        NONE,
-        BUSY,
-        PENDING,
-    } lease_state = LeaseState::NONE;
+    bool response_sent = false;
 
 public:
     LbRequest(LbHttpConnection &_connection, LbCluster &_cluster,
@@ -151,22 +145,9 @@ private:
     }
 
     void Destroy() {
-        assert(lease_state == LeaseState::NONE);
+        assert(stock_item == nullptr);
 
         DeleteFromPool(pool, this);
-    }
-
-    void DoRelease() {
-        assert(lease_state == LeaseState::PENDING);
-
-        lease_state = LeaseState::NONE;
-        stock_item->Put(!reuse);
-    }
-
-    bool CheckRelease() {
-        if (lease_state == LeaseState::PENDING)
-            DoRelease();
-        return lease_state == LeaseState::NONE;
     }
 
     void SetForwardedTo() {
@@ -180,7 +161,7 @@ private:
         assert(!response_sent);
         response_sent = true;
 
-        if (CheckRelease())
+        if (stock_item == nullptr)
             Destroy();
     }
 
@@ -207,7 +188,7 @@ private:
         body.Clear();
         cancel_ptr.Cancel();
 
-        CheckRelease();
+        assert(stock_item == nullptr);
         Destroy();
     }
 
@@ -354,7 +335,6 @@ void
 LbRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
                           UnusedIstreamPtr response_body) noexcept
 {
-    assert(lease_state != LeaseState::NONE);
     assert(!response_sent);
 
     failure->Unset(FAILURE_PROTOCOL);
@@ -387,7 +367,6 @@ LbRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
 void
 LbRequest::OnHttpError(std::exception_ptr ep) noexcept
 {
-    assert(lease_state != LeaseState::NONE);
     assert(!response_sent);
 
     if (IsHttpClientServerFailure(ep))
@@ -411,7 +390,7 @@ LbRequest::OnHttpError(std::exception_ptr ep) noexcept
 void
 LbRequest::OnStockItemReady(StockItem &item) noexcept
 {
-    assert(lease_state == LeaseState::NONE);
+    assert(stock_item == nullptr);
     assert(!response_sent);
 
     if (cluster_config.HasZeroConf())
@@ -420,7 +399,6 @@ LbRequest::OnStockItemReady(StockItem &item) noexcept
         current_member->GetFailureInfo().Unset(FAILURE_CONNECT);
 
     stock_item = &item;
-    lease_state = LeaseState::BUSY;
 
     failure = GetFailureManager().Make(fs_stock_item_get_address(*stock_item));
 
@@ -452,7 +430,7 @@ LbRequest::OnStockItemReady(StockItem &item) noexcept
 void
 LbRequest::OnStockItemError(std::exception_ptr ep) noexcept
 {
-    assert(lease_state == LeaseState::NONE);
+    assert(stock_item == nullptr);
     assert(!response_sent);
 
     connection.logger(2, "Connect error: ", ep);
@@ -484,15 +462,14 @@ LbRequest::OnStockItemError(std::exception_ptr ep) noexcept
  */
 
 void
-LbRequest::ReleaseLease(bool _reuse) noexcept
+LbRequest::ReleaseLease(bool reuse) noexcept
 {
-    assert(lease_state == LeaseState::BUSY);
+    assert(stock_item != nullptr);
 
-    lease_state = LeaseState::PENDING;
-    reuse = _reuse;
+    stock_item->Put(!reuse);
+    stock_item = nullptr;
 
     if (response_sent) {
-        DoRelease();
         Destroy();
     }
 }
