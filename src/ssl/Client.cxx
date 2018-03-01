@@ -141,11 +141,8 @@ SslClientCerts::Find(X509_NAME &name,
     if (i == by_issuer.end())
         return false;
 
-    X509_up_ref(i->second.first.get());
-    *x509 = i->second.first.get();
-
-    EVP_PKEY_up_ref(i->second.second.get());
-    *pkey = i->second.second.get();
+    *x509 = UpRef(*i->second.first).release();
+    *pkey = UpRef(*i->second.second).release();
     return true;
 }
 
