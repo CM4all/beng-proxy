@@ -154,7 +154,7 @@ private:
         // TODO: optimize this operation
         connection.per_request.forwarded_to =
             address_to_string(pool,
-                              fs_stock_item_get_address(*stock_item));
+                              GetFailureManager().GetAddress(*failure));
     }
 
     void ResponseSent() {
