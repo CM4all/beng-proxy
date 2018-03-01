@@ -141,6 +141,21 @@ extract_server_name(struct pool *pool, const StringMap *headers,
     return p_strndup(pool, p, colon - p);
 }
 
+gcc_pure
+static const char *
+GetHostWithoutPort(struct pool &pool, const HttpAddress &address) noexcept
+{
+    const char *host_and_port = address.host_and_port;
+    if (host_and_port == nullptr)
+        return nullptr;
+
+    auto e = ExtractHost(host_and_port);
+    if (e.host.IsNull())
+        return nullptr;
+
+    return p_strdup(pool, e.host);
+}
+
 void
 DirectResourceLoader::SendRequest(struct pool &pool,
                                   sticky_hash_t session_sticky,
@@ -289,8 +304,7 @@ DirectResourceLoader::SendRequest(struct pool &pool,
             if (address.GetHttp().ssl) {
                 filter_factory = NewFromPool<SslSocketFilterFactory>(pool,
                                                                      event_loop,
-                                                                     /* TODO: only host */
-                                                                     address.GetHttp().host_and_port,
+                                                                     GetHostWithoutPort(pool, address.GetHttp()),
                                                                      address.GetHttp().certificate);
             } else {
                 filter_factory = nullptr;
