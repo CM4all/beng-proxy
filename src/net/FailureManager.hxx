@@ -59,6 +59,10 @@ class FailureManager {
                 Expiry _expires) noexcept
             :ReferencedFailureInfo(_status, _expires), address(_address) {}
 
+        SocketAddress GetAddress() const noexcept {
+            return address;
+        }
+
         struct Hash {
             gcc_pure
             size_t operator()(const SocketAddress a) const noexcept;
@@ -114,6 +118,11 @@ public:
      * return value should be passed to the #FailureRef constructor.
      */
     ReferencedFailureInfo &Make(SocketAddress address) noexcept;
+
+    SocketAddress GetAddress(const FailureInfo &info) const noexcept {
+        const auto &f = (const Failure &)info;
+        return f.GetAddress();
+    }
 
     void Set(SocketAddress address, enum failure_status status,
              std::chrono::seconds duration) noexcept;
