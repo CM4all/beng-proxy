@@ -109,8 +109,11 @@ ToJson(const ReceivedAccessLogDatagram &d)
     if (d.valid_duration)
         root["duration"] = StringFormat<64>("%f", d.duration * 1e-6).c_str();
 
-    if (d.type != Net::Log::Type::UNSPECIFIED)
-        root["type"] = ToString(d.type);
+    if (d.type != Net::Log::Type::UNSPECIFIED) {
+        const char *type = ToString(d.type);
+        if (type != nullptr)
+            root["type"] = type;
+    }
 
     return root;
 }
