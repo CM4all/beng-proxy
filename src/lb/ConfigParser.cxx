@@ -1060,6 +1060,9 @@ LbConfigParser::Listener::ParseLine(FileLineParser &line)
         if (config.cert_db != nullptr)
             throw LineParser::Error("ssl_cert_db already set");
 
+        if (config.ssl_config.verify != SslVerify::NO)
+            throw LineParser::Error("ssl_cert_db and ssl_verify are mutually exclusive");
+
         const char *name = line.ExpectValueAndEnd();
         config.cert_db = parent.config.FindCertDb(name);
         if (config.cert_db == nullptr)
@@ -1134,6 +1137,10 @@ LbConfigParser::Listener::ParseLine(FileLineParser &line)
             config.ssl_config.verify = SslVerify::OPTIONAL;
         else
             throw LineParser::Error("yes/no expected");
+
+        if (config.ssl_config.verify != SslVerify::NO &&
+            config.cert_db != nullptr)
+            throw LineParser::Error("ssl_cert_db and ssl_verify are mutually exclusive");
     } else
         throw LineParser::Error("Unknown option");
 }
