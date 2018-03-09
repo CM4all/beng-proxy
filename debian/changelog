@@ -4,7 +4,7 @@ cm4all-beng-proxy (13.11) unstable; urgency=low
   * log-json: fix crash bug with unknown type value
   * log: support type "SSH"
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Fri, 09 Mar 2018 09:15:14 -0000
 
 cm4all-beng-proxy (13.10) unstable; urgency=low
 
