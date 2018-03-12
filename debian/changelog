@@ -4,7 +4,7 @@ cm4all-beng-proxy (14.0.8) unstable; urgency=low
   * bp: add SSL/TLS support to the HTTP server
   * fix bogus assertion failure
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Mon, 12 Mar 2018 10:38:35 -0000
 
 cm4all-beng-proxy (14.0.7) unstable; urgency=low
 
