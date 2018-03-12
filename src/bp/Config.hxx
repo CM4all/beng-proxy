@@ -59,6 +59,10 @@ struct BpConfig {
 
         std::string zeroconf_service;
 
+        bool ssl = false;
+
+        SslConfig ssl_config;
+
         Listener() {
             listen = 64;
             tcp_defer_accept = 10;

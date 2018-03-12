@@ -36,6 +36,8 @@
 #include "event/net/ServerSocket.hxx"
 
 struct BpInstance;
+struct SslConfig;
+struct SslFactory;
 
 /**
  * Listener for incoming HTTP connections.
@@ -45,8 +47,12 @@ class BPListener final : public ServerSocket {
 
     const char *const tag;
 
+    SslFactory *ssl_factory = nullptr;
+
 public:
-    BPListener(BpInstance &_instance, const char *_tag);
+    BPListener(BpInstance &_instance, const char *_tag,
+               const SslConfig *ssl_config);
+    ~BPListener();
 
 protected:
     void OnAccept(UniqueSocketDescriptor &&fd, SocketAddress address) override;

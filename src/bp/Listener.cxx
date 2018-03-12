@@ -33,19 +33,30 @@
 #include "Listener.hxx"
 #include "Connection.hxx"
 #include "Instance.hxx"
+#include "ssl/Factory.hxx"
+#include "ssl/SniCallback.hxx"
 #include "net/SocketAddress.hxx"
 #include "io/Logger.hxx"
 #include "util/Exception.hxx"
 
-BPListener::BPListener(BpInstance &_instance, const char *_tag)
+BPListener::BPListener(BpInstance &_instance, const char *_tag,
+                       const SslConfig *ssl_config)
     :ServerSocket(_instance.event_loop), instance(_instance), tag(_tag)
 {
+    if (ssl_config != nullptr)
+        ssl_factory = ssl_factory_new_server(*ssl_config, nullptr);
+}
+
+BPListener::~BPListener()
+{
+    if (ssl_factory != nullptr)
+        ssl_factory_free(ssl_factory);
 }
 
 void
 BPListener::OnAccept(UniqueSocketDescriptor &&_fd, SocketAddress address)
 {
-    new_connection(instance, std::move(_fd), address, tag);
+    new_connection(instance, std::move(_fd), address, ssl_factory, tag);
 }
 
 void

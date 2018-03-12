@@ -144,6 +144,24 @@ BpConfigParser::Listener::ParseLine(FileLineParser &line)
     } else if (strcmp(word, "free_bind") == 0) {
         config.free_bind = line.NextBool();
         line.ExpectEnd();
+    } else if (strcmp(word, "ssl") == 0) {
+        bool value = line.NextBool();
+
+        if (config.ssl && !value)
+            throw LineParser::Error("SSL cannot be disabled at this point");
+
+        line.ExpectEnd();
+
+        config.ssl = value;
+    } else if (strcmp(word, "ssl_cert") == 0) {
+        if (!config.ssl)
+            throw LineParser::Error("SSL is not enabled");
+
+        const char *path = line.ExpectValue();
+        const char *key_path = line.ExpectValue();
+        line.ExpectEnd();
+
+        config.ssl_config.cert_key.emplace_back(path, key_path);
     } else
         throw LineParser::Error("Unknown option");
 }
@@ -153,6 +171,9 @@ BpConfigParser::Listener::Finish()
 {
     if (config.bind_address.IsNull())
         throw LineParser::Error("Listener has no bind address");
+
+    if (config.ssl && config.ssl_config.cert_key.empty())
+        throw LineParser::Error("No SSL certificates ");
 
     parent.config.listen.emplace_front(std::move(config));
 

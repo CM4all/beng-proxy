@@ -46,6 +46,7 @@ struct BpConfig;
 struct BpInstance;
 class UniqueSocketDescriptor;
 class SocketAddress;
+struct SslFactory;
 struct HttpServerConnection;
 
 /*
@@ -122,6 +123,7 @@ struct BpConnection final
 void
 new_connection(BpInstance &instance,
                UniqueSocketDescriptor &&fd, SocketAddress address,
+               SslFactory *ssl_factory,
                const char *listener_tag);
 
 void

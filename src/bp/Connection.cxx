@@ -41,6 +41,9 @@
 #include "access_log/Glue.hxx"
 #include "drop.hxx"
 #include "address_string.hxx"
+#include "thread_pool.hxx"
+#include "fs/ThreadSocketFilter.hxx"
+#include "ssl/Filter.hxx"
 #include "net/SocketProtocolError.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
@@ -187,6 +190,7 @@ BpConnection::HttpConnectionClosed()
 void
 new_connection(BpInstance &instance,
                UniqueSocketDescriptor &&fd, SocketAddress address,
+               SslFactory *ssl_factory,
                const char *listener_tag)
 {
     struct pool *pool;
@@ -200,6 +204,14 @@ new_connection(BpInstance &instance,
                       ", dropping");
             return;
         }
+    }
+
+    SocketFilterPtr filter;
+    if (ssl_factory != nullptr) {
+        auto *ssl_filter = ssl_filter_new(*ssl_factory);
+        filter.reset(new ThreadSocketFilter(instance.event_loop,
+                                            thread_pool_get_queue(instance.event_loop),
+                                            &ssl_filter_get_handler(*ssl_filter)));
     }
 
     /* determine the local socket address */
@@ -216,7 +228,7 @@ new_connection(BpInstance &instance,
         http_server_connection_new(pool,
                                    instance.event_loop,
                                    fd.Release(), FdType::FD_TCP,
-                                   nullptr,
+                                   std::move(filter),
                                    local_address.IsDefined()
                                    ? (SocketAddress)local_address
                                    : nullptr,

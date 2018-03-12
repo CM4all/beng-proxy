@@ -173,6 +173,13 @@ network interfaces are up and configured. \\\hline
 \verb|tag| & A tag, to be passed to the translation server in a
 \verb|LISTENER_TAG| packet (see page \pageref{listenertag}). \\\hline
 
+\verb|ssl| & \texttt{yes} enables SSL/TLS. \\\hline
+
+\verb|ssl_cert| & Add a certificate/key pair to the listener.  If
+\verb|ssl| is enabled, at least one pair must be configured; if there
+is more than one, the server will choose one according to the SNI
+parameter received from the client. \\\hline
+
 \verb|zeroconf_service| & If specified, then register this listener as
 Zeroconf service in the local Avahi daemon.  This can be used by
 \emph{beng-lb} to discover pool members. \\\hline
