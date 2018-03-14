@@ -134,12 +134,15 @@ proxy_handler(Request &request2)
 
     request2.collect_cookies = true;
 
-    request2.instance.cached_resource_loader
-        ->SendRequest(pool,
-                      request2.session_id.GetClusterHash(),
-                      forward.method, address, HTTP_STATUS_OK,
-                      std::move(forward.headers),
-                      std::move(forward.body),
-                      nullptr,
-                      request2, request2.cancel_ptr);
+    auto &rl = tr.uncached
+        ? *request2.instance.direct_resource_loader
+        : *request2.instance.cached_resource_loader;
+
+    rl.SendRequest(pool,
+                   request2.session_id.GetClusterHash(),
+                   forward.method, address, HTTP_STATUS_OK,
+                   std::move(forward.headers),
+                   std::move(forward.body),
+                   nullptr,
+                   request2, request2.cancel_ptr);
 }
