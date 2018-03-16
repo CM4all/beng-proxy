@@ -64,7 +64,7 @@
 #include <assert.h>
 #include <string.h>
 
-struct WidgetRequest final : HttpResponseHandler, SuffixRegistryHandler, Cancellable {
+class WidgetRequest final : HttpResponseHandler, SuffixRegistryHandler, Cancellable {
     struct pool &pool;
 
     unsigned num_redirects = 0;
@@ -97,6 +97,7 @@ struct WidgetRequest final : HttpResponseHandler, SuffixRegistryHandler, Cancell
     HttpResponseHandler *http_handler;
     CancellablePointer cancel_ptr;
 
+public:
     WidgetRequest(struct pool &_pool, Widget &_widget,
                   struct processor_env &_env,
                   HttpResponseHandler &_handler,
@@ -117,6 +118,10 @@ struct WidgetRequest final : HttpResponseHandler, SuffixRegistryHandler, Cancell
         _cancel_ptr = *this;
     }
 
+    bool ContentTypeLookup();
+    void SendRequest();
+
+private:
     RealmSessionLease GetSessionIfStateful() const {
         return widget.cls->stateful
             ? env.GetRealmSession()
@@ -179,9 +184,6 @@ struct WidgetRequest final : HttpResponseHandler, SuffixRegistryHandler, Cancell
      * Throws exception on error.
      */
     void UpdateView(StringMap &headers);
-
-    bool ContentTypeLookup();
-    void SendRequest();
 
     /* virtual methods from class Cancellable */
     void Cancel() noexcept override {
