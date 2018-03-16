@@ -50,7 +50,7 @@
 #include <string.h>
 
 struct CssProcessor {
-    struct pool &pool, &caller_pool;
+    struct pool &pool;
 
     Widget &container;
     struct processor_env &env;
@@ -69,7 +69,7 @@ struct CssProcessor {
 
     UriRewrite uri_rewrite;
 
-    CssProcessor(struct pool &_pool, struct pool &_caller_pool,
+    CssProcessor(struct pool &_pool,
                  UnusedIstreamPtr input,
                  SharedPoolPtr<ReplaceIstreamControl> _replace,
                  Widget &_container,
@@ -295,13 +295,13 @@ static constexpr CssParserHandler css_processor_parser_handler = {
  */
 
 inline
-CssProcessor::CssProcessor(struct pool &_pool, struct pool &_caller_pool,
+CssProcessor::CssProcessor(struct pool &_pool,
                            UnusedIstreamPtr input,
                            SharedPoolPtr<ReplaceIstreamControl> _replace,
                            Widget &_container,
                            struct processor_env &_env,
                            unsigned _options)
-    :pool(_pool), caller_pool(_caller_pool),
+    :pool(_pool),
      container(_container), env(_env),
      options(_options),
      replace(std::move(_replace)),
@@ -322,7 +322,7 @@ css_processor(struct pool &caller_pool, UnusedIstreamPtr input,
 
     auto replace = istream_replace_new(*pool, std::move(tee.second));
 
-    NewFromPool<CssProcessor>(*pool, *pool, caller_pool,
+    NewFromPool<CssProcessor>(*pool, *pool,
                               std::move(tee.first),
                               std::move(replace.second),
                               widget, env,
