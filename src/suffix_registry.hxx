@@ -41,19 +41,17 @@ class CancellablePointer;
 template<typename T> struct ConstBuffer;
 struct Transformation;
 
-struct SuffixRegistryHandler {
+class SuffixRegistryHandler {
+public:
     /**
      * @param transformations an optional #Transformation chain for
      * all files of this type
      */
-    void (*success)(const char *content_type,
-                    const Transformation *transformations,
-                    void *ctx);
+    virtual void OnSuffixRegistrySuccess(const char *content_type,
+                                         const Transformation *transformations) = 0;
 
-    void (*error)(std::exception_ptr ep, void *ctx);
+    virtual void OnSuffixRegistryError(std::exception_ptr ep) = 0;
 };
-typedef void (*widget_class_callback_t)(const struct widget_class *cls,
-                                        void *ctx);
 
 /**
  * Interface for Content-Types managed by the translation server.
@@ -63,7 +61,7 @@ suffix_registry_lookup(struct pool &pool,
                        struct tcache &tcache,
                        ConstBuffer<void> payload,
                        const char *suffix,
-                       const SuffixRegistryHandler &handler, void *ctx,
+                       SuffixRegistryHandler &handler,
                        CancellablePointer &cancel_ptr);
 
 #endif

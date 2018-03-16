@@ -45,7 +45,7 @@ class CancellablePointer;
 bool
 suffix_registry_lookup(struct pool &pool, struct tcache &translate_cache,
                        const ResourceAddress &address,
-                       const SuffixRegistryHandler &handler, void *ctx,
+                       SuffixRegistryHandler &handler,
                        CancellablePointer &cancel_ptr);
 
 #endif

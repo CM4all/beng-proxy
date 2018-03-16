@@ -64,7 +64,7 @@
 #include <assert.h>
 #include <string.h>
 
-struct WidgetRequest final : HttpResponseHandler, Cancellable {
+struct WidgetRequest final : HttpResponseHandler, SuffixRegistryHandler, Cancellable {
     struct pool &pool;
 
     unsigned num_redirects = 0;
@@ -193,6 +193,11 @@ struct WidgetRequest final : HttpResponseHandler, Cancellable {
     void OnHttpResponse(http_status_t status, StringMap &&headers,
                         UnusedIstreamPtr body) noexcept override;
     void OnHttpError(std::exception_ptr ep) noexcept override;
+
+    /* virtual methods from class SuffixRegistryHandler */
+    void OnSuffixRegistrySuccess(const char *content_type,
+                                 const Transformation *transformations) override;
+    void OnSuffixRegistryError(std::exception_ptr ep) override;
 };
 
 static const char *
@@ -652,39 +657,28 @@ WidgetRequest::SendRequest()
                                      *this, cancel_ptr);
 }
 
-static void
-widget_suffix_registry_success(const char *content_type,
-                               // TODO: apply transformations
-                               gcc_unused const Transformation *transformations,
-                               void *ctx)
+void
+WidgetRequest::OnSuffixRegistrySuccess(const char *_content_type,
+                                       // TODO: apply transformations
+                                       gcc_unused const Transformation *transformations)
 {
-    WidgetRequest &embed = *(WidgetRequest *)ctx;
-
-    embed.content_type = content_type;
-    embed.SendRequest();
+    content_type = _content_type;
+    SendRequest();
 }
 
-static void
-widget_suffix_registry_error(std::exception_ptr ep, void *ctx)
+void
+WidgetRequest::OnSuffixRegistryError(std::exception_ptr ep)
 {
-    WidgetRequest &embed = *(WidgetRequest *)ctx;
-
-    embed.widget.Cancel();
-    embed.DispatchError(ep);
+    widget.Cancel();
+    DispatchError(ep);
 }
-
-static constexpr SuffixRegistryHandler widget_suffix_registry_handler = {
-    .success = widget_suffix_registry_success,
-    .error = widget_suffix_registry_error,
-};
 
 bool
 WidgetRequest::ContentTypeLookup()
 {
     return suffix_registry_lookup(pool, *global_translate_cache,
                                   *widget.GetAddress(),
-                                  widget_suffix_registry_handler, this,
-                                  cancel_ptr);
+                                  *this, cancel_ptr);
 }
 
 /*

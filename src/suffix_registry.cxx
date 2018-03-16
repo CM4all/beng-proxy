@@ -41,13 +41,12 @@
 struct SuffixRegistryLookup {
     TranslateRequest request;
 
-    const SuffixRegistryHandler &handler;
-    void *const handler_ctx;
+    SuffixRegistryHandler &handler;
 
     SuffixRegistryLookup(ConstBuffer<void> payload,
                          const char *suffix,
-                         const SuffixRegistryHandler &_handler, void *_ctx)
-        :handler(_handler), handler_ctx(_ctx) {
+                         SuffixRegistryHandler &_handler)
+        :handler(_handler) {
         request.Clear();
         request.content_type_lookup = payload;
         request.suffix = suffix;
@@ -64,11 +63,10 @@ suffix_translate_response(TranslateResponse &response, void *ctx)
 {
     SuffixRegistryLookup &lookup = *(SuffixRegistryLookup *)ctx;
 
-    lookup.handler.success(response.content_type,
-                           response.views != nullptr
-                           ? response.views->transformation
-                           : nullptr,
-                           lookup.handler_ctx);
+    lookup.handler.OnSuffixRegistrySuccess(response.content_type,
+                                           response.views != nullptr
+                                           ? response.views->transformation
+                                           : nullptr);
 }
 
 static void
@@ -76,7 +74,7 @@ suffix_translate_error(std::exception_ptr ep, void *ctx)
 {
     SuffixRegistryLookup &lookup = *(SuffixRegistryLookup *)ctx;
 
-    lookup.handler.error(ep, lookup.handler_ctx);
+    lookup.handler.OnSuffixRegistryError(ep);
 }
 
 static constexpr TranslateHandler suffix_translate_handler = {
@@ -94,12 +92,12 @@ suffix_registry_lookup(struct pool &pool,
                        struct tcache &tcache,
                        ConstBuffer<void> payload,
                        const char *suffix,
-                       const SuffixRegistryHandler &handler, void *ctx,
+                       SuffixRegistryHandler &handler,
                        CancellablePointer &cancel_ptr)
 {
     auto lookup = NewFromPool<SuffixRegistryLookup>(pool,
                                                     payload, suffix,
-                                                    handler, ctx);
+                                                    handler);
 
     translate_cache(pool, tcache, lookup->request,
                     suffix_translate_handler, lookup, cancel_ptr);

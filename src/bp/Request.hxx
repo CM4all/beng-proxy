@@ -38,6 +38,7 @@
 #include "translation/Request.hxx"
 #include "translation/Response.hxx"
 #include "translation/Transformation.hxx"
+#include "suffix_registry.hxx"
 #include "delegate/Handler.hxx"
 #include "nfs/Cache.hxx"
 #include "penv.hxx"
@@ -62,7 +63,7 @@ struct HttpServerRequest;
  * (handler.c, file-handler.c etc.).
  */
 struct Request final : HttpResponseHandler, DelegateHandler,
-    NfsCacheHandler, Cancellable {
+    NfsCacheHandler, SuffixRegistryHandler, Cancellable {
 
     struct pool &pool;
 
@@ -467,6 +468,11 @@ public:
     void OnNfsCacheResponse(NfsCacheHandle &handle,
                             const struct stat &st) override;
     void OnNfsCacheError(std::exception_ptr ep) override;
+
+    /* virtual methods from class SuffixRegistryHandler */
+    void OnSuffixRegistrySuccess(const char *content_type,
+                                 const Transformation *transformations) override;
+    void OnSuffixRegistryError(std::exception_ptr ep) override;
 };
 
 #endif

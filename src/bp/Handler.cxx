@@ -337,33 +337,23 @@ Request::CheckHandleProbePathSuffixes(const TranslateResponse &response)
     return true;
 }
 
-static void
-handler_suffix_registry_success(const char *content_type,
-                                const Transformation *transformations,
-                                void *ctx)
+void
+Request::OnSuffixRegistrySuccess(const char *content_type,
+                                 const Transformation *transformations)
 {
-    auto &request = *(Request *)ctx;
+    translate.content_type = content_type;
+    translate.suffix_transformation = transformations;
 
-    request.translate.content_type = content_type;
-    request.translate.suffix_transformation = transformations;
-
-    handle_translated_request2(request, *request.translate.response);
+    handle_translated_request2(*this, *translate.response);
 }
 
-static void
-handler_suffix_registry_error(std::exception_ptr ep, void *ctx)
+void
+Request::OnSuffixRegistryError(std::exception_ptr ep)
 {
-    auto &request = *(Request *)ctx;
-
-    request.LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
-                             "Configuration server failed",
-                             ep, 1);
+    LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
+                     "Configuration server failed",
+                     ep, 1);
 }
-
-static constexpr SuffixRegistryHandler handler_suffix_registry_handler = {
-    .success = handler_suffix_registry_success,
-    .error = handler_suffix_registry_error,
-};
 
 static bool
 do_content_type_lookup(Request &request,
@@ -372,8 +362,7 @@ do_content_type_lookup(Request &request,
     return suffix_registry_lookup(request.pool,
                                   *request.instance.translate_cache,
                                   address,
-                                  handler_suffix_registry_handler, &request,
-                                  request.cancel_ptr);
+                                  request, request.cancel_ptr);
 }
 
 static void
