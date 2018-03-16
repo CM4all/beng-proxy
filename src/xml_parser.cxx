@@ -129,11 +129,15 @@ public:
         pool_ref(pool);
     }
 
+    void Destroy() noexcept {
+        pool_unref(pool);
+    }
+
     void Close() noexcept {
         assert(input.IsDefined());
 
         ClearAndCloseInput();
-        pool_unref(pool);
+        Destroy();
     }
 
     bool Read() noexcept {
@@ -173,7 +177,7 @@ private:
 
         input.Clear();
         handler.OnXmlEof(position);
-        pool_unref(pool);
+        Destroy();
     }
 
     void OnError(std::exception_ptr ep) noexcept override {
@@ -181,7 +185,7 @@ private:
 
         input.Clear();
         handler.OnXmlError(ep);
-        pool_unref(pool);
+        Destroy();
     }
 };
 
