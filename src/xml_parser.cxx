@@ -130,7 +130,7 @@ public:
     }
 
     void Destroy() noexcept {
-        pool_unref(pool);
+        DeleteUnrefPool(*pool, this);
     }
 
     void Close() noexcept {
