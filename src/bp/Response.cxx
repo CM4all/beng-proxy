@@ -617,6 +617,7 @@ response_apply_filter(Request &request2,
 
     request2.instance.filter_resource_loader
         ->SendRequest(request2.pool, request2.session_id.GetClusterHash(),
+                      request2.translate.response->site,
                       HTTP_METHOD_POST, filter, status, std::move(headers2),
                       std::move(body), source_tag,
                       request2, request2.cancel_ptr);

@@ -617,7 +617,7 @@ FilterCache::Miss(struct pool &caller_pool,
     LogConcat(4, "FilterCache", "miss ", info.key);
 
     pool_ref(&caller_pool);
-    resource_loader.SendRequest(*request_pool, 0,
+    resource_loader.SendRequest(*request_pool, 0, nullptr,
                                 HTTP_METHOD_POST, address,
                                 status, std::move(headers),
                                 std::move(body), body_etag,
@@ -682,7 +682,7 @@ FilterCache::Get(struct pool &caller_pool,
             Hit(*item, caller_pool, handler);
         }
     } else {
-        resource_loader.SendRequest(caller_pool, 0,
+        resource_loader.SendRequest(caller_pool, 0, nullptr,
                                     HTTP_METHOD_POST, address,
                                     status, std::move(headers),
                                     std::move(body), source_id,

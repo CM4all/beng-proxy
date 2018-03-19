@@ -54,6 +54,8 @@ public:
      *
      * @param session_sticky a portion of the session id that is used to
      * select the worker; 0 means disable stickiness
+     * @param site_name the name of the site this request belongs to;
+     * may be nullptr
      * @param address the address of the resource
      * @param status a HTTP status code for protocols which do have one
      * @param body the request body
@@ -62,6 +64,7 @@ public:
      */
     virtual void SendRequest(struct pool &pool,
                              sticky_hash_t session_sticky,
+                             const char *site_name,
                              http_method_t method,
                              const ResourceAddress &address,
                              http_status_t status, StringMap &&headers,

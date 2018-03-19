@@ -160,6 +160,7 @@ public:
     /* virtual methods from class ResourceLoader */
     void SendRequest(struct pool &pool,
                      sticky_hash_t,
+                     const char *site_name,
                      http_method_t method,
                      const ResourceAddress &address,
                      http_status_t status, StringMap &&headers,
@@ -171,6 +172,7 @@ public:
 void
 MyResourceLoader::SendRequest(struct pool &pool,
                               sticky_hash_t,
+                              gcc_unused const char *site_name,
                               http_method_t method,
                               gcc_unused const ResourceAddress &address,
                               gcc_unused http_status_t status,

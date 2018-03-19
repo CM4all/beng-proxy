@@ -221,6 +221,7 @@ public:
     /* virtual methods from class ResourceLoader */
     void SendRequest(struct pool &pool,
                      sticky_hash_t sticky_hash,
+                     const char *site_name,
                      http_method_t method,
                      const ResourceAddress &address,
                      http_status_t status, StringMap &&headers,
@@ -232,6 +233,7 @@ public:
 void
 MyResourceLoader::SendRequest(struct pool &pool,
                               sticky_hash_t,
+                              gcc_unused const char *site_name,
                               http_method_t method,
                               gcc_unused const ResourceAddress &address,
                               gcc_unused http_status_t status,
@@ -351,7 +353,8 @@ run_cache_test(struct pool *root_pool, unsigned num, bool cached)
     got_response = false;
 
     Context context(*pool);
-    http_cache_request(*cache, *pool, 0, request->method, address,
+    http_cache_request(*cache, *pool, 0, nullptr,
+                       request->method, address,
                        std::move(headers), nullptr,
                        context, cancel_ptr);
     pool_unref(pool);

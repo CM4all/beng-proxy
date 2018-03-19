@@ -140,6 +140,7 @@ proxy_handler(Request &request2)
 
     rl.SendRequest(pool,
                    request2.session_id.GetClusterHash(),
+                   tr.site,
                    forward.method, address, HTTP_STATUS_OK,
                    std::move(forward.headers),
                    std::move(forward.body),

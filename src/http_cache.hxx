@@ -79,6 +79,7 @@ http_cache_flush(HttpCache &cache);
 void
 http_cache_request(HttpCache &cache,
                    struct pool &pool, sticky_hash_t session_sticky,
+                   const char *site_name,
                    http_method_t method,
                    const ResourceAddress &address,
                    StringMap &&headers, UnusedIstreamPtr body,

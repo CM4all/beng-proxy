@@ -39,6 +39,7 @@
 void
 CachedResourceLoader::SendRequest(struct pool &pool,
                                   sticky_hash_t session_sticky,
+                                  const char *site_name,
                                   http_method_t method,
                                   const ResourceAddress &address,
                                   gcc_unused http_status_t status,
@@ -48,7 +49,7 @@ CachedResourceLoader::SendRequest(struct pool &pool,
                                   HttpResponseHandler &handler,
                                   CancellablePointer &cancel_ptr)
 {
-    http_cache_request(cache, pool, session_sticky,
+    http_cache_request(cache, pool, session_sticky, site_name,
                        method, address,
                        std::move(headers), std::move(body),
                        handler, cancel_ptr);
