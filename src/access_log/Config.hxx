@@ -60,7 +60,7 @@ struct AccessLogConfig {
      *
      * Special value "null" specifies that access logging is disabled
      * completely, and "" (empty string) specifies that one-line
-     * logging is performed directly to stdandard output.
+     * logging is performed directly to standard output.
      */
     std::string command;
 
