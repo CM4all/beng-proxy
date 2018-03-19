@@ -50,6 +50,10 @@ public:
     explicit LogClient(UniqueSocketDescriptor &&_fd)
         :logger("access_log"), fd(std::move(_fd)) {}
 
+    SocketDescriptor GetSocket() noexcept {
+        return fd;
+    }
+
     bool Send(const Net::Log::Datagram &d);
 };
 

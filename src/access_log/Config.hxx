@@ -77,6 +77,12 @@ struct AccessLogConfig {
     std::set<std::string> trust_xff;
 
     /**
+     * Forward error messages printed by child processes into their
+     * stderr pipe to the Pond server?
+     */
+    bool forward_child_errors = false;
+
+    /**
      * Setter for the deprecated "--access-logger" command-line
      * option, which has a few special cases.
      */

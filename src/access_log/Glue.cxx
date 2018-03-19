@@ -222,3 +222,11 @@ AccessLogGlue::Log(HttpServerRequest &request, const char *site,
         bytes_received, bytes_sent,
         duration);
 }
+
+SocketDescriptor
+AccessLogGlue::GetChildSocket() noexcept
+{
+    return config.forward_child_errors && client
+        ? client->GetSocket()
+        : SocketDescriptor::Undefined();
+}

@@ -61,6 +61,9 @@ AccessLogConfigParser::ParseLine(FileLineParser &line)
         config.ignore_localhost_200 = line.ExpectValueAndEnd();
     } else if (strcmp(word, "trust_xff") == 0) {
         config.trust_xff.emplace(line.ExpectValueAndEnd());
+    } else if (strcmp(word, "forward_child_errors") == 0) {
+        config.forward_child_errors = line.NextBool();
+        line.ExpectEnd();
     } else
         throw LineParser::Error("Unknown option");
 }

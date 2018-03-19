@@ -51,6 +51,7 @@ struct UidGid;
 struct AccessLogConfig;
 namespace Net { namespace Log { struct Datagram; }}
 struct HttpServerRequest;
+class SocketDescriptor;
 class LogClient;
 
 class AccessLogGlue {
@@ -93,6 +94,13 @@ public:
              http_status_t status, int64_t length,
              uint64_t bytes_received, uint64_t bytes_sent,
              std::chrono::steady_clock::duration duration);
+
+    /**
+     * Returns the connected logger socket to be used to send child
+     * process error messages.  Returns SocketDescriptor::Undefined()
+     * if the feature is disabled.
+     */
+    SocketDescriptor GetChildSocket() noexcept;
 };
 
 #endif
