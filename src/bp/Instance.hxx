@@ -61,7 +61,6 @@ class TcpStock;
 class TcpBalancer;
 class FilteredSocketStock;
 class FilteredSocketBalancer;
-struct MemachedStock;
 class SpawnService;
 class ControlDistribute;
 class ControlServer;
@@ -141,8 +140,6 @@ struct BpInstance final : PInstance, ControlHandler {
 
     FilteredSocketStock *fs_stock = nullptr;
     FilteredSocketBalancer *fs_balancer = nullptr;
-
-    MemachedStock *memcached_stock = nullptr;
 
     /* cache */
     HttpCache *http_cache = nullptr;

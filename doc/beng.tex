@@ -312,8 +312,7 @@ incrementally kill excess processes. \\
 \hline
 
 \verb|http_cache_size| & The maximum amount of memory used by the
-HTTP cache.  Set to 0 to disable the HTTP cache.  This option cannot
-be used together with \texttt{--memcached-server}. \\
+HTTP cache.  Set to 0 to disable the HTTP cache. \\
 
 \hline
 
@@ -361,12 +360,6 @@ All memory sizes can be suffixed using \texttt{kB}, \texttt{MB} or
 \texttt{GB}.
 
 \subsection{Command-line options}
-
-\label{memcached}
-You may specify \texttt{--memcached-server} followed by a server name.
-This disables the local heap cache, and allows \emph{beng-proxy} to
-share the cache with several (distributed) workers.  With the local
-heap cache disabled, all of its configuration options are ignored.
 
 \label{bulldog}
 With \texttt{--bulldog-path}, \emph{beng-proxy} reads status
@@ -629,9 +622,7 @@ Additionally, they should understand the according request headers
 \texttt{If-Modified-Since} and \texttt{If-Unmodified-Since},
 \texttt{If-Match}, \texttt{If-None-Match}.
 
-The cache is local to a \emph{beng-proxy} worker.  To share the cache
-across workers and even across hosts, you may use a memcached server
-(see \ref{memcached}).
+The cache is local to a \emph{beng-proxy} worker.
 
 \subsubsection{Connection pooling}
 

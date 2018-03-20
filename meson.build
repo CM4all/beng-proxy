@@ -843,12 +843,10 @@ http_server_dep = declare_dependency(
 
 http_cache = static_library('http_cache',
   'src/http_cache.cxx',
-  'src/http_cache_choice.cxx',
   'src/http_cache_document.cxx',
   'src/http_cache_age.cxx',
   'src/http_cache_heap.cxx',
   'src/http_cache_info.cxx',
-  'src/http_cache_memcached.cxx',
   'src/http_cache_rfc.cxx',
   include_directories: inc,
 )

@@ -41,7 +41,6 @@
 
 struct pool;
 class UnusedIstreamPtr;
-struct MemachedStock;
 class EventLoop;
 class ResourceLoader;
 struct ResourceAddress;
@@ -56,7 +55,6 @@ class CancellablePointer;
  */
 HttpCache *
 http_cache_new(struct pool &pool, size_t max_size,
-               MemachedStock *memcached_stock,
                EventLoop &event_loop, ResourceLoader &resource_loader);
 
 void

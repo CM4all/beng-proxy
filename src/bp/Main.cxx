@@ -47,7 +47,6 @@
 #include "tcp_balancer.hxx"
 #include "fs/Stock.hxx"
 #include "fs/Balancer.hxx"
-#include "memcached/memcached_stock.hxx"
 #include "stock/MapStock.hxx"
 #include "http_cache.hxx"
 #include "lhttp_stock.hxx"
@@ -322,14 +321,6 @@ try {
     instance.fs_balancer = new FilteredSocketBalancer(*instance.fs_stock,
                                                       instance.failure_manager);
 
-    const AddressList memcached_server(ShallowCopy(),
-                                       instance.config.memcached_server);
-    if (!instance.config.memcached_server.empty())
-        instance.memcached_stock =
-            memcached_stock_new(instance.event_loop,
-                                *instance.tcp_balancer,
-                                memcached_server);
-
     if (instance.config.translation_socket != nullptr) {
         instance.translate_stock =
             tstock_new(instance.event_loop,
@@ -379,7 +370,6 @@ try {
 
     instance.http_cache = http_cache_new(instance.root_pool,
                                          instance.config.http_cache_size,
-                                         instance.memcached_stock,
                                          instance.event_loop,
                                          *instance.direct_resource_loader);
 

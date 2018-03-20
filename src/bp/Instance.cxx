@@ -54,7 +54,6 @@
 #include "event/Duration.hxx"
 #include "nfs/Stock.hxx"
 #include "nfs/Cache.hxx"
-#include "memcached/memcached_stock.hxx"
 #include "access_log/Glue.hxx"
 
 #include <sys/signal.h>
@@ -120,11 +119,6 @@ BpInstance::FreeStocksAndCaches()
     if (was_stock != nullptr) {
         was_stock_free(was_stock);
         was_stock = nullptr;
-    }
-
-    if (memcached_stock != nullptr) {
-        memcached_stock_free(memcached_stock);
-        memcached_stock = nullptr;
     }
 
     delete std::exchange(fs_balancer, nullptr);

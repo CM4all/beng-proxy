@@ -122,42 +122,6 @@ executable('run_memcached_client',
     io_dep,
   ])
 
-executable('dump_memcached_choice',
-  'dump_memcached_choice.cxx',
-  '../src/PInstance.cxx',
-  '../src/direct.cxx',
-  '../src/serialize.cxx',
-  include_directories: inc,
-  dependencies: [
-    memcached_client_dep,
-    net_dep,
-    io_dep,
-    putil_dep,
-  ])
-
-executable('cleanup_memcached_choice',
-  'cleanup_memcached_choice.cxx',
-  '../src/PInstance.cxx',
-  '../src/direct.cxx',
-  '../src/serialize.cxx',
-  '../src/tcp_stock.cxx',
-  '../src/tcp_balancer.cxx',
-  '../src/balancer.cxx',
-  '../src/bulldog.cxx',
-  include_directories: inc,
-  dependencies: [
-    memcached_client_dep,
-    event_net_dep,
-    io_dep,
-    putil_dep,
-    raddress_dep,
-    stock_dep,
-    eutil_dep,
-    stopwatch_dep,
-    http_cache_dep,
-    ssl_dep,
-  ])
-
 executable('fake_memcached_server',
   'fake_memcached_server.cxx',
   include_directories: inc,

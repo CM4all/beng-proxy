@@ -34,7 +34,6 @@
 #include "http_cache_document.hxx"
 #include "http_cache_rfc.hxx"
 #include "http_cache_heap.hxx"
-#include "http_cache_memcached.hxx"
 #include "strmap.hxx"
 #include "HttpResponseHandler.hxx"
 #include "ResourceLoader.hxx"
@@ -116,13 +115,6 @@ public:
     HttpCacheDocument *document = nullptr;
 
     /**
-     * The response body from the http_cache_document.  This is not
-     * used for the heap backend: it creates the #istream on demand
-     * with http_cache_heap_istream().
-     */
-    UnusedHoldIstreamPtr document_body;
-
-    /**
      * This struct holds response information while this module
      * receives the response body.
      */
@@ -186,8 +178,6 @@ public:
 
     HttpCacheHeap heap;
 
-    MemachedStock *memcached_stock;
-
     ResourceLoader &resource_loader;
 
     /**
@@ -203,7 +193,6 @@ public:
     BackgroundManager background;
 
     HttpCache(struct pool &_pool, size_t max_size,
-              MemachedStock *_memcached_stock,
               EventLoop &event_loop,
               ResourceLoader &_resource_loader);
 
@@ -215,8 +204,7 @@ public:
 private:
     void OnCompressTimer() {
         rubber->Compress();
-        if (heap.IsDefined())
-            heap.Compress();
+        heap.Compress();
         compress_timer.Add(http_cache_compress_interval);
     }
 };
@@ -254,68 +242,29 @@ http_cache_key(struct pool &pool, const ResourceAddress &address)
 }
 
 static void
-http_cache_memcached_put_callback(std::exception_ptr ep, void *ctx)
-{
-    LinkedBackgroundJob *job = (LinkedBackgroundJob *)ctx;
-
-    if (ep)
-        LogConcat(2, "HttpCache", "put failed: ", ep);
-
-    job->Remove();
-}
-
-static void
 http_cache_put(HttpCacheRequest &request,
                unsigned rubber_id, size_t size)
 {
     LogConcat(4, "HttpCache", "put ", request.key);
 
-    if (request.cache.heap.IsDefined())
-        request.cache.heap.Put(request.key,
-                               request.info, request.headers,
-                               request.response.status,
-                               *request.response.headers,
-                               *request.cache.rubber, rubber_id, size);
-    else if (request.cache.memcached_stock != nullptr) {
-        auto job = NewFromPool<LinkedBackgroundJob>(request.pool,
-                                                    request.cache.background);
-
-        UnusedIstreamPtr value;
-        if (rubber_id)
-            value = istream_rubber_new(request.pool, *request.cache.rubber,
-                                       rubber_id, 0, size, true);
-
-        http_cache_memcached_put(request.pool,
-                                 *request.cache.memcached_stock,
-                                 request.cache.pool,
-                                 request.cache.background,
-                                 request.key,
-                                 request.info,
-                                 request.headers,
-                                 request.response.status, request.response.headers,
-                                 std::move(value),
-                                 http_cache_memcached_put_callback, job,
-                                 request.cache.background.Add2(*job));
-    }
+    request.cache.heap.Put(request.key,
+                           request.info, request.headers,
+                           request.response.status,
+                           *request.response.headers,
+                           *request.cache.rubber, rubber_id, size);
 }
 
 static void
 http_cache_remove(HttpCache &cache, HttpCacheDocument *document)
 {
-    if (cache.heap.IsDefined())
-        cache.heap.Remove(*document);
+    cache.heap.Remove(*document);
 }
 
 static void
 http_cache_remove_url(HttpCache &cache, const char *url,
                       StringMap &headers)
 {
-    if (cache.heap.IsDefined())
-        cache.heap.RemoveURL(url, headers);
-    else if (cache.memcached_stock != nullptr)
-        http_cache_memcached_remove_uri_match(*cache.memcached_stock,
-                                              cache.pool, cache.background,
-                                              url, headers);
+    cache.heap.RemoveURL(url, headers);
 }
 
 static void
@@ -383,15 +332,12 @@ void
 HttpCacheRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
                                  UnusedIstreamPtr body) noexcept
 {
-    HttpCacheDocument *locked_document = cache.heap.IsDefined()
-        ? document
-        : nullptr;
+    HttpCacheDocument *locked_document = document;
 
     if (document != nullptr && status == HTTP_STATUS_NOT_MODIFIED) {
         assert(!body);
 
-        if (cache.heap.IsDefined() &&
-            http_cache_response_evaluate(request_info, info,
+        if (http_cache_response_evaluate(request_info, info,
                                          HTTP_STATUS_OK, _headers, -1) &&
             info.expires >= std::chrono::system_clock::now()) {
             /* copy the new "Expires" (or "max-age") value from the
@@ -402,9 +348,6 @@ HttpCacheRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
                headers; how to fix this? */
             UpdateHeader(document->response_headers, _headers, "expires");
             UpdateHeader(document->response_headers, _headers, "cache-control");
-
-            /* TODO: do we want the same feature for memcached, or is
-               memcached obsolete? */
         }
 
         LogConcat(5, "HttpCache", "not_modified ", key);
@@ -435,12 +378,6 @@ HttpCacheRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
 
     if (document != nullptr)
         http_cache_remove(cache, document);
-
-    if (document != nullptr &&
-        !cache.heap.IsDefined() &&
-        document_body)
-        /* free the cached document istream (memcached) */
-        document_body.Clear();
 
     const off_t available = body
         ? body.GetAvailable(true)
@@ -498,14 +435,8 @@ HttpCacheRequest::OnHttpError(std::exception_ptr ep) noexcept
 {
     ep = NestException(ep, FormatRuntimeError("http_cache %s", key));
 
-    if (document != nullptr && cache.heap.IsDefined())
+    if (document != nullptr)
         http_cache_unlock(cache, document);
-
-    if (document != nullptr &&
-        !cache.heap.IsDefined() &&
-        document_body)
-        /* free the cached document istream (memcached) */
-        document_body.Clear();
 
     handler.InvokeError(ep);
     pool_unref(&caller_pool);
@@ -519,14 +450,8 @@ HttpCacheRequest::OnHttpError(std::exception_ptr ep) noexcept
 void
 HttpCacheRequest::Cancel() noexcept
 {
-    if (document != nullptr && cache.heap.IsDefined())
+    if (document != nullptr)
         http_cache_unlock(cache, document);
-
-    if (document != nullptr &&
-        !cache.heap.IsDefined() &&
-        document_body)
-        /* free the cached document istream (memcached) */
-        document_body.Clear();
 
     pool_unref(&caller_pool);
 
@@ -566,27 +491,22 @@ HttpCacheRequest::HttpCacheRequest(struct pool &_pool,
 
 inline
 HttpCache::HttpCache(struct pool &_pool, size_t max_size,
-                     MemachedStock *_memcached_stock,
                      EventLoop &_event_loop,
                      ResourceLoader &_resource_loader)
     :pool(*pool_new_libc(&_pool, "http_cache")),
      event_loop(_event_loop),
      compress_timer(event_loop, BIND_THIS_METHOD(OnCompressTimer)),
-     memcached_stock(_memcached_stock),
      resource_loader(_resource_loader)
 {
-    if (memcached_stock != nullptr || max_size > 0) {
-        static const size_t max_memcached_rubber = 64 * 1024 * 1024;
+    if (max_size > 0) {
         size_t rubber_size = max_size;
-        if (memcached_stock != nullptr && rubber_size > max_memcached_rubber)
-            rubber_size = max_memcached_rubber;
 
         rubber = new Rubber(rubber_size);
 
         compress_timer.Add(http_cache_compress_interval);
     }
 
-    if (memcached_stock == nullptr && max_size > 0)
+    if (max_size > 0)
         /* leave 12.5% of the rubber allocator empty, to increase the
            chances that a hole can be found for a new allocation, to
            reduce the pressure that rubber_compress() creates */
@@ -597,12 +517,11 @@ HttpCache::HttpCache(struct pool &_pool, size_t max_size,
 
 HttpCache *
 http_cache_new(struct pool &pool, size_t max_size,
-               MemachedStock *memcached_stock,
                EventLoop &event_loop,
                ResourceLoader &resource_loader)
 {
     return new HttpCache(pool, max_size,
-                         memcached_stock, event_loop, resource_loader);
+                         event_loop, resource_loader);
 }
 
 void
@@ -647,8 +566,7 @@ http_cache_close(HttpCache *cache)
 void
 http_cache_fork_cow(HttpCache &cache, bool inherit)
 {
-    if (cache.heap.IsDefined() ||
-        cache.memcached_stock != nullptr)
+    if (cache.rubber != nullptr)
         cache.rubber->ForkCow(inherit);
 
     if (cache.heap.IsDefined())
@@ -663,36 +581,11 @@ http_cache_get_stats(const HttpCache &cache)
         : AllocatorStats::Zero();
 }
 
-static void
-http_cache_flush_callback(bool success, std::exception_ptr ep, void *ctx)
-{
-    LinkedBackgroundJob *flush = (LinkedBackgroundJob *)ctx;
-
-    flush->Remove();
-
-    if (success)
-        LogConcat(5, "HttpCacheMemcached", "flushed");
-    else if (ep)
-        LogConcat(5, "HttpCacheMemcached", "flush has failed: ", ep);
-    else
-        LogConcat(5, "HttpCacheMemcached", "flush has failed");
-}
-
 void
 http_cache_flush(HttpCache &cache)
 {
     if (cache.heap.IsDefined())
         cache.heap.Flush();
-    else if (cache.memcached_stock != nullptr) {
-        struct pool *pool = pool_new_linear(&cache.pool,
-                                            "http_cache_memcached_flush", 1024);
-        auto flush = NewFromPool<LinkedBackgroundJob>(*pool, cache.background);
-
-        http_cache_memcached_flush(*pool, *cache.memcached_stock,
-                                   http_cache_flush_callback, flush,
-                                   cache.background.Add2(*flush));
-        pool_unref(pool);
-    }
 
     if (cache.rubber != nullptr)
         cache.rubber->Compress();
@@ -855,22 +748,6 @@ http_cache_heap_serve(HttpCacheHeap &cache,
 }
 
 /**
- * Send the cached document to the caller (memcached version).
- *
- * Caller pool is left unchanged.
- */
-static void
-http_cache_memcached_serve(HttpCacheRequest &request)
-{
-    LogConcat(4, "HttpCache", "serve ", request.key);
-
-    request.handler.InvokeResponse(request.document->status,
-                                   StringMap(ShallowCopy(), request.caller_pool,
-                                             request.document->response_headers),
-                                   std::move(request.document_body));
-}
-
-/**
  * Send the cached document to the caller.
  *
  * Caller pool is left unchanged.
@@ -882,12 +759,9 @@ http_cache_serve(HttpCacheRequest &request)
                            *request.document, request.handler))
         return;
 
-    if (request.cache.heap.IsDefined())
-        http_cache_heap_serve(request.cache.heap, *request.document,
-                              request.pool, request.key,
-                              request.handler);
-    else if (request.cache.memcached_stock != nullptr)
-        http_cache_memcached_serve(request);
+    http_cache_heap_serve(request.cache.heap, *request.document,
+                          request.pool, request.key,
+                          request.handler);
 }
 
 /**
@@ -1032,133 +906,6 @@ http_cache_heap_use(HttpCache &cache,
                          handler, cancel_ptr);
 }
 
-/**
- * Forward the HTTP request to the real server.
- *
- * Caller pool is freed asynchronously.
- */
-static void
-http_cache_memcached_forward(HttpCacheRequest &request,
-                             HttpResponseHandler &handler)
-{
-    request.cache.resource_loader.SendRequest(request.pool,
-                                              request.session_sticky,
-                                              request.site_name,
-                                              request.method, request.address,
-                                              HTTP_STATUS_OK,
-                                              StringMap(ShallowCopy(),
-                                                        request.pool,
-                                                        request.headers),
-                                              nullptr, nullptr,
-                                              handler, request.cancel_ptr);
-}
-
-/**
- * A resource was not found in the cache.
- *
- * Caller pool is freed (asynchronously).
- */
-static void
-http_cache_memcached_miss(HttpCacheRequest &request)
-{
-    if (request.request_info.only_if_cached) {
-        request.handler.InvokeResponse(HTTP_STATUS_GATEWAY_TIMEOUT,
-                                       StringMap(request.pool),
-                                       UnusedIstreamPtr());
-
-        pool_unref(&request.caller_pool);
-        return;
-    }
-
-    LogConcat(4, "HttpCache", "miss ", request.key);
-
-    request.document = nullptr;
-
-    http_cache_memcached_forward(request, request);
-}
-
-/**
- * The memcached-client callback.
- *
- * Caller pool is freed (asynchronously).
- */
-static void
-http_cache_memcached_get_callback(HttpCacheDocument *document,
-                                  UnusedIstreamPtr body, std::exception_ptr ep,
-                                  void *ctx)
-{
-    HttpCacheRequest &request = *(HttpCacheRequest *)ctx;
-
-    if (document == nullptr) {
-        if (ep)
-            LogConcat(2, "HttpCache", "get failed: ", ep);
-
-        http_cache_memcached_miss(request);
-        return;
-    }
-
-    if (http_cache_may_serve(request.request_info, *document)) {
-        LogConcat(4, "HttpCache", "serve ", request.key);
-
-        request.handler.InvokeResponse(document->status,
-                                       StringMap(ShallowCopy(), request.caller_pool,
-                                                 document->response_headers),
-                                       std::move(body));
-        pool_unref(&request.caller_pool);
-    } else {
-        request.document = document;
-        request.document_body = UnusedHoldIstreamPtr(request.pool,
-                                                     std::move(body));
-
-        http_cache_test(request, request.method, request.address,
-                        StringMap(ShallowCopy(),
-                                  request.pool,
-                                  request.headers));
-    }
-}
-
-/**
- * Query the resource from the memached server.
- *
- * Caller pool is referenced synchronously and freed asynchronously.
- */
-static void
-http_cache_memcached_use(HttpCache &cache,
-                         struct pool &caller_pool,
-                         sticky_hash_t session_sticky,
-                         const char *site_name,
-                         http_method_t method,
-                         const ResourceAddress &address,
-                         StringMap &headers,
-                         HttpCacheRequestInfo &info,
-                         HttpResponseHandler &handler,
-                         CancellablePointer &cancel_ptr)
-{
-    assert(cache.memcached_stock != nullptr);
-
-    /* the cache request may live longer than the caller pool, so
-       allocate a new pool for it from cache.pool */
-    struct pool *pool = pool_new_linear(&cache.pool, "HttpCacheRequest",
-                                        8192);
-
-    auto request =
-        NewFromPool<HttpCacheRequest>(*pool, *pool, caller_pool,
-                                      session_sticky, site_name, cache,
-                                      method, address,
-                                      http_cache_key(*pool, address),
-                                      headers,
-                                      handler,
-                                      info, cancel_ptr);
-
-    http_cache_memcached_get(*pool, *cache.memcached_stock,
-                             request->cache.pool,
-                             cache.background,
-                             request->key, request->headers,
-                             http_cache_memcached_get_callback, request,
-                             request->cancel_ptr);
-    pool_unref(pool);
-}
-
 void
 http_cache_request(HttpCache &cache,
                    struct pool &pool, sticky_hash_t session_sticky,
@@ -1169,8 +916,7 @@ http_cache_request(HttpCache &cache,
                    HttpResponseHandler &handler,
                    CancellablePointer &cancel_ptr)
 {
-    const char *key = cache.heap.IsDefined() ||
-        cache.memcached_stock != nullptr
+    const char *key = cache.heap.IsDefined()
         ? http_cache_key(pool, address)
         : nullptr;
     if (/* this address type cannot be cached; skip the rest of this
@@ -1192,14 +938,9 @@ http_cache_request(HttpCache &cache,
     if (http_cache_request_evaluate(info, method, address, headers, body)) {
         assert(!body);
 
-        if (cache.heap.IsDefined())
-            http_cache_heap_use(cache, pool, session_sticky, site_name,
-                                method, address, std::move(headers), info,
-                                handler, cancel_ptr);
-        else if (cache.memcached_stock != nullptr)
-            http_cache_memcached_use(cache, pool, session_sticky, site_name,
-                                     method, address, headers, info,
-                                     handler, cancel_ptr);
+        http_cache_heap_use(cache, pool, session_sticky, site_name,
+                            method, address, std::move(headers), info,
+                            handler, cancel_ptr);
     } else {
         if (http_cache_request_invalidate(method))
             http_cache_remove_url(cache, key, headers);

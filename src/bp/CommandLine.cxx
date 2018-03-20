@@ -127,10 +127,6 @@ PrintUsage()
 #endif
          " -t PATH        set the path to the translation server socket\n"
 #ifdef __GLIBC__
-         " --memcached-server IP:PORT\n"
-#endif
-         " -M IP:PORT     use this memcached server\n"
-#ifdef __GLIBC__
          " --bulldog-path PATH\n"
 #endif
          " -B PATH        obtain worker status information from the Bulldog-Tyke path\n"
@@ -305,7 +301,6 @@ ParseCommandLine(BpCmdLine &cmdline, BpConfig &config, int argc, char **argv)
         {"workers", 1, NULL, 'w'},
         {"document-root", 1, NULL, 'r'},
         {"translation-socket", 1, NULL, 't'},
-        {"memcached-server", 1, NULL, 'M'},
         {"bulldog-path", 1, NULL, 'B'},
         {"cluster-size", 1, NULL, 'C'},
         {"cluster-node", 1, NULL, 'N'},
@@ -314,7 +309,6 @@ ParseCommandLine(BpCmdLine &cmdline, BpConfig &config, int argc, char **argv)
         {NULL,0,NULL,0}
     };
 #endif
-    struct addrinfo hints;
     const char *user_name = NULL;
     const char *spawn_user = nullptr;
     unsigned verbose = 1;
@@ -324,11 +318,11 @@ ParseCommandLine(BpCmdLine &cmdline, BpConfig &config, int argc, char **argv)
         int option_index = 0;
 
         ret = getopt_long(argc, argv,
-                          "hVvqA:f:u:U:p:L:c:m:w:r:t:M:B:C:N:s:",
+                          "hVvqA:f:u:U:p:L:c:m:w:r:t:B:C:N:s:",
                           long_options, &option_index);
 #else
         ret = getopt(argc, argv,
-                     "hVvqA:f:u:U:p:L:c:m:w:r:t:M:B:C:N:s:");
+                     "hVvqA:f:u:U:p:L:c:m:w:r:t:B:C:N:s:");
 #endif
         if (ret == -1)
             break;
@@ -430,17 +424,6 @@ ParseCommandLine(BpCmdLine &cmdline, BpConfig &config, int argc, char **argv)
             config.translation_socket = ParseSocketAddress(optarg, 0, false);
             break;
 
-        case 'M':
-            if (!config.memcached_server.empty())
-                arg_error(argv[0], "duplicate memcached-server option");
-
-            memset(&hints, 0, sizeof(hints));
-            hints.ai_flags = AI_ADDRCONFIG;
-            hints.ai_socktype = SOCK_STREAM;
-
-            config.memcached_server = Resolve(optarg, 11211, &hints);
-            break;
-
         case 'B':
             config.bulldog_path = optarg;
             break;
@@ -503,9 +486,6 @@ ParseCommandLine(BpCmdLine &cmdline, BpConfig &config, int argc, char **argv)
             arg_error(argv[0], "refusing to run as root");
     } else if (!debug_mode)
         arg_error(argv[0], "no user name specified (-u)");
-
-    if (!config.memcached_server.empty() && config.http_cache_size_set)
-        arg_error(argv[0], "can't specify both --memcached-server and http_cache_size");
 
     if (debug_mode) {
         if (spawn_user != nullptr)

@@ -104,8 +104,6 @@ struct BpConfig {
 
     AllocatedSocketAddress translation_socket;
 
-    AddressInfoList memcached_server;
-
     /**
      * The Bulldog data path.
      */

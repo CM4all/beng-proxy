@@ -32,7 +32,6 @@
 
 #include "tconstruct.hxx"
 #include "http_cache.hxx"
-#include "http_cache_memcached.hxx"
 #include "ResourceLoader.hxx"
 #include "ResourceAddress.hxx"
 #include "http_address.hxx"
@@ -133,62 +132,6 @@ static HttpCache *cache;
 static unsigned current_request;
 static bool got_request, got_response;
 static bool validated;
-
-void
-http_cache_memcached_flush(gcc_unused struct pool &pool,
-                           gcc_unused MemachedStock &stock,
-                           gcc_unused http_cache_memcached_flush_t callback,
-                           gcc_unused void *callback_ctx,
-                           gcc_unused CancellablePointer &cancel_ptr)
-{
-}
-
-void
-http_cache_memcached_get(gcc_unused struct pool &pool,
-                         gcc_unused MemachedStock &stock,
-                         gcc_unused struct pool &background_pool,
-                         gcc_unused BackgroundManager &background,
-                         gcc_unused const char *uri,
-                         gcc_unused StringMap &request_headers,
-                         gcc_unused http_cache_memcached_get_t callback,
-                         gcc_unused void *callback_ctx,
-                         gcc_unused CancellablePointer &cancel_ptr)
-{
-}
-
-void
-http_cache_memcached_put(gcc_unused struct pool &pool,
-                         gcc_unused MemachedStock &stock,
-                         gcc_unused struct pool &background_pool,
-                         gcc_unused BackgroundManager &background,
-                         gcc_unused const char *uri,
-                         gcc_unused const HttpCacheResponseInfo &info,
-                         gcc_unused const StringMap &request_headers,
-                         gcc_unused http_status_t status,
-                         gcc_unused const StringMap *response_headers,
-                         gcc_unused UnusedIstreamPtr value,
-                         gcc_unused http_cache_memcached_put_t put,
-                         gcc_unused void *callback_ctx,
-                         gcc_unused CancellablePointer &cancel_ptr)
-{
-}
-
-void
-http_cache_memcached_remove_uri(gcc_unused MemachedStock &stock,
-                                gcc_unused struct pool &background_pool,
-                                gcc_unused BackgroundManager &background,
-                                gcc_unused const char *uri)
-{
-}
-
-void
-http_cache_memcached_remove_uri_match(gcc_unused MemachedStock &stock,
-                                      gcc_unused struct pool &background_pool,
-                                      gcc_unused BackgroundManager &background,
-                                      gcc_unused const char *uri,
-                                      gcc_unused StringMap &headers)
-{
-}
 
 static StringMap *
 parse_headers(struct pool &pool, const char *raw)
@@ -372,7 +315,7 @@ int main(int argc, char **argv) {
 
     MyResourceLoader resource_loader;
 
-    cache = http_cache_new(instance.root_pool, 1024 * 1024, nullptr,
+    cache = http_cache_new(instance.root_pool, 1024 * 1024,
                            instance.event_loop, resource_loader);
 
     /* request one resource, cold and warm cache */
