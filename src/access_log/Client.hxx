@@ -33,15 +33,9 @@
 #ifndef BENG_PROXY_LOG_CLIENT_HXX
 #define BENG_PROXY_LOG_CLIENT_HXX
 
-#include "net/log/Protocol.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "io/Logger.hxx"
-#include "util/ByteOrder.hxx"
 
-#include <stdint.h>
-#include <string.h>
-
-struct StringView;
 namespace Net { namespace Log { struct Datagram; }}
 
 /**
@@ -52,57 +46,9 @@ class LogClient {
 
     UniqueSocketDescriptor fd;
 
-    size_t position;
-    char buffer[32768];
-
 public:
     explicit LogClient(UniqueSocketDescriptor &&_fd)
         :logger("access_log"), fd(std::move(_fd)) {}
-
-    void Begin() {
-        position = 0;
-
-        static constexpr uint32_t magic = ToBE32(Net::Log::MAGIC_V2);
-        Append(&magic, sizeof(magic));
-    }
-
-    void Append(const void *p, size_t size) {
-        if (position + size <= sizeof(buffer))
-            memcpy(buffer + position, p, size);
-
-        position += size;
-    }
-
-    void AppendAttribute(Net::Log::Attribute attribute,
-                         const void *value, size_t size) {
-        const uint8_t attribute8 = (uint8_t)attribute;
-        Append(&attribute8, sizeof(attribute8));
-        Append(value, size);
-    }
-
-    void AppendU8(Net::Log::Attribute attribute, uint8_t value) {
-        AppendAttribute(attribute, &value, sizeof(value));
-    }
-
-    void AppendU16(Net::Log::Attribute attribute, uint16_t value) {
-        const uint16_t value2 = ToBE16(value);
-        AppendAttribute(attribute, &value2, sizeof(value2));
-    }
-
-    void AppendU32(Net::Log::Attribute attribute, uint32_t value) {
-        const uint32_t value2 = ToBE32(value);
-        AppendAttribute(attribute, &value2, sizeof(value2));
-    }
-
-    void AppendU64(Net::Log::Attribute attribute, uint64_t value) {
-        const uint64_t value2 = ToBE64(value);
-        AppendAttribute(attribute, &value2, sizeof(value2));
-    }
-
-    void AppendString(Net::Log::Attribute attribute, const char *value);
-    void AppendString(Net::Log::Attribute attribute, StringView value);
-
-    bool Commit();
 
     bool Send(const Net::Log::Datagram &d);
 };

@@ -31,133 +31,18 @@
  */
 
 #include "Client.hxx"
-#include "net/log/Datagram.hxx"
-#include "net/log/Crc.hxx"
-
-#include <assert.h>
-#include <sys/socket.h>
-#include <errno.h>
+#include "net/log/Send.hxx"
 
 using namespace Net::Log;
-
-void
-LogClient::AppendString(Attribute attribute, const char *value)
-{
-    assert(value != nullptr);
-
-    AppendAttribute(attribute, value, strlen(value) + 1);
-}
-
-void
-LogClient::AppendString(Attribute attribute, StringView value)
-{
-    // TODO: is this the best way to deal with NULL bytes?
-    const char *end = value.Find('\0');
-    if (end != nullptr)
-        value.size = end - value.data;
-
-    AppendAttribute(attribute, value.data, value.size);
-
-    if (position < sizeof(buffer))
-        buffer[position] = 0;
-    ++position;
-}
-
-bool
-LogClient::Commit()
-{
-    assert(fd.IsDefined());
-    assert(position > 0);
-
-    if (position + sizeof(Net::Log::Crc::value_type) > sizeof(buffer))
-        /* datagram is too large */
-        return false;
-
-    {
-        Net::Log::Crc crc;
-        crc.reset();
-        crc.process_bytes(buffer + sizeof(Net::Log::MAGIC_V2),
-                          position - sizeof(Net::Log::MAGIC_V2));
-
-        const uint32_t crc_be = ToBE32(crc.checksum());
-        memcpy(buffer + position, &crc_be, sizeof(crc_be));
-        position += sizeof(crc_be);
-    }
-
-    ssize_t nbytes = send(fd.Get(), buffer, position,
-                          MSG_DONTWAIT|MSG_NOSIGNAL);
-    if (nbytes < 0) {
-        if (errno == EAGAIN || errno == EWOULDBLOCK)
-            /* silently ignore EAGAIN */
-            return true;
-
-        logger(1, "Failed to send to logger: ", strerror(errno));
-        return false;
-    }
-
-    if ((size_t)nbytes != position)
-        logger(1, "Short send to logger");
-
-    return true;
-}
 
 bool
 LogClient::Send(const Datagram &d)
 {
-    Begin();
-
-    if (d.valid_timestamp)
-        AppendU64(Attribute::TIMESTAMP, d.timestamp);
-
-    if (d.remote_host != nullptr)
-        AppendString(Attribute::REMOTE_HOST, d.remote_host);
-
-    if (d.host != nullptr)
-        AppendString(Attribute::HOST, d.host);
-
-    if (d.site != nullptr)
-        AppendString(Attribute::SITE, d.site);
-
-    if (d.forwarded_to != nullptr)
-        AppendString(Attribute::FORWARDED_TO, d.forwarded_to);
-
-    if (d.valid_http_method)
-        AppendU8(Attribute::HTTP_METHOD, d.http_method);
-
-    if (d.http_uri != nullptr)
-        AppendString(Attribute::HTTP_URI, d.http_uri);
-
-    if (d.http_referer != nullptr)
-        AppendString(Attribute::HTTP_REFERER, d.http_referer);
-
-    if (d.user_agent != nullptr)
-        AppendString(Attribute::USER_AGENT, d.user_agent);
-
-    if (d.message != nullptr)
-        AppendString(Attribute::MESSAGE, d.message);
-
-    if (d.valid_http_status)
-        AppendU16(Attribute::HTTP_STATUS, d.http_status);
-
-    if (d.valid_length)
-        AppendU64(Attribute::LENGTH, d.length);
-
-    if (d.valid_traffic) {
-        struct {
-            uint64_t received, sent;
-        } traffic = {
-            .received = ToBE64(d.traffic_received),
-            .sent = ToBE64(d.traffic_sent),
-        };
-
-        AppendAttribute(Attribute::TRAFFIC, &traffic, sizeof(traffic));
+    try {
+        Net::Log::Send(fd, d);
+        return true;
+    } catch (...) {
+        logger(1, std::current_exception());
+        return false;
     }
-
-    if (d.valid_duration)
-        AppendU64(Attribute::DURATION, d.duration);
-
-    if (d.type != Net::Log::Type::UNSPECIFIED)
-        AppendU8(Attribute::TYPE, (uint8_t)d.type);
-
-    return Commit();
 }
