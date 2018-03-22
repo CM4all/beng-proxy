@@ -64,6 +64,7 @@ was_launch(SpawnService &spawn_service,
            const char *executable_path,
            ConstBuffer<const char *> args,
            const ChildOptions &options,
+           UniqueFileDescriptor stderr_fd,
            ExitListener *listener);
 
 #endif

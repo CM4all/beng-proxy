@@ -60,6 +60,8 @@ class WasRequest final : StockGetHandler, Cancellable, WasLease {
 
     Stopwatch *const stopwatch;
 
+    const char *const site_name;
+
     StockItem *stock_item;
 
     http_method_t method;
@@ -79,6 +81,7 @@ class WasRequest final : StockGetHandler, Cancellable, WasLease {
 public:
     WasRequest(struct pool &_pool,
                Stopwatch *_stopwatch,
+               const char *_site_name,
                http_method_t _method, const char *_uri,
                const char *_script_name, const char *_path_info,
                const char *_query_string,
@@ -89,6 +92,7 @@ public:
                CancellablePointer &_cancel_ptr)
         :pool(_pool),
          stopwatch(_stopwatch),
+         site_name(_site_name),
          method(_method),
          uri(_uri), script_name(_script_name),
          path_info(_path_info), query_string(_query_string),
@@ -143,6 +147,9 @@ private:
 void
 WasRequest::OnStockItemReady(StockItem &item) noexcept
 {
+    was_stock_item_set_site(item, site_name);
+    was_stock_item_set_uri(item, uri);
+
     stock_item = &item;
 
     const auto &process = was_stock_item_get(item);
@@ -215,6 +222,7 @@ stopwatch_new_was(struct pool &pool, const char *path, const char *uri,
 
 void
 was_request(struct pool &pool, StockMap &was_stock,
+            const char *site_name,
             const ChildOptions &options,
             const char *action,
             const char *path,
@@ -234,6 +242,7 @@ was_request(struct pool &pool, StockMap &was_stock,
                                            stopwatch_new_was(pool, path, uri,
                                                              path_info,
                                                              parameters),
+                                           site_name,
                                            method, uri, script_name,
                                            path_info, query_string,
                                            headers, std::move(body),

@@ -159,7 +159,7 @@ GetHostWithoutPort(struct pool &pool, const HttpAddress &address) noexcept
 void
 DirectResourceLoader::SendRequest(struct pool &pool,
                                   sticky_hash_t session_sticky,
-                                  gcc_unused const char *site_name,
+                                  const char *site_name,
                                   http_method_t method,
                                   const ResourceAddress &address,
                                   http_status_t status, StringMap &&headers,
@@ -254,6 +254,7 @@ DirectResourceLoader::SendRequest(struct pool &pool,
 
         if (cgi->address_list.IsEmpty())
             fcgi_request(&pool, event_loop, fcgi_stock,
+                         site_name,
                          cgi->options,
                          cgi->action,
                          cgi->path,
@@ -286,7 +287,8 @@ DirectResourceLoader::SendRequest(struct pool &pool,
 
     case ResourceAddress::Type::WAS:
         cgi = &address.GetCgi();
-        was_request(pool, *was_stock, cgi->options,
+        was_request(pool, *was_stock, site_name,
+                    cgi->options,
                     cgi->action,
                     cgi->path,
                     cgi->args.ToArray(pool),

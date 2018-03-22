@@ -48,6 +48,7 @@ was_launch(SpawnService &spawn_service,
            const char *executable_path,
            ConstBuffer<const char *> args,
            const ChildOptions &options,
+           UniqueFileDescriptor stderr_fd,
            ExitListener *listener)
 {
     WasProcess process;
@@ -82,6 +83,10 @@ was_launch(SpawnService &spawn_service,
         p.Append(i);
 
     options.CopyTo(p, true, nullptr);
+
+    if (p.stderr_fd < 0 && stderr_fd.IsDefined())
+        p.SetStderr(std::move(stderr_fd));
+
     process.pid = spawn_service.SpawnChildProcess(name, std::move(p),
                                                   listener);
     return process;

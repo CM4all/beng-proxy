@@ -195,7 +195,7 @@ try {
 
     context.process = was_launch(spawn_service, "was",
                                  argv[1], nullptr,
-                                 child_options, nullptr);
+                                 child_options, {}, nullptr);
 
     was_client_request(context.root_pool, context.event_loop, nullptr,
                        context.process.control.Get(),

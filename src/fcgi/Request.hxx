@@ -54,6 +54,7 @@ template<typename T> struct ConstBuffer;
 void
 fcgi_request(struct pool *pool, EventLoop &event_loop,
              FcgiStock *fcgi_stock,
+             const char *site_name,
              const ChildOptions &options,
              const char *action,
              const char *path,

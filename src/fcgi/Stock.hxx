@@ -41,13 +41,15 @@ template<typename T> struct ConstBuffer;
 class AllocatorPtr;
 class EventLoop;
 class SpawnService;
+class SocketDescriptor;
 
 /**
  * Launch and manage FastCGI child processes.
  */
 FcgiStock *
 fcgi_stock_new(unsigned limit, unsigned max_idle,
-               EventLoop &event_loop, SpawnService &spawn_service);
+               EventLoop &event_loop, SpawnService &spawn_service,
+               SocketDescriptor log_socket);
 
 void
 fcgi_stock_free(FcgiStock *fcgi_stock);
@@ -68,6 +70,12 @@ fcgi_stock_get(FcgiStock *fcgi_stock,
                const ChildOptions &options,
                const char *executable_path,
                ConstBuffer<const char *> args);
+
+void
+fcgi_stock_item_set_site(StockItem &item, const char *site) noexcept;
+
+void
+fcgi_stock_item_set_uri(StockItem &item, const char *uri) noexcept;
 
 /**
  * Returns the socket descriptor of the specified stock item.

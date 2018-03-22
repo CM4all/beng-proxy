@@ -36,11 +36,13 @@
 #include "stock/Stock.hxx"
 #include "stock/Class.hxx"
 #include "stock/Item.hxx"
+#include "access_log/ChildErrorLog.hxx"
 #include "spawn/ChildOptions.hxx"
 #include "spawn/ExitListener.hxx"
 #include "spawn/Interface.hxx"
 #include "pool/tpool.hxx"
 #include "event/SocketEvent.hxx"
+#include "net/log/Datagram.hxx"
 #include "io/Logger.hxx"
 #include "util/Cancellable.hxx"
 #include "util/ConstBuffer.hxx"
@@ -89,6 +91,9 @@ class WasChild final : public StockItem, ExitListener {
 
     const std::string tag;
 
+    const SocketDescriptor log_socket;
+    ChildErrorLog log;
+
     WasProcess process;
     SocketEvent event;
 
@@ -105,9 +110,10 @@ class WasChild final : public StockItem, ExitListener {
 
 public:
     explicit WasChild(CreateStockItem c, SpawnService &_spawn_service,
-                      const char *_tag)
+                      const char *_tag, SocketDescriptor _log_socket)
         :StockItem(c), logger(GetStockName()), spawn_service(_spawn_service),
          tag(_tag != nullptr ? _tag : ""),
+         log_socket(_log_socket),
          event(c.stock.GetEventLoop(), BIND_THIS_METHOD(EventCallback)) {
         /* mark this object as "unused" so the destructor doesn't
            attempt to kill the process */
@@ -115,6 +121,10 @@ public:
     }
 
     ~WasChild() override;
+
+    EventLoop &GetEventLoop() {
+        return event.GetEventLoop();
+    }
 
     bool IsTag(const char *other_tag) const {
         return tag == other_tag;
@@ -126,8 +136,17 @@ public:
                              params.executable_path,
                              params.args,
                              params.options,
+                             log.EnableClient(GetEventLoop(), log_socket),
                              this);
         event.Set(process.control.Get(), SocketEvent::READ);
+    }
+
+    void SetSite(const char *_site) noexcept {
+        log.SetSite(_site);
+    }
+
+    void SetUri(const char *_uri) noexcept {
+        log.SetUri(_uri);
     }
 
     const WasProcess &GetProcess() const {
@@ -386,12 +405,15 @@ WasChild::EventCallback(unsigned events)
 
 class WasStock final : StockClass {
     SpawnService &spawn_service;
+    const SocketDescriptor log_socket;
     StockMap stock;
 
 public:
     explicit WasStock(EventLoop &event_loop, SpawnService &_spawn_service,
+                      const SocketDescriptor _log_socket,
                       unsigned limit, unsigned max_idle)
         :spawn_service(_spawn_service),
+         log_socket(_log_socket),
          stock(event_loop, *this, limit, max_idle) {}
 
     StockMap &GetStock() {
@@ -419,10 +441,11 @@ WasStock::Create(CreateStockItem c,
 {
     WasChildParams *params = (WasChildParams *)info;
 
-    auto *child = new WasChild(c, spawn_service, params->options.tag);
-
     assert(params != nullptr);
     assert(params->executable_path != nullptr);
+
+    auto *child = new WasChild(c, spawn_service, params->options.tag,
+                               log_socket);
 
     try {
         child->Launch(*params);
@@ -450,9 +473,11 @@ WasChild::~WasChild()
 
 StockMap *
 was_stock_new(unsigned limit, unsigned max_idle,
-              EventLoop &event_loop, SpawnService &spawn_service)
+              EventLoop &event_loop, SpawnService &spawn_service,
+              SocketDescriptor log_socket)
 {
-    auto *stock = new WasStock(event_loop, spawn_service, limit, max_idle);
+    auto *stock = new WasStock(event_loop, spawn_service, log_socket,
+                               limit, max_idle);
     return &stock->GetStock();
 }
 
@@ -485,6 +510,20 @@ was_stock_get(StockMap *hstock, struct pool *pool,
 
     hstock->Get(*pool, params->GetStockKey(*tpool), params,
                 handler, cancel_ptr);
+}
+
+void
+was_stock_item_set_site(StockItem &item, const char *site) noexcept
+{
+    auto &child = (WasChild &)item;
+    child.SetSite(site);
+}
+
+void
+was_stock_item_set_uri(StockItem &item, const char *uri) noexcept
+{
+    auto &child = (WasChild &)item;
+    child.SetUri(uri);
 }
 
 const WasProcess &

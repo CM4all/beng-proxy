@@ -3,6 +3,7 @@ cm4all-beng-proxy (14.0.9) unstable; urgency=low
   * translation: allow disabling the HTTP cache with "UNCACHED"
   * http_cache: remove the memcached backend
   * access_log: use protocol version 2
+  * fcgi, was: option "forward_child_errors" forwards stderr to logger
 
  --   
 

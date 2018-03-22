@@ -60,7 +60,8 @@ public:
         :pool(_pool), stock_item(&_stock_item) {
     }
 
-    void Start(EventLoop &event_loop, const char *path,
+    void Start(EventLoop &event_loop, const char *site_name,
+               const char *path,
                http_method_t method, const char *uri,
                const char *script_name, const char *path_info,
                const char *query_string,
@@ -72,6 +73,9 @@ public:
                HttpResponseHandler &handler,
                CancellablePointer &caller_cancel_ptr) {
         caller_cancel_ptr = *this;
+
+        fcgi_stock_item_set_site(*stock_item, site_name);
+        fcgi_stock_item_set_uri(*stock_item, uri);
 
         const char *script_filename = fcgi_stock_translate_path(*stock_item, path,
                                                                 pool);
@@ -114,6 +118,7 @@ private:
 void
 fcgi_request(struct pool *pool, EventLoop &event_loop,
              FcgiStock *fcgi_stock,
+             const char *site_name,
              const ChildOptions &options,
              const char *action,
              const char *path,
@@ -150,7 +155,7 @@ fcgi_request(struct pool *pool, EventLoop &event_loop,
     auto request = NewFromPool<FcgiRequest>(*pool, *pool, *stock_item);
 
 
-    request->Start(event_loop, path, method, uri,
+    request->Start(event_loop, site_name, path, method, uri,
                    script_name, path_info,
                    query_string, document_root, remote_addr,
                    headers, std::move(body), params, stderr_fd, handler,

@@ -47,13 +47,15 @@ struct WasProcess;
 template<typename T> struct ConstBuffer;
 class EventLoop;
 class SpawnService;
+class SocketDescriptor;
 
 /**
  * Launch and manage WAS child processes.
  */
 StockMap *
 was_stock_new(unsigned limit, unsigned max_idle,
-              EventLoop &event_loop, SpawnService &spawn_service);
+              EventLoop &event_loop, SpawnService &spawn_service,
+              SocketDescriptor log_socket);
 
 void
 was_stock_free(StockMap *stock);
@@ -71,6 +73,12 @@ was_stock_get(StockMap *hstock, struct pool *pool,
               ConstBuffer<const char *> args,
               StockGetHandler &handler,
               CancellablePointer &cancel_ptr);
+
+void
+was_stock_item_set_site(StockItem &item, const char *site) noexcept;
+
+void
+was_stock_item_set_uri(StockItem &item, const char *uri) noexcept;
 
 /**
  * Returns the socket descriptor of the specified stock item.

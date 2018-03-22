@@ -316,6 +316,10 @@ try {
     instance.access_log.reset(AccessLogGlue::Create(instance.config.access_log,
                                                     &instance.cmdline.logger_user));
 
+    const auto child_log_socket = instance.access_log
+        ? instance.access_log->GetChildSocket()
+        : SocketDescriptor::Undefined();
+
     /* initialize ResourceLoader and all its dependencies */
 
     instance.tcp_stock = new TcpStock(instance.event_loop,
@@ -347,12 +351,14 @@ try {
     instance.fcgi_stock = fcgi_stock_new(instance.config.fcgi_stock_limit,
                                          instance.config.fcgi_stock_max_idle,
                                          instance.event_loop,
-                                         *instance.spawn_service);
+                                         *instance.spawn_service,
+                                         child_log_socket);
 
     instance.was_stock = was_stock_new(instance.config.was_stock_limit,
                                        instance.config.was_stock_max_idle,
                                        instance.event_loop,
-                                       *instance.spawn_service);
+                                       *instance.spawn_service,
+                                       child_log_socket);
 
     instance.delegate_stock = delegate_stock_new(instance.event_loop,
                                                  *instance.spawn_service);
