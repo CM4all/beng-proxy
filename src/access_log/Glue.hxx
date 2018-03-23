@@ -43,6 +43,7 @@
 
 #include <chrono>
 #include <string>
+#include <memory>
 
 #include <stdint.h>
 
@@ -55,12 +56,13 @@ class LogClient;
 class AccessLogGlue {
     const AccessLogConfig config;
 
-    LogClient *const client;
+    const std::unique_ptr<LogClient> client;
 
-    AccessLogGlue(const AccessLogConfig &config, LogClient *_client);
+    AccessLogGlue(const AccessLogConfig &config,
+                  std::unique_ptr<LogClient> _client);
 
 public:
-    ~AccessLogGlue();
+    ~AccessLogGlue() noexcept;
 
     static AccessLogGlue *Create(const AccessLogConfig &config,
                                  const UidGid *user);

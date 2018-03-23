@@ -43,13 +43,10 @@
 #include <string.h>
 
 AccessLogGlue::AccessLogGlue(const AccessLogConfig &_config,
-                             LogClient *_client)
-    :config(_config), client(_client) {}
+                             std::unique_ptr<LogClient> _client)
+    :config(_config), client(std::move(_client)) {}
 
-AccessLogGlue::~AccessLogGlue()
-{
-    delete client;
-}
+AccessLogGlue::~AccessLogGlue() noexcept = default;
 
 static UniqueSocketDescriptor
 CreateConnectDatagram(const SocketAddress address)
@@ -81,14 +78,15 @@ AccessLogGlue::Create(const AccessLogConfig &config,
 
     case AccessLogConfig::Type::SEND:
         return new AccessLogGlue(config,
-                                 new LogClient(CreateConnectDatagram(config.send_to)));
+                                 std::make_unique<LogClient>(CreateConnectDatagram(config.send_to)));
 
     case AccessLogConfig::Type::EXECUTE:
         {
             auto lp = LaunchLogger(config.command.c_str(), user);
             assert(lp.fd.IsDefined());
 
-            return new AccessLogGlue(config, new LogClient(std::move(lp.fd)));
+            return new AccessLogGlue(config,
+                                     std::make_unique<LogClient>(std::move(lp.fd)));
         }
     }
 
