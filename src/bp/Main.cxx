@@ -311,6 +311,13 @@ try {
         PrintException(e);
     }
 
+    /* launch the access logger */
+
+    instance.access_log.reset(AccessLogGlue::Create(instance.config.access_log,
+                                                    &instance.cmdline.logger_user));
+
+    /* initialize ResourceLoader and all its dependencies */
+
     instance.tcp_stock = new TcpStock(instance.event_loop,
                                       instance.config.tcp_stock_limit);
     instance.tcp_balancer = new TcpBalancer(*instance.tcp_stock,
@@ -392,11 +399,6 @@ try {
 
     global_translate_cache = instance.translate_cache;
     global_pipe_stock = instance.pipe_stock;
-
-    /* launch the access logger */
-
-    instance.access_log.reset(AccessLogGlue::Create(instance.config.access_log,
-                                                    &instance.cmdline.logger_user));
 
     /* daemonize II */
 
