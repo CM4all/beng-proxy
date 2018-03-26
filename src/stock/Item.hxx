@@ -33,6 +33,7 @@
 #ifndef BENG_PROXY_STOCK_ITEM_HXX
 #define BENG_PROXY_STOCK_ITEM_HXX
 
+#include "util/LeakDetector.hxx"
 #include "util/Compiler.h"
 
 #include <boost/intrusive/list_hook.hpp>
@@ -66,7 +67,8 @@ struct CreateStockItem {
 };
 
 struct StockItem
-    : boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
+    : boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>,
+      private LeakDetector {
 
     Stock &stock;
 
