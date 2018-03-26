@@ -61,6 +61,21 @@ struct LhttpRequest final : Lease {
                     *(BufferedSocketHandler *)nullptr);
     }
 
+    void Start(struct pool &pool,
+               const LhttpAddress &address,
+               http_method_t method, HttpHeaders &&headers,
+               UnusedIstreamPtr body,
+               HttpResponseHandler &handler,
+               CancellablePointer &cancel_ptr) noexcept {
+        http_client_request(pool,
+                            socket,
+                            *this,
+                            stock_item.GetStockName(),
+                            method, address.uri, std::move(headers),
+                            std::move(body), true,
+                            handler, cancel_ptr);
+    }
+
     /* virtual methods from class Lease */
     void ReleaseLease(bool reuse) noexcept override {
         socket.Abandon();
@@ -119,11 +134,8 @@ lhttp_request(struct pool &pool, EventLoop &event_loop,
     if (address.host_and_port != nullptr)
         headers.Write("host", address.host_and_port);
 
-    http_client_request(pool,
-                        request->socket,
-                        *request,
-                        stock_item->GetStockName(),
-                        method, address.uri, std::move(headers),
-                        std::move(body), true,
-                        handler, cancel_ptr);
+    request->Start(pool, address,
+                   method, std::move(headers),
+                   std::move(body),
+                   handler, cancel_ptr);
 }
