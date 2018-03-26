@@ -46,11 +46,12 @@
 
 #include <stdexcept>
 
-struct LhttpRequest final : Lease {
+class LhttpRequest final : Lease {
     StockItem &stock_item;
 
     FilteredSocket socket;
 
+public:
     explicit LhttpRequest(EventLoop &event_loop, StockItem &_stock_item)
         :stock_item(_stock_item), socket(event_loop) {
         socket.Init(lhttp_stock_item_get_socket(stock_item),
@@ -76,6 +77,7 @@ struct LhttpRequest final : Lease {
                             handler, cancel_ptr);
     }
 
+private:
     /* virtual methods from class Lease */
     void ReleaseLease(bool reuse) noexcept override {
         socket.Abandon();
