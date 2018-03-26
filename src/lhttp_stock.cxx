@@ -270,6 +270,7 @@ LhttpStock::LhttpStock(unsigned limit, unsigned max_idle,
                        EventLoop &event_loop, SpawnService &spawn_service)
     :child_stock(event_loop, spawn_service,
                  *this,
+                 SocketDescriptor::Undefined(),
                  limit, max_idle),
      mchild_stock(child_stock.GetStockMap()),
      hstock(event_loop, *this, limit, max_idle) {}

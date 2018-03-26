@@ -37,7 +37,6 @@
 #include "stock/Class.hxx"
 #include "stock/Item.hxx"
 #include "child_stock.hxx"
-#include "access_log/ChildErrorLog.hxx"
 #include "spawn/Prepared.hxx"
 #include "spawn/ChildOptions.hxx"
 #include "spawn/JailParams.hxx"
@@ -69,8 +68,6 @@
 struct FcgiStock final : StockClass, ChildStockClass {
     StockMap hstock;
     ChildStock child_stock;
-
-    const SocketDescriptor log_socket;
 
     FcgiStock(unsigned limit, unsigned max_idle,
               EventLoop &event_loop, SpawnService &spawn_service,
@@ -111,8 +108,6 @@ struct FcgiChildParams {
 
     const ChildOptions &options;
 
-    ChildErrorLog log;
-
     FcgiChildParams(const char *_executable_path,
                     ConstBuffer<const char *> _args,
                     const ChildOptions &_options)
@@ -130,8 +125,6 @@ struct FcgiConnection final : StockItem {
     JailConfig jail_config;
 
     StockItem *child = nullptr;
-
-    ChildErrorLog log;
 
     UniqueSocketDescriptor fd;
     SocketEvent event;
@@ -165,11 +158,11 @@ struct FcgiConnection final : StockItem {
     }
 
     void SetSite(const char *site) noexcept {
-        log.SetSite(site);
+        child_stock_item_set_site(*child, site);
     }
 
     void SetUri(const char *uri) noexcept {
-        log.SetUri(uri);
+        child_stock_item_set_uri(*child, uri);
     }
 
     /* virtual methods from class StockItem */
@@ -239,9 +232,6 @@ FcgiStock::PrepareChild(void *info, UniqueSocketDescriptor &&fd,
     auto &params = *(FcgiChildParams *)info;
     const ChildOptions &options = params.options;
 
-    if (log_socket.IsDefined())
-        params.log.EnableClient(p, GetEventLoop(), log_socket);
-
     p.SetStdin(std::move(fd));
 
     /* the FastCGI protocol defines a channel for stderr, so we could
@@ -296,8 +286,6 @@ FcgiStock::Create(CreateStockItem c, void *info,
         std::throw_with_nested(FcgiClientError(StringFormat<256>("Failed to start FastCGI server '%s'",
                                                                  key)));
     }
-
-    connection->log = std::move(params->log);
 
     try {
         connection->fd = child_stock_item_connect(*connection->child);
@@ -376,8 +364,8 @@ FcgiStock::FcgiStock(unsigned limit, unsigned max_idle,
     :hstock(event_loop, *this, limit, max_idle),
      child_stock(event_loop, spawn_service,
                  *this,
-                 limit, max_idle),
-     log_socket(_log_socket) {}
+                 _log_socket,
+                 limit, max_idle) {}
 
 void
 FcgiStock::FadeTag(const char *tag)

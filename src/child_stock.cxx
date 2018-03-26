@@ -33,6 +33,7 @@
 #include "child_stock.hxx"
 #include "child_socket.hxx"
 #include "spawn/ExitListener.hxx"
+#include "access_log/ChildErrorLog.hxx"
 #include "stock/Stock.hxx"
 #include "stock/Item.hxx"
 #include "spawn/Interface.hxx"
@@ -62,6 +63,8 @@ class ChildStockItem final : public StockItem, ExitListener {
 
     const std::string tag;
 
+    ChildErrorLog log;
+
     ChildSocket socket;
     int pid = -1;
 
@@ -77,7 +80,12 @@ public:
 
     ~ChildStockItem() override;
 
-    void Spawn(ChildStockClass &cls, void *info);
+    EventLoop &GetEventLoop() {
+        return stock.GetEventLoop();
+    }
+
+    void Spawn(ChildStockClass &cls, void *info,
+               SocketDescriptor log_socket);
 
     gcc_pure
     const char *GetTag() const {
@@ -87,6 +95,14 @@ public:
     gcc_pure
     bool IsTag(const char *_tag) const {
         return tag == _tag;
+    }
+
+    void SetSite(const char *site) noexcept {
+        log.SetSite(site);
+    }
+
+    void SetUri(const char *uri) noexcept {
+        log.SetUri(uri);
     }
 
     UniqueSocketDescriptor Connect() {
@@ -122,12 +138,16 @@ private:
 };
 
 void
-ChildStockItem::Spawn(ChildStockClass &cls, void *info)
+ChildStockItem::Spawn(ChildStockClass &cls, void *info,
+                      SocketDescriptor log_socket)
 {
     int socket_type = cls.GetChildSocketType(info);
 
     PreparedChildProcess p;
     cls.PrepareChild(info, socket.Create(socket_type), p);
+
+    if (log_socket.IsDefined() && p.stderr_fd < 0)
+        log.EnableClient(p, GetEventLoop(), log_socket);
 
     pid = spawn_service.SpawnChildProcess(GetStockName(), std::move(p), this);
 }
@@ -154,7 +174,7 @@ ChildStock::Create(CreateStockItem c, void *info,
                                     cls.GetChildTag(info));
 
     try {
-        item->Spawn(cls, info);
+        item->Spawn(cls, info, log_socket);
     } catch (...) {
         delete item;
         throw;
@@ -179,9 +199,11 @@ ChildStockItem::~ChildStockItem()
 
 ChildStock::ChildStock(EventLoop &event_loop, SpawnService &_spawn_service,
                        ChildStockClass &_cls,
+                       SocketDescriptor _log_socket,
                        unsigned _limit, unsigned _max_idle) noexcept
     :map(event_loop, *this, _limit, _max_idle),
-     spawn_service(_spawn_service), cls(_cls)
+     spawn_service(_spawn_service), cls(_cls),
+     log_socket(_log_socket)
 {
 }
 
@@ -208,4 +230,18 @@ child_stock_item_get_tag(const StockItem &_item)
     const auto &item = (const ChildStockItem &)_item;
 
     return item.GetTag();
+}
+
+void
+child_stock_item_set_site(StockItem &_item, const char *site) noexcept
+{
+    auto &item = (ChildStockItem &)_item;
+    item.SetSite(site);
+}
+
+void
+child_stock_item_set_uri(StockItem &_item, const char *uri) noexcept
+{
+    auto &item = (ChildStockItem &)_item;
+    item.SetUri(uri);
 }

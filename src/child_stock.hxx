@@ -40,6 +40,7 @@
 #include "stock/Class.hxx"
 #include "stock/MapStock.hxx"
 #include "io/FdType.hxx"
+#include "net/SocketDescriptor.hxx"
 
 struct PreparedChildProcess;
 class UniqueSocketDescriptor;
@@ -80,9 +81,12 @@ class ChildStock final : StockClass {
     SpawnService &spawn_service;
     ChildStockClass &cls;
 
+    const SocketDescriptor log_socket;
+
 public:
     ChildStock(EventLoop &event_loop, SpawnService &_spawn_service,
                ChildStockClass &_cls,
+               SocketDescriptor _log_socket,
                unsigned _limit, unsigned _max_idle) noexcept;
 
     StockMap &GetStockMap() noexcept {
@@ -119,5 +123,11 @@ child_stock_item_get_type(const StockItem &)
 
 const char *
 child_stock_item_get_tag(const StockItem &item);
+
+void
+child_stock_item_set_site(StockItem &item, const char *site) noexcept;
+
+void
+child_stock_item_set_uri(StockItem &item, const char *uri) noexcept;
 
 #endif
