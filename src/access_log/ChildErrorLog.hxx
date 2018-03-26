@@ -50,7 +50,7 @@ class ChildErrorLog {
     std::string site, uri;
 
 public:
-    ChildErrorLog() noexcept;
+    ChildErrorLog();
 
     /**
      * Construct a #Net::Log::PipeAdapter if the given socket is

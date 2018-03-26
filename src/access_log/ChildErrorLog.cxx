@@ -38,7 +38,7 @@
 
 #include <assert.h>
 
-ChildErrorLog::ChildErrorLog() noexcept = default;
+ChildErrorLog::ChildErrorLog() = default;
 ChildErrorLog::~ChildErrorLog() noexcept = default;
 ChildErrorLog &ChildErrorLog::operator=(ChildErrorLog &&) = default;
 
