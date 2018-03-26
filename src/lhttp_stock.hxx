@@ -50,7 +50,8 @@ class SpawnService;
  */
 LhttpStock *
 lhttp_stock_new(unsigned limit, unsigned max_idle,
-                EventLoop &event_loop, SpawnService &spawn_service);
+                EventLoop &event_loop, SpawnService &spawn_service,
+                SocketDescriptor log_socket);
 
 void
 lhttp_stock_free(LhttpStock *lhttp_stock);
@@ -78,5 +79,11 @@ lhttp_stock_item_get_socket(const StockItem &item);
 gcc_pure
 FdType
 lhttp_stock_item_get_type(const StockItem &item);
+
+void
+lhttp_stock_item_set_site(StockItem &item, const char *site) noexcept;
+
+void
+lhttp_stock_item_set_uri(StockItem &item, const char *uri) noexcept;
 
 #endif

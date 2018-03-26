@@ -346,7 +346,8 @@ try {
     }
 
     instance.lhttp_stock = lhttp_stock_new(0, 16, instance.event_loop,
-                                           *instance.spawn_service);
+                                           *instance.spawn_service,
+                                           child_log_socket);
 
     instance.fcgi_stock = fcgi_stock_new(instance.config.fcgi_stock_limit,
                                          instance.config.fcgi_stock_max_idle,

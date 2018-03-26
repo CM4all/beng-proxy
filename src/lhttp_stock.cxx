@@ -59,7 +59,8 @@ class LhttpStock final : StockClass, ChildStockClass {
 
 public:
     LhttpStock(unsigned limit, unsigned max_idle,
-               EventLoop &event_loop, SpawnService &spawn_service);
+               EventLoop &event_loop, SpawnService &spawn_service,
+               SocketDescriptor log_socket);
 
     void FadeAll() {
         hstock.FadeAll();
@@ -117,6 +118,14 @@ public:
         assert(child != nullptr);
 
         return child_stock_item_get_tag(*child);
+    }
+
+    void SetSite(const char *site) noexcept {
+        child_stock_item_set_site(*child, site);
+    }
+
+    void SetUri(const char *uri) noexcept {
+        child_stock_item_set_uri(*child, uri);
     }
 
 private:
@@ -267,10 +276,11 @@ LhttpConnection::~LhttpConnection()
 
 inline
 LhttpStock::LhttpStock(unsigned limit, unsigned max_idle,
-                       EventLoop &event_loop, SpawnService &spawn_service)
+                       EventLoop &event_loop, SpawnService &spawn_service,
+                       SocketDescriptor log_socket)
     :child_stock(event_loop, spawn_service,
                  *this,
-                 SocketDescriptor::Undefined(),
+                 log_socket,
                  limit, max_idle),
      mchild_stock(child_stock.GetStockMap()),
      hstock(event_loop, *this, limit, max_idle) {}
@@ -296,9 +306,11 @@ LhttpStock::FadeTag(const char *tag)
 
 LhttpStock *
 lhttp_stock_new(unsigned limit, unsigned max_idle,
-                EventLoop &event_loop, SpawnService &spawn_service)
+                EventLoop &event_loop, SpawnService &spawn_service,
+                SocketDescriptor log_socket)
 {
-    return new LhttpStock(limit, max_idle, event_loop, spawn_service);
+    return new LhttpStock(limit, max_idle, event_loop, spawn_service,
+                          log_socket);
 }
 
 void
@@ -351,4 +363,18 @@ FdType
 lhttp_stock_item_get_type(gcc_unused const StockItem &item)
 {
     return FdType::FD_SOCKET;
+}
+
+void
+lhttp_stock_item_set_site(StockItem &item, const char *site) noexcept
+{
+    auto &connection = (LhttpConnection &)item;
+    connection.SetSite(site);
+}
+
+void
+lhttp_stock_item_set_uri(StockItem &item, const char *uri) noexcept
+{
+    auto &connection = (LhttpConnection &)item;
+    connection.SetUri(uri);
 }
