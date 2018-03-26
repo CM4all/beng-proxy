@@ -57,7 +57,7 @@ ChildStockClass::GetChildTag(void *) const noexcept
     return nullptr;
 }
 
-struct ChildStockItem final : StockItem, ExitListener {
+class ChildStockItem final : public StockItem, ExitListener {
     SpawnService &spawn_service;
 
     const std::string tag;
@@ -67,6 +67,7 @@ struct ChildStockItem final : StockItem, ExitListener {
 
     bool busy = true;
 
+public:
     ChildStockItem(CreateStockItem c,
                    SpawnService &_spawn_service,
                    const char *_tag) noexcept
@@ -77,6 +78,27 @@ struct ChildStockItem final : StockItem, ExitListener {
     ~ChildStockItem() override;
 
     void Spawn(ChildStockClass &cls, void *info);
+
+    gcc_pure
+    const char *GetTag() const {
+        return tag.empty() ? nullptr : tag.c_str();
+    }
+
+    gcc_pure
+    bool IsTag(const char *_tag) const {
+        return tag == _tag;
+    }
+
+    UniqueSocketDescriptor Connect() {
+        try {
+            return socket.Connect();
+        } catch (...) {
+            /* if the connection fails, abandon the child process, don't
+               try again - it will never work! */
+            fade = true;
+            throw;
+        }
+    }
 
     /* virtual methods from class StockItem */
     bool Borrow() noexcept override {
@@ -94,6 +116,7 @@ struct ChildStockItem final : StockItem, ExitListener {
         return pid > 0;
     }
 
+private:
     /* virtual methods from class ExitListener */
     void OnChildProcessExit(int status) override;
 };
@@ -167,7 +190,7 @@ ChildStock::FadeTag(const char *tag)
 {
     map.FadeIf([tag](const StockItem &_item) {
             const auto &item = (const ChildStockItem &)_item;
-            return item.tag == tag;
+            return item.IsTag(tag);
         });
 }
 
@@ -176,14 +199,7 @@ child_stock_item_connect(StockItem &_item)
 {
     auto &item = (ChildStockItem &)_item;
 
-    try {
-        return item.socket.Connect();
-    } catch (...) {
-        /* if the connection fails, abandon the child process, don't
-           try again - it will never work! */
-        item.fade = true;
-        throw;
-    }
+    return item.Connect();
 }
 
 const char *
@@ -191,5 +207,5 @@ child_stock_item_get_tag(const StockItem &_item)
 {
     const auto &item = (const ChildStockItem &)_item;
 
-    return item.tag.empty() ? nullptr : item.tag.c_str();
+    return item.GetTag();
 }
