@@ -39,7 +39,7 @@ struct PreparedChildProcess;
 class EventLoop;
 class SocketDescriptor;
 class UniqueFileDescriptor;
-namespace Net::Log { struct Datagram; class PipeAdapter; }
+namespace Net { namespace Log { struct Datagram; class PipeAdapter; }}
 
 /**
  * A glue class which manages where a child process logs its "stderr".
