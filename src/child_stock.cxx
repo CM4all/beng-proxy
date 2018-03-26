@@ -76,6 +76,8 @@ struct ChildStockItem final : StockItem, ExitListener {
 
     ~ChildStockItem() override;
 
+    void Spawn(ChildStockClass &cls, void *info);
+
     /* virtual methods from class StockItem */
     bool Borrow() noexcept override {
         assert(!busy);
@@ -95,6 +97,17 @@ struct ChildStockItem final : StockItem, ExitListener {
     /* virtual methods from class ExitListener */
     void OnChildProcessExit(int status) override;
 };
+
+void
+ChildStockItem::Spawn(ChildStockClass &cls, void *info)
+{
+    int socket_type = cls.GetChildSocketType(info);
+
+    PreparedChildProcess p;
+    cls.PrepareChild(info, socket.Create(socket_type), p);
+
+    pid = spawn_service.SpawnChildProcess(GetStockName(), std::move(p), this);
+}
 
 void
 ChildStockItem::OnChildProcessExit(gcc_unused int status)
@@ -118,16 +131,7 @@ ChildStock::Create(CreateStockItem c, void *info,
                                     cls.GetChildTag(info));
 
     try {
-        int socket_type = cls.GetChildSocketType(info);
-
-        auto fd = item->socket.Create(socket_type);
-
-        PreparedChildProcess p;
-        cls.PrepareChild(info, std::move(fd), p);
-
-        item->pid = spawn_service.SpawnChildProcess(item->GetStockName(),
-                                                    std::move(p),
-                                                    item);
+        item->Spawn(cls, info);
     } catch (...) {
         delete item;
         throw;
