@@ -5,7 +5,7 @@ cm4all-beng-proxy (14.0.9) unstable; urgency=low
   * access_log: use protocol version 2
   * fcgi, was, lhttp: option "forward_child_errors" forwards stderr to logger
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Mon, 26 Mar 2018 09:42:46 -0000
 
 cm4all-beng-proxy (14.0.8) unstable; urgency=low
 
