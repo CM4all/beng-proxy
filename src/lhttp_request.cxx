@@ -84,6 +84,8 @@ private:
         socket.Destroy();
 
         stock_item.Put(!reuse);
+
+        this->~LhttpRequest();
     }
 };
 
