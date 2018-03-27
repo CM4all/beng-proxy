@@ -240,14 +240,11 @@ DirectResourceLoader::SendRequest(struct pool &pool,
 
         UniqueFileDescriptor stderr_fd;
         if (cgi->options.stderr_path != nullptr) {
-            stderr_fd = cgi->options.OpenStderrPath();
-            if (!stderr_fd.IsDefined()) {
-                int code = errno;
-
+            try {
+                stderr_fd = cgi->options.OpenStderrPath();
+            } catch (...) {
                 body.Clear();
-
-                handler.InvokeError(std::make_exception_ptr(FormatErrno(code, "Failed to open '%s'",
-                                                                        cgi->options.stderr_path)));
+                handler.InvokeError(std::current_exception());
                 return;
             }
         }
