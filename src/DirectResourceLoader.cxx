@@ -339,6 +339,7 @@ DirectResourceLoader::SendRequest(struct pool &pool,
 
     case ResourceAddress::Type::LHTTP:
         lhttp_request(pool, event_loop, *lhttp_stock,
+                      site_name,
                       address.GetLhttp(),
                       method, HttpHeaders(std::move(headers)),
                       std::move(body),

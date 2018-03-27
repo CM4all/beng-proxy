@@ -97,6 +97,7 @@ private:
 void
 lhttp_request(struct pool &pool, EventLoop &event_loop,
               LhttpStock &lhttp_stock,
+              const char *site_name,
               const LhttpAddress &address,
               http_method_t method, HttpHeaders &&headers,
               UnusedIstreamPtr body,
@@ -132,6 +133,9 @@ lhttp_request(struct pool &pool, EventLoop &event_loop,
         handler.InvokeError(std::current_exception());
         return;
     }
+
+    lhttp_stock_item_set_site(*stock_item, site_name);
+    lhttp_stock_item_set_uri(*stock_item, address.uri);
 
     auto request = NewFromPool<LhttpRequest>(pool, event_loop, *stock_item);
 
