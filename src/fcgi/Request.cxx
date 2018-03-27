@@ -69,7 +69,7 @@ public:
                const char *remote_addr,
                const StringMap &headers, UnusedIstreamPtr body,
                ConstBuffer<const char *> params,
-               int stderr_fd,
+               UniqueFileDescriptor &&stderr_fd,
                HttpResponseHandler &handler,
                CancellablePointer &caller_cancel_ptr) {
         caller_cancel_ptr = *this;
@@ -95,7 +95,7 @@ public:
                             remote_addr,
                             headers, std::move(body),
                             params,
-                            stderr_fd,
+                            std::move(stderr_fd),
                             handler, cancel_ptr);
     }
 
@@ -130,7 +130,7 @@ fcgi_request(struct pool *pool, EventLoop &event_loop,
              const char *remote_addr,
              const StringMap &headers, UnusedIstreamPtr body,
              ConstBuffer<const char *> params,
-             int stderr_fd,
+             UniqueFileDescriptor &&stderr_fd,
              HttpResponseHandler &handler,
              CancellablePointer &cancel_ptr)
 {
@@ -144,10 +144,6 @@ fcgi_request(struct pool *pool, EventLoop &event_loop,
                                     args);
     } catch (...) {
         body.Clear();
-
-        if (stderr_fd >= 0)
-            close(stderr_fd);
-
         handler.InvokeError(std::current_exception());
         return;
     }
@@ -158,6 +154,6 @@ fcgi_request(struct pool *pool, EventLoop &event_loop,
     request->Start(event_loop, site_name, path, method, uri,
                    script_name, path_info,
                    query_string, document_root, remote_addr,
-                   headers, std::move(body), params, stderr_fd, handler,
-                   cancel_ptr);
+                   headers, std::move(body), params, std::move(stderr_fd),
+                   handler, cancel_ptr);
 }

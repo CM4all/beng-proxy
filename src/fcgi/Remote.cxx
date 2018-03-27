@@ -44,6 +44,7 @@
 #include "istream/UnusedHoldPtr.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
+#include "io/UniqueFileDescriptor.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/Cancellable.hxx"
 
@@ -72,7 +73,7 @@ class FcgiRemoteRequest final : StockGetHandler, Cancellable, Lease {
 
     const ConstBuffer<const char *> params;
 
-    const int stderr_fd;
+    UniqueFileDescriptor stderr_fd;
 
     HttpResponseHandler &handler;
     CancellablePointer &caller_cancel_ptr;
@@ -89,7 +90,7 @@ public:
                       StringMap &&_headers,
                       UnusedIstreamPtr _body,
                       ConstBuffer<const char *> _params,
-                      int _stderr_fd,
+                      UniqueFileDescriptor &&_stderr_fd,
                       HttpResponseHandler &_handler,
                       CancellablePointer &_cancel_ptr)
         :pool(_pool), event_loop(_event_loop),
@@ -101,7 +102,7 @@ public:
          headers(std::move(_headers)),
          body(pool, std::move(_body)),
          params(_params),
-         stderr_fd(_stderr_fd),
+         stderr_fd(std::move(_stderr_fd)),
          handler(_handler), caller_cancel_ptr(_cancel_ptr) {
         caller_cancel_ptr = *this;
     }
@@ -154,7 +155,7 @@ FcgiRemoteRequest::OnStockItemReady(StockItem &item) noexcept
                         remote_addr,
                         headers, std::move(body),
                         params,
-                        stderr_fd,
+                        std::move(stderr_fd),
                         handler,
                         caller_cancel_ptr);
 }
@@ -162,8 +163,8 @@ FcgiRemoteRequest::OnStockItemReady(StockItem &item) noexcept
 void
 FcgiRemoteRequest::OnStockItemError(std::exception_ptr ep) noexcept
 {
-    if (stderr_fd >= 0)
-        close(stderr_fd);
+    if (stderr_fd.IsDefined())
+        stderr_fd.Close();
 
     handler.InvokeError(ep);
 }
@@ -185,7 +186,7 @@ fcgi_remote_request(struct pool *pool, EventLoop &event_loop,
                     const char *remote_addr,
                     StringMap &&headers, UnusedIstreamPtr body,
                     ConstBuffer<const char *> params,
-                    int stderr_fd,
+                    UniqueFileDescriptor stderr_fd,
                     HttpResponseHandler &handler,
                     CancellablePointer &_cancel_ptr)
 {
@@ -199,7 +200,7 @@ fcgi_remote_request(struct pool *pool, EventLoop &event_loop,
                                                   std::move(headers),
                                                   std::move(body),
                                                   params,
-                                                  stderr_fd,
+                                                  std::move(stderr_fd),
                                                   handler, *cancel_ptr);
 
     request->Start(*tcp_balancer, *address_list);

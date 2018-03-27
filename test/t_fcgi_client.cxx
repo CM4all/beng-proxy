@@ -41,7 +41,7 @@
 #include "tio.hxx"
 #include "fcgi/Client.hxx"
 #include "system/SetupProcess.hxx"
-#include "io/FileDescriptor.hxx"
+#include "io/UniqueFileDescriptor.hxx"
 #include "lease.hxx"
 #include "direct.hxx"
 #include "istream/UnusedPtr.hxx"
@@ -273,7 +273,7 @@ struct Connection {
                             nullptr, "192.168.1.100",
                             headers, std::move(body),
                             nullptr,
-                            -1,
+                            {},
                             handler, cancel_ptr);
     }
 

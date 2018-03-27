@@ -61,6 +61,7 @@
 #include "AllocatorPtr.hxx"
 #include "system/Error.hxx"
 #include "net/HostParser.hxx"
+#include "io/UniqueFileDescriptor.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/StringUtil.hxx"
 
@@ -172,7 +173,6 @@ DirectResourceLoader::SendRequest(struct pool &pool,
         const FileAddress *file;
         const CgiAddress *cgi;
         const NfsAddress *nfs;
-        int stderr_fd;
         const char *server_name;
         unsigned server_port;
         SocketFilterFactory *filter_factory;
@@ -235,12 +235,13 @@ DirectResourceLoader::SendRequest(struct pool &pool,
                 handler, cancel_ptr);
         return;
 
-    case ResourceAddress::Type::FASTCGI:
+    case ResourceAddress::Type::FASTCGI: {
         cgi = &address.GetCgi();
 
+        UniqueFileDescriptor stderr_fd;
         if (cgi->options.stderr_path != nullptr) {
-            stderr_fd = cgi->options.OpenStderrPath();
-            if (stderr_fd < 0) {
+            int _stderr_fd = cgi->options.OpenStderrPath();
+            if (_stderr_fd < 0) {
                 int code = errno;
 
                 body.Clear();
@@ -249,8 +250,9 @@ DirectResourceLoader::SendRequest(struct pool &pool,
                                                                         cgi->options.stderr_path)));
                 return;
             }
-        } else
-            stderr_fd = -1;
+
+            stderr_fd = UniqueFileDescriptor(FileDescriptor(_stderr_fd));
+        }
 
         if (cgi->address_list.IsEmpty())
             fcgi_request(&pool, event_loop, fcgi_stock,
@@ -267,7 +269,7 @@ DirectResourceLoader::SendRequest(struct pool &pool,
                          extract_remote_ip(&pool, &headers),
                          headers, std::move(body),
                          cgi->params.ToArray(pool),
-                         stderr_fd,
+                         std::move(stderr_fd),
                          handler, cancel_ptr);
         else
             fcgi_remote_request(&pool, event_loop, tcp_balancer,
@@ -281,9 +283,10 @@ DirectResourceLoader::SendRequest(struct pool &pool,
                                 extract_remote_ip(&pool, &headers),
                                 std::move(headers), std::move(body),
                                 cgi->params.ToArray(pool),
-                                stderr_fd,
+                                std::move(stderr_fd),
                                 handler, cancel_ptr);
         return;
+    }
 
     case ResourceAddress::Type::WAS:
         cgi = &address.GetCgi();

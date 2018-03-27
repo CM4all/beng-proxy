@@ -50,6 +50,7 @@
 #include "pool/pool.hxx"
 #include "system/Error.hxx"
 #include "event/net/BufferedSocket.hxx"
+#include "io/UniqueFileDescriptor.hxx"
 #include "util/ByteOrder.hxx"
 #include "util/Cast.hxx"
 #include "util/ConstBuffer.hxx"
@@ -76,7 +77,7 @@ struct FcgiClient final
 
     struct lease_ref lease_ref;
 
-    const int stderr_fd;
+    UniqueFileDescriptor stderr_fd;
 
     HttpResponseHandler &handler;
 
@@ -147,7 +148,7 @@ struct FcgiClient final
 
     FcgiClient(struct pool &_pool, EventLoop &event_loop,
                SocketDescriptor fd, FdType fd_type, Lease &lease,
-               int _stderr_fd,
+               UniqueFileDescriptor &&_stderr_fd,
                uint16_t _id, http_method_t method,
                HttpResponseHandler &_handler,
                CancellablePointer &cancel_ptr);
@@ -276,9 +277,6 @@ static constexpr struct timeval fcgi_client_timeout = {
 inline FcgiClient::~FcgiClient()
 {
     socket.Destroy();
-
-    if (stderr_fd >= 0)
-        close(stderr_fd);
 }
 
 void
@@ -423,8 +421,8 @@ FcgiClient::Feed(const uint8_t *data, size_t length)
         /* ignore errors and partial writes while forwarding STDERR
            payload; there's nothing useful we can do, and we can't let
            this delay/disturb the response delivery */
-        if (stderr_fd >= 0)
-            write(stderr_fd, data, length);
+        if (stderr_fd.IsDefined())
+            stderr_fd.Write(data, length);
         else
             fwrite(data, 1, length, stderr);
         return length;
@@ -1039,13 +1037,13 @@ FcgiClient::Cancel() noexcept
 inline
 FcgiClient::FcgiClient(struct pool &_pool, EventLoop &event_loop,
                        SocketDescriptor fd, FdType fd_type, Lease &lease,
-                       int _stderr_fd,
+                       UniqueFileDescriptor &&_stderr_fd,
                        uint16_t _id, http_method_t method,
                        HttpResponseHandler &_handler,
                        CancellablePointer &cancel_ptr)
     :Istream(_pool),
      socket(event_loop),
-     stderr_fd(_stderr_fd),
+     stderr_fd(std::move(_stderr_fd)),
      handler(_handler),
      id(_id),
      response(GetPool(), http_method_is_empty(method))
@@ -1070,7 +1068,7 @@ fcgi_client_request(struct pool *pool, EventLoop &event_loop,
                     const char *remote_addr,
                     const StringMap &headers, UnusedIstreamPtr body,
                     ConstBuffer<const char *> params,
-                    int stderr_fd,
+                    UniqueFileDescriptor &&stderr_fd,
                     HttpResponseHandler &handler,
                     CancellablePointer &cancel_ptr)
 {
@@ -1094,7 +1092,7 @@ fcgi_client_request(struct pool *pool, EventLoop &event_loop,
 
     auto client = NewFromPool<FcgiClient>(*pool, *pool, event_loop,
                                           fd, fd_type, lease,
-                                          stderr_fd,
+                                          std::move(stderr_fd),
                                           header.request_id, method,
                                           handler, cancel_ptr);
 

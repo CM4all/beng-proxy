@@ -42,6 +42,7 @@ struct FcgiStock;
 class StringMap;
 class HttpResponseHandler;
 class CancellablePointer;
+class UniqueFileDescriptor;
 struct ChildOptions;
 template<typename T> struct ConstBuffer;
 
@@ -66,7 +67,7 @@ fcgi_request(struct pool *pool, EventLoop &event_loop,
              const char *remote_addr,
              const StringMap &headers, UnusedIstreamPtr body,
              ConstBuffer<const char *> params,
-             int stderr_fd,
+             UniqueFileDescriptor &&stderr_fd,
              HttpResponseHandler &handler,
              CancellablePointer &cancel_ptr);
 

@@ -43,6 +43,7 @@ struct AddressList;
 class StringMap;
 class HttpResponseHandler;
 class CancellablePointer;
+class UniqueFileDescriptor;
 template<typename T> struct ConstBuffer;
 
 /**
@@ -60,7 +61,7 @@ fcgi_remote_request(struct pool *pool, EventLoop &event_loop,
                     const char *remote_addr,
                     StringMap &&headers, UnusedIstreamPtr body,
                     ConstBuffer<const char *> params,
-                    int stderr_fd,
+                    UniqueFileDescriptor stderr_fd,
                     HttpResponseHandler &handler,
                     CancellablePointer &cancel_ptr);
 
