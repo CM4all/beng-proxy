@@ -52,7 +52,8 @@ class LhttpRequest final : Lease {
     FilteredSocket socket;
 
 public:
-    explicit LhttpRequest(EventLoop &event_loop, StockItem &_stock_item)
+    explicit LhttpRequest(EventLoop &event_loop,
+                          StockItem &_stock_item) noexcept
         :stock_item(_stock_item), socket(event_loop) {
         socket.Init(lhttp_stock_item_get_socket(stock_item),
                     lhttp_stock_item_get_type(stock_item),
@@ -102,7 +103,7 @@ lhttp_request(struct pool &pool, EventLoop &event_loop,
               http_method_t method, HttpHeaders &&headers,
               UnusedIstreamPtr body,
               HttpResponseHandler &handler,
-              CancellablePointer &cancel_ptr)
+              CancellablePointer &cancel_ptr) noexcept
 {
     try {
         address.options.Check();

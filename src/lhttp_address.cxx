@@ -45,7 +45,7 @@
 
 #include <string.h>
 
-LhttpAddress::LhttpAddress(const char *_path)
+LhttpAddress::LhttpAddress(const char *_path) noexcept
     :path(_path),
      host_and_port(nullptr),
      uri(nullptr), expand_uri(nullptr),
@@ -55,7 +55,8 @@ LhttpAddress::LhttpAddress(const char *_path)
     assert(path != nullptr);
 }
 
-LhttpAddress::LhttpAddress(AllocatorPtr alloc, const LhttpAddress &src)
+LhttpAddress::LhttpAddress(AllocatorPtr alloc,
+                           const LhttpAddress &src) noexcept
     :path(alloc.Dup(src.path)),
      args(alloc, src.args),
      options(alloc, src.options),
@@ -68,7 +69,7 @@ LhttpAddress::LhttpAddress(AllocatorPtr alloc, const LhttpAddress &src)
 }
 
 const char *
-LhttpAddress::GetServerId(struct pool *pool) const
+LhttpAddress::GetServerId(struct pool *pool) const noexcept
 {
     char child_options_buffer[16384];
     *options.MakeId(child_options_buffer) = 0;
@@ -84,7 +85,7 @@ LhttpAddress::GetServerId(struct pool *pool) const
 }
 
 const char *
-LhttpAddress::GetId(struct pool *pool) const
+LhttpAddress::GetId(struct pool *pool) const noexcept
 {
     const char *p = GetServerId(pool);
 
@@ -95,7 +96,7 @@ LhttpAddress::GetId(struct pool *pool) const
 }
 
 LhttpAddress *
-LhttpAddress::Dup(AllocatorPtr alloc) const
+LhttpAddress::Dup(AllocatorPtr alloc) const noexcept
 {
     return alloc.New<LhttpAddress>(alloc, *this);
 }
@@ -110,7 +111,7 @@ LhttpAddress::Check() const
 }
 
 LhttpAddress *
-LhttpAddress::DupWithUri(AllocatorPtr alloc, const char *new_uri) const
+LhttpAddress::DupWithUri(AllocatorPtr alloc, const char *new_uri) const noexcept
 {
     LhttpAddress *p = Dup(alloc);
     p->uri = new_uri;
@@ -118,14 +119,14 @@ LhttpAddress::DupWithUri(AllocatorPtr alloc, const char *new_uri) const
 }
 
 bool
-LhttpAddress::HasQueryString() const
+LhttpAddress::HasQueryString() const noexcept
 {
     return strchr(uri, '?') != nullptr;
 }
 
 LhttpAddress *
 LhttpAddress::InsertQueryString(struct pool &pool,
-                                const char *query_string) const
+                                const char *query_string) const noexcept
 {
     return NewFromPool<LhttpAddress>(pool, ShallowCopy(), *this,
                                      uri_insert_query_string(&pool, uri, query_string));
@@ -133,7 +134,8 @@ LhttpAddress::InsertQueryString(struct pool &pool,
 
 LhttpAddress *
 LhttpAddress::InsertArgs(struct pool &pool,
-                         StringView new_args, StringView path_info) const
+                         StringView new_args,
+                         StringView path_info) const noexcept
 {
     return NewFromPool<LhttpAddress>(pool, ShallowCopy(), *this,
                                      uri_insert_args(&pool, uri,
@@ -141,13 +143,13 @@ LhttpAddress::InsertArgs(struct pool &pool,
 }
 
 bool
-LhttpAddress::IsValidBase() const
+LhttpAddress::IsValidBase() const noexcept
 {
     return IsExpandable() || is_base(uri);
 }
 
 LhttpAddress *
-LhttpAddress::SaveBase(AllocatorPtr alloc, const char *suffix) const
+LhttpAddress::SaveBase(AllocatorPtr alloc, const char *suffix) const noexcept
 {
     assert(suffix != nullptr);
 
@@ -159,7 +161,7 @@ LhttpAddress::SaveBase(AllocatorPtr alloc, const char *suffix) const
 }
 
 LhttpAddress *
-LhttpAddress::LoadBase(AllocatorPtr alloc, const char *suffix) const
+LhttpAddress::LoadBase(AllocatorPtr alloc, const char *suffix) const noexcept
 {
     assert(suffix != nullptr);
     assert(uri != nullptr);
@@ -171,7 +173,7 @@ LhttpAddress::LoadBase(AllocatorPtr alloc, const char *suffix) const
 }
 
 const LhttpAddress *
-LhttpAddress::Apply(struct pool *pool, StringView relative) const
+LhttpAddress::Apply(struct pool *pool, StringView relative) const noexcept
 {
     if (relative.empty())
         return this;
@@ -186,7 +188,7 @@ LhttpAddress::Apply(struct pool *pool, StringView relative) const
 }
 
 StringView
-LhttpAddress::RelativeTo(const LhttpAddress &base) const
+LhttpAddress::RelativeTo(const LhttpAddress &base) const noexcept
 {
     if (strcmp(base.path, path) != 0)
         return nullptr;
@@ -195,7 +197,7 @@ LhttpAddress::RelativeTo(const LhttpAddress &base) const
 }
 
 void
-LhttpAddress::Expand(AllocatorPtr alloc, const MatchInfo &match_info)
+LhttpAddress::Expand(AllocatorPtr alloc, const MatchInfo &match_info) noexcept
 {
     options.Expand(alloc, match_info);
 
@@ -206,7 +208,7 @@ LhttpAddress::Expand(AllocatorPtr alloc, const MatchInfo &match_info)
 }
 
 void
-LhttpAddress::CopyTo(PreparedChildProcess &dest) const
+LhttpAddress::CopyTo(PreparedChildProcess &dest) const noexcept
 {
     dest.Append(path);
 

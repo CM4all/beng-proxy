@@ -55,6 +55,6 @@ lhttp_request(struct pool &pool, EventLoop &event_loop,
               http_method_t method,
               HttpHeaders &&headers, UnusedIstreamPtr body,
               HttpResponseHandler &handler,
-              CancellablePointer &cancel_ptr);
+              CancellablePointer &cancel_ptr) noexcept;
 
 #endif

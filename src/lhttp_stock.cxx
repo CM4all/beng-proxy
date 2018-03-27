@@ -60,17 +60,17 @@ class LhttpStock final : StockClass, ChildStockClass {
 public:
     LhttpStock(unsigned limit, unsigned max_idle,
                EventLoop &event_loop, SpawnService &spawn_service,
-               SocketDescriptor log_socket);
+               SocketDescriptor log_socket) noexcept;
 
-    void FadeAll() {
+    void FadeAll() noexcept {
         hstock.FadeAll();
         child_stock.GetStockMap().FadeAll();
         mchild_stock.FadeAll();
     }
 
-    void FadeTag(const char *tag);
+    void FadeTag(const char *tag) noexcept;
 
-    StockMap &GetConnectionStock() {
+    StockMap &GetConnectionStock() noexcept {
         return hstock;
     }
 
@@ -97,24 +97,24 @@ class LhttpConnection final : LoggerDomainFactory, StockItem {
     SocketEvent event;
 
 public:
-    explicit LhttpConnection(CreateStockItem c)
+    explicit LhttpConnection(CreateStockItem c) noexcept
         :StockItem(c),
          logger(*this),
          event(c.stock.GetEventLoop(), BIND_THIS_METHOD(EventCallback)) {}
 
-    ~LhttpConnection() override;
+    ~LhttpConnection() noexcept override;
 
     void Connect(MultiStock &child_stock, struct pool &caller_pool,
                  const char *key, void *info,
                  unsigned concurrency);
 
-    SocketDescriptor GetSocket() const {
+    SocketDescriptor GetSocket() const noexcept {
         assert(fd.IsDefined());
         return fd;
     }
 
     gcc_pure
-    const char *GetTag() const {
+    const char *GetTag() const noexcept {
         assert(child != nullptr);
 
         return child_stock_item_get_tag(*child);
@@ -129,7 +129,7 @@ public:
     }
 
 private:
-    void EventCallback(unsigned events);
+    void EventCallback(unsigned events) noexcept;
 
     /* virtual methods from LoggerDomainFactory */
     std::string MakeLoggerDomain() const noexcept override {
@@ -176,7 +176,7 @@ LhttpConnection::Connect(MultiStock &child_stock, struct pool &caller_pool,
 }
 
 static const char *
-lhttp_stock_key(struct pool *pool, const LhttpAddress *address)
+lhttp_stock_key(struct pool *pool, const LhttpAddress *address) noexcept
 {
     return address->GetServerId(pool);
 }
@@ -187,7 +187,7 @@ lhttp_stock_key(struct pool *pool, const LhttpAddress *address)
  */
 
 inline void
-LhttpConnection::EventCallback(unsigned events)
+LhttpConnection::EventCallback(unsigned events) noexcept
 {
     if ((events & SocketEvent::TIMEOUT) == 0) {
         char buffer;
@@ -257,7 +257,7 @@ LhttpStock::Create(CreateStockItem c, void *info,
                         c.GetStockName(), info, address->concurrency);
 }
 
-LhttpConnection::~LhttpConnection()
+LhttpConnection::~LhttpConnection() noexcept
 {
     if (fd.IsDefined()) {
         event.Delete();
@@ -277,7 +277,7 @@ LhttpConnection::~LhttpConnection()
 inline
 LhttpStock::LhttpStock(unsigned limit, unsigned max_idle,
                        EventLoop &event_loop, SpawnService &spawn_service,
-                       SocketDescriptor log_socket)
+                       SocketDescriptor log_socket) noexcept
     :child_stock(event_loop, spawn_service,
                  *this,
                  log_socket,
@@ -286,7 +286,7 @@ LhttpStock::LhttpStock(unsigned limit, unsigned max_idle,
      hstock(event_loop, *this, limit, max_idle) {}
 
 void
-LhttpStock::FadeTag(const char *tag)
+LhttpStock::FadeTag(const char *tag) noexcept
 {
     assert(tag != nullptr);
 
@@ -307,26 +307,26 @@ LhttpStock::FadeTag(const char *tag)
 LhttpStock *
 lhttp_stock_new(unsigned limit, unsigned max_idle,
                 EventLoop &event_loop, SpawnService &spawn_service,
-                SocketDescriptor log_socket)
+                SocketDescriptor log_socket) noexcept
 {
     return new LhttpStock(limit, max_idle, event_loop, spawn_service,
                           log_socket);
 }
 
 void
-lhttp_stock_free(LhttpStock *ls)
+lhttp_stock_free(LhttpStock *ls) noexcept
 {
     delete ls;
 }
 
 void
-lhttp_stock_fade_all(LhttpStock &ls)
+lhttp_stock_fade_all(LhttpStock &ls) noexcept
 {
     ls.FadeAll();
 }
 
 void
-lhttp_stock_fade_tag(LhttpStock &ls, const char *tag)
+lhttp_stock_fade_tag(LhttpStock &ls, const char *tag) noexcept
 {
     ls.FadeTag(tag);
 }
@@ -352,7 +352,7 @@ lhttp_stock_get(LhttpStock *lhttp_stock,
 }
 
 SocketDescriptor
-lhttp_stock_item_get_socket(const StockItem &item)
+lhttp_stock_item_get_socket(const StockItem &item) noexcept
 {
     const auto *connection = (const LhttpConnection *)&item;
 
@@ -360,7 +360,7 @@ lhttp_stock_item_get_socket(const StockItem &item)
 }
 
 FdType
-lhttp_stock_item_get_type(gcc_unused const StockItem &item)
+lhttp_stock_item_get_type(gcc_unused const StockItem &item) noexcept
 {
     return FdType::FD_SOCKET;
 }

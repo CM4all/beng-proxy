@@ -51,16 +51,16 @@ class SpawnService;
 LhttpStock *
 lhttp_stock_new(unsigned limit, unsigned max_idle,
                 EventLoop &event_loop, SpawnService &spawn_service,
-                SocketDescriptor log_socket);
+                SocketDescriptor log_socket) noexcept;
 
 void
-lhttp_stock_free(LhttpStock *lhttp_stock);
+lhttp_stock_free(LhttpStock *lhttp_stock) noexcept;
 
 void
-lhttp_stock_fade_all(LhttpStock &ls);
+lhttp_stock_fade_all(LhttpStock &ls) noexcept;
 
 void
-lhttp_stock_fade_tag(LhttpStock &ls, const char *tag);
+lhttp_stock_fade_tag(LhttpStock &ls, const char *tag) noexcept;
 
 /**
  * Throws exception on error.
@@ -74,11 +74,11 @@ lhttp_stock_get(LhttpStock *lhttp_stock,
  */
 gcc_pure
 SocketDescriptor
-lhttp_stock_item_get_socket(const StockItem &item);
+lhttp_stock_item_get_socket(const StockItem &item) noexcept;
 
 gcc_pure
 FdType
-lhttp_stock_item_get_type(const StockItem &item);
+lhttp_stock_item_get_type(const StockItem &item) noexcept;
 
 void
 lhttp_stock_item_set_site(StockItem &item, const char *site) noexcept;

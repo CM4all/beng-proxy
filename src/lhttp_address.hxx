@@ -79,9 +79,10 @@ struct LhttpAddress {
      */
     bool blocking;
 
-    explicit LhttpAddress(const char *path);
+    explicit LhttpAddress(const char *path) noexcept;
 
-    constexpr LhttpAddress(ShallowCopy shallow_copy, const LhttpAddress &src)
+    constexpr LhttpAddress(ShallowCopy shallow_copy,
+                           const LhttpAddress &src) noexcept
         :path(src.path),
          args(shallow_copy, src.args),
          options(shallow_copy, src.options),
@@ -92,17 +93,17 @@ struct LhttpAddress {
     {
     }
 
-    constexpr LhttpAddress(LhttpAddress &&src)
+    constexpr LhttpAddress(LhttpAddress &&src) noexcept
         :LhttpAddress(ShallowCopy(), src) {}
 
     LhttpAddress(ShallowCopy shallow_copy, const LhttpAddress &src,
-                 const char *_uri)
+                 const char *_uri) noexcept
         :LhttpAddress(shallow_copy, src)
     {
         uri = _uri;
     }
 
-    LhttpAddress(AllocatorPtr alloc, const LhttpAddress &src);
+    LhttpAddress(AllocatorPtr alloc, const LhttpAddress &src) noexcept;
 
     LhttpAddress &operator=(const LhttpAddress &) = delete;
 
@@ -112,7 +113,7 @@ struct LhttpAddress {
      * the specified pool.
      */
     gcc_pure
-    const char *GetServerId(struct pool *pool) const;
+    const char *GetServerId(struct pool *pool) const noexcept;
 
     /**
      * Generates a string identifying the address.  This can be used as a
@@ -120,7 +121,7 @@ struct LhttpAddress {
      * pool.
      */
     gcc_pure
-    const char *GetId(struct pool *pool) const;
+    const char *GetId(struct pool *pool) const noexcept;
 
     /**
      * Throws std::runtime_error on error.
@@ -128,11 +129,12 @@ struct LhttpAddress {
     void Check() const;
 
     gcc_pure
-    bool HasQueryString() const;
+    bool HasQueryString() const noexcept;
 
-    LhttpAddress *Dup(AllocatorPtr alloc) const;
+    LhttpAddress *Dup(AllocatorPtr alloc) const noexcept;
 
-    LhttpAddress *DupWithUri(AllocatorPtr alloc, const char *uri) const;
+    LhttpAddress *DupWithUri(AllocatorPtr alloc,
+                             const char *uri) const noexcept;
 
     /**
      * Duplicates this #lhttp_address object and inserts the specified
@@ -140,7 +142,7 @@ struct LhttpAddress {
      */
     gcc_malloc
     LhttpAddress *InsertQueryString(struct pool &pool,
-                                    const char *query_string) const;
+                                    const char *query_string) const noexcept;
 
     /**
      * Duplicates this #lhttp_address object and inserts the specified
@@ -148,40 +150,44 @@ struct LhttpAddress {
      */
     gcc_malloc
     LhttpAddress *InsertArgs(struct pool &pool,
-                             StringView new_args, StringView path_info) const;
+                             StringView new_args,
+                             StringView path_info) const noexcept;
 
     gcc_pure
-    bool IsValidBase() const;
+    bool IsValidBase() const noexcept;
 
-    LhttpAddress *SaveBase(AllocatorPtr alloc, const char *suffix) const;
+    LhttpAddress *SaveBase(AllocatorPtr alloc,
+                           const char *suffix) const noexcept;
 
-    LhttpAddress *LoadBase(AllocatorPtr alloc, const char *suffix) const;
+    LhttpAddress *LoadBase(AllocatorPtr alloc,
+                           const char *suffix) const noexcept;
 
     /**
      * @return a new object on success, src if no change is needed, nullptr
      * on error
      */
-    const LhttpAddress *Apply(struct pool *pool, StringView relative) const;
+    const LhttpAddress *Apply(struct pool *pool,
+                              StringView relative) const noexcept;
 
     gcc_pure
-    StringView RelativeTo(const LhttpAddress &base) const;
+    StringView RelativeTo(const LhttpAddress &base) const noexcept;
 
     /**
      * Does this address need to be expanded with lhttp_address_expand()?
      */
     gcc_pure
-    bool IsExpandable() const {
+    bool IsExpandable() const noexcept {
         return options.IsExpandable() ||
             expand_uri != nullptr ||
             args.IsExpandable();
     }
 
-    void Expand(AllocatorPtr alloc, const MatchInfo &match_info);
+    void Expand(AllocatorPtr alloc, const MatchInfo &match_info) noexcept;
 
     /**
      * Throws std::runtime_error on error.
      */
-    void CopyTo(PreparedChildProcess &dest) const;
+    void CopyTo(PreparedChildProcess &dest) const noexcept;
 };
 
 #endif
