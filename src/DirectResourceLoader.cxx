@@ -240,8 +240,8 @@ DirectResourceLoader::SendRequest(struct pool &pool,
 
         UniqueFileDescriptor stderr_fd;
         if (cgi->options.stderr_path != nullptr) {
-            int _stderr_fd = cgi->options.OpenStderrPath();
-            if (_stderr_fd < 0) {
+            stderr_fd = cgi->options.OpenStderrPath();
+            if (!stderr_fd.IsDefined()) {
                 int code = errno;
 
                 body.Clear();
@@ -250,8 +250,6 @@ DirectResourceLoader::SendRequest(struct pool &pool,
                                                                         cgi->options.stderr_path)));
                 return;
             }
-
-            stderr_fd = UniqueFileDescriptor(FileDescriptor(_stderr_fd));
         }
 
         if (cgi->address_list.IsEmpty())
