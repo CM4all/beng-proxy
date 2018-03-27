@@ -168,7 +168,7 @@ DirectResourceLoader::SendRequest(struct pool &pool,
                                   gcc_unused const char *body_etag,
                                   HttpResponseHandler &handler,
                                   CancellablePointer &cancel_ptr)
-{
+try {
     switch (address.type) {
         const FileAddress *file;
         const CgiAddress *cgi;
@@ -186,10 +186,8 @@ DirectResourceLoader::SendRequest(struct pool &pool,
 
         file = &address.GetFile();
         if (file->delegate != nullptr) {
-            if (delegate_stock == nullptr) {
-                handler.InvokeError(std::make_exception_ptr(std::runtime_error("No delegate stock")));
-                return;
-            }
+            if (delegate_stock == nullptr)
+                throw std::runtime_error("No delegate stock");
 
             delegate_stock_request(event_loop, *delegate_stock, pool,
                                    file->delegate->delegate,
@@ -240,13 +238,7 @@ DirectResourceLoader::SendRequest(struct pool &pool,
 
         UniqueFileDescriptor stderr_fd;
         if (cgi->options.stderr_path != nullptr) {
-            try {
-                stderr_fd = cgi->options.OpenStderrPath();
-            } catch (...) {
-                body.Clear();
-                handler.InvokeError(std::current_exception());
-                return;
-            }
+            stderr_fd = cgi->options.OpenStderrPath();
         }
 
         if (cgi->address_list.IsEmpty())
@@ -347,7 +339,8 @@ DirectResourceLoader::SendRequest(struct pool &pool,
 
     /* the resource could not be located, abort the request */
 
+    throw std::runtime_error("Could not locate resource");
+} catch (...) {
     body.Clear();
-
-    handler.InvokeError(std::make_exception_ptr(std::runtime_error("Could not locate resource")));
+    handler.InvokeError(std::current_exception());
 }
