@@ -317,7 +317,7 @@ ResourceAddress::CacheStore(AllocatorPtr alloc,
 
         if (easy_base || expandable) {
             /* when the response is expandable, skip appending the
-               tail URI, don't call resource_address_save_base() */
+               tail URI, don't call SaveBase() */
             CopyFrom(alloc, src);
             return true;
         }
