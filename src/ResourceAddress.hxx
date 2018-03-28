@@ -329,10 +329,10 @@ public:
     /**
      * Copies data from #src for storing in the translation cache.
      *
-     * @return true if a #base was given and it was applied
-     * successfully
+     * Throws HttpMessageResponse(HTTP_STATUS_BAD_REQUEST) on base
+     * mismatch.
      */
-    bool CacheStore(AllocatorPtr alloc, const ResourceAddress &src,
+    void CacheStore(AllocatorPtr alloc, const ResourceAddress &src,
                     const char *uri, const char *base,
                     bool easy_base, bool expandable);
 

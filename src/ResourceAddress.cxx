@@ -304,14 +304,16 @@ ResourceAddress::SaveBase(AllocatorPtr alloc, const char *suffix) const
     gcc_unreachable();
 }
 
-bool
+void
 ResourceAddress::CacheStore(AllocatorPtr alloc,
                             const ResourceAddress &src,
                             const char *uri, const char *base,
                             bool easy_base, bool expandable)
 {
-    const char *tail = base_tail(uri, base);
-    if (tail != nullptr) {
+    if (base == nullptr) {
+        CopyFrom(alloc, src);
+        return;
+    } else if (const char *tail = base_tail(uri, base)) {
         /* we received a valid BASE packet - store only the base
            URI */
 
@@ -319,7 +321,7 @@ ResourceAddress::CacheStore(AllocatorPtr alloc,
             /* when the response is expandable, skip appending the
                tail URI, don't call SaveBase() */
             CopyFrom(alloc, src);
-            return true;
+            return;
         }
 
         if (src.type == Type::NONE) {
@@ -327,16 +329,18 @@ ResourceAddress::CacheStore(AllocatorPtr alloc,
                case, the operation is useful and is allowed as a
                special case */
             type = Type::NONE;
-            return true;
+            return;
         }
 
         *this = src.SaveBase(alloc, tail);
         if (IsDefined())
-            return true;
+            return;
+
+        /* the tail could not be applied to the address, so this is a
+           base mismatch */
     }
 
-    CopyFrom(alloc, src);
-    return false;
+    throw HttpMessageResponse(HTTP_STATUS_BAD_REQUEST, "Base mismatch");
 }
 
 ResourceAddress

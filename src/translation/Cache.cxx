@@ -767,8 +767,8 @@ tcache_store_response(struct pool &pool, TranslateResponse &dest,
                       const TranslateResponse &src,
                       const TranslateRequest &request)
 {
-    const bool has_base = dest.CacheStore(pool, src, request.uri);
-    return has_base
+    dest.CacheStore(pool, src, request.uri);
+    return dest.base != nullptr
         /* generate a new cache key for the BASE */
         ? tcache_uri_key(pool, dest.base, request.host,
                          request.error_document_status,
@@ -1217,12 +1217,14 @@ tcache_store(TranslateCacheRequest &tcr, const TranslateResponse &response)
         tcache_vary_copy(pool, tcr.request.user,
                          response, TranslationCommand::USER);
 
-    const char *key = tcache_store_response(*pool, item->response, response,
-                                            tcr.request);
-    if (item->response.base == nullptr && response.base != nullptr) {
-        /* base mismatch - refuse to use this response */
+    const char *key;
+
+    try {
+        key = tcache_store_response(*pool, item->response, response,
+                                    tcr.request);
+    } catch (...) {
         DeleteUnrefTrashPool(*pool, item);
-        throw HttpMessageResponse(HTTP_STATUS_BAD_REQUEST, "Base mismatch");
+        throw;
     }
 
     assert(!item->response.easy_base ||
