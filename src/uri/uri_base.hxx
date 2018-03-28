@@ -49,7 +49,7 @@
  *
  * @param uri the URI specified by the tcache client, may be nullptr
  * @param base the base URI, as given by the translation server,
- * stored in the cache item, may be nullptr
+ * stored in the cache item
  */
 gcc_pure
 const char *

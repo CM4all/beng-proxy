@@ -38,10 +38,8 @@
 const char *
 base_tail(const char *uri, const char *base)
 {
-    if (base == nullptr)
-        return nullptr;
-
     assert(uri != nullptr);
+    assert(base != nullptr);
 
     const size_t uri_length = strlen(uri);
     const size_t base_length = strlen(base);
