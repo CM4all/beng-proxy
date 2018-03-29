@@ -43,7 +43,7 @@
 #include <assert.h>
 #include <string.h>
 
-FileAddress::FileAddress(AllocatorPtr alloc, const FileAddress &src)
+FileAddress::FileAddress(AllocatorPtr alloc, const FileAddress &src) noexcept
     :path(alloc.Dup(src.path)),
      deflated(alloc.CheckDup(src.deflated)),
      gzipped(alloc.CheckDup(src.gzipped)),
@@ -66,13 +66,13 @@ FileAddress::Check() const
 }
 
 bool
-FileAddress::IsValidBase() const
+FileAddress::IsValidBase() const noexcept
 {
     return IsExpandable() || is_base(path);
 }
 
 FileAddress *
-FileAddress::SaveBase(AllocatorPtr alloc, const char *suffix) const
+FileAddress::SaveBase(AllocatorPtr alloc, const char *suffix) const noexcept
 {
     assert(suffix != nullptr);
 
@@ -91,7 +91,7 @@ FileAddress::SaveBase(AllocatorPtr alloc, const char *suffix) const
 }
 
 FileAddress *
-FileAddress::LoadBase(AllocatorPtr alloc, const char *suffix) const
+FileAddress::LoadBase(AllocatorPtr alloc, const char *suffix) const noexcept
 {
     assert(path != nullptr);
     assert(*path != 0);
@@ -108,7 +108,7 @@ FileAddress::LoadBase(AllocatorPtr alloc, const char *suffix) const
 }
 
 bool
-FileAddress::IsExpandable() const
+FileAddress::IsExpandable() const noexcept
 {
     return expand_path != nullptr ||
         expand_document_root != nullptr ||

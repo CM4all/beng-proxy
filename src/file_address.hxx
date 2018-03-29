@@ -72,18 +72,18 @@ struct FileAddress {
 
     bool auto_gzipped = false;
 
-    constexpr FileAddress(const char *_path)
+    constexpr FileAddress(const char *_path) noexcept
         :path(_path)
     {
     }
 
-    FileAddress(AllocatorPtr alloc, const FileAddress &src);
+    FileAddress(AllocatorPtr alloc, const FileAddress &src) noexcept;
 
     FileAddress(const FileAddress &) = delete;
     FileAddress &operator=(const FileAddress &) = delete;
 
     gcc_pure
-    bool HasQueryString() const {
+    bool HasQueryString() const noexcept {
         return false;
     }
 
@@ -93,16 +93,18 @@ struct FileAddress {
     void Check() const;
 
     gcc_pure
-    bool IsValidBase() const;
+    bool IsValidBase() const noexcept;
 
-    FileAddress *SaveBase(AllocatorPtr alloc, const char *suffix) const;
-    FileAddress *LoadBase(AllocatorPtr alloc, const char *suffix) const;
+    FileAddress *SaveBase(AllocatorPtr alloc,
+                          const char *suffix) const noexcept;
+    FileAddress *LoadBase(AllocatorPtr alloc,
+                          const char *suffix) const noexcept;
 
     /**
      * Does this address need to be expanded with Expand()?
      */
     gcc_pure
-    bool IsExpandable() const;
+    bool IsExpandable() const noexcept;
 
     /**
      * Throws std::runtime_error on error.
