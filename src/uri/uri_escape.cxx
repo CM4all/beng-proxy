@@ -34,6 +34,7 @@
 #include "util/CharUtil.hxx"
 #include "util/StringView.hxx"
 #include "util/HexFormat.h"
+#include "util/HexParse.hxx"
 
 #include <algorithm>
 
@@ -77,19 +78,6 @@ uri_escape(char *dest, ConstBuffer<void> src,
                       escape_char);
 }
 
-static int
-parse_hexdigit(char ch)
-{
-    if (IsDigitASCII(ch))
-        return ch - '0';
-    else if (ch >= 'a' && ch <= 'f')
-        return ch - 'a' + 0xa;
-    else if (ch >= 'A' && ch <= 'F')
-        return ch - 'A' + 0xa;
-    else
-        return -1;
-}
-
 char *
 uri_unescape(char *dest, StringView _src, char escape_char)
 {
@@ -107,8 +95,8 @@ uri_unescape(char *dest, StringView _src, char escape_char)
             /* percent sign at the end of string */
             return nullptr;
 
-        const int digit1 = parse_hexdigit(p[1]);
-        const int digit2 = parse_hexdigit(p[2]);
+        const int digit1 = ParseHexDigit(p[1]);
+        const int digit2 = ParseHexDigit(p[2]);
         if (digit1 == -1 || digit2 == -1)
             /* invalid hex digits */
             return nullptr;
