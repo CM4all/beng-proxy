@@ -43,8 +43,9 @@
 #include <assert.h>
 #include <string.h>
 
-FileAddress::FileAddress(AllocatorPtr alloc, const FileAddress &src) noexcept
-    :path(alloc.Dup(src.path)),
+FileAddress::FileAddress(AllocatorPtr alloc, const FileAddress &src,
+                         const char *_path) noexcept
+    :path(_path),
      deflated(alloc.CheckDup(src.deflated)),
      gzipped(alloc.CheckDup(src.gzipped)),
      content_type(alloc.CheckDup(src.content_type)),
@@ -57,6 +58,9 @@ FileAddress::FileAddress(AllocatorPtr alloc, const FileAddress &src) noexcept
               : nullptr),
      auto_gzipped(src.auto_gzipped) {
 }
+
+FileAddress::FileAddress(AllocatorPtr alloc, const FileAddress &src) noexcept
+    :FileAddress(alloc, src, alloc.Dup(src.path)) {}
 
 void
 FileAddress::Check() const
@@ -80,8 +84,8 @@ FileAddress::SaveBase(AllocatorPtr alloc, const char *suffix) const noexcept
     if (length == (size_t)-1)
         return nullptr;
 
-    auto *dest = alloc.New<FileAddress>(alloc, *this);
-    dest->path = alloc.DupZ({dest->path, length});
+    auto *dest = alloc.New<FileAddress>(alloc, *this,
+                                        alloc.DupZ({path, length}));
 
     /* BASE+DEFLATED is not supported */
     dest->deflated = nullptr;
@@ -102,9 +106,8 @@ FileAddress::LoadBase(AllocatorPtr alloc, const char *suffix) const noexcept
     if (unescaped == nullptr)
         return nullptr;
 
-    auto *dest = alloc.New<FileAddress>(alloc, *this);
-    dest->path = alloc.Concat(dest->path, unescaped);
-    return dest;
+    return alloc.New<FileAddress>(alloc, *this,
+                                  alloc.Concat(path, unescaped));
 }
 
 bool

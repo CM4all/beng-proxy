@@ -80,6 +80,15 @@ struct FileAddress {
     {
     }
 
+    /**
+     * Copy from an existing #FileAddress instance, but override the
+     * path.
+     *
+     * @param _path the new path pointer (taken as-is, no deep copy)
+     */
+    FileAddress(AllocatorPtr alloc, const FileAddress &src,
+                const char *_path) noexcept;
+
     FileAddress(AllocatorPtr alloc, const FileAddress &src) noexcept;
 
     FileAddress(const FileAddress &) = delete;
