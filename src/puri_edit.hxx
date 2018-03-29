@@ -39,8 +39,6 @@
 
 #include "util/Compiler.h"
 
-#include <stddef.h>
-
 struct pool;
 struct StringView;
 
