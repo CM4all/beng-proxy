@@ -32,7 +32,7 @@
 
 #include "Address.hxx"
 #include "uri/uri_base.hxx"
-#include "puri_base.hxx"
+#include "uri/Compare.hxx"
 #include "puri_escape.hxx"
 #include "pexpand.hxx"
 #include "AllocatorPtr.hxx"
@@ -82,13 +82,13 @@ NfsAddress::SaveBase(AllocatorPtr alloc, const char *suffix) const
 {
     assert(suffix != nullptr);
 
-    size_t length = base_string_unescape(alloc, path, suffix);
-    if (length == (size_t)-1)
+    const char *end = UriFindUnescapedSuffix(path, suffix);
+    if (end == nullptr)
         return nullptr;
 
     auto dest = alloc.New<NfsAddress>(alloc.Dup(server),
                                       alloc.Dup(export_name),
-                                      alloc.DupZ({path, length}));
+                                      alloc.DupZ({path, end}));
     dest->content_type = alloc.CheckDup(content_type);
     return dest;
 }

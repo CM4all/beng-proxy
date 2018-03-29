@@ -36,9 +36,9 @@
 #include "uri/uri_base.hxx"
 #include "uri/uri_escape.hxx"
 #include "uri/uri_extract.hxx"
+#include "uri/Compare.hxx"
 #include "util/StringView.hxx"
 #include "puri_relative.hxx"
-#include "puri_base.hxx"
 #include "puri_escape.hxx"
 #include "puri_edit.hxx"
 #include "pexpand.hxx"
@@ -211,21 +211,25 @@ CgiAddress::SaveBase(AllocatorPtr alloc, const char *suffix) const
 {
     assert(suffix != nullptr);
 
-    size_t uri_length = uri != nullptr
-        ? base_string_unescape(alloc, uri, suffix)
-        : 0;
-    if (uri_length == (size_t)-1)
-        return nullptr;
+    size_t uri_length;
+    if (uri != nullptr) {
+        const char *end = UriFindUnescapedSuffix(uri, suffix);
+        if (end == nullptr)
+            return nullptr;
+
+        uri_length = end - uri;
+    }
 
     const char *new_path_info = path_info != nullptr ? path_info : "";
-    size_t length = base_string_unescape(alloc, new_path_info, suffix);
-    if (length == (size_t)-1)
+    const char *new_path_info_end =
+        UriFindUnescapedSuffix(new_path_info, suffix);
+    if (new_path_info_end == nullptr)
         return nullptr;
 
     CgiAddress *dest = Clone(alloc);
     if (dest->uri != nullptr)
         dest->uri = alloc.DupZ({dest->uri, uri_length});
-    dest->path_info = alloc.DupZ({new_path_info, length});
+    dest->path_info = alloc.DupZ({new_path_info, new_path_info_end});
     return dest;
 }
 

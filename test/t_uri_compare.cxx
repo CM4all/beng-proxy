@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2018 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,24 +30,27 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Functions for working with base URIs.
- */
-
-#ifndef BENG_PROXY_PURI_BASE_HXX
-#define BENG_PROXY_PURI_BASE_HXX
-
+#include "uri/Compare.hxx"
 #include "util/Compiler.h"
 
-#include <stddef.h>
+#include <gtest/gtest.h>
 
-class AllocatorPtr;
+#include <string.h>
+#include <stdlib.h>
 
-/**
- * @return (size_t)-1 on mismatch
- */
-gcc_pure
-size_t
-base_string_unescape(AllocatorPtr alloc, const char *p, const char *tail);
-
-#endif
+TEST(UriCompareTest, UriFindUnescapedSuffix)
+{
+    const char *uri1 = "/foo";
+    EXPECT_EQ(UriFindUnescapedSuffix(uri1, "bar"), nullptr);
+    EXPECT_EQ(UriFindUnescapedSuffix(uri1, "foo"), uri1 + 1);
+    EXPECT_EQ(UriFindUnescapedSuffix(uri1, "/foo"), uri1);
+    EXPECT_EQ(UriFindUnescapedSuffix(uri1, " /foo"), nullptr);
+    EXPECT_EQ(UriFindUnescapedSuffix(uri1, "oo"), uri1 + 2);
+    EXPECT_EQ(UriFindUnescapedSuffix(uri1, "%6fo"), uri1 + 2);
+    EXPECT_EQ(UriFindUnescapedSuffix(uri1, "%6f%6f"), uri1 + 2);
+    EXPECT_EQ(UriFindUnescapedSuffix(uri1, "%66%6f%6f"), uri1 + 1);
+    EXPECT_EQ(UriFindUnescapedSuffix(uri1, "%2f%66%6f%6f"), uri1);
+    EXPECT_EQ(UriFindUnescapedSuffix(uri1, "%6f%6"), nullptr);
+    EXPECT_EQ(UriFindUnescapedSuffix(uri1, "%6f%"), nullptr);
+    EXPECT_EQ(UriFindUnescapedSuffix(uri1, "%%6f"), nullptr);
+}

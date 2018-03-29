@@ -33,8 +33,8 @@
 #include "file_address.hxx"
 #include "delegate/Address.hxx"
 #include "uri/uri_base.hxx"
+#include "uri/Compare.hxx"
 #include "util/StringView.hxx"
-#include "puri_base.hxx"
 #include "puri_escape.hxx"
 #include "pexpand.hxx"
 #include "pool/pbuffer.hxx"
@@ -80,12 +80,12 @@ FileAddress::SaveBase(AllocatorPtr alloc, const char *suffix) const noexcept
 {
     assert(suffix != nullptr);
 
-    size_t length = base_string_unescape(alloc, path, suffix);
-    if (length == (size_t)-1)
+    const char *end = UriFindUnescapedSuffix(path, suffix);
+    if (end == nullptr)
         return nullptr;
 
     auto *dest = alloc.New<FileAddress>(alloc, *this,
-                                        alloc.DupZ({path, length}));
+                                        alloc.DupZ({path, end}));
 
     /* BASE+DEFLATED is not supported */
     dest->deflated = nullptr;
