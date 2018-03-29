@@ -75,7 +75,7 @@ struct FileAddress {
     /**
      * @param _path the new path pointer (taken as-is, no deep copy)
      */
-    constexpr FileAddress(const char *_path) noexcept
+    explicit constexpr FileAddress(const char *_path) noexcept
         :path(_path)
     {
     }
