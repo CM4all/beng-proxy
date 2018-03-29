@@ -101,13 +101,13 @@ NfsAddress::LoadBase(AllocatorPtr alloc, const char *suffix) const
     assert(path[strlen(path) - 1] == '/');
     assert(suffix != nullptr);
 
-    char *unescaped = uri_unescape_dup(alloc, suffix);
-    if (unescaped == nullptr)
+    char *new_path = uri_unescape_concat(alloc, path, suffix);
+    if (new_path == nullptr)
         return nullptr;
 
     auto dest = alloc.New<NfsAddress>(alloc.Dup(server),
                                       alloc.Dup(export_name),
-                                      alloc.Concat(path, unescaped));
+                                      new_path);
     dest->content_type = alloc.CheckDup(content_type);
     return dest;
 }

@@ -102,12 +102,11 @@ FileAddress::LoadBase(AllocatorPtr alloc, const char *suffix) const noexcept
     assert(path[strlen(path) - 1] == '/');
     assert(suffix != nullptr);
 
-    char *unescaped = uri_unescape_dup(alloc, suffix);
-    if (unescaped == nullptr)
+    char *new_path = uri_unescape_concat(alloc, path, suffix);
+    if (new_path == nullptr)
         return nullptr;
 
-    return alloc.New<FileAddress>(alloc, *this,
-                                  alloc.Concat(path, unescaped));
+    return alloc.New<FileAddress>(alloc, *this, new_path);
 }
 
 bool

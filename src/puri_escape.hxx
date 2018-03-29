@@ -54,4 +54,14 @@ char *
 uri_unescape_dup(AllocatorPtr alloc, StringView src,
                  char escape_char='%');
 
+/**
+ * Concatenate an existing (unescaped) URI and an escaped URI fragment
+ * (escaped, to be unescaped by this function).
+ *
+ * @return nullptr on error
+ */
+char *
+uri_unescape_concat(AllocatorPtr alloc, StringView uri,
+                    StringView escaped_tail) noexcept;
+
 #endif

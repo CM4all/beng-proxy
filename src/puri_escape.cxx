@@ -35,6 +35,8 @@
 #include "util/StringView.hxx"
 #include "AllocatorPtr.hxx"
 
+#include <algorithm>
+
 const char *
 uri_escape_dup(AllocatorPtr alloc, StringView src,
                char escape_char)
@@ -55,5 +57,26 @@ uri_unescape_dup(AllocatorPtr alloc, StringView src,
         return nullptr;
 
     *end = 0;
+    return dest;
+}
+
+char *
+uri_unescape_concat(AllocatorPtr alloc, StringView uri,
+                    StringView escaped_tail) noexcept
+{
+    /* worst-case allocation */
+    char *dest = alloc.NewArray<char>(uri.size + escaped_tail.size + 1);
+
+    /* first copy "uri" */
+    char *p = std::copy_n(uri.data, uri.size, dest);
+
+    /* append "escaped_tail", and fail this function if unescaping
+       fails */
+    p = uri_unescape(p, escaped_tail);
+    if (p == nullptr)
+        return nullptr;
+
+    *p = 0;
+
     return dest;
 }
