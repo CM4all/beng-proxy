@@ -194,18 +194,15 @@ HttpCacheHeap::OpenStream(struct pool &_pool, HttpCacheDocument &document)
  *
  */
 
-void
-HttpCacheHeap::Init(struct pool &_pool, EventLoop &event_loop, size_t max_size)
+HttpCacheHeap::HttpCacheHeap(struct pool &_pool, EventLoop &event_loop,
+                             size_t max_size) noexcept
+    :pool(&_pool),
+     cache(new Cache(event_loop, 65521, max_size)),
+     slice_pool(slice_pool_new(1024, 65536))
 {
-    pool = &_pool;
-    cache = new Cache(event_loop, 65521, max_size);
-
-    slice_pool = slice_pool_new(1024, 65536);
 }
 
-
-void
-HttpCacheHeap::Deinit()
+HttpCacheHeap::~HttpCacheHeap() noexcept
 {
     delete cache;
     slice_pool_free(slice_pool);

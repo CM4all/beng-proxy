@@ -53,21 +53,18 @@ struct HttpCacheDocument;
  * Caching HTTP responses in heap memory.
  */
 class HttpCacheHeap {
-    struct pool *pool;
+    struct pool *const pool;
 
-    Cache *cache;
+    Cache *const cache;
 
-    SlicePool *slice_pool;
+    SlicePool *const slice_pool;
 
 public:
-    void Init(struct pool &pool, EventLoop &event_loop, size_t max_size);
-    void Deinit();
+    HttpCacheHeap(struct pool &pool, EventLoop &event_loop,
+                  size_t max_size) noexcept;
+    ~HttpCacheHeap() noexcept;
 
     void ForkCow(bool inherit);
-
-    void Clear() {
-        cache = nullptr;
-    }
 
     gcc_pure
     AllocatorStats GetStats(const Rubber &rubber) const;

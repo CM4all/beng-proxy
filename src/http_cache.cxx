@@ -550,16 +550,17 @@ HttpCache::HttpCache(struct pool &_pool, size_t max_size,
      event_loop(_event_loop),
      compress_timer(event_loop, BIND_THIS_METHOD(OnCompressTimer)),
      rubber(max_size),
+     heap(pool, event_loop,
+          /* leave 12.5% of the rubber allocator empty, to increase
+             the chances that a hole can be found for a new
+             allocation, to reduce the pressure that rubber_compress()
+             creates */
+          max_size * 7 / 8),
      resource_loader(_resource_loader)
 {
     assert(max_size > 0);
 
     compress_timer.Add(http_cache_compress_interval);
-
-    /* leave 12.5% of the rubber allocator empty, to increase the
-       chances that a hole can be found for a new allocation, to
-       reduce the pressure that rubber_compress() creates */
-    heap.Init(pool, event_loop, max_size * 7 / 8);
 }
 
 HttpCache *
@@ -595,8 +596,6 @@ HttpCache::~HttpCache()
     requests.clear_and_dispose(std::mem_fn(&HttpCacheRequest::AbortRubberStore));
 
     background.AbortAll();
-
-    heap.Deinit();
 
     compress_timer.Cancel();
 
