@@ -36,11 +36,13 @@
 #include "HttpResponseHandler.hxx"
 #include "lease.hxx"
 #include "tcp_stock.hxx"
+#include "access_log/ChildErrorLog.hxx"
 #include "stock/Item.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "pool/pool.hxx"
 #include "AllocatorPtr.hxx"
 #include "net/SocketDescriptor.hxx"
+#include "io/UniqueFileDescriptor.hxx"
 #include "util/Cast.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/Cancellable.hxx"
@@ -52,6 +54,8 @@ class FcgiRequest final : Lease, Cancellable {
     struct pool &pool;
 
     StockItem *stock_item;
+
+    ChildErrorLog log;
 
     CancellablePointer cancel_ptr;
 
@@ -70,12 +74,16 @@ public:
                const StringMap &headers, UnusedIstreamPtr body,
                ConstBuffer<const char *> params,
                UniqueFileDescriptor &&stderr_fd,
+               SocketDescriptor log_socket,
                HttpResponseHandler &handler,
                CancellablePointer &caller_cancel_ptr) {
         caller_cancel_ptr = *this;
 
         fcgi_stock_item_set_site(*stock_item, site_name);
         fcgi_stock_item_set_uri(*stock_item, uri);
+
+        if (log_socket.IsDefined() && !stderr_fd.IsDefined())
+            stderr_fd = log.EnableClient(event_loop, log_socket);
 
         const char *script_filename = fcgi_stock_translate_path(*stock_item, path,
                                                                 pool);
@@ -155,5 +163,6 @@ fcgi_request(struct pool *pool, EventLoop &event_loop,
                    script_name, path_info,
                    query_string, document_root, remote_addr,
                    headers, std::move(body), params, std::move(stderr_fd),
+                   fcgi_stock_get_log_socket(*fcgi_stock),
                    handler, cancel_ptr);
 }
