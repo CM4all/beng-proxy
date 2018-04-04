@@ -54,7 +54,7 @@ struct HttpCacheDocument;
  * Caching HTTP responses in heap memory.
  */
 class HttpCacheHeap {
-    struct pool *const pool;
+    struct pool &pool;
 
     Cache cache;
 

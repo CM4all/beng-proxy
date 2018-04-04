@@ -44,11 +44,11 @@
 #include "pool/pool.hxx"
 
 struct HttpCacheItem final : HttpCacheDocument, CacheItem {
-    struct pool *pool;
+    struct pool &pool;
 
     size_t size;
 
-    Rubber *rubber;
+    Rubber &rubber;
     unsigned rubber_id;
 
     HttpCacheItem(struct pool &_pool,
@@ -62,24 +62,24 @@ struct HttpCacheItem final : HttpCacheDocument, CacheItem {
                            _status, _response_headers),
          CacheItem(http_cache_calc_expires(_info, vary),
                    pool_netto_size(&_pool) + _size),
-         pool(&_pool),
+         pool(_pool),
          size(_size),
-         rubber(&_rubber), rubber_id(_rubber_id) {
+         rubber(_rubber), rubber_id(_rubber_id) {
     }
 
     HttpCacheItem(const HttpCacheItem &) = delete;
     HttpCacheItem &operator=(const HttpCacheItem &) = delete;
 
     UnusedIstreamPtr OpenStream(struct pool &_pool) {
-        return istream_rubber_new(_pool, *rubber, rubber_id, 0, size, false);
+        return istream_rubber_new(_pool, rubber, rubber_id, 0, size, false);
     }
 
     /* virtual methods from class CacheItem */
     void Destroy() override {
         if (rubber_id != 0)
-            rubber->Remove(rubber_id);
+            rubber.Remove(rubber_id);
 
-        pool_unref(pool);
+        pool_unref(&pool);
     }
 };
 
@@ -108,7 +108,7 @@ HttpCacheHeap::Put(const char *url,
                    const StringMap &response_headers,
                    Rubber &rubber, unsigned rubber_id, size_t size)
 {
-    struct pool *item_pool = pool_new_slice(pool, "http_cache_item",
+    struct pool *item_pool = pool_new_slice(&pool, "http_cache_item",
                                             slice_pool);
     auto item = NewFromPool<HttpCacheItem>(*item_pool, *item_pool,
                                            info, request_headers,
@@ -188,7 +188,7 @@ HttpCacheHeap::OpenStream(struct pool &_pool, HttpCacheDocument &document)
 
 HttpCacheHeap::HttpCacheHeap(struct pool &_pool, EventLoop &event_loop,
                              size_t max_size) noexcept
-    :pool(&_pool),
+    :pool(_pool),
      cache(event_loop, 65521, max_size),
      slice_pool(slice_pool_new(1024, 65536))
 {
