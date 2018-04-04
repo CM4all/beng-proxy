@@ -246,6 +246,17 @@ public:
             pool_ref(value);
     }
 
+    struct Donate {};
+    static Donate donate;
+
+    /**
+     * Donate a pool reference to a newly constructed #PoolPtr.  It
+     * will not create another reference, but will unreference it in
+     * its destructor.
+     */
+    explicit PoolPtr(Donate, struct pool &_value) noexcept
+        :value(&_value) {}
+
     PoolPtr(PoolPtr &&src) noexcept
         :value(std::exchange(src.value, nullptr)) {}
 
