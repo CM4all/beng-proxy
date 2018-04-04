@@ -54,6 +54,9 @@ fcgi_stock_new(unsigned limit, unsigned max_idle,
 void
 fcgi_stock_free(FcgiStock *fcgi_stock);
 
+SocketDescriptor
+fcgi_stock_get_log_socket(const FcgiStock &fs) noexcept;
+
 void
 fcgi_stock_fade_all(FcgiStock &fs);
 

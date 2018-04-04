@@ -84,6 +84,10 @@ struct FcgiStock final : StockClass, ChildStockClass {
         return hstock.GetEventLoop();
     }
 
+    SocketDescriptor GetLogSocket() const noexcept {
+        return child_stock.GetLogSocket();
+    }
+
     void FadeAll() {
         hstock.FadeAll();
         child_stock.GetStockMap().FadeAll();
@@ -394,6 +398,12 @@ void
 fcgi_stock_free(FcgiStock *fcgi_stock)
 {
     delete fcgi_stock;
+}
+
+SocketDescriptor
+fcgi_stock_get_log_socket(const FcgiStock &fs) noexcept
+{
+    return fs.GetLogSocket();
 }
 
 void
