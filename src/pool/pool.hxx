@@ -539,6 +539,19 @@ NewFromPool(pool &p, Args&&... args)
     return ::new(t) T(std::forward<Args>(args)...);
 }
 
+/**
+ * Create a newly allocated object and move the pool reference into it
+ * as the first parameter.
+ */
+template<typename T, typename... Args>
+gcc_malloc gcc_returns_nonnull
+T *
+NewFromPool(PoolPtr &&p, Args&&... args)
+{
+    void *t = p_malloc(p, sizeof(T));
+    return ::new(t) T(std::move(p), std::forward<Args>(args)...);
+}
+
 template<typename T>
 void
 DeleteFromPool(struct pool &pool, T *t) noexcept
