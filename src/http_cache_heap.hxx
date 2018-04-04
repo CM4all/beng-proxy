@@ -33,6 +33,7 @@
 #ifndef BENG_PROXY_HTTP_CACHE_HEAP_HXX
 #define BENG_PROXY_HTTP_CACHE_HEAP_HXX
 
+#include "cache.hxx"
 #include "http/Status.h"
 #include "util/Compiler.h"
 
@@ -55,7 +56,7 @@ struct HttpCacheDocument;
 class HttpCacheHeap {
     struct pool *const pool;
 
-    Cache *const cache;
+    Cache cache;
 
     SlicePool *const slice_pool;
 

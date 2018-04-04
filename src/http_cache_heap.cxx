@@ -34,7 +34,6 @@
 #include "http_cache_rfc.hxx"
 #include "http_cache_document.hxx"
 #include "http_cache_age.hxx"
-#include "cache.hxx"
 #include "AllocatorStats.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "istream/istream_null.hxx"
@@ -96,9 +95,9 @@ http_cache_item_match(const CacheItem *_item, void *ctx)
 HttpCacheDocument *
 HttpCacheHeap::Get(const char *uri, StringMap &request_headers)
 {
-    return (HttpCacheItem *)cache->GetMatch(uri,
-                                            http_cache_item_match,
-                                            &request_headers);
+    return (HttpCacheItem *)cache.GetMatch(uri,
+                                           http_cache_item_match,
+                                           &request_headers);
 }
 
 void
@@ -116,8 +115,8 @@ HttpCacheHeap::Put(const char *url,
                                            status, response_headers,
                                            size, rubber, rubber_id);
 
-    cache->PutMatch(p_strdup(item_pool, url), *item,
-                    http_cache_item_match, &request_headers);
+    cache.PutMatch(p_strdup(item_pool, url), *item,
+                   http_cache_item_match, &request_headers);
 }
 
 void
@@ -125,14 +124,14 @@ HttpCacheHeap::Remove(HttpCacheDocument &document)
 {
     auto &item = (HttpCacheItem &)document;
 
-    cache->Remove(item);
+    cache.Remove(item);
     item.Unlock();
 }
 
 void
 HttpCacheHeap::RemoveURL(const char *url, StringMap &headers)
 {
-    cache->RemoveMatch(url, http_cache_item_match, &headers);
+    cache.RemoveMatch(url, http_cache_item_match, &headers);
 }
 
 void
@@ -150,7 +149,7 @@ HttpCacheHeap::Compress()
 void
 HttpCacheHeap::Flush()
 {
-    cache->Flush();
+    cache.Flush();
     slice_pool_compress(slice_pool);
 }
 
@@ -190,14 +189,14 @@ HttpCacheHeap::OpenStream(struct pool &_pool, HttpCacheDocument &document)
 HttpCacheHeap::HttpCacheHeap(struct pool &_pool, EventLoop &event_loop,
                              size_t max_size) noexcept
     :pool(&_pool),
-     cache(new Cache(event_loop, 65521, max_size)),
+     cache(event_loop, 65521, max_size),
      slice_pool(slice_pool_new(1024, 65536))
 {
 }
 
 HttpCacheHeap::~HttpCacheHeap() noexcept
 {
-    delete cache;
+    cache.Flush();
     slice_pool_free(slice_pool);
 }
 
