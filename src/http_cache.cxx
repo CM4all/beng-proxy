@@ -201,7 +201,87 @@ public:
 
     ~HttpCache();
 
+    void Remove(HttpCacheDocument *document) noexcept {
+        heap.Remove(*document);
+    }
+
+    void RemoveURL(const char *url, StringMap &headers) noexcept {
+        heap.RemoveURL(url, headers);
+    }
+
+    void Lock(HttpCacheDocument &document) noexcept {
+        heap.Lock(document);
+    }
+
+    void Unlock(HttpCacheDocument &document) noexcept {
+        heap.Unlock(document);
+    }
+
+    /**
+     * Query the cache.
+     *
+     * Caller pool is referenced synchronously and freed
+     * asynchronously (as needed).
+     */
+    void Use(struct pool &caller_pool, sticky_hash_t session_sticky,
+             const char *site_name,
+             http_method_t method,
+             const ResourceAddress &address,
+             StringMap &&headers,
+             HttpCacheRequestInfo &info,
+             HttpResponseHandler &handler,
+             CancellablePointer &cancel_ptr) noexcept;
+
 private:
+    /**
+     * A resource was not found in the cache.
+     *
+     * Caller pool is referenced synchronously and freed asynchronously.
+     */
+    void Miss(struct pool &caller_pool,
+              sticky_hash_t session_sticky,
+              const char *site_name,
+              HttpCacheRequestInfo &info,
+              http_method_t method,
+              const ResourceAddress &address,
+              StringMap &&headers,
+              HttpResponseHandler &handler,
+              CancellablePointer &cancel_ptr) noexcept;
+
+    /**
+     * Revalidate a cache entry.
+     *
+     * Caller pool is referenced synchronously and freed asynchronously.
+     */
+    void Revalidate(struct pool &caller_pool,
+                    sticky_hash_t session_sticky,
+                    const char *site_name,
+                    HttpCacheRequestInfo &info,
+                    HttpCacheDocument &document,
+                    http_method_t method,
+                    const ResourceAddress &address,
+                    StringMap &&headers,
+                    HttpResponseHandler &handler,
+                    CancellablePointer &cancel_ptr) noexcept;
+
+/**
+     * The requested document was found in the cache.  It is either
+     * served or revalidated.
+     *
+     * Caller pool is referenced synchronously and freed asynchronously
+     * (as needed).
+     */
+    void Found(HttpCacheRequestInfo &info,
+               HttpCacheDocument &document,
+               struct pool &caller_pool,
+               sticky_hash_t session_sticky,
+               const char *site_name,
+               http_method_t method,
+               const ResourceAddress &address,
+               StringMap &&headers,
+               HttpResponseHandler &handler,
+               CancellablePointer &cancel_ptr) noexcept;
+
     void OnCompressTimer() {
         rubber->Compress();
         heap.Compress();
@@ -252,33 +332,6 @@ http_cache_put(HttpCacheRequest &request,
                            request.response.status,
                            *request.response.headers,
                            *request.cache.rubber, rubber_id, size);
-}
-
-static void
-http_cache_remove(HttpCache &cache, HttpCacheDocument *document)
-{
-    cache.heap.Remove(*document);
-}
-
-static void
-http_cache_remove_url(HttpCache &cache, const char *url,
-                      StringMap &headers)
-{
-    cache.heap.RemoveURL(url, headers);
-}
-
-static void
-http_cache_lock(HttpCache &cache,
-                HttpCacheDocument &document)
-{
-    cache.heap.Lock(document);
-}
-
-static void
-http_cache_unlock(HttpCache &cache,
-                  HttpCacheDocument *document)
-{
-    cache.heap.Unlock(*document);
 }
 
 static void
@@ -355,7 +408,7 @@ HttpCacheRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
         pool_unref(&caller_pool);
 
         if (locked_document != nullptr)
-            http_cache_unlock(cache, locked_document);
+            cache.Unlock(*locked_document);
 
         return;
     }
@@ -371,13 +424,13 @@ HttpCacheRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
         pool_unref(&caller_pool);
 
         if (locked_document != nullptr)
-            http_cache_unlock(cache, locked_document);
+            cache.Unlock(*locked_document);
 
         return;
     }
 
     if (document != nullptr)
-        http_cache_remove(cache, document);
+        cache.Remove(document);
 
     const off_t available = body
         ? body.GetAvailable(true)
@@ -436,7 +489,7 @@ HttpCacheRequest::OnHttpError(std::exception_ptr ep) noexcept
     ep = NestException(ep, FormatRuntimeError("http_cache %s", key));
 
     if (document != nullptr)
-        http_cache_unlock(cache, document);
+        cache.Unlock(*document);
 
     handler.InvokeError(ep);
     pool_unref(&caller_pool);
@@ -451,7 +504,7 @@ void
 HttpCacheRequest::Cancel() noexcept
 {
     if (document != nullptr)
-        http_cache_unlock(cache, document);
+        cache.Unlock(*document);
 
     pool_unref(&caller_pool);
 
@@ -591,13 +644,8 @@ http_cache_flush(HttpCache &cache)
         cache.rubber->Compress();
 }
 
-/**
- * A resource was not found in the cache.
- *
- * Caller pool is referenced synchronously and freed asynchronously.
- */
-static void
-http_cache_miss(HttpCache &cache, struct pool &caller_pool,
+void
+HttpCache::Miss(struct pool &caller_pool,
                 sticky_hash_t session_sticky,
                 const char *site_name,
                 HttpCacheRequestInfo &info,
@@ -605,7 +653,7 @@ http_cache_miss(HttpCache &cache, struct pool &caller_pool,
                 const ResourceAddress &address,
                 StringMap &&headers,
                 HttpResponseHandler &handler,
-                CancellablePointer &cancel_ptr)
+                CancellablePointer &cancel_ptr) noexcept
 {
     if (info.only_if_cached) {
         handler.InvokeResponse(HTTP_STATUS_GATEWAY_TIMEOUT,
@@ -615,27 +663,26 @@ http_cache_miss(HttpCache &cache, struct pool &caller_pool,
 
     /* the cache request may live longer than the caller pool, so
        allocate a new pool for it from cache.pool */
-    struct pool *pool = pool_new_linear(&cache.pool, "HttpCacheRequest",
-                                        8192);
+    auto *request_pool = pool_new_linear(&pool, "HttpCacheRequest", 8192);
 
     auto request =
-        NewFromPool<HttpCacheRequest>(*pool, *pool, caller_pool,
-                                      session_sticky, site_name, cache,
+        NewFromPool<HttpCacheRequest>(*request_pool,
+                                      *request_pool, caller_pool,
+                                      session_sticky, site_name, *this,
                                       method, address,
-                                      http_cache_key(*pool, address),
+                                      http_cache_key(*request_pool, address),
                                       headers,
                                       handler,
                                       info, cancel_ptr);
 
     LogConcat(4, "HttpCache", "miss ", request->key);
 
-    cache.resource_loader.SendRequest(*pool, session_sticky, site_name,
-                                      method, address,
-                                      HTTP_STATUS_OK, std::move(headers),
-                                      nullptr, nullptr,
-                                      *request,
-                                      request->cancel_ptr);
-    pool_unref(pool);
+    resource_loader.SendRequest(*request_pool, session_sticky, site_name,
+                                method, address,
+                                HTTP_STATUS_OK, std::move(headers),
+                                nullptr, nullptr,
+                                *request, request->cancel_ptr);
+    pool_unref(request_pool);
 }
 
 gcc_pure
@@ -718,7 +765,8 @@ CheckCacheRequest(struct pool &pool, const HttpCacheRequestInfo &info,
                 lm != std::chrono::system_clock::from_time_t(-1) &&
                 lm > iums) {
                 handler.InvokeResponse(HTTP_STATUS_PRECONDITION_FAILED,
-                                       StringMap(pool), UnusedIstreamPtr());
+                                       StringMap(pool),
+                                       UnusedIstreamPtr());
                 return false;
             }
         }
@@ -735,16 +783,16 @@ CheckCacheRequest(struct pool &pool, const HttpCacheRequestInfo &info,
 static void
 http_cache_heap_serve(HttpCacheHeap &cache,
                       HttpCacheDocument &document,
-                      struct pool &pool,
+                      struct pool &caller_pool,
                       const char *key gcc_unused,
                       HttpResponseHandler &handler)
 {
     LogConcat(4, "HttpCache", "serve ", key);
 
     handler.InvokeResponse(document.status,
-                           StringMap(ShallowCopy(), pool,
+                           StringMap(ShallowCopy(), caller_pool,
                                      document.response_headers),
-                           cache.OpenStream(pool, document));
+                           cache.OpenStream(caller_pool, document));
 }
 
 /**
@@ -796,41 +844,36 @@ http_cache_test(HttpCacheRequest &request,
                                       request.cancel_ptr);
 }
 
-/**
- * Revalidate a cache entry (heap version).
- *
- * Caller pool is referenced synchronously and freed asynchronously.
- */
-static void
-http_cache_heap_test(HttpCache &cache, struct pool &caller_pool,
-                     sticky_hash_t session_sticky,
-                     const char *site_name,
-                     HttpCacheRequestInfo &info,
-                     HttpCacheDocument &document,
-                     http_method_t method,
-                     const ResourceAddress &address,
-                     StringMap &&headers,
-                     HttpResponseHandler &handler,
-                     CancellablePointer &cancel_ptr)
+void
+HttpCache::Revalidate(struct pool &caller_pool,
+                      sticky_hash_t session_sticky,
+                      const char *site_name,
+                      HttpCacheRequestInfo &info,
+                      HttpCacheDocument &document,
+                      http_method_t method,
+                      const ResourceAddress &address,
+                      StringMap &&headers,
+                      HttpResponseHandler &handler,
+                      CancellablePointer &cancel_ptr) noexcept
 {
     /* the cache request may live longer than the caller pool, so
        allocate a new pool for it from cache.pool */
-    struct pool *pool = pool_new_linear(&cache.pool, "HttpCacheRequest", 8192);
+    auto *request_pool = pool_new_linear(&pool, "HttpCacheRequest", 8192);
 
     auto request =
-        NewFromPool<HttpCacheRequest>(*pool, *pool, caller_pool,
-                                      session_sticky, site_name, cache,
+        NewFromPool<HttpCacheRequest>(*request_pool, *request_pool, caller_pool,
+                                      session_sticky, site_name, *this,
                                       method, address,
-                                      http_cache_key(*pool, address),
+                                      http_cache_key(*request_pool, address),
                                       headers,
                                       handler,
                                       info, cancel_ptr);
 
-    http_cache_lock(cache, document);
+    Lock(document);
     request->document = &document;
 
     http_cache_test(*request, method, address, std::move(headers));
-    pool_unref(pool);
+    pool_unref(request_pool);
 }
 
 static bool
@@ -841,69 +884,53 @@ http_cache_may_serve(HttpCacheRequestInfo &info,
         document.info.expires >= std::chrono::system_clock::now();
 }
 
-/**
- * The requested document was found in the cache.  It is either served
- * or revalidated.
- *
- * Caller pool is referenced synchronously and freed asynchronously
- * (as needed).
- */
-static void
-http_cache_found(HttpCache &cache,
-                 HttpCacheRequestInfo &info,
+void
+HttpCache::Found(HttpCacheRequestInfo &info,
                  HttpCacheDocument &document,
-                 struct pool &pool,
+                 struct pool &caller_pool,
                  sticky_hash_t session_sticky,
                  const char *site_name,
                  http_method_t method,
                  const ResourceAddress &address,
                  StringMap &&headers,
                  HttpResponseHandler &handler,
-                 CancellablePointer &cancel_ptr)
+                 CancellablePointer &cancel_ptr) noexcept
 {
-    if (!CheckCacheRequest(pool, info, document, handler))
+    if (!CheckCacheRequest(caller_pool, info, document, handler))
         return;
 
     if (http_cache_may_serve(info, document))
-        http_cache_heap_serve(cache.heap, document, pool,
-                              http_cache_key(pool, address),
+        http_cache_heap_serve(heap, document, caller_pool,
+                              http_cache_key(caller_pool, address),
                               handler);
     else
-        http_cache_heap_test(cache, pool, session_sticky, site_name,
-                             info, document,
-                             method, address, std::move(headers),
-                             handler, cancel_ptr);
+        Revalidate(caller_pool, session_sticky, site_name,
+                   info, document,
+                   method, address, std::move(headers),
+                   handler, cancel_ptr);
 }
 
-/**
- * Query the heap cache.
- *
- * Caller pool is referenced synchronously and freed asynchronously
- * (as needed).
- */
-static void
-http_cache_heap_use(HttpCache &cache,
-                    struct pool &pool, sticky_hash_t session_sticky,
-                    const char *site_name,
-                    http_method_t method,
-                    const ResourceAddress &address,
-                    StringMap &&headers,
-                    HttpCacheRequestInfo &info,
-                    HttpResponseHandler &handler,
-                    CancellablePointer &cancel_ptr)
+void
+HttpCache::Use(struct pool &caller_pool, sticky_hash_t session_sticky,
+               const char *site_name,
+               http_method_t method,
+               const ResourceAddress &address,
+               StringMap &&headers,
+               HttpCacheRequestInfo &info,
+               HttpResponseHandler &handler,
+               CancellablePointer &cancel_ptr) noexcept
 {
-    HttpCacheDocument *document =
-        cache.heap.Get(http_cache_key(pool, address), headers);
+    auto *document = heap.Get(http_cache_key(caller_pool, address), headers);
 
     if (document == nullptr)
-        http_cache_miss(cache, pool, session_sticky, site_name, info,
-                        method, address, std::move(headers),
-                        handler, cancel_ptr);
+        Miss(caller_pool, session_sticky, site_name, info,
+             method, address, std::move(headers),
+             handler, cancel_ptr);
     else
-        http_cache_found(cache, info, *document, pool,
-                         session_sticky, site_name,
-                         method, address, std::move(headers),
-                         handler, cancel_ptr);
+        Found(info, *document, caller_pool,
+              session_sticky, site_name,
+              method, address, std::move(headers),
+              handler, cancel_ptr);
 }
 
 void
@@ -938,12 +965,12 @@ http_cache_request(HttpCache &cache,
     if (http_cache_request_evaluate(info, method, address, headers, body)) {
         assert(!body);
 
-        http_cache_heap_use(cache, pool, session_sticky, site_name,
-                            method, address, std::move(headers), info,
-                            handler, cancel_ptr);
+        cache.Use(pool, session_sticky, site_name,
+                  method, address, std::move(headers), info,
+                  handler, cancel_ptr);
     } else {
         if (http_cache_request_invalidate(method))
-            http_cache_remove_url(cache, key, headers);
+            cache.RemoveURL(key, headers);
 
         LogConcat(4, "HttpCache", "ignore ", key);
 
