@@ -62,7 +62,9 @@ BpInstance::GetStats() const noexcept
     const auto tcache_stats = translate_cache != nullptr
         ? translate_cache_get_stats(*translate_cache)
         : AllocatorStats::Zero();
-    const auto http_cache_stats = http_cache_get_stats(*http_cache);
+    const auto http_cache_stats = http_cache != nullptr
+        ? http_cache_get_stats(*http_cache)
+        : AllocatorStats::Zero();
     const auto fcache_stats = filter_cache != nullptr
         ? filter_cache_get_stats(*filter_cache)
         : AllocatorStats::Zero();

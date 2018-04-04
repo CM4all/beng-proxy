@@ -168,7 +168,10 @@ BpInstance::ReloadEventCallback(int)
               (int)getpid(), ")");
 
     translate_cache_flush(*translate_cache);
-    http_cache_flush(*http_cache);
+
+    if (http_cache != nullptr)
+        http_cache_flush(*http_cache);
+
     if (filter_cache != nullptr)
         filter_cache_flush(*filter_cache);
     Compress();
@@ -382,13 +385,16 @@ try {
                                  instance.delegate_stock,
                                  instance.nfs_cache);
 
-    instance.http_cache = http_cache_new(instance.root_pool,
-                                         instance.config.http_cache_size,
-                                         instance.event_loop,
-                                         *instance.direct_resource_loader);
+    if (instance.config.http_cache_size > 0) {
+        instance.http_cache = http_cache_new(instance.root_pool,
+                                             instance.config.http_cache_size,
+                                             instance.event_loop,
+                                             *instance.direct_resource_loader);
 
-    instance.cached_resource_loader =
-        new CachedResourceLoader(*instance.http_cache);
+        instance.cached_resource_loader =
+            new CachedResourceLoader(*instance.http_cache);
+    } else
+        instance.cached_resource_loader = instance.direct_resource_loader;
 
     instance.pipe_stock = pipe_stock_new(instance.event_loop);
 

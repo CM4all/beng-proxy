@@ -77,7 +77,6 @@ BpInstance::~BpInstance()
     if (filter_resource_loader != direct_resource_loader)
         delete (FilterResourceLoader *)filter_resource_loader;
 
-    delete (CachedResourceLoader *)cached_resource_loader;
     delete (DirectResourceLoader *)direct_resource_loader;
 
     FreeStocksAndCaches();
@@ -97,6 +96,9 @@ BpInstance::FreeStocksAndCaches()
     }
 
     if (http_cache != nullptr) {
+        delete (CachedResourceLoader *)cached_resource_loader;
+        cached_resource_loader = nullptr;
+
         http_cache_close(http_cache);
         http_cache = nullptr;
     }
