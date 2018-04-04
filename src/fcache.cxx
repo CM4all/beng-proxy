@@ -340,13 +340,13 @@ FilterCache::Put(const FilterCacheInfo &info,
     else
         expires = info.expires;
 
-    struct pool *item_pool = pool_new_slice(&pool, "FilterCacheItem",
-                                            slice_pool);
+    auto item_pool = pool_new_slice(&pool, "FilterCacheItem", slice_pool);
     auto item = NewFromPool<FilterCacheItem>(*item_pool, *item_pool,
                                              info,
                                              status, headers, size,
                                              rubber, rubber_id,
                                              expires);
+    item_pool.release();
 
     cache.Put(item->info.key, *item);
 }

@@ -108,8 +108,7 @@ HttpCacheHeap::Put(const char *url,
                    const StringMap &response_headers,
                    Rubber &rubber, unsigned rubber_id, size_t size)
 {
-    struct pool *item_pool = pool_new_slice(&pool, "http_cache_item",
-                                            slice_pool);
+    auto item_pool = pool_new_slice(&pool, "http_cache_item", slice_pool);
     auto item = NewFromPool<HttpCacheItem>(*item_pool, *item_pool,
                                            info, request_headers,
                                            status, response_headers,
@@ -117,6 +116,7 @@ HttpCacheHeap::Put(const char *url,
 
     cache.PutMatch(p_strdup(item_pool, url), *item,
                    http_cache_item_match, &request_headers);
+    item_pool.release();
 }
 
 void

@@ -490,7 +490,7 @@ pool_new_linear(struct pool *parent, const char *name,
 #endif
 }
 
-struct pool *
+PoolPtr
 pool_new_slice(struct pool *parent, const char *name,
                SlicePool *slice_pool) noexcept
 {
@@ -500,7 +500,7 @@ pool_new_slice(struct pool *parent, const char *name,
 #ifdef POOL_LIBC_ONLY
     (void)slice_pool;
 
-    return pool_new_libc(parent, name);
+    return PoolPtr(PoolPtr::donate, *pool_new_libc(parent, name));
 #else
 
 #ifdef VALGRIND
@@ -508,7 +508,7 @@ pool_new_slice(struct pool *parent, const char *name,
         /* Valgrind cannot verify allocations and memory accesses with
            this library; therefore use the "libc" pool when running on
            valgrind */
-        return pool_new_libc(parent, name);
+        return PoolPtr(PoolPtr::donate, *pool_new_libc(parent, name));
 #endif
 
     struct pool *pool = pool_new(parent, name);
@@ -517,7 +517,7 @@ pool_new_slice(struct pool *parent, const char *name,
     pool->slice_pool = slice_pool;
     pool->current_area.linear = nullptr;
 
-    return pool;
+    return PoolPtr(PoolPtr::donate, *pool);
 #endif
 }
 

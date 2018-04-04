@@ -55,6 +55,7 @@
 struct pool;
 struct SlicePool;
 struct AllocatorStats;
+class PoolPtr;
 
 struct pool_mark_state {
     /**
@@ -96,8 +97,7 @@ struct pool *
 pool_new_linear(struct pool *parent, const char *name,
                 size_t initial_size) noexcept;
 
-gcc_malloc gcc_returns_nonnull
-struct pool *
+PoolPtr
 pool_new_slice(struct pool *parent, const char *name,
                struct SlicePool *slice_pool) noexcept;
 

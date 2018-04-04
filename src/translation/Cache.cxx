@@ -1158,8 +1158,8 @@ tcache_store(TranslateCacheRequest &tcr, const TranslateResponse &response)
     assert(tcr.tcache->slice_pool != nullptr);
     assert(tcr.tcache->cache != nullptr);
 
-    struct pool *pool = pool_new_slice(&tcr.tcache->pool, "tcache_item",
-                                       tcr.tcache->slice_pool);
+    auto pool = pool_new_slice(&tcr.tcache->pool, "tcache_item",
+                               tcr.tcache->slice_pool);
 
     auto max_age = response.max_age;
     constexpr std::chrono::seconds max_max_age = std::chrono::hours(24);
@@ -1223,7 +1223,8 @@ tcache_store(TranslateCacheRequest &tcr, const TranslateResponse &response)
         key = tcache_store_response(*pool, item->response, response,
                                     tcr.request);
     } catch (...) {
-        DeleteUnrefTrashPool(*pool, item);
+        DeleteFromPool(pool, item);
+        pool_trash(pool);
         throw;
     }
 
@@ -1239,7 +1240,8 @@ tcache_store(TranslateCacheRequest &tcr, const TranslateResponse &response)
         try {
             item->regex = response.CompileRegex();
         } catch (...) {
-            DeleteUnrefTrashPool(*pool, item);
+            DeleteFromPool(pool, item);
+            pool_trash(pool);
             throw;
         }
     } else {
@@ -1250,7 +1252,8 @@ tcache_store(TranslateCacheRequest &tcr, const TranslateResponse &response)
         try {
             item->inverse_regex = response.CompileInverseRegex();
         } catch (...) {
-            DeleteUnrefTrashPool(*pool, item);
+            DeleteFromPool(pool, item);
+            pool_trash(pool);
             throw;
         }
     }
@@ -1262,6 +1265,7 @@ tcache_store(TranslateCacheRequest &tcr, const TranslateResponse &response)
         tcache_add_per_site(*tcr.tcache, item);
 
     tcr.tcache->cache->PutMatch(key, *item, tcache_item_match, &tcr);
+    pool.release();
     return item;
 }
 
