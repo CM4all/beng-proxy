@@ -174,7 +174,7 @@ public:
 
     TimerEvent compress_timer;
 
-    Rubber *rubber = nullptr;
+    Rubber rubber;
 
     HttpCacheHeap heap;
 
@@ -283,7 +283,7 @@ private:
                CancellablePointer &cancel_ptr) noexcept;
 
     void OnCompressTimer() {
-        rubber->Compress();
+        rubber.Compress();
         heap.Compress();
         compress_timer.Add(http_cache_compress_interval);
     }
@@ -331,7 +331,7 @@ http_cache_put(HttpCacheRequest &request,
                            request.info, request.headers,
                            request.response.status,
                            *request.response.headers,
-                           *request.cache.rubber, rubber_id, size);
+                           request.cache.rubber, rubber_id, size);
 }
 
 static void
@@ -472,7 +472,7 @@ HttpCacheRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
         cache.requests.push_front(*this);
 
         sink_rubber_new(pool, std::move(tee.second),
-                        *cache.rubber, cacheable_size_limit,
+                        cache.rubber, cacheable_size_limit,
                         *this,
                         cancel_ptr);
 
@@ -549,11 +549,10 @@ HttpCache::HttpCache(struct pool &_pool, size_t max_size,
     :pool(*pool_new_libc(&_pool, "http_cache")),
      event_loop(_event_loop),
      compress_timer(event_loop, BIND_THIS_METHOD(OnCompressTimer)),
+     rubber(max_size),
      resource_loader(_resource_loader)
 {
     assert(max_size > 0);
-
-    rubber = new Rubber(max_size);
 
     compress_timer.Add(http_cache_compress_interval);
 
@@ -601,8 +600,6 @@ HttpCache::~HttpCache()
 
     compress_timer.Cancel();
 
-    delete rubber;
-
     pool_unref(&pool);
 }
 
@@ -615,21 +612,21 @@ http_cache_close(HttpCache *cache)
 void
 http_cache_fork_cow(HttpCache &cache, bool inherit)
 {
-    cache.rubber->ForkCow(inherit);
+    cache.rubber.ForkCow(inherit);
     cache.heap.ForkCow(inherit);
 }
 
 AllocatorStats
 http_cache_get_stats(const HttpCache &cache)
 {
-    return cache.heap.GetStats(*cache.rubber);
+    return cache.heap.GetStats(cache.rubber);
 }
 
 void
 http_cache_flush(HttpCache &cache)
 {
     cache.heap.Flush();
-    cache.rubber->Compress();
+    cache.rubber.Compress();
 }
 
 void
