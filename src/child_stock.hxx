@@ -93,6 +93,10 @@ public:
         return map;
     }
 
+    SocketDescriptor GetLogSocket() const noexcept {
+        return log_socket;
+    }
+
     /**
      * "Fade" all child processes with the given tag.
      */
