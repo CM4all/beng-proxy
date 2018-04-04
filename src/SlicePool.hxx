@@ -54,37 +54,37 @@ struct SliceAllocation {
 };
 
 SlicePool *
-slice_pool_new(size_t slice_size, unsigned per_area);
+slice_pool_new(size_t slice_size, unsigned per_area) noexcept;
 
 gcc_nonnull_all
 void
-slice_pool_free(SlicePool *pool);
+slice_pool_free(SlicePool *pool) noexcept;
 
 /**
  * Controls whether forked child processes inherit the allocator.
  * This is enabled by default.
  */
 void
-slice_pool_fork_cow(SlicePool &pool, bool inherit);
+slice_pool_fork_cow(SlicePool &pool, bool inherit) noexcept;
 
 gcc_const gcc_nonnull_all
 size_t
-slice_pool_get_slice_size(const SlicePool *pool);
+slice_pool_get_slice_size(const SlicePool *pool) noexcept;
 
 gcc_nonnull_all
 void
-slice_pool_compress(SlicePool *pool);
+slice_pool_compress(SlicePool *pool) noexcept;
 
 gcc_nonnull_all
 SliceAllocation
-slice_alloc(SlicePool *pool);
+slice_alloc(SlicePool *pool) noexcept;
 
 gcc_nonnull_all
 void
-slice_free(SlicePool *pool, SliceArea *area, void *p);
+slice_free(SlicePool *pool, SliceArea *area, void *p) noexcept;
 
 gcc_pure
 AllocatorStats
-slice_pool_get_stats(const SlicePool &pool);
+slice_pool_get_stats(const SlicePool &pool) noexcept;
 
 #endif
