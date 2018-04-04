@@ -43,13 +43,6 @@
 #include "rubber.hxx"
 #include "SlicePool.hxx"
 #include "pool/pool.hxx"
-#include "util/Cast.hxx"
-
-#include <time.h>
-#include <string.h>
-#include <errno.h>
-#include <stdio.h>
-#include <unistd.h>
 
 struct HttpCacheItem final : HttpCacheDocument, CacheItem {
     struct pool *pool;
