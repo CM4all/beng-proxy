@@ -69,10 +69,6 @@ public:
         cache = nullptr;
     }
 
-    bool IsDefined() const {
-        return cache != nullptr;
-    }
-
     gcc_pure
     AllocatorStats GetStats(const Rubber &rubber) const;
 

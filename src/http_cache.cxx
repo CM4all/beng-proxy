@@ -551,21 +551,16 @@ HttpCache::HttpCache(struct pool &_pool, size_t max_size,
      compress_timer(event_loop, BIND_THIS_METHOD(OnCompressTimer)),
      resource_loader(_resource_loader)
 {
-    if (max_size > 0) {
-        size_t rubber_size = max_size;
+    assert(max_size > 0);
 
-        rubber = new Rubber(rubber_size);
+    rubber = new Rubber(max_size);
 
-        compress_timer.Add(http_cache_compress_interval);
-    }
+    compress_timer.Add(http_cache_compress_interval);
 
-    if (max_size > 0)
-        /* leave 12.5% of the rubber allocator empty, to increase the
-           chances that a hole can be found for a new allocation, to
-           reduce the pressure that rubber_compress() creates */
-        heap.Init(pool, event_loop, max_size * 7 / 8);
-    else
-        heap.Clear();
+    /* leave 12.5% of the rubber allocator empty, to increase the
+       chances that a hole can be found for a new allocation, to
+       reduce the pressure that rubber_compress() creates */
+    heap.Init(pool, event_loop, max_size * 7 / 8);
 }
 
 HttpCache *
@@ -573,6 +568,8 @@ http_cache_new(struct pool &pool, size_t max_size,
                EventLoop &event_loop,
                ResourceLoader &resource_loader)
 {
+    assert(max_size > 0);
+
     return new HttpCache(pool, max_size,
                          event_loop, resource_loader);
 }
@@ -600,8 +597,7 @@ HttpCache::~HttpCache()
 
     background.AbortAll();
 
-    if (heap.IsDefined())
-        heap.Deinit();
+    heap.Deinit();
 
     compress_timer.Cancel();
 
@@ -619,29 +615,21 @@ http_cache_close(HttpCache *cache)
 void
 http_cache_fork_cow(HttpCache &cache, bool inherit)
 {
-    if (cache.rubber != nullptr)
-        cache.rubber->ForkCow(inherit);
-
-    if (cache.heap.IsDefined())
-        cache.heap.ForkCow(inherit);
+    cache.rubber->ForkCow(inherit);
+    cache.heap.ForkCow(inherit);
 }
 
 AllocatorStats
 http_cache_get_stats(const HttpCache &cache)
 {
-    return cache.heap.IsDefined()
-        ? cache.heap.GetStats(*cache.rubber)
-        : AllocatorStats::Zero();
+    return cache.heap.GetStats(*cache.rubber);
 }
 
 void
 http_cache_flush(HttpCache &cache)
 {
-    if (cache.heap.IsDefined())
-        cache.heap.Flush();
-
-    if (cache.rubber != nullptr)
-        cache.rubber->Compress();
+    cache.heap.Flush();
+    cache.rubber->Compress();
 }
 
 void
@@ -943,9 +931,7 @@ http_cache_request(HttpCache &cache,
                    HttpResponseHandler &handler,
                    CancellablePointer &cancel_ptr)
 {
-    const char *key = cache.heap.IsDefined()
-        ? http_cache_key(pool, address)
-        : nullptr;
+    const char *key = http_cache_key(pool, address);
     if (/* this address type cannot be cached; skip the rest of this
            library */
         key == nullptr ||
