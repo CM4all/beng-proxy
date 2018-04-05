@@ -50,14 +50,6 @@ static constexpr unsigned END_OF_LIST = -2;
 static constexpr unsigned MARK = -3;
 #endif
 
-struct SliceSlot {
-    unsigned next;
-
-    constexpr bool IsAllocated() const noexcept {
-        return next == ALLOCATED;
-    }
-};
-
 struct SliceArea {
     static constexpr auto link_mode = boost::intrusive::normal_link;
     typedef boost::intrusive::link_mode<link_mode> LinkMode;
@@ -68,7 +60,15 @@ struct SliceArea {
 
     unsigned free_head = 0;
 
-    SliceSlot slices[1];
+    struct Slot {
+        unsigned next;
+
+        constexpr bool IsAllocated() const noexcept {
+            return next == ALLOCATED;
+        }
+    };
+
+    Slot slices[1];
 
 private:
     SliceArea(SlicePool &pool) noexcept;
@@ -101,7 +101,7 @@ public:
 
     /**
      * Calculates the allocation slot index from an allocated pointer.
-     * This is used to locate the #SliceSlot for a pointer passed to a
+     * This is used to locate the #Slot for a pointer passed to a
      * public function.
      */
     gcc_pure
@@ -547,7 +547,7 @@ SliceArea::Alloc(SlicePool &pool) noexcept
     assert(!IsFull(pool));
 
     const unsigned i = free_head;
-    SliceSlot *const slot = &slices[i];
+    auto *const slot = &slices[i];
 
     ++allocated_count;
     free_head = slot->next;
