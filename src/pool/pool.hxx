@@ -292,6 +292,11 @@ public:
         return value;
     }
 
+    void reset() noexcept {
+        if (value != nullptr)
+            pool_unref(std::exchange(value, nullptr));
+    }
+
     /**
      * Return the value, releasing ownership.
      */
