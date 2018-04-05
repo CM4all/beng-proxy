@@ -234,7 +234,7 @@ class DumpPoolStats(gdb.Command):
             print "pool '%s' type=%d" % (pool['name'].string(), pool['type'])
             print "size", pool_sizes(pool)
             print "recursive_size", pool_recursive_sizes(pool)
-        elif pool.type == gdb.lookup_type('struct SlicePool').pointer():
+        elif pool.type == gdb.lookup_type('class SlicePool').pointer():
             print "slice_pool", pool.address
             for x in ('slice_size', 'area_size', 'slices_per_area'):
                 print x, pool[x]

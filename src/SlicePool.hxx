@@ -43,7 +43,7 @@
 #include <stddef.h>
 
 struct AllocatorStats;
-struct SlicePool;
+class SlicePool;
 struct SliceArea;
 
 struct SliceAllocation {

@@ -47,7 +47,7 @@ class Cache;
 class StringMap;
 struct AllocatorStats;
 struct HttpCacheResponseInfo;
-struct SlicePool;
+class SlicePool;
 struct HttpCacheDocument;
 
 /**

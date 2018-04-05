@@ -37,7 +37,7 @@
 
 #include <stdint.h>
 
-struct SlicePool;
+class SlicePool;
 struct SliceArea;
 
 class SliceFifoBuffer : public ForeignFifoBuffer<uint8_t> {

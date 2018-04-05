@@ -53,7 +53,7 @@
 #include <stdbool.h>
 
 struct pool;
-struct SlicePool;
+class SlicePool;
 struct AllocatorStats;
 class PoolPtr;
 
@@ -99,7 +99,7 @@ pool_new_linear(struct pool *parent, const char *name,
 
 PoolPtr
 pool_new_slice(struct pool *parent, const char *name,
-               struct SlicePool *slice_pool) noexcept;
+               SlicePool *slice_pool) noexcept;
 
 #ifdef NDEBUG
 

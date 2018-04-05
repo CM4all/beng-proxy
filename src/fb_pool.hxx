@@ -40,7 +40,7 @@
 
 #include "util/Compiler.h"
 
-struct SlicePool;
+class SlicePool;
 
 /**
  * Global initialization.

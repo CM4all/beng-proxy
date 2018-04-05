@@ -164,7 +164,9 @@ divide_round_up(unsigned a, unsigned b) noexcept
     return (a + b - 1) / b;
 }
 
-struct SlicePool {
+class SlicePool {
+    friend struct SliceArea;
+
     size_t slice_size;
 
     /**
@@ -209,8 +211,13 @@ struct SlicePool {
 
     bool fork_cow = true;
 
+public:
     SlicePool(size_t _slice_size, unsigned _slices_per_area) noexcept;
     ~SlicePool() noexcept;
+
+    size_t GetSliceSize() const noexcept {
+        return slice_size;
+    }
 
     void ForkCow(bool inherit) noexcept;
 
@@ -489,7 +496,7 @@ slice_pool_fork_cow(SlicePool &pool, bool inherit) noexcept
 size_t
 slice_pool_get_slice_size(const SlicePool *pool) noexcept
 {
-    return pool->slice_size;
+    return pool->GetSliceSize();
 }
 
 inline void
