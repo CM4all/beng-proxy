@@ -39,40 +39,14 @@
    number; both must be in sync */
 static constexpr size_t FB_SIZE = 8192;
 
-class SliceFifoBufferPool {
-    SlicePool *const pool;
-
-public:
-    SliceFifoBufferPool()
-        :pool(new SlicePool(FB_SIZE, 256)) {
-        assert(pool != nullptr);
-    }
-
-    ~SliceFifoBufferPool() {
-        delete pool;
-    }
-
-    SlicePool &Get() {
-        return *pool;
-    }
-
-    void ForkCow(bool inherit) {
-        pool->ForkCow(inherit);
-    }
-
-    void Compress() {
-        pool->Compress();
-    }
-};
-
-static SliceFifoBufferPool *fb_pool;
+static SlicePool *fb_pool;
 
 void
 fb_pool_init()
 {
     assert(fb_pool == nullptr);
 
-    fb_pool = new SliceFifoBufferPool();
+    fb_pool = new SlicePool(FB_SIZE, 256);
 }
 
 void
@@ -95,7 +69,9 @@ fb_pool_fork_cow(bool inherit)
 SlicePool &
 fb_pool_get()
 {
-    return fb_pool->Get();
+    assert(fb_pool != nullptr);
+
+    return *fb_pool;
 }
 
 void
