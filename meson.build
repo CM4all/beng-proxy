@@ -1000,7 +1000,6 @@ control_server_dep = declare_dependency(
 executable('cm4all-beng-proxy',
   'src/delegate/RequestHandler.cxx',
   'src/capabilities.cxx',
-  'src/abort_unref.cxx',
   'src/address_string.cxx',
   'src/balancer.cxx',
   'src/bot.c',
