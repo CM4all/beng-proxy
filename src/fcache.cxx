@@ -144,7 +144,7 @@ public:
     SiblingsHook siblings;
 
 private:
-    struct pool &pool;
+    const PoolPtr pool;
     PoolPtr caller_pool;
     FilterCache &cache;
     HttpResponseHandler &handler;
@@ -171,7 +171,7 @@ private:
     CancellablePointer cancel_ptr;
 
 public:
-    FilterCacheRequest(struct pool &_pool, struct pool &_caller_pool,
+    FilterCacheRequest(PoolPtr &&_pool, struct pool &_caller_pool,
                        FilterCache &_cache,
                        HttpResponseHandler &_handler,
                        const FilterCacheInfo &_info);
@@ -303,18 +303,17 @@ private:
     }
 };
 
-FilterCacheRequest::FilterCacheRequest(struct pool &_pool,
+FilterCacheRequest::FilterCacheRequest(PoolPtr &&_pool,
                                        struct pool &_caller_pool,
                                        FilterCache &_cache,
                                        HttpResponseHandler &_handler,
                                        const FilterCacheInfo &_info)
-    :pool(_pool), caller_pool(_caller_pool),
+    :pool(std::move(_pool)), caller_pool(_caller_pool),
      cache(_cache),
      handler(_handler),
      info(pool, _info),
      timeout_event(cache.event_loop, BIND_THIS_METHOD(OnTimeout))
 {
-    pool_ref(&pool);
 }
 
 void
@@ -326,7 +325,7 @@ FilterCacheRequest::Destroy() noexcept
 
     /* unref but don't trash the pool; it may still be in use by our
        caller who may still be reading from the TeeIstream */
-    DeleteUnrefPool(pool, this);
+    DeleteFromPool(pool, this);
 }
 
 void
@@ -537,7 +536,7 @@ FilterCacheRequest::OnHttpResponse(http_status_t status, StringMap &&headers,
                                    true);
 
         response.status = status;
-        response.headers = strmap_dup(&pool, &headers);
+        response.headers = strmap_dup(pool, &headers);
 
         cache.requests.push_front(*this);
 
@@ -642,9 +641,11 @@ FilterCache::Miss(struct pool &caller_pool,
 {
     /* the cache request may live longer than the caller pool, so
        allocate a new pool for it from cache->pool */
-    auto *request_pool = pool_new_linear(&pool, "filter_cache_request", 8192);
+    PoolPtr request_pool(PoolPtr::donate,
+                         *pool_new_linear(&pool, "filter_cache_request", 8192));
 
-    auto request = NewFromPool<FilterCacheRequest>(*request_pool, *request_pool, caller_pool,
+    auto request = NewFromPool<FilterCacheRequest>(std::move(request_pool),
+                                                   caller_pool,
                                                    *this, _handler, info);
 
     LogConcat(4, "FilterCache", "miss ", info.key);
@@ -653,7 +654,6 @@ FilterCache::Miss(struct pool &caller_pool,
                    status, std::move(headers),
                    std::move(body), body_etag,
                    cancel_ptr);
-    pool_unref(request_pool);
 }
 
 void
