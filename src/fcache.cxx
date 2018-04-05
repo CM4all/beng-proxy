@@ -103,7 +103,7 @@ struct FilterCacheInfo {
 };
 
 struct FilterCacheItem final : CacheItem {
-    struct pool &pool;
+    const PoolPtr pool;
 
     const FilterCacheInfo info;
 
@@ -114,12 +114,12 @@ struct FilterCacheItem final : CacheItem {
     Rubber &rubber;
     const unsigned rubber_id;
 
-    FilterCacheItem(struct pool &_pool, const FilterCacheInfo &_info,
+    FilterCacheItem(PoolPtr &&_pool, const FilterCacheInfo &_info,
                     http_status_t _status, const StringMap &_headers,
                     size_t _size, Rubber &_rubber, unsigned _rubber_id,
                     std::chrono::system_clock::time_point _expires)
-        :CacheItem(_expires, pool_netto_size(&_pool) + _size),
-         pool(_pool), info(pool, _info),
+        :CacheItem(_expires, pool_netto_size(_pool) + _size),
+         pool(std::move(_pool)), info(pool, _info),
          status(_status), headers(pool, _headers),
          size(_size), rubber(_rubber), rubber_id(_rubber_id) {
     }
@@ -129,7 +129,8 @@ struct FilterCacheItem final : CacheItem {
         if (rubber_id != 0)
             rubber.Remove(rubber_id);
 
-        DeleteUnrefTrashPool(pool, this);
+        pool_trash(pool);
+        DeleteFromPool(pool, this);
     }
 
 };
@@ -340,13 +341,11 @@ FilterCache::Put(const FilterCacheInfo &info,
     else
         expires = info.expires;
 
-    auto item_pool = pool_new_slice(&pool, "FilterCacheItem", slice_pool);
-    auto item = NewFromPool<FilterCacheItem>(*item_pool, *item_pool,
+    auto item = NewFromPool<FilterCacheItem>(pool_new_slice(&pool, "FilterCacheItem", slice_pool),
                                              info,
                                              status, headers, size,
                                              rubber, rubber_id,
                                              expires);
-    item_pool.release();
 
     cache.Put(item->info.key, *item);
 }
