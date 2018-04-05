@@ -135,7 +135,7 @@ struct FilterCacheItem final : CacheItem {
 
 };
 
-class FilterCacheRequest final : public HttpResponseHandler, RubberSinkHandler {
+class FilterCacheRequest final : HttpResponseHandler, RubberSinkHandler {
 public:
     static constexpr auto link_mode = boost::intrusive::auto_unlink;
     typedef boost::intrusive::link_mode<link_mode> LinkMode;
@@ -171,6 +171,20 @@ public:
                        FilterCache &_cache,
                        HttpResponseHandler &_handler,
                        const FilterCacheInfo &_info);
+
+    void Start(ResourceLoader &resource_loader,
+               const ResourceAddress &address,
+               http_status_t status, StringMap &&headers,
+               UnusedIstreamPtr body, const char *body_etag,
+               CancellablePointer &cancel_ptr) noexcept {
+        pool_ref(&caller_pool);
+        resource_loader.SendRequest(pool, 0, nullptr,
+                                    HTTP_METHOD_POST, address,
+                                    status, std::move(headers),
+                                    std::move(body), body_etag,
+                                    *this,
+                                    async_unref_on_abort(caller_pool, cancel_ptr));
+    }
 
     /**
      * Release resources held by this request.
@@ -621,13 +635,10 @@ FilterCache::Miss(struct pool &caller_pool,
 
     LogConcat(4, "FilterCache", "miss ", info.key);
 
-    pool_ref(&caller_pool);
-    resource_loader.SendRequest(*request_pool, 0, nullptr,
-                                HTTP_METHOD_POST, address,
-                                status, std::move(headers),
-                                std::move(body), body_etag,
-                                *request,
-                                async_unref_on_abort(caller_pool, cancel_ptr));
+    request->Start(resource_loader, address,
+                   status, std::move(headers),
+                   std::move(body), body_etag,
+                   cancel_ptr);
     pool_unref(request_pool);
 }
 
