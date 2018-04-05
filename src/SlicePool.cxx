@@ -50,12 +50,14 @@ static constexpr unsigned END_OF_LIST = -2;
 static constexpr unsigned MARK = -3;
 #endif
 
-struct SliceArea {
+class SliceArea {
+public:
     static constexpr auto link_mode = boost::intrusive::normal_link;
     typedef boost::intrusive::link_mode<link_mode> LinkMode;
     typedef boost::intrusive::list_member_hook<LinkMode> SiblingsHook;
     SiblingsHook siblings;
 
+private:
     unsigned allocated_count = 0;
 
     unsigned free_head = 0;
@@ -70,7 +72,6 @@ struct SliceArea {
 
     Slot slices[1];
 
-private:
     SliceArea(SlicePool &pool) noexcept;
 
     ~SliceArea() noexcept {
@@ -80,6 +81,10 @@ private:
 public:
     static SliceArea *New(SlicePool &pool) noexcept;
     void Delete(SlicePool &pool) noexcept;
+
+    static constexpr size_t GetHeaderSize(unsigned slices_per_area) noexcept {
+        return sizeof(SliceArea) + sizeof(Slot) * (slices_per_area - 1);
+    }
 
     void ForkCow(const SlicePool &pool, bool inherit) noexcept;
 
@@ -165,7 +170,7 @@ divide_round_up(unsigned a, unsigned b) noexcept
 }
 
 class SlicePool {
-    friend struct SliceArea;
+    friend class SliceArea;
 
     size_t slice_size;
 
@@ -434,9 +439,7 @@ SlicePool::SlicePool(size_t _slice_size, unsigned _slices_per_area) noexcept
 
     slices_per_area = (pages_per_area / pages_per_slice) * slices_per_page;
 
-    const SliceArea *area = nullptr;
-    const size_t header_size = sizeof(*area)
-        + sizeof(area->slices[0]) * (slices_per_area - 1);
+    const size_t header_size = SliceArea::GetHeaderSize(slices_per_area);
     header_pages = divide_round_up(header_size, mmap_page_size());
 
     area_size = mmap_page_size() * (header_pages + pages_per_area);

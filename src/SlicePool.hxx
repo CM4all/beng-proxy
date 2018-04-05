@@ -44,7 +44,7 @@
 
 struct AllocatorStats;
 class SlicePool;
-struct SliceArea;
+class SliceArea;
 
 struct SliceAllocation {
     SliceArea *area;

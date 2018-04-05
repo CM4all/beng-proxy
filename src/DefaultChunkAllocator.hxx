@@ -36,7 +36,7 @@
 #include <utility>
 
 template<typename T> struct WritableBuffer;
-struct SliceArea;
+class SliceArea;
 
 class DefaultChunkAllocator {
     SliceArea *area = nullptr;

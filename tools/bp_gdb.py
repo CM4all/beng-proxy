@@ -238,7 +238,7 @@ class DumpPoolStats(gdb.Command):
             print "slice_pool", pool.address
             for x in ('slice_size', 'area_size', 'slices_per_area'):
                 print x, pool[x]
-            area_pointer = gdb.lookup_type('struct SliceArea').pointer()
+            area_pointer = gdb.lookup_type('class SliceArea').pointer()
             brutto_size = netto_size = 0
             n_allocated = 0
             for area in for_each_list_item(pool['areas'], area_pointer):
