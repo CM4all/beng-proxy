@@ -144,7 +144,8 @@ public:
     SiblingsHook siblings;
 
 private:
-    struct pool &pool, &caller_pool;
+    struct pool &pool;
+    PoolPtr caller_pool;
     FilterCache &cache;
     HttpResponseHandler &handler;
 
@@ -181,7 +182,6 @@ public:
                UnusedIstreamPtr body, const char *body_etag,
                CancellablePointer &caller_cancel_ptr) noexcept {
         caller_cancel_ptr = *this;
-        pool_ref(&caller_pool);
         resource_loader.SendRequest(pool, 0, nullptr,
                                     HTTP_METHOD_POST, address,
                                     status, std::move(headers),
@@ -492,7 +492,6 @@ FilterCacheRequest::RubberError(std::exception_ptr ep)
 void
 FilterCacheRequest::Cancel() noexcept
 {
-    pool_unref(&caller_pool);
     cancel_ptr.Cancel();
     Destroy();
 }
@@ -506,7 +505,8 @@ void
 FilterCacheRequest::OnHttpResponse(http_status_t status, StringMap &&headers,
                                    UnusedIstreamPtr body) noexcept
 {
-    auto &_caller_pool = caller_pool;
+    /* make sure the caller pool gets unreferenced upon returning */
+    const auto _caller_pool = std::move(caller_pool);
 
     off_t available = body ? body.GetAvailable(true) : 0;
 
@@ -516,7 +516,6 @@ FilterCacheRequest::OnHttpResponse(http_status_t status, StringMap &&headers,
         LogConcat(4, "FilterCache", "nocache ", info.key);
 
         handler.InvokeResponse(status, std::move(headers), std::move(body));
-        pool_unref(&_caller_pool);
         Destroy();
         return;
     }
@@ -553,7 +552,6 @@ FilterCacheRequest::OnHttpResponse(http_status_t status, StringMap &&headers,
     }
 
     handler.InvokeResponse(status, std::move(headers), std::move(body));
-    pool_unref(&_caller_pool);
 }
 
 void
@@ -561,9 +559,7 @@ FilterCacheRequest::OnHttpError(std::exception_ptr ep) noexcept
 {
     ep = NestException(ep, FormatRuntimeError("fcache %s", info.key));
 
-    auto &_caller_pool = caller_pool;
     handler.InvokeError(ep);
-    pool_unref(&_caller_pool);
     Destroy();
 }
 
