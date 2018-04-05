@@ -345,7 +345,7 @@ pool_dispose_slice_area(SlicePool *slice_pool,
 
     assert(slice_pool != nullptr);
 
-    slice_free(slice_pool, area->slice_area, area);
+    slice_pool->Free(*area->slice_area, area);
     return true;
 }
 
@@ -414,7 +414,7 @@ static struct linear_pool_area *
 pool_new_slice_area(SlicePool *slice_pool,
                     struct linear_pool_area *prev) noexcept
 {
-    auto allocation = slice_alloc(slice_pool);
+    auto allocation = slice_pool->Alloc();
 
     struct linear_pool_area *area = (struct linear_pool_area *)allocation.data;
     assert(area != nullptr);
@@ -495,7 +495,7 @@ pool_new_slice(struct pool *parent, const char *name,
                SlicePool *slice_pool) noexcept
 {
     assert(parent != nullptr);
-    assert(slice_pool_get_slice_size(slice_pool) > LINEAR_POOL_AREA_HEADER);
+    assert(slice_pool->GetSliceSize() > LINEAR_POOL_AREA_HEADER);
 
 #ifdef POOL_LIBC_ONLY
     (void)slice_pool;
@@ -513,7 +513,7 @@ pool_new_slice(struct pool *parent, const char *name,
 
     struct pool *pool = pool_new(parent, name);
     pool->type = POOL_LINEAR;
-    pool->area_size = slice_pool_get_slice_size(slice_pool) - LINEAR_POOL_AREA_HEADER;
+    pool->area_size = slice_pool->GetSliceSize() - LINEAR_POOL_AREA_HEADER;
     pool->slice_pool = slice_pool;
     pool->current_area.linear = nullptr;
 

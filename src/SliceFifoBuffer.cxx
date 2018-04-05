@@ -38,7 +38,7 @@ SliceFifoBuffer::Allocate(SlicePool &pool) noexcept
 {
     assert(IsNull());
 
-    auto allocation = slice_alloc(&pool);
+    auto allocation = pool.Alloc();
     area = allocation.area;
     SetBuffer((uint8_t *)allocation.data, allocation.size);
 }
@@ -48,6 +48,6 @@ SliceFifoBuffer::Free(SlicePool &pool) noexcept
 {
     assert(IsDefined());
 
-    slice_free(&pool, area, GetBuffer());
+    pool.Free(*area, GetBuffer());
     SetNull();
 }

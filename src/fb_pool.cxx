@@ -44,12 +44,12 @@ class SliceFifoBufferPool {
 
 public:
     SliceFifoBufferPool()
-        :pool(slice_pool_new(FB_SIZE, 256)) {
+        :pool(new SlicePool(FB_SIZE, 256)) {
         assert(pool != nullptr);
     }
 
     ~SliceFifoBufferPool() {
-        slice_pool_free(pool);
+        delete pool;
     }
 
     SlicePool &Get() {
@@ -57,11 +57,11 @@ public:
     }
 
     void ForkCow(bool inherit) {
-        slice_pool_fork_cow(*pool, inherit);
+        pool->ForkCow(inherit);
     }
 
     void Compress() {
-        slice_pool_compress(pool);
+        pool->Compress();
     }
 };
 

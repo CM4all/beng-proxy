@@ -217,6 +217,10 @@ public:
         return slice_size;
     }
 
+    /**
+     * Controls whether forked child processes inherit the allocator.
+     * This is enabled by default.
+     */
     void ForkCow(bool inherit) noexcept;
 
     void AddStats(AllocatorStats &stats, const AreaList &list) const noexcept;
@@ -234,39 +238,5 @@ public:
     SliceAllocation Alloc() noexcept;
     void Free(SliceArea &area, void *p) noexcept;
 };
-
-SlicePool *
-slice_pool_new(size_t slice_size, unsigned per_area) noexcept;
-
-gcc_nonnull_all
-void
-slice_pool_free(SlicePool *pool) noexcept;
-
-/**
- * Controls whether forked child processes inherit the allocator.
- * This is enabled by default.
- */
-void
-slice_pool_fork_cow(SlicePool &pool, bool inherit) noexcept;
-
-gcc_const gcc_nonnull_all
-size_t
-slice_pool_get_slice_size(const SlicePool *pool) noexcept;
-
-gcc_nonnull_all
-void
-slice_pool_compress(SlicePool *pool) noexcept;
-
-gcc_nonnull_all
-SliceAllocation
-slice_alloc(SlicePool *pool) noexcept;
-
-gcc_nonnull_all
-void
-slice_free(SlicePool *pool, SliceArea *area, void *p) noexcept;
-
-gcc_pure
-AllocatorStats
-slice_pool_get_stats(const SlicePool &pool) noexcept;
 
 #endif

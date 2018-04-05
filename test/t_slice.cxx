@@ -62,18 +62,18 @@ TEST(SliceTest, Small)
     const size_t slice_size = 13;
     const unsigned per_area = 600;
 
-    auto *pool = slice_pool_new(slice_size, per_area);
+    auto *pool = new SlicePool(slice_size, per_area);
     ASSERT_NE(pool, nullptr);
 
-    auto allocation0 = slice_alloc(pool);
+    auto allocation0 = pool->Alloc();
     auto *area0 = allocation0.area;
     ASSERT_NE(area0, nullptr);
-    slice_free(pool, area0, allocation0.data);
+    pool->Free(*area0, allocation0.data);
 
     void *allocations[per_area];
 
     for (unsigned i = 0; i < per_area; ++i) {
-        auto allocation = slice_alloc(pool);
+        auto allocation = pool->Alloc();
         ASSERT_EQ(allocation.area, area0);
 
         allocations[i] = allocation.data;
@@ -91,7 +91,7 @@ TEST(SliceTest, Small)
     } more[per_area];
 
     for (unsigned i = 0; i < per_area; ++i) {
-        auto allocation = slice_alloc(pool);
+        auto allocation = pool->Alloc();
 
         more[i].area = allocation.area;
         more[i].p = allocation.data;
@@ -104,13 +104,13 @@ TEST(SliceTest, Small)
 
     for (unsigned i = 0; i < per_area; ++i) {
         ASSERT_TRUE(Check(allocations[i], slice_size, i));
-        slice_free(pool, area0, allocations[i]);
+        pool->Free(*area0, allocations[i]);
 
         ASSERT_TRUE(Check(more[i].p, slice_size, per_area + i));
-        slice_free(pool, more[i].area, more[i].p);
+        pool->Free(*more[i].area, more[i].p);
     }
 
-    slice_pool_free(pool);
+    delete pool;
 }
 
 TEST(SliceTest, Medium)
@@ -118,18 +118,18 @@ TEST(SliceTest, Medium)
     const size_t slice_size = 3000;
     const unsigned per_area = 10;
 
-    auto *pool = slice_pool_new(slice_size, per_area);
+    auto *pool = new SlicePool(slice_size, per_area);
     ASSERT_NE(pool, nullptr);
 
-    auto allocation0 = slice_alloc(pool);
+    auto allocation0 = pool->Alloc();
     auto *area0 = allocation0.area;
     ASSERT_NE(area0, nullptr);
-    slice_free(pool, area0, allocation0.data);
+    pool->Free(*area0, allocation0.data);
 
     void *allocations[per_area];
 
     for (unsigned i = 0; i < per_area; ++i) {
-        auto allocation = slice_alloc(pool);
+        auto allocation = pool->Alloc();
         ASSERT_EQ(allocation.area, area0);
 
         allocations[i] = allocation.data;
@@ -148,7 +148,7 @@ TEST(SliceTest, Medium)
     } more[per_area];
 
     for (unsigned i = 0; i < per_area; ++i) {
-        auto allocation = slice_alloc(pool);
+        auto allocation = pool->Alloc();
 
         more[i].area = allocation.area;
         more[i].p = allocation.data;
@@ -159,13 +159,13 @@ TEST(SliceTest, Medium)
 
     for (unsigned i = 0; i < per_area; ++i) {
         ASSERT_TRUE(Check(allocations[i], slice_size, i));
-        slice_free(pool, area0, allocations[i]);
+        pool->Free(*area0, allocations[i]);
 
         ASSERT_TRUE(Check(more[i].p, slice_size, per_area + i));
-        slice_free(pool, more[i].area, more[i].p);
+        pool->Free(*more[i].area, more[i].p);
     }
 
-    slice_pool_free(pool);
+    delete pool;
 }
 
 TEST(SliceTest, Large)
@@ -173,18 +173,18 @@ TEST(SliceTest, Large)
     const size_t slice_size = 8192;
     const unsigned per_area = 13;
 
-    auto *pool = slice_pool_new(slice_size, per_area);
+    auto *pool = new SlicePool(slice_size, per_area);
     ASSERT_NE(pool, nullptr);
 
-    auto allocation0 = slice_alloc(pool);
+    auto allocation0 = pool->Alloc();
     auto *area0 = allocation0.area;
     ASSERT_NE(area0, nullptr);
-    slice_free(pool, area0, allocation0.data);
+    pool->Free(*area0, allocation0.data);
 
     void *allocations[per_area];
 
     for (unsigned i = 0; i < per_area; ++i) {
-        auto allocation = slice_alloc(pool);
+        auto allocation = pool->Alloc();
         ASSERT_EQ(allocation.area, area0);
 
         allocations[i] = allocation.data;
@@ -203,7 +203,7 @@ TEST(SliceTest, Large)
     } more[per_area];
 
     for (unsigned i = 0; i < per_area; ++i) {
-        auto allocation = slice_alloc(pool);
+        auto allocation = pool->Alloc();
 
         more[i].area = allocation.area;
         more[i].p = allocation.data;
@@ -214,11 +214,11 @@ TEST(SliceTest, Large)
 
     for (unsigned i = 0; i < per_area; ++i) {
         ASSERT_TRUE(Check(allocations[i], slice_size, i));
-        slice_free(pool, area0, allocations[i]);
+        pool->Free(*area0, allocations[i]);
 
         ASSERT_TRUE(Check(more[i].p, slice_size, per_area + i));
-        slice_free(pool, more[i].area, more[i].p);
+        pool->Free(*more[i].area, more[i].p);
     }
 
-    slice_pool_free(pool);
+    delete pool;
 }

@@ -1480,7 +1480,7 @@ tcache::tcache(struct pool &_pool, EventLoop &event_loop,
                bool handshake_cacheable)
     :pool(*pool_new_libc(&_pool, "translate_cache")),
      slice_pool(max_size > 0
-                ? slice_pool_new(4096, 32768)
+                ? new SlicePool(4096, 32768)
                 : nullptr),
      cache(max_size > 0
            ? new Cache(event_loop, 65521, max_size)
@@ -1493,8 +1493,7 @@ inline
 tcache::~tcache()
 {
     delete cache;
-    if (slice_pool != nullptr)
-        slice_pool_free(slice_pool);
+    delete slice_pool;
     pool_unref(&pool);
 }
 
@@ -1518,7 +1517,7 @@ void
 translate_cache_fork_cow(struct tcache &cache, bool inherit)
 {
     if (cache.slice_pool != nullptr)
-        slice_pool_fork_cow(*cache.slice_pool, inherit);
+        cache.slice_pool->ForkCow(inherit);
 }
 
 AllocatorStats
@@ -1533,7 +1532,7 @@ translate_cache_flush(struct tcache &tcache)
     if (tcache.cache != nullptr)
         tcache.cache->Flush();
     if (tcache.slice_pool != nullptr)
-        slice_pool_compress(tcache.slice_pool);
+        tcache.slice_pool->Compress();
 }
 
 

@@ -251,12 +251,11 @@ public:
 
     void ForkCow(bool inherit) {
         rubber.ForkCow(inherit);
-        slice_pool_fork_cow(*slice_pool, inherit);
+        slice_pool->ForkCow(inherit);
     }
 
     AllocatorStats GetStats() const noexcept {
-        return slice_pool_get_stats(*slice_pool)
-            + rubber.GetStats();
+        return slice_pool->GetStats() + rubber.GetStats();
     }
 
     void Flush() {
@@ -295,7 +294,7 @@ private:
 
     void Compress() {
         rubber.Compress();
-        slice_pool_compress(slice_pool);
+        slice_pool->Compress();
     }
 
     void OnCompressTimer() {
@@ -577,7 +576,7 @@ FilterCache::FilterCache(struct pool &_pool, size_t max_size,
         reduce the pressure that rubber_compress() creates */
      cache(_event_loop, 65521, max_size * 7 / 8),
      rubber(max_size),
-     slice_pool(slice_pool_new(1024, 65536)),
+     slice_pool(new SlicePool(1024, 65536)),
      compress_timer(_event_loop, BIND_THIS_METHOD(OnCompressTimer)),
      event_loop(_event_loop),
      resource_loader(_resource_loader) {
@@ -602,7 +601,7 @@ inline FilterCache::~FilterCache()
     compress_timer.Cancel();
 
     cache.Flush();
-    slice_pool_free(slice_pool);
+    delete slice_pool;
 
     pool_unref(&pool);
 }

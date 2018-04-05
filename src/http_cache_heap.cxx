@@ -136,20 +136,20 @@ HttpCacheHeap::RemoveURL(const char *url, StringMap &headers)
 void
 HttpCacheHeap::ForkCow(bool inherit)
 {
-    slice_pool_fork_cow(*slice_pool, inherit);
+    slice_pool->ForkCow(inherit);
 }
 
 void
 HttpCacheHeap::Compress()
 {
-    slice_pool_compress(slice_pool);
+    slice_pool->Compress();
 }
 
 void
 HttpCacheHeap::Flush()
 {
     cache.Flush();
-    slice_pool_compress(slice_pool);
+    slice_pool->Compress();
 }
 
 void
@@ -189,18 +189,18 @@ HttpCacheHeap::HttpCacheHeap(struct pool &_pool, EventLoop &event_loop,
                              size_t max_size) noexcept
     :pool(_pool),
      cache(event_loop, 65521, max_size),
-     slice_pool(slice_pool_new(1024, 65536))
+     slice_pool(new SlicePool(1024, 65536))
 {
 }
 
 HttpCacheHeap::~HttpCacheHeap() noexcept
 {
     cache.Flush();
-    slice_pool_free(slice_pool);
+    delete slice_pool;
 }
 
 AllocatorStats
 HttpCacheHeap::GetStats(const Rubber &rubber) const
 {
-    return slice_pool_get_stats(*slice_pool) + rubber.GetStats();
+    return slice_pool->GetStats() + rubber.GetStats();
 }

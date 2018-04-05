@@ -232,7 +232,6 @@ SliceArea::Compress(SlicePool &pool) noexcept
  *
  */
 
-inline
 SlicePool::SlicePool(size_t _slice_size, unsigned _slices_per_area) noexcept
 {
     assert(_slice_size > 0);
@@ -263,7 +262,6 @@ SlicePool::SlicePool(size_t _slice_size, unsigned _slices_per_area) noexcept
     area_size = mmap_page_size() * (header_pages + pages_per_area);
 }
 
-inline
 SlicePool::~SlicePool() noexcept
 {
     assert(areas.empty());
@@ -272,25 +270,13 @@ SlicePool::~SlicePool() noexcept
     empty_areas.clear_and_dispose(SliceArea::Disposer{*this});
 }
 
-SlicePool *
-slice_pool_new(size_t slice_size, unsigned slices_per_area) noexcept
-{
-    return new SlicePool(slice_size, slices_per_area);
-}
-
 void
-slice_pool_free(SlicePool *pool) noexcept
-{
-    delete pool;
-}
-
-inline void
 SliceArea::ForkCow(const SlicePool &pool, bool inherit) noexcept
 {
     mmap_enable_fork(this, pool.area_size, inherit);
 }
 
-inline void
+void
 SlicePool::ForkCow(bool inherit) noexcept
 {
     if (inherit == fork_cow)
@@ -308,18 +294,6 @@ SlicePool::ForkCow(bool inherit) noexcept
 }
 
 void
-slice_pool_fork_cow(SlicePool &pool, bool inherit) noexcept
-{
-    pool.ForkCow(inherit);
-}
-
-size_t
-slice_pool_get_slice_size(const SlicePool *pool) noexcept
-{
-    return pool->GetSliceSize();
-}
-
-inline void
 SlicePool::Compress() noexcept
 {
     for (auto &area : areas)
@@ -328,12 +302,6 @@ SlicePool::Compress() noexcept
     empty_areas.clear_and_dispose(SliceArea::Disposer{*this});
 
     /* compressing full_areas would have no effect */
-}
-
-void
-slice_pool_compress(SlicePool *pool) noexcept
-{
-    pool->Compress();
 }
 
 gcc_pure
@@ -377,7 +345,7 @@ SliceArea::Alloc(SlicePool &pool) noexcept
     return GetSlice(pool, i);
 }
 
-inline SliceAllocation
+SliceAllocation
 SlicePool::Alloc() noexcept
 {
     auto &area = MakeNonFullArea();
@@ -400,12 +368,6 @@ SlicePool::Alloc() noexcept
     return { &area, p, slice_size };
 }
 
-SliceAllocation
-slice_alloc(SlicePool *pool) noexcept
-{
-    return pool->Alloc();
-}
-
 inline void
 SliceArea::Free(SlicePool &pool, void *p) noexcept
 {
@@ -419,7 +381,7 @@ SliceArea::Free(SlicePool &pool, void *p) noexcept
     --allocated_count;
 }
 
-inline void
+void
 SlicePool::Free(SliceArea &area, void *p) noexcept
 {
     const bool was_full = area.IsFull(*this);
@@ -440,12 +402,6 @@ SlicePool::Free(SliceArea &area, void *p) noexcept
     }
 }
 
-void
-slice_free(SlicePool *pool, SliceArea *area, void *p) noexcept
-{
-    pool->Free(*area, p);
-}
-
 inline void
 SlicePool::AddStats(AllocatorStats &stats, const AreaList &list) const noexcept
 {
@@ -455,7 +411,7 @@ SlicePool::AddStats(AllocatorStats &stats, const AreaList &list) const noexcept
     }
 }
 
-inline AllocatorStats
+AllocatorStats
 SlicePool::GetStats() const noexcept
 {
     AllocatorStats stats;
@@ -466,10 +422,4 @@ SlicePool::GetStats() const noexcept
     AddStats(stats, full_areas);
 
     return stats;
-}
-
-AllocatorStats
-slice_pool_get_stats(const SlicePool &pool) noexcept
-{
-    return pool.GetStats();
 }

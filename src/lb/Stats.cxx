@@ -67,7 +67,7 @@ LbInstance::GetStats() const noexcept
     stats.filter_cache_brutto_size = 0;
     stats.nfs_cache_size = stats.nfs_cache_brutto_size = 0;
 
-    const auto io_buffers_stats = slice_pool_get_stats(fb_pool_get());
+    const auto io_buffers_stats = fb_pool_get().GetStats();
     stats.io_buffers_size = ToBE64(io_buffers_stats.netto_size);
     stats.io_buffers_brutto_size = ToBE64(io_buffers_stats.brutto_size);
 

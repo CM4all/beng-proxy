@@ -51,7 +51,7 @@ DefaultChunkAllocator::Allocate()
 {
     assert(area == nullptr);
 
-    auto a = slice_alloc(&fb_pool_get());
+    auto a = fb_pool_get().Alloc();
     area = a.area;
     return {a.data, a.size};
 }
@@ -61,7 +61,7 @@ DefaultChunkAllocator::Free(void *p)
 {
     assert(area != nullptr);
 
-    slice_free(&fb_pool_get(), area, p);
+    fb_pool_get().Free(*area, p);
 
     area = nullptr;
 }
