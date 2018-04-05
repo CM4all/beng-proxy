@@ -312,7 +312,10 @@ FilterCacheRequest::FilterCacheRequest(struct pool &_pool,
      cache(_cache),
      handler(_handler),
      info(pool, _info),
-     timeout_event(cache.event_loop, BIND_THIS_METHOD(OnTimeout)) {}
+     timeout_event(cache.event_loop, BIND_THIS_METHOD(OnTimeout))
+{
+    pool_ref(&pool);
+}
 
 void
 FilterCacheRequest::Destroy() noexcept
@@ -491,6 +494,7 @@ FilterCacheRequest::Cancel() noexcept
 {
     pool_unref(&caller_pool);
     cancel_ptr.Cancel();
+    Destroy();
 }
 
 /*
@@ -513,6 +517,7 @@ FilterCacheRequest::OnHttpResponse(http_status_t status, StringMap &&headers,
 
         handler.InvokeResponse(status, std::move(headers), std::move(body));
         pool_unref(&_caller_pool);
+        Destroy();
         return;
     }
 
@@ -521,8 +526,6 @@ FilterCacheRequest::OnHttpResponse(http_status_t status, StringMap &&headers,
 
         cache.Put(info, status, headers, 0, 0);
     } else {
-        pool_ref(&pool);
-
         /* tee the body: one goes to our client, and one goes into the
            cache */
         auto tee = istream_tee_new(pool, std::move(body),
@@ -561,6 +564,7 @@ FilterCacheRequest::OnHttpError(std::exception_ptr ep) noexcept
     auto &_caller_pool = caller_pool;
     handler.InvokeError(ep);
     pool_unref(&_caller_pool);
+    Destroy();
 }
 
 /*
