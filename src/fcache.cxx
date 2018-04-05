@@ -57,6 +57,7 @@
 #include "util/Cancellable.hxx"
 #include "util/Exception.hxx"
 #include "util/RuntimeError.hxx"
+#include "util/LeakDetector.hxx"
 
 #include <boost/intrusive/list.hpp>
 
@@ -101,7 +102,7 @@ struct FilterCacheInfo {
     FilterCacheInfo &operator=(const FilterCacheInfo &) = delete;
 };
 
-struct FilterCacheItem final : CacheItem {
+struct FilterCacheItem final : CacheItem, LeakDetector {
     const PoolPtr pool;
 
     const FilterCacheInfo info;
@@ -135,7 +136,7 @@ struct FilterCacheItem final : CacheItem {
 };
 
 class FilterCacheRequest final
-    : HttpResponseHandler, RubberSinkHandler, Cancellable {
+    : HttpResponseHandler, RubberSinkHandler, Cancellable, LeakDetector {
 
 public:
     static constexpr auto link_mode = boost::intrusive::auto_unlink;
@@ -218,7 +219,7 @@ private:
     void RubberError(std::exception_ptr ep) override;
 };
 
-class FilterCache {
+class FilterCache final : LeakDetector {
     friend struct FilterCacheRequest;
 
     struct pool &pool;
