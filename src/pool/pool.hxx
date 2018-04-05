@@ -291,6 +291,13 @@ public:
     operator struct pool *() const noexcept {
         return value;
     }
+
+    /**
+     * Return the value, releasing ownership.
+     */
+    struct pool *release() noexcept {
+        return std::exchange(value, nullptr);
+    }
 };
 
 /**
