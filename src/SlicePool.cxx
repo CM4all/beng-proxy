@@ -64,9 +64,9 @@ struct SliceArea {
     typedef boost::intrusive::list_member_hook<LinkMode> SiblingsHook;
     SiblingsHook siblings;
 
-    unsigned allocated_count;
+    unsigned allocated_count = 0;
 
-    unsigned free_head;
+    unsigned free_head = 0;
 
     SliceSlot slices[1];
 
@@ -243,7 +243,6 @@ public:
  */
 
 SliceArea::SliceArea(SlicePool &pool) noexcept
-    :allocated_count(0), free_head(0)
 {
     /* build the "free" list */
     for (unsigned i = 0; i < pool.slices_per_area - 1; ++i)
