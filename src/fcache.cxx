@@ -36,7 +36,6 @@
 #include "header_writer.hxx"
 #include "strmap.hxx"
 #include "HttpResponseHandler.hxx"
-#include "abort_unref.hxx"
 #include "pool/tpool.hxx"
 #include "ResourceAddress.hxx"
 #include "ResourceLoader.hxx"
@@ -135,7 +134,9 @@ struct FilterCacheItem final : CacheItem {
 
 };
 
-class FilterCacheRequest final : HttpResponseHandler, RubberSinkHandler {
+class FilterCacheRequest final
+    : HttpResponseHandler, RubberSinkHandler, Cancellable {
+
 public:
     static constexpr auto link_mode = boost::intrusive::auto_unlink;
     typedef boost::intrusive::link_mode<link_mode> LinkMode;
@@ -166,6 +167,8 @@ private:
      */
     TimerEvent timeout_event;
 
+    CancellablePointer cancel_ptr;
+
 public:
     FilterCacheRequest(struct pool &_pool, struct pool &_caller_pool,
                        FilterCache &_cache,
@@ -176,14 +179,15 @@ public:
                const ResourceAddress &address,
                http_status_t status, StringMap &&headers,
                UnusedIstreamPtr body, const char *body_etag,
-               CancellablePointer &cancel_ptr) noexcept {
+               CancellablePointer &caller_cancel_ptr) noexcept {
+        caller_cancel_ptr = *this;
         pool_ref(&caller_pool);
         resource_loader.SendRequest(pool, 0, nullptr,
                                     HTTP_METHOD_POST, address,
                                     status, std::move(headers),
                                     std::move(body), body_etag,
                                     *this,
-                                    async_unref_on_abort(caller_pool, cancel_ptr));
+                                    cancel_ptr);
     }
 
     /**
@@ -198,6 +202,9 @@ public:
 
 private:
     void OnTimeout();
+
+    /* virtual methods from class Cancellable */
+    void Cancel() noexcept override;
 
     /* virtual methods from class HttpResponseHandler */
     void OnHttpResponse(http_status_t status, StringMap &&headers,
@@ -477,6 +484,13 @@ FilterCacheRequest::RubberError(std::exception_ptr ep)
 
     LogConcat(4, "FilterCache", "body_abort ", info.key, ": ", ep);
     Destroy();
+}
+
+void
+FilterCacheRequest::Cancel() noexcept
+{
+    pool_unref(&caller_pool);
+    cancel_ptr.Cancel();
 }
 
 /*
