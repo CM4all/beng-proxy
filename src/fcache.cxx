@@ -192,9 +192,9 @@ public:
     void Destroy() noexcept;
 
     /**
-     * Cancel the request.
+     * Cancel storing the response body.
      */
-    void Cancel() noexcept;
+    void CancelStore() noexcept;
 
 private:
     void OnTimeout();
@@ -320,7 +320,7 @@ FilterCacheRequest::Destroy() noexcept
 }
 
 void
-FilterCacheRequest::Cancel() noexcept
+FilterCacheRequest::CancelStore() noexcept
 {
     assert(response.cancel_ptr);
 
@@ -432,7 +432,7 @@ FilterCacheRequest::OnTimeout()
     /* reading the response has taken too long already; don't store
        this resource */
     LogConcat(4, "FilterCache", "timeout ", info.key);
-    Cancel();
+    CancelStore();
 }
 
 /*
@@ -583,7 +583,7 @@ filter_cache_new(struct pool *pool, size_t max_size,
 
 inline FilterCache::~FilterCache()
 {
-    requests.clear_and_dispose([](FilterCacheRequest *r){ r->Cancel(); });
+    requests.clear_and_dispose([](FilterCacheRequest *r){ r->CancelStore(); });
 
     compress_timer.Cancel();
 
