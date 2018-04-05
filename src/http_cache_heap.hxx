@@ -34,6 +34,7 @@
 #define BENG_PROXY_HTTP_CACHE_HEAP_HXX
 
 #include "cache.hxx"
+#include "SlicePool.hxx"
 #include "http/Status.h"
 #include "util/Compiler.h"
 
@@ -47,7 +48,6 @@ class Cache;
 class StringMap;
 struct AllocatorStats;
 struct HttpCacheResponseInfo;
-class SlicePool;
 struct HttpCacheDocument;
 
 /**
@@ -56,14 +56,13 @@ struct HttpCacheDocument;
 class HttpCacheHeap {
     struct pool &pool;
 
-    Cache cache;
+    SlicePool slice_pool;
 
-    SlicePool *const slice_pool;
+    Cache cache;
 
 public:
     HttpCacheHeap(struct pool &pool, EventLoop &event_loop,
                   size_t max_size) noexcept;
-    ~HttpCacheHeap() noexcept;
 
     void ForkCow(bool inherit);
 

@@ -40,7 +40,6 @@
 #include "istream_unlock.hxx"
 #include "istream_rubber.hxx"
 #include "rubber.hxx"
-#include "SlicePool.hxx"
 #include "pool/pool.hxx"
 
 struct HttpCacheItem final : HttpCacheDocument, CacheItem {
@@ -109,7 +108,7 @@ HttpCacheHeap::Put(const char *url,
                    const StringMap &response_headers,
                    Rubber &rubber, unsigned rubber_id, size_t size)
 {
-    auto item = NewFromPool<HttpCacheItem>(pool_new_slice(&pool, "http_cache_item", slice_pool),
+    auto item = NewFromPool<HttpCacheItem>(pool_new_slice(&pool, "http_cache_item", &slice_pool),
                                            info, request_headers,
                                            status, response_headers,
                                            size, rubber, rubber_id);
@@ -136,20 +135,20 @@ HttpCacheHeap::RemoveURL(const char *url, StringMap &headers)
 void
 HttpCacheHeap::ForkCow(bool inherit)
 {
-    slice_pool->ForkCow(inherit);
+    slice_pool.ForkCow(inherit);
 }
 
 void
 HttpCacheHeap::Compress()
 {
-    slice_pool->Compress();
+    slice_pool.Compress();
 }
 
 void
 HttpCacheHeap::Flush()
 {
     cache.Flush();
-    slice_pool->Compress();
+    slice_pool.Compress();
 }
 
 void
@@ -188,19 +187,13 @@ HttpCacheHeap::OpenStream(struct pool &_pool, HttpCacheDocument &document)
 HttpCacheHeap::HttpCacheHeap(struct pool &_pool, EventLoop &event_loop,
                              size_t max_size) noexcept
     :pool(_pool),
-     cache(event_loop, 65521, max_size),
-     slice_pool(new SlicePool(1024, 65536))
+     slice_pool(1024, 65536),
+     cache(event_loop, 65521, max_size)
 {
-}
-
-HttpCacheHeap::~HttpCacheHeap() noexcept
-{
-    cache.Flush();
-    delete slice_pool;
 }
 
 AllocatorStats
 HttpCacheHeap::GetStats(const Rubber &rubber) const
 {
-    return slice_pool->GetStats() + rubber.GetStats();
+    return slice_pool.GetStats() + rubber.GetStats();
 }
