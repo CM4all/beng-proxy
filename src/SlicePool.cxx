@@ -43,13 +43,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-static constexpr unsigned ALLOCATED = -1;
-static constexpr unsigned END_OF_LIST = -2;
-
-#ifndef NDEBUG
-static constexpr unsigned MARK = -3;
-#endif
-
 class SliceArea {
 public:
     static constexpr auto link_mode = boost::intrusive::normal_link;
@@ -64,6 +57,13 @@ private:
 
     struct Slot {
         unsigned next;
+
+        static constexpr unsigned ALLOCATED = -1;
+        static constexpr unsigned END_OF_LIST = -2;
+
+#ifndef NDEBUG
+        static constexpr unsigned MARK = -3;
+#endif
 
         constexpr bool IsAllocated() const noexcept {
             return next == ALLOCATED;
@@ -253,7 +253,7 @@ SliceArea::SliceArea(SlicePool &pool) noexcept
     for (unsigned i = 0; i < pool.slices_per_area - 1; ++i)
         slices[i].next = i + 1;
 
-    slices[pool.slices_per_area - 1].next = END_OF_LIST;
+    slices[pool.slices_per_area - 1].next = Slot::END_OF_LIST;
 }
 
 SliceArea *
@@ -272,9 +272,9 @@ inline bool
 SliceArea::IsFull(gcc_unused const SlicePool &pool) const noexcept
 {
     assert(free_head < pool.slices_per_area ||
-           free_head == END_OF_LIST);
+           free_head == Slot::END_OF_LIST);
 
-    return free_head == END_OF_LIST;
+    return free_head == Slot::END_OF_LIST;
 }
 
 void
@@ -285,14 +285,14 @@ SliceArea::Delete(SlicePool &pool) noexcept
 #ifndef NDEBUG
     for (unsigned i = 0; i < pool.slices_per_area; ++i)
         assert(slices[i].next < pool.slices_per_area ||
-               slices[i].next == END_OF_LIST);
+               slices[i].next == Slot::END_OF_LIST);
 
     unsigned i = free_head;
-    while (i != END_OF_LIST) {
+    while (i != Slot::END_OF_LIST) {
         assert(i < pool.slices_per_area);
 
         unsigned next = slices[i].next;
-        slices[i].next = MARK;
+        slices[i].next = Slot::MARK;
         i = next;
     }
 #endif
@@ -554,7 +554,7 @@ SliceArea::Alloc(SlicePool &pool) noexcept
 
     ++allocated_count;
     free_head = slot->next;
-    slot->next = ALLOCATED;
+    slot->next = Slot::ALLOCATED;
 
     return GetSlice(pool, i);
 }
