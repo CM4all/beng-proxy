@@ -169,6 +169,16 @@ struct FilterCacheRequest final : HttpResponseHandler, RubberSinkHandler {
                        HttpResponseHandler &_handler,
                        const FilterCacheInfo &_info);
 
+    /**
+     * Release resources held by this request.
+     */
+    void Destroy() noexcept;
+
+    /**
+     * Cancel the request.
+     */
+    void Cancel() noexcept;
+
     void OnTimeout();
 
     /* virtual methods from class HttpResponseHandler */
@@ -279,33 +289,25 @@ FilterCacheRequest::FilterCacheRequest(struct pool &_pool,
      info(pool, _info),
      timeout_event(cache.event_loop, BIND_THIS_METHOD(OnTimeout)) {}
 
-/**
- * Release resources held by this request.
- */
-static void
-filter_cache_request_release(struct FilterCacheRequest *request)
+void
+FilterCacheRequest::Destroy() noexcept
 {
-    assert(request != nullptr);
-    assert(!request->response.cancel_ptr);
+    assert(!response.cancel_ptr);
 
-    request->timeout_event.Cancel();
+    timeout_event.Cancel();
 
     /* unref but don't trash the pool; it may still be in use by our
        caller who may still be reading from the TeeIstream */
-    DeleteUnrefPool(request->pool, request);
+    DeleteUnrefPool(pool, this);
 }
 
-/**
- * Abort the request.
- */
-static void
-filter_cache_request_abort(struct FilterCacheRequest *request)
+void
+FilterCacheRequest::Cancel() noexcept
 {
-    assert(request != nullptr);
-    assert(request->response.cancel_ptr);
+    assert(response.cancel_ptr);
 
-    request->response.cancel_ptr.CancelAndClear();
-    filter_cache_request_release(request);
+    response.cancel_ptr.CancelAndClear();
+    Destroy();
 }
 
 /* check whether the request could produce a cacheable response */
@@ -412,7 +414,7 @@ FilterCacheRequest::OnTimeout()
     /* reading the response has taken too long already; don't store
        this resource */
     LogConcat(4, "FilterCache", "timeout ", info.key);
-    filter_cache_request_abort(this);
+    Cancel();
 }
 
 /*
@@ -429,7 +431,7 @@ FilterCacheRequest::RubberDone(unsigned rubber_id, size_t size)
        saved: add it to the cache */
     cache.Put(info, response.status, *response.headers, rubber_id, size);
 
-    filter_cache_request_release(this);
+    Destroy();
 }
 
 void
@@ -438,7 +440,7 @@ FilterCacheRequest::RubberOutOfMemory()
     response.cancel_ptr = nullptr;
 
     LogConcat(4, "FilterCache", "nocache oom ", info.key);
-    filter_cache_request_release(this);
+    Destroy();
 }
 
 void
@@ -447,7 +449,7 @@ FilterCacheRequest::RubberTooLarge()
     response.cancel_ptr = nullptr;
 
     LogConcat(4, "FilterCache", "nocache too large %s\n", info.key);
-    filter_cache_request_release(this);
+    Destroy();
 }
 
 void
@@ -456,7 +458,7 @@ FilterCacheRequest::RubberError(std::exception_ptr ep)
     response.cancel_ptr = nullptr;
 
     LogConcat(4, "FilterCache", "body_abort ", info.key, ": ", ep);
-    filter_cache_request_release(this);
+    Destroy();
 }
 
 /*
@@ -563,7 +565,7 @@ filter_cache_new(struct pool *pool, size_t max_size,
 
 inline FilterCache::~FilterCache()
 {
-    requests.clear_and_dispose(filter_cache_request_abort);
+    requests.clear_and_dispose([](FilterCacheRequest *r){ r->Cancel(); });
 
     compress_timer.Cancel();
 
