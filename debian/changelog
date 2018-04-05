@@ -4,6 +4,7 @@ cm4all-beng-proxy (13.12) unstable; urgency=low
   * session: fix assertion failure
   * fcgi, lhttp: fix race condition with socket permissions
   * cgi: fix crash bug
+  * pipe: fix assertion failure
   * lb: fix "pivot_root" problem during start on kernel 4.9-
   * enable core dumps (PR_SET_DUMPABLE)
   * debian: don't start daemon during initial installation
