@@ -223,9 +223,9 @@ class FilterCache final : LeakDetector {
     friend struct FilterCacheRequest;
 
     struct pool &pool;
+    SlicePool slice_pool;
     Cache cache;
     Rubber rubber;
-    SlicePool *const slice_pool;
 
     TimerEvent compress_timer;
 
@@ -251,11 +251,11 @@ public:
 
     void ForkCow(bool inherit) {
         rubber.ForkCow(inherit);
-        slice_pool->ForkCow(inherit);
+        slice_pool.ForkCow(inherit);
     }
 
     AllocatorStats GetStats() const noexcept {
-        return slice_pool->GetStats() + rubber.GetStats();
+        return slice_pool.GetStats() + rubber.GetStats();
     }
 
     void Flush() {
@@ -294,7 +294,7 @@ private:
 
     void Compress() {
         rubber.Compress();
-        slice_pool->Compress();
+        slice_pool.Compress();
     }
 
     void OnCompressTimer() {
@@ -370,7 +370,7 @@ FilterCache::Put(const FilterCacheInfo &info,
     else
         expires = info.expires;
 
-    auto item = NewFromPool<FilterCacheItem>(pool_new_slice(&pool, "FilterCacheItem", slice_pool),
+    auto item = NewFromPool<FilterCacheItem>(pool_new_slice(&pool, "FilterCacheItem", &slice_pool),
                                              info,
                                              status, headers, size,
                                              rubber, rubber_id,
@@ -571,12 +571,12 @@ FilterCache::FilterCache(struct pool &_pool, size_t max_size,
                          EventLoop &_event_loop,
                          ResourceLoader &_resource_loader)
     :pool(*pool_new_libc(&_pool, "filter_cache")),
+     slice_pool(1024, 65536),
      /* leave 12.5% of the rubber allocator empty, to increase the
         chances that a hole can be found for a new allocation, to
         reduce the pressure that rubber_compress() creates */
      cache(_event_loop, 65521, max_size * 7 / 8),
      rubber(max_size),
-     slice_pool(new SlicePool(1024, 65536)),
      compress_timer(_event_loop, BIND_THIS_METHOD(OnCompressTimer)),
      event_loop(_event_loop),
      resource_loader(_resource_loader) {
@@ -599,9 +599,6 @@ inline FilterCache::~FilterCache()
     requests.clear_and_dispose([](FilterCacheRequest *r){ r->CancelStore(); });
 
     compress_timer.Cancel();
-
-    cache.Flush();
-    delete slice_pool;
 
     pool_unref(&pool);
 }
