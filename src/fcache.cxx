@@ -135,12 +135,14 @@ struct FilterCacheItem final : CacheItem {
 
 };
 
-struct FilterCacheRequest final : HttpResponseHandler, RubberSinkHandler {
+class FilterCacheRequest final : public HttpResponseHandler, RubberSinkHandler {
+public:
     static constexpr auto link_mode = boost::intrusive::auto_unlink;
     typedef boost::intrusive::link_mode<link_mode> LinkMode;
     typedef boost::intrusive::list_member_hook<LinkMode> SiblingsHook;
     SiblingsHook siblings;
 
+private:
     struct pool &pool, &caller_pool;
     FilterCache &cache;
     HttpResponseHandler &handler;
@@ -164,6 +166,7 @@ struct FilterCacheRequest final : HttpResponseHandler, RubberSinkHandler {
      */
     TimerEvent timeout_event;
 
+public:
     FilterCacheRequest(struct pool &_pool, struct pool &_caller_pool,
                        FilterCache &_cache,
                        HttpResponseHandler &_handler,
@@ -179,6 +182,7 @@ struct FilterCacheRequest final : HttpResponseHandler, RubberSinkHandler {
      */
     void Cancel() noexcept;
 
+private:
     void OnTimeout();
 
     /* virtual methods from class HttpResponseHandler */
