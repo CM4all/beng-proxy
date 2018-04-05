@@ -213,14 +213,14 @@ public:
 
     gcc_pure
     const CgiAddress &GetCgi() const {
-        assert(IsCgiAlike());
+        assert(IsCgiAlike() || type == Type::PIPE);
 
         return *u.cgi;
     }
 
     gcc_pure
     CgiAddress &GetCgi() {
-        assert(IsCgiAlike());
+        assert(IsCgiAlike() || type == Type::PIPE);
 
         return *const_cast<CgiAddress *>(u.cgi);
     }
