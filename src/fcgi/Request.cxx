@@ -46,11 +46,12 @@
 #include "util/Cast.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/Cancellable.hxx"
+#include "util/LeakDetector.hxx"
 
 #include <sys/socket.h>
 #include <unistd.h>
 
-class FcgiRequest final : Lease, Cancellable {
+class FcgiRequest final : Lease, Cancellable, LeakDetector {
     struct pool &pool;
 
     StockItem *stock_item;
@@ -108,6 +109,10 @@ public:
     }
 
 private:
+    void Destroy() {
+        DeleteFromPool(pool, this);
+    }
+
     /* virtual methods from class Cancellable */
     void Cancel() noexcept override {
         fcgi_stock_aborted(*stock_item);
@@ -119,6 +124,8 @@ private:
     void ReleaseLease(bool reuse) noexcept override {
         stock_item->Put(!reuse);
         stock_item = nullptr;
+
+        Destroy();
     }
 };
 
