@@ -47,6 +47,7 @@
 #include "stopwatch.hxx"
 #include "util/Cancellable.hxx"
 #include "util/ConstBuffer.hxx"
+#include "util/LeakDetector.hxx"
 #include "util/StringCompare.hxx"
 
 #include <assert.h>
@@ -55,7 +56,7 @@
 #include <string.h>
 #include <unistd.h>
 
-class WasRequest final : StockGetHandler, Cancellable, WasLease {
+class WasRequest final : StockGetHandler, Cancellable, WasLease, LeakDetector {
     struct pool &pool;
 
     Stopwatch *const stopwatch;
