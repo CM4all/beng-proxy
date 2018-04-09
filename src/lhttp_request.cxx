@@ -43,10 +43,11 @@
 #include "header_writer.hxx"
 #include "pool/pool.hxx"
 #include "net/SocketDescriptor.hxx"
+#include "util/LeakDetector.hxx"
 
 #include <stdexcept>
 
-class LhttpRequest final : Lease {
+class LhttpRequest final : Lease, LeakDetector {
     StockItem &stock_item;
 
     FilteredSocket socket;
