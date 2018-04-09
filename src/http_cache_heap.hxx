@@ -35,6 +35,7 @@
 
 #include "cache.hxx"
 #include "SlicePool.hxx"
+#include "rubber.hxx"
 #include "http/Status.h"
 #include "util/Compiler.h"
 
@@ -58,16 +59,22 @@ class HttpCacheHeap {
 
     SlicePool slice_pool;
 
+    Rubber rubber;
+
     Cache cache;
 
 public:
     HttpCacheHeap(struct pool &pool, EventLoop &event_loop,
                   size_t max_size) noexcept;
 
+    Rubber &GetRubber() noexcept {
+        return rubber;
+    }
+
     void ForkCow(bool inherit);
 
     gcc_pure
-    AllocatorStats GetStats(const Rubber &rubber) const;
+    AllocatorStats GetStats() const noexcept;
 
     HttpCacheDocument *Get(const char *uri, StringMap &request_headers);
 
@@ -76,7 +83,7 @@ public:
              StringMap &request_headers,
              http_status_t status,
              const StringMap &response_headers,
-             Rubber &rubber, unsigned rubber_id, size_t size);
+             unsigned rubber_id, size_t size);
 
     void Remove(HttpCacheDocument &document);
     void RemoveURL(const char *url, StringMap &headers);

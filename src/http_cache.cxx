@@ -40,7 +40,6 @@
 #include "ResourceAddress.hxx"
 #include "http_util.hxx"
 #include "cache.hxx"
-#include "rubber.hxx"
 #include "sink_rubber.hxx"
 #include "AllocatorStats.hxx"
 #include "http/Date.hxx"
@@ -178,8 +177,6 @@ public:
 
     TimerEvent compress_timer;
 
-    Rubber rubber;
-
     HttpCacheHeap heap;
 
     ResourceLoader &resource_loader;
@@ -287,7 +284,6 @@ private:
                CancellablePointer &cancel_ptr) noexcept;
 
     void OnCompressTimer() {
-        rubber.Compress();
         heap.Compress();
         compress_timer.Add(http_cache_compress_interval);
     }
@@ -332,7 +328,7 @@ HttpCacheRequest::Put(unsigned rubber_id, size_t size) noexcept
 
     cache.heap.Put(key, info, headers,
                    response.status, *response.headers,
-                   cache.rubber, rubber_id, size);
+                   rubber_id, size);
 }
 
 /*
@@ -470,7 +466,7 @@ HttpCacheRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
         cache.requests.push_front(*this);
 
         sink_rubber_new(pool, std::move(tee.second),
-                        cache.rubber, cacheable_size_limit,
+                        cache.heap.GetRubber(), cacheable_size_limit,
                         *this,
                         cancel_ptr);
 
@@ -547,13 +543,7 @@ HttpCache::HttpCache(struct pool &_pool, size_t max_size,
     :pool(*pool_new_libc(&_pool, "http_cache")),
      event_loop(_event_loop),
      compress_timer(event_loop, BIND_THIS_METHOD(OnCompressTimer)),
-     rubber(max_size),
-     heap(pool, event_loop,
-          /* leave 12.5% of the rubber allocator empty, to increase
-             the chances that a hole can be found for a new
-             allocation, to reduce the pressure that rubber_compress()
-             creates */
-          max_size * 7 / 8),
+     heap(pool, event_loop, max_size),
      resource_loader(_resource_loader)
 {
     assert(max_size > 0);
@@ -609,21 +599,19 @@ http_cache_close(HttpCache *cache)
 void
 http_cache_fork_cow(HttpCache &cache, bool inherit)
 {
-    cache.rubber.ForkCow(inherit);
     cache.heap.ForkCow(inherit);
 }
 
 AllocatorStats
 http_cache_get_stats(const HttpCache &cache)
 {
-    return cache.heap.GetStats(cache.rubber);
+    return cache.heap.GetStats();
 }
 
 void
 http_cache_flush(HttpCache &cache)
 {
     cache.heap.Flush();
-    cache.rubber.Compress();
 }
 
 void

@@ -106,7 +106,7 @@ HttpCacheHeap::Put(const char *url,
                    StringMap &request_headers,
                    http_status_t status,
                    const StringMap &response_headers,
-                   Rubber &rubber, unsigned rubber_id, size_t size)
+                   unsigned rubber_id, size_t size)
 {
     auto item = NewFromPool<HttpCacheItem>(pool_new_slice(&pool, "http_cache_item", &slice_pool),
                                            info, request_headers,
@@ -136,12 +136,14 @@ void
 HttpCacheHeap::ForkCow(bool inherit)
 {
     slice_pool.ForkCow(inherit);
+    rubber.ForkCow(inherit);
 }
 
 void
 HttpCacheHeap::Compress()
 {
     slice_pool.Compress();
+    rubber.Compress();
 }
 
 void
@@ -149,6 +151,7 @@ HttpCacheHeap::Flush()
 {
     cache.Flush();
     slice_pool.Compress();
+    rubber.Compress();
 }
 
 void
@@ -188,12 +191,16 @@ HttpCacheHeap::HttpCacheHeap(struct pool &_pool, EventLoop &event_loop,
                              size_t max_size) noexcept
     :pool(_pool),
      slice_pool(1024, 65536),
-     cache(event_loop, 65521, max_size)
+     rubber(max_size),
+     /* leave 12.5% of the rubber allocator empty, to increase the
+        chances that a hole can be found for a new allocation, to
+        reduce the pressure that rubber_compress() creates */
+     cache(event_loop, 65521, max_size * 7 / 8)
 {
 }
 
 AllocatorStats
-HttpCacheHeap::GetStats(const Rubber &rubber) const
+HttpCacheHeap::GetStats() const noexcept
 {
     return slice_pool.GetStats() + rubber.GetStats();
 }
