@@ -170,7 +170,6 @@ public:
 };
 
 class HttpCache {
-public:
     struct pool &pool;
 
     EventLoop &event_loop;
@@ -193,6 +192,7 @@ public:
 
     BackgroundManager background;
 
+public:
     HttpCache(struct pool &_pool, size_t max_size,
               EventLoop &event_loop,
               ResourceLoader &_resource_loader);
@@ -201,6 +201,55 @@ public:
     HttpCache &operator=(const HttpCache &) = delete;
 
     ~HttpCache();
+
+    EventLoop &GetEventLoop() const noexcept {
+        return event_loop;
+    }
+
+    Rubber &GetRubber() noexcept {
+        return heap.GetRubber();
+    }
+
+    void ForkCow(bool inherit) noexcept {
+        heap.ForkCow(inherit);
+    }
+
+    AllocatorStats GetStats() const noexcept {
+        return heap.GetStats();
+    }
+
+    void Flush() noexcept {
+        heap.Flush();
+    }
+
+    void AddRequest(HttpCacheRequest &r) noexcept {
+        requests.push_front(r);
+    }
+
+    void RemoveRequest(HttpCacheRequest &r) noexcept {
+        requests.erase(requests.iterator_to(r));
+    }
+
+    void Start(struct pool &caller_pool, sticky_hash_t session_sticky,
+               const char *site_name,
+               http_method_t method,
+               const ResourceAddress &address,
+               StringMap &&headers, UnusedIstreamPtr body,
+               HttpResponseHandler &handler,
+               CancellablePointer &cancel_ptr) noexcept;
+
+    void Put(const char *url,
+             const HttpCacheResponseInfo &info,
+             StringMap &request_headers,
+             http_status_t status,
+             const StringMap &response_headers,
+             unsigned rubber_id, size_t size) noexcept {
+        LogConcat(4, "HttpCache", "put ", url);
+
+        heap.Put(url, info, request_headers,
+                 status, response_headers,
+                 rubber_id, size);
+    }
 
     void Remove(HttpCacheDocument *document) noexcept {
         heap.Remove(*document);
@@ -232,6 +281,16 @@ public:
              HttpCacheRequestInfo &info,
              HttpResponseHandler &handler,
              CancellablePointer &cancel_ptr) noexcept;
+
+    /**
+     * Send the cached document to the caller.
+     *
+     * Caller pool is left unchanged.
+     */
+    void Serve(struct pool &caller_pool,
+               HttpCacheDocument &document,
+               const char *key,
+               HttpResponseHandler &handler) noexcept;
 
 private:
     /**
@@ -324,11 +383,9 @@ http_cache_key(struct pool &pool, const ResourceAddress &address)
 void
 HttpCacheRequest::Put(unsigned rubber_id, size_t size) noexcept
 {
-    LogConcat(4, "HttpCache", "put ", key);
-
-    cache.heap.Put(key, info, headers,
-                   response.status, *response.headers,
-                   rubber_id, size);
+    cache.Put(key, info, headers,
+              response.status, *response.headers,
+              rubber_id, size);
 }
 
 /*
@@ -455,7 +512,7 @@ HttpCacheRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
         /* tee the body: one goes to our client, and one goes into the
            cache */
         auto tee = istream_tee_new(pool, std::move(body),
-                                   cache.event_loop,
+                                   cache.GetEventLoop(),
                                    false, false,
                                    /* just in case our handler closes
                                       the body without looking at it:
@@ -463,10 +520,10 @@ HttpCacheRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
                                       for the Rubber sink */
                                    true);
 
-        cache.requests.push_front(*this);
+        cache.AddRequest(*this);
 
         sink_rubber_new(pool, std::move(tee.second),
-                        cache.heap.GetRubber(), cacheable_size_limit,
+                        cache.GetRubber(), cacheable_size_limit,
                         *this,
                         cancel_ptr);
 
@@ -568,13 +625,13 @@ HttpCacheRequest::RubberStoreFinished()
     assert(cancel_ptr);
 
     cancel_ptr = nullptr;
-    cache.requests.erase(cache.requests.iterator_to(*this));
+    cache.RemoveRequest(*this);
 }
 
 void
 HttpCacheRequest::AbortRubberStore()
 {
-    cache.requests.erase(cache.requests.iterator_to(*this));
+    cache.RemoveRequest(*this);
     cancel_ptr.Cancel();
 }
 
@@ -599,19 +656,19 @@ http_cache_close(HttpCache *cache)
 void
 http_cache_fork_cow(HttpCache &cache, bool inherit)
 {
-    cache.heap.ForkCow(inherit);
+    cache.ForkCow(inherit);
 }
 
 AllocatorStats
 http_cache_get_stats(const HttpCache &cache)
 {
-    return cache.heap.GetStats();
+    return cache.GetStats();
 }
 
 void
 http_cache_flush(HttpCache &cache)
 {
-    cache.heap.Flush();
+    cache.Flush();
 }
 
 void
@@ -745,24 +802,18 @@ CheckCacheRequest(struct pool &pool, const HttpCacheRequestInfo &info,
     return true;
 }
 
-/**
- * Send the cached document to the caller.
- *
- * Caller pool is left unchanged.
- */
-static void
-http_cache_heap_serve(HttpCacheHeap &cache,
-                      HttpCacheDocument &document,
-                      struct pool &caller_pool,
-                      const char *key gcc_unused,
-                      HttpResponseHandler &handler) noexcept
+void
+HttpCache::Serve(struct pool &caller_pool,
+                 HttpCacheDocument &document,
+                 const char *key,
+                 HttpResponseHandler &handler) noexcept
 {
     LogConcat(4, "HttpCache", "serve ", key);
 
     handler.InvokeResponse(document.status,
                            StringMap(ShallowCopy(), caller_pool,
                                      document.response_headers),
-                           cache.OpenStream(caller_pool, document));
+                           heap.OpenStream(caller_pool, document));
 }
 
 /**
@@ -776,7 +827,7 @@ HttpCacheRequest::Serve() noexcept
     if (!CheckCacheRequest(pool, request_info, *document, handler))
         return;
 
-    http_cache_heap_serve(cache.heap, *document, caller_pool, key, handler);
+    cache.Serve(caller_pool, *document, key, handler);
 }
 
 void
@@ -850,9 +901,9 @@ HttpCache::Found(HttpCacheRequestInfo &info,
         return;
 
     if (http_cache_may_serve(info, document))
-        http_cache_heap_serve(heap, document, caller_pool,
-                              http_cache_key(caller_pool, address),
-                              handler);
+        Serve(caller_pool, document,
+              http_cache_key(caller_pool, address),
+              handler);
     else
         Revalidate(caller_pool, session_sticky, site_name,
                    info, document,
@@ -883,6 +934,52 @@ HttpCache::Use(struct pool &caller_pool, sticky_hash_t session_sticky,
               handler, cancel_ptr);
 }
 
+inline void
+HttpCache::Start(struct pool &caller_pool, sticky_hash_t session_sticky,
+                 const char *site_name,
+                 http_method_t method,
+                 const ResourceAddress &address,
+                 StringMap &&headers, UnusedIstreamPtr body,
+                 HttpResponseHandler &handler,
+                 CancellablePointer &cancel_ptr) noexcept
+{
+    const char *key = http_cache_key(caller_pool, address);
+    if (/* this address type cannot be cached; skip the rest of this
+           library */
+        key == nullptr ||
+        /* don't cache a huge request URI; probably it contains lots
+           and lots of unique parameters, and that's not worth the
+           cache space anyway */
+        strlen(key) > 8192) {
+        resource_loader.SendRequest(caller_pool, session_sticky, site_name,
+                                    method, address,
+                                    HTTP_STATUS_OK, std::move(headers),
+                                    std::move(body), nullptr,
+                                    handler, cancel_ptr);
+        return;
+    }
+
+    HttpCacheRequestInfo info;
+    if (http_cache_request_evaluate(info, method, address, headers, body)) {
+        assert(!body);
+
+        Use(caller_pool, session_sticky, site_name,
+            method, address, std::move(headers), info,
+            handler, cancel_ptr);
+    } else {
+        if (http_cache_request_invalidate(method))
+            RemoveURL(key, headers);
+
+        LogConcat(4, "HttpCache", "ignore ", key);
+
+        resource_loader.SendRequest(caller_pool, session_sticky, site_name,
+                                    method, address,
+                                    HTTP_STATUS_OK, std::move(headers),
+                                    std::move(body), nullptr,
+                                    handler, cancel_ptr);
+    }
+}
+
 void
 http_cache_request(HttpCache &cache,
                    struct pool &pool, sticky_hash_t session_sticky,
@@ -893,39 +990,7 @@ http_cache_request(HttpCache &cache,
                    HttpResponseHandler &handler,
                    CancellablePointer &cancel_ptr)
 {
-    const char *key = http_cache_key(pool, address);
-    if (/* this address type cannot be cached; skip the rest of this
-           library */
-        key == nullptr ||
-        /* don't cache a huge request URI; probably it contains lots
-           and lots of unique parameters, and that's not worth the
-           cache space anyway */
-        strlen(key) > 8192) {
-        cache.resource_loader.SendRequest(pool, session_sticky, site_name,
-                                          method, address,
-                                          HTTP_STATUS_OK, std::move(headers),
-                                          std::move(body), nullptr,
-                                          handler, cancel_ptr);
-        return;
-    }
-
-    HttpCacheRequestInfo info;
-    if (http_cache_request_evaluate(info, method, address, headers, body)) {
-        assert(!body);
-
-        cache.Use(pool, session_sticky, site_name,
-                  method, address, std::move(headers), info,
-                  handler, cancel_ptr);
-    } else {
-        if (http_cache_request_invalidate(method))
-            cache.RemoveURL(key, headers);
-
-        LogConcat(4, "HttpCache", "ignore ", key);
-
-        cache.resource_loader.SendRequest(pool, session_sticky, site_name,
-                                          method, address,
-                                          HTTP_STATUS_OK, std::move(headers),
-                                          std::move(body), nullptr,
-                                          handler, cancel_ptr);
-    }
+    cache.Start(pool, session_sticky, site_name,
+                method, address, std::move(headers), std::move(body),
+                handler, cancel_ptr);
 }
