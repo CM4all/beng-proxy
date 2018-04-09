@@ -140,6 +140,10 @@ public:
     HttpCacheRequest(const HttpCacheRequest &) = delete;
     HttpCacheRequest &operator=(const HttpCacheRequest &) = delete;
 
+    void Serve() noexcept;
+
+    void Put(unsigned rubber_id, size_t size) noexcept;
+
     /**
      * Storing the response body in the rubber allocator has finished
      * (but may have failed).
@@ -321,21 +325,15 @@ http_cache_key(struct pool &pool, const ResourceAddress &address)
     return nullptr;
 }
 
-static void
-http_cache_put(HttpCacheRequest &request,
-               unsigned rubber_id, size_t size)
+void
+HttpCacheRequest::Put(unsigned rubber_id, size_t size) noexcept
 {
-    LogConcat(4, "HttpCache", "put ", request.key);
+    LogConcat(4, "HttpCache", "put ", key);
 
-    request.cache.heap.Put(request.key,
-                           request.info, request.headers,
-                           request.response.status,
-                           *request.response.headers,
-                           request.cache.rubber, rubber_id, size);
+    cache.heap.Put(key, info, headers,
+                   response.status, *response.headers,
+                   cache.rubber, rubber_id, size);
 }
-
-static void
-http_cache_serve(HttpCacheRequest &equest);
 
 /*
  * sink_rubber handler
@@ -349,7 +347,7 @@ HttpCacheRequest::RubberDone(unsigned rubber_id, size_t size)
 
     /* the request was successful, and all of the body data has been
        saved: add it to the cache */
-    http_cache_put(*this, rubber_id, size);
+    Put(rubber_id, size);
 }
 
 void
@@ -404,7 +402,7 @@ HttpCacheRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
         }
 
         LogConcat(5, "HttpCache", "not_modified ", key);
-        http_cache_serve(*this);
+        Serve();
         pool_unref(&caller_pool);
 
         if (locked_document != nullptr)
@@ -420,7 +418,7 @@ HttpCacheRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
 
         body.Clear();
 
-        http_cache_serve(*this);
+        Serve();
         pool_unref(&caller_pool);
 
         if (locked_document != nullptr)
@@ -450,7 +448,7 @@ HttpCacheRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
     response.headers = strmap_dup(&pool, &_headers);
 
     if (!body) {
-        http_cache_put(*this, 0, 0);
+        Put(0, 0);
     } else {
         /* this->info was allocated from the caller pool; duplicate
            it to keep it alive even after the caller pool is
@@ -760,7 +758,7 @@ CheckCacheRequest(struct pool &pool, const HttpCacheRequestInfo &info,
 }
 
 /**
- * Send the cached document to the caller (heap version).
+ * Send the cached document to the caller.
  *
  * Caller pool is left unchanged.
  */
@@ -769,7 +767,7 @@ http_cache_heap_serve(HttpCacheHeap &cache,
                       HttpCacheDocument &document,
                       struct pool &caller_pool,
                       const char *key gcc_unused,
-                      HttpResponseHandler &handler)
+                      HttpResponseHandler &handler) noexcept
 {
     LogConcat(4, "HttpCache", "serve ", key);
 
@@ -784,16 +782,13 @@ http_cache_heap_serve(HttpCacheHeap &cache,
  *
  * Caller pool is left unchanged.
  */
-static void
-http_cache_serve(HttpCacheRequest &request)
+void
+HttpCacheRequest::Serve() noexcept
 {
-    if (!CheckCacheRequest(request.pool, request.request_info,
-                           *request.document, request.handler))
+    if (!CheckCacheRequest(pool, request_info, *document, handler))
         return;
 
-    http_cache_heap_serve(request.cache.heap, *request.document,
-                          request.pool, request.key,
-                          request.handler);
+    http_cache_heap_serve(cache.heap, *document, pool, key, handler);
 }
 
 /**
