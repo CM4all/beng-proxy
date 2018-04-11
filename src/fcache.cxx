@@ -111,24 +111,21 @@ struct FilterCacheItem final : CacheItem, LeakDetector {
     StringMap headers;
 
     const size_t size;
-    Rubber &rubber;
-    const unsigned rubber_id;
+
+    const RubberAllocation body;
 
     FilterCacheItem(PoolPtr &&_pool, const FilterCacheInfo &_info,
                     http_status_t _status, const StringMap &_headers,
-                    size_t _size, Rubber &_rubber, unsigned _rubber_id,
+                    size_t _size, RubberAllocation &&_body,
                     std::chrono::system_clock::time_point _expires)
         :CacheItem(_expires, pool_netto_size(_pool) + _size),
          pool(std::move(_pool)), info(pool, _info),
          status(_status), headers(pool, _headers),
-         size(_size), rubber(_rubber), rubber_id(_rubber_id) {
+         size(_size), body(std::move(_body)) {
     }
 
     /* virtual methods from class CacheItem */
     void Destroy() override {
-        if (rubber_id != 0)
-            rubber.Remove(rubber_id);
-
         pool_trash(pool);
         DeleteFromPool(pool, this);
     }
@@ -373,7 +370,7 @@ FilterCache::Put(const FilterCacheInfo &info,
     auto item = NewFromPool<FilterCacheItem>(pool_new_slice(&pool, "FilterCacheItem", &slice_pool),
                                              info,
                                              status, headers, size,
-                                             rubber, rubber_id,
+                                             RubberAllocation(rubber, rubber_id),
                                              expires);
 
     cache.Put(item->info.key, *item);
@@ -662,10 +659,10 @@ FilterCache::Serve(FilterCacheItem &item,
 
     /* XXX hold reference on item */
 
-    assert(item.rubber_id == 0 || ((CacheItem &)item).size >= item.size);
+    assert(!item.body || ((CacheItem &)item).size >= item.size);
 
-    auto response_body = item.rubber_id != 0
-        ? istream_rubber_new(caller_pool, rubber, item.rubber_id,
+    auto response_body = item.body
+        ? istream_rubber_new(caller_pool, rubber, item.body.GetId(),
                              0, item.size, false)
         : istream_null_new(caller_pool);
 
