@@ -345,6 +345,24 @@ public:
         assert(*this);
         return id;
     }
+
+    void Shrink(size_t new_size) noexcept {
+        assert(*this);
+
+        rubber->Shrink(id, new_size);
+    }
+
+    void *Write() noexcept {
+        assert(*this);
+
+        return rubber->Write(id);
+    }
+
+    const void *Read() noexcept {
+        assert(*this);
+
+        return rubber->Read(id);
+    }
 };
 
 #endif
