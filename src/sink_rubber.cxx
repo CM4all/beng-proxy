@@ -45,8 +45,7 @@
 #include <sys/socket.h>
 
 class RubberSink final : IstreamSink, Cancellable, LeakDetector {
-    Rubber &rubber;
-    unsigned rubber_id;
+    RubberAllocation allocation;
 
     const size_t max_size;
     size_t position = 0;
@@ -55,12 +54,13 @@ class RubberSink final : IstreamSink, Cancellable, LeakDetector {
 
 public:
     template<typename I>
-    RubberSink(Rubber &_rubber, unsigned _rubber_id, size_t _max_size,
+    RubberSink(RubberAllocation &&_a, size_t _max_size,
                RubberSinkHandler &_handler,
                I &&_input,
                CancellablePointer &cancel_ptr)
         :IstreamSink(std::forward<I>(_input), FD_ANY),
-         rubber(_rubber), rubber_id(_rubber_id), max_size(_max_size),
+         allocation(std::move(_a)),
+         max_size(_max_size),
          handler(_handler) {
         cancel_ptr = *this;
     }
@@ -98,7 +98,7 @@ fd_read(FdType type, int fd, void *p, size_t size)
 void
 RubberSink::FailTooLarge()
 {
-    rubber.Remove(rubber_id);
+    allocation = {};
 
     if (input.IsDefined())
         input.ClearAndClose();
@@ -115,12 +115,11 @@ RubberSink::InvokeEof()
     if (position == 0) {
         /* the stream was empty; remove the object from the rubber
            allocator */
-        rubber.Remove(rubber_id);
-        rubber_id = 0;
+        allocation = {};
     } else
-        rubber.Shrink(rubber_id, position);
+        allocation.Shrink(position);
 
-    handler.RubberDone(RubberAllocation(rubber, rubber_id), position);
+    handler.RubberDone(std::move(allocation), position);
 }
 
 /*
@@ -141,7 +140,7 @@ RubberSink::OnData(const void *data, size_t length)
         return 0;
     }
 
-    uint8_t *p = (uint8_t *)rubber.Write(rubber_id);
+    uint8_t *p = (uint8_t *)allocation.Write();
     memcpy(p + position, data, length);
     position += length;
 
@@ -177,7 +176,7 @@ RubberSink::OnDirect(FdType type, int fd, size_t max_length)
     if (length > max_length)
         length = max_length;
 
-    uint8_t *p = (uint8_t *)rubber.Write(rubber_id);
+    uint8_t *p = (uint8_t *)allocation.Write();
     p += position;
 
     ssize_t nbytes = fd_read(type, fd, p, length);
@@ -203,7 +202,7 @@ RubberSink::OnError(std::exception_ptr ep) noexcept
     assert(input.IsDefined());
     input.Clear();
 
-    rubber.Remove(rubber_id);
+    allocation = {};
     handler.RubberError(ep);
     Destroy();
 }
@@ -216,8 +215,6 @@ RubberSink::OnError(std::exception_ptr ep) noexcept
 void
 RubberSink::Cancel() noexcept
 {
-    rubber.Remove(rubber_id);
-
     if (input.IsDefined())
         input.ClearAndClose();
 
@@ -262,7 +259,8 @@ sink_rubber_new(struct pool &pool, UnusedIstreamPtr input,
         return nullptr;
     }
 
-    return NewFromPool<RubberSink>(pool, rubber, rubber_id, allocate,
+    return NewFromPool<RubberSink>(pool, RubberAllocation(rubber, rubber_id),
+                                   allocate,
                                    handler,
                                    std::move(input), cancel_ptr);
 }
