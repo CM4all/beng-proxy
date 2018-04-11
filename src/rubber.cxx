@@ -112,8 +112,8 @@ struct RubberTable {
      */
     RubberObject entries[1];
 
-    void Init(unsigned _max_entries) noexcept;
-    void Deinit() noexcept;
+    explicit RubberTable(unsigned _max_entries) noexcept;
+    ~RubberTable() noexcept;
 
     bool IsEmpty() const noexcept {
         return entries[0].next == 0;
@@ -243,8 +243,8 @@ align_size(size_t size) noexcept
  *
  */
 
-void
-RubberTable::Init(unsigned _max_entries) noexcept
+inline
+RubberTable::RubberTable(unsigned _max_entries) noexcept
 {
     assert(_max_entries > 1);
 
@@ -271,8 +271,8 @@ RubberTable::Init(unsigned _max_entries) noexcept
 
 constexpr size_t Rubber::HOLE_THRESHOLDS[];
 
-void
-RubberTable::Deinit() noexcept
+inline
+RubberTable::~RubberTable() noexcept
 {
     assert(IsEmpty());
     assert(entries[0].next == 0);
@@ -616,11 +616,11 @@ Rubber::AddHoleAfter(unsigned reference_id, size_t offset, size_t size) noexcept
  */
 
 Rubber::Rubber(size_t _max_size)
-    :table(HUGE_PAGE_SIZE + AlignHugePageUp(_max_size))
+    :table(HUGE_PAGE_SIZE + AlignHugePageUp(_max_size),
+           (HUGE_PAGE_SIZE + AlignHugePageUp(_max_size)) / 1024u)
 {
     static_assert(RUBBER_ALIGN >= sizeof(Hole), "Alignment too large");
 
-    table->Init(table.size() / 1024);
     const size_t table_size = table->GetSize();
     mmap_enable_huge_pages(WriteAt(table_size),
                            AlignHugePageDown(table.size() - table_size));
@@ -630,8 +630,6 @@ Rubber::~Rubber() noexcept
 {
     assert(table->IsEmpty());
     assert(netto_size == 0);
-
-    table->Deinit();
 }
 
 void
