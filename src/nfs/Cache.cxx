@@ -187,17 +187,17 @@ struct NfsCacheHandle {
 };
 
 struct NfsCacheItem final : CacheItem {
-    struct pool &pool;
+    const PoolPtr pool;
 
     struct stat stat;
 
     Rubber &rubber;
     unsigned rubber_id;
 
-    NfsCacheItem(struct pool &_pool, const NfsCacheStore &store,
+    NfsCacheItem(PoolPtr &&_pool, const NfsCacheStore &store,
                  Rubber &_rubber, unsigned _rubber_id)
         :CacheItem(std::chrono::minutes(1), store.stat.st_size),
-         pool(_pool), stat(store.stat),
+         pool(std::move(_pool)), stat(store.stat),
          rubber(_rubber), rubber_id(_rubber_id) {
     }
 
@@ -206,7 +206,8 @@ struct NfsCacheItem final : CacheItem {
         if (rubber_id != 0)
             rubber.Remove(rubber_id);
 
-        pool_unref(&pool);
+        pool_trash(pool);
+        DeleteFromPool(pool, this);
     }
 };
 
@@ -253,10 +254,11 @@ NfsCacheStore::Put(unsigned rubber_id)
 {
     LogConcat(4, "NfsCache", "put ", key);
 
-    struct pool *item_pool = pool_new_libc(&cache.pool, "nfs_cache_item");
-    const auto item = NewFromPool<NfsCacheItem>(*item_pool, *item_pool, *this,
+    const auto item = NewFromPool<NfsCacheItem>(PoolPtr(PoolPtr::donate,
+                                                        *pool_new_libc(&cache.pool, "NfsCacheItem")),
+                                                *this,
                                                 cache.rubber, rubber_id);
-    cache.cache.Put(p_strdup(item_pool, key), *item);
+    cache.cache.Put(p_strdup(item->pool, key), *item);
 }
 
 /*
