@@ -776,7 +776,7 @@ HttpCacheRequest::Serve() noexcept
     if (!CheckCacheRequest(pool, request_info, *document, handler))
         return;
 
-    http_cache_heap_serve(cache.heap, *document, pool, key, handler);
+    http_cache_heap_serve(cache.heap, *document, caller_pool, key, handler);
 }
 
 void
