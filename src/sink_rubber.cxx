@@ -36,6 +36,7 @@
 #include "rubber.hxx"
 #include "pool/pool.hxx"
 #include "util/Cancellable.hxx"
+#include "util/LeakDetector.hxx"
 
 #include <assert.h>
 #include <stdint.h>
@@ -43,7 +44,7 @@
 #include <unistd.h>
 #include <sys/socket.h>
 
-class RubberSink final : IstreamSink, Cancellable {
+class RubberSink final : IstreamSink, Cancellable, LeakDetector {
     Rubber &rubber;
     unsigned rubber_id;
 
@@ -69,6 +70,10 @@ public:
     }
 
 private:
+    void Destroy() {
+        this->~RubberSink();
+    }
+
     void FailTooLarge();
     void InvokeEof();
 
@@ -132,6 +137,7 @@ RubberSink::OnData(const void *data, size_t length)
         /* too large, abort and invoke handler */
 
         FailTooLarge();
+        Destroy();
         return 0;
     }
 
@@ -155,11 +161,13 @@ RubberSink::OnDirect(FdType type, int fd, size_t max_length)
         ssize_t nbytes = fd_read(type, fd, &dummy, sizeof(dummy));
         if (nbytes > 0) {
             FailTooLarge();
+            Destroy();
             return ISTREAM_RESULT_CLOSED;
         }
 
         if (nbytes == 0) {
             InvokeEof();
+            Destroy();
             return ISTREAM_RESULT_CLOSED;
         }
 
@@ -186,6 +194,7 @@ RubberSink::OnEof() noexcept
     input.Clear();
 
     InvokeEof();
+    Destroy();
 }
 
 void
@@ -196,6 +205,7 @@ RubberSink::OnError(std::exception_ptr ep) noexcept
 
     rubber.Remove(rubber_id);
     handler.RubberError(ep);
+    Destroy();
 }
 
 /*
@@ -210,6 +220,8 @@ RubberSink::Cancel() noexcept
 
     if (input.IsDefined())
         input.ClearAndClose();
+
+    Destroy();
 }
 
 /*
