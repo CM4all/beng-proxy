@@ -191,21 +191,17 @@ struct NfsCacheItem final : CacheItem {
 
     struct stat stat;
 
-    Rubber &rubber;
-    unsigned rubber_id;
+    const RubberAllocation body;
 
     NfsCacheItem(PoolPtr &&_pool, const NfsCacheStore &store,
-                 Rubber &_rubber, unsigned _rubber_id)
+                 RubberAllocation &&_body) noexcept
         :CacheItem(std::chrono::minutes(1), store.stat.st_size),
          pool(std::move(_pool)), stat(store.stat),
-         rubber(_rubber), rubber_id(_rubber_id) {
+         body(std::move(_body)) {
     }
 
     /* virtual methods from class CacheItem */
     void Destroy() override {
-        if (rubber_id != 0)
-            rubber.Remove(rubber_id);
-
         pool_trash(pool);
         DeleteFromPool(pool, this);
     }
@@ -257,7 +253,8 @@ NfsCacheStore::Put(unsigned rubber_id)
     const auto item = NewFromPool<NfsCacheItem>(PoolPtr(PoolPtr::donate,
                                                         *pool_new_libc(&cache.pool, "NfsCacheItem")),
                                                 *this,
-                                                cache.rubber, rubber_id);
+                                                RubberAllocation(cache.rubber,
+                                                                 rubber_id));
     cache.cache.Put(p_strdup(item->pool, key), *item);
 }
 
@@ -431,11 +428,12 @@ nfs_cache_item_open(struct pool &pool,
     assert(start <= end);
     assert(end <= (uint64_t)item.stat.st_size);
 
-    assert(item.rubber_id != 0);
+    assert(item.body);
 
     return istream_unlock_new(pool,
                               istream_rubber_new(pool,
-                                                 item.rubber, item.rubber_id,
+                                                 item.body.GetRubber(),
+                                                 item.body.GetId(),
                                                  start, end, false),
                               item);
 }
