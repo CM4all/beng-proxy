@@ -40,7 +40,9 @@
 #include <boost/intrusive/list.hpp>
 
 #include <array>
+#include <algorithm>
 
+#include <assert.h>
 #include <stddef.h>
 
 struct AllocatorStats;
@@ -297,6 +299,51 @@ private:
 
     void RemoveHole(Hole &hole) noexcept {
         GetHoleList(hole).erase(HoleList::s_iterator_to(hole));
+    }
+};
+
+/**
+ * An allocation from a #Rubber instance.  This class "owns" the
+ * allocation and frees it automatically.
+ */
+class RubberAllocation {
+    Rubber *rubber = nullptr;
+    unsigned id = 0;
+
+public:
+    RubberAllocation() = default;
+
+    RubberAllocation(Rubber &_rubber, unsigned _id) noexcept
+        :rubber(&_rubber), id(_id) {}
+
+    RubberAllocation(RubberAllocation &&src) noexcept
+        :rubber(std::exchange(src.rubber, nullptr)),
+         id(std::exchange(src.id, 0)) {}
+
+    ~RubberAllocation() {
+        if (id != 0)
+            rubber->Remove(id);
+    }
+
+    RubberAllocation &operator=(RubberAllocation &&src) noexcept {
+        using std::swap;
+        swap(rubber, src.rubber);
+        swap(id, src.id);
+        return *this;
+    }
+
+    operator bool() const noexcept {
+        return id != 0;
+    }
+
+    Rubber &GetRubber() const noexcept {
+        assert(*this);
+        return *rubber;
+    }
+
+    unsigned GetId() const noexcept {
+        assert(*this);
+        return id;
     }
 };
 
