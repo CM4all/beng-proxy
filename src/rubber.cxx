@@ -633,7 +633,6 @@ Rubber::~Rubber() noexcept
     assert(netto_size == 0);
 
     table->Deinit();
-    mmap_free(table, max_size);
 }
 
 void
