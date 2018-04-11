@@ -70,9 +70,9 @@ struct Request final : IstreamHandler {
     bool eof = false;
     size_t body_read = 0;
 
-    Request(const char *_uri, const char *_request_headers,
-            const char *_response_headers,
-            const char *_response_body)
+    constexpr Request(const char *_uri, const char *_request_headers,
+                      const char *_response_headers,
+                      const char *_response_body) noexcept
         :uri(_uri), request_headers(_request_headers),
          response_headers(_response_headers),
          response_body(_response_body) {}
