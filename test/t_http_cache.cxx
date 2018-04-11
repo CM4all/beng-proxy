@@ -100,7 +100,7 @@ struct Request final : IstreamHandler {
 #define STAMP2 "Fri, 20 Jan 2009 08:53:30 GMT"
 #define EXPIRES "Fri, 20 Jan 2029 08:53:30 GMT"
 
-Request requests[] = {
+static Request requests[] = {
     { "/foo", nullptr,
       "date: " DATE "\n"
       "last-modified: " STAMP1 "\n"
