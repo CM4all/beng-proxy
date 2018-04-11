@@ -47,8 +47,7 @@ struct HttpCacheItem final : HttpCacheDocument, CacheItem {
 
     size_t size;
 
-    Rubber &rubber;
-    unsigned rubber_id;
+    const RubberAllocation body;
 
     HttpCacheItem(PoolPtr &&_pool,
                   const HttpCacheResponseInfo &_info,
@@ -56,28 +55,26 @@ struct HttpCacheItem final : HttpCacheDocument, CacheItem {
                   http_status_t _status,
                   const StringMap &_response_headers,
                   size_t _size,
-                  Rubber &_rubber, unsigned _rubber_id)
+                  RubberAllocation &&_body) noexcept
         :HttpCacheDocument(_pool, _info, _request_headers,
                            _status, _response_headers),
          CacheItem(http_cache_calc_expires(_info, vary),
                    pool_netto_size(_pool) + _size),
          pool(std::move(_pool)),
          size(_size),
-         rubber(_rubber), rubber_id(_rubber_id) {
+         body(std::move(_body)) {
     }
 
     HttpCacheItem(const HttpCacheItem &) = delete;
     HttpCacheItem &operator=(const HttpCacheItem &) = delete;
 
     UnusedIstreamPtr OpenStream(struct pool &_pool) {
-        return istream_rubber_new(_pool, rubber, rubber_id, 0, size, false);
+        return istream_rubber_new(_pool, body.GetRubber(), body.GetId(),
+                                  0, size, false);
     }
 
     /* virtual methods from class CacheItem */
     void Destroy() override {
-        if (rubber_id != 0)
-            rubber.Remove(rubber_id);
-
         pool_trash(pool);
         DeleteFromPool(pool, this);
     }
@@ -111,7 +108,8 @@ HttpCacheHeap::Put(const char *url,
     auto item = NewFromPool<HttpCacheItem>(pool_new_slice(&pool, "http_cache_item", &slice_pool),
                                            info, request_headers,
                                            status, response_headers,
-                                           size, rubber, rubber_id);
+                                           size,
+                                           RubberAllocation(rubber, rubber_id));
 
     cache.PutMatch(p_strdup(item->pool, url), *item,
                    http_cache_item_match, &request_headers);
@@ -175,7 +173,7 @@ HttpCacheHeap::OpenStream(struct pool &_pool, HttpCacheDocument &document)
 {
     auto &item = (HttpCacheItem &)document;
 
-    if (item.rubber_id == 0)
+    if (!item.body)
         /* don't lock the item */
         return istream_null_new(_pool);
 
