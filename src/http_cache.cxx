@@ -779,38 +779,6 @@ HttpCacheRequest::Serve() noexcept
     http_cache_heap_serve(cache.heap, *document, pool, key, handler);
 }
 
-/**
- * Revalidate a cache entry.
- *
- * Caller pool is freed asynchronously.
- */
-static void
-http_cache_test(HttpCacheRequest &request,
-                http_method_t method,
-                const ResourceAddress &address,
-                StringMap &&headers)
-{
-    HttpCache &cache = request.cache;
-    HttpCacheDocument &document = *request.document;
-
-    LogConcat(4, "HttpCache", "test ", request.key);
-
-    if (document.info.last_modified != nullptr)
-        headers.Set("if-modified-since", document.info.last_modified);
-
-    if (document.info.etag != nullptr)
-        headers.Set("if-none-match", document.info.etag);
-
-    cache.resource_loader.SendRequest(request.pool,
-                                      request.session_sticky,
-                                      request.site_name,
-                                      method, address,
-                                      HTTP_STATUS_OK, std::move(headers),
-                                      nullptr, nullptr,
-                                      request,
-                                      request.cancel_ptr);
-}
-
 void
 HttpCache::Revalidate(struct pool &caller_pool,
                       sticky_hash_t session_sticky,
@@ -839,7 +807,22 @@ HttpCache::Revalidate(struct pool &caller_pool,
     Lock(document);
     request->document = &document;
 
-    http_cache_test(*request, method, address, std::move(headers));
+    LogConcat(4, "HttpCache", "test ", request->key);
+
+    if (document.info.last_modified != nullptr)
+        headers.Set("if-modified-since", document.info.last_modified);
+
+    if (document.info.etag != nullptr)
+        headers.Set("if-none-match", document.info.etag);
+
+    resource_loader.SendRequest(request->pool,
+                                session_sticky, site_name,
+                                method, address,
+                                HTTP_STATUS_OK, std::move(headers),
+                                nullptr, nullptr,
+                                *request,
+                                request->cancel_ptr);
+
     pool_unref(request_pool);
 }
 
