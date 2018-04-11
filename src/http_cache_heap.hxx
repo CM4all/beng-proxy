@@ -83,7 +83,7 @@ public:
              StringMap &request_headers,
              http_status_t status,
              const StringMap &response_headers,
-             unsigned rubber_id, size_t size);
+             RubberAllocation &&a, size_t size);
 
     void Remove(HttpCacheDocument &document);
     void RemoveURL(const char *url, StringMap &headers);

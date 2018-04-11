@@ -40,12 +40,13 @@
 struct pool;
 class UnusedIstreamPtr;
 class Rubber;
+class RubberAllocation;
 class RubberSink;
 class CancellablePointer;
 
 class RubberSinkHandler {
 public:
-    virtual void RubberDone(unsigned rubber_id, size_t size) = 0;
+    virtual void RubberDone(RubberAllocation &&a, size_t size) = 0;
     virtual void RubberOutOfMemory() = 0;
     virtual void RubberTooLarge() = 0;
     virtual void RubberError(std::exception_ptr ep) = 0;

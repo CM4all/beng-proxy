@@ -87,7 +87,7 @@ put_random(HttpCacheHeap *cache)
 
     cache->Put(uri, info, *request_headers,
                HTTP_STATUS_OK, *response_headers,
-               rubber_id, length);
+               RubberAllocation(cache->GetRubber(), rubber_id), length);
 }
 
 /*

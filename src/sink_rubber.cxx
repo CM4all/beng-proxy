@@ -115,7 +115,7 @@ RubberSink::InvokeEof()
     } else
         rubber.Shrink(rubber_id, position);
 
-    handler.RubberDone(rubber_id, position);
+    handler.RubberDone(RubberAllocation(rubber, rubber_id), position);
 }
 
 /*
@@ -235,7 +235,7 @@ sink_rubber_new(struct pool &pool, UnusedIstreamPtr input,
     assert(size <= (off_t)max_size);
     if (size == 0) {
         input.Clear();
-        handler.RubberDone(0, 0);
+        handler.RubberDone({}, 0);
         return nullptr;
     }
 

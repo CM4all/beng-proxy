@@ -210,7 +210,7 @@ private:
     void OnHttpError(std::exception_ptr ep) noexcept override;
 
     /* virtual methods from class RubberSinkHandler */
-    void RubberDone(unsigned rubber_id, size_t size) override;
+    void RubberDone(RubberAllocation &&a, size_t size) override;
     void RubberOutOfMemory() override;
     void RubberTooLarge() override;
     void RubberError(std::exception_ptr ep) override;
@@ -270,7 +270,7 @@ public:
 
     void Put(const FilterCacheInfo &info,
              http_status_t status, const StringMap &headers,
-             unsigned rubber_id, size_t size);
+             RubberAllocation &&a, size_t size);
 
 private:
     void Miss(struct pool &caller_pool,
@@ -357,7 +357,7 @@ filter_cache_request_evaluate(struct pool &pool,
 void
 FilterCache::Put(const FilterCacheInfo &info,
                  http_status_t status, const StringMap &headers,
-                 unsigned rubber_id, size_t size)
+                 RubberAllocation &&a, size_t size)
 {
     LogConcat(4, "FilterCache", "put ", info.key);
 
@@ -370,7 +370,7 @@ FilterCache::Put(const FilterCacheInfo &info,
     auto item = NewFromPool<FilterCacheItem>(pool_new_slice(&pool, "FilterCacheItem", &slice_pool),
                                              info,
                                              status, headers, size,
-                                             RubberAllocation(rubber, rubber_id),
+                                             std::move(a),
                                              expires);
 
     cache.Put(item->info.key, *item);
@@ -447,13 +447,13 @@ FilterCacheRequest::OnTimeout()
  */
 
 void
-FilterCacheRequest::RubberDone(unsigned rubber_id, size_t size)
+FilterCacheRequest::RubberDone(RubberAllocation &&a, size_t size)
 {
     response.cancel_ptr = nullptr;
 
     /* the request was successful, and all of the body data has been
        saved: add it to the cache */
-    cache.Put(info, response.status, *response.headers, rubber_id, size);
+    cache.Put(info, response.status, *response.headers, std::move(a), size);
 
     Destroy();
 }
@@ -519,7 +519,7 @@ FilterCacheRequest::OnHttpResponse(http_status_t status, StringMap &&headers,
     if (!body) {
         response.cancel_ptr = nullptr;
 
-        cache.Put(info, status, headers, 0, 0);
+        cache.Put(info, status, headers, {}, 0);
     } else {
         /* tee the body: one goes to our client, and one goes into the
            cache */

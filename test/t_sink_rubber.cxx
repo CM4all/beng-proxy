@@ -61,32 +61,28 @@ struct Data final : RubberSinkHandler {
 
     Rubber &r;
 
-    unsigned rubber_id;
+    RubberAllocation allocation;
     size_t size;
     std::exception_ptr error;
 
     CancellablePointer cancel_ptr;
 
-    explicit Data(Rubber &_r):result(NONE), r(_r), rubber_id(0) {}
-    ~Data() {
-        if (rubber_id > 0)
-            r.Remove(rubber_id);
-    }
+    explicit Data(Rubber &_r):result(NONE), r(_r) {}
 
     /* virtual methods from class RubberSinkHandler */
-    void RubberDone(unsigned rubber_id, size_t size) override;
+    void RubberDone(RubberAllocation &&a, size_t size) override;
     void RubberOutOfMemory() override;
     void RubberTooLarge() override;
     void RubberError(std::exception_ptr ep) override;
 };
 
 void
-Data::RubberDone(unsigned _rubber_id, size_t _size)
+Data::RubberDone(RubberAllocation &&a, size_t _size)
 {
     assert(result == NONE);
 
     result = DONE;
-    rubber_id = _rubber_id;
+    allocation = std::move(a);
     size = _size;
 }
 
@@ -125,7 +121,7 @@ TEST(SinkRubberTest, Empty)
                     data, data.cancel_ptr);
 
     ASSERT_EQ(Data::DONE, data.result);
-    ASSERT_EQ(0u, data.rubber_id);
+    ASSERT_FALSE(data.allocation);
     ASSERT_EQ(size_t(0), data.size);
 }
 
@@ -144,7 +140,7 @@ TEST(SinkRubberTest, Empty2)
     sink_rubber_read(*sink);
 
     ASSERT_EQ(Data::DONE, data.result);
-    ASSERT_EQ(0u, data.rubber_id);
+    ASSERT_FALSE(data.allocation);
     ASSERT_EQ(size_t(0), data.size);
 }
 
@@ -163,10 +159,10 @@ TEST(SinkRubberTest, String)
     sink_rubber_read(*sink);
 
     ASSERT_EQ(Data::DONE, data.result);
-    ASSERT_GT(data.rubber_id, 0);
+    ASSERT_TRUE(data.allocation);
     ASSERT_EQ(size_t(3), data.size);
-    ASSERT_EQ(size_t(32), r.GetSizeOf(data.rubber_id));
-    ASSERT_EQ(0, memcmp("foo", r.Read(data.rubber_id), 3));
+    ASSERT_EQ(size_t(32), r.GetSizeOf(data.allocation.GetId()));
+    ASSERT_EQ(0, memcmp("foo", r.Read(data.allocation.GetId()), 3));
 }
 
 TEST(SinkRubberTest, String2)
@@ -188,10 +184,10 @@ TEST(SinkRubberTest, String2)
         sink_rubber_read(*sink);
 
     ASSERT_EQ(Data::DONE, data.result);
-    ASSERT_GT(data.rubber_id, 0);
+    ASSERT_TRUE(data.allocation);
     ASSERT_EQ(size_t(6), data.size);
-    ASSERT_EQ(size_t(32), r.GetSizeOf(data.rubber_id));
-    ASSERT_EQ(0, memcmp("foobar", r.Read(data.rubber_id), 6));
+    ASSERT_EQ(size_t(32), r.GetSizeOf(data.allocation.GetId()));
+    ASSERT_EQ(0, memcmp("foobar", r.Read(data.allocation.GetId()), 6));
 }
 
 TEST(SinkRubberTest, TooLarge1)

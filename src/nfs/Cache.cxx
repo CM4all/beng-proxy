@@ -92,7 +92,7 @@ struct NfsCacheStore final
      */
     void Abort();
 
-    void Put(unsigned rubber_id);
+    void Put(RubberAllocation &&a);
 
     void OnTimeout() {
         /* reading the response has taken too long already; don't store
@@ -102,7 +102,7 @@ struct NfsCacheStore final
     }
 
     /* virtual methods from class RubberSinkHandler */
-    void RubberDone(unsigned rubber_id, size_t size) override;
+    void RubberDone(RubberAllocation &&a, size_t size) override;
     void RubberOutOfMemory() override;
     void RubberTooLarge() override;
     void RubberError(std::exception_ptr ep) override;
@@ -246,15 +246,14 @@ NfsCacheStore::Abort()
 }
 
 void
-NfsCacheStore::Put(unsigned rubber_id)
+NfsCacheStore::Put(RubberAllocation &&a)
 {
     LogConcat(4, "NfsCache", "put ", key);
 
     const auto item = NewFromPool<NfsCacheItem>(PoolPtr(PoolPtr::donate,
                                                         *pool_new_libc(&cache.pool, "NfsCacheItem")),
                                                 *this,
-                                                RubberAllocation(cache.rubber,
-                                                                 rubber_id));
+                                                std::move(a));
     cache.cache.Put(p_strdup(item->pool, key), *item);
 }
 
@@ -264,7 +263,7 @@ NfsCacheStore::Put(unsigned rubber_id)
  */
 
 void
-NfsCacheStore::RubberDone(unsigned rubber_id, gcc_unused size_t size)
+NfsCacheStore::RubberDone(RubberAllocation &&a, gcc_unused size_t size)
 {
     assert((off_t)size == stat.st_size);
 
@@ -272,7 +271,7 @@ NfsCacheStore::RubberDone(unsigned rubber_id, gcc_unused size_t size)
 
     /* the request was successful, and all of the body data has been
        saved: add it to the cache */
-    Put(rubber_id);
+    Put(std::move(a));
 
     Release();
 }

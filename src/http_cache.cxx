@@ -141,7 +141,7 @@ public:
 
     void Serve() noexcept;
 
-    void Put(unsigned rubber_id, size_t size) noexcept;
+    void Put(RubberAllocation &&a, size_t size) noexcept;
 
     /**
      * Storing the response body in the rubber allocator has finished
@@ -163,7 +163,7 @@ public:
     void OnHttpError(std::exception_ptr ep) noexcept override;
 
     /* virtual methods from class RubberSinkHandler */
-    void RubberDone(unsigned rubber_id, size_t size) override;
+    void RubberDone(RubberAllocation &&a, size_t size) override;
     void RubberOutOfMemory() override;
     void RubberTooLarge() override;
     void RubberError(std::exception_ptr ep) override;
@@ -243,12 +243,12 @@ public:
              StringMap &request_headers,
              http_status_t status,
              const StringMap &response_headers,
-             unsigned rubber_id, size_t size) noexcept {
+             RubberAllocation &&a, size_t size) noexcept {
         LogConcat(4, "HttpCache", "put ", url);
 
         heap.Put(url, info, request_headers,
                  status, response_headers,
-                 rubber_id, size);
+                 std::move(a), size);
     }
 
     void Remove(HttpCacheDocument *document) noexcept {
@@ -381,11 +381,11 @@ http_cache_key(struct pool &pool, const ResourceAddress &address)
 }
 
 void
-HttpCacheRequest::Put(unsigned rubber_id, size_t size) noexcept
+HttpCacheRequest::Put(RubberAllocation &&a, size_t size) noexcept
 {
     cache.Put(key, info, headers,
               response.status, *response.headers,
-              rubber_id, size);
+              std::move(a), size);
 }
 
 /*
@@ -394,13 +394,13 @@ HttpCacheRequest::Put(unsigned rubber_id, size_t size) noexcept
  */
 
 void
-HttpCacheRequest::RubberDone(unsigned rubber_id, size_t size)
+HttpCacheRequest::RubberDone(RubberAllocation &&a, size_t size)
 {
     RubberStoreFinished();
 
     /* the request was successful, and all of the body data has been
        saved: add it to the cache */
-    Put(rubber_id, size);
+    Put(std::move(a), size);
 }
 
 void
@@ -501,7 +501,7 @@ HttpCacheRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
     response.headers = strmap_dup(&pool, &_headers);
 
     if (!body) {
-        Put(0, 0);
+        Put({}, 0);
     } else {
         /* this->info was allocated from the caller pool; duplicate
            it to keep it alive even after the caller pool is

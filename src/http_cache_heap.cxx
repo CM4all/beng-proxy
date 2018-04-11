@@ -103,13 +103,13 @@ HttpCacheHeap::Put(const char *url,
                    StringMap &request_headers,
                    http_status_t status,
                    const StringMap &response_headers,
-                   unsigned rubber_id, size_t size)
+                   RubberAllocation &&a, size_t size)
 {
     auto item = NewFromPool<HttpCacheItem>(pool_new_slice(&pool, "http_cache_item", &slice_pool),
                                            info, request_headers,
                                            status, response_headers,
                                            size,
-                                           RubberAllocation(rubber, rubber_id));
+                                           std::move(a));
 
     cache.PutMatch(p_strdup(item->pool, url), *item,
                    http_cache_item_match, &request_headers);
