@@ -96,14 +96,14 @@ struct RubberTable {
      * kernel allocate physical memory for table areas we don't need
      * (yet).
      */
-    unsigned initialized_tail;
+    unsigned initialized_tail = 1;
 
     /**
      * The index of the first free table entry.  The linked list
      * contains all free entries in no specific order.  This is 0 if
      * the table is full.
      */
-    unsigned free_head;
+    unsigned free_head = 0;
 
     /**
      * The first entry (index 0) is the table itself.  Its "previous"
@@ -246,8 +246,6 @@ RubberTable::RubberTable(unsigned _max_entries) noexcept
 {
     assert(_max_entries > 1);
 
-    initialized_tail = 1;
-
     uint8_t *const table_begin = (uint8_t *)this;
 
     /* round to nearest "huge page", so the first real allocation
@@ -259,8 +257,6 @@ RubberTable::RubberTable(unsigned _max_entries) noexcept
     entries[0].InitHead(table_size);
 
     max_entries = Capacity(table_size);
-
-    free_head = 0;
 
 #ifndef NDEBUG
     entries[0].allocated = true;
