@@ -56,12 +56,6 @@ struct RubberTable;
  */
 class Rubber {
     /**
-     * The maximum size of the memory map.  This is the value passed
-     * to rubber_new() and will never be changed.
-     */
-    const size_t max_size;
-
-    /**
      * The sum of all allocation sizes.
      */
     size_t netto_size = 0;
@@ -197,14 +191,14 @@ public:
 private:
     gcc_pure
     void *WriteAt(size_t offset) noexcept {
-        assert(offset <= max_size);
+        assert(offset <= allocation.size());
 
         return (uint8_t *)table + offset;
     }
 
     gcc_pure
     const void *ReadAt(size_t offset) const noexcept {
-        assert(offset <= max_size);
+        assert(offset <= allocation.size());
 
         return (const uint8_t *)table + offset;
     }
@@ -259,7 +253,7 @@ private:
      * of simplified defragmentation.  It attempts to keep the "brutto"
      * size of this allocator small by filling holes.
      *
-     * @param max_size move it only if it's not larger than this size
+     * @param max_object_size move it only if it's not larger than this size
      */
     bool MoveLast(size_t max_object_size) noexcept;
 

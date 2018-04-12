@@ -616,15 +616,14 @@ Rubber::AddHoleAfter(unsigned reference_id, size_t offset, size_t size) noexcept
  */
 
 Rubber::Rubber(size_t _max_size)
-    :max_size(HUGE_PAGE_SIZE + AlignHugePageUp(_max_size)),
-     allocation(max_size),
+    :allocation(HUGE_PAGE_SIZE + AlignHugePageUp(_max_size)),
      table((RubberTable *)allocation.get()) {
     static_assert(RUBBER_ALIGN >= sizeof(Hole), "Alignment too large");
 
-    table->Init(max_size / 1024);
+    table->Init(allocation.size() / 1024);
     const size_t table_size = table->GetSize();
     mmap_enable_huge_pages(WriteAt(table_size),
-                           AlignHugePageDown(max_size - table_size));
+                           AlignHugePageDown(allocation.size() - table_size));
 }
 
 Rubber::~Rubber() noexcept
@@ -638,7 +637,7 @@ Rubber::~Rubber() noexcept
 void
 Rubber::ForkCow(bool inherit) noexcept
 {
-    mmap_enable_fork(table, max_size, inherit);
+    mmap_enable_fork(table, allocation.size(), inherit);
 }
 
 void
@@ -747,7 +746,7 @@ Rubber::Add(size_t size) noexcept
     assert(netto_size + GetTotalHoleSize() == GetBruttoSize());
     assert(size > 0);
 
-    if (size >= max_size)
+    if (size >= allocation.size())
         /* sanity check to avoid integer overflows */
         return 0;
 
@@ -766,12 +765,12 @@ Rubber::Add(size_t size) noexcept
         while (MoveLast(size - 1)) {}
 
     size_t offset = table->GetTailOffset();
-    if (offset + size > max_size) {
+    if (offset + size > allocation.size()) {
         /* compress, then try again */
         Compress();
 
         offset = table->GetTailOffset();
-        if (offset + size > max_size)
+        if (offset + size > allocation.size())
             /* no, sorry, there's simply not enough free memory */
             return 0;
     }
@@ -798,7 +797,7 @@ void *
 Rubber::Write(unsigned id) noexcept
 {
     const size_t offset = table->GetOffsetOf(id);
-    assert(offset < max_size);
+    assert(offset < allocation.size());
     return WriteAt(offset);
 }
 
@@ -806,7 +805,7 @@ const void *
 Rubber::Read(unsigned id) const noexcept
 {
     const size_t offset = table->GetOffsetOf(id);
-    assert(offset < max_size);
+    assert(offset < allocation.size());
     return ReadAt(offset);
 }
 
@@ -895,7 +894,7 @@ Rubber::Remove(unsigned id) noexcept
 size_t
 Rubber::GetMaxSize() const noexcept
 {
-    return max_size - table->GetSize();
+    return allocation.size() - table->GetSize();
 }
 
 size_t
@@ -960,6 +959,6 @@ Rubber::Compress() noexcept
     /* tell the kernel that we won't need the data after our last
        allocation */
     const size_t allocated = AlignHugePageUp(offset);
-    if (allocated < max_size)
-        mmap_discard_pages(WriteAt(allocated), max_size - allocated);
+    if (allocated < allocation.size())
+        mmap_discard_pages(WriteAt(allocated), allocation.size() - allocated);
 }
