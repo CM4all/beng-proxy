@@ -176,12 +176,12 @@ struct RubberTable {
             : nullptr;
     }
 
-    gcc_const
+    gcc_pure
     RubberObject &GetTail() noexcept {
         return entries[entries[0].previous];
     }
 
-    gcc_const
+    gcc_pure
     const RubberObject &GetTail() const noexcept {
         return entries[entries[0].previous];
     }
@@ -224,15 +224,13 @@ struct RubberTable {
 
 static const size_t RUBBER_ALIGN = 0x20;
 
-gcc_const
-static inline void *
+static constexpr inline void *
 align_page_size_ptr(void *p) noexcept
 {
     return (void *)(long)AlignHugePageUp((size_t)p);
 }
 
-gcc_const
-static inline size_t
+static constexpr inline size_t
 align_size(size_t size) noexcept
 {
     return ((size - 1) | (RUBBER_ALIGN - 1)) + 1;
