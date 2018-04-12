@@ -119,7 +119,7 @@ public:
     /**
      * Throws std::bad_alloc on error.
      */
-    explicit Rubber(size_t _max_size) noexcept;
+    explicit Rubber(size_t _max_size);
 
     ~Rubber() noexcept;
 

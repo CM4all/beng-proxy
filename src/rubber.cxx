@@ -615,7 +615,7 @@ Rubber::AddHoleAfter(unsigned reference_id, size_t offset, size_t size) noexcept
  *
  */
 
-Rubber::Rubber(size_t _max_size) noexcept
+Rubber::Rubber(size_t _max_size)
     :max_size(HUGE_PAGE_SIZE + AlignHugePageUp(_max_size)), netto_size(0),
      allocation(max_size),
      table((RubberTable *)allocation.get()) {
