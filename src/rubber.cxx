@@ -222,7 +222,7 @@ struct RubberTable {
     size_t Shrink(unsigned id, size_t new_size) noexcept;
 };
 
-static const size_t RUBBER_ALIGN = 0x20;
+static constexpr size_t RUBBER_ALIGN = 0x20;
 
 static constexpr inline void *
 align_page_size_ptr(void *p) noexcept
