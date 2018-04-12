@@ -33,7 +33,7 @@
 #ifndef BENG_PROXY_RUBBER_HXX
 #define BENG_PROXY_RUBBER_HXX
 
-#include "system/LargeAllocation.hxx"
+#include "system/LargeObject.hxx"
 #include "util/Macros.hxx"
 #include "util/Compiler.h"
 
@@ -60,13 +60,11 @@ class Rubber {
      */
     size_t netto_size = 0;
 
-    LargeAllocation allocation;
-
     /**
      * The table managing the allocations in the memory map.  At the
      * same time, this is the pointer to the memory map.
      */
-    RubberTable *const table;
+    LargeObject<RubberTable> table;
 
     /**
      * The threshold for each hole list.  The goal is to reduce the cost
@@ -191,20 +189,20 @@ public:
 private:
     gcc_pure
     void *WriteAt(size_t offset) noexcept {
-        assert(offset <= allocation.size());
+        assert(offset <= table.size());
 
-        return (uint8_t *)table + offset;
+        return (uint8_t *)table.get() + offset;
     }
 
     gcc_pure
     const void *ReadAt(size_t offset) const noexcept {
-        assert(offset <= allocation.size());
+        assert(offset <= table.size());
 
-        return (const uint8_t *)table + offset;
+        return (const uint8_t *)table.get() + offset;
     }
 
     size_t OffsetOf(const void *p) const noexcept {
-        return (const uint8_t *)p - (const uint8_t *)table;
+        return (const uint8_t *)p - (const uint8_t *)table.get();
     }
 
     size_t OffsetOf(const Hole &hole) const noexcept {
