@@ -64,7 +64,7 @@ class Rubber {
     /**
      * The sum of all allocation sizes.
      */
-    size_t netto_size;
+    size_t netto_size = 0;
 
     LargeAllocation allocation;
 
