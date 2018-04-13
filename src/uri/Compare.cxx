@@ -33,16 +33,12 @@
 #include "Compare.hxx"
 #include "util/HexParse.hxx"
 
-#include <assert.h>
 #include <string.h>
 
 const char *
 UriFindUnescapedSuffix(const char *const uri_start,
                        const char *const suffix_start) noexcept
 {
-    assert(uri_start != nullptr);
-    assert(suffix_start != nullptr);
-
     const char *uri_i = (const char *)rawmemchr(uri_start, '\0');
     const char *suffix_i = (const char *)rawmemchr(suffix_start, '\0');
 
