@@ -62,17 +62,17 @@ class SubstIstream final : public FacadeIstream, DestructAnchor {
     const SubstNode *match;
     StringView mismatch = nullptr;
 
-    enum {
+    enum class State {
         /** searching the first matching character */
-        STATE_NONE,
+        NONE,
 
         /** at least the first character was found, checking for the
             rest */
-        STATE_MATCH,
+        MATCH,
 
         /** inserting the substitution */
-        STATE_INSERT,
-    } state = STATE_NONE;
+        INSERT,
+    } state = State::NONE;
     size_t a_match, b_sent;
 
  public:
@@ -255,7 +255,7 @@ subst_find_any_leaf(const SubstNode *node) noexcept
 size_t
 SubstIstream::TryWriteB() noexcept
 {
-    assert(state == STATE_INSERT);
+    assert(state == State::INSERT);
     assert(a_match > 0);
     assert(match != nullptr);
     assert(match->ch == 0);
@@ -272,7 +272,7 @@ SubstIstream::TryWriteB() noexcept
 
         /* finished sending substitution? */
         if (nbytes == length)
-            state = STATE_NONE;
+            state = State::NONE;
     }
 
     return length - nbytes;
@@ -281,7 +281,7 @@ SubstIstream::TryWriteB() noexcept
 bool
 SubstIstream::FeedMismatch() noexcept
 {
-    assert(state == STATE_NONE);
+    assert(state == State::NONE);
     assert(input.IsDefined());
     assert(!mismatch.empty());
 
@@ -312,7 +312,7 @@ SubstIstream::FeedMismatch() noexcept
 bool
 SubstIstream::WriteMismatch() noexcept
 {
-    assert(!input.IsDefined() || state == STATE_NONE);
+    assert(!input.IsDefined() || state == State::NONE);
     assert(!mismatch.empty());
 
     size_t nbytes = InvokeData(mismatch.data, mismatch.size);
@@ -351,7 +351,7 @@ SubstIstream::ForwardSourceData(const char *start,
 
     if (nbytes < length) {
         /* blocking */
-        state = STATE_NONE;
+        state = State::NONE;
         return (p - start) + nbytes;
     } else
         /* everything has been consumed */
@@ -394,7 +394,7 @@ SubstIstream::Feed(const void *_data, size_t length) noexcept
         assert(p <= end);
 
         switch (state) {
-        case STATE_NONE:
+        case State::NONE:
             /* find matching first char */
 
             assert(first == nullptr);
@@ -404,7 +404,7 @@ SubstIstream::Feed(const void *_data, size_t length) noexcept
                 /* no match, try to write and return */
                 return ForwardSourceDataFinal(data0, end, data);
 
-            state = STATE_MATCH;
+            state = State::MATCH;
             a_match = 1;
 
             p = first + 1;
@@ -412,7 +412,7 @@ SubstIstream::Feed(const void *_data, size_t length) noexcept
             /* XXX check if match is full */
             break;
 
-        case STATE_MATCH:
+        case State::MATCH:
             /* now see if the rest matches; note that max_compare may be
                0, but that isn't a problem */
 
@@ -450,10 +450,10 @@ SubstIstream::Feed(const void *_data, size_t length) noexcept
                     /* switch state */
 
                     if (n->leaf.b_length > 0) {
-                        state = STATE_INSERT;
+                        state = State::INSERT;
                         b_sent = 0;
                     } else {
-                        state = STATE_NONE;
+                        state = State::NONE;
                     }
                 }
             } else {
@@ -476,7 +476,7 @@ SubstIstream::Feed(const void *_data, size_t length) noexcept
                 } else {
                     /* when re-parsing a mismatch, "first" must not be
                        nullptr because we entered this function with
-                       state=STATE_NONE */
+                       state=NONE */
                     assert(mismatch.empty());
                 }
 
@@ -491,7 +491,7 @@ SubstIstream::Feed(const void *_data, size_t length) noexcept
                    can use to re-insert the partial match into the
                    stream */
 
-                state = STATE_NONE;
+                state = State::NONE;
 
                 if (mismatch.empty()) {
                     send_first = true;
@@ -508,7 +508,7 @@ SubstIstream::Feed(const void *_data, size_t length) noexcept
 
             break;
 
-        case STATE_INSERT:
+        case State::INSERT:
             /* there is a previous full match, copy data from b */
 
             const size_t nbytes = TryWriteB();
@@ -516,23 +516,23 @@ SubstIstream::Feed(const void *_data, size_t length) noexcept
                 if (destructed)
                     return 0;
 
-                assert(state == STATE_INSERT);
+                assert(state == State::INSERT);
                 /* blocking */
                 return data - data0;
             }
 
-            assert(state == STATE_NONE);
+            assert(state == State::NONE);
 
             break;
         }
-    } while (p < end || state == STATE_INSERT);
+    } while (p < end || state == State::INSERT);
 
     size_t chunk_length;
     if (first != nullptr)
         /* we have found a partial match which we discard now, instead
            we will write the chunk right before this match */
         chunk_length = first - data;
-    else if (state == STATE_MATCH || state == STATE_INSERT)
+    else if (state == State::MATCH || state == State::INSERT)
         chunk_length = 0;
     else
         /* there was no match (maybe a partial match which mismatched
@@ -577,10 +577,10 @@ SubstIstream::OnEof() noexcept
     switch (state) {
         size_t nbytes;
 
-    case STATE_NONE:
+    case State::NONE:
         break;
 
-    case STATE_MATCH:
+    case State::MATCH:
         /* we're in the middle of a match, technically making this a
            mismatch because we reach end of file before end of
            match */
@@ -595,14 +595,14 @@ SubstIstream::OnEof() noexcept
         }
         break;
 
-    case STATE_INSERT:
+    case State::INSERT:
         nbytes = TryWriteB();
         if (nbytes > 0)
             return;
         break;
     }
 
-    if (state == STATE_NONE)
+    if (state == State::NONE)
         DestroyEof();
 }
 
@@ -637,8 +637,8 @@ SubstIstream::_Read() noexcept
     switch (state) {
         size_t nbytes;
 
-    case STATE_NONE:
-    case STATE_MATCH: {
+    case State::NONE:
+    case State::MATCH: {
         assert(input.IsDefined());
 
         had_output = false;
@@ -649,19 +649,19 @@ SubstIstream::_Read() noexcept
             had_input = false;
             input.Read();
         } while (!destructed && input.IsDefined() && had_input &&
-                 !had_output && state != STATE_INSERT);
+                 !had_output && state != State::INSERT);
 
         return;
     }
 
-    case STATE_INSERT:
+    case State::INSERT:
         nbytes = TryWriteB();
         if (nbytes > 0)
             return;
         break;
     }
 
-    if (state == STATE_NONE && !input.IsDefined())
+    if (state == State::NONE && !input.IsDefined())
         DestroyEof();
 }
 
