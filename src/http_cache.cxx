@@ -78,7 +78,9 @@ public:
     typedef boost::intrusive::list_member_hook<LinkMode> SiblingsHook;
     SiblingsHook siblings;
 
-    struct pool &pool, &caller_pool;
+    struct pool &pool;
+
+    PoolPtr caller_pool;
 
     sticky_hash_t session_sticky;
     const char *site_name;
@@ -466,7 +468,6 @@ HttpCacheRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
 
         LogConcat(5, "HttpCache", "not_modified ", key);
         Serve();
-        pool_unref(&caller_pool);
 
         if (locked_document != nullptr)
             cache.Unlock(*locked_document);
@@ -483,7 +484,6 @@ HttpCacheRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
         body.Clear();
 
         Serve();
-        pool_unref(&caller_pool);
 
         if (locked_document != nullptr)
             cache.Unlock(*locked_document);
@@ -505,7 +505,6 @@ HttpCacheRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
         LogConcat(4, "HttpCache", "nocache ", key);
 
         handler.InvokeResponse(status, std::move(_headers), std::move(body));
-        pool_unref(&caller_pool);
         Destroy();
         return;
     }
@@ -545,10 +544,12 @@ HttpCacheRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
         body = std::move(tee.first);
     }
 
-    auto &_caller_pool = caller_pool;
+    /* move the caller_pool reference to the stack to ensure it gets
+       unreferenced at the end of this method - not earlier and not
+       later */
+    const PoolPtr _caller_pool = std::move(caller_pool);
 
     handler.InvokeResponse(status, std::move(_headers), std::move(body));
-    pool_unref(&_caller_pool);
 
     if (destroy)
         Destroy();
@@ -563,7 +564,6 @@ HttpCacheRequest::OnHttpError(std::exception_ptr ep) noexcept
         cache.Unlock(*document);
 
     handler.InvokeError(ep);
-    pool_unref(&caller_pool);
     Destroy();
 }
 
@@ -577,8 +577,6 @@ HttpCacheRequest::Cancel() noexcept
 {
     if (document != nullptr)
         cache.Unlock(*document);
-
-    pool_unref(&caller_pool);
 
     cancel_ptr.Cancel();
 
@@ -613,7 +611,6 @@ HttpCacheRequest::HttpCacheRequest(struct pool &_pool,
      handler(_handler),
      request_info(_request_info) {
     _cancel_ptr = *this;
-    pool_ref(&caller_pool);
 }
 
 inline
