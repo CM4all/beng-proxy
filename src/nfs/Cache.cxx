@@ -108,7 +108,7 @@ struct NfsCacheStore final
     void RubberError(std::exception_ptr ep) override;
 };
 
-struct NfsCache {
+class NfsCache {
     struct pool &pool;
 
     NfsStock &stock;
@@ -127,6 +127,7 @@ struct NfsCache {
     boost::intrusive::list<NfsCacheStore,
                            boost::intrusive::constant_time_size<false>> requests;
 
+public:
     NfsCache(struct pool &_pool, size_t max_size, NfsStock &_stock,
              EventLoop &_event_loop);
 
@@ -134,6 +135,44 @@ struct NfsCache {
         compress_timer.Cancel();
         pool_unref(&pool);
     }
+
+    auto &GetPool() const noexcept {
+        return pool;
+    }
+
+    auto &GetEventLoop() const noexcept {
+        return event_loop;
+    }
+
+    auto &GetRubber() noexcept {
+        return rubber;
+    }
+
+    void ForkCow(bool inherit) noexcept {
+        rubber.ForkCow(inherit);
+    }
+
+    auto GetStats() const noexcept {
+        return pool_children_stats(pool) + rubber.GetStats();
+    }
+
+    void RemoveRequest(NfsCacheStore &s) noexcept {
+        requests.erase(requests.iterator_to(s));
+    }
+
+    void Put(const char *key, CacheItem &item) noexcept {
+        cache.Put(key, item);
+    }
+
+    void Request(struct pool &caller_pool,
+                 const char *server, const char *_export, const char *path,
+                 NfsCacheHandler &handler,
+                 CancellablePointer &cancel_ptr) noexcept;
+
+    UnusedIstreamPtr OpenFile(struct pool &caller_pool,
+                              const char *key,
+                              NfsFileHandle &file, const struct stat &st,
+                              uint64_t start, uint64_t end) noexcept;
 
 private:
     void OnCompressTimer() {
@@ -224,7 +263,7 @@ NfsCacheStore::NfsCacheStore(struct pool &_pool, NfsCache &_cache,
     :pool(_pool), cache(_cache),
      key(_key),
      stat(_st),
-     timeout_event(cache.event_loop, BIND_THIS_METHOD(OnTimeout)) {}
+     timeout_event(cache.GetEventLoop(), BIND_THIS_METHOD(OnTimeout)) {}
 
 void
 NfsCacheStore::Release()
@@ -233,7 +272,7 @@ NfsCacheStore::Release()
 
     timeout_event.Cancel();
 
-    cache.requests.erase(cache.requests.iterator_to(*this));
+    cache.RemoveRequest(*this);
     pool_unref(&pool);
 }
 
@@ -252,10 +291,11 @@ NfsCacheStore::Put(RubberAllocation &&a)
     LogConcat(4, "NfsCache", "put ", key);
 
     const auto item = NewFromPool<NfsCacheItem>(PoolPtr(PoolPtr::donate,
-                                                        *pool_new_libc(&cache.pool, "NfsCacheItem")),
+                                                        *pool_new_libc(&cache.GetPool(),
+                                                                       "NfsCacheItem")),
                                                 *this,
                                                 std::move(a));
-    cache.cache.Put(p_strdup(item->GetPool(), key), *item);
+    cache.Put(p_strdup(item->GetPool(), key), *item);
 }
 
 /*
@@ -379,28 +419,28 @@ nfs_cache_free(NfsCache *cache)
 AllocatorStats
 nfs_cache_get_stats(const NfsCache &cache)
 {
-    return pool_children_stats(cache.pool) + cache.rubber.GetStats();
+    return cache.GetStats();
 }
 
 void
 nfs_cache_fork_cow(NfsCache &cache, bool inherit)
 {
-    cache.rubber.ForkCow(inherit);
+    cache.ForkCow(inherit);
 }
 
-void
-nfs_cache_request(struct pool &pool, NfsCache &cache,
+inline void
+NfsCache::Request(struct pool &caller_pool,
                   const char *server, const char *_export, const char *path,
                   NfsCacheHandler &handler,
-                  CancellablePointer &cancel_ptr)
+                  CancellablePointer &cancel_ptr) noexcept
 {
-    const char *key = nfs_cache_key(pool, server, _export, path);
-    const auto item = (NfsCacheItem *)cache.cache.Get(key);
+    const char *key = nfs_cache_key(caller_pool, server, _export, path);
+    const auto item = (NfsCacheItem *)cache.Get(key);
     if (item != nullptr) {
         LogConcat(4, "NfsCache", "hit ", key);
 
         NfsCacheHandle handle2 = {
-            .cache = cache,
+            .cache = *this,
             .key = key,
             .file = nullptr,
             .item = item,
@@ -413,11 +453,20 @@ nfs_cache_request(struct pool &pool, NfsCache &cache,
 
     LogConcat(4, "NfsCache", "miss ", key);
 
-    auto r = NewFromPool<NfsCacheRequest>(pool, pool, cache,
+    auto r = NewFromPool<NfsCacheRequest>(caller_pool, caller_pool, *this,
                                           key, path,
                                           handler, cancel_ptr);
-    nfs_stock_get(&cache.stock, &pool, server, _export,
+    nfs_stock_get(&stock, &caller_pool, server, _export,
                   *r, cancel_ptr);
+}
+
+void
+nfs_cache_request(struct pool &pool, NfsCache &cache,
+                  const char *server, const char *_export, const char *path,
+                  NfsCacheHandler &handler,
+                  CancellablePointer &cancel_ptr)
+{
+    cache.Request(pool, server, _export, path, handler, cancel_ptr);
 }
 
 static UnusedIstreamPtr
@@ -438,16 +487,16 @@ nfs_cache_item_open(struct pool &pool,
                               item);
 }
 
-static UnusedIstreamPtr
-nfs_cache_file_open(struct pool &pool, NfsCache &cache,
-                    const char *key,
-                    NfsFileHandle &file, const struct stat &st,
-                    uint64_t start, uint64_t end)
+inline UnusedIstreamPtr
+NfsCache::OpenFile(struct pool &caller_pool,
+                   const char *key,
+                   NfsFileHandle &file, const struct stat &st,
+                   uint64_t start, uint64_t end) noexcept
 {
     assert(start <= end);
     assert(end <= (uint64_t)st.st_size);
 
-    auto body = istream_nfs_new(pool, file, start, end);
+    auto body = istream_nfs_new(caller_pool, file, start, end);
     if (st.st_size > cacheable_size_limit || start != 0 ||
         end != (uint64_t)st.st_size) {
         /* don't cache */
@@ -458,15 +507,14 @@ nfs_cache_file_open(struct pool &pool, NfsCache &cache,
     /* move all this stuff to a new pool, so istream_tee's second head
        can continue to fill the cache even if our caller gave up on
        it */
-    struct pool *pool2 = pool_new_linear(&cache.pool,
-                                         "nfs_cache_tee", 1024);
-    auto store = NewFromPool<NfsCacheStore>(*pool2, *pool2, cache,
+    struct pool *pool2 = pool_new_linear(&pool, "nfs_cache_tee", 1024);
+    auto store = NewFromPool<NfsCacheStore>(*pool2, *pool2, *this,
                                             p_strdup(pool2, key), st);
 
     /* tee the body: one goes to our client, and one goes into the
        cache */
     auto tee = istream_tee_new(*pool2, std::move(body),
-                               cache.event_loop,
+                               event_loop,
                                false, true,
                                /* just in case our handler closes the
                                   body without looking at it: defer
@@ -474,12 +522,12 @@ nfs_cache_file_open(struct pool &pool, NfsCache &cache,
                                   Rubber sink */
                                true);
 
-    cache.requests.push_back(*store);
+    requests.push_back(*store);
 
     store->timeout_event.Add(nfs_cache_timeout);
 
     sink_rubber_new(*pool2, std::move(tee.second),
-                    cache.rubber, cacheable_size_limit,
+                    rubber, cacheable_size_limit,
                     *store,
                     store->cancel_ptr);
 
@@ -507,7 +555,7 @@ nfs_cache_handle_open(struct pool &pool, NfsCacheHandle &handle,
         NfsFileHandle *const file = handle.file;
         handle.file = nullptr;
 
-        return nfs_cache_file_open(pool, handle.cache, handle.key,
-                                   *file, handle.stat, start, end);
+        return handle.cache.OpenFile(pool, handle.key,
+                                     *file, handle.stat, start, end);
     }
 }
