@@ -67,7 +67,7 @@ struct NfsCacheStore;
 
 struct NfsCacheStore final
     : PoolHolder,
-      public boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>,
+      public boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::auto_unlink>>,
       RubberSinkHandler, LeakDetector {
 
     NfsCache &cache;
@@ -159,10 +159,6 @@ public:
 
     auto GetStats() const noexcept {
         return pool_children_stats(pool) + rubber.GetStats();
-    }
-
-    void RemoveRequest(NfsCacheStore &s) noexcept {
-        requests.erase(requests.iterator_to(s));
     }
 
     void Put(const char *key, CacheItem &item) noexcept {
@@ -275,8 +271,6 @@ NfsCacheStore::~NfsCacheStore() noexcept
     assert(!cancel_ptr);
 
     timeout_event.Cancel();
-
-    cache.RemoveRequest(*this);
 }
 
 void
