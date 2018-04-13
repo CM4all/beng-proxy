@@ -55,6 +55,7 @@
 #include "util/Cancellable.hxx"
 #include "util/Exception.hxx"
 #include "util/RuntimeError.hxx"
+#include "util/LeakDetector.hxx"
 
 #include <boost/intrusive/list.hpp>
 
@@ -70,7 +71,7 @@ static constexpr struct timeval http_cache_compress_interval = { 600, 0 };
 
 class HttpCacheRequest final : public HttpResponseHandler,
                                public RubberSinkHandler,
-                               Cancellable {
+                               Cancellable, LeakDetector {
 public:
     static constexpr auto link_mode = boost::intrusive::normal_link;
     typedef boost::intrusive::link_mode<link_mode> LinkMode;
@@ -153,6 +154,11 @@ public:
      * Abort storing the response body in the rubber allocator.
      */
     void AbortRubberStore();
+
+private:
+    void Destroy() {
+        DeleteFromPool(pool, this);
+    }
 
     /* virtual methods from class Cancellable */
     void Cancel() noexcept override;
@@ -401,6 +407,7 @@ HttpCacheRequest::RubberDone(RubberAllocation &&a, size_t size)
     /* the request was successful, and all of the body data has been
        saved: add it to the cache */
     Put(std::move(a), size);
+    Destroy();
 }
 
 void
@@ -409,6 +416,7 @@ HttpCacheRequest::RubberOutOfMemory()
     LogConcat(4, "HttpCache", "nocache oom ", key);
 
     RubberStoreFinished();
+    Destroy();
 }
 
 void
@@ -417,6 +425,7 @@ HttpCacheRequest::RubberTooLarge()
     LogConcat(4, "HttpCache", "nocache too large ", key);
 
     RubberStoreFinished();
+    Destroy();
 }
 
 void
@@ -425,6 +434,7 @@ HttpCacheRequest::RubberError(std::exception_ptr ep)
     LogConcat(4, "HttpCache", "body_abort ", key, ": ", ep);
 
     RubberStoreFinished();
+    Destroy();
 }
 
 /*
@@ -461,6 +471,7 @@ HttpCacheRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
         if (locked_document != nullptr)
             cache.Unlock(*locked_document);
 
+        Destroy();
         return;
     }
 
@@ -477,6 +488,7 @@ HttpCacheRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
         if (locked_document != nullptr)
             cache.Unlock(*locked_document);
 
+        Destroy();
         return;
     }
 
@@ -494,14 +506,17 @@ HttpCacheRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
 
         handler.InvokeResponse(status, std::move(_headers), std::move(body));
         pool_unref(&caller_pool);
+        Destroy();
         return;
     }
 
     response.status = status;
     response.headers = strmap_dup(&pool, &_headers);
 
+    bool destroy = false;
     if (!body) {
         Put({}, 0);
+        destroy = true;
     } else {
         /* this->info was allocated from the caller pool; duplicate
            it to keep it alive even after the caller pool is
@@ -530,8 +545,13 @@ HttpCacheRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
         body = std::move(tee.first);
     }
 
+    auto &_caller_pool = caller_pool;
+
     handler.InvokeResponse(status, std::move(_headers), std::move(body));
-    pool_unref(&caller_pool);
+    pool_unref(&_caller_pool);
+
+    if (destroy)
+        Destroy();
 }
 
 void
@@ -544,6 +564,7 @@ HttpCacheRequest::OnHttpError(std::exception_ptr ep) noexcept
 
     handler.InvokeError(ep);
     pool_unref(&caller_pool);
+    Destroy();
 }
 
 /*
@@ -560,6 +581,8 @@ HttpCacheRequest::Cancel() noexcept
     pool_unref(&caller_pool);
 
     cancel_ptr.Cancel();
+
+    Destroy();
 }
 
 
@@ -633,6 +656,7 @@ HttpCacheRequest::AbortRubberStore()
 {
     cache.RemoveRequest(*this);
     cancel_ptr.Cancel();
+    Destroy();
 }
 
 inline
