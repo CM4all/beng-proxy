@@ -36,10 +36,11 @@
 #include "istream/UnusedPtr.hxx"
 #include "direct.hxx"
 #include "util/ByteOrder.hxx"
+#include "util/DestructObserver.hxx"
 
 #include <assert.h>
 
-class AjpBodyIstream final : public ForwardIstream {
+class AjpBodyIstream final : public ForwardIstream, DestructAnchor {
     const SharedPoolPtr<AjpBodyIstreamControl> control;
 
     size_t requested = 0, packet_remaining = 0;
@@ -200,16 +201,13 @@ AjpBodyIstream::OnDirect(FdType type, int fd, size_t max_length) noexcept
         StartPacket(available);
     }
 
-    pool_ref(&GetPool());
+    const DestructObserver destructed(*this);
 
     if (!WriteHeader()) {
-        ssize_t ret = input.IsDefined()
-            ? ISTREAM_RESULT_BLOCKING : ISTREAM_RESULT_CLOSED;
-        pool_unref(&GetPool());
+        ssize_t ret = destructed
+            ? ISTREAM_RESULT_CLOSED : ISTREAM_RESULT_BLOCKING;
         return ret;
     }
-
-    pool_unref(&GetPool());
 
     if (max_length > packet_remaining)
         max_length = packet_remaining;
