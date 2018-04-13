@@ -38,6 +38,7 @@
 #include "io/Splice.hxx"
 #include "io/FileDescriptor.hxx"
 #include "event/SocketEvent.hxx"
+#include "util/DestructObserver.hxx"
 #include "util/LeakDetector.hxx"
 
 #include <sys/types.h>
@@ -45,7 +46,7 @@
 #include <unistd.h>
 #include <errno.h>
 
-struct SinkFd final : IstreamSink, LeakDetector {
+struct SinkFd final : IstreamSink, DestructAnchor, LeakDetector {
     struct pool *pool;
 
     FileDescriptor fd;
@@ -213,18 +214,16 @@ SinkFd::OnError(std::exception_ptr ep) noexcept
 inline void
 SinkFd::EventCallback(unsigned)
 {
-    pool_ref(pool);
+    const DestructObserver destructed(*this);
 
     got_event = true;
     got_data = false;
     input.Read();
 
-    if (!got_data)
+    if (!destructed && !got_data)
         /* the fd is ready for writing, but the istream is blocking -
            don't try again for now */
         event.Delete();
-
-    pool_unref(pool);
 }
 
 /*
