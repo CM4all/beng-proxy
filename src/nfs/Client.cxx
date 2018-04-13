@@ -39,6 +39,7 @@
 #include "event/SocketEvent.hxx"
 #include "event/TimerEvent.hxx"
 #include "util/Cancellable.hxx"
+#include "util/LeakDetector.hxx"
 
 extern "C" {
 #include <nfsc/libnfs.h>
@@ -346,7 +347,7 @@ public:
     };
 };
 
-class NfsClient final : Cancellable {
+class NfsClient final : Cancellable, LeakDetector {
     struct pool &pool;
 
     NfsClientHandler &handler;
@@ -420,7 +421,7 @@ public:
     }
 
     void Destroy() {
-        pool_unref(&pool);
+        DeleteUnrefPool(pool, this);
     }
 
     EventLoop &GetEventLoop() {
