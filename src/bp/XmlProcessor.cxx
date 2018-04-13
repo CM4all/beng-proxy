@@ -69,6 +69,7 @@
 #include "util/StringView.hxx"
 #include "util/Cancellable.hxx"
 #include "util/ScopeExit.hxx"
+#include "util/LeakDetector.hxx"
 
 #include <assert.h>
 #include <string.h>
@@ -87,7 +88,7 @@ struct uri_rewrite {
     char view[64];
 };
 
-struct XmlProcessor final : XmlParserHandler, Cancellable {
+struct XmlProcessor final : XmlParserHandler, Cancellable, LeakDetector {
     class CdataIstream final : public Istream {
         friend struct XmlProcessor;
         XmlProcessor &processor;
