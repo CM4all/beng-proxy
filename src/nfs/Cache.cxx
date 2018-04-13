@@ -49,6 +49,7 @@
 #include "event/TimerEvent.hxx"
 #include "io/Logger.hxx"
 #include "util/Cancellable.hxx"
+#include "util/LeakDetector.hxx"
 
 #include <boost/intrusive/list.hpp>
 
@@ -66,7 +67,7 @@ struct NfsCacheStore;
 
 struct NfsCacheStore final
     : public boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>,
-      RubberSinkHandler {
+      RubberSinkHandler, LeakDetector {
 
     struct pool &pool;
 
@@ -85,7 +86,7 @@ struct NfsCacheStore final
     /**
      * Release resources held by this request.
      */
-    void Release();
+    void Destroy();
 
     /**
      * Abort the request.
@@ -266,14 +267,14 @@ NfsCacheStore::NfsCacheStore(struct pool &_pool, NfsCache &_cache,
      timeout_event(cache.GetEventLoop(), BIND_THIS_METHOD(OnTimeout)) {}
 
 void
-NfsCacheStore::Release()
+NfsCacheStore::Destroy()
 {
     assert(!cancel_ptr);
 
     timeout_event.Cancel();
 
     cache.RemoveRequest(*this);
-    pool_unref(&pool);
+    DeleteUnrefPool(pool, this);
 }
 
 void
@@ -282,7 +283,7 @@ NfsCacheStore::Abort()
     assert(cancel_ptr);
 
     cancel_ptr.CancelAndClear();
-    Release();
+    Destroy();
 }
 
 void
@@ -314,7 +315,7 @@ NfsCacheStore::RubberDone(RubberAllocation &&a, gcc_unused size_t size)
        saved: add it to the cache */
     Put(std::move(a));
 
-    Release();
+    Destroy();
 }
 
 void
@@ -323,7 +324,7 @@ NfsCacheStore::RubberOutOfMemory()
     cancel_ptr = nullptr;
 
     LogConcat(4, "NfsCache", "nocache oom ", key);
-    Release();
+    Destroy();
 }
 
 void
@@ -332,7 +333,7 @@ NfsCacheStore::RubberTooLarge()
     cancel_ptr = nullptr;
 
     LogConcat(4, "NfsCache", "nocache too large ", key);
-    Release();
+    Destroy();
 }
 
 void
@@ -342,7 +343,7 @@ NfsCacheStore::RubberError(std::exception_ptr ep)
 
     LogConcat(4, "NfsCache", "body_abort ", key, ": ", ep);
 
-    Release();
+    Destroy();
 }
 
 /*
