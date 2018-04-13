@@ -347,9 +347,7 @@ public:
     };
 };
 
-class NfsClient final : Cancellable, LeakDetector {
-    struct pool &pool;
-
+class NfsClient final : PoolHolder, Cancellable, LeakDetector {
     NfsClientHandler &handler;
 
     struct nfs_context *context;
@@ -413,15 +411,14 @@ public:
     NfsClient(EventLoop &event_loop, struct pool &_pool,
               NfsClientHandler &_handler,
               struct nfs_context &_context)
-        :pool(_pool),
+        :PoolHolder(_pool),
          handler(_handler), context(&_context),
          event(event_loop, BIND_THIS_METHOD(SocketEventCallback)),
          timeout_event(event_loop, BIND_THIS_METHOD(TimeoutCallback)) {
-        pool_ref(&pool);
     }
 
     void Destroy() {
-        DeleteUnrefPool(pool, this);
+        this->~NfsClient();
     }
 
     EventLoop &GetEventLoop() {
