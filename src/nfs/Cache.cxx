@@ -110,7 +110,7 @@ struct NfsCacheStore final
 };
 
 class NfsCache {
-    struct pool &pool;
+    const PoolPtr pool;
 
     NfsStock &stock;
     EventLoop &event_loop;
@@ -134,7 +134,6 @@ public:
 
     ~NfsCache() {
         compress_timer.Cancel();
-        pool_unref(&pool);
     }
 
     auto &GetPool() const noexcept {
@@ -292,7 +291,7 @@ NfsCacheStore::Put(RubberAllocation &&a)
     LogConcat(4, "NfsCache", "put ", key);
 
     const auto item = NewFromPool<NfsCacheItem>(PoolPtr(PoolPtr::donate,
-                                                        *pool_new_libc(&cache.GetPool(),
+                                                        *pool_new_libc(cache.GetPool(),
                                                                        "NfsCacheItem")),
                                                 *this,
                                                 std::move(a));
@@ -394,7 +393,8 @@ NfsCacheRequest::OnNfsStockError(std::exception_ptr ep)
 inline
 NfsCache::NfsCache(struct pool &_pool, size_t max_size,
                    NfsStock &_stock, EventLoop &_event_loop)
-    :pool(*pool_new_libc(&_pool, "nfs_cache")), stock(_stock),
+    :pool(PoolPtr::donate, *pool_new_libc(&_pool, "nfs_cache")),
+     stock(_stock),
      event_loop(_event_loop),
      rubber(max_size),
      cache(event_loop, 65521, max_size * 7 / 8),
@@ -508,7 +508,7 @@ NfsCache::OpenFile(struct pool &caller_pool,
     /* move all this stuff to a new pool, so istream_tee's second head
        can continue to fill the cache even if our caller gave up on
        it */
-    struct pool *pool2 = pool_new_linear(&pool, "nfs_cache_tee", 1024);
+    struct pool *pool2 = pool_new_linear(pool, "nfs_cache_tee", 1024);
     auto store = NewFromPool<NfsCacheStore>(*pool2, *pool2, *this,
                                             p_strdup(pool2, key), st);
 
