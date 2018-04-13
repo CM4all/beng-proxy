@@ -306,6 +306,7 @@ LbControl::OnControlPacket(ControlServer &control_server,
 
     case CONTROL_DISABLE_ZEROCONF:
     case CONTROL_ENABLE_ZEROCONF:
+    case CONTROL_FLUSH_NFS_CACHE:
         /* not applicable */
         break;
     }

@@ -117,6 +117,11 @@ enum beng_control_command {
      * Re-register all Zeroconf services.
      */
     CONTROL_ENABLE_ZEROCONF = 10,
+
+    /**
+     * Flush the NFS cache.
+     */
+    CONTROL_FLUSH_NFS_CACHE = 11,
 };
 
 struct beng_control_stats {

@@ -32,6 +32,7 @@
 
 #include "Control.hxx"
 #include "Instance.hxx"
+#include "nfs/Cache.hxx"
 #include "control/Distribute.hxx"
 #include "control/Server.hxx"
 #include "control/Local.hxx"
@@ -162,6 +163,11 @@ BpInstance::OnControlPacket(ControlServer &control_server,
     case CONTROL_ENABLE_ZEROCONF:
         if (is_privileged)
             avahi_client.ShowServices();
+        break;
+
+    case CONTROL_FLUSH_NFS_CACHE:
+        if (nfs_cache != nullptr)
+            nfs_cache_flush(*nfs_cache);
         break;
     }
 }

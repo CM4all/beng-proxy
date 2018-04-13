@@ -120,3 +120,6 @@ class Client:
 
     def send_disable_zeroconf(self, tag=None):
         self.send(CONTROL_DISABLE_ZEROCONF)
+
+    def send_flush_nfs_cache(self):
+        self.send(CONTROL_FLUSH_NFS_CACHE)
