@@ -186,19 +186,20 @@ struct NfsCacheHandle {
     const struct stat &stat;
 };
 
-struct NfsCacheItem final : CacheItem {
-    const PoolPtr pool;
-
+struct NfsCacheItem final : PoolHolder, CacheItem {
     struct stat stat;
 
     const RubberAllocation body;
 
     NfsCacheItem(PoolPtr &&_pool, const NfsCacheStore &store,
                  RubberAllocation &&_body) noexcept
-        :CacheItem(std::chrono::minutes(1), store.stat.st_size),
-         pool(std::move(_pool)), stat(store.stat),
+        :PoolHolder(std::move(_pool)),
+         CacheItem(std::chrono::minutes(1), store.stat.st_size),
+         stat(store.stat),
          body(std::move(_body)) {
     }
+
+    using PoolHolder::GetPool;
 
     /* virtual methods from class CacheItem */
     void Destroy() override {
@@ -254,7 +255,7 @@ NfsCacheStore::Put(RubberAllocation &&a)
                                                         *pool_new_libc(&cache.pool, "NfsCacheItem")),
                                                 *this,
                                                 std::move(a));
-    cache.cache.Put(p_strdup(item->pool, key), *item);
+    cache.cache.Put(p_strdup(item->GetPool(), key), *item);
 }
 
 /*
