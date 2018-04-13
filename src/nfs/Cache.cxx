@@ -66,10 +66,9 @@ struct NfsCacheItem;
 struct NfsCacheStore;
 
 struct NfsCacheStore final
-    : public boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>,
+    : PoolHolder,
+      public boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>,
       RubberSinkHandler, LeakDetector {
-
-    struct pool &pool;
 
     NfsCache &cache;
 
@@ -80,8 +79,10 @@ struct NfsCacheStore final
     TimerEvent timeout_event;
     CancellablePointer cancel_ptr;
 
-    NfsCacheStore(struct pool &_pool, NfsCache &_cache,
+    NfsCacheStore(PoolPtr &&_pool, NfsCache &_cache,
                   const char *_key, const struct stat &_st);
+
+    using PoolHolder::GetPool;
 
     /**
      * Release resources held by this request.
@@ -197,7 +198,7 @@ struct NfsCacheRequest final : NfsStockGetHandler, NfsClientOpenFileHandler {
                     NfsCacheHandler &_handler,
                     CancellablePointer &_cancel_ptr)
         :pool(_pool), cache(_cache),
-         key(_key), path(_path),
+         key(p_strdup(pool, _key)), path(_path),
          handler(_handler),
          cancel_ptr(_cancel_ptr) {}
 
@@ -258,9 +259,9 @@ nfs_cache_key(struct pool &pool, const char *server,
     return p_strcat(&pool, server, ":", _export, path, nullptr);
 }
 
-NfsCacheStore::NfsCacheStore(struct pool &_pool, NfsCache &_cache,
+NfsCacheStore::NfsCacheStore(PoolPtr &&_pool, NfsCache &_cache,
                              const char *_key, const struct stat &_st)
-    :pool(_pool), cache(_cache),
+    :PoolHolder(std::move(_pool)), cache(_cache),
      key(_key),
      stat(_st),
      timeout_event(cache.GetEventLoop(), BIND_THIS_METHOD(OnTimeout)) {}
@@ -273,7 +274,7 @@ NfsCacheStore::Destroy()
     timeout_event.Cancel();
 
     cache.RemoveRequest(*this);
-    DeleteUnrefPool(pool, this);
+    this->~NfsCacheStore();
 }
 
 void
@@ -508,13 +509,14 @@ NfsCache::OpenFile(struct pool &caller_pool,
     /* move all this stuff to a new pool, so istream_tee's second head
        can continue to fill the cache even if our caller gave up on
        it */
-    struct pool *pool2 = pool_new_linear(pool, "nfs_cache_tee", 1024);
-    auto store = NewFromPool<NfsCacheStore>(*pool2, *pool2, *this,
-                                            p_strdup(pool2, key), st);
+    auto store = NewFromPool<NfsCacheStore>(PoolPtr(PoolPtr::donate,
+                                                    *pool_new_linear(pool, "nfs_cache_tee", 1024)),
+                                            *this,
+                                            key, st);
 
     /* tee the body: one goes to our client, and one goes into the
        cache */
-    auto tee = istream_tee_new(*pool2, std::move(body),
+    auto tee = istream_tee_new(store->GetPool(), std::move(body),
                                event_loop,
                                false, true,
                                /* just in case our handler closes the
@@ -527,7 +529,7 @@ NfsCache::OpenFile(struct pool &caller_pool,
 
     store->timeout_event.Add(nfs_cache_timeout);
 
-    sink_rubber_new(*pool2, std::move(tee.second),
+    sink_rubber_new(store->GetPool(), std::move(tee.second),
                     rubber, cacheable_size_limit,
                     *store,
                     store->cancel_ptr);
