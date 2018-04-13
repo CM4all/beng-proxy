@@ -91,6 +91,9 @@ Context::ShutdownCallback()
         sink_fd_close(body);
     else
         cancel_ptr.Cancel();
+
+    if (client != nullptr)
+        nfs_client_free(std::exchange(client, nullptr));
 }
 
 /*
