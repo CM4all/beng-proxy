@@ -34,6 +34,7 @@
 #include "FacadeIstream.hxx"
 #include "UnusedPtr.hxx"
 #include "pool/pool.hxx"
+#include "util/DestructObserver.hxx"
 #include "util/StringView.hxx"
 
 #include <assert.h>
@@ -51,7 +52,7 @@ struct SubstNode {
     } leaf;
 };
 
-class SubstIstream final : public FacadeIstream {
+class SubstIstream final : public FacadeIstream, DestructAnchor {
     bool had_input, had_output;
 
     bool send_first;
@@ -64,9 +65,6 @@ class SubstIstream final : public FacadeIstream {
     enum {
         /** searching the first matching character */
         STATE_NONE,
-
-        /** the istream has been closed */
-        STATE_CLOSED,
 
         /** at least the first character was found, checking for the
             rest */
@@ -300,9 +298,7 @@ SubstIstream::FeedMismatch() noexcept
         send_first = false;
     }
 
-    pool_ref(&GetPool());
     const size_t nbytes = Feed(mismatch.data, mismatch.size);
-    pool_unref(&GetPool());
     if (nbytes == 0)
         return true;
 
@@ -342,10 +338,14 @@ size_t
 SubstIstream::ForwardSourceData(const char *start,
                                 const char *p, size_t length) noexcept
 {
+    const DestructObserver destructed(*this);
+
     size_t nbytes = InvokeData(p, length);
-    if (nbytes == 0 && state == STATE_CLOSED)
+    if (destructed) {
         /* stream has been closed - we must return 0 */
+        assert(nbytes == 0);
         return 0;
+    }
 
     had_output = true;
 
@@ -362,8 +362,10 @@ inline size_t
 SubstIstream::ForwardSourceDataFinal(const char *start,
                                      const char *end, const char *p) noexcept
 {
+    const DestructObserver destructed(*this);
+
     size_t nbytes = InvokeData(p, end - p);
-    if (nbytes > 0 || state != STATE_CLOSED) {
+    if (nbytes > 0 || !destructed) {
         had_output = true;
         nbytes += (p - start);
     }
@@ -375,6 +377,8 @@ size_t
 SubstIstream::Feed(const void *_data, size_t length) noexcept
 {
     assert(input.IsDefined());
+
+    const DestructObserver destructed(*this);
 
     const char *const data0 = (const char *)_data, *data = data0, *p = data0,
         *const end = p + length, *first = nullptr;
@@ -407,9 +411,6 @@ SubstIstream::Feed(const void *_data, size_t length) noexcept
 
             /* XXX check if match is full */
             break;
-
-        case STATE_CLOSED:
-            assert(0);
 
         case STATE_MATCH:
             /* now see if the rest matches; note that max_compare may be
@@ -501,7 +502,7 @@ SubstIstream::Feed(const void *_data, size_t length) noexcept
                     mismatch = {n->leaf.a, a_match};
 
                     if (FeedMismatch())
-                        return state == STATE_CLOSED ? 0 : data - data0;
+                        return destructed ? 0 : data - data0;
                 }
             }
 
@@ -512,7 +513,7 @@ SubstIstream::Feed(const void *_data, size_t length) noexcept
 
             const size_t nbytes = TryWriteB();
             if (nbytes > 0) {
-                if (state == STATE_CLOSED)
+                if (destructed)
                     return 0;
 
                 assert(state == STATE_INSERT);
@@ -579,9 +580,6 @@ SubstIstream::OnEof() noexcept
     case STATE_NONE:
         break;
 
-    case STATE_CLOSED:
-        assert(0);
-
     case STATE_MATCH:
         /* we're in the middle of a match, technically making this a
            mismatch because we reach end of file before end of
@@ -604,18 +602,14 @@ SubstIstream::OnEof() noexcept
         break;
     }
 
-    if (state == STATE_NONE) {
-        state = STATE_CLOSED;
+    if (state == STATE_NONE)
         DestroyEof();
-    }
 }
 
 void
 SubstIstream::OnError(std::exception_ptr ep) noexcept
 {
     assert(input.IsDefined());
-
-    state = STATE_CLOSED;
 
     input.Clear();
     DestroyError(ep);
@@ -644,25 +638,21 @@ SubstIstream::_Read() noexcept
         size_t nbytes;
 
     case STATE_NONE:
-    case STATE_MATCH:
+    case STATE_MATCH: {
         assert(input.IsDefined());
 
         had_output = false;
 
-        pool_ref(&GetPool());
+        const DestructObserver destructed(*this);
 
         do {
             had_input = false;
             input.Read();
-        } while (input.IsDefined() && had_input &&
+        } while (!destructed && input.IsDefined() && had_input &&
                  !had_output && state != STATE_INSERT);
 
-        pool_unref(&GetPool());
-
         return;
-
-    case STATE_CLOSED:
-        assert(0);
+    }
 
     case STATE_INSERT:
         nbytes = TryWriteB();
@@ -671,17 +661,13 @@ SubstIstream::_Read() noexcept
         break;
     }
 
-    if (state == STATE_NONE && !input.IsDefined()) {
-        state = STATE_CLOSED;
+    if (state == STATE_NONE && !input.IsDefined())
         DestroyEof();
-    }
 }
 
 void
 SubstIstream::_Close() noexcept
 {
-    state = STATE_CLOSED;
-
     if (input.IsDefined())
         input.ClearAndClose();
 
