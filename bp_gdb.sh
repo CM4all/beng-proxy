@@ -1,4 +1,4 @@
 #!/bin/sh
 set -e
-ninja -C build cm4all-beng-proxy
-exec gdb -x gdbrun --args ./build/cm4all-beng-proxy -vvvvv "$@"
+ninja -C output/asan cm4all-beng-proxy
+exec gdb -x gdbrun --args ./output/asan/cm4all-beng-proxy -vvvvv "$@"
