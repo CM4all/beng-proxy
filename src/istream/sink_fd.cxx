@@ -38,13 +38,14 @@
 #include "io/Splice.hxx"
 #include "io/FileDescriptor.hxx"
 #include "event/SocketEvent.hxx"
+#include "util/LeakDetector.hxx"
 
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <unistd.h>
 #include <errno.h>
 
-struct SinkFd final : IstreamSink {
+struct SinkFd final : IstreamSink, LeakDetector {
     struct pool *pool;
 
     FileDescriptor fd;
@@ -84,6 +85,10 @@ struct SinkFd final : IstreamSink {
         ScheduleWrite();
     }
 
+    void Destroy() noexcept {
+        this->~SinkFd();
+    }
+
     bool IsDefined() const {
         return input.IsDefined();
     }
@@ -94,6 +99,7 @@ struct SinkFd final : IstreamSink {
 
     void Close() {
         input.Close();
+        Destroy();
     }
 
     void ScheduleWrite() {
@@ -134,8 +140,10 @@ SinkFd::OnData(const void *data, size_t length)
         return 0;
     } else {
         event.Delete();
-        if (handler->send_error(errno, handler_ctx))
+        if (handler->send_error(errno, handler_ctx)) {
             input.Close();
+            Destroy();
+        }
         return 0;
     }
 }
@@ -179,6 +187,7 @@ SinkFd::OnEof() noexcept
     event.Delete();
 
     handler->input_eof(handler_ctx);
+    Destroy();
 }
 
 void
@@ -193,6 +202,7 @@ SinkFd::OnError(std::exception_ptr ep) noexcept
     event.Delete();
 
     handler->input_error(ep, handler_ctx);
+    Destroy();
 }
 
 /*
