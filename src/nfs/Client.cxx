@@ -106,7 +106,7 @@ class NfsFileHandle final
         PENDING_CLOSED,
 
         RELEASED,
-    } state;
+    } state = WAITING;
 
     NfsClientOpenFileHandler *open_handler;
     NfsClientReadFileHandler *read_handler;
