@@ -82,12 +82,16 @@ struct NfsCacheStore final
     NfsCacheStore(PoolPtr &&_pool, NfsCache &_cache,
                   const char *_key, const struct stat &_st);
 
-    using PoolHolder::GetPool;
+    ~NfsCacheStore() noexcept;
 
     /**
      * Release resources held by this request.
      */
-    void Destroy();
+    void Destroy() {
+        this->~NfsCacheStore();
+    }
+
+    using PoolHolder::GetPool;
 
     /**
      * Abort the request.
@@ -266,15 +270,13 @@ NfsCacheStore::NfsCacheStore(PoolPtr &&_pool, NfsCache &_cache,
      stat(_st),
      timeout_event(cache.GetEventLoop(), BIND_THIS_METHOD(OnTimeout)) {}
 
-void
-NfsCacheStore::Destroy()
+NfsCacheStore::~NfsCacheStore() noexcept
 {
     assert(!cancel_ptr);
 
     timeout_event.Cancel();
 
     cache.RemoveRequest(*this);
-    this->~NfsCacheStore();
 }
 
 void
