@@ -203,7 +203,7 @@ struct NfsCacheItem final : CacheItem {
     /* virtual methods from class CacheItem */
     void Destroy() override {
         pool_trash(pool);
-        DeleteFromPool(pool, this);
+        this->~NfsCacheItem();
     }
 };
 
