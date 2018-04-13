@@ -45,9 +45,7 @@
 #include <string.h>
 #include <unistd.h>
 
-class PConnectSocket final : Cancellable, ConnectSocketHandler {
-    PoolPtr pool;
-
+class PConnectSocket final : PoolHolder, Cancellable, ConnectSocketHandler {
     ConnectSocket connect;
 
 #ifdef ENABLE_STOPWATCH
@@ -64,7 +62,7 @@ public:
 #endif
                    ConnectSocketHandler &_handler,
                    CancellablePointer &cancel_ptr)
-        :pool(std::move(_pool)),
+        :PoolHolder(std::move(_pool)),
          connect(event_loop, *this),
 #ifdef ENABLE_STOPWATCH
          stopwatch(_stopwatch),

@@ -75,7 +75,7 @@ static constexpr size_t MAX_READ_FILE = 256;
 struct TranslateCachePerHost;
 struct TranslateCachePerSite;
 
-struct TranslateCacheItem final : CacheItem {
+struct TranslateCacheItem final : PoolHolder, CacheItem {
     static constexpr auto link_mode = boost::intrusive::normal_link;
     typedef boost::intrusive::link_mode<link_mode> LinkMode;
 
@@ -97,8 +97,6 @@ struct TranslateCacheItem final : CacheItem {
      */
     SiblingsHook per_site_siblings;
     TranslateCachePerSite *per_site = nullptr;
-
-    const PoolPtr pool;
 
     struct {
         const char *param;
@@ -127,10 +125,12 @@ struct TranslateCacheItem final : CacheItem {
     UniqueRegex regex, inverse_regex;
 
     TranslateCacheItem(PoolPtr &&_pool, std::chrono::seconds max_age)
-        :CacheItem(max_age, 1),
-         pool(std::move(_pool)) {}
+        :PoolHolder(std::move(_pool)),
+         CacheItem(max_age, 1) {}
 
     TranslateCacheItem(const TranslateCacheItem &) = delete;
+
+    using PoolHolder::GetPool;
 
     gcc_pure
     bool MatchSite(const char *_site) const {
@@ -1168,58 +1168,60 @@ tcache_store(TranslateCacheRequest &tcr, const TranslateResponse &response)
                                                                tcr.tcache->slice_pool),
                                                 max_age);
 
+    auto &pool = item->GetPool();
+
     item->request.param =
-        tcache_vary_copy(item->pool, tcr.request.param,
+        tcache_vary_copy(&pool, tcr.request.param,
                          response, TranslationCommand::PARAM);
 
     item->request.session =
-        tcache_vary_copy(item->pool, tcr.request.session,
+        tcache_vary_copy(pool, tcr.request.session,
                          response, TranslationCommand::SESSION);
 
     item->request.listener_tag =
-        tcache_vary_copy(item->pool, tcr.request.listener_tag,
+        tcache_vary_copy(&pool, tcr.request.listener_tag,
                          response, TranslationCommand::LISTENER_TAG);
 
     item->request.local_address =
         !tcr.request.local_address.IsNull() &&
         (response.VaryContains(TranslationCommand::LOCAL_ADDRESS) ||
          response.VaryContains(TranslationCommand::LOCAL_ADDRESS_STRING))
-        ? DupAddress(item->pool, tcr.request.local_address)
+        ? DupAddress(pool, tcr.request.local_address)
         : nullptr;
 
-    tcache_vary_copy(item->pool, tcr.request.remote_host,
+    tcache_vary_copy(&pool, tcr.request.remote_host,
                      response, TranslationCommand::REMOTE_HOST);
     item->request.remote_host =
-        tcache_vary_copy(item->pool, tcr.request.remote_host,
+        tcache_vary_copy(&pool, tcr.request.remote_host,
                          response, TranslationCommand::REMOTE_HOST);
-    item->request.host = tcache_vary_copy(item->pool, tcr.request.host,
+    item->request.host = tcache_vary_copy(&pool, tcr.request.host,
                                           response, TranslationCommand::HOST);
     item->request.accept_language =
-        tcache_vary_copy(item->pool, tcr.request.accept_language,
+        tcache_vary_copy(&pool, tcr.request.accept_language,
                          response, TranslationCommand::LANGUAGE);
     item->request.user_agent =
-        tcache_vary_copy(item->pool, tcr.request.user_agent,
+        tcache_vary_copy(&pool, tcr.request.user_agent,
                          response, TranslationCommand::USER_AGENT);
     item->request.ua_class =
-        tcache_vary_copy(item->pool, tcr.request.ua_class,
+        tcache_vary_copy(&pool, tcr.request.ua_class,
                          response, TranslationCommand::UA_CLASS);
     item->request.query_string =
-        tcache_vary_copy(item->pool, tcr.request.query_string,
+        tcache_vary_copy(&pool, tcr.request.query_string,
                          response, TranslationCommand::QUERY_STRING);
     item->request.internal_redirect =
-        tcache_vary_copy(item->pool, tcr.request.internal_redirect,
+        tcache_vary_copy(pool, tcr.request.internal_redirect,
                          response, TranslationCommand::INTERNAL_REDIRECT);
     item->request.enotdir =
-        tcache_vary_copy(item->pool, tcr.request.enotdir,
+        tcache_vary_copy(pool, tcr.request.enotdir,
                          response, TranslationCommand::ENOTDIR_);
     item->request.user =
-        tcache_vary_copy(item->pool, tcr.request.user,
+        tcache_vary_copy(&pool, tcr.request.user,
                          response, TranslationCommand::USER);
 
     const char *key;
 
     try {
-        key = tcache_store_response(item->pool, item->response, response,
+        key = tcache_store_response(pool, item->response, response,
                                     tcr.request);
     } catch (...) {
         item->Destroy();
@@ -1230,7 +1232,7 @@ tcache_store(TranslateCacheRequest &tcr, const TranslateResponse &response)
            item->response.address.IsValidBase());
 
     if (key == nullptr)
-        key = p_strdup(item->pool, tcr.key);
+        key = p_strdup(pool, tcr.key);
 
     LogConcat(4, "TranslationCache", "store ", key);
 

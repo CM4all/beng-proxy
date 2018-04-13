@@ -43,9 +43,8 @@ struct WidgetResolver;
 
 struct WidgetResolverListener final
     : public boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>,
+      PoolHolder,
       Cancellable {
-
-    const PoolPtr pool;
 
     WidgetResolver &resolver;
 
@@ -59,7 +58,7 @@ struct WidgetResolverListener final
     WidgetResolverListener(P &&_pool, WidgetResolver &_resolver,
                            WidgetResolverCallback _callback,
                            CancellablePointer &cancel_ptr)
-        :pool(std::forward<P>(_pool)), resolver(_resolver),
+        :PoolHolder(std::forward<P>(_pool)), resolver(_resolver),
          callback(_callback) {
         cancel_ptr = *this;
     }

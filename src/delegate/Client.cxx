@@ -47,24 +47,22 @@
 #include <string.h>
 #include <sys/socket.h>
 
-struct DelegateClient final : Cancellable {
+struct DelegateClient final : PoolHolder, Cancellable {
     struct lease_ref lease_ref;
     const int fd;
     SocketEvent event;
-
-    const PoolPtr pool;
 
     DelegateHandler &handler;
 
     DelegateClient(EventLoop &event_loop, int _fd, Lease &lease,
                    struct pool &_pool,
                    DelegateHandler &_handler)
-        :fd(_fd), event(event_loop, fd, SocketEvent::READ,
+        :PoolHolder(_pool),
+         fd(_fd), event(event_loop, fd, SocketEvent::READ,
                         BIND_THIS_METHOD(SocketEventCallback)),
-         pool(_pool),
          handler(_handler) {
         p_lease_ref_set(lease_ref, lease,
-                        _pool, "delegate_client_lease");
+                        pool, "delegate_client_lease");
 
         event.Add();
     }

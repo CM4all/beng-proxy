@@ -42,9 +42,7 @@
 #include "rubber.hxx"
 #include "pool/pool.hxx"
 
-struct HttpCacheItem final : HttpCacheDocument, CacheItem {
-    const PoolPtr pool;
-
+struct HttpCacheItem final : PoolHolder, HttpCacheDocument, CacheItem {
     size_t size;
 
     const RubberAllocation body;
@@ -56,17 +54,19 @@ struct HttpCacheItem final : HttpCacheDocument, CacheItem {
                   const StringMap &_response_headers,
                   size_t _size,
                   RubberAllocation &&_body) noexcept
-        :HttpCacheDocument(_pool, _info, _request_headers,
+        :PoolHolder(std::move(_pool)),
+         HttpCacheDocument(pool, _info, _request_headers,
                            _status, _response_headers),
          CacheItem(http_cache_calc_expires(_info, vary),
-                   pool_netto_size(_pool) + _size),
-         pool(std::move(_pool)),
+                   pool_netto_size(pool) + _size),
          size(_size),
          body(std::move(_body)) {
     }
 
     HttpCacheItem(const HttpCacheItem &) = delete;
     HttpCacheItem &operator=(const HttpCacheItem &) = delete;
+
+    using PoolHolder::GetPool;
 
     UnusedIstreamPtr OpenStream(struct pool &_pool) {
         return istream_rubber_new(_pool, body.GetRubber(), body.GetId(),
@@ -111,7 +111,7 @@ HttpCacheHeap::Put(const char *url,
                                            size,
                                            std::move(a));
 
-    cache.PutMatch(p_strdup(item->pool, url), *item,
+    cache.PutMatch(p_strdup(&item->GetPool(), url), *item,
                    http_cache_item_match, &request_headers);
 }
 

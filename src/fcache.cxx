@@ -102,9 +102,7 @@ struct FilterCacheInfo {
     FilterCacheInfo &operator=(const FilterCacheInfo &) = delete;
 };
 
-struct FilterCacheItem final : CacheItem, LeakDetector {
-    const PoolPtr pool;
-
+struct FilterCacheItem final : PoolHolder, CacheItem, LeakDetector {
     const FilterCacheInfo info;
 
     const http_status_t status;
@@ -118,8 +116,9 @@ struct FilterCacheItem final : CacheItem, LeakDetector {
                     http_status_t _status, const StringMap &_headers,
                     size_t _size, RubberAllocation &&_body,
                     std::chrono::system_clock::time_point _expires)
-        :CacheItem(_expires, pool_netto_size(_pool) + _size),
-         pool(std::move(_pool)), info(pool, _info),
+        :PoolHolder(std::move(_pool)),
+         CacheItem(_expires, pool_netto_size(pool) + _size),
+         info(pool, _info),
          status(_status), headers(pool, _headers),
          size(_size), body(std::move(_body)) {
     }
@@ -133,7 +132,8 @@ struct FilterCacheItem final : CacheItem, LeakDetector {
 };
 
 class FilterCacheRequest final
-    : HttpResponseHandler, RubberSinkHandler, Cancellable, LeakDetector {
+    : PoolHolder, HttpResponseHandler, RubberSinkHandler,
+      Cancellable, LeakDetector {
 
 public:
     static constexpr auto link_mode = boost::intrusive::auto_unlink;
@@ -142,7 +142,6 @@ public:
     SiblingsHook siblings;
 
 private:
-    const PoolPtr pool;
     PoolPtr caller_pool;
     FilterCache &cache;
     HttpResponseHandler &handler;
@@ -305,7 +304,7 @@ FilterCacheRequest::FilterCacheRequest(PoolPtr &&_pool,
                                        FilterCache &_cache,
                                        HttpResponseHandler &_handler,
                                        const FilterCacheInfo &_info)
-    :pool(std::move(_pool)), caller_pool(_caller_pool),
+    :PoolHolder(std::move(_pool)), caller_pool(_caller_pool),
      cache(_cache),
      handler(_handler),
      info(pool, _info),
