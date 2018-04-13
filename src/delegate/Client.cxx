@@ -52,7 +52,7 @@ struct DelegateClient final : Cancellable {
     const int fd;
     SocketEvent event;
 
-    struct pool &pool;
+    const PoolPtr pool;
 
     DelegateHandler &handler;
 
@@ -67,10 +67,6 @@ struct DelegateClient final : Cancellable {
                         _pool, "delegate_client_lease");
 
         event.Add();
-    }
-
-    ~DelegateClient() {
-        pool_unref(&pool);
     }
 
     void Destroy() {
@@ -276,7 +272,6 @@ delegate_open(EventLoop &event_loop, int fd, Lease &lease,
                                          *pool,
                                          handler);
 
-    pool_ref(pool);
 
     cancel_ptr = *d;
 }
