@@ -114,11 +114,11 @@ struct NfsCache {
     NfsStock &stock;
     EventLoop &event_loop;
 
+    Rubber rubber;
+
     Cache cache;
 
     TimerEvent compress_timer;
-
-    Rubber rubber;
 
     /**
      * A list of requests that are currently saving their contents to
@@ -354,9 +354,9 @@ NfsCache::NfsCache(struct pool &_pool, size_t max_size,
                    NfsStock &_stock, EventLoop &_event_loop)
     :pool(*pool_new_libc(&_pool, "nfs_cache")), stock(_stock),
      event_loop(_event_loop),
+     rubber(max_size),
      cache(event_loop, 65521, max_size * 7 / 8),
-     compress_timer(event_loop, BIND_THIS_METHOD(OnCompressTimer)),
-     rubber(max_size) {
+     compress_timer(event_loop, BIND_THIS_METHOD(OnCompressTimer)) {
     compress_timer.Add(nfs_cache_compress_interval);
 }
 
