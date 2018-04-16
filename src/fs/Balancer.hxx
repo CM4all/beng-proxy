@@ -49,7 +49,7 @@ class FilteredSocketStock;
  * balancing.
  */
 class FilteredSocketBalancer {
-    friend struct FilteredSocketBalancerRequest;
+    friend class FilteredSocketBalancerRequest;
 
     FilteredSocketStock &stock;
 

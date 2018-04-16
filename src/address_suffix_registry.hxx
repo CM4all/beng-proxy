@@ -36,7 +36,7 @@
 struct pool;
 struct tcache;
 struct ResourceAddress;
-struct SuffixRegistryHandler;
+class SuffixRegistryHandler;
 class CancellablePointer;
 
 /**

@@ -61,7 +61,7 @@
 
 static constexpr struct timeval nfs_cache_compress_interval = { 600, 0 };
 
-struct NfsCache;
+class NfsCache;
 struct NfsCacheItem;
 struct NfsCacheStore;
 

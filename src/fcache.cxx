@@ -216,7 +216,7 @@ private:
 };
 
 class FilterCache final : LeakDetector {
-    friend struct FilterCacheRequest;
+    friend class FilterCacheRequest;
 
     struct pool &pool;
     SlicePool slice_pool;

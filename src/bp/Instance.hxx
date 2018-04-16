@@ -70,7 +70,7 @@ class TranslateStock;
 class LhttpStock;
 struct FcgiStock;
 struct NfsStock;
-struct NfsCache;
+class NfsCache;
 class HttpCache;
 class FilterCache;
 

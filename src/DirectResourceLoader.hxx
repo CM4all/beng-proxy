@@ -40,7 +40,7 @@ class SpawnService;
 class StockMap;
 class LhttpStock;
 struct FcgiStock;
-struct NfsCache;
+class NfsCache;
 class TcpBalancer;
 class FilteredSocketBalancer;
 

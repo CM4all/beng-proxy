@@ -34,7 +34,7 @@
 #define BENG_PROXY_NFS_GLUE_HXX
 
 struct pool;
-struct NfsCache;
+class NfsCache;
 class HttpResponseHandler;
 class CancellablePointer;
 

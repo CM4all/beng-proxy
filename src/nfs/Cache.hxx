@@ -43,7 +43,7 @@
 struct pool;
 class UnusedIstreamPtr;
 class EventLoop;
-struct NfsCache;
+class NfsCache;
 struct NfsStock;
 struct NfsCacheHandle;
 class CancellablePointer;

@@ -41,9 +41,9 @@
 #include "util/Compiler.h"
 
 struct pool;
-struct StockMap;
+class StockMap;
 struct StockItem;
-struct StockGetHandler;
+class StockGetHandler;
 class CancellablePointer;
 class SocketFilterFactory;
 struct FilteredSocket;
