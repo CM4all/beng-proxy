@@ -4,6 +4,8 @@
 /*.debhelper
 /*.log
 
+/build/
+
 /cm4all-*/
 /libcm4all-*/
 /python-cm4all-*/

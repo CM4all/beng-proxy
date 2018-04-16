@@ -6,19 +6,19 @@
 
 MESON_OPTIONS = --prefix=/usr --werror
 
-build/debug/build.ninja: meson.build
+debian/build/debug/build.ninja: meson.build
 	rm -rf $(@D)
 	meson . $(@D) --buildtype debugoptimized $(MESON_OPTIONS)
 
-build/optimized/build.ninja: meson.build
+debian/build/optimized/build.ninja: meson.build
 	rm -rf $(@D)
 	meson . $(@D) --buildtype=debugoptimized $(MESON_OPTIONS) -Db_ndebug=true
 
-debian/stamp-build-debug: build/debug/build.ninja
+debian/stamp-build-debug: debian/build/debug/build.ninja
 	ninja -C $(<D) test
 	touch $@
 
-debian/stamp-build-optimized: build/optimized/build.ninja
+debian/stamp-build-optimized: debian/build/optimized/build.ninja
 	ninja -C $(<D) cm4all-beng-proxy
 	touch $@
 
