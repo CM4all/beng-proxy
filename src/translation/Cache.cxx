@@ -1468,7 +1468,7 @@ TranslateCacheItem::Destroy()
         per_site->Erase(*this);
 
     pool_trash(pool);
-    DeleteFromPool(pool, this);
+    this->~TranslateCacheItem();
 }
 
 /*
