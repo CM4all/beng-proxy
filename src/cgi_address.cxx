@@ -211,7 +211,7 @@ CgiAddress::SaveBase(AllocatorPtr alloc, const char *suffix) const
 {
     assert(suffix != nullptr);
 
-    size_t uri_length;
+    size_t uri_length = 0;
     if (uri != nullptr) {
         const char *end = UriFindUnescapedSuffix(uri, suffix);
         if (end == nullptr)
