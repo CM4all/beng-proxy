@@ -130,6 +130,20 @@ FilteredSocket::Init(SocketDescriptor fd, FdType fd_type,
 }
 
 void
+FilteredSocket::Init(SocketDescriptor fd, FdType fd_type) noexcept
+{
+    assert(!filter);
+
+    base.Init(fd, fd_type);
+
+#ifndef NDEBUG
+    ended = false;
+#endif
+
+    drained = true;
+}
+
+void
 FilteredSocket::Reinit(const struct timeval *read_timeout,
                        const struct timeval *write_timeout,
                        BufferedSocketHandler &_handler) noexcept

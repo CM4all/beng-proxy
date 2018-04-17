@@ -296,10 +296,7 @@ try {
         break;
 
     case parsed_url::HTTP:
-        fs.Init(fd.Release(), FdType::FD_TCP, nullptr, nullptr,
-                nullptr,
-                // TODO replace this dummy
-                *(BufferedSocketHandler *)nullptr);
+        fs.Init(fd.Release(), FdType::FD_TCP);
 
         http_client_request(*pool, fs,
                             *this,
@@ -312,12 +309,7 @@ try {
         break;
 
     case parsed_url::HTTPS:
-        fs.Init(fd.Release(), FdType::FD_TCP, nullptr, nullptr,
-                ssl_client_create(event_loop,
-                                  url.host.c_str(),
-                                  nullptr),
-                // TODO replace this dummy
-                *(BufferedSocketHandler *)nullptr);
+        fs.Init(fd.Release(), FdType::FD_TCP);
 
         http_client_request(*pool, fs,
                             *this,

@@ -75,6 +75,13 @@ struct FilteredSocket final : private BufferedSocketHandler {
               SocketFilterPtr filter,
               BufferedSocketHandler &handler) noexcept;
 
+    /**
+     * Initialize a "dummy" instance (without a filter) which cannot
+     * be used to schedule events (because there is no handler); the
+     * next Reinit() call finishes initialization.
+     */
+    void Init(SocketDescriptor _fd, FdType _fd_type) noexcept;
+
     void Reinit(const struct timeval *read_timeout,
                 const struct timeval *write_timeout,
                 BufferedSocketHandler &handler) noexcept;
