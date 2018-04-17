@@ -115,10 +115,10 @@ class Client:
     def send_fade_children(self, tag=None):
         self.send(CONTROL_FADE_CHILDREN, tag)
 
-    def send_enable_zeroconf(self, tag=None):
+    def send_enable_zeroconf(self):
         self.send(CONTROL_ENABLE_ZEROCONF)
 
-    def send_disable_zeroconf(self, tag=None):
+    def send_disable_zeroconf(self):
         self.send(CONTROL_DISABLE_ZEROCONF)
 
     def send_flush_nfs_cache(self):
