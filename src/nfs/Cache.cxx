@@ -157,6 +157,11 @@ public:
         rubber.ForkCow(inherit);
     }
 
+    void Flush() {
+        cache.Flush();
+        rubber.Compress();
+    }
+
     auto GetStats() const noexcept {
         return pool_children_stats(pool) + rubber.GetStats();
     }
@@ -424,6 +429,12 @@ void
 nfs_cache_fork_cow(NfsCache &cache, bool inherit) noexcept
 {
     cache.ForkCow(inherit);
+}
+
+void
+nfs_cache_flush(NfsCache &cache) noexcept
+{
+    cache.Flush();
 }
 
 inline void

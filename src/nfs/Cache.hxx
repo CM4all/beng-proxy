@@ -77,6 +77,9 @@ void
 nfs_cache_fork_cow(NfsCache &cache, bool inherit) noexcept;
 
 void
+nfs_cache_flush(NfsCache &cache) noexcept;
+
+void
 nfs_cache_request(struct pool &pool, NfsCache &cache,
                   const char *server, const char *export_name,
                   const char *path,
