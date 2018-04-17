@@ -174,6 +174,10 @@ BpInstance::ReloadEventCallback(int)
 
     if (filter_cache != nullptr)
         filter_cache_flush(*filter_cache);
+
+    if (nfs_cache != nullptr)
+        nfs_cache_flush(*nfs_cache);
+
     Compress();
 }
 
