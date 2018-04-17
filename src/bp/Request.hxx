@@ -466,8 +466,8 @@ public:
 
     /* virtual methods from class NfsCacheHandler */
     void OnNfsCacheResponse(NfsCacheHandle &handle,
-                            const struct stat &st) override;
-    void OnNfsCacheError(std::exception_ptr ep) override;
+                            const struct stat &st) noexcept override;
+    void OnNfsCacheError(std::exception_ptr ep) noexcept override;
 
     /* virtual methods from class SuffixRegistryHandler */
     void OnSuffixRegistrySuccess(const char *content_type,

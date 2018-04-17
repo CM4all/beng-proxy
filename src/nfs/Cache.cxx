@@ -87,7 +87,7 @@ struct NfsCacheStore final
     /**
      * Release resources held by this request.
      */
-    void Destroy() {
+    void Destroy() noexcept {
         this->~NfsCacheStore();
     }
 
@@ -96,11 +96,11 @@ struct NfsCacheStore final
     /**
      * Abort the request.
      */
-    void Abort();
+    void Abort() noexcept;
 
-    void Put(RubberAllocation &&a);
+    void Put(RubberAllocation &&a) noexcept;
 
-    void OnTimeout() {
+    void OnTimeout() noexcept {
         /* reading the response has taken too long already; don't store
            this resource */
         LogConcat(4, "NfsCache", "timeout ", key);
@@ -108,10 +108,10 @@ struct NfsCacheStore final
     }
 
     /* virtual methods from class RubberSinkHandler */
-    void RubberDone(RubberAllocation &&a, size_t size) override;
-    void RubberOutOfMemory() override;
-    void RubberTooLarge() override;
-    void RubberError(std::exception_ptr ep) override;
+    void RubberDone(RubberAllocation &&a, size_t size) noexcept override;
+    void RubberOutOfMemory() noexcept override;
+    void RubberTooLarge() noexcept override;
+    void RubberError(std::exception_ptr ep) noexcept override;
 };
 
 class NfsCache {
@@ -274,7 +274,7 @@ NfsCacheStore::~NfsCacheStore() noexcept
 }
 
 void
-NfsCacheStore::Abort()
+NfsCacheStore::Abort() noexcept
 {
     assert(cancel_ptr);
 
@@ -283,7 +283,7 @@ NfsCacheStore::Abort()
 }
 
 void
-NfsCacheStore::Put(RubberAllocation &&a)
+NfsCacheStore::Put(RubberAllocation &&a) noexcept
 {
     LogConcat(4, "NfsCache", "put ", key);
 
@@ -301,7 +301,7 @@ NfsCacheStore::Put(RubberAllocation &&a)
  */
 
 void
-NfsCacheStore::RubberDone(RubberAllocation &&a, gcc_unused size_t size)
+NfsCacheStore::RubberDone(RubberAllocation &&a, gcc_unused size_t size) noexcept
 {
     assert((off_t)size == stat.st_size);
 
@@ -315,7 +315,7 @@ NfsCacheStore::RubberDone(RubberAllocation &&a, gcc_unused size_t size)
 }
 
 void
-NfsCacheStore::RubberOutOfMemory()
+NfsCacheStore::RubberOutOfMemory() noexcept
 {
     cancel_ptr = nullptr;
 
@@ -324,7 +324,7 @@ NfsCacheStore::RubberOutOfMemory()
 }
 
 void
-NfsCacheStore::RubberTooLarge()
+NfsCacheStore::RubberTooLarge() noexcept
 {
     cancel_ptr = nullptr;
 
@@ -333,7 +333,7 @@ NfsCacheStore::RubberTooLarge()
 }
 
 void
-NfsCacheStore::RubberError(std::exception_ptr ep)
+NfsCacheStore::RubberError(std::exception_ptr ep) noexcept
 {
     cancel_ptr = nullptr;
 
@@ -407,7 +407,7 @@ nfs_cache_new(struct pool &_pool, size_t max_size,
 }
 
 void
-nfs_cache_free(NfsCache *cache)
+nfs_cache_free(NfsCache *cache) noexcept
 {
     assert(cache != nullptr);
 
@@ -415,13 +415,13 @@ nfs_cache_free(NfsCache *cache)
 }
 
 AllocatorStats
-nfs_cache_get_stats(const NfsCache &cache)
+nfs_cache_get_stats(const NfsCache &cache) noexcept
 {
     return cache.GetStats();
 }
 
 void
-nfs_cache_fork_cow(NfsCache &cache, bool inherit)
+nfs_cache_fork_cow(NfsCache &cache, bool inherit) noexcept
 {
     cache.ForkCow(inherit);
 }
@@ -462,7 +462,7 @@ void
 nfs_cache_request(struct pool &pool, NfsCache &cache,
                   const char *server, const char *_export, const char *path,
                   NfsCacheHandler &handler,
-                  CancellablePointer &cancel_ptr)
+                  CancellablePointer &cancel_ptr) noexcept
 {
     cache.Request(pool, server, _export, path, handler, cancel_ptr);
 }
@@ -470,7 +470,7 @@ nfs_cache_request(struct pool &pool, NfsCache &cache,
 static UnusedIstreamPtr
 nfs_cache_item_open(struct pool &pool,
                     NfsCacheItem &item,
-                    uint64_t start, uint64_t end)
+                    uint64_t start, uint64_t end) noexcept
 {
     assert(start <= end);
     assert(end <= (uint64_t)item.stat.st_size);
@@ -535,7 +535,7 @@ NfsCache::OpenFile(struct pool &caller_pool,
 
 UnusedIstreamPtr
 nfs_cache_handle_open(struct pool &pool, NfsCacheHandle &handle,
-                      uint64_t start, uint64_t end)
+                      uint64_t start, uint64_t end) noexcept
 {
     assert((handle.file == nullptr) != (handle.item == nullptr));
     assert(start <= end);

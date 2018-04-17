@@ -54,7 +54,8 @@
  */
 
 void
-Request::OnNfsCacheResponse(NfsCacheHandle &handle, const struct stat &st)
+Request::OnNfsCacheResponse(NfsCacheHandle &handle,
+                            const struct stat &st) noexcept
 {
     const TranslateResponse *const tr = translate.response;
 
@@ -121,7 +122,7 @@ Request::OnNfsCacheResponse(NfsCacheHandle &handle, const struct stat &st)
 }
 
 void
-Request::OnNfsCacheError(std::exception_ptr ep)
+Request::OnNfsCacheError(std::exception_ptr ep) noexcept
 {
     LogDispatchError(ep);
 }
@@ -132,7 +133,7 @@ Request::OnNfsCacheError(std::exception_ptr ep)
  */
 
 void
-nfs_handler(Request &request2)
+nfs_handler(Request &request2) noexcept
 {
     const auto &request = request2.request;
     struct pool &pool = request2.pool;

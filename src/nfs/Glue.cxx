@@ -57,15 +57,16 @@ struct NfsRequest final : NfsCacheHandler {
 
     /* virtual methods from NfsCacheHandler */
     void OnNfsCacheResponse(NfsCacheHandle &handle,
-                            const struct stat &st) override;
+                            const struct stat &st) noexcept override;
 
-    void OnNfsCacheError(std::exception_ptr ep) override {
+    void OnNfsCacheError(std::exception_ptr ep) noexcept override {
         handler.InvokeError(ep);
     }
 };
 
 void
-NfsRequest::OnNfsCacheResponse(NfsCacheHandle &handle, const struct stat &st)
+NfsRequest::OnNfsCacheResponse(NfsCacheHandle &handle,
+                               const struct stat &st) noexcept
 {
     auto headers = static_response_headers(pool, -1, st,
                                            content_type);

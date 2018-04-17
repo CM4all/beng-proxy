@@ -39,6 +39,6 @@ struct Request;
  * Serve HTTP requests from a NFS server.
  */
 void
-nfs_handler(Request &request);
+nfs_handler(Request &request) noexcept;
 
 #endif

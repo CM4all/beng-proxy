@@ -53,36 +53,38 @@ struct AllocatorStats;
 class NfsCacheHandler {
 public:
     virtual void OnNfsCacheResponse(NfsCacheHandle &handle,
-                                    const struct stat &st) = 0;
-    virtual void OnNfsCacheError(std::exception_ptr ep) = 0;
+                                    const struct stat &st) noexcept = 0;
+    virtual void OnNfsCacheError(std::exception_ptr ep) noexcept = 0;
 };
 
 /**
  * A cache for NFS files.
+ *
+ * Throws on error.
  */
 NfsCache *
 nfs_cache_new(struct pool &pool, size_t max_size, NfsStock &stock,
               EventLoop &event_loop);
 
 void
-nfs_cache_free(NfsCache *cache);
+nfs_cache_free(NfsCache *cache) noexcept;
 
 gcc_pure
 AllocatorStats
-nfs_cache_get_stats(const NfsCache &cache);
+nfs_cache_get_stats(const NfsCache &cache) noexcept;
 
 void
-nfs_cache_fork_cow(NfsCache &cache, bool inherit);
+nfs_cache_fork_cow(NfsCache &cache, bool inherit) noexcept;
 
 void
 nfs_cache_request(struct pool &pool, NfsCache &cache,
                   const char *server, const char *export_name,
                   const char *path,
                   NfsCacheHandler &handler,
-                  CancellablePointer &cancel_ptr);
+                  CancellablePointer &cancel_ptr) noexcept;
 
 UnusedIstreamPtr
 nfs_cache_handle_open(struct pool &pool, NfsCacheHandle &handle,
-                      uint64_t start, uint64_t end);
+                      uint64_t start, uint64_t end) noexcept;
 
 #endif
