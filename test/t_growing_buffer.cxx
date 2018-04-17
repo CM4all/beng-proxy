@@ -179,7 +179,8 @@ TEST(GrowingBufferTest, Normal)
     const ScopeFbPoolInit fb_pool_init;
     TestPool pool;
 
-    run_istream(&pool.Steal(), create_test(pool));
+    auto istream = create_test(pool);
+    run_istream(&pool.Steal(), std::move(istream));
 }
 
 /** empty input */
@@ -188,7 +189,8 @@ TEST(GrowingBufferTest, Empty)
     const ScopeFbPoolInit fb_pool_init;
     TestPool pool;
 
-    run_istream(&pool.Steal(), create_empty(pool));
+    auto istream = create_empty(pool);
+    run_istream(&pool.Steal(), std::move(istream));
 }
 
 /** first buffer is too small, empty */
