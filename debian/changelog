@@ -1,6 +1,6 @@
 cm4all-beng-proxy (13.12) unstable; urgency=low
 
-  * 
+  * cgi: fix crash bug
 
  --   
 
