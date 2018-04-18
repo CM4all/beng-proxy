@@ -75,9 +75,7 @@ CGIParser::Finish(ForeignFifoBuffer<uint8_t> &buffer)
     if (IsTooMuch(buffer.GetAvailable()))
         throw CgiError("too much data from CGI script");
 
-#ifndef NDEBUG
     finished = true;
-#endif
     return Completion::DONE;
 }
 
