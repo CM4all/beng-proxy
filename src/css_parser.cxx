@@ -77,7 +77,7 @@ struct CssParser final : PoolHolder, IstreamSink, DestructAnchor {
 
     off_t position;
 
-    const CssParserHandler *const handler;
+    const CssParserHandler &handler;
     void *const handler_ctx;
 
     /* internal state */
@@ -137,13 +137,13 @@ struct CssParser final : PoolHolder, IstreamSink, DestructAnchor {
 
     void OnEof() noexcept override {
         input.Clear();
-        handler->eof(handler_ctx, position);
+        handler.eof(handler_ctx, position);
         Destroy();
     }
 
     void OnError(std::exception_ptr ep) noexcept override {
         input.Clear();
-        handler->error(ep, handler_ctx);
+        handler.error(ep, handler_ctx);
         Destroy();
     }
 };
@@ -175,12 +175,12 @@ CssParser::Feed(const char *start, size_t length)
                     /* start of block */
                     state = State::BLOCK;
 
-                    if (handler->block != nullptr)
-                        handler->block(handler_ctx);
+                    if (handler.block != nullptr)
+                        handler.block(handler_ctx);
                     break;
 
                 case '.':
-                    if (handler->class_name != nullptr) {
+                    if (handler.class_name != nullptr) {
                         state = State::CLASS_NAME;
                         name_start = position + (off_t)(buffer - start) + 1;
                         name_buffer.clear();
@@ -189,7 +189,7 @@ CssParser::Feed(const char *start, size_t length)
                     break;
 
                 case '#':
-                    if (handler->xml_id != nullptr) {
+                    if (handler.xml_id != nullptr) {
                         state = State::XML_ID;
                         name_start = position + (off_t)(buffer - start) + 1;
                         name_buffer.clear();
@@ -198,7 +198,7 @@ CssParser::Feed(const char *start, size_t length)
                     break;
 
                 case '@':
-                    if (handler->import != nullptr) {
+                    if (handler.import != nullptr) {
                         state = State::AT;
                         name_buffer.clear();
                     }
@@ -221,7 +221,7 @@ CssParser::Feed(const char *start, size_t length)
                         };
 
                         name.value = name_buffer;
-                        handler->class_name(&name,handler_ctx);
+                        handler.class_name(&name,handler_ctx);
                     }
 
                     state = State::NONE;
@@ -246,7 +246,7 @@ CssParser::Feed(const char *start, size_t length)
                         };
 
                         name.value = name_buffer;
-                        handler->xml_id(&name, handler_ctx);
+                        handler.xml_id(&name, handler_ctx);
                     }
 
                     state = State::NONE;
@@ -286,7 +286,7 @@ CssParser::Feed(const char *start, size_t length)
 
                 default:
                     if (is_css_ident_start(*buffer) &&
-                        handler->property_keyword != nullptr) {
+                        handler.property_keyword != nullptr) {
                         state = State::PROPERTY;
                         name_start = position + (off_t)(buffer - start);
                         name_buffer.clear();
@@ -391,15 +391,15 @@ CssParser::Feed(const char *start, size_t length)
 
                 case ';':
                     if (!name_buffer.empty()) {
-                        assert(handler->property_keyword != nullptr);
+                        assert(handler.property_keyword != nullptr);
 
                         name_buffer.push_back('\0');
 
-                        handler->property_keyword(name_buffer.raw(),
-                                                  value_buffer,
-                                                  name_start,
-                                                  position + (off_t)(buffer - start) + 1,
-                                                  handler_ctx);
+                        handler.property_keyword(name_buffer.raw(),
+                                                 value_buffer,
+                                                 name_start,
+                                                 position + (off_t)(buffer - start) + 1,
+                                                 handler_ctx);
                     }
 
                     state = State::BLOCK;
@@ -416,7 +416,7 @@ CssParser::Feed(const char *start, size_t length)
                         break;
 
                     value_buffer.push_back(*buffer);
-                    if (handler->url != nullptr &&
+                    if (handler.url != nullptr &&
                         at_url_start(value_buffer.raw(),
                                      value_buffer.size()))
                         state = State::PRE_URL;
@@ -478,7 +478,7 @@ CssParser::Feed(const char *start, size_t length)
                 url.value = url_buffer;
 
                 const DestructObserver destructed(*this);
-                handler->url(&url, handler_ctx);
+                handler.url(&url, handler_ctx);
                 if (destructed)
                     return 0;
             }
@@ -545,7 +545,7 @@ CssParser::Feed(const char *start, size_t length)
                 url.value = url_buffer;
 
                 const DestructObserver destructed(*this);
-                handler->import(&url, handler_ctx);
+                handler.import(&url, handler_ctx);
                 if (destructed)
                     return 0;
             }
@@ -568,7 +568,7 @@ CssParser::CssParser(struct pool &_pool, UnusedIstreamPtr _input, bool _block,
                      void *_handler_ctx)
     :PoolHolder(_pool), IstreamSink(std::move(_input)), block(_block),
      position(0),
-     handler(&_handler), handler_ctx(_handler_ctx),
+     handler(_handler), handler_ctx(_handler_ctx),
      state(block ? State::BLOCK : State::NONE)
 {
 }
