@@ -307,8 +307,12 @@ static constexpr TranslateHandler my_translate_handler = {
 };
 
 static void
-test_basic(struct pool *pool, struct tcache *cache)
+test_basic()
 {
+    Instance instance;
+    struct pool *pool = instance.root_pool;
+    auto *cache = instance.cache;
+
     CancellablePointer cancel_ptr;
 
     const auto request1 = MakeRequest("/");
@@ -391,8 +395,12 @@ test_basic(struct pool *pool, struct tcache *cache)
  * 4.0.30.
  */
 static void
-test_base_root(struct pool *pool, struct tcache *cache)
+test_base_root()
 {
+    Instance instance;
+    struct pool *pool = instance.root_pool;
+    auto *cache = instance.cache;
+
     CancellablePointer cancel_ptr;
 
     const auto request1 = MakeRequest("/base_root/");
@@ -410,8 +418,12 @@ test_base_root(struct pool *pool, struct tcache *cache)
 }
 
 static void
-test_base_mismatch(struct pool *pool, struct tcache *cache)
+test_base_mismatch()
 {
+    Instance instance;
+    struct pool *pool = instance.root_pool;
+    auto *cache = instance.cache;
+
     CancellablePointer cancel_ptr;
 
     const auto request1 = MakeRequest("/base_mismatch/hansi");
@@ -427,8 +439,12 @@ test_base_mismatch(struct pool *pool, struct tcache *cache)
  * Test BASE+URI.
  */
 static void
-test_base_uri(struct pool *pool, struct tcache *cache)
+test_base_uri()
 {
+    Instance instance;
+    struct pool *pool = instance.root_pool;
+    auto *cache = instance.cache;
+
     CancellablePointer cancel_ptr;
 
     const auto request1 = MakeRequest("/base_uri/foo");
@@ -455,8 +471,12 @@ test_base_uri(struct pool *pool, struct tcache *cache)
  * Test BASE+REDIRECT.
  */
 static void
-test_base_redirect(struct pool *pool, struct tcache *cache)
+test_base_redirect()
 {
+    Instance instance;
+    struct pool *pool = instance.root_pool;
+    auto *cache = instance.cache;
+
     CancellablePointer cancel_ref;
 
     const auto request1 = MakeRequest("/base_redirect/foo");
@@ -483,8 +503,12 @@ test_base_redirect(struct pool *pool, struct tcache *cache)
  * Test BASE+TEST_PATH.
  */
 static void
-test_base_test_path(struct pool *pool, struct tcache *cache)
+test_base_test_path()
 {
+    Instance instance;
+    struct pool *pool = instance.root_pool;
+    auto *cache = instance.cache;
+
     CancellablePointer cancel_ptr;
 
     const auto request1 = MakeRequest("/base_test_path/foo");
@@ -508,8 +532,12 @@ test_base_test_path(struct pool *pool, struct tcache *cache)
 }
 
 static void
-test_easy_base(struct pool *pool, struct tcache *cache)
+test_easy_base()
 {
+    Instance instance;
+    struct pool *pool = instance.root_pool;
+    auto *cache = instance.cache;
+
     const auto request1 = MakeRequest("/easy/bar.html");
 
     const auto response1 = MakeResponse().EasyBase("/easy/").File("/var/www/");
@@ -538,8 +566,12 @@ test_easy_base(struct pool *pool, struct tcache *cache)
  * Test EASY_BASE+URI.
  */
 static void
-test_easy_base_uri(struct pool *pool, struct tcache *cache)
+test_easy_base_uri()
 {
+    Instance instance;
+    struct pool *pool = instance.root_pool;
+    auto *cache = instance.cache;
+
     CancellablePointer cancel_ptr;
 
     const auto request1 = MakeRequest("/easy_base_uri/foo");
@@ -570,8 +602,12 @@ test_easy_base_uri(struct pool *pool, struct tcache *cache)
  * Test EASY_BASE + TEST_PATH.
  */
 static void
-test_easy_base_test_path(struct pool *pool, struct tcache *cache)
+test_easy_base_test_path()
 {
+    Instance instance;
+    struct pool *pool = instance.root_pool;
+    auto *cache = instance.cache;
+
     CancellablePointer cancel_ptr;
 
     const auto request1 = MakeRequest("/easy_base_test_path/foo");
@@ -599,8 +635,12 @@ test_easy_base_test_path(struct pool *pool, struct tcache *cache)
 }
 
 static void
-test_vary_invalidate(struct pool *pool, struct tcache *cache)
+test_vary_invalidate()
 {
+    Instance instance;
+    struct pool *pool = instance.root_pool;
+    auto *cache = instance.cache;
+
     static const TranslationCommand response5_vary[] = {
         TranslationCommand::QUERY_STRING,
     };
@@ -662,8 +702,12 @@ test_vary_invalidate(struct pool *pool, struct tcache *cache)
 }
 
 static void
-test_invalidate_uri(struct pool *pool, struct tcache *cache)
+test_invalidate_uri()
 {
+    Instance instance;
+    struct pool *pool = instance.root_pool;
+    auto *cache = instance.cache;
+
     CancellablePointer cancel_ptr;
 
     /* feed the cache */
@@ -761,8 +805,12 @@ test_invalidate_uri(struct pool *pool, struct tcache *cache)
 }
 
 static void
-test_regex(struct pool *pool, struct tcache *cache)
+test_regex()
 {
+    Instance instance;
+    struct pool *pool = instance.root_pool;
+    auto *cache = instance.cache;
+
     CancellablePointer cancel_ptr;
 
     /* add the "inverse_regex" test to the cache first */
@@ -818,8 +866,12 @@ test_regex(struct pool *pool, struct tcache *cache)
 }
 
 static void
-test_regex_error(struct pool *pool, struct tcache *cache)
+test_regex_error()
 {
+    Instance instance;
+    struct pool *pool = instance.root_pool;
+    auto *cache = instance.cache;
+
     const auto request = MakeRequest("/regex-error");
     const auto response = MakeResponse().File("/error")
         .Base("/regex/").Regex("(");
@@ -834,8 +886,12 @@ test_regex_error(struct pool *pool, struct tcache *cache)
 }
 
 static void
-test_regex_tail(struct pool *pool, struct tcache *cache)
+test_regex_tail()
 {
+    Instance instance;
+    struct pool *pool = instance.root_pool;
+    auto *cache = instance.cache;
+
     CancellablePointer cancel_ptr;
 
     const auto request1 = MakeRequest("/regex_tail/a/foo.jpg");
@@ -866,8 +922,12 @@ test_regex_tail(struct pool *pool, struct tcache *cache)
 }
 
 static void
-test_regex_tail_unescape(struct pool *pool, struct tcache *cache)
+test_regex_tail_unescape()
 {
+    Instance instance;
+    struct pool *pool = instance.root_pool;
+    auto *cache = instance.cache;
+
     CancellablePointer cancel_ptr;
 
     const auto request1 = MakeRequest("/regex_unescape/a/foo.jpg");
@@ -903,8 +963,12 @@ test_regex_tail_unescape(struct pool *pool, struct tcache *cache)
 }
 
 static void
-test_expand(struct pool *pool, struct tcache *cache)
+test_expand()
 {
+    Instance instance;
+    struct pool *pool = instance.root_pool;
+    auto *cache = instance.cache;
+
     CancellablePointer cancel_ptr;
 
     /* add to cache */
@@ -939,8 +1003,12 @@ test_expand(struct pool *pool, struct tcache *cache)
 }
 
 static void
-test_expand_local(struct pool *pool, struct tcache *cache)
+test_expand_local()
 {
+    Instance instance;
+    struct pool *pool = instance.root_pool;
+    auto *cache = instance.cache;
+
     CancellablePointer cancel_ptr;
 
     /* add to cache */
@@ -976,8 +1044,12 @@ test_expand_local(struct pool *pool, struct tcache *cache)
 }
 
 static void
-test_expand_local_filter(struct pool *pool, struct tcache *cache)
+test_expand_local_filter()
 {
+    Instance instance;
+    struct pool *pool = instance.root_pool;
+    auto *cache = instance.cache;
+
     CancellablePointer cancel_ptr;
 
     /* add to cache */
@@ -1019,8 +1091,12 @@ test_expand_local_filter(struct pool *pool, struct tcache *cache)
 }
 
 static void
-test_expand_uri(struct pool *pool, struct tcache *cache)
+test_expand_uri()
 {
+    Instance instance;
+    struct pool *pool = instance.root_pool;
+    auto *cache = instance.cache;
+
     CancellablePointer cancel_ptr;
 
     /* add to cache */
@@ -1055,8 +1131,12 @@ test_expand_uri(struct pool *pool, struct tcache *cache)
 }
 
 static void
-test_auto_base(struct pool *pool, struct tcache *cache)
+test_auto_base()
 {
+    Instance instance;
+    struct pool *pool = instance.root_pool;
+    auto *cache = instance.cache;
+
     CancellablePointer cancel_ptr;
 
     /* store response */
@@ -1087,8 +1167,12 @@ test_auto_base(struct pool *pool, struct tcache *cache)
  * Test CHECK + BASE.
  */
 static void
-test_base_check(struct pool *pool, struct tcache *cache)
+test_base_check()
 {
+    Instance instance;
+    struct pool *pool = instance.root_pool;
+    auto *cache = instance.cache;
+
     CancellablePointer cancel_ptr;
 
     /* feed the cache */
@@ -1162,8 +1246,12 @@ test_base_check(struct pool *pool, struct tcache *cache)
  * Test WANT_FULL_URI + BASE.
  */
 static void
-test_base_wfu(struct pool *pool, struct tcache *cache)
+test_base_wfu()
 {
+    Instance instance;
+    struct pool *pool = instance.root_pool;
+    auto *cache = instance.cache;
+
     CancellablePointer cancel_ptr;
 
     /* feed the cache */
@@ -1236,8 +1324,12 @@ test_base_wfu(struct pool *pool, struct tcache *cache)
  * Test UNSAFE_BASE.
  */
 static void
-test_unsafe_base(struct pool *pool, struct tcache *cache)
+test_unsafe_base()
 {
+    Instance instance;
+    struct pool *pool = instance.root_pool;
+    auto *cache = instance.cache;
+
     CancellablePointer cancel_ptr;
 
     /* feed */
@@ -1281,8 +1373,12 @@ test_unsafe_base(struct pool *pool, struct tcache *cache)
  * Test UNSAFE_BASE + EXPAND_PATH.
  */
 static void
-test_expand_unsafe_base(struct pool *pool, struct tcache *cache)
+test_expand_unsafe_base()
 {
+    Instance instance;
+    struct pool *pool = instance.root_pool;
+    auto *cache = instance.cache;
+
     CancellablePointer cancel_ptr;
 
     /* feed */
@@ -1327,8 +1423,12 @@ test_expand_unsafe_base(struct pool *pool, struct tcache *cache)
 }
 
 static void
-test_expand_bind_mount(struct pool *pool, struct tcache *cache)
+test_expand_bind_mount()
 {
+    Instance instance;
+    struct pool *pool = instance.root_pool;
+    auto *cache = instance.cache;
+
     CancellablePointer cancel_ptr;
 
     /* add to cache */
@@ -1368,36 +1468,29 @@ test_expand_bind_mount(struct pool *pool, struct tcache *cache)
 int
 main(gcc_unused int argc, gcc_unused char **argv)
 {
-    Instance instance;
-
-    struct pool *pool = instance.root_pool;
-    auto *cache = instance.cache;
-
-    /* test */
-
-    test_basic(pool, cache);
-    test_base_root(pool, cache);
-    test_base_mismatch(pool, cache);
-    test_base_uri(pool, cache);
-    test_base_redirect(pool, cache);
-    test_base_test_path(pool, cache);
-    test_easy_base(pool, cache);
-    test_easy_base_uri(pool, cache);
-    test_easy_base_test_path(pool, cache);
-    test_vary_invalidate(pool, cache);
-    test_invalidate_uri(pool, cache);
-    test_regex(pool, cache);
-    test_regex_error(pool, cache);
-    test_regex_tail(pool, cache);
-    test_regex_tail_unescape(pool, cache);
-    test_expand(pool, cache);
-    test_expand_local(pool, cache);
-    test_expand_local_filter(pool, cache);
-    test_expand_uri(pool, cache);
-    test_auto_base(pool, cache);
-    test_base_check(pool, cache);
-    test_base_wfu(pool, cache);
-    test_unsafe_base(pool, cache);
-    test_expand_unsafe_base(pool, cache);
-    test_expand_bind_mount(pool, cache);
+    test_basic();
+    test_base_root();
+    test_base_mismatch();
+    test_base_uri();
+    test_base_redirect();
+    test_base_test_path();
+    test_easy_base();
+    test_easy_base_uri();
+    test_easy_base_test_path();
+    test_vary_invalidate();
+    test_invalidate_uri();
+    test_regex();
+    test_regex_error();
+    test_regex_tail();
+    test_regex_tail_unescape();
+    test_expand();
+    test_expand_local();
+    test_expand_local_filter();
+    test_expand_uri();
+    test_auto_base();
+    test_base_check();
+    test_base_wfu();
+    test_unsafe_base();
+    test_expand_unsafe_base();
+    test_expand_bind_mount();
 }
