@@ -57,8 +57,9 @@
 #include "address_suffix_registry.hxx"
 #include "util/Cancellable.hxx"
 #include "util/PrintException.hxx"
-
 #include "util/Compiler.h"
+
+#include <gtest/gtest.h>
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -185,9 +186,9 @@ MyResourceLoader::SendRequest(struct pool &pool,
     StringMap response_headers(pool);
     const char *p;
 
-    assert(!got_request);
-    assert(method == HTTP_METHOD_GET);
-    assert(!body);
+    EXPECT_FALSE(got_request);
+    ASSERT_EQ(method, HTTP_METHOD_GET);
+    EXPECT_FALSE(body);
 
     got_request = true;
 
@@ -196,7 +197,7 @@ MyResourceLoader::SendRequest(struct pool &pool,
     switch (test_id) {
     case 0:
         p = headers.Get("cookie");
-        assert(p == nullptr);
+        EXPECT_EQ(p, nullptr);
 
         /* set one cookie */
         response_headers.Add("set-cookie", "foo=bar");
@@ -205,8 +206,8 @@ MyResourceLoader::SendRequest(struct pool &pool,
     case 1:
         /* is the one cookie present? */
         p = headers.Get("cookie");
-        assert(p != nullptr);
-        assert(strcmp(p, "foo=bar") == 0);
+        EXPECT_NE(p, nullptr);
+        ASSERT_STREQ(p, "foo=bar");
 
         /* add 2 more cookies */
         response_headers.Add("set-cookie", "a=b, c=d");
@@ -215,8 +216,8 @@ MyResourceLoader::SendRequest(struct pool &pool,
     case 2:
         /* are 3 cookies present? */
         p = headers.Get("cookie");
-        assert(p != nullptr);
-        assert(strcmp(p, "c=d; a=b; foo=bar") == 0);
+        EXPECT_NE(p, nullptr);
+        ASSERT_STREQ(p, "c=d; a=b; foo=bar");
 
         /* set two cookies in two headers */
         response_headers.Add("set-cookie", "e=f");
@@ -226,8 +227,8 @@ MyResourceLoader::SendRequest(struct pool &pool,
     case 3:
         /* check for 5 cookies */
         p = headers.Get("cookie");
-        assert(p != nullptr);
-        assert(strcmp(p, "g=h; e=f; c=d; a=b; foo=bar") == 0);
+        EXPECT_NE(p, nullptr);
+        ASSERT_STREQ(p, "g=h; e=f; c=d; a=b; foo=bar");
         break;
     }
 
@@ -247,24 +248,29 @@ void
 Context::OnHttpResponse(http_status_t status, gcc_unused StringMap &&headers,
                         UnusedIstreamPtr body) noexcept
 {
-    assert(!got_response);
-    assert(status == 200);
-    assert(body);
+    EXPECT_FALSE(got_response);
+    ASSERT_EQ(status, 200);
+    ASSERT_TRUE(body);
 
     got_response = true;
 }
 
-void gcc_noreturn
+void
 Context::OnHttpError(std::exception_ptr ep) noexcept
 {
     PrintException(ep);
 
-    assert(false);
+    FAIL();
 }
 
-static void
-test_cookie_client(struct pool *pool)
+TEST(WidgetHttpTest, CookieClient)
 {
+    PInstance instance;
+    struct pool *pool = instance.root_pool;
+
+    crash_global_init();
+    session_manager_init(instance.event_loop, std::chrono::minutes(30), 0, 0);
+
     const auto address = MakeHttpAddress("/bar/").Host("foo");
     WidgetClass cls;
     cls.Init();
@@ -298,18 +304,6 @@ test_cookie_client(struct pool *pool)
         assert(got_request);
         assert(got_response);
     }
-}
-
-int main(int argc, char **argv) {
-    (void)argc;
-    (void)argv;
-
-    PInstance instance;
-
-    crash_global_init();
-    session_manager_init(instance.event_loop, std::chrono::minutes(30), 0, 0);
-
-    test_cookie_client(instance.root_pool);
 
     session_manager_deinit();
     crash_global_deinit();

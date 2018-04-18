@@ -620,6 +620,7 @@ test('t_widget_http', executable('t_widget_http',
   '../src/HttpResponseHandler.cxx',
   include_directories: inc,
   dependencies: [
+    gtest,
     threads,
     widget_dep,
     istream_dep,
