@@ -41,7 +41,7 @@
 
 struct pool;
 class UnusedIstreamPtr;
-struct CssParser;
+class CssParser;
 
 struct CssParserValue {
     off_t start, end;

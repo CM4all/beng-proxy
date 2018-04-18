@@ -39,7 +39,7 @@
 #include "util/StringUtil.hxx"
 #include "util/TrivialArray.hxx"
 
-struct CssParser final : PoolHolder, IstreamSink, DestructAnchor {
+class CssParser final : PoolHolder, IstreamSink, DestructAnchor {
     template<size_t max>
     class StringBuffer : public TrivialArray<char, max> {
     public:
@@ -112,6 +112,7 @@ struct CssParser final : PoolHolder, IstreamSink, DestructAnchor {
     off_t url_start;
     StringBuffer<1024> url_buffer;
 
+public:
     CssParser(struct pool &pool, UnusedIstreamPtr input, bool block,
               const CssParserHandler &handler, void *handler_ctx);
 
@@ -127,6 +128,7 @@ struct CssParser final : PoolHolder, IstreamSink, DestructAnchor {
         input.Close();
     }
 
+private:
     size_t Feed(const char *start, size_t length);
 
     /* virtual methods from class IstreamHandler */
