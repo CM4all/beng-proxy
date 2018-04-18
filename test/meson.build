@@ -296,6 +296,7 @@ test('t_tcache', executable('t_tcache',
   '../src/widget/View.cxx',
   include_directories: inc,
   dependencies: [
+    gtest,
     translation_dep,
   ]))
 

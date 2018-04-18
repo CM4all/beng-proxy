@@ -49,6 +49,8 @@
 #include "PInstance.hxx"
 #include "util/Cancellable.hxx"
 
+#include <gtest/gtest.h>
+
 #include <string.h>
 
 struct Instance : PInstance {
@@ -148,8 +150,8 @@ static bool
 resource_address_equals(const ResourceAddress *a,
                         const ResourceAddress *b)
 {
-    assert(a != nullptr);
-    assert(b != nullptr);
+    EXPECT_NE(a, nullptr);
+    EXPECT_NE(b, nullptr);
 
     if (a->type != b->type)
         return false;
@@ -159,8 +161,8 @@ resource_address_equals(const ResourceAddress *a,
         return true;
 
     case ResourceAddress::Type::LOCAL:
-        assert(a->GetFile().path != nullptr);
-        assert(b->GetFile().path != nullptr);
+        EXPECT_NE(a->GetFile().path, nullptr);
+        EXPECT_NE(b->GetFile().path, nullptr);
 
         return string_equals(a->GetFile().path, b->GetFile().path) &&
             string_equals(a->GetFile().deflated, b->GetFile().deflated) &&
@@ -172,8 +174,8 @@ resource_address_equals(const ResourceAddress *a,
              Equals(*a->GetFile().delegate, *b->GetFile().delegate));
 
     case ResourceAddress::Type::CGI:
-        assert(a->GetCgi().path != nullptr);
-        assert(b->GetCgi().path != nullptr);
+        EXPECT_NE(a->GetCgi().path, nullptr);
+        EXPECT_NE(b->GetCgi().path, nullptr);
 
         return Equals(a->GetCgi().options, b->GetCgi().options) &&
             string_equals(a->GetCgi().path, b->GetCgi().path) &&
@@ -190,7 +192,7 @@ resource_address_equals(const ResourceAddress *a,
 
     default:
         /* not implemented */
-        assert(false);
+        EXPECT_TRUE(false);
         return false;
     }
 }
@@ -199,8 +201,8 @@ static bool
 transformation_equals(const Transformation *a,
                       const Transformation *b)
 {
-    assert(a != nullptr);
-    assert(b != nullptr);
+    EXPECT_NE(a, nullptr);
+    EXPECT_NE(b, nullptr);
 
     if (a->type != b->type)
         return false;
@@ -221,7 +223,7 @@ transformation_equals(const Transformation *a,
     }
 
     /* unreachable */
-    assert(false);
+    EXPECT_TRUE(false);
     return false;
 }
 
@@ -243,8 +245,8 @@ transformation_chain_equals(const Transformation *a,
 static bool
 view_equals(const WidgetView *a, const WidgetView *b)
 {
-    assert(a != nullptr);
-    assert(b != nullptr);
+    EXPECT_NE(a, nullptr);
+    EXPECT_NE(b, nullptr);
 
     return string_equals(a->name, b->name) &&
         resource_address_equals(&a->address, &b->address) &&
@@ -292,13 +294,13 @@ static void
 my_translate_response(TranslateResponse &response,
                       gcc_unused void *ctx)
 {
-    assert(translate_response_equals(&response, expected_response));
+    EXPECT_TRUE(translate_response_equals(&response, expected_response));
 }
 
 static void
 my_translate_error(gcc_unused std::exception_ptr ep, gcc_unused void *ctx)
 {
-    assert(expected_response == nullptr);
+    EXPECT_EQ(expected_response, nullptr);
 }
 
 static constexpr TranslateHandler my_translate_handler = {
@@ -306,8 +308,7 @@ static constexpr TranslateHandler my_translate_handler = {
     .error = my_translate_error,
 };
 
-static void
-test_basic()
+TEST(TranslationCache, Basic)
 {
     Instance instance;
     struct pool *pool = instance.root_pool;
@@ -394,8 +395,7 @@ test_basic()
  * Feed the cache with a request to the BASE.  This was buggy until
  * 4.0.30.
  */
-static void
-test_base_root()
+TEST(TranslationCache, BaseRoot)
 {
     Instance instance;
     struct pool *pool = instance.root_pool;
@@ -417,8 +417,7 @@ test_base_root()
                     my_translate_handler, nullptr, cancel_ptr);
 }
 
-static void
-test_base_mismatch()
+TEST(TranslationCache, BaseMismatch)
 {
     Instance instance;
     struct pool *pool = instance.root_pool;
@@ -438,8 +437,7 @@ test_base_mismatch()
 /**
  * Test BASE+URI.
  */
-static void
-test_base_uri()
+TEST(TranslationCache, BaseUri)
 {
     Instance instance;
     struct pool *pool = instance.root_pool;
@@ -470,8 +468,7 @@ test_base_uri()
 /**
  * Test BASE+REDIRECT.
  */
-static void
-test_base_redirect()
+TEST(TranslationCache, BaseRedirect)
 {
     Instance instance;
     struct pool *pool = instance.root_pool;
@@ -502,8 +499,7 @@ test_base_redirect()
 /**
  * Test BASE+TEST_PATH.
  */
-static void
-test_base_test_path()
+TEST(TranslationCache, BaseTestPath)
 {
     Instance instance;
     struct pool *pool = instance.root_pool;
@@ -531,8 +527,7 @@ test_base_test_path()
                     my_translate_handler, nullptr, cancel_ptr);
 }
 
-static void
-test_easy_base()
+TEST(TranslationCache, EasyBase)
 {
     Instance instance;
     struct pool *pool = instance.root_pool;
@@ -565,8 +560,7 @@ test_easy_base()
 /**
  * Test EASY_BASE+URI.
  */
-static void
-test_easy_base_uri()
+TEST(TranslationCache, EasyBaseUri)
 {
     Instance instance;
     struct pool *pool = instance.root_pool;
@@ -601,8 +595,7 @@ test_easy_base_uri()
 /**
  * Test EASY_BASE + TEST_PATH.
  */
-static void
-test_easy_base_test_path()
+TEST(TranslationCache, EasyBaseTestPath)
 {
     Instance instance;
     struct pool *pool = instance.root_pool;
@@ -634,8 +627,7 @@ test_easy_base_test_path()
                     my_translate_handler, nullptr, cancel_ptr);
 }
 
-static void
-test_vary_invalidate()
+TEST(TranslationCache, VaryInvalidate)
 {
     Instance instance;
     struct pool *pool = instance.root_pool;
@@ -701,8 +693,7 @@ test_vary_invalidate()
                     my_translate_handler, nullptr, cancel_ptr);
 }
 
-static void
-test_invalidate_uri()
+TEST(TranslationCache, InvalidateUri)
 {
     Instance instance;
     struct pool *pool = instance.root_pool;
@@ -804,8 +795,7 @@ test_invalidate_uri()
                     my_translate_handler, nullptr, cancel_ptr);
 }
 
-static void
-test_regex()
+TEST(TranslationCache, Regex)
 {
     Instance instance;
     struct pool *pool = instance.root_pool;
@@ -865,8 +855,7 @@ test_regex()
                     my_translate_handler, nullptr, cancel_ptr);
 }
 
-static void
-test_regex_error()
+TEST(TranslationCache, RegexError)
 {
     Instance instance;
     struct pool *pool = instance.root_pool;
@@ -885,8 +874,7 @@ test_regex_error()
                     my_translate_handler, nullptr, cancel_ptr);
 }
 
-static void
-test_regex_tail()
+TEST(TranslationCache, RegexTail)
 {
     Instance instance;
     struct pool *pool = instance.root_pool;
@@ -921,8 +909,7 @@ test_regex_tail()
                     my_translate_handler, nullptr, cancel_ptr);
 }
 
-static void
-test_regex_tail_unescape()
+TEST(TranslationCache, RegexTailUnescape)
 {
     Instance instance;
     struct pool *pool = instance.root_pool;
@@ -962,8 +949,7 @@ test_regex_tail_unescape()
                     my_translate_handler, nullptr, cancel_ptr);
 }
 
-static void
-test_expand()
+TEST(TranslationCache, Expand)
 {
     Instance instance;
     struct pool *pool = instance.root_pool;
@@ -1002,8 +988,7 @@ test_expand()
                     my_translate_handler, nullptr, cancel_ptr);
 }
 
-static void
-test_expand_local()
+TEST(TranslationCache, ExpandLocal)
 {
     Instance instance;
     struct pool *pool = instance.root_pool;
@@ -1043,8 +1028,7 @@ test_expand_local()
                     my_translate_handler, nullptr, cancel_ptr);
 }
 
-static void
-test_expand_local_filter()
+TEST(TranslationCache, ExpandLocalFilter)
 {
     Instance instance;
     struct pool *pool = instance.root_pool;
@@ -1090,8 +1074,7 @@ test_expand_local_filter()
                     my_translate_handler, nullptr, cancel_ptr);
 }
 
-static void
-test_expand_uri()
+TEST(TranslationCache, ExpandUri)
 {
     Instance instance;
     struct pool *pool = instance.root_pool;
@@ -1130,8 +1113,7 @@ test_expand_uri()
                     my_translate_handler, nullptr, cancel_ptr);
 }
 
-static void
-test_auto_base()
+TEST(TranslationCache, AutoBase)
 {
     Instance instance;
     struct pool *pool = instance.root_pool;
@@ -1166,8 +1148,7 @@ test_auto_base()
 /**
  * Test CHECK + BASE.
  */
-static void
-test_base_check()
+TEST(TranslationCache, BaseCheck)
 {
     Instance instance;
     struct pool *pool = instance.root_pool;
@@ -1245,8 +1226,7 @@ test_base_check()
 /**
  * Test WANT_FULL_URI + BASE.
  */
-static void
-test_base_wfu()
+TEST(TranslationCache, BaseWantFullUri)
 {
     Instance instance;
     struct pool *pool = instance.root_pool;
@@ -1323,8 +1303,7 @@ test_base_wfu()
 /**
  * Test UNSAFE_BASE.
  */
-static void
-test_unsafe_base()
+TEST(TranslationCache, UnsafeBase)
 {
     Instance instance;
     struct pool *pool = instance.root_pool;
@@ -1372,8 +1351,7 @@ test_unsafe_base()
 /**
  * Test UNSAFE_BASE + EXPAND_PATH.
  */
-static void
-test_expand_unsafe_base()
+TEST(TranslationCache, ExpandUnsafeBase)
 {
     Instance instance;
     struct pool *pool = instance.root_pool;
@@ -1422,8 +1400,7 @@ test_expand_unsafe_base()
                     my_translate_handler, nullptr, cancel_ptr);
 }
 
-static void
-test_expand_bind_mount()
+TEST(TranslationCache, ExpandBindMount)
 {
     Instance instance;
     struct pool *pool = instance.root_pool;
@@ -1463,34 +1440,4 @@ test_expand_bind_mount()
     expected_response = &response2e;
     translate_cache(*pool, *cache, request2,
                     my_translate_handler, nullptr, cancel_ptr);
-}
-
-int
-main(gcc_unused int argc, gcc_unused char **argv)
-{
-    test_basic();
-    test_base_root();
-    test_base_mismatch();
-    test_base_uri();
-    test_base_redirect();
-    test_base_test_path();
-    test_easy_base();
-    test_easy_base_uri();
-    test_easy_base_test_path();
-    test_vary_invalidate();
-    test_invalidate_uri();
-    test_regex();
-    test_regex_error();
-    test_regex_tail();
-    test_regex_tail_unescape();
-    test_expand();
-    test_expand_local();
-    test_expand_local_filter();
-    test_expand_uri();
-    test_auto_base();
-    test_base_check();
-    test_base_wfu();
-    test_unsafe_base();
-    test_expand_unsafe_base();
-    test_expand_bind_mount();
 }
