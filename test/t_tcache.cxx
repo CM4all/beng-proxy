@@ -51,6 +51,18 @@
 
 #include <string.h>
 
+struct Instance : PInstance {
+    struct tcache *cache;
+
+    Instance()
+        :cache(translate_cache_new(root_pool, event_loop,
+                                   *(TranslateStock *)0x1, 1024)) {}
+
+    ~Instance() {
+        translate_cache_close(cache);
+    }
+};
+
 const TranslateResponse *next_response, *expected_response;
 
 void
@@ -1356,13 +1368,10 @@ test_expand_bind_mount(struct pool *pool, struct tcache *cache)
 int
 main(gcc_unused int argc, gcc_unused char **argv)
 {
-    PInstance instance;
-
-    const auto translate_stock = (TranslateStock *)0x1;
-    auto *cache = translate_cache_new(instance.root_pool, instance.event_loop,
-                                      *translate_stock, 1024);
+    Instance instance;
 
     struct pool *pool = instance.root_pool;
+    auto *cache = instance.cache;
 
     /* test */
 
@@ -1391,8 +1400,4 @@ main(gcc_unused int argc, gcc_unused char **argv)
     test_unsafe_base(pool, cache);
     test_expand_unsafe_base(pool, cache);
     test_expand_bind_mount(pool, cache);
-
-    /* cleanup */
-
-    translate_cache_close(cache);
 }
