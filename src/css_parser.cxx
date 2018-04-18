@@ -73,12 +73,12 @@ struct CssParser final : PoolHolder, IstreamSink, DestructAnchor {
         }
     };
 
-    bool block;
+    const bool block;
 
     off_t position;
 
-    const CssParserHandler *handler;
-    void *handler_ctx;
+    const CssParserHandler *const handler;
+    void *const handler_ctx;
 
     /* internal state */
     enum class State {
