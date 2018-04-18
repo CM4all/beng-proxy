@@ -39,7 +39,7 @@
 #include "util/StringUtil.hxx"
 #include "util/TrivialArray.hxx"
 
-struct CssParser final : IstreamSink, DestructAnchor {
+struct CssParser final : PoolHolder, IstreamSink, DestructAnchor {
     template<size_t max>
     class StringBuffer : public TrivialArray<char, max> {
     public:
@@ -72,8 +72,6 @@ struct CssParser final : IstreamSink, DestructAnchor {
             return Equals({value, n - 1});
         }
     };
-
-    struct pool *pool;
 
     bool block;
 
@@ -118,7 +116,7 @@ struct CssParser final : IstreamSink, DestructAnchor {
               const CssParserHandler &handler, void *handler_ctx);
 
     void Destroy() {
-        DeleteUnrefPool(*pool, this);
+        this->~CssParser();
     }
 
     void Read() {
@@ -568,7 +566,7 @@ CssParser::Feed(const char *start, size_t length)
 CssParser::CssParser(struct pool &_pool, UnusedIstreamPtr _input, bool _block,
                      const CssParserHandler &_handler,
                      void *_handler_ctx)
-    :IstreamSink(std::move(_input)), pool(&_pool), block(_block),
+    :PoolHolder(_pool), IstreamSink(std::move(_input)), block(_block),
      position(0),
      handler(&_handler), handler_ctx(_handler_ctx),
      state(block ? State::BLOCK : State::NONE)
@@ -581,8 +579,6 @@ css_parser_new(struct pool &pool, UnusedIstreamPtr input, bool block,
 {
     assert(handler.eof != nullptr);
     assert(handler.error != nullptr);
-
-    pool_ref(&pool);
 
     return NewFromPool<CssParser>(pool, pool, std::move(input), block,
                                   handler, handler_ctx);
