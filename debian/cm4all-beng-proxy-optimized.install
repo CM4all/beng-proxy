@@ -1,1 +1,1 @@
-build/optimized/cm4all-beng-proxy usr/sbin
+debian/build/optimized/cm4all-beng-proxy usr/sbin

@@ -1,1 +1,1 @@
-build/debug/cm4all-certdb usr/bin
+debian/build/debug/cm4all-certdb usr/bin
