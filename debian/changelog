@@ -1,5 +1,6 @@
-cm4all-beng-proxy (14.0.10) unstable; urgency=low
+cm4all-beng-proxy (14.1) unstable; urgency=low
 
+  * feature freeze
   * lhttp: fix memory leak
   * lhttp: pass URI and site name to error logger
   * fcgi: implement "forward_child_errors" for STDERR payloads
@@ -8,7 +9,7 @@ cm4all-beng-proxy (14.0.10) unstable; urgency=low
   * bp: SIGHUP flushes the NFS cache
   * control: add packet FLUSH_NFS_CACHE
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Thu, 19 Apr 2018 08:43:23 -0000
 
 cm4all-beng-proxy (14.0.9) unstable; urgency=low
 
