@@ -578,9 +578,9 @@ HttpCacheRequest::Cancel() noexcept
     if (document != nullptr)
         cache.Unlock(*document);
 
-    cancel_ptr.Cancel();
-
+    CancellablePointer _cancel_ptr(std::move(cancel_ptr));
     Destroy();
+    _cancel_ptr.Cancel();
 }
 
 
@@ -652,8 +652,10 @@ void
 HttpCacheRequest::AbortRubberStore()
 {
     cache.RemoveRequest(*this);
-    cancel_ptr.Cancel();
+
+    CancellablePointer _cancel_ptr(std::move(cancel_ptr));
     Destroy();
+    _cancel_ptr.Cancel();
 }
 
 inline
