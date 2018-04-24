@@ -2,6 +2,7 @@ cm4all-beng-proxy (14.2) unstable; urgency=low
 
   * lb: fix use-after-free crash after using translation response
   * http_cache: fix use-after-free crash on request cancellation
+  * http_client: fix assertion failure upon discarding large request body
 
  --   
 

@@ -105,6 +105,12 @@ public:
                  FdTypeMask direct=0) noexcept {
         Close();
 
+#ifndef NDEBUG
+        /* must clear the pointer in the debug build to avoid
+           assertion failure in Set() */
+        Clear();
+#endif
+
         Set(std::forward<I>(_stream), handler, direct);
     }
 
