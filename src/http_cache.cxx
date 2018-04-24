@@ -158,6 +158,9 @@ public:
 
     /**
      * Abort storing the response body in the rubber allocator.
+     *
+     * This will not remove the request from the HttpCache, because
+     * this method is supposed to be used as a "disposer".
      */
     void AbortRubberStore();
 
@@ -618,7 +621,6 @@ HttpCacheRequest::RubberStoreFinished()
 void
 HttpCacheRequest::AbortRubberStore()
 {
-    cache.requests.erase(cache.requests.iterator_to(*this));
     cancel_ptr.Cancel();
 }
 
