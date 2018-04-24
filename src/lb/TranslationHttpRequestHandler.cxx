@@ -143,8 +143,10 @@ lb_http_translate_response(TranslateResponse &response, void *ctx)
 
         request.body = std::move(r.request_body);
 
-        c.HandleHttpRequest(*destination, request, r.caller_cancel_ptr);
+        auto &caller_cancel_ptr = r.caller_cancel_ptr;
         r.Destroy();
+
+        c.HandleHttpRequest(*destination, request, caller_cancel_ptr);
     } else {
         r.Destroy();
 

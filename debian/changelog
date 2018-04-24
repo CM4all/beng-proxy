@@ -1,6 +1,6 @@
 cm4all-beng-proxy (14.2) unstable; urgency=low
 
-  * 
+  * lb: fix use-after-free crash after using translation response
 
  --   
 
