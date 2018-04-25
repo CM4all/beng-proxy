@@ -248,6 +248,9 @@ BpConfigParser::ParseLine2(FileLineParser &line)
         } else
             /* <12.0.32 legacy */
             config.access_log.SetLegacy(line.ExpectValueAndEnd());
+    } else if (strcmp(word, "child_error_logger") == 0) {
+        line.ExpectSymbolAndEol('{');
+        SetChild(std::make_unique<AccessLogConfigParser>(true));
     } else if (strcmp(word, "set") == 0) {
         const char *name = line.ExpectWord();
         line.ExpectSymbol('=');
@@ -267,7 +270,10 @@ void
 BpConfigParser::FinishChild(std::unique_ptr<ConfigParser> &&c)
 {
     if (auto *al = dynamic_cast<AccessLogConfigParser *>(c.get())) {
-        config.access_log = al->GetConfig();
+        if (al->IsChildErrorLogger())
+            config.child_error_log = al->GetConfig();
+        else
+            config.access_log = al->GetConfig();
     } else if (auto *sc = dynamic_cast<SslClientConfigParser *>(c.get())) {
         config.ssl_client = sc->GetConfig();
     }

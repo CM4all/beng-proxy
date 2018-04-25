@@ -85,7 +85,7 @@ struct BpInstance final : PInstance, ControlHandler {
     boost::intrusive::list<BpConnection,
                            boost::intrusive::constant_time_size<true>> connections;
 
-    std::unique_ptr<AccessLogGlue> access_log;
+    std::unique_ptr<AccessLogGlue> access_log, child_error_log;
 
     bool should_exit = false;
     ShutdownListener shutdown_listener;

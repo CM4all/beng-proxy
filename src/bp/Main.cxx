@@ -323,9 +323,15 @@ try {
     instance.access_log.reset(AccessLogGlue::Create(instance.config.access_log,
                                                     &instance.cmdline.logger_user));
 
-    const auto child_log_socket = instance.access_log
-        ? instance.access_log->GetChildSocket()
-        : SocketDescriptor::Undefined();
+    if (instance.config.child_error_log.type != AccessLogConfig::Type::INTERNAL)
+        instance.child_error_log.reset(AccessLogGlue::Create(instance.config.child_error_log,
+                                                             &instance.cmdline.logger_user));
+
+    const auto child_log_socket = instance.child_error_log
+        ? instance.child_error_log->GetChildSocket()
+        : (instance.access_log
+           ? instance.access_log->GetChildSocket()
+           : SocketDescriptor::Undefined());
 
     /* initialize ResourceLoader and all its dependencies */
 

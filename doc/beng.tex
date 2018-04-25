@@ -2926,6 +2926,22 @@ journal). \\
 \hline
 \end{longtabu*}
 
+\subsubsection{Child Erorr Logger}
+
+To be able to use the \verb|forward_child_errors| feature without
+logging HTTP requests, the section \verb|child_error_logger| can be
+used instead:
+
+\begin{verbatim}
+child_error_logger {
+  send_to "ff02::dead:beef"
+}
+\end{verbatim}
+
+This section contains either \verb|send_to| or \verb|shell|, as
+described in the previous section.
+
+
 \subsection{Included Loggers}
 
 This section describes the loggers which are included in the Debian

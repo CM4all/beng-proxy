@@ -43,7 +43,16 @@ class AccessLogConfigParser : public ConfigParser {
     AccessLogConfig config;
     bool enabled = true, type_selected = false;
 
+    const bool is_child_error_logger;
+
 public:
+    explicit AccessLogConfigParser(bool _is_child_error_logger=false) noexcept
+        :is_child_error_logger(_is_child_error_logger) {}
+
+    bool IsChildErrorLogger() const noexcept {
+        return is_child_error_logger;
+    }
+
     AccessLogConfig &&GetConfig() {
         return std::move(config);
     }

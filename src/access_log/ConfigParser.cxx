@@ -39,7 +39,7 @@ AccessLogConfigParser::ParseLine(FileLineParser &line)
 {
     const char *word = line.ExpectWord();
 
-    if (strcmp(word, "enabled") == 0) {
+    if (strcmp(word, "enabled") == 0 && !is_child_error_logger) {
         enabled = line.NextBool();
         line.ExpectEnd();
     } else if (strcmp(word, "send_to") == 0) {
@@ -57,11 +57,13 @@ AccessLogConfigParser::ParseLine(FileLineParser &line)
         type_selected = true;
         config.type = AccessLogConfig::Type::EXECUTE;
         config.command = line.ExpectValueAndEnd();
-    } else if (strcmp(word, "ignore_localhost_200") == 0) {
+    } else if (strcmp(word, "ignore_localhost_200") == 0 &&
+               !is_child_error_logger) {
         config.ignore_localhost_200 = line.ExpectValueAndEnd();
-    } else if (strcmp(word, "trust_xff") == 0) {
+    } else if (strcmp(word, "trust_xff") == 0 && !is_child_error_logger) {
         config.trust_xff.emplace(line.ExpectValueAndEnd());
-    } else if (strcmp(word, "forward_child_errors") == 0) {
+    } else if (strcmp(word, "forward_child_errors") == 0 &&
+               !is_child_error_logger) {
         config.forward_child_errors = line.NextBool();
         line.ExpectEnd();
     } else
@@ -71,6 +73,9 @@ AccessLogConfigParser::ParseLine(FileLineParser &line)
 void
 AccessLogConfigParser::Finish()
 {
+    if (is_child_error_logger)
+        config.forward_child_errors = true;
+
     if (!enabled) {
         config.type = AccessLogConfig::Type::DISABLED;
         type_selected = true;

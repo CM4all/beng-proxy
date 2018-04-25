@@ -79,6 +79,8 @@ struct BpConfig {
 
     AccessLogConfig access_log;
 
+    AccessLogConfig child_error_log;
+
     std::string session_cookie = "beng_proxy_session";
 
     std::chrono::seconds session_idle_timeout = std::chrono::minutes(30);
