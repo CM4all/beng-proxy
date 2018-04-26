@@ -1,6 +1,7 @@
 cm4all-beng-proxy (14.3) unstable; urgency=low
 
   * bp: allow configuring child error logger without access logger
+  * log: fix datagram corruption due to wrong attribute code
 
  --   
 
