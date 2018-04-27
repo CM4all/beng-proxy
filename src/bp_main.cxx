@@ -92,6 +92,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#ifdef __linux
+#include <sys/prctl.h>
+#endif
+
 #ifndef NDEBUG
 bool debug_mode = false;
 #endif
@@ -405,6 +409,13 @@ try {
         capabilities_pre_setuid();
 
     instance.cmdline.user.Apply();
+
+#ifdef __linux
+    /* revert the "dumpable" flag to "true" after it was cleared by
+       setreuid() because we want core dumps to be able to analyze
+       crashes */
+    prctl(PR_SET_DUMPABLE, 1, 0, 0, 0);
+#endif
 
     if (!instance.cmdline.user.IsEmpty())
         capabilities_post_setuid(cap_keep_list, ARRAY_SIZE(cap_keep_list));

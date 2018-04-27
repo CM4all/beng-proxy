@@ -206,6 +206,16 @@ try {
 
     cmdline.user.Apply();
 
+#ifdef __linux
+    /* revert the "dumpable" flag to "true" after it was cleared by
+       setreuid(); this is necessary for two reasons: (1) we want core
+       dumps to be able to analyze crashes; and (2) Linux kernels
+       older than 4.10 (commit 68eb94f16227) don't allow writing to
+       /proc/self/setgroups etc. without it, which
+       isolate_from_filesystem() needs to do */
+    prctl(PR_SET_DUMPABLE, 1, 0, 0, 0);
+#endif
+
     /* can't change to new (empty) rootfs if we may need to reconnect
        to PostgreSQL eventually */
     // TODO: bind-mount the PostgreSQL socket into the new rootfs
