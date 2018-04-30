@@ -71,16 +71,6 @@ test_cflags = test_common_flags + [
   '-pedantic',
 ]
 
-test_ldflags = [
-]
-
-if not debug
-  test_ldflags += [
-    '-Wl,--gc-sections',
-    '-Wl,--icf=all',
-  ]
-endif
-
 add_global_arguments(common_flags, language: 'c')
 add_global_arguments(common_flags, language: 'cpp')
 
@@ -93,13 +83,6 @@ endforeach
 foreach f: test_cflags
   if c_compiler.has_argument(f)
     add_global_arguments(f, language: 'c')
-  endif
-endforeach
-
-foreach f: test_ldflags
-  if c_compiler.has_argument(f)
-    add_global_link_arguments(f, language: 'c')
-    add_global_link_arguments(f, language: 'cpp')
   endif
 endforeach
 

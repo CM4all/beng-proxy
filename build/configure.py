@@ -21,6 +21,9 @@ flavors = {
             '--buildtype', 'release',
             '-Db_ndebug=true',
         ],
+        'env': {
+            'LDFLAGS': '-fuse-ld=gold -Wl,--gc-sections,--icf=all',
+        },
     },
 
     'clang': {
