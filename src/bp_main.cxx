@@ -452,7 +452,7 @@ try {
     crash_global_deinit();
 
     ua_classification_deinit();
-} catch (const std::exception &e) {
-    PrintException(e);
+} catch (...) {
+    PrintException(std::current_exception());
     return EXIT_FAILURE;
 }

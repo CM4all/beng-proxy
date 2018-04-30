@@ -246,7 +246,7 @@ try {
     instance.DeinitAllControls();
 
     thread_pool_deinit();
-} catch (const std::exception &e) {
-    PrintException(e);
+} catch (...) {
+    PrintException(std::current_exception());
     return EXIT_FAILURE;
 }
