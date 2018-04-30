@@ -26,6 +26,14 @@ flavors = {
         },
     },
 
+    'lto': {
+        'options': [
+            '--buildtype', 'release',
+            '-Db_ndebug=true',
+            '-Db_lto=true',
+        ],
+    },
+
     'clang': {
         'options': [
         ],
