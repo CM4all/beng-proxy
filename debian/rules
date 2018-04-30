@@ -15,11 +15,11 @@ debian/build/optimized/build.ninja: meson.build
 	meson . $(@D) --buildtype=debugoptimized $(MESON_OPTIONS) -Db_ndebug=true
 
 debian/stamp-build-debug: debian/build/debug/build.ninja
-	ninja -C $(<D) test
+	ninja -v -C $(<D) test
 	touch $@
 
 debian/stamp-build-optimized: debian/build/optimized/build.ninja
-	ninja -C $(<D) cm4all-beng-proxy
+	ninja -v -C $(<D) cm4all-beng-proxy
 	touch $@
 
 TEX_VARS =
