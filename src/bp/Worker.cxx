@@ -119,7 +119,7 @@ BpInstance::SpawnWorker()
     assert(!crash_in_unsafe());
     assert(connections.empty());
 
-    int spawn_fd = spawn->Connect();
+    auto spawn_socket = spawn->Connect();
 
     UniqueSocketDescriptor distribute_socket;
     if (!config.control_listen.empty() && config.num_workers != 1)
@@ -133,8 +133,6 @@ BpInstance::SpawnWorker()
     if (pid < 0) {
         LogConcat(1, "worker", "fork() failed: ", strerror(errno));
 
-        close(spawn_fd);
-
         crash_deinit(&crash);
     } else if (pid == 0) {
         event_loop.Reinit();
@@ -144,7 +142,7 @@ BpInstance::SpawnWorker()
 
         InitWorker();
 
-        spawn->ReplaceSocket(spawn_fd);
+        spawn->ReplaceSocket(std::move(spawn_socket));
 
         if (distribute_socket.IsDefined())
             global_control_handler_set_fd(this, std::move(distribute_socket));
@@ -171,8 +169,6 @@ BpInstance::SpawnWorker()
 
         EnableListeners();
     } else {
-        close(spawn_fd);
-
         event_loop.Reinit();
 
         auto *worker = new BpWorker(*this, pid, crash);
