@@ -33,9 +33,11 @@
 #include "Server.hxx"
 #include "net/SocketConfig.hxx"
 #include "net/SocketAddress.hxx"
+#include "net/SendMessage.hxx"
 #include "util/ByteOrder.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/RuntimeError.hxx"
+#include "util/Macros.hxx"
 
 #include <stdexcept>
 
@@ -139,15 +141,15 @@ ControlServer::Reply(SocketAddress address,
                      enum beng_control_command command,
                      const void *payload, size_t payload_length)
 {
-    // TODO: use sendmsg() with iovec[2] instead of assembling a new buffer
-    struct beng_control_header *header = (struct beng_control_header *)
-        alloca(sizeof(*header) + payload_length);
-    if (header == nullptr)
-        throw std::runtime_error("alloca() failed");
+    const struct beng_control_header header{ToBE16(payload_length), ToBE16(command)};
 
-    header->length = ToBE16(payload_length);
-    header->command = ToBE16(command);
-    memcpy(header + 1, payload, payload_length);
+    struct iovec v[] = {
+        { const_cast<struct beng_control_header *>(&header), sizeof(header) },
+        { const_cast<void *>(payload), payload_length },
+    };
 
-    socket.Reply(address, header, sizeof(*header) + payload_length);
+    SendMessage(socket.GetSocket(),
+                MessageHeader(ConstBuffer<struct iovec>(v, ARRAY_SIZE(v)))
+                .SetAddress(address),
+                MSG_DONTWAIT|MSG_NOSIGNAL);
 }
