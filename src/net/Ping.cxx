@@ -34,6 +34,7 @@
 #include "system/Error.hxx"
 #include "net/IPv4Address.hxx"
 #include "net/SocketAddress.hxx"
+#include "net/SendMessage.hxx"
 #include "event/Duration.hxx"
 
 #include <sys/socket.h>
@@ -85,12 +86,6 @@ in_cksum(const u_short *addr, register int len, u_short csum)
 	sum += (sum >> 16);			/* add carry */
 	answer = ~sum;				/* truncate to 16 bits */
 	return (answer);
-}
-
-static void *
-deconst_address(const struct sockaddr *address)
-{
-    return const_cast<struct sockaddr *>(address);
 }
 
 static bool
@@ -223,19 +218,9 @@ SendPing(SocketDescriptor fd, SocketAddress address, uint16_t ident)
         .iov_len = sizeof(packet),
     };
 
-    struct msghdr m = {
-        .msg_name = deconst_address(address.GetAddress()),
-        .msg_namelen = socklen_t(address.GetSize()),
-        .msg_iov = &iov,
-        .msg_iovlen = 1,
-        .msg_control = nullptr,
-        .msg_controllen = 0,
-        .msg_flags = 0,
-    };
-
-    ssize_t nbytes = sendmsg(fd.Get(), &m, 0);
-    if (nbytes < 0)
-        throw MakeErrno("Failed to send ICMP_ECHO datagram");
+    SendMessage(fd,
+                MessageHeader(ConstBuffer<struct iovec>(&iov, 1))
+                .SetAddress(address), 0);
 }
 
 void

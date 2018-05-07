@@ -38,6 +38,7 @@
 #include "pool/pool.hxx"
 #include "event/SocketEvent.hxx"
 #include "net/SocketDescriptor.hxx"
+#include "net/SendMessage.hxx"
 #include "system/Error.hxx"
 #include "util/Cancellable.hxx"
 #include "util/Macros.hxx"
@@ -234,21 +235,10 @@ SendDelegatePacket(SocketDescriptor s, DelegateRequestCommand cmd,
         { const_cast<void *>(payload), length },
     };
 
-    struct msghdr msg = {
-        .msg_name = nullptr,
-        .msg_namelen = 0,
-        .msg_iov = v,
-        .msg_iovlen = ARRAY_SIZE(v),
-        .msg_control = nullptr,
-        .msg_controllen = 0,
-        .msg_flags = 0,
-    };
-
-    auto nbytes = sendmsg(s.Get(), &msg, MSG_DONTWAIT);
-    if (nbytes < 0)
-        throw MakeErrno("Failed to send to delegate");
-
-    if (size_t(nbytes) != sizeof(header) + length)
+    auto nbytes = SendMessage(s,
+                              ConstBuffer<struct iovec>(v, ARRAY_SIZE(v)),
+                              MSG_DONTWAIT);
+    if (nbytes != sizeof(header) + length)
         throw std::runtime_error("Short send to delegate");
 }
 
