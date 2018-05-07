@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2018 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -36,7 +36,7 @@
  */
 
 #include "Protocol.hxx"
-
+#include "net/ScmRightsBuilder.hxx"
 #include "util/Compiler.h"
 
 #include <stdbool.h>
@@ -94,23 +94,19 @@ delegate_send_fd(DelegateResponseCommand command, int fd)
         .iov_len = sizeof(header),
     };
 
-    char ccmsg[CMSG_SPACE(sizeof(fd))];
     struct msghdr msg = {
         .msg_name = nullptr,
         .msg_namelen = 0,
         .msg_iov = &vec,
         .msg_iovlen = 1,
-        .msg_control = ccmsg,
-        .msg_controllen = CMSG_LEN(sizeof(fd)),
+        .msg_control = nullptr,
+        .msg_controllen = 0,
         .msg_flags = 0,
     };
-    struct cmsghdr *cmsg;
 
-    cmsg = CMSG_FIRSTHDR(&msg);
-    cmsg->cmsg_level = SOL_SOCKET;
-    cmsg->cmsg_type = SCM_RIGHTS;
-    cmsg->cmsg_len = msg.msg_controllen;
-    *(int *)(void *)CMSG_DATA(cmsg) = fd;
+    ScmRightsBuilder<1> srb(msg);
+    srb.push_back(fd);
+    srb.Finish(msg);
 
     if (sendmsg(0, &msg, 0) < 0) {
         fprintf(stderr, "failed to send fd: %s\n", strerror(errno));
