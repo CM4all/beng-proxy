@@ -92,8 +92,8 @@ public:
             event.Delete();
     }
 
-    int GetSocket() const {
-        return fd.Get();
+    SocketDescriptor GetSocket() const noexcept {
+        return fd;
     }
 
     /* virtual methods from class StockItem */
@@ -213,8 +213,8 @@ delegate_stock_get(StockMap *delegate_stock,
     return delegate_stock->GetNow(*tpool, args.GetStockKey(*tpool), &args);
 }
 
-int
-delegate_stock_item_get(StockItem &item)
+SocketDescriptor
+delegate_stock_item_get(StockItem &item) noexcept
 {
     auto *process = (DelegateProcess *)&item;
 

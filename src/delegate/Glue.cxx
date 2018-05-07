@@ -38,6 +38,7 @@
 #include "stock/MapStock.hxx"
 #include "lease.hxx"
 #include "pool/pool.hxx"
+#include "net/SocketDescriptor.hxx"
 
 struct DelegateGlue final : Lease {
     StockItem &item;

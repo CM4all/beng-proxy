@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2018 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -35,6 +35,7 @@
 
 struct pool;
 class EventLoop;
+class SocketDescriptor;
 class Lease;
 class CancellablePointer;
 class DelegateHandler;
@@ -46,7 +47,7 @@ class DelegateHandler;
  * @param fd the socket to the helper process
  */
 void
-delegate_open(EventLoop &event_loop, int fd, Lease &lease,
+delegate_open(EventLoop &event_loop, SocketDescriptor fd, Lease &lease,
               struct pool *pool, const char *path,
               DelegateHandler &handler,
               CancellablePointer &cancel_ptr);

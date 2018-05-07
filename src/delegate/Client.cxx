@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2018 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -37,6 +37,7 @@
 #include "system/fd_util.h"
 #include "pool/pool.hxx"
 #include "event/SocketEvent.hxx"
+#include "net/SocketDescriptor.hxx"
 #include "system/Error.hxx"
 #include "util/Cancellable.hxx"
 #include "util/Macros.hxx"
@@ -49,17 +50,17 @@
 
 struct DelegateClient final : PoolHolder, Cancellable {
     struct lease_ref lease_ref;
-    const int fd;
+    const SocketDescriptor s;
     SocketEvent event;
 
     DelegateHandler &handler;
 
-    DelegateClient(EventLoop &event_loop, int _fd, Lease &lease,
+    DelegateClient(EventLoop &event_loop, SocketDescriptor _s, Lease &lease,
                    struct pool &_pool,
                    DelegateHandler &_handler)
         :PoolHolder(_pool),
-         fd(_fd), event(event_loop, fd, SocketEvent::READ,
-                        BIND_THIS_METHOD(SocketEventCallback)),
+         s(_s), event(event_loop, s.Get(), SocketEvent::READ,
+                      BIND_THIS_METHOD(SocketEventCallback)),
          handler(_handler) {
         p_lease_ref_set(lease_ref, lease,
                         pool, "delegate_client_lease");
@@ -72,7 +73,7 @@ struct DelegateClient final : PoolHolder, Cancellable {
     }
 
     void ReleaseSocket(bool reuse) {
-        assert(fd >= 0);
+        assert(s.IsDefined());
 
         p_lease_release(lease_ref, reuse, pool);
     }
@@ -145,7 +146,7 @@ DelegateClient::HandleErrno(size_t length)
         return;
     }
 
-    ssize_t nbytes = recv(fd, &e, sizeof(e), 0);
+    ssize_t nbytes = recv(s.Get(), &e, sizeof(e), 0);
     std::exception_ptr ep;
 
     if (nbytes == sizeof(e)) {
@@ -200,7 +201,7 @@ DelegateClient::TryRead()
     iov.iov_base = &header;
     iov.iov_len = sizeof(header);
 
-    nbytes = recvmsg_cloexec(fd, &msg, 0);
+    nbytes = recvmsg_cloexec(s.Get(), &msg, 0);
     if (nbytes < 0) {
         DestroyError(std::make_exception_ptr(MakeErrno("recvmsg() failed")));
         return;
@@ -220,7 +221,7 @@ DelegateClient::TryRead()
  */
 
 static void
-SendDelegatePacket(int fd, DelegateRequestCommand cmd,
+SendDelegatePacket(SocketDescriptor s, DelegateRequestCommand cmd,
                    const void *payload, size_t length)
 {
     const DelegateRequestHeader header = {
@@ -243,7 +244,7 @@ SendDelegatePacket(int fd, DelegateRequestCommand cmd,
         .msg_flags = 0,
     };
 
-    auto nbytes = sendmsg(fd, &msg, MSG_DONTWAIT);
+    auto nbytes = sendmsg(s.Get(), &msg, MSG_DONTWAIT);
     if (nbytes < 0)
         throw MakeErrno("Failed to send to delegate");
 
@@ -252,13 +253,13 @@ SendDelegatePacket(int fd, DelegateRequestCommand cmd,
 }
 
 void
-delegate_open(EventLoop &event_loop, int fd, Lease &lease,
+delegate_open(EventLoop &event_loop, SocketDescriptor s, Lease &lease,
               struct pool *pool, const char *path,
               DelegateHandler &handler,
               CancellablePointer &cancel_ptr)
 {
     try {
-        SendDelegatePacket(fd, DelegateRequestCommand::OPEN,
+        SendDelegatePacket(s, DelegateRequestCommand::OPEN,
                            path, strlen(path));
     } catch (...) {
         lease.ReleaseLease(false);
@@ -266,7 +267,7 @@ delegate_open(EventLoop &event_loop, int fd, Lease &lease,
         return;
     }
 
-    auto d = NewFromPool<DelegateClient>(*pool, event_loop, fd, lease,
+    auto d = NewFromPool<DelegateClient>(*pool, event_loop, s, lease,
                                          *pool,
                                          handler);
 

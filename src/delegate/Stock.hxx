@@ -38,6 +38,7 @@ class StockMap;
 class EventLoop;
 class SpawnService;
 class StockGetHandler;
+class SocketDescriptor;
 struct StockItem;
 
 StockMap *
@@ -54,7 +55,7 @@ delegate_stock_get(StockMap *delegate_stock,
                    const char *path,
                    const ChildOptions &options);
 
-int
-delegate_stock_item_get(StockItem &item);
+SocketDescriptor
+delegate_stock_item_get(StockItem &item) noexcept;
 
 #endif
