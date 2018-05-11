@@ -119,9 +119,15 @@ Equals(const MountList *a, const MountList *b)
 }
 
 static bool
-Equals(const NamespaceOptions &a, const NamespaceOptions &b)
+Equals(const MountNamespaceOptions &a, const MountNamespaceOptions &b) noexcept
 {
     return Equals(a.mounts, b.mounts);
+}
+
+static bool
+Equals(const NamespaceOptions &a, const NamespaceOptions &b)
+{
+    return Equals(a.mount, b.mount);
 }
 
 static bool

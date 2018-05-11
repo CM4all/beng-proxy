@@ -312,8 +312,8 @@ struct MakeCgiAddress : CgiAddress {
         auto &p = *tpool;
         auto *m = NewFromPool<MountList>(p, _source, _target,
                                          _expand_source, _writable);
-        m->next = options.ns.mounts;
-        options.ns.mounts = m;
+        m->next = options.ns.mount.mounts;
+        options.ns.mount.mounts = m;
         return std::move(*this);
     }
 };
