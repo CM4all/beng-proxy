@@ -33,6 +33,7 @@
 #include "Glue.hxx"
 #include "Launch.hxx"
 #include "Client.hxx"
+#include "net/ConnectSocket.hxx"
 #include "net/log/Datagram.hxx"
 #include "net/log/OneLine.hxx"
 #include "http_server/Request.hxx"
@@ -48,23 +49,6 @@ AccessLogGlue::AccessLogGlue(const AccessLogConfig &_config,
 
 AccessLogGlue::~AccessLogGlue() noexcept = default;
 
-static UniqueSocketDescriptor
-CreateConnectDatagram(const SocketAddress address)
-{
-    UniqueSocketDescriptor fd;
-    if (!fd.CreateNonBlock(address.GetFamily(), SOCK_DGRAM, 0))
-        throw MakeErrno("Failed to create socket");
-
-    if (!fd.Connect(address)) {
-        const int e = errno;
-        char buffer[256];
-        ToString(buffer, sizeof(buffer), address);
-        throw FormatErrno(e, "Failed to connect to %s", buffer);
-    }
-
-    return fd;
-}
-
 AccessLogGlue *
 AccessLogGlue::Create(const AccessLogConfig &config,
                       const UidGid *user)
@@ -78,7 +62,7 @@ AccessLogGlue::Create(const AccessLogConfig &config,
 
     case AccessLogConfig::Type::SEND:
         return new AccessLogGlue(config,
-                                 std::make_unique<LogClient>(CreateConnectDatagram(config.send_to)));
+                                 std::make_unique<LogClient>(CreateConnectDatagramSocket(config.send_to)));
 
     case AccessLogConfig::Type::EXECUTE:
         {
