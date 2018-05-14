@@ -611,6 +611,7 @@ spawn_dep = declare_dependency(
     adata_dep,
     io_dep,
     expand_dep,
+    net_dep,
     odbus_dep,
   ],
 )
