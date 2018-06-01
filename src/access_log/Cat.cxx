@@ -51,6 +51,6 @@ int main(int argc, char **argv)
     const FileDescriptor fd(STDOUT_FILENO);
 
     AccessLogServer().Run(std::bind(LogOneLine, fd,
-                                    std::placeholders::_1));
+                                    std::placeholders::_1, true));
     return 0;
 }
