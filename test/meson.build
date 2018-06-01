@@ -483,6 +483,21 @@ test('t_http_cache', executable('t_http_cache',
     http_cache_dep,
   ]))
 
+test('t_fcache', executable('t_fcache',
+  't_fcache.cxx',
+  'BlockingResourceLoader.cxx',
+  '../src/fcache.cxx',
+  '../src/cache.cxx',
+  '../src/sink_rubber.cxx',
+  '../src/istream_rubber.cxx',
+  '../src/istream_unlock.cxx',
+  include_directories: inc,
+  dependencies: [
+    istream_dep,
+    raddress_dep,
+    http_dep,
+  ]))
+
 test('t_cookie_client', executable('t_cookie_client',
   't_cookie_client.cxx',
   include_directories: inc,
