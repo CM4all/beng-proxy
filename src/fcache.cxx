@@ -319,9 +319,7 @@ FilterCacheRequest::Destroy() noexcept
 
     timeout_event.Cancel();
 
-    /* unref but don't trash the pool; it may still be in use by our
-       caller who may still be reading from the TeeIstream */
-    DeleteFromPool(pool, this);
+    this->~FilterCacheRequest();
 }
 
 void
