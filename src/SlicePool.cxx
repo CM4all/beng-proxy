@@ -33,6 +33,7 @@
 #include "SlicePool.hxx"
 #include "system/mmap.h"
 #include "AllocatorStats.hxx"
+#include "util/Poison.h"
 
 #include <new>
 
@@ -72,6 +73,9 @@ SliceArea::SliceArea(SlicePool &pool) noexcept
         slices[i].next = i + 1;
 
     slices[pool.slices_per_area - 1].next = Slot::END_OF_LIST;
+
+    PoisonInaccessible(GetPage(pool, pool.header_pages),
+                       mmap_page_size() * (pool.pages_per_area - pool.header_pages));
 }
 
 SliceArea *
@@ -342,7 +346,9 @@ SliceArea::Alloc(SlicePool &pool) noexcept
     free_head = slot->next;
     slot->next = Slot::ALLOCATED;
 
-    return GetSlice(pool, i);
+    auto *p = GetSlice(pool, i);
+    PoisonUndefined(p, pool.slice_size);
+    return p;
 }
 
 SliceAllocation
@@ -373,6 +379,8 @@ SliceArea::Free(SlicePool &pool, void *p) noexcept
 {
     unsigned i = IndexOf(pool, p);
     assert(slices[i].IsAllocated());
+
+    PoisonUndefined(p, pool.slice_size);
 
     slices[i].next = free_head;
     free_head = i;
