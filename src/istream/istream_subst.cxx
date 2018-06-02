@@ -159,7 +159,7 @@ subst_next_non_leaf_node(SubstNode *node, SubstNode *root)
 }
 
 inline std::pair<const SubstNode *, const char *>
-SubstTree::FindFirstChar(const char *data, size_t length) noexcept
+SubstTree::FindFirstChar(const char *data, size_t length) const noexcept
 {
     SubstNode *n = root;
     const SubstNode *match = nullptr;

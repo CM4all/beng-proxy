@@ -63,7 +63,7 @@ public:
 
     gcc_pure
     std::pair<const SubstNode *, const char *> FindFirstChar(const char *data,
-                                                             size_t length) noexcept;
+                                                             size_t length) const noexcept;
 };
 
 /**
