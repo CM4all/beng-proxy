@@ -1014,13 +1014,10 @@ HttpClient::TryResponseDirect(SocketDescriptor fd, FdType fd_type)
 BufferedResult
 HttpClient::OnBufferedData()
 {
-    auto b = socket.ReadBuffer();
-    assert(!b.empty());
-
     switch (response.state) {
     case Response::State::STATUS:
     case Response::State::HEADERS:
-        return FeedHeaders(b);
+        return FeedHeaders(socket.ReadBuffer());
 
     case Response::State::BODY:
         if (IsConnected() && response_body_reader.IsSocketDone(socket))
@@ -1028,7 +1025,7 @@ HttpClient::OnBufferedData()
                we need in the input buffer */
             ReleaseSocket(keep_alive);
 
-        return FeedBody(b);
+        return FeedBody(socket.ReadBuffer());
 
     case Response::State::END:
         break;
