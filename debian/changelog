@@ -4,6 +4,7 @@ cm4all-beng-proxy (14.6) unstable; urgency=low
   * fcache: fix use-after-free crash bug upon cancellation
   * access_log: fix crash after sendmsg() failure
   * istream/replace: fix stall bug
+  * istream/subst: optimize mismatch check
 
  --   
 

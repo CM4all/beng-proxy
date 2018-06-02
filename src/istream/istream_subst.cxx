@@ -171,6 +171,33 @@ subst_find_leaf(const SubstNode *node) noexcept
     return nullptr;
 }
 
+/**
+ * Check whether the given input can possibly be a match.
+ *
+ * @param match the current match (usually found with memchr() by
+ * SubstTree::FindFirstChar())
+ * @param input the remaining input
+ * @param true if the remaining input matches so far (but may not be
+ * complete yet), false if the input cannot match
+ */
+gcc_pure
+static bool
+CheckMatch(const SubstNode *match, ConstBuffer<char> input) noexcept
+{
+    const char *p = input.data, *const end = p + input.size;
+
+    while (p < end) {
+        if (subst_find_leaf(match) != nullptr)
+            return true;
+
+        match = subst_find_char(match, *p++);
+        if (match == nullptr)
+            return false;
+    }
+
+    return true;
+}
+
 /** find any leaf which begins with the current partial match, used to
     find a buffer which is partially re-inserted into the data
     stream */
@@ -225,6 +252,7 @@ subst_next_non_leaf_node(const SubstNode *node, const SubstNode *root) noexcept
 inline std::pair<const SubstNode *, const char *>
 SubstTree::FindFirstChar(const char *data, size_t length) const noexcept
 {
+    const char *const end = data + length;
     const SubstNode *n = root;
     const SubstNode *match = nullptr;
     const char *min = nullptr;
@@ -232,13 +260,29 @@ SubstTree::FindFirstChar(const char *data, size_t length) const noexcept
     while (n != nullptr) {
         assert(n->ch != 0);
 
-        auto *p = (const char *)memchr(data, n->ch, length);
-        if (p != nullptr && (min == nullptr || p < min)) {
-            assert(n->equals != nullptr);
-            match = n->equals;
-            min = p;
+        /* loop to find all instances of this start character, until
+           there is one where the rest also matches */
+        const char *p = data;
+        while (true) {
+            p = (const char *)memchr(p, n->ch, end - p);
+            if (p != nullptr && (min == nullptr || p < min)) {
+                if (!CheckMatch(n->equals, {p + 1, end})) {
+                    /* late mismatch; continue the loop to check if
+                       there are more of the current start
+                       character */
+                    ++p;
+                    continue;
+                }
+
+                assert(n->equals != nullptr);
+                match = n->equals;
+                min = p;
+            }
+
+            break;
         }
 
+        /* check the next start character in the #SubstTree */
         n = subst_next_non_leaf_node(n, root);
     }
 
