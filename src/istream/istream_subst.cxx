@@ -125,6 +125,69 @@ public:
  *
  */
 
+/** find a character in the tree */
+gcc_pure
+static const SubstNode *
+subst_find_char(const SubstNode *node, char ch) noexcept
+{
+    assert(node != nullptr);
+
+    if (ch == 0)
+        /* we cannot support null bytes */
+        return nullptr;
+
+    do {
+        if (node->ch == ch) {
+            assert(node->equals != nullptr);
+            return node->equals;
+        }
+
+        if (ch < node->ch)
+            node = node->left;
+        else
+            node = node->right;
+    } while (node != nullptr);
+
+    return nullptr;
+}
+
+/** find the leaf ending the current search word */
+gcc_pure
+static const SubstNode *
+subst_find_leaf(const SubstNode *node) noexcept
+{
+    assert(node != nullptr);
+
+    do {
+        if (node->ch == 0)
+            return node;
+
+        if (0 < node->ch)
+            node = node->left;
+        else
+            node = node->right;
+    } while (node != nullptr);
+
+    return nullptr;
+}
+
+/** find any leaf which begins with the current partial match, used to
+    find a buffer which is partially re-inserted into the data
+    stream */
+gcc_pure
+static const SubstNode *
+subst_find_any_leaf(const SubstNode *node) noexcept
+{
+    while (true) {
+        assert(node != nullptr);
+
+        if (node->ch == 0)
+            return node;
+
+        node = node->equals;
+    }
+}
+
 /** iterates over the current depth */
 gcc_pure
 static const SubstNode *
@@ -188,69 +251,6 @@ SubstIstream::FindFirstChar(const char *data, size_t length) noexcept
     auto x = tree.FindFirstChar(data, length);
     match = x.first;
     return x.second;
-}
-
-/** find a character in the tree */
-gcc_pure
-static const SubstNode *
-subst_find_char(const SubstNode *node, char ch) noexcept
-{
-    assert(node != nullptr);
-
-    if (ch == 0)
-        /* we cannot support null bytes */
-        return nullptr;
-
-    do {
-        if (node->ch == ch) {
-            assert(node->equals != nullptr);
-            return node->equals;
-        }
-
-        if (ch < node->ch)
-            node = node->left;
-        else
-            node = node->right;
-    } while (node != nullptr);
-
-    return nullptr;
-}
-
-/** find the leaf ending the current search word */
-gcc_pure
-static const SubstNode *
-subst_find_leaf(const SubstNode *node) noexcept
-{
-    assert(node != nullptr);
-
-    do {
-        if (node->ch == 0)
-            return node;
-
-        if (0 < node->ch)
-            node = node->left;
-        else
-            node = node->right;
-    } while (node != nullptr);
-
-    return nullptr;
-}
-
-/** find any leaf which begins with the current partial match, used to
-    find a buffer which is partially re-inserted into the data
-    stream */
-gcc_pure
-static const SubstNode *
-subst_find_any_leaf(const SubstNode *node) noexcept
-{
-    while (true) {
-        assert(node != nullptr);
-
-        if (node->ch == 0)
-            return node;
-
-        node = node->equals;
-    }
 }
 
 size_t
