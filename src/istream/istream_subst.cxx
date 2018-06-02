@@ -126,8 +126,9 @@ public:
  */
 
 /** iterates over the current depth */
-static SubstNode *
-subst_next_non_leaf_node(SubstNode *node, SubstNode *root)
+gcc_pure
+static const SubstNode *
+subst_next_non_leaf_node(const SubstNode *node, const SubstNode *root) noexcept
 {
     /* dive into left wing first */
     if (node->left != nullptr && node->left->ch != 0)
@@ -161,7 +162,7 @@ subst_next_non_leaf_node(SubstNode *node, SubstNode *root)
 inline std::pair<const SubstNode *, const char *>
 SubstTree::FindFirstChar(const char *data, size_t length) const noexcept
 {
-    SubstNode *n = root;
+    const SubstNode *n = root;
     const SubstNode *match = nullptr;
     const char *min = nullptr;
 
