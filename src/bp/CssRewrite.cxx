@@ -32,6 +32,7 @@
 
 #include "CssRewrite.hxx"
 #include "css_parser.hxx"
+#include "penv.hxx"
 #include "widget/RewriteUri.hxx"
 #include "pool/pool.hxx"
 #include "pool/tpool.hxx"
@@ -141,7 +142,8 @@ css_rewrite_block_uris(struct pool &pool,
 
     auto input =
         istream_memory_new(pool, p_strdup(pool, block), block.size);
-    auto replace = istream_replace_new(pool, std::move(input));
+    auto replace = istream_replace_new(*env.event_loop, pool,
+                                       std::move(input));
 
     bool modified = false;
     for (unsigned i = 0; i < rewrite.n_urls; ++i) {

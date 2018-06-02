@@ -320,7 +320,8 @@ css_processor(struct pool &caller_pool, UnusedIstreamPtr input,
                                *env.event_loop,
                                true, true);
 
-    auto replace = istream_replace_new(*pool, std::move(tee.second));
+    auto replace = istream_replace_new(*env.event_loop, *pool,
+                                       std::move(tee.second));
 
     NewFromPool<CssProcessor>(*pool, *pool,
                               std::move(tee.first),

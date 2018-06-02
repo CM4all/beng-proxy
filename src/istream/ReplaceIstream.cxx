@@ -35,6 +35,7 @@
 #include "Sink.hxx"
 #include "UnusedPtr.hxx"
 #include "GrowingBuffer.hxx"
+#include "event/DeferEvent.hxx"
 #include "util/ConstBuffer.hxx"
 #include "pool/pool.hxx"
 #include "pool/Notify.hxx"
@@ -81,6 +82,14 @@ class ReplaceIstream final : public FacadeIstream {
         void OnError(std::exception_ptr ep) noexcept override;
     };
 
+    /**
+     * This event is scheduled when a #ReplaceIstreamControl method
+     * call allows us to submit more data to the #IstreamHandler.
+     * This avoids stalling the transfer when the last Read() call did
+     * not return any data.
+     */
+    DeferEvent defer_read;
+
     bool finished = false, read_locked = false;
     bool had_input, had_output;
 
@@ -103,8 +112,10 @@ class ReplaceIstream final : public FacadeIstream {
     const SharedPoolPtr<ReplaceIstreamControl> control;
 
 public:
-    ReplaceIstream(struct pool &p, UnusedIstreamPtr _input)
+    ReplaceIstream(struct pool &p, EventLoop &event_loop,
+                   UnusedIstreamPtr _input)
         :FacadeIstream(p, std::move(_input)),
+         defer_read(event_loop, BIND_THIS_METHOD(DeferredRead)),
          control(SharedPoolPtr<ReplaceIstreamControl>::Make(p, *this))
     {
     }
@@ -114,6 +125,8 @@ public:
         assert(control->replace == this);
 
         control->replace = nullptr;
+
+        defer_read.Cancel();
     }
 
     auto GetControl() noexcept {
@@ -155,6 +168,10 @@ private:
      * bytes remaining in the buffer if it is blocking
      */
     size_t TryReadFromBuffer();
+
+    void DeferredRead() noexcept {
+        TryReadFromBuffer();
+    }
 
     /**
      * Copy data from the source buffer to the istream handler.
@@ -587,9 +604,10 @@ ReplaceIstream::_Close() noexcept
  */
 
 std::pair<UnusedIstreamPtr, SharedPoolPtr<ReplaceIstreamControl>>
-istream_replace_new(struct pool &pool, UnusedIstreamPtr input)
+istream_replace_new(EventLoop &event_loop, struct pool &pool,
+                    UnusedIstreamPtr input)
 {
-    auto *i = NewIstream<ReplaceIstream>(pool, std::move(input));
+    auto *i = NewIstream<ReplaceIstream>(pool, event_loop, std::move(input));
     return std::make_pair(UnusedIstreamPtr(i), i->GetControl());
 }
 
@@ -617,6 +635,8 @@ ReplaceIstream::Add(off_t start, off_t end,
 
     *append_substitution_p = s;
     append_substitution_p = &s->next;
+
+    defer_read.Schedule();
 }
 
 void
@@ -673,6 +693,8 @@ ReplaceIstream::Settle(off_t offset) noexcept
     assert(offset >= settled_position);
 
     settled_position = offset;
+
+    defer_read.Schedule();
 }
 
 void

@@ -37,6 +37,7 @@
 #include <sys/types.h>
 
 struct pool;
+class EventLoop;
 class Istream;
 class UnusedIstreamPtr;
 class ReplaceIstream;
@@ -77,4 +78,5 @@ public:
  * Process CM4all commands in a HTML stream, e.g. embeddings.
  */
 std::pair<UnusedIstreamPtr, SharedPoolPtr<ReplaceIstreamControl>>
-istream_replace_new(struct pool &pool, UnusedIstreamPtr input);
+istream_replace_new(EventLoop &event_loop, struct pool &pool,
+                    UnusedIstreamPtr input);

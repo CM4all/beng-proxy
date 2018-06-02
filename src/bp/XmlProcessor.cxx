@@ -432,7 +432,8 @@ processor_process(struct pool &caller_pool, UnusedIstreamPtr input,
                                *env.event_loop,
                                true, true);
 
-    auto r = istream_replace_new(processor->pool, std::move(tee.first));
+    auto r = istream_replace_new(*env.event_loop, processor->pool,
+                                 std::move(tee.first));
 
     processor->replace = std::move(r.second);
     processor->InitParser(std::move(tee.second));

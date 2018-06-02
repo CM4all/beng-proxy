@@ -45,11 +45,12 @@ create_input(struct pool &pool) noexcept
 }
 
 static UnusedIstreamPtr
-create_test(EventLoop &, struct pool &pool, UnusedIstreamPtr input) noexcept
+create_test(EventLoop &event_loop, struct pool &pool,
+            UnusedIstreamPtr input) noexcept
 {
     auto istream =
         istream_string_new(pool, "abcdefghijklmnopqrstuvwxyz");
-    auto replace = istream_replace_new(pool, std::move(istream));
+    auto replace = istream_replace_new(event_loop, pool, std::move(istream));
     replace.second->Add(3, 3, std::move(input));
     replace.second->Extend(3, 4);
     replace.second->Extend(3, 5);
