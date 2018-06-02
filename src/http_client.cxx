@@ -336,8 +336,6 @@ struct HttpClient final : BufferedSocketHandler, IstreamHandler, Cancellable, De
 
     BufferedResult FeedBody(ConstBuffer<void> b);
 
-    BufferedResult Feed(ConstBuffer<void> b);
-
     DirectResult TryResponseDirect(SocketDescriptor fd, FdType fd_type);
 
     /* virtual methods from class BufferedSocketHandler */
@@ -1008,9 +1006,17 @@ HttpClient::TryResponseDirect(SocketDescriptor fd, FdType fd_type)
     return DirectResult::OK;
 }
 
-inline BufferedResult
-HttpClient::Feed(ConstBuffer<void> b)
+/*
+ * socket_wrapper handler
+ *
+ */
+
+BufferedResult
+HttpClient::OnBufferedData()
 {
+    auto b = socket.ReadBuffer();
+    assert(!b.empty());
+
     switch (response.state) {
     case Response::State::STATUS:
     case Response::State::HEADERS:
@@ -1030,19 +1036,6 @@ HttpClient::Feed(ConstBuffer<void> b)
 
     assert(false);
     gcc_unreachable();
-}
-
-/*
- * socket_wrapper handler
- *
- */
-
-BufferedResult
-HttpClient::OnBufferedData()
-{
-    auto r = socket.ReadBuffer();
-    assert(!r.empty());
-    return Feed(r);
 }
 
 DirectResult
