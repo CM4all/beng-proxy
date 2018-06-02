@@ -328,15 +328,15 @@ struct HttpClient final : BufferedSocketHandler, IstreamHandler, Cancellable, De
      */
     bool HandleLine(const char *line, size_t length);
 
-    BufferedResult ParseHeaders(const void *data, size_t length);
+    BufferedResult ParseHeaders(ConstBuffer<char> b);
 
-    BufferedResult FeedHeaders(const void *data, size_t length);
+    BufferedResult FeedHeaders(ConstBuffer<void> b);
 
     void ResponseBodyEOF();
 
-    BufferedResult FeedBody(const void *data, size_t length);
+    BufferedResult FeedBody(ConstBuffer<void> b);
 
-    BufferedResult Feed(const void *data, size_t length);
+    BufferedResult Feed(ConstBuffer<void> b);
 
     DirectResult TryResponseDirect(SocketDescriptor fd, FdType fd_type);
 
@@ -786,15 +786,15 @@ HttpClient::ResponseFinished() noexcept
 }
 
 inline BufferedResult
-HttpClient::ParseHeaders(const void *_data, size_t length)
+HttpClient::ParseHeaders(ConstBuffer<char> b)
 {
     assert(response.state == Response::State::STATUS ||
            response.state == Response::State::HEADERS);
-    assert(_data != nullptr);
-    assert(length > 0);
+    assert(!b.IsNull());
+    assert(!b.empty());
 
-    const char *const buffer = (const char *)_data;
-    const char *buffer_end = buffer + length;
+    const char *const buffer = b.data;
+    const char *buffer_end = buffer + b.size;
 
     /* parse line by line */
     const char *start = buffer, *end;
@@ -837,7 +837,7 @@ HttpClient::ResponseBodyEOF()
 }
 
 inline BufferedResult
-HttpClient::FeedBody(const void *data, size_t length)
+HttpClient::FeedBody(ConstBuffer<void> b)
 {
     assert(response.state == Response::State::BODY);
 
@@ -845,7 +845,7 @@ HttpClient::FeedBody(const void *data, size_t length)
 
     {
         const DestructObserver destructed(*this);
-        nbytes = response_body_reader.FeedBody(data, length);
+        nbytes = response_body_reader.FeedBody(b.data, b.size);
         if (nbytes == 0)
             return destructed
                 ? BufferedResult::CLOSED
@@ -864,7 +864,7 @@ HttpClient::FeedBody(const void *data, size_t length)
         return BufferedResult::CLOSED;
     }
 
-    if (nbytes < length)
+    if (nbytes < b.size)
         return BufferedResult::OK;
 
     if (response_body_reader.RequireMore())
@@ -874,12 +874,12 @@ HttpClient::FeedBody(const void *data, size_t length)
 }
 
 BufferedResult
-HttpClient::FeedHeaders(const void *data, size_t length)
+HttpClient::FeedHeaders(ConstBuffer<void> b)
 {
     assert(response.state == Response::State::STATUS ||
            response.state == Response::State::HEADERS);
 
-    const BufferedResult result = ParseHeaders(data, length);
+    const BufferedResult result = ParseHeaders(ConstBuffer<char>::FromVoid(b));
     if (result != BufferedResult::AGAIN_EXPECT)
         return result;
 
@@ -1009,12 +1009,12 @@ HttpClient::TryResponseDirect(SocketDescriptor fd, FdType fd_type)
 }
 
 inline BufferedResult
-HttpClient::Feed(const void *data, size_t length)
+HttpClient::Feed(ConstBuffer<void> b)
 {
     switch (response.state) {
     case Response::State::STATUS:
     case Response::State::HEADERS:
-        return FeedHeaders(data, length);
+        return FeedHeaders(b);
 
     case Response::State::BODY:
         if (IsConnected() && response_body_reader.IsSocketDone(socket))
@@ -1022,7 +1022,7 @@ HttpClient::Feed(const void *data, size_t length)
                we need in the input buffer */
             ReleaseSocket(keep_alive);
 
-        return FeedBody(data, length);
+        return FeedBody(b);
 
     case Response::State::END:
         break;
@@ -1042,7 +1042,7 @@ HttpClient::OnBufferedData()
 {
     auto r = socket.ReadBuffer();
     assert(!r.empty());
-    return Feed(r.data, r.size);
+    return Feed(r);
 }
 
 DirectResult
