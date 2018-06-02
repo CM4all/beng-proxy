@@ -998,7 +998,7 @@ HttpClient::TryResponseDirect(SocketDescriptor fd, FdType fd_type)
         response_body_reader.SocketEOF(0);
         Destroy();
         return DirectResult::CLOSED;
-   }
+    }
 
     if (response_body_reader.IsEOF()) {
         ResponseBodyEOF();
