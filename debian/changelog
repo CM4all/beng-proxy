@@ -6,7 +6,7 @@ cm4all-beng-proxy (14.6) unstable; urgency=low
   * istream/replace: fix stall bug
   * istream/subst: optimize mismatch check
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Mon, 04 Jun 2018 10:22:47 -0000
 
 cm4all-beng-proxy (14.5) unstable; urgency=low
 
