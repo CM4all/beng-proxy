@@ -1,6 +1,6 @@
 cm4all-beng-proxy (14.7) unstable; urgency=low
 
-  * 
+  * certdb: DELETE old name before INSERT to avoid constraint violation
 
  --   
 

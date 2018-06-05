@@ -224,6 +224,10 @@ CertDatabase::LoadServerCertificate(const char *handle,
             CheckError(InsertAltName(id, alt_name.c_str()));
         return false;
     } else {
+        /* just in case a deleted certificate with the same name
+           already exists */
+        CheckError(ReallyDeleteServerCertificateByName(common_name.c_str()));
+
         result = CheckError(InsertServerCertificate(handle, common_name.c_str(),
                                                     issuer_common_name.c_str(),
                                                     not_before.c_str(),

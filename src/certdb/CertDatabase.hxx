@@ -271,6 +271,20 @@ private:
                                   id);
     }
 
+    /**
+     * Invoke SQL "DELETE" on the given certificate which has the
+     * "deleted" flag set.  This is used prior to "INSERT"ing a new
+     * certificate when an old deleted one with the same name may
+     * already exist.  Without a following INSERT, this is an unsafe
+     * operation, because it may break beng-lb's certificate cache.
+     */
+    Pg::Result ReallyDeleteServerCertificateByName(const char *common_name) {
+        return conn.ExecuteParams(true,
+                                  "DELETE FROM server_certificate "
+                                  "WHERE common_name=$1 AND deleted",
+                                  common_name);
+    }
+
 public:
     Pg::Result GetModifiedServerCertificatesMeta(const char *since) {
         return conn.ExecuteParams("SELECT deleted, modified, handle "
