@@ -90,7 +90,7 @@ class Translation(Protocol):
             return response
 
         response.packet(TRANSLATE_USER_NAMESPACE)
-        response.packet(TRANSLATE_PID_NAMESPACE)
+        response.packet(TRANSLATE_PID_NAMESPACE_NAME, user)
         response.packet(TRANSLATE_HOME, os.path.join('/var/www', user))
         response.packet(TRANSLATE_TOKEN, 'xyz')
         response.uid_gid(500, 100)

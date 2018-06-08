@@ -34,6 +34,7 @@ Architecture: any
 Depends: ${shlibs:Depends}, adduser,
  systemd-sysv
 Recommends: cm4all-beng-proxy-translation | cm4all-jetserv-daemon,
+ cm4all-spawn (>= 0.3),
  libcm4all-beng-proxy-js (= ${source:Version})
 Suggests: attr, cm4all-jailcgi-wrapper, cm4all-coma-cgi,
  cm4all-beng-proxy-logging (= ${source:Version}),

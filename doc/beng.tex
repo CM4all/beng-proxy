@@ -2145,6 +2145,11 @@ new PID namespace.  This creates a new mapping for process ids inside
 this namespace.  Only processes in this namespace are visible and only
 these can be killed.
 
+The translation packet \verb|PID_NAMESPACE_NAME| reassociates the
+process with an existing PID namespace, selected by its name (in the
+payload).  This requires the \verb|cm4all-spawn| daemon, which manages
+PID namespaces.
+
 By default, other processes are actually still visible through
 \texttt{/proc}.  For complete PID namespace support, one would need to
 mount a new \texttt{proc} filesystem connected to the new namespace.
