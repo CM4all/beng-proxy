@@ -4,6 +4,13 @@ cm4all-beng-proxy (15.0.1) unstable; urgency=low
 
  --   
 
+cm4all-beng-proxy (14.8) unstable; urgency=low
+
+  * http_cache, fcache: fix use-after-free crash bug
+  * spawn: support the systemd hybrid cgroup hierarchy
+
+ -- Max Kellermann <mk@cm4all.com>  Tue, 19 Jun 2018 14:46:39 -0000
+
 cm4all-beng-proxy (14.7) unstable; urgency=low
 
   * certdb: DELETE old name before INSERT to avoid constraint violation

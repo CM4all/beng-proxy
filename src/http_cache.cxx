@@ -515,6 +515,15 @@ HttpCacheRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
     response.status = status;
     response.headers = strmap_dup(&pool, &_headers);
 
+    /* move the caller_pool reference to the stack to ensure it gets
+       unreferenced at the end of this method - not earlier and not
+       later */
+    const PoolPtr _caller_pool = std::move(caller_pool);
+
+    /* copy the HttpResponseHandler reference to the stack, because
+       the sink_rubber_new() call may destroy this object */
+    auto &_handler = handler;
+
     bool destroy = false;
     if (!body) {
         Put({}, 0);
@@ -547,12 +556,7 @@ HttpCacheRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
         body = std::move(tee.first);
     }
 
-    /* move the caller_pool reference to the stack to ensure it gets
-       unreferenced at the end of this method - not earlier and not
-       later */
-    const PoolPtr _caller_pool = std::move(caller_pool);
-
-    handler.InvokeResponse(status, std::move(_headers), std::move(body));
+    _handler.InvokeResponse(status, std::move(_headers), std::move(body));
 
     if (destroy)
         Destroy();

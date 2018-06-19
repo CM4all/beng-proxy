@@ -513,6 +513,10 @@ FilterCacheRequest::OnHttpResponse(http_status_t status, StringMap &&headers,
         return;
     }
 
+    /* copy the HttpResponseHandler reference to the stack, because
+       the sink_rubber_new() call may destroy this object */
+    auto &_handler = handler;
+
     if (!body) {
         response.cancel_ptr = nullptr;
 
@@ -544,7 +548,7 @@ FilterCacheRequest::OnHttpResponse(http_status_t status, StringMap &&headers,
         body = std::move(tee.first);
     }
 
-    handler.InvokeResponse(status, std::move(headers), std::move(body));
+    _handler.InvokeResponse(status, std::move(headers), std::move(body));
 }
 
 void
