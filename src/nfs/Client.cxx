@@ -621,7 +621,7 @@ NfsFileHandle::Abort(std::exception_ptr ep)
 inline void
 NfsFile::AbortHandles(std::exception_ptr ep)
 {
-    handles.clear_and_dispose([this, &ep](NfsFileHandle *handle){
+    handles.clear_and_dispose([&ep](NfsFileHandle *handle){
             handle->Abort(ep);
         });
 

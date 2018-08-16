@@ -208,7 +208,7 @@ nfs_stock_new(EventLoop &event_loop, struct pool &pool)
 
 NfsStock::~NfsStock()
 {
-    connections.clear_and_dispose([this](NfsStockConnection *connection){
+    connections.clear_and_dispose([](NfsStockConnection *connection){
         if (connection->client != nullptr)
             nfs_client_free(connection->client);
         else
