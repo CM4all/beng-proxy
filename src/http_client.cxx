@@ -199,11 +199,6 @@ struct HttpClient final : BufferedSocketHandler, IstreamHandler, Cancellable, De
          */
         bool in_handler;
 
-        /**
-         * Has the server sent a HTTP/1.0 response?
-         */
-        bool http_1_0;
-
         http_status_t status;
         StringMap headers;
 
@@ -629,8 +624,6 @@ HttpClient::ParseStatusLine(const char *line, size_t length)
         return false;
     }
 
-    response.http_1_0 = line[7] == '0' && line[6] == '.' && line[5] == '1';
-
     length = line + length - space - 1;
     line = space + 1;
 
@@ -687,7 +680,7 @@ HttpClient::HeadersFinished()
     /* remove the other hop-by-hop response headers */
     response_headers.Remove("proxy-authenticate");
 
-    const bool upgrade = !response.http_1_0 && header_connection != nullptr &&
+    const bool upgrade = header_connection != nullptr &&
         transfer_encoding == nullptr && content_length_string == nullptr &&
         http_is_upgrade(response.status, header_connection);
     if (upgrade) {
