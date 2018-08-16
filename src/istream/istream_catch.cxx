@@ -284,6 +284,6 @@ istream_catch_new(struct pool *pool, UnusedIstreamPtr input,
 {
     assert(callback != nullptr);
 
-    return UnusedIstreamPtr(NewIstream<CatchIstream>(*pool, std::move(input),
-                                                     callback, ctx));
+    return NewIstreamPtr<CatchIstream>(*pool, std::move(input),
+                                       callback, ctx);
 }

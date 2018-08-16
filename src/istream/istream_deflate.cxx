@@ -425,5 +425,6 @@ UnusedIstreamPtr
 istream_deflate_new(struct pool &pool, UnusedIstreamPtr input,
                     EventLoop &event_loop, bool gzip) noexcept
 {
-    return UnusedIstreamPtr(NewIstream<DeflateIstream>(pool, std::move(input), event_loop, gzip));
+    return NewIstreamPtr<DeflateIstream>(pool, std::move(input),
+                                         event_loop, gzip);
 }

@@ -362,8 +362,7 @@ UnusedIstreamPtr
 istream_pipe_new(struct pool *pool, UnusedIstreamPtr input,
                  Stock *pipe_stock)
 {
-    return UnusedIstreamPtr(NewIstream<PipeIstream>(*pool, std::move(input),
-                                                    pipe_stock));
+    return NewIstreamPtr<PipeIstream>(*pool, std::move(input), pipe_stock);
 }
 
 #endif

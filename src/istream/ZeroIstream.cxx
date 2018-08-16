@@ -32,7 +32,6 @@
 
 #include "ZeroIstream.hxx"
 #include "istream.hxx"
-#include "UnusedPtr.hxx"
 #include "New.hxx"
 
 #include <limits.h>
@@ -64,5 +63,5 @@ public:
 UnusedIstreamPtr
 istream_zero_new(struct pool &pool) noexcept
 {
-    return UnusedIstreamPtr(NewIstream<ZeroIstream>(pool));
+    return NewIstreamPtr<ZeroIstream>(pool);
 }

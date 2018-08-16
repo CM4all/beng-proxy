@@ -729,8 +729,8 @@ UnusedIstreamPtr
 istream_subst_new(struct pool *pool, UnusedIstreamPtr input,
                   SubstTree tree) noexcept
 {
-    return UnusedIstreamPtr(NewIstream<SubstIstream>(*pool, std::move(input),
-                                                     std::move(tree)));
+    return NewIstreamPtr<SubstIstream>(*pool, std::move(input),
+                                       std::move(tree));
 }
 
 bool

@@ -215,5 +215,5 @@ istream_escape_new(struct pool &pool, UnusedIstreamPtr input,
     assert(cls.escape_find != nullptr);
     assert(cls.escape_char != nullptr);
 
-    return UnusedIstreamPtr(NewIstream<EscapeIstream>(pool, std::move(input), cls));
+    return NewIstreamPtr<EscapeIstream>(pool, std::move(input), cls);
 }

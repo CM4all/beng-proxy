@@ -66,5 +66,5 @@ public:
 UnusedIstreamPtr
 istream_unlock_new(struct pool &pool, UnusedIstreamPtr input, CacheItem &item)
 {
-    return UnusedIstreamPtr(NewIstream<UnlockIstream>(pool, std::move(input), item));
+    return NewIstreamPtr<UnlockIstream>(pool, std::move(input), item);
 }

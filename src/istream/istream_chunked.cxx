@@ -389,5 +389,5 @@ ChunkedIstream::_Close() noexcept
 UnusedIstreamPtr
 istream_chunked_new(struct pool &pool, UnusedIstreamPtr input) noexcept
 {
-    return UnusedIstreamPtr(NewIstream<ChunkedIstream>(pool, std::move(input)));
+    return NewIstreamPtr<ChunkedIstream>(pool, std::move(input));
 }

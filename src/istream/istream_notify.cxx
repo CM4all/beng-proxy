@@ -91,5 +91,5 @@ istream_notify_new(struct pool &pool, UnusedIstreamPtr input,
     assert(handler.abort != nullptr);
     assert(handler.close != nullptr);
 
-    return UnusedIstreamPtr(NewIstream<NotifyIstream>(pool, std::move(input), handler, ctx));
+    return NewIstreamPtr<NotifyIstream>(pool, std::move(input), handler, ctx);
 }

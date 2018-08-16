@@ -32,7 +32,6 @@
 
 #include "FailIstream.hxx"
 #include "istream.hxx"
-#include "UnusedPtr.hxx"
 #include "New.hxx"
 
 class FailIstream final : public Istream {
@@ -61,5 +60,5 @@ istream_fail_new(struct pool &pool, std::exception_ptr ep) noexcept
 {
     assert(ep);
 
-    return UnusedIstreamPtr(NewIstream<FailIstream>(pool, ep));
+    return NewIstreamPtr<FailIstream>(pool, ep);
 }

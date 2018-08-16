@@ -33,7 +33,6 @@
 #include "istream_memory.hxx"
 #include "istream.hxx"
 #include "Bucket.hxx"
-#include "UnusedPtr.hxx"
 #include "New.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/Cast.hxx"
@@ -93,5 +92,5 @@ public:
 UnusedIstreamPtr
 istream_memory_new(struct pool &pool, const void *data, size_t length) noexcept
 {
-    return UnusedIstreamPtr(NewIstream<MemoryIstream>(pool, data, length));
+    return NewIstreamPtr<MemoryIstream>(pool, data, length);
 }

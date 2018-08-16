@@ -83,5 +83,5 @@ public:
 UnusedIstreamPtr
 istream_byte_new(struct pool &pool, UnusedIstreamPtr input)
 {
-    return UnusedIstreamPtr(NewIstream<ByteIstream>(pool, std::move(input)));
+    return NewIstreamPtr<ByteIstream>(pool, std::move(input));
 }

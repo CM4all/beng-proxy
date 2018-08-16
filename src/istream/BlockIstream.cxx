@@ -48,5 +48,5 @@ public:
 UnusedIstreamPtr
 istream_block_new(struct pool &pool) noexcept
 {
-    return UnusedIstreamPtr(NewIstream<BlockIstream>(pool));
+    return NewIstreamPtr<BlockIstream>(pool);
 }

@@ -176,5 +176,5 @@ TraceIstream::TraceData(const void *data0, size_t length)
 UnusedIstreamPtr
 istream_trace_new(struct pool &pool, UnusedIstreamPtr input) noexcept
 {
-    return UnusedIstreamPtr(NewIstream<TraceIstream>(pool, std::move(input)));
+    return NewIstreamPtr<TraceIstream>(pool, std::move(input));
 }

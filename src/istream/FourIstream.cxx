@@ -86,5 +86,5 @@ public:
 UnusedIstreamPtr
 istream_four_new(struct pool *pool, UnusedIstreamPtr input) noexcept
 {
-    return UnusedIstreamPtr(NewIstream<FourIstream>(*pool, std::move(input)));
+    return NewIstreamPtr<FourIstream>(*pool, std::move(input));
 }

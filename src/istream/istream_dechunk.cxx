@@ -468,9 +468,9 @@ istream_dechunk_new(struct pool &pool, UnusedIstreamPtr input,
                     EventLoop &event_loop,
                     DechunkHandler &dechunk_handler)
 {
-    return UnusedIstreamPtr(NewIstream<DechunkIstream>(pool, std::move(input),
-                                                       event_loop,
-                                                       dechunk_handler));
+    return NewIstreamPtr<DechunkIstream>(pool, std::move(input),
+                                         event_loop,
+                                         dechunk_handler);
 }
 
 bool

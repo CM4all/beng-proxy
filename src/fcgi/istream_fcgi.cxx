@@ -242,6 +242,6 @@ UnusedIstreamPtr
 istream_fcgi_new(struct pool &pool, UnusedIstreamPtr input,
                  uint16_t request_id) noexcept
 {
-    return UnusedIstreamPtr(NewIstream<FcgiIstream>(pool, std::move(input),
-                                                    request_id));
+    return NewIstreamPtr<FcgiIstream>(pool, std::move(input),
+                                      request_id);
 }

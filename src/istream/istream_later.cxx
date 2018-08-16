@@ -104,5 +104,5 @@ UnusedIstreamPtr
 istream_later_new(struct pool &pool, UnusedIstreamPtr input,
                   EventLoop &event_loop) noexcept
 {
-    return UnusedIstreamPtr(NewIstream<LaterIstream>(pool, std::move(input), event_loop));
+    return NewIstreamPtr<LaterIstream>(pool, std::move(input), event_loop);
 }

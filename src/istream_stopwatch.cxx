@@ -108,5 +108,6 @@ istream_stopwatch_new(struct pool &pool, UnusedIstreamPtr input,
     if (_stopwatch == nullptr)
         return input;
 
-    return UnusedIstreamPtr(NewIstream<StopwatchIstream>(pool, std::move(input), *_stopwatch));
+    return NewIstreamPtr<StopwatchIstream>(pool, std::move(input),
+                                           *_stopwatch);
 }

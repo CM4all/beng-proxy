@@ -256,5 +256,5 @@ istream_iconv_new(struct pool &pool, UnusedIstreamPtr input,
     if (iconv == (iconv_t)-1)
         return nullptr;
 
-    return UnusedIstreamPtr(NewIstream<IconvIstream>(pool, std::move(input), iconv));
+    return NewIstreamPtr<IconvIstream>(pool, std::move(input), iconv);
 }

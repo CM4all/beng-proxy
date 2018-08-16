@@ -124,6 +124,6 @@ istream_rubber_new(struct pool &pool, Rubber &rubber,
     assert(id > 0);
     assert(start <= end);
 
-    return UnusedIstreamPtr(NewIstream<RubberIstream>(pool, rubber, id,
-                                                      start, end, auto_remove));
+    return NewIstreamPtr<RubberIstream>(pool, rubber, id,
+                                        start, end, auto_remove);
 }

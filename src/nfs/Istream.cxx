@@ -287,5 +287,5 @@ istream_nfs_new(struct pool &pool, NfsFileHandle &handle,
 {
     assert(start <= end);
 
-    return UnusedIstreamPtr(NewIstream<NfsIstream>(pool, handle, start, end));
+    return NewIstreamPtr<NfsIstream>(pool, handle, start, end);
 }

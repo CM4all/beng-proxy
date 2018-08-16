@@ -204,6 +204,6 @@ UnusedIstreamPtr
 istream_head_new(struct pool &pool, UnusedIstreamPtr input,
                  size_t size, bool authoritative) noexcept
 {
-    return UnusedIstreamPtr(NewIstream<HeadIstream>(pool, std::move(input),
-                                                    size, authoritative));
+    return NewIstreamPtr<HeadIstream>(pool, std::move(input),
+                                      size, authoritative);
 }

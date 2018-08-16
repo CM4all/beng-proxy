@@ -118,6 +118,6 @@ NewTimeoutIstream(struct pool &pool, UnusedIstreamPtr input,
                   EventLoop &event_loop,
                   const struct timeval &timeout)
 {
-    return UnusedIstreamPtr(NewIstream<TimeoutIstream>(pool, std::move(input),
-                                                       event_loop, timeout));
+    return NewIstreamPtr<TimeoutIstream>(pool, std::move(input),
+                                         event_loop, timeout);
 }
