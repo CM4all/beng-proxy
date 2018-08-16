@@ -33,6 +33,7 @@
 #include "sink_header.hxx"
 #include "ForwardIstream.hxx"
 #include "UnusedPtr.hxx"
+#include "New.hxx"
 #include "util/Cancellable.hxx"
 #include "util/ByteOrder.hxx"
 

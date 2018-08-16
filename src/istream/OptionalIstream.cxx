@@ -34,6 +34,7 @@
 #include "ForwardIstream.hxx"
 #include "UnusedPtr.hxx"
 #include "Bucket.hxx"
+#include "New.hxx"
 #include "istream_null.hxx"
 
 #include <assert.h>

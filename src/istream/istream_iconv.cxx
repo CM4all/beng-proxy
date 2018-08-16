@@ -33,6 +33,7 @@
 #include "istream_iconv.hxx"
 #include "FacadeIstream.hxx"
 #include "UnusedPtr.hxx"
+#include "New.hxx"
 #include "fb_pool.hxx"
 #include "SliceFifoBuffer.hxx"
 

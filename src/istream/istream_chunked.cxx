@@ -33,6 +33,7 @@
 #include "istream_chunked.hxx"
 #include "FacadeIstream.hxx"
 #include "Bucket.hxx"
+#include "New.hxx"
 #include "UnusedPtr.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/Cast.hxx"

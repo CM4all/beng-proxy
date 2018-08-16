@@ -34,6 +34,7 @@
 #include "FacadeIstream.hxx"
 #include "Sink.hxx"
 #include "UnusedPtr.hxx"
+#include "New.hxx"
 #include "GrowingBuffer.hxx"
 #include "event/DeferEvent.hxx"
 #include "util/ConstBuffer.hxx"

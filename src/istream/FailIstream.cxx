@@ -33,6 +33,7 @@
 #include "FailIstream.hxx"
 #include "istream.hxx"
 #include "UnusedPtr.hxx"
+#include "New.hxx"
 
 class FailIstream final : public Istream {
     const std::exception_ptr error;

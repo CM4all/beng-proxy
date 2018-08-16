@@ -33,6 +33,7 @@
 #include "istream_escape.hxx"
 #include "istream/FacadeIstream.hxx"
 #include "istream/UnusedPtr.hxx"
+#include "istream/New.hxx"
 #include "escape_class.hxx"
 #include "util/ConstBuffer.hxx"
 

@@ -32,6 +32,7 @@
 
 #include "istream_deflate.hxx"
 #include "UnusedPtr.hxx"
+#include "New.hxx"
 #include "FacadeIstream.hxx"
 #include "pool/pool.hxx"
 #include "fb_pool.hxx"

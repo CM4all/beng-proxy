@@ -33,6 +33,7 @@
 #ifdef __linux
 
 #include "istream_pipe.hxx"
+#include "New.hxx"
 #include "UnusedPtr.hxx"
 #include "ForwardIstream.hxx"
 #include "io/FileDescriptor.hxx"

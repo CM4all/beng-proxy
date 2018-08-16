@@ -33,6 +33,7 @@
 #include "istream_later.hxx"
 #include "ForwardIstream.hxx"
 #include "UnusedPtr.hxx"
+#include "New.hxx"
 #include "event/DeferEvent.hxx"
 
 class LaterIstream final : public ForwardIstream {

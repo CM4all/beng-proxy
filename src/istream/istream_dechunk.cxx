@@ -33,6 +33,7 @@
 #include "istream_dechunk.hxx"
 #include "FacadeIstream.hxx"
 #include "UnusedPtr.hxx"
+#include "New.hxx"
 #include "http/ChunkParser.hxx"
 #include "pool/pool.hxx"
 #include "event/DeferEvent.hxx"

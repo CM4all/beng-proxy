@@ -33,6 +33,7 @@
 #include "FourIstream.hxx"
 #include "ForwardIstream.hxx"
 #include "UnusedPtr.hxx"
+#include "New.hxx"
 #include "Bucket.hxx"
 
 #include <algorithm>

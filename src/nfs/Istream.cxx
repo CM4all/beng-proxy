@@ -35,6 +35,7 @@
 #include "Handler.hxx"
 #include "istream/istream.hxx"
 #include "istream/UnusedPtr.hxx"
+#include "istream/New.hxx"
 #include "pool/pool.hxx"
 #include "util/Cast.hxx"
 #include "util/ForeignFifoBuffer.hxx"

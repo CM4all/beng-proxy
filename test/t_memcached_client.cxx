@@ -39,6 +39,7 @@
 #include "direct.hxx"
 #include "istream/Pointer.hxx"
 #include "istream/UnusedPtr.hxx"
+#include "istream/New.hxx"
 #include "fb_pool.hxx"
 #include "pool/pool.hxx"
 #include "PInstance.hxx"

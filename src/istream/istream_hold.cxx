@@ -33,6 +33,7 @@
 #include "istream_hold.hxx"
 #include "ForwardIstream.hxx"
 #include "UnusedPtr.hxx"
+#include "New.hxx"
 
 #include <assert.h>
 

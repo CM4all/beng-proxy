@@ -34,6 +34,7 @@
 #include "Protocol.hxx"
 #include "istream/ForwardIstream.hxx"
 #include "istream/UnusedPtr.hxx"
+#include "istream/New.hxx"
 #include "direct.hxx"
 #include "util/ByteOrder.hxx"
 #include "util/DestructObserver.hxx"

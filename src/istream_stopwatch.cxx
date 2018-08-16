@@ -33,6 +33,7 @@
 #include "istream_stopwatch.hxx"
 #include "istream/ForwardIstream.hxx"
 #include "istream/UnusedPtr.hxx"
+#include "istream/New.hxx"
 #include "stopwatch.hxx"
 
 class StopwatchIstream final : public ForwardIstream {

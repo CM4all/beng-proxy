@@ -33,6 +33,7 @@
 #include "ZeroIstream.hxx"
 #include "istream.hxx"
 #include "UnusedPtr.hxx"
+#include "New.hxx"
 
 #include <limits.h>
 

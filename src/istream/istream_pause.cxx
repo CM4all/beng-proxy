@@ -33,6 +33,7 @@
 #include "istream_pause.hxx"
 #include "ForwardIstream.hxx"
 #include "UnusedPtr.hxx"
+#include "New.hxx"
 
 class PauseIstream final : public ForwardIstream {
     const SharedPoolPtr<PauseIstreamControl> control;

@@ -34,6 +34,7 @@
 #include "istream/istream.hxx"
 #include "istream/Bucket.hxx"
 #include "istream/UnusedPtr.hxx"
+#include "istream/New.hxx"
 #include "rubber.hxx"
 #include "util/ConstBuffer.hxx"
 

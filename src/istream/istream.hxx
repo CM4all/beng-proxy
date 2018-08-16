@@ -481,12 +481,4 @@ protected:
 
 #include "Invoke.hxx"
 
-template<typename T, typename... Args>
-static inline T *
-NewIstream(struct pool &pool, Args&&... args)
-{
-    return NewFromPool<T>(pool, pool,
-                          std::forward<Args>(args)...);
-}
-
 #endif

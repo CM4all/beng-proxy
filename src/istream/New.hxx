@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2018 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,45 +30,16 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "istream_null.hxx"
-#include "istream.hxx"
-#include "UnusedPtr.hxx"
-#include "New.hxx"
+#pragma once
 
-#include <unistd.h>
+#include "pool/pool.hxx"
 
-class NullIstream final : public Istream {
-public:
-    NullIstream(struct pool &p)
-        :Istream(p) {}
+#include <utility>
 
-    /* virtual methods from class Istream */
-
-    off_t _GetAvailable(gcc_unused bool partial) noexcept override {
-        return 0;
-    }
-
-    void _Read() noexcept override {
-        DestroyEof();
-    }
-
-    int _AsFd() noexcept override {
-        /* fd0 is always linked with /dev/null */
-        int fd = dup(0);
-        if (fd < 0)
-            return -1;
-
-        Destroy();
-        return fd;
-    }
-
-    void _Close() noexcept override {
-        Destroy();
-    }
-};
-
-UnusedIstreamPtr
-istream_null_new(struct pool &pool)
+template<typename T, typename... Args>
+static inline T *
+NewIstream(struct pool &pool, Args&&... args)
 {
-    return UnusedIstreamPtr(NewIstream<NullIstream>(pool));
+    return NewFromPool<T>(pool, pool,
+                          std::forward<Args>(args)...);
 }

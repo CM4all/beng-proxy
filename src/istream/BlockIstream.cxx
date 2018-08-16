@@ -33,6 +33,7 @@
 #include "BlockIstream.hxx"
 #include "istream.hxx"
 #include "UnusedPtr.hxx"
+#include "New.hxx"
 
 class BlockIstream final : public Istream {
 public:
