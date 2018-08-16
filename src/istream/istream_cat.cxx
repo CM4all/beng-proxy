@@ -34,6 +34,7 @@
 #include "Sink.hxx"
 #include "Bucket.hxx"
 #include "UnusedPtr.hxx"
+#include "pool/pool.hxx"
 #include "util/WritableBuffer.hxx"
 
 #include <boost/intrusive/slist.hpp>

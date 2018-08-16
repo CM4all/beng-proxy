@@ -33,7 +33,6 @@
 #ifndef ISTREAM_HXX
 #define ISTREAM_HXX
 
-#include "pool/pool.hxx"
 #include "pool/Holder.hxx"
 #include "pool/Notify.hxx"
 #include "Handler.hxx"

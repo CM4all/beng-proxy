@@ -41,6 +41,7 @@
 #include "istream/sink_close.hxx"
 #include "istream/StringSink.hxx"
 #include "istream/Bucket.hxx"
+#include "pool/pool.hxx"
 #include "util/Cancellable.hxx"
 #include "util/Exception.hxx"
 

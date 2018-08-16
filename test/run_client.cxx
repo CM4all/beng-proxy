@@ -42,6 +42,7 @@
 #include "istream/istream.hxx"
 #include "istream/sink_fd.hxx"
 #include "istream/UnusedPtr.hxx"
+#include "pool/pool.hxx"
 #include "direct.hxx"
 #include "PInstance.hxx"
 #include "fb_pool.hxx"

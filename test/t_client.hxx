@@ -44,6 +44,7 @@
 #include "istream/istream_null.hxx"
 #include "istream/istream_string.hxx"
 #include "istream/ZeroIstream.hxx"
+#include "pool/pool.hxx"
 #include "event/TimerEvent.hxx"
 #include "event/Duration.hxx"
 #include "PInstance.hxx"

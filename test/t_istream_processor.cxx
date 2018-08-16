@@ -33,6 +33,7 @@
 #include "FailingResourceLoader.hxx"
 #include "istream/istream_string.hxx"
 #include "istream/istream.hxx"
+#include "pool/pool.hxx"
 #include "widget/Widget.hxx"
 #include "widget/Class.hxx"
 #include "bp/XmlProcessor.hxx"

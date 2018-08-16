@@ -42,6 +42,7 @@
 #include "istream/istream.hxx"
 #include "istream/BlockIstream.hxx"
 #include "istream/istream_string.hxx"
+#include "pool/pool.hxx"
 #include "util/Cancellable.hxx"
 #include "util/PrintException.hxx"
 

@@ -33,6 +33,7 @@
 #include "Internal.hxx"
 #include "Request.hxx"
 #include "direct.hxx"
+#include "pool/pool.hxx"
 #include "util/Exception.hxx"
 
 #include <sys/socket.h>

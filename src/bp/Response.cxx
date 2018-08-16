@@ -64,6 +64,7 @@
 #include "istream/istream_deflate.hxx"
 #include "istream/istream_pipe.hxx"
 #include "istream/istream_string.hxx"
+#include "pool/pool.hxx"
 #include "translation/Vary.hxx"
 #include "translation/Transformation.hxx"
 #include "http/Date.hxx"

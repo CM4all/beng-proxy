@@ -194,10 +194,7 @@ struct HttpServerConnection final
         defer_read.Cancel();
     }
 
-    void Delete() {
-        this->~HttpServerConnection();
-        pool_unref(pool);
-    }
+    void Delete() noexcept;
 
     EventLoop &GetEventLoop() {
         return defer_read.GetEventLoop();

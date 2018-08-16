@@ -44,6 +44,7 @@
 #include "istream/istream_later.hxx"
 #include "istream/Pointer.hxx"
 #include "istream/UnusedHoldPtr.hxx"
+#include "pool/pool.hxx"
 #include "event/DeferEvent.hxx"
 
 #include <stdexcept>

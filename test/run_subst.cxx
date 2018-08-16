@@ -36,6 +36,7 @@
 #include "istream/istream_file.hxx"
 #include "fb_pool.hxx"
 #include "PInstance.hxx"
+#include "pool/pool.hxx"
 #include "util/PrintException.hxx"
 #include "util/StringView.hxx"
 #include "util/Compiler.h"

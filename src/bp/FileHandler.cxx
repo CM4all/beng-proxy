@@ -43,6 +43,7 @@
 #include "http_server/Request.hxx"
 #include "istream/istream_file.hxx"
 #include "istream/istream.hxx"
+#include "pool/pool.hxx"
 #include "translation/Vary.hxx"
 #include "util/DecimalFormat.h"
 

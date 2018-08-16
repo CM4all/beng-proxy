@@ -41,6 +41,7 @@
 #include "ResourceLoader.hxx"
 #include "istream/istream.hxx"
 #include "istream/UnusedHoldPtr.hxx"
+#include "pool/pool.hxx"
 #include "io/Logger.hxx"
 
 struct ErrorResponseLoader final : HttpResponseHandler, Cancellable {

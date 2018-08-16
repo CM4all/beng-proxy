@@ -344,6 +344,13 @@ HttpServerConnection::HttpServerConnection(struct pool &_pool,
     defer_read.Schedule();
 }
 
+void
+HttpServerConnection::Delete() noexcept
+{
+    this->~HttpServerConnection();
+    pool_unref(pool);
+}
+
 HttpServerConnection *
 http_server_connection_new(struct pool *pool,
                            EventLoop &loop,

@@ -33,6 +33,7 @@
 #include "sink_close.hxx"
 #include "Sink.hxx"
 #include "UnusedPtr.hxx"
+#include "pool/pool.hxx"
 
 class SinkClose final : IstreamSink {
 public:
