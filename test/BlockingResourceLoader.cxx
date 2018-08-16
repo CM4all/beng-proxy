@@ -33,6 +33,7 @@
 #include "BlockingResourceLoader.hxx"
 #include "istream/UnusedHoldPtr.hxx"
 #include "pool/pool.hxx"
+#include "pool/Holder.hxx"
 #include "util/LeakDetector.hxx"
 #include "util/Cancellable.hxx"
 

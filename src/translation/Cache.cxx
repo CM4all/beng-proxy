@@ -44,6 +44,7 @@
 #include "uri/uri_escape.hxx"
 #include "puri_escape.hxx"
 #include "pool/tpool.hxx"
+#include "pool/Holder.hxx"
 #include "AllocatorPtr.hxx"
 #include "pool/pbuffer.hxx"
 #include "paddress.hxx"

@@ -305,27 +305,6 @@ public:
     }
 };
 
-/**
- * Base class for classes which hold a reference to a #pool.
- */
-class PoolHolder {
-protected:
-    const PoolPtr pool;
-
-    template<typename P>
-    explicit PoolHolder(P &&_pool) noexcept
-        :pool(std::forward<P>(_pool))
-    {
-    }
-
-    PoolHolder(const PoolHolder &) = delete;
-    PoolHolder &operator=(const PoolHolder &) = delete;
-
-    struct pool &GetPool() noexcept {
-        return *pool;
-    }
-};
-
 #ifdef NDEBUG
 
 static inline void

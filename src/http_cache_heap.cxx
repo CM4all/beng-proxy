@@ -41,6 +41,7 @@
 #include "istream_rubber.hxx"
 #include "rubber.hxx"
 #include "pool/pool.hxx"
+#include "pool/Holder.hxx"
 
 struct HttpCacheItem final : PoolHolder, HttpCacheDocument, CacheItem {
     size_t size;

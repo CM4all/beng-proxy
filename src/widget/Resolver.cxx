@@ -35,6 +35,7 @@
 #include "Widget.hxx"
 #include "Class.hxx"
 #include "pool/pool.hxx"
+#include "pool/Holder.hxx"
 #include "util/Cancellable.hxx"
 
 #include <boost/intrusive/list.hpp>

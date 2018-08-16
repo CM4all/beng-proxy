@@ -36,6 +36,7 @@
 #include "please.hxx"
 #include "system/fd_util.h"
 #include "pool/pool.hxx"
+#include "pool/Holder.hxx"
 #include "event/SocketEvent.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "net/SendMessage.hxx"

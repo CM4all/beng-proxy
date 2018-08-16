@@ -34,6 +34,7 @@
 #include "Error.hxx"
 #include "Handler.hxx"
 #include "pool/pool.hxx"
+#include "pool/Holder.hxx"
 #include "system/Error.hxx"
 #include "system/fd_util.h"
 #include "event/SocketEvent.hxx"

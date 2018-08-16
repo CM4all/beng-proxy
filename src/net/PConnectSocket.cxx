@@ -35,6 +35,7 @@
 #include "system/fd_util.h"
 #include "stopwatch.hxx"
 #include "pool/pool.hxx"
+#include "pool/Holder.hxx"
 #include "system/Error.hxx"
 #include "util/Cancellable.hxx"
 
