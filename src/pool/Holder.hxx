@@ -32,6 +32,8 @@
 
 #pragma once
 
+#include "Ptr.hxx"
+
 /**
  * Base class for classes which hold a reference to a #pool.
  */

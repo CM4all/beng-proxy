@@ -47,6 +47,7 @@
 #include "istream/UnusedPtr.hxx"
 #include "istream/UnusedHoldPtr.hxx"
 #include "istream/istream_tee.hxx"
+#include "pool/Ptr.hxx"
 #include "AllocatorPtr.hxx"
 #include "event/TimerEvent.hxx"
 #include "io/Logger.hxx"

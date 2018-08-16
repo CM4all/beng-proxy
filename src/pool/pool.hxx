@@ -226,85 +226,6 @@ public:
     }
 };
 
-/**
- * A reference-holding pointer to a "struct pool".
- */
-class PoolPtr {
-    struct pool *value = nullptr;
-
-public:
-    PoolPtr() = default;
-
-    explicit PoolPtr(struct pool &_value) noexcept
-        :value(&_value) {
-        pool_ref(value);
-    }
-
-    PoolPtr(const PoolPtr &src) noexcept
-        :value(src.value) {
-        if (value != nullptr)
-            pool_ref(value);
-    }
-
-    struct Donate {};
-    static Donate donate;
-
-    /**
-     * Donate a pool reference to a newly constructed #PoolPtr.  It
-     * will not create another reference, but will unreference it in
-     * its destructor.
-     */
-    explicit PoolPtr(Donate, struct pool &_value) noexcept
-        :value(&_value) {}
-
-    PoolPtr(PoolPtr &&src) noexcept
-        :value(std::exchange(src.value, nullptr)) {}
-
-    ~PoolPtr() noexcept {
-        if (value != nullptr)
-            pool_unref(value);
-    }
-
-    PoolPtr &operator=(const PoolPtr &src) noexcept {
-        if (value != nullptr)
-            pool_unref(value);
-        value = src.value;
-        if (value != nullptr)
-            pool_ref(value);
-        return *this;
-    }
-
-    PoolPtr &operator=(PoolPtr &&src) noexcept {
-        using std::swap;
-        swap(value, src.value);
-        return *this;
-    }
-
-    operator bool() const noexcept {
-        return value;
-    }
-
-    operator struct pool &() const noexcept {
-        return *value;
-    }
-
-    operator struct pool *() const noexcept {
-        return value;
-    }
-
-    void reset() noexcept {
-        if (value != nullptr)
-            pool_unref(std::exchange(value, nullptr));
-    }
-
-    /**
-     * Return the value, releasing ownership.
-     */
-    struct pool *release() noexcept {
-        return std::exchange(value, nullptr);
-    }
-};
-
 #ifdef NDEBUG
 
 static inline void
@@ -521,19 +442,6 @@ NewFromPool(pool &p, Args&&... args)
 {
     void *t = p_malloc(&p, sizeof(T));
     return ::new(t) T(std::forward<Args>(args)...);
-}
-
-/**
- * Create a newly allocated object and move the pool reference into it
- * as the first parameter.
- */
-template<typename T, typename... Args>
-gcc_malloc gcc_returns_nonnull
-T *
-NewFromPool(PoolPtr &&p, Args&&... args)
-{
-    void *t = p_malloc(p, sizeof(T));
-    return ::new(t) T(std::move(p), std::forward<Args>(args)...);
 }
 
 template<typename T>
