@@ -576,36 +576,6 @@ DeleteUnrefTrashPool(struct pool &pool, T *t) noexcept
     DeleteUnrefPool(pool, t);
 }
 
-class PoolAllocator {
-    struct pool &pool;
-
-public:
-    explicit constexpr PoolAllocator(struct pool &_pool) noexcept
-        :pool(_pool) {}
-
-    void *Allocate(size_t size) noexcept {
-        return p_malloc(&pool, size);
-    }
-
-    char *DupString(const char *p) noexcept {
-        return p_strdup(&pool, p);
-    }
-
-    void Free(void *p) noexcept {
-        p_free(&pool, p);
-    }
-
-    template<typename T, typename... Args>
-    T *New(Args&&... args) {
-        return NewFromPool<T>(pool, std::forward<Args>(args)...);
-    }
-
-    template<typename T>
-    void Delete(T *t) noexcept {
-        DeleteFromPool(pool, t);
-    }
-};
-
 gcc_malloc gcc_returns_nonnull
 char *
 p_strdup_impl(struct pool &pool, StringView src TRACE_ARGS_DECL) noexcept;
