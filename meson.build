@@ -61,6 +61,10 @@ test_cxxflags = test_common_flags + [
   # in C++17 because the exception specification is part of a function
   # type"
   '-Wno-noexcept-type',
+
+  # the only warnings we got from this are from formatted error
+  # messages, and their truncation is harmless
+  '-Wno-format-truncation',
 ]
 
 test_cflags = test_common_flags + [

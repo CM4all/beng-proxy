@@ -57,6 +57,9 @@ struct StatsIstreamSink : IstreamSink {
     explicit StatsIstreamSink(I &&_input) noexcept
         :IstreamSink(std::forward<I>(_input)) {}
 
+    /* only here to work around -Wdelete-non-virtual-dtor */
+    virtual ~StatsIstreamSink() = default;
+
     using IstreamSink::ClearAndCloseInput;
 
     void Read() noexcept {
