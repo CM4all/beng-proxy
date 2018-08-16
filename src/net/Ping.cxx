@@ -56,7 +56,7 @@ PingClient::ScheduleRead()
 }
 
 static u_short
-in_cksum(const u_short *addr, register int len, u_short csum)
+in_cksum(const u_short *addr, int len, u_short csum)
 {
 	int nleft = len;
 	const u_short *w = addr;
