@@ -98,7 +98,7 @@ public:
      * shutdown.
      */
     void AbortAll() {
-        jobs.clear_and_dispose([this](BackgroundJob *job){
+        jobs.clear_and_dispose([](BackgroundJob *job){
                 job->cancel_ptr.Cancel();
             });
     }
