@@ -112,8 +112,6 @@ public:
 
         if (address.host_and_port != nullptr)
             headers.Write("host", address.host_and_port);
-
-        headers.Write("connection", "keep-alive");
     }
 
     void BeginConnect() {
