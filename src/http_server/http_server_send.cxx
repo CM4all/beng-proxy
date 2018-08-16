@@ -164,7 +164,7 @@ HttpServerConnection::SubmitResponse(http_status_t status,
     if (upgrade) {
         headers.Write("connection", "upgrade");
         headers.MoveToBuffer("upgrade");
-    } else if (!keep_alive && !request.http_1_0)
+    } else if (!keep_alive)
         headers.Write("connection", "close");
 
     GrowingBuffer headers3 = headers.ToBuffer();

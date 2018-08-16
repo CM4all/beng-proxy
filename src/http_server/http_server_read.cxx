@@ -177,8 +177,6 @@ HttpServerConnection::ParseRequestLine(const char *line, size_t length)
 
     request.request = http_server_request_new(this, method, {line, space});
     request.read_state = Request::HEADERS;
-    request.http_1_0 = space + 9 <= line + length &&
-        space[8] == '0' && space[7] == '.' && space[6] == '1';
 
     return true;
 }
@@ -210,11 +208,9 @@ HttpServerConnection::HeadersFinished()
     /* we disable keep-alive support on ancient HTTP 1.0, because that
        feature was not well-defined and led to problems with some
        clients */
-    keep_alive = !request.http_1_0 &&
-        (value == nullptr || !http_list_contains_i(value, "close"));
+    keep_alive = value == nullptr || !http_list_contains_i(value, "close");
 
-    const bool upgrade = !request.http_1_0 && value != nullptr &&
-        http_is_upgrade(value);
+    const bool upgrade = value != nullptr && http_is_upgrade(value);
 
     value = r.headers.Get("transfer-encoding");
 

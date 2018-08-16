@@ -133,9 +133,6 @@ struct HttpServerConnection final
          */
         bool in_handler;
 
-        /** has the client sent a HTTP/1.0 request? */
-        bool http_1_0;
-
         /** did the client send an "Expect: 100-continue" header? */
         bool expect_100_continue;
 
