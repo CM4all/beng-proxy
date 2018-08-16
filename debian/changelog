@@ -1,6 +1,7 @@
 cm4all-beng-proxy (15.0.1) unstable; urgency=low
 
   * spawn: support reassociating with PID namespaces
+  * http_client: improve Keep-Alive detection
 
  --   
 

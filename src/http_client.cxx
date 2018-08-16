@@ -665,10 +665,8 @@ HttpClient::HeadersFinished()
     auto &response_headers = response.headers;
 
     const char *header_connection = response_headers.Remove("connection");
-    keep_alive =
-        (header_connection == nullptr && !response.http_1_0) ||
-        (header_connection != nullptr &&
-         http_list_contains_i(header_connection, "keep-alive"));
+    keep_alive = header_connection == nullptr ||
+        !http_list_contains_i(header_connection, "close");
 
     if (http_status_is_empty(response.status) &&
         /* "100 Continue" requires special handling here, because the
