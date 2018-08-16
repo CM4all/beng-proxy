@@ -53,6 +53,10 @@ class ZlibError : public std::runtime_error {
 public:
     explicit ZlibError(int _code, const char *_msg)
         :std::runtime_error(_msg), code(_code) {}
+
+    int GetCode() const noexcept {
+        return code;
+    }
 };
 
 class DeflateIstream final : public FacadeIstream {
