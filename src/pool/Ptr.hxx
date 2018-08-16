@@ -32,7 +32,11 @@
 
 #pragma once
 
-#include "pool.hxx"
+#include "util/Compiler.h"
+
+#include <utility>
+
+#include <stddef.h>
 
 /**
  * A reference-holding pointer to a "struct pool".
@@ -43,16 +47,8 @@ class PoolPtr {
 public:
     PoolPtr() = default;
 
-    explicit PoolPtr(struct pool &_value) noexcept
-        :value(&_value) {
-        pool_ref(value);
-    }
-
-    PoolPtr(const PoolPtr &src) noexcept
-        :value(src.value) {
-        if (value != nullptr)
-            pool_ref(value);
-    }
+    explicit PoolPtr(struct pool &_value) noexcept;
+    PoolPtr(const PoolPtr &src) noexcept;
 
     struct Donate {};
     static Donate donate;
@@ -68,19 +64,9 @@ public:
     PoolPtr(PoolPtr &&src) noexcept
         :value(std::exchange(src.value, nullptr)) {}
 
-    ~PoolPtr() noexcept {
-        if (value != nullptr)
-            pool_unref(value);
-    }
+    ~PoolPtr() noexcept;
 
-    PoolPtr &operator=(const PoolPtr &src) noexcept {
-        if (value != nullptr)
-            pool_unref(value);
-        value = src.value;
-        if (value != nullptr)
-            pool_ref(value);
-        return *this;
-    }
+    PoolPtr &operator=(const PoolPtr &src) noexcept;
 
     PoolPtr &operator=(PoolPtr &&src) noexcept {
         using std::swap;
@@ -100,10 +86,7 @@ public:
         return value;
     }
 
-    void reset() noexcept {
-        if (value != nullptr)
-            pool_unref(std::exchange(value, nullptr));
-    }
+    void reset() noexcept;
 
     /**
      * Return the value, releasing ownership.
@@ -111,6 +94,8 @@ public:
     struct pool *release() noexcept {
         return std::exchange(value, nullptr);
     }
+
+    void *Allocate(size_t size) noexcept;
 };
 
 /**
@@ -122,6 +107,6 @@ gcc_malloc gcc_returns_nonnull
 T *
 NewFromPool(PoolPtr &&p, Args&&... args)
 {
-    void *t = p_malloc(p, sizeof(T));
+    void *t = p.Allocate(sizeof(T));
     return ::new(t) T(std::move(p), std::forward<Args>(args)...);
 }

@@ -265,6 +265,7 @@ memory_dep = declare_dependency(link_with: memory,
 
 pool = static_library('pool',
   'src/AllocatorPtr.cxx',
+  'src/pool/Ptr.cxx',
   'src/pool/RootPool.cxx',
   'src/pool/tpool.cxx',
   'src/pool/pbuffer.cxx',
