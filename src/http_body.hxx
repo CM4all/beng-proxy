@@ -214,8 +214,8 @@ private:
 
 protected:
     /* virtual methods from class DechunkHandler */
-    void OnDechunkEndSeen() override;
-    bool OnDechunkEnd() override;
+    void OnDechunkEndSeen() final;
+    bool OnDechunkEnd() final;
 };
 
 #endif
