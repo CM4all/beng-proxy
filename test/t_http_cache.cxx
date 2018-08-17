@@ -41,6 +41,7 @@
 #include "HttpResponseHandler.hxx"
 #include "PInstance.hxx"
 #include "fb_pool.hxx"
+#include "istream/Handler.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream_string.hxx"

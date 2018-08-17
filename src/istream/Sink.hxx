@@ -33,6 +33,7 @@
 #ifndef BENG_PROXY_ISTREAM_SINK_HXX
 #define BENG_PROXY_ISTREAM_SINK_HXX
 
+#include "Handler.hxx"
 #include "Pointer.hxx"
 
 /**

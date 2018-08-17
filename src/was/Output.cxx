@@ -37,6 +37,7 @@
 #include "io/Splice.hxx"
 #include "io/FileDescriptor.hxx"
 #include "system/Error.hxx"
+#include "istream/Handler.hxx"
 #include "istream/Pointer.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "pool/pool.hxx"

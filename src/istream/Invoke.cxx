@@ -31,6 +31,7 @@
  */
 
 #include "istream.hxx"
+#include "Handler.hxx"
 #include "pool/Notify.hxx"
 
 #include <assert.h>

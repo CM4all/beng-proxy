@@ -33,6 +33,7 @@
 #include "HttpResponseHandler.hxx"
 #include "lease.hxx"
 #include "istream/istream.hxx"
+#include "istream/Handler.hxx"
 #include "istream/Pointer.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "istream/BlockIstream.hxx"

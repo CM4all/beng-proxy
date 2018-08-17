@@ -41,6 +41,7 @@
 #include "net/SocketAddress.hxx"
 #include "event/TimerEvent.hxx"
 #include "event/DeferEvent.hxx"
+#include "istream/Handler.hxx"
 #include "istream/Pointer.hxx"
 #include "http/Method.h"
 #include "util/Cancellable.hxx"

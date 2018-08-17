@@ -38,6 +38,7 @@
 #include "HttpResponseHandler.hxx"
 #include "istream_fcgi.hxx"
 #include "istream_gb.hxx"
+#include "istream/Handler.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "istream/Pointer.hxx"
 #include "istream/istream_cat.hxx"

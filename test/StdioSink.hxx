@@ -30,6 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "istream/Handler.hxx"
 #include "istream/Pointer.hxx"
 #include "util/PrintException.hxx"
 

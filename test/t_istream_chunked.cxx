@@ -34,6 +34,7 @@
 #include "istream/istream_string.hxx"
 #include "istream/istream.hxx"
 #include "istream/UnusedPtr.hxx"
+#include "istream/Handler.hxx"
 #include "pool/pool.hxx"
 
 class EventLoop;

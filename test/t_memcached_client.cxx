@@ -37,6 +37,7 @@
 #include "header_writer.hxx"
 #include "lease.hxx"
 #include "direct.hxx"
+#include "istream/Handler.hxx"
 #include "istream/Pointer.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "istream/New.hxx"

@@ -35,13 +35,14 @@
 
 #include "pool/Holder.hxx"
 #include "pool/Notify.hxx"
-#include "Handler.hxx"
+#include "io/FdType.hxx"
 #include "util/LeakDetector.hxx"
 
 #include <algorithm>
 
 #include <assert.h>
 
+class IstreamHandler;
 class IstreamBucketList;
 
 /**

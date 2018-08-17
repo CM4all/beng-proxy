@@ -37,6 +37,7 @@
 #include "HttpResponseHandler.hxx"
 #include "direct.hxx"
 #include "strmap.hxx"
+#include "istream/Handler.hxx"
 #include "istream/Pointer.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "istream/istream_file.hxx"

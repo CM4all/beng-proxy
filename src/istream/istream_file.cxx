@@ -33,6 +33,7 @@
 #include "istream_file.hxx"
 #include "istream.hxx"
 #include "New.hxx"
+#include "Result.hxx"
 #include "io/Buffered.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "pool/pool.hxx"

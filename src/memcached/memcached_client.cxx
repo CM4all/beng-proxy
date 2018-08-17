@@ -36,6 +36,8 @@
 #include "please.hxx"
 #include "istream/Pointer.hxx"
 #include "istream/UnusedPtr.hxx"
+#include "istream/Handler.hxx"
+#include "istream/Result.hxx"
 #include "pool/pool.hxx"
 #include "system/Error.hxx"
 #include "event/net/BufferedSocket.hxx"

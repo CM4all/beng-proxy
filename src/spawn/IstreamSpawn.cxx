@@ -38,6 +38,7 @@
 #include "istream/UnusedPtr.hxx"
 #include "istream/istream.hxx"
 #include "istream/Pointer.hxx"
+#include "istream/Handler.hxx"
 #include "io/Splice.hxx"
 #include "io/Buffered.hxx"
 #include "io/UniqueFileDescriptor.hxx"

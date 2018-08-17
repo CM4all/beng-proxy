@@ -39,6 +39,7 @@
 #include "header_writer.hxx"
 #include "http_body.hxx"
 #include "istream_gb.hxx"
+#include "istream/Handler.hxx"
 #include "istream/Bucket.hxx"
 #include "istream/Pointer.hxx"
 #include "istream/UnusedPtr.hxx"

@@ -34,6 +34,7 @@
 #include "UnusedPtr.hxx"
 #include "Pointer.hxx"
 #include "Bucket.hxx"
+#include "Handler.hxx"
 #include "pool/pool.hxx"
 #include "event/DeferEvent.hxx"
 #include "util/Cast.hxx"

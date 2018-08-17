@@ -36,6 +36,7 @@
 #include "direct.hxx"
 #include "istream/istream.hxx"
 #include "istream/UnusedPtr.hxx"
+#include "istream/Result.hxx"
 #include "pool/pool.hxx"
 #include "fb_pool.hxx"
 #include "SliceFifoBuffer.hxx"
