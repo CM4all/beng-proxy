@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2018 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,12 +30,12 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef ISTREAM_INVOKE_HXX
-#define ISTREAM_INVOKE_HXX
-
+#include "istream.hxx"
 #include "pool/Notify.hxx"
 
-inline size_t
+#include <assert.h>
+
+size_t
 Istream::InvokeData(const void *data, size_t length) noexcept
 {
     assert(!destroyed);
@@ -75,7 +75,7 @@ Istream::InvokeData(const void *data, size_t length) noexcept
     return nbytes;
 }
 
-inline ssize_t
+ssize_t
 Istream::InvokeDirect(FdType type, int fd, size_t max_length) noexcept
 {
     assert(!destroyed);
@@ -114,7 +114,7 @@ Istream::InvokeDirect(FdType type, int fd, size_t max_length) noexcept
     return nbytes;
 }
 
-inline void
+void
 Istream::InvokeEof() noexcept
 {
     assert(!destroyed);
@@ -132,7 +132,7 @@ Istream::InvokeEof() noexcept
     handler->OnEof();
 }
 
-inline void
+void
 Istream::InvokeError(std::exception_ptr ep) noexcept
 {
     assert(!destroyed);
@@ -147,5 +147,3 @@ Istream::InvokeError(std::exception_ptr ep) noexcept
 
     handler->OnError(ep);
 }
-
-#endif

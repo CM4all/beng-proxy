@@ -478,6 +478,4 @@ protected:
     }
 };
 
-#include "Invoke.hxx"
-
 #endif

@@ -516,6 +516,7 @@ odbus_dep = declare_dependency(
 )
 
 istream = static_library('istream',
+  'src/istream/Invoke.cxx',
   'src/istream/Pointer.cxx',
   'src/istream/UnusedPtr.cxx',
   'src/istream/TimeoutIstream.cxx',
