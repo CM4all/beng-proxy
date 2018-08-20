@@ -37,6 +37,7 @@
 #include "util/ConstBuffer.hxx"
 #include "util/Compiler.h"
 
+#include <assert.h>
 #include <sys/socket.h>
 #include <stdio.h>
 #include <stdlib.h>
