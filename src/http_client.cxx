@@ -62,7 +62,7 @@
 #include "util/Cast.hxx"
 #include "util/CharUtil.hxx"
 #include "util/DestructObserver.hxx"
-#include "util/StringUtil.hxx"
+#include "util/StringStrip.hxx"
 #include "util/StringView.hxx"
 #include "util/StringFormat.hxx"
 #include "util/StaticArray.hxx"

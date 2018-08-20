@@ -160,7 +160,7 @@ SpawnIstream::SendFromBuffer()
         return false;
 
     if (!output_fd.IsDefined()) {
-        if (buffer.IsEmpty()) {
+        if (buffer.empty()) {
             FreeBuffer();
             DestroyEof();
         }
@@ -278,7 +278,7 @@ SpawnIstream::ReadFromOutput()
         } else if (nbytes == 0) {
             Cancel();
 
-            if (buffer.IsEmpty()) {
+            if (buffer.empty()) {
                 FreeBuffer();
                 DestroyEof();
             }
@@ -347,7 +347,7 @@ SpawnIstream::ReadFromOutput()
 void
 SpawnIstream::_Read() noexcept
 {
-    if (buffer.IsEmpty() || SendFromBuffer())
+    if (buffer.empty() || SendFromBuffer())
         ReadFromOutput();
 }
 

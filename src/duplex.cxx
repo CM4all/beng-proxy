@@ -171,7 +171,7 @@ Duplex::Destroy()
 bool
 Duplex::CheckDestroy()
 {
-    if (read_fd < 0 && sock_eof && from_read.IsEmpty() && to_write.IsEmpty()) {
+    if (read_fd < 0 && sock_eof && from_read.empty() && to_write.empty()) {
         Destroy();
         return true;
     } else
@@ -212,7 +212,7 @@ Duplex::WriteEventCallback()
     if (nbytes > 0 && !sock_eof)
         socket_read_event.Add();
 
-    if (!to_write.IsEmpty())
+    if (!to_write.empty())
         write_event.Add();
     else
         CheckDestroy();
@@ -250,7 +250,7 @@ Duplex::SocketWriteEventCallback(unsigned)
     if (nbytes > 0 && read_fd >= 0)
         read_event.Add();
 
-    if (!from_read.IsEmpty())
+    if (!from_read.empty())
         socket_write_event.Add();
 }
 

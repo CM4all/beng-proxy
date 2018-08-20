@@ -129,8 +129,8 @@ public:
 
     void Done();
 
-    bool IsEmpty() const {
-        return input_buffer.IsEmpty() && output_buffer.IsEmpty();
+    bool empty() const {
+        return input_buffer.empty() && output_buffer.empty();
     }
 
 private:

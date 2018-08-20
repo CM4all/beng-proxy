@@ -135,6 +135,6 @@ pipe_stock_item_get(StockItem *_item, FileDescriptor fds[2])
 {
     auto *item = (PipeStockItem *)_item;
 
-    fds[0] = item->fds[0].ToFileDescriptor();
-    fds[1] = item->fds[1].ToFileDescriptor();
+    fds[0] = item->fds[0];
+    fds[1] = item->fds[1];
 }

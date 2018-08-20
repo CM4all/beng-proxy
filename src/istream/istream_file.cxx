@@ -204,7 +204,7 @@ FileIstream::TryData()
         assert(rest >= 0);
     }
 
-    assert(!buffer.IsEmpty());
+    assert(!buffer.empty());
 
     buffer_rest = SubmitBuffer();
     if (buffer_rest == 0 && rest == 0)

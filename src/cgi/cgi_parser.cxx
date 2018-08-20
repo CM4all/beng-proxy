@@ -34,7 +34,7 @@
 #include "Error.hxx"
 #include "header_parser.hxx"
 #include "util/ForeignFifoBuffer.hxx"
-#include "util/StringUtil.hxx"
+#include "util/StringStrip.hxx"
 #include "util/StringView.hxx"
 
 #include <string.h>

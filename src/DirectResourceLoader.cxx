@@ -63,7 +63,7 @@
 #include "net/HostParser.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "util/ConstBuffer.hxx"
-#include "util/StringUtil.hxx"
+#include "util/StringStrip.hxx"
 
 #include <string.h>
 #include <stdlib.h>

@@ -80,13 +80,13 @@ FullRead(const char *path, FileDescriptor fd, void *_p, size_t size)
 static size_t
 Read(const char *path, void *p, size_t size)
 {
-    return Read(path, Open(path).ToFileDescriptor(), p, size);
+    return Read(path, Open(path), p, size);
 }
 
 static void
 FullRead(const char *path, void *p, size_t size)
 {
-    FullRead(path, Open(path).ToFileDescriptor(), p, size);
+    FullRead(path, Open(path), p, size);
 }
 
 size_t

@@ -33,7 +33,7 @@
 #include "StringFile.hxx"
 #include "system/Error.hxx"
 #include "io/UniqueFileDescriptor.hxx"
-#include "util/StringUtil.hxx"
+#include "util/StringStrip.hxx"
 
 std::string
 LoadStringFile(const char *path)

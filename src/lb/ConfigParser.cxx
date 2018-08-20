@@ -39,7 +39,7 @@
 #include "io/ConfigParser.hxx"
 #include "system/Error.hxx"
 #include "net/Parser.hxx"
-#include "util/StringUtil.hxx"
+#include "util/StringStrip.hxx"
 #include "util/CharUtil.hxx"
 #include "util/ScopeExit.hxx"
 #include "util/RuntimeError.hxx"

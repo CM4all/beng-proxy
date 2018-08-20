@@ -36,7 +36,7 @@
 #include "istream/Sink.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "util/DestructObserver.hxx"
-#include "util/StringUtil.hxx"
+#include "util/StringStrip.hxx"
 #include "util/TrivialArray.hxx"
 
 class CssParser final : PoolHolder, IstreamSink, DestructAnchor {

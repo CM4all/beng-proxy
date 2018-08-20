@@ -74,7 +74,7 @@ public:
     }
 
     void FreeIfEmpty(SlicePool &pool) noexcept {
-        if (IsEmpty())
+        if (empty())
             FreeIfDefined(pool);
     }
 
@@ -83,7 +83,7 @@ public:
      * one.  This is useful to work around #SliceArea fragmentation.
      */
     void CycleIfEmpty(SlicePool &pool) noexcept {
-        if (IsDefined() && IsEmpty()) {
+        if (IsDefined() && empty()) {
             Free(pool);
             Allocate(pool);
         }
@@ -96,7 +96,7 @@ public:
      * afterwards, because some callers may not be prepared for this.
      */
     void MoveFrom(SliceFifoBuffer &src) noexcept {
-        if (IsEmpty() && !IsNull() && !src.IsNull())
+        if (empty() && !IsNull() && !src.IsNull())
             /* optimized special case: swap buffer pointers instead of
                copying data */
             Swap(src);
@@ -109,7 +109,7 @@ public:
      * is useful when #src can be freed, but this object cannot.
      */
     void MoveFromAllowNull(SliceFifoBuffer &src) noexcept {
-        if (IsEmpty() && (!src.IsEmpty() || !IsNull()))
+        if (empty() && (!src.empty() || !IsNull()))
             /* optimized special case: swap buffer pointers instead of
                copying data */
             Swap(src);
@@ -122,7 +122,7 @@ public:
      * useful when this object can be freed, but #src cannot.
      */
     void MoveFromAllowSrcNull(SliceFifoBuffer &src) noexcept {
-        if (IsEmpty() && (!src.IsEmpty() || IsNull()))
+        if (empty() && (!src.empty() || IsNull()))
             /* optimized special case: swap buffer pointers instead of
                copying data */
             Swap(src);
@@ -134,7 +134,7 @@ public:
      * Like MoveFrom(), but allow both to be nulled.
      */
     void MoveFromAllowBothNull(SliceFifoBuffer &src) noexcept {
-        if (IsEmpty())
+        if (empty())
             /* optimized special case: swap buffer pointers instead of
                copying data */
             Swap(src);
@@ -147,7 +147,7 @@ public:
      * #src can be freed, but this object cannot.
      */
     void SwapIfNull(SliceFifoBuffer &src) noexcept {
-        if (src.IsNull() && IsEmpty() && !IsNull())
+        if (src.IsNull() && empty() && !IsNull())
             Swap(src);
     }
 };

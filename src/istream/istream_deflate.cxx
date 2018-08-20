@@ -148,7 +148,7 @@ public:
     /* virtual methods from class Istream */
 
     void _Read() noexcept override {
-        if (!buffer.IsEmpty())
+        if (!buffer.empty())
             TryWrite();
         else if (HasInput())
             ForceRead();
@@ -264,7 +264,7 @@ DeflateIstream::TryFlush() noexcept
 
     buffer.Append(w.size - (size_t)z.avail_out);
 
-    if (!buffer.IsEmpty())
+    if (!buffer.empty())
         TryWrite();
 }
 
@@ -321,7 +321,7 @@ DeflateIstream::TryFinish() noexcept
 
     buffer.Append(w.size - (size_t)z.avail_out);
 
-    if (z_stream_end && buffer.IsEmpty()) {
+    if (z_stream_end && buffer.empty()) {
         DeinitZlib();
         DestroyEof();
     } else

@@ -46,7 +46,7 @@ static inline ConstBuffer<T>
 DupBuffer(pool &p, ConstBuffer<T> src)
 {
     if (src.IsNull())
-        return ConstBuffer<T>::Null();
+        return nullptr;
 
     if (src.empty())
         return ConstBuffer<T>::FromVoid({"", 0});

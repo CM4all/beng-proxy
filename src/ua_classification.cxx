@@ -33,7 +33,7 @@
 #include "ua_classification.hxx"
 #include "regex.hxx"
 #include "system/Error.hxx"
-#include "util/StringUtil.hxx"
+#include "util/StringStrip.hxx"
 #include "util/CharUtil.hxx"
 #include "util/ScopeExit.hxx"
 

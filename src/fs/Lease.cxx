@@ -90,7 +90,7 @@ bool
 FilteredSocketLease::IsEmpty() const noexcept
 {
     if (IsReleased())
-        return input.front().IsEmpty();
+        return input.front().empty();
     else
         return socket->IsEmpty();
 }
@@ -141,7 +141,7 @@ FilteredSocketLease::Read(bool expect_more) noexcept
                 break;
 
             case BufferedResult::BLOCKING:
-                assert(!input.front().IsEmpty());
+                assert(!input.front().empty());
                 return true;
 
             case BufferedResult::MORE:

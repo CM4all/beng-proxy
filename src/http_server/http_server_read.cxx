@@ -39,7 +39,7 @@
 #include "header_parser.hxx"
 #include "istream/istream_null.hxx"
 #include "http/List.hxx"
-#include "util/StringUtil.hxx"
+#include "util/StringStrip.hxx"
 #include "util/StringView.hxx"
 #include "util/StringFormat.hxx"
 

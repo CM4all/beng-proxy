@@ -70,7 +70,7 @@ WasControl::ScheduleRead()
 {
     assert(fd >= 0);
 
-    read_event.Add(input_buffer.IsEmpty()
+    read_event.Add(input_buffer.empty()
                    ? nullptr : &was_control_timeout);
 }
 
@@ -187,7 +187,7 @@ WasControl::TryWrite()
         return false;
     }
 
-    if (!output_buffer.IsEmpty())
+    if (!output_buffer.empty())
         ScheduleWrite();
     else if (done) {
         InvokeDone();
@@ -225,7 +225,7 @@ inline void
 WasControl::WriteEventCallback(unsigned events)
 {
     assert(fd >= 0);
-    assert(!output_buffer.IsEmpty());
+    assert(!output_buffer.empty());
 
     if (gcc_unlikely(events & SocketEvent::TIMEOUT)) {
         InvokeError("control send timeout");
@@ -341,11 +341,11 @@ WasControl::Done()
 
     done = true;
 
-    if (!input_buffer.IsEmpty()) {
+    if (!input_buffer.empty()) {
         InvokeError("received too much control data");
         return;
     }
 
-    if (output_buffer.IsEmpty())
+    if (output_buffer.empty())
         InvokeDone();
 }

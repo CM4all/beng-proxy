@@ -112,7 +112,7 @@ private:
     off_t _Skip(off_t length) noexcept override;
 
     void _Read() noexcept override {
-        if (!buffer.IsEmpty())
+        if (!buffer.empty())
             ReadFromBuffer();
         else
             ScheduleReadOrEof();
@@ -126,7 +126,7 @@ private:
 void
 NfsIstream::ScheduleReadOrEof()
 {
-    assert(buffer.IsEmpty());
+    assert(buffer.empty());
 
     if (pending_read > 0)
         return;

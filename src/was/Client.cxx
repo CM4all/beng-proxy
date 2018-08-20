@@ -174,7 +174,7 @@ struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler, C
             /* already released */
             return;
 
-        bool reuse = control.IsEmpty();
+        bool reuse = control.empty();
         control.ReleaseSocket();
 
         lease.ReleaseWas(reuse);

@@ -133,10 +133,10 @@ bool
 ThreadSocketFilter::SubmitDecryptedInput() noexcept
 {
     while (true) {
-        if (unprotected_decrypted_input.IsEmpty())
+        if (unprotected_decrypted_input.empty())
             MoveDecryptedInputAndSchedule();
 
-        if (unprotected_decrypted_input.IsEmpty())
+        if (unprotected_decrypted_input.empty())
             return true;
 
         want_read = false;
@@ -343,9 +343,9 @@ ThreadSocketFilter::Done() noexcept
         lock.lock();
     }
 
-    if (postponed_end && encrypted_input.IsEmpty()) {
+    if (postponed_end && encrypted_input.empty()) {
         if (postponed_remaining) {
-            if (!decrypted_input.IsEmpty()) {
+            if (!decrypted_input.empty()) {
                 /* before we actually deliver the "remaining" event,
                    we should give the handler a chance to process the
                    data */
@@ -375,8 +375,8 @@ ThreadSocketFilter::Done() noexcept
             lock.lock();
         }
 
-        if (decrypted_input.IsEmpty() &&
-            unprotected_decrypted_input.IsEmpty()) {
+        if (decrypted_input.empty() &&
+            unprotected_decrypted_input.empty()) {
             lock.unlock();
 
             if (expect_more) {
@@ -404,7 +404,7 @@ ThreadSocketFilter::Done() noexcept
         if (!encrypted_input.IsDefinedAndFull())
             socket->InternalScheduleRead(expect_more, nullptr);
 
-        if (!encrypted_output.IsEmpty())
+        if (!encrypted_output.empty())
             socket->InternalScheduleWrite();
     }
 
@@ -412,8 +412,8 @@ ThreadSocketFilter::Done() noexcept
         return;
 
     const bool drained2 = connected && drained &&
-        plain_output.IsEmpty() &&
-        encrypted_output.IsEmpty();
+        plain_output.empty() &&
+        encrypted_output.empty();
 
     encrypted_input.FreeIfEmpty(fb_pool_get());
     plain_output.FreeIfEmpty(fb_pool_get());
@@ -475,8 +475,8 @@ bool
 ThreadSocketFilter::IsEmpty() const noexcept
 {
     std::lock_guard<std::mutex> lock(mutex);
-    return decrypted_input.IsEmpty() &&
-        unprotected_decrypted_input.IsEmpty();
+    return decrypted_input.empty() &&
+        unprotected_decrypted_input.empty();
 }
 
 bool
@@ -498,7 +498,7 @@ ThreadSocketFilter::GetAvailable() const noexcept
 WritableBuffer<void>
 ThreadSocketFilter::ReadBuffer() noexcept
 {
-    if (unprotected_decrypted_input.IsEmpty())
+    if (unprotected_decrypted_input.empty())
         MoveDecryptedInputAndSchedule();
 
     return unprotected_decrypted_input.Read().ToVoid();
@@ -633,8 +633,8 @@ ThreadSocketFilter::InternalWrite() noexcept
         const bool add = encrypted_output.IsFull();
         encrypted_output.Consume(nbytes);
         encrypted_output.FreeIfEmpty(fb_pool_get());
-        const bool empty = encrypted_output.IsEmpty();
-        const bool _drained = empty && drained && plain_output.IsEmpty();
+        const bool empty = encrypted_output.empty();
+        const bool _drained = empty && drained && plain_output.empty();
         lock.unlock();
 
         if (add)
@@ -696,7 +696,7 @@ ThreadSocketFilter::OnRemaining(size_t remaining) noexcept
     if (remaining == 0) {
         std::unique_lock<std::mutex> lock(mutex);
 
-        if (!busy && !done_pending && encrypted_input.IsEmpty()) {
+        if (!busy && !done_pending && encrypted_input.empty()) {
             const size_t available = decrypted_input.GetAvailable() +
                 unprotected_decrypted_input.GetAvailable();
             lock.unlock();
@@ -722,7 +722,7 @@ ThreadSocketFilter::OnEnd() noexcept
         /* see if we can commit the "remaining" call now */
         std::unique_lock<std::mutex> lock(mutex);
 
-        if (!busy && !done_pending && encrypted_input.IsEmpty()) {
+        if (!busy && !done_pending && encrypted_input.empty()) {
             const size_t available = decrypted_input.GetAvailable() +
                 unprotected_decrypted_input.GetAvailable();
             lock.unlock();
@@ -743,9 +743,9 @@ ThreadSocketFilter::OnEnd() noexcept
     bool empty;
     {
         const std::lock_guard<std::mutex> lock(mutex);
-        assert(encrypted_input.IsEmpty());
-        empty = decrypted_input.IsEmpty() &&
-            unprotected_decrypted_input.IsEmpty();
+        assert(encrypted_input.empty());
+        empty = decrypted_input.empty() &&
+            unprotected_decrypted_input.empty();
     }
 
     if (empty)

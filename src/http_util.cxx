@@ -32,7 +32,7 @@
 
 #include "http_util.hxx"
 #include "pool/pool.hxx"
-#include "util/StringUtil.hxx"
+#include "util/StringStrip.hxx"
 #include "util/StringView.hxx"
 
 #include <string.h>

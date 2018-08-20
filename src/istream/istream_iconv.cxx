@@ -206,7 +206,7 @@ IconvIstream::OnEof() noexcept
     assert(input.IsDefined());
     input.Clear();
 
-    if (buffer.IsEmpty())
+    if (buffer.empty())
         DestroyEof();
 }
 

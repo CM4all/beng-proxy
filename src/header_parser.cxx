@@ -37,7 +37,7 @@
 #include "util/StringView.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/StaticFifoBuffer.hxx"
-#include "util/StringUtil.hxx"
+#include "util/StringStrip.hxx"
 
 #include <algorithm>
 

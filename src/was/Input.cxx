@@ -153,7 +153,7 @@ public:
     }
 
     bool CheckEof() {
-        if (CanRelease() && buffer.IsEmpty()) {
+        if (CanRelease() && buffer.empty()) {
             Eof();
             return true;
         } else
@@ -299,7 +299,7 @@ WasInput::TryBuffered()
 inline bool
 WasInput::TryDirect()
 {
-    assert(buffer.IsEmpty());
+    assert(buffer.empty());
     assert(!buffer.IsDefined());
 
     size_t max_length = 0x1000000;

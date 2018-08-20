@@ -56,7 +56,7 @@
 #include "util/Cast.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/DestructObserver.hxx"
-#include "util/StringUtil.hxx"
+#include "util/StringStrip.hxx"
 #include "util/ByteOrder.hxx"
 #include "util/StringView.hxx"
 #include "util/InstanceList.hxx"
