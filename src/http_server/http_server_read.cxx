@@ -214,8 +214,7 @@ HttpServerConnection::HeadersFinished()
     keep_alive = !request.http_1_0 &&
         (value == nullptr || !http_list_contains_i(value, "close"));
 
-    const bool upgrade = !request.http_1_0 && value != nullptr &&
-        http_is_upgrade(value);
+    const bool upgrade = !request.http_1_0 && http_is_upgrade(r.headers);
 
     value = r.headers.Get("transfer-encoding");
 

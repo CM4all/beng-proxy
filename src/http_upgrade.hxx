@@ -53,26 +53,15 @@ http_is_upgrade(http_status_t status)
     return status == HTTP_STATUS_SWITCHING_PROTOCOLS;
 }
 
-gcc_pure
-bool
-http_is_upgrade(const char *connection);
-
-gcc_pure
-static inline bool
-http_is_upgrade(http_status_t status, const char *connection)
-{
-    return http_is_upgrade(status) && http_is_upgrade(connection);
-}
-
 /**
- * Does the header "Connection:Upgrade" exist?
+ * Does the "Upgrade" header exist?
  */
 gcc_pure
 bool
 http_is_upgrade(const StringMap &headers);
 
 /**
- * Does the header "Connection:Upgrade" exist?
+ * Does the "Upgrade" header exist?
  */
 gcc_pure
 bool
