@@ -39,6 +39,7 @@
 #include "puri_relative.hxx"
 #include "AllocatorPtr.hxx"
 #include "pexpand.hxx"
+#include "util/StringCompare.hxx"
 #include "util/StringView.hxx"
 
 #include <stdexcept>
@@ -126,18 +127,20 @@ http_address_parse2(AllocatorPtr alloc, HttpAddress::Protocol protocol, bool ssl
 HttpAddress *
 http_address_parse(AllocatorPtr alloc, const char *uri)
 {
-    if (memcmp(uri, "http://", 7) == 0)
+    if (auto http = StringAfterPrefix(uri, "http://"))
         return http_address_parse2(alloc, HttpAddress::Protocol::HTTP,
-                                   false, uri + 7);
-    else if (memcmp(uri, "https://", 8) == 0)
+                                   false, http);
+    else if (auto https = StringAfterPrefix(uri, "https://"))
         return http_address_parse2(alloc, HttpAddress::Protocol::HTTP,
-                                   true, uri + 8);
-    else if (memcmp(uri, "ajp://", 6) == 0)
+                                   true, https);
+    else if (auto ajp = StringAfterPrefix(uri, "ajp://"))
         return http_address_parse2(alloc, HttpAddress::Protocol::AJP,
-                                   false, uri + 6);
-    else if (memcmp(uri, "unix:/", 6) == 0)
+                                   false, ajp);
+    else if (auto unix = StringAfterPrefix(uri, "unix:/"))
         return http_address_new(alloc, HttpAddress::Protocol::HTTP,
-                                false, nullptr, uri + 5);
+                                false, nullptr,
+                                /* rewind to the slash */
+                                unix - 1);
 
     throw std::runtime_error("unrecognized URI");
 }

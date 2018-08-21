@@ -35,9 +35,9 @@
 #include "pool/tpool.hxx"
 #include "cookie_server.hxx"
 #include "pool/pool.hxx"
+#include "util/StringCompare.hxx"
 
 #include <assert.h>
-#include <string.h>
 #include <stdlib.h>
 
 sticky_hash_t
@@ -52,10 +52,12 @@ lb_cookie_get(const StringMap &request_headers)
     const auto jar = cookie_map_parse(*tpool, cookie);
 
     const char *p = jar.Get("beng_lb_node");
-    if (p == NULL || memcmp(p, "0-", 2) != 0)
+    if (p == nullptr)
         return 0;
 
-    p += 2;
+    p = StringAfterPrefix(p, "0-");
+    if (p == nullptr)
+        return 0;
 
     char *endptr;
     unsigned long id = strtoul(p, &endptr, 16);

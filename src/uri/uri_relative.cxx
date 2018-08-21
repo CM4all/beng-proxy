@@ -41,8 +41,7 @@ uri_relative(StringView base, StringView uri)
     if (base.empty() || uri.empty())
         return nullptr;
 
-    if (uri.size >= base.size &&
-        memcmp(uri.data, base.data, base.size) == 0) {
+    if (uri.StartsWith(base)) {
         uri.skip_front(base.size);
         return uri;
     }

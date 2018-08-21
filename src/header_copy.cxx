@@ -32,6 +32,7 @@
 
 #include "header_copy.hxx"
 #include "strmap.hxx"
+#include "util/StringCompare.hxx"
 
 #include <assert.h>
 #include <string.h>
@@ -58,14 +59,14 @@ header_copy_list(const StringMap &in, StringMap &out,
 
 void
 header_copy_prefix(const StringMap &in, StringMap &out,
-                   const char *prefix)
+                   const char *_prefix)
 {
-    assert(prefix != nullptr);
-    assert(*prefix != 0);
+    assert(_prefix != nullptr);
+    assert(*_prefix != 0);
 
-    const size_t prefix_length = strlen(prefix);
+    const StringView prefix(_prefix);
 
     for (const auto &i : in)
-        if (memcmp(i.key, prefix, prefix_length) == 0)
+        if (StringStartsWith(i.key, prefix))
             out.Add(i.key, i.value);
 }

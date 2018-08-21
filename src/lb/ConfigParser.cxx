@@ -39,6 +39,7 @@
 #include "io/ConfigParser.hxx"
 #include "system/Error.hxx"
 #include "net/Parser.hxx"
+#include "util/StringCompare.hxx"
 #include "util/StringUtil.hxx"
 #include "util/CharUtil.hxx"
 #include "util/ScopeExit.hxx"
@@ -746,8 +747,8 @@ ParseAttributeReference(const char *p)
         return LbAttributeReference::Type::METHOD;
     } else if (strcmp(p, "request_uri") == 0) {
         return LbAttributeReference::Type::URI;
-    } else if (memcmp(p, "http_", 5) == 0) {
-        LbAttributeReference a(LbAttributeReference::Type::HEADER, p + 5);
+    } else if (auto header = StringAfterPrefix(p, "http_")) {
+        LbAttributeReference a(LbAttributeReference::Type::HEADER, header);
         if (a.name.empty())
             throw LineParser::Error("Empty HTTP header name");
 
