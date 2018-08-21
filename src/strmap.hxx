@@ -186,6 +186,20 @@ public:
     }
 
     /**
+     * Copy string pointers with keys from the given key list.
+     *
+     * @param keys a nullptr terminated array of keys
+     */
+    void ListCopyFrom(const StringMap &src, const char *const*keys) noexcept;
+
+    /**
+     * Copy string pointers with the given key prefix.
+     *
+     * @param keys a nullptr terminated array of keys
+     */
+    void PrefixCopyFrom(const StringMap &src, const char *prefix) noexcept;
+
+    /**
      * Move items from #src, merging it into this object.
      */
     void Merge(StringMap &&src) {

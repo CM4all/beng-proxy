@@ -31,7 +31,6 @@
  */
 
 #include "ForwardHeaders.hxx"
-#include "header_copy.hxx"
 #include "header_writer.hxx"
 #include "http_upgrade.hxx"
 #include "strmap.hxx"
@@ -203,7 +202,7 @@ forward_upgrade_request_headers(StringMap &dest, const StringMap &src,
                                 bool with_body) noexcept
 {
     if (with_body && http_is_upgrade(src))
-        header_copy_list(src, dest, http_upgrade_request_headers);
+        dest.ListCopyFrom(src, http_upgrade_request_headers);
 }
 
 static void
@@ -211,7 +210,7 @@ forward_upgrade_response_headers(StringMap &dest, http_status_t status,
                                  const StringMap &src) noexcept
 {
     if (http_is_upgrade(status, src))
-        header_copy_list(src, dest, http_upgrade_response_headers);
+        dest.ListCopyFrom(src, http_upgrade_response_headers);
 }
 
 /**
@@ -277,9 +276,9 @@ static void
 forward_basic_headers(StringMap &dest, const StringMap &src,
                       bool with_body) noexcept
 {
-    header_copy_list(src, dest, basic_request_headers);
+    dest.ListCopyFrom(src, basic_request_headers);
     if (with_body)
-        header_copy_list(src, dest, body_request_headers);
+        dest.ListCopyFrom(src, body_request_headers);
 }
 
 static void
@@ -521,7 +520,7 @@ forward_request_headers(struct pool &pool, const StringMap &src,
         dest.CopyFrom(src, "host");
 
     if (settings.modes[HEADER_GROUP_CORS] == HEADER_FORWARD_YES)
-        header_copy_list(src, dest, cors_request_headers);
+        dest.ListCopyFrom(src, cors_request_headers);
 
     if (settings.modes[HEADER_GROUP_SECURE] == HEADER_FORWARD_YES)
         forward_secure_headers(dest, src);
@@ -552,14 +551,14 @@ forward_request_headers(struct pool &pool, const StringMap &src,
             dest.Add("range", p);
 
         // TODO: separate parameter for cache headers
-        header_copy_list(src, dest, cache_request_headers);
+        dest.ListCopyFrom(src, cache_request_headers);
     }
 
     if (settings.modes[HEADER_GROUP_COOKIE] == HEADER_FORWARD_YES) {
-        header_copy_list(src, dest, cookie_request_headers);
+        dest.ListCopyFrom(src, cookie_request_headers);
     } else if (settings.modes[HEADER_GROUP_COOKIE] == HEADER_FORWARD_BOTH) {
         if (session_cookie == nullptr)
-            header_copy_list(src, dest, cookie_request_headers);
+            dest.ListCopyFrom(src, cookie_request_headers);
         else
             header_copy_cookie_except(pool, dest, src, session_cookie);
     } else if (settings.modes[HEADER_GROUP_COOKIE] == HEADER_FORWARD_MANGLE &&
@@ -571,7 +570,7 @@ forward_request_headers(struct pool &pool, const StringMap &src,
         dest.Add("accept-language",
                   p_strdup(&pool, session->parent.language));
     else
-        header_copy_list(src, dest, language_request_headers);
+        dest.ListCopyFrom(src, language_request_headers);
 
     if (session != nullptr && session->user != nullptr)
         dest.Add("x-cm4all-beng-user", p_strdup(&pool, session->user));
@@ -635,7 +634,7 @@ forward_response_headers(struct pool &pool, http_status_t status,
 {
     StringMap dest(pool);
 
-    header_copy_list(src, dest, basic_response_headers);
+    dest.ListCopyFrom(src, basic_response_headers);
 
     forward_link_response_headers(dest, src,
                                   relocate, relocate_ctx,
@@ -647,16 +646,16 @@ forward_response_headers(struct pool &pool, http_status_t status,
         forward_other_response_headers(dest, src);
 
     if (settings.modes[HEADER_GROUP_COOKIE] == HEADER_FORWARD_YES)
-        header_copy_list(src, dest, cookie_response_headers);
+        dest.ListCopyFrom(src, cookie_response_headers);
     else if (settings.modes[HEADER_GROUP_COOKIE] == HEADER_FORWARD_BOTH) {
         if (session_cookie == nullptr)
-            header_copy_list(src, dest, cookie_response_headers);
+            dest.ListCopyFrom(src, cookie_response_headers);
         else
             header_copy_set_cookie_except(dest, src, session_cookie);
     }
 
     if (settings.modes[HEADER_GROUP_CORS] == HEADER_FORWARD_YES)
-        header_copy_list(src, dest, cors_response_headers);
+        dest.ListCopyFrom(src, cors_response_headers);
 
     if (settings.modes[HEADER_GROUP_SECURE] == HEADER_FORWARD_YES)
         forward_secure_headers(dest, src);

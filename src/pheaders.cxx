@@ -31,7 +31,6 @@
  */
 
 #include "pheaders.hxx"
-#include "header_copy.hxx"
 #include "strmap.hxx"
 
 StringMap
@@ -47,13 +46,13 @@ processor_header_forward(struct pool &pool, const StringMap &src)
         nullptr,
     };
 
-    header_copy_list(src, dest, copy_headers);
+    dest.ListCopyFrom(src, copy_headers);
 
 #ifndef NDEBUG
     /* copy Wildfire headers if present (debug build only, to avoid
        overhead on production servers) */
     if (src.Get("x-wf-protocol-1") != nullptr)
-        header_copy_prefix(src, dest, "x-wf-");
+        dest.PrefixCopyFrom(src, "x-wf-");
 #endif
 
     /* reportedly, the Internet Explorer caches uncacheable resources
