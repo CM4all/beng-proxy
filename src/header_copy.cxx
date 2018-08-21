@@ -38,23 +38,13 @@
 #include <string.h>
 
 void
-header_copy_one(const StringMap &in, StringMap &out, const char *key)
-{
-    assert(key != nullptr);
-
-    const auto r = in.EqualRange(key);
-    for (auto i = r.first; i != r.second; ++i)
-        out.Add(key, i->value);
-}
-
-void
 header_copy_list(const StringMap &in, StringMap &out,
                  const char *const*keys)
 {
     assert(keys != nullptr);
 
     for (; *keys != nullptr; ++keys)
-        header_copy_one(in, out, *keys);
+        out.CopyFrom(in, *keys);
 }
 
 void

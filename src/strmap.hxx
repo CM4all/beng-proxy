@@ -179,6 +179,12 @@ public:
     gcc_pure
     std::pair<const_iterator, const_iterator> EqualRange(const char *key) const;
 
+    void CopyFrom(const StringMap &src, const char *key) noexcept {
+        const auto r = src.EqualRange(key);
+        for (auto i = r.first; i != r.second; ++i)
+            Add(key, i->value);
+    }
+
     /**
      * Move items from #src, merging it into this object.
      */

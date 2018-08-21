@@ -301,7 +301,7 @@ forward_ssl_headers(StringMap &dest, const StringMap &src) noexcept
 static void
 forward_transformation_headers(StringMap &dest, const StringMap &src) noexcept
 {
-    header_copy_one(src, dest, "x-cm4all-view");
+    dest.CopyFrom(src, "x-cm4all-view");
 }
 
 /**
@@ -317,7 +317,7 @@ IsLinkRequestHeader(const char *name) noexcept
 static void
 ForwardLinkRequestHeaders(StringMap &dest, const StringMap &src) noexcept
 {
-    header_copy_one(src, dest, "referer");
+    dest.CopyFrom(src, "referer");
 }
 
 /**
@@ -356,8 +356,8 @@ forward_link_response_headers(StringMap &dest, const StringMap &src,
                               enum beng_header_forward_mode mode) noexcept
 {
     if (mode == HEADER_FORWARD_YES) {
-        header_copy_one(src, dest, "location");
-        header_copy_one(src, dest, "content-location");
+        dest.CopyFrom(src, "location");
+        dest.CopyFrom(src, "content-location");
     } else if (mode == HEADER_FORWARD_MANGLE) {
         RelocateLinkHeader(dest, src, relocate, relocate_ctx, "location");
         RelocateLinkHeader(dest, src, relocate, relocate_ctx, "content-location");
@@ -518,7 +518,7 @@ forward_request_headers(struct pool &pool, const StringMap &src,
     forward_upgrade_request_headers(dest, src, with_body);
 
     if (!exclude_host)
-        header_copy_one(src, dest, "host");
+        dest.CopyFrom(src, "host");
 
     if (settings.modes[HEADER_GROUP_CORS] == HEADER_FORWARD_YES)
         header_copy_list(src, dest, cors_request_headers);

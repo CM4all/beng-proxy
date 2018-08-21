@@ -40,9 +40,6 @@
 class StringMap;
 
 void
-header_copy_one(const StringMap &in, StringMap &out, const char *key);
-
-void
 header_copy_list(const StringMap &in, StringMap &out,
                  const char *const*keys);
 
