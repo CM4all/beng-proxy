@@ -36,8 +36,6 @@
 #include "http/List.hxx"
 
 const char *const http_upgrade_request_headers[] = {
-    "upgrade",
-    "origin",
     "sec-websocket-key",
     "sec-websocket-protocol",
     "sec-websocket-version",
@@ -45,7 +43,6 @@ const char *const http_upgrade_request_headers[] = {
 };
 
 const char *const http_upgrade_response_headers[] = {
-    "upgrade",
     "sec-websocket-accept",
     nullptr,
 };
