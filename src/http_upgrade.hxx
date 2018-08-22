@@ -43,7 +43,14 @@
 class StringMap;
 class HttpHeaders;
 
+/**
+ * This list does not include "Upgrade" and "Origin".
+ */
 extern const char *const http_upgrade_request_headers[];
+
+/**
+ * This list does not include "Upgrade".
+ */
 extern const char *const http_upgrade_response_headers[];
 
 gcc_pure
@@ -53,26 +60,15 @@ http_is_upgrade(http_status_t status)
     return status == HTTP_STATUS_SWITCHING_PROTOCOLS;
 }
 
-gcc_pure
-bool
-http_is_upgrade(const char *connection);
-
-gcc_pure
-static inline bool
-http_is_upgrade(http_status_t status, const char *connection)
-{
-    return http_is_upgrade(status) && http_is_upgrade(connection);
-}
-
 /**
- * Does the header "Connection:Upgrade" exist?
+ * Does the "Upgrade" header exist?
  */
 gcc_pure
 bool
 http_is_upgrade(const StringMap &headers);
 
 /**
- * Does the header "Connection:Upgrade" exist?
+ * Does the "Upgrade" header exist?
  */
 gcc_pure
 bool

@@ -39,6 +39,7 @@
 #include "header_parser.hxx"
 #include "istream/istream_null.hxx"
 #include "http/List.hxx"
+#include "util/StringCompare.hxx"
 #include "util/StringStrip.hxx"
 #include "util/StringView.hxx"
 #include "util/StringFormat.hxx"
@@ -88,15 +89,15 @@ HttpServerConnection::ParseRequestLine(const char *line, size_t length)
         } else if (line[1] == 'U' && line[2] == 'T' && line[3] == ' ') {
             method = HTTP_METHOD_PUT;
             line += 4;
-        } else if (memcmp(line + 1, "ATCH ", 5) == 0) {
+        } else if (auto patch = StringAfterPrefix(line + 1, "ATCH ")) {
             method = HTTP_METHOD_PATCH;
-            line += 6;
-        } else if (memcmp(line + 1, "ROPFIND ", 8) == 0) {
+            line = patch;
+        } else if (auto propfind = StringAfterPrefix(line + 1, "ROPFIND ")) {
             method = HTTP_METHOD_PROPFIND;
-            line += 9;
-        } else if (memcmp(line + 1, "ROPPATCH ", 9) == 0) {
+            line = propfind;
+        } else if (auto proppatch = StringAfterPrefix(line + 1, "ROPPATCH ")) {
             method = HTTP_METHOD_PROPPATCH;
-            line += 10;
+            line = proppatch;
         }
 
         break;
@@ -110,47 +111,47 @@ HttpServerConnection::ParseRequestLine(const char *line, size_t length)
         break;
 
     case 'O':
-        if (memcmp(line + 1, "PTIONS ", 7) == 0) {
+        if (auto options = StringAfterPrefix(line + 1, "PTIONS ")) {
             method = HTTP_METHOD_OPTIONS;
-            line += 8;
+            line = options;
         }
         break;
 
     case 'T':
-        if (memcmp(line + 1, "RACE ", 5) == 0) {
+        if (auto trace = StringAfterPrefix(line + 1, "RACE ")) {
             method = HTTP_METHOD_TRACE;
-            line += 6;
+            line = trace;
         }
         break;
 
     case 'M':
-        if (memcmp(line + 1, "KCOL ", 5) == 0) {
+        if (auto mkcol = StringAfterPrefix(line + 1, "KCOL ")) {
             method = HTTP_METHOD_MKCOL;
-            line += 6;
-        } else if (memcmp(line + 1, "OVE ", 4) == 0) {
+            line = mkcol;
+        } else if (auto move = StringAfterPrefix(line + 1, "OVE ")) {
             method = HTTP_METHOD_MOVE;
-            line += 5;
+            line = move;
         }
         break;
 
     case 'C':
-        if (memcmp(line + 1, "OPY ", 4) == 0) {
+        if (auto copy = StringAfterPrefix(line + 1, "OPY ")) {
             method = HTTP_METHOD_COPY;
-            line += 5;
+            line = copy;
         }
         break;
 
     case 'L':
-        if (memcmp(line + 1, "OCK ", 4) == 0) {
+        if (auto lock = StringAfterPrefix(line + 1, "OCK ")) {
             method = HTTP_METHOD_LOCK;
-            line += 5;
+            line = lock;
         }
         break;
 
     case 'U':
-        if (memcmp(line + 1, "NLOCK ", 6) == 0) {
+        if (auto unlock = StringAfterPrefix(line + 1, "NLOCK ")) {
             method = HTTP_METHOD_UNLOCK;
-            line += 7;
+            line = unlock;
         }
         break;
     }
@@ -210,7 +211,7 @@ HttpServerConnection::HeadersFinished()
        clients */
     keep_alive = value == nullptr || !http_list_contains_i(value, "close");
 
-    const bool upgrade = value != nullptr && http_is_upgrade(value);
+    const bool upgrade = http_is_upgrade(r.headers);
 
     value = r.headers.Get("transfer-encoding");
 

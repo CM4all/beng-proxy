@@ -5,6 +5,13 @@ cm4all-beng-proxy (15.0.1) unstable; urgency=low
 
  --   
 
+cm4all-beng-proxy (14.10) unstable; urgency=low
+
+  * http: don't require "Connection" header for WebSocket upgrade
+  * bp/http: fix WebSocket header duplication
+
+ -- Max Kellermann <mk@cm4all.com>  Wed, 22 Aug 2018 11:11:50 -0000
+
 cm4all-beng-proxy (14.9) unstable; urgency=low
 
   * bp/http: abolish the forced "Connection:keep-alive" request header

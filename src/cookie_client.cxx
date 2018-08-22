@@ -38,6 +38,7 @@
 #include "pool/tpool.hxx"
 #include "pool/pool.hxx"
 #include "shm/dpool.hxx"
+#include "util/StringCompare.hxx"
 #include "util/StringView.hxx"
 
 #include <iterator>
@@ -64,7 +65,7 @@ domain_matches(const char *domain, const char *match)
 static bool
 path_matches(const char *path, const char *match)
 {
-    return match == nullptr || memcmp(path, match, strlen(match)) == 0;
+    return match == nullptr || StringStartsWith(path, match);
 }
 
 template<typename L>

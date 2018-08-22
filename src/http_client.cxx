@@ -681,11 +681,10 @@ HttpClient::HeadersFinished()
     /* remove the other hop-by-hop response headers */
     response_headers.Remove("proxy-authenticate");
 
-    const bool upgrade = header_connection != nullptr &&
+    const bool upgrade =
         transfer_encoding == nullptr && content_length_string == nullptr &&
-        http_is_upgrade(response.status, header_connection);
+        http_is_upgrade(response.status, response_headers);
     if (upgrade) {
-        response_headers.Add("connection", "upgrade");
         keep_alive = false;
     }
 

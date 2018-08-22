@@ -32,6 +32,8 @@
 
 #include "strmap.hxx"
 #include "pool/pool.hxx"
+#include "util/StringCompare.hxx"
+#include "util/StringView.hxx"
 
 #include <iterator>
 
@@ -151,6 +153,29 @@ std::pair<StringMap::const_iterator, StringMap::const_iterator>
 StringMap::EqualRange(const char *key) const
 {
     return map.equal_range(key, Item::Compare());
+}
+
+void
+StringMap::ListCopyFrom(const StringMap &src, const char *const*keys) noexcept
+{
+    assert(keys != nullptr);
+
+    for (; *keys != nullptr; ++keys)
+        CopyFrom(src, *keys);
+}
+
+void
+StringMap::PrefixCopyFrom(const StringMap &src, const char *_prefix) noexcept
+{
+    assert(_prefix != nullptr);
+    assert(*_prefix != 0);
+
+    const StringView prefix(_prefix);
+
+    // TODO optimize this search
+    for (const auto &i : src)
+        if (StringStartsWith(i.key, prefix))
+            Add(i.key, i.value);
 }
 
 StringMap *

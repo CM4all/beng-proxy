@@ -32,6 +32,7 @@
 
 #include "puri_edit.hxx"
 #include "pool/pool.hxx"
+#include "util/StringCompare.hxx"
 #include "util/StringView.hxx"
 
 #include <assert.h>
@@ -78,10 +79,10 @@ query_string_begins_with(const char *query_string, StringView needle)
     assert(query_string != nullptr);
     assert(!needle.IsNull());
 
-    if (memcmp(query_string, needle.data, needle.size) != 0)
+    query_string = StringAfterPrefix(query_string, needle);
+    if (query_string == nullptr)
         return 0;
 
-    query_string += needle.size;
     if (*query_string == '&')
         return needle.size + 1;
     else if (*query_string == 0)
