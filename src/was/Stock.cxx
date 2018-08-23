@@ -42,6 +42,7 @@
 #include "spawn/Interface.hxx"
 #include "pool/tpool.hxx"
 #include "event/SocketEvent.hxx"
+#include "event/TimerEvent.hxx"
 #include "net/log/Datagram.hxx"
 #include "io/Logger.hxx"
 #include "util/Cancellable.hxx"
@@ -96,6 +97,7 @@ class WasChild final : public StockItem, ExitListener {
 
     WasProcess process;
     SocketEvent event;
+    TimerEvent idle_timeout_event;
 
     /**
      * If true, then we're waiting for PREMATURE (after the #WasClient
@@ -114,7 +116,10 @@ public:
         :StockItem(c), logger(GetStockName()), spawn_service(_spawn_service),
          tag(_tag != nullptr ? _tag : ""),
          log_socket(_log_socket),
-         event(c.stock.GetEventLoop(), BIND_THIS_METHOD(EventCallback)) {
+         event(c.stock.GetEventLoop(), BIND_THIS_METHOD(EventCallback)),
+         idle_timeout_event(c.stock.GetEventLoop(),
+                            BIND_THIS_METHOD(OnIdleTimeout))
+    {
         /* mark this object as "unused" so the destructor doesn't
            attempt to kill the process */
         process.pid = -1;
@@ -193,6 +198,7 @@ private:
     void RecoverStop();
 
     void EventCallback(unsigned events);
+    void OnIdleTimeout() noexcept;
 
 public:
     /* virtual methods from class StockItem */
@@ -204,11 +210,13 @@ public:
             return false;
 
         event.Delete();
+        idle_timeout_event.Cancel();
         return true;
     }
 
     bool Release() noexcept override {
-        event.Add(was_idle_timeout);
+        event.Add();
+        idle_timeout_event.Add(was_idle_timeout);
         unclean = stopping;
         return true;
     }
@@ -308,7 +316,7 @@ WasChild::RecoverStop()
 
         case ReceiveResult::AGAIN:
             /* wait for more data */
-            event.Add(was_idle_timeout);
+            event.Add();
             return;
         }
 
@@ -368,7 +376,7 @@ WasChild::RecoverStop()
     stopping = false;
     unclean = false;
 
-    event.Add(was_idle_timeout);
+    event.Add();
 }
 
 /*
@@ -377,24 +385,28 @@ WasChild::RecoverStop()
  */
 
 inline void
-WasChild::EventCallback(unsigned events)
+WasChild::EventCallback(unsigned)
 {
-    if ((events & SocketEvent::TIMEOUT) == 0) {
-        if (stopping) {
-            RecoverStop();
-            return;
-        }
-
-        char buffer;
-        ssize_t nbytes = recv(process.control.Get(), &buffer, sizeof(buffer),
-                              MSG_DONTWAIT);
-        if (nbytes < 0)
-            logger(2, "error on idle WAS control connection: ",
-                   strerror(errno));
-        else if (nbytes > 0)
-            logger(2, "unexpected data from idle WAS control connection");
+    if (stopping) {
+        RecoverStop();
+        return;
     }
 
+    char buffer;
+    ssize_t nbytes = recv(process.control.Get(), &buffer, sizeof(buffer),
+                          MSG_DONTWAIT);
+    if (nbytes < 0)
+        logger(2, "error on idle WAS control connection: ",
+               strerror(errno));
+    else if (nbytes > 0)
+        logger(2, "unexpected data from idle WAS control connection");
+
+    InvokeIdleDisconnect();
+}
+
+inline void
+WasChild::OnIdleTimeout() noexcept
+{
     InvokeIdleDisconnect();
 }
 
