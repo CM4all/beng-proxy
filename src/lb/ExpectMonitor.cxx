@@ -56,6 +56,7 @@ class ExpectMonitor final : ConnectSocketHandler, Cancellable {
     SocketDescriptor fd = SocketDescriptor::Undefined();
 
     SocketEvent event;
+    TimerEvent timeout_event;
 
     /**
      * A timer which is used to delay the recv() call, just in case
@@ -72,6 +73,7 @@ public:
         :config(_config),
          connect(event_loop, *this),
          event(event_loop, BIND_THIS_METHOD(EventCallback)),
+         timeout_event(event_loop, BIND_THIS_METHOD(OnTimeout)),
          delay_event(event_loop, BIND_THIS_METHOD(DelayCallback)),
          handler(_handler) {}
 
@@ -109,6 +111,7 @@ private:
 
 private:
     void EventCallback(unsigned events);
+    void OnTimeout() noexcept;
     void DelayCallback();
 };
 
@@ -129,6 +132,7 @@ ExpectMonitor::Cancel() noexcept
 {
     if (fd.IsDefined()) {
         event.Delete();
+        timeout_event.Cancel();
         delay_event.Cancel();
         fd.Close();
     }
@@ -142,16 +146,17 @@ ExpectMonitor::Cancel() noexcept
  */
 
 inline void
-ExpectMonitor::EventCallback(unsigned events)
+ExpectMonitor::EventCallback(unsigned)
 {
-    if (events & SocketEvent::TIMEOUT) {
-        fd.Close();
-        handler.Timeout();
-    } else {
-        /* wait 10ms before we start reading */
-        delay_event.Add(EventDuration<0, 10000>::value);
-        return;
-    }
+    /* wait 10ms before we start reading */
+    delay_event.Add(EventDuration<0, 10000>::value);
+}
+
+inline void
+ExpectMonitor::OnTimeout() noexcept
+{
+    fd.Close();
+    handler.Timeout();
 
     delete this;
 }
@@ -211,7 +216,8 @@ ExpectMonitor::OnSocketConnectSuccess(UniqueSocketDescriptor &&new_fd) noexcept
 
     fd = new_fd.Release();
     event.Set(fd.Get(), SocketEvent::READ);
-    event.Add(expect_timeout);
+    event.Add();
+    timeout_event.Add(expect_timeout);
 }
 
 /*
