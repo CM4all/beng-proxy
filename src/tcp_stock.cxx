@@ -107,8 +107,8 @@ struct TcpStockConnection final
     }
 
     /* virtual methods from class ConnectSocketHandler */
-    void OnSocketConnectSuccess(UniqueSocketDescriptor &&fd) override;
-    void OnSocketConnectError(std::exception_ptr ep) override;
+    void OnSocketConnectSuccess(UniqueSocketDescriptor &&fd) noexcept override;
+    void OnSocketConnectError(std::exception_ptr ep) noexcept override;
 
     /* virtual methods from class StockItem */
     bool Borrow() noexcept override {
@@ -154,7 +154,7 @@ TcpStockConnection::EventCallback(unsigned events)
  */
 
 void
-TcpStockConnection::OnSocketConnectSuccess(UniqueSocketDescriptor &&new_fd)
+TcpStockConnection::OnSocketConnectSuccess(UniqueSocketDescriptor &&new_fd) noexcept
 {
     cancel_ptr = nullptr;
 
@@ -165,7 +165,7 @@ TcpStockConnection::OnSocketConnectSuccess(UniqueSocketDescriptor &&new_fd)
 }
 
 void
-TcpStockConnection::OnSocketConnectError(std::exception_ptr ep)
+TcpStockConnection::OnSocketConnectError(std::exception_ptr ep) noexcept
 {
     cancel_ptr = nullptr;
 

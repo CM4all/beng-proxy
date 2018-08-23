@@ -101,10 +101,6 @@ public:
                   const CertDatabaseConfig &config,
                   CertNameCacheHandler &_handler);
 
-    ~CertNameCache() {
-        update_timer.Cancel();
-    }
-
     void Connect() {
         conn.Connect();
     }

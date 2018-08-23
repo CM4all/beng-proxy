@@ -67,8 +67,9 @@ public:
     unsigned FlushSSLSessionCache(long tm);
 
 protected:
-    void OnAccept(UniqueSocketDescriptor &&fd, SocketAddress address) override;
-    void OnAcceptError(std::exception_ptr ep) override;
+    void OnAccept(UniqueSocketDescriptor &&fd,
+                  SocketAddress address) noexcept override;
+    void OnAcceptError(std::exception_ptr ep) noexcept override;
 };
 
 #endif

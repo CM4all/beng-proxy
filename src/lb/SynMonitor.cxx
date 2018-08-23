@@ -72,19 +72,19 @@ private:
     }
 
     /* virtual methods from class ConnectSocketHandler */
-    void OnSocketConnectSuccess(UniqueSocketDescriptor &&) override {
+    void OnSocketConnectSuccess(UniqueSocketDescriptor &&) noexcept override {
         /* ignore the socket, we don't need it */
 
         handler.Success();
         delete this;
     }
 
-    void OnSocketConnectTimeout() override {
+    void OnSocketConnectTimeout() noexcept override {
         handler.Timeout();
         delete this;
     }
 
-    void OnSocketConnectError(std::exception_ptr ep) override {
+    void OnSocketConnectError(std::exception_ptr ep) noexcept override {
         handler.Error(ep);
         delete this;
     }

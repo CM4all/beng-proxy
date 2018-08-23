@@ -95,14 +95,14 @@ private:
     void Cancel() noexcept override;
 
     /* virtual methods from class ConnectSocketHandler */
-    void OnSocketConnectSuccess(UniqueSocketDescriptor &&fd) override;
+    void OnSocketConnectSuccess(UniqueSocketDescriptor &&fd) noexcept override;
 
-    void OnSocketConnectTimeout() override {
+    void OnSocketConnectTimeout() noexcept override {
         handler.Timeout();
         delete this;
     }
 
-    void OnSocketConnectError(std::exception_ptr ep) override {
+    void OnSocketConnectError(std::exception_ptr ep) noexcept override {
         handler.Error(ep);
         delete this;
     }
@@ -191,7 +191,7 @@ ExpectMonitor::DelayCallback()
  */
 
 void
-ExpectMonitor::OnSocketConnectSuccess(UniqueSocketDescriptor &&new_fd)
+ExpectMonitor::OnSocketConnectSuccess(UniqueSocketDescriptor &&new_fd) noexcept
 {
     if (!config.send.empty()) {
         ssize_t nbytes = send(new_fd.Get(), config.send.data(),

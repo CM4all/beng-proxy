@@ -40,7 +40,8 @@
 #include "net/SocketAddress.hxx"
 
 void
-LbListener::OnAccept(UniqueSocketDescriptor &&new_fd, SocketAddress address)
+LbListener::OnAccept(UniqueSocketDescriptor &&new_fd,
+                     SocketAddress address) noexcept
 try {
     switch (config.destination.GetProtocol()) {
     case LbProtocol::HTTP:
@@ -60,10 +61,10 @@ try {
 } catch (...) {
     logger(1, "Failed to setup accepted connection: ",
            std::current_exception());
- }
+}
 
 void
-LbListener::OnAcceptError(std::exception_ptr ep)
+LbListener::OnAcceptError(std::exception_ptr ep) noexcept
 {
     logger(2, "Failed to accept: ", ep);
 }

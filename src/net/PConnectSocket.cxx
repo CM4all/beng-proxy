@@ -90,9 +90,9 @@ private:
     void Cancel() noexcept override;
 
     /* virtual methods from class ConnectSocketHandler */
-    void OnSocketConnectSuccess(UniqueSocketDescriptor &&fd) override;
-    void OnSocketConnectTimeout() override;
-    void OnSocketConnectError(std::exception_ptr ep) override;
+    void OnSocketConnectSuccess(UniqueSocketDescriptor &&fd) noexcept override;
+    void OnSocketConnectTimeout() noexcept override;
+    void OnSocketConnectError(std::exception_ptr ep) noexcept override;
 };
 
 
@@ -116,7 +116,7 @@ PConnectSocket::Cancel() noexcept
  */
 
 void
-PConnectSocket::OnSocketConnectSuccess(UniqueSocketDescriptor &&fd)
+PConnectSocket::OnSocketConnectSuccess(UniqueSocketDescriptor &&fd) noexcept
 {
 #ifdef ENABLE_STOPWATCH
     stopwatch_event(&stopwatch, "connect");
@@ -128,7 +128,7 @@ PConnectSocket::OnSocketConnectSuccess(UniqueSocketDescriptor &&fd)
 }
 
 void
-PConnectSocket::OnSocketConnectTimeout()
+PConnectSocket::OnSocketConnectTimeout() noexcept
 {
 #ifdef ENABLE_STOPWATCH
     stopwatch_event(&stopwatch, "timeout");
@@ -140,7 +140,7 @@ PConnectSocket::OnSocketConnectTimeout()
 }
 
 void
-PConnectSocket::OnSocketConnectError(std::exception_ptr ep)
+PConnectSocket::OnSocketConnectError(std::exception_ptr ep) noexcept
 {
 #ifdef ENABLE_STOPWATCH
     stopwatch_event(&stopwatch, "error");

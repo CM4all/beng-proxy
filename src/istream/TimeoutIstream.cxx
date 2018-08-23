@@ -52,10 +52,6 @@ public:
          timeout_event(event_loop, BIND_THIS_METHOD(OnTimeout)),
          timeout(&_timeout) {}
 
-    ~TimeoutIstream() {
-        timeout_event.Cancel();
-    }
-
 private:
     void OnTimeout() {
         input.Close();

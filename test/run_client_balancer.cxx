@@ -68,16 +68,16 @@ struct Context final : PInstance, ConnectSocketHandler {
     }
 
     /* virtual methods from class ConnectSocketHandler */
-    void OnSocketConnectSuccess(UniqueSocketDescriptor &&new_fd) override {
+    void OnSocketConnectSuccess(UniqueSocketDescriptor &&new_fd) noexcept override {
         result = SUCCESS;
         fd = std::move(new_fd);
     }
 
-    void OnSocketConnectTimeout() override {
+    void OnSocketConnectTimeout() noexcept override {
         result = TIMEOUT;
     }
 
-    void OnSocketConnectError(std::exception_ptr ep) override {
+    void OnSocketConnectError(std::exception_ptr ep) noexcept override {
         result = ERROR;
         error = std::move(ep);
     }

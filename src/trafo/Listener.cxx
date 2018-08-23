@@ -42,13 +42,13 @@ TrafoListener::RemoveConnection(TrafoConnection &connection)
 
 void
 TrafoListener::OnAccept(UniqueSocketDescriptor &&new_fd,
-                        gcc_unused SocketAddress address)
+                        gcc_unused SocketAddress address) noexcept
 {
     connections.emplace_back(event_loop, *this, handler, std::move(new_fd));
 }
 
 void
-TrafoListener::OnAcceptError(std::exception_ptr ep)
+TrafoListener::OnAcceptError(std::exception_ptr ep) noexcept
 {
     LogConcat(2, "trafo", ep);
 }

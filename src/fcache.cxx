@@ -317,8 +317,6 @@ FilterCacheRequest::Destroy() noexcept
 {
     assert(!response.cancel_ptr);
 
-    timeout_event.Cancel();
-
     this->~FilterCacheRequest();
 }
 
@@ -595,8 +593,6 @@ filter_cache_new(struct pool *pool, size_t max_size,
 inline FilterCache::~FilterCache()
 {
     requests.clear_and_dispose([](FilterCacheRequest *r){ r->CancelStore(); });
-
-    compress_timer.Cancel();
 
     pool_unref(&pool);
 }

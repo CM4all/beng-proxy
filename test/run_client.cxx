@@ -146,8 +146,8 @@ struct Context final
     void ShutdownCallback();
 
     /* virtual methods from class ConnectSocketHandler */
-    void OnSocketConnectSuccess(UniqueSocketDescriptor &&fd) override;
-    void OnSocketConnectError(std::exception_ptr ep) override;
+    void OnSocketConnectSuccess(UniqueSocketDescriptor &&fd) noexcept override;
+    void OnSocketConnectError(std::exception_ptr ep) noexcept override;
 
     /* virtual methods from class Lease */
     void ReleaseLease(bool _reuse) noexcept override {
@@ -276,7 +276,7 @@ Context::OnHttpError(std::exception_ptr ep) noexcept
  */
 
 void
-Context::OnSocketConnectSuccess(UniqueSocketDescriptor &&new_fd)
+Context::OnSocketConnectSuccess(UniqueSocketDescriptor &&new_fd) noexcept
 try {
     fd = std::move(new_fd);
     idle = false;
@@ -332,7 +332,7 @@ try {
  }
 
 void
-Context::OnSocketConnectError(std::exception_ptr ep)
+Context::OnSocketConnectError(std::exception_ptr ep) noexcept
 {
     PrintException(ep);
 

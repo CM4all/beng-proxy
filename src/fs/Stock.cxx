@@ -125,8 +125,8 @@ struct FilteredSocketStockConnection final
     }
 
     /* virtual methods from class ConnectSocketHandler */
-    void OnSocketConnectSuccess(UniqueSocketDescriptor &&fd) override;
-    void OnSocketConnectError(std::exception_ptr ep) override;
+    void OnSocketConnectSuccess(UniqueSocketDescriptor &&fd) noexcept override;
+    void OnSocketConnectError(std::exception_ptr ep) noexcept override;
 
     /* virtual methods from class BufferedSocketHandler */
     BufferedResult OnBufferedData() override;
@@ -182,7 +182,7 @@ FilteredSocketStockConnection::OnBufferedError(std::exception_ptr e) noexcept
  */
 
 void
-FilteredSocketStockConnection::OnSocketConnectSuccess(UniqueSocketDescriptor &&fd)
+FilteredSocketStockConnection::OnSocketConnectSuccess(UniqueSocketDescriptor &&fd) noexcept
 {
     cancel_ptr = nullptr;
 
@@ -202,7 +202,7 @@ FilteredSocketStockConnection::OnSocketConnectSuccess(UniqueSocketDescriptor &&f
 }
 
 void
-FilteredSocketStockConnection::OnSocketConnectError(std::exception_ptr ep)
+FilteredSocketStockConnection::OnSocketConnectError(std::exception_ptr ep) noexcept
 {
     cancel_ptr = nullptr;
 

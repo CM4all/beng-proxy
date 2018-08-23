@@ -671,8 +671,6 @@ HttpCache::~HttpCache()
 
     background.AbortAll();
 
-    compress_timer.Cancel();
-
     pool_unref(&pool);
 }
 

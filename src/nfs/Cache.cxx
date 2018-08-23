@@ -138,10 +138,6 @@ public:
     NfsCache(struct pool &_pool, size_t max_size, NfsStock &_stock,
              EventLoop &_event_loop);
 
-    ~NfsCache() {
-        compress_timer.Cancel();
-    }
-
     auto &GetPool() const noexcept {
         return pool;
     }
@@ -275,8 +271,6 @@ NfsCacheStore::NfsCacheStore(PoolPtr &&_pool, NfsCache &_cache,
 NfsCacheStore::~NfsCacheStore() noexcept
 {
     assert(!cancel_ptr);
-
-    timeout_event.Cancel();
 }
 
 void

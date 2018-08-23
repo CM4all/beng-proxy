@@ -89,7 +89,7 @@ public:
         done = true;
     }
 
-    void OnError(std::exception_ptr e) override {
+    void OnError(std::exception_ptr e) noexcept override {
         error = std::move(e);
         done = true;
     }

@@ -54,13 +54,14 @@ BPListener::~BPListener()
 }
 
 void
-BPListener::OnAccept(UniqueSocketDescriptor &&_fd, SocketAddress address)
+BPListener::OnAccept(UniqueSocketDescriptor &&_fd,
+                     SocketAddress address) noexcept
 {
     new_connection(instance, std::move(_fd), address, ssl_factory, tag);
 }
 
 void
-BPListener::OnAcceptError(std::exception_ptr ep)
+BPListener::OnAcceptError(std::exception_ptr ep) noexcept
 {
     LogConcat(2, "listener", ep);
 }

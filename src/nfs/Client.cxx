@@ -1076,8 +1076,6 @@ NfsClient::Free()
 {
     assert(n_active_files == 0);
 
-    timeout_event.Cancel();
-
     if (in_service) {
         postponed_destroy = true;
     } else {

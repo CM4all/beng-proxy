@@ -67,9 +67,9 @@ struct ClientBalancerRequest : ConnectSocketHandler {
               CancellablePointer &cancel_ptr);
 
     /* virtual methods from class ConnectSocketHandler */
-    void OnSocketConnectSuccess(UniqueSocketDescriptor &&fd) override;
-    void OnSocketConnectTimeout() override;
-    void OnSocketConnectError(std::exception_ptr ep) override;
+    void OnSocketConnectSuccess(UniqueSocketDescriptor &&fd) noexcept override;
+    void OnSocketConnectTimeout() noexcept override;
+    void OnSocketConnectError(std::exception_ptr ep) noexcept override;
 };
 
 inline void
@@ -92,7 +92,7 @@ ClientBalancerRequest::Send(struct pool &pool, SocketAddress address,
  */
 
 void
-ClientBalancerRequest::OnSocketConnectSuccess(UniqueSocketDescriptor &&fd)
+ClientBalancerRequest::OnSocketConnectSuccess(UniqueSocketDescriptor &&fd) noexcept
 {
     auto &base = BalancerRequest<ClientBalancerRequest>::Cast(*this);
     base.ConnectSuccess();
@@ -101,7 +101,7 @@ ClientBalancerRequest::OnSocketConnectSuccess(UniqueSocketDescriptor &&fd)
 }
 
 void
-ClientBalancerRequest::OnSocketConnectTimeout()
+ClientBalancerRequest::OnSocketConnectTimeout() noexcept
 {
     auto &base = BalancerRequest<ClientBalancerRequest>::Cast(*this);
     if (!base.ConnectFailure())
@@ -109,7 +109,7 @@ ClientBalancerRequest::OnSocketConnectTimeout()
 }
 
 void
-ClientBalancerRequest::OnSocketConnectError(std::exception_ptr ep)
+ClientBalancerRequest::OnSocketConnectError(std::exception_ptr ep) noexcept
 {
     auto &base = BalancerRequest<ClientBalancerRequest>::Cast(*this);
     if (!base.ConnectFailure())

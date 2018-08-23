@@ -232,9 +232,7 @@ public:
          container(NewFromShm<SessionContainer>(shm, SM_PAGES, idle_timeout)),
          cleanup_timer(event_loop, BIND_THIS_METHOD(Cleanup)) {}
 
-    ~SessionManager() {
-        cleanup_timer.Cancel();
-
+    ~SessionManager() noexcept {
         if (container != nullptr)
             container->Unref();
 

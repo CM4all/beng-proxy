@@ -383,7 +383,7 @@ LbTcpConnection::OnTcpError(const char *prefix, std::exception_ptr ep)
  */
 
 void
-LbTcpConnection::OnSocketConnectSuccess(UniqueSocketDescriptor &&fd)
+LbTcpConnection::OnSocketConnectSuccess(UniqueSocketDescriptor &&fd) noexcept
 {
     cancel_connect = nullptr;
 
@@ -402,7 +402,7 @@ LbTcpConnection::OnSocketConnectSuccess(UniqueSocketDescriptor &&fd)
 }
 
 void
-LbTcpConnection::OnSocketConnectTimeout()
+LbTcpConnection::OnSocketConnectTimeout() noexcept
 {
     cancel_connect = nullptr;
 
@@ -411,7 +411,7 @@ LbTcpConnection::OnSocketConnectTimeout()
 }
 
 void
-LbTcpConnection::OnSocketConnectError(std::exception_ptr ep)
+LbTcpConnection::OnSocketConnectError(std::exception_ptr ep) noexcept
 {
     cancel_connect = nullptr;
 

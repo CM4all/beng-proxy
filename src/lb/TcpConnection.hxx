@@ -195,9 +195,9 @@ public:
 
 private:
     /* virtual methods from class ConnectSocketHandler */
-    void OnSocketConnectSuccess(UniqueSocketDescriptor &&fd) override;
-    void OnSocketConnectTimeout() override;
-    void OnSocketConnectError(std::exception_ptr ep) override;
+    void OnSocketConnectSuccess(UniqueSocketDescriptor &&fd) noexcept override;
+    void OnSocketConnectTimeout() noexcept override;
+    void OnSocketConnectError(std::exception_ptr ep) noexcept override;
 };
 
 #endif
