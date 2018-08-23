@@ -33,6 +33,7 @@
 #include "Input.hxx"
 #include "Error.hxx"
 #include "event/SocketEvent.hxx"
+#include "event/TimerEvent.hxx"
 #include "direct.hxx"
 #include "istream/istream.hxx"
 #include "istream/UnusedPtr.hxx"
@@ -60,6 +61,7 @@ class WasInput final : public Istream {
 public:
     int fd;
     SocketEvent event;
+    TimerEvent timeout_event;
 
     WasInputHandler &handler;
 
@@ -76,6 +78,7 @@ public:
         :Istream(p), fd(_fd),
          event(event_loop, fd, SocketEvent::READ,
                BIND_THIS_METHOD(EventCallback)),
+         timeout_event(event_loop, BIND_THIS_METHOD(OnTimeout)),
          handler(_handler) {
     }
 
@@ -103,6 +106,7 @@ public:
         assert(fd >= 0);
         fd = -1;
         event.Delete();
+        timeout_event.Cancel();
 
         return handler.WasInputRelease();
     }
@@ -122,7 +126,9 @@ public:
         assert(fd >= 0);
         assert(!buffer.IsDefined() || !buffer.IsFull());
 
-        event.Add(timeout ? &was_input_timeout : nullptr);
+        event.Add();
+        if (timeout)
+            timeout_event.Add(was_input_timeout);
     }
 
     void AbortError(std::exception_ptr ep) {
@@ -201,6 +207,10 @@ public:
 
     void EventCallback(unsigned events);
 
+    void OnTimeout() noexcept {
+        AbortError("data receive timeout");
+    }
+
     /* virtual methods from class Istream */
 
     off_t _GetAvailable(bool partial) noexcept override {
@@ -214,6 +224,7 @@ public:
 
     void _Read() noexcept override {
         event.Delete();
+        timeout_event.Cancel();
 
         if (SubmitBuffer())
             TryRead();
@@ -345,14 +356,11 @@ WasInput::TryDirect()
  */
 
 inline void
-WasInput::EventCallback(unsigned events)
+WasInput::EventCallback(unsigned)
 {
     assert(fd >= 0);
 
-    if (gcc_unlikely(events & SocketEvent::TIMEOUT)) {
-        AbortError("data receive timeout");
-        return;
-    }
+    timeout_event.Cancel();
 
     TryRead();
 }
@@ -380,6 +388,7 @@ WasInput::Free(std::exception_ptr ep)
     buffer.FreeIfDefined(fb_pool_get());
 
     event.Delete();
+    timeout_event.Cancel();
 
     if (!closed && enabled)
         DestroyError(ep);
@@ -448,6 +457,7 @@ WasInput::PrematureThrow(uint64_t _length)
 {
     buffer.FreeIfDefined(fb_pool_get());
     event.Delete();
+    timeout_event.Cancel();
 
     if (known_length && _length > length)
         throw WasProtocolError("announced premature length is too large");
