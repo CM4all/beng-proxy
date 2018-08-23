@@ -33,6 +33,7 @@
 #include "Output.hxx"
 #include "Error.hxx"
 #include "event/SocketEvent.hxx"
+#include "event/TimerEvent.hxx"
 #include "direct.hxx"
 #include "io/Splice.hxx"
 #include "io/FileDescriptor.hxx"
@@ -57,6 +58,7 @@ class WasOutput final : IstreamHandler {
 public:
     FileDescriptor fd;
     SocketEvent event;
+    TimerEvent timeout_event;
 
     WasOutputHandler &handler;
 
@@ -72,17 +74,20 @@ public:
         :fd(_fd),
          event(event_loop, fd.Get(), SocketEvent::WRITE,
                BIND_THIS_METHOD(WriteEventCallback)),
+         timeout_event(event_loop, BIND_THIS_METHOD(OnTimeout)),
          handler(_handler),
          input(std::move(_input), *this, ISTREAM_TO_PIPE) {
         ScheduleWrite();
     }
 
     void ScheduleWrite() {
-        event.Add(was_output_timeout);
+        event.Add();
+        timeout_event.Add(was_output_timeout);
     }
 
     void AbortError(std::exception_ptr ep) {
         event.Delete();
+        timeout_event.Cancel();
 
         if (input.IsDefined())
             input.ClearAndClose();
@@ -93,6 +98,10 @@ public:
     bool CheckLength();
 
     void WriteEventCallback(unsigned events);
+
+    void OnTimeout() noexcept {
+        AbortError(std::make_exception_ptr(WasError("send timeout")));
+    }
 
     /* virtual methods from class IstreamHandler */
     size_t OnData(const void *data, size_t length) override;
@@ -121,15 +130,12 @@ WasOutput::CheckLength()
  */
 
 inline void
-WasOutput::WriteEventCallback(unsigned events)
+WasOutput::WriteEventCallback(unsigned)
 {
     assert(fd.IsDefined());
     assert(input.IsDefined());
 
-    if (gcc_unlikely(events & SocketEvent::TIMEOUT)) {
-        AbortError(std::make_exception_ptr(WasError("send timeout")));
-        return;
-    }
+    timeout_event.Cancel();
 
     if (CheckLength())
         input.Read();
@@ -195,6 +201,7 @@ WasOutput::OnEof() noexcept
 
     input.Clear();
     event.Delete();
+    timeout_event.Cancel();
 
     if (!known_length && !handler.WasOutputLength(sent))
         return;
@@ -209,6 +216,7 @@ WasOutput::OnError(std::exception_ptr ep) noexcept
 
     input.Clear();
     event.Delete();
+    timeout_event.Cancel();
 
     handler.WasOutputPremature(sent, ep);
 }
@@ -238,6 +246,7 @@ was_output_free(WasOutput *output)
         output->input.ClearAndClose();
 
     output->event.Delete();
+    output->timeout_event.Cancel();
 
     return output->sent;
 }
