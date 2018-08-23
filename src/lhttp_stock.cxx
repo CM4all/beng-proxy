@@ -43,6 +43,7 @@
 #include "spawn/JailParams.hxx"
 #include "spawn/Prepared.hxx"
 #include "event/SocketEvent.hxx"
+#include "event/TimerEvent.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "io/Logger.hxx"
 #include "util/RuntimeError.hxx"
@@ -95,12 +96,15 @@ class LhttpConnection final : LoggerDomainFactory, StockItem {
 
     UniqueSocketDescriptor fd;
     SocketEvent event;
+    TimerEvent idle_timeout_event;
 
 public:
     explicit LhttpConnection(CreateStockItem c) noexcept
         :StockItem(c),
          logger(*this),
-         event(c.stock.GetEventLoop(), BIND_THIS_METHOD(EventCallback)) {}
+         event(c.stock.GetEventLoop(), BIND_THIS_METHOD(EventCallback)),
+         idle_timeout_event(c.stock.GetEventLoop(),
+                            BIND_THIS_METHOD(OnIdleTimeout)) {}
 
     ~LhttpConnection() noexcept override;
 
@@ -130,6 +134,7 @@ public:
 
 private:
     void EventCallback(unsigned events) noexcept;
+    void OnIdleTimeout() noexcept;
 
     /* virtual methods from LoggerDomainFactory */
     std::string MakeLoggerDomain() const noexcept override {
@@ -139,11 +144,13 @@ private:
     /* virtual methods from class StockItem */
     bool Borrow() noexcept override {
         event.Delete();
+        idle_timeout_event.Cancel();
         return true;
     }
 
     bool Release() noexcept override {
-        event.Add(EventDuration<300>::value);
+        event.Add();
+        idle_timeout_event.Add(EventDuration<300>::value);
         return true;
     }
 };
@@ -187,17 +194,21 @@ lhttp_stock_key(struct pool *pool, const LhttpAddress *address) noexcept
  */
 
 inline void
-LhttpConnection::EventCallback(unsigned events) noexcept
+LhttpConnection::EventCallback(unsigned) noexcept
 {
-    if ((events & SocketEvent::TIMEOUT) == 0) {
-        char buffer;
-        ssize_t nbytes = fd.Read(&buffer, sizeof(buffer));
-        if (nbytes < 0)
-            logger(2, "error on idle LHTTP connection: ", strerror(errno));
-        else if (nbytes > 0)
-            logger(2, "unexpected data from idle LHTTP connection");
-    }
+    char buffer;
+    ssize_t nbytes = fd.Read(&buffer, sizeof(buffer));
+    if (nbytes < 0)
+        logger(2, "error on idle LHTTP connection: ", strerror(errno));
+    else if (nbytes > 0)
+        logger(2, "unexpected data from idle LHTTP connection");
 
+    InvokeIdleDisconnect();
+}
+
+inline void
+LhttpConnection::OnIdleTimeout() noexcept
+{
     InvokeIdleDisconnect();
 }
 
