@@ -44,6 +44,7 @@
 #include "pool/tpool.hxx"
 #include "AllocatorPtr.hxx"
 #include "event/SocketEvent.hxx"
+#include "event/TimerEvent.hxx"
 #include "event/Duration.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "io/UniqueFileDescriptor.hxx"
@@ -132,6 +133,7 @@ struct FcgiConnection final : StockItem {
 
     UniqueSocketDescriptor fd;
     SocketEvent event;
+    TimerEvent idle_timeout_event;
 
     /**
      * Is this a fresh connection to the FastCGI child process?
@@ -150,7 +152,9 @@ struct FcgiConnection final : StockItem {
 
     explicit FcgiConnection(EventLoop &event_loop, CreateStockItem c)
         :StockItem(c), logger(GetStockName()),
-         event(event_loop, BIND_THIS_METHOD(OnSocketEvent)) {}
+         event(event_loop, BIND_THIS_METHOD(OnSocketEvent)),
+         idle_timeout_event(c.stock.GetEventLoop(),
+                            BIND_THIS_METHOD(OnIdleTimeout)) {}
 
     ~FcgiConnection() override;
 
@@ -175,6 +179,7 @@ struct FcgiConnection final : StockItem {
 
 private:
     void OnSocketEvent(unsigned events);
+    void OnIdleTimeout() noexcept;
 };
 
 const char *
@@ -202,17 +207,21 @@ FcgiChildParams::GetStockKey(struct pool &pool) const
  */
 
 void
-FcgiConnection::OnSocketEvent(unsigned events)
+FcgiConnection::OnSocketEvent(unsigned)
 {
-    if ((events & SocketEvent::TIMEOUT) == 0) {
-        char buffer;
-        ssize_t nbytes = fd.Read(&buffer, sizeof(buffer));
-        if (nbytes < 0)
-            logger(2, "error on idle FastCGI connection: ", strerror(errno));
-        else if (nbytes > 0)
-            logger(2, "unexpected data from idle FastCGI connection");
-    }
+    char buffer;
+    ssize_t nbytes = fd.Read(&buffer, sizeof(buffer));
+    if (nbytes < 0)
+        logger(2, "error on idle FastCGI connection: ", strerror(errno));
+    else if (nbytes > 0)
+        logger(2, "unexpected data from idle FastCGI connection");
 
+    InvokeIdleDisconnect();
+}
+
+inline void
+FcgiConnection::OnIdleTimeout() noexcept
+{
     InvokeIdleDisconnect();
 }
 
@@ -325,6 +334,7 @@ FcgiConnection::Borrow() noexcept
     }
 
     event.Delete();
+    idle_timeout_event.Cancel();
     aborted = false;
     return true;
 }
@@ -333,7 +343,8 @@ bool
 FcgiConnection::Release() noexcept
 {
     fresh = false;
-    event.Add(EventDuration<300>::value);
+    event.Add();
+    idle_timeout_event.Add(EventDuration<300>::value);
     return true;
 }
 
