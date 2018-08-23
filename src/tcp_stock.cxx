@@ -37,6 +37,7 @@
 #include "address_list.hxx"
 #include "pool/pool.hxx"
 #include "event/SocketEvent.hxx"
+#include "event/TimerEvent.hxx"
 #include "event/Duration.hxx"
 #include "net/PConnectSocket.hxx"
 #include "net/AllocatedSocketAddress.hxx"
@@ -82,13 +83,17 @@ struct TcpStockConnection final
     const AllocatedSocketAddress address;
 
     SocketEvent event;
+    TimerEvent idle_timeout_event;
 
     TcpStockConnection(CreateStockItem c, SocketAddress _address,
                        CancellablePointer &_cancel_ptr)
         :StockItem(c),
          logger(c.stock),
          address(_address),
-         event(c.stock.GetEventLoop(), BIND_THIS_METHOD(EventCallback)) {
+         event(c.stock.GetEventLoop(), BIND_THIS_METHOD(EventCallback)),
+         idle_timeout_event(c.stock.GetEventLoop(),
+                            BIND_THIS_METHOD(OnIdleTimeout))
+    {
         _cancel_ptr = *this;
 
         cancel_ptr = nullptr;
@@ -96,7 +101,9 @@ struct TcpStockConnection final
 
     ~TcpStockConnection() override;
 
+private:
     void EventCallback(unsigned events);
+    void OnIdleTimeout() noexcept;
 
     /* virtual methods from class Cancellable */
     void Cancel() noexcept override {
@@ -113,11 +120,13 @@ struct TcpStockConnection final
     /* virtual methods from class StockItem */
     bool Borrow() noexcept override {
         event.Delete();
+        idle_timeout_event.Cancel();
         return true;
     }
 
     bool Release() noexcept override {
-        event.Add(EventDuration<60>::value);
+        event.Add();
+        idle_timeout_event.Add(EventDuration<60>::value);
         return true;
     }
 };
@@ -129,21 +138,23 @@ struct TcpStockConnection final
  */
 
 inline void
-TcpStockConnection::EventCallback(unsigned events)
+TcpStockConnection::EventCallback(unsigned)
 {
-    if ((events & SocketEvent::TIMEOUT) == 0) {
-        char buffer;
-        ssize_t nbytes;
+    char buffer;
+    ssize_t nbytes;
 
-        assert((events & SocketEvent::READ) != 0);
+    nbytes = fd.Read(&buffer, sizeof(buffer));
+    if (nbytes < 0)
+        logger(2, "error on idle TCP connection: ", strerror(errno));
+    else if (nbytes > 0)
+        logger(2, "unexpected data in idle TCP connection");
 
-        nbytes = fd.Read(&buffer, sizeof(buffer));
-        if (nbytes < 0)
-            logger(2, "error on idle TCP connection: ",strerror(errno));
-        else if (nbytes > 0)
-            logger(2, "unexpected data in idle TCP connection");
-    }
+    InvokeIdleDisconnect();
+}
 
+inline void
+TcpStockConnection::OnIdleTimeout() noexcept
+{
     InvokeIdleDisconnect();
 }
 
