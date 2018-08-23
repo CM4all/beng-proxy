@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2018 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -31,7 +31,7 @@
  */
 
 #include "Poll.hxx"
-#include "event/SocketEvent.hxx"
+#include "event/NewSocketEvent.hxx"
 #include "event/TimerEvent.hxx"
 
 static unsigned
@@ -54,7 +54,7 @@ ToAvahiWatchEvent(unsigned events)
 
 struct AvahiWatch final {
 private:
-    SocketEvent event;
+    NewSocketEvent event;
 
     const AvahiWatchCallback callback;
     void *const userdata;
@@ -64,20 +64,13 @@ private:
 public:
     AvahiWatch(EventLoop &_loop, int _fd, AvahiWatchEvent _event,
                AvahiWatchCallback _callback, void *_userdata)
-        :event(_loop, _fd, FromAvahiWatchEvent(_event),
-               BIND_THIS_METHOD(OnSocketReady)),
+        :event(_loop, BIND_THIS_METHOD(OnSocketReady), SocketDescriptor(_fd)),
          callback(_callback), userdata(_userdata) {
-        event.Add();
-    }
-
-    ~AvahiWatch() {
-        event.Delete();
+        event.Schedule(FromAvahiWatchEvent(_event));
     }
 
     static void WatchUpdate(AvahiWatch *w, AvahiWatchEvent _event) {
-        w->event.Delete();
-        w->event.Set(w->event.GetFd(), FromAvahiWatchEvent(_event));
-        w->event.Add();
+        w->event.Schedule(FromAvahiWatchEvent(_event));
     }
 
     static AvahiWatchEvent WatchGetEvents(AvahiWatch *w) {
@@ -91,9 +84,8 @@ public:
 protected:
     void OnSocketReady(unsigned events) {
         received = ToAvahiWatchEvent(events);
-        callback(this, event.GetFd(), received, userdata);
+        callback(this, event.GetSocket().Get(), received, userdata);
         received = AvahiWatchEvent(0);
-        event.Add();
     }
 };
 
