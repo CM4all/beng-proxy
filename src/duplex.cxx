@@ -166,6 +166,8 @@ Duplex::Destroy()
 
     from_read.Free(fb_pool_get());
     to_write.Free(fb_pool_get());
+
+    this->~Duplex();
 }
 
 bool
