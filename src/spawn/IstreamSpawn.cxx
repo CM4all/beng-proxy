@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2018 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -44,7 +44,7 @@
 #include "io/UniqueFileDescriptor.hxx"
 #include "io/Logger.hxx"
 #include "direct.hxx"
-#include "event/SocketEvent.hxx"
+#include "event/NewSocketEvent.hxx"
 #include "pool/pool.hxx"
 #include "fb_pool.hxx"
 #include "SliceFifoBuffer.hxx"
@@ -68,13 +68,13 @@ struct SpawnIstream final : Istream, IstreamHandler, ExitListener {
     SpawnService &spawn_service;
 
     UniqueFileDescriptor output_fd;
-    SocketEvent output_event;
+    NewSocketEvent output_event;
 
     SliceFifoBuffer buffer;
 
     IstreamPointer input;
     UniqueFileDescriptor input_fd;
-    SocketEvent input_event;
+    NewSocketEvent input_event;
 
     int pid;
 
@@ -105,10 +105,14 @@ struct SpawnIstream final : Istream, IstreamHandler, ExitListener {
     void ReadFromOutput();
 
     void InputEventCallback(unsigned) {
+        input_event.Cancel(); // TODO: take advantage of EV_PERSIST
+
         input.Read();
     }
 
     void OutputEventCallback(unsigned) {
+        output_event.Cancel(); // TODO: take advantage of EV_PERSIST
+
         ReadFromOutput();
     }
 
@@ -136,12 +140,12 @@ SpawnIstream::Cancel()
     if (input.IsDefined()) {
         assert(input_fd.IsDefined());
 
-        input_event.Delete();
+        input_event.Cancel();
         input_fd.Close();
         input.Close();
     }
 
-    output_event.Delete();
+    output_event.Cancel();
 
     output_fd.Close();
 
@@ -185,15 +189,15 @@ SpawnIstream::OnData(const void *data, size_t length)
 
     ssize_t nbytes = input_fd.Write(data, length);
     if (nbytes > 0)
-        input_event.Add();
+        input_event.ScheduleWrite();
     else if (nbytes < 0) {
         if (errno == EAGAIN) {
-            input_event.Add();
+            input_event.ScheduleWrite();
             return 0;
         }
 
         logger(1, "write() to subprocess failed: ", strerror(errno));
-        input_event.Delete();
+        input_event.Cancel();
         input_fd.Close();
         input.ClearAndClose();
         return 0;
@@ -209,11 +213,11 @@ SpawnIstream::OnDirect(gcc_unused FdType type, int fd, size_t max_length)
 
     ssize_t nbytes = SpliceToPipe(fd, input_fd.Get(), max_length);
     if (nbytes > 0)
-        input_event.Add();
+        input_event.ScheduleWrite();
     else if (nbytes < 0) {
         if (errno == EAGAIN) {
             if (!input_fd.IsReadyForWriting()) {
-                input_event.Add();
+                input_event.ScheduleWrite();
                 return ISTREAM_RESULT_BLOCKING;
             }
 
@@ -233,7 +237,7 @@ SpawnIstream::OnEof() noexcept
     assert(input.IsDefined());
     assert(input_fd.IsDefined());
 
-    input_event.Delete();
+    input_event.Cancel();
     input_fd.Close();
 
     input.Clear();
@@ -247,7 +251,7 @@ SpawnIstream::OnError(std::exception_ptr ep) noexcept
 
     FreeBuffer();
 
-    input_event.Delete();
+    input_event.Cancel();
     input_fd.Close();
     input.Clear();
 
@@ -273,7 +277,7 @@ SpawnIstream::ReadFromOutput()
         } else if (nbytes > 0) {
             if (Istream::SendFromBuffer(buffer) > 0) {
                 buffer.FreeIfEmpty(fb_pool_get());
-                output_event.Add();
+                output_event.ScheduleRead();
             }
         } else if (nbytes == 0) {
             Cancel();
@@ -284,7 +288,7 @@ SpawnIstream::ReadFromOutput()
             }
         } else if (errno == EAGAIN) {
             buffer.FreeIfEmpty(fb_pool_get());
-            output_event.Add();
+            output_event.ScheduleRead();
 
             if (input.IsDefined())
                 /* the CGI may be waiting for more data from stdin */
@@ -307,7 +311,7 @@ SpawnIstream::ReadFromOutput()
            Istream::ConsumeFromBuffer(), and the new handler might not
            support "direct" transfer - check again */
         if (!CheckDirect()) {
-            output_event.Add();
+            output_event.ScheduleRead();
             return;
         }
 
@@ -318,13 +322,13 @@ SpawnIstream::ReadFromOutput()
             /* -2 means the callback wasn't able to consume any data right
                now */
         } else if (nbytes > 0) {
-            output_event.Add();
+            output_event.ScheduleRead();
         } else if (nbytes == ISTREAM_RESULT_EOF) {
             FreeBuffer();
             Cancel();
             DestroyEof();
         } else if (errno == EAGAIN) {
-            output_event.Add();
+            output_event.ScheduleRead();
 
             if (input.IsDefined())
                 /* the CGI may be waiting for more data from stdin */
@@ -392,17 +396,16 @@ SpawnIstream::SpawnIstream(SpawnService &_spawn_service, EventLoop &event_loop,
      logger("spawn"),
      spawn_service(_spawn_service),
      output_fd(std::move(_output_fd)),
-     output_event(event_loop, output_fd.Get(), SocketEvent::READ,
-                  BIND_THIS_METHOD(OutputEventCallback)),
+     output_event(event_loop, BIND_THIS_METHOD(OutputEventCallback),
+                  SocketDescriptor::FromFileDescriptor(output_fd)),
      input(std::move(_input), *this, ISTREAM_TO_PIPE),
      input_fd(std::move(_input_fd)),
-     input_event(event_loop, BIND_THIS_METHOD(InputEventCallback)),
+     input_event(event_loop, BIND_THIS_METHOD(InputEventCallback),
+                  SocketDescriptor::FromFileDescriptor(input_fd)),
      pid(_pid)
 {
-    if (input.IsDefined()) {
-        input_event.Set(input_fd.Get(), SocketEvent::WRITE);
-        input_event.Add();
-    }
+    if (input.IsDefined())
+        input_event.ScheduleWrite();
 
     spawn_service.SetExitListener(pid, this);
 }
