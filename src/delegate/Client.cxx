@@ -37,7 +37,7 @@
 #include "system/fd_util.h"
 #include "pool/pool.hxx"
 #include "pool/Holder.hxx"
-#include "event/SocketEvent.hxx"
+#include "event/NewSocketEvent.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "net/SendMessage.hxx"
 #include "system/Error.hxx"
@@ -53,7 +53,7 @@
 struct DelegateClient final : PoolHolder, Cancellable {
     struct lease_ref lease_ref;
     const SocketDescriptor s;
-    SocketEvent event;
+    NewSocketEvent event;
 
     DelegateHandler &handler;
 
@@ -61,13 +61,12 @@ struct DelegateClient final : PoolHolder, Cancellable {
                    struct pool &_pool,
                    DelegateHandler &_handler)
         :PoolHolder(_pool),
-         s(_s), event(event_loop, s.Get(), SocketEvent::READ,
-                      BIND_THIS_METHOD(SocketEventCallback)),
+         s(_s), event(event_loop, BIND_THIS_METHOD(SocketEventCallback), s),
          handler(_handler) {
         p_lease_ref_set(lease_ref, lease,
                         pool, "delegate_client_lease");
 
-        event.Add();
+        event.ScheduleRead();
     }
 
     void Destroy() {
@@ -103,7 +102,7 @@ private:
 
     /* virtual methods from class Cancellable */
     void Cancel() noexcept override {
-        event.Delete();
+        event.Cancel();
         ReleaseSocket(false);
         Destroy();
     }
