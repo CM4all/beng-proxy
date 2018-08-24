@@ -384,7 +384,6 @@ WasClient::SubmitPendingResponse()
         Destroy();
         return false;
     } else {
-        const ScopePoolRef ref(pool TRACE_ARGS);
         const DestructObserver destructed(*this);
         handler.InvokeResponse(response.status, std::move(response.headers),
                                was_input_enable(*response.body));
