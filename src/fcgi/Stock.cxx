@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2018 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -43,7 +43,7 @@
 #include "spawn/JailConfig.hxx"
 #include "pool/tpool.hxx"
 #include "AllocatorPtr.hxx"
-#include "event/SocketEvent.hxx"
+#include "event/NewSocketEvent.hxx"
 #include "event/TimerEvent.hxx"
 #include "event/Duration.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
@@ -132,7 +132,7 @@ struct FcgiConnection final : StockItem {
     StockItem *child = nullptr;
 
     UniqueSocketDescriptor fd;
-    SocketEvent event;
+    NewSocketEvent event;
     TimerEvent idle_timeout_event;
 
     /**
@@ -309,7 +309,7 @@ FcgiStock::Create(CreateStockItem c, void *info,
                                                                  key)));
     }
 
-    connection->event.Set(connection->fd.Get(), SocketEvent::READ);
+    connection->event.Open(connection->fd);
 
     connection->InvokeCreateSuccess();
 }
@@ -333,7 +333,7 @@ FcgiConnection::Borrow() noexcept
         return false;
     }
 
-    event.Delete();
+    event.Cancel();
     idle_timeout_event.Cancel();
     aborted = false;
     return true;
@@ -343,7 +343,7 @@ bool
 FcgiConnection::Release() noexcept
 {
     fresh = false;
-    event.Add();
+    event.ScheduleRead();
     idle_timeout_event.Add(EventDuration<300>::value);
     return true;
 }
@@ -351,7 +351,7 @@ FcgiConnection::Release() noexcept
 FcgiConnection::~FcgiConnection()
 {
     if (fd.IsDefined()) {
-        event.Delete();
+        event.Cancel();
         fd.Close();
     }
 
