@@ -53,7 +53,7 @@ static constexpr struct timeval was_control_timeout = {
 };
 
 WasControl::WasControl(EventLoop &event_loop, int _fd,
-                       WasControlHandler &_handler)
+                       WasControlHandler &_handler) noexcept
     :fd(_fd), handler(_handler),
      read_event(event_loop, fd, SocketEvent::READ,
                 BIND_THIS_METHOD(ReadEventCallback)),
@@ -66,7 +66,7 @@ WasControl::WasControl(EventLoop &event_loop, int _fd,
 }
 
 void
-WasControl::ScheduleRead()
+WasControl::ScheduleRead() noexcept
 {
     assert(fd >= 0);
 
@@ -75,7 +75,7 @@ WasControl::ScheduleRead()
 }
 
 void
-WasControl::ScheduleWrite()
+WasControl::ScheduleWrite() noexcept
 {
     assert(fd >= 0);
 
@@ -83,7 +83,7 @@ WasControl::ScheduleWrite()
 }
 
 void
-WasControl::ReleaseSocket()
+WasControl::ReleaseSocket() noexcept
 {
     assert(fd >= 0);
 
@@ -97,13 +97,13 @@ WasControl::ReleaseSocket()
 }
 
 void
-WasControl::InvokeError(const char *msg)
+WasControl::InvokeError(const char *msg) noexcept
 {
     InvokeError(std::make_exception_ptr(WasProtocolError(msg)));
 }
 
 bool
-WasControl::ConsumeInput()
+WasControl::ConsumeInput() noexcept
 {
     while (true) {
         auto r = input_buffer.Read().ToVoid();
@@ -141,7 +141,7 @@ WasControl::ConsumeInput()
  */
 
 void
-WasControl::TryRead()
+WasControl::TryRead() noexcept
 {
     assert(IsDefined());
 
@@ -170,7 +170,7 @@ WasControl::TryRead()
 }
 
 bool
-WasControl::TryWrite()
+WasControl::TryWrite() noexcept
 {
     assert(IsDefined());
 
@@ -204,7 +204,7 @@ WasControl::TryWrite()
  */
 
 inline void
-WasControl::ReadEventCallback(unsigned events)
+WasControl::ReadEventCallback(unsigned events) noexcept
 {
     assert(fd >= 0);
 
@@ -222,7 +222,7 @@ WasControl::ReadEventCallback(unsigned events)
 }
 
 inline void
-WasControl::WriteEventCallback(unsigned events)
+WasControl::WriteEventCallback(unsigned events) noexcept
 {
     assert(fd >= 0);
     assert(!output_buffer.empty());
@@ -242,7 +242,7 @@ WasControl::WriteEventCallback(unsigned events)
  */
 
 void *
-WasControl::Start(enum was_command cmd, size_t payload_length)
+WasControl::Start(enum was_command cmd, size_t payload_length) noexcept
 {
     assert(!done);
 
@@ -260,7 +260,7 @@ WasControl::Start(enum was_command cmd, size_t payload_length)
 }
 
 bool
-WasControl::Finish(size_t payload_length)
+WasControl::Finish(size_t payload_length) noexcept
 {
     assert(!done);
 
@@ -270,7 +270,7 @@ WasControl::Finish(size_t payload_length)
 
 bool
 WasControl::Send(enum was_command cmd,
-                 const void *payload, size_t payload_length)
+                 const void *payload, size_t payload_length) noexcept
 {
     assert(!done);
 
@@ -283,7 +283,7 @@ WasControl::Send(enum was_command cmd,
 }
 
 bool
-WasControl::SendString(enum was_command cmd, const char *payload)
+WasControl::SendString(enum was_command cmd, const char *payload) noexcept
 {
     assert(payload != nullptr);
 
@@ -291,7 +291,8 @@ WasControl::SendString(enum was_command cmd, const char *payload)
 }
 
 bool
-WasControl::SendArray(enum was_command cmd, ConstBuffer<const char *> values)
+WasControl::SendArray(enum was_command cmd,
+                      ConstBuffer<const char *> values) noexcept
 {
     for (auto value : values) {
         assert(value != nullptr);
@@ -304,7 +305,7 @@ WasControl::SendArray(enum was_command cmd, ConstBuffer<const char *> values)
 }
 
 bool
-WasControl::SendStrmap(enum was_command cmd, const StringMap &map)
+WasControl::SendStrmap(enum was_command cmd, const StringMap &map) noexcept
 {
     for (const auto &i : map) {
         size_t key_length = strlen(i.key);
@@ -326,7 +327,7 @@ WasControl::SendStrmap(enum was_command cmd, const StringMap &map)
 }
 
 bool
-WasControl::BulkOff()
+WasControl::BulkOff() noexcept
 {
     assert(output.bulk > 0);
 
@@ -335,7 +336,7 @@ WasControl::BulkOff()
 }
 
 void
-WasControl::Done()
+WasControl::Done() noexcept
 {
     assert(!done);
 

@@ -163,9 +163,9 @@ private:
 
     /* virtual methods from class WasControlHandler */
     bool OnWasControlPacket(enum was_command cmd,
-                            ConstBuffer<void> payload) override;
+                            ConstBuffer<void> payload) noexcept override;
 
-    bool OnWasControlDrained() override {
+    bool OnWasControlDrained() noexcept override {
         if (request.state == Request::State::PENDING) {
             request.state = Request::State::SUBMITTED;
 
@@ -187,11 +187,11 @@ private:
         return true;
     }
 
-    void OnWasControlDone() override {
+    void OnWasControlDone() noexcept override {
         assert(!control.IsDefined());
     }
 
-    void OnWasControlError(std::exception_ptr ep) override;
+    void OnWasControlError(std::exception_ptr ep) noexcept override;
 
     /* virtual methods from class WasOutputHandler */
     bool WasOutputLength(uint64_t length) override;
@@ -354,7 +354,8 @@ WasServer::WasInputError()
  */
 
 bool
-WasServer::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload)
+WasServer::OnWasControlPacket(enum was_command cmd,
+                              ConstBuffer<void> payload) noexcept
 {
     switch (cmd) {
         const uint64_t *length_p;
@@ -496,7 +497,7 @@ WasServer::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload)
 }
 
 void
-WasServer::OnWasControlError(std::exception_ptr ep)
+WasServer::OnWasControlError(std::exception_ptr ep) noexcept
 {
     assert(!control.IsDefined());
 

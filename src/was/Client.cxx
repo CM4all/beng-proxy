@@ -321,16 +321,16 @@ struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler, C
 
     /* virtual methods from class WasControlHandler */
     bool OnWasControlPacket(enum was_command cmd,
-                            ConstBuffer<void> payload) override;
-    bool OnWasControlDrained() override;
+                            ConstBuffer<void> payload) noexcept override;
+    bool OnWasControlDrained() noexcept override;
 
-    void OnWasControlDone() override {
+    void OnWasControlDone() noexcept override {
         assert(request.body == nullptr);
         assert(response.body == nullptr);
         assert(!control.IsDefined());
     }
 
-    void OnWasControlError(std::exception_ptr ep) override {
+    void OnWasControlError(std::exception_ptr ep) noexcept override {
         assert(!control.IsDefined());
 
         if (ignore_control_errors)
@@ -390,7 +390,7 @@ WasClient::SubmitPendingResponse()
  */
 
 bool
-WasClient::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload)
+WasClient::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload) noexcept
 {
     switch (cmd) {
         const uint32_t *status32_r;
@@ -596,7 +596,7 @@ WasClient::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload)
 }
 
 bool
-WasClient::OnWasControlDrained()
+WasClient::OnWasControlDrained() noexcept
 {
     if (response.pending)
         return SubmitPendingResponse();

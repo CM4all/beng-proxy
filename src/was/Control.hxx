@@ -53,7 +53,7 @@ public:
      * @return false if the object was closed
      */
     virtual bool OnWasControlPacket(enum was_command cmd,
-                                    ConstBuffer<void> payload) = 0;
+                                    ConstBuffer<void> payload) noexcept = 0;
 
     /**
      * Called after a group of control packets have been handled, and
@@ -61,12 +61,12 @@ public:
      *
      * @return false if the #WasControl object has been destructed
      */
-    virtual bool OnWasControlDrained() {
+    virtual bool OnWasControlDrained() noexcept {
         return true;
     }
 
-    virtual void OnWasControlDone() = 0;
-    virtual void OnWasControlError(std::exception_ptr ep) = 0;
+    virtual void OnWasControlDone() noexcept = 0;
+    virtual void OnWasControlError(std::exception_ptr ep) noexcept = 0;
 };
 
 /**
@@ -88,78 +88,80 @@ class WasControl {
     SliceFifoBuffer input_buffer, output_buffer;
 
 public:
-    WasControl(EventLoop &event_loop, int _fd, WasControlHandler &_handler);
+    WasControl(EventLoop &event_loop, int _fd,
+               WasControlHandler &_handler) noexcept;
 
-    EventLoop &GetEventLoop() {
+    EventLoop &GetEventLoop() noexcept {
         return read_event.GetEventLoop();
     }
 
-    bool IsDefined() const {
+    bool IsDefined() const noexcept {
         return fd >= 0;
     }
 
     bool Send(enum was_command cmd,
-              const void *payload, size_t payload_length);
+              const void *payload, size_t payload_length) noexcept;
 
-    bool SendEmpty(enum was_command cmd) {
+    bool SendEmpty(enum was_command cmd) noexcept {
         return Send(cmd, nullptr, 0);
     }
 
-    bool SendString(enum was_command cmd, const char *payload);
+    bool SendString(enum was_command cmd, const char *payload) noexcept;
 
-    bool SendUint64(enum was_command cmd, uint64_t payload) {
+    bool SendUint64(enum was_command cmd, uint64_t payload) noexcept {
         return Send(cmd, &payload, sizeof(payload));
     }
 
-    bool SendArray(enum was_command cmd, ConstBuffer<const char *> values);
+    bool SendArray(enum was_command cmd,
+                   ConstBuffer<const char *> values) noexcept;
 
-    bool SendStrmap(enum was_command cmd, const StringMap &map);
+    bool SendStrmap(enum was_command cmd, const StringMap &map) noexcept;
 
     /**
      * Enables bulk mode.
      */
-    void BulkOn() {
+    void BulkOn() noexcept {
         ++output.bulk;
     }
 
     /**
      * Disables bulk mode and flushes the output buffer.
      */
-    bool BulkOff();
+    bool BulkOff() noexcept;
 
-    void Done();
+    void Done() noexcept;
 
     bool empty() const {
         return input_buffer.empty() && output_buffer.empty();
     }
 
 private:
-    void *Start(enum was_command cmd, size_t payload_length);
-    bool Finish(size_t payload_length);
+    void *Start(enum was_command cmd, size_t payload_length) noexcept;
+    bool Finish(size_t payload_length) noexcept;
 
-    void ScheduleRead();
-    void ScheduleWrite();
+    void ScheduleRead() noexcept;
+    void ScheduleWrite() noexcept;
 
 public:
     /**
      * Release the socket held by this object.
      */
-    void ReleaseSocket();
+    void ReleaseSocket() noexcept;
 
 private:
-    void InvokeDone() {
+    void InvokeDone() noexcept {
         ReleaseSocket();
         handler.OnWasControlDone();
     }
 
-    void InvokeError(std::exception_ptr ep) {
+    void InvokeError(std::exception_ptr ep) noexcept {
         ReleaseSocket();
         handler.OnWasControlError(ep);
     }
 
-    void InvokeError(const char *msg);
+    void InvokeError(const char *msg) noexcept;
 
-    bool InvokeDrained() {
+    bool InvokeDrained() noexcept {
         return handler.OnWasControlDrained();
     }
 
@@ -167,13 +169,13 @@ private:
      * Consume data from the input buffer.  Returns false if this object
      * has been destructed.
      */
-    bool ConsumeInput();
+    bool ConsumeInput() noexcept;
 
-    void TryRead();
-    bool TryWrite();
+    void TryRead() noexcept;
+    bool TryWrite() noexcept;
 
-    void ReadEventCallback(unsigned events);
-    void WriteEventCallback(unsigned events);
+    void ReadEventCallback(unsigned events) noexcept;
+    void WriteEventCallback(unsigned events) noexcept;
 };
 
 #endif
