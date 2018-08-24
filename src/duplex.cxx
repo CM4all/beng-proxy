@@ -31,7 +31,7 @@
  */
 
 #include "duplex.hxx"
-#include "event/SocketEvent.hxx"
+#include "event/NewSocketEvent.hxx"
 #include "event/DeferEvent.hxx"
 #include "system/Error.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
@@ -51,29 +51,34 @@
 #include <limits.h>
 
 class FallbackEvent {
-    SocketEvent socket_event;
+    NewSocketEvent socket_event;
     DeferEvent defer_event;
+
+    const unsigned events;
 
     const BoundMethod<void()> callback;
 
 public:
-    FallbackEvent(EventLoop &event_loop, FileDescriptor fd, short events,
+    FallbackEvent(EventLoop &event_loop, FileDescriptor fd, unsigned _events,
                   BoundMethod<void()> _callback)
-        :socket_event(event_loop, fd.Get(), events,
-                      BIND_THIS_METHOD(OnSocket)),
+        :socket_event(event_loop, BIND_THIS_METHOD(OnSocket),
+                      SocketDescriptor::FromFileDescriptor(fd)),
          defer_event(event_loop, _callback),
+         events(fd.IsRegularFile() ? 0 : _events),
          callback(_callback) {}
 
     void Add() {
-        if (!socket_event.Add())
+        if (events == 0)
             /* if "fd" is a regular file, trigger the event repeatedly
                using DeferEvent, because we can't use SocketEvent::READ on
                regular files */
             defer_event.Schedule();
+        else
+            socket_event.Schedule(events);
     }
 
     void Delete() {
-        socket_event.Delete();
+        socket_event.Cancel();
         defer_event.Cancel();
     }
 
@@ -92,7 +97,7 @@ class Duplex {
     SliceFifoBuffer from_read, to_write;
 
     FallbackEvent read_event, write_event;
-    SocketEvent socket_read_event, socket_write_event;
+    NewSocketEvent socket_event;
 
 public:
     Duplex(EventLoop &event_loop,
@@ -104,16 +109,13 @@ public:
                     BIND_THIS_METHOD(ReadEventCallback)),
          write_event(event_loop, write_fd, SocketEvent::WRITE,
                      BIND_THIS_METHOD(WriteEventCallback)),
-         socket_read_event(event_loop, sock_fd.Get(), SocketEvent::READ,
-                           BIND_THIS_METHOD(SocketReadEventCallback)),
-         socket_write_event(event_loop, sock_fd.Get(), SocketEvent::WRITE,
-                            BIND_THIS_METHOD(SocketWriteEventCallback))
+         socket_event(event_loop, BIND_THIS_METHOD(OnSocketReady), sock_fd)
     {
         from_read.Allocate(fb_pool_get());
         to_write.Allocate(fb_pool_get());
 
         read_event.Add();
-        socket_read_event.Add();
+        socket_event.ScheduleRead();
     }
 
 private:
@@ -142,8 +144,7 @@ private:
     void CloseSocket() {
         assert(sock_fd.IsDefined());
 
-        socket_read_event.Delete();
-        socket_write_event.Delete();
+        socket_event.Cancel();
 
         sock_fd.Close();
     }
@@ -153,8 +154,10 @@ private:
 
     void ReadEventCallback();
     void WriteEventCallback();
-    void SocketReadEventCallback(unsigned);
-    void SocketWriteEventCallback(unsigned);
+
+    bool TryReadSocket() noexcept;
+    bool TryWriteSocket() noexcept;
+    void OnSocketReady(unsigned events) noexcept;
 };
 
 void
@@ -202,10 +205,10 @@ Duplex::ReadEventCallback()
         return;
     }
 
-    socket_write_event.Add();
+    socket_event.ScheduleWrite();
 
-    if (!from_read.IsFull())
-        read_event.Add();
+    if (from_read.IsFull())
+        read_event.Delete();
 }
 
 inline void
@@ -218,48 +221,64 @@ Duplex::WriteEventCallback()
     }
 
     if (nbytes > 0 && !sock_eof)
-        socket_read_event.Add();
+        socket_event.ScheduleRead();
 
-    if (!to_write.empty())
-        write_event.Add();
-    else
+    if (to_write.empty()) {
+        write_event.Delete();
         CheckDestroy();
+    }
 }
 
-inline void
-Duplex::SocketReadEventCallback(unsigned)
+inline bool
+Duplex::TryReadSocket() noexcept
 {
     ssize_t nbytes = ReceiveToBuffer(sock_fd.Get(), to_write);
     if (nbytes == -1) {
         LogConcat(1, "Duplex", "failed to read: ", strerror(errno));
         Destroy();
-        return;
+        return false;
     }
 
     if (gcc_likely(nbytes > 0)) {
         write_event.Add();
-        if (!to_write.IsFull())
-            socket_read_event.Add();
+        if (to_write.IsFull())
+            socket_event.CancelRead();
+        return true;
     } else {
+        socket_event.CancelRead();
         sock_eof = true;
-        CheckDestroy();
+        return !CheckDestroy();
     }
 }
 
-inline void
-Duplex::SocketWriteEventCallback(unsigned)
+inline bool
+Duplex::TryWriteSocket() noexcept
 {
     ssize_t nbytes = SendFromBuffer(sock_fd.Get(), from_read);
     if (nbytes == -1) {
         Destroy();
-        return;
+        return false;
     }
 
     if (nbytes > 0 && read_fd.IsDefined())
         read_event.Add();
 
     if (!from_read.empty())
-        socket_write_event.Add();
+        socket_event.ScheduleWrite();
+
+    return true;
+}
+
+inline void
+Duplex::OnSocketReady(unsigned events) noexcept
+{
+    if (events & SocketEvent::READ) {
+        if (!TryReadSocket())
+            return;
+    }
+
+    if (events & SocketEvent::WRITE)
+        TryWriteSocket();
 }
 
 UniqueSocketDescriptor
