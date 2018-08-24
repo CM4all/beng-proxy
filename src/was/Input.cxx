@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2018 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -32,7 +32,7 @@
 
 #include "Input.hxx"
 #include "Error.hxx"
-#include "event/SocketEvent.hxx"
+#include "event/NewSocketEvent.hxx"
 #include "event/TimerEvent.hxx"
 #include "direct.hxx"
 #include "istream/istream.hxx"
@@ -60,7 +60,7 @@ static constexpr struct timeval was_input_timeout = {
 class WasInput final : public Istream {
 public:
     int fd;
-    SocketEvent event;
+    NewSocketEvent event;
     TimerEvent timeout_event;
 
     WasInputHandler &handler;
@@ -76,8 +76,8 @@ public:
     WasInput(struct pool &p, EventLoop &event_loop, int _fd,
              WasInputHandler &_handler)
         :Istream(p), fd(_fd),
-         event(event_loop, fd, SocketEvent::READ,
-               BIND_THIS_METHOD(EventCallback)),
+         event(event_loop, BIND_THIS_METHOD(EventCallback),
+               SocketDescriptor(fd)),
          timeout_event(event_loop, BIND_THIS_METHOD(OnTimeout)),
          handler(_handler) {
     }
@@ -105,7 +105,7 @@ public:
     bool ReleasePipe() {
         assert(fd >= 0);
         fd = -1;
-        event.Delete();
+        event.Cancel();
         timeout_event.Cancel();
 
         return handler.WasInputRelease();
@@ -126,14 +126,14 @@ public:
         assert(fd >= 0);
         assert(!buffer.IsDefined() || !buffer.IsFull());
 
-        event.Add();
+        event.ScheduleRead();
         if (timeout)
             timeout_event.Add(was_input_timeout);
     }
 
     void AbortError(std::exception_ptr ep) {
         buffer.FreeIfDefined(fb_pool_get());
-        event.Delete();
+        event.Cancel();
 
         /* protect against recursive Free() call within the istream
            handler */
@@ -152,7 +152,7 @@ public:
         assert(received == length);
         assert(!buffer.IsDefined());
 
-        event.Delete();
+        event.Cancel();
 
         handler.WasInputEof();
         DestroyEof();
@@ -223,7 +223,7 @@ public:
     }
 
     void _Read() noexcept override {
-        event.Delete();
+        event.Cancel();
         timeout_event.Cancel();
 
         if (SubmitBuffer())
@@ -232,7 +232,7 @@ public:
 
     void _Close() noexcept override {
         buffer.FreeIfDefined(fb_pool_get());
-        event.Delete();
+        event.Cancel();
 
         /* protect against recursive Free() call within the istream
            handler */
@@ -283,6 +283,10 @@ WasInput::ReadToBuffer()
     }
 
     received += nbytes;
+
+    if (buffer.IsFull())
+        event.CancelRead();
+
     return true;
 }
 
@@ -387,7 +391,7 @@ WasInput::Free(std::exception_ptr ep)
 
     buffer.FreeIfDefined(fb_pool_get());
 
-    event.Delete();
+    event.Cancel();
     timeout_event.Cancel();
 
     if (!closed && enabled)
@@ -456,7 +460,7 @@ void
 WasInput::PrematureThrow(uint64_t _length)
 {
     buffer.FreeIfDefined(fb_pool_get());
-    event.Delete();
+    event.Cancel();
     timeout_event.Cancel();
 
     if (known_length && _length > length)
