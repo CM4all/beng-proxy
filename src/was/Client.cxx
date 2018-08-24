@@ -148,7 +148,7 @@ struct WasClient final
     void Destroy() {
         stopwatch_dump(stopwatch);
         pool_unref(&caller_pool);
-        pool_unref(&pool);
+        DeleteUnrefPool(pool, this);
     }
 
     /**
