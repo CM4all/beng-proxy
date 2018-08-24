@@ -54,8 +54,7 @@ static constexpr struct timeval was_control_timeout = {
 
 WasControl::WasControl(EventLoop &event_loop, int _fd,
                        WasControlHandler &_handler) noexcept
-    :socket(event_loop), handler(_handler),
-     output_buffer(fb_pool_get())
+    :socket(event_loop), handler(_handler)
 {
     socket.Init(SocketDescriptor(_fd), FD_SOCKET,
                 &was_control_timeout, &was_control_timeout,
@@ -83,7 +82,7 @@ WasControl::ReleaseSocket() noexcept
 {
     assert(socket.IsConnected());
 
-    output_buffer.Free(fb_pool_get());
+    output_buffer.FreeIfDefined(fb_pool_get());
 
     socket.Abandon();
     socket.Destroy();
@@ -148,6 +147,7 @@ WasControl::OnBufferedWrite()
     output_buffer.Consume(nbytes);
 
     if (output_buffer.empty()) {
+        output_buffer.Free(fb_pool_get());
         socket.UnscheduleWrite();
 
         if (done) {
@@ -201,6 +201,7 @@ WasControl::Start(enum was_command cmd, size_t payload_length) noexcept
 {
     assert(!done);
 
+    output_buffer.AllocateIfNull(fb_pool_get());
     auto w = output_buffer.Write().ToVoid();
     struct was_header *header = (struct was_header *)w.data;
     if (w.size < sizeof(*header) + payload_length) {
