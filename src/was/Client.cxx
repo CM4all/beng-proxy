@@ -47,6 +47,7 @@
 #include "util/Cast.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/Cancellable.hxx"
+#include "util/Exception.hxx"
 #include "util/StringFormat.hxx"
 #include "util/ScopeExit.hxx"
 
@@ -337,7 +338,8 @@ struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler, C
 
         stopwatch_event(stopwatch, "control_error");
 
-        AbortResponse(ep);
+        AbortResponse(NestException(ep,
+                                    std::runtime_error("Error on WAS control channel")));
     }
 
     /* virtual methods from class WasOutputHandler */
