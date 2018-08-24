@@ -84,7 +84,7 @@ private:
 class Duplex {
     int read_fd;
     int write_fd;
-    int sock_fd;
+    UniqueSocketDescriptor sock_fd;
     bool sock_eof = false;
 
     SliceFifoBuffer from_read, to_write;
@@ -93,15 +93,17 @@ class Duplex {
     SocketEvent socket_read_event, socket_write_event;
 
 public:
-    Duplex(EventLoop &event_loop, int _read_fd, int _write_fd, int _sock_fd)
-        :read_fd(_read_fd), write_fd(_write_fd), sock_fd(_sock_fd),
+    Duplex(EventLoop &event_loop, int _read_fd, int _write_fd,
+           UniqueSocketDescriptor &&_sock_fd)
+        :read_fd(_read_fd), write_fd(_write_fd),
+         sock_fd(std::move(_sock_fd)),
          read_event(event_loop, read_fd, SocketEvent::READ,
                     BIND_THIS_METHOD(ReadEventCallback)),
          write_event(event_loop, write_fd, SocketEvent::WRITE,
                      BIND_THIS_METHOD(WriteEventCallback)),
-         socket_read_event(event_loop, sock_fd, SocketEvent::READ,
+         socket_read_event(event_loop, sock_fd.Get(), SocketEvent::READ,
                            BIND_THIS_METHOD(SocketReadEventCallback)),
-         socket_write_event(event_loop, sock_fd, SocketEvent::WRITE,
+         socket_write_event(event_loop, sock_fd.Get(), SocketEvent::WRITE,
                            BIND_THIS_METHOD(SocketWriteEventCallback))
     {
         from_read.Allocate(fb_pool_get());
@@ -135,13 +137,12 @@ private:
     }
 
     void CloseSocket() {
-        assert(sock_fd >= 0);
+        assert(sock_fd.IsDefined());
 
         socket_read_event.Delete();
         socket_write_event.Delete();
 
-        close(sock_fd);
-        sock_fd = -1;
+        sock_fd.Close();
     }
 
     void Destroy();
@@ -162,7 +163,7 @@ Duplex::Destroy()
     if (write_fd >= 0)
         CloseWrite();
 
-    if (sock_fd >= 0)
+    if (sock_fd.IsDefined())
         CloseSocket();
 
     from_read.Free(fb_pool_get());
@@ -224,7 +225,7 @@ Duplex::WriteEventCallback()
 inline void
 Duplex::SocketReadEventCallback(unsigned)
 {
-    ssize_t nbytes = ReceiveToBuffer(sock_fd, to_write);
+    ssize_t nbytes = ReceiveToBuffer(sock_fd.Get(), to_write);
     if (nbytes == -1) {
         LogConcat(1, "Duplex", "failed to read: ", strerror(errno));
         Destroy();
@@ -244,7 +245,7 @@ Duplex::SocketReadEventCallback(unsigned)
 inline void
 Duplex::SocketWriteEventCallback(unsigned)
 {
-    ssize_t nbytes = SendFromBuffer(sock_fd, from_read);
+    ssize_t nbytes = SendFromBuffer(sock_fd.Get(), from_read);
     if (nbytes == -1) {
         Destroy();
         return;
@@ -257,7 +258,7 @@ Duplex::SocketWriteEventCallback(unsigned)
         socket_write_event.Add();
 }
 
-int
+UniqueSocketDescriptor
 duplex_new(EventLoop &event_loop, struct pool *pool, int read_fd, int write_fd)
 {
     assert(pool != nullptr);
@@ -270,6 +271,6 @@ duplex_new(EventLoop &event_loop, struct pool *pool, int read_fd, int write_fd)
         throw MakeErrno("socketpair() failed");
 
     NewFromPool<Duplex>(*pool, event_loop, read_fd, write_fd,
-                        duplex_fd.Steal());
-    return result_fd.Steal();
+                        std::move(duplex_fd));
+    return result_fd;
 }

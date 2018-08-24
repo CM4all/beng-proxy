@@ -50,7 +50,7 @@
 #include "event/TimerEvent.hxx"
 #include "event/ShutdownListener.hxx"
 #include "fb_pool.hxx"
-#include "net/SocketDescriptor.hxx"
+#include "net/UniqueSocketDescriptor.hxx"
 #include "util/Cancellable.hxx"
 #include "util/PrintException.hxx"
 
@@ -263,12 +263,12 @@ try {
     Instance instance;
     instance.shutdown_listener.Enable();
 
-    int sockfd;
+    UniqueSocketDescriptor sockfd;
     if (in_fd != out_fd) {
         sockfd = duplex_new(instance.event_loop, instance.root_pool,
                             in_fd, out_fd);
     } else
-        sockfd = in_fd;
+        sockfd = UniqueSocketDescriptor(in_fd);
 
     const char *mode = argv[3];
     if (strcmp(mode, "null") == 0)
@@ -292,7 +292,7 @@ try {
 
     instance.connection = http_server_connection_new(instance.root_pool,
                                                      instance.event_loop,
-                                                     SocketDescriptor(sockfd),
+                                                     sockfd,
                                                      FdType::FD_SOCKET,
                                                      nullptr,
                                                      nullptr, nullptr,
