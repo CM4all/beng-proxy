@@ -145,8 +145,9 @@ private:
      * Abort receiving the response status/headers from the WAS server.
      */
     void AbortError(std::exception_ptr ep) {
+        auto &handler2 = handler;
         ReleaseError(ep);
-        handler.OnWasClosed();
+        handler2.OnWasClosed();
     }
 
     void AbortError(const char *msg) {
@@ -157,8 +158,9 @@ private:
      * Abort receiving the response status/headers from the WAS server.
      */
     void AbortUnused() {
+        auto &handler2 = handler;
         ReleaseUnused();
-        handler.OnWasClosed();
+        handler2.OnWasClosed();
     }
 
     /* virtual methods from class WasControlHandler */
@@ -224,6 +226,8 @@ WasServer::ReleaseError(std::exception_ptr ep)
     }
 
     CloseFiles();
+
+    this->~WasServer();
 }
 
 void
@@ -244,6 +248,8 @@ WasServer::ReleaseUnused()
     }
 
     CloseFiles();
+
+    this->~WasServer();
 }
 
 /*
