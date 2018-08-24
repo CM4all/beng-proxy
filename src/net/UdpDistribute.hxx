@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2018 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -34,7 +34,7 @@
 #define UDP_DISTRIBUTE_HXX
 
 #include "net/UniqueSocketDescriptor.hxx"
-#include "event/SocketEvent.hxx"
+#include "event/NewSocketEvent.hxx"
 
 #include <boost/intrusive/list.hpp>
 
@@ -50,10 +50,9 @@ class UdpDistribute {
         : boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::auto_unlink>> {
 
         UniqueSocketDescriptor fd;
-        SocketEvent event;
+        NewSocketEvent event;
 
         Recipient(EventLoop &_event_loop, UniqueSocketDescriptor &&_fd);
-        ~Recipient();
 
         void RemoveAndDestroy() {
             delete this;
