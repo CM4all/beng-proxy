@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2018 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -42,7 +42,7 @@
 #include "system/Error.hxx"
 #include "net/AllocatedSocketAddress.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
-#include "event/SocketEvent.hxx"
+#include "event/NewSocketEvent.hxx"
 #include "io/Logger.hxx"
 
 #include <stdexcept>
@@ -53,17 +53,12 @@
 class TranslateConnection final : public StockItem {
     UniqueSocketDescriptor s;
 
-    SocketEvent event;
+    NewSocketEvent event;
 
 public:
     explicit TranslateConnection(CreateStockItem c)
         :StockItem(c),
          event(c.stock.GetEventLoop(), BIND_THIS_METHOD(EventCallback)) {}
-
-    ~TranslateConnection() override {
-        if (s.IsDefined())
-            event.Delete();
-    }
 
 private:
     bool CreateAndConnect(SocketAddress address) {
@@ -76,7 +71,7 @@ private:
 public:
     void CreateAndConnectAndFinish(SocketAddress address) {
         if (CreateAndConnect(address)) {
-            event.Set(s.Get(), SocketEvent::READ);
+            event.Open(s);
             InvokeCreateSuccess();
         } else {
             auto error = std::make_exception_ptr(MakeErrno());
@@ -110,12 +105,12 @@ private:
 public:
     /* virtual methods from class StockItem */
     bool Borrow() noexcept override {
-        event.Delete();
+        event.Cancel();
         return true;
     }
 
     bool Release() noexcept override {
-        event.Add();
+        event.ScheduleRead();
         return true;
     }
 };
