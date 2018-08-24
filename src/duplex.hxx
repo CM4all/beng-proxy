@@ -34,6 +34,7 @@
 #define BENG_PROXY_DUPLEX_HXX
 
 class EventLoop;
+class UniqueFileDescriptor;
 class UniqueSocketDescriptor;
 struct pool;
 
@@ -46,6 +47,7 @@ struct pool;
  * Throws on error.
  */
 UniqueSocketDescriptor
-duplex_new(EventLoop &event_loop, struct pool *pool, int read_fd, int write_fd);
+duplex_new(EventLoop &event_loop, struct pool *pool,
+           UniqueFileDescriptor read_fd, UniqueFileDescriptor write_fd);
 
 #endif

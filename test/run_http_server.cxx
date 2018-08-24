@@ -51,6 +51,7 @@
 #include "event/ShutdownListener.hxx"
 #include "fb_pool.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
+#include "io/UniqueFileDescriptor.hxx"
 #include "util/Cancellable.hxx"
 #include "util/PrintException.hxx"
 
@@ -266,7 +267,8 @@ try {
     UniqueSocketDescriptor sockfd;
     if (in_fd != out_fd) {
         sockfd = duplex_new(instance.event_loop, instance.root_pool,
-                            in_fd, out_fd);
+                            UniqueFileDescriptor(in_fd),
+                            UniqueFileDescriptor(out_fd));
     } else
         sockfd = UniqueSocketDescriptor(in_fd);
 
