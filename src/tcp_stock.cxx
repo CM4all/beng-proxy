@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2018 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -82,7 +82,7 @@ struct TcpStockConnection final
 
     const AllocatedSocketAddress address;
 
-    SocketEvent event;
+    NewSocketEvent event;
     TimerEvent idle_timeout_event;
 
     TcpStockConnection(CreateStockItem c, SocketAddress _address,
@@ -119,13 +119,13 @@ private:
 
     /* virtual methods from class StockItem */
     bool Borrow() noexcept override {
-        event.Delete();
+        event.Cancel();
         idle_timeout_event.Cancel();
         return true;
     }
 
     bool Release() noexcept override {
-        event.Add();
+        event.ScheduleRead();
         idle_timeout_event.Add(EventDuration<60>::value);
         return true;
     }
@@ -170,7 +170,7 @@ TcpStockConnection::OnSocketConnectSuccess(UniqueSocketDescriptor &&new_fd) noex
     cancel_ptr = nullptr;
 
     fd = new_fd.Release();
-    event.Set(fd.Get(), SocketEvent::READ);
+    event.Open(fd);
 
     InvokeCreateSuccess();
 }
@@ -218,7 +218,7 @@ TcpStockConnection::~TcpStockConnection()
     if (cancel_ptr)
         cancel_ptr.Cancel();
     else if (fd.IsDefined()) {
-        event.Delete();
+        event.Cancel();
         fd.Close();
     }
 }
