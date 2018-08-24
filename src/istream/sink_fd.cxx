@@ -37,7 +37,7 @@
 #include "direct.hxx"
 #include "io/Splice.hxx"
 #include "io/FileDescriptor.hxx"
-#include "event/SocketEvent.hxx"
+#include "event/NewSocketEvent.hxx"
 #include "util/DestructObserver.hxx"
 #include "util/LeakDetector.hxx"
 
@@ -54,7 +54,7 @@ struct SinkFd final : IstreamSink, DestructAnchor, LeakDetector {
     const SinkFdHandler *handler;
     void *handler_ctx;
 
-    SocketEvent event;
+    NewSocketEvent event;
 
     /**
      * Set to true each time data was received from the istream.
@@ -81,8 +81,9 @@ struct SinkFd final : IstreamSink, DestructAnchor, LeakDetector {
          pool(&_pool),
          fd(_fd), fd_type(_fd_type),
          handler(&_handler), handler_ctx(_handler_ctx),
-         event(event_loop, fd.Get(), SocketEvent::WRITE|SocketEvent::PERSIST,
-               BIND_THIS_METHOD(EventCallback)) {
+         event(event_loop, BIND_THIS_METHOD(EventCallback),
+               SocketDescriptor::FromFileDescriptor(fd))
+    {
         ScheduleWrite();
     }
 
@@ -108,7 +109,7 @@ struct SinkFd final : IstreamSink, DestructAnchor, LeakDetector {
         assert(input.IsDefined());
 
         got_event = false;
-        event.Add();
+        event.ScheduleWrite();
     }
 
     void EventCallback(unsigned events);
@@ -140,7 +141,7 @@ SinkFd::OnData(const void *data, size_t length)
         ScheduleWrite();
         return 0;
     } else {
-        event.Delete();
+        event.Cancel();
         if (handler->send_error(errno, handler_ctx)) {
             input.Close();
             Destroy();
@@ -185,7 +186,7 @@ SinkFd::OnEof() noexcept
     valid = false;
 #endif
 
-    event.Delete();
+    event.Cancel();
 
     handler->input_eof(handler_ctx);
     Destroy();
@@ -200,7 +201,7 @@ SinkFd::OnError(std::exception_ptr ep) noexcept
     valid = false;
 #endif
 
-    event.Delete();
+    event.Cancel();
 
     handler->input_error(ep, handler_ctx);
     Destroy();
@@ -223,7 +224,7 @@ SinkFd::EventCallback(unsigned)
     if (!destructed && !got_data)
         /* the fd is ready for writing, but the istream is blocking -
            don't try again for now */
-        event.Delete();
+        event.Cancel();
 }
 
 /*
@@ -267,6 +268,6 @@ sink_fd_close(SinkFd *ss)
     ss->valid = false;
 #endif
 
-    ss->event.Delete();
+    ss->event.Cancel();
     ss->Close();
 }
