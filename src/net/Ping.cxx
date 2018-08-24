@@ -46,6 +46,7 @@
 
 PingClient::PingClient(EventLoop &event_loop, PingClientHandler &_handler)
     :event(event_loop, -1, 0, BIND_THIS_METHOD(EventCallback)),
+     timeout_event(event_loop, BIND_THIS_METHOD(OnTimeout)),
      handler(_handler)
 {
 }
@@ -53,7 +54,8 @@ PingClient::PingClient(EventLoop &event_loop, PingClientHandler &_handler)
 inline void
 PingClient::ScheduleRead()
 {
-    event.Add(EventDuration<10>::value);
+    event.Add();
+    timeout_event.Add(EventDuration<10>::value);
 }
 
 static u_short
@@ -143,16 +145,20 @@ PingClient::Read()
  */
 
 inline void
-PingClient::EventCallback(unsigned events)
+PingClient::EventCallback(unsigned)
 {
     assert(fd.IsDefined());
 
-    if (events & SocketEvent::READ) {
-        Read();
-    } else {
-        fd.Close();
-        handler.PingTimeout();
-    }
+    Read();
+}
+
+inline void
+PingClient::OnTimeout() noexcept
+{
+    assert(fd.IsDefined());
+
+    fd.Close();
+    handler.PingTimeout();
 }
 
 /*

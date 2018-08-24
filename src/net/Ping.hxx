@@ -34,6 +34,7 @@
 #define PING_HXX
 
 #include "event/SocketEvent.hxx"
+#include "event/TimerEvent.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "util/Compiler.h"
 
@@ -56,6 +57,7 @@ class PingClient final {
     uint16_t ident;
 
     SocketEvent event;
+    TimerEvent timeout_event;
 
     PingClientHandler &handler;
 
@@ -67,6 +69,7 @@ public:
 
     void Cancel() {
         if (fd.IsDefined()) {
+            timeout_event.Cancel();
             event.Delete();
             fd.Close();
         }
@@ -75,6 +78,7 @@ public:
 private:
     void ScheduleRead();
     void EventCallback(unsigned events);
+    void OnTimeout() noexcept;
 
     void Read();
 };
