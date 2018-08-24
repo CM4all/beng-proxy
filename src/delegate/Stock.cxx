@@ -36,7 +36,7 @@
 #include "stock/Item.hxx"
 #include "system/Error.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
-#include "event/SocketEvent.hxx"
+#include "event/NewSocketEvent.hxx"
 #include "event/TimerEvent.hxx"
 #include "event/Duration.hxx"
 #include "spawn/Interface.hxx"
@@ -77,7 +77,7 @@ class DelegateProcess final : public StockItem {
 
     UniqueSocketDescriptor fd;
 
-    SocketEvent event;
+    NewSocketEvent event;
     TimerEvent idle_timeout_event;
 
 public:
@@ -85,16 +85,11 @@ public:
         :StockItem(c),
          logger(c.GetStockName()),
          fd(std::move(_fd)),
-         event(c.stock.GetEventLoop(), fd.Get(), SocketEvent::READ,
-               BIND_THIS_METHOD(SocketEventCallback)),
+         event(c.stock.GetEventLoop(),
+               BIND_THIS_METHOD(SocketEventCallback), fd),
          idle_timeout_event(c.stock.GetEventLoop(),
                     BIND_THIS_METHOD(OnIdleTimeout))
     {
-    }
-
-    ~DelegateProcess() override {
-        if (fd.IsDefined())
-            event.Delete();
     }
 
     SocketDescriptor GetSocket() const noexcept {
@@ -103,13 +98,13 @@ public:
 
     /* virtual methods from class StockItem */
     bool Borrow() noexcept override {
-        event.Delete();
+        event.Cancel();
         idle_timeout_event.Cancel();
         return true;
     }
 
     bool Release() noexcept override {
-        event.Add();
+        event.ScheduleRead();
         idle_timeout_event.Add(EventDuration<60>::value);
         return true;
     }
