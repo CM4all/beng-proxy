@@ -367,22 +367,22 @@ WasClient::SubmitPendingResponse()
 
     response.receiving_metadata = false;
 
-    const ScopePoolRef ref(pool TRACE_ARGS);
     const ScopePoolRef caller_ref(caller_pool TRACE_ARGS);
 
-    UnusedIstreamPtr body;
     if (response.released) {
         was_input_free_unused_p(&response.body);
-        body = istream_null_new(caller_pool);
-
         ReleaseControl();
-        Destroy();
-    } else
-        body = was_input_enable(*response.body);
 
-    handler.InvokeResponse(response.status, std::move(response.headers),
-                           std::move(body));
-    return control.IsDefined();
+        handler.InvokeResponse(response.status, std::move(response.headers),
+                               istream_null_new(caller_pool));
+        Destroy();
+        return false;
+    } else {
+        const ScopePoolRef ref(pool TRACE_ARGS);
+        handler.InvokeResponse(response.status, std::move(response.headers),
+                               was_input_enable(*response.body));
+        return control.IsDefined();
+    }
 }
 
 /*
