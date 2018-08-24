@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2018 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -37,7 +37,7 @@
 #include "pool/Holder.hxx"
 #include "system/Error.hxx"
 #include "system/fd_util.h"
-#include "event/SocketEvent.hxx"
+#include "event/NewSocketEvent.hxx"
 #include "event/TimerEvent.hxx"
 #include "util/Cancellable.hxx"
 #include "util/LeakDetector.hxx"
@@ -356,7 +356,7 @@ class NfsClient final : PoolHolder, Cancellable, LeakDetector {
     /**
      * libnfs I/O events.
      */
-    SocketEvent event;
+    NewSocketEvent event;
 
     /**
      * Track mount timeout (#nfs_client_mount_timeout) and idle
@@ -640,7 +640,7 @@ NfsClient::DestroyContext()
     assert(context != nullptr);
     assert(!in_service);
 
-    event.Delete();
+    event.Cancel();
     nfs_destroy_context(context);
     context = nullptr;
 }
@@ -699,9 +699,8 @@ NfsClient::Error(std::exception_ptr ep)
 void
 NfsClient::AddEvent()
 {
-    event.Set(nfs_get_fd(context),
-              libnfs_to_libevent(nfs_which_events(context)));
-    event.Add();
+    event.Open(SocketDescriptor(nfs_get_fd(context)));
+    event.Schedule(libnfs_to_libevent(nfs_which_events(context)));
 }
 
 void
@@ -710,7 +709,7 @@ NfsClient::UpdateEvent()
     if (in_event)
         return;
 
-    event.Delete();
+    event.Cancel();
     AddEvent();
 }
 
@@ -827,6 +826,8 @@ inline void
 NfsClient::SocketEventCallback(unsigned events)
 {
     assert(context != nullptr);
+
+    event.Cancel(); // TODO: take advantage of EV_PERSIST
 
     const ScopePoolRef ref(pool TRACE_ARGS);
 
