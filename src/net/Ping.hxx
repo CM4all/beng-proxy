@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2018 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -33,7 +33,7 @@
 #ifndef PING_HXX
 #define PING_HXX
 
-#include "event/SocketEvent.hxx"
+#include "event/NewSocketEvent.hxx"
 #include "event/TimerEvent.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "util/Compiler.h"
@@ -56,7 +56,7 @@ class PingClient final {
 
     uint16_t ident;
 
-    SocketEvent event;
+    NewSocketEvent event;
     TimerEvent timeout_event;
 
     PingClientHandler &handler;
@@ -70,7 +70,7 @@ public:
     void Cancel() {
         if (fd.IsDefined()) {
             timeout_event.Cancel();
-            event.Delete();
+            event.Cancel();
             fd.Close();
         }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2018 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -45,7 +45,7 @@
 #include <unistd.h>
 
 PingClient::PingClient(EventLoop &event_loop, PingClientHandler &_handler)
-    :event(event_loop, -1, 0, BIND_THIS_METHOD(EventCallback)),
+    :event(event_loop, BIND_THIS_METHOD(EventCallback)),
      timeout_event(event_loop, BIND_THIS_METHOD(OnTimeout)),
      handler(_handler)
 {
@@ -54,7 +54,7 @@ PingClient::PingClient(EventLoop &event_loop, PingClientHandler &_handler)
 inline void
 PingClient::ScheduleRead()
 {
-    event.Add();
+    event.ScheduleRead();
     timeout_event.Add(EventDuration<10>::value);
 }
 
