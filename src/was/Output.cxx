@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2018 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -32,7 +32,7 @@
 
 #include "Output.hxx"
 #include "Error.hxx"
-#include "event/SocketEvent.hxx"
+#include "event/NewSocketEvent.hxx"
 #include "event/TimerEvent.hxx"
 #include "direct.hxx"
 #include "io/Splice.hxx"
@@ -57,7 +57,7 @@ static constexpr struct timeval was_output_timeout = {
 class WasOutput final : IstreamHandler {
 public:
     FileDescriptor fd;
-    SocketEvent event;
+    NewSocketEvent event;
     TimerEvent timeout_event;
 
     WasOutputHandler &handler;
@@ -72,8 +72,8 @@ public:
               UnusedIstreamPtr _input,
               WasOutputHandler &_handler)
         :fd(_fd),
-         event(event_loop, fd.Get(), SocketEvent::WRITE,
-               BIND_THIS_METHOD(WriteEventCallback)),
+         event(event_loop, BIND_THIS_METHOD(WriteEventCallback),
+               SocketDescriptor::FromFileDescriptor(fd)),
          timeout_event(event_loop, BIND_THIS_METHOD(OnTimeout)),
          handler(_handler),
          input(std::move(_input), *this, ISTREAM_TO_PIPE) {
@@ -81,12 +81,12 @@ public:
     }
 
     void ScheduleWrite() {
-        event.Add();
+        event.ScheduleWrite();
         timeout_event.Add(was_output_timeout);
     }
 
     void AbortError(std::exception_ptr ep) {
-        event.Delete();
+        event.Cancel();
         timeout_event.Cancel();
 
         if (input.IsDefined())
@@ -135,6 +135,7 @@ WasOutput::WriteEventCallback(unsigned)
     assert(fd.IsDefined());
     assert(input.IsDefined());
 
+    event.CancelWrite();
     timeout_event.Cancel();
 
     if (CheckLength())
@@ -200,7 +201,7 @@ WasOutput::OnEof() noexcept
     assert(input.IsDefined());
 
     input.Clear();
-    event.Delete();
+    event.Cancel();
     timeout_event.Cancel();
 
     if (!known_length && !handler.WasOutputLength(sent))
@@ -215,7 +216,7 @@ WasOutput::OnError(std::exception_ptr ep) noexcept
     assert(input.IsDefined());
 
     input.Clear();
-    event.Delete();
+    event.Cancel();
     timeout_event.Cancel();
 
     handler.WasOutputPremature(sent, ep);
@@ -245,7 +246,7 @@ was_output_free(WasOutput *output)
     if (output->input.IsDefined())
         output->input.ClearAndClose();
 
-    output->event.Delete();
+    output->event.Cancel();
     output->timeout_event.Cancel();
 
     return output->sent;
