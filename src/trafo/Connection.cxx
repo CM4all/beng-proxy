@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2018 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -47,26 +47,20 @@ TrafoConnection::TrafoConnection(EventLoop &event_loop,
                                  UniqueSocketDescriptor &&_fd)
     :listener(_listener), handler(_handler),
      fd(std::move(_fd)),
-     read_event(event_loop, fd.Get(), SocketEvent::READ|SocketEvent::PERSIST,
-                BIND_THIS_METHOD(ReadEventCallback)),
-     write_event(event_loop, fd.Get(), SocketEvent::WRITE|SocketEvent::PERSIST,
-                 BIND_THIS_METHOD(WriteEventCallback)),
+     event(event_loop, BIND_THIS_METHOD(OnSocketReady), fd),
      state(State::INIT),
      input(8192)
 {
-    read_event.Add();
+    event.ScheduleRead();
 }
 
 TrafoConnection::~TrafoConnection()
 {
-    read_event.Delete();
-    write_event.Delete();
-
     if (state == State::RESPONSE)
         delete[] response;
 }
 
-inline void
+inline bool
 TrafoConnection::TryRead()
 {
     assert(state == State::INIT || state == State::REQUEST);
@@ -77,21 +71,21 @@ TrafoConnection::TryRead()
     ssize_t nbytes = recv(fd.Get(), r.data, r.size, MSG_DONTWAIT);
     if (gcc_likely(nbytes > 0)) {
         input.Append(nbytes);
-        OnReceived();
-        return;
+        return OnReceived();
     }
 
     if (nbytes < 0) {
         if (errno == EAGAIN)
-            return;
+            return true;
 
         LogConcat(2, "trafo", "Failed to read from client: ", strerror(errno));
     }
 
     listener.RemoveConnection(*this);
+    return false;
 }
 
-inline void
+inline bool
 TrafoConnection::OnReceived()
 {
     assert(state != State::PROCESSING);
@@ -108,12 +102,16 @@ TrafoConnection::OnReceived()
         if (r.size < total_size)
             break;
 
-        OnPacket(header->command, header + 1, payload_length);
+        if (!OnPacket(header->command, header + 1, payload_length))
+            return false;
+
         input.Consume(total_size);
     }
+
+    return true;
 }
 
-inline void
+inline bool
 TrafoConnection::OnPacket(TranslationCommand cmd, const void *payload, size_t length)
 {
     assert(state != State::PROCESSING);
@@ -122,7 +120,7 @@ TrafoConnection::OnPacket(TranslationCommand cmd, const void *payload, size_t le
         if (state != State::INIT) {
             LogConcat(2, "trafo", "Misplaced INIT");
             listener.RemoveConnection(*this);
-            return;
+            return false;
         }
 
         state = State::REQUEST;
@@ -131,17 +129,18 @@ TrafoConnection::OnPacket(TranslationCommand cmd, const void *payload, size_t le
     if (state != State::REQUEST) {
         LogConcat(2, "trafo", "INIT expected");
         listener.RemoveConnection(*this);
-        return;
+        return false;
     }
 
     if (gcc_unlikely(cmd == TranslationCommand::END)) {
         state = State::PROCESSING;
-        read_event.Delete();
+        event.CancelRead();
         handler.OnTrafoRequest(*this, request);
-        return;
+        return false;
     }
 
     request.Parse(cmd, payload, length);
+    return true;
 }
 
 void
@@ -153,7 +152,7 @@ TrafoConnection::TryWrite()
                           MSG_DONTWAIT|MSG_NOSIGNAL);
     if (nbytes < 0) {
         if (gcc_likely(errno == EAGAIN)) {
-            write_event.Add();
+            event.ScheduleWrite();
             return;
         }
 
@@ -168,8 +167,7 @@ TrafoConnection::TryWrite()
     if (output.empty()) {
         delete[] response;
         state = State::INIT;
-        write_event.Delete();
-        read_event.Add();
+        event.Schedule(SocketEvent::READ);
     }
 }
 
@@ -183,4 +181,16 @@ TrafoConnection::SendResponse(TrafoResponse &&_response)
     response = output.data;
 
     TryWrite();
+}
+
+void
+TrafoConnection::OnSocketReady(unsigned events) noexcept
+{
+    if (events & SocketEvent::READ) {
+        if (!TryRead())
+            return;
+    }
+
+    if (events & SocketEvent::WRITE)
+        TryWrite();
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2018 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -33,7 +33,7 @@
 #ifndef TRAFO_CONNECTION_HXX
 #define TRAFO_CONNECTION_HXX
 
-#include "event/SocketEvent.hxx"
+#include "event/NewSocketEvent.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "util/DynamicFifoBuffer.hxx"
 #include "AllocatedRequest.hxx"
@@ -52,7 +52,7 @@ class TrafoConnection {
     TrafoHandler &handler;
 
     const UniqueSocketDescriptor fd;
-    SocketEvent read_event, write_event;
+    NewSocketEvent event;
 
     enum class State {
         INIT,
@@ -85,19 +85,13 @@ public:
     void SendResponse(TrafoResponse &&response);
 
 private:
-    void TryRead();
-    void OnReceived();
-    void OnPacket(TranslationCommand cmd, const void *payload, size_t length);
+    bool TryRead();
+    bool OnReceived();
+    bool OnPacket(TranslationCommand cmd, const void *payload, size_t length);
 
     void TryWrite();
 
-    void ReadEventCallback(unsigned) {
-        TryRead();
-    }
-
-    void WriteEventCallback(unsigned) {
-        TryWrite();
-    }
+    void OnSocketReady(unsigned events) noexcept;
 };
 
 #endif
