@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2018 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -48,15 +48,15 @@ MakeEventFd()
 Notify::Notify(EventLoop &event_loop, Callback _callback)
     :callback(_callback),
      fd(MakeEventFd()),
-     event(event_loop, fd, SocketEvent::READ|SocketEvent::PERSIST,
-           BIND_THIS_METHOD(EventFdCallback)),
+     event(event_loop, BIND_THIS_METHOD(EventFdCallback),
+           SocketDescriptor(fd)),
      pending(false) {
-    event.Add();
+    event.ScheduleRead();
 }
 
 Notify::~Notify()
 {
-    event.Delete();
+    event.Cancel();
     close(fd);
 }
 

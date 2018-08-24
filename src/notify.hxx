@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2018 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -33,7 +33,7 @@
 #ifndef BENG_PROXY_NOTIFY_HXX
 #define BENG_PROXY_NOTIFY_HXX
 
-#include "event/SocketEvent.hxx"
+#include "event/NewSocketEvent.hxx"
 #include "util/BindMethod.hxx"
 
 #include <atomic>
@@ -46,7 +46,7 @@ class Notify {
     Callback callback;
 
     const int fd;
-    SocketEvent event;
+    NewSocketEvent event;
 
     std::atomic_bool pending;
 
@@ -55,11 +55,11 @@ public:
     ~Notify();
 
     void Enable() {
-        event.Add();
+        event.ScheduleRead();
     }
 
     void Disable() {
-        event.Delete();
+        event.Cancel();
     }
 
     void Signal() {
