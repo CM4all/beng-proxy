@@ -41,7 +41,7 @@
 #include "spawn/ExitListener.hxx"
 #include "spawn/Interface.hxx"
 #include "pool/tpool.hxx"
-#include "event/SocketEvent.hxx"
+#include "event/NewSocketEvent.hxx"
 #include "event/TimerEvent.hxx"
 #include "net/log/Datagram.hxx"
 #include "io/Logger.hxx"
@@ -96,7 +96,7 @@ class WasChild final : public StockItem, ExitListener {
     ChildErrorLog log;
 
     WasProcess process;
-    SocketEvent event;
+    NewSocketEvent event;
     TimerEvent idle_timeout_event;
 
     /**
@@ -143,7 +143,7 @@ public:
                              params.options,
                              log.EnableClient(GetEventLoop(), log_socket),
                              this);
-        event.Set(process.control.Get(), SocketEvent::READ);
+        event.Open(process.control);
     }
 
     void SetSite(const char *_site) noexcept {
@@ -209,13 +209,13 @@ public:
             // TODO: improve recovery for this case
             return false;
 
-        event.Delete();
+        event.Cancel();
         idle_timeout_event.Cancel();
         return true;
     }
 
     bool Release() noexcept override {
-        event.Add();
+        event.ScheduleRead();
         idle_timeout_event.Add(was_idle_timeout);
         unclean = stopping;
         return true;
@@ -316,7 +316,6 @@ WasChild::RecoverStop()
 
         case ReceiveResult::AGAIN:
             /* wait for more data */
-            event.Add();
             return;
         }
 
@@ -375,8 +374,6 @@ WasChild::RecoverStop()
 
     stopping = false;
     unclean = false;
-
-    event.Add();
 }
 
 /*
@@ -473,9 +470,6 @@ WasChild::~WasChild()
 {
     if (process.pid >= 0)
         spawn_service.KillChildProcess(process.pid);
-
-    if (process.control.IsDefined())
-        event.Delete();
 }
 
 /*
