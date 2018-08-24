@@ -661,6 +661,7 @@ was_common_dep = declare_dependency(
   link_with: was_common,
   dependencies: [
     istream_dep,
+    event_net_dep,
     event_dep,
     net_dep,
     putil_dep,

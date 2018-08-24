@@ -54,46 +54,39 @@ static constexpr struct timeval was_control_timeout = {
 
 WasControl::WasControl(EventLoop &event_loop, int _fd,
                        WasControlHandler &_handler) noexcept
-    :fd(_fd), handler(_handler),
-     read_event(event_loop, fd, SocketEvent::READ,
-                BIND_THIS_METHOD(ReadEventCallback)),
-     write_event(event_loop, fd, SocketEvent::WRITE,
-                 BIND_THIS_METHOD(WriteEventCallback)),
-     input_buffer(fb_pool_get()),
+    :socket(event_loop), handler(_handler),
      output_buffer(fb_pool_get())
 {
-    ScheduleRead();
+    socket.Init(SocketDescriptor(_fd), FD_SOCKET,
+                &was_control_timeout, &was_control_timeout,
+                *this);
+
+    socket.ScheduleReadNoTimeout(true);
 }
 
 void
 WasControl::ScheduleRead() noexcept
 {
-    assert(fd >= 0);
-
-    read_event.Add(input_buffer.empty()
-                   ? nullptr : &was_control_timeout);
+    socket.ScheduleReadTimeout(true,
+                               socket.IsEmpty()
+                               ? nullptr : &was_control_timeout);
 }
 
 void
 WasControl::ScheduleWrite() noexcept
 {
-    assert(fd >= 0);
-
-    write_event.Add(was_control_timeout);
+    socket.ScheduleWrite();
 }
 
 void
 WasControl::ReleaseSocket() noexcept
 {
-    assert(fd >= 0);
+    assert(socket.IsConnected());
 
-    input_buffer.Free(fb_pool_get());
     output_buffer.Free(fb_pool_get());
 
-    read_event.Delete();
-    write_event.Delete();
-
-    fd = -1;
+    socket.Abandon();
+    socket.Destroy();
 }
 
 void
@@ -102,139 +95,101 @@ WasControl::InvokeError(const char *msg) noexcept
     InvokeError(std::make_exception_ptr(WasProtocolError(msg)));
 }
 
-bool
-WasControl::ConsumeInput() noexcept
+BufferedResult
+WasControl::OnBufferedData()
 {
-    while (true) {
-        auto r = input_buffer.Read().ToVoid();
-        const auto header = (const struct was_header *)r.data;
-        if (r.size < sizeof(*header))
-            /* not enough data yet */
-            return InvokeDrained();
+    if (done) {
+        InvokeError("received too much control data");
+        return BufferedResult::CLOSED;
+    }
 
+    while (true) {
+        auto r = socket.ReadBuffer();
+        const auto header = (const struct was_header *)r.data;
         if (r.size < sizeof(*header) + header->length) {
             /* not enough data yet */
+            if (!InvokeDrained())
+                return BufferedResult::CLOSED;
 
-            if (input_buffer.IsFull()) {
-                InvokeError(std::make_exception_ptr(WasProtocolError(StringFormat<64>("control header too long (%u)",
-                                                                                      header->length))));
-                return false;
-            }
-
-            return InvokeDrained();
+            return BufferedResult::MORE;
         }
 
         const void *payload = header + 1;
 
-        input_buffer.Consume(sizeof(*header) + header->length);
+        socket.Consumed(sizeof(*header) + header->length);
 
         bool success = handler.OnWasControlPacket(was_command(header->command),
                                                   {payload, header->length});
         if (!success)
-            return false;
+            return BufferedResult::CLOSED;
     }
 }
 
-/*
- * socket i/o
- *
- */
+bool
+WasControl::OnBufferedClosed() noexcept
+{
+    InvokeError("WAS control socket closed by peer");
+    return false;
+}
+
+bool
+WasControl::OnBufferedWrite()
+{
+    auto r = output_buffer.Read();
+    assert(!r.empty());
+
+    ssize_t nbytes = socket.Write(r.data, r.size);
+    if (nbytes <= 0) {
+        if (nbytes == WRITE_ERRNO)
+            throw MakeErrno("WAS control send error");
+        return true;
+    }
+
+    output_buffer.Consume(nbytes);
+
+    if (output_buffer.empty()) {
+        socket.UnscheduleWrite();
+
+        if (done) {
+            InvokeDone();
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool
+WasControl::OnBufferedDrained() noexcept
+{
+    return handler.OnWasControlDrained();
+}
 
 void
-WasControl::TryRead() noexcept
+WasControl::OnBufferedError(std::exception_ptr e) noexcept
 {
-    assert(IsDefined());
-
-    ssize_t nbytes = ReceiveToBuffer(fd, input_buffer);
-    assert(nbytes != -2);
-
-    if (nbytes == 0) {
-        InvokeError("server closed the control connection");
-        return;
-    }
-
-    if (nbytes < 0) {
-        if (errno == EAGAIN) {
-            ScheduleRead();
-            return;
-        }
-
-        InvokeError(std::make_exception_ptr(MakeErrno("WAS control receive error")));
-        return;
-    }
-
-    if (ConsumeInput()) {
-        assert(!input_buffer.IsDefinedAndFull());
-        ScheduleRead();
-    }
+    InvokeError(e);
 }
 
 bool
 WasControl::TryWrite() noexcept
 {
-    assert(IsDefined());
-
-    ssize_t nbytes = SendFromBuffer(fd, output_buffer);
-    assert(nbytes != -2);
-
-    if (nbytes == 0) {
-        ScheduleWrite();
+    if (output_buffer.empty())
         return true;
-    }
 
-    if (nbytes < 0) {
-        InvokeError(std::make_exception_ptr(MakeErrno("WAS control send error")));
+    try {
+        if (!OnBufferedWrite())
+            return false;
+    } catch (...) {
+        InvokeError(std::current_exception());
         return false;
     }
 
     if (!output_buffer.empty())
         ScheduleWrite();
-    else if (done) {
-        InvokeDone();
-        return false;
-    } else
-        write_event.Delete();
 
     return true;
 }
-
-/*
- * libevent callback
- *
- */
-
-inline void
-WasControl::ReadEventCallback(unsigned events) noexcept
-{
-    assert(fd >= 0);
-
-    if (done) {
-        InvokeError("received too much control data");
-        return;
-    }
-
-    if (gcc_unlikely(events & SocketEvent::TIMEOUT)) {
-        InvokeError("control receive timeout");
-        return;
-    }
-
-    TryRead();
-}
-
-inline void
-WasControl::WriteEventCallback(unsigned events) noexcept
-{
-    assert(fd >= 0);
-    assert(!output_buffer.empty());
-
-    if (gcc_unlikely(events & SocketEvent::TIMEOUT)) {
-        InvokeError("control send timeout");
-        return;
-    }
-
-    TryWrite();
-}
-
 
 /*
  * constructor
@@ -265,6 +220,7 @@ WasControl::Finish(size_t payload_length) noexcept
     assert(!done);
 
     output_buffer.Append(sizeof(struct was_header) + payload_length);
+
     return output.bulk > 0 || TryWrite();
 }
 
@@ -342,7 +298,7 @@ WasControl::Done() noexcept
 
     done = true;
 
-    if (!input_buffer.empty()) {
+    if (!socket.IsEmpty()) {
         InvokeError("received too much control data");
         return;
     }

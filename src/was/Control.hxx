@@ -33,14 +33,10 @@
 #ifndef BENG_PROXY_WAS_CONTROL_HXX
 #define BENG_PROXY_WAS_CONTROL_HXX
 
-#include "event/SocketEvent.hxx"
+#include "event/net/BufferedSocket.hxx"
 #include "SliceFifoBuffer.hxx"
 
-#include <exception>
-
 #include <was/protocol.h>
-
-#include <stddef.h>
 
 class StringMap;
 template<typename T> struct ConstBuffer;
@@ -72,31 +68,29 @@ public:
 /**
  * Web Application Socket protocol, control channel library.
  */
-class WasControl {
-    int fd;
+class WasControl final : BufferedSocketHandler {
+    BufferedSocket socket;
 
     bool done = false;
 
     WasControlHandler &handler;
 
-    SocketEvent read_event, write_event;
-
     struct {
         unsigned bulk = 0;
     } output;
 
-    SliceFifoBuffer input_buffer, output_buffer;
+    SliceFifoBuffer output_buffer;
 
 public:
     WasControl(EventLoop &event_loop, int _fd,
                WasControlHandler &_handler) noexcept;
 
     EventLoop &GetEventLoop() noexcept {
-        return read_event.GetEventLoop();
+        return socket.GetEventLoop();
     }
 
     bool IsDefined() const noexcept {
-        return fd >= 0;
+        return socket.IsValid();
     }
 
     bool Send(enum was_command cmd,
@@ -132,7 +126,7 @@ public:
     void Done() noexcept;
 
     bool empty() const {
-        return input_buffer.empty() && output_buffer.empty();
+        return socket.IsEmpty() && output_buffer.empty();
     }
 
 private:
@@ -165,17 +159,14 @@ private:
         return handler.OnWasControlDrained();
     }
 
-    /**
-     * Consume data from the input buffer.  Returns false if this object
-     * has been destructed.
-     */
-    bool ConsumeInput() noexcept;
-
-    void TryRead() noexcept;
     bool TryWrite() noexcept;
 
-    void ReadEventCallback(unsigned events) noexcept;
-    void WriteEventCallback(unsigned events) noexcept;
+    /* virtual methods from class BufferedSocketHandler */
+    BufferedResult OnBufferedData() override;
+    bool OnBufferedClosed() noexcept override;
+    bool OnBufferedWrite() override;
+    bool OnBufferedDrained() noexcept;
+    void OnBufferedError(std::exception_ptr e) noexcept override;
 };
 
 #endif
