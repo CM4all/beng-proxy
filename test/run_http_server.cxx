@@ -235,7 +235,9 @@ Instance::HttpConnectionClosed()
  *
  */
 
-int main(int argc, char **argv) {
+int
+main(int argc, char **argv)
+try {
     if (argc != 4) {
         fprintf(stderr, "Usage: %s INFD OUTFD {null|mirror|close|dummy|fixed|huge|hold}\n", argv[0]);
         return EXIT_FAILURE;
@@ -265,10 +267,6 @@ int main(int argc, char **argv) {
     if (in_fd != out_fd) {
         sockfd = duplex_new(instance.event_loop, instance.root_pool,
                             in_fd, out_fd);
-        if (sockfd < 0) {
-            perror("duplex_new() failed");
-            exit(2);
-        }
     } else
         sockfd = in_fd;
 
@@ -303,4 +301,7 @@ int main(int argc, char **argv) {
     instance.event_loop.Dispatch();
 
     return EXIT_SUCCESS;
+} catch (...) {
+    PrintException(std::current_exception());
+    return EXIT_FAILURE;
 }

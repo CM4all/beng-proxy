@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2018 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -41,6 +41,8 @@ struct pool;
  *
  * This code is used in the test cases to convert stdin/stdout to a
  * single socket.
+ *
+ * Throws on error.
  */
 int
 duplex_new(EventLoop &event_loop, struct pool *pool, int read_fd, int write_fd);

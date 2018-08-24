@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2018 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -33,6 +33,7 @@
 #include "duplex.hxx"
 #include "event/SocketEvent.hxx"
 #include "event/DeferEvent.hxx"
+#include "system/Error.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "net/Buffered.hxx"
 #include "io/Buffered.hxx"
@@ -266,7 +267,7 @@ duplex_new(EventLoop &event_loop, struct pool *pool, int read_fd, int write_fd)
     UniqueSocketDescriptor result_fd, duplex_fd;
     if (!UniqueSocketDescriptor::CreateSocketPairNonBlock(AF_LOCAL, SOCK_STREAM, 0,
                                                           result_fd, duplex_fd))
-        return -1;
+        throw MakeErrno("socketpair() failed");
 
     NewFromPool<Duplex>(*pool, event_loop, read_fd, write_fd,
                         duplex_fd.Steal());
