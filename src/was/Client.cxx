@@ -47,6 +47,7 @@
 #include "util/Cast.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/Cancellable.hxx"
+#include "util/DestructObserver.hxx"
 #include "util/Exception.hxx"
 #include "util/StringFormat.hxx"
 #include "util/ScopeExit.hxx"
@@ -57,7 +58,12 @@
 #include <string.h>
 #include <sys/socket.h>
 
-struct WasClient final : WasControlHandler, WasOutputHandler, WasInputHandler, Cancellable {
+struct WasClient final
+    : WasControlHandler, WasOutputHandler, WasInputHandler,
+      DestructAnchor,
+      Cancellable
+{
+
     struct pool &pool, &caller_pool;
 
     Stopwatch *const stopwatch;
@@ -379,9 +385,10 @@ WasClient::SubmitPendingResponse()
         return false;
     } else {
         const ScopePoolRef ref(pool TRACE_ARGS);
+        const DestructObserver destructed(*this);
         handler.InvokeResponse(response.status, std::move(response.headers),
                                was_input_enable(*response.body));
-        return control.IsDefined();
+        return !destructed && control.IsDefined();
     }
 }
 
