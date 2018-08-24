@@ -35,6 +35,7 @@
 
 #include "util/ForeignFifoBuffer.hxx"
 
+#include <assert.h>
 #include <stdint.h>
 
 class SlicePool;
@@ -49,6 +50,10 @@ public:
     explicit SliceFifoBuffer(SlicePool &pool) noexcept
         :ForeignFifoBuffer<uint8_t>(nullptr) {
         Allocate(pool);
+    }
+
+    ~SliceFifoBuffer() noexcept {
+        assert(!IsDefined());
     }
 
     void Swap(SliceFifoBuffer &other) noexcept {
