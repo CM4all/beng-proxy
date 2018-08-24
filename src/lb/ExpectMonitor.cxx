@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2018 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -38,7 +38,7 @@
 #include "net/UniqueSocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
 #include "event/net/ConnectSocket.hxx"
-#include "event/SocketEvent.hxx"
+#include "event/NewSocketEvent.hxx"
 #include "event/TimerEvent.hxx"
 #include "event/Duration.hxx"
 #include "util/Cancellable.hxx"
@@ -55,7 +55,7 @@ class ExpectMonitor final : ConnectSocketHandler, Cancellable {
 
     SocketDescriptor fd = SocketDescriptor::Undefined();
 
-    SocketEvent event;
+    NewSocketEvent event;
     TimerEvent timeout_event;
 
     /**
@@ -131,7 +131,7 @@ void
 ExpectMonitor::Cancel() noexcept
 {
     if (fd.IsDefined()) {
-        event.Delete();
+        event.Cancel();
         timeout_event.Cancel();
         delay_event.Cancel();
         fd.Close();
@@ -148,6 +148,8 @@ ExpectMonitor::Cancel() noexcept
 inline void
 ExpectMonitor::EventCallback(unsigned)
 {
+    event.Cancel();
+
     /* wait 10ms before we start reading */
     delay_event.Add(EventDuration<0, 10000>::value);
 }
@@ -215,8 +217,8 @@ ExpectMonitor::OnSocketConnectSuccess(UniqueSocketDescriptor &&new_fd) noexcept
     };
 
     fd = new_fd.Release();
-    event.Set(fd.Get(), SocketEvent::READ);
-    event.Add();
+    event.Open(fd);
+    event.ScheduleRead();
     timeout_event.Add(expect_timeout);
 }
 
