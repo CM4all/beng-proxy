@@ -42,7 +42,7 @@
 #include "child_stock.hxx"
 #include "spawn/JailParams.hxx"
 #include "spawn/Prepared.hxx"
-#include "event/SocketEvent.hxx"
+#include "event/NewSocketEvent.hxx"
 #include "event/TimerEvent.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "io/Logger.hxx"
@@ -95,7 +95,7 @@ class LhttpConnection final : LoggerDomainFactory, StockItem {
     struct lease_ref lease_ref;
 
     UniqueSocketDescriptor fd;
-    SocketEvent event;
+    NewSocketEvent event;
     TimerEvent idle_timeout_event;
 
 public:
@@ -143,13 +143,13 @@ private:
 
     /* virtual methods from class StockItem */
     bool Borrow() noexcept override {
-        event.Delete();
+        event.Cancel();
         idle_timeout_event.Cancel();
         return true;
     }
 
     bool Release() noexcept override {
-        event.Add();
+        event.ScheduleRead();
         idle_timeout_event.Add(EventDuration<300>::value);
         return true;
     }
@@ -178,7 +178,7 @@ LhttpConnection::Connect(MultiStock &child_stock, struct pool &caller_pool,
                                                   key));
     }
 
-    event.Set(fd.Get(), SocketEvent::READ);
+    event.Open(fd);
     InvokeCreateSuccess();
 }
 
@@ -271,7 +271,7 @@ LhttpStock::Create(CreateStockItem c, void *info,
 LhttpConnection::~LhttpConnection() noexcept
 {
     if (fd.IsDefined()) {
-        event.Delete();
+        event.Cancel();
         fd.Close();
     }
 
