@@ -47,6 +47,7 @@
 #include "fb_pool.hxx"
 #include "istream/UnusedPtr.hxx"
 
+#include <sys/socket.h>
 #include <sys/wait.h>
 
 struct Connection {
