@@ -16,7 +16,7 @@ Build-Depends: debhelper (>= 9), dh-python, dh-systemd,
  libc-ares-dev,
  libgtest-dev,
  libluajit-5.1-dev,
- libevent-dev (>= 2.0.19), libattr1-dev,
+ libattr1-dev,
  libsodium-dev,
  libssl-dev,
  libnfs-dev (>= 1.9.5),
@@ -40,8 +40,7 @@ Suggests: attr, cm4all-jailcgi-wrapper, cm4all-coma-cgi,
  cm4all-beng-proxy-logging (= ${source:Version}),
  cm4all-beng-proxy-delegate-helper
 Provides: httpd, httpd-cgi
-Conflicts: libevent1 (>= 1.4~), libevent2,
- cm4all-beng-proxy-toi-dbg,
+Conflicts: cm4all-beng-proxy-toi-dbg,
  cm4all-jailcgi-wrapper (<< 1.4)
 Breaks: libcm4all-beng-proxy-js (<< 0.9.14),
  libcm4all-was-simple1 (<< 1.8),

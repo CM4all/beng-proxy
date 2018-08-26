@@ -119,7 +119,6 @@ boost = dependency('boost', modules: ['system', 'filesystem'], version: '>= 1.54
 liblua = dependency('luajit')
 libcap = dependency('libcap')
 libseccomp = dependency('libseccomp')
-libevent = dependency('libevent', version: '>= 2.0.19')
 libcurl = dependency('libcurl', version: '>= 7.38')
 libsystemd = dependency('libsystemd')
 libdbus = dependency('dbus-1')
@@ -216,6 +215,7 @@ system = static_library('system',
   'libcommon/src/system/BindMount.cxx',
   'libcommon/src/system/CapabilityState.cxx',
   'libcommon/src/system/LinuxFD.cxx',
+  'libcommon/src/system/EpollFD.cxx',
   'libcommon/src/system/ProcessName.cxx',
   'src/system/Isolate.cxx',
   'src/system/urandom.cxx',
@@ -297,14 +297,15 @@ putil_dep = declare_dependency(link_with: putil,
 event = static_library('event',
   'libcommon/src/event/Loop.cxx',
   'libcommon/src/event/ShutdownListener.cxx',
+  'libcommon/src/event/TimerEvent.cxx',
   'libcommon/src/event/CleanupTimer.cxx',
   'libcommon/src/event/DeferEvent.cxx',
-  'libcommon/src/event/NewSocketEvent.cxx',
+  'libcommon/src/event/SocketEvent.cxx',
   'libcommon/src/event/SignalEvent.cxx',
   'libcommon/src/event/PipeLineReader.cxx',
   include_directories: inc,
   dependencies: [
-    libevent,
+    system_dep,
   ])
 event_dep = declare_dependency(link_with: event,
                                dependencies: [util_dep])
@@ -363,7 +364,6 @@ event_net = static_library('event_net',
   'src/net/UdpDistribute.cxx',
   include_directories: inc,
   dependencies: [
-    libevent,
   ])
 event_net_dep = declare_dependency(
   link_with: event_net,
@@ -381,7 +381,6 @@ event_net_cares = static_library('event_net_cares',
   include_directories: inc,
   dependencies: [
     libcares,
-    libevent,
   ])
 event_net_cares_dep = declare_dependency(
   link_with: event_net_cares,
