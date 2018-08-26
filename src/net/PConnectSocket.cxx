@@ -42,6 +42,7 @@
 #include <assert.h>
 #include <stddef.h>
 #include <sys/socket.h>
+#include <netinet/in.h>
 #include <errno.h>
 #include <string.h>
 #include <unistd.h>
