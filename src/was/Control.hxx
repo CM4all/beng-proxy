@@ -165,7 +165,7 @@ private:
     BufferedResult OnBufferedData() override;
     bool OnBufferedClosed() noexcept override;
     bool OnBufferedWrite() override;
-    bool OnBufferedDrained() noexcept;
+    bool OnBufferedDrained() noexcept override;
     void OnBufferedError(std::exception_ptr e) noexcept override;
 };
 
