@@ -586,6 +586,9 @@ test_big_hold(Instance &instance)
     hold.Clear();
 
     pool_unref(pool);
+
+    cleanup();
+    pool_commit();
 }
 #endif
 
