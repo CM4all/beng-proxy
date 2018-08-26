@@ -37,6 +37,7 @@
 #include "translation/Protocol.hxx"
 #include "io/Logger.hxx"
 
+#include <sys/socket.h>
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
