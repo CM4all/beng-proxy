@@ -43,6 +43,8 @@
 #include "util/DeleteDisposer.hxx"
 #include "util/Compiler.h"
 
+#include <boost/intrusive/list.hpp>
+
 #include <string>
 
 #include <stddef.h>
