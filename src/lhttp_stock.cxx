@@ -50,6 +50,7 @@
 #include "util/Exception.hxx"
 
 #include <assert.h>
+#include <sys/socket.h>
 #include <unistd.h>
 #include <string.h>
 
