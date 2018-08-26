@@ -35,6 +35,7 @@
 
 #include "system/SetupProcess.hxx"
 #include "event/ShutdownListener.hxx"
+#include "event/Loop.hxx"
 #include "Handler.hxx"
 #include "Server.hxx"
 #include "Connection.hxx"
