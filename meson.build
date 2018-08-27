@@ -118,7 +118,6 @@ threads = dependency('threads')
 libpcre = dependency('libpcre')
 libsodium = dependency('libsodium')
 libjsoncpp = dependency('jsoncpp')
-libavahi_client = dependency('avahi-client')
 libnfs = dependency('libnfs')
 zlib = dependency('zlib')
 
@@ -354,18 +353,7 @@ ssl_dep = declare_dependency(
   ],
 )
 
-avahi = static_library('avahi',
-  'src/avahi/Check.cxx',
-  'src/avahi/Client.cxx',
-  'src/avahi/Poll.cxx',
-  'src/avahi/Explorer.cxx',
-  include_directories: inc,
-  dependencies: [
-    libavahi_client,
-  ])
-avahi_dep = declare_dependency(link_with: avahi,
-                               dependencies: [event_dep])
-
+subdir('libcommon/src/avahi')
 subdir('libcommon/src/pg')
 subdir('libcommon/src/curl')
 subdir('libcommon/src/odbus')
