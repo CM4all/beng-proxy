@@ -33,6 +33,7 @@
 #include "direct.hxx"
 #include "CommandLine.hxx"
 #include "Instance.hxx"
+#include "Listener.hxx"
 #include "Connection.hxx"
 #include "Worker.hxx"
 #include "Global.hxx"

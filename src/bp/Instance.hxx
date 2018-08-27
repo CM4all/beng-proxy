@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2018 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -36,9 +36,6 @@
 #include "PInstance.hxx"
 #include "CommandLine.hxx"
 #include "Config.hxx"
-#include "Listener.hxx"
-#include "Connection.hxx"
-#include "Worker.hxx"
 #include "event/SignalEvent.hxx"
 #include "event/ShutdownListener.hxx"
 #include "event/TimerEvent.hxx"
@@ -73,6 +70,9 @@ struct NfsStock;
 class NfsCache;
 class HttpCache;
 class FilterCache;
+struct BpWorker;
+class BPListener;
+struct BpConnection;
 
 struct BpInstance final : PInstance, ControlHandler {
     BpCmdLine cmdline;
@@ -83,6 +83,7 @@ struct BpInstance final : PInstance, ControlHandler {
     std::forward_list<BPListener> listeners;
 
     boost::intrusive::list<BpConnection,
+                           boost::intrusive::base_hook<boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>>,
                            boost::intrusive::constant_time_size<true>> connections;
 
     std::unique_ptr<AccessLogGlue> access_log, child_error_log;
@@ -107,6 +108,7 @@ struct BpInstance final : PInstance, ControlHandler {
     SpawnServerClient *spawn = nullptr;
 
     boost::intrusive::list<BpWorker,
+                           boost::intrusive::base_hook<boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>>,
                            boost::intrusive::constant_time_size<true>> workers;
 
     /**

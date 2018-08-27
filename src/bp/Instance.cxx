@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2018 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -31,6 +31,9 @@
  */
 
 #include "Instance.hxx"
+#include "Worker.hxx"
+#include "Listener.hxx"
+#include "Connection.hxx"
 #include "fb_pool.hxx"
 #include "control/Server.hxx"
 #include "tcp_balancer.hxx"
