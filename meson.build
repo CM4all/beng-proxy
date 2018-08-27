@@ -115,18 +115,8 @@ add_global_arguments(debug_flags, language: 'c')
 add_global_arguments(debug_flags, language: 'cpp')
 
 threads = dependency('threads')
-boost = dependency('boost', modules: ['system', 'filesystem'], version: '>= 1.54')
-liblua = dependency('luajit')
-libcap = dependency('libcap')
-libseccomp = dependency('libseccomp')
-libcurl = dependency('libcurl', version: '>= 7.38')
-libsystemd = dependency('libsystemd')
-libdbus = dependency('dbus-1')
-libcares = dependency('libcares')
 libpcre = dependency('libpcre')
 libsodium = dependency('libsodium')
-libssl = dependency('openssl', version: '>= 1.0')
-libpq = dependency('libpq', version: '>= 8.4')
 libjsoncpp = dependency('jsoncpp')
 libavahi_client = dependency('avahi-client')
 libnfs = dependency('libnfs')
@@ -156,18 +146,11 @@ libwas = dependency('libcm4all-was-protocol', version: '>= 1.0')
 
 inc = include_directories('src', 'include', 'libcommon/src')
 
-util = static_library('util',
-  'libcommon/src/util/AllocatedString.cxx',
-  'libcommon/src/util/Exception.cxx',
-  'libcommon/src/util/HexFormat.c',
-  'libcommon/src/util/LeakDetector.cxx',
-  'libcommon/src/util/PrintException.cxx',
-  'libcommon/src/util/StringBuilder.cxx',
-  'libcommon/src/util/StringParser.cxx',
-  'libcommon/src/util/StringStrip.cxx',
-  'libcommon/src/util/StringView.cxx',
+subdir('libcommon/src/util')
+
+util2 = static_library(
+  'util2',
   'src/util/StringSet.cxx',
-  'libcommon/src/util/djbhash.c',
   'src/uri/uri_base.cxx',
   'src/uri/Compare.cxx',
   'src/uri/Dissect.cxx',
@@ -178,77 +161,49 @@ util = static_library('util',
   'src/escape_html.cxx',
   'src/escape_css.cxx',
   include_directories: inc,
+)
+util_dep = declare_dependency(
+  link_with: util2,
   dependencies: [
-  ])
-util_dep = declare_dependency(link_with: util)
+    util_dep,
+  ],
+)
 
-time = static_library('time',
-  'libcommon/src/time/gmtime.c',
-  'libcommon/src/time/Convert.cxx',
-  'libcommon/src/time/ISO8601.cxx',
-  include_directories: inc,
-  dependencies: [
-  ])
-time_dep = declare_dependency(link_with: time)
+subdir('libcommon/src/time')
+subdir('libcommon/src/io')
 
-io = static_library('io',
+io2 = static_library(
+  'io2',
   'src/io/Buffered.cxx',
-  'libcommon/src/io/FileDescriptor.cxx',
-  'libcommon/src/io/FileWriter.cxx',
-  'libcommon/src/io/WriteFile.cxx',
-  'libcommon/src/io/LineParser.cxx',
-  'libcommon/src/io/FileLineParser.cxx',
-  'libcommon/src/io/ConfigParser.cxx',
-  'libcommon/src/io/Logger.cxx',
   'src/io/StringFile.cxx',
   include_directories: inc,
+)
+io_dep = declare_dependency(
+  link_with: io2,
   dependencies: [
-    boost,
-  ])
-io_dep = declare_dependency(link_with: io,
-                            dependencies: [util_dep])
+    io_dep,
+  ],
+)
 
-system = static_library('system',
+subdir('libcommon/src/system')
+
+system2 = static_library(
+  'system2',
   'src/system/SetupProcess.cxx',
   'src/system/fd_util.c',
-  'libcommon/src/system/LargeAllocation.cxx',
-  'libcommon/src/system/BindMount.cxx',
-  'libcommon/src/system/CapabilityState.cxx',
-  'libcommon/src/system/LinuxFD.cxx',
-  'libcommon/src/system/EpollFD.cxx',
-  'libcommon/src/system/ProcessName.cxx',
   'src/system/Isolate.cxx',
   'src/system/urandom.cxx',
   include_directories: inc,
-  dependencies: [
-    libcap,
-  ])
-system_dep = declare_dependency(link_with: system,
-                                dependencies: [io_dep])
-
-http = static_library('http',
-  'libcommon/src/http/Method.c',
-  'libcommon/src/http/Status.c',
-  'libcommon/src/http/HeaderName.cxx',
-  'libcommon/src/http/List.cxx',
-  'libcommon/src/http/Date.cxx',
-  'libcommon/src/http/Range.cxx',
-  include_directories: inc,
 )
-http_dep = declare_dependency(link_with: http,
-                              dependencies: [util_dep, time_dep])
-
-lua = static_library('lua',
-  'libcommon/src/lua/Error.cxx',
-  'libcommon/src/lua/Panic.cxx',
-  'libcommon/src/lua/RunFile.cxx',
-  'libcommon/src/lua/State.cxx',
-  include_directories: inc,
+system_dep = declare_dependency(
+  link_with: system2,
   dependencies: [
-    liblua,
-  ]
+    system_dep,
+  ],
 )
-lua_dep = declare_dependency(link_with: lua)
+
+subdir('libcommon/src/http')
+subdir('libcommon/src/lua')
 
 memory = static_library('memory',
   'src/fb_pool.cxx',
@@ -294,21 +249,7 @@ putil_dep = declare_dependency(link_with: putil,
   ],
 )
 
-event = static_library('event',
-  'libcommon/src/event/Loop.cxx',
-  'libcommon/src/event/ShutdownListener.cxx',
-  'libcommon/src/event/TimerEvent.cxx',
-  'libcommon/src/event/CleanupTimer.cxx',
-  'libcommon/src/event/DeferEvent.cxx',
-  'libcommon/src/event/SocketEvent.cxx',
-  'libcommon/src/event/SignalEvent.cxx',
-  'libcommon/src/event/PipeLineReader.cxx',
-  include_directories: inc,
-  dependencies: [
-    system_dep,
-  ])
-event_dep = declare_dependency(link_with: event,
-                               dependencies: [util_dep])
+subdir('libcommon/src/event')
 
 # Utility library using libevent
 eutil = static_library('eutil',
@@ -319,75 +260,36 @@ eutil = static_library('eutil',
 eutil_dep = declare_dependency(link_with: eutil,
                               dependencies: [event_dep])
 
-net = static_library('net',
+subdir('libcommon/src/net')
+
+net2 = static_library(
+  'net2',
   'src/net/FailureManager.cxx',
   'src/net/FailureInfo.cxx',
   'src/net/FailureRef.cxx',
-  'libcommon/src/net/SocketAddress.cxx',
-  'libcommon/src/net/StaticSocketAddress.cxx',
-  'libcommon/src/net/AllocatedSocketAddress.cxx',
-  'libcommon/src/net/MaskedSocketAddress.cxx',
-  'libcommon/src/net/IPv4Address.cxx',
-  'libcommon/src/net/IPv6Address.cxx',
-  'libcommon/src/net/ToString.cxx',
-  'libcommon/src/net/HostParser.cxx',
-  'libcommon/src/net/AddressInfo.cxx',
-  'libcommon/src/net/Resolver.cxx',
-  'libcommon/src/net/Parser.cxx',
-  'libcommon/src/net/RBindSocket.cxx',
-  'libcommon/src/net/RConnectSocket.cxx',
-  'libcommon/src/net/ConnectSocket.cxx',
-  'libcommon/src/net/Interface.cxx',
-  'libcommon/src/net/SendMessage.cxx',
-  'libcommon/src/net/SocketDescriptor.cxx',
-  'libcommon/src/net/UniqueSocketDescriptor.cxx',
-  'libcommon/src/net/SocketConfig.cxx',
-  'libcommon/src/net/Buffered.cxx',
-  'libcommon/src/net/log/Send.cxx',
-  'libcommon/src/net/log/String.cxx',
-  'libcommon/src/net/log/Parser.cxx',
-  'libcommon/src/net/log/OneLine.cxx',
   include_directories: inc,
 )
-net_dep = declare_dependency(link_with: net,
-                             dependencies: [system_dep, io_dep])
-
-event_net = static_library('event_net',
-  'libcommon/src/event/net/ConnectSocket.cxx',
-  'libcommon/src/event/net/ServerSocket.cxx',
-  'libcommon/src/event/net/UdpListener.cxx',
-  'libcommon/src/event/net/SocketWrapper.cxx',
-  'libcommon/src/event/net/BufferedSocket.cxx',
-  'libcommon/src/event/net/log/PipeAdapter.cxx',
-  'src/net/PConnectSocket.cxx',
-  'src/net/Ping.cxx',
-  'src/net/UdpDistribute.cxx',
-  include_directories: inc,
+net_dep = declare_dependency(
+  link_with: net2,
   dependencies: [
-  ])
-event_net_dep = declare_dependency(
-  link_with: event_net,
-  dependencies: [
-    memory_dep,
-    event_dep,
     net_dep,
   ],
 )
 
-event_net_cares = static_library('event_net_cares',
-  'libcommon/src/event/net/cares/Error.cxx',
-  'libcommon/src/event/net/cares/Init.cxx',
-  'libcommon/src/event/net/cares/Channel.cxx',
+subdir('libcommon/src/event/net')
+
+event_net2 = static_library(
+  'event_net2',
+  'src/net/PConnectSocket.cxx',
+  'src/net/Ping.cxx',
+  'src/net/UdpDistribute.cxx',
   include_directories: inc,
+)
+event_net_dep = declare_dependency(
+  link_with: event_net2,
   dependencies: [
-    libcares,
-  ])
-event_net_cares_dep = declare_dependency(
-  link_with: event_net_cares,
-  dependencies: [
-    event_dep,
-    net_dep,
-    util_dep,
+    memory_dep,
+    event_net_dep,
   ],
 )
 
@@ -426,23 +328,14 @@ shm = static_library('shm',
 shm_dep = declare_dependency(link_with: shm,
                              dependencies: [io_dep])
 
-ssl = static_library('ssl',
+subdir('libcommon/src/ssl')
+
+ssl2 = static_library(
+  'ssl2',
   'src/certdb/CertDatabase.cxx',
   'src/certdb/FromResult.cxx',
   'src/certdb/WrapKey.cxx',
   'src/certdb/Wildcard.cxx',
-  'libcommon/src/ssl/Buffer.cxx',
-  'libcommon/src/ssl/Dummy.cxx',
-  'libcommon/src/ssl/Edit.cxx',
-  'libcommon/src/ssl/Request.cxx',
-  'libcommon/src/ssl/Certificate.cxx',
-  'libcommon/src/ssl/Key.cxx',
-  'libcommon/src/ssl/Hash.cxx',
-  'libcommon/src/ssl/LoadFile.cxx',
-  'libcommon/src/ssl/Time.cxx',
-  'libcommon/src/ssl/AltName.cxx',
-  'libcommon/src/ssl/Name.cxx',
-  'libcommon/src/ssl/Error.cxx',
   'src/ssl/Basic.cxx',
   'src/ssl/Cache.cxx',
   'src/ssl/NameCache.cxx',
@@ -453,11 +346,13 @@ ssl = static_library('ssl',
   'src/ssl/Filter.cxx',
   'src/ssl/Init.cxx',
   include_directories: inc,
+)
+ssl_dep = declare_dependency(
+  link_with: ssl2,
   dependencies: [
-    libssl,
-  ])
-ssl_dep = declare_dependency(link_with: ssl,
-                            dependencies: [io_dep, event_dep])
+    ssl_dep,
+  ],
+)
 
 avahi = static_library('avahi',
   'src/avahi/Check.cxx',
@@ -471,50 +366,9 @@ avahi = static_library('avahi',
 avahi_dep = declare_dependency(link_with: avahi,
                                dependencies: [event_dep])
 
-pg = static_library('pg',
-  'libcommon/src/pg/Serial.cxx',
-  'libcommon/src/pg/Array.cxx',
-  'libcommon/src/pg/Interval.cxx',
-  'libcommon/src/pg/Timestamp.cxx',
-  'libcommon/src/pg/Connection.cxx',
-  'libcommon/src/pg/AsyncConnection.cxx',
-  'libcommon/src/pg/Result.cxx',
-  'libcommon/src/pg/Error.cxx',
-  'libcommon/src/pg/Reflection.cxx',
-  include_directories: inc,
-  dependencies: [
-    libpq,
-  ])
-pg_dep = declare_dependency(link_with: pg)
-
-curl = static_library('curl',
-  'libcommon/src/curl/Version.cxx',
-  'libcommon/src/curl/Request.cxx',
-  'libcommon/src/curl/Global.cxx',
-  'libcommon/src/curl/Init.cxx',
-  include_directories: inc,
-  dependencies: [
-    libcurl,
-  ])
-curl_dep = declare_dependency(
-  link_with: curl,
-  dependencies: [
-    event_dep,
-  ],
-)
-
-odbus = static_library('odbus',
-  'libcommon/src/odbus/Connection.cxx',
-  'libcommon/src/odbus/Message.cxx',
-  'libcommon/src/odbus/Error.cxx',
-  'libcommon/src/odbus/ScopeMatch.cxx',
-  include_directories: inc,
-  dependencies: [
-    libdbus,
-  ])
-odbus_dep = declare_dependency(
-  link_with: odbus,
-)
+subdir('libcommon/src/pg')
+subdir('libcommon/src/curl')
+subdir('libcommon/src/odbus')
 
 istream = static_library('istream',
   'src/istream/Invoke.cxx',
@@ -579,47 +433,18 @@ adata = static_library('adata',
   ])
 adata_dep = declare_dependency(link_with: adata)
 
-spawn = static_library('spawn',
-  'libcommon/src/spawn/SeccompFilter.cxx',
-  'libcommon/src/spawn/SyscallFilter.cxx',
-  'libcommon/src/spawn/Systemd.cxx',
-  'libcommon/src/spawn/Prepared.cxx',
-  'libcommon/src/spawn/Registry.cxx',
-  'libcommon/src/spawn/Direct.cxx',
-  'libcommon/src/spawn/Init.cxx',
-  'libcommon/src/spawn/Interface.cxx',
-  'libcommon/src/spawn/Local.cxx',
+subdir('libcommon/src/spawn')
+
+spawn2 = static_library(
+  'spawn2',
   'src/spawn/IstreamSpawn.cxx',
-  'libcommon/src/spawn/UserNamespace.cxx',
-  'libcommon/src/spawn/PidNamespace.cxx',
-  'libcommon/src/spawn/NetworkNamespace.cxx',
-  'libcommon/src/spawn/NamespaceOptions.cxx',
-  'libcommon/src/spawn/MountNamespaceOptions.cxx',
-  'libcommon/src/spawn/MountList.cxx',
-  'libcommon/src/spawn/JailConfig.cxx',
-  'libcommon/src/spawn/JailParams.cxx',
-  'libcommon/src/spawn/ChildOptions.cxx',
-  'libcommon/src/spawn/CgroupOptions.cxx',
-  'libcommon/src/spawn/UidGid.cxx',
-  'libcommon/src/spawn/ResourceLimits.cxx',
-  'libcommon/src/spawn/RefenceOptions.cxx',
-  'libcommon/src/spawn/ConfigParser.cxx',
-  'libcommon/src/spawn/daemon/Client.cxx',
   include_directories: inc,
-  dependencies: [
-    libdbus,
-    libseccomp,
-    libsystemd,
-  ])
+)
 spawn_dep = declare_dependency(
-  link_with: spawn,
+  link_with: spawn2,
   dependencies: [
-    system_dep,
-    adata_dep,
-    io_dep,
     expand_dep,
-    net_dep,
-    odbus_dep,
+    spawn_dep,
   ],
 )
 
@@ -781,23 +606,32 @@ ajp_client_dep = declare_dependency(
   ],
 )
 
-translation = static_library('translation',
+subdir('libcommon/src/translation')
+
+translation2 = static_library(
+  'translation2',
   'src/translation/Cache.cxx',
   'src/translation/Stock.cxx',
-  'libcommon/src/translation/PReader.cxx',
-  'libcommon/src/translation/Parser.cxx',
   'src/translation/Marshal.cxx',
   'src/translation/Client.cxx',
   'src/translation/Transformation.cxx',
-  'libcommon/src/translation/Response.cxx',
   'src/translation/Vary.cxx',
   'src/translation/InvalidateParser.cxx',
   include_directories: inc,
 )
-translation_dep = declare_dependency(link_with: translation,
-                                     dependencies: [event_dep, putil_dep, eutil_dep,
-                                                    raddress_dep,
-                                                    spawn_dep, socket_dep, net_dep, stopwatch_dep])
+
+translation_dep = declare_dependency(
+  link_with: translation2,
+  dependencies: [
+    translation_dep,
+    event_dep,
+    putil_dep,
+    eutil_dep,
+    raddress_dep,
+    socket_dep,
+    stopwatch_dep
+  ],
+)
 
 http_common = static_library('http_common',
   'src/http_body.cxx',
@@ -1088,10 +922,7 @@ executable('cm4all-beng-proxy',
   include_directories: inc,
   dependencies: [
     threads,
-    boost,
     libnfs,
-    libsystemd,
-    libdbus,
     avahi_dep,
     pool_dep,
     net_dep,
@@ -1187,10 +1018,6 @@ executable('cm4all-beng-lb',
   include_directories: inc,
   dependencies: [
     threads,
-    boost,
-    libsystemd,
-    libdbus,
-    libpq,
     liblua,
     libpcre,
     libsodium,
