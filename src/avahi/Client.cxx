@@ -32,7 +32,6 @@
 
 #include "Client.hxx"
 #include "ConnectionListener.hxx"
-#include "event/Duration.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/Interface.hxx"
 
@@ -79,7 +78,7 @@ MyAvahiClient::Activate()
 {
     assert(client == nullptr);
 
-    reconnect_timer.Add(EventDuration<0, 1000>::value);
+    reconnect_timer.Schedule(std::chrono::milliseconds(1));
 }
 
 void
@@ -247,10 +246,10 @@ MyAvahiClient::ClientCallback(AvahiClient *c, AvahiClientState state)
         if (error == AVAHI_ERR_DISCONNECTED) {
             Close();
 
-            reconnect_timer.Add(EventDuration<10, 0>::value);
+            reconnect_timer.Schedule(std::chrono::seconds(10));
         } else {
             logger(3, "Avahi client failed: ", avahi_strerror(error));
-            reconnect_timer.Add(EventDuration<60, 0>::value);
+            reconnect_timer.Schedule(std::chrono::minutes(1));
         }
 
         for (auto *l : listeners)
@@ -288,7 +287,7 @@ MyAvahiClient::OnReconnectTimer()
     if (client == nullptr) {
         logger(3, "Failed to create avahi client: ",
                avahi_strerror(error));
-        reconnect_timer.Add(EventDuration<60, 0>::value);
+        reconnect_timer.Schedule(std::chrono::minutes(1));
         return;
     }
 }
