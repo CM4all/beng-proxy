@@ -197,10 +197,7 @@ struct MemcachedClient final
     void OnError(std::exception_ptr ep) noexcept override;
 };
 
-static const struct timeval memcached_client_timeout = {
-    .tv_sec = 5,
-    .tv_usec = 0,
-};
+static constexpr auto memcached_client_timeout = std::chrono::seconds(5);
 
 void
 MemcachedClient::AbortResponseHeaders(std::exception_ptr ep)
@@ -702,7 +699,7 @@ MemcachedClient::MemcachedClient(struct pool &_pool, EventLoop &event_loop,
      request(std::move(_request), *this, _handler, _handler_ctx)
 {
     socket.Init(fd, fd_type,
-                nullptr, &memcached_client_timeout,
+                Event::Duration(-1), memcached_client_timeout,
                 *this);
 
     p_lease_ref_set(lease_ref, lease, GetPool(), "memcached_client_lease");

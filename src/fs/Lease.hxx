@@ -53,8 +53,8 @@ class FilteredSocketLease final : BufferedSocketHandler {
 
 public:
     FilteredSocketLease(FilteredSocket &_socket, Lease &lease,
-                        const struct timeval *read_timeout,
-                        const struct timeval *write_timeout,
+                        Event::Duration read_timeout,
+                        Event::Duration write_timeout,
                         BufferedSocketHandler &_handler) noexcept;
 
     ~FilteredSocketLease() noexcept;
@@ -122,7 +122,7 @@ public:
     bool Read(bool expect_more) noexcept;
 
     void ScheduleReadTimeout(bool expect_more,
-                             const struct timeval *timeout) noexcept {
+                             Event::Duration timeout) noexcept {
         socket->ScheduleReadTimeout(expect_more, timeout);
     }
 

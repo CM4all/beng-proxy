@@ -100,8 +100,8 @@ FilteredSocket::OnBufferedError(std::exception_ptr ep) noexcept
 
 void
 FilteredSocket::Init(SocketDescriptor fd, FdType fd_type,
-                     const struct timeval *read_timeout,
-                     const struct timeval *write_timeout,
+                     Event::Duration read_timeout,
+                     Event::Duration write_timeout,
                      SocketFilterPtr _filter,
                      BufferedSocketHandler &__handler) noexcept
 {
@@ -144,8 +144,8 @@ FilteredSocket::Init(SocketDescriptor fd, FdType fd_type) noexcept
 }
 
 void
-FilteredSocket::Reinit(const struct timeval *read_timeout,
-                       const struct timeval *write_timeout,
+FilteredSocket::Reinit(Event::Duration read_timeout,
+                       Event::Duration write_timeout,
                        BufferedSocketHandler &_handler) noexcept
 {
     if (filter != nullptr) {

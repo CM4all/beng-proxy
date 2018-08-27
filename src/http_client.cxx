@@ -95,10 +95,7 @@ IsHttpClientServerFailure(std::exception_ptr ep)
  */
 static constexpr off_t EXPECT_100_THRESHOLD = 1024;
 
-static constexpr struct timeval http_client_timeout = {
-    .tv_sec = 30,
-    .tv_usec = 0,
-};
+static constexpr auto http_client_timeout = std::chrono::seconds(30);
 
 struct HttpClient final : BufferedSocketHandler, IstreamHandler, Cancellable, DestructAnchor {
     enum class BucketResult {
@@ -1258,7 +1255,7 @@ HttpClient::HttpClient(PoolPtr &&_caller_pool, struct pool &_pool,
      peer_name(_peer_name),
      stopwatch(stopwatch_new(&_pool, peer_name, uri)),
      socket(_socket, lease,
-            nullptr, &http_client_timeout,
+            Event::Duration(-1), http_client_timeout,
             *this),
      request(handler),
      response(caller_pool),

@@ -35,8 +35,8 @@
 #include "net/SocketProtocolError.hxx"
 
 FilteredSocketLease::FilteredSocketLease(FilteredSocket &_socket, Lease &lease,
-                                         const struct timeval *read_timeout,
-                                         const struct timeval *write_timeout,
+                                         Event::Duration read_timeout,
+                                         Event::Duration write_timeout,
                                          BufferedSocketHandler &_handler) noexcept
     :socket(&_socket), handler(_handler)
 {

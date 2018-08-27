@@ -270,10 +270,7 @@ struct FcgiClient final
     void OnError(std::exception_ptr ep) noexcept override;
 };
 
-static constexpr struct timeval fcgi_client_timeout = {
-    .tv_sec = 120,
-    .tv_usec = 0,
-};
+static constexpr auto fcgi_client_timeout = std::chrono::minutes(2);
 
 inline FcgiClient::~FcgiClient()
 {
@@ -1050,7 +1047,7 @@ FcgiClient::FcgiClient(struct pool &_pool, EventLoop &event_loop,
      response(GetPool(), http_method_is_empty(method))
 {
     socket.Init(fd, fd_type,
-                &fcgi_client_timeout, &fcgi_client_timeout,
+                fcgi_client_timeout, fcgi_client_timeout,
                 *this);
 
     p_lease_ref_set(lease_ref, lease, GetPool(), "fcgi_client_lease");

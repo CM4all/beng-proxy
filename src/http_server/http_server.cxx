@@ -46,20 +46,9 @@
 #include <assert.h>
 #include <unistd.h>
 
-const struct timeval http_server_idle_timeout = {
-    .tv_sec = 30,
-    .tv_usec = 0,
-};
-
-const struct timeval http_server_read_timeout = {
-    .tv_sec = 30,
-    .tv_usec = 0,
-};
-
-const struct timeval http_server_write_timeout = {
-    .tv_sec = 30,
-    .tv_usec = 0,
-};
+const Event::Duration  http_server_idle_timeout = std::chrono::seconds(30);
+const Event::Duration http_server_read_timeout = std::chrono::seconds(30);
+const Event::Duration http_server_write_timeout = std::chrono::seconds(30);
 
 void
 HttpServerConnection::Log()
@@ -332,11 +321,11 @@ HttpServerConnection::HttpServerConnection(struct pool &_pool,
     pool_ref(pool);
 
     socket.Init(fd, fd_type,
-                nullptr, &http_server_write_timeout,
+                Event::Duration(-1), http_server_write_timeout,
                 std::move(filter),
                 *this);
 
-    idle_timeout.Add(http_server_idle_timeout);
+    idle_timeout.Schedule(http_server_idle_timeout);
 
     /* read the first request, but not in this stack frame, because a
        failure may destroy the HttpServerConnection before it gets

@@ -235,10 +235,7 @@ struct AjpClient final
     void OnError(std::exception_ptr ep) noexcept override;
 };
 
-static const struct timeval ajp_client_timeout = {
-    .tv_sec = 30,
-    .tv_usec = 0,
-};
+static constexpr auto ajp_client_timeout = std::chrono::seconds(30);
 
 static const struct ajp_header empty_body_chunk = {
     .a = 0x12, .b = 0x34,
@@ -813,7 +810,7 @@ AjpClient::AjpClient(PoolPtr &&_pool, EventLoop &event_loop,
      request(_handler), response(GetPool())
 {
     socket.Init(fd, fd_type,
-                &ajp_client_timeout, &ajp_client_timeout,
+                ajp_client_timeout, ajp_client_timeout,
                 *this);
 
     p_lease_ref_set(lease_ref, lease,

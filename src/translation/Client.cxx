@@ -116,15 +116,8 @@ struct TranslateClient final : BufferedSocketHandler, Cancellable {
     }
 };
 
-static constexpr struct timeval translate_read_timeout = {
-    .tv_sec = 60,
-    .tv_usec = 0,
-};
-
-static constexpr struct timeval translate_write_timeout = {
-    .tv_sec = 10,
-    .tv_usec = 0,
-};
+static constexpr auto translate_read_timeout = std::chrono::minutes(1);
+static constexpr auto translate_write_timeout = std::chrono::seconds(10);
 
 void
 TranslateClient::ReleaseSocket(bool reuse)
@@ -252,8 +245,8 @@ TranslateClient::TranslateClient(struct pool &p, EventLoop &event_loop,
      parser(p, request2)
 {
     socket.Init(fd, FdType::FD_SOCKET,
-                &translate_read_timeout,
-                &translate_write_timeout,
+                translate_read_timeout,
+                translate_write_timeout,
                 *this);
     p_lease_ref_set(lease_ref, lease, p, "translate_lease");
 

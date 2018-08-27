@@ -83,7 +83,7 @@ NopSocketFilter::Write(const void *data, size_t length) noexcept
 
 void
 NopSocketFilter::ScheduleRead(bool expect_more,
-                              const struct timeval *timeout) noexcept
+                              Event::Duration timeout) noexcept
 {
     socket->InternalScheduleRead(expect_more, timeout);
 }

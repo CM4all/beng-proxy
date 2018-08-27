@@ -140,7 +140,7 @@ ThreadSocketFilter::SubmitDecryptedInput() noexcept
             return true;
 
         want_read = false;
-        read_timeout = nullptr;
+        read_timeout = Event::Duration(-1);
 
         switch (socket->InvokeData()) {
         case BufferedResult::OK:
@@ -402,7 +402,7 @@ ThreadSocketFilter::Done() noexcept
         }
 
         if (!encrypted_input.IsDefinedAndFull())
-            socket->InternalScheduleRead(expect_more, nullptr);
+            socket->InternalScheduleRead(expect_more, Event::Duration(-1));
 
         if (!encrypted_output.empty())
             socket->InternalScheduleWrite();
@@ -570,18 +570,13 @@ ThreadSocketFilter::Write(const void *data, size_t length) noexcept
 
 void
 ThreadSocketFilter::ScheduleRead(bool _expect_more,
-                                 const struct timeval *timeout) noexcept
+                                 Event::Duration timeout) noexcept
 {
     if (_expect_more)
         expect_more = true;
 
     want_read = true;
     read_scheduled = false;
-
-    if (timeout != nullptr) {
-        read_timeout_buffer = *timeout;
-        timeout = &read_timeout_buffer;
-    }
 
     read_timeout = timeout;
 

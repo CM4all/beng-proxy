@@ -47,17 +47,14 @@
 #include <stdio.h>
 #include <unistd.h>
 
-static constexpr struct timeval was_control_timeout = {
-    .tv_sec = 120,
-    .tv_usec = 0,
-};
+static constexpr auto was_control_timeout = std::chrono::minutes(2);
 
 WasControl::WasControl(EventLoop &event_loop, int _fd,
                        WasControlHandler &_handler) noexcept
     :socket(event_loop), handler(_handler)
 {
     socket.Init(SocketDescriptor(_fd), FD_SOCKET,
-                &was_control_timeout, &was_control_timeout,
+                was_control_timeout, was_control_timeout,
                 *this);
 
     socket.ScheduleReadNoTimeout(true);
@@ -68,7 +65,8 @@ WasControl::ScheduleRead() noexcept
 {
     socket.ScheduleReadTimeout(true,
                                socket.IsEmpty()
-                               ? nullptr : &was_control_timeout);
+                               ? Event::Duration(-1)
+                               : was_control_timeout);
 }
 
 void

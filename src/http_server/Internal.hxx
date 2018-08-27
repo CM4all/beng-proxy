@@ -347,17 +347,17 @@ struct HttpServerConnection final
  * The timeout of an idle connection (READ_START) up until request
  * headers are received.
  */
-extern const struct timeval http_server_idle_timeout;
+extern const Event::Duration http_server_idle_timeout;
 
 /**
  * The timeout for reading more request data (READ_BODY).
  */
-extern const struct timeval http_server_read_timeout;
+extern const Event::Duration http_server_read_timeout;
 
 /**
  * The timeout for writing more response data (READ_BODY, READ_END).
  */
-extern const struct timeval http_server_write_timeout;
+extern const Event::Duration http_server_write_timeout;
 
 HttpServerRequest *
 http_server_request_new(HttpServerConnection *connection,

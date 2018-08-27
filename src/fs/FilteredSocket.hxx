@@ -70,8 +70,8 @@ struct FilteredSocket final : private BufferedSocketHandler {
     }
 
     void Init(SocketDescriptor fd, FdType fd_type,
-              const struct timeval *read_timeout,
-              const struct timeval *write_timeout,
+              Event::Duration read_timeout,
+              Event::Duration write_timeout,
               SocketFilterPtr filter,
               BufferedSocketHandler &handler) noexcept;
 
@@ -82,8 +82,8 @@ struct FilteredSocket final : private BufferedSocketHandler {
      */
     void Init(SocketDescriptor _fd, FdType _fd_type) noexcept;
 
-    void Reinit(const struct timeval *read_timeout,
-                const struct timeval *write_timeout,
+    void Reinit(Event::Duration read_timeout,
+                Event::Duration write_timeout,
                 BufferedSocketHandler &handler) noexcept;
 
     bool HasFilter() const noexcept {
@@ -275,7 +275,7 @@ struct FilteredSocket final : private BufferedSocketHandler {
     }
 
     void ScheduleReadTimeout(bool expect_more,
-                             const struct timeval *timeout) noexcept {
+                             Event::Duration timeout) noexcept {
         if (filter != nullptr)
             filter->ScheduleRead(expect_more, timeout);
         else
@@ -290,7 +290,7 @@ struct FilteredSocket final : private BufferedSocketHandler {
      * you should call filtered_socket_read() to enable the read timeout.
      */
     void ScheduleReadNoTimeout(bool expect_more) noexcept {
-        ScheduleReadTimeout(expect_more, nullptr);
+        ScheduleReadTimeout(expect_more, Event::Duration(-1));
     }
 
     void ScheduleWrite() noexcept {
@@ -383,7 +383,7 @@ struct FilteredSocket final : private BufferedSocketHandler {
     bool InternalDrained() noexcept;
 
     void InternalScheduleRead(bool expect_more,
-                              const struct timeval *timeout) noexcept {
+                              Event::Duration timeout) noexcept {
         assert(filter != nullptr);
 
         base.ScheduleReadTimeout(expect_more, timeout);

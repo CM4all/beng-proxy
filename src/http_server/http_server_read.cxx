@@ -215,7 +215,7 @@ HttpServerConnection::HeadersFinished()
 
     value = r.headers.Get("transfer-encoding");
 
-    const struct timeval *read_timeout = &http_server_read_timeout;
+    Event::Duration read_timeout = http_server_read_timeout;
 
     off_t content_length = -1;
     const bool chunked = value != nullptr && strcasecmp(value, "chunked") == 0;
@@ -229,7 +229,7 @@ HttpServerConnection::HeadersFinished()
             }
 
             /* disable timeout */
-            read_timeout = nullptr;
+            read_timeout = Event::Duration(-1);
 
             /* forward incoming data as-is */
 

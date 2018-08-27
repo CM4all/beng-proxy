@@ -188,7 +188,7 @@ FilteredSocketStockConnection::OnSocketConnectSuccess(UniqueSocketDescriptor &&f
 
     try {
         socket.Init(fd.Release(), type,
-                    nullptr, nullptr,
+                    Event::Duration(-1), Event::Duration(-1),
                     filter_factory != nullptr
                     ? filter_factory->CreateFilter()
                     : nullptr,
@@ -252,14 +252,10 @@ FilteredSocketStockConnection::Release() noexcept
         return false;
     }
 
-    socket.Reinit(nullptr, nullptr, *this);
+    socket.Reinit(Event::Duration(-1), Event::Duration(-1), *this);
     socket.UnscheduleWrite();
 
-    static const struct timeval tv = {
-        .tv_sec = 60,
-        .tv_usec = 0,
-    };
-    socket.ScheduleReadTimeout(false, &tv);
+    socket.ScheduleReadTimeout(false, std::chrono::minutes(1));
 
     return true;
 }

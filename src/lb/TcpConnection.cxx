@@ -47,7 +47,7 @@
 
 #include <assert.h>
 
-static constexpr timeval write_timeout = { 30, 0 };
+static constexpr auto write_timeout = std::chrono::seconds(30);
 
 gcc_pure
 static sticky_hash_t
@@ -388,7 +388,7 @@ LbTcpConnection::OnSocketConnectSuccess(UniqueSocketDescriptor &&fd) noexcept
     cancel_connect = nullptr;
 
     outbound.socket.Init(fd.Release(), FdType::FD_TCP,
-                         nullptr, &write_timeout,
+                         Event::Duration(-1), write_timeout,
                          outbound);
 
     /* TODO
@@ -467,7 +467,7 @@ LbTcpConnection::Inbound::Inbound(EventLoop &event_loop,
     :socket(event_loop)
 {
     socket.Init(fd.Release(), fd_type,
-                nullptr, &write_timeout,
+                Event::Duration(-1), write_timeout,
                 std::move(filter),
                 *this);
     /* TODO

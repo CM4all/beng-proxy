@@ -32,6 +32,7 @@
 
 #pragma once
 
+#include "event/Chrono.hxx"
 #include "util/BindMethod.hxx"
 #include "util/WritableBuffer.hxx"
 
@@ -89,7 +90,7 @@ public:
      * FilteredSocket::InternalScheduleRead().
      */
     virtual void ScheduleRead(bool expect_more,
-                              const struct timeval *timeout) noexcept = 0;
+                              Event::Duration timeout) noexcept = 0;
 
     /**
      * The client wants to be called back as soon as writing becomes
