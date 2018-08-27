@@ -33,6 +33,8 @@
 #include "direct.hxx"
 #include "CommandLine.hxx"
 #include "Instance.hxx"
+#include "TcpConnection.hxx"
+#include "HttpConnection.hxx"
 #include "Config.hxx"
 #include "lb_check.hxx"
 #include "fs/Stock.hxx"

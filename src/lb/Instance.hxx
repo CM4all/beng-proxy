@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2018 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -36,8 +36,6 @@
 #include "PInstance.hxx"
 #include "GotoMap.hxx"
 #include "MonitorManager.hxx"
-#include "HttpConnection.hxx"
-#include "TcpConnection.hxx"
 #include "event/TimerEvent.hxx"
 #include "event/SignalEvent.hxx"
 #include "event/ShutdownListener.hxx"
@@ -56,6 +54,8 @@ class FilteredSocketStock;
 class FilteredSocketBalancer;
 struct LbConfig;
 struct LbCertDatabaseConfig;
+struct LbHttpConnection;
+class LbTcpConnection;
 class LbControl;
 class LbListener;
 class CertCache;
@@ -82,9 +82,11 @@ struct LbInstance final : PInstance {
     TimerEvent compress_event;
 
     boost::intrusive::list<LbHttpConnection,
+                           boost::intrusive::base_hook<boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>>,
                            boost::intrusive::constant_time_size<true>> http_connections;
 
     boost::intrusive::list<LbTcpConnection,
+                           boost::intrusive::base_hook<boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>>,
                            boost::intrusive::constant_time_size<true>> tcp_connections;
 
     std::unique_ptr<AccessLogGlue> access_log;

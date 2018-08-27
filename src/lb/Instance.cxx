@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2018 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -31,9 +31,11 @@
  */
 
 #include "Instance.hxx"
-#include "lb/Control.hxx"
-#include "lb/Config.hxx"
-#include "lb/Listener.hxx"
+#include "HttpConnection.hxx"
+#include "TcpConnection.hxx"
+#include "Control.hxx"
+#include "Config.hxx"
+#include "Listener.hxx"
 #include "ssl/Cache.hxx"
 #include "fb_pool.hxx"
 #include "event/Duration.hxx"
