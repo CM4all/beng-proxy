@@ -32,7 +32,7 @@
 
 #include "Output.hxx"
 #include "Error.hxx"
-#include "event/NewSocketEvent.hxx"
+#include "event/SocketEvent.hxx"
 #include "event/TimerEvent.hxx"
 #include "direct.hxx"
 #include "io/Splice.hxx"
@@ -57,7 +57,7 @@ static constexpr struct timeval was_output_timeout = {
 class WasOutput final : IstreamHandler {
 public:
     FileDescriptor fd;
-    NewSocketEvent event;
+    SocketEvent event;
     TimerEvent timeout_event;
 
     WasOutputHandler &handler;

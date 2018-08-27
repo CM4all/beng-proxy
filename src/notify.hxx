@@ -33,7 +33,7 @@
 #ifndef BENG_PROXY_NOTIFY_HXX
 #define BENG_PROXY_NOTIFY_HXX
 
-#include "event/NewSocketEvent.hxx"
+#include "event/SocketEvent.hxx"
 #include "util/BindMethod.hxx"
 
 #include <atomic>
@@ -46,7 +46,7 @@ class Notify {
     Callback callback;
 
     const int fd;
-    NewSocketEvent event;
+    SocketEvent event;
 
     std::atomic_bool pending;
 

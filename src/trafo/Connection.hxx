@@ -33,7 +33,7 @@
 #ifndef TRAFO_CONNECTION_HXX
 #define TRAFO_CONNECTION_HXX
 
-#include "event/NewSocketEvent.hxx"
+#include "event/SocketEvent.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "util/DynamicFifoBuffer.hxx"
 #include "AllocatedRequest.hxx"
@@ -52,7 +52,7 @@ class TrafoConnection {
     TrafoHandler &handler;
 
     const UniqueSocketDescriptor fd;
-    NewSocketEvent event;
+    SocketEvent event;
 
     enum class State {
         INIT,

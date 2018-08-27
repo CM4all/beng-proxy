@@ -38,7 +38,7 @@
 #include "net/UniqueSocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
 #include "event/net/ConnectSocket.hxx"
-#include "event/NewSocketEvent.hxx"
+#include "event/SocketEvent.hxx"
 #include "event/TimerEvent.hxx"
 #include "event/Duration.hxx"
 #include "util/Cancellable.hxx"
@@ -55,7 +55,7 @@ class ExpectMonitor final : ConnectSocketHandler, Cancellable {
 
     SocketDescriptor fd = SocketDescriptor::Undefined();
 
-    NewSocketEvent event;
+    SocketEvent event;
     TimerEvent timeout_event;
 
     /**

@@ -31,7 +31,7 @@
  */
 
 #include "duplex.hxx"
-#include "event/NewSocketEvent.hxx"
+#include "event/SocketEvent.hxx"
 #include "event/DeferEvent.hxx"
 #include "system/Error.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
@@ -51,7 +51,7 @@
 #include <limits.h>
 
 class FallbackEvent {
-    NewSocketEvent socket_event;
+    SocketEvent socket_event;
     DeferEvent defer_event;
 
     const unsigned events;
@@ -97,7 +97,7 @@ class Duplex {
     SliceFifoBuffer from_read, to_write;
 
     FallbackEvent read_event, write_event;
-    NewSocketEvent socket_event;
+    SocketEvent socket_event;
 
 public:
     Duplex(EventLoop &event_loop,

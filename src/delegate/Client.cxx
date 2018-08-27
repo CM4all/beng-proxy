@@ -37,7 +37,7 @@
 #include "system/fd_util.h"
 #include "pool/pool.hxx"
 #include "pool/Holder.hxx"
-#include "event/NewSocketEvent.hxx"
+#include "event/SocketEvent.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "net/SendMessage.hxx"
 #include "system/Error.hxx"
@@ -53,7 +53,7 @@
 struct DelegateClient final : PoolHolder, Cancellable {
     struct lease_ref lease_ref;
     const SocketDescriptor s;
-    NewSocketEvent event;
+    SocketEvent event;
 
     DelegateHandler &handler;
 

@@ -32,7 +32,7 @@
 
 #include "Input.hxx"
 #include "Error.hxx"
-#include "event/NewSocketEvent.hxx"
+#include "event/SocketEvent.hxx"
 #include "event/TimerEvent.hxx"
 #include "direct.hxx"
 #include "istream/istream.hxx"
@@ -60,7 +60,7 @@ static constexpr struct timeval was_input_timeout = {
 class WasInput final : public Istream {
 public:
     int fd;
-    NewSocketEvent event;
+    SocketEvent event;
     TimerEvent timeout_event;
 
     WasInputHandler &handler;

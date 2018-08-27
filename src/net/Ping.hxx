@@ -33,7 +33,7 @@
 #ifndef PING_HXX
 #define PING_HXX
 
-#include "event/NewSocketEvent.hxx"
+#include "event/SocketEvent.hxx"
 #include "event/TimerEvent.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "util/Compiler.h"
@@ -56,7 +56,7 @@ class PingClient final {
 
     uint16_t ident;
 
-    NewSocketEvent event;
+    SocketEvent event;
     TimerEvent timeout_event;
 
     PingClientHandler &handler;

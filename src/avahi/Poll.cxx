@@ -31,7 +31,7 @@
  */
 
 #include "Poll.hxx"
-#include "event/NewSocketEvent.hxx"
+#include "event/SocketEvent.hxx"
 #include "event/TimerEvent.hxx"
 
 static unsigned
@@ -54,7 +54,7 @@ ToAvahiWatchEvent(unsigned events)
 
 struct AvahiWatch final {
 private:
-    NewSocketEvent event;
+    SocketEvent event;
 
     const AvahiWatchCallback callback;
     void *const userdata;

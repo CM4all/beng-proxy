@@ -43,7 +43,7 @@
 #include "spawn/JailConfig.hxx"
 #include "pool/tpool.hxx"
 #include "AllocatorPtr.hxx"
-#include "event/NewSocketEvent.hxx"
+#include "event/SocketEvent.hxx"
 #include "event/TimerEvent.hxx"
 #include "event/Duration.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
@@ -133,7 +133,7 @@ struct FcgiConnection final : StockItem {
     StockItem *child = nullptr;
 
     UniqueSocketDescriptor fd;
-    NewSocketEvent event;
+    SocketEvent event;
     TimerEvent idle_timeout_event;
 
     /**

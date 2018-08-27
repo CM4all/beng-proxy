@@ -44,7 +44,7 @@
 #include "io/UniqueFileDescriptor.hxx"
 #include "io/Logger.hxx"
 #include "direct.hxx"
-#include "event/NewSocketEvent.hxx"
+#include "event/SocketEvent.hxx"
 #include "pool/pool.hxx"
 #include "fb_pool.hxx"
 #include "SliceFifoBuffer.hxx"
@@ -68,13 +68,13 @@ struct SpawnIstream final : Istream, IstreamHandler, ExitListener {
     SpawnService &spawn_service;
 
     UniqueFileDescriptor output_fd;
-    NewSocketEvent output_event;
+    SocketEvent output_event;
 
     SliceFifoBuffer buffer;
 
     IstreamPointer input;
     UniqueFileDescriptor input_fd;
-    NewSocketEvent input_event;
+    SocketEvent input_event;
 
     int pid;
 

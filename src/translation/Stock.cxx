@@ -42,7 +42,7 @@
 #include "system/Error.hxx"
 #include "net/AllocatedSocketAddress.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
-#include "event/NewSocketEvent.hxx"
+#include "event/SocketEvent.hxx"
 #include "io/Logger.hxx"
 
 #include <stdexcept>
@@ -53,7 +53,7 @@
 class TranslateConnection final : public StockItem {
     UniqueSocketDescriptor s;
 
-    NewSocketEvent event;
+    SocketEvent event;
 
 public:
     explicit TranslateConnection(CreateStockItem c)

@@ -37,7 +37,7 @@
 #include "direct.hxx"
 #include "io/Splice.hxx"
 #include "io/FileDescriptor.hxx"
-#include "event/NewSocketEvent.hxx"
+#include "event/SocketEvent.hxx"
 #include "util/DestructObserver.hxx"
 #include "util/LeakDetector.hxx"
 
@@ -54,7 +54,7 @@ struct SinkFd final : IstreamSink, DestructAnchor, LeakDetector {
     const SinkFdHandler *handler;
     void *handler_ctx;
 
-    NewSocketEvent event;
+    SocketEvent event;
 
     /**
      * Set to true each time data was received from the istream.

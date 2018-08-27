@@ -82,7 +82,7 @@ struct TcpStockConnection final
 
     const AllocatedSocketAddress address;
 
-    NewSocketEvent event;
+    SocketEvent event;
     TimerEvent idle_timeout_event;
 
     TcpStockConnection(CreateStockItem c, SocketAddress _address,

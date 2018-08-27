@@ -41,7 +41,7 @@
 #include "spawn/ExitListener.hxx"
 #include "spawn/Interface.hxx"
 #include "pool/tpool.hxx"
-#include "event/NewSocketEvent.hxx"
+#include "event/SocketEvent.hxx"
 #include "event/TimerEvent.hxx"
 #include "net/log/Datagram.hxx"
 #include "io/Logger.hxx"
@@ -96,7 +96,7 @@ class WasChild final : public StockItem, ExitListener {
     ChildErrorLog log;
 
     WasProcess process;
-    NewSocketEvent event;
+    SocketEvent event;
     TimerEvent idle_timeout_event;
 
     /**

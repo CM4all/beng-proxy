@@ -42,7 +42,7 @@
 #include "child_stock.hxx"
 #include "spawn/JailParams.hxx"
 #include "spawn/Prepared.hxx"
-#include "event/NewSocketEvent.hxx"
+#include "event/SocketEvent.hxx"
 #include "event/TimerEvent.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "io/Logger.hxx"
@@ -96,7 +96,7 @@ class LhttpConnection final : LoggerDomainFactory, StockItem {
     struct lease_ref lease_ref;
 
     UniqueSocketDescriptor fd;
-    NewSocketEvent event;
+    SocketEvent event;
     TimerEvent idle_timeout_event;
 
 public:

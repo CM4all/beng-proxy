@@ -36,7 +36,7 @@
 #include "stock/Item.hxx"
 #include "system/Error.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
-#include "event/NewSocketEvent.hxx"
+#include "event/SocketEvent.hxx"
 #include "event/TimerEvent.hxx"
 #include "event/Duration.hxx"
 #include "spawn/Interface.hxx"
@@ -77,7 +77,7 @@ class DelegateProcess final : public StockItem {
 
     UniqueSocketDescriptor fd;
 
-    NewSocketEvent event;
+    SocketEvent event;
     TimerEvent idle_timeout_event;
 
 public:

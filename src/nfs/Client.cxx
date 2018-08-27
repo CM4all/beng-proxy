@@ -37,7 +37,7 @@
 #include "pool/Holder.hxx"
 #include "system/Error.hxx"
 #include "system/fd_util.h"
-#include "event/NewSocketEvent.hxx"
+#include "event/SocketEvent.hxx"
 #include "event/TimerEvent.hxx"
 #include "util/Cancellable.hxx"
 #include "util/LeakDetector.hxx"
@@ -356,7 +356,7 @@ class NfsClient final : PoolHolder, Cancellable, LeakDetector {
     /**
      * libnfs I/O events.
      */
-    NewSocketEvent event;
+    SocketEvent event;
 
     /**
      * Track mount timeout (#nfs_client_mount_timeout) and idle
