@@ -66,14 +66,14 @@ private:
 
     /* virtual methods from class AvahiServiceExplorerListener */
     void OnAvahiNewObject(const std::string &key,
-                          SocketAddress address) override {
+                          SocketAddress address) noexcept override {
         char buffer[1024];
         ToString(buffer, sizeof(buffer), address);
 
         printf("new '%s' at %s\n", key.c_str(), buffer);
     }
 
-    void OnAvahiRemoveObject(const std::string &key) override {
+    void OnAvahiRemoveObject(const std::string &key) noexcept override {
         printf("remove '%s'\n", key.c_str());
     }
 };

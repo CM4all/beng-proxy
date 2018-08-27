@@ -270,7 +270,8 @@ LbCluster::FillActive()
 }
 
 void
-LbCluster::OnAvahiNewObject(const std::string &key, SocketAddress address)
+LbCluster::OnAvahiNewObject(const std::string &key,
+                            SocketAddress address) noexcept
 {
     MemberMap::insert_commit_data hint;
     auto result = members.insert_check(key, members.key_comp(), hint);
@@ -287,7 +288,7 @@ LbCluster::OnAvahiNewObject(const std::string &key, SocketAddress address)
 }
 
 void
-LbCluster::OnAvahiRemoveObject(const std::string &key)
+LbCluster::OnAvahiRemoveObject(const std::string &key) noexcept
 {
     auto i = members.find(key, members.key_comp());
     if (i == members.end())
