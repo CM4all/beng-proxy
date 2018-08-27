@@ -67,7 +67,8 @@ Cache::Cache(EventLoop &event_loop,
     :max_size(_max_size),
      buckets(new ItemSet::bucket_type[hashtable_capacity]),
      items(ItemSet::bucket_traits(buckets.get(), hashtable_capacity)),
-     cleanup_timer(event_loop, 60, BIND_THIS_METHOD(ExpireCallback)) {}
+     cleanup_timer(event_loop, std::chrono::minutes(1),
+                   BIND_THIS_METHOD(ExpireCallback)) {}
 
 Cache::~Cache()
 {
