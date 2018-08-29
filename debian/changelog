@@ -1,6 +1,6 @@
 cm4all-beng-proxy (14.11) unstable; urgency=low
 
-  * 
+  * fcgi, lhttp: fix race condition with socket permissions
 
  --   
 
