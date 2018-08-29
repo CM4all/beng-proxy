@@ -78,6 +78,8 @@
 #include "spawn/Client.hxx"
 #include "event/Duration.hxx"
 #include "address_list.hxx"
+#include "odbus/Init.hxx"
+#include "odbus/Connection.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/StaticSocketAddress.hxx"
 #include "net/FailureManager.hxx"
@@ -241,6 +243,10 @@ try {
     if (geteuid() != 0)
         debug_mode = true;
 #endif
+
+    const ODBus::ScopeInit dbus_init;
+    dbus_connection_set_exit_on_disconnect(ODBus::Connection::GetSystem(),
+                                           false);
 
     const ScopeFbPoolInit fb_pool_init;
 

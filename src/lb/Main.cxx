@@ -48,6 +48,8 @@
 #include "thread_pool.hxx"
 #include "fb_pool.hxx"
 #include "capabilities.hxx"
+#include "odbus/Init.hxx"
+#include "odbus/Connection.hxx"
 #include "net/FailureManager.hxx"
 #include "system/Isolate.hxx"
 #include "system/SetupProcess.hxx"
@@ -176,6 +178,10 @@ try {
     SetupProcess();
 
     const ScopeSslGlobalInit ssl_init;
+
+    const ODBus::ScopeInit dbus_init;
+    dbus_connection_set_exit_on_disconnect(ODBus::Connection::GetSystem(),
+                                           false);
 
     /* prevent libpq from initializing libssl & libcrypto again */
     PQinitOpenSSL(0, 0);
