@@ -373,6 +373,17 @@ class DumpPoolRecycler(gdb.Command):
         print("n_areas", recycler['num_linear_areas'], n_areas)
         print("area_total_size", total_size)
 
+class DumpLeaks(gdb.Command):
+    """Dump all objects registered in LeakDetector."""
+
+    def __init__(self):
+        gdb.Command.__init__(self, "bp_dump_leaks", gdb.COMMAND_DATA, gdb.COMPLETE_SYMBOL, True)
+
+    def invoke(self, arg, from_tty):
+        leaks = gdb.parse_and_eval('leak_detector_container.list')
+        for i in for_each_intrusive_list_item(leaks):
+            print(i)
+
 class SliceArea:
     def __init__(self, pool, area):
         if area.type != gdb.lookup_type('SliceArea').pointer():
@@ -613,6 +624,7 @@ DumpPoolRefs()
 DumpPoolAllocations()
 FindPool()
 DumpPoolRecycler()
+DumpLeaks()
 DumpSlicePoolAreas()
 FindSliceFifoBuffer()
 FindChild()
