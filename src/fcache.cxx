@@ -493,7 +493,13 @@ FilterCacheRequest::OnHttpResponse(http_status_t status, StringMap &&headers,
            cache */
         body = istream_tee_new(pool, *body,
                                cache.event_loop,
-                               false, false);
+                               false,
+                               /* the second one must be weak because
+                                  closing the first one may imply
+                                  invalidating our input (because its
+                                  pool is going to be trashed),
+                                  triggering the pool leak detector */
+                               true);
 
         response.status = status;
         response.headers = strmap_dup(&pool, &headers);
