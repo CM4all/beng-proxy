@@ -186,8 +186,17 @@ class IntrusiveContainerType:
         else:
             return (node.dereference().address - self.member_hook.bitpos // 8).cast(self.value_pointer_type)
 
+def get_intrusive_list_header(l):
+    rps = l['data_']['root_plus_size_']
+    if 'm_header' in rps.type:
+        # seen in Boost 1.62
+        return rps['m_header']
+    else:
+        # seen in Boost 1.55
+        return rps['root_']
+
 def for_each_intrusive_list(l):
-    root = l['data_']['root_plus_size_']['root_']
+    root = get_intrusive_list_header(l)
     root_address = root.address
     node = root['next_']
     while node != root_address:
@@ -200,7 +209,7 @@ def for_each_intrusive_list_item(l, member_hook=None):
         yield t.node_to_value(node)
 
 def for_each_intrusive_list_reverse(l):
-    root = l['data_']['root_plus_size_']['root_']
+    root = get_intrusive_list_header(l)
     root_address = root.address
     node = root['prev_']
     while node != root_address:
