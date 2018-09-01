@@ -8,6 +8,18 @@ from __future__ import print_function
 
 import gdb
 
+try:
+    from gdb.types import get_basic_type
+except ImportError:
+    # from libstdcxx printers
+    def get_basic_type(type):
+        # If it points to a reference, get the reference.
+        if type.code == gdb.TYPE_CODE_REF:
+            type = type.target()
+        # Get the unqualified type, stripped of typedefs.
+        type = type.unqualified().strip_typedefs()
+        return type
+
 def is_null(p):
     return str(p) == '0x0'
 
@@ -157,6 +169,15 @@ def for_each_list_item_reverse(head, cast):
         yield item.cast(cast)
         item = item['prev']
 
+class IntrusiveContainerType:
+    def __init__(self, list_type):
+        self.list_type = get_basic_type(list_type)
+        self.value_type = list_type.template_argument(0)
+        self.value_pointer_type = self.value_type.pointer()
+
+    def node_to_value(self, node):
+        return node.cast(self.value_pointer_type)
+
 def for_each_intrusive_list(l):
     root = l['data_']['root_plus_size_']['root_']
     root_address = root.address
@@ -165,9 +186,10 @@ def for_each_intrusive_list(l):
         yield node
         node = node['next_']
 
-def for_each_intrusive_list_item(l, cast):
+def for_each_intrusive_list_item(l):
+    t = IntrusiveContainerType(l.type)
     for node in for_each_intrusive_list(l):
-        yield node.cast(cast)
+        yield t.node_to_value(node)
 
 def for_each_recursive_pool(pool):
     yield pool
@@ -360,11 +382,11 @@ class SlicePool:
         self.pages_per_slice = long(pool['pages_per_slice'])
 
     def areas(self):
-        for area in for_each_intrusive_list_item(self.pool['areas'], gdb.lookup_type('SliceArea').pointer()):
+        for area in for_each_intrusive_list_item(self.pool['areas']):
             yield SliceArea(self, area)
 
 def iter_fifo_buffers(instance):
-    for connection in for_each_intrusive_list_item(instance['connections'], gdb.lookup_type('LbConnection').pointer()):
+    for connection in for_each_intrusive_list_item(instance['connections']):
         protocol = int(connection['listener']['destination']['cluster']['protocol'])
         if protocol == 0:
             http = connection['http']
@@ -511,10 +533,9 @@ class LbStats(gdb.Command):
         n_tcp = 0
         n_buffers = 0
 
-        connection_type = gdb.lookup_type('LbConnection').pointer()
         void_ptr_type = gdb.lookup_type('void').pointer()
         long_type = gdb.lookup_type('long')
-        for c in for_each_intrusive_list_item(instance['connections'], connection_type):
+        for c in for_each_intrusive_list_item(instance['connections']):
             n += 1
 
             if not is_null(c['ssl_filter']):
