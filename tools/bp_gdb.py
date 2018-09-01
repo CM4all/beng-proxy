@@ -328,9 +328,9 @@ class DumpPoolAllocations(gdb.Command):
 
         for a in for_each_intrusive_list_item_reverse(pool['allocations'], member_hook='siblings'):
             if 'file' in a.type:
-                print('%8u %s:%u' % (a['size'], a['file'].string().replace('../', ''), a['line']))
+                print('%s %8u %s:%u' % (a + 1, a['size'], a['file'].string().replace('../', ''), a['line']))
             else:
-                print('%8u' % (a['size'],))
+                print('%s %8u' % (a + 1, a['size'],))
 
 class FindPool(gdb.Command):
     def __init__(self):
