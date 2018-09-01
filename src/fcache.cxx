@@ -524,7 +524,14 @@ FilterCacheRequest::OnHttpResponse(http_status_t status, StringMap &&headers,
            cache */
         auto tee = istream_tee_new(pool, std::move(body),
                                    cache.event_loop,
-                                   false, false,
+                                   false,
+                                   /* the second one must be weak
+                                      because closing the first one
+                                      may imply invalidating our input
+                                      (because its pool is going to be
+                                      trashed), triggering the pool
+                                      leak detector */
+                                   true,
                                    /* just in case our handler closes
                                       the body without looking at it:
                                       defer an Istream::Read() call

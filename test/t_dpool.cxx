@@ -62,9 +62,9 @@ TEST(ShmTest, Dpool)
     ASSERT_NE(a, nullptr);
     memset(a, 0, 512);
 
-    b = d_malloc(*pool, 800);
+    b = d_malloc(*pool, 700);
     ASSERT_NE(b, nullptr);
-    memset(b, 0, 800);
+    memset(b, 0, 700);
 
     try {
         c = d_malloc(*pool, 512);

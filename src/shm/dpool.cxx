@@ -116,7 +116,7 @@ dpool::Allocate(size_t size)
        multiple consecutive chunks, but we don't implement that
        because our current use cases should not need to allocate such
        large structures */
-    if (size > first_chunk.GetTotalSize())
+    if (size + first_chunk.GetMinSize() > first_chunk.GetTotalSize())
         throw std::bad_alloc();
 
     boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex> scoped_lock(mutex);

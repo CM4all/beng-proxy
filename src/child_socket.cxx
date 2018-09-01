@@ -57,11 +57,11 @@ ChildSocket::Create(int socket_type)
     if (!fd.Create(AF_LOCAL, socket_type, 0))
         throw MakeErrno("failed to create local socket");
 
+    /* allow only beng-proxy to connect to it */
+    fchmod(fd.Get(), 0600);
+
     if (!fd.Bind(GetAddress()))
         throw MakeErrno("failed to bind local socket");
-
-    /* allow only beng-proxy to connect to it */
-    chmod(address.sun_path, 0600);
 
     if (!fd.Listen(8))
         throw MakeErrno("failed to listen on local socket");
