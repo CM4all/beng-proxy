@@ -190,7 +190,6 @@ struct pool final
                                boost::intrusive::constant_time_size<false>> libc;
 
         struct linear_pool_area *linear;
-        struct pool *recycler;
 
         CurrentArea():libc() {}
         ~CurrentArea() {}
