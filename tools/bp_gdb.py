@@ -263,7 +263,7 @@ class PoolTree(gdb.Command):
         pool = gdb.parse_and_eval(arg_list[0])
 
         for x in for_each_recursive_pool(pool):
-            print(x, x.dereference())
+            print(x, x['name'])
 
 class DumpPoolStats(gdb.Command):
     def __init__(self):
