@@ -326,8 +326,7 @@ class DumpPoolAllocations(gdb.Command):
             print("%s is not a pool*" % arg)
             return
 
-        allocation_pointer = gdb.lookup_type('struct allocation_info').pointer()
-        for a in for_each_list_item_reverse(pool['allocations'], allocation_pointer):
+        for a in for_each_intrusive_list_item_reverse(pool['allocations'], member_hook='siblings'):
             print('%8u %s:%u' % (a['size'], a['file'].string().replace('../', ''), a['line']))
 
 class FindPool(gdb.Command):
