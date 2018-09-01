@@ -170,13 +170,21 @@ def for_each_list_item_reverse(head, cast):
         item = item['prev']
 
 class IntrusiveContainerType:
-    def __init__(self, list_type):
+    def __init__(self, list_type, member_hook=None):
         self.list_type = get_basic_type(list_type)
         self.value_type = list_type.template_argument(0)
         self.value_pointer_type = self.value_type.pointer()
 
+        self.member_hook = None
+        if member_hook is not None:
+            self.member_hook = self.value_type[member_hook]
+            print("member_hook", member_hook, "offset", self.member_hook.bitpos/8)
+
     def node_to_value(self, node):
-        return node.cast(self.value_pointer_type)
+        if self.member_hook is None:
+            return node.cast(self.value_pointer_type)
+        else:
+            return (node.dereference().address - self.member_hook.bitpos // 8).cast(self.value_pointer_type)
 
 def for_each_intrusive_list(l):
     root = l['data_']['root_plus_size_']['root_']
@@ -186,8 +194,8 @@ def for_each_intrusive_list(l):
         yield node
         node = node['next_']
 
-def for_each_intrusive_list_item(l):
-    t = IntrusiveContainerType(l.type)
+def for_each_intrusive_list_item(l, member_hook=None):
+    t = IntrusiveContainerType(l.type, member_hook=member_hook)
     for node in for_each_intrusive_list(l):
         yield t.node_to_value(node)
 
