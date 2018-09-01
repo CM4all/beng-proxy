@@ -191,9 +191,12 @@ def get_intrusive_list_header(l):
     if 'm_header' in rps.type:
         # seen in Boost 1.62
         return rps['m_header']
-    else:
+    elif 'root_' in rps.type:
         # seen in Boost 1.55
         return rps['root_']
+    else:
+        # seen in Boost 1.62 slist
+        return rps['header_holder_']
 
 def for_each_intrusive_list(l):
     root = get_intrusive_list_header(l)
