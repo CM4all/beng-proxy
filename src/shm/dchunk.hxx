@@ -115,6 +115,11 @@ struct DpoolChunk {
     size_t GetTotalSize() const {
         return m.get_size();
     }
+
+    gcc_const
+    size_t GetMinSize() const noexcept {
+        return m.get_segment_manager()->get_min_size();
+    }
 };
 
 #endif

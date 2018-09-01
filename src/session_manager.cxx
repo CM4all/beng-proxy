@@ -494,7 +494,15 @@ SessionContainer::Purge()
               " sessions (score=", highest_score, ")");
 
     for (auto session : purge_sessions) {
+        /* lock the session to make sure it's not currently in use by
+           another worker (will wait for the other worker) */
         session->mutex.lock();
+        /* release the mutex right after that to avoid assertion
+           failure in the mutex destructor; meanwhile, no other worker
+           can get a reference to this unlocked session, because the
+           SessionContainer is locked */
+        session->mutex.unlock();
+
         EraseAndDispose(*session);
     }
 
