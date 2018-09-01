@@ -199,6 +199,19 @@ def for_each_intrusive_list_item(l, member_hook=None):
     for node in for_each_intrusive_list(l):
         yield t.node_to_value(node)
 
+def for_each_intrusive_list_reverse(l):
+    root = l['data_']['root_plus_size_']['root_']
+    root_address = root.address
+    node = root['prev_']
+    while node != root_address:
+        yield node
+        node = node['prev_']
+
+def for_each_intrusive_list_item_reverse(l, member_hook=None):
+    t = IntrusiveContainerType(l.type, member_hook=member_hook)
+    for node in for_each_intrusive_list_reverse(l):
+        yield t.node_to_value(node)
+
 def for_each_recursive_pool(pool):
     yield pool
 
