@@ -667,10 +667,59 @@ FindChild()
 FindChildStockClient()
 LbStats()
 
+class StringViewPrinter:
+    def __init__(self, val):
+        self.val = val
+
+    def to_string(self):
+        data = self.val['data']
+        if data.address == 0:
+            return "nullptr"
+
+        return '"%s"' % data.string(length=self.val['size'])
+
+class PoolPtrPrinter:
+    def __init__(self, val):
+        self.val = val
+
+    def to_string(self):
+        pool = self.val['value']
+
+        if pool.address != 0:
+            return 'PoolPtr{"%s"}' % pool['name'].string()
+        else:
+            return 'PoolPtr{nullptr}'
+
+class PoolHolderPrinter:
+    def __init__(self, val):
+        self.val = val
+
+    def to_string(self):
+        pool = self.val['pool']
+        if 'value' in pool.type:
+            pool = pool['value']
+
+        if pool.address != 0:
+            return 'PoolHolder{"%s"}' % pool['name'].string()
+        else:
+            return 'PoolHolder{nullptr}'
+
+class LeakDetectorPrinter:
+    def __init__(self, val):
+        self.val = val
+
+    def to_string(self):
+        return 'LeakDetector'
+
 import gdb.printing
 def build_pretty_printer():
     pp = gdb.printing.RegexpCollectionPrettyPrinter("cm4all-beng-proxy")
     pp.add_printer('boost::intrusive::list', 'boost::intrusive::s?list<', IntrusiveListPrinter)
+    pp.add_printer('StringView', '^BasicStringView<char>$', StringViewPrinter)
+    pp.add_printer('StringView', '^StringView$', StringViewPrinter)
+    pp.add_printer('PoolPtr', '^PoolPtr$', PoolPtrPrinter)
+    pp.add_printer('PoolHolder', '^PoolHolder$', PoolHolderPrinter)
+    pp.add_printer('LeakDetector', '^LeakDetector$', LeakDetectorPrinter)
     return pp
 
 gdb.printing.register_pretty_printer(gdb.current_objfile(), build_pretty_printer(), replace=True)
