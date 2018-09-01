@@ -1,7 +1,7 @@
 cm4all-beng-proxy (13.12) unstable; urgency=low
 
   * bp/http: abolish the forced "Connection:keep-alive" request header
-  * session: fix assertion failure
+  * session: fix two assertion failures
   * fcgi, lhttp: fix race condition with socket permissions
   * cgi: fix crash bug
   * pipe: fix assertion failure
