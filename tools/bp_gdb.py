@@ -180,48 +180,48 @@ class IntrusiveContainerType:
             self.member_hook = self.value_type[member_hook]
             print("member_hook", member_hook, "offset", self.member_hook.bitpos/8)
 
+    def get_header(self, l):
+        rps = l['data_']['root_plus_size_']
+        if 'm_header' in rps.type:
+            # seen in Boost 1.62
+            return rps['m_header']
+        elif 'root_' in rps.type:
+            # seen in Boost 1.55
+            return rps['root_']
+        else:
+            # seen in Boost 1.62 slist
+            return rps['header_holder_']
+
     def node_to_value(self, node):
         if self.member_hook is None:
             return node.cast(self.value_pointer_type)
         else:
             return (node.dereference().address - self.member_hook.bitpos // 8).cast(self.value_pointer_type)
 
-def get_intrusive_list_header(l):
-    rps = l['data_']['root_plus_size_']
-    if 'm_header' in rps.type:
-        # seen in Boost 1.62
-        return rps['m_header']
-    elif 'root_' in rps.type:
-        # seen in Boost 1.55
-        return rps['root_']
-    else:
-        # seen in Boost 1.62 slist
-        return rps['header_holder_']
+    def iter_nodes(self, l):
+        root = self.get_header(l)
+        root_address = root.address
+        node = root['next_']
+        while node != root_address:
+            yield node
+            node = node['next_']
 
-def for_each_intrusive_list(l):
-    root = get_intrusive_list_header(l)
-    root_address = root.address
-    node = root['next_']
-    while node != root_address:
-        yield node
-        node = node['next_']
+    def iter_nodes_reverse(self, l):
+        root = self.get_header(l)
+        root_address = root.address
+        node = root['prev_']
+        while node != root_address:
+            yield node
+            node = node['prev_']
 
 def for_each_intrusive_list_item(l, member_hook=None):
     t = IntrusiveContainerType(l.type, member_hook=member_hook)
-    for node in for_each_intrusive_list(l):
+    for node in t.iter_nodes(l):
         yield t.node_to_value(node)
-
-def for_each_intrusive_list_reverse(l):
-    root = get_intrusive_list_header(l)
-    root_address = root.address
-    node = root['prev_']
-    while node != root_address:
-        yield node
-        node = node['prev_']
 
 def for_each_intrusive_list_item_reverse(l, member_hook=None):
     t = IntrusiveContainerType(l.type, member_hook=member_hook)
-    for node in for_each_intrusive_list_reverse(l):
+    for node in t.iter_nodes_reverse(l):
         yield t.node_to_value(node)
 
 class IntrusiveListPrinter:
@@ -249,7 +249,7 @@ class IntrusiveListPrinter:
         return 'array'
 
     def children(self):
-        return self.Iterator(self.t, get_intrusive_list_header(self.val))
+        return self.Iterator(self.t, self.t.get_header(self.val))
 
     def to_string(self):
         return str(self.val.type.strip_typedefs())
