@@ -224,6 +224,36 @@ def for_each_intrusive_list_item_reverse(l, member_hook=None):
     for node in for_each_intrusive_list_reverse(l):
         yield t.node_to_value(node)
 
+class IntrusiveListPrinter:
+    class Iterator:
+        def __init__(self, t, head):
+            self.t = t
+            self.head_address = head.address
+            self.i = head['next_']
+
+        def __iter__(self):
+            return self
+
+        def __next__(self):
+            if self.i == self.head_address:
+                raise StopIteration
+            result = self.t.node_to_value(self.i)
+            self.i = self.i['next_']
+            return '', result.dereference()
+
+    def __init__(self, val):
+        self.t = IntrusiveContainerType(val.type)
+        self.val = val
+
+    def display_hint(self):
+        return 'array'
+
+    def children(self):
+        return self.Iterator(self.t, get_intrusive_list_header(self.val))
+
+    def to_string(self):
+        return str(self.val.type.strip_typedefs())
+
 def for_each_recursive_pool(pool):
     yield pool
 
@@ -636,3 +666,11 @@ FindSliceFifoBuffer()
 FindChild()
 FindChildStockClient()
 LbStats()
+
+import gdb.printing
+def build_pretty_printer():
+    pp = gdb.printing.RegexpCollectionPrettyPrinter("cm4all-beng-proxy")
+    pp.add_printer('boost::intrusive::list', 'boost::intrusive::s?list<', IntrusiveListPrinter)
+    return pp
+
+gdb.printing.register_pretty_printer(gdb.current_objfile(), build_pretty_printer(), replace=True)
