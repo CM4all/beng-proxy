@@ -215,17 +215,13 @@ def for_each_intrusive_list_item_reverse(l, member_hook=None):
 def for_each_recursive_pool(pool):
     yield pool
 
-    pool_pointer = gdb.lookup_type('struct pool').pointer()
-
-    for child in for_each_list_item(pool['children'], pool_pointer):
+    for child in for_each_intrusive_list_item(pool['children']):
         for x in for_each_recursive_pool(child):
             yield x
 
 def pool_recursive_sizes(pool):
-    pool_pointer = gdb.lookup_type('struct pool').pointer()
-
     brutto_size, netto_size = pool_sizes(pool)
-    for child in for_each_list_item(pool['children'], pool_pointer):
+    for child in for_each_intrusive_list_item(pool['children']):
         child_brutto_size, child_netto_size = pool_recursive_sizes(child)
         brutto_size += child_brutto_size
         netto_size += child_netto_size
