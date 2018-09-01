@@ -357,11 +357,9 @@ class DumpPoolRecycler(gdb.Command):
         recycler = gdb.parse_and_eval('recycler')
 
         n_pools = 0
-        pool = recycler['pools']
-        while not is_null(pool):
+        for item in for_each_intrusive_list_item(recycler['pools']['list']):
             n_pools += 1
-            pool = pool['current_area']['recycler']
-        print("n_pools", recycler['num_pools'], n_pools)
+        print("n_pools", n_pools)
 
         n_areas = 0
         total_size = 0
