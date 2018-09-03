@@ -287,8 +287,8 @@ event_net2 = static_library(
 event_net_dep = declare_dependency(
   link_with: event_net2,
   dependencies: [
-    memory_dep,
     event_net_dep,
+    memory_dep,
   ],
 )
 
@@ -431,8 +431,8 @@ spawn2 = static_library(
 spawn_dep = declare_dependency(
   link_with: spawn2,
   dependencies: [
-    expand_dep,
     spawn_dep,
+    expand_dep,
   ],
 )
 
