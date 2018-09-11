@@ -72,14 +72,14 @@ SessionId::Parse(const char *p)
     if (strlen(p) != data.size() * 8)
         return false;
 
-    char segment[9];
-    segment[8] = 0;
+    std::array<char, 9> segment;
+    segment.back() = 0;
     for (auto &i : data) {
-        memcpy(segment, p, 8);
+        memcpy(&segment.front(), p, 8);
         p += 8;
         char *endptr;
-        i = strtoul(segment, &endptr, 16);
-        if (endptr != segment + 8)
+        i = strtoul(&segment.front(), &endptr, 16);
+        if (endptr != &segment.back())
             return false;
     }
 
