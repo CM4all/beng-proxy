@@ -31,22 +31,11 @@
  */
 
 #include "notify.hxx"
-#include "system/Error.hxx"
-
-#include <sys/eventfd.h>
-
-static int
-MakeEventFd()
-{
-    int fd = eventfd(0, EFD_NONBLOCK|EFD_CLOEXEC);
-    if (fd < 0)
-        throw MakeErrno("eventfd() failed");
-    return fd;
-}
+#include "system/LinuxFD.hxx"
 
 Notify::Notify(EventLoop &event_loop, Callback _callback)
     :callback(_callback),
-     fd(MakeEventFd()),
+     fd(CreateEventFD()),
      event(event_loop, BIND_THIS_METHOD(EventFdCallback),
            SocketDescriptor::FromFileDescriptor(fd)),
      pending(false) {
