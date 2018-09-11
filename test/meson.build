@@ -525,6 +525,7 @@ test('t_shm', executable('t_shm',
 
 test('t_session', executable('t_session',
   't_session.cxx',
+  'TestSessionId.cxx',
   '../src/crash.cxx',
   '../src/random.cxx',
   include_directories: inc,
