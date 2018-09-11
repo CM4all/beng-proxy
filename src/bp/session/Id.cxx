@@ -69,7 +69,7 @@ SessionId::SetClusterNode(unsigned cluster_size, unsigned cluster_node)
 bool
 SessionId::Parse(const char *p)
 {
-    if (strlen(p) != SESSION_ID_WORDS * 8)
+    if (strlen(p) != data.size() * 8)
         return false;
 
     char segment[9];

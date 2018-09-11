@@ -45,8 +45,7 @@
  * The session id data structure.
  */
 class SessionId {
-    static constexpr size_t SESSION_ID_WORDS = 4;
-    std::array<uint32_t, SESSION_ID_WORDS> data;
+    std::array<uint32_t, 4> data;
 
 public:
     gcc_pure
