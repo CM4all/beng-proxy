@@ -45,7 +45,7 @@
  * The session id data structure.
  */
 class SessionId {
-    std::array<uint32_t, 4> data;
+    std::array<uint64_t, 2> data;
 
 public:
     gcc_pure

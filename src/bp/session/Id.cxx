@@ -41,13 +41,13 @@ void
 SessionId::Generate()
 {
     for (auto &i : data)
-        i = random_uint32();
+        i = random_uint64();
 }
 
 static auto
-ToClusterNode(uint32_t id, unsigned cluster_size, unsigned cluster_node)
+ToClusterNode(uint64_t id, unsigned cluster_size, unsigned cluster_node)
 {
-    uint32_t remainder = id % (uint32_t)cluster_size;
+    uint64_t remainder = id % (uint64_t)cluster_size;
     assert(remainder < cluster_size);
 
     id -= remainder;
@@ -92,7 +92,7 @@ SessionId::Format(struct session_id_string &string) const
 {
     char *p = string.buffer;
     for (const auto i : data) {
-        format_uint32_hex_fixed(p, i);
+        format_uint64_hex_fixed(p, i);
         p += sizeof(i) * 2;
     }
 
