@@ -49,37 +49,37 @@ class SessionId {
 
 public:
     gcc_pure
-    bool IsDefined() const {
+    bool IsDefined() const noexcept {
         for (auto i : data)
             if (i != 0)
                 return true;
         return false;
     }
 
-    void Clear() {
+    void Clear() noexcept {
         std::fill(data.begin(), data.end(), 0);
     }
 
-    void Generate();
+    void Generate() noexcept;
 
     /**
      * Manipulate the modulo of GetClusterHash() so that it results in
      * the specified cluster node.
      */
-    void SetClusterNode(unsigned cluster_size, unsigned cluster_node);
+    void SetClusterNode(unsigned cluster_size, unsigned cluster_node) noexcept;
 
     gcc_pure
-    bool operator==(const SessionId &other) const {
+    bool operator==(const SessionId &other) const noexcept {
         return memcmp(this, &other, sizeof(other)) == 0;
     }
 
     gcc_pure
-    bool operator!=(const SessionId &other) const {
+    bool operator!=(const SessionId &other) const noexcept {
         return !(*this == other);
     }
 
     gcc_pure
-    size_t Hash() const {
+    size_t Hash() const noexcept {
         return data[0];
     }
 
@@ -88,7 +88,7 @@ public:
      * by calculating the modulo.
      */
     gcc_pure
-    auto GetClusterHash() const {
+    auto GetClusterHash() const noexcept {
         return data.back();
    }
 
@@ -97,9 +97,9 @@ public:
      *
      * @return true on success, false on error
      */
-    bool Parse(const char *p);
+    bool Parse(const char *p) noexcept;
 
-    const char *Format(struct session_id_string &buffer) const;
+    const char *Format(struct session_id_string &buffer) const noexcept;
 };
 
 /**

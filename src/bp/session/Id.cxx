@@ -38,14 +38,15 @@
 #include <stdlib.h>
 
 void
-SessionId::Generate()
+SessionId::Generate() noexcept
 {
     for (auto &i : data)
         i = random_uint64();
 }
 
 static auto
-ToClusterNode(uint64_t id, unsigned cluster_size, unsigned cluster_node)
+ToClusterNode(uint64_t id,
+              unsigned cluster_size, unsigned cluster_node) noexcept
 {
     uint64_t remainder = id % (uint64_t)cluster_size;
     assert(remainder < cluster_size);
@@ -56,7 +57,8 @@ ToClusterNode(uint64_t id, unsigned cluster_size, unsigned cluster_node)
 }
 
 void
-SessionId::SetClusterNode(unsigned cluster_size, unsigned cluster_node)
+SessionId::SetClusterNode(unsigned cluster_size,
+                          unsigned cluster_node) noexcept
 {
     assert(cluster_size > 0);
     assert(cluster_node < cluster_size);
@@ -67,7 +69,7 @@ SessionId::SetClusterNode(unsigned cluster_size, unsigned cluster_node)
 }
 
 bool
-SessionId::Parse(const char *p)
+SessionId::Parse(const char *p) noexcept
 {
     if (strlen(p) != sizeof(data) * 2)
         return false;
@@ -88,7 +90,7 @@ SessionId::Parse(const char *p)
 }
 
 const char *
-SessionId::Format(struct session_id_string &string) const
+SessionId::Format(struct session_id_string &string) const noexcept
 {
     char *p = string.buffer;
     for (const auto i : data) {
