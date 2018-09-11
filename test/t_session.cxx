@@ -45,9 +45,9 @@
 
 TEST(SessionTest, Basic)
 {
+    const ScopeCrashGlobalInit crash_init;
     EventLoop event_loop;
 
-    crash_global_init();
     session_manager_init(event_loop, std::chrono::minutes(30), 0, 0);
     session_manager_event_del();
 
@@ -84,5 +84,4 @@ TEST(SessionTest, Basic)
     }
 
     session_manager_deinit();
-    crash_global_deinit();
 }

@@ -268,7 +268,7 @@ TEST(WidgetHttpTest, CookieClient)
     PInstance instance;
     struct pool *pool = instance.root_pool;
 
-    crash_global_init();
+    const ScopeCrashGlobalInit crash_init;
     session_manager_init(instance.event_loop, std::chrono::minutes(30), 0, 0);
 
     const auto address = MakeHttpAddress("/bar/").Host("foo");
@@ -306,5 +306,4 @@ TEST(WidgetHttpTest, CookieClient)
     }
 
     session_manager_deinit();
-    crash_global_deinit();
 }

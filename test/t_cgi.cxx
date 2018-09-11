@@ -721,15 +721,13 @@ try {
     SetupProcess();
 
     direct_global_init();
-    crash_global_init();
+    const ScopeCrashGlobalInit crash_init;
     const ScopeFbPoolInit fb_pool_init;
 
     run_all_tests();
 
     my_handler_direct = FD_ANY;
     run_all_tests();
-
-    crash_global_deinit();
 } catch (...) {
     PrintException(std::current_exception());
     return EXIT_FAILURE;

@@ -306,7 +306,7 @@ try {
         });
     instance.spawn_service = instance.spawn;
 
-    crash_global_init();
+    const ScopeCrashGlobalInit crash_init;
 
     session_manager_init(instance.event_loop,
                          instance.config.session_idle_timeout,
@@ -476,8 +476,6 @@ try {
     thread_pool_deinit();
 
     ssl_client_deinit();
-
-    crash_global_deinit();
 
     ua_classification_deinit();
 } catch (...) {

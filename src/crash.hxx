@@ -128,6 +128,20 @@ crash_in_unsafe() noexcept
     return !crash_is_safe(&global_crash);
 }
 
+class ScopeCrashGlobalInit {
+public:
+    ScopeCrashGlobalInit() {
+        crash_global_init();
+    }
+
+    ~ScopeCrashGlobalInit() noexcept {
+        crash_global_deinit();
+    }
+
+    ScopeCrashGlobalInit(const ScopeCrashGlobalInit &) = delete;
+    ScopeCrashGlobalInit &operator=(const ScopeCrashGlobalInit &) = delete;
+};
+
 struct ScopeCrashUnsafe {
     ScopeCrashUnsafe() noexcept {
         crash_unsafe_enter();
