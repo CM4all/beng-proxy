@@ -33,7 +33,6 @@
 #include "notify.hxx"
 #include "system/Error.hxx"
 
-#include <unistd.h>
 #include <sys/eventfd.h>
 
 static int
@@ -49,7 +48,7 @@ Notify::Notify(EventLoop &event_loop, Callback _callback)
     :callback(_callback),
      fd(MakeEventFd()),
      event(event_loop, BIND_THIS_METHOD(EventFdCallback),
-           SocketDescriptor(fd)),
+           SocketDescriptor::FromFileDescriptor(fd)),
      pending(false) {
     event.ScheduleRead();
 }
@@ -57,14 +56,13 @@ Notify::Notify(EventLoop &event_loop, Callback _callback)
 Notify::~Notify()
 {
     event.Cancel();
-    close(fd);
 }
 
 inline void
 Notify::EventFdCallback(unsigned)
 {
     uint64_t value;
-    (void)read(fd, &value, sizeof(value));
+    (void)fd.Read(&value, sizeof(value));
 
     if (pending.exchange(false))
         callback();

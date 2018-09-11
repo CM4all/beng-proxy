@@ -34,6 +34,7 @@
 #define BENG_PROXY_NOTIFY_HXX
 
 #include "event/SocketEvent.hxx"
+#include "io/UniqueFileDescriptor.hxx"
 #include "util/BindMethod.hxx"
 
 #include <atomic>
@@ -45,7 +46,7 @@ class Notify {
     typedef BoundMethod<void()> Callback;
     Callback callback;
 
-    const int fd;
+    UniqueFileDescriptor fd;
     SocketEvent event;
 
     std::atomic_bool pending;
@@ -65,7 +66,7 @@ public:
     void Signal() {
         if (!pending.exchange(true)) {
             static constexpr uint64_t value = 1;
-            (void)write(fd, &value, sizeof(value));
+            (void)fd.Write(&value, sizeof(value));
         }
     }
 
