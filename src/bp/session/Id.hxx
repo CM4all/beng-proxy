@@ -37,10 +37,10 @@
 #include "util/Compiler.h"
 
 #include <array>
+#include <algorithm>
 
 #include <stddef.h>
 #include <stdint.h>
-#include <string.h> /* for memcmp() */
 
 /**
  * The session id data structure.
@@ -51,10 +51,9 @@ class SessionId {
 public:
     gcc_pure
     bool IsDefined() const noexcept {
-        for (auto i : data)
-            if (i != 0)
-                return true;
-        return false;
+        return !std::all_of(data.begin(), data.end(), [](auto i){
+                return i == 0;
+            });
     }
 
     void Clear() noexcept {
@@ -71,7 +70,7 @@ public:
 
     gcc_pure
     bool operator==(const SessionId &other) const noexcept {
-        return memcmp(this, &other, sizeof(other)) == 0;
+        return std::equal(data.begin(), data.end(), other.data.begin());
     }
 
     gcc_pure

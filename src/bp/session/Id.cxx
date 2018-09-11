@@ -35,6 +35,7 @@
 #include "util/HexFormat.h"
 
 #include <assert.h>
+#include <string.h>
 #include <stdlib.h>
 
 void
@@ -78,7 +79,7 @@ SessionId::Parse(const char *p) noexcept
     std::array<char, segment_size + 1> segment;
     segment.back() = 0;
     for (auto &i : data) {
-        memcpy(&segment.front(), p, segment_size);
+        std::copy_n(p, segment_size, segment.begin());
         p += segment_size;
         char *endptr;
         i = strtoul(&segment.front(), &endptr, 16);
