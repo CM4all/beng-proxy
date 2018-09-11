@@ -205,7 +205,7 @@ Request::MakeSession()
 
     if (args == nullptr)
         args = strmap_new(&pool);
-    args->Set("session", session_id.Format(session_id_string));
+    args->Set("session", session_id_string = session_id.Format());
 
     return SessionLease(session);
 }

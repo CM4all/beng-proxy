@@ -85,7 +85,7 @@ struct Request final : HttpResponseHandler, DelegateHandler,
     const char *session_cookie;
 
     SessionId session_id;
-    struct session_id_string session_id_string;
+    StringBuffer<sizeof(SessionId) * 2 + 1> session_id_string;
     bool send_session_cookie = false;
 
     /**

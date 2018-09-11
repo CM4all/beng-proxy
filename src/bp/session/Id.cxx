@@ -89,15 +89,17 @@ SessionId::Parse(const char *p) noexcept
     return true;
 }
 
-const char *
-SessionId::Format(struct session_id_string &string) const noexcept
+StringBuffer<sizeof(SessionId::data) * 2 + 1>
+SessionId::Format() const noexcept
 {
-    char *p = string.buffer;
+    StringBuffer<sizeof(data) * 2 + 1> result;
+
+    char *p = result.data();
     for (const auto i : data) {
         format_uint64_hex_fixed(p, i);
         p += sizeof(i) * 2;
     }
 
     *p = 0;
-    return string.buffer;
+    return result;
 }

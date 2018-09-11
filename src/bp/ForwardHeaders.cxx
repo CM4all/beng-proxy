@@ -521,12 +521,11 @@ forward_request_headers(struct pool &pool, const StringMap &src,
 
 #ifndef NDEBUG
     if (session != nullptr && CheckLogLevel(10)) {
-        struct session_id_string s;
         LogFormat(10, "forward_request_headers",
                   "remote_host='%s' "
                   "host='%s' uri='%s' session=%s user='%s' cookie='%s'",
                   remote_host, host_and_port, uri,
-                  session->parent.id.Format(s),
+                  session->parent.id.Format().c_str(),
                   session->user.c_str(),
                   host_and_port != nullptr && uri != nullptr
                   ? cookie_jar_http_header_value(session->cookies,

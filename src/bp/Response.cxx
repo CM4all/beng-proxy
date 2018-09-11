@@ -495,7 +495,7 @@ Request::GenerateSetCookie(GrowingBuffer &headers)
         header_write_begin(headers, "set-cookie");
         headers.Write(session_cookie);
         headers.Write("=", 1);
-        headers.Write(session_id.Format(session_id_string));
+        headers.Write(session_id.Format());
         headers.Write("; HttpOnly; Path=");
 
         const char *cookie_path = translate.response->cookie_path;

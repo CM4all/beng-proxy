@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2018 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -33,6 +33,7 @@
 #ifndef BENG_PROXY_SESSION_ID_H
 #define BENG_PROXY_SESSION_ID_H
 
+#include "util/StringBuffer.hxx"
 #include "util/Compiler.h"
 
 #include <array>
@@ -99,17 +100,8 @@ public:
      */
     bool Parse(const char *p) noexcept;
 
-    const char *Format(struct session_id_string &buffer) const noexcept;
-};
-
-/**
- * Buffer for the function session_id_format().
- */
-struct session_id_string {
-    /**
-     * Two hex characters per byte, plus the terminating zero.
-     */
-    char buffer[sizeof(SessionId) * 2 + 1];
+    gcc_pure
+    StringBuffer<sizeof(data) * 2 + 1> Format() const noexcept;
 };
 
 #endif

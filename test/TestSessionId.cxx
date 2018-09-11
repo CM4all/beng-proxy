@@ -60,8 +60,7 @@ TEST(SessionIdTest, FormatAndParse)
     a.Generate();
     EXPECT_TRUE(a.IsDefined());
 
-    struct session_id_string buffer;
-    const char *s = a.Format(buffer);
+    const auto s = a.Format();
     EXPECT_EQ(strlen(s), sizeof(a) * 2);
 
     SessionId b;
