@@ -36,7 +36,7 @@
 #include "pool/pool.hxx"
 #include "pool/Holder.hxx"
 #include "system/Error.hxx"
-#include "system/fd_util.h"
+#include "io/FileDescriptor.hxx"
 #include "event/SocketEvent.hxx"
 #include "event/TimerEvent.hxx"
 #include "util/Cancellable.hxx"
@@ -870,7 +870,7 @@ NfsClient::SocketEventCallback(unsigned events)
             /* until the mount is finished, the NFS client may use
                various sockets, therefore make sure the close-on-exec
                flag is set on all of them */
-            fd_set_cloexec(nfs_get_fd(context), true);
+            FileDescriptor(nfs_get_fd(context)).EnableCloseOnExec();
 
         AddEvent();
     }
@@ -937,7 +937,7 @@ NfsClient::Mount(const char *server, const char *exportname,
         return false;
     }
 
-    fd_set_cloexec(nfs_get_fd(context), true);
+    FileDescriptor(nfs_get_fd(context)).EnableCloseOnExec();
 
     AddEvent();
 
