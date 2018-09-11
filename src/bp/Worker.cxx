@@ -126,8 +126,7 @@ BpInstance::SpawnWorker()
         distribute_socket = global_control_handler_add_fd(this);
 
     struct crash crash;
-    if (!crash_init(&crash))
-        return -1;
+    crash_init(&crash);
 
     pid_t pid = fork();
     if (pid < 0) {

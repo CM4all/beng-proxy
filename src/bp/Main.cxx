@@ -306,10 +306,7 @@ try {
         });
     instance.spawn_service = instance.spawn;
 
-    if (!crash_global_init()) {
-        fprintf(stderr, "crash_global_init() failed\n");
-        return EXIT_FAILURE;
-    }
+    crash_global_init();
 
     session_manager_init(instance.event_loop,
                          instance.config.session_idle_timeout,

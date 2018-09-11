@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2018 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -56,16 +56,22 @@ struct crash {
 
 extern struct crash global_crash;
 
-bool
+/**
+ * Throws on error.
+ */
+void
 crash_init(struct crash *crash);
 
 void
 crash_deinit(struct crash *crash) noexcept;
 
-static inline bool
+/**
+ * Throws on error.
+ */
+static inline void
 crash_global_init()
 {
-    return crash_init(&global_crash);
+    crash_init(&global_crash);
 }
 
 static inline void

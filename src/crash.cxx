@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2018 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -31,6 +31,7 @@
  */
 
 #include "crash.hxx"
+#include "system/Error.hxx"
 
 #include <new>
 
@@ -38,7 +39,7 @@
 
 struct crash global_crash;
 
-bool
+void
 crash_init(struct crash *crash)
 {
     assert(crash != nullptr);
@@ -48,10 +49,9 @@ crash_init(struct crash *crash)
              MAP_ANONYMOUS|MAP_SHARED,
              -1, 0);
     if (p == (struct crash_shm *)-1)
-        return false;
+        throw MakeErrno("mmap() failed");
 
     crash->shm = new(p) crash_shm();
-    return true;
 }
 
 void
