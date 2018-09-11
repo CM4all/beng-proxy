@@ -47,7 +47,7 @@
 struct crash_shm {
     std::atomic_uint counter;
 
-    crash_shm():counter(0) {}
+    crash_shm() noexcept:counter(0) {}
 };
 
 struct crash {
@@ -60,16 +60,16 @@ bool
 crash_init(struct crash *crash);
 
 void
-crash_deinit(struct crash *crash);
+crash_deinit(struct crash *crash) noexcept;
 
 static inline bool
-crash_global_init(void)
+crash_global_init()
 {
     return crash_init(&global_crash);
 }
 
 static inline void
-crash_global_deinit(void)
+crash_global_deinit() noexcept
 {
     crash_deinit(&global_crash);
 }
@@ -79,7 +79,7 @@ crash_global_deinit(void)
  */
 gcc_pure
 static inline bool
-crash_is_safe(struct crash *crash)
+crash_is_safe(struct crash *crash) noexcept
 {
     assert(crash != nullptr);
     assert(crash->shm != nullptr);
@@ -92,7 +92,7 @@ crash_is_safe(struct crash *crash)
  * crash.
  */
 static inline void
-crash_unsafe_enter(void)
+crash_unsafe_enter(void) noexcept
 {
     assert(global_crash.shm != nullptr);
 
@@ -104,7 +104,7 @@ crash_unsafe_enter(void)
  * crash.
  */
 static inline void
-crash_unsafe_leave(void)
+crash_unsafe_leave() noexcept
 {
     assert(global_crash.shm != nullptr);
     assert(!crash_is_safe(&global_crash));
@@ -117,17 +117,17 @@ crash_unsafe_leave(void)
  */
 gcc_pure
 static inline bool
-crash_in_unsafe(void)
+crash_in_unsafe() noexcept
 {
     return !crash_is_safe(&global_crash);
 }
 
 struct ScopeCrashUnsafe {
-    ScopeCrashUnsafe() {
+    ScopeCrashUnsafe() noexcept {
         crash_unsafe_enter();
     }
 
-    ~ScopeCrashUnsafe() {
+    ~ScopeCrashUnsafe() noexcept {
         crash_unsafe_leave();
     }
 };

@@ -55,7 +55,7 @@ crash_init(struct crash *crash)
 }
 
 void
-crash_deinit(struct crash *crash)
+crash_deinit(struct crash *crash) noexcept
 {
     assert(crash != nullptr);
     assert(crash->shm != nullptr);
