@@ -74,10 +74,11 @@ SessionId::Parse(const char *p)
 
     char segment[9];
     segment[8] = 0;
-    for (unsigned i = 0; i < SESSION_ID_WORDS; ++i) {
-        memcpy(segment, p + i * 8, 8);
+    for (auto &i : data) {
+        memcpy(segment, p, 8);
+        p += 8;
         char *endptr;
-        data[i] = strtoul(segment, &endptr, 16);
+        i = strtoul(segment, &endptr, 16);
         if (endptr != segment + 8)
             return false;
     }
@@ -88,8 +89,12 @@ SessionId::Parse(const char *p)
 const char *
 SessionId::Format(struct session_id_string &string) const
 {
-    for (unsigned i = 0; i < SESSION_ID_WORDS; ++i)
-        format_uint32_hex_fixed(string.buffer + i * 8, data[i]);
-    string.buffer[sizeof(string.buffer) - 1] = 0;
+    char *p = string.buffer;
+    for (const auto i : data) {
+        format_uint32_hex_fixed(p, i);
+        p += 8;
+    }
+
+    *p = 0;
     return string.buffer;
 }
