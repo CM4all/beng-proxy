@@ -69,14 +69,15 @@ SessionId::SetClusterNode(unsigned cluster_size, unsigned cluster_node)
 bool
 SessionId::Parse(const char *p)
 {
-    if (strlen(p) != data.size() * 8)
+    if (strlen(p) != sizeof(data) * 2)
         return false;
 
-    std::array<char, 9> segment;
+    constexpr size_t segment_size = sizeof(data.front()) * 2;
+    std::array<char, segment_size + 1> segment;
     segment.back() = 0;
     for (auto &i : data) {
-        memcpy(&segment.front(), p, 8);
-        p += 8;
+        memcpy(&segment.front(), p, segment_size);
+        p += segment_size;
         char *endptr;
         i = strtoul(&segment.front(), &endptr, 16);
         if (endptr != &segment.back())
@@ -92,7 +93,7 @@ SessionId::Format(struct session_id_string &string) const
     char *p = string.buffer;
     for (const auto i : data) {
         format_uint32_hex_fixed(p, i);
-        p += 8;
+        p += sizeof(i) * 2;
     }
 
     *p = 0;
