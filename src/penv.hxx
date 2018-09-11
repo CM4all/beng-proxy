@@ -33,7 +33,7 @@
 #ifndef BENG_PROXY_PROCESSOR_ENV_H
 #define BENG_PROXY_PROCESSOR_ENV_H
 
-#include "session_id.hxx"
+#include "bp/session/Id.hxx"
 #include "util/StringView.hxx"
 
 class EventLoop;

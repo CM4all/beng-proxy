@@ -42,7 +42,7 @@
 #include "delegate/Handler.hxx"
 #include "nfs/Cache.hxx"
 #include "penv.hxx"
-#include "session.hxx"
+#include "session/Session.hxx"
 #include "widget/View.hxx"
 #include "HttpResponseHandler.hxx"
 #include "io/Logger.hxx"

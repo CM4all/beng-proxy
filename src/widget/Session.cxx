@@ -31,7 +31,7 @@
  */
 
 #include "Widget.hxx"
-#include "session.hxx"
+#include "bp/session/Session.hxx"
 #include "pool/tpool.hxx"
 
 #include <assert.h>

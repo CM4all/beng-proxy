@@ -38,12 +38,12 @@
 #include "widget/Class.hxx"
 #include "bp/XmlProcessor.hxx"
 #include "penv.hxx"
-#include "session_manager.hxx"
+#include "bp/session/Manager.hxx"
+#include "bp/session/Session.hxx"
 #include "widget/Inline.hxx"
 #include "widget/Registry.hxx"
 #include "bp/Global.hxx"
 #include "crash.hxx"
-#include "session.hxx"
 
 #include <stdlib.h>
 #include <stdio.h>

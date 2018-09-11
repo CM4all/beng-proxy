@@ -51,7 +51,7 @@
 #include "istream/istream_pause.hxx"
 #include "istream/istream_string.hxx"
 #include "istream/TimeoutIstream.hxx"
-#include "session.hxx"
+#include "bp/session/Session.hxx"
 #include "pool/pool.hxx"
 #include "event/TimerEvent.hxx"
 #include "util/Cancellable.hxx"

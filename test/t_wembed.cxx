@@ -42,7 +42,7 @@
 #include "istream/istream_iconv.hxx"
 #include "pool/pool.hxx"
 #include "PInstance.hxx"
-#include "session.hxx"
+#include "bp/session/Session.hxx"
 #include "util/Cancellable.hxx"
 
 #include <stdlib.h>

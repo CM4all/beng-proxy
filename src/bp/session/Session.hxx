@@ -37,7 +37,7 @@
 #ifndef BENG_PROXY_SESSION_HXX
 #define BENG_PROXY_SESSION_HXX
 
-#include "session_id.hxx"
+#include "Id.hxx"
 #include "cookie_jar.hxx"
 #include "shm/String.hxx"
 #include "util/ConstBuffer.hxx"

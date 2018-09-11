@@ -44,7 +44,7 @@
 #include "nfs/RequestHandler.hxx"
 #include "Request.hxx"
 #include "args.hxx"
-#include "session.hxx"
+#include "session/Session.hxx"
 #include "ExternalSession.hxx"
 #include "suffix_registry.hxx"
 #include "address_suffix_registry.hxx"

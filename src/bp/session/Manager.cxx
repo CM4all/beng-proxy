@@ -30,8 +30,8 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "session_manager.hxx"
-#include "session.hxx"
+#include "Manager.hxx"
+#include "Session.hxx"
 #include "shm/shm.hxx"
 #include "shm/dpool.hxx"
 #include "random.hxx"

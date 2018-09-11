@@ -47,7 +47,7 @@
 #include "istream/istream_string.hxx"
 #include "istream/istream.hxx"
 #include "strmap.hxx"
-#include "session.hxx"
+#include "bp/session/Session.hxx"
 #include "pool/pool.hxx"
 #include "pool/pbuffer.hxx"
 #include "util/StringView.hxx"

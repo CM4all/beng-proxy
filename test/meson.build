@@ -315,7 +315,7 @@ test('t_header_forward', executable('t_header_forward',
   't_header_forward.cxx',
   '../src/bp/ForwardHeaders.cxx',
   '../src/random.cxx',
-  '../src/session_id.cxx',
+  '../src/bp/session/Id.cxx',
   include_directories: inc,
   dependencies: [
     gtest,

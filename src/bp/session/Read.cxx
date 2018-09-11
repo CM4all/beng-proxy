@@ -30,9 +30,9 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "session_read.hxx"
-#include "session_file.h"
-#include "session.hxx"
+#include "Read.hxx"
+#include "File.hxx"
+#include "Session.hxx"
 #include "cookie_jar.hxx"
 #include "shm/dpool.hxx"
 

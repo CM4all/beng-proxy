@@ -31,7 +31,7 @@
  */
 
 #include "penv.hxx"
-#include "session.hxx"
+#include "bp/session/Session.hxx"
 
 SessionLease
 processor_env::GetSession() const

@@ -30,7 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "session.hxx"
+#include "Session.hxx"
 #include "cookie_jar.hxx"
 #include "http_address.hxx"
 #include "shm/dpool.hxx"

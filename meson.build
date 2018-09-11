@@ -750,15 +750,15 @@ delegate_client_dep = declare_dependency(
 )
 
 session = static_library('session',
-  'src/session.cxx',
-  'src/session_id.cxx',
-  'src/session_manager.cxx',
-  'src/session_write.cxx',
-  'src/session_read.cxx',
-  'src/session_save.cxx',
+  'src/bp/session/Session.cxx',
+  'src/bp/session/Id.cxx',
+  'src/bp/session/Manager.cxx',
+  'src/bp/session/Write.cxx',
+  'src/bp/session/Read.cxx',
+  'src/bp/session/Save.cxx',
+  'src/bp/session/DHttpAddress.cxx',
+  'src/bp/session/DAddressList.cxx',
   'src/bp/ExternalSession.cxx',
-  'src/dhttp_address.cxx',
-  'src/daddress_list.cxx',
   include_directories: inc,
 )
 session_dep = declare_dependency(link_with: session,

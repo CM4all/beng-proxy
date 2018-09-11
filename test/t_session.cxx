@@ -30,9 +30,9 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "session.hxx"
-#include "session_manager.hxx"
+#include "bp/session/Session.hxx"
 #include "cookie_jar.hxx"
+#include "bp/session/Manager.hxx"
 #include "shm/dpool.hxx"
 #include "crash.hxx"
 #include "event/Loop.hxx"

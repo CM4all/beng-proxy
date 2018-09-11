@@ -34,7 +34,7 @@
 #include "tconstruct.hxx"
 #include "widget/RewriteUri.hxx"
 #include "http_address.hxx"
-#include "session.hxx"
+#include "bp/session/Session.hxx"
 #include "widget/Widget.hxx"
 #include "widget/Class.hxx"
 #include "widget/Resolver.hxx"

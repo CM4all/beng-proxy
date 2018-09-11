@@ -34,7 +34,7 @@
 #include "Error.hxx"
 #include "Class.hxx"
 #include "Ref.hxx"
-#include "session.hxx"
+#include "bp/session/Session.hxx"
 #include "penv.hxx"
 #include "uri/Dissect.hxx"
 #include "puri_relative.hxx"

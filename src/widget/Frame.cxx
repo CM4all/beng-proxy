@@ -41,7 +41,7 @@
 #include "penv.hxx"
 #include "HttpResponseHandler.hxx"
 #include "istream/istream.hxx"
-#include "session.hxx"
+#include "bp/session/Session.hxx"
 #include "util/Exception.hxx"
 #include "util/StringFormat.hxx"
 

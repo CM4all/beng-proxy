@@ -49,7 +49,7 @@
 #include "widget/Ref.hxx"
 #include "widget/Class.hxx"
 #include "widget/Dump.hxx"
-#include "session.hxx"
+#include "session/Session.hxx"
 #include "GrowingBuffer.hxx"
 #include "ResourceLoader.hxx"
 #include "resource_tag.hxx"

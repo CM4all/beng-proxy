@@ -41,7 +41,7 @@
 #include "http_cache.hxx"
 #include "fcache.hxx"
 #include "nfs/Cache.hxx"
-#include "session_manager.hxx"
+#include "session/Manager.hxx"
 #include "AllocatorStats.hxx"
 #include "beng-proxy/control.h"
 #include "util/ByteOrder.hxx"

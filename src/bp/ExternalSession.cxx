@@ -31,8 +31,8 @@
  */
 
 #include "ExternalSession.hxx"
-#include "session.hxx"
-#include "bp/Instance.hxx"
+#include "session/Session.hxx"
+#include "Instance.hxx"
 #include "http_address.hxx"
 #include "http_request.hxx"
 #include "http_headers.hxx"

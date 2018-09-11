@@ -35,7 +35,7 @@
 #include "Control.hxx"
 #include "Instance.hxx"
 #include "http_server/http_server.hxx"
-#include "session_manager.hxx"
+#include "session/Manager.hxx"
 #include "spawn/Client.hxx"
 #include "event/Duration.hxx"
 #include "event/net/ServerSocket.hxx"

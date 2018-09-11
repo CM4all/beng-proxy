@@ -30,12 +30,12 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "session_save.hxx"
-#include "session_write.hxx"
-#include "session_read.hxx"
-#include "session_file.h"
-#include "session_manager.hxx"
-#include "session.hxx"
+#include "Save.hxx"
+#include "Write.hxx"
+#include "Read.hxx"
+#include "File.hxx"
+#include "Manager.hxx"
+#include "Session.hxx"
 #include "shm/dpool.hxx"
 #include "io/Logger.hxx"
 
