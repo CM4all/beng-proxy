@@ -89,7 +89,7 @@ public:
      * by calculating the modulo.
      */
     gcc_pure
-    uint32_t GetClusterHash() const {
+    auto GetClusterHash() const {
         return data.back();
    }
 

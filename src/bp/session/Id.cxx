@@ -44,7 +44,7 @@ SessionId::Generate()
         i = random_uint32();
 }
 
-static uint32_t
+static auto
 ToClusterNode(uint32_t id, unsigned cluster_size, unsigned cluster_node)
 {
     uint32_t remainder = id % (uint32_t)cluster_size;
@@ -61,8 +61,8 @@ SessionId::SetClusterNode(unsigned cluster_size, unsigned cluster_node)
     assert(cluster_size > 0);
     assert(cluster_node < cluster_size);
 
-    uint32_t old_hash = GetClusterHash();
-    uint32_t new_hash = ToClusterNode(old_hash, cluster_size, cluster_node);
+    const auto old_hash = GetClusterHash();
+    const auto new_hash = ToClusterNode(old_hash, cluster_size, cluster_node);
     data.back() = new_hash;
 }
 
