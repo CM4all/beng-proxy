@@ -34,7 +34,6 @@
 #include "Handler.hxx"
 #include "Protocol.hxx"
 #include "please.hxx"
-#include "system/fd_util.h"
 #include "pool/pool.hxx"
 #include "pool/Holder.hxx"
 #include "event/SocketEvent.hxx"
@@ -202,7 +201,7 @@ DelegateClient::TryRead()
     iov.iov_base = &header;
     iov.iov_len = sizeof(header);
 
-    nbytes = recvmsg_cloexec(s.Get(), &msg, 0);
+    nbytes = recvmsg(s.Get(), &msg, MSG_CMSG_CLOEXEC);
     if (nbytes < 0) {
         DestroyError(std::make_exception_ptr(MakeErrno("recvmsg() failed")));
         return;
