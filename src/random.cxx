@@ -35,7 +35,7 @@
 
 #include <random>
 
-typedef std::mt19937 Prng;
+typedef std::mt19937_64 Prng;
 static Prng prng;
 
 template<typename T>
@@ -49,7 +49,7 @@ obtain_entropy(T *dest, size_t max)
 void
 random_seed()
 {
-    uint32_t seed[Prng::state_size];
+    uint32_t seed[Prng::state_size * 2];
     auto n = obtain_entropy(seed, Prng::state_size);
     if (n == 0)
         return;
@@ -58,8 +58,8 @@ random_seed()
     prng.seed(ss);
 }
 
-uint32_t
-random_uint32()
+uint64_t
+random_uint64()
 {
     return prng();
 }

@@ -46,15 +46,9 @@ void
 random_seed();
 
 /**
- * Generate a new pseudo-random 32 bit integer.
+ * Generate a new pseudo-random 64 bit integer.
  */
-uint32_t
-random_uint32();
-
-static inline uint64_t
-random_uint64()
-{
-    return (uint64_t)random_uint32() | (uint64_t)random_uint32() << 32;
-}
+uint64_t
+random_uint64();
 
 #endif
