@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2018 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -40,6 +40,7 @@
 #include "util/Compiler.h"
 
 #include <chrono>
+#include <utility>
 
 struct Session;
 class EventLoop;
@@ -125,5 +126,20 @@ session_new();
 bool
 session_manager_visit(bool (*callback)(const Session *session,
                                        void *ctx), void *ctx);
+
+class ScopeSessionManagerInit {
+public:
+    template<typename... Args>
+    ScopeSessionManagerInit(Args&&... args) {
+        session_manager_init(std::forward<Args>(args)...);
+    }
+
+    ~ScopeSessionManagerInit() noexcept {
+        session_manager_deinit();
+    }
+
+    ScopeSessionManagerInit(const ScopeSessionManagerInit &) = delete;
+    ScopeSessionManagerInit &operator=(const ScopeSessionManagerInit &) = delete;
+};
 
 #endif

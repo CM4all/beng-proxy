@@ -48,8 +48,8 @@ TEST(SessionTest, Basic)
     const ScopeCrashGlobalInit crash_init;
     EventLoop event_loop;
 
-    session_manager_init(event_loop, std::chrono::minutes(30), 0, 0);
-    session_manager_event_del();
+    const ScopeSessionManagerInit sm_init(event_loop, std::chrono::minutes(30),
+                                          0, 0);
 
     int fds[2];
     (void)pipe(fds);
@@ -65,8 +65,6 @@ TEST(SessionTest, Basic)
         (void)write(fds[1], &session->id, sizeof(session->id));
         session_put(session);
     } else {
-        session_manager_event_add();
-
         close(fds[1]);
 
         int status;
@@ -82,6 +80,4 @@ TEST(SessionTest, Basic)
         ASSERT_TRUE(session);
         ASSERT_EQ(session->id, session_id);
     }
-
-    session_manager_deinit();
 }

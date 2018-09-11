@@ -269,7 +269,9 @@ TEST(WidgetHttpTest, CookieClient)
     struct pool *pool = instance.root_pool;
 
     const ScopeCrashGlobalInit crash_init;
-    session_manager_init(instance.event_loop, std::chrono::minutes(30), 0, 0);
+    const ScopeSessionManagerInit sm_init(instance.event_loop,
+                                          std::chrono::minutes(30),
+                                          0, 0);
 
     const auto address = MakeHttpAddress("/bar/").Host("foo");
     WidgetClass cls;
@@ -304,6 +306,4 @@ TEST(WidgetHttpTest, CookieClient)
         assert(got_request);
         assert(got_response);
     }
-
-    session_manager_deinit();
 }
