@@ -75,6 +75,11 @@ public:
     }
 
     gcc_pure
+    bool operator!=(const SessionId &other) const {
+        return !(*this == other);
+    }
+
+    gcc_pure
     size_t Hash() const {
         return data[0];
     }
