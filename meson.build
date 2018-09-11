@@ -189,7 +189,6 @@ subdir('libcommon/src/system')
 system2 = static_library(
   'system2',
   'src/system/SetupProcess.cxx',
-  'src/system/fd_util.c',
   'src/system/Isolate.cxx',
   'src/system/urandom.cxx',
   include_directories: inc,

@@ -34,7 +34,6 @@
 #include "spawn/Interface.hxx"
 #include "spawn/Prepared.hxx"
 #include "spawn/ExitListener.hxx"
-#include "system/fd_util.h"
 #include "istream/UnusedPtr.hxx"
 #include "istream/istream.hxx"
 #include "istream/Pointer.hxx"
