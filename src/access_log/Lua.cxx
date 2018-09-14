@@ -140,7 +140,7 @@ try {
             Lua::SetTable(L, -3, "logger_client", buffer);
     }
 
-    if (d.valid_timestamp)
+    if (d.HasTimestamp())
         Lua::SetTable(L, -3, "timestamp",
                       std::chrono::duration_cast<std::chrono::duration<double>>(d.timestamp.time_since_epoch()).count());
 
@@ -156,7 +156,7 @@ try {
     if (d.forwarded_to != nullptr)
         Lua::SetTable(L, -3, "forwarded_to", d.forwarded_to);
 
-    if (d.valid_http_method)
+    if (d.HasHttpMethod())
         Lua::SetTable(L, -3, "http_method", http_method_to_string(d.http_method));
 
     if (d.http_uri != nullptr)
@@ -171,7 +171,7 @@ try {
     if (d.message != nullptr)
         Lua::SetTable(L, -3, "message", d.message);
 
-    if (d.valid_http_status)
+    if (d.HasHttpStatus())
         Lua::SetTable(L, -3, "http_status", int(d.http_status));
 
     if (d.valid_length)

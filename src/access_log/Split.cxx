@@ -68,7 +68,7 @@ split_time_t(time_t t)
 static const char *
 expand_timestamp(const char *fmt, const Net::Log::Datagram &d)
 {
-    if (!d.valid_timestamp)
+    if (!d.HasTimestamp())
         return nullptr;
 
     time_t t = std::chrono::system_clock::to_time_t(Net::Log::ToSystem(d.timestamp));

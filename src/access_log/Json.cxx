@@ -55,7 +55,7 @@ Dump(JsonWriter::Sink sink, const ReceivedAccessLogDatagram &d)
             o.AddMember("logger_client", buffer);
     }
 
-    if (d.valid_timestamp) {
+    if (d.HasTimestamp()) {
         time_t t = std::chrono::system_clock::to_time_t(Net::Log::ToSystem(d.timestamp));
         char buffer[64];
         strftime(buffer, sizeof(buffer), "%FT%TZ", gmtime(&t));
@@ -74,7 +74,7 @@ Dump(JsonWriter::Sink sink, const ReceivedAccessLogDatagram &d)
     if (d.forwarded_to != nullptr)
         o.AddMember("forwarded_to", d.forwarded_to);
 
-    if (d.valid_http_method &&
+    if (d.HasHttpMethod() &&
         http_method_is_valid(d.http_method))
         o.AddMember("method", http_method_to_string(d.http_method));
 
@@ -90,7 +90,7 @@ Dump(JsonWriter::Sink sink, const ReceivedAccessLogDatagram &d)
     if (d.message != nullptr)
         o.AddMember("message", d.message);
 
-    if (d.valid_http_status)
+    if (d.HasHttpStatus())
         o.AddMember("status", http_status_to_string(d.http_status));
 
     if (d.valid_length)
