@@ -128,9 +128,9 @@ HttpServerLogLevel(std::exception_ptr e)
  */
 
 inline void
-BpConnection::PerRequest::Begin()
+BpConnection::PerRequest::Begin(std::chrono::steady_clock::time_point now)
 {
-    start_time = std::chrono::steady_clock::now();
+    start_time = now;
     site_name = nullptr;
 }
 
@@ -139,7 +139,7 @@ BpConnection::RequestHeadersFinished(const HttpServerRequest &) noexcept
 {
     ++instance.http_request_counter;
 
-    per_request.Begin();
+    per_request.Begin(instance.event_loop.SteadyNow());
 }
 
 void
@@ -161,7 +161,7 @@ BpConnection::LogHttpRequest(HttpServerRequest &request,
                                  request.headers.Get("user-agent"),
                                  status, length,
                                  bytes_received, bytes_sent,
-                                 per_request.GetDuration());
+                                 per_request.GetDuration(instance.event_loop.SteadyNow()));
 }
 
 void

@@ -212,9 +212,10 @@ SendResponse(HttpServerRequest &request,
  */
 
 inline void
-LbHttpConnection::PerRequest::Begin(const HttpServerRequest &request)
+LbHttpConnection::PerRequest::Begin(const HttpServerRequest &request,
+                                    std::chrono::steady_clock::time_point now)
 {
-    start_time = std::chrono::steady_clock::now();
+    start_time = now;
     host = request.headers.Get("host");
     x_forwarded_for = request.headers.Get("x-forwarded-for");
     referer = request.headers.Get("referer");
@@ -229,7 +230,7 @@ LbHttpConnection::RequestHeadersFinished(const HttpServerRequest &request) noexc
 {
     ++instance.http_request_counter;
 
-    per_request.Begin(request);
+    per_request.Begin(request, instance.event_loop.SteadyNow());
 }
 
 void
@@ -314,7 +315,7 @@ LbHttpConnection::LogHttpRequest(HttpServerRequest &request,
                                  per_request.user_agent,
                                  status, length,
                                  bytes_received, bytes_sent,
-                                 per_request.GetDuration());
+                                 per_request.GetDuration(instance.event_loop.SteadyNow()));
 }
 
 void

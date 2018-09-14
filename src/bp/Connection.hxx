@@ -91,10 +91,10 @@ struct BpConnection final
          */
         const char *site_name;
 
-        void Begin();
+        void Begin(std::chrono::steady_clock::time_point now);
 
-        std::chrono::steady_clock::duration GetDuration() const {
-            return std::chrono::steady_clock::now() - start_time;
+        std::chrono::steady_clock::duration GetDuration(std::chrono::steady_clock::time_point now) const {
+            return now - start_time;
         }
     } per_request;
 

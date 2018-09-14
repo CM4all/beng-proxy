@@ -136,7 +136,8 @@ struct LbHttpConnection final
          */
         const char *forwarded_to;
 
-        void Begin(const HttpServerRequest &request);
+        void Begin(const HttpServerRequest &request,
+                   std::chrono::steady_clock::time_point now);
 
         constexpr const char *GetCanonicalHost() const {
             return canonical_host != nullptr
@@ -144,8 +145,8 @@ struct LbHttpConnection final
                 : host;
         }
 
-        std::chrono::steady_clock::duration GetDuration() const {
-            return std::chrono::steady_clock::now() - start_time;
+        std::chrono::steady_clock::duration GetDuration(std::chrono::steady_clock::time_point now) const {
+            return now - start_time;
         }
     } per_request;
 
