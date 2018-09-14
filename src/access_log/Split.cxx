@@ -71,7 +71,7 @@ expand_timestamp(const char *fmt, const Net::Log::Datagram &d)
     if (!d.valid_timestamp)
         return nullptr;
 
-    time_t t = (time_t)(d.timestamp / 1000000);
+    time_t t = std::chrono::system_clock::to_time_t(Net::Log::ToSystem(d.timestamp));
     static char buffer[64];
     strftime(buffer, sizeof(buffer), fmt, split_time_t(t));
     return buffer;

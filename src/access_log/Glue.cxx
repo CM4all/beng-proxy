@@ -176,7 +176,7 @@ AccessLogGlue::Log(HttpServerRequest &request, const char *site,
         }
     }
 
-    Net::Log::Datagram d(std::chrono::system_clock::now(),
+    Net::Log::Datagram d(Net::Log::FromSystem(std::chrono::system_clock::now()),
                          request.method, request.uri,
                          remote_host,
                          host,
@@ -184,7 +184,7 @@ AccessLogGlue::Log(HttpServerRequest &request, const char *site,
                          referer, user_agent,
                          status, content_length,
                          bytes_received, bytes_sent,
-                         duration);
+                         std::chrono::duration_cast<Net::Log::Duration>(duration));
     d.forwarded_to = forwarded_to;
 
     Log(d);

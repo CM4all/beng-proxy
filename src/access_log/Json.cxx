@@ -56,7 +56,7 @@ Dump(JsonWriter::Sink sink, const ReceivedAccessLogDatagram &d)
     }
 
     if (d.valid_timestamp) {
-        time_t t = d.timestamp / 1000000;
+        time_t t = std::chrono::system_clock::to_time_t(Net::Log::ToSystem(d.timestamp));
         char buffer[64];
         strftime(buffer, sizeof(buffer), "%FT%TZ", gmtime(&t));
         o.AddMember("time", buffer);
@@ -102,7 +102,7 @@ Dump(JsonWriter::Sink sink, const ReceivedAccessLogDatagram &d)
     }
 
     if (d.valid_duration)
-        o.AddMember("duration", d.duration * 1e-6);
+        o.AddMember("duration", std::chrono::duration_cast<std::chrono::duration<double>>(d.duration).count());
 
     if (d.type != Net::Log::Type::UNSPECIFIED) {
         const char *type = ToString(d.type);

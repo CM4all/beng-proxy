@@ -141,7 +141,8 @@ try {
     }
 
     if (d.valid_timestamp)
-        Lua::SetTable(L, -3, "timestamp", d.timestamp / 1000000.);
+        Lua::SetTable(L, -3, "timestamp",
+                      std::chrono::duration_cast<std::chrono::duration<double>>(d.timestamp.time_since_epoch()).count());
 
     if (d.remote_host != nullptr)
         Lua::SetTable(L, -3, "remote_host", d.remote_host);
@@ -182,7 +183,8 @@ try {
     }
 
     if (d.valid_duration)
-        Lua::SetTable(L, -3, "duration", d.duration / 1000000.);
+        Lua::SetTable(L, -3, "duration",
+                      std::chrono::duration_cast<std::chrono::duration<double>>(d.duration).count());
 
     if (const char *type = TypeToString(d.type))
         Lua::SetTable(L, -3, "type", type);
