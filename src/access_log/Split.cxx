@@ -37,6 +37,7 @@
 
 #include "Server.hxx"
 #include "net/log/OneLine.hxx"
+#include "time/Convert.hxx"
 #include "util/ConstBuffer.hxx"
 
 #include <sys/stat.h>
@@ -59,10 +60,12 @@ string_equals(const char *a, size_t a_length, const char *b)
     return a_length == b_length && memcmp(a, b, a_length) == 0;
 }
 
-static struct tm *
-split_time_t(time_t t)
+static auto
+SplitTimePoint(std::chrono::system_clock::time_point tp)
 {
-    return use_local_time ? localtime(&t) : gmtime(&t);
+    return use_local_time
+        ? LocalTime(tp)
+        : GmTime(tp);
 }
 
 static const char *
@@ -71,10 +74,15 @@ expand_timestamp(const char *fmt, const Net::Log::Datagram &d)
     if (!d.HasTimestamp())
         return nullptr;
 
-    time_t t = std::chrono::system_clock::to_time_t(Net::Log::ToSystem(d.timestamp));
-    static char buffer[64];
-    strftime(buffer, sizeof(buffer), fmt, split_time_t(t));
-    return buffer;
+    try {
+        const auto tm = SplitTimePoint(Net::Log::ToSystem(d.timestamp));
+        static char buffer[64];
+        strftime(buffer, sizeof(buffer), fmt, &tm);
+        return buffer;
+    } catch (...) {
+        /* just in case GmTime() throws */
+        return nullptr;
+    }
 }
 
 static const char *

@@ -38,6 +38,7 @@
 #include "Server.hxx"
 #include "net/ToString.hxx"
 #include "net/log/String.hxx"
+#include "time/Convert.hxx"
 
 #include <functional>
 
@@ -56,10 +57,14 @@ Dump(JsonWriter::Sink sink, const ReceivedAccessLogDatagram &d)
     }
 
     if (d.HasTimestamp()) {
-        time_t t = std::chrono::system_clock::to_time_t(Net::Log::ToSystem(d.timestamp));
-        char buffer[64];
-        strftime(buffer, sizeof(buffer), "%FT%TZ", gmtime(&t));
-        o.AddMember("time", buffer);
+        try {
+            const auto tm = GmTime(Net::Log::ToSystem(d.timestamp));
+            char buffer[64];
+            strftime(buffer, sizeof(buffer), "%FT%TZ", &tm);
+            o.AddMember("time", buffer);
+        } catch (...) {
+            /* just in case GmTime() throws */
+        }
     }
 
     if (d.remote_host != nullptr)
