@@ -49,6 +49,7 @@ struct HttpCacheItem final : PoolHolder, HttpCacheDocument, CacheItem {
     const RubberAllocation body;
 
     HttpCacheItem(PoolPtr &&_pool,
+                  std::chrono::steady_clock::time_point now,
                   const HttpCacheResponseInfo &_info,
                   const StringMap &_request_headers,
                   http_status_t _status,
@@ -58,7 +59,7 @@ struct HttpCacheItem final : PoolHolder, HttpCacheDocument, CacheItem {
         :PoolHolder(std::move(_pool)),
          HttpCacheDocument(pool, _info, _request_headers,
                            _status, _response_headers),
-         CacheItem(http_cache_calc_expires(_info, vary),
+         CacheItem(now, http_cache_calc_expires(_info, vary),
                    pool_netto_size(pool) + _size),
          size(_size),
          body(std::move(_body)) {
@@ -107,6 +108,7 @@ HttpCacheHeap::Put(const char *url,
                    RubberAllocation &&a, size_t size)
 {
     auto item = NewFromPool<HttpCacheItem>(pool_new_slice(&pool, "http_cache_item", &slice_pool),
+                                           cache.SteadyNow(),
                                            info, request_headers,
                                            status, response_headers,
                                            size,

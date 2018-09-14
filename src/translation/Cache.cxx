@@ -125,9 +125,11 @@ struct TranslateCacheItem final : PoolHolder, CacheItem {
 
     UniqueRegex regex, inverse_regex;
 
-    TranslateCacheItem(PoolPtr &&_pool, std::chrono::seconds max_age)
+    TranslateCacheItem(PoolPtr &&_pool,
+                       std::chrono::steady_clock::time_point now,
+                       std::chrono::seconds max_age)
         :PoolHolder(std::move(_pool)),
-         CacheItem(max_age, 1) {}
+         CacheItem(now, max_age, 1) {}
 
     TranslateCacheItem(const TranslateCacheItem &) = delete;
 
@@ -1167,6 +1169,7 @@ tcache_store(TranslateCacheRequest &tcr, const TranslateResponse &response)
 
     auto item = NewFromPool<TranslateCacheItem>(pool_new_slice(&tcr.tcache->pool, "tcache_item",
                                                                tcr.tcache->slice_pool),
+                                                tcr.tcache->cache->SteadyNow(),
                                                 max_age);
 
     auto &pool = item->GetPool();

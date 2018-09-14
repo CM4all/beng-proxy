@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2018 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -87,8 +87,11 @@ struct CacheItem {
     CacheItem(std::chrono::steady_clock::time_point _expires, size_t _size)
         :expires(_expires), size(_size) {}
 
-    CacheItem(std::chrono::system_clock::time_point _expires, size_t _size);
-    CacheItem(std::chrono::seconds max_age, size_t _size);
+    CacheItem(std::chrono::steady_clock::time_point now,
+              std::chrono::system_clock::time_point _expires, size_t _size);
+
+    CacheItem(std::chrono::steady_clock::time_point now,
+              std::chrono::seconds max_age, size_t _size);
 
     CacheItem(const CacheItem &) = delete;
 
@@ -170,6 +173,13 @@ public:
           unsigned hashtable_capacity, size_t _max_size);
 
     ~Cache();
+
+    auto &GetEventLoop() const noexcept {
+        return cleanup_timer.GetEventLoop();
+    }
+
+    gcc_pure
+    std::chrono::steady_clock::time_point SteadyNow() const noexcept;
 
     void EventAdd();
     void EventDel();

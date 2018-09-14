@@ -48,6 +48,7 @@
 #include "AllocatorStats.hxx"
 #include "cache.hxx"
 #include "event/TimerEvent.hxx"
+#include "event/Loop.hxx"
 #include "io/Logger.hxx"
 #include "util/Cancellable.hxx"
 #include "util/LeakDetector.hxx"
@@ -233,10 +234,12 @@ struct NfsCacheItem final : PoolHolder, CacheItem {
 
     const RubberAllocation body;
 
-    NfsCacheItem(PoolPtr &&_pool, const NfsCacheStore &store,
+    NfsCacheItem(PoolPtr &&_pool,
+                 std::chrono::steady_clock::time_point now,
+                 const NfsCacheStore &store,
                  RubberAllocation &&_body) noexcept
         :PoolHolder(std::move(_pool)),
-         CacheItem(std::chrono::minutes(1), store.stat.st_size),
+         CacheItem(now, std::chrono::minutes(1), store.stat.st_size),
          stat(store.stat),
          body(std::move(_body)) {
     }
@@ -290,6 +293,7 @@ NfsCacheStore::Put(RubberAllocation &&a) noexcept
     const auto item = NewFromPool<NfsCacheItem>(PoolPtr(PoolPtr::donate,
                                                         *pool_new_libc(cache.GetPool(),
                                                                        "NfsCacheItem")),
+                                                cache.GetEventLoop().SteadyNow(),
                                                 *this,
                                                 std::move(a));
     cache.Put(p_strdup(item->GetPool(), key), *item);

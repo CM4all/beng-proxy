@@ -55,7 +55,8 @@ struct MyCacheItem final : CacheItem {
     const int value;
 
     MyCacheItem(struct pool &_pool, int _match, int _value)
-        :CacheItem(std::chrono::hours(1), 1),
+        :CacheItem(std::chrono::steady_clock::now(),
+                   std::chrono::hours(1), 1),
          pool(&_pool), match(_match), value(_value) {
     }
 

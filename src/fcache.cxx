@@ -112,12 +112,14 @@ struct FilterCacheItem final : PoolHolder, CacheItem, LeakDetector {
 
     const RubberAllocation body;
 
-    FilterCacheItem(PoolPtr &&_pool, const FilterCacheInfo &_info,
+    FilterCacheItem(PoolPtr &&_pool,
+                    std::chrono::steady_clock::time_point now,
+                    const FilterCacheInfo &_info,
                     http_status_t _status, const StringMap &_headers,
                     size_t _size, RubberAllocation &&_body,
                     std::chrono::system_clock::time_point _expires)
         :PoolHolder(std::move(_pool)),
-         CacheItem(_expires, pool_netto_size(pool) + _size),
+         CacheItem(now, _expires, pool_netto_size(pool) + _size),
          info(pool, _info),
          status(_status), headers(pool, _headers),
          size(_size), body(std::move(_body)) {
@@ -363,6 +365,7 @@ FilterCache::Put(const FilterCacheInfo &info,
         expires = info.expires;
 
     auto item = NewFromPool<FilterCacheItem>(pool_new_slice(&pool, "FilterCacheItem", &slice_pool),
+                                             cache.SteadyNow(),
                                              info,
                                              status, headers, size,
                                              std::move(a),

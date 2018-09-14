@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2018 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -31,6 +31,7 @@
  */
 
 #include "cache.hxx"
+#include "event/Loop.hxx"
 #include "util/djbhash.h"
 
 #include <assert.h>
@@ -86,6 +87,12 @@ Cache::~Cache()
 
     assert(size == 0);
     assert(sorted_items.empty());
+}
+
+std::chrono::steady_clock::time_point
+Cache::SteadyNow() const noexcept
+{
+    return GetEventLoop().SteadyNow();
 }
 
 void
@@ -148,7 +155,7 @@ Cache::Get(const char *key)
 
     CacheItem *item = &*i;
 
-    const auto now = std::chrono::steady_clock::now();
+    const auto now = SteadyNow();
 
     if (!cache_item_validate(item, now)) {
         RemoveItem(*item);
@@ -164,7 +171,7 @@ Cache::GetMatch(const char *key,
                 bool (*match)(const CacheItem *, void *),
                 void *ctx)
 {
-    const auto now = std::chrono::steady_clock::now();
+    const auto now = SteadyNow();
 
     const auto r = items.equal_range(key, CacheItem::KeyHasher,
                                      CacheItem::KeyValueEqual);
@@ -224,7 +231,7 @@ Cache::Add(const char *key, CacheItem &item)
     sorted_items.push_back(item);
 
     size += item.size;
-    item.last_accessed = std::chrono::steady_clock::now();
+    item.last_accessed = SteadyNow();
 
     cleanup_timer.Enable();
     return true;
@@ -252,7 +259,7 @@ Cache::Put(const char *key, CacheItem &item)
         RemoveItem(*i);
 
     size += item.size;
-    item.last_accessed = std::chrono::steady_clock::now();
+    item.last_accessed = SteadyNow();
 
     items.insert(item);
     sorted_items.push_back(item);
@@ -334,22 +341,25 @@ Cache::RemoveAllMatch(bool (*match)(const CacheItem *, void *), void *ctx)
 }
 
 static std::chrono::steady_clock::time_point
-ToSteady(std::chrono::system_clock::time_point t)
+ToSteady(std::chrono::steady_clock::time_point steady_now,
+         std::chrono::system_clock::time_point t)
 {
     const auto now = std::chrono::system_clock::now();
     return t > now
-        ? std::chrono::steady_clock::now() + (t - now)
+        ? steady_now + (t - now)
         : std::chrono::steady_clock::time_point();
 }
 
-CacheItem::CacheItem(std::chrono::system_clock::time_point _expires,
+CacheItem::CacheItem(std::chrono::steady_clock::time_point now,
+                     std::chrono::system_clock::time_point _expires,
                      size_t _size)
-    :CacheItem(ToSteady(_expires), _size)
+    :CacheItem(ToSteady(now, _expires), _size)
 {
 }
 
-CacheItem::CacheItem(std::chrono::seconds max_age, size_t _size)
-    :CacheItem(std::chrono::steady_clock::now() + max_age, _size)
+CacheItem::CacheItem(std::chrono::steady_clock::time_point now,
+                     std::chrono::seconds max_age, size_t _size)
+    :CacheItem(now + max_age, _size)
 {
 }
 
@@ -367,7 +377,7 @@ CacheItem::Unlock()
 bool
 Cache::ExpireCallback()
 {
-    const auto now = std::chrono::steady_clock::now();
+    const auto now = SteadyNow();
 
     for (auto i = sorted_items.begin(), end = sorted_items.end(); i != end;) {
         CacheItem &item = *i++;
