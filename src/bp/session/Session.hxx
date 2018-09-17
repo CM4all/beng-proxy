@@ -277,6 +277,7 @@ struct Session {
     void ClearLanguage();
 
     bool SetExternalManager(const HttpAddress &address,
+                            std::chrono::steady_clock::time_point now,
                             std::chrono::duration<uint16_t> keepalive);
 
     void Expire(Expiry now);

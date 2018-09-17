@@ -236,6 +236,7 @@ Session::SetLanguage(const char *_language)
 
 bool
 Session::SetExternalManager(const HttpAddress &address,
+                            std::chrono::steady_clock::time_point now,
                             std::chrono::duration<uint16_t> keepalive)
 {
     assert(crash_in_unsafe());
@@ -254,7 +255,7 @@ Session::SetExternalManager(const HttpAddress &address,
 
         /* assume the session is fresh now; postpone the first refresh
            for one period */
-        next_external_keepalive = std::chrono::steady_clock::now() + keepalive;
+        next_external_keepalive = now + keepalive;
 
         return true;
     } catch (const std::bad_alloc &) {

@@ -374,6 +374,7 @@ Request::ApplyTranslateSession(const TranslateResponse &response)
 
         if (session)
             session->parent.SetExternalManager(*response.external_session_manager,
+                                               instance.event_loop.SteadyNow(),
                                                response.external_session_keepalive);
     }
 
