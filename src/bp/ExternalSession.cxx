@@ -94,7 +94,7 @@ RefreshExternalSession(BpInstance &instance, Session &session)
         /* feature is not enabled */
         return;
 
-    const auto now = std::chrono::steady_clock::now();
+    const auto now = instance.event_loop.SteadyNow();
     if (now < session.next_external_keepalive)
         /* not yet */
         return;
