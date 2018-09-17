@@ -38,6 +38,7 @@
 #include "ssl/LoadFile.hxx"
 #include "certdb/Wildcard.hxx"
 #include "pg/CheckError.hxx"
+#include "event/Loop.hxx"
 #include "util/AllocatedString.hxx"
 
 #include <openssl/err.h>
@@ -56,7 +57,7 @@ CertCache::FlushSessionCache(long tm)
 void
 CertCache::Expire()
 {
-    const auto now = std::chrono::steady_clock::now();
+    const auto now = GetEventLoop().SteadyNow();
 
     for (auto i = map.begin(), end = map.end(); i != end;) {
         if (now >= i->second.expires) {
@@ -114,7 +115,10 @@ CertCache::Add(UniqueX509 &&cert, UniqueEVP_PKEY &&key)
 
     if (name != nullptr) {
         const std::unique_lock<std::mutex> lock(mutex);
-        map.emplace(name.c_str(), ssl_ctx);
+        map.emplace(std::piecewise_construct,
+                    std::forward_as_tuple(name.c_str()),
+                    std::forward_as_tuple(ssl_ctx,
+                                          GetEventLoop().SteadyNow()));
     }
 
     return ssl_ctx;
@@ -140,7 +144,7 @@ CertCache::GetNoWildCard(const char *host)
         const std::unique_lock<std::mutex> lock(mutex);
         auto i = map.find(host);
         if (i != map.end()) {
-            i->second.expires = std::chrono::steady_clock::now() + std::chrono::hours(24);
+            i->second.expires = GetEventLoop().SteadyNow() + std::chrono::hours(24);
             return i->second.ssl_ctx;
         }
     }
