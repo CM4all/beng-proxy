@@ -107,6 +107,10 @@ public:
         :logger("CertCache"), config(_config),
          name_cache(event_loop, _config, *this) {}
 
+    auto &GetEventLoop() const noexcept {
+        return name_cache.GetEventLoop();
+    }
+
     void LoadCaCertificate(const char *path);
 
     void Connect() {

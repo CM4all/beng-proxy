@@ -101,6 +101,10 @@ public:
                   const CertDatabaseConfig &config,
                   CertNameCacheHandler &_handler);
 
+    auto &GetEventLoop() const noexcept {
+        return update_timer.GetEventLoop();
+    }
+
     void Connect() {
         conn.Connect();
     }
