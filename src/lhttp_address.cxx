@@ -32,6 +32,7 @@
 
 #include "lhttp_address.hxx"
 #include "pool/pool.hxx"
+#include "pool/StringBuilder.hxx"
 #include "AllocatorPtr.hxx"
 #include "uri/uri_base.hxx"
 #include "uri/uri_relative.hxx"
@@ -71,17 +72,19 @@ LhttpAddress::LhttpAddress(AllocatorPtr alloc,
 const char *
 LhttpAddress::GetServerId(struct pool *pool) const noexcept
 {
+    PoolStringBuilder<256> b;
+    b.push_back(path);
+
     char child_options_buffer[16384];
-    *options.MakeId(child_options_buffer) = 0;
+    b.emplace_back(child_options_buffer,
+                   options.MakeId(child_options_buffer));
 
-    const char *p = p_strcat(pool, path,
-                             child_options_buffer,
-                             nullptr);
+    for (auto i : args) {
+        b.push_back("!");
+        b.push_back(i);
+    }
 
-    for (auto i : args)
-        p = p_strcat(pool, p, "!", i, nullptr);
-
-    return p;
+    return b(*pool);
 }
 
 const char *
