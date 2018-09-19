@@ -47,6 +47,7 @@
 #include "pool/Holder.hxx"
 #include "AllocatorPtr.hxx"
 #include "pool/pbuffer.hxx"
+#include "pool/StringBuilder.hxx"
 #include "paddress.hxx"
 #include "SlicePool.hxx"
 #include "AllocatorStats.hxx"
@@ -534,92 +535,74 @@ tcache_uri_key(struct pool &pool, const char *uri, const char *host,
                ConstBuffer<void> read_file,
                bool want)
 {
-    const char *key = status != 0
-        ? p_sprintf(&pool, "ERR%u_%s", status, uri)
-        : uri;
+    PoolStringBuilder<256> b;
 
-    if (host != nullptr)
-        /* workaround for a scalability problem in a large hosting
-           environment: include the Host request header in the cache
-           key */
-        key = p_strcat(&pool, host, ":", key, nullptr);
-
-    if (!check.IsNull()) {
-        char buffer[MAX_CACHE_CHECK * 3];
-        size_t length = uri_escape(buffer, check);
-
-        key = p_strncat(&pool,
-                        "|CHECK=", (size_t)7,
-                        buffer, length,
-                        key, strlen(key),
-                        nullptr);
+    char rf_buffer[MAX_READ_FILE * 3];
+    if (!read_file.IsNull()) {
+        b.emplace_back(rf_buffer, uri_escape(rf_buffer, read_file));
+        b.push_back("=RF]");
     }
 
-    if (!want_full_uri.IsNull()) {
-        char buffer[MAX_CACHE_WFU * 3];
-        size_t length = uri_escape(buffer, want_full_uri);
-
-        key = p_strncat(&pool,
-                        "|WFU=", (size_t)5,
-                        buffer, length,
-                        key, strlen(key),
-                        nullptr);
+    char di_buffer[MAX_DIRECTORY_INDEX * 3];
+    if (!directory_index.IsNull()) {
+        b.emplace_back(di_buffer, uri_escape(di_buffer, directory_index));
+        b.push_back("=DIR]");
     }
 
-    if (want)
-        key = p_strcat(&pool, "|W_", key, nullptr);
+    char fnf_buffer[MAX_FILE_NOT_FOUND * 3];
+    if (!file_not_found.IsNull()) {
+        b.emplace_back(fnf_buffer, uri_escape(fnf_buffer, file_not_found));
+        b.push_back("=FNF]");
+    }
 
+    char pps_buffer[MAX_PROBE_PATH_SUFFIXES * 3];
     if (!probe_path_suffixes.IsNull()) {
-        char buffer[MAX_PROBE_PATH_SUFFIXES * 3];
-        size_t length = uri_escape(buffer, probe_path_suffixes);
+        b.emplace_back(pps_buffer,
+                       uri_escape(pps_buffer, probe_path_suffixes));
+        b.push_back("=PPS");
 
-        key = p_strncat(&pool,
-                        buffer, length,
-                        "=PPS", (size_t)4,
-                        ":", size_t(probe_suffix != nullptr ? 1 : 0),
-                        probe_suffix != nullptr ? probe_suffix : "",
-                        probe_suffix != nullptr ? strlen(probe_suffix) : 0,
-                        "]", (size_t)1,
-                        key, strlen(key),
-                        nullptr);
+        if (probe_suffix != nullptr) {
+            b.push_back(":");
+            b.push_back(probe_suffix);
+            b.push_back("]");
+        }
     } else {
         assert(probe_suffix == nullptr);
     }
 
-    if (!file_not_found.IsNull()) {
-        char buffer[MAX_FILE_NOT_FOUND * 3];
-        size_t length = uri_escape(buffer, file_not_found);
+    if (want)
+        b.push_back("|W_");
 
-        key = p_strncat(&pool,
-                        buffer, length,
-                        "=FNF]", (size_t)5,
-                        key, strlen(key),
-                        nullptr);
+    char wfu_buffer[MAX_CACHE_WFU * 3];
+    if (!want_full_uri.IsNull()) {
+        b.push_back("|WFU=");
+        b.emplace_back(wfu_buffer, uri_escape(wfu_buffer, want_full_uri));
     }
 
-    if (!directory_index.IsNull()) {
-        char buffer[MAX_DIRECTORY_INDEX * 3];
-        size_t length = uri_escape(buffer, directory_index);
-
-        key = p_strncat(&pool,
-                        buffer, length,
-                        "=DIR]", (size_t)5,
-                        key, strlen(key),
-                        nullptr);
+    char check_buffer[MAX_CACHE_CHECK * 3];
+    if (!check.IsNull()) {
+        b.push_back("|CHECK=");
+        b.emplace_back(check_buffer, uri_escape(check_buffer, check));
     }
 
-    if (!read_file.IsNull()) {
-        char buffer[MAX_READ_FILE * 3];
-        size_t length = uri_escape(buffer, read_file);
-
-        key = p_strncat(&pool,
-                        buffer, length,
-                        "=RF]", (size_t)4,
-                        key, strlen(key),
-                        nullptr);
+    if (host != nullptr) {
+        /* workaround for a scalability problem in a large hosting
+           environment: include the Host request header in the cache
+           key */
+        b.push_back(host);
+        b.push_back(":");
     }
 
-    return key;
+    char status_buffer[32];
+    if (status != 0) {
+        snprintf(status_buffer, sizeof(status_buffer),
+                 "ERR%u_", status);
+        b.push_back(status_buffer);
+    }
+
+    b.push_back(uri);
+
+    return b(pool);
 }
 
 static bool
