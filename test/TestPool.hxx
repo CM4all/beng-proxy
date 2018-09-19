@@ -34,23 +34,21 @@
 #define TEST_POOL_HXX
 
 #include "pool/pool.hxx"
+#include "pool/RootPool.hxx"
 
 #include <assert.h>
 
 class TestPool {
-    struct pool *const root_pool, *the_pool;
+    RootPool root_pool;
+    struct pool *the_pool;
 
 public:
     TestPool()
-        :root_pool(pool_new_libc(nullptr, "root")),
-         the_pool(pool_new_libc(root_pool, "test")) {}
+        :the_pool(pool_new_libc(root_pool, "test")) {}
 
     ~TestPool() {
-        pool_unref(root_pool);
         if (the_pool != nullptr)
             pool_unref(the_pool);
-        pool_commit();
-        pool_recycler_clear();
     }
 
     TestPool(const TestPool &) = delete;
