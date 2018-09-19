@@ -33,6 +33,7 @@
 #include "cgi_address.hxx"
 #include "pool/pool.hxx"
 #include "pool/tpool.hxx"
+#include "pool/StringBuilder.hxx"
 #include "AllocatorPtr.hxx"
 #include "uri/uri_base.hxx"
 #include "uri/uri_escape.hxx"
@@ -115,40 +116,57 @@ CgiAddress::GetURI(struct pool *pool) const
 const char *
 CgiAddress::GetId(struct pool *pool) const
 {
+    PoolStringBuilder<256> b;
+    b.push_back(path);
+
     char child_options_buffer[16384];
-    *options.MakeId(child_options_buffer) = 0;
+    b.emplace_back(child_options_buffer,
+                   options.MakeId(child_options_buffer));
 
-    const char *p = p_strcat(pool, path,
-                             child_options_buffer,
-                             nullptr);
+    if (document_root != nullptr) {
+        b.push_back(";d=");
+        b.push_back(document_root);
+    }
 
-    if (document_root != nullptr)
-        p = p_strcat(pool, p, ";d=", document_root, nullptr);
+    if (interpreter != nullptr) {
+        b.push_back(";i=");
+        b.push_back(interpreter);
+    }
 
-    if (interpreter != nullptr)
-        p = p_strcat(pool, p, ";i=", interpreter, nullptr);
+    if (action != nullptr) {
+        b.push_back(";a=");
+        b.push_back(action);
+    }
 
-    if (action != nullptr)
-        p = p_strcat(pool, p, ";a=", action, nullptr);
+    for (auto i : args) {
+        b.push_back("!");
+        b.push_back(i);
+    }
 
-    for (auto i : args)
-        p = p_strcat(pool, p, "!", i, nullptr);
+    for (auto i : params) {
+        b.push_back("!");
+        b.push_back(i);
+    }
 
-    for (auto i : params)
-        p = p_strcat(pool, p, "~", i, nullptr);
+    if (uri != nullptr) {
+        b.push_back(";u=");
+        b.push_back(uri);
+    } else if (script_name != nullptr) {
+        b.push_back(";s=");
+        b.push_back(script_name);
+    }
 
-    if (uri != nullptr)
-        p = p_strcat(pool, p, ";u=", uri, nullptr);
-    else if (script_name != nullptr)
-        p = p_strcat(pool, p, ";s=", script_name, nullptr);
+    if (path_info != nullptr) {
+        b.push_back(";p=");
+        b.push_back(path_info);
+    }
 
-    if (path_info != nullptr)
-        p = p_strcat(pool, p, ";p=", path_info, nullptr);
+    if (query_string != nullptr) {
+        b.push_back("?");
+        b.push_back(query_string);
+    }
 
-    if (query_string != nullptr)
-        p = p_strcat(pool, p, "?", query_string, nullptr);
-
-    return p;
+    return b(*pool);
 }
 
 CgiAddress *
