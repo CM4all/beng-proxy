@@ -32,6 +32,7 @@
 
 #include "cgi_address.hxx"
 #include "pool/pool.hxx"
+#include "pool/tpool.hxx"
 #include "AllocatorPtr.hxx"
 #include "uri/uri_base.hxx"
 #include "uri/uri_escape.hxx"
@@ -238,7 +239,9 @@ CgiAddress::LoadBase(AllocatorPtr alloc, const char *suffix) const
 {
     assert(suffix != nullptr);
 
-    char *unescaped = uri_unescape_dup(alloc, suffix);
+    const AutoRewindPool auto_rewind(*tpool);
+
+    char *unescaped = uri_unescape_dup(*tpool, suffix);
     if (unescaped == nullptr)
         return nullptr;
 
@@ -261,7 +264,9 @@ CgiAddress::Apply(struct pool *pool,
     if (uri_has_authority(relative))
         return nullptr;
 
-    char *unescaped = (char *)p_malloc(pool, relative.size);
+    const AutoRewindPool auto_rewind(*tpool);
+
+    char *unescaped = (char *)p_malloc(tpool, relative.size);
     char *unescaped_end = uri_unescape(unescaped, relative);
     if (unescaped_end == nullptr)
         return nullptr;
