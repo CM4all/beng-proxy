@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2018 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -83,6 +83,7 @@ struct pool_mark_state {
 #endif
 };
 
+template<typename T> struct ConstBuffer;
 struct StringView;
 
 void
@@ -492,5 +493,12 @@ gcc_malloc gcc_returns_nonnull
 char *
 p_strdup_lower_impl(struct pool &pool, StringView src
                     TRACE_ARGS_DECL) noexcept;
+
+/**
+ * Concatenate all strings and return a newly allocated
+ * null-terminated string.
+ */
+char *
+StringConcat(struct pool &pool, ConstBuffer<StringView> src) noexcept;
 
 #endif

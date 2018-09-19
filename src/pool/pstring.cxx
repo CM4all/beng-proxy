@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2018 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -181,3 +181,24 @@ p_strncat(struct pool *pool, const char *first,
 
     return result;
 }
+
+char *
+StringConcat(struct pool &pool, ConstBuffer<StringView> src) noexcept
+{
+    /* calculate the total allocation size */
+    size_t size = 1;
+    for (const auto &i : src)
+        size += i.size;
+
+    char *result = (char *)p_malloc(&pool, size);
+
+    /* now concatenate everything into the allocated buffer and
+       null-terminate it */
+    char *p = result;
+    for (const auto &i : src)
+        p = Copy(p, i.data, i.size);
+    *p = 0;
+
+    return result;
+}
+
