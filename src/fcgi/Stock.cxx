@@ -42,6 +42,7 @@
 #include "spawn/JailParams.hxx"
 #include "spawn/JailConfig.hxx"
 #include "pool/tpool.hxx"
+#include "pool/StringBuilder.hxx"
 #include "AllocatorPtr.hxx"
 #include "event/SocketEvent.hxx"
 #include "event/TimerEvent.hxx"
@@ -186,20 +187,24 @@ private:
 const char *
 FcgiChildParams::GetStockKey(struct pool &pool) const
 {
-    const char *key = executable_path;
+    PoolStringBuilder<256> b;
+    b.push_back(executable_path);
 
-    for (auto i : args)
-        key = p_strcat(&pool, key, " ", i, nullptr);
+    for (auto i : args) {
+        b.push_back(" ");
+        b.push_back(i);
+    }
 
-    for (auto i : options.env)
-        key = p_strcat(&pool, key, "$", i, nullptr);
+    for (auto i : options.env) {
+        b.push_back("$");
+        b.push_back(i);
+    }
 
     char options_buffer[16384];
-    *options.MakeId(options_buffer) = 0;
-    if (*options_buffer != 0)
-        key = p_strcat(&pool, key, options_buffer, nullptr);
+    b.emplace_back(options_buffer,
+                   options.MakeId(options_buffer));
 
-    return key;
+    return b(pool);
 }
 
 /*
