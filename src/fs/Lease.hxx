@@ -117,7 +117,7 @@ public:
 
     WritableBuffer<void> ReadBuffer() const noexcept;
 
-    void Consumed(size_t nbytes) noexcept;
+    void DisposeConsumed(size_t nbytes) noexcept;
 
     bool Read(bool expect_more) noexcept;
 

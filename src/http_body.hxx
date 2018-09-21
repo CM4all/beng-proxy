@@ -172,7 +172,7 @@ public:
         if (nbytes == 0)
             return 0;
 
-        s.Consumed(nbytes);
+        s.DisposeConsumed(nbytes);
         Consumed(nbytes);
         Istream::Consumed(nbytes);
         return nbytes;

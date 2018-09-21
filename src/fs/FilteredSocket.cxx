@@ -195,12 +195,12 @@ FilteredSocket::ReadBuffer() const noexcept
 }
 
 void
-FilteredSocket::Consumed(size_t nbytes) noexcept
+FilteredSocket::DisposeConsumed(size_t nbytes) noexcept
 {
     if (filter != nullptr)
         filter->Consumed(nbytes);
     else
-        base.Consumed(nbytes);
+        base.DisposeConsumed(nbytes);
 }
 
 bool

@@ -170,7 +170,7 @@ try {
             break;
 
         consumed += nbytes;
-        socket.Consumed(nbytes);
+        socket.DisposeConsumed(nbytes);
 
         auto result = parser.Process();
         switch (result) {

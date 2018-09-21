@@ -101,7 +101,7 @@ LbTcpConnection::Inbound::OnBufferedData()
     ssize_t nbytes = tcp.outbound.socket.Write(r.data, r.size);
     if (nbytes > 0) {
         tcp.outbound.socket.ScheduleWrite();
-        socket.Consumed(nbytes);
+        socket.DisposeConsumed(nbytes);
         return BufferedResult::OK;
     }
 
@@ -207,7 +207,7 @@ LbTcpConnection::Outbound::OnBufferedData()
     ssize_t nbytes = tcp.inbound.socket.Write(r.data, r.size);
     if (nbytes > 0) {
         tcp.inbound.socket.ScheduleWrite();
-        socket.Consumed(nbytes);
+        socket.DisposeConsumed(nbytes);
         return BufferedResult::OK;
     }
 

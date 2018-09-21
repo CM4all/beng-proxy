@@ -78,7 +78,7 @@ FilteredSocketLease::Release(bool reuse) noexcept
         size_t n = std::min(r.size, w.size);
         assert(n > 0);
         std::move(r.data, r.data + n, w.data);
-        socket->Consumed(n);
+        socket->DisposeConsumed(n);
         dest.Append(n);
     }
 
@@ -116,13 +116,13 @@ FilteredSocketLease::ReadBuffer() const noexcept
 }
 
 void
-FilteredSocketLease::Consumed(size_t nbytes) noexcept
+FilteredSocketLease::DisposeConsumed(size_t nbytes) noexcept
 {
     if (IsReleased()) {
         input.front().Consume(nbytes);
         MoveInput();
     } else
-        socket->Consumed(nbytes);
+        socket->DisposeConsumed(nbytes);
 }
 
 bool

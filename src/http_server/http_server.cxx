@@ -234,7 +234,7 @@ HttpServerConnection::OnBufferedData()
     if (response.pending_drained) {
         /* discard all incoming data while we're waiting for the
            (filtered) response to be drained */
-        socket.Consumed(r.size);
+        socket.DisposeConsumed(r.size);
         return BufferedResult::OK;
     }
 

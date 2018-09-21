@@ -354,7 +354,7 @@ HttpServerConnection::FeedHeaders(const void *_data, size_t length)
     if (next != nullptr) {
         consumed = next - buffer;
         request.bytes_received += consumed;
-        socket.Consumed(consumed);
+        socket.DisposeConsumed(consumed);
     }
 
     return request.read_state == Request::HEADERS
@@ -440,7 +440,7 @@ HttpServerConnection::Feed(const void *data, size_t length)
         if (!keep_alive) {
             /* discard all pipelined input when keep-alive has been
                disabled */
-            socket.Consumed(length);
+            socket.DisposeConsumed(length);
             return BufferedResult::OK;
         }
 

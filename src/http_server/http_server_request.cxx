@@ -51,7 +51,7 @@ HttpServerConnection::FeedRequestBody(const void *data, size_t length)
     }
 
     request.bytes_received += nbytes;
-    socket.Consumed(nbytes);
+    socket.DisposeConsumed(nbytes);
 
     if (request.read_state == Request::BODY && request_body_reader->IsEOF()) {
         request.read_state = Request::END;

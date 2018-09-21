@@ -797,7 +797,7 @@ HttpClient::ParseHeaders(ConstBuffer<char> b)
 
         if (response.state != Response::State::HEADERS) {
             /* header parsing is finished */
-            socket.Consumed(next - buffer);
+            socket.DisposeConsumed(next - buffer);
             return BufferedResult::AGAIN_EXPECT;
         }
 
@@ -805,7 +805,7 @@ HttpClient::ParseHeaders(ConstBuffer<char> b)
     }
 
     /* remove the parsed part of the buffer */
-    socket.Consumed(start - buffer);
+    socket.DisposeConsumed(start - buffer);
     return BufferedResult::MORE;
 }
 
@@ -838,7 +838,7 @@ HttpClient::FeedBody(ConstBuffer<void> b)
                 : BufferedResult::BLOCKING;
     }
 
-    socket.Consumed(nbytes);
+    socket.DisposeConsumed(nbytes);
 
     if (IsConnected() && response_body_reader.IsSocketDone(socket))
         /* we don't need the socket anymore, we've got everything we

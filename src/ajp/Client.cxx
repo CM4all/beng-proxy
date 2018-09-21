@@ -559,7 +559,7 @@ AjpClient::Feed(const uint8_t *data, const size_t length)
                         : BufferedResult::BLOCKING;
 
                 data += nbytes;
-                socket.Consumed(nbytes);
+                socket.DisposeConsumed(nbytes);
                 if (data == end || response.chunk_length > 0)
                     /* want more data */
                     return nbytes < remaining
@@ -572,7 +572,7 @@ AjpClient::Feed(const uint8_t *data, const size_t length)
                 assert(nbytes > 0);
 
                 data += nbytes;
-                socket.Consumed(nbytes);
+                socket.DisposeConsumed(nbytes);
                 if (data == end || response.chunk_length > 0)
                     /* want more data */
                     return BufferedResult::MORE;
@@ -630,7 +630,7 @@ AjpClient::Feed(const uint8_t *data, const size_t length)
 
             /* consume the body chunk header and start sending the
                body */
-            socket.Consumed(nbytes);
+            socket.DisposeConsumed(nbytes);
             data += nbytes;
             continue;
         }
@@ -641,7 +641,7 @@ AjpClient::Feed(const uint8_t *data, const size_t length)
             /* the packet is not complete yet */
             return BufferedResult::MORE;
 
-        socket.Consumed(nbytes);
+        socket.KeepConsumed(nbytes);
 
         if (!ConsumePacket(code, data + sizeof(*header) + 1,
                            header_length - 1))

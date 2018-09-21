@@ -610,7 +610,7 @@ FcgiClient::ConsumeInput(const uint8_t *data0, size_t length0)
 
             data += nbytes;
             content_length -= nbytes;
-            socket.Consumed(nbytes);
+            socket.DisposeConsumed(nbytes);
 
             if (at_headers && response.read_state == FcgiClient::Response::READ_BODY) {
                 /* the read_state has been switched from HEADERS to
@@ -640,7 +640,7 @@ FcgiClient::ConsumeInput(const uint8_t *data0, size_t length0)
 
             data += nbytes;
             skip_length -= nbytes;
-            socket.Consumed(nbytes);
+            socket.DisposeConsumed(nbytes);
 
             if (skip_length > 0)
                 return BufferedResult::MORE;
@@ -655,7 +655,7 @@ FcgiClient::ConsumeInput(const uint8_t *data0, size_t length0)
             return BufferedResult::MORE;
 
         data += sizeof(*header);
-        socket.Consumed(sizeof(*header));
+        socket.KeepConsumed(sizeof(*header));
 
         if (!HandleHeader(*header))
             return BufferedResult::CLOSED;
@@ -877,7 +877,7 @@ FcgiClient::_ConsumeBucketList(size_t nbytes) noexcept
             if (response.available > 0 && (off_t)consumed > response.available)
                 consumed = response.available;
 
-            socket.Consumed(consumed);
+            socket.DisposeConsumed(consumed);
             content_length -= consumed;
             nbytes -= consumed;
             total += consumed;
@@ -895,7 +895,7 @@ FcgiClient::_ConsumeBucketList(size_t nbytes) noexcept
                 break;
 
             size_t consumed = std::min(b.size, skip_length);
-            socket.Consumed(consumed);
+            socket.DisposeConsumed(consumed);
             skip_length -= consumed;
 
             if (skip_length > 0)
@@ -920,7 +920,7 @@ FcgiClient::_ConsumeBucketList(size_t nbytes) noexcept
         content_length = FromBE16(header.content_length);
         skip_length = header.padding_length;
 
-        socket.Consumed(sizeof(header));
+        socket.DisposeConsumed(sizeof(header));
     }
 
     assert(nbytes == 0);

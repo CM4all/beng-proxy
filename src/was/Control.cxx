@@ -113,7 +113,7 @@ WasControl::OnBufferedData()
 
         const void *payload = header + 1;
 
-        socket.Consumed(sizeof(*header) + header->length);
+        socket.KeepConsumed(sizeof(*header) + header->length);
 
         bool success = handler.OnWasControlPacket(was_command(header->command),
                                                   {payload, header->length});

@@ -388,7 +388,7 @@ MemcachedClient::FeedHeader(const void *data, size_t length)
         return BufferedResult::MORE;
 
     memcpy(&response.header, data, sizeof(response.header));
-    socket.Consumed(sizeof(response.header));
+    socket.DisposeConsumed(sizeof(response.header));
 
     response.read_state = ReadState::EXTRAS;
 
@@ -424,7 +424,7 @@ MemcachedClient::FeedExtras(const void *data, size_t length)
     memcpy(response.extras, data,
            response.header.extras_length);
 
-    socket.Consumed(response.header.extras_length);
+    socket.DisposeConsumed(response.header.extras_length);
     response.remaining -= response.header.extras_length;
 
     return BeginKey();
@@ -444,7 +444,7 @@ MemcachedClient::FeedKey(const void *data, size_t length)
     response.key.remaining -= length;
     response.remaining -= FromBE16(response.header.key_length);
 
-    socket.Consumed(length);
+    socket.DisposeConsumed(length);
 
     if (response.key.remaining == 0)
         return SubmitResponse();
@@ -471,7 +471,7 @@ MemcachedClient::FeedValue(const void *data, size_t length)
             ? BufferedResult::BLOCKING
             : BufferedResult::CLOSED;
 
-    socket.Consumed(nbytes);
+    socket.DisposeConsumed(nbytes);
 
     response.remaining -= nbytes;
     if (response.remaining > 0)

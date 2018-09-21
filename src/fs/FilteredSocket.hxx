@@ -230,12 +230,10 @@ struct FilteredSocket final : private BufferedSocketHandler {
     WritableBuffer<void> ReadBuffer() const noexcept;
 
     /**
-     * Mark the specified number of bytes of the input buffer as
-     * "consumed".  Call this in the data() method.  Note that this
-     * method does not invalidate the buffer passed to data().  It may
-     * be called repeatedly.
+     * Dispose the specified number of bytes from the input buffer.
+     * Call this after ReadBuffer().  It may be called repeatedly.
      */
-    void Consumed(size_t nbytes) noexcept;
+    void DisposeConsumed(size_t nbytes) noexcept;
 
     void SetDirect(bool _direct) noexcept {
         assert(!_direct || !HasFilter());
@@ -337,7 +335,7 @@ struct FilteredSocket final : private BufferedSocketHandler {
     void InternalConsumed(size_t nbytes) noexcept {
         assert(filter != nullptr);
 
-        base.Consumed(nbytes);
+        base.DisposeConsumed(nbytes);
     }
 
     bool InternalRead(bool expect_more) noexcept {
