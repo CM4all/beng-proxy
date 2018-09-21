@@ -1,6 +1,6 @@
 cm4all-beng-proxy (15.0.2) unstable; urgency=low
 
-  * 
+  * spawn: add fallback PATH
 
  --   
 
