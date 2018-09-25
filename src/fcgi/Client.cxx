@@ -345,7 +345,7 @@ FcgiClient::AnalyseBuffer(const void *const _data0, size_t size) const
 
     FcgiClient::BufferAnalysis result;
 
-    if (!response.stderr)
+    if (content_length > 0 && !response.stderr)
         result.total_stdout += content_length;
 
     /* skip the rest of the current packet */
