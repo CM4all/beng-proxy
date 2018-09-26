@@ -228,7 +228,10 @@ TranslateStockRequest::OnStockItemReady(StockItem &_item) noexcept
 void
 TranslateStockRequest::OnStockItemError(std::exception_ptr ep) noexcept
 {
-    handler.error(ep, handler_ctx);
+    auto &_handler = handler;
+    auto *_handler_ctx = handler_ctx;
+    Destroy();
+    _handler.error(ep, _handler_ctx);
 }
 
 /*
