@@ -46,19 +46,19 @@
 #include "fs/Factory.hxx"
 #include "fs/SocketFilter.hxx"
 #include "pool/pool.hxx"
+#include "pool/LeakDetector.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "net/FailureManager.hxx"
 #include "net/FailureRef.hxx"
 #include "util/Cancellable.hxx"
 #include "util/Exception.hxx"
-#include "util/LeakDetector.hxx"
 #include "util/Compiler.h"
 
 #include <string.h>
 
 class HttpRequest final
-    : Cancellable, StockGetHandler, Lease, HttpResponseHandler, LeakDetector {
+    : Cancellable, StockGetHandler, Lease, HttpResponseHandler, PoolLeakDetector {
 
     struct pool &pool;
 
@@ -94,7 +94,8 @@ public:
                 UnusedIstreamPtr _body,
                 HttpResponseHandler &_handler,
                 CancellablePointer &_cancel_ptr)
-        :pool(_pool), fs_balancer(_fs_balancer),
+        :PoolLeakDetector(_pool),
+         pool(_pool), fs_balancer(_fs_balancer),
          session_sticky(_session_sticky),
          filter_factory(_filter_factory),
          method(_method), address(_address),

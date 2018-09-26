@@ -270,6 +270,7 @@ pool = static_library('pool',
   'src/pool/pbuffer.cxx',
   'src/pool/pstring.cxx',
   'src/pool/pool.cxx',
+  'src/pool/LeakDetector.cxx',
   include_directories: inc,
 )
 pool_dep = declare_dependency(link_with: pool,

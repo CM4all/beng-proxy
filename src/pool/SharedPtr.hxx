@@ -33,6 +33,7 @@
 #pragma once
 
 #include "pool.hxx"
+#include "LeakDetector.hxx"
 #include "util/LeakDetector.hxx"
 
 #include <utility>
@@ -46,7 +47,7 @@
  */
 template<typename T>
 class SharedPoolPtr : LeakDetector {
-    struct ControlBlock : LeakDetector {
+    struct ControlBlock : PoolLeakDetector {
         struct pool &p;
 
         uintptr_t ref = 1;
@@ -55,7 +56,8 @@ class SharedPoolPtr : LeakDetector {
 
         template<typename... Args>
         explicit ControlBlock(struct pool &_p, Args&&... args)
-            :p(_p), value(std::forward<Args>(args)...) {}
+            :PoolLeakDetector(_p),
+             p(_p), value(std::forward<Args>(args)...) {}
 
         void Ref() noexcept {
             ++ref;

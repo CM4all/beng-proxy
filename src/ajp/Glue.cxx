@@ -45,14 +45,14 @@
 #include "net/SocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
 #include "pool/pool.hxx"
+#include "pool/LeakDetector.hxx"
 #include "util/Cancellable.hxx"
-#include "util/LeakDetector.hxx"
 #include "util/Compiler.h"
 
 #include <string.h>
 #include <sys/socket.h>
 
-class AjpRequest final : Cancellable, StockGetHandler, Lease, LeakDetector {
+class AjpRequest final : Cancellable, StockGetHandler, Lease, PoolLeakDetector {
     struct pool &pool;
     EventLoop &event_loop;
 
@@ -83,7 +83,8 @@ public:
                UnusedIstreamPtr _body,
                HttpResponseHandler &_handler,
                CancellablePointer &_cancel_ptr)
-        :pool(_pool), event_loop(_event_loop),
+        :PoolLeakDetector(_pool),
+         pool(_pool), event_loop(_event_loop),
          protocol(_protocol),
          remote_addr(_remote_addr), remote_host(_remote_host),
          server_name(_server_name), server_port(_server_port),
