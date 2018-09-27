@@ -424,6 +424,10 @@ at symbol ``@''. \\\hline
 \verb|interface| & Limit this listener to the given network
 interface. \\\hline
 
+\verb|ack_timeout| & Close the connection if transmitted data remains
+unacknowledged by the client for this number of seconds.  By default,
+dead connections can remain open for up to 20 minutes. \\\hline
+
 \verb|reuse_port| & \texttt{yes} enables the socket option
 \verb|SO_REUSEPORT|, which allows multiple sockets to bind to the same
 port. \\\hline
