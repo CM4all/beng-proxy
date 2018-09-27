@@ -47,14 +47,14 @@ TEST(ExpansibleBufferTest, Basic)
 
     auto p = eb.Read();
     ASSERT_NE(p.data, nullptr);
-    ASSERT_EQ(p.size, 0);
+    ASSERT_EQ(p.size, 0u);
 
     eb.Write("01");
     ASSERT_FALSE(eb.IsEmpty());
 
     auto q = eb.Read();
     ASSERT_EQ(q.data, p.data);
-    ASSERT_EQ(q.size, 2);
+    ASSERT_EQ(q.size, 2u);
     ASSERT_EQ(memcmp(q.data, "01", 2), 0);
 
     eb.Write("234");
@@ -62,7 +62,7 @@ TEST(ExpansibleBufferTest, Basic)
 
     q = eb.Read();
     ASSERT_NE(q.data, p.data);
-    ASSERT_EQ(q.size, 5);
+    ASSERT_EQ(q.size, 5u);
     ASSERT_EQ(memcmp(q.data, "01234", 5), 0);
 
     eb.Clear();
@@ -70,14 +70,14 @@ TEST(ExpansibleBufferTest, Basic)
 
     p = eb.Read();
     ASSERT_EQ(p.data, q.data);
-    ASSERT_EQ(p.size, 0);
+    ASSERT_EQ(p.size, 0u);
 
     eb.Write("abcdef");
     ASSERT_FALSE(eb.IsEmpty());
 
     p = eb.Read();
     ASSERT_EQ(p.data, q.data);
-    ASSERT_EQ(p.size, 6);
+    ASSERT_EQ(p.size, 6u);
     ASSERT_EQ(memcmp(q.data, "abcdef", 6), 0);
 
     void *r = eb.Write(512);
