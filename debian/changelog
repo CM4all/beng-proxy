@@ -4,7 +4,7 @@ cm4all-beng-proxy (14.12) unstable; urgency=low
   * add listener options "ack_timeout", "keepalive"
   * support HTTP method "REPORT"
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Thu, 27 Sep 2018 10:55:50 +0200
 
 cm4all-beng-proxy (14.11) unstable; urgency=low
 
