@@ -35,8 +35,8 @@
 #include "istream/UnusedPtr.hxx"
 #include "rubber.hxx"
 #include "pool/pool.hxx"
+#include "pool/LeakDetector.hxx"
 #include "util/Cancellable.hxx"
-#include "util/LeakDetector.hxx"
 
 #include <assert.h>
 #include <stdint.h>
@@ -44,7 +44,7 @@
 #include <unistd.h>
 #include <sys/socket.h>
 
-class RubberSink final : IstreamSink, Cancellable, LeakDetector {
+class RubberSink final : IstreamSink, Cancellable, PoolLeakDetector {
     RubberAllocation allocation;
 
     const size_t max_size;
@@ -54,11 +54,12 @@ class RubberSink final : IstreamSink, Cancellable, LeakDetector {
 
 public:
     template<typename I>
-    RubberSink(RubberAllocation &&_a, size_t _max_size,
+    RubberSink(struct pool &_pool, RubberAllocation &&_a, size_t _max_size,
                RubberSinkHandler &_handler,
                I &&_input,
                CancellablePointer &cancel_ptr)
         :IstreamSink(std::forward<I>(_input), FD_ANY),
+         PoolLeakDetector(_pool),
          allocation(std::move(_a)),
          max_size(_max_size),
          handler(_handler) {
@@ -259,7 +260,8 @@ sink_rubber_new(struct pool &pool, UnusedIstreamPtr input,
         return nullptr;
     }
 
-    return NewFromPool<RubberSink>(pool, RubberAllocation(rubber, rubber_id),
+    return NewFromPool<RubberSink>(pool, pool,
+                                   RubberAllocation(rubber, rubber_id),
                                    allocate,
                                    handler,
                                    std::move(input), cancel_ptr);

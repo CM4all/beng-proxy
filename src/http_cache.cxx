@@ -51,12 +51,12 @@
 #include "AllocatorPtr.hxx"
 #include "event/TimerEvent.hxx"
 #include "io/Logger.hxx"
+#include "pool/LeakDetector.hxx"
 #include "util/Background.hxx"
 #include "util/Cast.hxx"
 #include "util/Cancellable.hxx"
 #include "util/Exception.hxx"
 #include "util/RuntimeError.hxx"
-#include "util/LeakDetector.hxx"
 
 #include <boost/intrusive/list.hpp>
 
@@ -72,7 +72,7 @@ static constexpr struct timeval http_cache_compress_interval = { 600, 0 };
 
 class HttpCacheRequest final : public HttpResponseHandler,
                                public RubberSinkHandler,
-                               Cancellable, LeakDetector {
+                               Cancellable, PoolLeakDetector {
 public:
     static constexpr auto link_mode = boost::intrusive::normal_link;
     typedef boost::intrusive::link_mode<link_mode> LinkMode;
@@ -609,7 +609,8 @@ HttpCacheRequest::HttpCacheRequest(struct pool &_pool,
                                    HttpResponseHandler &_handler,
                                    HttpCacheRequestInfo &_request_info,
                                    CancellablePointer &_cancel_ptr)
-    :pool(_pool), caller_pool(_caller_pool),
+    :PoolLeakDetector(_pool),
+     pool(_pool), caller_pool(_caller_pool),
      session_sticky(_session_sticky), site_name(_site_name),
      cache(_cache),
      method(_method),

@@ -204,13 +204,13 @@ TEST(GrowingBufferTest, FirstEmpty)
 
     buffer.Write("0123456789abcdefg");
 
-    ASSERT_EQ(buffer.GetSize(), 17);
+    ASSERT_EQ(buffer.GetSize(), 17u);
     ASSERT_TRUE(Equals(buffer.Dup(pool), "0123456789abcdefg"));
 
     GrowingBufferReader reader(std::move(buffer));
     auto x = reader.Read();
     ASSERT_FALSE(x.IsNull());
-    ASSERT_EQ(x.size, 17);
+    ASSERT_EQ(x.size, 17u);
 
     reader.Consume(x.size);
 }
@@ -227,7 +227,7 @@ TEST(GrowingBufferTest, Skip)
     buffer.Write("89ab");
     buffer.Write("cdef");
 
-    ASSERT_EQ(buffer.GetSize(), 16);
+    ASSERT_EQ(buffer.GetSize(), 16u);
     ASSERT_TRUE(Equals(buffer.Dup(pool), "0123456789abcdef"));
 
     constexpr size_t buffer_size = 8192 - 2 * sizeof(void*) - 2 * sizeof(size_t);
@@ -241,7 +241,7 @@ TEST(GrowingBufferTest, Skip)
 
     auto x = reader.Read();
     ASSERT_FALSE(x.IsNull());
-    ASSERT_EQ(x.size, 2);
+    ASSERT_EQ(x.size, 2u);
     reader.Consume(1);
 
     reader.Skip(5);
@@ -259,7 +259,7 @@ TEST(GrowingBufferTest, Skip)
 
     x = reader.Read();
     ASSERT_FALSE(x.IsNull());
-    ASSERT_EQ(x.size, 8);
+    ASSERT_EQ(x.size, 8u);
 
     reader.Skip(8);
 
@@ -279,22 +279,22 @@ TEST(GrowingBufferTest, ConcurrentRW)
     buffer.Write("4567");
     buffer.Write("89ab");
 
-    ASSERT_EQ(buffer.GetSize(), 12);
+    ASSERT_EQ(buffer.GetSize(), 12u);
     ASSERT_TRUE(Equals(buffer.Dup(pool), "0123456789ab"));
 
     buffer.Skip(12);
     ASSERT_TRUE(buffer.IsEmpty());
-    ASSERT_EQ(buffer.GetSize(), 0);
+    ASSERT_EQ(buffer.GetSize(), 0u);
 
     buffer.Write("cdef");
 
     ASSERT_FALSE(buffer.IsEmpty());
-    ASSERT_EQ(buffer.GetSize(),4);
+    ASSERT_EQ(buffer.GetSize(), 4u);
     ASSERT_TRUE(Equals(buffer.Dup(pool), "cdef"));
 
     auto x = buffer.Read();
     ASSERT_FALSE(x.IsNull());
-    ASSERT_EQ(x.size, 4);
+    ASSERT_EQ(x.size, 4u);
 }
 
 /** abort without handler */

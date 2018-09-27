@@ -102,6 +102,14 @@ HttpServerConnection::ParseRequestLine(const char *line, size_t length)
 
         break;
 
+    case 'R':
+        if (auto report = StringAfterPrefix(line + 1, "EPORT ")) {
+            method = HTTP_METHOD_REPORT;
+            line = report;
+        }
+
+        break;
+
     case 'H':
         if (gcc_likely(line[1] == 'E' && line[2] == 'A' && line[3] == 'D' &&
                        line[4] == ' ')) {

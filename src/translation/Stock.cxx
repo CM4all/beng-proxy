@@ -39,6 +39,7 @@
 #include "stock/GetHandler.hxx"
 #include "lease.hxx"
 #include "pool/pool.hxx"
+#include "pool/LeakDetector.hxx"
 #include "system/Error.hxx"
 #include "net/AllocatedSocketAddress.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
@@ -149,7 +150,9 @@ private:
     }
 };
 
-class TranslateStockRequest final : public StockGetHandler, Lease {
+class TranslateStockRequest final
+    : Cancellable, StockGetHandler, Lease, PoolLeakDetector
+{
     struct pool &pool;
 
     TranslateStock &stock;
@@ -160,17 +163,35 @@ class TranslateStockRequest final : public StockGetHandler, Lease {
     const TranslateHandler &handler;
     void *handler_ctx;
 
-    CancellablePointer &cancel_ptr;
+    CancellablePointer cancel_ptr;
 
 public:
     TranslateStockRequest(TranslateStock &_stock, struct pool &_pool,
                           const TranslateRequest &_request,
                           const TranslateHandler &_handler, void *_ctx,
                           CancellablePointer &_cancel_ptr)
-        :pool(_pool), stock(_stock),
+        :PoolLeakDetector(_pool),
+         pool(_pool), stock(_stock),
          request(_request),
-         handler(_handler), handler_ctx(_ctx),
-         cancel_ptr(_cancel_ptr) {}
+         handler(_handler), handler_ctx(_ctx)
+    {
+        _cancel_ptr = *this;
+    }
+
+    void Start() noexcept {
+        stock.Get(pool, *this, cancel_ptr);
+    }
+
+private:
+    void Destroy() noexcept {
+        this->~TranslateStockRequest();
+    }
+
+    /* virtual methods from class Cancellable */
+    void Cancel() noexcept override {
+        cancel_ptr.Cancel();
+        Destroy();
+    }
 
     /* virtual methods from class StockGetHandler */
     void OnStockItemReady(StockItem &item) noexcept override;
@@ -179,6 +200,7 @@ public:
     /* virtual methods from class Lease */
     void ReleaseLease(bool reuse) noexcept override {
         stock.Put(*item, !reuse);
+        Destroy();
     }
 };
 
@@ -201,7 +223,10 @@ TranslateStockRequest::OnStockItemReady(StockItem &_item) noexcept
 void
 TranslateStockRequest::OnStockItemError(std::exception_ptr ep) noexcept
 {
-    handler.error(ep, handler_ctx);
+    auto &_handler = handler;
+    auto *_handler_ctx = handler_ctx;
+    Destroy();
+    _handler.error(ep, _handler_ctx);
 }
 
 /*
@@ -229,5 +254,5 @@ tstock_translate(TranslateStock &stock, struct pool &pool,
 {
     auto r = NewFromPool<TranslateStockRequest>(pool, stock, pool, request,
                                                 handler, ctx, cancel_ptr);
-    stock.Get(pool, *r, cancel_ptr);
+    r->Start();
 }

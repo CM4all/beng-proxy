@@ -92,22 +92,22 @@ TEST(RubberTest, Basic)
     /* fill the whole "rubber" object with four quarters */
 
     unsigned a = AddFillRubber(r, total / 4);
-    ASSERT_GT(a, 0);
+    ASSERT_GT(a, 0u);
     ASSERT_EQ(r.GetSizeOf(a), total / 4);
 
     unsigned b = AddFillRubber(r, total / 4);
-    ASSERT_GT(b, 0);
+    ASSERT_GT(b, 0u);
     ASSERT_EQ(r.GetSizeOf(b), total / 4);
 
     ASSERT_EQ(r.GetNettoSize(), total / 2);
     ASSERT_EQ(r.GetBruttoSize(), total / 2);
 
     unsigned c = AddFillRubber(r, total / 4);
-    ASSERT_GT(c, 0);
+    ASSERT_GT(c, 0u);
     ASSERT_EQ(r.GetSizeOf(c), total / 4);
 
     unsigned d = AddFillRubber(r, total / 4);
-    ASSERT_GT(d, 0);
+    ASSERT_GT(d, 0u);
     ASSERT_EQ(r.GetSizeOf(d), total / 4);
 
     ASSERT_EQ(r.GetNettoSize(), total);
@@ -133,7 +133,7 @@ TEST(RubberTest, Basic)
     ASSERT_EQ(r.GetBruttoSize(), total * 3 / 4);
 
     unsigned e = AddFillRubber(r, total / 2);
-    ASSERT_GT(e, 0);
+    ASSERT_GT(e, 0u);
 
     ASSERT_EQ(r.GetNettoSize(), total);
     ASSERT_EQ(r.GetBruttoSize(), total);
@@ -191,11 +191,11 @@ TEST(RubberTest, Shrink)
     /* fill the whole "rubber" object */
 
     unsigned a = AddFillRubber(r, total * 3 / 4);
-    ASSERT_GT(a, 0);
+    ASSERT_GT(a, 0u);
     ASSERT_EQ(r.GetSizeOf(a), total * 3 / 4);
 
     unsigned b = AddFillRubber(r, total / 4);
-    ASSERT_GT(b, 0);
+    ASSERT_GT(b, 0u);
 
     ASSERT_EQ(r.GetNettoSize(), total);
     ASSERT_EQ(r.GetBruttoSize(), total);
@@ -216,7 +216,7 @@ TEST(RubberTest, Shrink)
     ASSERT_EQ(r.GetBruttoSize(), total);
 
     unsigned c = AddFillRubber(r, total / 2);
-    ASSERT_GT(c, 0);
+    ASSERT_GT(c, 0u);
 
     ASSERT_EQ(r.GetNettoSize(), total);
     ASSERT_EQ(r.GetBruttoSize(), total);
@@ -276,7 +276,7 @@ TEST(RubberTest, FullTable)
         ids[n++] = id;
     }
 
-    ASSERT_GT(n, 0);
+    ASSERT_GT(n, 0u);
     ASSERT_LT(n, max);
 
     /* just to be sure: try again, must still fail */
@@ -288,7 +288,7 @@ TEST(RubberTest, FullTable)
     r.Remove(ids[n / 2]);
 
     unsigned id = r.Add(1024 * 1024);
-    ASSERT_GT(id, 0);
+    ASSERT_GT(id, 0u);
     ASSERT_EQ(id, ids[n / 2]);
 
     /* cleanup */

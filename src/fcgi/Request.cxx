@@ -40,18 +40,18 @@
 #include "stock/Item.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "pool/pool.hxx"
+#include "pool/LeakDetector.hxx"
 #include "AllocatorPtr.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "util/Cast.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/Cancellable.hxx"
-#include "util/LeakDetector.hxx"
 
 #include <sys/socket.h>
 #include <unistd.h>
 
-class FcgiRequest final : Lease, Cancellable, LeakDetector {
+class FcgiRequest final : Lease, Cancellable, PoolLeakDetector {
     struct pool &pool;
 
     StockItem *stock_item;
@@ -62,7 +62,9 @@ class FcgiRequest final : Lease, Cancellable, LeakDetector {
 
 public:
     FcgiRequest(struct pool &_pool, StockItem &_stock_item)
-        :pool(_pool), stock_item(&_stock_item) {
+        :PoolLeakDetector(_pool),
+         pool(_pool), stock_item(&_stock_item)
+    {
     }
 
     void Start(EventLoop &event_loop, const char *site_name,

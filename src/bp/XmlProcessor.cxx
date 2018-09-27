@@ -63,13 +63,13 @@
 #include "istream/istream_string.hxx"
 #include "istream/istream_tee.hxx"
 #include "pool/pool.hxx"
+#include "pool/LeakDetector.hxx"
 #include "util/CharUtil.hxx"
 #include "util/Macros.hxx"
 #include "util/RuntimeError.hxx"
 #include "util/StringView.hxx"
 #include "util/Cancellable.hxx"
 #include "util/ScopeExit.hxx"
-#include "util/LeakDetector.hxx"
 
 #include <assert.h>
 #include <string.h>
@@ -88,7 +88,7 @@ struct uri_rewrite {
     char view[64];
 };
 
-struct XmlProcessor final : XmlParserHandler, Cancellable, LeakDetector {
+struct XmlProcessor final : XmlParserHandler, Cancellable, PoolLeakDetector {
     class CdataIstream final : public Istream {
         friend struct XmlProcessor;
         XmlProcessor &processor;
@@ -231,7 +231,8 @@ struct XmlProcessor final : XmlParserHandler, Cancellable, LeakDetector {
     XmlProcessor(struct pool &_pool, struct pool &_caller_pool,
                  Widget &_widget, struct processor_env &_env,
                  unsigned _options) noexcept
-        :pool(_pool), caller_pool(_caller_pool),
+        :PoolLeakDetector(_pool),
+         pool(_pool), caller_pool(_caller_pool),
          container(_widget),
          env(_env), options(_options),
          buffer(pool, 128, 2048),

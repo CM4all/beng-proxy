@@ -80,6 +80,7 @@ to_ajp_method(http_method_t method)
     case HTTP_METHOD_UNLOCK:
         return AJP_METHOD_UNLOCK;
 
+    case HTTP_METHOD_REPORT:
     case HTTP_METHOD_PATCH:
         /* not supported by AJPv13 */
         return AJP_METHOD_NULL;

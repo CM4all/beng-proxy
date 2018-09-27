@@ -42,20 +42,22 @@
 #include "istream/UnusedPtr.hxx"
 #include "header_writer.hxx"
 #include "pool/pool.hxx"
+#include "pool/LeakDetector.hxx"
 #include "net/SocketDescriptor.hxx"
-#include "util/LeakDetector.hxx"
 
 #include <stdexcept>
 
-class LhttpRequest final : Lease, LeakDetector {
+class LhttpRequest final : Lease, PoolLeakDetector {
     StockItem &stock_item;
 
     FilteredSocket socket;
 
 public:
-    explicit LhttpRequest(EventLoop &event_loop,
+    explicit LhttpRequest(struct pool &_pool, EventLoop &event_loop,
                           StockItem &_stock_item) noexcept
-        :stock_item(_stock_item), socket(event_loop) {
+        :PoolLeakDetector(_pool),
+         stock_item(_stock_item), socket(event_loop)
+    {
         socket.Init(lhttp_stock_item_get_socket(stock_item),
                     lhttp_stock_item_get_type(stock_item));
     }
@@ -139,7 +141,8 @@ lhttp_request(struct pool &pool, EventLoop &event_loop,
     lhttp_stock_item_set_site(*stock_item, site_name);
     lhttp_stock_item_set_uri(*stock_item, address.uri);
 
-    auto request = NewFromPool<LhttpRequest>(pool, event_loop, *stock_item);
+    auto request = NewFromPool<LhttpRequest>(pool, pool,
+                                             event_loop, *stock_item);
 
     if (address.host_and_port != nullptr)
         headers.Write("host", address.host_and_port);

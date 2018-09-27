@@ -44,10 +44,10 @@
 #include "istream/istream.hxx"
 #include "istream/UnusedHoldPtr.hxx"
 #include "pool/pool.hxx"
+#include "pool/LeakDetector.hxx"
 #include "stopwatch.hxx"
 #include "util/Cancellable.hxx"
 #include "util/ConstBuffer.hxx"
-#include "util/LeakDetector.hxx"
 #include "util/StringCompare.hxx"
 
 #include <assert.h>
@@ -56,7 +56,7 @@
 #include <string.h>
 #include <unistd.h>
 
-class WasRequest final : StockGetHandler, Cancellable, WasLease, LeakDetector {
+class WasRequest final : StockGetHandler, Cancellable, WasLease, PoolLeakDetector {
     struct pool &pool;
 
     Stopwatch *const stopwatch;
@@ -91,7 +91,8 @@ public:
                ConstBuffer<const char *> _parameters,
                HttpResponseHandler &_handler,
                CancellablePointer &_cancel_ptr)
-        :pool(_pool),
+        :PoolLeakDetector(_pool),
+         pool(_pool),
          stopwatch(_stopwatch),
          site_name(_site_name),
          method(_method),

@@ -62,30 +62,30 @@ TEST(HtmlEscape, Basic)
 
     char a[] = "foo bar";
     length = html_unescape_inplace(a, sizeof(a) - 1);
-    ASSERT_EQ(length, 7);
+    ASSERT_EQ(length, 7u);
 
     char e[] = "foo&amp;bar";
     length = html_unescape_inplace(e, sizeof(e) - 1);
-    ASSERT_EQ(length, 7);
+    ASSERT_EQ(length, 7u);
     ASSERT_EQ(memcmp(e, "foo&bar", 7), 0);
 
     char f[] = "&lt;foo&gt;bar&apos;";
     length = html_unescape_inplace(f, sizeof(f) - 1);
-    ASSERT_EQ(length, 9);
+    ASSERT_EQ(length, 9u);
     ASSERT_EQ(memcmp(f, "<foo>bar'", 9), 0);
 
     char b[] = "&lt;&gt;&apos;";
     length = html_unescape_inplace(b, sizeof(b) - 1);
-    ASSERT_EQ(length, 3);
+    ASSERT_EQ(length, 3u);
     ASSERT_EQ(memcmp(b, "<>'", 3), 0);
 
     char c[] = "&quot";
     length = html_unescape_inplace(c, sizeof(c) - 1);
-    ASSERT_EQ(length, 5);
+    ASSERT_EQ(length, 5u);
     ASSERT_EQ(memcmp(c, "&quot", 5), 0);
 
     char d[] = "&amp;&&quot;";
     length = html_unescape_inplace(d, sizeof(d) - 1);
-    ASSERT_EQ(length, 3);
+    ASSERT_EQ(length, 3u);
     ASSERT_EQ(memcmp(d, "&&\"", 3), 0);
 }

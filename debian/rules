@@ -44,7 +44,7 @@ clean:
 	dh_testroot
 	rm -f debian/stamp-*
 
-	rm -rf build
+	rm -rf debian/build
 
 	dh_clean
 

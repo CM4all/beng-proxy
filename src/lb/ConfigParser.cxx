@@ -1026,6 +1026,12 @@ LbConfigParser::Listener::ParseLine(FileLineParser &line)
         config.interface = line.ExpectValueAndEnd();
     } else if (strcmp(word, "tag") == 0) {
         config.tag = line.ExpectValueAndEnd();
+    } else if (strcmp(word, "ack_timeout") == 0) {
+        config.tcp_user_timeout = line.NextPositiveInteger() * 1000;
+        line.ExpectEnd();
+    } else if (strcmp(word, "keepalive") == 0) {
+        config.keepalive = line.NextBool();
+        line.ExpectEnd();
     } else if (strcmp(word, "reuse_port") == 0) {
         config.reuse_port = line.NextBool();
         line.ExpectEnd();
