@@ -168,6 +168,7 @@ class TranslateStockRequest final
     const TranslateHandler &handler;
     void *handler_ctx;
 
+    CancellablePointer &caller_cancel_ptr;
     CancellablePointer cancel_ptr;
 
 public:
@@ -178,7 +179,8 @@ public:
         :PoolLeakDetector(_pool),
          pool(_pool), stock(_stock),
          request(_request),
-         handler(_handler), handler_ctx(_ctx)
+         handler(_handler), handler_ctx(_ctx),
+         caller_cancel_ptr(_cancel_ptr)
     {
         _cancel_ptr = *this;
     }
@@ -194,6 +196,9 @@ private:
 
     /* virtual methods from class Cancellable */
     void Cancel() noexcept override {
+        /* this cancels only the TranslateStock::Get() call initiated
+           from Start() */
+
         cancel_ptr.Cancel();
         Destroy();
     }
@@ -219,10 +224,16 @@ void
 TranslateStockRequest::OnStockItemReady(StockItem &_item) noexcept
 {
     item = &(TranslateConnection &)_item;
+
+    /* cancellation will not be handled by this class from here on;
+       instead, we pass the caller's CancellablePointer to
+       translate() */
     translate(pool, stock.GetEventLoop(), item->GetSocket(),
               *this,
               request, handler, handler_ctx,
-              cancel_ptr);
+              caller_cancel_ptr);
+
+    /* ReleaseLease() will invoke Destroy() */
 }
 
 void

@@ -1,6 +1,7 @@
 cm4all-beng-proxy (14.13) unstable; urgency=low
 
   * spawn: fix "signalfd() failed: Bad file descriptor"
+  * translation: fix crash bug
 
  --   
 
