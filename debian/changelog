@@ -1,6 +1,6 @@
 cm4all-beng-proxy (15.0.3) unstable; urgency=low
 
-  * 
+  * merge release 14.13
 
  --   
 
@@ -18,6 +18,14 @@ cm4all-beng-proxy (15.0.1) unstable; urgency=low
   * eliminate dependency on libevent
 
  -- Max Kellermann <mk@cm4all.com>  Mon, 03 Sep 2018 12:14:18 +0200
+
+cm4all-beng-proxy (14.13) unstable; urgency=low
+
+  * spawn: fix "signalfd() failed: Bad file descriptor"
+  * translation: fix crash bug
+  * session: fix data loss after defragmentation
+
+ -- Max Kellermann <mk@cm4all.com>  Fri, 28 Sep 2018 15:24:19 +0200
 
 cm4all-beng-proxy (14.12) unstable; urgency=low
 
