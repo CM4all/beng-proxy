@@ -113,8 +113,17 @@ Session::Session(struct dpool &_pool, const Session &src)
                       ? NewFromPool<HttpAddress>(pool, pool,
                                                  *src.external_manager)
                       : nullptr),
-     external_keepalive(src.external_keepalive)
+     external_keepalive(src.external_keepalive),
+     next_external_keepalive(src.next_external_keepalive)
 {
+    realms.clone_from(src.realms,
+                      [&_pool, this](const RealmSession &src_realm){
+                          return NewFromPool<RealmSession>(_pool, *this,
+                                                           src_realm);
+                      },
+                      [&_pool](RealmSession *session){
+                          DeleteFromPool(_pool, session);
+                      });
 }
 
 void
