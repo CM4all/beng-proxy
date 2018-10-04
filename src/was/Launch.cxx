@@ -41,6 +41,7 @@
 
 #include <sys/socket.h>
 #include <unistd.h>
+#include <fcntl.h>
 
 WasProcess
 was_launch(SpawnService &spawn_service,
@@ -76,6 +77,12 @@ was_launch(SpawnService &spawn_service,
     p.SetStdin(std::move(output_r));
     output_w.SetNonBlocking();
     process.output = std::move(output_w);
+
+    /* allocate 256 kB for each pipe to reduce the system call and
+       latency overhead for splicing */
+    static constexpr int PIPE_BUFFER_SIZE = 256 * 1024;
+    fcntl(process.input.Get(), F_SETPIPE_SZ, PIPE_BUFFER_SIZE);
+    fcntl(process.output.Get(), F_SETPIPE_SZ, PIPE_BUFFER_SIZE);
 
     p.Append(executable_path);
     for (auto i : args)
