@@ -200,8 +200,10 @@ struct WasClient final
            handler - he's not interested anymore */
         ignore_control_errors = true;
 
-        if (!control.SendEmpty(WAS_COMMAND_STOP))
+        if (!control.SendEmpty(WAS_COMMAND_STOP)) {
+            lease.ReleaseWas(false);
             return;
+        }
 
         control.ReleaseSocket();
 
