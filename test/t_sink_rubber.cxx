@@ -162,7 +162,7 @@ TEST(SinkRubberTest, String)
     input->Read();
 
     ASSERT_EQ(Data::DONE, data.result);
-    ASSERT_GT(data.rubber_id, 0);
+    ASSERT_GT(data.rubber_id, 0u);
     ASSERT_EQ(size_t(3), data.size);
     ASSERT_EQ(size_t(32), r.GetSizeOf(data.rubber_id));
     ASSERT_EQ(0, memcmp("foo", r.Read(data.rubber_id), 3));
@@ -187,7 +187,7 @@ TEST(SinkRubberTest, String2)
         input->Read();
 
     ASSERT_EQ(Data::DONE, data.result);
-    ASSERT_GT(data.rubber_id, 0);
+    ASSERT_GT(data.rubber_id, 0u);
     ASSERT_EQ(size_t(6), data.size);
     ASSERT_EQ(size_t(32), r.GetSizeOf(data.rubber_id));
     ASSERT_EQ(0, memcmp("foobar", r.Read(data.rubber_id), 6));
