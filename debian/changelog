@@ -4,7 +4,7 @@ cm4all-beng-proxy (13.13) unstable; urgency=low
   * was: force pipe buffers to 256 kB
   * session: fix data loss after defragmentation
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Fri, 05 Oct 2018 12:23:09 +0200
 
 cm4all-beng-proxy (13.12) unstable; urgency=low
 
