@@ -43,7 +43,7 @@
 #include "nfs/Cache.hxx"
 #include "session/Manager.hxx"
 #include "AllocatorStats.hxx"
-#include "beng-proxy/control.h"
+#include "beng-proxy/Control.hxx"
 #include "util/ByteOrder.hxx"
 
 struct beng_control_stats

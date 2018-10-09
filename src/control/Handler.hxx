@@ -33,7 +33,7 @@
 #ifndef CONTROL_HANDLER_HXX
 #define CONTROL_HANDLER_HXX
 
-#include "beng-proxy/control.h"
+#include "beng-proxy/Control.hxx"
 
 #include <exception>
 

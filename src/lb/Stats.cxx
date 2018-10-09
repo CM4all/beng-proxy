@@ -36,7 +36,7 @@
 #include "fb_pool.hxx"
 #include "SlicePool.hxx"
 #include "AllocatorStats.hxx"
-#include "beng-proxy/control.h"
+#include "beng-proxy/Control.hxx"
 #include "util/ByteOrder.hxx"
 
 struct beng_control_stats

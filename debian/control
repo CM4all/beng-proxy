@@ -129,7 +129,7 @@ Description: JavaScript library for cm4all-beng-proxy
  This package provides the JavaScript library for managing widgets
  from within a web browser.
 
-Package: libcm4all-beng-proxy2-dev
+Package: libcm4all-beng-proxy3-dev
 Architecture: all
 Section: libdevel
 Depends: libc6-dev,
@@ -138,7 +138,7 @@ Description: Development files for cm4all-beng-proxy
  BENG proxy is an HTTP proxy server which includes a HTML template
  processor.
  .
- This package provides C headers for developing extensions and
+ This package provides C++ headers for developing extensions and
  services for cm4all-beng-proxy.
 
 Package: python-cm4all-beng-proxy

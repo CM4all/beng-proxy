@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2018 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -34,8 +34,8 @@
  * Definitions for the beng-proxy remote control protocol.
  */
 
-#ifndef BENG_PROXY_CONTROL_H
-#define BENG_PROXY_CONTROL_H
+#ifndef BENG_PROXY_CONTROL_HXX
+#define BENG_PROXY_CONTROL_HXX
 
 #include <stdint.h>
 
