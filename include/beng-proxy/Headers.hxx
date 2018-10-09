@@ -44,7 +44,7 @@ namespace BengProxy {
 /**
  * How is a specific set of headers forwarded?
  */
-enum class HeaderForwardMode {
+enum class HeaderForwardMode : uint8_t {
     /**
      * Do not forward at all.
      */
