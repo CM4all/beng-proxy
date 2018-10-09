@@ -41,13 +41,13 @@
 
 namespace BengProxy {
 
-enum ControlCommand {
-    CONTROL_NOP = 0,
+enum class ControlCommand {
+    NOP = 0,
 
     /**
      * Drop items from the translation cache.
      */
-    CONTROL_TCACHE_INVALIDATE = 1,
+    TCACHE_INVALIDATE = 1,
 
     /**
      * Re-enable the specified node after a failure, remove all
@@ -56,7 +56,7 @@ enum ControlCommand {
      * The payload is the node name according to lb.conf, followed by
      * a colon and the port number.
      */
-    CONTROL_ENABLE_NODE = 2,
+    ENABLE_NODE = 2,
 
     /**
      * Fade out the specified node, preparing for its shutdown: the
@@ -66,7 +66,7 @@ enum ControlCommand {
      * The payload is the node name according to lb.conf, followed by
      * a colon and the port number.
      */
-    CONTROL_FADE_NODE = 3,
+    FADE_NODE = 3,
 
     /**
      * Get the status of the specified node.
@@ -78,24 +78,24 @@ enum ControlCommand {
      * is the node name and port, a null byte, and a string describing
      * the worker status.  Possible values: "ok", "error", "fade".
      */
-    CONTROL_NODE_STATUS = 4,
+    NODE_STATUS = 4,
 
     /**
      * Dump all memory pools.
      */
-    CONTROL_DUMP_POOLS = 5,
+    DUMP_POOLS = 5,
 
     /**
      * Server statistics.
      */
-    CONTROL_STATS = 6,
+    STATS = 6,
 
     /**
      * Set the logger verbosity.  The payload is one byte: 0 means
      * quiet, 1 is the default, and bigger values make the daemon more
      * verbose.
      */
-    CONTROL_VERBOSE = 7,
+    VERBOSE = 7,
 
     /**
      * Fade out all child processes (FastCGI, WAS, LHTTP, Delegate;
@@ -108,22 +108,22 @@ enum ControlCommand {
      * If a payload is given, then this is a tag which fades only
      * child processes with the given CHILD_TAG.
      */
-    CONTROL_FADE_CHILDREN = 8,
+    FADE_CHILDREN = 8,
 
     /**
      * Unregister all Zeroconf services.
      */
-    CONTROL_DISABLE_ZEROCONF = 9,
+    DISABLE_ZEROCONF = 9,
 
     /**
      * Re-register all Zeroconf services.
      */
-    CONTROL_ENABLE_ZEROCONF = 10,
+    ENABLE_ZEROCONF = 10,
 
     /**
      * Flush the NFS cache.
      */
-    CONTROL_FLUSH_NFS_CACHE = 11,
+    FLUSH_NFS_CACHE = 11,
 };
 
 struct ControlStats {

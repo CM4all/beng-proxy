@@ -58,7 +58,7 @@ int main(int argc, char **argv) {
         .magic = ToBE32(control_magic),
         .header = {
             .length = ToBE16(0),
-            .command = ToBE16(CONTROL_NOP),
+            .command = ToBE16(uint16_t(ControlCommand::NOP)),
         },
     };
 

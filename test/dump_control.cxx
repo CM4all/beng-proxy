@@ -49,7 +49,8 @@ public:
                          BengProxy::ControlCommand command,
                          ConstBuffer<void> payload,
                          gcc_unused SocketAddress address) override {
-        printf("packet command=%u length=%zu\n", command, payload.size);
+        printf("packet command=%u length=%zu\n",
+               unsigned(command), payload.size);
     }
 
     void OnControlError(std::exception_ptr ep) noexcept override {

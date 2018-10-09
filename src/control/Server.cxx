@@ -140,7 +140,7 @@ ControlServer::Reply(SocketAddress address,
                      BengProxy::ControlCommand command,
                      const void *payload, size_t payload_length)
 {
-    const struct BengProxy::ControlHeader header{ToBE16(payload_length), ToBE16(command)};
+    const struct BengProxy::ControlHeader header{ToBE16(payload_length), ToBE16(uint16_t(command))};
 
     struct iovec v[] = {
         { const_cast<BengProxy::ControlHeader *>(&header), sizeof(header) },

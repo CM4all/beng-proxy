@@ -185,7 +185,7 @@ node_status_response(ControlServer *server,
     memcpy(response + payload.size + 1, status, status_length);
 
     server->Reply(address,
-                  CONTROL_NODE_STATUS, response, response_length);
+                  ControlCommand::NODE_STATUS, response, response_length);
 }
 
 inline void
@@ -249,7 +249,7 @@ LbControl::QueryStats(ControlServer &control_server,
 try {
     const auto stats = instance.GetStats();
     control_server.Reply(address,
-                         CONTROL_STATS, &stats, sizeof(stats));
+                         ControlCommand::STATS, &stats, sizeof(stats));
 } catch (...) {
     logger(3, std::current_exception());
 }
@@ -264,51 +264,51 @@ LbControl::OnControlPacket(ControlServer &control_server,
     const bool is_privileged = address.GetFamily() == AF_LOCAL;
 
     switch (command) {
-    case CONTROL_NOP:
+    case ControlCommand::NOP:
         break;
 
-    case CONTROL_TCACHE_INVALIDATE:
+    case ControlCommand::TCACHE_INVALIDATE:
         InvalidateTranslationCache(payload.data, payload.size);
         break;
 
-    case CONTROL_FADE_CHILDREN:
+    case ControlCommand::FADE_CHILDREN:
         break;
 
-    case CONTROL_ENABLE_NODE:
+    case ControlCommand::ENABLE_NODE:
         if (is_privileged)
             EnableNode((const char *)payload.data, payload.size);
         break;
 
-    case CONTROL_FADE_NODE:
+    case ControlCommand::FADE_NODE:
         if (is_privileged)
             FadeNode((const char *)payload.data, payload.size);
         break;
 
-    case CONTROL_NODE_STATUS:
+    case ControlCommand::NODE_STATUS:
         QueryNodeStatus(control_server,
                         StringView(payload),
                         address);
         break;
 
-    case CONTROL_DUMP_POOLS:
+    case ControlCommand::DUMP_POOLS:
         if (is_privileged)
             pool_dump_tree(instance.root_pool);
         break;
 
-    case CONTROL_STATS:
+    case ControlCommand::STATS:
         QueryStats(control_server, address);
         break;
 
-    case CONTROL_VERBOSE:
+    case ControlCommand::VERBOSE:
         if (is_privileged && payload.size == 1) {
             SetLogLevel(*(const uint8_t *)payload.data);
         }
 
         break;
 
-    case CONTROL_DISABLE_ZEROCONF:
-    case CONTROL_ENABLE_ZEROCONF:
-    case CONTROL_FLUSH_NFS_CACHE:
+    case ControlCommand::DISABLE_ZEROCONF:
+    case ControlCommand::ENABLE_ZEROCONF:
+    case ControlCommand::FLUSH_NFS_CACHE:
         /* not applicable */
         break;
     }

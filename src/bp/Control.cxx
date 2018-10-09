@@ -99,7 +99,7 @@ query_stats(BpInstance *instance, ControlServer *server,
 
     try {
         server->Reply(address,
-                      CONTROL_STATS, &stats, sizeof(stats));
+                      ControlCommand::STATS, &stats, sizeof(stats));
     } catch (...) {
         LogConcat(3, "control", std::current_exception());
     }
@@ -118,35 +118,35 @@ BpInstance::OnControlPacket(ControlServer &control_server,
     const bool is_privileged = address.GetFamily() == AF_LOCAL;
 
     switch (command) {
-    case CONTROL_NOP:
+    case ControlCommand::NOP:
         /* duh! */
         break;
 
-    case CONTROL_TCACHE_INVALIDATE:
+    case ControlCommand::TCACHE_INVALIDATE:
         control_tcache_invalidate(this, payload);
         break;
 
-    case CONTROL_DUMP_POOLS:
+    case ControlCommand::DUMP_POOLS:
         if (is_privileged)
             pool_dump_tree(root_pool);
         break;
 
-    case CONTROL_ENABLE_NODE:
-    case CONTROL_FADE_NODE:
-    case CONTROL_NODE_STATUS:
+    case ControlCommand::ENABLE_NODE:
+    case ControlCommand::FADE_NODE:
+    case ControlCommand::NODE_STATUS:
         /* only for beng-lb */
         break;
 
-    case CONTROL_STATS:
+    case ControlCommand::STATS:
         query_stats(this, &control_server, address);
         break;
 
-    case CONTROL_VERBOSE:
+    case ControlCommand::VERBOSE:
         if (is_privileged && payload.size == 1)
             SetLogLevel(*(const uint8_t *)payload.data);
         break;
 
-    case CONTROL_FADE_CHILDREN:
+    case ControlCommand::FADE_CHILDREN:
         if (!payload.empty())
             /* tagged fade is allowed for any unprivileged client */
             FadeTaggedChildren(std::string((const char *)payload.data,
@@ -157,17 +157,17 @@ BpInstance::OnControlPacket(ControlServer &control_server,
             FadeChildren();
         break;
 
-    case CONTROL_DISABLE_ZEROCONF:
+    case ControlCommand::DISABLE_ZEROCONF:
         if (is_privileged)
             avahi_client.HideServices();
         break;
 
-    case CONTROL_ENABLE_ZEROCONF:
+    case ControlCommand::ENABLE_ZEROCONF:
         if (is_privileged)
             avahi_client.ShowServices();
         break;
 
-    case CONTROL_FLUSH_NFS_CACHE:
+    case ControlCommand::FLUSH_NFS_CACHE:
         if (nfs_cache != nullptr)
             nfs_cache_flush(*nfs_cache);
         break;
