@@ -61,7 +61,7 @@ public:
                       int uid) override;
 
     void OnControlPacket(ControlServer &control_server,
-                         enum beng_control_command command,
+                         BengProxy::ControlCommand command,
                          ConstBuffer<void> payload,
                          SocketAddress address) override;
 

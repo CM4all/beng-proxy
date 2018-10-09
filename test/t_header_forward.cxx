@@ -40,6 +40,8 @@
 
 #include <string.h>
 
+using namespace BengProxy;
+
 static const char *
 strmap_to_string(const StringMap &map)
 {

@@ -74,7 +74,7 @@ private:
 
     /* virtual methods from class ControlHandler */
     void OnControlPacket(ControlServer &control_server,
-                         enum beng_control_command command,
+                         BengProxy::ControlCommand command,
                          ConstBuffer<void> payload,
                          SocketAddress address) override;
 

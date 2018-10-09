@@ -44,6 +44,8 @@
 #include <string.h>
 #include <stdlib.h>
 
+using namespace BengProxy;
+
 LbControl::LbControl(LbInstance &_instance)
     :logger("control"), instance(_instance) {}
 
@@ -254,7 +256,7 @@ try {
 
 void
 LbControl::OnControlPacket(ControlServer &control_server,
-                           enum beng_control_command command,
+                           BengProxy::ControlCommand command,
                            ConstBuffer<void> payload,
                            SocketAddress address)
 {

@@ -53,6 +53,8 @@
 #include <assert.h>
 #include <string.h>
 
+using namespace BengProxy;
+
 static void
 control_tcache_invalidate(BpInstance *instance, ConstBuffer<void> payload)
 {
@@ -93,7 +95,7 @@ query_stats(BpInstance *instance, ControlServer *server,
            exited already) */
         return;
 
-    const struct beng_control_stats stats = instance->GetStats();
+    const auto stats = instance->GetStats();
 
     try {
         server->Reply(address,
@@ -105,7 +107,7 @@ query_stats(BpInstance *instance, ControlServer *server,
 
 void
 BpInstance::OnControlPacket(ControlServer &control_server,
-                            enum beng_control_command command,
+                            BengProxy::ControlCommand command,
                             ConstBuffer<void> payload,
                             SocketAddress address)
 {

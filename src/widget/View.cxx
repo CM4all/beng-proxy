@@ -46,6 +46,7 @@ WidgetView::Init(const char *_name)
     inherited = false;
     transformation = nullptr;
 
+    using namespace BengProxy;
     request_header_forward = (struct header_forward_settings){
         .modes = {
             [HEADER_GROUP_IDENTITY] = HEADER_FORWARD_MANGLE,

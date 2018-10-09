@@ -41,10 +41,12 @@
 
 #include <stdint.h>
 
+namespace BengProxy {
+
 /**
  * How is a specific set of headers forwarded?
  */
-enum beng_header_forward_mode {
+enum HeaderForwardMode {
     /**
      * Do not forward at all.
      */
@@ -71,7 +73,7 @@ enum beng_header_forward_mode {
 /**
  * Selectors for a group of headers.
  */
-enum beng_header_group {
+enum HeaderGroup {
     /**
      * Special value for "override all settings" (except for
      * #HEADER_GROUP_SECURE and #HEADER_GROUP_LINK).
@@ -149,7 +151,7 @@ enum beng_header_group {
     HEADER_GROUP_MAX,
 };
 
-struct beng_header_forward_packet {
+struct HeaderForwardPacket {
     /**
      * See #beng_header_group
      */
@@ -165,5 +167,7 @@ struct beng_header_forward_packet {
      */
     uint8_t reserved;
 } gcc_packed;
+
+} // namespace BengProxy
 
 #endif

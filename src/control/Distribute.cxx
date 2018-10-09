@@ -53,7 +53,7 @@ ControlDistribute::OnControlRaw(ConstBuffer<void> payload,
 
 void
 ControlDistribute::OnControlPacket(ControlServer &control_server,
-                                   enum beng_control_command command,
+                                   BengProxy::ControlCommand command,
                                    ConstBuffer<void> payload,
                                    SocketAddress address)
 {

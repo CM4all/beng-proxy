@@ -49,6 +49,8 @@
 
 #include <string.h>
 
+using namespace BengProxy;
+
 static const char *const basic_request_headers[] = {
     "accept",
     "from",
@@ -376,7 +378,7 @@ forward_link_response_headers(StringMap &dest, const StringMap &src,
                               const char *(*relocate)(const char *uri,
                                                       void *ctx),
                               void *relocate_ctx,
-                              enum beng_header_forward_mode mode) noexcept
+                              HeaderForwardMode mode) noexcept
 {
     if (mode == HEADER_FORWARD_YES) {
         dest.CopyFrom(src, "location");

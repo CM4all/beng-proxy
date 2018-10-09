@@ -54,7 +54,7 @@ LocalControl::OnControlRaw(ConstBuffer<void> payload,
 
 void
 LocalControl::OnControlPacket(ControlServer &control_server,
-                              enum beng_control_command command,
+                              BengProxy::ControlCommand command,
                               ConstBuffer<void> payload,
                               SocketAddress address)
 {

@@ -39,7 +39,9 @@
 
 #include <stdint.h>
 
-enum beng_control_command {
+namespace BengProxy {
+
+enum ControlCommand {
     CONTROL_NOP = 0,
 
     /**
@@ -124,7 +126,7 @@ enum beng_control_command {
     CONTROL_FLUSH_NFS_CACHE = 11,
 };
 
-struct beng_control_stats {
+struct ControlStats {
     /**
      * Number of open incoming connections.
      */
@@ -181,7 +183,7 @@ struct beng_control_stats {
     uint64_t io_buffers_size, io_buffers_brutto_size;
 };
 
-struct beng_control_header {
+struct ControlHeader {
     uint16_t length;
     uint16_t command;
 };
@@ -190,5 +192,7 @@ struct beng_control_header {
  * This magic number precedes every UDP packet.
  */
 static const uint32_t control_magic = 0x63046101;
+
+} // namespace BengProxy
 
 #endif

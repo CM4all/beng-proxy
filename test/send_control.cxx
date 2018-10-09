@@ -41,6 +41,8 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 
+using namespace BengProxy;
+
 int main(int argc, char **argv) {
     if (argc != 2) {
         fprintf(stderr, "usage: send-udp HOST\n");
@@ -51,7 +53,7 @@ int main(int argc, char **argv) {
 
     static constexpr struct {
         uint32_t magic;
-        struct beng_control_header header;
+        ControlHeader header;
     } packet = {
         .magic = ToBE32(control_magic),
         .header = {

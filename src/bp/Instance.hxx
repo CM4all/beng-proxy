@@ -208,11 +208,11 @@ struct BpInstance final : PInstance, ControlHandler {
     void DisableListeners();
 
     gcc_pure
-    struct beng_control_stats GetStats() const noexcept;
+    BengProxy::ControlStats GetStats() const noexcept;
 
     /* virtual methods from class ControlHandler */
     void OnControlPacket(ControlServer &control_server,
-                         enum beng_control_command command,
+                         BengProxy::ControlCommand command,
                          ConstBuffer<void> payload,
                          SocketAddress address) override;
 

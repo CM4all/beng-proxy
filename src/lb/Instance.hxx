@@ -59,6 +59,7 @@ class LbTcpConnection;
 class LbControl;
 class LbListener;
 class CertCache;
+namespace BengProxy { struct ControlStats; }
 
 struct LbInstance final : PInstance {
     const LbConfig &config;
@@ -121,7 +122,7 @@ struct LbInstance final : PInstance {
     void DeinitAllControls();
 
     gcc_pure
-    struct beng_control_stats GetStats() const noexcept;
+    BengProxy::ControlStats GetStats() const noexcept;
 
     /**
      * Compress memory allocators, try to return unused memory areas

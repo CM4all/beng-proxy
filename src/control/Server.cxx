@@ -67,7 +67,7 @@ control_server_decode(ControlServer &control_server,
 
     const uint32_t *magic = (const uint32_t *)data;
 
-    if (length < sizeof(*magic) || FromBE32(*magic) != control_magic) {
+    if (length < sizeof(*magic) || FromBE32(*magic) != BengProxy::control_magic) {
         handler.OnControlError(std::make_exception_ptr(std::runtime_error("wrong magic")));
         return;
     }
@@ -83,8 +83,7 @@ control_server_decode(ControlServer &control_server,
     /* now decode all commands */
 
     while (length > 0) {
-        const struct beng_control_header *header =
-            (const struct beng_control_header *)data;
+        const auto *header = (const BengProxy::ControlHeader *)data;
         if (length < sizeof(*header)) {
             handler.OnControlError(std::make_exception_ptr(FormatRuntimeError("partial header (length=%zu)",
                                                                               length)));
@@ -92,7 +91,7 @@ control_server_decode(ControlServer &control_server,
         }
 
         size_t payload_length = FromBE16(header->length);
-        beng_control_command command = (beng_control_command)
+        const auto command = (BengProxy::ControlCommand)
             FromBE16(header->command);
 
         data = header + 1;
@@ -138,13 +137,13 @@ ControlServer::OnUdpError(std::exception_ptr ep) noexcept
 
 void
 ControlServer::Reply(SocketAddress address,
-                     enum beng_control_command command,
+                     BengProxy::ControlCommand command,
                      const void *payload, size_t payload_length)
 {
-    const struct beng_control_header header{ToBE16(payload_length), ToBE16(command)};
+    const struct BengProxy::ControlHeader header{ToBE16(payload_length), ToBE16(command)};
 
     struct iovec v[] = {
-        { const_cast<struct beng_control_header *>(&header), sizeof(header) },
+        { const_cast<BengProxy::ControlHeader *>(&header), sizeof(header) },
         { const_cast<void *>(payload), payload_length },
     };
 

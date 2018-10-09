@@ -41,10 +41,12 @@
 
 #include <stdio.h>
 
+using namespace BengProxy;
+
 class DumpControlHandler final : public ControlHandler {
 public:
     void OnControlPacket(gcc_unused ControlServer &control_server,
-                         enum beng_control_command command,
+                         BengProxy::ControlCommand command,
                          ConstBuffer<void> payload,
                          gcc_unused SocketAddress address) override {
         printf("packet command=%u length=%zu\n", command, payload.size);

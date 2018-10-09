@@ -73,7 +73,7 @@ public:
      * Throws std::runtime_error on error.
      */
     void Reply(SocketAddress address,
-               enum beng_control_command command,
+               BengProxy::ControlCommand command,
                const void *payload, size_t payload_length);
 
 private:

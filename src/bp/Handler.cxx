@@ -158,6 +158,7 @@ handle_translated_request2(Request &request,
         ? response.views->transformation
         : nullptr;
 
+    using namespace BengProxy;
     if ((response.request_header_forward.modes[HEADER_GROUP_COOKIE] != HEADER_FORWARD_MANGLE &&
          response.request_header_forward.modes[HEADER_GROUP_COOKIE] != HEADER_FORWARD_BOTH) ||
         (response.response_header_forward.modes[HEADER_GROUP_COOKIE] != HEADER_FORWARD_MANGLE &&
@@ -898,6 +899,7 @@ serve_document_root_file(Request &request2, const BpConfig &config)
 
     request2.translate.address = {ShallowCopy(), tr->address};
 
+    using namespace BengProxy;
     tr->request_header_forward = (struct header_forward_settings){
         .modes = {
             [HEADER_GROUP_IDENTITY] = HEADER_FORWARD_MANGLE,

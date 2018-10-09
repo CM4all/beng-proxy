@@ -46,10 +46,10 @@
 #include "beng-proxy/Control.hxx"
 #include "util/ByteOrder.hxx"
 
-struct beng_control_stats
+BengProxy::ControlStats
 BpInstance::GetStats() const noexcept
 {
-    struct beng_control_stats stats;
+    BengProxy::ControlStats stats;
 
     StockStats tcp_stock_stats = {
         .busy = 0,

@@ -800,6 +800,8 @@ Request::OnHttpResponse(http_status_t status, StringMap &&headers,
     }
 
     if (http_status_is_success(status)) {
+        using namespace BengProxy;
+
         if (!transformed &&
             (translate.response->response_header_forward.modes[HEADER_GROUP_TRANSFORMATION] == HEADER_FORWARD_MANGLE)) {
             /* handle the response header "x-cm4all-view" */
