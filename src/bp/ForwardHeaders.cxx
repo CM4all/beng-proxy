@@ -240,7 +240,7 @@ forward_upgrade_response_headers(StringMap &dest, http_status_t status,
 }
 
 /**
- * @see #HEADER_GROUP_SSL
+ * @see #HeaderGroup::SSL
  */
 gcc_pure
 static bool
@@ -250,7 +250,7 @@ is_old_ssl_header(const char *name) noexcept
 }
 
 /**
- * @see #HEADER_GROUP_SSL
+ * @see #HeaderGroup::SSL
  */
 gcc_pure
 static bool
@@ -260,7 +260,7 @@ is_new_ssl_header(const char *name) noexcept
 }
 
 /**
- * @see #HEADER_GROUP_SSL
+ * @see #HeaderGroup::SSL
  */
 gcc_pure
 static bool
@@ -270,7 +270,7 @@ is_ssl_header(const char *name) noexcept
 }
 
 /**
- * @see #HEADER_GROUP_SECURE
+ * @see #HeaderGroup::SECURE
  */
 gcc_pure
 static bool
@@ -289,7 +289,7 @@ is_secure_or_ssl_header(const char *name) noexcept
 }
 
 /**
- * @see #HEADER_GROUP_TRANSFORMATION
+ * @see #HeaderGroup::TRANSFORMATION
  */
 gcc_pure
 static bool
@@ -330,7 +330,7 @@ forward_transformation_headers(StringMap &dest, const StringMap &src) noexcept
 }
 
 /**
- * @see #HEADER_GROUP_LINK
+ * @see #HeaderGroup::LINK
  */
 gcc_pure
 static bool
@@ -346,7 +346,7 @@ ForwardLinkRequestHeaders(StringMap &dest, const StringMap &src) noexcept
 }
 
 /**
- * @see #HEADER_GROUP_LINK
+ * @see #HeaderGroup::LINK
  */
 gcc_pure
 static bool
@@ -380,10 +380,10 @@ forward_link_response_headers(StringMap &dest, const StringMap &src,
                               void *relocate_ctx,
                               HeaderForwardMode mode) noexcept
 {
-    if (mode == HEADER_FORWARD_YES) {
+    if (mode == HeaderForwardMode::YES) {
         dest.CopyFrom(src, "location");
         dest.CopyFrom(src, "content-location");
-    } else if (mode == HEADER_FORWARD_MANGLE) {
+    } else if (mode == HeaderForwardMode::MANGLE) {
         RelocateLinkHeader(dest, src, relocate, relocate_ctx, "location");
         RelocateLinkHeader(dest, src, relocate, relocate_ctx, "content-location");
     }
@@ -540,25 +540,25 @@ forward_request_headers(struct pool &pool, const StringMap &src,
 
     forward_basic_headers(dest, src, with_body);
     forward_upgrade_request_headers(dest, src, with_body,
-                                    settings.modes[HEADER_GROUP_CORS] == HEADER_FORWARD_YES,
-                                    settings.modes[HEADER_GROUP_OTHER] == HEADER_FORWARD_YES);
+                                    settings[HeaderGroup::CORS] == HeaderForwardMode::YES,
+                                    settings[HeaderGroup::OTHER] == HeaderForwardMode::YES);
 
     if (!exclude_host)
         dest.CopyFrom(src, "host");
 
-    if (settings.modes[HEADER_GROUP_CORS] == HEADER_FORWARD_YES)
+    if (settings[HeaderGroup::CORS] == HeaderForwardMode::YES)
         dest.ListCopyFrom(src, cors_request_headers);
 
-    if (settings.modes[HEADER_GROUP_SECURE] == HEADER_FORWARD_YES)
+    if (settings[HeaderGroup::SECURE] == HeaderForwardMode::YES)
         forward_secure_headers(dest, src);
 
-    if (settings.modes[HEADER_GROUP_SSL] == HEADER_FORWARD_YES)
+    if (settings[HeaderGroup::SSL] == HeaderForwardMode::YES)
         forward_ssl_headers(dest, src);
 
-    if (settings.modes[HEADER_GROUP_LINK] == HEADER_FORWARD_YES)
+    if (settings[HeaderGroup::LINK] == HeaderForwardMode::YES)
         ForwardLinkRequestHeaders(dest, src);
 
-    if (settings.modes[HEADER_GROUP_OTHER] == HEADER_FORWARD_YES)
+    if (settings[HeaderGroup::OTHER] == HeaderForwardMode::YES)
         forward_other_headers(dest, src);
 
     p = forward_charset
@@ -581,14 +581,14 @@ forward_request_headers(struct pool &pool, const StringMap &src,
         dest.ListCopyFrom(src, cache_request_headers);
     }
 
-    if (settings.modes[HEADER_GROUP_COOKIE] == HEADER_FORWARD_YES) {
+    if (settings[HeaderGroup::COOKIE] == HeaderForwardMode::YES) {
         dest.ListCopyFrom(src, cookie_request_headers);
-    } else if (settings.modes[HEADER_GROUP_COOKIE] == HEADER_FORWARD_BOTH) {
+    } else if (settings[HeaderGroup::COOKIE] == HeaderForwardMode::BOTH) {
         if (session_cookie == nullptr)
             dest.ListCopyFrom(src, cookie_request_headers);
         else
             header_copy_cookie_except(pool, dest, src, session_cookie);
-    } else if (settings.modes[HEADER_GROUP_COOKIE] == HEADER_FORWARD_MANGLE &&
+    } else if (settings[HeaderGroup::COOKIE] == HeaderForwardMode::MANGLE &&
                session != nullptr && host_and_port != nullptr && uri != nullptr)
         cookie_jar_http_header(session->cookies, host_and_port, uri,
                                dest, pool);
@@ -602,15 +602,15 @@ forward_request_headers(struct pool &pool, const StringMap &src,
     if (session != nullptr && session->user != nullptr)
         dest.Add("x-cm4all-beng-user", p_strdup(&pool, session->user));
 
-    if (settings.modes[HEADER_GROUP_CAPABILITIES] != HEADER_FORWARD_NO)
+    if (settings[HeaderGroup::CAPABILITIES] != HeaderForwardMode::NO)
         forward_user_agent(dest, src,
-                           settings.modes[HEADER_GROUP_CAPABILITIES] == HEADER_FORWARD_MANGLE);
+                           settings[HeaderGroup::CAPABILITIES] == HeaderForwardMode::MANGLE);
 
-    if (settings.modes[HEADER_GROUP_IDENTITY] != HEADER_FORWARD_NO)
+    if (settings[HeaderGroup::IDENTITY] != HeaderForwardMode::NO)
         forward_identity(pool, dest, src, local_host, remote_host,
-                         settings.modes[HEADER_GROUP_IDENTITY] == HEADER_FORWARD_MANGLE);
+                         settings[HeaderGroup::IDENTITY] == HeaderForwardMode::MANGLE);
 
-    if (settings.modes[HEADER_GROUP_FORWARD] == HEADER_FORWARD_MANGLE) {
+    if (settings[HeaderGroup::FORWARD] == HeaderForwardMode::MANGLE) {
         const char *host = src.Get("host");
         if (host != nullptr)
             dest.Add("x-forwarded-host", host);
@@ -665,38 +665,38 @@ forward_response_headers(struct pool &pool, http_status_t status,
 
     forward_link_response_headers(dest, src,
                                   relocate, relocate_ctx,
-                                  settings.modes[HEADER_GROUP_LINK]);
+                                  settings[HeaderGroup::LINK]);
 
     forward_upgrade_response_headers(dest, status, src,
-                                     settings.modes[HEADER_GROUP_OTHER] == HEADER_FORWARD_YES);
+                                     settings[HeaderGroup::OTHER] == HeaderForwardMode::YES);
 
-    if (settings.modes[HEADER_GROUP_OTHER] == HEADER_FORWARD_YES)
+    if (settings[HeaderGroup::OTHER] == HeaderForwardMode::YES)
         forward_other_response_headers(dest, src);
 
-    if (settings.modes[HEADER_GROUP_COOKIE] == HEADER_FORWARD_YES)
+    if (settings[HeaderGroup::COOKIE] == HeaderForwardMode::YES)
         dest.ListCopyFrom(src, cookie_response_headers);
-    else if (settings.modes[HEADER_GROUP_COOKIE] == HEADER_FORWARD_BOTH) {
+    else if (settings[HeaderGroup::COOKIE] == HeaderForwardMode::BOTH) {
         if (session_cookie == nullptr)
             dest.ListCopyFrom(src, cookie_response_headers);
         else
             header_copy_set_cookie_except(dest, src, session_cookie);
     }
 
-    if (settings.modes[HEADER_GROUP_CORS] == HEADER_FORWARD_YES)
+    if (settings[HeaderGroup::CORS] == HeaderForwardMode::YES)
         dest.ListCopyFrom(src, cors_response_headers);
 
-    if (settings.modes[HEADER_GROUP_SECURE] == HEADER_FORWARD_YES)
+    if (settings[HeaderGroup::SECURE] == HeaderForwardMode::YES)
         forward_secure_headers(dest, src);
 
     /* RFC 2616 3.8: Product Tokens */
     forward_server(dest, src,
-                   settings.modes[HEADER_GROUP_CAPABILITIES] != HEADER_FORWARD_YES);
+                   settings[HeaderGroup::CAPABILITIES] != HeaderForwardMode::YES);
 
-    if (settings.modes[HEADER_GROUP_IDENTITY] != HEADER_FORWARD_NO)
+    if (settings[HeaderGroup::IDENTITY] != HeaderForwardMode::NO)
         forward_via(pool, dest, src, local_host,
-                    settings.modes[HEADER_GROUP_IDENTITY] == HEADER_FORWARD_MANGLE);
+                    settings[HeaderGroup::IDENTITY] == HeaderForwardMode::MANGLE);
 
-    if (settings.modes[HEADER_GROUP_TRANSFORMATION] == HEADER_FORWARD_YES)
+    if (settings[HeaderGroup::TRANSFORMATION] == HeaderForwardMode::YES)
         forward_transformation_headers(dest, src);
 
     return dest;

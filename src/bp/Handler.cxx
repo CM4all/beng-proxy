@@ -159,10 +159,10 @@ handle_translated_request2(Request &request,
         : nullptr;
 
     using namespace BengProxy;
-    if ((response.request_header_forward.modes[HEADER_GROUP_COOKIE] != HEADER_FORWARD_MANGLE &&
-         response.request_header_forward.modes[HEADER_GROUP_COOKIE] != HEADER_FORWARD_BOTH) ||
-        (response.response_header_forward.modes[HEADER_GROUP_COOKIE] != HEADER_FORWARD_MANGLE &&
-         response.response_header_forward.modes[HEADER_GROUP_COOKIE] != HEADER_FORWARD_BOTH)) {
+    if ((response.request_header_forward[HeaderGroup::COOKIE] != HeaderForwardMode::MANGLE &&
+         response.request_header_forward[HeaderGroup::COOKIE] != HeaderForwardMode::BOTH) ||
+        (response.response_header_forward[HeaderGroup::COOKIE] != HeaderForwardMode::MANGLE &&
+         response.response_header_forward[HeaderGroup::COOKIE] != HeaderForwardMode::BOTH)) {
         /* disable session management if cookies are not mangled by
            beng-proxy */
         request.MakeStateless();
@@ -902,21 +902,21 @@ serve_document_root_file(Request &request2, const BpConfig &config)
     using namespace BengProxy;
     tr->request_header_forward = (struct header_forward_settings){
         .modes = {
-            [HEADER_GROUP_IDENTITY] = HEADER_FORWARD_MANGLE,
-            [HEADER_GROUP_CAPABILITIES] = HEADER_FORWARD_YES,
-            [HEADER_GROUP_COOKIE] = HEADER_FORWARD_MANGLE,
-            [HEADER_GROUP_OTHER] = HEADER_FORWARD_NO,
-            [HEADER_GROUP_FORWARD] = HEADER_FORWARD_NO,
+            [(size_t)HeaderGroup::IDENTITY] = HeaderForwardMode::MANGLE,
+            [(size_t)HeaderGroup::CAPABILITIES] = HeaderForwardMode::YES,
+            [(size_t)HeaderGroup::COOKIE] = HeaderForwardMode::MANGLE,
+            [(size_t)HeaderGroup::OTHER] = HeaderForwardMode::NO,
+            [(size_t)HeaderGroup::FORWARD] = HeaderForwardMode::NO,
         },
     };
 
     tr->response_header_forward = (struct header_forward_settings){
         .modes = {
-            [HEADER_GROUP_IDENTITY] = HEADER_FORWARD_NO,
-            [HEADER_GROUP_CAPABILITIES] = HEADER_FORWARD_YES,
-            [HEADER_GROUP_COOKIE] = HEADER_FORWARD_MANGLE,
-            [HEADER_GROUP_OTHER] = HEADER_FORWARD_NO,
-            [HEADER_GROUP_FORWARD] = HEADER_FORWARD_NO,
+            [(size_t)HeaderGroup::IDENTITY] = HeaderForwardMode::NO,
+            [(size_t)HeaderGroup::CAPABILITIES] = HeaderForwardMode::YES,
+            [(size_t)HeaderGroup::COOKIE] = HeaderForwardMode::MANGLE,
+            [(size_t)HeaderGroup::OTHER] = HeaderForwardMode::NO,
+            [(size_t)HeaderGroup::FORWARD] = HeaderForwardMode::NO,
         },
     };
 

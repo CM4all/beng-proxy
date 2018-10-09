@@ -41,7 +41,15 @@
 #include <beng-proxy/Headers.hxx>
 
 struct header_forward_settings {
-    BengProxy::HeaderForwardMode modes[BengProxy::HEADER_GROUP_MAX];
+    BengProxy::HeaderForwardMode modes[size_t(BengProxy::HeaderGroup::MAX)];
+
+    constexpr auto &operator[](BengProxy::HeaderGroup group) noexcept {
+        return modes[size_t(group)];
+    }
+
+    constexpr const auto &operator[](BengProxy::HeaderGroup group) const noexcept {
+        return modes[size_t(group)];
+    }
 };
 
 struct pool;

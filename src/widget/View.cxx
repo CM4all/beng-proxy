@@ -49,31 +49,31 @@ WidgetView::Init(const char *_name)
     using namespace BengProxy;
     request_header_forward = (struct header_forward_settings){
         .modes = {
-            [HEADER_GROUP_IDENTITY] = HEADER_FORWARD_MANGLE,
-            [HEADER_GROUP_CAPABILITIES] = HEADER_FORWARD_YES,
-            [HEADER_GROUP_COOKIE] = HEADER_FORWARD_MANGLE,
-            [HEADER_GROUP_OTHER] = HEADER_FORWARD_NO,
-            [HEADER_GROUP_FORWARD] = HEADER_FORWARD_NO,
-            [HEADER_GROUP_CORS] = HEADER_FORWARD_NO,
-            [HEADER_GROUP_SECURE] = HEADER_FORWARD_NO,
-            [HEADER_GROUP_TRANSFORMATION] = HEADER_FORWARD_NO,
-            [HEADER_GROUP_LINK] = HEADER_FORWARD_NO,
-            [HEADER_GROUP_SSL] = HEADER_FORWARD_NO,
+            [(size_t)HeaderGroup::IDENTITY] = HeaderForwardMode::MANGLE,
+            [(size_t)HeaderGroup::CAPABILITIES] = HeaderForwardMode::YES,
+            [(size_t)HeaderGroup::COOKIE] = HeaderForwardMode::MANGLE,
+            [(size_t)HeaderGroup::OTHER] = HeaderForwardMode::NO,
+            [(size_t)HeaderGroup::FORWARD] = HeaderForwardMode::NO,
+            [(size_t)HeaderGroup::CORS] = HeaderForwardMode::NO,
+            [(size_t)HeaderGroup::SECURE] = HeaderForwardMode::NO,
+            [(size_t)HeaderGroup::TRANSFORMATION] = HeaderForwardMode::NO,
+            [(size_t)HeaderGroup::LINK] = HeaderForwardMode::NO,
+            [(size_t)HeaderGroup::SSL] = HeaderForwardMode::NO,
         },
     };
 
     response_header_forward = (struct header_forward_settings){
         .modes = {
-            [HEADER_GROUP_IDENTITY] = HEADER_FORWARD_NO,
-            [HEADER_GROUP_CAPABILITIES] = HEADER_FORWARD_YES,
-            [HEADER_GROUP_COOKIE] = HEADER_FORWARD_MANGLE,
-            [HEADER_GROUP_OTHER] = HEADER_FORWARD_NO,
-            [HEADER_GROUP_FORWARD] = HEADER_FORWARD_NO,
-            [HEADER_GROUP_CORS] = HEADER_FORWARD_NO,
-            [HEADER_GROUP_SECURE] = HEADER_FORWARD_NO,
-            [HEADER_GROUP_TRANSFORMATION] = HEADER_FORWARD_MANGLE,
-            [HEADER_GROUP_LINK] = HEADER_FORWARD_YES,
-            [HEADER_GROUP_SSL] = HEADER_FORWARD_NO,
+            [(size_t)HeaderGroup::IDENTITY] = HeaderForwardMode::NO,
+            [(size_t)HeaderGroup::CAPABILITIES] = HeaderForwardMode::YES,
+            [(size_t)HeaderGroup::COOKIE] = HeaderForwardMode::MANGLE,
+            [(size_t)HeaderGroup::OTHER] = HeaderForwardMode::NO,
+            [(size_t)HeaderGroup::FORWARD] = HeaderForwardMode::NO,
+            [(size_t)HeaderGroup::CORS] = HeaderForwardMode::NO,
+            [(size_t)HeaderGroup::SECURE] = HeaderForwardMode::NO,
+            [(size_t)HeaderGroup::TRANSFORMATION] = HeaderForwardMode::MANGLE,
+            [(size_t)HeaderGroup::LINK] = HeaderForwardMode::YES,
+            [(size_t)HeaderGroup::SSL] = HeaderForwardMode::NO,
         },
     };
 }

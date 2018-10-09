@@ -803,7 +803,7 @@ Request::OnHttpResponse(http_status_t status, StringMap &&headers,
         using namespace BengProxy;
 
         if (!transformed &&
-            (translate.response->response_header_forward.modes[HEADER_GROUP_TRANSFORMATION] == HEADER_FORWARD_MANGLE)) {
+            (translate.response->response_header_forward[HeaderGroup::TRANSFORMATION] == HeaderForwardMode::MANGLE)) {
             /* handle the response header "x-cm4all-view" */
             const char *view_name = headers.Get("x-cm4all-view");
             if (view_name != nullptr) {

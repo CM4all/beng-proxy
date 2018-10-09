@@ -69,16 +69,16 @@ check_strmap(const StringMap &map, const char *p)
 TEST(HeaderForwardTest, RequestHeaders)
 {
     struct header_forward_settings settings;
-    settings.modes[HEADER_GROUP_IDENTITY] = HEADER_FORWARD_MANGLE;
-    settings.modes[HEADER_GROUP_CAPABILITIES] = HEADER_FORWARD_YES;
-    settings.modes[HEADER_GROUP_COOKIE] = HEADER_FORWARD_MANGLE;
-    settings.modes[HEADER_GROUP_OTHER] = HEADER_FORWARD_NO;
-    settings.modes[HEADER_GROUP_FORWARD] = HEADER_FORWARD_NO;
-    settings.modes[HEADER_GROUP_CORS] = HEADER_FORWARD_NO;
-    settings.modes[HEADER_GROUP_SECURE] = HEADER_FORWARD_NO;
-    settings.modes[HEADER_GROUP_SSL] = HEADER_FORWARD_NO;
-    settings.modes[HEADER_GROUP_TRANSFORMATION] = HEADER_FORWARD_NO;
-    settings.modes[HEADER_GROUP_LINK] = HEADER_FORWARD_NO;
+    settings[HeaderGroup::IDENTITY] = HeaderForwardMode::MANGLE;
+    settings[HeaderGroup::CAPABILITIES] = HeaderForwardMode::YES;
+    settings[HeaderGroup::COOKIE] = HeaderForwardMode::MANGLE;
+    settings[HeaderGroup::OTHER] = HeaderForwardMode::NO;
+    settings[HeaderGroup::FORWARD] = HeaderForwardMode::NO;
+    settings[HeaderGroup::CORS] = HeaderForwardMode::NO;
+    settings[HeaderGroup::SECURE] = HeaderForwardMode::NO;
+    settings[HeaderGroup::SSL] = HeaderForwardMode::NO;
+    settings[HeaderGroup::TRANSFORMATION] = HeaderForwardMode::NO;
+    settings[HeaderGroup::LINK] = HeaderForwardMode::NO;
 
     TestPool pool;
 
@@ -165,7 +165,7 @@ TEST(HeaderForwardTest, RequestHeaders)
 
     /* don't forward user-agent */
 
-    settings.modes[HEADER_GROUP_CAPABILITIES] = HEADER_FORWARD_NO;
+    settings[HeaderGroup::CAPABILITIES] = HeaderForwardMode::NO;
     auto f = forward_request_headers(pool, headers,
                                      "192.168.0.2", "192.168.0.3",
                                      false, false, false, false, false,
@@ -178,7 +178,7 @@ TEST(HeaderForwardTest, RequestHeaders)
 
     /* mangle user-agent */
 
-    settings.modes[HEADER_GROUP_CAPABILITIES] = HEADER_FORWARD_MANGLE;
+    settings[HeaderGroup::CAPABILITIES] = HeaderForwardMode::MANGLE;
     auto g = forward_request_headers(pool, headers,
                                      "192.168.0.2", "192.168.0.3",
                                      false, false, false, false, false,
@@ -192,8 +192,8 @@ TEST(HeaderForwardTest, RequestHeaders)
 
     /* forward via/x-forwarded-for as-is */
 
-    settings.modes[HEADER_GROUP_CAPABILITIES] = HEADER_FORWARD_NO;
-    settings.modes[HEADER_GROUP_IDENTITY] = HEADER_FORWARD_YES;
+    settings[HeaderGroup::CAPABILITIES] = HeaderForwardMode::NO;
+    settings[HeaderGroup::IDENTITY] = HeaderForwardMode::YES;
 
     auto h = forward_request_headers(pool, headers,
                                      "192.168.0.2", "192.168.0.3",
@@ -207,7 +207,7 @@ TEST(HeaderForwardTest, RequestHeaders)
 
     /* no via/x-forwarded-for */
 
-    settings.modes[HEADER_GROUP_IDENTITY] = HEADER_FORWARD_NO;
+    settings[HeaderGroup::IDENTITY] = HeaderForwardMode::NO;
 
     auto i = forward_request_headers(pool, headers,
                                      "192.168.0.2", "192.168.0.3",
@@ -219,7 +219,7 @@ TEST(HeaderForwardTest, RequestHeaders)
 
     /* forward cookies */
 
-    settings.modes[HEADER_GROUP_COOKIE] = HEADER_FORWARD_YES;
+    settings[HeaderGroup::COOKIE] = HeaderForwardMode::YES;
 
     auto j = forward_request_headers(pool, headers,
                                      "192.168.0.2", "192.168.0.3",
@@ -245,7 +245,7 @@ TEST(HeaderForwardTest, RequestHeaders)
 
     /* exclude one cookie */
 
-    settings.modes[HEADER_GROUP_COOKIE] = HEADER_FORWARD_BOTH;
+    settings[HeaderGroup::COOKIE] = HeaderForwardMode::BOTH;
 
     auto l = forward_request_headers(pool, headers,
                                      "192.168.0.2", "192.168.0.3",
@@ -258,8 +258,8 @@ TEST(HeaderForwardTest, RequestHeaders)
 
     /* forward other headers */
 
-    settings.modes[HEADER_GROUP_COOKIE] = HEADER_FORWARD_NO;
-    settings.modes[HEADER_GROUP_OTHER] = HEADER_FORWARD_YES;
+    settings[HeaderGroup::COOKIE] = HeaderForwardMode::NO;
+    settings[HeaderGroup::OTHER] = HeaderForwardMode::YES;
 
     auto m = forward_request_headers(pool, headers,
                                      "192.168.0.2", "192.168.0.3",
@@ -282,7 +282,7 @@ TEST(HeaderForwardTest, RequestHeaders)
     check_strmap(n, "abc=def;accept=text/*;accept-charset=utf-8;"
                  "from=foo;");
 
-    settings.modes[HEADER_GROUP_CORS] = HEADER_FORWARD_YES;
+    settings[HeaderGroup::CORS] = HeaderForwardMode::YES;
 
     auto o = forward_request_headers(pool, headers,
                                      "192.168.0.2", "192.168.0.3",
@@ -296,7 +296,7 @@ TEST(HeaderForwardTest, RequestHeaders)
 
     /* forward secure headers */
 
-    settings.modes[HEADER_GROUP_SECURE] = HEADER_FORWARD_YES;
+    settings[HeaderGroup::SECURE] = HeaderForwardMode::YES;
 
     auto p = forward_request_headers(pool, headers,
                                      "192.168.0.2", "192.168.0.3",
@@ -311,8 +311,8 @@ TEST(HeaderForwardTest, RequestHeaders)
 
     /* forward ssl headers */
 
-    settings.modes[HEADER_GROUP_SECURE] = HEADER_FORWARD_NO;
-    settings.modes[HEADER_GROUP_SSL] = HEADER_FORWARD_YES;
+    settings[HeaderGroup::SECURE] = HeaderForwardMode::NO;
+    settings[HeaderGroup::SSL] = HeaderForwardMode::YES;
 
     auto q = forward_request_headers(pool, headers,
                                      "192.168.0.2", "192.168.0.3",
@@ -328,7 +328,7 @@ TEST(HeaderForwardTest, RequestHeaders)
 
     /* forward referer headers */
 
-    settings.modes[HEADER_GROUP_LINK] = HEADER_FORWARD_YES;
+    settings[HeaderGroup::LINK] = HeaderForwardMode::YES;
 
     q = forward_request_headers(pool, headers,
                                 "192.168.0.2", "192.168.0.3",
@@ -358,16 +358,16 @@ RelocateCallback(const char *uri, void *ctx) noexcept
 TEST(HeaderForwardTest, ResponseHeaders)
 {
     struct header_forward_settings settings;
-    settings.modes[HEADER_GROUP_IDENTITY] = HEADER_FORWARD_NO;
-    settings.modes[HEADER_GROUP_CAPABILITIES] = HEADER_FORWARD_NO;
-    settings.modes[HEADER_GROUP_COOKIE] = HEADER_FORWARD_NO;
-    settings.modes[HEADER_GROUP_OTHER] = HEADER_FORWARD_NO;
-    settings.modes[HEADER_GROUP_FORWARD] = HEADER_FORWARD_NO;
-    settings.modes[HEADER_GROUP_CORS] = HEADER_FORWARD_NO;
-    settings.modes[HEADER_GROUP_SECURE] = HEADER_FORWARD_NO;
-    settings.modes[HEADER_GROUP_SSL] = HEADER_FORWARD_NO;
-    settings.modes[HEADER_GROUP_TRANSFORMATION] = HEADER_FORWARD_NO;
-    settings.modes[HEADER_GROUP_LINK] = HEADER_FORWARD_YES;
+    settings[HeaderGroup::IDENTITY] = HeaderForwardMode::NO;
+    settings[HeaderGroup::CAPABILITIES] = HeaderForwardMode::NO;
+    settings[HeaderGroup::COOKIE] = HeaderForwardMode::NO;
+    settings[HeaderGroup::OTHER] = HeaderForwardMode::NO;
+    settings[HeaderGroup::FORWARD] = HeaderForwardMode::NO;
+    settings[HeaderGroup::CORS] = HeaderForwardMode::NO;
+    settings[HeaderGroup::SECURE] = HeaderForwardMode::NO;
+    settings[HeaderGroup::SSL] = HeaderForwardMode::NO;
+    settings[HeaderGroup::TRANSFORMATION] = HeaderForwardMode::NO;
+    settings[HeaderGroup::LINK] = HeaderForwardMode::YES;
 
     TestPool pool;
 
@@ -401,7 +401,7 @@ TEST(HeaderForwardTest, ResponseHeaders)
 
     /* response headers: server */
 
-    settings.modes[HEADER_GROUP_CAPABILITIES] = HEADER_FORWARD_YES;
+    settings[HeaderGroup::CAPABILITIES] = HeaderForwardMode::YES;
 
     auto out3 = forward_response_headers(*pool, HTTP_STATUS_OK, headers,
                                          "192.168.0.2", nullptr,
@@ -411,7 +411,7 @@ TEST(HeaderForwardTest, ResponseHeaders)
 
     /* response: forward via/x-forwarded-for as-is */
 
-    settings.modes[HEADER_GROUP_IDENTITY] = HEADER_FORWARD_YES;
+    settings[HeaderGroup::IDENTITY] = HeaderForwardMode::YES;
 
     auto out4 = forward_response_headers(*pool, HTTP_STATUS_OK, headers,
                                          "192.168.0.2", nullptr,
@@ -422,7 +422,7 @@ TEST(HeaderForwardTest, ResponseHeaders)
 
     /* response: mangle via/x-forwarded-for */
 
-    settings.modes[HEADER_GROUP_IDENTITY] = HEADER_FORWARD_MANGLE;
+    settings[HeaderGroup::IDENTITY] = HeaderForwardMode::MANGLE;
 
     auto out5 = forward_response_headers(*pool, HTTP_STATUS_OK, headers,
                                          "192.168.0.2", nullptr,
@@ -431,13 +431,13 @@ TEST(HeaderForwardTest, ResponseHeaders)
     check_strmap(out5, "content-type=image/jpeg;server=apache;"
                  "via=1.1 192.168.0.1, 1.1 192.168.0.2;");
 
-    settings.modes[HEADER_GROUP_IDENTITY] = HEADER_FORWARD_NO;
+    settings[HeaderGroup::IDENTITY] = HeaderForwardMode::NO;
 
     /* response: mangle "Location" */
 
     headers.Add("location", "http://localhost:8080/foo/bar");
 
-    settings.modes[HEADER_GROUP_LINK] = HEADER_FORWARD_NO;
+    settings[HeaderGroup::LINK] = HeaderForwardMode::NO;
 
     auto out5b = forward_response_headers(*pool, HTTP_STATUS_OK, headers,
                                           "192.168.0.2", nullptr,
@@ -446,7 +446,7 @@ TEST(HeaderForwardTest, ResponseHeaders)
     check_strmap(out5b, "content-type=image/jpeg;"
                  "server=apache;");
 
-    settings.modes[HEADER_GROUP_LINK] = HEADER_FORWARD_YES;
+    settings[HeaderGroup::LINK] = HeaderForwardMode::YES;
 
     out5b = forward_response_headers(*pool, HTTP_STATUS_OK, headers,
                                      "192.168.0.2", nullptr,
@@ -456,7 +456,7 @@ TEST(HeaderForwardTest, ResponseHeaders)
                  "location=http://localhost:8080/foo/bar;"
                  "server=apache;");
 
-    settings.modes[HEADER_GROUP_LINK] = HEADER_FORWARD_MANGLE;
+    settings[HeaderGroup::LINK] = HeaderForwardMode::MANGLE;
 
     out5b = forward_response_headers(*pool, HTTP_STATUS_OK, headers,
                                      "192.168.0.2", nullptr,
@@ -466,11 +466,11 @@ TEST(HeaderForwardTest, ResponseHeaders)
                  "location=http://example.com/foo/bar;"
                  "server=apache;");
 
-    settings.modes[HEADER_GROUP_LINK] = HEADER_FORWARD_NO;
+    settings[HeaderGroup::LINK] = HeaderForwardMode::NO;
 
     /* forward cookies */
 
-    settings.modes[HEADER_GROUP_COOKIE] = HEADER_FORWARD_YES;
+    settings[HeaderGroup::COOKIE] = HeaderForwardMode::YES;
 
     auto out6 = forward_response_headers(*pool, HTTP_STATUS_OK, headers,
                                          "192.168.0.2", nullptr,
@@ -490,7 +490,7 @@ TEST(HeaderForwardTest, ResponseHeaders)
     check_strmap(out7, "content-type=image/jpeg;server=apache;"
                  "set-cookie=a=b;");
 
-    settings.modes[HEADER_GROUP_CORS] = HEADER_FORWARD_YES;
+    settings[HeaderGroup::CORS] = HeaderForwardMode::YES;
 
     auto out8 = forward_response_headers(*pool, HTTP_STATUS_OK, headers,
                                          "192.168.0.2", nullptr,
@@ -502,7 +502,7 @@ TEST(HeaderForwardTest, ResponseHeaders)
 
     /* forward secure headers */
 
-    settings.modes[HEADER_GROUP_SECURE] = HEADER_FORWARD_YES;
+    settings[HeaderGroup::SECURE] = HeaderForwardMode::YES;
 
     auto out9 = forward_response_headers(*pool, HTTP_STATUS_OK, headers,
                                          "192.168.0.2", nullptr,
