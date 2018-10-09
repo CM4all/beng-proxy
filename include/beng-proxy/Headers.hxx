@@ -37,8 +37,6 @@
 #ifndef BENG_PROXY_HEADERS_HXX
 #define BENG_PROXY_HEADERS_HXX
 
-#include "util/Compiler.h"
-
 #include <stdint.h>
 
 namespace BengProxy {
@@ -166,7 +164,9 @@ struct HeaderForwardPacket {
      * Unused padding byte.  Set 0.
      */
     uint8_t reserved;
-} gcc_packed;
+};
+
+static_assert(sizeof(HeaderForwardPacket) == 4);
 
 } // namespace BengProxy
 
