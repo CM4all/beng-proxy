@@ -18,7 +18,7 @@ flavors = {
 
     'release': {
         'options': [
-            '--buildtype', 'release',
+            '--buildtype', 'debugoptimized',
             '-Db_ndebug=true',
         ],
         'env': {
