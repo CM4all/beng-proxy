@@ -327,9 +327,7 @@ Request::CheckHandleProbePathSuffixes(const TranslateResponse &response)
     assert(response.test_path != nullptr);
     const char *prefix = response.test_path;
 
-    ConstBuffer<const char *> probe_suffixes(&response.probe_suffixes.front(),
-                                             response.probe_suffixes.size());
-    const char *found = ProbePathSuffixes(prefix, probe_suffixes);
+    const char *found = ProbePathSuffixes(prefix, response.probe_suffixes);
 
     translate.request.probe_path_suffixes = response.probe_path_suffixes;
     translate.request.probe_suffix = found;
