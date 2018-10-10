@@ -1,6 +1,6 @@
 cm4all-beng-proxy (15.0.4) unstable; urgency=low
 
-  * merge release 14.14
+  * merge release 14.15x
   * translation: size optimizations
   * dev: convert headers to C++
 
@@ -26,6 +26,13 @@ cm4all-beng-proxy (15.0.1) unstable; urgency=low
   * eliminate dependency on libevent
 
  -- Max Kellermann <mk@cm4all.com>  Mon, 03 Sep 2018 12:14:18 +0200
+
+cm4all-beng-proxy (14.15) unstable; urgency=low
+
+  * spawn: fix error "Failed to create systemd scope: Unit
+    cm4all-beng-spawn.scope not loaded"
+
+ -- Max Kellermann <mk@cm4all.com>  Wed, 10 Oct 2018 11:49:25 +0200
 
 cm4all-beng-proxy (14.14) unstable; urgency=low
 
