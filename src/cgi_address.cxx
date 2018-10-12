@@ -64,12 +64,12 @@ CgiAddress::CgiAddress(AllocatorPtr alloc, const CgiAddress &src)
      path_info(alloc.CheckDup(src.path_info)),
      query_string(alloc.CheckDup(src.query_string)),
      document_root(alloc.CheckDup(src.document_root)),
-     expand_path(alloc.CheckDup(src.expand_path)),
-     expand_uri(alloc.CheckDup(src.expand_uri)),
-     expand_script_name(alloc.CheckDup(src.expand_script_name)),
-     expand_path_info(alloc.CheckDup(src.expand_path_info)),
-     expand_document_root(alloc.CheckDup(src.expand_document_root)),
-     address_list(alloc, src.address_list)
+     address_list(alloc, src.address_list),
+     expand_path(src.expand_path),
+     expand_uri(src.expand_uri),
+     expand_script_name(src.expand_script_name),
+     expand_path_info(src.expand_path_info),
+     expand_document_root(src.expand_document_root)
 {
 }
 
@@ -305,23 +305,31 @@ CgiAddress::Expand(AllocatorPtr alloc, const MatchInfo &match_info)
 {
     options.Expand(alloc, match_info);
 
-    if (expand_path != nullptr)
-        path = expand_string_unescaped(alloc, expand_path, match_info);
+    if (expand_path) {
+        expand_path = false;
+        path = expand_string_unescaped(alloc, path, match_info);
+    }
 
-    if (expand_uri != nullptr)
-        uri = expand_string_unescaped(alloc, expand_uri, match_info);
+    if (expand_uri) {
+        expand_uri = false;
+        uri = expand_string_unescaped(alloc, uri, match_info);
+    }
 
-    if (expand_script_name != nullptr)
-        script_name = expand_string_unescaped(alloc, expand_script_name,
-                                              match_info);
+    if (expand_script_name) {
+        expand_script_name = false;
+        script_name = expand_string_unescaped(alloc, script_name, match_info);
+    }
 
-    if (expand_path_info != nullptr)
-        path_info = expand_string_unescaped(alloc, expand_path_info,
-                                            match_info);
+    if (expand_path_info) {
+        expand_path_info = false;
+        path_info = expand_string_unescaped(alloc, path_info, match_info);
+    }
 
-    if (expand_document_root != nullptr)
-        document_root = expand_string_unescaped(alloc, expand_document_root,
+    if (expand_document_root) {
+        expand_document_root = false;
+        document_root = expand_string_unescaped(alloc, document_root,
                                                 match_info);
+    }
 
     args.Expand(alloc, match_info);
     params.Expand(alloc, match_info);

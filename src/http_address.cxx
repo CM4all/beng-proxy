@@ -50,8 +50,7 @@ HttpAddress::HttpAddress(Protocol _protocol, bool _ssl,
                          const char *_host_and_port, const char *_path)
     :protocol(_protocol), ssl(_ssl),
      host_and_port(_host_and_port),
-     path(_path),
-     expand_path(nullptr)
+     path(_path)
 {
 }
 
@@ -62,17 +61,16 @@ HttpAddress::HttpAddress(ShallowCopy shallow_copy,
     :protocol(_protocol), ssl(_ssl),
      host_and_port(_host_and_port),
      path(_path),
-     expand_path(nullptr),
      addresses(shallow_copy, _addresses)
 {
 }
 
 HttpAddress::HttpAddress(AllocatorPtr alloc, const HttpAddress &src)
     :protocol(src.protocol), ssl(src.ssl),
+     expand_path(src.expand_path),
      certificate(alloc.CheckDup(src.certificate)),
      host_and_port(alloc.CheckDup(src.host_and_port)),
      path(alloc.Dup(src.path)),
-     expand_path(alloc.CheckDup(src.expand_path)),
      addresses(alloc, src.addresses)
 {
 }
@@ -83,7 +81,6 @@ HttpAddress::HttpAddress(AllocatorPtr alloc, const HttpAddress &src,
      certificate(alloc.CheckDup(src.certificate)),
      host_and_port(alloc.CheckDup(src.host_and_port)),
      path(alloc.Dup(_path)),
-     expand_path(nullptr),
      addresses(alloc, src.addresses)
 {
 }
@@ -260,8 +257,7 @@ HttpAddress::LoadBase(AllocatorPtr alloc, const char *suffix) const
     assert(suffix != nullptr);
     assert(path != nullptr);
     assert(*path != 0);
-    assert(expand_path != nullptr ||
-           path[strlen(path) - 1] == '/');
+    assert(expand_path || path[strlen(path) - 1] == '/');
 
     return http_address_dup_with_path(alloc, this,
                                       alloc.Concat(path, suffix));
@@ -324,6 +320,8 @@ HttpAddress::RelativeTo(const HttpAddress &base) const
 void
 HttpAddress::Expand(AllocatorPtr alloc, const MatchInfo &match_info)
 {
-    if (expand_path != nullptr)
-        path = expand_string(alloc, expand_path, match_info);
+    if (expand_path) {
+        expand_path = false;
+        path = expand_string(alloc, path, match_info);
+    }
 }

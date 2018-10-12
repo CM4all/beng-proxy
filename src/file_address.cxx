@@ -51,12 +51,13 @@ FileAddress::FileAddress(AllocatorPtr alloc, const FileAddress &src,
      content_type(alloc.CheckDup(src.content_type)),
      content_type_lookup(alloc.Dup(src.content_type_lookup)),
      document_root(alloc.CheckDup(src.document_root)),
-     expand_path(alloc.CheckDup(src.expand_path)),
-     expand_document_root(alloc.CheckDup(src.expand_document_root)),
      delegate(src.delegate != nullptr
               ? alloc.New<DelegateAddress>(alloc, *src.delegate)
               : nullptr),
-     auto_gzipped(src.auto_gzipped) {
+     auto_gzipped(src.auto_gzipped),
+     expand_path(src.expand_path),
+     expand_document_root(src.expand_document_root)
+{
 }
 
 FileAddress::FileAddress(AllocatorPtr alloc, const FileAddress &src) noexcept
@@ -112,20 +113,24 @@ FileAddress::LoadBase(AllocatorPtr alloc, const char *suffix) const noexcept
 bool
 FileAddress::IsExpandable() const noexcept
 {
-    return expand_path != nullptr ||
-        expand_document_root != nullptr ||
+    return expand_path ||
+        expand_document_root ||
         (delegate != nullptr && delegate->IsExpandable());
 }
 
 void
 FileAddress::Expand(AllocatorPtr alloc, const MatchInfo &match_info)
 {
-    if (expand_path != nullptr)
-        path = expand_string_unescaped(alloc, expand_path, match_info);
+    if (expand_path) {
+        expand_path = false;
+        path = expand_string_unescaped(alloc, path, match_info);
+    }
 
-    if (expand_document_root != nullptr)
-        document_root = expand_string_unescaped(alloc, expand_document_root,
+    if (expand_document_root) {
+        expand_document_root = false;
+        document_root = expand_string_unescaped(alloc, document_root,
                                                 match_info);
+    }
 
     if (delegate != nullptr)
         delegate->Expand(alloc, match_info);

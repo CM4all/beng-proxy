@@ -56,6 +56,12 @@ struct HttpAddress {
     const bool ssl;
 
     /**
+     * The value of #TRANSLATE_EXPAND_PATH.  Only used by the
+     * translation cache.
+     */
+    bool expand_path = false;
+
+    /**
      * The name of the SSL/TLS client certificate to be used.
      */
     const char *certificate = nullptr;
@@ -71,12 +77,6 @@ struct HttpAddress {
      */
     const char *path;
 
-    /**
-     * The value of #TRANSLATE_EXPAND_PATH.  Only used by the
-     * translation cache.
-     */
-    const char *expand_path;
-
     AddressList addresses;
 
     HttpAddress(Protocol _protocol, bool _ssl,
@@ -88,10 +88,10 @@ struct HttpAddress {
 
     constexpr HttpAddress(ShallowCopy shallow_copy, const HttpAddress &src)
         :protocol(src.protocol), ssl(src.ssl),
+         expand_path(src.expand_path),
          certificate(src.certificate),
          host_and_port(src.host_and_port),
          path(src.path),
-         expand_path(src.expand_path),
          addresses(shallow_copy, src.addresses)
     {
     }
@@ -107,7 +107,6 @@ struct HttpAddress {
          certificate(src.certificate),
          host_and_port(src.host_and_port),
          path(_path),
-         expand_path(nullptr),
          addresses(shallow_copy, src.addresses)
     {
     }
@@ -177,7 +176,7 @@ struct HttpAddress {
      */
     gcc_pure
     bool IsExpandable() const {
-        return expand_path != nullptr;
+        return expand_path;
     }
 
     /**

@@ -56,21 +56,21 @@ struct FileAddress {
 
     const char *document_root = nullptr;
 
+    DelegateAddress *delegate = nullptr;
+
+    bool auto_gzipped = false;
+
     /**
      * The value of #TRANSLATE_EXPAND_PATH.  Only used by the
      * translation cache.
      */
-    const char *expand_path = nullptr;
+    bool expand_path = false;
 
     /**
      * The value of #TRANSLATE_EXPAND_DOCUMENT_ROOT.  Only used by the
      * translation cache.
      */
-    const char *expand_document_root = nullptr;
-
-    DelegateAddress *delegate = nullptr;
-
-    bool auto_gzipped = false;
+    bool expand_document_root = false;
 
     /**
      * @param _path the new path pointer (taken as-is, no deep copy)

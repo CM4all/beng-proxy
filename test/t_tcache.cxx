@@ -973,7 +973,7 @@ TEST(TranslationCache, Expand)
     const auto response1e = MakeResponse()
         .Base("/regex-expand/").Regex("^/regex-expand/(.+=.+)$")
         .Cgi(MakeCgiAddress("/usr/lib/cgi-bin/foo.cgi", nullptr,
-                            "/a/b=c").ExpandPathInfo("/a/\\1"));
+                            "/a/b=c"));
 
     next_response = &response1n;
     expected_response = &response1e;
@@ -1013,7 +1013,7 @@ TEST(TranslationCache, ExpandLocal)
     const auto response1e = MakeResponse()
         .Base("/regex-expand2/")
         .Regex("^/regex-expand2/(.+\\.jpg)/([^/]+=[^/]+)$")
-        .File(MakeFileAddress("/var/www/foo/bar.jpg").ExpandPath("/var/www/\\1"));
+        .File(MakeFileAddress("/var/www/foo/bar.jpg"));
 
     next_response = &response1n;
     expected_response = &response1e;
@@ -1056,8 +1056,8 @@ TEST(TranslationCache, ExpandLocalFilter)
         .Base("/regex-expand3/")
         .Regex("^/regex-expand3/(.+\\.jpg)/([^/]+=[^/]+)$")
         .Filter(MakeCgiAddress("/usr/lib/cgi-bin/image-processor.cgi", nullptr,
-                               "/b=c").ExpandPathInfo("/\\2"))
-        .File(MakeFileAddress("/var/www/foo/bar.jpg").ExpandPath("/var/www/\\1"));
+                               "/b=c"))
+        .File(MakeFileAddress("/var/www/foo/bar.jpg"));
 
     next_response = &response1n;
     expected_response = &response1e;
@@ -1071,7 +1071,7 @@ TEST(TranslationCache, ExpandLocalFilter)
         .Base("/regex-expand3/")
         .Regex("^/regex-expand3/(.+\\.jpg)/([^/]+=[^/]+)$")
         .Filter(MakeCgiAddress("/usr/lib/cgi-bin/image-processor.cgi", nullptr,
-                               "/d=e").ExpandPathInfo("/\\2"))
+                               "/d=e"))
         .File("/var/www/x/y/z.jpg");
 
     next_response = nullptr;
@@ -1371,8 +1371,12 @@ TEST(TranslationCache, ExpandUnsafeBase)
     const auto response1 = MakeResponse().Base("/expand_unsafe_base1/")
         .Regex("^/expand_unsafe_base1/(.*)$")
         .File(MakeFileAddress("/var/www/foo.html").ExpandPath("/var/www/\\1.html"));
+    const auto response1e = MakeResponse().Base("/expand_unsafe_base1/")
+        .Regex("^/expand_unsafe_base1/(.*)$")
+        .File(MakeFileAddress("/var/www/foo.html"));
 
-    next_response = expected_response = &response1;
+    next_response = &response1;
+    expected_response = &response1e;
     translate_cache(*pool, *cache, request1,
                     my_translate_handler, nullptr, cancel_ptr);
 
@@ -1380,8 +1384,12 @@ TEST(TranslationCache, ExpandUnsafeBase)
     const auto response2 = MakeResponse().UnsafeBase("/expand_unsafe_base2/")
         .Regex("^/expand_unsafe_base2/(.*)$")
         .File(MakeFileAddress("/var/www/foo.html").ExpandPath("/var/www/\\1.html"));
+    const auto response2e = MakeResponse().UnsafeBase("/expand_unsafe_base2/")
+        .Regex("^/expand_unsafe_base2/(.*)$")
+        .File(MakeFileAddress("/var/www/foo.html"));
 
-    next_response = expected_response = &response2;
+    next_response = &response2;
+    expected_response = &response2e;
     translate_cache(*pool, *cache, request2,
                     my_translate_handler, nullptr, cancel_ptr);
 
@@ -1398,7 +1406,7 @@ TEST(TranslationCache, ExpandUnsafeBase)
     const auto request4 = MakeRequest("/expand_unsafe_base2/../x");
     const auto response4 = MakeResponse().UnsafeBase("/expand_unsafe_base2/")
         .Regex("^/expand_unsafe_base2/(.*)$")
-        .File(MakeFileAddress("/var/www/../x.html").ExpandPath("/var/www/\\1.html"));
+        .File(MakeFileAddress("/var/www/../x.html"));
 
     next_response = nullptr;
     expected_response = &response4;

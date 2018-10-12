@@ -50,20 +50,20 @@ struct NfsAddress {
 
     const char *path;
 
-    /**
-     * The value of #TRANSLATE_EXPAND_PATH.  Only used by the
-     * translation cache.
-     */
-    const char *expand_path;
-
     const char *content_type;
 
     ConstBuffer<void> content_type_lookup = nullptr;
 
+    /**
+     * The value of #TRANSLATE_EXPAND_PATH.  Only used by the
+     * translation cache.
+     */
+    bool expand_path = false;
+
     NfsAddress(const char *_server,
                const char *_export_name, const char *_path)
         :server(_server), export_name(_export_name), path(_path),
-         expand_path(nullptr), content_type(nullptr) {}
+         content_type(nullptr) {}
 
     NfsAddress(AllocatorPtr alloc, const NfsAddress &other);
 
@@ -94,7 +94,7 @@ struct NfsAddress {
      */
     gcc_pure
     bool IsExpandable() const {
-        return expand_path != nullptr;
+        return expand_path;
     }
 
     /**

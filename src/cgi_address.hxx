@@ -69,42 +69,18 @@ struct CgiAddress {
     const char *document_root = nullptr;
 
     /**
-     * The value of #TRANSLATE_EXPAND_PATH.  Only used by the
-     * translation cache.
-     */
-    const char *expand_path = nullptr;
-
-    /**
-     * The value of #TRANSLATE_EXPAND_URI.  Only used by the
-     * translation cache.
-     */
-    const char *expand_uri = nullptr;
-
-    /**
-     * The value of #TRANSLATE_EXPAND_SCRIPT_NAME.  Only used by the
-     * translation cache.
-     */
-    const char *expand_script_name = nullptr;
-
-    /**
-     * The value of #TRANSLATE_EXPAND_PATH_INFO.  Only used by
-     * the translation cache.
-     */
-    const char *expand_path_info = nullptr;
-
-    /**
-     * The value of #TRANSLATE_EXPAND_DOCUMENT_ROOT.  Only used by the
-     * translation cache.
-     */
-    const char *expand_document_root = nullptr;
-
-    /**
      * An optional list of addresses to connect to.  If given
      * for a FastCGI resource, then beng-proxy connects to one
      * of the addresses instead of spawning a new child
      * process.
      */
     AddressList address_list;
+
+    bool expand_path = false;
+    bool expand_uri = false;
+    bool expand_script_name = false;
+    bool expand_path_info = false;
+    bool expand_document_root = false;
 
     explicit CgiAddress(const char *_path);
 
@@ -115,12 +91,12 @@ struct CgiAddress {
          interpreter(src.interpreter), action(src.action),
          uri(src.uri), script_name(src.script_name), path_info(src.path_info),
          query_string(src.query_string), document_root(src.document_root),
+         address_list(shallow_copy, src.address_list),
          expand_path(src.expand_path),
          expand_uri(src.expand_uri),
          expand_script_name(src.expand_script_name),
          expand_path_info(src.expand_path_info),
-         expand_document_root(src.expand_document_root),
-         address_list(shallow_copy, src.address_list)
+         expand_document_root(src.expand_document_root)
     {
     }
 
@@ -178,11 +154,11 @@ struct CgiAddress {
     gcc_pure
     bool IsExpandable() const {
         return options.IsExpandable() ||
-            expand_path != nullptr ||
-            expand_uri != nullptr ||
-            expand_script_name != nullptr ||
-            expand_path_info != nullptr ||
-            expand_document_root != nullptr ||
+            expand_path ||
+            expand_uri ||
+            expand_script_name ||
+            expand_path_info ||
+            expand_document_root ||
             args.IsExpandable() ||
             params.IsExpandable();
     }

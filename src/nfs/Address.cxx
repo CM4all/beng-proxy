@@ -47,9 +47,9 @@ NfsAddress::NfsAddress(AllocatorPtr alloc, const NfsAddress &other)
     :server(alloc.Dup(other.server)),
      export_name(alloc.Dup(other.export_name)),
      path(alloc.Dup(other.path)),
-     expand_path(alloc.CheckDup(other.expand_path)),
      content_type(alloc.CheckDup(other.content_type)),
-     content_type_lookup(alloc.Dup(other.content_type_lookup)) {}
+     content_type_lookup(alloc.Dup(other.content_type_lookup)),
+     expand_path(other.expand_path) {}
 
 const char *
 NfsAddress::GetId(struct pool *pool) const
@@ -115,10 +115,10 @@ NfsAddress::LoadBase(AllocatorPtr alloc, const char *suffix) const
 const NfsAddress *
 NfsAddress::Expand(AllocatorPtr alloc, const MatchInfo &match_info) const
 {
-    if (expand_path == nullptr)
+    if (!expand_path)
         return this;
 
-    const char *new_path = expand_string_unescaped(alloc, expand_path,
+    const char *new_path = expand_string_unescaped(alloc, path,
                                                    match_info);
 
     auto dest = alloc.New<NfsAddress>(server, export_name, new_path);

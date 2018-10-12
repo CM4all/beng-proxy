@@ -49,7 +49,7 @@
 LhttpAddress::LhttpAddress(const char *_path) noexcept
     :path(_path),
      host_and_port(nullptr),
-     uri(nullptr), expand_uri(nullptr),
+     uri(nullptr),
      concurrency(1),
      blocking(true)
 {
@@ -63,9 +63,9 @@ LhttpAddress::LhttpAddress(AllocatorPtr alloc,
      options(alloc, src.options),
      host_and_port(alloc.CheckDup(src.host_and_port)),
      uri(alloc.Dup(src.uri)),
-     expand_uri(alloc.CheckDup(src.expand_uri)),
      concurrency(src.concurrency),
-     blocking(src.blocking)
+     blocking(src.blocking),
+     expand_uri(src.expand_uri)
 {
 }
 
@@ -204,8 +204,10 @@ LhttpAddress::Expand(AllocatorPtr alloc, const MatchInfo &match_info) noexcept
 {
     options.Expand(alloc, match_info);
 
-    if (expand_uri != NULL)
-        uri = expand_string(alloc, expand_uri, match_info);
+    if (expand_uri) {
+        expand_uri = false;
+        uri = expand_string(alloc, uri, match_info);
+    }
 
     args.Expand(alloc, match_info);
 }

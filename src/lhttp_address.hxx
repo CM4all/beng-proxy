@@ -63,12 +63,6 @@ struct LhttpAddress {
     const char *uri;
 
     /**
-     * The value of #TRANSLATE_EXPAND_PATH.  Only used by the
-     * translation cache.
-     */
-    const char *expand_uri;
-
-    /**
      * The maximum number of concurrent connections to one instance.
      */
     unsigned concurrency;
@@ -79,6 +73,12 @@ struct LhttpAddress {
      */
     bool blocking;
 
+    /**
+     * The value of #TRANSLATE_EXPAND_PATH.  Only used by the
+     * translation cache.
+     */
+    bool expand_uri = false;
+
     explicit LhttpAddress(const char *path) noexcept;
 
     constexpr LhttpAddress(ShallowCopy shallow_copy,
@@ -87,9 +87,10 @@ struct LhttpAddress {
          args(shallow_copy, src.args),
          options(shallow_copy, src.options),
          host_and_port(src.host_and_port),
-         uri(src.uri), expand_uri(src.expand_uri),
+         uri(src.uri),
          concurrency(src.concurrency),
-         blocking(src.blocking)
+         blocking(src.blocking),
+         expand_uri(src.expand_uri)
     {
     }
 
@@ -178,7 +179,7 @@ struct LhttpAddress {
     gcc_pure
     bool IsExpandable() const noexcept {
         return options.IsExpandable() ||
-            expand_uri != nullptr ||
+            expand_uri ||
             args.IsExpandable();
     }
 

@@ -262,7 +262,8 @@ struct MakeFileAddress : FileAddress {
     explicit MakeFileAddress(const char *_path):FileAddress(_path) {}
 
     MakeFileAddress &&ExpandPath(const char *value) {
-        expand_path = value;
+        path = value;
+        expand_path = true;
         return std::move(*this);
     }
 };
@@ -278,7 +279,8 @@ struct MakeHttpAddress : HttpAddress {
     }
 
     MakeHttpAddress &&ExpandPath(const char *value) {
-        expand_path = value;
+        path = value;
+        expand_path = true;
         return std::move(*this);
     }
 };
@@ -302,7 +304,8 @@ struct MakeCgiAddress : CgiAddress {
     }
 
     MakeCgiAddress &&ExpandPathInfo(const char *value) {
-        expand_path_info = value;
+        path_info = value;
+        expand_path_info = true;
         return std::move(*this);
     }
 
