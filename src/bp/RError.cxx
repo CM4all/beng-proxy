@@ -38,7 +38,6 @@
 #include "Instance.hxx"
 #include "http_client.hxx"
 #include "nfs/Error.hxx"
-#include "ajp/Error.hxx"
 #include "memcached/Error.hxx"
 #include "cgi/Error.hxx"
 #include "fcgi/Error.hxx"
@@ -113,12 +112,6 @@ ToResponse(struct pool &pool, std::exception_ptr ep)
 
     try {
         FindRetrowNested<HttpClientError>(ep);
-    } catch (...) {
-        return {HTTP_STATUS_BAD_GATEWAY, "Upstream server failed"};
-    }
-
-    try {
-        FindRetrowNested<AjpClientError>(ep);
     } catch (...) {
         return {HTTP_STATUS_BAD_GATEWAY, "Upstream server failed"};
     }

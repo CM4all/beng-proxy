@@ -58,12 +58,7 @@ struct ResourceAddress {
     enum class Type {
         NONE,
         LOCAL,
-
-        /**
-         * A #HttpAddress, which may specify HTTP or AJP.
-         */
         HTTP,
-
         LHTTP,
         PIPE,
         CGI,
@@ -140,8 +135,9 @@ public:
      */
     void Check() const;
 
-    gcc_pure
-    bool IsHttp() const;
+    bool IsHttp() const noexcept {
+        return type == Type::HTTP;
+    }
 
     gcc_pure
     bool IsAnyHttp() const {
@@ -258,7 +254,7 @@ public:
     ResourceAddress *Dup(struct pool &pool) const;
 
     /**
-     * Construct a copy of this object with a different HTTP/AJP URI
+     * Construct a copy of this object with a different HTTP URI
      * path component.
      *
      * This is a shallow copy: no memory is duplicated; the new

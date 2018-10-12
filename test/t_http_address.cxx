@@ -57,26 +57,22 @@ TEST(HttpAddressTest, Apply)
 
     auto *a = http_address_parse(alloc, "http://localhost/foo");
     ASSERT_NE(a, nullptr);
-    ASSERT_EQ(a->protocol, HttpAddress::Protocol::HTTP);
     ASSERT_NE(a->host_and_port, nullptr);
     ASSERT_STREQ(a->host_and_port, "localhost");
     ASSERT_STREQ(a->path, "/foo");
 
     const auto *b = a->Apply(alloc, "");
     ASSERT_NE(b, nullptr);
-    ASSERT_EQ(b->protocol, a->protocol);
     ASSERT_STREQ(b->host_and_port, a->host_and_port);
     ASSERT_STREQ(b->path, "/foo");
 
     b = a->Apply(alloc, "bar");
     ASSERT_NE(b, nullptr);
-    ASSERT_EQ(b->protocol, a->protocol);
     ASSERT_STREQ(b->host_and_port, a->host_and_port);
     ASSERT_STREQ(b->path, "/bar");
 
     b = a->Apply(alloc, "/");
     ASSERT_NE(b, nullptr);
-    ASSERT_EQ(b->protocol, a->protocol);
     ASSERT_STREQ(b->host_and_port, a->host_and_port);
     ASSERT_STREQ(b->path, "/");
 
@@ -85,13 +81,11 @@ TEST(HttpAddressTest, Apply)
 
     b = a->Apply(alloc, "http://localhost/bar");
     ASSERT_NE(b, nullptr);
-    ASSERT_EQ(b->protocol, a->protocol);
     ASSERT_STREQ(b->host_and_port, a->host_and_port);
     ASSERT_STREQ(b->path, "/bar");
 
     b = a->Apply(alloc, "?query");
     ASSERT_NE(b, nullptr);
-    ASSERT_EQ(b->protocol, a->protocol);
     ASSERT_STREQ(b->host_and_port, a->host_and_port);
     ASSERT_STREQ(b->path, "/foo?query");
 }

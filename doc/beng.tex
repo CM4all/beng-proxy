@@ -701,15 +701,6 @@ packet.
 After that, the \verb|CERTIFICATE| packet can choose a client
 certificate (see \ref{certificate}).
 
-\subsection{AJP v1.3}
-\label{ajp}
-
-Similar to HTTP proxying, \emph{beng-proxy} can act as a HTTP-to-AJP
-bridge.
-
-The AJP client also supports caching, connection pooling and load
-balancing.
-
 \subsection{CGI and FastCGI}
 \label{cgi}
 
@@ -1103,12 +1094,6 @@ SSL connection (see \ref{certificate}). \\
 
 \hline
 
-\verb|AJP| & Load the resource from an AJPv13 server (see
-\ref{ajp}).  The payload of this packet is an absolute URI in the form
-\texttt{ajp://host:port/path} \\
-
-\hline
-
 \verb|PIPE| & a local program which reads input from stdin and
 prints the modified resource on stdout (see \ref{pipe}). \\
 
@@ -1213,8 +1198,7 @@ will need to redirect back to the original URI. \\
 \hline
 
 \verb|EXPAND_PATH| & Override the \verb|PATH| with the given value
-(applicable to static files, CGI, FastCGI, WAS, \verb|HTTP|,
-\verb|AJP|).
+(applicable to static files, CGI, FastCGI, WAS, \verb|HTTP|).
 Backslash references are expanded to the value of the match group of
 \verb|REGEX|. In the presence of this packet, the URI suffix after the
 base will not be appended to other paths.
@@ -1418,7 +1402,7 @@ will be mounted in the jail; defaults to \verb|DOCUMENT_ROOT| \\
 \verb|ADDRESS| & after each \verb|HTTP| packet, there must be one
 or more \verb|ADDRESS| packets which specify the resolved addresses.
 The payload of each is a \texttt{struct sockaddr}.
-The same applies to \verb|AJP| packets. \\
+\\
 
 \hline
 
@@ -2323,7 +2307,7 @@ address groups of child processes.
 The translation server can tell \emph{beng-proxy} to apply a filter to
 the resource by sending the \verb|FILTER| command.  It is followed
 by a packet specifying the filter server (\verb|HTTP|,
-\verb|CGI|, \verb|FASTCGI|, \verb|AJP|, \verb|PIPE|).
+\verb|CGI|, \verb|FASTCGI|, \verb|PIPE|).
 
 A filter server is a HTTP server.  \emph{beng-proxy} sends the
 original resource with a POST request and expects the filtered

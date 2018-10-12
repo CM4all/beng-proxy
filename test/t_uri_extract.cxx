@@ -47,7 +47,6 @@ static constexpr struct UriTests {
 } uri_tests[] = {
     { "http://foo/bar", "foo", "/bar", nullptr },
     { "https://foo/bar", "foo", "/bar", nullptr },
-    { "ajp://foo/bar", "foo", "/bar", nullptr },
     { "http://foo:8080/bar", "foo:8080", "/bar", nullptr },
     { "http://foo", "foo", nullptr, nullptr },
     { "http://foo/bar?a=b", "foo", "/bar?a=b", "a=b" },

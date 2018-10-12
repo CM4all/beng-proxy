@@ -65,16 +65,7 @@ print_resource_address(const ResourceAddress *address)
         break;
 
     case ResourceAddress::Type::HTTP:
-        switch (address->GetHttp().protocol) {
-        case HttpAddress::Protocol::HTTP:
-            printf("http=%s\n", address->GetHttp().path);
-            break;
-
-        case HttpAddress::Protocol::AJP:
-            printf("ajp=%s\n", address->GetHttp().path);
-            break;
-        }
-
+        printf("http=%s\n", address->GetHttp().path);
         break;
 
     case ResourceAddress::Type::LHTTP:

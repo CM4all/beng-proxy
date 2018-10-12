@@ -30,7 +30,6 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "ajp/Client.hxx"
 #include "strmap.hxx"
 #include "http_client.hxx"
 #include "http_headers.hxx"
@@ -75,7 +74,7 @@
 
 struct parsed_url {
     enum {
-        HTTP, HTTPS, AJP,
+        HTTP, HTTPS,
     } protocol;
 
     std::string host;
@@ -92,11 +91,7 @@ parse_url(const char *url)
 
     struct parsed_url dest;
 
-    if (memcmp(url, "ajp://", 6) == 0) {
-        url += 6;
-        dest.protocol = parsed_url::AJP;
-        dest.default_port = 8009;
-    } else if (memcmp(url, "http://", 7) == 0) {
+    if (memcmp(url, "http://", 7) == 0) {
         url += 7;
         dest.protocol = parsed_url::HTTP;
         dest.default_port = 80;
@@ -285,17 +280,6 @@ try {
     headers.Add("host", url.host.c_str());
 
     switch (url.protocol) {
-    case parsed_url::AJP:
-        ajp_client_request(*pool, event_loop,
-                           fd, FdType::FD_TCP,
-                           *this,
-                           "http", "127.0.0.1", "localhost",
-                           "localhost", 80, false,
-                           method, url.uri, headers, std::move(request_body),
-                           *this,
-                           cancel_ptr);
-        break;
-
     case parsed_url::HTTP:
         fs.Init(fd.Release(), FdType::FD_TCP);
 

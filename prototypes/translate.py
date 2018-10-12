@@ -430,8 +430,6 @@ class Translation(Protocol):
 
             response.vary(TRANSLATE_USER_AGENT)
             response.http('http://cfatest01.intern.cm-ag/' + raw_uri[24:])
-        elif raw_uri[:5] == '/ajp/':
-            response.ajp('ajp://cfatest01.intern.cm-ag:8009' + raw_uri[4:], 'cfatest01.intern.cm-ag:8009')
         elif raw_uri[:5] == '/nfs/':
             response.nfs('172.28.0.8', '/srv/nfs4/foo', raw_uri[4:])
         elif uri[:8] == '/fcgi.rb':

@@ -574,26 +574,6 @@ memcached_client_dep = declare_dependency(
   ],
 )
 
-ajp_client = static_library('ajp_client',
-  'src/ajp/Client.cxx',
-  'src/ajp/Headers.cxx',
-  'src/ajp/Protocol.cxx',
-  'src/ajp/Serialize.cxx',
-  'src/ajp/istream_ajp_body.cxx',
-  'src/ajp/Glue.cxx',
-  include_directories: inc,
-)
-ajp_client_dep = declare_dependency(
-  link_with: ajp_client,
-  dependencies: [
-    istream_dep,
-    stopwatch_dep,
-    socket_dep,
-    putil_dep,
-    http_dep,
-  ],
-)
-
 subdir('libcommon/src/translation')
 
 translation2 = static_library(
@@ -922,7 +902,6 @@ executable('cm4all-beng-proxy',
     ssl_dep,
     translation_dep,
     was_client_dep,
-    ajp_client_dep,
     stopwatch_dep,
     cgi_dep,
     fcgi_client_dep,

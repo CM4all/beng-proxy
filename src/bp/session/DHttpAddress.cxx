@@ -34,7 +34,7 @@
 #include "shm/dpool.hxx"
 
 HttpAddress::HttpAddress(struct dpool &pool, const HttpAddress &src)
-    :protocol(src.protocol), ssl(src.ssl),
+    :ssl(src.ssl),
      expand_path(src.expand_path),
      host_and_port(d_strdup_checked(pool, src.host_and_port)),
      path(d_strdup(pool, src.path)),

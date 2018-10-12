@@ -31,7 +31,7 @@
  */
 
 /*
- * Serve HTTP requests from another HTTP/AJP server.
+ * Serve HTTP requests from another HTTP server.
  */
 
 #include "Handler.hxx"

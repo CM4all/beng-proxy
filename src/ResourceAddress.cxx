@@ -50,13 +50,6 @@ ResourceAddress::ResourceAddress(AllocatorPtr alloc,
     CopyFrom(alloc, src);
 }
 
-bool
-ResourceAddress::IsHttp() const
-{
-    return type == Type::HTTP &&
-        GetHttp().protocol == HttpAddress::Protocol::HTTP;
-}
-
 void
 ResourceAddress::CopyFrom(AllocatorPtr alloc, const ResourceAddress &src)
 {

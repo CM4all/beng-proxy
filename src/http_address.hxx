@@ -45,14 +45,9 @@ class AllocatorPtr;
 class MatchInfo;
 
 /**
- * The address of a resource stored on a HTTP (or AJP) server.
+ * The address of a resource stored on a HTTP server.
  */
 struct HttpAddress {
-    const enum class Protocol : uint8_t {
-        HTTP,
-        AJP,
-    } protocol;
-
     const bool ssl;
 
     /**
@@ -79,15 +74,15 @@ struct HttpAddress {
 
     AddressList addresses;
 
-    HttpAddress(Protocol _protocol, bool _ssl,
+    HttpAddress(bool _ssl,
                 const char *_host_and_port, const char *_path);
 
-    HttpAddress(ShallowCopy, Protocol _protocol, bool _ssl,
+    HttpAddress(ShallowCopy, bool _ssl,
                 const char *_host_and_port, const char *_path,
                 const AddressList &_addresses);
 
     constexpr HttpAddress(ShallowCopy shallow_copy, const HttpAddress &src)
-        :protocol(src.protocol), ssl(src.ssl),
+        :ssl(src.ssl),
          expand_path(src.expand_path),
          certificate(src.certificate),
          host_and_port(src.host_and_port),
@@ -103,7 +98,7 @@ struct HttpAddress {
 
     constexpr HttpAddress(ShallowCopy shallow_copy, const HttpAddress &src,
                           const char *_path)
-        :protocol(src.protocol), ssl(src.ssl),
+        :ssl(src.ssl),
          certificate(src.certificate),
          host_and_port(src.host_and_port),
          path(_path),
@@ -186,15 +181,7 @@ struct HttpAddress {
 
     gcc_pure
     int GetDefaultPort() const {
-        switch (protocol) {
-        case Protocol::HTTP:
-            return ssl ? 443 : 80;
-
-        case Protocol::AJP:
-            return 8009;
-        }
-
-        gcc_unreachable();
+        return ssl ? 443 : 80;
     }
 };
 

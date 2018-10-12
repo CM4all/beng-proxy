@@ -68,7 +68,6 @@ executable('run_client',
   dependencies: [
     threads,
     ssl_dep,
-    ajp_client_dep,
     was_client_dep,
     http_client_dep,
     event_net_dep,
@@ -443,19 +442,6 @@ test('t_was_client', executable('t_was_client',
   dependencies: [
     was_client_dep,
     declare_dependency(link_with: was_server),
-  ]),
-)
-
-test('t_ajp_client', executable('t_ajp_client',
-  't_ajp_client.cxx',
-  'ajp_server.cxx',
-  '../src/PInstance.cxx',
-  '../src/direct.cxx',
-  '../src/serialize.cxx',
-  '../src/istream_gb.cxx',
-  include_directories: inc,
-  dependencies: [
-    ajp_client_dep,
   ]),
 )
 

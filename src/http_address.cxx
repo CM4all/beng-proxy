@@ -46,19 +46,19 @@
 
 #include <string.h>
 
-HttpAddress::HttpAddress(Protocol _protocol, bool _ssl,
+HttpAddress::HttpAddress(bool _ssl,
                          const char *_host_and_port, const char *_path)
-    :protocol(_protocol), ssl(_ssl),
+    :ssl(_ssl),
      host_and_port(_host_and_port),
      path(_path)
 {
 }
 
 HttpAddress::HttpAddress(ShallowCopy shallow_copy,
-                         Protocol _protocol, bool _ssl,
+                         bool _ssl,
                          const char *_host_and_port, const char *_path,
                          const AddressList &_addresses)
-    :protocol(_protocol), ssl(_ssl),
+    :ssl(_ssl),
      host_and_port(_host_and_port),
      path(_path),
      addresses(shallow_copy, _addresses)
@@ -66,7 +66,7 @@ HttpAddress::HttpAddress(ShallowCopy shallow_copy,
 }
 
 HttpAddress::HttpAddress(AllocatorPtr alloc, const HttpAddress &src)
-    :protocol(src.protocol), ssl(src.ssl),
+    :ssl(src.ssl),
      expand_path(src.expand_path),
      certificate(alloc.CheckDup(src.certificate)),
      host_and_port(alloc.CheckDup(src.host_and_port)),
@@ -77,7 +77,7 @@ HttpAddress::HttpAddress(AllocatorPtr alloc, const HttpAddress &src)
 
 HttpAddress::HttpAddress(AllocatorPtr alloc, const HttpAddress &src,
                          const char *_path)
-    :protocol(src.protocol), ssl(src.ssl),
+    :ssl(src.ssl),
      certificate(alloc.CheckDup(src.certificate)),
      host_and_port(alloc.CheckDup(src.host_and_port)),
      path(alloc.Dup(_path)),
@@ -86,12 +86,12 @@ HttpAddress::HttpAddress(AllocatorPtr alloc, const HttpAddress &src,
 }
 
 static HttpAddress *
-http_address_new(AllocatorPtr alloc, HttpAddress::Protocol protocol, bool ssl,
+http_address_new(AllocatorPtr alloc, bool ssl,
                  const char *host_and_port, const char *path)
 {
     assert(path != nullptr);
 
-    return alloc.New<HttpAddress>(protocol, ssl, host_and_port, path);
+    return alloc.New<HttpAddress>(ssl, host_and_port, path);
 }
 
 /**
@@ -100,7 +100,7 @@ http_address_new(AllocatorPtr alloc, HttpAddress::Protocol protocol, bool ssl,
  * Throws std::runtime_error on error.
  */
 static HttpAddress *
-http_address_parse2(AllocatorPtr alloc, HttpAddress::Protocol protocol, bool ssl,
+http_address_parse2(AllocatorPtr alloc, bool ssl,
                     const char *uri)
 {
     assert(uri != nullptr);
@@ -118,24 +118,18 @@ http_address_parse2(AllocatorPtr alloc, HttpAddress::Protocol protocol, bool ssl
         path = "/";
     }
 
-    return http_address_new(alloc, protocol, ssl, host_and_port, path);
+    return http_address_new(alloc, ssl, host_and_port, path);
 }
 
 HttpAddress *
 http_address_parse(AllocatorPtr alloc, const char *uri)
 {
     if (auto http = StringAfterPrefix(uri, "http://"))
-        return http_address_parse2(alloc, HttpAddress::Protocol::HTTP,
-                                   false, http);
+        return http_address_parse2(alloc, false, http);
     else if (auto https = StringAfterPrefix(uri, "https://"))
-        return http_address_parse2(alloc, HttpAddress::Protocol::HTTP,
-                                   true, https);
-    else if (auto ajp = StringAfterPrefix(uri, "ajp://"))
-        return http_address_parse2(alloc, HttpAddress::Protocol::AJP,
-                                   false, ajp);
+        return http_address_parse2(alloc, true, https);
     else if (auto unix = StringAfterPrefix(uri, "unix:/"))
-        return http_address_new(alloc, HttpAddress::Protocol::HTTP,
-                                false, nullptr,
+        return http_address_new(alloc, false, nullptr,
                                 /* rewind to the slash */
                                 unix - 1);
 
@@ -165,25 +159,14 @@ void
 HttpAddress::Check() const
 {
     if (addresses.IsEmpty())
-        throw std::runtime_error(protocol == Protocol::AJP
-                                 ? "no ADDRESS for AJP address"
-                                 : "no ADDRESS for HTTP address");
+        throw std::runtime_error("no ADDRESS for HTTP address");
 }
 
 gcc_const
 static const char *
-uri_protocol_prefix(HttpAddress::Protocol p, bool has_host)
+uri_protocol_prefix(bool has_host)
 {
-    switch (p) {
-    case HttpAddress::Protocol::HTTP:
-        return has_host ? "http://" : "unix:";
-
-    case HttpAddress::Protocol::AJP:
-        return "ajp://";
-    }
-
-    assert(false);
-    return nullptr;
+    return has_host ? "http://" : "unix:";
 }
 
 char *
@@ -195,7 +178,7 @@ HttpAddress::GetAbsoluteURI(struct pool *pool,
     assert(override_path != nullptr);
     assert(*override_path == '/');
 
-    return p_strcat(pool, uri_protocol_prefix(protocol, host_and_port != nullptr),
+    return p_strcat(pool, uri_protocol_prefix(host_and_port != nullptr),
                     host_and_port == nullptr ? "" : host_and_port,
                     override_path, nullptr);
 }
@@ -277,9 +260,6 @@ HttpAddress::Apply(AllocatorPtr alloc, StringView relative) const
             return nullptr;
         }
 
-        if (other->protocol != protocol)
-            return nullptr;
-
         const char *my_host = host_and_port != nullptr ? host_and_port : "";
         const char *other_host = other->host_and_port != nullptr
             ? other->host_and_port
@@ -303,9 +283,6 @@ HttpAddress::Apply(AllocatorPtr alloc, StringView relative) const
 StringView
 HttpAddress::RelativeTo(const HttpAddress &base) const
 {
-    if (base.protocol != protocol)
-        return nullptr;
-
     const char *my_host = host_and_port != nullptr ? host_and_port : "";
     const char *base_host = base.host_and_port != nullptr
         ? base.host_and_port

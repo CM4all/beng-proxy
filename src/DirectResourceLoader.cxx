@@ -46,7 +46,6 @@
 #include "fcgi/Request.hxx"
 #include "fcgi/Remote.hxx"
 #include "was/Glue.hxx"
-#include "ajp/Glue.hxx"
 #include "nfs/Address.hxx"
 #include "nfs/Glue.hxx"
 #include "header_writer.hxx"
@@ -118,30 +117,6 @@ extract_remote_ip(struct pool *pool, const StringMap *headers)
     return p_strdup(*pool, eh.host);
 }
 
-static const char *
-extract_server_name(struct pool *pool, const StringMap *headers,
-                    unsigned *port_r)
-{
-    const char *p = strmap_get_checked(headers, "host");
-    if (p == nullptr)
-        return nullptr;
-
-    const char *colon = strchr(p, ':');
-    if (colon == nullptr)
-        return p;
-
-    if (strchr(colon + 1, ':') != nullptr)
-        /* XXX handle IPv6 addresses properly */
-        return p;
-
-    char *endptr;
-    unsigned port = strtoul(colon + 1, &endptr, 10);
-    if (endptr > colon + 1 && *endptr == 0)
-        *port_r = port;
-
-    return p_strndup(pool, p, colon - p);
-}
-
 gcc_pure
 static const char *
 GetHostWithoutPort(struct pool &pool, const HttpAddress &address) noexcept
@@ -173,8 +148,6 @@ try {
         const FileAddress *file;
         const CgiAddress *cgi;
         const NfsAddress *nfs;
-        const char *server_name;
-        unsigned server_port;
         SocketFilterFactory *filter_factory;
 
     case ResourceAddress::Type::NONE:
@@ -292,39 +265,20 @@ try {
         return;
 
     case ResourceAddress::Type::HTTP:
-        switch (address.GetHttp().protocol) {
-        case HttpAddress::Protocol::HTTP:
-            if (address.GetHttp().ssl) {
-                filter_factory = NewFromPool<SslSocketFilterFactory>(pool,
-                                                                     event_loop,
-                                                                     GetHostWithoutPort(pool, address.GetHttp()),
-                                                                     address.GetHttp().certificate);
-            } else {
-                filter_factory = nullptr;
-            }
-
-            http_request(pool, fs_balancer, session_sticky,
-                         filter_factory,
-                         method, address.GetHttp(),
-                         HttpHeaders(std::move(headers)), std::move(body),
-                         handler, cancel_ptr);
-            break;
-
-        case HttpAddress::Protocol::AJP:
-            server_port = 80;
-            server_name = extract_server_name(&pool, &headers, &server_port);
-            ajp_stock_request(pool, event_loop, *tcp_balancer,
-                              session_sticky,
-                              "http", extract_remote_ip(&pool, &headers),
-                              nullptr,
-                              server_name, server_port,
-                              false,
-                              method, address.GetHttp(),
-                              std::move(headers), std::move(body),
-                              handler, cancel_ptr);
-            break;
+        if (address.GetHttp().ssl) {
+            filter_factory = NewFromPool<SslSocketFilterFactory>(pool,
+                                                                 event_loop,
+                                                                 GetHostWithoutPort(pool, address.GetHttp()),
+                                                                 address.GetHttp().certificate);
+        } else {
+            filter_factory = nullptr;
         }
 
+        http_request(pool, fs_balancer, session_sticky,
+                     filter_factory,
+                     method, address.GetHttp(),
+                     HttpHeaders(std::move(headers)), std::move(body),
+                     handler, cancel_ptr);
         return;
 
     case ResourceAddress::Type::LHTTP:
