@@ -33,12 +33,11 @@
 #ifdef __linux
 
 #include "istream_pipe.hxx"
+#include "PipeLease.hxx"
 #include "New.hxx"
 #include "UnusedPtr.hxx"
 #include "ForwardIstream.hxx"
-#include "io/FileDescriptor.hxx"
 #include "direct.hxx"
-#include "pipe_stock.hxx"
 #include "stock/Stock.hxx"
 #include "stock/Item.hxx"
 #include "system/Error.hxx"
@@ -49,16 +48,14 @@
 #include <string.h>
 
 class PipeIstream final : public ForwardIstream {
-    Stock *const stock;
-    StockItem *stock_item = nullptr;
-    FileDescriptor fds[2] = { FileDescriptor::Undefined(), FileDescriptor::Undefined() };
+    PipeLease pipe;
     size_t piped = 0;
 
 public:
     PipeIstream(struct pool &p, UnusedIstreamPtr _input,
                 Stock *_pipe_stock)
         :ForwardIstream(p, std::move(_input)),
-         stock(_pipe_stock) {}
+         pipe(_pipe_stock) {}
 
     /* virtual methods from class Istream */
 
@@ -90,25 +87,13 @@ private:
     void CloseInternal() noexcept;
     void Abort(std::exception_ptr ep) noexcept;
     ssize_t Consume() noexcept;
-
-    /**
-     * Throws exception on error.
-     */
-    void Create();
 };
 
 void
 PipeIstream::CloseInternal() noexcept
 {
-    if (stock != nullptr) {
-        if (stock_item != nullptr)
-            /* reuse the pipe only if it's empty */
-            stock_item->Put(piped > 0);
-    } else {
-        for (auto &fd : fds)
-            if (fd.IsDefined())
-                fd.Close();
-    }
+    /* reuse the pipe only if it's empty */
+    pipe.Release(piped == 0);
 }
 
 void
@@ -125,11 +110,11 @@ PipeIstream::Abort(std::exception_ptr ep) noexcept
 ssize_t
 PipeIstream::Consume() noexcept
 {
-    assert(fds[0].IsDefined());
+    assert(pipe.IsDefined());
     assert(piped > 0);
-    assert(stock_item != nullptr || stock == nullptr);
 
-    ssize_t nbytes = InvokeDirect(FdType::FD_PIPE, fds[0].Get(), piped);
+    ssize_t nbytes = InvokeDirect(FdType::FD_PIPE, pipe.GetReadFd().Get(),
+                                  piped);
     if (gcc_unlikely(nbytes == ISTREAM_RESULT_BLOCKING ||
                      nbytes == ISTREAM_RESULT_CLOSED))
         /* handler blocks (-2) or pipe was closed (-3) */
@@ -144,16 +129,10 @@ PipeIstream::Consume() noexcept
         assert((size_t)nbytes <= piped);
         piped -= (size_t)nbytes;
 
-        if (piped == 0 && stock != nullptr) {
+        if (piped == 0)
             /* if the pipe was drained, return it to the stock, to
                make it available to other streams */
-
-            stock_item->Put(false);
-            stock_item = nullptr;
-
-            for (auto &fd : fds)
-                fd.SetUndefined();
-        }
+            pipe.ReleaseIfStock();
 
         if (piped == 0 && !input.IsDefined()) {
             /* our input has already reported EOF, and we have been
@@ -192,23 +171,6 @@ PipeIstream::OnData(const void *data, size_t length) noexcept
     return InvokeData(data, length);
 }
 
-inline void
-PipeIstream::Create()
-{
-    assert(!fds[0].IsDefined());
-    assert(!fds[1].IsDefined());
-
-    if (stock != nullptr) {
-        assert(stock_item == nullptr);
-
-        stock_item = stock->GetNow(GetPool(), nullptr);
-        pipe_stock_item_get(stock_item, fds);
-    } else {
-        if (!FileDescriptor::CreatePipeNonBlock(fds[0], fds[1]))
-            throw MakeErrno("pipe() failed");
-    }
-}
-
 inline ssize_t
 PipeIstream::OnDirect(FdType type, int fd, size_t max_length) noexcept
 {
@@ -233,16 +195,16 @@ PipeIstream::OnDirect(FdType type, int fd, size_t max_length) noexcept
 
     assert((type & ISTREAM_TO_PIPE) == type);
 
-    if (!fds[1].IsDefined()) {
+    if (!pipe.IsDefined()) {
         try {
-            Create();
+            pipe.Create(GetPool());
         } catch (...) {
             Abort(std::current_exception());
             return ISTREAM_RESULT_CLOSED;
         }
     }
 
-    ssize_t nbytes = Splice(fd, fds[1].Get(), max_length);
+    ssize_t nbytes = Splice(fd, pipe.GetWriteFd().Get(), max_length);
     /* don't check EAGAIN here (and don't return -2).  We assume that
        splicing to the pipe cannot possibly block, since we flushed
        the pipe; assume that it can only be the source file which is
@@ -264,8 +226,7 @@ PipeIstream::OnEof() noexcept
 {
     input.Clear();
 
-    if (stock == nullptr && fds[1].IsDefined())
-        fds[1].Close();
+    pipe.CloseWriteIfNotStock();
 
     if (piped == 0) {
         CloseInternal();
