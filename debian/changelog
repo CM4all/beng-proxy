@@ -1,6 +1,6 @@
 cm4all-beng-proxy (15.0.4) unstable; urgency=low
 
-  * merge release 14.15x
+  * merge release 14.16
   * translation: size optimizations
   * dev: convert headers to C++
   * ajp: remove unused AJPv13 protocol implementation
@@ -27,6 +27,12 @@ cm4all-beng-proxy (15.0.1) unstable; urgency=low
   * eliminate dependency on libevent
 
  -- Max Kellermann <mk@cm4all.com>  Mon, 03 Sep 2018 12:14:18 +0200
+
+cm4all-beng-proxy (14.16) unstable; urgency=low
+
+  * http_client: fix assertion failure due to unexpected recursion
+
+ -- Max Kellermann <mk@cm4all.com>  Mon, 15 Oct 2018 17:03:13 +0200
 
 cm4all-beng-proxy (14.15) unstable; urgency=low
 
