@@ -1225,7 +1225,7 @@ HttpClient::OnEof() noexcept
     request.istream.Clear();
 
     socket.UnscheduleWrite();
-    socket.Read(false);
+    socket.ScheduleReadNoTimeout(response_body_reader.RequireMore());
 }
 
 void
