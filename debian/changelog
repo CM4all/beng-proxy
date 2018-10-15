@@ -1,6 +1,6 @@
 cm4all-beng-proxy (14.16) unstable; urgency=low
 
-  * 
+  * http_client: fix assertion failure due to unexpected recursion
 
  --   
 
