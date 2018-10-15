@@ -4,6 +4,7 @@ cm4all-beng-proxy (15.0.4) unstable; urgency=low
   * translation: size optimizations
   * dev: convert headers to C++
   * ajp: remove unused AJPv13 protocol implementation
+  * spawn: fix warning "... died from signal 31"
 
  --   
 
