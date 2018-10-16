@@ -3,7 +3,7 @@ cm4all-beng-proxy (14.18) unstable; urgency=low
   * was: fix use-after-free bug
   * enlarge I/O buffers to 32 for faster bulk transfers
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 16 Oct 2018 19:05:34 +0200
 
 cm4all-beng-proxy (14.17) unstable; urgency=low
 
