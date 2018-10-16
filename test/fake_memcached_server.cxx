@@ -31,6 +31,7 @@
  */
 
 #include "memcached/memcached_protocol.hxx"
+#include "fb_pool.hxx"
 #include "util/ByteOrder.hxx"
 
 #include <unistd.h>
@@ -99,7 +100,7 @@ int main(int argc, char **argv)
     struct memcached_request_header request_header;
     static constexpr char response_key[3] = {'f','o','o'};
     static char response_body1[1024];
-    static char response_body2[16384];
+    static char response_body2[2 * FB_SIZE];
     const struct memcached_response_header response_header = {
         .magic = MEMCACHED_MAGIC_RESPONSE,
         .opcode = 0,
@@ -125,7 +126,7 @@ int main(int argc, char **argv)
             return 2;
         }
 
-        read_discard(0, FromBE16(request_header.body_length));
+        read_discard(0, FromBE32(request_header.body_length));
 
         write_full_or_abort(1, &response_header, sizeof(response_header));
         write_full_or_abort(1, response_key, sizeof(response_key));

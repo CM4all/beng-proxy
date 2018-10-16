@@ -40,7 +40,11 @@
 
 #include "util/Compiler.h"
 
+#include <stddef.h>
+
 class SlicePool;
+
+static constexpr size_t FB_SIZE = 32768;
 
 /**
  * Global initialization.

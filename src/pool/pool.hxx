@@ -56,6 +56,7 @@ struct pool;
 class SlicePool;
 struct AllocatorStats;
 class PoolPtr;
+class PoolLeakDetector;
 
 struct pool_mark_state {
     /**
@@ -256,19 +257,6 @@ pool_detach(gcc_unused struct pool *pool, gcc_unused const void *p) noexcept
 {
 }
 
-static inline void
-pool_detach_checked(gcc_unused struct pool *pool,
-                    gcc_unused const void *p) noexcept
-{
-}
-
-static inline const char *
-pool_attachment_name(gcc_unused struct pool *pool,
-                     gcc_unused const void *p) noexcept
-{
-    return NULL;
-}
-
 #else
 
 void
@@ -279,6 +267,12 @@ pool_commit() noexcept;
 
 bool
 pool_contains(const struct pool &pool, const void *ptr, size_t size) noexcept;
+
+/**
+ * Register a #PoolLeakDetector to the pool.
+ */
+void
+pool_register_leak_detector(struct pool &pool, PoolLeakDetector &ld) noexcept;
 
 /**
  * Attach an opaque object to the pool.  It must be detached before
@@ -298,12 +292,6 @@ pool_attach_checked(struct pool *pool, const void *p,
 
 void
 pool_detach(struct pool *pool, const void *p) noexcept;
-
-void
-pool_detach_checked(struct pool *pool, const void *p) noexcept;
-
-const char *
-pool_attachment_name(struct pool *pool, const void *p) noexcept;
 
 #endif
 

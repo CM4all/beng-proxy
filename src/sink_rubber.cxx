@@ -216,10 +216,12 @@ RubberSink::OnError(std::exception_ptr ep) noexcept
 void
 RubberSink::Cancel() noexcept
 {
-    if (input.IsDefined())
-        input.ClearAndClose();
+    IstreamPointer i(std::move(input));
 
     Destroy();
+
+    if (i.IsDefined())
+        i.ClearAndClose();
 }
 
 /*

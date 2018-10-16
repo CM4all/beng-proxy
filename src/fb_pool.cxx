@@ -35,10 +35,6 @@
 
 #include <assert.h>
 
-/* Note: ThreadSocketFilter::SubmitDecryptedInput() has a copy of this
-   number; both must be in sync */
-static constexpr size_t FB_SIZE = 8192;
-
 static SlicePool *fb_pool;
 
 void

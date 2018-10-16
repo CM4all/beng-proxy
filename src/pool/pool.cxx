@@ -33,6 +33,7 @@
 #include "pool.hxx"
 #include "Ptr.hxx"
 #include "Notify.hxx"
+#include "LeakDetector.hxx"
 #include "SlicePool.hxx"
 #include "AllocatorStats.hxx"
 #include "io/Logger.hxx"
@@ -46,6 +47,7 @@
 #endif
 
 #include <forward_list>
+#include <typeinfo>
 
 #include <assert.h>
 #include <stdlib.h>
@@ -203,6 +205,12 @@ struct pool final
                                                          allocation_info::SiblingsHook,
                                                          &allocation_info::siblings>,
                            boost::intrusive::constant_time_size<false>> allocations;
+
+    boost::intrusive::list<PoolLeakDetector,
+                           boost::intrusive::member_hook<PoolLeakDetector,
+                                                         PoolLeakDetector::PoolLeakDetectorSiblingsHook,
+                                                         &PoolLeakDetector::pool_leak_detector_siblings>,
+                           boost::intrusive::constant_time_size<false>> leaks;
 
     boost::intrusive::list<struct attachment,
                            boost::intrusive::constant_time_size<false>> attachments;
@@ -553,6 +561,25 @@ pool_dump_allocations(const struct pool &pool) noexcept;
 #endif
 
 static void
+pool_check_leaks(const struct pool &pool) noexcept
+{
+#ifdef NDEBUG
+    (void)pool;
+#else
+    if (pool.leaks.empty())
+        return;
+
+    pool.logger(1, "pool has leaked objects:");
+
+    for (const auto &ld : pool.leaks)
+        pool.logger.Format(1, " %p %s",
+                           &ld, typeid(ld).name());
+
+    abort();
+#endif
+}
+
+static void
 pool_check_attachments(const struct pool &pool) noexcept
 {
 #ifdef NDEBUG
@@ -586,6 +613,7 @@ pool_destroy(struct pool *pool, gcc_unused struct pool *parent,
     pool_dump_allocations(*pool);
 #endif
 
+    pool_check_leaks(*pool);
     pool_check_attachments(*pool);
 
     pool->notify.clear();
@@ -1203,6 +1231,12 @@ p_free(struct pool *pool, const void *cptr) noexcept
 #ifndef NDEBUG
 
 void
+pool_register_leak_detector(struct pool &pool, PoolLeakDetector &ld) noexcept
+{
+    pool.leaks.push_back(ld);
+}
+
+void
 pool_attach(struct pool *pool, const void *p, const char *name) noexcept
 {
     assert(pool != nullptr);
@@ -1249,26 +1283,6 @@ pool_detach(struct pool *pool, const void *p) noexcept
 
     pool->attachments.erase_and_dispose(pool->attachments.iterator_to(*attachment),
                                         free);
-}
-
-void
-pool_detach_checked(struct pool *pool, const void *p) noexcept
-{
-    struct attachment *attachment = find_attachment(pool, p);
-    if (attachment == nullptr)
-        return;
-
-    pool->attachments.erase_and_dispose(pool->attachments.iterator_to(*attachment),
-                                        free);
-}
-
-const char *
-pool_attachment_name(struct pool *pool, const void *p) noexcept
-{
-    struct attachment *attachment = find_attachment(pool, p);
-    return attachment != nullptr
-        ? attachment->name
-        : nullptr;
 }
 
 #endif

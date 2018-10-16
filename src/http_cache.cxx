@@ -660,7 +660,9 @@ HttpCacheRequest::RubberStoreFinished()
 void
 HttpCacheRequest::AbortRubberStore()
 {
-    cancel_ptr.Cancel();
+    CancellablePointer _cancel_ptr(std::move(cancel_ptr));
+    Destroy();
+    _cancel_ptr.Cancel();
 }
 
 inline

@@ -38,6 +38,7 @@
 #include "istream/UnusedPtr.hxx"
 #include "istream/BlockIstream.hxx"
 #include "istream/ByteIstream.hxx"
+#include "istream/FourIstream.hxx"
 #include "istream/istream_cat.hxx"
 #include "istream/DelayedIstream.hxx"
 #include "istream/FailIstream.hxx"
@@ -742,10 +743,10 @@ template<class Connection>
 static void
 test_data_blocking(Context<Connection> &c)
 {
-    fprintf(stderr, "TEST_DATA_BLOCKING\n");
     auto request_body =
-        istream_head_new(*c.pool, istream_zero_new(*c.pool),
-                         2*65536, false);
+        istream_four_new(c.pool,
+                         istream_head_new(*c.pool, istream_zero_new(*c.pool),
+                                          65536, false));
 
     c.data_blocking = 5;
     c.connection = Connection::NewMirror(*c.pool, c.event_loop);
