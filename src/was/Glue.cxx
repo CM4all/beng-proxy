@@ -173,9 +173,9 @@ WasRequest::OnStockItemError(std::exception_ptr ep) noexcept
 {
     body.Clear();
 
-    handler.InvokeError(ep);
-
+    auto &_handler = handler;
     Destroy();
+    _handler.InvokeError(ep);
 }
 
 /*
