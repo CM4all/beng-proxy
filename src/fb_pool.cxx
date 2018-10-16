@@ -35,8 +35,6 @@
 
 #include <assert.h>
 
-static constexpr size_t FB_SIZE = 32768;
-
 static SlicePool *fb_pool;
 
 void
