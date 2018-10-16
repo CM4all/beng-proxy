@@ -35,17 +35,12 @@
 
 #ifndef NDEBUG
 
-#include <typeinfo>
-
 PoolLeakDetector::PoolLeakDetector(struct pool &_pool) noexcept
     :ldp(_pool)
 {
-    pool_attach(&ldp, this, typeid(*this).name());
+    pool_register_leak_detector(ldp, *this);
 }
 
-PoolLeakDetector::~PoolLeakDetector() noexcept
-{
-    pool_detach(&ldp, this);
-}
+PoolLeakDetector::~PoolLeakDetector() noexcept = default;
 
 #endif

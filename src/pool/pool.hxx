@@ -56,6 +56,7 @@ struct pool;
 class SlicePool;
 struct AllocatorStats;
 class PoolPtr;
+class PoolLeakDetector;
 
 struct pool_mark_state {
     /**
@@ -378,6 +379,12 @@ pool_commit() noexcept;
 
 bool
 pool_contains(const struct pool &pool, const void *ptr, size_t size) noexcept;
+
+/**
+ * Register a #PoolLeakDetector to the pool.
+ */
+void
+pool_register_leak_detector(struct pool &pool, PoolLeakDetector &ld) noexcept;
 
 /**
  * Attach an opaque object to the pool.  It must be detached before

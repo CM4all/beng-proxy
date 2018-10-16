@@ -34,6 +34,8 @@
 
 #ifndef NDEBUG
 
+#include <boost/intrusive/list_hook.hpp>
+
 /**
  * Derive from this class to verify that its destructor gets called
  * before the #pool gets destroyed.
@@ -42,6 +44,9 @@ class PoolLeakDetector {
     struct pool &ldp;
 
 public:
+    typedef boost::intrusive::list_member_hook<boost::intrusive::link_mode<boost::intrusive::auto_unlink>> PoolLeakDetectorSiblingsHook;
+    PoolLeakDetectorSiblingsHook pool_leak_detector_siblings;
+
     explicit PoolLeakDetector(struct pool &_pool) noexcept;
 
     PoolLeakDetector(const PoolLeakDetector &src):PoolLeakDetector(src.ldp) {}
