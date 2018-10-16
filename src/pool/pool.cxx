@@ -46,6 +46,7 @@
 #endif
 
 #include <forward_list>
+#include <typeinfo>
 
 #include <assert.h>
 #include <stdlib.h>
