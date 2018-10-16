@@ -1283,24 +1283,4 @@ pool_detach(struct pool *pool, const void *p) noexcept
                                         free);
 }
 
-void
-pool_detach_checked(struct pool *pool, const void *p) noexcept
-{
-    struct attachment *attachment = find_attachment(pool, p);
-    if (attachment == nullptr)
-        return;
-
-    pool->attachments.erase_and_dispose(pool->attachments.iterator_to(*attachment),
-                                        free);
-}
-
-const char *
-pool_attachment_name(struct pool *pool, const void *p) noexcept
-{
-    struct attachment *attachment = find_attachment(pool, p);
-    return attachment != nullptr
-        ? attachment->name
-        : nullptr;
-}
-
 #endif
