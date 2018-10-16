@@ -40,6 +40,7 @@ common_flags = [
 ]
 
 test_common_flags = [
+  '-fno-omit-frame-pointer',
   '-fvisibility=hidden',
 ]
 
