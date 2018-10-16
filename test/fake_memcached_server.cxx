@@ -126,7 +126,7 @@ int main(int argc, char **argv)
             return 2;
         }
 
-        read_discard(0, FromBE16(request_header.body_length));
+        read_discard(0, FromBE32(request_header.body_length));
 
         write_full_or_abort(1, &response_header, sizeof(response_header));
         write_full_or_abort(1, response_key, sizeof(response_key));
