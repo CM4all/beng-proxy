@@ -67,6 +67,8 @@ struct LbInstance final : PInstance {
     const Logger logger;
 
     uint64_t http_request_counter = 0;
+    uint64_t http_traffic_received_counter = 0;
+    uint64_t http_traffic_sent_counter = 0;
 
     std::forward_list<LbControl> controls;
 

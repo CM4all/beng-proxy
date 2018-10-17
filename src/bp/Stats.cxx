@@ -75,6 +75,8 @@ BpInstance::GetStats() const noexcept
     stats.children = ToBE32(child_process_registry.GetCount());
     stats.sessions = ToBE32(session_manager_get_count());
     stats.http_requests = ToBE64(http_request_counter);
+    stats.http_traffic_received = ToBE64(http_traffic_received_counter);
+    stats.http_traffic_sent = ToBE64(http_traffic_sent_counter);
     stats.translation_cache_size = ToBE64(tcache_stats.netto_size);
     stats.http_cache_size = ToBE64(http_cache_stats.netto_size);
     stats.filter_cache_size = ToBE64(fcache_stats.netto_size);

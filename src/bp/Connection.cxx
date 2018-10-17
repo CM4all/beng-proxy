@@ -154,6 +154,8 @@ BpConnection::LogHttpRequest(HttpServerRequest &request,
                              http_status_t status, int64_t length,
                              uint64_t bytes_received, uint64_t bytes_sent)
 {
+    instance.http_traffic_received_counter += bytes_received;
+    instance.http_traffic_sent_counter += bytes_sent;
     if (instance.access_log != nullptr)
         instance.access_log->Log(request, per_request.site_name,
                                  nullptr,

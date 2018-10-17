@@ -181,6 +181,13 @@ struct ControlStats {
      * Total size of I/O buffers.
      */
     uint64_t io_buffers_size, io_buffers_brutto_size;
+
+    /**
+     * In- and outgoing HTTP traffic since
+     * the server was started.
+     */
+    uint64_t http_traffic_received;
+    uint64_t http_traffic_sent;
 };
 
 struct ControlHeader {
