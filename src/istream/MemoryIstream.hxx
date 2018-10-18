@@ -30,12 +30,29 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "istream_memory.hxx"
-#include "MemoryIstream.hxx"
-#include "New.hxx"
+#pragma once
 
-UnusedIstreamPtr
-istream_memory_new(struct pool &pool, const void *data, size_t length) noexcept
-{
-    return NewIstreamPtr<MemoryIstream>(pool, data, length);
-}
+#include "istream.hxx"
+#include "util/ConstBuffer.hxx"
+
+#include <stdint.h>
+
+class MemoryIstream final : public Istream {
+    ConstBuffer<uint8_t> data;
+
+public:
+    MemoryIstream(struct pool &p, const void *_data, size_t length)
+        :Istream(p),
+         data((const uint8_t *)_data, length) {}
+
+    /* virtual methods from class Istream */
+
+    off_t _GetAvailable(gcc_unused bool partial) noexcept override {
+        return data.size;
+    }
+
+    off_t _Skip(off_t length) noexcept override;
+    void _Read() noexcept override;
+    void _FillBucketList(IstreamBucketList &list) noexcept override;
+    size_t _ConsumeBucketList(size_t nbytes) noexcept override;
+};

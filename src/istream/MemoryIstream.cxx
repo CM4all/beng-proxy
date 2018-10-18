@@ -30,12 +30,48 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "istream_memory.hxx"
 #include "MemoryIstream.hxx"
-#include "New.hxx"
+#include "Bucket.hxx"
 
-UnusedIstreamPtr
-istream_memory_new(struct pool &pool, const void *data, size_t length) noexcept
+#include <algorithm>
+
+off_t
+MemoryIstream::_Skip(off_t length) noexcept
 {
-    return NewIstreamPtr<MemoryIstream>(pool, data, length);
+    size_t nbytes = std::min(off_t(data.size), length);
+    data.skip_front(nbytes);
+    Consumed(nbytes);
+    return nbytes;
+}
+
+void
+MemoryIstream::_Read() noexcept
+{
+    if (!data.empty()) {
+        auto nbytes = InvokeData(data.data, data.size);
+        if (nbytes == 0)
+            return;
+
+        data.skip_front(nbytes);
+    }
+
+    if (data.empty())
+        DestroyEof();
+}
+
+void
+MemoryIstream::_FillBucketList(IstreamBucketList &list) noexcept
+{
+    if (!data.empty())
+        list.Push(data.ToVoid());
+}
+
+size_t
+MemoryIstream::_ConsumeBucketList(size_t nbytes) noexcept
+{
+    if (nbytes > data.size)
+        nbytes = data.size;
+    data.skip_front(nbytes);
+    Consumed(nbytes);
+    return nbytes;
 }
