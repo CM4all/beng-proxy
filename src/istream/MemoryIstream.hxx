@@ -41,7 +41,7 @@ class MemoryIstream : public Istream {
     ConstBuffer<uint8_t> data;
 
 public:
-    MemoryIstream(struct pool &p, const void *_data, size_t length)
+    MemoryIstream(struct pool &p, const void *_data, size_t length) noexcept
         :Istream(p),
          data((const uint8_t *)_data, length) {}
 
