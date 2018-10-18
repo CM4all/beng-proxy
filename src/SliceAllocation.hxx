@@ -32,14 +32,37 @@
 
 #pragma once
 
+#include <algorithm>
+
 #include <stddef.h>
 
 class SliceArea;
 
 class SliceAllocation {
 public:
-    SliceArea *area;
+    SliceArea *area = nullptr;
 
     void *data;
     size_t size;
+
+    SliceAllocation() = default;
+
+    SliceAllocation(SliceArea &_area, void *_data, size_t _size) noexcept
+        :area(&_area), data(_data), size(_size) {}
+
+    SliceAllocation(SliceAllocation &&src) noexcept
+        :area(std::exchange(src.area, nullptr)),
+         data(src.data), size(src.size) {}
+
+    SliceAllocation &operator=(SliceAllocation &&src) noexcept {
+        using std::swap;
+        swap(area, src.area);
+        swap(data, src.data);
+        swap(size, src.size);
+        return *this;
+    }
+
+    bool IsDefined() const noexcept {
+        return area != nullptr;
+    }
 };

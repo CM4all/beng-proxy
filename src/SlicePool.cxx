@@ -373,7 +373,7 @@ SlicePool::Alloc() noexcept
         areas.push_back(area);
     }
 
-    return { &area, p, slice_size };
+    return { area, p, slice_size };
 }
 
 inline void
