@@ -206,6 +206,7 @@ subdir('libcommon/src/lua')
 memory = static_library('memory',
   'src/fb_pool.cxx',
   'src/SlicePool.cxx',
+  'src/SliceAllocation.cxx',
   'src/SliceFifoBuffer.cxx',
   'src/DefaultFifoBuffer.cxx',
   'src/DefaultChunkAllocator.cxx',
