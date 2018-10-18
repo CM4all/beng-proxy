@@ -43,15 +43,6 @@
 #include <string.h>
 #include <errno.h>
 
-inline
-ThreadSocketFilterInternal::~ThreadSocketFilterInternal() noexcept
-{
-    encrypted_input.FreeIfDefined();
-    decrypted_input.FreeIfDefined();
-    plain_output.FreeIfDefined();
-    encrypted_output.FreeIfDefined();
-}
-
 ThreadSocketFilter::ThreadSocketFilter(EventLoop &_event_loop,
                                        ThreadQueue &_queue,
                                        ThreadSocketFilterHandler *_handler) noexcept

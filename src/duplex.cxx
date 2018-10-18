@@ -172,9 +172,6 @@ Duplex::Destroy()
     if (sock_fd.IsDefined())
         CloseSocket();
 
-    from_read.Free();
-    to_write.Free();
-
     this->~Duplex();
 }
 

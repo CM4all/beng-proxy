@@ -57,7 +57,6 @@ public:
     }
 
     ~IconvIstream() noexcept {
-        buffer.FreeIfDefined();
         iconv_close(iconv);
         iconv = (iconv_t)-1;
     }

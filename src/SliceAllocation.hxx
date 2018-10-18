@@ -34,6 +34,7 @@
 
 #include <algorithm>
 
+#include <assert.h>
 #include <stddef.h>
 
 class SliceArea;
@@ -54,6 +55,11 @@ public:
         :area(src.area),
          data(std::exchange(src.data, nullptr)), size(src.size) {}
 
+    ~SliceAllocation() noexcept {
+        if (IsDefined())
+            Free();
+    }
+
     SliceAllocation &operator=(SliceAllocation &&src) noexcept {
         using std::swap;
         swap(area, src.area);
@@ -71,6 +77,12 @@ public:
 
     bool IsDefined() const noexcept {
         return data != nullptr;
+    }
+
+    void *Steal() noexcept {
+        assert(IsDefined());
+
+        return std::exchange(data, nullptr);
     }
 
     void Free() noexcept;

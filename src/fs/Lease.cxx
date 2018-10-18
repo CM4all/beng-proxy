@@ -47,9 +47,6 @@ FilteredSocketLease::FilteredSocketLease(FilteredSocket &_socket, Lease &lease,
 FilteredSocketLease::~FilteredSocketLease() noexcept
 {
     assert(IsReleased());
-
-    for (auto &i : input)
-        i.FreeIfDefined();
 }
 
 void

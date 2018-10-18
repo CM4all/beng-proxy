@@ -60,10 +60,6 @@ public:
         src.SetNull();
     }
 
-    ~SliceFifoBuffer() noexcept {
-        assert(!IsDefined());
-    }
-
     void Swap(SliceFifoBuffer &other) noexcept {
         using std::swap;
         ForeignFifoBuffer<uint8_t>::Swap(other);

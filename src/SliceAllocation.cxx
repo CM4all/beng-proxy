@@ -33,8 +33,6 @@
 #include "SliceAllocation.hxx"
 #include "SliceArea.hxx"
 
-#include <assert.h>
-
 void
 SliceAllocation::Free() noexcept
 {

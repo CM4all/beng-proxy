@@ -138,8 +138,6 @@ struct ThreadSocketFilterInternal : ThreadJob {
      * will be written to the socket.
      */
     SliceFifoBuffer encrypted_output;
-
-    ~ThreadSocketFilterInternal() noexcept;
 };
 
 /**

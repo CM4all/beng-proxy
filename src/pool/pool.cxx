@@ -424,7 +424,7 @@ pool_new_slice_area(SlicePool *slice_pool,
 {
     auto allocation = slice_pool->Alloc();
 
-    struct linear_pool_area *area = (struct linear_pool_area *)allocation.data;
+    auto *area = (struct linear_pool_area *)allocation.Steal();
     assert(area != nullptr);
 
     area->prev = prev;

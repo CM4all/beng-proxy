@@ -70,13 +70,6 @@ struct SslFilter final : ThreadSocketFilterHandler {
                     NewFifoBufferBio(encrypted_output));
     }
 
-    ~SslFilter() {
-        encrypted_input.FreeIfDefined();
-        decrypted_input.FreeIfDefined();
-        plain_output.FreeIfDefined();
-        encrypted_output.FreeIfDefined();
-    }
-
     void Encrypt();
 
     /* virtual methods from class ThreadSocketFilterHandler */

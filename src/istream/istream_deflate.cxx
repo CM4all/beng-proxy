@@ -87,7 +87,6 @@ public:
 
     ~DeflateIstream() {
         defer.Cancel();
-        buffer.FreeIfDefined();
     }
 
     bool InitZlib() noexcept;
