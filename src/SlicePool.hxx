@@ -38,6 +38,7 @@
 #ifndef BENG_PROXY_SLICE_POOL_HXX
 #define BENG_PROXY_SLICE_POOL_HXX
 
+#include "SliceAllocation.hxx"
 #include "util/Compiler.h"
 
 #include <boost/intrusive/list.hpp>
@@ -47,14 +48,6 @@
 
 struct AllocatorStats;
 class SlicePool;
-class SliceArea;
-
-struct SliceAllocation {
-    SliceArea *area;
-
-    void *data;
-    size_t size;
-};
 
 class SliceArea {
 public:
