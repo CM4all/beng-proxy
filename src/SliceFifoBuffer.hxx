@@ -52,6 +52,12 @@ public:
         Allocate(pool);
     }
 
+    SliceFifoBuffer(SliceFifoBuffer &&src) noexcept
+        :ForeignFifoBuffer(std::move(src)),
+         area(std::exchange(src.area, nullptr)) {
+        src.SetNull();
+    }
+
     ~SliceFifoBuffer() noexcept {
         assert(!IsDefined());
     }
