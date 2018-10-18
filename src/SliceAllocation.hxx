@@ -62,6 +62,13 @@ public:
         return *this;
     }
 
+    friend void swap(SliceAllocation &a, SliceAllocation &b) noexcept {
+        using std::swap;
+        swap(a.area, b.area);
+        swap(a.data, b.data);
+        swap(a.size, b.size);
+    }
+
     bool IsDefined() const noexcept {
         return area != nullptr;
     }
