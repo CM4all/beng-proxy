@@ -33,20 +33,19 @@
 #ifndef BENG_PROXY_DEFAULT_CHUNK_ALLOCATOR_HXX
 #define BENG_PROXY_DEFAULT_CHUNK_ALLOCATOR_HXX
 
+#include "SliceAllocation.hxx"
+
 #include <utility>
 
 template<typename T> struct WritableBuffer;
 class SliceArea;
 
 class DefaultChunkAllocator {
-    SliceArea *area = nullptr;
+    SliceAllocation allocation;
 
 public:
     DefaultChunkAllocator() = default;
-    DefaultChunkAllocator(DefaultChunkAllocator &&src)
-        :area(src.area) {
-        src.area = nullptr;
-    }
+    DefaultChunkAllocator(DefaultChunkAllocator &&src) noexcept = default;
 
     DefaultChunkAllocator &operator=(const DefaultChunkAllocator &) = delete;
 
@@ -56,11 +55,11 @@ public:
 
     friend void swap(DefaultChunkAllocator &a, DefaultChunkAllocator &b) {
         using std::swap;
-        swap(a.area, b.area);
+        swap(a.allocation, b.allocation);
     }
 
     WritableBuffer<void> Allocate();
-    void Free(void *p);
+    void Free();
 };
 
 #endif

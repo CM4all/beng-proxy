@@ -57,7 +57,7 @@ GrowingBuffer::BufferPtr::Free() noexcept
     assert(buffer != nullptr);
 
     buffer->~Buffer();
-    allocator.Free(buffer);
+    allocator.Free();
     buffer = nullptr;
 }
 

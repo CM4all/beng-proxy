@@ -41,7 +41,7 @@
 
 DefaultChunkAllocator::~DefaultChunkAllocator()
 {
-    assert(area == nullptr);
+    assert(!allocation.IsDefined());
 }
 
 #endif
@@ -49,19 +49,16 @@ DefaultChunkAllocator::~DefaultChunkAllocator()
 WritableBuffer<void>
 DefaultChunkAllocator::Allocate()
 {
-    assert(area == nullptr);
+    assert(!allocation.IsDefined());
 
-    auto a = fb_pool_get().Alloc();
-    area = a.area;
-    return {a.data, a.size};
+    allocation = fb_pool_get().Alloc();
+    return {allocation.data, allocation.size};
 }
 
 void
-DefaultChunkAllocator::Free(void *p)
+DefaultChunkAllocator::Free()
 {
-    assert(area != nullptr);
+    assert(allocation.IsDefined());
 
-    fb_pool_get().Free(*area, p);
-
-    area = nullptr;
+    allocation.Free();
 }
