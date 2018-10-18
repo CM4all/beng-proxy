@@ -57,7 +57,7 @@ public:
     }
 
     ~IconvIstream() noexcept {
-        buffer.FreeIfDefined(fb_pool_get());
+        buffer.FreeIfDefined();
         iconv_close(iconv);
         iconv = (iconv_t)-1;
     }
@@ -180,7 +180,7 @@ IconvIstream::Feed(const char *data, size_t length) noexcept
     if (!IsOpen())
         return 0;
 
-    buffer.FreeIfEmpty(fb_pool_get());
+    buffer.FreeIfEmpty();
 
     return src - data;
 }

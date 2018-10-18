@@ -172,8 +172,8 @@ Duplex::Destroy()
     if (sock_fd.IsDefined())
         CloseSocket();
 
-    from_read.Free(fb_pool_get());
-    to_write.Free(fb_pool_get());
+    from_read.Free();
+    to_write.Free();
 
     this->~Duplex();
 }

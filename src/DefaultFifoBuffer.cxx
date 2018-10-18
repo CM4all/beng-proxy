@@ -42,7 +42,7 @@ DefaultFifoBuffer::Allocate()
 void
 DefaultFifoBuffer::Free()
 {
-    SliceFifoBuffer::Free(fb_pool_get());
+    SliceFifoBuffer::Free();
 }
 
 void
@@ -54,13 +54,13 @@ DefaultFifoBuffer::AllocateIfNull()
 void
 DefaultFifoBuffer::FreeIfDefined()
 {
-    SliceFifoBuffer::FreeIfDefined(fb_pool_get());
+    SliceFifoBuffer::FreeIfDefined();
 }
 
 void
 DefaultFifoBuffer::FreeIfEmpty()
 {
-    SliceFifoBuffer::FreeIfEmpty(fb_pool_get());
+    SliceFifoBuffer::FreeIfEmpty();
 }
 
 void

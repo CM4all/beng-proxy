@@ -71,10 +71,10 @@ struct SslFilter final : ThreadSocketFilterHandler {
     }
 
     ~SslFilter() {
-        encrypted_input.FreeIfDefined(fb_pool_get());
-        decrypted_input.FreeIfDefined(fb_pool_get());
-        plain_output.FreeIfDefined(fb_pool_get());
-        encrypted_output.FreeIfDefined(fb_pool_get());
+        encrypted_input.FreeIfDefined();
+        decrypted_input.FreeIfDefined();
+        plain_output.FreeIfDefined();
+        encrypted_output.FreeIfDefined();
     }
 
     void Encrypt();
@@ -322,10 +322,10 @@ void
 SslFilter::PostRun(ThreadSocketFilterInternal &f) noexcept
 {
     if (f.IsIdle()) {
-        plain_output.FreeIfEmpty(fb_pool_get());
-        encrypted_input.FreeIfEmpty(fb_pool_get());
-        decrypted_input.FreeIfEmpty(fb_pool_get());
-        encrypted_output.FreeIfEmpty(fb_pool_get());
+        plain_output.FreeIfEmpty();
+        encrypted_input.FreeIfEmpty();
+        decrypted_input.FreeIfEmpty();
+        encrypted_output.FreeIfEmpty();
     }
 }
 

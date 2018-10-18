@@ -80,7 +80,7 @@ WasControl::ReleaseSocket() noexcept
 {
     assert(socket.IsConnected());
 
-    output_buffer.FreeIfDefined(fb_pool_get());
+    output_buffer.FreeIfDefined();
 
     socket.Abandon();
     socket.Destroy();
@@ -145,7 +145,7 @@ WasControl::OnBufferedWrite()
     output_buffer.Consume(nbytes);
 
     if (output_buffer.empty()) {
-        output_buffer.Free(fb_pool_get());
+        output_buffer.Free();
         socket.UnscheduleWrite();
 
         if (done) {

@@ -49,7 +49,7 @@ FilteredSocketLease::~FilteredSocketLease() noexcept
     assert(IsReleased());
 
     for (auto &i : input)
-        i.FreeIfDefined(fb_pool_get());
+        i.FreeIfDefined();
 }
 
 void
@@ -164,7 +164,7 @@ FilteredSocketLease::MoveInput() noexcept
     for (size_t i = 1; !dest.IsFull() && i < input.size(); ++i) {
         auto &src = input[i];
         dest.MoveFromAllowBothNull(src);
-        src.FreeIfEmpty(fb_pool_get());
+        src.FreeIfEmpty();
     }
 }
 

@@ -87,7 +87,7 @@ public:
 
     ~DeflateIstream() {
         defer.Cancel();
-        buffer.FreeIfDefined(fb_pool_get());
+        buffer.FreeIfDefined();
     }
 
     bool InitZlib() noexcept;
@@ -230,7 +230,7 @@ DeflateIstream::TryWrite() noexcept
         return 0;
 
     buffer.Consume(nbytes);
-    buffer.FreeIfEmpty(fb_pool_get());
+    buffer.FreeIfEmpty();
 
     if (nbytes == r.size && !HasInput() && z_stream_end) {
         DeinitZlib();

@@ -33,6 +33,7 @@
 #ifndef BENG_PROXY_SLICE_FIFO_BUFFER_HXX
 #define BENG_PROXY_SLICE_FIFO_BUFFER_HXX
 
+#include "SliceAllocation.hxx"
 #include "util/ForeignFifoBuffer.hxx"
 
 #include <assert.h>
@@ -42,7 +43,7 @@ class SlicePool;
 class SliceArea;
 
 class SliceFifoBuffer : public ForeignFifoBuffer<uint8_t> {
-    SliceArea *area;
+    SliceAllocation allocation;
 
 public:
     SliceFifoBuffer() noexcept:ForeignFifoBuffer<uint8_t>(nullptr) {}
@@ -54,7 +55,8 @@ public:
 
     SliceFifoBuffer(SliceFifoBuffer &&src) noexcept
         :ForeignFifoBuffer(std::move(src)),
-         area(std::exchange(src.area, nullptr)) {
+         allocation(std::move(src.allocation))
+    {
         src.SetNull();
     }
 
@@ -63,12 +65,13 @@ public:
     }
 
     void Swap(SliceFifoBuffer &other) noexcept {
+        using std::swap;
         ForeignFifoBuffer<uint8_t>::Swap(other);
-        std::swap(area, other.area);
+        swap(allocation, other.allocation);
     }
 
     void Allocate(SlicePool &pool) noexcept;
-    void Free(SlicePool &pool) noexcept;
+    void Free() noexcept;
 
     bool IsDefinedAndFull() const noexcept {
         return IsDefined() && IsFull();
@@ -79,14 +82,14 @@ public:
             Allocate(pool);
     }
 
-    void FreeIfDefined(SlicePool &pool) noexcept {
+    void FreeIfDefined() noexcept {
         if (IsDefined())
-            Free(pool);
+            Free();
     }
 
-    void FreeIfEmpty(SlicePool &pool) noexcept {
+    void FreeIfEmpty() noexcept {
         if (empty())
-            FreeIfDefined(pool);
+            FreeIfDefined();
     }
 
     /**
@@ -95,7 +98,7 @@ public:
      */
     void CycleIfEmpty(SlicePool &pool) noexcept {
         if (IsDefined() && empty()) {
-            Free(pool);
+            Free();
             Allocate(pool);
         }
     }

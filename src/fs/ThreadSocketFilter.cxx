@@ -46,10 +46,10 @@
 inline
 ThreadSocketFilterInternal::~ThreadSocketFilterInternal() noexcept
 {
-    encrypted_input.FreeIfDefined(fb_pool_get());
-    decrypted_input.FreeIfDefined(fb_pool_get());
-    plain_output.FreeIfDefined(fb_pool_get());
-    encrypted_output.FreeIfDefined(fb_pool_get());
+    encrypted_input.FreeIfDefined();
+    decrypted_input.FreeIfDefined();
+    plain_output.FreeIfDefined();
+    encrypted_output.FreeIfDefined();
 }
 
 ThreadSocketFilter::ThreadSocketFilter(EventLoop &_event_loop,
@@ -71,7 +71,7 @@ ThreadSocketFilter::~ThreadSocketFilter() noexcept
     defer_event.Cancel();
     handshake_timeout_event.Cancel();
 
-    unprotected_decrypted_input.FreeIfDefined(fb_pool_get());
+    unprotected_decrypted_input.FreeIfDefined();
 }
 
 void
@@ -113,7 +113,7 @@ ThreadSocketFilter::MoveDecryptedInput() noexcept
     const std::lock_guard<std::mutex> lock(mutex);
     const bool was_full = decrypted_input.IsDefinedAndFull();
     unprotected_decrypted_input.MoveFromAllowBothNull(decrypted_input);
-    unprotected_decrypted_input.FreeIfEmpty(fb_pool_get());
+    unprotected_decrypted_input.FreeIfEmpty();
     return was_full;
 }
 
@@ -240,8 +240,8 @@ ThreadSocketFilter::PostRun() noexcept
 
     {
         const std::lock_guard<std::mutex> lock(mutex);
-        decrypted_input.FreeIfEmpty(fb_pool_get());
-        encrypted_output.FreeIfEmpty(fb_pool_get());
+        decrypted_input.FreeIfEmpty();
+        encrypted_output.FreeIfEmpty();
     }
 }
 
@@ -324,7 +324,7 @@ ThreadSocketFilter::Done() noexcept
            ThreadSocketFilterHandler::run(), probably because a TLS
            "close notify" alert was received */
 
-        encrypted_input.FreeIfDefined(fb_pool_get());
+        encrypted_input.FreeIfDefined();
 
         input_eof = false;
 
@@ -415,8 +415,8 @@ ThreadSocketFilter::Done() noexcept
         plain_output.empty() &&
         encrypted_output.empty();
 
-    encrypted_input.FreeIfEmpty(fb_pool_get());
-    plain_output.FreeIfEmpty(fb_pool_get());
+    encrypted_input.FreeIfEmpty();
+    plain_output.FreeIfEmpty();
 
     bool _again = again;
     again = false;
@@ -513,7 +513,7 @@ ThreadSocketFilter::Consumed(size_t nbytes) noexcept
     assert(unprotected_decrypted_input.IsDefined());
 
     unprotected_decrypted_input.Consume(nbytes);
-    unprotected_decrypted_input.FreeIfEmpty(fb_pool_get());
+    unprotected_decrypted_input.FreeIfEmpty();
 
     MoveDecryptedInputAndSchedule();
 }
@@ -627,7 +627,7 @@ ThreadSocketFilter::InternalWrite() noexcept
         lock.lock();
         const bool add = encrypted_output.IsFull();
         encrypted_output.Consume(nbytes);
-        encrypted_output.FreeIfEmpty(fb_pool_get());
+        encrypted_output.FreeIfEmpty();
         const bool empty = encrypted_output.empty();
         const bool _drained = empty && drained && plain_output.empty();
         lock.unlock();

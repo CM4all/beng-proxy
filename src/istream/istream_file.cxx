@@ -98,7 +98,7 @@ struct FileIstream final : public Istream {
         close(fd);
         fd = -1;
 
-        buffer.FreeIfDefined(fb_pool_get());
+        buffer.FreeIfDefined();
     }
 
     void Abort(std::exception_ptr ep) {

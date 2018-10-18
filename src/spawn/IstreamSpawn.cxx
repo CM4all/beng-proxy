@@ -90,7 +90,7 @@ struct SpawnIstream final : Istream, IstreamHandler, ExitListener {
     void Cancel();
 
     void FreeBuffer() {
-        buffer.FreeIfDefined(fb_pool_get());
+        buffer.FreeIfDefined();
     }
 
     /**
@@ -171,7 +171,7 @@ SpawnIstream::SendFromBuffer()
         return false;
     }
 
-    buffer.FreeIfEmpty(fb_pool_get());
+    buffer.FreeIfEmpty();
 
     return true;
 }
@@ -275,7 +275,7 @@ SpawnIstream::ReadFromOutput()
             /* XXX should not happen */
         } else if (nbytes > 0) {
             if (Istream::SendFromBuffer(buffer) > 0) {
-                buffer.FreeIfEmpty(fb_pool_get());
+                buffer.FreeIfEmpty();
                 output_event.ScheduleRead();
             }
         } else if (nbytes == 0) {
@@ -286,7 +286,7 @@ SpawnIstream::ReadFromOutput()
                 DestroyEof();
             }
         } else if (errno == EAGAIN) {
-            buffer.FreeIfEmpty(fb_pool_get());
+            buffer.FreeIfEmpty();
             output_event.ScheduleRead();
 
             if (input.IsDefined())
@@ -304,7 +304,7 @@ SpawnIstream::ReadFromOutput()
                before we can switch to "direct" transfer */
             return;
 
-        buffer.FreeIfDefined(fb_pool_get());
+        buffer.FreeIfDefined();
 
         /* at this point, the handler might have changed inside
            Istream::ConsumeFromBuffer(), and the new handler might not

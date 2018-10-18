@@ -132,7 +132,7 @@ public:
     }
 
     void AbortError(std::exception_ptr ep) {
-        buffer.FreeIfDefined(fb_pool_get());
+        buffer.FreeIfDefined();
         event.Cancel();
 
         /* protect against recursive Free() call within the istream
@@ -178,7 +178,7 @@ public:
                 return false;
 
             buffer.Consume(nbytes);
-            buffer.FreeIfEmpty(fb_pool_get());
+            buffer.FreeIfEmpty();
         }
 
         if (CheckEof())
@@ -231,7 +231,7 @@ public:
     }
 
     void _Close() noexcept override {
-        buffer.FreeIfDefined(fb_pool_get());
+        buffer.FreeIfDefined();
         event.Cancel();
 
         /* protect against recursive Free() call within the istream
@@ -272,7 +272,7 @@ WasInput::ReadToBuffer()
         const int e = errno;
 
         if (e == EAGAIN) {
-            buffer.FreeIfEmpty(fb_pool_get());
+            buffer.FreeIfEmpty();
             ScheduleRead();
             return true;
         }
@@ -389,7 +389,7 @@ WasInput::Free(std::exception_ptr ep)
 {
     assert(ep || closed || !enabled);
 
-    buffer.FreeIfDefined(fb_pool_get());
+    buffer.FreeIfDefined();
 
     event.Cancel();
     timeout_event.Cancel();
@@ -459,7 +459,7 @@ was_input_set_length(WasInput *input, uint64_t length)
 void
 WasInput::PrematureThrow(uint64_t _length)
 {
-    buffer.FreeIfDefined(fb_pool_get());
+    buffer.FreeIfDefined();
     event.Cancel();
     timeout_event.Cancel();
 

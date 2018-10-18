@@ -138,7 +138,7 @@ CGIClient::ReturnResponse()
         stopwatch_event(stopwatch, "empty");
         stopwatch_dump(stopwatch);
 
-        buffer.Free(fb_pool_get());
+        buffer.Free();
         input.ClearAndClose();
         handler.InvokeResponse(status, std::move(headers), UnusedIstreamPtr());
         Destroy();
@@ -149,7 +149,7 @@ CGIClient::ReturnResponse()
         stopwatch_event(stopwatch, "empty");
         stopwatch_dump(stopwatch);
 
-        buffer.Free(fb_pool_get());
+        buffer.Free();
         input.ClearAndClose();
         handler.InvokeResponse(status, std::move(headers),
                                istream_null_new(GetPool()));
@@ -214,7 +214,7 @@ try {
     assert(false);
     return 0;
 } catch (...) {
-    buffer.Free(fb_pool_get());
+    buffer.Free();
     input.ClearAndClose();
     handler.InvokeError(std::current_exception());
     Destroy();
@@ -264,7 +264,7 @@ CGIClient::FeedBody(const char *data, size_t length)
         stopwatch_event(stopwatch, "malformed");
         stopwatch_dump(stopwatch);
 
-        buffer.Free(fb_pool_get());
+        buffer.Free();
         input.ClearAndClose();
 
         DestroyError(std::make_exception_ptr(CgiError("too much data from CGI script")));
@@ -278,7 +278,7 @@ CGIClient::FeedBody(const char *data, size_t length)
         stopwatch_event(stopwatch, "end");
         stopwatch_dump(stopwatch);
 
-        buffer.Free(fb_pool_get());
+        buffer.Free();
         input.ClearAndClose();
         DestroyEof();
         return 0;
@@ -340,7 +340,7 @@ CGIClient::OnDirect(FdType type, int fd, size_t max_length)
         stopwatch_event(stopwatch, "end");
         stopwatch_dump(stopwatch);
 
-        buffer.Free(fb_pool_get());
+        buffer.Free();
         input.Close();
         DestroyEof();
         return ISTREAM_RESULT_CLOSED;
@@ -360,7 +360,7 @@ CGIClient::OnEof() noexcept
 
         assert(!HasHandler());
 
-        buffer.Free(fb_pool_get());
+        buffer.Free();
 
         handler.InvokeError(std::make_exception_ptr(CgiError("premature end of headers from CGI script")));
         Destroy();
@@ -368,14 +368,14 @@ CGIClient::OnEof() noexcept
         stopwatch_event(stopwatch, "malformed");
         stopwatch_dump(stopwatch);
 
-        buffer.Free(fb_pool_get());
+        buffer.Free();
 
         DestroyError(std::make_exception_ptr(CgiError("premature end of response body from CGI script")));
     } else {
         stopwatch_event(stopwatch, "end");
         stopwatch_dump(stopwatch);
 
-        buffer.Free(fb_pool_get());
+        buffer.Free();
         DestroyEof();
     }
 }
@@ -393,14 +393,14 @@ CGIClient::OnError(std::exception_ptr ep) noexcept
            handler */
         assert(!HasHandler());
 
-        buffer.Free(fb_pool_get());
+        buffer.Free();
 
         handler.InvokeError(NestException(ep,
                                           std::runtime_error("CGI request body failed")));
         Destroy();
     } else {
         /* response has been sent: abort only the output stream */
-        buffer.Free(fb_pool_get());
+        buffer.Free();
         DestroyError(ep);
     }
 }
@@ -454,7 +454,7 @@ CGIClient::_Read() noexcept
 void
 CGIClient::_Close() noexcept
 {
-    buffer.Free(fb_pool_get());
+    buffer.Free();
 
     if (input.IsDefined())
         input.ClearAndClose();
@@ -472,7 +472,7 @@ CGIClient::Cancel() noexcept
 {
     assert(input.IsDefined());
 
-    buffer.Free(fb_pool_get());
+    buffer.Free();
     input.Close();
     Destroy();
 }

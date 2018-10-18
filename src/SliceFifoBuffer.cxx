@@ -38,16 +38,15 @@ SliceFifoBuffer::Allocate(SlicePool &pool) noexcept
 {
     assert(IsNull());
 
-    auto allocation = pool.Alloc();
-    area = allocation.area;
+    allocation = pool.Alloc();
     SetBuffer((uint8_t *)allocation.data, allocation.size);
 }
 
 void
-SliceFifoBuffer::Free(SlicePool &pool) noexcept
+SliceFifoBuffer::Free() noexcept
 {
     assert(IsDefined());
 
-    pool.Free(*area, GetBuffer());
+    allocation.Free();
     SetNull();
 }
