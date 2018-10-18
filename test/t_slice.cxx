@@ -67,46 +67,40 @@ TEST(SliceTest, Small)
     auto allocation0 = pool.Alloc();
     auto *area0 = allocation0.area;
     ASSERT_NE(area0, nullptr);
-    pool.Free(*area0, allocation0.data);
+    allocation0.Free();
 
-    void *allocations[per_area];
+    SliceAllocation allocations[per_area];
 
     for (unsigned i = 0; i < per_area; ++i) {
-        auto allocation = pool.Alloc();
+        auto &allocation = allocations[i];
+        allocation = pool.Alloc();
         ASSERT_EQ(allocation.area, area0);
+        ASSERT_NE(allocation.data, nullptr);
+        ASSERT_TRUE(i <= 0 || allocation.data != allocations[0].data);
+        ASSERT_TRUE(i <= 1 || allocation.data != allocations[1].data);
+        ASSERT_TRUE(i <= 128 || allocation.data != allocations[128].data);
 
-        allocations[i] = allocation.data;
-        ASSERT_NE(allocations[i], nullptr);
-        ASSERT_TRUE(i <= 0 || allocations[i] != allocations[0]);
-        ASSERT_TRUE(i <= 1 || allocations[i] != allocations[1]);
-        ASSERT_TRUE(i <= 128 || allocations[i] != allocations[128]);
-
-        Fill(allocations[i], slice_size, i);
+        Fill(allocation.data, slice_size, i);
     }
 
-    struct {
-        SliceArea *area;
-        void *p;
-    } more[per_area];
+    SliceAllocation more[per_area];
 
     for (unsigned i = 0; i < per_area; ++i) {
-        auto allocation = pool.Alloc();
+        more[i] = pool.Alloc();
 
-        more[i].area = allocation.area;
-        more[i].p = allocation.data;
-        ASSERT_NE(more[i].p, nullptr);
+        ASSERT_TRUE(more[i].IsDefined());
 
-        Fill(more[i].p, slice_size, per_area + i);
+        Fill(more[i].data, slice_size, per_area + i);
     }
 
     ASSERT_NE(more[per_area - 1].area, area0);
 
     for (unsigned i = 0; i < per_area; ++i) {
-        ASSERT_TRUE(Check(allocations[i], slice_size, i));
-        pool.Free(*area0, allocations[i]);
+        ASSERT_TRUE(Check(allocations[i].data, slice_size, i));
+        allocations[i].Free();
 
-        ASSERT_TRUE(Check(more[i].p, slice_size, per_area + i));
-        pool.Free(*more[i].area, more[i].p);
+        ASSERT_TRUE(Check(more[i].data, slice_size, per_area + i));
+        more[i].Free();
     }
 }
 
@@ -120,45 +114,40 @@ TEST(SliceTest, Medium)
     auto allocation0 = pool.Alloc();
     auto *area0 = allocation0.area;
     ASSERT_NE(area0, nullptr);
-    pool.Free(*area0, allocation0.data);
+    allocation0.Free();
 
-    void *allocations[per_area];
+    SliceAllocation allocations[per_area];
 
     for (unsigned i = 0; i < per_area; ++i) {
-        auto allocation = pool.Alloc();
+        auto &allocation = allocations[i];
+        allocation = pool.Alloc();
         ASSERT_EQ(allocation.area, area0);
 
-        allocations[i] = allocation.data;
-        ASSERT_NE(allocations[i], nullptr);
-        ASSERT_TRUE(i <= 0 || allocations[i] != allocations[0]);
-        ASSERT_TRUE(i <= 1 || allocations[i] != allocations[1]);
+        ASSERT_NE(allocations[i].data, nullptr);
+        ASSERT_TRUE(i <= 0 || allocation.data != allocations[0].data);
+        ASSERT_TRUE(i <= 1 || allocation.data != allocations[1].data);
         ASSERT_TRUE(i <= per_area - 1 ||
-                    allocations[i] != allocations[per_area - 1]);
+                    allocation.data != allocations[per_area - 1].data);
 
-        Fill(allocations[i], slice_size, i);
+        Fill(allocation.data, slice_size, i);
     }
 
-    struct {
-        SliceArea *area;
-        void *p;
-    } more[per_area];
+    SliceAllocation more[per_area];
 
     for (unsigned i = 0; i < per_area; ++i) {
-        auto allocation = pool.Alloc();
+        more[i] = pool.Alloc();
 
-        more[i].area = allocation.area;
-        more[i].p = allocation.data;
-        ASSERT_NE(more[i].p, nullptr);
+        ASSERT_TRUE(more[i].IsDefined());
 
-        Fill(more[i].p, slice_size, per_area + i);
+        Fill(more[i].data, slice_size, per_area + i);
     }
 
     for (unsigned i = 0; i < per_area; ++i) {
-        ASSERT_TRUE(Check(allocations[i], slice_size, i));
-        pool.Free(*area0, allocations[i]);
+        ASSERT_TRUE(Check(allocations[i].data, slice_size, i));
+        allocations[i].Free();
 
-        ASSERT_TRUE(Check(more[i].p, slice_size, per_area + i));
-        pool.Free(*more[i].area, more[i].p);
+        ASSERT_TRUE(Check(more[i].data, slice_size, per_area + i));
+        more[i].Free();
     }
 }
 
@@ -172,44 +161,39 @@ TEST(SliceTest, Large)
     auto allocation0 = pool.Alloc();
     auto *area0 = allocation0.area;
     ASSERT_NE(area0, nullptr);
-    pool.Free(*area0, allocation0.data);
+    allocation0.Free();
 
-    void *allocations[per_area];
+    SliceAllocation allocations[per_area];
 
     for (unsigned i = 0; i < per_area; ++i) {
-        auto allocation = pool.Alloc();
+        auto &allocation = allocations[i];
+        allocation = pool.Alloc();
         ASSERT_EQ(allocation.area, area0);
 
-        allocations[i] = allocation.data;
-        ASSERT_NE(allocations[i], nullptr);
-        ASSERT_TRUE(i <= 0 || allocations[i] != allocations[0]);
-        ASSERT_TRUE(i <= 1 || allocations[i] != allocations[1]);
+        ASSERT_NE(allocations[i].data, nullptr);
+        ASSERT_TRUE(i <= 0 || allocation.data != allocations[0].data);
+        ASSERT_TRUE(i <= 1 || allocation.data != allocations[1].data);
         ASSERT_TRUE(i <= per_area - 1 ||
-                    allocations[i] != allocations[per_area - 1]);
+                    allocation.data != allocations[per_area - 1].data);
 
-        Fill(allocations[i], slice_size, i);
+        Fill(allocation.data, slice_size, i);
     }
 
-    struct {
-        SliceArea *area;
-        void *p;
-    } more[per_area];
+    SliceAllocation more[per_area];
 
     for (unsigned i = 0; i < per_area; ++i) {
-        auto allocation = pool.Alloc();
+        more[i] = pool.Alloc();
 
-        more[i].area = allocation.area;
-        more[i].p = allocation.data;
-        ASSERT_NE(more[i].p, nullptr);
+        ASSERT_TRUE(more[i].IsDefined());
 
-        Fill(more[i].p, slice_size, per_area + i);
+        Fill(more[i].data, slice_size, per_area + i);
     }
 
     for (unsigned i = 0; i < per_area; ++i) {
-        ASSERT_TRUE(Check(allocations[i], slice_size, i));
-        pool.Free(*area0, allocations[i]);
+        ASSERT_TRUE(Check(allocations[i].data, slice_size, i));
+        allocations[i].Free();
 
-        ASSERT_TRUE(Check(more[i].p, slice_size, per_area + i));
-        pool.Free(*more[i].area, more[i].p);
+        ASSERT_TRUE(Check(more[i].data, slice_size, per_area + i));
+        more[i].Free();
     }
 }
