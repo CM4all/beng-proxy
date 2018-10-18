@@ -47,6 +47,8 @@ class SlicePool;
 class SliceArea
     : public boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
 
+    SlicePool &pool;
+
     unsigned allocated_count = 0;
 
     unsigned free_head = 0;
@@ -76,29 +78,29 @@ class SliceArea
 
 public:
     static SliceArea *New(SlicePool &pool) noexcept;
-    void Delete(SlicePool &pool) noexcept;
+    void Delete() noexcept;
 
     static constexpr size_t GetHeaderSize(unsigned slices_per_area) noexcept {
         return sizeof(SliceArea) + sizeof(Slot) * (slices_per_area - 1);
     }
 
-    void ForkCow(const SlicePool &pool, bool inherit) noexcept;
+    void ForkCow(bool inherit) noexcept;
 
     bool IsEmpty() const noexcept {
         return allocated_count == 0;
     }
 
-    bool IsFull(const SlicePool &pool) const noexcept;
+    bool IsFull() const noexcept;
 
     size_t GetNettoSize(size_t slice_size) const noexcept {
         return allocated_count * slice_size;
     }
 
     gcc_pure
-    void *GetPage(const SlicePool &pool, unsigned page) noexcept;
+    void *GetPage(unsigned page) noexcept;
 
     gcc_pure
-    void *GetSlice(const SlicePool &pool, unsigned slice) noexcept;
+    void *GetSlice(unsigned slice) noexcept;
 
     /**
      * Calculates the allocation slot index from an allocated pointer.
@@ -106,21 +108,20 @@ public:
      * public function.
      */
     gcc_pure
-    unsigned IndexOf(const SlicePool &pool, const void *_p) noexcept;
+    unsigned IndexOf(const void *_p) noexcept;
 
     /**
      * Find the first free slot index, starting at the specified position.
      */
     gcc_pure
-    unsigned FindFree(const SlicePool &pool, unsigned start) const noexcept;
+    unsigned FindFree(unsigned start) const noexcept;
 
     /**
      * Find the first allocated slot index, starting at the specified
      * position.
      */
     gcc_pure
-    unsigned FindAllocated(const SlicePool &pool,
-                           unsigned start) const noexcept;
+    unsigned FindAllocated(unsigned start) const noexcept;
 
     /**
      * Punch a hole in the memory map in the specified slot index range.
@@ -128,19 +129,16 @@ public:
      * contents, which allows the kernel to drop the allocated pages and
      * reuse it for other processes.
      */
-    void PunchSliceRange(SlicePool &pool,
-                         unsigned start, unsigned end) noexcept;
+    void PunchSliceRange(unsigned start, unsigned end) noexcept;
 
-    void Compress(SlicePool &pool) noexcept;
+    void Compress() noexcept;
 
-    void *Alloc(SlicePool &pool) noexcept;
-    void Free(SlicePool &pool, void *p) noexcept;
+    void *Alloc() noexcept;
+    void Free(void *p) noexcept;
 
     struct Disposer {
-        SlicePool &pool;
-
         void operator()(SliceArea *area) noexcept {
-            area->Delete(pool);
+            area->Delete();
         }
     };
 };
