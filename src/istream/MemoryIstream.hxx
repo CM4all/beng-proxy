@@ -45,6 +45,12 @@ public:
         :Istream(p),
          data((const uint8_t *)_data, length) {}
 
+    MemoryIstream(struct pool &p, ConstBuffer<uint8_t> _data) noexcept
+        :Istream(p), data(_data) {}
+
+    MemoryIstream(struct pool &p, ConstBuffer<void> _data) noexcept
+        :MemoryIstream(p, ConstBuffer<uint8_t>::FromVoid(_data)) {}
+
     /* virtual methods from class Istream */
 
     off_t _GetAvailable(gcc_unused bool partial) noexcept override {
