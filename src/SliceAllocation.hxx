@@ -36,7 +36,8 @@
 
 class SliceArea;
 
-struct SliceAllocation {
+class SliceAllocation {
+public:
     SliceArea *area;
 
     void *data;
