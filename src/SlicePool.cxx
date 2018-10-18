@@ -31,6 +31,7 @@
  */
 
 #include "SlicePool.hxx"
+#include "SliceArea.hxx"
 #include "system/mmap.h"
 #include "AllocatorStats.hxx"
 #include "util/Poison.h"
