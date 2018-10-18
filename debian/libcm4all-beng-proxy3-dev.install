@@ -1,2 +1,2 @@
 include/beng-proxy/*.hxx usr/include/cm4all/libbeng-proxy-0/beng-proxy
-debian/build/debug/meson-private/libcm4all-beng-proxy.pc usr/share/pkgconfig
+debian/build/debug/meson-private/libcm4all-beng-proxy3.pc usr/share/pkgconfig
