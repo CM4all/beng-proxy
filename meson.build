@@ -1128,6 +1128,12 @@ executable('delegate-helper',
   dependencies: [
   ])
 
+install_headers(
+  'include/beng-proxy/Control.hxx',
+  'include/beng-proxy/Headers.hxx',
+  subdir: 'beng-proxy',
+)
+
 subdir('test')
 subdir('libcommon/test/util')
 subdir('libcommon/test/http')
