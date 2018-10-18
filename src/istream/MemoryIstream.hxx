@@ -37,7 +37,7 @@
 
 #include <stdint.h>
 
-class MemoryIstream final : public Istream {
+class MemoryIstream : public Istream {
     ConstBuffer<uint8_t> data;
 
 public:
