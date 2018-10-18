@@ -412,6 +412,12 @@ SlicePool::Free(SliceArea &area, void *p) noexcept
     }
 }
 
+void
+SliceArea::Free(void *p) noexcept
+{
+    pool.Free(*this, p);
+}
+
 inline void
 SlicePool::AddStats(AllocatorStats &stats, const AreaList &list) const noexcept
 {

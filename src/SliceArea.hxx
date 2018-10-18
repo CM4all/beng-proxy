@@ -140,6 +140,8 @@ public:
      */
     void _Free(void *p) noexcept;
 
+    void Free(void *p) noexcept;
+
     struct Disposer {
         void operator()(SliceArea *area) noexcept {
             area->Delete();
