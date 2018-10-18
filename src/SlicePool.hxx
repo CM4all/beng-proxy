@@ -49,14 +49,9 @@
 struct AllocatorStats;
 class SlicePool;
 
-class SliceArea {
-public:
-    static constexpr auto link_mode = boost::intrusive::normal_link;
-    typedef boost::intrusive::link_mode<link_mode> LinkMode;
-    typedef boost::intrusive::list_member_hook<LinkMode> SiblingsHook;
-    SiblingsHook siblings;
+class SliceArea
+    : public boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
 
-private:
     unsigned allocated_count = 0;
 
     unsigned free_head = 0;
@@ -179,9 +174,7 @@ class SlicePool {
     size_t area_size;
 
     typedef boost::intrusive::list<SliceArea,
-                                   boost::intrusive::member_hook<SliceArea,
-                                                                 SliceArea::SiblingsHook,
-                                                                 &SliceArea::siblings>,
+                                   boost::intrusive::base_hook<boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>>,
                                    boost::intrusive::constant_time_size<false>> AreaList;
 
     AreaList areas;
