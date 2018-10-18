@@ -68,7 +68,7 @@ class SliceArea
 
     Slot slices[1];
 
-    SliceArea(SlicePool &pool) noexcept;
+    explicit SliceArea(SlicePool &pool) noexcept;
 
     ~SliceArea() noexcept {
         assert(allocated_count == 0);
