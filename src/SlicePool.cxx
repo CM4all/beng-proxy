@@ -377,7 +377,7 @@ SlicePool::Alloc() noexcept
 }
 
 inline void
-SliceArea::Free(void *p) noexcept
+SliceArea::_Free(void *p) noexcept
 {
     unsigned i = IndexOf(p);
     assert(slices[i].IsAllocated());
@@ -396,7 +396,7 @@ SlicePool::Free(SliceArea &area, void *p) noexcept
 {
     const bool was_full = area.IsFull();
 
-    area.Free(p);
+    area._Free(p);
 
     if (was_full) {
         /* if the area has become non-full, move it to the front of

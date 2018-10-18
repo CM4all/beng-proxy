@@ -134,7 +134,11 @@ public:
     void Compress() noexcept;
 
     void *Alloc() noexcept;
-    void Free(void *p) noexcept;
+
+    /**
+     * Internal method only to be used by SlicePool::Free().
+     */
+    void _Free(void *p) noexcept;
 
     struct Disposer {
         void operator()(SliceArea *area) noexcept {
