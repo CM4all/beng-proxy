@@ -11,7 +11,6 @@ c_compiler = meson.get_compiler('c')
 pkg_mod = import('pkgconfig')
 pkg_mod.generate(version: meson.project_version(),
                  name: 'libcm4all-beng-proxy',
-                 subdirs: ['cm4all/libbeng-proxy-0'],
                  description: 'CM4all BENG proxy library')
 
 # TODO: use get_option('b_ndebug'), but that doesn't work with Meson 0.37.1
