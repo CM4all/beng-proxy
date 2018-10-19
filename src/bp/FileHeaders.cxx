@@ -40,6 +40,7 @@
 #include "translation/Vary.hxx"
 #include "http/List.hxx"
 #include "http/Date.hxx"
+#include "io/FileDescriptor.hxx"
 #include "util/DecimalFormat.h"
 
 #include <attr/xattr.h>
@@ -50,12 +51,12 @@
 
 gcc_pure
 static std::chrono::seconds
-read_xattr_max_age(int fd)
+read_xattr_max_age(FileDescriptor fd)
 {
-    assert(fd >= 0);
+    assert(fd.IsDefined());
 
     char buffer[32];
-    ssize_t nbytes = fgetxattr(fd, "user.MaxAge",
+    ssize_t nbytes = fgetxattr(fd.Get(), "user.MaxAge",
                                buffer, sizeof(buffer) - 1);
     if (nbytes <= 0)
         return std::chrono::seconds::zero();
@@ -87,7 +88,8 @@ generate_expires(GrowingBuffer &headers,
 
 gcc_pure
 static bool
-CheckETagList(const char *list, int fd, const struct stat &st) noexcept
+CheckETagList(const char *list, FileDescriptor fd,
+              const struct stat &st) noexcept
 {
     assert(list != nullptr);
 
@@ -100,7 +102,7 @@ CheckETagList(const char *list, int fd, const struct stat &st) noexcept
 }
 
 static void
-MakeETag(GrowingBuffer &headers, int fd, const struct stat &st)
+MakeETag(GrowingBuffer &headers, FileDescriptor fd, const struct stat &st)
 {
     char buffer[512];
     GetAnyETag(buffer, sizeof(buffer), fd, st);
@@ -110,7 +112,7 @@ MakeETag(GrowingBuffer &headers, int fd, const struct stat &st)
 
 static void
 file_cache_headers(GrowingBuffer &headers,
-                   int fd, const struct stat &st,
+                   FileDescriptor fd, const struct stat &st,
                    std::chrono::seconds max_age)
 {
     header_write(headers, "last-modified",
@@ -118,7 +120,7 @@ file_cache_headers(GrowingBuffer &headers,
 
     MakeETag(headers, fd, st);
 
-    if (max_age == std::chrono::seconds::zero() && fd >= 0)
+    if (max_age == std::chrono::seconds::zero() && fd.IsDefined())
         max_age = read_xattr_max_age(fd);
 
     if (max_age > std::chrono::seconds::zero())
@@ -129,7 +131,8 @@ file_cache_headers(GrowingBuffer &headers,
  * Verifies the If-Range request header (RFC 2616 14.27).
  */
 static bool
-check_if_range(const char *if_range, int fd, const struct stat &st) noexcept
+check_if_range(const char *if_range,
+               FileDescriptor fd, const struct stat &st) noexcept
 {
     if (if_range == nullptr)
         return true;
@@ -148,7 +151,7 @@ check_if_range(const char *if_range, int fd, const struct stat &st) noexcept
  */
 static void
 DispatchNotModified(Request &request2, const TranslateResponse &tr,
-                    int fd, const struct stat &st)
+                    FileDescriptor fd, const struct stat &st)
 {
     HttpHeaders headers(request2.pool);
     auto &headers2 = headers.GetBuffer();
@@ -163,7 +166,7 @@ DispatchNotModified(Request &request2, const TranslateResponse &tr,
 
 bool
 file_evaluate_request(Request &request2,
-                      int fd, const struct stat &st,
+                      FileDescriptor fd, const struct stat &st,
                       struct file_request &file_request)
 {
     const auto &request = request2.request;
@@ -235,7 +238,7 @@ file_evaluate_request(Request &request2,
 void
 file_response_headers(GrowingBuffer &headers,
                       const char *override_content_type,
-                      int fd, const struct stat &st,
+                      FileDescriptor fd, const struct stat &st,
                       std::chrono::seconds expires_relative,
                       bool processor_first)
 {

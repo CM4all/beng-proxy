@@ -37,6 +37,7 @@
 #include "strmap.hxx"
 #include "pool/pool.hxx"
 #include "istream/UnusedPtr.hxx"
+#include "io/FileDescriptor.hxx"
 
 #include <sys/stat.h>
 
@@ -68,8 +69,8 @@ void
 NfsRequest::OnNfsCacheResponse(NfsCacheHandle &handle,
                                const struct stat &st) noexcept
 {
-    auto headers = static_response_headers(pool, -1, st,
-                                           content_type);
+    auto headers = static_response_headers(pool, FileDescriptor::Undefined(),
+                                           st, content_type);
     headers.Add("cache-control", "max-age=60");
 
     // TODO: handle revalidation etc.

@@ -96,7 +96,7 @@ DelegateHttpRequest::OnDelegateSuccess(UniqueFileDescriptor fd)
 
     /* XXX handle if-modified-since, ... */
 
-    auto response_headers = static_response_headers(pool, fd.Get(), st,
+    auto response_headers = static_response_headers(pool, fd, st,
                                                     content_type);
 
     Istream *body = istream_file_fd_new(event_loop, pool, path,

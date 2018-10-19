@@ -34,6 +34,7 @@
 #include "strmap.hxx"
 #include "pool/pool.hxx"
 #include "http/Date.hxx"
+#include "io/FileDescriptor.hxx"
 #include "util/HexFormat.h"
 
 #include <attr/xattr.h>
@@ -43,12 +44,12 @@
 #include <sys/types.h>
 
 static bool
-ReadETag(int fd, char *buffer, size_t size) noexcept
+ReadETag(FileDescriptor fd, char *buffer, size_t size) noexcept
 {
-    assert(fd >= 0);
+    assert(fd.IsDefined());
     assert(size > 4);
 
-    const auto nbytes = fgetxattr(fd, "user.ETag", buffer + 1, size - 3);
+    const auto nbytes = fgetxattr(fd.Get(), "user.ETag", buffer + 1, size - 3);
     if (nbytes <= 0)
         return false;
 
@@ -81,19 +82,19 @@ static_etag(char *p, const struct stat &st)
 
 void
 GetAnyETag(char *buffer, size_t size,
-           int fd, const struct stat &st) noexcept
+           FileDescriptor fd, const struct stat &st) noexcept
 {
-    if (fd < 0 || !ReadETag(fd, buffer, size))
+    if (!fd.IsDefined() || !ReadETag(fd, buffer, size))
         static_etag(buffer, st);
 }
 
 bool
-load_xattr_content_type(char *buffer, size_t size, int fd)
+load_xattr_content_type(char *buffer, size_t size, FileDescriptor fd) noexcept
 {
-    if (fd < 0)
+    if (!fd.IsDefined())
         return false;
 
-    ssize_t nbytes = fgetxattr(fd, "user.Content-Type",
+    ssize_t nbytes = fgetxattr(fd.Get(), "user.Content-Type",
                                buffer, size - 1);
     if (nbytes <= 0)
         return false;
@@ -105,7 +106,7 @@ load_xattr_content_type(char *buffer, size_t size, int fd)
 
 StringMap
 static_response_headers(struct pool &pool,
-                        int fd, const struct stat &st,
+                        FileDescriptor fd, const struct stat &st,
                         const char *content_type)
 {
     StringMap headers(pool);

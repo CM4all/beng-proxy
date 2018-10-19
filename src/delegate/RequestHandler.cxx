@@ -72,7 +72,7 @@ Request::OnDelegateSuccess(UniqueFileDescriptor fd)
     /* request options */
 
     struct file_request file_request(st.st_size);
-    if (!file_evaluate_request(*this, fd.Get(), st, file_request)) {
+    if (!file_evaluate_request(*this, fd, st, file_request)) {
         return;
     }
 

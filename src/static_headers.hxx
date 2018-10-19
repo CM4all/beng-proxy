@@ -41,16 +41,17 @@
 #include <stddef.h>
 
 struct pool;
+class FileDescriptor;
 class StringMap;
 struct stat;
 struct file_request;
 
 void
 GetAnyETag(char *buffer, size_t size,
-           int fd, const struct stat &st) noexcept;
+           FileDescriptor fd, const struct stat &st) noexcept;
 
 bool
-load_xattr_content_type(char *buffer, size_t size, int fd);
+load_xattr_content_type(char *buffer, size_t size, FileDescriptor fd) noexcept;
 
 /**
  * @param fd a file descriptor for loading xattr, or -1 to disable
@@ -58,7 +59,7 @@ load_xattr_content_type(char *buffer, size_t size, int fd);
  */
 StringMap
 static_response_headers(struct pool &pool,
-                        int fd, const struct stat &st,
+                        FileDescriptor fd, const struct stat &st,
                         const char *content_type);
 
 #endif
