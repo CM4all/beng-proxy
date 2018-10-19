@@ -35,6 +35,7 @@
 #include "New.hxx"
 #include "Result.hxx"
 #include "io/Buffered.hxx"
+#include "io/Open.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "pool/pool.hxx"
 #include "fb_pool.hxx"
@@ -371,9 +372,7 @@ istream_file_stat_new(EventLoop &event_loop, struct pool &pool,
 {
     assert(path != nullptr);
 
-    UniqueFileDescriptor fd;
-    if (!fd.OpenReadOnly(path))
-        throw FormatErrno("Failed to open %s", path);
+    auto fd = OpenReadOnly(path);
 
     if (fstat(fd.Get(), &st) < 0)
         throw FormatErrno("Failed to stat %s", path);
@@ -396,12 +395,8 @@ istream_file_new(EventLoop &event_loop, struct pool &pool,
 {
     assert(length >= -1);
 
-    UniqueFileDescriptor fd;
-    if (!fd.OpenReadOnly(path))
-        throw FormatErrno("Failed to open %s", path);
-
     return istream_file_fd_new(event_loop, pool, path,
-                               std::move(fd), FdType::FD_FILE, length);
+                               OpenReadOnly(path), FdType::FD_FILE, length);
 }
 
 FileDescriptor
