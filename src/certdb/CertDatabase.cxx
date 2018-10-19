@@ -297,10 +297,11 @@ CertDatabase::FindServerCertificatesByName(const char *name)
                               name);
 }
 
-std::list<std::string>
+std::forward_list<std::string>
 CertDatabase::GetNamesByHandle(const char *handle)
 {
-    std::list<std::string> names;
+    std::forward_list<std::string> names;
+    auto i = names.before_begin();
 
     const char *sql = "SELECT common_name, "
         "ARRAY(SELECT name FROM server_certificate_alt_name WHERE server_certificate_id=server_certificate.id)"
@@ -308,10 +309,13 @@ CertDatabase::GetNamesByHandle(const char *handle)
         " WHERE handle=$1 AND NOT deleted";
 
     for (const auto &row : CheckError(conn.ExecuteParams(sql, handle))) {
-        names.emplace_back(row.GetValue(0));
-        if (!row.IsValueNull(1))
-            names.splice(names.end(),
-                         Pg::DecodeArray(row.GetValue(1)));
+        i = names.emplace_after(i, row.GetValue(0));
+        if (!row.IsValueNull(1)) {
+            names.splice_after(i,
+                               Pg::DecodeArray(row.GetValue(1)));
+            while (std::next(i) != names.end())
+                ++i;
+        }
     }
 
     return names;

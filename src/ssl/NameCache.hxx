@@ -129,9 +129,9 @@ private:
     }
 
     void AddAltNames(const std::string &common_name,
-                     std::list<std::string> &&list);
+                     std::forward_list<std::string> &&list);
     void RemoveAltNames(const std::string &common_name,
-                        std::list<std::string> &&list);
+                        std::forward_list<std::string> &&list);
 
     /* virtual methods from Pg::AsyncConnectionHandler */
     void OnConnect() override;

@@ -103,7 +103,7 @@ CertNameCache::ScheduleUpdate() noexcept
 
 inline void
 CertNameCache::AddAltNames(const std::string &common_name,
-                           std::list<std::string> &&list)
+                           std::forward_list<std::string> &&list)
 {
     for (auto &&a : list) {
         /* create the alt_name if it doesn't exist yet */
@@ -115,7 +115,7 @@ CertNameCache::AddAltNames(const std::string &common_name,
 
 inline void
 CertNameCache::RemoveAltNames(const std::string &common_name,
-                              std::list<std::string> &&list)
+                              std::forward_list<std::string> &&list)
 {
     for (auto &&a : list) {
         auto i = alt_names.find(std::move(a));
@@ -206,8 +206,8 @@ CertNameCache::OnResult(Pg::Result &&result)
 
     for (const auto &row : result) {
         std::string name(row.GetValue(0));
-        std::list<std::string> _alt_names = row.IsValueNull(1)
-            ? std::list<std::string>()
+        auto _alt_names = row.IsValueNull(1)
+            ? std::forward_list<std::string>()
             : Pg::DecodeArray(row.GetValue(1));
         modified = row.GetValue(2);
         const bool deleted = complete && *row.GetValue(3) == 't';
