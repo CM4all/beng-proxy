@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2018 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_ISTREAM_CAT_HXX
-#define BENG_PROXY_ISTREAM_CAT_HXX
+#pragma once
 
 #include "UnusedPtr.hxx"
 
@@ -51,5 +50,3 @@ istream_cat_new(struct pool &pool, Args&&... args)
     UnusedIstreamPtr inputs[]{std::forward<Args>(args)...};
     return _istream_cat_new(pool, inputs, sizeof...(args));
 }
-
-#endif

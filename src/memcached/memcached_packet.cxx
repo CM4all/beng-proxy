@@ -31,7 +31,7 @@
  */
 
 #include "memcached_packet.hxx"
-#include "istream/istream_cat.hxx"
+#include "istream/ConcatIstream.hxx"
 #include "istream/istream_memory.hxx"
 #include "istream/istream_null.hxx"
 #include "istream/UnusedPtr.hxx"

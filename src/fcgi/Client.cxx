@@ -41,7 +41,7 @@
 #include "istream/Handler.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "istream/Pointer.hxx"
-#include "istream/istream_cat.hxx"
+#include "istream/ConcatIstream.hxx"
 #include "istream/Bucket.hxx"
 #include "please.hxx"
 #include "header_parser.hxx"

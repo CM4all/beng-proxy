@@ -38,7 +38,7 @@
 #include "header_writer.hxx"
 #include "GrowingBuffer.hxx"
 #include "istream_gb.hxx"
-#include "istream/istream_cat.hxx"
+#include "istream/ConcatIstream.hxx"
 #include "istream/istream_chunked.hxx"
 #include "istream/istream_dechunk.hxx"
 #include "istream/istream_memory.hxx"

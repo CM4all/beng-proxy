@@ -43,7 +43,7 @@
 #include "istream/Bucket.hxx"
 #include "istream/Pointer.hxx"
 #include "istream/UnusedPtr.hxx"
-#include "istream/istream_cat.hxx"
+#include "istream/ConcatIstream.hxx"
 #include "istream/OptionalIstream.hxx"
 #include "istream/istream_chunked.hxx"
 #include "istream/istream_dechunk.hxx"

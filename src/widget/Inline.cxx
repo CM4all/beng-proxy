@@ -44,7 +44,7 @@
 #include "strmap.hxx"
 #include "istream_html_escape.hxx"
 #include "istream/istream.hxx"
-#include "istream/istream_cat.hxx"
+#include "istream/ConcatIstream.hxx"
 #include "istream/DelayedIstream.hxx"
 #include "istream/istream_iconv.hxx"
 #include "istream/istream_null.hxx"

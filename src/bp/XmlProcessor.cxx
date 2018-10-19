@@ -57,7 +57,7 @@
 #include "istream/istream.hxx"
 #include "istream/istream.hxx"
 #include "istream/ReplaceIstream.hxx"
-#include "istream/istream_cat.hxx"
+#include "istream/ConcatIstream.hxx"
 #include "istream/istream_catch.hxx"
 #include "istream/istream_memory.hxx"
 #include "istream/istream_string.hxx"
