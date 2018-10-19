@@ -40,9 +40,9 @@ class SliceArea;
 
 class SliceAllocation {
 public:
-    SliceArea *area = nullptr;
+    SliceArea *area;
 
-    void *data;
+    void *data = nullptr;
     size_t size;
 
     SliceAllocation() = default;
@@ -51,8 +51,8 @@ public:
         :area(&_area), data(_data), size(_size) {}
 
     SliceAllocation(SliceAllocation &&src) noexcept
-        :area(std::exchange(src.area, nullptr)),
-         data(src.data), size(src.size) {}
+        :area(src.area),
+         data(std::exchange(src.data, nullptr)), size(src.size) {}
 
     SliceAllocation &operator=(SliceAllocation &&src) noexcept {
         using std::swap;
@@ -70,7 +70,7 @@ public:
     }
 
     bool IsDefined() const noexcept {
-        return area != nullptr;
+        return data != nullptr;
     }
 
     void Free() noexcept;
