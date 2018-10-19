@@ -80,11 +80,7 @@ public:
         old->Close();
     }
 
-    Istream *Steal() noexcept {
-        Istream *result = stream;
-        stream = nullptr;
-        return result;
-    }
+    UnusedIstreamPtr Steal() noexcept;
 
     void Set(UnusedIstreamPtr _stream,
              IstreamHandler &handler,

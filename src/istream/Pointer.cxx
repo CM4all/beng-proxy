@@ -53,3 +53,11 @@ IstreamPointer::Set(UnusedIstreamPtr _stream,
         stream = _stream.Steal();
         stream->SetHandler(handler, direct);
 }
+
+UnusedIstreamPtr
+IstreamPointer::Steal() noexcept
+{
+    if (stream != nullptr)
+        stream->ClearHandler();
+    return UnusedIstreamPtr(std::exchange(stream, nullptr));
+}
