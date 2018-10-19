@@ -40,7 +40,7 @@
 #include "widget/Widget.hxx"
 #include "widget/Class.hxx"
 #include "widget/RewriteUri.hxx"
-#include "istream/istream_file.hxx"
+#include "istream/FileIstream.hxx"
 #include "istream/istream_string.hxx"
 #include "util/StringView.hxx"
 #include "util/PrintException.hxx"

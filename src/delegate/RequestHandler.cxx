@@ -41,7 +41,7 @@
 #include "file_address.hxx"
 #include "http_server/Request.hxx"
 #include "HttpResponseHandler.hxx"
-#include "istream/istream_file.hxx"
+#include "istream/FileIstream.hxx"
 
 #include <assert.h>
 #include <sys/stat.h>

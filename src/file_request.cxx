@@ -35,7 +35,7 @@
 #include "HttpResponseHandler.hxx"
 #include "strmap.hxx"
 #include "istream/UnusedPtr.hxx"
-#include "istream/istream_file.hxx"
+#include "istream/FileIstream.hxx"
 #include "pool/pool.hxx"
 #include "system/Error.hxx"
 #include "http/Status.h"

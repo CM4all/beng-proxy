@@ -36,7 +36,7 @@
 #include "HttpResponseHandler.hxx"
 #include "lease.hxx"
 #include "direct.hxx"
-#include "istream/istream_file.hxx"
+#include "istream/FileIstream.hxx"
 #include "istream/istream_pipe.hxx"
 #include "istream/istream.hxx"
 #include "istream/sink_fd.hxx"

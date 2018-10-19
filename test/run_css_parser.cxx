@@ -31,7 +31,7 @@
  */
 
 #include "css_parser.hxx"
-#include "istream/istream_file.hxx"
+#include "istream/FileIstream.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "PInstance.hxx"
 #include "fb_pool.hxx"

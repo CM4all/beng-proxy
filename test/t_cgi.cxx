@@ -37,7 +37,7 @@
 #include "direct.hxx"
 #include "crash.hxx"
 #include "strmap.hxx"
-#include "istream/istream_file.hxx"
+#include "istream/FileIstream.hxx"
 #include "istream/Handler.hxx"
 #include "istream/Pointer.hxx"
 #include "istream/UnusedPtr.hxx"

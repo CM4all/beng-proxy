@@ -32,7 +32,7 @@
 
 #include "xml_parser.hxx"
 #include "istream/UnusedPtr.hxx"
-#include "istream/istream_file.hxx"
+#include "istream/FileIstream.hxx"
 #include "PInstance.hxx"
 #include "fb_pool.hxx"
 #include "pool/pool.hxx"

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2018 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_ISTREAM_FILE_HXX
-#define BENG_PROXY_ISTREAM_FILE_HXX
+#pragma once
 
 #include "io/FdType.hxx"
 
@@ -74,5 +73,3 @@ istream_file_fd(Istream &istream);
  */
 bool
 istream_file_set_range(Istream &istream, off_t start, off_t end);
-
-#endif
