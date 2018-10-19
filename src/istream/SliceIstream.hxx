@@ -34,7 +34,6 @@
 
 #include "MemoryIstream.hxx"
 #include "SliceAllocation.hxx"
-#include "util/ConstBuffer.hxx"
 
 class SliceBuffer;
 
