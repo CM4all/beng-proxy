@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2018 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -35,9 +35,11 @@
 
 #include <exception>
 
+class UniqueFileDescriptor;
+
 class DelegateHandler {
 public:
-    virtual void OnDelegateSuccess(int fd) = 0;
+    virtual void OnDelegateSuccess(UniqueFileDescriptor fd) = 0;
     virtual void OnDelegateError(std::exception_ptr ep) = 0;
 };
 

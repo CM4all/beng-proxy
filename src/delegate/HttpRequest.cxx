@@ -40,6 +40,7 @@
 #include "istream/FileIstream.hxx"
 #include "pool/pool.hxx"
 #include "system/Error.hxx"
+#include "io/UniqueFileDescriptor.hxx"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -71,7 +72,7 @@ public:
 
 private:
     /* virtual methods from class DelegateHandler */
-    void OnDelegateSuccess(int fd) override;
+    void OnDelegateSuccess(UniqueFileDescriptor fd) override;
 
     void OnDelegateError(std::exception_ptr ep) override {
         handler.InvokeError(ep);
@@ -79,16 +80,15 @@ private:
 };
 
 void
-DelegateHttpRequest::OnDelegateSuccess(int fd)
+DelegateHttpRequest::OnDelegateSuccess(UniqueFileDescriptor fd)
 {
     struct stat st;
-    if (fstat(fd, &st) < 0) {
+    if (fstat(fd.Get(), &st) < 0) {
         handler.InvokeError(std::make_exception_ptr(FormatErrno("Failed to stat %s: ", path)));
         return;
     }
 
     if (!S_ISREG(st.st_mode)) {
-        close(fd);
         handler.InvokeResponse(pool, HTTP_STATUS_NOT_FOUND,
                                "Not a regular file");
         return;
@@ -96,11 +96,14 @@ DelegateHttpRequest::OnDelegateSuccess(int fd)
 
     /* XXX handle if-modified-since, ... */
 
+    auto response_headers = static_response_headers(pool, fd.Get(), st,
+                                                    content_type);
+
     Istream *body = istream_file_fd_new(event_loop, pool, path,
-                                        fd, FdType::FD_FILE,
+                                        fd.Steal(), FdType::FD_FILE,
                                         st.st_size);
     handler.InvokeResponse(HTTP_STATUS_OK,
-                           static_response_headers(pool, fd, st, content_type),
+                           std::move(response_headers),
                            UnusedIstreamPtr(body));
 }
 

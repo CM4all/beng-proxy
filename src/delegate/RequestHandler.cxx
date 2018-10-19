@@ -53,22 +53,18 @@
  */
 
 void
-Request::OnDelegateSuccess(int fd)
+Request::OnDelegateSuccess(UniqueFileDescriptor fd)
 {
     /* get file information */
 
     struct stat st;
-    if (fstat(fd, &st) < 0) {
-        close(fd);
-
+    if (fstat(fd.Get(), &st) < 0) {
         DispatchResponse(HTTP_STATUS_INTERNAL_SERVER_ERROR,
                          "Internal server error");
         return;
     }
 
     if (!S_ISREG(st.st_mode)) {
-        close(fd);
-
         DispatchResponse(HTTP_STATUS_NOT_FOUND, "Not a regular file");
         return;
     }
@@ -76,8 +72,7 @@ Request::OnDelegateSuccess(int fd)
     /* request options */
 
     struct file_request file_request(st.st_size);
-    if (!file_evaluate_request(*this, fd, st, file_request)) {
-        close(fd);
+    if (!file_evaluate_request(*this, fd.Get(), st, file_request)) {
         return;
     }
 
@@ -86,7 +81,7 @@ Request::OnDelegateSuccess(int fd)
     file_dispatch(*this, st, file_request,
                   istream_file_fd_new(instance.event_loop, pool,
                                       handler.delegate.path,
-                                      fd, FdType::FD_FILE,
+                                      fd.Steal(), FdType::FD_FILE,
                                       file_request.range.size));
 }
 

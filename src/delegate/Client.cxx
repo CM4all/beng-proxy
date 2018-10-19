@@ -39,6 +39,7 @@
 #include "event/SocketEvent.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "net/SendMessage.hxx"
+#include "io/UniqueFileDescriptor.hxx"
 #include "system/Error.hxx"
 #include "util/Cancellable.hxx"
 #include "util/Macros.hxx"
@@ -131,8 +132,7 @@ DelegateClient::HandleFd(const struct msghdr &msg, size_t length)
     const void *data = CMSG_DATA(cmsg);
     const int *fd_p = (const int *)data;
 
-    int new_fd = *fd_p;
-    handler.OnDelegateSuccess(new_fd);
+    handler.OnDelegateSuccess(UniqueFileDescriptor(*fd_p));
     Destroy();
 }
 

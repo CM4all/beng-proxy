@@ -461,7 +461,7 @@ public:
     void OnHttpError(std::exception_ptr ep) noexcept override;
 
     /* virtual methods from class DelegateHandler */
-    void OnDelegateSuccess(int fd) override;
+    void OnDelegateSuccess(UniqueFileDescriptor fd) override;
     void OnDelegateError(std::exception_ptr ep) override;
 
     /* virtual methods from class NfsCacheHandler */

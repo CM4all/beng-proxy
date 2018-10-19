@@ -41,6 +41,7 @@
 #include "event/DeferEvent.hxx"
 #include "PInstance.hxx"
 #include "pool/pool.hxx"
+#include "io/UniqueFileDescriptor.hxx"
 #include "util/Cancellable.hxx"
 #include "util/PrintException.hxx"
 
@@ -63,9 +64,7 @@ public:
         delegate_stock_free(delegate_stock);
     }
 
-    void OnDelegateSuccess(int fd) override {
-        close(fd);
-
+    void OnDelegateSuccess(UniqueFileDescriptor) override {
         defer_stop.Schedule();
     }
 
