@@ -82,6 +82,10 @@ public:
         return fill;
     }
 
+    bool empty() const noexcept {
+        return size() == 0;
+    }
+
     ConstBuffer<uint8_t> Read() noexcept {
         assert(IsDefined());
 
