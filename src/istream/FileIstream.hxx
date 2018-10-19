@@ -46,7 +46,7 @@ class EventLoop;
 Istream *
 istream_file_fd_new(EventLoop &event_loop, struct pool &pool,
                     const char *path,
-                    int fd, FdType fd_type, off_t length);
+                    int fd, FdType fd_type, off_t length) noexcept;
 
 /**
  * Opens a file and stats it.
@@ -65,11 +65,11 @@ istream_file_new(EventLoop &event_loop, struct pool &pool,
                  const char *path, off_t length);
 
 int
-istream_file_fd(Istream &istream);
+istream_file_fd(Istream &istream) noexcept;
 
 /**
  * Select a range of the file.  This must be the first call after
  * creating the object.
  */
 bool
-istream_file_set_range(Istream &istream, off_t start, off_t end);
+istream_file_set_range(Istream &istream, off_t start, off_t end) noexcept;

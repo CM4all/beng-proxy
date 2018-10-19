@@ -79,14 +79,14 @@ class FileIstream final : public Istream {
 public:
     FileIstream(struct pool &p, EventLoop &event_loop,
                 int _fd, FdType _fd_type, off_t _length,
-                const char *_path)
+                const char *_path) noexcept
         :Istream(p),
          fd(_fd), fd_type(_fd_type),
          retry_event(event_loop, BIND_THIS_METHOD(EventCallback)),
          rest(_length),
          path(_path) {}
 
-    ~FileIstream() {
+    ~FileIstream() noexcept {
         retry_event.Cancel();
     }
 
@@ -123,7 +123,7 @@ private:
         buffer.FreeIfDefined();
     }
 
-    void Abort(std::exception_ptr ep) {
+    void Abort(std::exception_ptr ep) noexcept {
         CloseHandle();
         DestroyError(ep);
     }
@@ -131,11 +131,11 @@ private:
     /**
      * @return the number of bytes still in the buffer
      */
-    size_t SubmitBuffer() {
+    size_t SubmitBuffer() noexcept {
         return ConsumeFromBuffer(buffer);
     }
 
-    void EofDetected() {
+    void EofDetected() noexcept {
         assert(fd >= 0);
 
         CloseHandle();
@@ -143,24 +143,24 @@ private:
     }
 
     gcc_pure
-    size_t GetMaxRead() const {
+    size_t GetMaxRead() const noexcept {
         if (rest != (off_t)-1 && rest < (off_t)INT_MAX)
             return (size_t)rest;
         else
             return INT_MAX;
     }
 
-    void TryData();
-    void TryDirect();
+    void TryData() noexcept;
+    void TryDirect() noexcept;
 
-    void TryRead() {
+    void TryRead() noexcept {
         if (CheckDirect(fd_type))
             TryDirect();
         else
             TryData();
     }
 
-    void EventCallback() {
+    void EventCallback() noexcept {
         TryRead();
     }
 
@@ -182,7 +182,7 @@ private:
 };
 
 inline void
-FileIstream::TryData()
+FileIstream::TryData() noexcept
 {
     size_t buffer_rest = 0;
 
@@ -234,7 +234,7 @@ FileIstream::TryData()
 }
 
 inline void
-FileIstream::TryDirect()
+FileIstream::TryDirect() noexcept
 {
     /* first consume the rest of the buffer */
     if (SubmitBuffer() > 0)
@@ -358,7 +358,7 @@ FileIstream::_AsFd() noexcept
 Istream *
 istream_file_fd_new(EventLoop &event_loop, struct pool &pool,
                     const char *path,
-                    int fd, FdType fd_type, off_t length)
+                    int fd, FdType fd_type, off_t length) noexcept
 {
     assert(fd >= 0);
     assert(length >= -1);
@@ -406,14 +406,14 @@ istream_file_new(EventLoop &event_loop, struct pool &pool,
 }
 
 int
-istream_file_fd(Istream &istream)
+istream_file_fd(Istream &istream) noexcept
 {
     auto &file = (FileIstream &)istream;
     return file.GetFileDescriptor();
 }
 
 bool
-istream_file_set_range(Istream &istream, off_t start, off_t end)
+istream_file_set_range(Istream &istream, off_t start, off_t end) noexcept
 {
     auto &file = (FileIstream &)istream;
     return file.SetRange(start, end);
