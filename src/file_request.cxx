@@ -37,6 +37,7 @@
 #include "istream/UnusedPtr.hxx"
 #include "istream/FileIstream.hxx"
 #include "pool/pool.hxx"
+#include "io/FileDescriptor.hxx"
 #include "system/Error.hxx"
 #include "http/Status.h"
 
@@ -81,7 +82,7 @@ static_file_get(EventLoop &event_loop, struct pool &pool,
 
     handler.InvokeResponse(HTTP_STATUS_OK,
                            static_response_headers(pool,
-                                                   istream_file_fd(*body), st,
+                                                   istream_file_fd(*body).Get(), st,
                                                    content_type),
                            UnusedIstreamPtr(body));
 }

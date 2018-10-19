@@ -62,7 +62,7 @@ static const struct timeval file_retry_timeout = {
 };
 
 class FileIstream final : public Istream {
-    int fd;
+    FileDescriptor fd;
 
     FdType fd_type;
 
@@ -77,10 +77,10 @@ class FileIstream final : public Istream {
 
 public:
     FileIstream(struct pool &p, EventLoop &event_loop,
-                int _fd, FdType _fd_type, off_t _length,
+                UniqueFileDescriptor &&_fd, FdType _fd_type, off_t _length,
                 const char *_path) noexcept
         :Istream(p),
-         fd(_fd), fd_type(_fd_type),
+         fd(_fd.Steal()), fd_type(_fd_type),
          retry_event(event_loop, BIND_THIS_METHOD(EventCallback)),
          rest(_length),
          path(_path) {}
@@ -89,20 +89,20 @@ public:
         retry_event.Cancel();
     }
 
-    int GetFileDescriptor() const noexcept {
-        assert(fd >= 0);
+    FileDescriptor GetFileDescriptor() const noexcept {
+        assert(fd.IsDefined());
         return fd;
     }
 
     bool SetRange(off_t start, off_t end) noexcept {
         assert(start >= 0);
         assert(end >= start);
-        assert(fd >= 0);
+        assert(fd.IsDefined());
         assert(rest >= 0);
         assert(buffer.IsNull());
         assert(end <= rest);
 
-        if (start > 0 && lseek(fd, start, SEEK_CUR) < 0)
+        if (start > 0 && fd.Skip(start) < 0)
             return false;
 
         rest = end - start;
@@ -111,13 +111,12 @@ public:
 
 private:
     void CloseHandle() noexcept {
-        if (fd < 0)
+        if (!fd.IsDefined())
             return;
 
         retry_event.Cancel();
 
-        close(fd);
-        fd = -1;
+        fd.Close();
 
         buffer.FreeIfDefined();
     }
@@ -135,7 +134,7 @@ private:
     }
 
     void EofDetected() noexcept {
-        assert(fd >= 0);
+        assert(fd.IsDefined());
 
         CloseHandle();
         DestroyEof();
@@ -205,7 +204,7 @@ FileIstream::TryData() noexcept
         return;
     }
 
-    ssize_t nbytes = read_to_buffer(fd, buffer, GetMaxRead());
+    ssize_t nbytes = read_to_buffer(fd.Get(), buffer, GetMaxRead());
     if (nbytes == 0) {
         if (rest == (off_t)-1) {
             rest = 0;
@@ -244,7 +243,7 @@ FileIstream::TryDirect() noexcept
         return;
     }
 
-    ssize_t nbytes = InvokeDirect(fd_type, fd, GetMaxRead());
+    ssize_t nbytes = InvokeDirect(fd_type, fd.Get(), GetMaxRead());
     if (nbytes == ISTREAM_RESULT_CLOSED)
         /* this stream was closed during the direct() callback */
         return;
@@ -328,8 +327,7 @@ FileIstream::_Skip(off_t length) noexcept
     } else {
         /* seek the file descriptor */
 
-        off_t ret = lseek(fd, length, SEEK_CUR);
-        if (ret < 0)
+        if (fd.Skip(length) < 0)
             return -1;
         rest -= length;
     }
@@ -342,7 +340,7 @@ FileIstream::_Skip(off_t length) noexcept
 int
 FileIstream::_AsFd() noexcept
 {
-    int result_fd = fd;
+    int result_fd = fd.Steal();
 
     Destroy();
 
@@ -357,12 +355,14 @@ FileIstream::_AsFd() noexcept
 Istream *
 istream_file_fd_new(EventLoop &event_loop, struct pool &pool,
                     const char *path,
-                    int fd, FdType fd_type, off_t length) noexcept
+                    UniqueFileDescriptor fd, FdType fd_type, off_t length) noexcept
 {
-    assert(fd >= 0);
+    assert(fd.IsDefined());
     assert(length >= -1);
 
-    return NewIstream<FileIstream>(pool, event_loop, fd, fd_type, length, path);
+    return NewIstream<FileIstream>(pool, event_loop,
+                                   std::move(fd), fd_type,
+                                   length, path);
 }
 
 Istream *
@@ -387,7 +387,7 @@ istream_file_stat_new(EventLoop &event_loop, struct pool &pool,
     }
 
     return istream_file_fd_new(event_loop, pool, path,
-                               fd.Steal(), fd_type, size);
+                               std::move(fd), fd_type, size);
 }
 
 Istream *
@@ -401,10 +401,10 @@ istream_file_new(EventLoop &event_loop, struct pool &pool,
         throw FormatErrno("Failed to open %s", path);
 
     return istream_file_fd_new(event_loop, pool, path,
-                               fd.Steal(), FdType::FD_FILE, length);
+                               std::move(fd), FdType::FD_FILE, length);
 }
 
-int
+FileDescriptor
 istream_file_fd(Istream &istream) noexcept
 {
     auto &file = (FileIstream &)istream;

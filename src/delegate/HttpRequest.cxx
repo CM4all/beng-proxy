@@ -100,7 +100,7 @@ DelegateHttpRequest::OnDelegateSuccess(UniqueFileDescriptor fd)
                                                     content_type);
 
     Istream *body = istream_file_fd_new(event_loop, pool, path,
-                                        fd.Steal(), FdType::FD_FILE,
+                                        std::move(fd), FdType::FD_FILE,
                                         st.st_size);
     handler.InvokeResponse(HTTP_STATUS_OK,
                            std::move(response_headers),

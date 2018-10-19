@@ -67,7 +67,7 @@ file_dispatch(Request &request2, const struct stat &st,
     HttpHeaders headers(request2.pool);
     GrowingBuffer &headers2 = headers.GetBuffer();
     file_response_headers(headers2, override_content_type,
-                          istream_file_fd(*body), st,
+                          istream_file_fd(*body).Get(), st,
                           tr.expires_relative,
                           request2.IsProcessorFirst());
     write_translation_vary_header(headers2, tr);
@@ -148,7 +148,7 @@ file_dispatch_compressed(Request &request2, const struct stat &st,
     HttpHeaders headers(request2.pool);
     GrowingBuffer &headers2 = headers.GetBuffer();
     file_response_headers(headers2, override_content_type,
-                          istream_file_fd(body), st,
+                          istream_file_fd(body).Get(), st,
                           tr.expires_relative,
                           request2.IsProcessorFirst());
     write_translation_vary_header(headers2, tr);
@@ -260,7 +260,7 @@ file_callback(Request &request2, const FileAddress &address)
 
     /* request options */
 
-    if (!file_evaluate_request(request2, istream_file_fd(*body), st,
+    if (!file_evaluate_request(request2, istream_file_fd(*body).Get(), st,
                                file_request)) {
         body->CloseUnused();
         return;

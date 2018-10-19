@@ -81,7 +81,7 @@ Request::OnDelegateSuccess(UniqueFileDescriptor fd)
     file_dispatch(*this, st, file_request,
                   istream_file_fd_new(instance.event_loop, pool,
                                       handler.delegate.path,
-                                      fd.Steal(), FdType::FD_FILE,
+                                      std::move(fd), FdType::FD_FILE,
                                       file_request.range.size));
 }
 

@@ -40,11 +40,14 @@ struct pool;
 struct stat;
 class Istream;
 class EventLoop;
+class FileDescriptor;
+class UniqueFileDescriptor;
 
 Istream *
 istream_file_fd_new(EventLoop &event_loop, struct pool &pool,
                     const char *path,
-                    int fd, FdType fd_type, off_t length) noexcept;
+                    UniqueFileDescriptor fd, FdType fd_type,
+                    off_t length) noexcept;
 
 /**
  * Opens a file and stats it.
@@ -62,7 +65,7 @@ Istream *
 istream_file_new(EventLoop &event_loop, struct pool &pool,
                  const char *path, off_t length);
 
-int
+FileDescriptor
 istream_file_fd(Istream &istream) noexcept;
 
 /**
