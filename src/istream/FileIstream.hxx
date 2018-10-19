@@ -34,8 +34,6 @@
 
 #include "io/FdType.hxx"
 
-#include "util/Compiler.h"
-
 #include <sys/types.h>
 
 struct pool;
