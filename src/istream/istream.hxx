@@ -181,6 +181,16 @@ public:
         handler_direct = _handler_direct;
     }
 
+    /**
+     * Detach the handler from this object.  This should only be done
+     * if it is going to be reattached to a new handler right after
+     * this call.
+     */
+    void ClearHandler() noexcept {
+        handler = nullptr;
+        handler_direct = 0;
+    }
+
     void SetDirect(FdTypeMask _handler_direct) noexcept {
         assert(!destroyed);
 
