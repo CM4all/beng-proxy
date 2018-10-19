@@ -62,7 +62,7 @@ static const struct timeval file_retry_timeout = {
     .tv_usec = 100000,
 };
 
-struct FileIstream final : public Istream {
+class FileIstream final : public Istream {
     int fd;
 
     FdType fd_type;
@@ -76,6 +76,7 @@ struct FileIstream final : public Istream {
     SliceFifoBuffer buffer;
     const char *path;
 
+public:
     FileIstream(struct pool &p, EventLoop &event_loop,
                 int _fd, FdType _fd_type, off_t _length,
                 const char *_path)
@@ -89,6 +90,27 @@ struct FileIstream final : public Istream {
         retry_event.Cancel();
     }
 
+    int GetFileDescriptor() const noexcept {
+        assert(fd >= 0);
+        return fd;
+    }
+
+    bool SetRange(off_t start, off_t end) noexcept {
+        assert(start >= 0);
+        assert(end >= start);
+        assert(fd >= 0);
+        assert(rest >= 0);
+        assert(buffer.IsNull());
+        assert(end <= rest);
+
+        if (start > 0 && lseek(fd, start, SEEK_CUR) < 0)
+            return false;
+
+        rest = end - start;
+        return true;
+    }
+
+private:
     void CloseHandle() noexcept {
         if (fd < 0)
             return;
@@ -387,25 +409,12 @@ int
 istream_file_fd(Istream &istream)
 {
     auto &file = (FileIstream &)istream;
-    assert(file.fd >= 0);
-    return file.fd;
+    return file.GetFileDescriptor();
 }
 
 bool
 istream_file_set_range(Istream &istream, off_t start, off_t end)
 {
-    assert(start >= 0);
-    assert(end >= start);
-
     auto &file = (FileIstream &)istream;
-    assert(file.fd >= 0);
-    assert(file.rest >= 0);
-    assert(file.buffer.IsNull());
-    assert(end <= file.rest);
-
-    if (start > 0 && lseek(file.fd, start, SEEK_CUR) < 0)
-        return false;
-
-    file.rest = end - start;
-    return true;
+    return file.SetRange(start, end);
 }
