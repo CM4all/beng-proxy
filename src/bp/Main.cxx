@@ -64,6 +64,7 @@
 #include "DirectResourceLoader.hxx"
 #include "CachedResourceLoader.hxx"
 #include "FilterResourceLoader.hxx"
+#include "BufferedResourceLoader.hxx"
 #include "bp/Control.hxx"
 #include "access_log/Glue.hxx"
 #include "ua_classification.hxx"
@@ -425,6 +426,11 @@ try {
             new FilterResourceLoader(*instance.filter_cache);
     } else
         instance.filter_resource_loader = instance.direct_resource_loader;
+
+    instance.buffered_filter_resource_loader =
+        new BufferedResourceLoader(instance.event_loop,
+                                   *instance.filter_resource_loader,
+                                   instance.pipe_stock);
 
     bulldog_init(instance.config.bulldog_path);
 

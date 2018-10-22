@@ -165,6 +165,7 @@ struct BpInstance final : PInstance, ControlHandler {
     ResourceLoader *direct_resource_loader = nullptr;
     ResourceLoader *cached_resource_loader = nullptr;
     ResourceLoader *filter_resource_loader = nullptr;
+    ResourceLoader *buffered_filter_resource_loader = nullptr;
 
     /* session */
     TimerEvent session_save_timer;

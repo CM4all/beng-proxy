@@ -41,6 +41,7 @@
 #include "DirectResourceLoader.hxx"
 #include "CachedResourceLoader.hxx"
 #include "FilterResourceLoader.hxx"
+#include "BufferedResourceLoader.hxx"
 #include "http_cache.hxx"
 #include "fcache.hxx"
 #include "translation/Stock.hxx"
@@ -77,6 +78,8 @@ BpInstance::BpInstance()
 
 BpInstance::~BpInstance()
 {
+    delete (BufferedResourceLoader *)buffered_filter_resource_loader;
+
     if (filter_resource_loader != direct_resource_loader)
         delete (FilterResourceLoader *)filter_resource_loader;
 
