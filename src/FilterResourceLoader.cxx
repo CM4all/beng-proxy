@@ -47,7 +47,7 @@ FilterResourceLoader::SendRequest(struct pool &pool,
                                   UnusedIstreamPtr body,
                                   gcc_unused const char *body_etag,
                                   HttpResponseHandler &handler,
-                                  CancellablePointer &cancel_ptr)
+                                  CancellablePointer &cancel_ptr) noexcept
 {
     assert(method == HTTP_METHOD_POST);
 

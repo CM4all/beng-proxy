@@ -66,7 +66,7 @@ BlockingResourceLoader::SendRequest(struct pool &pool,
                                     StringMap &&,
                                     UnusedIstreamPtr body, const char *,
                                     HttpResponseHandler &,
-                                    CancellablePointer &cancel_ptr)
+                                    CancellablePointer &cancel_ptr) noexcept
 {
     NewFromPool<BlockingResourceRequest>(pool, pool,
                                          std::move(body), cancel_ptr);

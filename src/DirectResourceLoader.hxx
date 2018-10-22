@@ -67,7 +67,7 @@ public:
                          LhttpStock *_lhttp_stock,
                          FcgiStock *_fcgi_stock, StockMap *_was_stock,
                          StockMap *_delegate_stock,
-                         NfsCache *_nfs_cache)
+                         NfsCache *_nfs_cache) noexcept
         :event_loop(_event_loop),
          tcp_balancer(_tcp_balancer),
          fs_balancer(_fs_balancer),
@@ -88,7 +88,7 @@ public:
                      http_status_t status, StringMap &&headers,
                      UnusedIstreamPtr body, const char *body_etag,
                      HttpResponseHandler &handler,
-                     CancellablePointer &cancel_ptr) override;
+                     CancellablePointer &cancel_ptr) noexcept override;
 };
 
 #endif

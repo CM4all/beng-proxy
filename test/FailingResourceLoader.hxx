@@ -43,5 +43,5 @@ public:
                      http_status_t status, StringMap &&headers,
                      UnusedIstreamPtr body, const char *body_etag,
                      HttpResponseHandler &handler,
-                     CancellablePointer &cancel_ptr) override;
+                     CancellablePointer &cancel_ptr) noexcept override;
 };

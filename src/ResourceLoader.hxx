@@ -70,7 +70,7 @@ public:
                              http_status_t status, StringMap &&headers,
                              UnusedIstreamPtr body, const char *body_etag,
                              HttpResponseHandler &handler,
-                             CancellablePointer &cancel_ptr) = 0;
+                             CancellablePointer &cancel_ptr) noexcept = 0;
 };
 
 #endif

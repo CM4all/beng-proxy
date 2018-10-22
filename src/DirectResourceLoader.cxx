@@ -86,8 +86,9 @@ public:
     }
 };
 
+gcc_pure
 static const char *
-extract_remote_addr(const StringMap *headers)
+extract_remote_addr(const StringMap *headers) noexcept
 {
     const char *xff = strmap_get_checked(headers, "x-forwarded-for");
     if (xff == nullptr)
@@ -103,8 +104,9 @@ extract_remote_addr(const StringMap *headers)
     return StripLeft(p);
 }
 
+gcc_pure
 static const char *
-extract_remote_ip(struct pool *pool, const StringMap *headers)
+extract_remote_ip(struct pool *pool, const StringMap *headers) noexcept
 {
     const char *p = extract_remote_addr(headers);
     if (p == nullptr)
@@ -142,7 +144,7 @@ DirectResourceLoader::SendRequest(struct pool &pool,
                                   UnusedIstreamPtr body,
                                   gcc_unused const char *body_etag,
                                   HttpResponseHandler &handler,
-                                  CancellablePointer &cancel_ptr)
+                                  CancellablePointer &cancel_ptr) noexcept
 try {
     switch (address.type) {
         const FileAddress *file;

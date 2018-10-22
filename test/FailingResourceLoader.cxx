@@ -46,7 +46,7 @@ FailingResourceLoader::SendRequest(struct pool &,
                                    StringMap &&,
                                    UnusedIstreamPtr body, const char *,
                                    HttpResponseHandler &handler,
-                                   CancellablePointer &)
+                                   CancellablePointer &) noexcept
 {
     body.Clear();
 

@@ -47,7 +47,7 @@ CachedResourceLoader::SendRequest(struct pool &pool,
                                   UnusedIstreamPtr body,
                                   gcc_unused const char *body_etag,
                                   HttpResponseHandler &handler,
-                                  CancellablePointer &cancel_ptr)
+                                  CancellablePointer &cancel_ptr) noexcept
 {
     http_cache_request(cache, pool, session_sticky, site_name,
                        method, address,

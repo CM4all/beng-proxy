@@ -172,7 +172,7 @@ public:
                      http_status_t status, StringMap &&headers,
                      UnusedIstreamPtr body, const char *body_etag,
                      HttpResponseHandler &handler,
-                     CancellablePointer &cancel_ptr) override;
+                     CancellablePointer &cancel_ptr) noexcept override;
 };
 
 void
@@ -186,7 +186,7 @@ MyResourceLoader::SendRequest(struct pool &pool,
                               UnusedIstreamPtr body,
                               gcc_unused const char *body_etag,
                               HttpResponseHandler &handler,
-                              gcc_unused CancellablePointer &cancel_ptr)
+                              CancellablePointer &) noexcept
 {
     const auto *request = &requests[current_request];
     StringMap *expected_rh;

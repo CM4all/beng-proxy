@@ -45,7 +45,7 @@ class CachedResourceLoader final : public ResourceLoader {
     HttpCache &cache;
 
 public:
-    explicit CachedResourceLoader(HttpCache &_cache)
+    explicit CachedResourceLoader(HttpCache &_cache) noexcept
         :cache(_cache) {}
 
     /* virtual methods from class ResourceLoader */
@@ -57,7 +57,7 @@ public:
                      http_status_t status, StringMap &&headers,
                      UnusedIstreamPtr body, const char *body_etag,
                      HttpResponseHandler &handler,
-                     CancellablePointer &cancel_ptr) override;
+                     CancellablePointer &cancel_ptr) noexcept override;
 };
 
 #endif
