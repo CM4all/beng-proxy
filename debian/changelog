@@ -1,6 +1,6 @@
 cm4all-beng-proxy (15.0.4) unstable; urgency=low
 
-  * merge release 14.19
+  * merge release 14.18
   * translation: size optimizations
   * dev: convert headers to C++
   * ajp: remove unused AJPv13 protocol implementation
