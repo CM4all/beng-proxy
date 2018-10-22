@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2018 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,19 +30,15 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_ISTREAM_PIPE_HXX
-#define BENG_PROXY_ISTREAM_PIPE_HXX
+#pragma once
 
 struct pool;
 class UnusedIstreamPtr;
 class Stock;
 
-#ifdef __linux
 /**
  * Convert any file descriptor to a pipe by splicing.
  */
 UnusedIstreamPtr
-istream_pipe_new(struct pool *pool, UnusedIstreamPtr input, Stock *pipe_stock);
-#endif
-
-#endif
+NewAutoPipeIstream(struct pool *pool, UnusedIstreamPtr input,
+                   Stock *pipe_stock) noexcept;

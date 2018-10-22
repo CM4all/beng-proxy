@@ -31,7 +31,7 @@
  */
 
 #include "istream/UnusedPtr.hxx"
-#include "istream/istream_pipe.hxx"
+#include "istream/AutoPipeIstream.hxx"
 #include "istream/istream_string.hxx"
 #include "istream/UnusedPtr.hxx"
 
@@ -48,7 +48,7 @@ create_input(struct pool &pool)
 static UnusedIstreamPtr
 create_test(EventLoop &, struct pool &pool, UnusedIstreamPtr input)
 {
-    return istream_pipe_new(&pool, std::move(input), nullptr);
+    return NewAutoPipeIstream(&pool, std::move(input), nullptr);
 }
 
 #include "t_istream_filter.hxx"

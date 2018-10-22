@@ -50,7 +50,7 @@
 #include "istream/UnusedPtr.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream_null.hxx"
-#include "istream/istream_pipe.hxx"
+#include "istream/AutoPipeIstream.hxx"
 #include "bp/session/Session.hxx"
 #include "bp/session/Manager.hxx"
 #include "suffix_registry.hxx"
@@ -150,8 +150,8 @@ class Stock;
 Stock *global_pipe_stock;
 
 UnusedIstreamPtr
-istream_pipe_new(gcc_unused struct pool *pool, UnusedIstreamPtr input,
-                 gcc_unused Stock *pipe_stock)
+NewAutoPipeIstream(gcc_unused struct pool *pool, UnusedIstreamPtr input,
+                   gcc_unused Stock *pipe_stock) noexcept
 {
     return input;
 }

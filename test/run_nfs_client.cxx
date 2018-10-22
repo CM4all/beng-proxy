@@ -34,7 +34,7 @@
 #include "nfs/Client.hxx"
 #include "nfs/Istream.hxx"
 #include "istream/UnusedPtr.hxx"
-#include "istream/istream_pipe.hxx"
+#include "istream/AutoPipeIstream.hxx"
 #include "istream/istream.hxx"
 #include "istream/sink_fd.hxx"
 #include "event/ShutdownListener.hxx"
@@ -163,10 +163,10 @@ Context::OnNfsOpen(NfsFileHandle *handle, const struct stat *st)
     assert(connected);
 
     body = sink_fd_new(event_loop, *pool,
-                       istream_pipe_new(pool,
-                                        istream_nfs_new(*pool, *handle,
-                                                        0, st->st_size),
-                                        nullptr),
+                       NewAutoPipeIstream(pool,
+                                          istream_nfs_new(*pool, *handle,
+                                                          0, st->st_size),
+                                          nullptr),
                        FileDescriptor(STDOUT_FILENO),
                        guess_fd_type(STDOUT_FILENO),
                        my_sink_fd_handler, this);

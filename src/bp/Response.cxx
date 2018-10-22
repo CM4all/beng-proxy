@@ -62,7 +62,7 @@
 #include "TextProcessor.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream_deflate.hxx"
-#include "istream/istream_pipe.hxx"
+#include "istream/AutoPipeIstream.hxx"
 #include "istream/istream_string.hxx"
 #include "pool/pool.hxx"
 #include "translation/Vary.hxx"
@@ -579,7 +579,7 @@ Request::DispatchResponseDirect(http_status_t status, HttpHeaders &&headers,
 
 #ifdef SPLICE
     if (body)
-        body = istream_pipe_new(&pool, std::move(body), instance.pipe_stock);
+        body = NewAutoPipeIstream(&pool, std::move(body), instance.pipe_stock);
 #endif
 
 #ifndef NDEBUG
@@ -612,8 +612,8 @@ response_apply_filter(Request &request2,
 
 #ifdef SPLICE
     if (body)
-        body = istream_pipe_new(&request2.pool, std::move(body),
-                                request2.instance.pipe_stock);
+        body = NewAutoPipeIstream(&request2.pool, std::move(body),
+                                  request2.instance.pipe_stock);
 #endif
 
     request2.instance.filter_resource_loader

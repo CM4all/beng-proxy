@@ -53,7 +53,7 @@
 #include "strmap.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "istream/istream.hxx"
-#include "istream/istream_pipe.hxx"
+#include "istream/AutoPipeIstream.hxx"
 #include "pool/pool.hxx"
 #include "suffix_registry.hxx"
 #include "address_suffix_registry.hxx"
@@ -404,7 +404,7 @@ WidgetRequest::FilterResponse(http_status_t status,
 
 #ifdef SPLICE
     if (body)
-        body = istream_pipe_new(&pool, std::move(body), global_pipe_stock);
+        body = NewAutoPipeIstream(&pool, std::move(body), global_pipe_stock);
 #endif
 
     env.filter_resource_loader

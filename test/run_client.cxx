@@ -37,7 +37,7 @@
 #include "lease.hxx"
 #include "direct.hxx"
 #include "istream/FileIstream.hxx"
-#include "istream/istream_pipe.hxx"
+#include "istream/AutoPipeIstream.hxx"
 #include "istream/istream.hxx"
 #include "istream/sink_fd.hxx"
 #include "istream/UnusedPtr.hxx"
@@ -245,7 +245,7 @@ Context::OnHttpResponse(http_status_t _status, gcc_unused StringMap &&headers,
 
     if (_body) {
         body = sink_fd_new(event_loop, *pool,
-                           istream_pipe_new(pool, std::move(_body), nullptr),
+                           NewAutoPipeIstream(pool, std::move(_body), nullptr),
                            FileDescriptor(STDOUT_FILENO),
                            guess_fd_type(STDOUT_FILENO),
                            my_sink_fd_handler, this);

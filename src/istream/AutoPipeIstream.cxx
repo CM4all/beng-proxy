@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2018 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,9 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifdef __linux
-
-#include "istream_pipe.hxx"
+#include "AutoPipeIstream.hxx"
 #include "PipeLease.hxx"
 #include "New.hxx"
 #include "UnusedPtr.hxx"
@@ -47,13 +45,13 @@
 #include <errno.h>
 #include <string.h>
 
-class PipeIstream final : public ForwardIstream {
+class AutoPipeIstream final : public ForwardIstream {
     PipeLease pipe;
     size_t piped = 0;
 
 public:
-    PipeIstream(struct pool &p, UnusedIstreamPtr _input,
-                Stock *_pipe_stock)
+    AutoPipeIstream(struct pool &p, UnusedIstreamPtr _input,
+                    Stock *_pipe_stock) noexcept
         :ForwardIstream(p, std::move(_input)),
          pipe(_pipe_stock) {}
 
@@ -90,14 +88,14 @@ private:
 };
 
 void
-PipeIstream::CloseInternal() noexcept
+AutoPipeIstream::CloseInternal() noexcept
 {
     /* reuse the pipe only if it's empty */
     pipe.Release(piped == 0);
 }
 
 void
-PipeIstream::Abort(std::exception_ptr ep) noexcept
+AutoPipeIstream::Abort(std::exception_ptr ep) noexcept
 {
     CloseInternal();
 
@@ -108,7 +106,7 @@ PipeIstream::Abort(std::exception_ptr ep) noexcept
 }
 
 ssize_t
-PipeIstream::Consume() noexcept
+AutoPipeIstream::Consume() noexcept
 {
     assert(pipe.IsDefined());
     assert(piped > 0);
@@ -153,7 +151,7 @@ PipeIstream::Consume() noexcept
  */
 
 inline size_t
-PipeIstream::OnData(const void *data, size_t length) noexcept
+AutoPipeIstream::OnData(const void *data, size_t length) noexcept
 {
     assert(HasHandler());
 
@@ -172,7 +170,7 @@ PipeIstream::OnData(const void *data, size_t length) noexcept
 }
 
 inline ssize_t
-PipeIstream::OnDirect(FdType type, int fd, size_t max_length) noexcept
+AutoPipeIstream::OnDirect(FdType type, int fd, size_t max_length) noexcept
 {
     assert(HasHandler());
     assert(CheckDirect(FdType::FD_PIPE));
@@ -222,7 +220,7 @@ PipeIstream::OnDirect(FdType type, int fd, size_t max_length) noexcept
 }
 
 inline void
-PipeIstream::OnEof() noexcept
+AutoPipeIstream::OnEof() noexcept
 {
     input.Clear();
 
@@ -235,7 +233,7 @@ PipeIstream::OnEof() noexcept
 }
 
 inline void
-PipeIstream::OnError(std::exception_ptr ep) noexcept
+AutoPipeIstream::OnError(std::exception_ptr ep) noexcept
 {
     CloseInternal();
     input.Clear();
@@ -248,7 +246,7 @@ PipeIstream::OnError(std::exception_ptr ep) noexcept
  */
 
 off_t
-PipeIstream::_GetAvailable(bool partial) noexcept
+AutoPipeIstream::_GetAvailable(bool partial) noexcept
 {
     if (gcc_likely(input.IsDefined())) {
         off_t available = input.GetAvailable(partial);
@@ -268,7 +266,7 @@ PipeIstream::_GetAvailable(bool partial) noexcept
 }
 
 void
-PipeIstream::_Read() noexcept
+AutoPipeIstream::_Read() noexcept
 {
     if (piped > 0 && (Consume() <= 0 || piped > 0))
         return;
@@ -288,7 +286,7 @@ PipeIstream::_Read() noexcept
 }
 
 int
-PipeIstream::_AsFd() noexcept
+AutoPipeIstream::_AsFd() noexcept
 {
     if (piped > 0)
         /* need to flush the pipe buffer first */
@@ -304,7 +302,7 @@ PipeIstream::_AsFd() noexcept
 }
 
 void
-PipeIstream::_Close() noexcept
+AutoPipeIstream::_Close() noexcept
 {
     CloseInternal();
 
@@ -320,10 +318,8 @@ PipeIstream::_Close() noexcept
  */
 
 UnusedIstreamPtr
-istream_pipe_new(struct pool *pool, UnusedIstreamPtr input,
-                 Stock *pipe_stock)
+NewAutoPipeIstream(struct pool *pool, UnusedIstreamPtr input,
+                   Stock *pipe_stock) noexcept
 {
-    return NewIstreamPtr<PipeIstream>(*pool, std::move(input), pipe_stock);
+    return NewIstreamPtr<AutoPipeIstream>(*pool, std::move(input), pipe_stock);
 }
-
-#endif

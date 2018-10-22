@@ -728,8 +728,8 @@ test('t_istream_dechunk_verbatim3', executable('t_istream_dechunk_verbatim3',
   include_directories: inc,
   dependencies: t_istream_filter_deps))
 
-test('t_istream_pipe', executable('t_istream_pipe',
-  't_istream_pipe.cxx',
+test('TestAutoPipeIstream', executable('TestAutoPipeIstream',
+  'TestAutoPipeIstream.cxx',
   '../src/pipe_stock.cxx',
   '../src/PipeLease.cxx',
   include_directories: inc,

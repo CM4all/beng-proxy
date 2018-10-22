@@ -48,7 +48,7 @@
 #include "HttpResponseHandler.hxx"
 #include "XmlProcessor.hxx"
 #include "istream/istream.hxx"
-#include "istream/istream_pipe.hxx"
+#include "istream/AutoPipeIstream.hxx"
 #include "translation/Vary.hxx"
 #include "pool/pool.hxx"
 #include "io/Logger.hxx"
@@ -138,8 +138,8 @@ ProxyWidget::OnHttpResponse(http_status_t status, StringMap &&_headers,
 
 #ifdef SPLICE
     if (body)
-        body = istream_pipe_new(&request.pool, std::move(body),
-                                global_pipe_stock);
+        body = NewAutoPipeIstream(&request.pool, std::move(body),
+                                  global_pipe_stock);
 #endif
 
     /* disable the following transformations, because they are meant

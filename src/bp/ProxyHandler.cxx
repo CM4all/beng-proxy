@@ -45,7 +45,7 @@
 #include "http_address.hxx"
 #include "cgi_address.hxx"
 #include "uri/uri_extract.hxx"
-#include "istream/istream_pipe.hxx"
+#include "istream/AutoPipeIstream.hxx"
 #include "lhttp_address.hxx"
 #include "pool/pool.hxx"
 
@@ -125,8 +125,8 @@ proxy_handler(Request &request2)
 
 #ifdef SPLICE
     if (forward.body)
-        forward.body = istream_pipe_new(&pool, std::move(forward.body),
-                                        request2.instance.pipe_stock);
+        forward.body = NewAutoPipeIstream(&pool, std::move(forward.body),
+                                          request2.instance.pipe_stock);
 #endif
 
     for (const auto &i : tr.request_headers)
