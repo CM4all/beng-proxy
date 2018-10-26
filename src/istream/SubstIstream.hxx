@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2018 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_ISTREAM_SUBST_HXX
-#define BENG_PROXY_ISTREAM_SUBST_HXX
+#pragma once
 
 #include "util/Compiler.h"
 
@@ -72,5 +71,3 @@ public:
 UnusedIstreamPtr
 istream_subst_new(struct pool *pool, UnusedIstreamPtr input,
                   SubstTree tree) noexcept;
-
-#endif

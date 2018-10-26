@@ -30,7 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "istream/istream_subst.hxx"
+#include "istream/SubstIstream.hxx"
 #include "istream/istream_string.hxx"
 #include "istream/istream.hxx"
 #include "istream/UnusedPtr.hxx"

@@ -33,7 +33,7 @@
 #include "TextProcessor.hxx"
 #include "strmap.hxx"
 #include "istream/UnusedPtr.hxx"
-#include "istream/istream_subst.hxx"
+#include "istream/SubstIstream.hxx"
 #include "widget/Widget.hxx"
 #include "widget/Class.hxx"
 #include "penv.hxx"

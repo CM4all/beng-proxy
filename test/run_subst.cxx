@@ -32,7 +32,7 @@
 
 #include "StdioSink.hxx"
 #include "istream/UnusedPtr.hxx"
-#include "istream/istream_subst.hxx"
+#include "istream/SubstIstream.hxx"
 #include "istream/FileIstream.hxx"
 #include "fb_pool.hxx"
 #include "PInstance.hxx"
