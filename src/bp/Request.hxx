@@ -426,6 +426,11 @@ private:
                              StringMap &response_headers,
                              UnusedIstreamPtr response_body);
 
+    void InvokeSubst(http_status_t status,
+                     StringMap &&response_headers,
+                     UnusedIstreamPtr response_body,
+                     const char *yaml_file) noexcept;
+
     void ApplyTransformation(http_status_t status, StringMap &&headers,
                              UnusedIstreamPtr response_body,
                              const Transformation &transformation);

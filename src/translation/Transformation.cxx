@@ -78,6 +78,10 @@ Transformation::Dup(AllocatorPtr alloc) const
         dest->u.filter.address.CopyFrom(alloc, u.filter.address);
         dest->u.filter.reveal_user = u.filter.reveal_user;
         break;
+
+    case Type::SUBST:
+        dest->u.subst.yaml_file = alloc.CheckDup(u.subst.yaml_file);
+        break;
     }
 
     dest->next = nullptr;
@@ -119,6 +123,9 @@ Transformation::Expand(AllocatorPtr alloc, const MatchInfo &match_info)
 
     case Type::FILTER:
         u.filter.address.Expand(alloc, match_info);
+        break;
+
+    case Type::SUBST:
         break;
     }
 }

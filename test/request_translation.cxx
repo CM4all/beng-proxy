@@ -132,6 +132,10 @@ my_translate_response(TranslateResponse &response, void *ctx)
                 printf("filter\n");
                 print_resource_address(&transformation->u.filter.address);
                 break;
+
+            case Transformation::Type::SUBST:
+                printf("subst '%s'\n", transformation->u.subst.yaml_file);
+                break;
             }
         }
     }

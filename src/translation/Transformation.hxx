@@ -53,6 +53,7 @@ struct Transformation {
         PROCESS_CSS,
         PROCESS_TEXT,
         FILTER,
+        SUBST,
     } type;
 
     union {
@@ -72,6 +73,10 @@ struct Transformation {
              */
             bool reveal_user;
         } filter;
+
+        struct {
+            const char *yaml_file;
+        } subst;
     } u;
 
     /**

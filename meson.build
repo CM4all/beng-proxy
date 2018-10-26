@@ -118,6 +118,7 @@ threads = dependency('threads')
 libpcre = dependency('libpcre')
 libsodium = dependency('libsodium')
 libjsoncpp = dependency('jsoncpp')
+libyamlcpp = dependency('yaml-cpp')
 libnfs = dependency('libnfs')
 zlib = dependency('zlib')
 
@@ -384,6 +385,7 @@ istream = static_library('istream',
   'src/istream/OptionalIstream.cxx',
   'src/istream/istream_deflate.cxx',
   'src/istream/SubstIstream.cxx',
+  'src/istream/YamlSubstIstream.cxx',
   'src/istream/BufferedIstream.cxx',
   'src/istream/ByteIstream.cxx',
   'src/istream/FourIstream.cxx',
@@ -405,6 +407,7 @@ istream = static_library('istream',
   include_directories: inc,
   dependencies: [
     zlib,
+    libyamlcpp,
   ])
 istream_dep = declare_dependency(link_with: istream,
                                 dependencies: [event_dep, pool_dep, system_dep])

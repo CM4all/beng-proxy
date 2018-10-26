@@ -63,6 +63,7 @@
 #include "istream/istream.hxx"
 #include "istream/istream_deflate.hxx"
 #include "istream/AutoPipeIstream.hxx"
+#include "istream/YamlSubstIstream.hxx"
 #include "istream/istream_string.hxx"
 #include "pool/pool.hxx"
 #include "translation/Vary.hxx"
@@ -447,6 +448,21 @@ Request::InvokeTextProcessor(http_status_t status,
                    std::move(response_body));
 }
 
+inline void
+Request::InvokeSubst(http_status_t status,
+                     StringMap &&response_headers,
+                     UnusedIstreamPtr response_body,
+                     const char *yaml_file) noexcept
+{
+    try {
+        InvokeResponse(status, std::move(response_headers),
+                       NewYamlSubstIstream(pool, std::move(response_body),
+                                           yaml_file));
+    } catch (...) {
+        LogDispatchError(std::current_exception());
+    }
+}
+
 /**
  * Append response headers set by the translation server.
  */
@@ -660,6 +676,14 @@ Request::ApplyTransformation(http_status_t status, StringMap &&headers,
         resource_tag = nullptr;
 
         InvokeTextProcessor(status, headers, std::move(response_body));
+        break;
+
+    case Transformation::Type::SUBST:
+        /* subst responses cannot be cached */
+        resource_tag = nullptr;
+
+        InvokeSubst(status, std::move(headers), std::move(response_body),
+                    transformation.u.subst.yaml_file);
         break;
     }
 }

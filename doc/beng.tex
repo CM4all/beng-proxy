@@ -1328,6 +1328,13 @@ useful when at least one \verb|FILTER| was specified. \\
 
 \hline
 
+\verb|SUBST_YAML_FILE| & Substitute variables in the form
+"\verb|{{NAME}}|" with values from the given YAML file.  The values
+are inserted raw into the stream, i.e. without any
+escaping/quoting. \\
+
+\hline
+
 \verb|PROCESS| & enables the \emph{beng-proxy} processor, see
 section \ref{processor} \\
 

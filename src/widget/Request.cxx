@@ -54,6 +54,7 @@
 #include "istream/UnusedPtr.hxx"
 #include "istream/istream.hxx"
 #include "istream/AutoPipeIstream.hxx"
+#include "istream/YamlSubstIstream.hxx"
 #include "pool/pool.hxx"
 #include "suffix_registry.hxx"
 #include "address_suffix_registry.hxx"
@@ -171,6 +172,10 @@ private:
     void FilterResponse(http_status_t status,
                         StringMap &&headers, UnusedIstreamPtr body,
                         const ResourceAddress &filter, bool reveal_user);
+
+    void SubstResponse(http_status_t status,
+                       StringMap &&headers, UnusedIstreamPtr body,
+                       const char *yaml_file) noexcept;
 
     /**
      * Apply a transformation to the widget response and hand it back
@@ -417,6 +422,20 @@ WidgetRequest::FilterResponse(http_status_t status,
 }
 
 void
+WidgetRequest::SubstResponse(http_status_t status,
+                             StringMap &&headers, UnusedIstreamPtr body,
+                             const char *yaml_file) noexcept
+{
+    try {
+        InvokeResponse(status, std::move(headers),
+                       NewYamlSubstIstream(pool, std::move(body),
+                                           yaml_file));
+    } catch (...) {
+        DispatchError(std::current_exception());
+    }
+}
+
+void
 WidgetRequest::TransformResponse(http_status_t status,
                                  StringMap &&headers, UnusedIstreamPtr body,
                                  const Transformation &t)
@@ -458,6 +477,11 @@ WidgetRequest::TransformResponse(http_status_t status,
     case Transformation::Type::FILTER:
         FilterResponse(status, std::move(headers), std::move(body),
                        t.u.filter.address, t.u.filter.reveal_user);
+        break;
+
+    case Transformation::Type::SUBST:
+        SubstResponse(status, std::move(headers), std::move(body),
+                      t.u.subst.yaml_file);
         break;
     }
 }

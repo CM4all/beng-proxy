@@ -225,6 +225,9 @@ transformation_equals(const Transformation *a,
     case Transformation::Type::FILTER:
         return resource_address_equals(&a->u.filter.address,
                                        &b->u.filter.address);
+
+    case Transformation::Type::SUBST:
+        return string_equals(a->u.subst.yaml_file, b->u.subst.yaml_file);
     }
 
     /* unreachable */

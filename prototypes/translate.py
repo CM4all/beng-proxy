@@ -691,6 +691,9 @@ class Translation(Protocol):
             response.packet(TRANSLATE_FILTER)
             response.packet(TRANSLATE_FASTCGI, os.path.join(cgi_path, 'pipe2.sed'))
             response.packet(TRANSLATE_ACTION, sed_fastcgi)
+        elif uri == '/subst':
+            response.path(os.path.join(demo_path, 'subst.txt'))
+            response.packet(TRANSLATE_SUBST_YAML_FILE, os.path.join(demo_path, 'subst.yaml'))
         elif uri == '/dav':
             response.packet(TRANSLATE_WAS, davos_plain)
             response.pair('DAVOS_DOCUMENT_ROOT', '/var/www')
