@@ -53,7 +53,6 @@ LoadYamlMap(struct pool &pool, const YAML::Node &node) noexcept
     for (const auto &i : node) {
         const auto name = "{{" + i.first.as<std::string>() + "}}";
         const auto value = i.second.as<std::string>();
-        fprintf(stderr, "LoadYamlMap: '%s' -> '%s'\n", name.c_str(), value.c_str());
         tree.Add(pool, p_strndup(&pool, name.data(), name.length()),
                  {p_strndup(&pool, value.data(), value.length()), value.length()});
     }
