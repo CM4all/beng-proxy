@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2018 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -59,6 +59,7 @@ Transformation::Transformation(AllocatorPtr alloc,
 
     case Type::SUBST:
         u.subst.yaml_file = alloc.CheckDup(src.u.subst.yaml_file);
+        u.subst.yaml_map_path = alloc.CheckDup(src.u.subst.yaml_map_path);
         break;
     }
 }

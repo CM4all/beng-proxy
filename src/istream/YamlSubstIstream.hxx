@@ -43,4 +43,4 @@ class UnusedIstreamPtr;
  */
 UnusedIstreamPtr
 NewYamlSubstIstream(struct pool &pool, UnusedIstreamPtr input,
-                    const char *yaml_file);
+                    const char *yaml_file, const char *yaml_map_path);

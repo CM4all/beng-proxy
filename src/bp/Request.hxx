@@ -429,7 +429,8 @@ private:
     void InvokeSubst(http_status_t status,
                      StringMap &&response_headers,
                      UnusedIstreamPtr response_body,
-                     const char *yaml_file) noexcept;
+                     const char *yaml_file,
+                     const char *yaml_map_path) noexcept;
 
     void ApplyTransformation(http_status_t status, StringMap &&headers,
                              UnusedIstreamPtr response_body,

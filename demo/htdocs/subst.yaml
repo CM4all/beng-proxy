@@ -1,2 +1,5 @@
 object: world
 greeting: Hello
+child:
+  greeting: Good morning
+  object: everybody
