@@ -197,6 +197,15 @@ executable('run_subst',
     istream_dep,
   ])
 
+executable(
+  'RunYamlSubst',
+  'RunYamlSubst.cxx',
+  '../src/PInstance.cxx',
+  include_directories: inc,
+  dependencies: [
+    istream_dep,
+  ])
+
 executable('run_cookie_client',
   'run_cookie_client.cxx',
   include_directories: inc,
