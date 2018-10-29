@@ -42,14 +42,14 @@
 #include "util/PrintException.hxx"
 #include "util/StringView.hxx"
 
+struct Usage {};
+
 int
 main(int argc, char **argv)
 try {
     ConstBuffer<const char *> args(argv + 1, argc - 1);
-    if (args.size != 1) {
-        fprintf(stderr, "usage: %s DATA.yaml\n", argv[0]);
-        return EXIT_FAILURE;
-    }
+    if (args.size != 1)
+        throw Usage();
 
     const char *const yaml_file = args[0];
 
@@ -67,6 +67,9 @@ try {
     pool_commit();
 
     sink.LoopRead();
+} catch (Usage) {
+    fprintf(stderr, "usage: %s DATA.yaml\n", argv[0]);
+    return EXIT_FAILURE;
 } catch (...) {
     PrintException(std::current_exception());
     return EXIT_FAILURE;
