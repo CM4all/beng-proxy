@@ -51,6 +51,9 @@ LoadYamlMap(struct pool &pool, const YAML::Node &node) noexcept
     SubstTree tree;
 
     for (const auto &i : node) {
+        if (!i.first.IsScalar() || !i.second.IsScalar())
+            continue;
+
         const auto name = "{{" + i.first.as<std::string>() + "}}";
         const auto value = i.second.as<std::string>();
         tree.Add(pool, p_strndup(&pool, name.data(), name.length()),
