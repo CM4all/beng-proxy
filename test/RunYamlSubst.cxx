@@ -56,14 +56,15 @@ try {
     const ScopeFbPoolInit fb_pool_init;
     PInstance instance;
 
-    auto *pool = pool_new_linear(instance.root_pool, "test", 8192);
+    PoolPtr pool(PoolPtr::donate,
+                 *pool_new_linear(instance.root_pool, "test", 8192));
 
-    StdioSink sink(NewYamlSubstIstream(*pool,
+    StdioSink sink(NewYamlSubstIstream(pool,
                                        UnusedIstreamPtr(istream_file_new(instance.event_loop, *pool,
                                                                          "/dev/stdin", (off_t)-1)),
                                        yaml_file));
 
-    pool_unref(pool);
+    pool.reset();
     pool_commit();
 
     sink.LoopRead();
