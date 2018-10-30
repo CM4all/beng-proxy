@@ -1331,9 +1331,12 @@ useful when at least one \verb|FILTER| was specified. \\
 \verb|SUBST_YAML_FILE| & Substitute variables in the form
 "\verb|{{NAME}}|" with values from the given YAML file.  The values
 are inserted raw into the stream, i.e. without any escaping/quoting.
-The payload is the YAML file path and may be followed (separated with
-a null byte) by a path inside the YAML file where YAML map to be used
-is found. \\
+The payload consists of 3 strings separated by a null byte: the prefix
+for variable names (example: ``\verb|foo.|''; may be empty; will be
+stripped before looking up in the YAML file), the YAML file path
+(absolute, i.e. starting with slash) and a path inside the YAML file
+where YAML map to be used is found (may be empty).  Example:
+``\verb|foo.\0/the/file.yaml\0inside/file|'' \\
 
 \hline
 

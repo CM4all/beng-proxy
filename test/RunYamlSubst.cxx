@@ -51,6 +51,10 @@ try {
     if (args.empty())
         throw Usage();
 
+    const char *const prefix = args.shift();
+    if (args.empty())
+        throw Usage();
+
     const char *const yaml_file = args.shift();
     const char *const yaml_map_path = args.empty() ? nullptr : args.shift();
 
@@ -66,14 +70,14 @@ try {
     StdioSink sink(NewYamlSubstIstream(pool,
                                        UnusedIstreamPtr(istream_file_new(instance.event_loop, *pool,
                                                                          "/dev/stdin", (off_t)-1)),
-                                       yaml_file, yaml_map_path));
+                                       prefix, yaml_file, yaml_map_path));
 
     pool.reset();
     pool_commit();
 
     sink.LoopRead();
 } catch (Usage) {
-    fprintf(stderr, "usage: %s DATA.yaml [MAP_PATH]\n", argv[0]);
+    fprintf(stderr, "usage: %s PREFIX DATA.yaml [MAP_PATH]\n", argv[0]);
     return EXIT_FAILURE;
 } catch (...) {
     PrintException(std::current_exception());

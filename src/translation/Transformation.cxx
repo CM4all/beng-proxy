@@ -58,6 +58,7 @@ Transformation::Transformation(AllocatorPtr alloc,
         break;
 
     case Type::SUBST:
+        u.subst.prefix = alloc.CheckDup(src.u.subst.prefix);
         u.subst.yaml_file = alloc.CheckDup(src.u.subst.yaml_file);
         u.subst.yaml_map_path = alloc.CheckDup(src.u.subst.yaml_map_path);
         break;

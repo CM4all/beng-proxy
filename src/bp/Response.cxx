@@ -452,13 +452,14 @@ inline void
 Request::InvokeSubst(http_status_t status,
                      StringMap &&response_headers,
                      UnusedIstreamPtr response_body,
+                     const char *prefix,
                      const char *yaml_file,
                      const char *yaml_map_path) noexcept
 {
     try {
         InvokeResponse(status, std::move(response_headers),
                        NewYamlSubstIstream(pool, std::move(response_body),
-                                           yaml_file, yaml_map_path));
+                                           prefix, yaml_file, yaml_map_path));
     } catch (...) {
         LogDispatchError(std::current_exception());
     }
@@ -684,6 +685,7 @@ Request::ApplyTransformation(http_status_t status, StringMap &&headers,
         resource_tag = nullptr;
 
         InvokeSubst(status, std::move(headers), std::move(response_body),
+                    transformation.u.subst.prefix,
                     transformation.u.subst.yaml_file,
                     transformation.u.subst.yaml_map_path);
         break;

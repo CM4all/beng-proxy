@@ -175,6 +175,7 @@ private:
 
     void SubstResponse(http_status_t status,
                        StringMap &&headers, UnusedIstreamPtr body,
+                       const char *prefix,
                        const char *yaml_file,
                        const char *yaml_map_path) noexcept;
 
@@ -425,13 +426,14 @@ WidgetRequest::FilterResponse(http_status_t status,
 void
 WidgetRequest::SubstResponse(http_status_t status,
                              StringMap &&headers, UnusedIstreamPtr body,
+                             const char *prefix,
                              const char *yaml_file,
                              const char *yaml_map_path) noexcept
 {
     try {
         InvokeResponse(status, std::move(headers),
                        NewYamlSubstIstream(pool, std::move(body),
-                                           yaml_file, yaml_map_path));
+                                           prefix, yaml_file, yaml_map_path));
     } catch (...) {
         DispatchError(std::current_exception());
     }
@@ -483,6 +485,7 @@ WidgetRequest::TransformResponse(http_status_t status,
 
     case Transformation::Type::SUBST:
         SubstResponse(status, std::move(headers), std::move(body),
+                      t.u.subst.prefix,
                       t.u.subst.yaml_file,
                       t.u.subst.yaml_map_path);
         break;

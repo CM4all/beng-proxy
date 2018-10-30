@@ -75,6 +75,8 @@ struct Transformation {
         } filter;
 
         struct {
+            const char *prefix;
+
             const char *yaml_file;
 
             const char *yaml_map_path;

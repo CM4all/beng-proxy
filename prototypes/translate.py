@@ -693,10 +693,10 @@ class Translation(Protocol):
             response.packet(TRANSLATE_ACTION, sed_fastcgi)
         elif uri == '/subst':
             response.path(os.path.join(demo_path, 'subst.txt'))
-            response.packet(TRANSLATE_SUBST_YAML_FILE, os.path.join(demo_path, 'subst.yaml'))
+            response.packet(TRANSLATE_SUBST_YAML_FILE, '\0' + os.path.join(demo_path, 'subst.yaml') + '\0')
         elif uri == '/subst2':
             response.path(os.path.join(demo_path, 'subst.txt'))
-            response.packet(TRANSLATE_SUBST_YAML_FILE, os.path.join(demo_path, 'subst.yaml') + '\0child')
+            response.packet(TRANSLATE_SUBST_YAML_FILE, '\0' + os.path.join(demo_path, 'subst.yaml') + '\0child')
         elif uri == '/dav':
             response.packet(TRANSLATE_WAS, davos_plain)
             response.pair('DAVOS_DOCUMENT_ROOT', '/var/www')
