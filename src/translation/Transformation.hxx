@@ -82,6 +82,8 @@ struct Transformation {
     explicit Transformation(Type _type) noexcept
         :type(_type) {}
 
+    Transformation(AllocatorPtr alloc, const Transformation &src) noexcept;
+
     /**
      * Returns true if the chain contains at least one "PROCESS"
      * transformation.

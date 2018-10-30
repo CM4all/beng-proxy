@@ -36,6 +36,33 @@
 
 #include <string.h>
 
+Transformation::Transformation(AllocatorPtr alloc,
+                               const Transformation &src) noexcept
+    :Transformation(src.type)
+{
+    switch (type) {
+    case Type::PROCESS:
+        u.processor.options = src.u.processor.options;
+        break;
+
+    case Type::PROCESS_CSS:
+        u.css_processor.options = src.u.css_processor.options;
+        break;
+
+    case Type::PROCESS_TEXT:
+        break;
+
+    case Type::FILTER:
+        u.filter.address.CopyFrom(alloc, src.u.filter.address);
+        u.filter.reveal_user = src.u.filter.reveal_user;
+        break;
+
+    case Type::SUBST:
+        u.subst.yaml_file = alloc.CheckDup(src.u.subst.yaml_file);
+        break;
+    }
+}
+
 bool
 Transformation::HasProcessor(const Transformation *t)
 {
@@ -59,31 +86,7 @@ Transformation::IsContainer(const Transformation *t)
 Transformation *
 Transformation::Dup(AllocatorPtr alloc) const
 {
-    Transformation *dest = alloc.New<Transformation>(type);
-
-    switch (dest->type) {
-    case Type::PROCESS:
-        dest->u.processor.options = u.processor.options;
-        break;
-
-    case Type::PROCESS_CSS:
-        dest->u.css_processor.options = u.css_processor.options;
-        break;
-
-    case Type::PROCESS_TEXT:
-        break;
-
-    case Type::FILTER:
-        dest->u.filter.address.CopyFrom(alloc, u.filter.address);
-        dest->u.filter.reveal_user = u.filter.reveal_user;
-        break;
-
-    case Type::SUBST:
-        dest->u.subst.yaml_file = alloc.CheckDup(u.subst.yaml_file);
-        break;
-    }
-
-    return dest;
+    return alloc.New<Transformation>(alloc, *this);
 }
 
 Transformation *
