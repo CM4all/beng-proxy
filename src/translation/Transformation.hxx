@@ -46,7 +46,7 @@ class AllocatorPtr;
  * Transformations which can be applied to resources.
  */
 struct Transformation {
-    Transformation *next;
+    Transformation *next = nullptr;
 
     enum class Type {
         PROCESS,
@@ -78,6 +78,9 @@ struct Transformation {
             const char *yaml_file;
         } subst;
     } u;
+
+    explicit Transformation(Type _type) noexcept
+        :type(_type) {}
 
     /**
      * Returns true if the chain contains at least one "PROCESS"

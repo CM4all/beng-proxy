@@ -59,9 +59,8 @@ Transformation::IsContainer(const Transformation *t)
 Transformation *
 Transformation::Dup(AllocatorPtr alloc) const
 {
-    Transformation *dest = alloc.New<Transformation>();
+    Transformation *dest = alloc.New<Transformation>(type);
 
-    dest->type = type;
     switch (dest->type) {
     case Type::PROCESS:
         dest->u.processor.options = u.processor.options;
@@ -84,7 +83,6 @@ Transformation::Dup(AllocatorPtr alloc) const
         break;
     }
 
-    dest->next = nullptr;
     return dest;
 }
 
