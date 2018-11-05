@@ -85,17 +85,8 @@ test_cflags = test_common_flags + [
 add_global_arguments(common_flags, language: 'c')
 add_global_arguments(common_flags, language: 'cpp')
 
-foreach f: test_cxxflags
-  if compiler.has_argument(f)
-    add_global_arguments(f, language: 'cpp')
-  endif
-endforeach
-
-foreach f: test_cflags
-  if c_compiler.has_argument(f)
-    add_global_arguments(f, language: 'c')
-  endif
-endforeach
+add_global_arguments(compiler.get_supported_arguments(test_cxxflags), language: 'cpp')
+add_global_arguments(c_compiler.get_supported_arguments(test_cflags), language: 'c')
 
 if debug
   debug_flags = ['-DPOISON', '-DTRACE']
