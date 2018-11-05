@@ -14,8 +14,7 @@ debian/build/debug/build.ninja: meson.build
 
 debian/build/optimized/build.ninja: meson.build
 	rm -rf $(@D)
-	LDFLAGS="-fuse-ld=gold -Wl,--gc-sections,--icf=all" \
-		meson . $(@D) --buildtype=debugoptimized $(MESON_OPTIONS) -Db_ndebug=true
+	meson . $(@D) --buildtype=debugoptimized $(MESON_OPTIONS) -Db_ndebug=true
 
 debian/stamp-build-debug: debian/build/debug/build.ninja
 	ninja -v -C $(<D) test

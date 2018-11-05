@@ -1,4 +1,5 @@
 project('CM4all beng-proxy', ['c', 'cpp'], version: '15.0.6',
+  meson_version: '>= 0.47',
   default_options: [
     'c_std=c99',
     'cpp_std=c++14'
@@ -48,6 +49,14 @@ if not debug
     '-ffunction-sections',
     '-fdata-sections',
   ]
+
+  add_global_link_arguments(
+    compiler.get_supported_link_arguments(
+      '-Wl,--gc-sections',
+      '-Wl,--icf=all',
+    ),
+    language: 'cpp'
+  )
 endif
 
 test_cxxflags = test_common_flags + [

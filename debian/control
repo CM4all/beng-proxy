@@ -3,7 +3,7 @@ Section: web
 Priority: extra
 Maintainer: Max Kellermann <mk@cm4all.com>
 Build-Depends: debhelper (>= 9), dh-python, dh-systemd,
- meson (>= 0.37),
+ meson (>= 0.47),
  gcc (>= 4:4.9),
  libc6-dev (>= 2.13),
  libsystemd-dev, libdbus-1-dev,
