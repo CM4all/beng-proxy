@@ -10,7 +10,7 @@ MESON_OPTIONS = --prefix=/usr \
 
 debian/build/debug/build.ninja: meson.build
 	rm -rf $(@D)
-	meson . $(@D) --buildtype debugoptimized $(MESON_OPTIONS)
+	meson . $(@D) --buildtype=debugoptimized --optimization=g $(MESON_OPTIONS)
 
 debian/build/optimized/build.ninja: meson.build
 	rm -rf $(@D)

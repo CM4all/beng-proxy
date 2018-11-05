@@ -1,6 +1,6 @@
 cm4all-beng-proxy (15.0.6) unstable; urgency=low
 
-  * 
+  * compile with -Og instead of -O2
 
  --   
 
