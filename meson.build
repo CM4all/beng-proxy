@@ -26,8 +26,6 @@ common_flags = [
   '-DSPLICE',
   '-DPACKAGE="' + meson.project_name() + '"',
   '-DVERSION="' + meson.project_version() + '"',
-  '-DHAVE_PIPE2',
-  '-DHAVE_ACCEPT4',
   '-DCACHE_LOG',
   '-Wall',
   '-Wextra',
