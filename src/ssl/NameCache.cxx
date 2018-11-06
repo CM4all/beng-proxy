@@ -136,7 +136,7 @@ CertNameCache::RemoveAltNames(const std::string &common_name,
 }
 
 static void
-Listen(const LLogger &logger, Pg::AsyncConnection &c, const char *name)
+Listen(Pg::AsyncConnection &c, const char *name)
 {
     std::string sql("LISTEN \"");
 
@@ -151,11 +151,7 @@ Listen(const LLogger &logger, Pg::AsyncConnection &c, const char *name)
     sql += name;
     sql += "\"";
 
-    try {
-        Pg::CheckError(c.Execute(sql.c_str()));
-    } catch (...) {
-        logger(1, "'LISTEN ", name, "' failed: ", std::current_exception());
-    }
+    Pg::CheckError(c.Execute(sql.c_str()));
 }
 
 void
@@ -164,8 +160,8 @@ CertNameCache::OnConnect()
     logger(5, "connected to certificate database");
 
     // TODO: make asynchronous
-    Listen(logger, conn, "modified");
-    Listen(logger, conn, "deleted");
+    Listen(conn, "modified");
+    Listen(conn, "deleted");
 
     ScheduleUpdate();
 }
