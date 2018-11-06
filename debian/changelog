@@ -1,6 +1,6 @@
 cm4all-beng-proxy (14.19) unstable; urgency=low
 
-  * 
+  * certdb: fix "std::bad_alloc" error after database connection loss
 
  --   
 
