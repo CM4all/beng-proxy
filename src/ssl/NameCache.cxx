@@ -64,7 +64,7 @@ CertNameCache::Lookup(const char *_host) const
 
 void
 CertNameCache::OnUpdateTimer()
-{
+try {
     assert(conn.IsReady());
 
     logger(4, "updating certificate database name cache");
@@ -92,6 +92,8 @@ CertNameCache::OnUpdateTimer()
                        " ORDER BY modified");
 
     conn.SetSingleRowMode();
+} catch (...) {
+    conn.Error(std::current_exception());
 }
 
 void
