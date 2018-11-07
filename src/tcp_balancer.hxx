@@ -48,6 +48,7 @@ class StockGetHandler;
 struct StockItem;
 class CancellablePointer;
 class SocketAddress;
+class EventLoop;
 
 class TcpBalancer {
     friend struct TcpBalancerRequest;
@@ -62,6 +63,8 @@ public:
      */
     TcpBalancer(TcpStock &_tcp_stock, FailureManager &failure_manager)
         :tcp_stock(_tcp_stock), balancer(failure_manager) {}
+
+    EventLoop &GetEventLoop() noexcept;
 
     FailureManager &GetFailureManager() {
         return balancer.GetFailureManager();

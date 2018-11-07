@@ -68,13 +68,12 @@ FailureManager::Make(SocketAddress address) noexcept
 }
 
 void
-FailureManager::Set(SocketAddress address, enum failure_status status,
+FailureManager::Set(const Expiry now, SocketAddress address,
+                    enum failure_status status,
                     std::chrono::seconds duration) noexcept
 {
     assert(!address.IsNull());
     assert(status > FAILURE_OK);
-
-    const Expiry now = Expiry::Now();
 
     FailureSet::insert_commit_data hint;
     auto result = failures.insert_check(address, Failure::Hash(),
@@ -90,9 +89,10 @@ FailureManager::Set(SocketAddress address, enum failure_status status,
 }
 
 inline void
-FailureManager::Unset(Failure &failure, enum failure_status status) noexcept
+FailureManager::Unset(const Expiry now, Failure &failure,
+                      enum failure_status status) noexcept
 {
-    failure.Unset(status);
+    failure.Unset(now, status);
 
     if (failure.IsNull())
         failures.erase_and_dispose(failures.iterator_to(failure),
@@ -100,18 +100,18 @@ FailureManager::Unset(Failure &failure, enum failure_status status) noexcept
 }
 
 void
-FailureManager::Unset(SocketAddress address,
+FailureManager::Unset(const Expiry now, SocketAddress address,
                       enum failure_status status) noexcept
 {
     assert(!address.IsNull());
 
     auto i = failures.find(address, Failure::Hash(), Failure::Equal());
     if (i != failures.end())
-        Unset(*i, status);
+        Unset(now, *i, status);
 }
 
 enum failure_status
-FailureManager::Get(SocketAddress address) const noexcept
+FailureManager::Get(const Expiry now, SocketAddress address) const noexcept
 {
     assert(!address.IsNull());
 
@@ -119,5 +119,5 @@ FailureManager::Get(SocketAddress address) const noexcept
     if (i == failures.end())
         return FAILURE_OK;
 
-    return i->GetStatus();
+    return i->GetStatus(now);
 }

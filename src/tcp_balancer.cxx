@@ -34,6 +34,13 @@
 #include "tcp_stock.hxx"
 #include "generic_balancer.hxx"
 #include "stock/GetHandler.hxx"
+#include "event/Loop.hxx"
+
+inline EventLoop &
+TcpBalancer::GetEventLoop() noexcept
+{
+    return tcp_stock.GetEventLoop();
+}
 
 struct TcpBalancerRequest : public StockGetHandler {
     TcpBalancer &tcp_balancer;
@@ -55,6 +62,10 @@ struct TcpBalancerRequest : public StockGetHandler {
          bind_address(_bind_address),
          timeout(_timeout),
          handler(_handler) {}
+
+    EventLoop &GetEventLoop() noexcept {
+        return tcp_balancer.GetEventLoop();
+    }
 
     void Send(struct pool &pool, SocketAddress address,
               CancellablePointer &cancel_ptr) noexcept;
@@ -87,7 +98,7 @@ void
 TcpBalancerRequest::OnStockItemReady(StockItem &item) noexcept
 {
     auto &base = BalancerRequest<TcpBalancerRequest>::Cast(*this);
-    base.ConnectSuccess();
+    base.ConnectSuccess(GetEventLoop().SteadyNow());
 
     handler.OnStockItemReady(item);
 }
@@ -96,7 +107,7 @@ void
 TcpBalancerRequest::OnStockItemError(std::exception_ptr ep) noexcept
 {
     auto &base = BalancerRequest<TcpBalancerRequest>::Cast(*this);
-    if (!base.ConnectFailure())
+    if (!base.ConnectFailure(GetEventLoop().SteadyNow()))
         handler.OnStockItemError(ep);
 }
 
@@ -115,7 +126,8 @@ TcpBalancer::Get(struct pool &pool,
                  StockGetHandler &handler,
                  CancellablePointer &cancel_ptr)
 {
-    BalancerRequest<TcpBalancerRequest>::Start(pool, balancer,
+    BalancerRequest<TcpBalancerRequest>::Start(pool, GetEventLoop().SteadyNow(),
+                                               balancer,
                                                address_list, cancel_ptr,
                                                session_sticky,
                                                *this,

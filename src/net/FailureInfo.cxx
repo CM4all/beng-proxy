@@ -59,17 +59,17 @@ FailureInfo::Set(Expiry now,
 }
 
 void
-FailureInfo::Unset(enum failure_status unset_status) noexcept
+FailureInfo::Unset(Expiry now, enum failure_status unset_status) noexcept
 {
     if (unset_status == FAILURE_FADE)
         fade_expires = Expiry::AlreadyExpired();
 
-    if (!MatchFailureStatus(status, unset_status) && !IsExpired())
+    if (!MatchFailureStatus(status, unset_status) && !IsExpired(now))
         /* don't update if the current status is more serious than the
            one to be removed */
         return;
 
-    if (unset_status != FAILURE_OK && IsFade()) {
+    if (unset_status != FAILURE_OK && IsFade(now)) {
         status = FAILURE_FADE;
         expires = fade_expires;
         fade_expires = Expiry::AlreadyExpired();

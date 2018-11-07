@@ -58,7 +58,7 @@ public:
 
     void SendRequest(struct pool &pool, BpInstance &instance,
                      const SessionId session_id) {
-        http_request(pool, *instance.fs_balancer,
+        http_request(pool, instance.event_loop, *instance.fs_balancer,
                      session_id.GetClusterHash(),
                      nullptr,
                      HTTP_METHOD_GET, address,

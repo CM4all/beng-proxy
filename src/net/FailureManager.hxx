@@ -124,7 +124,8 @@ public:
         return f.GetAddress();
     }
 
-    void Set(SocketAddress address, enum failure_status status,
+    void Set(Expiry now, SocketAddress address,
+             enum failure_status status,
              std::chrono::seconds duration) noexcept;
 
     /**
@@ -133,13 +134,14 @@ public:
      * @param status the status to be removed; #FAILURE_OK is a catch-all
      * status that matches everything
      */
-    void Unset(SocketAddress address, enum failure_status status) noexcept;
+    void Unset(Expiry now, SocketAddress address,
+               enum failure_status status) noexcept;
 
     gcc_pure
-    enum failure_status Get(SocketAddress address) const noexcept;
+    enum failure_status Get(Expiry now, SocketAddress address) const noexcept;
 
 private:
-    void Unset(Failure &failure, enum failure_status status) noexcept;
+    void Unset(Expiry now, Failure &failure, enum failure_status status) noexcept;
 };
 
 #endif

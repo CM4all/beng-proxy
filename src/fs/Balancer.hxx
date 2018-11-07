@@ -38,6 +38,7 @@
 
 struct pool;
 struct AddressList;
+class EventLoop;
 class StockGetHandler;
 struct StockItem;
 class CancellablePointer;
@@ -60,6 +61,9 @@ public:
     FilteredSocketBalancer(FilteredSocketStock &_stock,
                            FailureManager &failure_manager) noexcept
         :stock(_stock), balancer(failure_manager) {}
+
+    gcc_pure
+    EventLoop &GetEventLoop() noexcept;
 
     FailureManager &GetFailureManager() {
         return balancer.GetFailureManager();

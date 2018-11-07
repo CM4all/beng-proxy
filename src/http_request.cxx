@@ -47,6 +47,7 @@
 #include "fs/SocketFilter.hxx"
 #include "pool/pool.hxx"
 #include "pool/LeakDetector.hxx"
+#include "event/Loop.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "net/FailureManager.hxx"
@@ -64,6 +65,8 @@ class HttpRequest final
     : Cancellable, StockGetHandler, Lease, HttpResponseHandler, PoolLeakDetector {
 
     struct pool &pool;
+
+    EventLoop &event_loop;
 
     FilteredSocketBalancer &fs_balancer;
 
@@ -87,7 +90,7 @@ class HttpRequest final
     bool response_sent = false;
 
 public:
-    HttpRequest(struct pool &_pool,
+    HttpRequest(struct pool &_pool, EventLoop &_event_loop,
                 FilteredSocketBalancer &_fs_balancer,
                 sticky_hash_t _session_sticky,
                 SocketFilterFactory *_filter_factory,
@@ -98,7 +101,7 @@ public:
                 HttpResponseHandler &_handler,
                 CancellablePointer &_cancel_ptr)
         :PoolLeakDetector(_pool),
-         pool(_pool), fs_balancer(_fs_balancer),
+         pool(_pool), event_loop(_event_loop), fs_balancer(_fs_balancer),
          session_sticky(_session_sticky),
          filter_factory(_filter_factory),
          method(_method), address(_address),
@@ -184,7 +187,7 @@ HttpRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
 {
     assert(!response_sent);
 
-    failure->Unset(FAILURE_PROTOCOL);
+    failure->Unset(event_loop.SteadyNow(), FAILURE_PROTOCOL);
 
     handler.InvokeResponse(status, std::move(_headers), std::move(_body));
     ResponseSent();
@@ -217,7 +220,7 @@ HttpRequest::OnHttpError(std::exception_ptr ep) noexcept
         BeginConnect();
     } else {
         if (IsHttpClientServerFailure(ep)) {
-            failure->Set(FAILURE_PROTOCOL,
+            failure->Set(event_loop.SteadyNow(), FAILURE_PROTOCOL,
                          std::chrono::seconds(20));
         }
 
@@ -283,7 +286,7 @@ HttpRequest::ReleaseLease(bool reuse) noexcept
  */
 
 void
-http_request(struct pool &pool,
+http_request(struct pool &pool, EventLoop &event_loop,
              FilteredSocketBalancer &fs_balancer,
              sticky_hash_t session_sticky,
              SocketFilterFactory *filter_factory,
@@ -297,7 +300,7 @@ http_request(struct pool &pool,
     assert(uwa.host_and_port != nullptr);
     assert(uwa.path != nullptr);
 
-    auto hr = NewFromPool<HttpRequest>(pool, pool, fs_balancer,
+    auto hr = NewFromPool<HttpRequest>(pool, pool, event_loop, fs_balancer,
                                        session_sticky,
                                        filter_factory,
                                        method, uwa,

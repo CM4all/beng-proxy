@@ -43,6 +43,7 @@
 struct AddressList;
 class SocketAddress;
 class FailureManager;
+class Expiry;
 
 class Balancer {
     struct Item final {
@@ -51,6 +52,7 @@ class Balancer {
 
         const SocketAddress &NextAddress(const AddressList &addresses);
         const SocketAddress &NextAddressChecked(FailureManager &failure_manager,
+                                                Expiry now,
                                                 const AddressList &addresses,
                                                 bool allow_fade);
     };
@@ -76,7 +78,8 @@ public:
      * @param session a portion of the session id used to select an
      * address if stickiness is enabled; 0 if there is no session
      */
-    SocketAddress Get(const AddressList &list, unsigned session) noexcept;
+    SocketAddress Get(Expiry now,
+                      const AddressList &list, unsigned session) noexcept;
 };
 
 #endif

@@ -57,7 +57,7 @@ public:
     }
 
     SocketAddress Get(const AddressList &al, unsigned session=0) {
-        return balancer.Get(al, session);
+        return balancer.Get(Expiry::Now(), al, session);
     }
 };
 
@@ -89,7 +89,7 @@ gcc_pure
 static enum failure_status
 FailureGet(FailureManager &fm, const char *host_and_port)
 {
-    return fm.Get(Resolve(host_and_port, 80, nullptr).front());
+    return fm.Get(Expiry::Now(), Resolve(host_and_port, 80, nullptr).front());
 }
 
 static void
@@ -97,7 +97,7 @@ FailureAdd(FailureManager &fm, const char *host_and_port,
            enum failure_status status=FAILURE_CONNECT,
            std::chrono::seconds duration=std::chrono::hours(1))
 {
-    fm.Set(Resolve(host_and_port, 80, nullptr).front(),
+    fm.Set(Expiry::Now(), Resolve(host_and_port, 80, nullptr).front(),
            status, duration);
 }
 
@@ -105,7 +105,8 @@ static void
 FailureRemove(FailureManager &fm, const char *host_and_port,
               enum failure_status status=FAILURE_CONNECT)
 {
-    fm.Unset(Resolve(host_and_port, 80, nullptr).front(), status);
+    fm.Unset(Expiry::Now(),
+             Resolve(host_and_port, 80, nullptr).front(), status);
 }
 
 TEST(BalancerTest, Failure)

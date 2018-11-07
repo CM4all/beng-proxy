@@ -41,10 +41,10 @@
 #include <assert.h>
 
 static bool
-check_failure(FailureManager &failure_manager,
+check_failure(FailureManager &failure_manager, Expiry now,
               const SocketAddress address, bool allow_fade)
 {
-    enum failure_status status = failure_manager.Get(address);
+    enum failure_status status = failure_manager.Get(now, address);
     if (status == FAILURE_FADE && allow_fade)
         status = FAILURE_OK;
     return status == FAILURE_OK;
@@ -59,20 +59,21 @@ check_bulldog(const SocketAddress address, bool allow_fade)
 }
 
 static bool
-CheckAddress(FailureManager &failure_manager,
+CheckAddress(FailureManager &failure_manager, Expiry now,
              const SocketAddress address, bool allow_fade)
 {
-    return check_failure(failure_manager, address, allow_fade) &&
+    return check_failure(failure_manager, now, address, allow_fade) &&
         check_bulldog(address, allow_fade);
 }
 
 static SocketAddress
-next_failover_address(FailureManager &failure_manager, const AddressList &list)
+next_failover_address(FailureManager &failure_manager, Expiry now,
+                      const AddressList &list)
 {
     assert(list.GetSize() > 0);
 
     for (auto i : list)
-        if (CheckAddress(failure_manager, i, true))
+        if (CheckAddress(failure_manager, now, i, true))
             return i;
 
     /* none available - return first node as last resort */
@@ -96,13 +97,14 @@ Balancer::Item::NextAddress(const AddressList &addresses)
 
 const SocketAddress &
 Balancer::Item::NextAddressChecked(FailureManager &_failure_manager,
+                                   const Expiry now,
                                    const AddressList &addresses,
                                    bool allow_fade)
 {
     const auto &first = NextAddress(addresses);
     const SocketAddress *ret = &first;
     do {
-        if (CheckAddress(_failure_manager, *ret, allow_fade))
+        if (CheckAddress(_failure_manager, now, *ret, allow_fade))
             return *ret;
 
         ret = &NextAddress(addresses);
@@ -113,7 +115,7 @@ Balancer::Item::NextAddressChecked(FailureManager &_failure_manager,
 }
 
 static const SocketAddress &
-next_sticky_address_checked(FailureManager &failure_manager,
+next_sticky_address_checked(FailureManager &failure_manager, const Expiry now,
                             const AddressList &al, sticky_hash_t sticky_hash)
 {
     assert(al.GetSize() >= 2);
@@ -124,7 +126,7 @@ next_sticky_address_checked(FailureManager &failure_manager,
     const SocketAddress &first = al[i];
     const SocketAddress *ret = &first;
     do {
-        if (CheckAddress(failure_manager, *ret, allow_fade))
+        if (CheckAddress(failure_manager, now, *ret, allow_fade))
             return *ret;
 
         /* only the first iteration is allowed to override
@@ -144,7 +146,8 @@ next_sticky_address_checked(FailureManager &failure_manager,
 }
 
 SocketAddress
-Balancer::Get(const AddressList &list, sticky_hash_t sticky_hash) noexcept
+Balancer::Get(const Expiry now,
+              const AddressList &list, sticky_hash_t sticky_hash) noexcept
 {
     if (list.IsSingle())
         return list[0];
@@ -154,7 +157,7 @@ Balancer::Get(const AddressList &list, sticky_hash_t sticky_hash) noexcept
         break;
 
     case StickyMode::FAILOVER:
-        return next_failover_address(failure_manager, list);
+        return next_failover_address(failure_manager, now, list);
 
     case StickyMode::SOURCE_IP:
     case StickyMode::HOST:
@@ -163,7 +166,7 @@ Balancer::Get(const AddressList &list, sticky_hash_t sticky_hash) noexcept
     case StickyMode::COOKIE:
     case StickyMode::JVM_ROUTE:
         if (sticky_hash != 0)
-            return next_sticky_address_checked(failure_manager, list,
+            return next_sticky_address_checked(failure_manager, now, list,
                                                sticky_hash);
         break;
     }
@@ -175,6 +178,6 @@ Balancer::Get(const AddressList &list, sticky_hash_t sticky_hash) noexcept
         /* create a new cache item */
         item = &cache.Put(std::move(key), Item());
 
-    return item->NextAddressChecked(failure_manager, list,
+    return item->NextAddressChecked(failure_manager, now, list,
                                     list.sticky_mode == StickyMode::NONE);
 }

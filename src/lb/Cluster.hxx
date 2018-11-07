@@ -252,7 +252,7 @@ public:
         return active_members.size();
     }
 
-    Member *Pick(sticky_hash_t sticky_hash);
+    Member *Pick(Expiry now, sticky_hash_t sticky_hash);
 
 private:
     void FillActive();
@@ -268,7 +268,7 @@ private:
      * according to failure_get_status().  If all are bad, a random
      * (bad) one is returned.
      */
-    MemberMap::reference PickNextGoodZeroconf();
+    MemberMap::reference PickNextGoodZeroconf(Expiry now);
 
     /* virtual methods from class AvahiServiceExplorerListener */
     void OnAvahiNewObject(const std::string &key,

@@ -42,6 +42,7 @@ struct StringView;
 struct LbInstance;
 struct LbControlConfig;
 class ControlServer;
+class EventLoop;
 
 class LbControl final : ControlHandler {
     const LLogger logger;
@@ -53,6 +54,8 @@ class LbControl final : ControlHandler {
 public:
     explicit LbControl(LbInstance &_instance);
     ~LbControl();
+
+    EventLoop &GetEventLoop() const noexcept;
 
     void Open(const LbControlConfig &config);
 

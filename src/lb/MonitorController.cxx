@@ -33,6 +33,7 @@
 #include "MonitorController.hxx"
 #include "MonitorConfig.hxx"
 #include "MonitorClass.hxx"
+#include "event/Loop.hxx"
 #include "net/FailureManager.hxx"
 #include "util/StringFormat.hxx"
 
@@ -51,11 +52,11 @@ LbMonitorController::Success()
 
     state = true;
 
-    failure->Unset(FAILURE_MONITOR);
+    failure->Unset(event_loop.SteadyNow(), FAILURE_MONITOR);
 
     if (fade) {
         fade = false;
-        failure->Unset(FAILURE_FADE);
+        failure->Unset(event_loop.SteadyNow(), FAILURE_FADE);
     }
 
     interval_event.Schedule(config.interval);
@@ -73,7 +74,8 @@ LbMonitorController::Fade()
         logger(6, "still fade");
 
     fade = true;
-    failure->Set(FAILURE_FADE, std::chrono::minutes(5));
+    failure->Set(event_loop.SteadyNow(),
+                 FAILURE_FADE, std::chrono::minutes(5));
 
     interval_event.Schedule(config.interval);
 }
@@ -87,7 +89,8 @@ LbMonitorController::Timeout()
     logger(state ? 3 : 6, "timeout");
 
     state = false;
-    failure->Set(FAILURE_MONITOR, std::chrono::seconds::zero());
+    failure->Set(event_loop.SteadyNow(),
+                 FAILURE_MONITOR, std::chrono::seconds::zero());
 
     interval_event.Schedule(config.interval);
 }
@@ -101,7 +104,8 @@ LbMonitorController::Error(std::exception_ptr e)
     logger(state ? 2 : 4, "error: ", e);
 
     state = false;
-    failure->Set(FAILURE_MONITOR, std::chrono::seconds::zero());
+    failure->Set(event_loop.SteadyNow(),
+                 FAILURE_MONITOR, std::chrono::seconds::zero());
 
     interval_event.Schedule(config.interval);
 }
@@ -129,7 +133,8 @@ LbMonitorController::TimeoutCallback()
     cancel_ptr.CancelAndClear();
 
     state = false;
-    failure->Set(FAILURE_MONITOR, std::chrono::seconds::zero());
+    failure->Set(event_loop.SteadyNow(),
+                 FAILURE_MONITOR, std::chrono::seconds::zero());
 
     interval_event.Schedule(config.interval);
 }

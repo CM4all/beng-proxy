@@ -63,6 +63,10 @@ public:
     FilteredSocketStock(EventLoop &event_loop, unsigned limit) noexcept
         :stock(event_loop, *this, limit, 16) {}
 
+    EventLoop &GetEventLoop() noexcept {
+        return stock.GetEventLoop();
+    }
+
     void AddStats(StockStats &data) const noexcept {
         stock.AddStats(data);
     }

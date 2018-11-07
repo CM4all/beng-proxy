@@ -126,7 +126,7 @@ LbCluster::PickNextZeroconf()
 }
 
 LbCluster::MemberMap::reference
-LbCluster::PickNextGoodZeroconf()
+LbCluster::PickNextGoodZeroconf(const Expiry now)
 {
     assert(!active_members.empty());
 
@@ -135,13 +135,13 @@ LbCluster::PickNextGoodZeroconf()
     while (true) {
         auto &m = PickNextZeroconf();
         if (--remaining == 0 ||
-            m.GetFailureInfo().GetStatus() == FAILURE_OK)
+            m.GetFailureInfo().GetStatus(now) == FAILURE_OK)
             return m;
     }
 }
 
 LbCluster::Member *
-LbCluster::Pick(sticky_hash_t sticky_hash)
+LbCluster::Pick(const Expiry now, sticky_hash_t sticky_hash)
 {
     if (dirty) {
         dirty = false;
@@ -166,7 +166,7 @@ LbCluster::Pick(sticky_hash_t sticky_hash)
             auto i = members.find(*cached, members.key_comp());
             if (i != members.end() &&
                 // TODO: allow FAILURE_FADE here?
-                i->GetFailureInfo().GetStatus() == FAILURE_OK)
+                i->GetFailureInfo().GetStatus(now) == FAILURE_OK)
                 /* the node is active, we can use it */
                 return &*i;
 
@@ -186,7 +186,7 @@ LbCluster::Pick(sticky_hash_t sticky_hash)
         unsigned retries = active_members.size();
         while (true) {
             if (--retries == 0 ||
-                i->GetFailureInfo().GetStatus() == FAILURE_OK)
+                i->GetFailureInfo().GetStatus(now) == FAILURE_OK)
                 return &*i;
 
             /* the node is known-bad; pick the next one in the ring */
@@ -196,7 +196,7 @@ LbCluster::Pick(sticky_hash_t sticky_hash)
         }
     }
 
-    auto &i = PickNextGoodZeroconf();
+    auto &i = PickNextGoodZeroconf(now);
 
     if (sticky_hash != 0)
         sticky_cache->Put(sticky_hash, i.GetKey());

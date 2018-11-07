@@ -35,6 +35,7 @@
 #include "generic_balancer.hxx"
 #include "stock/Stock.hxx"
 #include "stock/GetHandler.hxx"
+#include "event/Loop.hxx"
 
 class FilteredSocketBalancerRequest : public StockGetHandler {
     FilteredSocketBalancer &fs_balancer;
@@ -95,7 +96,7 @@ void
 FilteredSocketBalancerRequest::OnStockItemReady(StockItem &item) noexcept
 {
     auto &base = BR::Cast(*this);
-    base.ConnectSuccess();
+    base.ConnectSuccess(fs_balancer.GetEventLoop().SteadyNow());
 
     handler.OnStockItemReady(item);
 }
@@ -104,7 +105,7 @@ void
 FilteredSocketBalancerRequest::OnStockItemError(std::exception_ptr ep) noexcept
 {
     auto &base = BR::Cast(*this);
-    if (!base.ConnectFailure())
+    if (!base.ConnectFailure(fs_balancer.GetEventLoop().SteadyNow()))
         handler.OnStockItemError(ep);
 }
 
@@ -112,6 +113,12 @@ FilteredSocketBalancerRequest::OnStockItemError(std::exception_ptr ep) noexcept
  * public API
  *
  */
+
+EventLoop &
+FilteredSocketBalancer::GetEventLoop() noexcept
+{
+    return stock.GetEventLoop();
+}
 
 void
 FilteredSocketBalancer::Get(struct pool &pool,
@@ -124,7 +131,7 @@ FilteredSocketBalancer::Get(struct pool &pool,
                             StockGetHandler &handler,
                             CancellablePointer &cancel_ptr) noexcept
 {
-    BR::Start(pool, balancer,
+    BR::Start(pool, GetEventLoop().SteadyNow(), balancer,
               address_list, cancel_ptr,
               session_sticky,
               *this,

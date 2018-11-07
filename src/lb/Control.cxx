@@ -49,6 +49,12 @@ using namespace BengProxy;
 LbControl::LbControl(LbInstance &_instance)
     :logger("control"), instance(_instance) {}
 
+inline EventLoop &
+LbControl::GetEventLoop() const noexcept
+{
+    return instance.event_loop;
+}
+
 inline void
 LbControl::InvalidateTranslationCache(const void *payload,
                                       size_t payload_length)
@@ -109,7 +115,8 @@ LbControl::EnableNode(const char *payload, size_t length)
     ToString(buffer, sizeof(buffer), with_port);
     logger(4, "enabling node ", node_name, " (", buffer, ")");
 
-    instance.failure_manager.Unset(with_port, FAILURE_OK);
+    instance.failure_manager.Unset(GetEventLoop().SteadyNow(),
+                                   with_port, FAILURE_OK);
 }
 
 inline void
@@ -147,7 +154,8 @@ LbControl::FadeNode(const char *payload, size_t length)
     logger(4, "fading node ", node_name, " (", buffer, ")");
 
     /* set status "FADE" for 3 hours */
-    instance.failure_manager.Set(with_port, FAILURE_FADE,
+    instance.failure_manager.Set(GetEventLoop().SteadyNow(),
+                                 with_port, FAILURE_FADE,
                                  std::chrono::hours(3));
 }
 
@@ -234,7 +242,8 @@ try {
     char buffer[64];
     ToString(buffer, sizeof(buffer), with_port);
 
-    enum failure_status status = instance.failure_manager.Get(with_port);
+    enum failure_status status = instance.failure_manager.Get(GetEventLoop().SteadyNow(),
+                                                              with_port);
     const char *s = failure_status_to_string(status);
 
     node_status_response(&control_server, address,

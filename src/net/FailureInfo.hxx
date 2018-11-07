@@ -62,18 +62,8 @@ public:
         return CanExpire() && expires.IsExpired(now);
     }
 
-    gcc_pure
-    bool IsExpired() const noexcept {
-        return FailureInfo::IsExpired(Expiry::Now());
-    }
-
     constexpr bool IsFade(Expiry now) const noexcept {
         return !fade_expires.IsExpired(now);
-    }
-
-    gcc_pure
-    bool IsFade() const noexcept {
-        return FailureInfo::IsFade(Expiry::Now());
     }
 
     constexpr enum failure_status GetStatus(Expiry now) const noexcept {
@@ -83,10 +73,6 @@ public:
             return FAILURE_FADE;
         else
             return FAILURE_OK;
-    }
-
-    enum failure_status GetStatus() const noexcept {
-        return GetStatus(Expiry::Now());
     }
 
     /**
@@ -99,12 +85,7 @@ public:
     bool Set(Expiry now, enum failure_status new_status,
              std::chrono::seconds duration) noexcept;
 
-    bool Set(enum failure_status new_status,
-             std::chrono::seconds duration) noexcept {
-        return Set(Expiry::Now(), new_status, duration);
-    }
-
-    void Unset(enum failure_status unset_status) noexcept;
+    void Unset(Expiry now, enum failure_status unset_status) noexcept;
 };
 
 #endif

@@ -428,7 +428,8 @@ LbTcpConnection::ConnectOutbound()
     const auto &cluster_config = cluster.GetConfig();
 
     if (cluster_config.HasZeroConf()) {
-        const auto *member = cluster.Pick(session_sticky);
+        const auto *member = cluster.Pick(GetEventLoop().SteadyNow(),
+                                          session_sticky);
         if (member == nullptr) {
             inbound.Destroy();
             OnTcpError("Zeroconf error", "Zeroconf cluster is empty");

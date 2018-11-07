@@ -35,6 +35,7 @@
 #include "net/PConnectSocket.hxx"
 #include "address_list.hxx"
 #include "balancer.hxx"
+#include "event/Loop.hxx"
 #include "net/StaticSocketAddress.hxx"
 
 struct ClientBalancerRequest : ConnectSocketHandler {
@@ -95,7 +96,7 @@ void
 ClientBalancerRequest::OnSocketConnectSuccess(UniqueSocketDescriptor &&fd) noexcept
 {
     auto &base = BalancerRequest<ClientBalancerRequest>::Cast(*this);
-    base.ConnectSuccess();
+    base.ConnectSuccess(event_loop.SteadyNow());
 
     handler.OnSocketConnectSuccess(std::move(fd));
 }
@@ -104,7 +105,7 @@ void
 ClientBalancerRequest::OnSocketConnectTimeout() noexcept
 {
     auto &base = BalancerRequest<ClientBalancerRequest>::Cast(*this);
-    if (!base.ConnectFailure())
+    if (!base.ConnectFailure(event_loop.SteadyNow()))
         handler.OnSocketConnectTimeout();
 }
 
@@ -112,7 +113,7 @@ void
 ClientBalancerRequest::OnSocketConnectError(std::exception_ptr ep) noexcept
 {
     auto &base = BalancerRequest<ClientBalancerRequest>::Cast(*this);
-    if (!base.ConnectFailure())
+    if (!base.ConnectFailure(event_loop.SteadyNow()))
         handler.OnSocketConnectError(ep);
 }
 
@@ -132,7 +133,8 @@ client_balancer_connect(EventLoop &event_loop,
                         ConnectSocketHandler &handler,
                         CancellablePointer &cancel_ptr)
 {
-    BalancerRequest<ClientBalancerRequest>::Start(pool, balancer,
+    BalancerRequest<ClientBalancerRequest>::Start(pool, event_loop.SteadyNow(),
+                                                  balancer,
                                                   *address_list,
                                                   cancel_ptr,
                                                   session_sticky,

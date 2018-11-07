@@ -106,9 +106,9 @@ struct BalancerRequest : R {
         return current_address;
     }
 
-    void Next() {
+    void Next(Expiry now) {
         const SocketAddress address =
-            balancer.Get(address_list, session_sticky);
+            balancer.Get(now, address_list, session_sticky);
 
         /* we need to copy this address because it may come from
            the balancer's cache, and the according cache item may
@@ -120,17 +120,18 @@ struct BalancerRequest : R {
         R::Send(pool, current_address, cancel_ptr);
     }
 
-    void ConnectSuccess() {
-        balancer.GetFailureManager().Unset(current_address, FAILURE_CONNECT);
+    void ConnectSuccess(Expiry now) {
+        balancer.GetFailureManager().Unset(now, current_address,
+                                           FAILURE_CONNECT);
     }
 
-    bool ConnectFailure() {
-        balancer.GetFailureManager().Set(current_address, FAILURE_CONNECT,
+    bool ConnectFailure(Expiry now) {
+        balancer.GetFailureManager().Set(now, current_address, FAILURE_CONNECT,
                                          std::chrono::seconds(20));
 
         if (retries-- > 0){
             /* try again, next address */
-            Next();
+            Next(now);
             return true;
         } else
             /* give up */
@@ -138,11 +139,11 @@ struct BalancerRequest : R {
     }
 
     template<typename... Args>
-    static void Start(struct pool &pool,
+    static void Start(struct pool &pool, Expiry now,
                       Args&&... args) {
         auto r = NewFromPool<BalancerRequest>(pool, pool,
                                               std::forward<Args>(args)...);
-        r->Next();
+        r->Next(now);
     }
 };
 
