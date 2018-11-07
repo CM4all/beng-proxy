@@ -79,15 +79,23 @@ public:
     Pg::Result NotifyModified();
 
     gcc_pure
-    std::string GetCurrentTimestamp() {
-        const auto result = conn.Execute("SELECT CURRENT_TIMESTAMP");
-        return result.GetOnlyStringChecked();
+    std::string GetCurrentTimestamp() noexcept {
+        try {
+            const auto result = conn.Execute("SELECT CURRENT_TIMESTAMP");
+            return result.GetOnlyStringChecked();
+        } catch (...) {
+            return {};
+        }
     }
 
     gcc_pure
-    std::string GetLastModified() {
-        const auto result = conn.Execute("SELECT MAX(modified) FROM server_certificate");
-        return result.GetOnlyStringChecked();
+    std::string GetLastModified() noexcept {
+        try {
+            const auto result = conn.Execute("SELECT MAX(modified) FROM server_certificate");
+            return result.GetOnlyStringChecked();
+        } catch (...) {
+            return {};
+        }
     }
 
     template<typename F>

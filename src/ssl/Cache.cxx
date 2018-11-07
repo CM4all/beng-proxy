@@ -37,7 +37,6 @@
 #include "ssl/Error.hxx"
 #include "ssl/LoadFile.hxx"
 #include "certdb/Wildcard.hxx"
-#include "pg/CheckError.hxx"
 #include "event/Loop.hxx"
 #include "util/AllocatedString.hxx"
 

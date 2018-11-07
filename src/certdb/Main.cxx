@@ -54,7 +54,6 @@
 #include "ssl/MemBio.hxx"
 #include "ssl/Unique.hxx"
 #include "ssl/Error.hxx"
-#include "pg/CheckError.hxx"
 #include "lb/Config.hxx"
 #include "system/urandom.hxx"
 #include "system/Error.hxx"
@@ -142,7 +141,7 @@ DeleteCertificate(const char *handle)
 {
     CertDatabase db(*db_config);
 
-    const auto result = CheckError(db.DeleteServerCertificateByHandle(handle));
+    const auto result = db.DeleteServerCertificateByHandle(handle);
     if (result.GetAffectedRows() == 0)
         throw "Certificate not found";
 
@@ -177,7 +176,7 @@ FindKeyByName(CertDatabase &db, const char *common_name)
 static void
 FindPrintCertificates(CertDatabase &db, const char *name)
 {
-    for (const auto &row : CheckError(db.FindServerCertificatesByName(name)))
+    for (const auto &row : db.FindServerCertificatesByName(name))
         printf("%s\t%s\t%s\t%s\n",
                row.GetValue(0), row.GetValue(1),
                row.GetValue(2), row.GetValue(3));
@@ -219,7 +218,7 @@ static void
 Monitor()
 {
     CertDatabase db(*db_config);
-    CheckError(db.ListenModified());
+    db.ListenModified();
 
     std::string last_modified = db.GetLastModified();
     if (last_modified.empty()) {
@@ -244,7 +243,7 @@ Monitor()
         if (new_last_modified.empty())
             throw "No MAX(modified) found";
 
-        for (auto &row : CheckError(db.GetModifiedServerCertificatesMeta(last_modified.c_str())))
+        for (auto &row : db.GetModifiedServerCertificatesMeta(last_modified.c_str()))
             printf("%s %s %s\n",
                    row.GetValue(1),
                    *row.GetValue(0) == 't' ? "deleted" : "modified",
@@ -259,7 +258,7 @@ Tail()
 {
     CertDatabase db(*db_config);
 
-    for (auto &row : CheckError(db.TailModifiedServerCertificatesMeta()))
+    for (auto &row : db.TailModifiedServerCertificatesMeta())
         printf("%s %s %s\n",
                row.GetValue(1),
                *row.GetValue(0) == 't' ? "deleted" : "modified",

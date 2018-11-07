@@ -34,7 +34,6 @@
 #include "FromResult.hxx"
 #include "Config.hxx"
 #include "pg/Reflection.hxx"
-#include "pg/CheckError.hxx"
 #include "ssl/Name.hxx"
 #include "util/ByteOrder.hxx"
 #include "util/PrintException.hxx"
@@ -42,9 +41,9 @@
 static void
 FillIssuerCommonName(Pg::Connection &c)
 {
-    auto result = CheckError(c.ExecuteParams(true,
-                                             "SELECT id::int8, certificate_der FROM server_certificate "
-                                             "WHERE NOT deleted AND issuer_common_name IS NULL"));
+    auto result = c.ExecuteParams(true,
+                                  "SELECT id::int8, certificate_der FROM server_certificate "
+                                  "WHERE NOT deleted AND issuer_common_name IS NULL");
     for (unsigned row = 0, n_rows = result.GetRowCount(); row < n_rows; ++row) {
         const int64_t id = FromBE64(*(const int64_t *)(const void *)result.GetValue(row, 0));
 
@@ -61,10 +60,10 @@ FillIssuerCommonName(Pg::Connection &c)
         if (issuer_common_name.IsNull())
             continue;
 
-        auto r = CheckError(c.ExecuteParams("UPDATE server_certificate "
-                                            "SET issuer_common_name=$2 "
-                                            "WHERE id=$1 AND NOT deleted AND issuer_common_name IS NULL",
-                                            id, issuer_common_name.c_str()));
+        auto r = c.ExecuteParams("UPDATE server_certificate "
+                                 "SET issuer_common_name=$2 "
+                                 "WHERE id=$1 AND NOT deleted AND issuer_common_name IS NULL",
+                                 id, issuer_common_name.c_str());
         if (r.GetAffectedRows() < 1)
             fprintf(stderr, "Certificate '%" PRId64 "' disappeared\n", id);
     }
@@ -81,8 +80,8 @@ CertDatabase::Migrate()
 
     if (!Pg::ColumnExists(conn, schema, "server_certificate",
                           "issuer_common_name"))
-        conn.ExecuteOrThrow("ALTER TABLE server_certificate "
-                            "ADD COLUMN issuer_common_name varchar(256) NULL");
+        conn.Execute("ALTER TABLE server_certificate "
+                     "ADD COLUMN issuer_common_name varchar(256) NULL");
 
     FillIssuerCommonName(conn);
 
@@ -90,12 +89,12 @@ CertDatabase::Migrate()
 
     if (!Pg::ColumnExists(conn, schema, "server_certificate",
                           "handle"))
-        conn.ExecuteOrThrow("ALTER TABLE server_certificate "
-                            "ADD COLUMN handle varchar(256) NULL");
+        conn.Execute("ALTER TABLE server_certificate "
+                     "ADD COLUMN handle varchar(256) NULL");
 
 
     if (!Pg::IndexExists(conn, schema, "server_certificate",
                          "server_certificate_handle"))
-        conn.ExecuteOrThrow("CREATE UNIQUE INDEX server_certificate_handle "
-                            "ON server_certificate(handle);");
+        conn.Execute("CREATE UNIQUE INDEX server_certificate_handle "
+                     "ON server_certificate(handle);");
 }

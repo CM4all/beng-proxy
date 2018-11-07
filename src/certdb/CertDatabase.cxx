@@ -33,7 +33,6 @@
 #include "CertDatabase.hxx"
 #include "FromResult.hxx"
 #include "Config.hxx"
-#include "pg/CheckError.hxx"
 #include "ssl/Buffer.hxx"
 #include "ssl/Time.hxx"
 #include "ssl/Name.hxx"
@@ -121,10 +120,10 @@ CertDatabase::NotifyModified()
 Pg::Serial
 CertDatabase::GetIdByHandle(const char *handle)
 {
-    auto result = CheckError(conn.ExecuteParams("SELECT id FROM server_certificate "
-                                                "WHERE handle=$1 "
-                                                "LIMIT 1",
-                                                handle));
+    auto result = conn.ExecuteParams("SELECT id FROM server_certificate "
+                                     "WHERE handle=$1 "
+                                     "LIMIT 1",
+                                     handle);
     if (result.GetRowCount() == 0)
         return Pg::Serial();
 
@@ -145,10 +144,10 @@ CertDatabase::InsertServerCertificate(const char *handle,
 
     const Pg::BinaryValue key_der(key);
 
-    CheckError(InsertServerCertificate(handle,
-                                       common_name, issuer_common_name,
-                                       not_before, not_after,
-                                       cert_der, key_der, key_wrap_name));
+    InsertServerCertificate(handle,
+                            common_name, issuer_common_name,
+                            not_before, not_after,
+                            cert_der, key_der, key_wrap_name);
 }
 
 bool
@@ -210,33 +209,33 @@ CertDatabase::LoadServerCertificate(const char *handle,
     if (not_after == nullptr)
         throw "Certificate does not have a notAfter time stamp";
 
-    auto result = CheckError(UpdateServerCertificate(handle,
-                                                     common_name.c_str(),
-                                                     issuer_common_name.c_str(),
-                                                     not_before.c_str(),
-                                                     not_after.c_str(),
-                                                     cert_der, key_der,
-                                                     key_wrap_name));
+    auto result = UpdateServerCertificate(handle,
+                                          common_name.c_str(),
+                                          issuer_common_name.c_str(),
+                                          not_before.c_str(),
+                                          not_after.c_str(),
+                                          cert_der, key_der,
+                                          key_wrap_name);
     if (result.GetRowCount() > 0) {
         const char *id = result.GetValue(0, 0);
-        CheckError(DeleteAltNames(id));
+        DeleteAltNames(id);
         for (const auto &alt_name : alt_names)
-            CheckError(InsertAltName(id, alt_name.c_str()));
+            InsertAltName(id, alt_name.c_str());
         return false;
     } else {
         /* just in case a deleted certificate with the same name
            already exists */
-        CheckError(ReallyDeleteServerCertificateByName(common_name.c_str()));
+        ReallyDeleteServerCertificateByName(common_name.c_str());
 
-        result = CheckError(InsertServerCertificate(handle, common_name.c_str(),
-                                                    issuer_common_name.c_str(),
-                                                    not_before.c_str(),
-                                                    not_after.c_str(),
-                                                    cert_der, key_der,
-                                                    key_wrap_name));
+        result = InsertServerCertificate(handle, common_name.c_str(),
+                                         issuer_common_name.c_str(),
+                                         not_before.c_str(),
+                                         not_after.c_str(),
+                                         cert_der, key_der,
+                                         key_wrap_name);
         const char *id = result.GetValue(0, 0);
         for (const auto &alt_name : alt_names)
-            CheckError(InsertAltName(id, alt_name.c_str()));
+            InsertAltName(id, alt_name.c_str());
         return true;
     }
 }
@@ -244,7 +243,7 @@ CertDatabase::LoadServerCertificate(const char *handle,
 UniqueX509
 CertDatabase::GetServerCertificateByHandle(const char *handle)
 {
-    auto result = CheckError(FindServerCertificateByHandle(handle));
+    auto result = FindServerCertificateByHandle(handle);
     if (result.GetRowCount() == 0)
         return nullptr;
 
@@ -254,7 +253,7 @@ CertDatabase::GetServerCertificateByHandle(const char *handle)
 std::pair<UniqueX509, UniqueEVP_PKEY>
 CertDatabase::GetServerCertificateKeyByHandle(const char *handle)
 {
-    auto result = CheckError(FindServerCertificateKeyByHandle(handle));
+    auto result = FindServerCertificateKeyByHandle(handle);
     if (result.GetRowCount() == 0)
         return std::make_pair(nullptr, nullptr);
 
@@ -264,7 +263,7 @@ CertDatabase::GetServerCertificateKeyByHandle(const char *handle)
 std::pair<UniqueX509, UniqueEVP_PKEY>
 CertDatabase::GetServerCertificateKey(const char *name)
 {
-    auto result = CheckError(FindServerCertificateKeyByName(name));
+    auto result = FindServerCertificateKeyByName(name);
     if (result.GetRowCount() == 0)
         return std::make_pair(nullptr, nullptr);
 
@@ -274,7 +273,7 @@ CertDatabase::GetServerCertificateKey(const char *name)
 std::pair<UniqueX509, UniqueEVP_PKEY>
 CertDatabase::GetServerCertificateKey(Pg::Serial id)
 {
-    auto result = CheckError(FindServerCertificateKeyById(id));
+    auto result = FindServerCertificateKeyById(id);
     if (result.GetRowCount() == 0)
         return std::make_pair(nullptr, nullptr);
 
@@ -308,7 +307,7 @@ CertDatabase::GetNamesByHandle(const char *handle)
         " FROM server_certificate"
         " WHERE handle=$1 AND NOT deleted";
 
-    for (const auto &row : CheckError(conn.ExecuteParams(sql, handle))) {
+    for (const auto &row : conn.ExecuteParams(sql, handle)) {
         i = names.emplace_after(i, row.GetValue(0));
         if (!row.IsValueNull(1)) {
             names.splice_after(i,
@@ -324,10 +323,10 @@ CertDatabase::GetNamesByHandle(const char *handle)
 void
 CertDatabase::SetHandle(Pg::Serial id, const char *handle)
 {
-    auto result = CheckError(conn.ExecuteParams("UPDATE server_certificate"
-                                                " SET handle=$2"
-                                                " WHERE id=$1",
-                                                id, handle));
+    auto result = conn.ExecuteParams("UPDATE server_certificate"
+                                     " SET handle=$2"
+                                     " WHERE id=$1",
+                                     id, handle);
     if (result.GetAffectedRows() < 1)
         throw std::runtime_error("No such record");
 }

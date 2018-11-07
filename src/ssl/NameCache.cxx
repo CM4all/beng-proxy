@@ -32,7 +32,6 @@
 
 #include "NameCache.hxx"
 #include "certdb/Config.hxx"
-#include "pg/CheckError.hxx"
 #include "event/Duration.hxx"
 
 #include <assert.h>
@@ -153,7 +152,7 @@ Listen(Pg::AsyncConnection &c, const char *name)
     sql += name;
     sql += "\"";
 
-    Pg::CheckError(c.Execute(sql.c_str()));
+    c.Execute(sql.c_str());
 }
 
 void
