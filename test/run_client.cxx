@@ -391,7 +391,7 @@ try {
 
     ConnectSocket connect(ctx.event_loop, ctx);
     ctx.cancel_ptr = connect;
-    connect.Connect(ai, EventDuration<30>::value);
+    connect.Connect(ai, std::chrono::seconds(30));
 
     /* run test */
 

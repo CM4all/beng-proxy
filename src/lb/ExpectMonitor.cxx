@@ -89,7 +89,7 @@ public:
                : 30);
 
         connect.Connect(address,
-                        ToEventDuration(std::chrono::seconds(timeout)));
+                        std::chrono::seconds(timeout));
     }
 
 private:

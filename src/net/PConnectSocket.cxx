@@ -71,12 +71,7 @@ public:
          handler(_handler) {
         cancel_ptr = *this;
 
-        const struct timeval tv = {
-            .tv_sec = time_t(timeout),
-            .tv_usec = 0,
-        };
-
-        connect.WaitConnected(std::move(_fd), tv);
+        connect.WaitConnected(std::move(_fd), std::chrono::seconds(timeout));
     }
 
     void Delete() {
