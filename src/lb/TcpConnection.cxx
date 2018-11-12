@@ -47,6 +47,9 @@
 
 #include <assert.h>
 
+static constexpr Event::Duration LB_TCP_CONNECT_TIMEOUT =
+    std::chrono::seconds(20);
+
 static constexpr auto write_timeout = std::chrono::seconds(30);
 
 gcc_pure
@@ -439,7 +442,7 @@ LbTcpConnection::ConnectOutbound()
                           address.GetFamily(), SOCK_STREAM, 0,
                           cluster_config.transparent_source, bind_address,
                           address,
-                          20,
+                          LB_TCP_CONNECT_TIMEOUT,
                           *this,
                           cancel_connect);
         return;
@@ -450,7 +453,7 @@ LbTcpConnection::ConnectOutbound()
                             bind_address,
                             session_sticky,
                             &cluster_config.address_list,
-                            20,
+                            LB_TCP_CONNECT_TIMEOUT,
                             *this,
                             cancel_connect);
 }

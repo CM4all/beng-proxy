@@ -57,7 +57,7 @@ class PConnectSocket final : PoolHolder, Cancellable, ConnectSocketHandler {
 
 public:
     PConnectSocket(EventLoop &event_loop, PoolPtr &&_pool,
-                   UniqueSocketDescriptor &&_fd, unsigned timeout,
+                   UniqueSocketDescriptor &&_fd, Event::Duration timeout,
 #ifdef ENABLE_STOPWATCH
                    Stopwatch &_stopwatch,
 #endif
@@ -71,7 +71,7 @@ public:
          handler(_handler) {
         cancel_ptr = *this;
 
-        connect.WaitConnected(std::move(_fd), std::chrono::seconds(timeout));
+        connect.WaitConnected(std::move(_fd), timeout);
     }
 
     void Delete() {
@@ -157,7 +157,7 @@ client_socket_new(EventLoop &event_loop, struct pool &_pool,
                   bool ip_transparent,
                   const SocketAddress bind_address,
                   const SocketAddress address,
-                  unsigned timeout,
+                  Event::Duration timeout,
                   ConnectSocketHandler &handler,
                   CancellablePointer &cancel_ptr)
 {

@@ -69,6 +69,9 @@
 #include "util/LeakDetector.hxx"
 #include "util/FNVHash.hxx"
 
+static constexpr Event::Duration LB_HTTP_CONNECT_TIMEOUT =
+    std::chrono::seconds(20);
+
 class LbRequest final
     : LeakDetector, Cancellable, StockGetHandler, Lease, HttpResponseHandler {
 
@@ -527,7 +530,7 @@ LbRequest::Start()
                                           cluster_config.transparent_source,
                                           bind_address,
                                           member->GetAddress(),
-                                          20,
+                                          LB_HTTP_CONNECT_TIMEOUT,
                                           nullptr,
                                           *this, cancel_ptr);
 
@@ -539,7 +542,7 @@ LbRequest::Start()
                  bind_address,
                  GetStickyHash(),
                  cluster_config.address_list,
-                 20,
+                 LB_HTTP_CONNECT_TIMEOUT,
                  nullptr,
                  *this, cancel_ptr);
 }

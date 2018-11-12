@@ -76,7 +76,7 @@ public:
              bool ip_transparent,
              SocketAddress bind_address,
              SocketAddress address,
-             unsigned timeout,
+             Event::Duration timeout,
              SocketFilterFactory *filter_factory,
              StockGetHandler &handler,
              CancellablePointer &cancel_ptr) noexcept;

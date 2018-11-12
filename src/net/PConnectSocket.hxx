@@ -53,7 +53,7 @@ client_socket_new(EventLoop &event_loop, struct pool &pool,
                   bool ip_transparent,
                   const SocketAddress bind_address,
                   const SocketAddress address,
-                  unsigned timeout,
+                  Event::Duration timeout,
                   ConnectSocketHandler &handler,
                   CancellablePointer &cancel_ptr);
 

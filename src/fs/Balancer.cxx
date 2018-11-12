@@ -42,7 +42,7 @@ class FilteredSocketBalancerRequest : public StockGetHandler {
     const bool ip_transparent;
     const SocketAddress bind_address;
 
-    const unsigned timeout;
+    const Event::Duration timeout;
 
     SocketFilterFactory *const filter_factory;
 
@@ -52,7 +52,7 @@ public:
     FilteredSocketBalancerRequest(FilteredSocketBalancer &_fs_balancer,
                                   bool _ip_transparent,
                                   SocketAddress _bind_address,
-                                  unsigned _timeout,
+                                  Event::Duration _timeout,
                                   SocketFilterFactory *_filter_factory,
                                   StockGetHandler &_handler) noexcept
         :fs_balancer(_fs_balancer),
@@ -119,7 +119,7 @@ FilteredSocketBalancer::Get(struct pool &pool,
                             SocketAddress bind_address,
                             sticky_hash_t session_sticky,
                             const AddressList &address_list,
-                            unsigned timeout,
+                            Event::Duration timeout,
                             SocketFilterFactory *filter_factory,
                             StockGetHandler &handler,
                             CancellablePointer &cancel_ptr) noexcept

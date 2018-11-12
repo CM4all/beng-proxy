@@ -55,12 +55,15 @@
 #include <sys/un.h>
 #include <sys/socket.h>
 
+static constexpr Event::Duration TCP_CONNECT_TIMEOUT =
+    std::chrono::seconds(30);
+
 struct TcpStockRequest {
     const bool ip_transparent;
 
     const SocketAddress bind_address, address;
 
-    const unsigned timeout;
+    const Event::Duration timeout;
 
     TcpStockRequest(bool _ip_transparent, SocketAddress _bind_address,
                     SocketAddress _address, unsigned _timeout)

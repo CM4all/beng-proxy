@@ -57,6 +57,9 @@
 
 #include <string.h>
 
+static constexpr Event::Duration HTTP_CONNECT_TIMEOUT =
+    std::chrono::seconds(30);
+
 class HttpRequest final
     : Cancellable, StockGetHandler, Lease, HttpResponseHandler, PoolLeakDetector {
 
@@ -115,7 +118,7 @@ public:
                         false, SocketAddress::Null(),
                         session_sticky,
                         address.addresses,
-                        30,
+                        HTTP_CONNECT_TIMEOUT,
                         filter_factory,
                         *this, cancel_ptr);
     }

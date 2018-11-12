@@ -118,7 +118,7 @@ try {
     CancellablePointer cancel_ptr;
     client_balancer_connect(ctx.event_loop, *pool, ctx.balancer,
                             false, SocketAddress::Null(),
-                            0, &address_list, 30,
+                            0, &address_list, std::chrono::seconds(30),
                             ctx, cancel_ptr);
 
     ctx.event_loop.Dispatch();

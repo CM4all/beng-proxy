@@ -59,14 +59,14 @@ struct FilteredSocketStockRequest {
 
     const SocketAddress bind_address, address;
 
-    const unsigned timeout;
+    const Event::Duration timeout;
 
     SocketFilterFactory *const filter_factory;
 
     FilteredSocketStockRequest(bool _ip_transparent,
                                SocketAddress _bind_address,
                                SocketAddress _address,
-                               unsigned _timeout,
+                               Event::Duration _timeout,
                                SocketFilterFactory *_filter_factory)
         :ip_transparent(_ip_transparent),
          bind_address(_bind_address), address(_address),
@@ -270,7 +270,7 @@ FilteredSocketStock::Get(struct pool &pool, const char *name,
                          bool ip_transparent,
                          SocketAddress bind_address,
                          SocketAddress address,
-                         unsigned timeout,
+                         Event::Duration timeout,
                          SocketFilterFactory *filter_factory,
                          StockGetHandler &handler,
                          CancellablePointer &cancel_ptr) noexcept

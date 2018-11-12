@@ -33,6 +33,7 @@
 #pragma once
 
 #include "balancer.hxx"
+#include "event/Chrono.hxx"
 #include "util/Compiler.h"
 
 struct pool;
@@ -74,7 +75,7 @@ public:
              SocketAddress bind_address,
              unsigned session_sticky,
              const AddressList &address_list,
-             unsigned timeout,
+             Event::Duration timeout,
              SocketFilterFactory *filter_factory,
              StockGetHandler &handler,
              CancellablePointer &cancel_ptr) noexcept;

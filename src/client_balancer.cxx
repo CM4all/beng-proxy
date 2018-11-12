@@ -46,13 +46,13 @@ struct ClientBalancerRequest : ConnectSocketHandler {
     /**
      * The connect timeout for each attempt.
      */
-    unsigned timeout;
+    const Event::Duration timeout;
 
     ConnectSocketHandler &handler;
 
     ClientBalancerRequest(EventLoop &_event_loop,
                           bool _ip_transparent, SocketAddress _bind_address,
-                          unsigned _timeout,
+                          Event::Duration _timeout,
                           ConnectSocketHandler &_handler)
         :event_loop(_event_loop), ip_transparent(_ip_transparent),
          timeout(_timeout),
@@ -128,7 +128,7 @@ client_balancer_connect(EventLoop &event_loop,
                         SocketAddress bind_address,
                         sticky_hash_t session_sticky,
                         const AddressList *address_list,
-                        unsigned timeout,
+                        Event::Duration timeout,
                         ConnectSocketHandler &handler,
                         CancellablePointer &cancel_ptr)
 {

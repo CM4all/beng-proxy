@@ -50,6 +50,9 @@
 #include "util/Cancellable.hxx"
 #include "util/LeakDetector.hxx"
 
+static constexpr Event::Duration LB_HTTP_CONNECT_TIMEOUT =
+    std::chrono::seconds(20);
+
 class LbResolveConnectRequest final
     : LeakDetector, Cancellable, StockGetHandler, Lease, HttpResponseHandler {
 
@@ -241,7 +244,8 @@ inline void
 LbResolveConnectRequest::Start(const char *name, SocketAddress address)
 {
     connection.instance.fs_stock->Get(pool, name, false, nullptr,
-                                      address, 20,
+                                      address,
+                                      LB_HTTP_CONNECT_TIMEOUT,
                                       nullptr,
                                       *this, cancel_ptr);
 
