@@ -55,14 +55,13 @@
 #include "fs/Balancer.hxx"
 #include "stock/MapStock.hxx"
 #include "session/Save.hxx"
-#include "event/Duration.hxx"
 #include "nfs/Stock.hxx"
 #include "nfs/Cache.hxx"
 #include "access_log/Glue.hxx"
 
 #include <sys/signal.h>
 
-static constexpr auto &COMPRESS_INTERVAL = EventDuration<600>::value;
+static constexpr auto COMPRESS_INTERVAL = std::chrono::minutes(10);
 
 BpInstance::BpInstance()
     :shutdown_listener(event_loop, BIND_THIS_METHOD(ShutdownCallback)),
@@ -185,7 +184,7 @@ BpInstance::Compress()
 void
 BpInstance::ScheduleCompress()
 {
-    compress_timer.Add(COMPRESS_INTERVAL);
+    compress_timer.Schedule(COMPRESS_INTERVAL);
 }
 
 void
@@ -240,5 +239,5 @@ void
 BpInstance::ScheduleSaveSessions()
 {
     /* save all sessions every 2 minutes */
-    session_save_timer.Add(EventDuration<120, 0>::value);
+    session_save_timer.Schedule(std::chrono::minutes(2));
 }

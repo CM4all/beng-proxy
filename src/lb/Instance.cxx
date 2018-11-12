@@ -38,13 +38,12 @@
 #include "Listener.hxx"
 #include "ssl/Cache.hxx"
 #include "fb_pool.hxx"
-#include "event/Duration.hxx"
 #include "access_log/Glue.hxx"
 
 #include <assert.h>
 #include <sys/signal.h>
 
-static constexpr auto &COMPRESS_INTERVAL = EventDuration<600>::value;
+static constexpr Event::Duration COMPRESS_INTERVAL = std::chrono::minutes(10);
 
 LbInstance::LbInstance(const LbConfig &_config)
     :config(_config),
@@ -66,7 +65,7 @@ LbInstance::~LbInstance()
 void
 LbInstance::InitWorker()
 {
-    compress_event.Add(COMPRESS_INTERVAL);
+    compress_event.Schedule(COMPRESS_INTERVAL);
 
     for (auto &listener : listeners)
         listener.Scan(goto_map);
@@ -119,5 +118,5 @@ LbInstance::OnCompressTimer()
 {
     Compress();
 
-    compress_event.Add(COMPRESS_INTERVAL);
+    compress_event.Schedule(COMPRESS_INTERVAL);
 }

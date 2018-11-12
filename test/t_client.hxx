@@ -48,7 +48,6 @@
 #include "istream/ZeroIstream.hxx"
 #include "pool/pool.hxx"
 #include "event/TimerEvent.hxx"
-#include "event/Duration.hxx"
 #include "PInstance.hxx"
 #include "strmap.hxx"
 #include "fb_pool.hxx"
@@ -378,7 +377,7 @@ Context<Connection>::OnHttpResponse(http_status_t _status,
             DoBuckets();
         else {
             /* try again later */
-            defer_event.Add(EventDuration<0, 10000>::value);
+            defer_event.Schedule(std::chrono::milliseconds(10));
             deferred = true;
         }
 
@@ -390,7 +389,7 @@ Context<Connection>::OnHttpResponse(http_status_t _status,
         ReadBody();
 
     if (defer_read_response_body) {
-        defer_event.Add(EventDuration<0>::value);
+        defer_event.Schedule(Event::Duration{});
         deferred = true;
     }
 

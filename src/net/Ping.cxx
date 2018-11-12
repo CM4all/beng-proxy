@@ -35,7 +35,6 @@
 #include "net/IPv4Address.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/SendMessage.hxx"
-#include "event/Duration.hxx"
 
 #include <sys/socket.h>
 #include <errno.h>
@@ -55,7 +54,7 @@ inline void
 PingClient::ScheduleRead()
 {
     event.ScheduleRead();
-    timeout_event.Add(EventDuration<10>::value);
+    timeout_event.Schedule(std::chrono::seconds(10));
 }
 
 static u_short

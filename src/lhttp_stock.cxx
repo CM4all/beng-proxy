@@ -151,7 +151,7 @@ private:
 
     bool Release() noexcept override {
         event.ScheduleRead();
-        idle_timeout_event.Add(EventDuration<300>::value);
+        idle_timeout_event.Schedule(std::chrono::minutes(5));
         return true;
     }
 };

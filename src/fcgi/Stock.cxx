@@ -46,7 +46,6 @@
 #include "AllocatorPtr.hxx"
 #include "event/SocketEvent.hxx"
 #include "event/TimerEvent.hxx"
-#include "event/Duration.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "io/Logger.hxx"
@@ -350,7 +349,7 @@ FcgiConnection::Release() noexcept
 {
     fresh = false;
     event.ScheduleRead();
-    idle_timeout_event.Add(EventDuration<300>::value);
+    idle_timeout_event.Schedule(std::chrono::minutes(6));
     return true;
 }
 

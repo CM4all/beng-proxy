@@ -37,7 +37,6 @@
 #include "Stats.hxx"
 #include "event/TimerEvent.hxx"
 #include "event/DeferEvent.hxx"
-#include "event/Duration.hxx"
 #include "io/Logger.hxx"
 #include "util/Cancellable.hxx"
 #include "util/DeleteDisposer.hxx"
@@ -222,7 +221,7 @@ private:
     void ScheduleCheckEmpty();
 
     void ScheduleClear() {
-        clear_event.Add(EventDuration<60>::value);
+        clear_event.Schedule(std::chrono::minutes(1));
     }
 
     void ClearIdle();
@@ -275,7 +274,7 @@ public:
 
 private:
     void ScheduleCleanup() {
-        cleanup_event.Add(EventDuration<20>::value);
+        cleanup_event.Schedule(std::chrono::seconds(20));
     }
 
     void UnscheduleCleanup() {

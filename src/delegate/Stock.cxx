@@ -38,7 +38,6 @@
 #include "net/UniqueSocketDescriptor.hxx"
 #include "event/SocketEvent.hxx"
 #include "event/TimerEvent.hxx"
-#include "event/Duration.hxx"
 #include "spawn/Interface.hxx"
 #include "spawn/Prepared.hxx"
 #include "spawn/ChildOptions.hxx"
@@ -105,7 +104,7 @@ public:
 
     bool Release() noexcept override {
         event.ScheduleRead();
-        idle_timeout_event.Add(EventDuration<60>::value);
+        idle_timeout_event.Schedule(std::chrono::minutes(1));
         return true;
     }
 

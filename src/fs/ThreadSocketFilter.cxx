@@ -35,7 +35,6 @@
 #include "fb_pool.hxx"
 #include "thread_queue.hxx"
 #include "pool/pool.hxx"
-#include "event/Duration.hxx"
 #include "system/Error.hxx"
 
 #include <algorithm>
@@ -52,7 +51,7 @@ ThreadSocketFilter::ThreadSocketFilter(EventLoop &_event_loop,
      handshake_timeout_event(_event_loop,
                              BIND_THIS_METHOD(HandshakeTimeoutCallback))
 {
-    handshake_timeout_event.Add(EventDuration<60>::value);
+    handshake_timeout_event.Schedule(std::chrono::minutes(1));
 }
 
 ThreadSocketFilter::~ThreadSocketFilter() noexcept

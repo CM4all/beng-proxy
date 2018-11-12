@@ -40,7 +40,6 @@
 #include "event/net/ConnectSocket.hxx"
 #include "event/SocketEvent.hxx"
 #include "event/TimerEvent.hxx"
-#include "event/Duration.hxx"
 #include "util/Cancellable.hxx"
 
 #include <unistd.h>
@@ -151,7 +150,7 @@ ExpectMonitor::EventCallback(unsigned)
     event.Cancel();
 
     /* wait 10ms before we start reading */
-    delay_event.Add(EventDuration<0, 10000>::value);
+    delay_event.Schedule(std::chrono::milliseconds(10));
 }
 
 inline void

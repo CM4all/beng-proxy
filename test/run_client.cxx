@@ -57,7 +57,6 @@
 #include "net/SocketAddress.hxx"
 #include "event/net/ConnectSocket.hxx"
 #include "event/ShutdownListener.hxx"
-#include "event/Duration.hxx"
 #include "util/Cancellable.hxx"
 #include "util/PrintException.hxx"
 

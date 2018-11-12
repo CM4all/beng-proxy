@@ -32,7 +32,6 @@
 
 #include "NameCache.hxx"
 #include "certdb/Config.hxx"
-#include "event/Duration.hxx"
 
 #include <assert.h>
 #include <string.h>
@@ -99,7 +98,7 @@ void
 CertNameCache::ScheduleUpdate() noexcept
 {
     if (!update_timer.IsPending())
-        update_timer.Add(EventDuration<0, 200000>::value);
+        update_timer.Schedule(std::chrono::milliseconds(200));
 }
 
 inline void

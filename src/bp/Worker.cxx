@@ -37,7 +37,6 @@
 #include "http_server/http_server.hxx"
 #include "session/Manager.hxx"
 #include "spawn/Client.hxx"
-#include "event/Duration.hxx"
 #include "event/net/ServerSocket.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "io/Logger.hxx"
@@ -71,7 +70,7 @@ BpInstance::ScheduleSpawnWorker()
 {
     if (!should_exit && workers.size() < config.num_workers &&
         !spawn_worker_event.IsPending())
-        spawn_worker_event.Add(EventDuration<1>::value);
+        spawn_worker_event.Schedule(std::chrono::seconds(1));
 }
 
 void

@@ -77,7 +77,6 @@
 #include "spawn/Local.hxx"
 #include "spawn/Glue.hxx"
 #include "spawn/Client.hxx"
-#include "event/Duration.hxx"
 #include "address_list.hxx"
 #include "odbus/Init.hxx"
 #include "odbus/Connection.hxx"
@@ -461,7 +460,7 @@ try {
         instance.DisableListeners();
 
         /* spawn the first worker really soon */
-        instance.spawn_worker_event.Add(EventDuration<0, 10000>::value);
+        instance.spawn_worker_event.Schedule(std::chrono::milliseconds(10));
     } else {
         instance.InitWorker();
     }
