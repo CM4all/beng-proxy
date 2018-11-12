@@ -58,7 +58,7 @@ LbMonitorController::Success()
         failure->Unset(FAILURE_FADE);
     }
 
-    interval_event.Add(interval);
+    interval_event.Schedule(interval);
 }
 
 void
@@ -75,7 +75,7 @@ LbMonitorController::Fade()
     fade = true;
     failure->Set(FAILURE_FADE, std::chrono::minutes(5));
 
-    interval_event.Add(interval);
+    interval_event.Schedule(interval);
 }
 
 void
@@ -89,7 +89,7 @@ LbMonitorController::Timeout()
     state = false;
     failure->Set(FAILURE_MONITOR, std::chrono::seconds::zero());
 
-    interval_event.Add(interval);
+    interval_event.Schedule(interval);
 }
 
 void
@@ -103,7 +103,7 @@ LbMonitorController::Error(std::exception_ptr e)
     state = false;
     failure->Set(FAILURE_MONITOR, std::chrono::seconds::zero());
 
-    interval_event.Add(interval);
+    interval_event.Schedule(interval);
 }
 
 inline void
@@ -114,7 +114,7 @@ LbMonitorController::IntervalCallback()
     logger(6, "run");
 
     if (config.timeout > 0)
-        timeout_event.Add(timeout);
+        timeout_event.Schedule(timeout);
 
     class_.run(event_loop, config, address, *this, cancel_ptr);
 }
@@ -131,7 +131,7 @@ LbMonitorController::TimeoutCallback()
     state = false;
     failure->Set(FAILURE_MONITOR, std::chrono::seconds::zero());
 
-    interval_event.Add(interval);
+    interval_event.Schedule(interval);
 }
 
 static std::string
@@ -155,9 +155,9 @@ LbMonitorController::LbMonitorController(EventLoop &_event_loop,
      class_(_class),
      logger(MakeLoggerDomain(config.name.c_str(), node_name,
                              address.GetPort())),
-     interval{time_t(config.interval), 0},
+     interval(std::chrono::seconds(config.interval)),
      interval_event(event_loop, BIND_THIS_METHOD(IntervalCallback)),
-     timeout{time_t(config.timeout), 0},
+     timeout(std::chrono::seconds(config.timeout)),
      timeout_event(event_loop, BIND_THIS_METHOD(TimeoutCallback))
 {
     static constexpr struct timeval immediately = { 0, 0 };
