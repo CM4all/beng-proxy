@@ -57,10 +57,7 @@ class LbMonitorController final : public LbMonitorHandler {
 
     const Logger logger;
 
-    const Event::Duration interval;
     TimerEvent interval_event;
-
-    const Event::Duration timeout;
     TimerEvent timeout_event;
 
     CancellablePointer cancel_ptr;

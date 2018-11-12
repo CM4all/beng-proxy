@@ -355,12 +355,12 @@ LbConfigParser::Monitor::ParseLine(FileLineParser &line)
         else
             throw LineParser::Error("Unknown monitor type");
     } else if (strcmp(word, "interval") == 0) {
-        config.interval = line.NextPositiveInteger();
+        config.interval = std::chrono::seconds(line.NextPositiveInteger());
     } else if (strcmp(word, "timeout") == 0) {
-        config.timeout = line.NextPositiveInteger();
+        config.timeout = std::chrono::seconds(line.NextPositiveInteger());
     } else if (config.type == LbMonitorConfig::Type::TCP_EXPECT &&
                strcmp(word, "connect_timeout") == 0) {
-        config.connect_timeout = line.NextPositiveInteger();
+        config.connect_timeout = std::chrono::seconds(line.NextPositiveInteger());
     } else if (config.type == LbMonitorConfig::Type::TCP_EXPECT &&
                strcmp(word, "send") == 0) {
         const char *value = line.NextUnescape();

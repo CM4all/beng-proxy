@@ -82,14 +82,14 @@ public:
     void Start(SocketAddress address, CancellablePointer &cancel_ptr) {
         cancel_ptr = *this;
 
-        const unsigned timeout = config.connect_timeout > 0
+        const Event::Duration zero{};
+        const auto timeout = config.connect_timeout > zero
             ? config.connect_timeout
-            : (config.timeout > 0
+            : (config.timeout > zero
                ? config.timeout
-               : 30);
+               : std::chrono::seconds(30));
 
-        connect.Connect(address,
-                        std::chrono::seconds(timeout));
+        connect.Connect(address, timeout);
     }
 
 private:
@@ -211,15 +211,14 @@ ExpectMonitor::OnSocketConnectSuccess(UniqueSocketDescriptor &&new_fd) noexcept
         }
     }
 
-    struct timeval expect_timeout = {
-        time_t(config.timeout > 0 ? config.timeout : 10),
-        0,
-    };
+    const auto expect_timeout = config.timeout > Event::Duration{}
+        ? config.timeout
+        : std::chrono::seconds(10);
 
     fd = new_fd.Release();
     event.Open(fd);
     event.ScheduleRead();
-    timeout_event.Add(expect_timeout);
+    timeout_event.Schedule(expect_timeout);
 }
 
 /*

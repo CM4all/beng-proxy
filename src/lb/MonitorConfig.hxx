@@ -33,6 +33,8 @@
 #ifndef BENG_LB_MONITOR_CONFIG_HXX
 #define BENG_LB_MONITOR_CONFIG_HXX
 
+#include "event/Chrono.hxx"
+
 #include <string>
 
 struct LbMonitorConfig {
@@ -41,13 +43,13 @@ struct LbMonitorConfig {
     /**
      * Time in seconds between two monitor checks.
      */
-    unsigned interval = 10;
+    Event::Duration interval = std::chrono::seconds(10);
 
     /**
      * If the monitor does not produce a result after this timeout
      * [seconds], it is assumed to be negative.
      */
-    unsigned timeout = 0;
+    Event::Duration timeout{};
 
     enum class Type {
         NONE,
@@ -60,7 +62,7 @@ struct LbMonitorConfig {
      * The timeout for establishing a connection.  Only applicable for
      * #Type::TCP_EXPECT.  0 means no special setting present.
      */
-    unsigned connect_timeout = 0;
+    Event::Duration connect_timeout{};
 
     /**
      * For #Type::TCP_EXPECT: a string that is sent to the peer

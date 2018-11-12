@@ -57,12 +57,11 @@ public:
                CancellablePointer &cancel_ptr) {
         cancel_ptr = *this;
 
-        const unsigned timeout = config.timeout > 0
+        const auto timeout = config.timeout > Event::Duration{}
             ? config.timeout
-            : 30;
+            : std::chrono::seconds(30);
 
-        connect.Connect(address,
-                        std::chrono::seconds(timeout));
+        connect.Connect(address, timeout);
     }
 
 private:
