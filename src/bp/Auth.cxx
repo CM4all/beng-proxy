@@ -140,8 +140,12 @@ Request::HandleAuth(const TranslateResponse &response)
     t->host = translate.request.host;
     t->session = translate.request.session;
 
-    if (response.protocol_version >= 2)
+    if (response.protocol_version >= 2) {
         t->listener_tag = connection.listener_tag;
+
+        if (connection.auth_alt_host)
+            t->alt_host = request.headers.Get("x-cm4all-althost");
+    }
 
     translate.previous = &response;
 

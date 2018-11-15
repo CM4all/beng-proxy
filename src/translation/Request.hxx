@@ -57,6 +57,7 @@ struct TranslateRequest {
 
     const char *remote_host;
     const char *host;
+    const char *alt_host;
     const char *user_agent;
     const char *ua_class;
     const char *accept_language;
@@ -146,6 +147,7 @@ struct TranslateRequest {
 #endif
         remote_host = nullptr;
         host = nullptr;
+        alt_host = nullptr;
         user_agent = nullptr;
         ua_class = nullptr;
         accept_language = nullptr;

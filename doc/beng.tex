@@ -182,6 +182,10 @@ network interfaces are up and configured. \\\hline
 \verb|tag| & A tag, to be passed to the translation server in a
 \verb|LISTENER_TAG| packet (see page \pageref{listenertag}). \\\hline
 
+\verb|auth_alt_host| & \texttt{yes} forwards the value of the
+\verb|X-CM4all-AltHost| request header to the translation server in
+\verb|AUTH| requests. \\\hline
+
 \verb|ssl| & \texttt{yes} enables SSL/TLS. \\\hline
 
 \verb|ssl_cert| & Add a certificate/key pair to the listener.  If
@@ -3413,6 +3417,10 @@ more than 64 bytes).  This path can be specified dynamically using
 Additionally, \verb|APPEND_AUTH| may specify a payload that will be
 appended to the contents of the \verb|AUTH_FILE|.  There's also
 \verb|EXPAND_APPEND_AUTH|.
+
+If the listener option \verb|auth_alt_host| is enabled, then the
+request header \verb|X-CM4all-AltHost| will be forwarded to the
+translation server in a \verb|ALT_HOST| translation packet.
 
 
 \subsection{Referrer}

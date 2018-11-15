@@ -59,6 +59,8 @@ struct BpConfig {
 
         std::string zeroconf_service;
 
+        bool auth_alt_host = false;
+
         bool ssl = false;
 
         SslConfig ssl_config;

@@ -40,8 +40,11 @@
 #include "util/Exception.hxx"
 
 BPListener::BPListener(BpInstance &_instance, const char *_tag,
+                       bool _auth_alt_host,
                        const SslConfig *ssl_config)
-    :ServerSocket(_instance.event_loop), instance(_instance), tag(_tag)
+    :ServerSocket(_instance.event_loop), instance(_instance),
+     tag(_tag),
+     auth_alt_host(_auth_alt_host)
 {
     if (ssl_config != nullptr)
         ssl_factory = ssl_factory_new_server(*ssl_config, nullptr);
@@ -57,7 +60,8 @@ void
 BPListener::OnAccept(UniqueSocketDescriptor &&_fd,
                      SocketAddress address) noexcept
 {
-    new_connection(instance, std::move(_fd), address, ssl_factory, tag);
+    new_connection(instance, std::move(_fd), address, ssl_factory,
+                   tag, auth_alt_host);
 }
 
 void

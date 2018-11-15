@@ -62,6 +62,8 @@ struct BpConnection final
 
     const char *const listener_tag;
 
+    const bool auth_alt_host;
+
     /**
      * The address (host and port) of the client.
      */
@@ -99,7 +101,7 @@ struct BpConnection final
     } per_request;
 
     BpConnection(BpInstance &_instance, struct pool &_pool,
-                 const char *_listener_tag,
+                 const char *_listener_tag, bool _auth_alt_host,
                  SocketAddress remote_address);
     ~BpConnection();
 
@@ -124,7 +126,7 @@ void
 new_connection(BpInstance &instance,
                UniqueSocketDescriptor &&fd, SocketAddress address,
                SslFactory *ssl_factory,
-               const char *listener_tag);
+               const char *listener_tag, bool auth_alt_host);
 
 void
 close_connection(BpConnection *connection);

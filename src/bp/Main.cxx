@@ -206,6 +206,7 @@ void
 BpInstance::AddListener(const BpConfig::Listener &c)
 {
     listeners.emplace_front(*this, c.tag.empty() ? nullptr : c.tag.c_str(),
+                            c.auth_alt_host,
                             c.ssl ? &c.ssl_config : nullptr);
     auto &listener = listeners.front();
 
@@ -229,7 +230,7 @@ BpInstance::AddListener(const BpConfig::Listener &c)
 void
 BpInstance::AddTcpListener(int port)
 {
-    listeners.emplace_front(*this, nullptr, nullptr);
+    listeners.emplace_front(*this, nullptr, false, nullptr);
     auto &listener = listeners.front();
     listener.ListenTCP(port);
     listener.SetTcpDeferAccept(10);

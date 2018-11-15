@@ -109,6 +109,7 @@ MarshalTranslateRequest(uint8_t PROTOCOL_VERSION,
     m.WriteOptional(TranslationCommand::REMOTE_HOST,
                     request.remote_host);
     m.WriteOptional(TranslationCommand::HOST, request.host);
+    m.WriteOptional(TranslationCommand::ALT_HOST, request.alt_host);
     m.WriteOptional(TranslationCommand::USER_AGENT, request.user_agent);
     m.WriteOptional(TranslationCommand::UA_CLASS, request.ua_class);
     m.WriteOptional(TranslationCommand::LANGUAGE, request.accept_language);

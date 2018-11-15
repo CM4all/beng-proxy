@@ -150,6 +150,9 @@ BpConfigParser::Listener::ParseLine(FileLineParser &line)
     } else if (strcmp(word, "free_bind") == 0) {
         config.free_bind = line.NextBool();
         line.ExpectEnd();
+    } else if (strcmp(word, "auth_alt_host") == 0) {
+        config.auth_alt_host = line.NextBool();
+        line.ExpectEnd();
     } else if (strcmp(word, "ssl") == 0) {
         bool value = line.NextBool();
 

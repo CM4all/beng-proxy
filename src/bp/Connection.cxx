@@ -57,11 +57,13 @@
 
 BpConnection::BpConnection(BpInstance &_instance, struct pool &_pool,
                            const char *_listener_tag,
+                           bool _auth_alt_host,
                            SocketAddress remote_address)
     :instance(_instance),
      pool(_pool),
      config(_instance.config),
      listener_tag(_listener_tag),
+     auth_alt_host(_auth_alt_host),
      remote_host_and_port(address_to_string(pool, remote_address)),
      logger(remote_host_and_port)
 {
@@ -193,7 +195,7 @@ void
 new_connection(BpInstance &instance,
                UniqueSocketDescriptor &&fd, SocketAddress address,
                SslFactory *ssl_factory,
-               const char *listener_tag)
+               const char *listener_tag, bool auth_alt_host)
 {
     struct pool *pool;
 
@@ -223,7 +225,8 @@ new_connection(BpInstance &instance,
     pool_set_major(pool);
 
     auto *connection = NewFromPool<BpConnection>(*pool, instance, *pool,
-                                                 listener_tag, address);
+                                                 listener_tag, auth_alt_host,
+                                                 address);
     instance.connections.push_front(*connection);
 
     connection->http =

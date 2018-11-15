@@ -47,10 +47,13 @@ class BPListener final : public ServerSocket {
 
     const char *const tag;
 
+    const bool auth_alt_host;
+
     SslFactory *ssl_factory = nullptr;
 
 public:
     BPListener(BpInstance &_instance, const char *_tag,
+               bool _auth_alt_host,
                const SslConfig *ssl_config);
     ~BPListener();
 
