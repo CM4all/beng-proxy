@@ -36,6 +36,7 @@ class Request:
     def __init__(self):
         self.protocol_version = 0
         self.host = None
+        self.alt_host = None
         self.raw_uri = None
         self.args = None
         self.query_string = None
@@ -93,6 +94,8 @@ class Request:
             return True
         elif packet.command == TRANSLATE_HOST:
             self.host = packet.payload
+        elif packet.command == TRANSLATE_ALT_HOST:
+            self.alt_host = packet.payload
         elif packet.command == TRANSLATE_URI:
             self.raw_uri = packet.payload
         elif packet.command == TRANSLATE_ARGS:
