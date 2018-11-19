@@ -62,12 +62,12 @@ class Translation(Protocol):
             return self.widget_registry.lookup(widget_type)
         except:
             log.err()
-            return Response().status(500)
+            return Response(protocol_version=2).status(500)
 
     def _handle_content_type_lookup(self, payload, suffix):
         log.msg("content_type_lookup '%s' suffix='%s'" % (payload, suffix))
 
-        response = Response(protocol_version=1)
+        response = Response(protocol_version=2)
         if suffix == 'phtml':
             response.packet(TRANSLATE_CONTENT_TYPE, 'text/html')
             response.process(container=True)
@@ -80,7 +80,7 @@ class Translation(Protocol):
     def _handle_login(self, user, password, service, listener_tag):
         log.msg("login %s password=%s service=%s tag=%s" % (repr(user), repr(password), repr(service), repr(listener_tag)))
 
-        response = Response(protocol_version=1)
+        response = Response(protocol_version=2)
         if user is None or not re.match(r'^[-_\w]+$', user):
             response.status(400)
             return response
@@ -108,7 +108,7 @@ class Translation(Protocol):
     def _handle_cron(self, partition, tag, user, uri, param):
         log.msg("cron partition=%s tag=%s user=%s uri=%s param=%s" % (repr(partition), repr(tag), repr(user), repr(uri), repr(param)))
 
-        response = Response(protocol_version=1)
+        response = Response(protocol_version=2)
         if user is None or not re.match(r'^[-_\w]+$', user):
             response.status(400)
             return response
@@ -132,7 +132,7 @@ class Translation(Protocol):
     def _handle_auth(self, auth, uri, session):
         log.msg("auth '%s' uri='%s' session='%s'" % (auth, uri, session))
 
-        response = Response(protocol_version=1)
+        response = Response(protocol_version=2)
         response.max_age(0)
         response.packet(TRANSLATE_USER, 'hans')
         response.max_age(20)
@@ -141,7 +141,7 @@ class Translation(Protocol):
     def _handle_pool(self, name, listener_tag, host):
         log.msg("pool '%s' tag=%s host=%s" % (name, repr(listener_tag), repr(host)))
 
-        response = Response(protocol_version=1)
+        response = Response(protocol_version=2)
 
         if host == '404':
             response.status(404)
@@ -932,7 +932,7 @@ class Translation(Protocol):
 
         if request.error_document:
             log.msg("error %s %s %u" % (request.uri, repr(request.error_document_payload), request.status))
-            return Response().path('/var/www/%u.html' % request.status).content_type('text/html')
+            return Response(protocol_version=2).path('/var/www/%u.html' % request.status).content_type('text/html')
 
         if request.session is not None: log.msg("- session = %s" % request.session)
         if request.param is not None: log.msg("- param = %s" % request.param)
@@ -950,7 +950,7 @@ class Translation(Protocol):
             # 
             user = session = None
 
-        response = Response(protocol_version=1)
+        response = Response(protocol_version=2)
         if user is not None:
             response.packet(TRANSLATE_USER, user)
         if session is not None:
@@ -975,7 +975,7 @@ class Translation(Protocol):
 
     def _fail(self, fail):
         log.err(fail)
-        self.transport.write(Response().status(500).finish())
+        self.transport.write(Response(protocol_version=2).status(500).finish())
         self._request = None
 
     def _handle_packet(self, packet):
