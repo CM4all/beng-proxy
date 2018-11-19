@@ -129,8 +129,8 @@ class Translation(Protocol):
         response.packet(TRANSLATE_UTS_NAMESPACE, 'host-' + user)
         return response
 
-    def _handle_auth(self, auth, uri, session):
-        log.msg("auth '%s' uri='%s' session='%s'" % (auth, uri, session))
+    def _handle_auth(self, auth, uri, session, alt_host):
+        log.msg("auth '%s' uri='%s' session='%s' alt_host='%s'" % (auth, uri, session, alt_host))
 
         response = Response(protocol_version=2)
         response.max_age(0)
@@ -925,7 +925,7 @@ class Translation(Protocol):
             return self._handle_cron(request.cron, request.listener_tag, request.user, request.uri, request.param)
 
         if request.auth is not None:
-            return self._handle_auth(request.auth, request.uri, request.session)
+            return self._handle_auth(request.auth, request.uri, request.session, request.alt_host)
 
         if request.pool is not None:
             return self._handle_pool(request.pool, request.listener_tag, request.host)
