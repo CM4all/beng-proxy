@@ -41,6 +41,9 @@ class AcmeKey {
 	UniqueEVP_PKEY key;
 
 public:
+	explicit AcmeKey(UniqueEVP_PKEY &&_key) noexcept
+		:key(std::move(_key)) {}
+
 	explicit AcmeKey(const char *path);
 
 	AcmeKey(AcmeKey &&) = default;

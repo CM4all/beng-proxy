@@ -1,1 +1,1 @@
-certdb/certdb.sql usr/share/cm4all/beng-lb/sql
+certdb/*.sql usr/share/cm4all/beng-lb/sql

@@ -67,6 +67,17 @@
 
 #include <stdio.h>
 
+static AcmeKey
+GetAcmeAccountKey(AcmeConfig &config, CertDatabase &db)
+{
+	if (config.account_db) {
+		auto account = db.GetAcmeAccount(config.staging);
+		config.account_key_id = std::move(account.location);
+		return AcmeKey(std::move(account.key));
+	} else
+		return AcmeKey(config.account_key_path.c_str());
+}
+
 static void
 CopyCommonName(X509_REQ &req, X509 &src)
 {
@@ -479,6 +490,9 @@ Acme(ConstBuffer<const char *> args)
 			   ACME responses */
 			args.shift();
 			config.fake = true;
+		} else if (StringIsEqual(arg, "--account-db")) {
+			args.shift();
+			config.account_db = true;
 		} else if (StringIsEqual(arg, "--account-key")) {
 			args.shift();
 
@@ -525,6 +539,7 @@ Acme(ConstBuffer<const char *> args)
 			"options:\n"
 			"  --staging     use the Let's Encrypt staging server\n"
 			"  --debug       enable debug mode\n"
+			"  --account-db  load the ACME account key from the database\n"
 			"  --account-key FILE\n"
 			"                load the ACME account key from this file\n"
 			"  --dns-txt-program PATH\n"
@@ -544,21 +559,52 @@ Acme(ConstBuffer<const char *> args)
 		const char *email = args[0];
 
 		const ScopeSslGlobalInit ssl_init;
-		const AcmeKey key(key_path);
 
-		const auto account = AcmeClient(config).NewAccount(*key, email);
-		printf("%s\n", account.location.c_str());
+		if (config.account_db) {
+			/* using the account database: generate a new
+			   key, create account and store it in the
+			   database */
+			const AcmeKey key(GenerateRsaKey());
+			const auto account = AcmeClient(config).NewAccount(*key, email);
+
+			const auto db_config = LoadPatchCertDatabaseConfig();
+			CertDatabase db(db_config);
+
+			WrapKeyHelper wrap_key_helper;
+			const auto wrap_key = wrap_key_helper.SetEncryptKey(db_config);
+
+			db.InsertAcmeAccount(config.staging, email,
+					     account.location.c_str(), *key,
+					     wrap_key.first, wrap_key.second);
+
+			printf("%s\n", account.location.c_str());
+		} else {
+			const AcmeKey key(key_path);
+			const auto account = AcmeClient(config).NewAccount(*key, email);
+			printf("%s\n", account.location.c_str());
+		}
 	} else if (StringIsEqual(cmd, "get-account")) {
 		if (!args.empty())
 			throw Usage("acme get-account");
 
 		const ScopeSslGlobalInit ssl_init;
-		const AcmeKey key(key_path);
 
-		const auto account = AcmeClient(config).NewAccount(*key,
-								   nullptr,
-								   true);
-		PrintAccount(account);
+		if (config.account_db) {
+			const auto db_config = LoadPatchCertDatabaseConfig();
+			CertDatabase db(db_config);
+			const auto key = db.GetAcmeAccount(config.staging).key;
+			const auto account = AcmeClient(config).NewAccount(*key,
+									   nullptr,
+									   true);
+			PrintAccount(account);
+		} else {
+			const AcmeKey key(key_path);
+
+			const auto account = AcmeClient(config).NewAccount(*key,
+									   nullptr,
+									   true);
+			PrintAccount(account);
+		}
 	} else if (StringIsEqual(cmd, "new-order")) {
 		if (args.size < 2)
 			throw Usage("acme new-order HANDLE HOST ...");
@@ -570,10 +616,10 @@ Acme(ConstBuffer<const char *> args)
 			identifiers.emplace(i);
 
 		const ScopeSslGlobalInit ssl_init;
-		const AcmeKey key(key_path);
 
 		const auto db_config = LoadPatchCertDatabaseConfig();
 		CertDatabase db(db_config);
+		const auto key = GetAcmeAccountKey(config, db);
 		AcmeClient client(config);
 
 		AcmeNewOrder(db_config, config, *key, db, client, root_progress,
@@ -586,10 +632,10 @@ Acme(ConstBuffer<const char *> args)
 		const char *handle = args.front();
 
 		const ScopeSslGlobalInit ssl_init;
-		const AcmeKey key(key_path);
 
 		const auto db_config = LoadPatchCertDatabaseConfig();
 		CertDatabase db(db_config);
+		const auto key = GetAcmeAccountKey(config, db);
 		AcmeClient client(config);
 
 		AcmeRenewCert(db_config, config, *key,

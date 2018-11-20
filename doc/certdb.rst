@@ -60,16 +60,14 @@ The ``cm4all-certdb`` program includes an ACME (Automatic Certificate
 Management Environment) client, the protocol implemented by the *Let’s
 Encrypt* project.
 
-To get started, register an account::
+To get started, register one or more accounts::
 
-   openssl genrsa -out /etc/cm4all/acme/account.key  4096
-   cm4all-certdb acme --staging new-account foo@example.com
+   cm4all-certdb acme --staging --account-db new-account foo@example.com
 
-This prints the account "location", which must be specified with the
-``--account-key-id`` option in every successive call.  To look up the
-location of an existing account, type::
-
-  cm4all-certdb acme --staging get-account
+This generates a new RSA key, registers the account with Let's
+Encrypt, encrypts the key with the ``wrap_key`` settings from the
+:program:`beng-lb` configuration file, and inserts everything into the
+database.
 
 Note: examples listed here will use the “staging” server. Omit the
 ``–-staging`` option to use the Let’s Encrypt production server.
@@ -78,7 +76,7 @@ To obtain a signed certificate, type::
 
    cm4all-certdb acme --staging \
      --challenge-directory /var/www/acme-challenge \
-     --account-key-id https://staging.api.letsencrypt.org/acme/acct/42 \
+     --account-db \
      new-order example www.example.com example.com foo.example.com
 
 To update all names in an existing certificate, use the command
@@ -86,7 +84,7 @@ To update all names in an existing certificate, use the command
 
    cm4all-certdb acme --staging \
      --challenge-directory /var/www/acme-challenge \
-     --account-key-id https://staging.api.letsencrypt.org/acme/acct/42 \
+     --account-db \
      renew-cert example
 
 This requires that the URL
@@ -107,7 +105,7 @@ challenge host::
 
    cm4all-certdb acme --staging \
      --dns-txt-program /usr/lib/cm4all/bin/set-acme-challenge-dns-txt \
-     --account-key-id https://staging.api.letsencrypt.org/acme/acct/42 \
+     --account-db \
      new-order example *.example.com
 
 This program is invoked twice: once to set a ``TXT`` record and again

@@ -307,3 +307,49 @@ CertDatabase::SetHandle(Pg::Serial id, const char *handle)
 	if (result.GetAffectedRows() < 1)
 		throw std::runtime_error("No such record");
 }
+
+
+void
+CertDatabase::InsertAcmeAccount(bool staging,
+				const char *email, const char *location,
+				EVP_PKEY &key, const char *key_wrap_name,
+				AES_KEY *wrap_key)
+{
+	const SslBuffer key_buffer(key);
+	Pg::BinaryValue key_der(key_buffer.get());
+
+	std::unique_ptr<unsigned char[]> wrapped;
+	if (wrap_key != nullptr)
+		key_der = WapKey(key_der, wrap_key, wrapped);
+
+	conn.ExecuteBinary("INSERT INTO acme_account("
+			   "staging, email, location, key_der, key_wrap_name) "
+			   "VALUES($1, $2, $3, $4, $5)",
+			   staging, email, location, key_der, key_wrap_name);
+}
+
+void
+CertDatabase::TouchAcmeAccount(const char *id)
+{
+	conn.ExecuteParams("UPDATE acme_account SET time_used=now() WHERE id=$1",
+			   id);
+}
+
+CertDatabase::AcmeAccount
+CertDatabase::GetAcmeAccount(bool staging)
+{
+	const auto result = conn.ExecuteParams(true, R"(
+SELECT id::varchar,location,key_der,key_wrap_name
+FROM acme_account
+WHERE enabled AND staging=$1
+ORDER BY time_used NULLS FIRST
+LIMIT 1)", staging);
+	if (result.IsEmpty())
+		throw std::runtime_error("No valid ACME account in database");
+
+	const char *id = result.GetValue(0, 0);
+	TouchAcmeAccount(id);
+
+	return {id, result.GetValue(0, 1),
+		LoadWrappedKey(config, result, 0, 2)};
+}

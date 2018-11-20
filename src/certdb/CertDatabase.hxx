@@ -305,4 +305,21 @@ public:
 				    "FROM server_certificate "
 				    "ORDER BY modified DESC LIMIT 20");
 	}
+
+	void InsertAcmeAccount(bool staging,
+			       const char *email, const char *location,
+			       EVP_PKEY &key, const char *key_wrap_name,
+			       AES_KEY *wrap_key);
+
+	void TouchAcmeAccount(const char *id);
+
+	struct AcmeAccount {
+		std::string id;
+
+		std::string location;
+
+		UniqueEVP_PKEY key;
+	};
+
+	AcmeAccount GetAcmeAccount(bool staging);
 };
