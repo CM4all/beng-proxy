@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2018 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -32,6 +32,8 @@
 
 #ifndef ACME_CONFIG_HXX
 #define ACME_CONFIG_HXX
+
+#include <string>
 
 struct AcmeConfig {
     std::string agreement_url = "https://letsencrypt.org/documents/LE-SA-v1.2-November-15-2017.pdf";
