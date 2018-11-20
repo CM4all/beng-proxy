@@ -608,6 +608,14 @@ Acme(ConstBuffer<const char *> args)
                ACME responses */
             args.shift();
             config.fake = true;
+        } else if (strcmp(arg, "--account-key") == 0) {
+            args.shift();
+
+            if (args.empty())
+                throw std::runtime_error("File missing");
+
+            config.account_key_path = args.front();
+            args.shift();
         } else if (strcmp(arg, "--challenge-directory") == 0) {
             args.shift();
 
@@ -639,6 +647,8 @@ Acme(ConstBuffer<const char *> args)
             "options:\n"
             "  --staging     use the Let's Encrypt staging server\n"
             "  --debug       enable debug mode\n"
+            "  --account-key FILE\n"
+            "                load the ACME account key from this file\n"
             "  --challenge-directory PATH\n"
             "                use http-01 with this challenge directory\n"
             "  --agreement URL\n"
