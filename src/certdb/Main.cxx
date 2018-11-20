@@ -644,7 +644,7 @@ Acme(ConstBuffer<const char *> args)
             "  --agreement URL\n"
             "                use a custom ACME agreement URL\n";
 
-    const char *key_path = "/etc/cm4all/acme/account.key";
+    const char *key_path = config.account_key_path.c_str();
 
     const auto cmd = args.shift();
 
