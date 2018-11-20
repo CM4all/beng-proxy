@@ -35,6 +35,7 @@
 #include "AcmeError.hxx"
 #include "AcmeClient.hxx"
 #include "AcmeChallenge.hxx"
+#include "AcmeKey.hxx"
 #include "AcmeSni.hxx"
 #include "AcmeHttp.hxx"
 #include "AcmeConfig.hxx"
@@ -665,10 +666,7 @@ Acme(ConstBuffer<const char *> args)
         const char *email = args[0];
 
         const ScopeSslGlobalInit ssl_init;
-
-        const auto key = LoadKeyFile(key_path);
-        if (EVP_PKEY_base_id(key.get()) != EVP_PKEY_RSA)
-            throw "RSA key expected";
+        const AcmeKey key(key_path);
 
         const auto account = AcmeClient(config).NewReg(*key, email);
         printf("location: %s\n", account.location.c_str());
@@ -679,10 +677,7 @@ Acme(ConstBuffer<const char *> args)
         const char *host = args[0];
 
         const ScopeSslGlobalInit ssl_init;
-
-        const auto key = LoadKeyFile(key_path);
-        if (EVP_PKEY_base_id(key.get()) != EVP_PKEY_RSA)
-            throw "RSA key expected";
+        const AcmeKey key(key_path);
 
         CertDatabase db(*db_config);
         AcmeClient client(config);
@@ -696,10 +691,7 @@ Acme(ConstBuffer<const char *> args)
         const char *handle = args.shift();
 
         const ScopeSslGlobalInit ssl_init;
-
-        const auto key = LoadKeyFile(key_path);
-        if (EVP_PKEY_base_id(key.get()) != EVP_PKEY_RSA)
-            throw "RSA key expected";
+        const AcmeKey key(key_path);
 
         CertDatabase db(*db_config);
         AcmeClient client(config);
@@ -714,10 +706,7 @@ Acme(ConstBuffer<const char *> args)
         const char *handle = args.shift();
 
         const ScopeSslGlobalInit ssl_init;
-
-        const auto key = LoadKeyFile(key_path);
-        if (EVP_PKEY_base_id(key.get()) != EVP_PKEY_RSA)
-            throw "RSA key expected";
+        const AcmeKey key(key_path);
 
         CertDatabase db(*db_config);
         AcmeClient client(config);
@@ -733,10 +722,7 @@ Acme(ConstBuffer<const char *> args)
         const char *handle = args.front();
 
         const ScopeSslGlobalInit ssl_init;
-
-        const auto key = LoadKeyFile(key_path);
-        if (EVP_PKEY_base_id(key.get()) != EVP_PKEY_RSA)
-            throw "RSA key expected";
+        const AcmeKey key(key_path);
 
         CertDatabase db(*db_config);
         AcmeClient client(config);
