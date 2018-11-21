@@ -47,13 +47,13 @@ class TimeoutIstream final : public ForwardIstream {
 public:
     explicit TimeoutIstream(struct pool &p, UnusedIstreamPtr _input,
                             EventLoop &event_loop,
-                            const struct timeval &_timeout)
+                            const struct timeval &_timeout) noexcept
         :ForwardIstream(p, std::move(_input)),
          timeout_event(event_loop, BIND_THIS_METHOD(OnTimeout)),
          timeout(&_timeout) {}
 
 private:
-    void OnTimeout() {
+    void OnTimeout() noexcept {
         input.Close();
         DestroyError(std::make_exception_ptr(std::runtime_error("timeout")));
     }
@@ -112,7 +112,7 @@ public:
 UnusedIstreamPtr
 NewTimeoutIstream(struct pool &pool, UnusedIstreamPtr input,
                   EventLoop &event_loop,
-                  const struct timeval &timeout)
+                  const struct timeval &timeout) noexcept
 {
     return NewIstreamPtr<TimeoutIstream>(pool, std::move(input),
                                          event_loop, timeout);

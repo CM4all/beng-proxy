@@ -46,6 +46,6 @@ class EventLoop;
 UnusedIstreamPtr
 NewTimeoutIstream(struct pool &pool, UnusedIstreamPtr input,
                   EventLoop &event_loop,
-                  const struct timeval &timeout);
+                  const struct timeval &timeout) noexcept;
 
 #endif
