@@ -68,7 +68,8 @@ class CertCache final : CertNameCacheHandler {
 
     struct SHA1Compare {
         gcc_pure
-        bool operator()(const SHA1Digest &a, const SHA1Digest &b) {
+        bool operator()(const SHA1Digest &a,
+                        const SHA1Digest &b) const noexcept {
             return memcmp(&a, &b, sizeof(a)) < 0;
         }
     };
@@ -88,7 +89,7 @@ class CertCache final : CertNameCacheHandler {
         std::chrono::steady_clock::time_point expires;
 
         template<typename T>
-        Item(T &&_ssl_ctx, std::chrono::steady_clock::time_point now)
+        Item(T &&_ssl_ctx, std::chrono::steady_clock::time_point now) noexcept
             :ssl_ctx(std::forward<T>(_ssl_ctx)),
              /* the initial expiration is 6 hours; it will be raised
                 to 24 hours if the certificate is used again */
@@ -103,7 +104,7 @@ class CertCache final : CertNameCacheHandler {
 
 public:
     explicit CertCache(EventLoop &event_loop,
-                       const CertDatabaseConfig &_config)
+                       const CertDatabaseConfig &_config) noexcept
         :logger("CertCache"), config(_config),
          name_cache(event_loop, _config, *this) {}
 
@@ -113,11 +114,11 @@ public:
 
     void LoadCaCertificate(const char *path);
 
-    void Connect() {
+    void Connect() noexcept {
         name_cache.Connect();
     }
 
-    void Disconnect() {
+    void Disconnect() noexcept {
         name_cache.Disconnect();
     }
 
@@ -126,9 +127,9 @@ public:
      *
      * @return the number of expired sessions
      */
-    unsigned FlushSessionCache(long tm);
+    unsigned FlushSessionCache(long tm) noexcept;
 
-    void Expire();
+    void Expire() noexcept;
 
     /**
      * Look up a certificate by host name.  Returns the SSL_CTX
@@ -143,7 +144,8 @@ private:
     SslCtx GetNoWildCard(const char *host);
 
     /* virtual methods from class CertNameCacheHandler */
-    void OnCertModified(const std::string &name, bool deleted) override;
+    void OnCertModified(const std::string &name,
+                        bool deleted) noexcept override;
 };
 
 #endif

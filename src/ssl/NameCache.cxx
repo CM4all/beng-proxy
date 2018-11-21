@@ -38,7 +38,7 @@
 
 CertNameCache::CertNameCache(EventLoop &event_loop,
                              const CertDatabaseConfig &config,
-                             CertNameCacheHandler &_handler)
+                             CertNameCacheHandler &_handler) noexcept
     :logger("CertNameCache"), handler(_handler),
      conn(event_loop, config.connect.c_str(), config.schema.c_str(), *this),
      update_timer(event_loop, BIND_THIS_METHOD(OnUpdateTimer))
@@ -46,7 +46,7 @@ CertNameCache::CertNameCache(EventLoop &event_loop,
 }
 
 bool
-CertNameCache::Lookup(const char *_host) const
+CertNameCache::Lookup(const char *_host) const noexcept
 {
     if (!complete)
         /* we can't give reliable results until the cache is
@@ -61,7 +61,7 @@ CertNameCache::Lookup(const char *_host) const
 }
 
 void
-CertNameCache::OnUpdateTimer()
+CertNameCache::OnUpdateTimer() noexcept
 try {
     assert(conn.IsReady());
 
@@ -103,7 +103,7 @@ CertNameCache::ScheduleUpdate() noexcept
 
 inline void
 CertNameCache::AddAltNames(const std::string &common_name,
-                           std::forward_list<std::string> &&list)
+                           std::forward_list<std::string> &&list) noexcept
 {
     for (auto &&a : list) {
         /* create the alt_name if it doesn't exist yet */
@@ -115,7 +115,7 @@ CertNameCache::AddAltNames(const std::string &common_name,
 
 inline void
 CertNameCache::RemoveAltNames(const std::string &common_name,
-                              std::forward_list<std::string> &&list)
+                              std::forward_list<std::string> &&list) noexcept
 {
     for (auto &&a : list) {
         auto i = alt_names.find(std::move(a));

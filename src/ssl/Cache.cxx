@@ -43,7 +43,7 @@
 #include <openssl/err.h>
 
 unsigned
-CertCache::FlushSessionCache(long tm)
+CertCache::FlushSessionCache(long tm) noexcept
 {
     unsigned n = 0;
 
@@ -54,7 +54,7 @@ CertCache::FlushSessionCache(long tm)
 }
 
 void
-CertCache::Expire()
+CertCache::Expire() noexcept
 {
     const auto now = GetEventLoop().SteadyNow();
 
@@ -172,7 +172,7 @@ CertCache::Get(const char *host)
 }
 
 void
-CertCache::OnCertModified(const std::string &name, bool deleted)
+CertCache::OnCertModified(const std::string &name, bool deleted) noexcept
 {
     const std::unique_lock<std::mutex> lock(mutex);
     auto i = map.find(name);

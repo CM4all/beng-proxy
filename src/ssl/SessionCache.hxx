@@ -39,7 +39,7 @@
 
 gcc_pure
 static inline unsigned
-GetSessionCacheNumber(SSL_CTX &ssl_ctx)
+GetSessionCacheNumber(SSL_CTX &ssl_ctx) noexcept
 {
     return SSL_CTX_sess_number(&ssl_ctx);
 }
@@ -50,7 +50,7 @@ GetSessionCacheNumber(SSL_CTX &ssl_ctx)
  * @return the number of expired sessions
  */
 static inline unsigned
-FlushSessionCache(SSL_CTX &ssl_ctx, long tm)
+FlushSessionCache(SSL_CTX &ssl_ctx, long tm) noexcept
 {
     const unsigned before = GetSessionCacheNumber(ssl_ctx);
     SSL_CTX_flush_sessions(&ssl_ctx, tm);

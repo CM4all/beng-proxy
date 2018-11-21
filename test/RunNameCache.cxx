@@ -49,17 +49,18 @@ public:
         cache.Connect();
     }
 
-    void Dispatch() {
+    void Dispatch() noexcept {
         event_loop.Dispatch();
     }
 
 private:
-    void OnShutdown() {
+    void OnShutdown() noexcept {
         cache.Disconnect();
     }
 
     /* virtual methods from CertNameCacheHandler */
-    void OnCertModified(const std::string &name, bool deleted) override {
+    void OnCertModified(const std::string &name,
+                        bool deleted) noexcept override {
         fprintf(stderr, "%s: %s\n",
                 deleted ? "deleted" : "modified",
                 name.c_str());

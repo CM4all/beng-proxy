@@ -47,7 +47,8 @@ struct CertDatabaseConfig;
 
 class CertNameCacheHandler {
 public:
-    virtual void OnCertModified(const std::string &name, bool deleted) = 0;
+    virtual void OnCertModified(const std::string &name,
+                                bool deleted) noexcept = 0;
 };
 
 /**
@@ -99,17 +100,17 @@ class CertNameCache final : Pg::AsyncConnectionHandler, Pg::AsyncResultHandler {
 public:
     CertNameCache(EventLoop &event_loop,
                   const CertDatabaseConfig &config,
-                  CertNameCacheHandler &_handler);
+                  CertNameCacheHandler &_handler) noexcept;
 
     auto &GetEventLoop() const noexcept {
         return update_timer.GetEventLoop();
     }
 
-    void Connect() {
+    void Connect() noexcept {
         conn.Connect();
     }
 
-    void Disconnect() {
+    void Disconnect() noexcept {
         conn.Disconnect();
         update_timer.Cancel();
     }
@@ -117,21 +118,21 @@ public:
     /**
      * Check if the given name exists in the database.
      */
-    bool Lookup(const char *host) const;
+    bool Lookup(const char *host) const noexcept;
 
 private:
-    void OnUpdateTimer();
+    void OnUpdateTimer() noexcept;
 
     void ScheduleUpdate() noexcept;
 
-    void UnscheduleUpdate() {
+    void UnscheduleUpdate() noexcept {
         update_timer.Cancel();
     }
 
     void AddAltNames(const std::string &common_name,
-                     std::forward_list<std::string> &&list);
+                     std::forward_list<std::string> &&list) noexcept;
     void RemoveAltNames(const std::string &common_name,
-                        std::forward_list<std::string> &&list);
+                        std::forward_list<std::string> &&list) noexcept;
 
     /* virtual methods from Pg::AsyncConnectionHandler */
     void OnConnect() override;
