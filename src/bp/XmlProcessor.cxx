@@ -379,6 +379,20 @@ processable(const StringMap &headers)
          strncmp(content_type, "application/xhtml+xml", 21) == 0);
 }
 
+gcc_pure
+static bool
+CanRewriteUri(StringView uri) noexcept
+{
+    if (uri.StartsWith("mailto:"))
+        /* ignore email links */
+        return false;
+
+    if (uri_has_authority(uri))
+        /* can't rewrite if the specified URI is absolute */
+        return false;
+
+    return true;
+}
 
 /*
  * async operation
@@ -790,12 +804,7 @@ XmlProcessor::TransformUriAttribute(const XmlParserAttribute &attr,
                                     const char *view) noexcept
 {
     StringView value = attr.value;
-    if (value.StartsWith("mailto:"))
-        /* ignore email links */
-        return;
-
-    if (uri_has_authority(value))
-        /* can't rewrite if the specified URI is absolute */
+    if (!CanRewriteUri(value))
         return;
 
     Widget *target_widget = nullptr;
