@@ -52,14 +52,15 @@ class UdpDistribute {
         UniqueSocketDescriptor fd;
         SocketEvent event;
 
-        Recipient(EventLoop &_event_loop, UniqueSocketDescriptor &&_fd);
+        Recipient(EventLoop &_event_loop,
+                  UniqueSocketDescriptor &&_fd) noexcept;
 
-        void RemoveAndDestroy() {
+        void RemoveAndDestroy() noexcept {
             delete this;
         }
 
     private:
-        void EventCallback(unsigned) {
+        void EventCallback(unsigned) noexcept {
             RemoveAndDestroy();
         }
     };
@@ -70,9 +71,9 @@ class UdpDistribute {
                            boost::intrusive::constant_time_size<false>> recipients;
 
 public:
-    explicit UdpDistribute(EventLoop &_event_loop):event_loop(_event_loop) {}
+    explicit UdpDistribute(EventLoop &_event_loop) noexcept:event_loop(_event_loop) {}
 
-    ~UdpDistribute() {
+    ~UdpDistribute() noexcept {
         Clear();
     }
 
@@ -80,9 +81,9 @@ public:
      * Throws std::system_error on error.
      */
     UniqueSocketDescriptor Add();
-    void Clear();
+    void Clear() noexcept;
 
-    void Packet(const void *payload, size_t payload_length);
+    void Packet(const void *payload, size_t payload_length) noexcept;
 };
 
 #endif

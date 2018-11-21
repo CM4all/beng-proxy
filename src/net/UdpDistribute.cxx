@@ -39,7 +39,7 @@
 #include <sys/socket.h>
 
 UdpDistribute::Recipient::Recipient(EventLoop &_event_loop,
-                                    UniqueSocketDescriptor &&_fd)
+                                    UniqueSocketDescriptor &&_fd) noexcept
     :fd(std::move(_fd)),
      event(_event_loop, BIND_THIS_METHOD(EventCallback), fd)
 {
@@ -47,7 +47,7 @@ UdpDistribute::Recipient::Recipient(EventLoop &_event_loop,
 }
 
 void
-UdpDistribute::Clear()
+UdpDistribute::Clear() noexcept
 {
     recipients.clear_and_dispose(DeleteDisposer());
 }
@@ -66,7 +66,7 @@ UdpDistribute::Add()
 }
 
 void
-UdpDistribute::Packet(const void *payload, size_t payload_length)
+UdpDistribute::Packet(const void *payload, size_t payload_length) noexcept
 {
     for (auto &ur : recipients)
         send(ur.fd.Get(), payload, payload_length, MSG_DONTWAIT|MSG_NOSIGNAL);
