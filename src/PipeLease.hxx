@@ -42,7 +42,8 @@ struct StockItem;
 class PipeLease {
     Stock *stock;
     StockItem *item = nullptr;
-    FileDescriptor fds[2]{FileDescriptor::Undefined(), FileDescriptor::Undefined()};
+    FileDescriptor read_fd = FileDescriptor::Undefined();
+    FileDescriptor write_fd = FileDescriptor::Undefined();
 
 public:
     explicit PipeLease(Stock *_stock) noexcept
@@ -50,21 +51,20 @@ public:
 
     PipeLease(PipeLease &&src) noexcept
         :stock(src.stock), item(std::exchange(src.item, nullptr)),
-         fds(src.fds) {
-        for (auto &fd : src.fds)
-            fd.SetUndefined();
-    }
+         read_fd(std::exchange(src.read_fd, FileDescriptor::Undefined())),
+         write_fd(std::exchange(src.write_fd, FileDescriptor::Undefined())) {}
 
     PipeLease &operator=(PipeLease &&src) noexcept {
         using std::swap;
         swap(stock, src.stock);
         swap(item, src.item);
-        swap(fds, src.fds);
+        swap(read_fd, src.read_fd);
+        swap(write_fd, src.write_fd);
         return *this;
     }
 
     bool IsDefined() const noexcept {
-        return fds[0].IsDefined();
+        return read_fd.IsDefined();
     }
 
     /**
@@ -90,15 +90,15 @@ public:
     }
 
     void CloseWriteIfNotStock() noexcept {
-        if (item == nullptr && fds[1].IsDefined())
-            fds[1].Close();
+        if (item == nullptr && write_fd.IsDefined())
+            write_fd.Close();
     }
 
     FileDescriptor GetReadFd() noexcept {
-        return fds[0];
+        return read_fd;
     }
 
     FileDescriptor GetWriteFd() noexcept {
-        return fds[1];
+        return write_fd;
     }
 };

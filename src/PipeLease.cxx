@@ -48,12 +48,13 @@ PipeLease::Release(bool reuse) noexcept
         assert(item != nullptr);
         item->Put(!reuse);
 
-        for (auto &fd : fds)
-            fd.SetUndefined();
+        read_fd.SetUndefined();
+        write_fd.SetUndefined();
     } else {
-        for (auto &fd : fds)
-            if (fd.IsDefined())
-                fd.Close();
+        if (read_fd.IsDefined())
+            read_fd.Close();
+        if (write_fd.IsDefined())
+            write_fd.Close();
     }
 }
 
@@ -66,9 +67,13 @@ PipeLease::Create(struct pool &pool)
         assert(item == nullptr);
 
         item = stock->GetNow(pool, nullptr);
+
+        FileDescriptor fds[2];
         pipe_stock_item_get(item, fds);
+        read_fd = fds[0];
+        write_fd = fds[0];
     } else {
-        if (!FileDescriptor::CreatePipeNonBlock(fds[0], fds[1]))
+        if (!FileDescriptor::CreatePipeNonBlock(read_fd, write_fd))
             throw MakeErrno("pipe() failed");
     }
 }
