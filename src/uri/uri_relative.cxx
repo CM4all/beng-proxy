@@ -41,10 +41,8 @@ uri_relative(StringView base, StringView uri)
     if (base.empty() || uri.empty())
         return nullptr;
 
-    if (uri.StartsWith(base)) {
-        uri.skip_front(base.size);
+    if (uri.SkipPrefix(base))
         return uri;
-    }
 
     /* special case: http://hostname without trailing slash */
     if (uri.size == base.size - 1 &&

@@ -206,8 +206,7 @@ Widget::AbsoluteUri(struct pool &_pool, bool stateful,
 {
     assert(GetAddress()->IsHttp());
 
-    if (relative_uri.StartsWith("~/")) {
-        relative_uri.skip_front(2);
+    if (relative_uri.SkipPrefix("~/")) {
         stateful = false;
     } else if (!relative_uri.empty() && relative_uri.front() == '/' &&
                cls != nullptr && cls->anchor_absolute) {
@@ -241,9 +240,7 @@ Widget::RelativeUri(struct pool &_pool, bool stateful,
                     StringView relative_uri) const
 {
     const ResourceAddress *base;
-    if (relative_uri.size >= 2 && relative_uri[0] == '~' &&
-        relative_uri[1] == '/') {
-        relative_uri.skip_front(2);
+    if (relative_uri.SkipPrefix("~/")) {
         base = widget_get_original_address(this);
     } else if (relative_uri.size >= 1 && relative_uri[0] == '/' &&
                cls != nullptr && cls->anchor_absolute) {

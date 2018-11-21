@@ -655,8 +655,7 @@ XmlProcessor::OnStartElementInWidget(XmlParserTagType type,
     if (type == XmlParserTagType::PI)
         return OnProcessingInstruction(name);
 
-    if (name.StartsWith("c:"))
-        name.skip_front(2);
+    name.SkipPrefix("c:");
 
     if (name.Equals("widget")) {
         if (type == XmlParserTagType::CLOSE)
