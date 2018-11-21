@@ -297,11 +297,10 @@ private:
     }
 
     void PostponeUriRewrite(off_t start, off_t end,
-                            const void *value, size_t length) noexcept;
+                            StringView value) noexcept;
 
     void PostponeUriRewrite(const XmlParserAttribute &attr) noexcept {
-        PostponeUriRewrite(attr.value_start, attr.value_end,
-                           attr.value.data, attr.value.size);
+        PostponeUriRewrite(attr.value_start, attr.value_end, attr.value);
     }
 
     void PostponeRefreshRewrite(const XmlParserAttribute &attr) noexcept;
@@ -497,7 +496,7 @@ processor_lookup_widget(struct pool &caller_pool,
 
 void
 XmlProcessor::PostponeUriRewrite(off_t start, off_t end,
-                                 const void *value, size_t length) noexcept
+                                 StringView value) noexcept
 {
     assert(start <= end);
 
@@ -512,7 +511,7 @@ XmlProcessor::PostponeUriRewrite(off_t start, off_t end,
     postponed_rewrite.uri_start = start;
     postponed_rewrite.uri_end = end;
 
-    bool success = postponed_rewrite.value.Set(value, length);
+    bool success = postponed_rewrite.value.Set(value);
 
     for (unsigned i = 0; i < ARRAY_SIZE(postponed_rewrite.delete_); ++i)
         postponed_rewrite.delete_[i].start = 0;
@@ -560,7 +559,7 @@ XmlProcessor::PostponeRefreshRewrite(const XmlParserAttribute &attr) noexcept
        set the "pending" flag */
 
     PostponeUriRewrite(attr.value_start + (p - attr.value.data),
-                       attr.value_end - 1, p, end - 1 - p);
+                       attr.value_end - 1, {p, end - 1});
 }
 
 inline void
