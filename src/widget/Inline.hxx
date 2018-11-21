@@ -56,6 +56,6 @@ extern const struct timeval inline_widget_body_timeout;
 UnusedIstreamPtr
 embed_inline_widget(struct pool &pool, struct processor_env &env,
                     bool plain_text,
-                    Widget &widget);
+                    Widget &widget) noexcept;
 
 #endif

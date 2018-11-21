@@ -87,7 +87,7 @@ public:
     InlineWidget(struct pool &_pool, struct processor_env &_env,
                  bool _plain_text,
                  Widget &_widget,
-                 DelayedIstreamControl &_delayed)
+                 DelayedIstreamControl &_delayed) noexcept
         :pool(_pool), env(_env),
          plain_text(_plain_text),
          widget(_widget),
@@ -110,10 +110,10 @@ private:
         delayed.SetError(ep);
     }
 
-    void SendRequest();
-    void ResolverCallback();
+    void SendRequest() noexcept;
+    void ResolverCallback() noexcept;
 
-    void OnHeaderTimeout() {
+    void OnHeaderTimeout() noexcept {
         Cancel();
         Fail(std::make_exception_ptr(std::runtime_error("Header timeout")));
     }
@@ -265,7 +265,7 @@ InlineWidget::Cancel() noexcept
  */
 
 void
-InlineWidget::SendRequest()
+InlineWidget::SendRequest() noexcept
 {
     if (!widget_check_approval(&widget)) {
         WidgetError error(*widget.parent, WidgetErrorCode::FORBIDDEN,
@@ -314,7 +314,7 @@ InlineWidget::SendRequest()
  */
 
 void
-InlineWidget::ResolverCallback()
+InlineWidget::ResolverCallback() noexcept
 {
     if (widget.cls != nullptr) {
         SendRequest();
@@ -346,7 +346,7 @@ InlineWidget::Start() noexcept
 UnusedIstreamPtr
 embed_inline_widget(struct pool &pool, struct processor_env &env,
                     bool plain_text,
-                    Widget &widget)
+                    Widget &widget) noexcept
 {
     SharedPoolPtr<PauseIstreamControl> pause;
     if (widget.from_request.body) {
