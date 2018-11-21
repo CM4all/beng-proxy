@@ -134,7 +134,7 @@ public:
 
 private:
     /* virtual methods from class ExitListener */
-    void OnChildProcessExit(int status) override;
+    void OnChildProcessExit(int status) noexcept override;
 };
 
 void
@@ -153,7 +153,7 @@ ChildStockItem::Spawn(ChildStockClass &cls, void *info,
 }
 
 void
-ChildStockItem::OnChildProcessExit(gcc_unused int status)
+ChildStockItem::OnChildProcessExit(gcc_unused int status) noexcept
 {
     pid = -1;
 

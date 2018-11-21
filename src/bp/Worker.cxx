@@ -74,7 +74,7 @@ BpInstance::ScheduleSpawnWorker()
 }
 
 void
-BpWorker::OnChildProcessExit(int status)
+BpWorker::OnChildProcessExit(int status) noexcept
 {
     const bool safe = crash_is_safe(&crash);
 

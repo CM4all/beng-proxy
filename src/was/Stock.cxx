@@ -224,7 +224,7 @@ public:
 
 private:
     /* virtual methods from class ExitListener */
-    void OnChildProcessExit(gcc_unused int status) override {
+    void OnChildProcessExit(gcc_unused int status) noexcept override {
         process.pid = -1;
     }
 };

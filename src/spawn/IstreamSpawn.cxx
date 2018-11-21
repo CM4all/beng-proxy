@@ -128,7 +128,7 @@ struct SpawnIstream final : Istream, IstreamHandler, ExitListener {
     void OnError(std::exception_ptr ep) noexcept override;
 
     /* virtual methods from class ExitListener */
-    void OnChildProcessExit(int status) override;
+    void OnChildProcessExit(int status) noexcept override;
 };
 
 void
@@ -371,7 +371,7 @@ SpawnIstream::_Close() noexcept
  */
 
 void
-SpawnIstream::OnChildProcessExit(gcc_unused int status)
+SpawnIstream::OnChildProcessExit(gcc_unused int status) noexcept
 {
     assert(pid >= 0);
 

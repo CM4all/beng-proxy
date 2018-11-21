@@ -61,7 +61,7 @@ struct BpWorker final
     }
 
     /* virtual methods from class ExitListener */
-    void OnChildProcessExit(int status) override;
+    void OnChildProcessExit(int status) noexcept override;
 };
 
 #endif
