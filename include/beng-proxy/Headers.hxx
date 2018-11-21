@@ -166,7 +166,7 @@ struct HeaderForwardPacket {
     uint8_t reserved;
 };
 
-static_assert(sizeof(HeaderForwardPacket) == 4);
+static_assert(sizeof(HeaderForwardPacket) == 4, "Wrong struct size");
 
 } // namespace BengProxy
 
