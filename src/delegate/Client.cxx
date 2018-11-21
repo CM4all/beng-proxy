@@ -96,7 +96,7 @@ struct DelegateClient final : PoolHolder, Cancellable {
     void TryRead();
 
 private:
-    void SocketEventCallback(unsigned) {
+    void SocketEventCallback(unsigned) noexcept {
         TryRead();
     }
 

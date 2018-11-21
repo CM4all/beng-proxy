@@ -146,12 +146,12 @@ struct LbInstance final : PInstance {
 
     unsigned FlushSSLSessionCache(long tm);
 
-    void ShutdownCallback();
+    void ShutdownCallback() noexcept;
 
-    void ReloadEventCallback(int signo);
+    void ReloadEventCallback(int signo) noexcept;
 
 private:
-    void OnCompressTimer();
+    void OnCompressTimer() noexcept;
 };
 
 struct client_connection;

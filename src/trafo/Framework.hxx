@@ -91,7 +91,7 @@ public:
 private:
     void Setup();
 
-    void OnQuitSignal() {
+    void OnQuitSignal() noexcept {
         cerr << "quit" << endl;
         event_loop.Break();
     }

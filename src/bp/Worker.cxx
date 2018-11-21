@@ -49,7 +49,7 @@
 #include <errno.h>
 
 void
-BpInstance::RespawnWorkerCallback()
+BpInstance::RespawnWorkerCallback() noexcept
 {
     if (should_exit || workers.size() >= config.num_workers)
         return;

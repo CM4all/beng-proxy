@@ -180,7 +180,7 @@ struct BpInstance final : PInstance, ControlHandler {
 
     void Compress();
     void ScheduleCompress();
-    void OnCompressTimer();
+    void OnCompressTimer() noexcept;
 
     void ScheduleSaveSessions();
 
@@ -200,9 +200,9 @@ struct BpInstance final : PInstance, ControlHandler {
     void FadeChildren();
     void FadeTaggedChildren(const char *tag);
 
-    void ShutdownCallback();
+    void ShutdownCallback() noexcept;
 
-    void ReloadEventCallback(int signo);
+    void ReloadEventCallback(int signo) noexcept;
 
     void AddListener(const BpConfig::Listener &c);
     void AddTcpListener(int port);
@@ -222,11 +222,11 @@ struct BpInstance final : PInstance, ControlHandler {
     void OnControlError(std::exception_ptr ep) noexcept override;
 
 private:
-    void RespawnWorkerCallback();
+    void RespawnWorkerCallback() noexcept;
 
-    bool AllocatorCompressCallback();
+    bool AllocatorCompressCallback() noexcept;
 
-    void SaveSesssions();
+    void SaveSesssions() noexcept;
 
     void FreeStocksAndCaches();
 };

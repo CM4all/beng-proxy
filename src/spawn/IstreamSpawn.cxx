@@ -103,13 +103,13 @@ struct SpawnIstream final : Istream, IstreamHandler, ExitListener {
 
     void ReadFromOutput();
 
-    void InputEventCallback(unsigned) {
+    void InputEventCallback(unsigned) noexcept {
         input_event.Cancel(); // TODO: take advantage of EV_PERSIST
 
         input.Read();
     }
 
-    void OutputEventCallback(unsigned) {
+    void OutputEventCallback(unsigned) noexcept {
         output_event.Cancel(); // TODO: take advantage of EV_PERSIST
 
         ReadFromOutput();

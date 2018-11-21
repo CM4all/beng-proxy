@@ -90,7 +90,7 @@ public:
 
         void Destroy();
 
-        void ScheduleHandshakeCallback(BoundMethod<void()> callback) {
+        void ScheduleHandshakeCallback(BoundMethod<void() noexcept> callback) {
             socket.ScheduleReadNoTimeout(false);
             socket.SetHandshakeCallback(callback);
         }

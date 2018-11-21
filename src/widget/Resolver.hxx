@@ -40,7 +40,7 @@ struct Widget;
 struct tcache;
 class CancellablePointer;
 
-typedef BoundMethod<void()> WidgetResolverCallback;
+typedef BoundMethod<void() noexcept> WidgetResolverCallback;
 
 /**
  * Wrapper for widget-registry.h which resolves widget classes.  This

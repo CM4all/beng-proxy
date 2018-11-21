@@ -155,7 +155,7 @@ class ThreadSocketFilter final : public SocketFilter, ThreadSocketFilterInternal
      */
     ThreadSocketFilterHandler *const handler;
 
-    BoundMethod<void()> handshake_callback{nullptr};
+    BoundMethod<void() noexcept> handshake_callback{nullptr};
 
     /**
      * This event moves a call out of the current stack frame.  It is
@@ -295,7 +295,7 @@ public:
         socket = &_socket;
     }
 
-    void SetHandshakeCallback(BoundMethod<void()> callback) noexcept override;
+    void SetHandshakeCallback(BoundMethod<void() noexcept> callback) noexcept override;
     BufferedResult OnData() noexcept override;
     bool IsEmpty() const noexcept override;
     bool IsFull() const noexcept override;

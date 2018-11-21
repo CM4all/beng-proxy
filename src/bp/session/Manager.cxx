@@ -185,7 +185,7 @@ struct SessionContainer {
     /**
      * @return true if there is at least one session
      */
-    bool Cleanup();
+    bool Cleanup() noexcept;
 
     /**
      * Forcefully deletes at least one session.
@@ -331,7 +331,7 @@ public:
         return container->Purge();
     }
 
-    void Cleanup();
+    void Cleanup() noexcept;
 
     struct dpool *NewDpool() {
         return dpool_new(*shm);
@@ -361,7 +361,7 @@ SessionContainer::EraseAndDispose(Session &session)
 }
 
 inline bool
-SessionContainer::Cleanup()
+SessionContainer::Cleanup() noexcept
 {
     assert(!crash_in_unsafe());
     assert(locked_session == nullptr);
@@ -384,7 +384,7 @@ SessionContainer::Cleanup()
 }
 
 void
-SessionManager::Cleanup()
+SessionManager::Cleanup() noexcept
 {
     if (container->Cleanup())
         cleanup_timer.Add(cleanup_interval);

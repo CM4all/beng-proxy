@@ -56,11 +56,11 @@ class FallbackEvent {
 
     const unsigned events;
 
-    const BoundMethod<void()> callback;
+    const BoundMethod<void() noexcept> callback;
 
 public:
     FallbackEvent(EventLoop &event_loop, FileDescriptor fd, unsigned _events,
-                  BoundMethod<void()> _callback)
+                  BoundMethod<void() noexcept> _callback)
         :socket_event(event_loop, BIND_THIS_METHOD(OnSocket),
                       SocketDescriptor::FromFileDescriptor(fd)),
          defer_event(event_loop, _callback),
@@ -83,7 +83,7 @@ public:
     }
 
 private:
-    void OnSocket(unsigned) {
+    void OnSocket(unsigned) noexcept {
         callback();
     }
 };
@@ -152,8 +152,8 @@ private:
     void Destroy();
     bool CheckDestroy();
 
-    void ReadEventCallback();
-    void WriteEventCallback();
+    void ReadEventCallback() noexcept;
+    void WriteEventCallback() noexcept;
 
     bool TryReadSocket() noexcept;
     bool TryWriteSocket() noexcept;
@@ -187,7 +187,7 @@ Duplex::CheckDestroy()
 }
 
 inline void
-Duplex::ReadEventCallback()
+Duplex::ReadEventCallback() noexcept
 {
     ssize_t nbytes = read_to_buffer(read_fd.Get(), from_read, INT_MAX);
     if (nbytes == -1) {
@@ -209,7 +209,7 @@ Duplex::ReadEventCallback()
 }
 
 inline void
-Duplex::WriteEventCallback()
+Duplex::WriteEventCallback() noexcept
 {
     ssize_t nbytes = write_from_buffer(write_fd.Get(), to_write);
     if (nbytes == -1) {

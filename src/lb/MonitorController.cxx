@@ -107,7 +107,7 @@ LbMonitorController::Error(std::exception_ptr e)
 }
 
 inline void
-LbMonitorController::IntervalCallback()
+LbMonitorController::IntervalCallback() noexcept
 {
     assert(!cancel_ptr);
 
@@ -120,7 +120,7 @@ LbMonitorController::IntervalCallback()
 }
 
 inline void
-LbMonitorController::TimeoutCallback()
+LbMonitorController::TimeoutCallback() noexcept
 {
     assert(cancel_ptr);
 

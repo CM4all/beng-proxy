@@ -49,7 +49,7 @@ public:
     /**
      * @see FilteredSocket::SetHandshakeCallback()
      */
-    virtual void SetHandshakeCallback(BoundMethod<void()> callback) noexcept {
+    virtual void SetHandshakeCallback(BoundMethod<void() noexcept> callback) noexcept {
         callback();
     }
 

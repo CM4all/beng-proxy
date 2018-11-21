@@ -200,7 +200,7 @@ public:
     void CancelStore() noexcept;
 
 private:
-    void OnTimeout();
+    void OnTimeout() noexcept;
 
     /* virtual methods from class Cancellable */
     void Cancel() noexcept override;
@@ -295,7 +295,7 @@ private:
         slice_pool.Compress();
     }
 
-    void OnCompressTimer() {
+    void OnCompressTimer() noexcept {
         Compress();
         compress_timer.Add(fcache_compress_interval);
     }
@@ -431,7 +431,7 @@ filter_cache_response_evaluate(FilterCacheInfo &info,
 }
 
 inline void
-FilterCacheRequest::OnTimeout()
+FilterCacheRequest::OnTimeout() noexcept
 {
     /* reading the response has taken too long already; don't store
        this resource */
