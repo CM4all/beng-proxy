@@ -126,7 +126,7 @@ struct FilterCacheItem final : PoolHolder, CacheItem, LeakDetector {
     }
 
     /* virtual methods from class CacheItem */
-    void Destroy() override {
+    void Destroy() noexcept override {
         pool_trash(pool);
         this->~FilterCacheItem();
     }

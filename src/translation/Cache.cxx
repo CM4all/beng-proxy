@@ -179,8 +179,8 @@ struct TranslateCacheItem final : PoolHolder, CacheItem {
     }
 
     /* virtual methods from class CacheItem */
-    bool Validate() const override;
-    void Destroy() override;
+    bool Validate() const noexcept override;
+    void Destroy() noexcept override;
 };
 
 struct TranslateCachePerHost
@@ -1440,13 +1440,13 @@ tcache_validate_mtime(const TranslateResponse &response,
  */
 
 bool
-TranslateCacheItem::Validate() const
+TranslateCacheItem::Validate() const noexcept
 {
     return tcache_validate_mtime(response, key);
 }
 
 void
-TranslateCacheItem::Destroy()
+TranslateCacheItem::Destroy() noexcept
 {
     if (per_host != nullptr)
         per_host->Erase(*this);

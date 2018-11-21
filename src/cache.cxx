@@ -38,7 +38,7 @@
 #include <string.h>
 
 inline size_t
-CacheItem::KeyHasher(const char *key)
+CacheItem::KeyHasher(const char *key) noexcept
 {
     assert(key != nullptr);
 
@@ -46,7 +46,7 @@ CacheItem::KeyHasher(const char *key)
 }
 
 bool
-CacheItem::KeyValueEqual(const char *a, const CacheItem &b)
+CacheItem::KeyValueEqual(const char *a, const CacheItem &b) noexcept
 {
     assert(a != nullptr);
 
@@ -54,7 +54,7 @@ CacheItem::KeyValueEqual(const char *a, const CacheItem &b)
 }
 
 void
-CacheItem::Release()
+CacheItem::Release() noexcept
 {
     if (lock == 0)
         Destroy();
@@ -64,14 +64,14 @@ CacheItem::Release()
 }
 
 Cache::Cache(EventLoop &event_loop,
-             unsigned hashtable_capacity, size_t _max_size)
+             unsigned hashtable_capacity, size_t _max_size) noexcept
     :max_size(_max_size),
      buckets(new ItemSet::bucket_type[hashtable_capacity]),
      items(ItemSet::bucket_traits(buckets.get(), hashtable_capacity)),
      cleanup_timer(event_loop, std::chrono::minutes(1),
                    BIND_THIS_METHOD(ExpireCallback)) {}
 
-Cache::~Cache()
+Cache::~Cache() noexcept
 {
     items.clear_and_dispose([this](CacheItem *item){
             assert(item->lock == 0);
@@ -96,7 +96,7 @@ Cache::SteadyNow() const noexcept
 }
 
 void
-Cache::ItemRemoved(CacheItem *item)
+Cache::ItemRemoved(CacheItem *item) noexcept
 {
     assert(item != nullptr);
     assert(item->size > 0);
@@ -114,21 +114,21 @@ Cache::ItemRemoved(CacheItem *item)
 }
 
 void
-Cache::Flush()
+Cache::Flush() noexcept
 {
     items.clear_and_dispose(Cache::ItemRemover(*this));
 }
 
 static bool
 cache_item_validate(CacheItem *item,
-                    std::chrono::steady_clock::time_point now)
+                    std::chrono::steady_clock::time_point now) noexcept
 {
     return now < item->expires && item->Validate();
 }
 
 void
 Cache::RefreshItem(CacheItem &item,
-                   std::chrono::steady_clock::time_point now)
+                   std::chrono::steady_clock::time_point now) noexcept
 {
     item.last_accessed = now;
 
@@ -138,7 +138,7 @@ Cache::RefreshItem(CacheItem &item,
 }
 
 void
-Cache::RemoveItem(CacheItem &item)
+Cache::RemoveItem(CacheItem &item) noexcept
 {
     assert(!item.removed);
 
@@ -147,7 +147,7 @@ Cache::RemoveItem(CacheItem &item)
 }
 
 CacheItem *
-Cache::Get(const char *key)
+Cache::Get(const char *key) noexcept
 {
     auto i = items.find(key, CacheItem::KeyHasher, CacheItem::KeyValueEqual);
     if (i == items.end())
@@ -169,7 +169,7 @@ Cache::Get(const char *key)
 CacheItem *
 Cache::GetMatch(const char *key,
                 bool (*match)(const CacheItem *, void *),
-                void *ctx)
+                void *ctx) noexcept
 {
     const auto now = SteadyNow();
 
@@ -194,7 +194,7 @@ Cache::GetMatch(const char *key,
 }
 
 void
-Cache::DestroyOldestItem()
+Cache::DestroyOldestItem() noexcept
 {
     if (sorted_items.empty())
         return;
@@ -204,7 +204,7 @@ Cache::DestroyOldestItem()
 }
 
 bool
-Cache::NeedRoom(size_t _size)
+Cache::NeedRoom(size_t _size) noexcept
 {
     if (_size > max_size)
         return false;
@@ -218,7 +218,7 @@ Cache::NeedRoom(size_t _size)
 }
 
 bool
-Cache::Add(const char *key, CacheItem &item)
+Cache::Add(const char *key, CacheItem &item) noexcept
 {
     /* XXX size constraints */
     if (!NeedRoom(item.size)) {
@@ -238,7 +238,7 @@ Cache::Add(const char *key, CacheItem &item)
 }
 
 bool
-Cache::Put(const char *key, CacheItem &item)
+Cache::Put(const char *key, CacheItem &item) noexcept
 {
     /* XXX size constraints */
 
@@ -270,7 +270,7 @@ Cache::Put(const char *key, CacheItem &item)
 
 bool
 Cache::PutMatch(const char *key, CacheItem &item,
-                bool (*match)(const CacheItem *, void *), void *ctx)
+                bool (*match)(const CacheItem *, void *), void *ctx) noexcept
 {
     auto *old = GetMatch(key, match, ctx);
 
@@ -285,7 +285,7 @@ Cache::PutMatch(const char *key, CacheItem &item,
 }
 
 void
-Cache::Remove(const char *key)
+Cache::Remove(const char *key) noexcept
 {
     items.erase_and_dispose(key, CacheItem::KeyHasher,
                             CacheItem::KeyValueEqual,
@@ -296,7 +296,8 @@ Cache::Remove(const char *key)
 
 void
 Cache::RemoveMatch(const char *key,
-                   bool (*match)(const CacheItem *, void *), void *ctx)
+                   bool (*match)(const CacheItem *, void *),
+                   void *ctx) noexcept
 {
     const auto r = items.equal_range(key, CacheItem::KeyHasher,
                                      CacheItem::KeyValueEqual);
@@ -309,7 +310,7 @@ Cache::RemoveMatch(const char *key,
 }
 
 void
-Cache::Remove(CacheItem &item)
+Cache::Remove(CacheItem &item) noexcept
 {
     if (item.removed) {
         /* item has already been removed by somebody else */
@@ -321,7 +322,8 @@ Cache::Remove(CacheItem &item)
 }
 
 unsigned
-Cache::RemoveAllMatch(bool (*match)(const CacheItem *, void *), void *ctx)
+Cache::RemoveAllMatch(bool (*match)(const CacheItem *, void *),
+                      void *ctx) noexcept
 {
     unsigned removed = 0;
 
@@ -342,7 +344,7 @@ Cache::RemoveAllMatch(bool (*match)(const CacheItem *, void *), void *ctx)
 
 static std::chrono::steady_clock::time_point
 ToSteady(std::chrono::steady_clock::time_point steady_now,
-         std::chrono::system_clock::time_point t)
+         std::chrono::system_clock::time_point t) noexcept
 {
     const auto now = std::chrono::system_clock::now();
     return t > now
@@ -352,19 +354,19 @@ ToSteady(std::chrono::steady_clock::time_point steady_now,
 
 CacheItem::CacheItem(std::chrono::steady_clock::time_point now,
                      std::chrono::system_clock::time_point _expires,
-                     size_t _size)
+                     size_t _size) noexcept
     :CacheItem(ToSteady(now, _expires), _size)
 {
 }
 
 CacheItem::CacheItem(std::chrono::steady_clock::time_point now,
-                     std::chrono::seconds max_age, size_t _size)
+                     std::chrono::seconds max_age, size_t _size) noexcept
     :CacheItem(now + max_age, _size)
 {
 }
 
 void
-CacheItem::Unlock()
+CacheItem::Unlock() noexcept
 {
     assert(lock > 0);
 
@@ -375,7 +377,7 @@ CacheItem::Unlock()
 
 /** clean up expired cache items every 60 seconds */
 bool
-Cache::ExpireCallback()
+Cache::ExpireCallback() noexcept
 {
     const auto now = SteadyNow();
 
@@ -393,14 +395,14 @@ Cache::ExpireCallback()
 }
 
 void
-Cache::EventAdd()
+Cache::EventAdd() noexcept
 {
     if (size > 0)
         cleanup_timer.Enable();
 }
 
 void
-Cache::EventDel()
+Cache::EventDel() noexcept
 {
     cleanup_timer.Disable();
 }

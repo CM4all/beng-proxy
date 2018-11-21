@@ -61,7 +61,7 @@ struct MyCacheItem final : CacheItem {
     }
 
     /* virtual methods from class CacheItem */
-    void Destroy() override {
+    void Destroy() noexcept override {
         struct pool *_pool = pool;
 
         p_free(_pool, this);

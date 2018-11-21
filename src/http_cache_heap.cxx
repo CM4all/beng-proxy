@@ -76,7 +76,7 @@ struct HttpCacheItem final : PoolHolder, HttpCacheDocument, CacheItem {
     }
 
     /* virtual methods from class CacheItem */
-    void Destroy() override {
+    void Destroy() noexcept override {
         pool_trash(pool);
         this->~HttpCacheItem();
     }
