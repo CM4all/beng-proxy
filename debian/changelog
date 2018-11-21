@@ -1,6 +1,7 @@
 cm4all-beng-proxy (15.0.7) unstable; urgency=low
 
   * translation: fix assertion failure
+  * translation: fix use-after-free bug in PROBE_SUFFIX handler
   * certdb: add option --account-key
 
  --   
