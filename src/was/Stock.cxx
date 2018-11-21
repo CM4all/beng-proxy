@@ -79,11 +79,11 @@ struct WasChildParams {
 
     WasChildParams(const char *_executable_path,
                    ConstBuffer<const char *> _args,
-                   const ChildOptions &_options)
+                   const ChildOptions &_options) noexcept
         :executable_path(_executable_path), args(_args),
          options(_options) {}
 
-    const char *GetStockKey(struct pool &pool) const;
+    const char *GetStockKey(struct pool &pool) const noexcept;
 };
 
 class WasChild final : public StockItem, ExitListener {
@@ -159,7 +159,7 @@ public:
         return process;
     }
 
-    void Stop(uint64_t _received) {
+    void Stop(uint64_t _received) noexcept {
         assert(!is_idle);
         assert(!stopping);
 
@@ -198,7 +198,7 @@ private:
      */
     void RecoverStop();
 
-    void EventCallback(unsigned events);
+    void EventCallback(unsigned events) noexcept;
     void OnIdleTimeout() noexcept;
 
 public:
@@ -230,7 +230,7 @@ private:
 };
 
 const char *
-WasChildParams::GetStockKey(struct pool &pool) const
+WasChildParams::GetStockKey(struct pool &pool) const noexcept
 {
     PoolStringBuilder<256> b;
     b.push_back(executable_path);
@@ -388,7 +388,7 @@ WasChild::RecoverStop()
  */
 
 inline void
-WasChild::EventCallback(unsigned)
+WasChild::EventCallback(unsigned) noexcept
 {
     if (stopping) {
         RecoverStop();
@@ -426,16 +426,16 @@ class WasStock final : StockClass {
 public:
     explicit WasStock(EventLoop &event_loop, SpawnService &_spawn_service,
                       const SocketDescriptor _log_socket,
-                      unsigned limit, unsigned max_idle)
+                      unsigned limit, unsigned max_idle) noexcept
         :spawn_service(_spawn_service),
          log_socket(_log_socket),
          stock(event_loop, *this, limit, max_idle) {}
 
-    StockMap &GetStock() {
+    StockMap &GetStock() noexcept {
         return stock;
     }
 
-    void FadeTag(const char *tag) {
+    void FadeTag(const char *tag) noexcept {
         stock.FadeIf([tag](const StockItem &item){
                 const auto &child = (const WasChild &)item;
                 return child.IsTag(tag);
@@ -486,7 +486,7 @@ WasChild::~WasChild()
 StockMap *
 was_stock_new(unsigned limit, unsigned max_idle,
               EventLoop &event_loop, SpawnService &spawn_service,
-              SocketDescriptor log_socket)
+              SocketDescriptor log_socket) noexcept
 {
     auto *stock = new WasStock(event_loop, spawn_service, log_socket,
                                limit, max_idle);
@@ -494,14 +494,14 @@ was_stock_new(unsigned limit, unsigned max_idle,
 }
 
 void
-was_stock_free(StockMap *_stock)
+was_stock_free(StockMap *_stock) noexcept
 {
     auto *stock = (WasStock *)&_stock->GetClass();
     delete stock;
 }
 
 void
-was_stock_fade_tag(StockMap &_stock, const char *tag)
+was_stock_fade_tag(StockMap &_stock, const char *tag) noexcept
 {
     auto &stock = (WasStock &)_stock.GetClass();
     stock.FadeTag(tag);
@@ -513,7 +513,7 @@ was_stock_get(StockMap *hstock, struct pool *pool,
               const char *executable_path,
               ConstBuffer<const char *> args,
               StockGetHandler &handler,
-              CancellablePointer &cancel_ptr)
+              CancellablePointer &cancel_ptr) noexcept
 {
     const AutoRewindPool auto_rewind(*tpool);
 
@@ -539,7 +539,7 @@ was_stock_item_set_uri(StockItem &item, const char *uri) noexcept
 }
 
 const WasProcess &
-was_stock_item_get(const StockItem &item)
+was_stock_item_get(const StockItem &item) noexcept
 {
     auto *child = (const WasChild *)&item;
 
@@ -547,7 +547,7 @@ was_stock_item_get(const StockItem &item)
 }
 
 void
-was_stock_item_stop(StockItem &item, uint64_t received)
+was_stock_item_stop(StockItem &item, uint64_t received) noexcept
 {
     auto &child = (WasChild &)item;
     child.Stop(received);

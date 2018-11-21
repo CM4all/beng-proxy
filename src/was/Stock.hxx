@@ -55,13 +55,13 @@ class SocketDescriptor;
 StockMap *
 was_stock_new(unsigned limit, unsigned max_idle,
               EventLoop &event_loop, SpawnService &spawn_service,
-              SocketDescriptor log_socket);
+              SocketDescriptor log_socket) noexcept;
 
 void
-was_stock_free(StockMap *stock);
+was_stock_free(StockMap *stock) noexcept;
 
 void
-was_stock_fade_tag(StockMap &s, const char *tag);
+was_stock_fade_tag(StockMap &s, const char *tag) noexcept;
 
 /**
  * @param args command-line arguments
@@ -72,7 +72,7 @@ was_stock_get(StockMap *hstock, struct pool *pool,
               const char *executable_path,
               ConstBuffer<const char *> args,
               StockGetHandler &handler,
-              CancellablePointer &cancel_ptr);
+              CancellablePointer &cancel_ptr) noexcept;
 
 void
 was_stock_item_set_site(StockItem &item, const char *site) noexcept;
@@ -85,7 +85,7 @@ was_stock_item_set_uri(StockItem &item, const char *uri) noexcept;
  */
 gcc_pure
 const WasProcess &
-was_stock_item_get(const StockItem &item);
+was_stock_item_get(const StockItem &item) noexcept;
 
 /**
  * Set the "stopping" flag.  Call this after sending
@@ -93,6 +93,6 @@ was_stock_item_get(const StockItem &item);
  * stock wait for #WAS_COMMAND_PREMATURE.
  */
 void
-was_stock_item_stop(StockItem &item, uint64_t received);
+was_stock_item_stop(StockItem &item, uint64_t received) noexcept;
 
 #endif
