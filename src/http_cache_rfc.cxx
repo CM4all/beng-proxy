@@ -237,7 +237,7 @@ http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
                 s.Equals("no-cache") || s.Equals("no-store"))
                 return false;
 
-            if (s.StartsWith({"max-age=", 8})) {
+            if (s.StartsWith("max-age=")) {
                 /* RFC 2616 14.9.3 */
                 char value[16];
                 int seconds;

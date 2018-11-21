@@ -206,7 +206,7 @@ Widget::AbsoluteUri(struct pool &_pool, bool stateful,
 {
     assert(GetAddress()->IsHttp());
 
-    if (relative_uri.StartsWith({"~/", 2})) {
+    if (relative_uri.StartsWith("~/")) {
         relative_uri.skip_front(2);
         stateful = false;
     } else if (!relative_uri.empty() && relative_uri.front() == '/' &&

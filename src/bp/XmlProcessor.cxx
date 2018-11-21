@@ -655,7 +655,7 @@ XmlProcessor::OnStartElementInWidget(XmlParserTagType type,
     if (type == XmlParserTagType::PI)
         return OnProcessingInstruction(name);
 
-    if (name.StartsWith({"c:", 2}))
+    if (name.StartsWith("c:"))
         name.skip_front(2);
 
     if (name.Equals("widget")) {
@@ -793,7 +793,7 @@ XmlProcessor::TransformUriAttribute(const XmlParserAttribute &attr,
                                     const char *view) noexcept
 {
     StringView value = attr.value;
-    if (value.StartsWith({"mailto:", 7}))
+    if (value.StartsWith("mailto:"))
         /* ignore email links */
         return;
 
@@ -1199,8 +1199,8 @@ XmlProcessor::OnXmlAttributeFinished(const XmlParserAttribute &attr) noexcept
 
     case Tag::A:
         if (attr.name.EqualsIgnoreCase("href")) {
-            if (!attr.value.StartsWith({"#", 1}) &&
-                !attr.value.StartsWith({"javascript:", 11}))
+            if (!attr.value.StartsWith("#") &&
+                !attr.value.StartsWith("javascript:"))
                 PostponeUriRewrite(attr);
         } else if (IsQuiet() &&
                    HasOptionPrefixId() &&
