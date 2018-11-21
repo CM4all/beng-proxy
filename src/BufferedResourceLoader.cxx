@@ -76,9 +76,9 @@ public:
         _cancel_ptr = *this;
     }
 
-    void Start(EventLoop &event_loop, Stock *pipe_stock,
+    void Start(EventLoop &_event_loop, Stock *_pipe_stock,
                UnusedIstreamPtr &&body) noexcept {
-        NewBufferedIstream(pool, event_loop, pipe_stock,
+        NewBufferedIstream(pool, _event_loop, _pipe_stock,
                            *this, std::move(body),
                            cancel_ptr);
     }
@@ -103,7 +103,7 @@ private:
                          handler, cancel_ptr);
     }
 
-    void OnBufferedIstreamError(std::exception_ptr e) noexcept {
+    void OnBufferedIstreamError(std::exception_ptr e) noexcept override {
         handler.InvokeError(std::move(e));
     }
 };
