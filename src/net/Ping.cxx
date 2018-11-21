@@ -43,7 +43,8 @@
 #include <netinet/ip_icmp.h>
 #include <unistd.h>
 
-PingClient::PingClient(EventLoop &event_loop, PingClientHandler &_handler)
+PingClient::PingClient(EventLoop &event_loop,
+                       PingClientHandler &_handler) noexcept
     :event(event_loop, BIND_THIS_METHOD(EventCallback)),
      timeout_event(event_loop, BIND_THIS_METHOD(OnTimeout)),
      handler(_handler)
@@ -51,14 +52,14 @@ PingClient::PingClient(EventLoop &event_loop, PingClientHandler &_handler)
 }
 
 inline void
-PingClient::ScheduleRead()
+PingClient::ScheduleRead() noexcept
 {
     event.ScheduleRead();
     timeout_event.Schedule(std::chrono::seconds(10));
 }
 
 static u_short
-in_cksum(const u_short *addr, int len, u_short csum)
+in_cksum(const u_short *addr, int len, u_short csum) noexcept
 {
 	int nleft = len;
 	const u_short *w = addr;
@@ -90,7 +91,7 @@ in_cksum(const u_short *addr, int len, u_short csum)
 }
 
 static bool
-parse_reply(struct msghdr *msg, size_t cc, uint16_t ident)
+parse_reply(struct msghdr *msg, size_t cc, uint16_t ident) noexcept
 {
     const void *buf = (const void *)msg->msg_iov->iov_base;
     const struct icmphdr *icp = (const struct icmphdr *)buf;
@@ -101,7 +102,7 @@ parse_reply(struct msghdr *msg, size_t cc, uint16_t ident)
 }
 
 inline void
-PingClient::Read()
+PingClient::Read() noexcept
 {
     char buffer[1024];
     struct iovec iov = {
@@ -144,7 +145,7 @@ PingClient::Read()
  */
 
 inline void
-PingClient::EventCallback(unsigned)
+PingClient::EventCallback(unsigned) noexcept
 {
     assert(fd.IsDefined());
 
@@ -166,7 +167,7 @@ PingClient::OnTimeout() noexcept
  */
 
 bool
-ping_available(void)
+ping_available(void) noexcept
 {
     int fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_ICMP);
     if (fd < 0)
@@ -229,7 +230,7 @@ SendPing(SocketDescriptor fd, SocketAddress address, uint16_t ident)
 }
 
 void
-PingClient::Start(SocketAddress address)
+PingClient::Start(SocketAddress address) noexcept
 {
     try {
         fd = CreateIcmp();

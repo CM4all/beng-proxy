@@ -42,9 +42,9 @@
 
 class PingClientHandler {
 public:
-    virtual void PingResponse() = 0;
-    virtual void PingTimeout() = 0;
-    virtual void PingError(std::exception_ptr ep) = 0;
+    virtual void PingResponse() noexcept = 0;
+    virtual void PingTimeout() noexcept = 0;
+    virtual void PingError(std::exception_ptr ep) noexcept = 0;
 };
 
 /**
@@ -63,11 +63,11 @@ class PingClient final {
 
 public:
     PingClient(EventLoop &event_loop,
-               PingClientHandler &_handler);
+               PingClientHandler &_handler) noexcept;
 
-    void Start(SocketAddress address);
+    void Start(SocketAddress address) noexcept;
 
-    void Cancel() {
+    void Cancel() noexcept {
         if (fd.IsDefined()) {
             timeout_event.Cancel();
             event.Cancel();
@@ -76,11 +76,11 @@ public:
     }
 
 private:
-    void ScheduleRead();
-    void EventCallback(unsigned events);
+    void ScheduleRead() noexcept;
+    void EventCallback(unsigned events) noexcept;
     void OnTimeout() noexcept;
 
-    void Read();
+    void Read() noexcept;
 };
 
 /**
@@ -88,6 +88,6 @@ private:
  */
 gcc_const
 bool
-ping_available();
+ping_available() noexcept;
 
 #endif

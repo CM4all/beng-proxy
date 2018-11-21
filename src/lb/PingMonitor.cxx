@@ -59,17 +59,17 @@ private:
     }
 
     /* virtual methods from class PingClientHandler */
-    void PingResponse() override {
+    void PingResponse() noexcept override {
         handler.Success();
         delete this;
     }
 
-    void PingTimeout() override {
+    void PingTimeout() noexcept override {
         handler.Timeout();
         delete this;
     }
 
-    void PingError(std::exception_ptr ep) override {
+    void PingError(std::exception_ptr ep) noexcept override {
         handler.Error(ep);
         delete this;
     }

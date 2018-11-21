@@ -44,16 +44,16 @@ static bool success;
 
 class MyPingClientHandler final : public PingClientHandler {
 public:
-    void PingResponse() override {
+    void PingResponse() noexcept override {
         success = true;
         printf("ok\n");
     }
 
-    void PingTimeout() override {
+    void PingTimeout() noexcept override {
         fprintf(stderr, "timeout\n");
     }
 
-    void PingError(std::exception_ptr ep) override {
+    void PingError(std::exception_ptr ep) noexcept override {
         PrintException(ep);
     }
 };
