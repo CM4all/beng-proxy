@@ -513,8 +513,9 @@ XmlProcessor::PostponeUriRewrite(off_t start, off_t end,
 
     bool success = postponed_rewrite.value.Set(value);
 
-    for (unsigned i = 0; i < ARRAY_SIZE(postponed_rewrite.delete_); ++i)
-        postponed_rewrite.delete_[i].start = 0;
+    for (auto &i : postponed_rewrite.delete_)
+        i.start = 0;
+
     postponed_rewrite.pending = success;
 }
 
@@ -585,11 +586,9 @@ XmlProcessor::CommitUriRewrite() noexcept
     /* now delete all c:base/c:mode attributes which followed the
        URI */
 
-    for (unsigned i = 0; i < ARRAY_SIZE(postponed_rewrite.delete_); ++i)
-        if (postponed_rewrite.delete_[i].start > 0)
-            Replace(postponed_rewrite.delete_[i].start,
-                    postponed_rewrite.delete_[i].end,
-                    nullptr);
+    for (const auto &i : postponed_rewrite.delete_)
+        if (i.start > 0)
+            Replace(i.start, i.end, nullptr);
 }
 
 /*
