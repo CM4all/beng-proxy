@@ -390,8 +390,9 @@ CanRewriteUri(StringView uri) noexcept
         /* can't rewrite URI fragments */
         return false;
 
-    if (uri.StartsWith("mailto:") || uri.StartsWith("javascript:"))
-        /* ignore email and JavaScript links */
+    if (uri.StartsWith("data:") ||
+        uri.StartsWith("mailto:") || uri.StartsWith("javascript:"))
+        /* ignore data, email and JavaScript links */
         return false;
 
     if (uri_has_authority(uri))
