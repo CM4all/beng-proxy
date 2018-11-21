@@ -56,9 +56,10 @@ public:
     }
 
     PipeLease &operator=(PipeLease &&src) noexcept {
-        std::swap(stock, src.stock);
-        std::swap(item, src.item);
-        std::swap(fds, src.fds);
+        using std::swap;
+        swap(stock, src.stock);
+        swap(item, src.item);
+        swap(fds, src.fds);
         return *this;
     }
 
