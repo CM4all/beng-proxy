@@ -518,6 +518,9 @@ XmlProcessor::PostponeUriRewrite(off_t start, off_t end,
         /* cannot rewrite more than one attribute per element */
         return;
 
+    if (!CanRewriteUri(value))
+        return;
+
     /* postpone the URI rewrite until the tag is finished: save the
        attribute value position, save the original attribute value and
        set the "pending" flag */
@@ -804,8 +807,9 @@ XmlProcessor::TransformUriAttribute(const XmlParserAttribute &attr,
                                     const char *view) noexcept
 {
     StringView value = attr.value;
-    if (!CanRewriteUri(value))
-        return;
+
+    /* this has been checked already by PostponeUriRewrite() */
+    assert(CanRewriteUri(value));
 
     Widget *target_widget = nullptr;
     StringView child_id, suffix;
