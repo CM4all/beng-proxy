@@ -386,8 +386,12 @@ CanRewriteUri(StringView uri) noexcept
     if (uri.empty())
         return false;
 
-    if (uri.StartsWith("mailto:"))
-        /* ignore email links */
+    if (uri.front() == '#')
+        /* can't rewrite URI fragments */
+        return false;
+
+    if (uri.StartsWith("mailto:") || uri.StartsWith("javascript:"))
+        /* ignore email and JavaScript links */
         return false;
 
     if (uri_has_authority(uri))
@@ -1212,9 +1216,7 @@ XmlProcessor::OnXmlAttributeFinished(const XmlParserAttribute &attr) noexcept
 
     case Tag::A:
         if (attr.name.EqualsIgnoreCase("href")) {
-            if (!attr.value.StartsWith("#") &&
-                !attr.value.StartsWith("javascript:"))
-                PostponeUriRewrite(attr);
+            PostponeUriRewrite(attr);
         } else if (IsQuiet() &&
                    HasOptionPrefixId() &&
                    attr.name.EqualsIgnoreCase("name"))
