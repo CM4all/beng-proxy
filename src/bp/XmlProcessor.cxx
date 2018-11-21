@@ -383,6 +383,9 @@ gcc_pure
 static bool
 CanRewriteUri(StringView uri) noexcept
 {
+    if (uri.empty())
+        return false;
+
     if (uri.StartsWith("mailto:"))
         /* ignore email links */
         return false;
