@@ -61,7 +61,7 @@ public:
      * The stock has become empty.  It is safe to delete it from
      * within this method.
      */
-    virtual void OnStockEmpty(Stock &stock) = 0;
+    virtual void OnStockEmpty(Stock &stock) noexcept = 0;
 };
 
 /**
@@ -131,9 +131,9 @@ class Stock {
 
         Waiting(Stock &_stock, struct pool &_pool, void *_info,
                 StockGetHandler &_handler,
-                CancellablePointer &_cancel_ptr);
+                CancellablePointer &_cancel_ptr) noexcept;
 
-        void Destroy();
+        void Destroy() noexcept;
 
         /* virtual methods from class Cancellable */
         void Cancel() noexcept override;
@@ -155,22 +155,22 @@ public:
     gcc_nonnull(4)
     Stock(EventLoop &event_loop, StockClass &cls,
           const char *name, unsigned limit, unsigned max_idle,
-          StockHandler *handler=nullptr);
+          StockHandler *handler=nullptr) noexcept;
 
-    ~Stock();
+    ~Stock() noexcept;
 
     Stock(const Stock &) = delete;
     Stock &operator=(const Stock &) = delete;
 
-    EventLoop &GetEventLoop() {
+    EventLoop &GetEventLoop() noexcept {
         return retry_event.GetEventLoop();
     }
 
-    StockClass &GetClass() {
+    StockClass &GetClass() noexcept {
         return cls;
     }
 
-    const char *GetName() const {
+    const char *GetName() const noexcept {
         return name.c_str();
     }
 
@@ -179,14 +179,14 @@ public:
      * nor busy.
      */
     gcc_pure
-    bool IsEmpty() const {
+    bool IsEmpty() const noexcept {
         return idle.empty() && busy.empty() && num_create == 0;
     }
 
     /**
      * Obtain statistics.
      */
-    void AddStats(StockStats &data) const {
+    void AddStats(StockStats &data) const noexcept {
         data.busy += busy.size();
         data.idle += idle.size();
     }
@@ -195,14 +195,14 @@ public:
      * Destroy all idle items and don't reuse any of the current busy
      * items.
      */
-    void FadeAll();
+    void FadeAll() noexcept;
 
     /**
      * Destroy all matching idle items and don't reuse any of the
      * matching busy items.
      */
     template<typename P>
-    void FadeIf(P &&predicate) {
+    void FadeIf(P &&predicate) noexcept {
         for (auto &i : busy)
             if (predicate(i))
                 i.fade = true;
@@ -217,17 +217,17 @@ private:
     /**
      * Check if the stock has become empty, and invoke the handler.
      */
-    void CheckEmpty();
-    void ScheduleCheckEmpty();
+    void CheckEmpty() noexcept;
+    void ScheduleCheckEmpty() noexcept;
 
-    void ScheduleClear() {
+    void ScheduleClear() noexcept {
         clear_event.Schedule(std::chrono::minutes(1));
     }
 
-    void ClearIdle();
+    void ClearIdle() noexcept;
 
     template<typename P>
-    void ClearIdleIf(P &&predicate) {
+    void ClearIdleIf(P &&predicate) noexcept {
         idle.remove_and_dispose_if(std::forward<P>(predicate),
                                    DeleteDisposer());
 
@@ -235,15 +235,15 @@ private:
             UnscheduleCleanup();
     }
 
-    bool GetIdle(StockGetHandler &handler);
+    bool GetIdle(StockGetHandler &handler) noexcept;
     void GetCreate(struct pool &caller_pool, void *info,
                    StockGetHandler &get_handler,
-                   CancellablePointer &cancel_ptr);
+                   CancellablePointer &cancel_ptr) noexcept;
 
 public:
     void Get(struct pool &caller_pool, void *info,
              StockGetHandler &get_handler,
-             CancellablePointer &cancel_ptr);
+             CancellablePointer &cancel_ptr) noexcept;
 
     /**
      * Obtains an item from the stock without going through the
@@ -254,34 +254,36 @@ public:
      */
     StockItem *GetNow(struct pool &caller_pool, void *info);
 
-    void Put(StockItem &item, bool destroy);
+    void Put(StockItem &item, bool destroy) noexcept;
 
-    void ItemIdleDisconnect(StockItem &item);
+    void ItemIdleDisconnect(StockItem &item) noexcept;
 
-    void ItemCreateSuccess(StockItem &item);
-    void ItemCreateError(StockItem &item, std::exception_ptr ep);
-    void ItemCreateAborted(StockItem &item);
+    void ItemCreateSuccess(StockItem &item) noexcept;
+    void ItemCreateError(StockItem &item, std::exception_ptr ep) noexcept;
+    void ItemCreateAborted(StockItem &item) noexcept;
 
-    void ItemCreateError(StockGetHandler &get_handler, std::exception_ptr ep);
-    void ItemCreateAborted();
+    void ItemCreateError(StockGetHandler &get_handler,
+                         std::exception_ptr ep) noexcept;
+    void ItemCreateAborted() noexcept;
 
     /**
      * Retry the waiting requests.  This is called after the number of
      * busy items was reduced.
      */
-    void RetryWaiting();
-    void ScheduleRetryWaiting();
+    void RetryWaiting() noexcept;
+    void ScheduleRetryWaiting() noexcept;
 
 private:
-    void ScheduleCleanup() {
+    void ScheduleCleanup() noexcept {
         cleanup_event.Schedule(std::chrono::seconds(20));
     }
 
-    void UnscheduleCleanup() {
+    void UnscheduleCleanup() noexcept {
         cleanup_event.Cancel();
     }
-    void CleanupEventCallback();
-    void ClearEventCallback();
+
+    void CleanupEventCallback() noexcept;
+    void ClearEventCallback() noexcept;
 };
 
 #endif

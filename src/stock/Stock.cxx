@@ -41,7 +41,7 @@
 inline
 Stock::Waiting::Waiting(Stock &_stock, struct pool &_pool, void *_info,
                         StockGetHandler &_handler,
-                        CancellablePointer &_cancel_ptr)
+                        CancellablePointer &_cancel_ptr) noexcept
     :stock(_stock), pool(_pool), info(_info),
      handler(_handler),
      cancel_ptr(_cancel_ptr)
@@ -51,14 +51,14 @@ Stock::Waiting::Waiting(Stock &_stock, struct pool &_pool, void *_info,
 }
 
 inline void
-Stock::Waiting::Destroy()
+Stock::Waiting::Destroy() noexcept
 {
     pool_unref(&pool);
     delete this;
 }
 
 void
-Stock::FadeAll()
+Stock::FadeAll() noexcept
 {
     for (auto &i : busy)
         i.fade = true;
@@ -75,14 +75,14 @@ Stock::FadeAll()
  */
 
 void
-Stock::CheckEmpty()
+Stock::CheckEmpty() noexcept
 {
     if (IsEmpty() && handler != nullptr)
         handler->OnStockEmpty(*this);
 }
 
 void
-Stock::ScheduleCheckEmpty()
+Stock::ScheduleCheckEmpty() noexcept
 {
     if (IsEmpty() && handler != nullptr)
         empty_event.Schedule();
@@ -95,7 +95,7 @@ Stock::ScheduleCheckEmpty()
  */
 
 void
-Stock::CleanupEventCallback()
+Stock::CleanupEventCallback() noexcept
 {
     assert(idle.size() > max_idle);
 
@@ -127,7 +127,7 @@ Stock::Waiting::Cancel() noexcept
 }
 
 void
-Stock::RetryWaiting()
+Stock::RetryWaiting() noexcept
 {
     if (limit == 0)
         /* no limit configured, no waiters possible */
@@ -168,7 +168,7 @@ Stock::RetryWaiting()
 }
 
 void
-Stock::ScheduleRetryWaiting()
+Stock::ScheduleRetryWaiting() noexcept
 {
     if (limit > 0 && !waiting.empty() &&
         busy.size() - num_create < limit)
@@ -182,7 +182,7 @@ Stock::ScheduleRetryWaiting()
  */
 
 void
-Stock::ClearIdle()
+Stock::ClearIdle() noexcept
 {
     logger.Format(5, "ClearIdle num_idle=%zu num_busy=%zu",
                   idle.size(), busy.size());
@@ -194,7 +194,7 @@ Stock::ClearIdle()
 }
 
 void
-Stock::ClearEventCallback()
+Stock::ClearEventCallback() noexcept
 {
     logger.Format(6, "ClearEvent may_clear=%d", may_clear);
 
@@ -214,7 +214,7 @@ Stock::ClearEventCallback()
 
 Stock::Stock(EventLoop &event_loop, StockClass &_cls,
              const char *_name, unsigned _limit, unsigned _max_idle,
-             StockHandler *_handler)
+             StockHandler *_handler) noexcept
     :cls(_cls),
      name(_name),
      limit(_limit), max_idle(_max_idle),
@@ -230,7 +230,7 @@ Stock::Stock(EventLoop &event_loop, StockClass &_cls,
     ScheduleClear();
 }
 
-Stock::~Stock()
+Stock::~Stock() noexcept
 {
     assert(num_create == 0);
 
@@ -246,7 +246,7 @@ Stock::~Stock()
 }
 
 bool
-Stock::GetIdle(StockGetHandler &get_handler)
+Stock::GetIdle(StockGetHandler &get_handler) noexcept
 {
     unsigned retry_unclean = idle.size();
 
@@ -290,7 +290,7 @@ Stock::GetIdle(StockGetHandler &get_handler)
 void
 Stock::GetCreate(struct pool &caller_pool, void *info,
                  StockGetHandler &get_handler,
-                 CancellablePointer &cancel_ptr)
+                 CancellablePointer &cancel_ptr) noexcept
 {
     ++num_create;
 
@@ -305,7 +305,7 @@ Stock::GetCreate(struct pool &caller_pool, void *info,
 void
 Stock::Get(struct pool &caller_pool, void *info,
            StockGetHandler &get_handler,
-           CancellablePointer &cancel_ptr)
+           CancellablePointer &cancel_ptr) noexcept
 {
     may_clear = false;
 
@@ -367,7 +367,7 @@ Stock::GetNow(struct pool &caller_pool, void *info)
 }
 
 void
-Stock::ItemCreateSuccess(StockItem &item)
+Stock::ItemCreateSuccess(StockItem &item) noexcept
 {
     assert(num_create > 0);
     --num_create;
@@ -378,21 +378,22 @@ Stock::ItemCreateSuccess(StockItem &item)
 }
 
 void
-Stock::ItemCreateError(StockItem &item, std::exception_ptr ep)
+Stock::ItemCreateError(StockItem &item, std::exception_ptr ep) noexcept
 {
     ItemCreateError(item.handler, ep);
     delete &item;
 }
 
 void
-Stock::ItemCreateAborted(StockItem &item)
+Stock::ItemCreateAborted(StockItem &item) noexcept
 {
     ItemCreateAborted();
     delete &item;
 }
 
 void
-Stock::ItemCreateError(StockGetHandler &get_handler, std::exception_ptr ep)
+Stock::ItemCreateError(StockGetHandler &get_handler,
+                       std::exception_ptr ep) noexcept
 {
     assert(num_create > 0);
     --num_create;
@@ -404,7 +405,7 @@ Stock::ItemCreateError(StockGetHandler &get_handler, std::exception_ptr ep)
 }
 
 void
-Stock::ItemCreateAborted()
+Stock::ItemCreateAborted() noexcept
 {
     assert(num_create > 0);
     --num_create;
@@ -414,7 +415,7 @@ Stock::ItemCreateAborted()
 }
 
 void
-Stock::Put(StockItem &item, bool destroy)
+Stock::Put(StockItem &item, bool destroy) noexcept
 {
     assert(!item.is_idle);
     assert(&item.stock == this);
@@ -443,7 +444,7 @@ Stock::Put(StockItem &item, bool destroy)
 }
 
 void
-Stock::ItemIdleDisconnect(StockItem &item)
+Stock::ItemIdleDisconnect(StockItem &item) noexcept
 {
     assert(item.is_idle);
 
