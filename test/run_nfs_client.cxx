@@ -70,7 +70,7 @@ struct Context final : PInstance, NfsClientHandler, NfsClientOpenFileHandler {
     Context()
         :shutdown_listener(event_loop, BIND_THIS_METHOD(ShutdownCallback)) {}
 
-    void ShutdownCallback();
+    void ShutdownCallback() noexcept;
 
     /* virtual methods from NfsClientHandler */
     void OnNfsClientReady(NfsClient &client) override;
@@ -83,7 +83,7 @@ struct Context final : PInstance, NfsClientHandler, NfsClientOpenFileHandler {
 };
 
 void
-Context::ShutdownCallback()
+Context::ShutdownCallback() noexcept
 {
     aborted = true;
 

@@ -67,8 +67,8 @@ struct Context {
         global = this;
     }
 
-    void ResolverCallback1();
-    void ResolverCallback2();
+    void ResolverCallback1() noexcept;
+    void ResolverCallback2() noexcept;
 };
 
 const WidgetView *
@@ -79,7 +79,7 @@ widget_view_lookup(const WidgetView *view,
 }
 
 void
-Context::ResolverCallback1()
+Context::ResolverCallback1() noexcept
 {
     assert(!first.finished);
     assert(!second.finished);
@@ -91,7 +91,7 @@ Context::ResolverCallback1()
 }
 
 void
-Context::ResolverCallback2()
+Context::ResolverCallback2() noexcept
 {
     assert(first.finished);
     assert(!second.finished);

@@ -137,7 +137,7 @@ struct Context final
         :shutdown_listener(event_loop, BIND_THIS_METHOD(ShutdownCallback)),
          fs(event_loop) {}
 
-    void ShutdownCallback();
+    void ShutdownCallback() noexcept;
 
     /* virtual methods from class ConnectSocketHandler */
     void OnSocketConnectSuccess(UniqueSocketDescriptor &&fd) noexcept override;
@@ -168,7 +168,7 @@ struct Context final
 };
 
 void
-Context::ShutdownCallback()
+Context::ShutdownCallback() noexcept
 {
     if (body != nullptr) {
         sink_fd_close(body);

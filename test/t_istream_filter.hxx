@@ -145,7 +145,7 @@ struct Context final : IstreamSink {
         defer_inject_event.Schedule();
     }
 
-    void DeferredInject() {
+    void DeferredInject() noexcept {
         assert(defer_inject_istream != nullptr);
         assert(defer_inject_error);
 

@@ -65,7 +65,7 @@ UnusedIstreamPtr
 embed_inline_widget(struct pool &pool,
                     gcc_unused struct processor_env &env,
                     gcc_unused bool plain_text,
-                    Widget &widget)
+                    Widget &widget) noexcept
 {
     const char *s = widget.GetIdPath();
     if (s == nullptr)

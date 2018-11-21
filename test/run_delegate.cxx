@@ -60,7 +60,7 @@ public:
     MyDelegateHandler(EventLoop &event_loop)
         :defer_stop(event_loop, BIND_THIS_METHOD(Stop)) {}
 
-    void Stop() {
+    void Stop() noexcept {
         delegate_stock_free(delegate_stock);
     }
 

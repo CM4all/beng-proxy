@@ -225,7 +225,7 @@ struct Context final
     }
 #endif
 
-    void OnDeferred() {
+    void OnDeferred() noexcept {
         if (defer_read_response_body) {
             deferred = false;
             body.Read();

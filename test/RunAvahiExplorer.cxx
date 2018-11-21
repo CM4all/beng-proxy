@@ -60,7 +60,7 @@ public:
     }
 
 private:
-    void OnShutdown() {
+    void OnShutdown() noexcept {
         event_loop.Break();
     }
 

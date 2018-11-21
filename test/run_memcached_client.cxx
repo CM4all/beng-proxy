@@ -71,7 +71,7 @@ struct Context final : PInstance, Lease {
     Context()
         :shutdown_listener(event_loop, BIND_THIS_METHOD(ShutdownCallback)) {}
 
-    void ShutdownCallback();
+    void ShutdownCallback() noexcept;
 
     /* virtual methods from class Lease */
     void ReleaseLease(bool _reuse) noexcept override {
@@ -86,7 +86,7 @@ struct Context final : PInstance, Lease {
 };
 
 void
-Context::ShutdownCallback()
+Context::ShutdownCallback() noexcept
 {
     if (value != nullptr) {
         sink_fd_close(value);

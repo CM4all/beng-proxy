@@ -88,9 +88,9 @@ struct Instance final : PInstance, HttpServerConnectionHandler, Cancellable {
         :shutdown_listener(event_loop, BIND_THIS_METHOD(ShutdownCallback)),
          timer(event_loop, BIND_THIS_METHOD(OnTimer)) {}
 
-    void ShutdownCallback();
+    void ShutdownCallback() noexcept;
 
-    void OnTimer();
+    void OnTimer() noexcept;
 
     /* virtual methods from class Cancellable */
     void Cancel() noexcept override {
@@ -111,13 +111,13 @@ struct Instance final : PInstance, HttpServerConnectionHandler, Cancellable {
 };
 
 void
-Instance::ShutdownCallback()
+Instance::ShutdownCallback() noexcept
 {
     http_server_connection_close(connection);
 }
 
 void
-Instance::OnTimer()
+Instance::OnTimer() noexcept
 {
     http_server_connection_close(connection);
     shutdown_listener.Disable();
