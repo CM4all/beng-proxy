@@ -589,6 +589,8 @@ memcached_client_dep = declare_dependency(
 
 subdir('libcommon/src/translation')
 
+libcommon_translation_dep = translation_dep
+
 translation2 = static_library(
   'translation2',
   'src/translation/Cache.cxx',

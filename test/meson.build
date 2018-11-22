@@ -306,10 +306,14 @@ test('t_tcache', executable('t_tcache',
   '../src/PInstance.cxx',
   '../src/pexpand.cxx',
   '../src/widget/View.cxx',
+  '../src/translation/Cache.cxx',
+  '../src/translation/Transformation.cxx',
   include_directories: inc,
   dependencies: [
     gtest,
-    translation_dep,
+    libcommon_translation_dep,
+    eutil_dep,
+    raddress_dep,
   ]))
 
 test('t_regex', executable('t_regex',
