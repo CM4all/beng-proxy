@@ -1,6 +1,6 @@
 cm4all-beng-proxy (15.0.9) unstable; urgency=low
 
-  * 
+  * fix EBADFD
 
  --   
 

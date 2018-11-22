@@ -71,7 +71,7 @@ PipeLease::Create(struct pool &pool)
         FileDescriptor fds[2];
         pipe_stock_item_get(item, fds);
         read_fd = fds[0];
-        write_fd = fds[0];
+        write_fd = fds[1];
     } else {
         if (!FileDescriptor::CreatePipeNonBlock(read_fd, write_fd))
             throw MakeErrno("pipe() failed");
