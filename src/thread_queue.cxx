@@ -71,11 +71,11 @@ public:
         return waiting.empty() && busy.empty() && done.empty();
     }
 
-    void WakeupCallback() noexcept;
+    void WakeupCallback();
 };
 
 void
-ThreadQueue::WakeupCallback() noexcept
+ThreadQueue::WakeupCallback()
 {
     mutex.lock();
 

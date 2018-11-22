@@ -179,7 +179,7 @@ struct FcgiConnection final : StockItem {
     bool Release() noexcept override;
 
 private:
-    void OnSocketEvent(unsigned events) noexcept;
+    void OnSocketEvent(unsigned events);
     void OnIdleTimeout() noexcept;
 };
 
@@ -212,7 +212,7 @@ FcgiChildParams::GetStockKey(struct pool &pool) const
  */
 
 void
-FcgiConnection::OnSocketEvent(unsigned) noexcept
+FcgiConnection::OnSocketEvent(unsigned)
 {
     char buffer;
     ssize_t nbytes = fd.Read(&buffer, sizeof(buffer));

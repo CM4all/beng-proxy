@@ -109,9 +109,9 @@ private:
     }
 
 private:
-    void EventCallback(unsigned events) noexcept;
+    void EventCallback(unsigned events);
     void OnTimeout() noexcept;
-    void DelayCallback() noexcept;
+    void DelayCallback();
 };
 
 static bool
@@ -145,7 +145,7 @@ ExpectMonitor::Cancel() noexcept
  */
 
 inline void
-ExpectMonitor::EventCallback(unsigned) noexcept
+ExpectMonitor::EventCallback(unsigned)
 {
     event.Cancel();
 
@@ -163,7 +163,7 @@ ExpectMonitor::OnTimeout() noexcept
 }
 
 void
-ExpectMonitor::DelayCallback() noexcept
+ExpectMonitor::DelayCallback()
 {
     char buffer[1024];
 

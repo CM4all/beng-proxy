@@ -114,7 +114,7 @@ LbInstance::DisconnectCertCaches()
 }
 
 void
-LbInstance::OnCompressTimer() noexcept
+LbInstance::OnCompressTimer()
 {
     Compress();
 

@@ -188,7 +188,7 @@ BpInstance::ScheduleCompress()
 }
 
 void
-BpInstance::OnCompressTimer() noexcept
+BpInstance::OnCompressTimer()
 {
     Compress();
     ScheduleCompress();
@@ -228,7 +228,7 @@ BpInstance::FadeTaggedChildren(const char *tag)
 }
 
 void
-BpInstance::SaveSesssions() noexcept
+BpInstance::SaveSesssions()
 {
     session_save();
 

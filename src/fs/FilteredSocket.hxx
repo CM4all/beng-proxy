@@ -104,7 +104,7 @@ struct FilteredSocket final : private BufferedSocketHandler {
      * the filter has no handshake), the callback will be invoked
      * synchronously by this method.
      */
-    void SetHandshakeCallback(BoundMethod<void() noexcept> callback) noexcept {
+    void SetHandshakeCallback(BoundMethod<void()> callback) noexcept {
         if (filter != nullptr)
             filter->SetHandshakeCallback(callback);
         else

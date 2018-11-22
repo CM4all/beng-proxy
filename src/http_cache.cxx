@@ -354,7 +354,7 @@ private:
                HttpResponseHandler &handler,
                CancellablePointer &cancel_ptr) noexcept;
 
-    void OnCompressTimer() noexcept {
+    void OnCompressTimer() {
         heap.Compress();
         compress_timer.Add(http_cache_compress_interval);
     }

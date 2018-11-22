@@ -125,7 +125,7 @@ BpInstance::DisableListeners()
 }
 
 void
-BpInstance::ShutdownCallback() noexcept
+BpInstance::ShutdownCallback()
 {
     if (should_exit)
         return;
@@ -169,7 +169,7 @@ BpInstance::ShutdownCallback() noexcept
 }
 
 void
-BpInstance::ReloadEventCallback(int) noexcept
+BpInstance::ReloadEventCallback(int)
 {
     LogConcat(3, "main", "caught SIGHUP, flushing all caches (pid=",
               (int)getpid(), ")");

@@ -101,7 +101,7 @@ struct TcpStockConnection final
     ~TcpStockConnection() override;
 
 private:
-    void EventCallback(unsigned events) noexcept;
+    void EventCallback(unsigned events);
     void OnIdleTimeout() noexcept;
 
     /* virtual methods from class Cancellable */
@@ -137,7 +137,7 @@ private:
  */
 
 inline void
-TcpStockConnection::EventCallback(unsigned) noexcept
+TcpStockConnection::EventCallback(unsigned)
 {
     char buffer;
     ssize_t nbytes;

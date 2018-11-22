@@ -48,7 +48,7 @@ Notify::~Notify()
 }
 
 inline void
-Notify::EventFdCallback(unsigned) noexcept
+Notify::EventFdCallback(unsigned)
 {
     uint64_t value;
     (void)fd.Read(&value, sizeof(value));

@@ -209,15 +209,15 @@ struct TeeIstream final : IstreamHandler {
             DeferRead();
     }
 
-    static TeeIstream &CastFromFirst(Istream &first) noexcept {
+    static TeeIstream &CastFromFirst(Istream &first) {
         return ContainerCast((FirstOutput &)first, &TeeIstream::first_output);
     }
 
-    struct pool &GetPool() noexcept {
+    struct pool &GetPool() {
         return first_output.GetPool();
     }
 
-    void ReadInput() noexcept {
+    void ReadInput() {
         if (second_output.enabled &&
             second_output.postponed_error != nullptr) {
             assert(!input.IsDefined());

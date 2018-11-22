@@ -97,8 +97,8 @@ public:
     }
 
 private:
-    void IntervalCallback() noexcept;
-    void TimeoutCallback() noexcept;
+    void IntervalCallback();
+    void TimeoutCallback();
 
     /* virtual methods from class LbMonitorHandler */
     virtual void Success() override;

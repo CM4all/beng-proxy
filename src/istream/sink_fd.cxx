@@ -112,7 +112,7 @@ struct SinkFd final : IstreamSink, DestructAnchor, LeakDetector {
         event.ScheduleWrite();
     }
 
-    void EventCallback(unsigned events) noexcept;
+    void EventCallback(unsigned events);
 
     /* virtual methods from class IstreamHandler */
     size_t OnData(const void *data, size_t length) override;
@@ -213,7 +213,7 @@ SinkFd::OnError(std::exception_ptr ep) noexcept
  */
 
 inline void
-SinkFd::EventCallback(unsigned) noexcept
+SinkFd::EventCallback(unsigned)
 {
     const DestructObserver destructed(*this);
 

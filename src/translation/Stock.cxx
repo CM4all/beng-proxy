@@ -89,7 +89,7 @@ public:
     }
 
 private:
-    void EventCallback(unsigned) noexcept {
+    void EventCallback(unsigned) {
         char buffer;
         ssize_t nbytes = recv(s.Get(), &buffer, sizeof(buffer), MSG_DONTWAIT);
         if (nbytes < 0)

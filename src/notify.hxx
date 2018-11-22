@@ -43,7 +43,7 @@
  * Send notifications from a worker thread to the main thread.
  */
 class Notify {
-    typedef BoundMethod<void() noexcept> Callback;
+    typedef BoundMethod<void()> Callback;
     Callback callback;
 
     UniqueFileDescriptor fd;
@@ -71,7 +71,7 @@ public:
     }
 
 private:
-    void EventFdCallback(unsigned events) noexcept;
+    void EventFdCallback(unsigned events);
 };
 
 #endif

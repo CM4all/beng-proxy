@@ -109,7 +109,7 @@ public:
     }
 
 private:
-    void SocketEventCallback(unsigned events) noexcept;
+    void SocketEventCallback(unsigned events);
     void OnIdleTimeout() noexcept;
 };
 
@@ -138,7 +138,7 @@ private:
  */
 
 inline void
-DelegateProcess::SocketEventCallback(unsigned) noexcept
+DelegateProcess::SocketEventCallback(unsigned)
 {
     char buffer;
     ssize_t nbytes = recv(fd.Get(), &buffer, sizeof(buffer), MSG_DONTWAIT);
