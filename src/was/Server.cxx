@@ -202,10 +202,10 @@ private:
     void WasOutputError(std::exception_ptr ep) override;
 
     /* virtual methods from class WasInputHandler */
-    void WasInputClose(uint64_t received) override;
-    bool WasInputRelease() override;
-    void WasInputEof() override;
-    void WasInputError() override;
+    void WasInputClose(uint64_t received) noexcept override;
+    bool WasInputRelease() noexcept override;
+    void WasInputEof() noexcept override;
+    void WasInputError() noexcept override;
 };
 
 void
@@ -306,7 +306,7 @@ WasServer::WasOutputError(std::exception_ptr ep)
  */
 
 void
-WasServer::WasInputClose(gcc_unused uint64_t received)
+WasServer::WasInputClose(gcc_unused uint64_t received) noexcept
 {
     /* this happens when the request handler isn't interested in the
        request body */
@@ -323,7 +323,7 @@ WasServer::WasInputClose(gcc_unused uint64_t received)
 }
 
 bool
-WasServer::WasInputRelease()
+WasServer::WasInputRelease() noexcept
 {
     assert(request.body != nullptr);
     assert(!request.released);
@@ -333,7 +333,7 @@ WasServer::WasInputRelease()
 }
 
 void
-WasServer::WasInputEof()
+WasServer::WasInputEof() noexcept
 {
     assert(request.state == Request::State::SUBMITTED);
     assert(request.body != nullptr);
@@ -345,7 +345,7 @@ WasServer::WasInputEof()
 }
 
 void
-WasServer::WasInputError()
+WasServer::WasInputError() noexcept
 {
     assert(request.state == Request::State::SUBMITTED);
     assert(request.body != nullptr);

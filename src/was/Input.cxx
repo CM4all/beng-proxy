@@ -74,7 +74,7 @@ public:
     bool closed = false, timeout = false, known_length = false;
 
     WasInput(struct pool &p, EventLoop &event_loop, int _fd,
-             WasInputHandler &_handler)
+             WasInputHandler &_handler) noexcept
         :Istream(p), fd(_fd),
          event(event_loop, BIND_THIS_METHOD(EventCallback),
                SocketDescriptor(fd)),
@@ -82,18 +82,18 @@ public:
          handler(_handler) {
     }
 
-    void Free(std::exception_ptr ep);
+    void Free(std::exception_ptr ep) noexcept;
 
-    UnusedIstreamPtr Enable() {
+    UnusedIstreamPtr Enable() noexcept {
         assert(!enabled);
         enabled = true;
         ScheduleRead();
         return UnusedIstreamPtr(this);
     }
 
-    bool SetLength(uint64_t _length);
+    bool SetLength(uint64_t _length) noexcept;
     void PrematureThrow(uint64_t _length);
-    bool Premature(uint64_t _length);
+    bool Premature(uint64_t _length) noexcept;
 
     bool CanRelease() const {
         return known_length && received == length;
@@ -102,7 +102,7 @@ public:
     /**
      * @return false if the #WasInput has been destroyed
      */
-    bool ReleasePipe() {
+    bool ReleasePipe() noexcept {
         assert(fd >= 0);
         fd = -1;
         event.Cancel();
@@ -114,7 +114,7 @@ public:
     /**
      * @return false if the #WasInput has been destroyed
      */
-    bool CheckReleasePipe() {
+    bool CheckReleasePipe() noexcept {
         return !CanRelease() || ReleasePipe();
     }
 
@@ -122,7 +122,7 @@ public:
     using Istream::Destroy;
     using Istream::DestroyError;
 
-    void ScheduleRead() {
+    void ScheduleRead() noexcept {
         assert(fd >= 0);
         assert(!buffer.IsDefined() || !buffer.IsFull());
 
@@ -131,7 +131,7 @@ public:
             timeout_event.Add(was_input_timeout);
     }
 
-    void AbortError(std::exception_ptr ep) {
+    void AbortError(std::exception_ptr ep) noexcept {
         buffer.FreeIfDefined();
         event.Cancel();
 
@@ -143,11 +143,11 @@ public:
         DestroyError(ep);
     }
 
-    void AbortError(const char *msg) {
+    void AbortError(const char *msg) noexcept {
         AbortError(std::make_exception_ptr(WasProtocolError(msg)));
     }
 
-    void Eof() {
+    void Eof() noexcept {
         assert(known_length);
         assert(received == length);
         assert(!buffer.IsDefined());
@@ -158,7 +158,7 @@ public:
         DestroyEof();
     }
 
-    bool CheckEof() {
+    bool CheckEof() noexcept {
         if (CanRelease() && buffer.empty()) {
             Eof();
             return true;
@@ -170,7 +170,7 @@ public:
      * Consume data from the input buffer.  Returns true if data has been
      * consumed.
      */
-    bool SubmitBuffer() {
+    bool SubmitBuffer() noexcept {
         auto r = buffer.Read();
         if (!r.empty()) {
             size_t nbytes = InvokeData(r.data, r.size);
@@ -192,11 +192,11 @@ public:
      *
      */
 
-    bool ReadToBuffer();
-    bool TryBuffered();
-    bool TryDirect();
+    bool ReadToBuffer() noexcept;
+    bool TryBuffered() noexcept;
+    bool TryDirect() noexcept;
 
-    void TryRead() {
+    void TryRead() noexcept {
         if (CheckDirect(FdType::FD_PIPE)) {
             if (SubmitBuffer())
                 TryDirect();
@@ -205,7 +205,7 @@ public:
         }
     }
 
-    void EventCallback(unsigned events);
+    void EventCallback(unsigned events) noexcept;
 
     void OnTimeout() noexcept {
         AbortError("data receive timeout");
@@ -245,7 +245,7 @@ public:
 };
 
 inline bool
-WasInput::ReadToBuffer()
+WasInput::ReadToBuffer() noexcept
 {
     buffer.AllocateIfNull(fb_pool_get());
 
@@ -291,7 +291,7 @@ WasInput::ReadToBuffer()
 }
 
 inline bool
-WasInput::TryBuffered()
+WasInput::TryBuffered() noexcept
 {
     if (fd >= 0) {
         if (!ReadToBuffer())
@@ -312,7 +312,7 @@ WasInput::TryBuffered()
 }
 
 inline bool
-WasInput::TryDirect()
+WasInput::TryDirect() noexcept
 {
     assert(buffer.empty());
     assert(!buffer.IsDefined());
@@ -360,7 +360,7 @@ WasInput::TryDirect()
  */
 
 inline void
-WasInput::EventCallback(unsigned)
+WasInput::EventCallback(unsigned) noexcept
 {
     assert(fd >= 0);
 
@@ -376,7 +376,7 @@ WasInput::EventCallback(unsigned)
 
 WasInput *
 was_input_new(struct pool &pool, EventLoop &event_loop, int fd,
-              WasInputHandler &handler)
+              WasInputHandler &handler) noexcept
 {
     assert(fd >= 0);
 
@@ -385,7 +385,7 @@ was_input_new(struct pool &pool, EventLoop &event_loop, int fd,
 }
 
 inline void
-WasInput::Free(std::exception_ptr ep)
+WasInput::Free(std::exception_ptr ep) noexcept
 {
     assert(ep || closed || !enabled);
 
@@ -399,13 +399,13 @@ WasInput::Free(std::exception_ptr ep)
 }
 
 void
-was_input_free(WasInput *input, std::exception_ptr ep)
+was_input_free(WasInput *input, std::exception_ptr ep) noexcept
 {
     input->Free(ep);
 }
 
 void
-was_input_free_unused(WasInput *input)
+was_input_free_unused(WasInput *input) noexcept
 {
     assert(!input->HasHandler());
     assert(!input->closed);
@@ -415,13 +415,13 @@ was_input_free_unused(WasInput *input)
 }
 
 UnusedIstreamPtr
-was_input_enable(WasInput &input)
+was_input_enable(WasInput &input) noexcept
 {
     return input.Enable();
 }
 
 inline bool
-WasInput::SetLength(uint64_t _length)
+WasInput::SetLength(uint64_t _length) noexcept
 {
     if (known_length) {
         if (_length == length)
@@ -451,7 +451,7 @@ WasInput::SetLength(uint64_t _length)
 }
 
 bool
-was_input_set_length(WasInput *input, uint64_t length)
+was_input_set_length(WasInput *input, uint64_t length) noexcept
 {
     return input->SetLength(length);
 }
@@ -487,7 +487,7 @@ WasInput::PrematureThrow(uint64_t _length)
 }
 
 inline bool
-WasInput::Premature(uint64_t _length)
+WasInput::Premature(uint64_t _length) noexcept
 {
     bool result = false;
     try {
@@ -502,7 +502,7 @@ WasInput::Premature(uint64_t _length)
 }
 
 bool
-was_input_premature(WasInput *input, uint64_t length)
+was_input_premature(WasInput *input, uint64_t length) noexcept
 {
     return input->Premature(length);
 }

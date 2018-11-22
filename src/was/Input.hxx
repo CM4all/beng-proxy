@@ -56,7 +56,7 @@ public:
      * @param received the number of bytes received so far (includes
      * data that hasn't been delivered to the #IstreamHandler yet)
      */
-    virtual void WasInputClose(uint64_t received) = 0;
+    virtual void WasInputClose(uint64_t received) noexcept = 0;
 
     /**
      * All data was received from the pipe to the input buffer; we
@@ -65,7 +65,7 @@ public:
      * @return false if the #WasInput has been destroyed by this
      * method
      */
-    virtual bool WasInputRelease() = 0;
+    virtual bool WasInputRelease() noexcept = 0;
 
     /**
      * Called right before reporting end-of-file to the #IstreamHandler.
@@ -74,7 +74,7 @@ public:
      * method; the method should abandon all pointers to it, and not
      * call it.
      */
-    virtual void WasInputEof() = 0;
+    virtual void WasInputEof() noexcept = 0;
 
     /**
      * There was an I/O error on the pipe.  Called right before
@@ -84,7 +84,7 @@ public:
      * method; the method should abandon all pointers to it, and not
      * call it.
      */
-    virtual void WasInputError() = 0;
+    virtual void WasInputError() noexcept = 0;
 };
 
 
@@ -93,16 +93,16 @@ public:
  */
 WasInput *
 was_input_new(struct pool &pool, EventLoop &event_loop, int fd,
-              WasInputHandler &handler);
+              WasInputHandler &handler) noexcept;
 
 /**
  * @param error the error reported to the istream handler
  */
 void
-was_input_free(WasInput *input, std::exception_ptr ep);
+was_input_free(WasInput *input, std::exception_ptr ep) noexcept;
 
 static inline void
-was_input_free_p(WasInput **input_p, std::exception_ptr ep)
+was_input_free_p(WasInput **input_p, std::exception_ptr ep) noexcept
 {
     WasInput *input = *input_p;
     *input_p = nullptr;
@@ -114,10 +114,10 @@ was_input_free_p(WasInput **input_p, std::exception_ptr ep)
  * been called yet (no istream handler).
  */
 void
-was_input_free_unused(WasInput *input);
+was_input_free_unused(WasInput *input) noexcept;
 
 static inline void
-was_input_free_unused_p(WasInput **input_p)
+was_input_free_unused_p(WasInput **input_p) noexcept
 {
     WasInput *input = *input_p;
     *input_p = nullptr;
@@ -125,7 +125,7 @@ was_input_free_unused_p(WasInput **input_p)
 }
 
 UnusedIstreamPtr
-was_input_enable(WasInput &input);
+was_input_enable(WasInput &input) noexcept;
 
 /**
  * Set the new content length of this entity.
@@ -134,7 +134,7 @@ was_input_enable(WasInput &input);
  * invoked in this case)
  */
 bool
-was_input_set_length(WasInput *input, uint64_t length);
+was_input_set_length(WasInput *input, uint64_t length) noexcept;
 
 /**
  * Signals premature end of this stream.
@@ -145,7 +145,7 @@ was_input_set_length(WasInput *input, uint64_t length);
  * been closed
  */
 bool
-was_input_premature(WasInput *input, uint64_t length);
+was_input_premature(WasInput *input, uint64_t length) noexcept;
 
 /**
  * Same as above, but throw exception instead of reporting the error
@@ -156,6 +156,6 @@ void
 was_input_premature_throw(WasInput *input, uint64_t length);
 
 void
-was_input_enable_timeout(WasInput *input);
+was_input_enable_timeout(WasInput *input) noexcept;
 
 #endif

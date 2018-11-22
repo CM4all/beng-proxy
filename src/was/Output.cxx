@@ -97,7 +97,7 @@ public:
 
     bool CheckLength();
 
-    void WriteEventCallback(unsigned events);
+    void WriteEventCallback(unsigned events) noexcept;
 
     void OnTimeout() noexcept {
         AbortError(std::make_exception_ptr(WasError("send timeout")));
@@ -130,7 +130,7 @@ WasOutput::CheckLength()
  */
 
 inline void
-WasOutput::WriteEventCallback(unsigned)
+WasOutput::WriteEventCallback(unsigned) noexcept
 {
     assert(fd.IsDefined());
     assert(input.IsDefined());

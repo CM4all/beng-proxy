@@ -357,10 +357,10 @@ struct WasClient final
     void WasOutputError(std::exception_ptr ep) override;
 
     /* virtual methods from class WasInputHandler */
-    void WasInputClose(uint64_t received) override;
-    bool WasInputRelease() override;
-    void WasInputEof() override;
-    void WasInputError() override;
+    void WasInputClose(uint64_t received) noexcept override;
+    bool WasInputRelease() noexcept override;
+    void WasInputEof() noexcept override;
+    void WasInputError() noexcept override;
 };
 
 bool
@@ -669,7 +669,7 @@ WasClient::WasOutputError(std::exception_ptr ep)
  */
 
 void
-WasClient::WasInputClose(uint64_t received)
+WasClient::WasInputClose(uint64_t received) noexcept
 {
     assert(response.WasSubmitted());
     assert(response.body != nullptr);
@@ -683,7 +683,7 @@ WasClient::WasInputClose(uint64_t received)
 }
 
 bool
-WasClient::WasInputRelease()
+WasClient::WasInputRelease() noexcept
 {
     assert(response.body != nullptr);
     assert(!response.released);
@@ -700,7 +700,7 @@ WasClient::WasInputRelease()
 }
 
 void
-WasClient::WasInputEof()
+WasClient::WasInputEof() noexcept
 {
     assert(response.WasSubmitted());
     assert(response.body != nullptr);
@@ -712,7 +712,7 @@ WasClient::WasInputEof()
 }
 
 void
-WasClient::WasInputError()
+WasClient::WasInputError() noexcept
 {
     assert(response.WasSubmitted());
     assert(response.body != nullptr);
