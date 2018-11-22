@@ -508,7 +508,7 @@ HttpServerConnection::TryRequestBodyDirect(SocketDescriptor fd, FdType fd_type)
 }
 
 void
-HttpServerConnection::OnDeferredRead()
+HttpServerConnection::OnDeferredRead() noexcept
 {
     socket.Read(false);
 }

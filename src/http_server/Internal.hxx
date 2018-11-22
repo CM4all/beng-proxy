@@ -206,11 +206,11 @@ struct HttpServerConnection final
         return socket.IsValid() && socket.IsConnected();
     }
 
-    void IdleTimeoutCallback();
+    void IdleTimeoutCallback() noexcept;
 
-    void Log();
+    void Log() noexcept;
 
-    void OnDeferredRead();
+    void OnDeferredRead() noexcept;
 
     /**
      * @return false if the connection has been closed
@@ -278,25 +278,25 @@ struct HttpServerConnection final
     /**
      * @return false if the connection has been closed
      */
-    bool TryWrite();
+    bool TryWrite() noexcept;
     BucketResult TryWriteBuckets2();
-    BucketResult TryWriteBuckets();
+    BucketResult TryWriteBuckets() noexcept;
 
-    void CloseRequest();
+    void CloseRequest() noexcept;
 
-    void CloseSocket();
-    void DestroySocket();
+    void CloseSocket() noexcept;
+    void DestroySocket() noexcept;
 
     /**
      * The last response on this connection is finished, and it should
      * be closed.
      */
-    void Done();
+    void Done() noexcept;
 
     /**
      * The peer has closed the socket.
      */
-    void Cancel();
+    void Cancel() noexcept;
 
     /**
      * A fatal error has occurred, and the connection should be closed
@@ -305,14 +305,14 @@ struct HttpServerConnection final
      * HttpServerConnectionHandler::HttpConnectionError(), but not
      * HttpServerConnectionHandler::HttpConnectionClosed().
      */
-    void Error(std::exception_ptr e);
+    void Error(std::exception_ptr e) noexcept;
 
-    void Error(const char *msg);
+    void Error(const char *msg) noexcept;
 
-    void SocketErrorErrno(const char *msg);
+    void SocketErrorErrno(const char *msg) noexcept;
 
     template<typename T>
-    void SocketError(T &&t) {
+    void SocketError(T &&t) noexcept {
         try {
             ThrowException(std::forward<T>(t));
         } catch (...) {
@@ -320,11 +320,11 @@ struct HttpServerConnection final
         }
     }
 
-    void SocketError(const char *msg) {
+    void SocketError(const char *msg) noexcept {
         SocketError(std::runtime_error(msg));
     }
 
-    void ProtocolError(const char *msg) {
+    void ProtocolError(const char *msg) noexcept {
         Error(std::make_exception_ptr(SocketProtocolError(msg)));
     }
 
@@ -362,6 +362,6 @@ extern const Event::Duration http_server_write_timeout;
 HttpServerRequest *
 http_server_request_new(HttpServerConnection *connection,
                         http_method_t method,
-                        StringView uri);
+                        StringView uri) noexcept;
 
 #endif

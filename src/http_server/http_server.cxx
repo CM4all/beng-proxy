@@ -51,7 +51,7 @@ const Event::Duration http_server_read_timeout = std::chrono::seconds(30);
 const Event::Duration http_server_write_timeout = std::chrono::seconds(30);
 
 void
-HttpServerConnection::Log()
+HttpServerConnection::Log() noexcept
 {
     if (handler == nullptr)
         /* this can happen when called via
@@ -68,7 +68,7 @@ HttpServerConnection::Log()
 HttpServerRequest *
 http_server_request_new(HttpServerConnection *connection,
                         http_method_t method,
-                        StringView uri)
+                        StringView uri) noexcept
 {
     assert(connection != nullptr);
 
@@ -152,7 +152,7 @@ HttpServerConnection::TryWriteBuckets2()
 }
 
 HttpServerConnection::BucketResult
-HttpServerConnection::TryWriteBuckets()
+HttpServerConnection::TryWriteBuckets() noexcept
 {
     BucketResult result;
 
@@ -195,7 +195,7 @@ HttpServerConnection::TryWriteBuckets()
 }
 
 bool
-HttpServerConnection::TryWrite()
+HttpServerConnection::TryWrite() noexcept
 {
     assert(IsValid());
     assert(request.read_state != Request::START &&
@@ -291,7 +291,7 @@ HttpServerConnection::OnBufferedError(std::exception_ptr ep) noexcept
 }
 
 inline void
-HttpServerConnection::IdleTimeoutCallback()
+HttpServerConnection::IdleTimeoutCallback() noexcept
 {
     assert(request.read_state == Request::START ||
            request.read_state == Request::HEADERS);
@@ -348,7 +348,7 @@ http_server_connection_new(struct pool *pool,
                            SocketAddress local_address,
                            SocketAddress remote_address,
                            bool date_header,
-                           HttpServerConnectionHandler &handler)
+                           HttpServerConnectionHandler &handler) noexcept
 {
     assert(fd.IsDefined());
 
@@ -360,7 +360,7 @@ http_server_connection_new(struct pool *pool,
 }
 
 inline void
-HttpServerConnection::CloseSocket()
+HttpServerConnection::CloseSocket() noexcept
 {
     assert(socket.IsConnected());
 
@@ -370,7 +370,7 @@ HttpServerConnection::CloseSocket()
 }
 
 void
-HttpServerConnection::DestroySocket()
+HttpServerConnection::DestroySocket() noexcept
 {
     assert(socket.IsValid());
 
@@ -381,7 +381,7 @@ HttpServerConnection::DestroySocket()
 }
 
 void
-HttpServerConnection::CloseRequest()
+HttpServerConnection::CloseRequest() noexcept
 {
     assert(request.read_state != Request::START);
     assert(request.request != nullptr);
@@ -407,7 +407,7 @@ HttpServerConnection::CloseRequest()
 }
 
 void
-HttpServerConnection::Done()
+HttpServerConnection::Done() noexcept
 {
     assert(handler != nullptr);
     assert(request.read_state == Request::START);
@@ -427,7 +427,7 @@ HttpServerConnection::Done()
 }
 
 void
-HttpServerConnection::Cancel()
+HttpServerConnection::Cancel() noexcept
 {
     assert(handler != nullptr);
 
@@ -447,7 +447,7 @@ HttpServerConnection::Cancel()
 }
 
 void
-HttpServerConnection::Error(std::exception_ptr e)
+HttpServerConnection::Error(std::exception_ptr e) noexcept
 {
     assert(handler != nullptr);
 
@@ -468,13 +468,13 @@ HttpServerConnection::Error(std::exception_ptr e)
 }
 
 void
-HttpServerConnection::Error(const char *msg)
+HttpServerConnection::Error(const char *msg) noexcept
 {
     Error(std::make_exception_ptr(std::runtime_error(msg)));
 }
 
 void
-http_server_connection_close(HttpServerConnection *connection)
+http_server_connection_close(HttpServerConnection *connection) noexcept
 {
     assert(connection != nullptr);
 
@@ -489,7 +489,7 @@ http_server_connection_close(HttpServerConnection *connection)
 }
 
 void
-HttpServerConnection::SocketErrorErrno(const char *msg)
+HttpServerConnection::SocketErrorErrno(const char *msg) noexcept
 {
     if (errno == EPIPE || errno == ECONNRESET) {
         /* don't report this common problem */
@@ -505,7 +505,7 @@ HttpServerConnection::SocketErrorErrno(const char *msg)
 }
 
 void
-http_server_connection_graceful(HttpServerConnection *connection)
+http_server_connection_graceful(HttpServerConnection *connection) noexcept
 {
     assert(connection != nullptr);
 
@@ -520,7 +520,7 @@ http_server_connection_graceful(HttpServerConnection *connection)
 }
 
 enum http_server_score
-http_server_connection_score(const HttpServerConnection *connection)
+http_server_connection_score(const HttpServerConnection *connection) noexcept
 {
     return connection->score;
 }

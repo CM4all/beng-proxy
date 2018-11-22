@@ -188,7 +188,7 @@ void
 http_server_response(const HttpServerRequest *request,
                      http_status_t status,
                      HttpHeaders &&headers,
-                     UnusedIstreamPtr body)
+                     UnusedIstreamPtr body) noexcept
 {
     auto &connection = request->connection;
     assert(connection.request.request == request);
@@ -199,7 +199,7 @@ http_server_response(const HttpServerRequest *request,
 void
 http_server_simple_response(const HttpServerRequest &request,
                             http_status_t status, const char *location,
-                            const char *msg)
+                            const char *msg) noexcept
 {
     assert(unsigned(status) >= 200 && unsigned(status) < 600);
 
@@ -229,7 +229,7 @@ http_server_simple_response(const HttpServerRequest &request,
 
 void
 http_server_send_message(const HttpServerRequest *request,
-                         http_status_t status, const char *msg)
+                         http_status_t status, const char *msg) noexcept
 {
     HttpHeaders headers(request->pool);
 
@@ -246,7 +246,7 @@ http_server_send_message(const HttpServerRequest *request,
 void
 http_server_send_redirect(const HttpServerRequest *request,
                           http_status_t status, const char *location,
-                          const char *msg)
+                          const char *msg) noexcept
 {
     assert(request != nullptr);
     assert(status >= 300 && status < 400);
