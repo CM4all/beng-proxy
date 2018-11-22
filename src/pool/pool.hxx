@@ -302,18 +302,30 @@ void
 pool_rewind(struct pool *pool, const struct pool_mark_state *mark) noexcept;
 
 class AutoRewindPool {
-    struct pool &pool;
+    struct pool *const pool;
     pool_mark_state mark;
 
 public:
-    AutoRewindPool(struct pool &_pool) noexcept:pool(_pool) {
-        pool_mark(&pool, &mark);
+    AutoRewindPool(struct pool &_pool) noexcept:pool(&_pool) {
+        pool_mark(pool, &mark);
+    }
+
+    /**
+     * @param result_pool the pool where the caller's result will be
+     * put, and it must outlive this object; therefore, if it is the
+     * same pool as #_pool, this class is a no-op
+     */
+    AutoRewindPool(struct pool &_pool, struct pool &result_pool) noexcept
+        :pool(&_pool != &result_pool ? &_pool : nullptr) {
+        if (pool != nullptr)
+            pool_mark(pool, &mark);
     }
 
     AutoRewindPool(const AutoRewindPool &) = delete;
 
     ~AutoRewindPool() noexcept {
-        pool_rewind(&pool, &mark);
+        if (pool != nullptr)
+            pool_rewind(pool, &mark);
     }
 };
 
