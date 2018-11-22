@@ -3,7 +3,7 @@ cm4all-beng-proxy (15.0.8) unstable; urgency=low
   * processor: don't rewrite "data:" links
   * processor: fix use-after-free crash bug in URI rewriter
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Thu, 22 Nov 2018 09:24:35 +0100
 
 cm4all-beng-proxy (15.0.7) unstable; urgency=low
 
