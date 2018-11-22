@@ -429,16 +429,23 @@ adata_dep = declare_dependency(link_with: adata)
 
 subdir('libcommon/src/spawn')
 
-spawn2 = static_library(
-  'spawn2',
-  'src/spawn/IstreamSpawn.cxx',
-  include_directories: inc,
-)
 spawn_dep = declare_dependency(
-  link_with: spawn2,
   dependencies: [
     spawn_dep,
     expand_dep,
+  ],
+)
+
+istream_spawn = static_library(
+  'istream_spawn',
+  'src/spawn/IstreamSpawn.cxx',
+  include_directories: inc,
+)
+istream_spawn_dep = declare_dependency(
+  link_with: istream_spawn,
+  dependencies: [
+    spawn_dep,
+    istream_dep,
   ],
 )
 
@@ -677,9 +684,8 @@ cgi = static_library('cgi',
 cgi_dep = declare_dependency(
   link_with: cgi,
   dependencies: [
-    event_dep,
     stopwatch_dep,
-    istream_dep,
+    istream_spawn_dep,
     http_util_dep,
   ],
 )
