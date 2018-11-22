@@ -203,7 +203,7 @@ cookie_jar_http_header_value(const CookieJar &jar,
     if (jar.cookies.empty())
         return nullptr;
 
-    const AutoRewindPool auto_rewind(*tpool);
+    const AutoRewindPool auto_rewind(*tpool, pool);
 
     char *buffer = (char *)p_malloc(tpool, buffer_size);
 

@@ -282,7 +282,7 @@ CgiAddress::Apply(struct pool *pool,
     if (uri_has_authority(relative))
         return nullptr;
 
-    const AutoRewindPool auto_rewind(*tpool);
+    const AutoRewindPool auto_rewind(*tpool, *pool);
 
     char *unescaped = (char *)p_malloc(tpool, relative.size);
     char *unescaped_end = uri_unescape(unescaped, relative);
