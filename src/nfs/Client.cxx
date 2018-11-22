@@ -328,7 +328,7 @@ public:
     void ReadAsync(uint64_t offset, uint64_t count,
                    nfs_cb cb, void *private_data);
 
-    void ExpireCallback();
+    void ExpireCallback() noexcept;
 
     void FstatCallback(int status, struct nfs_context *nfs, void *data);
     void OpenCallback(int status, struct nfs_context *nfs, void *data);
@@ -445,8 +445,8 @@ public:
 
     void AddEvent();
     void UpdateEvent();
-    void SocketEventCallback(unsigned events);
-    void TimeoutCallback();
+    void SocketEventCallback(unsigned events) noexcept;
+    void TimeoutCallback() noexcept;
 
     void OpenFile(struct pool &caller_pool,
                   const char *path,
@@ -808,7 +808,7 @@ NfsClient::Cancel() noexcept
  */
 
 void
-NfsFile::ExpireCallback()
+NfsFile::ExpireCallback() noexcept
 {
     assert(state == IDLE);
 
@@ -823,7 +823,7 @@ NfsFile::ExpireCallback()
 }
 
 inline void
-NfsClient::SocketEventCallback(unsigned events)
+NfsClient::SocketEventCallback(unsigned events) noexcept
 {
     assert(context != nullptr);
 
@@ -877,7 +877,7 @@ NfsClient::SocketEventCallback(unsigned events)
 }
 
 inline void
-NfsClient::TimeoutCallback()
+NfsClient::TimeoutCallback() noexcept
 {
     assert(context != nullptr);
 

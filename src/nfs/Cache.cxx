@@ -179,7 +179,7 @@ public:
                               uint64_t start, uint64_t end) noexcept;
 
 private:
-    void OnCompressTimer() {
+    void OnCompressTimer() noexcept {
         rubber.Compress();
         compress_timer.Add(nfs_cache_compress_interval);
     }
