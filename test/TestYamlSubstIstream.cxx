@@ -63,7 +63,7 @@ create_test(EventLoop &, struct pool &pool, UnusedIstreamPtr input) noexcept
 {
     return NewYamlSubstIstream(pool, std::move(input), "foo:",
                                YAML::Load(yaml),
-                               "child/grandchild");
+                               "child.grandchild");
 }
 
 #include "t_istream_filter.hxx"

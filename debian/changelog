@@ -1,6 +1,7 @@
 cm4all-beng-proxy (15.0.9) unstable; urgency=low
 
   * fix EBADFD
+  * subst/yaml: use the dot as a YAML path separator
 
  --   
 

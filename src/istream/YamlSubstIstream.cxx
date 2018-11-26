@@ -64,7 +64,7 @@ ResolveYamlPathSegment(const YAML::Node &parent, StringView segment)
 static YAML::Node
 ResolveYamlPath(YAML::Node node, StringView path)
 {
-    for (StringView s : IterableSplitString(path, '/')) {
+    for (StringView s : IterableSplitString(path, '.')) {
         if (s.empty())
             continue;
 

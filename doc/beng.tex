@@ -1339,8 +1339,8 @@ The payload consists of 3 strings separated by a null byte: the prefix
 for variable names (example: ``\verb|foo.|''; may be empty; will be
 stripped before looking up in the YAML file), the YAML file path
 (absolute, i.e. starting with slash) and a path inside the YAML file
-where YAML map to be used is found (may be empty).  Example:
-``\verb|foo.\0/the/file.yaml\0inside/file|'' \\
+where YAML map to be used is found (segments separated with dots; may
+be empty).  Example: ``\verb|foo.\0/the/file.yaml\0inside.file|'' \\
 
 \hline
 
