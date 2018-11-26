@@ -112,6 +112,14 @@ class StringMap {
 public:
     explicit StringMap(struct pool &_pool):pool(_pool) {}
 
+    explicit StringMap(struct pool &_pool,
+                       std::initializer_list<std::pair<const char *, const char *>> init)
+        :StringMap(_pool)
+    {
+        for (const auto &i : init)
+            Add(i.first, i.second);
+    }
+
     StringMap(struct pool &_pool, const StringMap &src);
     StringMap(struct pool &_pool, const StringMap *src);
 

@@ -75,18 +75,19 @@ TEST(HeaderForwardTest, RequestHeaders)
 
     TestPool pool;
 
-    StringMap headers(pool);
-    headers.Add("from", "foo");
-    headers.Add("abc", "def");
-    headers.Add("cookie", "a=b");
-    headers.Add("content-type", "image/jpeg");
-    headers.Add("accept", "text/*");
-    headers.Add("via", "1.1 192.168.0.1");
-    headers.Add("x-forwarded-for", "10.0.0.2");
-    headers.Add("x-cm4all-beng-user", "hans");
-    headers.Add("x-cm4all-beng-peer-subject", "CN=hans");
-    headers.Add("x-cm4all-https", "tls");
-    headers.Add("referer", "http://referer.example/");
+    StringMap headers{pool,
+                      {{"from", "foo"},
+                       {"abc", "def"},
+                       {"cookie", "a=b"},
+                       {"content-type", "image/jpeg"},
+                       {"accept", "text/*"},
+                       {"via", "1.1 192.168.0.1"},
+                       {"x-forwarded-for", "10.0.0.2"},
+                       {"x-cm4all-beng-user", "hans"},
+                       {"x-cm4all-beng-peer-subject", "CN=hans"},
+                       {"x-cm4all-https", "tls"},
+                       {"referer", "http://referer.example/"},
+                      }};
 
     /* verify strmap_to_string() */
     check_strmap(headers, "abc=def;accept=text/*;"
@@ -355,14 +356,15 @@ TEST(HeaderForwardTest, ResponseHeaders)
 
     TestPool pool;
 
-    StringMap headers(pool);
-    headers.Add("server", "apache");
-    headers.Add("abc", "def");
-    headers.Add("set-cookie", "a=b");
-    headers.Add("content-type", "image/jpeg");
-    headers.Add("via", "1.1 192.168.0.1");
-    headers.Add("x-cm4all-beng-user", "hans");
-    headers.Add("x-cm4all-https", "tls");
+    StringMap headers{pool,
+                      {{"server", "apache"},
+                       {"abc", "def"},
+                       {"set-cookie", "a=b"},
+                       {"content-type", "image/jpeg"},
+                       {"via", "1.1 192.168.0.1"},
+                       {"x-cm4all-beng-user", "hans"},
+                       {"x-cm4all-https", "tls"},
+                      }};
 
     /* response headers: nullptr */
 
