@@ -31,7 +31,6 @@
  */
 
 #include "ForwardHeaders.hxx"
-#include "header_writer.hxx"
 #include "http_upgrade.hxx"
 #include "strmap.hxx"
 #include "session/Session.hxx"
@@ -51,342 +50,156 @@
 
 using namespace BengProxy;
 
-static const char *const basic_request_headers[] = {
-    "accept",
-    "from",
-    "cache-control",
-    nullptr,
-};
-
-static const char *const language_request_headers[] = {
-    "accept-language",
-    nullptr,
-};
-
-static const char *const body_request_headers[] = {
-    "content-encoding",
-    "content-language",
-    "content-md5",
-    "content-range",
-    "content-type",
-    "content-disposition",
-    nullptr,
-};
-
-static const char *const cookie_request_headers[] = {
-    "cookie",
-    "cookie2",
-    nullptr,
-};
-
-static const char *const cache_request_headers[] = {
-    "if-modified-since",
-    "if-unmodified-since",
-    "if-match",
-    "if-none-match",
-    "if-range",
-    nullptr,
-};
-
-/**
- * @see http://www.w3.org/TR/cors/#syntax
- */
-static const char *const cors_request_headers[] = {
-    "origin",
-    "access-control-request-method",
-    "access-control-request-headers",
-    nullptr,
-};
-
-/**
- * A list of response headers to for the "ssl" setting.
- *
- * @see #old_ssl_request_headers
- */
-static const char *const ssl_request_headers[] = {
-    "x-cm4all-https",
-    nullptr,
-};
-
-/**
- * A list of response headers to for the "ssl" setting (the old
- * namespace "X-CM4all-BENG-*").
- *
- * @see #ssl_request_headers
- */
-static const char *const old_ssl_request_headers[] = {
-    "x-cm4all-beng-peer-subject",
-    "x-cm4all-beng-peer-issuer-subject",
-    nullptr,
-};
-
-/**
- * A list of request headers to be excluded from the "other" setting.
- */
-static const char *const exclude_request_headers[] = {
-    "accept-charset",
-    "accept-encoding",
-    "accept-language",
-    "user-agent",
-    "via",
-    "x-forwarded-for",
-    "host",
-
-    /* this header is used by apache-lhttpd to set the per-request
-       DocumentRoot, and should never be forwarded from the outside to
-       apache-lhttpd */
-    "x-cm4all-docroot",
-
-    nullptr,
-};
-
-static const char *const basic_response_headers[] = {
-    "age",
-    "allow",
-    "etag",
-    "cache-control",
-    "expires",
-    "content-encoding",
-    "content-language",
-    "content-md5",
-    "content-range",
-    "accept-ranges",
-    "content-type",
-    "content-disposition",
-    "last-modified",
-    "retry-after",
-    "vary",
-    nullptr,
-};
-
-static const char *const cookie_response_headers[] = {
-    "set-cookie",
-    "set-cookie2",
-    nullptr,
-};
-
-/**
- * @see http://www.w3.org/TR/cors/#syntax
- */
-static const char *const cors_response_headers[] = {
-    "access-control-allow-origin",
-    "access-control-allow-credentials",
-    "access-control-expose-headers",
-    "access-control-max-age",
-    "access-control-allow-methods",
-    "access-control-allow-headers",
-    nullptr,
-};
-
-/**
- * A list of response headers to be excluded from the "other" setting.
- */
-static const char *const exclude_response_headers[] = {
-    "server",
-    "via",
-    "date",
-    nullptr,
-};
-
 gcc_pure
 static bool
-string_in_array(const char *const array[], const char *value) noexcept
+IsIfCacheHeader(const char *name) noexcept
 {
-    for (unsigned i = 0; array[i] != nullptr; ++i)
-        if (strcmp(array[i], value) == 0)
-            return true;
-
-    return false;
-}
-
-static void
-forward_upgrade_request_headers(StringMap &dest, const StringMap &src,
-                                bool with_body,
-                                bool forward_cors_headers,
-                                bool forward_other_headers) noexcept
-{
-    if (!with_body || !http_is_upgrade(src))
-        return;
-
-    dest.CopyFrom(src, "upgrade");
-
-    if (!forward_cors_headers)
-        /* copy the "Origin" header only if it was not already copied
-           as part of the "CORS" header group */
-        dest.CopyFrom(src, "origin");
-
-    if (!forward_other_headers)
-        /* the "WebSocket" headers have no special group, and thus
-           they may have been copied already as part of the "OTHER"
-           header group */
-        dest.ListCopyFrom(src, http_upgrade_request_headers);
-}
-
-static void
-forward_upgrade_response_headers(StringMap &dest, http_status_t status,
-                                 const StringMap &src,
-                                 bool forward_other_headers) noexcept
-{
-    if (!http_is_upgrade(status, src))
-        return;
-
-    dest.CopyFrom(src, "upgrade");
-
-    if (!forward_other_headers)
-        /* the "WebSocket" headers have no special group, and thus
-           they may have been copied already as part of the "OTHER"
-           header group */
-        dest.ListCopyFrom(src, http_upgrade_response_headers);
+    const char *i = StringAfterPrefix(name, "if-");
+    return i != nullptr &&
+        (StringIsEqual(i, "modified-since") ||
+         StringIsEqual(i, "unmodified-since") ||
+         StringIsEqual(i, "match") ||
+         StringIsEqual(i, "none-match") ||
+         StringIsEqual(i, "range"));
 }
 
 /**
- * @see #HeaderGroup::SSL
+ * @return HeaderGroup::ALL for headers which must be copied
+ * unconditionally; HeaderGroup::MAX for headers with special handling
+ * (to be forwarded/handled by special code); or one of the "real"
+ * HeaderGroup values for the given group
  */
 gcc_pure
-static bool
-is_old_ssl_header(const char *name) noexcept
+static HeaderGroup
+ClassifyRequestHeader(const char *name, const bool with_body,
+                      const bool is_upgrade) noexcept
 {
-    return string_in_array(old_ssl_request_headers, name);
-}
+    switch (*name) {
+    case 'a':
+        if (auto accept = StringAfterPrefix(name, "accept")) {
+            if (StringIsEmpty(accept))
+                /* "basic" */
+                return HeaderGroup::ALL;
 
-/**
- * @see #HeaderGroup::SSL
- */
-gcc_pure
-static bool
-is_new_ssl_header(const char *name) noexcept
-{
-    return string_in_array(ssl_request_headers, name);
-}
+            if (StringIsEqual(accept, "-language") ||
+                StringIsEqual(accept, "-charset") ||
+                StringIsEqual(accept, "-encoding"))
+                /* special handling */
+                return HeaderGroup::MAX;
+        }
 
-/**
- * @see #HeaderGroup::SSL
- */
-gcc_pure
-static bool
-is_ssl_header(const char *name) noexcept
-{
-    return is_old_ssl_header(name) || is_new_ssl_header(name);
-}
+        if (auto acr = StringAfterPrefix(name, "access-control-request-")) {
+            if (StringIsEqual(acr, "method") || StringIsEqual(acr, "headers"))
+                /* see http://www.w3.org/TR/cors/#syntax */
+                return HeaderGroup::CORS;
+        }
 
-/**
- * @see #HeaderGroup::SECURE
- */
-gcc_pure
-static bool
-is_secure_header(const char *name) noexcept
-{
-    return StringStartsWith(name, "x-cm4all-beng-") &&
-        !is_old_ssl_header(name);
-}
+        break;
 
-gcc_pure
-static bool
-is_secure_or_ssl_header(const char *name) noexcept
-{
-    return StringStartsWith(name, "x-cm4all-beng-") ||
-        is_new_ssl_header(name);
-}
+    case 'c':
+        if (StringIsEqual(name, "cache-control"))
+            /* "basic" */
+            return HeaderGroup::ALL;
 
-/**
- * @see #HeaderGroup::TRANSFORMATION
- */
-gcc_pure
-static bool
-is_transformation_header(const char *name) noexcept
-{
-    return StringStartsWith(name, "x-cm4all-view");
-}
+        if (StringIsEqual(name, "cookie") || StringIsEqual(name, "cookie2"))
+            return HeaderGroup::COOKIE;
 
-static void
-forward_basic_headers(StringMap &dest, const StringMap &src,
-                      bool with_body) noexcept
-{
-    dest.ListCopyFrom(src, basic_request_headers);
-    if (with_body)
-        dest.ListCopyFrom(src, body_request_headers);
-}
+        if (auto content = StringAfterPrefix(name, "content-")) {
+            if (StringIsEqual(content, "encoding") ||
+                StringIsEqual(content, "language") ||
+                StringIsEqual(content, "md5") ||
+                StringIsEqual(content, "range") ||
+                StringIsEqual(content, "type") ||
+                StringIsEqual(content, "disposition"))
+                /* "body" */
+                return with_body ? HeaderGroup::ALL : HeaderGroup::MAX;
+        }
 
-static void
-forward_secure_headers(StringMap &dest, const StringMap &src) noexcept
-{
-    for (const auto &i : src)
-        if (is_secure_header(i.key))
-            dest.Add(i.key, i.value);
-}
+        break;
 
-static void
-forward_ssl_headers(StringMap &dest, const StringMap &src) noexcept
-{
-    for (const auto &i : src)
-        if (is_ssl_header(i.key))
-            dest.Add(i.key, i.value);
-}
+    case 'f':
+        if (StringIsEqual(name, "from"))
+            /* "basic" */
+            return HeaderGroup::ALL;
 
-static void
-forward_transformation_headers(StringMap &dest, const StringMap &src) noexcept
-{
-    dest.CopyFrom(src, "x-cm4all-view");
-}
+        break;
 
-/**
- * @see #HeaderGroup::LINK
- */
-gcc_pure
-static bool
-IsLinkRequestHeader(const char *name) noexcept
-{
-    return strcmp(name, "referer") == 0;
-}
+    case 'i':
+        if (IsIfCacheHeader(name))
+            /* "cache" */
+            return HeaderGroup::MAX;
 
-static void
-ForwardLinkRequestHeaders(StringMap &dest, const StringMap &src) noexcept
-{
-    dest.CopyFrom(src, "referer");
-}
+        break;
 
-/**
- * @see #HeaderGroup::LINK
- */
-gcc_pure
-static bool
-IsLinkResponseHeader(const char *name) noexcept
-{
-    return strcmp(name, "location") == 0 ||
-        strcmp(name, "content-location") == 0;
-}
+    case 'h':
+        if (StringIsEqual(name, "host"))
+            return HeaderGroup::MAX;
+        break;
 
-static void
-RelocateLinkHeader(StringMap &dest, const StringMap &src,
-                   const char *(*relocate)(const char *uri, void *ctx),
-                   void *relocate_ctx,
-                   const char *name) noexcept
-{
-    const char *value = src.Get(name);
-    if (value == nullptr)
-        return;
+    case 'o':
+        if (StringIsEqual(name, "origin"))
+            /* see http://www.w3.org/TR/cors/#syntax */
+            return is_upgrade
+                /* always forward for "Upgrade" requests */
+                ? HeaderGroup::ALL
+                /* only forward if CORS forwarding is enabled */
+                : HeaderGroup::CORS;
+        break;
 
-    const char *new_value = relocate != nullptr
-        ? relocate(value, relocate_ctx)
-        : value;
-    if (new_value != nullptr)
-        dest.Add(name, new_value);
-}
+    case 'r':
+        if (StringIsEqual(name, "referer"))
+            return HeaderGroup::LINK;
+        if (StringIsEqual(name, "range"))
+                /* special handling */
+            return HeaderGroup::MAX;
+        break;
 
-static void
-forward_link_response_headers(StringMap &dest, const StringMap &src,
-                              const char *(*relocate)(const char *uri,
-                                                      void *ctx),
-                              void *relocate_ctx,
-                              HeaderForwardMode mode) noexcept
-{
-    if (mode == HeaderForwardMode::YES) {
-        dest.CopyFrom(src, "location");
-        dest.CopyFrom(src, "content-location");
-    } else if (mode == HeaderForwardMode::MANGLE) {
-        RelocateLinkHeader(dest, src, relocate, relocate_ctx, "location");
-        RelocateLinkHeader(dest, src, relocate, relocate_ctx, "content-location");
+    case 's':
+        if (is_upgrade && StringStartsWith(name, "sec-websocket-"))
+            /* "upgrade" */
+            return HeaderGroup::ALL;
+        break;
+
+    case 'u':
+        if (is_upgrade && StringIsEqual(name, "upgrade"))
+            /* "upgrade" */
+            return HeaderGroup::ALL;
+
+        if (StringIsEqual(name, "user-agent"))
+            return HeaderGroup::MAX;
+        break;
+
+    case 'v':
+        if (StringIsEqual(name, "via"))
+            /* TODO: use HeaderGroup::IDENTITY */
+            return HeaderGroup::MAX;
+        break;
+
+    case 'x':
+        if (auto c4 = StringAfterPrefix(name, "x-cm4all-")) {
+            if (auto b = StringAfterPrefix(c4, "beng-")) {
+                return StringIsEqual(b, "peer-subject") ||
+                    StringIsEqual(b, "peer-issuer-subject")
+                    ? HeaderGroup::SSL
+                    : HeaderGroup::SECURE;
+            } else if (StringIsEqual(c4, "https"))
+                return HeaderGroup::SSL;
+            else if (StringIsEqual(c4, "docroot"))
+                /* this header is used by apache-lhttpd to set the
+                   per-request DocumentRoot, and should never be forwarded
+                   from the outside to apache-lhttpd */
+                return HeaderGroup::MAX;
+        } else if (StringIsEqual(name, "x-forwarded-for"))
+            /* TODO: use HeaderGroup::IDENTITY */
+            return HeaderGroup::MAX;
+
+        break;
     }
+
+    if (http_header_is_hop_by_hop(name))
+        return HeaderGroup::MAX;
+
+    return HeaderGroup::OTHER;
 }
 
 static void
@@ -449,62 +262,12 @@ forward_identity(struct pool &pool,
     forward_xff(pool, dest, src, remote_host, mangle);
 }
 
-static void
-forward_other_headers(StringMap &dest, const StringMap &src) noexcept
-{
-    for (const auto &i : src)
-        if (!string_in_array(basic_request_headers, i.key) &&
-            !string_in_array(body_request_headers, i.key) &&
-            !string_in_array(language_request_headers, i.key) &&
-            !string_in_array(cookie_request_headers, i.key) &&
-            !string_in_array(cors_request_headers, i.key) &&
-            !string_in_array(cache_request_headers, i.key) &&
-            !string_in_array(exclude_request_headers, i.key) &&
-            !is_secure_or_ssl_header(i.key) &&
-            !IsLinkRequestHeader(i.key) &&
-            strcmp(i.key, "range") != 0 &&
-            !http_header_is_hop_by_hop(i.key))
-            dest.Add(i.key, i.value);
-}
-
-/**
- * Copy cookie request headers, but exclude one cookie name.
- */
-static void
-header_copy_cookie_except(struct pool &pool,
-                          StringMap &dest, const StringMap &src,
-                          const char *except) noexcept
-{
-    for (const auto &i : src) {
-        if (strcmp(i.key, "cookie2") == 0)
-            dest.Add(i.key, i.value);
-        else if (strcmp(i.key, "cookie") == 0) {
-            const char *new_value = cookie_exclude(i.value, except, &pool);
-            if (new_value != nullptr)
-                dest.Add(i.key, new_value);
-        }
-    }
-}
-
 gcc_pure
 static bool
 compare_set_cookie_name(const char *set_cookie, const char *name) noexcept
 {
     auto suffix = StringAfterPrefix(set_cookie, name);
     return suffix != nullptr && !IsAlphaNumericASCII(*suffix);
-}
-
-/**
- * Copy cookie response headers, but exclude one cookie name.
- */
-static void
-header_copy_set_cookie_except(StringMap &dest, const StringMap &src,
-                              const char *except)
-{
-    for (const auto &i : src)
-        if (string_in_array(cookie_response_headers, i.key) &&
-            !compare_set_cookie_name(i.value, except))
-            dest.Add(i.key, i.value);
 }
 
 StringMap
@@ -519,8 +282,6 @@ forward_request_headers(struct pool &pool, const StringMap &src,
                         const RealmSession *session,
                         const char *host_and_port, const char *uri) noexcept
 {
-    const char *p;
-
 #ifndef NDEBUG
     if (session != nullptr && CheckLogLevel(10)) {
         LogFormat(10, "forward_request_headers",
@@ -536,68 +297,86 @@ forward_request_headers(struct pool &pool, const StringMap &src,
     }
 #endif
 
+    const bool is_upgrade = with_body && http_is_upgrade(src);
+
     StringMap dest(pool);
+    bool found_accept_charset = false;
 
-    forward_basic_headers(dest, src, with_body);
-    forward_upgrade_request_headers(dest, src, with_body,
-                                    settings[HeaderGroup::CORS] == HeaderForwardMode::YES,
-                                    settings[HeaderGroup::OTHER] == HeaderForwardMode::YES);
+    for (const auto &i : src) {
+        const char *const key = i.key;
+        const char *value = i.value;
 
-    if (!exclude_host)
-        dest.CopyFrom(src, "host");
+        const auto group = ClassifyRequestHeader(key, with_body, is_upgrade);
+        if (group == HeaderGroup::ALL) {
+            dest.Add(key, value);
+            continue;
+        } else if (group == HeaderGroup::MAX) {
+            if (StringIsEqual(key, "host")) {
+                if (!exclude_host)
+                    dest.Add(key, value);
+                if (settings[HeaderGroup::FORWARD] == HeaderForwardMode::MANGLE)
+                    dest.Add("x-forwarded-host", value);
+            } else if (forward_charset &&
+                       StringIsEqual(key, "accept-charset")) {
+                dest.Add(key, value);
+                found_accept_charset = true;
+            } else if (forward_encoding &&
+                       StringIsEqual(key, "accept-encoding")) {
+                dest.Add(key, value);
+            } else if ((session == nullptr ||
+                        session->parent.language == nullptr) &&
+                       StringIsEqual(key, "accept-language")) {
+                dest.Add(key, value);
+            } else if (forward_range &&
+                       (StringIsEqual(key, "range") ||
+                        // TODO: separate parameter for cache headers
+                        IsIfCacheHeader(key))) {
+                dest.Add(key, value);
+            }
 
-    if (settings[HeaderGroup::CORS] == HeaderForwardMode::YES)
-        dest.ListCopyFrom(src, cors_request_headers);
+            continue;
+        }
 
-    if (settings[HeaderGroup::SECURE] == HeaderForwardMode::YES)
-        forward_secure_headers(dest, src);
+        const auto mode = settings[group];
+        switch (mode) {
+        case HeaderForwardMode::NO:
+            continue;
 
-    if (settings[HeaderGroup::SSL] == HeaderForwardMode::YES)
-        forward_ssl_headers(dest, src);
+        case HeaderForwardMode::YES:
+            break;
 
-    if (settings[HeaderGroup::LINK] == HeaderForwardMode::YES)
-        ForwardLinkRequestHeaders(dest, src);
+        case HeaderForwardMode::BOTH:
+            if (group == HeaderGroup::COOKIE) {
+                if (StringIsEqual(key, "cookie2"))
+                    break;
 
-    if (settings[HeaderGroup::OTHER] == HeaderForwardMode::YES)
-        forward_other_headers(dest, src);
+                if (StringIsEqual(key, "cookie")) {
+                    value = cookie_exclude(i.value, session_cookie, &pool);
+                    if (value != nullptr)
+                        break;
+                }
+            }
 
-    p = forward_charset
-        ? src.Get("accept-charset")
-        : nullptr;
-    if (p == nullptr)
-        p = "utf-8";
-    dest.Add("accept-charset", p);
+            continue;
 
-    if (forward_encoding &&
-        (p = src.Get("accept-encoding")) != nullptr)
-        dest.Add("accept-encoding", p);
+        case HeaderForwardMode::MANGLE:
+            continue;
+        }
 
-    if (forward_range) {
-        p = src.Get("range");
-        if (p != nullptr)
-            dest.Add("range", p);
-
-        // TODO: separate parameter for cache headers
-        dest.ListCopyFrom(src, cache_request_headers);
+        dest.Add(key, value);
     }
 
-    if (settings[HeaderGroup::COOKIE] == HeaderForwardMode::YES) {
-        dest.ListCopyFrom(src, cookie_request_headers);
-    } else if (settings[HeaderGroup::COOKIE] == HeaderForwardMode::BOTH) {
-        if (session_cookie == nullptr)
-            dest.ListCopyFrom(src, cookie_request_headers);
-        else
-            header_copy_cookie_except(pool, dest, src, session_cookie);
-    } else if (settings[HeaderGroup::COOKIE] == HeaderForwardMode::MANGLE &&
-               session != nullptr && host_and_port != nullptr && uri != nullptr)
+    if (!found_accept_charset)
+        dest.Add("accept-charset", "utf-8");
+
+    if (settings[HeaderGroup::COOKIE] == HeaderForwardMode::MANGLE &&
+        session != nullptr && host_and_port != nullptr && uri != nullptr)
         cookie_jar_http_header(session->cookies, host_and_port, uri,
                                dest, pool);
 
     if (session != nullptr && session->parent.language != nullptr)
         dest.Add("accept-language",
                   p_strdup(&pool, session->parent.language));
-    else
-        dest.ListCopyFrom(src, language_request_headers);
 
     if (session != nullptr && session->user != nullptr)
         dest.Add("x-cm4all-beng-user", p_strdup(&pool, session->user));
@@ -610,44 +389,144 @@ forward_request_headers(struct pool &pool, const StringMap &src,
         forward_identity(pool, dest, src, local_host, remote_host,
                          settings[HeaderGroup::IDENTITY] == HeaderForwardMode::MANGLE);
 
-    if (settings[HeaderGroup::FORWARD] == HeaderForwardMode::MANGLE) {
-        const char *host = src.Get("host");
-        if (host != nullptr)
-            dest.Add("x-forwarded-host", host);
-    }
-
     return dest;
 }
 
-static void
-forward_other_response_headers(StringMap &dest, const StringMap &src) noexcept
+/**
+ * @return HeaderGroup::ALL for headers which must be copied
+ * unconditionally; HeaderGroup::MAX for headers with special handling
+ * (to be forwarded/handled by special code); or one of the "real"
+ * HeaderGroup values for the given group
+ */
+gcc_pure
+static HeaderGroup
+ClassifyResponseHeader(const char *name, const bool is_upgrade) noexcept
 {
-    for (const auto &i : src)
-        if (!string_in_array(basic_response_headers, i.key) &&
-            !string_in_array(cookie_response_headers, i.key) &&
-            !string_in_array(cors_response_headers, i.key) &&
-            !string_in_array(exclude_response_headers, i.key) &&
-            !IsLinkResponseHeader(i.key) &&
-            !is_secure_or_ssl_header(i.key) &&
-            !is_transformation_header(i.key) &&
-            !http_header_is_hop_by_hop(i.key))
-            dest.Add(i.key, i.value);
-}
+    switch (*name) {
+    case 'a':
+        if (StringIsEqual(name, "accept-ranges") ||
+            StringIsEqual(name, "age") ||
+            StringIsEqual(name, "allow"))
+            /* "basic" */
+            return HeaderGroup::ALL;
 
-static void
-forward_server(StringMap &dest, const StringMap &src,
-               bool mangle) noexcept
-{
-    const char *p;
+        if (auto acr = StringAfterPrefix(name, "access-control-")) {
+            if (StringIsEqual(acr, "allow-origin") ||
+                StringIsEqual(acr, "allow-credentials") ||
+                StringIsEqual(acr, "expose-headers") ||
+                StringIsEqual(acr, "max-age") ||
+                StringIsEqual(acr, "allow-methods") ||
+                StringIsEqual(acr, "allow-headers"))
+                /* see http://www.w3.org/TR/cors/#syntax */
+                return HeaderGroup::CORS;
+        }
 
-    if (mangle)
-        return;
+        break;
 
-    p = src.Get("server");
-    if (p == nullptr)
-        return;
+    case 'c':
+        if (auto content = StringAfterPrefix(name, "content-")) {
+            if (StringIsEqual(content, "encoding") ||
+                StringIsEqual(content, "language") ||
+                StringIsEqual(content, "md5") ||
+                StringIsEqual(content, "range") ||
+                StringIsEqual(content, "type") ||
+                StringIsEqual(content, "disposition"))
+                /* "body" */
+                return HeaderGroup::ALL;
 
-    dest.Add("server", p);
+            if (StringIsEqual(content, "location"))
+                /* "link" */
+                return HeaderGroup::LINK;
+        } else if (StringIsEqual(name, "cache-control"))
+            /* "basic" */
+            return HeaderGroup::ALL;
+
+        break;
+
+    case 'd':
+        if (StringIsEqual(name, "date"))
+            /* "exclude" */
+            return HeaderGroup::MAX;
+
+        break;
+
+    case 'e':
+        if (StringIsEqual(name, "etag") || StringIsEqual(name, "expires"))
+            /* "basic" */
+            return HeaderGroup::ALL;
+        break;
+
+    case 'l':
+        if (StringIsEqual(name, "last-modified"))
+            /* "basic" */
+            return HeaderGroup::ALL;
+
+        if (StringIsEqual(name, "location"))
+            /* "link" */
+            return HeaderGroup::LINK;
+
+        break;
+
+    case 'r':
+        if (StringIsEqual(name, "retry-after"))
+            /* "basic" */
+            return HeaderGroup::ALL;
+        break;
+
+    case 's':
+        if (is_upgrade && StringStartsWith(name, "sec-websocket-"))
+            /* "upgrade" */
+            return HeaderGroup::ALL;
+
+        if (StringIsEqual(name, "server"))
+            /* RFC 2616 3.8: Product Tokens */
+            return HeaderGroup::CAPABILITIES;
+
+        if (StringIsEqual(name, "set-cookie") ||
+            StringIsEqual(name, "set-cookie2"))
+            return HeaderGroup::COOKIE;
+
+        break;
+
+    case 'u':
+        if (is_upgrade && StringIsEqual(name, "upgrade"))
+            /* "upgrade" */
+            return HeaderGroup::ALL;
+        break;
+
+    case 'v':
+        if (StringIsEqual(name, "vary"))
+            /* "basic" */
+            return HeaderGroup::ALL;
+
+        if (StringIsEqual(name, "via"))
+            /* TODO: use HeaderGroup::IDENTITY */
+            return HeaderGroup::MAX;
+
+        break;
+
+    case 'x':
+        if (auto c4 = StringAfterPrefix(name, "x-cm4all-")) {
+            if (auto b = StringAfterPrefix(c4, "beng-")) {
+                return StringIsEqual(b, "peer-subject") ||
+                    StringIsEqual(b, "peer-issuer-subject")
+                    /* note: HeaderGroup::SSL doesn't exist for response
+                       headers */
+                    ? HeaderGroup::OTHER
+                    : HeaderGroup::SECURE;
+            } else if (StringIsEqual(c4, "https"))
+                return HeaderGroup::SSL;
+            else if (StringIsEqual(c4, "view"))
+                return HeaderGroup::TRANSFORMATION;
+        }
+
+        break;
+    }
+
+    if (http_header_is_hop_by_hop(name))
+        return HeaderGroup::MAX;
+
+    return HeaderGroup::OTHER;
 }
 
 StringMap
@@ -659,45 +538,55 @@ forward_response_headers(struct pool &pool, http_status_t status,
                          void *relocate_ctx,
                          const HeaderForwardSettings &settings) noexcept
 {
+    const bool is_upgrade = http_is_upgrade(status, src);
+
     StringMap dest(pool);
 
-    dest.ListCopyFrom(src, basic_response_headers);
+    for (const auto &i : src) {
+        const char *const key = i.key;
+        const char *value = i.value;
 
-    forward_link_response_headers(dest, src,
-                                  relocate, relocate_ctx,
-                                  settings[HeaderGroup::LINK]);
+        const auto group = ClassifyResponseHeader(key, is_upgrade);
+        if (group == HeaderGroup::ALL) {
+            dest.Add(key, value);
+            continue;
+        } else if (group == HeaderGroup::MAX) {
+            continue;
+        }
 
-    forward_upgrade_response_headers(dest, status, src,
-                                     settings[HeaderGroup::OTHER] == HeaderForwardMode::YES);
+        const auto mode = settings[group];
+        switch (mode) {
+        case HeaderForwardMode::NO:
+            continue;
 
-    if (settings[HeaderGroup::OTHER] == HeaderForwardMode::YES)
-        forward_other_response_headers(dest, src);
+        case HeaderForwardMode::YES:
+            break;
 
-    if (settings[HeaderGroup::COOKIE] == HeaderForwardMode::YES)
-        dest.ListCopyFrom(src, cookie_response_headers);
-    else if (settings[HeaderGroup::COOKIE] == HeaderForwardMode::BOTH) {
-        if (session_cookie == nullptr)
-            dest.ListCopyFrom(src, cookie_response_headers);
-        else
-            header_copy_set_cookie_except(dest, src, session_cookie);
+        case HeaderForwardMode::BOTH:
+            if (group == HeaderGroup::COOKIE &&
+                (session_cookie == nullptr ||
+                 !compare_set_cookie_name(value, session_cookie)))
+                /* if this is not our session cookie, forward it */
+                break;
+
+            continue;
+
+        case HeaderForwardMode::MANGLE:
+            if (relocate != nullptr && group == HeaderGroup::LINK) {
+                value = relocate(value, relocate_ctx);
+                if (value != nullptr)
+                    break;
+            }
+
+            continue;
+        }
+
+        dest.Add(key, value);
     }
-
-    if (settings[HeaderGroup::CORS] == HeaderForwardMode::YES)
-        dest.ListCopyFrom(src, cors_response_headers);
-
-    if (settings[HeaderGroup::SECURE] == HeaderForwardMode::YES)
-        forward_secure_headers(dest, src);
-
-    /* RFC 2616 3.8: Product Tokens */
-    forward_server(dest, src,
-                   settings[HeaderGroup::CAPABILITIES] != HeaderForwardMode::YES);
 
     if (settings[HeaderGroup::IDENTITY] != HeaderForwardMode::NO)
         forward_via(pool, dest, src, local_host,
                     settings[HeaderGroup::IDENTITY] == HeaderForwardMode::MANGLE);
-
-    if (settings[HeaderGroup::TRANSFORMATION] == HeaderForwardMode::YES)
-        forward_transformation_headers(dest, src);
 
     return dest;
 }

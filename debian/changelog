@@ -4,6 +4,7 @@ cm4all-beng-proxy (15.0.9) unstable; urgency=low
   * subst/yaml: use "{[name]}" instead of "{{name}}"
   * subst/yaml: use the dot as a YAML path separator
   * subst/yaml: allow traversing child maps
+  * bp/headers: optimize
 
  --   
 

@@ -35,18 +35,6 @@
 #include "strmap.hxx"
 #include "http/List.hxx"
 
-const char *const http_upgrade_request_headers[] = {
-    "sec-websocket-key",
-    "sec-websocket-protocol",
-    "sec-websocket-version",
-    nullptr,
-};
-
-const char *const http_upgrade_response_headers[] = {
-    "sec-websocket-accept",
-    nullptr,
-};
-
 bool
 http_is_upgrade(const StringMap &headers)
 {

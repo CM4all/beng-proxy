@@ -43,16 +43,6 @@
 class StringMap;
 class HttpHeaders;
 
-/**
- * This list does not include "Upgrade" and "Origin".
- */
-extern const char *const http_upgrade_request_headers[];
-
-/**
- * This list does not include "Upgrade".
- */
-extern const char *const http_upgrade_response_headers[];
-
 gcc_pure
 static inline bool
 http_is_upgrade(http_status_t status)
