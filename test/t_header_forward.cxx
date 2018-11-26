@@ -103,6 +103,34 @@ TEST(HeaderForwardTest, HostRequestHeader)
     check_strmap(a, "accept-charset=utf-8;host=foo;x-forwarded-host=foo;");
 }
 
+TEST(HeaderForwardTest, RangeRequestHeader)
+{
+    HeaderForwardSettings settings = HeaderForwardSettings::AllNo();
+
+    TestPool pool;
+    const StringMap headers{pool, {{"range", "1-42"}}};
+    auto a = forward_request_headers(pool, headers,
+                                     "192.168.0.2", "192.168.0.3",
+                                     false, false, false, false, false,
+                                     settings,
+                                     nullptr, nullptr, nullptr, nullptr);
+    check_strmap(a, "accept-charset=utf-8;");
+
+    a = forward_request_headers(pool, headers,
+                                "192.168.0.2", "192.168.0.3",
+                                false, false, false, false, true,
+                                settings,
+                                nullptr, nullptr, nullptr, nullptr);
+    check_strmap(a, "accept-charset=utf-8;range=1-42;");
+
+    a = forward_request_headers(pool, StringMap{pool},
+                                "192.168.0.2", "192.168.0.3",
+                                false, false, false, false, true,
+                                settings,
+                                nullptr, nullptr, nullptr, nullptr);
+    check_strmap(a, "accept-charset=utf-8;");
+}
+
 TEST(HeaderForwardTest, RequestHeaders)
 {
     HeaderForwardSettings settings = HeaderForwardSettings::AllNo();
