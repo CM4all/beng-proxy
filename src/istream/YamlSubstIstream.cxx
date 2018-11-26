@@ -119,6 +119,17 @@ LoadYamlMap(struct pool &pool, const char *_prefix,
     return tree;
 }
 
+UnusedIstreamPtr
+NewYamlSubstIstream(struct pool &pool, UnusedIstreamPtr input,
+                    const char *prefix,
+                    const YAML::Node &yaml_node, const char *yaml_map_path)
+{
+    return istream_subst_new(&pool, std::move(input),
+                             LoadYamlMap(pool, prefix,
+                                         ResolveYamlMap(yaml_node,
+                                                        yaml_map_path)));
+}
+
 static SubstTree
 LoadYamlFile(struct pool &pool, const char *prefix,
              const char *file_path, const char *map_path)

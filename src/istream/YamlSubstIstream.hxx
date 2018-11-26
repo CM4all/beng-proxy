@@ -34,6 +34,12 @@
 
 struct pool;
 class UnusedIstreamPtr;
+namespace YAML { class Node; }
+
+UnusedIstreamPtr
+NewYamlSubstIstream(struct pool &pool, UnusedIstreamPtr input,
+                    const char *prefix,
+                    const YAML::Node &yaml_node, const char *yaml_map_path);
 
 /**
  * Substitute variables in the form "{{NAME}}" with values from the
