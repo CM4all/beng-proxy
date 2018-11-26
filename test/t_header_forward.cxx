@@ -66,6 +66,43 @@ check_strmap(const StringMap &map, const char *p)
     ASSERT_STREQ(q, p);
 }
 
+TEST(HeaderForwardTest, HostRequestHeader)
+{
+    HeaderForwardSettings settings = HeaderForwardSettings::AllNo();
+
+    TestPool pool;
+    const StringMap headers{pool, {{"host", "foo"}}};
+    auto a = forward_request_headers(pool, headers,
+                                     "192.168.0.2", "192.168.0.3",
+                                     true, false, false, false, false,
+                                     settings,
+                                     nullptr, nullptr, nullptr, nullptr);
+    check_strmap(a, "accept-charset=utf-8;");
+
+    a = forward_request_headers(pool, headers,
+                                "192.168.0.2", "192.168.0.3",
+                                false, false, false, false, false,
+                                settings,
+                                nullptr, nullptr, nullptr, nullptr);
+    check_strmap(a, "accept-charset=utf-8;host=foo;");
+
+    settings[HeaderGroup::FORWARD] = HeaderForwardMode::MANGLE;
+    a = forward_request_headers(pool, headers,
+                                "192.168.0.2", "192.168.0.3",
+                                true, false, false, false, false,
+                                settings,
+                                nullptr, nullptr, nullptr, nullptr);
+    check_strmap(a, "accept-charset=utf-8;x-forwarded-host=foo;");
+
+    settings[HeaderGroup::FORWARD] = HeaderForwardMode::MANGLE;
+    a = forward_request_headers(pool, headers,
+                                "192.168.0.2", "192.168.0.3",
+                                false, false, false, false, false,
+                                settings,
+                                nullptr, nullptr, nullptr, nullptr);
+    check_strmap(a, "accept-charset=utf-8;host=foo;x-forwarded-host=foo;");
+}
+
 TEST(HeaderForwardTest, RequestHeaders)
 {
     HeaderForwardSettings settings = HeaderForwardSettings::AllNo();
