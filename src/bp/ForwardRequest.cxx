@@ -37,7 +37,7 @@
 
 ForwardRequest
 request_forward(Request &request2,
-                const struct header_forward_settings &header_forward,
+                const HeaderForwardSettings &header_forward,
                 const char *host_and_port, const char *uri,
                 bool exclude_host) noexcept
 {

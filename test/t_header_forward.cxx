@@ -68,7 +68,7 @@ check_strmap(const StringMap &map, const char *p)
 
 TEST(HeaderForwardTest, RequestHeaders)
 {
-    struct header_forward_settings settings;
+    HeaderForwardSettings settings;
     settings[HeaderGroup::IDENTITY] = HeaderForwardMode::MANGLE;
     settings[HeaderGroup::CAPABILITIES] = HeaderForwardMode::YES;
     settings[HeaderGroup::COOKIE] = HeaderForwardMode::MANGLE;
@@ -357,7 +357,7 @@ RelocateCallback(const char *uri, void *ctx) noexcept
 
 TEST(HeaderForwardTest, ResponseHeaders)
 {
-    struct header_forward_settings settings;
+    HeaderForwardSettings settings;
     settings[HeaderGroup::IDENTITY] = HeaderForwardMode::NO;
     settings[HeaderGroup::CAPABILITIES] = HeaderForwardMode::NO;
     settings[HeaderGroup::COOKIE] = HeaderForwardMode::NO;

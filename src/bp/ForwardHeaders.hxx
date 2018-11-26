@@ -40,7 +40,7 @@
 
 #include <beng-proxy/Headers.hxx>
 
-struct header_forward_settings {
+struct HeaderForwardSettings {
     BengProxy::HeaderForwardMode modes[size_t(BengProxy::HeaderGroup::MAX)];
 
     constexpr auto &operator[](BengProxy::HeaderGroup group) noexcept {
@@ -69,7 +69,7 @@ forward_request_headers(struct pool &pool, const StringMap &src,
                         bool with_body, bool forward_charset,
                         bool forward_encoding,
                         bool forward_range,
-                        const struct header_forward_settings &settings,
+                        const HeaderForwardSettings &settings,
                         const char *session_cookie,
                         const RealmSession *session,
                         const char *host_and_port, const char *uri) noexcept;
@@ -81,7 +81,7 @@ forward_response_headers(struct pool &pool, http_status_t status,
                          const char *session_cookie,
                          const char *(*relocate)(const char *uri, void *ctx),
                          void *relocate_ctx,
-                         const struct header_forward_settings &settings) noexcept;
+                         const HeaderForwardSettings &settings) noexcept;
 
 /**
  * Generate a X-CM4all-BENG-User header (if available)_.

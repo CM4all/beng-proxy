@@ -898,7 +898,7 @@ serve_document_root_file(Request &request2, const BpConfig &config)
     request2.translate.address = {ShallowCopy(), tr->address};
 
     using namespace BengProxy;
-    tr->request_header_forward = (struct header_forward_settings){
+    tr->request_header_forward = HeaderForwardSettings{
         .modes = {
             [(size_t)HeaderGroup::IDENTITY] = HeaderForwardMode::MANGLE,
             [(size_t)HeaderGroup::CAPABILITIES] = HeaderForwardMode::YES,
@@ -908,7 +908,7 @@ serve_document_root_file(Request &request2, const BpConfig &config)
         },
     };
 
-    tr->response_header_forward = (struct header_forward_settings){
+    tr->response_header_forward = HeaderForwardSettings{
         .modes = {
             [(size_t)HeaderGroup::IDENTITY] = HeaderForwardMode::NO,
             [(size_t)HeaderGroup::CAPABILITIES] = HeaderForwardMode::YES,

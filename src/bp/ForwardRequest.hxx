@@ -42,7 +42,7 @@
 #include "istream/UnusedPtr.hxx"
 
 class StringMap;
-struct header_forward_settings;
+struct HeaderForwardSettings;
 struct Request;
 class Istream;
 
@@ -61,7 +61,7 @@ struct ForwardRequest {
 
 ForwardRequest
 request_forward(Request &src,
-                const struct header_forward_settings &header_forward,
+                const HeaderForwardSettings &header_forward,
                 const char *host_and_port, const char *uri,
                 bool exclude_host) noexcept;
 
