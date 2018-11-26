@@ -763,6 +763,11 @@ test('t_istream_subst', executable('t_istream_subst',
   include_directories: inc,
   dependencies: t_istream_filter_deps))
 
+test('TestYamlSubstIstream', executable('TestYamlSubstIstream',
+  'TestYamlSubstIstream.cxx',
+  include_directories: inc,
+  dependencies: t_istream_filter_deps))
+
 test('t_istream_deflate', executable('t_istream_deflate',
   't_istream_deflate.cxx',
   include_directories: inc,
