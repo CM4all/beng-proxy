@@ -55,7 +55,7 @@ class EventLoop;
 static UnusedIstreamPtr
 create_input(struct pool &pool) noexcept
 {
-    return istream_string_new(pool, "{{foo:greeting}}, {{foo:object}}!");
+    return istream_string_new(pool, "{[foo:greeting]}, {[foo:object]}!");
 }
 
 static UnusedIstreamPtr

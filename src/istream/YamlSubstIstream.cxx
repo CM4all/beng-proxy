@@ -90,7 +90,7 @@ ResolveYamlMap(YAML::Node node, StringView path)
 static auto
 MakePrefix(const char *_prefix)
 {
-    std::string prefix = "{{";
+    std::string prefix = "{[";
     if (_prefix != nullptr)
         prefix += _prefix;
     return prefix;
@@ -110,7 +110,7 @@ LoadYamlMap(struct pool &pool, const char *_prefix,
         if (!i.first.IsScalar() || !i.second.IsScalar())
             continue;
 
-        const auto name = prefix + i.first.as<std::string>() + "}}";
+        const auto name = prefix + i.first.as<std::string>() + "]}";
         const auto value = i.second.as<std::string>();
         tree.Add(pool, p_strndup(&pool, name.data(), name.length()),
                  {p_strndup(&pool, value.data(), value.length()), value.length()});

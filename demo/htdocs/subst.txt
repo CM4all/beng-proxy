@@ -1,1 +1,1 @@
-{{greeting}}, {{object}}!
+{[greeting]}, {[object]}!

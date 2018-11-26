@@ -42,7 +42,7 @@ NewYamlSubstIstream(struct pool &pool, UnusedIstreamPtr input,
                     const YAML::Node &yaml_node, const char *yaml_map_path);
 
 /**
- * Substitute variables in the form "{{NAME}}" with values from the
+ * Substitute variables in the form "{[NAME]}" with values from the
  * given YAML file.
  *
  * Throws on error (if the YAML file could not be loaded).
