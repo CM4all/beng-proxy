@@ -47,7 +47,6 @@ struct SuffixRegistryLookup {
                          const char *suffix,
                          SuffixRegistryHandler &_handler)
         :handler(_handler) {
-        request.Clear();
         request.content_type_lookup = payload;
         request.suffix = suffix;
     }

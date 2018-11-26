@@ -35,22 +35,16 @@
 
 #include "Request.hxx"
 #include "translation/Protocol.hxx"
-#include "util/TrivialArray.hxx"
+#include "util/StaticArray.hxx"
 
 #include <stddef.h>
 
 struct pool;
 
 struct TranslationInvalidateRequest : TranslateRequest {
-    const char *site;
+    const char *site = nullptr;
 
-    TrivialArray<TranslationCommand, 32> commands;
-
-    void Clear() {
-        TranslateRequest::Clear();
-        site = nullptr;
-        commands.clear();
-    }
+    StaticArray<TranslationCommand, 32> commands;
 };
 
 /**

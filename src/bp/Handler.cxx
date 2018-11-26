@@ -819,8 +819,6 @@ fill_translate_request(TranslateRequest &t,
     const auto session = t.session;
     const auto param = t.param;
 
-    t.Clear();
-
     /* restore */
     t.session = session;
     t.param = param;

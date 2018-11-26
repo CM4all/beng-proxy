@@ -164,7 +164,6 @@ int main(int argc, char **argv) {
     const ScopeFbPoolInit fb_pool_init;
 
     TranslateRequest request;
-    request.Clear();
     request.host = "example.com";
     request.uri = "/foo/index.html";
 

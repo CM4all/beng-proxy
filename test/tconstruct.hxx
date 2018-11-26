@@ -47,7 +47,6 @@
 
 struct MakeRequest : TranslateRequest {
     explicit MakeRequest(const char *_uri) {
-        Clear();
         uri = _uri;
     }
 

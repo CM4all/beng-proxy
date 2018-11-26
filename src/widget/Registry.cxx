@@ -49,7 +49,6 @@ widget_registry_lookup(struct pool &pool,
                        CancellablePointer &cancel_ptr)
 {
     auto request = NewFromPool<TranslateRequest>(pool);
-    request->Clear();
 
     request->widget_type = widget_type;
 

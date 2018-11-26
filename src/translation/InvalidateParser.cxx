@@ -111,7 +111,6 @@ ParseTranslationInvalidateRequest(struct pool &pool,
                                   const void *data, size_t length)
 {
     TranslationInvalidateRequest request;
-    request.Clear();
 
     if (length % 4 != 0)
         /* must be padded */

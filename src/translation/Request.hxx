@@ -49,54 +49,54 @@
 enum class TranslationCommand : uint16_t;
 
 struct TranslateRequest {
-    const char *listener_tag;
+    const char *listener_tag = nullptr;
 
 #if TRANSLATION_ENABLE_HTTP
-    SocketAddress local_address;
+    SocketAddress local_address = nullptr;
 #endif
 
-    const char *remote_host;
-    const char *host;
-    const char *alt_host;
-    const char *user_agent;
-    const char *ua_class;
-    const char *accept_language;
+    const char *remote_host = nullptr;
+    const char *host = nullptr;
+    const char *alt_host = nullptr;
+    const char *user_agent = nullptr;
+    const char *ua_class = nullptr;
+    const char *accept_language = nullptr;
 
     /**
      * The value of the "Authorization" HTTP request header.
      */
-    const char *authorization;
+    const char *authorization = nullptr;
 
-    const char *uri;
-    const char *args;
-    const char *query_string;
-    const char *widget_type;
+    const char *uri = nullptr;
+    const char *args = nullptr;
+    const char *query_string = nullptr;
+    const char *widget_type = nullptr;
 
 #if TRANSLATION_ENABLE_SESSION
-    ConstBuffer<void> session;
+    ConstBuffer<void> session = nullptr;
 #endif
 
-    const char *param;
+    const char *param = nullptr;
 
     /**
      * The payload of the #TRANSLATE_INTERNAL_REDIRECT packet.  If
      * ConstBuffer::IsNull(), then no #TRANSLATE_INTERNAL_REDIRECT
      * packet was received.
      */
-    ConstBuffer<void> internal_redirect;
+    ConstBuffer<void> internal_redirect = nullptr;
 
 #if TRANSLATION_ENABLE_SESSION
     /**
      * The payload of the CHECK packet.  If ConstBuffer::IsNull(),
      * then no CHECK packet will be sent.
      */
-    ConstBuffer<void> check;
+    ConstBuffer<void> check = nullptr;
 
     /**
      * The payload of the AUTH packet.  If ConstBuffer::IsNull(),
      * then no AUTH packet will be sent.
      */
-    ConstBuffer<void> auth;
+    ConstBuffer<void> auth = nullptr;
 #endif
 
 #if TRANSLATION_ENABLE_HTTP
@@ -105,86 +105,40 @@ struct TranslateRequest {
      * ConstBuffer::IsNull(), then no #TRANSLATE_WANT_FULL_URI packet
      * was received.
      */
-    ConstBuffer<void> want_full_uri;
+    ConstBuffer<void> want_full_uri = nullptr;
 #endif
 
-    ConstBuffer<TranslationCommand> want;
+    ConstBuffer<TranslationCommand> want = nullptr;
 
-    ConstBuffer<void> file_not_found;
+    ConstBuffer<void> file_not_found = nullptr;
 
-    ConstBuffer<void> content_type_lookup;
+    ConstBuffer<void> content_type_lookup = nullptr;
 
-    const char *suffix;
+    const char *suffix = nullptr;
 
-    ConstBuffer<void> enotdir;
+    ConstBuffer<void> enotdir = nullptr;
 
-    ConstBuffer<void> directory_index;
+    ConstBuffer<void> directory_index = nullptr;
 
 #if TRANSLATION_ENABLE_HTTP
-    ConstBuffer<void> error_document;
+    ConstBuffer<void> error_document = nullptr;
 
-    http_status_t error_document_status;
+    http_status_t error_document_status = http_status_t(0);
 #endif
 
-    ConstBuffer<void> probe_path_suffixes;
-    const char *probe_suffix;
+    ConstBuffer<void> probe_path_suffixes = nullptr;
+    const char *probe_suffix = nullptr;
 
     /**
      * File contents.
      */
-    ConstBuffer<void> read_file;
+    ConstBuffer<void> read_file = nullptr;
 
-    const char *user;
+    const char *user = nullptr;
 
-    const char *pool;
+    const char *pool = nullptr;
 
-    bool cron;
-
-    void Clear() {
-        listener_tag = nullptr;
-#if TRANSLATION_ENABLE_HTTP
-        local_address = nullptr;
-#endif
-        remote_host = nullptr;
-        host = nullptr;
-        alt_host = nullptr;
-        user_agent = nullptr;
-        ua_class = nullptr;
-        accept_language = nullptr;
-        authorization = nullptr;
-        uri = nullptr;
-        args = nullptr;
-        query_string = nullptr;
-        widget_type = nullptr;
-#if TRANSLATION_ENABLE_SESSION
-        session = nullptr;
-#endif
-        param = nullptr;
-        internal_redirect = nullptr;
-#if TRANSLATION_ENABLE_SESSION
-        check = nullptr;
-        auth = nullptr;
-#endif
-#if TRANSLATION_ENABLE_HTTP
-        want_full_uri = nullptr;
-#endif
-        want = nullptr;
-        file_not_found = nullptr;
-        content_type_lookup = nullptr;
-        suffix = nullptr;
-        enotdir = nullptr;
-        directory_index = nullptr;
-#if TRANSLATION_ENABLE_HTTP
-        error_document = nullptr;
-        error_document_status = http_status_t(0);
-#endif
-        probe_path_suffixes = nullptr;
-        probe_suffix = nullptr;
-        read_file = nullptr;
-        user = nullptr;
-        pool = nullptr;
-        cron = false;
-    }
+    bool cron = false;
 
     /**
      * Returns a name for this object to identify it in diagnostic

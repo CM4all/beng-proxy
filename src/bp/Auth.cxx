@@ -134,7 +134,6 @@ Request::HandleAuth(const TranslateResponse &response)
     }
 
     auto t = NewFromPool<TranslateRequest>(pool);
-    t->Clear();
     t->auth = auth;
     t->uri = request.uri;
     t->host = translate.request.host;

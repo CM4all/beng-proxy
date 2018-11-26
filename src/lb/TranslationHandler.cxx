@@ -90,7 +90,6 @@ Fill(TranslateRequest &t, const char *name,
      const char *listener_tag,
      const HttpServerRequest &request)
 {
-    t.Clear();
     t.pool = name;
     t.listener_tag = listener_tag;
     t.host = request.headers.Get("host");
