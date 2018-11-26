@@ -144,6 +144,12 @@ enum class HeaderGroup {
     SSL,
 
     /**
+     * Forward authentication headers such as "WWW-Authenticate" and
+     * "Authorization".
+     */
+    AUTH,
+
+    /**
      * Internal definition for estimating the size of an array.
      */
     MAX,

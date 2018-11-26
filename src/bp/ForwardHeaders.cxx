@@ -94,6 +94,9 @@ ClassifyRequestHeader(const char *name, const bool with_body,
                 return HeaderGroup::CORS;
         }
 
+        if (StringIsEqual(name, "authorization"))
+            return HeaderGroup::AUTH;
+
         break;
 
     case 'c':
@@ -421,6 +424,9 @@ ClassifyResponseHeader(const char *name, const bool is_upgrade) noexcept
                 return HeaderGroup::CORS;
         }
 
+        if (StringIsEqual(name, "authentication-info"))
+            return HeaderGroup::AUTH;
+
         break;
 
     case 'c':
@@ -502,6 +508,12 @@ ClassifyResponseHeader(const char *name, const bool is_upgrade) noexcept
         if (StringIsEqual(name, "via"))
             /* TODO: use HeaderGroup::IDENTITY */
             return HeaderGroup::MAX;
+
+        break;
+
+    case 'w':
+        if (StringIsEqual(name, "www-authenticate"))
+            return HeaderGroup::AUTH;
 
         break;
 

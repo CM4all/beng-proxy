@@ -472,11 +472,13 @@ static void
 translation_response_headers(HttpHeaders &headers,
                              const TranslateResponse &tr)
 {
-    if (tr.www_authenticate != nullptr)
-        headers.Write("www-authenticate", tr.www_authenticate);
+    if (tr.response_header_forward[BengProxy::HeaderGroup::AUTH] == BengProxy::HeaderForwardMode::MANGLE) {
+        if (tr.www_authenticate != nullptr)
+            headers.Write("www-authenticate", tr.www_authenticate);
 
-    if (tr.authentication_info != nullptr)
-        headers.Write("authentication-info", tr.authentication_info);
+        if (tr.authentication_info != nullptr)
+            headers.Write("authentication-info", tr.authentication_info);
+    }
 
     for (const auto &i : tr.response_headers)
         headers.Write(i.key, i.value);

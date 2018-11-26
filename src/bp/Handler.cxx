@@ -910,6 +910,7 @@ serve_document_root_file(Request &request2, const BpConfig &config)
             [(size_t)HeaderGroup::TRANSFORMATION] = HeaderForwardMode::NO,
             [(size_t)HeaderGroup::LINK] = HeaderForwardMode::NO,
             [(size_t)HeaderGroup::SSL] = HeaderForwardMode::NO,
+            [(size_t)HeaderGroup::AUTH] = HeaderForwardMode::MANGLE,
         },
     };
 
@@ -925,6 +926,7 @@ serve_document_root_file(Request &request2, const BpConfig &config)
             [(size_t)HeaderGroup::TRANSFORMATION] = HeaderForwardMode::MANGLE,
             [(size_t)HeaderGroup::LINK] = HeaderForwardMode::YES,
             [(size_t)HeaderGroup::SSL] = HeaderForwardMode::NO,
+            [(size_t)HeaderGroup::AUTH] = HeaderForwardMode::MANGLE,
         },
     };
 

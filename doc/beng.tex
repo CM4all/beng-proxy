@@ -1971,6 +1971,12 @@ Group is one of:
   if set to \verb|MANGLE|, then \emph{beng-proxy} attempts to rewrite
   the \texttt{Location} URI relative to itself
 
+\item \texttt{AUTH}: forward HTTP authentication headers
+  (e.g. basic/digest auth), such as \verb|WWW-Authenticate|,
+  \verb|Authentication-Info| and \verb|authorization|; if set to
+  \verb|MANGLE| (the default), then \emph{beng-proxy} allows the
+  translation server to handle HTTP authentication
+
 \item \texttt{OTHER}: other end-to-end headers not explicitly
   mentioned here
 

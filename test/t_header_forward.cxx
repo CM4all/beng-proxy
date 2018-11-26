@@ -156,6 +156,44 @@ TEST(HeaderForwardTest, HostRequestHeader)
     check_strmap(a, "accept-charset=utf-8;host=foo;x-forwarded-host=foo;");
 }
 
+TEST(HeaderForwardTest, AuthRequestHeaders)
+{
+    HeaderForwardSettings settings = HeaderForwardSettings::AllNo();
+
+    TestPool pool;
+    const StringMap headers{pool, {{"authorization", "foo"}}};
+    auto a = forward_request_headers(pool, headers,
+                                     "192.168.0.2", "192.168.0.3",
+                                     false, false, false, false, false,
+                                     settings,
+                                     nullptr, nullptr, nullptr, nullptr);
+    check_strmap(a, "accept-charset=utf-8;");
+
+    settings[HeaderGroup::AUTH] = HeaderForwardMode::MANGLE;
+    a = forward_request_headers(pool, headers,
+                                "192.168.0.2", "192.168.0.3",
+                                false, false, false, false, false,
+                                settings,
+                                nullptr, nullptr, nullptr, nullptr);
+    check_strmap(a, "accept-charset=utf-8;");
+
+    settings[HeaderGroup::AUTH] = HeaderForwardMode::BOTH;
+    a = forward_request_headers(pool, headers,
+                                "192.168.0.2", "192.168.0.3",
+                                false, false, false, false, false,
+                                settings,
+                                nullptr, nullptr, nullptr, nullptr);
+    check_strmap(a, "accept-charset=utf-8;");
+
+    settings[HeaderGroup::AUTH] = HeaderForwardMode::YES;
+    a = forward_request_headers(pool, headers,
+                                "192.168.0.2", "192.168.0.3",
+                                false, false, false, false, false,
+                                settings,
+                                nullptr, nullptr, nullptr, nullptr);
+    check_strmap(a, "accept-charset=utf-8;authorization=foo;");
+}
+
 TEST(HeaderForwardTest, RangeRequestHeader)
 {
     HeaderForwardSettings settings = HeaderForwardSettings::AllNo();
@@ -554,6 +592,44 @@ TEST(HeaderForwardTest, BasicResponseHeader)
                                  nullptr, nullptr,
                                  settings);
     check_strmap(a, "accept-ranges=10;age=1;allow=2;cache-control=4;content-disposition=12;content-encoding=6;content-language=7;content-md5=8;content-range=9;content-type=11;etag=3;expires=5;last-modified=13;retry-after=14;vary=15;");
+}
+
+TEST(HeaderForwardTest, AuthResponseHeaders)
+{
+    HeaderForwardSettings settings = HeaderForwardSettings::AllNo();
+
+    TestPool pool;
+    const StringMap headers{pool,
+                            {
+                             {"www-authenticate", "foo"},
+                             {"authentication-info", "bar"},
+                            }};
+    auto a = forward_response_headers(pool, HTTP_STATUS_OK, headers,
+                                      "192.168.0.2", nullptr,
+                                      nullptr, nullptr,
+                                      settings);
+    check_strmap(a, "");
+
+    settings[HeaderGroup::AUTH] = HeaderForwardMode::MANGLE;
+    a = forward_response_headers(pool, HTTP_STATUS_OK, headers,
+                                 "192.168.0.2", nullptr,
+                                 nullptr, nullptr,
+                                 settings);
+    check_strmap(a, "");
+
+    settings[HeaderGroup::AUTH] = HeaderForwardMode::BOTH;
+    a = forward_response_headers(pool, HTTP_STATUS_OK, headers,
+                                 "192.168.0.2", nullptr,
+                                 nullptr, nullptr,
+                                 settings);
+    check_strmap(a, "");
+
+    settings[HeaderGroup::AUTH] = HeaderForwardMode::YES;
+    a = forward_response_headers(pool, HTTP_STATUS_OK, headers,
+                                 "192.168.0.2", nullptr,
+                                 nullptr, nullptr,
+                                 settings);
+    check_strmap(a, "authentication-info=bar;www-authenticate=foo;");
 }
 
 TEST(HeaderForwardTest, ResponseHeaders)
