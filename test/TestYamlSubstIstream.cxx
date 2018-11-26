@@ -39,7 +39,7 @@
 #include <yaml-cpp/node/parse.h>
 #include <yaml-cpp/node/node.h>
 
-#define EXPECTED_RESULT "Good morning, everybody!"
+#define EXPECTED_RESULT "Good morning, everybody! bar"
 
 static constexpr char yaml[] =
     "top: level\n"
@@ -55,7 +55,7 @@ class EventLoop;
 static UnusedIstreamPtr
 create_input(struct pool &pool) noexcept
 {
-    return istream_string_new(pool, "{[foo:greeting]}, {[foo:object]}!");
+    return istream_string_new(pool, "{[foo:greeting]}, {[foo:object]}! {[foo:nested.foo]}");
 }
 
 static UnusedIstreamPtr

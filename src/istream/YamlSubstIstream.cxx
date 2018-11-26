@@ -104,13 +104,18 @@ LoadYamlMap(struct pool &pool, SubstTree &tree,
     assert(node.IsMap());
 
     for (const auto &i : node) {
-        if (!i.first.IsScalar() || !i.second.IsScalar())
+        if (!i.first.IsScalar())
             continue;
 
-        const auto name = prefix + i.first.as<std::string>() + "]}";
-        const auto value = i.second.as<std::string>();
-        tree.Add(pool, p_strndup(&pool, name.data(), name.length()),
-                 {p_strndup(&pool, value.data(), value.length()), value.length()});
+        if (i.second.IsScalar()) {
+            const auto name = prefix + i.first.as<std::string>() + "]}";
+            const auto value = i.second.as<std::string>();
+            tree.Add(pool, p_strndup(&pool, name.data(), name.length()),
+                     {p_strndup(&pool, value.data(), value.length()), value.length()});
+        } else if (i.second.IsMap()) {
+            LoadYamlMap(pool, tree, prefix + i.first.as<std::string>() + ".",
+                        i.second);
+        }
     }
 }
 
