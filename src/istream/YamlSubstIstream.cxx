@@ -74,6 +74,19 @@ ResolveYamlPath(YAML::Node node, StringView path)
     return node;
 }
 
+static YAML::Node
+ResolveYamlMap(YAML::Node node, StringView path)
+{
+    node = ResolveYamlPath(node, path);
+    if (!node.IsMap())
+        throw path.empty()
+            ? std::runtime_error("Not a YAML map")
+            : FormatRuntimeError("Path '%.*s' is not a YAML map",
+                                 int(path.size), path.data);
+
+    return node;
+}
+
 static auto
 MakePrefix(const char *_prefix)
 {
@@ -110,13 +123,8 @@ static SubstTree
 LoadYamlFile(struct pool &pool, const char *prefix,
              const char *file_path, const char *map_path)
 try {
-    const auto node = ResolveYamlPath(YAML::LoadFile(file_path), map_path);
-    if (!node.IsMap())
-        throw map_path != nullptr && *map_path != 0
-            ? FormatRuntimeError("Path '%s' is not a YAML map", map_path)
-            : std::runtime_error("Not a YAML map");
-
-    return LoadYamlMap(pool, prefix, node);
+    return LoadYamlMap(pool, prefix,
+                       ResolveYamlMap(YAML::LoadFile(file_path), map_path));
 } catch (...) {
     std::throw_with_nested(FormatRuntimeError("Failed to load YAML file '%s'",
                                               file_path));
