@@ -96,15 +96,12 @@ MakePrefix(const char *_prefix)
     return prefix;
 }
 
-static SubstTree
-LoadYamlMap(struct pool &pool, const char *_prefix,
+static void
+LoadYamlMap(struct pool &pool, SubstTree &tree,
+            const std::string &prefix,
             const YAML::Node &node) noexcept
 {
     assert(node.IsMap());
-
-    const auto prefix = MakePrefix(_prefix);
-
-    SubstTree tree;
 
     for (const auto &i : node) {
         if (!i.first.IsScalar() || !i.second.IsScalar())
@@ -115,7 +112,18 @@ LoadYamlMap(struct pool &pool, const char *_prefix,
         tree.Add(pool, p_strndup(&pool, name.data(), name.length()),
                  {p_strndup(&pool, value.data(), value.length()), value.length()});
     }
+}
 
+static SubstTree
+LoadYamlMap(struct pool &pool, const char *_prefix,
+            const YAML::Node &node) noexcept
+{
+    assert(node.IsMap());
+
+    const auto prefix = MakePrefix(_prefix);
+
+    SubstTree tree;
+    LoadYamlMap(pool, tree, prefix, node);
     return tree;
 }
 
