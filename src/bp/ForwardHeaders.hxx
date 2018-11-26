@@ -43,6 +43,15 @@
 struct HeaderForwardSettings {
     BengProxy::HeaderForwardMode modes[size_t(BengProxy::HeaderGroup::MAX)];
 
+    HeaderForwardSettings() = default;
+
+    static constexpr HeaderForwardSettings AllNo() noexcept {
+        static_assert(BengProxy::HeaderForwardMode::NO == BengProxy::HeaderForwardMode(),
+                      "Wrong default value");
+
+        return HeaderForwardSettings{BengProxy::HeaderForwardMode::NO};
+    }
+
     constexpr auto &operator[](BengProxy::HeaderGroup group) noexcept {
         return modes[size_t(group)];
     }

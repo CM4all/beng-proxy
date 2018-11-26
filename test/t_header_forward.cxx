@@ -68,17 +68,10 @@ check_strmap(const StringMap &map, const char *p)
 
 TEST(HeaderForwardTest, RequestHeaders)
 {
-    HeaderForwardSettings settings;
+    HeaderForwardSettings settings = HeaderForwardSettings::AllNo();
     settings[HeaderGroup::IDENTITY] = HeaderForwardMode::MANGLE;
     settings[HeaderGroup::CAPABILITIES] = HeaderForwardMode::YES;
     settings[HeaderGroup::COOKIE] = HeaderForwardMode::MANGLE;
-    settings[HeaderGroup::OTHER] = HeaderForwardMode::NO;
-    settings[HeaderGroup::FORWARD] = HeaderForwardMode::NO;
-    settings[HeaderGroup::CORS] = HeaderForwardMode::NO;
-    settings[HeaderGroup::SECURE] = HeaderForwardMode::NO;
-    settings[HeaderGroup::SSL] = HeaderForwardMode::NO;
-    settings[HeaderGroup::TRANSFORMATION] = HeaderForwardMode::NO;
-    settings[HeaderGroup::LINK] = HeaderForwardMode::NO;
 
     TestPool pool;
 
@@ -357,16 +350,7 @@ RelocateCallback(const char *uri, void *ctx) noexcept
 
 TEST(HeaderForwardTest, ResponseHeaders)
 {
-    HeaderForwardSettings settings;
-    settings[HeaderGroup::IDENTITY] = HeaderForwardMode::NO;
-    settings[HeaderGroup::CAPABILITIES] = HeaderForwardMode::NO;
-    settings[HeaderGroup::COOKIE] = HeaderForwardMode::NO;
-    settings[HeaderGroup::OTHER] = HeaderForwardMode::NO;
-    settings[HeaderGroup::FORWARD] = HeaderForwardMode::NO;
-    settings[HeaderGroup::CORS] = HeaderForwardMode::NO;
-    settings[HeaderGroup::SECURE] = HeaderForwardMode::NO;
-    settings[HeaderGroup::SSL] = HeaderForwardMode::NO;
-    settings[HeaderGroup::TRANSFORMATION] = HeaderForwardMode::NO;
+    HeaderForwardSettings settings = HeaderForwardSettings::AllNo();
     settings[HeaderGroup::LINK] = HeaderForwardMode::YES;
 
     TestPool pool;
