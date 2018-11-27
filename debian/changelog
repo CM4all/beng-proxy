@@ -7,7 +7,7 @@ cm4all-beng-proxy (15.0.9) unstable; urgency=low
   * bp/headers: optimize
   * bp/headers: add group "AUTH"
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 27 Nov 2018 16:57:41 +0100
 
 cm4all-beng-proxy (15.0.8) unstable; urgency=low
 
