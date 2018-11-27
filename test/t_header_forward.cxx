@@ -66,6 +66,59 @@ check_strmap(const StringMap &map, const char *p)
     ASSERT_STREQ(q, p);
 }
 
+TEST(HeaderForwardTest, BasicRequestHeader)
+{
+    HeaderForwardSettings settings = HeaderForwardSettings::AllNo();
+
+    TestPool pool;
+    const StringMap headers{pool,
+                            {
+                             {"accept", "1"},
+                             {"from", "2"},
+                             {"cache-control", "3"},
+                            }};
+    auto a = forward_request_headers(pool, headers,
+                                     "192.168.0.2", "192.168.0.3",
+                                     false, false, false, false, false,
+                                     settings,
+                                     nullptr, nullptr, nullptr, nullptr);
+    check_strmap(a, "accept=1;accept-charset=utf-8;cache-control=3;from=2;");
+
+    a = forward_request_headers(pool, headers,
+                                "192.168.0.2", "192.168.0.3",
+                                true, true, true, true, true,
+                                settings,
+                                nullptr, nullptr, nullptr, nullptr);
+    check_strmap(a, "accept=1;accept-charset=utf-8;cache-control=3;from=2;");
+
+    std::fill_n(settings.modes, size_t(HeaderGroup::MAX),
+                HeaderForwardMode::YES);
+    a = forward_request_headers(pool, headers,
+                                "192.168.0.2", "192.168.0.3",
+                                false, false, false, false, false,
+                                settings,
+                                nullptr, nullptr, nullptr, nullptr);
+    check_strmap(a, "accept=1;accept-charset=utf-8;cache-control=3;from=2;user-agent=" PRODUCT_TOKEN ";");
+
+    std::fill_n(settings.modes, size_t(HeaderGroup::MAX),
+                HeaderForwardMode::MANGLE);
+    a = forward_request_headers(pool, headers,
+                                "192.168.0.2", "192.168.0.3",
+                                false, false, false, false, false,
+                                settings,
+                                nullptr, nullptr, nullptr, nullptr);
+    check_strmap(a, "accept=1;accept-charset=utf-8;cache-control=3;from=2;user-agent=" PRODUCT_TOKEN ";via=1.1 192.168.0.2;x-forwarded-for=192.168.0.3;");
+
+    std::fill_n(settings.modes, size_t(HeaderGroup::MAX),
+                HeaderForwardMode::BOTH);
+    a = forward_request_headers(pool, headers,
+                                "192.168.0.2", "192.168.0.3",
+                                false, false, false, false, false,
+                                settings,
+                                nullptr, nullptr, nullptr, nullptr);
+    check_strmap(a, "accept=1;accept-charset=utf-8;cache-control=3;from=2;user-agent=" PRODUCT_TOKEN ";");
+}
+
 TEST(HeaderForwardTest, HostRequestHeader)
 {
     HeaderForwardSettings settings = HeaderForwardSettings::AllNo();
@@ -447,6 +500,60 @@ RelocateCallback(const char *uri, void *ctx) noexcept
         return p_strcat(&pool, "http://example.com/", suffix, nullptr);
 
     return uri;
+}
+
+TEST(HeaderForwardTest, BasicResponseHeader)
+{
+    HeaderForwardSettings settings = HeaderForwardSettings::AllNo();
+
+    TestPool pool;
+    const StringMap headers{pool,
+                            {
+                             {"age", "1"},
+                             {"allow", "2"},
+                             {"etag", "3"},
+                             {"cache-control", "4"},
+                             {"expires", "5"},
+                             {"content-encoding", "6"},
+                             {"content-language", "7"},
+                             {"content-md5", "8"},
+                             {"content-range", "9"},
+                             {"accept-ranges", "10"},
+                             {"content-type", "11"},
+                             {"content-disposition", "12"},
+                             {"last-modified", "13"},
+                             {"retry-after", "14"},
+                             {"vary", "15"},
+                            }};
+    auto a = forward_response_headers(pool, HTTP_STATUS_OK, headers,
+                                      "192.168.0.2", nullptr,
+                                      nullptr, nullptr,
+                                      settings);
+    check_strmap(a, "accept-ranges=10;age=1;allow=2;cache-control=4;content-disposition=12;content-encoding=6;content-language=7;content-md5=8;content-range=9;content-type=11;etag=3;expires=5;last-modified=13;retry-after=14;vary=15;");
+
+    std::fill_n(settings.modes, size_t(HeaderGroup::MAX),
+                HeaderForwardMode::YES);
+    a = forward_response_headers(pool, HTTP_STATUS_OK, headers,
+                                 "192.168.0.2", nullptr,
+                                 nullptr, nullptr,
+                                 settings);
+    check_strmap(a, "accept-ranges=10;age=1;allow=2;cache-control=4;content-disposition=12;content-encoding=6;content-language=7;content-md5=8;content-range=9;content-type=11;etag=3;expires=5;last-modified=13;retry-after=14;vary=15;");
+
+    std::fill_n(settings.modes, size_t(HeaderGroup::MAX),
+                HeaderForwardMode::MANGLE);
+    a = forward_response_headers(pool, HTTP_STATUS_OK, headers,
+                                 "192.168.0.2", nullptr,
+                                 nullptr, nullptr,
+                                 settings);
+    check_strmap(a, "accept-ranges=10;age=1;allow=2;cache-control=4;content-disposition=12;content-encoding=6;content-language=7;content-md5=8;content-range=9;content-type=11;etag=3;expires=5;last-modified=13;retry-after=14;vary=15;via=1.1 192.168.0.2;");
+
+    std::fill_n(settings.modes, size_t(HeaderGroup::MAX),
+                HeaderForwardMode::BOTH);
+    a = forward_response_headers(pool, HTTP_STATUS_OK, headers,
+                                 "192.168.0.2", nullptr,
+                                 nullptr, nullptr,
+                                 settings);
+    check_strmap(a, "accept-ranges=10;age=1;allow=2;cache-control=4;content-disposition=12;content-encoding=6;content-language=7;content-md5=8;content-range=9;content-type=11;etag=3;expires=5;last-modified=13;retry-after=14;vary=15;");
 }
 
 TEST(HeaderForwardTest, ResponseHeaders)
