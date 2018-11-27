@@ -38,6 +38,7 @@
 
 #include <yaml-cpp/node/parse.h>
 #include <yaml-cpp/node/node.h>
+#include <yaml-cpp/node/impl.h>
 
 #define EXPECTED_RESULT "Good morning, everybody! bar"
 
