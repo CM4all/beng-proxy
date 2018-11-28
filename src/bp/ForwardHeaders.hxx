@@ -62,6 +62,25 @@ struct HeaderForwardSettings {
     constexpr const auto &operator[](Group group) const noexcept {
         return modes[size_t(group)];
     }
+
+    static constexpr auto MakeDefaultRequest() noexcept {
+        auto s = AllNo();
+        s[Group::IDENTITY] = Mode::MANGLE;
+        s[Group::CAPABILITIES] = Mode::YES;
+        s[Group::COOKIE] = Mode::MANGLE;
+        s[Group::AUTH] = Mode::MANGLE;
+        return s;
+    }
+
+    static constexpr auto MakeDefaultResponse() noexcept {
+        auto s = AllNo();
+        s[Group::CAPABILITIES] = Mode::YES;
+        s[Group::COOKIE] = Mode::MANGLE;
+        s[Group::TRANSFORMATION] = Mode::MANGLE;
+        s[Group::LINK] = Mode::YES;
+        s[Group::AUTH] = Mode::MANGLE;
+        return s;
+    }
 };
 
 struct pool;
