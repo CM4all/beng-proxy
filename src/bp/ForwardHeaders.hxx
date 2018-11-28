@@ -41,22 +41,25 @@
 #include <beng-proxy/Headers.hxx>
 
 struct HeaderForwardSettings {
-    BengProxy::HeaderForwardMode modes[size_t(BengProxy::HeaderGroup::MAX)];
+    using Group = BengProxy::HeaderGroup;
+    using Mode = BengProxy::HeaderForwardMode;
+
+    Mode modes[size_t(Group::MAX)];
 
     HeaderForwardSettings() = default;
 
     static constexpr HeaderForwardSettings AllNo() noexcept {
-        static_assert(BengProxy::HeaderForwardMode::NO == BengProxy::HeaderForwardMode(),
+        static_assert(Mode::NO == Mode(),
                       "Wrong default value");
 
-        return HeaderForwardSettings{BengProxy::HeaderForwardMode::NO};
+        return HeaderForwardSettings{Mode::NO};
     }
 
-    constexpr auto &operator[](BengProxy::HeaderGroup group) noexcept {
+    constexpr auto &operator[](Group group) noexcept {
         return modes[size_t(group)];
     }
 
-    constexpr const auto &operator[](BengProxy::HeaderGroup group) const noexcept {
+    constexpr const auto &operator[](Group group) const noexcept {
         return modes[size_t(group)];
     }
 };
