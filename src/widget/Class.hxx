@@ -119,7 +119,8 @@ struct WidgetClass {
 
     bool dump_headers;
 
-    WidgetClass() = default;
+    WidgetClass() noexcept
+        :views(nullptr) {}
 
     struct Root {};
     WidgetClass(Root)
@@ -137,7 +138,6 @@ struct WidgetClass {
          info_headers(false), dump_headers(false) {}
 
     void Init() {
-        views.Init(nullptr);
         local_uri = nullptr;
         untrusted_host = nullptr;
         untrusted_prefix = nullptr;

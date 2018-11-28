@@ -208,8 +208,7 @@ struct MakeResponse : TranslateResponse {
         struct pool &p = *tpool;
 
         if (views == nullptr) {
-            views = NewFromPool<WidgetView>(p);
-            views->Init(nullptr);
+            views = NewFromPool<WidgetView>(p, nullptr);
         }
 
         Transformation **tail = &views->transformation;

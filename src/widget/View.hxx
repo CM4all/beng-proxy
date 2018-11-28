@@ -75,12 +75,11 @@ struct WidgetView {
      */
     HeaderForwardSettings response_header_forward = HeaderForwardSettings::MakeDefaultResponse();
 
-    WidgetView() = default;
+    WidgetView(const char *_name)
+        :name(_name) {}
 
     explicit constexpr WidgetView(const ResourceAddress &_address)
         :address(ShallowCopy(), _address) {}
-
-    void Init(const char *_name);
 
     void CopyFrom(AllocatorPtr alloc, const WidgetView &src);
 

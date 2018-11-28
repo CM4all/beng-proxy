@@ -37,16 +37,9 @@
 #include <string.h>
 
 void
-WidgetView::Init(const char *_name)
-{
-    name = _name;
-}
-
-void
 WidgetView::CopyFrom(AllocatorPtr alloc, const WidgetView &src)
 {
-    Init(alloc.CheckDup(src.name));
-
+    name = alloc.CheckDup(src.name);
     address.CopyFrom(alloc, src.address);
     filter_4xx = src.filter_4xx;
     inherited = src.inherited;
@@ -58,7 +51,7 @@ WidgetView::CopyFrom(AllocatorPtr alloc, const WidgetView &src)
 WidgetView *
 WidgetView::Clone(AllocatorPtr alloc) const
 {
-    auto dest = alloc.New<WidgetView>();
+    auto dest = alloc.New<WidgetView>(nullptr);
     dest->CopyFrom(alloc, *this);
     return dest;
 }

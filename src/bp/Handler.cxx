@@ -877,8 +877,7 @@ serve_document_root_file(Request &request2, const BpConfig &config)
     if (uri->base.back() == '/')
         index_file = "index.html";
 
-    auto view = NewFromPool<WidgetView>(request2.pool);
-    view->Init(nullptr);
+    auto view = NewFromPool<WidgetView>(request2.pool, nullptr);
 
     tr->views = view;
     tr->transparent = true;
