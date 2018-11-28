@@ -67,7 +67,7 @@ const Event::Duration inline_widget_body_timeout = std::chrono::seconds(10);
 class InlineWidget final : HttpResponseHandler, Cancellable {
     struct pool &pool;
     struct processor_env &env;
-    bool plain_text;
+    const bool plain_text;
     Widget &widget;
 
     TimerEvent header_timeout_event;
