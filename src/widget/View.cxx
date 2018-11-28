@@ -40,9 +40,6 @@ void
 WidgetView::Init(const char *_name)
 {
     name = _name;
-
-    request_header_forward = HeaderForwardSettings::MakeDefaultRequest();
-    response_header_forward = HeaderForwardSettings::MakeDefaultResponse();
 }
 
 void

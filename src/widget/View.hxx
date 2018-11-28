@@ -68,18 +68,17 @@ struct WidgetView {
     /**
      * Which request headers are forwarded?
      */
-    HeaderForwardSettings request_header_forward;
+    HeaderForwardSettings request_header_forward = HeaderForwardSettings::MakeDefaultRequest();
 
     /**
      * Which response headers are forwarded?
      */
-    HeaderForwardSettings response_header_forward;
+    HeaderForwardSettings response_header_forward = HeaderForwardSettings::MakeDefaultResponse();
 
     WidgetView() = default;
 
     explicit constexpr WidgetView(const ResourceAddress &_address)
-        :address(ShallowCopy(), _address),
-         request_header_forward(), response_header_forward() {}
+        :address(ShallowCopy(), _address) {}
 
     void Init(const char *_name);
 
