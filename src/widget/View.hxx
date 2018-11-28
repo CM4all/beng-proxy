@@ -42,28 +42,28 @@ struct Transformation;
 class AllocatorPtr;
 
 struct WidgetView {
-    WidgetView *next;
+    WidgetView *next = nullptr;
 
     /**
      * The name of this view; always NULL for the first (default)
      * view.
      */
-    const char *name;
+    const char *name = nullptr;
 
     /** the base URI of this widget, as specified in the template */
-    ResourceAddress address;
+    ResourceAddress address{nullptr};
 
     /**
      * Filter client error messages?
      */
-    bool filter_4xx;
+    bool filter_4xx = false;
 
     /**
      * Was the address inherited from another view?
      */
-    bool inherited;
+    bool inherited = false;
 
-    Transformation *transformation;
+    Transformation *transformation = nullptr;
 
     /**
      * Which request headers are forwarded?
@@ -78,9 +78,7 @@ struct WidgetView {
     WidgetView() = default;
 
     explicit constexpr WidgetView(const ResourceAddress &_address)
-        :next(nullptr), name(nullptr), address(ShallowCopy(), _address),
-         filter_4xx(false), inherited(false),
-         transformation(nullptr),
+        :address(ShallowCopy(), _address),
          request_header_forward(), response_header_forward() {}
 
     void Init(const char *_name);

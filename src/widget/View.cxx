@@ -39,12 +39,7 @@
 void
 WidgetView::Init(const char *_name)
 {
-    next = nullptr;
     name = _name;
-    address.type = ResourceAddress::Type::NONE;
-    filter_4xx = false;
-    inherited = false;
-    transformation = nullptr;
 
     using namespace BengProxy;
     request_header_forward = HeaderForwardSettings{
