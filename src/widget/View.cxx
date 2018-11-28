@@ -37,7 +37,7 @@
 #include <string.h>
 
 void
-WidgetView::CopyFrom(AllocatorPtr alloc, const WidgetView &src)
+WidgetView::CopyFrom(AllocatorPtr alloc, const WidgetView &src) noexcept
 {
     name = alloc.CheckDup(src.name);
     address.CopyFrom(alloc, src.address);
@@ -49,7 +49,7 @@ WidgetView::CopyFrom(AllocatorPtr alloc, const WidgetView &src)
 }
 
 WidgetView *
-WidgetView::Clone(AllocatorPtr alloc) const
+WidgetView::Clone(AllocatorPtr alloc) const noexcept
 {
     auto dest = alloc.New<WidgetView>(nullptr);
     dest->CopyFrom(alloc, *this);
@@ -57,7 +57,7 @@ WidgetView::Clone(AllocatorPtr alloc) const
 }
 
 void
-WidgetView::CopyChainFrom(AllocatorPtr alloc, const WidgetView &_src)
+WidgetView::CopyChainFrom(AllocatorPtr alloc, const WidgetView &_src) noexcept
 {
     CopyFrom(alloc, _src);
 
@@ -72,7 +72,7 @@ WidgetView::CopyChainFrom(AllocatorPtr alloc, const WidgetView &_src)
 }
 
 WidgetView *
-WidgetView::CloneChain(AllocatorPtr alloc) const
+WidgetView::CloneChain(AllocatorPtr alloc) const noexcept
 {
     assert(name == nullptr);
 
@@ -90,7 +90,7 @@ WidgetView::CloneChain(AllocatorPtr alloc) const
 
 bool
 WidgetView::InheritAddress(AllocatorPtr alloc,
-                           const ResourceAddress &src)
+                           const ResourceAddress &src) noexcept
 {
     if (address.type != ResourceAddress::Type::NONE ||
         src.type == ResourceAddress::Type::NONE)
@@ -102,7 +102,7 @@ WidgetView::InheritAddress(AllocatorPtr alloc,
 }
 
 bool
-WidgetView::InheritFrom(AllocatorPtr alloc, const WidgetView &src)
+WidgetView::InheritFrom(AllocatorPtr alloc, const WidgetView &src) noexcept
 {
     if (InheritAddress(alloc, src.address)) {
         filter_4xx = src.filter_4xx;
@@ -116,7 +116,7 @@ WidgetView::InheritFrom(AllocatorPtr alloc, const WidgetView &src)
 }
 
 const WidgetView *
-widget_view_lookup(const WidgetView *view, const char *name)
+widget_view_lookup(const WidgetView *view, const char *name) noexcept
 {
     assert(view != nullptr);
     assert(view->name == nullptr);
@@ -136,19 +136,19 @@ widget_view_lookup(const WidgetView *view, const char *name)
 }
 
 bool
-WidgetView::HasProcessor() const
+WidgetView::HasProcessor() const noexcept
 {
     return Transformation::HasProcessor(transformation);
 }
 
 bool
-WidgetView::IsContainer() const
+WidgetView::IsContainer() const noexcept
 {
     return Transformation::IsContainer(transformation);
 }
 
 bool
-WidgetView::IsExpandable() const
+WidgetView::IsExpandable() const noexcept
 {
     return address.IsExpandable() ||
         (transformation != nullptr &&
@@ -156,7 +156,7 @@ WidgetView::IsExpandable() const
 }
 
 bool
-widget_view_any_is_expandable(const WidgetView *view)
+widget_view_any_is_expandable(const WidgetView *view) noexcept
 {
     while (view != nullptr) {
         if (view->IsExpandable())
@@ -169,7 +169,7 @@ widget_view_any_is_expandable(const WidgetView *view)
 }
 
 void
-WidgetView::Expand(AllocatorPtr alloc, const MatchInfo &match_info)
+WidgetView::Expand(AllocatorPtr alloc, const MatchInfo &match_info) noexcept
 {
     address.Expand(alloc, match_info);
     if (transformation != nullptr)
@@ -178,7 +178,7 @@ WidgetView::Expand(AllocatorPtr alloc, const MatchInfo &match_info)
 
 void
 widget_view_expand_all(AllocatorPtr alloc, WidgetView *view,
-                       const MatchInfo &match_info)
+                       const MatchInfo &match_info) noexcept
 {
     while (view != nullptr) {
         view->Expand(alloc, match_info);

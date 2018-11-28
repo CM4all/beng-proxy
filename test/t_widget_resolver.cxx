@@ -73,7 +73,7 @@ struct Context {
 
 const WidgetView *
 widget_view_lookup(const WidgetView *view,
-                   gcc_unused const char *name)
+                   gcc_unused const char *name) noexcept
 {
     return view;
 }

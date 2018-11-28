@@ -75,18 +75,18 @@ struct WidgetView {
      */
     HeaderForwardSettings response_header_forward = HeaderForwardSettings::MakeDefaultResponse();
 
-    WidgetView(const char *_name)
+    WidgetView(const char *_name) noexcept
         :name(_name) {}
 
-    explicit constexpr WidgetView(const ResourceAddress &_address)
+    explicit constexpr WidgetView(const ResourceAddress &_address) noexcept
         :address(ShallowCopy(), _address) {}
 
-    void CopyFrom(AllocatorPtr alloc, const WidgetView &src);
+    void CopyFrom(AllocatorPtr alloc, const WidgetView &src) noexcept;
 
-    WidgetView *Clone(AllocatorPtr alloc) const;
+    WidgetView *Clone(AllocatorPtr alloc) const noexcept;
 
-    void CopyChainFrom(AllocatorPtr alloc, const WidgetView &src);
-    WidgetView *CloneChain(AllocatorPtr alloc) const;
+    void CopyChainFrom(AllocatorPtr alloc, const WidgetView &src) noexcept;
+    WidgetView *CloneChain(AllocatorPtr alloc) const noexcept;
 
     /**
      * Copy the specified address into the view, if it does not have an
@@ -96,8 +96,7 @@ struct WidgetView {
      * already had an address or if the specified address is empty
      */
     bool InheritAddress(AllocatorPtr alloc,
-                        const ResourceAddress &src);
-
+                        const ResourceAddress &src) noexcept;
 
     /**
      * Inherit the address and other related settings from one view to
@@ -107,25 +106,25 @@ struct WidgetView {
      * view already had an address or if the source view's address is
      * empty
      */
-    bool InheritFrom(AllocatorPtr alloc, const WidgetView &src);
+    bool InheritFrom(AllocatorPtr alloc, const WidgetView &src) noexcept;
 
     /**
      * Does the effective view enable the HTML processor?
      */
     gcc_pure
-    bool HasProcessor() const;
+    bool HasProcessor() const noexcept;
 
     /**
      * Is this view a container?
      */
     gcc_pure
-    bool IsContainer() const;
+    bool IsContainer() const noexcept;
 
     /**
      * Does this view need to be expanded with widget_view_expand()?
      */
     gcc_pure
-    bool IsExpandable() const;
+    bool IsExpandable() const noexcept;
 
     /**
      * Expand the strings in this view (not following the linked list)
@@ -133,7 +132,7 @@ struct WidgetView {
      *
      * Throws std::runtime_error on error.
      */
-    void Expand(AllocatorPtr alloc, const MatchInfo &match_info);
+    void Expand(AllocatorPtr alloc, const MatchInfo &match_info) noexcept;
 };
 
 /**
@@ -142,7 +141,7 @@ struct WidgetView {
  */
 gcc_pure
 const WidgetView *
-widget_view_lookup(const WidgetView *view, const char *name);
+widget_view_lookup(const WidgetView *view, const char *name) noexcept;
 
 /**
  * Does any view in the linked list need to be expanded with
@@ -150,7 +149,7 @@ widget_view_lookup(const WidgetView *view, const char *name);
  */
 gcc_pure
 bool
-widget_view_any_is_expandable(const WidgetView *view);
+widget_view_any_is_expandable(const WidgetView *view) noexcept;
 
 /**
  * The same as widget_view_expand(), but expand all voews in
@@ -158,6 +157,6 @@ widget_view_any_is_expandable(const WidgetView *view);
  */
 void
 widget_view_expand_all(AllocatorPtr alloc, WidgetView *view,
-                       const MatchInfo &match_info);
+                       const MatchInfo &match_info) noexcept;
 
 #endif
