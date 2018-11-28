@@ -37,12 +37,14 @@
 #ifndef BENG_PROXY_INLINE_WIDGET_HXX
 #define BENG_PROXY_INLINE_WIDGET_HXX
 
+#include "event/Chrono.hxx"
+
 struct pool;
 class UnusedIstreamPtr;
 struct Widget;
 struct processor_env;
 
-extern const struct timeval inline_widget_body_timeout;
+extern const Event::Duration inline_widget_body_timeout;
 
 /**
  * Utility function for the HTML processor which prepares a widget for

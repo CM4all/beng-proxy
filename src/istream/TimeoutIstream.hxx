@@ -33,7 +33,8 @@
 #ifndef BENG_PROXY_ISTREAM_TIMEOUT_HXX
 #define BENG_PROXY_ISTREAM_TIMEOUT_HXX
 
-struct timeval;
+#include "event/Chrono.hxx"
+
 struct pool;
 class UnusedIstreamPtr;
 class EventLoop;
@@ -46,6 +47,6 @@ class EventLoop;
 UnusedIstreamPtr
 NewTimeoutIstream(struct pool &pool, UnusedIstreamPtr input,
                   EventLoop &event_loop,
-                  const struct timeval &timeout) noexcept;
+                  Event::Duration timeout) noexcept;
 
 #endif

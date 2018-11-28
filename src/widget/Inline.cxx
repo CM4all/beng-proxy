@@ -61,15 +61,8 @@
 
 #include <assert.h>
 
-const struct timeval inline_widget_header_timeout = {
-    .tv_sec = 5,
-    .tv_usec = 0,
-};
-
-const struct timeval inline_widget_body_timeout = {
-    .tv_sec = 10,
-    .tv_usec = 0,
-};
+static constexpr Event::Duration inline_widget_header_timeout = std::chrono::seconds(5);
+const Event::Duration inline_widget_body_timeout = std::chrono::seconds(10);
 
 class InlineWidget final : HttpResponseHandler, Cancellable {
     struct pool &pool;
@@ -302,7 +295,7 @@ InlineWidget::SendRequest() noexcept
             widget.session_sync_pending = false;
     }
 
-    header_timeout_event.Add(inline_widget_header_timeout);
+    header_timeout_event.Schedule(inline_widget_header_timeout);
     widget_http_request(pool, widget, env,
                         *this, cancel_ptr);
 }

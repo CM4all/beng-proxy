@@ -50,10 +50,7 @@
 
 #include <gtest/gtest.h>
 
-const struct timeval inline_widget_body_timeout = {
-    .tv_sec = 10,
-    .tv_usec = 0,
-};
+const Event::Duration inline_widget_body_timeout = std::chrono::seconds(10);
 
 struct MakeWidgetClass : WidgetClass {
     explicit MakeWidgetClass(struct pool &p, const char *uri) {
