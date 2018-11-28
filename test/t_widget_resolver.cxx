@@ -134,7 +134,7 @@ widget_registry_finish(Context *data)
 
     data->registry.finished = true;
 
-    static const WidgetClass cls = WidgetClass(WidgetClass::Root());
+    static const WidgetClass cls{};
     data->registry.callback(&cls);
 }
 
