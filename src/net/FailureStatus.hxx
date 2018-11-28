@@ -60,7 +60,7 @@ enum failure_status {
     FAILURE_MONITOR,
 };
 
-inline constexpr bool
+constexpr bool
 MatchFailureStatus(enum failure_status current,
                    enum failure_status match) noexcept
 {

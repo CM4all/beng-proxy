@@ -43,8 +43,7 @@
 /**
  * @see RFC 3986 2.3
  */
-constexpr
-static inline bool
+static constexpr bool
 IsUriUnreserved(char ch)
 {
     return IsAlphaNumericASCII(ch) ||

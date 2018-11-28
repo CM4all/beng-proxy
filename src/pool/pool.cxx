@@ -264,7 +264,7 @@ xmalloc(size_t size) noexcept
     return p;
 }
 
-static inline constexpr size_t
+static constexpr size_t
 align_size(size_t size) noexcept
 {
     return ((size - 1) | ALIGN_MASK) + 1;

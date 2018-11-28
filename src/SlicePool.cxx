@@ -42,8 +42,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-constexpr
-static inline size_t
+static constexpr size_t
 align_size(size_t size) noexcept
 {
     return ((size - 1) | 0x1f) + 1;
