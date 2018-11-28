@@ -429,6 +429,7 @@ private:
     void InvokeSubst(http_status_t status,
                      StringMap &&response_headers,
                      UnusedIstreamPtr response_body,
+                     bool alt_syntax,
                      const char *prefix,
                      const char *yaml_file,
                      const char *yaml_map_path) noexcept;

@@ -59,6 +59,12 @@ struct WidgetView {
     bool filter_4xx = false;
 
     /**
+     * Copy of #TranslateResponse::subst_alt_syntax from
+     * #TranslationCommand::SUBST_ALT_SYNTAX.
+     */
+    bool subst_alt_syntax = false;
+
+    /**
      * Was the address inherited from another view?
      */
     bool inherited = false;

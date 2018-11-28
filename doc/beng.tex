@@ -1347,6 +1347,13 @@ information. \\
 
 \hline
 
+\verb|SUBST_ALT_SYNTAX| & Use the alternative variable reference
+syntax.  This setting is enabled for all substitution filters of this
+response (but not for substitution filters of embedded widgets).  No
+payload.  See section \ref{subst} for more information. \\
+
+\hline
+
 \verb|PROCESS| & enables the \emph{beng-proxy} processor, see
 section \ref{processor} \\
 
@@ -4011,7 +4018,9 @@ or three underscores.
 This filter substitutes variables with their according values in a
 text stream.  It can be enabled with \verb|SUBST_YAML_FILE|.
 
-Variable references have the form "\verb|{[NAME]}|".
+Variable references have the form ``\verb|{%NAME%}|''.  If
+\verb|SUBST_ALT_SYNTAX| is specified, the syntax is instead switched
+to ``\verb|{[NAME]}|''.
 
 If a variable does not exist, the behavior is undefined; the reference
 may be left as-is, or replaced with an empty string, or the filter may

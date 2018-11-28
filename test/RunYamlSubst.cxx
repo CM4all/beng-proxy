@@ -70,6 +70,7 @@ try {
     StdioSink sink(NewYamlSubstIstream(pool,
                                        UnusedIstreamPtr(istream_file_new(instance.event_loop, *pool,
                                                                          "/dev/stdin", (off_t)-1)),
+                                       true,
                                        prefix, yaml_file, yaml_map_path));
 
     pool.reset();

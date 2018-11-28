@@ -62,7 +62,8 @@ create_input(struct pool &pool) noexcept
 static UnusedIstreamPtr
 create_test(EventLoop &, struct pool &pool, UnusedIstreamPtr input) noexcept
 {
-    return NewYamlSubstIstream(pool, std::move(input), "foo:",
+    return NewYamlSubstIstream(pool, std::move(input), true,
+                               "foo:",
                                YAML::Load(yaml),
                                "child.grandchild");
 }

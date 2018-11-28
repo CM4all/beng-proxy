@@ -70,6 +70,8 @@ class WidgetRequest final : HttpResponseHandler, SuffixRegistryHandler, Cancella
 
     unsigned num_redirects = 0;
 
+    bool subst_alt_syntax;
+
     Widget &widget;
     const char *const lookup_id = nullptr;
 
@@ -563,6 +565,7 @@ WidgetRequest::UpdateView(StringMap &headers)
 
         /* install the new view */
         transformation = view->transformation;
+        subst_alt_syntax = view->subst_alt_syntax;
     } else if (widget.from_request.unauthorized_view &&
                processable(headers) &&
                !widget.IsContainer()) {
@@ -654,6 +657,7 @@ WidgetRequest::SendRequest()
         ? widget.cls->cookie_host
         : a_view->address.GetHostAndPort();
     transformation = t_view->transformation;
+    subst_alt_syntax = t_view->subst_alt_syntax;
 
     const auto *address = widget.GetAddress();
 

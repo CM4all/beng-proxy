@@ -37,7 +37,7 @@ class UnusedIstreamPtr;
 namespace YAML { class Node; }
 
 UnusedIstreamPtr
-NewYamlSubstIstream(struct pool &pool, UnusedIstreamPtr input,
+NewYamlSubstIstream(struct pool &pool, UnusedIstreamPtr input, bool alt_syntax,
                     const char *prefix,
                     const YAML::Node &yaml_node, const char *yaml_map_path);
 
@@ -48,6 +48,6 @@ NewYamlSubstIstream(struct pool &pool, UnusedIstreamPtr input,
  * Throws on error (if the YAML file could not be loaded).
  */
 UnusedIstreamPtr
-NewYamlSubstIstream(struct pool &pool, UnusedIstreamPtr input,
+NewYamlSubstIstream(struct pool &pool, UnusedIstreamPtr input, bool alt_syntax,
                     const char *prefix,
                     const char *yaml_file, const char *yaml_map_path);

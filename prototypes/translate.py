@@ -697,6 +697,14 @@ class Translation(Protocol):
         elif uri == '/subst2':
             response.path(os.path.join(demo_path, 'subst.txt'))
             response.packet(TRANSLATE_SUBST_YAML_FILE, '\0' + os.path.join(demo_path, 'subst.yaml') + '\0child')
+        elif uri == '/subst-alt':
+            response.path(os.path.join(demo_path, 'subst-alt.txt'))
+            response.packet(TRANSLATE_SUBST_YAML_FILE, '\0' + os.path.join(demo_path, 'subst.yaml') + '\0')
+            response.packet(TRANSLATE_SUBST_ALT_SYNTAX)
+        elif uri == '/subst2-alt':
+            response.path(os.path.join(demo_path, 'subst-alt.txt'))
+            response.packet(TRANSLATE_SUBST_YAML_FILE, '\0' + os.path.join(demo_path, 'subst.yaml') + '\0child')
+            response.packet(TRANSLATE_SUBST_ALT_SYNTAX)
         elif uri == '/dav':
             response.packet(TRANSLATE_WAS, davos_plain)
             response.pair('DAVOS_DOCUMENT_ROOT', '/var/www')
