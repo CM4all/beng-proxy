@@ -70,10 +70,7 @@ public:
     void operator()(int value) noexcept;
 
 private:
-#if !GCC_OLDER_THAN(5,0)
-    constexpr
-#endif
-    static unsigned Clamp(int x) {
+    static constexpr unsigned Clamp(int x) noexcept {
         return std::min(100u, (unsigned)std::max(0, x));
     }
 

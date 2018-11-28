@@ -76,10 +76,7 @@ public:
         return FailureInfo::IsFade(Expiry::Now());
     }
 
-#if !GCC_OLDER_THAN(5,0)
-    constexpr
-#endif
-    enum failure_status GetStatus(Expiry now) const noexcept {
+    constexpr enum failure_status GetStatus(Expiry now) const noexcept {
         if (!IsExpired(now))
             return status;
         else if (IsFade(now))

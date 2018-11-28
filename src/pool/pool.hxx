@@ -401,13 +401,8 @@ gcc_malloc gcc_returns_nonnull
 T *
 PoolAlloc(pool &p) noexcept
 {
-#if CLANG_OR_GCC_VERSION(5,0)
     static_assert(std::is_trivially_default_constructible<T>::value,
                   "Must be trivially constructible");
-#else
-    static_assert(std::has_trivial_default_constructor<T>::value,
-                  "Must be trivially constructible");
-#endif
 
     return (T *)p_malloc(&p, sizeof(T));
 }
@@ -417,13 +412,8 @@ gcc_malloc gcc_returns_nonnull
 T *
 PoolAlloc(pool &p, size_t n) noexcept
 {
-#if CLANG_OR_GCC_VERSION(5,0)
     static_assert(std::is_trivially_default_constructible<T>::value,
                   "Must be trivially constructible");
-#else
-    static_assert(std::has_trivial_default_constructor<T>::value,
-                  "Must be trivially constructible");
-#endif
 
     return (T *)p_malloc(&p, sizeof(T) * n);
 }
