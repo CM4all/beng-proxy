@@ -57,8 +57,6 @@ const struct timeval inline_widget_body_timeout = {
 
 struct MakeWidgetClass : WidgetClass {
     explicit MakeWidgetClass(struct pool &p, const char *uri) {
-        Init();
-
         auto http = MakeHttpAddress(uri).Host("widget-server");
         views.address = *NewFromPool<HttpAddress>(p, p, http);
     }

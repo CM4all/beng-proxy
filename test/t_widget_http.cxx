@@ -275,7 +275,6 @@ TEST(WidgetHttpTest, CookieClient)
 
     const auto address = MakeHttpAddress("/bar/").Host("foo");
     WidgetClass cls;
-    cls.Init();
     cls.views.address = address;
     cls.stateful = true;
 

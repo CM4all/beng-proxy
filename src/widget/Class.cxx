@@ -32,4 +32,4 @@
 
 #include "Class.hxx"
 
-const WidgetClass root_widget_class = WidgetClass::Root();
+const WidgetClass root_widget_class{};

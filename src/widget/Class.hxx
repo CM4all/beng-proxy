@@ -43,19 +43,19 @@ struct WidgetClass {
     /**
      * A linked list of view descriptions.
      */
-    WidgetView views;
+    WidgetView views{nullptr};
 
     /**
      * The URI prefix that represents '@/'.
      */
-    const char *local_uri;
+    const char *local_uri = nullptr;
 
     /**
      * The (beng-proxy) hostname on which requests to this widget are
      * allowed.  If not set, then this is a trusted widget.  Requests
      * from an untrusted widget to a trusted one are forbidden.
      */
-    const char *untrusted_host;
+    const char *untrusted_host = nullptr;
 
     /**
      * The (beng-proxy) hostname prefix on which requests to this
@@ -63,28 +63,28 @@ struct WidgetClass {
      * Requests from an untrusted widget to a trusted one are
      * forbidden.
      */
-    const char *untrusted_prefix;
+    const char *untrusted_prefix = nullptr;
 
     /**
      * A hostname suffix on which requests to this widget are allowed.
      * If not set, then this is a trusted widget.  Requests from an
      * untrusted widget to a trusted one are forbidden.
      */
-    const char *untrusted_site_suffix;
+    const char *untrusted_site_suffix = nullptr;
 
     /**
      * @see @TRANSLATE_UNTRUSTED_RAW_SITE_SUFFIX
      */
-    const char *untrusted_raw_site_suffix;
+    const char *untrusted_raw_site_suffix = nullptr;
 
-    const char *cookie_host;
+    const char *cookie_host = nullptr;
 
     /**
      * The group name from #TRANSLATE_WIDGET_GROUP.  It is used to
      * determine whether this widget may be embedded inside another
      * one, see #TRANSLATE_GROUP_CONTAINER and #container_groups.
      */
-    const char *group;
+    const char *group = nullptr;
 
     /**
      * If this list is non-empty, then this widget may only embed
@@ -99,58 +99,27 @@ struct WidgetClass {
      * Example: http://localhost/template.html;frame=foo/bar - this
      * requests the widget "foo" and with path-info "/bar".
      */
-    bool direct_addressing;
+    bool direct_addressing = false;
 
     /** does beng-proxy remember the state (path_info and
         query_string) of this widget? */
-    bool stateful;
+    bool stateful = false;
 
     /**
      * Absolute URI paths are considered relative to the base URI of
      * the widget.
      */
-    bool anchor_absolute;
+    bool anchor_absolute = false;
 
     /**
      * Send the "info" request headers to the widget?  See
      * #TRANSLATE_WIDGET_INFO.
      */
-    bool info_headers;
+    bool info_headers = false;
 
-    bool dump_headers;
+    bool dump_headers = false;
 
-    WidgetClass() noexcept
-        :views(nullptr) {}
-
-    struct Root {};
-    WidgetClass(Root)
-        :views(nullptr),
-         local_uri(nullptr),
-         untrusted_host(nullptr),
-         untrusted_prefix(nullptr),
-         untrusted_site_suffix(nullptr),
-         untrusted_raw_site_suffix(nullptr),
-         cookie_host(nullptr),
-         container_groups(),
-         direct_addressing(false),
-         stateful(false),
-         anchor_absolute(false),
-         info_headers(false), dump_headers(false) {}
-
-    void Init() {
-        local_uri = nullptr;
-        untrusted_host = nullptr;
-        untrusted_prefix = nullptr;
-        untrusted_site_suffix = nullptr;
-        untrusted_raw_site_suffix = nullptr;
-        cookie_host = nullptr;
-        group = nullptr;
-        direct_addressing = false;
-        stateful = false;
-        anchor_absolute = false;
-        info_headers = false;
-        dump_headers = false;
-    }
+    WidgetClass() = default;
 
     /**
      * Determines whether it is allowed to embed the widget in a page with
