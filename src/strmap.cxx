@@ -40,13 +40,13 @@
 #include <string.h>
 
 bool
-StringMap::Item::Compare::Less(const char *a, const char *b) const
+StringMap::Item::Compare::Less(const char *a, const char *b) const noexcept
 {
     return strcmp(a, b) < 0;
 }
 
 StringMap::Item *
-StringMap::Item::Cloner::operator()(const Item &src) const
+StringMap::Item::Cloner::operator()(const Item &src) const noexcept
 {
     return NewFromPool<Item>(pool,
                              p_strdup(&pool, src.key),
@@ -54,43 +54,44 @@ StringMap::Item::Cloner::operator()(const Item &src) const
 }
 
 StringMap::Item *
-StringMap::Item::ShallowCloner::operator()(const Item &src) const
+StringMap::Item::ShallowCloner::operator()(const Item &src) const noexcept
 {
     return NewFromPool<Item>(pool, ShallowCopy(), src);
 }
 
-StringMap::StringMap(struct pool &_pool, const StringMap &src)
+StringMap::StringMap(struct pool &_pool, const StringMap &src) noexcept
     :pool(_pool) {
     map.clone_from(src.map, Item::Cloner(pool), [](Item *){});
 }
 
-StringMap::StringMap(struct pool &_pool, const StringMap *src)
+StringMap::StringMap(struct pool &_pool, const StringMap *src) noexcept
     :pool(_pool) {
     if (src != nullptr)
         map.clone_from(src->map, Item::Cloner(pool), [](Item *){});
 }
 
-StringMap::StringMap(ShallowCopy, struct pool &_pool, const StringMap &src)
+StringMap::StringMap(ShallowCopy, struct pool &_pool,
+                     const StringMap &src) noexcept
     :pool(_pool)
 {
     map.clone_from(src.map, Item::ShallowCloner(pool), [](Item *){});
 }
 
 void
-StringMap::Clear()
+StringMap::Clear() noexcept
 {
     map.clear_and_dispose(PoolDisposer(pool));
 }
 
 void
-StringMap::Add(const char *key, const char *value)
+StringMap::Add(const char *key, const char *value) noexcept
 {
     Item *item = NewFromPool<Item>(pool, key, value);
     map.insert(*item);
 }
 
 const char *
-StringMap::Set(const char *key, const char *value)
+StringMap::Set(const char *key, const char *value) noexcept
 {
     auto i = map.upper_bound(key, Item::Compare());
     if (i != map.begin() && strcmp(std::prev(i)->key, key) == 0) {
@@ -105,7 +106,7 @@ StringMap::Set(const char *key, const char *value)
 }
 
 const char *
-StringMap::Remove(const char *key)
+StringMap::Remove(const char *key) noexcept
 {
     auto i = map.find(key, Item::Compare());
     if (i == map.end())
@@ -117,13 +118,13 @@ StringMap::Remove(const char *key)
 }
 
 void
-StringMap::RemoveAll(const char *key)
+StringMap::RemoveAll(const char *key) noexcept
 {
     map.erase_and_dispose(key, Item::Compare(), PoolDisposer(pool));
 }
 
 void
-StringMap::SecureSet(const char *key, const char *value)
+StringMap::SecureSet(const char *key, const char *value) noexcept
 {
     auto r = map.equal_range(key, Item::Compare());
     if (r.first != r.second) {
@@ -140,7 +141,7 @@ StringMap::SecureSet(const char *key, const char *value)
 }
 
 const char *
-StringMap::Get(const char *key) const
+StringMap::Get(const char *key) const noexcept
 {
     auto i = map.find(key, Item::Compare());
     if (i == map.end())
@@ -150,7 +151,7 @@ StringMap::Get(const char *key) const
 }
 
 std::pair<StringMap::const_iterator, StringMap::const_iterator>
-StringMap::EqualRange(const char *key) const
+StringMap::EqualRange(const char *key) const noexcept
 {
     return map.equal_range(key, Item::Compare());
 }
@@ -179,13 +180,13 @@ StringMap::PrefixCopyFrom(const StringMap &src, const char *_prefix) noexcept
 }
 
 StringMap *
-strmap_new(struct pool *pool)
+strmap_new(struct pool *pool) noexcept
 {
     return NewFromPool<StringMap>(*pool, *pool);
 }
 
 StringMap *gcc_malloc
-strmap_dup(struct pool *pool, const StringMap *src)
+strmap_dup(struct pool *pool, const StringMap *src) noexcept
 {
     return NewFromPool<StringMap>(*pool, *pool, *src);
 }

@@ -50,10 +50,10 @@ class StringMap {
     struct Item : boost::intrusive::set_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
         const char *key, *value;
 
-        Item(const char *_key, const char *_value)
+        Item(const char *_key, const char *_value) noexcept
             :key(_key), value(_value) {}
 
-        Item(ShallowCopy, const Item &src)
+        Item(ShallowCopy, const Item &src) noexcept
             :key(src.key), value(src.value) {}
 
         Item(const Item &) = delete;
@@ -61,21 +61,21 @@ class StringMap {
 
         class Compare {
             gcc_pure
-            bool Less(const char *a, const char *b) const;
+            bool Less(const char *a, const char *b) const noexcept;
 
         public:
             gcc_pure
-            bool operator()(const char *a, const Item &b) const {
+            bool operator()(const char *a, const Item &b) const noexcept {
                 return Less(a, b.key);
             }
 
             gcc_pure
-            bool operator()(const Item &a, const char *b) const {
+            bool operator()(const Item &a, const char *b) const noexcept {
                 return Less(a.key, b);
             }
 
             gcc_pure
-            bool operator()(const Item &a, const Item &b) const {
+            bool operator()(const Item &a, const Item &b) const noexcept {
                 return Less(a.key, b.key);
             }
         };
@@ -84,18 +84,18 @@ class StringMap {
             struct pool &pool;
 
         public:
-            explicit Cloner(struct pool &_pool):pool(_pool) {}
+            explicit Cloner(struct pool &_pool) noexcept:pool(_pool) {}
 
-            Item *operator()(const Item &src) const;
+            Item *operator()(const Item &src) const noexcept;
         };
 
         class ShallowCloner {
             struct pool &pool;
 
         public:
-            explicit ShallowCloner(struct pool &_pool):pool(_pool) {}
+            explicit ShallowCloner(struct pool &_pool) noexcept:pool(_pool) {}
 
-            Item *operator()(const Item &src) const;
+            Item *operator()(const Item &src) const noexcept;
         };
     };
 
@@ -110,23 +110,24 @@ class StringMap {
     Map map;
 
 public:
-    explicit StringMap(struct pool &_pool):pool(_pool) {}
+    explicit StringMap(struct pool &_pool) noexcept
+        :pool(_pool) {}
 
     explicit StringMap(struct pool &_pool,
-                       std::initializer_list<std::pair<const char *, const char *>> init)
+                       std::initializer_list<std::pair<const char *, const char *>> init) noexcept
         :StringMap(_pool)
     {
         for (const auto &i : init)
             Add(i.first, i.second);
     }
 
-    StringMap(struct pool &_pool, const StringMap &src);
-    StringMap(struct pool &_pool, const StringMap *src);
+    StringMap(struct pool &_pool, const StringMap &src) noexcept;
+    StringMap(struct pool &_pool, const StringMap *src) noexcept;
 
     /**
      * Copy string pointers from #src.
      */
-    StringMap(ShallowCopy, struct pool &_pool, const StringMap &src);
+    StringMap(ShallowCopy, struct pool &_pool, const StringMap &src) noexcept;
 
     StringMap(const StringMap &) = delete;
 
@@ -137,55 +138,55 @@ public:
      * this operation is only safe if both instances use the same
      * pool.
      */
-    StringMap &operator=(StringMap &&src) {
+    StringMap &operator=(StringMap &&src) noexcept {
         map.swap(src.map);
         return *this;
     }
 
-    struct pool &GetPool() {
+    struct pool &GetPool() noexcept {
         return pool;
     }
 
-    const_iterator begin() const {
+    const_iterator begin() const noexcept {
         return map.begin();
     }
 
-    const_iterator end() const {
+    const_iterator end() const noexcept {
         return map.end();
     }
 
     gcc_pure
-    bool IsEmpty() const {
+    bool IsEmpty() const noexcept {
         return map.empty();
     }
 
-    void Clear();
+    void Clear() noexcept;
 
-    void Add(const char *key, const char *value);
-    const char *Set(const char *key, const char *value);
-    const char *Remove(const char *key);
+    void Add(const char *key, const char *value) noexcept;
+    const char *Set(const char *key, const char *value) noexcept;
+    const char *Remove(const char *key) noexcept;
 
     /**
      * Remove all values with the specified key.
      */
-    void RemoveAll(const char *key);
+    void RemoveAll(const char *key) noexcept;
 
     /**
      * Remove all existing values with the specified key and
      * (optionally, if not nullptr) add a new value.
      */
-    void SecureSet(const char *key, const char *value);
+    void SecureSet(const char *key, const char *value) noexcept;
 
     gcc_pure
-    const char *Get(const char *key) const;
+    const char *Get(const char *key) const noexcept;
 
     gcc_pure
-    bool Contains(const char *key) const {
+    bool Contains(const char *key) const noexcept {
         return Get(key) != nullptr;
     }
 
     gcc_pure
-    std::pair<const_iterator, const_iterator> EqualRange(const char *key) const;
+    std::pair<const_iterator, const_iterator> EqualRange(const char *key) const noexcept;
 
     void CopyFrom(const StringMap &src, const char *key) noexcept {
         const auto r = src.EqualRange(key);
@@ -210,7 +211,7 @@ public:
     /**
      * Move items from #src, merging it into this object.
      */
-    void Merge(StringMap &&src) {
+    void Merge(StringMap &&src) noexcept {
         src.map.clear_and_dispose([this](Item *item){
                 map.insert(*item);
             });
@@ -218,17 +219,17 @@ public:
 };
 
 StringMap *gcc_malloc
-strmap_new(struct pool *pool);
+strmap_new(struct pool *pool) noexcept;
 
 StringMap *gcc_malloc
-strmap_dup(struct pool *pool, const StringMap *src);
+strmap_dup(struct pool *pool, const StringMap *src) noexcept;
 
 /**
  * This variation of StringMap::Remove() allows the caller to pass
  * map=nullptr.
  */
 static inline const char *
-strmap_remove_checked(StringMap *map, const char *key)
+strmap_remove_checked(StringMap *map, const char *key) noexcept
 {
     return map != nullptr
         ? map->Remove(key)
@@ -241,7 +242,7 @@ strmap_remove_checked(StringMap *map, const char *key)
  */
 gcc_pure
 static inline const char *
-strmap_get_checked(const StringMap *map, const char *key)
+strmap_get_checked(const StringMap *map, const char *key) noexcept
 {
     return map != nullptr
         ? map->Get(key)
