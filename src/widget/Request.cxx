@@ -433,6 +433,7 @@ WidgetRequest::SubstResponse(http_status_t status,
     try {
         InvokeResponse(status, std::move(headers),
                        NewYamlSubstIstream(pool, std::move(body),
+                                           subst_alt_syntax,
                                            prefix, yaml_file, yaml_map_path));
     } catch (...) {
         DispatchError(std::current_exception());

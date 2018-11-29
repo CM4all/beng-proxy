@@ -1332,18 +1332,18 @@ useful when at least one \verb|FILTER| was specified. \\
 
 \hline
 
-\verb|SUBST_YAML_FILE| & Substitute variables in the form
-"\verb|{[NAME]}|" with values from the given YAML file.  The values
-are inserted raw into the stream, i.e. without any escaping/quoting.
-The payload consists of 3 strings separated by a null byte: the prefix
-for variable names (example: ``\verb|foo.|''; may be empty; will be
-stripped before looking up in the YAML file), the YAML file path
-(absolute, i.e. starting with slash) and a path inside the YAML file
-where YAML map to be used is found (segments separated with dots; may
-be empty).  Example: ``\verb|foo.\0/the/file.yaml\0inside.file|''.
-Inside the specified YAML map, child maps can be addressed using the
-dot as a separator, e.g. ``\verb|foo.bar|'' looks up the key
-\verb|bar| in a map found under key \verb|foo|. \\
+\verb|SUBST_YAML_FILE| & Substitute variables with values from the
+given YAML file.  The payload consists of 3 strings separated by a
+null byte: the prefix for variable names (example: ``\verb|foo.|'';
+may be empty; will be stripped before looking up in the YAML file),
+the YAML file path (absolute, i.e. starting with slash) and a path
+inside the YAML file where YAML map to be used is found (segments
+separated with dots; may be empty).  Example:
+``\verb|foo.\0/the/file.yaml\0inside.file|''.  Inside the specified
+YAML map, child maps can be addressed using the dot as a separator,
+e.g. ``\verb|foo.bar|'' looks up the key \verb|bar| in a map found
+under key \verb|foo|.  See section \ref{subst} for more
+information. \\
 
 \hline
 
@@ -4003,6 +4003,18 @@ different styles for this class.
 
 The expansion is applied even when the class/id consists only of two
 or three underscores.
+
+
+\section{The Substitution Filter}
+\label{subst}
+
+This filter substitutes variables with their according values in a
+text stream.  It can be enabled with \verb|SUBST_YAML_FILE|.
+
+Variable references have the form "\verb|{[NAME]}|".
+
+The values are inserted raw into the stream, i.e. without any
+escaping/quoting.
 
 
 \section{The prototype translation server}
