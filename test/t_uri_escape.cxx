@@ -30,7 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "uri/uri_escape.hxx"
+#include "uri/Escape.hxx"
 #include "util/StringView.hxx"
 #include "util/Compiler.h"
 

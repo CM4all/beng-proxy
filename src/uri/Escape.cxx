@@ -30,7 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "uri_escape.hxx"
+#include "Escape.hxx"
 #include "util/CharUtil.hxx"
 #include "util/StringView.hxx"
 #include "util/HexFormat.h"

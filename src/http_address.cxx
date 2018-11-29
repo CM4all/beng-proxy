@@ -31,10 +31,10 @@
  */
 
 #include "http_address.hxx"
-#include "uri/uri_base.hxx"
-#include "uri/uri_relative.hxx"
-#include "uri/uri_verify.hxx"
-#include "uri/uri_extract.hxx"
+#include "uri/Base.hxx"
+#include "uri/Relative.hxx"
+#include "uri/Verify.hxx"
+#include "uri/Extract.hxx"
 #include "puri_edit.hxx"
 #include "puri_relative.hxx"
 #include "AllocatorPtr.hxx"

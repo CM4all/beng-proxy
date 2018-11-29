@@ -34,7 +34,7 @@
 #include "expand.hxx"
 #include "regex.hxx"
 #include "AllocatorPtr.hxx"
-#include "uri/uri_escape.hxx"
+#include "uri/Escape.hxx"
 #include "util/StringView.hxx"
 
 #include <assert.h>

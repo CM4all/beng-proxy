@@ -44,7 +44,7 @@
 #include "http_server/Request.hxx"
 #include "http_address.hxx"
 #include "cgi_address.hxx"
-#include "uri/uri_extract.hxx"
+#include "uri/Extract.hxx"
 #include "istream/AutoPipeIstream.hxx"
 #include "lhttp_address.hxx"
 #include "pool/pool.hxx"

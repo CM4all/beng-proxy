@@ -38,7 +38,7 @@
 #include "ssl/Base64.hxx"
 #include "ssl/Certificate.hxx"
 #include "ssl/Key.hxx"
-#include "uri/uri_extract.hxx"
+#include "uri/Extract.hxx"
 #include "util/Exception.hxx"
 #include "util/RuntimeError.hxx"
 

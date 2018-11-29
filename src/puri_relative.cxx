@@ -31,7 +31,7 @@
  */
 
 #include "puri_relative.hxx"
-#include "uri/uri_extract.hxx"
+#include "uri/Extract.hxx"
 #include "AllocatorPtr.hxx"
 #include "util/StringView.hxx"
 

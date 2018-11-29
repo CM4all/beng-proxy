@@ -30,7 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "uri_extract.hxx"
+#include "Extract.hxx"
 #include "util/StringView.hxx"
 #include "util/CharUtil.hxx"
 

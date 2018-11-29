@@ -31,7 +31,7 @@
  */
 
 #include "Dissect.hxx"
-#include "uri_verify.hxx"
+#include "Verify.hxx"
 
 #include <string.h>
 

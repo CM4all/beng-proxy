@@ -31,7 +31,7 @@
  */
 
 #include "Address.hxx"
-#include "uri/uri_base.hxx"
+#include "uri/Base.hxx"
 #include "uri/Compare.hxx"
 #include "puri_escape.hxx"
 #include "pexpand.hxx"

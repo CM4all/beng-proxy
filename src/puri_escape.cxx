@@ -31,7 +31,7 @@
  */
 
 #include "puri_escape.hxx"
-#include "uri/uri_escape.hxx"
+#include "uri/Escape.hxx"
 #include "util/StringView.hxx"
 #include "AllocatorPtr.hxx"
 

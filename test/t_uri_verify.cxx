@@ -30,7 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "uri/uri_verify.hxx"
+#include "uri/Verify.hxx"
 #include "util/Compiler.h"
 
 #include <gtest/gtest.h>

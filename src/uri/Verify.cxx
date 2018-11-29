@@ -30,8 +30,8 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "uri_verify.hxx"
-#include "uri_chars.hxx"
+#include "Verify.hxx"
+#include "Chars.hxx"
 #include "util/StringView.hxx"
 
 #include <string.h>

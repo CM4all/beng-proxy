@@ -55,7 +55,7 @@
 #include "AllocatorPtr.hxx"
 #include "puri_edit.hxx"
 #include "puri_escape.hxx"
-#include "uri/uri_verify.hxx"
+#include "uri/Verify.hxx"
 #include "RedirectHttps.hxx"
 #include "strmap.hxx"
 #include "istream/istream.hxx"

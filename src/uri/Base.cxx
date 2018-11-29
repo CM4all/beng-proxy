@@ -30,25 +30,61 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "uri_relative.hxx"
-#include "util/StringView.hxx"
+#include "Base.hxx"
 
+#include <assert.h>
 #include <string.h>
 
-StringView
-uri_relative(StringView base, StringView uri)
+const char *
+base_tail(const char *uri, const char *base)
 {
-    if (base.empty() || uri.empty())
-        return nullptr;
+    assert(uri != nullptr);
+    assert(base != nullptr);
 
-    if (uri.SkipPrefix(base))
-        return uri;
+    const size_t uri_length = strlen(uri);
+    const size_t base_length = strlen(base);
 
-    /* special case: http://hostname without trailing slash */
-    if (uri.size == base.size - 1 &&
-        memcmp(uri.data, base.data, base.size) &&
-        memchr(uri.data + 7, '/', uri.size - 7) == nullptr)
-        return "";
+    return base_length > 0 && base[base_length - 1] == '/' &&
+        uri_length >= base_length && memcmp(uri, base, base_length) == 0
+        ? uri + base_length
+        : nullptr;
+}
 
-    return nullptr;
+const char *
+require_base_tail(const char *uri, const char *base)
+{
+    assert(uri != nullptr);
+    assert(base != nullptr);
+    assert(memcmp(base, uri, strlen(base)) == 0);
+
+    return uri + strlen(base);
+}
+
+size_t
+base_string(const char *p, const char *tail)
+{
+    assert(p != nullptr);
+    assert(tail != nullptr);
+
+    size_t length = strlen(p), tail_length = strlen(tail);
+
+    if (length == tail_length)
+        /* special case: zero-length prefix (not followed by a
+           slash) */
+        return memcmp(p, tail, length) == 0
+            ? 0 : (size_t)-1;
+
+    return length > tail_length && p[length - tail_length - 1] == '/' &&
+        memcmp(p + length - tail_length, tail, tail_length) == 0
+        ? length - tail_length
+        : (size_t)-1;
+}
+
+bool
+is_base(const char *uri)
+{
+    assert(uri != nullptr);
+
+    size_t length = strlen(uri);
+    return length > 0 && uri[length - 1] == '/';
 }

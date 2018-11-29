@@ -50,7 +50,7 @@
 #include "istream/istream_string.hxx"
 #include "istream/istream_null.hxx"
 #include "GrowingBuffer.hxx"
-#include "uri/uri_verify.hxx"
+#include "uri/Verify.hxx"
 #include "direct.hxx"
 #include "stopwatch.hxx"
 #include "strmap.hxx"

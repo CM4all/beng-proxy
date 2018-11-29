@@ -35,7 +35,7 @@
 #include "Resolver.hxx"
 #include "Class.hxx"
 #include "Inline.hxx"
-#include "uri/uri_extract.hxx"
+#include "uri/Extract.hxx"
 #include "penv.hxx"
 #include "pool/tpool.hxx"
 #include "escape_class.hxx"

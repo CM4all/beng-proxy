@@ -30,7 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "uri/uri_relative.hxx"
+#include "uri/Relative.hxx"
 #include "puri_relative.hxx"
 #include "TestPool.hxx"
 #include "AllocatorPtr.hxx"

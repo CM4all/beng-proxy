@@ -32,7 +32,7 @@
 
 #include "file_address.hxx"
 #include "delegate/Address.hxx"
-#include "uri/uri_base.hxx"
+#include "uri/Base.hxx"
 #include "uri/Compare.hxx"
 #include "util/StringView.hxx"
 #include "puri_escape.hxx"

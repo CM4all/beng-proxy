@@ -49,7 +49,7 @@
 #include "bp/Global.hxx"
 #include "translation/Transformation.hxx"
 #include "resource_tag.hxx"
-#include "uri/uri_extract.hxx"
+#include "uri/Extract.hxx"
 #include "strmap.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "istream/istream.hxx"
