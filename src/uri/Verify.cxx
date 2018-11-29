@@ -42,7 +42,7 @@ uri_segment_verify(const char *src, const char *end)
     for (; src < end; ++src) {
         /* XXX check for invalid escaped characters? */
 
-        if (!char_is_uri_pchar(*src))
+        if (!IsUriPchar(*src))
             return false;
     }
 

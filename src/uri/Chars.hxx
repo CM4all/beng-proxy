@@ -40,7 +40,7 @@
 #include "util/CharUtil.hxx"
 
 static constexpr inline bool
-char_is_uri_mark(char ch)
+IsUriMarkChar(char ch) noexcept
 {
     return ch == '-' || ch == '_' || ch == '.' || ch == '!' || ch == '~' ||
         ch == '*' || ch == '\'' || ch == '(' || ch == ')';
@@ -50,18 +50,18 @@ char_is_uri_mark(char ch)
  * See RFC 2396 2.3.
  */
 static constexpr inline bool
-char_is_uri_unreserved(char ch)
+IsUriUnreservedChar(char ch) noexcept
 {
-    return IsAlphaNumericASCII(ch) || char_is_uri_mark(ch);
+    return IsAlphaNumericASCII(ch) || IsUriMarkChar(ch);
 }
 
 /**
  * See RFC 2396 3.3.
  */
 static constexpr inline bool
-char_is_uri_pchar(char ch)
+IsUriPchar(char ch) noexcept
 {
-    return char_is_uri_unreserved(ch) ||
+    return IsUriUnreservedChar(ch) ||
         ch == '%' || /* "escaped" */
         ch == ':' || ch == '@' || ch == '&' || ch == '=' || ch == '+' ||
         ch == '$' || ch == ',';
