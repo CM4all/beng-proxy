@@ -255,8 +255,8 @@ WidgetRequest::MakeRequestHeaders(const WidgetView &a_view,
     if (widget.from_template.headers != nullptr)
         /* copy HTTP request headers from template */
         for (const auto &i : *widget.from_template.headers)
-            headers.Add(p_strdup(&pool, i.key),
-                         p_strdup(&pool, i.value));
+            headers.SecureSet(p_strdup(&pool, i.key),
+                              p_strdup(&pool, i.value));
 
     return headers;
 }

@@ -3627,12 +3627,10 @@ input came from the template or from the user's browser.
 \end{verbatim*}
 
 \texttt{header} elements create HTTP request headers.  Headers are
-added, not replaced, i.e. you cannot use this to overwrite existing
-headers.  In the header name, only letters, digits and the dash is
-allowed.  It must start with ``X-''.
-
-Again: never trust user input!  The widget server cannot see if input
-came from the template or from the user's browser.
+replaced, i.e. if a header with such a name was about to be forwarded
+from the client to the widget, the client's value will be removed.
+In the header name, only letters, digits and the dash is allowed.  It
+must start with ``X-''.
 
 \subsection{Selecting the widget view}
 
