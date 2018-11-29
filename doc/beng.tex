@@ -4013,8 +4013,29 @@ text stream.  It can be enabled with \verb|SUBST_YAML_FILE|.
 
 Variable references have the form "\verb|{[NAME]}|".
 
+If a variable does not exist, the behavior is undefined; the reference
+may be left as-is, or replaced with an empty string, or the filter may
+fail with an error.  Don't make assumptions on what happens; it may
+change at any time.
+
+Multiple consecutive substitution filters may be merged.  Thus,
+variable values which contain another variable reference (or recursive
+variable references) are not supported and the resulting behavior is
+undefined.  Duplicate variable names also result in undefined
+behavior.
+
+\subsection{Security Considerations}
+
 The values are inserted raw into the stream, i.e. without any
-escaping/quoting.
+escaping/quoting.  This has implications which need to be kept in
+mind.
+
+If an attacker controls variable values, he may be able to inject
+JavaScript or, more dangerously: if the substitution filter comes
+before a XML processor, he may be able to inject widget instances.  On
+the other hand, if the substitution filter comes after the XML
+processor, variable references in inline widgets will also be
+substituted, which may have displeasing consequences.
 
 
 \section{The prototype translation server}
