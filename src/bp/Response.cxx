@@ -198,10 +198,10 @@ Request::InvokeXmlProcessor(http_status_t status,
                                        : p_strdup(pool, dissected_uri.base));
 
     const struct widget_ref *focus_ref =
-        widget_ref_parse(&pool, strmap_remove_checked(args, "focus"));
+        widget_ref_parse(&pool, args.Remove("focus"));
 
     const struct widget_ref *proxy_ref =
-        widget_ref_parse(&pool, strmap_get_checked(args, "frame"));
+        widget_ref_parse(&pool, args.Get("frame"));
 
     if (focus_ref != nullptr && proxy_ref != nullptr &&
         !widget_ref_includes(proxy_ref, focus_ref)) {
@@ -261,7 +261,7 @@ Request::InvokeXmlProcessor(http_status_t status,
         method = HTTP_METHOD_GET;
 
     widget->for_focused.method = method;
-    widget->for_focused.path_info = strmap_remove_checked(args, "path");
+    widget->for_focused.path_info = args.Remove("path");
     widget->for_focused.query_string = dissected_uri.query;
 
     env = processor_env(instance.event_loop,
@@ -276,7 +276,7 @@ Request::InvokeXmlProcessor(http_status_t status,
                                              translate.response->host,
                                              uri),
                         dissected_uri.base,
-                        args,
+                        &args,
                         session_cookie,
                         session_id, realm,
                         &request.headers);
@@ -365,7 +365,7 @@ Request::InvokeCssProcessor(http_status_t status,
                                              translate.response->host,
                                              uri),
                         dissected_uri.base,
-                        args,
+                        &args,
                         session_cookie,
                         session_id, realm,
                         &request.headers);
@@ -434,7 +434,7 @@ Request::InvokeTextProcessor(http_status_t status,
                                              translate.response->host,
                                              uri),
                         dissected_uri.base,
-                        args,
+                        &args,
                         session_cookie,
                         session_id, realm,
                         &request.headers);

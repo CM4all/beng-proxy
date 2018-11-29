@@ -114,7 +114,7 @@ apply_translate_response_session(Request &request,
 
     if (response.transparent) {
         request.MakeStateless();
-        request.args = nullptr;
+        request.args.Clear();
     } else if (response.discard_session)
         request.DiscardSession();
 
@@ -185,13 +185,13 @@ handle_translated_request2(Request &request,
 
     request.resource_tag = address.GetId(request.pool);
 
-    request.processor_focus = request.args != nullptr &&
+    request.processor_focus =
         /* the IsProcessorEnabled() check was disabled because the
            response may include a X-CM4all-View header that enables
            the processor; with this check, the request body would be
            consumed already */
         //request.IsProcessorEnabled() &&
-        request.args->Get("focus") != nullptr;
+        request.args.Get("focus") != nullptr;
 
     if (address.IsDefined()) {
         request.HandleAddress(address);
@@ -456,13 +456,11 @@ fill_translate_request_language(TranslateRequest &t,
 
 static void
 fill_translate_request_args(TranslateRequest &t,
-                            struct pool &pool, StringMap *args)
+                            struct pool &pool, const StringMap &args)
 {
-    t.args = args != nullptr
-        ? args_format(&pool, args,
-                      nullptr, nullptr, nullptr, nullptr,
-                      "translate")
-        : nullptr;
+    t.args = args_format(&pool, &args,
+                         nullptr, nullptr, nullptr, nullptr,
+                         "translate");
     if (t.args != nullptr && *t.args == 0)
         t.args = nullptr;
 }
@@ -811,7 +809,7 @@ static void
 fill_translate_request(TranslateRequest &t,
                        const HttpServerRequest &request,
                        const DissectedUri &uri,
-                       StringMap *args,
+                       const StringMap &args,
                        const char *listener_tag,
                        const char *remote_host_and_port)
 {

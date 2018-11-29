@@ -42,7 +42,8 @@ Request::Request(BpInstance &_instance, BpConnection &_connection,
      instance(_instance),
      connection(_connection),
      logger(connection.logger),
-     request(_request)
+     request(_request),
+     args(pool)
 {
     session_id.Clear();
 }
@@ -56,16 +57,15 @@ Request::IsProcessorEnabled() const
 void
 Request::ParseArgs()
 {
-    assert(args == nullptr);
+    assert(args.IsEmpty());
 
     if (dissected_uri.args.empty()) {
-        args = nullptr;
         translate.request.param = nullptr;
         translate.request.session = nullptr;
         return;
     }
 
     args = args_parse(&pool, dissected_uri.args.data, dissected_uri.args.size);
-    translate.request.param = args->Remove("translate");
+    translate.request.param = args.Remove("translate");
     translate.request.session = nullptr;
 }

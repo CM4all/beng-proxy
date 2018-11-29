@@ -45,7 +45,7 @@ struct StringView;
  * Parse the argument list in an URI after the semicolon.
  */
 gcc_pure
-StringMap *
+StringMap
 args_parse(struct pool *pool, const char *p, size_t length);
 
 /**

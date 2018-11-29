@@ -77,7 +77,7 @@ struct ProxyWidget final : WidgetLookupHandler, HttpResponseHandler, Cancellable
     ProxyWidget(Request &_request, Widget &_widget,
                 const struct widget_ref *_ref)
         :request(_request),
-         view_name(request.args->Remove("view")),
+         view_name(request.args.Remove("view")),
          widget(&_widget), ref(_ref) {
     }
 

@@ -41,11 +41,11 @@
 
 static constexpr char ARGS_ESCAPE_CHAR = '$';
 
-StringMap *
+StringMap
 args_parse(struct pool *pool, const char *p, size_t length)
 {
     const char *end = p + length;
-    auto *args = strmap_new(pool);
+    StringMap args(*pool);
 
     do {
         const char *ampersand = (const char *)memchr(p, '&', end - p);
@@ -60,7 +60,7 @@ args_parse(struct pool *pool, const char *p, size_t length)
             char *value = uri_unescape_dup(*pool, {equals + 1, ampersand},
                                            ARGS_ESCAPE_CHAR);
             if (value != nullptr)
-                args->Add(p_strndup(pool, p, equals - p), value);
+                args.Add(p_strndup(pool, p, equals - p), value);
         }
 
         p = next;

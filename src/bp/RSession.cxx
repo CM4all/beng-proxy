@@ -107,7 +107,7 @@ Request::GetUriSessionId()
 {
     assert(!stateless);
 
-    return strmap_get_checked(args, "session");
+    return args.Get("session");
 }
 
 inline const char *
@@ -130,8 +130,7 @@ Request::DetermineSession()
     stateless = user_agent == nullptr || user_agent_is_bot(user_agent);
     if (stateless) {
         /* don't propagate a stale session id to processed URIs */
-        if (args != nullptr)
-            args->Remove("session");
+        args.Remove("session");
         return;
     }
 
@@ -151,9 +150,9 @@ Request::DetermineSession()
 
     auto session = LoadSession(sid);
     if (!session) {
-        if (!cookie_received && args != nullptr)
+        if (!cookie_received)
             /* remove invalid session id from URI args */
-            args->Remove("session");
+            args.Remove("session");
 
         return;
     }
@@ -167,10 +166,9 @@ Request::DetermineSession()
     if (cookie_received) {
         session->cookie_received = true;
 
-        if (args != nullptr)
-            /* we're using cookies, and we can safely remove the
-               session id from the args */
-            args->Remove("session");
+        /* we're using cookies, and we can safely remove the session
+           id from the args */
+        args.Remove("session");
     }
 }
 
@@ -203,9 +201,7 @@ Request::MakeSession()
     session_id = session->id;
     send_session_cookie = true;
 
-    if (args == nullptr)
-        args = strmap_new(&pool);
-    args->Set("session", session_id_string = session_id.Format());
+    args.Set("session", session_id_string = session_id.Format());
 
     return SessionLease(session);
 }
@@ -230,8 +226,7 @@ Request::IgnoreSession()
 
     assert(!stateless);
 
-    if (args != nullptr)
-        args->Remove("session");
+    args.Remove("session");
 
     session_id.Clear();
     send_session_cookie = false;
@@ -245,8 +240,7 @@ Request::DiscardSession()
 
     assert(!stateless);
 
-    if (args != nullptr)
-        args->Remove("session");
+    args.Remove("session");
 
     session_delete(session_id);
     session_id.Clear();

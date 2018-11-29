@@ -41,6 +41,7 @@
 #include "suffix_registry.hxx"
 #include "delegate/Handler.hxx"
 #include "nfs/Cache.hxx"
+#include "strmap.hxx"
 #include "penv.hxx"
 #include "session/Session.hxx"
 #include "widget/View.hxx"
@@ -52,7 +53,6 @@
 
 class Istream;
 class HttpHeaders;
-class StringMap;
 class GrowingBuffer;
 struct BpInstance;
 struct BpConnection;
@@ -75,7 +75,7 @@ struct Request final : HttpResponseHandler, DelegateHandler,
     HttpServerRequest &request;
     DissectedUri dissected_uri;
 
-    StringMap *args = nullptr;
+    StringMap args;
 
     StringMap *cookies = nullptr;
 
