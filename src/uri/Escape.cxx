@@ -31,7 +31,7 @@
  */
 
 #include "Escape.hxx"
-#include "util/CharUtil.hxx"
+#include "Chars.hxx"
 #include "util/StringView.hxx"
 #include "util/HexFormat.h"
 #include "util/HexParse.hxx"
@@ -40,16 +40,6 @@
 
 #include <string.h>
 
-/**
- * @see RFC 3986 2.3
- */
-static constexpr bool
-IsUriUnreserved(char ch)
-{
-    return IsAlphaNumericASCII(ch) ||
-        ch == '-' || ch == '.' || ch == '_' || ch == '~';
-}
-
 size_t
 uri_escape(char *dest, StringView src,
            char escape_char)
@@ -57,7 +47,7 @@ uri_escape(char *dest, StringView src,
     size_t dest_length = 0;
 
     for (size_t i = 0; i < src.size; ++i) {
-        if (IsUriUnreserved(src[i])) {
+        if (IsUriUnreservedChar(src[i])) {
             dest[dest_length++] = src[i];
         } else {
             dest[dest_length++] = escape_char;
