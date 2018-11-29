@@ -39,15 +39,15 @@
 
 #include "util/CharUtil.hxx"
 
-static constexpr inline bool
-is_html_name_start_char(char ch)
+constexpr bool
+is_html_name_start_char(char ch) noexcept
 {
     return IsAlphaASCII(ch) ||
         ch == ':' || ch == '_';
 }
 
-static constexpr inline bool
-is_html_name_char(char ch)
+constexpr bool
+is_html_name_char(char ch) noexcept
 {
     return is_html_name_start_char(ch) || IsDigitASCII(ch) ||
         ch == '-' || ch == '.';

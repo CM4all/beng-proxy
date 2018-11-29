@@ -231,7 +231,7 @@ align_page_size_ptr(void *p) noexcept
     return (void *)(long)AlignHugePageUp((size_t)p);
 }
 
-static constexpr inline size_t
+static constexpr size_t
 align_size(size_t size) noexcept
 {
     return ((size - 1) | (RUBBER_ALIGN - 1)) + 1;

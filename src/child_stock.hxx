@@ -119,8 +119,8 @@ private:
 UniqueSocketDescriptor
 child_stock_item_connect(StockItem &item);
 
-static constexpr inline FdType
-child_stock_item_get_type(const StockItem &)
+constexpr FdType
+child_stock_item_get_type(const StockItem &) noexcept
 {
     return FdType::FD_SOCKET;
 }

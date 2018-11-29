@@ -39,7 +39,7 @@
 
 #include "util/CharUtil.hxx"
 
-static constexpr inline bool
+constexpr bool
 IsUriMarkChar(char ch) noexcept
 {
     return ch == '-' || ch == '_' || ch == '.' || ch == '!' || ch == '~' ||
@@ -49,7 +49,7 @@ IsUriMarkChar(char ch) noexcept
 /**
  * See RFC 2396 2.3.
  */
-static constexpr inline bool
+constexpr bool
 IsUriUnreservedChar(char ch) noexcept
 {
     return IsAlphaNumericASCII(ch) || IsUriMarkChar(ch);
@@ -58,7 +58,7 @@ IsUriUnreservedChar(char ch) noexcept
 /**
  * See RFC 2396 3.3.
  */
-static constexpr inline bool
+constexpr bool
 IsUriPchar(char ch) noexcept
 {
     return IsUriUnreservedChar(ch) ||
