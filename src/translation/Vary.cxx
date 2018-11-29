@@ -98,7 +98,7 @@ add_translation_vary_header(StringMap &headers,
     if (old != nullptr)
         value = p_strcat(&headers.GetPool(), old, ",", value, nullptr);
 
-    headers.Set("vary", value);
+    headers.Add("vary", value);
 }
 
 void
