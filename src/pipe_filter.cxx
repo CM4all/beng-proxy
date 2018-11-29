@@ -139,7 +139,7 @@ pipe_filter(SpawnService &spawn_service, EventLoop &event_loop,
 
     stopwatch_event(stopwatch, "fork");
 
-    etag = headers.Get("etag");
+    etag = headers.Remove("etag");
     if (etag != nullptr) {
         /* we cannot pass the original ETag to the client, because the
            pipe has modified the resource (which is what the pipe is
@@ -150,7 +150,7 @@ pipe_filter(SpawnService &spawn_service, EventLoop &event_loop,
                               options.env);
         assert(etag != nullptr);
 
-        headers.Set("etag", etag);
+        headers.Add("etag", etag);
     }
 
     response = istream_stopwatch_new(*pool, std::move(response), stopwatch);
