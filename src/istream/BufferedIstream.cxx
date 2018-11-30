@@ -126,7 +126,10 @@ private:
 
     /* virtual methods from class Cancellable */
     void Cancel() noexcept override {
-        ClearAndCloseInput();
+        /* the input may be gone already if #defer_ready is pending */
+        if (HasInput())
+            ClearAndCloseInput();
+
         Destroy();
     }
 
