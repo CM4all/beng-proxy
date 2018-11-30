@@ -1,6 +1,6 @@
 cm4all-beng-proxy (15.0.12) unstable; urgency=low
 
-  * 
+  * istream: fix assertion failure
 
  --   
 

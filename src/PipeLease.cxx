@@ -47,6 +47,7 @@ PipeLease::Release(bool reuse) noexcept
     if (stock != nullptr) {
         assert(item != nullptr);
         item->Put(!reuse);
+        item = nullptr;
 
         read_fd.SetUndefined();
         write_fd.SetUndefined();
