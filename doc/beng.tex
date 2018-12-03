@@ -262,6 +262,28 @@ interface. \\\hline
 
 \end{longtabu*}
 
+\subsection{\texttt{spawn}}
+\label{config.spawn}
+
+Configures the process spawner.  Example:
+
+\begin{verbatim*}
+spawn {
+  allow_user "www-data"
+  allow_group "www-data"
+}
+\end{verbatim*}
+
+\begin{longtabu*}{|l|X|}\hline
+
+\verb|allow_user| & Allow child processes to impersonate the
+given user. \\\hline
+
+\verb|allow_group| & Allow child processes to impersonate the given
+group. \\\hline
+
+\end{longtabu*}
+
 \subsection{\texttt{set}}
 
 Tweak global settings.  Most of these are legacy from the old
