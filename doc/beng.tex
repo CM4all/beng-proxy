@@ -271,6 +271,10 @@ Configures the process spawner.  Example:
 spawn {
   allow_user "www-data"
   allow_group "www-data"
+  CPUWeight "50"
+  TasksMax "100"
+  MemoryMax "16 GB"
+  IOWeight "50"
 }
 \end{verbatim*}
 
@@ -281,6 +285,20 @@ given user. \\\hline
 
 \verb|allow_group| & Allow child processes to impersonate the given
 group. \\\hline
+
+\verb|CPUWeight| & CPU weight for all spawned processes combined
+($1..10000$).  \texttt{systemd}'s default is 100. \\\hline
+
+\verb|TasksMax| & Maximum number of tasks ($1..$).  \texttt{systemd}
+sets no limit by default. \\\hline
+
+\verb|MemoryMax| & Absolute limit on the combined memory usage of all
+spawned processes.  Value is in bytes and may be postfixed with
+\texttt{kB}, \texttt{MB}, \texttt{GB} or \texttt{TB}.
+\texttt{systemd} sets no limit by default. \\\hline
+
+\verb|IOWeight| & IO weight for all spawned processes combined
+($1..10000$).  \texttt{systemd}'s default is 100. \\\hline
 
 \end{longtabu*}
 
