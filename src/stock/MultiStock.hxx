@@ -184,7 +184,7 @@ public:
     template<typename P>
     void FadeIf(P &&predicate) {
         for (auto &i : items)
-            i.FadeIf(predicate);
+            i.FadeIf(std::forward<P>(predicate));
     }
 
     /**
