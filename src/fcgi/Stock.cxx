@@ -452,7 +452,7 @@ fcgi_stock_get(FcgiStock *fcgi_stock,
 int
 fcgi_stock_item_get_domain(gcc_unused const StockItem &item)
 {
-    return AF_UNIX;
+    return AF_LOCAL;
 }
 
 void

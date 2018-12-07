@@ -74,7 +74,7 @@ LocalControl::Open(EventLoop &event_loop)
     server.reset();
 
     struct sockaddr_un sa;
-    sa.sun_family = AF_UNIX;
+    sa.sun_family = AF_LOCAL;
     sa.sun_path[0] = '\0';
     sprintf(sa.sun_path + 1, "%s%d", prefix, (int)getpid());
 
