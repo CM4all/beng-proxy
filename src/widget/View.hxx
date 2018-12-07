@@ -81,7 +81,7 @@ struct WidgetView {
      */
     HeaderForwardSettings response_header_forward = HeaderForwardSettings::MakeDefaultResponse();
 
-    WidgetView(const char *_name) noexcept
+    explicit WidgetView(const char *_name) noexcept
         :name(_name) {}
 
     explicit constexpr WidgetView(const ResourceAddress &_address) noexcept
