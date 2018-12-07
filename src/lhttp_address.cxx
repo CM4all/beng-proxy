@@ -49,9 +49,7 @@
 LhttpAddress::LhttpAddress(const char *_path) noexcept
     :path(_path),
      host_and_port(nullptr),
-     uri(nullptr),
-     concurrency(1),
-     blocking(true)
+     uri(nullptr)
 {
     assert(path != nullptr);
 }

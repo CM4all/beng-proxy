@@ -65,13 +65,13 @@ struct LhttpAddress {
     /**
      * The maximum number of concurrent connections to one instance.
      */
-    unsigned concurrency;
+    unsigned concurrency = 1;
 
     /**
      * Pass a blocking listener socket to the child process?  The
      * default is true; sets SOCK_NONBLOCK if false.
      */
-    bool blocking;
+    bool blocking = true;
 
     /**
      * The value of #TRANSLATE_EXPAND_PATH.  Only used by the
