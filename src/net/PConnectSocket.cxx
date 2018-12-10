@@ -173,7 +173,7 @@ client_socket_new(EventLoop &event_loop, struct pool &_pool,
 
     if ((domain == PF_INET || domain == PF_INET6) && type == SOCK_STREAM &&
         !fd.SetNoDelay()) {
-        handler.OnSocketConnectError(std::make_exception_ptr(MakeErrno()));
+        handler.OnSocketConnectError(std::make_exception_ptr(MakeErrno("Failed to set TCP_NODELAY")));
         return;
     }
 
@@ -187,7 +187,7 @@ client_socket_new(EventLoop &event_loop, struct pool &_pool,
 
     if (!bind_address.IsNull() && bind_address.IsDefined() &&
         !fd.Bind(bind_address)) {
-        handler.OnSocketConnectError(std::make_exception_ptr(MakeErrno()));
+        handler.OnSocketConnectError(std::make_exception_ptr(MakeErrno("Failed to bind socket")));
         return;
     }
 

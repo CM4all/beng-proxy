@@ -134,7 +134,7 @@ PingClient::Read() noexcept
     } else {
         const int e = errno;
         fd.Close();
-        handler.PingError(std::make_exception_ptr(MakeErrno(e)));
+        handler.PingError(std::make_exception_ptr(MakeErrno(e, "Failed to receive ping reply")));
     }
 }
 

@@ -152,7 +152,7 @@ DelegateClient::HandleErrno(size_t length)
     if (nbytes == sizeof(e)) {
         ReleaseSocket(true);
 
-        ep = std::make_exception_ptr(MakeErrno(e));
+        ep = std::make_exception_ptr(MakeErrno(e, "Error from delegate"));
     } else {
         ReleaseSocket(false);
 

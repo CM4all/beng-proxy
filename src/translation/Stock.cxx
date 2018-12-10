@@ -75,7 +75,7 @@ public:
             event.Open(s);
             InvokeCreateSuccess();
         } else {
-            auto error = std::make_exception_ptr(MakeErrno());
+            auto error = std::make_exception_ptr(MakeErrno("Failed to connect to translation server"));
 
             if (s.IsDefined())
                 s.Close();
