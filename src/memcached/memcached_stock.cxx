@@ -178,6 +178,6 @@ memcached_stock_invoke(struct pool &pool, MemachedStock &stock,
     stock.tcp_balancer.Get(pool,
                            false, SocketAddress::Null(),
                            0, stock.address,
-                           10,
+                           std::chrono::seconds(10),
                            *request, cancel_ptr);
 }

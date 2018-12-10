@@ -41,14 +41,14 @@ struct TcpBalancerRequest : public StockGetHandler {
     const bool ip_transparent;
     const SocketAddress bind_address;
 
-    const unsigned timeout;
+    const Event::Duration timeout;
 
     StockGetHandler &handler;
 
     TcpBalancerRequest(TcpBalancer &_tcp_balancer,
                        bool _ip_transparent,
                        SocketAddress _bind_address,
-                       unsigned _timeout,
+                       Event::Duration _timeout,
                        StockGetHandler &_handler) noexcept
         :tcp_balancer(_tcp_balancer),
          ip_transparent(_ip_transparent),
@@ -111,7 +111,7 @@ TcpBalancer::Get(struct pool &pool,
                  SocketAddress bind_address,
                  sticky_hash_t session_sticky,
                  const AddressList &address_list,
-                 unsigned timeout,
+                 Event::Duration timeout,
                  StockGetHandler &handler,
                  CancellablePointer &cancel_ptr)
 {

@@ -39,6 +39,7 @@
 
 #include "StickyHash.hxx"
 #include "balancer.hxx"
+#include "event/Chrono.hxx"
 
 struct pool;
 struct AddressList;
@@ -69,14 +70,14 @@ public:
     /**
      * @param session_sticky a portion of the session id that is used to
      * select the worker; 0 means disable stickiness
-     * @param timeout the connect timeout for each attempt [seconds]
+     * @param timeout the connect timeout for each attempt
      */
     void Get(struct pool &pool,
              bool ip_transparent,
              SocketAddress bind_address,
              sticky_hash_t session_sticky,
              const AddressList &address_list,
-             unsigned timeout,
+             Event::Duration timeout,
              StockGetHandler &handler,
              CancellablePointer &cancel_ptr);
 };

@@ -62,7 +62,7 @@ struct TcpStockRequest {
     const Event::Duration timeout;
 
     TcpStockRequest(bool _ip_transparent, SocketAddress _bind_address,
-                    SocketAddress _address, unsigned _timeout)
+                    SocketAddress _address, Event::Duration _timeout) noexcept
         :ip_transparent(_ip_transparent), bind_address(_bind_address),
          address(_address), timeout(_timeout) {}
 };
@@ -232,7 +232,7 @@ TcpStock::Get(struct pool &pool, const char *name,
               bool ip_transparent,
               SocketAddress bind_address,
               SocketAddress address,
-              unsigned timeout,
+              Event::Duration timeout,
               StockGetHandler &handler,
               CancellablePointer &cancel_ptr)
 {

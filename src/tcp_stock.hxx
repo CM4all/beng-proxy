@@ -39,6 +39,7 @@
 
 #include "stock/Class.hxx"
 #include "stock/MapStock.hxx"
+#include "event/Chrono.hxx"
 #include "util/Compiler.h"
 
 struct pool;
@@ -75,7 +76,7 @@ public:
              bool ip_transparent,
              SocketAddress bind_address,
              SocketAddress address,
-             unsigned timeout,
+             Event::Duration timeout,
              StockGetHandler &handler,
              CancellablePointer &cancel_ptr);
 
