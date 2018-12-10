@@ -486,25 +486,22 @@ translation_response_headers(HttpHeaders &headers,
         headers.Write(i.key, i.value);
 }
 
-/**
- * Generate additional response headers as needed.
- */
-static void
-more_response_headers(const Request &request2, HttpHeaders &headers)
+inline void
+Request::MoreResponseHeaders(HttpHeaders &headers) const noexcept
 {
     /* RFC 2616 3.8: Product Tokens */
-    headers.Write("server", request2.product_token != nullptr
-                  ? request2.product_token
+    headers.Write("server", product_token != nullptr
+                  ? product_token
                   : BRIEF_PRODUCT_TOKEN);
 
 #ifndef NO_DATE_HEADER
     /* RFC 2616 14.18: Date */
-    headers.Write("date", request2.date != nullptr
-                  ? request2.date
+    headers.Write("date", date != nullptr
+                  ? date
                   : http_date_format(std::chrono::system_clock::now()));
 #endif
 
-    translation_response_headers(headers, *request2.translate.response);
+    translation_response_headers(headers, *translate.response);
 }
 
 inline void
@@ -592,7 +589,7 @@ Request::DispatchResponseDirect(http_status_t status, HttpHeaders &&headers,
         /* default to "401 Unauthorized" */
         status = HTTP_STATUS_UNAUTHORIZED;
 
-    more_response_headers(*this, headers);
+    MoreResponseHeaders(headers);
 
     DiscardRequestBody();
 
@@ -613,37 +610,31 @@ Request::DispatchResponseDirect(http_status_t status, HttpHeaders &&headers,
                          std::move(body));
 }
 
-static void
-response_apply_filter(Request &request2,
-                      http_status_t status, StringMap &&headers2,
+inline void
+Request::ApplyFilter(http_status_t status, StringMap &&headers2,
                       UnusedIstreamPtr body,
-                      const ResourceAddress &filter, bool reveal_user)
+                      const ResourceAddress &filter, bool reveal_user) noexcept
 {
-    const char *source_tag;
-    source_tag = resource_tag_append_etag(&request2.pool,
-                                          request2.resource_tag, headers2);
-    request2.resource_tag = source_tag != nullptr
-        ? p_strcat(&request2.pool, source_tag, "|",
-                   filter.GetId(request2.pool),
-                   nullptr)
+    const char *source_tag = resource_tag_append_etag(&pool, resource_tag,
+                                                      headers2);
+    resource_tag = source_tag != nullptr
+        ? p_strcat(&pool, source_tag, "|", filter.GetId(pool), nullptr)
         : nullptr;
 
     if (reveal_user)
-        forward_reveal_user(headers2,
-                            request2.GetRealmSession().get());
+        forward_reveal_user(headers2, GetRealmSession().get());
 
 #ifdef SPLICE
     if (body)
-        body = NewAutoPipeIstream(&request2.pool, std::move(body),
-                                  request2.instance.pipe_stock);
+        body = NewAutoPipeIstream(&pool, std::move(body), instance.pipe_stock);
 #endif
 
-    request2.instance.buffered_filter_resource_loader
-        ->SendRequest(request2.pool, request2.session_id.GetClusterHash(),
-                      request2.translate.response->site,
+    instance.buffered_filter_resource_loader
+        ->SendRequest(pool, session_id.GetClusterHash(),
+                      translate.response->site,
                       HTTP_METHOD_POST, filter, status, std::move(headers2),
                       std::move(body), source_tag,
-                      request2, request2.cancel_ptr);
+                      *this, cancel_ptr);
 }
 
 void
@@ -655,10 +646,10 @@ Request::ApplyTransformation(http_status_t status, StringMap &&headers,
 
     switch (transformation.type) {
     case Transformation::Type::FILTER:
-        response_apply_filter(*this, status, std::move(headers),
-                              std::move(response_body),
-                              transformation.u.filter.address,
-                              transformation.u.filter.reveal_user);
+        ApplyFilter(status, std::move(headers),
+                    std::move(response_body),
+                    transformation.u.filter.address,
+                    transformation.u.filter.reveal_user);
         break;
 
     case Transformation::Type::PROCESS:

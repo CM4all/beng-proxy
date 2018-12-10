@@ -434,9 +434,18 @@ private:
                      const char *yaml_file,
                      const char *yaml_map_path) noexcept;
 
+    void ApplyFilter(http_status_t status, StringMap &&headers2,
+                     UnusedIstreamPtr body,
+                     const ResourceAddress &filter, bool reveal_user) noexcept;
+
     void ApplyTransformation(http_status_t status, StringMap &&headers,
                              UnusedIstreamPtr response_body,
                              const Transformation &transformation);
+
+    /**
+     * Generate additional response headers as needed.
+     */
+    void MoreResponseHeaders(HttpHeaders &headers) const noexcept;
 
     /**
      * Generate the Set-Cookie response header for the given request.
