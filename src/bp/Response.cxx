@@ -72,6 +72,7 @@
 #include "product.h"
 #include "http_address.hxx"
 #include "relocate_uri.hxx"
+#include "FilterStatus.hxx"
 
 static const char *
 request_absolute_uri(const HttpServerRequest &request,
@@ -615,6 +616,8 @@ Request::ApplyFilter(http_status_t status, StringMap &&headers2,
                       UnusedIstreamPtr body,
                       const ResourceAddress &filter, bool reveal_user) noexcept
 {
+    previous_status = status;
+
     const char *source_tag = resource_tag_append_etag(&pool, resource_tag,
                                                       headers2);
     resource_tag = source_tag != nullptr
@@ -817,6 +820,11 @@ Request::OnHttpResponse(http_status_t status, StringMap &&headers,
                         UnusedIstreamPtr body) noexcept
 {
     assert(!response_sent);
+
+    if (previous_status != http_status_t(0)) {
+        status = ApplyFilterStatus(previous_status, status, !!body);
+        previous_status = http_status_t(0);
+    }
 
     if (collect_cookies) {
         collect_cookies = false;

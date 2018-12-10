@@ -36,6 +36,7 @@
 #include "Error.hxx"
 #include "LookupHandler.hxx"
 #include "HttpResponseHandler.hxx"
+#include "FilterStatus.hxx"
 #include "pheaders.hxx"
 #include "bp/XmlProcessor.hxx"
 #include "bp/CssProcessor.hxx"
@@ -69,6 +70,13 @@ class WidgetRequest final : HttpResponseHandler, SuffixRegistryHandler, Cancella
     struct pool &pool;
 
     unsigned num_redirects = 0;
+
+    /**
+     * This attribute remembers the previous status for
+     * ApplyFilterStatus().  Zero means the response was not generated
+     * by a filter.
+     */
+    http_status_t previous_status = http_status_t(0);
 
     bool subst_alt_syntax;
 
@@ -402,6 +410,8 @@ WidgetRequest::FilterResponse(http_status_t status,
                               StringMap &&headers, UnusedIstreamPtr body,
                               const ResourceAddress &filter, bool reveal_user)
 {
+    previous_status = status;
+
     const char *source_tag = resource_tag_append_etag(&pool, resource_tag,
                                                       headers);
     resource_tag = source_tag != nullptr
@@ -585,6 +595,11 @@ void
 WidgetRequest::OnHttpResponse(http_status_t status, StringMap &&headers,
                               UnusedIstreamPtr body) noexcept
 {
+    if (previous_status != http_status_t(0)) {
+        status = ApplyFilterStatus(previous_status, status, !!body);
+        previous_status = http_status_t(0);
+    }
+
     if (widget.cls->dump_headers) {
         widget.logger(4, "response headers from widget");
 

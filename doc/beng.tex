@@ -2385,6 +2385,9 @@ A filter server is a HTTP server.  \emph{beng-proxy} sends the
 original resource with a POST request and expects the filtered
 resource as response.
 
+If the filter returns status \texttt{200 OK} or \texttt{204 No
+  Content}, then the previous status code is used instead.
+
 It is important that a filter is completely stateless.  Running the
 same filter twice on the same source must always render the same
 result, at any time.

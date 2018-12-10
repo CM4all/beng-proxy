@@ -2,6 +2,7 @@ cm4all-beng-proxy (15.0.13) unstable; urgency=low
 
   * spawn: configurable resource limits CPUWeight, TasksMax, MemoryMax
   * lhttp, fcgi: kill idle processes after 15 minutes
+  * filter: use the previous status if filter returns "200 OK"
 
  --   
 

@@ -229,6 +229,13 @@ struct Request final : HttpResponseHandler, DelegateHandler,
     UnusedHoldIstreamPtr request_body;
 
     /**
+     * This attribute remembers the previous status for
+     * ApplyFilterStatus().  Zero means the response was not generated
+     * by a filter.
+     */
+    http_status_t previous_status = http_status_t(0);
+
+    /**
      * Shall the Set-Cookie2 header received from the next server be
      * evaluated?
      */
