@@ -64,11 +64,8 @@ static void
 SetupBasicSslCtx(SSL_CTX &ssl_ctx, bool server)
 {
     long mode = SSL_MODE_ENABLE_PARTIAL_WRITE
-        | SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER;
-#ifdef SSL_MODE_RELEASE_BUFFERS
-    /* requires libssl 1.0.0 */
-    mode |= SSL_MODE_RELEASE_BUFFERS;
-#endif
+        | SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER
+        | SSL_MODE_RELEASE_BUFFERS;
 
     /* without this flag, OpenSSL attempts to verify the whole local
        certificate chain for each connection, which is a waste of CPU
