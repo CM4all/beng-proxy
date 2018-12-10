@@ -77,7 +77,7 @@ Request::LoadSession(const char *_session_id)
 
         session->is_new = false;
 
-        session->Expire(Expiry::Now());
+        session->Expire(instance.event_loop.SteadyNow());
     }
 
     return session;
