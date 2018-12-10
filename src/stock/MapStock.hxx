@@ -125,7 +125,7 @@ public:
 
     ~StockMap() noexcept;
 
-    EventLoop &GetEventLoop() noexcept {
+    EventLoop &GetEventLoop() const noexcept {
         return event_loop;
     }
 
