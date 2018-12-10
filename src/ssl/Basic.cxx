@@ -40,26 +40,6 @@
 
 #include <openssl/err.h>
 
-/**
- * Enable Elliptic curve Diffie-Hellman (ECDH) for perfect forward
- * secrecy.  By default, it OpenSSL disables it.
- */
-static void
-enable_ecdh(SSL_CTX &ssl_ctx)
-{
-    /* OpenSSL 1.0.2 will allow this instead:
-
-       SSL_CTX_set_ecdh_auto(ssl_ctx, 1)
-    */
-
-    UniqueEC_KEY ecdh(EC_KEY_new_by_curve_name(NID_X9_62_prime256v1));
-    if (ecdh == nullptr)
-        throw SslError("EC_KEY_new_by_curve_name() failed");
-
-    if (SSL_CTX_set_tmp_ecdh(&ssl_ctx, ecdh.get()) != 1)
-        throw SslError("SSL_CTX_set_tmp_ecdh() failed");
-}
-
 static void
 SetupBasicSslCtx(SSL_CTX &ssl_ctx, bool server)
 {
@@ -75,7 +55,9 @@ SetupBasicSslCtx(SSL_CTX &ssl_ctx, bool server)
     SSL_CTX_set_mode(&ssl_ctx, mode);
 
     if (server) {
-        enable_ecdh(ssl_ctx);
+        /* enable Elliptic curve Diffie-Hellman (ECDH) for perfect
+           forward secrecy; by default, it OpenSSL disables it */
+        SSL_CTX_set_ecdh_auto(ssl_ctx, 1);
 
         /* no auto-clear, because LbInstance::compress_event will do
            this every 10 minutes, which is more reliable */
