@@ -63,6 +63,10 @@ public:
     TcpStock(EventLoop &event_loop, unsigned limit)
         :stock(event_loop, *this, limit, 16) {}
 
+    EventLoop &GetEventLoop() const noexcept {
+        return stock.GetEventLoop();
+    }
+
     void AddStats(StockStats &data) const {
         stock.AddStats(data);
     }
