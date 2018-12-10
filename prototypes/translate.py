@@ -684,6 +684,12 @@ class Translation(Protocol):
             response.packet(TRANSLATE_FILTER)
             response.packet(TRANSLATE_FASTCGI, os.path.join(cgi_path, 'pipe2.sed'))
             response.packet(TRANSLATE_ACTION, sed_fastcgi)
+        elif uri[:11] == '/filter4xx/':
+            response.path(os.path.join('/var/www', uri[11:]))
+            response.packet(TRANSLATE_FILTER)
+            response.packet(TRANSLATE_FASTCGI, os.path.join(cgi_path, 'underscore.sed'))
+            response.packet(TRANSLATE_ACTION, sed_fastcgi)
+            response.packet(TRANSLATE_FILTER_4XX)
         elif uri == '/remote-sed':
             response.packet(TRANSLATE_FASTCGI, os.path.join(cgi_path, 'pipe.sed'))
             response.packet(TRANSLATE_ADDRESS_STRING, '/tmp/sed.socket')
