@@ -119,7 +119,7 @@ public:
 class TranslateStock final : StockClass {
     Stock stock;
 
-    AllocatedSocketAddress address;
+    const AllocatedSocketAddress address;
 
 public:
     TranslateStock(EventLoop &event_loop, SocketAddress _address,
