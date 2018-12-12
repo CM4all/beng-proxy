@@ -51,10 +51,6 @@ public:
          defer_read(event_loop, BIND_THIS_METHOD(DeferredRead)) {
     }
 
-    ~DelayedIstream() noexcept {
-        defer_read.Cancel();
-    }
-
     void Set(UnusedIstreamPtr _input) noexcept {
         assert(!HasInput());
 
