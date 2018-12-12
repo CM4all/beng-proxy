@@ -2570,8 +2570,15 @@ reducing overhead. \\
 
 \hline
 
-\verb|STATEFUL| & remember the state of this widget, i.e. path info
-and query string \\
+\verb|STATEFUL| & Remember the state of this widget, i.e. path info
+and query string.  It is remembered for \verb|GET| requests to the
+widget when it is focused and the XML processor is enabled.
+\verb|POST| requests do not update the state because the \verb|POST|
+URI may not be valid in a follow-up \verb|GET| request.  AJAX requests
+on the other hand should not update the state, and they do not because
+they usually do not use the XML processor, which is only useful for
+generating the initial HTML page, and not for incremental (AJAX)
+updates. \\
 
 \hline
 

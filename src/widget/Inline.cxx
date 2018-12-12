@@ -349,7 +349,7 @@ embed_inline_widget(struct pool &pool, struct processor_env &env,
            gets cancelled, but the event cannot reach this stack
            frame; by preventing reads on the request body, this
            situation is avoided */
-        auto _pause = istream_pause_new(&pool,
+        auto _pause = istream_pause_new(pool, *env.event_loop,
                                         std::move(widget.from_request.body));
         pause = std::move(_pause.second);
 
