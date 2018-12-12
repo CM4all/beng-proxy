@@ -127,6 +127,12 @@ class _Lookup:
             response.packet(TRANSLATE_WIDGET_GROUP, m.group(1))
             return
 
+        m = re.match(r'^pair\s+"([^"]+)"\s+"([^"]*)"$', line)
+        if m:
+            name, value = m.group(1), m.group(2)
+            response.pair(name, value)
+            return
+
         if line == 'process':
             response.process()
         elif line == 'container':
