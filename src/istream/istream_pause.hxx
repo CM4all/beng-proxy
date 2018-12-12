@@ -36,6 +36,7 @@
 #include "pool/SharedPtr.hxx"
 
 struct pool;
+class EventLoop;
 class UnusedIstreamPtr;
 class PauseIstream;
 
@@ -49,7 +50,9 @@ public:
 
     void Resume() noexcept;
 };
+
 std::pair<UnusedIstreamPtr, SharedPoolPtr<PauseIstreamControl>>
-istream_pause_new(struct pool *pool, UnusedIstreamPtr input);
+istream_pause_new(struct pool &pool, EventLoop &event_loop,
+                  UnusedIstreamPtr input);
 
 #endif
