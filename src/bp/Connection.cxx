@@ -55,12 +55,12 @@
 #include <assert.h>
 #include <unistd.h>
 
-BpConnection::BpConnection(BpInstance &_instance, struct pool &_pool,
+BpConnection::BpConnection(PoolPtr &&_pool, BpInstance &_instance,
                            const char *_listener_tag,
                            bool _auth_alt_host,
                            SocketAddress remote_address)
     :instance(_instance),
-     pool(_pool),
+     pool(std::move(_pool)),
      config(_instance.config),
      listener_tag(_listener_tag),
      auth_alt_host(_auth_alt_host),
@@ -73,15 +73,14 @@ BpConnection::~BpConnection()
 {
     if (http != nullptr)
         http_server_connection_close(http);
+
+    pool_trash(pool);
 }
 
 void
 BpConnection::Disposer::operator()(BpConnection *c)
 {
-    auto &p = c->pool;
-    DeleteFromPool(p, c);
-    pool_trash(&p);
-    pool_unref(&p);
+    c->~BpConnection();
 }
 
 void
@@ -197,8 +196,6 @@ new_connection(BpInstance &instance,
                SslFactory *ssl_factory,
                const char *listener_tag, bool auth_alt_host)
 {
-    struct pool *pool;
-
     if (instance.connections.size() >= instance.config.max_connections) {
         unsigned num_dropped = drop_some_connections(&instance);
 
@@ -221,16 +218,17 @@ new_connection(BpInstance &instance,
     /* determine the local socket address */
     const StaticSocketAddress local_address = fd.GetLocalAddress();
 
-    pool = pool_new_linear(instance.root_pool, "connection", 2048);
+    PoolPtr pool(PoolPtr::Donate(),
+                 *pool_new_linear(instance.root_pool, "connection", 2048));
     pool_set_major(pool);
 
-    auto *connection = NewFromPool<BpConnection>(*pool, instance, *pool,
+    auto *connection = NewFromPool<BpConnection>(std::move(pool), instance,
                                                  listener_tag, auth_alt_host,
                                                  address);
     instance.connections.push_front(*connection);
 
     connection->http =
-        http_server_connection_new(pool,
+        http_server_connection_new(connection->pool,
                                    instance.event_loop,
                                    fd.Release(), FdType::FD_TCP,
                                    std::move(filter),

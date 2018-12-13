@@ -35,6 +35,7 @@
 
 #include "http_server/Handler.hxx"
 #include "io/Logger.hxx"
+#include "pool/Ptr.hxx"
 
 #include <boost/intrusive/list.hpp>
 
@@ -57,7 +58,7 @@ struct BpConnection final
       boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
 
     BpInstance &instance;
-    struct pool &pool;
+    PoolPtr pool;
     const BpConfig &config;
 
     const char *const listener_tag;
@@ -100,7 +101,7 @@ struct BpConnection final
         }
     } per_request;
 
-    BpConnection(BpInstance &_instance, struct pool &_pool,
+    BpConnection(PoolPtr &&_pool, BpInstance &_instance,
                  const char *_listener_tag, bool _auth_alt_host,
                  SocketAddress remote_address);
     ~BpConnection();
