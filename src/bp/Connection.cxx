@@ -58,7 +58,7 @@
 BpConnection::BpConnection(PoolPtr &&_pool, BpInstance &_instance,
                            const char *_listener_tag,
                            bool _auth_alt_host,
-                           SocketAddress remote_address)
+                           SocketAddress remote_address) noexcept
     :instance(_instance),
      pool(std::move(_pool)),
      config(_instance.config),
@@ -69,7 +69,7 @@ BpConnection::BpConnection(PoolPtr &&_pool, BpInstance &_instance,
 {
 }
 
-BpConnection::~BpConnection()
+BpConnection::~BpConnection() noexcept
 {
     if (http != nullptr)
         http_server_connection_close(http);
@@ -78,13 +78,13 @@ BpConnection::~BpConnection()
 }
 
 void
-BpConnection::Disposer::operator()(BpConnection *c)
+BpConnection::Disposer::operator()(BpConnection *c) noexcept
 {
     c->~BpConnection();
 }
 
 void
-close_connection(BpConnection *connection)
+close_connection(BpConnection *connection) noexcept
 {
     auto &connections = connection->instance.connections;
     assert(!connections.empty());
@@ -94,7 +94,7 @@ close_connection(BpConnection *connection)
 
 gcc_pure
 static int
-HttpServerLogLevel(std::exception_ptr e)
+HttpServerLogLevel(std::exception_ptr e) noexcept
 {
     try {
         FindRetrowNested<HttpServerSocketError>(e);
@@ -129,7 +129,7 @@ HttpServerLogLevel(std::exception_ptr e)
  */
 
 inline void
-BpConnection::PerRequest::Begin(std::chrono::steady_clock::time_point now)
+BpConnection::PerRequest::Begin(std::chrono::steady_clock::time_point now) noexcept
 {
     start_time = now;
     site_name = nullptr;
@@ -194,7 +194,7 @@ void
 new_connection(BpInstance &instance,
                UniqueSocketDescriptor &&fd, SocketAddress address,
                SslFactory *ssl_factory,
-               const char *listener_tag, bool auth_alt_host)
+               const char *listener_tag, bool auth_alt_host) noexcept
 {
     if (instance.connections.size() >= instance.config.max_connections) {
         unsigned num_dropped = drop_some_connections(&instance);
