@@ -81,7 +81,7 @@ ThreadSocketFilter::Schedule() noexcept
 }
 
 void
-ThreadSocketFilter::SetHandshakeCallback(BoundMethod<void()> callback) noexcept
+ThreadSocketFilter::SetHandshakeCallback(BoundMethod<void() noexcept> callback) noexcept
 {
     assert(!handshake_callback);
     assert(callback);
