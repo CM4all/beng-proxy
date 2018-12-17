@@ -53,7 +53,7 @@ struct TeeIstream final : IstreamHandler {
 
         bool enabled = true;
 
-        Output(struct pool &p, bool _weak):Istream(p), weak(_weak) {}
+        Output(struct pool &p, bool _weak) noexcept:Istream(p), weak(_weak) {}
 
         Output(const Output &) = delete;
         Output &operator=(const Output &) = delete;
@@ -68,7 +68,8 @@ struct TeeIstream final : IstreamHandler {
          */
         size_t bucket_list_size;
 
-        explicit FirstOutput(struct pool &p, bool _weak):Output(p, _weak) {}
+        explicit FirstOutput(struct pool &p, bool _weak) noexcept
+            :Output(p, _weak) {}
 
         TeeIstream &GetParent() noexcept {
             return ContainerCast(*this, &TeeIstream::first_output);
@@ -151,14 +152,15 @@ struct TeeIstream final : IstreamHandler {
          */
         std::exception_ptr postponed_error;
 
-        explicit SecondOutput(struct pool &p, bool _weak):Output(p, _weak) {}
+        explicit SecondOutput(struct pool &p, bool _weak) noexcept
+            :Output(p, _weak) {}
 
-        ~SecondOutput() override {
+        ~SecondOutput() noexcept override {
             if (postponed_error)
                 GetParent().defer_event.Cancel();
         }
 
-        TeeIstream &GetParent() {
+        TeeIstream &GetParent() noexcept {
             return ContainerCast(*this, &TeeIstream::second_output);
         }
 
@@ -199,7 +201,7 @@ struct TeeIstream final : IstreamHandler {
     size_t skip = 0;
 
     TeeIstream(struct pool &p, UnusedIstreamPtr _input, EventLoop &event_loop,
-               bool first_weak, bool second_weak, bool defer_read)
+               bool first_weak, bool second_weak, bool defer_read) noexcept
         :first_output(p, first_weak),
          second_output(p, second_weak),
          input(std::move(_input), *this),
@@ -209,15 +211,15 @@ struct TeeIstream final : IstreamHandler {
             DeferRead();
     }
 
-    static TeeIstream &CastFromFirst(Istream &first) {
+    static TeeIstream &CastFromFirst(Istream &first) noexcept {
         return ContainerCast((FirstOutput &)first, &TeeIstream::first_output);
     }
 
-    struct pool &GetPool() {
+    struct pool &GetPool() noexcept {
         return first_output.GetPool();
     }
 
-    void ReadInput() {
+    void ReadInput() noexcept {
         if (second_output.enabled &&
             second_output.postponed_error != nullptr) {
             assert(!input.IsDefined());
@@ -233,17 +235,17 @@ struct TeeIstream final : IstreamHandler {
         input.Read();
     }
 
-    size_t Feed0(const char *data, size_t length);
-    size_t Feed1(const void *data, size_t length);
-    size_t Feed(const void *data, size_t length);
+    size_t Feed0(const char *data, size_t length) noexcept;
+    size_t Feed1(const void *data, size_t length) noexcept;
+    size_t Feed(const void *data, size_t length) noexcept;
 
-    void DeferRead() {
+    void DeferRead() noexcept {
         assert(input.IsDefined() || second_output.postponed_error);
 
         defer_event.Schedule();
     }
 
-    void PostponeErrorCopyForSecond(std::exception_ptr e) {
+    void PostponeErrorCopyForSecond(std::exception_ptr e) noexcept {
         assert(!first_output.enabled);
 
         if (!second_output.enabled)
@@ -261,7 +263,7 @@ struct TeeIstream final : IstreamHandler {
 };
 
 inline size_t
-TeeIstream::Feed0(const char *data, size_t length)
+TeeIstream::Feed0(const char *data, size_t length) noexcept
 {
     if (!first_output.enabled)
         return length;
@@ -292,7 +294,7 @@ TeeIstream::Feed0(const char *data, size_t length)
 }
 
 inline size_t
-TeeIstream::Feed1(const void *data, size_t length)
+TeeIstream::Feed1(const void *data, size_t length) noexcept
 {
     if (!second_output.enabled)
         return length;
@@ -309,7 +311,7 @@ TeeIstream::Feed1(const void *data, size_t length)
 }
 
 inline size_t
-TeeIstream::Feed(const void *data, size_t length)
+TeeIstream::Feed(const void *data, size_t length) noexcept
 {
     size_t nbytes0 = Feed0((const char *)data, length);
     if (nbytes0 == 0)
