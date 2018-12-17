@@ -68,7 +68,7 @@ class ExpectMonitor final : ConnectSocketHandler, Cancellable {
 public:
     ExpectMonitor(EventLoop &event_loop,
                   const LbMonitorConfig &_config,
-                  LbMonitorHandler &_handler)
+                  LbMonitorHandler &_handler) noexcept
         :config(_config),
          connect(event_loop, *this),
          event(event_loop, BIND_THIS_METHOD(EventCallback)),
@@ -78,7 +78,7 @@ public:
 
     ExpectMonitor(const ExpectMonitor &other) = delete;
 
-    void Start(SocketAddress address, CancellablePointer &cancel_ptr) {
+    void Start(SocketAddress address, CancellablePointer &cancel_ptr) noexcept {
         cancel_ptr = *this;
 
         const Event::Duration zero{};
@@ -109,14 +109,14 @@ private:
     }
 
 private:
-    void EventCallback(unsigned events);
+    void EventCallback(unsigned events) noexcept;
     void OnTimeout() noexcept;
-    void DelayCallback();
+    void DelayCallback() noexcept;
 };
 
 static bool
 check_expectation(char *received, size_t received_length,
-                  const char *expect)
+                  const char *expect) noexcept
 {
     return memmem(received, received_length, expect, strlen(expect)) != nullptr;
 }
@@ -145,7 +145,7 @@ ExpectMonitor::Cancel() noexcept
  */
 
 inline void
-ExpectMonitor::EventCallback(unsigned)
+ExpectMonitor::EventCallback(unsigned) noexcept
 {
     event.Cancel();
 
@@ -163,7 +163,7 @@ ExpectMonitor::OnTimeout() noexcept
 }
 
 void
-ExpectMonitor::DelayCallback()
+ExpectMonitor::DelayCallback() noexcept
 {
     char buffer[1024];
 
