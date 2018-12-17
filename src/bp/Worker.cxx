@@ -49,7 +49,7 @@
 #include <errno.h>
 
 void
-BpInstance::RespawnWorkerCallback()
+BpInstance::RespawnWorkerCallback() noexcept
 {
     if (should_exit || workers.size() >= config.num_workers)
         return;
@@ -66,7 +66,7 @@ BpInstance::RespawnWorkerCallback()
 }
 
 void
-BpInstance::ScheduleSpawnWorker()
+BpInstance::ScheduleSpawnWorker() noexcept
 {
     if (!should_exit && workers.size() < config.num_workers &&
         !spawn_worker_event.IsPending())
@@ -113,7 +113,7 @@ BpInstance::InitWorker()
 }
 
 pid_t
-BpInstance::SpawnWorker()
+BpInstance::SpawnWorker() noexcept
 {
     assert(!crash_in_unsafe());
     assert(connections.empty());
@@ -179,7 +179,7 @@ BpInstance::SpawnWorker()
 }
 
 void
-BpInstance::KillAllWorkers()
+BpInstance::KillAllWorkers() noexcept
 {
     for (auto &worker : workers) {
         if (kill(worker.pid, SIGTERM) < 0)

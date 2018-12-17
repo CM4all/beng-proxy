@@ -170,19 +170,19 @@ struct BpInstance final : PInstance, ControlHandler {
     /* session */
     TimerEvent session_save_timer;
 
-    BpInstance();
-    ~BpInstance();
+    BpInstance() noexcept;
+    ~BpInstance() noexcept;
 
-    void EnableSignals();
-    void DisableSignals();
+    void EnableSignals() noexcept;
+    void DisableSignals() noexcept;
 
-    void ForkCow(bool inherit);
+    void ForkCow(bool inherit) noexcept;
 
-    void Compress();
-    void ScheduleCompress();
-    void OnCompressTimer();
+    void Compress() noexcept;
+    void ScheduleCompress() noexcept;
+    void OnCompressTimer() noexcept;
 
-    void ScheduleSaveSessions();
+    void ScheduleSaveSessions() noexcept;
 
     /**
      * Transition the current process from "master" to "worker".  Call
@@ -190,25 +190,25 @@ struct BpInstance final : PInstance, ControlHandler {
      */
     void InitWorker();
 
-    pid_t SpawnWorker();
-    void ScheduleSpawnWorker();
-    void KillAllWorkers();
+    pid_t SpawnWorker() noexcept;
+    void ScheduleSpawnWorker() noexcept;
+    void KillAllWorkers() noexcept;
 
     /**
      * Handler for #CONTROL_FADE_CHILDREN
      */
-    void FadeChildren();
-    void FadeTaggedChildren(const char *tag);
+    void FadeChildren() noexcept;
+    void FadeTaggedChildren(const char *tag) noexcept;
 
-    void ShutdownCallback();
+    void ShutdownCallback() noexcept;
 
-    void ReloadEventCallback(int signo);
+    void ReloadEventCallback(int signo) noexcept;
 
     void AddListener(const BpConfig::Listener &c);
     void AddTcpListener(int port);
 
-    void EnableListeners();
-    void DisableListeners();
+    void EnableListeners() noexcept;
+    void DisableListeners() noexcept;
 
     gcc_pure
     BengProxy::ControlStats GetStats() const noexcept;
@@ -222,13 +222,13 @@ struct BpInstance final : PInstance, ControlHandler {
     void OnControlError(std::exception_ptr ep) noexcept override;
 
 private:
-    void RespawnWorkerCallback();
+    void RespawnWorkerCallback() noexcept;
 
-    bool AllocatorCompressCallback();
+    bool AllocatorCompressCallback() noexcept;
 
-    void SaveSesssions();
+    void SaveSessions() noexcept;
 
-    void FreeStocksAndCaches();
+    void FreeStocksAndCaches() noexcept;
 };
 
 #endif

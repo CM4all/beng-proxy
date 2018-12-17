@@ -111,21 +111,21 @@ static constexpr cap_value_t cap_keep_list[] = {
 };
 
 void
-BpInstance::EnableListeners()
+BpInstance::EnableListeners() noexcept
 {
     for (auto &listener : listeners)
         listener.AddEvent();
 }
 
 void
-BpInstance::DisableListeners()
+BpInstance::DisableListeners() noexcept
 {
     for (auto &listener : listeners)
         listener.RemoveEvent();
 }
 
 void
-BpInstance::ShutdownCallback()
+BpInstance::ShutdownCallback() noexcept
 {
     if (should_exit)
         return;
@@ -169,7 +169,7 @@ BpInstance::ShutdownCallback()
 }
 
 void
-BpInstance::ReloadEventCallback(int)
+BpInstance::ReloadEventCallback(int) noexcept
 {
     LogConcat(3, "main", "caught SIGHUP, flushing all caches (pid=",
               (int)getpid(), ")");
@@ -189,14 +189,14 @@ BpInstance::ReloadEventCallback(int)
 }
 
 void
-BpInstance::EnableSignals()
+BpInstance::EnableSignals() noexcept
 {
     shutdown_listener.Enable();
     sighup_event.Enable();
 }
 
 void
-BpInstance::DisableSignals()
+BpInstance::DisableSignals() noexcept
 {
     shutdown_listener.Disable();
     sighup_event.Disable();

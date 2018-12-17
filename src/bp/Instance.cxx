@@ -63,7 +63,7 @@
 
 static constexpr auto COMPRESS_INTERVAL = std::chrono::minutes(10);
 
-BpInstance::BpInstance()
+BpInstance::BpInstance() noexcept
     :shutdown_listener(event_loop, BIND_THIS_METHOD(ShutdownCallback)),
      sighup_event(event_loop, SIGHUP, BIND_THIS_METHOD(ReloadEventCallback)),
      compress_timer(event_loop, BIND_THIS_METHOD(OnCompressTimer)),
@@ -71,11 +71,11 @@ BpInstance::BpInstance()
      spawn_worker_event(event_loop,
                         BIND_THIS_METHOD(RespawnWorkerCallback)),
      avahi_client(event_loop, "beng-proxy"),
-     session_save_timer(event_loop, BIND_THIS_METHOD(SaveSesssions))
+     session_save_timer(event_loop, BIND_THIS_METHOD(SaveSessions))
 {
 }
 
-BpInstance::~BpInstance()
+BpInstance::~BpInstance() noexcept
 {
     delete (BufferedResourceLoader *)buffered_filter_resource_loader;
 
@@ -88,7 +88,7 @@ BpInstance::~BpInstance()
 }
 
 void
-BpInstance::FreeStocksAndCaches()
+BpInstance::FreeStocksAndCaches() noexcept
 {
     if (translate_cache != nullptr) {
         translate_cache_close(translate_cache);
@@ -158,7 +158,7 @@ BpInstance::FreeStocksAndCaches()
 }
 
 void
-BpInstance::ForkCow(bool inherit)
+BpInstance::ForkCow(bool inherit) noexcept
 {
     fb_pool_fork_cow(inherit);
 
@@ -176,26 +176,26 @@ BpInstance::ForkCow(bool inherit)
 }
 
 void
-BpInstance::Compress()
+BpInstance::Compress() noexcept
 {
     fb_pool_compress();
 }
 
 void
-BpInstance::ScheduleCompress()
+BpInstance::ScheduleCompress() noexcept
 {
     compress_timer.Schedule(COMPRESS_INTERVAL);
 }
 
 void
-BpInstance::OnCompressTimer()
+BpInstance::OnCompressTimer() noexcept
 {
     Compress();
     ScheduleCompress();
 }
 
 void
-BpInstance::FadeChildren()
+BpInstance::FadeChildren() noexcept
 {
     if (lhttp_stock != nullptr)
         lhttp_stock_fade_all(*lhttp_stock);
@@ -211,7 +211,7 @@ BpInstance::FadeChildren()
 }
 
 void
-BpInstance::FadeTaggedChildren(const char *tag)
+BpInstance::FadeTaggedChildren(const char *tag) noexcept
 {
     assert(tag != nullptr);
 
@@ -228,7 +228,7 @@ BpInstance::FadeTaggedChildren(const char *tag)
 }
 
 void
-BpInstance::SaveSesssions()
+BpInstance::SaveSessions() noexcept
 {
     session_save();
 
@@ -236,7 +236,7 @@ BpInstance::SaveSesssions()
 }
 
 void
-BpInstance::ScheduleSaveSessions()
+BpInstance::ScheduleSaveSessions() noexcept
 {
     /* save all sessions every 2 minutes */
     session_save_timer.Schedule(std::chrono::minutes(2));
