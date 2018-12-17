@@ -104,7 +104,7 @@ struct BpConnection final
     BpConnection(PoolPtr &&_pool, BpInstance &_instance,
                  const char *_listener_tag, bool _auth_alt_host,
                  SocketAddress remote_address) noexcept;
-    ~BpConnection();
+    ~BpConnection() noexcept;
 
     struct Disposer {
         void operator()(BpConnection *c) noexcept;
