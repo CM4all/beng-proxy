@@ -33,7 +33,7 @@
 #include "notify.hxx"
 #include "system/LinuxFD.hxx"
 
-Notify::Notify(EventLoop &event_loop, Callback _callback)
+Notify::Notify(EventLoop &event_loop, Callback _callback) noexcept
     :callback(_callback),
      fd(CreateEventFD()),
      event(event_loop, BIND_THIS_METHOD(EventFdCallback),
@@ -42,13 +42,13 @@ Notify::Notify(EventLoop &event_loop, Callback _callback)
     event.ScheduleRead();
 }
 
-Notify::~Notify()
+Notify::~Notify() noexcept
 {
     event.Cancel();
 }
 
 inline void
-Notify::EventFdCallback(unsigned)
+Notify::EventFdCallback(unsigned) noexcept
 {
     uint64_t value;
     (void)fd.Read(&value, sizeof(value));

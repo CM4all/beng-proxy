@@ -43,7 +43,7 @@
  * Send notifications from a worker thread to the main thread.
  */
 class Notify {
-    typedef BoundMethod<void()> Callback;
+    typedef BoundMethod<void() noexcept> Callback;
     Callback callback;
 
     UniqueFileDescriptor fd;
@@ -52,18 +52,18 @@ class Notify {
     std::atomic_bool pending;
 
 public:
-    Notify(EventLoop &event_loop, Callback _callback);
-    ~Notify();
+    Notify(EventLoop &event_loop, Callback _callback) noexcept;
+    ~Notify() noexcept;
 
-    void Enable() {
+    void Enable() noexcept {
         event.ScheduleRead();
     }
 
-    void Disable() {
+    void Disable() noexcept {
         event.Cancel();
     }
 
-    void Signal() {
+    void Signal() noexcept {
         if (!pending.exchange(true)) {
             static constexpr uint64_t value = 1;
             (void)fd.Write(&value, sizeof(value));
@@ -71,7 +71,7 @@ public:
     }
 
 private:
-    void EventFdCallback(unsigned events);
+    void EventFdCallback(unsigned events) noexcept;
 };
 
 #endif
