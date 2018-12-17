@@ -185,15 +185,15 @@ struct SessionContainer {
     /**
      * @return true if there is at least one session
      */
-    bool Cleanup();
+    bool Cleanup() noexcept;
 
     /**
      * Forcefully deletes at least one session.
      */
-    bool Purge();
+    bool Purge() noexcept;
 
     bool Visit(bool (*callback)(const Session *session,
-                                void *ctx), void *ctx);
+                                void *ctx), void *ctx) noexcept;
 };
 
 static constexpr size_t SHM_PAGE_SIZE = 4096;
@@ -226,7 +226,7 @@ class SessionManager {
 
 public:
     SessionManager(EventLoop &event_loop, std::chrono::seconds idle_timeout,
-                   unsigned _cluster_size, unsigned _cluster_node)
+                   unsigned _cluster_size, unsigned _cluster_node) noexcept
         :cluster_size(_cluster_size), cluster_node(_cluster_node),
          shm(shm_new(SHM_PAGE_SIZE, SHM_NUM_PAGES)),
          container(NewFromShm<SessionContainer>(shm, SM_PAGES, idle_timeout)),
@@ -327,11 +327,11 @@ public:
         container->LockDefragment(id, *shm);
     }
 
-    bool Purge() {
+    bool Purge() noexcept {
         return container->Purge();
     }
 
-    void Cleanup();
+    void Cleanup() noexcept;
 
     struct dpool *NewDpool() {
         return dpool_new(*shm);
@@ -361,7 +361,7 @@ SessionContainer::EraseAndDispose(Session &session)
 }
 
 inline bool
-SessionContainer::Cleanup()
+SessionContainer::Cleanup() noexcept
 {
     assert(!crash_in_unsafe());
     assert(locked_session == nullptr);
@@ -384,7 +384,7 @@ SessionContainer::Cleanup()
 }
 
 void
-SessionManager::Cleanup()
+SessionManager::Cleanup() noexcept
 {
     if (container->Cleanup())
         cleanup_timer.Add(cleanup_interval);
@@ -463,7 +463,7 @@ session_manager_new_dpool()
 }
 
 bool
-SessionContainer::Purge()
+SessionContainer::Purge() noexcept
 {
     /* collect at most 256 sessions */
     StaticArray<Session *, 256> purge_sessions;
@@ -724,7 +724,7 @@ session_delete(SessionId id)
 
 inline bool
 SessionContainer::Visit(bool (*callback)(const Session *session,
-                                         void *ctx), void *ctx)
+                                         void *ctx), void *ctx) noexcept
 {
     const ScopeCrashUnsafe crash_unsafe;
     boost::interprocess::sharable_lock<boost::interprocess::interprocess_sharable_mutex> lock(mutex);
