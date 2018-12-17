@@ -59,7 +59,7 @@ struct DelegateClient final : PoolHolder, Cancellable {
 
     DelegateClient(EventLoop &event_loop, SocketDescriptor _s, Lease &lease,
                    struct pool &_pool,
-                   DelegateHandler &_handler)
+                   DelegateHandler &_handler) noexcept
         :PoolHolder(_pool),
          s(_s), event(event_loop, BIND_THIS_METHOD(SocketEventCallback), s),
          handler(_handler) {
@@ -69,23 +69,23 @@ struct DelegateClient final : PoolHolder, Cancellable {
         event.ScheduleRead();
     }
 
-    void Destroy() {
+    void Destroy() noexcept {
         this->~DelegateClient();
     }
 
-    void ReleaseSocket(bool reuse) {
+    void ReleaseSocket(bool reuse) noexcept {
         assert(s.IsDefined());
 
         p_lease_release(lease_ref, reuse, pool);
     }
 
-    void DestroyError(std::exception_ptr ep) {
+    void DestroyError(std::exception_ptr ep) noexcept {
         ReleaseSocket(false);
         handler.OnDelegateError(ep);
         Destroy();
     }
 
-    void DestroyError(const char *msg) {
+    void DestroyError(const char *msg) noexcept {
         DestroyError(std::make_exception_ptr(std::runtime_error(msg)));
     }
 
@@ -96,7 +96,7 @@ struct DelegateClient final : PoolHolder, Cancellable {
     void TryRead();
 
 private:
-    void SocketEventCallback(unsigned) {
+    void SocketEventCallback(unsigned) noexcept {
         TryRead();
     }
 
