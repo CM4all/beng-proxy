@@ -40,7 +40,7 @@ struct tcache;
 class CancellablePointer;
 struct WidgetClass;
 
-typedef BoundMethod<void(const WidgetClass *cls)> WidgetRegistryCallback;
+typedef BoundMethod<void(const WidgetClass *cls) noexcept> WidgetRegistryCallback;
 
 /**
  * Interface for the widget registry managed by the translation

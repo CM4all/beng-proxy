@@ -58,7 +58,7 @@ struct WidgetResolverListener final
     template<typename P>
     WidgetResolverListener(P &&_pool, WidgetResolver &_resolver,
                            WidgetResolverCallback _callback,
-                           CancellablePointer &cancel_ptr)
+                           CancellablePointer &cancel_ptr) noexcept
         :PoolHolder(std::forward<P>(_pool)), resolver(_resolver),
          callback(_callback) {
         cancel_ptr = *this;
@@ -68,7 +68,7 @@ struct WidgetResolverListener final
         this->~WidgetResolverListener();
     }
 
-    void Finish();
+    void Finish() noexcept;
 
     /* virtual methods from class Cancellable */
     void Cancel() noexcept override;
@@ -112,7 +112,7 @@ struct WidgetResolver {
     void RemoveListener(WidgetResolverListener &listener);
     void Abort();
 
-    void RegistryCallback(const WidgetClass *cls);
+    void RegistryCallback(const WidgetClass *cls) noexcept;
 };
 
 void
@@ -172,7 +172,7 @@ WidgetResolverListener::Cancel() noexcept
  */
 
 inline void
-WidgetResolverListener::Finish()
+WidgetResolverListener::Finish() noexcept
 {
     assert(!finished);
     assert(!aborted);
@@ -186,7 +186,7 @@ WidgetResolverListener::Finish()
 }
 
 void
-WidgetResolver::RegistryCallback(const WidgetClass *cls)
+WidgetResolver::RegistryCallback(const WidgetClass *cls) noexcept
 {
     assert(widget.cls == nullptr);
     assert(widget.resolver == this);
@@ -231,7 +231,7 @@ WidgetResolver::RegistryCallback(const WidgetClass *cls)
  */
 
 static WidgetResolver *
-widget_resolver_alloc(Widget &widget)
+widget_resolver_alloc(Widget &widget) noexcept
 {
     auto &pool = widget.pool;
 
@@ -245,7 +245,7 @@ ResolveWidget(struct pool &pool,
               Widget &widget,
               struct tcache &translate_cache,
               WidgetResolverCallback callback,
-              CancellablePointer &cancel_ptr)
+              CancellablePointer &cancel_ptr) noexcept
 {
     bool is_new = false;
 

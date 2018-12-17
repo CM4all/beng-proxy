@@ -61,7 +61,7 @@ struct Context : PInstance {
     bool got_class = false;
     const WidgetClass *cls = nullptr;
 
-    void RegistryCallback(const WidgetClass *_cls) {
+    void RegistryCallback(const WidgetClass *_cls) noexcept {
         got_class = true;
         cls = _cls;
     }

@@ -83,7 +83,7 @@ struct ProxyWidget final : WidgetLookupHandler, HttpResponseHandler, Cancellable
 
     void Continue();
 
-    void ResolverCallback();
+    void ResolverCallback() noexcept;
 
     /* virtual methods from class Cancellable */
     void Cancel() noexcept override;
@@ -247,7 +247,7 @@ ProxyWidget::Continue()
 }
 
 void
-ProxyWidget::ResolverCallback()
+ProxyWidget::ResolverCallback() noexcept
 {
     if (widget->cls == nullptr) {
         widget->Cancel();

@@ -124,7 +124,7 @@ ResolveWidget(struct pool &pool,
               gcc_unused Widget &widget,
               gcc_unused struct tcache &translate_cache,
               gcc_unused WidgetResolverCallback callback,
-              CancellablePointer &cancel_ptr)
+              CancellablePointer &cancel_ptr) noexcept
 {
     auto to = NewFromPool<TestOperation>(pool, pool);
     cancel_ptr = *to;
