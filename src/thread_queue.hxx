@@ -42,7 +42,7 @@ class ThreadQueue;
 class ThreadJob;
 
 ThreadQueue *
-thread_queue_new(EventLoop &event_loop);
+thread_queue_new(EventLoop &event_loop) noexcept;
 
 /**
  * Cancel all thread_queue_wait() calls and refuse all further calls.
@@ -50,16 +50,16 @@ thread_queue_new(EventLoop &event_loop);
  * queue.
  */
 void
-thread_queue_stop(ThreadQueue &q);
+thread_queue_stop(ThreadQueue &q) noexcept;
 
 void
-thread_queue_free(ThreadQueue *q);
+thread_queue_free(ThreadQueue *q) noexcept;
 
 /**
  * Enqueue a job, and wake up an idle thread (if there is any).
  */
 void
-thread_queue_add(ThreadQueue &q, ThreadJob &job);
+thread_queue_add(ThreadQueue &q, ThreadJob &job) noexcept;
 
 /**
  * Dequeue an existing job or wait for a new job, and reserve it.
@@ -67,13 +67,13 @@ thread_queue_add(ThreadQueue &q, ThreadJob &job);
  * @return NULL if thread_queue_stop() has been called
  */
 ThreadJob *
-thread_queue_wait(ThreadQueue &q);
+thread_queue_wait(ThreadQueue &q) noexcept;
 
 /**
  * Mark the specified job (returned by thread_queue_wait()) as "done".
  */
 void
-thread_queue_done(ThreadQueue &q, ThreadJob &job);
+thread_queue_done(ThreadQueue &q, ThreadJob &job) noexcept;
 
 /**
  * Cancel a job that has been queued.
@@ -82,6 +82,6 @@ thread_queue_done(ThreadQueue &q, ThreadJob &job);
  * currently being processed
  */
 bool
-thread_queue_cancel(ThreadQueue &q, ThreadJob &job);
+thread_queue_cancel(ThreadQueue &q, ThreadJob &job) noexcept;
 
 #endif

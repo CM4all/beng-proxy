@@ -60,22 +60,22 @@ public:
 
     Notify notify;
 
-    explicit ThreadQueue(EventLoop &event_loop)
+    explicit ThreadQueue(EventLoop &event_loop) noexcept
         :notify(event_loop, BIND_THIS_METHOD(WakeupCallback)) {}
 
-    ~ThreadQueue() {
+    ~ThreadQueue() noexcept {
         assert(!alive);
     }
 
-    bool IsEmpty() const {
+    bool IsEmpty() const noexcept {
         return waiting.empty() && busy.empty() && done.empty();
     }
 
-    void WakeupCallback();
+    void WakeupCallback() noexcept;
 };
 
 void
-ThreadQueue::WakeupCallback()
+ThreadQueue::WakeupCallback() noexcept
 {
     mutex.lock();
 
@@ -110,13 +110,13 @@ ThreadQueue::WakeupCallback()
 }
 
 ThreadQueue *
-thread_queue_new(EventLoop &event_loop)
+thread_queue_new(EventLoop &event_loop) noexcept
 {
     return new ThreadQueue(event_loop);
 }
 
 void
-thread_queue_stop(ThreadQueue &q)
+thread_queue_stop(ThreadQueue &q) noexcept
 {
     std::unique_lock<std::mutex> lock(q.mutex);
     q.alive = false;
@@ -124,13 +124,13 @@ thread_queue_stop(ThreadQueue &q)
 }
 
 void
-thread_queue_free(ThreadQueue *q)
+thread_queue_free(ThreadQueue *q) noexcept
 {
     delete q;
 }
 
 void
-thread_queue_add(ThreadQueue &q, ThreadJob &job)
+thread_queue_add(ThreadQueue &q, ThreadJob &job) noexcept
 {
     q.mutex.lock();
     assert(q.alive);
@@ -150,7 +150,7 @@ thread_queue_add(ThreadQueue &q, ThreadJob &job)
 }
 
 ThreadJob *
-thread_queue_wait(ThreadQueue &q)
+thread_queue_wait(ThreadQueue &q) noexcept
 {
     std::unique_lock<std::mutex> lock(q.mutex);
 
@@ -175,7 +175,7 @@ thread_queue_wait(ThreadQueue &q)
 }
 
 void
-thread_queue_done(ThreadQueue &q, ThreadJob &job)
+thread_queue_done(ThreadQueue &q, ThreadJob &job) noexcept
 {
     assert(job.state == ThreadJob::State::BUSY);
 
@@ -193,7 +193,7 @@ thread_queue_done(ThreadQueue &q, ThreadJob &job)
 }
 
 bool
-thread_queue_cancel(ThreadQueue &q, ThreadJob &job)
+thread_queue_cancel(ThreadQueue &q, ThreadJob &job) noexcept
 {
     std::unique_lock<std::mutex> lock(q.mutex);
 
