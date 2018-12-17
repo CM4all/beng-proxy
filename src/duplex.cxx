@@ -56,18 +56,18 @@ class FallbackEvent {
 
     const unsigned events;
 
-    const BoundMethod<void()> callback;
+    const BoundMethod<void() noexcept> callback;
 
 public:
     FallbackEvent(EventLoop &event_loop, FileDescriptor fd, unsigned _events,
-                  BoundMethod<void()> _callback)
+                  BoundMethod<void() noexcept> _callback) noexcept
         :socket_event(event_loop, BIND_THIS_METHOD(OnSocket),
                       SocketDescriptor::FromFileDescriptor(fd)),
          defer_event(event_loop, _callback),
          events(fd.IsRegularFile() ? 0 : _events),
          callback(_callback) {}
 
-    void Add() {
+    void Add() noexcept {
         if (events == 0)
             /* if "fd" is a regular file, trigger the event repeatedly
                using DeferEvent, because we can't use SocketEvent::READ on
@@ -77,13 +77,13 @@ public:
             socket_event.Schedule(events);
     }
 
-    void Delete() {
+    void Delete() noexcept {
         socket_event.Cancel();
         defer_event.Cancel();
     }
 
 private:
-    void OnSocket(unsigned) {
+    void OnSocket(unsigned) noexcept {
         callback();
     }
 };
@@ -102,7 +102,7 @@ class Duplex {
 public:
     Duplex(EventLoop &event_loop,
            UniqueFileDescriptor &&_read_fd, UniqueFileDescriptor &&_write_fd,
-           UniqueSocketDescriptor &&_sock_fd)
+           UniqueSocketDescriptor &&_sock_fd) noexcept
         :read_fd(std::move(_read_fd)), write_fd(std::move(_write_fd)),
          sock_fd(std::move(_sock_fd)),
          read_event(event_loop, read_fd, SocketEvent::READ,
@@ -119,7 +119,7 @@ public:
     }
 
 private:
-    void CloseRead() {
+    void CloseRead() noexcept {
         assert(read_fd.IsDefined());
 
         read_event.Delete();
@@ -130,7 +130,7 @@ private:
             read_fd.Steal();
     }
 
-    void CloseWrite() {
+    void CloseWrite() noexcept {
         assert(write_fd.IsDefined());
 
         write_event.Delete();
@@ -141,7 +141,7 @@ private:
             write_fd.Steal();
     }
 
-    void CloseSocket() {
+    void CloseSocket() noexcept {
         assert(sock_fd.IsDefined());
 
         socket_event.Cancel();
@@ -149,11 +149,11 @@ private:
         sock_fd.Close();
     }
 
-    void Destroy();
-    bool CheckDestroy();
+    void Destroy() noexcept;
+    bool CheckDestroy() noexcept;
 
-    void ReadEventCallback();
-    void WriteEventCallback();
+    void ReadEventCallback() noexcept;
+    void WriteEventCallback() noexcept;
 
     bool TryReadSocket() noexcept;
     bool TryWriteSocket() noexcept;
@@ -161,7 +161,7 @@ private:
 };
 
 void
-Duplex::Destroy()
+Duplex::Destroy() noexcept
 {
     if (read_fd.IsDefined())
         CloseRead();
@@ -176,7 +176,7 @@ Duplex::Destroy()
 }
 
 bool
-Duplex::CheckDestroy()
+Duplex::CheckDestroy() noexcept
 {
     if (!read_fd.IsDefined() && sock_eof &&
         from_read.empty() && to_write.empty()) {
@@ -187,7 +187,7 @@ Duplex::CheckDestroy()
 }
 
 inline void
-Duplex::ReadEventCallback()
+Duplex::ReadEventCallback() noexcept
 {
     ssize_t nbytes = read_to_buffer(read_fd.Get(), from_read, INT_MAX);
     if (nbytes == -1) {
@@ -209,7 +209,7 @@ Duplex::ReadEventCallback()
 }
 
 inline void
-Duplex::WriteEventCallback()
+Duplex::WriteEventCallback() noexcept
 {
     ssize_t nbytes = write_from_buffer(write_fd.Get(), to_write);
     if (nbytes == -1) {
