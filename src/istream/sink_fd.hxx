@@ -71,12 +71,12 @@ struct SinkFdHandler {
 SinkFd *
 sink_fd_new(EventLoop &event_loop, struct pool &pool, UnusedIstreamPtr istream,
             FileDescriptor fd, FdType fd_type,
-            const SinkFdHandler &handler, void *ctx);
+            const SinkFdHandler &handler, void *ctx) noexcept;
 
 void
-sink_fd_read(SinkFd *ss);
+sink_fd_read(SinkFd *ss) noexcept;
 
 void
-sink_fd_close(SinkFd *ss);
+sink_fd_close(SinkFd *ss) noexcept;
 
 #endif

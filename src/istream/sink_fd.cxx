@@ -76,7 +76,7 @@ struct SinkFd final : IstreamSink, DestructAnchor, LeakDetector {
     SinkFd(EventLoop &event_loop, struct pool &_pool,
            UnusedIstreamPtr &&_istream,
            FileDescriptor _fd, FdType _fd_type,
-           const SinkFdHandler &_handler, void *_handler_ctx)
+           const SinkFdHandler &_handler, void *_handler_ctx) noexcept
         :IstreamSink(std::move(_istream), istream_direct_mask_to(_fd_type)),
          pool(&_pool),
          fd(_fd), fd_type(_fd_type),
@@ -91,20 +91,20 @@ struct SinkFd final : IstreamSink, DestructAnchor, LeakDetector {
         this->~SinkFd();
     }
 
-    bool IsDefined() const {
+    bool IsDefined() const noexcept {
         return input.IsDefined();
     }
 
-    void Read() {
+    void Read() noexcept {
         input.Read();
     }
 
-    void Close() {
+    void Close() noexcept {
         input.Close();
         Destroy();
     }
 
-    void ScheduleWrite() {
+    void ScheduleWrite() noexcept {
         assert(fd.IsDefined());
         assert(input.IsDefined());
 
@@ -112,7 +112,7 @@ struct SinkFd final : IstreamSink, DestructAnchor, LeakDetector {
         event.ScheduleWrite();
     }
 
-    void EventCallback(unsigned events);
+    void EventCallback(unsigned events) noexcept;
 
     /* virtual methods from class IstreamHandler */
     size_t OnData(const void *data, size_t length) override;
@@ -213,7 +213,7 @@ SinkFd::OnError(std::exception_ptr ep) noexcept
  */
 
 inline void
-SinkFd::EventCallback(unsigned)
+SinkFd::EventCallback(unsigned) noexcept
 {
     const DestructObserver destructed(*this);
 
@@ -235,7 +235,7 @@ SinkFd::EventCallback(unsigned)
 SinkFd *
 sink_fd_new(EventLoop &event_loop, struct pool &pool, UnusedIstreamPtr istream,
             FileDescriptor fd, FdType fd_type,
-            const SinkFdHandler &handler, void *ctx)
+            const SinkFdHandler &handler, void *ctx) noexcept
 {
     assert(fd.IsDefined());
     assert(handler.input_eof != nullptr);
@@ -248,7 +248,7 @@ sink_fd_new(EventLoop &event_loop, struct pool &pool, UnusedIstreamPtr istream,
 }
 
 void
-sink_fd_read(SinkFd *ss)
+sink_fd_read(SinkFd *ss) noexcept
 {
     assert(ss != nullptr);
     assert(ss->valid);
@@ -258,7 +258,7 @@ sink_fd_read(SinkFd *ss)
 }
 
 void
-sink_fd_close(SinkFd *ss)
+sink_fd_close(SinkFd *ss) noexcept
 {
     assert(ss != nullptr);
     assert(ss->valid);
