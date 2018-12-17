@@ -111,7 +111,7 @@ LbMonitorController::Error(std::exception_ptr e)
 }
 
 inline void
-LbMonitorController::IntervalCallback()
+LbMonitorController::IntervalCallback() noexcept
 {
     assert(!cancel_ptr);
 
@@ -124,7 +124,7 @@ LbMonitorController::IntervalCallback()
 }
 
 inline void
-LbMonitorController::TimeoutCallback()
+LbMonitorController::TimeoutCallback() noexcept
 {
     assert(cancel_ptr);
 
@@ -141,7 +141,7 @@ LbMonitorController::TimeoutCallback()
 
 static std::string
 MakeLoggerDomain(const char *monitor_name, const char *node_name,
-                 unsigned port)
+                 unsigned port) noexcept
 {
     return StringFormat<1024>("monitor %s:[%s]:%u",
                               monitor_name, node_name, port).c_str();
@@ -152,7 +152,7 @@ LbMonitorController::LbMonitorController(EventLoop &_event_loop,
                                          const char *node_name,
                                          const LbMonitorConfig &_config,
                                          SocketAddress _address,
-                                         const LbMonitorClass &_class)
+                                         const LbMonitorClass &_class) noexcept
     :event_loop(_event_loop),
      failure(failure_manager.Make(_address)),
      config(_config),
@@ -167,7 +167,7 @@ LbMonitorController::LbMonitorController(EventLoop &_event_loop,
     interval_event.Add(immediately);
 }
 
-LbMonitorController::~LbMonitorController()
+LbMonitorController::~LbMonitorController() noexcept
 {
     if (cancel_ptr)
         cancel_ptr.Cancel();

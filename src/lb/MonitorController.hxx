@@ -73,9 +73,9 @@ public:
                         const char *node_name,
                         const LbMonitorConfig &_config,
                         SocketAddress _address,
-                        const LbMonitorClass &_class);
+                        const LbMonitorClass &_class) noexcept;
 
-    ~LbMonitorController();
+    ~LbMonitorController() noexcept;
 
     LbMonitorController(const LbMonitorController &) = delete;
     LbMonitorController &operator=(const LbMonitorController &) = delete;
@@ -92,13 +92,13 @@ public:
         return --ref == 0;
     }
 
-    const SocketAddress GetAddress() const {
+    const SocketAddress GetAddress() const noexcept {
         return address;
     }
 
 private:
-    void IntervalCallback();
-    void TimeoutCallback();
+    void IntervalCallback() noexcept;
+    void TimeoutCallback() noexcept;
 
     /* virtual methods from class LbMonitorHandler */
     virtual void Success() override;
