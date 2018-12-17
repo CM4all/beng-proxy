@@ -57,7 +57,7 @@ class TrafoFrameworkHandler {
     TrafoConnection *connection;
 
 protected:
-    void SendResponse(TrafoResponse &&response) {
+    void SendResponse(TrafoResponse &&response) noexcept {
         connection->SendResponse(std::move(response));
         delete this;
     }
@@ -74,7 +74,7 @@ class TrafoFramework final : TrafoHandler {
     TrafoServer server;
 
 public:
-    TrafoFramework()
+    TrafoFramework() noexcept
         :shutdown_listener(event_loop, BIND_THIS_METHOD(OnQuitSignal)),
          server(event_loop, *this) {
         SetupProcess();
@@ -82,7 +82,7 @@ public:
         shutdown_listener.Enable();
     }
 
-    ~TrafoFramework() {
+    ~TrafoFramework() noexcept {
         shutdown_listener.Disable();
     }
 
@@ -91,7 +91,7 @@ public:
 private:
     void Setup();
 
-    void OnQuitSignal() {
+    void OnQuitSignal() noexcept {
         cerr << "quit" << endl;
         event_loop.Break();
     }
