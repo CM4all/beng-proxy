@@ -81,15 +81,15 @@ struct SpawnIstream final : Istream, IstreamHandler, ExitListener {
                  struct pool &p,
                  UnusedIstreamPtr _input, UniqueFileDescriptor _input_fd,
                  UniqueFileDescriptor _output_fd,
-                 pid_t _pid);
+                 pid_t _pid) noexcept;
 
-    bool CheckDirect() const {
+    bool CheckDirect() const noexcept {
         return Istream::CheckDirect(FdType::FD_PIPE);
     }
 
-    void Cancel();
+    void Cancel() noexcept;
 
-    void FreeBuffer() {
+    void FreeBuffer() noexcept {
         buffer.FreeIfDefined();
     }
 
@@ -99,17 +99,17 @@ struct SpawnIstream final : Istream, IstreamHandler, ExitListener {
      *
      * @return true if the caller shall read more data from the pipe
      */
-    bool SendFromBuffer();
+    bool SendFromBuffer() noexcept;
 
-    void ReadFromOutput();
+    void ReadFromOutput() noexcept;
 
-    void InputEventCallback(unsigned) {
+    void InputEventCallback(unsigned) noexcept {
         input_event.Cancel(); // TODO: take advantage of EV_PERSIST
 
         input.Read();
     }
 
-    void OutputEventCallback(unsigned) {
+    void OutputEventCallback(unsigned) noexcept {
         output_event.Cancel(); // TODO: take advantage of EV_PERSIST
 
         ReadFromOutput();
@@ -132,7 +132,7 @@ struct SpawnIstream final : Istream, IstreamHandler, ExitListener {
 };
 
 void
-SpawnIstream::Cancel()
+SpawnIstream::Cancel() noexcept
 {
     assert(output_fd.IsDefined());
 
@@ -155,7 +155,7 @@ SpawnIstream::Cancel()
 }
 
 inline bool
-SpawnIstream::SendFromBuffer()
+SpawnIstream::SendFromBuffer() noexcept
 {
     assert(buffer.IsDefined());
 
@@ -263,7 +263,7 @@ SpawnIstream::OnError(std::exception_ptr ep) noexcept
  */
 
 void
-SpawnIstream::ReadFromOutput()
+SpawnIstream::ReadFromOutput() noexcept
 {
     assert(output_fd.IsDefined());
 
@@ -390,7 +390,7 @@ SpawnIstream::SpawnIstream(SpawnService &_spawn_service, EventLoop &event_loop,
                            UnusedIstreamPtr _input,
                            UniqueFileDescriptor _input_fd,
                            UniqueFileDescriptor _output_fd,
-                           pid_t _pid)
+                           pid_t _pid) noexcept
     :Istream(p),
      logger("spawn"),
      spawn_service(_spawn_service),
