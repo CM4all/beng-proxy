@@ -151,13 +151,13 @@ struct FcgiConnection final : StockItem {
      */
     bool aborted = false;
 
-    explicit FcgiConnection(EventLoop &event_loop, CreateStockItem c)
+    explicit FcgiConnection(EventLoop &event_loop, CreateStockItem c) noexcept
         :StockItem(c), logger(GetStockName()),
          event(event_loop, BIND_THIS_METHOD(OnSocketEvent)),
          idle_timeout_event(c.stock.GetEventLoop(),
                             BIND_THIS_METHOD(OnIdleTimeout)) {}
 
-    ~FcgiConnection() override;
+    ~FcgiConnection() noexcept override;
 
     gcc_pure
     const char *GetTag() const {
@@ -179,7 +179,7 @@ struct FcgiConnection final : StockItem {
     bool Release() noexcept override;
 
 private:
-    void OnSocketEvent(unsigned events);
+    void OnSocketEvent(unsigned events) noexcept;
     void OnIdleTimeout() noexcept;
 };
 
@@ -212,7 +212,7 @@ FcgiChildParams::GetStockKey(struct pool &pool) const
  */
 
 void
-FcgiConnection::OnSocketEvent(unsigned)
+FcgiConnection::OnSocketEvent(unsigned) noexcept
 {
     char buffer;
     ssize_t nbytes = fd.Read(&buffer, sizeof(buffer));
@@ -353,7 +353,7 @@ FcgiConnection::Release() noexcept
     return true;
 }
 
-FcgiConnection::~FcgiConnection()
+FcgiConnection::~FcgiConnection() noexcept
 {
     if (fd.IsDefined()) {
         event.Cancel();
