@@ -45,7 +45,7 @@
 
 static constexpr Event::Duration COMPRESS_INTERVAL = std::chrono::minutes(10);
 
-LbInstance::LbInstance(const LbConfig &_config)
+LbInstance::LbInstance(const LbConfig &_config) noexcept
     :config(_config),
      monitors(event_loop, failure_manager),
      avahi_client(event_loop, "beng-lb"),
@@ -56,7 +56,7 @@ LbInstance::LbInstance(const LbConfig &_config)
 {
 }
 
-LbInstance::~LbInstance()
+LbInstance::~LbInstance() noexcept
 {
     assert(tcp_connections.empty());
     assert(http_connections.empty());
@@ -74,7 +74,7 @@ LbInstance::InitWorker()
 }
 
 void
-LbInstance::Compress()
+LbInstance::Compress() noexcept
 {
     fb_pool_compress();
 
@@ -107,14 +107,14 @@ LbInstance::ConnectCertCaches()
 }
 
 void
-LbInstance::DisconnectCertCaches()
+LbInstance::DisconnectCertCaches() noexcept
 {
     for (auto &i : cert_dbs)
         i.second.Disconnect();
 }
 
 void
-LbInstance::OnCompressTimer()
+LbInstance::OnCompressTimer() noexcept
 {
     Compress();
 

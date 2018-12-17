@@ -80,8 +80,7 @@ class DelegateProcess final : public StockItem {
     TimerEvent idle_timeout_event;
 
 public:
-    explicit DelegateProcess(CreateStockItem c,
-                             UniqueSocketDescriptor &&_fd) noexcept
+    explicit DelegateProcess(CreateStockItem c, UniqueSocketDescriptor &&_fd)
         :StockItem(c),
          logger(c.GetStockName()),
          fd(std::move(_fd)),
@@ -110,7 +109,7 @@ public:
     }
 
 private:
-    void SocketEventCallback(unsigned events) noexcept;
+    void SocketEventCallback(unsigned events);
     void OnIdleTimeout() noexcept;
 };
 
@@ -139,7 +138,7 @@ private:
  */
 
 inline void
-DelegateProcess::SocketEventCallback(unsigned)
+DelegateProcess::SocketEventCallback(unsigned) noexcept
 {
     char buffer;
     ssize_t nbytes = recv(fd.Get(), &buffer, sizeof(buffer), MSG_DONTWAIT);

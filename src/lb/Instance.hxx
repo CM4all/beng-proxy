@@ -107,8 +107,8 @@ struct LbInstance final : PInstance {
 
     Stock *pipe_stock;
 
-    explicit LbInstance(const LbConfig &_config);
-    ~LbInstance();
+    explicit LbInstance(const LbConfig &_config) noexcept;
+    ~LbInstance() noexcept;
 
     /**
      * Transition the current process from "master" to "worker".  Call
@@ -117,11 +117,11 @@ struct LbInstance final : PInstance {
     void InitWorker();
 
     void InitAllListeners();
-    void DeinitAllListeners();
+    void DeinitAllListeners() noexcept;
 
     void InitAllControls();
-    void EnableAllControls();
-    void DeinitAllControls();
+    void EnableAllControls() noexcept;
+    void DeinitAllControls() noexcept;
 
     gcc_pure
     BengProxy::ControlStats GetStats() const noexcept;
@@ -130,28 +130,28 @@ struct LbInstance final : PInstance {
      * Compress memory allocators, try to return unused memory areas
      * to the kernel.
      */
-    void Compress();
+    void Compress() noexcept;
 
     CertCache &GetCertCache(const LbCertDatabaseConfig &cert_db_config);
     void ConnectCertCaches();
-    void DisconnectCertCaches();
+    void DisconnectCertCaches() noexcept;
 
-    void FlushTranslationCaches() {
+    void FlushTranslationCaches() noexcept {
         goto_map.FlushCaches();
     }
 
-    void InvalidateTranslationCaches(const TranslationInvalidateRequest &request) {
+    void InvalidateTranslationCaches(const TranslationInvalidateRequest &request) noexcept {
         goto_map.InvalidateTranslationCaches(request);
     }
 
-    unsigned FlushSSLSessionCache(long tm);
+    unsigned FlushSSLSessionCache(long tm) noexcept;
 
-    void ShutdownCallback();
+    void ShutdownCallback() noexcept;
 
-    void ReloadEventCallback(int signo);
+    void ReloadEventCallback(int signo) noexcept;
 
 private:
-    void OnCompressTimer();
+    void OnCompressTimer() noexcept;
 };
 
 struct client_connection;

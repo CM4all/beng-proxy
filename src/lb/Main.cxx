@@ -84,7 +84,7 @@ static constexpr cap_value_t cap_keep_list[1] = {
 };
 
 void
-LbInstance::ShutdownCallback()
+LbInstance::ShutdownCallback() noexcept
 {
     if (should_exit)
         return;
@@ -129,7 +129,7 @@ LbInstance::ShutdownCallback()
 }
 
 void
-LbInstance::ReloadEventCallback(int)
+LbInstance::ReloadEventCallback(int) noexcept
 {
     unsigned n_ssl_sessions = FlushSSLSessionCache(LONG_MAX);
     logger(3, "flushed ", n_ssl_sessions, " SSL sessions");

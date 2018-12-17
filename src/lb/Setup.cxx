@@ -47,13 +47,13 @@ LbInstance::InitAllListeners()
 }
 
 void
-LbInstance::DeinitAllListeners()
+LbInstance::DeinitAllListeners() noexcept
 {
     listeners.clear();
 }
 
 unsigned
-LbInstance::FlushSSLSessionCache(long tm)
+LbInstance::FlushSSLSessionCache(long tm) noexcept
 {
     unsigned n = 0;
     for (auto &listener : listeners)
@@ -76,13 +76,13 @@ LbInstance::InitAllControls()
 }
 
 void
-LbInstance::DeinitAllControls()
+LbInstance::DeinitAllControls() noexcept
 {
     controls.clear();
 }
 
 void
-LbInstance::EnableAllControls()
+LbInstance::EnableAllControls() noexcept
 {
     for (auto &control : controls)
         control.Enable();
