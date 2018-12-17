@@ -90,10 +90,10 @@ struct FilterCacheInfo {
     /** the final resource id */
     const char *key;
 
-    FilterCacheInfo(const char *_key)
+    FilterCacheInfo(const char *_key) noexcept
         :expires(std::chrono::system_clock::from_time_t(-1)), key(_key) {}
 
-    FilterCacheInfo(struct pool &pool, const FilterCacheInfo &src)
+    FilterCacheInfo(struct pool &pool, const FilterCacheInfo &src) noexcept
         :expires(src.expires),
          key(p_strdup(&pool, src.key)) {}
 
@@ -117,7 +117,7 @@ struct FilterCacheItem final : PoolHolder, CacheItem, LeakDetector {
                     const FilterCacheInfo &_info,
                     http_status_t _status, const StringMap &_headers,
                     size_t _size, RubberAllocation &&_body,
-                    std::chrono::system_clock::time_point _expires)
+                    std::chrono::system_clock::time_point _expires) noexcept
         :PoolHolder(std::move(_pool)),
          CacheItem(now, _expires, pool_netto_size(pool) + _size),
          info(pool, _info),
@@ -173,7 +173,7 @@ public:
     FilterCacheRequest(PoolPtr &&_pool, struct pool &_caller_pool,
                        FilterCache &_cache,
                        HttpResponseHandler &_handler,
-                       const FilterCacheInfo &_info);
+                       const FilterCacheInfo &_info) noexcept;
 
     void Start(ResourceLoader &resource_loader,
                const ResourceAddress &address,
@@ -200,7 +200,7 @@ public:
     void CancelStore() noexcept;
 
 private:
-    void OnTimeout();
+    void OnTimeout() noexcept;
 
     /* virtual methods from class Cancellable */
     void Cancel() noexcept override;
@@ -290,12 +290,12 @@ private:
              struct pool &caller_pool,
              HttpResponseHandler &handler);
 
-    void Compress() {
+    void Compress() noexcept {
         rubber.Compress();
         slice_pool.Compress();
     }
 
-    void OnCompressTimer() {
+    void OnCompressTimer() noexcept {
         Compress();
         compress_timer.Add(fcache_compress_interval);
     }
@@ -305,7 +305,7 @@ FilterCacheRequest::FilterCacheRequest(PoolPtr &&_pool,
                                        struct pool &_caller_pool,
                                        FilterCache &_cache,
                                        HttpResponseHandler &_handler,
-                                       const FilterCacheInfo &_info)
+                                       const FilterCacheInfo &_info) noexcept
     :PoolHolder(std::move(_pool)), caller_pool(_caller_pool),
      cache(_cache),
      handler(_handler),
@@ -431,7 +431,7 @@ filter_cache_response_evaluate(FilterCacheInfo &info,
 }
 
 inline void
-FilterCacheRequest::OnTimeout()
+FilterCacheRequest::OnTimeout() noexcept
 {
     /* reading the response has taken too long already; don't store
        this resource */
