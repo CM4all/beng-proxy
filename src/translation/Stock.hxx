@@ -46,15 +46,16 @@ struct TranslateRequest;
 class CancellablePointer;
 
 TranslateStock *
-tstock_new(EventLoop &event_loop, SocketAddress address, unsigned limit);
+tstock_new(EventLoop &event_loop, SocketAddress address,
+           unsigned limit) noexcept;
 
 void
-tstock_free(TranslateStock *stock);
+tstock_free(TranslateStock *stock) noexcept;
 
 void
 tstock_translate(TranslateStock &stock, struct pool &pool,
                  const TranslateRequest &request,
                  const TranslateHandler &handler, void *ctx,
-                 CancellablePointer &cancel_ptr);
+                 CancellablePointer &cancel_ptr) noexcept;
 
 #endif

@@ -57,12 +57,12 @@ class TranslateConnection final : public StockItem {
     SocketEvent event;
 
 public:
-    explicit TranslateConnection(CreateStockItem c)
+    explicit TranslateConnection(CreateStockItem c) noexcept
         :StockItem(c),
          event(c.stock.GetEventLoop(), BIND_THIS_METHOD(EventCallback)) {}
 
 private:
-    bool CreateAndConnect(SocketAddress address) {
+    bool CreateAndConnect(SocketAddress address) noexcept {
         assert(!s.IsDefined());
 
         return s.CreateNonBlock(AF_LOCAL, SOCK_STREAM, 0) &&
@@ -70,7 +70,7 @@ private:
     }
 
 public:
-    void CreateAndConnectAndFinish(SocketAddress address) {
+    void CreateAndConnectAndFinish(SocketAddress address) noexcept {
         if (CreateAndConnect(address)) {
             event.Open(s);
             InvokeCreateSuccess();
@@ -84,12 +84,12 @@ public:
         }
     }
 
-    SocketDescriptor GetSocket() {
+    SocketDescriptor GetSocket() noexcept {
         return s;
     }
 
 private:
-    void EventCallback(unsigned) {
+    void EventCallback(unsigned) noexcept {
         char buffer;
         ssize_t nbytes = recv(s.Get(), &buffer, sizeof(buffer), MSG_DONTWAIT);
         if (nbytes < 0)
@@ -123,21 +123,21 @@ class TranslateStock final : StockClass {
 
 public:
     TranslateStock(EventLoop &event_loop, SocketAddress _address,
-                   unsigned limit)
+                   unsigned limit) noexcept
         :stock(event_loop, *this, "translation", limit, 8),
          address(_address) {
     }
 
-    EventLoop &GetEventLoop() {
+    EventLoop &GetEventLoop() noexcept {
         return stock.GetEventLoop();
     }
 
     void Get(struct pool &pool, StockGetHandler &handler,
-             CancellablePointer &cancel_ptr) {
+             CancellablePointer &cancel_ptr) noexcept {
         stock.Get(pool, nullptr, handler, cancel_ptr);
     }
 
-    void Put(StockItem &item, bool destroy) {
+    void Put(StockItem &item, bool destroy) noexcept {
         stock.Put(item, destroy);
     }
 
@@ -170,7 +170,7 @@ public:
     TranslateStockRequest(TranslateStock &_stock, struct pool &_pool,
                           const TranslateRequest &_request,
                           const TranslateHandler &_handler, void *_ctx,
-                          CancellablePointer &_cancel_ptr)
+                          CancellablePointer &_cancel_ptr) noexcept
         :PoolLeakDetector(_pool),
          pool(_pool), stock(_stock),
          request(_request),
@@ -247,13 +247,14 @@ TranslateStockRequest::OnStockItemError(std::exception_ptr ep) noexcept
  */
 
 TranslateStock *
-tstock_new(EventLoop &event_loop, SocketAddress address, unsigned limit)
+tstock_new(EventLoop &event_loop, SocketAddress address,
+           unsigned limit) noexcept
 {
     return new TranslateStock(event_loop, address, limit);
 }
 
 void
-tstock_free(TranslateStock *stock)
+tstock_free(TranslateStock *stock) noexcept
 {
     delete stock;
 }
@@ -262,7 +263,7 @@ void
 tstock_translate(TranslateStock &stock, struct pool &pool,
                  const TranslateRequest &request,
                  const TranslateHandler &handler, void *ctx,
-                 CancellablePointer &cancel_ptr)
+                 CancellablePointer &cancel_ptr) noexcept
 {
     auto r = NewFromPool<TranslateStockRequest>(pool, stock, pool, request,
                                                 handler, ctx, cancel_ptr);

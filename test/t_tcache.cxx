@@ -71,7 +71,7 @@ void
 tstock_translate(gcc_unused TranslateStock &stock, struct pool &pool,
                  gcc_unused const TranslateRequest &request,
                  const TranslateHandler &handler, void *ctx,
-                 gcc_unused CancellablePointer &cancel_ptr)
+                 gcc_unused CancellablePointer &cancel_ptr) noexcept
 {
     if (next_response != nullptr) {
         auto response = NewFromPool<MakeResponse>(pool, pool, *next_response);

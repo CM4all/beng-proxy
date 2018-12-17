@@ -76,7 +76,7 @@ void
 tstock_translate(gcc_unused TranslateStock &stock, struct pool &pool,
                  const TranslateRequest &request,
                  const TranslateHandler &handler, void *ctx,
-                 CancellablePointer &cancel_ptr)
+                 CancellablePointer &cancel_ptr) noexcept
 {
     assert(request.remote_host == NULL);
     assert(request.host == NULL);
