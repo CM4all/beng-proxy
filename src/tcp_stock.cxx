@@ -85,7 +85,7 @@ struct TcpStockConnection final
     TimerEvent idle_timeout_event;
 
     TcpStockConnection(CreateStockItem c, SocketAddress _address,
-                       CancellablePointer &_cancel_ptr)
+                       CancellablePointer &_cancel_ptr) noexcept
         :StockItem(c),
          logger(c.stock),
          address(_address),
@@ -98,10 +98,10 @@ struct TcpStockConnection final
         cancel_ptr = nullptr;
     }
 
-    ~TcpStockConnection() override;
+    ~TcpStockConnection() noexcept override;
 
 private:
-    void EventCallback(unsigned events);
+    void EventCallback(unsigned events) noexcept;
     void OnIdleTimeout() noexcept;
 
     /* virtual methods from class Cancellable */
@@ -137,7 +137,7 @@ private:
  */
 
 inline void
-TcpStockConnection::EventCallback(unsigned)
+TcpStockConnection::EventCallback(unsigned) noexcept
 {
     char buffer;
     ssize_t nbytes;
@@ -212,7 +212,7 @@ TcpStock::Create(CreateStockItem c,
                       connection->cancel_ptr);
 }
 
-TcpStockConnection::~TcpStockConnection()
+TcpStockConnection::~TcpStockConnection() noexcept
 {
     if (cancel_ptr)
         cancel_ptr.Cancel();
