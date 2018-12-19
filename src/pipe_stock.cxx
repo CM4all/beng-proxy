@@ -94,8 +94,7 @@ PipeStockItem::Release() noexcept
 Stock *
 pipe_stock_new(EventLoop &event_loop)
 {
-    auto *stock = new PipeStock(event_loop);
-    return &stock->GetStock();
+    return new PipeStock(event_loop);
 }
 
 void

@@ -41,16 +41,10 @@ class FileDescriptor;
 /**
  * Anonymous pipe pooling, to speed to istream_pipe.
  */
-class PipeStock final : StockClass {
-    Stock stock;
-
+class PipeStock final : public Stock, StockClass {
 public:
     explicit PipeStock(EventLoop &event_loop)
-        :stock(event_loop, *this, "pipe", 0, 64) {}
-
-    Stock &GetStock() {
-        return stock;
-    }
+        :Stock(event_loop, *this, "pipe", 0, 64) {}
 
 private:
     /* virtual methods from class StockClass */
