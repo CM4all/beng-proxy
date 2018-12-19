@@ -86,7 +86,7 @@ class BufferedIstream final : PoolHolder, IstreamSink, Cancellable {
 
 public:
     BufferedIstream(struct pool &_p, EventLoop &_event_loop,
-                    Stock *_pipe_stock,
+                    PipeStock *_pipe_stock,
                     BufferedIstreamHandler &_handler,
                     UnusedIstreamPtr &&_input,
                     CancellablePointer &cancel_ptr) noexcept
@@ -259,7 +259,7 @@ BufferedIstream::OnError(std::exception_ptr e) noexcept
 
 void
 NewBufferedIstream(struct pool &pool, EventLoop &event_loop,
-                   Stock *pipe_stock,
+                   PipeStock *pipe_stock,
                    BufferedIstreamHandler &handler,
                    UnusedIstreamPtr i,
                    CancellablePointer &cancel_ptr) noexcept

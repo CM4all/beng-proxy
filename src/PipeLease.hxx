@@ -36,17 +36,17 @@
 
 #include <utility>
 
-class Stock;
+class PipeStock;
 struct StockItem;
 
 class PipeLease {
-    Stock *stock;
+    PipeStock *stock;
     StockItem *item = nullptr;
     FileDescriptor read_fd = FileDescriptor::Undefined();
     FileDescriptor write_fd = FileDescriptor::Undefined();
 
 public:
-    explicit PipeLease(Stock *_stock) noexcept
+    explicit PipeLease(PipeStock *_stock) noexcept
         :stock(_stock) {}
 
     PipeLease(PipeLease &&src) noexcept

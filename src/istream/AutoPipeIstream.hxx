@@ -34,11 +34,11 @@
 
 struct pool;
 class UnusedIstreamPtr;
-class Stock;
+class PipeStock;
 
 /**
  * Convert any file descriptor to a pipe by splicing.
  */
 UnusedIstreamPtr
 NewAutoPipeIstream(struct pool *pool, UnusedIstreamPtr input,
-                   Stock *pipe_stock) noexcept;
+                   PipeStock *pipe_stock) noexcept;

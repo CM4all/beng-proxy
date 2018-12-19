@@ -146,12 +146,12 @@ suffix_registry_lookup(gcc_unused struct pool &pool,
 
 struct tcache *global_translate_cache;
 
-class Stock;
-Stock *global_pipe_stock;
+class PipeStock;
+PipeStock *global_pipe_stock;
 
 UnusedIstreamPtr
 NewAutoPipeIstream(gcc_unused struct pool *pool, UnusedIstreamPtr input,
-                   gcc_unused Stock *pipe_stock) noexcept
+                   gcc_unused PipeStock *pipe_stock) noexcept
 {
     return input;
 }

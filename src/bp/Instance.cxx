@@ -151,10 +151,7 @@ BpInstance::FreeStocksAndCaches() noexcept
         nfs_stock = nullptr;
     }
 
-    if (pipe_stock != nullptr) {
-        pipe_stock_free(pipe_stock);
-        pipe_stock = nullptr;
-    }
+    delete std::exchange(pipe_stock, nullptr);
 }
 
 void

@@ -51,7 +51,7 @@ class AutoPipeIstream final : public ForwardIstream {
 
 public:
     AutoPipeIstream(struct pool &p, UnusedIstreamPtr _input,
-                    Stock *_pipe_stock) noexcept
+                    PipeStock *_pipe_stock) noexcept
         :ForwardIstream(p, std::move(_input)),
          pipe(_pipe_stock) {}
 
@@ -319,7 +319,7 @@ AutoPipeIstream::_Close() noexcept
 
 UnusedIstreamPtr
 NewAutoPipeIstream(struct pool *pool, UnusedIstreamPtr input,
-                   Stock *pipe_stock) noexcept
+                   PipeStock *pipe_stock) noexcept
 {
     return NewIstreamPtr<AutoPipeIstream>(*pool, std::move(input), pipe_stock);
 }

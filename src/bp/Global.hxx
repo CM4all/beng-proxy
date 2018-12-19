@@ -36,8 +36,8 @@
 
 #pragma once
 
-class Stock;
+class PipeStock;
 
 extern struct tcache *global_translate_cache;
 
-extern Stock *global_pipe_stock;
+extern PipeStock *global_pipe_stock;

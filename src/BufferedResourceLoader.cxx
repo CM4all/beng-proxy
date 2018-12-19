@@ -76,7 +76,7 @@ public:
         _cancel_ptr = *this;
     }
 
-    void Start(EventLoop &_event_loop, Stock *_pipe_stock,
+    void Start(EventLoop &_event_loop, PipeStock *_pipe_stock,
                UnusedIstreamPtr &&body) noexcept {
         NewBufferedIstream(pool, _event_loop, _pipe_stock,
                            *this, std::move(body),

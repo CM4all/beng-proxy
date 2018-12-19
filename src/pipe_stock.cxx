@@ -91,19 +91,6 @@ PipeStockItem::Release() noexcept
  *
  */
 
-Stock *
-pipe_stock_new(EventLoop &event_loop)
-{
-    return new PipeStock(event_loop);
-}
-
-void
-pipe_stock_free(Stock *_stock)
-{
-    auto *stock = (PipeStock *)&_stock->GetClass();
-    delete stock;
-}
-
 void
 pipe_stock_item_get(StockItem *_item, FileDescriptor fds[2])
 {

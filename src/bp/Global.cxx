@@ -34,4 +34,4 @@
 
 struct tcache *global_translate_cache;
 
-Stock *global_pipe_stock;
+PipeStock *global_pipe_stock;

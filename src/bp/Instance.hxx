@@ -52,6 +52,7 @@
 
 class AccessLogGlue;
 class Stock;
+class PipeStock;
 class ResourceLoader;
 class StockMap;
 class TcpStock;
@@ -160,7 +161,7 @@ struct BpInstance final : PInstance, ControlHandler {
     NfsStock *nfs_stock = nullptr;
     NfsCache *nfs_cache = nullptr;
 
-    Stock *pipe_stock = nullptr;
+    PipeStock *pipe_stock = nullptr;
 
     ResourceLoader *direct_resource_loader = nullptr;
     ResourceLoader *cached_resource_loader = nullptr;

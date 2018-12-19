@@ -122,8 +122,7 @@ LbInstance::ShutdownCallback() noexcept
 
     delete std::exchange(balancer, nullptr);
 
-    if (pipe_stock != nullptr)
-        pipe_stock_free(pipe_stock);
+    delete std::exchange(pipe_stock, nullptr);
 
     pool_commit();
 }
@@ -200,7 +199,7 @@ try {
     instance.fs_balancer = new FilteredSocketBalancer(*instance.fs_stock,
                                                       instance.failure_manager);
 
-    instance.pipe_stock = pipe_stock_new(instance.event_loop);
+    instance.pipe_stock = new PipeStock(instance.event_loop);
 
     bulldog_init(cmdline.bulldog_path);
 

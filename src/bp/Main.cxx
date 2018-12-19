@@ -415,7 +415,7 @@ try {
     } else
         instance.cached_resource_loader = instance.direct_resource_loader;
 
-    instance.pipe_stock = pipe_stock_new(instance.event_loop);
+    instance.pipe_stock = new PipeStock(instance.event_loop);
 
     if (instance.config.filter_cache_size > 0) {
         instance.filter_cache = filter_cache_new(instance.root_pool,

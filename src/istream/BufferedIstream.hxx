@@ -36,7 +36,7 @@
 
 struct pool;
 class EventLoop;
-class Stock;
+class PipeStock;
 class CancellablePointer;
 class UnusedIstreamPtr;
 
@@ -62,7 +62,7 @@ public:
  */
 void
 NewBufferedIstream(struct pool &pool, EventLoop &event_loop,
-                   Stock *pipe_stock,
+                   PipeStock *pipe_stock,
                    BufferedIstreamHandler &handler,
                    UnusedIstreamPtr i,
                    CancellablePointer &cancel_ptr) noexcept;

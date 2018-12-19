@@ -35,7 +35,7 @@
 #include "ResourceLoader.hxx"
 
 class EventLoop;
-class Stock;
+class PipeStock;
 
 /**
  * A #ResourceLoader implementation which uses #BufferedIstream to
@@ -45,14 +45,14 @@ class BufferedResourceLoader final : public ResourceLoader {
     EventLoop &event_loop;
     ResourceLoader &next;
 
-    Stock *const pipe_stock;
+    PipeStock *const pipe_stock;
 
     class Request;
 
 public:
     BufferedResourceLoader(EventLoop &_event_loop,
                            ResourceLoader &_next,
-                           Stock *_pipe_stock) noexcept
+                           PipeStock *_pipe_stock) noexcept
         :event_loop(_event_loop), next(_next), pipe_stock(_pipe_stock) {}
 
     /* virtual methods from class ResourceLoader */
