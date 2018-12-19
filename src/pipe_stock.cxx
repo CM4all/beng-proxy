@@ -96,18 +96,12 @@ PipeStock::Create(CreateStockItem c,
 bool
 PipeStockItem::Borrow()
 {
-    assert(fds[0].IsValid());
-    assert(fds[1].IsValid());
-
     return true;
 }
 
 bool
 PipeStockItem::Release()
 {
-    assert(fds[0].IsValid());
-    assert(fds[1].IsValid());
-
     return true;
 }
 
