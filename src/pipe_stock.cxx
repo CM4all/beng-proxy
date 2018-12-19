@@ -31,8 +31,6 @@
  */
 
 #include "pipe_stock.hxx"
-#include "stock/Stock.hxx"
-#include "stock/Class.hxx"
 #include "stock/Item.hxx"
 #include "system/Error.hxx"
 #include "io/UniqueFileDescriptor.hxx"
@@ -51,23 +49,6 @@ struct PipeStockItem final : StockItem {
     /* virtual methods from class StockItem */
     bool Borrow() noexcept override;
     bool Release() noexcept override;
-};
-
-class PipeStock final : StockClass {
-    Stock stock;
-
-public:
-    explicit PipeStock(EventLoop &event_loop)
-        :stock(event_loop, *this, "pipe", 0, 64) {}
-
-    Stock &GetStock() {
-        return stock;
-    }
-
-private:
-    /* virtual methods from class StockClass */
-    void Create(CreateStockItem c, void *info, struct pool &caller_pool,
-                CancellablePointer &cancel_ptr) override;
 };
 
 /*
