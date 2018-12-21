@@ -183,6 +183,8 @@ Context::ShutdownCallback()
         aborted = true;
         cancel_ptr.Cancel();
     }
+
+    shutdown_listener.Disable();
 }
 
 /*
@@ -266,6 +268,8 @@ Context::OnHttpError(std::exception_ptr ep) noexcept
     PrintException(ep);
 
     aborted = true;
+
+    shutdown_listener.Disable();
 }
 
 
