@@ -135,7 +135,7 @@ struct Context final
     bool idle, reuse, aborted, got_response = false;
     http_status_t status;
 
-    SinkFd *body;
+    SinkFd *body = nullptr;
     bool body_eof, body_abort, body_closed;
 
     Context()
