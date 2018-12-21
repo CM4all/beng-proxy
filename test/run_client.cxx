@@ -131,7 +131,7 @@ struct Context final
     http_status_t status;
 
     SinkFd *body = nullptr;
-    bool body_eof, body_abort, body_closed;
+    bool body_eof, body_abort;
 
     Context()
         :shutdown_listener(event_loop, BIND_THIS_METHOD(ShutdownCallback)),
