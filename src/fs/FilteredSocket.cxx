@@ -130,7 +130,7 @@ FilteredSocket::Init(SocketDescriptor fd, FdType fd_type,
 }
 
 void
-FilteredSocket::Init(SocketDescriptor fd, FdType fd_type) noexcept
+FilteredSocket::InitDummy(SocketDescriptor fd, FdType fd_type) noexcept
 {
     assert(!filter);
 
