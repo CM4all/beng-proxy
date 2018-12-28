@@ -284,7 +284,7 @@ try {
 
     switch (url.protocol) {
     case parsed_url::HTTP:
-        fs.Init(fd.Release(), FdType::FD_TCP);
+        fs.InitDummy(fd.Release(), FdType::FD_TCP);
 
         http_client_request(*pool, fs,
                             *this,
@@ -297,7 +297,7 @@ try {
         break;
 
     case parsed_url::HTTPS:
-        fs.Init(fd.Release(), FdType::FD_TCP);
+        fs.InitDummy(fd.Release(), FdType::FD_TCP);
 
         http_client_request(*pool, fs,
                             *this,

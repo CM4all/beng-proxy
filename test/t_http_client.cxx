@@ -57,7 +57,7 @@ struct Connection {
 
     Connection(EventLoop &_event_loop, pid_t _pid, SocketDescriptor fd)
         :event_loop(_event_loop), pid(_pid), socket(_event_loop) {
-        socket.Init(fd, FdType::FD_SOCKET);
+        socket.InitDummy(fd, FdType::FD_SOCKET);
     }
 
     static Connection *New(EventLoop &event_loop,
