@@ -167,6 +167,8 @@ private:
         return input.front().IsEmpty();
     }
 
+    bool ReadReleased() noexcept;
+
     /* virtual methods from class BufferedSocketHandler */
     BufferedResult OnBufferedData() override;
     DirectResult OnBufferedDirect(SocketDescriptor fd,
