@@ -80,7 +80,8 @@ struct FilteredSocket final : private BufferedSocketHandler {
      * be used to schedule events (because there is no handler); the
      * next Reinit() call finishes initialization.
      */
-    void InitDummy(SocketDescriptor _fd, FdType _fd_type) noexcept;
+    void InitDummy(SocketDescriptor _fd, FdType _fd_type,
+                   SocketFilterPtr _filter={}) noexcept;
 
     void Reinit(const struct timeval *read_timeout,
                 const struct timeval *write_timeout,
