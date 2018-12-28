@@ -128,10 +128,7 @@ FilteredSocketLease::Consumed(size_t nbytes) noexcept
 bool
 FilteredSocketLease::ReadReleased() noexcept
 {
-    while (true) {
-        if (IsReleasedEmpty())
-            return true;
-
+    while (!IsReleasedEmpty()) {
         switch (handler.OnBufferedData()) {
         case BufferedResult::OK:
             if (IsReleasedEmpty() && !handler.OnBufferedEnd())
@@ -151,6 +148,8 @@ FilteredSocketLease::ReadReleased() noexcept
             return false;
         }
     }
+
+    return true;
 }
 
 bool
