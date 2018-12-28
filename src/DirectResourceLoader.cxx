@@ -55,7 +55,7 @@
 #include "strmap.hxx"
 #include "istream/istream.hxx"
 #include "istream/UnusedPtr.hxx"
-#include "ssl/Client.hxx"
+#include "ssl/SslSocketFilterFactory.hxx"
 #include "pool/pool.hxx"
 #include "AllocatorPtr.hxx"
 #include "system/Error.hxx"
@@ -66,25 +66,6 @@
 
 #include <string.h>
 #include <stdlib.h>
-
-class SslSocketFilterFactory final : public SocketFilterFactory {
-    EventLoop &event_loop;
-    const char *const host;
-    const char *const certificate;
-
-public:
-    SslSocketFilterFactory(EventLoop &_event_loop,
-                           const char *_host, const char *_certificate)
-        :event_loop(_event_loop), host(_host), certificate(_certificate) {}
-
-    const char *GetFilterId() const override {
-        return host;
-    }
-
-    SocketFilterPtr CreateFilter() override {
-        return ssl_client_create(event_loop, host, certificate);
-    }
-};
 
 gcc_pure
 static const char *
