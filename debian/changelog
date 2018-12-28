@@ -1,6 +1,6 @@
 cm4all-beng-proxy (15.2) unstable; urgency=low
 
-  * 
+  * pipe: remove excess fcntl() system calls in the debug build
 
  --   
 
