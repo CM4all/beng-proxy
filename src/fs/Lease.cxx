@@ -123,33 +123,39 @@ FilteredSocketLease::DisposeConsumed(size_t nbytes) noexcept
 }
 
 bool
+FilteredSocketLease::ReadReleased() noexcept
+{
+    while (true) {
+        if (IsReleasedEmpty())
+            return true;
+
+        switch (handler.OnBufferedData()) {
+        case BufferedResult::OK:
+            if (IsReleasedEmpty() && !handler.OnBufferedEnd())
+                return false;
+            break;
+
+        case BufferedResult::BLOCKING:
+            assert(!IsReleasedEmpty());
+            return true;
+
+        case BufferedResult::MORE:
+        case BufferedResult::AGAIN_OPTIONAL:
+        case BufferedResult::AGAIN_EXPECT:
+            break;
+
+        case BufferedResult::CLOSED:
+            return false;
+        }
+    }
+}
+
+bool
 FilteredSocketLease::Read(bool expect_more) noexcept
 {
-    if (IsReleased()) {
-        while (true) {
-            if (IsReleasedEmpty())
-                return true;
-
-            switch (handler.OnBufferedData()) {
-            case BufferedResult::OK:
-                if (IsReleasedEmpty() && !handler.OnBufferedEnd())
-                    return false;
-                break;
-
-            case BufferedResult::BLOCKING:
-                assert(!IsReleasedEmpty());
-                return true;
-
-            case BufferedResult::MORE:
-            case BufferedResult::AGAIN_OPTIONAL:
-            case BufferedResult::AGAIN_EXPECT:
-                break;
-
-            case BufferedResult::CLOSED:
-                return false;
-            }
-        }
-    } else
+    if (IsReleased())
+        return ReadReleased();
+    else
         return socket->Read(expect_more);
 }
 
