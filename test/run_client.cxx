@@ -51,6 +51,7 @@
 #include "ssl/Config.hxx"
 #include "system/SetupProcess.hxx"
 #include "io/FileDescriptor.hxx"
+#include "net/HostParser.hxx"
 #include "net/Resolver.hxx"
 #include "net/AddressInfo.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
@@ -113,6 +114,20 @@ parse_url(const char *url)
     dest.host = std::string(url, dest.uri);
 
     return dest;
+}
+
+gcc_pure
+static const char *
+GetHostWithoutPort(struct pool &pool, const struct parsed_url &url) noexcept
+{
+    if (url.host.empty())
+        return nullptr;
+
+    auto e = ExtractHost(url.host.c_str());
+    if (e.host.IsNull())
+        return nullptr;
+
+    return p_strdup(pool, e.host);
 }
 
 struct Context final
@@ -313,7 +328,10 @@ try {
         break;
 
     case parsed_url::HTTPS:
-        fs.InitDummy(fd.Release(), FdType::FD_TCP);
+        fs.InitDummy(fd.Release(), FdType::FD_TCP,
+                     ssl_client_create(event_loop,
+                                       GetHostWithoutPort(*pool, url),
+                                       nullptr));
 
         http_client_request(*pool, fs,
                             *this,
