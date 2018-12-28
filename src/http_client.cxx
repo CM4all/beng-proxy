@@ -146,6 +146,8 @@ struct HttpClient final : BufferedSocketHandler, IstreamHandler, Cancellable, De
 
     Stopwatch *const stopwatch;
 
+    EventLoop &event_loop;
+
     /* I/O */
     FilteredSocketLease socket;
 
@@ -727,7 +729,7 @@ HttpClient::HeadersFinished()
         chunked = true;
     }
 
-    response.body = response_body_reader.Init(socket.GetEventLoop(),
+    response.body = response_body_reader.Init(event_loop,
                                               content_length,
                                               chunked);
 
@@ -1254,6 +1256,7 @@ HttpClient::HttpClient(PoolPtr &&_caller_pool, struct pool &_pool,
     :caller_pool(std::move(_caller_pool)),
      peer_name(_peer_name),
      stopwatch(stopwatch_new(&_pool, peer_name, uri)),
+     event_loop(_socket.GetEventLoop()),
      socket(_socket, lease,
             Event::Duration(-1), http_client_timeout,
             *this),
