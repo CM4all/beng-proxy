@@ -163,6 +163,10 @@ public:
 private:
     void MoveInput() noexcept;
 
+    bool IsReleasedEmpty() const noexcept {
+        return input.front().IsEmpty();
+    }
+
     /* virtual methods from class BufferedSocketHandler */
     BufferedResult OnBufferedData() override;
     DirectResult OnBufferedDirect(SocketDescriptor fd,
