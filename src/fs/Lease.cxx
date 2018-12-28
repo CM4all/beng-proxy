@@ -127,8 +127,7 @@ FilteredSocketLease::Read(bool expect_more) noexcept
 {
     if (IsReleased()) {
         while (true) {
-            auto r = input.front().Read();
-            if (r.empty())
+            if (IsReleasedEmpty())
                 return true;
 
             switch (handler.OnBufferedData()) {
