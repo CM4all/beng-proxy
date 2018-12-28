@@ -59,10 +59,6 @@ public:
 
     ~FilteredSocketLease() noexcept;
 
-    EventLoop &GetEventLoop() noexcept {
-        return socket->GetEventLoop();
-    }
-
     gcc_pure
     bool IsConnected() const noexcept {
         return socket != nullptr && socket->IsConnected();

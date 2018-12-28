@@ -1,6 +1,7 @@
 cm4all-beng-proxy (14.20) unstable; urgency=low
 
   * pipe: remove excess fcntl() system calls in the debug build
+  * http_client: fix crash bug
 
  --   
 
