@@ -762,7 +762,8 @@ HttpClient::HeadersFinished()
                                                chunked);
 
     response.state = Response::State::BODY;
-    socket.SetDirect(CheckDirect());
+    if (!socket.IsReleased())
+        socket.SetDirect(CheckDirect());
     return true;
 }
 
