@@ -1052,8 +1052,11 @@ HttpClient::OnBufferedClosed() noexcept
     if (request.istream.IsDefined())
         request.istream.ClearAndClose();
 
-    /* can't reuse the socket, it was closed by the peer */
-    ReleaseSocket(false);
+    /* close the socket, but don't release it just yet; data may be
+       still in flight in a SocketFilter (e.g. SSL/TLS); we'll do that
+       in OnBufferedRemaining() which gets called after the
+       SocketFilter has completed */
+    socket.Close();
 
     return true;
 }
@@ -1061,6 +1064,15 @@ HttpClient::OnBufferedClosed() noexcept
 bool
 HttpClient::OnBufferedRemaining(size_t remaining) noexcept
 {
+    if (!socket.IsReleased())
+        /* by now, the SocketFilter has processed all incoming data,
+           and is available in the buffer; we can release the socket
+           lease, but keep the (decrypted) input buffer */
+        /* note: the socket can't be reused, because it was closed by
+           the peer; this method gets called only after
+           OnBufferedClosed() */
+        ReleaseSocket(false);
+
     if (response.state < Response::State::BODY)
         /* this information comes too early, we can't use it */
         return true;
