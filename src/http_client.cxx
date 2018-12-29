@@ -236,7 +236,7 @@ struct HttpClient final : BufferedSocketHandler, IstreamHandler, Cancellable, De
     ~HttpClient() noexcept {
         stopwatch_dump(stopwatch);
 
-        if (IsConnected())
+        if (!socket.IsReleased())
             ReleaseSocket(false);
     }
 
