@@ -64,6 +64,10 @@ public:
         return socket != nullptr && socket->IsConnected();
     }
 
+    void Close() const noexcept {
+        socket->Close();
+    }
+
     gcc_pure
     bool HasFilter() const noexcept {
         assert(!IsReleased());

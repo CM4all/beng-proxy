@@ -247,6 +247,9 @@ FilteredSocketStock::Create(CreateStockItem c, void *info,
 bool
 FilteredSocketStockConnection::Release() noexcept
 {
+    if (!socket.IsConnected())
+        return false;
+
     if (!socket.IsEmpty()) {
         logger(2, "unexpected data in idle connection");
         return false;
