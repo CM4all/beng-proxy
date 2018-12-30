@@ -146,6 +146,8 @@ struct HttpClient final : BufferedSocketHandler, IstreamHandler, Cancellable, De
 
     Stopwatch *const stopwatch;
 
+    EventLoop &event_loop;
+
     /* I/O */
     FilteredSocketLease socket;
 
@@ -227,7 +229,7 @@ struct HttpClient final : BufferedSocketHandler, IstreamHandler, Cancellable, De
     ~HttpClient() noexcept {
         stopwatch_dump(stopwatch);
 
-        if (IsConnected())
+        if (!socket.IsReleased())
             ReleaseSocket(false);
     }
 
@@ -727,12 +729,13 @@ HttpClient::HeadersFinished()
         chunked = true;
     }
 
-    response.body = response_body_reader.Init(socket.GetEventLoop(),
+    response.body = response_body_reader.Init(event_loop,
                                               content_length,
                                               chunked);
 
     response.state = Response::State::BODY;
-    socket.SetDirect(CheckDirect());
+    if (!socket.IsReleased())
+        socket.SetDirect(CheckDirect());
     return true;
 }
 
@@ -1038,8 +1041,11 @@ HttpClient::OnBufferedClosed() noexcept
     if (request.istream.IsDefined())
         request.istream.ClearAndClose();
 
-    /* can't reuse the socket, it was closed by the peer */
-    ReleaseSocket(false);
+    /* close the socket, but don't release it just yet; data may be
+       still in flight in a SocketFilter (e.g. SSL/TLS); we'll do that
+       in OnBufferedRemaining() which gets called after the
+       SocketFilter has completed */
+    socket.Close();
 
     return true;
 }
@@ -1047,6 +1053,15 @@ HttpClient::OnBufferedClosed() noexcept
 bool
 HttpClient::OnBufferedRemaining(size_t remaining) noexcept
 {
+    if (!socket.IsReleased())
+        /* by now, the SocketFilter has processed all incoming data,
+           and is available in the buffer; we can release the socket
+           lease, but keep the (decrypted) input buffer */
+        /* note: the socket can't be reused, because it was closed by
+           the peer; this method gets called only after
+           OnBufferedClosed() */
+        ReleaseSocket(false);
+
     if (response.state < Response::State::BODY)
         /* this information comes too early, we can't use it */
         return true;
@@ -1254,6 +1269,7 @@ HttpClient::HttpClient(PoolPtr &&_caller_pool, struct pool &_pool,
     :caller_pool(std::move(_caller_pool)),
      peer_name(_peer_name),
      stopwatch(stopwatch_new(&_pool, peer_name, uri)),
+     event_loop(_socket.GetEventLoop()),
      socket(_socket, lease,
             Event::Duration(-1), http_client_timeout,
             *this),

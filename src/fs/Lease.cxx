@@ -87,7 +87,7 @@ bool
 FilteredSocketLease::IsEmpty() const noexcept
 {
     if (IsReleased())
-        return input.front().empty();
+        return IsReleasedEmpty();
     else
         return socket->IsEmpty();
 }
@@ -123,34 +123,38 @@ FilteredSocketLease::DisposeConsumed(size_t nbytes) noexcept
 }
 
 bool
+FilteredSocketLease::ReadReleased() noexcept
+{
+    while (!IsReleasedEmpty()) {
+        switch (handler.OnBufferedData()) {
+        case BufferedResult::OK:
+            if (IsReleasedEmpty() && !handler.OnBufferedEnd())
+                return false;
+            break;
+
+        case BufferedResult::BLOCKING:
+            assert(!IsReleasedEmpty());
+            return true;
+
+        case BufferedResult::MORE:
+        case BufferedResult::AGAIN_OPTIONAL:
+        case BufferedResult::AGAIN_EXPECT:
+            break;
+
+        case BufferedResult::CLOSED:
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool
 FilteredSocketLease::Read(bool expect_more) noexcept
 {
-    if (IsReleased()) {
-        while (true) {
-            auto r = input.front().Read();
-            if (r.empty())
-                return true;
-
-            switch (handler.OnBufferedData()) {
-            case BufferedResult::OK:
-                if (IsEmpty() && !handler.OnBufferedEnd())
-                    return false;
-                break;
-
-            case BufferedResult::BLOCKING:
-                assert(!input.front().empty());
-                return true;
-
-            case BufferedResult::MORE:
-            case BufferedResult::AGAIN_OPTIONAL:
-            case BufferedResult::AGAIN_EXPECT:
-                break;
-
-            case BufferedResult::CLOSED:
-                return false;
-            }
-        }
-    } else
+    if (IsReleased())
+        return ReadReleased();
+    else
         return socket->Read(expect_more);
 }
 
@@ -212,7 +216,8 @@ FilteredSocketLease::OnBufferedClosed() noexcept
         result = false;
 
         if (handler.OnBufferedRemaining(GetAvailable()) &&
-            IsEmpty() &&
+            ReadReleased() &&
+            IsReleasedEmpty() &&
             !handler.OnBufferedEnd())
             handler.OnBufferedError(std::make_exception_ptr(SocketClosedPrematurelyError()));
     }

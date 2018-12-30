@@ -51,6 +51,7 @@
 #include "ssl/Config.hxx"
 #include "system/SetupProcess.hxx"
 #include "io/FileDescriptor.hxx"
+#include "net/HostParser.hxx"
 #include "net/Resolver.hxx"
 #include "net/AddressInfo.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
@@ -110,6 +111,20 @@ parse_url(const char *url)
     return dest;
 }
 
+gcc_pure
+static const char *
+GetHostWithoutPort(struct pool &pool, const struct parsed_url &url) noexcept
+{
+    if (url.host.empty())
+        return nullptr;
+
+    auto e = ExtractHost(url.host.c_str());
+    if (e.host.IsNull())
+        return nullptr;
+
+    return p_strdup(pool, e.host);
+}
+
 struct Context final
     : PInstance, ConnectSocketHandler, Lease, HttpResponseHandler {
 
@@ -130,8 +145,8 @@ struct Context final
     bool idle, reuse, aborted, got_response = false;
     http_status_t status;
 
-    SinkFd *body;
-    bool body_eof, body_abort, body_closed;
+    SinkFd *body = nullptr;
+    bool body_eof, body_abort;
 
     Context()
         :shutdown_listener(event_loop, BIND_THIS_METHOD(ShutdownCallback)),
@@ -155,7 +170,8 @@ struct Context final
 
         if (url.protocol == parsed_url::HTTP ||
             url.protocol == parsed_url::HTTPS) {
-            fs.Close();
+            if (fs.IsConnected())
+                fs.Close();
             fs.Destroy();
         } else
             fd.Close();
@@ -178,6 +194,8 @@ Context::ShutdownCallback() noexcept
         aborted = true;
         cancel_ptr.Cancel();
     }
+
+    shutdown_listener.Disable();
 }
 
 /*
@@ -261,6 +279,8 @@ Context::OnHttpError(std::exception_ptr ep) noexcept
     PrintException(ep);
 
     aborted = true;
+
+    shutdown_listener.Disable();
 }
 
 
@@ -280,7 +300,7 @@ try {
 
     switch (url.protocol) {
     case parsed_url::HTTP:
-        fs.Init(fd.Release(), FdType::FD_TCP);
+        fs.InitDummy(fd.Release(), FdType::FD_TCP);
 
         http_client_request(*pool, fs,
                             *this,
@@ -293,7 +313,10 @@ try {
         break;
 
     case parsed_url::HTTPS:
-        fs.Init(fd.Release(), FdType::FD_TCP);
+        fs.InitDummy(fd.Release(), FdType::FD_TCP,
+                     ssl_client_create(event_loop,
+                                       GetHostWithoutPort(*pool, url),
+                                       nullptr));
 
         http_client_request(*pool, fs,
                             *this,

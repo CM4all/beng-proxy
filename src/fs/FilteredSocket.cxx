@@ -130,17 +130,28 @@ FilteredSocket::Init(SocketDescriptor fd, FdType fd_type,
 }
 
 void
-FilteredSocket::Init(SocketDescriptor fd, FdType fd_type) noexcept
+FilteredSocket::InitDummy(SocketDescriptor fd, FdType fd_type,
+                          SocketFilterPtr _filter) noexcept
 {
     assert(!filter);
 
-    base.Init(fd, fd_type);
+    filter = std::move(_filter);
+
+    if (filter != nullptr)
+        base.Init(fd, fd_type,
+                  Event::Duration{-1}, Event::Duration{-1},
+                  *this);
+    else
+        base.Init(fd, fd_type);
 
 #ifndef NDEBUG
     ended = false;
 #endif
 
     drained = true;
+
+    if (filter != nullptr)
+        filter->Init(*this);
 }
 
 void

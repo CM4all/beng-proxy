@@ -58,8 +58,8 @@ public:
         :PoolLeakDetector(_pool),
          stock_item(_stock_item), socket(event_loop)
     {
-        socket.Init(lhttp_stock_item_get_socket(stock_item),
-                    lhttp_stock_item_get_type(stock_item));
+        socket.InitDummy(lhttp_stock_item_get_socket(stock_item),
+                         lhttp_stock_item_get_type(stock_item));
     }
 
     void Start(struct pool &pool,

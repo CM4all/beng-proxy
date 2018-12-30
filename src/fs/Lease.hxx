@@ -59,13 +59,13 @@ public:
 
     ~FilteredSocketLease() noexcept;
 
-    EventLoop &GetEventLoop() noexcept {
-        return socket->GetEventLoop();
-    }
-
     gcc_pure
     bool IsConnected() const noexcept {
         return socket != nullptr && socket->IsConnected();
+    }
+
+    void Close() const noexcept {
+        socket->Close();
     }
 
     gcc_pure
@@ -162,6 +162,12 @@ public:
 
 private:
     void MoveInput() noexcept;
+
+    bool IsReleasedEmpty() const noexcept {
+        return input.front().empty();
+    }
+
+    bool ReadReleased() noexcept;
 
     /* virtual methods from class BufferedSocketHandler */
     BufferedResult OnBufferedData() override;
