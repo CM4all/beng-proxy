@@ -175,7 +175,8 @@ struct Context final
 
         if (url.protocol == parsed_url::HTTP ||
             url.protocol == parsed_url::HTTPS) {
-            fs.Close();
+            if (fs.IsConnected())
+                fs.Close();
             fs.Destroy();
         } else
             fd.Close();
