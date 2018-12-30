@@ -5,7 +5,7 @@ cm4all-beng-proxy (14.20) unstable; urgency=low
   * http_client: fix stall bug with SSL
   * http_client: fix "Peer closed the socket prematurely" error with SSL
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Sun, 30 Dec 2018 13:40:44 +0100
 
 cm4all-beng-proxy (14.19) unstable; urgency=low
 
