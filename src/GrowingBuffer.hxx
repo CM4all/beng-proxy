@@ -34,12 +34,12 @@
 #define BENG_PROXY_GROWING_BUFFER_HXX
 
 #include "DefaultChunkAllocator.hxx"
-
 #include "util/Compiler.h"
 
 #include <utility>
 
 #include <stddef.h>
+#include <stdint.h>
 
 template<typename T> struct ConstBuffer;
 template<typename T> struct WritableBuffer;
@@ -115,7 +115,7 @@ class GrowingBuffer {
 
         const size_t size;
         size_t fill = 0;
-        char data[sizeof(size_t)];
+        uint8_t data[sizeof(size_t)];
 
         explicit Buffer(size_t _size) noexcept
             :size(_size) {}
