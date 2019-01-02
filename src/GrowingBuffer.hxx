@@ -35,6 +35,7 @@
 
 #include "DefaultChunkAllocator.hxx"
 #include "util/Compiler.h"
+#include "util/ConstBuffer.hxx"
 
 #include <utility>
 
@@ -108,6 +109,9 @@ class GrowingBuffer {
         Buffer *operator->() noexcept {
             return buffer;
         }
+
+        template<typename F>
+        void ForEachBuffer(size_t skip, F &&f) const;
     };
 
     struct Buffer {
@@ -202,16 +206,29 @@ private:
 
     template<typename F>
     void ForEachBuffer(F &&f) const {
-        const auto *i = head.get();
-        if (i == nullptr)
-            return;
-
-        f({i->data + position, i->fill - position});
-
-        while ((i = i->next.get()) != nullptr)
-            f({i->data, i->fill});
+        head.ForEachBuffer(position, std::forward<F>(f));
     }
 };
+
+template<typename F>
+void
+GrowingBuffer::BufferPtr::ForEachBuffer(size_t skip, F &&f) const
+{
+    for (const auto *i = get(); i != nullptr; i = i->next.get()) {
+        ConstBuffer<uint8_t> b(i->data, i->fill);
+        if (skip > 0) {
+            if (skip >= b.size) {
+                skip -= b.size;
+                continue;
+            } else {
+                b.skip_front(skip);
+                skip = 0;
+            }
+        }
+
+        f(b.ToVoid());
+    }
+}
 
 class GrowingBufferReader {
     GrowingBuffer::BufferPtr buffer;
@@ -246,14 +263,7 @@ public:
 private:
     template<typename F>
     void ForEachBuffer(F &&f) const {
-        const auto *i = buffer.get();
-        if (i == nullptr)
-            return;
-
-        f({i->data + position, i->fill - position});
-
-        while ((i = i->next.get()) != nullptr)
-            f({i->data, i->fill});
+        buffer.ForEachBuffer(position, std::forward<F>(f));
     }
 };
 
