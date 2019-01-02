@@ -50,16 +50,17 @@ public:
     DefaultChunkAllocator &operator=(const DefaultChunkAllocator &) = delete;
 
 #ifndef NDEBUG
-    ~DefaultChunkAllocator();
+    ~DefaultChunkAllocator() noexcept;
 #endif
 
-    friend void swap(DefaultChunkAllocator &a, DefaultChunkAllocator &b) {
+    friend void swap(DefaultChunkAllocator &a,
+                     DefaultChunkAllocator &b) noexcept {
         using std::swap;
         swap(a.allocation, b.allocation);
     }
 
-    WritableBuffer<void> Allocate();
-    void Free();
+    WritableBuffer<void> Allocate() noexcept;
+    void Free() noexcept;
 };
 
 #endif

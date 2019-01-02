@@ -39,7 +39,7 @@
 
 #ifndef NDEBUG
 
-DefaultChunkAllocator::~DefaultChunkAllocator()
+DefaultChunkAllocator::~DefaultChunkAllocator() noexcept
 {
     assert(!allocation.IsDefined());
 }
@@ -47,7 +47,7 @@ DefaultChunkAllocator::~DefaultChunkAllocator()
 #endif
 
 WritableBuffer<void>
-DefaultChunkAllocator::Allocate()
+DefaultChunkAllocator::Allocate() noexcept
 {
     assert(!allocation.IsDefined());
 
@@ -56,7 +56,7 @@ DefaultChunkAllocator::Allocate()
 }
 
 void
-DefaultChunkAllocator::Free()
+DefaultChunkAllocator::Free() noexcept
 {
     assert(allocation.IsDefined());
 
