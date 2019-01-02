@@ -192,7 +192,7 @@ struct MemcachedClient final
     void _Close() noexcept override;
 
     /* virtual methods from class IstreamHandler */
-    size_t OnData(const void *data, size_t length) override;
+    size_t OnData(const void *data, size_t length) noexcept override;
     void OnEof() noexcept override;
     void OnError(std::exception_ptr ep) noexcept override;
 };
@@ -611,7 +611,7 @@ MemcachedClient::OnBufferedError(std::exception_ptr ep) noexcept
  */
 
 inline size_t
-MemcachedClient::OnData(const void *data, size_t length)
+MemcachedClient::OnData(const void *data, size_t length) noexcept
 {
     assert(request.istream.IsDefined());
     assert(response.read_state == ReadState::HEADER ||

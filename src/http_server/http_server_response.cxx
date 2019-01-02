@@ -41,7 +41,7 @@
 #include <string.h>
 
 size_t
-HttpServerConnection::OnData(const void *data, size_t length)
+HttpServerConnection::OnData(const void *data, size_t length) noexcept
 {
     assert(socket.IsConnected() || request.request == nullptr);
     assert(response.istream.IsDefined());
@@ -72,7 +72,7 @@ HttpServerConnection::OnData(const void *data, size_t length)
 }
 
 ssize_t
-HttpServerConnection::OnDirect(FdType type, int fd, size_t max_length)
+HttpServerConnection::OnDirect(FdType type, int fd, size_t max_length) noexcept
 {
     assert(socket.IsConnected() || request.request == nullptr);
     assert(response.istream.IsDefined());

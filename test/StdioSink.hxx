@@ -54,7 +54,7 @@ struct StdioSink final : IstreamHandler {
 
     /* virtual methods from class IstreamHandler */
 
-    size_t OnData(const void *data, size_t length) override;
+    size_t OnData(const void *data, size_t length) noexcept override;
 
     void OnEof() noexcept override {
         input.Clear();
@@ -68,7 +68,7 @@ struct StdioSink final : IstreamHandler {
 };
 
 size_t
-StdioSink::OnData(const void *data, size_t length)
+StdioSink::OnData(const void *data, size_t length) noexcept
 {
     ssize_t nbytes = write(STDOUT_FILENO, data, length);
     if (nbytes < 0) {

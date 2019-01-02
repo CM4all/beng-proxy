@@ -110,7 +110,7 @@ public:
 
     /* virtual methods from class IstreamHandler */
 
-    size_t OnData(const void *data, size_t length) override {
+    size_t OnData(const void *data, size_t length) noexcept override {
         fprintf(stderr, "%p data(%zu)\n", (const void *)this, length);
         TraceData(data, length);
         auto nbytes = ForwardIstream::OnData(data, length);
@@ -119,7 +119,7 @@ public:
         return nbytes;
     }
 
-    ssize_t OnDirect(FdType type, int fd, size_t max_length) override {
+    ssize_t OnDirect(FdType type, int fd, size_t max_length) noexcept override {
         fprintf(stderr, "%p direct(0x%x, %zd)\n", (const void *)this,
                 GetHandlerDirect(), max_length);
         auto nbytes = ForwardIstream::OnDirect(type, fd, max_length);

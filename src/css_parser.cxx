@@ -129,11 +129,11 @@ public:
     }
 
 private:
-    size_t Feed(const char *start, size_t length);
+    size_t Feed(const char *start, size_t length) noexcept;
 
     /* virtual methods from class IstreamHandler */
 
-    size_t OnData(const void *data, size_t length) override {
+    size_t OnData(const void *data, size_t length) noexcept override {
         return Feed((const char *)data, length);
     }
 
@@ -152,7 +152,7 @@ private:
 
 gcc_pure
 static bool
-at_url_start(const char *p, size_t length)
+at_url_start(const char *p, size_t length) noexcept
 {
     return length >= 4 && memcmp(p + length - 4, "url(", 4) == 0 &&
         (/* just url(): */ length == 4 ||
@@ -160,8 +160,8 @@ at_url_start(const char *p, size_t length)
          IsWhitespaceOrNull(p[length - 5]));
 }
 
-size_t
-CssParser::Feed(const char *start, size_t length)
+inline size_t
+CssParser::Feed(const char *start, size_t length) noexcept
 {
     assert(start != nullptr);
     assert(length > 0);

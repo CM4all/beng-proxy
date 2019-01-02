@@ -56,7 +56,7 @@ struct Context final : IstreamHandler {
         :pool(&_pool), abort_istream(nullptr) {}
 
     /* virtual methods from class IstreamHandler */
-    size_t OnData(const void *data, size_t length) override;
+    size_t OnData(const void *data, size_t length) noexcept override;
     void OnEof() noexcept override;
     void OnError(std::exception_ptr ep) noexcept override;
 };
@@ -67,7 +67,7 @@ struct Context final : IstreamHandler {
  */
 
 size_t
-Context::OnData(gcc_unused const void *data, size_t length)
+Context::OnData(gcc_unused const void *data, size_t length) noexcept
 {
     got_data = true;
 

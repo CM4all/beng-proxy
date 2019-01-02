@@ -122,8 +122,8 @@ struct SpawnIstream final : Istream, IstreamHandler, ExitListener {
     void _Close() noexcept override;
 
     /* virtual methods from class IstreamHandler */
-    size_t OnData(const void *data, size_t length) override;
-    ssize_t OnDirect(FdType type, int fd, size_t max_length) override;
+    size_t OnData(const void *data, size_t length) noexcept override;
+    ssize_t OnDirect(FdType type, int fd, size_t max_length) noexcept override;
     void OnEof() noexcept override;
     void OnError(std::exception_ptr ep) noexcept override;
 
@@ -181,8 +181,8 @@ SpawnIstream::SendFromBuffer() noexcept
  *
  */
 
-inline size_t
-SpawnIstream::OnData(const void *data, size_t length)
+size_t
+SpawnIstream::OnData(const void *data, size_t length) noexcept
 {
     assert(input_fd.IsDefined());
 
@@ -205,8 +205,8 @@ SpawnIstream::OnData(const void *data, size_t length)
     return (size_t)nbytes;
 }
 
-inline ssize_t
-SpawnIstream::OnDirect(gcc_unused FdType type, int fd, size_t max_length)
+ssize_t
+SpawnIstream::OnDirect(gcc_unused FdType type, int fd, size_t max_length) noexcept
 {
     assert(input_fd.IsDefined());
 

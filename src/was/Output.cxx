@@ -104,8 +104,8 @@ public:
     }
 
     /* virtual methods from class IstreamHandler */
-    size_t OnData(const void *data, size_t length) override;
-    ssize_t OnDirect(FdType type, int fd, size_t max_length) override;
+    size_t OnData(const void *data, size_t length) noexcept override;
+    ssize_t OnDirect(FdType type, int fd, size_t max_length) noexcept override;
     void OnEof() noexcept override;
     void OnError(std::exception_ptr ep) noexcept override;
 };
@@ -149,7 +149,7 @@ WasOutput::WriteEventCallback(unsigned) noexcept
  */
 
 inline size_t
-WasOutput::OnData(const void *p, size_t length)
+WasOutput::OnData(const void *p, size_t length) noexcept
 {
     assert(fd.IsDefined());
     assert(input.IsDefined());
@@ -172,7 +172,7 @@ WasOutput::OnData(const void *p, size_t length)
 }
 
 inline ssize_t
-WasOutput::OnDirect(gcc_unused FdType type, int source_fd, size_t max_length)
+WasOutput::OnDirect(gcc_unused FdType type, int source_fd, size_t max_length) noexcept
 {
     assert(fd.IsDefined());
 

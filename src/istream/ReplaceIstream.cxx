@@ -78,7 +78,7 @@ class ReplaceIstream final : public FacadeIstream {
         bool IsActive() const;
 
         /* virtual methods from class IstreamHandler */
-        size_t OnData(const void *data, size_t length) override;
+        size_t OnData(const void *data, size_t length) noexcept override;
         void OnEof() noexcept override;
         void OnError(std::exception_ptr ep) noexcept override;
     };
@@ -201,7 +201,7 @@ private:
     Substitution *GetLastSubstitution() noexcept;
 
     /* virtual methods from class IstreamHandler */
-    size_t OnData(const void *data, size_t length) override;
+    size_t OnData(const void *data, size_t length) noexcept override;
     void OnEof() noexcept override;
     void OnError(std::exception_ptr ep) noexcept override;
 
@@ -265,8 +265,8 @@ ReplaceIstream::ToNextSubstitution(ReplaceIstream::Substitution *s)
  *
  */
 
-inline size_t
-ReplaceIstream::Substitution::OnData(const void *data, size_t length)
+size_t
+ReplaceIstream::Substitution::OnData(const void *data, size_t length) noexcept
 {
     if (IsActive()) {
         replace.had_output = true;
@@ -469,8 +469,8 @@ ReplaceIstream::ReadCheckEmpty()
  *
  */
 
-inline size_t
-ReplaceIstream::OnData(const void *data, size_t length)
+size_t
+ReplaceIstream::OnData(const void *data, size_t length) noexcept
 {
     had_input = true;
 

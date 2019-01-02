@@ -54,7 +54,7 @@ public:
      * (caller is responsible for registering an event) or if the
      * stream has been closed
      */
-    virtual size_t OnData(const void *data, size_t length) = 0;
+    virtual size_t OnData(const void *data, size_t length) noexcept = 0;
 
     /**
      * Data is available in a file descriptor.
@@ -67,7 +67,7 @@ public:
      * #istream_result values
      */
     virtual ssize_t OnDirect(gcc_unused FdType type, gcc_unused int fd,
-                             gcc_unused size_t max_length) {
+                             gcc_unused size_t max_length) noexcept {
         gcc_unreachable();
     }
 

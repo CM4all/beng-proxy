@@ -257,7 +257,7 @@ struct TeeIstream final : IstreamHandler {
     }
 
     /* virtual methods from class IstreamHandler */
-    size_t OnData(const void *data, size_t length) override;
+    size_t OnData(const void *data, size_t length) noexcept override;
     void OnEof() noexcept override;
     void OnError(std::exception_ptr ep) noexcept override;
 };
@@ -332,8 +332,8 @@ TeeIstream::Feed(const void *data, size_t length) noexcept
  *
  */
 
-inline size_t
-TeeIstream::OnData(const void *data, size_t length)
+size_t
+TeeIstream::OnData(const void *data, size_t length) noexcept
 {
     assert(input.IsDefined());
 

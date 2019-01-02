@@ -102,8 +102,8 @@ private:
 
     /* virtual methods from class IstreamHandler */
 
-    size_t OnData(const void *data, size_t length) override;
-    ssize_t OnDirect(FdType type, int fd, size_t max_length) override;
+    size_t OnData(const void *data, size_t length) noexcept override;
+    ssize_t OnDirect(FdType type, int fd, size_t max_length) noexcept override;
     void OnEof() noexcept override;
     void OnError(std::exception_ptr ep) noexcept override;
 };
@@ -199,8 +199,8 @@ HeaderSink::ConsumeHeader(const void *data, size_t length)
  *
  */
 
-inline size_t
-HeaderSink::OnData(const void *data0, size_t length)
+size_t
+HeaderSink::OnData(const void *data0, size_t length) noexcept
 {
     const unsigned char *data = (const unsigned char *)data0;
     size_t consumed = 0, nbytes;
@@ -252,8 +252,8 @@ HeaderSink::OnData(const void *data0, size_t length)
     return consumed;
 }
 
-inline ssize_t
-HeaderSink::OnDirect(FdType type, int fd, size_t max_length)
+ssize_t
+HeaderSink::OnDirect(FdType type, int fd, size_t max_length) noexcept
 {
     assert(state == DATA);
 

@@ -264,8 +264,8 @@ struct FcgiClient final
     void _Close() noexcept override;
 
     /* virtual methods from class IstreamHandler */
-    size_t OnData(const void *data, size_t length) override;
-    ssize_t OnDirect(FdType type, int fd, size_t max_length) override;
+    size_t OnData(const void *data, size_t length) noexcept override;
+    ssize_t OnDirect(FdType type, int fd, size_t max_length) noexcept override;
     void OnEof() noexcept override;
     void OnError(std::exception_ptr ep) noexcept override;
 };
@@ -669,8 +669,8 @@ FcgiClient::ConsumeInput(const uint8_t *data0, size_t length0)
  *
  */
 
-inline size_t
-FcgiClient::OnData(const void *data, size_t length)
+size_t
+FcgiClient::OnData(const void *data, size_t length) noexcept
 {
     assert(socket.IsConnected());
     assert(request.input.IsDefined());
@@ -691,8 +691,8 @@ FcgiClient::OnData(const void *data, size_t length)
     return (size_t)nbytes;
 }
 
-inline ssize_t
-FcgiClient::OnDirect(FdType type, int fd, size_t max_length)
+ssize_t
+FcgiClient::OnDirect(FdType type, int fd, size_t max_length) noexcept
 {
     assert(socket.IsConnected());
 

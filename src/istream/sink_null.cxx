@@ -42,7 +42,7 @@ public:
 
     /* virtual methods from class IstreamHandler */
 
-    size_t OnData(gcc_unused const void *data, size_t length) override {
+    size_t OnData(const void *, size_t length) noexcept override {
         return length;
     }
 

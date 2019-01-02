@@ -115,8 +115,8 @@ struct SinkFd final : IstreamSink, DestructAnchor, LeakDetector {
     void EventCallback(unsigned events) noexcept;
 
     /* virtual methods from class IstreamHandler */
-    size_t OnData(const void *data, size_t length) override;
-    ssize_t OnDirect(FdType type, int fd, size_t max_length) override;
+    size_t OnData(const void *data, size_t length) noexcept override;
+    ssize_t OnDirect(FdType type, int fd, size_t max_length) noexcept override;
     void OnEof() noexcept override;
     void OnError(std::exception_ptr ep) noexcept override;
 };
@@ -126,8 +126,8 @@ struct SinkFd final : IstreamSink, DestructAnchor, LeakDetector {
  *
  */
 
-inline size_t
-SinkFd::OnData(const void *data, size_t length)
+size_t
+SinkFd::OnData(const void *data, size_t length) noexcept
 {
     got_data = true;
 
@@ -150,8 +150,8 @@ SinkFd::OnData(const void *data, size_t length)
     }
 }
 
-inline ssize_t
-SinkFd::OnDirect(FdType type, int _fd, size_t max_length)
+ssize_t
+SinkFd::OnDirect(FdType type, int _fd, size_t max_length) noexcept
 {
     got_data = true;
 

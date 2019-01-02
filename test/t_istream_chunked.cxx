@@ -70,7 +70,7 @@ struct Custom final : Istream, IstreamHandler {
     /* virtual methods from class IstreamHandler */
 
     size_t OnData(gcc_unused const void *data,
-                  gcc_unused size_t length) override {
+                  gcc_unused size_t length) noexcept override {
         InvokeData(" ", 1);
         return 0;
     }

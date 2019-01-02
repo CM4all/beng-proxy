@@ -68,8 +68,8 @@ struct BufferSink final : IstreamSink, Cancellable {
     void Cancel() noexcept override;
 
     /* virtual methods from class IstreamHandler */
-    size_t OnData(const void *data, size_t length) override;
-    ssize_t OnDirect(FdType type, int fd, size_t max_length) override;
+    size_t OnData(const void *data, size_t length) noexcept override;
+    ssize_t OnDirect(FdType type, int fd, size_t max_length) noexcept override;
     void OnEof() noexcept override;
     void OnError(std::exception_ptr ep) noexcept override;
 };
@@ -79,8 +79,8 @@ struct BufferSink final : IstreamSink, Cancellable {
  *
  */
 
-inline size_t
-BufferSink::OnData(const void *data, size_t length)
+size_t
+BufferSink::OnData(const void *data, size_t length) noexcept
 {
     assert(position < size);
     assert(length <= size - position);
@@ -91,8 +91,8 @@ BufferSink::OnData(const void *data, size_t length)
     return length;
 }
 
-inline ssize_t
-BufferSink::OnDirect(FdType type, int fd, size_t max_length)
+ssize_t
+BufferSink::OnDirect(FdType type, int fd, size_t max_length) noexcept
 {
     size_t length = size - position;
     if (length > max_length)

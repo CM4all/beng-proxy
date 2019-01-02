@@ -92,7 +92,7 @@ public:
 
     /* virtual methods from class IstreamHandler */
 
-    size_t OnData(const void *data, size_t length) override {
+    size_t OnData(const void *data, size_t length) noexcept override {
         /* disable the timeout as soon as the first data byte
            arrives */
         timeout_event.Cancel();
@@ -100,7 +100,7 @@ public:
         return ForwardIstream::OnData(data, length);
     }
 
-    ssize_t OnDirect(FdType type, int fd, size_t max_length) override {
+    ssize_t OnDirect(FdType type, int fd, size_t max_length) noexcept override {
         /* disable the timeout as soon as the first data byte
            arrives */
         timeout_event.Cancel();

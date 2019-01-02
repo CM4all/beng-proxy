@@ -80,7 +80,7 @@ struct Request final : IstreamHandler {
          response_body(_response_body) {}
 
     /* virtual methods from class IstreamHandler */
-    size_t OnData(gcc_unused const void *data, size_t length) override {
+    size_t OnData(gcc_unused const void *data, size_t length) noexcept override {
         EXPECT_LE(body_read + length, strlen(response_body));
         EXPECT_EQ(memcmp(response_body + body_read, data, length), 0);
 

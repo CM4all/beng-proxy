@@ -62,7 +62,7 @@ public:
         :ForwardIstream(_pool, std::move(_input)),
          callback(_callback), callback_ctx(ctx) {}
 
-    void SendSpace();
+    void SendSpace() noexcept;
 
     /* virtual methods from class Istream */
 
@@ -91,8 +91,8 @@ public:
 
     /* virtual methods from class IstreamHandler */
 
-    size_t OnData(const void *data, size_t length) override;
-    ssize_t OnDirect(FdType type, int fd, size_t max_length) override;
+    size_t OnData(const void *data, size_t length) noexcept override;
+    ssize_t OnDirect(FdType type, int fd, size_t max_length) noexcept override;
     void OnError(std::exception_ptr ep) noexcept override;
 };
 
@@ -103,7 +103,7 @@ static constexpr char space[] =
     "                                ";
 
 void
-CatchIstream::SendSpace()
+CatchIstream::SendSpace() noexcept
 {
     assert(!HasInput());
     assert(available > 0);
@@ -154,7 +154,7 @@ CatchIstream::SendSpace()
  */
 
 size_t
-CatchIstream::OnData(const void *data, size_t length)
+CatchIstream::OnData(const void *data, size_t length) noexcept
 {
     if ((off_t)length > available)
         available = length;
@@ -176,7 +176,7 @@ CatchIstream::OnData(const void *data, size_t length)
 }
 
 ssize_t
-CatchIstream::OnDirect(FdType type, int fd, size_t max_length)
+CatchIstream::OnDirect(FdType type, int fd, size_t max_length) noexcept
 {
     ssize_t nbytes = ForwardIstream::OnDirect(type, fd, max_length);
     if (nbytes > 0) {

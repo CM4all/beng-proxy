@@ -73,7 +73,7 @@ private:
 
     /* virtual methods from class IstreamHandler */
 
-    size_t OnData(const void *data, size_t length) override {
+    size_t OnData(const void *data, size_t length) noexcept override {
         value.append((const char *)data, length);
         return length;
     }

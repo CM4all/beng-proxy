@@ -74,7 +74,7 @@ struct Context final
 
     /* virtual methods from class IstreamHandler */
 
-    size_t OnData(const void *data, size_t length) override;
+    size_t OnData(const void *data, size_t length) noexcept override;
 
     void OnEof() noexcept override {
         body.Clear();
@@ -110,7 +110,7 @@ struct Context final
  */
 
 size_t
-Context::OnData(const void *data, size_t length)
+Context::OnData(const void *data, size_t length) noexcept
 {
     ssize_t nbytes = write(1, data, length);
     if (nbytes <= 0) {

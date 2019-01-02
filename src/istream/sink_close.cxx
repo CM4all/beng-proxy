@@ -45,13 +45,13 @@ public:
     }
 
     /* request istream handler */
-    size_t OnData(gcc_unused const void *data, gcc_unused size_t length) {
+    size_t OnData(gcc_unused const void *data, gcc_unused size_t length) noexcept {
         input.Close();
         return 0;
     }
 
     ssize_t OnDirect(gcc_unused FdType type, gcc_unused int fd,
-                     gcc_unused size_t max_length) {
+                     gcc_unused size_t max_length) noexcept {
         gcc_unreachable();
     }
 

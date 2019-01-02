@@ -256,7 +256,7 @@ struct Context final
     void Cancel() noexcept override;
 
     /* virtual methods from class IstreamHandler */
-    size_t OnData(const void *data, size_t length) override;
+    size_t OnData(const void *data, size_t length) noexcept override;
     void OnEof() noexcept override;
     void OnError(std::exception_ptr ep) noexcept override;
 
@@ -293,7 +293,7 @@ Context<Connection>::Cancel() noexcept
 
 template<class Connection>
 size_t
-Context<Connection>::OnData(gcc_unused const void *data, size_t length)
+Context<Connection>::OnData(gcc_unused const void *data, size_t length) noexcept
 {
     body_data += length;
 
