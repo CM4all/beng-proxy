@@ -237,31 +237,38 @@ TEST(GrowingBufferTest, Skip)
     ASSERT_EQ(buffer.GetSize(), 16 + buffer_size * 2);
 
     GrowingBufferReader reader(std::move(buffer));
+    ASSERT_EQ(reader.Available(), 16 + buffer_size * 2);
     reader.Skip(buffer_size - 2);
+    ASSERT_EQ(reader.Available(), 18 + buffer_size);
 
     auto x = reader.Read();
     ASSERT_FALSE(x.IsNull());
     ASSERT_EQ(x.size, 2u);
     reader.Consume(1);
+    ASSERT_EQ(reader.Available(), 17 + buffer_size);
 
     reader.Skip(5);
+    ASSERT_EQ(reader.Available(), 12 + buffer_size);
 
     x = reader.Read();
     ASSERT_FALSE(x.IsNull());
     ASSERT_EQ(x.size, buffer_size - 4);
     reader.Consume(4);
+    ASSERT_EQ(reader.Available(), 8 + buffer_size);
 
     x = reader.Read();
     ASSERT_FALSE(x.IsNull());
     ASSERT_EQ(x.size, buffer_size - 8);
 
     reader.Skip(buffer_size);
+    ASSERT_EQ(reader.Available(), 8);
 
     x = reader.Read();
     ASSERT_FALSE(x.IsNull());
     ASSERT_EQ(x.size, 8u);
 
     reader.Skip(8);
+    ASSERT_EQ(reader.Available(), 0);
 
     x = reader.Read();
     ASSERT_TRUE(x.IsNull());
