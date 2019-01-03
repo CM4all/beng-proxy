@@ -151,6 +151,8 @@ struct BpConfig {
 
     bool stopwatch = false;
 
+    bool emulate_mod_auth_easy = false;
+
     SpawnConfig spawn;
 
     SslClientConfig ssl_client;

@@ -1,6 +1,6 @@
 cm4all-beng-proxy (15.5) unstable; urgency=low
 
-  * 
+  * bp: add option to emulate mod_auth_easy
 
  --   
 

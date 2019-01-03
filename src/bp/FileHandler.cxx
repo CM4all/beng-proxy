@@ -34,6 +34,7 @@
 #include "FileHeaders.hxx"
 #include "file_address.hxx"
 #include "Request.hxx"
+#include "EmulateModAuthEasy.hxx"
 #include "Instance.hxx"
 #include "GenerateResponse.hxx"
 #include "header_writer.hxx"
@@ -46,6 +47,7 @@
 #include "pool/pool.hxx"
 #include "translation/Vary.hxx"
 #include "util/DecimalFormat.h"
+#include "util/StringCompare.hxx"
 
 #include <assert.h>
 #include <sys/stat.h>
@@ -205,6 +207,31 @@ file_check_auto_compressed(Request &request2, const struct stat &st,
                                     compressed_path);
 }
 
+static bool
+MaybeEmulateModAuthEasy(Request &request2, const FileAddress &address,
+                        const struct stat &st, Istream *body) noexcept
+{
+    if (!request2.instance.config.emulate_mod_auth_easy)
+        return false;
+
+    if (request2.IsTransformationEnabled())
+        return false;
+
+    if (!S_ISREG(st.st_mode))
+        return false;
+
+    if (!StringStartsWith(address.path, "/var/www/vol"))
+        return false;
+
+    if (strstr(address.path, "/pr_0001/public_html/") == nullptr)
+        return false;
+
+    if (!StringEndsWith(address.path, ".html"))
+        return false;
+
+    return EmulateModAuthEasy(request2, address, st, body);
+}
+
 void
 file_callback(Request &request2, const FileAddress &address)
 {
@@ -239,6 +266,9 @@ file_callback(Request &request2, const FileAddress &address)
         request2.LogDispatchError(std::current_exception());
         return;
     }
+
+    if (MaybeEmulateModAuthEasy(request2, address, st, body))
+        return;
 
     /* check file type */
 
