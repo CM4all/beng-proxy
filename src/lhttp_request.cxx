@@ -84,7 +84,8 @@ private:
 
     /* virtual methods from class Lease */
     void ReleaseLease(bool reuse) noexcept override {
-        socket.Abandon();
+        if (socket.IsConnected())
+            socket.Abandon();
         socket.Destroy();
 
         stock_item.Put(!reuse);
