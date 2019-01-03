@@ -199,6 +199,9 @@ public:
      */
     void Consume(size_t length) noexcept;
 
+    void FillBucketList(IstreamBucketList &list) const noexcept;
+    size_t ConsumeBucketList(size_t nbytes) noexcept;
+
 private:
     Buffer &AppendBuffer() noexcept;
 

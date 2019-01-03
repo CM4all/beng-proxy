@@ -311,6 +311,36 @@ GrowingBuffer::Dup(struct pool &_pool) const noexcept
 }
 
 void
+GrowingBuffer::FillBucketList(IstreamBucketList &list) const noexcept
+{
+    ForEachBuffer([&list](ConstBuffer<void> b){
+            list.Push(b);
+        });
+}
+
+size_t
+GrowingBuffer::ConsumeBucketList(size_t nbytes) noexcept
+{
+    size_t result = 0;
+    while (nbytes > 0 && head) {
+        size_t available = head->fill - position;
+        if (nbytes < available) {
+            position += nbytes;
+            result += nbytes;
+            break;
+        }
+
+        result += available;
+        nbytes -= available;
+
+        head.Pop();
+        position = 0;
+    }
+
+    return result;
+}
+
+void
 GrowingBufferReader::FillBucketList(IstreamBucketList &list) const noexcept
 {
     ForEachBuffer([&list](ConstBuffer<void> b){
