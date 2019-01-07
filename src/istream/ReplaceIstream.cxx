@@ -95,7 +95,7 @@ class ReplaceIstream final : public FacadeIstream {
      */
     DeferEvent defer_read;
 
-    bool finished = false, read_locked = false;
+    bool finished = false;
     bool had_input, had_output;
 
     GrowingBuffer buffer;
@@ -258,11 +258,7 @@ ReplaceIstream::ToNextSubstitution(ReplaceIstream::Substitution *s) noexcept
         return;
     }
 
-    /* don't recurse if we're being called from ReadSubstitution() */
-    if (!read_locked) {
-        const ScopePoolRef ref(GetPool() TRACE_ARGS);
-        TryRead();
-    }
+    defer_read.Schedule();
 }
 
 /*
@@ -331,14 +327,10 @@ ReplaceIstream::ReadSubstitution() noexcept
     while (first_substitution != nullptr && first_substitution->IsActive()) {
         auto *s = first_substitution;
 
-        read_locked = true;
-
         if (s->IsDefined())
             s->Read();
         else
             ToNextSubstitution(s);
-
-        read_locked = false;
 
         /* we assume the substitution object is blocking if it hasn't
            reached EOF with this one call */
