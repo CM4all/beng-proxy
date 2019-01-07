@@ -147,6 +147,10 @@ private:
 
     void DestroyReplace() noexcept;
 
+    bool IsDestroyed() const noexcept {
+        return source_length == -1;
+    }
+
     /**
      * Is the buffer at the end-of-file position?
      */
@@ -304,7 +308,7 @@ ReplaceIstream::Substitution::OnError(std::exception_ptr ep) noexcept
 void
 ReplaceIstream::DestroyReplace() noexcept
 {
-    assert(source_length != (off_t)-1);
+    assert(!IsDestroyed());
 
     /* source_length -1 is the "destroyed" marker */
     source_length = (off_t)-1;
@@ -437,7 +441,7 @@ ReplaceIstream::TryRead() noexcept
     size_t rest;
     do {
         bool blocking = ReadSubstitution();
-        if (blocking || IsBufferAtEOF() || source_length == (off_t)-1)
+        if (blocking || IsBufferAtEOF() || IsDestroyed())
             break;
 
         rest = TryReadFromBuffer();
