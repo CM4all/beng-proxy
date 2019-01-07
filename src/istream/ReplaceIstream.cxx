@@ -333,15 +333,15 @@ ReplaceIstream::ReadSubstitution() noexcept
     while (first_substitution != nullptr && first_substitution->IsActive()) {
         auto *s = first_substitution;
 
-        if (s->IsDefined())
+        if (s->IsDefined()) {
             s->Read();
-        else
-            ToNextSubstitution(s);
 
-        /* we assume the substitution object is blocking if it hasn't
-           reached EOF with this one call */
-        if (s == first_substitution)
-            return false;
+            /* we assume the substitution object is blocking if it hasn't
+               reached EOF with this one call */
+            if (s == first_substitution)
+                return false;
+        } else
+            ToNextSubstitution(s);
     }
 
     return !IsBufferAtEOF() && !IsDestroyed();
