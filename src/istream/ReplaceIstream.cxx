@@ -266,7 +266,6 @@ ReplaceIstream::ToNextSubstitution(ReplaceIstream::Substitution *s) noexcept
         return false;
     }
 
-    defer_read.Schedule();
     return true;
 }
 
@@ -290,8 +289,8 @@ ReplaceIstream::Substitution::OnEof() noexcept
 {
     input.Clear();
 
-    if (IsActive())
-        replace.ToNextSubstitution(this);
+    if (IsActive() && replace.ToNextSubstitution(this))
+        replace.defer_read.Schedule();
 }
 
 void
