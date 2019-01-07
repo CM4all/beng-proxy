@@ -60,6 +60,10 @@ class ReplaceIstream final : public FacadeIstream {
         {
         }
 
+        void Destroy() noexcept {
+            this->~Substitution();
+        }
+
         bool IsDefined() const noexcept {
             return input.IsDefined();
         }
@@ -243,7 +247,7 @@ ReplaceIstream::ToNextSubstitution(ReplaceIstream::Substitution *s) noexcept
         append_substitution_p = &first_substitution;
     }
 
-    p_free(&GetPool(), s);
+    s->Destroy();
 
     assert(first_substitution == nullptr ||
            first_substitution->start >= position);
