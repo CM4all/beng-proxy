@@ -175,7 +175,8 @@ private:
     size_t TryReadFromBuffer() noexcept;
 
     void DeferredRead() noexcept {
-        TryReadFromBuffer();
+        const ScopePoolRef ref(GetPool() TRACE_ARGS);
+        TryRead();
     }
 
     /**
