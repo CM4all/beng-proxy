@@ -79,4 +79,4 @@ public:
  */
 std::pair<UnusedIstreamPtr, SharedPoolPtr<ReplaceIstreamControl>>
 istream_replace_new(EventLoop &event_loop, struct pool &pool,
-                    UnusedIstreamPtr input);
+                    UnusedIstreamPtr input) noexcept;

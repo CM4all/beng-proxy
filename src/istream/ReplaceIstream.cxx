@@ -53,29 +53,29 @@ class ReplaceIstream final : public FacadeIstream {
         off_t end;
 
         Substitution(ReplaceIstream &_replace, off_t _start, off_t _end,
-                     UnusedIstreamPtr _input)
+                     UnusedIstreamPtr _input) noexcept
             :IstreamSink(std::move(_input)),
              replace(_replace),
              start(_start), end(_end)
         {
         }
 
-        bool IsDefined() const {
+        bool IsDefined() const noexcept {
             return input.IsDefined();
         }
 
-        off_t GetAvailable(bool partial) const {
+        off_t GetAvailable(bool partial) const noexcept {
             return input.GetAvailable(partial);
         }
 
-        void Read() {
+        void Read() noexcept {
             input.Read();
         }
 
         using IstreamSink::ClearAndCloseInput;
 
         gcc_pure
-        bool IsActive() const;
+        bool IsActive() const noexcept;
 
         /* virtual methods from class IstreamHandler */
         size_t OnData(const void *data, size_t length) noexcept override;
@@ -114,7 +114,7 @@ class ReplaceIstream final : public FacadeIstream {
 
 public:
     ReplaceIstream(struct pool &p, EventLoop &event_loop,
-                   UnusedIstreamPtr _input)
+                   UnusedIstreamPtr _input) noexcept
         :FacadeIstream(p, std::move(_input)),
          defer_read(event_loop, BIND_THIS_METHOD(DeferredRead)),
          control(SharedPoolPtr<ReplaceIstreamControl>::Make(p, *this))
@@ -143,19 +143,19 @@ private:
     using FacadeIstream::GetPool;
     using FacadeIstream::HasInput;
 
-    void DestroyReplace();
+    void DestroyReplace() noexcept;
 
     /**
      * Is the buffer at the end-of-file position?
      */
-    bool IsBufferAtEOF() const {
+    bool IsBufferAtEOF() const noexcept {
         return position == source_length;
     }
 
     /**
      * Is the object at end-of-file?
      */
-    bool IsEOF() const {
+    bool IsEOF() const noexcept {
         return !input.IsDefined() && finished &&
             first_substitution == nullptr &&
             IsBufferAtEOF();
@@ -168,7 +168,7 @@ private:
      * @return 0 if the istream handler is not blocking; the number of
      * bytes remaining in the buffer if it is blocking
      */
-    size_t TryReadFromBuffer();
+    size_t TryReadFromBuffer() noexcept;
 
     void DeferredRead() noexcept {
         TryReadFromBuffer();
@@ -180,23 +180,23 @@ private:
      * @return 0 if the istream handler is not blocking; the number of
      * bytes remaining in the buffer if it is blocking
      */
-    size_t ReadFromBuffer(size_t max_length);
+    size_t ReadFromBuffer(size_t max_length) noexcept;
 
-    size_t ReadFromBufferLoop(off_t end);
+    size_t ReadFromBufferLoop(off_t end) noexcept;
 
-    void TryRead();
+    void TryRead() noexcept;
 
-    void ReadCheckEmpty();
+    void ReadCheckEmpty() noexcept;
 
     /**
      * Read data from substitution objects.
      */
-    bool ReadSubstitution();
+    bool ReadSubstitution() noexcept;
 
     /**
      * Activate the next substitution object after s.
      */
-    void ToNextSubstitution(ReplaceIstream::Substitution *s);
+    void ToNextSubstitution(ReplaceIstream::Substitution *s) noexcept;
 
     Substitution *GetLastSubstitution() noexcept;
 
@@ -217,7 +217,7 @@ public:
  * being written?
  */
 bool
-ReplaceIstream::Substitution::IsActive() const
+ReplaceIstream::Substitution::IsActive() const noexcept
 {
     assert(replace.first_substitution != nullptr);
     assert(replace.first_substitution->start <= start);
@@ -227,7 +227,7 @@ ReplaceIstream::Substitution::IsActive() const
 }
 
 void
-ReplaceIstream::ToNextSubstitution(ReplaceIstream::Substitution *s)
+ReplaceIstream::ToNextSubstitution(ReplaceIstream::Substitution *s) noexcept
 {
     assert(first_substitution == s);
     assert(s->IsActive());
@@ -303,7 +303,7 @@ ReplaceIstream::Substitution::OnError(std::exception_ptr ep) noexcept
  */
 
 void
-ReplaceIstream::DestroyReplace()
+ReplaceIstream::DestroyReplace() noexcept
 {
     assert(source_length != (off_t)-1);
 
@@ -321,7 +321,7 @@ ReplaceIstream::DestroyReplace()
 
 
 bool
-ReplaceIstream::ReadSubstitution()
+ReplaceIstream::ReadSubstitution() noexcept
 {
     while (first_substitution != nullptr && first_substitution->IsActive()) {
         auto *s = first_substitution;
@@ -345,7 +345,7 @@ ReplaceIstream::ReadSubstitution()
 }
 
 inline size_t
-ReplaceIstream::ReadFromBuffer(size_t max_length)
+ReplaceIstream::ReadFromBuffer(size_t max_length) noexcept
 {
     assert(max_length > 0);
 
@@ -373,7 +373,7 @@ ReplaceIstream::ReadFromBuffer(size_t max_length)
 }
 
 inline size_t
-ReplaceIstream::ReadFromBufferLoop(off_t end)
+ReplaceIstream::ReadFromBufferLoop(off_t end) noexcept
 {
     assert(end > position);
     assert(end <= source_length);
@@ -402,7 +402,7 @@ ReplaceIstream::ReadFromBufferLoop(off_t end)
 }
 
 size_t
-ReplaceIstream::TryReadFromBuffer()
+ReplaceIstream::TryReadFromBuffer() noexcept
 {
     off_t end;
     if (first_substitution == nullptr) {
@@ -434,7 +434,7 @@ ReplaceIstream::TryReadFromBuffer()
 }
 
 void
-ReplaceIstream::TryRead()
+ReplaceIstream::TryRead() noexcept
 {
     assert(position <= source_length);
 
@@ -450,7 +450,7 @@ ReplaceIstream::TryRead()
 }
 
 void
-ReplaceIstream::ReadCheckEmpty()
+ReplaceIstream::ReadCheckEmpty() noexcept
 {
     assert(finished);
     assert(!input.IsDefined());
@@ -606,7 +606,7 @@ ReplaceIstream::_Close() noexcept
 
 std::pair<UnusedIstreamPtr, SharedPoolPtr<ReplaceIstreamControl>>
 istream_replace_new(EventLoop &event_loop, struct pool &pool,
-                    UnusedIstreamPtr input)
+                    UnusedIstreamPtr input) noexcept
 {
     auto *i = NewIstream<ReplaceIstream>(pool, event_loop, std::move(input));
     return std::make_pair(UnusedIstreamPtr(i), i->GetControl());
