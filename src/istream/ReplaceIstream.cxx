@@ -197,6 +197,10 @@ private:
 
     /**
      * Read data from substitution objects.
+     *
+     * @return true if there is no active substitution and reading
+     * shall continue; false if the active substitution blocks or this
+     * object was destroyed
      */
     bool ReadSubstitution() noexcept;
 
@@ -337,10 +341,10 @@ ReplaceIstream::ReadSubstitution() noexcept
         /* we assume the substitution object is blocking if it hasn't
            reached EOF with this one call */
         if (s == first_substitution)
-            return true;
+            return false;
     }
 
-    return false;
+    return !IsBufferAtEOF() && !IsDestroyed();
 }
 
 inline size_t
@@ -440,8 +444,7 @@ ReplaceIstream::TryRead() noexcept
     /* read until someone (input or output) blocks */
     size_t rest;
     do {
-        bool blocking = ReadSubstitution();
-        if (blocking || IsBufferAtEOF() || IsDestroyed())
+        if (!ReadSubstitution())
             break;
 
         rest = TryReadFromBuffer();
