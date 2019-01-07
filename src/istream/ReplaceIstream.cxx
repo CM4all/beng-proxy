@@ -37,15 +37,16 @@
 #include "New.hxx"
 #include "GrowingBuffer.hxx"
 #include "event/DeferEvent.hxx"
-#include "util/ConstBuffer.hxx"
 #include "pool/pool.hxx"
 #include "pool/Notify.hxx"
+#include "util/ConstBuffer.hxx"
+#include "util/DestructObserver.hxx"
 
 #include <stdexcept>
 
 #include <assert.h>
 
-class ReplaceIstream final : public FacadeIstream {
+class ReplaceIstream final : public FacadeIstream, DestructAnchor {
     struct Substitution final : IstreamSink {
         Substitution *next = nullptr;
         ReplaceIstream &replace;
@@ -147,10 +148,6 @@ private:
 
     void DestroyReplace() noexcept;
 
-    bool IsDestroyed() const noexcept {
-        return source_length == -1;
-    }
-
     /**
      * Is the buffer at the end-of-file position?
      */
@@ -177,7 +174,6 @@ private:
     bool TryReadFromBuffer() noexcept;
 
     void DeferredRead() noexcept {
-        const ScopePoolRef ref(GetPool() TRACE_ARGS);
         TryRead();
     }
 
@@ -270,9 +266,6 @@ ReplaceIstream::ToNextSubstitution(ReplaceIstream::Substitution *s) noexcept
            first_substitution->start >= position);
 
     if (IsEOF()) {
-        /* source_length -1 is the "destroyed" marker */
-        source_length = (off_t)-1;
-
         DestroyEof();
         return false;
     }
@@ -325,11 +318,6 @@ ReplaceIstream::Substitution::OnError(std::exception_ptr ep) noexcept
 void
 ReplaceIstream::DestroyReplace() noexcept
 {
-    assert(!IsDestroyed());
-
-    /* source_length -1 is the "destroyed" marker */
-    source_length = (off_t)-1;
-
     while (first_substitution != nullptr) {
         auto *s = first_substitution;
         first_substitution = s->next;
@@ -347,7 +335,12 @@ ReplaceIstream::ReadSubstitution() noexcept
         auto *s = first_substitution;
 
         if (s->IsDefined()) {
+            const DestructObserver destructed(*this);
+
             s->Read();
+
+            if (destructed)
+                return false;
 
             /* we assume the substitution object is blocking if it hasn't
                reached EOF with this one call */
@@ -359,7 +352,7 @@ ReplaceIstream::ReadSubstitution() noexcept
         }
     }
 
-    return !IsDestroyed();
+    return true;
 }
 
 inline size_t
@@ -473,10 +466,8 @@ ReplaceIstream::ReadCheckEmpty() noexcept
 
     if (IsEOF())
         DestroyEof();
-    else {
-        const ScopePoolRef ref(GetPool() TRACE_ARGS);
+    else
         TryRead();
-    }
 }
 
 
@@ -501,10 +492,10 @@ ReplaceIstream::OnData(const void *data, size_t length) noexcept
     buffer.Write(data, length);
     source_length += (off_t)length;
 
-    const ScopePoolRef ref(GetPool() TRACE_ARGS);
+    const DestructObserver destructed(*this);
 
     TryReadFromBuffer();
-    if (!input.IsDefined())
+    if (destructed || !input.IsDefined())
         /* the istream API mandates that we must return 0 if the
            stream is finished */
         length = 0;
@@ -589,20 +580,20 @@ ReplaceIstream::_GetAvailable(bool partial) noexcept
 void
 ReplaceIstream::_Read() noexcept
 {
-    const ScopePoolRef ref(GetPool() TRACE_ARGS);
-
     if (!TryRead())
         return;
 
     if (!HasInput())
         return;
 
+    const DestructObserver destructed(*this);
+
     had_output = false;
 
     do {
         had_input = false;
         input.Read();
-    } while (had_input && !had_output && HasInput());
+    } while (!destructed && had_input && !had_output && HasInput());
 }
 
 void
