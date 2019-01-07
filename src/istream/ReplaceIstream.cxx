@@ -206,8 +206,10 @@ private:
 
     /**
      * Activate the next substitution object after s.
+     *
+     * @return false if this object was destroyed
      */
-    void ToNextSubstitution(ReplaceIstream::Substitution *s) noexcept;
+    bool ToNextSubstitution(ReplaceIstream::Substitution *s) noexcept;
 
     Substitution *GetLastSubstitution() noexcept;
 
@@ -237,7 +239,7 @@ ReplaceIstream::Substitution::IsActive() const noexcept
     return this == replace.first_substitution && replace.position == start;
 }
 
-void
+bool
 ReplaceIstream::ToNextSubstitution(ReplaceIstream::Substitution *s) noexcept
 {
     assert(first_substitution == s);
@@ -261,10 +263,11 @@ ReplaceIstream::ToNextSubstitution(ReplaceIstream::Substitution *s) noexcept
 
     if (IsEOF()) {
         DestroyEof();
-        return;
+        return false;
     }
 
     defer_read.Schedule();
+    return true;
 }
 
 /*
@@ -340,8 +343,10 @@ ReplaceIstream::ReadSubstitution() noexcept
                reached EOF with this one call */
             if (s == first_substitution)
                 return false;
-        } else
-            ToNextSubstitution(s);
+        } else {
+            if (!ToNextSubstitution(s))
+                return false;
+        }
     }
 
     return !IsBufferAtEOF() && !IsDestroyed();
