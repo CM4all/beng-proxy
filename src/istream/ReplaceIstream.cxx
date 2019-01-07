@@ -130,8 +130,6 @@ public:
         assert(control->replace == this);
 
         control->replace = nullptr;
-
-        defer_read.Cancel();
     }
 
     auto GetControl() noexcept {
