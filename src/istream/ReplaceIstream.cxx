@@ -171,10 +171,10 @@ private:
      * Copy the next chunk from the source buffer to the istream
      * handler.
      *
-     * @return 0 if the istream handler is not blocking; the number of
-     * bytes remaining in the buffer if it is blocking
+     * @return true if all pending data has been consumed, false if
+     * the handler is blocking or if this object has been destroyed
      */
-    size_t TryReadFromBuffer() noexcept;
+    bool TryReadFromBuffer() noexcept;
 
     void DeferredRead() noexcept {
         const ScopePoolRef ref(GetPool() TRACE_ARGS);
@@ -408,7 +408,7 @@ ReplaceIstream::ReadFromBufferLoop(off_t end) noexcept
     return rest;
 }
 
-size_t
+bool
 ReplaceIstream::TryReadFromBuffer() noexcept
 {
     off_t end;
@@ -420,7 +420,7 @@ ReplaceIstream::TryReadFromBuffer() noexcept
         else
             /* block after the last substitution, unless the caller
                has already set the "finished" flag */
-            return 1;
+            return false;
 
         assert(position < source_length);
     } else {
@@ -428,16 +428,18 @@ ReplaceIstream::TryReadFromBuffer() noexcept
         assert(end >= position);
 
         if (end == position)
-            return 0;
+            return true;
     }
 
     size_t rest = ReadFromBufferLoop(end);
     if (rest == 0 && position == source_length &&
         first_substitution == nullptr &&
-        !input.IsDefined())
+        !input.IsDefined()) {
         DestroyEof();
+        return false;
+    }
 
-    return rest;
+    return rest == 0;
 }
 
 void
@@ -446,13 +448,13 @@ ReplaceIstream::TryRead() noexcept
     assert(position <= source_length);
 
     /* read until someone (input or output) blocks */
-    size_t rest;
     do {
         if (!ReadSubstitution())
             break;
 
-        rest = TryReadFromBuffer();
-    } while (rest == 0 && first_substitution != nullptr);
+        if (!TryReadFromBuffer())
+            return;
+    } while (first_substitution != nullptr);
 }
 
 void
