@@ -189,7 +189,11 @@ private:
      */
     size_t ReadFromBuffer(size_t max_length) noexcept;
 
-    size_t ReadFromBufferLoop(off_t end) noexcept;
+    /**
+     * @return true if all data until #end has been consumed, false if
+     * the handler is blocking or if this object has been destroyed
+     */
+    bool ReadFromBufferLoop(off_t end) noexcept;
 
     void TryRead() noexcept;
 
@@ -379,33 +383,22 @@ ReplaceIstream::ReadFromBuffer(size_t max_length) noexcept
     return src.size - nbytes;
 }
 
-inline size_t
+inline bool
 ReplaceIstream::ReadFromBufferLoop(off_t end) noexcept
 {
     assert(end > position);
     assert(end <= source_length);
 
     /* this loop is required to cross the GrowingBuffer borders */
-    size_t rest;
     do {
-#ifndef NDEBUG
-        PoolNotify notify(GetPool());
-#endif
-
         size_t max_length = (size_t)(end - position);
-        rest = ReadFromBuffer(max_length);
-
-#ifndef NDEBUG
-        if (notify.IsDestroyed()) {
-            assert(rest > 0);
-            break;
-        }
-#endif
+        if (ReadFromBuffer(max_length) > 0)
+            return false;
 
         assert(position <= end);
-    } while (rest == 0 && position < end);
+    } while (position < end);
 
-    return rest;
+    return true;
 }
 
 bool
@@ -431,15 +424,17 @@ ReplaceIstream::TryReadFromBuffer() noexcept
             return true;
     }
 
-    size_t rest = ReadFromBufferLoop(end);
-    if (rest == 0 && position == source_length &&
+    if (!ReadFromBufferLoop(end))
+        return false;
+
+    if (position == source_length &&
         first_substitution == nullptr &&
         !input.IsDefined()) {
         DestroyEof();
         return false;
     }
 
-    return rest == 0;
+    return true;
 }
 
 void
