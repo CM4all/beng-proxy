@@ -195,7 +195,11 @@ private:
      */
     bool ReadFromBufferLoop(off_t end) noexcept;
 
-    void TryRead() noexcept;
+    /**
+     * @return true if all pending data has been consumed, false if
+     * the handler is blocking or if this object has been destroyed
+     */
+    bool TryRead() noexcept;
 
     void ReadCheckEmpty() noexcept;
 
@@ -442,7 +446,7 @@ ReplaceIstream::TryReadFromBuffer() noexcept
     return true;
 }
 
-void
+bool
 ReplaceIstream::TryRead() noexcept
 {
     assert(position <= source_length);
@@ -450,13 +454,15 @@ ReplaceIstream::TryRead() noexcept
     /* read until someone (input or output) blocks */
     do {
         if (!ReadSubstitution())
-            break;
+            return false;
 
         if (!TryReadFromBuffer())
-            return;
+            return false;
     } while (first_substitution != nullptr &&
              /* quit the loop if we don't have enough data yet */
              first_substitution->start <= source_length);
+
+    return true;
 }
 
 void
@@ -585,7 +591,8 @@ ReplaceIstream::_Read() noexcept
 {
     const ScopePoolRef ref(GetPool() TRACE_ARGS);
 
-    TryRead();
+    if (!TryRead())
+        return;
 
     if (!HasInput())
         return;
