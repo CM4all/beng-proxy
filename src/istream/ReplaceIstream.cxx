@@ -266,6 +266,9 @@ ReplaceIstream::ToNextSubstitution(ReplaceIstream::Substitution *s) noexcept
            first_substitution->start >= position);
 
     if (IsEOF()) {
+        /* source_length -1 is the "destroyed" marker */
+        source_length = (off_t)-1;
+
         DestroyEof();
         return false;
     }
