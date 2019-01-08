@@ -454,7 +454,9 @@ ReplaceIstream::TryRead() noexcept
 
         if (!TryReadFromBuffer())
             return;
-    } while (first_substitution != nullptr);
+    } while (first_substitution != nullptr &&
+             /* quit the loop if we don't have enough data yet */
+             first_substitution->start <= source_length);
 }
 
 void
