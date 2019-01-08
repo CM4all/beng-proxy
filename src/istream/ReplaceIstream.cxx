@@ -422,9 +422,12 @@ ReplaceIstream::TryReadFromBuffer() noexcept
     }
 
     assert(end >= position);
+    assert(end <= source_length);
 
     if (!ReadFromBufferLoop(end))
         return false;
+
+    assert(position == end);
 
     if (position == source_length &&
         first_substitution == nullptr &&
