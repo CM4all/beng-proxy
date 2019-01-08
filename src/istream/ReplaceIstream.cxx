@@ -386,17 +386,17 @@ ReplaceIstream::ReadFromBuffer(size_t max_length) noexcept
 inline bool
 ReplaceIstream::ReadFromBufferLoop(off_t end) noexcept
 {
-    assert(end > position);
+    assert(end >= position);
     assert(end <= source_length);
 
     /* this loop is required to cross the GrowingBuffer borders */
-    do {
+    while (position < end) {
         size_t max_length = (size_t)(end - position);
         if (ReadFromBuffer(max_length) > 0)
             return false;
 
         assert(position <= end);
-    } while (position < end);
+    }
 
     return true;
 }
@@ -404,6 +404,8 @@ ReplaceIstream::ReadFromBufferLoop(off_t end) noexcept
 bool
 ReplaceIstream::TryReadFromBuffer() noexcept
 {
+    assert(position <= source_length);
+
     off_t end;
     if (first_substitution == nullptr) {
         if (finished)
@@ -415,14 +417,11 @@ ReplaceIstream::TryReadFromBuffer() noexcept
                has already set the "finished" flag */
             return false;
 
-        assert(position < source_length);
     } else {
         end = first_substitution->start;
-        assert(end >= position);
-
-        if (end == position)
-            return true;
     }
+
+    assert(end >= position);
 
     if (!ReadFromBufferLoop(end))
         return false;
