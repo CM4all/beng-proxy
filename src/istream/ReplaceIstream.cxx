@@ -418,7 +418,7 @@ ReplaceIstream::TryReadFromBuffer() noexcept
         else
             /* block after the last substitution, unless the caller
                has already set the "finished" flag */
-            return false;
+            return true;
 
     } else {
         end = std::min(first_substitution->start, source_length);
