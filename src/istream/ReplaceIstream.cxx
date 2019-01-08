@@ -418,7 +418,7 @@ ReplaceIstream::TryReadFromBuffer() noexcept
             return false;
 
     } else {
-        end = first_substitution->start;
+        end = std::min(first_substitution->start, source_length);
     }
 
     assert(end >= position);
