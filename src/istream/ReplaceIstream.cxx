@@ -355,7 +355,7 @@ ReplaceIstream::ReadSubstitution() noexcept
         }
     }
 
-    return !IsBufferAtEOF() && !IsDestroyed();
+    return !IsDestroyed();
 }
 
 inline size_t
