@@ -1,6 +1,6 @@
 cm4all-beng-proxy (15.4) unstable; urgency=low
 
-  * 
+  * processor: rewrite empty form action URIs
 
  --   
 
