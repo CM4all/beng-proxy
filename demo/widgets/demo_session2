@@ -1,4 +1,4 @@
-server "http://cfatest01.intern.cm-ag/widgets/session2.sh/"
+server "http://localhost:8080/cgi-bin/session2.sh/"
 process
 container
 stateful

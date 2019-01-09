@@ -1,3 +1,3 @@
-server "http://cfatest01.intern.cm-ag/widgets/session1.sh/"
+server "http://localhost:8080/cgi-bin/session1.sh/"
 process
 stateful

@@ -1,4 +1,4 @@
-server "http://cfatest01.intern.cm-ag/widgets/wizard.py/"
+server "http://localhost:8080/cgi-bin/wizard.py/"
 process
 container
 stateful

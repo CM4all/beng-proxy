@@ -1,1 +1,1 @@
-server "http://cfatest01.intern.cm-ag/widgets/time2.py"
+server "http://localhost:8080/cgi-bin/time2.py"

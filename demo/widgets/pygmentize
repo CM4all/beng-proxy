@@ -1,1 +1,1 @@
-server "http://cfatest01.intern.cm-ag/widgets/pygmentize.py"
+server "http://localhost:8080/cgi-bin/pygmentize.py"

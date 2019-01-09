@@ -1,1 +1,1 @@
-server "http://cfatest01.intern.cm-ag/widgets/redirect.sh/"
+server "http://localhost:8080/cgi-bin/redirect.sh/"
