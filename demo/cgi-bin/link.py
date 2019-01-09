@@ -21,3 +21,9 @@ else:
     print '<a c:base="widget" href="test">base=widget</a><br>'
     print '<a c:base="widget" c:mode="focus" href="test">base=widget, mode=focus</a><br>'
     print '<a c:base="widget" c:mode="partial" href="test">base=widget, mode=partial</a><br>'
+
+    print '<h2>empty</h2>'
+    print '<a href="">Default</a><br>'
+    print '<a c:base="widget" href="">base=widget</a><br>'
+    print '<a c:base="widget" c:mode="focus" href="">base=widget, mode=focus</a><br>'
+    print '<a c:base="widget" c:mode="partial" href="">base=widget, mode=partial</a><br>'
