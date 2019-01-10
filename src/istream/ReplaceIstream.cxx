@@ -210,10 +210,8 @@ private:
 
     /**
      * Activate the next substitution object after s.
-     *
-     * @return false if this object was destroyed
      */
-    bool ToNextSubstitution(ReplaceIstream::Substitution *s) noexcept;
+    void ToNextSubstitution(ReplaceIstream::Substitution *s) noexcept;
 
     Substitution *GetLastSubstitution() noexcept;
 
@@ -243,7 +241,7 @@ ReplaceIstream::Substitution::IsActive() const noexcept
     return this == replace.first_substitution && replace.position == start;
 }
 
-bool
+void
 ReplaceIstream::ToNextSubstitution(ReplaceIstream::Substitution *s) noexcept
 {
     assert(first_substitution == s);
@@ -264,13 +262,6 @@ ReplaceIstream::ToNextSubstitution(ReplaceIstream::Substitution *s) noexcept
 
     assert(first_substitution == nullptr ||
            first_substitution->start >= position);
-
-    if (IsEOF()) {
-        DestroyEof();
-        return false;
-    }
-
-    return true;
 }
 
 /*
@@ -293,8 +284,14 @@ ReplaceIstream::Substitution::OnEof() noexcept
 {
     input.Clear();
 
-    if (IsActive() && replace.ToNextSubstitution(this))
-        replace.defer_read.Schedule();
+    if (IsActive()) {
+        replace.ToNextSubstitution(this);
+
+        if (replace.IsEOF())
+            replace.DestroyEof();
+        else
+            replace.defer_read.Schedule();
+    }
 }
 
 void
@@ -347,8 +344,11 @@ ReplaceIstream::ReadSubstitution() noexcept
             if (s == first_substitution)
                 return false;
         } else {
-            if (!ToNextSubstitution(s))
+            ToNextSubstitution(s);
+            if (IsEOF()) {
+                DestroyEof();
                 return false;
+            }
         }
     }
 
