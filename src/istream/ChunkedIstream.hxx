@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_ISTREAM_CHUNKED_HXX
-#define BENG_PROXY_ISTREAM_CHUNKED_HXX
+#pragma once
 
 struct pool;
 class UnusedIstreamPtr;
@@ -41,5 +40,3 @@ class UnusedIstreamPtr;
  */
 UnusedIstreamPtr
 istream_chunked_new(struct pool &pool, UnusedIstreamPtr input) noexcept;
-
-#endif

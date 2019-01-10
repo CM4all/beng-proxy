@@ -30,7 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "istream_chunked.hxx"
+#include "ChunkedIstream.hxx"
 #include "FacadeIstream.hxx"
 #include "Bucket.hxx"
 #include "New.hxx"

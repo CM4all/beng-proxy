@@ -33,7 +33,7 @@
 #ifndef BENG_PROXY_HTTP_BODY_HXX
 #define BENG_PROXY_HTTP_BODY_HXX
 
-#include "istream/istream_dechunk.hxx"
+#include "istream/DechunkIstream.hxx"
 #include "istream/istream.hxx"
 #include "istream/Bucket.hxx"
 

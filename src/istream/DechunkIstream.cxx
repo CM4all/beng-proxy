@@ -30,7 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "istream_dechunk.hxx"
+#include "DechunkIstream.hxx"
 #include "FacadeIstream.hxx"
 #include "UnusedPtr.hxx"
 #include "New.hxx"

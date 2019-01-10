@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_ISTREAM_DECHUNK_HXX
-#define BENG_PROXY_ISTREAM_DECHUNK_HXX
+#pragma once
 
 struct pool;
 class EventLoop;
@@ -80,5 +79,3 @@ istream_dechunk_new(struct pool &pool, UnusedIstreamPtr input,
  */
 bool
 istream_dechunk_check_verbatim(UnusedIstreamPtr &i);
-
-#endif

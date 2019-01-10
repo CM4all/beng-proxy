@@ -31,7 +31,6 @@
  */
 
 #include "http_body.hxx"
-#include "istream/istream_dechunk.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "net/SocketDescriptor.hxx"
 

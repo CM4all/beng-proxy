@@ -30,7 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "istream/istream_dechunk.hxx"
+#include "istream/DechunkIstream.hxx"
 #include "istream/ByteIstream.hxx"
 #include "istream/FourIstream.hxx"
 #include "istream/istream_string.hxx"
