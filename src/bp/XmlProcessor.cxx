@@ -270,6 +270,10 @@ private:
         return (options & PROCESSOR_STYLE) != 0;
     }
 
+    bool MustRewriteEmptyURI() const noexcept {
+        return tag == Tag::FORM;
+    }
+
     void Destroy() noexcept {
         DeleteFromPool(pool, this);
     }
@@ -379,12 +383,18 @@ processable(const StringMap &headers)
          strncmp(content_type, "application/xhtml+xml", 21) == 0);
 }
 
+/**
+ * @param rewrite_empty rewrite empty URIs?  This is not always
+ * necessary, but definitely is for form actions.
+ */
 gcc_pure
 static bool
-CanRewriteUri(StringView uri) noexcept
+CanRewriteUri(StringView uri, bool rewrite_empty) noexcept
 {
     if (uri.empty())
-        return false;
+        /* an empty URI is a reference to the current document and
+           thus should be rewritten */
+        return rewrite_empty;
 
     if (uri.front() == '#')
         /* can't rewrite URI fragments */
@@ -526,7 +536,7 @@ XmlProcessor::PostponeUriRewrite(off_t start, off_t end,
         /* cannot rewrite more than one attribute per element */
         return;
 
-    if (!CanRewriteUri(value))
+    if (!CanRewriteUri(value, MustRewriteEmptyURI()))
         return;
 
     /* postpone the URI rewrite until the tag is finished: save the
@@ -817,7 +827,7 @@ XmlProcessor::TransformUriAttribute(const XmlParserAttribute &attr,
     StringView value = attr.value;
 
     /* this has been checked already by PostponeUriRewrite() */
-    assert(CanRewriteUri(value));
+    assert(CanRewriteUri(value, MustRewriteEmptyURI()));
 
     Widget *target_widget = nullptr;
     StringView child_id, suffix;
