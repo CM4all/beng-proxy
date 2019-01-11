@@ -40,6 +40,23 @@
 #include <errno.h>
 #include <string.h>
 
+bool
+HttpServerConnection::OnIstreamReady() noexcept
+{
+    switch (TryWriteBuckets()) {
+    case BucketResult::UNAVAILABLE:
+        return true;
+
+    case BucketResult::MORE:
+    case BucketResult::BLOCKING:
+    case BucketResult::DEPLETED:
+    case BucketResult::DESTROYED:
+        return false;
+    }
+
+    gcc_unreachable();
+}
+
 size_t
 HttpServerConnection::OnData(const void *data, size_t length) noexcept
 {
