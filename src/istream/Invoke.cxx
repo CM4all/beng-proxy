@@ -36,6 +36,30 @@
 
 #include <assert.h>
 
+bool
+Istream::InvokeReady() noexcept
+{
+    assert(!destroyed);
+    assert(handler != nullptr);
+    assert(!in_data);
+    assert(!eof);
+    assert(!closing);
+
+#ifndef NDEBUG
+    PoolNotify notify(pool);
+#endif
+
+    bool result = handler->OnIstreamReady();
+
+#ifndef NDEBUG
+    if (notify.IsDestroyed() || destroyed) {
+        assert(!result);
+    }
+#endif
+
+    return result;
+}
+
 size_t
 Istream::InvokeData(const void *data, size_t length) noexcept
 {

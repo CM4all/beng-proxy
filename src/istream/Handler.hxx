@@ -45,6 +45,22 @@
 class IstreamHandler {
 public:
     /**
+     * Data is available and the callee shall invoke
+     * Istream::FillBucketList() and Istream::ConsumeBucketList().
+     *
+     * This is the successor to OnData() and OnDirect().  Once
+     * everything has been migrated to #IstreamBucketList, these
+     * methods can be removed.
+     *
+     * @return true if the caller shall invoke OnData() or OnDirect(),
+     * false if data has already been handled or if the #Istream has
+     * been closed
+     */
+    virtual bool OnIstreamReady() noexcept {
+        return true;
+    }
+
+    /**
      * Data is available as a buffer.
      * This function must return 0 if it has closed the stream.
      *

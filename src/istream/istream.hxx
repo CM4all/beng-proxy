@@ -116,6 +116,7 @@ protected:
 #endif
     }
 
+    bool InvokeReady() noexcept;
     size_t InvokeData(const void *data, size_t length) noexcept;
     ssize_t InvokeDirect(FdType type, int fd, size_t max_length) noexcept;
     void InvokeEof() noexcept;

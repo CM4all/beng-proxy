@@ -78,6 +78,10 @@ class CatIstream final : public Istream {
 
         /* virtual methods from class IstreamHandler */
 
+        bool OnIstreamReady() noexcept override {
+            return cat.OnInputReady(*this);
+        }
+
         size_t OnData(const void *data, size_t length) noexcept override {
             return cat.OnInputData(*this, data, length);
         }
@@ -135,6 +139,12 @@ private:
 
     void CloseAllInputs() noexcept {
         inputs.clear_and_dispose(Input::Disposer());
+    }
+
+    bool OnInputReady(Input &i) noexcept {
+        return IsCurrent(i)
+            ? InvokeReady()
+            : false;
     }
 
     size_t OnInputData(Input &i, const void *data, size_t length) noexcept {
