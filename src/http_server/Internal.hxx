@@ -52,9 +52,24 @@ struct HttpServerConnection final
     : BufferedSocketHandler, IstreamHandler, DestructAnchor {
 
     enum class BucketResult {
+        /**
+         * More data will be available later.
+         */
         MORE,
+
+        /**
+         * Writing to our socket blocks.
+         */
         BLOCKING,
+
+        /**
+         * The #Istream is now empty.
+         */
         DEPLETED,
+
+        /**
+         * This object has been destroyed inside the function.
+         */
         DESTROYED,
     };
 
