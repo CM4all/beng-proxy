@@ -466,7 +466,7 @@ DechunkIstream::_Close() noexcept
 UnusedIstreamPtr
 istream_dechunk_new(struct pool &pool, UnusedIstreamPtr input,
                     EventLoop &event_loop,
-                    DechunkHandler &dechunk_handler)
+                    DechunkHandler &dechunk_handler) noexcept
 {
     return NewIstreamPtr<DechunkIstream>(pool, std::move(input),
                                          event_loop,
@@ -474,7 +474,7 @@ istream_dechunk_new(struct pool &pool, UnusedIstreamPtr input,
 }
 
 bool
-istream_dechunk_check_verbatim(UnusedIstreamPtr &i)
+istream_dechunk_check_verbatim(UnusedIstreamPtr &i) noexcept
 {
     auto *dechunk = i.DynamicCast<DechunkIstream>();
     if (dechunk == nullptr)

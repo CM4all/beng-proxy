@@ -44,7 +44,7 @@ public:
      * ready to be processed, but it's an indicator that input's
      * underlying socket is done.
      */
-    virtual void OnDechunkEndSeen() = 0;
+    virtual void OnDechunkEndSeen() noexcept = 0;
 
     /**
      * Called after the end chunk has been consumed from the input,
@@ -52,7 +52,7 @@ public:
      *
      * @return false if the caller shall close its input
      */
-    virtual bool OnDechunkEnd() = 0;
+    virtual bool OnDechunkEnd() noexcept = 0;
 };
 
 /**
@@ -66,7 +66,7 @@ public:
 UnusedIstreamPtr
 istream_dechunk_new(struct pool &pool, UnusedIstreamPtr input,
                     EventLoop &event_loop,
-                    DechunkHandler &dechunk_handler);
+                    DechunkHandler &dechunk_handler) noexcept;
 
 /**
  * Check if the parameter is an istream_dechunk, and if so, switch to
@@ -78,4 +78,4 @@ istream_dechunk_new(struct pool &pool, UnusedIstreamPtr input,
  * need to output chunked data (e.g. proxying to another client).
  */
 bool
-istream_dechunk_check_verbatim(UnusedIstreamPtr &i);
+istream_dechunk_check_verbatim(UnusedIstreamPtr &i) noexcept;

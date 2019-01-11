@@ -38,21 +38,22 @@
 #define EXPECTED_RESULT "foo"
 
 static UnusedIstreamPtr
-create_input(struct pool &pool)
+create_input(struct pool &pool) noexcept
 {
     return istream_string_new(pool, "3\r\nfoo\r\n0\r\n\r\n ");
 }
 
 class MyDechunkHandler final : public DechunkHandler {
-    void OnDechunkEndSeen() override {}
+    void OnDechunkEndSeen() noexcept override {}
 
-    bool OnDechunkEnd() override {
+    bool OnDechunkEnd() noexcept override {
         return false;
     }
 };
 
 static UnusedIstreamPtr
-create_test(EventLoop &event_loop, struct pool &pool, UnusedIstreamPtr input)
+create_test(EventLoop &event_loop, struct pool &pool,
+            UnusedIstreamPtr input) noexcept
 {
     auto *handler = NewFromPool<MyDechunkHandler>(pool);
     return istream_dechunk_new(pool, std::move(input),

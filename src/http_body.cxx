@@ -124,7 +124,7 @@ HttpBodyReader::SocketEOF(size_t remaining)
 }
 
 void
-HttpBodyReader::OnDechunkEndSeen()
+HttpBodyReader::OnDechunkEndSeen() noexcept
 {
     assert(rest == REST_CHUNKED);
 
@@ -132,8 +132,7 @@ HttpBodyReader::OnDechunkEndSeen()
 }
 
 bool
-HttpBodyReader::OnDechunkEnd()
-
+HttpBodyReader::OnDechunkEnd() noexcept
 {
     assert(rest == REST_CHUNKED);
 

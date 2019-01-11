@@ -53,9 +53,9 @@ create_input(struct pool &pool) noexcept
 }
 
 class MyDechunkHandler final : public DechunkHandler {
-    void OnDechunkEndSeen() override {}
+    void OnDechunkEndSeen() noexcept override {}
 
-    bool OnDechunkEnd() override {
+    bool OnDechunkEnd() noexcept override {
         return false;
     }
 };
