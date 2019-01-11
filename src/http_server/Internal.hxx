@@ -53,6 +53,12 @@ struct HttpServerConnection final
 
     enum class BucketResult {
         /**
+         * No data is avaiable right now.  Maybe the #Istream doesn't
+         * support FillBucketList().
+         */
+        UNAVAILABLE,
+
+        /**
          * More data will be available later.
          */
         MORE,

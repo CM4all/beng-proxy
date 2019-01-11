@@ -97,7 +97,7 @@ HttpServerConnection::TryWriteBuckets2()
     assert(response.istream.IsDefined());
 
     if (socket.HasFilter())
-        return BucketResult::MORE;
+        return BucketResult::UNAVAILABLE;
 
     IstreamBucketList list;
 
@@ -124,7 +124,7 @@ HttpServerConnection::TryWriteBuckets2()
 
     if (v.empty()) {
         return list.HasMore()
-            ? BucketResult::MORE
+            ? BucketResult::UNAVAILABLE
             : BucketResult::DEPLETED;
     }
 
@@ -170,6 +170,7 @@ HttpServerConnection::TryWriteBuckets() noexcept
     }
 
     switch (result) {
+    case BucketResult::UNAVAILABLE:
     case BucketResult::MORE:
         assert(response.istream.IsDefined());
         break;
@@ -204,6 +205,7 @@ HttpServerConnection::TryWrite() noexcept
     assert(response.istream.IsDefined());
 
     switch (TryWriteBuckets()) {
+    case BucketResult::UNAVAILABLE:
     case BucketResult::MORE:
         break;
 
