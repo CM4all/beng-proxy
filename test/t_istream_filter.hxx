@@ -34,6 +34,7 @@
 #include "fb_pool.hxx"
 #include "PInstance.hxx"
 #include "istream/istream.hxx"
+#include "istream/Bucket.hxx"
 #include "istream/Sink.hxx"
 #include "istream/ByteIstream.hxx"
 #include "istream/ConcatIstream.hxx"
@@ -156,12 +157,74 @@ struct Context final : IstreamSink {
                                     std::exception_ptr()));
     }
 
+    bool ReadBuckets();
+
     /* virtual methods from class IstreamHandler */
     size_t OnData(const void *data, size_t length) noexcept override;
     ssize_t OnDirect(FdType type, int fd, size_t max_length) noexcept override;
     void OnEof() noexcept override;
     void OnError(std::exception_ptr ep) noexcept override;
 };
+
+bool
+Context::ReadBuckets()
+{
+    IstreamBucketList list;
+
+    try {
+        input.FillBucketList(list);
+    } catch (...) {
+        input.Clear();
+        throw;
+    }
+
+    if (list.IsEmpty() && list.HasMore())
+        return false;
+
+    got_data = true;
+
+    bool result = true;
+    size_t consumed = 0;
+
+    for (const auto &i : list) {
+        if (i.GetType() != IstreamBucket::Type::BUFFER) {
+            result = false;
+            break;
+        }
+
+        const auto b = i.GetBuffer();
+
+#ifdef EXPECTED_RESULT
+        if (record) {
+#ifdef __clang__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstring-plus-int"
+#endif
+
+            assert(memcmp((const char *)EXPECTED_RESULT + skipped + buffer.size(),
+                          b.data, b.size) == 0);
+
+#ifdef __clang__
+#pragma GCC diagnostic pop
+#endif
+
+            buffer.append((const char *)b.data, b.size);
+        }
+#endif
+
+        consumed += b.size;
+    }
+
+    gcc_unused size_t consumed2 = input.ConsumeBucketList(consumed);
+    assert(consumed2 == consumed);
+
+    if (result && !list.HasMore()) {
+        ClearAndCloseInput();
+        result = false;
+    }
+
+    return result;
+}
 
 /*
  * istream handler
@@ -340,6 +403,28 @@ test_normal(Instance &instance)
     assert(istream);
 
     run_istream(instance, pool, std::move(istream), true);
+}
+
+/** test with Istream::FillBucketList() */
+static void
+test_bucket(Instance &instance)
+{
+    auto *pool = pool_new_linear(instance.root_pool, "test_normal", 8192);
+
+    auto istream = create_test(instance.event_loop, *pool, create_input(*pool));
+    assert(istream);
+
+    Context ctx(instance, std::move(istream));
+#ifdef EXPECTED_RESULT
+    ctx.record = true;
+#endif
+
+    while (ctx.ReadBuckets()) {}
+
+    if (ctx.input.IsDefined())
+        run_istream_ctx(ctx, pool);
+    else
+        pool_unref(pool);
 }
 
 /** invoke Istream::Skip(1) */
@@ -616,6 +701,7 @@ int main(int argc, char **argv) {
     /* run test suite */
 
     RunTest(test_normal);
+    RunTest(test_bucket);
     RunTest(test_skip);
     if (enable_blocking) {
         RunTest(test_block);
