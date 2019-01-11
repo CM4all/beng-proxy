@@ -97,6 +97,15 @@ public:
         }
     }
 
+    size_t _ConsumeBucketList(size_t nbytes) noexcept override {
+        assert(!input_error);
+
+        if (input_eof)
+            return 0;
+        else
+            return ForwardIstream::_ConsumeBucketList(nbytes);
+    }
+
     int _AsFd() noexcept override {
         return Check()
             ? ForwardIstream::_AsFd()
