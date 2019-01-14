@@ -702,112 +702,49 @@ t_istream_filter = static_library('t_istream_filter',
   ])
 
 t_istream_filter_deps = [
+  gtest,
   istream_dep,
   declare_dependency(link_with: t_istream_filter),
 ]
 
-test('t_istream_cat', executable('t_istream_cat',
-  't_istream_cat.cxx',
-  include_directories: inc,
-  dependencies: t_istream_filter_deps))
-
-test('t_istream_catch', executable('t_istream_catch',
-  't_istream_catch.cxx',
-  include_directories: inc,
-  dependencies: t_istream_filter_deps))
-
-test('t_istream_chunked', executable('t_istream_chunked',
-  't_istream_chunked.cxx',
-  include_directories: inc,
-  dependencies: t_istream_filter_deps))
-
-test('t_istream_dechunk', executable('t_istream_dechunk',
-  't_istream_dechunk.cxx',
-  include_directories: inc,
-  dependencies: t_istream_filter_deps))
-
-test('t_istream_dechunk_verbatim1', executable('t_istream_dechunk_verbatim1',
-  't_istream_dechunk_verbatim.cxx',
-  include_directories: inc,
-  dependencies: t_istream_filter_deps))
-
-test('t_istream_dechunk_verbatim2', executable('t_istream_dechunk_verbatim2',
-  't_istream_dechunk_verbatim2.cxx',
-  include_directories: inc,
-  dependencies: t_istream_filter_deps))
-
-test('t_istream_dechunk_verbatim3', executable('t_istream_dechunk_verbatim3',
-  't_istream_dechunk_verbatim3.cxx',
-  include_directories: inc,
-  dependencies: t_istream_filter_deps))
-
-test('TestAutoPipeIstream', executable('TestAutoPipeIstream',
-  'TestAutoPipeIstream.cxx',
-  '../src/pipe_stock.cxx',
-  '../src/PipeLease.cxx',
-  include_directories: inc,
-  dependencies: [stock_dep] + t_istream_filter_deps))
-
-test('t_istream_hold', executable('t_istream_hold',
-  't_istream_hold.cxx',
-  include_directories: inc,
-  dependencies: t_istream_filter_deps))
-
-test('t_istream_delayed', executable('t_istream_delayed',
-  't_istream_delayed.cxx',
-  include_directories: inc,
-  dependencies: t_istream_filter_deps))
-
-test('t_istream_subst', executable('t_istream_subst',
-  't_istream_subst.cxx',
-  include_directories: inc,
-  dependencies: t_istream_filter_deps))
-
-test('TestYamlSubstIstream', executable('TestYamlSubstIstream',
-  'TestYamlSubstIstream.cxx',
-  include_directories: inc,
-  dependencies: t_istream_filter_deps))
-
-test('t_istream_deflate', executable('t_istream_deflate',
-  't_istream_deflate.cxx',
-  include_directories: inc,
-  dependencies: t_istream_filter_deps))
-
-test('t_istream_byte', executable('t_istream_byte',
-  't_istream_byte.cxx',
-  include_directories: inc,
-  dependencies: t_istream_filter_deps))
-
-test('t_istream_replace', executable('t_istream_replace',
-  't_istream_replace.cxx',
-  include_directories: inc,
-  dependencies: t_istream_filter_deps))
-
-test('t_istream_replace2', executable('t_istream_replace2',
-  't_istream_replace2.cxx',
-  include_directories: inc,
-  dependencies: t_istream_filter_deps))
-
-test('t_istream_iconv', executable('t_istream_iconv',
-  't_istream_iconv.cxx',
-  include_directories: inc,
-  dependencies: t_istream_filter_deps))
-
-test('t_istream_html_escape', executable('t_istream_html_escape',
-  't_istream_html_escape.cxx',
-  '../src/istream_escape.cxx',
-  '../src/istream_html_escape.cxx',
-  include_directories: inc,
-  dependencies: t_istream_filter_deps))
-
-test('t_istream_fcgi', executable('t_istream_fcgi',
-  't_istream_fcgi.cxx',
-  '../src/fcgi/istream_fcgi.cxx',
-  include_directories: inc,
-  dependencies: t_istream_filter_deps))
+test(
+  'IstreamFilterTest',
+  executable(
+    'IstreamFilterTest',
+    'IstreamFilterTest.cxx',
+    't_istream_byte.cxx',
+    't_istream_cat.cxx',
+    't_istream_catch.cxx',
+    't_istream_chunked.cxx',
+    't_istream_dechunk.cxx',
+    't_istream_deflate.cxx',
+    't_istream_delayed.cxx',
+    't_istream_fcgi.cxx',
+    '../src/fcgi/istream_fcgi.cxx',
+    't_istream_hold.cxx',
+    't_istream_html_escape.cxx',
+    '../src/istream_escape.cxx',
+    '../src/istream_html_escape.cxx',
+    't_istream_iconv.cxx',
+    't_istream_replace.cxx',
+    't_istream_subst.cxx',
+    't_sink_header.cxx',
+    't_sink_header_empty.cxx',
+    'TestAutoPipeIstream.cxx',
+    '../src/pipe_stock.cxx',
+    '../src/PipeLease.cxx',
+    'TestYamlSubstIstream.cxx',
+    include_directories: inc,
+    dependencies: [
+      t_istream_filter_deps,
+      stock_dep,
+    ],
+  ),
+)
 
 test('t_istream_processor', executable('t_istream_processor',
   't_istream_processor.cxx',
+  'IstreamFilterTest.cxx',
   'FailingResourceLoader.cxx',
   '../src/crash.cxx',
   '../src/random.cxx',
@@ -820,21 +757,12 @@ test('t_istream_processor', executable('t_istream_processor',
   '../src/istream_html_escape.cxx',
   include_directories: inc,
   dependencies: [
+    gtest,
     threads,
     processor_dep,
     widget_dep,
     session_dep,
   ] + t_istream_filter_deps))
-
-test('t_sink_header', executable('t_sink_header',
-  't_sink_header.cxx',
-  include_directories: inc,
-  dependencies: t_istream_filter_deps))
-
-test('t_sink_header_empty', executable('t_sink_header_empty',
-  't_sink_header_empty.cxx',
-  include_directories: inc,
-  dependencies: t_istream_filter_deps))
 
 test('t_istream_tee', executable('t_istream_tee',
   't_istream_tee.cxx',

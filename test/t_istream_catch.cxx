@@ -30,24 +30,13 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "IstreamFilterTest.hxx"
 #include "istream/istream_catch.hxx"
 #include "istream/istream_string.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "util/Exception.hxx"
 
 #include <stdio.h>
-
-/* an input string longer than the "space" buffer (128 bytes) to
-   trigger bugs due to truncated OnData() buffers */
-#define EXPECTED_RESULT "long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long"
-
-class EventLoop;
-
-static UnusedIstreamPtr
-create_input(struct pool &pool) noexcept
-{
-    return istream_string_new(pool, EXPECTED_RESULT);
-}
 
 static std::exception_ptr
 catch_callback(std::exception_ptr ep, gcc_unused void *ctx)
@@ -56,12 +45,28 @@ catch_callback(std::exception_ptr ep, gcc_unused void *ctx)
     return {};
 }
 
-static UnusedIstreamPtr
-create_test(EventLoop &, struct pool &pool, UnusedIstreamPtr input)
-{
-    return istream_catch_new(&pool, std::move(input),
-                             catch_callback, nullptr);
-}
+class IstreamCatchTestTraits {
+public:
+    /* an input string longer than the "space" buffer (128 bytes) to
+       trigger bugs due to truncated OnData() buffers */
+    static constexpr const char *expected_result =
+        "long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long";
 
-#define NO_AVAILABLE_CALL
-#include "t_istream_filter.hxx"
+    static constexpr bool call_available = false;
+    static constexpr bool got_data_assert = true;
+    static constexpr bool enable_blocking = true;
+    static constexpr bool enable_abort_istream = true;
+
+    UnusedIstreamPtr CreateInput(struct pool &pool) const noexcept {
+        return istream_string_new(pool, expected_result);
+    }
+
+    UnusedIstreamPtr CreateTest(EventLoop &, struct pool &pool,
+                                UnusedIstreamPtr input) const noexcept {
+        return istream_catch_new(&pool, std::move(input),
+                                 catch_callback, nullptr);
+    }
+};
+
+INSTANTIATE_TYPED_TEST_CASE_P(Catch, IstreamFilterTest,
+                              IstreamCatchTestTraits);

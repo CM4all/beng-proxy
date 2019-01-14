@@ -30,6 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "IstreamFilterTest.hxx"
 #include "FailingResourceLoader.hxx"
 #include "istream/istream_string.hxx"
 #include "istream/istream.hxx"
@@ -44,11 +45,10 @@
 #include "widget/Registry.hxx"
 #include "bp/Global.hxx"
 #include "crash.hxx"
+#include "util/ScopeExit.hxx"
 
 #include <stdlib.h>
 #include <stdio.h>
-
-#define EXPECTED_RESULT "foo &c:url; <script><c:widget id=\"foo\" type=\"bar\"/></script> bar"
 
 class EventLoop;
 
@@ -73,49 +73,52 @@ embed_inline_widget(struct pool &pool, gcc_unused struct processor_env &env,
     return istream_string_new(pool, p_strdup(&pool, widget.class_name));
 }
 
-static UnusedIstreamPtr
-create_input(struct pool &pool)
-{
-    return istream_string_new(pool, "foo &c:url; <script><c:widget id=\"foo\" type=\"bar\"/></script> <c:widget id=\"foo\" type=\"bar\"/>");
-}
+class IstreamProcessorTestTraits {
+public:
+    static constexpr const char *expected_result =
+        "foo &c:url; <script><c:widget id=\"foo\" type=\"bar\"/></script> bar";
 
-static UnusedIstreamPtr
-create_test(EventLoop &event_loop, struct pool &pool, UnusedIstreamPtr input)
-{
-    /* HACK, processor.c will ignore c:widget otherwise */
-    global_translate_cache = (struct tcache *)(size_t)1;
+    static constexpr bool call_available = true;
+    static constexpr bool got_data_assert = true;
+    static constexpr bool enable_blocking = true;
+    static constexpr bool enable_abort_istream = true;
 
-    auto *widget = NewFromPool<Widget>(pool, pool, &root_widget_class);
+    UnusedIstreamPtr CreateInput(struct pool &pool) const noexcept {
+        return istream_string_new(pool, "foo &c:url; <script><c:widget id=\"foo\" type=\"bar\"/></script> <c:widget id=\"foo\" type=\"bar\"/>");
+    }
 
-    crash_global_init();
-    session_manager_init(event_loop, std::chrono::minutes(30), 0, 0);
+    UnusedIstreamPtr CreateTest(EventLoop &event_loop, struct pool &pool,
+                                UnusedIstreamPtr input) const noexcept {
+        /* HACK, processor.c will ignore c:widget otherwise */
+        global_translate_cache = (struct tcache *)(size_t)1;
 
-    auto *session = session_new();
+        auto *widget = NewFromPool<Widget>(pool, pool, &root_widget_class);
 
-    static struct processor_env env;
-    FailingResourceLoader resource_loader;
-    env = processor_env(event_loop, resource_loader, resource_loader,
-                        nullptr, nullptr,
-                        "localhost:8080",
-                        "localhost:8080",
-                        "/beng.html",
-                        "http://localhost:8080/beng.html",
-                        "/beng.html",
-                        nullptr,
-                        "bp_session", session->id, "foo",
-                        nullptr);
-    session_put(session);
+        crash_global_init();
+        AtScopeExit() { crash_global_deinit(); };
 
-    return processor_process(pool, std::move(input), *widget, env, PROCESSOR_CONTAINER);
-}
+        session_manager_init(event_loop, std::chrono::minutes(30), 0, 0);
+        AtScopeExit() { session_manager_deinit(); };
 
-static void
-cleanup(void)
-{
-    session_manager_deinit();
-    crash_global_deinit();
-}
+        auto *session = session_new();
 
-#define FILTER_CLEANUP
+        static struct processor_env env;
+        FailingResourceLoader resource_loader;
+        env = processor_env(event_loop, resource_loader, resource_loader,
+                            nullptr, nullptr,
+                            "localhost:8080",
+                            "localhost:8080",
+                            "/beng.html",
+                            "http://localhost:8080/beng.html",
+                            "/beng.html",
+                            nullptr,
+                            "bp_session", session->id, "foo",
+                            nullptr);
+        session_put(session);
 
-#include "t_istream_filter.hxx"
+        return processor_process(pool, std::move(input), *widget, env, PROCESSOR_CONTAINER);
+    }
+};
+
+INSTANTIATE_TYPED_TEST_CASE_P(Processor, IstreamFilterTest,
+                              IstreamProcessorTestTraits);

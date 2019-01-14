@@ -30,22 +30,29 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "IstreamFilterTest.hxx"
 #include "istream/istream_deflate.hxx"
 #include "istream/istream_string.hxx"
 #include "istream/UnusedPtr.hxx"
 
-class EventLoop;
+class IstreamDeflateTestTraits {
+public:
+    static constexpr const char *expected_result = nullptr;
 
-static UnusedIstreamPtr
-create_input(struct pool &pool)
-{
-    return istream_string_new(pool, "foo");
-}
+    static constexpr bool call_available = true;
+    static constexpr bool got_data_assert = true;
+    static constexpr bool enable_blocking = true;
+    static constexpr bool enable_abort_istream = true;
 
-static UnusedIstreamPtr
-create_test(EventLoop &event_loop, struct pool &pool, UnusedIstreamPtr input)
-{
-    return istream_deflate_new(pool, std::move(input), event_loop);
-}
+    UnusedIstreamPtr CreateInput(struct pool &pool) const noexcept {
+        return istream_string_new(pool, "foo");
+    }
 
-#include "t_istream_filter.hxx"
+    UnusedIstreamPtr CreateTest(EventLoop &event_loop, struct pool &pool,
+                                UnusedIstreamPtr input) const noexcept {
+        return istream_deflate_new(pool, std::move(input), event_loop);
+    }
+};
+
+INSTANTIATE_TYPED_TEST_CASE_P(Deflate, IstreamFilterTest,
+                              IstreamDeflateTestTraits);

@@ -30,6 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "IstreamFilterTest.hxx"
 #include "istream/sink_header.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "istream/istream.hxx"
@@ -40,16 +41,6 @@
 
 #include <assert.h>
 #include <string.h>
-
-#define EXPECTED_RESULT "foo"
-
-class EventLoop;
-
-static UnusedIstreamPtr
-create_input(struct pool &pool)
-{
-    return istream_memory_new(pool, "\0\0\0\x06" "foobarfoo", 13);
-}
 
 static void
 my_sink_header_done(gcc_unused void *header, gcc_unused size_t length,
@@ -78,21 +69,32 @@ static const struct sink_header_handler my_sink_header_handler = {
     .error = my_sink_header_error,
 };
 
-static UnusedIstreamPtr
-create_test(EventLoop &event_loop, struct pool &pool, UnusedIstreamPtr input)
-{
-    auto delayed = istream_delayed_new(pool, event_loop);
-    UnusedHoldIstreamPtr hold(pool, std::move(delayed.first));
+class IstreamSinkHeaderTestTraits {
+public:
+    static constexpr const char *expected_result = "foo";
 
-    auto &sink = sink_header_new(pool, std::move(input),
-                                 my_sink_header_handler, &delayed.second,
-                                 delayed.second.cancel_ptr);
-    sink_header_read(sink);
+    static constexpr bool call_available = true;
+    static constexpr bool got_data_assert = false;
+    static constexpr bool enable_blocking = false;
+    static constexpr bool enable_abort_istream = true;
 
-    return std::move(hold);
-}
+    UnusedIstreamPtr CreateInput(struct pool &pool) const noexcept {
+        return istream_memory_new(pool, "\0\0\0\x06" "foobarfoo", 13);
+    }
 
-#define NO_BLOCKING
-#define NO_GOT_DATA_ASSERT
+    UnusedIstreamPtr CreateTest(EventLoop &event_loop, struct pool &pool,
+                                UnusedIstreamPtr input) const noexcept {
+        auto delayed = istream_delayed_new(pool, event_loop);
+        UnusedHoldIstreamPtr hold(pool, std::move(delayed.first));
 
-#include "t_istream_filter.hxx"
+        auto &sink = sink_header_new(pool, std::move(input),
+                                     my_sink_header_handler, &delayed.second,
+                                     delayed.second.cancel_ptr);
+        sink_header_read(sink);
+
+        return std::move(hold);
+    }
+};
+
+INSTANTIATE_TYPED_TEST_CASE_P(SinkHeader, IstreamFilterTest,
+                              IstreamSinkHeaderTestTraits);

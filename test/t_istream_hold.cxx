@@ -30,24 +30,29 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "IstreamFilterTest.hxx"
 #include "istream/istream_hold.hxx"
 #include "istream/istream_string.hxx"
 #include "istream/UnusedPtr.hxx"
 
-#define EXPECTED_RESULT "foo"
+class IstreamHoldTestTraits {
+public:
+    static constexpr const char *expected_result = "foo";
 
-class EventLoop;
+    static constexpr bool call_available = true;
+    static constexpr bool got_data_assert = true;
+    static constexpr bool enable_blocking = true;
+    static constexpr bool enable_abort_istream = true;
 
-static UnusedIstreamPtr
-create_input(struct pool &pool)
-{
-    return istream_string_new(pool, "foo");
-}
+    UnusedIstreamPtr CreateInput(struct pool &pool) const noexcept {
+        return istream_string_new(pool, "foo");
+    }
 
-static UnusedIstreamPtr
-create_test(EventLoop &, struct pool &pool, UnusedIstreamPtr input)
-{
-    return UnusedIstreamPtr(istream_hold_new(pool, std::move(input)));
-}
+    UnusedIstreamPtr CreateTest(EventLoop &, struct pool &pool,
+                                UnusedIstreamPtr input) const noexcept {
+        return UnusedIstreamPtr(istream_hold_new(pool, std::move(input)));
+    }
+};
 
-#include "t_istream_filter.hxx"
+INSTANTIATE_TYPED_TEST_CASE_P(Hold, IstreamFilterTest,
+                              IstreamHoldTestTraits);

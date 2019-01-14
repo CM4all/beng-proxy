@@ -30,29 +30,63 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "IstreamFilterTest.hxx"
 #include "istream/ReplaceIstream.hxx"
 #include "istream/istream_string.hxx"
 #include "istream/UnusedPtr.hxx"
 
-#define EXPECTED_RESULT "foo"
+class IstreamReplaceTestTraits {
+public:
+    static constexpr const char *expected_result = "foo";
 
-class EventLoop;
+    static constexpr bool call_available = true;
+    static constexpr bool got_data_assert = true;
+    static constexpr bool enable_blocking = true;
+    static constexpr bool enable_abort_istream = true;
 
-static UnusedIstreamPtr
-create_input(struct pool &pool)
-{
-    return istream_string_new(pool, "foo");
-}
+    UnusedIstreamPtr CreateInput(struct pool &pool) const noexcept {
+        return istream_string_new(pool, "foo");
+    }
 
-static UnusedIstreamPtr
-create_test(EventLoop &event_loop, struct pool &pool,
-            UnusedIstreamPtr input) noexcept
-{
-    auto replace = istream_replace_new(event_loop, pool, std::move(input));
-    replace.second->Add(0, 0, nullptr);
-    replace.second->Add(3, 3, nullptr);
-    replace.second->Finish();
-    return std::move(replace.first);
-}
+    UnusedIstreamPtr CreateTest(EventLoop &event_loop, struct pool &pool,
+                                UnusedIstreamPtr input) const noexcept {
+        auto replace = istream_replace_new(event_loop, pool, std::move(input));
+        replace.second->Add(0, 0, nullptr);
+        replace.second->Add(3, 3, nullptr);
+        replace.second->Finish();
+        return std::move(replace.first);
+    }
+};
 
-#include "t_istream_filter.hxx"
+INSTANTIATE_TYPED_TEST_CASE_P(Replace, IstreamFilterTest,
+                              IstreamReplaceTestTraits);
+
+class IstreamReplace2TestTraits {
+public:
+    static constexpr const char *expected_result =
+        "abcfoofghijklmnopqrstuvwxyz";
+
+    static constexpr bool call_available = true;
+    static constexpr bool got_data_assert = true;
+    static constexpr bool enable_blocking = true;
+    static constexpr bool enable_abort_istream = true;
+
+    UnusedIstreamPtr CreateInput(struct pool &pool) const noexcept {
+        return istream_string_new(pool, "foo");
+    }
+
+    UnusedIstreamPtr CreateTest(EventLoop &event_loop, struct pool &pool,
+                                UnusedIstreamPtr input) const noexcept {
+        auto istream =
+            istream_string_new(pool, "abcdefghijklmnopqrstuvwxyz");
+        auto replace = istream_replace_new(event_loop, pool, std::move(istream));
+        replace.second->Add(3, 3, std::move(input));
+        replace.second->Extend(3, 4);
+        replace.second->Extend(3, 5);
+        replace.second->Finish();
+        return std::move(replace.first);
+    }
+};
+
+INSTANTIATE_TYPED_TEST_CASE_P(Replace2, IstreamFilterTest,
+                              IstreamReplace2TestTraits);

@@ -30,6 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "IstreamFilterTest.hxx"
 #include "istream/YamlSubstIstream.hxx"
 #include "istream/istream_string.hxx"
 #include "istream/istream.hxx"
@@ -40,8 +41,6 @@
 #include <yaml-cpp/node/node.h>
 #include <yaml-cpp/node/impl.h>
 
-#define EXPECTED_RESULT "Good morning, everybody! bar"
-
 static constexpr char yaml[] =
     "top: level\n"
     "child:\n"
@@ -51,21 +50,27 @@ static constexpr char yaml[] =
     "    nested:\n"
     "      foo: bar\n";
 
-class EventLoop;
+class IstreamYamlSubstTestTraits {
+public:
+    static constexpr const char *expected_result = "Good morning, everybody! bar";
 
-static UnusedIstreamPtr
-create_input(struct pool &pool) noexcept
-{
-    return istream_string_new(pool, "{[foo:greeting]}, {[foo:object]}! {[foo:nested.foo]}");
-}
+    static constexpr bool call_available = true;
+    static constexpr bool got_data_assert = true;
+    static constexpr bool enable_blocking = true;
+    static constexpr bool enable_abort_istream = true;
 
-static UnusedIstreamPtr
-create_test(EventLoop &, struct pool &pool, UnusedIstreamPtr input) noexcept
-{
-    return NewYamlSubstIstream(pool, std::move(input), true,
-                               "foo:",
-                               YAML::Load(yaml),
-                               "child.grandchild");
-}
+    UnusedIstreamPtr CreateInput(struct pool &pool) const noexcept {
+        return istream_string_new(pool, "{[foo:greeting]}, {[foo:object]}! {[foo:nested.foo]}");
+    }
 
-#include "t_istream_filter.hxx"
+    UnusedIstreamPtr CreateTest(EventLoop &, struct pool &pool,
+                                UnusedIstreamPtr input) const noexcept {
+        return NewYamlSubstIstream(pool, std::move(input), true,
+                                   "foo:",
+                                   YAML::Load(yaml),
+                                   "child.grandchild");
+    }
+};
+
+INSTANTIATE_TYPED_TEST_CASE_P(YamlSubst, IstreamFilterTest,
+                              IstreamYamlSubstTestTraits);

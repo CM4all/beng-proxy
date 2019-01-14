@@ -30,24 +30,30 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "IstreamFilterTest.hxx"
 #include "istream_html_escape.hxx"
 #include "istream/istream_string.hxx"
 #include "istream/UnusedPtr.hxx"
 
-#define EXPECTED_RESULT "test&lt;foo&amp;bar&gt;test&quot;test&apos;"
+class IstreamHtmlEscapeTestTraits {
+public:
+    static constexpr const char *expected_result =
+        "test&lt;foo&amp;bar&gt;test&quot;test&apos;";
 
-class EventLoop;
+    static constexpr bool call_available = true;
+    static constexpr bool got_data_assert = true;
+    static constexpr bool enable_blocking = true;
+    static constexpr bool enable_abort_istream = true;
 
-static UnusedIstreamPtr
-create_input(struct pool &pool)
-{
-    return istream_string_new(pool, "test<foo&bar>test\"test'");
-}
+    UnusedIstreamPtr CreateInput(struct pool &pool) const noexcept {
+        return istream_string_new(pool, "test<foo&bar>test\"test'");
+    }
 
-static UnusedIstreamPtr
-create_test(EventLoop &, struct pool &pool, UnusedIstreamPtr input)
-{
-    return istream_html_escape_new(pool, std::move(input));
-}
+    UnusedIstreamPtr CreateTest(EventLoop &, struct pool &pool,
+                                UnusedIstreamPtr input) const noexcept {
+        return istream_html_escape_new(pool, std::move(input));
+    }
+};
 
-#include "t_istream_filter.hxx"
+INSTANTIATE_TYPED_TEST_CASE_P(HtmlEscape, IstreamFilterTest,
+                              IstreamHtmlEscapeTestTraits);

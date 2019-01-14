@@ -30,24 +30,29 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "IstreamFilterTest.hxx"
 #include "istream/istream_iconv.hxx"
 #include "istream/istream_string.hxx"
 #include "istream/UnusedPtr.hxx"
 
-#define EXPECTED_RESULT "f\xc3\xbc\xc3\xbc"
+class IstreamIconvTestTraits {
+public:
+    static constexpr const char *expected_result = "f\xc3\xbc\xc3\xbc";
 
-class EventLoop;
+    static constexpr bool call_available = true;
+    static constexpr bool got_data_assert = true;
+    static constexpr bool enable_blocking = true;
+    static constexpr bool enable_abort_istream = true;
 
-static UnusedIstreamPtr
-create_input(struct pool &pool)
-{
-    return istream_string_new(pool, "f\xfc\xfc");
-}
+    UnusedIstreamPtr CreateInput(struct pool &pool) const noexcept {
+        return istream_string_new(pool, "f\xfc\xfc");
+    }
 
-static UnusedIstreamPtr
-create_test(EventLoop &, struct pool &pool, UnusedIstreamPtr input)
-{
-    return istream_iconv_new(pool, std::move(input), "utf-8", "iso-8859-1");
-}
+    UnusedIstreamPtr CreateTest(EventLoop &, struct pool &pool,
+                                UnusedIstreamPtr input) const noexcept {
+        return istream_iconv_new(pool, std::move(input), "utf-8", "iso-8859-1");
+    }
+};
 
-#include "t_istream_filter.hxx"
+INSTANTIATE_TYPED_TEST_CASE_P(Iconv, IstreamFilterTest,
+                              IstreamIconvTestTraits);

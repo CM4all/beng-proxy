@@ -30,6 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "IstreamFilterTest.hxx"
 #include "istream/DelayedIstream.hxx"
 #include "istream/istream_string.hxx"
 #include "istream/UnusedPtr.hxx"
@@ -38,10 +39,6 @@
 
 #include <stdio.h>
 
-#define EXPECTED_RESULT "foo"
-
-class EventLoop;
-
 struct DelayedTest final : Cancellable {
     /* virtual methods from class Cancellable */
     void Cancel() noexcept override {
@@ -49,22 +46,29 @@ struct DelayedTest final : Cancellable {
     }
 };
 
-static UnusedIstreamPtr
-create_input(struct pool &pool)
-{
-    return istream_string_new(pool, "foo");
-}
+class IstreamDelayedTestTraits {
+public:
+    static constexpr const char *expected_result = "foo";
 
-static UnusedIstreamPtr
-create_test(EventLoop &event_loop, struct pool &pool,
-            UnusedIstreamPtr input) noexcept
-{
-    auto *test = NewFromPool<DelayedTest>(pool);
+    static constexpr bool call_available = true;
+    static constexpr bool got_data_assert = true;
+    static constexpr bool enable_blocking = true;
+    static constexpr bool enable_abort_istream = true;
 
-    auto delayed = istream_delayed_new(pool, event_loop);
-    delayed.second.cancel_ptr = *test;
-    delayed.second.Set(std::move(input));
-    return std::move(delayed.first);
-}
+    UnusedIstreamPtr CreateInput(struct pool &pool) const noexcept {
+        return istream_string_new(pool, "foo");
+    }
 
-#include "t_istream_filter.hxx"
+    UnusedIstreamPtr CreateTest(EventLoop &event_loop, struct pool &pool,
+                                UnusedIstreamPtr input) const noexcept {
+        auto *test = NewFromPool<DelayedTest>(pool);
+
+        auto delayed = istream_delayed_new(pool, event_loop);
+        delayed.second.cancel_ptr = *test;
+        delayed.second.Set(std::move(input));
+        return std::move(delayed.first);
+    }
+};
+
+INSTANTIATE_TYPED_TEST_CASE_P(Delayed, IstreamFilterTest,
+                              IstreamDelayedTestTraits);

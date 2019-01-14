@@ -30,6 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "IstreamFilterTest.hxx"
 #include "istream/ChunkedIstream.hxx"
 #include "istream/istream_string.hxx"
 #include "istream/istream.hxx"
@@ -37,57 +38,63 @@
 #include "istream/Handler.hxx"
 #include "pool/pool.hxx"
 
-class EventLoop;
+class IstreamChunkedTestTraits {
+public:
+    static constexpr const char *expected_result = nullptr;
 
-static UnusedIstreamPtr
-create_input(struct pool &pool)
-{
-    return istream_string_new(pool, "foo_bar_0123456789abcdefghijklmnopqrstuvwxyz");
-}
+    static constexpr bool call_available = true;
+    static constexpr bool got_data_assert = true;
+    static constexpr bool enable_blocking = true;
+    static constexpr bool enable_abort_istream = true;
 
-static UnusedIstreamPtr
-create_test(EventLoop &, struct pool &pool, UnusedIstreamPtr input)
-{
-    return istream_chunked_new(pool, std::move(input));
-}
-
-#define CUSTOM_TEST
-
-struct Custom final : Istream, IstreamHandler {
-    bool eof;
-    std::exception_ptr error;
-
-    explicit Custom(struct pool &p):Istream(p) {}
-
-    /* virtual methods from class Istream */
-
-    off_t _GetAvailable(gcc_unused bool partial) noexcept override {
-        return 1;
+    UnusedIstreamPtr CreateInput(struct pool &pool) const noexcept {
+        return istream_string_new(pool, "foo_bar_0123456789abcdefghijklmnopqrstuvwxyz");
     }
 
-    void _Read() noexcept override {}
-
-    /* virtual methods from class IstreamHandler */
-
-    size_t OnData(gcc_unused const void *data,
-                  gcc_unused size_t length) noexcept override {
-        InvokeData(" ", 1);
-        return 0;
-    }
-
-    void OnEof() noexcept override {
-        eof = true;
-    }
-
-    void OnError(std::exception_ptr ep) noexcept override {
-        error = ep;
+    UnusedIstreamPtr CreateTest(EventLoop &, struct pool &pool,
+                                UnusedIstreamPtr input) const noexcept {
+        return istream_chunked_new(pool, std::move(input));
     }
 };
 
-static void
-test_custom(EventLoop &, struct pool &_pool)
+INSTANTIATE_TYPED_TEST_CASE_P(Chunked, IstreamFilterTest,
+                              IstreamChunkedTestTraits);
+
+TEST(IstreamChunkedTest, Custom)
 {
-    auto &pool = *pool_new_linear(&_pool, "test", 8192);
+    struct Custom final : Istream, IstreamHandler {
+        bool eof;
+        std::exception_ptr error;
+
+        explicit Custom(struct pool &p):Istream(p) {}
+
+        /* virtual methods from class Istream */
+
+        off_t _GetAvailable(gcc_unused bool partial) noexcept override {
+            return 1;
+        }
+
+        void _Read() noexcept override {}
+
+        /* virtual methods from class IstreamHandler */
+
+        size_t OnData(gcc_unused const void *data,
+                      gcc_unused size_t length) noexcept override {
+            InvokeData(" ", 1);
+            return 0;
+        }
+
+        void OnEof() noexcept override {
+            eof = true;
+        }
+
+        void OnError(std::exception_ptr ep) noexcept override {
+            error = ep;
+        }
+    };
+
+    PInstance instance;
+    auto &pool = *pool_new_linear(instance.root_pool, "test", 8192);
     auto *ctx = NewFromPool<Custom>(pool, pool);
 
     auto *chunked = istream_chunked_new(pool, UnusedIstreamPtr(ctx)).Steal();
@@ -99,5 +106,3 @@ test_custom(EventLoop &, struct pool &_pool)
 
     pool_commit();
 }
-
-#include "t_istream_filter.hxx"

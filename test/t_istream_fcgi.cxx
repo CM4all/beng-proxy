@@ -30,22 +30,29 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "IstreamFilterTest.hxx"
 #include "istream/istream_string.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "fcgi/istream_fcgi.hxx"
 
-class EventLoop;
+class IstreamFcgiTestTraits {
+public:
+    static constexpr const char *expected_result = nullptr;
 
-static UnusedIstreamPtr
-create_input(struct pool &pool)
-{
-    return istream_string_new(pool, "foo");
-}
+    static constexpr bool call_available = true;
+    static constexpr bool got_data_assert = true;
+    static constexpr bool enable_blocking = true;
+    static constexpr bool enable_abort_istream = true;
 
-static UnusedIstreamPtr
-create_test(EventLoop &, struct pool &pool, UnusedIstreamPtr input)
-{
-    return istream_fcgi_new(pool, std::move(input), 1);
-}
+    UnusedIstreamPtr CreateInput(struct pool &pool) const noexcept {
+        return istream_string_new(pool, "foo");
+    }
 
-#include "t_istream_filter.hxx"
+    UnusedIstreamPtr CreateTest(EventLoop &, struct pool &pool,
+                                UnusedIstreamPtr input) const noexcept {
+        return istream_fcgi_new(pool, std::move(input), 1);
+    }
+};
+
+INSTANTIATE_TYPED_TEST_CASE_P(Fcgi, IstreamFilterTest,
+                              IstreamFcgiTestTraits);
