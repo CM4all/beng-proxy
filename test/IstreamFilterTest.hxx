@@ -281,6 +281,29 @@ TYPED_TEST_P(IstreamFilterTest, Bucket)
         pool_unref(pool);
 }
 
+/** test with Istream::FillBucketList() */
+TYPED_TEST_P(IstreamFilterTest, SmallBucket)
+{
+    TypeParam traits;
+    Instance instance;
+
+    auto *pool = pool_new_linear(instance.root_pool, "test_normal", 8192);
+
+    auto istream = traits.CreateTest(instance.event_loop, *pool, traits.CreateInput(*pool));
+    ASSERT_TRUE(!!istream);
+
+    Context ctx(instance, traits.expected_result, std::move(istream));
+    if (ctx.expected_result)
+        ctx.record = true;
+
+    while (ctx.ReadBuckets(3)) {}
+
+    if (ctx.input.IsDefined())
+        run_istream_ctx(traits, ctx, pool);
+    else
+        pool_unref(pool);
+}
+
 /** invoke Istream::Skip(1) */
 TYPED_TEST_P(IstreamFilterTest, Skip)
 {
@@ -579,6 +602,7 @@ TYPED_TEST_P(IstreamFilterTest, BigHold)
 REGISTER_TYPED_TEST_CASE_P(IstreamFilterTest,
                            Normal,
                            Bucket,
+                           SmallBucket,
                            Skip,
                            Block,
                            Byte,
