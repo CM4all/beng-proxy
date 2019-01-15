@@ -37,6 +37,7 @@
 #include "istream/istream.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "istream/Result.hxx"
+#include "istream/Bucket.hxx"
 #include "pool/pool.hxx"
 #include "fb_pool.hxx"
 #include "SliceFifoBuffer.hxx"
@@ -219,6 +220,9 @@ public:
         if (SubmitBuffer())
             TryRead();
     }
+
+    void _FillBucketList(IstreamBucketList &list) override;
+    size_t _ConsumeBucketList(size_t nbytes) noexcept override;
 
     void _Close() noexcept override {
         buffer.FreeIfDefined();
@@ -497,4 +501,39 @@ was_input_premature_throw(WasInput *input, uint64_t length)
     AtScopeExit(input) { input->Destroy(); };
     input->PrematureThrow(length);
     throw WasProtocolError("premature end of WAS response");
+}
+
+void
+WasInput::_FillBucketList(IstreamBucketList &list)
+{
+    auto r = buffer.Read();
+    if (r.empty()) {
+        if (!fd.IsDefined())
+            return;
+
+        ReadToBuffer();
+
+        r = buffer.Read();
+        if (r.empty()) {
+            list.SetMore();
+            return;
+        }
+    }
+
+    list.Push(r.ToVoid());
+
+    if (!known_length || received < length)
+        list.SetMore();
+}
+
+size_t
+WasInput::_ConsumeBucketList(size_t nbytes) noexcept
+{
+    size_t consumed = std::min(buffer.GetAvailable(), nbytes);
+
+    buffer.Consume(consumed);
+    buffer.FreeIfEmpty();
+
+    Consumed(consumed);
+    return consumed;
 }
