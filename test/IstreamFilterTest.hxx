@@ -167,7 +167,7 @@ struct Context final : IstreamSink {
                                     std::exception_ptr()));
     }
 
-    bool ReadBuckets();
+    bool ReadBuckets(size_t limit);
 
     /* virtual methods from class IstreamHandler */
     size_t OnData(const void *data, size_t length) noexcept override;
@@ -273,7 +273,7 @@ TYPED_TEST_P(IstreamFilterTest, Bucket)
     if (ctx.expected_result)
         ctx.record = true;
 
-    while (ctx.ReadBuckets()) {}
+    while (ctx.ReadBuckets(1024 * 1024)) {}
 
     if (ctx.input.IsDefined())
         run_istream_ctx(traits, ctx, pool);

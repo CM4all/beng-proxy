@@ -33,7 +33,7 @@
 #include "IstreamFilterTest.hxx"
 
 bool
-Context::ReadBuckets()
+Context::ReadBuckets(size_t limit)
 {
     IstreamBucketList list;
     input.FillBucketList(list);
@@ -53,17 +53,21 @@ Context::ReadBuckets()
         }
 
         const auto b = i.GetBuffer();
+        size_t size = std::min(b.size, limit);
 
         if (expected_result && record) {
             assert(skipped + buffer.size() == offset);
             assert(memcmp((const char *)expected_result + skipped + buffer.size(),
                           b.data, b.size) == 0);
 
-            buffer.append((const char *)b.data, b.size);
+            buffer.append((const char *)b.data, size);
         }
 
-        consumed += b.size;
-        offset += b.size;
+        consumed += size;
+        offset += size;
+        limit -= size;
+        if (limit == 0)
+            break;
     }
 
     gcc_unused size_t consumed2 = input.ConsumeBucketList(consumed);
