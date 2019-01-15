@@ -199,7 +199,7 @@ public:
 
     void TryRead() noexcept {
         if (CheckDirect(FdType::FD_PIPE)) {
-            if (SubmitBuffer())
+            if (SubmitBuffer() && buffer.empty())
                 TryDirect();
         } else {
             TryBuffered();
