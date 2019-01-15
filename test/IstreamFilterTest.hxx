@@ -100,6 +100,11 @@ struct Context final : IstreamSink {
 
     bool block_byte = false, block_byte_state = false;
 
+    /**
+     * The current offset in the #Istream.
+     */
+    size_t offset = 0;
+
     size_t skipped = 0;
 
     DeferEvent defer_inject_event;
@@ -117,8 +122,10 @@ struct Context final : IstreamSink {
     void Skip(off_t nbytes) noexcept {
         assert(skipped == 0);
         auto s = input.Skip(nbytes);
-        if (s > 0)
+        if (s > 0) {
             skipped += s;
+            offset += s;
+        }
     }
 
     int ReadEvent() {

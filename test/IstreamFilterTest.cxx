@@ -55,6 +55,7 @@ Context::ReadBuckets()
         const auto b = i.GetBuffer();
 
         if (expected_result && record) {
+            assert(skipped + buffer.size() == offset);
             assert(memcmp((const char *)expected_result + skipped + buffer.size(),
                           b.data, b.size) == 0);
 
@@ -62,6 +63,7 @@ Context::ReadBuckets()
         }
 
         consumed += b.size;
+        offset += b.size;
     }
 
     gcc_unused size_t consumed2 = input.ConsumeBucketList(consumed);
@@ -116,11 +118,13 @@ Context::OnData(gcc_unused const void *data, size_t length) noexcept
     }
 
     if (expected_result && record) {
+        assert(skipped + buffer.size() == offset);
         assert(memcmp((const char *)expected_result + skipped + buffer.size(), data, length) == 0);
 
         buffer.append((const char *)data, length);
     }
 
+    offset += length;
     return length;
 }
 
@@ -143,6 +147,7 @@ Context::OnDirect(gcc_unused FdType type, gcc_unused int fd, size_t max_length) 
         return 0;
     }
 
+    offset += max_length;
     return max_length;
 }
 
