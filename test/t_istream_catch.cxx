@@ -45,7 +45,7 @@ catch_callback(std::exception_ptr ep, gcc_unused void *ctx)
     return {};
 }
 
-class IstreamCatchTestTraits {
+class IstreamCatchTestTraits : public SkipErrorTraits {
 public:
     /* an input string longer than the "space" buffer (128 bytes) to
        trigger bugs due to truncated OnData() buffers */

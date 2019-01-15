@@ -55,9 +55,12 @@
 
 #include <stdexcept>
 #include <string>
+#include <type_traits>
 
 #include <stdio.h>
 #include <string.h>
+
+struct SkipErrorTraits {};
 
 template<typename T>
 class IstreamFilterTest : public ::testing::Test {
@@ -302,6 +305,40 @@ TYPED_TEST_P(IstreamFilterTest, SmallBucket)
         run_istream_ctx(traits, ctx, pool);
     else
         pool_unref(pool);
+}
+
+/** Istream::FillBucketList() throws */
+TYPED_TEST_P(IstreamFilterTest, BucketError)
+{
+    if (std::is_base_of<SkipErrorTraits, TypeParam>::value)
+        return;
+
+    TypeParam traits;
+    Instance instance;
+
+    auto *pool = pool_new_linear(instance.root_pool, "test_normal", 8192);
+
+    const std::runtime_error error("test_fail");
+    auto istream = traits.CreateTest(instance.event_loop, *pool,
+                                     istream_fail_new(*pool, std::make_exception_ptr(error)));
+    ASSERT_TRUE(!!istream);
+
+    Context ctx(instance, traits.expected_result, std::move(istream));
+    if (ctx.expected_result)
+        ctx.record = true;
+
+    try {
+        while (ctx.ReadBuckets(3)) {}
+
+        /* this is only reachable if the Istream doesn't support
+           FillBucketList() */
+        ASSERT_TRUE(ctx.input.IsDefined());
+        ctx.input.ClearAndClose();
+    } catch (...) {
+        ASSERT_FALSE(ctx.input.IsDefined());
+    }
+
+    pool_unref(pool);
 }
 
 /** invoke Istream::Skip(1) */
@@ -603,6 +640,7 @@ REGISTER_TYPED_TEST_CASE_P(IstreamFilterTest,
                            Normal,
                            Bucket,
                            SmallBucket,
+                           BucketError,
                            Skip,
                            Block,
                            Byte,
