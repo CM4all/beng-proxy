@@ -55,17 +55,8 @@ Context::ReadBuckets()
         const auto b = i.GetBuffer();
 
         if (expected_result && record) {
-#ifdef __clang__
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wstring-plus-int"
-#endif
-
             assert(memcmp((const char *)expected_result + skipped + buffer.size(),
                           b.data, b.size) == 0);
-
-#ifdef __clang__
-#pragma GCC diagnostic pop
-#endif
 
             buffer.append((const char *)b.data, b.size);
         }
@@ -125,16 +116,7 @@ Context::OnData(gcc_unused const void *data, size_t length) noexcept
     }
 
     if (expected_result && record) {
-#ifdef __clang__
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wstring-plus-int"
-#endif
-
         assert(memcmp((const char *)expected_result + skipped + buffer.size(), data, length) == 0);
-
-#ifdef __clang__
-#pragma GCC diagnostic pop
-#endif
 
         buffer.append((const char *)data, length);
     }
