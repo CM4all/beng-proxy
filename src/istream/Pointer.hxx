@@ -132,7 +132,7 @@ public:
         stream->FillBucketList(list);
     }
 
-    size_t ConsumeBucketList(size_t nbytes) {
+    size_t ConsumeBucketList(size_t nbytes) noexcept {
         assert(IsDefined());
 
         return stream->ConsumeBucketList(nbytes);
@@ -151,7 +151,7 @@ public:
         return stream->Skip(length);
     }
 
-    int AsFd() {
+    int AsFd() noexcept {
         assert(IsDefined());
 
         return stream->AsFd();
