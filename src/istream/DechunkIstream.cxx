@@ -120,7 +120,7 @@ private:
      */
     bool EofDetected() noexcept;
 
-    bool CalculateRemainingDataSize(const char *src, const char *src_end) noexcept;
+    bool CalculateRemainingDataSize(const uint8_t *src, const uint8_t *src_end) noexcept;
 
     size_t Feed(const void *data, size_t length) noexcept;
 
@@ -182,8 +182,8 @@ DechunkIstream::EofDetected() noexcept
 }
 
 inline bool
-DechunkIstream::CalculateRemainingDataSize(const char *src,
-                                           const char *const src_end) noexcept
+DechunkIstream::CalculateRemainingDataSize(const uint8_t *src,
+                                           const uint8_t *const src_end) noexcept
 {
     assert(!IsEofPending());
     assert(!eof);
@@ -203,12 +203,12 @@ DechunkIstream::CalculateRemainingDataSize(const char *src,
     HttpChunkParser p(parser);
 
     while (src != src_end) {
-        const ConstBuffer<char> src_remaining(src, src_end - src);
+        const ConstBuffer<uint8_t> src_remaining(src, src_end - src);
 
-        ConstBuffer<char> data;
+        ConstBuffer<uint8_t> data;
 
         try {
-            data = ConstBuffer<char>::FromVoid(p.Parse(src_remaining.ToVoid()));
+            data = ConstBuffer<uint8_t>::FromVoid(p.Parse(src_remaining.ToVoid()));
         } catch (...) {
             Abort(std::current_exception());
             return false;
@@ -240,7 +240,7 @@ DechunkIstream::Feed(const void *data0, size_t length) noexcept
 
     had_input = true;
 
-    const auto src_begin = (const char *)data0;
+    const auto src_begin = (const uint8_t *)data0;
     const auto src_end = src_begin + length;
 
     auto src = src_begin;
@@ -250,12 +250,12 @@ DechunkIstream::Feed(const void *data0, size_t length) noexcept
         src += pending_verbatim;
 
     while (src != src_end) {
-        const ConstBuffer<char> src_remaining(src, src_end - src);
+        const ConstBuffer<uint8_t> src_remaining(src, src_end - src);
 
-        ConstBuffer<char> data;
+        ConstBuffer<uint8_t> data;
 
         try {
-            data = ConstBuffer<char>::FromVoid(parser.Parse(src_remaining.ToVoid()));
+            data = ConstBuffer<uint8_t>::FromVoid(parser.Parse(src_remaining.ToVoid()));
         } catch (...) {
             Abort(std::current_exception());
             return 0;
