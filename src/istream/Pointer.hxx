@@ -129,7 +129,14 @@ public:
     void FillBucketList(IstreamBucketList &list) {
         assert(IsDefined());
 
-        stream->FillBucketList(list);
+        try {
+            stream->FillBucketList(list);
+        } catch (...) {
+            /* if FillBucketList() fails, the Istream is destroyed, so
+               clear the pointer here */
+            Clear();
+            throw;
+        }
     }
 
     size_t ConsumeBucketList(size_t nbytes) noexcept {

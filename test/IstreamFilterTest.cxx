@@ -36,13 +36,7 @@ bool
 Context::ReadBuckets()
 {
     IstreamBucketList list;
-
-    try {
-        input.FillBucketList(list);
-    } catch (...) {
-        input.Clear();
-        throw;
-    }
+    input.FillBucketList(list);
 
     if (list.IsEmpty() && list.HasMore())
         return false;

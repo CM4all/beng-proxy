@@ -115,7 +115,6 @@ struct TeeIstream final : IstreamHandler {
             try {
                 tee.input.FillBucketList(sub);
             } catch (...) {
-                tee.input.Clear();
                 tee.defer_event.Cancel();
                 enabled = false;
                 tee.PostponeErrorCopyForSecond(std::current_exception());

@@ -104,7 +104,6 @@ HttpServerConnection::TryWriteBuckets2()
     try {
         response.istream.FillBucketList(list);
     } catch (...) {
-        response.istream.Clear();
         std::throw_with_nested(std::runtime_error("error on HTTP response stream"));
     }
 

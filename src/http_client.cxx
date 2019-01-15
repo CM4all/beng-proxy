@@ -518,13 +518,7 @@ HttpClient::TryWriteBuckets2()
         return BucketResult::MORE;
 
     IstreamBucketList list;
-
-    try {
-        request.istream.FillBucketList(list);
-    } catch (...) {
-        request.istream.Clear();
-        throw;
-    }
+    request.istream.FillBucketList(list);
 
     StaticArray<struct iovec, 64> v;
     for (const auto &bucket : list) {

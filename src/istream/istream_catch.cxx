@@ -256,7 +256,6 @@ CatchIstream::_FillBucketList(IstreamBucketList &list)
 
         /* the error has been handled by the callback, and he has
            disposed it */
-        ClearInput();
         list.SetMore();
 
         // TODO: return space bucket here
