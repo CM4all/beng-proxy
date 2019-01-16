@@ -403,6 +403,7 @@ istream = static_library('istream',
   'src/istream/StringSink.cxx',
   'src/istream/sink_fd.cxx',
   'src/istream/ToBucketIstream.cxx',
+  'src/istream/FromBucketIstream.cxx',
   include_directories: inc,
   dependencies: [
     zlib,
