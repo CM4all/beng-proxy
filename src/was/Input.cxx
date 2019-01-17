@@ -169,7 +169,8 @@ public:
     /**
      * Consume data from the input buffer.
      *
-     * @return false if the object has been destroyed
+     * @return false if the handler blocks or if this object has been
+     * destroyed
      */
     bool SubmitBuffer() noexcept {
         auto r = buffer.Read();
