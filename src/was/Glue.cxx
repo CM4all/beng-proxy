@@ -158,7 +158,7 @@ WasRequest::OnStockItemReady(StockItem &item) noexcept
 
     was_client_request(pool, item.stock.GetEventLoop(), stopwatch,
                        process.control,
-                       process.input, process.output.Get(),
+                       process.input, process.output,
                        *this,
                        method, uri,
                        script_name, path_info,

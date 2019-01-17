@@ -74,7 +74,7 @@ void
 was_client_request(struct pool &pool, EventLoop &event_loop,
                    Stopwatch *stopwatch,
                    SocketDescriptor control_fd,
-                   FileDescriptor input_fd, int output_fd,
+                   FileDescriptor input_fd, FileDescriptor output_fd,
                    WasLease &lease,
                    http_method_t method, const char *uri,
                    const char *script_name, const char *path_info,

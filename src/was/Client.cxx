@@ -796,7 +796,7 @@ void
 was_client_request(struct pool &caller_pool, EventLoop &event_loop,
                    Stopwatch *stopwatch,
                    SocketDescriptor control_fd,
-                   FileDescriptor input_fd, int output_fd,
+                   FileDescriptor input_fd, FileDescriptor output_fd,
                    WasLease &lease,
                    http_method_t method, const char *uri,
                    const char *script_name, const char *path_info,
@@ -812,8 +812,7 @@ was_client_request(struct pool &caller_pool, EventLoop &event_loop,
     struct pool *pool = pool_new_linear(&caller_pool, "was_client_request", 32768);
     auto client = NewFromPool<WasClient>(*pool, *pool, caller_pool,
                                          event_loop, stopwatch,
-                                         control_fd, input_fd,
-                                         FileDescriptor(output_fd),
+                                         control_fd, input_fd, output_fd,
                                          lease, method, std::move(body),
                                          handler, cancel_ptr);
 

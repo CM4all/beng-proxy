@@ -202,7 +202,7 @@ try {
     was_client_request(context.root_pool, context.event_loop, nullptr,
                        context.process.control,
                        context.process.input,
-                       context.process.output.Get(),
+                       context.process.output,
                        context,
                        HTTP_METHOD_GET, "/",
                        nullptr,
