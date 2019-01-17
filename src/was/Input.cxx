@@ -33,7 +33,6 @@
 #include "Input.hxx"
 #include "Error.hxx"
 #include "event/SocketEvent.hxx"
-#include "event/TimerEvent.hxx"
 #include "direct.hxx"
 #include "istream/istream.hxx"
 #include "istream/UnusedPtr.hxx"
@@ -52,16 +51,10 @@
 #include <string.h>
 #include <unistd.h>
 
-static constexpr struct timeval was_input_timeout = {
-    .tv_sec = 120,
-    .tv_usec = 0,
-};
-
 class WasInput final : public Istream {
 public:
     int fd;
     SocketEvent event;
-    TimerEvent timeout_event;
 
     WasInputHandler &handler;
 
@@ -71,14 +64,13 @@ public:
 
     bool enabled = false;
 
-    bool closed = false, timeout = false, known_length = false;
+    bool closed = false, known_length = false;
 
     WasInput(struct pool &p, EventLoop &event_loop, int _fd,
              WasInputHandler &_handler) noexcept
         :Istream(p), fd(_fd),
          event(event_loop, BIND_THIS_METHOD(EventCallback),
                SocketDescriptor(fd)),
-         timeout_event(event_loop, BIND_THIS_METHOD(OnTimeout)),
          handler(_handler) {
     }
 
@@ -106,7 +98,6 @@ public:
         assert(fd >= 0);
         fd = -1;
         event.Cancel();
-        timeout_event.Cancel();
 
         return handler.WasInputRelease();
     }
@@ -127,8 +118,6 @@ public:
         assert(!buffer.IsDefined() || !buffer.IsFull());
 
         event.ScheduleRead();
-        if (timeout)
-            timeout_event.Add(was_input_timeout);
     }
 
     void AbortError(std::exception_ptr ep) noexcept {
@@ -213,10 +202,6 @@ public:
 
     void EventCallback(unsigned events) noexcept;
 
-    void OnTimeout() noexcept {
-        AbortError("data receive timeout");
-    }
-
     /* virtual methods from class Istream */
 
     off_t _GetAvailable(bool partial) noexcept override {
@@ -230,7 +215,6 @@ public:
 
     void _Read() noexcept override {
         event.Cancel();
-        timeout_event.Cancel();
 
         if (SubmitBuffer())
             TryRead();
@@ -368,8 +352,6 @@ WasInput::EventCallback(unsigned) noexcept
 {
     assert(fd >= 0);
 
-    timeout_event.Cancel();
-
     TryRead();
 }
 
@@ -396,7 +378,6 @@ WasInput::Free(std::exception_ptr ep) noexcept
     buffer.FreeIfDefined();
 
     event.Cancel();
-    timeout_event.Cancel();
 
     if (!closed && enabled)
         DestroyError(ep);
@@ -465,7 +446,6 @@ WasInput::PrematureThrow(uint64_t _length)
 {
     buffer.FreeIfDefined();
     event.Cancel();
-    timeout_event.Cancel();
 
     if (known_length && _length > length)
         throw WasProtocolError("announced premature length is too large");
