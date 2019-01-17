@@ -55,7 +55,7 @@
 class WasServer final : WasControlHandler, WasOutputHandler, WasInputHandler {
     struct pool &pool;
 
-    const int control_fd;
+    SocketDescriptor control_fd;
     FileDescriptor input_fd, output_fd;
 
     WasControl control;
@@ -112,7 +112,7 @@ class WasServer final : WasControlHandler, WasOutputHandler, WasInputHandler {
 
 public:
     WasServer(struct pool &_pool, EventLoop &event_loop,
-              int _control_fd,
+              SocketDescriptor _control_fd,
               FileDescriptor _input_fd, FileDescriptor _output_fd,
               WasServerHandler &_handler)
         :pool(_pool),
@@ -129,7 +129,7 @@ public:
 
 private:
     void CloseFiles() {
-        close(control_fd);
+        control_fd.Close();
         input_fd.Close();
         output_fd.Close();
     }
@@ -518,10 +518,11 @@ WasServer::OnWasControlError(std::exception_ptr ep) noexcept
 
 WasServer *
 was_server_new(struct pool &pool, EventLoop &event_loop,
-               int control_fd, FileDescriptor input_fd, int output_fd,
+               SocketDescriptor control_fd,
+               FileDescriptor input_fd, int output_fd,
                WasServerHandler &handler)
 {
-    assert(control_fd >= 0);
+    assert(control_fd.IsDefined());
     assert(input_fd.IsDefined());
     assert(output_fd >= 0);
 

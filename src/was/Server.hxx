@@ -38,6 +38,7 @@
 
 struct pool;
 class FileDescriptor;
+class SocketDescriptor;
 class EventLoop;
 class UnusedIstreamPtr;
 struct lease;
@@ -67,7 +68,8 @@ public:
  */
 WasServer *
 was_server_new(struct pool &pool, EventLoop &event_loop,
-               int control_fd, FileDescriptor input_fd, int output_fd,
+               SocketDescriptor control_fd,
+               FileDescriptor input_fd, int output_fd,
                WasServerHandler &handler);
 
 void

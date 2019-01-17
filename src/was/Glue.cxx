@@ -157,7 +157,7 @@ WasRequest::OnStockItemReady(StockItem &item) noexcept
     const auto &process = was_stock_item_get(item);
 
     was_client_request(pool, item.stock.GetEventLoop(), stopwatch,
-                       process.control.Get(),
+                       process.control,
                        process.input, process.output.Get(),
                        *this,
                        method, uri,

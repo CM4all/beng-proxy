@@ -49,11 +49,11 @@
 
 static constexpr auto was_control_timeout = std::chrono::minutes(2);
 
-WasControl::WasControl(EventLoop &event_loop, int _fd,
+WasControl::WasControl(EventLoop &event_loop, SocketDescriptor _fd,
                        WasControlHandler &_handler) noexcept
     :socket(event_loop), handler(_handler)
 {
-    socket.Init(SocketDescriptor(_fd), FD_SOCKET,
+    socket.Init(_fd, FD_SOCKET,
                 was_control_timeout, was_control_timeout,
                 *this);
 

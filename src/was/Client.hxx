@@ -38,6 +38,7 @@
 struct pool;
 struct Stopwatch;
 class FileDescriptor;
+class SocketDescriptor;
 class EventLoop;
 class UnusedIstreamPtr;
 class WasLease;
@@ -72,7 +73,8 @@ template<typename T> struct ConstBuffer;
 void
 was_client_request(struct pool &pool, EventLoop &event_loop,
                    Stopwatch *stopwatch,
-                   int control_fd, FileDescriptor input_fd, int output_fd,
+                   SocketDescriptor control_fd,
+                   FileDescriptor input_fd, int output_fd,
                    WasLease &lease,
                    http_method_t method, const char *uri,
                    const char *script_name, const char *path_info,

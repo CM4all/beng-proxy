@@ -157,7 +157,7 @@ public:
             exit(EXIT_FAILURE);
         }
 
-        server = was_server_new(pool, event_loop, control_server.Get(),
+        server = was_server_new(pool, event_loop, control_server,
                                 output_r, input_w.Get(), *this);
     }
 
@@ -178,7 +178,7 @@ public:
                  CancellablePointer &cancel_ptr) {
         lease = &_lease;
         was_client_request(*pool, event_loop, nullptr,
-                           control_fd.Get(), input_fd, output_fd.Get(),
+                           control_fd, input_fd, output_fd.Get(),
                            *this,
                            method, uri, uri, nullptr, nullptr,
                            headers, std::move(body), nullptr,

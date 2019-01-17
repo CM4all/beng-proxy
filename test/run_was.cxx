@@ -200,7 +200,7 @@ try {
                                  child_options, {}, nullptr);
 
     was_client_request(context.root_pool, context.event_loop, nullptr,
-                       context.process.control.Get(),
+                       context.process.control,
                        context.process.input,
                        context.process.output.Get(),
                        context,

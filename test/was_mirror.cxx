@@ -35,6 +35,7 @@
 #include "direct.hxx"
 #include "PInstance.hxx"
 #include "fb_pool.hxx"
+#include "net/SocketDescriptor.hxx"
 #include "io/Logger.hxx"
 
 #include <stdio.h>
@@ -63,7 +64,8 @@ int main(int argc, char **argv) {
     SetLogLevel(5);
 
     const FileDescriptor in_fd(0);
-    int out_fd = 1, control_fd = 3;
+    int out_fd = 1;
+    const SocketDescriptor control_fd(3);
 
     direct_global_init();
     const ScopeFbPoolInit fb_pool_init;

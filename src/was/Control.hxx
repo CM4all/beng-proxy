@@ -82,7 +82,7 @@ class WasControl final : BufferedSocketHandler {
     SliceFifoBuffer output_buffer;
 
 public:
-    WasControl(EventLoop &event_loop, int _fd,
+    WasControl(EventLoop &event_loop, SocketDescriptor _fd,
                WasControlHandler &_handler) noexcept;
 
     EventLoop &GetEventLoop() noexcept {
