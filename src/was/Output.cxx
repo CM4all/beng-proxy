@@ -38,13 +38,16 @@
 #include "io/Splice.hxx"
 #include "io/FileDescriptor.hxx"
 #include "system/Error.hxx"
+#include "istream/Bucket.hxx"
 #include "istream/Handler.hxx"
 #include "istream/Pointer.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "pool/pool.hxx"
+#include "util/StaticArray.hxx"
 
 #include <was/protocol.h>
 
+#include <sys/uio.h>
 #include <errno.h>
 #include <string.h>
 #include <unistd.h>
@@ -104,6 +107,7 @@ public:
     }
 
     /* virtual methods from class IstreamHandler */
+    bool OnIstreamReady() noexcept override;
     size_t OnData(const void *data, size_t length) noexcept override;
     ssize_t OnDirect(FdType type, int fd, size_t max_length) noexcept override;
     void OnEof() noexcept override;
@@ -147,6 +151,100 @@ WasOutput::WriteEventCallback(unsigned) noexcept
  * istream handler for the request
  *
  */
+
+bool
+WasOutput::OnIstreamReady() noexcept
+{
+    assert(fd.IsDefined());
+    assert(input.IsDefined());
+
+    /* collect buckets */
+
+    IstreamBucketList list;
+
+    try {
+        input.FillBucketList(list);
+    } catch (...) {
+        input.Clear();
+        AbortError(std::current_exception());
+        return false;
+    }
+
+    if (list.IsEmpty() && !list.HasMore()) {
+        /* our input has ended */
+
+        input.ClearAndClose();
+        event.Cancel();
+        timeout_event.Cancel();
+
+        if (!known_length && !handler.WasOutputLength(sent))
+            return false;
+
+        handler.WasOutputEof();
+        return false;
+    }
+
+    /* convert buckets to struct iovec array */
+
+    StaticArray<struct iovec, 64> v;
+    bool more = list.HasMore(), result = false;
+    size_t total = 0;
+
+    for (const auto &i : list) {
+        if (i.GetType() != IstreamBucket::Type::BUFFER) {
+            result = true;
+            more = true;
+            break;
+        }
+
+        if (v.full()) {
+            more = true;
+            break;
+        }
+
+        const auto buffer = i.GetBuffer();
+
+        auto &w = v.append();
+        w.iov_base = const_cast<void *>(buffer.data);
+        w.iov_len = buffer.size;
+        total += buffer.size;
+    }
+
+    if (v.empty())
+        return true;
+
+    /* write this struct iovec array */
+
+    ssize_t nbytes = writev(fd.Get(), &v.front(), v.size());
+    if (nbytes < 0) {
+        int e = errno;
+        if (e == EAGAIN) {
+            ScheduleWrite();
+            return false;
+        }
+
+        AbortError(std::make_exception_ptr(MakeErrno("Write to WAS process failed")));
+        return false;
+    }
+
+    input.ConsumeBucketList(nbytes);
+
+    if (!more && size_t(nbytes) == total) {
+        /* we've just reached end of our input */
+
+        input.ClearAndClose();
+        event.Cancel();
+        timeout_event.Cancel();
+
+        if (!known_length && !handler.WasOutputLength(sent))
+            return false;
+
+        handler.WasOutputEof();
+        return false;
+    }
+
+    return result;
+}
 
 inline size_t
 WasOutput::OnData(const void *p, size_t length) noexcept
