@@ -35,61 +35,72 @@
 #include "strmap.hxx"
 #include "pool/RootPool.hxx"
 
-#include <assert.h>
-#include <string.h>
-#include <stdio.h>
+#include <gtest/gtest.h>
 
-int main(int argc gcc_unused, char **argv gcc_unused) {
+TEST(CookieServerTest, Basic)
+{
     RootPool pool;
 
-    {
-        const auto cookies = cookie_map_parse(pool, "a=b");
-        assert(strcmp(cookies.Get("a"), "b") == 0);
-    }
+    const auto cookies = cookie_map_parse(pool, "a=b");
+    ASSERT_STREQ(cookies.Get("a"), "b");
+}
 
-    {
-        const auto cookies = cookie_map_parse(pool, "c=d;e=f");
-        assert(strcmp(cookies.Get("c"), "d") == 0);
-        assert(strcmp(cookies.Get("e"), "f") == 0);
-    }
+TEST(CookieServerTest, Basic2)
+{
+    RootPool pool;
 
-    {
-        const auto cookies = cookie_map_parse(pool, "quoted=\"quoted!\\\\");
-        assert(strcmp(cookies.Get("quoted"), "quoted!\\") == 0);
-    }
+    const auto cookies = cookie_map_parse(pool, "c=d;e=f");
+    ASSERT_STREQ(cookies.Get("c"), "d");
+    ASSERT_STREQ(cookies.Get("e"), "f");
+}
 
-    {
-        const auto cookies = cookie_map_parse(pool, "invalid1=foo\t");
-        assert(strcmp(cookies.Get("invalid1"), "foo") == 0);
-    }
+TEST(CookieServerTest, Quoted)
+{
+    RootPool pool;
 
-    {
-        /* this is actually invalid, but unfortunately RFC ignorance
-           is viral, and forces us to accept square brackets :-( */
-        const auto cookies = cookie_map_parse(pool, "invalid2=foo |[bar] ,");
-        assert(strcmp(cookies.Get("invalid2"), "foo |[bar] ,") == 0);
-    }
+    const auto cookies = cookie_map_parse(pool, "quoted=\"quoted!\\\\");
+    ASSERT_STREQ(cookies.Get("quoted"), "quoted!\\");
+}
 
-    assert(strcmp(cookie_exclude("foo=\"bar\"", "abc", pool),
-                  "foo=\"bar\"") == 0);
+TEST(CookieServerTest, Invalid1)
+{
+    RootPool pool;
 
-    assert(cookie_exclude("foo=\"bar\"", "foo", pool) == nullptr);
+    const auto cookies = cookie_map_parse(pool, "invalid1=foo\t");
+    ASSERT_STREQ(cookies.Get("invalid1"), "foo");
+}
 
-    assert(strcmp(cookie_exclude("a=\"b\"", "foo", pool),
-                  "a=\"b\"") == 0);
+TEST(CookieServerTest, Invalid2)
+{
+    RootPool pool;
 
-    assert(strcmp(cookie_exclude("a=b", "foo", pool),
-                  "a=b") == 0);
+    /* this is actually invalid, but unfortunately RFC ignorance is
+       viral, and forces us to accept square brackets :-( */
+    const auto cookies = cookie_map_parse(pool, "invalid2=foo |[bar] ,");
+    ASSERT_STREQ(cookies.Get("invalid2"), "foo |[bar] ,");
+}
 
-    assert(strcmp(cookie_exclude("a=\"b\"; foo=\"bar\"; c=\"d\"", "foo", pool),
-                  "a=\"b\"; c=\"d\"") == 0);
+TEST(CookieServerTest, Exclude)
+{
+    RootPool pool;
 
-    assert(strcmp(cookie_exclude("foo=\"bar\"; c=\"d\"", "foo", pool),
-                  "c=\"d\"") == 0);
+    ASSERT_STREQ(cookie_exclude("foo=\"bar\"", "abc", pool), "foo=\"bar\"");
 
-    assert(strcmp(cookie_exclude("a=\"b\"; foo=\"bar\"", "foo", pool),
-                  "a=\"b\"; ") == 0);
+    ASSERT_EQ(cookie_exclude("foo=\"bar\"", "foo", pool), nullptr);
 
-    assert(strcmp(cookie_exclude("foo=\"duplicate\"; a=\"b\"; foo=\"bar\"; c=\"d\"", "foo", pool),
-                  "a=\"b\"; c=\"d\"") == 0);
+    ASSERT_STREQ(cookie_exclude("a=\"b\"", "foo", pool), "a=\"b\"");
+
+    ASSERT_STREQ(cookie_exclude("a=b", "foo", pool), "a=b");
+
+    ASSERT_STREQ(cookie_exclude("a=\"b\"; foo=\"bar\"; c=\"d\"", "foo", pool),
+                 "a=\"b\"; c=\"d\"");
+
+    ASSERT_STREQ(cookie_exclude("foo=\"bar\"; c=\"d\"", "foo", pool),
+                 "c=\"d\"");
+
+    ASSERT_STREQ(cookie_exclude("a=\"b\"; foo=\"bar\"", "foo", pool),
+                 "a=\"b\"; ");
+
+    ASSERT_STREQ(cookie_exclude("foo=\"duplicate\"; a=\"b\"; foo=\"bar\"; c=\"d\"", "foo", pool),
+                 "a=\"b\"; c=\"d\"");
 }

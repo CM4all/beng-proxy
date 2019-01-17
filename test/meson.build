@@ -512,6 +512,7 @@ test('t_cookie_server', executable('t_cookie_server',
   't_cookie_server.cxx',
   include_directories: inc,
   dependencies: [
+    gtest,
     threads,
     cookie_dep,
   ]))
