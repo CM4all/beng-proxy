@@ -37,6 +37,7 @@
 #include "http/Status.h"
 
 struct pool;
+class FileDescriptor;
 class EventLoop;
 class UnusedIstreamPtr;
 struct lease;
@@ -66,7 +67,7 @@ public:
  */
 WasServer *
 was_server_new(struct pool &pool, EventLoop &event_loop,
-               int control_fd, int input_fd, int output_fd,
+               int control_fd, FileDescriptor input_fd, int output_fd,
                WasServerHandler &handler);
 
 void

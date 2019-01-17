@@ -40,6 +40,7 @@
 #include <stdint.h>
 
 struct pool;
+class FileDescriptor;
 class EventLoop;
 class UnusedIstreamPtr;
 class WasInput;
@@ -92,7 +93,7 @@ public:
  * Web Application Socket protocol, input data channel library.
  */
 WasInput *
-was_input_new(struct pool &pool, EventLoop &event_loop, int fd,
+was_input_new(struct pool &pool, EventLoop &event_loop, FileDescriptor fd,
               WasInputHandler &handler) noexcept;
 
 /**

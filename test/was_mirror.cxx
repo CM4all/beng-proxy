@@ -62,7 +62,8 @@ int main(int argc, char **argv) {
 
     SetLogLevel(5);
 
-    int in_fd = 0, out_fd = 1, control_fd = 3;
+    const FileDescriptor in_fd(0);
+    int out_fd = 1, control_fd = 3;
 
     direct_global_init();
     const ScopeFbPoolInit fb_pool_init;

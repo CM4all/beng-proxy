@@ -53,7 +53,7 @@
 
 class WasInput final : public Istream {
 public:
-    int fd;
+    FileDescriptor fd;
     SocketEvent event;
 
     WasInputHandler &handler;
@@ -66,11 +66,11 @@ public:
 
     bool closed = false, known_length = false;
 
-    WasInput(struct pool &p, EventLoop &event_loop, int _fd,
+    WasInput(struct pool &p, EventLoop &event_loop, FileDescriptor _fd,
              WasInputHandler &_handler) noexcept
         :Istream(p), fd(_fd),
          event(event_loop, BIND_THIS_METHOD(EventCallback),
-               SocketDescriptor(fd)),
+               SocketDescriptor::FromFileDescriptor(fd)),
          handler(_handler) {
     }
 
@@ -95,8 +95,8 @@ public:
      * @return false if the #WasInput has been destroyed
      */
     bool ReleasePipe() noexcept {
-        assert(fd >= 0);
-        fd = -1;
+        assert(fd.IsDefined());
+        fd.SetUndefined();
         event.Cancel();
 
         return handler.WasInputRelease();
@@ -114,7 +114,7 @@ public:
     using Istream::DestroyError;
 
     void ScheduleRead() noexcept {
-        assert(fd >= 0);
+        assert(fd.IsDefined());
         assert(!buffer.IsDefined() || !buffer.IsFull());
 
         event.ScheduleRead();
@@ -250,7 +250,7 @@ WasInput::ReadToBuffer()
             return;
     }
 
-    ssize_t nbytes = read_to_buffer(fd, buffer, max_length);
+    ssize_t nbytes = read_to_buffer(fd.Get(), buffer, max_length);
     assert(nbytes != -2);
 
     if (nbytes == 0)
@@ -277,7 +277,7 @@ WasInput::ReadToBuffer()
 inline bool
 WasInput::TryBuffered() noexcept
 {
-    if (fd >= 0) {
+    if (fd.IsDefined()) {
         try {
             ReadToBuffer();
         } catch (...) {
@@ -292,7 +292,7 @@ WasInput::TryBuffered() noexcept
     if (SubmitBuffer()) {
         assert(!buffer.IsDefinedAndFull());
 
-        if (fd >= 0)
+        if (fd.IsDefined())
             ScheduleRead();
     }
 
@@ -312,7 +312,7 @@ WasInput::TryDirect() noexcept
             max_length = rest;
     }
 
-    ssize_t nbytes = InvokeDirect(FdType::FD_PIPE, fd, max_length);
+    ssize_t nbytes = InvokeDirect(FdType::FD_PIPE, fd.Get(), max_length);
     if (nbytes == ISTREAM_RESULT_EOF || nbytes == ISTREAM_RESULT_BLOCKING ||
         nbytes == ISTREAM_RESULT_CLOSED)
         return false;
@@ -350,7 +350,7 @@ WasInput::TryDirect() noexcept
 inline void
 WasInput::EventCallback(unsigned) noexcept
 {
-    assert(fd >= 0);
+    assert(fd.IsDefined());
 
     TryRead();
 }
@@ -361,10 +361,10 @@ WasInput::EventCallback(unsigned) noexcept
  */
 
 WasInput *
-was_input_new(struct pool &pool, EventLoop &event_loop, int fd,
+was_input_new(struct pool &pool, EventLoop &event_loop, FileDescriptor fd,
               WasInputHandler &handler) noexcept
 {
-    assert(fd >= 0);
+    assert(fd.IsDefined());
 
     return NewFromPool<WasInput>(pool, pool, event_loop, fd,
                                  handler);
@@ -458,7 +458,7 @@ WasInput::PrematureThrow(uint64_t _length)
     while (remaining > 0) {
         uint8_t discard_buffer[4096];
         size_t size = std::min(remaining, uint64_t(sizeof(discard_buffer)));
-        ssize_t nbytes = read(fd, discard_buffer, size);
+        ssize_t nbytes = fd.Read(discard_buffer, size);
         if (nbytes < 0)
             throw NestException(std::make_exception_ptr(MakeErrno()),
                                 WasError("read error on WAS data connection"));
