@@ -194,7 +194,11 @@ public:
      *
      */
 
-    bool ReadToBuffer() noexcept;
+    /**
+     * Throws on error.
+     */
+    void ReadToBuffer();
+
     bool TryBuffered() noexcept;
     bool TryDirect() noexcept;
 
@@ -246,8 +250,8 @@ public:
     }
 };
 
-inline bool
-WasInput::ReadToBuffer() noexcept
+void
+WasInput::ReadToBuffer()
 {
     buffer.AllocateIfNull(fb_pool_get());
 
@@ -259,16 +263,14 @@ WasInput::ReadToBuffer() noexcept
 
         if (max_length == 0)
             /* all the data we need is already in the buffer */
-            return true;
+            return;
     }
 
     ssize_t nbytes = read_to_buffer(fd, buffer, max_length);
     assert(nbytes != -2);
 
-    if (nbytes == 0) {
-        AbortError("server closed the data connection");
-        return false;
-    }
+    if (nbytes == 0)
+        throw WasProtocolError("server closed the data connection");
 
     if (nbytes < 0) {
         const int e = errno;
@@ -276,28 +278,28 @@ WasInput::ReadToBuffer() noexcept
         if (e == EAGAIN) {
             buffer.FreeIfEmpty();
             ScheduleRead();
-            return true;
+            return;
         }
 
-        AbortError(std::make_exception_ptr(MakeErrno(e,
-                                                     "read error on WAS data connection")));
-        return false;
+        throw MakeErrno(e, "read error on WAS data connection");
     }
 
     received += nbytes;
 
     if (buffer.IsFull())
         event.CancelRead();
-
-    return true;
 }
 
 inline bool
 WasInput::TryBuffered() noexcept
 {
     if (fd >= 0) {
-        if (!ReadToBuffer())
+        try {
+            ReadToBuffer();
+        } catch (...) {
+            AbortError(std::current_exception());
             return false;
+        }
 
         if (!CheckReleasePipe())
             return false;
