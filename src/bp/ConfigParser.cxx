@@ -271,6 +271,9 @@ BpConfigParser::ParseLine2(FileLineParser &line)
     } else if (strcmp(word, "ssl_client") == 0) {
         line.ExpectSymbolAndEol('{');
         SetChild(std::make_unique<SslClientConfigParser>());
+    } else if (StringIsEqual(word, "emulate_mod_auth_easy")) {
+        config.emulate_mod_auth_easy = line.NextBool();
+        line.ExpectEnd();
     } else
         throw LineParser::Error("Unknown option");
 }

@@ -4,6 +4,12 @@ cm4all-beng-proxy (16.0.1) unstable; urgency=low
 
  --   
 
+cm4all-beng-proxy (15.5) unstable; urgency=low
+
+  * bp: add option to emulate mod_auth_easy
+
+ -- Max Kellermann <mk@cm4all.com>  Mon, 21 Jan 2019 14:56:51 +0100
+
 cm4all-beng-proxy (15.4) unstable; urgency=low
 
   * processor: rewrite empty form action URIs

@@ -114,11 +114,12 @@ add_global_arguments(debug_flags, language: 'cpp')
 
 threads = dependency('threads')
 libpcre = dependency('libpcre')
-libsodium = dependency('libsodium')
+libsodium = dependency('libsodium', version: '>= 1.0.16')
 libjsoncpp = dependency('jsoncpp')
 libyamlcpp = dependency('yaml-cpp')
 libnfs = dependency('libnfs')
 zlib = dependency('zlib')
+libcrypt = compiler.find_library('crypt')
 
 gtest_compile_args = [
   '-Wno-undef',
@@ -837,6 +838,7 @@ executable('cm4all-beng-proxy',
   'src/nfs/Istream.cxx',
   'src/bp/FileHeaders.cxx',
   'src/bp/FileHandler.cxx',
+  'src/bp/EmulateModAuthEasy.cxx',
   'src/bp/ProxyHandler.cxx',
   'src/bp/Global.cxx',
   'src/bp/Handler.cxx',
@@ -932,6 +934,8 @@ executable('cm4all-beng-proxy',
     memcached_client_dep,
     delegate_client_dep,
     control_server_dep,
+    libsodium,
+    libcrypt,
   ])
 
 executable('cm4all-beng-lb',
