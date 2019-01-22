@@ -73,7 +73,7 @@ FindWhitespace(char *s) noexcept
 static const char *
 CheckUsername(const char *s, StringView user) noexcept
 {
-    const char *t = StringAfterPrefix(s, user);
+    const char *t = StringAfterPrefixIgnoreCase(s, user);
     if (t == nullptr || *t != ':')
         return nullptr;
 
