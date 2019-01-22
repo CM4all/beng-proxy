@@ -1,6 +1,7 @@
 cm4all-beng-proxy (15.6) unstable; urgency=low
 
   * bp/mod_auth_easy: user name check is case insensitive
+  * bp/mod_auth_easy: implement .access files
 
  --   
 
