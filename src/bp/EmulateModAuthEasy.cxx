@@ -43,12 +43,14 @@
 #include "util/StringCompare.hxx"
 #include "util/StringStrip.hxx"
 #include "util/CharUtil.hxx"
+#include "util/ScopeExit.hxx"
 
 #include <sodium.h>
 
 #include <assert.h>
 #include <errno.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 static void
 DispatchUnauthorized(Request &request2) noexcept
@@ -73,7 +75,7 @@ FindWhitespace(char *s) noexcept
 static const char *
 CheckUsername(const char *s, StringView user) noexcept
 {
-    const char *t = StringAfterPrefix(s, user);
+    const char *t = StringAfterPrefixIgnoreCase(s, user);
     if (t == nullptr || *t != ':')
         return nullptr;
 
@@ -159,10 +161,62 @@ VerifyPassword(const char *crypted_password,
     return strcmp(p, crypted_password) == 0;
 }
 
+static FILE *
+OpenSiblingFile(const char *path, const char *sibling_name)
+{
+    const char *slash = strrchr(path, '/');
+    if (slash == nullptr)
+        return nullptr;
+
+    char buffer[4096];
+    if (size_t(slash + 1 - path) + strlen(sibling_name) >= sizeof(buffer))
+        return nullptr;
+
+    strcpy((char *)mempcpy(buffer, path, slash + 1 - path), sibling_name);
+    return fopen(buffer, "r");
+}
+
+static bool
+CheckAccessFileFor(Request &request2, const char *html_path)
+{
+    FILE *file = OpenSiblingFile(html_path, ".access");
+    if (file == nullptr)
+        return false;
+
+    AtScopeExit(file) { fclose(file); };
+
+    const char *authorization = request2.request.headers.Get("authorization");
+    if (authorization == nullptr)
+        return false;
+
+    const auto basic_auth = ParseBasicAuth(authorization);
+    if (basic_auth.first.empty())
+        return false;
+
+    const StringView username = basic_auth.first.c_str();
+    const auto given_password = basic_auth.second.c_str();
+
+    char buffer[4096];
+    while (fgets(buffer, sizeof(buffer), file) != nullptr) {
+        char *line = Strip(buffer);
+        const char *crypted_password = CheckUsername(line, username);
+        if (crypted_password != nullptr)
+            return VerifyPassword(crypted_password, given_password);
+    }
+
+    return false;
+}
+
 bool
 EmulateModAuthEasy(Request &request2, const FileAddress &address,
                    const struct stat &st, Istream *body) noexcept
 {
+    if (!CheckAccessFileFor(request2, address.path)) {
+        DispatchUnauthorized(request2);
+        body->Close();
+        return true;
+    }
+
     char buffer[4096];
     char *line = ReadFirstLine(istream_file_fd(*body), buffer, sizeof(buffer));
     if (line == nullptr)

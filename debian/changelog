@@ -4,6 +4,13 @@ cm4all-beng-proxy (16.0.1) unstable; urgency=low
 
  --   
 
+cm4all-beng-proxy (15.6) unstable; urgency=low
+
+  * bp/mod_auth_easy: user name check is case insensitive
+  * bp/mod_auth_easy: implement .access files
+
+ -- Max Kellermann <mk@cm4all.com>  Tue, 22 Jan 2019 22:43:33 +0100
+
 cm4all-beng-proxy (15.5) unstable; urgency=low
 
   * bp: add option to emulate mod_auth_easy
