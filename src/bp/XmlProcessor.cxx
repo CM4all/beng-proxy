@@ -826,6 +826,9 @@ parser_widget_attr_finished(Widget *widget,
                             StringView name, StringView value)
 {
     if (name.Equals("type")) {
+        if (value.empty())
+            throw std::runtime_error("empty widget class name");
+
         widget->SetClassName(value);
     } else if (name.Equals("id")) {
         if (!value.empty())
