@@ -915,12 +915,14 @@ parser_widget_attr_finished(Widget *widget,
         else if (value.Equals("none"))
             widget->display = Widget::Display::NONE;
         else
-            widget->display = Widget::Display::NONE;
+            throw std::runtime_error("Invalid widget 'display' attribute");
     } else if (name.Equals("session")) {
         if (value.Equals("resource"))
             widget->session_scope = Widget::SessionScope::RESOURCE;
         else if (value.Equals("site"))
             widget->session_scope = Widget::SessionScope::SITE;
+        else
+            throw std::runtime_error("Invalid widget 'session' attribute");
     }
 }
 
