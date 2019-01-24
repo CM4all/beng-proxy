@@ -899,7 +899,7 @@ XmlProcessor::TransformUriAttribute(const XmlParserAttribute &attr,
 
 static void
 parser_widget_attr_finished(Widget *widget,
-                            StringView name, StringView value) noexcept
+                            StringView name, StringView value)
 {
     if (name.Equals("type")) {
         widget->SetClassName(value);
@@ -1180,8 +1180,14 @@ XmlProcessor::OnXmlAttributeFinished(const XmlParserAttribute &attr) noexcept
     case Tag::WIDGET:
         assert(widget.widget != nullptr);
 
-        parser_widget_attr_finished(widget.widget,
-                                    attr.name, attr.value);
+        try {
+            parser_widget_attr_finished(widget.widget,
+                                        attr.name, attr.value);
+        } catch (...) {
+            container.logger(2, std::current_exception());
+            // TODO: discard errored widget?
+        }
+
         break;
 
     case Tag::WIDGET_PARAM:
