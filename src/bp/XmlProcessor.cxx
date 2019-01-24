@@ -1098,8 +1098,14 @@ XmlProcessor::OnXmlAttributeFinished(const XmlParserAttribute &attr)
     case TAG_WIDGET:
         assert(widget.widget != nullptr);
 
-        parser_widget_attr_finished(widget.widget,
-                                    attr.name, attr.value);
+        try {
+            parser_widget_attr_finished(widget.widget,
+                                        attr.name, attr.value);
+        } catch (...) {
+            container.logger(2, std::current_exception());
+            // TODO: discard errored widget?
+        }
+
         break;
 
     case TAG_WIDGET_PARAM:
