@@ -61,7 +61,7 @@ binary-indep: build
 	dh_installinit -i
 	dh_install -i
 	dh_link -i
-	#dh_strip -i
+	dh_strip -i
 	dh_compress -i -X.pdf
 	dh_fixperms -i
 	dh_python2 -ppython-cm4all-beng-proxy
@@ -83,9 +83,7 @@ binary-arch: build
 	dh_installinit -a
 	dh_install -a
 	dh_link -a
-	dh_strip -p cm4all-beng-proxy --dbg-package=cm4all-beng-proxy-dbg
-	dh_strip -p cm4all-beng-proxy-optimized --dbg-package=cm4all-beng-proxy-optimized-dbg
-	dh_strip -p cm4all-beng-lb --dbg-package=cm4all-beng-lb-dbg
+	dh_strip -a --dbgsym-migration='cm4all-beng-proxy-dbg (<< 15.6~), cm4all-beng-proxy-optimized-dbg (<< 15.6~), cm4all-beng-lb-dbg (<< 15.6~)'
 	dh_compress -a
 	dh_fixperms -a
 	dh_installdeb -a
