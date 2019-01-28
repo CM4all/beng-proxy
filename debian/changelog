@@ -5,7 +5,7 @@ cm4all-beng-proxy (15.7) unstable; urgency=low
   * debian: migrate from "-dbg" to "-dbgsym" packages
   * fix the pkg-config include directory
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Mon, 28 Jan 2019 12:58:31 +0100
 
 cm4all-beng-proxy (15.6) unstable; urgency=low
 
