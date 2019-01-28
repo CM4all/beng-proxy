@@ -5,6 +5,7 @@
 /*.log
 
 /build/
+/tmp/
 
 /cm4all-*/
 /libcm4all-*/
