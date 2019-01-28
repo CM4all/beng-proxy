@@ -2,7 +2,7 @@ Source: cm4all-beng-proxy
 Section: web
 Priority: extra
 Maintainer: Max Kellermann <mk@cm4all.com>
-Build-Depends: debhelper (>= 9), dh-python, dh-systemd,
+Build-Depends: debhelper (>= 10), dh-python, dh-systemd,
  meson (>= 0.47),
  g++ (>= 4:6),
  libc6-dev (>= 2.13),
@@ -54,16 +54,6 @@ Description: HTTP proxy server
  BENG proxy is an HTTP proxy server which includes a HTML template
  processor.
 
-Package: cm4all-beng-proxy-dbg
-Section: devel
-Architecture: any
-Depends: cm4all-beng-proxy (= ${binary:Version})
-Description: HTTP proxy server, debug symbols
- BENG proxy is an HTTP proxy server which includes a HTML template
- processor.
- .
- This package provides the debugging symbols.
-
 Package: cm4all-beng-proxy-optimized
 Architecture: any
 Depends: ${shlibs:Depends}, cm4all-beng-proxy (= ${source:Version})
@@ -75,17 +65,6 @@ Description: HTTP proxy server, optimized build
  .
  This package contains the optimized beng-proxy binary.  Most
  debugging options are disabled.
-
-Package: cm4all-beng-proxy-optimized-dbg
-Section: devel
-Architecture: any
-Depends: cm4all-beng-proxy-optimized (= ${binary:Version})
-Conflicts: cm4all-beng-proxy-dbg
-Description: HTTP proxy server, debug symbols
- BENG proxy is an HTTP proxy server which includes a HTML template
- processor.
- .
- This package provides the debugging symbols for the optimized build.
 
 Package: cm4all-beng-proxy-toi
 Architecture: any
@@ -182,15 +161,6 @@ Provides: httpd
 Breaks: cm4all-beng-proxy-logging (<< 13.0.9)
 Description: HTTP load balancer
  BENG lb is a HTTP proxy server and load balancer.
-
-Package: cm4all-beng-lb-dbg
-Section: devel
-Architecture: any
-Depends: cm4all-beng-lb (= ${binary:Version})
-Description: HTTP load balancer, debug symbols
- BENG lb is a HTTP proxy server and load balancer.
- .
- This package provides the debugging symbols.
 
 Package: cm4all-certdb
 Architecture: any

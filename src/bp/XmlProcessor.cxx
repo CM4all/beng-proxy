@@ -899,9 +899,12 @@ XmlProcessor::TransformUriAttribute(const XmlParserAttribute &attr,
 
 static void
 parser_widget_attr_finished(Widget *widget,
-                            StringView name, StringView value) noexcept
+                            StringView name, StringView value)
 {
     if (name.Equals("type")) {
+        if (value.empty())
+            throw std::runtime_error("empty widget class name");
+
         widget->SetClassName(value);
     } else if (name.Equals("id")) {
         if (!value.empty())
@@ -912,12 +915,14 @@ parser_widget_attr_finished(Widget *widget,
         else if (value.Equals("none"))
             widget->display = Widget::Display::NONE;
         else
-            widget->display = Widget::Display::NONE;
+            throw std::runtime_error("Invalid widget 'display' attribute");
     } else if (name.Equals("session")) {
         if (value.Equals("resource"))
             widget->session_scope = Widget::SessionScope::RESOURCE;
         else if (value.Equals("site"))
             widget->session_scope = Widget::SessionScope::SITE;
+        else
+            throw std::runtime_error("Invalid widget 'session' attribute");
     }
 }
 
@@ -1180,8 +1185,14 @@ XmlProcessor::OnXmlAttributeFinished(const XmlParserAttribute &attr) noexcept
     case Tag::WIDGET:
         assert(widget.widget != nullptr);
 
-        parser_widget_attr_finished(widget.widget,
-                                    attr.name, attr.value);
+        try {
+            parser_widget_attr_finished(widget.widget,
+                                        attr.name, attr.value);
+        } catch (...) {
+            container.logger(2, std::current_exception());
+            // TODO: discard errored widget?
+        }
+
         break;
 
     case Tag::WIDGET_PARAM:

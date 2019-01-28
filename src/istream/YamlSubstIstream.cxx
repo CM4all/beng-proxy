@@ -46,6 +46,8 @@
 #include <yaml-cpp/node/convert.h>
 #include <yaml-cpp/node/detail/impl.h>
 
+#include <assert.h>
+
 static YAML::Node
 ResolveYamlPathSegment(const YAML::Node &parent, StringView segment)
 {

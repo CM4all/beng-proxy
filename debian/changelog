@@ -4,6 +4,15 @@ cm4all-beng-proxy (16.0.1) unstable; urgency=low
 
  --   
 
+cm4all-beng-proxy (15.7) unstable; urgency=low
+
+  * bp/mod_auth_easy: fix inverted check in .access file check
+  * bp/processor: don't allow empty widget class name
+  * debian: migrate from "-dbg" to "-dbgsym" packages
+  * fix the pkg-config include directory
+
+ -- Max Kellermann <mk@cm4all.com>  Mon, 28 Jan 2019 12:58:31 +0100
+
 cm4all-beng-proxy (15.6) unstable; urgency=low
 
   * bp/mod_auth_easy: user name check is case insensitive

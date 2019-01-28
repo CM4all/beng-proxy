@@ -181,7 +181,7 @@ CheckAccessFileFor(Request &request2, const char *html_path)
 {
     FILE *file = OpenSiblingFile(html_path, ".access");
     if (file == nullptr)
-        return false;
+        return true;
 
     AtScopeExit(file) { fclose(file); };
 

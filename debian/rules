@@ -40,6 +40,11 @@ debian/stamp-doc: $(TEX_OUTPUTS)
 
 build: debian/stamp-build-debug debian/stamp-build-optimized debian/stamp-doc
 
+install: debian/stamp-install
+debian/stamp-install: debian/stamp-build-debug
+	DESTDIR=`pwd`/debian/tmp ninja -v -C debian/build/debug install
+	touch $@
+
 clean:
 	dh_testdir
 	dh_testroot
@@ -50,7 +55,7 @@ clean:
 	dh_clean
 
 # Build architecture-independent files here.
-binary-indep: build
+binary-indep: build install
 	dh_testdir -i
 	dh_testroot -i
 	dh_installdirs -i
@@ -61,7 +66,7 @@ binary-indep: build
 	dh_installinit -i
 	dh_install -i
 	dh_link -i
-	#dh_strip -i
+	dh_strip -i
 	dh_compress -i -X.pdf
 	dh_fixperms -i
 	dh_python2 -ppython-cm4all-beng-proxy
@@ -72,7 +77,7 @@ binary-indep: build
 	dh_builddeb -i
 
 # Build architecture-dependent files here.
-binary-arch: build
+binary-arch: build install
 	dh_testdir -a
 	dh_testroot -a
 	dh_installdirs -a
@@ -83,9 +88,7 @@ binary-arch: build
 	dh_installinit -a
 	dh_install -a
 	dh_link -a
-	dh_strip -p cm4all-beng-proxy --dbg-package=cm4all-beng-proxy-dbg
-	dh_strip -p cm4all-beng-proxy-optimized --dbg-package=cm4all-beng-proxy-optimized-dbg
-	dh_strip -p cm4all-beng-lb --dbg-package=cm4all-beng-lb-dbg
+	dh_strip -a --dbgsym-migration='cm4all-beng-proxy-dbg (<< 15.6~), cm4all-beng-proxy-optimized-dbg (<< 15.6~), cm4all-beng-lb-dbg (<< 15.6~)'
 	dh_compress -a
 	dh_fixperms -a
 	dh_installdeb -a
