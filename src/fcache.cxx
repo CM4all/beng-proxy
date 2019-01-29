@@ -227,7 +227,6 @@ class FilterCache final : LeakDetector {
 
     TimerEvent compress_timer;
 
-    EventLoop &event_loop;
     ResourceLoader &resource_loader;
 
     /**
@@ -246,6 +245,10 @@ public:
                 EventLoop &_event_loop, ResourceLoader &_resource_loader);
 
     ~FilterCache();
+
+    auto &GetEventLoop() const noexcept {
+        return compress_timer.GetEventLoop();
+    }
 
     void ForkCow(bool inherit) {
         rubber.ForkCow(inherit);
@@ -310,7 +313,7 @@ FilterCacheRequest::FilterCacheRequest(PoolPtr &&_pool,
      cache(_cache),
      handler(_handler),
      info(pool, _info),
-     timeout_event(cache.event_loop, BIND_THIS_METHOD(OnTimeout))
+     timeout_event(cache.GetEventLoop(), BIND_THIS_METHOD(OnTimeout))
 {
 }
 
@@ -526,7 +529,7 @@ FilterCacheRequest::OnHttpResponse(http_status_t status, StringMap &&headers,
         /* tee the body: one goes to our client, and one goes into the
            cache */
         auto tee = istream_tee_new(pool, std::move(body),
-                                   cache.event_loop,
+                                   cache.GetEventLoop(),
                                    false,
                                    /* the second one must be weak
                                       because closing the first one
@@ -584,7 +587,6 @@ FilterCache::FilterCache(struct pool &_pool, size_t max_size,
         reduce the pressure that rubber_compress() creates */
      cache(_event_loop, 65521, max_size * 7 / 8),
      compress_timer(_event_loop, BIND_THIS_METHOD(OnCompressTimer)),
-     event_loop(_event_loop),
      resource_loader(_resource_loader) {
     compress_timer.Add(fcache_compress_interval);
 }
