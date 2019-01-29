@@ -44,7 +44,7 @@
 #include <string.h>
 
 AccessLogGlue::AccessLogGlue(const AccessLogConfig &_config,
-                             std::unique_ptr<LogClient> _client)
+                             std::unique_ptr<LogClient> _client) noexcept
     :config(_config), client(std::move(_client)) {}
 
 AccessLogGlue::~AccessLogGlue() noexcept = default;
@@ -79,7 +79,7 @@ AccessLogGlue::Create(const AccessLogConfig &config,
 }
 
 void
-AccessLogGlue::Log(const Net::Log::Datagram &d)
+AccessLogGlue::Log(const Net::Log::Datagram &d) noexcept
 {
     if (!config.ignore_localhost_200.empty() &&
         d.http_uri != nullptr &&
@@ -102,7 +102,7 @@ AccessLogGlue::Log(const Net::Log::Datagram &d)
  */
 gcc_pure
 static std::pair<StringView, StringView>
-LastListItem(StringView list)
+LastListItem(StringView list) noexcept
 {
     const char *comma = (const char *)memrchr(list.data, ',', list.size);
     if (comma == nullptr) {
@@ -129,7 +129,7 @@ LastListItem(StringView list)
  */
 gcc_pure
 static StringView
-GetRealRemoteHost(const char *xff, const std::set<std::string> &trust)
+GetRealRemoteHost(const char *xff, const std::set<std::string> &trust) noexcept
 {
     StringView list(xff);
     StringView result(nullptr);
@@ -157,7 +157,7 @@ AccessLogGlue::Log(HttpServerRequest &request, const char *site,
                    const char *referer, const char *user_agent,
                    http_status_t status, int64_t content_length,
                    uint64_t bytes_received, uint64_t bytes_sent,
-                   std::chrono::steady_clock::duration duration)
+                   std::chrono::steady_clock::duration duration) noexcept
 {
     assert(http_method_is_valid(request.method));
     assert(http_status_is_valid(status));
@@ -196,7 +196,7 @@ AccessLogGlue::Log(HttpServerRequest &request, const char *site,
                    const char *referer, const char *user_agent,
                    http_status_t status, int64_t content_length,
                    uint64_t bytes_received, uint64_t bytes_sent,
-                   std::chrono::steady_clock::duration duration)
+                   std::chrono::steady_clock::duration duration) noexcept
 {
     Log(request, site, forwarded_to,
         request.headers.Get("host"),

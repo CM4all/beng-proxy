@@ -60,7 +60,7 @@ class AccessLogGlue {
     const std::unique_ptr<LogClient> client;
 
     AccessLogGlue(const AccessLogConfig &config,
-                  std::unique_ptr<LogClient> _client);
+                  std::unique_ptr<LogClient> _client) noexcept;
 
 public:
     ~AccessLogGlue() noexcept;
@@ -68,7 +68,7 @@ public:
     static AccessLogGlue *Create(const AccessLogConfig &config,
                                  const UidGid *user);
 
-    void Log(const Net::Log::Datagram &d);
+    void Log(const Net::Log::Datagram &d) noexcept;
 
     /**
      * @param length the number of response body (payload) bytes sent
@@ -86,14 +86,14 @@ public:
              const char *referer, const char *user_agent,
              http_status_t status, int64_t length,
              uint64_t bytes_received, uint64_t bytes_sent,
-             std::chrono::steady_clock::duration duration);
+             std::chrono::steady_clock::duration duration) noexcept;
 
     void Log(HttpServerRequest &request, const char *site,
              const char *forwarded_to,
              const char *referer, const char *user_agent,
              http_status_t status, int64_t length,
              uint64_t bytes_received, uint64_t bytes_sent,
-             std::chrono::steady_clock::duration duration);
+             std::chrono::steady_clock::duration duration) noexcept;
 
     /**
      * Returns the connected logger socket to be used to send child
