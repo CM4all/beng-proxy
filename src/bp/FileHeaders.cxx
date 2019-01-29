@@ -32,6 +32,7 @@
 
 #include "FileHeaders.hxx"
 #include "Request.hxx"
+#include "Instance.hxx"
 #include "static_headers.hxx"
 #include "GrowingBuffer.hxx"
 #include "http/HeaderWriter.hxx"
@@ -40,6 +41,7 @@
 #include "translation/Vary.hxx"
 #include "http/List.hxx"
 #include "http/Date.hxx"
+#include "event/Loop.hxx"
 #include "io/FileDescriptor.hxx"
 #include "util/DecimalFormat.h"
 
@@ -73,6 +75,7 @@ read_xattr_max_age(FileDescriptor fd)
 
 static void
 generate_expires(GrowingBuffer &headers,
+                 std::chrono::system_clock::time_point now,
                  std::chrono::system_clock::duration max_age)
 {
     constexpr std::chrono::system_clock::duration max_max_age =
@@ -83,7 +86,7 @@ generate_expires(GrowingBuffer &headers,
 
     /* generate an "Expires" response header */
     header_write(headers, "expires",
-                 http_date_format(std::chrono::system_clock::now() + max_age));
+                 http_date_format(now + max_age));
 }
 
 gcc_pure
@@ -112,6 +115,7 @@ MakeETag(GrowingBuffer &headers, FileDescriptor fd, const struct stat &st)
 
 static void
 file_cache_headers(GrowingBuffer &headers,
+                   const ClockCache<std::chrono::system_clock> &system_clock,
                    FileDescriptor fd, const struct stat &st,
                    std::chrono::seconds max_age)
 {
@@ -124,7 +128,7 @@ file_cache_headers(GrowingBuffer &headers,
         max_age = read_xattr_max_age(fd);
 
     if (max_age > std::chrono::seconds::zero())
-        generate_expires(headers, max_age);
+        generate_expires(headers, system_clock.now(), max_age);
 }
 
 /**
@@ -156,7 +160,9 @@ DispatchNotModified(Request &request2, const TranslateResponse &tr,
     HttpHeaders headers(request2.pool);
     auto &headers2 = headers.GetBuffer();
 
-    file_cache_headers(headers2, fd, st, tr.expires_relative);
+    file_cache_headers(headers2,
+                       request2.instance.event_loop.GetSystemClockCache(),
+                       fd, st, tr.expires_relative);
 
     write_translation_vary_header(headers2, tr);
 
@@ -235,13 +241,15 @@ Request::EvaluateFileRequest(FileDescriptor fd, const struct stat &st,
 
 void
 file_response_headers(GrowingBuffer &headers,
+                      const ClockCache<std::chrono::system_clock> &system_clock,
                       const char *override_content_type,
                       FileDescriptor fd, const struct stat &st,
                       std::chrono::seconds expires_relative,
                       bool processor_first)
 {
     if (!processor_first)
-        file_cache_headers(headers, fd, st, expires_relative);
+        file_cache_headers(headers, system_clock,
+                           fd, st, expires_relative);
 
     if (override_content_type != nullptr) {
         /* content type override from the translation server */

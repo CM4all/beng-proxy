@@ -71,6 +71,7 @@ Request::OnNfsCacheResponse(NfsCacheHandle &handle,
     header_write(headers2, "cache-control", "max-age=60");
 
     file_response_headers(headers2,
+                          instance.event_loop.GetSystemClockCache(),
                           override_content_type,
                           FileDescriptor::Undefined(), st,
                           tr->expires_relative,

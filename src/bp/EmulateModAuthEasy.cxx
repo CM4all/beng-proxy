@@ -31,6 +31,7 @@
  */
 
 #include "Request.hxx"
+#include "Instance.hxx"
 #include "AprMd5.hxx"
 #include "FileHeaders.hxx"
 #include "file_address.hxx"
@@ -274,7 +275,9 @@ Request::EmulateModAuthEasy(const FileAddress &address,
 
     HttpHeaders headers(pool);
     GrowingBuffer &headers2 = headers.GetBuffer();
-    file_response_headers(headers2, override_content_type,
+    file_response_headers(headers2,
+                          instance.event_loop.GetSystemClockCache(),
+                          override_content_type,
                           istream_file_fd(*body), st,
                           tr.expires_relative,
                           IsProcessorFirst());

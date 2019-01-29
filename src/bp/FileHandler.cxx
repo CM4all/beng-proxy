@@ -66,7 +66,9 @@ Request::DispatchFile(const struct stat &st,
 
     HttpHeaders headers(pool);
     GrowingBuffer &headers2 = headers.GetBuffer();
-    file_response_headers(headers2, override_content_type,
+    file_response_headers(headers2,
+                          instance.event_loop.GetSystemClockCache(),
+                          override_content_type,
                           istream_file_fd(*body), st,
                           tr.expires_relative,
                           IsProcessorFirst());
@@ -148,7 +150,9 @@ Request::DispatchCompressedFile(const struct stat &st,
 
     HttpHeaders headers(pool);
     GrowingBuffer &headers2 = headers.GetBuffer();
-    file_response_headers(headers2, override_content_type,
+    file_response_headers(headers2,
+                          instance.event_loop.GetSystemClockCache(),
+                          override_content_type,
                           istream_file_fd(body), st,
                           tr.expires_relative,
                           IsProcessorFirst());

@@ -43,6 +43,7 @@
 
 #include <sys/types.h>
 
+template<typename Clock> class ClockCache;
 class FileDescriptor;
 class GrowingBuffer;
 struct stat;
@@ -55,6 +56,7 @@ struct file_request {
 
 void
 file_response_headers(GrowingBuffer &headers,
+                      const ClockCache<std::chrono::system_clock> &system_clock,
                       const char *override_content_type,
                       FileDescriptor fd, const struct stat &st,
                       std::chrono::seconds expires_relative,
