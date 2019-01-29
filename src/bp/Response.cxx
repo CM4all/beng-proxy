@@ -499,7 +499,7 @@ Request::MoreResponseHeaders(HttpHeaders &headers) const noexcept
     /* RFC 2616 14.18: Date */
     headers.Write("date", date != nullptr
                   ? date
-                  : http_date_format(std::chrono::system_clock::now()));
+                  : http_date_format(instance.event_loop.SystemNow()));
 #endif
 
     translation_response_headers(headers, *translate.response);

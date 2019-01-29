@@ -44,6 +44,7 @@
 #include "istream/istream_memory.hxx"
 #include "istream/istream_string.hxx"
 #include "http/Date.hxx"
+#include "event/Loop.hxx"
 #include "util/DecimalFormat.h"
 
 #include <string.h>
@@ -211,7 +212,7 @@ http_server_simple_response(const HttpServerRequest &request,
     HttpHeaders headers(request.pool);
 
 #ifndef NO_DATE_HEADER
-    headers.Write("date", http_date_format(std::chrono::system_clock::now()));
+    headers.Write("date", http_date_format(request.connection.GetEventLoop().SystemNow()));
 #endif
 
     if (location != nullptr)
@@ -236,7 +237,7 @@ http_server_send_message(const HttpServerRequest *request,
     headers.Write("content-type", "text/plain");
 
 #ifndef NO_DATE_HEADER
-    headers.Write("date", http_date_format(std::chrono::system_clock::now()));
+    headers.Write("date", http_date_format(request->connection.GetEventLoop().SystemNow()));
 #endif
 
     http_server_response(request, status, std::move(headers),
@@ -261,7 +262,7 @@ http_server_send_redirect(const HttpServerRequest *request,
     headers.Write("location", location);
 
 #ifndef NO_DATE_HEADER
-    headers.Write("date", http_date_format(std::chrono::system_clock::now()));
+    headers.Write("date", http_date_format(request->connection.GetEventLoop().SystemNow()));
 #endif
 
     http_server_response(request, status, std::move(headers),

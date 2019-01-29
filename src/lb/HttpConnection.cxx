@@ -309,7 +309,8 @@ LbHttpConnection::LogHttpRequest(HttpServerRequest &request,
     instance.http_traffic_received_counter += bytes_received;
     instance.http_traffic_sent_counter += bytes_sent;
     if (instance.access_log != nullptr)
-        instance.access_log->Log(request, per_request.site_name,
+        instance.access_log->Log(instance.event_loop.SystemNow(),
+                                 request, per_request.site_name,
                                  per_request.forwarded_to,
                                  per_request.host,
                                  per_request.x_forwarded_for,

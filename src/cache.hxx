@@ -89,6 +89,7 @@ struct CacheItem {
         :expires(_expires), size(_size) {}
 
     CacheItem(std::chrono::steady_clock::time_point now,
+              std::chrono::system_clock::time_point system_now,
               std::chrono::system_clock::time_point _expires,
               size_t _size) noexcept;
 
@@ -182,6 +183,9 @@ public:
 
     gcc_pure
     std::chrono::steady_clock::time_point SteadyNow() const noexcept;
+
+    gcc_pure
+    std::chrono::system_clock::time_point SystemNow() const noexcept;
 
     void EventAdd() noexcept;
     void EventDel() noexcept;

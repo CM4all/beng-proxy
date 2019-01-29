@@ -95,6 +95,12 @@ Cache::SteadyNow() const noexcept
     return GetEventLoop().SteadyNow();
 }
 
+std::chrono::system_clock::time_point
+Cache::SystemNow() const noexcept
+{
+    return GetEventLoop().SystemNow();
+}
+
 void
 Cache::ItemRemoved(CacheItem *item) noexcept
 {
@@ -344,18 +350,19 @@ Cache::RemoveAllMatch(bool (*match)(const CacheItem *, void *),
 
 static std::chrono::steady_clock::time_point
 ToSteady(std::chrono::steady_clock::time_point steady_now,
+         std::chrono::system_clock::time_point system_now,
          std::chrono::system_clock::time_point t) noexcept
 {
-    const auto now = std::chrono::system_clock::now();
-    return t > now
-        ? steady_now + (t - now)
+    return t > system_now
+        ? steady_now + (t - system_now)
         : std::chrono::steady_clock::time_point();
 }
 
 CacheItem::CacheItem(std::chrono::steady_clock::time_point now,
+                     std::chrono::system_clock::time_point system_now,
                      std::chrono::system_clock::time_point _expires,
                      size_t _size) noexcept
-    :CacheItem(ToSteady(now, _expires), _size)
+    :CacheItem(ToSteady(now, system_now, _expires), _size)
 {
 }
 

@@ -50,6 +50,7 @@
 #include "pool/Ptr.hxx"
 #include "AllocatorPtr.hxx"
 #include "event/TimerEvent.hxx"
+#include "event/Loop.hxx"
 #include "io/Logger.hxx"
 #include "pool/LeakDetector.hxx"
 #include "util/Background.hxx"
@@ -467,7 +468,7 @@ HttpCacheRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
 
         if (http_cache_response_evaluate(request_info, info,
                                          HTTP_STATUS_OK, _headers, -1) &&
-            info.expires >= std::chrono::system_clock::now()) {
+            info.expires >= GetEventLoop().SystemNow()) {
             /* copy the new "Expires" (or "max-age") value from the
                "304 Not Modified" response */
             document->info.expires = info.expires;
@@ -914,11 +915,12 @@ HttpCache::Revalidate(struct pool &caller_pool,
 }
 
 static bool
-http_cache_may_serve(HttpCacheRequestInfo &info,
+http_cache_may_serve(EventLoop &event_loop,
+                     HttpCacheRequestInfo &info,
                      const HttpCacheDocument &document)
 {
     return info.only_if_cached ||
-        document.info.expires >= std::chrono::system_clock::now();
+        document.info.expires >= event_loop.SystemNow();
 }
 
 void
@@ -936,7 +938,7 @@ HttpCache::Found(HttpCacheRequestInfo &info,
     if (!CheckCacheRequest(caller_pool, info, document, handler))
         return;
 
-    if (http_cache_may_serve(info, document))
+    if (http_cache_may_serve(GetEventLoop(), info, document))
         Serve(caller_pool, document,
               http_cache_key(caller_pool, address),
               handler);

@@ -51,6 +51,7 @@
 #include "AllocatorStats.hxx"
 #include "pool/pool.hxx"
 #include "event/TimerEvent.hxx"
+#include "event/Loop.hxx"
 #include "io/Logger.hxx"
 #include "http/List.hxx"
 #include "http/Date.hxx"
@@ -114,12 +115,13 @@ struct FilterCacheItem final : PoolHolder, CacheItem, LeakDetector {
 
     FilterCacheItem(PoolPtr &&_pool,
                     std::chrono::steady_clock::time_point now,
+                    std::chrono::system_clock::time_point system_now,
                     const FilterCacheInfo &_info,
                     http_status_t _status, const StringMap &_headers,
                     size_t _size, RubberAllocation &&_body,
                     std::chrono::system_clock::time_point _expires) noexcept
         :PoolHolder(std::move(_pool)),
-         CacheItem(now, _expires, pool_netto_size(pool) + _size),
+         CacheItem(now, system_now, _expires, pool_netto_size(pool) + _size),
          info(pool, _info),
          status(_status), headers(pool, _headers),
          size(_size), body(std::move(_body)) {
@@ -363,12 +365,13 @@ FilterCache::Put(const FilterCacheInfo &info,
 
     std::chrono::system_clock::time_point expires;
     if (info.expires == std::chrono::system_clock::from_time_t(-1))
-        expires = std::chrono::system_clock::now() + fcache_default_expires;
+        expires = GetEventLoop().SystemNow() + fcache_default_expires;
     else
         expires = info.expires;
 
     auto item = NewFromPool<FilterCacheItem>(pool_new_slice(&pool, "FilterCacheItem", &slice_pool),
                                              cache.SteadyNow(),
+                                             cache.SystemNow(),
                                              info,
                                              status, headers, size,
                                              std::move(a),
@@ -392,7 +395,7 @@ parse_translate_time(const char *p, std::chrono::system_clock::duration offset)
 
 /** check whether the HTTP response should be put into the cache */
 static bool
-filter_cache_response_evaluate(FilterCacheInfo &info,
+filter_cache_response_evaluate(EventLoop &event_loop, FilterCacheInfo &info,
                                http_status_t status, const StringMap &headers,
                                off_t body_available)
 {
@@ -409,7 +412,7 @@ filter_cache_response_evaluate(FilterCacheInfo &info,
     if (p != nullptr && http_list_contains(p, "no-store"))
         return false;
 
-    const auto now = std::chrono::system_clock::now();
+    const auto now = event_loop.SystemNow();
     std::chrono::system_clock::duration offset = std::chrono::system_clock::duration::zero();
 
     p = headers.Get("date");
@@ -507,7 +510,7 @@ FilterCacheRequest::OnHttpResponse(http_status_t status, StringMap &&headers,
 
     off_t available = body ? body.GetAvailable(true) : 0;
 
-    if (!filter_cache_response_evaluate(info,
+    if (!filter_cache_response_evaluate(cache.GetEventLoop(), info,
                                         status, headers, available)) {
         /* don't cache response */
         LogConcat(4, "FilterCache", "nocache ", info.key);

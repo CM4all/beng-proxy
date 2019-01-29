@@ -158,7 +158,8 @@ BpConnection::LogHttpRequest(HttpServerRequest &request,
     instance.http_traffic_received_counter += bytes_received;
     instance.http_traffic_sent_counter += bytes_sent;
     if (instance.access_log != nullptr)
-        instance.access_log->Log(request, per_request.site_name,
+        instance.access_log->Log(instance.event_loop.SystemNow(),
+                                 request, per_request.site_name,
                                  nullptr,
                                  request.headers.Get("referer"),
                                  request.headers.Get("user-agent"),

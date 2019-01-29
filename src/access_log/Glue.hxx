@@ -80,7 +80,8 @@ public:
      * (which includes status line, headers and transport encoding
      * overhead such as chunk headers)
      */
-    void Log(HttpServerRequest &request, const char *site,
+    void Log(std::chrono::system_clock::time_point now,
+             HttpServerRequest &request, const char *site,
              const char *forwarded_to,
              const char *host, const char *x_forwarded_for,
              const char *referer, const char *user_agent,
@@ -88,7 +89,8 @@ public:
              uint64_t bytes_received, uint64_t bytes_sent,
              std::chrono::steady_clock::duration duration) noexcept;
 
-    void Log(HttpServerRequest &request, const char *site,
+    void Log(std::chrono::system_clock::time_point now,
+             HttpServerRequest &request, const char *site,
              const char *forwarded_to,
              const char *referer, const char *user_agent,
              http_status_t status, int64_t length,
