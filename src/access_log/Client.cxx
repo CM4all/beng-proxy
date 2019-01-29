@@ -36,7 +36,7 @@
 using namespace Net::Log;
 
 bool
-LogClient::Send(const Datagram &d)
+LogClient::Send(const Datagram &d) noexcept
 {
     try {
         Net::Log::Send(fd, d);

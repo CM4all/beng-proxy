@@ -47,14 +47,14 @@ class LogClient {
     UniqueSocketDescriptor fd;
 
 public:
-    explicit LogClient(UniqueSocketDescriptor &&_fd)
+    explicit LogClient(UniqueSocketDescriptor &&_fd) noexcept
         :logger("access_log"), fd(std::move(_fd)) {}
 
     SocketDescriptor GetSocket() noexcept {
         return fd;
     }
 
-    bool Send(const Net::Log::Datagram &d);
+    bool Send(const Net::Log::Datagram &d) noexcept;
 };
 
 #endif
