@@ -143,6 +143,8 @@ public:
     HttpCacheRequest(const HttpCacheRequest &) = delete;
     HttpCacheRequest &operator=(const HttpCacheRequest &) = delete;
 
+    EventLoop &GetEventLoop() const noexcept;
+
     void Serve() noexcept;
 
     void Put(RubberAllocation &&a, size_t size) noexcept;
@@ -392,6 +394,12 @@ http_cache_key(struct pool &pool, const ResourceAddress &address)
     return nullptr;
 }
 
+inline EventLoop &
+HttpCacheRequest::GetEventLoop() const noexcept
+{
+    return cache.GetEventLoop();
+}
+
 void
 HttpCacheRequest::Put(RubberAllocation &&a, size_t size) noexcept
 {
@@ -539,7 +547,7 @@ HttpCacheRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
         /* tee the body: one goes to our client, and one goes into the
            cache */
         auto tee = istream_tee_new(pool, std::move(body),
-                                   cache.GetEventLoop(),
+                                   GetEventLoop(),
                                    false, false,
                                    /* just in case our handler closes
                                       the body without looking at it:
