@@ -152,7 +152,7 @@ GetRealRemoteHost(const char *xff, const std::set<std::string> &trust) noexcept
 
 void
 AccessLogGlue::Log(std::chrono::system_clock::time_point now,
-                   HttpServerRequest &request, const char *site,
+                   const HttpServerRequest &request, const char *site,
                    const char *forwarded_to,
                    const char *host, const char *x_forwarded_for,
                    const char *referer, const char *user_agent,
@@ -193,7 +193,7 @@ AccessLogGlue::Log(std::chrono::system_clock::time_point now,
 
 void
 AccessLogGlue::Log(std::chrono::system_clock::time_point now,
-                   HttpServerRequest &request, const char *site,
+                   const HttpServerRequest &request, const char *site,
                    const char *forwarded_to,
                    const char *referer, const char *user_agent,
                    http_status_t status, int64_t content_length,
