@@ -107,7 +107,7 @@ struct BpInstance final : PInstance, ControlHandler {
     SpawnService *spawn_service;
     TimerEvent spawn_worker_event;
 
-    SpawnServerClient *spawn = nullptr;
+    std::unique_ptr<SpawnServerClient> spawn;
 
     boost::intrusive::list<BpWorker,
                            boost::intrusive::base_hook<boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>>,

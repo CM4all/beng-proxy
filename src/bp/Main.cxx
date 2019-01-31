@@ -293,10 +293,10 @@ try {
     /* note: this function call passes a temporary SpawnConfig copy,
        because the reference will be evaluated in the child process
        after ~BpInstance() has been called */
-    instance.spawn = StartSpawnServer(SpawnConfig(instance.config.spawn),
-                                      instance.child_process_registry,
-                                      nullptr,
-                                      [&instance](){
+    instance.spawn.reset(StartSpawnServer(SpawnConfig(instance.config.spawn),
+                                          instance.child_process_registry,
+                                          nullptr,
+                                          [&instance](){
             instance.event_loop.Reinit();
 
             global_control_handler_deinit(&instance);
@@ -304,8 +304,8 @@ try {
             instance.DisableSignals();
 
             instance.~BpInstance();
-        });
-    instance.spawn_service = instance.spawn;
+    }));
+    instance.spawn_service = instance.spawn.get();
 
     const ScopeCrashGlobalInit crash_init;
 
@@ -476,8 +476,6 @@ try {
     /* cleanup */
 
     bulldog_deinit();
-
-    delete instance.spawn;
 
     thread_pool_deinit();
 
