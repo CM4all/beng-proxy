@@ -57,6 +57,7 @@
 #include "session/Save.hxx"
 #include "nfs/Stock.hxx"
 #include "nfs/Cache.hxx"
+#include "spawn/Client.hxx"
 #include "access_log/Glue.hxx"
 
 #include <sys/signal.h>
