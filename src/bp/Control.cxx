@@ -252,13 +252,13 @@ void
 local_control_handler_init(BpInstance *instance)
 {
     instance->local_control_server =
-        new LocalControl("beng_control:pid=", *instance);
+        std::make_unique<LocalControl>("beng_control:pid=", *instance);
 }
 
 void
 local_control_handler_deinit(BpInstance *instance)
 {
-    delete instance->local_control_server;
+    instance->local_control_server.reset();
 }
 
 void
