@@ -131,7 +131,7 @@ struct BpInstance final : PInstance, ControlHandler {
      * socket "@beng-proxy:PID" and will accept connections only from
      * root or the beng-proxy user.
      */
-    LocalControl *local_control_server = nullptr;
+    std::unique_ptr<LocalControl> local_control_server;
 
     MyAvahiClient avahi_client;
 
