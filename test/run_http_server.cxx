@@ -59,24 +59,26 @@
 #include <stdlib.h>
 #include <string.h>
 
+enum class Mode {
+    MODE_NULL,
+    MIRROR,
+
+    /**
+     * Response body of unknown length with keep-alive disabled.
+     * Response body ends when socket is closed.
+     */
+    CLOSE,
+
+    DUMMY,
+    FIXED,
+    HUGE_,
+    HOLD,
+};
+
 struct Instance final : PInstance, HttpServerConnectionHandler, Cancellable {
     ShutdownListener shutdown_listener;
 
-    enum class Mode {
-        MODE_NULL,
-        MIRROR,
-
-        /**
-         * Response body of unknown length with keep-alive disabled.
-         * Response body ends when socket is closed.
-         */
-        CLOSE,
-
-        DUMMY,
-        FIXED,
-        HUGE_,
-        HOLD,
-    } mode;
+    Mode mode;
 
     HttpServerConnection *connection;
 
@@ -136,7 +138,7 @@ Instance::HandleHttpRequest(HttpServerRequest &request,
         http_status_t status;
         static char data[0x100];
 
-    case Instance::Mode::MODE_NULL:
+    case Mode::MODE_NULL:
         if (request.body)
             sink_null_new(request.pool, std::move(request.body));
 
@@ -144,7 +146,7 @@ Instance::HandleHttpRequest(HttpServerRequest &request,
                              HttpHeaders(request.pool), nullptr);
         break;
 
-    case Instance::Mode::MIRROR:
+    case Mode::MIRROR:
         status = request.body
             ? HTTP_STATUS_OK
             : HTTP_STATUS_NO_CONTENT;
@@ -153,13 +155,13 @@ Instance::HandleHttpRequest(HttpServerRequest &request,
                              std::move(request.body));
         break;
 
-    case Instance::Mode::CLOSE:
+    case Mode::CLOSE:
         /* disable keep-alive */
         http_server_connection_graceful(&request.connection);
 
         /* fall through */
 
-    case Instance::Mode::DUMMY:
+    case Mode::DUMMY:
         if (request.body)
             sink_null_new(request.pool, std::move(request.body));
 
@@ -176,7 +178,7 @@ Instance::HandleHttpRequest(HttpServerRequest &request,
 
         break;
 
-    case Instance::Mode::FIXED:
+    case Mode::FIXED:
         if (request.body)
             sink_null_new(request.pool, std::move(request.body));
 
@@ -185,7 +187,7 @@ Instance::HandleHttpRequest(HttpServerRequest &request,
                                                 data, sizeof(data)));
         break;
 
-    case Instance::Mode::HUGE_:
+    case Mode::HUGE_:
         if (request.body)
             sink_null_new(request.pool, std::move(request.body));
 
@@ -196,7 +198,7 @@ Instance::HandleHttpRequest(HttpServerRequest &request,
                                               512 * 1024, true));
         break;
 
-    case Instance::Mode::HOLD:
+    case Mode::HOLD:
         request_body = UnusedHoldIstreamPtr(request.pool,
                                             std::move(request.body));
 
@@ -274,19 +276,19 @@ try {
 
     const char *mode = argv[3];
     if (strcmp(mode, "null") == 0)
-        instance.mode = Instance::Mode::MODE_NULL;
+        instance.mode = Mode::MODE_NULL;
     else if (strcmp(mode, "mirror") == 0)
-        instance.mode = Instance::Mode::MIRROR;
+        instance.mode = Mode::MIRROR;
     else if (strcmp(mode, "close") == 0)
-        instance.mode = Instance::Mode::CLOSE;
+        instance.mode = Mode::CLOSE;
     else if (strcmp(mode, "dummy") == 0)
-        instance.mode = Instance::Mode::DUMMY;
+        instance.mode = Mode::DUMMY;
     else if (strcmp(mode, "fixed") == 0)
-        instance.mode = Instance::Mode::FIXED;
+        instance.mode = Mode::FIXED;
     else if (strcmp(mode, "huge") == 0)
-        instance.mode = Instance::Mode::HUGE_;
+        instance.mode = Mode::HUGE_;
     else if (strcmp(mode, "hold") == 0)
-        instance.mode = Instance::Mode::HOLD;
+        instance.mode = Mode::HOLD;
     else {
         fprintf(stderr, "Unknown mode: %s\n", mode);
         return EXIT_FAILURE;
