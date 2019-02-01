@@ -292,6 +292,7 @@ LhttpStock::LhttpStock(unsigned limit, unsigned max_idle,
                        SocketDescriptor log_socket) noexcept
     :child_stock(event_loop, spawn_service,
                  *this,
+                 64,
                  log_socket,
                  limit, max_idle),
      mchild_stock(child_stock.GetStockMap()),

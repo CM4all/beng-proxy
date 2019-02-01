@@ -1,6 +1,6 @@
 cm4all-beng-proxy (15.8) unstable; urgency=low
 
-  * 
+  * lhttp: increase listener backlog
 
  --   
 
