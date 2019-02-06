@@ -1,6 +1,7 @@
 cm4all-beng-proxy (15.8) unstable; urgency=low
 
   * lhttp: increase listener backlog
+  * bp/mod_auth_easy: protect all files with .access
 
  --   
 

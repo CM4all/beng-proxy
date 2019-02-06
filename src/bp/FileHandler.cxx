@@ -226,9 +226,6 @@ MaybeEmulateModAuthEasy(Request &request2, const FileAddress &address,
     if (strstr(address.path, "/pr_0001/public_html/") == nullptr)
         return false;
 
-    if (!StringEndsWith(address.path, ".html"))
-        return false;
-
     return EmulateModAuthEasy(request2, address, st, body);
 }
 
