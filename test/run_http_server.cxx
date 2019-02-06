@@ -302,7 +302,7 @@ try {
     }
 
     UniqueSocketDescriptor listen_fd;
-    int in_fd, out_fd;
+    int in_fd = -1, out_fd = -1;
 
     if (strcmp(argv[1], "accept") == 0) {
         listen_fd = UniqueSocketDescriptor(atoi(argv[2]));
