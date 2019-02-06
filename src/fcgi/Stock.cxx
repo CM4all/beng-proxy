@@ -384,6 +384,7 @@ FcgiStock::FcgiStock(unsigned limit, unsigned max_idle,
     :hstock(event_loop, *this, limit, max_idle),
      child_stock(event_loop, spawn_service,
                  *this,
+                 4,
                  _log_socket,
                  limit, max_idle) {}
 

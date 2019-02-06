@@ -4,6 +4,13 @@ cm4all-beng-proxy (16.0.1) unstable; urgency=low
 
  --   
 
+cm4all-beng-proxy (15.8) unstable; urgency=low
+
+  * lhttp: increase listener backlog
+  * bp/mod_auth_easy: protect all files with .access
+
+ -- Max Kellermann <mk@cm4all.com>  Wed, 06 Feb 2019 11:48:31 +0100
+
 cm4all-beng-proxy (15.7) unstable; urgency=low
 
   * bp/mod_auth_easy: fix inverted check in .access file check

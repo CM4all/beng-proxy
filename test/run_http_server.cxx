@@ -49,6 +49,7 @@
 #include "pool/pool.hxx"
 #include "event/TimerEvent.hxx"
 #include "event/ShutdownListener.hxx"
+#include "event/net/TemplateServerSocket.hxx"
 #include "fb_pool.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "io/UniqueFileDescriptor.hxx"
@@ -59,24 +60,31 @@
 #include <stdlib.h>
 #include <string.h>
 
-struct Instance final : PInstance, HttpServerConnectionHandler, Cancellable {
-    ShutdownListener shutdown_listener;
+struct Instance;
 
-    enum class Mode {
-        MODE_NULL,
-        MIRROR,
+enum class Mode {
+    MODE_NULL,
+    MIRROR,
 
-        /**
-         * Response body of unknown length with keep-alive disabled.
-         * Response body ends when socket is closed.
-         */
-        CLOSE,
+    /**
+     * Response body of unknown length with keep-alive disabled.
+     * Response body ends when socket is closed.
+     */
+    CLOSE,
 
-        DUMMY,
-        FIXED,
-        HUGE_,
-        HOLD,
-    } mode;
+    DUMMY,
+    FIXED,
+    HUGE_,
+    HOLD,
+};
+
+class Connection final
+    : public boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::auto_unlink>>,
+    HttpServerConnectionHandler, Cancellable
+{
+    Instance &instance;
+
+    PoolPtr pool;
 
     HttpServerConnection *connection;
 
@@ -84,12 +92,16 @@ struct Instance final : PInstance, HttpServerConnectionHandler, Cancellable {
 
     TimerEvent timer;
 
-    Instance()
-        :shutdown_listener(event_loop, BIND_THIS_METHOD(ShutdownCallback)),
-         timer(event_loop, BIND_THIS_METHOD(OnTimer)) {}
+public:
+    Connection(Instance &instance,
+               UniqueSocketDescriptor &&_fd, SocketAddress address) noexcept;
 
-    void ShutdownCallback() noexcept;
+    ~Connection() noexcept {
+        if (connection != nullptr)
+            http_server_connection_close(connection);
+    }
 
+private:
     void OnTimer() noexcept;
 
     /* virtual methods from class Cancellable */
@@ -110,17 +122,58 @@ struct Instance final : PInstance, HttpServerConnectionHandler, Cancellable {
     void HttpConnectionClosed() override;
 };
 
+using Listener = TemplateServerSocket<Connection, Instance &>;
+
+struct Instance final : PInstance {
+    ShutdownListener shutdown_listener;
+
+    Mode mode;
+
+    std::unique_ptr<Listener> listener;
+
+    Instance()
+        :shutdown_listener(event_loop, BIND_THIS_METHOD(ShutdownCallback)) {}
+
+    void OnConnectionClosed() noexcept;
+
+private:
+    void ShutdownCallback() noexcept;
+};
+
+Connection::Connection(Instance &_instance,
+                       UniqueSocketDescriptor &&fd,
+                       SocketAddress address) noexcept
+    :instance(_instance),
+     pool(PoolPtr::Donate(),
+          *pool_new_linear(instance.root_pool, "connection", 2048)),
+     connection(http_server_connection_new(pool, instance.event_loop,
+                                           fd.Release(), FdType::FD_SOCKET,
+                                           nullptr,
+                                           nullptr,
+                                           address,
+                                           true,
+                                           *this)),
+     timer(instance.event_loop, BIND_THIS_METHOD(OnTimer)) {}
+
+
 void
 Instance::ShutdownCallback() noexcept
 {
-    http_server_connection_close(connection);
+    listener.reset();
 }
 
 void
-Instance::OnTimer() noexcept
+Connection::OnTimer() noexcept
 {
-    http_server_connection_close(connection);
-    shutdown_listener.Disable();
+    instance.OnConnectionClosed();
+    delete this;
+}
+
+void
+Instance::OnConnectionClosed() noexcept
+{
+    if (!listener)
+        shutdown_listener.Disable();
 }
 
 /*
@@ -129,14 +182,14 @@ Instance::OnTimer() noexcept
  */
 
 void
-Instance::HandleHttpRequest(HttpServerRequest &request,
-                            gcc_unused CancellablePointer &cancel_ptr)
+Connection::HandleHttpRequest(HttpServerRequest &request,
+                              gcc_unused CancellablePointer &cancel_ptr)
 {
-    switch (mode) {
+    switch (instance.mode) {
         http_status_t status;
         static char data[0x100];
 
-    case Instance::Mode::MODE_NULL:
+    case Mode::MODE_NULL:
         if (request.body)
             sink_null_new(request.pool, std::move(request.body));
 
@@ -144,7 +197,7 @@ Instance::HandleHttpRequest(HttpServerRequest &request,
                              HttpHeaders(request.pool), nullptr);
         break;
 
-    case Instance::Mode::MIRROR:
+    case Mode::MIRROR:
         status = request.body
             ? HTTP_STATUS_OK
             : HTTP_STATUS_NO_CONTENT;
@@ -153,13 +206,13 @@ Instance::HandleHttpRequest(HttpServerRequest &request,
                              std::move(request.body));
         break;
 
-    case Instance::Mode::CLOSE:
+    case Mode::CLOSE:
         /* disable keep-alive */
         http_server_connection_graceful(&request.connection);
 
         /* fall through */
 
-    case Instance::Mode::DUMMY:
+    case Mode::DUMMY:
         if (request.body)
             sink_null_new(request.pool, std::move(request.body));
 
@@ -176,7 +229,7 @@ Instance::HandleHttpRequest(HttpServerRequest &request,
 
         break;
 
-    case Instance::Mode::FIXED:
+    case Mode::FIXED:
         if (request.body)
             sink_null_new(request.pool, std::move(request.body));
 
@@ -185,7 +238,7 @@ Instance::HandleHttpRequest(HttpServerRequest &request,
                                                 data, sizeof(data)));
         break;
 
-    case Instance::Mode::HUGE_:
+    case Mode::HUGE_:
         if (request.body)
             sink_null_new(request.pool, std::move(request.body));
 
@@ -196,12 +249,13 @@ Instance::HandleHttpRequest(HttpServerRequest &request,
                                               512 * 1024, true));
         break;
 
-    case Instance::Mode::HOLD:
+    case Mode::HOLD:
         request_body = UnusedHoldIstreamPtr(request.pool,
                                             std::move(request.body));
 
         {
-            auto delayed = istream_delayed_new(request.pool, event_loop);
+            auto delayed = istream_delayed_new(request.pool,
+                                               instance.event_loop);
             delayed.second.cancel_ptr = *this;
 
             http_server_response(&request, HTTP_STATUS_OK,
@@ -216,19 +270,22 @@ Instance::HandleHttpRequest(HttpServerRequest &request,
 }
 
 void
-Instance::HttpConnectionError(std::exception_ptr e)
+Connection::HttpConnectionError(std::exception_ptr e)
 {
-    timer.Cancel();
-    shutdown_listener.Disable();
-
     PrintException(e);
+
+    connection = nullptr;
+
+    instance.OnConnectionClosed();
+    delete this;
 }
 
 void
-Instance::HttpConnectionClosed()
+Connection::HttpConnectionClosed()
 {
-    timer.Cancel();
-    shutdown_listener.Disable();
+    connection = nullptr;
+    instance.OnConnectionClosed();
+    delete this;
 }
 
 /*
@@ -244,15 +301,11 @@ try {
         return EXIT_FAILURE;
     }
 
-    int in_fd, out_fd;
+    UniqueSocketDescriptor listen_fd;
+    int in_fd = -1, out_fd = -1;
 
     if (strcmp(argv[1], "accept") == 0) {
-        const int listen_fd = atoi(argv[2]);
-        in_fd = out_fd = accept(listen_fd, nullptr, 0);
-        if (in_fd < 0) {
-            perror("accept() failed");
-            return EXIT_FAILURE;
-        }
+        listen_fd = UniqueSocketDescriptor(atoi(argv[2]));
     } else {
         in_fd = atoi(argv[1]);
         out_fd = atoi(argv[2]);
@@ -264,41 +317,41 @@ try {
     Instance instance;
     instance.shutdown_listener.Enable();
 
-    UniqueSocketDescriptor sockfd;
-    if (in_fd != out_fd) {
-        sockfd = duplex_new(instance.event_loop, instance.root_pool,
-                            UniqueFileDescriptor(in_fd),
-                            UniqueFileDescriptor(out_fd));
-    } else
-        sockfd = UniqueSocketDescriptor(in_fd);
-
     const char *mode = argv[3];
     if (strcmp(mode, "null") == 0)
-        instance.mode = Instance::Mode::MODE_NULL;
+        instance.mode = Mode::MODE_NULL;
     else if (strcmp(mode, "mirror") == 0)
-        instance.mode = Instance::Mode::MIRROR;
+        instance.mode = Mode::MIRROR;
     else if (strcmp(mode, "close") == 0)
-        instance.mode = Instance::Mode::CLOSE;
+        instance.mode = Mode::CLOSE;
     else if (strcmp(mode, "dummy") == 0)
-        instance.mode = Instance::Mode::DUMMY;
+        instance.mode = Mode::DUMMY;
     else if (strcmp(mode, "fixed") == 0)
-        instance.mode = Instance::Mode::FIXED;
+        instance.mode = Mode::FIXED;
     else if (strcmp(mode, "huge") == 0)
-        instance.mode = Instance::Mode::HUGE_;
+        instance.mode = Mode::HUGE_;
     else if (strcmp(mode, "hold") == 0)
-        instance.mode = Instance::Mode::HOLD;
+        instance.mode = Mode::HOLD;
     else {
         fprintf(stderr, "Unknown mode: %s\n", mode);
         return EXIT_FAILURE;
     }
 
-    instance.connection = http_server_connection_new(instance.root_pool,
-                                                     instance.event_loop,
-                                                     sockfd,
-                                                     FdType::FD_SOCKET,
-                                                     nullptr,
-                                                     nullptr, nullptr,
-                                                     true, instance);
+    if (listen_fd.IsDefined()) {
+        instance.listener = std::make_unique<Listener>(instance.event_loop,
+                                                       instance);
+        instance.listener->Listen(std::move(listen_fd));
+    } else {
+        UniqueSocketDescriptor sockfd;
+        if (in_fd != out_fd) {
+            sockfd = duplex_new(instance.event_loop, instance.root_pool,
+                                UniqueFileDescriptor(in_fd),
+                                UniqueFileDescriptor(out_fd));
+        } else
+            sockfd = UniqueSocketDescriptor(in_fd);
+
+        new Connection(instance, std::move(sockfd), {});
+    }
 
     instance.event_loop.Dispatch();
 

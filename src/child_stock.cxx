@@ -90,6 +90,7 @@ public:
     }
 
     void Spawn(ChildStockClass &cls, void *info,
+               int backlog,
                SocketDescriptor log_socket);
 
     gcc_pure
@@ -155,12 +156,13 @@ private:
 
 void
 ChildStockItem::Spawn(ChildStockClass &cls, void *info,
+                      int backlog,
                       SocketDescriptor log_socket)
 {
     int socket_type = cls.GetChildSocketType(info);
 
     PreparedChildProcess p;
-    cls.PrepareChild(info, socket.Create(socket_type), p);
+    cls.PrepareChild(info, socket.Create(socket_type, backlog), p);
 
     if (log_socket.IsDefined() && p.stderr_fd < 0)
         log.EnableClient(p, GetEventLoop(), log_socket);
@@ -190,7 +192,7 @@ ChildStock::Create(CreateStockItem c, void *info,
                                     cls.GetChildTag(info));
 
     try {
-        item->Spawn(cls, info, log_socket);
+        item->Spawn(cls, info, backlog, log_socket);
     } catch (...) {
         delete item;
         throw;
@@ -215,10 +217,12 @@ ChildStockItem::~ChildStockItem()
 
 ChildStock::ChildStock(EventLoop &event_loop, SpawnService &_spawn_service,
                        ChildStockClass &_cls,
+                       int _backlog,
                        SocketDescriptor _log_socket,
                        unsigned _limit, unsigned _max_idle) noexcept
     :map(event_loop, *this, _limit, _max_idle),
      spawn_service(_spawn_service), cls(_cls),
+     backlog(_backlog),
      log_socket(_log_socket)
 {
 }

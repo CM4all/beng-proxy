@@ -57,7 +57,7 @@ struct ChildSocket {
     /**
      * Throws std::runtime_error on error.
      */
-    UniqueSocketDescriptor Create(int socket_type);
+    UniqueSocketDescriptor Create(int socket_type, int backlog);
 
     void Unlink();
 

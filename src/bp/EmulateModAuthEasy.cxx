@@ -217,6 +217,9 @@ EmulateModAuthEasy(Request &request2, const FileAddress &address,
         return true;
     }
 
+    if (!StringEndsWith(address.path, ".html"))
+        return false;
+
     char buffer[4096];
     char *line = ReadFirstLine(istream_file_fd(*body), buffer, sizeof(buffer));
     if (line == nullptr)

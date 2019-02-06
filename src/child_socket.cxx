@@ -47,7 +47,7 @@ make_child_socket_path(struct sockaddr_un *address)
 }
 
 UniqueSocketDescriptor
-ChildSocket::Create(int socket_type)
+ChildSocket::Create(int socket_type, int backlog)
 {
     make_child_socket_path(&address);
 
@@ -63,7 +63,7 @@ ChildSocket::Create(int socket_type)
     if (!fd.Bind(GetAddress()))
         throw MakeErrno("failed to bind local socket");
 
-    if (!fd.Listen(8))
+    if (!fd.Listen(backlog))
         throw MakeErrno("failed to listen on local socket");
 
     return fd;
