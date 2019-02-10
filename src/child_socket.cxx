@@ -63,7 +63,7 @@ ChildSocket::Create(int socket_type)
     if (!fd.Bind(GetAddress()))
         throw MakeErrno("failed to bind local socket");
 
-    if (!fd.Listen(8))
+    if (!fd.Listen(64))
         throw MakeErrno("failed to listen on local socket");
 
     return fd;
