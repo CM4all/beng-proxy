@@ -52,6 +52,7 @@ user_agent_is_bot(const char *user_agent)
         strstr(user_agent, "/robot") != NULL || /* AhrefsBot and Exabot */
         strstr(user_agent, "/bots") != NULL || /* Yandex */
         strstr(user_agent, "/crawler.") != NULL || /* Sistrix */
+        strstr(user_agent, "Applebot") != NULL ||
         strstr(user_agent, "WordPress/") != NULL || /* WordPress pingbacks */
         strstr(user_agent, "pingback") != NULL || /* WordPress (and other?) pingbacks */
         false;
