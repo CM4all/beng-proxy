@@ -191,7 +191,7 @@ public:
 
     void TryRead() {
         if (CheckDirect(FdType::FD_PIPE)) {
-            if (SubmitBuffer())
+            if (SubmitBuffer() && buffer.IsEmpty())
                 TryDirect();
         } else {
             TryBuffered();
