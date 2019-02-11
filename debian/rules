@@ -4,7 +4,8 @@
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
 
-MESON_OPTIONS = --prefix=/usr --werror
+MESON_OPTIONS = --prefix=/usr
+# --werror
 
 debian/build/debug/build.ninja: meson.build
 	rm -rf $(@D)
