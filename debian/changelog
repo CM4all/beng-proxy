@@ -1,6 +1,6 @@
 cm4all-beng-proxy (13.15) unstable; urgency=low
 
-  * 
+  * was: send PREMATURE after client canceled the request
 
  --   
 
