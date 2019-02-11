@@ -320,6 +320,12 @@ struct WasClient final
 
         stopwatch_event(stopwatch, "cancel");
 
+        /* if an error occurs while sending PREMATURE, don't pass it
+           to our handler - he's not interested anymore */
+        ignore_control_errors = true;
+
+        CancelRequestBody();
+
         if (response.body != nullptr)
             was_input_free_unused_p(&response.body);
 
@@ -677,6 +683,12 @@ WasClient::WasInputClose(uint64_t received) noexcept
     stopwatch_event(stopwatch, "close");
 
     response.body = nullptr;
+
+    /* if an error occurs while sending PREMATURE, don't pass it
+       to our handler - he's not interested anymore */
+    ignore_control_errors = true;
+
+    CancelRequestBody();
 
     ReleaseControlStop(received);
     Destroy();
