@@ -360,12 +360,8 @@ XmlParser::Feed(const char *start, size_t length)
                     }
 
                     attr_name[attr_name_length++] = ToLowerASCII(*buffer++);
-                } else if (*buffer == '=' || IsWhitespaceOrNull(*buffer)) {
-                    state = State::AFTER_ATTR_NAME;
-                    break;
                 } else {
-                    InvokeAttributeFinished();
-                    state = State::ELEMENT_TAG;
+                    state = State::AFTER_ATTR_NAME;
                     break;
                 }
             } while (buffer < end);
