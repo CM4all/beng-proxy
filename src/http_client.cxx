@@ -762,7 +762,9 @@ HttpClient::HeadersFinished()
                                                chunked);
 
     response.state = Response::State::BODY;
-    if (!socket.IsReleased())
+#ifndef NDEBUG
+    if (!socket.IsReleased()) /* this check only avoids the assertion failure */
+#endif
         socket.SetDirect(CheckDirect());
     return true;
 }
