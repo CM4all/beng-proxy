@@ -2,6 +2,7 @@ cm4all-beng-proxy (13.16) unstable; urgency=low
 
   * processor: fix crash due to malformed XML attribute
   * http_client: fix crash bug
+  * ssl/cache: fix crash bug
 
  --   
 
