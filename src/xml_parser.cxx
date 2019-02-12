@@ -378,6 +378,11 @@ XmlParser::Feed(const char *start, size_t length)
                 } else if (IsWhitespaceOrNull(*buffer)) {
                     ++buffer;
                 } else {
+                    /* there is no value (probably malformed XML) -
+                       use the current position as start and end
+                       offset because that's the best we can do */
+                    attr.value_start = attr.value_end = position + (off_t)(buffer - start);
+
                     InvokeAttributeFinished();
                     state = State::ELEMENT_TAG;
                     break;
