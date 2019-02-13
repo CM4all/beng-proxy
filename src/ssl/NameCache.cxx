@@ -65,6 +65,12 @@ CertNameCache::OnUpdateTimer() noexcept
 try {
     assert(conn.IsReady());
 
+    if (!conn.IsIdle()) {
+        /* still processing a query; try again later */
+        ScheduleUpdate();
+        return;
+    }
+
     logger(4, "updating certificate database name cache");
 
     n_added = n_updated = n_deleted = 0;

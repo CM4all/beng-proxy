@@ -402,8 +402,7 @@ rewrite_widget_uri(struct pool &pool,
         return nullptr;
 
     if (mode == RewriteUriMode::RESPONSE) {
-        UnusedIstreamPtr istream(embed_inline_widget(pool, env, true,
-                                                     widget));
+        auto istream = embed_inline_widget(pool, env, true, widget);
         if (escape != nullptr)
             istream = istream_escape_new(pool, std::move(istream), *escape);
         return istream;

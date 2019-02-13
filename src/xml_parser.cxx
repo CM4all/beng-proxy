@@ -367,12 +367,8 @@ XmlParser::Feed(const char *start, size_t length) noexcept
                     }
 
                     attr_name[attr_name_length++] = ToLowerASCII(*buffer++);
-                } else if (*buffer == '=' || IsWhitespaceOrNull(*buffer)) {
-                    state = State::AFTER_ATTR_NAME;
-                    break;
                 } else {
-                    InvokeAttributeFinished();
-                    state = State::ELEMENT_TAG;
+                    state = State::AFTER_ATTR_NAME;
                     break;
                 }
             } while (buffer < end);
@@ -389,6 +385,11 @@ XmlParser::Feed(const char *start, size_t length) noexcept
                 } else if (IsWhitespaceOrNull(*buffer)) {
                     ++buffer;
                 } else {
+                    /* there is no value (probably malformed XML) -
+                       use the current position as start and end
+                       offset because that's the best we can do */
+                    attr.value_start = attr.value_end = position + (off_t)(buffer - start);
+
                     InvokeAttributeFinished();
                     state = State::ELEMENT_TAG;
                     break;
