@@ -26,7 +26,7 @@ was_path = '/usr/lib/cm4all/was/bin'
 demo_path = '/usr/share/cm4all/beng-proxy/demo/htdocs'
 test_path = os.path.join(os.getcwd(), 'test')
 was_examples_path = was_path
-was_examples = ['hello', 'random', 'mirror']
+was_examples = ['hello', 'random', 'mirror', 'cookie']
 coma_fastcgi = '/usr/bin/cm4all-coma-fastcgi'
 coma_was = os.path.join(was_path, 'coma-was')
 coma_demo = '/var/www'
@@ -1051,6 +1051,7 @@ if __name__ == '__main__':
             elif os.path.isdir('../../cgi-coma'):
                 src_dir = os.path.join(os.getcwd(), '../..')
 
+        was_examples_path = os.path.join(src_dir, 'libwas', 'output', 'debug', 'examples')
         was_examples_path = os.path.join(src_dir, 'libwas')
         coma_fastcgi = os.path.join(src_dir, 'cgi-coma/output/debug/cm4all-coma-fastcgi')
         coma_was = os.path.join(src_dir, 'cgi-coma/output/debug/coma-was')
