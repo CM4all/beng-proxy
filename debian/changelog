@@ -1,6 +1,6 @@
 cm4all-beng-proxy (15.11) unstable; urgency=low
 
-  * 
+  * truncate long stderr lines before sending to Pond
 
  --   
 
