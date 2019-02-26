@@ -118,8 +118,9 @@ LbControl::EnableNode(const char *payload, size_t length)
     const auto with_port = node->address.WithPort(port);
 
     char buffer[64];
-    ToString(buffer, sizeof(buffer), with_port);
-    logger(4, "enabling node ", node_name, " (", buffer, ")");
+    logger(4, "enabling node ", node_name, " (",
+           ToString(buffer, sizeof(buffer), with_port, "?"),
+           ")");
 
     instance.failure_manager.Unset(GetEventLoop().SteadyNow(),
                                    with_port, FAILURE_OK);
@@ -156,8 +157,9 @@ LbControl::FadeNode(const char *payload, size_t length)
     const auto with_port = node->address.WithPort(port);
 
     char buffer[64];
-    ToString(buffer, sizeof(buffer), with_port);
-    logger(4, "fading node ", node_name, " (", buffer, ")");
+    logger(4, "fading node ", node_name, " (",
+           ToString(buffer, sizeof(buffer), with_port, "?"),
+           ")");
 
     /* set status "FADE" for 3 hours */
     instance.failure_manager.Set(GetEventLoop().SteadyNow(),
