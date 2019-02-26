@@ -54,12 +54,17 @@ LbControl::LbControl(LbInstance &_instance, const LbControlConfig &config)
 }
 
 inline void
-LbControl::InvalidateTranslationCache(ConstBuffer<void> payload)
+LbControl::InvalidateTranslationCache(ConstBuffer<void> payload,
+                                      SocketAddress address)
 {
     if (payload.empty()) {
         /* flush the translation cache if the payload is empty */
 
+        char address_buffer[256];
         sd_journal_send("MESSAGE=control TCACHE_INVALIDATE *",
+                        "REMOTE_ADDR=%s",
+                        ToString(address_buffer, sizeof(address_buffer),
+                                 address, "?"),
                         "PRIORITY=%i", LOG_DEBUG,
                         nullptr);
 
@@ -80,7 +85,11 @@ LbControl::InvalidateTranslationCache(ConstBuffer<void> payload)
         return;
     }
 
+    char address_buffer[256];
     sd_journal_send("MESSAGE=control TCACHE_INVALIDATE %s", request.ToString().c_str(),
+                    "REMOTE_ADDR=%s",
+                    ToString(address_buffer, sizeof(address_buffer),
+                             address, "?"),
                     "PRIORITY=%i", LOG_DEBUG,
                     nullptr);
 
@@ -282,7 +291,7 @@ LbControl::OnControlPacket(ControlServer &control_server,
         break;
 
     case ControlCommand::TCACHE_INVALIDATE:
-        InvalidateTranslationCache(payload);
+        InvalidateTranslationCache(payload, address);
         break;
 
     case ControlCommand::FADE_CHILDREN:

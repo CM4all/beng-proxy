@@ -68,7 +68,8 @@ public:
     }
 
 private:
-    void InvalidateTranslationCache(ConstBuffer<void> payload);
+    void InvalidateTranslationCache(ConstBuffer<void> payload,
+                                    SocketAddress address);
 
     void EnableNode(const char *payload, size_t length);
     void FadeNode(const char *payload, size_t length);
