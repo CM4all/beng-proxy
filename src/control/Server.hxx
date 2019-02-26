@@ -56,16 +56,16 @@ class ControlServer final : UdpHandler {
 
 public:
     ControlServer(EventLoop &event_loop, UniqueSocketDescriptor s,
-                  ControlHandler &_handler);
+                  ControlHandler &_handler) noexcept;
 
     ControlServer(EventLoop &event_loop, ControlHandler &_handler,
                   const SocketConfig &config);
 
-    void Enable() {
+    void Enable() noexcept {
         socket.Enable();
     }
 
-    void Disable() {
+    void Disable() noexcept {
         socket.Disable();
     }
 

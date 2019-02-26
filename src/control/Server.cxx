@@ -46,7 +46,7 @@
 #include <alloca.h>
 
 ControlServer::ControlServer(EventLoop &event_loop, UniqueSocketDescriptor s,
-                             ControlHandler &_handler)
+                             ControlHandler &_handler) noexcept
     :handler(_handler), socket(event_loop, std::move(s), *this)
 {
 }
