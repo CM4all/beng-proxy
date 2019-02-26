@@ -76,7 +76,7 @@ LbControl::InvalidateTranslationCache(const void *payload,
         return;
     }
 
-    sd_journal_send("MESSAGE=control tcache_invalidate %s", request.ToString().c_str(),
+    sd_journal_send("MESSAGE=control TCACHE_INVALIDATE %s", request.ToString().c_str(),
                     "PRIORITY=%i", LOG_DEBUG,
                     nullptr);
 
