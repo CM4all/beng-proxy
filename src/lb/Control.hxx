@@ -34,6 +34,7 @@
 #define BENG_PROXY_LB_CONTROL_H
 
 #include "control/Handler.hxx"
+#include "control/Server.hxx"
 #include "io/Logger.hxx"
 
 #include <memory>
@@ -41,7 +42,6 @@
 struct StringView;
 struct LbInstance;
 struct LbControlConfig;
-class ControlServer;
 class EventLoop;
 
 class LbControl final : ControlHandler {
@@ -49,16 +49,20 @@ class LbControl final : ControlHandler {
 
     LbInstance &instance;
 
-    std::unique_ptr<ControlServer> server;
+    ControlServer server;
 
 public:
     LbControl(LbInstance &_instance, const LbControlConfig &config);
-    ~LbControl();
 
     EventLoop &GetEventLoop() const noexcept;
 
-    void Enable();
-    void Disable();
+    void Enable() noexcept {
+        server.Enable();
+    }
+
+    void Disable() noexcept {
+        server.Disable();
+    }
 
 private:
     void InvalidateTranslationCache(const void *payload,

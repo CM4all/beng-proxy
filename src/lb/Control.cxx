@@ -33,7 +33,6 @@
 #include "Control.hxx"
 #include "Instance.hxx"
 #include "Config.hxx"
-#include "control/Server.hxx"
 #include "pool/tpool.hxx"
 #include "pool/pool.hxx"
 #include "translation/InvalidateParser.hxx"
@@ -50,9 +49,7 @@ using namespace BengProxy;
 
 LbControl::LbControl(LbInstance &_instance, const LbControlConfig &config)
     :logger("control"), instance(_instance),
-     server(std::make_unique<ControlServer>(instance.event_loop,
-                                            *(ControlHandler *)this,
-                                            config))
+     server(instance.event_loop, *this, config)
 {
 }
 
@@ -338,20 +335,4 @@ void
 LbControl::OnControlError(std::exception_ptr ep) noexcept
 {
     logger(2, ep);
-}
-
-LbControl::~LbControl()
-{
-}
-
-void
-LbControl::Enable()
-{
-    server->Enable();
-}
-
-void
-LbControl::Disable()
-{
-    server->Disable();
 }
