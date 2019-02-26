@@ -91,6 +91,12 @@ TranslationInvalidateRequest::ToString() const noexcept
 {
     std::string result;
 
+    if (site != nullptr) {
+        result.append("site=\"");
+        result.append(site);
+        result.push_back('"');
+    }
+
     for (TranslationCommand command : commands) {
         auto nv = GetInvalidateNameValue(*this, command);
 
