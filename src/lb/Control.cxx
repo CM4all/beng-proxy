@@ -245,9 +245,6 @@ try {
 
     const auto with_port = node->address.WithPort(port);
 
-    char buffer[64];
-    ToString(buffer, sizeof(buffer), with_port);
-
     enum failure_status status = instance.failure_manager.Get(GetEventLoop().SteadyNow(),
                                                               with_port);
     const char *s = failure_status_to_string(status);
