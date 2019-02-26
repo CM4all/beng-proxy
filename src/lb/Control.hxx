@@ -54,7 +54,9 @@ class LbControl final : ControlHandler {
 public:
     LbControl(LbInstance &_instance, const LbControlConfig &config);
 
-    EventLoop &GetEventLoop() const noexcept;
+    auto &GetEventLoop() const noexcept {
+        return server.GetEventLoop();
+    }
 
     void Enable() noexcept {
         server.Enable();

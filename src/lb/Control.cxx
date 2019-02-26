@@ -53,12 +53,6 @@ LbControl::LbControl(LbInstance &_instance, const LbControlConfig &config)
 {
 }
 
-inline EventLoop &
-LbControl::GetEventLoop() const noexcept
-{
-    return instance.event_loop;
-}
-
 inline void
 LbControl::InvalidateTranslationCache(const void *payload,
                                       size_t payload_length)
