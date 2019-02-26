@@ -45,6 +45,8 @@ struct TranslationInvalidateRequest : TranslateRequest {
     const char *site = nullptr;
 
     StaticArray<TranslationCommand, 32> commands;
+
+    std::string ToString() const noexcept;
 };
 
 /**

@@ -36,6 +36,77 @@
 #include "util/RuntimeError.hxx"
 #include "pool/pool.hxx"
 
+gcc_pure
+static std::pair<const char *, const char *>
+GetInvalidateNameValue(const TranslateRequest &request,
+                       TranslationCommand command) noexcept
+{
+    switch (command) {
+    case TranslationCommand::URI:
+        return std::make_pair("uri", request.uri);
+
+    case TranslationCommand::PARAM:
+        return std::make_pair("param", request.param);
+
+    case TranslationCommand::SESSION:
+        return std::make_pair("session", "?");
+
+    case TranslationCommand::LISTENER_TAG:
+        return std::make_pair("listener_tag", request.listener_tag);
+
+    case TranslationCommand::REMOTE_HOST:
+        return std::make_pair("remote_host", request.remote_host);
+
+    case TranslationCommand::HOST:
+        return std::make_pair("host", request.host);
+
+    case TranslationCommand::LANGUAGE:
+        return std::make_pair("language", request.accept_language);
+
+    case TranslationCommand::USER_AGENT:
+        return std::make_pair("user_agent", request.user_agent);
+
+    case TranslationCommand::UA_CLASS:
+        return std::make_pair("ua_class", request.ua_class);
+
+    case TranslationCommand::QUERY_STRING:
+        return std::make_pair("query_string", request.query_string);
+
+    case TranslationCommand::INTERNAL_REDIRECT:
+        return std::make_pair("internal_redirect", "?");
+
+    case TranslationCommand::ENOTDIR_:
+        return std::make_pair("enotdir", "?");
+
+    case TranslationCommand::USER:
+        return std::make_pair("user", request.user);
+
+    default:
+        return std::make_pair("?", "?");
+    }
+}
+
+std::string
+TranslationInvalidateRequest::ToString() const noexcept
+{
+    std::string result;
+
+    for (TranslationCommand command : commands) {
+        auto nv = GetInvalidateNameValue(*this, command);
+
+        if (!result.empty())
+            result.push_back(' ');
+
+        result.append(nv.first);
+        result.push_back('=');
+        result.push_back('"');
+        result.append(nv.second);
+        result.push_back('"');
+    }
+
+    return result;
+}
+
 static void
 apply_translation_packet(TranslateRequest &request,
                          enum TranslationCommand command,

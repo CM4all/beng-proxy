@@ -41,6 +41,8 @@
 #include "net/FailureManager.hxx"
 #include "util/Exception.hxx"
 
+#include <systemd/sd-journal.h>
+
 #include <string.h>
 #include <stdlib.h>
 
@@ -77,6 +79,10 @@ LbControl::InvalidateTranslationCache(const void *payload,
                GetFullMessage(std::current_exception()));
         return;
     }
+
+    sd_journal_send("MESSAGE=control tcache_invalidate %s", request.ToString().c_str(),
+                    "PRIORITY=%i", LOG_DEBUG,
+                    nullptr);
 
     instance.InvalidateTranslationCaches(request);
 }
