@@ -54,10 +54,9 @@ LbControl::LbControl(LbInstance &_instance, const LbControlConfig &config)
 }
 
 inline void
-LbControl::InvalidateTranslationCache(const void *payload,
-                                      size_t payload_length)
+LbControl::InvalidateTranslationCache(ConstBuffer<void> payload)
 {
-    if (payload_length == 0) {
+    if (payload.empty()) {
         /* flush the translation cache if the payload is empty */
 
         sd_journal_send("MESSAGE=control TCACHE_INVALIDATE *",
@@ -73,8 +72,8 @@ LbControl::InvalidateTranslationCache(const void *payload,
     TranslationInvalidateRequest request;
 
     try {
-        request = ParseTranslationInvalidateRequest(*tpool,
-                                                    payload, payload_length);
+        request = ParseTranslationInvalidateRequest(*tpool, payload.data,
+                                                    payload.size);
     } catch (...) {
         logger(2, "malformed TCACHE_INVALIDATE control packet: ",
                GetFullMessage(std::current_exception()));
@@ -284,7 +283,7 @@ LbControl::OnControlPacket(ControlServer &control_server,
         break;
 
     case ControlCommand::TCACHE_INVALIDATE:
-        InvalidateTranslationCache(payload.data, payload.size);
+        InvalidateTranslationCache(payload);
         break;
 
     case ControlCommand::FADE_CHILDREN:

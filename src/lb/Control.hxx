@@ -42,6 +42,7 @@
 struct StringView;
 struct LbInstance;
 struct LbControlConfig;
+template<typename T> struct ConstBuffer;
 class EventLoop;
 
 class LbControl final : ControlHandler {
@@ -67,8 +68,7 @@ public:
     }
 
 private:
-    void InvalidateTranslationCache(const void *payload,
-                                    size_t payload_length);
+    void InvalidateTranslationCache(ConstBuffer<void> payload);
 
     void EnableNode(const char *payload, size_t length);
     void FadeNode(const char *payload, size_t length);
