@@ -61,6 +61,10 @@ public:
     ControlServer(EventLoop &event_loop, ControlHandler &_handler,
                   const SocketConfig &config);
 
+    auto &GetEventLoop() const noexcept {
+        return socket.GetEventLoop();
+    }
+
     void Enable() noexcept {
         socket.Enable();
     }
