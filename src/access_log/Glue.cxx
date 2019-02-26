@@ -37,7 +37,6 @@
 #include "net/log/Datagram.hxx"
 #include "net/log/OneLine.hxx"
 #include "http_server/Request.hxx"
-#include "net/ToString.hxx"
 #include "system/Error.hxx"
 
 #include <assert.h>
