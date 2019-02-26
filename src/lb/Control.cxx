@@ -59,6 +59,11 @@ LbControl::InvalidateTranslationCache(const void *payload,
 {
     if (payload_length == 0) {
         /* flush the translation cache if the payload is empty */
+
+        sd_journal_send("MESSAGE=control TCACHE_INVALIDATE *",
+                        "PRIORITY=%i", LOG_DEBUG,
+                        nullptr);
+
         instance.FlushTranslationCaches();
         return;
     }
