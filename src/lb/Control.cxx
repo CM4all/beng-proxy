@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -48,8 +48,13 @@
 
 using namespace BengProxy;
 
-LbControl::LbControl(LbInstance &_instance)
-    :logger("control"), instance(_instance) {}
+LbControl::LbControl(LbInstance &_instance, const LbControlConfig &config)
+    :logger("control"), instance(_instance),
+     server(std::make_unique<ControlServer>(instance.event_loop,
+                                            *(ControlHandler *)this,
+                                            config))
+{
+}
 
 inline EventLoop &
 LbControl::GetEventLoop() const noexcept
@@ -333,16 +338,6 @@ void
 LbControl::OnControlError(std::exception_ptr ep) noexcept
 {
     logger(2, ep);
-}
-
-void
-LbControl::Open(const LbControlConfig &config)
-{
-    assert(server == nullptr);
-
-    server = std::make_unique<ControlServer>(instance.event_loop,
-                                             *(ControlHandler *)this,
-                                             config);
 }
 
 LbControl::~LbControl()

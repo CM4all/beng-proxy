@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -52,12 +52,10 @@ class LbControl final : ControlHandler {
     std::unique_ptr<ControlServer> server;
 
 public:
-    explicit LbControl(LbInstance &_instance);
+    LbControl(LbInstance &_instance, const LbControlConfig &config);
     ~LbControl();
 
     EventLoop &GetEventLoop() const noexcept;
-
-    void Open(const LbControlConfig &config);
 
     void Enable();
     void Disable();
