@@ -124,6 +124,10 @@ class LbCluster final : AvahiServiceExplorerListener {
             address = _address;
         }
 
+        auto &GetFailureRef() noexcept {
+            return failure;
+        }
+
         FailureInfo &GetFailureInfo() {
             return *failure;
         }
