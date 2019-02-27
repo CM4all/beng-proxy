@@ -160,15 +160,6 @@ executable('was_mirror',
     declare_dependency(link_with: was_server),
   ])
 
-executable('benchmark-gmtime',
-  'benchmark-gmtime.c',
-  'libcore-gmtime.c',
-  include_directories: inc,
-  dependencies: [
-    util_dep,
-    time_dep,
-  ])
-
 executable('format_http_date',
   'format_http_date.cxx',
   include_directories: inc,
