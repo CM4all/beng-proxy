@@ -69,9 +69,7 @@ void
 LbInstance::InitAllControls()
 {
     for (const auto &i : config.controls) {
-        controls.emplace_front(*this);
-        auto &control = controls.front();
-        control.Open(i);
+        controls.emplace_front(*this, i);
     }
 }
 

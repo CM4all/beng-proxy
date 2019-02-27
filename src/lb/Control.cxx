@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -33,7 +33,6 @@
 #include "Control.hxx"
 #include "Instance.hxx"
 #include "Config.hxx"
-#include "control/Server.hxx"
 #include "pool/tpool.hxx"
 #include "pool/pool.hxx"
 #include "translation/InvalidateParser.hxx"
@@ -41,26 +40,34 @@
 #include "net/FailureManager.hxx"
 #include "util/Exception.hxx"
 
+#include <systemd/sd-journal.h>
+
 #include <string.h>
 #include <stdlib.h>
 
 using namespace BengProxy;
 
-LbControl::LbControl(LbInstance &_instance)
-    :logger("control"), instance(_instance) {}
-
-inline EventLoop &
-LbControl::GetEventLoop() const noexcept
+LbControl::LbControl(LbInstance &_instance, const LbControlConfig &config)
+    :logger("control"), instance(_instance),
+     server(instance.event_loop, *this, config)
 {
-    return instance.event_loop;
 }
 
 inline void
-LbControl::InvalidateTranslationCache(const void *payload,
-                                      size_t payload_length)
+LbControl::InvalidateTranslationCache(ConstBuffer<void> payload,
+                                      SocketAddress address)
 {
-    if (payload_length == 0) {
+    if (payload.empty()) {
         /* flush the translation cache if the payload is empty */
+
+        char address_buffer[256];
+        sd_journal_send("MESSAGE=control TCACHE_INVALIDATE *",
+                        "REMOTE_ADDR=%s",
+                        ToString(address_buffer, sizeof(address_buffer),
+                                 address, "?"),
+                        "PRIORITY=%i", LOG_DEBUG,
+                        nullptr);
+
         instance.FlushTranslationCaches();
         return;
     }
@@ -70,13 +77,21 @@ LbControl::InvalidateTranslationCache(const void *payload,
     TranslationInvalidateRequest request;
 
     try {
-        request = ParseTranslationInvalidateRequest(*tpool,
-                                                    payload, payload_length);
+        request = ParseTranslationInvalidateRequest(*tpool, payload.data,
+                                                    payload.size);
     } catch (...) {
         logger(2, "malformed TCACHE_INVALIDATE control packet: ",
                GetFullMessage(std::current_exception()));
         return;
     }
+
+    char address_buffer[256];
+    sd_journal_send("MESSAGE=control TCACHE_INVALIDATE %s", request.ToString().c_str(),
+                    "REMOTE_ADDR=%s",
+                    ToString(address_buffer, sizeof(address_buffer),
+                             address, "?"),
+                    "PRIORITY=%i", LOG_DEBUG,
+                    nullptr);
 
     instance.InvalidateTranslationCaches(request);
 }
@@ -112,8 +127,9 @@ LbControl::EnableNode(const char *payload, size_t length)
     const auto with_port = node->address.WithPort(port);
 
     char buffer[64];
-    ToString(buffer, sizeof(buffer), with_port);
-    logger(4, "enabling node ", node_name, " (", buffer, ")");
+    logger(4, "enabling node ", node_name, " (",
+           ToString(buffer, sizeof(buffer), with_port, "?"),
+           ")");
 
     instance.failure_manager.Unset(GetEventLoop().SteadyNow(),
                                    with_port, FAILURE_OK);
@@ -150,8 +166,9 @@ LbControl::FadeNode(const char *payload, size_t length)
     const auto with_port = node->address.WithPort(port);
 
     char buffer[64];
-    ToString(buffer, sizeof(buffer), with_port);
-    logger(4, "fading node ", node_name, " (", buffer, ")");
+    logger(4, "fading node ", node_name, " (",
+           ToString(buffer, sizeof(buffer), with_port, "?"),
+           ")");
 
     /* set status "FADE" for 3 hours */
     instance.failure_manager.Set(GetEventLoop().SteadyNow(),
@@ -239,9 +256,6 @@ try {
 
     const auto with_port = node->address.WithPort(port);
 
-    char buffer[64];
-    ToString(buffer, sizeof(buffer), with_port);
-
     enum failure_status status = instance.failure_manager.Get(GetEventLoop().SteadyNow(),
                                                               with_port);
     const char *s = failure_status_to_string(status);
@@ -277,7 +291,7 @@ LbControl::OnControlPacket(ControlServer &control_server,
         break;
 
     case ControlCommand::TCACHE_INVALIDATE:
-        InvalidateTranslationCache(payload.data, payload.size);
+        InvalidateTranslationCache(payload, address);
         break;
 
     case ControlCommand::FADE_CHILDREN:
@@ -327,30 +341,4 @@ void
 LbControl::OnControlError(std::exception_ptr ep) noexcept
 {
     logger(2, ep);
-}
-
-void
-LbControl::Open(const LbControlConfig &config)
-{
-    assert(server == nullptr);
-
-    server = std::make_unique<ControlServer>(instance.event_loop,
-                                             *(ControlHandler *)this,
-                                             config);
-}
-
-LbControl::~LbControl()
-{
-}
-
-void
-LbControl::Enable()
-{
-    server->Enable();
-}
-
-void
-LbControl::Disable()
-{
-    server->Disable();
 }

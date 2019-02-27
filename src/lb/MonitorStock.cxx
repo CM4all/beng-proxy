@@ -66,12 +66,10 @@ LookupMonitorClass(LbMonitorConfig::Type type)
 }
 
 static std::string
-ToString(SocketAddress address)
+ToString(SocketAddress address) noexcept
 {
     char buffer[4096];
-    return ToString(buffer, sizeof(buffer), address)
-        ? buffer
-        : "unknown";
+    return ToString(buffer, sizeof(buffer), address, "unknown");
 }
 
 LbMonitorStock::LbMonitorStock(EventLoop &_event_loop,

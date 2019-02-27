@@ -124,10 +124,7 @@ stopwatch_new(struct pool *pool, SocketAddress address, const char *suffix)
     if (!stopwatch_is_enabled())
         return nullptr;
 
-    const char *name = ToString(buffer, sizeof(buffer), address)
-        ? buffer
-        : "unknown";
-
+    const char *name = ToString(buffer, sizeof(buffer), address, "unknown");
     return stopwatch_new(pool, name, suffix);
 }
 

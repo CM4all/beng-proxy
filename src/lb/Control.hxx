@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -34,6 +34,7 @@
 #define BENG_PROXY_LB_CONTROL_H
 
 #include "control/Handler.hxx"
+#include "control/Server.hxx"
 #include "io/Logger.hxx"
 
 #include <memory>
@@ -41,7 +42,7 @@
 struct StringView;
 struct LbInstance;
 struct LbControlConfig;
-class ControlServer;
+template<typename T> struct ConstBuffer;
 class EventLoop;
 
 class LbControl final : ControlHandler {
@@ -49,22 +50,26 @@ class LbControl final : ControlHandler {
 
     LbInstance &instance;
 
-    std::unique_ptr<ControlServer> server;
+    ControlServer server;
 
 public:
-    explicit LbControl(LbInstance &_instance);
-    ~LbControl();
+    LbControl(LbInstance &_instance, const LbControlConfig &config);
 
-    EventLoop &GetEventLoop() const noexcept;
+    auto &GetEventLoop() const noexcept {
+        return server.GetEventLoop();
+    }
 
-    void Open(const LbControlConfig &config);
+    void Enable() noexcept {
+        server.Enable();
+    }
 
-    void Enable();
-    void Disable();
+    void Disable() noexcept {
+        server.Disable();
+    }
 
 private:
-    void InvalidateTranslationCache(const void *payload,
-                                    size_t payload_length);
+    void InvalidateTranslationCache(ConstBuffer<void> payload,
+                                    SocketAddress address);
 
     void EnableNode(const char *payload, size_t length);
     void FadeNode(const char *payload, size_t length);

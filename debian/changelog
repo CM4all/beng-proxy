@@ -4,6 +4,14 @@ cm4all-beng-proxy (16.0.1) unstable; urgency=low
 
  --   
 
+cm4all-beng-proxy (15.11) unstable; urgency=low
+
+  * was, fcgi: truncate long stderr lines before sending to Pond
+  * lb/control: log TCACHE_INVALIDATE packets
+  * lb/certdb: fix shutdown hang
+
+ -- Max Kellermann <mk@cm4all.com>  Tue, 26 Feb 2019 23:54:43 +0100
+
 cm4all-beng-proxy (15.10) unstable; urgency=low
 
   * merge release 14.23
