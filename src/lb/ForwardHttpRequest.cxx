@@ -403,15 +403,16 @@ LbRequest::OnStockItemReady(StockItem &item) noexcept
     assert(stock_item == nullptr);
     assert(!response_sent);
 
-    if (cluster_config.HasZeroConf())
-        /* without the fs_balancer, we have to roll our own failure
-           updates */
-        current_member->GetFailureInfo().Unset(GetEventLoop().SteadyNow(),
-                                               FAILURE_CONNECT);
-
     stock_item = &item;
 
-    failure = GetFailureManager().Make(fs_stock_item_get_address(*stock_item));
+    if (cluster_config.HasZeroConf()) {
+        failure = current_member->GetFailureRef();
+
+        /* without the fs_balancer, we have to roll our own failure
+           updates */
+        failure->Unset(GetEventLoop().SteadyNow(), FAILURE_CONNECT);
+    } else
+        failure = GetFailureManager().Make(fs_stock_item_get_address(*stock_item));
 
     const char *peer_subject = connection.ssl_filter != nullptr
         ? ssl_filter_get_peer_subject(connection.ssl_filter)
