@@ -116,7 +116,7 @@ public:
     LbRequest(LbHttpConnection &_connection, LbCluster &_cluster,
               FilteredSocketBalancer &_balancer,
               HttpServerRequest &_request,
-              CancellablePointer &_cancel_ptr)
+              CancellablePointer &_cancel_ptr) noexcept
         :pool(_request.pool), connection(_connection), cluster(_cluster),
          cluster_config(cluster.GetConfig()),
          balancer(_balancer),
@@ -132,15 +132,15 @@ public:
         return connection.instance.event_loop;
     }
 
-    FailureManager &GetFailureManager() {
+    FailureManager &GetFailureManager() noexcept {
         return balancer.GetFailureManager();
     }
 
-    void Start();
+    void Start() noexcept;
 
 private:
     /* code copied from generic_balancer.hxx */
-    static unsigned CalculateRetries(size_t size) {
+    static constexpr unsigned CalculateRetries(size_t size) noexcept {
         if (size <= 1)
             return 0;
         else if (size == 2)
@@ -151,20 +151,20 @@ private:
             return 3;
     }
 
-    void Destroy() {
+    void Destroy() noexcept {
         assert(stock_item == nullptr);
 
         DeleteFromPool(pool, this);
     }
 
-    void SetForwardedTo() {
+    void SetForwardedTo() noexcept {
         // TODO: optimize this operation
         connection.per_request.forwarded_to =
             address_to_string(pool,
                               GetFailureManager().GetAddress(*failure));
     }
 
-    void ResponseSent() {
+    void ResponseSent() noexcept {
         assert(!response_sent);
         response_sent = true;
 
@@ -172,16 +172,16 @@ private:
             Destroy();
     }
 
-    const char *GetCanonicalHost() const {
+    const char *GetCanonicalHost() const noexcept {
         return connection.per_request.GetCanonicalHost();
     }
 
-    sticky_hash_t GetStickyHash();
-    sticky_hash_t GetHostHash() const;
-    sticky_hash_t GetXHostHash() const;
-    sticky_hash_t MakeCookieHash();
+    sticky_hash_t GetStickyHash() noexcept;
+    sticky_hash_t GetHostHash() const noexcept;
+    sticky_hash_t GetXHostHash() const noexcept;
+    sticky_hash_t MakeCookieHash() noexcept;
 
-    SocketAddress MakeBindAddress() const;
+    SocketAddress MakeBindAddress() const noexcept;
 
     /* virtual methods from class Cancellable */
     void Cancel() noexcept override {
@@ -214,7 +214,7 @@ private:
 
 static void
 SendResponse(HttpServerRequest &request,
-             const LbSimpleHttpResponse &response)
+             const LbSimpleHttpResponse &response) noexcept
 {
     assert(response.IsDefined());
 
@@ -225,7 +225,7 @@ SendResponse(HttpServerRequest &request,
 
 static bool
 send_fallback(HttpServerRequest &request,
-              const LbSimpleHttpResponse &fallback)
+              const LbSimpleHttpResponse &fallback) noexcept
 {
     if (!fallback.IsDefined())
         return false;
@@ -235,7 +235,7 @@ send_fallback(HttpServerRequest &request,
 }
 
 inline sticky_hash_t
-LbRequest::GetHostHash() const
+LbRequest::GetHostHash() const noexcept
 {
     const char *host = GetCanonicalHost();
     if (host == nullptr)
@@ -245,7 +245,7 @@ LbRequest::GetHostHash() const
 }
 
 inline sticky_hash_t
-LbRequest::GetXHostHash() const
+LbRequest::GetXHostHash() const noexcept
 {
     const char *host = request.headers.Get("x-cm4all-host");
     if (host == nullptr)
@@ -261,7 +261,7 @@ LbRequest::GetXHostHash() const
  */
 static unsigned
 GenerateCookie(const FailureManager &failure_manager, Expiry now,
-               const AddressList &list)
+               const AddressList &list) noexcept
 {
     assert(list.GetSize() >= 2);
 
@@ -283,7 +283,7 @@ GenerateCookie(const FailureManager &failure_manager, Expiry now,
 }
 
 sticky_hash_t
-LbRequest::MakeCookieHash()
+LbRequest::MakeCookieHash() noexcept
 {
     unsigned hash = lb_cookie_get(request.headers);
     if (hash == 0)
@@ -295,7 +295,7 @@ LbRequest::MakeCookieHash()
 }
 
 sticky_hash_t
-LbRequest::GetStickyHash()
+LbRequest::GetStickyHash() noexcept
 {
     switch (cluster_config.sticky_mode) {
     case StickyMode::NONE:
@@ -493,7 +493,7 @@ LbRequest::ReleaseLease(bool reuse) noexcept
  */
 
 inline SocketAddress
-LbRequest::MakeBindAddress() const
+LbRequest::MakeBindAddress() const noexcept
 {
     if (cluster_config.transparent_source) {
         SocketAddress bind_address = request.remote_address;
@@ -517,7 +517,7 @@ LbRequest::MakeBindAddress() const
 }
 
 inline void
-LbRequest::Start()
+LbRequest::Start() noexcept
 {
     const auto bind_address = MakeBindAddress();
 
@@ -562,7 +562,7 @@ void
 ForwardHttpRequest(LbHttpConnection &connection,
                    HttpServerRequest &request,
                    LbCluster &cluster,
-                   CancellablePointer &cancel_ptr)
+                   CancellablePointer &cancel_ptr) noexcept
 {
     const auto request2 =
         NewFromPool<LbRequest>(request.pool,

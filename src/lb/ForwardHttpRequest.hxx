@@ -42,6 +42,6 @@ void
 ForwardHttpRequest(LbHttpConnection &connection,
                    HttpServerRequest &request,
                    LbCluster &cluster,
-                   CancellablePointer &cancel_ptr);
+                   CancellablePointer &cancel_ptr) noexcept;
 
 #endif
