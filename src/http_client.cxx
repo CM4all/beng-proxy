@@ -284,10 +284,6 @@ struct HttpClient final : BufferedSocketHandler, IstreamHandler, Cancellable, De
     void AbortResponseBody(std::exception_ptr ep);
     void AbortResponse(std::exception_ptr ep);
 
-    void AbortResponseHeaders(HttpClientErrorCode code, const char *msg) {
-        AbortResponseHeaders(std::make_exception_ptr(HttpClientError(code, msg)));
-    }
-
     void AbortResponse(HttpClientErrorCode code, const char *msg) {
         AbortResponse(std::make_exception_ptr(HttpClientError(code, msg)));
     }
@@ -309,22 +305,28 @@ struct HttpClient final : BufferedSocketHandler, IstreamHandler, Cancellable, De
     BucketResult TryWriteBuckets();
 
     /**
-     * @return false if the connection is closed
+     * Throws on error.
      */
-    bool ParseStatusLine(const char *line, size_t length);
+    void ParseStatusLine(const char *line, size_t length);
 
     /**
-     * @return false if the connection is closed
+     * Throws on error.
      */
-    bool HeadersFinished();
+    void HeadersFinished();
 
     /**
-     * @return false if the connection is closed
+     * Throws on error.
      */
-    bool HandleLine(const char *line, size_t length);
+    void HandleLine(const char *line, size_t length);
 
+    /**
+     * Throws on error.
+     */
     BufferedResult ParseHeaders(ConstBuffer<char> b);
 
+    /**
+     * Throws on error.
+     */
     BufferedResult FeedHeaders(ConstBuffer<void> b);
 
     void ResponseBodyEOF();
@@ -603,7 +605,7 @@ HttpClient::TryWriteBuckets()
     return result;
 }
 
-inline bool
+inline void
 HttpClient::ParseStatusLine(const char *line, size_t length)
 {
     assert(response.state == Response::State::STATUS);
@@ -613,9 +615,8 @@ HttpClient::ParseStatusLine(const char *line, size_t length)
         (space = (const char *)memchr(line + 6, ' ', length - 6)) == nullptr) {
         stopwatch_event(stopwatch, "malformed");
 
-        AbortResponseHeaders(HttpClientErrorCode::GARBAGE,
-                             "malformed HTTP status line");
-        return false;
+        throw HttpClientError(HttpClientErrorCode::GARBAGE,
+                              "malformed HTTP status line");
     }
 
     length = line + length - space - 1;
@@ -625,26 +626,23 @@ HttpClient::ParseStatusLine(const char *line, size_t length)
                      !IsDigitASCII(line[1]) || !IsDigitASCII(line[2]))) {
         stopwatch_event(stopwatch, "malformed");
 
-        AbortResponseHeaders(HttpClientErrorCode::GARBAGE,
-                             "no HTTP status found");
-        return false;
+        throw HttpClientError(HttpClientErrorCode::GARBAGE,
+                              "no HTTP status found");
     }
 
     response.status = (http_status_t)(((line[0] - '0') * 10 + line[1] - '0') * 10 + line[2] - '0');
     if (gcc_unlikely(!http_status_is_valid(response.status))) {
         stopwatch_event(stopwatch, "malformed");
 
-        AbortResponseHeaders(HttpClientErrorCode::GARBAGE,
-                             StringFormat<64>("invalid HTTP status %d",
-                                              response.status));
-        return false;
+        throw HttpClientError(HttpClientErrorCode::GARBAGE,
+                              StringFormat<64>("invalid HTTP status %d",
+                                               response.status));
     }
 
     response.state = Response::State::HEADERS;
-    return true;
 }
 
-inline bool
+inline void
 HttpClient::HeadersFinished()
 {
     stopwatch_event(stopwatch, "headers");
@@ -663,7 +661,7 @@ HttpClient::HeadersFinished()
 
     if (response.no_body || response.status == HTTP_STATUS_CONTINUE) {
         response.state = Response::State::END;
-        return true;
+        return;
     }
 
     const char *transfer_encoding =
@@ -691,9 +689,8 @@ HttpClient::HeadersFinished()
             if (keep_alive) {
                 stopwatch_event(stopwatch, "malformed");
 
-                AbortResponseHeaders(HttpClientErrorCode::UNSPECIFIED,
-                                     "no Content-Length response header");
-                return false;
+                throw HttpClientError(HttpClientErrorCode::UNSPECIFIED,
+                                      "no Content-Length response header");
             }
             content_length = (off_t)-1;
         } else {
@@ -704,14 +701,13 @@ HttpClient::HeadersFinished()
                              content_length < 0)) {
                 stopwatch_event(stopwatch, "malformed");
 
-                AbortResponseHeaders(HttpClientErrorCode::UNSPECIFIED,
-                                     "invalid Content-Length header in response");
-                return false;
+                throw HttpClientError(HttpClientErrorCode::UNSPECIFIED,
+                                      "invalid Content-Length header in response");
             }
 
             if (content_length == 0) {
                 response.state = Response::State::END;
-                return true;
+                return;
             }
         }
 
@@ -730,22 +726,20 @@ HttpClient::HeadersFinished()
     response.state = Response::State::BODY;
     if (!socket.IsReleased())
         socket.SetDirect(CheckDirect());
-    return true;
 }
 
-inline bool
+inline void
 HttpClient::HandleLine(const char *line, size_t length)
 {
     assert(response.state == Response::State::STATUS ||
            response.state == Response::State::HEADERS);
 
     if (response.state == Response::State::STATUS)
-        return ParseStatusLine(line, length);
-    else if (length > 0) {
+        ParseStatusLine(line, length);
+    else if (length > 0)
         header_parse_line(caller_pool, response.headers, {line, length});
-        return true;
-    } else
-        return HeadersFinished();
+    else
+        HeadersFinished();
 }
 
 void
@@ -789,8 +783,7 @@ HttpClient::ParseHeaders(ConstBuffer<char> b)
         end = StripRight(start, end);
 
         /* handle this line */
-        if (!HandleLine(start, end - start))
-            return BufferedResult::CLOSED;
+        HandleLine(start, end - start);
 
         if (response.state != Response::State::HEADERS) {
             /* header parsing is finished */
@@ -879,9 +872,8 @@ HttpClient::FeedHeaders(ConstBuffer<void> b)
             /* assertion workaround */
             response.state = Response::State::STATUS;
 #endif
-            AbortResponseHeaders(HttpClientErrorCode::UNSPECIFIED,
-                                 "unexpected status 100");
-            return BufferedResult::CLOSED;
+            throw HttpClientError(HttpClientErrorCode::UNSPECIFIED,
+                                  "unexpected status 100");
         }
 
         /* reset state, we're now expecting the real response */
@@ -895,9 +887,8 @@ HttpClient::FeedHeaders(ConstBuffer<void> b)
             /* assertion workaround */
             response.state = HttpClient::Response::State::STATUS;
 #endif
-            AbortResponseHeaders(HttpClientErrorCode::UNSPECIFIED,
-                                 "Peer closed the socket prematurely after status 100");
-            return BufferedResult::CLOSED;
+            throw HttpClientError(HttpClientErrorCode::UNSPECIFIED,
+                                  "Peer closed the socket prematurely after status 100");
         }
 
         ScheduleWrite();
@@ -1002,7 +993,12 @@ HttpClient::OnBufferedData()
     switch (response.state) {
     case Response::State::STATUS:
     case Response::State::HEADERS:
-        return FeedHeaders(socket.ReadBuffer());
+        try {
+            return FeedHeaders(socket.ReadBuffer());
+        } catch (...) {
+            AbortResponseHeaders(std::current_exception());
+            return BufferedResult::CLOSED;
+        }
 
     case Response::State::BODY:
         if (IsConnected() && response_body_reader.IsSocketDone(socket))
