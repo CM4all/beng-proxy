@@ -71,6 +71,8 @@ protected:
  * Holds a (counted) reference to a #FailureInfo instance.
  */
 class FailureRef {
+    friend class FailurePtr;
+
     ReferencedFailureInfo &info;
 
 public:
@@ -116,6 +118,10 @@ public:
         info = &new_info;
         info->Ref();
         return *this;
+    }
+
+    FailurePtr &operator=(FailureRef &new_ref) noexcept {
+        return *this = new_ref.info;
     }
 
     FailureInfo *operator->() {
