@@ -39,6 +39,7 @@
 
 #include "balancer.hxx"
 #include "address_list.hxx"
+#include "paddress.hxx"
 #include "pool/pool.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/FailureManager.hxx"
@@ -109,9 +110,7 @@ struct BalancerRequest : R {
         /* we need to copy this address because it may come from
            the balancer's cache, and the according cache item may
            be flushed at any time */
-        const struct sockaddr *new_address = (const struct sockaddr *)
-            p_memdup(&pool, address.GetAddress(), address.GetSize());
-        const SocketAddress current_address{ new_address, address.GetSize() };
+        const auto current_address = DupAddress(pool, address);
         failure = balancer.GetFailureManager().Make(current_address);
 
         R::Send(pool, current_address, cancel_ptr);
