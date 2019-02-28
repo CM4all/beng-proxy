@@ -88,3 +88,16 @@ FailureManager::Get(const Expiry now, SocketAddress address) const noexcept
 
     return i->GetStatus(now);
 }
+
+bool
+FailureManager::Check(const Expiry now, SocketAddress address,
+                      bool allow_fade) const noexcept
+{
+    assert(!address.IsNull());
+
+    auto i = failures.find(address, Failure::Hash(), Failure::Equal());
+    if (i == failures.end())
+        return true;
+
+    return i->Check(now, allow_fade);
+}

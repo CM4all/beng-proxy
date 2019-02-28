@@ -271,7 +271,7 @@ GenerateCookie(const FailureManager &failure_manager, Expiry now,
     do {
         assert(i >= 1 && i <= list.GetSize());
         const SocketAddress address = list.addresses[i % list.GetSize()];
-        if (failure_manager.Get(now, address) == FAILURE_OK &&
+        if (failure_manager.Check(now, address) &&
             bulldog_check(address) && !bulldog_is_fading(address))
             return i;
 

@@ -73,6 +73,11 @@ public:
             return FAILURE_OK;
     }
 
+    constexpr bool Check(Expiry now, bool allow_fade=false) const noexcept {
+        const auto s = GetStatus(now);
+        return s == FAILURE_OK || (allow_fade && s == FAILURE_FADE);
+    }
+
     /**
      * Set the specified failure status, but only if it is not less
      * severe than the current status.
