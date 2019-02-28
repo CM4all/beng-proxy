@@ -68,8 +68,6 @@ struct BalancerRequest : R {
      */
     unsigned retries;
 
-    SocketAddress current_address;
-
     FailurePtr failure;
 
     template<typename... Args>
@@ -104,10 +102,6 @@ struct BalancerRequest : R {
         return (BalancerRequest &)r;
     }
 
-    const SocketAddress &GetAddress() const {
-        return current_address;
-    }
-
     void Next(Expiry now) {
         const SocketAddress address =
             balancer.Get(now, address_list, session_sticky);
@@ -117,7 +111,7 @@ struct BalancerRequest : R {
            be flushed at any time */
         const struct sockaddr *new_address = (const struct sockaddr *)
             p_memdup(&pool, address.GetAddress(), address.GetSize());
-        current_address = { new_address, address.GetSize() };
+        const SocketAddress current_address{ new_address, address.GetSize() };
         failure = balancer.GetFailureManager().Make(current_address);
 
         R::Send(pool, current_address, cancel_ptr);
