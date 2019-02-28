@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -48,23 +48,23 @@ class FailureInfo {
 
 public:
     constexpr enum failure_status GetStatus(Expiry now) const noexcept {
-        if (monitor)
+        if (!CheckMonitor())
             return FAILURE_MONITOR;
-        else if (!connect_expires.IsExpired(now))
+        else if (!CheckConnect(now))
             return FAILURE_CONNECT;
-        else if (!protocol_expires.IsExpired(now))
+        else if (!CheckProtocol(now))
             return FAILURE_PROTOCOL;
-        else if (!fade_expires.IsExpired(now))
+        else if (!CheckFade(now))
             return FAILURE_FADE;
         else
             return FAILURE_OK;
     }
 
     constexpr bool Check(Expiry now, bool allow_fade=false) const noexcept {
-        return !monitor &&
-            connect_expires.IsExpired(now) &&
-            protocol_expires.IsExpired(now) &&
-            (allow_fade || fade_expires.IsExpired(now));
+        return CheckMonitor() &&
+            CheckConnect(now) &&
+            CheckProtocol(now) &&
+            (allow_fade || CheckFade(now));
     }
 
     /**
@@ -90,12 +90,20 @@ public:
         fade_expires = Expiry::AlreadyExpired();
     }
 
+    bool CheckFade(Expiry now) const noexcept {
+        return fade_expires.IsExpired(now);
+    }
+
     void SetProtocol(Expiry now, std::chrono::seconds duration) noexcept {
         protocol_expires.Touch(now, duration);
     }
 
     void UnsetProtocol() noexcept {
         protocol_expires = Expiry::AlreadyExpired();
+    }
+
+    bool CheckProtocol(Expiry now) const noexcept {
+        return protocol_expires.IsExpired(now);
     }
 
     void SetConnect(Expiry now, std::chrono::seconds duration) noexcept {
@@ -106,12 +114,20 @@ public:
         connect_expires = Expiry::AlreadyExpired();
     }
 
+    bool CheckConnect(Expiry now) const noexcept {
+        return connect_expires.IsExpired(now);
+    }
+
     void SetMonitor() noexcept {
         monitor = true;
     }
 
     void UnsetMonitor() noexcept {
         monitor = false;
+    }
+
+    bool CheckMonitor() const noexcept {
+        return !monitor;
     }
 
     void UnsetAll() noexcept {
