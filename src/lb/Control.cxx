@@ -132,7 +132,7 @@ LbControl::EnableNode(const char *payload, size_t length)
            ")");
 
     instance.failure_manager.Make(with_port)
-        .Unset(GetEventLoop().SteadyNow(), FAILURE_OK);
+        .UnsetAll(GetEventLoop().SteadyNow());
 }
 
 inline void
@@ -172,7 +172,7 @@ LbControl::FadeNode(const char *payload, size_t length)
 
     /* set status "FADE" for 3 hours */
     instance.failure_manager.Make(with_port)
-        .Set(GetEventLoop().SteadyNow(), FAILURE_FADE, std::chrono::hours(3));
+        .SetFade(GetEventLoop().SteadyNow(), std::chrono::hours(3));
 }
 
 gcc_const

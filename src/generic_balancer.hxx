@@ -117,11 +117,11 @@ struct BalancerRequest : R {
     }
 
     void ConnectSuccess(Expiry now) {
-        failure->Unset(now, FAILURE_CONNECT);
+        failure->UnsetConnect(now);
     }
 
     bool ConnectFailure(Expiry now) {
-        failure->Set(now, FAILURE_CONNECT, std::chrono::seconds(20));
+        failure->SetConnect(now, std::chrono::seconds(20));
 
         if (retries-- > 0){
             /* try again, next address */

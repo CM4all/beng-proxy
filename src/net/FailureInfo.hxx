@@ -95,6 +95,42 @@ public:
      * status that matches everything
      */
     void Unset(Expiry now, enum failure_status unset_status) noexcept;
+
+    void SetFade(Expiry now, std::chrono::seconds duration) noexcept {
+        Set(now, FAILURE_FADE, duration);
+    }
+
+    void UnsetFade(Expiry now) noexcept {
+        Unset(now, FAILURE_FADE);
+    }
+
+    void SetProtocol(Expiry now, std::chrono::seconds duration) noexcept {
+        Set(now, FAILURE_PROTOCOL, duration);
+    }
+
+    void UnsetProtocol(Expiry now) noexcept {
+        Unset(now, FAILURE_PROTOCOL);
+    }
+
+    void SetConnect(Expiry now, std::chrono::seconds duration) noexcept {
+        Set(now, FAILURE_CONNECT, duration);
+    }
+
+    void UnsetConnect(Expiry now) noexcept {
+        Unset(now, FAILURE_CONNECT);
+    }
+
+    void SetMonitor(Expiry now) noexcept {
+        Set(now, FAILURE_MONITOR, std::chrono::seconds::zero());
+    }
+
+    void UnsetMonitor(Expiry now) noexcept {
+        Unset(now, FAILURE_MONITOR);
+    }
+
+    void UnsetAll(Expiry now) noexcept {
+        Unset(now, FAILURE_OK);
+    }
 };
 
 #endif
