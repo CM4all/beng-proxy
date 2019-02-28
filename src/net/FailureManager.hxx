@@ -128,9 +128,6 @@ public:
 
     gcc_pure
     enum failure_status Get(Expiry now, SocketAddress address) const noexcept;
-
-private:
-    void Unset(Expiry now, Failure &failure, enum failure_status status) noexcept;
 };
 
 #endif

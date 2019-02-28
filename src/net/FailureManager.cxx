@@ -66,13 +66,6 @@ FailureManager::Make(SocketAddress address) noexcept
     }
 }
 
-inline void
-FailureManager::Unset(const Expiry now, Failure &failure,
-                      enum failure_status status) noexcept
-{
-    failure.Unset(now, status);
-}
-
 void
 FailureManager::Unset(const Expiry now, SocketAddress address,
                       enum failure_status status) noexcept
@@ -81,7 +74,7 @@ FailureManager::Unset(const Expiry now, SocketAddress address,
 
     auto i = failures.find(address, Failure::Hash(), Failure::Equal());
     if (i != failures.end())
-        Unset(now, *i, status);
+        i->Unset(now, status);
 }
 
 enum failure_status
