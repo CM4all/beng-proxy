@@ -97,8 +97,8 @@ FailureAdd(FailureManager &fm, const char *host_and_port,
            enum failure_status status=FAILURE_CONNECT,
            std::chrono::seconds duration=std::chrono::hours(1))
 {
-    fm.Set(Expiry::Now(), Resolve(host_and_port, 80, nullptr).front(),
-           status, duration);
+    fm.Make(Resolve(host_and_port, 80, nullptr).front())
+        .Set(Expiry::Now(), status, duration);
 }
 
 static void

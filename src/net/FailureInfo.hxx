@@ -87,6 +87,12 @@ public:
     bool Set(Expiry now, enum failure_status new_status,
              std::chrono::seconds duration) noexcept;
 
+    /**
+     * Unset a failure status.
+     *
+     * @param status the status to be removed; #FAILURE_OK is a catch-all
+     * status that matches everything
+     */
     void Unset(Expiry now, enum failure_status unset_status) noexcept;
 };
 

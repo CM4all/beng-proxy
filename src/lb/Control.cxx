@@ -171,9 +171,8 @@ LbControl::FadeNode(const char *payload, size_t length)
            ")");
 
     /* set status "FADE" for 3 hours */
-    instance.failure_manager.Set(GetEventLoop().SteadyNow(),
-                                 with_port, FAILURE_FADE,
-                                 std::chrono::hours(3));
+    instance.failure_manager.Make(with_port)
+        .Set(GetEventLoop().SteadyNow(), FAILURE_FADE, std::chrono::hours(3));
 }
 
 gcc_const

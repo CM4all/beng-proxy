@@ -67,27 +67,6 @@ FailureManager::Make(SocketAddress address) noexcept
     }
 }
 
-void
-FailureManager::Set(const Expiry now, SocketAddress address,
-                    enum failure_status status,
-                    std::chrono::seconds duration) noexcept
-{
-    assert(!address.IsNull());
-    assert(status > FAILURE_OK);
-
-    FailureSet::insert_commit_data hint;
-    auto result = failures.insert_check(address, Failure::Hash(),
-                                        Failure::Equal(), hint);
-    if (result.second) {
-        Failure *failure = new Failure(address, status,
-                                       Expiry::Touched(now, duration));
-        failures.insert_commit(*failure, hint);
-    } else {
-        Failure &failure = *result.first;
-        failure.Set(now, status, duration);
-    }
-}
-
 inline void
 FailureManager::Unset(const Expiry now, Failure &failure,
                       enum failure_status status) noexcept
