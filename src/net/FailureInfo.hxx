@@ -44,6 +44,8 @@ class FailureInfo {
 
     Expiry connect_expires = Expiry::AlreadyExpired();
 
+    unsigned protocol_counter = 0;
+
     bool monitor = false;
 
 public:
@@ -96,14 +98,16 @@ public:
 
     void SetProtocol(Expiry now, std::chrono::seconds duration) noexcept {
         protocol_expires.Touch(now, duration);
+        ++protocol_counter;
     }
 
     void UnsetProtocol() noexcept {
         protocol_expires = Expiry::AlreadyExpired();
+        protocol_counter = 0;
     }
 
     bool CheckProtocol(Expiry now) const noexcept {
-        return protocol_expires.IsExpired(now);
+        return protocol_expires.IsExpired(now) || protocol_counter < 8;
     }
 
     void SetConnect(Expiry now, std::chrono::seconds duration) noexcept {
@@ -133,6 +137,7 @@ public:
     void UnsetAll() noexcept {
         fade_expires = protocol_expires = connect_expires =
             Expiry::AlreadyExpired();
+        protocol_counter = 0;
         monitor = false;
     }
 };

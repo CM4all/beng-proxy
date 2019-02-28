@@ -126,6 +126,9 @@ TEST(BalancerTest, Failure)
     /* remove status mismatch */
 
     FailureAdd(fm, "192.168.0.1", FAILURE_PROTOCOL);
+    ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FAILURE_OK);
+    for (unsigned i = 0; i < 64; ++i)
+        FailureAdd(fm, "192.168.0.1", FAILURE_PROTOCOL);
     ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FAILURE_PROTOCOL);
     FailureRemove(fm, "192.168.0.1", FAILURE_CONNECT);
     ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FAILURE_PROTOCOL);
