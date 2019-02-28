@@ -98,7 +98,7 @@ void
 TcpBalancerRequest::OnStockItemReady(StockItem &item) noexcept
 {
     auto &base = BalancerRequest<TcpBalancerRequest>::Cast(*this);
-    base.ConnectSuccess(GetEventLoop().SteadyNow());
+    base.ConnectSuccess();
 
     handler.OnStockItemReady(item);
 }

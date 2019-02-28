@@ -38,47 +38,40 @@
 #include "util/Compiler.h"
 
 class FailureInfo {
-    Expiry expires = Expiry::AlreadyExpired();
-
     Expiry fade_expires = Expiry::AlreadyExpired();
 
-    enum failure_status status = FAILURE_OK;
+    Expiry protocol_expires = Expiry::AlreadyExpired();
 
-    constexpr bool CanExpire() const noexcept {
-        return status != FAILURE_MONITOR;
-    }
+    Expiry connect_expires = Expiry::AlreadyExpired();
 
-    constexpr bool IsExpired(Expiry now) const noexcept {
-        return CanExpire() && expires.IsExpired(now);
-    }
-
-    constexpr bool IsFade(Expiry now) const noexcept {
-        return !fade_expires.IsExpired(now);
-    }
+    bool monitor = false;
 
 public:
     constexpr enum failure_status GetStatus(Expiry now) const noexcept {
-        if (!IsExpired(now))
-            return status;
-        else if (IsFade(now))
+        if (monitor)
+            return FAILURE_MONITOR;
+        else if (!connect_expires.IsExpired(now))
+            return FAILURE_CONNECT;
+        else if (!protocol_expires.IsExpired(now))
+            return FAILURE_PROTOCOL;
+        else if (!fade_expires.IsExpired(now))
             return FAILURE_FADE;
         else
             return FAILURE_OK;
     }
 
     constexpr bool Check(Expiry now, bool allow_fade=false) const noexcept {
-        const auto s = GetStatus(now);
-        return s == FAILURE_OK || (allow_fade && s == FAILURE_FADE);
+        return !monitor &&
+            connect_expires.IsExpired(now) &&
+            protocol_expires.IsExpired(now) &&
+            (allow_fade || fade_expires.IsExpired(now));
     }
 
     /**
      * Set the specified failure status, but only if it is not less
      * severe than the current status.
-     *
-     * @return false if the new status is less severe, and nothing has
-     * changed
      */
-    bool Set(Expiry now, enum failure_status new_status,
+    void Set(Expiry now, enum failure_status new_status,
              std::chrono::seconds duration) noexcept;
 
     /**
@@ -87,43 +80,44 @@ public:
      * @param status the status to be removed; #FAILURE_OK is a catch-all
      * status that matches everything
      */
-    void Unset(Expiry now, enum failure_status unset_status) noexcept;
+    void Unset(enum failure_status unset_status) noexcept;
 
     void SetFade(Expiry now, std::chrono::seconds duration) noexcept {
-        Set(now, FAILURE_FADE, duration);
+        fade_expires.Touch(now, duration);
     }
 
-    void UnsetFade(Expiry now) noexcept {
-        Unset(now, FAILURE_FADE);
+    void UnsetFade() noexcept {
+        fade_expires = Expiry::AlreadyExpired();
     }
 
     void SetProtocol(Expiry now, std::chrono::seconds duration) noexcept {
-        Set(now, FAILURE_PROTOCOL, duration);
+        protocol_expires.Touch(now, duration);
     }
 
-    void UnsetProtocol(Expiry now) noexcept {
-        Unset(now, FAILURE_PROTOCOL);
+    void UnsetProtocol() noexcept {
+        protocol_expires = Expiry::AlreadyExpired();
     }
 
     void SetConnect(Expiry now, std::chrono::seconds duration) noexcept {
-        Set(now, FAILURE_CONNECT, duration);
+        connect_expires.Touch(now, duration);
     }
 
-    void UnsetConnect(Expiry now) noexcept {
-        Unset(now, FAILURE_CONNECT);
+    void UnsetConnect() noexcept {
+        connect_expires = Expiry::AlreadyExpired();
     }
 
-    void SetMonitor(Expiry now) noexcept {
-        Set(now, FAILURE_MONITOR, std::chrono::seconds::zero());
+    void SetMonitor() noexcept {
+        monitor = true;
     }
 
-    void UnsetMonitor(Expiry now) noexcept {
-        Unset(now, FAILURE_MONITOR);
+    void UnsetMonitor() noexcept {
+        monitor = false;
     }
 
     void UnsetAll() noexcept {
-        status = FAILURE_OK;
-        expires = fade_expires = Expiry::AlreadyExpired();
+        fade_expires = protocol_expires = connect_expires =
+            Expiry::AlreadyExpired();
+        monitor = false;
     }
 };
 

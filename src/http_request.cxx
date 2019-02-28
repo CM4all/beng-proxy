@@ -187,7 +187,7 @@ HttpRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
 {
     assert(!response_sent);
 
-    failure->UnsetProtocol(event_loop.SteadyNow());
+    failure->UnsetProtocol();
 
     handler.InvokeResponse(status, std::move(_headers), std::move(_body));
     ResponseSent();

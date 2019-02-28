@@ -32,49 +32,55 @@
 
 #include "FailureInfo.hxx"
 
-bool
+void
 FailureInfo::Set(Expiry now,
                  enum failure_status new_status,
                  std::chrono::seconds duration) noexcept
 {
-    if (IsExpired(now)) {
-        /* expired: override in any case */
-    } else if (new_status == status) {
-        /* same status: update expiry */
-    } else if (new_status == FAILURE_FADE) {
-        /* store "fade" expiry in special attribute, until the other
-           failure status expires */
-        fade_expires.Touch(now, duration);
-        return true;
-    } else if (status == FAILURE_FADE) {
-        /* copy the "fade" expiry to the special attribute, and
-           overwrite the FAILURE_FADE status */
-        fade_expires = expires;
-    } else if (new_status < status)
-        return false;
+    switch (new_status) {
+    case FAILURE_OK:
+        break;
 
-    expires.Touch(now, duration);
-    status = new_status;
-    return true;
+    case FAILURE_FADE:
+        SetFade(now, duration);
+        break;
+
+    case FAILURE_PROTOCOL:
+        SetProtocol(now, duration);
+        break;
+
+    case FAILURE_CONNECT:
+        SetConnect(now, duration);
+        break;
+
+    case FAILURE_MONITOR:
+        SetMonitor();
+        break;
+    }
 }
 
 void
-FailureInfo::Unset(Expiry now, enum failure_status unset_status) noexcept
+FailureInfo::Unset(enum failure_status unset_status) noexcept
 {
-    if (unset_status == FAILURE_FADE)
-        fade_expires = Expiry::AlreadyExpired();
+    switch (unset_status) {
+    case FAILURE_OK:
+        UnsetAll();
+        break;
 
-    if (!MatchFailureStatus(status, unset_status) && !IsExpired(now))
-        /* don't update if the current status is more serious than the
-           one to be removed */
-        return;
+    case FAILURE_FADE:
+        UnsetFade();
+        break;
 
-    if (unset_status != FAILURE_OK && IsFade(now)) {
-        status = FAILURE_FADE;
-        expires = fade_expires;
-        fade_expires = Expiry::AlreadyExpired();
-    } else {
-        status = FAILURE_OK;
-        expires = fade_expires = Expiry::AlreadyExpired();
+    case FAILURE_PROTOCOL:
+        UnsetProtocol();
+        break;
+
+    case FAILURE_CONNECT:
+        UnsetConnect();
+        break;
+
+    case FAILURE_MONITOR:
+        UnsetMonitor();
+        break;
     }
 }

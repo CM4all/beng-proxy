@@ -116,8 +116,8 @@ struct BalancerRequest : R {
         R::Send(pool, current_address, cancel_ptr);
     }
 
-    void ConnectSuccess(Expiry now) {
-        failure->UnsetConnect(now);
+    void ConnectSuccess() {
+        failure->UnsetConnect();
     }
 
     bool ConnectFailure(Expiry now) {

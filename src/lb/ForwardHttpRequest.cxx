@@ -346,7 +346,7 @@ LbRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
 {
     assert(!response_sent);
 
-    failure->UnsetProtocol(GetEventLoop().SteadyNow());
+    failure->UnsetProtocol();
 
     SetForwardedTo();
 
@@ -410,7 +410,7 @@ LbRequest::OnStockItemReady(StockItem &item) noexcept
 
         /* without the fs_balancer, we have to roll our own failure
            updates */
-        failure->UnsetConnect(GetEventLoop().SteadyNow());
+        failure->UnsetConnect();
     } else
         failure = GetFailureManager().Make(fs_stock_item_get_address(*stock_item));
 

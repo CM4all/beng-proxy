@@ -96,7 +96,7 @@ void
 ClientBalancerRequest::OnSocketConnectSuccess(UniqueSocketDescriptor &&fd) noexcept
 {
     auto &base = BalancerRequest<ClientBalancerRequest>::Cast(*this);
-    base.ConnectSuccess(event_loop.SteadyNow());
+    base.ConnectSuccess();
 
     handler.OnSocketConnectSuccess(std::move(fd));
 }

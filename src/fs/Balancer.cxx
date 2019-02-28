@@ -96,7 +96,7 @@ void
 FilteredSocketBalancerRequest::OnStockItemReady(StockItem &item) noexcept
 {
     auto &base = BR::Cast(*this);
-    base.ConnectSuccess(fs_balancer.GetEventLoop().SteadyNow());
+    base.ConnectSuccess();
 
     handler.OnStockItemReady(item);
 }

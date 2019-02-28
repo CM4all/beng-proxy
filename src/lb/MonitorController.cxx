@@ -52,11 +52,11 @@ LbMonitorController::Success()
 
     state = true;
 
-    failure->UnsetMonitor(event_loop.SteadyNow());
+    failure->UnsetMonitor();
 
     if (fade) {
         fade = false;
-        failure->UnsetFade(event_loop.SteadyNow());
+        failure->UnsetFade();
     }
 
     interval_event.Schedule(config.interval);
@@ -88,7 +88,7 @@ LbMonitorController::Timeout()
     logger(state ? 3 : 6, "timeout");
 
     state = false;
-    failure->SetMonitor(event_loop.SteadyNow());
+    failure->SetMonitor();
 
     interval_event.Schedule(config.interval);
 }
@@ -102,7 +102,7 @@ LbMonitorController::Error(std::exception_ptr e)
     logger(state ? 2 : 4, "error: ", e);
 
     state = false;
-    failure->SetMonitor(event_loop.SteadyNow());
+    failure->SetMonitor();
 
     interval_event.Schedule(config.interval);
 }
@@ -130,7 +130,7 @@ LbMonitorController::TimeoutCallback() noexcept
     cancel_ptr.CancelAndClear();
 
     state = false;
-    failure->SetMonitor(event_loop.SteadyNow());
+    failure->SetMonitor();
 
     interval_event.Schedule(config.interval);
 }
