@@ -44,13 +44,6 @@ class FailureInfo {
 
     enum failure_status status = FAILURE_OK;
 
-public:
-    constexpr bool IsNull() const noexcept {
-        return expires == Expiry::AlreadyExpired() &&
-            fade_expires == Expiry::AlreadyExpired();
-    }
-
-private:
     constexpr bool CanExpire() const noexcept {
         return status != FAILURE_MONITOR;
     }
