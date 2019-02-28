@@ -105,8 +105,8 @@ static void
 FailureRemove(FailureManager &fm, const char *host_and_port,
               enum failure_status status=FAILURE_CONNECT)
 {
-    fm.Unset(Expiry::Now(),
-             Resolve(host_and_port, 80, nullptr).front(), status);
+    fm.Make(Resolve(host_and_port, 80, nullptr).front())
+        .Unset(Expiry::Now(), status);
 }
 
 TEST(BalancerTest, Failure)

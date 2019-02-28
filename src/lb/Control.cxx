@@ -131,8 +131,8 @@ LbControl::EnableNode(const char *payload, size_t length)
            ToString(buffer, sizeof(buffer), with_port, "?"),
            ")");
 
-    instance.failure_manager.Unset(GetEventLoop().SteadyNow(),
-                                   with_port, FAILURE_OK);
+    instance.failure_manager.Make(with_port)
+        .Unset(GetEventLoop().SteadyNow(), FAILURE_OK);
 }
 
 inline void

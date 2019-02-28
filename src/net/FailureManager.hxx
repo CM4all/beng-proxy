@@ -123,9 +123,6 @@ public:
         return f.GetAddress();
     }
 
-    void Unset(Expiry now, SocketAddress address,
-               enum failure_status status) noexcept;
-
     gcc_pure
     enum failure_status Get(Expiry now, SocketAddress address) const noexcept;
 
