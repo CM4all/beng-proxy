@@ -49,17 +49,17 @@ class FailureInfo {
     bool monitor = false;
 
 public:
-    constexpr enum failure_status GetStatus(Expiry now) const noexcept {
+    constexpr FailureStatus GetStatus(Expiry now) const noexcept {
         if (!CheckMonitor())
-            return FAILURE_MONITOR;
+            return FailureStatus::MONITOR;
         else if (!CheckConnect(now))
-            return FAILURE_CONNECT;
+            return FailureStatus::CONNECT;
         else if (!CheckProtocol(now))
-            return FAILURE_PROTOCOL;
+            return FailureStatus::PROTOCOL;
         else if (!CheckFade(now))
-            return FAILURE_FADE;
+            return FailureStatus::FADE;
         else
-            return FAILURE_OK;
+            return FailureStatus::OK;
     }
 
     constexpr bool Check(Expiry now, bool allow_fade=false) const noexcept {
@@ -73,16 +73,16 @@ public:
      * Set the specified failure status, but only if it is not less
      * severe than the current status.
      */
-    void Set(Expiry now, enum failure_status new_status,
+    void Set(Expiry now, FailureStatus new_status,
              std::chrono::seconds duration) noexcept;
 
     /**
      * Unset a failure status.
      *
-     * @param status the status to be removed; #FAILURE_OK is a catch-all
-     * status that matches everything
+     * @param status the status to be removed; #FailureStatus::OK is a
+     * catch-all status that matches everything
      */
-    void Unset(enum failure_status unset_status) noexcept;
+    void Unset(FailureStatus unset_status) noexcept;
 
     void SetFade(Expiry now, std::chrono::seconds duration) noexcept {
         fade_expires.Touch(now, duration);

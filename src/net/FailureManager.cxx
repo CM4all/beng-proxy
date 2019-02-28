@@ -66,14 +66,14 @@ FailureManager::Make(SocketAddress address) noexcept
     }
 }
 
-enum failure_status
+FailureStatus
 FailureManager::Get(const Expiry now, SocketAddress address) const noexcept
 {
     assert(!address.IsNull());
 
     auto i = failures.find(address, Failure::Hash(), Failure::Equal());
     if (i == failures.end())
-        return FAILURE_OK;
+        return FailureStatus::OK;
 
     return i->GetStatus(now);
 }

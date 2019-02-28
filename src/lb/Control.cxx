@@ -176,18 +176,18 @@ LbControl::FadeNode(const char *payload, size_t length)
 
 gcc_const
 static const char *
-failure_status_to_string(enum failure_status status)
+failure_status_to_string(FailureStatus status)
 {
     switch (status) {
-    case FAILURE_OK:
+    case FailureStatus::OK:
         return "ok";
 
-    case FAILURE_FADE:
+    case FailureStatus::FADE:
         return "fade";
 
-    case FAILURE_PROTOCOL:
-    case FAILURE_CONNECT:
-    case FAILURE_MONITOR:
+    case FailureStatus::PROTOCOL:
+    case FailureStatus::CONNECT:
+    case FailureStatus::MONITOR:
         break;
     }
 
@@ -254,8 +254,8 @@ try {
 
     const auto with_port = node->address.WithPort(port);
 
-    enum failure_status status = instance.failure_manager.Get(GetEventLoop().SteadyNow(),
-                                                              with_port);
+    auto status = instance.failure_manager.Get(GetEventLoop().SteadyNow(),
+                                               with_port);
     const char *s = failure_status_to_string(status);
 
     node_status_response(&control_server, address,

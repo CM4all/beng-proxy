@@ -124,7 +124,7 @@ public:
     }
 
     gcc_pure
-    enum failure_status Get(Expiry now, SocketAddress address) const noexcept;
+    FailureStatus Get(Expiry now, SocketAddress address) const noexcept;
 
     gcc_pure
     bool Check(Expiry now, SocketAddress address,

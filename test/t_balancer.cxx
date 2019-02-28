@@ -86,7 +86,7 @@ public:
 };
 
 gcc_pure
-static enum failure_status
+static FailureStatus
 FailureGet(FailureManager &fm, const char *host_and_port)
 {
     return fm.Get(Expiry::Now(), Resolve(host_and_port, 80, nullptr).front());
@@ -94,7 +94,7 @@ FailureGet(FailureManager &fm, const char *host_and_port)
 
 static void
 FailureAdd(FailureManager &fm, const char *host_and_port,
-           enum failure_status status=FAILURE_CONNECT,
+           FailureStatus status=FailureStatus::CONNECT,
            std::chrono::seconds duration=std::chrono::hours(1))
 {
     fm.Make(Resolve(host_and_port, 80, nullptr).front())
@@ -103,7 +103,7 @@ FailureAdd(FailureManager &fm, const char *host_and_port,
 
 static void
 FailureRemove(FailureManager &fm, const char *host_and_port,
-              enum failure_status status=FAILURE_CONNECT)
+              FailureStatus status=FailureStatus::CONNECT)
 {
     fm.Make(Resolve(host_and_port, 80, nullptr).front()).Unset(status);
 }
@@ -112,58 +112,58 @@ TEST(BalancerTest, Failure)
 {
     FailureManager fm;
 
-    ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FAILURE_OK);
-    ASSERT_EQ(FailureGet(fm, "192.168.0.2"), FAILURE_OK);
+    ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FailureStatus::OK);
+    ASSERT_EQ(FailureGet(fm, "192.168.0.2"), FailureStatus::OK);
 
     FailureAdd(fm, "192.168.0.1");
-    ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FAILURE_CONNECT);
-    ASSERT_EQ(FailureGet(fm, "192.168.0.2"), FAILURE_OK);
+    ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FailureStatus::CONNECT);
+    ASSERT_EQ(FailureGet(fm, "192.168.0.2"), FailureStatus::OK);
 
     FailureRemove(fm, "192.168.0.1");
-    ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FAILURE_OK);
-    ASSERT_EQ(FailureGet(fm, "192.168.0.2"), FAILURE_OK);
+    ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FailureStatus::OK);
+    ASSERT_EQ(FailureGet(fm, "192.168.0.2"), FailureStatus::OK);
 
     /* remove status mismatch */
 
-    FailureAdd(fm, "192.168.0.1", FAILURE_PROTOCOL);
-    ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FAILURE_OK);
+    FailureAdd(fm, "192.168.0.1", FailureStatus::PROTOCOL);
+    ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FailureStatus::OK);
     for (unsigned i = 0; i < 64; ++i)
-        FailureAdd(fm, "192.168.0.1", FAILURE_PROTOCOL);
-    ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FAILURE_PROTOCOL);
-    FailureRemove(fm, "192.168.0.1", FAILURE_CONNECT);
-    ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FAILURE_PROTOCOL);
-    FailureRemove(fm, "192.168.0.1", FAILURE_PROTOCOL);
-    ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FAILURE_OK);
+        FailureAdd(fm, "192.168.0.1", FailureStatus::PROTOCOL);
+    ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FailureStatus::PROTOCOL);
+    FailureRemove(fm, "192.168.0.1", FailureStatus::CONNECT);
+    ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FailureStatus::PROTOCOL);
+    FailureRemove(fm, "192.168.0.1", FailureStatus::PROTOCOL);
+    ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FailureStatus::OK);
 
     /* "fade", then "failed", remove "failed", and the old "fade"
        should remain */
 
-    FailureAdd(fm, "192.168.0.1", FAILURE_FADE);
-    ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FAILURE_FADE);
+    FailureAdd(fm, "192.168.0.1", FailureStatus::FADE);
+    ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FailureStatus::FADE);
     FailureRemove(fm, "192.168.0.1");
-    ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FAILURE_FADE);
+    ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FailureStatus::FADE);
     FailureAdd(fm, "192.168.0.1");
-    ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FAILURE_CONNECT);
+    ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FailureStatus::CONNECT);
     FailureRemove(fm, "192.168.0.1");
-    ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FAILURE_FADE);
-    FailureRemove(fm, "192.168.0.1", FAILURE_OK);
-    ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FAILURE_OK);
+    ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FailureStatus::FADE);
+    FailureRemove(fm, "192.168.0.1", FailureStatus::OK);
+    ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FailureStatus::OK);
 
     /* first "fail", then "fade"; see if removing the "fade"
        before" failed" will not bring it back */
 
-    FailureAdd(fm, "192.168.0.1", FAILURE_CONNECT);
-    ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FAILURE_CONNECT);
-    FailureAdd(fm, "192.168.0.1", FAILURE_FADE);
-    ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FAILURE_CONNECT);
-    FailureRemove(fm, "192.168.0.1", FAILURE_CONNECT);
-    ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FAILURE_FADE);
-    FailureAdd(fm, "192.168.0.1", FAILURE_CONNECT);
-    ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FAILURE_CONNECT);
-    FailureRemove(fm, "192.168.0.1", FAILURE_FADE);
-    ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FAILURE_CONNECT);
-    FailureRemove(fm, "192.168.0.1", FAILURE_CONNECT);
-    ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FAILURE_OK);
+    FailureAdd(fm, "192.168.0.1", FailureStatus::CONNECT);
+    ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FailureStatus::CONNECT);
+    FailureAdd(fm, "192.168.0.1", FailureStatus::FADE);
+    ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FailureStatus::CONNECT);
+    FailureRemove(fm, "192.168.0.1", FailureStatus::CONNECT);
+    ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FailureStatus::FADE);
+    FailureAdd(fm, "192.168.0.1", FailureStatus::CONNECT);
+    ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FailureStatus::CONNECT);
+    FailureRemove(fm, "192.168.0.1", FailureStatus::FADE);
+    ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FailureStatus::CONNECT);
+    FailureRemove(fm, "192.168.0.1", FailureStatus::CONNECT);
+    ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FailureStatus::OK);
 }
 
 TEST(BalancerTest, Basic)
@@ -415,7 +415,7 @@ TEST(BalancerTest, StickyCookie)
 
     /* fade */
 
-    FailureAdd(fm, "192.168.0.1", FAILURE_FADE);
+    FailureAdd(fm, "192.168.0.1", FailureStatus::FADE);
 
     result = balancer.Get(al);
     ASSERT_NE(result, nullptr);

@@ -34,52 +34,52 @@
 
 void
 FailureInfo::Set(Expiry now,
-                 enum failure_status new_status,
+                 FailureStatus new_status,
                  std::chrono::seconds duration) noexcept
 {
     switch (new_status) {
-    case FAILURE_OK:
+    case FailureStatus::OK:
         break;
 
-    case FAILURE_FADE:
+    case FailureStatus::FADE:
         SetFade(now, duration);
         break;
 
-    case FAILURE_PROTOCOL:
+    case FailureStatus::PROTOCOL:
         SetProtocol(now, duration);
         break;
 
-    case FAILURE_CONNECT:
+    case FailureStatus::CONNECT:
         SetConnect(now, duration);
         break;
 
-    case FAILURE_MONITOR:
+    case FailureStatus::MONITOR:
         SetMonitor();
         break;
     }
 }
 
 void
-FailureInfo::Unset(enum failure_status unset_status) noexcept
+FailureInfo::Unset(FailureStatus unset_status) noexcept
 {
     switch (unset_status) {
-    case FAILURE_OK:
+    case FailureStatus::OK:
         UnsetAll();
         break;
 
-    case FAILURE_FADE:
+    case FailureStatus::FADE:
         UnsetFade();
         break;
 
-    case FAILURE_PROTOCOL:
+    case FailureStatus::PROTOCOL:
         UnsetProtocol();
         break;
 
-    case FAILURE_CONNECT:
+    case FailureStatus::CONNECT:
         UnsetConnect();
         break;
 
-    case FAILURE_MONITOR:
+    case FailureStatus::MONITOR:
         UnsetMonitor();
         break;
     }
