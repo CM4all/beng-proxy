@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -70,6 +70,8 @@ struct BalancerRequest : R {
 
     SocketAddress current_address;
 
+    FailurePtr failure;
+
     template<typename... Args>
     BalancerRequest(struct pool &_pool,
                     Balancer &_balancer,
@@ -116,18 +118,17 @@ struct BalancerRequest : R {
         const struct sockaddr *new_address = (const struct sockaddr *)
             p_memdup(&pool, address.GetAddress(), address.GetSize());
         current_address = { new_address, address.GetSize() };
+        failure = balancer.GetFailureManager().Make(current_address);
 
         R::Send(pool, current_address, cancel_ptr);
     }
 
     void ConnectSuccess(Expiry now) {
-        balancer.GetFailureManager().Unset(now, current_address,
-                                           FAILURE_CONNECT);
+        failure->Unset(now, FAILURE_CONNECT);
     }
 
     bool ConnectFailure(Expiry now) {
-        balancer.GetFailureManager().Set(now, current_address, FAILURE_CONNECT,
-                                         std::chrono::seconds(20));
+        failure->Set(now, FAILURE_CONNECT, std::chrono::seconds(20));
 
         if (retries-- > 0){
             /* try again, next address */
