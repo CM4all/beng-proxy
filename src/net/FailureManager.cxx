@@ -93,10 +93,6 @@ FailureManager::Unset(const Expiry now, Failure &failure,
                       enum failure_status status) noexcept
 {
     failure.Unset(now, status);
-
-    if (failure.IsNull())
-        failures.erase_and_dispose(failures.iterator_to(failure),
-                                   Failure::UnrefDisposer());
 }
 
 void
