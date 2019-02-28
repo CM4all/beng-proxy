@@ -128,8 +128,9 @@ public:
         Unset(now, FAILURE_MONITOR);
     }
 
-    void UnsetAll(Expiry now) noexcept {
-        Unset(now, FAILURE_OK);
+    void UnsetAll() noexcept {
+        status = FAILURE_OK;
+        expires = fade_expires = Expiry::AlreadyExpired();
     }
 };
 
