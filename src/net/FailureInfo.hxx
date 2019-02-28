@@ -54,6 +54,7 @@ public:
             fade_expires == Expiry::AlreadyExpired();
     }
 
+private:
     constexpr bool CanExpire() const noexcept {
         return status != FAILURE_MONITOR;
     }
@@ -66,6 +67,7 @@ public:
         return !fade_expires.IsExpired(now);
     }
 
+public:
     constexpr enum failure_status GetStatus(Expiry now) const noexcept {
         if (!IsExpired(now))
             return status;
