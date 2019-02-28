@@ -55,9 +55,8 @@ class FailureManager {
         const AllocatedSocketAddress address;
 
     public:
-        Failure(SocketAddress _address, enum failure_status _status,
-                Expiry _expires) noexcept
-            :ReferencedFailureInfo(_status, _expires), address(_address) {}
+        explicit Failure(SocketAddress _address) noexcept
+            :address(_address) {}
 
         SocketAddress GetAddress() const noexcept {
             return address;

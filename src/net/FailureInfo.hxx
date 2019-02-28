@@ -38,17 +38,13 @@
 #include "util/Compiler.h"
 
 class FailureInfo {
-    Expiry expires;
+    Expiry expires = Expiry::AlreadyExpired();
 
     Expiry fade_expires = Expiry::AlreadyExpired();
 
-    enum failure_status status;
+    enum failure_status status = FAILURE_OK;
 
 public:
-    constexpr FailureInfo(enum failure_status _status,
-                          Expiry _expires) noexcept
-        :expires(_expires), status(_status) {}
-
     constexpr bool IsNull() const noexcept {
         return expires == Expiry::AlreadyExpired() &&
             fade_expires == Expiry::AlreadyExpired();

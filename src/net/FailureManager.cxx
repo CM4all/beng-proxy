@@ -58,8 +58,7 @@ FailureManager::Make(SocketAddress address) noexcept
     auto result = failures.insert_check(address, Failure::Hash(),
                                         Failure::Equal(), hint);
     if (result.second) {
-        Failure *failure = new Failure(address, FAILURE_OK,
-                                       Expiry::AlreadyExpired());
+        Failure *failure = new Failure(address);
         failures.insert_commit(*failure, hint);
         return *failure;
     } else {
