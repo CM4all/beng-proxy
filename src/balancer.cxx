@@ -40,16 +40,6 @@
 
 #include <assert.h>
 
-static bool
-check_failure(FailureManager &failure_manager, Expiry now,
-              const SocketAddress address, bool allow_fade)
-{
-    enum failure_status status = failure_manager.Get(now, address);
-    if (status == FAILURE_FADE && allow_fade)
-        status = FAILURE_OK;
-    return status == FAILURE_OK;
-}
-
 gcc_pure
 static bool
 check_bulldog(const SocketAddress address, bool allow_fade)
@@ -62,7 +52,7 @@ static bool
 CheckAddress(FailureManager &failure_manager, Expiry now,
              const SocketAddress address, bool allow_fade)
 {
-    return check_failure(failure_manager, now, address, allow_fade) &&
+    return failure_manager.Check(now, address, allow_fade) &&
         check_bulldog(address, allow_fade);
 }
 
