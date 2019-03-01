@@ -97,7 +97,7 @@ HttpServerConnection::RequestBodyReader::_Read() noexcept
         /* avoid recursion */
         return;
 
-    connection.socket.Read(connection.request_body_reader->RequireMore());
+    connection.socket.Read(RequireMore());
 }
 
 void
@@ -108,7 +108,7 @@ HttpServerConnection::RequestBodyReader::_Close() noexcept
 
     assert(connection.request.read_state == Request::BODY);
     assert(connection.request.body_state == Request::BodyState::READING);
-    assert(!connection.request_body_reader->IsEOF());
+    assert(!IsEOF());
     assert(!connection.response.pending_drained);
 
     if (!connection.socket.IsValid() ||
@@ -136,5 +136,5 @@ HttpServerConnection::RequestBodyReader::_Close() noexcept
            to finish sending the request body */
         connection.keep_alive = false;
 
-    connection.request_body_reader->Destroy();
+    Destroy();
 }
