@@ -49,7 +49,7 @@
 class CancellablePointer;
 
 template<class R>
-struct BalancerRequest : R {
+class BalancerRequest : R {
     struct pool &pool;
 
     Balancer &balancer;
@@ -71,6 +71,7 @@ struct BalancerRequest : R {
 
     FailurePtr failure;
 
+public:
     template<typename... Args>
     BalancerRequest(struct pool &_pool,
                     Balancer &_balancer,
@@ -87,6 +88,7 @@ struct BalancerRequest : R {
 
     BalancerRequest(const BalancerRequest &) = delete;
 
+private:
     static unsigned CalculateRetries(const AddressList &address_list) {
         const unsigned size = address_list.GetSize();
         if (size <= 1)
@@ -99,6 +101,7 @@ struct BalancerRequest : R {
             return 3;
     }
 
+public:
     static constexpr BalancerRequest &Cast(R &r) {
         return (BalancerRequest &)r;
     }
