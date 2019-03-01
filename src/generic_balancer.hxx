@@ -43,20 +43,21 @@
 #include "pool/pool.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/FailureManager.hxx"
+#include "util/Cancellable.hxx"
 
 #include <utility>
 
 class CancellablePointer;
 
 template<class R>
-class BalancerRequest : R {
+class BalancerRequest final : R, Cancellable {
     struct pool &pool;
 
     Balancer &balancer;
 
     const AddressList &address_list;
 
-    CancellablePointer &cancel_ptr;
+    CancellablePointer cancel_ptr;
 
     /**
      * The "sticky id" of the incoming HTTP request.
@@ -82,13 +83,23 @@ public:
         :R(std::forward<Args>(args)...),
          pool(_pool), balancer(_balancer),
          address_list(_address_list),
-         cancel_ptr(_cancel_ptr),
          session_sticky(_session_sticky),
-         retries(CalculateRetries(address_list)) {}
+         retries(CalculateRetries(address_list))
+    {
+        _cancel_ptr = *this;
+    }
 
     BalancerRequest(const BalancerRequest &) = delete;
 
+    void Destroy() noexcept {
+        this->~BalancerRequest();
+    }
+
 private:
+    void Cancel() noexcept override {
+        Destroy();
+    }
+
     static unsigned CalculateRetries(const AddressList &address_list) {
         const unsigned size = address_list.GetSize();
         if (size <= 1)
