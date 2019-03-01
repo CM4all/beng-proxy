@@ -1161,7 +1161,8 @@ HttpClient::OnData(const void *data, size_t length)
 
     stopwatch_event(stopwatch, "error");
 
-    AbortResponse(NestException(std::make_exception_ptr(MakeErrno(_errno)),
+    AbortResponse(NestException(std::make_exception_ptr(MakeErrno(_errno,
+                                                                  "Write error")),
                                 HttpClientError(HttpClientErrorCode::IO,
                                                 "write error")));
     return 0;

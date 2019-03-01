@@ -210,6 +210,6 @@ client_socket_new(EventLoop &event_loop, struct pool &_pool,
 #endif
                                     handler, cancel_ptr);
     } else {
-        handler.OnSocketConnectError(std::make_exception_ptr(MakeErrno()));
+        handler.OnSocketConnectError(std::make_exception_ptr(MakeErrno("Failed to connect")));
     }
 }

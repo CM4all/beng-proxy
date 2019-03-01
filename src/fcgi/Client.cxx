@@ -683,7 +683,7 @@ FcgiClient::OnData(const void *data, size_t length)
     else if (gcc_likely(nbytes == WRITE_BLOCKING || nbytes == WRITE_DESTROYED))
         return 0;
     else if (nbytes < 0) {
-        AbortResponse(NestException(std::make_exception_ptr(MakeErrno()),
+        AbortResponse(NestException(std::make_exception_ptr(MakeErrno("Write error")),
                                     FcgiClientError("write to FastCGI application failed")));
         return 0;
     }
