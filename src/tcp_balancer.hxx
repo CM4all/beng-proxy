@@ -51,7 +51,7 @@ class SocketAddress;
 class EventLoop;
 
 class TcpBalancer {
-    friend struct TcpBalancerRequest;
+    friend class TcpBalancerRequest;
 
     TcpStock &tcp_stock;
 
