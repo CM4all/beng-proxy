@@ -92,7 +92,7 @@ public:
         fade_expires = Expiry::AlreadyExpired();
     }
 
-    bool CheckFade(Expiry now) const noexcept {
+    constexpr bool CheckFade(Expiry now) const noexcept {
         return fade_expires.IsExpired(now);
     }
 
@@ -106,7 +106,7 @@ public:
         protocol_counter = 0;
     }
 
-    bool CheckProtocol(Expiry now) const noexcept {
+    constexpr bool CheckProtocol(Expiry now) const noexcept {
         return protocol_expires.IsExpired(now) || protocol_counter < 8;
     }
 
@@ -118,7 +118,7 @@ public:
         connect_expires = Expiry::AlreadyExpired();
     }
 
-    bool CheckConnect(Expiry now) const noexcept {
+    constexpr bool CheckConnect(Expiry now) const noexcept {
         return connect_expires.IsExpired(now);
     }
 
@@ -130,7 +130,7 @@ public:
         monitor = false;
     }
 
-    bool CheckMonitor() const noexcept {
+    constexpr bool CheckMonitor() const noexcept {
         return !monitor;
     }
 
