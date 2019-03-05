@@ -52,6 +52,8 @@
 #include "util/Cancellable.hxx"
 #include "util/PrintException.hxx"
 
+#include <functional>
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -61,6 +63,9 @@ class Instance final
     struct pool *pool;
 
     HttpServerConnection *connection = nullptr;
+
+    std::function<void(HttpServerRequest &request,
+                       CancellablePointer &cancel_ptr)> request_handler;
 
     FilteredSocket client_fs;
     CancellablePointer client_cancel_ptr;
@@ -81,6 +86,11 @@ public:
 
     struct pool &GetPool() noexcept {
         return *pool;
+    }
+
+    template<typename T>
+    void SetRequestHandler(T &&handler) noexcept {
+        request_handler = std::forward<T>(handler);
     }
 
     void RethrowResponseError() const {
@@ -234,14 +244,9 @@ catch_callback(std::exception_ptr ep, gcc_unused void *ctx) noexcept
 
 void
 Instance::HandleHttpRequest(HttpServerRequest &request,
-                            gcc_unused CancellablePointer &cancel_ptr) noexcept
+                            CancellablePointer &cancel_ptr) noexcept
 {
-    http_server_response(&request, HTTP_STATUS_OK, HttpHeaders(request.pool),
-                         istream_catch_new(&request.pool,
-                                           std::move(request.body),
-                                           catch_callback, nullptr));
-
-    CloseConnection();
+    request_handler(request, cancel_ptr);
 }
 
 void
@@ -262,6 +267,14 @@ static void
 test_catch(EventLoop &event_loop, struct pool *_pool)
 {
     Instance instance(*_pool, event_loop);
+
+    instance.SetRequestHandler([&instance](HttpServerRequest &request, CancellablePointer &) noexcept {
+        http_server_response(&request, HTTP_STATUS_OK, HttpHeaders(request.pool),
+                             istream_catch_new(&request.pool,
+                                               std::move(request.body),
+                                               catch_callback, nullptr));
+        instance.CloseConnection();
+    });
 
     instance.SendRequest(HTTP_METHOD_POST, "/", HttpHeaders(instance.GetPool()),
                          istream_head_new(instance.GetPool(),
