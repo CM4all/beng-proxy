@@ -52,14 +52,13 @@ struct Instance final : HttpServerConnectionHandler {
 
     HttpServerConnection *connection = nullptr;
 
-    explicit Instance(struct pool &_pool) noexcept
-        :pool(pool_new_libc(&_pool, "catch")) {}
+    UniqueSocketDescriptor client_socket;
+
+    Instance(struct pool &_pool, EventLoop &event_loop);
 
     ~Instance() noexcept {
         CheckCloseConnection();
     }
-
-    UniqueSocketDescriptor CreateConnection(EventLoop &event_loop);
 
     void CloseConnection() noexcept {
         http_server_connection_close(connection);
@@ -83,12 +82,10 @@ struct Instance final : HttpServerConnectionHandler {
     void HttpConnectionClosed() noexcept override;
 };
 
-UniqueSocketDescriptor
-Instance::CreateConnection(EventLoop &event_loop)
+Instance::Instance(struct pool &_pool, EventLoop &event_loop)
+    :pool(pool_new_libc(&_pool, "catch"))
 {
-    assert(connection == nullptr);
-
-    UniqueSocketDescriptor client_socket, server_socket;
+    UniqueSocketDescriptor server_socket;
     if (!UniqueSocketDescriptor::CreateSocketPair(AF_LOCAL, SOCK_STREAM, 0,
                                                   client_socket, server_socket))
         throw MakeErrno("socketpair() failed");
@@ -99,8 +96,6 @@ Instance::CreateConnection(EventLoop &event_loop)
                                             nullptr,
                                             nullptr, nullptr,
                                             true, *this);
-
-    return client_socket;
 }
 
 static std::exception_ptr
@@ -139,13 +134,12 @@ Instance::HttpConnectionClosed() noexcept
 static void
 test_catch(EventLoop &event_loop, struct pool *_pool)
 {
-    Instance instance(*_pool);
-    auto client_socket = instance.CreateConnection(event_loop);
+    Instance instance(*_pool, event_loop);
     pool_unref(instance.pool);
 
     static constexpr char request[] =
         "POST / HTTP/1.1\r\nContent-Length: 1024\r\n\r\nfoo";
-    send(client_socket.Get(), request, sizeof(request) - 1, 0);
+    send(instance.client_socket.Get(), request, sizeof(request) - 1, 0);
 
     event_loop.Dispatch();
 }
