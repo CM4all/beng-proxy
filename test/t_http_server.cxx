@@ -58,7 +58,7 @@
 #include <stdlib.h>
 
 class Instance final
-    : HttpServerConnectionHandler, Lease, HttpResponseHandler, IstreamSink, BufferedSocketHandler
+    : HttpServerConnectionHandler, Lease, BufferedSocketHandler
 {
     struct pool *pool;
 
@@ -68,14 +68,8 @@ class Instance final
                        CancellablePointer &cancel_ptr)> request_handler;
 
     FilteredSocket client_fs;
-    CancellablePointer client_cancel_ptr;
-
-    std::exception_ptr response_error;
-    std::string response_body;
-    http_status_t status{};
 
     bool client_fs_released = false;
-    bool response_eof = false;
 
 public:
     Instance(struct pool &_pool, EventLoop &event_loop);
@@ -93,15 +87,6 @@ public:
         request_handler = std::forward<T>(handler);
     }
 
-    void RethrowResponseError() const {
-        if (response_error)
-            std::rethrow_exception(response_error);
-    }
-
-    bool IsClientDone() const noexcept {
-        return response_error || response_eof;
-    }
-
     void CloseConnection() noexcept {
         http_server_connection_close(connection);
         connection = nullptr;
@@ -114,16 +99,14 @@ public:
 
     void SendRequest(http_method_t method, const char *uri,
                      HttpHeaders &&headers,
-                     UnusedIstreamPtr body, bool expect_100=false) noexcept {
-        response_error = {};
-        status = {};
-        response_eof = false;
-
+                     UnusedIstreamPtr body, bool expect_100,
+                     HttpResponseHandler &handler,
+                     CancellablePointer &cancel_ptr) noexcept {
         http_client_request(*pool, client_fs, *this,
                             "foo",
                             method, uri, std::move(headers),
                             std::move(body), expect_100,
-                            *this, client_cancel_ptr);
+                            handler, cancel_ptr);
     }
 
     void CloseClientSocket() noexcept {
@@ -145,7 +128,7 @@ private:
     void HttpConnectionError(std::exception_ptr e) noexcept override;
     void HttpConnectionClosed() noexcept override;
 
-    /* virtual methods from class HttpResponseHandler */
+    /* virtual methods from class Lease */
     void ReleaseLease(bool reuse) noexcept override {
         client_fs_released = true;
 
@@ -157,6 +140,60 @@ private:
         }
     }
 
+    /* virtual methods from class BufferedSocketHandler */
+    BufferedResult OnBufferedData() override {
+        fprintf(stderr, "unexpected data in idle TCP connection");
+        CloseClientSocket();
+        return BufferedResult::CLOSED;
+    }
+
+    bool OnBufferedClosed() noexcept override {
+        CloseClientSocket();
+        return false;
+    }
+
+    gcc_noreturn
+    bool OnBufferedWrite() override {
+        /* should never be reached because we never schedule
+           writing */
+        gcc_unreachable();
+    }
+
+    void OnBufferedError(std::exception_ptr e) noexcept override {
+        PrintException(e);
+        CloseClientSocket();
+    }
+};
+
+class Client final : HttpResponseHandler, IstreamSink {
+    CancellablePointer client_cancel_ptr;
+
+    std::exception_ptr response_error;
+    std::string response_body;
+    http_status_t status{};
+
+    bool response_eof = false;
+
+public:
+    void SendRequest(Instance &instance,
+                     http_method_t method, const char *uri,
+                     HttpHeaders &&headers,
+                     UnusedIstreamPtr body, bool expect_100=false) noexcept {
+        instance.SendRequest(method, uri, std::move(headers),
+                             std::move(body), expect_100,
+                             *this, client_cancel_ptr);
+    }
+
+    bool IsClientDone() const noexcept {
+        return response_error || response_eof;
+    }
+
+    void RethrowResponseError() const {
+        if (response_error)
+            std::rethrow_exception(response_error);
+    }
+
+private:
     /* virtual methods from class HttpResponseHandler */
     void OnHttpResponse(http_status_t _status, StringMap &&headers,
                         UnusedIstreamPtr body) noexcept override {
@@ -187,30 +224,6 @@ private:
     void OnError(std::exception_ptr ep) noexcept override {
         IstreamSink::ClearInput();
         response_error = std::move(ep);
-    }
-
-    /* virtual methods from class BufferedSocketHandler */
-    BufferedResult OnBufferedData() override {
-        fprintf(stderr, "unexpected data in idle TCP connection");
-        CloseClientSocket();
-        return BufferedResult::CLOSED;
-    }
-
-    bool OnBufferedClosed() noexcept override {
-        CloseClientSocket();
-        return false;
-    }
-
-    gcc_noreturn
-    bool OnBufferedWrite() override {
-        /* should never be reached because we never schedule
-           writing */
-        gcc_unreachable();
-    }
-
-    void OnBufferedError(std::exception_ptr e) noexcept override {
-        PrintException(e);
-        CloseClientSocket();
     }
 };
 
@@ -276,16 +289,19 @@ test_catch(EventLoop &event_loop, struct pool *_pool)
         instance.CloseConnection();
     });
 
-    instance.SendRequest(HTTP_METHOD_POST, "/", HttpHeaders(instance.GetPool()),
-                         istream_head_new(instance.GetPool(),
-                                          istream_block_new(instance.GetPool()),
-                                          1024, true));
+    Client client;
 
-    while (!instance.IsClientDone())
+    client.SendRequest(instance,
+                       HTTP_METHOD_POST, "/", HttpHeaders(instance.GetPool()),
+                       istream_head_new(instance.GetPool(),
+                                        istream_block_new(instance.GetPool()),
+                                        1024, true));
+
+    while (!client.IsClientDone())
         event_loop.LoopOnce();
 
     instance.CloseClientSocket();
-    instance.RethrowResponseError();
+    client.RethrowResponseError();
 
     event_loop.Dispatch();
 }
