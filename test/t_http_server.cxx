@@ -327,6 +327,22 @@ TestMirror(Server &server)
     client.ExpectResponse(server, HTTP_STATUS_OK, "foo");
 }
 
+static void
+TestDiscardTinyRequestBody(Server &server)
+{
+    server.SetRequestHandler([](HttpServerRequest &request, CancellablePointer &) noexcept {
+        request.body.Clear();
+        http_server_response(&request, HTTP_STATUS_OK, HttpHeaders(request.pool),
+                             istream_string_new(request.pool, "foo"));
+    });
+
+    Client client;
+    client.SendRequest(server,
+                       HTTP_METHOD_POST, "/", HttpHeaders(server.GetPool()),
+                       istream_string_new(server.GetPool(), "foo"));
+    client.ExpectResponse(server, HTTP_STATUS_OK, "foo");
+}
+
 /**
  * Send a huge request body which will be discarded by the server; the
  * server then disables keepalive, sends the response and closes the
@@ -386,6 +402,7 @@ try {
         Server server(instance.root_pool, instance.event_loop);
         TestSimple(server);
         TestMirror(server);
+        TestDiscardTinyRequestBody(server);
         TestDiscardedHugeRequestBody(server);
 
         server.CloseClientSocket();
