@@ -71,14 +71,14 @@ struct Instance final : HttpServerConnectionHandler {
 
     /* virtual methods from class HttpServerConnectionHandler */
     void HandleHttpRequest(HttpServerRequest &request,
-                           CancellablePointer &cancel_ptr) override;
+                           CancellablePointer &cancel_ptr) noexcept override;
 
     void LogHttpRequest(HttpServerRequest &,
                         http_status_t, int64_t,
-                        uint64_t, uint64_t) override {}
+                        uint64_t, uint64_t) noexcept override {}
 
-    void HttpConnectionError(std::exception_ptr e) override;
-    void HttpConnectionClosed() override;
+    void HttpConnectionError(std::exception_ptr e) noexcept override;
+    void HttpConnectionClosed() noexcept override;
 };
 
 static std::exception_ptr
@@ -90,7 +90,7 @@ catch_callback(std::exception_ptr ep, gcc_unused void *ctx)
 
 void
 Instance::HandleHttpRequest(HttpServerRequest &request,
-                            gcc_unused CancellablePointer &cancel_ptr)
+                            gcc_unused CancellablePointer &cancel_ptr) noexcept
 {
     http_server_response(&request, HTTP_STATUS_OK, HttpHeaders(request.pool),
                          istream_catch_new(&request.pool,
@@ -101,7 +101,7 @@ Instance::HandleHttpRequest(HttpServerRequest &request,
 }
 
 void
-Instance::HttpConnectionError(std::exception_ptr e)
+Instance::HttpConnectionError(std::exception_ptr e) noexcept
 {
     connection = nullptr;
 
@@ -109,7 +109,7 @@ Instance::HttpConnectionError(std::exception_ptr e)
 }
 
 void
-Instance::HttpConnectionClosed()
+Instance::HttpConnectionClosed() noexcept
 {
     connection = nullptr;
 }

@@ -53,7 +53,7 @@ public:
     virtual void RequestHeadersFinished(const HttpServerRequest &) noexcept {};
 
     virtual void HandleHttpRequest(HttpServerRequest &request,
-                                   CancellablePointer &cancel_ptr) = 0;
+                                   CancellablePointer &cancel_ptr) noexcept = 0;
 
     /**
      * @param length the number of response body (payload) bytes sent
@@ -67,7 +67,7 @@ public:
      */
     virtual void LogHttpRequest(HttpServerRequest &request,
                                 http_status_t status, int64_t length,
-                                uint64_t bytes_received, uint64_t bytes_sent) = 0;
+                                uint64_t bytes_received, uint64_t bytes_sent) noexcept = 0;
 
     /**
      * A fatal protocol level error has occurred, and the connection
@@ -75,9 +75,9 @@ public:
      *
      * This will be called instead of HttpConnectionClosed().
      */
-    virtual void HttpConnectionError(std::exception_ptr e) = 0;
+    virtual void HttpConnectionError(std::exception_ptr e) noexcept = 0;
 
-    virtual void HttpConnectionClosed() = 0;
+    virtual void HttpConnectionClosed() noexcept = 0;
 };
 
 #endif

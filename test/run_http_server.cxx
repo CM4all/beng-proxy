@@ -112,14 +112,14 @@ private:
 
     /* virtual methods from class HttpServerConnectionHandler */
     void HandleHttpRequest(HttpServerRequest &request,
-                           CancellablePointer &cancel_ptr) override;
+                           CancellablePointer &cancel_ptr) noexcept override;
 
     void LogHttpRequest(HttpServerRequest &,
                         http_status_t, int64_t,
-                        uint64_t, uint64_t) override {}
+                        uint64_t, uint64_t) noexcept override {}
 
-    void HttpConnectionError(std::exception_ptr e) override;
-    void HttpConnectionClosed() override;
+    void HttpConnectionError(std::exception_ptr e) noexcept override;
+    void HttpConnectionClosed() noexcept override;
 };
 
 using Listener = TemplateServerSocket<Connection, Instance &>;
@@ -183,7 +183,7 @@ Instance::OnConnectionClosed() noexcept
 
 void
 Connection::HandleHttpRequest(HttpServerRequest &request,
-                              gcc_unused CancellablePointer &cancel_ptr)
+                              gcc_unused CancellablePointer &cancel_ptr) noexcept
 {
     switch (instance.mode) {
         http_status_t status;
@@ -270,7 +270,7 @@ Connection::HandleHttpRequest(HttpServerRequest &request,
 }
 
 void
-Connection::HttpConnectionError(std::exception_ptr e)
+Connection::HttpConnectionError(std::exception_ptr e) noexcept
 {
     PrintException(e);
 
@@ -281,7 +281,7 @@ Connection::HttpConnectionError(std::exception_ptr e)
 }
 
 void
-Connection::HttpConnectionClosed()
+Connection::HttpConnectionClosed() noexcept
 {
     connection = nullptr;
     instance.OnConnectionClosed();

@@ -168,14 +168,15 @@ struct LbHttpConnection final
     /* virtual methods from class HttpServerConnectionHandler */
     void RequestHeadersFinished(const HttpServerRequest &request) noexcept override;
     void HandleHttpRequest(HttpServerRequest &request,
-                           CancellablePointer &cancel_ptr) override;
+                           CancellablePointer &cancel_ptr) noexcept override;
 
     void LogHttpRequest(HttpServerRequest &request,
                         http_status_t status, off_t length,
-                        uint64_t bytes_received, uint64_t bytes_sent) override;
+                        uint64_t bytes_received,
+                        uint64_t bytes_sent) noexcept override;
 
-    void HttpConnectionError(std::exception_ptr e) override;
-    void HttpConnectionClosed() override;
+    void HttpConnectionError(std::exception_ptr e) noexcept override;
+    void HttpConnectionClosed() noexcept override;
 
 public:
     void HandleHttpRequest(const LbGoto &destination,

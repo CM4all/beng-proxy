@@ -145,7 +145,7 @@ BpConnection::RequestHeadersFinished(const HttpServerRequest &) noexcept
 
 void
 BpConnection::HandleHttpRequest(HttpServerRequest &request,
-                                CancellablePointer &cancel_ptr)
+                                CancellablePointer &cancel_ptr) noexcept
 {
     handle_http_request(*this, request, cancel_ptr);
 }
@@ -153,7 +153,7 @@ BpConnection::HandleHttpRequest(HttpServerRequest &request,
 void
 BpConnection::LogHttpRequest(HttpServerRequest &request,
                              http_status_t status, int64_t length,
-                             uint64_t bytes_received, uint64_t bytes_sent)
+                             uint64_t bytes_received, uint64_t bytes_sent) noexcept
 {
     instance.http_traffic_received_counter += bytes_received;
     instance.http_traffic_sent_counter += bytes_sent;
@@ -168,7 +168,7 @@ BpConnection::LogHttpRequest(HttpServerRequest &request,
 }
 
 void
-BpConnection::HttpConnectionError(std::exception_ptr e)
+BpConnection::HttpConnectionError(std::exception_ptr e) noexcept
 {
     http = nullptr;
 
@@ -178,7 +178,7 @@ BpConnection::HttpConnectionError(std::exception_ptr e)
 }
 
 void
-BpConnection::HttpConnectionClosed()
+BpConnection::HttpConnectionClosed() noexcept
 {
     http = nullptr;
 
