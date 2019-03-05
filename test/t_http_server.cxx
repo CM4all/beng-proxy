@@ -41,6 +41,7 @@
 #include "PInstance.hxx"
 #include "pool/pool.hxx"
 #include "istream/UnusedPtr.hxx"
+#include "istream/UnusedHoldPtr.hxx"
 #include "istream/HeadIstream.hxx"
 #include "istream/BlockIstream.hxx"
 #include "istream/ZeroIstream.hxx"
@@ -342,10 +343,34 @@ TestMirror(Server &server)
 static void
 TestDiscardedHugeRequestBody(Server &server)
 {
-    server.SetRequestHandler([](HttpServerRequest &request, CancellablePointer &) noexcept {
-        request.body.Clear();
-        http_server_response(&request, HTTP_STATUS_OK, HttpHeaders(request.pool),
-                             istream_string_new(request.pool, "foo"));
+    class RespondLater {
+        TimerEvent timer;
+
+        HttpServerRequest *request;
+
+        UnusedHoldIstreamPtr body;
+
+    public:
+        explicit RespondLater(EventLoop &event_loop) noexcept
+            :timer(event_loop, BIND_THIS_METHOD(OnTimer)) {}
+
+        void Schedule(HttpServerRequest &_request) noexcept {
+            request = &_request;
+            body = UnusedHoldIstreamPtr(request->pool, std::move(request->body));
+
+            timer.Schedule(std::chrono::milliseconds(10));
+        }
+
+    private:
+        void OnTimer() noexcept {
+            body.Clear();
+            http_server_response(request, HTTP_STATUS_OK, HttpHeaders(request->pool),
+                                 istream_string_new(request->pool, "foo"));
+        }
+    } respond_later(server.GetEventLoop());
+
+    server.SetRequestHandler([&respond_later](HttpServerRequest &request, CancellablePointer &) noexcept {
+        respond_later.Schedule(request);
     });
 
     Client client;
