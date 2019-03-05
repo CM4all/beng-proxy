@@ -65,16 +65,21 @@ struct Instance final
     FilteredSocket client_fs;
     CancellablePointer client_cancel_ptr;
 
+    std::exception_ptr response_error;
     std::string response_body;
     http_status_t status{};
 
     bool client_fs_released = false;
-    bool response_eof;
+    bool response_eof = false;
 
     Instance(struct pool &_pool, EventLoop &event_loop);
 
     ~Instance() noexcept {
         CheckCloseConnection();
+    }
+
+    bool IsClientDone() const noexcept {
+        return response_error || response_eof;
     }
 
     void CloseConnection() noexcept {
@@ -139,7 +144,7 @@ struct Instance final
     }
 
     void OnHttpError(std::exception_ptr ep) noexcept override {
-        PrintException(ep);
+        response_error = std::move(ep);
     }
 
     /* virtual methods from class IstreamHandler */
@@ -156,7 +161,7 @@ struct Instance final
 
     void OnError(std::exception_ptr ep) noexcept override {
         IstreamSink::ClearInput();
-        PrintException(ep);
+        response_error = std::move(ep);
     }
 
     /* virtual methods from class BufferedSocketHandler */
@@ -246,6 +251,11 @@ test_catch(EventLoop &event_loop, struct pool *_pool)
                          istream_head_new(*instance.pool,
                                           istream_block_new(*instance.pool),
                                           1024, true));
+
+    while (!instance.IsClientDone())
+        event_loop.LoopOnce();
+
+    instance.CloseClientSocket();
 
     event_loop.Dispatch();
 }
