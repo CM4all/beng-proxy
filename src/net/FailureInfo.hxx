@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -38,56 +38,108 @@
 #include "util/Compiler.h"
 
 class FailureInfo {
-    Expiry expires;
-
     Expiry fade_expires = Expiry::AlreadyExpired();
 
-    enum failure_status status;
+    Expiry protocol_expires = Expiry::AlreadyExpired();
+
+    Expiry connect_expires = Expiry::AlreadyExpired();
+
+    unsigned protocol_counter = 0;
+
+    bool monitor = false;
 
 public:
-    constexpr FailureInfo(enum failure_status _status,
-                          Expiry _expires) noexcept
-        :expires(_expires), status(_status) {}
-
-    constexpr bool IsNull() const noexcept {
-        return expires == Expiry::AlreadyExpired() &&
-            fade_expires == Expiry::AlreadyExpired();
-    }
-
-private:
-    constexpr bool CanExpire() const noexcept {
-        return status != FAILURE_MONITOR;
-    }
-
-    constexpr bool IsExpired(Expiry now) const noexcept {
-        return CanExpire() && expires.IsExpired(now);
-    }
-
-    constexpr bool IsFade(Expiry now) const noexcept {
-        return !fade_expires.IsExpired(now);
-    }
-
-public:
-    constexpr enum failure_status GetStatus(Expiry now) const noexcept {
-        if (!IsExpired(now))
-            return status;
-        else if (IsFade(now))
-            return FAILURE_FADE;
+    constexpr FailureStatus GetStatus(Expiry now) const noexcept {
+        if (!CheckMonitor())
+            return FailureStatus::MONITOR;
+        else if (!CheckConnect(now))
+            return FailureStatus::CONNECT;
+        else if (!CheckProtocol(now))
+            return FailureStatus::PROTOCOL;
+        else if (!CheckFade(now))
+            return FailureStatus::FADE;
         else
-            return FAILURE_OK;
+            return FailureStatus::OK;
+    }
+
+    constexpr bool Check(Expiry now, bool allow_fade=false) const noexcept {
+        return CheckMonitor() &&
+            CheckConnect(now) &&
+            CheckProtocol(now) &&
+            (allow_fade || CheckFade(now));
     }
 
     /**
      * Set the specified failure status, but only if it is not less
      * severe than the current status.
-     *
-     * @return false if the new status is less severe, and nothing has
-     * changed
      */
-    bool Set(Expiry now, enum failure_status new_status,
+    void Set(Expiry now, FailureStatus new_status,
              std::chrono::seconds duration) noexcept;
 
-    void Unset(Expiry now, enum failure_status unset_status) noexcept;
+    /**
+     * Unset a failure status.
+     *
+     * @param status the status to be removed; #FailureStatus::OK is a
+     * catch-all status that matches everything
+     */
+    void Unset(FailureStatus unset_status) noexcept;
+
+    void SetFade(Expiry now, std::chrono::seconds duration) noexcept {
+        fade_expires.Touch(now, duration);
+    }
+
+    void UnsetFade() noexcept {
+        fade_expires = Expiry::AlreadyExpired();
+    }
+
+    constexpr bool CheckFade(Expiry now) const noexcept {
+        return fade_expires.IsExpired(now);
+    }
+
+    void SetProtocol(Expiry now, std::chrono::seconds duration) noexcept {
+        protocol_expires.Touch(now, duration);
+        ++protocol_counter;
+    }
+
+    void UnsetProtocol() noexcept {
+        protocol_expires = Expiry::AlreadyExpired();
+        protocol_counter = 0;
+    }
+
+    constexpr bool CheckProtocol(Expiry now) const noexcept {
+        return protocol_expires.IsExpired(now) || protocol_counter < 8;
+    }
+
+    void SetConnect(Expiry now, std::chrono::seconds duration) noexcept {
+        connect_expires.Touch(now, duration);
+    }
+
+    void UnsetConnect() noexcept {
+        connect_expires = Expiry::AlreadyExpired();
+    }
+
+    constexpr bool CheckConnect(Expiry now) const noexcept {
+        return connect_expires.IsExpired(now);
+    }
+
+    void SetMonitor() noexcept {
+        monitor = true;
+    }
+
+    void UnsetMonitor() noexcept {
+        monitor = false;
+    }
+
+    constexpr bool CheckMonitor() const noexcept {
+        return !monitor;
+    }
+
+    void UnsetAll() noexcept {
+        fade_expires = protocol_expires = connect_expires =
+            Expiry::AlreadyExpired();
+        protocol_counter = 0;
+        monitor = false;
+    }
 };
 
 #endif

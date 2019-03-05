@@ -42,12 +42,6 @@ class ReferencedFailureInfo : public FailureInfo {
     unsigned refs = 1;
 
 public:
-    using FailureInfo::FailureInfo;
-
-    bool IsNull() const noexcept {
-        return FailureInfo::IsNull() && refs == 0;
-    }
-
     void Ref() noexcept {
         ++refs;
     }

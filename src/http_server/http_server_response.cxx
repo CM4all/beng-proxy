@@ -171,17 +171,12 @@ HttpServerConnection::ResponseIstreamFinished()
             return false;
     }
 
-    if (request.read_state == Request::BODY &&
-        !request.expect_100_continue) {
+    if (request.read_state == Request::BODY) {
         /* We are still reading the request body, which we don't need
            anymore.  To discard it, we simply close the connection by
            disabling keepalive; this seems cheaper than redirecting
            the rest of the body to /dev/null */
-        keep_alive = false;
-        request.read_state = Request::END;
-#ifndef NDEBUG
-        request.body_state = Request::BodyState::CLOSED;
-#endif
+        DiscardRequestBody();
 
         const DestructObserver destructed(*this);
         request_body_reader->DestroyError(std::make_exception_ptr(std::runtime_error("request body discarded")));

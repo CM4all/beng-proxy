@@ -33,8 +33,12 @@
 #include "ZeroIstream.hxx"
 #include "istream.hxx"
 #include "New.hxx"
+#include "Bucket.hxx"
 
 #include <limits.h>
+#include <stdint.h>
+
+static constexpr uint8_t zero_buffer[4096]{};
 
 class ZeroIstream final : public Istream {
 public:
@@ -54,9 +58,18 @@ public:
     }
 
     void _Read() noexcept override {
-        static char buffer[1024];
+        InvokeData(zero_buffer, sizeof(zero_buffer));
+    }
 
-        InvokeData(buffer, sizeof(buffer));
+    void _FillBucketList(IstreamBucketList &list) noexcept override {
+        list.SetMore();
+
+        while (!list.IsFull())
+            list.Push({zero_buffer, sizeof(zero_buffer)});
+    }
+
+    size_t _ConsumeBucketList(size_t nbytes) noexcept override {
+        return nbytes;
     }
 };
 

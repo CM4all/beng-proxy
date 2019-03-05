@@ -187,7 +187,7 @@ HttpRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
 {
     assert(!response_sent);
 
-    failure->Unset(event_loop.SteadyNow(), FAILURE_PROTOCOL);
+    failure->UnsetProtocol();
 
     handler.InvokeResponse(status, std::move(_headers), std::move(_body));
     ResponseSent();
@@ -220,8 +220,8 @@ HttpRequest::OnHttpError(std::exception_ptr ep) noexcept
         BeginConnect();
     } else {
         if (IsHttpClientServerFailure(ep)) {
-            failure->Set(event_loop.SteadyNow(), FAILURE_PROTOCOL,
-                         std::chrono::seconds(20));
+            failure->SetProtocol(event_loop.SteadyNow(),
+                                 std::chrono::seconds(20));
         }
 
         Failed(ep);

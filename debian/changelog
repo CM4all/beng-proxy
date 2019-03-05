@@ -1,8 +1,12 @@
 cm4all-beng-proxy (16.0.1) unstable; urgency=low
 
-  * 
+  * balancer: wait for consecutive failures before disabling node
+  * http_client: continue receiving pending data after server closed the
+    connection
+  * http_server: preserve connection after discarding short request body
+  * spawn/client: retry sending after EAGAIN
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Wed, 06 Mar 2019 00:08:34 +0100
 
 cm4all-beng-proxy (15.11) unstable; urgency=low
 

@@ -87,8 +87,7 @@ HttpServerLogLevel(std::exception_ptr e)
         try {
             FindRetrowNested<std::system_error>(e);
         } catch (const std::system_error &se) {
-            if (se.code().category() == ErrnoCategory() &&
-                se.code().value() == ECONNRESET)
+            if (IsErrno(se, ECONNRESET))
                 return 4;
         }
 
@@ -144,7 +143,7 @@ NewLbHttpConnection(LbInstance &instance,
     instance.http_connections.push_back(*connection);
 
     connection->http = http_server_connection_new(pool, instance.event_loop,
-                                                  fd.Release(), fd_type,
+                                                  std::move(fd), fd_type,
                                                   std::move(filter),
                                                   local_address.IsDefined()
                                                   ? (SocketAddress)local_address
@@ -235,7 +234,7 @@ LbHttpConnection::RequestHeadersFinished(const HttpServerRequest &request) noexc
 
 void
 LbHttpConnection::HandleHttpRequest(HttpServerRequest &request,
-                                    CancellablePointer &cancel_ptr)
+                                    CancellablePointer &cancel_ptr) noexcept
 {
     if (!uri_path_verify_quick(request.uri)) {
         request.body.Clear();
@@ -304,7 +303,7 @@ LbHttpConnection::ForwardHttpRequest(LbCluster &cluster,
 void
 LbHttpConnection::LogHttpRequest(HttpServerRequest &request,
                                  http_status_t status, int64_t length,
-                                 uint64_t bytes_received, uint64_t bytes_sent)
+                                 uint64_t bytes_received, uint64_t bytes_sent) noexcept
 {
     instance.http_traffic_received_counter += bytes_received;
     instance.http_traffic_sent_counter += bytes_sent;
@@ -322,7 +321,7 @@ LbHttpConnection::LogHttpRequest(HttpServerRequest &request,
 }
 
 void
-LbHttpConnection::HttpConnectionError(std::exception_ptr e)
+LbHttpConnection::HttpConnectionError(std::exception_ptr e) noexcept
 {
     logger(HttpServerLogLevel(e), e);
 
@@ -333,7 +332,7 @@ LbHttpConnection::HttpConnectionError(std::exception_ptr e)
 }
 
 void
-LbHttpConnection::HttpConnectionClosed()
+LbHttpConnection::HttpConnectionClosed() noexcept
 {
     assert(http != nullptr);
     http = nullptr;

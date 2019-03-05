@@ -32,38 +32,30 @@
 
 #pragma once
 
-enum failure_status {
+enum class FailureStatus {
     /**
      * No failure, host is ok.
      */
-    FAILURE_OK,
+    OK,
 
     /**
      * Host is being faded out (graceful shutdown).  No new sessions.
      */
-    FAILURE_FADE,
+    FADE,
 
     /**
      * A server-side protocol-level failure.
      */
-    FAILURE_PROTOCOL,
+    PROTOCOL,
 
     /**
      * Failed to connect to the host.
      */
-    FAILURE_CONNECT,
+    CONNECT,
 
     /**
      * The failure was submitted by a "monitor", and will not expire
      * until the monitor detects recovery.
      */
-    FAILURE_MONITOR,
+    MONITOR,
 };
-
-constexpr bool
-MatchFailureStatus(enum failure_status current,
-                   enum failure_status match) noexcept
-{
-    /* FAILURE_OK is a catch-all magic value */
-    return match == FAILURE_OK || current == match;
-}

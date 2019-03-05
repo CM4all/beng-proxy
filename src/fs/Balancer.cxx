@@ -96,17 +96,20 @@ void
 FilteredSocketBalancerRequest::OnStockItemReady(StockItem &item) noexcept
 {
     auto &base = BR::Cast(*this);
-    base.ConnectSuccess(fs_balancer.GetEventLoop().SteadyNow());
+    base.ConnectSuccess();
 
     handler.OnStockItemReady(item);
+    base.Destroy();
 }
 
 void
 FilteredSocketBalancerRequest::OnStockItemError(std::exception_ptr ep) noexcept
 {
     auto &base = BR::Cast(*this);
-    if (!base.ConnectFailure(fs_balancer.GetEventLoop().SteadyNow()))
+    if (!base.ConnectFailure(fs_balancer.GetEventLoop().SteadyNow())) {
         handler.OnStockItemError(ep);
+        base.Destroy();
+    }
 }
 
 /*

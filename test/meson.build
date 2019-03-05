@@ -427,6 +427,7 @@ test('t_http_server', executable('t_http_server',
   include_directories: inc,
   dependencies: [
     http_server_dep,
+    http_client_dep,
     system_dep,
   ]))
 

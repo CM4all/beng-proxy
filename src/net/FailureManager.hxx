@@ -55,9 +55,8 @@ class FailureManager {
         const AllocatedSocketAddress address;
 
     public:
-        Failure(SocketAddress _address, enum failure_status _status,
-                Expiry _expires) noexcept
-            :ReferencedFailureInfo(_status, _expires), address(_address) {}
+        explicit Failure(SocketAddress _address) noexcept
+            :address(_address) {}
 
         SocketAddress GetAddress() const noexcept {
             return address;
@@ -124,24 +123,12 @@ public:
         return f.GetAddress();
     }
 
-    void Set(Expiry now, SocketAddress address,
-             enum failure_status status,
-             std::chrono::seconds duration) noexcept;
-
-    /**
-     * Unset a failure status.
-     *
-     * @param status the status to be removed; #FAILURE_OK is a catch-all
-     * status that matches everything
-     */
-    void Unset(Expiry now, SocketAddress address,
-               enum failure_status status) noexcept;
+    gcc_pure
+    FailureStatus Get(Expiry now, SocketAddress address) const noexcept;
 
     gcc_pure
-    enum failure_status Get(Expiry now, SocketAddress address) const noexcept;
-
-private:
-    void Unset(Expiry now, Failure &failure, enum failure_status status) noexcept;
+    bool Check(Expiry now, SocketAddress address,
+               bool allow_fade=false) const noexcept;
 };
 
 #endif

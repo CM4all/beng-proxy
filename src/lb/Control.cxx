@@ -131,8 +131,7 @@ LbControl::EnableNode(const char *payload, size_t length)
            ToString(buffer, sizeof(buffer), with_port, "?"),
            ")");
 
-    instance.failure_manager.Unset(GetEventLoop().SteadyNow(),
-                                   with_port, FAILURE_OK);
+    instance.failure_manager.Make(with_port).UnsetAll();
 }
 
 inline void
@@ -171,25 +170,24 @@ LbControl::FadeNode(const char *payload, size_t length)
            ")");
 
     /* set status "FADE" for 3 hours */
-    instance.failure_manager.Set(GetEventLoop().SteadyNow(),
-                                 with_port, FAILURE_FADE,
-                                 std::chrono::hours(3));
+    instance.failure_manager.Make(with_port)
+        .SetFade(GetEventLoop().SteadyNow(), std::chrono::hours(3));
 }
 
 gcc_const
 static const char *
-failure_status_to_string(enum failure_status status)
+failure_status_to_string(FailureStatus status)
 {
     switch (status) {
-    case FAILURE_OK:
+    case FailureStatus::OK:
         return "ok";
 
-    case FAILURE_FADE:
+    case FailureStatus::FADE:
         return "fade";
 
-    case FAILURE_PROTOCOL:
-    case FAILURE_CONNECT:
-    case FAILURE_MONITOR:
+    case FailureStatus::PROTOCOL:
+    case FailureStatus::CONNECT:
+    case FailureStatus::MONITOR:
         break;
     }
 
@@ -256,8 +254,8 @@ try {
 
     const auto with_port = node->address.WithPort(port);
 
-    enum failure_status status = instance.failure_manager.Get(GetEventLoop().SteadyNow(),
-                                                              with_port);
+    auto status = instance.failure_manager.Get(GetEventLoop().SteadyNow(),
+                                               with_port);
     const char *s = failure_status_to_string(status);
 
     node_status_response(&control_server, address,

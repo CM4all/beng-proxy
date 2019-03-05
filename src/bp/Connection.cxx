@@ -107,8 +107,7 @@ HttpServerLogLevel(std::exception_ptr e) noexcept
         try {
             FindRetrowNested<std::system_error>(e);
         } catch (const std::system_error &se) {
-            if (se.code().category() == ErrnoCategory() &&
-                se.code().value() == ECONNRESET)
+            if (IsErrno(se, ECONNRESET))
                 return 4;
         }
 
@@ -145,7 +144,7 @@ BpConnection::RequestHeadersFinished(const HttpServerRequest &) noexcept
 
 void
 BpConnection::HandleHttpRequest(HttpServerRequest &request,
-                                CancellablePointer &cancel_ptr)
+                                CancellablePointer &cancel_ptr) noexcept
 {
     handle_http_request(*this, request, cancel_ptr);
 }
@@ -153,7 +152,7 @@ BpConnection::HandleHttpRequest(HttpServerRequest &request,
 void
 BpConnection::LogHttpRequest(HttpServerRequest &request,
                              http_status_t status, int64_t length,
-                             uint64_t bytes_received, uint64_t bytes_sent)
+                             uint64_t bytes_received, uint64_t bytes_sent) noexcept
 {
     instance.http_traffic_received_counter += bytes_received;
     instance.http_traffic_sent_counter += bytes_sent;
@@ -169,7 +168,7 @@ BpConnection::LogHttpRequest(HttpServerRequest &request,
 }
 
 void
-BpConnection::HttpConnectionError(std::exception_ptr e)
+BpConnection::HttpConnectionError(std::exception_ptr e) noexcept
 {
     http = nullptr;
 
@@ -179,7 +178,7 @@ BpConnection::HttpConnectionError(std::exception_ptr e)
 }
 
 void
-BpConnection::HttpConnectionClosed()
+BpConnection::HttpConnectionClosed() noexcept
 {
     http = nullptr;
 
@@ -231,7 +230,7 @@ new_connection(BpInstance &instance,
     connection->http =
         http_server_connection_new(connection->pool,
                                    instance.event_loop,
-                                   fd.Release(), FdType::FD_TCP,
+                                   std::move(fd), FdType::FD_TCP,
                                    std::move(filter),
                                    local_address.IsDefined()
                                    ? (SocketAddress)local_address

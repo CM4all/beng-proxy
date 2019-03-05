@@ -206,6 +206,26 @@ public:
      */
     bool SocketEOF(size_t remaining);
 
+    /**
+     * Discard data from the input buffer.  This method shall be used
+     * to discard an unwanted request body.
+     *
+     * @return true if the whole body has been removed from the input
+     * buffer
+     */
+    template<typename Socket>
+    bool Discard(Socket &s) {
+        if (IsChunked() || !KnownLength())
+            return false;
+
+        size_t available = s.GetAvailable();
+        if ((off_t)available < rest)
+            return false;
+
+        s.DisposeConsumed(rest);
+        return true;
+    }
+
 private:
     gcc_pure
     size_t GetMaxRead(size_t length) const;

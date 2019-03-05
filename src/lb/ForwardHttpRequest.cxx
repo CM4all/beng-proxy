@@ -271,7 +271,7 @@ GenerateCookie(const FailureManager &failure_manager, Expiry now,
     do {
         assert(i >= 1 && i <= list.GetSize());
         const SocketAddress address = list.addresses[i % list.GetSize()];
-        if (failure_manager.Get(now, address) == FAILURE_OK &&
+        if (failure_manager.Check(now, address) &&
             bulldog_check(address) && !bulldog_is_fading(address))
             return i;
 
@@ -346,7 +346,7 @@ LbRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
 {
     assert(!response_sent);
 
-    failure->Unset(GetEventLoop().SteadyNow(), FAILURE_PROTOCOL);
+    failure->UnsetProtocol();
 
     SetForwardedTo();
 
@@ -379,8 +379,8 @@ LbRequest::OnHttpError(std::exception_ptr ep) noexcept
     assert(!response_sent);
 
     if (IsHttpClientServerFailure(ep))
-        failure->Set(GetEventLoop().SteadyNow(),
-                     FAILURE_PROTOCOL, std::chrono::seconds(20));
+        failure->SetProtocol(GetEventLoop().SteadyNow(),
+                             std::chrono::seconds(20));
 
     SetForwardedTo();
 
@@ -410,7 +410,7 @@ LbRequest::OnStockItemReady(StockItem &item) noexcept
 
         /* without the fs_balancer, we have to roll our own failure
            updates */
-        failure->Unset(GetEventLoop().SteadyNow(), FAILURE_CONNECT);
+        failure->UnsetConnect();
     } else
         failure = GetFailureManager().Make(fs_stock_item_get_address(*stock_item));
 
@@ -450,9 +450,8 @@ LbRequest::OnStockItemError(std::exception_ptr ep) noexcept
     if (cluster_config.HasZeroConf()) {
         /* without the tcp_balancer, we have to roll our own failure
            updates and retries */
-        current_member->GetFailureInfo().Set(GetEventLoop().SteadyNow(),
-                                             FAILURE_CONNECT,
-                                             std::chrono::seconds(20));
+        current_member->GetFailureInfo().SetConnect(GetEventLoop().SteadyNow(),
+                                                    std::chrono::seconds(20));
 
         if (retries-- > 0) {
             /* try the next Zeroconf member */

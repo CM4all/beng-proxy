@@ -135,7 +135,7 @@ LbCluster::PickNextGoodZeroconf(const Expiry now)
     while (true) {
         auto &m = PickNextZeroconf();
         if (--remaining == 0 ||
-            m.GetFailureInfo().GetStatus(now) == FAILURE_OK)
+            m.GetFailureInfo().Check(now))
             return m;
     }
 }
@@ -166,7 +166,7 @@ LbCluster::Pick(const Expiry now, sticky_hash_t sticky_hash)
             auto i = members.find(*cached, members.key_comp());
             if (i != members.end() &&
                 // TODO: allow FAILURE_FADE here?
-                i->GetFailureInfo().GetStatus(now) == FAILURE_OK)
+                i->GetFailureInfo().Check(now))
                 /* the node is active, we can use it */
                 return &*i;
 
@@ -186,7 +186,7 @@ LbCluster::Pick(const Expiry now, sticky_hash_t sticky_hash)
         unsigned retries = active_members.size();
         while (true) {
             if (--retries == 0 ||
-                i->GetFailureInfo().GetStatus(now) == FAILURE_OK)
+                i->GetFailureInfo().Check(now))
                 return &*i;
 
             /* the node is known-bad; pick the next one in the ring */

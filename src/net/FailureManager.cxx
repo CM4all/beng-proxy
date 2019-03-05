@@ -58,8 +58,7 @@ FailureManager::Make(SocketAddress address) noexcept
     auto result = failures.insert_check(address, Failure::Hash(),
                                         Failure::Equal(), hint);
     if (result.second) {
-        Failure *failure = new Failure(address, FAILURE_OK,
-                                       Expiry::AlreadyExpired());
+        Failure *failure = new Failure(address);
         failures.insert_commit(*failure, hint);
         return *failure;
     } else {
@@ -67,57 +66,27 @@ FailureManager::Make(SocketAddress address) noexcept
     }
 }
 
-void
-FailureManager::Set(const Expiry now, SocketAddress address,
-                    enum failure_status status,
-                    std::chrono::seconds duration) noexcept
-{
-    assert(!address.IsNull());
-    assert(status > FAILURE_OK);
-
-    FailureSet::insert_commit_data hint;
-    auto result = failures.insert_check(address, Failure::Hash(),
-                                        Failure::Equal(), hint);
-    if (result.second) {
-        Failure *failure = new Failure(address, status,
-                                       Expiry::Touched(now, duration));
-        failures.insert_commit(*failure, hint);
-    } else {
-        Failure &failure = *result.first;
-        failure.Set(now, status, duration);
-    }
-}
-
-inline void
-FailureManager::Unset(const Expiry now, Failure &failure,
-                      enum failure_status status) noexcept
-{
-    failure.Unset(now, status);
-
-    if (failure.IsNull())
-        failures.erase_and_dispose(failures.iterator_to(failure),
-                                   Failure::UnrefDisposer());
-}
-
-void
-FailureManager::Unset(const Expiry now, SocketAddress address,
-                      enum failure_status status) noexcept
-{
-    assert(!address.IsNull());
-
-    auto i = failures.find(address, Failure::Hash(), Failure::Equal());
-    if (i != failures.end())
-        Unset(now, *i, status);
-}
-
-enum failure_status
+FailureStatus
 FailureManager::Get(const Expiry now, SocketAddress address) const noexcept
 {
     assert(!address.IsNull());
 
     auto i = failures.find(address, Failure::Hash(), Failure::Equal());
     if (i == failures.end())
-        return FAILURE_OK;
+        return FailureStatus::OK;
 
     return i->GetStatus(now);
+}
+
+bool
+FailureManager::Check(const Expiry now, SocketAddress address,
+                      bool allow_fade) const noexcept
+{
+    assert(!address.IsNull());
+
+    auto i = failures.find(address, Failure::Hash(), Failure::Equal());
+    if (i == failures.end())
+        return true;
+
+    return i->Check(now, allow_fade);
 }

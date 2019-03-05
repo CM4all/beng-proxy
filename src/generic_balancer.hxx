@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -39,23 +39,25 @@
 
 #include "balancer.hxx"
 #include "address_list.hxx"
+#include "paddress.hxx"
 #include "pool/pool.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/FailureManager.hxx"
+#include "util/Cancellable.hxx"
 
 #include <utility>
 
 class CancellablePointer;
 
 template<class R>
-struct BalancerRequest : R {
+class BalancerRequest final : R, Cancellable {
     struct pool &pool;
 
     Balancer &balancer;
 
     const AddressList &address_list;
 
-    CancellablePointer &cancel_ptr;
+    CancellablePointer cancel_ptr;
 
     /**
      * The "sticky id" of the incoming HTTP request.
@@ -68,8 +70,9 @@ struct BalancerRequest : R {
      */
     unsigned retries;
 
-    SocketAddress current_address;
+    FailurePtr failure;
 
+public:
     template<typename... Args>
     BalancerRequest(struct pool &_pool,
                     Balancer &_balancer,
@@ -80,11 +83,22 @@ struct BalancerRequest : R {
         :R(std::forward<Args>(args)...),
          pool(_pool), balancer(_balancer),
          address_list(_address_list),
-         cancel_ptr(_cancel_ptr),
          session_sticky(_session_sticky),
-         retries(CalculateRetries(address_list)) {}
+         retries(CalculateRetries(address_list))
+    {
+        _cancel_ptr = *this;
+    }
 
     BalancerRequest(const BalancerRequest &) = delete;
+
+    void Destroy() noexcept {
+        this->~BalancerRequest();
+    }
+
+private:
+    void Cancel() noexcept override {
+        Destroy();
+    }
 
     static unsigned CalculateRetries(const AddressList &address_list) {
         const unsigned size = address_list.GetSize();
@@ -98,12 +112,9 @@ struct BalancerRequest : R {
             return 3;
     }
 
+public:
     static constexpr BalancerRequest &Cast(R &r) {
         return (BalancerRequest &)r;
-    }
-
-    const SocketAddress &GetAddress() const {
-        return current_address;
     }
 
     void Next(Expiry now) {
@@ -113,21 +124,18 @@ struct BalancerRequest : R {
         /* we need to copy this address because it may come from
            the balancer's cache, and the according cache item may
            be flushed at any time */
-        const struct sockaddr *new_address = (const struct sockaddr *)
-            p_memdup(&pool, address.GetAddress(), address.GetSize());
-        current_address = { new_address, address.GetSize() };
+        const auto current_address = DupAddress(pool, address);
+        failure = balancer.GetFailureManager().Make(current_address);
 
         R::Send(pool, current_address, cancel_ptr);
     }
 
-    void ConnectSuccess(Expiry now) {
-        balancer.GetFailureManager().Unset(now, current_address,
-                                           FAILURE_CONNECT);
+    void ConnectSuccess() {
+        failure->UnsetConnect();
     }
 
     bool ConnectFailure(Expiry now) {
-        balancer.GetFailureManager().Set(now, current_address, FAILURE_CONNECT,
-                                         std::chrono::seconds(20));
+        failure->SetConnect(now, std::chrono::seconds(20));
 
         if (retries-- > 0){
             /* try again, next address */

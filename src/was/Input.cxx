@@ -464,7 +464,7 @@ WasInput::PrematureThrow(uint64_t _length)
         size_t size = std::min(remaining, uint64_t(sizeof(discard_buffer)));
         ssize_t nbytes = fd.Read(discard_buffer, size);
         if (nbytes < 0)
-            throw NestException(std::make_exception_ptr(MakeErrno()),
+            throw NestException(std::make_exception_ptr(MakeErrno("Read error")),
                                 WasError("read error on WAS data connection"));
 
         if (nbytes == 0)

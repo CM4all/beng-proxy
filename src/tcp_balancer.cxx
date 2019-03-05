@@ -42,7 +42,7 @@ TcpBalancer::GetEventLoop() noexcept
     return tcp_stock.GetEventLoop();
 }
 
-struct TcpBalancerRequest : public StockGetHandler {
+class TcpBalancerRequest : StockGetHandler {
     TcpBalancer &tcp_balancer;
 
     const bool ip_transparent;
@@ -52,6 +52,7 @@ struct TcpBalancerRequest : public StockGetHandler {
 
     StockGetHandler &handler;
 
+public:
     TcpBalancerRequest(TcpBalancer &_tcp_balancer,
                        bool _ip_transparent,
                        SocketAddress _bind_address,
@@ -67,9 +68,11 @@ struct TcpBalancerRequest : public StockGetHandler {
         return tcp_balancer.GetEventLoop();
     }
 
+protected:
     void Send(struct pool &pool, SocketAddress address,
               CancellablePointer &cancel_ptr) noexcept;
 
+private:
     /* virtual methods from class StockGetHandler */
     void OnStockItemReady(StockItem &item) noexcept override;
     void OnStockItemError(std::exception_ptr ep) noexcept override;
@@ -98,17 +101,20 @@ void
 TcpBalancerRequest::OnStockItemReady(StockItem &item) noexcept
 {
     auto &base = BalancerRequest<TcpBalancerRequest>::Cast(*this);
-    base.ConnectSuccess(GetEventLoop().SteadyNow());
+    base.ConnectSuccess();
 
     handler.OnStockItemReady(item);
+    base.Destroy();
 }
 
 void
 TcpBalancerRequest::OnStockItemError(std::exception_ptr ep) noexcept
 {
     auto &base = BalancerRequest<TcpBalancerRequest>::Cast(*this);
-    if (!base.ConnectFailure(GetEventLoop().SteadyNow()))
+    if (!base.ConnectFailure(GetEventLoop().SteadyNow())) {
         handler.OnStockItemError(ep);
+        base.Destroy();
+    }
 }
 
 /*
