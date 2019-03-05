@@ -36,6 +36,8 @@
 
 #include <limits.h>
 
+static uint8_t zero_buffer[1024];
+
 class ZeroIstream final : public Istream {
 public:
     explicit ZeroIstream(struct pool &_pool):Istream(_pool) {}
@@ -54,9 +56,7 @@ public:
     }
 
     void _Read() noexcept override {
-        static char buffer[1024];
-
-        InvokeData(buffer, sizeof(buffer));
+        InvokeData(zero_buffer, sizeof(zero_buffer));
     }
 };
 
