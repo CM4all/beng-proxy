@@ -87,8 +87,7 @@ HttpServerLogLevel(std::exception_ptr e)
         try {
             FindRetrowNested<std::system_error>(e);
         } catch (const std::system_error &se) {
-            if (se.code().category() == ErrnoCategory() &&
-                se.code().value() == ECONNRESET)
+            if (IsError(se, ECONNRESET)
                 return 4;
         }
 
