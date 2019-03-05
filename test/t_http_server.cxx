@@ -59,6 +59,8 @@ struct Instance final : HttpServerConnectionHandler {
         CheckCloseConnection();
     }
 
+    UniqueSocketDescriptor CreateConnection(EventLoop &event_loop);
+
     void CloseConnection() noexcept {
         http_server_connection_close(connection);
         connection = nullptr;
@@ -80,6 +82,26 @@ struct Instance final : HttpServerConnectionHandler {
     void HttpConnectionError(std::exception_ptr e) noexcept override;
     void HttpConnectionClosed() noexcept override;
 };
+
+UniqueSocketDescriptor
+Instance::CreateConnection(EventLoop &event_loop)
+{
+    assert(connection == nullptr);
+
+    UniqueSocketDescriptor client_socket, server_socket;
+    if (!UniqueSocketDescriptor::CreateSocketPair(AF_LOCAL, SOCK_STREAM, 0,
+                                                  client_socket, server_socket))
+        throw MakeErrno("socketpair() failed");
+
+    connection = http_server_connection_new(pool, event_loop,
+                                            std::move(server_socket),
+                                            FdType::FD_SOCKET,
+                                            nullptr,
+                                            nullptr, nullptr,
+                                            true, *this);
+
+    return client_socket;
+}
 
 static std::exception_ptr
 catch_callback(std::exception_ptr ep, gcc_unused void *ctx) noexcept
@@ -117,23 +139,13 @@ Instance::HttpConnectionClosed() noexcept
 static void
 test_catch(EventLoop &event_loop, struct pool *_pool)
 {
-    UniqueSocketDescriptor client_socket, server_socket;
-    if (!UniqueSocketDescriptor::CreateSocketPair(AF_LOCAL, SOCK_STREAM, 0,
-                                                  client_socket, server_socket))
-        throw MakeErrno("socketpair() failed");
+    Instance instance(*_pool);
+    auto client_socket = instance.CreateConnection(event_loop);
+    pool_unref(instance.pool);
 
     static constexpr char request[] =
         "POST / HTTP/1.1\r\nContent-Length: 1024\r\n\r\nfoo";
     send(client_socket.Get(), request, sizeof(request) - 1, 0);
-
-    Instance instance(*_pool);
-    instance.connection =
-        http_server_connection_new(instance.pool, event_loop,
-                                   std::move(server_socket), FdType::FD_SOCKET,
-                                   nullptr,
-                                   nullptr, nullptr,
-                                   true, instance);
-    pool_unref(instance.pool);
 
     event_loop.Dispatch();
 }
