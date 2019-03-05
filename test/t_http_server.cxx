@@ -75,6 +75,7 @@ public:
     Server(struct pool &_pool, EventLoop &event_loop);
 
     ~Server() noexcept {
+        CloseClientSocket();
         CheckCloseConnection();
     }
 
