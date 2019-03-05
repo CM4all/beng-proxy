@@ -100,6 +100,10 @@ struct Instance final
     void SendRequest(http_method_t method, const char *uri,
                      HttpHeaders &&headers,
                      UnusedIstreamPtr body, bool expect_100=false) noexcept {
+        response_error = {};
+        status = {};
+        response_eof = false;
+
         http_client_request(*pool, client_fs, *this,
                             "foo",
                             method, uri, std::move(headers),
