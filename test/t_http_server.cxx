@@ -55,7 +55,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-struct Instance final
+class Instance final
     : HttpServerConnectionHandler, Lease, HttpResponseHandler, IstreamSink, BufferedSocketHandler
 {
     struct pool *pool;
@@ -72,6 +72,7 @@ struct Instance final
     bool client_fs_released = false;
     bool response_eof = false;
 
+public:
     Instance(struct pool &_pool, EventLoop &event_loop);
 
     ~Instance() noexcept {
@@ -122,6 +123,7 @@ struct Instance final
         }
     }
 
+private:
     /* virtual methods from class HttpServerConnectionHandler */
     void HandleHttpRequest(HttpServerRequest &request,
                            CancellablePointer &cancel_ptr) noexcept override;
