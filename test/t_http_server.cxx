@@ -43,6 +43,7 @@
 #include "istream/UnusedPtr.hxx"
 #include "istream/HeadIstream.hxx"
 #include "istream/BlockIstream.hxx"
+#include "istream/ZeroIstream.hxx"
 #include "istream/istream_catch.hxx"
 #include "istream/istream_string.hxx"
 #include "istream/Sink.hxx"
@@ -333,6 +334,27 @@ TestMirror(Server &server)
     client.ExpectResponse(server, HTTP_STATUS_OK, "foo");
 }
 
+/**
+ * Send a huge request body which will be discarded by the server; the
+ * server then disables keepalive, sends the response and closes the
+ * connection.
+ */
+static void
+TestDiscardedHugeRequestBody(Server &server)
+{
+    server.SetRequestHandler([](HttpServerRequest &request, CancellablePointer &) noexcept {
+        request.body.Clear();
+        http_server_response(&request, HTTP_STATUS_OK, HttpHeaders(request.pool),
+                             istream_string_new(request.pool, "foo"));
+    });
+
+    Client client;
+    client.SendRequest(server,
+                       HTTP_METHOD_POST, "/", HttpHeaders(server.GetPool()),
+                       istream_zero_new(server.GetPool()));
+    client.ExpectResponse(server, HTTP_STATUS_OK, "foo");
+}
+
 static void
 test_catch(EventLoop &event_loop, struct pool *_pool)
 {
@@ -377,6 +399,7 @@ try {
         Server server(instance.root_pool, instance.event_loop);
         TestSimple(server);
         TestMirror(server);
+        TestDiscardedHugeRequestBody(server);
 
         server.CloseClientSocket();
         instance.event_loop.Dispatch();
