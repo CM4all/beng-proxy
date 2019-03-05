@@ -78,6 +78,11 @@ struct Instance final
         CheckCloseConnection();
     }
 
+    void RethrowResponseError() const {
+        if (response_error)
+            std::rethrow_exception(response_error);
+    }
+
     bool IsClientDone() const noexcept {
         return response_error || response_eof;
     }
@@ -256,6 +261,7 @@ test_catch(EventLoop &event_loop, struct pool *_pool)
         event_loop.LoopOnce();
 
     instance.CloseClientSocket();
+    instance.RethrowResponseError();
 
     event_loop.Dispatch();
 }
