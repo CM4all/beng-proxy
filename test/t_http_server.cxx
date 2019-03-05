@@ -44,6 +44,7 @@
 #include "istream/HeadIstream.hxx"
 #include "istream/BlockIstream.hxx"
 #include "istream/istream_catch.hxx"
+#include "istream/Sink.hxx"
 #include "fb_pool.hxx"
 #include "fs/FilteredSocket.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
@@ -55,7 +56,7 @@
 #include <stdlib.h>
 
 struct Instance final
-    : HttpServerConnectionHandler, Lease, HttpResponseHandler, BufferedSocketHandler
+    : HttpServerConnectionHandler, Lease, HttpResponseHandler, IstreamSink, BufferedSocketHandler
 {
     struct pool *pool;
 
@@ -64,7 +65,11 @@ struct Instance final
     FilteredSocket client_fs;
     CancellablePointer client_cancel_ptr;
 
+    std::string response_body;
+    http_status_t status{};
+
     bool client_fs_released = false;
+    bool response_eof;
 
     Instance(struct pool &_pool, EventLoop &event_loop);
 
@@ -123,14 +128,34 @@ struct Instance final
     }
 
     /* virtual methods from class HttpResponseHandler */
-    void OnHttpResponse(http_status_t status, StringMap &&headers,
+    void OnHttpResponse(http_status_t _status, StringMap &&headers,
                         UnusedIstreamPtr body) noexcept override {
-        (void)status;
+        status = _status;
+
         (void)headers;
-        (void)body;
+
+        IstreamSink::SetInput(std::move(body));
+        input.Read();
     }
 
     void OnHttpError(std::exception_ptr ep) noexcept override {
+        PrintException(ep);
+    }
+
+    /* virtual methods from class IstreamHandler */
+
+    size_t OnData(const void *data, size_t length) override {
+        response_body.append((const char *)data, length);
+        return length;
+    }
+
+    void OnEof() noexcept override {
+        IstreamSink::ClearInput();
+        response_eof = true;
+    }
+
+    void OnError(std::exception_ptr ep) noexcept override {
+        IstreamSink::ClearInput();
         PrintException(ep);
     }
 
