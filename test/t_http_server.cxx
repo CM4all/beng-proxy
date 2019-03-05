@@ -78,6 +78,10 @@ struct Instance final
         CheckCloseConnection();
     }
 
+    struct pool &GetPool() noexcept {
+        return *pool;
+    }
+
     void RethrowResponseError() const {
         if (response_error)
             std::rethrow_exception(response_error);
@@ -257,9 +261,9 @@ test_catch(EventLoop &event_loop, struct pool *_pool)
 {
     Instance instance(*_pool, event_loop);
 
-    instance.SendRequest(HTTP_METHOD_POST, "/", HttpHeaders(*instance.pool),
-                         istream_head_new(*instance.pool,
-                                          istream_block_new(*instance.pool),
+    instance.SendRequest(HTTP_METHOD_POST, "/", HttpHeaders(instance.GetPool()),
+                         istream_head_new(instance.GetPool(),
+                                          istream_block_new(instance.GetPool()),
                                           1024, true));
 
     while (!instance.IsClientDone())
