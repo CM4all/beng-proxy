@@ -3,6 +3,7 @@ cm4all-beng-proxy (15.12) unstable; urgency=low
   * balancer: wait for consecutive failures before disabling node
   * http_client: continue receiving pending data after server closed the
     connection
+  * http_server: preserve connection after discarding short request body
 
  --   
 

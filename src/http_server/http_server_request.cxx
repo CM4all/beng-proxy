@@ -99,6 +99,11 @@ HttpServerConnection::DiscardRequestBody() noexcept
            Continue" response (yet): pretend there never was a request
            body */
         request.expect_100_continue = false;
+    else if (request_body_reader->Discard(socket))
+        /* the remaining data has already been received into the input
+           buffer, and we only need to discard it from there to have a
+           "clean" connection */
+        return;
     else
         /* disable keep-alive so we don't need to wait for the client
            to finish sending the request body */
