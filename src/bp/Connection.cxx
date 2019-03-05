@@ -230,7 +230,7 @@ new_connection(BpInstance &instance,
     connection->http =
         http_server_connection_new(connection->pool,
                                    instance.event_loop,
-                                   fd.Release(), FdType::FD_TCP,
+                                   std::move(fd), FdType::FD_TCP,
                                    std::move(filter),
                                    local_address.IsDefined()
                                    ? (SocketAddress)local_address

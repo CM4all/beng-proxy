@@ -144,7 +144,7 @@ NewLbHttpConnection(LbInstance &instance,
     instance.http_connections.push_back(*connection);
 
     connection->http = http_server_connection_new(pool, instance.event_loop,
-                                                  fd.Release(), fd_type,
+                                                  std::move(fd), fd_type,
                                                   std::move(filter),
                                                   local_address.IsDefined()
                                                   ? (SocketAddress)local_address

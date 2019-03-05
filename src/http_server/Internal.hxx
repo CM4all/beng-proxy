@@ -184,7 +184,7 @@ struct HttpServerConnection final
 
     HttpServerConnection(struct pool &_pool,
                          EventLoop &_loop,
-                         SocketDescriptor fd, FdType fd_type,
+                         UniqueSocketDescriptor &&fd, FdType fd_type,
                          SocketFilterPtr &&filter,
                          SocketAddress _local_address,
                          SocketAddress _remote_address,

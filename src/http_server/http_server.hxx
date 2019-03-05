@@ -40,7 +40,7 @@
 struct pool;
 class EventLoop;
 class UnusedIstreamPtr;
-class SocketDescriptor;
+class UniqueSocketDescriptor;
 class SocketAddress;
 class HttpHeaders;
 
@@ -82,7 +82,7 @@ enum http_server_score {
 HttpServerConnection *
 http_server_connection_new(struct pool *pool,
                            EventLoop &loop,
-                           SocketDescriptor fd, FdType fd_type,
+                           UniqueSocketDescriptor fd, FdType fd_type,
                            SocketFilterPtr filter,
                            SocketAddress local_address,
                            SocketAddress remote_address,

@@ -39,6 +39,7 @@
 #include "paddress.hxx"
 #include "istream/Bucket.hxx"
 #include "system/Error.hxx"
+#include "net/UniqueSocketDescriptor.hxx"
 #include "util/StringView.hxx"
 #include "util/StaticArray.hxx"
 #include "util/RuntimeError.hxx"
@@ -302,7 +303,7 @@ HttpServerConnection::IdleTimeoutCallback() noexcept
 inline
 HttpServerConnection::HttpServerConnection(struct pool &_pool,
                                            EventLoop &_loop,
-                                           SocketDescriptor fd, FdType fd_type,
+                                           UniqueSocketDescriptor &&fd, FdType fd_type,
                                            SocketFilterPtr &&filter,
                                            SocketAddress _local_address,
                                            SocketAddress _remote_address,
@@ -320,7 +321,7 @@ HttpServerConnection::HttpServerConnection(struct pool &_pool,
 {
     pool_ref(pool);
 
-    socket.Init(fd, fd_type,
+    socket.Init(fd.Release(), fd_type,
                 Event::Duration(-1), http_server_write_timeout,
                 std::move(filter),
                 *this);
@@ -343,7 +344,7 @@ HttpServerConnection::Delete() noexcept
 HttpServerConnection *
 http_server_connection_new(struct pool *pool,
                            EventLoop &loop,
-                           SocketDescriptor fd, FdType fd_type,
+                           UniqueSocketDescriptor fd, FdType fd_type,
                            SocketFilterPtr filter,
                            SocketAddress local_address,
                            SocketAddress remote_address,
@@ -352,7 +353,8 @@ http_server_connection_new(struct pool *pool,
 {
     assert(fd.IsDefined());
 
-    return NewFromPool<HttpServerConnection>(*pool, *pool, loop, fd, fd_type,
+    return NewFromPool<HttpServerConnection>(*pool, *pool, loop,
+                                             std::move(fd), fd_type,
                                              std::move(filter),
                                              local_address, remote_address,
                                              date_header,

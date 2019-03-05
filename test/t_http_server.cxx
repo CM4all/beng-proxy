@@ -40,8 +40,7 @@
 #include "istream/UnusedPtr.hxx"
 #include "istream/istream_catch.hxx"
 #include "fb_pool.hxx"
-#include "net/SocketDescriptor.hxx"
-#include "io/FileDescriptor.hxx"
+#include "net/UniqueSocketDescriptor.hxx"
 #include "util/PrintException.hxx"
 
 #include <stdio.h>
@@ -117,9 +116,9 @@ Instance::HttpConnectionClosed() noexcept
 static void
 test_catch(EventLoop &event_loop, struct pool *_pool)
 {
-    SocketDescriptor client_socket, server_socket;
-    if (!SocketDescriptor::CreateSocketPair(AF_LOCAL, SOCK_STREAM, 0,
-                                            client_socket, server_socket)) {
+    UniqueSocketDescriptor client_socket, server_socket;
+    if (!UniqueSocketDescriptor::CreateSocketPair(AF_LOCAL, SOCK_STREAM, 0,
+                                                  client_socket, server_socket)) {
         perror("socketpair() failed");
         exit(EXIT_FAILURE);
     }
@@ -131,15 +130,13 @@ test_catch(EventLoop &event_loop, struct pool *_pool)
     Instance instance(*_pool);
     instance.connection =
         http_server_connection_new(instance.pool, event_loop,
-                                   server_socket, FdType::FD_SOCKET,
+                                   std::move(server_socket), FdType::FD_SOCKET,
                                    nullptr,
                                    nullptr, nullptr,
                                    true, instance);
     pool_unref(instance.pool);
 
     event_loop.Dispatch();
-
-    client_socket.Close();
 }
 
 int
