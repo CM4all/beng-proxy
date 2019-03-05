@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -44,6 +44,7 @@
 #include "istream/HeadIstream.hxx"
 #include "istream/BlockIstream.hxx"
 #include "istream/istream_catch.hxx"
+#include "istream/istream_string.hxx"
 #include "istream/Sink.hxx"
 #include "fb_pool.hxx"
 #include "fs/FilteredSocket.hxx"
@@ -51,6 +52,7 @@
 #include "system/Error.hxx"
 #include "util/Cancellable.hxx"
 #include "util/PrintException.hxx"
+#include "util/RuntimeError.hxx"
 
 #include <functional>
 
@@ -81,6 +83,10 @@ public:
 
     struct pool &GetPool() noexcept {
         return *pool;
+    }
+
+    auto &GetEventLoop() noexcept {
+        return client_fs.GetEventLoop();
     }
 
     template<typename T>
@@ -189,9 +195,29 @@ public:
         return response_error || response_eof;
     }
 
+    void WaitDone(Server &server) {
+        auto &event_loop = server.GetEventLoop();
+        while (!IsClientDone())
+            event_loop.LoopOnce();
+    }
+
     void RethrowResponseError() const {
         if (response_error)
             std::rethrow_exception(response_error);
+    }
+
+    void ExpectResponse(Server &server, http_status_t expected_status,
+                        const char *expected_body) {
+        WaitDone(server);
+        RethrowResponseError();
+
+        if (status != expected_status)
+            throw FormatRuntimeError("Got status %d, expected %d\n",
+                                     int(status), int(expected_status));
+
+        if (response_body != expected_body)
+            throw FormatRuntimeError("Got response body '%s', expected '%s'\n",
+                                     response_body.c_str(), expected_body);
     }
 
 private:
@@ -278,6 +304,36 @@ Server::HttpConnectionClosed() noexcept
 }
 
 static void
+TestSimple(Server &server)
+{
+    server.SetRequestHandler([](HttpServerRequest &request, CancellablePointer &) noexcept {
+        http_server_response(&request, HTTP_STATUS_OK, HttpHeaders(request.pool),
+                             istream_string_new(request.pool, "foo"));
+    });
+
+    Client client;
+    client.SendRequest(server,
+                       HTTP_METHOD_GET, "/", HttpHeaders(server.GetPool()),
+                       nullptr);
+    client.ExpectResponse(server, HTTP_STATUS_OK, "foo");
+}
+
+static void
+TestMirror(Server &server)
+{
+    server.SetRequestHandler([](HttpServerRequest &request, CancellablePointer &) noexcept {
+        http_server_response(&request, HTTP_STATUS_OK, HttpHeaders(request.pool),
+                             std::move(request.body));
+    });
+
+    Client client;
+    client.SendRequest(server,
+                       HTTP_METHOD_POST, "/", HttpHeaders(server.GetPool()),
+                       istream_string_new(server.GetPool(), "foo"));
+    client.ExpectResponse(server, HTTP_STATUS_OK, "foo");
+}
+
+static void
 test_catch(EventLoop &event_loop, struct pool *_pool)
 {
     Server server(*_pool, event_loop);
@@ -316,6 +372,15 @@ try {
     direct_global_init();
     const ScopeFbPoolInit fb_pool_init;
     PInstance instance;
+
+    {
+        Server server(instance.root_pool, instance.event_loop);
+        TestSimple(server);
+        TestMirror(server);
+
+        server.CloseClientSocket();
+        instance.event_loop.Dispatch();
+    }
 
     test_catch(instance.event_loop, instance.root_pool);
 } catch (...) {
