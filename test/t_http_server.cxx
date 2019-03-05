@@ -52,19 +52,19 @@ struct Instance final : HttpServerConnectionHandler {
 
     HttpServerConnection *connection = nullptr;
 
-    explicit Instance(struct pool &_pool)
+    explicit Instance(struct pool &_pool) noexcept
         :pool(pool_new_libc(&_pool, "catch")) {}
 
-    ~Instance() {
+    ~Instance() noexcept {
         CheckCloseConnection();
     }
 
-    void CloseConnection() {
+    void CloseConnection() noexcept {
         http_server_connection_close(connection);
         connection = nullptr;
     }
 
-    void CheckCloseConnection() {
+    void CheckCloseConnection() noexcept {
         if (connection != nullptr)
             CloseConnection();
     }
@@ -82,7 +82,7 @@ struct Instance final : HttpServerConnectionHandler {
 };
 
 static std::exception_ptr
-catch_callback(std::exception_ptr ep, gcc_unused void *ctx)
+catch_callback(std::exception_ptr ep, gcc_unused void *ctx) noexcept
 {
     PrintException(ep);
     return {};
@@ -142,7 +142,9 @@ test_catch(EventLoop &event_loop, struct pool *_pool)
     client_socket.Close();
 }
 
-int main(int argc, char **argv) {
+int
+main(int argc, char **argv) noexcept
+{
     (void)argc;
     (void)argv;
 
