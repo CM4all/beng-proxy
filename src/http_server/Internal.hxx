@@ -252,6 +252,15 @@ struct HttpServerConnection final
     DirectResult TryRequestBodyDirect(SocketDescriptor fd, FdType fd_type);
 
     /**
+     * The request body is not needed anymore.  This method discards
+     * it.  If it is not possible to discard it properly, this method
+     * disables keep-alive so the connection will be closed as soon as
+     * the response has been sent, forcibly disposing the request
+     * body.
+     */
+    void DiscardRequestBody() noexcept;
+
+    /**
      * @return false if the connection has been closed
      */
     bool MaybeSend100Continue();
