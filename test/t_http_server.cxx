@@ -215,6 +215,8 @@ Instance::Instance(struct pool &_pool, EventLoop &event_loop)
                                             true, *this);
 
     client_fs.InitDummy(client_socket.Release(), FdType::FD_SOCKET);
+
+    pool_unref(pool);
 }
 
 static std::exception_ptr
@@ -254,7 +256,6 @@ static void
 test_catch(EventLoop &event_loop, struct pool *_pool)
 {
     Instance instance(*_pool, event_loop);
-    pool_unref(instance.pool);
 
     instance.SendRequest(HTTP_METHOD_POST, "/", HttpHeaders(*instance.pool),
                          istream_head_new(*instance.pool,
