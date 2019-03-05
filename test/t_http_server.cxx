@@ -57,7 +57,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-class Instance final
+class Server final
     : HttpServerConnectionHandler, Lease, BufferedSocketHandler
 {
     struct pool *pool;
@@ -72,9 +72,9 @@ class Instance final
     bool client_fs_released = false;
 
 public:
-    Instance(struct pool &_pool, EventLoop &event_loop);
+    Server(struct pool &_pool, EventLoop &event_loop);
 
-    ~Instance() noexcept {
+    ~Server() noexcept {
         CheckCloseConnection();
     }
 
@@ -175,11 +175,11 @@ class Client final : HttpResponseHandler, IstreamSink {
     bool response_eof = false;
 
 public:
-    void SendRequest(Instance &instance,
+    void SendRequest(Server &server,
                      http_method_t method, const char *uri,
                      HttpHeaders &&headers,
                      UnusedIstreamPtr body, bool expect_100=false) noexcept {
-        instance.SendRequest(method, uri, std::move(headers),
+        server.SendRequest(method, uri, std::move(headers),
                              std::move(body), expect_100,
                              *this, client_cancel_ptr);
     }
@@ -227,7 +227,7 @@ private:
     }
 };
 
-Instance::Instance(struct pool &_pool, EventLoop &event_loop)
+Server::Server(struct pool &_pool, EventLoop &event_loop)
     :pool(pool_new_libc(&_pool, "catch")),
      client_fs(event_loop)
 {
@@ -256,14 +256,14 @@ catch_callback(std::exception_ptr ep, gcc_unused void *ctx) noexcept
 }
 
 void
-Instance::HandleHttpRequest(HttpServerRequest &request,
+Server::HandleHttpRequest(HttpServerRequest &request,
                             CancellablePointer &cancel_ptr) noexcept
 {
     request_handler(request, cancel_ptr);
 }
 
 void
-Instance::HttpConnectionError(std::exception_ptr e) noexcept
+Server::HttpConnectionError(std::exception_ptr e) noexcept
 {
     connection = nullptr;
 
@@ -271,7 +271,7 @@ Instance::HttpConnectionError(std::exception_ptr e) noexcept
 }
 
 void
-Instance::HttpConnectionClosed() noexcept
+Server::HttpConnectionClosed() noexcept
 {
     connection = nullptr;
 }
@@ -279,28 +279,28 @@ Instance::HttpConnectionClosed() noexcept
 static void
 test_catch(EventLoop &event_loop, struct pool *_pool)
 {
-    Instance instance(*_pool, event_loop);
+    Server server(*_pool, event_loop);
 
-    instance.SetRequestHandler([&instance](HttpServerRequest &request, CancellablePointer &) noexcept {
+    server.SetRequestHandler([&server](HttpServerRequest &request, CancellablePointer &) noexcept {
         http_server_response(&request, HTTP_STATUS_OK, HttpHeaders(request.pool),
                              istream_catch_new(&request.pool,
                                                std::move(request.body),
                                                catch_callback, nullptr));
-        instance.CloseConnection();
+        server.CloseConnection();
     });
 
     Client client;
 
-    client.SendRequest(instance,
-                       HTTP_METHOD_POST, "/", HttpHeaders(instance.GetPool()),
-                       istream_head_new(instance.GetPool(),
-                                        istream_block_new(instance.GetPool()),
+    client.SendRequest(server,
+                       HTTP_METHOD_POST, "/", HttpHeaders(server.GetPool()),
+                       istream_head_new(server.GetPool(),
+                                        istream_block_new(server.GetPool()),
                                         1024, true));
 
     while (!client.IsClientDone())
         event_loop.LoopOnce();
 
-    instance.CloseClientSocket();
+    server.CloseClientSocket();
     client.RethrowResponseError();
 
     event_loop.Dispatch();
