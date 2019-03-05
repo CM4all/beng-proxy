@@ -38,7 +38,7 @@
 #include <limits.h>
 #include <stdint.h>
 
-static constexpr uint8_t zero_buffer[1024]{};
+static constexpr uint8_t zero_buffer[4096]{};
 
 class ZeroIstream final : public Istream {
 public:
