@@ -45,7 +45,6 @@
 #include "istream/HeadIstream.hxx"
 #include "istream/BlockIstream.hxx"
 #include "istream/ZeroIstream.hxx"
-#include "istream/istream_catch.hxx"
 #include "istream/istream_string.hxx"
 #include "istream/Sink.hxx"
 #include "fb_pool.hxx"
@@ -277,13 +276,6 @@ Server::Server(struct pool &_pool, EventLoop &event_loop)
     pool_unref(pool);
 }
 
-static std::exception_ptr
-catch_callback(std::exception_ptr ep, gcc_unused void *ctx) noexcept
-{
-    PrintException(ep);
-    return {};
-}
-
 void
 Server::HandleHttpRequest(HttpServerRequest &request,
                             CancellablePointer &cancel_ptr) noexcept
@@ -380,36 +372,6 @@ TestDiscardedHugeRequestBody(Server &server)
     client.ExpectResponse(server, HTTP_STATUS_OK, "foo");
 }
 
-static void
-test_catch(EventLoop &event_loop, struct pool *_pool)
-{
-    Server server(*_pool, event_loop);
-
-    server.SetRequestHandler([&server](HttpServerRequest &request, CancellablePointer &) noexcept {
-        http_server_response(&request, HTTP_STATUS_OK, HttpHeaders(request.pool),
-                             istream_catch_new(&request.pool,
-                                               std::move(request.body),
-                                               catch_callback, nullptr));
-        server.CloseConnection();
-    });
-
-    Client client;
-
-    client.SendRequest(server,
-                       HTTP_METHOD_POST, "/", HttpHeaders(server.GetPool()),
-                       istream_head_new(server.GetPool(),
-                                        istream_block_new(server.GetPool()),
-                                        1024, true));
-
-    while (!client.IsClientDone())
-        event_loop.LoopOnce();
-
-    server.CloseClientSocket();
-    client.RethrowResponseError();
-
-    event_loop.Dispatch();
-}
-
 int
 main(int argc, char **argv) noexcept
 try {
@@ -429,8 +391,6 @@ try {
         server.CloseClientSocket();
         instance.event_loop.Dispatch();
     }
-
-    test_catch(instance.event_loop, instance.root_pool);
 } catch (...) {
     PrintException(std::current_exception());
     return EXIT_FAILURE;
