@@ -41,6 +41,7 @@
 #include "istream/istream_catch.hxx"
 #include "fb_pool.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
+#include "system/Error.hxx"
 #include "util/PrintException.hxx"
 
 #include <stdio.h>
@@ -118,10 +119,8 @@ test_catch(EventLoop &event_loop, struct pool *_pool)
 {
     UniqueSocketDescriptor client_socket, server_socket;
     if (!UniqueSocketDescriptor::CreateSocketPair(AF_LOCAL, SOCK_STREAM, 0,
-                                                  client_socket, server_socket)) {
-        perror("socketpair() failed");
-        exit(EXIT_FAILURE);
-    }
+                                                  client_socket, server_socket))
+        throw MakeErrno("socketpair() failed");
 
     static constexpr char request[] =
         "POST / HTTP/1.1\r\nContent-Length: 1024\r\n\r\nfoo";
@@ -141,7 +140,7 @@ test_catch(EventLoop &event_loop, struct pool *_pool)
 
 int
 main(int argc, char **argv) noexcept
-{
+try {
     (void)argc;
     (void)argv;
 
@@ -150,4 +149,7 @@ main(int argc, char **argv) noexcept
     PInstance instance;
 
     test_catch(instance.event_loop, instance.root_pool);
+} catch (...) {
+    PrintException(std::current_exception());
+    return EXIT_FAILURE;
 }
