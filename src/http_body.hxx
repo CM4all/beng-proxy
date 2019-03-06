@@ -218,7 +218,12 @@ public:
         if (IsChunked() || !KnownLength())
             return false;
 
-        size_t available = s.GetAvailable();
+        /* note: using s.ReadBuffer().size instead of s.GetAvailable()
+           to work around a problem with
+           ThreadSocketFilter::Consumed() which asserts that
+           ReadBuffer() has moved decrypted_input into
+           unprotected_decrypted_input */
+        size_t available = s.ReadBuffer().size;
         if ((off_t)available < rest)
             return false;
 

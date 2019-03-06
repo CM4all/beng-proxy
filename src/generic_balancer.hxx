@@ -97,6 +97,7 @@ public:
 
 private:
     void Cancel() noexcept override {
+        cancel_ptr.Cancel();
         Destroy();
     }
 
