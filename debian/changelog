@@ -2,7 +2,7 @@ cm4all-beng-proxy (15.14) unstable; urgency=low
 
   * http_server: fix crash bug (15.12 regression)
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Wed, 06 Mar 2019 10:35:38 +0100
 
 cm4all-beng-proxy (15.13) unstable; urgency=low
 
