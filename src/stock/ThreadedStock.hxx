@@ -87,7 +87,8 @@ public:
         {
             std::unique_lock<std::mutex> lock(mutex);
             if (!items.empty())
-                tmp.splice_after(tmp.before_begin(), items, items.begin());
+                tmp.splice_after(tmp.before_begin(),
+                                 items, items.before_begin());
         }
 
         if (tmp.empty())
