@@ -304,7 +304,7 @@ public:
     Pg::Result TailModifiedServerCertificatesMeta() {
         return conn.Execute("SELECT deleted, modified, handle "
                             "FROM server_certificate "
-                            "ORDER BY modified LIMIT 20");
+                            "ORDER BY modified DESC LIMIT 20");
     }
 };
 

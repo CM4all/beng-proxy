@@ -1,6 +1,6 @@
 cm4all-beng-proxy (15.15) unstable; urgency=low
 
-  * 
+  * certdb: fix broken "tail" command
 
  --   
 
