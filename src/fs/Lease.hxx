@@ -162,6 +162,13 @@ public:
 
 private:
     /**
+     * Move data from the #FilteredSocket input buffers to our #input
+     * buffers.  This is done prior to releasing the #FilteredSocket
+     * to be able to continue reading pending input.
+     */
+    void MoveSocketInput() noexcept;
+
+    /**
      * Move data to the front-most #input buffer.
      */
     void MoveInput() noexcept;

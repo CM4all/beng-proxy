@@ -50,11 +50,8 @@ FilteredSocketLease::~FilteredSocketLease() noexcept
 }
 
 void
-FilteredSocketLease::Release(bool reuse) noexcept
+FilteredSocketLease::MoveSocketInput() noexcept
 {
-    assert(!IsReleased());
-    assert(!lease_ref.released);
-
     // TODO: move buffers instead of copying the data
     size_t i = 0;
     while (true) {
@@ -78,6 +75,15 @@ FilteredSocketLease::Release(bool reuse) noexcept
         socket->DisposeConsumed(n);
         dest.Append(n);
     }
+}
+
+void
+FilteredSocketLease::Release(bool reuse) noexcept
+{
+    assert(!IsReleased());
+    assert(!lease_ref.released);
+
+    MoveSocketInput();
 
     lease_ref.Release(reuse);
     socket = nullptr;
