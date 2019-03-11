@@ -4,6 +4,7 @@ cm4all-beng-proxy (15.15) unstable; urgency=low
   * lb/certdb: reuse the database connection more often
   * lb/certdb: set schema after database reconnect
   * bp: SIGHUP fades out child processes
+  * debian: trigger "cm4all-apps-changed" fades out child processes
 
  --   
 

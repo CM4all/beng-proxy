@@ -482,6 +482,12 @@ On \texttt{SIGHUP}, the error log file is reopened, all caches are
 flushed and all spawned child processes are faded out (see
 \ref{fadechildren}).
 
+\subsection{Triggers}
+
+The Debian trigger \verb|cm4all-apps-changed| reloads all spawned
+applications.  It shall be invoked after updating application
+packages.
+
 
 \section{Tuning}
 
