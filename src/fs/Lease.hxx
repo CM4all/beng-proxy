@@ -84,7 +84,11 @@ public:
     }
 #endif
 
-    void Release(bool reuse) noexcept;
+    /**
+     * @param preserve preserve the contents of the input buffer for
+     * further consumption?
+     */
+    void Release(bool preserve, bool reuse) noexcept;
 
     bool IsReleased() const noexcept {
         return socket == nullptr;

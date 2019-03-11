@@ -78,12 +78,13 @@ FilteredSocketLease::MoveSocketInput() noexcept
 }
 
 void
-FilteredSocketLease::Release(bool reuse) noexcept
+FilteredSocketLease::Release(bool preserve, bool reuse) noexcept
 {
     assert(!IsReleased());
     assert(!lease_ref.released);
 
-    MoveSocketInput();
+    if (preserve)
+        MoveSocketInput();
 
     lease_ref.Release(reuse);
     socket = nullptr;

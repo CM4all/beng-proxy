@@ -230,7 +230,7 @@ struct HttpClient final : BufferedSocketHandler, IstreamHandler, Cancellable, De
         stopwatch_dump(stopwatch);
 
         if (!socket.IsReleased())
-            ReleaseSocket(false);
+            ReleaseSocket(false, false);
     }
 
     struct pool &GetPool() {
@@ -262,8 +262,8 @@ struct HttpClient final : BufferedSocketHandler, IstreamHandler, Cancellable, De
     /**
      * Release the socket held by this object.
      */
-    void ReleaseSocket(bool reuse) {
-        socket.Release(reuse);
+    void ReleaseSocket(bool preserve, bool reuse) {
+        socket.Release(preserve, reuse);
     }
 
     void Destroy() {
@@ -362,7 +362,7 @@ HttpClient::AbortResponseHeaders(std::exception_ptr ep)
            response.state == Response::State::HEADERS);
 
     if (IsConnected())
-        ReleaseSocket(false);
+        ReleaseSocket(false, false);
 
     if (request.istream.IsDefined())
         request.istream.Close();
@@ -769,7 +769,7 @@ HttpClient::ResponseFinished() noexcept
     if (request.istream.IsDefined())
         request.istream.Close();
     else if (IsConnected())
-        ReleaseSocket(keep_alive);
+        ReleaseSocket(false, keep_alive);
 
     Destroy();
 }
@@ -846,7 +846,7 @@ HttpClient::FeedBody(ConstBuffer<void> b)
     if (IsConnected() && response_body_reader.IsSocketDone(socket))
         /* we don't need the socket anymore, we've got everything we
            need in the input buffer */
-        ReleaseSocket(keep_alive);
+        ReleaseSocket(true, keep_alive);
 
     if (response_body_reader.IsEOF()) {
         ResponseBodyEOF();
@@ -922,7 +922,7 @@ HttpClient::FeedHeaders(ConstBuffer<void> b)
         IsConnected())
         /* we don't need the socket anymore, we've got everything we
            need in the input buffer */
-        ReleaseSocket(keep_alive);
+        ReleaseSocket(true, keep_alive);
 
     const DestructObserver destructed(*this);
     const ScopePoolRef caller_ref(caller_pool TRACE_ARGS);
@@ -1014,7 +1014,7 @@ HttpClient::OnBufferedData()
         if (IsConnected() && response_body_reader.IsSocketDone(socket))
             /* we don't need the socket anymore, we've got everything
                we need in the input buffer */
-            ReleaseSocket(keep_alive);
+            ReleaseSocket(true, keep_alive);
 
         return FeedBody(socket.ReadBuffer());
 
@@ -1060,7 +1060,7 @@ HttpClient::OnBufferedRemaining(size_t remaining) noexcept
         /* note: the socket can't be reused, because it was closed by
            the peer; this method gets called only after
            OnBufferedClosed() */
-        ReleaseSocket(false);
+        ReleaseSocket(true, false);
 
     if (response.state < Response::State::BODY)
         /* this information comes too early, we can't use it */
