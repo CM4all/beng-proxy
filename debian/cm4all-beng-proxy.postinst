@@ -24,6 +24,8 @@ if [ "$1" = "configure" ]; then
         chown cm4all-logger:adm /var/log/cm4all/beng-proxy
         chmod 2750 /var/log/cm4all/beng-proxy
     fi
+elif [ "$1" = "triggered" ]; then
+    systemctl reload cm4all-beng-proxy
 fi
 
 #DEBHELPER#

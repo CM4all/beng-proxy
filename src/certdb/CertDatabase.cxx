@@ -81,8 +81,19 @@ CertDatabase::CheckConnected()
 void
 CertDatabase::EnsureConnected()
 {
-    if (!CheckConnected())
-        conn.Reconnect();
+    if (CheckConnected())
+        return;
+
+    conn.Reconnect();
+
+    if (!config.schema.empty()) {
+        try {
+            conn.SetSchema(config.schema.c_str());
+        } catch (...) {
+            conn.Disconnect();
+            throw;
+        }
+    }
 }
 
 Pg::Result

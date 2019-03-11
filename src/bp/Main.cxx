@@ -174,6 +174,8 @@ BpInstance::ReloadEventCallback(int) noexcept
     LogConcat(3, "main", "caught SIGHUP, flushing all caches (pid=",
               (int)getpid(), ")");
 
+    FadeChildren();
+
     translate_cache_flush(*translate_cache);
 
     if (http_cache != nullptr)

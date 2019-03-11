@@ -478,8 +478,15 @@ node runs with \texttt{--cluster-node=0}, the second node runs with
 
 \texttt{SIGTERM} on the master process initiates shutdown.
 
-On \texttt{SIGHUP}, the error log file is reopened and all caches are
-flushed.
+On \texttt{SIGHUP}, the error log file is reopened, all caches are
+flushed and all spawned child processes are faded out (see
+\ref{fadechildren}).
+
+\subsection{Triggers}
+
+The Debian trigger \verb|cm4all-apps-changed| reloads all spawned
+applications.  It shall be invoked after updating application
+packages.
 
 
 \section{Tuning}
@@ -2875,7 +2882,7 @@ lasts for 3 hours. \\
 
 \verb|FADE_CHILDREN| & Fade out child processes.  If a payload is
 given, then this is a tag which fades only child processes with the
-given \verb|CHILD_TAG|. \\
+given \verb|CHILD_TAG|. \label{fadechildren} \\
 
 \hline
 

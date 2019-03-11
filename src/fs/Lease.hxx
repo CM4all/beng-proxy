@@ -84,7 +84,11 @@ public:
     }
 #endif
 
-    void Release(bool reuse) noexcept;
+    /**
+     * @param preserve preserve the contents of the input buffer for
+     * further consumption?
+     */
+    void Release(bool preserve, bool reuse) noexcept;
 
     bool IsReleased() const noexcept {
         return socket == nullptr;
@@ -161,6 +165,16 @@ public:
     }
 
 private:
+    /**
+     * Move data from the #FilteredSocket input buffers to our #input
+     * buffers.  This is done prior to releasing the #FilteredSocket
+     * to be able to continue reading pending input.
+     */
+    void MoveSocketInput() noexcept;
+
+    /**
+     * Move data to the front-most #input buffer.
+     */
     void MoveInput() noexcept;
 
     bool IsReleasedEmpty() const noexcept {
