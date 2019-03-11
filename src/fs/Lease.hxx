@@ -161,6 +161,9 @@ public:
     }
 
 private:
+    /**
+     * Move data to the front-most #input buffer.
+     */
     void MoveInput() noexcept;
 
     bool IsReleasedEmpty() const noexcept {
