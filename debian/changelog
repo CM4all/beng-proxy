@@ -2,7 +2,7 @@ cm4all-beng-proxy (15.16) unstable; urgency=low
 
   * debian/postinst: reload on trigger "cm4all-apps-changed" only if active
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Wed, 13 Mar 2019 08:07:45 +0100
 
 cm4all-beng-proxy (15.15) unstable; urgency=low
 
