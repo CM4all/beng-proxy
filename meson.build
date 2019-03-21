@@ -1152,6 +1152,18 @@ executable('delegate-helper',
   dependencies: [
   ])
 
+executable(
+  'cm4all-beng-control',
+  'src/control/Client.cxx',
+  include_directories: inc,
+  dependencies: [
+    net_dep,
+    io_dep,
+    util_dep,
+  ],
+  install: true,
+)
+
 install_headers(
   'include/beng-proxy/Control.hxx',
   'include/beng-proxy/Headers.hxx',

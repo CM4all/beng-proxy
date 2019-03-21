@@ -98,6 +98,17 @@ Description: HTTP proxy server, delegate helper
  This package contains the delegate helper.  It can be used to open
  files safely.
 
+Package: cm4all-beng-control
+Architecture: any
+Depends: ${misc:Depends}, ${shlibs:Depends}
+Enhances: cm4all-beng-proxy
+Suggests: cm4all-beng-proxy (= ${source:Version})
+Description: Control client for beng-proxy
+ BENG proxy is an HTTP proxy server which includes a HTML template
+ processor.
+ .
+ This package contains the control client.
+
 Package: libcm4all-beng-proxy-js
 Architecture: all
 Enhances: cm4all-beng-proxy

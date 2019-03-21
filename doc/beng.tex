@@ -2908,6 +2908,25 @@ from clients connected on a local socket (aka Unix Domain Socket,
 \verb|AF_LOCAL|).
 
 
+\subsection{Client}
+
+The Debian package \texttt{cm4all-beng-control} contains a generic
+non-interactive client which can send commands to \emph{beng-proxy} or
+\emph{beng-lb}.
+
+The following command sends \verb|NOP| to an abstract socket:
+
+\begin{verbatim*}
+cm4all-beng-control --server=@bp-control nop
+\end{verbatim*}
+
+And here is a multicast on interface \texttt{eth1}:
+
+\begin{verbatim*}
+cm4all-beng-control --server=ff02::dead%eth1 nop
+\end{verbatim*}
+
+
 \section{Logging Protocol}
 
 By default, accesses to HTTP resources are logged into the standard
