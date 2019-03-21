@@ -4,6 +4,7 @@
 # Author: Max Kellermann <mk@cm4all.com>
 #
 
+from __future__ import print_function
 import array, struct
 import urllib
 from beng_proxy.translation.protocol import *
@@ -169,7 +170,7 @@ class Request:
         elif packet.command == TRANSLATE_CRON:
             self.cron = packet.payload or True
         elif packet.command != TRANSLATE_LOCAL_ADDRESS:
-            print "Invalid command:", packet.command
+            print("Invalid command:", packet.command)
         return False
 
     def absolute_uri(self, scheme=None, host=None, uri=None, query_string=None,
