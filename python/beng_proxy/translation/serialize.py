@@ -13,7 +13,7 @@ class PacketReader:
     attributes 'command' and 'payload' are available."""
 
     def __init__(self):
-        self._header = ''
+        self._header = b''
         self.complete = False
 
     def consume(self, data):
@@ -22,7 +22,7 @@ class PacketReader:
         is already true."""
 
         assert not self.complete
-        assert isinstance(data, str)
+        assert isinstance(data, bytes)
 
         # read header
         if len(self._header) < 4:
@@ -35,7 +35,7 @@ class PacketReader:
 
             # header is finished, decode it
             self._length, self.command = struct.unpack('HH', self._header)
-            self.payload = ''
+            self.payload = b''
             if self._length == 0:
                 # no payload, we're done
                 self.complete = True
@@ -61,7 +61,7 @@ def packet_header(command, length=0):
     assert length <= 0xffff
     return struct.pack('HH', length, command)
 
-def write_packet(f, command, payload = ''):
+def write_packet(f, command, payload = b''):
     assert isinstance(payload, str)
     f.write(packet_header(command, len(payload)))
     f.write(payload)

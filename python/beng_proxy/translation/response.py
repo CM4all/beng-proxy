@@ -4,6 +4,7 @@
 # Author: Max Kellermann <mk@cm4all.com>
 #
 
+import six
 import array, struct
 
 try:
@@ -25,9 +26,9 @@ class Response:
         assert protocol_version >= 0
         assert protocol_version <= 0xff
 
-        self._data = ''
+        self._data = b''
 
-        payload = ''
+        payload = b''
         if protocol_version > 0:
             payload = struct.pack('B', protocol_version)
         self.packet(TRANSLATE_BEGIN, payload)
@@ -37,9 +38,15 @@ class Response:
         self._data += packet_header(TRANSLATE_END)
         return self._data
 
-    def packet(self, command, payload = ''):
+    def packet(self, command, payload = b''):
         """Append a packet."""
-        assert isinstance(payload, str)
+
+        if not isinstance(payload, bytes) and isinstance(payload, str):
+            # this implicit conversion allows passing a `str` payload
+            # in Python 3
+            payload = payload.encode('utf-8')
+
+        assert isinstance(payload, bytes)
         self._data += packet_header(command, len(payload))
         self._data += payload
         return self
@@ -145,7 +152,11 @@ class Response:
         put into the VARY packet payload."""
 
         assert len(args) > 0
-        payload = array.array('H', args).tostring()
+        payload = array.array('H', args)
+        if six.PY2:
+            payload = payload.tostring()
+        else:
+            payload = payload.tobytes()
         return self.packet(TRANSLATE_VARY, payload)
 
     def invalidate(self, *args):
@@ -153,7 +164,11 @@ class Response:
         which are put into the INVALIDATE packet payload."""
 
         assert len(args) > 0
-        payload = array.array('H', args).tostring()
+        payload = array.array('H', args)
+        if six.PY2:
+            payload = payload.tostring()
+        else:
+            payload = payload.tobytes()
         return self.packet(TRANSLATE_INVALIDATE, payload)
 
     def want(self, *args):
@@ -161,7 +176,11 @@ class Response:
         put into the WANT packet payload."""
 
         assert len(args) > 0
-        payload = array.array('H', args).tostring()
+        payload = array.array('H', args)
+        if six.PY2:
+            payload = payload.tostring()
+        else:
+            payload = payload.tobytes()
         return self.packet(TRANSLATE_WANT, payload)
 
     def pipe(self, path, *args):
@@ -230,7 +249,7 @@ class Response:
         return self
 
     def header_forward(self, command, *args):
-        payload = ''
+        payload = b''
         for x in args:
             assert isinstance(x, tuple)
             assert len(x) == 2
@@ -269,7 +288,7 @@ class Response:
 
     def validate_mtime(self, mtime, path):
         return self.packet(TRANSLATE_VALIDATE_MTIME,
-                           struct.pack('L', mtime) + path)
+                           struct.pack('L', int(mtime)) + path.encode('utf-8'))
 
     def bind_mount(self, source, target, expand=False, writable=False):
         assert isinstance(source, str)

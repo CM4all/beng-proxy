@@ -5,6 +5,7 @@
 #
 
 from __future__ import print_function
+import six
 import array, struct
 
 try:
@@ -12,7 +13,7 @@ try:
 except ImportError:
     from urllib import unquote
 
-from beng_proxy.translation.protocol import *
+from .protocol import *
 import beng_proxy.translation.uri
 
 def _parse_port(address):
@@ -100,23 +101,24 @@ class Request:
 
         if packet.command == TRANSLATE_BEGIN:
             if len(packet.payload) > 0:
-                self.protocol_version = ord(packet.payload[0])
+                # this "struct" kludge is for Python 2/3 compatibility
+                self.protocol_version = struct.unpack('B', packet.payload[:1])[0]
         elif packet.command == TRANSLATE_END:
             return True
         elif packet.command == TRANSLATE_HOST:
-            self.host = packet.payload
+            self.host = packet.payload.decode('ascii')
         elif packet.command == TRANSLATE_ALT_HOST:
-            self.alt_host = packet.payload
+            self.alt_host = packet.payload.decode('ascii')
         elif packet.command == TRANSLATE_URI:
-            self.raw_uri = packet.payload
+            self.raw_uri = packet.payload.decode('ascii')
         elif packet.command == TRANSLATE_ARGS:
-            self.args = packet.payload
+            self.args = packet.payload.decode('ascii')
         elif packet.command == TRANSLATE_QUERY_STRING:
-            self.query_string = packet.payload
+            self.query_string = packet.payload.decode('ascii')
         elif packet.command == TRANSLATE_WIDGET_TYPE:
-            self.widget_type = packet.payload
+            self.widget_type = packet.payload.decode('ascii')
         elif packet.command == TRANSLATE_SESSION:
-            self.session = packet.payload
+            self.session = packet.payload.decode('ascii')
         elif packet.command == TRANSLATE_CHECK:
             self.check = packet.payload
         elif packet.command == TRANSLATE_AUTH:
@@ -134,28 +136,31 @@ class Request:
         elif packet.command == TRANSLATE_CHAIN_HEADER:
             self.chain_header = packet.payload
         elif packet.command == TRANSLATE_PARAM:
-            self.param = packet.payload
+            self.param = packet.payload.decode('ascii')
         elif packet.command == TRANSLATE_LISTENER_TAG:
-            self.listener_tag = packet.payload
+            self.listener_tag = packet.payload.decode('ascii')
         elif packet.command == TRANSLATE_LOCAL_ADDRESS_STRING:
-            self.local_address = packet.payload
+            self.local_address = packet.payload.decode('ascii')
             self.local_port = _parse_port(self.local_address)
         elif packet.command == TRANSLATE_REMOTE_HOST:
-            self.remote_host = packet.payload
+            self.remote_host = packet.payload.decode('ascii')
         elif packet.command == TRANSLATE_USER_AGENT:
-            self.user_agent = packet.payload
+            self.user_agent = packet.payload.decode('ascii')
         elif packet.command == TRANSLATE_UA_CLASS:
-            self.ua_class = packet.payload
+            self.ua_class = packet.payload.decode('ascii')
         elif packet.command == TRANSLATE_LANGUAGE:
-            self.accept_language = packet.payload
+            self.accept_language = packet.payload.decode('ascii')
         elif packet.command == TRANSLATE_AUTHORIZATION:
-            self.authorization = packet.payload
+            self.authorization = packet.payload.decode('ascii')
         elif packet.command == TRANSLATE_STATUS:
             if len(packet.payload) == 2:
                 self.status = struct.unpack('H', packet.payload)[0]
         elif packet.command == TRANSLATE_WANT:
             self.want = array.array('H')
-            self.want.fromstring(packet.payload)
+            if six.PY2:
+                self.want.fromstring(packet.payload)
+            else:
+                self.want.frombytes(packet.payload)
         elif packet.command == TRANSLATE_FILE_NOT_FOUND:
             self.file_not_found = packet.payload
         elif packet.command == TRANSLATE_DIRECTORY_INDEX:
@@ -167,28 +172,31 @@ class Request:
         elif packet.command == TRANSLATE_CONTENT_TYPE_LOOKUP:
             self.content_type_lookup = packet.payload
         elif packet.command == TRANSLATE_SUFFIX:
-            self.suffix = packet.payload
+            self.suffix = packet.payload.decode('ascii')
         elif packet.command == TRANSLATE_ERROR_DOCUMENT:
             self.error_document = True
             self.error_document_payload = packet.payload
         elif packet.command == TRANSLATE_PROBE_PATH_SUFFIXES:
             self.probe_path_suffixes = packet.payload
         elif packet.command == TRANSLATE_PROBE_SUFFIX:
-            self.probe_suffix = packet.payload
+            self.probe_suffix = packet.payload.decode('utf-8')
         elif packet.command == TRANSLATE_READ_FILE:
             self.read_file = packet.payload
         elif packet.command == TRANSLATE_POOL:
-            self.pool = packet.payload
+            self.pool = packet.payload.decode('ascii')
         elif packet.command == TRANSLATE_USER:
-            self.user = packet.payload
+            self.user = packet.payload.decode('ascii')
         elif packet.command == TRANSLATE_LOGIN:
             self.login = True
         elif packet.command == TRANSLATE_PASSWORD:
-            self.password = packet.payload
+            self.password = packet.payload.decode('ascii')
         elif packet.command == TRANSLATE_SERVICE:
-            self.service = packet.payload
+            self.service = packet.payload.decode('ascii')
         elif packet.command == TRANSLATE_CRON:
-            self.cron = packet.payload or True
+            if packet.payload:
+                self.cron = packet.payload.decode('ascii')
+            else:
+                self.cron = True
         elif packet.command != TRANSLATE_LOCAL_ADDRESS:
             print("Invalid command:", packet.command)
         return False

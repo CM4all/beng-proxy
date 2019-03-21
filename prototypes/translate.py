@@ -65,7 +65,7 @@ class Translation(Protocol):
         self.widget_registry = WidgetRegistry(widgets_path)
 
     def _handle_chain(self, chain, chain_header, status):
-        print "chain", chain, chain_header, status
+        log.msg("chain %s header=%s status=%s" % (chain, chain_header, status))
         response = Response(protocol_version=2)
         if chain == 'foo':
             response.packet(TRANSLATE_FASTCGI, os.path.join(cgi_path, 'pipe2.sed'))
@@ -918,7 +918,7 @@ class Translation(Protocol):
                 response.packet(TRANSLATE_EXPAND_PATH, r'/var/www/\1/\2')
         elif uri[:16] == '/file_not_found/':
             if file_not_found is not None:
-                assert file_not_found == 'hansi'
+                assert file_not_found == b'hansi'
                 response.packet(TRANSLATE_BASE, '/file_not_found/')
                 response.status(204)
                 return
@@ -927,7 +927,7 @@ class Translation(Protocol):
             response.packet(TRANSLATE_FILE_NOT_FOUND, 'hansi')
         elif uri[:17] == '/directory_index/':
             if directory_index is not None:
-                assert directory_index == 'abc'
+                assert directory_index == b'abc'
                 response.packet(TRANSLATE_BASE, '/directory_index/')
                 response.packet(TRANSLATE_REGEX, "^(.*)$")
                 response.packet(TRANSLATE_REGEX_TAIL)
@@ -968,7 +968,7 @@ class Translation(Protocol):
                 response.packet(TRANSLATE_BASE, '/read_file/')
                 response.packet(TRANSLATE_READ_FILE, '/tmp/foo')
             else:
-                response.path('/var/www/' + request.read_file)
+                response.path('/var/www/' + request.read_file.decode('ascii'))
         elif raw_uri[:16] == '/regex_host_uri/':
             response.packet(TRANSLATE_BASE, '/regex_host_uri/')
             response.packet(TRANSLATE_EASY_BASE)
