@@ -6,7 +6,12 @@
 
 from __future__ import print_function
 import array, struct
-import urllib
+
+try:
+    from urllib.parse import unquote
+except ImportError:
+    from urllib import unquote
+
 from beng_proxy.translation.protocol import *
 import beng_proxy.translation.uri
 
@@ -80,7 +85,7 @@ class Request:
             # compatibility with pre-0.7: return the unquoted URI
             if self.raw_uri is None:
                 return None
-            return urllib.unquote(self.raw_uri)
+            return unquote(self.raw_uri)
         else:
             raise AttributeError(name)
 

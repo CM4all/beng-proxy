@@ -4,7 +4,10 @@
 # Author: Max Kellermann <mk@cm4all.com>
 #
 
-import urllib
+try:
+    from urllib.parse import quote
+except ImportError:
+    from urllib import quote
 
 def absolute_uri(request, scheme=None, host=None, uri=None, query_string=None,
                  param=None):
@@ -27,7 +30,7 @@ def absolute_uri(request, scheme=None, host=None, uri=None, query_string=None,
             x += "&"
         else:
             x += ";"
-        x += "translate=" + urllib.quote(param)
+        x += "translate=" + quote(param)
 
     if query_string is None:
         query_string = request.query_string

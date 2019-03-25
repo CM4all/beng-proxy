@@ -6,7 +6,12 @@
 
 import re
 import os
-import urllib
+
+try:
+    from urllib.parse import unquote
+except ImportError:
+    from urllib import unquote
+
 from twisted.python import log
 from twisted.internet import reactor, defer
 from twisted.internet.protocol import Protocol, Factory
@@ -162,7 +167,7 @@ class Translation(Protocol):
         response.packet(TRANSLATE_BASE, base)
         response.packet(TRANSLATE_DOCUMENT_ROOT, document_root)
 
-        path = os.path.join(document_root, urllib.unquote(uri))
+        path = os.path.join(document_root, unquote(uri))
         easy_path = document_root + '/'
 
         if request.file_not_found == '404':

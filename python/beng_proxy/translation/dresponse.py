@@ -5,6 +5,12 @@
 #
 
 import struct
+
+try:
+    from urllib.parse import urlparse
+except ImportError:
+    from urlparse import urlparse
+
 from twisted.names.client import getHostByName
 from twisted.internet import defer
 from .protocol import *
@@ -31,8 +37,6 @@ class DeferredResponse(Response):
 
         if uri[0] != '/' and addresses is None:
             # parse host:port from URL
-            from urlparse import urlparse
-
             d = defer.Deferred()
 
             host, port = (urlparse(uri)[1].split(':', 1) + [None])[0:2]
@@ -54,8 +58,6 @@ class DeferredResponse(Response):
 
         if uri[0] != '/' and addresses is None:
             # parse host:port from URL
-            from urlparse import urlparse
-
             d = defer.Deferred()
 
             host, port = (addresses.split(':', 1) + [None])[:2]

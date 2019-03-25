@@ -5,6 +5,12 @@
 #
 
 import array, struct
+
+try:
+    from urllib.parse import urlparse
+except ImportError:
+    from urlparse import urlparse
+
 from .protocol import *
 from .serialize import packet_header
 
@@ -75,7 +81,6 @@ class Response:
 
         if uri[0] != '/' and addresses is None:
             # parse host:port from URL
-            from urlparse import urlparse
             from socket import gethostbyname
 
             host, port = (urlparse(uri)[1].split(':', 1) + [None])[0:2]
