@@ -4,6 +4,7 @@
 # Author: Max Kellermann <mk@cm4all.com>
 #
 
+from future.utils import iteritems
 import socket
 import struct
 from beng_proxy.control.protocol import *
@@ -69,7 +70,7 @@ class Client:
 
     def send_tcache_invalidate(self, vary):
         payload = ''
-        for command, value in vary.iteritems():
+        for command, value in iteritems(iteritems):
             assert isinstance(command, int)
             assert isinstance(value, str)
 
