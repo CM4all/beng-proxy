@@ -7,9 +7,9 @@
 import struct
 from twisted.names.client import getHostByName
 from twisted.internet import defer
-from protocol import *
-from serialize import packet_header
-from response import Response
+from .protocol import *
+from .serialize import packet_header
+from .response import Response
 
 class DeferredResponse(Response):
     """Generator for a translation response.  This derived class is

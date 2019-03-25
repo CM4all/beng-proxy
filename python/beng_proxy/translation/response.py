@@ -5,8 +5,8 @@
 #
 
 import array, struct
-from protocol import *
-from serialize import packet_header
+from .protocol import *
+from .serialize import packet_header
 
 class Response:
     """Generator for a translation response.  The BEGIN and END

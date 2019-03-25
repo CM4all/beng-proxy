@@ -4,10 +4,10 @@
 # Author: Max Kellermann <mk@cm4all.com>
 #
 
-from protocol import *
-from serialize import PacketReader, packet_header, write_packet
-from request import Request
-from response import Response
+from .protocol import *
+from .serialize import PacketReader, packet_header, write_packet
+from .request import Request
+from .response import Response
 
 import protocol
 __all__ = ['PacketReader', 'packet_header', 'write_packet',
