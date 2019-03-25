@@ -12,4 +12,4 @@ from .response import Response
 from . import protocol
 __all__ = ['PacketReader', 'packet_header', 'write_packet',
            'Request', 'Response'] + \
-          filter(lambda x: x[:10] == 'TRANSLATE_' or x[:7] == 'HEADER_', protocol.__dict__)
+          [x for x in protocol.__dict__ if x[:10] == 'TRANSLATE_' or x[:7] == 'HEADER_']
