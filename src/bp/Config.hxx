@@ -159,8 +159,9 @@ struct BpConfig {
 
     BpConfig() {
         translation_socket.SetLocal("@translation");
-        spawn.systemd_scope = "cm4all-beng-spawn.scope";
+        spawn.systemd_scope = "bp-spawn.scope";
         spawn.systemd_scope_description = "The cm4all-beng-proxy child process spawner";
+        spawn.systemd_slice = "system-cm4all.slice";
     }
 
     void HandleSet(StringView name, const char *value);
