@@ -159,8 +159,7 @@ LbMonitorController::LbMonitorController(EventLoop &_event_loop,
      interval_event(event_loop, BIND_THIS_METHOD(IntervalCallback)),
      timeout_event(event_loop, BIND_THIS_METHOD(TimeoutCallback))
 {
-    static constexpr struct timeval immediately = { 0, 0 };
-    interval_event.Add(immediately);
+    interval_event.Schedule(std::chrono::seconds(0));
 }
 
 LbMonitorController::~LbMonitorController() noexcept
