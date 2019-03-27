@@ -263,8 +263,7 @@ Connection::HandleHttpRequest(HttpServerRequest &request,
                                  std::move(delayed.first));
         }
 
-        static constexpr struct timeval t{0,0};
-        timer.Add(t);
+        timer.Schedule(std::chrono::seconds(0));
         break;
     }
 }
