@@ -74,9 +74,9 @@ static constexpr off_t cacheable_size_limit = 512 * 1024;
  * The timeout for the underlying HTTP request.  After this timeout
  * expires, the filter cache gives up and doesn't store the response.
  */
-static constexpr struct timeval fcache_request_timeout = { 60, 0 };
+static constexpr Event::Duration fcache_request_timeout = std::chrono::minutes(1);
 
-static constexpr struct timeval fcache_compress_interval = { 600, 0 };
+static constexpr Event::Duration fcache_compress_interval = std::chrono::minutes(10);
 
 /**
  * The default "expires" duration [s] if no expiration was given for
@@ -302,7 +302,7 @@ private:
 
     void OnCompressTimer() noexcept {
         Compress();
-        compress_timer.Add(fcache_compress_interval);
+        compress_timer.Schedule(fcache_compress_interval);
     }
 };
 
@@ -552,7 +552,7 @@ FilterCacheRequest::OnHttpResponse(http_status_t status, StringMap &&headers,
 
         cache.requests.push_front(*this);
 
-        timeout_event.Add(fcache_request_timeout);
+        timeout_event.Schedule(fcache_request_timeout);
 
         sink_rubber_new(pool, std::move(tee.second),
                         cache.rubber, cacheable_size_limit,
@@ -591,7 +591,7 @@ FilterCache::FilterCache(struct pool &_pool, size_t max_size,
      cache(_event_loop, 65521, max_size * 7 / 8),
      compress_timer(_event_loop, BIND_THIS_METHOD(OnCompressTimer)),
      resource_loader(_resource_loader) {
-    compress_timer.Add(fcache_compress_interval);
+    compress_timer.Schedule(fcache_compress_interval);
 }
 
 FilterCache *

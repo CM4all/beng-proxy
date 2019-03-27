@@ -69,7 +69,7 @@
 #include <stdio.h>
 #include <errno.h>
 
-static constexpr struct timeval http_cache_compress_interval = { 600, 0 };
+static constexpr Event::Duration http_cache_compress_interval = std::chrono::minutes(10);
 
 class HttpCacheRequest final : public HttpResponseHandler,
                                public RubberSinkHandler,
@@ -359,7 +359,7 @@ private:
 
     void OnCompressTimer() noexcept {
         heap.Compress();
-        compress_timer.Add(http_cache_compress_interval);
+        compress_timer.Schedule(http_cache_compress_interval);
     }
 };
 
@@ -643,7 +643,7 @@ HttpCache::HttpCache(struct pool &_pool, size_t max_size,
 {
     assert(max_size > 0);
 
-    compress_timer.Add(http_cache_compress_interval);
+    compress_timer.Schedule(http_cache_compress_interval);
 }
 
 HttpCache *
