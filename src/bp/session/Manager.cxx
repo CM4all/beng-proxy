@@ -201,10 +201,7 @@ static constexpr unsigned SHM_NUM_PAGES = 65536;
 static constexpr unsigned SM_PAGES = (sizeof(SessionContainer) + SHM_PAGE_SIZE - 1) / SHM_PAGE_SIZE;
 
 /** clean up expired sessions every 60 seconds */
-static const struct timeval cleanup_interval = {
-    .tv_sec = 60,
-    .tv_usec = 0,
-};
+static constexpr Event::Duration cleanup_interval = std::chrono::minutes(1);
 
 #ifndef NDEBUG
 /**
@@ -241,7 +238,7 @@ public:
     }
 
     void EnableEvents() {
-        cleanup_timer.Add(cleanup_interval);
+        cleanup_timer.Schedule(cleanup_interval);
     }
 
     void DisableEvents() {
@@ -307,7 +304,7 @@ public:
         container->LockInsert(session);
 
         if (!cleanup_timer.IsPending())
-            cleanup_timer.Add(cleanup_interval);
+            cleanup_timer.Schedule(cleanup_interval);
     }
 
     void EraseAndDispose(SessionId id) {
@@ -387,7 +384,7 @@ void
 SessionManager::Cleanup() noexcept
 {
     if (container->Cleanup())
-        cleanup_timer.Add(cleanup_interval);
+        cleanup_timer.Schedule(cleanup_interval);
 
     assert(!crash_in_unsafe());
 }
