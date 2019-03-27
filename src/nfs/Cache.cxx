@@ -61,7 +61,7 @@
 #include <string.h>
 #include <errno.h>
 
-static constexpr struct timeval nfs_cache_compress_interval = { 600, 0 };
+static constexpr Event::Duration nfs_cache_compress_interval = std::chrono::minutes(10);
 
 class NfsCache;
 struct NfsCacheItem;
@@ -181,7 +181,7 @@ public:
 private:
     void OnCompressTimer() noexcept {
         rubber.Compress();
-        compress_timer.Add(nfs_cache_compress_interval);
+        compress_timer.Schedule(nfs_cache_compress_interval);
     }
 };
 
@@ -255,7 +255,7 @@ struct NfsCacheItem final : PoolHolder, CacheItem {
 
 static constexpr off_t cacheable_size_limit = 512 * 1024;
 
-static constexpr struct timeval nfs_cache_timeout = { 60, 0 };
+static constexpr Event::Duration nfs_cache_timeout = std::chrono::minutes(1);
 
 static const char *
 nfs_cache_key(struct pool &pool, const char *server,
@@ -400,7 +400,7 @@ NfsCache::NfsCache(struct pool &_pool, size_t max_size,
      rubber(max_size),
      cache(event_loop, 65521, max_size * 7 / 8),
      compress_timer(event_loop, BIND_THIS_METHOD(OnCompressTimer)) {
-    compress_timer.Add(nfs_cache_compress_interval);
+    compress_timer.Schedule(nfs_cache_compress_interval);
 }
 
 NfsCache *
@@ -533,7 +533,7 @@ NfsCache::OpenFile(struct pool &caller_pool,
 
     requests.push_back(*store);
 
-    store->timeout_event.Add(nfs_cache_timeout);
+    store->timeout_event.Schedule(nfs_cache_timeout);
 
     sink_rubber_new(store->GetPool(), std::move(tee.second),
                     rubber, cacheable_size_limit,

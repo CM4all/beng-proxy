@@ -487,17 +487,11 @@ public:
     void Cancel() noexcept override;
 };
 
-static const struct timeval nfs_client_mount_timeout = {
-    .tv_sec = 10,
-};
+static constexpr Event::Duration nfs_client_mount_timeout = std::chrono::seconds(10);
 
-static const struct timeval nfs_client_idle_timeout = {
-    .tv_sec = 300,
-};
+static constexpr Event::Duration nfs_client_idle_timeout = std::chrono::minutes(5);
 
-static const struct timeval nfs_file_expiry = {
-    .tv_sec = 60,
-};
+static constexpr Event::Duration nfs_file_expiry = std::chrono::minutes(1);
 
 static std::exception_ptr
 nfs_client_new_error(int status, struct nfs_context *nfs, void *data,
@@ -562,7 +556,7 @@ NfsClient::DeactivateFile()
 
     if (n_active_files == 0)
         /* the last file was deactivated: watch for idle timeout */
-        timeout_event.Add(nfs_client_idle_timeout);
+        timeout_event.Schedule(nfs_client_idle_timeout);
 }
 
 inline void
@@ -941,7 +935,7 @@ NfsClient::Mount(const char *server, const char *exportname,
 
     AddEvent();
 
-    timeout_event.Add(nfs_client_mount_timeout);
+    timeout_event.Schedule(nfs_client_mount_timeout);
 
     cancel_ptr = *this;
 
@@ -968,7 +962,7 @@ NfsFile::FstatCallback(int status, struct nfs_context *nfs, void *data)
 
     stat = *st;
     state = NfsFile::IDLE;
-    expire_event.Add(nfs_file_expiry);
+    expire_event.Schedule(nfs_file_expiry);
 
     Continue();
 }
