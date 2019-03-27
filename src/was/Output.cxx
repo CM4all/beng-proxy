@@ -52,10 +52,7 @@
 #include <string.h>
 #include <unistd.h>
 
-static constexpr struct timeval was_output_timeout = {
-    .tv_sec = 120,
-    .tv_usec = 0,
-};
+static constexpr Event::Duration was_output_timeout = std::chrono::minutes(2);
 
 class WasOutput final : IstreamHandler {
 public:
@@ -85,7 +82,7 @@ public:
 
     void ScheduleWrite() {
         event.ScheduleWrite();
-        timeout_event.Add(was_output_timeout);
+        timeout_event.Schedule(was_output_timeout);
     }
 
     void AbortError(std::exception_ptr ep) {

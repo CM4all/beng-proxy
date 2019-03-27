@@ -65,10 +65,7 @@
 #include <signal.h>
 #include <stdlib.h>
 
-static constexpr struct timeval was_idle_timeout = {
-    .tv_sec = 300,
-    .tv_usec = 0,
-};
+static constexpr Event::Duration was_idle_timeout = std::chrono::minutes(5);
 
 struct WasChildParams {
     const char *executable_path;
@@ -217,7 +214,7 @@ public:
 
     bool Release() noexcept override {
         event.ScheduleRead();
-        idle_timeout_event.Add(was_idle_timeout);
+        idle_timeout_event.Schedule(was_idle_timeout);
         unclean = stopping;
         return true;
     }
