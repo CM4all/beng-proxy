@@ -57,10 +57,7 @@
  * check SocketEvent::READ, because the kernel always indicates VFS files as
  * "readable without blocking".
  */
-static const struct timeval file_retry_timeout = {
-    .tv_sec = 0,
-    .tv_usec = 100000,
-};
+static constexpr Event::Duration file_retry_timeout = std::chrono::milliseconds(100);
 
 class FileIstream final : public Istream {
     FileDescriptor fd;
@@ -271,7 +268,7 @@ FileIstream::TryDirect() noexcept
            here, so we just install a timer which retries after
            100ms */
 
-        retry_event.Add(file_retry_timeout);
+        retry_event.Schedule(file_retry_timeout);
     } else {
         /* XXX */
         Abort(std::make_exception_ptr(FormatErrno("Failed to read from '%s'",
