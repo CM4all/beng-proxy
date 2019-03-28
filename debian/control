@@ -28,7 +28,8 @@ Build-Depends: debhelper (>= 12~), dh-python,
  texlive, texlive-luatex, texlive-latex-extra,
  valgrind
 Standards-Version: 3.9.1
-Vcs-git: git@dev.intern.cm-ag:max/beng-proxy.git
+Vcs-Browser: https://github.com/CM4all/beng-proxy
+Vcs-Git: git://github.com/CM4all/beng-proxy
 
 Package: cm4all-beng-proxy
 Architecture: any
