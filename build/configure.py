@@ -13,6 +13,7 @@ flavors = {
     'asan': {
         'options': [
             '-Db_sanitize=address',
+            '-Ddocumentation=disabled',
         ],
     },
 
@@ -20,6 +21,7 @@ flavors = {
         'options': [
             '--buildtype', 'debugoptimized',
             '-Db_ndebug=true',
+            '-Ddocumentation=disabled',
         ],
         'env': {
             'LDFLAGS': '-fuse-ld=gold -Wl,--gc-sections,--icf=all',
@@ -31,11 +33,13 @@ flavors = {
             '--buildtype', 'release',
             '-Db_ndebug=true',
             '-Db_lto=true',
+            '-Ddocumentation=disabled',
         ],
     },
 
     'clang': {
         'options': [
+            '-Ddocumentation=disabled',
         ],
         'env': {
             'CC': 'clang',

@@ -6,6 +6,7 @@
 
 MESON_OPTIONS = --prefix=/usr \
 	--includedir=include/cm4all/libbeng-proxy-3 \
+	-Ddocumentation=enabled \
 	--werror
 
 debian/build/debug/build.ninja: meson.build
@@ -16,21 +17,7 @@ debian/stamp-build-debug: debian/build/debug/build.ninja
 	ninja -v -C $(<D) test
 	touch $@
 
-TEX_VARS =
-TEX_FLAGS = --interaction=nonstopmode --no-shell-escape --output-format=pdf
-TEX_RUN = $(TEX_VARS) lualatex $(TEX_FLAGS) --output-directory=$(@D)
-
-TEX_SOURCES = doc/beng.tex doc/lb.tex
-TEX_OUTPUTS = $(patsubst %.tex,%.pdf,$(TEX_SOURCES))
-
-$(TEX_OUTPUTS): %.pdf: %.tex
-	$(TEX_RUN) $<
-	$(TEX_RUN) $<
-
-debian/stamp-doc: $(TEX_OUTPUTS)
-	touch $@
-
-build: debian/stamp-build-debug debian/stamp-doc
+build: debian/stamp-build-debug
 
 install: debian/stamp-install
 debian/stamp-install: debian/stamp-build-debug
