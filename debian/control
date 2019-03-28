@@ -2,7 +2,7 @@ Source: cm4all-beng-proxy
 Section: web
 Priority: extra
 Maintainer: Max Kellermann <mk@cm4all.com>
-Build-Depends: debhelper (>= 10), dh-python, dh-systemd,
+Build-Depends: debhelper (>= 11~), dh-python, dh-systemd,
  meson (>= 0.47),
  g++ (>= 4:6),
  libc6-dev (>= 2.13),

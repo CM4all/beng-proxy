@@ -53,8 +53,7 @@ binary-indep: build install
 	dh_installdirs -i
 	dh_installdocs -i
 	dh_installchangelogs -i
-	dh_systemd_enable -i
-	dh_systemd_start -i --no-start
+	dh_installsystemd -i --no-start
 	dh_installinit -i
 	dh_install -i
 	dh_link -i
@@ -75,8 +74,7 @@ binary-arch: build install
 	dh_installdirs -a
 	dh_installdocs -a
 	dh_installchangelogs -a
-	dh_systemd_enable -a
-	dh_systemd_start -a --no-start
+	dh_installsystemd -a --no-start
 	dh_installinit -a
 	dh_install -a
 	dh_link -a
