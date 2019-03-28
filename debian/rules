@@ -12,16 +12,8 @@ debian/build/debug/build.ninja: meson.build
 	rm -rf $(@D)
 	meson . $(@D) --buildtype debugoptimized $(MESON_OPTIONS)
 
-debian/build/optimized/build.ninja: meson.build
-	rm -rf $(@D)
-	meson . $(@D) --buildtype=debugoptimized $(MESON_OPTIONS) -Db_ndebug=true
-
 debian/stamp-build-debug: debian/build/debug/build.ninja
 	ninja -v -C $(<D) test
-	touch $@
-
-debian/stamp-build-optimized: debian/build/optimized/build.ninja
-	ninja -v -C $(<D) cm4all-beng-proxy
 	touch $@
 
 TEX_VARS =
@@ -38,7 +30,7 @@ $(TEX_OUTPUTS): %.pdf: %.tex
 debian/stamp-doc: $(TEX_OUTPUTS)
 	touch $@
 
-build: debian/stamp-build-debug debian/stamp-build-optimized debian/stamp-doc
+build: debian/stamp-build-debug debian/stamp-doc
 
 install: debian/stamp-install
 debian/stamp-install: debian/stamp-build-debug
@@ -88,7 +80,7 @@ binary-arch: build install
 	dh_installinit -a
 	dh_install -a
 	dh_link -a
-	dh_strip -a --dbgsym-migration='cm4all-beng-proxy-dbg (<< 15.6~), cm4all-beng-proxy-optimized-dbg (<< 15.6~), cm4all-beng-lb-dbg (<< 15.6~)'
+	dh_strip -a --dbgsym-migration='cm4all-beng-proxy-dbg (<< 15.6~), cm4all-beng-lb-dbg (<< 15.6~)'
 	dh_compress -a
 	dh_fixperms -a
 	dh_installdeb -a
