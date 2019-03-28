@@ -1157,6 +1157,7 @@ install_headers(
   subdir: 'beng-proxy',
 )
 
+subdir('doc')
 subdir('test')
 subdir('libcommon/test/util')
 subdir('libcommon/test/http')
