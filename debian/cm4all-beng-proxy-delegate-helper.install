@@ -1,1 +1,1 @@
-debian/build/debug/delegate-helper usr/lib/cm4all/beng-proxy/delegate/bin
+usr/lib/cm4all/beng-proxy/delegate/bin/delegate-helper
