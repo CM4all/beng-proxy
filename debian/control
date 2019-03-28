@@ -43,6 +43,7 @@ Suggests: attr, cm4all-jailcgi-wrapper, cm4all-coma-cgi,
  cm4all-beng-proxy-delegate-helper
 Provides: httpd, httpd-cgi
 Conflicts: cm4all-beng-proxy-toi-dbg,
+ cm4all-beng-proxy-toi,
  cm4all-beng-proxy-optimized,
  cm4all-jailcgi-wrapper (<< 1.4)
 Breaks: libcm4all-beng-proxy-js (<< 0.9.14),
@@ -56,16 +57,6 @@ Breaks: libcm4all-beng-proxy-js (<< 0.9.14),
 Description: HTTP proxy server
  BENG proxy is an HTTP proxy server which includes a HTML template
  processor.
-
-Package: cm4all-beng-proxy-toi
-Architecture: any
-Depends: ${shlibs:Depends}, cm4all-beng-proxy (= ${source:Version})
-Replaces: cm4all-beng-proxy
-Description: HTTP proxy server, obsolete TOI build
- BENG proxy is an HTTP proxy server which includes a HTML template
- processor.
- .
- This package is transitional.  Remove it.
 
 Package: cm4all-beng-proxy-logging
 Architecture: any
