@@ -813,7 +813,8 @@ control_server_dep = declare_dependency(
   ],
 )
 
-executable('cm4all-beng-proxy',
+executable(
+  'cm4all-beng-proxy',
   'src/delegate/RequestHandler.cxx',
   'src/capabilities.cxx',
   'src/address_string.cxx',
@@ -937,9 +938,13 @@ executable('cm4all-beng-proxy',
     control_server_dep,
     libsodium,
     libcrypt,
-  ])
+  ],
+  install: true,
+  install_dir: 'sbin',
+)
 
-executable('cm4all-beng-lb',
+executable(
+  'cm4all-beng-lb',
   'src/capabilities.cxx',
   'src/tcp_stock.cxx',
   'src/tcp_balancer.cxx',
@@ -1034,9 +1039,13 @@ executable('cm4all-beng-lb',
     control_server_dep,
     lua_dep,
     thread_pool_dep,
-  ])
+  ],
+  install: true,
+  install_dir: 'sbin',
+)
 
-executable('cm4all-certdb',
+executable(
+  'cm4all-certdb',
   'src/regex.cxx',
   'src/lb/Config.cxx',
   'src/lb/ConfigParser.cxx',
@@ -1069,27 +1078,36 @@ executable('cm4all-certdb',
     net_dep,
     http_dep,
     io_dep,
-])
+  ],
+  install: true,
+)
 
-executable('cm4all-beng-proxy-log-cat',
+executable(
+  'cm4all-beng-proxy-log-cat',
   'src/access_log/Server.cxx',
   'src/access_log/Cat.cxx',
   include_directories: inc,
   dependencies: [
     net_dep,
     http_dep,
-  ])
+  ],
+  install: true,
+)
 
-executable('cm4all-beng-proxy-log-json',
+executable(
+  'cm4all-beng-proxy-log-json',
   'src/access_log/Server.cxx',
   'src/access_log/Json.cxx',
   include_directories: inc,
   dependencies: [
     net_dep,
     http_dep,
-  ])
+  ],
+  install: true,
+)
 
-executable('cm4all-beng-proxy-log-lua',
+executable(
+  'cm4all-beng-proxy-log-lua',
   'src/access_log/Server.cxx',
   'src/access_log/Lua.cxx',
   'src/access_log/Launch.cxx',
@@ -1100,18 +1118,24 @@ executable('cm4all-beng-proxy-log-lua',
     net_dep,
     http_dep,
     liblua,
-  ])
+  ],
+  install: true,
+)
 
-executable('cm4all-beng-proxy-log-traffic',
+executable(
+  'cm4all-beng-proxy-log-traffic',
   'src/access_log/Server.cxx',
   'src/access_log/Traffic.cxx',
   include_directories: inc,
   dependencies: [
     net_dep,
     http_dep,
-  ])
+  ],
+  install: true,
+)
 
-executable('cm4all-beng-proxy-log-split',
+executable(
+  'cm4all-beng-proxy-log-split',
   'src/access_log/Server.cxx',
   'src/access_log/Split.cxx',
   include_directories: inc,
@@ -1119,24 +1143,33 @@ executable('cm4all-beng-proxy-log-split',
     system_dep,
     net_dep,
     http_dep,
-  ])
+  ],
+  install: true,
+)
 
-executable('cm4all-beng-proxy-log-forward',
+executable(
+  'cm4all-beng-proxy-log-forward',
   'src/access_log/Forward.cxx',
   include_directories: inc,
   dependencies: [
     net_dep,
     http_dep,
-  ])
+  ],
+  install: true,
+)
 
-executable('cm4all-beng-proxy-log-exec',
+executable(
+  'cm4all-beng-proxy-log-exec',
   'src/access_log/Exec.cxx',
   include_directories: inc,
   dependencies: [
     net_dep,
-  ])
+  ],
+  install: true,
+)
 
-executable('cm4all-beng-proxy-log-tee',
+executable(
+  'cm4all-beng-proxy-log-tee',
   'src/access_log/Launch.cxx',
   'src/access_log/Tee.cxx',
   include_directories: inc,
@@ -1144,13 +1177,19 @@ executable('cm4all-beng-proxy-log-tee',
     spawn_dep,
     system_dep,
     net_dep,
-  ])
+  ],
+  install: true,
+)
 
-executable('delegate-helper',
+executable(
+  'delegate-helper',
   'src/delegate/Helper.cxx',
   include_directories: inc,
   dependencies: [
-  ])
+  ],
+  install: true,
+  install_dir: 'lib/cm4all/beng-proxy/delegate/bin',
+)
 
 executable(
   'cm4all-beng-control',
