@@ -1,8 +1,8 @@
-/files
-/stamp-*
-/*.substvars
 /*.debhelper
-/*.log
+/*.debhelper.log
+/*.substvars
+/*-stamp
+/files
 
 /build/
 /tmp/

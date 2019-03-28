@@ -5,9 +5,4 @@
 *.pyc
 
 /output/
-
-perf.data
-perf.data.old
-/confdefs.h
-/conftest.err
-/conftest.c
+/obj-*/
