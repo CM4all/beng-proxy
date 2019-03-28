@@ -177,7 +177,6 @@ Description: Tools for managing the certificate database
 Package: cm4all-certdb-sql
 Architecture: all
 Enhances: cm4all-beng-lb
-Depends: ${shlibs:Depends}
 Replaces: cm4all-certdb (<< 11.16)
 Conflicts: cm4all-certdb (<< 11.16)
 Description: SQL scripts for the certificate database
