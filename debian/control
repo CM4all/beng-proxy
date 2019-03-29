@@ -25,7 +25,7 @@ Build-Depends: debhelper (>= 12~), dh-python,
  libyaml-cpp-dev,
  libavahi-client-dev,
  libcm4all-was-protocol-dev (>= 1.0),
- texlive, texlive-luatex, texlive-latex-extra,
+ python3-sphinx,
  valgrind
 Standards-Version: 3.9.1
 Vcs-Browser: https://github.com/CM4all/beng-proxy
@@ -140,6 +140,7 @@ Description: Tools for beng-proxy
 Package: cm4all-beng-proxy-doc
 Architecture: all
 Section: doc
+Depends: ${misc:Depends}, ${sphinxdoc:Depends}
 Description: Documentation for cm4all-beng-proxy
  BENG proxy is an HTTP proxy server which includes a HTML template
  processor.
