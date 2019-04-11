@@ -141,6 +141,14 @@ public:
         src.tail = nullptr;
     }
 
+    GrowingBuffer &operator=(GrowingBuffer &&src) noexcept {
+        using std::swap;
+        swap(head, src.head);
+        swap(tail, src.tail);
+        swap(position, src.position);
+        return *this;
+    }
+
     bool IsEmpty() const noexcept {
         return tail == nullptr;
     }
