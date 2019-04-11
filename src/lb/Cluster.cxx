@@ -58,9 +58,7 @@ LbCluster::Member::Member(const std::string &_key, SocketAddress _address,
 {
 }
 
-LbCluster::Member::~Member()
-{
-}
+LbCluster::Member::~Member() noexcept = default;
 
 const char *
 LbCluster::Member::GetLogName() const noexcept
@@ -105,7 +103,7 @@ LbCluster::LbCluster(const LbClusterConfig &_config,
                                                                member.port));
 }
 
-LbCluster::~LbCluster()
+LbCluster::~LbCluster() noexcept
 {
     delete sticky_cache;
     delete sticky_ring;
@@ -114,7 +112,7 @@ LbCluster::~LbCluster()
 }
 
 LbCluster::MemberMap::reference
-LbCluster::PickNextZeroconf()
+LbCluster::PickNextZeroconf() noexcept
 {
     assert(!active_members.empty());
 
@@ -126,7 +124,7 @@ LbCluster::PickNextZeroconf()
 }
 
 LbCluster::MemberMap::reference
-LbCluster::PickNextGoodZeroconf(const Expiry now)
+LbCluster::PickNextGoodZeroconf(const Expiry now) noexcept
 {
     assert(!active_members.empty());
 
@@ -141,7 +139,7 @@ LbCluster::PickNextGoodZeroconf(const Expiry now)
 }
 
 LbCluster::Member *
-LbCluster::Pick(const Expiry now, sticky_hash_t sticky_hash)
+LbCluster::Pick(const Expiry now, sticky_hash_t sticky_hash) noexcept
 {
     if (dirty) {
         dirty = false;
@@ -205,13 +203,13 @@ LbCluster::Pick(const Expiry now, sticky_hash_t sticky_hash)
 }
 
 static void
-UpdateHash(crypto_generichash_state &state, ConstBuffer<void> p)
+UpdateHash(crypto_generichash_state &state, ConstBuffer<void> p) noexcept
 {
     crypto_generichash_update(&state, (const unsigned char *)p.data, p.size);
 }
 
 static void
-UpdateHash(crypto_generichash_state &state, SocketAddress address)
+UpdateHash(crypto_generichash_state &state, SocketAddress address) noexcept
 {
     assert(!address.IsNull());
 
@@ -220,14 +218,14 @@ UpdateHash(crypto_generichash_state &state, SocketAddress address)
 
 template<typename T>
 static void
-UpdateHashT(crypto_generichash_state &state, const T &data)
+UpdateHashT(crypto_generichash_state &state, const T &data) noexcept
 {
     crypto_generichash_update(&state,
                               (const unsigned char *)&data, sizeof(data));
 }
 
 void
-LbCluster::FillActive()
+LbCluster::FillActive() noexcept
 {
     active_members.clear();
     active_members.reserve(members.size());

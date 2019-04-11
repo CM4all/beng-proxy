@@ -108,7 +108,7 @@ class LbCluster final : AvahiServiceExplorerListener {
         Member(const std::string &_key, SocketAddress _address,
                ReferencedFailureInfo &_failure,
                LbMonitorStock *monitors);
-        ~Member();
+        ~Member() noexcept;
 
         Member(const Member &) = delete;
         Member &operator=(const Member &) = delete;
@@ -122,15 +122,15 @@ class LbCluster final : AvahiServiceExplorerListener {
                 delete this;
         }
 
-        const std::string &GetKey() const {
+        const std::string &GetKey() const noexcept {
             return key;
         }
 
-        SocketAddress GetAddress() const {
+        SocketAddress GetAddress() const noexcept {
             return address;
         }
 
-        void SetAddress(SocketAddress _address) {
+        void SetAddress(SocketAddress _address) noexcept {
             address = _address;
         }
 
@@ -138,7 +138,7 @@ class LbCluster final : AvahiServiceExplorerListener {
             return failure;
         }
 
-        FailureInfo &GetFailureInfo() {
+        FailureInfo &GetFailureInfo() noexcept {
             return *failure;
         }
 
@@ -149,15 +149,15 @@ class LbCluster final : AvahiServiceExplorerListener {
         const char *GetLogName() const noexcept;
 
         struct Compare {
-            bool operator()(const Member &a, const Member &b) const {
+            bool operator()(const Member &a, const Member &b) const noexcept {
                 return a.key < b.key;
             }
 
-            bool operator()(const Member &a, const std::string &b) const {
+            bool operator()(const Member &a, const std::string &b) const noexcept {
                 return a.key < b;
             }
 
-            bool operator()(const std::string &a, const Member &b) const {
+            bool operator()(const std::string &a, const Member &b) const noexcept {
                 return a < b.key;
             }
         };
@@ -246,7 +246,7 @@ private:
     MemberMap members;
 
     /**
-     * All #members pointers as a std::vector.  Populated by
+     * All #members pointers in a std::vector.  Populated by
      * FillActive().
      */
     std::vector<MemberMap::pointer> active_members;
@@ -259,14 +259,14 @@ public:
     LbCluster(const LbClusterConfig &_config, FailureManager &_failure_manager,
               LbMonitorStock *_monitors,
               MyAvahiClient &avahi_client);
-    ~LbCluster();
+    ~LbCluster() noexcept;
 
-    const LbClusterConfig &GetConfig() const {
+    const LbClusterConfig &GetConfig() const noexcept {
         return config;
     }
 
     gcc_pure
-    size_t GetZeroconfCount() {
+    size_t GetZeroconfCount() noexcept {
         if (dirty) {
             dirty = false;
             FillActive();
@@ -280,7 +280,7 @@ public:
      *
      * Zeroconf only.
      */
-    Member *Pick(Expiry now, sticky_hash_t sticky_hash);
+    Member *Pick(Expiry now, sticky_hash_t sticky_hash) noexcept;
 
 private:
     /**
@@ -288,20 +288,20 @@ private:
      *
      * Zeroconf only.
      */
-    void FillActive();
+    void FillActive() noexcept;
 
     /**
      * Pick the next active Zeroconf member in a round-robin way.
      * Does not update the #StickyCache.
      */
-    MemberMap::reference PickNextZeroconf();
+    MemberMap::reference PickNextZeroconf() noexcept;
 
     /**
      * Like PickNextZeroconf(), but skips members which are bad
      * according to failure_get_status().  If all are bad, a random
      * (bad) one is returned.
      */
-    MemberMap::reference PickNextGoodZeroconf(Expiry now);
+    MemberMap::reference PickNextGoodZeroconf(Expiry now) noexcept;
 
     /* virtual methods from class AvahiServiceExplorerListener */
     void OnAvahiNewObject(const std::string &key,
