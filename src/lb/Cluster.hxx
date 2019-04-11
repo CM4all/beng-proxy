@@ -65,11 +65,21 @@ class LbCluster final : AvahiServiceExplorerListener {
 
     const Logger logger;
 
+    /**
+     * This #AvahiServiceExplorer locates Zeroconf nodes.
+     */
     std::unique_ptr<AvahiServiceExplorer> explorer;
 
     class StickyRing;
+
+    /**
+     * For consistent hashing.  It is populated by FillActive().
+     */
     StickyRing *sticky_ring = nullptr;
 
+    /**
+     * @see LbClusterConfig::sticky_cache
+     */
     StickyCache *sticky_cache = nullptr;
 
     /**
@@ -228,8 +238,17 @@ private:
     typedef boost::intrusive::set<Member,
                                   boost::intrusive::compare<Member::Compare>,
                                   boost::intrusive::constant_time_size<false>> MemberMap;
+
+    /**
+     * All Zeroconf members.  Managed by our
+     * AvahiServiceExplorerListener virtual method overrides.
+     */
     MemberMap members;
 
+    /**
+     * All #members pointers as a std::vector.  Populated by
+     * FillActive().
+     */
     std::vector<MemberMap::pointer> active_members;
 
     bool dirty = false;
@@ -256,9 +275,19 @@ public:
         return active_members.size();
     }
 
+    /**
+     * Pick a member for the next request.
+     *
+     * Zeroconf only.
+     */
     Member *Pick(Expiry now, sticky_hash_t sticky_hash);
 
 private:
+    /**
+     * Fill #active_members and #sticky_ring.
+     *
+     * Zeroconf only.
+     */
     void FillActive();
 
     /**
