@@ -38,7 +38,7 @@
 #include "event/Loop.hxx"
 
 class FilteredSocketBalancerRequest : public StockGetHandler {
-    FilteredSocketBalancer &fs_balancer;
+    FilteredSocketStock &stock;
 
     const bool ip_transparent;
     const SocketAddress bind_address;
@@ -50,13 +50,13 @@ class FilteredSocketBalancerRequest : public StockGetHandler {
     StockGetHandler &handler;
 
 public:
-    FilteredSocketBalancerRequest(FilteredSocketBalancer &_fs_balancer,
+    FilteredSocketBalancerRequest(FilteredSocketStock &_stock,
                                   bool _ip_transparent,
                                   SocketAddress _bind_address,
                                   Event::Duration _timeout,
                                   SocketFilterFactory *_filter_factory,
                                   StockGetHandler &_handler) noexcept
-        :fs_balancer(_fs_balancer),
+        :stock(_stock),
          ip_transparent(_ip_transparent),
          bind_address(_bind_address),
          timeout(_timeout),
@@ -78,13 +78,13 @@ inline void
 FilteredSocketBalancerRequest::Send(struct pool &pool, SocketAddress address,
                                     CancellablePointer &cancel_ptr) noexcept
 {
-    fs_balancer.stock.Get(pool,
-                          nullptr,
-                          ip_transparent, bind_address, address,
-                          timeout,
-                          filter_factory,
-                          *this,
-                          cancel_ptr);
+    stock.Get(pool,
+              nullptr,
+              ip_transparent, bind_address, address,
+              timeout,
+              filter_factory,
+              *this,
+              cancel_ptr);
 }
 
 /*
@@ -106,7 +106,7 @@ void
 FilteredSocketBalancerRequest::OnStockItemError(std::exception_ptr ep) noexcept
 {
     auto &base = BR::Cast(*this);
-    if (!base.ConnectFailure(fs_balancer.GetEventLoop().SteadyNow())) {
+    if (!base.ConnectFailure(stock.GetEventLoop().SteadyNow())) {
         handler.OnStockItemError(ep);
         base.Destroy();
     }
@@ -137,7 +137,7 @@ FilteredSocketBalancer::Get(struct pool &pool,
     BR::Start(pool, GetEventLoop().SteadyNow(), balancer,
               address_list, cancel_ptr,
               session_sticky,
-              *this,
+              stock,
               ip_transparent,
               bind_address, timeout,
               filter_factory,
