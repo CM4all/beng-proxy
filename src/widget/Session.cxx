@@ -37,31 +37,26 @@
 #include <assert.h>
 
 WidgetSession *
-widget_get_session(Widget *widget, RealmSession *session,
-                   bool create)
+Widget::GetSession(RealmSession &session, bool create) noexcept
 {
-    assert(widget != nullptr);
-    assert(session != nullptr);
-
-    if (widget->id == nullptr)
+    if (id == nullptr)
         return nullptr;
 
-    if (widget->parent == nullptr)
-        return session->GetWidget(widget->id, create);
+    if (parent == nullptr)
+        return session.GetWidget(id, create);
 
-    switch (widget->session_scope) {
+    switch (session_scope) {
     case Widget::SessionScope::RESOURCE:
         /* the session is bound to the resource: determine
            widget_session from the parent's session */
 
         {
-            WidgetSession *parent =
-                widget_get_session(widget->parent, session, create);
-            if (parent == nullptr)
+            auto *parent_session = parent->GetSession(session, create);
+            if (parent_session == nullptr)
                 return nullptr;
 
             const AutoRewindPool auto_rewind(*tpool);
-            return parent->GetChild(widget->id, create);
+            return parent_session->GetChild(id, create);
         }
 
     case Widget::SessionScope::SITE:
@@ -71,7 +66,7 @@ widget_get_session(Widget *widget, RealmSession *session,
 
         {
             const AutoRewindPool auto_rewind(*tpool);
-            return session->GetWidget(widget->id, create);
+            return session.GetWidget(id, create);
         }
     }
 

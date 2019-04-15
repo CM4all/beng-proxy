@@ -132,7 +132,7 @@ Widget::CopyFromRedirectLocation(StringView location, RealmSession *session)
     if (session != nullptr) {
         assert(cls->stateful);
 
-        auto *ws = widget_get_session(this, session, true);
+        auto *ws = GetSession(*session, true);
         if (ws != nullptr)
             SaveToSession(*ws);
     }

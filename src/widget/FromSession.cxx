@@ -100,7 +100,7 @@ Widget::LoadFromSession(RealmSession &session)
     } else {
         /* get query string from session */
 
-        WidgetSession *ws = widget_get_session(this, &session, false);
+        auto *ws = GetSession(session, false);
         if (ws != nullptr)
             LoadFromSession(*ws);
     }
@@ -121,7 +121,7 @@ Widget::SaveToSession(RealmSession &session)
         /* not stateful in this request */
         return;
 
-    WidgetSession *ws = widget_get_session(this, &session, true);
+    auto *ws = GetSession(session, true);
     if (ws != nullptr)
         SaveToSession(*ws);
 }

@@ -467,6 +467,12 @@ public:
      */
     void CopyFromRequest();
 
+    /**
+     * Returns the widget's session object.  The passed session object
+     * must be locked.
+     */
+    WidgetSession *GetSession(RealmSession &session, bool create) noexcept;
+
     gcc_pure
     bool ShouldSyncSession() const {
         if (from_request.body)
@@ -501,14 +507,6 @@ public:
      */
     void CopyFromRedirectLocation(StringView location, RealmSession *session);
 };
-
-/**
- * Returns the widget's session object.  The passed session object
- * must be locked.
- */
-WidgetSession *
-widget_get_session(Widget *widget, RealmSession *session,
-                   bool create);
 
 /**
  * Recursion detection: check if the widget or its parent chain

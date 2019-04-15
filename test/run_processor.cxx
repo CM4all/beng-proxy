@@ -66,9 +66,8 @@ embed_inline_widget(struct pool &pool,
 }
 
 WidgetSession *
-widget_get_session(gcc_unused Widget *widget,
-                   gcc_unused RealmSession *session,
-                   gcc_unused bool create)
+Widget::GetSession(gcc_unused RealmSession &session,
+                   gcc_unused bool create) noexcept
 {
     return nullptr;
 }
