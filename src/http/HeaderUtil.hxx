@@ -42,4 +42,4 @@ struct StringView;
 
 gcc_pure
 StringView
-http_header_param(const char *value, const char *name);
+http_header_param(const char *value, const char *name) noexcept;

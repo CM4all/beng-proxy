@@ -44,7 +44,7 @@ struct StringView;
 gcc_pure
 static inline int
 http_client_accepts_encoding(const StringMap &request_headers,
-                             const char *coding)
+                             const char *coding) noexcept
 {
     const char *accept_encoding = request_headers.Get("accept-encoding");
     return accept_encoding != nullptr &&

@@ -38,7 +38,7 @@
 #include <string.h>
 
 StringView
-http_header_param(const char *value, const char *name)
+http_header_param(const char *value, const char *name) noexcept
 {
     /* XXX this implementation only supports one param */
     const char *p = strchr(value, ';'), *q;
