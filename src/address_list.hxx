@@ -63,29 +63,29 @@ struct AddressList {
 
     AddressList() = default;
 
-    constexpr AddressList(ShallowCopy, const AddressList &src)
+    constexpr AddressList(ShallowCopy, const AddressList &src) noexcept
         :sticky_mode(src.sticky_mode),
          addresses(src.addresses)
     {
     }
 
-    AddressList(ShallowCopy, const AddressInfoList &src);
+    AddressList(ShallowCopy, const AddressInfoList &src) noexcept;
 
-    AddressList(AllocatorPtr alloc, const AddressList &src);
+    AddressList(AllocatorPtr alloc, const AddressList &src) noexcept;
 
-    AddressList(struct dpool &pool, const AddressList &src);
-    void Free(struct dpool &pool);
+    AddressList(struct dpool &pool, const AddressList &src) noexcept;
+    void Free(struct dpool &pool) noexcept;
 
-    void SetStickyMode(StickyMode _sticky_mode) {
+    void SetStickyMode(StickyMode _sticky_mode) noexcept {
         sticky_mode = _sticky_mode;
     }
 
     constexpr
-    bool IsEmpty() const {
+    bool IsEmpty() const noexcept {
         return addresses.empty();
     }
 
-    Array::size_type GetSize() const {
+    Array::size_type GetSize() const noexcept {
         return addresses.size();
     }
 
@@ -93,31 +93,31 @@ struct AddressList {
      * Is there no more than one address?
      */
     constexpr
-    bool IsSingle() const {
+    bool IsSingle() const noexcept {
         return addresses.size() == 1;
     }
 
-    constexpr const_iterator begin() const {
+    constexpr const_iterator begin() const noexcept {
         return addresses.begin();
     }
 
-    constexpr const_iterator end() const {
+    constexpr const_iterator end() const noexcept {
         return addresses.end();
     }
 
     /**
      * @return false if the list is full
      */
-    bool AddPointer(SocketAddress address) {
+    bool AddPointer(SocketAddress address) noexcept {
         return addresses.checked_append(address);
     }
 
-    bool Add(AllocatorPtr alloc, SocketAddress address);
-    bool Add(AllocatorPtr alloc, const AddressInfoList &list);
+    bool Add(AllocatorPtr alloc, SocketAddress address) noexcept;
+    bool Add(AllocatorPtr alloc, const AddressInfoList &list) noexcept;
 
-    bool Add(struct dpool &pool, SocketAddress address);
+    bool Add(struct dpool &pool, SocketAddress address) noexcept;
 
-    const SocketAddress &operator[](unsigned n) const {
+    const SocketAddress &operator[](unsigned n) const noexcept {
         assert(addresses[n].IsDefined());
 
         return addresses[n];
@@ -128,7 +128,7 @@ struct AddressList {
      * table.  This string stored in a statically allocated buffer.
      */
     gcc_pure
-    const char *GetKey() const;
+    const char *GetKey() const noexcept;
 };
 
 #endif

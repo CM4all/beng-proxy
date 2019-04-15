@@ -33,7 +33,7 @@
 #include "address_list.hxx"
 #include "shm/dpool.hxx"
 
-AddressList::AddressList(struct dpool &pool, const AddressList &src)
+AddressList::AddressList(struct dpool &pool, const AddressList &src) noexcept
     :sticky_mode(src.sticky_mode)
 {
     addresses.clear();
@@ -43,7 +43,7 @@ AddressList::AddressList(struct dpool &pool, const AddressList &src)
 }
 
 bool
-AddressList::Add(struct dpool &pool, const SocketAddress address)
+AddressList::Add(struct dpool &pool, const SocketAddress address) noexcept
 {
     if (addresses.full())
         return false;
@@ -56,7 +56,7 @@ AddressList::Add(struct dpool &pool, const SocketAddress address)
 }
 
 void
-AddressList::Free(struct dpool &pool)
+AddressList::Free(struct dpool &pool) noexcept
 {
     for (const auto &i : *this)
         d_free(pool, i.GetAddress());

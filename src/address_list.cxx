@@ -37,7 +37,7 @@
 
 #include <string.h>
 
-AddressList::AddressList(ShallowCopy, const AddressInfoList &src)
+AddressList::AddressList(ShallowCopy, const AddressInfoList &src) noexcept
 {
     for (const auto &i : src) {
         if (addresses.full())
@@ -47,7 +47,7 @@ AddressList::AddressList(ShallowCopy, const AddressInfoList &src)
     }
 }
 
-AddressList::AddressList(AllocatorPtr alloc, const AddressList &src)
+AddressList::AddressList(AllocatorPtr alloc, const AddressList &src) noexcept
     :sticky_mode(src.sticky_mode)
 {
     addresses.clear();
@@ -57,7 +57,7 @@ AddressList::AddressList(AllocatorPtr alloc, const AddressList &src)
 }
 
 bool
-AddressList::Add(AllocatorPtr alloc, const SocketAddress address)
+AddressList::Add(AllocatorPtr alloc, const SocketAddress address) noexcept
 {
     if (addresses.full())
         return false;
@@ -69,7 +69,7 @@ AddressList::Add(AllocatorPtr alloc, const SocketAddress address)
 }
 
 bool
-AddressList::Add(AllocatorPtr alloc, const AddressInfoList &list)
+AddressList::Add(AllocatorPtr alloc, const AddressInfoList &list) noexcept
 {
     for (const auto &i : list)
         if (!Add(alloc, i))
@@ -79,7 +79,7 @@ AddressList::Add(AllocatorPtr alloc, const AddressInfoList &list)
 }
 
 const char *
-AddressList::GetKey() const
+AddressList::GetKey() const noexcept
 {
     static char buffer[2048];
     size_t length = 0;
