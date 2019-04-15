@@ -44,6 +44,8 @@
 static struct Context *global;
 
 struct Context {
+    RootPool root_pool;
+
     struct {
         CancellablePointer cancel_ptr;
 
@@ -145,11 +147,11 @@ widget_registry_finish(Context *data)
  */
 
 static void
-test_normal(struct pool *pool)
+test_normal()
 {
     Context data;
 
-    pool = pool_new_linear(pool, "test", 8192);
+    auto *pool = pool_new_linear(data.root_pool, "test", 8192);
 
     auto widget = NewFromPool<Widget>(*pool, *pool, nullptr);
     widget->class_name = "foo";
@@ -178,11 +180,11 @@ test_normal(struct pool *pool)
 }
 
 static void
-test_abort(struct pool *pool)
+test_abort()
 {
     Context data;
 
-    pool = pool_new_linear(pool, "test", 8192);
+    auto *pool = pool_new_linear(data.root_pool, "test", 8192);
 
     auto widget = NewFromPool<Widget>(*pool, *pool, nullptr);
     widget->class_name = "foo";
@@ -211,11 +213,11 @@ test_abort(struct pool *pool)
 }
 
 static void
-test_two_clients(struct pool *pool)
+test_two_clients()
 {
     Context data;
 
-    pool = pool_new_linear(pool, "test", 8192);
+    auto *pool = pool_new_linear(data.root_pool, "test", 8192);
 
     auto widget = NewFromPool<Widget>(*pool, *pool, nullptr);
     widget->class_name = "foo";
@@ -249,12 +251,12 @@ test_two_clients(struct pool *pool)
 }
 
 static void
-test_two_abort(struct pool *pool)
+test_two_abort()
 {
     Context data;
     data.first.abort = true;
 
-    pool = pool_new_linear(pool, "test", 8192);
+    auto *pool = pool_new_linear(data.root_pool, "test", 8192);
 
     auto widget = NewFromPool<Widget>(*pool, *pool, nullptr);
     widget->class_name = "foo";
@@ -298,8 +300,8 @@ main(int, char **)
 {
     /* run test suite */
 
-    test_normal(RootPool());
-    test_abort(RootPool());
-    test_two_clients(RootPool());
-    test_two_abort(RootPool());
+    test_normal();
+    test_abort();
+    test_two_clients();
+    test_two_abort();
 }
