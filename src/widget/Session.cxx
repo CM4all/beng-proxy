@@ -40,13 +40,13 @@ WidgetSession *
 widget_get_session(Widget *widget, RealmSession *session,
                    bool create)
 {
-    assert(widget != NULL);
-    assert(session != NULL);
+    assert(widget != nullptr);
+    assert(session != nullptr);
 
-    if (widget->id == NULL)
-        return NULL;
+    if (widget->id == nullptr)
+        return nullptr;
 
-    if (widget->parent == NULL)
+    if (widget->parent == nullptr)
         return session->GetWidget(widget->id, create);
 
     switch (widget->session_scope) {
@@ -76,5 +76,5 @@ widget_get_session(Widget *widget, RealmSession *session,
     }
 
     assert(0);
-    return NULL;
+    return nullptr;
 }
