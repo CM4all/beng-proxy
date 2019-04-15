@@ -31,7 +31,7 @@
  */
 
 #include "ForwardHeaders.hxx"
-#include "http_upgrade.hxx"
+#include "http/Upgrade.hxx"
 #include "strmap.hxx"
 #include "session/Session.hxx"
 #include "pool/pool.hxx"

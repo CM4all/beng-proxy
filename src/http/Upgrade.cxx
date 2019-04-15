@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,10 +30,9 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "http_upgrade.hxx"
-#include "http/Headers.hxx"
+#include "Upgrade.hxx"
+#include "Headers.hxx"
 #include "strmap.hxx"
-#include "http/List.hxx"
 
 bool
 http_is_upgrade(const StringMap &headers)

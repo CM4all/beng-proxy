@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -34,11 +34,10 @@
  * Helpers for implementing HTTP "Upgrade".
  */
 
-#ifndef BENG_PROXY_HTTP_UPGRADE_HXX
-#define BENG_PROXY_HTTP_UPGRADE_HXX
+#pragma once
 
-#include "util/Compiler.h"
 #include "http/Status.h"
+#include "util/Compiler.h"
 
 class StringMap;
 class HttpHeaders;
@@ -77,5 +76,3 @@ http_is_upgrade(http_status_t status, const HttpHeaders &headers)
 {
     return http_is_upgrade(status) && http_is_upgrade(headers);
 }
-
-#endif

@@ -33,7 +33,7 @@
 #include "Internal.hxx"
 #include "Request.hxx"
 #include "Handler.hxx"
-#include "http_upgrade.hxx"
+#include "http/Upgrade.hxx"
 #include "pool/pool.hxx"
 #include "strmap.hxx"
 #include "http/HeaderParser.hxx"
