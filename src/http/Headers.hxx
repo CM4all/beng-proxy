@@ -49,63 +49,63 @@ class HttpHeaders {
     GrowingBuffer buffer;
 
 public:
-    explicit HttpHeaders(struct pool &pool)
+    explicit HttpHeaders(struct pool &pool) noexcept
         :map(pool) {}
 
-    explicit HttpHeaders(StringMap &&_map)
+    explicit HttpHeaders(StringMap &&_map) noexcept
         :map(std::move(_map)) {}
 
-    HttpHeaders(struct pool &pool, GrowingBuffer &&_buffer)
+    HttpHeaders(struct pool &pool, GrowingBuffer &&_buffer) noexcept
         :map(pool), buffer(std::move(_buffer)) {}
 
     HttpHeaders(HttpHeaders &&) = default;
     HttpHeaders &operator=(HttpHeaders &&) = default;
 
-    struct pool &GetPool() {
+    struct pool &GetPool() noexcept {
         return map.GetPool();
     }
 
-    const StringMap &GetMap() const {
+    const StringMap &GetMap() const noexcept {
         return map;
     }
 
-    StringMap &&ToMap() && {
+    StringMap &&ToMap() && noexcept {
         header_parse_buffer(GetPool(), map, std::move(buffer));
         return std::move(map);
     }
 
     gcc_pure
-    const char *Get(const char *key) const {
+    const char *Get(const char *key) const noexcept {
         return map.Get(key);
     }
 
-    GrowingBuffer &GetBuffer() {
+    GrowingBuffer &GetBuffer() noexcept {
         return buffer;
     }
 
-    GrowingBuffer MakeBuffer() {
+    GrowingBuffer MakeBuffer() noexcept {
         return std::move(buffer);
     }
 
-    void Write(const char *name, const char *value) {
+    void Write(const char *name, const char *value) noexcept {
         header_write(buffer, name, value);
     }
 
     /**
      * Move a (hop-by-hop) header from the map to the buffer.
      */
-    void MoveToBuffer(const char *name) {
+    void MoveToBuffer(const char *name) noexcept {
         const char *value = map.Get(name);
         if (value != nullptr)
             Write(name, value);
     }
 
-    void MoveToBuffer(const char *const*names) {
+    void MoveToBuffer(const char *const*names) noexcept {
         for (; *names != nullptr; ++names)
             MoveToBuffer(*names);
     }
 
-    GrowingBuffer &&ToBuffer() {
+    GrowingBuffer &&ToBuffer() noexcept {
         headers_copy_most(map, buffer);
         return std::move(buffer);
     }
