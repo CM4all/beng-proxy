@@ -233,11 +233,6 @@ Request::InvokeXmlProcessor(http_status_t status,
     }
 
     if (focus_ref != nullptr) {
-        auto &for_focused = *NewFromPool<Widget::ForFocused>(pool);
-        widget->for_focused = &for_focused;
-
-        for_focused.body = std::move(request_body);
-
         http_method_t method = request.method;
         if (http_method_is_empty(method) && HasTransformations())
             /* the following transformation may need the processed
@@ -245,9 +240,11 @@ Request::InvokeXmlProcessor(http_status_t status,
                HEAD to the processor */
             method = HTTP_METHOD_GET;
 
-        for_focused.method = method;
-        for_focused.path_info = args.Remove("path");
-        for_focused.query_string = dissected_uri.query;
+        auto &for_focused = *NewFromPool<Widget::ForFocused>(pool, method,
+                                                             args.Remove("path"),
+                                                             dissected_uri.query,
+                                                             std::move(request_body));
+        widget->for_focused = &for_focused;
     }
 
     uri = translate.response->uri != nullptr

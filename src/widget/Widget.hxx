@@ -237,12 +237,12 @@ public:
         /**
          * The new path_info for the focused widget.
          */
-        const char *path_info = nullptr;
+        const char *const path_info;
 
         /**
          * The query string for the focused widget.
          */
-        StringView query_string = nullptr;
+        const StringView query_string;
 
         /**
          * The request body.  This must be closed if it failed to be
@@ -253,7 +253,14 @@ public:
         /**
          * The HTTP method to be invoked on the focused widget.
          */
-        http_method_t method = HTTP_METHOD_GET;
+        const http_method_t method;
+
+        ForFocused(http_method_t _method, const char *_path_info,
+                   StringView _query_string,
+                   UnusedHoldIstreamPtr &&_body) noexcept
+            :path_info(_path_info), query_string(_query_string),
+             body(std::move(_body)),
+             method(_method) {}
     } *for_focused = nullptr;
 
 private:
