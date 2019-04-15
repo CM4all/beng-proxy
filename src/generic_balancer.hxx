@@ -79,7 +79,7 @@ public:
                     const AddressList &_address_list,
                     CancellablePointer &_cancel_ptr,
                     sticky_hash_t _session_sticky,
-                    Args&&... args)
+                    Args&&... args) noexcept
         :R(std::forward<Args>(args)...),
          pool(_pool), balancer(_balancer),
          address_list(_address_list),
@@ -101,7 +101,7 @@ private:
         Destroy();
     }
 
-    static unsigned CalculateRetries(const AddressList &address_list) {
+    static unsigned CalculateRetries(const AddressList &address_list) noexcept {
         const unsigned size = address_list.GetSize();
         if (size <= 1)
             return 0;
@@ -114,11 +114,11 @@ private:
     }
 
 public:
-    static constexpr BalancerRequest &Cast(R &r) {
+    static constexpr BalancerRequest &Cast(R &r) noexcept {
         return (BalancerRequest &)r;
     }
 
-    void Next(Expiry now) {
+    void Next(Expiry now) noexcept {
         const SocketAddress address =
             balancer.Get(now, address_list, session_sticky);
 
@@ -131,11 +131,11 @@ public:
         R::Send(pool, current_address, cancel_ptr);
     }
 
-    void ConnectSuccess() {
+    void ConnectSuccess() noexcept {
         failure->UnsetConnect();
     }
 
-    bool ConnectFailure(Expiry now) {
+    bool ConnectFailure(Expiry now) noexcept {
         failure->SetConnect(now, std::chrono::seconds(20));
 
         if (retries-- > 0){
@@ -149,7 +149,7 @@ public:
 
     template<typename... Args>
     static void Start(struct pool &pool, Expiry now,
-                      Args&&... args) {
+                      Args&&... args) noexcept {
         auto r = NewFromPool<BalancerRequest>(pool, pool,
                                               std::forward<Args>(args)...);
         r->Next(now);
