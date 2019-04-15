@@ -40,7 +40,7 @@
 #include "file_address.hxx"
 #include "lhttp_request.hxx"
 #include "http_address.hxx"
-#include "http_headers.hxx"
+#include "http/Headers.hxx"
 #include "cgi/cgi_glue.hxx"
 #include "cgi_address.hxx"
 #include "fcgi/Request.hxx"

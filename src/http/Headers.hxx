@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,14 +30,12 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_HTTP_HEADERS_HXX
-#define BENG_PROXY_HTTP_HEADERS_HXX
+#pragma once
 
 #include "strmap.hxx"
 #include "GrowingBuffer.hxx"
-#include "http/HeaderWriter.hxx"
-#include "http/HeaderParser.hxx"
-
+#include "HeaderWriter.hxx"
+#include "HeaderParser.hxx"
 #include "util/Compiler.h"
 
 /**
@@ -112,5 +110,3 @@ public:
         return std::move(buffer);
     }
 };
-
-#endif

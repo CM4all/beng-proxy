@@ -32,7 +32,7 @@
 
 #include "strmap.hxx"
 #include "http_client.hxx"
-#include "http_headers.hxx"
+#include "http/Headers.hxx"
 #include "HttpResponseHandler.hxx"
 #include "lease.hxx"
 #include "direct.hxx"

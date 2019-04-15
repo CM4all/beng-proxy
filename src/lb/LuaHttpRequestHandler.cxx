@@ -36,7 +36,7 @@
 #include "HttpResponseHandler.hxx"
 #include "http_server/http_server.hxx"
 #include "http_server/Request.hxx"
-#include "http_headers.hxx"
+#include "http/Headers.hxx"
 #include "HttpResponseHandler.hxx"
 
 class LbLuaResponseHandler final : public HttpResponseHandler {

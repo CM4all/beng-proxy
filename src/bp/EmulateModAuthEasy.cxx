@@ -34,7 +34,7 @@
 #include "FileHeaders.hxx"
 #include "Request.hxx"
 #include "file_address.hxx"
-#include "http_headers.hxx"
+#include "http/Headers.hxx"
 #include "http_server/Request.hxx"
 #include "translation/Vary.hxx"
 #include "istream/istream.hxx"

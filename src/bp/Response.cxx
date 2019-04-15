@@ -40,7 +40,7 @@
 #include "Instance.hxx"
 #include "http_server/http_server.hxx"
 #include "http_server/Request.hxx"
-#include "http_headers.hxx"
+#include "http/Headers.hxx"
 #include "http_util.hxx"
 #include "http/HeaderWriter.hxx"
 #include "http/HeaderParser.hxx"

@@ -50,7 +50,7 @@
 #include "address_suffix_registry.hxx"
 #include "http/HeaderWriter.hxx"
 #include "pool/pbuffer.hxx"
-#include "http_headers.hxx"
+#include "http/Headers.hxx"
 #include "http_server/Request.hxx"
 #include "AllocatorPtr.hxx"
 #include "puri_edit.hxx"

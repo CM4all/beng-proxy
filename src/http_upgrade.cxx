@@ -31,7 +31,7 @@
  */
 
 #include "http_upgrade.hxx"
-#include "http_headers.hxx"
+#include "http/Headers.hxx"
 #include "strmap.hxx"
 #include "http/List.hxx"
 

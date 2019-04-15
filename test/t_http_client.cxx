@@ -38,7 +38,7 @@
 
 #include "t_client.hxx"
 #include "http_client.hxx"
-#include "http_headers.hxx"
+#include "http/Headers.hxx"
 #include "system/SetupProcess.hxx"
 #include "io/FileDescriptor.hxx"
 #include "net/SocketDescriptor.hxx"

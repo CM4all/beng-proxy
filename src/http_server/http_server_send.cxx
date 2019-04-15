@@ -32,7 +32,7 @@
 
 #include "Internal.hxx"
 #include "Request.hxx"
-#include "http_headers.hxx"
+#include "http/Headers.hxx"
 #include "http_upgrade.hxx"
 #include "direct.hxx"
 #include "http/HeaderWriter.hxx"

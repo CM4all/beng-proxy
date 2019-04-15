@@ -39,7 +39,7 @@
 #include "http_server/http_server.hxx"
 #include "http_server/Request.hxx"
 #include "http_client.hxx"
-#include "http_headers.hxx"
+#include "http/Headers.hxx"
 #include "ssl/Filter.hxx"
 #include "istream/UnusedHoldPtr.hxx"
 #include "fs/Stock.hxx"

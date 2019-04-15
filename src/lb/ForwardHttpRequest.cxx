@@ -50,7 +50,7 @@
 #include "fs/Stock.hxx"
 #include "fs/Balancer.hxx"
 #include "HttpResponseHandler.hxx"
-#include "http_headers.hxx"
+#include "http/Headers.hxx"
 #include "stock/GetHandler.hxx"
 #include "stock/Item.hxx"
 #include "lease.hxx"

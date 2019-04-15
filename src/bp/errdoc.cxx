@@ -34,7 +34,7 @@
 #include "Request.hxx"
 #include "Instance.hxx"
 #include "http_server/Request.hxx"
-#include "http_headers.hxx"
+#include "http/Headers.hxx"
 #include "HttpResponseHandler.hxx"
 #include "translation/Cache.hxx"
 #include "translation/Handler.hxx"

@@ -32,7 +32,7 @@
 
 #include "http_request.hxx"
 #include "http_client.hxx"
-#include "http_headers.hxx"
+#include "http/Headers.hxx"
 #include "http_address.hxx"
 #include "HttpResponseHandler.hxx"
 #include "http/HeaderWriter.hxx"

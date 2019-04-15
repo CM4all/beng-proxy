@@ -33,7 +33,7 @@
 #include "http_server/http_server.hxx"
 #include "http_server/Request.hxx"
 #include "http_server/Handler.hxx"
-#include "http_headers.hxx"
+#include "http/Headers.hxx"
 #include "duplex.hxx"
 #include "direct.hxx"
 #include "istream/sink_null.hxx"

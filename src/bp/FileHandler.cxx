@@ -40,7 +40,7 @@
 #include "http/HeaderWriter.hxx"
 #include "http/Date.hxx"
 #include "http_util.hxx"
-#include "http_headers.hxx"
+#include "http/Headers.hxx"
 #include "http_server/Request.hxx"
 #include "istream/FileIstream.hxx"
 #include "istream/istream.hxx"

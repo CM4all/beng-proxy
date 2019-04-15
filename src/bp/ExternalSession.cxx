@@ -35,7 +35,7 @@
 #include "Instance.hxx"
 #include "http_address.hxx"
 #include "http_request.hxx"
-#include "http_headers.hxx"
+#include "http/Headers.hxx"
 #include "HttpResponseHandler.hxx"
 #include "istream/istream.hxx"
 #include "istream/UnusedPtr.hxx"
