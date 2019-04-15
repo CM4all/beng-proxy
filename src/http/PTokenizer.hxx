@@ -41,11 +41,12 @@ struct StringView;
 
 void
 http_next_quoted_string(struct pool &pool, StringView &input,
-                        StringView &value);
+                        StringView &value) noexcept;
 
 void
-http_next_value(struct pool &pool, StringView &input, StringView &value);
+http_next_value(struct pool &pool,
+                StringView &input, StringView &value) noexcept;
 
 void
 http_next_name_value(struct pool &pool, StringView &input,
-                     StringView &name, StringView &value);
+                     StringView &name, StringView &value) noexcept;

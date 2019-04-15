@@ -38,7 +38,7 @@
 
 void
 http_next_quoted_string(struct pool &pool, StringView &input,
-                        StringView &value)
+                        StringView &value) noexcept
 {
     char *dest = (char *)p_malloc(&pool, input.size); /* TODO: optimize memory consumption */
     size_t pos = 1;
@@ -65,7 +65,7 @@ http_next_quoted_string(struct pool &pool, StringView &input,
 }
 
 void
-http_next_value(struct pool &pool, StringView &input, StringView &value)
+http_next_value(struct pool &pool, StringView &input, StringView &value) noexcept
 {
     if (!input.empty() && input.front() == '"')
         http_next_quoted_string(pool, input, value);
@@ -75,7 +75,7 @@ http_next_value(struct pool &pool, StringView &input, StringView &value)
 
 void
 http_next_name_value(struct pool &pool, StringView &input,
-                     StringView &name, StringView &value)
+                     StringView &name, StringView &value) noexcept
 {
     http_next_token(input, name);
     if (name.empty())
