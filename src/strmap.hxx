@@ -225,18 +225,6 @@ StringMap *gcc_malloc
 strmap_dup(struct pool *pool, const StringMap *src) noexcept;
 
 /**
- * This variation of StringMap::Remove() allows the caller to pass
- * map=nullptr.
- */
-static inline const char *
-strmap_remove_checked(StringMap *map, const char *key) noexcept
-{
-    return map != nullptr
-        ? map->Remove(key)
-        : nullptr;
-}
-
-/**
  * This variation of StringMap::Get() allows the caller to pass
  * map=nullptr.
  */
