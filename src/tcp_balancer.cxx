@@ -68,7 +68,6 @@ public:
         return tcp_balancer.GetEventLoop();
     }
 
-protected:
     void Send(struct pool &pool, SocketAddress address,
               CancellablePointer &cancel_ptr) noexcept;
 

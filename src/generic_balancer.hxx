@@ -50,7 +50,9 @@
 class CancellablePointer;
 
 template<class R>
-class BalancerRequest final : R, Cancellable {
+class BalancerRequest final : Cancellable {
+    R request;
+
     struct pool &pool;
 
     Balancer &balancer;
@@ -80,7 +82,7 @@ public:
                     CancellablePointer &_cancel_ptr,
                     sticky_hash_t _session_sticky,
                     Args&&... args) noexcept
-        :R(std::forward<Args>(args)...),
+        :request(std::forward<Args>(args)...),
          pool(_pool), balancer(_balancer),
          address_list(_address_list),
          session_sticky(_session_sticky),
@@ -115,7 +117,7 @@ private:
 
 public:
     static constexpr BalancerRequest &Cast(R &r) noexcept {
-        return (BalancerRequest &)r;
+        return ContainerCast(r, &BalancerRequest::request);
     }
 
     void Next(Expiry now) noexcept {
@@ -128,7 +130,7 @@ public:
         const auto current_address = DupAddress(pool, address);
         failure = balancer.GetFailureManager().Make(current_address);
 
-        R::Send(pool, current_address, cancel_ptr);
+        request.Send(pool, current_address, cancel_ptr);
     }
 
     void ConnectSuccess() noexcept {
