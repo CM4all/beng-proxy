@@ -396,13 +396,6 @@ test('t_cgi', executable('t_cgi',
   env: ['srcdir=' + meson.source_root()],
 )
 
-test('t_http_util', executable('t_http_util',
-  't_http_util.cxx',
-  include_directories: inc,
-  dependencies: [
-    http_util_dep,
-  ]))
-
 test('t_http_client', executable('t_http_client',
   't_http_client.cxx',
   '../src/PInstance.cxx',
