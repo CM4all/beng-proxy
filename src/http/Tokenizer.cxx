@@ -35,7 +35,7 @@
 #include "util/StringView.hxx"
 
 void
-http_next_token(StringView &input, StringView &value)
+http_next_token(StringView &input, StringView &value) noexcept
 {
     value.size = 0;
     value.data = input.data;
