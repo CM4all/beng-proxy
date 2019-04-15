@@ -36,41 +36,38 @@
 
 #pragma once
 
-#include "util/Compiler.h"
-
-static gcc_always_inline bool
-char_is_http_char(char ch)
+constexpr bool
+char_is_http_char(char ch) noexcept
 {
     return (ch & 0x80) == 0;
 }
 
-static gcc_always_inline bool
-char_is_http_ctl(char ch)
+constexpr bool
+char_is_http_ctl(char ch) noexcept
 {
     return (((unsigned char)ch) <= 0x1f) || ch == 0x7f;
 }
 
-static gcc_always_inline bool
-char_is_http_text(char ch)
+constexpr bool
+char_is_http_text(char ch) noexcept
 {
     return !char_is_http_ctl(ch);
 }
 
-static gcc_always_inline bool
-char_is_http_sp(char ch)
+constexpr bool
+char_is_http_sp(char ch) noexcept
 {
     return ch == ' ';
 }
 
-static gcc_always_inline bool
-char_is_http_ht(char ch)
+constexpr bool
+char_is_http_ht(char ch) noexcept
 {
     return ch == '\t';
 }
 
-gcc_pure
-static gcc_always_inline bool
-char_is_http_separator(char ch)
+constexpr bool
+char_is_http_separator(char ch) noexcept
 {
     return ch == '(' || ch == ')' || ch == '<' || ch == '>' ||
         ch == '@' || ch == ',' || ch == ';' || ch == ':' ||
@@ -80,9 +77,8 @@ char_is_http_separator(char ch)
         char_is_http_sp(ch) || char_is_http_ht(ch);
 }
 
-gcc_pure
-static gcc_always_inline bool
-char_is_http_token(char ch)
+constexpr bool
+char_is_http_token(char ch) noexcept
 {
     return char_is_http_char(ch) && !char_is_http_ctl(ch) &&
         !char_is_http_separator(ch);
