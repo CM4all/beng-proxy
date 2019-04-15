@@ -30,8 +30,8 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "cookie_client.hxx"
-#include "cookie_jar.hxx"
+#include "http/CookieClient.hxx"
+#include "http/CookieJar.hxx"
 #include "header_writer.hxx"
 #include "pool/RootPool.hxx"
 #include "fb_pool.hxx"

@@ -30,7 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "cookie_jar.hxx"
+#include "CookieJar.hxx"
 #include "shm/dpool.hxx"
 
 #include <string.h>

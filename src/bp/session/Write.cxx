@@ -33,7 +33,6 @@
 #include "Write.hxx"
 #include "File.hxx"
 #include "Session.hxx"
-#include "cookie_jar.hxx"
 
 #include <stdint.h>
 

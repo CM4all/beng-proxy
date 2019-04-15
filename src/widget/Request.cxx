@@ -43,7 +43,7 @@
 #include "bp/TextProcessor.hxx"
 #include "bp/session/Session.hxx"
 #include "penv.hxx"
-#include "cookie_client.hxx"
+#include "http/CookieClient.hxx"
 #include "ResourceLoader.hxx"
 #include "header_writer.hxx"
 #include "bp/ForwardHeaders.hxx"

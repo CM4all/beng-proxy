@@ -31,18 +31,29 @@
  */
 
 /*
- * Cookie string utilities according to RFC 6265 4.1.1.
+ * Handle cookies sent by the HTTP client.
  */
 
-#ifndef BENG_PROXY_COOKIE_STRING_HXX
-#define BENG_PROXY_COOKIE_STRING_HXX
+#pragma once
+
+#include "util/Compiler.h"
 
 struct pool;
-struct StringView;
+class StringMap;
 
-void
-cookie_next_name_value(struct pool &pool, StringView &input,
-                       StringView &name, StringView &value,
-                       bool rfc_ignorant);
+/**
+ * Parse a Cookie request header and store all cookies in the
+ * specified strmap.
+ */
+gcc_pure
+StringMap
+cookie_map_parse(struct pool &pool, const char *p);
 
-#endif
+/**
+ * Remove cookies with the specified name from a Cookie request
+ * header.  Returns the input string if such a cookie was not found,
+ * or a newly allocated string.  Returns nullptr when no cookies
+ * remain after removing the excluded cookie.
+ */
+const char *
+cookie_exclude(const char *p, const char *exclude, struct pool *pool);

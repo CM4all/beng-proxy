@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_COOKIE_JAR_HXX
-#define BENG_PROXY_COOKIE_JAR_HXX
+#pragma once
 
 #include "util/Expiry.hxx"
 #include "util/StringView.hxx"
@@ -100,5 +99,3 @@ struct CookieJar {
      */
     void Expire(Expiry now);
 };
-
-#endif

@@ -31,7 +31,6 @@
  */
 
 #include "bp/session/Session.hxx"
-#include "cookie_jar.hxx"
 #include "bp/session/Manager.hxx"
 #include "shm/dpool.hxx"
 #include "crash.hxx"

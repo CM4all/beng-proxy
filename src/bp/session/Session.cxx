@@ -31,7 +31,6 @@
  */
 
 #include "Session.hxx"
-#include "cookie_jar.hxx"
 #include "http_address.hxx"
 #include "shm/dpool.hxx"
 #include "shm/dbuffer.hxx"

@@ -30,7 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "cookie_server.hxx"
+#include "http/CookieServer.hxx"
 #include "header_writer.hxx"
 #include "strmap.hxx"
 #include "pool/RootPool.hxx"

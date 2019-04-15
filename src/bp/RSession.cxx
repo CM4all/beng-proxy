@@ -36,7 +36,7 @@
 #include "session/Session.hxx"
 #include "session/Manager.hxx"
 #include "http_server/Request.hxx"
-#include "cookie_server.hxx"
+#include "http/CookieServer.hxx"
 #include "bot.h"
 #include "pool/pbuffer.hxx"
 #include "strmap.hxx"

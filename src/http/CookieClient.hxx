@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_COOKIE_CLIENT_HXX
-#define BENG_PROXY_COOKIE_CLIENT_HXX
+#pragma once
 
 struct pool;
 class StringMap;
@@ -64,5 +63,3 @@ void
 cookie_jar_http_header(const CookieJar &jar,
                        const char *domain, const char *path,
                        StringMap &headers, struct pool &pool);
-
-#endif

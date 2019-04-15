@@ -32,7 +32,7 @@
 
 #include "Request.hxx"
 #include "strmap.hxx"
-#include "cookie_client.hxx"
+#include "http/CookieClient.hxx"
 
 const char *
 Request::GetCookieHost() const

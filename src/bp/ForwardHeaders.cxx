@@ -34,11 +34,11 @@
 #include "http_upgrade.hxx"
 #include "strmap.hxx"
 #include "session/Session.hxx"
-#include "cookie_client.hxx"
-#include "cookie_server.hxx"
 #include "pool/pool.hxx"
 #include "product.h"
 #include "http/HeaderName.hxx"
+#include "http/CookieClient.hxx"
+#include "http/CookieServer.hxx"
 #include "util/CharUtil.hxx"
 #include "util/StringCompare.hxx"
 

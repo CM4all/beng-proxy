@@ -538,10 +538,10 @@ http_util_dep = declare_dependency(link_with: http_util,
                                    dependencies: [pool_dep, http_dep])
 
 cookie = static_library('cookie',
-  'src/cookie_jar.cxx',
-  'src/cookie_client.cxx',
-  'src/cookie_server.cxx',
-  'src/cookie_string.cxx',
+  'src/http/CookieJar.cxx',
+  'src/http/CookieClient.cxx',
+  'src/http/CookieServer.cxx',
+  'src/http/CookieString.cxx',
   include_directories: inc,
 )
 cookie_dep = declare_dependency(link_with: cookie,

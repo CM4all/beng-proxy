@@ -30,8 +30,8 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "cookie_server.hxx"
-#include "cookie_string.hxx"
+#include "CookieServer.hxx"
+#include "CookieString.hxx"
 #include "strmap.hxx"
 #include "pool/pool.hxx"
 #include "util/StringView.hxx"

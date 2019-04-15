@@ -30,9 +30,9 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "cookie_client.hxx"
-#include "cookie_jar.hxx"
-#include "cookie_string.hxx"
+#include "CookieClient.hxx"
+#include "CookieJar.hxx"
+#include "CookieString.hxx"
 #include "strmap.hxx"
 #include "http_string.hxx"
 #include "pool/tpool.hxx"

@@ -33,7 +33,7 @@
 #include "Session.hxx"
 #include "strmap.hxx"
 #include "pool/tpool.hxx"
-#include "cookie_server.hxx"
+#include "http/CookieServer.hxx"
 #include "pool/pool.hxx"
 
 #include <string.h>
