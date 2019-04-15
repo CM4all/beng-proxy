@@ -422,7 +422,7 @@ XmlProcessor::Cancel() noexcept
 {
     /* the request body was not yet submitted to the focused widget;
        dispose it now */
-    container.for_focused.body.Clear();
+    container.DiscardForFocused();
 
     pool_unref(&container.pool);
     pool_unref(&caller_pool);
@@ -1573,7 +1573,7 @@ XmlProcessor::OnXmlEof(gcc_unused off_t length) noexcept
 
     /* the request body could not be submitted to the focused widget,
        because we didn't find it; dispose it now */
-    container.for_focused.body.Clear();
+    container.DiscardForFocused();
 
     if (replace)
         replace->Finish();
@@ -1601,7 +1601,7 @@ XmlProcessor::OnXmlError(std::exception_ptr ep) noexcept
 
     /* the request body could not be submitted to the focused widget,
        because we didn't find it; dispose it now */
-    container.for_focused.body.Clear();
+    container.DiscardForFocused();
 
     if (lookup_id != nullptr) {
         handler->WidgetLookupError(ep);

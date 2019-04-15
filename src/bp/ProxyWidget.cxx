@@ -151,7 +151,7 @@ ProxyWidget::OnHttpResponse(http_status_t status, StringMap &&_headers,
 void
 ProxyWidget::OnHttpError(std::exception_ptr ep) noexcept
 {
-    widget->for_focused.body.Clear();
+    widget->DiscardForFocused();
 
     request.LogDispatchError(ep);
 }

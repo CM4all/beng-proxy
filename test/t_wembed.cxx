@@ -72,6 +72,11 @@ istream_iconv_new(gcc_unused struct pool &pool, UnusedIstreamPtr input,
 }
 
 void
+Widget::DiscardForFocused() noexcept
+{
+}
+
+void
 Widget::Cancel()
 {
 }

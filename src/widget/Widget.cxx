@@ -227,12 +227,18 @@ widget_check_recursion(const Widget *widget)
 }
 
 void
+Widget::DiscardForFocused() noexcept
+{
+    /* the request body was not forwarded to the focused widget,
+       so discard it */
+    for_focused.body.Clear();
+}
+
+void
 Widget::Cancel()
 {
     /* we are not going to consume the request body, so abort it */
     from_request.body.Clear();
 
-    /* the request body was not forwarded to the focused widget,
-       so discard it */
-    for_focused.body.Clear();
+    DiscardForFocused();
 }

@@ -455,6 +455,12 @@ public:
                             const char *frame, const char *view) const;
 
     /**
+     * Discard data for the focused widget (which is a descendant of
+     * this widget and was not yet found).
+     */
+    void DiscardForFocused() noexcept;
+
+    /**
      * Free important resources associated with the widget.  A widget
      * callback must call this function on a widget which it will not
      * send a HTTP request to.
