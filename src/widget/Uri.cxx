@@ -336,7 +336,7 @@ Widget::ExternalUri(struct pool &_pool,
     /* the URI is relative to the widget's base URI.  Convert the URI
        into an absolute URI to the template page on this server and
        add the appropriate args. */
-    args2 = args_format_n(tpool, args,
+    args2 = args_format_n(*tpool, args,
                           "focus", path,
                           p.IsNull() ? nullptr : "path", p,
                           frame == nullptr ? nullptr : "frame", frame,

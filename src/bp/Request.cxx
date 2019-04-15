@@ -65,7 +65,7 @@ Request::ParseArgs()
         return;
     }
 
-    args = args_parse(&pool, dissected_uri.args.data, dissected_uri.args.size);
+    args = args_parse(pool, dissected_uri.args.data, dissected_uri.args.size);
     translate.request.param = args.Remove("translate");
     translate.request.session = nullptr;
 }

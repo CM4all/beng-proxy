@@ -42,10 +42,10 @@
 static constexpr char ARGS_ESCAPE_CHAR = '$';
 
 StringMap
-args_parse(struct pool *pool, const char *p, size_t length)
+args_parse(struct pool &pool, const char *p, size_t length)
 {
     const char *end = p + length;
-    StringMap args(*pool);
+    StringMap args(pool);
 
     do {
         const char *ampersand = (const char *)memchr(p, '&', end - p);
@@ -57,10 +57,10 @@ args_parse(struct pool *pool, const char *p, size_t length)
 
         const char *equals = (const char *)memchr(p, '=', ampersand - p);
         if (equals > p) {
-            char *value = uri_unescape_dup(*pool, {equals + 1, ampersand},
+            char *value = uri_unescape_dup(pool, {equals + 1, ampersand},
                                            ARGS_ESCAPE_CHAR);
             if (value != nullptr)
-                args.Add(p_strndup(pool, p, equals - p), value);
+                args.Add(p_strndup(&pool, p, equals - p), value);
         }
 
         p = next;
@@ -70,7 +70,7 @@ args_parse(struct pool *pool, const char *p, size_t length)
 }
 
 const char *
-args_format_n(struct pool *pool, const StringMap *args,
+args_format_n(struct pool &pool, const StringMap *args,
               const char *replace_key, StringView replace_value,
               const char *replace_key2, StringView replace_value2,
               const char *replace_key3, StringView replace_value3,
@@ -95,7 +95,7 @@ args_format_n(struct pool *pool, const StringMap *args,
 
     /* allocate memory, format it */
 
-    char *p = (char *)p_malloc(pool, length + 1);
+    char *p = (char *)p_malloc(&pool, length + 1);
     const char *const ret = p;
 
     if (args != nullptr) {
@@ -151,7 +151,7 @@ args_format_n(struct pool *pool, const StringMap *args,
 }
 
 const char *
-args_format(struct pool *pool, const StringMap *args,
+args_format(struct pool &pool, const StringMap *args,
             const char *replace_key, const char *replace_value,
             const char *replace_key2, const char *replace_value2,
             const char *remove_key)

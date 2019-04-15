@@ -458,7 +458,7 @@ static void
 fill_translate_request_args(TranslateRequest &t,
                             struct pool &pool, const StringMap &args)
 {
-    t.args = args_format(&pool, &args,
+    t.args = args_format(pool, &args,
                          nullptr, nullptr, nullptr, nullptr,
                          "translate");
     if (t.args != nullptr && *t.args == 0)
