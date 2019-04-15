@@ -46,7 +46,7 @@
 
 void
 header_parse_line(struct pool &pool, StringMap &headers,
-                  StringView line)
+                  StringView line) noexcept
 {
     const char *colon = line.Find(':');
     if (gcc_unlikely(colon == nullptr || colon == line.data))
@@ -67,7 +67,7 @@ header_parse_line(struct pool &pool, StringMap &headers,
 
 void
 header_parse_buffer(struct pool &pool, StringMap &headers,
-                    GrowingBuffer &&_gb)
+                    GrowingBuffer &&_gb) noexcept
 {
     GrowingBufferReader reader(std::move(_gb));
 
