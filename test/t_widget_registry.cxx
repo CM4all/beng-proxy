@@ -45,6 +45,8 @@
 #include "PInstance.hxx"
 #include "util/Cancellable.hxx"
 
+#include <gtest/gtest.h>
+
 #include <string.h>
 
 class TranslateStock final : public Cancellable {
@@ -103,9 +105,7 @@ tstock_translate(gcc_unused TranslateStock &stock, struct pool &pool,
  *
  */
 
-/** normal run */
-static void
-test_normal()
+TEST(WidgetRegistry, Normal)
 {
     TranslateStock translate_stock;
     Context data;
@@ -119,14 +119,14 @@ test_normal()
     widget_class_lookup(*pool, *pool, *tcache, "sync",
                         BIND_METHOD(data, &Context::RegistryCallback),
                         cancel_ptr);
-    assert(!translate_stock.aborted);
-    assert(data.got_class);
-    assert(data.cls != NULL);
-    assert(data.cls->views.address.type == ResourceAddress::Type::HTTP);
-    assert(strcmp(data.cls->views.address.GetHttp().host_and_port, "foo") == 0);
-    assert(strcmp(data.cls->views.address.GetHttp().path, "/") == 0);
-    assert(data.cls->views.next == NULL);
-    assert(data.cls->views.transformation == NULL);
+    ASSERT_FALSE(translate_stock.aborted);
+    ASSERT_TRUE(data.got_class);
+    ASSERT_NE(data.cls, nullptr);
+    ASSERT_EQ(data.cls->views.address.type, ResourceAddress::Type::HTTP);
+    ASSERT_STREQ(data.cls->views.address.GetHttp().host_and_port, "foo");
+    ASSERT_STREQ(data.cls->views.address.GetHttp().path, "/");
+    ASSERT_EQ(data.cls->views.next, nullptr);
+    ASSERT_EQ(data.cls->views.transformation, nullptr);
 
     pool_unref(pool);
 
@@ -136,8 +136,7 @@ test_normal()
 }
 
 /** caller aborts */
-static void
-test_abort()
+TEST(WidgetRegistry, Abort)
 {
     TranslateStock translate_stock;
     Context data;
@@ -151,8 +150,8 @@ test_abort()
     widget_class_lookup(*pool, *pool, *tcache,  "block",
                         BIND_METHOD(data, &Context::RegistryCallback),
                         cancel_ptr);
-    assert(!data.got_class);
-    assert(!translate_stock.aborted);
+    ASSERT_FALSE(data.got_class);
+    ASSERT_FALSE(translate_stock.aborted);
 
     cancel_ptr.Cancel();
 
@@ -161,23 +160,10 @@ test_abort()
        pool */
     pool_unref(pool);
 
-    assert(translate_stock.aborted);
-    assert(!data.got_class);
+    ASSERT_TRUE(translate_stock.aborted);
+    ASSERT_FALSE(data.got_class);
 
     translate_cache_close(tcache);
 
     pool_commit();
-}
-
-
-/*
- * main
- *
- */
-
-int
-main(gcc_unused int argc, gcc_unused char **argv)
-{
-    test_normal();
-    test_abort();
 }

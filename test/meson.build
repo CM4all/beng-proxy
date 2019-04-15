@@ -584,6 +584,7 @@ test('t_widget_registry', executable('t_widget_registry',
   '../src/widget/Registry.cxx',
   include_directories: inc,
   dependencies: [
+    gtest,
     widget_dep,
   ]))
 
