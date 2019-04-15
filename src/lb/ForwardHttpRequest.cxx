@@ -55,7 +55,6 @@
 #include "stock/Item.hxx"
 #include "lease.hxx"
 #include "strmap.hxx"
-#include "bulldog.hxx"
 #include "pool/pool.hxx"
 #include "net/IPv4Address.hxx"
 #include "net/IPv6Address.hxx"
@@ -271,8 +270,7 @@ GenerateCookie(const FailureManager &failure_manager, Expiry now,
     do {
         assert(i >= 1 && i <= list.GetSize());
         const SocketAddress address = list.addresses[i % list.GetSize()];
-        if (failure_manager.Check(now, address) &&
-            bulldog_check(address) && !bulldog_is_fading(address))
+        if (failure_manager.Check(now, address))
             return i;
 
         i = lb_cookie_next(list.GetSize(), i);

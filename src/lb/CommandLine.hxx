@@ -46,11 +46,6 @@ struct LbCmdLine {
      */
     const char *config_path = "/etc/cm4all/beng/lb.conf";
 
-    /**
-     * The Bulldog data path.
-     */
-    const char *bulldog_path = nullptr;
-
     unsigned tcp_stock_limit = 256;
 
     /**

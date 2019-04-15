@@ -108,11 +108,6 @@ struct BpConfig {
 
     AllocatedSocketAddress translation_socket;
 
-    /**
-     * The Bulldog data path.
-     */
-    const char *bulldog_path = nullptr;
-
     unsigned num_workers = 0;
 
     /** maximum number of simultaneous connections */

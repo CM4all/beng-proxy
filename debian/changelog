@@ -1,5 +1,6 @@
 cm4all-beng-proxy (16.0.1) unstable; urgency=low
 
+  * remove the obsolete Bulldog support
   * bp: move the spawner into cm4all.slice
   * control: new control client
   * debian: remove packages cm4all-beng-proxy-optimized, cm4all-beng-proxy-toi

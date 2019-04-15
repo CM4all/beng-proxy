@@ -39,7 +39,6 @@
 #include "lb_check.hxx"
 #include "fs/Stock.hxx"
 #include "fs/Balancer.hxx"
-#include "bulldog.hxx"
 #include "balancer.hxx"
 #include "pipe_stock.hxx"
 #include "access_log/Glue.hxx"
@@ -201,8 +200,6 @@ try {
 
     instance.pipe_stock = new PipeStock(instance.event_loop);
 
-    bulldog_init(cmdline.bulldog_path);
-
     /* launch the access logger */
 
     instance.access_log.reset(AccessLogGlue::Create(config.access_log,
@@ -248,8 +245,6 @@ try {
     instance.event_loop.Dispatch();
 
     /* cleanup */
-
-    bulldog_deinit();
 
     instance.DeinitAllListeners();
     instance.DeinitAllControls();

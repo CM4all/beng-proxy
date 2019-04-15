@@ -34,26 +34,16 @@
 #include "address_list.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/FailureManager.hxx"
-#include "bulldog.hxx"
 
 #include <string>
 
 #include <assert.h>
 
-gcc_pure
-static bool
-check_bulldog(const SocketAddress address, bool allow_fade) noexcept
-{
-    return bulldog_check(address) &&
-        (allow_fade || !bulldog_is_fading(address));
-}
-
 static bool
 CheckAddress(FailureManager &failure_manager, Expiry now,
              const SocketAddress address, bool allow_fade) noexcept
 {
-    return failure_manager.Check(now, address, allow_fade) &&
-        check_bulldog(address, allow_fade);
+    return failure_manager.Check(now, address, allow_fade);
 }
 
 static SocketAddress

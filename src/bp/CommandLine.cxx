@@ -127,10 +127,6 @@ PrintUsage()
 #endif
          " -t PATH        set the path to the translation server socket\n"
 #ifdef __GLIBC__
-         " --bulldog-path PATH\n"
-#endif
-         " -B PATH        obtain worker status information from the Bulldog-Tyke path\n"
-#ifdef __GLIBC__
          " --cluster-size N\n"
 #endif
          " -C N           set the size of the beng-lb cluster\n"
@@ -301,7 +297,6 @@ ParseCommandLine(BpCmdLine &cmdline, BpConfig &config, int argc, char **argv)
         {"workers", 1, NULL, 'w'},
         {"document-root", 1, NULL, 'r'},
         {"translation-socket", 1, NULL, 't'},
-        {"bulldog-path", 1, NULL, 'B'},
         {"cluster-size", 1, NULL, 'C'},
         {"cluster-node", 1, NULL, 'N'},
         {"ua-classes", 1, NULL, 'a'},
@@ -422,10 +417,6 @@ ParseCommandLine(BpCmdLine &cmdline, BpConfig &config, int argc, char **argv)
 
         case 't':
             config.translation_socket = ParseSocketAddress(optarg, 0, false);
-            break;
-
-        case 'B':
-            config.bulldog_path = optarg;
             break;
 
         case 'C':

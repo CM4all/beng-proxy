@@ -78,10 +78,6 @@ PrintUsage()
 #endif
          " -U name        execute the access logger program with this user id\n"
 #ifdef __GLIBC__
-         " --bulldog-path PATH\n"
-#endif
-         " -B PATH        obtain worker status information from the Bulldog-Tyke path\n"
-#ifdef __GLIBC__
          " --set NAME=VALUE  tweak an internal variable, see manual for details\n"
 #endif
          " -s NAME=VALUE  \n"
@@ -162,7 +158,6 @@ ParseCommandLine(LbCmdLine &cmdline, LbConfig &config,
         {"access-logger", 1, NULL, 'A'},
         {"user", 1, NULL, 'u'},
         {"logger-user", 1, NULL, 'U'},
-        {"bulldog-path", 1, NULL, 'B'},
         {"set", 1, NULL, 's'},
         {NULL,0,NULL,0}
     };
@@ -217,10 +212,6 @@ ParseCommandLine(LbCmdLine &cmdline, LbConfig &config,
 
         case 'U':
             cmdline.logger_user.Lookup(optarg);
-            break;
-
-        case 'B':
-            cmdline.bulldog_path = optarg;
             break;
 
         case 's':

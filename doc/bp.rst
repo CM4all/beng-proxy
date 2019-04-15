@@ -312,14 +312,6 @@ The following settings are available:
 
 All memory sizes can be suffixed using ``kB``, ``MB`` or ``GB``.
 
-.. _bulldog:
-
-Command-line options
---------------------
-
-With ``--bulldog-path``, :program:`beng-proxy` reads status information on servers
-it contacts from the Bulldog-Tyke data directory.
-
 .. _uaclass:
 
 User-Agent classification
@@ -606,9 +598,6 @@ Load balancing, failover
 For a remote URL, more than one server may be specified. ``beng-proxy``
 tries to use all of these equally. If one server fails on the socket
 level, ``beng-proxy`` ignores it for a short amount of time.
-
-Advanced users may take advantage of Bulldog-Tyke data, by passing the
-option ``--bulldog-path`` (see :ref:`bulldog`).
 
 Forwarded headers
 ~~~~~~~~~~~~~~~~~

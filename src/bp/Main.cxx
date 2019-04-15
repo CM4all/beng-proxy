@@ -57,7 +57,6 @@
 #include "fcache.hxx"
 #include "thread_pool.hxx"
 #include "stopwatch.hxx"
-#include "bulldog.hxx"
 #include "pipe_stock.hxx"
 #include "nfs/Stock.hxx"
 #include "nfs/Cache.hxx"
@@ -434,8 +433,6 @@ try {
                                    *instance.filter_resource_loader,
                                    instance.pipe_stock);
 
-    bulldog_init(instance.config.bulldog_path);
-
     global_translate_cache = instance.translate_cache;
     global_pipe_stock = instance.pipe_stock;
 
@@ -476,8 +473,6 @@ try {
     instance.event_loop.Dispatch();
 
     /* cleanup */
-
-    bulldog_deinit();
 
     thread_pool_deinit();
 
