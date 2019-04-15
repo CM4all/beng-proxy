@@ -32,7 +32,7 @@
 
 #include "cgi_parser.hxx"
 #include "Error.hxx"
-#include "header_parser.hxx"
+#include "http/HeaderParser.hxx"
 #include "util/ForeignFifoBuffer.hxx"
 #include "util/StringStrip.hxx"
 #include "util/StringView.hxx"

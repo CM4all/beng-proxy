@@ -36,7 +36,7 @@
 #include "http_upgrade.hxx"
 #include "pool/pool.hxx"
 #include "strmap.hxx"
-#include "header_parser.hxx"
+#include "http/HeaderParser.hxx"
 #include "istream/istream_null.hxx"
 #include "http/List.hxx"
 #include "util/StringCompare.hxx"

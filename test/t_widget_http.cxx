@@ -37,7 +37,7 @@
 #include "widget/LookupHandler.hxx"
 #include "http_address.hxx"
 #include "strmap.hxx"
-#include "header_parser.hxx"
+#include "http/HeaderParser.hxx"
 #include "PInstance.hxx"
 #include "ResourceLoader.hxx"
 #include "HttpResponseHandler.hxx"

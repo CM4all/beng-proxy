@@ -38,7 +38,7 @@
 #include "istream/UnusedPtr.hxx"
 #include "istream/Pointer.hxx"
 #include "istream/istream_null.hxx"
-#include "header_parser.hxx"
+#include "http/HeaderParser.hxx"
 #include "stopwatch.hxx"
 #include "strmap.hxx"
 #include "HttpResponseHandler.hxx"

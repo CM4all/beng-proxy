@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -34,10 +34,7 @@
  * Parse HTTP headers into a StringMap.
  */
 
-#ifndef BENG_PROXY_HEADER_PARSER_HXX
-#define BENG_PROXY_HEADER_PARSER_HXX
-
-#include <stddef.h>
+#pragma once
 
 struct pool;
 class StringMap;
@@ -50,5 +47,3 @@ header_parse_line(struct pool &pool, StringMap &headers, StringView line);
 void
 header_parse_buffer(struct pool &pool, StringMap &headers,
                     GrowingBuffer &&gb);
-
-#endif

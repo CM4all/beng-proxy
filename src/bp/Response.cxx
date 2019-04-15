@@ -43,7 +43,7 @@
 #include "http_headers.hxx"
 #include "http_util.hxx"
 #include "header_writer.hxx"
-#include "header_parser.hxx"
+#include "http/HeaderParser.hxx"
 #include "ForwardHeaders.hxx"
 #include "widget/Widget.hxx"
 #include "widget/Ref.hxx"
