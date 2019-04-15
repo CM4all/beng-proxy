@@ -35,7 +35,7 @@
 #include "http_headers.hxx"
 #include "http_upgrade.hxx"
 #include "direct.hxx"
-#include "header_writer.hxx"
+#include "http/HeaderWriter.hxx"
 #include "GrowingBuffer.hxx"
 #include "istream_gb.hxx"
 #include "istream/ConcatIstream.hxx"

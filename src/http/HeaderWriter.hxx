@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -34,8 +34,7 @@
  * Write HTTP headers into a buffer.
  */
 
-#ifndef BENG_PROXY_HEADER_WRITER_HXX
-#define BENG_PROXY_HEADER_WRITER_HXX
+#pragma once
 
 class StringMap;
 class GrowingBuffer;
@@ -77,5 +76,3 @@ headers_copy_most(const StringMap &in, GrowingBuffer &out);
 
 GrowingBuffer
 headers_dup(const StringMap &in);
-
-#endif

@@ -533,7 +533,7 @@ http_util = static_library('http_util',
   'src/http_upgrade.cxx',
   'src/http_util.cxx',
   'src/http/HeaderParser.cxx',
-  'src/header_writer.cxx',
+  'src/http/HeaderWriter.cxx',
   include_directories: inc,
 )
 http_util_dep = declare_dependency(link_with: http_util,

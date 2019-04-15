@@ -35,7 +35,7 @@
 
 #include "strmap.hxx"
 #include "GrowingBuffer.hxx"
-#include "header_writer.hxx"
+#include "http/HeaderWriter.hxx"
 #include "http/HeaderParser.hxx"
 
 #include "util/Compiler.h"

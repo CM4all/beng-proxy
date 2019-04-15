@@ -34,7 +34,7 @@
 #include "Cache.hxx"
 #include "Address.hxx"
 #include "translation/Vary.hxx"
-#include "header_writer.hxx"
+#include "http/HeaderWriter.hxx"
 #include "GrowingBuffer.hxx"
 #include "bp/FileHeaders.hxx"
 #include "bp/Request.hxx"

@@ -45,7 +45,7 @@
 #include "penv.hxx"
 #include "http/CookieClient.hxx"
 #include "ResourceLoader.hxx"
-#include "header_writer.hxx"
+#include "http/HeaderWriter.hxx"
 #include "bp/ForwardHeaders.hxx"
 #include "bp/Global.hxx"
 #include "translation/Transformation.hxx"

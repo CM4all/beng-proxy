@@ -30,7 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "header_writer.hxx"
+#include "http/HeaderWriter.hxx"
 #include "strmap.hxx"
 #include "GrowingBuffer.hxx"
 #include "http/HeaderName.hxx"

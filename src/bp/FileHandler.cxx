@@ -37,7 +37,7 @@
 #include "EmulateModAuthEasy.hxx"
 #include "Instance.hxx"
 #include "GenerateResponse.hxx"
-#include "header_writer.hxx"
+#include "http/HeaderWriter.hxx"
 #include "http/Date.hxx"
 #include "http_util.hxx"
 #include "http_headers.hxx"

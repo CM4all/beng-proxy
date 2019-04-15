@@ -32,7 +32,7 @@
 
 #include "http/CookieClient.hxx"
 #include "http/CookieJar.hxx"
-#include "header_writer.hxx"
+#include "http/HeaderWriter.hxx"
 #include "pool/RootPool.hxx"
 #include "shm/shm.hxx"
 #include "shm/dpool.hxx"

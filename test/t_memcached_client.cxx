@@ -34,7 +34,7 @@
 #include "HttpResponseHandler.hxx"
 #include "system/SetupProcess.hxx"
 #include "io/FileDescriptor.hxx"
-#include "header_writer.hxx"
+#include "http/HeaderWriter.hxx"
 #include "lease.hxx"
 #include "direct.hxx"
 #include "istream/Handler.hxx"

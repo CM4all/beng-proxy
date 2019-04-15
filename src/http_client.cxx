@@ -36,7 +36,7 @@
 #include "http_util.hxx"
 #include "HttpResponseHandler.hxx"
 #include "http/HeaderParser.hxx"
-#include "header_writer.hxx"
+#include "http/HeaderWriter.hxx"
 #include "http_body.hxx"
 #include "istream_gb.hxx"
 #include "istream/Handler.hxx"

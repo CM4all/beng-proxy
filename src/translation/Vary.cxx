@@ -35,7 +35,7 @@
 #include "translation/Protocol.hxx"
 #include "strmap.hxx"
 #include "GrowingBuffer.hxx"
-#include "header_writer.hxx"
+#include "http/HeaderWriter.hxx"
 #include "pool/pool.hxx"
 
 #include <assert.h>

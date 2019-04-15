@@ -35,7 +35,7 @@
 #include "http_headers.hxx"
 #include "http_address.hxx"
 #include "HttpResponseHandler.hxx"
-#include "header_writer.hxx"
+#include "http/HeaderWriter.hxx"
 #include "stock/GetHandler.hxx"
 #include "stock/Item.hxx"
 #include "lease.hxx"

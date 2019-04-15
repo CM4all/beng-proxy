@@ -33,7 +33,7 @@
 #include "GenerateResponse.hxx"
 #include "Request.hxx"
 #include "http_headers.hxx"
-#include "header_writer.hxx"
+#include "http/HeaderWriter.hxx"
 #include "GrowingBuffer.hxx"
 #include "istream/istream_string.hxx"
 

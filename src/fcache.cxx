@@ -33,7 +33,7 @@
 #include "fcache.hxx"
 #include "cache.hxx"
 #include "http_request.hxx"
-#include "header_writer.hxx"
+#include "http/HeaderWriter.hxx"
 #include "strmap.hxx"
 #include "HttpResponseHandler.hxx"
 #include "pool/tpool.hxx"

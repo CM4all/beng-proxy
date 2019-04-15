@@ -31,7 +31,7 @@
  */
 
 #include "http/CookieServer.hxx"
-#include "header_writer.hxx"
+#include "http/HeaderWriter.hxx"
 #include "strmap.hxx"
 #include "pool/RootPool.hxx"
 

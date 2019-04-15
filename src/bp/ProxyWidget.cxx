@@ -40,7 +40,7 @@
 #include "widget/LookupHandler.hxx"
 #include "widget/Resolver.hxx"
 #include "widget/Frame.hxx"
-#include "header_writer.hxx"
+#include "http/HeaderWriter.hxx"
 #include "ForwardHeaders.hxx"
 #include "http_server/Request.hxx"
 #include "http_util.hxx"

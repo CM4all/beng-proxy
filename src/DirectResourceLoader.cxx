@@ -48,7 +48,7 @@
 #include "was/Glue.hxx"
 #include "nfs/Address.hxx"
 #include "nfs/Glue.hxx"
-#include "header_writer.hxx"
+#include "http/HeaderWriter.hxx"
 #include "pipe_filter.hxx"
 #include "delegate/Address.hxx"
 #include "delegate/HttpRequest.hxx"

@@ -40,7 +40,7 @@
 #include "stock/Item.hxx"
 #include "lease.hxx"
 #include "istream/UnusedPtr.hxx"
-#include "header_writer.hxx"
+#include "http/HeaderWriter.hxx"
 #include "pool/pool.hxx"
 #include "pool/LeakDetector.hxx"
 #include "net/SocketDescriptor.hxx"

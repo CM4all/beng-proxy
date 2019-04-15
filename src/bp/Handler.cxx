@@ -48,7 +48,7 @@
 #include "ExternalSession.hxx"
 #include "suffix_registry.hxx"
 #include "address_suffix_registry.hxx"
-#include "header_writer.hxx"
+#include "http/HeaderWriter.hxx"
 #include "pool/pbuffer.hxx"
 #include "http_headers.hxx"
 #include "http_server/Request.hxx"
