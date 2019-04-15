@@ -34,6 +34,15 @@
 #include "Chars.hxx"
 #include "util/StringView.hxx"
 
+bool
+http_must_quote_token(StringView src) noexcept
+{
+    for (auto ch : src)
+        if (!char_is_http_token(ch))
+            return true;
+    return false;
+}
+
 size_t
 http_quote_string(char *dest, const StringView src) noexcept
 {

@@ -32,8 +32,6 @@
 
 #pragma once
 
-#include "Chars.hxx"
-#include "util/StringView.hxx"
 #include "util/Compiler.h"
 
 #include <stddef.h>
@@ -41,14 +39,8 @@
 struct StringView;
 
 gcc_pure
-static inline bool
-http_must_quote_token(StringView src) noexcept
-{
-    for (auto ch : src)
-        if (!char_is_http_token(ch))
-            return true;
-    return false;
-}
+bool
+http_must_quote_token(StringView src) noexcept;
 
 size_t
 http_quote_string(char *dest, StringView src) noexcept;
