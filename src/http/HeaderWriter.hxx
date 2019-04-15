@@ -44,7 +44,7 @@ class GrowingBuffer;
  * Call header_write_finish() when you're done.
  */
 void
-header_write_begin(GrowingBuffer &buffer, const char *name);
+header_write_begin(GrowingBuffer &buffer, const char *name) noexcept;
 
 /**
  * Finish the current header line.
@@ -52,27 +52,28 @@ header_write_begin(GrowingBuffer &buffer, const char *name);
  * @see header_write_begin().
  */
 void
-header_write_finish(GrowingBuffer &buffer);
+header_write_finish(GrowingBuffer &buffer) noexcept;
 
 void
-header_write(GrowingBuffer &buffer, const char *key, const char *value);
+header_write(GrowingBuffer &buffer,
+             const char *key, const char *value) noexcept;
 
 void
 headers_copy_one(const StringMap &in, GrowingBuffer &out,
-                 const char *key);
+                 const char *key) noexcept;
 
 void
 headers_copy(const StringMap &in, GrowingBuffer &out,
-             const char *const* keys);
+             const char *const*keys) noexcept;
 
 void
-headers_copy_all(const StringMap &in, GrowingBuffer &out);
+headers_copy_all(const StringMap &in, GrowingBuffer &out) noexcept;
 
 /**
  * Like headers_copy_all(), but doesn't copy hop-by-hop headers.
  */
 void
-headers_copy_most(const StringMap &in, GrowingBuffer &out);
+headers_copy_most(const StringMap &in, GrowingBuffer &out) noexcept;
 
 GrowingBuffer
-headers_dup(const StringMap &in);
+headers_dup(const StringMap &in) noexcept;

@@ -39,7 +39,7 @@
 #include <string.h>
 
 void
-header_write_begin(GrowingBuffer &buffer, const char *name)
+header_write_begin(GrowingBuffer &buffer, const char *name) noexcept
 {
     assert(name != nullptr);
     assert(*name != 0);
@@ -54,13 +54,14 @@ header_write_begin(GrowingBuffer &buffer, const char *name)
 }
 
 void
-header_write_finish(GrowingBuffer &buffer)
+header_write_finish(GrowingBuffer &buffer) noexcept
 {
     buffer.Write("\r\n", 2);
 }
 
 void
-header_write(GrowingBuffer &buffer, const char *key, const char *value)
+header_write(GrowingBuffer &buffer,
+             const char *key, const char *value) noexcept
 {
     size_t key_length, value_length;
 
@@ -95,7 +96,7 @@ header_write(GrowingBuffer &buffer, const char *key, const char *value)
 
 void
 headers_copy_one(const StringMap &in, GrowingBuffer &out,
-                 const char *key)
+                 const char *key) noexcept
 {
     const char *value = in.Get(key);
     if (value != nullptr)
@@ -104,7 +105,7 @@ headers_copy_one(const StringMap &in, GrowingBuffer &out,
 
 void
 headers_copy(const StringMap &in, GrowingBuffer &out,
-             const char *const* keys)
+             const char *const*keys) noexcept
 {
     for (; *keys != nullptr; ++keys) {
         const char *value = in.Get(*keys);
@@ -114,14 +115,14 @@ headers_copy(const StringMap &in, GrowingBuffer &out,
 }
 
 void
-headers_copy_all(const StringMap &in, GrowingBuffer &out)
+headers_copy_all(const StringMap &in, GrowingBuffer &out) noexcept
 {
     for (const auto &i : in)
         header_write(out, i.key, i.value);
 }
 
 void
-headers_copy_most(const StringMap &in, GrowingBuffer &out)
+headers_copy_most(const StringMap &in, GrowingBuffer &out) noexcept
 {
     for (const auto &i : in)
         if (!http_header_is_hop_by_hop(i.key))
@@ -129,7 +130,7 @@ headers_copy_most(const StringMap &in, GrowingBuffer &out)
 }
 
 GrowingBuffer
-headers_dup(const StringMap &in)
+headers_dup(const StringMap &in) noexcept
 {
     GrowingBuffer out;
     headers_copy_most(in, out);
