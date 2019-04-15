@@ -44,7 +44,7 @@ TEST(Args, Parse)
     RootPool pool;
 
     const StringView s("a=foo&b=bar&c=$20&=&=xyz&d=&e");
-    const auto args = args_parse(pool, s.data, s.size);
+    const auto args = args_parse(pool, s);
 
     EXPECT_EQ(std::distance(args.begin(), args.end()), 4u);
     EXPECT_STREQ(args.Get("a"), "foo");

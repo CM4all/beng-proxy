@@ -46,7 +46,7 @@ struct StringView;
  */
 gcc_pure
 StringMap
-args_parse(struct pool &pool, const char *p, size_t length);
+args_parse(struct pool &pool, StringView p);
 
 /**
  * Format the arguments into a string in the form

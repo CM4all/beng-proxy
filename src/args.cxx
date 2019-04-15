@@ -43,11 +43,11 @@
 static constexpr char ARGS_ESCAPE_CHAR = '$';
 
 StringMap
-args_parse(struct pool &pool, const char *p, size_t length)
+args_parse(struct pool &pool, const StringView p)
 {
     StringMap args(pool);
 
-    for (const auto s : IterableSplitString({p, length}, '&')) {
+    for (const auto s : IterableSplitString(p, '&')) {
         const char *equals = s.Find('=');
         if (equals == nullptr)
             continue;
