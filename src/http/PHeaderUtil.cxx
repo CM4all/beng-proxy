@@ -30,17 +30,16 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Various utilities for working with HTTP objects.
- */
-
-#pragma once
-
-#include "util/Compiler.h"
-
-class StringMap;
+#include "PHeaderUtil.hxx"
+#include "strmap.hxx"
+#include "http/List.hxx"
 
 gcc_pure
 int
 http_client_accepts_encoding(const StringMap &request_headers,
-                             const char *coding) noexcept;
+                             const char *coding) noexcept
+{
+    const char *accept_encoding = request_headers.Get("accept-encoding");
+    return accept_encoding != nullptr &&
+        http_list_contains(accept_encoding, coding);
+}
