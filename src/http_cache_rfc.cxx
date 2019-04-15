@@ -34,7 +34,6 @@
 #include "http_cache_document.hxx"
 #include "http_cache_internal.hxx"
 #include "http_address.hxx"
-#include "http_util.hxx"
 #include "strmap.hxx"
 #include "ResourceAddress.hxx"
 #include "cgi_address.hxx"
@@ -42,6 +41,7 @@
 #include "pool/pool.hxx"
 #include "io/Logger.hxx"
 #include "http/Date.hxx"
+#include "http/PList.hxx"
 #include "util/StringView.hxx"
 #include "util/IterableSplitString.hxx"
 

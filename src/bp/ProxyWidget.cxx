@@ -43,7 +43,6 @@
 #include "http/HeaderWriter.hxx"
 #include "ForwardHeaders.hxx"
 #include "http_server/Request.hxx"
-#include "http_util.hxx"
 #include "http/Headers.hxx"
 #include "HttpResponseHandler.hxx"
 #include "XmlProcessor.hxx"

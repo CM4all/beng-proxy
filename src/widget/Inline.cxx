@@ -39,7 +39,7 @@
 #include "Approval.hxx"
 #include "penv.hxx"
 #include "bp/Global.hxx"
-#include "http_util.hxx"
+#include "http/HeaderUtil.hxx"
 #include "HttpResponseHandler.hxx"
 #include "strmap.hxx"
 #include "istream_html_escape.hxx"
