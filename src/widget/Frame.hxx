@@ -38,7 +38,7 @@
 #define BENG_PROXY_FRAME_HXX
 
 struct pool;
-struct Widget;
+class Widget;
 struct processor_env;
 class HttpResponseHandler;
 class WidgetLookupHandler;

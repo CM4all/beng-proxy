@@ -37,7 +37,7 @@
 struct pool;
 class UnusedIstreamPtr;
 class StringMap;
-struct Widget;
+class Widget;
 struct processor_env;
 
 /**

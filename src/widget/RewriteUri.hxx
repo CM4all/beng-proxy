@@ -44,7 +44,7 @@ class UnusedIstreamPtr;
 struct tcache;
 struct parsed_uri;
 class StringMap;
-struct Widget;
+class Widget;
 struct StringView;
 struct escape_class;
 

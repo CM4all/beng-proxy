@@ -41,7 +41,7 @@
 
 struct pool;
 class UnusedIstreamPtr;
-struct Widget;
+class Widget;
 struct processor_env;
 
 extern const Event::Duration inline_widget_body_timeout;

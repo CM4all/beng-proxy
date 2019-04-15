@@ -35,7 +35,7 @@
 
 #include <stdexcept>
 
-struct Widget;
+class Widget;
 
 enum class WidgetErrorCode {
     UNSPECIFIED,

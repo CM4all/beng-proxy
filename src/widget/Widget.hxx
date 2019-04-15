@@ -57,9 +57,10 @@ struct WidgetResolver;
 /**
  * A widget instance.
  */
-struct Widget final
-    : boost::intrusive::slist_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
-
+class Widget final
+    : public boost::intrusive::slist_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>
+{
+public:
     boost::intrusive::slist<Widget,
                             boost::intrusive::constant_time_size<false>> children;
 

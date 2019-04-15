@@ -67,7 +67,7 @@ enum processor_options {
 struct pool;
 class UnusedIstreamPtr;
 struct parsed_uri;
-struct Widget;
+class Widget;
 struct processor_env;
 class StringMap;
 class WidgetLookupHandler;

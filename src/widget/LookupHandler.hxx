@@ -35,7 +35,7 @@
 
 #include <exception>
 
-struct Widget;
+class Widget;
 
 /**
  * A handler class for looking up a widget in a container.

@@ -35,7 +35,7 @@
 
 #include "util/Compiler.h"
 
-struct Widget;
+class Widget;
 
 bool
 widget_init_approval(Widget *widget, bool self_container);

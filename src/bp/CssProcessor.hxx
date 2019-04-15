@@ -46,7 +46,7 @@ enum css_processor_options {
 
 struct pool;
 class UnusedIstreamPtr;
-struct Widget;
+class Widget;
 struct processor_env;
 
 /**

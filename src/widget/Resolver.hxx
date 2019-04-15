@@ -36,7 +36,7 @@
 #include "util/BindMethod.hxx"
 
 struct pool;
-struct Widget;
+class Widget;
 struct tcache;
 class CancellablePointer;
 

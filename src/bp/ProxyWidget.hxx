@@ -41,7 +41,7 @@
 
 class UnusedIstreamPtr;
 struct Request;
-struct Widget;
+class Widget;
 struct widget_ref;
 
 void

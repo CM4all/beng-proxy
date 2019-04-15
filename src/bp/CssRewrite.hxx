@@ -37,7 +37,7 @@ class UnusedIstreamPtr;
 struct processor_env;
 struct StringView;
 struct escape_class;
-struct Widget;
+class Widget;
 struct tcache;
 
 /**

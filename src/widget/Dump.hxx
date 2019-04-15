@@ -35,7 +35,7 @@
 
 struct pool;
 class UnusedIstreamPtr;
-struct Widget;
+class Widget;
 
 /**
  * Dump the widget tree to the log file after the istream is done.
