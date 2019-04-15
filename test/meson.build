@@ -593,6 +593,7 @@ test('t_widget_resolver', executable('t_widget_resolver',
   '../src/widget/Resolver.cxx',
   include_directories: inc,
   dependencies: [
+    gtest,
     widget_dep,
   ]))
 

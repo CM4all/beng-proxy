@@ -39,6 +39,8 @@
 #include "util/Cancellable.hxx"
 #include "util/Cast.hxx"
 
+#include <gtest/gtest.h>
+
 #include <assert.h>
 
 static struct Context *global;
@@ -146,8 +148,7 @@ widget_registry_finish(Context *data)
  *
  */
 
-static void
-test_normal()
+TEST(WidgetResolver, Normal)
 {
     Context data;
 
@@ -161,26 +162,25 @@ test_normal()
                   BIND_METHOD(data, &Context::ResolverCallback1),
                   data.first.cancel_ptr);
 
-    assert(!data.first.finished);
-    assert(!data.second.finished);
-    assert(data.registry.requested);
-    assert(!data.registry.finished);
-    assert(!data.registry.aborted);
+    ASSERT_FALSE(data.first.finished);
+    ASSERT_FALSE(data.second.finished);
+    ASSERT_TRUE(data.registry.requested);
+    ASSERT_FALSE(data.registry.finished);
+    ASSERT_FALSE(data.registry.aborted);
 
     widget_registry_finish(&data);
 
-    assert(data.first.finished);
-    assert(!data.second.finished);
-    assert(data.registry.requested);
-    assert(data.registry.finished);
-    assert(!data.registry.aborted);
+    ASSERT_TRUE(data.first.finished);
+    ASSERT_FALSE(data.second.finished);
+    ASSERT_TRUE(data.registry.requested);
+    ASSERT_TRUE(data.registry.finished);
+    ASSERT_FALSE(data.registry.aborted);
 
     pool_unref(pool);
     pool_commit();
 }
 
-static void
-test_abort()
+TEST(WidgetResolver, Abort)
 {
     Context data;
 
@@ -194,26 +194,25 @@ test_abort()
                   BIND_METHOD(data, &Context::ResolverCallback1),
                   data.first.cancel_ptr);
 
-    assert(!data.first.finished);
-    assert(!data.second.finished);
-    assert(data.registry.requested);
-    assert(!data.registry.finished);
-    assert(!data.registry.aborted);
+    ASSERT_FALSE(data.first.finished);
+    ASSERT_FALSE(data.second.finished);
+    ASSERT_TRUE(data.registry.requested);
+    ASSERT_FALSE(data.registry.finished);
+    ASSERT_FALSE(data.registry.aborted);
 
     data.first.cancel_ptr.Cancel();
 
-    assert(!data.first.finished);
-    assert(!data.second.finished);
-    assert(data.registry.requested);
-    assert(!data.registry.finished);
-    assert(data.registry.aborted);
+    ASSERT_FALSE(data.first.finished);
+    ASSERT_FALSE(data.second.finished);
+    ASSERT_TRUE(data.registry.requested);
+    ASSERT_FALSE(data.registry.finished);
+    ASSERT_TRUE(data.registry.aborted);
 
     pool_unref(pool);
     pool_commit();
 }
 
-static void
-test_two_clients()
+TEST(WidgetResolver, TwoClients)
 {
     Context data;
 
@@ -232,26 +231,25 @@ test_two_clients()
                   BIND_METHOD(data, &Context::ResolverCallback2),
                   data.second.cancel_ptr);
 
-    assert(!data.first.finished);
-    assert(!data.second.finished);
-    assert(data.registry.requested);
-    assert(!data.registry.finished);
-    assert(!data.registry.aborted);
+    ASSERT_FALSE(data.first.finished);
+    ASSERT_FALSE(data.second.finished);
+    ASSERT_TRUE(data.registry.requested);
+    ASSERT_FALSE(data.registry.finished);
+    ASSERT_FALSE(data.registry.aborted);
 
     widget_registry_finish(&data);
 
-    assert(data.first.finished);
-    assert(data.second.finished);
-    assert(data.registry.requested);
-    assert(data.registry.finished);
-    assert(!data.registry.aborted);
+    ASSERT_TRUE(data.first.finished);
+    ASSERT_TRUE(data.second.finished);
+    ASSERT_TRUE(data.registry.requested);
+    ASSERT_TRUE(data.registry.finished);
+    ASSERT_FALSE(data.registry.aborted);
 
     pool_unref(pool);
     pool_commit();
 }
 
-static void
-test_two_abort()
+TEST(WidgetResolver, TwoAbort)
 {
     Context data;
     data.first.abort = true;
@@ -271,37 +269,20 @@ test_two_abort()
                   BIND_METHOD(data, &Context::ResolverCallback2),
                   data.second.cancel_ptr);
 
-    assert(!data.first.finished);
-    assert(!data.second.finished);
-    assert(data.registry.requested);
-    assert(!data.registry.finished);
-    assert(!data.registry.aborted);
+    ASSERT_FALSE(data.first.finished);
+    ASSERT_FALSE(data.second.finished);
+    ASSERT_TRUE(data.registry.requested);
+    ASSERT_FALSE(data.registry.finished);
+    ASSERT_FALSE(data.registry.aborted);
 
     widget_registry_finish(&data);
 
-    assert(data.first.finished);
-    assert(!data.second.finished);
-    assert(data.registry.requested);
-    assert(data.registry.finished);
-    assert(!data.registry.aborted);
+    ASSERT_TRUE(data.first.finished);
+    ASSERT_FALSE(data.second.finished);
+    ASSERT_TRUE(data.registry.requested);
+    ASSERT_TRUE(data.registry.finished);
+    ASSERT_FALSE(data.registry.aborted);
 
     pool_unref(pool);
     pool_commit();
-}
-
-
-/*
- * main
- *
- */
-
-int
-main(int, char **)
-{
-    /* run test suite */
-
-    test_normal();
-    test_abort();
-    test_two_clients();
-    test_two_abort();
 }
