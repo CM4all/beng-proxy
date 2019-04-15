@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -31,17 +31,12 @@
  */
 
 /*
- * HTTP string utilities according to RFC 2616 2.2.
+ * HTTP definitions according to RFC 2616 2.2.
  */
 
-#ifndef BENG_PROXY_HTTP_STRING_HXX
-#define BENG_PROXY_HTTP_STRING_HXX
-
-#include "util/StringView.hxx"
+#pragma once
 
 #include "util/Compiler.h"
-
-struct pool;
 
 static gcc_always_inline bool
 char_is_http_char(char ch)
@@ -92,32 +87,3 @@ char_is_http_token(char ch)
     return char_is_http_char(ch) && !char_is_http_ctl(ch) &&
         !char_is_http_separator(ch);
 }
-
-void
-http_next_token(StringView &input, StringView &value);
-
-void
-http_next_quoted_string(struct pool &pool, StringView &input,
-                        StringView &value);
-
-void
-http_next_value(struct pool &pool, StringView &input, StringView &value);
-
-void
-http_next_name_value(struct pool &pool, StringView &input,
-                     StringView &name, StringView &value);
-
-gcc_pure
-static inline bool
-http_must_quote_token(StringView src)
-{
-    for (auto ch : src)
-        if (!char_is_http_token(ch))
-            return true;
-    return false;
-}
-
-size_t
-http_quote_string(char *dest, StringView src);
-
-#endif

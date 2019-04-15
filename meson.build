@@ -527,7 +527,9 @@ was_server = static_library('was_server',
   ])
 
 http_util = static_library('http_util',
-  'src/http_string.cxx',
+  'src/http/Tokenizer.cxx',
+  'src/http/PTokenizer.cxx',
+  'src/http/Quote.cxx',
   'src/http_upgrade.cxx',
   'src/http_util.cxx',
   'src/header_parser.cxx',
@@ -954,7 +956,6 @@ executable(
   'src/address_list.cxx',
   'src/address_sticky.cxx',
   'src/client_balancer.cxx',
-  'src/http_string.cxx',
   'src/http_upgrade.cxx',
   'src/http_util.cxx',
   'src/regex.cxx',

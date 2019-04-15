@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,80 +30,52 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "CookieString.hxx"
-#include "Tokenizer.hxx"
 #include "PTokenizer.hxx"
+#include "Tokenizer.hxx"
+#include "Chars.hxx"
 #include "pool/pool.hxx"
 #include "util/StringView.hxx"
 
-gcc_always_inline
-static constexpr bool
-char_is_cookie_octet(char ch)
+void
+http_next_quoted_string(struct pool &pool, StringView &input,
+                        StringView &value)
 {
-    return ch == 0x21 || (ch >= 0x23 && ch <= 0x2b) ||
-        (ch >= 0x2d && ch <= 0x3a) ||
-        (ch >= 0x3c && ch <= 0x5b) ||
-        (ch >= 0x5d && ch <= 0x7e);
-}
+    char *dest = (char *)p_malloc(&pool, input.size); /* TODO: optimize memory consumption */
+    size_t pos = 1;
 
-static void
-cookie_next_unquoted_value(StringView &input, StringView &value)
-{
     value.size = 0;
-    value.data = input.data;
+    value.data = dest;
 
-    while (value.size < input.size &&
-           char_is_cookie_octet(input[value.size]))
-        ++value.size;
+    while (pos < input.size) {
+        if (input[pos] == '\\') {
+            ++pos;
+            if (pos < input.size)
+                dest[value.size++] = input[pos++];
+        } else if (input[pos] == '"') {
+            ++pos;
+            break;
+        } else if (char_is_http_text(input[pos])) {
+            dest[value.size++] = input[pos++];
+        } else {
+            ++pos;
+        }
+    }
 
-    input.skip_front(value.size);
-}
-
-gcc_always_inline
-static constexpr bool
-char_is_rfc_ignorant_cookie_octet(char ch)
-{
-    return char_is_cookie_octet(ch) ||
-        ch == ' ' || ch == ',';
-}
-
-static void
-cookie_next_rfc_ignorant_value(StringView &input, StringView &value)
-{
-    value.size = 0;
-    value.data = input.data;
-
-    while (value.size < input.size &&
-           char_is_rfc_ignorant_cookie_octet(input[value.size]))
-        ++value.size;
-
-    input.skip_front(value.size);
-}
-
-static void
-cookie_next_value(struct pool &pool, StringView &input,
-                  StringView &value)
-{
-    if (!input.empty() && input.front() == '"')
-        http_next_quoted_string(pool, input, value);
-    else
-        cookie_next_unquoted_value(input, value);
-}
-
-static void
-cookie_next_rfc_ignorant_value(struct pool &pool, StringView &input,
-                               StringView &value)
-{
-    if (!input.empty() && input.front() == '"')
-        http_next_quoted_string(pool, input, value);
-    else
-        cookie_next_rfc_ignorant_value(input, value);
+    input.skip_front(pos);
 }
 
 void
-cookie_next_name_value(struct pool &pool, StringView &input,
-                       StringView &name, StringView &value,
-                       bool rfc_ignorant)
+http_next_value(struct pool &pool, StringView &input, StringView &value)
+{
+    if (!input.empty() && input.front() == '"')
+        http_next_quoted_string(pool, input, value);
+    else
+        http_next_token(input, value);
+}
+
+void
+http_next_name_value(struct pool &pool, StringView &input,
+                     StringView &name, StringView &value)
 {
     http_next_token(input, name);
     if (name.empty())
@@ -114,10 +86,7 @@ cookie_next_name_value(struct pool &pool, StringView &input,
         input.pop_front();
         input.StripLeft();
 
-        if (rfc_ignorant)
-            cookie_next_rfc_ignorant_value(pool, input, value);
-        else
-            cookie_next_value(pool, input, value);
+        http_next_value(pool, input, value);
     } else
         value = nullptr;
 }
