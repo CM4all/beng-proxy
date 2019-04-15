@@ -232,12 +232,23 @@ Request::InvokeXmlProcessor(http_status_t status,
         return;
     }
 
-    auto &for_focused = *NewFromPool<Widget::ForFocused>(pool);
-    widget->for_focused = &for_focused;
+    if (focus_ref != nullptr) {
+        auto &for_focused = *NewFromPool<Widget::ForFocused>(pool);
+        widget->for_focused = &for_focused;
 
-    if (request_body &&
-        widget->from_request.focus_ref != nullptr)
         for_focused.body = std::move(request_body);
+
+        http_method_t method = request.method;
+        if (http_method_is_empty(method) && HasTransformations())
+            /* the following transformation may need the processed
+               document to generate its headers, so we should not pass
+               HEAD to the processor */
+            method = HTTP_METHOD_GET;
+
+        for_focused.method = method;
+        for_focused.path_info = args.Remove("path");
+        for_focused.query_string = dissected_uri.query;
+    }
 
     uri = translate.response->uri != nullptr
         ? translate.response->uri
@@ -256,17 +267,6 @@ Request::InvokeXmlProcessor(http_status_t status,
                 session_drop_widgets(*session, widget->id, proxy_ref);
         }
     }
-
-    http_method_t method = request.method;
-    if (http_method_is_empty(method) && HasTransformations())
-        /* the following transformation may need the processed
-           document to generate its headers, so we should not pass
-           HEAD to the processor */
-        method = HTTP_METHOD_GET;
-
-    for_focused.method = method;
-    for_focused.path_info = args.Remove("path");
-    for_focused.query_string = dissected_uri.query;
 
     env = processor_env(instance.event_loop,
                         *instance.cached_resource_loader,
