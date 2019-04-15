@@ -43,4 +43,4 @@ struct pool;
  * value is nullptr terminated.
  */
 char **
-http_list_split(struct pool &pool, const char *p);
+http_list_split(struct pool &pool, const char *p) noexcept;
