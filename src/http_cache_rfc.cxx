@@ -41,6 +41,7 @@
 #include "pool/pool.hxx"
 #include "io/Logger.hxx"
 #include "http/Date.hxx"
+#include "http/PHeaderUtil.hxx"
 #include "http/PList.hxx"
 #include "util/StringView.hxx"
 #include "util/IterableSplitString.hxx"
@@ -166,25 +167,6 @@ strmap_get_non_empty(const StringMap &map, const char *key)
     if (value != nullptr && *value == 0)
         value = nullptr;
     return value;
-}
-
-/**
- * Parse the "Date" response header.
- *
- * @return time_t(-1) if there is no "Date" header or if it could not
- * be parsed
- */
-gcc_pure
-static std::chrono::system_clock::time_point
-GetServerDate(const StringMap &response_headers) noexcept
-{
-    const char *p = response_headers.Get("date");
-    if (p == nullptr)
-        /* server does not provide its system time */
-        return std::chrono::system_clock::from_time_t(-1);
-
-    return http_date_parse(p);
-
 }
 
 /**

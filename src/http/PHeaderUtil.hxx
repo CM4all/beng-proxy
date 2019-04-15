@@ -38,9 +38,21 @@
 
 #include "util/Compiler.h"
 
+#include <chrono>
+
 class StringMap;
 
 gcc_pure
 int
 http_client_accepts_encoding(const StringMap &request_headers,
                              const char *coding) noexcept;
+
+/**
+ * Parse the "Date" response header.
+ *
+ * @return time_t(-1) if there is no "Date" header or if it could not
+ * be parsed
+ */
+gcc_pure
+std::chrono::system_clock::time_point
+GetServerDate(const StringMap &response_headers) noexcept;
