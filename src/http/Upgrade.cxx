@@ -35,13 +35,13 @@
 #include "strmap.hxx"
 
 bool
-http_is_upgrade(const StringMap &headers)
+http_is_upgrade(const StringMap &headers) noexcept
 {
     return headers.Contains("upgrade");
 }
 
 bool
-http_is_upgrade(const HttpHeaders &headers)
+http_is_upgrade(const HttpHeaders &headers) noexcept
 {
     return http_is_upgrade(headers.GetMap());
 }

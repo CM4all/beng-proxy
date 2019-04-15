@@ -44,7 +44,7 @@ class HttpHeaders;
 
 gcc_pure
 static inline bool
-http_is_upgrade(http_status_t status)
+http_is_upgrade(http_status_t status) noexcept
 {
     return status == HTTP_STATUS_SWITCHING_PROTOCOLS;
 }
@@ -54,25 +54,25 @@ http_is_upgrade(http_status_t status)
  */
 gcc_pure
 bool
-http_is_upgrade(const StringMap &headers);
+http_is_upgrade(const StringMap &headers) noexcept;
 
 /**
  * Does the "Upgrade" header exist?
  */
 gcc_pure
 bool
-http_is_upgrade(const HttpHeaders &headers);
+http_is_upgrade(const HttpHeaders &headers) noexcept;
 
 gcc_pure
 static inline bool
-http_is_upgrade(http_status_t status, const StringMap &headers)
+http_is_upgrade(http_status_t status, const StringMap &headers) noexcept
 {
     return http_is_upgrade(status) && http_is_upgrade(headers);
 }
 
 gcc_pure
 static inline bool
-http_is_upgrade(http_status_t status, const HttpHeaders &headers)
+http_is_upgrade(http_status_t status, const HttpHeaders &headers) noexcept
 {
     return http_is_upgrade(status) && http_is_upgrade(headers);
 }
