@@ -50,11 +50,11 @@ class Balancer {
         /** the index of the item that will be returned next */
         unsigned next = 0;
 
-        const SocketAddress &NextAddress(const AddressList &addresses);
+        const SocketAddress &NextAddress(const AddressList &addresses) noexcept;
         const SocketAddress &NextAddressChecked(FailureManager &failure_manager,
                                                 Expiry now,
                                                 const AddressList &addresses,
-                                                bool allow_fade);
+                                                bool allow_fade) noexcept;
     };
 
     FailureManager &failure_manager;
@@ -62,10 +62,10 @@ class Balancer {
     Cache<std::string, Item, 2048, 1021> cache;
 
 public:
-    explicit Balancer(FailureManager &_failure_manager)
+    explicit Balancer(FailureManager &_failure_manager) noexcept
         :failure_manager(_failure_manager) {}
 
-    FailureManager &GetFailureManager() {
+    FailureManager &GetFailureManager() const noexcept {
         return failure_manager;
     }
 

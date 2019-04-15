@@ -42,7 +42,7 @@
 
 gcc_pure
 static bool
-check_bulldog(const SocketAddress address, bool allow_fade)
+check_bulldog(const SocketAddress address, bool allow_fade) noexcept
 {
     return bulldog_check(address) &&
         (allow_fade || !bulldog_is_fading(address));
@@ -50,7 +50,7 @@ check_bulldog(const SocketAddress address, bool allow_fade)
 
 static bool
 CheckAddress(FailureManager &failure_manager, Expiry now,
-             const SocketAddress address, bool allow_fade)
+             const SocketAddress address, bool allow_fade) noexcept
 {
     return failure_manager.Check(now, address, allow_fade) &&
         check_bulldog(address, allow_fade);
@@ -58,7 +58,7 @@ CheckAddress(FailureManager &failure_manager, Expiry now,
 
 static SocketAddress
 next_failover_address(FailureManager &failure_manager, Expiry now,
-                      const AddressList &list)
+                      const AddressList &list) noexcept
 {
     assert(list.GetSize() > 0);
 
@@ -71,7 +71,7 @@ next_failover_address(FailureManager &failure_manager, Expiry now,
 }
 
 const SocketAddress &
-Balancer::Item::NextAddress(const AddressList &addresses)
+Balancer::Item::NextAddress(const AddressList &addresses) noexcept
 {
     assert(addresses.GetSize() >= 2);
     assert(next < addresses.GetSize());
@@ -89,7 +89,7 @@ const SocketAddress &
 Balancer::Item::NextAddressChecked(FailureManager &_failure_manager,
                                    const Expiry now,
                                    const AddressList &addresses,
-                                   bool allow_fade)
+                                   bool allow_fade) noexcept
 {
     const auto &first = NextAddress(addresses);
     const SocketAddress *ret = &first;
@@ -106,7 +106,8 @@ Balancer::Item::NextAddressChecked(FailureManager &_failure_manager,
 
 static const SocketAddress &
 next_sticky_address_checked(FailureManager &failure_manager, const Expiry now,
-                            const AddressList &al, sticky_hash_t sticky_hash)
+                            const AddressList &al,
+                            sticky_hash_t sticky_hash) noexcept
 {
     assert(al.GetSize() >= 2);
 
