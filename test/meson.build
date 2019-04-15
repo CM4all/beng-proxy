@@ -578,6 +578,19 @@ test('t_rewrite_uri', executable('t_rewrite_uri',
     istream_dep,
   ]))
 
+test(
+  'TestWidget',
+  executable(
+    'TestWidget',
+    'TestArgs.cxx',
+    include_directories: inc,
+    dependencies: [
+      gtest,
+      widget_dep,
+    ],
+  ),
+)
+
 test('t_widget_registry', executable('t_widget_registry',
   't_widget_registry.cxx',
   '../src/PInstance.cxx',
