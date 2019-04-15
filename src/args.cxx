@@ -35,6 +35,7 @@
 #include "puri_escape.hxx"
 #include "strmap.hxx"
 #include "AllocatorPtr.hxx"
+#include "util/IterableSplitString.hxx"
 #include "util/StringView.hxx"
 
 #include <string.h>
@@ -44,27 +45,26 @@ static constexpr char ARGS_ESCAPE_CHAR = '$';
 StringMap
 args_parse(struct pool &pool, const char *p, size_t length)
 {
-    const char *end = p + length;
     StringMap args(pool);
 
-    do {
-        const char *ampersand = (const char *)memchr(p, '&', end - p);
-        const char *next = ampersand;
-        if (ampersand == nullptr)
-            ampersand = end;
-        else
-            ++next;
+    for (const auto s : IterableSplitString({p, length}, '&')) {
+        const char *equals = s.Find('=');
+        if (equals == nullptr)
+            continue;
 
-        const char *equals = (const char *)memchr(p, '=', ampersand - p);
-        if (equals > p) {
-            char *value = uri_unescape_dup(pool, {equals + 1, ampersand},
-                                           ARGS_ESCAPE_CHAR);
-            if (value != nullptr)
-                args.Add(p_strndup(&pool, p, equals - p), value);
-        }
+        StringView name(s);
+        name.SetEnd(equals);
+        if (name.empty())
+            continue;
 
-        p = next;
-    } while (p != nullptr);
+        StringView escaped_value(s);
+        escaped_value.MoveFront(equals + 1);
+
+        char *value = uri_unescape_dup(pool, escaped_value,
+                                       ARGS_ESCAPE_CHAR);
+        if (value != nullptr)
+                args.Add(p_strdup(pool, name), value);
+    }
 
     return args;
 }
