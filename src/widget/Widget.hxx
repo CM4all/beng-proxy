@@ -233,7 +233,7 @@ public:
      * Parameters that will forwarded from the HTTP request to the
      * focused widget (which is an (indirect) child of this widget).
      */
-    struct {
+    struct ForFocused {
         /**
          * The new path_info for the focused widget.
          */
@@ -254,7 +254,7 @@ public:
          * The HTTP method to be invoked on the focused widget.
          */
         http_method_t method = HTTP_METHOD_GET;
-    } for_focused;
+    } *for_focused = nullptr;
 
 private:
     /**
@@ -287,6 +287,10 @@ public:
 
     struct RootTag {};
     Widget(RootTag, struct pool &_pool, const char *_id);
+
+    ~Widget() noexcept {
+        DiscardForFocused();
+    }
 
     Widget(const Widget &) = delete;
     Widget &operator=(const Widget &) = delete;

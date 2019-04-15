@@ -83,8 +83,13 @@ Widget::CopyFromRequest()
     /* are we focused? */
 
     if (HasFocus()) {
+        if (parent->for_focused == nullptr)
+            return;
+
+        auto &src = *parent->for_focused;
+
         /* we're in focus.  forward query string and request body. */
-        from_request.path_info = parent->for_focused.path_info;
+        from_request.path_info = src.path_info;
         if (from_request.path_info != nullptr) {
             from_request.path_info =
                 uri_compress(pool, from_request.path_info);
@@ -93,10 +98,10 @@ Widget::CopyFromRequest()
                                   "path compression failed");
         }
 
-        from_request.query_string = parent->for_focused.query_string;
+        from_request.query_string = src.query_string;
 
-        from_request.method = parent->for_focused.method;
-        from_request.body = std::move(parent->for_focused.body);
+        from_request.method = src.method;
+        from_request.body = std::move(src.body);
     } else if (DescendantHasFocus()) {
         /* we are the parent (or grant-parent) of the focused widget.
            store the relative focus_ref. */
@@ -104,7 +109,7 @@ Widget::CopyFromRequest()
         from_request.focus_ref = parent->from_request.focus_ref->next;
         parent->from_request.focus_ref = nullptr;
 
-        for_focused = std::move(parent->for_focused);
+        for_focused = std::exchange(parent->for_focused, nullptr);
     }
 }
 

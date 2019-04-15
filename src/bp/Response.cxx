@@ -232,9 +232,12 @@ Request::InvokeXmlProcessor(http_status_t status,
         return;
     }
 
+    auto &for_focused = *NewFromPool<Widget::ForFocused>(pool);
+    widget->for_focused = &for_focused;
+
     if (request_body &&
         widget->from_request.focus_ref != nullptr)
-        widget->for_focused.body = std::move(request_body);
+        for_focused.body = std::move(request_body);
 
     uri = translate.response->uri != nullptr
         ? translate.response->uri
@@ -261,9 +264,9 @@ Request::InvokeXmlProcessor(http_status_t status,
            HEAD to the processor */
         method = HTTP_METHOD_GET;
 
-    widget->for_focused.method = method;
-    widget->for_focused.path_info = args.Remove("path");
-    widget->for_focused.query_string = dissected_uri.query;
+    for_focused.method = method;
+    for_focused.path_info = args.Remove("path");
+    for_focused.query_string = dissected_uri.query;
 
     env = processor_env(instance.event_loop,
                         *instance.cached_resource_loader,

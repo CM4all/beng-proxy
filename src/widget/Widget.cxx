@@ -231,7 +231,8 @@ Widget::DiscardForFocused() noexcept
 {
     /* the request body was not forwarded to the focused widget,
        so discard it */
-    for_focused.body.Clear();
+    if (for_focused != nullptr)
+        DeleteFromPool(pool, std::exchange(for_focused, nullptr));
 }
 
 void
