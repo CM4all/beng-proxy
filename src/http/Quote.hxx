@@ -42,7 +42,7 @@ struct StringView;
 
 gcc_pure
 static inline bool
-http_must_quote_token(StringView src)
+http_must_quote_token(StringView src) noexcept
 {
     for (auto ch : src)
         if (!char_is_http_token(ch))
@@ -51,4 +51,4 @@ http_must_quote_token(StringView src)
 }
 
 size_t
-http_quote_string(char *dest, StringView src);
+http_quote_string(char *dest, StringView src) noexcept;

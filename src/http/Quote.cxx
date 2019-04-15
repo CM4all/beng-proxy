@@ -35,7 +35,7 @@
 #include "util/StringView.hxx"
 
 size_t
-http_quote_string(char *dest, const StringView src)
+http_quote_string(char *dest, const StringView src) noexcept
 {
     size_t dest_pos = 0, src_pos = 0;
 
