@@ -43,7 +43,7 @@
 static constexpr char ARGS_ESCAPE_CHAR = '$';
 
 StringMap
-args_parse(struct pool &pool, const StringView p)
+args_parse(struct pool &pool, const StringView p) noexcept
 {
     StringMap args(pool);
 
@@ -74,7 +74,7 @@ args_format_n(struct pool &pool, const StringMap *args,
               const char *replace_key, StringView replace_value,
               const char *replace_key2, StringView replace_value2,
               const char *replace_key3, StringView replace_value3,
-              const char *remove_key)
+              const char *remove_key) noexcept
 {
     size_t length = 0;
 
@@ -154,7 +154,7 @@ const char *
 args_format(struct pool &pool, const StringMap *args,
             const char *replace_key, const char *replace_value,
             const char *replace_key2, const char *replace_value2,
-            const char *remove_key)
+            const char *remove_key) noexcept
 {
     return args_format_n(pool, args,
                          replace_key,
