@@ -66,8 +66,8 @@ args_format_n(struct pool &pool, const StringMap *args,
 gcc_pure
 const char *
 args_format(struct pool &pool, const StringMap *args,
-            const char *replace_key, const char *replace_value,
-            const char *replace_key2, const char *replace_value2,
+            const char *replace_key, StringView replace_value,
+            const char *replace_key2, StringView replace_value2,
             const char *remove_key) noexcept;
 
 #endif

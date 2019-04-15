@@ -152,17 +152,13 @@ args_format_n(struct pool &pool, const StringMap *args,
 
 const char *
 args_format(struct pool &pool, const StringMap *args,
-            const char *replace_key, const char *replace_value,
-            const char *replace_key2, const char *replace_value2,
+            const char *replace_key, StringView replace_value,
+            const char *replace_key2, StringView replace_value2,
             const char *remove_key) noexcept
 {
     return args_format_n(pool, args,
-                         replace_key,
-                         { replace_value,
-                                 replace_value == nullptr ? 0 : strlen(replace_value) },
-                         replace_key2,
-                         { replace_value2,
-                                 replace_value2 == nullptr ? 0 : strlen(replace_value2) },
+                         replace_key, replace_value,
+                         replace_key2, replace_value2,
                          nullptr, nullptr,
                          remove_key);
 }
