@@ -215,7 +215,7 @@ executable('run_cookie_server',
 
 executable('run_header_parser',
   'run_header_parser.cxx',
-  '../src/header_parser.cxx',
+  '../src/http/HeaderParser.cxx',
   include_directories: inc,
   dependencies: [
     putil_dep,

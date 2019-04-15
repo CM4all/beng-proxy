@@ -31,7 +31,7 @@
  */
 
 #include "pool/RootPool.hxx"
-#include "header_parser.hxx"
+#include "http/HeaderParser.hxx"
 #include "GrowingBuffer.hxx"
 #include "strmap.hxx"
 

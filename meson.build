@@ -532,7 +532,7 @@ http_util = static_library('http_util',
   'src/http/Quote.cxx',
   'src/http_upgrade.cxx',
   'src/http_util.cxx',
-  'src/header_parser.cxx',
+  'src/http/HeaderParser.cxx',
   'src/header_writer.cxx',
   include_directories: inc,
 )

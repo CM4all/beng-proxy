@@ -36,7 +36,7 @@
 #include "ResourceAddress.hxx"
 #include "http_address.hxx"
 #include "GrowingBuffer.hxx"
-#include "header_parser.hxx"
+#include "http/HeaderParser.hxx"
 #include "strmap.hxx"
 #include "HttpResponseHandler.hxx"
 #include "PInstance.hxx"
