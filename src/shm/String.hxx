@@ -96,6 +96,10 @@ public:
         return value;
     }
 
+    operator StringView() const noexcept {
+        return value;
+    }
+
     void Clear(struct dpool &pool) noexcept;
 
     /**

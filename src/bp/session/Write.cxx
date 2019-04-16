@@ -106,6 +106,10 @@ public:
     void Write(StringView s) {
         Write(s.ToVoid());
     }
+
+    void Write(const DString &s) {
+        Write((StringView)s);
+    }
 };
 
 }
