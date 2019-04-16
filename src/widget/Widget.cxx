@@ -34,7 +34,7 @@
 #include "Class.hxx"
 #include "View.hxx"
 #include "Ref.hxx"
-#include "pool/pool.hxx"
+#include "pool/tpool.hxx"
 #include "util/HexFormat.h"
 #include "util/Cast.hxx"
 
@@ -124,8 +124,10 @@ Widget::SetId(const StringView _id)
             : p_strcat(&pool, p, WIDGET_REF_SEPARATOR_S, id, nullptr);
 
     p = parent->GetPrefix();
-    if (p != nullptr)
-        prefix = p_strcat(&pool, p, quote_prefix(&pool, id), "__", nullptr);
+    if (p != nullptr) {
+        const AutoRewindPool auto_rewind(*tpool);
+        prefix = p_strcat(&pool, p, quote_prefix(tpool, id), "__", nullptr);
+    }
 }
 
 void
