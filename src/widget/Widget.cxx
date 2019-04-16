@@ -41,16 +41,16 @@
 #include <string.h>
 #include <assert.h>
 
-static bool
-valid_prefix_start_char(char ch)
+static constexpr bool
+valid_prefix_start_char(char ch) noexcept
 {
     return (ch >= 'A' && ch <= 'Z') ||
         (ch >= 'a' && ch <= 'z') ||
         ch == '_';
 }
 
-static bool
-valid_prefix_char(char ch)
+static constexpr bool
+valid_prefix_char(char ch) noexcept
 {
     return valid_prefix_start_char(ch) ||
         (ch >= '0' && ch <= '9');
