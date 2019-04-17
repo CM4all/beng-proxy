@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,59 +30,33 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Wrapper for the tcp_stock class to support load balancing.
- */
-
-#ifndef BENG_PROXY_TCP_BALANCER_HXX
-#define BENG_PROXY_TCP_BALANCER_HXX
+#pragma once
 
 #include "StickyHash.hxx"
-#include "balancer.hxx"
 #include "event/Chrono.hxx"
 
 struct pool;
+class Balancer;
 struct AddressList;
-class TcpStock;
-class StockGetHandler;
-struct StockItem;
+class EventLoop;
+class ConnectSocketHandler;
 class CancellablePointer;
 class SocketAddress;
-class EventLoop;
 
-class TcpBalancer {
-    friend class TcpBalancerRequest;
-
-    TcpStock &tcp_stock;
-
-    Balancer balancer;
-
-public:
-    /**
-     * @param tcp_stock the underlying #TcpStock object
-     */
-    TcpBalancer(TcpStock &_tcp_stock, FailureManager &failure_manager)
-        :tcp_stock(_tcp_stock), balancer(failure_manager) {}
-
-    EventLoop &GetEventLoop() noexcept;
-
-    FailureManager &GetFailureManager() {
-        return balancer.GetFailureManager();
-    }
-
-    /**
-     * @param session_sticky a portion of the session id that is used to
-     * select the worker; 0 means disable stickiness
-     * @param timeout the connect timeout for each attempt
-     */
-    void Get(struct pool &pool,
-             bool ip_transparent,
-             SocketAddress bind_address,
-             sticky_hash_t session_sticky,
-             const AddressList &address_list,
-             Event::Duration timeout,
-             StockGetHandler &handler,
-             CancellablePointer &cancel_ptr);
-};
-
-#endif
+/**
+ * Open a connection to any address in the specified address list.
+ * This is done in a round-robin fashion, ignoring hosts that are
+ * known to be down.
+ *
+ * @param timeout the connect timeout for each attempt [seconds]
+ */
+void
+client_balancer_connect(EventLoop &event_loop, struct pool &pool,
+                        Balancer &balancer,
+                        bool ip_transparent,
+                        SocketAddress bind_address,
+                        sticky_hash_t session_sticky,
+                        const AddressList *address_list,
+                        Event::Duration timeout,
+                        ConnectSocketHandler &handler,
+                        CancellablePointer &cancel_ptr);

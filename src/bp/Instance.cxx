@@ -37,7 +37,7 @@
 #include "fb_pool.hxx"
 #include "control/Server.hxx"
 #include "control/Local.hxx"
-#include "tcp_balancer.hxx"
+#include "cluster/TcpBalancer.hxx"
 #include "pipe_stock.hxx"
 #include "DirectResourceLoader.hxx"
 #include "CachedResourceLoader.hxx"

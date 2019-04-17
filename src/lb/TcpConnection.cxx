@@ -35,7 +35,7 @@
 #include "ClusterConfig.hxx"
 #include "ListenerConfig.hxx"
 #include "Instance.hxx"
-#include "client_balancer.hxx"
+#include "cluster/ConnectBalancer.hxx"
 #include "address_sticky.hxx"
 #include "ssl/Filter.hxx"
 #include "pool/pool.hxx"

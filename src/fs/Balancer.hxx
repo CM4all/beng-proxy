@@ -32,7 +32,7 @@
 
 #pragma once
 
-#include "balancer.hxx"
+#include "cluster/Balancer.hxx"
 #include "event/Chrono.hxx"
 #include "util/Compiler.h"
 

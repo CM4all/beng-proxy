@@ -45,7 +45,7 @@
 #include "tcp_stock.hxx"
 #include "translation/Stock.hxx"
 #include "translation/Cache.hxx"
-#include "tcp_balancer.hxx"
+#include "cluster/TcpBalancer.hxx"
 #include "fs/Stock.hxx"
 #include "fs/Balancer.hxx"
 #include "stock/MapStock.hxx"

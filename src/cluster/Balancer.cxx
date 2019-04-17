@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,7 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "balancer.hxx"
+#include "Balancer.hxx"
 #include "address_list.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/FailureManager.hxx"

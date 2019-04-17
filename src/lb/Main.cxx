@@ -39,7 +39,6 @@
 #include "lb_check.hxx"
 #include "fs/Stock.hxx"
 #include "fs/Balancer.hxx"
-#include "balancer.hxx"
 #include "pipe_stock.hxx"
 #include "access_log/Glue.hxx"
 #include "ssl/Init.hxx"

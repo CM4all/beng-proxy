@@ -30,9 +30,9 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "tcp_balancer.hxx"
+#include "TcpBalancer.hxx"
+#include "BalancerRequest.hxx"
 #include "tcp_stock.hxx"
-#include "generic_balancer.hxx"
 #include "stock/GetHandler.hxx"
 #include "event/Loop.hxx"
 

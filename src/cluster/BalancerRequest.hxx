@@ -30,14 +30,9 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Generic connection balancer.
- */
+#pragma once
 
-#ifndef GENERIC_BALANCER_HXX
-#define GENERIC_BALANCER_HXX
-
-#include "balancer.hxx"
+#include "Balancer.hxx"
 #include "address_list.hxx"
 #include "paddress.hxx"
 #include "pool/pool.hxx"
@@ -49,6 +44,9 @@
 
 class CancellablePointer;
 
+/**
+ * Generic connection balancer.
+ */
 template<class R>
 class BalancerRequest final : Cancellable {
     R request;
@@ -157,5 +155,3 @@ public:
         r->Next(now);
     }
 };
-
-#endif

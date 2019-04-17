@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,12 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Load balancer for AddressList.
- */
-
-#ifndef BENG_PROXY_BALANCER_HXX
-#define BENG_PROXY_BALANCER_HXX
+#pragma once
 
 #include "StickyHash.hxx"
 #include "util/Cache.hxx"
@@ -45,6 +40,9 @@ class SocketAddress;
 class FailureManager;
 class Expiry;
 
+/**
+ * Load balancer for AddressList.
+ */
 class Balancer {
     struct Item final {
         /** the index of the item that will be returned next */
@@ -81,5 +79,3 @@ public:
     SocketAddress Get(Expiry now,
                       const AddressList &list, unsigned session) noexcept;
 };
-
-#endif

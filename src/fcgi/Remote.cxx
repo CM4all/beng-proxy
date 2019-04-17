@@ -35,7 +35,7 @@
 #include "HttpResponseHandler.hxx"
 #include "lease.hxx"
 #include "tcp_stock.hxx"
-#include "tcp_balancer.hxx"
+#include "cluster/TcpBalancer.hxx"
 #include "stock/GetHandler.hxx"
 #include "stock/Item.hxx"
 #include "address_list.hxx"

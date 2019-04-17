@@ -30,7 +30,8 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "client_balancer.hxx"
+#include "cluster/ConnectBalancer.hxx"
+#include "cluster/Balancer.hxx"
 #include "event/net/ConnectSocket.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
@@ -38,7 +39,6 @@
 #include "PInstance.hxx"
 #include "pool/pool.hxx"
 #include "AllocatorPtr.hxx"
-#include "balancer.hxx"
 #include "address_list.hxx"
 #include "net/Resolver.hxx"
 #include "net/AddressInfo.hxx"

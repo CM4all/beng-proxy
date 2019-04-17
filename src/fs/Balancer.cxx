@@ -32,7 +32,7 @@
 
 #include "Balancer.hxx"
 #include "Stock.hxx"
-#include "generic_balancer.hxx"
+#include "cluster/BalancerRequest.hxx"
 #include "stock/Stock.hxx"
 #include "stock/GetHandler.hxx"
 #include "event/Loop.hxx"

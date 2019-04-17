@@ -31,7 +31,7 @@
  */
 
 #include "TestPool.hxx"
-#include "balancer.hxx"
+#include "cluster/Balancer.hxx"
 #include "AllocatorPtr.hxx"
 #include "address_list.hxx"
 #include "event/Loop.hxx"

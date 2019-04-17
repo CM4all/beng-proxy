@@ -30,11 +30,10 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "client_balancer.hxx"
-#include "generic_balancer.hxx"
+#include "ConnectBalancer.hxx"
+#include "BalancerRequest.hxx"
 #include "net/PConnectSocket.hxx"
 #include "address_list.hxx"
-#include "balancer.hxx"
 #include "event/Loop.hxx"
 #include "net/StaticSocketAddress.hxx"
 
