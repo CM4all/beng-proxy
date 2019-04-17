@@ -64,7 +64,7 @@ struct ClientBalancerRequest : ConnectSocketHandler {
             bind_address = _bind_address;
     }
 
-    void Send(struct pool &pool, SocketAddress address,
+    void Send(AllocatorPtr alloc, SocketAddress address,
               CancellablePointer &cancel_ptr);
 
     /* virtual methods from class ConnectSocketHandler */
@@ -74,10 +74,10 @@ struct ClientBalancerRequest : ConnectSocketHandler {
 };
 
 inline void
-ClientBalancerRequest::Send(struct pool &pool, SocketAddress address,
+ClientBalancerRequest::Send(AllocatorPtr alloc, SocketAddress address,
                             CancellablePointer &cancel_ptr)
 {
-    client_socket_new(event_loop, pool, nullptr,
+    client_socket_new(event_loop, alloc, nullptr,
                       address.GetFamily(), SOCK_STREAM, 0,
                       ip_transparent,
                       bind_address,

@@ -34,11 +34,11 @@
 
 #include "BalancerMap.hxx"
 #include "address_list.hxx"
-#include "pool/pool.hxx"
 #include "pool/PSocketAddress.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/FailureManager.hxx"
 #include "util/Cancellable.hxx"
+#include "AllocatorPtr.hxx"
 
 #include <utility>
 
@@ -51,7 +51,7 @@ template<class R>
 class BalancerRequest final : Cancellable {
     R request;
 
-    struct pool &pool;
+    const AllocatorPtr alloc;
 
     BalancerMap &balancer;
 
@@ -74,14 +74,14 @@ class BalancerRequest final : Cancellable {
 
 public:
     template<typename... Args>
-    BalancerRequest(struct pool &_pool,
+    BalancerRequest(AllocatorPtr _alloc,
                     BalancerMap &_balancer,
                     const AddressList &_address_list,
                     CancellablePointer &_cancel_ptr,
                     sticky_hash_t _session_sticky,
                     Args&&... args) noexcept
         :request(std::forward<Args>(args)...),
-         pool(_pool), balancer(_balancer),
+         alloc(_alloc), balancer(_balancer),
          address_list(_address_list),
          session_sticky(_session_sticky),
          retries(CalculateRetries(address_list))
@@ -125,10 +125,10 @@ public:
         /* we need to copy this address because it may come from
            the balancer's cache, and the according cache item may
            be flushed at any time */
-        const auto current_address = DupAddress(pool, address);
+        const auto current_address = DupAddress(alloc, address);
         failure = balancer.GetFailureManager().Make(current_address);
 
-        request.Send(pool, current_address, cancel_ptr);
+        request.Send(alloc, current_address, cancel_ptr);
     }
 
     void ConnectSuccess() noexcept {
@@ -148,10 +148,10 @@ public:
     }
 
     template<typename... Args>
-    static void Start(struct pool &pool, Expiry now,
+    static void Start(AllocatorPtr alloc, Expiry now,
                       Args&&... args) noexcept {
-        auto r = NewFromPool<BalancerRequest>(pool, pool,
-                                              std::forward<Args>(args)...);
+        auto r = alloc.New<BalancerRequest>(alloc,
+                                            std::forward<Args>(args)...);
         r->Next(now);
     }
 };

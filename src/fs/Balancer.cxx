@@ -68,7 +68,7 @@ public:
          filter_factory(_filter_factory),
          handler(_handler) {}
 
-    void Send(struct pool &pool, SocketAddress address,
+    void Send(AllocatorPtr alloc, SocketAddress address,
               CancellablePointer &cancel_ptr) noexcept;
 
 private:
@@ -80,10 +80,10 @@ private:
 using BR = BalancerRequest<FilteredSocketBalancerRequest>;
 
 inline void
-FilteredSocketBalancerRequest::Send(struct pool &pool, SocketAddress address,
+FilteredSocketBalancerRequest::Send(AllocatorPtr alloc, SocketAddress address,
                                     CancellablePointer &cancel_ptr) noexcept
 {
-    stock.Get(pool,
+    stock.Get(alloc,
               StopwatchPtr(parent_stopwatch, "connect"),
               nullptr,
               ip_transparent, bind_address, address,

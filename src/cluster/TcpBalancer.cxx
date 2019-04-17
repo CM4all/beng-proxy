@@ -71,7 +71,7 @@ public:
         return tcp_balancer.GetEventLoop();
     }
 
-    void Send(struct pool &pool, SocketAddress address,
+    void Send(AllocatorPtr alloc, SocketAddress address,
               CancellablePointer &cancel_ptr) noexcept;
 
 private:
@@ -81,10 +81,10 @@ private:
 };
 
 inline void
-TcpBalancerRequest::Send(struct pool &pool, SocketAddress address,
+TcpBalancerRequest::Send(AllocatorPtr alloc, SocketAddress address,
                          CancellablePointer &cancel_ptr) noexcept
 {
-    tcp_balancer.tcp_stock.Get(pool,
+    tcp_balancer.tcp_stock.Get(alloc,
                                parent_stopwatch,
                                nullptr,
                                ip_transparent,
