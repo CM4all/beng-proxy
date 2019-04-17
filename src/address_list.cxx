@@ -62,9 +62,7 @@ AddressList::Add(AllocatorPtr alloc, const SocketAddress address) noexcept
     if (addresses.full())
         return false;
 
-    const struct sockaddr *new_address = (const struct sockaddr *)
-        alloc.Dup(address.GetAddress(), address.GetSize());
-    addresses.push_back({new_address, address.GetSize()});
+    addresses.push_back(alloc.Dup(address));
     return true;
 }
 

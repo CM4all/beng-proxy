@@ -40,6 +40,7 @@
 
 struct StringView;
 template<typename T> struct ConstBuffer;
+class SocketAddress;
 
 class AllocatorPtr {
     struct pool &pool;
@@ -90,6 +91,8 @@ public:
     const char *DupToLower(StringView src) const noexcept {
         return p_strdup_lower(pool, src);
     }
+
+    SocketAddress Dup(SocketAddress src) const noexcept;
 
 private:
     template<typename... Args>

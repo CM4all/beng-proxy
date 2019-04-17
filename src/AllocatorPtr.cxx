@@ -31,6 +31,7 @@
  */
 
 #include "AllocatorPtr.hxx"
+#include "pool/PSocketAddress.hxx"
 #include "util/StringView.hxx"
 
 ConstBuffer<void>
@@ -69,3 +70,8 @@ AllocatorPtr::DupZ(StringView src) const noexcept
     return p_strndup(&pool, src.data, src.size);
 }
 
+SocketAddress
+AllocatorPtr::Dup(SocketAddress src) const noexcept
+{
+    return DupAddress(pool, src);
+}
