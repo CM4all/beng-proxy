@@ -45,10 +45,10 @@ class RoundRobinBalancer final {
     unsigned next = 0;
 
 public:
-    const SocketAddress &Get(FailureManager &failure_manager,
-                             Expiry now,
-                             const AddressList &addresses,
-                             bool allow_fade) noexcept;
+    SocketAddress Get(FailureManager &failure_manager,
+                      Expiry now,
+                      const AddressList &addresses,
+                      bool allow_fade) noexcept;
 
 private:
     const SocketAddress &NextAddress(const AddressList &addresses) noexcept;

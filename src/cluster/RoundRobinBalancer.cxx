@@ -51,7 +51,7 @@ RoundRobinBalancer::NextAddress(const AddressList &addresses) noexcept
     return address;
 }
 
-const SocketAddress &
+SocketAddress
 RoundRobinBalancer::Get(FailureManager &failure_manager,
                         const Expiry now,
                         const AddressList &addresses,
