@@ -30,44 +30,42 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#pragma once
-
 #include "RoundRobinBalancer.hxx"
-#include "StickyHash.hxx"
-#include "util/Cache.hxx"
+#include "address_list.hxx"
+#include "net/FailureManager.hxx"
 
-#include <string>
+#include <assert.h>
 
-struct AddressList;
-class SocketAddress;
-class FailureManager;
-class Expiry;
+inline const SocketAddress &
+RoundRobinBalancer::NextAddress(const AddressList &addresses) noexcept
+{
+    assert(addresses.GetSize() >= 2);
+    assert(next < addresses.GetSize());
 
-/**
- * Load balancer for AddressList.
- */
-class BalancerMap {
-    FailureManager &failure_manager;
+    const SocketAddress &address = addresses[next];
 
-    Cache<std::string, RoundRobinBalancer, 2048, 1021> cache;
+    ++next;
+    if (next >= addresses.GetSize())
+        next = 0;
 
-public:
-    explicit BalancerMap(FailureManager &_failure_manager) noexcept
-        :failure_manager(_failure_manager) {}
+    return address;
+}
 
-    FailureManager &GetFailureManager() const noexcept {
-        return failure_manager;
-    }
+const SocketAddress &
+RoundRobinBalancer::Get(FailureManager &failure_manager,
+                        const Expiry now,
+                        const AddressList &addresses,
+                        bool allow_fade) noexcept
+{
+    const auto &first = NextAddress(addresses);
+    const SocketAddress *ret = &first;
+    do {
+        if (failure_manager.Check(now, *ret, allow_fade))
+            return *ret;
 
-    /**
-     * Gets the next socket address to connect to.  These are selected
-     * in a round-robin fashion, which results in symmetric
-     * load-balancing.  If a server is known to be faulty, it is not
-     * used (see net/FailureManager.hxx).
-     *
-     * @param session a portion of the session id used to select an
-     * address if stickiness is enabled; 0 if there is no session
-     */
-    SocketAddress Get(Expiry now,
-                      const AddressList &list, unsigned session) noexcept;
-};
+        ret = &NextAddress(addresses);
+    } while (ret != &first);
+
+    /* all addresses failed: */
+    return first;
+}

@@ -32,42 +32,24 @@
 
 #pragma once
 
-#include "RoundRobinBalancer.hxx"
-#include "StickyHash.hxx"
-#include "util/Cache.hxx"
-
-#include <string>
-
 struct AddressList;
 class SocketAddress;
 class FailureManager;
 class Expiry;
 
 /**
- * Load balancer for AddressList.
+ * A round-robin load balancer for #AddressList.
  */
-class BalancerMap {
-    FailureManager &failure_manager;
-
-    Cache<std::string, RoundRobinBalancer, 2048, 1021> cache;
+class RoundRobinBalancer final {
+    /** the index of the item that will be returned next */
+    unsigned next = 0;
 
 public:
-    explicit BalancerMap(FailureManager &_failure_manager) noexcept
-        :failure_manager(_failure_manager) {}
+    const SocketAddress &Get(FailureManager &failure_manager,
+                             Expiry now,
+                             const AddressList &addresses,
+                             bool allow_fade) noexcept;
 
-    FailureManager &GetFailureManager() const noexcept {
-        return failure_manager;
-    }
-
-    /**
-     * Gets the next socket address to connect to.  These are selected
-     * in a round-robin fashion, which results in symmetric
-     * load-balancing.  If a server is known to be faulty, it is not
-     * used (see net/FailureManager.hxx).
-     *
-     * @param session a portion of the session id used to select an
-     * address if stickiness is enabled; 0 if there is no session
-     */
-    SocketAddress Get(Expiry now,
-                      const AddressList &list, unsigned session) noexcept;
+private:
+    const SocketAddress &NextAddress(const AddressList &addresses) noexcept;
 };

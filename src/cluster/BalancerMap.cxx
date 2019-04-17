@@ -35,8 +35,6 @@
 #include "net/SocketAddress.hxx"
 #include "net/FailureManager.hxx"
 
-#include <string>
-
 #include <assert.h>
 
 static bool
@@ -58,40 +56,6 @@ next_failover_address(FailureManager &failure_manager, Expiry now,
 
     /* none available - return first node as last resort */
     return list[0];
-}
-
-const SocketAddress &
-BalancerMap::Item::NextAddress(const AddressList &addresses) noexcept
-{
-    assert(addresses.GetSize() >= 2);
-    assert(next < addresses.GetSize());
-
-    const SocketAddress &address = addresses[next];
-
-    ++next;
-    if (next >= addresses.GetSize())
-        next = 0;
-
-    return address;
-}
-
-const SocketAddress &
-BalancerMap::Item::NextAddressChecked(FailureManager &_failure_manager,
-                                      const Expiry now,
-                                      const AddressList &addresses,
-                                      bool allow_fade) noexcept
-{
-    const auto &first = NextAddress(addresses);
-    const SocketAddress *ret = &first;
-    do {
-        if (CheckAddress(_failure_manager, now, *ret, allow_fade))
-            return *ret;
-
-        ret = &NextAddress(addresses);
-    } while (ret != &first);
-
-    /* all addresses failed: */
-    return first;
 }
 
 static const SocketAddress &
@@ -157,8 +121,8 @@ BalancerMap::Get(const Expiry now,
 
     if (item == nullptr)
         /* create a new cache item */
-        item = &cache.Put(std::move(key), Item());
+        item = &cache.Put(std::move(key), RoundRobinBalancer());
 
-    return item->NextAddressChecked(failure_manager, now, list,
-                                    list.sticky_mode == StickyMode::NONE);
+    return item->Get(failure_manager, now, list,
+                     list.sticky_mode == StickyMode::NONE);
 }
