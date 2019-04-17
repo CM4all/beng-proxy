@@ -34,7 +34,7 @@
 #include "util/StringView.hxx"
 
 ConstBuffer<void>
-AllocatorPtr::Dup(ConstBuffer<void> src)
+AllocatorPtr::Dup(ConstBuffer<void> src) const noexcept
 {
     if (src == nullptr)
         return nullptr;
@@ -46,7 +46,7 @@ AllocatorPtr::Dup(ConstBuffer<void> src)
 }
 
 StringView
-AllocatorPtr::Dup(StringView src)
+AllocatorPtr::Dup(StringView src) const noexcept
 {
     if (src == nullptr)
         return nullptr;
@@ -58,7 +58,7 @@ AllocatorPtr::Dup(StringView src)
 }
 
 const char *
-AllocatorPtr::DupZ(StringView src)
+AllocatorPtr::DupZ(StringView src) const noexcept
 {
     if (src == nullptr)
         return nullptr;

@@ -47,16 +47,16 @@ class AllocatorPtr {
 public:
     constexpr AllocatorPtr(struct pool &_pool) noexcept :pool(_pool) {}
 
-    char *Dup(const char *src) noexcept {
+    char *Dup(const char *src) const noexcept {
         return p_strdup(&pool, src);
     }
 
-    const char *CheckDup(const char *src) noexcept {
+    const char *CheckDup(const char *src) const noexcept {
         return p_strdup_checked(&pool, src);
     }
 
     template<typename... Args>
-    char *Concat(Args&&... args) noexcept {
+    char *Concat(Args&&... args) const noexcept {
         const size_t length = ConcatLength(args...);
         char *result = NewArray<char>(length + 1);
         *ConcatCopy(result, args...) = 0;
@@ -64,30 +64,30 @@ public:
     }
 
     template<typename T, typename... Args>
-    T *New(Args&&... args) noexcept {
+    T *New(Args&&... args) const noexcept {
         return NewFromPool<T>(pool, std::forward<Args>(args)...);
     }
 
     template<typename T>
-    T *NewArray(size_t n) noexcept {
+    T *NewArray(size_t n) const noexcept {
         return PoolAlloc<T>(pool, n);
     }
 
-    void *Dup(const void *data, size_t size) noexcept {
+    void *Dup(const void *data, size_t size) const noexcept {
         return p_memdup(&pool, data, size);
     }
 
-    ConstBuffer<void> Dup(ConstBuffer<void> src);
+    ConstBuffer<void> Dup(ConstBuffer<void> src) const noexcept;
 
     template<typename T>
-    ConstBuffer<T> Dup(ConstBuffer<T> src) noexcept {
+    ConstBuffer<T> Dup(ConstBuffer<T> src) const noexcept {
         return ConstBuffer<T>::FromVoid(Dup(src.ToVoid()));
     }
 
-    StringView Dup(StringView src);
-    const char *DupZ(StringView src);
+    StringView Dup(StringView src) const noexcept;
+    const char *DupZ(StringView src) const noexcept;
 
-    const char *DupToLower(StringView src) noexcept {
+    const char *DupToLower(StringView src) const noexcept {
         return p_strdup_lower(pool, src);
     }
 
