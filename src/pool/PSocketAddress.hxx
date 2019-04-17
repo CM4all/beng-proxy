@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef PADDRESS_HXX
-#define PADDRESS_HXX
+#pragma once
 
 #include "pool/pool.hxx"
 #include "net/SocketAddress.hxx"
@@ -48,5 +47,3 @@ DupAddress(struct pool &pool, SocketAddress src)
                         p_memdup(&pool, src.GetAddress(), src.GetSize()),
                         src.GetSize());
 }
-
-#endif

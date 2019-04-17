@@ -36,7 +36,7 @@
 #include "strmap.hxx"
 #include "address_string.hxx"
 #include "pool/pool.hxx"
-#include "paddress.hxx"
+#include "pool/PSocketAddress.hxx"
 #include "istream/Bucket.hxx"
 #include "system/Error.hxx"
 #include "net/UniqueSocketDescriptor.hxx"

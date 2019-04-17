@@ -33,7 +33,7 @@
 #include "HttpConnection.hxx"
 #include "Headers.hxx"
 #include "Instance.hxx"
-#include "paddress.hxx"
+#include "pool/PSocketAddress.hxx"
 #include "lease.hxx"
 #include "HttpResponseHandler.hxx"
 #include "http_server/http_server.hxx"

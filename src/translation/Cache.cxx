@@ -48,7 +48,7 @@
 #include "AllocatorPtr.hxx"
 #include "pool/pbuffer.hxx"
 #include "pool/StringBuilder.hxx"
-#include "paddress.hxx"
+#include "pool/PSocketAddress.hxx"
 #include "SlicePool.hxx"
 #include "AllocatorStats.hxx"
 #include "load_file.hxx"

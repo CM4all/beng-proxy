@@ -34,8 +34,8 @@
 
 #include "BalancerMap.hxx"
 #include "address_list.hxx"
-#include "paddress.hxx"
 #include "pool/pool.hxx"
+#include "pool/PSocketAddress.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/FailureManager.hxx"
 #include "util/Cancellable.hxx"
