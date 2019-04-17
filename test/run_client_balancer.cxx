@@ -31,7 +31,7 @@
  */
 
 #include "cluster/ConnectBalancer.hxx"
-#include "cluster/Balancer.hxx"
+#include "cluster/BalancerMap.hxx"
 #include "event/net/ConnectSocket.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
@@ -53,7 +53,7 @@
 
 struct Context final : PInstance, ConnectSocketHandler {
     FailureManager failure_manager;
-    Balancer balancer;
+    BalancerMap balancer;
 
     enum {
         NONE, SUCCESS, TIMEOUT, ERROR,

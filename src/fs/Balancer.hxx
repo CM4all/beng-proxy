@@ -32,7 +32,7 @@
 
 #pragma once
 
-#include "cluster/Balancer.hxx"
+#include "cluster/BalancerMap.hxx"
 #include "event/Chrono.hxx"
 #include "util/Compiler.h"
 
@@ -55,7 +55,7 @@ class FilteredSocketBalancer {
 
     FilteredSocketStock &stock;
 
-    Balancer balancer;
+    BalancerMap balancer;
 
 public:
     FilteredSocketBalancer(FilteredSocketStock &_stock,

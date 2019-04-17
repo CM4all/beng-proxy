@@ -43,7 +43,7 @@ class Expiry;
 /**
  * Load balancer for AddressList.
  */
-class Balancer {
+class BalancerMap {
     struct Item final {
         /** the index of the item that will be returned next */
         unsigned next = 0;
@@ -60,7 +60,7 @@ class Balancer {
     Cache<std::string, Item, 2048, 1021> cache;
 
 public:
-    explicit Balancer(FailureManager &_failure_manager) noexcept
+    explicit BalancerMap(FailureManager &_failure_manager) noexcept
         :failure_manager(_failure_manager) {}
 
     FailureManager &GetFailureManager() const noexcept {

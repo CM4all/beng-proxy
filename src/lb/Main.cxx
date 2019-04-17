@@ -190,7 +190,7 @@ try {
     instance.InitAllControls();
     instance.InitAllListeners();
 
-    instance.balancer = new Balancer(instance.failure_manager);
+    instance.balancer = new BalancerMap(instance.failure_manager);
 
     instance.fs_stock = new FilteredSocketStock(instance.event_loop,
                                                 cmdline.tcp_stock_limit);

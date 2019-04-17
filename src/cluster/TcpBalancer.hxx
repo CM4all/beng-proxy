@@ -33,7 +33,7 @@
 #pragma once
 
 #include "StickyHash.hxx"
-#include "cluster/Balancer.hxx"
+#include "BalancerMap.hxx"
 #include "event/Chrono.hxx"
 
 struct pool;
@@ -53,7 +53,7 @@ class TcpBalancer {
 
     TcpStock &tcp_stock;
 
-    Balancer balancer;
+    BalancerMap balancer;
 
 public:
     /**

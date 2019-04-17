@@ -31,7 +31,7 @@
  */
 
 #include "TestPool.hxx"
-#include "cluster/Balancer.hxx"
+#include "cluster/BalancerMap.hxx"
 #include "AllocatorPtr.hxx"
 #include "address_list.hxx"
 #include "event/Loop.hxx"
@@ -46,13 +46,13 @@
 #include <stdlib.h>
 
 class MyBalancer {
-    Balancer balancer;
+    BalancerMap balancer;
 
 public:
     explicit MyBalancer(FailureManager &failure_manager)
         :balancer(failure_manager) {}
 
-    operator Balancer *() {
+    operator BalancerMap *() {
         return &balancer;
     }
 

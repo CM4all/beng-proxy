@@ -32,7 +32,7 @@
 
 #pragma once
 
-#include "Balancer.hxx"
+#include "BalancerMap.hxx"
 #include "address_list.hxx"
 #include "paddress.hxx"
 #include "pool/pool.hxx"
@@ -53,7 +53,7 @@ class BalancerRequest final : Cancellable {
 
     struct pool &pool;
 
-    Balancer &balancer;
+    BalancerMap &balancer;
 
     const AddressList &address_list;
 
@@ -75,7 +75,7 @@ class BalancerRequest final : Cancellable {
 public:
     template<typename... Args>
     BalancerRequest(struct pool &_pool,
-                    Balancer &_balancer,
+                    BalancerMap &_balancer,
                     const AddressList &_address_list,
                     CancellablePointer &_cancel_ptr,
                     sticky_hash_t _session_sticky,

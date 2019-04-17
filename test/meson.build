@@ -257,7 +257,7 @@ executable('run_processor',
 executable('run_client_balancer',
   'run_client_balancer.cxx',
   '../src/PInstance.cxx',
-  '../src/cluster/Balancer.cxx',
+  '../src/cluster/BalancerMap.cxx',
   '../src/cluster/ConnectBalancer.cxx',
   include_directories: inc,
   dependencies: [
@@ -371,7 +371,7 @@ test('t_expansible_buffer', executable('t_expansible_buffer',
 
 test('t_balancer', executable('t_balancer',
   't_balancer.cxx',
-  '../src/cluster/Balancer.cxx',
+  '../src/cluster/BalancerMap.cxx',
   '../src/address_list.cxx',
   include_directories: inc,
   dependencies: [

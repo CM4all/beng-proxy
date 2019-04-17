@@ -128,7 +128,7 @@ ClientBalancerRequest::OnSocketConnectError(std::exception_ptr ep) noexcept
 
 void
 client_balancer_connect(EventLoop &event_loop,
-                        struct pool &pool, Balancer &balancer,
+                        struct pool &pool, BalancerMap &balancer,
                         bool ip_transparent,
                         SocketAddress bind_address,
                         sticky_hash_t session_sticky,

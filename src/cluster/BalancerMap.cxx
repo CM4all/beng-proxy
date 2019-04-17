@@ -30,7 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "Balancer.hxx"
+#include "BalancerMap.hxx"
 #include "address_list.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/FailureManager.hxx"
@@ -61,7 +61,7 @@ next_failover_address(FailureManager &failure_manager, Expiry now,
 }
 
 const SocketAddress &
-Balancer::Item::NextAddress(const AddressList &addresses) noexcept
+BalancerMap::Item::NextAddress(const AddressList &addresses) noexcept
 {
     assert(addresses.GetSize() >= 2);
     assert(next < addresses.GetSize());
@@ -76,10 +76,10 @@ Balancer::Item::NextAddress(const AddressList &addresses) noexcept
 }
 
 const SocketAddress &
-Balancer::Item::NextAddressChecked(FailureManager &_failure_manager,
-                                   const Expiry now,
-                                   const AddressList &addresses,
-                                   bool allow_fade) noexcept
+BalancerMap::Item::NextAddressChecked(FailureManager &_failure_manager,
+                                      const Expiry now,
+                                      const AddressList &addresses,
+                                      bool allow_fade) noexcept
 {
     const auto &first = NextAddress(addresses);
     const SocketAddress *ret = &first;
@@ -127,8 +127,8 @@ next_sticky_address_checked(FailureManager &failure_manager, const Expiry now,
 }
 
 SocketAddress
-Balancer::Get(const Expiry now,
-              const AddressList &list, sticky_hash_t sticky_hash) noexcept
+BalancerMap::Get(const Expiry now,
+                 const AddressList &list, sticky_hash_t sticky_hash) noexcept
 {
     if (list.IsSingle())
         return list[0];

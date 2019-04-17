@@ -49,7 +49,7 @@
 
 class AccessLogGlue;
 class Stock;
-class Balancer;
+class BalancerMap;
 class FilteredSocketStock;
 class FilteredSocketBalancer;
 struct LbConfig;
@@ -100,7 +100,7 @@ struct LbInstance final : PInstance {
 
     /* stock */
     FailureManager failure_manager;
-    Balancer *balancer;
+    BalancerMap *balancer;
 
     FilteredSocketStock *fs_stock = nullptr;
     FilteredSocketBalancer *fs_balancer = nullptr;

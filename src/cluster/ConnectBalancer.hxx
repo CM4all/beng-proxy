@@ -36,7 +36,7 @@
 #include "event/Chrono.hxx"
 
 struct pool;
-class Balancer;
+class BalancerMap;
 struct AddressList;
 class EventLoop;
 class ConnectSocketHandler;
@@ -52,7 +52,7 @@ class SocketAddress;
  */
 void
 client_balancer_connect(EventLoop &event_loop, struct pool &pool,
-                        Balancer &balancer,
+                        BalancerMap &balancer,
                         bool ip_transparent,
                         SocketAddress bind_address,
                         sticky_hash_t session_sticky,
