@@ -100,6 +100,13 @@ public:
         return value;
     }
 
+    /* note: this method is only necessary to work around a GCC 8 bug
+       ("error: call of overloaded 'StringView(const DString&)' is
+       ambiguous") */
+    auto ToStringView() const noexcept {
+        return value;
+    }
+
     void Clear(struct dpool &pool) noexcept;
 
     /**

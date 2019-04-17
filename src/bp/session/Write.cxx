@@ -108,7 +108,7 @@ public:
     }
 
     void Write(const DString &s) {
-        Write((StringView)s);
+        Write(s.ToStringView());
     }
 };
 
