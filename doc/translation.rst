@@ -375,6 +375,8 @@ Response
 - ``FILTER``: the next resource address (``HTTP``, ``CGI``) will denote
   an output filter, see section `7.16 <#filter>`__
 
+.. _cache_tag:
+
 - ``CACHE_TAG``: If present after ``FILTER`` and the filter's response
   is cached, then this tag will be assigned to the cache item.  This
   tag can be used with :ref:`FLUSH_FILTER_CACHE <flush_filter_cache>`

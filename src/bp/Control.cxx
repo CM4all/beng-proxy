@@ -175,7 +175,12 @@ BpInstance::OnControlPacket(ControlServer &control_server,
 
     case ControlCommand::FLUSH_FILTER_CACHE:
         if (filter_cache != nullptr) {
-            filter_cache_flush(*filter_cache);
+            if (payload.empty())
+                filter_cache_flush(*filter_cache);
+            else
+                filter_cache_flush_tag(*filter_cache,
+                                       std::string((const char *)payload.data,
+                                                   payload.size).c_str());
         }
 
         break;

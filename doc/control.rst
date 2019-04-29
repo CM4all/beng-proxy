@@ -92,7 +92,9 @@ Commands
 
 .. _flush_filter_cache:
 
-- ``FLUSH_FILTER_CACHE``: Flush all items from the filter cache.
+- ``FLUSH_FILTER_CACHE``: Flush all items from the filter cache.  If a
+  payload is given, then this is a tag which flushes only cache items
+  with the given :ref:`CACHE_TAG <cache_tag>`.
 
 Only ``TCACHE_INVALIDATE``, ``STATS`` and ``NODE_STATUS`` are allowed
 when received via IP. The other commands are only accepted from

@@ -378,8 +378,16 @@ FadeChildren(const char *server, ConstBuffer<const char *> args)
 static void
 FlushFilterCache(const char *server, ConstBuffer<const char *> args)
 {
-    SimpleCommand(server, args,
-                  BengProxy::ControlCommand::FLUSH_FILTER_CACHE);
+    StringView tag = nullptr;
+
+    if (!args.empty())
+        tag = args.shift();
+
+    if (!args.empty())
+        throw Usage{"Too many arguments"};
+
+    BengControlClient client(server);
+    client.Send(BengProxy::ControlCommand::FLUSH_FILTER_CACHE, tag.ToVoid());
 }
 
 int

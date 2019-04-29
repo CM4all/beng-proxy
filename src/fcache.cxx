@@ -90,14 +90,17 @@ struct FilterCacheInfo {
     std::chrono::system_clock::time_point expires =
         std::chrono::system_clock::from_time_t(-1);
 
+    const char *tag;
+
     /** the final resource id */
     const char *key;
 
-    FilterCacheInfo(const char *_key) noexcept
-        :key(_key) {}
+    FilterCacheInfo(const char *_tag, const char *_key) noexcept
+        :tag(_tag), key(_key) {}
 
     FilterCacheInfo(struct pool &pool, const FilterCacheInfo &src) noexcept
         :expires(src.expires),
+         tag(p_strdup_checked(&pool, src.tag)),
          key(p_strdup(&pool, src.key)) {}
 
     FilterCacheInfo(FilterCacheInfo &&src) = default;
@@ -268,6 +271,8 @@ public:
         Compress();
     }
 
+    void FlushTag(const char *tag) noexcept;
+
     void Get(struct pool &caller_pool,
              const char *cache_tag,
              const ResourceAddress &address,
@@ -342,9 +347,10 @@ FilterCacheRequest::CancelStore() noexcept
 /* check whether the request could produce a cacheable response */
 static FilterCacheInfo *
 filter_cache_request_evaluate(struct pool &pool,
+                              const char *tag,
                               const ResourceAddress &address,
                               const char *source_id,
-                              const StringMap &headers)
+                              const StringMap &headers) noexcept
 {
     if (source_id == nullptr)
         return nullptr;
@@ -353,7 +359,7 @@ filter_cache_request_evaluate(struct pool &pool,
     if (user == nullptr)
         user = "";
 
-    return NewFromPool<FilterCacheInfo>(pool,
+    return NewFromPool<FilterCacheInfo>(pool, tag,
                                         p_strcat(&pool, source_id, "|",
                                                  user, "|",
                                                  address.GetId(AllocatorPtr(pool)), nullptr));
@@ -640,6 +646,22 @@ filter_cache_flush(FilterCache &cache)
 }
 
 void
+FilterCache::FlushTag(const char *_tag) noexcept
+{
+    cache.RemoveAllMatch([](const CacheItem *_item, void *ctx){
+        const auto &item = *(const FilterCacheItem *)_item;
+        const char *tag = (const char *)ctx;
+        return item.info.tag != nullptr && strcmp(item.info.tag, tag) == 0;
+    }, const_cast<char *>(_tag));
+}
+
+void
+filter_cache_flush_tag(FilterCache &cache, const char *tag) noexcept
+{
+    cache.FlushTag(tag);
+}
+
+void
 FilterCache::Miss(struct pool &caller_pool,
                   FilterCacheInfo &&info,
                   const ResourceAddress &address,
@@ -706,7 +728,7 @@ FilterCache::Get(struct pool &caller_pool,
                  HttpResponseHandler &handler,
                  CancellablePointer &cancel_ptr)
 {
-    auto *info = filter_cache_request_evaluate(caller_pool, address,
+    auto *info = filter_cache_request_evaluate(caller_pool, cache_tag, address,
                                                source_id, headers);
     if (info != nullptr) {
         FilterCacheItem *item

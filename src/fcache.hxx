@@ -68,6 +68,9 @@ filter_cache_get_stats(const FilterCache &cache);
 void
 filter_cache_flush(FilterCache &cache);
 
+void
+filter_cache_flush_tag(FilterCache &cache, const char *tag) noexcept;
+
 /**
  * @param source_id uniquely identifies the source; NULL means disable
  * the cache
