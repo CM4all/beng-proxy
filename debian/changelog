@@ -1,6 +1,6 @@
 cm4all-beng-proxy (15.17) unstable; urgency=low
 
-  * 
+  * bp/mod_auth_easy: support the "apr1" password hash
 
  --   
 
