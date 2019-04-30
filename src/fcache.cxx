@@ -82,7 +82,7 @@ static constexpr Event::Duration fcache_compress_interval = std::chrono::minutes
  * The default "expires" duration [s] if no expiration was given for
  * the input.
  */
-static constexpr std::chrono::seconds fcache_default_expires(7 * 24 * 3600);
+static constexpr auto fcache_default_expires = std::chrono::hours(7 * 24);
 
 struct FilterCacheInfo {
     /** when will the cached resource expire? (beng-proxy time) */
