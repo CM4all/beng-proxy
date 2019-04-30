@@ -86,13 +86,14 @@ static constexpr std::chrono::seconds fcache_default_expires(7 * 24 * 3600);
 
 struct FilterCacheInfo {
     /** when will the cached resource expire? (beng-proxy time) */
-    std::chrono::system_clock::time_point expires;
+    std::chrono::system_clock::time_point expires =
+        std::chrono::system_clock::from_time_t(-1);
 
     /** the final resource id */
     const char *key;
 
     FilterCacheInfo(const char *_key) noexcept
-        :expires(std::chrono::system_clock::from_time_t(-1)), key(_key) {}
+        :key(_key) {}
 
     FilterCacheInfo(struct pool &pool, const FilterCacheInfo &src) noexcept
         :expires(src.expires),
