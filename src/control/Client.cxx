@@ -434,6 +434,10 @@ try {
     } else if (StringIsEqual(command, "flush-nfs-cache")) {
         SimpleCommand(server, args, BengProxy::ControlCommand::FLUSH_NFS_CACHE);
         return EXIT_SUCCESS;
+    } else if (StringIsEqual(command, "flush-filter-cache")) {
+        SimpleCommand(server, args,
+                      BengProxy::ControlCommand::FLUSH_FILTER_CACHE);
+        return EXIT_SUCCESS;
     } else
         throw Usage{"Unknown command"};
  } catch (const Usage &u) {
@@ -453,6 +457,7 @@ try {
             "  disable-zeroconf\n"
             "  enable-zeroconf\n"
             "  flush-nfs-cache\n"
+            "  flush-filter-cache\n"
             "\n"
             "Names for tcache-invalidate:\n",
             argv[0]);

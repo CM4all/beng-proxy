@@ -124,3 +124,6 @@ class Client:
 
     def send_flush_nfs_cache(self):
         self.send(CONTROL_FLUSH_NFS_CACHE)
+
+    def send_flush_filter_cache(self):
+        self.send(CONTROL_FLUSH_FILTER_CACHE)

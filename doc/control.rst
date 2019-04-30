@@ -90,6 +90,8 @@ Commands
 
 - ``FLUSH_NFS_CACHE``: Flush all items from the NFS cache.
 
+- ``FLUSH_FILTER_CACHE``: Flush all items from the filter cache.
+
 Only ``TCACHE_INVALIDATE``, ``STATS`` and ``NODE_STATUS`` are allowed
 when received via IP. The other commands are only accepted from
 clients connected on a local socket (aka Unix Domain Socket,

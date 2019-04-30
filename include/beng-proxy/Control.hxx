@@ -124,6 +124,14 @@ enum class ControlCommand {
      * Flush the NFS cache.
      */
     FLUSH_NFS_CACHE = 11,
+
+    /**
+     * Drop items from the filter cache.
+     *
+     * If a payload is given, then only cache items with the specified
+     * tag will be flushed.
+     */
+    FLUSH_FILTER_CACHE = 12,
 };
 
 struct ControlStats {

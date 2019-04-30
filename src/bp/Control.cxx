@@ -32,6 +32,7 @@
 
 #include "Control.hxx"
 #include "Instance.hxx"
+#include "fcache.hxx"
 #include "nfs/Cache.hxx"
 #include "control/Distribute.hxx"
 #include "control/Server.hxx"
@@ -170,6 +171,13 @@ BpInstance::OnControlPacket(ControlServer &control_server,
     case ControlCommand::FLUSH_NFS_CACHE:
         if (nfs_cache != nullptr)
             nfs_cache_flush(*nfs_cache);
+        break;
+
+    case ControlCommand::FLUSH_FILTER_CACHE:
+        if (filter_cache != nullptr) {
+            filter_cache_flush(*filter_cache);
+        }
+
         break;
     }
 }
