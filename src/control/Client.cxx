@@ -375,6 +375,13 @@ FadeChildren(const char *server, ConstBuffer<const char *> args)
     client.Send(BengProxy::ControlCommand::FADE_CHILDREN, tag.ToVoid());
 }
 
+static void
+FlushFilterCache(const char *server, ConstBuffer<const char *> args)
+{
+    SimpleCommand(server, args,
+                  BengProxy::ControlCommand::FLUSH_FILTER_CACHE);
+}
+
 int
 main(int argc, char **argv)
 try {
@@ -435,8 +442,7 @@ try {
         SimpleCommand(server, args, BengProxy::ControlCommand::FLUSH_NFS_CACHE);
         return EXIT_SUCCESS;
     } else if (StringIsEqual(command, "flush-filter-cache")) {
-        SimpleCommand(server, args,
-                      BengProxy::ControlCommand::FLUSH_FILTER_CACHE);
+        FlushFilterCache(server, args);
         return EXIT_SUCCESS;
     } else
         throw Usage{"Unknown command"};
@@ -457,7 +463,7 @@ try {
             "  disable-zeroconf\n"
             "  enable-zeroconf\n"
             "  flush-nfs-cache\n"
-            "  flush-filter-cache\n"
+            "  flush-filter-cache [TAG]\n"
             "\n"
             "Names for tcache-invalidate:\n",
             argv[0]);
