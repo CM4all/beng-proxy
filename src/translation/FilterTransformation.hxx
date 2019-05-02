@@ -62,6 +62,9 @@ struct FilterTransformation {
         return address.IsExpandable();
     }
 
+    gcc_pure
+    const char *GetId(AllocatorPtr alloc) const noexcept;
+
     /**
      * Expand the strings in this transformation (not following the linked
      * lits) with the specified regex result.

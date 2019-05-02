@@ -38,6 +38,12 @@ FilterTransformation::FilterTransformation(AllocatorPtr alloc,
     :address(alloc, src.address),
      reveal_user(src.reveal_user) {}
 
+const char *
+FilterTransformation::GetId(AllocatorPtr alloc) const noexcept
+{
+    return address.GetId(alloc);
+}
+
 void
 FilterTransformation::Expand(AllocatorPtr alloc, const MatchInfo &match_info)
 {
