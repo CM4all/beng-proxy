@@ -65,7 +65,7 @@ Transformation::Transformation(AllocatorPtr alloc,
 }
 
 bool
-Transformation::HasProcessor(const Transformation *t)
+Transformation::HasProcessor(const Transformation *t) noexcept
 {
     for (; t != nullptr; t = t->next)
         if (t->type == Type::PROCESS)
@@ -75,7 +75,7 @@ Transformation::HasProcessor(const Transformation *t)
 }
 
 bool
-Transformation::IsContainer(const Transformation *t)
+Transformation::IsContainer(const Transformation *t) noexcept
 {
     for (; t != nullptr; t = t->next)
         if (t->type == Type::PROCESS)
@@ -85,13 +85,14 @@ Transformation::IsContainer(const Transformation *t)
 }
 
 Transformation *
-Transformation::Dup(AllocatorPtr alloc) const
+Transformation::Dup(AllocatorPtr alloc) const noexcept
 {
     return alloc.New<Transformation>(alloc, *this);
 }
 
 Transformation *
-Transformation::DupChain(AllocatorPtr alloc, const Transformation *src)
+Transformation::DupChain(AllocatorPtr alloc,
+                         const Transformation *src) noexcept
 {
     Transformation *dest = nullptr, **tail_p = &dest;
 
@@ -105,7 +106,7 @@ Transformation::DupChain(AllocatorPtr alloc, const Transformation *src)
 }
 
 bool
-Transformation::IsChainExpandable() const
+Transformation::IsChainExpandable() const noexcept
 {
     for (auto t = this; t != nullptr; t = t->next)
         if (t->IsExpandable())

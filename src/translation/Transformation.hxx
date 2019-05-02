@@ -81,21 +81,21 @@ struct Transformation {
      * transformation.
      */
     gcc_pure
-    static bool HasProcessor(const Transformation *head);
+    static bool HasProcessor(const Transformation *head) noexcept;
 
     /**
      * Returns true if the first "PROCESS" transformation in the chain (if
      * any) includes the "CONTAINER" processor option.
      */
     gcc_pure
-    static bool IsContainer(const Transformation *head);
+    static bool IsContainer(const Transformation *head) noexcept;
 
     /**
      * Does this transformation need to be expanded with
      * transformation_expand()?
      */
     gcc_pure
-    bool IsExpandable() const {
+    bool IsExpandable() const noexcept {
         return type == Type::FILTER &&
             u.filter.IsExpandable();
     }
@@ -105,14 +105,14 @@ struct Transformation {
      * transformation_expand()?
      */
     gcc_pure
-    bool IsChainExpandable() const;
+    bool IsChainExpandable() const noexcept;
 
     gcc_malloc
-    Transformation *Dup(AllocatorPtr alloc) const;
+    Transformation *Dup(AllocatorPtr alloc) const noexcept;
 
     gcc_malloc
     static Transformation *DupChain(AllocatorPtr alloc,
-                                    const Transformation *src);
+                                    const Transformation *src) noexcept;
 
     /**
      * Expand the strings in this transformation (not following the linked
