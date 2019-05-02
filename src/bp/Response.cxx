@@ -635,7 +635,7 @@ Request::ApplyFilter(http_status_t status, StringMap &&headers2,
 
     instance.buffered_filter_resource_loader
         ->SendRequest(pool, session_id.GetClusterHash(),
-                      nullptr, // TODO: use filter cache tag
+                      filter.cache_tag,
                       translate.response->site,
                       HTTP_METHOD_POST, filter.address,
                       status, std::move(headers2),

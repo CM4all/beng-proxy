@@ -90,6 +90,8 @@ Commands
 
 - ``FLUSH_NFS_CACHE``: Flush all items from the NFS cache.
 
+.. _flush_filter_cache:
+
 - ``FLUSH_FILTER_CACHE``: Flush all items from the filter cache.
 
 Only ``TCACHE_INVALIDATE``, ``STATS`` and ``NODE_STATUS`` are allowed

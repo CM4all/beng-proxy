@@ -41,6 +41,11 @@
 class AllocatorPtr;
 
 struct FilterTransformation {
+    /**
+     * @see TranslationCommand::CACHE_TAG
+     */
+    const char *cache_tag = nullptr;
+
     ResourceAddress address = nullptr;
 
     /**

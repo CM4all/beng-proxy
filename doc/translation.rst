@@ -375,6 +375,11 @@ Response
 - ``FILTER``: the next resource address (``HTTP``, ``CGI``) will denote
   an output filter, see section `7.16 <#filter>`__
 
+- ``CACHE_TAG``: If present after ``FILTER`` and the filter's response
+  is cached, then this tag will be assigned to the cache item.  This
+  tag can be used with :ref:`FLUSH_FILTER_CACHE <flush_filter_cache>`
+  to flush only a part of the filter cache.
+
 - ``REVEAL_USER``: If present after ``FILTER``, then the filter will
   see ``X-CM4all-BENG-User`` as an additional request header (if a user
   is logged in).

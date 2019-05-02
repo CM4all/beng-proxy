@@ -430,7 +430,7 @@ WidgetRequest::FilterResponse(http_status_t status,
 
     env.filter_resource_loader
         ->SendRequest(pool, env.session_id.GetClusterHash(),
-                      nullptr, // TODO: use filter cache tag
+                      filter.cache_tag,
                       env.site_name,
                       HTTP_METHOD_POST, filter.address, status,
                       std::move(headers), std::move(body), source_tag,
