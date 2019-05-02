@@ -43,6 +43,12 @@ struct SubstTransformation {
 
     SubstTransformation() = default;
 
+    SubstTransformation(const char *_prefix,
+                        const char *_yaml_file,
+                        const char *_yaml_map_path) noexcept
+        :prefix(_prefix),
+         yaml_file(_yaml_file), yaml_map_path(_yaml_map_path) {}
+
     SubstTransformation(AllocatorPtr alloc,
                         const SubstTransformation &src) noexcept;
 };
