@@ -35,7 +35,8 @@
 
 FilterTransformation::FilterTransformation(AllocatorPtr alloc,
                                            const FilterTransformation &src) noexcept
-    :address(alloc, src.address),
+    :cache_tag(alloc.CheckDup(src.cache_tag)),
+     address(alloc, src.address),
      reveal_user(src.reveal_user) {}
 
 const char *
