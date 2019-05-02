@@ -184,7 +184,7 @@ public:
                UnusedIstreamPtr body, const char *body_etag,
                CancellablePointer &caller_cancel_ptr) noexcept {
         caller_cancel_ptr = *this;
-        resource_loader.SendRequest(pool, 0, nullptr,
+        resource_loader.SendRequest(pool, 0, nullptr, nullptr,
                                     HTTP_METHOD_POST, address,
                                     status, std::move(headers),
                                     std::move(body), body_etag,
@@ -268,6 +268,7 @@ public:
     }
 
     void Get(struct pool &caller_pool,
+             const char *cache_tag,
              const ResourceAddress &address,
              const char *source_id,
              http_status_t status, StringMap &&headers,
@@ -696,6 +697,7 @@ FilterCache::Hit(FilterCacheItem &item,
 
 void
 FilterCache::Get(struct pool &caller_pool,
+                 const char *cache_tag,
                  const ResourceAddress &address,
                  const char *source_id,
                  http_status_t status, StringMap &&headers,
@@ -719,7 +721,7 @@ FilterCache::Get(struct pool &caller_pool,
             Hit(*item, caller_pool, handler);
         }
     } else {
-        resource_loader.SendRequest(caller_pool, 0, nullptr,
+        resource_loader.SendRequest(caller_pool, 0, cache_tag, nullptr,
                                     HTTP_METHOD_POST, address,
                                     status, std::move(headers),
                                     std::move(body), source_id,
@@ -730,6 +732,7 @@ FilterCache::Get(struct pool &caller_pool,
 void
 filter_cache_request(FilterCache &cache,
                      struct pool &pool,
+                     const char *cache_tag,
                      const ResourceAddress &address,
                      const char *source_id,
                      http_status_t status, StringMap &&headers,
@@ -737,6 +740,7 @@ filter_cache_request(FilterCache &cache,
                      HttpResponseHandler &handler,
                      CancellablePointer &cancel_ptr)
 {
-    cache.Get(pool, address, source_id, status, std::move(headers),
+    cache.Get(pool, cache_tag, address, source_id,
+              status, std::move(headers),
               std::move(body), handler, cancel_ptr);
 }

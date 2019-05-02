@@ -40,6 +40,7 @@ void
 FailingResourceLoader::SendRequest(struct pool &,
                                    sticky_hash_t,
                                    const char *,
+                                   const char *,
                                    http_method_t,
                                    const ResourceAddress &,
                                    http_status_t,

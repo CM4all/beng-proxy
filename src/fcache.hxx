@@ -77,6 +77,7 @@ filter_cache_flush(FilterCache &cache);
 void
 filter_cache_request(FilterCache &cache,
                      struct pool &pool,
+                     const char *cache_tag,
                      const ResourceAddress &address,
                      const char *source_id,
                      http_status_t status, StringMap &&headers,

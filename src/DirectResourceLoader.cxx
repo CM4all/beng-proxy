@@ -118,6 +118,7 @@ GetHostWithoutPort(struct pool &pool, const HttpAddress &address) noexcept
 void
 DirectResourceLoader::SendRequest(struct pool &pool,
                                   sticky_hash_t session_sticky,
+                                  gcc_unused const char *cache_tag,
                                   const char *site_name,
                                   http_method_t method,
                                   const ResourceAddress &address,

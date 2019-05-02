@@ -132,7 +132,7 @@ errdoc_translate_response(TranslateResponse &response, void *ctx)
         auto *instance = &request2->instance;
 
         instance->cached_resource_loader
-            ->SendRequest(request2->pool, 0, nullptr,
+            ->SendRequest(request2->pool, 0, nullptr, nullptr,
                           HTTP_METHOD_GET,
                           response.address, HTTP_STATUS_OK,
                           StringMap(request2->pool), nullptr, nullptr,

@@ -39,6 +39,7 @@
 void
 FilterResourceLoader::SendRequest(struct pool &pool,
                                   gcc_unused sticky_hash_t session_sticky,
+                                  const char *cache_tag,
                                   gcc_unused const char *site_name,
                                   gcc_unused http_method_t method,
                                   const ResourceAddress &address,
@@ -51,7 +52,7 @@ FilterResourceLoader::SendRequest(struct pool &pool,
 {
     assert(method == HTTP_METHOD_POST);
 
-    filter_cache_request(cache, pool,
+    filter_cache_request(cache, pool, cache_tag,
                          address, body_etag,
                          status, std::move(headers), std::move(body),
                          handler, cancel_ptr);

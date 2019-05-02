@@ -75,7 +75,7 @@ TestCancelBlocking()
     CancellablePointer cancel_ptr;
 
     auto *request_pool = pool_new_linear(context.root_pool, "Request", 8192);
-    filter_cache_request(*context.fcache, *request_pool, nullptr,
+    filter_cache_request(*context.fcache, *request_pool, nullptr, nullptr,
                          "foo", HTTP_STATUS_OK, StringMap(*request_pool),
                          istream_string_new(*request_pool, "bar"),
                          context, cancel_ptr);

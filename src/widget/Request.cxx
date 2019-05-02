@@ -300,6 +300,7 @@ WidgetRequest::HandleRedirect(const char *location, UnusedIstreamPtr &body)
     assert(t_view != nullptr);
 
     env.resource_loader->SendRequest(pool, env.session_id.GetClusterHash(),
+                                     nullptr,
                                      env.site_name,
                                      HTTP_METHOD_GET, address, HTTP_STATUS_OK,
                                      MakeRequestHeaders(*view, *t_view,
@@ -428,6 +429,7 @@ WidgetRequest::FilterResponse(http_status_t status,
 
     env.filter_resource_loader
         ->SendRequest(pool, env.session_id.GetClusterHash(),
+                      nullptr, // TODO: use filter cache tag
                       env.site_name,
                       HTTP_METHOD_POST, filter, status,
                       std::move(headers), std::move(body), source_tag,
@@ -703,6 +705,7 @@ WidgetRequest::SendRequest()
     }
 
     env.resource_loader->SendRequest(pool, env.session_id.GetClusterHash(),
+                                     nullptr,
                                      env.site_name,
                                      widget.from_request.method,
                                      *address, HTTP_STATUS_OK,

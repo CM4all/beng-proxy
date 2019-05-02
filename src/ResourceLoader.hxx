@@ -54,6 +54,11 @@ public:
      *
      * @param session_sticky a portion of the session id that is used to
      * select the worker; 0 means disable stickiness
+     *
+     * @param cache_tag an opaque tag string to be assigned to the
+     * cache item (if the response is going to be cached by the
+     * #ResourceLoader); may be nullptr
+     *
      * @param site_name the name of the site this request belongs to;
      * may be nullptr
      * @param address the address of the resource
@@ -64,6 +69,7 @@ public:
      */
     virtual void SendRequest(struct pool &pool,
                              sticky_hash_t session_sticky,
+                             const char *cache_tag,
                              const char *site_name,
                              http_method_t method,
                              const ResourceAddress &address,
