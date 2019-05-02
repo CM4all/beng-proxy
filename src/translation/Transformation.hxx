@@ -33,9 +33,18 @@
 #pragma once
 
 #include "FilterTransformation.hxx"
+#include "SubstTransformation.hxx"
 #include "util/Compiler.h"
 
 class AllocatorPtr;
+
+struct XmlProcessorTransformation {
+    unsigned options;
+};
+
+struct CssProcessorTransformation {
+    unsigned options;
+};
 
 /**
  * Transformations which can be applied to resources.
@@ -52,23 +61,13 @@ struct Transformation {
     } type;
 
     union {
-        struct {
-            unsigned options;
-        } processor;
+        XmlProcessorTransformation processor;
 
-        struct {
-            unsigned options;
-        } css_processor;
+        CssProcessorTransformation css_processor;
 
         FilterTransformation filter;
 
-        struct {
-            const char *prefix;
-
-            const char *yaml_file;
-
-            const char *yaml_map_path;
-        } subst;
+        SubstTransformation subst;
     } u;
 
     explicit Transformation(Type _type) noexcept

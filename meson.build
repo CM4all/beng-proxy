@@ -608,6 +608,7 @@ translation2 = static_library(
   'src/translation/Client.cxx',
   'src/translation/Transformation.cxx',
   'src/translation/FilterTransformation.cxx',
+  'src/translation/SubstTransformation.cxx',
   'src/translation/Vary.cxx',
   'src/translation/InvalidateParser.cxx',
   include_directories: inc,

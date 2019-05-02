@@ -300,6 +300,7 @@ test('t_tcache', executable('t_tcache',
   '../src/translation/Cache.cxx',
   '../src/translation/Transformation.cxx',
   '../src/translation/FilterTransformation.cxx',
+  '../src/translation/SubstTransformation.cxx',
   include_directories: inc,
   dependencies: [
     gtest,
