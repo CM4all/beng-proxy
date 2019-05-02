@@ -46,6 +46,9 @@ struct CssProcessorTransformation {
     unsigned options;
 };
 
+struct TextProcessorTransformation {
+};
+
 /**
  * Transformations which can be applied to resources.
  */
@@ -64,6 +67,8 @@ struct Transformation {
         XmlProcessorTransformation processor;
 
         CssProcessorTransformation css_processor;
+
+        TextProcessorTransformation text_processor;
 
         FilterTransformation filter;
 
