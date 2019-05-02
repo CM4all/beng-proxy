@@ -53,8 +53,7 @@ Transformation::Transformation(AllocatorPtr alloc,
         break;
 
     case Type::FILTER:
-        u.filter.address.CopyFrom(alloc, src.u.filter.address);
-        u.filter.reveal_user = src.u.filter.reveal_user;
+        u.filter = {alloc, src.u.filter};
         break;
 
     case Type::SUBST:
@@ -125,7 +124,7 @@ Transformation::Expand(AllocatorPtr alloc, const MatchInfo &match_info)
         break;
 
     case Type::FILTER:
-        u.filter.address.Expand(alloc, match_info);
+        u.filter.Expand(alloc, match_info);
         break;
 
     case Type::SUBST:

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,16 +30,11 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_TRANSFORMATION_HXX
-#define BENG_TRANSFORMATION_HXX
+#pragma once
 
-#include "ResourceAddress.hxx"
-
+#include "FilterTransformation.hxx"
 #include "util/Compiler.h"
 
-#include <assert.h>
-
-struct pool;
 class AllocatorPtr;
 
 /**
@@ -65,14 +60,7 @@ struct Transformation {
             unsigned options;
         } css_processor;
 
-        struct {
-            ResourceAddress address;
-
-            /**
-             * Send the X-CM4all-BENG-User header to the filter?
-             */
-            bool reveal_user;
-        } filter;
+        FilterTransformation filter;
 
         struct {
             const char *prefix;
@@ -109,7 +97,7 @@ struct Transformation {
     gcc_pure
     bool IsExpandable() const {
         return type == Type::FILTER &&
-            u.filter.address.IsExpandable();
+            u.filter.IsExpandable();
     }
 
     /**
@@ -140,5 +128,3 @@ struct Transformation {
      */
     void ExpandChain(AllocatorPtr alloc, const MatchInfo &match_info);
 };
-
-#endif

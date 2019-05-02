@@ -607,6 +607,7 @@ translation2 = static_library(
   'src/translation/Marshal.cxx',
   'src/translation/Client.cxx',
   'src/translation/Transformation.cxx',
+  'src/translation/FilterTransformation.cxx',
   'src/translation/Vary.cxx',
   'src/translation/InvalidateParser.cxx',
   include_directories: inc,

@@ -299,6 +299,7 @@ test('t_tcache', executable('t_tcache',
   '../src/widget/View.cxx',
   '../src/translation/Cache.cxx',
   '../src/translation/Transformation.cxx',
+  '../src/translation/FilterTransformation.cxx',
   include_directories: inc,
   dependencies: [
     gtest,
