@@ -41,8 +41,6 @@ struct SubstTransformation {
 
     const char *yaml_map_path;
 
-    SubstTransformation() = default;
-
     SubstTransformation(const char *_prefix,
                         const char *_yaml_file,
                         const char *_yaml_map_path) noexcept
