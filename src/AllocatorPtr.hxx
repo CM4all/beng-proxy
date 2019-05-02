@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,10 +30,10 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_ALLOCATOR_PTR_HXX
-#define BENG_PROXY_ALLOCATOR_PTR_HXX
+#pragma once
 
 #include "pool/pool.hxx"
+#include "util/ConstBuffer.hxx"
 #include "util/StringView.hxx"
 
 #include <string.h>
@@ -105,6 +105,15 @@ private:
         return s.size + ConcatLength(args...);
     }
 
+    template<typename... Args>
+    static constexpr size_t ConcatLength(ConstBuffer<StringView> s,
+                                         Args... args) noexcept {
+        size_t length = ConcatLength(args...);
+        for (const auto &i : s)
+            length += i.size;
+        return length;
+    }
+
     static constexpr size_t ConcatLength() noexcept {
         return 0;
     }
@@ -120,9 +129,14 @@ private:
     }
 
     template<typename... Args>
+    static char *ConcatCopy(char *p, ConstBuffer<StringView> s, Args... args) noexcept {
+        for (const auto &i : s)
+            p = ConcatCopy(p, i);
+        return ConcatCopy(p, args...);
+    }
+
+    template<typename... Args>
     static char *ConcatCopy(char *p) noexcept {
         return p;
     }
 };
-
-#endif
