@@ -182,7 +182,7 @@ private:
 
     void FilterResponse(http_status_t status,
                         StringMap &&headers, UnusedIstreamPtr body,
-                        const ResourceAddress &filter, bool reveal_user);
+                        const FilterTransformation &filter) noexcept;
 
     void SubstResponse(http_status_t status,
                        StringMap &&headers, UnusedIstreamPtr body,
@@ -410,7 +410,7 @@ WidgetRequest::TextProcessResponse(http_status_t status,
 void
 WidgetRequest::FilterResponse(http_status_t status,
                               StringMap &&headers, UnusedIstreamPtr body,
-                              const ResourceAddress &filter, bool reveal_user)
+                              const FilterTransformation &filter) noexcept
 {
     previous_status = status;
 
@@ -420,7 +420,7 @@ WidgetRequest::FilterResponse(http_status_t status,
         ? p_strcat(&pool, source_tag, "|", filter.GetId(AllocatorPtr(pool)), nullptr)
         : nullptr;
 
-    if (reveal_user)
+    if (filter.reveal_user)
         forward_reveal_user(headers, GetSessionIfStateful().get());
 
 #ifdef SPLICE
@@ -432,7 +432,7 @@ WidgetRequest::FilterResponse(http_status_t status,
         ->SendRequest(pool, env.session_id.GetClusterHash(),
                       nullptr, // TODO: use filter cache tag
                       env.site_name,
-                      HTTP_METHOD_POST, filter, status,
+                      HTTP_METHOD_POST, filter.address, status,
                       std::move(headers), std::move(body), source_tag,
                       *this,
                       cancel_ptr);
@@ -496,7 +496,7 @@ WidgetRequest::TransformResponse(http_status_t status,
 
     case Transformation::Type::FILTER:
         FilterResponse(status, std::move(headers), std::move(body),
-                       t.u.filter.address, t.u.filter.reveal_user);
+                       t.u.filter);
         break;
 
     case Transformation::Type::SUBST:
