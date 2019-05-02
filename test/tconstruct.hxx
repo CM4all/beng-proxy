@@ -221,7 +221,6 @@ struct MakeResponse : TranslateResponse {
     MakeResponse &&Filter(const CgiAddress &_cgi) {
         struct pool &p = *tpool;
         auto t = NewFromPool<Transformation>(p, FilterTransformation{});
-        t->u.filter.reveal_user = false;
         t->u.filter.address = ResourceAddress(ResourceAddress::Type::CGI, _cgi);
         AppendTransformation(t);
         return std::move(*this);

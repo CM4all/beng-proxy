@@ -41,12 +41,12 @@
 class AllocatorPtr;
 
 struct FilterTransformation {
-    ResourceAddress address;
+    ResourceAddress address = nullptr;
 
     /**
      * Send the X-CM4all-BENG-User header to the filter?
      */
-    bool reveal_user;
+    bool reveal_user = false;
 
     FilterTransformation() = default;
 
