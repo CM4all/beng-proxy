@@ -170,25 +170,22 @@ uri_protocol_prefix(bool has_host)
 }
 
 char *
-HttpAddress::GetAbsoluteURI(struct pool *pool,
-                            const char *override_path) const
+HttpAddress::GetAbsoluteURI(AllocatorPtr alloc,
+                            const char *override_path) const noexcept
 {
-    assert(pool != nullptr);
     assert(host_and_port != nullptr);
     assert(override_path != nullptr);
     assert(*override_path == '/');
 
-    return p_strcat(pool, uri_protocol_prefix(host_and_port != nullptr),
-                    host_and_port == nullptr ? "" : host_and_port,
-                    override_path, nullptr);
+    return alloc.Concat(uri_protocol_prefix(host_and_port != nullptr),
+                        host_and_port == nullptr ? "" : host_and_port,
+                        override_path);
 }
 
 char *
-HttpAddress::GetAbsoluteURI(struct pool *pool) const
+HttpAddress::GetAbsoluteURI(AllocatorPtr alloc) const noexcept
 {
-    assert(pool != nullptr);
-
-    return GetAbsoluteURI(pool, path);
+    return GetAbsoluteURI(alloc, path);
 }
 
 bool

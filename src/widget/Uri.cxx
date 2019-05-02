@@ -220,7 +220,7 @@ Widget::AbsoluteUri(struct pool &_pool, bool stateful,
           : GetStatelessAddress())->GetHttp();
     const char *base = uwa->path;
     if (relative_uri.IsNull())
-        return uwa->GetAbsoluteURI(&_pool);
+        return uwa->GetAbsoluteURI(AllocatorPtr(_pool));
 
     const char *uri = uri_absolute(_pool, base, relative_uri);
     assert(uri != nullptr);
@@ -232,7 +232,7 @@ Widget::AbsoluteUri(struct pool &_pool, bool stateful,
         uri = uri_insert_query_string(&_pool, uri,
                                       from_template.query_string);
 
-    return uwa->GetAbsoluteURI(&_pool, uri);
+    return uwa->GetAbsoluteURI(AllocatorPtr(_pool), uri);
 }
 
 StringView

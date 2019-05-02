@@ -33,6 +33,7 @@
 #pragma once
 
 #include "pool.hxx"
+#include "AllocatorPtr.hxx"
 #include "util/StaticArray.hxx"
 #include "util/StringView.hxx"
 
@@ -52,5 +53,10 @@ public:
 
     char *operator()(struct pool &p) const noexcept {
         return StringConcat(p, {items.raw(), items.size()});
+    }
+
+    char *operator()(AllocatorPtr alloc) const noexcept {
+        return alloc.Concat(ConstBuffer<StringView>(items.raw(),
+                                                    items.size()));
     }
 };

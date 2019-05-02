@@ -38,6 +38,7 @@
 #include "stock/Class.hxx"
 #include "stock/Item.hxx"
 #include "pool/tpool.hxx"
+#include "AllocatorPtr.hxx"
 #include "lease.hxx"
 #include "child_stock.hxx"
 #include "spawn/JailParams.hxx"
@@ -186,7 +187,7 @@ LhttpConnection::Connect(MultiStock &child_stock, struct pool &caller_pool,
 static const char *
 lhttp_stock_key(struct pool *pool, const LhttpAddress *address) noexcept
 {
-    return address->GetServerId(pool);
+    return address->GetServerId(AllocatorPtr(*pool));
 }
 
 /*

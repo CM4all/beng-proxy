@@ -115,7 +115,7 @@ struct CgiAddress {
      * pool.
      */
     gcc_pure
-    const char *GetId(struct pool *pool) const;
+    const char *GetId(AllocatorPtr alloc) const;
 
     void Check() const {
         options.Check();

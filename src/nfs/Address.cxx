@@ -52,13 +52,13 @@ NfsAddress::NfsAddress(AllocatorPtr alloc, const NfsAddress &other)
      expand_path(other.expand_path) {}
 
 const char *
-NfsAddress::GetId(struct pool *pool) const
+NfsAddress::GetId(AllocatorPtr alloc) const
 {
     assert(server != nullptr);
     assert(export_name != nullptr);
     assert(path != nullptr);
 
-    return p_strcat(pool, server, ":", export_name, ":", path, nullptr);
+    return alloc.Concat(server, ":", export_name, ":", path);
 }
 
 void

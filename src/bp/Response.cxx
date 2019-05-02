@@ -65,6 +65,7 @@
 #include "istream/AutoPipeIstream.hxx"
 #include "istream/YamlSubstIstream.hxx"
 #include "istream/istream_string.hxx"
+#include "AllocatorPtr.hxx"
 #include "pool/pool.hxx"
 #include "translation/Vary.hxx"
 #include "translation/Transformation.hxx"
@@ -621,7 +622,7 @@ Request::ApplyFilter(http_status_t status, StringMap &&headers2,
     const char *source_tag = resource_tag_append_etag(&pool, resource_tag,
                                                       headers2);
     resource_tag = source_tag != nullptr
-        ? p_strcat(&pool, source_tag, "|", filter.GetId(pool), nullptr)
+        ? p_strcat(&pool, source_tag, "|", filter.GetId(AllocatorPtr(pool)), nullptr)
         : nullptr;
 
     if (reveal_user)

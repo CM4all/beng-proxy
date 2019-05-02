@@ -70,7 +70,7 @@ struct NfsAddress {
     NfsAddress(const NfsAddress &) = delete;
     NfsAddress &operator=(const NfsAddress &) = delete;
 
-    const char *GetId(struct pool *pool) const;
+    const char *GetId(AllocatorPtr alloc) const;
 
     /**
      * Throws std::runtime_error on error.

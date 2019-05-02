@@ -246,7 +246,7 @@ public:
      * key in a hash table.
      */
     gcc_pure
-    const char *GetId(struct pool &pool) const;
+    const char *GetId(AllocatorPtr alloc) const;
 
     void CopyFrom(AllocatorPtr alloc, const ResourceAddress &src);
 

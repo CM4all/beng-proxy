@@ -36,6 +36,7 @@
 #include "http/HeaderWriter.hxx"
 #include "strmap.hxx"
 #include "HttpResponseHandler.hxx"
+#include "AllocatorPtr.hxx"
 #include "pool/tpool.hxx"
 #include "ResourceAddress.hxx"
 #include "ResourceLoader.hxx"
@@ -355,7 +356,7 @@ filter_cache_request_evaluate(struct pool &pool,
     return NewFromPool<FilterCacheInfo>(pool,
                                         p_strcat(&pool, source_id, "|",
                                                  user, "|",
-                                                 address.GetId(pool), nullptr));
+                                                 address.GetId(AllocatorPtr(pool)), nullptr));
 }
 
 void

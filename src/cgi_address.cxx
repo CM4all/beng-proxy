@@ -114,7 +114,7 @@ CgiAddress::GetURI(struct pool *pool) const
 }
 
 const char *
-CgiAddress::GetId(struct pool *pool) const
+CgiAddress::GetId(AllocatorPtr alloc) const
 {
     PoolStringBuilder<256> b;
     b.push_back(path);
@@ -166,7 +166,7 @@ CgiAddress::GetId(struct pool *pool) const
         b.push_back(query_string);
     }
 
-    return b(*pool);
+    return b(alloc);
 }
 
 CgiAddress *

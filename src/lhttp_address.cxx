@@ -68,7 +68,7 @@ LhttpAddress::LhttpAddress(AllocatorPtr alloc,
 }
 
 const char *
-LhttpAddress::GetServerId(struct pool *pool) const noexcept
+LhttpAddress::GetServerId(AllocatorPtr alloc) const noexcept
 {
     PoolStringBuilder<256> b;
     b.push_back(path);
@@ -82,16 +82,16 @@ LhttpAddress::GetServerId(struct pool *pool) const noexcept
         b.push_back(i);
     }
 
-    return b(*pool);
+    return b(alloc);
 }
 
 const char *
-LhttpAddress::GetId(struct pool *pool) const noexcept
+LhttpAddress::GetId(AllocatorPtr alloc) const noexcept
 {
-    const char *p = GetServerId(pool);
+    const char *p = GetServerId(alloc);
 
     if (uri != nullptr)
-        p = p_strcat(pool, p, ";u=", uri, nullptr);
+        p = alloc.Concat(p, ";u=", uri);
 
     return p;
 }

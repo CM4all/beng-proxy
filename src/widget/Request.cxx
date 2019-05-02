@@ -57,6 +57,7 @@
 #include "istream/AutoPipeIstream.hxx"
 #include "istream/YamlSubstIstream.hxx"
 #include "pool/pool.hxx"
+#include "AllocatorPtr.hxx"
 #include "suffix_registry.hxx"
 #include "address_suffix_registry.hxx"
 #include "util/Cast.hxx"
@@ -416,7 +417,7 @@ WidgetRequest::FilterResponse(http_status_t status,
     const char *source_tag = resource_tag_append_etag(&pool, resource_tag,
                                                       headers);
     resource_tag = source_tag != nullptr
-        ? p_strcat(&pool, source_tag, "|", filter.GetId(pool), nullptr)
+        ? p_strcat(&pool, source_tag, "|", filter.GetId(AllocatorPtr(pool)), nullptr)
         : nullptr;
 
     if (reveal_user)

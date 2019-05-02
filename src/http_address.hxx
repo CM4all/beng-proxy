@@ -128,13 +128,14 @@ struct HttpAddress {
      * instead.
      */
     gcc_malloc
-    char *GetAbsoluteURI(struct pool *pool, const char *override_path) const;
+    char *GetAbsoluteURI(AllocatorPtr alloc,
+                         const char *override_path) const noexcept;
 
     /**
      * Build the absolute URI from this object.
      */
     gcc_malloc
-    char *GetAbsoluteURI(struct pool *pool) const;
+    char *GetAbsoluteURI(AllocatorPtr alloc) const noexcept;
 
     gcc_pure
     bool HasQueryString() const;

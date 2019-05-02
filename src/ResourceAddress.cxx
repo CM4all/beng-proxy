@@ -495,29 +495,29 @@ ResourceAddress::RelativeTo(const ResourceAddress &base) const
 }
 
 const char *
-ResourceAddress::GetId(struct pool &pool) const
+ResourceAddress::GetId(AllocatorPtr alloc) const
 {
     switch (type) {
     case Type::NONE:
         return "";
 
     case Type::LOCAL:
-        return p_strdup(&pool, u.file->path);
+        return alloc.Dup(u.file->path);
 
     case Type::HTTP:
-        return u.http->GetAbsoluteURI(&pool);
+        return u.http->GetAbsoluteURI(alloc);
 
     case Type::LHTTP:
-        return u.lhttp->GetId(&pool);
+        return u.lhttp->GetId(alloc);
 
     case Type::PIPE:
     case Type::CGI:
     case Type::FASTCGI:
     case Type::WAS:
-        return u.cgi->GetId(&pool);
+        return u.cgi->GetId(alloc);
 
     case Type::NFS:
-        return u.nfs->GetId(&pool);
+        return u.nfs->GetId(alloc);
     }
 
     assert(false);

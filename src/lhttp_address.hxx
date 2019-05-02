@@ -114,7 +114,7 @@ struct LhttpAddress {
      * the specified pool.
      */
     gcc_pure
-    const char *GetServerId(struct pool *pool) const noexcept;
+    const char *GetServerId(AllocatorPtr alloc) const noexcept;
 
     /**
      * Generates a string identifying the address.  This can be used as a
@@ -122,7 +122,7 @@ struct LhttpAddress {
      * pool.
      */
     gcc_pure
-    const char *GetId(struct pool *pool) const noexcept;
+    const char *GetId(AllocatorPtr alloc) const noexcept;
 
     /**
      * Throws std::runtime_error on error.
