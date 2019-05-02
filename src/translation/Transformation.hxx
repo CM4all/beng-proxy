@@ -80,6 +80,9 @@ struct Transformation {
 
     Transformation(AllocatorPtr alloc, const Transformation &src) noexcept;
 
+    Transformation(const Transformation &) = delete;
+    Transformation &operator=(const Transformation &) = delete;
+
     /**
      * Returns true if the chain contains at least one "PROCESS"
      * transformation.
