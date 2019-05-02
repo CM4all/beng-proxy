@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -34,6 +34,8 @@
 #include "bp/XmlProcessor.hxx"
 #include "AllocatorPtr.hxx"
 
+#include <new>
+
 #include <string.h>
 
 Transformation::Transformation(AllocatorPtr alloc,
@@ -42,22 +44,23 @@ Transformation::Transformation(AllocatorPtr alloc,
 {
     switch (type) {
     case Type::PROCESS:
-        u.processor = src.u.processor;
+        new(&u.processor) XmlProcessorTransformation(src.u.processor);
         break;
 
     case Type::PROCESS_CSS:
-        u.css_processor = src.u.css_processor;
+        new(&u.css_processor) CssProcessorTransformation(src.u.css_processor);
         break;
 
     case Type::PROCESS_TEXT:
+        new(&u.text_processor) TextProcessorTransformation(src.u.text_processor);
         break;
 
     case Type::FILTER:
-        u.filter = {alloc, src.u.filter};
+        new(&u.filter) FilterTransformation(alloc, src.u.filter);
         break;
 
     case Type::SUBST:
-        u.subst = {alloc, src.u.subst};
+        new(&u.subst) SubstTransformation(alloc, src.u.subst);
         break;
     }
 }
