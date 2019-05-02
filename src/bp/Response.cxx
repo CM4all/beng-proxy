@@ -614,8 +614,8 @@ Request::DispatchResponseDirect(http_status_t status, HttpHeaders &&headers,
 
 inline void
 Request::ApplyFilter(http_status_t status, StringMap &&headers2,
-                      UnusedIstreamPtr body,
-                      const ResourceAddress &filter, bool reveal_user) noexcept
+                     UnusedIstreamPtr body,
+                     const FilterTransformation &filter) noexcept
 {
     previous_status = status;
 
@@ -625,7 +625,7 @@ Request::ApplyFilter(http_status_t status, StringMap &&headers2,
         ? p_strcat(&pool, source_tag, "|", filter.GetId(AllocatorPtr(pool)), nullptr)
         : nullptr;
 
-    if (reveal_user)
+    if (filter.reveal_user)
         forward_reveal_user(headers2, GetRealmSession().get());
 
 #ifdef SPLICE
@@ -637,7 +637,8 @@ Request::ApplyFilter(http_status_t status, StringMap &&headers2,
         ->SendRequest(pool, session_id.GetClusterHash(),
                       nullptr, // TODO: use filter cache tag
                       translate.response->site,
-                      HTTP_METHOD_POST, filter, status, std::move(headers2),
+                      HTTP_METHOD_POST, filter.address,
+                      status, std::move(headers2),
                       std::move(body), source_tag,
                       *this, cancel_ptr);
 }
@@ -653,8 +654,7 @@ Request::ApplyTransformation(http_status_t status, StringMap &&headers,
     case Transformation::Type::FILTER:
         ApplyFilter(status, std::move(headers),
                     std::move(response_body),
-                    transformation.u.filter.address,
-                    transformation.u.filter.reveal_user);
+                    transformation.u.filter);
         break;
 
     case Transformation::Type::PROCESS:

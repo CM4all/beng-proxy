@@ -57,6 +57,7 @@ class GrowingBuffer;
 struct BpInstance;
 struct BpConnection;
 struct HttpServerRequest;
+struct FilterTransformation;
 
 /*
  * The BENG request struct.  This is only used by the handlers
@@ -443,7 +444,7 @@ private:
 
     void ApplyFilter(http_status_t status, StringMap &&headers2,
                      UnusedIstreamPtr body,
-                     const ResourceAddress &filter, bool reveal_user) noexcept;
+                     const FilterTransformation &filter) noexcept;
 
     void ApplyTransformation(http_status_t status, StringMap &&headers,
                              UnusedIstreamPtr response_body,
