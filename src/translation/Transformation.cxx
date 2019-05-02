@@ -42,11 +42,11 @@ Transformation::Transformation(AllocatorPtr alloc,
 {
     switch (type) {
     case Type::PROCESS:
-        u.processor.options = src.u.processor.options;
+        u.processor = src.u.processor;
         break;
 
     case Type::PROCESS_CSS:
-        u.css_processor.options = src.u.css_processor.options;
+        u.css_processor = src.u.css_processor;
         break;
 
     case Type::PROCESS_TEXT:
