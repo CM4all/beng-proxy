@@ -66,7 +66,7 @@ struct Transformation {
         SUBST,
     } type;
 
-    union {
+    union U {
         XmlProcessorTransformation processor;
 
         CssProcessorTransformation css_processor;
@@ -84,6 +84,12 @@ struct Transformation {
         static_assert(std::is_trivially_destructible<TextProcessorTransformation>::value);
         static_assert(std::is_trivially_destructible<FilterTransformation>::value);
         static_assert(std::is_trivially_destructible<SubstTransformation>::value);
+
+        /**
+         * This constructor declaration is necessary to allow
+         * non-trivial member types.
+         */
+        U() noexcept {}
     } u;
 
     explicit Transformation(XmlProcessorTransformation &&src) noexcept
