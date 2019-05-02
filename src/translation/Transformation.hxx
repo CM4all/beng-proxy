@@ -36,6 +36,8 @@
 #include "SubstTransformation.hxx"
 #include "util/Compiler.h"
 
+#include <new>
+
 class AllocatorPtr;
 
 struct XmlProcessorTransformation {
@@ -75,8 +77,30 @@ struct Transformation {
         SubstTransformation subst;
     } u;
 
-    explicit Transformation(Type _type) noexcept
-        :type(_type) {}
+    explicit Transformation(XmlProcessorTransformation &&src) noexcept
+        :type(Type::PROCESS) {
+        new(&u.processor) XmlProcessorTransformation(std::move(src));
+    }
+
+    explicit Transformation(CssProcessorTransformation &&src) noexcept
+        :type(Type::PROCESS_CSS) {
+        new(&u.processor) CssProcessorTransformation(std::move(src));
+    }
+
+    explicit Transformation(TextProcessorTransformation &&src) noexcept
+        :type(Type::PROCESS_TEXT) {
+        new(&u.processor) TextProcessorTransformation(std::move(src));
+    }
+
+    explicit Transformation(FilterTransformation &&src) noexcept
+        :type(Type::FILTER) {
+        new(&u.filter) FilterTransformation(std::move(src));
+    }
+
+    explicit Transformation(SubstTransformation &&src) noexcept
+        :type(Type::SUBST) {
+        new(&u.subst) SubstTransformation(std::move(src));
+    }
 
     Transformation(AllocatorPtr alloc, const Transformation &src) noexcept;
 

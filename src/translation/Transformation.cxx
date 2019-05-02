@@ -34,13 +34,11 @@
 #include "bp/XmlProcessor.hxx"
 #include "AllocatorPtr.hxx"
 
-#include <new>
-
 #include <string.h>
 
 Transformation::Transformation(AllocatorPtr alloc,
                                const Transformation &src) noexcept
-    :Transformation(src.type)
+    :type(src.type)
 {
     switch (type) {
     case Type::PROCESS:
