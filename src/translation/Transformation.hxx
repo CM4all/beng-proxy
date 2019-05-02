@@ -37,6 +37,7 @@
 #include "util/Compiler.h"
 
 #include <new>
+#include <type_traits>
 
 class AllocatorPtr;
 
@@ -75,6 +76,14 @@ struct Transformation {
         FilterTransformation filter;
 
         SubstTransformation subst;
+
+        /* we don't even try to call destructors in this union, and
+           these assertions ensure that this is safe: */
+        static_assert(std::is_trivially_destructible<XmlProcessorTransformation>::value);
+        static_assert(std::is_trivially_destructible<CssProcessorTransformation>::value);
+        static_assert(std::is_trivially_destructible<TextProcessorTransformation>::value);
+        static_assert(std::is_trivially_destructible<FilterTransformation>::value);
+        static_assert(std::is_trivially_destructible<SubstTransformation>::value);
     } u;
 
     explicit Transformation(XmlProcessorTransformation &&src) noexcept
