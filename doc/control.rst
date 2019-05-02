@@ -96,10 +96,10 @@ Commands
   payload is given, then this is a tag which flushes only cache items
   with the given :ref:`CACHE_TAG <cache_tag>`.
 
-Only ``TCACHE_INVALIDATE``, ``STATS`` and ``NODE_STATUS`` are allowed
-when received via IP. The other commands are only accepted from
-clients connected on a local socket (aka Unix Domain Socket,
-``AF_LOCAL``).
+Only ``TCACHE_INVALIDATE``, ``FLUSH_NFS_CACHE``,
+``FLUSH_FILTER_CACHE``, ``STATS`` and ``NODE_STATUS`` are allowed when
+received via IP. The other commands are only accepted from clients
+connected on a local socket (aka Unix Domain Socket, ``AF_LOCAL``).
 
 
 Client
