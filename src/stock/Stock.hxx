@@ -162,7 +162,7 @@ public:
     Stock(const Stock &) = delete;
     Stock &operator=(const Stock &) = delete;
 
-    EventLoop &GetEventLoop() noexcept {
+    auto &GetEventLoop() const noexcept {
         return retry_event.GetEventLoop();
     }
 
